@@ -90,6 +90,7 @@ public:
 	void	startDialTone			(void);
 	void	congestion				(bool); 
 	void	errorDisplay			(char*);
+	void	nameDisplay				(char*);
 
 private:
 	bool	b_ringing;

@@ -290,8 +290,6 @@ int
 SIP::checkURI (const char *buffer) {
 	osip_uri_t *uri;
 	int 		i;
-	char 	   *dest = NULL;
-	QString		qdest;
 
 	// To parse a buffer containing a sip URI
 	i = osip_uri_init(&uri);
@@ -306,7 +304,6 @@ SIP::checkURI (const char *buffer) {
 
 	// Free memory
 	osip_uri_free(uri);	
-	osip_free(dest);
 	return 0;	
 }
 
@@ -326,6 +323,9 @@ SIP::checkUrl(char *url) {
 		qWarning ("Cannot parse url");
 		return -1;
 	}
+
+	// Free memory
+	osip_from_free (to);
   	return 0;
 }
 
@@ -421,7 +421,8 @@ SIP::setAuthentication (void) {
 		
 string
 SIP::fromHeader (string user, string host) {
-	return ("sip:" + user + "@" + host);
+	string displayname = Config::gets("Signalisations", "SIP.fullName");
+	return ("\"" + displayname + "\"" + " <sip:" + user + "@" + host + ">");
 }
 
 
@@ -623,13 +624,16 @@ SIP::manageActions (int usedLine, int action) {
 	case ONHOLD_CALL:
 		call[usedLine]->usehold = true;
 		
+		qDebug("ON HOLD CALL 0x%d, usedLine = %d", call[usedLine], usedLine);
+
 		eXosip_lock();
 		i = eXosip_on_hold_call(call[usedLine]->did);
 		eXosip_unlock();
 		
 		// Disable audio
-		call[usedLine]->enable_audio = -1;
-		callmanager->closeSound(call[usedLine]);
+		//call[usedLine]->enable_audio = -1;
+		//callmanager->closeSound(call[usedLine]);
+		call[usedLine]->closedCall();
 		break;
 
 	// IP-Phone user is parking peer OFF HOLD
@@ -692,6 +696,7 @@ SIP::getEvent (void) {
 	eXosip_event_t *event;
 	int theline = -1;
 	int curLine;
+	char *name;
 	static int countReg = 0;
 
 	event = eXosip_event_wait (0, 50);
@@ -719,6 +724,15 @@ SIP::getEvent (void) {
 			}
 			assert (theline >= 0); assert (theline < NUMBER_OF_LINES);
 
+			// Display the name which the call comes from
+			osip_from_t *from;
+  			osip_from_init(&from);
+  			osip_from_parse(from, event->remote_uri);
+			name = osip_from_get_displayname(from);
+			callmanager->nameDisplay(name);
+			callmanager->phLines[theline]->text = QString(name);
+			osip_from_free(from);
+			
 			if (call[theline] == NULL) {
 				//callmanager->setCallInProgress(true);
 				callmanager->phLines[theline]->setbInProgress(true);
@@ -928,7 +942,8 @@ SIP::getEvent (void) {
 			qDebug("<- (%i %i) INVITE (On Hold) from: %s", event->cid, 
 				event->did, event->remote_uri);
 			theline = findLineNumber(event);
-			callmanager->closeSound(call[theline]);
+			//callmanager->closeSound(call[theline]);
+			call[theline]->closedCall();
 			call[theline]->onholdCall(event);
 			break;
 

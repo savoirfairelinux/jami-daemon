@@ -70,7 +70,9 @@ AudioRtp::createNewSession (SipCall *ca) {
 
 	RTXThread = new AudioRtpRTX (ca, manager->audiodriver, manager, symetric);
 	qDebug("-- START SOUND --");
-	RTXThread->start();
+	if (RTXThread->start() != 0) {
+		return -1;
+	}
 		
 	return 0;
 }
@@ -83,7 +85,7 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 
 	if (RTXThread != NULL) {
 		// Wait for them...and delete.
-	//	RTXThread->join();
+		//RTXThread->join();
 		delete RTXThread;
 		RTXThread = NULL;
 	}
@@ -182,7 +184,7 @@ AudioRtpRTX::run (void) {
 	} else {
 		qDebug("RTP(Recv): Added destination %s:%d",
 				remote_ip.getHostname(),
-				(unsigned short) ca->remote_sdp_audio_port)
+				(unsigned short) ca->remote_sdp_audio_port);
 	}
 #endif
 
@@ -243,6 +245,7 @@ AudioRtpRTX::run (void) {
 		if (!manager->mute) {
 		//	i = audioDevice->readBuffer (320);
 		//	data_from_mic = (short*)manager->audiodriver->audio_buf.getData();
+		//	qDebug("audiortp data_from_mic 0x%d", data_from_mic);
 			i = audioDevice->readBuffer (data_from_mic, 320);
 		} else {
 			// When IP-phone user click on mute button, we read buffer of a
@@ -288,8 +291,8 @@ AudioRtpRTX::run (void) {
 		// Write decoded data to sound device
 		manager->audiodriver->audio_buf.resize(expandedSize);
 		manager->audiodriver->audio_buf.setData (data_for_speakers);
-		i = audioDevice->writeBuffer (data_for_speakers, expandedSize);
-	//	i = audioDevice->writeBuffer ();
+	//	i = audioDevice->writeBuffer (data_for_speakers, expandedSize);
+		i = audioDevice->writeBuffer ();
 		delete adu;
 
 

@@ -38,13 +38,14 @@ ToneThread::ToneThread (Manager *mngr, short *buf, int total) {
 }
 
 ToneThread::~ToneThread (void) {
+	this->terminate();
 }
 
 void
 ToneThread::run (void) {
 	while (mngr->tonezone) {
-		//mngr->audiodriver->writeBuffer();
-		mngr->audiodriver->writeBuffer(buf, totalbytes);
+		mngr->audiodriver->writeBuffer();
+		//mngr->audiodriver->writeBuffer(buf, totalbytes);
 	}
 }
 
@@ -229,13 +230,13 @@ ToneGenerator::toneHandle (int idr) {
 		// New thread for the tone
 		if (tonethread == NULL) {
 			tonethread = new ToneThread (manager, buf, totalbytes);
-		//	manager->audiodriver->audio_buf.resize(totalbytes);	
-		//	manager->audiodriver->audio_buf.setData (buf);	
+			manager->audiodriver->audio_buf.resize(totalbytes);	
+			manager->audiodriver->audio_buf.setData (buf);	
 			tonethread->start();
 		}
 
 		if (!manager->tonezone) {
-			tonethread->join();	
+			//tonethread->join();	
 			if (tonethread != NULL) {	
 				delete tonethread;
 				tonethread = NULL;

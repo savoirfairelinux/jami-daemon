@@ -1046,12 +1046,12 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	// Handle dtmf
 	key->startTone(code);
 	key->generateDTMF(buf, SAMPLING_RATE);
-//	callmanager->audiodriver->audio_buf.resize(SAMPLING_RATE);
-//	callmanager->audiodriver->audio_buf.setData (buf);
+	callmanager->audiodriver->audio_buf.resize(SAMPLING_RATE);
+	callmanager->audiodriver->audio_buf.setData (buf);
 	pulselen = Config::get("Signalisations", "DTMF.pulseLength", 250);
-//	callmanager->audiodriver->audio_buf.resize(pulselen * (OCTETS/1000));
-	a = callmanager->audiodriver->writeBuffer(buf, pulselen * (OCTETS/1000));
-//	a = callmanager->audiodriver->writeBuffer();
+	callmanager->audiodriver->audio_buf.resize(pulselen * (OCTETS/1000));
+//	a = callmanager->audiodriver->writeBuffer(buf, pulselen * (OCTETS/1000));
+	a = callmanager->audiodriver->writeBuffer();
 	if (a == 1) {
 		pressedKeySlot(id);
 	} else {

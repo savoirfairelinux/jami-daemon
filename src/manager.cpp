@@ -519,3 +519,9 @@ void
 Manager::errorDisplay (char *error) {
 	gui()->lcd->appendText(error);
 }
+
+void
+Manager::nameDisplay (char *name) {
+	gui()->lcd->clearBuffer();
+	gui()->lcd->appendText(name);
+}

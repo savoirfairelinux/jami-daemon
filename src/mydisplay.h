@@ -69,6 +69,7 @@ public slots:
 	void	 appendText	(const char *);
 	void	 appendText	(const QChar &);
 	void	 clear		(void);
+	void	 clearBuffer(void);
 	void	 clear		(const QString &);
 	void 	 backspace	(void);
 

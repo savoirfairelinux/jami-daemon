@@ -371,6 +371,11 @@ MyDisplay::clear (void) {
 }
 
 void
+MyDisplay::clearBuffer (void) {
+	this->textBuffer->remove(0, this->textBuffer->length());
+}
+
+void
 MyDisplay::clear (const QString &newstatus) {
 	// Remove everything in the buffer and set the new status.
 	this->textBuffer->remove(0, this->textBuffer->length());
