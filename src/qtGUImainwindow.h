@@ -137,6 +137,7 @@ public:
 	void	 startCallTimer 	(int);
 	void	 setFreeStateLine 	(int);
 	void	 setCurrentLineNumber(int);
+	void	 dialTone		(bool);
 
 signals:
 	void 	 keyPressed(int);
@@ -218,7 +219,6 @@ private:
 
 	int			 positionOffsetX		(void);
 
-	void		 dialTone		(bool);
 };
 
 

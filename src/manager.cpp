@@ -48,7 +48,6 @@ using namespace std;
 Manager::Manager (QString *Dc = NULL) {
 	DirectCall = Dc;
 	bool exist;
-	
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
 		phLines[i] = new PhoneLine ();
 	}
@@ -74,8 +73,8 @@ Manager::Manager (QString *Dc = NULL) {
 	b_ringtone = false;
 	if (! DirectCall->isNull()) { 
 		qWarning ("Direct call.....");
-		phonegui->lcd->textBuffer = DirectCall ;
-		phonegui->dial();
+		gui()->lcd->textBuffer = DirectCall ;
+		gui()->dial();
 	}
 
 	if (!exist){
@@ -228,7 +227,6 @@ Manager::actionHandle (int lineNumber, int action) {
 		sip->manageActions (lineNumber, ANSWER_CALL);		
 		this->ring(false);
 		gui()->lcd->setStatus("Connected");	
-		qDebug("Start timer call");
 		gui()->startCallTimer(lineNumber);
 		break;
 
@@ -244,9 +242,7 @@ Manager::actionHandle (int lineNumber, int action) {
 
 	case ONHOLD_CALL:
 		if (sip->call[lineNumber] != NULL) {
-			qDebug("Manager ONHOLD:  call[%d] = 0x%X", 
-				(unsigned int)lineNumber, sip->call[lineNumber]);
-			gui()->lcd->setStatus(ONHOLD_STATUS);
+			//gui()->lcd->setStatus(ONHOLD_STATUS);
 			sip->manageActions (lineNumber, ONHOLD_CALL);
 		}
 		break;
@@ -263,7 +259,7 @@ Manager::actionHandle (int lineNumber, int action) {
 		
 	case CANCEL_CALL:
 		sip->manageActions (lineNumber, CANCEL_CALL);
-		sip->notUsedLine = -1;
+		//sip->notUsedLine = -1;
 		break;
 
 	default:
@@ -309,7 +305,7 @@ Manager::findLineNumberNotUsedSIP (void) {
  * @param	remotetype:	event type
  */
 void
-Manager::handleRemoteEvent (int code, char * reason, int remotetype) {
+Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 	QString qinfo;
 	
 	switch (remotetype) {
@@ -327,8 +323,8 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype) {
 		case EXOSIP_CALL_ANSWERED:
 			if (!gui()->transfer)
 				gui()->lcd->setStatus("Connected");
-			// Start call timer
-			gui()->startCallTimer(gui()->currentLineNumber);
+				// Start call timer
+				gui()->startCallTimer(gui()->currentLineNumber);
 			break;
 
 		// Remote callee hangup
@@ -339,13 +335,13 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype) {
 				setCallInProgress(false);
 			} else {
 				// Stop call timer
-				gui()->stopCallTimer(gui()->currentLineNumber);
+				gui()->stopCallTimer(line);
 				// set state free pixmap line
-				gui()->setFreeStateLine(gui()->currentLineNumber);
+				gui()->setFreeStateLine(line);
 				// set free line
 				gui()->setCurrentLineNumber(-1);
 			}
-			
+			phLines[line]->setbDial(false);
 			gui()->lcd->clear(QString("Hung up"));
 			sip->notUsedLine = -1;
 			break;
@@ -375,6 +371,11 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype) {
 	}
 }
 
+void
+Manager::startDialTone (void) {
+	gui()->dialTone(true);
+}
+
 int
 Manager::startSound (SipCall *ca) {
 	return audioRTP->createNewSession(ca);
@@ -387,7 +388,7 @@ Manager::closeSound (SipCall *ca) {
 
 QString
 Manager::bufferTextRender (void) {
-	return QString(*phonegui->lcd->textBuffer);
+	return QString(*gui()->lcd->textBuffer);
 }
 
 void

@@ -83,7 +83,6 @@ SIP::SIP (Manager *_manager) {
 
 SIP::~SIP (void) {
 	if (evThread != NULL) {
-		qDebug("SIP: delete evThread");
 		delete evThread;
 		evThread = NULL;
 	}
@@ -294,7 +293,6 @@ SIP::checkURI (const char *buffer) {
 	char 	   *dest = NULL;
 	QString		qdest;
 
-	qDebug("buffer = %s", buffer);
 	// To parse a buffer containing a sip URI
 	i = osip_uri_init(&uri);
 	if (i != 0) {
@@ -608,8 +606,6 @@ SIP::manageActions (int usedLine, int action) {
 
 	// IP-Phone user is parking peer on HOLD
 	case ONHOLD_CALL:
-		qDebug("SIP ONHOLD:  call[%d] = 0x%X", usedLine, call[usedLine]);
-		
 		call[usedLine]->usehold = true;
 		
 		eXosip_lock();
@@ -617,13 +613,12 @@ SIP::manageActions (int usedLine, int action) {
 		eXosip_unlock();
 		
 		// Disable audio
+		call[usedLine]->enable_audio = -1;
 		callmanager->closeSound(call[usedLine]);
 		break;
 
 	// IP-Phone user is parking peer OFF HOLD
 	case OFFHOLD_CALL:
-		qDebug("SIP OFFHOLD: call[%d] = 0x%X", usedLine,call[usedLine]);
-
 		call[usedLine]->usehold = true;
 
 		eXosip_lock();
@@ -661,7 +656,6 @@ SIP::manageActions (int usedLine, int action) {
 
 		// Delete the call when I hangup
 		if (call[usedLine] != NULL) {
-			qDebug("SIP: CANCEL_CALL delete call[%d]", usedLine);
 			delete call[usedLine];
 			call[usedLine] = NULL;
 		}
@@ -687,7 +681,6 @@ SIP::getEvent (void) {
 		return -1;
 	}	
 	
-	qDebug("event_type = %d", event->type);
 	callmanager->handleRemoteEvent(event->status_code,
 			event->reason_phrase,
 			-1);	
@@ -702,7 +695,6 @@ SIP::getEvent (void) {
 			
 			theline = findLineNumberNotUsed();
 			notUsedLine = theline;
-			qDebug("%s: line number of new call = %d", __FILE__, notUsedLine);
 
 			if (theline < 0) {
 				// TODO: remonter erreur au manager (on refuse l'appel)
@@ -711,11 +703,7 @@ SIP::getEvent (void) {
 
 			if (call[theline] == NULL) {
 				callmanager->setCallInProgress(true);
-				qDebug("callmanager->setCallInProgress=%d",
-						callmanager->getCallInProgress());
-				
 				call[theline] = new SipCall (callmanager);
-				
 				call[theline]->newIncomingCall(event);
 
 				// Associate an audio port with a call
@@ -769,6 +757,8 @@ SIP::getEvent (void) {
 						exit(1);
 					}
 				}
+			} else if (callmanager->otherLine()) {
+				callmanager->startDialTone();	
 			}
 			break;
 
@@ -792,8 +782,10 @@ SIP::getEvent (void) {
 			assert (theline >= 0);
 			assert (theline < NUMBER_OF_LINES);
 
-			call[theline] = new SipCall(callmanager);
-			call[theline]->ringingCall(event);
+			if (call[theline] == NULL) {
+				call[theline] = new SipCall(callmanager);
+				call[theline]->ringingCall(event);
+			}
 			break;
 
 		case EXOSIP_CALL_REDIRECTED:
@@ -826,6 +818,8 @@ SIP::getEvent (void) {
 					callmanager->setCallInProgress(false);
 					break;
 				case FORBIDDEN:
+					break;
+				case REQ_TERMINATED:
 					break;
 				default:
 					callmanager->setCallInProgress(false);
@@ -875,7 +869,8 @@ SIP::getEvent (void) {
 			if (call[theline] != NULL) {
 				delete call[theline];
 				call[theline] = NULL;
-				callmanager->handleRemoteEvent(0, NULL, EXOSIP_CALL_CLOSED);
+				callmanager->handleRemoteEvent(
+						0, NULL, EXOSIP_CALL_CLOSED, theline);
 			}
 			break;
 

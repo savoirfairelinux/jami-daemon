@@ -23,11 +23,9 @@
 #ifndef _AUDIO_DRIVERS_OSS_H
 #define _AUDIO_DRIVERS_OSS_H
 
-#include <qstring.h>
 
 #include "audiodrivers.h"
 
-#define BUF_SIZE    	4096
 // TODO : a mettre dans config
 #define AUDIO_DEVICE	"/dev/dsp"
 
@@ -41,8 +39,9 @@ public:
 	int		closeDevice		(void);
 	bool	openDevice 		(int);
 	int	 	writeBuffer		(void *, int);
+	int	 	writeBuffer		(void);
 	int 	readBuffer		(void *, int);
-	void 	flushReadBuffer	(void);
+	int 	readBuffer		(int);
 	unsigned int readableBytes (void);
 
 	int audio_fd;

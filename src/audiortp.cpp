@@ -69,6 +69,7 @@ AudioRtp::createNewSession (SipCall *ca) {
 	}
 
 	RTXThread = new AudioRtpRTX (ca, manager->audiodriver, manager, symetric);
+	qDebug("Start audio thread !!");
 	RTXThread->start();
 		
 	return 0;
@@ -82,9 +83,7 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 
 	if (RTXThread != NULL) {
 		// Wait for them...and delete.
-		qDebug ("Thread audio JOIN ...");
-		RTXThread->join();
-		qDebug ("Thread audio JOIN !!!");		
+	//	RTXThread->join();
 		delete RTXThread;
 		RTXThread = NULL;
 	}
@@ -117,6 +116,7 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioDrivers *driver,
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
+	this->terminate();
 	if (!sym) {
 		if (sessionRecv != NULL) {
 			delete sessionRecv;	
@@ -241,6 +241,8 @@ AudioRtpRTX::run (void) {
 		// Send session
 		////////////////////////////
 		if (!manager->mute) {
+		//	i = audioDevice->readBuffer (320);
+		//	data_from_mic = (short*)manager->audiodriver->audio_buf.getData();
 			i = audioDevice->readBuffer (data_from_mic, 320);
 		} else {
 			// When IP-phone user click on mute button, we read buffer of a
@@ -284,7 +286,10 @@ AudioRtpRTX::run (void) {
 				adu->getSize());
 		
 		// Write decoded data to sound device
+		manager->audiodriver->audio_buf.resize(expandedSize);
+		manager->audiodriver->audio_buf.setData (data_for_speakers);
 		i = audioDevice->writeBuffer (data_for_speakers, expandedSize);
+	//	i = audioDevice->writeBuffer ();
 		delete adu;
 
 

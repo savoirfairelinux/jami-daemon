@@ -62,6 +62,7 @@ public:
 	bool 		inFunction;
 
 	QString		       *textBuffer;		
+	QString		       *time;
 
 public slots:
 	void	 appendText	(const QString &);
@@ -78,7 +79,6 @@ private:
 	QImage		 		centerImage;	// text zone
 	QImage				overImage;
 	QString			   *status;	
-	QString		       *time;
 	MyDisplayThread	   *animationThread;
 	QtGUIMainWindow	   *qtgui;	
 	

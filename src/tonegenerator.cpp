@@ -43,6 +43,7 @@ ToneThread::~ToneThread (void) {
 void
 ToneThread::run (void) {
 	while (mngr->tonezone) {
+		//mngr->audiodriver->writeBuffer();
 		mngr->audiodriver->writeBuffer(buf, totalbytes);
 	}
 }
@@ -220,8 +221,6 @@ ToneGenerator::idZoneName (const QString &name) {
  */
 void
 ToneGenerator::toneHandle (int idr) {
-//	int idz = idZoneName(Config::gets(QString(
-//					"Preferences/Options.zoneToneChoice")));
 	int idz = idZoneName(Config::gets("Preferences", "Options.zoneToneChoice"));
 	
 	if (idz != -1) {
@@ -230,6 +229,8 @@ ToneGenerator::toneHandle (int idr) {
 		// New thread for the tone
 		if (tonethread == NULL) {
 			tonethread = new ToneThread (manager, buf, totalbytes);
+		//	manager->audiodriver->audio_buf.resize(totalbytes);	
+		//	manager->audiodriver->audio_buf.setData (buf);	
 			tonethread->start();
 		}
 

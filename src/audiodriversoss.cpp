@@ -81,7 +81,7 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	// Open device in non-blocking mode
 	audio_fd = open (AUDIO_DEVICE, oflag | O_NONBLOCK );
 	if (audio_fd == -1) {
-		qWarning("ERROR: Open Failed");
+		printf ("ERROR: Open Failed\n");
 		return -1;
 	}
 
@@ -92,7 +92,7 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	// Fragments : No limit (0x7FFF), 
 	int frag = ( ( 0x7FFF << 16 ) | 7 );
 	if (ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &frag)) {
-		qWarning("ERROR: SETFRAG %s", (QString(strerror(errno))).ascii());
+		printf ("ERROR: SETFRAG %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -101,34 +101,34 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	format = AFMT_S16_LE;
 
 	if (ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format) == -1) {
-		qWarning("ERROR: SETFMT  %s", (QString(strerror(errno))).ascii());
+		printf("ERROR: SETFMT  %s\n", strerror(errno));
 		return -1;
 	}
 	if (format != AFMT_S16_LE) {
-		qWarning("ERROR: Format not supported");
+		printf ("ERROR: Format not supported\n");
 		return -1;
 	}
 
 	// Setup number of channels
 	int channels = MONO;
 	if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &channels) == -1) {
-		qWarning("ERROR: DSP_STEREO %s", (QString(strerror(errno))).ascii());
+		printf ("ERROR: DSP_STEREO %s\n", strerror(errno));
 		return false;
 	}
 	if (channels != MONO) {
-		qWarning("ERROR: Unsupported Number of Channels");
+		printf ("ERROR: Unsupported Number of Channels\n");
 		return false;
 	}
 
 	// Setup sampling rate
 	int rate = SAMPLING_RATE;
 	if (ioctl(audio_fd, SNDCTL_DSP_SPEED, &rate ) == -1 ) {
-		qWarning("ERROR: DSP_SPEED  %s", (QString(strerror(errno))).ascii());
+		printf ("ERROR: DSP_SPEED  %s\n", strerror(errno));
 		return false;
 	}
 
 	if (rate != SAMPLING_RATE) {
-		qWarning("WARNING: driver rounded %d Hz request to %d Hz, off by %f%%\n"
+		printf ("WARNING: driver rounded %d Hz request to %d Hz, off by %f%%\n"
 				, 8000, rate, 100*((rate-8000)/8000.0));
 	}
 
@@ -136,16 +136,16 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	audio_buf_info info;
 	if (mode == WriteOnly) {
 		if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == -1) {
-			qWarning("ERROR: GETISPACE %s", (QString(strerror(errno))).ascii());
+			printf ("ERROR: GETISPACE %s\n", strerror(errno));
 			return false;
 		} 
 	} else {
 		if (ioctl(audio_fd, SNDCTL_DSP_GETISPACE, &info ) == -1) {
-			qWarning("ERROR: GETOSPACE %s", (QString(strerror(errno))).ascii());
+			printf ("ERROR: GETOSPACE %s\n", strerror(errno));
 			return false;
 		}
 	}
-	audio_buf.resize (info.fragsize * sizeof(short));
+//	audio_buf.resize (info.fragsize * sizeof(short));
 	devstate = DeviceOpened;
 
 	return 0;
@@ -162,16 +162,17 @@ bool
 AudioDriversOSS::openDevice (int exist_fd) {
 	audio_fd = exist_fd;
 	if (audio_fd == -1) {
-		qWarning("ERROR: Open Failed");
+		printf ("ERROR: Open Failed\n");
 		return false;
 	}
 
 	audio_buf_info info;
 	if (ioctl(audio_fd, SNDCTL_DSP_GETISPACE, &info) == -1) {
-		qWarning("ERROR: GETISPACE  %s", (QString(strerror(errno))).ascii());
+		printf ("ERROR: GETISPACE  %s\n", strerror(errno));
 		return false;
 	}
-	audio_buf.resize (info.fragsize * sizeof(short));
+//	audio_buf.resize (info.fragsize * sizeof(short));
+
 
 	devstate = DeviceOpened;
 	return true;
@@ -206,11 +207,11 @@ AudioDriversOSS::readBuffer (void *buf, int read_bytes) {
 int
 AudioDriversOSS::readBuffer (void *ptr, int bytes) {
 	if( devstate != DeviceOpened ) {
-		qWarning("Device Not Open");
+		printf ("Device Not Open\n");
 		return false;
 	}
 
-	audio_buf.resize(bytes);
+	//audio_buf.resize(bytes);
 	ssize_t count = bytes;
 
 //	unsigned char *buf;
@@ -219,14 +220,37 @@ AudioDriversOSS::readBuffer (void *ptr, int bytes) {
 
 	rc = read (audio_fd, ptr, count);
 	if (rc < 0) {
-		qWarning("read(): %s", (QString(strerror(errno))).ascii());
+		printf ("rc < 0 read(): %s\n", strerror(errno));
 	}
 	
 	else if (rc != count) {
-		qWarning("WARNING: asked microphone for %d got %d\n", count, rc);
+		printf ("WARNING: asked microphone for %d got %d\n", count, rc);
 	}
+
+	return rc;
+}
+
+int
+AudioDriversOSS::readBuffer (int bytes) {
+	if( devstate != DeviceOpened ) {
+		printf ("Device Not Open\n");
+		return false;
+	}
+
+	audio_buf.resize(bytes);
+	ssize_t count = bytes;
+
+	short *buf;
+	buf = (short*)audio_buf.getData();
+	ssize_t rc;
+
+	rc = read (audio_fd, buf, count);
 	if (rc < 0) {
-		qWarning("read(): %s", (QString(strerror(errno))).ascii());
+		printf ("rc < 0 read(): %s\n", strerror(errno));
+	}
+	
+	else if (rc != count) {
+		printf ("WARNING: asked microphone for %d got %d\n", count, rc);
 	}
 
 	return rc;
@@ -235,7 +259,7 @@ AudioDriversOSS::readBuffer (void *ptr, int bytes) {
 int
 AudioDriversOSS::writeBuffer (void *ptr, int len) {
 	if (devstate != DeviceOpened ) {
-		qWarning("Device Not Opened");
+		printf ("Device Not Opened\n");
 		return -1;
 	}
 	
@@ -252,7 +276,7 @@ AudioDriversOSS::writeBuffer (void *ptr, int len) {
 	for (;;) {
 		int a;
 		if ((a = write(audio_fd, ptr, len)) < 0) {
-			qWarning("write(): %s", (QString(strerror(errno))).ascii());
+			printf ("write(): %s\n", strerror(errno));
 			break;
 		}
 		if (a > 0) { 
@@ -263,16 +287,38 @@ AudioDriversOSS::writeBuffer (void *ptr, int len) {
 	return 1; 
 }
 
-void
-AudioDriversOSS::flushReadBuffer(void) {
-    unsigned char buf[160];
-
+int
+AudioDriversOSS::writeBuffer (void) {
+	if (devstate != DeviceOpened ) {
+		printf ("Device Not Opened\n");
+		return -1;
+	}
 	
-	printf("Flushing.\n");
-	// TODO 160-> variable utilisateur
-    while(readBuffer(buf, 160) == 160)
-        ;
+	size_t count = audio_buf.getSize();
+	short *buf = (short*)audio_buf.getData();
+
+	audio_buf_info info;
+	if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == 0 ) {
+		if (info.fragstotal - info.fragments > 15) {
+			// drop the fragment if the buffer starts to fill up
+			return 1;
+		}
+	}
+	// Loop into write() while buffer not complete.
+	for (;;) {
+		int a;
+		if ((a = write(audio_fd, buf, count)) < 0) {
+			printf ("write(): %s\n", strerror(errno));
+			break;
+		}
+		if (a > 0) { 
+			return a;
+			break;
+		}
+	}
+	return 1; 
 }
+
 
 unsigned int 
 AudioDriversOSS::readableBytes(void) {
@@ -296,7 +342,7 @@ AudioDriversOSS::readableBytes(void) {
 		return 0;
 	}
 	if (ioctl (audio_fd, SNDCTL_DSP_GETISPACE, &info) == -1) {
-		qWarning("ERROR: readableBytes %s", (QString(strerror(errno))).ascii());
+		printf ("ERROR: readableBytes %s\n", strerror(errno));
 		return 0;
 	}
 

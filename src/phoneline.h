@@ -52,12 +52,15 @@ public:
 	JPushButton		*button		(void);
 	void			 startTimer	(void);
 	void			 stopTimer	(void);
-
+	inline
+	void			 setbDial	(bool dial) {b_dial = dial;}
+	inline
+	bool			 getbDial	(void) {return b_dial;}
 	QTime			*timer;
-	bool			 first;
-	QString			 time;
 	QString			 status;
 	QString			 text;
+	bool			 first;
+	bool			 b_dial;	
 
 private:
 	JPushButton			*jpb;

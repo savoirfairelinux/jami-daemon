@@ -55,6 +55,7 @@ using namespace ost;
 #define NOT_FOUND		404
 #define AUTH_REQUIRED	407
 #define	ADDR_INCOMPLETE	484
+#define	REQ_TERMINATED	487
 
 
 class EventThread : public Thread {

@@ -60,7 +60,7 @@ public:
 	int		outgoingNewCall			(void);
 	void 	actionHandle			(int, int);
 	int 	findLineNumberNotUsedSIP(void);
-	void 	handleRemoteEvent		(int, char *, int);
+	void 	handleRemoteEvent		(int, char *, int, int = -1);
 	int		startSound				(SipCall *);
 	void 	closeSound 				(SipCall *);	
 	void	selectAudioDriver		(void);
@@ -83,6 +83,7 @@ public:
 	bool	transferedCall			(void);
 
 	void	ringTone				(bool);
+	void	startDialTone			(void);
 
 private:
 	bool	b_ringing;
