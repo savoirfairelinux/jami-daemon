@@ -19,6 +19,10 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <osipparser2/sdp_message.h>
+#include <string.h>
+
+#include "audiocodec.h"
 #include "sipcall.h"
 
 SipCall::SipCall (void) {
@@ -66,7 +70,11 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
 	osip_strncpy (ca->remote_sdp_audio_ip, event->remote_sdp_audio_ip, 49);
 	ca->remote_sdp_audio_port = event->remote_sdp_audio_port;
 	ca->payload = event->payload;
+	qDebug("For incoming ca->payload = %d",ca->payload);
 	osip_strncpy (ca->payload_name, event->payload_name, 49);
+	osip_strncpy (ca->sdp_body, event->sdp_body, 1000);
+	osip_strncpy (ca->sdp_body, event->sdp_body, 1000);
+	qDebug("%s", ca->sdp_body);
 	
   	if (event->reason_phrase[0] != '\0') {
       	osip_strncpy(this->reason_phrase, event->reason_phrase, 49);
@@ -111,6 +119,7 @@ SipCall::ringingCall (eXosip_event_t *event) {
 
 int 
 SipCall::answeredCall(eXosip_event_t *event) {
+	AudioCodec* ac = new AudioCodec();
 	SipCall *ca = this;
 	
     this->cid = event->cid;
@@ -128,14 +137,66 @@ SipCall::answeredCall(eXosip_event_t *event) {
 
 	osip_strncpy(ca->remote_sdp_audio_ip, event->remote_sdp_audio_ip, 49);
 	ca->remote_sdp_audio_port = event->remote_sdp_audio_port;
-	ca->payload = event->payload;
 	osip_strncpy(ca->payload_name, event->payload_name, 49);
+	osip_strncpy (ca->sdp_body, event->sdp_body, 1000);
+	qDebug("%s", ca->sdp_body);
+	
+	// For outgoing calls, find the first payload of the remote user
+	int i;
+	char temp[64];
+	bzero(temp, 64);
+	// Codec array in common with the 2 parts
+	int m_audio[NB_CODECS];
+	for (int a = 0; a < NB_CODECS; a++)
+		m_audio[a] = -1;
+	
+	sdp_message_t *sdp;
+	i = sdp_message_init(&sdp);
+	if (i != 0) qDebug("Cannot allocate a SDP packet");
+	i = sdp_message_parse(sdp, ca->sdp_body);
+	if (i != 0) qDebug("Cannot parse the SDP body");
+	int pos = 0;
+	if (sdp == NULL) qDebug("SDP = NULL");
+/*********/	
+	while (!sdp_message_endof_media (sdp, pos)) {
+		int k = 0;
+	    char *tmp = sdp_message_m_media_get (sdp, pos);
+		
+	    if (0 == osip_strncasecmp (tmp, "audio", 5)) {
+		  	char *payload = NULL;
+			int c = 0;
+		  	do {
+		    	payload = sdp_message_m_payload_get (sdp, pos, k);
+				for (int j = 0; j < NB_CODECS; j++) {
+					snprintf(temp, 63, "%d", ac->handleCodecs[j]);
+					if (payload != NULL and strcmp(temp, payload) == 0) {
+					   	m_audio[c] = ac->handleCodecs[j];
+						c++;
+						break;
+					}
+				}
+				k++;
+			} while (payload != NULL);
+		}
+		pos++;
+	}
+/***********/
+	if (m_audio[0] == -1)
+		ac->noSupportedCodec();
+	else
+		ca->payload = m_audio[0];
+
+	qDebug ("For outgoing call: ca->payload = %d", ca->payload);
+	
+
+	sdp_message_free(sdp);
 		
 	if (event->reason_phrase[0]!='\0') {
 		osip_strncpy(this->reason_phrase, event->reason_phrase, 49);
 		this->status_code = event->status_code;
     }
 	this->state = event->type;
+	delete ac;
 	return 0;
 }
 
@@ -204,6 +265,7 @@ SipCall::alloc(void) {
   	this->subject = new char[256];
 	this->remote_sdp_audio_ip = new char[50];
   	this->payload_name = new char[50];
+  	this->sdp_body = new char[1000];
 }
 
 void
@@ -216,5 +278,6 @@ SipCall::dealloc(void) {
   	delete subject;
 	delete remote_sdp_audio_ip;
   	delete payload_name;
+	delete sdp_body;
 }
 

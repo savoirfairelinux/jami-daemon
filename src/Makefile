@@ -67,6 +67,7 @@ OBJS = \
 	stun.o udp.o  
 	
 start:	check prereq all
+#start:	check  all
 
 check:
 ifeq ($(CONFIGURE_CONF),../configure.conf)

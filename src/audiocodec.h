@@ -20,6 +20,8 @@
 #ifndef __CODEC_AUDIO_H__
 #define __CODEC_AUDIO_H__
 
+#include "../gsm/gsm.h"
+
 #include <string>
 using namespace std;
 
@@ -46,18 +48,15 @@ public:
 	~AudioCodec 			(void);	
 
 	int 	handleCodecs[NB_CODECS];
-
-
-	void 		noSupportedCodec	(void);
-	static int	codecDecode 		(int, short *, unsigned char *, unsigned int);
-	static int	codecEncode 		(int, unsigned char *, short *, unsigned int);
+	
 	int			matchPayloadCodec	(string);
 	char *		rtpmapPayload 		(int);
-	static void		gsmDecode			(short*, unsigned char*);
-	static void		gsmEncode			(unsigned char*, short*);
-
-private:
-	
+	void 		noSupportedCodec	(void);
+	static int	codecDecode 	(int, short *, unsigned char *, unsigned int);
+	static int	codecEncode 	(int, unsigned char *, short *, unsigned int);
+	static void	gsmCreate		(void);
+	static void	gsmDestroy		(void);
+	static int  getSizeByPayload(int);
 };
 
 #endif // __CODEC_AUDIO_H__

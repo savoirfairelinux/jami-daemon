@@ -114,8 +114,9 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioDrivers *driver,
 	this->sym =sym;
 	this->audioDevice = driver;
 #ifdef ALSA
-	if (manager->useAlsa)
+	if (manager->useAlsa) {
 		this->audioDeviceRead = read_driver;
+	}
 #endif
 
 	// TODO: Change bind address according to user settings.
@@ -129,10 +130,13 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioDrivers *driver,
 		qDebug("Forced port %d", forcedPort);
 		session = new SymmetricRTPSession (local_ip, forcedPort);
 	}
+	AudioCodec::gsmCreate();
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
 	this->terminate();
+	AudioCodec::gsmDestroy();
+	
 	if (!sym) {
 		if (sessionRecv != NULL) {
 			delete sessionRecv;	
@@ -152,7 +156,7 @@ AudioRtpRTX::~AudioRtpRTX () {
 
 void
 AudioRtpRTX::run (void) {
-	AudioCodec 		 ac;
+//	AudioCodec 		 ac;
 	unsigned char	*data_to_send;
 	short			*data_mute;
 	short			*data_from_mic;
@@ -163,7 +167,6 @@ AudioRtpRTX::run (void) {
 	int				 expandedSize;
 	short			*data_for_speakers = NULL;
 	int 			 countTime = 0;
-	
 	data_for_speakers = new short[2048];
 	data_from_mic = new short[1024];
 	data_from_mic_tmp = new short[1024];
@@ -259,33 +262,35 @@ AudioRtpRTX::run (void) {
 		////////////////////////////
 		// Send session
 		////////////////////////////
+		//int size = AudioCodec::getSizeByPayload(ca->payload);
+		int size = 320;
 		if (!manager->mute) {
 #ifdef ALSA
 			if (manager->useAlsa) {
-				i = audioDeviceRead->readBuffer (data_from_mic, 320);
+				i = audioDeviceRead->readBuffer (data_from_mic, size);
 			}
 #endif
 			if (!manager->useAlsa) {
-				i = audioDevice->readBuffer (data_from_mic, 320);
+				i = audioDevice->readBuffer (data_from_mic, size);
 			}
 		} else {
 			// When IP-phone user click on mute button, we read buffer of a
 			// temp buffer to avoid delay in sound.
 #ifdef ALSA
 			if (manager->useAlsa)
-				i = audioDeviceRead->readBuffer (data_mute, 320);
+				i = audioDeviceRead->readBuffer (data_mute, size);
 #endif
 			if (!manager->useAlsa)
-				i = audioDevice->readBuffer (data_mute, 320);
+				i = audioDevice->readBuffer (data_mute, size);
 		}
-
+	//qDebug("read i = %d", i); 
 		// TODO : return an error because no sound
 		if (i < 0) {
 			break;
 		}
 		for (int j = 0; j < i; j++)
 			data_from_mic_tmp[j] = data_from_mic[j]*manager->getMicVolume()/100;
-
+		
 		// Encode acquired audio sample
 		compSize = AudioCodec::codecEncode (
 				ca->payload, 
@@ -298,7 +303,8 @@ AudioRtpRTX::run (void) {
 		} else {
 			session->putData(timestamp, data_to_send, compSize);
 		}
-		timestamp += compSize;
+		//timestamp += compSize;
+		timestamp += 160;
 
 		////////////////////////////
 		// Recv session
@@ -320,7 +326,7 @@ AudioRtpRTX::run (void) {
 				data_for_speakers,
 				(unsigned char*) adu->getData(),
 				adu->getSize());
-
+		
 		// Set decoded data to sound device
 		audioDevice->audio_buf.resize(expandedSize);
 		audioDevice->audio_buf.setData (data_for_speakers, 
@@ -329,7 +335,7 @@ AudioRtpRTX::run (void) {
 		// Notify (with a bip) an incoming call when there is already call 
 		countTime += TimerPort::getElapsed();
 		if (manager->sip->getNumberPendingCalls() != 1) {
-			if ((countTime % 4000) <= 10 and (countTime % 4000) >= 0) {
+			if ((countTime % 3000) <= 10 and (countTime % 3000) >= 0) {
 				manager->notificationIncomingCall();
 			}
 		}

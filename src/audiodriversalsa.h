@@ -50,9 +50,10 @@ public:
 	unsigned int readableBytes(void);
 	
 	int 	audio_fd;
-	snd_pcm_t *audio_hdl;
+	
 
 private:
+	snd_pcm_t *audio_hdl;
 };
 
 #endif  // _AUDIO_DRIVERS_ALSA_H_

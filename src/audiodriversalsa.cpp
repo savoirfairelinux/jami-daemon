@@ -38,11 +38,12 @@
 AudioDriversALSA::AudioDriversALSA(DeviceMode mode) : AudioDrivers () {
 	audio_hdl = (snd_pcm_t *) NULL;
 	initDevice(mode);
+
 }
 
 AudioDriversALSA::~AudioDriversALSA (void) {
 	/* Close the audio handle */
-	snd_pcm_close (audio_hdl);
+	if (audio_hdl != NULL) snd_pcm_close (audio_hdl);
 }
 
 
@@ -56,16 +57,16 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	}
 	
 	// Open the audio device
-	// Flags : blocking (else have to OR omode with SND_PCM_OPEN_NONBLOCK).
+	// Flags : blocking (else have to OR omode with SND_PCM_NONBLOCK).
 	switch (mode) {
 	case ReadOnly:
 		/* Only read sound from the device */
-		err = snd_pcm_open (&audio_hdl, ALSA_DEVICE,SND_PCM_STREAM_CAPTURE, 0);
+		err = snd_pcm_open (&audio_hdl, ALSA_DEVICE,SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
 		break;
 
 	case WriteOnly:
 		/* Only write sound to the device */
-		err = snd_pcm_open (&audio_hdl, ALSA_DEVICE,SND_PCM_STREAM_PLAYBACK,0);	
+		err = snd_pcm_open (&audio_hdl, ALSA_DEVICE,SND_PCM_STREAM_PLAYBACK,SND_PCM_NONBLOCK);	
 		break;
 	default:
 		break;
@@ -81,6 +82,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	////////////////////////////////////////////////////////////////////////////
 	// Allocate space for device configuration
 	snd_pcm_hw_params_t	*hw_params;
+
 	err = snd_pcm_hw_params_malloc (&hw_params);
 	if (err < 0) {
 		printf ("Cannot allocate hardware parameter structure (%s)\n",
@@ -88,6 +90,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 		return -1;
 	}
 
+	// Init hwparams with full configuration space 
 	if ((err = snd_pcm_hw_params_any (audio_hdl, hw_params)) < 0) {
 		printf ("Cannot initialize hardware parameter structure (%s)\n",
 				 snd_strerror (err));
@@ -106,22 +109,29 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	if (err < 0) {
 		printf ("Cannot set sample format (%s)\n", snd_strerror (err));
 		return -1;
-	}
+	} 
+	
 	unsigned int rate = SAMPLING_RATE;
+	unsigned int exact_rate;
+
+	exact_rate = rate;
 	// Set sampling rate (8kHz)
 	err = snd_pcm_hw_params_set_rate_near (audio_hdl, hw_params, 
-			&rate, 0);
+			&exact_rate, 0);
 	if (err < 0) {
 		printf ("Cannot set sample rate (%s)\n", snd_strerror (err));
 		return -1;
 	}
+	if (exact_rate != rate) {
+      fprintf(stderr, "The rate %d Hz is not supported by your hardware.\n ==> Using %d Hz instead.\n", rate, exact_rate);
+    }
 	
 	// Set number of channels - Mono(1) or Stereo(2) 
 	err = snd_pcm_hw_params_set_channels (audio_hdl, hw_params, MONO);
 	if (err < 0) {
 		printf ("Cannot set channel count (%s)\n", snd_strerror (err));
 		return -1;
-	} 
+	}
 	
 	// Apply previously setup parameters
 	err = snd_pcm_hw_params (audio_hdl, hw_params);
@@ -129,39 +139,12 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 		printf ("Cannot set parameters (%s)\n", snd_strerror (err));
 		return -1;
 	}
-	
+		
 	// Free temp variable used for configuration.
 	snd_pcm_hw_params_free (hw_params);
 	////////////////////////////////////////////////////////////////////////////
 	// END DEVICE SETUP
 	////////////////////////////////////////////////////////////////////////////
-
-
-#if 0
-	// keep fragsize less than 20ms !!
-	int frag = ( ( 32767 << 16 ) | 7 );
-	if( ioctl( audio_fd, SNDCTL_DSP_SETFRAGMENT, &frag ) ) {
-		lasterror = QString( "SETFRAG" ) + QString( strerror( errno ) );
-		printf( "ERROR: %s\n", lasterror.ascii() );
-		return -1;
-	}
-
-	audio_buf_info info;
-	if( mode == WriteOnly ) {
-		if( ioctl( audio_fd, SNDCTL_DSP_GETOSPACE, &info ) == -1 ) {
-			lasterror = QString( "GETISPACE" ) + QString( strerror( errno ) );
-			printf( "ERROR: %s\n", lasterror.ascii() );
-			return -1;
-		}
-	} else {
-		if( ioctl( audio_fd, SNDCTL_DSP_GETISPACE, &info ) == -1 ) {
-			lasterror = QString( "GETOSPACE" ) + QString( strerror( errno ) );
-			printf( "ERROR: %s\n", lasterror.ascii() );
-			return -1;
-		}
-	}
-	audio_buf.resize( info.fragsize * sizeof( short ) );
-#endif
 
 	// Success
 	devstate = DeviceOpened;
@@ -174,10 +157,11 @@ AudioDriversALSA::writeBuffer (void) {
 		printf ("ALSA: writeBuffer(): Device Not Open\n");
 		return -1;
 	}
-	
+
+#if 1
 	int rc;
-	size_t count = audio_buf.getSize();
-	short *buf = (short*)audio_buf.getData();
+	size_t count = audio_buf.getSize()/2;
+	short* buf = (short *)audio_buf.getData();
 	while (count > 0) {
 		rc = snd_pcm_writei(audio_hdl, buf, count);
 		if (rc == -EPIPE) {
@@ -188,10 +172,12 @@ AudioDriversALSA::writeBuffer (void) {
 			printf ("ALSA: write(): %s\n", strerror(errno));
 			break; 
 		}
+		printf("rc = %d\n",rc);
 		buf += rc;
 		count -= rc;
-	}
+	}	
 	return rc;
+#endif
 }
 
 unsigned int
@@ -225,7 +211,7 @@ AudioDriversALSA::readableBytes (void) {
 
 int
 AudioDriversALSA::readBuffer (int bytes) {
-	if (devstate != DeviceOpened) {
+/*	if (devstate != DeviceOpened) {
 		printf ("Device Not Open\n");
 		return false;
 	}
@@ -238,7 +224,7 @@ AudioDriversALSA::readBuffer (int bytes) {
 	size_t rc = read (audio_fd, buf, count);
 	if (rc != count) {
 		printf ("warning: asked microphone for %d got %d\n", count, rc);
-	}
+	}*/
 	return true;
 }
 
@@ -249,23 +235,33 @@ AudioDriversALSA::readBuffer (void *ptr, int bytes) {
 		return -1;
 	}
 
-	ssize_t count = bytes;
+#if 1	
+	ssize_t count = bytes/2;
 	ssize_t rc;
-	rc = snd_pcm_readi(audio_hdl, ptr, count);
-	if (rc < 0) {
-		return -1;
-	} else if (rc != count) {
-		printf("warning: asked microphone for %d frames but got %d\n",
-			count, rc);
-		return -1;
+	
+	do {
+		rc = snd_pcm_readi(audio_hdl, (short*)ptr, count);
+	} while (rc == -EAGAIN);
+	if (rc == -EBADFD) printf ("Read: PCM is not in the right state\n");
+	if (rc == -ESTRPIPE) printf ("Read: a suspend event occurred\n");
+	if (rc == -EPIPE) {
+			printf ("Read: -EPIPE %d\n", rc);
+			snd_pcm_prepare(audio_hdl);
 	}
+	if (rc > 0 && rc != count) {
+		printf("Read: warning: asked microphone for %d frames but got %d\n",
+			count, rc);
+	}
+	
 	return rc;
+#endif
 }
 
 int
 AudioDriversALSA::resetDevice (void) {
-	printf ("ALSA: Resetting device.\n");
-
+/*	printf ("ALSA: Resetting device.\n");
+	snd_pcm_drop(audio_hdl);
+	snd_pcm_drain(audio_hdl);*/
 	return 0;
 }
 

@@ -525,17 +525,17 @@ Manager::dtmf (int line, char digit) {
 	int sendType = Config::geti ("Signalisations", "DTMF.sendDTMFas");
 	
 	switch (sendType) {
-		// Audio way
-		case 0:
-			break;
-			
 		// SIP INFO
-		case 1:
+		case 0:
 			if (sip->call[line] != NULL) {
 				sip->carryingDTMFdigits(line, digit);
 			}
 			break;
 
+		// Audio way
+		case 1:
+			break;
+			
 		// rfc 2833
 		case 2:
 			break;

@@ -52,6 +52,7 @@ public:
 	
 	char 	*remote_sdp_audio_ip;
   	char 	*payload_name;
+	char	*sdp_body;
 	int		 local_audio_port;	
   	int  	 remote_sdp_audio_port;
  	int  	 payload;
