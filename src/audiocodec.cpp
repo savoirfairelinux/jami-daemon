@@ -26,12 +26,6 @@
 
 #include <string>
 
-#define swab16(x) \
-	((unsigned short)( \
-	(((unsigned short)(x) & (unsigned short)0x00ffU) << 8) | \
-	(((unsigned short)(x) & (unsigned short)0xff00U) >> 8) ))
-
-
 
 using namespace std;
 
@@ -138,40 +132,7 @@ AudioCodec::codecEncode (int pt, unsigned char *dst, short *src, unsigned int si
 		break;
 
 	case PAYLOAD_CODEC_GSM:
-#if 0		
-	{
-		gsm_frame gsmdata; // dst
-		int iii;
-		
-		bzero (gsmdata, sizeof(gsm_frame));
-
-		printf ("Before gsm_encode: ");
-		for (iii = 0; iii < 33; iii++) {
-			unsigned char *ptr = gsmdata;
-			printf ("%02X ", ptr[iii]);
-		}
-		gsm_signal sample[160];
-		for (iii = 0; iii < 160; iii++) {
-			unsigned short dat;
-			dat = (unsigned short) src[iii];
-			//dat = (unsigned short) sample[iii];
-			//sample[iii] = (short) swab16(dat);
-			sample[iii] = src[iii];
-		}
-		gsm_encode(encode_gsmhandle, sample, gsmdata);
-		printf ("\nAfter gsm_encode: ");
-		for (iii = 0; iii < 33; iii++) {
-			unsigned char *ptr = gsmdata;
-			printf ("%02X ", ptr[iii]);
-			dst[iii] = ptr[iii];
-		}
-		printf ("\n------\n");
-	}
-#endif
-#if 1
 		gsm_encode(encode_gsmhandle, (gsm_signal*)src, (gsm_byte*)dst);
-	
-#endif
 		return 33;
 		break;
 
@@ -208,28 +169,4 @@ AudioCodec::gsmDestroy (void) {
 	gsm_destroy(encode_gsmhandle);
 }
 
-int
-AudioCodec::getSizeByPayload (int pt){
-	switch (pt) {
-	case PAYLOAD_CODEC_ULAW:
-	case PAYLOAD_CODEC_ALAW:
-		return 320;
-		break;
 
-	case PAYLOAD_CODEC_GSM:
-		return 320;
-		break;
-
-	case PAYLOAD_CODEC_ILBC:
-		// TODO
-		break;
-
-	case PAYLOAD_CODEC_SPEEX:
-		// TODO
-		break;
-
-	default:
-		break;
-	}
-	return 0;
-}

@@ -43,9 +43,16 @@ AudioDriversALSA::AudioDriversALSA(DeviceMode mode) : AudioDrivers () {
 
 AudioDriversALSA::~AudioDriversALSA (void) {
 	/* Close the audio handle */
-	if (audio_hdl != NULL) snd_pcm_close (audio_hdl);
+	this->closeDevice();
 }
 
+void
+AudioDriversALSA::closeDevice (void) {
+	if (audio_hdl != NULL) {
+		snd_pcm_close (audio_hdl);
+		audio_hdl = (snd_pcm_t *) NULL;
+	}
+}
 
 int
 AudioDriversALSA::initDevice (DeviceMode mode) {
@@ -57,16 +64,17 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	}
 	
 	// Open the audio device
-	// Flags : blocking (else have to OR omode with SND_PCM_NONBLOCK).
 	switch (mode) {
 	case ReadOnly:
 		/* Only read sound from the device */
-		err = snd_pcm_open (&audio_hdl, ALSA_DEVICE,SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
+		err = snd_pcm_open (&audio_hdl, ALSA_DEVICE,SND_PCM_STREAM_CAPTURE, 
+				SND_PCM_NONBLOCK);
 		break;
 
 	case WriteOnly:
 		/* Only write sound to the device */
-		err = snd_pcm_open (&audio_hdl, ALSA_DEVICE,SND_PCM_STREAM_PLAYBACK,SND_PCM_NONBLOCK);	
+		err = snd_pcm_open (&audio_hdl, ALSA_DEVICE,SND_PCM_STREAM_PLAYBACK,
+				SND_PCM_NONBLOCK);	
 		break;
 	default:
 		break;
@@ -132,7 +140,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 		printf ("Cannot set channel count (%s)\n", snd_strerror (err));
 		return -1;
 	}
-	
+
 	// Apply previously setup parameters
 	err = snd_pcm_hw_params (audio_hdl, hw_params);
 	if (err < 0) {
@@ -142,6 +150,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 		
 	// Free temp variable used for configuration.
 	snd_pcm_hw_params_free (hw_params);
+
 	////////////////////////////////////////////////////////////////////////////
 	// END DEVICE SETUP
 	////////////////////////////////////////////////////////////////////////////
@@ -157,75 +166,24 @@ AudioDriversALSA::writeBuffer (void) {
 		printf ("ALSA: writeBuffer(): Device Not Open\n");
 		return -1;
 	}
-
-#if 1
+	
 	int rc;
 	size_t count = audio_buf.getSize()/2;
 	short* buf = (short *)audio_buf.getData();
 	while (count > 0) {
 		rc = snd_pcm_writei(audio_hdl, buf, count);
+		snd_pcm_wait(audio_hdl, 1);
 		if (rc == -EPIPE) {
 			snd_pcm_prepare(audio_hdl);
 		} else if (rc == -EAGAIN) {
 			continue;
 		} else if (rc < 0) {
-			printf ("ALSA: write(): %s\n", strerror(errno));
 			break; 
 		}
-		printf("rc = %d\n",rc);
 		buf += rc;
 		count -= rc;
 	}	
 	return rc;
-#endif
-}
-
-unsigned int
-AudioDriversALSA::readableBytes (void) {
-	audio_buf_info info;
-#if 0
-	struct timeval timeout;
-	fd_set read_fds;
-
-	if (devstate != DeviceOpened) {
-		return 0;
-	}
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
-	FD_ZERO (&read_fds);
-	FD_SET (audio_fd, &read_fds);
-	if (select (audio_fd + 1, &read_fds, NULL, NULL, &timeout) == -1) {
-		return 0;
-	}
-	if (!FD_ISSET ( audio_fd, &read_fds)) {
-		return 0;
-	}
-	if (ioctl (audio_fd, SNDCTL_DSP_GETISPACE, &info) == -1) {
-		printf ("ERROR: readableBytes %s\n", strerror(errno));		
-		return 0;
-	}
-#endif
-	return info.bytes;
-}
-
-
-int
-AudioDriversALSA::readBuffer (int bytes) {
-/*	if (devstate != DeviceOpened) {
-		printf ("Device Not Open\n");
-		return false;
-	}
-
-	audio_buf.resize (bytes);
-	size_t count = bytes;
-
-	void *buf;
-	buf = audio_buf.getData ();
-	size_t rc = read (audio_fd, buf, count);
-	if (rc != count) {
-		printf ("warning: asked microphone for %d got %d\n", count, rc);
-	}*/
-	return true;
 }
 
 int
@@ -234,34 +192,37 @@ AudioDriversALSA::readBuffer (void *ptr, int bytes) {
 		printf ("ALSA: readBuffer(): Device Not Open\n");
 		return -1;
 	}
-
-#if 1	
-	ssize_t count = bytes/2;
+		 
+	ssize_t count = bytes;
 	ssize_t rc;
-	
 	do {
 		rc = snd_pcm_readi(audio_hdl, (short*)ptr, count);
 	} while (rc == -EAGAIN);
-	if (rc == -EBADFD) printf ("Read: PCM is not in the right state\n");
-	if (rc == -ESTRPIPE) printf ("Read: a suspend event occurred\n");
 	if (rc == -EPIPE) {
-			printf ("Read: -EPIPE %d\n", rc);
 			snd_pcm_prepare(audio_hdl);
+			bzero(ptr, bytes);
+			rc = 320;
 	}
-	if (rc > 0 && rc != count) {
-		printf("Read: warning: asked microphone for %d frames but got %d\n",
-			count, rc);
-	}
-	
+	if (rc != 320)
+		rc = rc * 2;
 	return rc;
-#endif
 }
 
 int
 AudioDriversALSA::resetDevice (void) {
-/*	printf ("ALSA: Resetting device.\n");
-	snd_pcm_drop(audio_hdl);
-	snd_pcm_drain(audio_hdl);*/
+	int err;
+
+	printf("Resetting...\n");
+	if ((err = snd_pcm_drop(audio_hdl)) < 0) {
+		printf ("ALSA: drop() error: %s\n", snd_strerror (err));
+		return -1;
+	}
+
+	if ((err = snd_pcm_prepare(audio_hdl)) < 0) {
+		printf ("ALSA: prepare() error: %s\n", snd_strerror (err));
+		return -1;
+	}
+
 	return 0;
 }
 

@@ -199,6 +199,7 @@ Manager::ring (bool var) {
 	if (this->b_ringing != var) {
 		this->b_ringing = var;
 	}
+
 	tonezone = ringing();
 
 	if (sip->getNumberPendingCalls() == 1) 

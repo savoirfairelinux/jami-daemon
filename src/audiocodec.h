@@ -56,7 +56,6 @@ public:
 	static int	codecEncode 	(int, unsigned char *, short *, unsigned int);
 	static void	gsmCreate		(void);
 	static void	gsmDestroy		(void);
-	static int  getSizeByPayload(int);
 };
 
 #endif // __CODEC_AUDIO_H__

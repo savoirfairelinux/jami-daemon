@@ -1132,8 +1132,10 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	callmanager->audiodriver->audio_buf.resize(SAMPLING_RATE);
 	callmanager->audiodriver->audio_buf.setData(
 										buf, callmanager->getSpkrVolume());
+
 	pulselen = Config::get("Signalisations", "DTMF.pulseLength", 250);
 	callmanager->audiodriver->audio_buf.resize(pulselen * (OCTETS/1000));
+//	callmanager->audiodriver->resetDevice();
 	a = callmanager->audiodriver->writeBuffer();
 	if (a == 1) {
 		pressedKeySlot(id);

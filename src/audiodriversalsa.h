@@ -45,15 +45,11 @@ public:
 	int 	initDevice	(DeviceMode);
 	int		resetDevice	(void);	
 	int 	writeBuffer	(void);
-	int 	readBuffer	(int);
 	int		readBuffer 	(void *, int);
-	unsigned int readableBytes(void);
 	
-	int 	audio_fd;
-	
-
 private:
 	snd_pcm_t *audio_hdl;
+	void closeDevice (void);
 };
 
 #endif  // _AUDIO_DRIVERS_ALSA_H_

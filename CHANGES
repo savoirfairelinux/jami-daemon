@@ -1,5 +1,5 @@
-SFLphone (0.3) / 2005-02-10
-	* ALSA driver support added (not yet operationnal)
+SFLphone (0.3) / 2005-04-05
+	* ALSA driver support added 
 	* GSM audio codec support added
 	* Rings support (just ulaw format) added
 	* Notification incoming call added

@@ -241,6 +241,7 @@ ToneGenerator::toneHandle (int idr) {
 		}
 
 		if (!manager->tonezone) {
+			manager->audiodriver->resetDevice();
 			if (tonethread != NULL) {	
 				delete tonethread;
 				tonethread = NULL;
@@ -292,6 +293,7 @@ ToneGenerator::playRing (const char *fileName) {
 		tonethread->start();
 	}
 	if (!manager->tonezone) {
+		manager->audiodriver->resetDevice();
 		if (tonethread != NULL) {	
 			delete tonethread;
 			tonethread = NULL;

@@ -908,8 +908,7 @@ SIP::getEvent (void) {
 
 		// The remote peer closed the phone call(we received BYE).
 		case EXOSIP_CALL_CLOSED:
-			qDebug("<- (%i %i) BYE from: %s", event->cid, event->did, 
-				event->remote_uri);
+			qDebug("<- (%i %i) BYE", event->cid, event->did);
 
 			call[theline]->usehold = false;
 			theline = findLineNumber(event);

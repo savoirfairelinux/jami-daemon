@@ -93,9 +93,7 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 	ca->enable_audio = -1;
 
 	if (RTXThread != NULL) {
-		// Wait for them...and delete.
-		//RTXThread->join();
-		qDebug("DELETED");
+		qDebug("RTXThread DELETED");
 		delete RTXThread;
 		RTXThread = NULL;
 	}
@@ -262,7 +260,6 @@ AudioRtpRTX::run (void) {
 		////////////////////////////
 		// Send session
 		////////////////////////////
-		//int size = AudioCodec::getSizeByPayload(ca->payload);
 		int size = 320;
 		if (!manager->mute) {
 #ifdef ALSA
@@ -283,9 +280,9 @@ AudioRtpRTX::run (void) {
 			if (!manager->useAlsa)
 				i = audioDevice->readBuffer (data_mute, size);
 		}
-	//qDebug("read i = %d", i); 
 		// TODO : return an error because no sound
 		if (i < 0) {
+			qDebug("audiortp.cpp: No sound");
 			break;
 		}
 		for (int j = 0; j < i; j++)
@@ -303,7 +300,6 @@ AudioRtpRTX::run (void) {
 		} else {
 			session->putData(timestamp, data_to_send, compSize);
 		}
-		//timestamp += compSize;
 		timestamp += 160;
 
 		////////////////////////////
