@@ -56,7 +56,8 @@ using namespace ost;
 #define AUTH_REQUIRED	407
 #define	ADDR_INCOMPLETE	484
 #define	REQ_TERMINATED	487
-
+// 5XX errors
+#define SERVICE_UNAVAILABLE	503
 
 class EventThread : public Thread {
 public:

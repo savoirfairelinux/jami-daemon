@@ -162,7 +162,6 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	
 	currentLineNumber = -1;
 	onLine = currentLineNumber;
-	callinprogress = false;
 	chosenLine = -1;
 	choose = false;
 	noChoose = false;
@@ -188,8 +187,6 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	// Connect to append url in display
 	connect (urlinput->buttonOK, SIGNAL(clicked()), this, SLOT(stripSlot()));
 
-	// Connect to apply settings
-	connect (panel->buttonApply, SIGNAL(clicked()), this, SLOT(applySlot()));
 	// Connect to save settings
 	connect (panel->buttonSave, SIGNAL(clicked()), this, SLOT(save()));
 	
@@ -264,9 +261,6 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	this->setCaption(PROGNAME);
 	this->setIcon(QPixmap(Skin::getPathPixmap(QString(PIXDIR), 
 				QString(SFLPHONE_LOGO))));
-
-	// Init ringing state (not ringing)
-	//this->ring(false);
 
 	// Show the GUI
 	this->show();	
@@ -591,7 +585,9 @@ QtGUIMainWindow::toggleLine (int num_line) {
 																== ONHOLD) {
 			qDebug("GUI: state OFF-HOLD line %d", currentLineNumber);
 			lcd->clear(QString("Connected"));
-			lcd->inFunction = true;
+			if (callmanager->sip->call[currentLineNumber] != NULL) {
+				lcd->inFunction = true;
+			}
 			callmanager->phLines[currentLineNumber]->setStateLine(OFFHOLD);
 			callmanager->actionHandle (currentLineNumber, OFFHOLD_CALL);
 			lcd->appendText(callmanager->phLines[currentLineNumber]->text);
@@ -623,6 +619,7 @@ QtGUIMainWindow::dial (void) {
 		transfer = false;
 	} else {
 		qDebug("GUI: LINE CURRENT %d", currentLineNumber);
+		 
 		 if (callmanager->ringing()) {
 			// If new incoming call
 			currentLineNumber = callmanager->newCallLineNumber();
@@ -654,14 +651,11 @@ QtGUIMainWindow::dial (void) {
 								callmanager->bufferTextRender();
 				callmanager->phLines[currentLineNumber]->setbDial(true);
 				toggleLine (currentLineNumber);
-				callinprogress = true;
+				callmanager->phLines[currentLineNumber]->setbInProgress(true);
 				// Set used-state pixmap 'currentLineNumber' line
 				callmanager->phLines[currentLineNumber]->button()->setPixmap(
 						TabLinePixmap[currentLineNumber][BUSY]);
 				callmanager->phLines[currentLineNumber]->setState(BUSY);
-
-				// RingTone
-				// TODO: callmanager->ringTone(true);
 			}
 		}	
 	}
@@ -680,7 +674,7 @@ QtGUIMainWindow::hangupLine (void) {
 		// set free pixmap
 		setFreeStateLine (currentLineNumber);
 		
-		if (callinprogress) {
+		if (callmanager->phLines[currentLineNumber]->getbInProgress()) {
 			// If call is progressing, cancel the call
 			callmanager->actionHandle (currentLineNumber, CANCEL_CALL);
 		} else {
@@ -697,7 +691,9 @@ QtGUIMainWindow::hangupLine (void) {
 		// set free pixmap
 		setFreeStateLine (currentLineNumber);
 		this->dialTone(false);
+		callmanager->congestion(false);
 		callmanager->phLines[currentLineNumber]->setbDial(false);
+		lcd->clear(QString("Hung up"));
 	}
 	
 	choose = false;
@@ -961,7 +957,8 @@ QtGUIMainWindow::blinkRingSlot (void) {
 	if ( line == -1 ) 
 		return;
 
-	if (callmanager->ringing()) {
+	//if (callmanager->ringing()) {
+	if (callmanager->phLines[line]->getbRinging()) {
 		// For the line
 		if	(!isOn) {
 			state = FREE;	
@@ -1060,12 +1057,6 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	} else {
 		lcd->appendText (code);		
 	}
-}
-
-// Apply new settings
-void 
-QtGUIMainWindow::applySlot() {
-	
 }
 
 // Save settings in config-file

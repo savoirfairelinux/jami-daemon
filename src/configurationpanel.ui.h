@@ -107,7 +107,7 @@ void ConfigurationPanel::init()
 
 // For saving settings at application 'save'
 void ConfigurationPanel::saveSlot()
-{
+{ 
    Config::set("Signalisations", "SIP.fullName", fullName->text());
    Config::set("Signalisations", "SIP.userPart", userPart->text());
    Config::set("Signalisations", "SIP.username", username->text());
@@ -145,40 +145,6 @@ void ConfigurationPanel::saveSlot()
 #endif
    accept();
 
-}
-
-void ConfigurationPanel::applySlot()
-{
-  Config::set("Signalisations", "SIP.fullName", fullName->text());
-   Config::set("Signalisations", "SIP.userPart", userPart->text());
-   Config::set("Signalisations", "SIP.username", username->text());
-   Config::set("Signalisations", "SIP.password", password->text());
-   Config::set("Signalisations", "SIP.hostPart", hostPart->text());
-   Config::set("Signalisations", "SIP.sipproxy", sipproxy->text());
-   Config::set("Signalisations", "DTMF.pulseLength",  pulseLength->value());
-   Config::set("Signalisations", "DTMF.playTones",  playTones->isChecked());
-   Config::set("Signalisations", "DTMF.sendDTMFas" , sendDTMFas->currentItem());
-   Config::set("Signalisations", "STUN.STUNserver", STUNserver->text());
-   Config::set("Signalisations", "STUN.useStunYes", useStunYes->isChecked());
-   Config::set("Signalisations", "STUN.useStunNo", useStunNo->isChecked());
- 
-   Config::set("Audio", "Drivers.driverOSS", ossButton->isChecked());
-   Config::set("Audio", "Drivers.driverALSA", alsaButton->isChecked());
-
-   Config::set("Audio", "Codecs.codec1", codec1->currentText());
-   Config::set("Audio", "Codecs.codec2", codec2->currentText());
-   Config::set("Audio", "Codecs.codec3", codec3->currentText());
-   Config::set("Audio", "Codecs.codec4", codec4->currentText());
-   Config::set("Audio", "Codecs.codec5", codec5->currentText());
-   
-   Config::set("Preferences", "Themes.skinChoice", SkinChoice->currentText());
-   Config::set("Preferences", "Options.zoneToneChoice", 
-     zoneToneChoice->currentText());
-   Config::set("Preferences", "Options.confirmQuit", 
-     confirmationToQuit->isChecked());
-   Config::set("Preferences", "Options.checkedTray", checkedTray->isChecked());
-   Config::set("Preferences", "Options.autoregister",autoregister->isChecked());
-   Config::set("Preferences", "Options.voicemailNumber", voicemailNumber->text());   
 }
 
 // Handle tab view  according to current item of listbox

@@ -52,20 +52,28 @@ public:
 	JPushButton		*button		(void);
 	void			 startTimer	(void);
 	void			 stopTimer	(void);
-	inline
-	void			 setbDial	(bool dial) {b_dial = dial;}
-	inline
-	bool			 getbDial	(void) {return b_dial;}
 	QTime			*timer;
 	QString			 status;
 	QString			 text;
 	bool			 first;
-	bool			 b_dial;	
+
+	inline void setbDial 		(bool dial) { b_dial = dial; }
+	inline bool getbDial 		(void) 		{ return b_dial; }
+	inline void setbInProgress 	(bool prog) { b_inProgress = prog; }
+	inline bool getbInProgress 	(void) 		{ return b_inProgress; }
+	
+	inline bool getbRinging 	(void) 		{ return b_ringing; }
+	inline void setbRinging 	(bool ring) { if (this->b_ringing != ring) 
+												this->b_ringing = ring;
+											} 
 
 private:
 	JPushButton			*jpb;
 	enum line_state		 state;
 	enum line_state		 stateLine;
+	bool			 	 b_dial;
+	bool				 b_inProgress;	
+	bool				 b_ringing;
 };
 
 #endif	// __PHONE_LINE_H__

@@ -71,6 +71,8 @@ Manager::Manager (QString *Dc = NULL) {
 	b_ringing = false;
 	mute = false;
 	b_ringtone = false;
+	b_congestion = false;
+
 	if (DirectCall) { 
 		qWarning ("Direct call.....");
 		gui()->lcd->textBuffer = DirectCall ;
@@ -153,6 +155,8 @@ Manager::sip_init (void) {
 		// Register to the known proxies if available
 		if (Config::gets("Signalisations", "SIP.password").length() > 0) {
 			sip->setRegister ();
+		} else {
+			errorDisplay("Fill password field");		
 		}
 	} 
 }
@@ -172,22 +176,16 @@ Manager::ringing (void) {
 	return this->b_ringing;
 }
 
-// Broadcast ring message to every component
+// When IP-phone user receives a call 
 void
 Manager::ring (bool var) {
 	if (this->b_ringing != var) {
 		this->b_ringing = var;
-		
-		// Blinking bar ring signalisation
-	//	gui()->ring(var);
-
-		// Blinking not-used line 
-		
-		// bruitagesproot->ring(var);
-		 
 	}
+	// TODO: play file.wav
 }
 
+// When IP-phone user makes call
 void
 Manager::ringTone (bool var) {
 	if (this->b_ringtone != var) {
@@ -197,6 +195,16 @@ Manager::ringTone (bool var) {
 	tone->toneHandle(ZT_TONE_RINGTONE);
 }
 
+void
+Manager::congestion (bool var) {
+	if (this->b_congestion != var) {
+		this->b_congestion = var;
+	}
+	tonezone = var;
+	tone->toneHandle(ZT_TONE_CONGESTION);
+}
+
+#if 0
 bool
 Manager::getCallInProgress (void) {
 	return gui()->callinprogress;
@@ -206,6 +214,7 @@ void
 Manager::setCallInProgress (bool inprogress) {
 	gui()->callinprogress = inprogress;
 }
+#endif
 
 bool
 Manager::transferedCall(void) {
@@ -226,6 +235,7 @@ Manager::actionHandle (int lineNumber, int action) {
 		// Stopper l'etat "ringing" du main (audio, signalisation, gui)
 		sip->manageActions (lineNumber, ANSWER_CALL);		
 		this->ring(false);
+		phLines[lineNumber]->setbRinging(false);
 		gui()->lcd->setStatus("Connected");	
 		gui()->startCallTimer(lineNumber);
 		break;
@@ -329,10 +339,13 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 
 		// Remote callee hangup
 		case EXOSIP_CALL_CLOSED:
-			if (getCallInProgress()) {
+			//if (getCallInProgress()) {
+			if (phLines[line]->getbInProgress()) {
 				this->ring(false);
+				phLines[line]->setbRinging(false);
 				gui()->setFreeStateLine(newCallLineNumber());
-				setCallInProgress(false);
+				//setCallInProgress(false);
+				phLines[line]->setbInProgress(false);
 			} else {
 				// Stop call timer
 				gui()->stopCallTimer(line);
@@ -441,6 +454,11 @@ Manager::otherLine (void) {
 	return false;
 }
 
+int
+Manager::getCurrentLineNumber (void) {
+	return gui()->currentLineNumber;
+}
+
 bool
 Manager::isChosenLine (void) {
 	return gui()->choose;
@@ -497,3 +515,7 @@ Manager::dtmf (int line, char digit) {
 	}
 }
 
+void
+Manager::errorDisplay (char *error) {
+	gui()->lcd->appendText(error);
+}

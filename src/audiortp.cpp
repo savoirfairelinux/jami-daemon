@@ -69,7 +69,7 @@ AudioRtp::createNewSession (SipCall *ca) {
 	}
 
 	RTXThread = new AudioRtpRTX (ca, manager->audiodriver, manager, symetric);
-	qDebug("Start audio thread !!");
+	qDebug("-- START SOUND --");
 	RTXThread->start();
 		
 	return 0;

@@ -78,16 +78,23 @@ public:
 	void	setChoose				(bool, bool);
 	bool	useStun					(void);
 	void	dtmf					(int, char);
+	int		getCurrentLineNumber	(void);
+#if 0
 	bool	getCallInProgress		(void);
 	void	setCallInProgress		(bool);
+#endif
+
 	bool	transferedCall			(void);
 
 	void	ringTone				(bool);
 	void	startDialTone			(void);
+	void	congestion				(bool); 
+	void	errorDisplay			(char*);
 
 private:
 	bool	b_ringing;
 	bool	b_ringtone;
+	bool	b_congestion;
 	int		firewallPort;
 	QString	firewallAddr;
 

@@ -29,6 +29,7 @@ PhoneLine::PhoneLine (void) {
 	first = true;
 	timer = new QTime();	
 	b_dial = false;
+	b_ringing = false;
 }
 
 PhoneLine::~PhoneLine (void) {
