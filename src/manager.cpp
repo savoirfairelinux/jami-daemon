@@ -81,8 +81,9 @@ Manager::selectAudioDriver (void) {
 void
 Manager::sip_rtp_init (void) {
 	// Init the SIP and RTP stacks.
-	sip->initSIP ();
-	sip->initRtpmapCodec ();
+	if ( sip->initSIP () != -1) {
+		 sip->initRtpmapCodec ();
+	}
 	
 	if (Config::getb(QString("Preferences/Options.autoregister"))) {
 		// Register to the known proxies if available

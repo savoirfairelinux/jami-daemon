@@ -96,7 +96,8 @@ SIP::initSIP (void) {
 	tmp = QString(PROGNAME) + "/" + QString(VERSION);
 
 	// Set IP address
-	getLocalIp();
+	if ( getLocalIp() == -1 )
+		return -1;
 	
 	srand (time(NULL));
 	if (eXosip_init (NULL, NULL, DEFAULT_SIP_PORT) != 0) {
