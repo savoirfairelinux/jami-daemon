@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'url_input.ui'
 **
-** Created: Sun Jan 2 11:20:56 2005
+** Created: Thu Jan 6 14:11:38 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!

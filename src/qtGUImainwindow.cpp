@@ -22,6 +22,7 @@
 // QtGUIMainWindow Implementation                                             //
 ////////////////////////////////////////////////////////////////////////////////
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <qbitmap.h>
 #include <qcheckbox.h>
@@ -564,6 +565,7 @@ QtGUIMainWindow::toggleLine (int num_line) {
 		chosenLine = currentLineNumber;
 		if (!noChoose) {
 			choose = true; 
+			this->dialTone(true);
 		}
 		callmanager->phLines[currentLineNumber]->setStateLine(BUSY);
 	} 
@@ -576,6 +578,7 @@ QtGUIMainWindow::toggleLine (int num_line) {
 			chosenLine = currentLineNumber;
 			if (!noChoose) {
 				choose = true;
+				this->dialTone(true);
 			}	
 		}
 		// Change state to ONHOLD
@@ -676,7 +679,7 @@ QtGUIMainWindow::dial (void) {
  * Hangup the current call.
  */
 void
-QtGUIMainWindow::hangupLine (void) {
+QtGUIMainWindow::hangupLine (void) {  
 	qDebug("HANGUP: line %d", currentLineNumber);
 	// If there is current line opened and state line not onHold
 	if (currentLineNumber != -1 and 
@@ -808,38 +811,38 @@ QtGUIMainWindow::button_conf (void) {
 
 void
 QtGUIMainWindow::button_line0 (void) {
-	this->dialTone(true);
+//	this->dialTone(true);
  	toggleLine (0);
 	 
 }
 
 void
 QtGUIMainWindow::button_line1 (void) {
-	this->dialTone(true);
+//	this->dialTone(true);
 	toggleLine (1);
 }
 
 void
 QtGUIMainWindow::button_line2 (void) {
-	this->dialTone(true);
+//	this->dialTone(true);
 	toggleLine (2);
 }
 
 void
 QtGUIMainWindow::button_line3 (void) {
-	this->dialTone(true);
+//	this->dialTone(true);
 	toggleLine (3);
 }
 
 void
 QtGUIMainWindow::button_line4 (void) {
-	this->dialTone(true);
+//	this->dialTone(true);
 	toggleLine (4);
 }
 
 void
 QtGUIMainWindow::button_line5 (void) {
-	this->dialTone(true);
+//	this->dialTone(true);
 	toggleLine (5);
 }
 
