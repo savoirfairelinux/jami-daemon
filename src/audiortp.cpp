@@ -245,9 +245,6 @@ AudioRtpRTX::run (void) {
 		// Send session
 		////////////////////////////
 		if (!manager->mute) {
-		//	i = audioDevice->readBuffer (320);
-		//	data_from_mic = (short*)manager->audiodriver->audio_buf.getData();
-		//	qDebug("audiortp data_from_mic 0x%d", data_from_mic); 
 			i = audioDevice->readBuffer (data_from_mic, 320);
 		} else {
 			// When IP-phone user click on mute button, we read buffer of a
@@ -256,7 +253,7 @@ AudioRtpRTX::run (void) {
 		}
 
 		for (int j = 0; j < i; j++)
-			data_from_mic_tmp[j] = data_from_mic[j]*manager->getMicVolume()/10;
+			data_from_mic_tmp[j] = data_from_mic[j]*manager->getMicVolume()/100;
 
 		// Encode acquired audio sample
 		compSize = AudioCodec::codecEncode (
@@ -294,9 +291,9 @@ AudioRtpRTX::run (void) {
 				adu->getSize());
 		
 		// Write decoded data to sound device
-		manager->audiodriver->audio_buf.resize(expandedSize);
-		manager->audiodriver->audio_buf.setData (data_for_speakers, 
-				manager->getSpkrVolume()/10);
+		audioDevice->audio_buf.resize(expandedSize);
+		audioDevice->audio_buf.setData (data_for_speakers, 
+				manager->getSpkrVolume());
 	//	i = audioDevice->writeBuffer (data_for_speakers, expandedSize);
 		i = audioDevice->writeBuffer ();
 		delete adu;

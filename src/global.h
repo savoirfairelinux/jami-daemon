@@ -28,6 +28,7 @@
 #define PROGNAME				"SFLPhone"
 #define SKINDIR					"skins"
 #define PIXDIR					"pixmaps"
+#define RINGDIR					"rings"
 
 #define SFLPHONE_LOGO			"logo_ico.png"
 #define TRAY_ICON				"tray-icon.png"
@@ -44,5 +45,6 @@
 #define	FORMAT					2			// for 16 bits format
 #define OCTETS					SAMPLING_RATE * FORMAT	// Number of writen 
 														// bytes in buffer
-
+#define	YES						0
+#define NO						1
 #endif	// __GLOBAL_H__

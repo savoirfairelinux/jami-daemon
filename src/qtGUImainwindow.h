@@ -130,6 +130,8 @@ public:
 	void 	 toggleLine 	 	(int);
 	void 	 stopTimerMessage 	(void);
 	static 	 QString  setPathSkin(void);
+	static 	 QString  ringFile	(void);
+	QString	 getRingFile		(void);
 	inline 
 	void 	 ring				(bool b) { this->ringVar = b; }
 	inline 
@@ -194,6 +196,8 @@ private:
 	Point				*pt;
 	Vector				*micVolVector;
 	Vector				*spkrVolVector;
+	int			vol_mic_x, vol_mic_y;
+	int			vol_spkr_x, vol_spkr_y;
 
 	// To construct ring rect pixmap
 	QImage 		 imageRing;
@@ -220,6 +224,8 @@ private:
 	
 	void 		 initButtons 	(void);
 	void 		 initBlinkTimer	(void);
+	void		 initSpkrVolumePosition (void);
+	void		 initMicVolumePosition (void);
 
 	int 		 numLineBusy	(void);
 

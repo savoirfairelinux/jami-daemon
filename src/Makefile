@@ -14,6 +14,7 @@ BIN_DIR  = $(PREFIX)/bin
 SHARE_DIR  = $(PREFIX)/share
 PIXMAPS = pixmaps
 SKINS = skins
+RINGS = rings
 METAL_SKINS = metal
 
 INC_OTHERS = ../stund
@@ -106,6 +107,8 @@ install:	all
 		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(PIXMAPS)
 	cd ..; cp -R $(SKINS) $(SHARE_DIR)/$(PROGNAME)/ ; \
 		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(SKINS)
+	cd ..; cp -R $(RINGS) $(SHARE_DIR)/$(PROGNAME)/ ; \
+		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(RINGS)
 
 uninstall: 
 	rm -f $(BIN_DIR)/$(PROGNAME)

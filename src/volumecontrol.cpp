@@ -69,6 +69,8 @@ VolumeControl::mouseMoveEvent (QMouseEvent *e) {
 		QPoint ptref(e->globalX() - offset(HORIZONTAL), e->globalY() - mouse_y);
 		if (ptref.x() >= vect->X() and ptref.x() <= vect->Variation()) {
 			volumeValue = vect->X() - ptref.x();
+			// Emit a signal
+			emit setVolumeValue (volumeValue);
 			move (QPoint(ptref.x(), vect->Y()));
 		}
 	}
@@ -79,5 +81,4 @@ VolumeControl::mousePressEvent (QMouseEvent *e) {
 	mouse_x = e->x();
 	mouse_y = e->y();
 }
-
 

@@ -121,9 +121,11 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	this->pt = new Point(skinfilename.ascii());
 	
 	// Initialisations
+	this->initSpkrVolumePosition();
+	this->initMicVolumePosition();
 	this->initButtons();
 	this->initBlinkTimer();
-
+	
  	// Initialisation variables for ringing and message
 	msgVar = false;
 	b_dialtone = false;
@@ -276,18 +278,12 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 				NULL, mypop, parent, name);
 	trayicon->show();
 	connect(trayicon, SIGNAL(clickedLeft()), this, SLOT(clickHandle()));
-	connect(vol_spkr, SIGNAL(setVolumeValue(int)), this, SLOT(volumeSpkrChanged(int)));
-	connect(vol_mic, SIGNAL(setVolumeValue(int)), this, SLOT(volumeMicChanged(int)));
-}
-
-void
-QtGUIMainWindow::volumeSpkrChanged(int val) {
-	callmanager->spkrSoundVolume(val);
-}
-
-void
-QtGUIMainWindow::volumeMicChanged(int val) {
-	callmanager->micSoundVolume(val);
+	
+	// Connections for volume control
+	connect(vol_spkr, SIGNAL(setVolumeValue(int)), this, 
+			SLOT(volumeSpkrChanged(int)));
+	connect(vol_mic, SIGNAL(setVolumeValue(int)), this, 
+			SLOT(volumeMicChanged(int)));
 }
 
 /**
@@ -348,6 +344,46 @@ QString
 QtGUIMainWindow::setPathSkin (void) {
 	return QString(Config::getchar(
 					"Preferences", "Themes.skinChoice", "metal"));
+}
+
+QString
+QtGUIMainWindow::ringFile(void) {
+	return QString(Config::getchar(
+					"Audio", "Rings.ringChoice", "konga.ul"));
+}
+
+QString
+QtGUIMainWindow::getRingFile (void) {
+	QString ringFilename(Skin::getPathRing(QString(RINGDIR), ringFile()));
+	return ringFilename;
+}
+
+void
+QtGUIMainWindow::initSpkrVolumePosition (void) {
+	if (pt->getDirection(VOL_SPKR) == VERTICAL) {
+		vol_spkr_x = Config::get("Audio", "Volume.speakers_x", 
+				pt->getX(VOL_SPKR));
+		vol_spkr_y = Config::get("Audio", "Volume.speakers_y",
+				pt->getVariation(VOL_SPKR));
+	} else if (pt->getDirection(VOL_SPKR) == HORIZONTAL) {
+		vol_spkr_x = Config::get("Audio", "Volume.speakers_x",
+				pt->getX(VOL_SPKR) + pt->getVariation(VOL_SPKR));
+		vol_spkr_y = Config::get("Audio", "Volume.speakers_y", 
+				pt->getY(VOL_SPKR));
+	} 
+}
+
+void
+QtGUIMainWindow::initMicVolumePosition (void) {
+	if (pt->getDirection(VOL_MIC) == VERTICAL) {
+		vol_mic_x = Config::get("Audio", "Volume.micro_x", pt->getX(VOL_MIC));
+		vol_mic_y = Config::get("Audio", "Volume.micro_y",
+				pt->getVariation(VOL_MIC));
+	} else if (pt->getDirection(VOL_MIC) == HORIZONTAL) {
+		vol_mic_x = Config::get("Audio", "Volume.micro_x",
+				pt->getX(VOL_MIC) + pt->getVariation(VOL_MIC));
+		vol_mic_y = Config::get("Audio", "Volume.micro_y", pt->getY(VOL_MIC));
+	} 
 }
 
 /**
@@ -413,8 +449,8 @@ QtGUIMainWindow::initButtons (void) {
 
 	vol_mic = new VolumeControl(this, NULL, VOLUME, micVolVector);
 	vol_spkr = new VolumeControl(this, NULL, VOLUME, spkrVolVector);
-	vol_mic->move(pt->getX(VOL_MIC), pt->getY(VOL_MIC));
-	vol_spkr->move(pt->getX(VOL_SPKR), pt->getY(VOL_SPKR));
+	vol_mic->move(vol_mic_x, vol_mic_y);
+	vol_spkr->move(vol_spkr_x, vol_spkr_y);
 }
 
 /**
@@ -750,6 +786,16 @@ QtGUIMainWindow::startCallTimer (int line) {
 ///////////////////////////////////////////////////////////////////////////////
 // Public slot implementations                                               //
 ///////////////////////////////////////////////////////////////////////////////
+void
+QtGUIMainWindow::volumeSpkrChanged(int val) {
+	callmanager->spkrSoundVolume(val);
+}
+
+void
+QtGUIMainWindow::volumeMicChanged(int val) {
+	callmanager->micSoundVolume(val);
+}
+
 /**
  * Slot to blink with free and busy pixmaps when line is hold.
  */
@@ -967,6 +1013,21 @@ QtGUIMainWindow::quitApplication (void) {
 	bool confirm;
 	// Show QMessageBox
 	confirm = Config::get("Preferences", "Options.confirmQuit", (int)true);
+
+	// Save volume positions
+	// TODO: save position if direction is horizontal
+	Config::set("Audio", "Volume.speakers_x",  pt->getX(VOL_SPKR));
+	if (vol_spkr->getValue() != micVolVector->Y() - micVolVector->Variation()){ 
+		Config::set("Audio", "Volume.speakers_y",  pt->getY(VOL_SPKR) - 
+			vol_spkr->getValue());
+	}
+	Config::set("Audio", "Volume.micro_x",  pt->getX(VOL_MIC)); 
+	if (vol_mic->getValue() != spkrVolVector->Y() - spkrVolVector->Variation()){
+		Config::set("Audio", "Volume.micro_y",  pt->getY(VOL_MIC) - 
+			vol_mic->getValue());
+	}
+	
+	save();
 		
 	if (confirm) {
 		if (QMessageBox::question(this, "Confirm quit",
@@ -1035,7 +1096,7 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	key->startTone(code);
 	key->generateDTMF(buf, SAMPLING_RATE);
 	callmanager->audiodriver->audio_buf.resize(SAMPLING_RATE);
-	callmanager->audiodriver->audio_buf.setData (buf, callmanager->getSpkrVolume()/10);
+	callmanager->audiodriver->audio_buf.setData (buf, callmanager->getSpkrVolume());
 	pulselen = Config::get("Signalisations", "DTMF.pulseLength", 250);
 	callmanager->audiodriver->audio_buf.resize(pulselen * (OCTETS/1000));
 //	a = callmanager->audiodriver->writeBuffer(buf, pulselen * (OCTETS/1000));

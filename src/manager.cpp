@@ -85,8 +85,8 @@ Manager::Manager (QString *Dc = NULL) {
 		gui()->configuration();
 	} 
 
-	spkr_volume = 10;
-	mic_volume = 10;
+	spkr_volume = 100;
+	mic_volume = 100;
 }
 
 Manager::~Manager (void) {
@@ -185,7 +185,8 @@ Manager::ring (bool var) {
 	if (this->b_ringing != var) {
 		this->b_ringing = var;
 	}
-	// TODO: play file.wav
+	tonezone = ringing();
+	tone->playRing ((gui()->getRingFile()).ascii());
 }
 
 // When IP-phone user makes call
@@ -480,7 +481,7 @@ Manager::setChoose (bool b, bool b2) {
 
 bool
 Manager::useStun () {
-	if (Config::getb("Signalisations", "STUN.useStunYes")) {
+	if (Config::geti("Signalisations", "STUN.useStun") == YES) {
 		return true;
 	} else {
 		return false;

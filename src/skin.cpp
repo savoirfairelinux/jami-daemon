@@ -71,4 +71,9 @@ Skin::getPathPixmap (const QString & pixdir, const QString & filename) {
 	return (QString(PROGSHAREDIR) + "/" + pixdir + "/" + filename);
 }
 
+QString 
+Skin::getPathRing (const QString & ringdir, const QString & filename) {
+	return (QString(PROGSHAREDIR) + "/" + ringdir + "/" + filename);
+}
+
 // EOF

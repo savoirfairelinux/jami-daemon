@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'configurationpanel.ui'
 **
-** Created: Fri Jan 28 18:58:55 2005
+** Created: Mon Jan 31 18:13:29 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -94,6 +94,8 @@ public:
     QLabel* textLabel1_4_3;
     QLabel* textLabel1_4_4;
     QLabel* textLabel1_4_5;
+    QWidget* RingPage;
+    QComboBox* ringsChoice;
     QTabWidget* Tab_Video;
     QWidget* DriversPage_2;
     QWidget* CodecsPage_2;
@@ -128,7 +130,7 @@ protected:
     QVBoxLayout* layout8;
     QHBoxLayout* layout7;
     QSpacerItem* Horizontal_Spacing2;
-    QVBoxLayout* layout17;
+    QVBoxLayout* layout19;
     QGridLayout* groupBox1Layout;
     QVBoxLayout* stunButtonGroupLayout;
     QGridLayout* SettingsDTMFLayout;
@@ -144,7 +146,7 @@ protected:
     QHBoxLayout* layout11_2;
     QVBoxLayout* layout9;
     QVBoxLayout* layout10_2;
-    QVBoxLayout* layout17_2;
+    QVBoxLayout* layout17;
     QHBoxLayout* layout16;
     QSpacerItem* spacer5;
     QHBoxLayout* layout16_2;

@@ -38,8 +38,22 @@ void ConfigurationPanel::init()
       SkinChoice->insertItem(list[i]);
        }
    } 
-
-
+   
+       // List ring choice from "rings" directory
+   QDir ringdir(Skin::getPath(QString(RINGDIR)));
+   if ( !ringdir.exists() ) {
+        printf ("Cannot find rings directory\n");
+    }
+   ringdir.setFilter( QDir::Files | QDir::NoSymLinks);
+   ringdir.setSorting( QDir::Name );
+    
+   QStringList ringlist;
+   ringlist = ringdir.entryList();
+   for (unsigned int i = 0; i < ringdir.count(); i++) {
+       if (ringlist[i] != "." && ringlist[i] != ".." && ringlist[i] != "CVS") {
+      ringsChoice->insertItem(ringlist[i]);
+       }
+   } 
   // For signalisations tab
    fullName->setText(QString(Config::getchar("Signalisations", "SIP.fullName", "")));
    userPart->setText(QString(Config::getchar("Signalisations", "SIP.userPart", "")));
@@ -61,6 +75,8 @@ void ConfigurationPanel::init()
    codec3->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec3", "G711u")));
    codec4->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec4", "G711u")));
    codec5->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec5", "G711u")));
+     ringsChoice->setCurrentText(QString(Config::getchar(
+      "Audio", "Rings.ringChoice", "konga.ul")));
    
    // For preferences tab
    SkinChoice->setCurrentText(QString(Config::getchar(
@@ -125,6 +141,7 @@ void ConfigurationPanel::saveSlot()
    Config::set("Audio", "Codecs.codec3", codec3->currentText());
    Config::set("Audio", "Codecs.codec4", codec4->currentText());
    Config::set("Audio", "Codecs.codec5", codec5->currentText());
+   Config::set("Audio", "Rings.ringChoice", ringsChoice->currentText());
    
    Config::set("Preferences", "Themes.skinChoice", SkinChoice->currentText());
    Config::set("Preferences", "Options.zoneToneChoice", 

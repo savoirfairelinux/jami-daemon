@@ -109,6 +109,7 @@ public:
 	static QString getPath(const QString &,const QString &, const QString &);
 	static QString getPath(const QString &);
 	static QString getPathPixmap (const QString &, const QString &);
+	static QString getPathRing	 (const QString &, const QString &);
 };
 
 #endif	// __SKIN_H__

@@ -18,14 +18,19 @@
  */
 
 #include <math.h>
+#include <iostream>
+#include <fstream>
 
 #include <qapplication.h>
 #include <qstring.h>
 
+#include "audiocodec.h"
 #include "configuration.h"
 #include "global.h"
 #include "manager.h"
 #include "tonegenerator.h"
+
+using namespace std;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,7 +49,7 @@ ToneThread::~ToneThread (void) {
 void
 ToneThread::run (void) {
 	while (mngr->tonezone) {
-		mngr->audiodriver->audio_buf.setData (buf, mngr->getSpkrVolume()/10);	
+		mngr->audiodriver->audio_buf.setData (buf, mngr->getSpkrVolume());	
 		mngr->audiodriver->writeBuffer();
 		//mngr->audiodriver->writeBuffer(buf, totalbytes);
 	}
@@ -232,12 +237,10 @@ ToneGenerator::toneHandle (int idr) {
 		if (tonethread == NULL) {
 			tonethread = new ToneThread (manager, buf, totalbytes);
 			manager->audiodriver->audio_buf.resize(totalbytes);	
-		//	manager->audiodriver->audio_buf.setData (buf);	
 			tonethread->start();
 		}
 
 		if (!manager->tonezone) {
-			//tonethread->join();	
 			if (tonethread != NULL) {	
 				delete tonethread;
 				tonethread = NULL;
@@ -246,4 +249,55 @@ ToneGenerator::toneHandle (int idr) {
 	}
 }
 
+
+int
+ToneGenerator::playRing (const char *fileName) {
+	short* dst = NULL;
+	char* src = NULL;
+	int expandedsize, length;
+
+	if (fileName == NULL) {
+		return 0;
+	}
+	fstream file;
+	file.open(fileName, fstream::in);
+	if (!file.is_open()) {
+		return 0;
+  	}
+
+	// get length of file:
+  	file.seekg (0, ios::end);
+  	length = file.tellg();
+  	file.seekg (0, ios::beg);
+
+  	// allocate memory:
+  	src = new char [length];
+	dst = new short[length];
+	
+  	// read data as a block:
+  	file.read (src,length);
+
+	expandedsize = AudioCodec::codecDecode (
+				PAYLOAD_CODEC_ULAW,
+				dst,
+				(unsigned char*)src,
+				length);
+
+	if (tonethread == NULL) {
+		tonethread = new ToneThread (manager, dst, expandedsize);
+		manager->audiodriver->audio_buf.resize(expandedsize);	
+		tonethread->start();
+	}
+	if (!manager->tonezone) {
+		if (tonethread != NULL) {	
+			delete tonethread;
+			tonethread = NULL;
+		}
+	}
+	
+	file.close();
+	delete[] dst;
+	delete[] src;
+	return 1;
+}
 
