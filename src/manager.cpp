@@ -71,7 +71,7 @@ Manager::Manager (QString *Dc = NULL) {
 	b_ringing = false;
 	mute = false;
 	b_ringtone = false;
-	if (! DirectCall->isNull()) { 
+	if (DirectCall) { 
 		qWarning ("Direct call.....");
 		gui()->lcd->textBuffer = DirectCall ;
 		gui()->dial();

@@ -33,7 +33,7 @@
 
 
 void OptionProcess (int argc,char **argv) ;
-QString *pOption ;
+QString *pOption = NULL;
 
 
 int
@@ -44,10 +44,13 @@ main (int argc, char **argv) {
 	Config::setTree(new ConfigurationTree());	
 	
 	OptionProcess (argc,argv);
+	manager = new Manager(pOption);
+/*
 	if ( pOption )  
 		manager = new Manager(pOption);
 	else
 		manager = new Manager(new QString());
+*/
 
 #if 0
 	QTranslator translator (0);

@@ -45,7 +45,7 @@ public:
 	AudioRtp		*audioRTP;
 	AudioDrivers	*audiodriver;
 	ToneGenerator	*tone;
-	QString 		*DirectCall; // from argv[1]
+	QString 		*DirectCall; // from -p argv
 	bool 			 mute;
 	bool 			 tonezone;
 	std::string		 path;
