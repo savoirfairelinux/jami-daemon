@@ -34,11 +34,10 @@
 #include "audiodriversoss.h"
 #include "global.h"
 
-#define MONO	1
 
-AudioDriversOSS::AudioDriversOSS (void) : AudioDrivers () {
+AudioDriversOSS::AudioDriversOSS (DeviceMode mode) : AudioDrivers () {
 	audio_fd = -1;
-	initDevice(AudioDrivers::ReadWrite);
+	initDevice(mode);
 }
 
 AudioDriversOSS::~AudioDriversOSS (void) {
@@ -61,7 +60,6 @@ AudioDriversOSS::resetDevice (void) {
 int
 AudioDriversOSS::initDevice (DeviceMode mode) {
 	int oflag;
-	
 	switch (mode) {
 	case ReadOnly:
 		oflag = O_RDONLY;
@@ -113,18 +111,18 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	int channels = MONO;
 	if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &channels) == -1) {
 		printf ("ERROR: DSP_STEREO %s\n", strerror(errno));
-		return false;
+		return -1;
 	}
 	if (channels != MONO) {
 		printf ("ERROR: Unsupported Number of Channels\n");
-		return false;
+		return -1;
 	}
 
-	// Setup sampling rate
+	// Setup sampling rate 8KHz
 	int rate = SAMPLING_RATE;
 	if (ioctl(audio_fd, SNDCTL_DSP_SPEED, &rate ) == -1 ) {
 		printf ("ERROR: DSP_SPEED  %s\n", strerror(errno));
-		return false;
+		return -1;
 	}
 
 	if (rate != SAMPLING_RATE) {
@@ -137,12 +135,12 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	if (mode == WriteOnly) {
 		if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == -1) {
 			printf ("ERROR: GETISPACE %s\n", strerror(errno));
-			return false;
+			return -1;
 		} 
 	} else {
 		if (ioctl(audio_fd, SNDCTL_DSP_GETISPACE, &info ) == -1) {
 			printf ("ERROR: GETOSPACE %s\n", strerror(errno));
-			return false;
+			return -1;
 		}
 	}
 //	audio_buf.resize (info.fragsize * sizeof(short));
@@ -178,31 +176,6 @@ AudioDriversOSS::openDevice (int exist_fd) {
 	return true;
 }
 
-#if 0
-#ifndef min
-#define min(a,b)	(a<b?a:b)
-#endif
-int
-AudioDriversOSS::readBuffer (void *buf, int read_bytes) {
-    int 			read_len,
-					available;
-    audio_buf_info	info;
-
-	/* Figure out how many bytes we can read before blocking... */
-    ioctl(audio_fd, SNDCTL_DSP_GETISPACE, &info);
-    available = min(info.bytes, read_bytes);
-
-	printf("info=%d, read_bytes=%d, available=%d\n", info.bytes, read_bytes,
-			available);
-    read_len  = read (audio_fd, (char *)buf, available);
-    if (read_len < 0) {
-        perror("audio_read");
-        return 0;
-    }
-
-    return read_len;
-}
-#endif
 
 int
 AudioDriversOSS::readBuffer (void *ptr, int bytes) {
@@ -210,12 +183,7 @@ AudioDriversOSS::readBuffer (void *ptr, int bytes) {
 		printf ("Device Not Open\n");
 		return false;
 	}
-
-	//audio_buf.resize(bytes);
 	ssize_t count = bytes;
-
-//	unsigned char *buf;
-//	buf = audio_buf.getData();
 	ssize_t rc;
 
 	rc = read (audio_fd, ptr, count);
@@ -234,7 +202,7 @@ int
 AudioDriversOSS::readBuffer (int bytes) {
 	if( devstate != DeviceOpened ) {
 		printf ("Device Not Open\n");
-		return false;
+		return -1;
 	}
 
 	audio_buf.resize(bytes);

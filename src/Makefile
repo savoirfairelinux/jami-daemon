@@ -23,7 +23,7 @@ INCPATH  = -I. -I$(QTDIR)/include -I$(CCPPDIR)/include/cc++2 -I$(CCRTPDIR)/inclu
 
 CXXFLAGS = -pipe -Wall -W -g -pipe -march=i386 -mcpu=i686  -DQT_NO_DEBUG -DQT_SHARED -DQT_THREAD_SUPPORT -fpermissive -Wno-deprecated $(INCPATH)
 
-LIBS     = -L$(QTDIR)/lib -L/usr/X11R6/lib -lqt-mt -lXext -lX11 -lm -L/opt/lib -losip2 -leXosip -lccrtp1 `ccgnu2-config --flags --stdlibs`
+LIBS     = -L$(QTDIR)/lib -L/usr/X11R6/lib -lqt-mt -lXext -lX11 -lm -L/opt/lib -losip2 -leXosip -lccrtp1 -lasound `ccgnu2-config --flags --stdlibs` 
 
 CONFIGURE_CONF=$(shell ls ../configure.conf)
 	
@@ -32,6 +32,7 @@ OBJS = \
 	audiocodec.o \
 	audiodrivers.o \
 	audiodriversoss.o \
+	audiodriversalsa.o \
 	audiortp.o \
 	configuration.o \
 	configitem.o \

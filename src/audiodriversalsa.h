@@ -1,9 +1,6 @@
 /**
  *  Copyright (C) 2004 Savoir-Faire Linux inc.
- *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
- *
- * 	Portions Copyright (c) 2000 Billy Biggs <bbiggs@div8.net>
- *  Portions Copyright (c) 2004 Wirlab <kphone@wirlab.net>
+ *  Author:  Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,38 +17,42 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __AUDIO_DRIVERS_H__
-#define __AUDIO_DRIVERS_H__
+#ifndef _AUDIO_DRIVERS_ALSA_H_
+#define _AUDIO_DRIVERS_ALSA_H_
 
-#include "audiobuffer.h"
+#include <alsa/asoundlib.h>
 
-class AudioDrivers {
+#include "audiodrivers.h"
+
+/**
+ * This is the ALSA implementation of DspOut.
+ * Note that you cannot change how many fragments
+ * this class requests, yet.
+ */
+class AudioDriversALSA : public AudioDrivers {
 public:
-	AudioDrivers (void);
-	virtual	~AudioDrivers (void);
+	/**
+	 * Constructs a AudioDriversALSA object representing the given
+	 * filename.  Default is /dev/dsp.
+	 */
+	AudioDriversALSA(DeviceMode);
 
-	enum DeviceState {
-		DeviceOpened,
-		DeviceClosed };
+	/**
+	 * Destructor.  Will close the device if it is open.
+	 */
+	virtual ~AudioDriversALSA( void );
 
-	enum DeviceMode {
-		ReadOnly,
-		WriteOnly,
-		ReadWrite };
+	int 	initDevice	(DeviceMode);
+	int		resetDevice	(void);	
+	int 	writeBuffer	(void);
+	int 	readBuffer	(int);
+	int		readBuffer 	(void *, int);
+	unsigned int readableBytes(void);
+	
+	int 	audio_fd;
+	snd_pcm_t *audio_hdl;
 
-	virtual int	 initDevice			(DeviceMode) = 0;
-	virtual int	 resetDevice		(void) = 0;
-	virtual int  writeBuffer		(void) = 0;
-	virtual int	 readBuffer			(void *, int) = 0;
-	virtual int	 readBuffer			(int) = 0;
-	virtual unsigned int readableBytes (void) = 0;
-
-	AudioBuffer audio_buf; // Buffer that the application fills	
-protected:
-	DeviceState devstate;  // Current state
-	DeviceMode devmode;    // Current mode
-
+private:
 };
 
-
-#endif// __AUDIO_DRIVERS_H__
+#endif  // _AUDIO_DRIVERS_ALSA_H_

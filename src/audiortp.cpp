@@ -67,8 +67,15 @@ AudioRtp::createNewSession (SipCall *ca) {
 	} else {
 		symetric = true;
 	}
-
-	RTXThread = new AudioRtpRTX (ca, manager->audiodriver, manager, symetric);
+	
+	if (manager->useAlsa) {
+		RTXThread = new AudioRtpRTX (ca, manager->audiodriver, 
+				manager->audiodriverReadAlsa, manager, symetric);
+	} else {
+		RTXThread = new AudioRtpRTX (ca, manager->audiodriver, NULL, manager, 
+			symetric);
+	}
+	
 	if (RTXThread->start() != 0) {
 		return -1;
 	}
@@ -98,11 +105,13 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioDrivers *driver, 
-						Manager *mngr, bool sym) {
-	this->ca = sipcall;
-	this->audioDevice = driver;
+		AudioDrivers *read_driver, Manager *mngr, bool sym) {
 	this->manager = mngr;
+	this->ca = sipcall;
 	this->sym =sym;
+	this->audioDevice = driver;
+	if (manager->useAlsa)
+		this->audioDeviceRead = read_driver;
 
 	// TODO: Change bind address according to user settings.
 	InetHostAddress local_ip("0.0.0.0");
@@ -245,13 +254,24 @@ AudioRtpRTX::run (void) {
 		// Send session
 		////////////////////////////
 		if (!manager->mute) {
-			i = audioDevice->readBuffer (data_from_mic, 320);
+			if (manager->useAlsa) {
+				i = audioDeviceRead->readBuffer (data_from_mic, 320);
+			} else {
+				i = audioDevice->readBuffer (data_from_mic, 320);
+			}
 		} else {
 			// When IP-phone user click on mute button, we read buffer of a
 			// temp buffer to avoid delay in sound.
-			i = audioDevice->readBuffer (data_mute, 320);
+			if (manager->useAlsa)
+				i = audioDeviceRead->readBuffer (data_mute, 320);
+			else
+				i = audioDevice->readBuffer (data_mute, 320);
 		}
 
+		// TODO : return an error because no sound
+		if (i < 0) {
+			break;
+		}
 		for (int j = 0; j < i; j++)
 			data_from_mic_tmp[j] = data_from_mic[j]*manager->getMicVolume()/100;
 
@@ -294,7 +314,6 @@ AudioRtpRTX::run (void) {
 		audioDevice->audio_buf.resize(expandedSize);
 		audioDevice->audio_buf.setData (data_for_speakers, 
 				manager->getSpkrVolume());
-	//	i = audioDevice->writeBuffer (data_for_speakers, expandedSize);
 		i = audioDevice->writeBuffer ();
 		delete adu;
 

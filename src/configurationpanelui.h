@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'configurationpanel.ui'
 **
-** Created: Wed Feb 2 17:25:45 2005
+** Created: Fri Feb 4 16:42:29 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -27,9 +27,9 @@ class QTabWidget;
 class QWidget;
 class QGroupBox;
 class QLineEdit;
+class QCheckBox;
 class QButtonGroup;
 class QRadioButton;
-class QCheckBox;
 class QSpinBox;
 class QComboBox;
 
@@ -63,6 +63,8 @@ public:
     QLineEdit* password;
     QLabel* textLabel1_3;
     QLabel* textLabel3_2;
+    QCheckBox* autoregister;
+    QPushButton* Register;
     QWidget* STUNPage;
     QGroupBox* groupBox3;
     QLabel* textLabel1_5;
@@ -104,14 +106,13 @@ public:
     QWidget* CodecsPage_3;
     QTabWidget* Tab_Preferences;
     QWidget* DriversPage_4;
-    QPushButton* buttonApplySkin;
     QComboBox* SkinChoice;
+    QPushButton* buttonApplySkin;
     QWidget* TabPage;
     QLabel* textLabel1_2;
     QComboBox* zoneToneChoice;
     QCheckBox* confirmationToQuit;
     QCheckBox* checkedTray;
-    QCheckBox* autoregister;
     QLabel* textLabel1_6;
     QLineEdit* voicemailNumber;
     QTabWidget* Tab_About;
@@ -132,8 +133,13 @@ protected:
     QVBoxLayout* layout8;
     QHBoxLayout* layout7;
     QSpacerItem* Horizontal_Spacing2;
-    QVBoxLayout* layout18;
+    QVBoxLayout* layout17;
+    QVBoxLayout* layout24;
     QGridLayout* groupBox1Layout;
+    QVBoxLayout* layout23;
+    QSpacerItem* spacer9;
+    QHBoxLayout* layout19;
+    QSpacerItem* spacer7;
     QVBoxLayout* stunButtonGroupLayout;
     QGridLayout* SettingsDTMFLayout;
     QVBoxLayout* layout11;
@@ -148,7 +154,7 @@ protected:
     QHBoxLayout* layout11_2;
     QVBoxLayout* layout9;
     QVBoxLayout* layout10_2;
-    QVBoxLayout* layout17;
+    QVBoxLayout* layout17_2;
     QHBoxLayout* layout16;
     QSpacerItem* spacer5;
     QHBoxLayout* layout16_2;

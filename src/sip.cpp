@@ -502,7 +502,7 @@ SIP::outgoingInvite (void) {
 		qto = toHeader(string(callmanager->bufferTextRender().ascii()));
 
 	if (qto.find("@") == string::npos and 
-			Config::getb("Preferences", "Options.autoregister")) {
+			Config::getb("Signalisations", "SIP.autoregister")) {
 		qto = qto + "@" + Config::gets("Signalisations", "SIP.hostPart");
 	}
 	to = (char*)qto.data();

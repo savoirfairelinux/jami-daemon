@@ -171,6 +171,8 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	connect (panel->buttonSave, SIGNAL(clicked()), this, SLOT(save()));
 	// Connect to apply skin
 	connect (panel->buttonApplySkin, SIGNAL(clicked()), this,SLOT(applySkin()));
+	// Connect to register manually
+	connect (panel->Register, SIGNAL(clicked()), this, SLOT(registerSlot()));
 }
 
 /**
@@ -363,7 +365,7 @@ QtGUIMainWindow::initButtons (void) {
 	QToolTip::add(hangup_button, tr("Hangup"));
 	QToolTip::add(dial_button, tr("Dial"));
 	QToolTip::add(mute_button, tr("Mute"));
-	QToolTip::add(dtmf_button, tr("Show DTMF keypad"));
+	QToolTip::add(dtmf_button, tr("Show DTMF keypad (Ctrl+D)"));
 
 	// Buttons position
 	phoneKey_msg->move (pt->getX(VOICEMAIL), pt->getY(VOICEMAIL));
@@ -800,13 +802,18 @@ QtGUIMainWindow::startCallTimer (int line) {
 // Public slot implementations                                               //
 ///////////////////////////////////////////////////////////////////////////////
 void
-QtGUIMainWindow::volumeSpkrChanged(int val) {
-	callmanager->spkrSoundVolume(val);
+QtGUIMainWindow::volumeSpkrChanged (int val) {
+	callmanager->spkrSoundVolume (val);
 }
 
 void
-QtGUIMainWindow::volumeMicChanged(int val) {
-	callmanager->micSoundVolume(val);
+QtGUIMainWindow::volumeMicChanged (int val) {
+	callmanager->micSoundVolume (val);
+}
+
+void
+QtGUIMainWindow::registerSlot (void) {
+	callmanager->sip->setRegister();
 }
 
 /**
@@ -1113,7 +1120,6 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 										buf, callmanager->getSpkrVolume());
 	pulselen = Config::get("Signalisations", "DTMF.pulseLength", 250);
 	callmanager->audiodriver->audio_buf.resize(pulselen * (OCTETS/1000));
-//	a = callmanager->audiodriver->writeBuffer(buf, pulselen * (OCTETS/1000));
 	a = callmanager->audiodriver->writeBuffer();
 	if (a == 1) {
 		pressedKeySlot(id);
@@ -1276,6 +1282,12 @@ QtGUIMainWindow::keyPressEvent(QKeyEvent *e) {
 	case Qt::Key_C :
  		if (e->state() == Qt::ControlButton ) {
 		 	configuration();
+			return;			
+		}			
+		break;
+	case Qt::Key_D :
+ 		if (e->state() == Qt::ControlButton ) {
+		 	dtmfKeypad();
 			return;			
 		}			
 		break;

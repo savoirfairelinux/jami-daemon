@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>560</width>
-            <height>515</height>
+            <height>536</height>
         </rect>
     </property>
     <property name="caption">
@@ -148,7 +148,7 @@
         </widget>
         <widget class="QLayoutWidget" row="0" column="1">
             <property name="name">
-                <cstring>layout18</cstring>
+                <cstring>layout17</cstring>
             </property>
             <vbox>
                 <property name="name">
@@ -192,107 +192,190 @@
                         <attribute name="title">
                             <string>SIP Authentication</string>
                         </attribute>
-                        <widget class="QGroupBox">
+                        <widget class="QLayoutWidget">
                             <property name="name">
-                                <cstring>groupBox1</cstring>
+                                <cstring>layout24</cstring>
                             </property>
                             <property name="geometry">
                                 <rect>
-                                    <x>20</x>
-                                    <y>10</y>
-                                    <width>380</width>
-                                    <height>322</height>
+                                    <x>16</x>
+                                    <y>12</y>
+                                    <width>401</width>
+                                    <height>393</height>
                                 </rect>
                             </property>
-                            <property name="title">
-                                <string></string>
-                            </property>
-                            <grid>
+                            <vbox>
                                 <property name="name">
                                     <cstring>unnamed</cstring>
                                 </property>
-                                <widget class="QLabel" row="0" column="0">
+                                <widget class="QGroupBox">
                                     <property name="name">
-                                        <cstring>textLabel2</cstring>
+                                        <cstring>groupBox1</cstring>
                                     </property>
-                                    <property name="text">
-                                        <string>Full name</string>
+                                    <property name="title">
+                                        <string></string>
                                     </property>
+                                    <grid>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QLabel" row="0" column="0">
+                                            <property name="name">
+                                                <cstring>textLabel2</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Full name</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLineEdit" row="1" column="0">
+                                            <property name="name">
+                                                <cstring>fullName</cstring>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLineEdit" row="3" column="0">
+                                            <property name="name">
+                                                <cstring>userPart</cstring>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel" row="2" column="0">
+                                            <property name="name">
+                                                <cstring>textLabel3</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>User Part of SIP URL</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel" row="4" column="0">
+                                            <property name="name">
+                                                <cstring>textLabel2_3</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Authorization user</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLineEdit" row="5" column="0">
+                                            <property name="name">
+                                                <cstring>username</cstring>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLineEdit" row="9" column="0">
+                                            <property name="name">
+                                                <cstring>hostPart</cstring>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLineEdit" row="11" column="0">
+                                            <property name="name">
+                                                <cstring>sipproxy</cstring>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel" row="10" column="0">
+                                            <property name="name">
+                                                <cstring>textLabel3_2_2</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>SIP proxy</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLineEdit" row="7" column="0">
+                                            <property name="name">
+                                                <cstring>password</cstring>
+                                            </property>
+                                            <property name="echoMode">
+                                                <enum>Password</enum>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel" row="6" column="0">
+                                            <property name="name">
+                                                <cstring>textLabel1_3</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Password</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel" row="8" column="0">
+                                            <property name="name">
+                                                <cstring>textLabel3_2</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Host part of SIP URL</string>
+                                            </property>
+                                        </widget>
+                                    </grid>
                                 </widget>
-                                <widget class="QLineEdit" row="1" column="0">
+                                <widget class="QLayoutWidget">
                                     <property name="name">
-                                        <cstring>fullName</cstring>
+                                        <cstring>layout23</cstring>
                                     </property>
+                                    <vbox>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QLayoutWidget">
+                                            <property name="name">
+                                                <cstring>layout19</cstring>
+                                            </property>
+                                            <hbox>
+                                                <property name="name">
+                                                    <cstring>unnamed</cstring>
+                                                </property>
+                                                <widget class="QCheckBox">
+                                                    <property name="name">
+                                                        <cstring>autoregister</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>Auto-register</string>
+                                                    </property>
+                                                    <property name="checked">
+                                                        <bool>true</bool>
+                                                    </property>
+                                                </widget>
+                                                <spacer>
+                                                    <property name="name">
+                                                        <cstring>spacer7</cstring>
+                                                    </property>
+                                                    <property name="orientation">
+                                                        <enum>Horizontal</enum>
+                                                    </property>
+                                                    <property name="sizeType">
+                                                        <enum>Expanding</enum>
+                                                    </property>
+                                                    <property name="sizeHint">
+                                                        <size>
+                                                            <width>201</width>
+                                                            <height>21</height>
+                                                        </size>
+                                                    </property>
+                                                </spacer>
+                                                <widget class="QPushButton">
+                                                    <property name="name">
+                                                        <cstring>Register</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>Register</string>
+                                                    </property>
+                                                </widget>
+                                            </hbox>
+                                        </widget>
+                                        <spacer>
+                                            <property name="name">
+                                                <cstring>spacer9</cstring>
+                                            </property>
+                                            <property name="orientation">
+                                                <enum>Vertical</enum>
+                                            </property>
+                                            <property name="sizeType">
+                                                <enum>Expanding</enum>
+                                            </property>
+                                            <property name="sizeHint">
+                                                <size>
+                                                    <width>20</width>
+                                                    <height>21</height>
+                                                </size>
+                                            </property>
+                                        </spacer>
+                                    </vbox>
                                 </widget>
-                                <widget class="QLineEdit" row="3" column="0">
-                                    <property name="name">
-                                        <cstring>userPart</cstring>
-                                    </property>
-                                </widget>
-                                <widget class="QLabel" row="2" column="0">
-                                    <property name="name">
-                                        <cstring>textLabel3</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>User Part of SIP URL</string>
-                                    </property>
-                                </widget>
-                                <widget class="QLabel" row="4" column="0">
-                                    <property name="name">
-                                        <cstring>textLabel2_3</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>Authorization user</string>
-                                    </property>
-                                </widget>
-                                <widget class="QLineEdit" row="5" column="0">
-                                    <property name="name">
-                                        <cstring>username</cstring>
-                                    </property>
-                                </widget>
-                                <widget class="QLineEdit" row="9" column="0">
-                                    <property name="name">
-                                        <cstring>hostPart</cstring>
-                                    </property>
-                                </widget>
-                                <widget class="QLineEdit" row="11" column="0">
-                                    <property name="name">
-                                        <cstring>sipproxy</cstring>
-                                    </property>
-                                </widget>
-                                <widget class="QLabel" row="10" column="0">
-                                    <property name="name">
-                                        <cstring>textLabel3_2_2</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>SIP proxy</string>
-                                    </property>
-                                </widget>
-                                <widget class="QLineEdit" row="7" column="0">
-                                    <property name="name">
-                                        <cstring>password</cstring>
-                                    </property>
-                                    <property name="echoMode">
-                                        <enum>Password</enum>
-                                    </property>
-                                </widget>
-                                <widget class="QLabel" row="6" column="0">
-                                    <property name="name">
-                                        <cstring>textLabel1_3</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>Password</string>
-                                    </property>
-                                </widget>
-                                <widget class="QLabel" row="8" column="0">
-                                    <property name="name">
-                                        <cstring>textLabel3_2</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>Host part of SIP URL</string>
-                                    </property>
-                                </widget>
-                            </grid>
+                            </vbox>
                         </widget>
                     </widget>
                     <widget class="QWidget">
@@ -611,6 +694,9 @@
                                     <property name="name">
                                         <cstring>alsaButton</cstring>
                                     </property>
+                                    <property name="enabled">
+                                        <bool>true</bool>
+                                    </property>
                                     <property name="text">
                                         <string>ALSA</string>
                                     </property>
@@ -867,6 +953,19 @@
                         <attribute name="title">
                             <string>Themes</string>
                         </attribute>
+                        <widget class="QComboBox">
+                            <property name="name">
+                                <cstring>SkinChoice</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>12</x>
+                                    <y>42</y>
+                                    <width>110</width>
+                                    <height>27</height>
+                                </rect>
+                            </property>
+                        </widget>
                         <widget class="QPushButton">
                             <property name="name">
                                 <cstring>buttonApplySkin</cstring>
@@ -886,19 +985,6 @@
                                 <string>Alt+A</string>
                             </property>
                         </widget>
-                        <widget class="QComboBox">
-                            <property name="name">
-                                <cstring>SkinChoice</cstring>
-                            </property>
-                            <property name="geometry">
-                                <rect>
-                                    <x>12</x>
-                                    <y>42</y>
-                                    <width>110</width>
-                                    <height>27</height>
-                                </rect>
-                            </property>
-                        </widget>
                     </widget>
                     <widget class="QWidget">
                         <property name="name">
@@ -914,9 +1000,9 @@
                             <property name="geometry">
                                 <rect>
                                     <x>10</x>
-                                    <y>20</y>
-                                    <width>220</width>
-                                    <height>210</height>
+                                    <y>10</y>
+                                    <width>262</width>
+                                    <height>200</height>
                                 </rect>
                             </property>
                             <vbox>
@@ -1015,17 +1101,6 @@
                                     </property>
                                     <property name="text">
                                         <string>Minimize to tray</string>
-                                    </property>
-                                </widget>
-                                <widget class="QCheckBox">
-                                    <property name="name">
-                                        <cstring>autoregister</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>Auto-register</string>
-                                    </property>
-                                    <property name="checked">
-                                        <bool>true</bool>
                                     </property>
                                 </widget>
                                 <widget class="QLayoutWidget">
@@ -1155,7 +1230,7 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
 </widget>
 <images>
     <image name="image0">
-        <data format="PNG" length="3586">89504e470d0a1a0a0000000d49484452000000ad0000003008060000006357fade00000dc949444154789ced5d5f681cc71dfe1d38452ea29c4b1fac108a149a80540839557938b5095e9197ca72484ec983ad360f77968ba5f625720245b68372f183235fc0ad94a2546730951210921fe4930aa2928bcc296057a7a2723238702a6a390551ce429893380c5f1ff6766fffccecceec9d1c39be79f9ecdbf9f39bd9df7cfbcd6f675604221a25a28a21006c0000902c220a40c5dba9e2538b653b68e27e1600101899075d026860928bca38d0379706007cdb1dafe2938b9e0aa6b75402f5c712a035802e4d4aa33f0384a75175e02a4aa35c0100ca7577469545651cc8eee4ab12a28a42289411059511bd30aa0c4617d355c7ada22bba66486fe511885796599d3030325f950c557444c70cd802fc99fd67582bfa6389aae356918bdc0be9ad3cfc310f8c399c00c5011a9907c581f61bcb0080c93535ca205a8ffff264f98e0b60686414e1b33d0877f714318cf0d91e0cc6060100d96cf6c991240012d3959dd0f99d3c066340b8bb07c1630ac2dd61eff5ef837d2cac0cc35e560dc50e1c533283c7c2b8c80358051a5b0248b764d0d81240a025c8fd7fff40f48960f6fe81a86e7fc5ec9d836d3cfadeeff33491f7c53e06da675e01d20c2b92c2b3cb9e34ae17c60d9fed31dd88f68e10864646010063e393400c503adaf5eb8196209653cb079f7135fb2be510303b6ca0258870774f594c5b51fb3868fb41c94b6ad0acbbc306279265695ce57a52dca16066582cf10710f7011480c46cc2b17edc47f937c2ad7c19f523ebc13e00c1638aed09840d97f17a0cf6b9e5f78d12518488e2441401e0fb688ae85027d123310c075214ff6533f152e4af29bab6d22c5c1f0fc74e6c52d74bcffae2467b19984a2de3f499dfd21eed510dd5505069a5e1c1986b391302e83cd545eb5fafebf518b15d69a7deee0835bcf8bcaff59882bd877b54535b434bb71628eef3f98cf52d2c2671fee279da7eb84d81c6466afbcb173ecdcee62f9ba9f56e1bed3ddc33d51f686ca4c0cb013af7de39737d31a0e9cb66aaa11abaf2e9156a7bede7bee19151c4ff1cd7cbfb8f1ea1ed6f1ed01eedd1da528ae2df33dba3a16637ab7f6b77536abb00da4e1cd7eb33e6aba9ada125658136bb37a9eed9e27d11b0afa6b646efaf6e1f80e1cfe3347b7396d6bf5937b5e33f7a8416de9aa1dd7776e9f00fbeef8b9365e67979c3e5946435acdb1b34a13d0cb06bb4f68e10b00124179342335e2b1f3ca6a81d29326ddffb7d3a23055f57803c907d3da7b7d7ded16eb32ff766de767d303664b76f0e089fed31d567d5862646cc157f676852edfffd0351fe7815d89a1f4b00f2ea389bec035409551c072d7feecd7c79f659183ff7665efd7d03089d3c651eef22d3eb4c1b995ec6b57f7960c41f2d10ceb43159b697883e93646e278c5eeca43a1f9b39ac4cd9f44ab38d41ac4cd1d8d8486dbf68a3ae539d664603905a495173f3cf6c0cddd412809191863f8f93914966a6a74acc63b163ed6e8a666eced0858f2ed11eed91bfd64fbdddbdd4d5f5b6b99d02d0d4da6c63bee19620b47622dd11eafdcd695fa4bb072b2b2b36a63ef5ce293afe46876f7c7c125dffeca4c87684e8500d35bfdc4cbd67226a7f2ded844e84a8e1c30beee3c0e89727fb4e1ca7c8995ed2aeb72bedd43878c9747fcf0f44317b7396f6688f82af04a9f54f9ff9540d51282f1eabed45b0a5adca31ad743401c0606c08b8211645d0998151df726a192800ed1d215379a4a033858d61485d4d5b194963de744b066313937c265c2d3194b69a67da3b67d1f0967eb0faabb58b14ecfd711857a4501c8776537dda2256d63edc37b71f3a79cac4e85884edfe0180cab41eb4ac1183bfefa4a56798644b57be5aa7f76f35548469556dbb4e5d2f3d2fa7518968339b455d5d1d2ddc5ea2b6af5ba9f36f76cd6ad472bd1f9ca395bb29da7eb8cd656c2dff831870ada8e5346dbbfef53a759d89e8e5a317fbe9f81b1d3e2b535b35b0510b9f7bef9ccec891bfdfe23059182b2bf774bb7afff1958da936bfd9247a444487886a6a0fd3f02757f47eb218d3c8a832e3206d9fc013d188fe5a3fcd4fcfa81e1f18299f119dd2e052e51837edc088b298984d98186374641446860b1e53541d5d5ccd8e4d4c3219065970195cd784c57659e5dda2205a7911cd28d3ffe5d432b33f5686d434ad711c580c2d6b9fb57dd178b92fbb93c7b37f3c5c36034ebeb5499d8d756cba25a2a97b9bf4f6cd3aa2bdf21917173bb90c65d2628166d77cc6991e3e99222b635acbb775b4435f9d1b98c9a8bd6c4c743645f1889acfa8f1581a4ec3ce93a7a03d09d64ea428fea19866b432ad8cf6373e69b4df99e35086a675625aa727cf66360b6dad404005187078de9169f5547c63566e7b63ab0eda0bf638edd844f149905721b9983431aaa639b1e8a0f1605e35b3aeb334b3166570b2cf14ff0463d59c2d3199ab6694605a9ea6353e8182af2b6606b6d827ad69ad766c94ae6bd11addbe3c805c69cda0470fc25ea3061afa67083dc7b90ccb4bbecf1788fed7e6a9ddbe8b9dd4c89991bb3b799cee3d4d2bf7ee096ba54063237d7ce1636a78a181acf159ffd123b4f77097a9e96ccc300034dd346b348d71ac0cc78b7f1ab1e168030d7d7a851a5e54357cfc9802cd0e96666c38da40a1c48d8a306dab628e1f8b8cc38d8e10b4382bcb3e4d9b5bed30ae0978e3d1f042034d7d314e719fcf4759d93760060c1537c3784dfd0b698f6fc81c98d6c00883b141f0e284b801b6864291998b7153cca90c8b4271559b83aa7d0b3033a8c60caba57283b141473b13b30953fe52b921bb5d5a7ecd1eed3a4ae5928b126f0e0dfdd5fac3fcdd6057ff4054ed770aa67110b5cff1cd23a3bdf0d91e60156a14c1909f3ced7bbd5adab5556e4a6672a061b9f6fdb183bfb9a58afb8724cb7479c075379774da013205c9688543c7b493167d7380922f1da6ac9e0afe6ea038d35e16dbcd556e12b5c7a963f51ce60ec4cb67e87c71422437720038f519ae273772159d2879cec4d3da8b2ea61145f1947405da1bba934118c54d4b00d25be6fe24ee67a18cabd7559c4714decffca5b77288c25c5fc8529f18d30e3f167fd553b94cebb59c08a673f6f8b4d5617971ecb21c08a5bd21811198b5f40e98fd4d6ea0acfe0eddb1d7ebcf98fb9177b85f7d731267fe00841c76031ac7cf9d691f13c35a53394cebb59cd0a3c9529ff530666822c9b55b1907784c29c278dc7e70c62b8af2fa1be5d46b74a07c0150c6f9e32d74e60f40fdd50477dcace55d99763f527a4bd5b0893517c73d804cebc6a08a4b3426902beed5906d1ffc7e2437d84c1b5df4d08e01a38b120c0efe2e41c73d230ee5ea87d9e5c8c9c38385fd70d9a2431ace940d02c831167721b0ed72d3a6df26d38a7c17c21f93d7bad1c5b434d3721d4566a2c8d40be72f0dd50f973477df5c1abcb5075d72fe12113f4e9b01374a10ba01504e950eb406d0750f4e9b65b45b14fb7ada0168c39e2f348103cbb432716fc7377b2c07e2f4035ca62def3b12d145761c1d2e5a99c7d022e8cfb8d76f9bc11ab65b5e1cf42da44157f9334fda697933d2a2a14337ec67cbac8e72b09896af6959189e163b9be685691f87a6e5617223277dd6301017d3fc8eab5dddc186e71d67889b36653a6d8e5f9fad7dc955f141d2b4811c90309e3183eae8c6fdcba109811315e0f7e340685a06ca9ceaaecf42388ece65a692c3f235efbe30ad45535bf3f92fbb3bde41d2b43ce6c817cc9add6d95dd37f704685ac1f22cacbf2abec19f4044a109fb8c0200123933e6f16dae1bd38ac4eb0e22d31a35add02962309e303b064707c08a979a18ed80695acd6ed93387a29fc42affe4c2734b84775b493679dde595fcf5036afdf10f1d4f2e9cbe04f0ca677fb74b75c5539d32271f34f40d4cc2585ff4d5353affda4ff5fadaae2771ebbfad448fa648f949277575899d693bf2c9146d3f121f87d17ef3fe56d6fd133e53c7c17b00628c7a9df633ef1680c3cf1079f527ffa1297af081f37e69dd83eb59ab7941e67b5c4c2bb4bb8bc89969056672a534ada8bd5e98c9583ecd398b27d53e03eb87d9f67035ec06e0e4478111f5de4717d57016af7eba34896cdef2c431de5fed1f63ab5921ede1166510765ac97664b4945b3d61b8ec1d709a10129a561997ff8086c817d559da9c176ff72a11c2d3ec2f0231a31d50e3aa4e51015e5c7ae84e861b65f0c780a13b195b39320fb8872fc1e43c78ac87ef2128797107f0f2c4709af109c3c9828a6b5aa6c3b88f8f0c532b5a1cdd6575aeed8ee3312053733ae4177db2610708383c7935fbcd9a96bc7f6146d3383249f67b08feda4e5aeb16d7a24e9ad62b6a1ad24dd31abf1f21ac691938be9ac1af6ef24f319b34ade1fe35fc6186fefdf038b79cf2dc121d79b79502b7d7885e6d22babd460bff69a2ed870bb4e2b0c6509e5ba08577db74adb95b002e3c43c4d2bca2dad48a4b00ae09d4e7ba9a15c1fe85b414d10a45250c28f5e6888ae1a10a31ad75156ed4ac4c26318c5fdf9c9cdd2c8dc862a0c0c8bc63bd63ab8075379a57cc831d97cd3bf889b68dd153bf1d9e18da78330b8621a9392fab27104492ecd71345df1859d1baefd52bf206d6ed7a45ff8684d52e897263ab19d3fe549ef60d8ccc4319575f74e8fb711d1c6f6c55dd47ebbfac9657ae27114285f6f142d5b2ca78e96f7cd45f4de87f9b83ab6d9c340613b3eab7bb9c92ecf70fbc6ac22a7eb7d191a9bcfcad05de61c7c0b8dc3b79a1579b557c2ad13d232aa70d45d1ab24a8e2d381621951d22e5ee2aba2e88fa91aec200c4c150f2e8a17288af9fd6258c5e10d4815ab6844e902c98d9ce39920592c2b3c52c5a712bd5700350ee965cf8276f6a7caac55f48295a908c0d8aa1ad70b4d246de7e043286d92a8fe0ddc2a968bff073b2dade7ee67c12d0000000049454e44ae426082</data>
+        <data format="PNG" length="3612">89504e470d0a1a0a0000000d49484452000000ad0000003008060000006357fade00000de349444154789ced5d5f685bd71dfe69a4e00e3394b18724946197b5600f4aafe73ec85b4baedb97ca4e49a57650bbeb831467c4de5eeab42f493c52350fa9a34286d5e1ce0a84d82d183b0f8eec419895a1221792591e1e7220057b78432ea638c618d998c0b787ab7b75ff9c73efb9574aea343a2f9fe57bfefcced1ef7cf73bbf7bce1581884688a86a0800ab0000644b883da0eaedd4f089c58a1d3475af00009086674117003a3fc145790ce8bf9907007cdf1dafe1e38b9e0ae6d71502f5c753a065802e4cb8467f01884ca1e6c035748dee0a0090af3a33aa5b94c780c256b126216a28844219b1a730a217467583b14cbee6b8357444c70cf9f522a4647599d50ea5e1d99a64a8a12dda66c03ae02f3c7c8635a33f9eaa396e0db9c8bd905f2fc21ff7c09889142809d0f02c280904afcf03002696942883683dfe8b13953b2e80a1e111444ef522d2d35bc20822a77a31181f0400140a85c7479200484d55774217b78a188c03919e5e048eca88f444bcd7ff10ec63617518f6a26228b6609bb2cb78248c8b22807b4053ab8442eb069a5a2548ad01eee733e7638f05b39f391fd3ecaf9abd1958c6a3ff837e4f13f9a1d8c740ebccdb836b8615499199794f1ad70be3464ef51abe8860670843c3230080d1b109200ec89d41edbad41ac07c6e7eff33ae6a7fb51c024687955a0388f4f456c4b455b58f83967fc870a941379c1d36309ead48e3ca57b3e20e0523c322c71f40dc53ec4bcda46ceb57f355ea20155db7b3afe0c13e0081a3b2e50e847587f17a04f639e5f78d1051948892441405e0fb6892e84098e8811846a41c255f6f215e8afe2d4757165a84ebe3e1e8b135ea7ee1882fa9b79781b9dc3c4e9cfc03edd22ed5511d05e4364a0cc61dcb191040b8ab9b56be59d1ead163500e525f4f941a9f7fd6d77654c6eef62ed5d5d7d1dcad34257d3e9fbebe74268bb3036769737b93a4a6266abff6854fb5b3e5cb166abbd34ebbdbbb86faa5a626925e94e8f4fba78df5c581e62f5ba88eeae8d2a797a8fd955ffb12c32348fe35a995f71f3a489bdfdea75ddaa5a53b398b3d2aaa76b3faa79503d07eac43ab4f9fafaebe8ee6e434adf5acd1e123a5ef45c0bebafa3aadbffa76129f2769e6c60cad7cbb6268c77fe820a5df9ca69db777e8e99ffcd89724d3ccf3f284cb2eb9d5b04e4fd084f630c0aad1829d21601dc866b242335e2d1f382a2b1d29316dff07fd1a23055e938122507caddc5eb03368b5efb8f5fa607cc86a5f06889cea35d467d68606462c96fecfd0a4eae733e763fcf1025bf32307a0a88cb3c13e409150a571d0f21fafd03e13e3e33894ffaf03a177ba8ce35d627a8d69a353f3b8f26f0f8cf8b334e1643b9365fb88e83397cc6d87b181301de6308799299b5f6ab1308899299a9a9aa8fd37edd4dd1536321280dc428e5a5a7e6561e8e656097a464a7c9e243d934c4f4d9699c764c7d29d1c4ddf98a6731f5da05dda257fbd9ffa7afaa8bbfb2d9f9dfd2a23255a0350db89f644a9eff7277cd19e5e2c2c2c5898baebed2eea78a3d337363681ee7f8529ba19253a50472d2fb650dfc9a8c670fa7642c742d4f8a773cee3502dfb8e7550f4641fa9d78372909a062f18bedfb3e76398b93143bbb44b819702d4f697cf7c8a86d8ab2c1eabee45b0a4f5ea31adeb680280c1f81030231645d09881519fca30c1ce90a13c72d098c2c230a4aca62d8c74bc6ccfe8f8049f09ef95194a5dcd33edcd9834bca91facfeaaed22076b7f6cc655ed6fb03368a84f5dc4bab50ff78ced87dee932303a32b07c7f00a030ad072dabc7c04098e6985c4b74e9eb15fae05663559856d1b62bd4fdc2b3ee342a11ad150a387cf830a5bf9aa3f66fda28fc77ab66d56bacbe0f4fd3c29d1c6d6e6f72195bcd7f3f0e5c29693955dbae7cb342dd27a35af9d8c019ea78a3d367666a9ee64c67b238fdfe698d91a3ffb8c561b2081616ee6a76f5fdf36b0b53ad7dbb46f480880e10d5d53f4d894f2e3199d6628fcb71706d9fc01d518ffe7a3fcd4e4d2b1e2f0d57ce88766970ae7a8c5bb06144b7989a491918636478047a86d3346d69353b3a3ec1641814c065704d1396da659577d29c6a7911cde8a6fff3b979667fcc0ca96a5afd38b018daad7de6f645e3e53f5adb2a62e13b22ba36494461cf3879778dc3b544a7034413bb6b0a6356d8ce91c1498a0270d2b4b9dc3c9cf275bcde41afd2abda4cbebf1da5e62e2363267d3e1f1df1f9923e9faffbb76ff9ba0fbdabe56f915a28494474c4e70b1e0b521dd519ea533f4fbf3959663ee9ac76fd8b2faf73ef0ce1aeee72f99794f2fafa13d792ca5ae45a9fa13d3777a016a9c560afda9f2880e6f7957108d78769fac6a4711cde0e1bfa471279b2cfdcfec70367b9779eb54201ea6702aac08089595ba6d552e98959a5ed8d2eda682f58e3b4a3e3a53b4151816c266b605455732263a3f1605c35b3aeb334b31a65b0b3cf10ff0463d55c283399a366b46128964665f5477f070abc261b19d8649f6b4d6bb663bd7c5dbdb369f61595ef4c5d3368d18388d7a8818afe69426f07976579c9f7799ae8bb764fedf60f84a989332377b68a38d1778216eede15d64a5253137d7cee636a7cae91ccf159ffa183b4bbbdc3d474160d781e68be61d468aab633df0978f14f3d361e6aa4a14f2f51e3f38a864f1e95a1dac1d28c8d871a2994baee1c5d21b6a6d46bfa36d9183f161987eb9d21a87156967daa3637dba15f13f0c6a3f1b9469afc624c61fc6205cc172a6d86f19acea4f31e9f90d930ad8e1106e383e0c5093103b6864289994b7153641486054aabda2214edab32b79eb94a7b1ed47283f1415b3b53332943fe72b921ab5d6a7e9d3daabd6ab96cc6c593435d7fd5fe30ffafb34b1d2f35966b2ee7649fed9347467b9153bd0abb668ce34c9ef6bd5e2eefdaaa34659737400977edfbe3fb7f734b0d1f1e92a72881c36e2ed7690bd8804b3b6c3aa69eb4e8bf09c8281fa6ac9d0afe61a038d35e14dbcd556912b5c7ae630d1ce69692953374b13421b2abca4e21663eddf5ecea4655274a9133f1d4f662993c62289d92ae427b43b797114169d31280fcbab13fa97b05c863ca7505671183f7337ff9f50dc460ac2f64aa4f8c69138fc45fb55429d37a2d278285a2f5ce637658de1daa220742796f88340ca396de02b3bfd95554d4dfa1dbd67afd05b1fed272e90ee7a27f219bdd80faf17366da47c4b0e65409d37a2d27746b32d5673e8c191acf72ed96c7001e538a301eb71f9cf18aa1b2fec638f5ea1da8b807c863fcf1163af307a0e1728a3b6ee6f28e4cfb30527e5dd1b0a92507c7dd874cebc4a04efb91a56269af86dbf6c1ef477695cdb4b18c87767418cbb86070f07709daee19b129d7906097233b0f0f54df5fcb0ea93b5336086083b1b80b816d979336fd3e9956e4bd10feb87bad1bcbe45d332dd751dc4c1437f5c2fe4d430d89b2e6eebf99076fed4117ecdf44c48fd316c08d1284ae035454a4032d0374d583d36e30da2d897d2d6d01b46ecd171ac7be655a37716fdb277b2c07e2f4035ca6adec3d12b10c3b8e0e07adcc636811f4179cebb7cc601583a60707fde93ce8327fe6b9765ade8c3469e8d075ebd932b3a3ec2fa6e56b5a1646a6c4cea67961da47a16979985ddd707dd6504a8a697edbd5aee6608959db19e2a44d994e5be4d76769dfe5aa783f695aa908a4f467cca038ba7eff72685ce04405f8fdd8179a96816e4e75376c40388ece65a6b2c3f235ef43615a93a636e7f35f7476bcfda46979cc51dc336a76a75576ffcdc740d30a966761c365f10dfe04220a8d5b67140090c8993181d3b84ca775605a9178dd7e645abda6153a450c6b7dd8d2393a0056bcd4c068fb4cd3aa76bb3d7328fa4aacca4f2e3c334778af8ddc26afbbbcb2bfbb4f6d3fffa9edc9851317005ef9c21f77e870e954a79b930f2aface4f405f5fece5253afbca2fb5fadaaf6671eb7f6d440f2649fe4598babbc5ceb41dfc6492361f888fc3c819e30903d6f7277ca68e837701c419f56220ccddf7bab3073cfd1491577ff21f98a4fb1ff2eb379cc66d60ade60599ef5131add0ee2e227ba61598c9d5d2b4a2f67a61267df93ce72c9eabf619d89060dbc3d5b0ab809d1f49c3ca771fcb28e12c5efd746142d9fabcc5b65ffb6374b120a43d9ca20cc24eebb21d375acaa99e081cf60ed84d08179a561e73ff020d9137aab3b4392fdeee552244a6d86f0462463ba0c455eda202bcb8f4d0ed656e94c11f07866e2f5bca9171c03dbc09a6e8c16397d9cc6087b20b07f372c7b09bf129ddc982aa6b5aa6c3388f8f1ba696d538bac3ea5cdd1dc76340a6e6b4c92f7a67c31620d9dc7955fb8d9a96bcbf6146d5386e92dbf721f8ebc3b4d423ae45ed34ad575435a493a6d5bf3f4258d332706c7119efdee09f6236685addf7d7f8e769facf7607b79cfccc1c1d7caf8da4af96885e6e26fa6a89d2ff6da6cded342dd8ac31e467d2947eaf5dd39a3b7bc0b9a788589a57549b9a710ec01581fa1c57b32278269d7745b44251091dba7a7244a5f0509598d6bc0a37c76159cca35eefbfe9ce6e9646643190343c6b5befe82260de8de61501fe5e033e330ac49d796873c750ed61168cc0a5e6bca89c4010496edf9e28fac4c88ce67daf5e9137b04ed7abfa1b1266bb5c941b5d5c36ec4fe5695f697816f298f2a043db8f6be378a38bca3e5aff45a5bc7c358b10aab48f178a9695c7cabff1d17039a5fd360757dbd8690c266e28efeeb24b6edf7fe05513d6f0878db64ce5e5b71678871da53177cfe4851e6dd6f08944e78ca89e361445af92a0864f068a654459bb7889af8aa23fae68b0fd303035dcbf285ea024e61f16c3ca00f709480d6ba847d705b2ab1bb66782dc6245e1911a3e91e8bd022871482f7b16d4b33f3566ada117ac4e4500461795b85e683c6b39071f42799344ed37706b5829fe1fab8c941d3590b5ea0000000049454e44ae426082</data>
     </image>
 </images>
 <connections>
@@ -1210,7 +1285,6 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
     <tabstop>zoneToneChoice</tabstop>
     <tabstop>confirmationToQuit</tabstop>
     <tabstop>checkedTray</tabstop>
-    <tabstop>autoregister</tabstop>
     <tabstop>voicemailNumber</tabstop>
     <tabstop>useStunNo</tabstop>
     <tabstop>STUNserver</tabstop>

@@ -25,7 +25,7 @@
 #endif
 
 #define VERSION					"0.2"
-#define PROGNAME				"SFLPhone"
+#define PROGNAME				"sflphone"
 #define SKINDIR					"skins"
 #define PIXDIR					"pixmaps"
 #define RINGDIR					"rings"
@@ -39,6 +39,7 @@
 #define PIXMAP_PREFERENCES		"preferences.png" 
 #define PIXMAP_ABOUT			"about.png" 
 
+#define MONO					1
 #define	SAMPLING_RATE 			8000
 #define AMPLITUDE				8192
 #define SIZEBUF 				1024*1024

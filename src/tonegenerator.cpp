@@ -51,7 +51,6 @@ ToneThread::run (void) {
 	while (mngr->tonezone) {
 		mngr->audiodriver->audio_buf.setData (buffer, mngr->getSpkrVolume());	
 		mngr->audiodriver->writeBuffer();
-		//mngr->audiodriver->writeBuffer(buf, totalbytes);
 	}
 }
 

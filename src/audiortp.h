@@ -38,13 +38,16 @@ class Manager;
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtpRTX : public Thread, public TimerPort {
 public:
-	AudioRtpRTX (SipCall *, AudioDrivers *, Manager *, bool);
+	AudioRtpRTX (SipCall *, AudioDrivers *, AudioDrivers *, Manager *, bool);
 	~AudioRtpRTX();
 	virtual void run ();
 
 private:
 	SipCall				*ca;
 	AudioDrivers		*audioDevice;
+#ifdef ALSA
+	AudioDrivers		*audioDeviceRead;
+#endif
 	RTPSession 			*sessionSend;
 	RTPSession 			*sessionRecv;
 	SymmetricRTPSession	*session;

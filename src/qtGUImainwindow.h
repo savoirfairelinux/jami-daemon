@@ -124,6 +124,10 @@ public:
 	QPopupMenu 			*mypop;
 	MyTrayIcon 			*trayicon;
 
+	Vector				*micVolVector;
+	Vector				*spkrVolVector;
+	int			vol_mic_x, vol_mic_y;
+	int			vol_spkr_x, vol_spkr_y;
 
 	// Public functions
 	void 	 setMainLCD		 	(void);
@@ -187,7 +191,8 @@ public slots:
 
 	void	 volumeSpkrChanged		(int);
 	void	 volumeMicChanged		(int);
-	
+	void	 registerSlot			(void);
+
 protected:
 	// To handle the key pressed event
 	void 		 keyPressEvent 	(QKeyEvent *);
@@ -195,10 +200,7 @@ protected:
 private:
 	// Configuration skin file
 	Point				*pt;
-	Vector				*micVolVector;
-	Vector				*spkrVolVector;
-	int			vol_mic_x, vol_mic_y;
-	int			vol_spkr_x, vol_spkr_y;
+	
 
 	// To construct ring rect pixmap
 	QImage 		 imageRing;

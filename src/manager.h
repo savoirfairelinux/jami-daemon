@@ -43,6 +43,10 @@ public:
 	PhoneLine		*phLines[NUMBER_OF_LINES];	
 	AudioRtp		*audioRTP;
 	AudioDrivers	*audiodriver;
+#ifdef ALSA
+	AudioDrivers	*audiodriverReadAlsa;
+#endif
+	bool 			 useAlsa;
 	ToneGenerator	*tone;
 	QString 		*DirectCall; // from -p argv
 	bool 			 mute;
@@ -104,7 +108,8 @@ private:
 	int 	mic_volume;
 
 	void 	sip_init			(void);
-	bool 	createSettingsPath		(void);
+	void 	initVolume			(void);
+	bool 	createSettingsPath	(void);
 
 };
 

@@ -31,12 +31,11 @@
 
 class AudioDriversOSS : public AudioDrivers {
 public:
-	AudioDriversOSS (void);
+	AudioDriversOSS (DeviceMode);
 	~AudioDriversOSS (void);
 
 	int		initDevice		(DeviceMode);
 	int		resetDevice		(void);
-	int		closeDevice		(void);
 	bool	openDevice 		(int);
 	int	 	writeBuffer		(void *, int);
 	int	 	writeBuffer		(void);
@@ -45,8 +44,8 @@ public:
 	unsigned int readableBytes (void);
 
 	int audio_fd;
-
 private:
+	int		closeDevice		(void);
 
 };
 

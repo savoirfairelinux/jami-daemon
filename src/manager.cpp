@@ -34,6 +34,11 @@
 #include "../stund/stun.h"
 
 #include "audiodriversoss.h"
+
+#ifdef ALSA
+#include "audiodriversalsa.h"
+#endif
+
 #include "configuration.h"
 #include "configurationtree.h"
 #include "global.h"
@@ -85,8 +90,7 @@ Manager::Manager (QString *Dc = NULL) {
 		gui()->configuration();
 	} 
 
-	spkr_volume = 100;
-	mic_volume = 100;
+	initVolume ();
 }
 
 Manager::~Manager (void) {
@@ -94,6 +98,9 @@ Manager::~Manager (void) {
 	delete sip;
 	delete audioRTP;
 	delete audiodriver;
+#ifdef ALSA
+	delete audiodriverReadAlsa;
+#endif
 	delete tone;
 	delete[] phLines;
 }
@@ -133,16 +140,23 @@ Manager::createSettingsPath (void) {
  */
 void
 Manager::selectAudioDriver (void) {
-	this->audiodriver = new AudioDriversOSS ();
-
-	// TODO remplacer par ce qui suit qd ALSA sera implementé
-#if 0 
 	if (Config::getb("Audio", "Drivers.driverOSS")) {
-		this->audiodriver = new AudioDriversOSS ();
-	} else if (Config::getb("Audio", "Drivers.driverALSA")) {
-		this->audiodriver = new AudioDriversALSA ();
+		useAlsa = false;
+		this->audiodriver = new AudioDriversOSS (AudioDrivers::ReadWrite);
 	}
+	if (Config::getb("Audio", "Drivers.driverALSA")) {
+#ifdef ALSA
+		useAlsa = true;
+		this->audiodriver = new AudioDriversALSA (AudioDrivers::WriteOnly);
+		this->audiodriverReadAlsa = new AudioDriversALSA (AudioDrivers::ReadOnly);
 #endif
+	}
+}
+
+void
+Manager::initVolume (void) {
+	spkr_volume = gui()->spkrVolVector->Y() - gui()->vol_spkr_y;
+	mic_volume = gui()->micVolVector->Y() - gui()->vol_mic_y;
 }
 
 /**
@@ -154,7 +168,7 @@ Manager::sip_init (void) {
 		 sip->initRtpmapCodec ();
 	}
 	
-	if (Config::getb("Preferences", "Options.autoregister")) {
+	if (Config::getb("Signalisations", "SIP.autoregister")) {
 		// Register to the known proxies if available
 		if (Config::gets("Signalisations", "SIP.password").length() > 0) {
 			sip->setRegister ();

@@ -61,6 +61,7 @@ void ConfigurationPanel::init()
    password->setText(QString(Config::getchar("Signalisations", "SIP.password", "")));
    hostPart->setText(QString(Config::getchar("Signalisations", "SIP.hostPart", "")));
    sipproxy->setText(QString(Config::getchar("Signalisations", "SIP.sipproxy", "")));
+       autoregister->setChecked(Config::get("Signalisations", "SIP.autoregister", (int)true));
    playTones->setChecked(Config::get("Signalisations", "DTMF.playTones", (int)true));
    pulseLength->setValue(Config::get("Signalisations", "DTMF.pulseLength", 250));
    sendDTMFas->setCurrentItem(Config::get("Signalisations", "DTMF.sendDTMFas",0));
@@ -70,6 +71,11 @@ void ConfigurationPanel::init()
    // For audio tab
    ossButton->setChecked(Config::get("Audio", "Drivers.driverOSS", (int)true));
    alsaButton->setChecked(Config::get("Audio", "Drivers.driverALSA", (int)false));
+#ifdef ALSA
+   alsaButton->setEnabled(true);
+#else
+   alsaButton->setEnabled(false);
+#endif
    codec1->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec1", "G711u")));
    codec2->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec2", "G711u")));
    codec3->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec3", "G711u")));
@@ -87,8 +93,7 @@ void ConfigurationPanel::init()
      "Preferences", "Options.zoneToneChoice", "North America")));
      checkedTray->setChecked(Config::get(
      "Preferences", "Options.checkedTray", (int)false));
-     autoregister->setChecked(Config::get(
-     "Preferences", "Options.autoregister", (int)true));
+ 
   voicemailNumber->setText(Config::get("Preferences", "Themes.voicemailNumber", "888"));
   
    //  Init tab view order
@@ -128,13 +133,14 @@ void ConfigurationPanel::saveSlot()
    Config::set("Signalisations", "SIP.password", password->text());
    Config::set("Signalisations", "SIP.hostPart", hostPart->text());
    Config::set("Signalisations", "SIP.sipproxy", sipproxy->text());
+      Config::set("Signalisations", "SIP.autoregister",autoregister->isChecked());
    Config::set("Signalisations", "DTMF.pulseLength",  pulseLength->value());
    Config::set("Signalisations", "DTMF.playTones",  playTones->isChecked());
    Config::set("Signalisations", "DTMF.sendDTMFas" , sendDTMFas->currentItem());
    Config::set("Signalisations", "STUN.STUNserver", STUNserver->text());
  
-   Config::set("Audio", "Drivers.driverOSS", ossButton->isChecked());
    Config::set("Audio", "Drivers.driverALSA", alsaButton->isChecked());
+   Config::set("Audio", "Drivers.driverOSS", ossButton->isChecked());
 
    Config::set("Audio", "Codecs.codec1", codec1->currentText());
    Config::set("Audio", "Codecs.codec2", codec2->currentText());
@@ -149,7 +155,7 @@ void ConfigurationPanel::saveSlot()
    Config::set("Preferences", "Options.confirmQuit", 
      confirmationToQuit->isChecked());
    Config::set("Preferences", "Options.checkedTray", checkedTray->isChecked());
-   Config::set("Preferences", "Options.autoregister",autoregister->isChecked());
+
    Config::set("Preferences", "Options.voicemailNumber", voicemailNumber->text());   
 #if 0 
    QMessageBox::information(this, "Save settings",
