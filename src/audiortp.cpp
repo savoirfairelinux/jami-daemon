@@ -68,13 +68,13 @@ AudioRtp::createNewSession (SipCall *ca) {
 		symetric = true;
 	}
 	
-	if (manager->useAlsa) {
-		RTXThread = new AudioRtpRTX (ca, manager->audiodriver, 
+#ifdef ALSA
+	RTXThread = new AudioRtpRTX (ca, manager->audiodriver, 
 				manager->audiodriverReadAlsa, manager, symetric);
-	} else {
-		RTXThread = new AudioRtpRTX (ca, manager->audiodriver, NULL, manager, 
+#else
+	RTXThread = new AudioRtpRTX (ca, manager->audiodriver, NULL, manager, 
 			symetric);
-	}
+#endif
 	
 	if (RTXThread->start() != 0) {
 		return -1;
@@ -110,8 +110,9 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioDrivers *driver,
 	this->ca = sipcall;
 	this->sym =sym;
 	this->audioDevice = driver;
-	if (manager->useAlsa)
-		this->audioDeviceRead = read_driver;
+#ifdef ALSA
+	this->audioDeviceRead = read_driver;
+#endif
 
 	// TODO: Change bind address according to user settings.
 	InetHostAddress local_ip("0.0.0.0");
@@ -254,18 +255,19 @@ AudioRtpRTX::run (void) {
 		// Send session
 		////////////////////////////
 		if (!manager->mute) {
-			if (manager->useAlsa) {
-				i = audioDeviceRead->readBuffer (data_from_mic, 320);
-			} else {
-				i = audioDevice->readBuffer (data_from_mic, 320);
-			}
+#ifdef ALSA
+			i = audioDeviceRead->readBuffer (data_from_mic, 320);
+#else
+			i = audioDevice->readBuffer (data_from_mic, 320);
+#endif
 		} else {
 			// When IP-phone user click on mute button, we read buffer of a
 			// temp buffer to avoid delay in sound.
-			if (manager->useAlsa)
-				i = audioDeviceRead->readBuffer (data_mute, 320);
-			else
-				i = audioDevice->readBuffer (data_mute, 320);
+#ifdef
+			i = audioDeviceRead->readBuffer (data_mute, 320);
+#else
+			i = audioDevice->readBuffer (data_mute, 320);
+#endif
 		}
 
 		// TODO : return an error because no sound
