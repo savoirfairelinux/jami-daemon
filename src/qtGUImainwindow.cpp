@@ -21,8 +21,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 // QtGUIMainWindow Implementation                                             //
 ////////////////////////////////////////////////////////////////////////////////
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <qbitmap.h>
 #include <qcheckbox.h>
@@ -272,6 +276,7 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	// Show the GUI
 	this->show();	
 
+	// Handle the tray icon system
 	mypop = new QPopupMenu(this);
 	mypop->insertItem ("Quit", qApp, SLOT(quit()));
 

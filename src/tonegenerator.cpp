@@ -223,19 +223,21 @@ ToneGenerator::toneHandle (int idr) {
 	int idz = idZoneName(Config::gets(QString(
 					"Preferences/Options.zoneToneChoice")));
 	
-	buildTone (idz, idr, SAMPLING_RATE, AMPLITUDE, buf);
+	if (idz != -1) {
+		buildTone (idz, idr, SAMPLING_RATE, AMPLITUDE, buf);
 
-	// New thread for the tone
-	if (tonethread == NULL) {
-		tonethread = new ToneThread (manager, buf, totalbytes);
-		tonethread->start();
-	}
+		// New thread for the tone
+		if (tonethread == NULL) {
+			tonethread = new ToneThread (manager, buf, totalbytes);
+			tonethread->start();
+		}
 
-	if (!manager->tonezone) {
-		tonethread->join();	
-		if (tonethread != NULL) {	
-			delete tonethread;
-			tonethread = NULL;
+		if (!manager->tonezone) {
+			tonethread->join();	
+			if (tonethread != NULL) {	
+				delete tonethread;
+				tonethread = NULL;
+			}
 		}
 	}
 }
