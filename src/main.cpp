@@ -31,7 +31,7 @@
 #include "qtGUImainwindow.h"
 
 void OptionProcess (int argc,char **argv) ;
-QString *pOption = NULL;
+QString *pOption ;
 
 
 int
@@ -43,7 +43,7 @@ main (int argc, char **argv) {
 	if ( pOption )  
 		manager = new Manager(pOption);
 	else
-		manager = new Manager(NULL);
+		manager = new Manager(new QString());
 
 #if 0
 	QTranslator translator (0);
