@@ -35,6 +35,11 @@
 #include "sip.h"
 #include "sipcall.h"
 
+#include <string>
+#ifdef  CCXX_NAMESPACES
+using namespace std;
+#endif
+
 // TODO : mettre dans config
 #define DEFAULT_SIP_PORT	5060
 #define RANDOM_SIP_PORT		rand() % 64000 + 1024
@@ -45,7 +50,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Thread implementation 
 ///////////////////////////////////////////////////////////////////////////////
-EventThread::EventThread (SIP *sip) : QThread () {
+EventThread::EventThread (SIP *sip) : Thread () {
 	this->sipthread = sip;
 }
 
@@ -114,11 +119,13 @@ SIP::initSIP (void) {
 		stunSvrAddr.addr = 0;
 		
 		// Stun server
-		QString svr = Config::gets("Signalisations/STUN.STUNserver");
-		qDebug("address server stun = %s", svr.ascii());
+		//QString svr = Config::gets("Signalisations/STUN.STUNserver");
+		//qDebug("address server stun = %s", svr.ascii());
+		string svr = Config::gets("Signalisations", "STUN.STUNserver");
+		qDebug("address server stun = %s", svr.data());
 		
 		// Convert char* to StunAddress4 structure
-		bool ret = stunParseServerName ((char*)svr.ascii(), stunSvrAddr);
+		bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
 		if (!ret) {
 			qDebug("SIP: Stun server address not valid");
 		}
@@ -331,7 +338,7 @@ SIP::checkUrl(char *url) {
 int
 SIP::setRegister (void) {
 	int reg_id = -1;
-	
+#if 0	
 	QString qproxy = "sip:" + Config::gets("Signalisations/SIP.sipproxy"); 
 	char * proxy = (char*)qproxy.ascii();
 
@@ -342,7 +349,17 @@ SIP::setRegister (void) {
 							Config::gets("Signalisations/SIP.userPart"), 
 							Config::gets("Signalisations/SIP.hostPart"));
 	char * from = (char*)qfrom.ascii();
+#endif
+	string qproxy = "sip:" + Config::gets("Signalisations", "SIP.sipproxy"); 
+	char * proxy = (char*)qproxy.data();
 
+	string qhostname = "sip:" + Config::gets("Signalisations", "SIP.hostPart"); 
+	char * hostname = (char*)qhostname.data();
+	
+	string qfrom = fromHeader(Config::gets("Signalisations", "SIP.userPart"), 
+							Config::gets("Signalisations", "SIP.hostPart"));
+	char * from = (char*)qfrom.data();
+	
 	qDebug("proxy = %s", proxy);
 	qDebug("from = %s", from);
 
@@ -354,7 +371,8 @@ SIP::setRegister (void) {
 	eXosip_lock();
 	setAuthentication();
 	
-	if (Config::gets("Signalisations/SIP.sipproxy") != "") {
+	//if (Config::gets("Signalisations/SIP.sipproxy") != "") {
+	if (Config::gets("Signalisations", "SIP.sipproxy") != "") {
 		reg_id = eXosip_register_init(from, proxy, NULL);
 	} else {
 		reg_id = eXosip_register_init(from, hostname, NULL);
@@ -380,6 +398,7 @@ SIP::setRegister (void) {
 
 int
 SIP::setAuthentication (void) {
+#if 0
 	QString login, pass, realm;
 	login = Config::gets("Signalisations/SIP.username");
 	if (login == "") {
@@ -402,11 +421,37 @@ SIP::setAuthentication (void) {
 		qDebug ("No authentication");
 		return -1;
 	}
+#endif
+
+	string login, pass, realm;
+	login = Config::gets("Signalisations", "SIP.username");
+	if (login == "") {
+		login = Config::gets("Signalisations", "SIP.userPart");
+	}
+	pass = Config::gets("Signalisations", "SIP.password");
+
+	if (callmanager->useStun()) {
+		realm = Config::gets("Signalisations", "SIP.hostPart");
+	} else {
+		if (Config::gets("Signalisations", "SIP.sipproxy") != "") {
+			realm = Config::gets("Signalisations", "SIP.sipproxy");
+		} else {
+			realm = Config::gets("Signalisations", "SIP.hostPart");
+		}
+	}
+	
+	if (eXosip_add_authentication_info(login.data(), login.data(), 
+		//pass.data(), NULL, realm.data()) != 0) {
+		pass.data(), NULL, NULL) != 0) {
+		qDebug ("No authentication");
+		return -1;
+	}
 	return 0;
 }
 		
 
 // Form the From header field
+#if 0
 QString
 SIP::fromHeader (QString name, QString user, QString host) {
 	if (name != NULL) {
@@ -415,11 +460,26 @@ SIP::fromHeader (QString name, QString user, QString host) {
 		return ("sip:" + user + "@" + host);
 	}
 }
+#endif
+string
+SIP::fromHeader (string user, string host) {
+	return ("sip:" + user + "@" + host);
+}
 
 // Form the To header field
+#if 0
 QString
 SIP::toHeader(QString to) {
 	if (to.contains("sip:") == 0) {
+		return ("sip:" + to );
+	} else {
+		return to;
+	}
+}
+#endif
+string
+SIP::toHeader(string to) {
+	if (to.find("sip:") == string::npos) {
 		return ("sip:" + to );
 	} else {
 		return to;
@@ -479,7 +539,7 @@ int
 SIP::outgoingInvite (void) {
 	char * from;
 	char * to;
-	
+#if 0	
 	// Form the From header field basis on configuration panel
 	QString qfrom = fromHeader(Config::gets("Signalisations/SIP.fullName"), 
 								Config::gets("Signalisations/SIP.userPart"),
@@ -512,7 +572,40 @@ SIP::outgoingInvite (void) {
 	if (startCall(from, to, NULL, route) <= 0) {
 		return -1;
 	}
+#endif	
+	// Form the From header field basis on configuration panel
+	string qfrom = fromHeader(Config::gets("Signalisations", "SIP.userPart"),
+								Config::gets("Signalisations", "SIP.hostPart"));
+	from = (char*)qfrom.data();
 	
+	// Form the To header field
+	string qto = toHeader(string(callmanager->bufferTextRender().ascii()));
+	if (qto.find("@") == string::npos and 
+			Config::getb("Preferences", "Options.autoregister")) {
+		qto = qto + "@" + Config::gets("Signalisations", "SIP.hostPart");
+	}
+	to = (char*)qto.data();
+		
+	qDebug ("From: <%s>", from);
+	qDebug ("To: <%s>", to);
+
+	// If no SIP proxy setting
+	if (Config::gets("Signalisations", "SIP.sipproxy") == "") {
+		if (startCall(from, to, NULL, NULL) <= 0) {
+			qDebug("SIP: no start call");
+			return -1;
+		}
+		return 0;
+	}
+	
+	string qroute = "<sip:" + Config::gets("Signalisations", "SIP.sipproxy") 
+							+ ";lr>";
+	char * route = (char*)qroute.data();
+	
+	if (startCall(from, to, NULL, route) <= 0) {
+		qDebug("SIP: no start call");
+		return -1;
+	}
 	return 0;
 }
 
@@ -528,7 +621,8 @@ SIP::setLocalPort (int port) {
 	
 void
 SIP::carryingDTMFdigits (int line, char digit) {
-	  int duration = Config::geti("Signalisations/DTMF.pulseLength"); 
+	  //int duration = Config::geti("Signalisations/DTMF.pulseLength"); 
+	  int duration = Config::geti("Signalisations", "DTMF.pulseLength"); 
       
 	  static const int body_len = 128;
 
@@ -544,10 +638,13 @@ SIP::carryingDTMFdigits (int line, char digit) {
 	  delete[] dtmf_body;
 }
 
+// Handle IP-Phone user actions
 int
 SIP::manageActions (int usedLine, int action) {
 	int i;
-	QString referTo;
+//	QString referTo;
+	string referTo;
+	
 	char tmpbuf[64];
 
 	assert (usedLine < NUMBER_OF_LINES);
@@ -637,14 +734,21 @@ SIP::manageActions (int usedLine, int action) {
 
 	// IP-Phone user is transfering call
 	case TRANSFER_CALL:
+#if 0
 	   	referTo	= toHeader(callmanager->bufferTextRender());
 		if (referTo.contains('@') == 0) {
 			referTo = referTo + "@" + 
 				Config::gets("Signalisations/SIP.hostPart");
 		}
+#endif		
+		referTo	= toHeader(string(callmanager->bufferTextRender().ascii()));
+		if (referTo.find("@") == string::npos) {
+			referTo = referTo + "@" + 
+				Config::gets("Signalisations", "SIP.hostPart");
+		}
 		
 		eXosip_lock();
-		i = eXosip_transfer_call(call[usedLine]->did, (char*)referTo.ascii());
+		i = eXosip_transfer_call(call[usedLine]->did, (char*)referTo.data());
 		eXosip_unlock();
 		break;
 		

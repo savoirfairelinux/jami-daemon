@@ -37,6 +37,13 @@
 #include "phoneline.h"
 #include "sipcall.h"
 
+#include <cc++/thread.h>
+#include <string>
+#ifdef  CCXX_NAMESPACES
+using namespace std;
+using namespace ost;
+#endif
+
 // List of actions
 #define ANSWER_CALL		0
 #define	CLOSE_CALL		1
@@ -51,7 +58,8 @@
 #define AUTH_REQUIRED	407
 #define	ADDR_INCOMPLETE	484
 
-class EventThread : public QThread {
+
+class EventThread : public Thread {
 public:
 	EventThread (SIP *);
 	virtual void 	 run ();
@@ -79,8 +87,8 @@ public:
 	int 	startCall 				(char *,  char *,  char *,  char *);
 	int 	setRegister 			(void);
 	int 	setAuthentication		(void);
-	QString	fromHeader				(QString, QString, QString);
-	QString toHeader				(QString);
+	string	fromHeader				(string, string);
+	string  toHeader				(string);
 	int 	outgoingInvite			(void);
 	int 	manageActions 			(int, int);
 	int 	getEvent				(void);

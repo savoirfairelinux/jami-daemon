@@ -26,13 +26,18 @@
 #include "global.h"
 
 #define CFG_PFX		PROGNAME
+#include <string>
+#ifdef  CCXX_NAMESPACES
+using namespace std;
+#endif
 
+class ConfigurationTree;
 class Config {
-
 public:
 	Config					(void) {};
 	~Config					(void) {};
 
+#if 0
 	static QString	 gets	(QString);
 	static QString	 get	(QString, QString);
 	static QString	 set	(QString, QString);
@@ -44,6 +49,24 @@ public:
 	static bool		 getb	(QString);
 	static bool		 get	(QString, bool);
 	static bool		 set	(QString, bool);
+#endif
+	static std::string	 gets	(const char*, const char*);
+	static char* getschar	(const char*, const char*);
+	static int		 geti	(const char*, const char*);
+	static bool		 getb	(const char*, const char*);
+	
+	static std::string	 get	(const char*, const char*, const char*);	
+	static char* getchar	(const char*, const char*, const char*);	
+	static int		 get	(const char*, const char*, int);
+	static bool		 get	(const char*, const char*, bool);
+	
+	static int		 set	(const char*, const char*, int);
+	static bool		 set	(const char*, const char*, bool);
+	static std::string	 set	(const char*, const char*, const char*);
+	static char* setchar	(const char*, const char*, const char*);
+
+	static void		 setTree (ConfigurationTree *);
+	static ConfigurationTree*	tree (void);
 };
 
 #endif // __CONFIG_H__

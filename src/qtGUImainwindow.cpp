@@ -21,12 +21,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 // QtGUIMainWindow Implementation                                             //
 ////////////////////////////////////////////////////////////////////////////////
-#include <errno.h>
+
+#include "configurationtree.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include <qbitmap.h>
 #include <qcheckbox.h>
@@ -249,7 +246,8 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	connect (dtmf_button, SIGNAL(clicked()), this, SLOT(dtmfKeypad()));
 
 	// Connect to reduce
-	if (Config::getb(QString("Preferences/Options.checkedTray"))) {
+//	if (Config::getb(QString("Preferences/Options.checkedTray"))) {
+	if (Config::getb("Preferences", "Options.checkedTray")) {
 		connect (reduce_button, SIGNAL(clicked()), this, SLOT(clickHandle()));
 	} else {
 		connect (reduce_button, SIGNAL(clicked()), this, SLOT(showMinimized()));
@@ -260,9 +258,10 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	connect (quit_button, SIGNAL(clicked()), this, SLOT(quitApplication()));
 	
 	// To register when program is launched
-	if (Config::getb(QString("Preferences/Options.autoregister")) and
-			panel->password->text() == "") { 
-		configuration ();
+//	if (Config::getb(QString("Preferences/Options.autoregister")) 
+	if (Config::getb("Preferences", "Options.autoregister") 	
+			and panel->password->text() == "") { 
+	//	configuration ();
 	}
 
 	// Change window title and Icon.
@@ -285,6 +284,7 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 				NULL, mypop, parent, name);
 	trayicon->show();
 	connect(trayicon, SIGNAL(clickedLeft()), this, SLOT(clickHandle()));
+	connect (panel->buttonSave, SIGNAL(clicked()), this, SLOT(save()));
 	
 }
 
@@ -351,8 +351,10 @@ QtGUIMainWindow::setPathSkin (void) {
 				QString("default"));
 	}
 	return pathskin;*/
-	return Config::get(QString("Preferences/Themes.skinChoice"),
-		   QString("metal"));
+//	return Config::get(QString("Preferences/Themes.skinChoice"),
+//		   QString("metal"));
+	return QString(Config::getchar(
+					"Preferences", "Themes.skinChoice", "metal"));
 }
 
 /**
@@ -794,7 +796,8 @@ void
 QtGUIMainWindow::button_msg (void) {
 	 stopTimerMessage();
 	 lcd->clear("Voicemail");
-	 lcd->appendText(Config::gets("Preferences/Options.voicemailNumber"));
+	 //lcd->appendText(Config::gets("Preferences/Options.voicemailNumber"));
+	 lcd->appendText(Config::getchar("Preferences","Options.voicemailNumber",""));
 	 dial();
 }
 
@@ -993,7 +996,9 @@ QtGUIMainWindow::quitApplication (void) {
 		confirm = panel->confirmationToQuit->isChecked();
 		apply = false;
 	} else {
-		confirm = Config::get (QString("Preferences/Options.confirmQuit"),true);
+		//confirm = Config::get (QString("Preferences/Options.confirmQuit"),true);
+		confirm = Config::get("Preferences", "Options.confirmQuit", (int)true);
+		
 	}
 	if (confirm) {
 		if (QMessageBox::question(this, "Confirm quit",
@@ -1066,7 +1071,9 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 		pulselen = panel->pulseLength->value();
 		apply = false;
 	} else {
-		pulselen = Config::get(QString("Signalisations/DTMF.pulseLength"), 250);
+		//pulselen = Config::get(QString("Signalisations/DTMF.pulseLength"), 250);
+		pulselen = Config::get("Signalisations", "DTMF.pulseLength", 250);
+		
 	}
 	callmanager->audiodriver->writeBuffer(buf, pulselen * (OCTETS/1000));
 }
@@ -1081,6 +1088,11 @@ QtGUIMainWindow::applySlot() {
 			panel->confirmationToQuit->isChecked());
    	panel->pulseLength->setValue(panel->pulseLength->value());
    	panel->zoneToneChoice->setCurrentItem(panel->zoneToneChoice->currentItem());
+}
+
+void 
+QtGUIMainWindow::save() {
+	Config::tree()->saveToFile(callmanager->path.data());
 }
 
 // Handle mouse left-button click to minimize/maximize the application

@@ -1,6 +1,6 @@
 //
+// (c) 2004 Jerome Oufella <jerome.oufella@savoirfairelinux.com>
 // (c) 2004 Savoir-faire Linux inc.
-// Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com>
 //
 // The configuration tree holds all the runtime parameters for sflphone.
 //
@@ -27,14 +27,15 @@
 
 class ConfigurationTree {
 public:
-	ConfigurationTree 			(void);
-	ConfigurationTree 			(const char *);
-	~ConfigurationTree 			(void);	
-	ConfigSection*  head 			(void) 		{ return this->_head; }
-	int		createFromFile		(const char*);
-	int		saveToFile		(const char*);
-	int		setValue		(const char*, const char*, const char*);
-	char*		getValue		(const char*, const char*);
+	ConfigurationTree (void);
+	ConfigurationTree (const char *);
+	~ConfigurationTree (void);	
+	ConfigSection*  head (void) { return this->_head; }
+	int				populateFromFile(const char*);
+	int				saveToFile		(const char*);
+	int				setValue		(const char*, const char*, int);
+	int				setValue		(const char*, const char*, const char*);
+	char*			getValue		(const char*, const char*);
 	
 private:
 	ConfigSection *_head;

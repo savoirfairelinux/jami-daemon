@@ -34,25 +34,35 @@
 #include "sip.h"
 #include "../stund/stun.h"
 
+#include <string>
 #ifdef  CCXX_NAMESPACES
 using namespace ost;
+using namespace std;
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp                                                          
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtp::AudioRtp (SIP *sip, Manager *manager) {
-	QString svr;
+	string svr;
 	this->sip = sip;
 	this->manager = manager;
 	RTXThread = NULL;
-	
+#if 0	
 	if (!manager->useStun()) {
 		if (Config::gets("Signalisations/SIP.sipproxy")) {
 			svr = Config::gets("Signalisations/SIP.sipproxy");
 		}
 	} else {
 		svr = Config::gets("Signalisations/SIP.hostPart");
+	}
+#endif
+	if (!manager->useStun()) {
+		if (Config::gets("Signalisations", "SIP.sipproxy") == NULL) {
+			svr = Config::gets("Signalisations", "SIP.sipproxy");
+		}
+	} else {
+		svr = Config::gets("Signalisations", "SIP.hostPart");
 	}
 }
 

@@ -25,6 +25,11 @@
 #include "phoneline.h"
 #include "../stund/stun.h"
 
+#include <string>
+#ifdef  CCXX_NAMESPACES
+using namespace std;
+#endif
+
 class AudioRtp;
 class SIP;
 class SipCall;
@@ -45,6 +50,7 @@ public:
 	QString 	*DirectCall; // from argv[1]
 	bool 			 mute;
 	bool 			 tonezone;
+	string			 path;
 
 	inline
 	QtGUIMainWindow*gui			(void) { return this->phonegui; }

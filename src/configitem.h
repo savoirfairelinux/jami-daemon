@@ -1,6 +1,6 @@
 //
+// (c) 2004 Jerome Oufella <jerome.oufella@savoirfairelinux.com>
 // (c) 2004 Savoir-faire Linux inc.
-// Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com>
 //
 //
 #ifndef __CONFIG_ITEM_H__

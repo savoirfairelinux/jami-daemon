@@ -1,6 +1,6 @@
 //
+// (c) 2004 Jerome Oufella <jerome.oufella@savoirfairelinux.com>
 // (c) 2004 Savoir-faire Linux inc.
-// Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com>
 //
 //
 #include <cc++/string.h>
@@ -40,6 +40,7 @@ ConfigItem::~ConfigItem (void) {
 String*
 ConfigItem::getValueByKey (const char *keyName) {
 	assert (_key != NULL);
+	
 	if (*_key == keyName) {
 		return _value;
 	} else if (_next) {

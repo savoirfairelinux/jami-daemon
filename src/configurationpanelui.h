@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'configurationpanel.ui'
 **
-** Created: Thu Jan 6 16:49:19 2005
+** Created: Mon Jan 10 17:49:57 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!

@@ -16,6 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include "configurationtree.h"
 
 #include <getopt.h>
 
@@ -30,6 +31,17 @@
 #include "skin.h"
 #include "qtGUImainwindow.h"
 
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string>
+#ifdef  CCXX_NAMESPACES
+using namespace std;
+#endif
+
+
 void OptionProcess (int argc,char **argv) ;
 QString *pOption ;
 
@@ -38,6 +50,8 @@ int
 main (int argc, char **argv) {
 	QApplication	a(argc, argv);
 	Manager *manager;
+	
+	Config::setTree(new ConfigurationTree());	
 	
 	OptionProcess (argc,argv);
 	if ( pOption )  
@@ -54,6 +68,7 @@ main (int argc, char **argv) {
 	a.setMainWidget(manager->gui());
 	return a.exec();
 }
+
 
 void OptionProcess (int argc,char **argv) {
 int c;

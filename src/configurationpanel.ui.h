@@ -10,7 +10,6 @@
 ** destructor.
 *****************************************************************************/
 #include <qdir.h>
-#include <qsettings.h>
 #include <qstringlist.h>
 
 #include "configuration.h"
@@ -19,10 +18,10 @@
 #include "skin.h"
 #include "qtGUImainwindow.h"
 
+
 void ConfigurationPanel::init()
 {
     // For reading settings at application startup
-  QSettings settings;  
 
      // List skin choice from "skins" directory
    QDir dir(Skin::getPath(QString(SKINDIR)));
@@ -41,66 +40,38 @@ void ConfigurationPanel::init()
    } 
 
 
-   // For signalisations tab
-   fullName->setText(
-    Config::get(QString("Signalisations/SIP.fullName"), QString("")));
-   userPart->setText(
-    Config::get(QString("Signalisations/SIP.userPart"), QString("")));
-   username->setText(
-    Config::get(QString("Signalisations/SIP.username"), QString("")));
-   password->setText(
-    Config::get(QString("Signalisations/SIP.password"), QString("")));
-   hostPart->setText(
-    Config::get(QString("Signalisations/SIP.hostPart"), QString("")));
-   sipproxy->setText(
-    Config::get(QString("Signalisations/SIP.sipproxy"), QString("")));
-   playTones->setChecked(
-    Config::get(QString("Signalisations/DTMF.playTones"), true));
-   pulseLength->setValue(
-    Config::get(QString("Signalisations/DTMF.pulseLength"),  250));
-   sendDTMFas->setCurrentItem(
-    Config::get(QString("Signalisations/DTMF.sendDTMFas"), 1));
-STUNserver->setText(
-    Config::get(QString("Signalisations/STUN.STUNserver"), 
-		QString("stun.fwdnet.net:3478")));
-useStunYes->setChecked(
-    Config::get(QString("Signalisations/STUN.useStunYes"), false));
-useStunNo->setChecked(
-    Config::get(QString("Signalisations/STUN.useStunNo"), true));
-
+  // For signalisations tab
+   fullName->setText(QString(Config::getchar("Signalisations", "SIP.fullName", "")));
+   userPart->setText(QString(Config::getchar("Signalisations", "SIP.userPart", "")));
+   username->setText(QString(Config::getchar("Signalisations", "SIP.username", "")));
+   password->setText(QString(Config::getchar("Signalisations", "SIP.password", "")));
+   hostPart->setText(QString(Config::getchar("Signalisations", "SIP.hostPart", "")));
+   sipproxy->setText(QString(Config::getchar("Signalisations", "SIP.sipproxy", "")));
+   playTones->setChecked(Config::get("Signalisations", "DTMF.playTones", (int)true));
+   pulseLength->setValue(Config::get("Signalisations", "DTMF.pulseLength", 250));
+   sendDTMFas->setCurrentItem(Config::get("Signalisations", "DTMF.sendDTMFas",1));
 
    // For audio tab
-   ossButton->setChecked(
-    Config::get(QString("Audio/Drivers.driverOSS"), true));
-   alsaButton->setChecked(
-    Config::get(QString("Audio/Drivers.driverALSA"), false));
-   
-   codec1->setCurrentText(
-    Config::get(QString("Audio/Codecs.codec1"), QString("G711u")));
-   codec2->setCurrentText(
-    Config::get(QString("Audio/Codecs.codec2"), QString("G711a")));
-   codec3->setCurrentText(
-    Config::get(QString("Audio/Codecs.codec3"), QString("GSM")));
-   codec4->setCurrentText(
-    Config::get(QString("Audio/Codecs.codec4"), QString("iLBC")));
-   codec5->setCurrentText(
-    Config::get(QString("Audio/Codecs.codec5"), QString("SPEEX")));
+   ossButton->setChecked(Config::get("Audio", "Drivers.driverOSS", (int)true));
+   alsaButton->setChecked(Config::get("Audio", "Drivers.driverALSA", (int)false));
+   codec1->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec1", "G711u")));
+   codec2->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec2", "G711a")));
+   codec3->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec3", "GSM")));
+   codec4->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec4", "iLBC")));
+   codec5->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec5", "SPEEX")));
    
    // For preferences tab
-   SkinChoice->setCurrentText(
-    Config::get(QString("Preferences/Themes.skinChoice"), QString("metal")));
-   confirmationToQuit->setChecked(
-    Config::get(QString("Preferences/Options.confirmQuit"), true));
-     zoneToneChoice->setCurrentText(
-      Config::get(QString("Preferences/Options.zoneToneChoice"),
-    QString("North America")));
-     checkedTray->setChecked(
-     Config::get(QString("Preferences/Options.checkedTray"), false));
-     autoregister->setChecked(
-     Config::get(QString("Preferences/Options.autoregister"), true));
-voicemailNumber->setText(
-    Config::get(QString("Preferences/Themes.voicemailNumber"), QString("888")));
-   
+   SkinChoice->setCurrentText(QString(Config::getchar(
+			   "Preferences", "Themes.skinChoice", "metal")));
+   confirmationToQuit->setChecked(Config::get(
+			   "Preferences", "Options.confirmQuit", (int)true));
+     zoneToneChoice->setCurrentText(QString(Config::getchar(
+				 "Preferences", "Options.zoneToneChoice", "North America")));
+     checkedTray->setChecked(Config::get(
+				 "Preferences", "Options.checkedTray", (int)false));
+     autoregister->setChecked(Config::get(
+				 "Preferences", "Options.autoregister", (int)true));
+	 
    //  Init tab view order
     Tab_Signalisations->show();
     Tab_Audio->hide();
@@ -132,41 +103,38 @@ voicemailNumber->setText(
 // For saving settings at application 'save'
 void ConfigurationPanel::saveSlot()
 {
- QSettings settings;
+   Config::set("Signalisations", "SIP.fullName", fullName->text());
+   Config::set("Signalisations", "SIP.userPart", userPart->text());
+   Config::set("Signalisations", "SIP.username", username->text());
+   Config::set("Signalisations", "SIP.password", password->text());
+   Config::set("Signalisations", "SIP.hostPart", hostPart->text());
+   Config::set("Signalisations", "SIP.sipproxy", sipproxy->text());
+   Config::set("Signalisations", "DTMF.pulseLength",  pulseLength->value());
+   Config::set("Signalisations", "DTMF.playTones",  playTones->isChecked());
+   Config::set("Signalisations", "DTMF.sendDTMFas" , sendDTMFas->currentItem());
  
-   Config::set("Signalisations/SIP.fullName", fullName->text());
-   Config::set("Signalisations/SIP.userPart", userPart->text());
-   Config::set("Signalisations/SIP.username", username->text());
-   Config::set("Signalisations/SIP.password", password->text());
-   Config::set("Signalisations/SIP.hostPart", hostPart->text());
-   Config::set("Signalisations/SIP.sipproxy", sipproxy->text());
-   Config::set("Signalisations/DTMF.pulseLength",  pulseLength->value());
-   Config::set("Signalisations/DTMF.playTones",  playTones->isChecked());
-   Config::set("Signalisations/DTMF.sendDTMFas",  sendDTMFas->currentItem());
-   Config::set("Signalisations/STUN.STUNserver", STUNserver->text());
-   Config::set("Signalisations/STUN.useStunYes", useStunYes->isChecked());
-   Config::set("Signalisations/STUN.useStunNo", useStunNo->isChecked());
- 
-   Config::set("Audio/Drivers.driverOSS", ossButton->isChecked());
-   Config::set("Audio/Drivers.driverALSA", alsaButton->isChecked());
+   Config::set("Audio", "Drivers.driverOSS", ossButton->isChecked());
+   Config::set("Audio", "Drivers.driverALSA", alsaButton->isChecked());
 
-   Config::set("Audio/Codecs.codec1", codec1->currentText());
-   Config::set("Audio/Codecs.codec2", codec2->currentText());
-   Config::set("Audio/Codecs.codec3", codec3->currentText());
-   Config::set("Audio/Codecs.codec4", codec4->currentText());
-   Config::set("Audio/Codecs.codec5", codec5->currentText());
+   Config::set("Audio", "Codecs.codec1", codec1->currentText());
+   Config::set("Audio", "Codecs.codec2", codec2->currentText());
+   Config::set("Audio", "Codecs.codec3", codec3->currentText());
+   Config::set("Audio", "Codecs.codec4", codec4->currentText());
+   Config::set("Audio", "Codecs.codec5", codec5->currentText());
    
-   Config::set("Preferences/Themes.skinChoice", SkinChoice->currentText());
-   Config::set("Preferences/Options.zoneToneChoice", zoneToneChoice->currentText());
-   Config::set("Preferences/Options.confirmQuit", confirmationToQuit->isChecked());
-   Config::set("Preferences/Options.checkedTray", checkedTray->isChecked());
-   Config::set("Preferences/Options.autoregister", autoregister->isChecked());
-   Config::set("Preferences/Options.voicemailNumber", voicemailNumber->text());
+   Config::set("Preferences", "Themes.skinChoice", SkinChoice->currentText());
+   Config::set("Preferences", "Options.zoneToneChoice", 
+		   zoneToneChoice->currentText());
+   Config::set("Preferences", "Options.confirmQuit", 
+		   confirmationToQuit->isChecked());
+   Config::set("Preferences", "Options.checkedTray", checkedTray->isChecked());
+   Config::set("Preferences", "Options.autoregister",autoregister->isChecked());
    
    QMessageBox::information(this, "Save settings",
    "You must restart SFLPhone",
     QMessageBox::Yes);
    accept();
+
 }
 
 // Handle tab view  according to current item of listbox

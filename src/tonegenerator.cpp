@@ -220,8 +220,9 @@ ToneGenerator::idZoneName (const QString &name) {
  */
 void
 ToneGenerator::toneHandle (int idr) {
-	int idz = idZoneName(Config::gets(QString(
-					"Preferences/Options.zoneToneChoice")));
+//	int idz = idZoneName(Config::gets(QString(
+//					"Preferences/Options.zoneToneChoice")));
+	int idz = idZoneName(Config::gets("Preferences", "Options.zoneToneChoice"));
 	
 	if (idz != -1) {
 		buildTone (idz, idr, SAMPLING_RATE, AMPLITUDE, buf);

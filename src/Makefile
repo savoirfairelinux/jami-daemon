@@ -34,6 +34,8 @@ OBJS = \
 	audiortp.o \
 	CDataFile.o \
 	configuration.o \
+	configitem.o \
+	configurationtree.o \
 	dtmf.o \
 	dtmfgenerator.o \
 	g711.o \

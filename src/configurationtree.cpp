@@ -1,11 +1,11 @@
 //
+// (c) 2004 Jerome Oufella <jerome.oufella@savoirfairelinux.com>
 // (c) 2004 Savoir-faire Linux inc.
-// Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com>
 //
 //
 
 #include <iostream>
-#include <fstream>
+#include <string>
 
 #include "configitem.h"
 #include "configurationtree.h"
@@ -19,7 +19,7 @@ ConfigurationTree::ConfigurationTree (void) {
 
 // Construct with file name, and load from this file
 ConfigurationTree::ConfigurationTree (const char *fileName) {
-	createFromFile (fileName);
+	populateFromFile (fileName);
 }
 
 // Destructor
@@ -31,8 +31,9 @@ ConfigurationTree::~ConfigurationTree (void) {
 
 // Create the tree from an existing ini file
 int
-ConfigurationTree::createFromFile (const char *fileName) {
+ConfigurationTree::populateFromFile (const char *fileName) {
 	if (fileName == NULL) {
+		printf("filename est NULL\n");
 		return 0;
 	}
 	
@@ -43,32 +44,34 @@ ConfigurationTree::createFromFile (const char *fileName) {
         cout << "Error opening file";
 		return 0;
   	}
-
+	
 	char line[128];
 	bzero (line, 128);
 	
-	const char* section;
+	const char* section = NULL;
 	const char* key;
 	const char* val;
+	String s;
 	
 	while (!file.eof()) {
 		// Read the file line by line
 		file.getline (line, 128 - 1);
 		String* str = new String(line);
-		
 		if (*str[0] == '[') {
 			// If the line is a section
-			section = (str->token("]", 1)).data();
-			if (section != NULL) {
-				_head->setValue(section);
-			}
-		} else if (*str != NULL){
+			s = str->token("[",1);
+			s.trim("]");
+			section = s.data();
+	
+		} else if (*str != NULL) {
 			// If the line is "key=value"
-			key = (str->token("=", 0)).data();
-			val = (str->token("=", String(key).length() + 2)).data();
-			if (key != NULL and val != NULL) {
+			String k = str->token("=", 0);
+			key = k.data();
+			String v = str->token("=", 0);
+			val = v.data();
+			if (String(key).length() > 0 and String(val).length() > 0) {
 				setValue(section, key, val);
-			}
+			} 
 		}
 		delete str;
 	}
@@ -96,6 +99,19 @@ ConfigurationTree::saveToFile (const char *fileName) {
 	
 	file.close();
 	return 1;
+}
+
+// set [section]/key to int value
+#define TMPBUFSIZE	32
+int
+ConfigurationTree::setValue (const char *section, const char *key, int value) {
+	char tmpBuf[TMPBUFSIZE];
+
+	// Make string from int
+	bzero(tmpBuf, TMPBUFSIZE);
+	snprintf (tmpBuf, TMPBUFSIZE - 1, "%d", (int) value);
+
+	return setValue(section, key, tmpBuf);
 }
 
 // set [section]/key to "value"
@@ -131,8 +147,22 @@ ConfigurationTree::setValue (const char *section, const char *key,
 // get [section]/key's value
 char *
 ConfigurationTree::getValue (const char *section, const char *key) {
+//	printf ("getValue(%s,%s)\n", section, key);
 	if (_head != NULL) {
-		return _head->getItemByKey(section)->getValueByKey(key)->data();
+		String *valuePtr;
+		if (_head->getItemByKey(section)->head() != 0) {
+			// If config file exist
+			valuePtr = _head->getItemByKey(section)->head()->getValueByKey(key);
+		} else {
+			// If config-file not exist
+			valuePtr = _head->getItemByKey(section)->getValueByKey(key);
+		}
+
+		if (valuePtr != NULL) {
+			return valuePtr->data();
+		} else {
+			return NULL;
+		}
 	} else {
 		return (char *) NULL;
 	}

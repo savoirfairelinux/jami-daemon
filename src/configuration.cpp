@@ -21,8 +21,11 @@
 #include <qsettings.h>
 
 #include "configuration.h"
+#include "configurationtree.h"
 
+static ConfigurationTree	*globalConfigTree = NULL;
 
+#if 0
 QString
 Config::gets (QString key) {
 	return Config::get (key, QString(""));
@@ -77,5 +80,95 @@ Config::set	(QString key, bool val) {
 	settings.writeEntry (QString(CFG_PFX) + QString("/") + key, val);
 	return val;
 }
+#endif
+string
+Config::gets (const char *section, const char *key) {
+	return Config::get (section, key, "");
+}
+
+string
+Config::get	(const char *section, const char *key, const char *defval) {
+	char *value = tree()->getValue (section, key);
+	if (value == NULL) {
+		tree()->setValue(section, key, defval);
+		return string(defval);
+	} else {
+		return string(value);
+	}
+}
+
+char *
+Config::getschar (const char *section, const char *key) {
+	return Config::getchar (section, key, "");
+}
+
+char *
+Config::getchar	(const char *section, const char *key, const char *defval) {
+	char *value = tree()->getValue (section, key);
+	if (value == NULL) {
+		tree()->setValue(section, key, defval);
+		return (char*)defval;
+	} else {
+		return value;
+	}
+}
+
+bool
+Config::getb (const char *section, const char *key) {
+	return (bool)Config::get (section, key, 0);
+}
+
+
+int
+Config::geti (const char *section, const char *key) {
+	return Config::get (section, key, 0);
+}
+
+int
+Config::get	(const char *section, const char * key, int defval) {
+	char *value = tree()->getValue(section, key);
+	if (value == NULL) {
+		tree()->setValue(section, key, defval);
+		return defval;
+	} else {
+		return atoi(value);
+	} 
+}
+
+string
+Config::set	(const char *section, const char *key, const char *val) {
+	tree()->setValue(section, key, val);
+	return string(val);
+}
+
+char *
+Config::setchar	(const char *section, const char *key, const char *val) {
+	tree()->setValue(section, key, val);
+	return (char*)val;
+}
+
+int
+Config::set	(const char *section, const char *key, int val) {
+	tree()->setValue(section, key, val);
+	return val;
+}
+
+bool
+Config::set	(const char *section, const char *key, bool val) {
+	tree()->setValue(section, key, (int)val);
+	return val;
+}
+
+
+void
+Config::setTree (ConfigurationTree *t) {
+	globalConfigTree = t;
+}
+
+ConfigurationTree*
+Config::tree(void) {
+	return globalConfigTree;
+}
+
 
 // EOF

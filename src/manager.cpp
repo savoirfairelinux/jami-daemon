@@ -16,6 +16,11 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -25,21 +30,49 @@
 #include <qhostaddress.h>
 #include <qwidget.h>
 
+#include "../stund/udp.h"
+#include "../stund/stun.h"
+
 #include "audiodriversoss.h"
 #include "configuration.h"
+#include "configurationtree.h"
+#include "global.h"
 #include "manager.h"
 #include "audiortp.h"
 #include "sip.h"
 #include "qtGUImainwindow.h"
 
-#include "../stund/udp.h"
-#include "../stund/stun.h"
+#include <string>
+#ifdef  CCXX_NAMESPACES
+using namespace std;
+#endif
 
 Manager::Manager (QString *Dc = NULL) {
 	DirectCall = Dc;
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
 		phLines[i] = new PhoneLine ();
 	}
+
+	// Create .sflphone directory in home user
+	bool exist = true;
+	char * buffer;
+	// Get variable $HOME
+  	buffer = getenv ("HOME");                                                   	path = string(buffer);
+  	path = path + "/." + PROGNAME;
+             
+  	if (mkdir (path.data(), 0755) != 0) {
+		// If directory	creation failed
+    	if (errno != EEXIST) {
+        	printf ("Cannot create directory: %s\n", strerror(errno));
+      	} 
+  	}
+  
+	// Load user's config
+	path = path + "/" + PROGNAME + "rc";
+	if (Config::tree()->populateFromFile(path.data()) == 0){
+		exist = false;
+	}
+	
 	phonegui = new QtGUIMainWindow (0, 0 ,  
 					Qt::WDestructiveClose | 
 					Qt::WStyle_Customize |
@@ -62,7 +95,13 @@ Manager::Manager (QString *Dc = NULL) {
 		phonegui->lcd->textBuffer = DirectCall ;
 		phonegui->dial();
 	}
-	
+
+	if (!exist){
+		// If config file $HOME/.PROGNAME/PROGNAMErc doesn't exist,
+  		// show configuration panel
+		gui()->configuration();
+	} 
+
 }
 
 Manager::~Manager (void) {
@@ -91,9 +130,11 @@ Manager::sip_rtp_init (void) {
 		 sip->initRtpmapCodec ();
 	}
 	
-	if (Config::getb(QString("Preferences/Options.autoregister"))) {
+//	if (Config::getb(QString("Preferences/Options.autoregister"))) {
+	if (Config::getb("Preferences", "Options.autoregister")) {
 		// Register to the known proxies if available
-		if (Config::gets("Signalisations/SIP.password").length() > 0) {
+		//if (Config::gets("Signalisations/SIP.password").length() > 0) {
+		if (Config::gets("Signalisations", "SIP.password").length() > 0) {
 			sip->setRegister ();
 		}
 	} 
@@ -395,7 +436,8 @@ Manager::setChoose (bool b, bool b2) {
 
 bool
 Manager::useStun () {
-	if (Config::getb("Signalisations/STUN.useStunYes")) {
+//	if (Config::getb("Signalisations/STUN.useStunYes")) {
+	if (Config::getb("Signalisations", "STUN.useStunYes")) {
 		return true;
 	} else {
 		return false;
@@ -405,7 +447,8 @@ Manager::useStun () {
 // Handle choice of the DTMF-send-way
 void
 Manager::dtmf (int line, char digit) {
-	int sendType = Config::geti ("Signalisations/DTMF.sendDTMFas");
+//	int sendType = Config::geti ("Signalisations/DTMF.sendDTMFas");
+	int sendType = Config::geti ("Signalisations", "DTMF.sendDTMFas");
 	
 	switch (sendType) {
 		// Audio way
