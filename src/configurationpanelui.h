@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'configurationpanel.ui'
 **
-** Created: Mon Jan 31 18:13:29 2005
+** Created: Wed Feb 2 17:25:45 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -104,6 +104,7 @@ public:
     QWidget* CodecsPage_3;
     QTabWidget* Tab_Preferences;
     QWidget* DriversPage_4;
+    QPushButton* buttonApplySkin;
     QComboBox* SkinChoice;
     QWidget* TabPage;
     QLabel* textLabel1_2;
@@ -124,13 +125,14 @@ public slots:
     virtual void saveSlot();
     virtual void changeTabSlot();
     virtual void useStunSlot( int id );
+    virtual void applySkinSlot();
 
 protected:
     QGridLayout* ConfigurationPanelLayout;
     QVBoxLayout* layout8;
     QHBoxLayout* layout7;
     QSpacerItem* Horizontal_Spacing2;
-    QVBoxLayout* layout19;
+    QVBoxLayout* layout18;
     QGridLayout* groupBox1Layout;
     QVBoxLayout* stunButtonGroupLayout;
     QGridLayout* SettingsDTMFLayout;

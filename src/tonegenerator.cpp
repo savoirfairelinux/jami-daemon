@@ -38,7 +38,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 ToneThread::ToneThread (Manager *mngr, short *buf, int total) {
 	this->mngr = mngr;
-	this->buf = buf;
+	this->buffer = buf;
 	this->totalbytes = total;
 }
 
@@ -49,7 +49,7 @@ ToneThread::~ToneThread (void) {
 void
 ToneThread::run (void) {
 	while (mngr->tonezone) {
-		mngr->audiodriver->audio_buf.setData (buf, mngr->getSpkrVolume());	
+		mngr->audiodriver->audio_buf.setData (buffer, mngr->getSpkrVolume());	
 		mngr->audiodriver->writeBuffer();
 		//mngr->audiodriver->writeBuffer(buf, totalbytes);
 	}
@@ -259,6 +259,7 @@ ToneGenerator::playRing (const char *fileName) {
 	if (fileName == NULL) {
 		return 0;
 	}
+	
 	fstream file;
 	file.open(fileName, fstream::in);
 	if (!file.is_open()) {
@@ -272,32 +273,32 @@ ToneGenerator::playRing (const char *fileName) {
 
   	// allocate memory:
   	src = new char [length];
-	dst = new short[length];
+	dst = new short[length*2];
 	
   	// read data as a block:
   	file.read (src,length);
 
+	// Decode file.ul
 	expandedsize = AudioCodec::codecDecode (
 				PAYLOAD_CODEC_ULAW,
 				dst,
-				(unsigned char*)src,
+				(unsigned char *)src,
 				length);
-
+	// Start tone thread
 	if (tonethread == NULL) {
 		tonethread = new ToneThread (manager, dst, expandedsize);
-		manager->audiodriver->audio_buf.resize(expandedsize);	
+		manager->audiodriver->audio_buf.resize(expandedsize);
 		tonethread->start();
 	}
 	if (!manager->tonezone) {
 		if (tonethread != NULL) {	
 			delete tonethread;
 			tonethread = NULL;
+			delete[] dst;
+			delete[] src;
 		}
 	}
-	
 	file.close();
-	delete[] dst;
-	delete[] src;
 	return 1;
 }
 

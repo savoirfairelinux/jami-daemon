@@ -24,6 +24,8 @@
 #include "point.h"
 #include "transqwidget.h"
 
+class QtGUIMainwindow;
+
 class NumericKeypad : public TransQWidget {
 	Q_OBJECT
 public:
@@ -48,6 +50,7 @@ public:
 private:
 	Point				*pt;	
 	TransQWidget*		mainWindow;
+	QtGUIMainWindow*	gui;
 	void keyPressEvent 	(QKeyEvent*);
 };
 

@@ -82,7 +82,6 @@ public:
 	bool	getCallInProgress		(void);
 	void	setCallInProgress		(bool);
 #endif
-
 	bool	transferedCall			(void);
 
 	void	ringTone				(bool);

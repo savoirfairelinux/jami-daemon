@@ -358,10 +358,6 @@ SIP::setRegister (void) {
 		callmanager->errorDisplay("Fill host part field");		
 		return -1;
 	}
-	if (Config::gets("Signalisations", "SIP.sipproxy") == "") {
-		callmanager->errorDisplay("Fill proxy field");		
-		return -1;
-	}
 	
 	eXosip_lock();
 	if (setAuthentication() == -1) {

@@ -32,6 +32,8 @@
 #define	PRESS_PREFIX	"_on"
 #define REL_PREFIX		"_off"
 
+class QtGUIMainWindow;
+
 class JPushButton : public QLabel {
 Q_OBJECT
 
@@ -40,6 +42,8 @@ public:
 	~JPushButton (void);
 
 private:
+	QtGUIMainWindow*	guiWidget;
+	
 	void iAmPressed (void);
 	void iAmReleased (void);
 	QImage*		btnImg[2];
@@ -48,6 +52,7 @@ private:
 
 	// This function was derived from QImage::createHeuristicMask()
 	int MyCreateHeuristicMask (const  QImage &, QImage &, long = -1 );
+
 
 protected:
 	void		mousePressEvent		(QMouseEvent *);

@@ -26,7 +26,7 @@
 VolumeControl::VolumeControl (QWidget *parent, const char *name, 
 		const char* pixname, Vector *v) : JPushButton(parent, name, pixname) {
 	this->vect = v;
-	volumeValue = vect->Y() - vect->Variation();
+	volumeValue = 0;
 }
 
 VolumeControl::~VolumeControl (void) {

@@ -28,11 +28,12 @@
 NumericKeypad::NumericKeypad (QWidget *parent, const char *name, WFlags f) 
 						: TransQWidget (NULL, name, f) {
 	mainWindow = (TransQWidget *)parent;
+	gui = (QtGUIMainWindow*)parent;
 	this->setCaption("DTMF keypad");
 	
 	// Load background image phone 
 	setbgPixmap (new QPixmap (Skin::getPath(QString(SKINDIR), 
-											QtGUIMainWindow::setPathSkin(),
+											gui->setPathSkin(),
 											QString(PIXMAP_KEYPAD))));
 
 	// Transform pixmap to QImage
@@ -44,7 +45,7 @@ NumericKeypad::NumericKeypad (QWidget *parent, const char *name, WFlags f)
 	transparencyMask ();						
 
 	QString skinfilename(Skin::getPath(QString(SKINDIR), 
-										QtGUIMainWindow::setPathSkin(),
+										gui->setPathSkin(),
 										QString(FILE_INI)));
 	pt = new Point(skinfilename);
 	

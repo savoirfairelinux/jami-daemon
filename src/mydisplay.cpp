@@ -88,6 +88,9 @@ MyDisplay::MyDisplay (QWidget *parent, const char *name, QtGUIMainWindow* qtgui)
 	this->qtgui = qtgui;
 	this->initGraphics();
 	this->initText();
+	// Graphics engine animation thread
+	this->animationThread = new MyDisplayThread (this);
+	this->animationThread->start();
 }
 
 /**
@@ -177,8 +180,8 @@ MyDisplay::initGraphics (void) {
 	this->setGeometry (0, 0, centerImage.width(), centerImage.height());
 
 	// Graphics engine animation thread
-	this->animationThread = new MyDisplayThread (this);
-	this->animationThread->start();
+//	this->animationThread = new MyDisplayThread (this);
+//	this->animationThread->start();
 }
 
 /**

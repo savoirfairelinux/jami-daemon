@@ -58,6 +58,7 @@ public:
 	QString &	getStatus (void);
 	void 		setTimer (const QString &);
 	QString &	getTimer (void);
+	void		initGraphics	(void);
 	bool 		inFunction;
 
 	QString		       *textBuffer;		
@@ -82,7 +83,6 @@ private:
 	MyDisplayThread	   *animationThread;
 	QtGUIMainWindow	   *qtgui;	
 	
-	void		initGraphics	(void);
 	void		initText		(void);
 	void		renderText		(QPainter &, QFontMetrics &, QString &);
 	void		renderStatus	(QPainter &, QFontMetrics &, QString &);

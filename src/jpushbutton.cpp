@@ -33,29 +33,33 @@
 // This is the default constructor, it must be called with pixname being
 // the base name for the picture used as button pixmap.
 JPushButton::JPushButton (QWidget* parent, const char* name,
-		const char* pixname) : QLabel (parent, name) {
-		// Load pictures
-		this->loadPixmaps(pixname);
+	const char* pixname) : QLabel (parent, name) {
 
-		// Create transparency bitmasks
-		QImage tmpImg[2];
-		MyCreateHeuristicMask (*(this->btnImg[0]), tmpImg[0]);
-		mask[0] = tmpImg[0];
+	guiWidget = (QtGUIMainWindow*)parent;
 
-		MyCreateHeuristicMask (*(this->btnImg[1]), tmpImg[1]);
-		mask[1] = tmpImg[1];
+	// Load pictures
+	this->loadPixmaps(pixname);
 
-		// Resize ourself
-		resize (this->btnImg[0]->width(), this->btnImg[0]->height() );
-		
-		// Set default pixmap (released)
-		setMask (mask[0]);
-		setPixmap (*(this->btnImg[0]));
+	// Create transparency bitmasks
+	QImage tmpImg[2];
+	MyCreateHeuristicMask (*(this->btnImg[0]), tmpImg[0]);
+	mask[0] = tmpImg[0];
 
-		// Default cursor is pointing hand
-		setCursor (QCursor (Qt::PointingHandCursor));
+	MyCreateHeuristicMask (*(this->btnImg[1]), tmpImg[1]);
+	mask[1] = tmpImg[1];
 
-		setFocusPolicy(QWidget::NoFocus);
+	// Resize ourself
+	resize (this->btnImg[0]->width(), this->btnImg[0]->height() );
+	
+	// Set default pixmap (released)
+	setMask (mask[0]);
+	setPixmap (*(this->btnImg[0]));
+
+	// Default cursor is pointing hand
+	setCursor (QCursor (Qt::PointingHandCursor));
+
+	setFocusPolicy(QWidget::NoFocus);
+	show();
 }
 
 // Delete allocated items
@@ -73,10 +77,10 @@ JPushButton::loadPixmaps (const char* pixname) {
 	QString pressedPixmapPath, releasedPixmapPath;
 	
 	pressedPixmapPath = Skin::getPath(QString(SKINDIR),
-									QtGUIMainWindow::setPathSkin(),
+									guiWidget->setPathSkin(),
 									QString(pixname) + PRESS_PREFIX + ".png");
 	releasedPixmapPath = Skin::getPath(QString(SKINDIR),
-									QtGUIMainWindow::setPathSkin(),
+									guiWidget->setPathSkin(),
 									QString(pixname) + REL_PREFIX + ".png");
 
 	this->btnImg[0] = new QImage (releasedPixmapPath);

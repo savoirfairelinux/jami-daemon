@@ -38,6 +38,7 @@ Point::~Point (void) {
 	}
 }
 
+
 /**
  * Extract the substring before the comma
  */

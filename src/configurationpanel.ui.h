@@ -226,3 +226,9 @@ void ConfigurationPanel::useStunSlot(int id)
 {
     Config::set("Signalisations", "STUN.useStun", id);
 }
+
+
+void ConfigurationPanel::applySkinSlot()
+{
+	Config::set("Preferences", "Themes.skinChoice", SkinChoice->currentText());
+}

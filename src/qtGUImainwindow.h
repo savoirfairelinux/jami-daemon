@@ -129,8 +129,8 @@ public:
 	void 	 setMainLCD		 	(void);
 	void 	 toggleLine 	 	(int);
 	void 	 stopTimerMessage 	(void);
-	static 	 QString  setPathSkin(void);
-	static 	 QString  ringFile	(void);
+	QString  setPathSkin		(void);
+	QString  ringFile			(void);
 	QString	 getRingFile		(void);
 	inline 
 	void 	 ring				(bool b) { this->ringVar = b; }
@@ -170,6 +170,7 @@ public slots:
 	void 	 clickHandle 		(void);
 	void	 reduceHandle		(void);
 	void	 save				(void);
+	void	 applySkin			(void);
 	
 	void 	 pressedKey0		(void);
 	void 	 pressedKey1		(void);
@@ -221,15 +222,17 @@ private:
 	void 		 setMode		(int);
 	bool 		 isInTextMode	(void);
 	bool 		 isInNumMode	(void);
-	
+	void		 initSkin		(void);
 	void 		 initButtons 	(void);
 	void 		 initBlinkTimer	(void);
 	void		 initSpkrVolumePosition (void);
 	void		 initMicVolumePosition (void);
+	void		 connections	(void);
 
 	int 		 numLineBusy	(void);
 
 	int			 positionOffsetX		(void);
+	void 		 deleteButtons	(void);
 
 };
 

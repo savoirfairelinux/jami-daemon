@@ -98,7 +98,6 @@ MyTrayIcon::mousePressEvent (QMouseEvent *e)
 QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f, 
 									Manager *mngr) 
 									: TransQWidget (parent, name, f) {
-
 	// Create configuration panel
 	panel = new ConfigurationPanel (0, 0, false);
 
@@ -115,152 +114,34 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	key = new DTMF ();
 	buf = new short[SIZEBUF];
 
-	// Load file configuration skin
-	QString skinfilename(Skin::getPath(QString(SKINDIR), setPathSkin(),
-				QString(FILE_INI)));
-	this->pt = new Point(skinfilename.ascii());
-	
-	// Initialisations
-	this->initSpkrVolumePosition();
-	this->initMicVolumePosition();
-	this->initButtons();
-	this->initBlinkTimer();
-	
- 	// Initialisation variables for ringing and message
-	msgVar = false;
-	b_dialtone = false;
-	
-	// Load background image phone
-	setbgPixmap (new QPixmap (Skin::getPath(QString(SKINDIR), 
-											setPathSkin(),
-											QString(PIXMAP_PHONE))));
-	
-	// Transform pixmap to QImage
-	setSourceImage ();
-
-	this->setMaximumSize (getSourceImage().width(), getSourceImage().height());
-	this->setGeometry (MAIN_INITIAL_POSITION, 
-					   MAIN_INITIAL_POSITION, 
-					   getSourceImage().width(),
-					   getSourceImage().height());
-		
-	// Calculate just one time the transparency mask bit to bit
-	transparencyMask ();
-
-	// By default, keyboard mapping mode is numerical mode
-	this->setMode(NUM_MODE);
-	
-	// Connect blinkTimer signals to blink slot
-    connect(blinkTimer, SIGNAL(timeout()),this, SLOT(blinkMessageSlot()));
-	connect (blinkTimer, SIGNAL(timeout()), this, SLOT(blinkRingSlot()) );
-	connect (blinkTimer, SIGNAL(timeout()), this, SLOT(blinkLineSlot()));
-	
-	// Line pixmaps initialisation
-	for (int i = 0; i < NUMBER_OF_LINES; i++) {
-		for (int j = 0; j < NUMBER_OF_STATES; j++) {
-	 		TabLinePixmap[i][j] = QPixmap(Skin::getPath(QString(SKINDIR),
-												setPathSkin(), 
-												QString(PIXMAP_LINE(i, j))));
-	 	}
-	}
-	
+	// Create new display and numeric keypad
+	lcd = new MyDisplay(this, 0, this);
+	keypad = new NumericKeypad (this, NULL, Qt::WDestructiveClose |
+                    					Qt::WStyle_Customize |
+                    					Qt::WStyle_NoBorder);
+ 	// Initialisation of variables
 	currentLineNumber = -1;
 	onLine = currentLineNumber;
 	chosenLine = -1;
 	choose = false;
 	noChoose = false;
 	transfer = false;
-	
-	// Message pixmaps initialisation
-	TabMsgPixmap[0] = QPixmap(Skin::getPath(QString(SKINDIR), setPathSkin(), 
-						PIXMAP_MESSAGE_OFF));
-	TabMsgPixmap[1] = QPixmap(Skin::getPath(QString(SKINDIR), setPathSkin(), 
-						PIXMAP_MESSAGE_ON));
-	
-	// Create new display and numeric keypad
-	lcd = new MyDisplay(this, 0, this);
-	keypad = new NumericKeypad (this, NULL, Qt::WDestructiveClose |
-                    					Qt::WStyle_Customize |
-                    					Qt::WStyle_NoBorder);
-
+	msgVar = false;
+	b_dialtone = false;
+	apply = false;
 	this->first = true;
+	
+	// Initialisation of all that concern the skin
+	initSkin();
+	this->initBlinkTimer();
+
+	
+	// By default, keyboard mapping mode is numerical mode
+	this->setMode(NUM_MODE);
 	
 	// Move 
 	setMainLCD ();
-
-	// Connect to append url in display
-	connect (urlinput->buttonOK, SIGNAL(clicked()), this, SLOT(stripSlot()));
-
-	// Connect to save settings
-	connect (panel->buttonSave, SIGNAL(clicked()), this, SLOT(save()));
 	
-	// Handle keyboard events
-	// Connect for clicked numeric keypad button 
-	connect ((QObject*)keypad->key0, SIGNAL(clicked()), this, 
-			SLOT(pressedKey0()));
-	connect ((QObject*)keypad->key1, SIGNAL(clicked()), this, 
-			SLOT(pressedKey1()));
-	connect ((QObject*)keypad->key2, SIGNAL(clicked()), this, 
-			SLOT(pressedKey2()));
-	connect ((QObject*)keypad->key3, SIGNAL(clicked()), this, 
-			SLOT(pressedKey3()));
-	connect ((QObject*)keypad->key4, SIGNAL(clicked()), this, 
-			SLOT(pressedKey4()));
-	connect ((QObject*)keypad->key5, SIGNAL(clicked()), this, 
-			SLOT(pressedKey5()));
-	connect ((QObject*)keypad->key6, SIGNAL(clicked()), this, 
-			SLOT(pressedKey6()));
-	connect ((QObject*)keypad->key7, SIGNAL(clicked()), this, 
-			SLOT(pressedKey7()));
-	connect ((QObject*)keypad->key8, SIGNAL(clicked()), this, 
-			SLOT(pressedKey8()));
-	connect ((QObject*)keypad->key9, SIGNAL(clicked()), this, 
-			SLOT(pressedKey9()));
-	connect ((QObject*)keypad->keyStar, SIGNAL(clicked()), this, 
-			SLOT(pressedKeyStar()));
-	connect ((QObject*)keypad->keyHash, SIGNAL(clicked()), this, 
-			SLOT(pressedKeyHash()));
-	connect ((QObject*)keypad->keyClose, SIGNAL(clicked()), this, 
-			SLOT(dtmfKeypad()));
-
-	// Connections for the lines 
-	connect (callmanager->phLines[0]->button(), SIGNAL(clicked()), this, 
-			SLOT(button_line0()));
-	connect (callmanager->phLines[1]->button(), SIGNAL(clicked()), this, 
-			SLOT(button_line1()));
-	connect (callmanager->phLines[2]->button(), SIGNAL(clicked()), this, 
-			SLOT(button_line2()));
-	connect (callmanager->phLines[3]->button(), SIGNAL(clicked()), this, 
-			SLOT(button_line3()));
-	connect (callmanager->phLines[4]->button(), SIGNAL(clicked()), this, 
-			SLOT(button_line4()));
-	connect (callmanager->phLines[5]->button(), SIGNAL(clicked()), this, 
-			SLOT(button_line5()));
-
-	// Misc 
-	connect (phoneKey_msg, SIGNAL(clicked()), this, SLOT(button_msg()));
-	connect (phoneKey_transf, SIGNAL(clicked()), this, SLOT(button_transfer()));
-	connect (phoneKey_conf, SIGNAL(clicked()), this, SLOT(button_conf()));
-	connect (dial_button, SIGNAL(clicked()), this, SLOT(dial()));
-	connect (mute_button, SIGNAL(clicked()), this, SLOT(button_mute()));
-	connect (hangup_button, SIGNAL(clicked()), this, SLOT(hangupLine()));
-	connect (configuration_button,SIGNAL(clicked()),this,SLOT(configuration()));
-	connect (addr_book_button, SIGNAL(clicked()), this,SLOT(addressBook()));
-	connect (dtmf_button, SIGNAL(clicked()), this, SLOT(dtmfKeypad()));
-
-	// Connect to reduce
-	connect (reduce_button, SIGNAL(clicked()), this, SLOT(reduceHandle()));
-	// Connect to quit with keyboard
-	connect (this, SIGNAL(keyPressed(int)), this, SLOT(quitApplication()));
-   	// Connect to quit with quit button
-	connect (quit_button, SIGNAL(clicked()), this, SLOT(quitApplication()));
-	
-	// To register when program is launched
-	//if (Config::getb("Preferences", "Options.autoregister") 	
-	//		and panel->password->text() == "") { 
-	//	configuration ();
-	//}
-
 	// Change window title and Icon.
 	this->setCaption(PROGNAME);
 	this->setIcon(QPixmap(Skin::getPathPixmap(QString(PIXDIR), 
@@ -277,19 +158,39 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 				Skin::getPathPixmap(QString(PIXDIR), QString(TRAY_ICON))), 
 				NULL, mypop, parent, name);
 	trayicon->show();
-	connect(trayicon, SIGNAL(clickedLeft()), this, SLOT(clickHandle()));
 	
-	// Connections for volume control
-	connect(vol_spkr, SIGNAL(setVolumeValue(int)), this, 
-			SLOT(volumeSpkrChanged(int)));
-	connect(vol_mic, SIGNAL(setVolumeValue(int)), this, 
-			SLOT(volumeMicChanged(int)));
+	// Connect to handle trayicon
+	connect(trayicon, SIGNAL(clickedLeft()), this, SLOT(clickHandle()));
+	// Connect blinkTimer signals to blink slot
+    connect(blinkTimer, SIGNAL(timeout()),this, SLOT(blinkMessageSlot()));
+	connect (blinkTimer, SIGNAL(timeout()), this, SLOT(blinkRingSlot()) );
+	connect (blinkTimer, SIGNAL(timeout()), this, SLOT(blinkLineSlot()));
+	// Connect to append url in display
+	connect (urlinput->buttonOK, SIGNAL(clicked()), this, SLOT(stripSlot()));
+	// Connect to save settings
+	connect (panel->buttonSave, SIGNAL(clicked()), this, SLOT(save()));
+	// Connect to apply skin
+	connect (panel->buttonApplySkin, SIGNAL(clicked()), this,SLOT(applySkin()));
 }
 
 /**
  * Destructor
  */
 QtGUIMainWindow::~QtGUIMainWindow(void) {
+	deleteButtons();
+	delete	panel;
+	delete  blinkTimer;
+	delete  keypad;
+	delete	lcd;
+	delete  urlinput;
+	delete	callmanager;
+	delete 	mypop;
+	delete 	trayicon;
+	delete  pt;
+}
+
+void
+QtGUIMainWindow::deleteButtons (void) {
 	delete  phoneKey_transf;
 	delete  phoneKey_msg;
 	delete  phoneKey_conf;
@@ -309,21 +210,10 @@ QtGUIMainWindow::~QtGUIMainWindow(void) {
 	delete 	vol_spkr;
 	delete	micVolVector;
 	delete	spkrVolVector;
-	delete	panel;
-	delete  blinkTimer;
-	delete  keypad;
-	delete	lcd;
-	delete  urlinput;
-	delete	callmanager;
-	delete 	mypop;
-	delete 	trayicon;
-
 	for (int j = 0; j < NUMBER_OF_LINES; j++) {
 		delete callmanager->phLines[j]->button();
 	}
 }
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private Methods implementations     	                               	     
@@ -346,16 +236,72 @@ QtGUIMainWindow::setPathSkin (void) {
 					"Preferences", "Themes.skinChoice", "metal"));
 }
 
+/**
+ * Init variable with ring choice
+ */
 QString
 QtGUIMainWindow::ringFile(void) {
 	return QString(Config::getchar(
 					"Audio", "Rings.ringChoice", "konga.ul"));
 }
 
+/**
+ * Get whole path for rings
+ */
 QString
 QtGUIMainWindow::getRingFile (void) {
 	QString ringFilename(Skin::getPathRing(QString(RINGDIR), ringFile()));
 	return ringFilename;
+}
+
+void
+QtGUIMainWindow::initSkin (void) {
+	// Load file configuration skin
+	QString skinfilename(Skin::getPath(QString(SKINDIR), setPathSkin(),
+				QString(FILE_INI)));
+	
+	if (!apply) {
+		this->pt = new Point(skinfilename.ascii());	
+	} else {
+		// If click on apply button
+		delete pt;
+		deleteButtons();
+		this->pt = new Point(skinfilename.ascii());	
+	}
+	// Initialisation of the buttons
+	this->initSpkrVolumePosition();
+	this->initMicVolumePosition();
+	this->initButtons();
+	// Connections of the buttons
+	this->connections();
+	
+	// Load background image phone
+	setbgPixmap (new QPixmap (Skin::getPath(QString(SKINDIR), 
+											setPathSkin(),
+											QString(PIXMAP_PHONE))));
+	// Transform pixmap to QImage
+	setSourceImage ();
+	this->setMaximumSize (getSourceImage().width(), getSourceImage().height());
+	this->setGeometry (MAIN_INITIAL_POSITION, 
+					   MAIN_INITIAL_POSITION, 
+					   getSourceImage().width(),
+					   getSourceImage().height());
+	// Calculate just one time the transparency mask bit to bit
+	transparencyMask ();
+
+	// Line pixmaps initialisation
+	for (int i = 0; i < NUMBER_OF_LINES; i++) {
+		for (int j = 0; j < NUMBER_OF_STATES; j++) {
+	 		TabLinePixmap[i][j] = QPixmap(Skin::getPath(QString(SKINDIR),
+												setPathSkin(), 
+												QString(PIXMAP_LINE(i, j))));
+	 	}
+	}
+	// Message pixmaps initialisation
+	TabMsgPixmap[0] = QPixmap(Skin::getPath(QString(SKINDIR), setPathSkin(), 
+						PIXMAP_MESSAGE_OFF));
+	TabMsgPixmap[1] = QPixmap(Skin::getPath(QString(SKINDIR), setPathSkin(), 
+						PIXMAP_MESSAGE_ON));
 }
 
 void
@@ -418,7 +364,7 @@ QtGUIMainWindow::initButtons (void) {
 	QToolTip::add(dial_button, tr("Dial"));
 	QToolTip::add(mute_button, tr("Mute"));
 	QToolTip::add(dtmf_button, tr("Show DTMF keypad"));
-	
+
 	// Buttons position
 	phoneKey_msg->move (pt->getX(VOICEMAIL), pt->getY(VOICEMAIL));
 	phoneKey_transf->move (pt->getX(TRANSFER), pt->getY(TRANSFER));
@@ -433,7 +379,7 @@ QtGUIMainWindow::initButtons (void) {
 	dtmf_button->move (pt->getX(DTMF_SHOW), pt->getY(DTMF_SHOW));
 	
 	// Loop for line buttons
-	//Initialisation, set no focus, set geometry, set palette, pixmap
+	// Initialisation, set no focus, set geometry, set palette, pixmap
 	for (int j = 0; j < NUMBER_OF_LINES; j++) {
 		QString lnum;
 
@@ -451,6 +397,75 @@ QtGUIMainWindow::initButtons (void) {
 	vol_spkr = new VolumeControl(this, NULL, VOLUME, spkrVolVector);
 	vol_mic->move(vol_mic_x, vol_mic_y);
 	vol_spkr->move(vol_spkr_x, vol_spkr_y);
+}
+
+void
+QtGUIMainWindow::connections (void) {
+	// Connect for clicked numeric keypad button 
+	connect ((QObject*)keypad->key0, SIGNAL(clicked()), this, 
+			SLOT(pressedKey0()));
+	connect ((QObject*)keypad->key1, SIGNAL(clicked()), this, 
+			SLOT(pressedKey1()));
+	connect ((QObject*)keypad->key2, SIGNAL(clicked()), this, 
+			SLOT(pressedKey2()));
+	connect ((QObject*)keypad->key3, SIGNAL(clicked()), this, 
+			SLOT(pressedKey3()));
+	connect ((QObject*)keypad->key4, SIGNAL(clicked()), this, 
+			SLOT(pressedKey4()));
+	connect ((QObject*)keypad->key5, SIGNAL(clicked()), this, 
+			SLOT(pressedKey5()));
+	connect ((QObject*)keypad->key6, SIGNAL(clicked()), this, 
+			SLOT(pressedKey6()));
+	connect ((QObject*)keypad->key7, SIGNAL(clicked()), this, 
+			SLOT(pressedKey7()));
+	connect ((QObject*)keypad->key8, SIGNAL(clicked()), this, 
+			SLOT(pressedKey8()));
+	connect ((QObject*)keypad->key9, SIGNAL(clicked()), this, 
+			SLOT(pressedKey9()));
+	connect ((QObject*)keypad->keyStar, SIGNAL(clicked()), this, 
+			SLOT(pressedKeyStar()));
+	connect ((QObject*)keypad->keyHash, SIGNAL(clicked()), this, 
+			SLOT(pressedKeyHash()));
+	connect ((QObject*)keypad->keyClose, SIGNAL(clicked()), this, 
+			SLOT(dtmfKeypad()));
+
+	// Connections for the lines 
+	connect (callmanager->phLines[0]->button(), SIGNAL(clicked()), this, 
+			SLOT(button_line0()));
+	connect (callmanager->phLines[1]->button(), SIGNAL(clicked()), this, 
+			SLOT(button_line1()));
+	connect (callmanager->phLines[2]->button(), SIGNAL(clicked()), this, 
+			SLOT(button_line2()));
+	connect (callmanager->phLines[3]->button(), SIGNAL(clicked()), this, 
+			SLOT(button_line3()));
+	connect (callmanager->phLines[4]->button(), SIGNAL(clicked()), this, 
+			SLOT(button_line4()));
+	connect (callmanager->phLines[5]->button(), SIGNAL(clicked()), this, 
+			SLOT(button_line5()));
+
+	// Misc 
+	connect (phoneKey_msg, SIGNAL(clicked()), this, SLOT(button_msg()));
+	connect (phoneKey_transf, SIGNAL(clicked()), this, SLOT(button_transfer()));
+	connect (phoneKey_conf, SIGNAL(clicked()), this, SLOT(button_conf()));
+	connect (dial_button, SIGNAL(clicked()), this, SLOT(dial()));
+	connect (mute_button, SIGNAL(clicked()), this, SLOT(button_mute()));
+	connect (hangup_button, SIGNAL(clicked()), this, SLOT(hangupLine()));
+	connect (configuration_button,SIGNAL(clicked()),this,SLOT(configuration()));
+	connect (addr_book_button, SIGNAL(clicked()), this,SLOT(addressBook()));
+	connect (dtmf_button, SIGNAL(clicked()), this, SLOT(dtmfKeypad()));
+
+	// Connect to reduce
+	connect (reduce_button, SIGNAL(clicked()), this, SLOT(reduceHandle()));
+	// Connect to quit with keyboard
+	connect (this, SIGNAL(keyPressed(int)), this, SLOT(quitApplication()));
+   	// Connect to quit with quit button
+	connect (quit_button, SIGNAL(clicked()), this, SLOT(quitApplication()));
+
+	// Connections for volume control
+	connect(vol_spkr, SIGNAL(setVolumeValue(int)), this, 
+			SLOT(volumeSpkrChanged(int)));
+	connect(vol_mic, SIGNAL(setVolumeValue(int)), this, 
+			SLOT(volumeMicChanged(int)));
 }
 
 /**
@@ -521,8 +536,6 @@ QtGUIMainWindow::dialTone (bool var) {
 
 /**
  * Initializes LCD display, and move it at the configuration file position.
- *
- * @param	lcd
  */
 void
 QtGUIMainWindow::setMainLCD (void) {
@@ -1011,24 +1024,24 @@ QtGUIMainWindow::blinkRingSlot (void) {
 void
 QtGUIMainWindow::quitApplication (void) {
 	bool confirm;
-	// Show QMessageBox
-	confirm = Config::get("Preferences", "Options.confirmQuit", (int)true);
 
 	// Save volume positions
 	// TODO: save position if direction is horizontal
 	Config::set("Audio", "Volume.speakers_x",  pt->getX(VOL_SPKR));
-	if (vol_spkr->getValue() != micVolVector->Y() - micVolVector->Variation()){ 
+	if (vol_spkr->getValue() != 0) { 
 		Config::set("Audio", "Volume.speakers_y",  pt->getY(VOL_SPKR) - 
 			vol_spkr->getValue());
 	}
 	Config::set("Audio", "Volume.micro_x",  pt->getX(VOL_MIC)); 
-	if (vol_mic->getValue() != spkrVolVector->Y() - spkrVolVector->Variation()){
+	if (vol_mic->getValue() != 0) {
 		Config::set("Audio", "Volume.micro_y",  pt->getY(VOL_MIC) - 
 			vol_mic->getValue());
 	}
-	
+	// Save current position of the controls volume
 	save();
 		
+	// Show QMessageBox
+	confirm = Config::get("Preferences", "Options.confirmQuit", (int)true);
 	if (confirm) {
 		if (QMessageBox::question(this, "Confirm quit",
 			"Are you sure you want to quit SFLPhone ?",
@@ -1096,7 +1109,8 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	key->startTone(code);
 	key->generateDTMF(buf, SAMPLING_RATE);
 	callmanager->audiodriver->audio_buf.resize(SAMPLING_RATE);
-	callmanager->audiodriver->audio_buf.setData (buf, callmanager->getSpkrVolume());
+	callmanager->audiodriver->audio_buf.setData(
+										buf, callmanager->getSpkrVolume());
 	pulselen = Config::get("Signalisations", "DTMF.pulseLength", 250);
 	callmanager->audiodriver->audio_buf.resize(pulselen * (OCTETS/1000));
 //	a = callmanager->audiodriver->writeBuffer(buf, pulselen * (OCTETS/1000));
@@ -1113,6 +1127,17 @@ void
 QtGUIMainWindow::save() {
 	Config::tree()->saveToFile(callmanager->path.data());
 }
+
+void
+QtGUIMainWindow::applySkin (void) {
+	apply = true;
+	// For skin of the screen
+	lcd->initGraphics();
+	setMainLCD();
+	// For skin of the gui
+	initSkin();
+}
+
 
 // Handle operation to minimize the application
 void 

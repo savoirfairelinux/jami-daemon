@@ -53,7 +53,7 @@ public:
 	virtual void run ();
 private:
 	Manager *mngr;
-	short	*buf;
+	short	*buffer;
 	int		 totalbytes;
 };
 
