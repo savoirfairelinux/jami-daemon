@@ -70,9 +70,10 @@ Manager::~Manager (void) {
 
 void
 Manager::selectAudioDriver (void) {
-	if (Config::getb(QString("Audio/Drivers.driverOSS"))) {
+	this->audiodriver = new AudioDriversOSS ();
+	/* if (Config::getb(QString("Audio/Drivers.driverOSS"))) {
 		this->audiodriver = new AudioDriversOSS ();
-	}/* else if (Config::get(QString("Audio/Drivers.driverALSA"), false)) {
+	} else if (Config::get(QString("Audio/Drivers.driverALSA"), false)) {
 		audiodriver = new AudioDriversALSA ();
 	}*/
 }
