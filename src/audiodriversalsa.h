@@ -46,6 +46,8 @@ public:
 	int		resetDevice	(void);	
 	int 	writeBuffer	(void);
 	int		readBuffer 	(void *, int);
+	int		readBuffer 	(int) { return 0; }
+	unsigned int readableBytes (void) { return 0; }
 	
 private:
 	snd_pcm_t *audio_hdl;
