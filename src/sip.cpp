@@ -507,7 +507,7 @@ SIP::outgoingInvite (void) {
 	}
 	to = (char*)qto.data();
 		
-	qDebug ("From: <%s>", from);
+	qDebug ("From: %s", from);
 	qDebug ("To: <%s>", to);
 
 	// If no SIP proxy setting
@@ -583,7 +583,6 @@ SIP::manageActions (int usedLine, int action) {
 		
 		// Get local port
 		snprintf (tmpbuf, 63, "%d", call[usedLine]->getLocalAudioPort());
-		qDebug("getLocalAudioPort = %d",call[usedLine]->getLocalAudioPort());
 
 		eXosip_lock();
 		i = eXosip_answer_call(call[usedLine]->did, 200, tmpbuf);
@@ -602,7 +601,7 @@ SIP::manageActions (int usedLine, int action) {
 		qDebug("CLOSE_CALL: cid = %d et did = %d", call[usedLine]->cid, 
 				call[usedLine]->did);
 		
-		qDebug("JE RACCROCHE CALL 0x%d, usedline = %d", call[usedLine], usedLine);
+		call[usedLine]->usehold = false;
 		// Release SIP stack.
 		eXosip_lock();
 		i = eXosip_terminate_call (call[usedLine]->cid, call[usedLine]->did);
@@ -624,22 +623,17 @@ SIP::manageActions (int usedLine, int action) {
 	case ONHOLD_CALL:
 		call[usedLine]->usehold = true;
 		
-		qDebug("ON HOLD CALL 0x%d, usedLine = %d", call[usedLine], usedLine);
-
 		eXosip_lock();
 		i = eXosip_on_hold_call(call[usedLine]->did);
 		eXosip_unlock();
 		
 		// Disable audio
-		//call[usedLine]->enable_audio = -1;
-		//callmanager->closeSound(call[usedLine]);
 		call[usedLine]->closedCall();
 		break;
 
 	// IP-Phone user is parking peer OFF HOLD
 	case OFFHOLD_CALL:
 		call[usedLine]->usehold = true;
-		qDebug("OFF HOLD CALL 0x%d, usedLine = %d", call[usedLine], usedLine);
 		eXosip_lock();
 		i = eXosip_off_hold_call(call[usedLine]->did, NULL, 0);
 		eXosip_unlock();
@@ -774,8 +768,10 @@ SIP::getEvent (void) {
 					or !call[theline]->usehold) {
 				
 				if (!callmanager->transferedCall()) {
-					// Associate an audio port with a call
-					call[theline]->setLocalAudioPort(local_port);
+					if (!call[theline]->usehold) {
+						// Associate an audio port with a call
+						call[theline]->setLocalAudioPort(local_port);
+					}
 
 					// Answer
 					call[theline]->answeredCall(event);
@@ -913,6 +909,7 @@ SIP::getEvent (void) {
 			qDebug("<- (%i %i) BYE from: %s", event->cid, event->did, 
 				event->remote_uri);
 
+			call[theline]->usehold = false;
 			theline = findLineNumber(event);
 			if (!callmanager->phLines[theline]->getbInProgress()) {
 		//	if (!callmanager->getCallInProgress()) {
@@ -942,7 +939,6 @@ SIP::getEvent (void) {
 			qDebug("<- (%i %i) INVITE (On Hold) from: %s", event->cid, 
 				event->did, event->remote_uri);
 			theline = findLineNumber(event);
-			//callmanager->closeSound(call[theline]);
 			call[theline]->closedCall();
 			call[theline]->onholdCall(event);
 			break;

@@ -63,8 +63,8 @@ ConfigurationTree::populateFromFile (const char *fileName) {
 			s.trim("]");
 			section = s.data();
 	
-		} else if (*str != NULL) {
-			// If the line is "key=value"
+		} else if (*str != NULL and *str[0] != '#') {
+			// If the line is "key=value" and doesn't begin with '#'(comments)
 			String k = str->token("=", 0);
 			key = k.data();
 			String v = str->token("=", 0);

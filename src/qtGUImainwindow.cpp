@@ -46,6 +46,7 @@
 #include "jpushbutton.h"
 #include "manager.h"
 #include "numerickeypadtools.h"
+#include "point.h"
 #include "skin.h"
 #include "qtGUImainwindow.h"
 
@@ -115,8 +116,7 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	// Load file configuration skin
 	QString skinfilename(Skin::getPath(QString(SKINDIR), setPathSkin(),
 				QString(FILE_INI)));
-	ExistingDF.SetFileName(skinfilename);
-	ExistingDF.Load(skinfilename);
+	this->pt = new Point(skinfilename.ascii());
 	
 	// Initialisations
 	this->initButtons();
@@ -343,17 +343,17 @@ QtGUIMainWindow::setPathSkin (void) {
 void
 QtGUIMainWindow::initButtons (void) {
 	// Buttons initialisation
-	phoneKey_msg= new JPushButton(this, NULL, "voicemail");
-	phoneKey_transf = new JPushButton(this, NULL, "transfer");
-	phoneKey_conf = new JPushButton(this, NULL, "conference");
-	reduce_button = new JPushButton(this, NULL, "minimize");
-	quit_button = new JPushButton(this, NULL, "close");
-	addr_book_button = new JPushButton(this, NULL, "directory");
-	configuration_button = new JPushButton(this, NULL, "setup");
-	hangup_button = new JPushButton(this, NULL, "hangup");
-	dial_button = new JPushButton(this, NULL, "ok");
-	mute_button = new JPushButton(this, NULL, "mute");
-	dtmf_button = new JPushButton(this, NULL, "dtmf");
+	phoneKey_msg= new JPushButton(this, NULL, VOICEMAIL);
+	phoneKey_transf = new JPushButton(this, NULL, TRANSFER);
+	phoneKey_conf = new JPushButton(this, NULL, CONFERENCE);
+	reduce_button = new JPushButton(this, NULL, MINIMIZE);
+	quit_button = new JPushButton(this, NULL, CLOSE);
+	addr_book_button = new JPushButton(this, NULL, DIRECTORY);
+	configuration_button = new JPushButton(this, NULL, SETUP);
+	hangup_button = new JPushButton(this, NULL, HANGUP);
+	dial_button = new JPushButton(this, NULL, CONNECT);
+	mute_button = new JPushButton(this, NULL, MUTE);
+	dtmf_button = new JPushButton(this, NULL, DTMF_SHOW);
 
 	// Set tooltip buttons
 	QToolTip::add(reduce_button, tr("Minimize window"));
@@ -369,41 +369,18 @@ QtGUIMainWindow::initButtons (void) {
 	QToolTip::add(dtmf_button, tr("Show DTMF keypad"));
 	
 	// Buttons position
-	phoneKey_msg->move (
-			ExistingDF.GetInt("msg_x","Positions"), 
-			ExistingDF.GetInt("msg_y","Positions"));
-	phoneKey_transf->move (
-			ExistingDF.GetInt("transf_x","Positions"), 
-			ExistingDF.GetInt("transf_y","Positions"));
-	phoneKey_conf->move (
-			ExistingDF.GetInt("conf_x","Positions"), 
-			ExistingDF.GetInt("conf_y","Positions"));
-	reduce_button->move (
-			ExistingDF.GetInt("reduce_x","Positions"), 
-			ExistingDF.GetInt("reduce_y","Positions"));
-	addr_book_button->move (
-			ExistingDF.GetInt("addr_book_x","Positions"), 
-			ExistingDF.GetInt("addr_book_y","Positions"));
-	quit_button->move (
-			ExistingDF.GetInt("quit_x","Positions"), 
-			ExistingDF.GetInt("quit_y","Positions"));		
-	configuration_button->move (
-			ExistingDF.GetInt("configuration_x","Positions"), 
-			ExistingDF.GetInt("configuration_y","Positions"));
-	hangup_button->move (
-			ExistingDF.GetInt("hangup_x","Positions"), 
-			ExistingDF.GetInt("hangup_y","Positions"));
-	dial_button->move (
-			ExistingDF.GetInt("dial_x","Positions"), 
-			ExistingDF.GetInt("dial_y","Positions"));
-	mute_button->move (
-			ExistingDF.GetInt("mute_x","Positions"), 
-			ExistingDF.GetInt("mute_y","Positions"));
-	dtmf_button->move (
-			ExistingDF.GetInt("dtmf_x","Positions"), 
-			ExistingDF.GetInt("dtmf_y","Positions"));
-				
-
+	phoneKey_msg->move (pt->getX(VOICEMAIL), pt->getY(VOICEMAIL));
+	phoneKey_transf->move (pt->getX(TRANSFER), pt->getY(TRANSFER));
+	phoneKey_conf->move (pt->getX(CONFERENCE), pt->getY(CONFERENCE));
+	reduce_button->move (pt->getX(MINIMIZE), pt->getY(MINIMIZE));
+	addr_book_button->move (pt->getX(DIRECTORY), pt->getY(DIRECTORY));
+	quit_button->move (pt->getX(CLOSE), pt->getY(CLOSE));
+	configuration_button->move (pt->getX(SETUP), pt->getY(SETUP));
+	hangup_button->move (pt->getX(HANGUP), pt->getY(HANGUP));
+	dial_button->move (pt->getX(CONNECT), pt->getY(CONNECT));
+	mute_button->move (pt->getX(MUTE), pt->getY(MUTE));
+	dtmf_button->move (pt->getX(DTMF_SHOW), pt->getY(DTMF_SHOW));
+	
 	// Loop for line buttons
 	//Initialisation, set no focus, set geometry, set palette, pixmap
 	for (int j = 0; j < NUMBER_OF_LINES; j++) {
@@ -412,20 +389,14 @@ QtGUIMainWindow::initButtons (void) {
 		lnum = "l" + lnum.setNum (j + 1);
 		callmanager->phLines[j]->setButton(new JPushButton(
 					this, NULL, lnum.ascii()));
-		callmanager->phLines[j]->button()->move (
-					ExistingDF.GetInt(lnum + "_x","Positions"), 
-					ExistingDF.GetInt(lnum + "_y","Positions"));
+		callmanager->phLines[j]->button()->move (pt->getX(lnum),pt->getY(lnum));
 	}
 
 	// Set pixmaps volume TODO:change to thing like slider
-	vol_mic = new JPushButton(this, NULL, "volume");
-	vol_mic->move(
-			ExistingDF.GetInt("vol_mic_x","Positions"), 
-			ExistingDF.GetInt("vol_mic_y","Positions"));
-	vol_spkr = new JPushButton(this, NULL, "volume");
-	vol_spkr->move(
-			ExistingDF.GetInt("vol_spkr_x","Positions"), 
-			ExistingDF.GetInt("vol_spkr_y","Positions"));
+	vol_mic = new JPushButton(this, NULL, VOLUME);
+	vol_spkr = new JPushButton(this, NULL, VOLUME);
+	vol_mic->move(pt->getX(VOL_MIC), pt->getY(VOL_MIC));
+	vol_spkr->move(pt->getX(VOL_SPKR), pt->getY(VOL_SPKR));
 }
 
 /**
@@ -502,8 +473,7 @@ QtGUIMainWindow::dialTone (bool var) {
 void
 QtGUIMainWindow::setMainLCD (void) {
 	// Screen initialisation
-	this->lcd->move (ExistingDF.GetInt("display_x","Positions"), 
-					ExistingDF.GetInt("display_y","Positions"));
+	this->lcd->move (pt->getX(SCREEN), pt->getY(SCREEN));
 }
 
 void
@@ -531,7 +501,7 @@ QtGUIMainWindow::toggleLine (int num_line) {
 	busyNum = numLineBusy();
 
 	if (callmanager->isNotUsedLine(currentLineNumber) and busyNum == -1) {
-		qDebug("GUI: PREMIERE LIGNE occupee %d", currentLineNumber);
+		qDebug("GUI: FIRST LINE IN USED %d", currentLineNumber);
 		lcd->setStatus("Enter Phone Number:");
 		chosenLine = currentLineNumber;
 		if (!noChoose) {
@@ -546,7 +516,7 @@ QtGUIMainWindow::toggleLine (int num_line) {
 	// Occurs when newly off-hook line replaces another one.
 	if (busyNum != currentLineNumber && busyNum != -1) {
 		if (callmanager->isNotUsedLine(currentLineNumber)) {
-			qDebug("GUI: Prend nouvelle ligne %d", currentLineNumber);
+			qDebug("GUI: Line %d replaces another one", currentLineNumber);
 			lcd->clear(QString("Enter Phone Number:"));
 			chosenLine = currentLineNumber;
 			lcd->inFunction = false;
@@ -576,7 +546,7 @@ QtGUIMainWindow::toggleLine (int num_line) {
 		// Answer new call
 		if (callmanager->isRingingLine(currentLineNumber) and 
 			callmanager->phLines[currentLineNumber]->getStateLine() != ONHOLD){
-			qDebug("GUI: -- Nouvel appel repondu %d --", currentLineNumber);
+			qDebug("GUI: -- New answered call %d --", currentLineNumber);
 			callmanager->actionHandle (currentLineNumber, ANSWER_CALL);
 			callmanager->phLines[currentLineNumber]->setState(BUSY);
 			callmanager->phLines[currentLineNumber]->setStateLine(BUSY);

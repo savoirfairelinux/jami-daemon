@@ -19,7 +19,6 @@
 
 #include <qapplication.h>
 
-#include "CDataFile.h"
 #include "jpushbutton.h"
 #include "numerickeypad.h"
 #include "qtGUImainwindow.h"
@@ -44,12 +43,10 @@ NumericKeypad::NumericKeypad (QWidget *parent, const char *name, WFlags f)
 	// Calculate just one time the transparency mask bit to bit
 	transparencyMask ();						
 
-	CDataFile ExistingDF;
 	QString skinfilename(Skin::getPath(QString(SKINDIR), 
 										QtGUIMainWindow::setPathSkin(),
 										QString(FILE_INI)));
-	ExistingDF.SetFileName(skinfilename);
-	ExistingDF.Load(skinfilename);
+	pt = new Point(skinfilename);
 	
 	// Buttons initialisation
 	key0 = new JPushButton(this, NULL, DTMF_0);
@@ -67,32 +64,19 @@ NumericKeypad::NumericKeypad (QWidget *parent, const char *name, WFlags f)
 	keyClose = new JPushButton(this, NULL, DTMF_CLOSE);
 
 	// Buttons position 
-	key0->move (ExistingDF.GetInt("dtmf_0_x","Positions"), 
-				ExistingDF.GetInt("dtmf_0_y","Positions"));
-	key1->move (ExistingDF.GetInt("dtmf_1_x","Positions"), 
-				ExistingDF.GetInt("dtmf_1_y","Positions"));
-	key2->move (ExistingDF.GetInt("dtmf_2_x","Positions"), 
-				ExistingDF.GetInt("dtmf_2_y","Positions"));
-	key3->move (ExistingDF.GetInt("dtmf_3_x","Positions"), 
-				ExistingDF.GetInt("dtmf_3_y","Positions"));
-	key4->move (ExistingDF.GetInt("dtmf_4_x","Positions"), 
-				ExistingDF.GetInt("dtmf_4_y","Positions"));
-	key5->move (ExistingDF.GetInt("dtmf_5_x","Positions"), 
-				ExistingDF.GetInt("dtmf_5_y","Positions"));
-	key6->move (ExistingDF.GetInt("dtmf_6_x","Positions"), 
-				ExistingDF.GetInt("dtmf_6_y","Positions"));
-	key7->move (ExistingDF.GetInt("dtmf_7_x","Positions"), 
-				ExistingDF.GetInt("dtmf_7_y","Positions"));
-	key8->move (ExistingDF.GetInt("dtmf_8_x","Positions"), 
-				ExistingDF.GetInt("dtmf_8_y","Positions"));
-	key9->move (ExistingDF.GetInt("dtmf_9_x","Positions"), 
-				ExistingDF.GetInt("dtmf_9_y","Positions"));
-	keyStar->move (ExistingDF.GetInt("dtmf_star_x","Positions"), 
-				ExistingDF.GetInt("dtmf_star_y","Positions"));
-	keyHash->move (ExistingDF.GetInt("dtmf_pound_x","Positions"), 
-				ExistingDF.GetInt("dtmf_pound_y","Positions"));
-	keyClose->move (ExistingDF.GetInt("dtmf_close_x","Positions"), 
-				ExistingDF.GetInt("dtmf_close_y","Positions"));
+	key0->move (pt->getX(DTMF_0), pt->getY(DTMF_0));
+	key1->move (pt->getX(DTMF_1), pt->getY(DTMF_1));
+	key2->move (pt->getX(DTMF_2), pt->getY(DTMF_2));
+	key3->move (pt->getX(DTMF_3), pt->getY(DTMF_3));
+	key4->move (pt->getX(DTMF_4), pt->getY(DTMF_4));
+	key5->move (pt->getX(DTMF_5), pt->getY(DTMF_5));
+	key6->move (pt->getX(DTMF_6), pt->getY(DTMF_6));
+	key7->move (pt->getX(DTMF_7), pt->getY(DTMF_7));
+	key8->move (pt->getX(DTMF_8), pt->getY(DTMF_8));
+	key9->move (pt->getX(DTMF_9), pt->getY(DTMF_9));
+	keyStar->move (pt->getX(DTMF_STAR), pt->getY(DTMF_STAR));
+	keyHash->move (pt->getX(DTMF_POUND), pt->getY(DTMF_POUND));
+	keyClose->move (pt->getX(DTMF_CLOSE), pt->getY(DTMF_CLOSE));
 }
 
 NumericKeypad::~NumericKeypad (void) {
@@ -109,6 +93,7 @@ NumericKeypad::~NumericKeypad (void) {
 	delete keyStar;
 	delete keyHash;
 	delete keyClose;
+	delete pt;
 }
 
 void

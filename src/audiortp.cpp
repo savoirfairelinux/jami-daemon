@@ -69,7 +69,6 @@ AudioRtp::createNewSession (SipCall *ca) {
 	}
 
 	RTXThread = new AudioRtpRTX (ca, manager->audiodriver, manager, symetric);
-	qDebug("-- START SOUND --");
 	if (RTXThread->start() != 0) {
 		return -1;
 	}
@@ -86,6 +85,7 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 	if (RTXThread != NULL) {
 		// Wait for them...and delete.
 		//RTXThread->join();
+		qDebug("DELETED");
 		delete RTXThread;
 		RTXThread = NULL;
 	}

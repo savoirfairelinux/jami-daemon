@@ -27,7 +27,6 @@
 #include <qthread.h>
 #include <qwidget.h>
 
-#include "CDataFile.h"
 #include "global.h"
 
 #define FREE_STATUS		QObject::tr("Welcome to SFLPhone")
@@ -83,8 +82,6 @@ private:
 	MyDisplayThread	   *animationThread;
 	QtGUIMainWindow	   *qtgui;	
 	
-	CDataFile 	 		ExistingDF;		// Configuration file
-
 	void		initGraphics	(void);
 	void		initText		(void);
 	void		renderText		(QPainter &, QFontMetrics &, QString &);

@@ -20,7 +20,7 @@
 #ifndef __CODEC_AUDIO_H__
 #define __CODEC_AUDIO_H__
 
-#include <string.h>
+#include <string>
 using namespace std;
 
 typedef enum {
@@ -31,11 +31,11 @@ typedef enum {
 	PAYLOAD_CODEC_SPEEX = 110
 } codecType;
 
-#define CODEC_ALAW			std::string("G711a")
-#define CODEC_ULAW			std::string("G711u")
-#define CODEC_GSM			std::string("GSM")
-#define CODEC_ILBC			std::string("iLBC")
-#define CODEC_SPEEX			std::string("SPEEX")
+#define CODEC_ALAW			string("G711a")
+#define CODEC_ULAW			string("G711u")
+#define CODEC_GSM			string("GSM")
+#define CODEC_ILBC			string("iLBC")
+#define CODEC_SPEEX			string("SPEEX")
 
 #define NB_CODECS			5
 
@@ -49,7 +49,7 @@ public:
 	void 		noSupportedCodec	(void);
 	static int	codecDecode 		(int, short *, unsigned char *, unsigned int);
 	static int	codecEncode 		(int, unsigned char *, short *, unsigned int);
-	int			matchPayloadCodec	(std::string);
+	int			matchPayloadCodec	(string);
 	char *		rtpmapPayload 		(int);
 
 private:

@@ -32,7 +32,6 @@ OBJS = \
 	audiodrivers.o \
 	audiodriversoss.o \
 	audiortp.o \
-	CDataFile.o \
 	configuration.o \
 	configitem.o \
 	configurationtree.o \
@@ -44,6 +43,7 @@ OBJS = \
 	mydisplay.o \
 	numerickeypadtools.o \
 	phoneline.o \
+	point.o \
 	qjlistboxpixmap.o \
 	sip.o \
 	sipcall.o \

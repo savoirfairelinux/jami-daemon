@@ -21,6 +21,7 @@
 #define __NUMERIC_KEYPAD_H__
 
 #include "jpushbutton.h"
+#include "point.h"
 #include "transqwidget.h"
 
 class NumericKeypad : public TransQWidget {
@@ -29,7 +30,6 @@ public:
 	// Default Constructor and destructor
 	NumericKeypad	(QWidget* = 0, const char* = 0,WFlags = 0);
 	~NumericKeypad	(void);
-
 
 	JPushButton		*key0;
 	JPushButton		*key1;
@@ -46,7 +46,7 @@ public:
 	JPushButton		*keyClose;
 
 private:
-//	QPoint		position;
+	Point				*pt;	
 	TransQWidget*		mainWindow;
 	void keyPressEvent 	(QKeyEvent*);
 };

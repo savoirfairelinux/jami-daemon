@@ -39,7 +39,7 @@ AudioCodec::~AudioCodec (void) {
 }
 
 int
-AudioCodec::matchPayloadCodec (std::string codecname) {
+AudioCodec::matchPayloadCodec (string codecname) {
 	if (codecname == CODEC_ALAW) {
 		return PAYLOAD_CODEC_ALAW;
 	} else if (codecname == CODEC_ULAW) {

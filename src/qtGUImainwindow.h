@@ -31,7 +31,6 @@
 #include <qthread.h>
 #include <qwidget.h>
 
-#include "CDataFile.h"
 #include "configuration.h"
 #include "configurationpanelui.h"
 #include "dtmf.h"
@@ -40,6 +39,7 @@
 #include "mydisplay.h"
 #include "numerickeypad.h"
 #include "phonebookui.h"
+#include "point.h"
 #include "skin.h"
 #include "sip.h"
 #include "transqwidget.h"
@@ -186,13 +186,14 @@ protected:
 	void 		 keyPressEvent 	(QKeyEvent *);
 
 private:
+	// Configuration skin file
+	Point				*pt;
+
 	// To construct ring rect pixmap
 	QImage 		 imageRing;
 	QImage 		 imageNoRing;
 
 	QPixmap		 TabMsgPixmap[NUMBER_OF_STATES];
-	// Configuration file
-	CDataFile 	 ExistingDF;
 	int 		 modeType;
 	DTMF 		*key;
 	short   	*buf;
