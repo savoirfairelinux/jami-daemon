@@ -141,10 +141,12 @@ Manager::createSettingsPath (void) {
 void
 Manager::selectAudioDriver (void) {
 	if (Config::getb("Audio", "Drivers.driverOSS")) {
+		useAlsa = false;
 		this->audiodriver = new AudioDriversOSS (AudioDrivers::ReadWrite);
 	}
 	if (Config::getb("Audio", "Drivers.driverALSA")) {
 #ifdef ALSA
+		useAlsa = true;
 		this->audiodriver = new AudioDriversALSA (AudioDrivers::WriteOnly);
 		this->audiodriverReadAlsa = new AudioDriversALSA (AudioDrivers::ReadOnly);
 #endif

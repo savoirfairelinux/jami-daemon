@@ -137,17 +137,18 @@ public:
 	QString  ringFile			(void);
 	QString	 getRingFile		(void);
 	inline 
-	void 	 ring				(bool b) { this->ringVar = b; }
+	void 	 ring				(bool b)	{ this->ringVar = b; }
 	inline 
-	bool 	 ringing			(void) { return this->ringVar; }
+	bool 	 ringing			(void) 		{ return this->ringVar; }
 	void	 stopCallTimer 		(int);
 	void	 startCallTimer 	(int);
 	void	 setFreeStateLine 	(int);
 	void	 setCurrentLineNumber(int);
-	void	 dialTone		(bool);
+	void	 dialTone			(bool);
+	void	 setInactiveLine 	(int);
 
 signals:
-	void 	 keyPressed(int);
+	void 	 keyPressed			(int);
 
 public slots:
 	void 	 dial				(void);

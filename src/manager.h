@@ -46,6 +46,7 @@ public:
 #ifdef ALSA
 	AudioDrivers	*audiodriverReadAlsa;
 #endif
+	bool			 useAlsa;
 	ToneGenerator	*tone;
 	QString 		*DirectCall; // from -p argv
 	bool 			 mute;

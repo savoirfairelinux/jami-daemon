@@ -598,7 +598,10 @@ QtGUIMainWindow::toggleLine (int num_line) {
 		callmanager->phLines[busyNum]->setStateLine(ONHOLD);
 		callmanager->actionHandle (busyNum, ONHOLD_CALL);
 		if (!callmanager->phLines[currentLineNumber]->getbDial()) {
-			this->dialTone(true);
+			if (callmanager->sip->call[busyNum] == NULL) {
+				setInactiveLine(busyNum);
+			}
+			this->dialTone(true);			
 		}
 		callmanager->phLines[currentLineNumber]->setState(BUSY);
 		qDebug("GUI: state ON-HOLD line busyNum %d", busyNum);
@@ -640,6 +643,10 @@ QtGUIMainWindow::toggleLine (int num_line) {
 		qDebug("GUI: state ON-HOLD line %d", currentLineNumber);
 		lcd->setStatus(ONHOLD_STATUS);
 		callmanager->actionHandle (currentLineNumber, ONHOLD_CALL);
+		if (callmanager->sip->call[currentLineNumber] == NULL) {
+			setInactiveLine(currentLineNumber);
+			lcd->setStatus("Enter Phone Number:");
+		}
 	}
 }
 
@@ -727,11 +734,9 @@ QtGUIMainWindow::hangupLine (void) {
 	} else if (callmanager->sip->call[currentLineNumber] == NULL and 
 			callmanager->phLines[currentLineNumber]->isOnHold()) {
 	// If there isn't call on the current line and state line onHold
-		// set free pixmap
-		setFreeStateLine (currentLineNumber);
-		this->dialTone(false);
+		setInactiveLine(currentLineNumber);
+		// Stop congestion sound
 		callmanager->congestion(false);
-		callmanager->phLines[currentLineNumber]->setbDial(false);
 		lcd->clear(QString("Hung up"));
 	}
 	
@@ -742,6 +747,15 @@ QtGUIMainWindow::hangupLine (void) {
 #if 0
 	msgVar = true;
 #endif
+}
+
+void
+QtGUIMainWindow::setInactiveLine (int num) {
+	// set free pixmap
+	setFreeStateLine (num);
+	// Stop dial tone
+	this->dialTone(false);
+	callmanager->phLines[num]->setbDial(false);
 }
 
 /**
