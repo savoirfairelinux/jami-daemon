@@ -90,10 +90,10 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 	// This will make RTP threads finish.
 	ca->enable_audio = -1;
 
+	if (RTXThread != NULL) {
 	// Wait for them...and delete.
 	RTXThread->join();
 	
-	if (RTXThread != NULL) {
 		delete RTXThread;
 		qDebug ("RTXThread deleted!");
 		RTXThread = NULL;
