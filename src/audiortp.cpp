@@ -263,7 +263,7 @@ AudioRtpRTX::run (void) {
 		} else {
 			// When IP-phone user click on mute button, we read buffer of a
 			// temp buffer to avoid delay in sound.
-#ifdef
+#ifdef ALSA
 			i = audioDeviceRead->readBuffer (data_mute, 320);
 #else
 			i = audioDevice->readBuffer (data_mute, 320);
