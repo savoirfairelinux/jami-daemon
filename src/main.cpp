@@ -17,6 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <getopt.h>
+
 #include <qapplication.h>
 #include <qmessagebox.h>
 #include <qtranslator.h>
@@ -28,13 +30,18 @@
 #include "skin.h"
 #include "qtGUImainwindow.h"
 
+void OptionProcess (int argc,char **argv) ;
+QString *pOption = NULL;
+
+
 int
 main (int argc, char **argv) {
 	QApplication	a(argc, argv);
 	Manager *manager;
 	
-	if ( argc > 1)
-		manager = new Manager(new QString(argv[1]));
+	OptionProcess (argc,argv);
+	if ( pOption )  
+		manager = new Manager(pOption);
 	else
 		manager = new Manager(NULL);
 
@@ -47,3 +54,44 @@ main (int argc, char **argv) {
 	a.setMainWidget(manager->gui());
 	return a.exec();
 }
+
+void OptionProcess (int argc,char **argv) {
+int c;
+
+        while (1) {
+                int option_index = 0;
+                static struct option long_options[] =
+                {
+                                {"phonenumber", 1, 0, 'p'},
+                                {"stun", 1, 0, 's'},
+                                {"verbose", 0, 0, 'v'},
+                                {"help", 0, 0, 'h'},
+                                {0, 0, 0, 0}
+                };
+
+                c = getopt_long (argc, argv, "p:s:vh", long_options, &option_index);
+                if (c == -1)
+                        break;
+
+                switch (c) {
+                        case 'v':
+                                break;
+                        case 'p':
+				printf("Phone number to call : %s\n",optarg);
+				pOption = new QString(optarg);		
+                                break;
+                        case 's':
+                                break;
+                        case '?':
+                        case 'h':
+                                break;
+                        default:
+                                printf ("?? caractère de code 0%o ??\n", c);
+                }
+        }
+}
+
+
+
+
+
