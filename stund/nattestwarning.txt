@@ -1,0 +1,47 @@
+WARNING: This script runs as "root" and makes changes to your network interface 
+configuration. This script makes several assumptions about the test environment 
+you might be using. Several of these assumptions may not hold in your environment 
+and could cause you to lose all connectivity to this or other computers.  
+It is designed to be run from the console on two networks which are connected 
+only to a NAT in a configuration like the one shown below:
+
+                 Logical Configuration
+
+     +--------+
+     | STUN   |192.168.0.2    +-------+
+     | Client |---------------|       |
+     +--------+               |       |public      +--------+
+                              |       |side        | STUN   | 1.1.1.2
+                  192.168.0.1 |  NAT  |------------| Server | 1.1.1.3
+                  private side|       |1.1.1.1     +--------+
+                              |       |
+     +--------+               |       |
+     | STUN   |---------------|       |
+     | Client |192.168.0.3    +-------+
+     +--------+
+
+The test actually just requires a single computer with two interfaces which acts 
+as a STUN server and a pair of cooperating STUN clients. The physical configuration 
+is shown below.  First plug in the NAT and computer and configure the primary IP 
+interface on each interface.  There should be no other computers or networks 
+connected to the test bed.
+
+                Physical Configuration
+
+    Private                           Public
+     or "inside"                        or "outside"
+     interface      +--------------+    interface
+                    |  NAT device  |
+  192.168.0.1 +-----|  under       |-----+  1.1.1.1
+              |     |  test        |     |
+              |     |              |     |
+              |     +--------------+     |
+              |                          |
+              |                          |
+              |     +--------------+     |
+              |     |  test        |     |
+  192.168.0.2 +-----|  computer    |-----+  1.1.1.2
+  192.168.0.3   eth1|              |eth0    1.1.1.3
+                    |              |
+                    +--------------+
+

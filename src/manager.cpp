@@ -1,0 +1,422 @@
+/**
+ *  Copyright (C) 2004 Savoir-Faire Linux inc.
+ *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *                                                                              
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *                                                                              
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *                                                                              
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#include <cstdio>
+#include <cstdlib>
+#include <ccrtp/rtp.h>
+
+#include <qapplication.h>
+#include <qhostaddress.h>
+#include <qwidget.h>
+
+#include "audiodriversoss.h"
+#include "configuration.h"
+#include "manager.h"
+#include "audiortp.h"
+#include "sip.h"
+#include "qtGUImainwindow.h"
+
+#include "../stund/udp.h"
+#include "../stund/stun.h"
+
+Manager::Manager (void) {
+	for (int i = 0; i < NUMBER_OF_LINES; i++) {
+		phLines[i] = new PhoneLine ();
+	}
+	phonegui = new QtGUIMainWindow (0, 0 ,  
+					Qt::WDestructiveClose | 
+					Qt::WStyle_Customize |
+					Qt::WStyle_NoBorder,this);
+
+	sip = new SIP(this);
+	audioRTP = new AudioRtp(this->sip, this);
+	tone = new ToneGenerator(this);
+	
+	sip_rtp_init();
+	
+	selectAudioDriver();
+
+	// Init variables
+	b_ringing = false;
+	mute = false;
+	b_ringtone = false;
+	
+}
+
+Manager::~Manager (void) {
+	delete phonegui;
+	delete sip;
+	delete audioRTP;
+	delete audiodriver;
+	delete tone;
+	delete[] phLines;
+}
+
+void
+Manager::selectAudioDriver (void) {
+	if (Config::getb(QString("Audio/Drivers.driverOSS"))) {
+		this->audiodriver = new AudioDriversOSS ();
+	}/* else if (Config::get(QString("Audio/Drivers.driverALSA"), false)) {
+		audiodriver = new AudioDriversALSA ();
+	}*/
+}
+
+void
+Manager::sip_rtp_init (void) {
+	// Init the SIP and RTP stacks.
+	sip->initSIP ();
+	sip->initRtpmapCodec ();
+	
+	if (Config::getb(QString("Preferences/Options.autoregister"))) {
+		// Register to the known proxies if available
+		if (Config::gets("Signalisations/SIP.password").length() > 0) {
+			sip->setRegister ();
+		}
+	} 
+}
+
+void
+Manager::quitLibrary (void) {
+	sip->quitSIP();
+	audioRTP->rtpexit();
+}
+
+int
+Manager::outgoingNewCall (void) {
+	return sip->outgoingInvite();
+}
+
+bool
+Manager::ringing (void) {
+	return this->b_ringing;
+}
+
+// Broadcast ring message to every component
+void
+Manager::ring (bool var) {
+	if (this->b_ringing != var) {
+		this->b_ringing = var;
+		
+		// Blinking bar ring signalisation
+	//	gui()->ring(var);
+
+		// Blinking not-used line 
+		
+		// bruitagesproot->ring(var);
+		 
+	}
+}
+
+void
+Manager::ringTone (bool var) {
+	if (this->b_ringtone != var) {
+		this->b_ringtone = var;
+	}
+	tonezone = var;
+	tone->toneHandle(ZT_TONE_RINGTONE);
+}
+
+bool
+Manager::getCallInProgress (void) {
+	return gui()->callinprogress;
+}
+
+void
+Manager::setCallInProgress (bool inprogress) {
+	gui()->callinprogress = inprogress;
+}
+
+bool
+Manager::transferedCall(void) {
+	return gui()->transfer;
+}
+
+/**
+ * Handle IP_Phone user's actions
+ *
+ * @param	lineNumber: line where occurs the action
+ * @param 	action:		type of action
+ */
+void
+Manager::actionHandle (int lineNumber, int action) {
+	switch (action) {
+	case ANSWER_CALL:
+		// TODO
+		// Stopper l'etat "ringing" du main (audio, signalisation, gui)
+		sip->manageActions (lineNumber, ANSWER_CALL);		
+		this->ring(false);
+		gui()->lcd->setStatus("Connected");	
+		qDebug("Start timer call");
+		gui()->startCallTimer(lineNumber);
+		break;
+
+	case CLOSE_CALL:
+		// If the call is active TODO: or is ringing for the callee
+		if (sip->call[lineNumber] != NULL) {
+			// stop call timer			
+			gui()->stopCallTimer(lineNumber);
+			sip->manageActions (lineNumber, CLOSE_CALL);
+			sip->notUsedLine = -1;	
+		}		
+		break;
+
+	case ONHOLD_CALL:
+		if (sip->call[lineNumber] != NULL) {
+			qDebug("Manager ONHOLD:  call[%d] = 0x%X", 
+				(unsigned int)lineNumber, sip->call[lineNumber]);
+			gui()->lcd->setStatus(ONHOLD_STATUS);
+			sip->manageActions (lineNumber, ONHOLD_CALL);
+		}
+		break;
+		
+	case OFFHOLD_CALL:
+		if (sip->call[lineNumber] != NULL) {
+			sip->manageActions (lineNumber, OFFHOLD_CALL);
+		}
+		break;
+		
+	case TRANSFER_CALL:
+		sip->manageActions (lineNumber, TRANSFER_CALL);
+		break;
+		
+	case CANCEL_CALL:
+		sip->manageActions (lineNumber, CANCEL_CALL);
+		sip->notUsedLine = -1;
+		break;
+
+	default:
+		break;
+	}
+}
+
+int
+Manager::newCallLineNumber (void) {
+	return sip->notUsedLine;
+}
+
+bool
+Manager::isRingingLine (int line) {
+	if (line == this->newCallLineNumber()) {
+		return true;
+	}
+	return false;
+}
+
+bool
+Manager::isNotUsedLine (int line) {
+	for (int k = 0; k < NUMBER_OF_LINES; k++) {
+		if (line == k) {
+			if (sip->call[line] == NULL) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+int
+Manager::findLineNumberNotUsedSIP (void) {
+	return sip->findLineNumberNotUsed();
+}
+
+/**
+ * Handle the remote callee's events
+ *
+ * @param	code:		event code
+ * @param	reason:		event reason
+ * @param	remotetype:	event type
+ */
+void
+Manager::handleRemoteEvent (int code, char * reason, int remotetype) {
+	QString qinfo;
+	
+	switch (remotetype) {
+		// Registration success
+		case EXOSIP_REGISTRATION_SUCCESS:
+			gui()->lcd->setStatus("Logged in");				
+			break;
+
+		// Remote callee answered
+		case EXOSIP_CALL_ANSWERED:
+			if (!gui()->transfer)
+				gui()->lcd->setStatus("Connected");
+			// Start call timer
+			gui()->startCallTimer(gui()->currentLineNumber);
+			break;
+
+		// Remote callee hangup
+		case EXOSIP_CALL_CLOSED:
+			if (getCallInProgress()) {
+				this->ring(false);
+				gui()->setFreeStateLine(newCallLineNumber());
+				setCallInProgress(false);
+			} else {
+				// Stop call timer
+				gui()->stopCallTimer(gui()->currentLineNumber);
+				// set state free pixmap line
+				gui()->setFreeStateLine(gui()->currentLineNumber);
+				// set free line
+				gui()->setCurrentLineNumber(-1);
+			}
+			
+			gui()->lcd->clear(QString("Hung up"));
+			sip->notUsedLine = -1;
+			break;
+
+		// Remote call ringing
+		case EXOSIP_CALL_RINGING:
+			gui()->lcd->setStatus("Ringing");
+			break;
+			
+		default:
+			break;
+	}
+
+	// If dialog is established
+	if (code == 101) {
+		gui()->lcd->setStatus("Ringing");
+		
+	// if error code
+	} else { 
+		if (code > 399) {
+			qinfo = QString::number(code, 10) + " " + 
+				QString(reason);
+			gui()->lcd->setStatus(qinfo);
+		} else if (0 < code < 400) {
+			qinfo = QString(reason);
+		}
+	}
+}
+
+int
+Manager::startSound (SipCall *ca) {
+	return audioRTP->createNewSession(ca);
+}
+
+void
+Manager::closeSound (SipCall *ca) {
+	audioRTP->closeRtpSession (ca);
+}
+
+QString
+Manager::bufferTextRender (void) {
+	return QString(*phonegui->lcd->textBuffer);
+}
+
+void
+Manager::getInfoStun (StunAddress4& stunSvrAddr) {
+	StunAddress4 mappedAddr;
+	
+	int fd3, fd4; 
+    bool ok = stunOpenSocketPair(stunSvrAddr,
+                                      &mappedAddr,
+                                      &fd3,
+                                      &fd4);
+	if (ok) {
+    	closesocket(fd3);
+        closesocket(fd4);
+        qDebug("Got port pair at %d", mappedAddr.port);
+		firewallPort = mappedAddr.port;
+		QHostAddress ha(mappedAddr.addr);
+		firewallAddr = ha.toString();
+		qDebug("address firewall = %s",firewallAddr.ascii());
+	} else {
+    	qDebug("Opened a stun socket pair FAILED");
+    }
+}
+
+int
+Manager::getFirewallPort (void) {
+	return firewallPort;
+}
+
+void
+Manager::setFirewallPort (int port) {
+	firewallPort = port;
+}
+
+QString
+Manager::getFirewallAddress (void) {
+	return firewallAddr;
+}
+
+/**
+ * Returs true if the current line replaces another one
+ */
+bool
+Manager::otherLine (void) {
+	if (gui()->busyNum != -1) {
+		if (gui()->busyNum != gui()->currentLineNumber) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool
+Manager::isChosenLine (void) {
+	return gui()->choose;
+}
+
+int
+Manager::chosenLine (void) {
+	return gui()->chosenLine;
+}
+
+void
+Manager::setChoose (bool b, bool b2) {
+	gui()->choose = b;
+	gui()->noChoose = b2;
+}
+
+bool
+Manager::useStun () {
+	if (Config::getb("Signalisations/STUN.useStunYes")) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+// Handle choice of the DTMF-send-way
+void
+Manager::dtmf (int line, char digit) {
+	int sendType = Config::geti ("Signalisations/DTMF.sendDTMFas");
+	
+	switch (sendType) {
+		// Audio way
+		case 0:
+			break;
+			
+		// SIP INFO
+		case 1:
+			if (sip->call[line] != NULL) {
+				sip->carryingDTMFdigits(line, digit);
+			}
+			break;
+
+		// rfc 2833
+		case 2:
+			break;
+			
+		default:
+			break;
+	}
+}
+

@@ -1,0 +1,1293 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>ConfigurationPanel</class>
+<widget class="QDialog">
+    <property name="name">
+        <cstring>ConfigurationPanel</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>560</width>
+            <height>515</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Configuration panel</string>
+    </property>
+    <property name="sizeGripEnabled">
+        <bool>true</bool>
+    </property>
+    <grid>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <property name="margin">
+            <number>11</number>
+        </property>
+        <property name="spacing">
+            <number>6</number>
+        </property>
+        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout8</cstring>
+            </property>
+            <vbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="Line">
+                    <property name="name">
+                        <cstring>line1</cstring>
+                    </property>
+                    <property name="frameShape">
+                        <enum>HLine</enum>
+                    </property>
+                    <property name="frameShadow">
+                        <enum>Sunken</enum>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                </widget>
+                <widget class="QLayoutWidget">
+                    <property name="name">
+                        <cstring>layout7</cstring>
+                    </property>
+                    <hbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>buttonHelp</cstring>
+                            </property>
+                            <property name="text">
+                                <string>&amp;Help</string>
+                            </property>
+                            <property name="accel">
+                                <string>F1</string>
+                            </property>
+                            <property name="autoDefault">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <spacer>
+                            <property name="name">
+                                <cstring>Horizontal Spacing2</cstring>
+                            </property>
+                            <property name="orientation">
+                                <enum>Horizontal</enum>
+                            </property>
+                            <property name="sizeType">
+                                <enum>Expanding</enum>
+                            </property>
+                            <property name="sizeHint">
+                                <size>
+                                    <width>190</width>
+                                    <height>20</height>
+                                </size>
+                            </property>
+                        </spacer>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>buttonApply</cstring>
+                            </property>
+                            <property name="text">
+                                <string>&amp;Apply</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+A</string>
+                            </property>
+                            <property name="autoDefault">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>buttonSave</cstring>
+                            </property>
+                            <property name="text">
+                                <string>&amp;Save</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+S</string>
+                            </property>
+                            <property name="autoDefault">
+                                <bool>true</bool>
+                            </property>
+                            <property name="default">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>buttonCancel</cstring>
+                            </property>
+                            <property name="text">
+                                <string>&amp;Cancel</string>
+                            </property>
+                            <property name="accel">
+                                <string>F, Backspace</string>
+                            </property>
+                            <property name="autoDefault">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                    </hbox>
+                </widget>
+            </vbox>
+        </widget>
+        <widget class="QListBox" row="0" column="0">
+            <property name="name">
+                <cstring>Menu</cstring>
+            </property>
+            <property name="sizePolicy">
+                <sizepolicy>
+                    <hsizetype>0</hsizetype>
+                    <vsizetype>7</vsizetype>
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                </sizepolicy>
+            </property>
+            <property name="cursor">
+                <cursor>13</cursor>
+            </property>
+            <property name="currentItem">
+                <number>-1</number>
+            </property>
+            <property name="selectionMode">
+                <enum>Single</enum>
+            </property>
+        </widget>
+        <widget class="QLayoutWidget" row="0" column="1">
+            <property name="name">
+                <cstring>layout14</cstring>
+            </property>
+            <vbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>TitleTab</cstring>
+                    </property>
+                    <property name="font">
+                        <font>
+                            <bold>1</bold>
+                        </font>
+                    </property>
+                    <property name="text">
+                        <string>Setup signalisation</string>
+                    </property>
+                </widget>
+                <widget class="Line">
+                    <property name="name">
+                        <cstring>line2</cstring>
+                    </property>
+                    <property name="frameShape">
+                        <enum>HLine</enum>
+                    </property>
+                    <property name="frameShadow">
+                        <enum>Sunken</enum>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                </widget>
+                <widget class="QTabWidget">
+                    <property name="name">
+                        <cstring>Tab_Signalisations</cstring>
+                    </property>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>SIPPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>SIP Authentication</string>
+                        </attribute>
+                        <widget class="QGroupBox">
+                            <property name="name">
+                                <cstring>groupBox1</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>20</x>
+                                    <y>10</y>
+                                    <width>380</width>
+                                    <height>322</height>
+                                </rect>
+                            </property>
+                            <property name="title">
+                                <string></string>
+                            </property>
+                            <grid>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLabel" row="0" column="0">
+                                    <property name="name">
+                                        <cstring>textLabel2</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Full name</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLineEdit" row="1" column="0">
+                                    <property name="name">
+                                        <cstring>fullName</cstring>
+                                    </property>
+                                </widget>
+                                <widget class="QLineEdit" row="3" column="0">
+                                    <property name="name">
+                                        <cstring>userPart</cstring>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel" row="2" column="0">
+                                    <property name="name">
+                                        <cstring>textLabel3</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>User Part of SIP URL</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel" row="4" column="0">
+                                    <property name="name">
+                                        <cstring>textLabel2_3</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Authorization user</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLineEdit" row="5" column="0">
+                                    <property name="name">
+                                        <cstring>username</cstring>
+                                    </property>
+                                </widget>
+                                <widget class="QLineEdit" row="9" column="0">
+                                    <property name="name">
+                                        <cstring>hostPart</cstring>
+                                    </property>
+                                </widget>
+                                <widget class="QLineEdit" row="11" column="0">
+                                    <property name="name">
+                                        <cstring>sipproxy</cstring>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel" row="10" column="0">
+                                    <property name="name">
+                                        <cstring>textLabel3_2_2</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>SIP proxy</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLineEdit" row="7" column="0">
+                                    <property name="name">
+                                        <cstring>password</cstring>
+                                    </property>
+                                    <property name="echoMode">
+                                        <enum>Password</enum>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel" row="6" column="0">
+                                    <property name="name">
+                                        <cstring>textLabel1_3</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Password</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel" row="8" column="0">
+                                    <property name="name">
+                                        <cstring>textLabel3_2</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Host part of SIP URL</string>
+                                    </property>
+                                </widget>
+                            </grid>
+                        </widget>
+                    </widget>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>STUNPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>STUN</string>
+                        </attribute>
+                        <widget class="QButtonGroup">
+                            <property name="name">
+                                <cstring>buttonGroup3</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>10</x>
+                                    <y>10</y>
+                                    <width>90</width>
+                                    <height>81</height>
+                                </rect>
+                            </property>
+                            <property name="title">
+                                <string>Use STUN</string>
+                            </property>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>useStunYes</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Yes</string>
+                                    </property>
+                                </widget>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>useStunNo</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>No</string>
+                                    </property>
+                                    <property name="checked">
+                                        <bool>true</bool>
+                                    </property>
+                                </widget>
+                            </vbox>
+                        </widget>
+                        <widget class="QGroupBox">
+                            <property name="name">
+                                <cstring>groupBox3</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>10</x>
+                                    <y>110</y>
+                                    <width>253</width>
+                                    <height>100</height>
+                                </rect>
+                            </property>
+                            <property name="title">
+                                <string>Settings </string>
+                            </property>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>textLabel1_5</cstring>
+                                </property>
+                                <property name="geometry">
+                                    <rect>
+                                        <x>10</x>
+                                        <y>38</y>
+                                        <width>229</width>
+                                        <height>16</height>
+                                    </rect>
+                                </property>
+                                <property name="text">
+                                    <string>STUN server (address:port)</string>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit">
+                                <property name="name">
+                                    <cstring>STUNserver</cstring>
+                                </property>
+                                <property name="geometry">
+                                    <rect>
+                                        <x>10</x>
+                                        <y>60</y>
+                                        <width>229</width>
+                                        <height>23</height>
+                                    </rect>
+                                </property>
+                            </widget>
+                        </widget>
+                    </widget>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>DTMFPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>DTMF</string>
+                        </attribute>
+                        <widget class="QGroupBox">
+                            <property name="name">
+                                <cstring>SettingsDTMF</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>11</x>
+                                    <y>11</y>
+                                    <width>301</width>
+                                    <height>130</height>
+                                </rect>
+                            </property>
+                            <property name="title">
+                                <string>Settings</string>
+                            </property>
+                            <grid>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLayoutWidget" row="0" column="0">
+                                    <property name="name">
+                                        <cstring>layout11</cstring>
+                                    </property>
+                                    <vbox>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QLayoutWidget">
+                                            <property name="name">
+                                                <cstring>layout10</cstring>
+                                            </property>
+                                            <hbox>
+                                                <property name="name">
+                                                    <cstring>unnamed</cstring>
+                                                </property>
+                                                <widget class="QCheckBox">
+                                                    <property name="name">
+                                                        <cstring>playTones</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>Play tones locally</string>
+                                                    </property>
+                                                    <property name="checked">
+                                                        <bool>true</bool>
+                                                    </property>
+                                                </widget>
+                                                <spacer>
+                                                    <property name="name">
+                                                        <cstring>spacer6</cstring>
+                                                    </property>
+                                                    <property name="orientation">
+                                                        <enum>Horizontal</enum>
+                                                    </property>
+                                                    <property name="sizeType">
+                                                        <enum>Expanding</enum>
+                                                    </property>
+                                                    <property name="sizeHint">
+                                                        <size>
+                                                            <width>111</width>
+                                                            <height>20</height>
+                                                        </size>
+                                                    </property>
+                                                </spacer>
+                                            </hbox>
+                                        </widget>
+                                        <widget class="QLayoutWidget">
+                                            <property name="name">
+                                                <cstring>layout7</cstring>
+                                            </property>
+                                            <hbox>
+                                                <property name="name">
+                                                    <cstring>unnamed</cstring>
+                                                </property>
+                                                <widget class="QLabel">
+                                                    <property name="name">
+                                                        <cstring>labelPulseLength</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>Pulse length</string>
+                                                    </property>
+                                                </widget>
+                                                <spacer>
+                                                    <property name="name">
+                                                        <cstring>spacer3</cstring>
+                                                    </property>
+                                                    <property name="orientation">
+                                                        <enum>Horizontal</enum>
+                                                    </property>
+                                                    <property name="sizeType">
+                                                        <enum>Expanding</enum>
+                                                    </property>
+                                                    <property name="sizeHint">
+                                                        <size>
+                                                            <width>115</width>
+                                                            <height>20</height>
+                                                        </size>
+                                                    </property>
+                                                </spacer>
+                                                <widget class="QSpinBox">
+                                                    <property name="name">
+                                                        <cstring>pulseLength</cstring>
+                                                    </property>
+                                                    <property name="suffix">
+                                                        <string> ms</string>
+                                                    </property>
+                                                    <property name="maxValue">
+                                                        <number>1500</number>
+                                                    </property>
+                                                    <property name="minValue">
+                                                        <number>10</number>
+                                                    </property>
+                                                    <property name="value">
+                                                        <number>250</number>
+                                                    </property>
+                                                </widget>
+                                            </hbox>
+                                        </widget>
+                                        <widget class="QLayoutWidget">
+                                            <property name="name">
+                                                <cstring>layout8</cstring>
+                                            </property>
+                                            <hbox>
+                                                <property name="name">
+                                                    <cstring>unnamed</cstring>
+                                                </property>
+                                                <widget class="QLabel">
+                                                    <property name="name">
+                                                        <cstring>labelSendDTMF</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>Send DTMF as</string>
+                                                    </property>
+                                                </widget>
+                                                <spacer>
+                                                    <property name="name">
+                                                        <cstring>spacer4</cstring>
+                                                    </property>
+                                                    <property name="orientation">
+                                                        <enum>Horizontal</enum>
+                                                    </property>
+                                                    <property name="sizeType">
+                                                        <enum>Expanding</enum>
+                                                    </property>
+                                                    <property name="sizeHint">
+                                                        <size>
+                                                            <width>85</width>
+                                                            <height>20</height>
+                                                        </size>
+                                                    </property>
+                                                </spacer>
+                                                <widget class="QComboBox">
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>Audio</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>SIP INFO</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>RFC 2833</string>
+                                                        </property>
+                                                    </item>
+                                                    <property name="name">
+                                                        <cstring>sendDTMFas</cstring>
+                                                    </property>
+                                                    <property name="currentItem">
+                                                        <number>1</number>
+                                                    </property>
+                                                </widget>
+                                            </hbox>
+                                        </widget>
+                                    </vbox>
+                                </widget>
+                            </grid>
+                        </widget>
+                    </widget>
+                </widget>
+                <widget class="QTabWidget">
+                    <property name="name">
+                        <cstring>Tab_Audio</cstring>
+                    </property>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>DriversPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>Drivers</string>
+                        </attribute>
+                        <widget class="QButtonGroup">
+                            <property name="name">
+                                <cstring>DriverChoice</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>10</x>
+                                    <y>10</y>
+                                    <width>104</width>
+                                    <height>81</height>
+                                </rect>
+                            </property>
+                            <property name="title">
+                                <string>Drivers</string>
+                            </property>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>ossButton</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>OSS</string>
+                                    </property>
+                                    <property name="checked">
+                                        <bool>true</bool>
+                                    </property>
+                                </widget>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>alsaButton</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>ALSA</string>
+                                    </property>
+                                </widget>
+                            </vbox>
+                        </widget>
+                    </widget>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>CodecsPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>Codecs</string>
+                        </attribute>
+                        <widget class="QButtonGroup">
+                            <property name="name">
+                                <cstring>CodecsChoice</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>20</x>
+                                    <y>10</y>
+                                    <width>126</width>
+                                    <height>196</height>
+                                </rect>
+                            </property>
+                            <property name="title">
+                                <string>Supported codecs</string>
+                            </property>
+                            <grid>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLayoutWidget" row="0" column="0">
+                                    <property name="name">
+                                        <cstring>layout11</cstring>
+                                    </property>
+                                    <hbox>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QLayoutWidget">
+                                            <property name="name">
+                                                <cstring>layout9</cstring>
+                                            </property>
+                                            <vbox>
+                                                <property name="name">
+                                                    <cstring>unnamed</cstring>
+                                                </property>
+                                                <widget class="QComboBox">
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711u</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711a</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>GSM</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>iLBC</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>SPEEX</string>
+                                                        </property>
+                                                    </item>
+                                                    <property name="name">
+                                                        <cstring>codec1</cstring>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QComboBox">
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711a</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711u</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>GSM</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>iLBC</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>SPEEX</string>
+                                                        </property>
+                                                    </item>
+                                                    <property name="name">
+                                                        <cstring>codec2</cstring>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QComboBox">
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>GSM</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711u</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711a</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>iLBC</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>SPEEX</string>
+                                                        </property>
+                                                    </item>
+                                                    <property name="name">
+                                                        <cstring>codec3</cstring>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QComboBox">
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>iLBC</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711u</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711a</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>GSM</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>SPEEX</string>
+                                                        </property>
+                                                    </item>
+                                                    <property name="name">
+                                                        <cstring>codec4</cstring>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QComboBox">
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>SPEEX</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711u</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>G711a</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>GSM</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>iLBC</string>
+                                                        </property>
+                                                    </item>
+                                                    <property name="name">
+                                                        <cstring>codec5</cstring>
+                                                    </property>
+                                                </widget>
+                                            </vbox>
+                                        </widget>
+                                        <widget class="QLayoutWidget">
+                                            <property name="name">
+                                                <cstring>layout10</cstring>
+                                            </property>
+                                            <vbox>
+                                                <property name="name">
+                                                    <cstring>unnamed</cstring>
+                                                </property>
+                                                <widget class="QLabel">
+                                                    <property name="name">
+                                                        <cstring>textLabel1_4</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>1</string>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QLabel">
+                                                    <property name="name">
+                                                        <cstring>textLabel1_4_2</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>2</string>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QLabel">
+                                                    <property name="name">
+                                                        <cstring>textLabel1_4_3</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>3</string>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QLabel">
+                                                    <property name="name">
+                                                        <cstring>textLabel1_4_4</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>4</string>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QLabel">
+                                                    <property name="name">
+                                                        <cstring>textLabel1_4_5</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>5</string>
+                                                    </property>
+                                                </widget>
+                                            </vbox>
+                                        </widget>
+                                    </hbox>
+                                </widget>
+                            </grid>
+                        </widget>
+                    </widget>
+                </widget>
+                <widget class="QTabWidget">
+                    <property name="name">
+                        <cstring>Tab_Video</cstring>
+                    </property>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>DriversPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>Drivers</string>
+                        </attribute>
+                    </widget>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>CodecsPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>Codecs</string>
+                        </attribute>
+                    </widget>
+                </widget>
+                <widget class="QTabWidget">
+                    <property name="name">
+                        <cstring>Tab_Network</cstring>
+                    </property>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>DriversPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string></string>
+                        </attribute>
+                    </widget>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>CodecsPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string></string>
+                        </attribute>
+                    </widget>
+                </widget>
+                <widget class="QTabWidget">
+                    <property name="name">
+                        <cstring>Tab_Preferences</cstring>
+                    </property>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>DriversPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>Themes</string>
+                        </attribute>
+                        <widget class="QComboBox">
+                            <property name="name">
+                                <cstring>SkinChoice</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>20</x>
+                                    <y>70</y>
+                                    <width>120</width>
+                                    <height>20</height>
+                                </rect>
+                            </property>
+                        </widget>
+                    </widget>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>TabPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>Options</string>
+                        </attribute>
+                        <widget class="QLayoutWidget">
+                            <property name="name">
+                                <cstring>layout17</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>10</x>
+                                    <y>20</y>
+                                    <width>220</width>
+                                    <height>210</height>
+                                </rect>
+                            </property>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLayoutWidget">
+                                    <property name="name">
+                                        <cstring>layout16</cstring>
+                                    </property>
+                                    <hbox>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>textLabel1_2</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Zone tone:</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QComboBox">
+                                            <item>
+                                                <property name="text">
+                                                    <string>North America</string>
+                                                </property>
+                                            </item>
+                                            <item>
+                                                <property name="text">
+                                                    <string>France</string>
+                                                </property>
+                                            </item>
+                                            <item>
+                                                <property name="text">
+                                                    <string>Australia</string>
+                                                </property>
+                                            </item>
+                                            <item>
+                                                <property name="text">
+                                                    <string>United Kingdom</string>
+                                                </property>
+                                            </item>
+                                            <item>
+                                                <property name="text">
+                                                    <string>Spain</string>
+                                                </property>
+                                            </item>
+                                            <item>
+                                                <property name="text">
+                                                    <string>Italy</string>
+                                                </property>
+                                            </item>
+                                            <item>
+                                                <property name="text">
+                                                    <string>Japan</string>
+                                                </property>
+                                            </item>
+                                            <property name="name">
+                                                <cstring>zoneToneChoice</cstring>
+                                            </property>
+                                        </widget>
+                                        <spacer>
+                                            <property name="name">
+                                                <cstring>spacer5</cstring>
+                                            </property>
+                                            <property name="orientation">
+                                                <enum>Horizontal</enum>
+                                            </property>
+                                            <property name="sizeType">
+                                                <enum>Expanding</enum>
+                                            </property>
+                                            <property name="sizeHint">
+                                                <size>
+                                                    <width>31</width>
+                                                    <height>21</height>
+                                                </size>
+                                            </property>
+                                        </spacer>
+                                    </hbox>
+                                </widget>
+                                <widget class="QCheckBox">
+                                    <property name="name">
+                                        <cstring>confirmationToQuit</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Show confirmation to quit.</string>
+                                    </property>
+                                    <property name="checked">
+                                        <bool>true</bool>
+                                    </property>
+                                </widget>
+                                <widget class="QCheckBox">
+                                    <property name="name">
+                                        <cstring>checkedTray</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Minimize to tray</string>
+                                    </property>
+                                </widget>
+                                <widget class="QCheckBox">
+                                    <property name="name">
+                                        <cstring>autoregister</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Auto-register</string>
+                                    </property>
+                                    <property name="checked">
+                                        <bool>true</bool>
+                                    </property>
+                                </widget>
+                                <widget class="QLayoutWidget">
+                                    <property name="name">
+                                        <cstring>layout16</cstring>
+                                    </property>
+                                    <hbox>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>textLabel1_6</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Voicemail:</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLineEdit">
+                                            <property name="name">
+                                                <cstring>voicemailNumber</cstring>
+                                            </property>
+                                        </widget>
+                                        <spacer>
+                                            <property name="name">
+                                                <cstring>spacer6_2</cstring>
+                                            </property>
+                                            <property name="orientation">
+                                                <enum>Horizontal</enum>
+                                            </property>
+                                            <property name="sizeType">
+                                                <enum>Expanding</enum>
+                                            </property>
+                                            <property name="sizeHint">
+                                                <size>
+                                                    <width>61</width>
+                                                    <height>21</height>
+                                                </size>
+                                            </property>
+                                        </spacer>
+                                    </hbox>
+                                </widget>
+                            </vbox>
+                        </widget>
+                    </widget>
+                </widget>
+                <widget class="QTabWidget">
+                    <property name="name">
+                        <cstring>Tab_About</cstring>
+                    </property>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>DriversPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>About SFLPhone</string>
+                        </attribute>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>textLabel2_2</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>25</x>
+                                    <y>46</y>
+                                    <width>371</width>
+                                    <height>121</height>
+                                </rect>
+                            </property>
+                            <property name="text">
+                                <string>&lt;p align="center"&gt;Copyright (C) 2004 Savoir-faire Linux inc.&lt;br&gt;&lt;br&gt;
+SFLPhone is released under the General Public License.&lt;br&gt;
+For more information, see http://www.sflphone.org/&lt;br&gt;
+&lt;/p&gt;</string>
+                            </property>
+                        </widget>
+                    </widget>
+                    <widget class="QWidget">
+                        <property name="name">
+                            <cstring>CodecsPage</cstring>
+                        </property>
+                        <attribute name="title">
+                            <string>About Savoir-faire Linux inc.</string>
+                        </attribute>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>pixmapLabel2</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>130</x>
+                                    <y>50</y>
+                                    <width>173</width>
+                                    <height>48</height>
+                                </rect>
+                            </property>
+                            <property name="pixmap">
+                                <pixmap>image0</pixmap>
+                            </property>
+                            <property name="scaledContents">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>textLabel1</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>85</x>
+                                    <y>126</y>
+                                    <width>291</width>
+                                    <height>131</height>
+                                </rect>
+                            </property>
+                            <property name="text">
+                                <string>&lt;p align="center"&gt;Website: http://www.savoirfairelinux.com&lt;br&gt;&lt;br&gt;
+5505, Saint-Laurent - bureau 2027&lt;br&gt;
+Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
+                            </property>
+                        </widget>
+                    </widget>
+                </widget>
+            </vbox>
+        </widget>
+    </grid>
+</widget>
+<images>
+    <image name="image0">
+        <data format="PNG" length="4927">89504e470d0a1a0a0000000d49484452000000ad0000003008060000006357fade0000130649444154789ced5d6d685b579a7e4ef01635b88354da6287b4c4a52d91a729234ff2c3ceb644eeec8f959242a5b6503b3330929d21767797a99dfe49d221b5d3a575d4928e9d92c6ca10623be0b15448240da46379f0ac14686279712a39346005a728c12db1f11a8d3085677f5c4bd695ae3eaee4f463aaf3e7c1bee7bce73de7bee739ef7def7bae700fc020808d4292e43c49928135e42ab9d1fd54f0a78b651ba8e7cb1803f3a4e1f438719cc4b1b19c681c26bb2e874992dff7c02bf8e3c5921a861748cf1ca97578083789e363aa51eb236d175931e00aaa46550d48d278ae30a3aa45e330195b8e575c880a16854555e42a198895c6a86ab067325c31dc0a16c48215c20b711a9c1bcbacf9d0707abce23254302fe6adc00552ebbbff0c9b895a87a762b815cc89392f8417e2d43a4a60cc010fe124717a9c709226f71449722c12e354ac7839daf7c6ca365c92ec3f3d48dbc10edada3bd6d046dbc10ef639fac83932168bfd685c1292f45cf490f18d5bd0f1e538fb1c31dada3bd8b8c7485bbb8d9c2b4dfefdd04f09378661dff3706e99e432f396c01cbf13c6659c0c8f86a9df6960cfce3eea771a68d8d998f3efc3c77a7e14cc7ef8584f4a7fae6e8cbee327c7b3e6a3eb5057490bf97ee85714d3c657a99a618b2936df54493e6e298c6b3bd821bb11a6bd16f69f1e2417c8a1e131ce396234ee35a5ae1b7636722a34f583675c52d29f0b1b63105ca06c9e0c3b1b696bef2879016fb47e4533ad31a4d207f51736d8c6d140593eaef15ca06883222963d480732ae704f24b9233a4c7e7c92b9f5f72435c95bcd7cb6026c6a89ad948b2718f316b079abb1ccb3b5fdf857e8ce59f6f3108c002c00dc0b44c6ef9d0055459816f8b439b2104e7bf372057b1ff2584b3d30d45cbcb8543fbeec0f4dc16e14ed35709a3a129b61d78030924a081068dc626f4f6390ab64b47fb0269fdaf56446f465372d2d16434a1b3dd0eed334f0af31e23132b0968aa35088efae17c4c887479d393011e79fb0896569660d0ebd17c7e4424f54c5c00baaf7623b19290c937e8f530fcc280ee37bbe114ebf29a1d319a2f98a18106273e3801c30bbbc5c8e9413acf3853edb5353a2cdd5d44020944ce86e07c4eae4f12937a2b8d2f321a82f34921ec7364f37f9a53f2d2eb69aa351834f643d7ae83668b745f8ad14f53ad498d37a99f9de4c0274ef82ef910bd1b95f5a3add1c1f5f21034af6a90f8d966e106b02975a348d69ff1023bac005c4563ebb3b90d361805ce261a54c9cb856f7c550bdd2a59c8e01a0c0db209ae9da8c1febd16365f8e71763240fb2a59c870eb4d0d88de8c4253ad41643484d04810916008cdc626b4a005be091f5a3becd0c5c9d6aa56249040622501b3cd9c252ffa41144b2b4bd04083a5c5255800381dfd6c3bf006da26da605a31a1b6a6167dbf3e01c32e033ab59d989e9dc5c80537ea7735c03eb7aeaff982192d68910cbbca0037007da24e36dee6bbc6d4df473eedcd39cee0477e249048c94bb61f3c3808d4accdc36b0d68be6b446d4d2d22a3210c7ed29f9a87c44a02af5cda0f5f871f6af433ad9864fad94936199be13ce344f46e145d5bbb60da6782f75d2fea9eae43f35d23767ffc225eb498a1fb52baff29a6edbe38c5b3d74b60c447fce0816645a3ed8c02a7ce97c7b0e9d873d08adac7949943c6947364fd6b0d590c92c9147abd1ecdffda8cd616ab8cd1ec2443d321d435fc328ba177ef3430c54893210c9c77229d49bc175d29e6b193acdfb5ae47643404ef175e1c7de7381248405bad45677b274cadafc8fab1cf90f5b6b476be109c8f0931b0b391c97eeced76b4fcae4d74b777707a7a3a8ba95b5e6d41d34b7b856f788c75ff5b07e7d20050a541c32f1ad079c00ea710a26586fc655a3f967d16d4fde168c179c81ad76408cecdeaf533ef33c37ea013c9eb26a309fabee3b2fbeb38d643df251f1248a07157239a3e3e25365900e856497755898cf86833225f2b33ed4035ca66d874749cf7c2cec24ce97c5288c8d5105a5e6f45cfcb3d8a8c625a31e1cad52b707ce840fdae065882f1945ca71022fd46454353b4cf90fbf75a5206db8216e006d079c00e4db5665dfe2d6d4a8f23eff4a6faebdada05e79342dc3dbb946adfd9916db01600cee784187b6b28a56f775f372c804cff961d2d52fd67adb2f1053e0aa0f9fc88687a69af7003707ce840db441beaa6f5b872f50a9c679c18feb30b16000f7e0ba48fa777df11b91e19f3a00b91f619d2bccf2c9bcfd08d5049fae1265206db821644bf8ac2be40464353b4af92ba49d25065485dbf72f50aec24c5204af365d3b1f1652b823b940df7c495280e4dd46d08d34abe6d14a6e79e54e5a35a00246231d66a6be1bf1684e1a61e6d7f7d23cb678d5c0dc129245faef3e36e4c5f0da5b67645df6f8d61161d319e5df3e534d51a0427fc88de8ca2f5803dd5bee7edc3687a69af9031f55a7f4afa4e4f06d8fd66778a91ed7f9bc8c164364e4fcfa6f4eabc76258ba9eedcbd037c0ba00ad0543f8881f74f48e38c93f52f643366fa8ea5661ed4ea97d97f21d4566b317ed12bf9b4e60be531e2954b2e658b05d0dd58873ee3c6316e74a5ae68434d47cd962dc2b95908c30bbb85dbfeb018bc30227ade392c630ce7274e348e8659ff5a03ae4c04010091b321842e0611b91a42d75b5d8a0cd3fd7aad8cc1eb7735c0dad28aa59525b4a005b535b548329facfd7428a7becd5b9b520ca3abd6a5982cd93ec964adcfb6ca6e6ca69cae3f1c154d1f9f1227ce9c124d1f9f12bd7d0e915c28a11b21c5f1b801d49c1c67fd6b0da89da881ae5a27f9f669f390b9e394a25f66ffa67d26448221745ebb2202d7a64526daff3621123fdb2c362596e39cfe06c07517006bc9e89abd93c77081b1ed7724c62cb39fa39fb90aba0876ae6d3105ea99f798318291d4842eae98f0cafbfb658ce97c4e88c52d42388510a6d75e11fe9a8954fd86ed0d700358dc2284699f091a6864f2927f0fbd3cb81edd30ac3f1d8f5c70e75c68d6c3ada9f67dbb7aa48597267fe4fa082c0086bf70c9fa53b3901bb637c8f44d8ec7be401e3adf0d0d34f055fbe0bde482f3c9f579687dd52a1b1fb6a324fd1a0cf2fe7b0f1e81f301e59d27118ba51ec237a1ea4194cd805a3facfada9c460b00567d2d781018ff6df98c3b7c3dbfc1d6ef6a80ef801ff5bb1aa0774ed1373a26f94871d24e727632c0c6d1b06c6beadada85ee5d72c6c4b45ceef1435d4c867fd219c60da0f7ed23729f6e8d41b45a2d74afeb52f59c0303a9ebbe091ff4ce29269f8a9306d3f67a0b0d370da9f6f5edf545fb8c6a7620dc90fbb4c9f178af7953f25005d98e6027696d692dd9a7cdf499bdef7a53d79b5e6b96454b7471d2128cd3bcc748e74bc3ebd1035ba95183246abd608739afc12a15f1891ff8a6b9a47ebb7e6b85fe09e515a9598eb3adb30dd3b3b345fb4a06bd1ebd477b51f7741dac2df2f8acb64687c4ca3f147dba4c1fb0f15898af5cda2fab97f4ed640b6b816cb629c73fd3b1aea60efd1f9c80f619c98777ee3132a98792cf585753078bc75d30ba92330a90f4e9d7c250e971dc62e6c1bdd7c2649c5549bfa46f9ea947fa3341aef9a87bba0eae9161388510e857fb062c0d2d6bc930a596c3fe70896fc80abf99e102d9e7e8a3d2bb75fd4e03c78e7ba49c838ce410921c1a1da3e7e4386d073b387e729c5d87bac8194aaf7a83710e9e1e246748c6e57a24731e6c073be83939ce3e475f5e3d3d3e8fac7eb2bf3e47bfe2ab508fcfb3aecfda1b2392a9f681c9e2df1ca6cf53723c596ff04e0f727c4d2fcfc97169be664886289b8762f5cbf7e651a93fdbc10e8647c3e4a47c9e5152deeb49296b6b234a60ee1e31a0ae7fade3879fdc52c1fb8750cb74435fb2603697eab24cf6cda8d323dfc0b84ac6e264d765d218920e53c6e2ac9c0afe27c1e299f6bde2b2b9ca296af26df30d6c5b0ee63638cb67e8f8aaa46b60fe1e496579e9d703f3f73674a1c4732cbcc0fc3d8617a4234b3d0bd229e98de8affff339dae6a4a4a5f002195e908fc7f3658cc661e9ba84e3ec5928fdcc5f78e11e7b16e4f22c11b9bce29876e0bedb6baac496cb67da52db15833d41b9bc4cc32595fb0dc4cacf124b9e7e369ccef0a59795f39403f3e5ed2cfd9f67cbd5fae4e3188ae4be4f5d978b3ff34792963cd980e9f3bca9607cf4a60becc077566a1f02e60e168ed7ba91fba9b8d476c5e0d1cfe4f27aff1e91c757ff1c54ec77f719178687494d11493f4a3870358aa58419b8eec2f43719e37d088ae3f56b4a1fa71bc0e2b66cb94b57e57172cb5380719bf27c3baed6e3c5d3e305e3e57692751f79e1bed9a42827f06b796ec8a6427151be652d6467aa4be46be0c475c03bab7cbd4e07c47e9f5fafbcf1c712db158359f29ead97dfe8a79a72f63f71cb85ddd7803b0bea0dd7f8545dce71046f67eb851d56591cb914c40d65b9c1dbebf5120f08d1da2a44ec90155a4d7696e0f4a3cdd07de0454b0ec335c549dd075edc7adc9cd5cf36ad177cdb8ad98cf0e6a66db7bdc8c54c8dfb36de6001a0fe51e0d0a72eecfd1410a7bc38b1082cfe9fbc4eed4380e55565bd0c35df1fd366c9fb229271dd9fb7ffe9cf5cd87d1e989dbfa7ce70bf88e41c47d3e3d97ae1ba0b96ede52d50cb7665b94d8f67d7f76d1662f14d330c5f678f7f2961c6e6775ce81d200726c3bcb3401ebf1c66ef00b9a5cf95da41d2db75554710ed302be666e48ed3faa8182588af92163789a0f47006378973ea7d57f815fa3d1790575a267159213e3c9adf57bb9f3e6da6bcf03db98fa726ee3d3453bccf19be977b1c9c57f669cbfd8e44cfa4721c9d057ce59e49657d8a41adafb0fc4d8b2bf2159c44532224f94a6ba57b2202f111b0f9bf5d70cf02f8cc057c2bd59ffa37a82f371518e9ab2688f7d3926f1e022c2ba1ac7a3d7b0a6ce1df23d3baae2bfbb44ab8ff9294c75c2ed32207d3627b7d59e3c5f67a65b90a4c9b8e9d2f0811d8b908ada6f89c92e40e1afb15b0f884c89bc597f36957c68a03e3795788275202d306f3afb8d8f23ab3ab7d2afe3e9936f38c9d21487ad2ce98911203a69f76b68c0652d74b61da404ea62d2f7a908b318b8d4aa839d5bdcdcfa2e3e89b9c420845cb5f2be29417586acebb42cc7aa82f057cbf2d1fbad0741dd8fc27793ded4d17f48556e20fc8a70dec049a9e11a97440a710a2f3859f8bd8af00cbcb523df7cd26347ce2cf9bbd76f6da0fdba755bc0f8f024b578b655a2ff02fc5c9dd640160791a594f7dfedb80f8c00bd4663fd5c9f0f9121fd67634e7979bccd37d545e6fe8d5c286f77d460fac69e3326e0d22f180f2024b3c2084a95e8840fbfa53b678d7057d8cd42da7657d911cf99c74acd4e71c0772440fdc3722e58df74644791e6f176e6fa7141528367befd6e3e6820b37899bdc005caf22cbf25ffc930b5078aacbc2dbc19c7699b71460da5ca8ab5a2c6c5879da2796e325c5498b655a994f5bd55450deec1621e287a41d2419cf157f041e3e36c6b6e3a478c785373e53e8377dbcf7c9a75ddaa6dea7d5ac92fa79496fa5a8403e9cfea619baf75d302de737dc4dc92d6bdbf3c5ad884c1c3736e536cc7ca508a6cd44e35640ffc4c3058fdae49553f5e07d655aec488bd37e5b9cdc910784587c4b39ce59cc8e11f93a5b2fecb0c2ff97f25c21d725657d721d11d2cd93f5ff03ec3eafacb7e11120fc1f56f43c1f41a05d8ac366d65b7ada8a2d7f74211192ef38594c6b01d0fbc81d94c27c8e6ba17ca699bb7ca6ae1f5c77c1ff9b220d2b9fafdce742708e9c9dbf57f04d4d294c2bdb41aa8a97eb14b9e39c857cf3dac784508ab74f7c050c4c864bda59ba2f4ef1d6523653daaab28f08d929c55dc579e0d6dfb3f535d45811d8b988f1df0971e561c9a79fdd2244a873afe8df1a558c32bc71c905dd1960e4f3b92cfd654f65c673257c0926a83e724095dff4c2f1311a43c5bfbb2f353f5809fb43d2d37f52be9a38ad9a2fe3a4a3ed62e1f9c96c47e6fe32bbf11c1967e1a773ae4af5b60d28cb51fa0c2bf3d42f36e782cba4214f34c9788eb27e655f98b153f245a0f22401df56f730a6f67b08da6a2b22edff8066ed0b238598a2ed38b951a77f93387858da121f3e36c6f4fff73c1f41e70b3f4fe995fefd08e35356b4b616fe4e8312fa66e6b8ff52ee53cc497d3219afee232f6ead9873b6336e0d42b7ab09866f22521cf64604fedbf5585af1633acf4912e3563ffcbf694eb9069a55f2e85dc0f127e5fada2a1762bfb76224c7992f250cce916773d845babc2ccb8fc5d533d2617f585d8c56e56f35a87973740f40d7e5d24e44e4c2f4374b99715825e659cf722a2f4eca796506329c1ecf2b776886cccc462b158722ca71d97cd95dc67385e3ceb930df8e81e3638c93546c689ba3ba930cef4927108a296abf9e68bb58dad70c33f35e4bc55c135be8fa46fe8644a65e6ada0dcdccc9f253b79df428ceb3e1f4388dc3d28b8e643e6e3ec31b9a91f268b5ef49ed8de702b44436268f9724fb3f9f4be5d3e2b8a477f2b73972fa36f97c0c45f44bdf9fcd57fa82ea7cd9527dc20afe73635ea62ae5b716721d76340c07d4c929e2d566057f9a58b082676ee37cc362b15497a0823f0d2caa626c79dd77b99fbf6ea375483ed80f61622af8c3c5a22b92928f79bf18d61822b95c392d5bc1c2a8ba4160fe1e8dc31bc7b0e584472af8d3c4921b92521c729bd2098402b86dc0c340acc2ac152c0d374490140f8c31bc203df5679e83b744a4007d7cb5f21bb8152c1fff1fb8f17d8d233650dc0000000049454e44ae426082</data>
+    </image>
+</images>
+<connections>
+    <connection>
+        <sender>Menu</sender>
+        <signal>clicked(QListBoxItem*)</signal>
+        <receiver>Tab_Signalisations</receiver>
+        <slot>setFocus()</slot>
+    </connection>
+    <connection>
+        <sender>buttonCancel</sender>
+        <signal>clicked()</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>reject()</slot>
+    </connection>
+    <connection>
+        <sender>Menu</sender>
+        <signal>clicked(QListBoxItem*)</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>changeTabSlot()</slot>
+    </connection>
+    <connection>
+        <sender>buttonSave</sender>
+        <signal>clicked()</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>saveSlot()</slot>
+    </connection>
+</connections>
+<tabstops>
+    <tabstop>fullName</tabstop>
+    <tabstop>userPart</tabstop>
+    <tabstop>username</tabstop>
+    <tabstop>password</tabstop>
+    <tabstop>hostPart</tabstop>
+    <tabstop>sipproxy</tabstop>
+    <tabstop>buttonApply</tabstop>
+    <tabstop>buttonSave</tabstop>
+    <tabstop>buttonCancel</tabstop>
+    <tabstop>buttonHelp</tabstop>
+    <tabstop>SkinChoice</tabstop>
+    <tabstop>zoneToneChoice</tabstop>
+    <tabstop>confirmationToQuit</tabstop>
+    <tabstop>checkedTray</tabstop>
+    <tabstop>autoregister</tabstop>
+    <tabstop>voicemailNumber</tabstop>
+    <tabstop>useStunNo</tabstop>
+    <tabstop>STUNserver</tabstop>
+    <tabstop>playTones</tabstop>
+    <tabstop>pulseLength</tabstop>
+    <tabstop>sendDTMFas</tabstop>
+    <tabstop>Tab_Signalisations</tabstop>
+    <tabstop>Menu</tabstop>
+    <tabstop>Tab_Audio</tabstop>
+    <tabstop>ossButton</tabstop>
+    <tabstop>codec1</tabstop>
+    <tabstop>codec2</tabstop>
+    <tabstop>codec3</tabstop>
+    <tabstop>codec4</tabstop>
+    <tabstop>codec5</tabstop>
+    <tabstop>Tab_Video</tabstop>
+    <tabstop>Tab_Network</tabstop>
+    <tabstop>Tab_Preferences</tabstop>
+    <tabstop>Tab_About</tabstop>
+</tabstops>
+<includes>
+    <include location="local" impldecl="in implementation">configurationpanel.ui.h</include>
+</includes>
+<slots>
+    <slot>saveSlot()</slot>
+    <slot>changeTabSlot()</slot>
+</slots>
+<functions>
+    <function access="private" specifier="non virtual">init()</function>
+</functions>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>
