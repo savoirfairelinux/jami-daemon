@@ -39,10 +39,8 @@
 
 #include <cc++/thread.h>
 #include <string>
-#ifdef  CCXX_NAMESPACES
 using namespace std;
 using namespace ost;
-#endif
 
 // List of actions
 #define ANSWER_CALL		0
@@ -101,7 +99,7 @@ public:
 	char			*myIPAddress;
 	SipCall 		*call[NUMBER_OF_LINES];
 	Manager			*callmanager;
-	
+	char 			 displayName[64];
 
 	int notUsedLine;
 	

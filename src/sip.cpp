@@ -36,9 +36,7 @@
 #include "sipcall.h"
 
 #include <string>
-#ifdef  CCXX_NAMESPACES
 using namespace std;
-#endif
 
 // TODO : mettre dans config
 #define DEFAULT_SIP_PORT	5060
@@ -484,7 +482,12 @@ SIP::outgoingInvite (void) {
 	from = (char*)qfrom.data();
 	
 	// Form the To header field
-	string qto = toHeader(string(callmanager->bufferTextRender().ascii()));
+	string qto;
+	if (callmanager->bufferTextRender().ascii() == NULL) 
+		return -1;
+	else 
+		qto = toHeader(string(callmanager->bufferTextRender().ascii()));
+
 	if (qto.find("@") == string::npos and 
 			Config::getb("Preferences", "Options.autoregister")) {
 		qto = qto + "@" + Config::gets("Signalisations", "SIP.hostPart");
@@ -546,7 +549,6 @@ SIP::carryingDTMFdigits (int line, char digit) {
 int
 SIP::manageActions (int usedLine, int action) {
 	int i;
-//	QString referTo;
 	string referTo;
 	
 	char tmpbuf[64];
@@ -732,7 +734,6 @@ SIP::getEvent (void) {
 			   	
 			// TODO: stop the ringtone
 			callmanager->ringTone(false);
-	
 			// Stop the call progress
 			callmanager->setCallInProgress(false);
 			
@@ -747,6 +748,7 @@ SIP::getEvent (void) {
 			if (callmanager->phLines[theline]->getStateLine() == BUSY or 
 					callmanager->phLines[theline]->getStateLine() == OFFHOLD
 					or !call[theline]->usehold) {
+				
 				if (!callmanager->transferedCall()) {
 					// Associate an audio port with a call
 					call[theline]->setLocalAudioPort(local_port);
@@ -867,7 +869,6 @@ SIP::getEvent (void) {
 				// If callee closes call instead of answering
 				theline = notUsedLine;
 			}
-
 			assert (theline >= 0);
 			assert (theline < NUMBER_OF_LINES);
 

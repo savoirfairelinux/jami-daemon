@@ -27,10 +27,11 @@ PhoneLine::PhoneLine (void) {
 	setState (FREE);
 	setStateLine (FREE);
 	first = true;
+	timer = new QTime();	
 }
 
 PhoneLine::~PhoneLine (void) {
-	if (timer) {
+	if (timer != NULL) {
 		delete timer;
 	}
 }
@@ -103,7 +104,8 @@ PhoneLine::button (void) {
 
 void
 PhoneLine::startTimer(void) {
-	timer = new QTime();
+	if (timer == NULL) 
+		timer = new QTime();
 	timer->start();
 }
 

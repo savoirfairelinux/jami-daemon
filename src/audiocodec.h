@@ -21,9 +21,7 @@
 #define __CODEC_AUDIO_H__
 
 #include <string.h>
-#ifdef  CCXX_NAMESPACES
 using namespace std;
-#endif
 
 typedef enum {
 	PAYLOAD_CODEC_ULAW = 0,
@@ -32,13 +30,7 @@ typedef enum {
 	PAYLOAD_CODEC_ILBC = 97,
 	PAYLOAD_CODEC_SPEEX = 110
 } codecType;
-/*
-#define CODEC_ALAW			QString("G711a")
-#define CODEC_ULAW			QString("G711u")
-#define CODEC_GSM			QString("GSM")
-#define CODEC_ILBC			QString("iLBC")
-#define CODEC_SPEEX			QString("SPEEX")
-*/
+
 #define CODEC_ALAW			std::string("G711a")
 #define CODEC_ULAW			std::string("G711u")
 #define CODEC_GSM			std::string("GSM")

@@ -278,7 +278,7 @@ MyDisplay::renderTime (QPainter &painter, QFontMetrics &fm) {
 		}
 		
 		time = new QString(minStr + ":" + secStr);
-		
+
 	} else {
 		// If no conversation, display the current time
 		time = new QString(QDateTime::currentDateTime().toString("hh:mm"));

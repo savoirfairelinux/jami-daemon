@@ -20,7 +20,7 @@ INC_OTHERS = ../stund
 
 INCPATH  = -I. -I$(QTDIR)/include -I$(CCPPDIR)/include/cc++2 -I$(CCRTPDIR)/include -I$(OSIPDIR)/include -I$(EXOPSIP)/include -I/usr/include
 
-CXXFLAGS = -pipe -Wall -W -O2 -g -pipe -march=i386 -mcpu=i686  -DQT_NO_DEBUG -DQT_SHARED -DQT_THREAD_SUPPORT -fpermissive -Wno-deprecated $(INCPATH)
+CXXFLAGS = -pipe -Wall -W -g -pipe -march=i386 -mcpu=i686  -DQT_NO_DEBUG -DQT_SHARED -DQT_THREAD_SUPPORT -fpermissive -Wno-deprecated $(INCPATH)
 
 LIBS     = -L$(QTDIR)/lib -L/usr/X11R6/lib -lqt-mt -lXext -lX11 -lm -L/opt/lib -losip2 -leXosip -lccrtp1 `ccgnu2-config --flags --stdlibs`
 
@@ -110,5 +110,5 @@ uninstall:
 	rm -rf $(SHARE_DIR)/$(PROGNAME)
 
 clean:
-	rm -f $(PROGNAME) *.o *.a *~ *.moc.cpp *.bak core
+	rm -f $(PROGNAME) *.o *.a *~ *.moc.cpp *.bak core.*
 

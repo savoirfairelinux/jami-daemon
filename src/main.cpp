@@ -31,16 +31,6 @@
 #include "skin.h"
 #include "qtGUImainwindow.h"
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string>
-#ifdef  CCXX_NAMESPACES
-using namespace std;
-#endif
-
 
 void OptionProcess (int argc,char **argv) ;
 QString *pOption ;

@@ -19,9 +19,7 @@ make install
 
 How to use it ?
 ---------------
-1. Lauch it and click on SETUP. 
-   Go to Audio, choose OSS (if you don't it WILL crash, this is a small bug,
-   don't forget, it's alpha). 
+1. Lauch it, a setup window appears. 
 
 2. If you do have a SIP account, fill the SIP stuff where related. You can use
    STUN too.
@@ -39,9 +37,6 @@ Why does it not compile ?
 	- You don't have the same compiler (some libraries dislike
 	  some compilers). We are using  gcc 3.3.3 on
 	  Fedora Core 2 Linux. Someone reported it works on gcc 3.4.
-
-	- You don't have luck as we cannot help you before
-	  January, 5th 2005 because we are on *holidays*.
 
 Of course we love patches. And contribution. See http://www.sflphone.org/ .    
 We are setting up the project (CVS, bugtraqer, MLs) infrastructure.

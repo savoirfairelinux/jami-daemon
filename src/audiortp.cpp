@@ -35,10 +35,8 @@
 #include "../stund/stun.h"
 
 #include <string>
-#ifdef  CCXX_NAMESPACES
 using namespace ost;
 using namespace std;
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp                                                          
@@ -72,16 +70,7 @@ AudioRtp::createNewSession (SipCall *ca) {
 
 	RTXThread = new AudioRtpRTX (ca, manager->audiodriver, manager, symetric);
 	RTXThread->start();
-	
-/*	if (!manager->useStun()) {
-		RTXThread = new AudioRtpRTX (ca, manager->audiodriver, manager);
-		qDebug("new RTXThread = 0x%X", (int)RTXThread);
-		RTXThread->start();
-	} else {
-		symThread = new AudioRtpSymmetric (ca, manager->audiodriver, manager);
-		symThread->start();
-	}
-*/	
+		
 	return 0;
 }
 
@@ -92,35 +81,16 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 	ca->enable_audio = -1;
 
 	if (RTXThread != NULL) {
-	// Wait for them...and delete.
-	RTXThread->join();
-	
+		// Wait for them...and delete.
+		qDebug ("Thread audio JOIN ...");
+		RTXThread->join();
+		qDebug ("Thread audio JOIN !!!");		
 		delete RTXThread;
-		qDebug ("RTXThread deleted!");
 		RTXThread = NULL;
 	}
 
-/*	if (!manager->useStun()) {
-		RTXThread->join();
-		if (RTXThread != NULL) {
-			delete RTXThread;
-			qDebug ("RTXThread deleted!");
-			RTXThread = NULL;
-		}
-	} else {
-		symThread->join();
-		if (symThread != NULL) {
-			delete symThread;
-			symThread = NULL;
-		}
-	}
-*/	
 	// Flush audio read buffer
 	manager->audiodriver->resetDevice();
-}
-
-void
-AudioRtp::rtpexit (void) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -330,124 +300,5 @@ AudioRtpRTX::run (void) {
 	this->exit();
 }
 
-#if 0
-////////////////////////////////////////////////////////////////////////////////
-// AudioRtpSymmetric Class                                                    //
-////////////////////////////////////////////////////////////////////////////////
-AudioRtpSymmetric::AudioRtpSymmetric (SipCall *sipcall, AudioDrivers *driver,
-										Manager *mngr) {
-	this->ca = sipcall;
-	this->audioDevice = driver;
-	this->manager = mngr;
-
-	InetHostAddress local_ip("192.168.1.172");
-	int forcedPort = manager->getFirewallPort();
-	qDebug("port firewall = %d", forcedPort);
-
-	session = new SymmetricRTPSession (local_ip, forcedPort);
-}
-
-AudioRtpSymmetric::~AudioRtpSymmetric () {
-	delete session;	
-	terminate();
-}
-
-void
-AudioRtpSymmetric::run (void) {
-	AudioCodec 		 ac;
-	unsigned char	*data_to_send;
-	short			*data_from_mic;
-	int				 i,
-					 compSize, 
-					 timestamp;
-	int				 expandedSize;
-	short			*data_for_speakers = NULL;
-
-	data_for_speakers = new short[2048];
-	data_from_mic = new short[1024];
-	data_to_send = new unsigned char[1024];
-
-	InetHostAddress remote_ip;
-	remote_ip = ca->remote_sdp_audio_ip;
-	int remote_port = ca->remote_sdp_audio_port;
-	
-	if (!remote_ip) {
-	   qDebug("Symmetric: IP address is not correct!");
-	   exit();
-	} 
-	
-	// Initialization
-	session->setSchedulingTimeout(10000);
-	session->setExpireTimeout(1000000);
-
-	if (!session->addDestination (remote_ip, (unsigned short) remote_port)) {
-		qDebug("Symmetric: could not connect to port %d", remote_port);
-		this->exit();
-	} else {
-		qDebug("Symmetric: Connected to %s:%d",
-				ca->remote_sdp_audio_ip, remote_port);
-	}
-	
-    session->setPayloadFormat(StaticPayloadFormat(
-				(enum StaticPayloadType) ca->payload));
-	
-	setCancel(cancelImmediate);
-	
-	timestamp = 0;
-
-	// TODO: get frameSize from user config 
-	int frameSize = 20; // 20ms frames
-	TimerPort::setTimer(frameSize);
-	
-	// start running the packet queue scheduler.
-	session->startRunning();	
- 
-	while (ca->enable_audio != -1) {
-		////////////////////////////
-		// Send session
-		////////////////////////////
-		i = audioDevice->readBuffer (data_from_mic, 320);
-		// Encode acquired audio sample
-		compSize = AudioCodec::codecEncode (
-				ac.handleCodecs[0], 
-				data_to_send,
-				data_from_mic, i);
-
-		// Send encoded audio sample
-		session->putData(timestamp, data_to_send, compSize);
-		timestamp += compSize;
-
-		////////////////////////////
-		// Recv session
-		////////////////////////////
-		const AppDataUnit* adu = NULL;
-		
-		do {
-			Thread::sleep(10);
-			adu = session->getData(session->getFirstTimestamp());	
-		} while (adu == NULL);
-
-		// Decode data with relevant codec
-		expandedSize = AudioCodec::codecDecode (
-				adu->getType(),
-				data_for_speakers,
-				(unsigned char*) adu->getData(),
-				adu->getSize());
-
-		// Write decoded data to sound device
-		audioDevice->writeBuffer (data_for_speakers, expandedSize);
-		delete adu;
-
-		// Let's wait for the next cycle
-		Thread::sleep(TimerPort::getTimer());
-		TimerPort::incTimer(frameSize); // 'frameSize' ms
-	}
-		 
-	delete[] data_for_speakers;
-	delete[] data_from_mic;
-	delete[] data_to_send;
-	this->exit();
-}
-#endif
 
 // EOF

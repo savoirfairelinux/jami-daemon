@@ -488,20 +488,6 @@ QtGUIMainWindow::numLineBusy(void) {
 }
 
 void
-QtGUIMainWindow::stopBlinkingRingPixmap (void) {
-	// Initialisation of red bar rectangle region
-	QRect rect(ExistingDF.GetInt("ring_x","Positions"), 
-			ExistingDF.GetInt("ring_y","Positions"),
-			imageRing.width(), imageRing.height());
-
-	// Blit the no-ringing pixmap with update rectangle
-	bitBlt (this, ExistingDF.GetInt("ring_x","Positions"), 
-			ExistingDF.GetInt("ring_y","Positions"),&imageNoRing, 0, 0,
-			imageRing.width(), imageRing.height(), Qt::CopyROP);
-	update(rect);
-}
-
-void
 QtGUIMainWindow::dialTone (bool var) {
 	if (this->b_dialtone != var) {
 		this->b_dialtone = var;
@@ -556,7 +542,7 @@ QtGUIMainWindow::toggleLine (int num_line) {
 		chosenLine = currentLineNumber;
 		if (!noChoose) {
 			choose = true; 
-			this->dialTone(true);
+			//this->dialTone(true);
 		}
 		callmanager->phLines[currentLineNumber]->setStateLine(BUSY);
 	} 
@@ -593,7 +579,6 @@ QtGUIMainWindow::toggleLine (int num_line) {
 			callmanager->phLines[currentLineNumber]->getStateLine() != ONHOLD){
 			qDebug("GUI: -- Nouvel appel repondu %d --", currentLineNumber);
 			callmanager->actionHandle (currentLineNumber, ANSWER_CALL);
-			stopBlinkingRingPixmap ();
 			callmanager->phLines[currentLineNumber]->setState(BUSY);
 			callmanager->phLines[currentLineNumber]->setStateLine(BUSY);
 		} 
@@ -625,14 +610,19 @@ QtGUIMainWindow::dial (void) {
 	int i = 0;
 	if (transfer and callmanager->sip->call[currentLineNumber] != NULL
 			and currentLineNumber != -1) {
+		// If transfer button clicked, validate the number for transfer.
 		callmanager->actionHandle (currentLineNumber, TRANSFER_CALL);
 		transfer = false;
+	} else if (callmanager->phLines[currentLineNumber]->isOnHold() or
+			callmanager->phLines[currentLineNumber]->getStateLine() == OFFHOLD
+			or (callmanager->phLines[currentLineNumber]->isBusy() and
+				callmanager->sip->call[currentLineNumber] != NULL)){
+			// If line used
+			// NOTHING
 	} else {
 		qDebug("GUI: LINE CURRENT %d", currentLineNumber);
-		// If new incoming call
-		// Stop blinking ring pixmap and answer.
-		if (callmanager->ringing()) {
-			stopBlinkingRingPixmap();
+		 if (callmanager->ringing()) {
+			// If new incoming call
 			currentLineNumber = callmanager->newCallLineNumber();
 			toggleLine (currentLineNumber);
 		} else {
@@ -650,7 +640,7 @@ QtGUIMainWindow::dial (void) {
 				callmanager->phLines[currentLineNumber]->text = 
 								callmanager->bufferTextRender();
 				toggleLine (currentLineNumber);
-				callinprogress = true;	
+				callinprogress = true;
 
 				// RingTone
 				// TODO: callmanager->ringTone(true);
@@ -714,6 +704,7 @@ void
 QtGUIMainWindow::setFreeStateLine (int line) {
 	// Set free-status for current line
 	callmanager->phLines[line]->setState (FREE);
+	callmanager->phLines[line]->setStateLine (FREE);
 	// Set free-pixmap
 	callmanager->phLines[line]->button()->setPixmap( TabLinePixmap[line][FREE]);
 }

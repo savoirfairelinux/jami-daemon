@@ -26,9 +26,7 @@
 #include "../stund/stun.h"
 
 #include <string>
-#ifdef  CCXX_NAMESPACES
 using namespace std;
-#endif
 
 class AudioRtp;
 class SIP;
@@ -53,33 +51,33 @@ public:
 	std::string		 path;
 
 	inline
-	QtGUIMainWindow*gui			(void) { return this->phonegui; }
-	bool	ringing 			(void);
+	QtGUIMainWindow*gui				(void) { return this->phonegui; }
+	bool	ringing 				(void);
 	inline
-	void 	ring    			(void) { this->ring(true); }
-	void 	ring    			(bool);
+	void 	ring    				(void) { this->ring(true); }
+	void 	ring    				(bool);
 	void 	quitLibrary 			(void);
 	int		outgoingNewCall			(void);
 	void 	actionHandle			(int, int);
-	int 	findLineNumberNotUsedSIP	(void);
+	int 	findLineNumberNotUsedSIP(void);
 	void 	handleRemoteEvent		(int, char *, int);
-	int	startSound			(SipCall *);
-	void 	closeSound 			(SipCall *);	
+	int		startSound				(SipCall *);
+	void 	closeSound 				(SipCall *);	
 	void	selectAudioDriver		(void);
 	QString	bufferTextRender		(void);
 	bool	isNotUsedLine			(int);
 	bool	isRingingLine			(int);
-	int	newCallLineNumber		(void);
+	int		newCallLineNumber		(void);
 	void	getInfoStun		       	(StunAddress4 &);
-	int	getFirewallPort			(void);
+	int		getFirewallPort			(void);
 	void	setFirewallPort 		(int);
 	QString	getFirewallAddress		(void);
-	bool	otherLine			(void);
+	bool	otherLine				(void);
 	bool	isChosenLine			(void);
-	int	chosenLine			(void);
-	void	setChoose			(bool, bool);
-	bool	useStun				(void);
-	void	dtmf				(int, char);
+	int		chosenLine				(void);
+	void	setChoose				(bool, bool);
+	bool	useStun					(void);
+	void	dtmf					(int, char);
 	bool	getCallInProgress		(void);
 	void	setCallInProgress		(bool);
 	bool	transferedCall			(void);
@@ -92,8 +90,8 @@ private:
 	int		firewallPort;
 	QString	firewallAddr;
 
-	void 	sip_rtp_init			(void);
-
+	void 	sip_init			(void);
+	bool 	createSettingsPath		(void);
 
 };
 

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'phonebook.ui'
 **
-** Created: Tue Jan 11 12:49:31 2005
+** Created: Thu Jan 13 18:33:59 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!

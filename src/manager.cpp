@@ -43,35 +43,17 @@
 #include "qtGUImainwindow.h"
 
 #include <string>
-#ifdef  CCXX_NAMESPACES
 using namespace std;
-#endif
 
 Manager::Manager (QString *Dc = NULL) {
 	DirectCall = Dc;
+	bool exist;
+	
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
 		phLines[i] = new PhoneLine ();
 	}
-
-	// Create .sflphone directory in home user
-	bool exist = true;
-	char * buffer;
-	// Get variable $HOME
-  	buffer = getenv ("HOME");                                                   	path = string(buffer);
-  	path = path + "/." + PROGNAME;
-             
-  	if (mkdir (path.data(), 0755) != 0) {
-		// If directory	creation failed
-    	if (errno != EEXIST) {
-        	printf ("Cannot create directory: %s\n", strerror(errno));
-      	} 
-  	}
-  
-	// Load user's config
-	path = path + "/" + PROGNAME + "rc";
-	if (Config::tree()->populateFromFile(path.data()) == 0){
-		exist = false;
-	}
+	
+	exist = createSettingsPath();
 	
 	phonegui = new QtGUIMainWindow (0, 0 ,  
 					Qt::WDestructiveClose | 
@@ -82,7 +64,7 @@ Manager::Manager (QString *Dc = NULL) {
 	audioRTP = new AudioRtp(this->sip, this);
 	tone = new ToneGenerator(this);
 	
-	sip_rtp_init();
+	sip_init();
 	
 	selectAudioDriver();
 
@@ -101,7 +83,6 @@ Manager::Manager (QString *Dc = NULL) {
   		// show configuration panel
 		gui()->configuration();
 	} 
-
 }
 
 Manager::~Manager (void) {
@@ -113,27 +94,64 @@ Manager::~Manager (void) {
 	delete[] phLines;
 }
 
+/**
+ * Create .PROGNAME directory in home user and create configuration tree from
+ * the settings file if this file exists.
+ *
+ * @return	true if config-file exists or false if not.
+ */
+bool
+Manager::createSettingsPath (void) {
+	// 
+	bool exist = true;
+	char * buffer;
+	// Get variable $HOME
+  	buffer = getenv ("HOME");                                                   	path = string(buffer);
+  	path = path + "/." + PROGNAME;
+             
+  	if (mkdir (path.data(), 0755) != 0) {
+		// If directory	creation failed
+    	if (errno != EEXIST) {
+        	printf ("Cannot create directory: %s\n", strerror(errno));
+      	} 
+  	}
+  
+	// Load user's config
+	path = path + "/" + PROGNAME + "rc";
+	if (Config::tree()->populateFromFile(path.data()) == 0){
+		exist = false;
+	}
+	return exist;
+}
+
+/**
+ * Call audio driver constructor according to the selected driver in setup
+ */
 void
 Manager::selectAudioDriver (void) {
 	this->audiodriver = new AudioDriversOSS ();
-	/* if (Config::getb(QString("Audio/Drivers.driverOSS"))) {
+
+	// TODO remplacer par ce qui suit ad ALSA sera implementé
+#if 0 
+	if (Config::getb("Audio", "Drivers.driverOSS")) {
 		this->audiodriver = new AudioDriversOSS ();
-	} else if (Config::get(QString("Audio/Drivers.driverALSA"), false)) {
-		audiodriver = new AudioDriversALSA ();
-	}*/
+	} else if (Config::getb("Audio", "Drivers.driverALSA")) {
+		this->audiodriver = new AudioDriversALSA ();
+	}
+#endif
 }
 
+/**
+ * Init the SIP stack
+ */
 void
-Manager::sip_rtp_init (void) {
-	// Init the SIP and RTP stacks.
+Manager::sip_init (void) {
 	if ( sip->initSIP () != -1) {
 		 sip->initRtpmapCodec ();
 	}
 	
-//	if (Config::getb(QString("Preferences/Options.autoregister"))) {
 	if (Config::getb("Preferences", "Options.autoregister")) {
 		// Register to the known proxies if available
-		//if (Config::gets("Signalisations/SIP.password").length() > 0) {
 		if (Config::gets("Signalisations", "SIP.password").length() > 0) {
 			sip->setRegister ();
 		}
@@ -143,7 +161,6 @@ Manager::sip_rtp_init (void) {
 void
 Manager::quitLibrary (void) {
 	sip->quitSIP();
-	audioRTP->rtpexit();
 }
 
 int
@@ -441,7 +458,6 @@ Manager::setChoose (bool b, bool b2) {
 
 bool
 Manager::useStun () {
-//	if (Config::getb("Signalisations/STUN.useStunYes")) {
 	if (Config::getb("Signalisations", "STUN.useStunYes")) {
 		return true;
 	} else {
@@ -449,10 +465,14 @@ Manager::useStun () {
 	}
 }
 
-// Handle choice of the DTMF-send-way
+/**
+ * Handle choice of the DTMF-send-way
+ *
+ * @param	line: number of the line.
+ * @param	digit: pressed key.
+ */
 void
 Manager::dtmf (int line, char digit) {
-//	int sendType = Config::geti ("Signalisations/DTMF.sendDTMFas");
 	int sendType = Config::geti ("Signalisations", "DTMF.sendDTMFas");
 	
 	switch (sendType) {

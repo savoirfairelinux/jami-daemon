@@ -24,9 +24,7 @@
 
 #include <ccrtp/rtp.h>
 
-#ifdef  CCXX_NAMESPACES
 using namespace ost;
-#endif
 
 #include "sipcall.h"
 
@@ -54,23 +52,6 @@ private:
 	bool				 sym;
 };
 
-#if 0
-///////////////////////////////////////////////////////////////////////////////
-// One pair of sockets
-///////////////////////////////////////////////////////////////////////////////
-class AudioRtpSymmetric : public Thread, public TimerPort {
-public:
-	AudioRtpSymmetric (SipCall *, AudioDrivers *, Manager *);
-	~AudioRtpSymmetric();
-	virtual void run ();
-
-private:
-	SipCall				*ca;
-	AudioDrivers		*audioDevice;
-	Manager				*manager;
-	SymmetricRTPSession	*session;
-};
-#endif
 ///////////////////////////////////////////////////////////////////////////////
 // Main class rtp
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,7 +62,6 @@ public:
 
 	int 				createNewSession	(SipCall *);
 	void				closeRtpSession		(SipCall *);
-	void				rtpexit 			(void);
 
 private:
 	AudioRtpRTX			*RTXThread;

@@ -22,9 +22,7 @@
 
 #include <cc++/thread.h>
 
-#ifdef  CCXX_NAMESPACES
 using namespace ost;
-#endif
 
 #include "manager.h"
 

@@ -24,9 +24,7 @@
 #include "g711.h"
 
 #include <string>
-#ifdef  CCXX_NAMESPACES
 using namespace std;
-#endif
 
 AudioCodec::AudioCodec (void) {
 	// Init array handleCodecs

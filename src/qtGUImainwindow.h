@@ -215,7 +215,6 @@ private:
 	void 		 initBlinkTimer	(void);
 
 	int 		 numLineBusy	(void);
-	void 		 stopBlinkingRingPixmap (void);
 
 	int			 positionOffsetX		(void);
 
