@@ -1,0 +1,11 @@
+SFLPhone (0.2) / 2005-01-18
+	* Lines management updated
+	* Blocking bug fixed
+	* Configuration tree, made from a config file, added for setup
+	* Dial tone updated
+	* Timer call updated
+	* Apply feature updated
+	* Non-network or request failure cases updated
+
+SFLPhone (0.1a) / 2004-12-22
+	* First release
