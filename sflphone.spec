@@ -1,0 +1,40 @@
+%define name sflphone
+%define version 0.1
+%define release 1
+%define prefix /usr
+Autoreq: 0
+
+Name:		%name
+Summary:	An other VoIP client
+Version:	%version
+Release:	%release
+Copyright:	GPL
+Group:		Networking/Utilities
+URL:		http://www.sflphone.org
+Packager:	Cyrille Béraud <cyrille.beraud@savoirfairelinux.com>
+Source:		http://www.sflphone.org/sflphone-0.1.tar.gz
+BuildRoot:	/tmp/sflphone-%{version}-%{release}
+
+%description
+SFLPhone is a VoIP client for a X11 environment.
+%prep
+%setup
+CXXFLAGS="$RPM_OPT_FLAGS" ./configure -prefix %{prefix}
+
+%build
+make
+
+%install
+make DESTDIR=$RPM_BUILD_ROOT install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-, root, root)
+%{prefix}/bin/sflphone
+%dir %{prefix}/share/sflphone/skins
+%{prefix}/share/sflphone/skins/*
+%dir %{prefix}/share/sflphone/pixmaps
+%{prefix}/share/sflphone/pixmaps/*
+
