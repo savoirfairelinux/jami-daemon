@@ -93,7 +93,7 @@ useStunNo->setChecked(
     Config::get(QString("Preferences/Options.confirmQuit"), true));
      zoneToneChoice->setCurrentText(
       Config::get(QString("Preferences/Options.zoneToneChoice"),
-    QString("France")));
+    QString("North America")));
      checkedTray->setChecked(
      Config::get(QString("Preferences/Options.checkedTray"), false));
      autoregister->setChecked(
