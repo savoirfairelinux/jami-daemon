@@ -47,10 +47,10 @@ public:
 	AudioRtp		*audioRTP;
 	AudioDrivers	*audiodriver;
 	ToneGenerator	*tone;
-	QString 	*DirectCall; // from argv[1]
+	QString 		*DirectCall; // from argv[1]
 	bool 			 mute;
 	bool 			 tonezone;
-	string			 path;
+	std::string		 path;
 
 	inline
 	QtGUIMainWindow*gui			(void) { return this->phonegui; }

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'configurationpanel.ui'
 **
-** Created: Mon Jan 10 17:49:57 2005
+** Created: Tue Jan 11 12:49:32 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -121,6 +121,7 @@ public:
 
 public slots:
     virtual void saveSlot();
+    virtual void applySlot();
     virtual void changeTabSlot();
 
 protected:

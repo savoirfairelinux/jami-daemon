@@ -165,6 +165,7 @@ public slots:
 	void 	 button_conf		(void);
 	void 	 applySlot 			(void);
 	void 	 clickHandle 		(void);
+	void	 reduceHandle		(void);
 	void	 save				(void);
 	
 	void 	 pressedKey0		(void);

@@ -119,8 +119,6 @@ SIP::initSIP (void) {
 		stunSvrAddr.addr = 0;
 		
 		// Stun server
-		//QString svr = Config::gets("Signalisations/STUN.STUNserver");
-		//qDebug("address server stun = %s", svr.ascii());
 		string svr = Config::gets("Signalisations", "STUN.STUNserver");
 		qDebug("address server stun = %s", svr.data());
 		
@@ -338,18 +336,7 @@ SIP::checkUrl(char *url) {
 int
 SIP::setRegister (void) {
 	int reg_id = -1;
-#if 0	
-	QString qproxy = "sip:" + Config::gets("Signalisations/SIP.sipproxy"); 
-	char * proxy = (char*)qproxy.ascii();
 
-	QString qhostname = "sip:"+Config::gets("Signalisations/SIP.hostPart"); 
-	char * hostname = (char*)qhostname.ascii();
-	
-	QString qfrom = fromHeader(NULL, 
-							Config::gets("Signalisations/SIP.userPart"), 
-							Config::gets("Signalisations/SIP.hostPart"));
-	char * from = (char*)qfrom.ascii();
-#endif
 	string qproxy = "sip:" + Config::gets("Signalisations", "SIP.sipproxy"); 
 	char * proxy = (char*)qproxy.data();
 
@@ -371,7 +358,6 @@ SIP::setRegister (void) {
 	eXosip_lock();
 	setAuthentication();
 	
-	//if (Config::gets("Signalisations/SIP.sipproxy") != "") {
 	if (Config::gets("Signalisations", "SIP.sipproxy") != "") {
 		reg_id = eXosip_register_init(from, proxy, NULL);
 	} else {
@@ -398,31 +384,6 @@ SIP::setRegister (void) {
 
 int
 SIP::setAuthentication (void) {
-#if 0
-	QString login, pass, realm;
-	login = Config::gets("Signalisations/SIP.username");
-	if (login == "") {
-		login = Config::gets("Signalisations/SIP.userPart");
-	}
-	pass = Config::gets("Signalisations/SIP.password");
-
-	if (callmanager->useStun()) {
-		realm = Config::gets("Signalisations/SIP.hostPart");
-	} else {
-		if (Config::gets("Signalisations/SIP.sipproxy") != "") {
-			realm = Config::gets("Signalisations/SIP.sipproxy");
-		} else {
-			realm = Config::gets("Signalisations/SIP.hostPart");
-		}
-	}
-	
-	if (eXosip_add_authentication_info(login.ascii(), login.ascii(), 
-		pass.ascii(), NULL, NULL) != 0) {
-		qDebug ("No authentication");
-		return -1;
-	}
-#endif
-
 	string login, pass, realm;
 	login = Config::gets("Signalisations", "SIP.username");
 	if (login == "") {
@@ -441,7 +402,6 @@ SIP::setAuthentication (void) {
 	}
 	
 	if (eXosip_add_authentication_info(login.data(), login.data(), 
-		//pass.data(), NULL, realm.data()) != 0) {
 		pass.data(), NULL, NULL) != 0) {
 		qDebug ("No authentication");
 		return -1;
@@ -449,34 +409,12 @@ SIP::setAuthentication (void) {
 	return 0;
 }
 		
-
-// Form the From header field
-#if 0
-QString
-SIP::fromHeader (QString name, QString user, QString host) {
-	if (name != NULL) {
-		return ("sip:" + user + "@" + host);
-	} else {
-		return ("sip:" + user + "@" + host);
-	}
-}
-#endif
 string
 SIP::fromHeader (string user, string host) {
 	return ("sip:" + user + "@" + host);
 }
 
-// Form the To header field
-#if 0
-QString
-SIP::toHeader(QString to) {
-	if (to.contains("sip:") == 0) {
-		return ("sip:" + to );
-	} else {
-		return to;
-	}
-}
-#endif
+
 string
 SIP::toHeader(string to) {
 	if (to.find("sip:") == string::npos) {
@@ -539,40 +477,7 @@ int
 SIP::outgoingInvite (void) {
 	char * from;
 	char * to;
-#if 0	
-	// Form the From header field basis on configuration panel
-	QString qfrom = fromHeader(Config::gets("Signalisations/SIP.fullName"), 
-								Config::gets("Signalisations/SIP.userPart"),
-								Config::gets("Signalisations/SIP.hostPart"));
-	from = (char*)qfrom.ascii();
-	
-	// Form the To header field
-	QString qto = toHeader(callmanager->bufferTextRender());
-	if (qto.contains('@') == 0 and 
-			Config::getb(QString("Preferences/Options.autoregister"))) {
-		qto = qto + "@" + Config::gets("Signalisations/SIP.hostPart");
-	}
-	to = (char*)qto.ascii();
-		
-	qDebug ("From: <%s>", from);
-	qDebug ("To: <%s>", to);
 
-	// If no SIP proxy setting
-	if (Config::gets("Signalisations/SIP.sipproxy") == "") {
-		if (startCall(from, to, NULL, NULL) <= 0) {
-			return -1;
-		}
-		return 0;
-	}
-	
-	QString qroute = "<sip:" + Config::gets("Signalisations/SIP.sipproxy") 
-							+ ";lr>";
-	char * route = (char*)qroute.ascii();
-	
-	if (startCall(from, to, NULL, route) <= 0) {
-		return -1;
-	}
-#endif	
 	// Form the From header field basis on configuration panel
 	string qfrom = fromHeader(Config::gets("Signalisations", "SIP.userPart"),
 								Config::gets("Signalisations", "SIP.hostPart"));
@@ -621,7 +526,6 @@ SIP::setLocalPort (int port) {
 	
 void
 SIP::carryingDTMFdigits (int line, char digit) {
-	  //int duration = Config::geti("Signalisations/DTMF.pulseLength"); 
 	  int duration = Config::geti("Signalisations", "DTMF.pulseLength"); 
       
 	  static const int body_len = 128;
@@ -734,13 +638,6 @@ SIP::manageActions (int usedLine, int action) {
 
 	// IP-Phone user is transfering call
 	case TRANSFER_CALL:
-#if 0
-	   	referTo	= toHeader(callmanager->bufferTextRender());
-		if (referTo.contains('@') == 0) {
-			referTo = referTo + "@" + 
-				Config::gets("Signalisations/SIP.hostPart");
-		}
-#endif		
 		referTo	= toHeader(string(callmanager->bufferTextRender().ascii()));
 		if (referTo.find("@") == string::npos) {
 			referTo = referTo + "@" + 
@@ -781,6 +678,7 @@ int
 SIP::getEvent (void) {
 	eXosip_event_t *event;
 	int theline = -1;
+	static int countReg = 0;
 
 	event = eXosip_event_wait (0, 50);
 	if (event == NULL) {
@@ -1011,7 +909,11 @@ SIP::getEvent (void) {
 			qDebug("REGISTRATION_FAILURE <- (%i) [%i %s] %s for REGISTER %s", 
 				event->rid, event->status_code, event->reason_phrase, 
 				event->remote_uri, event->req_uri);
-			setRegister();
+			if (countReg <= 3) { 
+				setRegister();
+				countReg++;
+			}
+			callmanager->handleRemoteEvent(0,NULL,EXOSIP_REGISTRATION_FAILURE);
 			break;
 
 		case EXOSIP_OPTIONS_NEW:

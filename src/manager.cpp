@@ -301,6 +301,11 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype) {
 			gui()->lcd->setStatus("Logged in");				
 			break;
 
+		// Registration failure
+		case EXOSIP_REGISTRATION_FAILURE:
+			gui()->lcd->setStatus("Registration failure");				
+			break;
+			
 		// Remote callee answered
 		case EXOSIP_CALL_ANSWERED:
 			if (!gui()->transfer)
@@ -342,7 +347,7 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype) {
 		gui()->lcd->setStatus("Ringing");
 		
 	// if error code
-	} else { 
+	} else { 	
 		if (code > 399) {
 			qinfo = QString::number(code, 10) + " " + 
 				QString(reason);

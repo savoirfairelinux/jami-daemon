@@ -18,69 +18,12 @@
  */
 
 #include <qstring.h>
-#include <qsettings.h>
 
 #include "configuration.h"
 #include "configurationtree.h"
 
 static ConfigurationTree	*globalConfigTree = NULL;
 
-#if 0
-QString
-Config::gets (QString key) {
-	return Config::get (key, QString(""));
-}
-
-QString
-Config::get	(QString key, QString defval) {
-	QSettings settings;
-	return settings.readEntry (QString(CFG_PFX) + QString("/") + key, defval);
-}
-
-int
-Config::geti (QString key) {
-	return Config::get (key, 0);
-}
-
-int
-Config::get	(QString key, int defval) {
-	QSettings settings;
-	return settings.readNumEntry (QString(CFG_PFX) + QString("/") + key,defval);
-}
-
-bool
-Config::getb (QString key) {
-	return Config::get (key, false);
-}
-
-bool
-Config::get	(QString key, bool defval) {
-	QSettings settings;
-	return settings.readBoolEntry (QString(CFG_PFX) + QString("/") + key,
-			defval);
-}
-
-QString
-Config::set	(QString key, QString val) {
-	QSettings settings;
-	settings.writeEntry (QString(CFG_PFX) + QString("/") + key, val);
-	return val;
-}
-
-int
-Config::set	(QString key, int val) {
-	QSettings settings;
-	settings.writeEntry (QString(CFG_PFX) + QString("/") + key, val);
-	return val;
-}
-
-bool
-Config::set	(QString key, bool val) {
-	QSettings settings;
-	settings.writeEntry (QString(CFG_PFX) + QString("/") + key, val);
-	return val;
-}
-#endif
 string
 Config::gets (const char *section, const char *key) {
 	return Config::get (section, key, "");

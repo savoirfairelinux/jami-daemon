@@ -50,6 +50,10 @@ void ConfigurationPanel::init()
    playTones->setChecked(Config::get("Signalisations", "DTMF.playTones", (int)true));
    pulseLength->setValue(Config::get("Signalisations", "DTMF.pulseLength", 250));
    sendDTMFas->setCurrentItem(Config::get("Signalisations", "DTMF.sendDTMFas",1));
+   STUNserver->setText(Config::get("Signalisations", "STUN.STUNserver", 
+      "stun.fwdnet.net:3478"));
+ useStunYes->setChecked(Config::get("Signalisations", "STUN.useStunYes", (int)false));
+ useStunNo->setChecked(Config::get("Signalisations", "STUN.useStunNo", (int)true));
 
    // For audio tab
    ossButton->setChecked(Config::get("Audio", "Drivers.driverOSS", (int)true));
@@ -62,16 +66,17 @@ void ConfigurationPanel::init()
    
    // For preferences tab
    SkinChoice->setCurrentText(QString(Config::getchar(
-			   "Preferences", "Themes.skinChoice", "metal")));
+      "Preferences", "Themes.skinChoice", "metal")));
    confirmationToQuit->setChecked(Config::get(
-			   "Preferences", "Options.confirmQuit", (int)true));
+      "Preferences", "Options.confirmQuit", (int)true));
      zoneToneChoice->setCurrentText(QString(Config::getchar(
-				 "Preferences", "Options.zoneToneChoice", "North America")));
+     "Preferences", "Options.zoneToneChoice", "North America")));
      checkedTray->setChecked(Config::get(
-				 "Preferences", "Options.checkedTray", (int)false));
+     "Preferences", "Options.checkedTray", (int)false));
      autoregister->setChecked(Config::get(
-				 "Preferences", "Options.autoregister", (int)true));
-	 
+     "Preferences", "Options.autoregister", (int)true));
+  voicemailNumber->setText(Config::get("Preferences", "Themes.voicemailNumber", "888"));
+  
    //  Init tab view order
     Tab_Signalisations->show();
     Tab_Audio->hide();
@@ -112,6 +117,9 @@ void ConfigurationPanel::saveSlot()
    Config::set("Signalisations", "DTMF.pulseLength",  pulseLength->value());
    Config::set("Signalisations", "DTMF.playTones",  playTones->isChecked());
    Config::set("Signalisations", "DTMF.sendDTMFas" , sendDTMFas->currentItem());
+   Config::set("Signalisations", "STUN.STUNserver", STUNserver->text());
+   Config::set("Signalisations", "STUN.useStunYes", useStunYes->isChecked());
+   Config::set("Signalisations", "STUN.useStunNo", useStunNo->isChecked());
  
    Config::set("Audio", "Drivers.driverOSS", ossButton->isChecked());
    Config::set("Audio", "Drivers.driverALSA", alsaButton->isChecked());
@@ -124,17 +132,53 @@ void ConfigurationPanel::saveSlot()
    
    Config::set("Preferences", "Themes.skinChoice", SkinChoice->currentText());
    Config::set("Preferences", "Options.zoneToneChoice", 
-		   zoneToneChoice->currentText());
+     zoneToneChoice->currentText());
    Config::set("Preferences", "Options.confirmQuit", 
-		   confirmationToQuit->isChecked());
+     confirmationToQuit->isChecked());
    Config::set("Preferences", "Options.checkedTray", checkedTray->isChecked());
    Config::set("Preferences", "Options.autoregister",autoregister->isChecked());
-   
+   Config::set("Preferences", "Options.voicemailNumber", voicemailNumber->text());   
+#if 0 
    QMessageBox::information(this, "Save settings",
    "You must restart SFLPhone",
     QMessageBox::Yes);
+#endif
    accept();
 
+}
+
+void ConfigurationPanel::applySlot()
+{
+  Config::set("Signalisations", "SIP.fullName", fullName->text());
+   Config::set("Signalisations", "SIP.userPart", userPart->text());
+   Config::set("Signalisations", "SIP.username", username->text());
+   Config::set("Signalisations", "SIP.password", password->text());
+   Config::set("Signalisations", "SIP.hostPart", hostPart->text());
+   Config::set("Signalisations", "SIP.sipproxy", sipproxy->text());
+   Config::set("Signalisations", "DTMF.pulseLength",  pulseLength->value());
+   Config::set("Signalisations", "DTMF.playTones",  playTones->isChecked());
+   Config::set("Signalisations", "DTMF.sendDTMFas" , sendDTMFas->currentItem());
+   Config::set("Signalisations", "STUN.STUNserver", STUNserver->text());
+   Config::set("Signalisations", "STUN.useStunYes", useStunYes->isChecked());
+   Config::set("Signalisations", "STUN.useStunNo", useStunNo->isChecked());
+ 
+   Config::set("Audio", "Drivers.driverOSS", ossButton->isChecked());
+   Config::set("Audio", "Drivers.driverALSA", alsaButton->isChecked());
+
+   Config::set("Audio", "Codecs.codec1", codec1->currentText());
+   Config::set("Audio", "Codecs.codec2", codec2->currentText());
+   Config::set("Audio", "Codecs.codec3", codec3->currentText());
+   Config::set("Audio", "Codecs.codec4", codec4->currentText());
+   Config::set("Audio", "Codecs.codec5", codec5->currentText());
+   
+   Config::set("Preferences", "Themes.skinChoice", SkinChoice->currentText());
+   Config::set("Preferences", "Options.zoneToneChoice", 
+     zoneToneChoice->currentText());
+   Config::set("Preferences", "Options.confirmQuit", 
+     confirmationToQuit->isChecked());
+   Config::set("Preferences", "Options.checkedTray", checkedTray->isChecked());
+   Config::set("Preferences", "Options.autoregister",autoregister->isChecked());
+   Config::set("Preferences", "Options.voicemailNumber", voicemailNumber->text());   
 }
 
 // Handle tab view  according to current item of listbox
@@ -197,5 +241,8 @@ void ConfigurationPanel::changeTabSlot()
               break;
     }
 }
+
+
+
 
 

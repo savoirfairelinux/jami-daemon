@@ -30,18 +30,6 @@ using namespace std;
 
 AudioCodec::AudioCodec (void) {
 	// Init array handleCodecs
-#if 0
-	handleCodecs[0] = matchPayloadCodec(
-		Config::gets(QString("Audio/Codecs.codec1")));
-	handleCodecs[1] = matchPayloadCodec(
-		Config::gets(QString("Audio/Codecs.codec2")));
-	handleCodecs[2] = matchPayloadCodec(
-		Config::gets(QString("Audio/Codecs.codec3")));
-	handleCodecs[3] = matchPayloadCodec(
-		Config::gets(QString("Audio/Codecs.codec4")));
-	handleCodecs[4] = matchPayloadCodec(
-		Config::gets(QString("Audio/Codecs.codec5")));
-#endif
 	handleCodecs[0] = matchPayloadCodec(Config::gets("Audio", "Codecs.codec1"));
 	handleCodecs[1] = matchPayloadCodec(Config::gets("Audio", "Codecs.codec2"));
 	handleCodecs[2] = matchPayloadCodec(Config::gets("Audio", "Codecs.codec3"));
