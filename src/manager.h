@@ -33,7 +33,7 @@ class QtGUIMainWindow;
 
 class Manager {
 public:
-	Manager (void);
+	Manager (QString *);
 	~Manager (void);
 
 	QtGUIMainWindow *phonegui;
@@ -42,6 +42,7 @@ public:
 	AudioRtp		*audioRTP;
 	AudioDrivers	*audiodriver;
 	ToneGenerator	*tone;
+	QString 	*DirectCall; // from argv[1]
 	bool 			 mute;
 	bool 			 tonezone;
 

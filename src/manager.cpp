@@ -35,7 +35,8 @@
 #include "../stund/udp.h"
 #include "../stund/stun.h"
 
-Manager::Manager (void) {
+Manager::Manager (QString *Dc = NULL) {
+	DirectCall = Dc;
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
 		phLines[i] = new PhoneLine ();
 	}
@@ -56,6 +57,11 @@ Manager::Manager (void) {
 	b_ringing = false;
 	mute = false;
 	b_ringtone = false;
+	if (! DirectCall->isNull()) { 
+		qWarning ("Direct call.....");
+		phonegui->lcd->textBuffer = DirectCall ;
+		phonegui->dial();
+	}
 	
 }
 

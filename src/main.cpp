@@ -31,8 +31,12 @@
 int
 main (int argc, char **argv) {
 	QApplication	a(argc, argv);
+	Manager *manager;
 	
-	Manager *manager = new Manager();
+	if ( argc > 1)
+		manager = new Manager(new QString(argv[1]));
+	else
+		manager = new Manager(NULL);
 
 #if 0
 	QTranslator translator (0);
