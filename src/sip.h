@@ -62,6 +62,7 @@ using namespace ost;
 class EventThread : public Thread {
 public:
 	EventThread (SIP *);
+	~EventThread (void);
 	virtual void 	 run ();
 private:
 	SIP	*	sipthread;

@@ -52,6 +52,10 @@ EventThread::EventThread (SIP *sip) : Thread () {
 	this->sipthread = sip;
 }
 
+EventThread::~EventThread (void) {
+	this->terminate();
+}
+
 /**
  * Reimplementation of run() to update widget
  */

@@ -84,6 +84,9 @@ Manager::Manager (QString *Dc = NULL) {
   		// show configuration panel
 		gui()->configuration();
 	} 
+
+	spkr_volume = 10;
+	mic_volume = 10;
 }
 
 Manager::~Manager (void) {
@@ -132,7 +135,7 @@ void
 Manager::selectAudioDriver (void) {
 	this->audiodriver = new AudioDriversOSS ();
 
-	// TODO remplacer par ce qui suit ad ALSA sera implementé
+	// TODO remplacer par ce qui suit qd ALSA sera implementé
 #if 0 
 	if (Config::getb("Audio", "Drivers.driverOSS")) {
 		this->audiodriver = new AudioDriversOSS ();
@@ -524,4 +527,14 @@ void
 Manager::nameDisplay (char *name) {
 	gui()->lcd->clearBuffer();
 	gui()->lcd->appendText(name);
+}
+
+void
+Manager::spkrSoundVolume (int val) {
+	spkr_volume = val;
+}
+
+void
+Manager::micSoundVolume (int val) {
+	mic_volume = val;
 }

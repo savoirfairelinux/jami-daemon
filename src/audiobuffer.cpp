@@ -50,11 +50,11 @@ void AudioBuffer::resize (size_t newsize)
 }
 
 void
-AudioBuffer::setData (short *buf) {
+AudioBuffer::setData (short *buf, int vol) {
 	short *databuf = data;
 	
 	for (int i = 0; i < (int)size; i++) {
-		databuf[i] = buf[i];
+		databuf[i] = buf[i]*vol;
 	}
 }
 

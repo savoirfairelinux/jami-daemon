@@ -30,6 +30,7 @@ extern "C" {
 #define PIXMAP_KEYPAD			"dtmf_main.png"
 #define PIXMAP_SCREEN			"screen_main.png"
 #define PIXMAP_OVERSCREEN		"overscreen.png"
+#define PIXMAP_VOLUME			"volume.png"
 	
 #define PIXMAP_IS_RINGING		"ring.png"
 #define PIXMAP_NO_RINGING		"no_ring.png"

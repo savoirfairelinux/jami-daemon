@@ -44,6 +44,7 @@ ToneThread::~ToneThread (void) {
 void
 ToneThread::run (void) {
 	while (mngr->tonezone) {
+		mngr->audiodriver->audio_buf.setData (buf, mngr->getSpkrVolume()/10);	
 		mngr->audiodriver->writeBuffer();
 		//mngr->audiodriver->writeBuffer(buf, totalbytes);
 	}
@@ -231,7 +232,7 @@ ToneGenerator::toneHandle (int idr) {
 		if (tonethread == NULL) {
 			tonethread = new ToneThread (manager, buf, totalbytes);
 			manager->audiodriver->audio_buf.resize(totalbytes);	
-			manager->audiodriver->audio_buf.setData (buf);	
+		//	manager->audiodriver->audio_buf.setData (buf);	
 			tonethread->start();
 		}
 

@@ -49,20 +49,18 @@ void ConfigurationPanel::init()
    sipproxy->setText(QString(Config::getchar("Signalisations", "SIP.sipproxy", "")));
    playTones->setChecked(Config::get("Signalisations", "DTMF.playTones", (int)true));
    pulseLength->setValue(Config::get("Signalisations", "DTMF.pulseLength", 250));
-   sendDTMFas->setCurrentItem(Config::get("Signalisations", "DTMF.sendDTMFas",1));
+   sendDTMFas->setCurrentItem(Config::get("Signalisations", "DTMF.sendDTMFas",0));
    STUNserver->setText(Config::get("Signalisations", "STUN.STUNserver", 
       "stun.fwdnet.net:3478"));
- useStunYes->setChecked(Config::get("Signalisations", "STUN.useStunYes", (int)false));
- useStunNo->setChecked(Config::get("Signalisations", "STUN.useStunNo", (int)true));
-
+((QRadioButton*)stunButtonGroup->find(Config::get("Signalisations", "STUN.useStun", 1)))->setChecked(true);
    // For audio tab
    ossButton->setChecked(Config::get("Audio", "Drivers.driverOSS", (int)true));
    alsaButton->setChecked(Config::get("Audio", "Drivers.driverALSA", (int)false));
    codec1->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec1", "G711u")));
-   codec2->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec2", "G711a")));
-   codec3->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec3", "GSM")));
-   codec4->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec4", "iLBC")));
-   codec5->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec5", "SPEEX")));
+   codec2->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec2", "G711u")));
+   codec3->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec3", "G711u")));
+   codec4->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec4", "G711u")));
+   codec5->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec5", "G711u")));
    
    // For preferences tab
    SkinChoice->setCurrentText(QString(Config::getchar(
@@ -118,8 +116,6 @@ void ConfigurationPanel::saveSlot()
    Config::set("Signalisations", "DTMF.playTones",  playTones->isChecked());
    Config::set("Signalisations", "DTMF.sendDTMFas" , sendDTMFas->currentItem());
    Config::set("Signalisations", "STUN.STUNserver", STUNserver->text());
-   Config::set("Signalisations", "STUN.useStunYes", useStunYes->isChecked());
-   Config::set("Signalisations", "STUN.useStunNo", useStunNo->isChecked());
  
    Config::set("Audio", "Drivers.driverOSS", ossButton->isChecked());
    Config::set("Audio", "Drivers.driverALSA", alsaButton->isChecked());
@@ -209,6 +205,7 @@ void ConfigurationPanel::changeTabSlot()
 }
 
 
-
-
-
+void ConfigurationPanel::useStunSlot(int id)
+{
+    Config::set("Signalisations", "STUN.useStun", id);
+}

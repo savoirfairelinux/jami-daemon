@@ -62,7 +62,7 @@ public:
 	 */
 	void resize (size_t newsize);
 
-	void setData (short *buf);
+	void setData (short *buf, int);
 void *data;
 private:
 	

@@ -49,6 +49,8 @@
 #include "point.h"
 #include "skin.h"
 #include "qtGUImainwindow.h"
+#include "vector.h"
+#include "volumecontrol.h"
 
 #define QCHAR_TO_STRIP	"-"
 #define REG_EXPR		"(-|\\(|\\)| )"
@@ -274,7 +276,18 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 				NULL, mypop, parent, name);
 	trayicon->show();
 	connect(trayicon, SIGNAL(clickedLeft()), this, SLOT(clickHandle()));
-	
+	connect(vol_spkr, SIGNAL(setVolumeValue(int)), this, SLOT(volumeSpkrChanged(int)));
+	connect(vol_mic, SIGNAL(setVolumeValue(int)), this, SLOT(volumeMicChanged(int)));
+}
+
+void
+QtGUIMainWindow::volumeSpkrChanged(int val) {
+	callmanager->spkrSoundVolume(val);
+}
+
+void
+QtGUIMainWindow::volumeMicChanged(int val) {
+	callmanager->micSoundVolume(val);
 }
 
 /**
@@ -298,6 +311,8 @@ QtGUIMainWindow::~QtGUIMainWindow(void) {
 	delete	dtmf_button;
 	delete	vol_mic;
 	delete 	vol_spkr;
+	delete	micVolVector;
+	delete	spkrVolVector;
 	delete	panel;
 	delete  blinkTimer;
 	delete  keypad;
@@ -392,9 +407,12 @@ QtGUIMainWindow::initButtons (void) {
 		callmanager->phLines[j]->button()->move (pt->getX(lnum),pt->getY(lnum));
 	}
 
-	// Set pixmaps volume TODO:change to thing like slider
-	vol_mic = new JPushButton(this, NULL, VOLUME);
-	vol_spkr = new JPushButton(this, NULL, VOLUME);
+	// Set pixmaps volume 
+	micVolVector = new Vector(this, VOL_MIC, pt);
+	spkrVolVector = new Vector(this, VOL_SPKR, pt);
+
+	vol_mic = new VolumeControl(this, NULL, VOLUME, micVolVector);
+	vol_spkr = new VolumeControl(this, NULL, VOLUME, spkrVolVector);
 	vol_mic->move(pt->getX(VOL_MIC), pt->getY(VOL_MIC));
 	vol_spkr->move(pt->getX(VOL_SPKR), pt->getY(VOL_SPKR));
 }
@@ -1017,7 +1035,7 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	key->startTone(code);
 	key->generateDTMF(buf, SAMPLING_RATE);
 	callmanager->audiodriver->audio_buf.resize(SAMPLING_RATE);
-	callmanager->audiodriver->audio_buf.setData (buf);
+	callmanager->audiodriver->audio_buf.setData (buf, callmanager->getSpkrVolume()/10);
 	pulselen = Config::get("Signalisations", "DTMF.pulseLength", 250);
 	callmanager->audiodriver->audio_buf.resize(pulselen * (OCTETS/1000));
 //	a = callmanager->audiodriver->writeBuffer(buf, pulselen * (OCTETS/1000));

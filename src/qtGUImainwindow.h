@@ -45,6 +45,7 @@
 #include "transqwidget.h"
 #include "trayicon.h"
 #include "url_inputui.h"
+#include "volumecontrol.h"
 
 #define	MAIN_INITIAL_POSITION	20
 #define TEXT_MODE				0
@@ -105,8 +106,8 @@ public:
 	JPushButton			*dial_button;
 	JPushButton			*mute_button;
 	JPushButton			*dtmf_button;
-	JPushButton			*vol_mic;
-	JPushButton			*vol_spkr;
+	VolumeControl		*vol_mic;
+	VolumeControl		*vol_spkr;
 
 	int 				 currentLineNumber;
 	int 				 busyNum;
@@ -180,6 +181,9 @@ public slots:
 	void 	 pressedKey9		(void);
 	void 	 pressedKeyStar		(void);
 	void 	 pressedKeyHash		(void);
+
+	void	 volumeSpkrChanged		(int);
+	void	 volumeMicChanged		(int);
 	
 protected:
 	// To handle the key pressed event
@@ -188,6 +192,8 @@ protected:
 private:
 	// Configuration skin file
 	Point				*pt;
+	Vector				*micVolVector;
+	Vector				*spkrVolVector;
 
 	// To construct ring rect pixmap
 	QImage 		 imageRing;

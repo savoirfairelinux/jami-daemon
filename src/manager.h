@@ -20,7 +20,6 @@
 #ifndef __MANAGER_H__
 #define __MANAGER_H__
 
-
 #include "audiodrivers.h"
 #include "phoneline.h"
 #include "../stund/stun.h"
@@ -91,6 +90,10 @@ public:
 	void	congestion				(bool); 
 	void	errorDisplay			(char*);
 	void	nameDisplay				(char*);
+	void	spkrSoundVolume			(int);
+	void	micSoundVolume			(int);
+	inline int	getSpkrVolume (void) { return spkr_volume; }
+	inline int	getMicVolume (void) { return mic_volume; }
 
 private:
 	bool	b_ringing;
@@ -98,6 +101,8 @@ private:
 	bool	b_congestion;
 	int		firewallPort;
 	QString	firewallAddr;
+	int 	spkr_volume;
+	int 	mic_volume;
 
 	void 	sip_init			(void);
 	bool 	createSettingsPath		(void);

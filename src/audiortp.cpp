@@ -47,7 +47,7 @@ AudioRtp::AudioRtp (SIP *sip, Manager *manager) {
 	this->manager = manager;
 	RTXThread = NULL;
 	if (!manager->useStun()) {
-		if (Config::gets("Signalisations", "SIP.sipproxy") == NULL) {
+		if (Config::gets("Signalisations", "SIP.sipproxy") == "") {
 			svr = Config::gets("Signalisations", "SIP.sipproxy");
 		}
 	} else {
@@ -142,6 +142,7 @@ AudioRtpRTX::run (void) {
 	unsigned char	*data_to_send;
 	short			*data_mute;
 	short			*data_from_mic;
+	short			*data_from_mic_tmp;
 	int				 i,
 					 compSize, 
 					 timestamp;
@@ -150,6 +151,7 @@ AudioRtpRTX::run (void) {
 	
 	data_for_speakers = new short[2048];
 	data_from_mic = new short[1024];
+	data_from_mic_tmp = new short[1024];
 	data_to_send = new unsigned char[1024];
 	data_mute = new short[1024];
 
@@ -245,7 +247,7 @@ AudioRtpRTX::run (void) {
 		if (!manager->mute) {
 		//	i = audioDevice->readBuffer (320);
 		//	data_from_mic = (short*)manager->audiodriver->audio_buf.getData();
-		//	qDebug("audiortp data_from_mic 0x%d", data_from_mic);
+		//	qDebug("audiortp data_from_mic 0x%d", data_from_mic); 
 			i = audioDevice->readBuffer (data_from_mic, 320);
 		} else {
 			// When IP-phone user click on mute button, we read buffer of a
@@ -253,11 +255,14 @@ AudioRtpRTX::run (void) {
 			i = audioDevice->readBuffer (data_mute, 320);
 		}
 
+		for (int j = 0; j < i; j++)
+			data_from_mic_tmp[j] = data_from_mic[j]*manager->getMicVolume()/10;
+
 		// Encode acquired audio sample
 		compSize = AudioCodec::codecEncode (
 				ac.handleCodecs[0], 
 				data_to_send,
-				data_from_mic, i);
+				data_from_mic_tmp, i);
 
 		// Send encoded audio sample
 		if (!sym) {
@@ -290,7 +295,8 @@ AudioRtpRTX::run (void) {
 		
 		// Write decoded data to sound device
 		manager->audiodriver->audio_buf.resize(expandedSize);
-		manager->audiodriver->audio_buf.setData (data_for_speakers);
+		manager->audiodriver->audio_buf.setData (data_for_speakers, 
+				manager->getSpkrVolume()/10);
 	//	i = audioDevice->writeBuffer (data_for_speakers, expandedSize);
 		i = audioDevice->writeBuffer ();
 		delete adu;
@@ -303,6 +309,7 @@ AudioRtpRTX::run (void) {
 		 
 	delete[] data_for_speakers;
 	delete[] data_from_mic;
+	delete[] data_from_mic_tmp;
 	delete[] data_mute;
 	delete[] data_to_send;
 	this->exit();

@@ -79,3 +79,4 @@ TransQWidget::mousePressEvent (QMouseEvent *e) {
 	mouse_x = e->x();
 	mouse_y = e->y();
 }
+

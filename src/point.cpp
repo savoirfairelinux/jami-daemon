@@ -32,7 +32,32 @@ Point::Point (const char* filename) {
 }
 
 Point::~Point (void) {
-	delete skinConfigTree;
+	if (skinConfigTree != NULL) {
+		delete skinConfigTree;
+		skinConfigTree = NULL;
+	}
+}
+
+/**
+ * Extract the substring before the comma
+ */
+string
+Point::getSubstrX (const char* key) {
+	char * value = skinConfigTree->getValue(NULL, key);
+	string tmp(value);
+	int index = tmp.find(',');
+	return tmp.substr(0, index);
+}
+
+/**
+ * Extract the substring after the comma
+ */
+string
+Point::getSubstrY (const char* key) {
+	char * value = skinConfigTree->getValue(NULL, key);
+	string tmp(value);
+	int index = tmp.find(',');
+	return tmp.substr(index + 1, tmp.length() - index);
 }
 
 /**
@@ -40,11 +65,22 @@ Point::~Point (void) {
  */
 int
 Point::getX (const char* key) {
+/*	
 	char * value = skinConfigTree->getValue(NULL, key);
 	string tmp(value);
 	int index = tmp.find(',');
-	int toto = atoi((tmp.substr(0, index)).data());
-	return toto;
+	return atoi((tmp.substr(0, index)).data());
+*/
+	
+	int index;
+	string tmp = getSubstrX(key);
+	
+	if (getDirection(key) == HORIZONTAL) {
+		index = tmp.find('-');
+		return atoi((tmp.substr(0, tmp.length() - index)).data());
+	} else {
+		return atoi(tmp.data());
+	}
 }
 
 /**
@@ -52,6 +88,7 @@ Point::getX (const char* key) {
  */
 int
 Point::getY (const char* key) {
+/*	
 	char * value = skinConfigTree->getValue(NULL, key);
 	string tmp(value);
 	int index1, index2;
@@ -65,6 +102,16 @@ Point::getY (const char* key) {
 		index2 = tmp.find('-');
 		return atoi((tmp.substr(index1 + 1, index2 - index1)).data());
 	}
+*/	
+	int index;
+	string tmp = getSubstrY(key);
+	
+	if (getDirection(key) == VERTICAL) {
+		index = tmp.find('-');
+		return atoi((tmp.substr(0, tmp.length() - index)).data());
+	} else {
+		return atoi(tmp.data());
+	}
 }
 
 /**
@@ -72,8 +119,38 @@ Point::getY (const char* key) {
  */
 int
 Point::getVariation (const char* key) {
+/*	
 	char * value = skinConfigTree->getValue(NULL, key);
 	string tmp(value);
 	int index = tmp.find('-');
 	return atoi((tmp.substr(index + 1, tmp.length() - index)).data());
+*/	
+	int index;
+	string str;
+	
+	if (getDirection(key) == HORIZONTAL) {
+		str = getSubstrX(key);
+	} else if (getDirection(key) == VERTICAL) {
+		str = getSubstrY(key);
+	} 
+	index = str.find('-');
+	return atoi((str.substr(index + 1, str.length() - index)).data());
+}
+
+
+/**
+ * Get the direction of the variation for 'key' 
+ *
+ * @return	1 -> horizontal or  2 -> vertical
+ *			(0 if no variation)
+ */
+int
+Point::getDirection (const char* key) {
+	if (getSubstrX(key).find('-') != string::npos) {
+		return HORIZONTAL;
+	} else if (getSubstrY(key).find('-') != string::npos) {
+		return VERTICAL;
+	} else {
+		return NO_DIRECTION;
+	}
 }

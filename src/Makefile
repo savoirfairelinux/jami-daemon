@@ -57,6 +57,8 @@ OBJS = \
 	jpushbutton.o jpushbutton.moc.o \
 	numerickeypad.o numerickeypad.moc.o \
 	qtGUImainwindow.o qtGUImainwindow.moc.o \
+	vector.o \
+	volumecontrol.o volumecontrol.moc.o \
 	stun.o udp.o
 	
 start:	check prereq all

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'configurationpanel.ui'
 **
-** Created: Wed Jan 26 14:28:43 2005
+** Created: Fri Jan 28 18:58:55 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -64,12 +64,12 @@ public:
     QLabel* textLabel1_3;
     QLabel* textLabel3_2;
     QWidget* STUNPage;
-    QButtonGroup* buttonGroup3;
-    QRadioButton* useStunYes;
-    QRadioButton* useStunNo;
     QGroupBox* groupBox3;
     QLabel* textLabel1_5;
     QLineEdit* STUNserver;
+    QButtonGroup* stunButtonGroup;
+    QRadioButton* useStunYes;
+    QRadioButton* useStunNo;
     QWidget* DTMFPage;
     QGroupBox* SettingsDTMF;
     QCheckBox* playTones;
@@ -121,15 +121,16 @@ public:
 public slots:
     virtual void saveSlot();
     virtual void changeTabSlot();
+    virtual void useStunSlot( int id );
 
 protected:
     QGridLayout* ConfigurationPanelLayout;
     QVBoxLayout* layout8;
     QHBoxLayout* layout7;
     QSpacerItem* Horizontal_Spacing2;
-    QVBoxLayout* layout14;
+    QVBoxLayout* layout17;
     QGridLayout* groupBox1Layout;
-    QVBoxLayout* buttonGroup3Layout;
+    QVBoxLayout* stunButtonGroupLayout;
     QGridLayout* SettingsDTMFLayout;
     QVBoxLayout* layout11;
     QHBoxLayout* layout10;
@@ -143,7 +144,7 @@ protected:
     QHBoxLayout* layout11_2;
     QVBoxLayout* layout9;
     QVBoxLayout* layout10_2;
-    QVBoxLayout* layout17;
+    QVBoxLayout* layout17_2;
     QHBoxLayout* layout16;
     QSpacerItem* spacer5;
     QHBoxLayout* layout16_2;

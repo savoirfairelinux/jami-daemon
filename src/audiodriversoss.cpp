@@ -296,7 +296,6 @@ AudioDriversOSS::writeBuffer (void) {
 	
 	size_t count = audio_buf.getSize();
 	short *buf = (short*)audio_buf.getData();
-	
 
 	audio_buf_info info;
 	if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == 0 ) {

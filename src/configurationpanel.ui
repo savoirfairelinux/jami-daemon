@@ -148,7 +148,7 @@
         </widget>
         <widget class="QLayoutWidget" row="0" column="1">
             <property name="name">
-                <cstring>layout14</cstring>
+                <cstring>layout17</cstring>
             </property>
             <vbox>
                 <property name="name">
@@ -302,46 +302,6 @@
                         <attribute name="title">
                             <string>STUN</string>
                         </attribute>
-                        <widget class="QButtonGroup">
-                            <property name="name">
-                                <cstring>buttonGroup3</cstring>
-                            </property>
-                            <property name="geometry">
-                                <rect>
-                                    <x>10</x>
-                                    <y>10</y>
-                                    <width>90</width>
-                                    <height>81</height>
-                                </rect>
-                            </property>
-                            <property name="title">
-                                <string>Use STUN</string>
-                            </property>
-                            <vbox>
-                                <property name="name">
-                                    <cstring>unnamed</cstring>
-                                </property>
-                                <widget class="QRadioButton">
-                                    <property name="name">
-                                        <cstring>useStunYes</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>Yes</string>
-                                    </property>
-                                </widget>
-                                <widget class="QRadioButton">
-                                    <property name="name">
-                                        <cstring>useStunNo</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>No</string>
-                                    </property>
-                                    <property name="checked">
-                                        <bool>true</bool>
-                                    </property>
-                                </widget>
-                            </vbox>
-                        </widget>
                         <widget class="QGroupBox">
                             <property name="name">
                                 <cstring>groupBox3</cstring>
@@ -387,6 +347,46 @@
                                 </property>
                             </widget>
                         </widget>
+                        <widget class="QButtonGroup">
+                            <property name="name">
+                                <cstring>stunButtonGroup</cstring>
+                            </property>
+                            <property name="geometry">
+                                <rect>
+                                    <x>10</x>
+                                    <y>10</y>
+                                    <width>90</width>
+                                    <height>81</height>
+                                </rect>
+                            </property>
+                            <property name="title">
+                                <string>Use STUN</string>
+                            </property>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>useStunYes</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Yes</string>
+                                    </property>
+                                </widget>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>useStunNo</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>No</string>
+                                    </property>
+                                    <property name="checked">
+                                        <bool>true</bool>
+                                    </property>
+                                </widget>
+                            </vbox>
+                        </widget>
                     </widget>
                     <widget class="QWidget">
                         <property name="name">
@@ -401,8 +401,8 @@
                             </property>
                             <property name="geometry">
                                 <rect>
-                                    <x>11</x>
-                                    <y>11</y>
+                                    <x>10</x>
+                                    <y>10</y>
                                     <width>301</width>
                                     <height>130</height>
                                 </rect>
@@ -548,24 +548,14 @@
                                                 <widget class="QComboBox">
                                                     <item>
                                                         <property name="text">
-                                                            <string>Audio</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
                                                             <string>SIP INFO</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>RFC 2833</string>
                                                         </property>
                                                     </item>
                                                     <property name="name">
                                                         <cstring>sendDTMFas</cstring>
                                                     </property>
                                                     <property name="currentItem">
-                                                        <number>1</number>
+                                                        <number>0</number>
                                                     </property>
                                                 </widget>
                                             </hbox>
@@ -681,21 +671,6 @@
                                                             <string>G711a</string>
                                                         </property>
                                                     </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>GSM</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>iLBC</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>SPEEX</string>
-                                                        </property>
-                                                    </item>
                                                     <property name="name">
                                                         <cstring>codec1</cstring>
                                                     </property>
@@ -711,31 +686,11 @@
                                                             <string>G711u</string>
                                                         </property>
                                                     </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>GSM</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>iLBC</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>SPEEX</string>
-                                                        </property>
-                                                    </item>
                                                     <property name="name">
                                                         <cstring>codec2</cstring>
                                                     </property>
                                                 </widget>
                                                 <widget class="QComboBox">
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>GSM</string>
-                                                        </property>
-                                                    </item>
                                                     <item>
                                                         <property name="text">
                                                             <string>G711u</string>
@@ -744,16 +699,6 @@
                                                     <item>
                                                         <property name="text">
                                                             <string>G711a</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>iLBC</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>SPEEX</string>
                                                         </property>
                                                     </item>
                                                     <property name="name">
@@ -763,27 +708,12 @@
                                                 <widget class="QComboBox">
                                                     <item>
                                                         <property name="text">
-                                                            <string>iLBC</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
                                                             <string>G711u</string>
                                                         </property>
                                                     </item>
                                                     <item>
                                                         <property name="text">
                                                             <string>G711a</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>GSM</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>SPEEX</string>
                                                         </property>
                                                     </item>
                                                     <property name="name">
@@ -793,27 +723,12 @@
                                                 <widget class="QComboBox">
                                                     <item>
                                                         <property name="text">
-                                                            <string>SPEEX</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
                                                             <string>G711u</string>
                                                         </property>
                                                     </item>
                                                     <item>
                                                         <property name="text">
                                                             <string>G711a</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>GSM</string>
-                                                        </property>
-                                                    </item>
-                                                    <item>
-                                                        <property name="text">
-                                                            <string>iLBC</string>
                                                         </property>
                                                     </item>
                                                     <property name="name">
@@ -1200,7 +1115,7 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
 </widget>
 <images>
     <image name="image0">
-        <data format="PNG" length="4100">89504e470d0a1a0a0000000d49484452000000ad0000003008060000006357fade00000fcb49444154789ced5d61681b679a7ea684a216efa22ccb1197b6d84bbb602f2c2bd78595bb5b32eadec2d9ced295b63f1aeff55829ce12bbfbe3eaf4e0ce6e97540947eaa84777ed2e6ead1cbeda2964edfc48641f98b5bc3827ed919ce5238b64480eb9f88212cc211b63142102cffd18499e19cd8c6646caaebbd5f7e72199ef7bbff7fbf4cd33cff7cefb8d41009300ea8624b9499264ac882c9075efa7815f5aac7981466e6798d9255d134bc43912676675519c2187169324c93ff7c01bf8c5455b0d935b64324b3a4311224ae2dcac6574c649ff55361670032da3b50624c5a9ea8c6a15c51932b39b6b4888069a425315592033397b8c6a05832bc9c6c26d6055ac5a21b995a32b5c5f663542d7c452433234d0100d2b708b74c61f3dc3aad1198a34166e037551f742722b4767c806638e478830898925224c765f592549cea632cce6ccdb719e9fad7de1921c9b98a4ffd400fdfd0345f4d37f6a80a3a151324b6632992f8e242119b95adf1b3ab79be36888f4f70fd07d54a4bfdf4f666dda7f04fe69617d18f6bce4287769586269fe4918973932b798635ba78bd39db36ceb74d1d5e9d6fdf7f099e01782d987cf04cbfed7cbdff454ba623e86de1eb275233f0aff4c316dae40cb0c6ba6f817566d695c3b8ceb3f35a0f821ba7bbd1c9b98240be4f4cc2c1922c5deeef27557a79bab89d583cfb82cfa5fa8d3822850314fae4e37fdfd03f6175cbdfdd3c18aff10d3163568a2fa82755f8ed5a471c5a998f905452a18357325ab3b81bc4d72938c2c440cedf3366b678e6aed6bb0cf8c0dff48ba8f8a154f20ded0b7c3dbb475635bf5af5a7d6112400040184080a4f0de1c70c8073c34877e5702e1bfe9805e09fc7b0217d73a4cdbd3c3e963f7d0f7eda784b0dc5f0d4c245679e2e49bc8230f071c708b5d181f0d556da7c002e9fbbb3e6cdcd928db9163b7d88dc1fe005abff90da1eba8c8fc5e1e8e2607e28b51841f1704b9bde84a8c23ef8e60676f07aeb636783ebd2494fc6cfeac15be9b3ee4f7f20afbaeb636b8bee3c2e9b74e232cc8ec85c8f6cf3ae08003173eb800cfcb2f09e313930c7f122eb7771e398c9dfbdbc8238fd49504c2cf2afd2961c96fadf1a51613087f4d100259d2f3464fd99ebc9ea3c98125711e3bfd3b687eaaf8bb98f0cfd1e4288fb7ec1fc9f18fc358b8b6808dfb1b8a7e9c470e23fae3793c78ed019ef8ea934218c063f2057bf88379e0fb3e0073a671e47bfa0b36be015c747458b2a7876fee350305b2da82eb70752826b86bd98d9e5e2f0337c8f84a8c0192d5166e7b570736ee6cc0d1e4406a3181c4a538523713f0885d18c630169617d037100072e4f0a111e491477e2f8f1e6f4f853d7c00ececedc0010776b6771000702134c61327dfc42bcbaf60706f10cd479a31fb8b39b85e7461d479016bebebb8f4d915b4bfd8814076dfdff6cf3a308c61e49187e7eb5d0803e8767814e30ddcf797ff3df2af6775c719ffb728f2c897ed95da2ffdd312e028f6f7c30e04eefbd17ca419a9c504263f1e2bcf437e2f8f17aebd84f5810d58f16f706f50e91fc92ed183f027616cdcdfc0d8d363e83ed68dd44709b43edf8ac07d3fda7fd38157bc3dc06de9f72f336de0ea2a2ffed106237e3d0a9ef4682edac16de0a35fd7c6b0720cfea30fcd8f6b338702b364fb0f3b2a1844cd146d6d6df07ccf83bee33e25a3914cac25d0d1f1420543b777ba5866a49b098c7f1c869c49e6afceed330fc9f617f7fd482d2630ff1ff378e7bd73c8230f67931383fd83e8ebfb89b29f4db2dd2b6b174f20fcb8208c77ba59ea27d01fc0e0cf4f0881fe01aeadad5530f5f1d78ea3e747bdc2cccc2c3dffedc1c8ce69e090031ddfe9c0e0c980345e553fde635eb4fef29deaf3a01ed7cd04c2820dff8ef520707210a5ebdd6237da46cf297edf9133412e5c5b401e79b85f74a3eb371f09928628d4168f4d6ee988d92d6bd182ba4613488e86c6b83a9e341545604adfee6a6295dc24bb7bbd8af62cea79f751715f13caec0c9f0996eb2fbd1ae32480a55763e5f6d3976775356229fae1ea749777f35afe268bbb7fadfe2701688db7d42f13ac1c8fc1bc32c1e23c742bec9536b156fde36d65ffded78f93054af648728515bf1f494a4c6b43cbcad1fd331fe2cf68922d2efc61036f2fb7d68569256dbb81be6f7fc39a4605702f9361737333a2d7e3f0dce982ef77959ab5c418812c39f8cfa7b17633517eb46b6abf62fded1079b1a8e51c4d0ec497a3d8b8b381be938172fbe0bbc3e8f951afa0666a05c3cb30ba12e3e9b74e971939f0fb651d26f3736d6dbdecd7e07ffda182a9eeddbf073c04700870343d81f1f72f48fdea30a6fc8965651e2cfba7eabf1a3a9b9c58ba3a2fad78d744ed8c685446e3f563dc690346b48a9185888231262726296738f75151ca0d2eee66a72fcf6a320c33348c0377f77acb0ca6d55ed3bf2c2bda6b31963ace6a65fcab8955cdf1a819b2bbd74b6695f3a0c5d056fd53f76f365e2e6476737cead74fd4cc80b33fbe075f5bb336dd02985bbf879f5c6b06f2b5332edff5e93294428bb93aaad693dfe9fed7135033a6babda7b79be5ddb98c99e4daab82894e25100e48f5e41a4f4bc395d0f7fa71969e04abc762b8f4cb274d694635d31aa21ed316c8f62e8379a841d31a316d49bbeb3e298b7b05907560c0f12543a62d975d32bd5b7b7fd3b70cb4172be3b4d3978b4f829c04b1959882514b9a932b061a8fe4d0db4386d7b534b3fb07a2d4af817f8af86781f4be7e5cd93eb3cf645535a305a6d5d3b4f22790fb07a2f28940a57f9635adda8f1bfbf3e13e2a2a5e21334732b5bf6728cd93e0b71b3528a1731e1ce8d16558bd227c1c05fecf63abdfa1bff7a1edabda77e483dd1c4f0c9ec0dafaba69ade46a6bc3d977cea2f5f956f88e2bb5aef3c861e4f71e686a3ab5063c7e26c717aebda4a857621c751cd8e3d58e7fcab1f5482bc63eb880d66f4a1a3e7c5464c90f2dcdd87aa415dec895da999652184a1ec735330f577abd2cc559b5fc2b6973b51ff23d81de7cb43edf8ab94b33080b828088d5376032f4169361ec96e168d2e61b3203a69531d66868945aefd6db3a5d5c1d4f4a1a4a9d1c4249b325a7d2f49f1a607a2a2dedde378bbbda143939312969dd9cd28f52ce83ffd4009353692929c7c0cfc8424451bfd4df68684cf355686421b2ef0f8bd7c972fbd88a853787b2792a8da7e20dddc424d345bf92536969be36293172aab25d35ff0cdf3c6af4e73f35c0dc628e5c51ce336ce5bd7e28656dd5a3c4d25962dc5affced0c14f6e69e0a3435865bad816ab6673592ebbe4eca6c56885c1c05890cc0e2d92627aff3065e354f05f069a67daf3e6b2b96a2956f26d8d06d6a2c3dcae70ed0c9d2bde10b1cd2c491d7bb2ebb1cd6c5d6f949cce8d17dbcc3257908e2c050bd229e97af43776234d7f564a5aca15c8e496723c91db198a33d2750997182cd83ff397dcca325850daf36694f6cc31edf8235faf8a522bd3da6d6706a75395f169f582d5ea3793ab3d4bac74fad935a15cb8dca5e678639bda0bdcfc82adb4eb8c2bc711cbe8ff4e438b16cefc91f41a6403cae7b93ad3fe091856abd4c2b476db997a34a9eca90f637a2fc774fd1667483da634c378bae3d099af608d79adc182b65df902ca154871467fbe4d9df923d9f2614477de32bbcaf65599f65194e496a46123a92a0bf70032adda5e4ef58354cb4776a58ab91a16fbcd517f1cb14d6da60dae58ef478ec1150b0c4efdef6018e68c18b46b19d76e07a315eeded45849752af23365a324b31a9b3bef963d6dfae7645a33df857086ac6bdde04ad232d3e66a64da9c09a655fb61f4a5a196f17dcd3db498a4dede03e78cbf44a41fa78d53374ae0bd422225490744494cd958b4098d7ea762ca4abb246e54d6f35ee681655a2b716fc3377bea0544fd715097696bfb8e4470453b8ece2a5a598fa1cda0335eddfe636b7753007cc0f5390576df4f005f41b99c5e4e41f81520bc37872beb007e3b073c94ea675f83f572335ad9efdd2e08efcfedd7f90ae0bd9ba8a837fdaaf19b1eadf194d06a76981ad5f642d7538aeba1eb71c3fee5f8d36b521eb3997e43d795bf9362bccf54fa85eb73c077db6b1a2fbedbae6df719e376232f0b42ecb96d381de6e6a184ae233e643a013c2b1866f1e9ee7615ac38be64788754d3a69a4c9b32bee314752dee8a0f92a675a5c888fc8c19250694e72f7b2fc7f6afebf47be035ad065a39d5dd92a0e938baae06dc5fb0fa9ad7ca69dc8a456be22b8beecdca7acef3d517de41d2b47ad1825c81f466f6eb55db650f2d7e0134ad1a75fcd2c2960fcd27f88300bc972befa8f42e09335f4534711a5773d156615a3d4c9af890c441d1b4664e11abbf9196c951da4bc87e78ad78e941d6b425bfad7e55d3ec27b16a3fb9f0741c7ca30b568bdd2cafd8df6ea3ebd9af196a9e13e748bdf6995f3c4073f154a71dad279c99a5dc5ef0fb298cbcfcadb23dcf548ccb77bb808773109ff3a1afcfc499369287df9fc3ce43f3f33039accc6fd5fafd4c9fa9d3c1f55d32f42fd6f2991f14c89d3cf094463b33e83c3487ed7f30ce972eafe016adddbc094cdbcc43b0c3b4a6b2bb0063a635fb68d3412b9ad6acbf769849de3ea97316cf52ff1ad832aeed8fae86dd248dd6916b424a8c0bae2499c9497158bdf145d2aa278e0c1f2bade0b387eec1ec2e4f8e6ffe2e015be5b7d6fac1f53944df30b9eb35b023bc378778968c6f664d1d27b71a3dc0755954e4900566130461fbad1eb8ee684455aa4441daff4a105afe385f516ff92e707625692a3aa1c6c0d5557ebed353d1af7f2fa1f9a438bd98a4f029f0f935eda840ecb96d247e2e089704411879f95bc2c29382b031d82b8c356d6846197a3f9dc3e14f80f11be90aff152b589cb2f125181b9103a6b599c108c5b47986b4f3c430bae323b29305f5d6b45ae8bf5a7d7eac30b5588aa357d99d97b2e3f4185053731ad42f69f46ae3e52ee93278f296fc576a5ad91d6347dbf25d1fac14abdf437036f990ea37af458d34ad5d2c69c86a9a56fefd08d39a5603676ea5f9d36bfaa798159a56f6fbb5fe6a1e9feff5e8b6139f8ee3f05f77c1f53f29290efb9f2944ffb71d3b7b51ac19ec31c4a7a388bee1296bcd0705f29d3ca0a579cd6a5335c6b3e4459d7521b7a71da6b0c848c3d1a425a235159590a1953747e5f0509d9856bd0b57c761b598a7747d68d19adf5a1a518b815c134b8676a76f91ea6c34bb18cb68c7658db2bbc4a9ea7167bbda9e24351bfab3b47692e1bc7402c14cb1faf544ff557b5f3354e7bdda45bd89ad76bdae7f4342ed978576d3b7d28afc54bd5c13d7c412c519e94547391fd760e14ddf92f2689de7a5f6e2548cde4c9df278498edd4897f3694b715c71469a575d6d63a4313431217d7fd6a858fdfe815d4dd8c0bf6c34642a3b7f6b41efb0a36b463fcf54d38e89579b0dfc7262d50ac96cfdb4a159b42b091af8e5407315b9af5dac32af157486240d761026a6810717cd37a0a4311f15c38a066f401ad840395a6e10dbcc1a9e09b28a3585471af8a544fb0628c521ede42cb48c472ab3991ad84093581f4324a76f65982b48bb7e29bea63cb71e5c915e4034fe066e036bc5ff074b22fee00d8621ca0000000049454e44ae426082</data>
+        <data format="PNG" length="3693">89504e470d0a1a0a0000000d49484452000000ad0000003008060000006357fade00000e3449444154789ced5d4d6c1bc719fd08f8a0044640073d584150484113802a1084aa72a0da045e219750729050c9c1529b0365b9b0945e22bb17ff040ee3832333855b298552d18051310104d907995601a3a203065400b9a40a15940b06900ab5580542410bac410b8281d7c372a9dde5cceecc924ee4987379367767e69bd96fdebef976664420a24922aa1b02c03a0000e9326207a87b3d0d7c6cb166074de455144a807f621e741ea073335c54e2c0c8cd1c00e0fb6e78031f5d749531b709ac16016f34014a01747e461abd8b4078160d076ea034ca6500a05c7166545954e2805a2c352444038550e846ec00851d778c2a839154aee1b80d7444c71b729b25f863f565563bf44fcc372443036dd1f6066c02dec587cfb056f446130dc76d2017b917729b2578a32e18733c018a0134310f8a01c16b1900c0cc8a8ad28e7839de0b33b53b2e80b18949848f0f213c3854c630c2c787301a1d058a80aaaa8f8e24019098adef802e154b188d02e1c121040e29080f8681a2cbf21f827d2cac0fc35ed00c4511b629bd8aef8471510290047c1d7ecc7424e0ebf0c3df11e0feffd4b9c823c1eca7ce452af6d7cb5e35ae56f5c7c8c9115703f961d827c4b4a51d4833ac480acf655c695c378c1b3e3e647a10c19e10c62626010053f119200a283dc1ca757f4700996c66ef33ae6e7fbd1c0230f593bf2380f0e090fbf2eb6d1f07ab7e50d62535e8b2b3c306a6d335695ce54a5adca16066d8c26c89db81c8035081c45cc2b67ce451fb8370ca5f43f9505dd807207048a97a0321cb2f0779b81ad8b2f639ddef9924a201228a11d10000cf875789f6f5123d10c3b03f4bb1d7db899706fe92a5cb4bedc2e5f170eaf006f5bff88c2766b49781d96c06478fbd47dbb44d4dd44401a593c647a38ef94c08a0b7af9fd6be59ab9463c4a012a4e1c1016a7de1394fe72105dbf7b6a9697f132ddc4a52cce3f118cb4ba6d2387df6346ddddb22bfcf475d7ffedca3dbd9fa858fba6f77d3f6bd6d53f97e9f8ffc2ff9e9c4fb27cce54581b62fdaa9899ae8e22717a9ebd59f7bc6272611fb53ac92df7bf0006d7d7b97b6699b5666b3147bc66c8f8ebaddacf6ad24b3147bcae31928025d7ddd95f28cf735ed6fa20525491b831bd4fc4cf9b908d8d7b4bfa9d2de8a7d00c63f8bd1dcf5395afb76cd548ff7e0014abe7583eebf739f9e78ea494f8c2c23cfcd172eb5c46758590debf4054d680d83e59537d39140b027046481742a2d34e2f5fc81438aa6d3cb4c3b7272a4c24881d714a004ccbf96aed417ec0956d9977e3353757d343a5665df6a5c45f8f890a93c5f87df34293231625efb9da549f5ff9f3a17e1f797cad6fc85d91250d2fad9d47f456812aadc0ffafde93733b5d96761fcf49b19edf72c103ad267eeef32d3579876603683cbff70c1883f4a128e75315976f87f449ffeae36863562e46c2f357bd8cc61c222d0d6d55ec52056a6f0f97cd4f58b2eeaefeb35331a80ec5296dadb7f56c5d06d1d7e5418e97696c63f8b9191496ecc5edd651e006d2fb79b18ecc69737e8cc87e7699bb6c9bbdf4bc383c3d4dfffb6b91e15687bc390ef7696621e8f67bc2300bd9e81c1011afef551cfc0e010969696aa98baef9d3eea7ea3c7138fcf20f8f7209dd87a8f685f13b5bfd44ec3c706b4f65aea091d0e51eb07679cfbc1da2eb7f61deea68163c3a45f0f2a41f28d9e373ddfd3e72298bb3e47dbb44d819703d4f9c74f3d9a86d8a92d1e9bdbe450ed66fd98563a9a0060343a86dcc4aa50144167065679996c065081604fc8941f595498c2ca30206d366d65249d79673a12989a9ee1336172f78da1cfe659f6ae96998c55ff2411b1daabd78b2caadb63d3afc8a2dc0f415379fa2456d63ee4cdf5878ef401d86574a450f5fc0040635a175ad68881c15e5a6866922d5dfc7a8d4ede6aad0bd36ada768dfa5f7c4e4ea312d186aaa2b9b999925f2d50d7379dd4fbd76acdaa33c64011188e9ca0a5db59dabab7c5656cfdfebb51e07259cbe9da76ed9b35ea3f3650c91f397b8abadfe8f15899daaa818d5af8c4fb272a8c3cf0e52d0e9385b1b474a762d7f0dfbeae62aa8d6f37881e10d13ea2a6fd4fd0f8c717b57a398c697c63c9f483b47d96fa9dd0bbdf4bf3b337348ff74fd4ce88766974a17e8c3b63c388b298984b98186372621246860b1c520055631700989a9e61320c547019bca209cbf5b2f233ed2ba22abf886694697f269b61b6c7ca90baa635f6038ba165edb3d62f1a2ff7a8c5129ef9c3133533e0cc5b1bd4ebe3d02d115dbdb3416f5f6f26daae9d7171b697cb50262de66f77bccf38d2c347b264654c6bfeae9e202ab373033319b55715131dcf526c40bbcfa8f1581a4ec7de237dd0df042b87b314fb404c335a99d6294ac2645ac3efcc7ea841d3da31addd9b674355a1cf1508a803038ecfdb326d251501b5547b7d53cb36da0bd571daa9e9f29ba01ce948a7d22646d5352752361a0fe65933eb3a4b33eb51063bfb4cf14f3066cdea2e93396a4609a6e5695ae31b28f09a627e2358ec93d6b4563bb2bbfda1476b2af69500e477e70c95e841d86dd44047ef0dc25037976179c9f35992e8bf5daeea1d39d94bbe27d923f27eb184a3c34769e9ce1d61ade4f7f9e8a3331f51ebf3ad648dcf7a0f1ea0ed7bf7999aae8a19ce016dd7cd1a4d671c2bc3751d66c73f8dd87ab095c63eb948ad2f681a3e7648816e074b33b61e6ca550e25a5d98b653e932c58f45fae15a4f087a9c95659faecdad7618e704bcfe687dbe95ae7e1ea798c7e3a179d92f60060c9517c3b84da79239975fc86c98d6c008a3d151f0e284b989554d4359178740d36c7adc548dabdaec5d2dcf6af3d0b4af0a3383eacc9004c2c787b01a57b54539367626e612a6fbf5fa46a36300aab55d622eb16b8f7e1dbbf9d329892f8786f6eaed61fdae96ed5a8dab5a7fa9d018395f9dcfc93edb2f8f8cfac2c78780248094b99fc9d5bad74bdaaaad7aa4f46a01342e57bf37baf717b734f0e121c9325da600c7d55cd2a9082454c968854dc3b0a3153b721350d6773753367605ff30509c692f88ade6aa25c9acb7b56b580b87b9fdb1da19ba541e10e9f502004e7986ebe9f5425d074a8933f0f4fa22a91c22d07649d7a3beb1c555848be5454b00729be6f624f22a94b8765dc37944e07ecf5f6eb38008cce58536cde58931edf843f75753aa9569dde613c1997c757cdaeab0ac7a0b3bb5af12d3d786f827cc8e8b2298ed4dafb31d5cdc61abcbf52e9adb91d9e43fa7919b127bfe00846c56031afbd99969bf038665a55a98d66d3ea15793a53ceb66ccd0749a6bb712d7de266e198fdb0e4e7f45505b7b239c728d0e54da019438bfbf85f6fc0168b994e0f65ba164ceefc8b40f23e536350d9b587170dc3dc8b4760c3049ceeb91fdf9f25a0dd9fac16f477a9dcdb491948b7a0c1849493038f8ab046dd78cd8e46b1967e7233b0f0fd42740c07648c39eb2510005c6e42e5470a74dbf4fa6153917c21b95d7ba91544e9a69b98e22335064ca85fd49432de3bb9a7be4660ebcb9079db73f89881fa75d04374a10ba06505e930e9402e88a0ba75d66d45b16fb955404285b7d5f681a7b966965e2deb65ff6580ec46907b84c5bdb391291143b8e0e07adcc636811f42e3a975f3582750c5a3e1c8c2473a04bec91a1cfa8a59c9637222d1a3a74ad7a6f99d551f616d3f2352d0bc3b3627bd3dc30ed77a16979985e2f48ef35f4c7c4343f77b66b72b0f179db11e2a44d994e9be7975755bfe4ac782f695a7f1e4818f798417374e3fae5d0b4c08e0af0dbb127342d03657675b72c43388ece65a65d87e56b5ee3c893765a815316036af57dde0bce8eb797342d8f394a3b406873f73ea759f6c8cd4740d30ae66761cb25f105fe04220a4d578f28b50490c89e3181ddb84ca775605a1eae0a1c24b15734adc82e62eb1969851d687309c38367c54b4d8cb6c734ad6eb7ec9e43d123b16adfb9f0ec02e1dd4e924d6e5779a57f75973a7ffcb4edce85a3e7015e7ef537f7a9b9bcab5366e7838e9e73333096177965854ebffad34a795d57d2b8f59f4ea2075749f9492ff5f70bec690370e0e3abb4f540bc1f264f99d7b7b29e9ff09e3a0ede2901d151b9f5ccf77780ed07444f33f289a077df55bafb5bfbf5d2150f6e61cde605d06e376ebd9956687517913dd30abe82eaa16945ed75c34cc6fc39ce5e3ca9fa19d832ceb687ab61d7013b3ff24f68cf3e92caa1b0a3c56179ed9b5fb7bc718ccf57ffc7d4b22aa43d9ca20cc24e2b598f8c96722a275c74583b6037202434ad12973f4043e444759636e7c5dbdd4a84f02cfb442066b4035a5cd52e2ac08b4b8f2dae72a30cde2830b6b85a958fcc1deee22498bc0b8f75711e82b22eee006ede1876233e61d859506f4dcb7618e7fe91616a458fa33bcccef5d5713c06646a4e9bfb758deed45e1401bfcd9b57b7dfac69c9fd0933bac69149b2e72178f7f7d2caa0b816b5d3b46e51d7904e9ad6787e84b0a665607c7915bfbccedfc56cd2b486e7d7fafb1bf4af7bdddc7ccab30b74e0f54ef2ff7385e89536a2af5628f9ef36daba97a4259b3986f26c9292ef7655b4e6fd1de0cc032296e615d5a6565c280297397e612c8f1da69064a453c99c14d10a45250c28f5e588cae1a13a31ad75166ed4ac4c8d6ce8bf919b7276b334228b81fc13f3b6e54e2d03d6d5686e31b3c98ecbdaadeed29731ba6ab7cd1b43ef6f66c6705152735ed076208824d9d31345bf1859d1baeed52df23ad6e97a5dff8684d52e897c53cbaba6f5a93cedeb9f988712d73e7454d6e3da38ded4b2b68ed67b41cbaf5c4923b459a775bcd0b4ac12dffd1b1f2d971295bfcdc1d536761a8389cbdad95d7649f6fc03b79ab0813f6cb4652a377f6b81b7d9d11f97fb262ff469b3818f253adeb05aac9f361445b792a0818f078add885dede226be2a8adea8a6c1f642c73470efa27886b2987f580cabd87c016960038d289d21bd5eb0dd13248b3585471af858a2fb02a0c521ddac5968194f54af666a600305b13e0501985ad6e27aa1e974d53ef8d06639405feff865031f4bfc3fdcfb64f7cd732d720000000049454e44ae426082</data>
     </image>
 </images>
 <connections>
@@ -1227,6 +1142,12 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
         <signal>clicked()</signal>
         <receiver>ConfigurationPanel</receiver>
         <slot>saveSlot()</slot>
+    </connection>
+    <connection>
+        <sender>stunButtonGroup</sender>
+        <signal>clicked(int)</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>useStunSlot(int)</slot>
     </connection>
 </connections>
 <tabstops>
@@ -1270,6 +1191,7 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
 <slots>
     <slot>saveSlot()</slot>
     <slot>changeTabSlot()</slot>
+    <slot>useStunSlot( int id )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
