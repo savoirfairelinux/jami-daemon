@@ -1,4 +1,14 @@
-SFLPhone (0.2) / 2005-01-18
+SFLphone (0.3) / 2005-02-10
+	* ALSA driver support added (not yet operationnal)
+	* GSM audio codec support added
+	* Rings support (just ulaw format) added
+	* Notification incoming call added
+	* Apply skin feature added
+	* Volume control added
+	* Registration manually added
+	* Config-file in home directory changed to ".sflphone"
+
+SFLphone (0.2) / 2005-01-18
 	* Lines management updated
 	* Blocking bug fixed
 	* Configuration tree, made from a config file, added for setup
@@ -7,5 +17,5 @@ SFLPhone (0.2) / 2005-01-18
 	* Apply feature updated
 	* Non-network or request failure cases updated
 
-SFLPhone (0.1a) / 2004-12-22
+SFLphone (0.1a) / 2004-12-22
 	* First release

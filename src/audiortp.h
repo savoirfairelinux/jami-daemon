@@ -60,7 +60,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtp {
 public:
-	AudioRtp (SIP *, Manager *);
+	AudioRtp (Manager *);
 	~AudioRtp (void);
 
 	int 				createNewSession	(SipCall *);

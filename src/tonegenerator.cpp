@@ -36,10 +36,9 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 // ToneThread implementation
 ///////////////////////////////////////////////////////////////////////////////
-ToneThread::ToneThread (Manager *mngr, short *buf, int total) {
+ToneThread::ToneThread (Manager *mngr, short *buf) {
 	this->mngr = mngr;
 	this->buffer = buf;
-	this->totalbytes = total;
 }
 
 ToneThread::~ToneThread (void) {
@@ -49,9 +48,9 @@ ToneThread::~ToneThread (void) {
 void
 ToneThread::run (void) {
 	while (mngr->tonezone) {
-		mngr->audiodriver->audio_buf.setData (buffer, mngr->getSpkrVolume());	
+		mngr->audiodriver->audio_buf.setData(buffer, mngr->getSpkrVolume());
 		mngr->audiodriver->writeBuffer();
-	}
+	} 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -158,8 +157,8 @@ ToneGenerator::buildTone (int idCountry, int idTones, int samplingRate,
 							int amplitude, short* temp) {
 	QString s;
 	int count = 0;
-	int	oct = 0,
-		oct_temp = 0,
+	int	byte = 0,
+		byte_temp = 0,
 		nbcomma;
 	short *buffer = new short[1024*1024];
 
@@ -175,20 +174,22 @@ ToneGenerator::buildTone (int idCountry, int idTones, int samplingRate,
 		
 		// If there is time or if it's unlimited
 		if (time) {
-			oct = (samplingRate*2*time)/1000;
+			byte = (samplingRate*2*time)/1000;
 		} else {
-			oct = samplingRate;
+			byte = samplingRate;
 		}
 		
 		// To concatenate the different buffers for each section.
-		for (int j = oct_temp * i; j < oct + (oct_temp * i); j++) {
+		for (int j = byte_temp * i; j < byte + (byte_temp * i); j++) {
 			temp[j] = buffer[count++];
 		}		
-		oct_temp = oct;
+		byte_temp = byte;
 		count = 0;
 	}
 	// Total number in final buffer
-	totalbytes = oct + (oct_temp * (nbcomma+1));
+	totalbytes = byte + (byte_temp * (nbcomma+1));
+	
+	delete[] buffer;
 }
 
 /**
@@ -234,7 +235,7 @@ ToneGenerator::toneHandle (int idr) {
 
 		// New thread for the tone
 		if (tonethread == NULL) {
-			tonethread = new ToneThread (manager, buf, totalbytes);
+			tonethread = new ToneThread (manager, buf);
 			manager->audiodriver->audio_buf.resize(totalbytes);	
 			tonethread->start();
 		}
@@ -283,9 +284,10 @@ ToneGenerator::playRing (const char *fileName) {
 				dst,
 				(unsigned char *)src,
 				length);
+	
 	// Start tone thread
 	if (tonethread == NULL) {
-		tonethread = new ToneThread (manager, dst, expandedsize);
+		tonethread = new ToneThread (manager, dst);
 		manager->audiodriver->audio_buf.resize(expandedsize);
 		tonethread->start();
 	}
@@ -300,4 +302,5 @@ ToneGenerator::playRing (const char *fileName) {
 	file.close();
 	return 1;
 }
+
 

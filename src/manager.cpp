@@ -65,8 +65,8 @@ Manager::Manager (QString *Dc = NULL) {
 					Qt::WStyle_NoBorder,this);
 
 	sip = new SIP(this);
-	audioRTP = new AudioRtp(this->sip, this);
 	tone = new ToneGenerator(this);
+	audioRTP = new AudioRtp(this);
 	
 	sip_init();
 	
@@ -74,9 +74,9 @@ Manager::Manager (QString *Dc = NULL) {
 
 	// Init variables
 	b_ringing = false;
-	mute = false;
 	b_ringtone = false;
 	b_congestion = false;
+	mute = false;
 
 	if (DirectCall) { 
 		qWarning ("Direct call.....");
@@ -200,7 +200,9 @@ Manager::ring (bool var) {
 		this->b_ringing = var;
 	}
 	tonezone = ringing();
-	tone->playRing ((gui()->getRingFile()).ascii());
+
+	if (sip->getNumberPendingCalls() == 1) 
+		tone->playRing ((gui()->getRingFile()).ascii());
 }
 
 // When IP-phone user makes call
@@ -222,6 +224,16 @@ Manager::congestion (bool var) {
 	tone->toneHandle(ZT_TONE_CONGESTION);
 }
 
+void
+Manager::notificationIncomingCall (void) {
+	short *buffer = new short[SAMPLING_RATE];
+	
+	tone->generateSin(440, 0, AMPLITUDE, SAMPLING_RATE, buffer);
+		
+	audiodriver->audio_buf.resize(SAMPLING_RATE);
+	audiodriver->audio_buf.setData(buffer, getSpkrVolume());
+	delete[] buffer;
+}
 #if 0
 bool
 Manager::getCallInProgress (void) {

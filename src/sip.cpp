@@ -214,7 +214,7 @@ SIP::getNumberPendingCalls(void) {
   
   	for (k = 0; k < NUMBER_OF_LINES; k++) {
 		assert (k < NUMBER_OF_LINES);
-	    if (call[k]->state != NOT_USED) {
+	    if (call[k] != NULL) {
 	  		pos++;
 		}
     }
@@ -361,6 +361,7 @@ SIP::setRegister (void) {
 	
 	eXosip_lock();
 	if (setAuthentication() == -1) {
+		eXosip_unlock();
 		return -1;
 	}
 	
@@ -837,10 +838,11 @@ SIP::getEvent (void) {
 			break;
 
 		case EXOSIP_CALL_REQUESTFAILURE:
+#if 0
 			qDebug("REQUESTFAILURE<- (%i %i) [%i %s] %s", event->cid, 
 				event->did, event->status_code, event->reason_phrase,
 				event->remote_uri);
-				
+#endif
 				theline = findLineNumber(event);
 				assert (theline >= 0);
 				assert (theline < NUMBER_OF_LINES);
@@ -850,10 +852,10 @@ SIP::getEvent (void) {
 			// Handle 4XX errors
 			switch (event->status_code) {
 				case AUTH_REQUIRED:
-					eXosip_lock();
 					if (setAuthentication() == -1) {
 						break;
 					}
+					eXosip_lock();
 					eXosip_retry_call (event->cid);
 					eXosip_unlock();
 					break;
@@ -963,9 +965,11 @@ SIP::getEvent (void) {
 			break;
 
 		case EXOSIP_REGISTRATION_FAILURE:
+#if 0
 			qDebug("REGISTRATION_FAILURE <- (%i) [%i %s] %s for REGISTER %s", 
 				event->rid, event->status_code, event->reason_phrase, 
 				event->remote_uri, event->req_uri);
+#endif
 			if (countReg <= 3) { 
 				setRegister();
 				countReg++;

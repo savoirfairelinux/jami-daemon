@@ -91,6 +91,7 @@ public:
 	void	ringTone				(bool);
 	void	startDialTone			(void);
 	void	congestion				(bool); 
+	void	notificationIncomingCall(void);
 	void	errorDisplay			(char*);
 	void	nameDisplay				(char*);
 	void	spkrSoundVolume			(int);

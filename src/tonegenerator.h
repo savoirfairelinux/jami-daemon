@@ -47,14 +47,13 @@ using namespace ost;
 ///////////////////////////////////////////////////////////////////////////////
 class ToneThread : public Thread {
 public:
-	ToneThread (Manager *, short *, int);
+	ToneThread (Manager *, short *);
 	~ToneThread (void);
 
 	virtual void run ();
 private:
-	Manager *mngr;
-	short	*buffer;
-	int		 totalbytes;
+	Manager*	mngr;
+	short*		buffer;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,9 +84,9 @@ public:
 private:
 	void		 initTone (void);
 	
-	Manager 	*manager;
-	ToneThread	*tonethread;
-
+	Manager*	manager;
+	ToneThread*	tonethread;
+	
 };
 
 #endif // __TONE_GENRATOR_H__

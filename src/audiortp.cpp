@@ -38,12 +38,12 @@
 using namespace ost;
 using namespace std;
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp                                                          
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtp::AudioRtp (SIP *sip, Manager *manager) {
+AudioRtp::AudioRtp (Manager *manager) {
 	string svr;
-	this->sip = sip;
 	this->manager = manager;
 	RTXThread = NULL;
 	if (!manager->useStun()) {
@@ -162,6 +162,7 @@ AudioRtpRTX::run (void) {
 					 timestamp;
 	int				 expandedSize;
 	short			*data_for_speakers = NULL;
+	int 			 countTime = 0;
 	
 	data_for_speakers = new short[2048];
 	data_from_mic = new short[1024];
@@ -253,7 +254,7 @@ AudioRtpRTX::run (void) {
 	} else {
 		session->startRunning();
 	}
-	
+
 	while (ca->enable_audio != -1) {
 		////////////////////////////
 		// Send session
@@ -287,7 +288,7 @@ AudioRtpRTX::run (void) {
 
 		// Encode acquired audio sample
 		compSize = AudioCodec::codecEncode (
-				ac.handleCodecs[0], 
+				ca->payload, 
 				data_to_send,
 				data_from_mic_tmp, i);
 
@@ -319,11 +320,21 @@ AudioRtpRTX::run (void) {
 				data_for_speakers,
 				(unsigned char*) adu->getData(),
 				adu->getSize());
-		
-		// Write decoded data to sound device
+
+		// Set decoded data to sound device
 		audioDevice->audio_buf.resize(expandedSize);
 		audioDevice->audio_buf.setData (data_for_speakers, 
 				manager->getSpkrVolume());
+
+		// Notify (with a bip) an incoming call when there is already call 
+		countTime += TimerPort::getElapsed();
+		if (manager->sip->getNumberPendingCalls() != 1) {
+			if ((countTime % 4000) <= 10 and (countTime % 4000) >= 0) {
+				manager->notificationIncomingCall();
+			}
+		}
+		
+		// Write data or notification
 		i = audioDevice->writeBuffer ();
 		delete adu;
 

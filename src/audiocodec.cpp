@@ -17,11 +17,10 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <qapplication.h>
-
 #include "audiocodec.h"
 #include "configuration.h"
 #include "g711.h"
+#include "../gsm/gsm.h"
 
 #include <string>
 using namespace std;
@@ -95,7 +94,8 @@ AudioCodec::codecDecode (int pt, short *dst, unsigned char *src, unsigned int si
 		break;
 
 	case PAYLOAD_CODEC_GSM:
-		// TODO: 
+		gsmDecode(dst, src);
+		return 320;
 		break;
 
 	case PAYLOAD_CODEC_ILBC:
@@ -114,34 +114,60 @@ AudioCodec::codecDecode (int pt, short *dst, unsigned char *src, unsigned int si
 
 int
 AudioCodec::codecEncode (int pt, unsigned char *dst, short *src, unsigned int size) {
-		switch (pt) {
-			case PAYLOAD_CODEC_ULAW:
-				return G711::ULawEncode (dst, src, size);
-				break;
+	switch (pt) {
+	case PAYLOAD_CODEC_ULAW:
+		return G711::ULawEncode (dst, src, size);
+		break;
 
-			case PAYLOAD_CODEC_ALAW:
-				return G711::ALawEncode (dst, src, size);
-				break;
+	case PAYLOAD_CODEC_ALAW:
+		return G711::ALawEncode (dst, src, size);
+		break;
 
-			case PAYLOAD_CODEC_GSM:
-				// TODO
-				break;
+	case PAYLOAD_CODEC_GSM:
+		gsmEncode(dst, src);
+		return 33;
+		break;
 
-			case PAYLOAD_CODEC_ILBC:
-				// TODO
-				break;
+	case PAYLOAD_CODEC_ILBC:
+		// TODO
+		break;
 
-			case PAYLOAD_CODEC_SPEEX:
-				// TODO
-				break;
+	case PAYLOAD_CODEC_SPEEX:
+		// TODO
+		break;
 
-			default:
-				break;
-		}
+	default:
+		break;
+	}
 	return 0;
 }
 
 void
 AudioCodec::noSupportedCodec (void) {
-	qDebug("Codec no supported");
+	printf("Codec no supported\n");
+}
+
+void
+AudioCodec::gsmDecode (short *dst, unsigned char *src) {
+	gsm gsmhandle;
+
+	if (!(gsmhandle = gsm_create() )) 
+		printf("AudioCodec: ERROR: gsm_create\n");
+	
+	if (gsm_decode(gsmhandle, src, dst) < 0) 
+		printf("AudioCodec: ERROR: gsm_decode\n");
+
+	gsm_destroy(gsmhandle);
+}
+
+void
+AudioCodec::gsmEncode (unsigned char* dst, short* src) {
+	gsm gsmhandle;
+
+	if (!(gsmhandle = gsm_create() )) 
+		printf("AudioCodec: ERROR: gsm_create\n");
+	
+	gsm_encode(gsmhandle, src, dst); 
+
+	gsm_destroy(gsmhandle);
 }

@@ -39,6 +39,7 @@ typedef enum {
 
 #define NB_CODECS			5
 
+
 class AudioCodec {
 public:
 	AudioCodec 				(void);		
@@ -46,11 +47,14 @@ public:
 
 	int 	handleCodecs[NB_CODECS];
 
+
 	void 		noSupportedCodec	(void);
 	static int	codecDecode 		(int, short *, unsigned char *, unsigned int);
 	static int	codecEncode 		(int, unsigned char *, short *, unsigned int);
 	int			matchPayloadCodec	(string);
 	char *		rtpmapPayload 		(int);
+	static void		gsmDecode			(short*, unsigned char*);
+	static void		gsmEncode			(unsigned char*, short*);
 
 private:
 	

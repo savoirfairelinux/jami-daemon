@@ -17,13 +17,16 @@ SKINS = skins
 RINGS = rings
 METAL_SKINS = metal
 
-INC_OTHERS = ../stund
+ifdef ALSA
+endif
 
-INCPATH  = -I. -I$(QTDIR)/include -I$(CCPPDIR)/include/cc++2 -I$(CCRTPDIR)/include -I$(OSIPDIR)/include -I$(EXOPSIP)/include -I/usr/include
+INCPATH  = -I. -I$(QTDIR)/include -I$(CCPPDIR)/include/cc++2 -I$(CCRTPDIR)/include -I$(OSIPDIR)/include -I$(EXOPSIP)/include -I/usr/include -I../gsm
 
 CXXFLAGS = -pipe -Wall -W -g -pipe -march=i386 -mcpu=i686  -DQT_NO_DEBUG -DQT_SHARED -DQT_THREAD_SUPPORT -fpermissive -Wno-deprecated $(INCPATH)
 
-LIBS     = -L$(QTDIR)/lib -L/usr/X11R6/lib -lqt-mt -lXext -lX11 -lm -L/opt/lib -losip2 -leXosip -lccrtp1 -lasound `ccgnu2-config --flags --stdlibs` 
+LIBS=-L$(QTDIR)/lib -L/usr/X11R6/lib -lqt-mt -lXext -lX11 -lm -L/opt/lib -losip2 -leXosip -lccrtp1 -lasound `ccgnu2-config --flags --stdlibs` 
+
+EXTRALIBS=../gsm/libgsm.a
 
 CONFIGURE_CONF=$(shell ls ../configure.conf)
 	
@@ -61,7 +64,7 @@ OBJS = \
 	qtGUImainwindow.o qtGUImainwindow.moc.o \
 	vector.o \
 	volumecontrol.o volumecontrol.moc.o \
-	stun.o udp.o
+	stun.o udp.o  
 	
 start:	check prereq all
 
@@ -96,9 +99,9 @@ udp.o: ../stund/udp.cxx ../stund/udp.h
 	
 	
 all: $(PROGNAME)
-
-$(PROGNAME): $(OBJS) 
-	$(CXX) -o $@ $(OBJS) $(LIBS)
+	
+$(PROGNAME): $(OBJS) $(EXTRALIBS)
+	$(CXX) -o $@ $(OBJS) $(LIBS) $(EXTRALIBS)
 	
 install:	all
 	mkdir -p $(BIN_DIR)
