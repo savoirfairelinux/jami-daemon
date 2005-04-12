@@ -42,6 +42,7 @@
 #include "audiodrivers.h"
 #include "configuration.h"
 #include "configurationpanelui.h"
+#include "error.h"
 #include "global.h"
 #include "jpushbutton.h"
 #include "manager.h"
@@ -682,14 +683,15 @@ QtGUIMainWindow::dial (void) {
 			// NOTHING
 		} else {
 			// If new outgoing call
-			// For new outgoing call with INVITE SIP request
 			i = callmanager->outgoingNewCall();
 			if (i == 0) {
 				// If outgoing call succeeded
 				if (!choose) {
 					// If find not used line
 					noChoose = true;
-					currentLineNumber = callmanager->findLineNumberNotUsedSIP();				} else {
+					currentLineNumber = callmanager->findLineNumberNotUsed();
+					qDebug("current line = %d", currentLineNumber);
+				} else {
 					// If choose line
 					currentLineNumber = chosenLine;
 				}
@@ -713,8 +715,21 @@ QtGUIMainWindow::dial (void) {
 void
 QtGUIMainWindow::hangupLine (void) {  
 	qDebug("HANGUP: line %d", currentLineNumber);
+	int line = callmanager->sip->notUsedLine;
 	
-	if (currentLineNumber != -1 and 
+	if (line != -1 and callmanager->phLines[line]->getbRinging()) {
+	// If the IP-phone user want to refuse an incoming call
+		int tmp = currentLineNumber;	// store currentLineNumber
+		callmanager->actionHandle (line, REFUSE_CALL);
+		setCurrentLineNumber(tmp); 		// set currentLineNumber
+		if (currentLineNumber != -1) {
+		// If there is current call, put on-hold this call
+			callmanager->phLines[currentLineNumber]->setState(ONHOLD);
+			callmanager->phLines[currentLineNumber]->setStateLine(ONHOLD);
+			callmanager->actionHandle (currentLineNumber, ONHOLD_CALL);
+		}
+	}
+	else if (currentLineNumber != -1 and 
 			!(callmanager->phLines[currentLineNumber]->isOnHold())) {
 	// If there is current line opened and state line not onHold
 		// set free pixmap
@@ -1135,12 +1150,17 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 
 	pulselen = Config::get("Signalisations", "DTMF.pulseLength", 250);
 	callmanager->audiodriver->audio_buf.resize(pulselen * (OCTETS/1000));
-//	callmanager->audiodriver->resetDevice();
 	a = callmanager->audiodriver->writeBuffer();
 	if (a == 1) {
 		pressedKeySlot(id);
 	} else {
-		lcd->appendText (code);		
+		if (callmanager->error->getError() == 0) 
+			lcd->appendText (code);		
+		else if (callmanager->error->getError() == 1) {
+			lcd->clearBuffer();
+			callmanager->error->setError(0);
+			lcd->appendText (code);
+		}
 	}
 }
 

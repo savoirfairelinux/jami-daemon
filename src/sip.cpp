@@ -31,6 +31,7 @@
 
 #include "audiocodec.h"
 #include "configuration.h"
+#include "error.h"
 #include "global.h"
 #include "sip.h"
 #include "sipcall.h"
@@ -351,11 +352,11 @@ SIP::setRegister (void) {
 	qDebug("from = %s", from);
 
 	if (Config::gets("Signalisations", "SIP.userPart") == "") {
-		callmanager->errorDisplay("Fill user part field");
+		callmanager->error->errorName(USER_PART_FIELD_EMPTY, NULL);
 		return -1;
 	} 
 	if (Config::gets("Signalisations", "SIP.hostPart") == "") {
-		callmanager->errorDisplay("Fill host part field");		
+		callmanager->error->errorName(HOST_PART_FIELD_EMPTY, NULL);
 		return -1;
 	}
 	
@@ -398,7 +399,7 @@ SIP::setAuthentication (void) {
 	}
 	pass = Config::gets("Signalisations", "SIP.password");
 	if (pass == "") {
-		callmanager->errorDisplay("Fill password field");				
+		callmanager->error->errorName(PASSWD_FIELD_EMPTY, NULL);				
 		return -1;
 	}
 
@@ -442,11 +443,11 @@ SIP::startCall ( char *from,  char *to,  char *subject,  char *route) {
   	int i;
 
   	if (checkUrl(from) != 0) {
-		callmanager->errorDisplay("Error for From header");
+		callmanager->error->errorName(FROM_ERROR, NULL);
     	return -1;
   	}
   	if (checkUrl(to) != 0) {
-		callmanager->errorDisplay("Error for To header");
+		callmanager->error->errorName(TO_ERROR, NULL);
     	return -1;
   	}
   	
@@ -571,19 +572,38 @@ SIP::manageActions (int usedLine, int action) {
 	assert (usedLine >= 0);
 	
 	bzero (tmpbuf, 64);
+	// Get local port
+	snprintf (tmpbuf, 63, "%d", call[usedLine]->getLocalAudioPort());
 
 	switch (action) {
 		
+	// IP-Phone user want to refuse a call.
+	case REFUSE_CALL: 
+		qDebug("REFUSE_CALL line %d, cid = %d, did = %d", 
+				usedLine, call[usedLine]->cid, call[usedLine]->did);
+
+		callmanager->phLines[usedLine]->setbInProgress(false);
+
+		eXosip_lock();
+		i = eXosip_answer_call(call[usedLine]->did, 486, tmpbuf);
+		eXosip_unlock();
+			
+		callmanager->ringTone(false);
+		
+		// Delete the call when I hangup
+		if (call[usedLine] != NULL) {
+			delete call[usedLine];
+			call[usedLine] = NULL;
+		}
+
+		break;
+
 	// IP-Phone user is answering a call.
 	case ANSWER_CALL: 
 		qDebug("ANSWER_CALL line %d, cid = %d, did = %d", 
 				usedLine, call[usedLine]->cid, call[usedLine]->did);
 
-		//callmanager->setCallInProgress(false);
 		callmanager->phLines[usedLine]->setbInProgress(false);
-		
-		// Get local port
-		snprintf (tmpbuf, 63, "%d", call[usedLine]->getLocalAudioPort());
 
 		eXosip_lock();
 		i = eXosip_answer_call(call[usedLine]->did, 200, tmpbuf);
@@ -622,6 +642,9 @@ SIP::manageActions (int usedLine, int action) {
 
 	// IP-Phone user is parking peer on HOLD
 	case ONHOLD_CALL:
+		qDebug("ONHOLD_CALL: cid = %d et did = %d", call[usedLine]->cid, 
+				call[usedLine]->did);
+
 		call[usedLine]->usehold = true;
 		
 		eXosip_lock();
@@ -702,6 +725,7 @@ SIP::getEvent (void) {
 	callmanager->handleRemoteEvent(event->status_code,
 			event->reason_phrase,
 			-1);	
+	//qDebug("status-code %d %s", event->status_code, event->reason_phrase);
 	switch (event->type) {
 		// IP-Phone user receives a new call
 		case EXOSIP_CALL_NEW: //13
@@ -913,15 +937,14 @@ SIP::getEvent (void) {
 			call[theline]->usehold = false;
 			theline = findLineNumber(event);
 			if (!callmanager->phLines[theline]->getbInProgress()) {
-		//	if (!callmanager->getCallInProgress()) {
 				// If callee answered before closing call 
 				// or callee not onhold by caller
 			 	theline = findLineNumberClosed(event);
 				call[theline]->closedCall();
 			} else {
-				// If callee closes call instead of answering
+				// If caller closes call before callee answers
 				theline = notUsedLine;
-				// If call refused, stop ringTone
+				// Stop ringTone
 				callmanager->ringTone(false);
 			}
 			

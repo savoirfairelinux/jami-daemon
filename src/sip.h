@@ -49,6 +49,7 @@ using namespace ost;
 #define	OFFHOLD_CALL	3
 #define TRANSFER_CALL	4
 #define CANCEL_CALL		5
+#define REFUSE_CALL		6
 
 // 4XX Errors
 #define	FORBIDDEN		403

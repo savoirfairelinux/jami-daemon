@@ -35,7 +35,9 @@
 #include "global.h"
 
 
-AudioDriversOSS::AudioDriversOSS (DeviceMode mode) : AudioDrivers () {
+AudioDriversOSS::AudioDriversOSS (DeviceMode mode, Error *error) : 
+			AudioDrivers () {
+	this->error = error;
 	audio_fd = -1;
 	initDevice(mode);
 }
@@ -73,24 +75,27 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	}
 	
 	if (devstate == DeviceOpened) {
+		error->errorName(DEVICE_ALREADY_OPEN, NULL);
 		return -1;
 	}
 
 	// Open device in non-blocking mode
 	audio_fd = open (AUDIO_DEVICE, oflag | O_NONBLOCK );
 	if (audio_fd == -1) {
-		printf ("ERROR: Open Failed\n");
-		return -1;
-	}
+		error->errorName(OPEN_FAILED_DEVICE, NULL);	
 
+		return -1;
+	}  
+ 
 	// Remove O_NONBLOCK
 	int flags = fcntl(audio_fd, F_GETFL) & ~O_NONBLOCK;
 	fcntl (audio_fd, F_SETFL, flags);
-
+    
 	// Fragments : No limit (0x7FFF), 
 	int frag = ( ( 0x7FFF << 16 ) | 7 );
 	if (ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &frag)) {
 		printf ("ERROR: SETFRAG %s\n", strerror(errno));
+		error->errorName(FRAGMENT_ERROR_OSS, strerror(errno));
 		return -1;
 	}
 
@@ -100,6 +105,7 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 
 	if (ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format) == -1) {
 		printf("ERROR: SETFMT  %s\n", strerror(errno));
+		error->errorName(SAMPLE_FORMAT_ERROR_OSS, strerror(errno));
 		return -1;
 	}
 	if (format != AFMT_S16_LE) {
@@ -111,6 +117,7 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	int channels = MONO;
 	if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &channels) == -1) {
 		printf ("ERROR: DSP_STEREO %s\n", strerror(errno));
+		error->errorName(CHANNEL_ERROR_OSS, strerror(errno));
 		return -1;
 	}
 	if (channels != MONO) {
@@ -122,6 +129,7 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	int rate = SAMPLING_RATE;
 	if (ioctl(audio_fd, SNDCTL_DSP_SPEED, &rate ) == -1 ) {
 		printf ("ERROR: DSP_SPEED  %s\n", strerror(errno));
+		error->errorName(SAMPLE_RATE_ERROR_OSS, strerror(errno));
 		return -1;
 	}
 
@@ -135,11 +143,13 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	if (mode == WriteOnly) {
 		if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == -1) {
 			printf ("ERROR: GETISPACE %s\n", strerror(errno));
+			error->errorName(GETISPACE_ERROR_OSS, strerror(errno));
 			return -1;
 		} 
 	} else {
 		if (ioctl(audio_fd, SNDCTL_DSP_GETISPACE, &info ) == -1) {
 			printf ("ERROR: GETOSPACE %s\n", strerror(errno));
+			error->errorName(GETOSPACE_ERROR_OSS, strerror(errno));
 			return -1;
 		}
 	}
@@ -180,12 +190,11 @@ AudioDriversOSS::openDevice (int exist_fd) {
 int
 AudioDriversOSS::readBuffer (void *ptr, int bytes) {
 	if( devstate != DeviceOpened ) {
-		printf ("Device Not Open\n");
 		return false;
 	}
 	ssize_t count = bytes;
 	ssize_t rc;
-
+ 
 	rc = read (audio_fd, ptr, count);
 	if (rc < 0) {
 		printf ("rc < 0 read(): %s\n", strerror(errno));
@@ -201,7 +210,6 @@ AudioDriversOSS::readBuffer (void *ptr, int bytes) {
 int
 AudioDriversOSS::readBuffer (int bytes) {
 	if( devstate != DeviceOpened ) {
-		printf ("Device Not Open\n");
 		return -1;
 	}
 
@@ -227,7 +235,7 @@ AudioDriversOSS::readBuffer (int bytes) {
 int
 AudioDriversOSS::writeBuffer (void *ptr, int len) {
 	if (devstate != DeviceOpened ) {
-		printf ("Device Not Opened\n");
+		error->errorName(DEVICE_NOT_OPEN, NULL);
 		return -1;
 	}
 	
@@ -258,7 +266,7 @@ AudioDriversOSS::writeBuffer (void *ptr, int len) {
 int
 AudioDriversOSS::writeBuffer (void) {
 	if (devstate != DeviceOpened ) {
-		printf ("Device Not Opened\n");
+		error->errorName(DEVICE_NOT_OPEN, NULL);
 		return -1;
 	}
 	

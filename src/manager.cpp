@@ -46,13 +46,13 @@
 #include "audiortp.h"
 #include "sip.h"
 #include "qtGUImainwindow.h"
+#include "error.h"
 
 #include <string>
 using namespace std;
 
 Manager::Manager (QString *Dc = NULL) {
 	DirectCall = Dc;
-	bool exist;
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
 		phLines[i] = new PhoneLine ();
 	}
@@ -67,9 +67,9 @@ Manager::Manager (QString *Dc = NULL) {
 	sip = new SIP(this);
 	tone = new ToneGenerator(this);
 	audioRTP = new AudioRtp(this);
+	error = new Error(this);
 	
 	sip_init();
-	
 	selectAudioDriver();
 
 	// Init variables
@@ -90,7 +90,7 @@ Manager::Manager (QString *Dc = NULL) {
 		gui()->configuration();
 	} 
 
-	initVolume ();
+	initVolume ();	
 }
 
 Manager::~Manager (void) {
@@ -117,7 +117,8 @@ Manager::createSettingsPath (void) {
 	bool exist = true;
 	char * buffer;
 	// Get variable $HOME
-  	buffer = getenv ("HOME");                                                   	path = string(buffer);
+  	buffer = getenv ("HOME");                                        
+	path = string(buffer);
   	path = path + "/." + PROGNAME;
              
   	if (mkdir (path.data(), 0755) != 0) {
@@ -134,21 +135,21 @@ Manager::createSettingsPath (void) {
 	}
 	return exist;
 }
-
+ 
 /**
  * Call audio driver constructor according to the selected driver in setup
  */
-void
+void 
 Manager::selectAudioDriver (void) {
 	if (Config::getb("Audio", "Drivers.driverOSS")) {
 		useAlsa = false;
-		this->audiodriver = new AudioDriversOSS (AudioDrivers::ReadWrite);
+		this->audiodriver = new AudioDriversOSS (AudioDrivers::ReadWrite, error);
 	}
 	if (Config::getb("Audio", "Drivers.driverALSA")) {
 #ifdef ALSA
 		useAlsa = true;
-		this->audiodriver = new AudioDriversALSA (AudioDrivers::WriteOnly);
-		this->audiodriverReadAlsa = new AudioDriversALSA (AudioDrivers::ReadOnly);
+		this->audiodriver = new AudioDriversALSA (AudioDrivers::WriteOnly, error);
+		this->audiodriverReadAlsa = new AudioDriversALSA (AudioDrivers::ReadOnly, error);
 #endif
 	}
 }
@@ -173,7 +174,8 @@ Manager::sip_init (void) {
 		if (Config::gets("Signalisations", "SIP.password").length() > 0) {
 			sip->setRegister ();
 		} else {
-			errorDisplay("Fill password field");		
+			if (exist)
+				error->errorName(PASSWD_FIELD_EMPTY, NULL);		
 		}
 	} 
 }
@@ -203,7 +205,7 @@ Manager::ring (bool var) {
 	tonezone = ringing();
 
 	if (sip->getNumberPendingCalls() == 1) 
-		tone->playRing ((gui()->getRingFile()).ascii());
+		tone->playRingtone ((gui()->getRingFile()).ascii());
 }
 
 // When IP-phone user makes call
@@ -231,7 +233,7 @@ Manager::notificationIncomingCall (void) {
 	
 	tone->generateSin(440, 0, AMPLITUDE, SAMPLING_RATE, buffer);
 		
-	audiodriver->audio_buf.resize(SAMPLING_RATE);
+	audiodriver->audio_buf.resize(SAMPLING_RATE/2);
 	audiodriver->audio_buf.setData(buffer, getSpkrVolume());
 	delete[] buffer;
 }
@@ -261,6 +263,13 @@ Manager::transferedCall(void) {
 void
 Manager::actionHandle (int lineNumber, int action) {
 	switch (action) {
+	case REFUSE_CALL:
+		sip->manageActions (lineNumber, REFUSE_CALL);
+		this->ring(false);
+		phLines[lineNumber]->setbRinging(false);
+		gui()->lcd->setStatus("Call refused");
+		break;
+		
 	case ANSWER_CALL:
 		// TODO
 		// Stopper l'etat "ringing" du main (audio, signalisation, gui)
@@ -300,7 +309,6 @@ Manager::actionHandle (int lineNumber, int action) {
 		
 	case CANCEL_CALL:
 		sip->manageActions (lineNumber, CANCEL_CALL);
-		//sip->notUsedLine = -1;
 		break;
 
 	default:
@@ -334,10 +342,14 @@ Manager::isNotUsedLine (int line) {
 }
 
 int
-Manager::findLineNumberNotUsedSIP (void) {
+Manager::findLineNumberNotUsed (void) {
 	return sip->findLineNumberNotUsed();
 }
 
+int
+Manager::getNumberPendingCalls (void) {
+	return sip->getNumberPendingCalls();
+}
 /**
  * Handle the remote callee's events
  *
@@ -405,7 +417,9 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 		
 	// if error code
 	} else { 	
-		if (code > 399) {
+		if (code == 407) {
+			gui()->lcd->setStatus("Trying...");
+		} else if (code > 399 and code != 407) {
 			qinfo = QString::number(code, 10) + " " + 
 				QString(reason);
 			gui()->lcd->setStatus(qinfo);
@@ -548,6 +562,7 @@ Manager::dtmf (int line, char digit) {
 
 void
 Manager::errorDisplay (char *error) {
+	gui()->lcd->clearBuffer();
 	gui()->lcd->appendText(error);
 }
 

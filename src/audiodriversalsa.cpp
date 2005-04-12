@@ -35,10 +35,11 @@
 
 #define ALSA_DEVICE	"plughw:0,0"
 
-AudioDriversALSA::AudioDriversALSA(DeviceMode mode) : AudioDrivers () {
+AudioDriversALSA::AudioDriversALSA(DeviceMode mode, Error *error) : 
+			AudioDrivers () {
+	this->error = error;
 	audio_hdl = (snd_pcm_t *) NULL;
 	initDevice(mode);
-
 }
 
 AudioDriversALSA::~AudioDriversALSA (void) {
@@ -59,7 +60,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	int	 err;
 		
 	if (devstate == DeviceOpened) {
-		printf ("ERROR: ALSA Device Already Open !\n");
+		error->errorName(DEVICE_ALREADY_OPEN, NULL);
 		return -1;
 	}
 	
@@ -83,6 +84,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	if (err < 0) {
 		printf ("ERROR: ALSA/snd_pcm_open: Cannot open audio device (%s)\n",
 						snd_strerror (err));
+		error->errorName(OPEN_FAILED_DEVICE, NULL);
 		return -1;
 	}
 	////////////////////////////////////////////////////////////////////////////
@@ -95,6 +97,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	if (err < 0) {
 		printf ("Cannot allocate hardware parameter structure (%s)\n",
 				 snd_strerror (err));
+		error->errorName(PARAMETER_STRUCT_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
 
@@ -102,6 +105,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	if ((err = snd_pcm_hw_params_any (audio_hdl, hw_params)) < 0) {
 		printf ("Cannot initialize hardware parameter structure (%s)\n",
 				 snd_strerror (err));
+		error->errorName(PARAMETER_STRUCT_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
 
@@ -109,6 +113,8 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 					SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
 		printf ("Cannot set access type (%s)\n", snd_strerror (err));
+		error->errorName(ACCESS_TYPE_ERROR_ALSA, (char*)snd_strerror(err));
+		return -1;
 	}
 	
 	// Set sample formats (Signed, 16Bits, little endian)
@@ -116,6 +122,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 					SND_PCM_FORMAT_S16_LE);
 	if (err < 0) {
 		printf ("Cannot set sample format (%s)\n", snd_strerror (err));
+		error->errorName(SAMPLE_FORMAT_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	} 
 	
@@ -128,6 +135,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 			&exact_rate, 0);
 	if (err < 0) {
 		printf ("Cannot set sample rate (%s)\n", snd_strerror (err));
+		error->errorName(SAMPLE_RATE_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
 	if (exact_rate != rate) {
@@ -138,6 +146,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	err = snd_pcm_hw_params_set_channels (audio_hdl, hw_params, MONO);
 	if (err < 0) {
 		printf ("Cannot set channel count (%s)\n", snd_strerror (err));
+		error->errorName(CHANNEL_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
 
@@ -145,6 +154,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	err = snd_pcm_hw_params (audio_hdl, hw_params);
 	if (err < 0) {
 		printf ("Cannot set parameters (%s)\n", snd_strerror (err));
+		error->errorName(PARAM_SETUP_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
 		
@@ -163,7 +173,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 int
 AudioDriversALSA::writeBuffer (void) {
 	if (devstate != DeviceOpened) {
-		printf ("ALSA: writeBuffer(): Device Not Open\n");
+		error->errorName(DEVICE_NOT_OPEN, NULL);
 		return -1;
 	}
 	
@@ -189,7 +199,7 @@ AudioDriversALSA::writeBuffer (void) {
 int
 AudioDriversALSA::readBuffer (void *ptr, int bytes) {
 	if( devstate != DeviceOpened ) {
-		printf ("ALSA: readBuffer(): Device Not Open\n");
+		error->errorName(DEVICE_NOT_OPEN, NULL);
 		return -1;
 	}
 		 
@@ -214,12 +224,14 @@ AudioDriversALSA::resetDevice (void) {
 
 	printf("Resetting...\n");
 	if ((err = snd_pcm_drop(audio_hdl)) < 0) {
-		printf ("ALSA: drop() error: %s\n", snd_strerror (err));
+		printf ("ALSA: drop() error: %s\n", snd_strerror (err));				
+		error->errorName(DROP_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
 
 	if ((err = snd_pcm_prepare(audio_hdl)) < 0) {
-		printf ("ALSA: prepare() error: %s\n", snd_strerror (err));
+		printf ("ALSA: prepare() error: %s\n", snd_strerror (err));			
+		error->errorName(PREPARE_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
 

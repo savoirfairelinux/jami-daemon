@@ -47,10 +47,10 @@ public:
 	virtual unsigned int readableBytes (void) = 0;
 
 	AudioBuffer audio_buf; // Buffer that the application fills	
+
 protected:
 	DeviceState devstate;  // Current state
 	DeviceMode devmode;    // Current mode
-
 };
 
 

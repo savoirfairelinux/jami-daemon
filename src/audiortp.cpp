@@ -154,7 +154,6 @@ AudioRtpRTX::~AudioRtpRTX () {
 
 void
 AudioRtpRTX::run (void) {
-//	AudioCodec 		 ac;
 	unsigned char	*data_to_send;
 	short			*data_mute;
 	short			*data_from_mic;
@@ -328,10 +327,10 @@ AudioRtpRTX::run (void) {
 		audioDevice->audio_buf.setData (data_for_speakers, 
 				manager->getSpkrVolume());
 
-		// Notify (with a bip) an incoming call when there is already call 
+		// Notify (with a bip) an incoming call when there is already a call 
 		countTime += TimerPort::getElapsed();
-		if (manager->sip->getNumberPendingCalls() != 1) {
-			if ((countTime % 3000) <= 10 and (countTime % 3000) >= 0) {
+		if (manager->getNumberPendingCalls() != 1 and manager->ringing()) {
+			if ((countTime % 2000) <= 10 and (countTime % 2000) >= 0) {
 				manager->notificationIncomingCall();
 			}
 		}

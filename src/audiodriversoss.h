@@ -25,13 +25,14 @@
 
 
 #include "audiodrivers.h"
+#include "error.h"
 
 // TODO : a mettre dans config
 #define AUDIO_DEVICE	"/dev/dsp"
 
 class AudioDriversOSS : public AudioDrivers {
 public:
-	AudioDriversOSS (DeviceMode);
+	AudioDriversOSS (DeviceMode, Error*);
 	~AudioDriversOSS (void);
 
 	int		initDevice		(DeviceMode);
@@ -46,7 +47,7 @@ public:
 	int audio_fd;
 private:
 	int		closeDevice		(void);
-
+	Error *	error;
 };
 
 #endif // _AUDIO_DRIVERS_OSS_H

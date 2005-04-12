@@ -72,7 +72,7 @@ public:
 	void generateSin	(int, int, int, int, short *);
 	void buildTone		(int, int, int, int, short*);
 	void toneHandle 	(int);
-	int  playRing		(const char*);
+	int  playRingtone		(const char*);
 	
 	short *sample;
 	int freq1, 

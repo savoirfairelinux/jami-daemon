@@ -42,6 +42,7 @@ OBJS = \
 	configurationtree.o \
 	dtmf.o \
 	dtmfgenerator.o \
+	error.o \
 	g711.o \
 	main.o \
 	manager.o \
@@ -66,8 +67,8 @@ OBJS = \
 	volumecontrol.o volumecontrol.moc.o \
 	stun.o udp.o  
 	
-start:	check prereq all
-#start:	check  all
+#start:	check prereq all
+start:	check  all
 
 check:
 ifeq ($(CONFIGURE_CONF),../configure.conf)

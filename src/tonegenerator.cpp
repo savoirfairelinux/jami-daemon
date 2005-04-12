@@ -252,7 +252,7 @@ ToneGenerator::toneHandle (int idr) {
 
 
 int
-ToneGenerator::playRing (const char *fileName) {
+ToneGenerator::playRingtone (const char *fileName) {
 	short* dst = NULL;
 	char* src = NULL;
 	int expandedsize, length;
@@ -278,7 +278,7 @@ ToneGenerator::playRing (const char *fileName) {
 	
   	// read data as a block:
   	file.read (src,length);
-
+	
 	// Decode file.ul
 	expandedsize = AudioCodec::codecDecode (
 				PAYLOAD_CODEC_ULAW,

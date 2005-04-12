@@ -32,6 +32,7 @@ class SIP;
 class SipCall;
 class ToneGenerator;
 class QtGUIMainWindow;
+class Error;
 
 class Manager {
 public:
@@ -42,10 +43,13 @@ public:
 	SIP 			*sip;
 	PhoneLine		*phLines[NUMBER_OF_LINES];	
 	AudioRtp		*audioRTP;
+		
 	AudioDrivers	*audiodriver;
 #ifdef ALSA
 	AudioDrivers	*audiodriverReadAlsa;
 #endif
+	Error 			*error;
+
 	bool			 useAlsa;
 	ToneGenerator	*tone;
 	QString 		*DirectCall; // from -p argv
@@ -62,7 +66,8 @@ public:
 	void 	quitLibrary 			(void);
 	int		outgoingNewCall			(void);
 	void 	actionHandle			(int, int);
-	int 	findLineNumberNotUsedSIP(void);
+	int 	findLineNumberNotUsed	(void);
+	int 	getNumberPendingCalls	(void);
 	void 	handleRemoteEvent		(int, char *, int, int = -1);
 	int		startSound				(SipCall *);
 	void 	closeSound 				(SipCall *);	
@@ -100,6 +105,7 @@ public:
 	inline int	getMicVolume (void) { return mic_volume; }
 
 private:
+	bool    exist;
 	bool	b_ringing;
 	bool	b_ringtone;
 	bool	b_congestion;

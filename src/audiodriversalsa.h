@@ -23,6 +23,8 @@
 #include <alsa/asoundlib.h>
 
 #include "audiodrivers.h"
+#include "error.h"
+
 
 /**
  * This is the ALSA implementation of DspOut.
@@ -35,7 +37,7 @@ public:
 	 * Constructs a AudioDriversALSA object representing the given
 	 * filename.  Default is /dev/dsp.
 	 */
-	AudioDriversALSA(DeviceMode);
+	AudioDriversALSA(DeviceMode, Error*);
 
 	/**
 	 * Destructor.  Will close the device if it is open.
@@ -50,6 +52,8 @@ public:
 	unsigned int readableBytes (void) { return 0; }
 	
 private:
+	Error *	error;
+	
 	snd_pcm_t *audio_hdl;
 	void closeDevice (void);
 };
