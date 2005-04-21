@@ -29,6 +29,7 @@ class AudioDrivers {
 public:
 	AudioDrivers (void);
 	virtual	~AudioDrivers (void);
+	AudioBuffer audio_buf; // Buffer that the application fills	
 
 	enum DeviceState {
 		DeviceOpened,
@@ -46,7 +47,6 @@ public:
 	virtual int	 readBuffer			(int) = 0;
 	virtual unsigned int readableBytes (void) = 0;
 
-	AudioBuffer audio_buf; // Buffer that the application fills	
 
 protected:
 	DeviceState devstate;  // Current state

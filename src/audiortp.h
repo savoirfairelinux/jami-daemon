@@ -23,6 +23,7 @@
 #include <cstdlib>
 
 #include <ccrtp/rtp.h>
+#include <cc++/numbers.h>
 
 using namespace ost;
 
@@ -40,6 +41,7 @@ class AudioRtpRTX : public Thread, public TimerPort {
 public:
 	AudioRtpRTX (SipCall *, AudioDrivers *, AudioDrivers *, Manager *, bool);
 	~AudioRtpRTX();
+	Time *time; 	// For incoming call notification 
 	virtual void run ();
 
 private:

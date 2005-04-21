@@ -55,7 +55,9 @@ using namespace ost;
 #define	FORBIDDEN		403
 #define NOT_FOUND		404
 #define AUTH_REQUIRED	407
+#define REQ_TIMEOUT		408
 #define	ADDR_INCOMPLETE	484
+#define	BUSY_HERE		486
 #define	REQ_TERMINATED	487
 // 5XX errors
 #define SERVICE_UNAVAILABLE	503

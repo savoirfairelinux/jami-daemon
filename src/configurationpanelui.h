@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'configurationpanel.ui'
 **
-** Created: Tue Apr 12 09:35:08 2005
+** Created: Wed Apr 20 14:48:03 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -120,8 +120,8 @@ public:
     QLabel* textLabel2_2;
     QLabel* pixmapLabel1;
     QWidget* CodecsPage_4;
-    QLabel* pixmapLabel2;
     QLabel* textLabel1;
+    QLabel* pixmapLabel2;
 
 public slots:
     virtual void saveSlot();

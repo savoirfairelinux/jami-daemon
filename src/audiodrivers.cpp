@@ -25,7 +25,6 @@
 
 AudioDrivers::AudioDrivers (void) {
 	this->devstate = AudioDrivers::DeviceClosed;
-	
 }
 
 AudioDrivers::~AudioDrivers (void) {

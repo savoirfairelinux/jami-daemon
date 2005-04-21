@@ -211,7 +211,7 @@ SipCall::onholdCall (eXosip_event_t *event) {
 
     osip_strncpy(ca->reason_phrase, event->reason_phrase, 49);
     ca->status_code = event->status_code;
-  
+		
 	ca->state = event->type;
   	return 0;
 }

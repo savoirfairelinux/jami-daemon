@@ -54,6 +54,10 @@ public:
 	void 		noSupportedCodec	(void);
 	static int	codecDecode 	(int, short *, unsigned char *, unsigned int);
 	static int	codecEncode 	(int, unsigned char *, short *, unsigned int);
+	static void	create			(int);
+	static void	destroy			(int);
+
+private:
 	static void	gsmCreate		(void);
 	static void	gsmDestroy		(void);
 };

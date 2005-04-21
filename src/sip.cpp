@@ -222,7 +222,7 @@ SIP::getNumberPendingCalls(void) {
   	return pos;
 }
 
-// Return the first number of line not used
+// Return the first line number not used
 int
 SIP::findLineNumberNotUsed (void) {
 	int k;
@@ -572,7 +572,7 @@ SIP::manageActions (int usedLine, int action) {
 	assert (usedLine >= 0);
 	
 	bzero (tmpbuf, 64);
-	// Get local port
+	// Get local port	
 	snprintf (tmpbuf, 63, "%d", call[usedLine]->getLocalAudioPort());
 
 	switch (action) {
@@ -585,7 +585,7 @@ SIP::manageActions (int usedLine, int action) {
 		callmanager->phLines[usedLine]->setbInProgress(false);
 
 		eXosip_lock();
-		i = eXosip_answer_call(call[usedLine]->did, 486, tmpbuf);
+		i = eXosip_answer_call(call[usedLine]->did, BUSY_HERE, tmpbuf);
 		eXosip_unlock();
 			
 		callmanager->ringTone(false);
@@ -627,7 +627,6 @@ SIP::manageActions (int usedLine, int action) {
 		eXosip_lock();
 		i = eXosip_terminate_call (call[usedLine]->cid, call[usedLine]->did);
 		eXosip_unlock();
-		qDebug ("exosip_terminate_call = %d", i);
 
 		// Release RTP channels
 		call[usedLine]->closedCall();
@@ -644,7 +643,7 @@ SIP::manageActions (int usedLine, int action) {
 	case ONHOLD_CALL:
 		qDebug("ONHOLD_CALL: cid = %d et did = %d", call[usedLine]->cid, 
 				call[usedLine]->did);
-
+				
 		call[usedLine]->usehold = true;
 		
 		eXosip_lock();
@@ -657,6 +656,8 @@ SIP::manageActions (int usedLine, int action) {
 
 	// IP-Phone user is parking peer OFF HOLD
 	case OFFHOLD_CALL:
+		qDebug("OFF-HOLD_CALL: cid = %d et did = %d", call[usedLine]->cid, 
+				call[usedLine]->did);
 		call[usedLine]->usehold = true;
 		eXosip_lock();
 		i = eXosip_off_hold_call(call[usedLine]->did, NULL, 0);
@@ -687,6 +688,7 @@ SIP::manageActions (int usedLine, int action) {
 	case CANCEL_CALL:
 		qDebug("SIP: CANCEL_CALL: terminate cid=%d did=%d", 
 				call[usedLine]->cid,call[usedLine]->did);
+	
 		eXosip_lock();
 		i = eXosip_terminate_call (call[usedLine]->cid, call[usedLine]->did);
 		eXosip_unlock();
@@ -725,7 +727,7 @@ SIP::getEvent (void) {
 	callmanager->handleRemoteEvent(event->status_code,
 			event->reason_phrase,
 			-1);	
-	//qDebug("status-code %d %s", event->status_code, event->reason_phrase);
+//	qDebug("status-code %d %s", event->status_code, event->reason_phrase);
 	switch (event->type) {
 		// IP-Phone user receives a new call
 		case EXOSIP_CALL_NEW: //13
@@ -776,8 +778,16 @@ SIP::getEvent (void) {
 			// TODO: stop the ringtone
 			callmanager->ringTone(false);
 			
+			//theline = callmanager->getCurrentLineNumber();
 			curLine = callmanager->getCurrentLineNumber();
-			theline = findLineNumber(event);
+			
+			// If we have chosen the line before validating the phone number
+			if (callmanager->isChosenLine() and !callmanager->otherLine()) {
+				theline = callmanager->chosenLine();
+			} else {
+				theline = findLineNumber(event);
+			}
+
 			if (call[theline] == NULL) {
 				call[theline] = new SipCall(callmanager);
 			}
@@ -791,7 +801,6 @@ SIP::getEvent (void) {
 			if (callmanager->phLines[theline]->getStateLine() == BUSY or 
 					callmanager->phLines[theline]->getStateLine() == OFFHOLD
 					or !call[theline]->usehold) {
-				
 				if (!callmanager->transferedCall()) {
 					if (!call[theline]->usehold) {
 						// Associate an audio port with a call
@@ -829,7 +838,7 @@ SIP::getEvent (void) {
 			
 			callmanager->handleRemoteEvent (0, NULL, EXOSIP_CALL_RINGING);
 			// TODO : rajouter tonalite qd ca sonne
-			//callmanager->ringTone(true);
+			callmanager->ringTone(true);
 
 			// If we have chosen the line before validating the phone number
 			if (callmanager->isChosenLine() and !callmanager->otherLine()) {
@@ -844,8 +853,11 @@ SIP::getEvent (void) {
 			assert (theline >= 0);
 			assert (theline < NUMBER_OF_LINES);
 
+			callmanager->phLines[theline]->setbInProgress(true);
+
 			if (call[theline] == NULL) {
 				call[theline] = new SipCall(callmanager);
+				call[theline]->setLocalAudioPort(local_port);
 				call[theline]->ringingCall(event);
 			}
 			break;
@@ -867,11 +879,16 @@ SIP::getEvent (void) {
 				event->did, event->status_code, event->reason_phrase,
 				event->remote_uri);
 #endif
+			if (callmanager->isChosenLine() and !callmanager->otherLine()) {
+				theline = callmanager->chosenLine();
+			} else {
 				theline = findLineNumber(event);
-				assert (theline >= 0);
-				assert (theline < NUMBER_OF_LINES);
-			//	call[theline]->requestfailureCall(event);
-				callmanager->phLines[theline]->setbInProgress(false);
+			}
+			
+			assert (theline >= 0);
+			assert (theline < NUMBER_OF_LINES);
+		//	call[theline]->requestfailureCall(event);
+			callmanager->phLines[theline]->setbInProgress(false);
 
 			// Handle 4XX errors
 			switch (event->status_code) {
@@ -883,15 +900,10 @@ SIP::getEvent (void) {
 					eXosip_retry_call (event->cid);
 					eXosip_unlock();
 					break;
-				case NOT_FOUND:
-				//	callmanager->setCallInProgress(false);
-					callmanager->congestion(true);
-					break;
-				case ADDR_INCOMPLETE:
-				//	callmanager->setCallInProgress(false);
-					callmanager->congestion(true);
-					break;
 				case FORBIDDEN:
+				case NOT_FOUND:
+				case REQ_TIMEOUT:
+				case ADDR_INCOMPLETE:
 					callmanager->congestion(true);
 					break;
 				case REQ_TERMINATED:

@@ -93,7 +93,6 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 	ca->enable_audio = -1;
 
 	if (RTXThread != NULL) {
-		qDebug("RTXThread DELETED");
 		delete RTXThread;
 		RTXThread = NULL;
 	}
@@ -107,6 +106,7 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioDrivers *driver, 
 		AudioDrivers *read_driver, Manager *mngr, bool sym) {
+	this->time = new Time();
 	this->manager = mngr;
 	this->ca = sipcall;
 	this->sym =sym;
@@ -128,12 +128,10 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioDrivers *driver,
 		qDebug("Forced port %d", forcedPort);
 		session = new SymmetricRTPSession (local_ip, forcedPort);
 	}
-	AudioCodec::gsmCreate();
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
 	this->terminate();
-	AudioCodec::gsmDestroy();
 	
 	if (!sym) {
 		if (sessionRecv != NULL) {
@@ -163,7 +161,7 @@ AudioRtpRTX::run (void) {
 					 timestamp;
 	int				 expandedSize;
 	short			*data_for_speakers = NULL;
-	int 			 countTime = 0;
+	unsigned int	 countTime = 0;
 	data_for_speakers = new short[2048];
 	data_from_mic = new short[1024];
 	data_from_mic_tmp = new short[1024];
@@ -255,6 +253,8 @@ AudioRtpRTX::run (void) {
 		session->startRunning();
 	}
 
+	AudioCodec::create(ca->payload);
+
 	while (ca->enable_audio != -1) {
 		////////////////////////////
 		// Send session
@@ -328,9 +328,9 @@ AudioRtpRTX::run (void) {
 				manager->getSpkrVolume());
 
 		// Notify (with a bip) an incoming call when there is already a call 
-		countTime += TimerPort::getElapsed();
+		countTime += time->getSecond();
 		if (manager->getNumberPendingCalls() != 1 and manager->ringing()) {
-			if ((countTime % 2000) <= 10 and (countTime % 2000) >= 0) {
+			if ((countTime % 2000) <= 10 and (countTime % 2000) > 0) {
 				manager->notificationIncomingCall();
 			}
 		}
@@ -345,6 +345,7 @@ AudioRtpRTX::run (void) {
 		TimerPort::incTimer(frameSize); // 'frameSize' ms
 	}
 		 
+	AudioCodec::destroy(ca->payload);
 	delete[] data_for_speakers;
 	delete[] data_from_mic;
 	delete[] data_from_mic_tmp;

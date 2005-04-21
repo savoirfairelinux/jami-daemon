@@ -24,6 +24,17 @@
 #include "phoneline.h"
 #include "../stund/stun.h"
 
+// Status list
+#define LOGGED_IN_STATUS 	"Logged in"	
+#define REG_FAIL_STATUS		"Registration failure"	
+#define CONNECTED_STATUS	"Connected"
+#define	HUNGUP_STATUS		"Hung up"
+#define RINGING_STATUS		"Ringing"
+#define TRYING_STATUS		"Trying..."
+#define	REFUSED_CALL_STATUS	"Refused call"
+#define ENTER_NUMBER_STATUS	"Enter Phone Number:"
+#define TRANSFER_STATUS		"Transfer to:"
+
 #include <string>
 using namespace std;
 
@@ -73,7 +84,9 @@ public:
 	void 	closeSound 				(SipCall *);	
 	void	selectAudioDriver		(void);
 	QString	bufferTextRender		(void);
+	QString	getStatusRender			(void);
 	bool	isNotUsedLine			(int);
+	bool	isUsedLine				(int);
 	bool	isRingingLine			(int);
 	int		newCallLineNumber		(void);
 	void	getInfoStun		       	(StunAddress4 &);
@@ -96,13 +109,15 @@ public:
 	void	ringTone				(bool);
 	void	startDialTone			(void);
 	void	congestion				(bool); 
+	inline bool	getbCongestion		(void) { return b_congestion; } 
 	void	notificationIncomingCall(void);
 	void	errorDisplay			(char*);
 	void	nameDisplay				(char*);
 	void	spkrSoundVolume			(int);
 	void	micSoundVolume			(int);
-	inline int	getSpkrVolume (void) { return spkr_volume; }
-	inline int	getMicVolume (void) { return mic_volume; }
+	inline 	int	getSpkrVolume (void) { return spkr_volume; }
+	inline 	int	getMicVolume (void) { return mic_volume; }
+	bool	tryingState (int);
 
 private:
 	bool    exist;

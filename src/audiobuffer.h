@@ -66,8 +66,8 @@ public:
 void *data;
 private:
 	
-	size_t size;
 	size_t realsize;
+	size_t size;
 };
 
 #endif // __AUDIOBUFFER_H__

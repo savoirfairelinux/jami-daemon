@@ -526,12 +526,15 @@ QtGUIMainWindow::numLineBusy(void) {
 
 void
 QtGUIMainWindow::dialTone (bool var) {
-	if (this->b_dialtone != var) {
-		this->b_dialtone = var;
+	if (callmanager->error->getError() == 0) {
+		if (this->b_dialtone != var) {
+			this->b_dialtone = var;
+		}
+		callmanager->tonezone = var;
+		callmanager->tone->toneHandle(ZT_TONE_DIALTONE); 
+	} else {
+		callmanager->error->errorName(DEVICE_NOT_OPEN, NULL);
 	}
-	callmanager->tonezone = var;
-	callmanager->tone->toneHandle(ZT_TONE_DIALTONE); 
-	
 }
 ///////////////////////////////////////////////////////////////////////////////
 // Public Methods implementations                                            //
@@ -572,7 +575,7 @@ QtGUIMainWindow::toggleLine (int num_line) {
 
 	if (callmanager->isNotUsedLine(currentLineNumber) and busyNum == -1) {
 		qDebug("GUI: FIRST LINE IN USED %d", currentLineNumber);
-		lcd->setStatus("Enter Phone Number:");
+		lcd->setStatus(ENTER_NUMBER_STATUS);
 		chosenLine = currentLineNumber;
 		if (!noChoose) {
 			choose = true; 
@@ -587,7 +590,7 @@ QtGUIMainWindow::toggleLine (int num_line) {
 	if (busyNum != currentLineNumber && busyNum != -1) {
 		if (callmanager->isNotUsedLine(currentLineNumber)) {
 			qDebug("GUI: Line %d replaces another one", currentLineNumber);
-			lcd->clear(QString("Enter Phone Number:"));
+			lcd->clear(QString(ENTER_NUMBER_STATUS));
 			chosenLine = currentLineNumber;
 			lcd->inFunction = false;
 			if (!noChoose) {
@@ -599,10 +602,19 @@ QtGUIMainWindow::toggleLine (int num_line) {
 		callmanager->phLines[busyNum]->setStateLine(ONHOLD);
 		callmanager->actionHandle (busyNum, ONHOLD_CALL);
 		if (!callmanager->phLines[currentLineNumber]->getbDial()) {
-			if (callmanager->sip->call[busyNum] == NULL) {
+		// If ok-button not clicked before 
+			if (callmanager->sip->call[busyNum] == NULL and
+				!callmanager->tryingState(busyNum)) {
 				setInactiveLine(busyNum);
 			}
-			this->dialTone(true);			
+			callmanager->phLines[busyNum]->setbDial(false);
+
+			if (!callmanager->phLines[currentLineNumber]->getbRinging()
+				and callmanager->sip->call[currentLineNumber] == NULL and
+				!callmanager->tryingState(currentLineNumber)) {
+			// If no occured incoming call (not ringing and call[current]=null)
+				this->dialTone(true);			
+			}
 		}
 		callmanager->phLines[currentLineNumber]->setState(BUSY);
 		qDebug("GUI: state ON-HOLD line busyNum %d", busyNum);
@@ -615,38 +627,53 @@ QtGUIMainWindow::toggleLine (int num_line) {
 		callmanager->phLines[currentLineNumber]->button()->setPixmap(
 				TabLinePixmap[currentLineNumber][BUSY]);
 		callmanager->phLines[currentLineNumber]->setState(BUSY);
-		
+					
 		// Answer new call
-		if (callmanager->isRingingLine(currentLineNumber) and 
+		if ((callmanager->isRingingLine(currentLineNumber) || 
+			(callmanager->isUsedLine(currentLineNumber) and 
+			callmanager->phLines[currentLineNumber]->getbRinging())) and 
 			callmanager->phLines[currentLineNumber]->getStateLine() != ONHOLD){
+
 			qDebug("GUI: -- New answered call %d --", currentLineNumber);
 			callmanager->actionHandle (currentLineNumber, ANSWER_CALL);
 			callmanager->phLines[currentLineNumber]->setState(BUSY);
 			callmanager->phLines[currentLineNumber]->setStateLine(BUSY);
+
+			lcd->clearBuffer();
+			lcd->appendText(callmanager->phLines[currentLineNumber]->text);
 		} 
 		else if (callmanager->phLines[currentLineNumber]->getStateLine() 
-																== ONHOLD) {
+																== ONHOLD
+				or callmanager->tryingState(currentLineNumber)) {
 			qDebug("GUI: state OFF-HOLD line %d", currentLineNumber);
-			lcd->clear(QString("Connected"));
+			lcd->clear(QString(CONNECTED_STATUS));
 			if (callmanager->sip->call[currentLineNumber] != NULL) {
-				lcd->inFunction = true;
+				if (!callmanager->phLines[currentLineNumber]->getbInProgress()){
+				// Timer-call function
+					lcd->inFunction = true;
+			   	} else {
+				// Time function
+					lcd->inFunction = false;
+			   	}
 			}
 			callmanager->phLines[currentLineNumber]->setStateLine(OFFHOLD);
 			callmanager->actionHandle (currentLineNumber, OFFHOLD_CALL);
 			lcd->appendText(callmanager->phLines[currentLineNumber]->text);
+			lcd->setStatus(callmanager->phLines[currentLineNumber]->status);
 		}
 	} 
 	else if (callmanager->phLines[currentLineNumber]->isOnHold()){
 		// Change state to ONHOLD
 		callmanager->phLines[currentLineNumber]->setState(ONHOLD);
 		callmanager->phLines[currentLineNumber]->setStateLine(ONHOLD);
-		// Change status to ONHOLD
 		qDebug("GUI: state ON-HOLD line %d", currentLineNumber);
 		lcd->setStatus(ONHOLD_STATUS);
 		callmanager->actionHandle (currentLineNumber, ONHOLD_CALL);
-		if (callmanager->sip->call[currentLineNumber] == NULL) {
+		
+		if (callmanager->sip->call[currentLineNumber] == NULL and
+				!callmanager->phLines[currentLineNumber]->getbDial()) {
 			setInactiveLine(currentLineNumber);
-			lcd->setStatus("Enter Phone Number:");
+			lcd->clear(QString(ENTER_NUMBER_STATUS));
 		}
 	}
 }
@@ -690,15 +717,16 @@ QtGUIMainWindow::dial (void) {
 					// If find not used line
 					noChoose = true;
 					currentLineNumber = callmanager->findLineNumberNotUsed();
-					qDebug("current line = %d", currentLineNumber);
 				} else {
 					// If choose line
 					currentLineNumber = chosenLine;
 				}
 				callmanager->phLines[currentLineNumber]->text = 
 								callmanager->bufferTextRender();
+
 				callmanager->phLines[currentLineNumber]->setbDial(true);
 				toggleLine (currentLineNumber);
+				
 				callmanager->phLines[currentLineNumber]->setbInProgress(true);
 				// Set used-state pixmap 'currentLineNumber' line
 				callmanager->phLines[currentLineNumber]->button()->setPixmap(
@@ -730,34 +758,38 @@ QtGUIMainWindow::hangupLine (void) {
 		}
 	}
 	else if (currentLineNumber != -1 and 
-			!(callmanager->phLines[currentLineNumber]->isOnHold())) {
+			!(callmanager->phLines[currentLineNumber]->isOnHold()) and
+			!callmanager->tryingState(currentLineNumber)) {
 	// If there is current line opened and state line not onHold
 		// set free pixmap
 		setFreeStateLine (currentLineNumber);
-		
+		callmanager->phLines[currentLineNumber]->setbDial(false);
+
 		if (callmanager->phLines[currentLineNumber]->getbInProgress()) {
 			// If call is progressing, cancel the call
+			lcd->clear(QString(HUNGUP_STATUS));
 			callmanager->actionHandle (currentLineNumber, CANCEL_CALL);
+		} else if (b_dialtone 
+				and callmanager->sip->call[currentLineNumber] == NULL){
+			// If stop dialtone
+			this->dialTone(false);
+			lcd->clear(QString(ENTER_NUMBER_STATUS));
+		} else if (callmanager->getbCongestion()){		
+			// If stop congestion tone
+			callmanager->congestion(false);
+			lcd->clear(QString(ENTER_NUMBER_STATUS));
 		} else {
 			// Hang up the call
-			this->dialTone(false);		
 			callmanager->actionHandle (currentLineNumber, CLOSE_CALL);
 			callmanager->phLines[currentLineNumber]->setbDial(false);
+			lcd->clear(QString(HUNGUP_STATUS));
 		}
-		lcd->clear(QString("Hung up"));
+		// Make free hung current line
 		setCurrentLineNumber(-1);
-	} else if (callmanager->sip->call[currentLineNumber] == NULL and 
-			callmanager->phLines[currentLineNumber]->isOnHold()) {
-	// If there isn't call on the current line and state line onHold
-		setInactiveLine(currentLineNumber);
-		// Stop congestion sound
-		callmanager->congestion(false);
-		lcd->clear(QString("Hung up"));
+		choose = false;
+		noChoose = false;
 	}
 	
-	choose = false;
-	noChoose = false;
-
 	// Just to test when  receive a message
 #if 0
 	msgVar = true;
@@ -882,13 +914,15 @@ QtGUIMainWindow::button_transfer (void) {
 	if (currentLineNumber != -1) {
 		transfer = true;
 		callmanager->actionHandle (currentLineNumber, ONHOLD_CALL);
-		lcd->clear(QString("Transfer to:"));
+		lcd->clear(QString(TRANSFER_STATUS));
 	}
 }
 
 void
 QtGUIMainWindow::button_conf (void) {
 //TODO: This feature is not implemented yet
+	QMessageBox::information(this, "Conference",
+		"This feature is not implemented yet", QMessageBox::Yes);
 }
 
 void
@@ -947,7 +981,7 @@ QtGUIMainWindow::configuration (void) {
 void
 QtGUIMainWindow::addressBook (void) {
 //	TODO: phonebook->show();
-	QMessageBox::information(this, "Information",
+	QMessageBox::information(this, "Directory",
 		"This feature is not implemented yet", QMessageBox::Yes);
 }
 
@@ -1040,7 +1074,18 @@ QtGUIMainWindow::blinkRingSlot (void) {
 	if ( line == -1 ) 
 		return;
 
-	//if (callmanager->ringing()) {
+	// If more than one line is ringing
+	for (int i = 0; i < NUMBER_OF_LINES; i++) {
+		if (callmanager->isUsedLine(i) 
+			and callmanager->phLines[i]->getbRinging()) {
+			if	(!isOn) 
+				state = FREE;	
+			callmanager->phLines[i]->button()->setPixmap(
+				TabLinePixmap[i][state]);		
+		}
+	}
+	
+	//If new line is ringing
 	if (callmanager->phLines[line]->getbRinging()) {
 		// For the line
 		if	(!isOn) {
@@ -1115,7 +1160,7 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	char code = 0;
 	int pulselen = 0;
 	int a = 0;
-	
+
 	// Stop dial tone
  	if (b_dialtone) {
 		this->dialTone(false);
@@ -1299,6 +1344,8 @@ QtGUIMainWindow::keyPressEvent(QKeyEvent *e) {
 	case Qt::Key_F2:
 	case Qt::Key_F3:
 	case Qt::Key_F4:
+	case Qt::Key_F5:
+	case Qt::Key_F6:
 		this->toggleLine(e->key() - Qt::Key_F1);
 		return;
 	   	break;

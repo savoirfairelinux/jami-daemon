@@ -169,4 +169,24 @@ AudioCodec::gsmDestroy (void) {
 	gsm_destroy(encode_gsmhandle);
 }
 
+void
+AudioCodec::create (int pt) {
+	switch (pt) {
+	case PAYLOAD_CODEC_GSM:
+		AudioCodec::gsmCreate();
+		break;
+	default:
+		break;
+	}
+} 
 
+void
+AudioCodec::destroy (int pt) {
+	switch (pt) {
+	case PAYLOAD_CODEC_GSM:
+		AudioCodec::gsmDestroy();
+		break;
+	default:
+		break;
+	}
+}

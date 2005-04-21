@@ -59,6 +59,7 @@ Manager::Manager (QString *Dc = NULL) {
 	
 	exist = createSettingsPath();
 	
+	selectAudioDriver();
 	phonegui = new QtGUIMainWindow (0, 0 ,  
 					Qt::WDestructiveClose | 
 					Qt::WStyle_Customize |
@@ -70,7 +71,6 @@ Manager::Manager (QString *Dc = NULL) {
 	error = new Error(this);
 	
 	sip_init();
-	selectAudioDriver();
 
 	// Init variables
 	b_ringing = false;
@@ -142,7 +142,7 @@ Manager::createSettingsPath (void) {
 void 
 Manager::selectAudioDriver (void) {
 	if (Config::getb("Audio", "Drivers.driverOSS")) {
-		useAlsa = false;
+		useAlsa = false; 
 		this->audiodriver = new AudioDriversOSS (AudioDrivers::ReadWrite, error);
 	}
 	if (Config::getb("Audio", "Drivers.driverALSA")) {
@@ -198,14 +198,27 @@ Manager::ringing (void) {
 // When IP-phone user receives a call 
 void
 Manager::ring (bool var) {
+	if (sip->getNumberPendingCalls() != 1 and tonezone == true 
+			and var == false) {
+	// If more than one line is ringing
+		for (int i = 0; i < NUMBER_OF_LINES; i++) {
+			if (i != getCurrentLineNumber() and phLines[i]->getbRinging()) {
+				tonezone = false;
+				tone->playRingtone ((gui()->getRingFile()).ascii());
+			}
+		}
+	}
+
 	if (this->b_ringing != var) {
 		this->b_ringing = var;
 	}
 
 	tonezone = ringing();
 
-	if (sip->getNumberPendingCalls() == 1) 
+	if (sip->getNumberPendingCalls() == 1) { 
+	// If just one line is ringing
 		tone->playRingtone ((gui()->getRingFile()).ascii());
+	} 
 }
 
 // When IP-phone user makes call
@@ -220,11 +233,15 @@ Manager::ringTone (bool var) {
 
 void
 Manager::congestion (bool var) {
-	if (this->b_congestion != var) {
-		this->b_congestion = var;
+	if (error->getError() == 0) {
+		if (this->b_congestion != var) {
+			this->b_congestion = var;
+		}
+		tonezone = var;
+		tone->toneHandle(ZT_TONE_CONGESTION);
+	} else {
+		error->errorName(DEVICE_NOT_OPEN, NULL);
 	}
-	tonezone = var;
-	tone->toneHandle(ZT_TONE_CONGESTION);
 }
 
 void
@@ -267,16 +284,16 @@ Manager::actionHandle (int lineNumber, int action) {
 		sip->manageActions (lineNumber, REFUSE_CALL);
 		this->ring(false);
 		phLines[lineNumber]->setbRinging(false);
-		gui()->lcd->setStatus("Call refused");
+		gui()->lcd->setStatus(REFUSED_CALL_STATUS);
 		break;
 		
 	case ANSWER_CALL:
 		// TODO
 		// Stopper l'etat "ringing" du main (audio, signalisation, gui)
-		sip->manageActions (lineNumber, ANSWER_CALL);		
 		this->ring(false);
+		sip->manageActions (lineNumber, ANSWER_CALL);		
 		phLines[lineNumber]->setbRinging(false);
-		gui()->lcd->setStatus("Connected");	
+		gui()->lcd->setStatus(CONNECTED_STATUS);	
 		gui()->startCallTimer(lineNumber);
 		break;
 
@@ -292,7 +309,6 @@ Manager::actionHandle (int lineNumber, int action) {
 
 	case ONHOLD_CALL:
 		if (sip->call[lineNumber] != NULL) {
-			//gui()->lcd->setStatus(ONHOLD_STATUS);
 			sip->manageActions (lineNumber, ONHOLD_CALL);
 		}
 		break;
@@ -341,6 +357,19 @@ Manager::isNotUsedLine (int line) {
 	return false;
 }
 
+bool
+Manager::isUsedLine (int line) {
+	for (int k = 0; k < NUMBER_OF_LINES; k++) {
+		if (line == k) {
+			if (sip->call[line] != NULL) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
 int
 Manager::findLineNumberNotUsed (void) {
 	return sip->findLineNumberNotUsed();
@@ -363,26 +392,33 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 	
 	switch (remotetype) {
 		// Registration success
-		case EXOSIP_REGISTRATION_SUCCESS:
-			gui()->lcd->setStatus("Logged in");				
+		case EXOSIP_REGISTRATION_SUCCESS: 
+			gui()->lcd->setStatus(LOGGED_IN_STATUS);				
 			break;
 
 		// Registration failure
 		case EXOSIP_REGISTRATION_FAILURE:
-			gui()->lcd->setStatus("Registration failure");				
+			gui()->lcd->setStatus(REG_FAIL_STATUS);				
 			break;
 			
 		// Remote callee answered
 		case EXOSIP_CALL_ANSWERED:
 			if (!gui()->transfer)
-				gui()->lcd->setStatus("Connected");
-				// Start call timer
-				gui()->startCallTimer(gui()->currentLineNumber);
+				gui()->lcd->setStatus(CONNECTED_STATUS);
+			// Start call timer
+			gui()->startCallTimer(getCurrentLineNumber());
+			phLines[getCurrentLineNumber()]->setbDial(false);
 			break;
 
 		// Remote callee hangup
 		case EXOSIP_CALL_CLOSED:
-			//if (getCallInProgress()) {
+			if (sip->getNumberPendingCalls() == 0 
+					or !phLines[line]->isOnHold()) {
+			// 	Show HUNGUP_STATUS if there's not pending call 
+			//	or line is not onhold
+				gui()->lcd->clear(QString(HUNGUP_STATUS));
+			}
+
 			if (phLines[line]->getbInProgress()) {
 				this->ring(false);
 				phLines[line]->setbRinging(false);
@@ -398,13 +434,14 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 				gui()->setCurrentLineNumber(-1);
 			}
 			phLines[line]->setbDial(false);
-			gui()->lcd->clear(QString("Hung up"));
+			
 			sip->notUsedLine = -1;
 			break;
 
 		// Remote call ringing
 		case EXOSIP_CALL_RINGING:
-			gui()->lcd->setStatus("Ringing");
+			gui()->lcd->setStatus(RINGING_STATUS);
+			phLines[getCurrentLineNumber()]->setbDial(false);
 			break;
 			
 		default:
@@ -413,19 +450,35 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 
 	// If dialog is established
 	if (code == 101) {
-		gui()->lcd->setStatus("Ringing");
-		
+		gui()->lcd->setStatus(RINGING_STATUS);		
 	// if error code
 	} else { 	
-		if (code == 407) {
-			gui()->lcd->setStatus("Trying...");
-		} else if (code > 399 and code != 407) {
+		if (code == AUTH_REQUIRED) {
+			gui()->lcd->setStatus(TRYING_STATUS);
+		} else if (code > 399 and code != AUTH_REQUIRED and 
+					code != REQ_TERMINATED) {
 			qinfo = QString::number(code, 10) + " " + 
 				QString(reason);
 			gui()->lcd->setStatus(qinfo);
 		} else if (0 < code < 400) {
 			qinfo = QString(reason);
 		}
+	}
+		
+	// Store the status of current line
+	if(getCurrentLineNumber() != -1) {
+		phLines[getCurrentLineNumber()]->status = getStatusRender();	
+		//qDebug("line[%d] status: %s", getCurrentLineNumber(),
+		//		(phLines[getCurrentLineNumber()]->status).ascii());
+	}
+}
+
+bool
+Manager::tryingState (int line) {
+	if (phLines[line]->status == TRYING_STATUS) {
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -447,6 +500,11 @@ Manager::closeSound (SipCall *ca) {
 QString
 Manager::bufferTextRender (void) {
 	return QString(*gui()->lcd->textBuffer);
+}
+
+QString
+Manager::getStatusRender (void) {
+	return (gui()->lcd->getStatus());
 }
 
 void
@@ -487,12 +545,13 @@ Manager::getFirewallAddress (void) {
 }
 
 /**
- * Returs true if the current line replaces another one
+ * Returns true if the current line replaces another one
  */
 bool
 Manager::otherLine (void) {
 	if (gui()->busyNum != -1) {
-		if (gui()->busyNum != gui()->currentLineNumber) {
+		if (phLines[getCurrentLineNumber()]->status != TRYING_STATUS and
+				gui()->busyNum != getCurrentLineNumber()) {
 			return true;
 		}
 	}

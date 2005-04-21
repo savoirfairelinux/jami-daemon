@@ -71,9 +71,12 @@ private:
 	JPushButton			*jpb;
 	enum line_state		 state;
 	enum line_state		 stateLine;
-	bool			 	 b_dial;
-	bool				 b_inProgress;	
-	bool				 b_ringing;
+
+	bool			 	 b_dial; 		// if ok button is clicked (->true)
+	bool				 b_inProgress;	// if outgoing call, 
+										// before remote callee answers (->true)
+	bool				 b_ringing;		// if incoming call, 
+										// before IP-phone user answers (->true) 
 };
 
 #endif	// __PHONE_LINE_H__

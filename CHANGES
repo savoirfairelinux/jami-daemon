@@ -1,7 +1,13 @@
+SFLphone (0.3.1) / 2005-04-21
+	* Handle error messages on screen
+	* Handle refused call
+	* Notification of remote RINGING event added
+	* Management of lines updated
+
 SFLphone (0.3) / 2005-04-05
 	* ALSA driver support added 
 	* GSM audio codec support added
-	* Rings support (just ulaw format) added
+	* Ringtones support (just ulaw format) added
 	* Notification incoming call added
 	* Apply skin feature added
 	* Volume control added
