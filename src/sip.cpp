@@ -759,6 +759,8 @@ SIP::getEvent (void) {
 				callmanager->phLines[theline]->setbInProgress(true);
 				call[theline] = new SipCall (callmanager);
 				call[theline]->newIncomingCall(event);
+			//	callmanager->handleRemoteEvent (
+			//				0, NULL, EXOSIP_CALL_NEW, theline);
 
 				// Associate an audio port with a call
 				call[theline]->setLocalAudioPort(local_port);
@@ -955,7 +957,8 @@ SIP::getEvent (void) {
 				call[theline]->closedCall();
 			} else {
 				// If caller closes call before callee answers
-				theline = notUsedLine;
+				//theline = notUsedLine;
+				theline = findLineNumber(event);
 				// Stop ringTone
 				callmanager->ringTone(false);
 			}

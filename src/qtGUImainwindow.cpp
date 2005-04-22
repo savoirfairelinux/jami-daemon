@@ -680,7 +680,7 @@ QtGUIMainWindow::toggleLine (int num_line) {
 
 /**
  * Actions occur when click on hang off button. 
- * Use for validate incoming and outgoing call, transfer call.
+ * Use to validate incoming and outgoing call, transfer call.
  */
 void
 QtGUIMainWindow::dial (void) {
@@ -695,7 +695,7 @@ QtGUIMainWindow::dial (void) {
 		qDebug("GUI: LINE CURRENT %d", currentLineNumber);
 		 
 		 if (callmanager->ringing()) {
-			// If new incoming call
+		// If new incoming call
 			currentLineNumber = callmanager->newCallLineNumber();
 			toggleLine (currentLineNumber);
 			// Set used-state pixmap 'currentLineNumber' line
@@ -710,28 +710,39 @@ QtGUIMainWindow::dial (void) {
 			// NOTHING
 		} else {
 			// If new outgoing call
-			i = callmanager->outgoingNewCall();
-			if (i == 0) {
-				// If outgoing call succeeded
-				if (!choose) {
-					// If find not used line
-					noChoose = true;
-					currentLineNumber = callmanager->findLineNumberNotUsed();
-				} else {
-					// If choose line
-					currentLineNumber = chosenLine;
-				}
-				callmanager->phLines[currentLineNumber]->text = 
-								callmanager->bufferTextRender();
-
-				callmanager->phLines[currentLineNumber]->setbDial(true);
-				toggleLine (currentLineNumber);
+			
+			if (callmanager->bufferTextRender() != "") {
+			// If a phone number is entered
 				
-				callmanager->phLines[currentLineNumber]->setbInProgress(true);
-				// Set used-state pixmap 'currentLineNumber' line
-				callmanager->phLines[currentLineNumber]->button()->setPixmap(
-						TabLinePixmap[currentLineNumber][BUSY]);
-				callmanager->phLines[currentLineNumber]->setState(BUSY);
+				// To make outgoing call
+				i = callmanager->outgoingNewCall();
+				
+				if (i == 0) {
+					// If outgoing call succeeded
+					if (!choose) {
+						// If find not used line
+						noChoose = true;
+						currentLineNumber=callmanager->findLineNumberNotUsed();
+					} else {
+						// If choose line
+						currentLineNumber = chosenLine;
+					}
+					
+					// Store the phone number 
+					callmanager->phLines[currentLineNumber]->text = 
+									callmanager->bufferTextRender();
+
+					// Dial button is clicked
+					callmanager->phLines[currentLineNumber]->setbDial(true);
+					// Main function
+					toggleLine (currentLineNumber);
+					// Call in progress
+					callmanager->phLines[currentLineNumber]->setbInProgress(true);
+					// Set used-state pixmap 'currentLineNumber' line
+					callmanager->phLines[currentLineNumber]->button()->setPixmap(
+							TabLinePixmap[currentLineNumber][BUSY]);
+					callmanager->phLines[currentLineNumber]->setState(BUSY);
+				}
 			}
 		}	
 	}
@@ -961,15 +972,18 @@ QtGUIMainWindow::button_mute(void) {
 	// Disable micro sound 
 	static bool isOn = true;
 	
-	if(!isOn) {
-		callmanager->mute = false;	
-		lcd->clear("Mute off");
-	} else { 
-		callmanager->mute = true;	
-		lcd->clear("Mute on");		
+	if (callmanager->sip->getNumberPendingCalls() != 0) {
+	// If there is at least a pending call
+		if(!isOn) {
+			callmanager->mute = false;	
+			lcd->clear("Mute off");
+		} else { 
+			callmanager->mute = true;	
+			lcd->clear("Mute on");		
+		}
+		
+		isOn = !isOn;
 	}
-	
-	isOn = !isOn;
 }
 
 // Show the setup panel

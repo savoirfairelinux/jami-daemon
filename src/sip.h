@@ -51,6 +51,8 @@ using namespace ost;
 #define CANCEL_CALL		5
 #define REFUSE_CALL		6
 
+// 1XX responses
+#define DIALOG_ESTABLISHED 101
 // 4XX Errors
 #define	FORBIDDEN		403
 #define NOT_FOUND		404

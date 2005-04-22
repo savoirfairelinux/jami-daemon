@@ -389,6 +389,7 @@ Manager::getNumberPendingCalls (void) {
 void
 Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 	QString qinfo;
+	int theline;
 	
 	switch (remotetype) {
 		// Registration success
@@ -414,28 +415,37 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 		case EXOSIP_CALL_CLOSED:
 			if (sip->getNumberPendingCalls() == 0 
 					or !phLines[line]->isOnHold()) {
-			// 	Show HUNGUP_STATUS if there's not pending call 
-			//	or line is not onhold
+			// Show HUNGUP_STATUS if there's not pending call 
+			// or line is not onhold
 				gui()->lcd->clear(QString(HUNGUP_STATUS));
+				if (getCurrentLineNumber() != -1 and line != getCurrentLineNumber()) {
+				// To show current status and phone number
+					gui()->lcd->appendText(phLines[getCurrentLineNumber()]->text);
+					gui()->lcd->setStatus(phLines[getCurrentLineNumber()]->status);
+				}
 			}
 
 			if (phLines[line]->getbInProgress()) {
 				this->ring(false);
 				phLines[line]->setbRinging(false);
-				gui()->setFreeStateLine(newCallLineNumber());
+			//	gui()->setFreeStateLine(newCallLineNumber());
+				gui()->setFreeStateLine(line);
+				
 				//setCallInProgress(false);
 				phLines[line]->setbInProgress(false);
 			} else {
+				if (line == getCurrentLineNumber()) {
+					// set free line
+					gui()->setCurrentLineNumber(-1);
+				}
 				// Stop call timer
 				gui()->stopCallTimer(line);
 				// set state free pixmap line
-				gui()->setFreeStateLine(line);
-				// set free line
-				gui()->setCurrentLineNumber(-1);
+				gui()->setFreeStateLine(line);			
 			}
 			phLines[line]->setbDial(false);
-			
 			sip->notUsedLine = -1;
+			
 			break;
 
 		// Remote call ringing
@@ -449,7 +459,7 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 	}
 
 	// If dialog is established
-	if (code == 101) {
+	if (code == DIALOG_ESTABLISHED) {
 		gui()->lcd->setStatus(RINGING_STATUS);		
 	// if error code
 	} else { 	
@@ -467,9 +477,17 @@ Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 		
 	// Store the status of current line
 	if(getCurrentLineNumber() != -1) {
-		phLines[getCurrentLineNumber()]->status = getStatusRender();	
-		//qDebug("line[%d] status: %s", getCurrentLineNumber(),
-		//		(phLines[getCurrentLineNumber()]->status).ascii());
+/*		if (remotetype == EXOSIP_CALL_NEW) {
+			theline = line;
+		} else {
+			theline = getCurrentLineNumber();
+		}
+		if ((code != REQ_TERMINATED and code != DIALOG_ESTABLISHED) 
+				or line == getCurrentLineNumber()) {*/
+		// If the remote-user close its remote call.
+		//	phLines[theline]->status = getStatusRender();	
+			phLines[getCurrentLineNumber()]->status = getStatusRender();	
+	//	}
 	}
 }
 

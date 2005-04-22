@@ -161,7 +161,7 @@ AudioRtpRTX::run (void) {
 					 timestamp;
 	int				 expandedSize;
 	short			*data_for_speakers = NULL;
-	unsigned int	 countTime = 0;
+	int	 			 countTime = 0;
 	data_for_speakers = new short[2048];
 	data_from_mic = new short[1024];
 	data_from_mic_tmp = new short[1024];
@@ -330,7 +330,8 @@ AudioRtpRTX::run (void) {
 		// Notify (with a bip) an incoming call when there is already a call 
 		countTime += time->getSecond();
 		if (manager->getNumberPendingCalls() != 1 and manager->ringing()) {
-			if ((countTime % 2000) <= 10 and (countTime % 2000) > 0) {
+			countTime = countTime % 2000;
+			if (countTime < 10 and countTime > 0) {
 				manager->notificationIncomingCall();
 			}
 		}
