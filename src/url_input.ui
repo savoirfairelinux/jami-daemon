@@ -17,6 +17,40 @@
     </property>
     <widget class="QPushButton">
         <property name="name">
+            <cstring>buttonOK</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>208</x>
+                <y>-1</y>
+                <width>20</width>
+                <height>23</height>
+            </rect>
+        </property>
+        <property name="minimumSize">
+            <size>
+                <width>0</width>
+                <height>23</height>
+            </size>
+        </property>
+        <property name="maximumSize">
+            <size>
+                <width>20</width>
+                <height>23</height>
+            </size>
+        </property>
+        <property name="focusPolicy">
+            <enum>StrongFocus</enum>
+        </property>
+        <property name="text">
+            <string>1</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </widget>
+    <widget class="QPushButton">
+        <property name="name">
             <cstring>buttonCancel</cstring>
         </property>
         <property name="geometry">
@@ -38,6 +72,9 @@
                 <width>20</width>
                 <height>23</height>
             </size>
+        </property>
+        <property name="focusPolicy">
+            <enum>TabFocus</enum>
         </property>
         <property name="text">
             <string>0</string>
@@ -64,36 +101,8 @@
                 <height>0</height>
             </size>
         </property>
-    </widget>
-    <widget class="QPushButton">
-        <property name="name">
-            <cstring>buttonOK</cstring>
-        </property>
-        <property name="geometry">
-            <rect>
-                <x>208</x>
-                <y>-1</y>
-                <width>20</width>
-                <height>23</height>
-            </rect>
-        </property>
-        <property name="minimumSize">
-            <size>
-                <width>0</width>
-                <height>23</height>
-            </size>
-        </property>
-        <property name="maximumSize">
-            <size>
-                <width>20</width>
-                <height>23</height>
-            </size>
-        </property>
-        <property name="text">
-            <string>1</string>
-        </property>
-        <property name="accel">
-            <string></string>
+        <property name="focusPolicy">
+            <enum>StrongFocus</enum>
         </property>
     </widget>
 </widget>
@@ -108,6 +117,7 @@
 <tabstops>
     <tabstop>url</tabstop>
     <tabstop>buttonOK</tabstop>
+    <tabstop>buttonCancel</tabstop>
 </tabstops>
 <includes>
     <include location="local" impldecl="in implementation">url_input.ui.h</include>

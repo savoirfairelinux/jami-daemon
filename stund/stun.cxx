@@ -671,7 +671,7 @@ stunRand()
       asm("rdtsc" : "=A" (tick));
 #elif defined (__SUNPRO_CC) || defined( __sparc__ )	
       tick = gethrtime();
-#elif defined(__MACH__) 
+#elif defined(__MACH__) || defined(__powerpc__) 
       int fd=open("/dev/random",O_RDONLY);
       read(fd,&tick,sizeof(tick));
       closesocket(fd);

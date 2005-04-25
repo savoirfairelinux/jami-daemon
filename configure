@@ -35,7 +35,7 @@ usage () {
 	echo "Options:
 	-prefix DIR         Set install prefix
 	-oss                Enable OSS support
-	-alsa               Enable ALSA support [Not supported yet]
+	-alsa               Enable ALSA support 
 	-macosx             Enable MacOSX audio support [Not supported yet]"
 }
 
@@ -129,7 +129,7 @@ fi
 
 # Check for cc++2
 dir=`is_in_path bin/ccgnu2-config ${CLASSIC_DIRS}:$CCPPDIR -p`
-if [ x"dir" = x"" ]
+if [ x"$dir" = x"" ]
 then
 	echo "I couldn't find bin/ccgnu2-config in the standard dirs. Please edit"
 	echo "this script and set CCPPDIR."
@@ -141,7 +141,7 @@ fi
 
 # Check for ccRTP (include/ccrtp/rtp.h)
 dir=`is_in_path include/ccrtp/rtp.h ${CLASSIC_DIRS}:$CCDIR -p`
-if [ x"dir" = x"" ]
+if [ x"$dir" = x"" ]
 then
 	echo "I couldn't find ccrtp/rtp.h in the standard dirs. Please edit"
 	echo "this script and set CCRTPDIR."
@@ -153,7 +153,7 @@ fi
 
 # Check for oSIP (include/osip2/osip.h)
 dir=`is_in_path include/osip2/osip.h ${CLASSIC_DIRS}:$OSIPDIR -p`
-if [ x"dir" = x"" ]
+if [ x"$dir" = x"" ]
 then
 	echo "I couldn't find osip2/osip.h in the standard dirs.Please edit"
 	echo "this script and set OSIPDIR."
@@ -165,7 +165,7 @@ fi
 
 # Check for eXoSIP (include/eXosip/eXosip.h)
 dir=`is_in_path include/eXosip/eXosip.h ${CLASSIC_DIRS}:$EXOSIPDIR -p`
-if [ x"dir" = x"" ]
+if [ x"$dir" = x"" ]
 then
 	echo "I couldn't find exosip/exosip.h in the standard dirs. Please "
 	echo "edit this script and set EXOSIPDIR."

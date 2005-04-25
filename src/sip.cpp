@@ -512,24 +512,24 @@ SIP::outgoingInvite (void) {
 	qDebug ("From: %s", from);
 	qDebug ("To: <%s>", to);
 
-	// If no SIP proxy setting
 	if (Config::gets("Signalisations", "SIP.sipproxy") == "") {
+	// If no SIP proxy setting for direct call with only IP address
 		if (startCall(from, to, NULL, NULL) <= 0) {
 			qDebug("SIP: no start call");
 			return -1;
 		}
 		return 0;
+	} else {
+	// If SIP proxy setting
+		string qroute = "<sip:" + 
+			Config::gets("Signalisations", "SIP.sipproxy") + ";lr>";
+		char * route = (char*)qroute.data();
+		if (startCall(from, to, NULL, route) <= 0) {
+			qDebug("SIP: no start call");
+			return -1;
+		}
+		return 0;
 	}
-	
-	string qroute = "<sip:" + Config::gets("Signalisations", "SIP.sipproxy") 
-							+ ";lr>";
-	char * route = (char*)qroute.data();
-	
-	if (startCall(from, to, NULL, route) <= 0) {
-		qDebug("SIP: no start call");
-		return -1;
-	}
-	return 0;
 }
 
 int
@@ -570,7 +570,7 @@ SIP::manageActions (int usedLine, int action) {
 
 	assert (usedLine < NUMBER_OF_LINES);
 	assert (usedLine >= 0);
-	
+
 	bzero (tmpbuf, 64);
 	// Get local port	
 	snprintf (tmpbuf, 63, "%d", call[usedLine]->getLocalAudioPort());

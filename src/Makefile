@@ -19,7 +19,7 @@ METAL_SKINS = metal
 
 ifdef ALSA
 endif
-
+	
 INCPATH  = -I. -I$(QTDIR)/include -I$(CCPPDIR)/include/cc++2 -I$(CCRTPDIR)/include -I$(OSIPDIR)/include -I$(EXOPSIP)/include -I/usr/include -I../gsm
 
 CXXFLAGS = -pipe -Wall -W -g -pipe -march=i386 -mcpu=i686  -DQT_NO_DEBUG -DQT_SHARED -DQT_THREAD_SUPPORT -fpermissive -Wno-deprecated $(INCPATH)
@@ -29,6 +29,7 @@ LIBS=-L$(QTDIR)/lib -L/usr/X11R6/lib -lqt-mt -lXext -lX11 -lm -L/opt/lib -losip2
 EXTRALIBS=../gsm/libgsm.a
 
 CONFIGURE_CONF=$(shell ls ../configure.conf)
+
 	
 OBJS = \
 	audiobuffer.o \
@@ -67,8 +68,8 @@ OBJS = \
 	volumecontrol.o volumecontrol.moc.o \
 	stun.o udp.o  
 	
-#start:	check prereq all
-start:	check  all
+start:	check prereq all
+#start:	check  all
 
 check:
 ifeq ($(CONFIGURE_CONF),../configure.conf)

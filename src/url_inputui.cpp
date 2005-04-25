@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'url_input.ui'
 **
-** Created: Wed Apr 20 14:48:03 2005
+** Created: Mon Apr 25 16:32:28 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -30,19 +30,22 @@ URL_Input::URL_Input( QWidget* parent, const char* name, bool modal, WFlags fl )
     if ( !name )
 	setName( "URL_Input" );
 
-    buttonCancel = new QPushButton( this, "buttonCancel" );
-    buttonCancel->setGeometry( QRect( 228, -1, 20, 23 ) );
-    buttonCancel->setMinimumSize( QSize( 0, 23 ) );
-    buttonCancel->setMaximumSize( QSize( 20, 23 ) );
-
-    url = new QLineEdit( this, "url" );
-    url->setGeometry( QRect( -1, 0, 210, 23 ) );
-    url->setMinimumSize( QSize( 210, 0 ) );
-
     buttonOK = new QPushButton( this, "buttonOK" );
     buttonOK->setGeometry( QRect( 208, -1, 20, 23 ) );
     buttonOK->setMinimumSize( QSize( 0, 23 ) );
     buttonOK->setMaximumSize( QSize( 20, 23 ) );
+    buttonOK->setFocusPolicy( QPushButton::StrongFocus );
+
+    buttonCancel = new QPushButton( this, "buttonCancel" );
+    buttonCancel->setGeometry( QRect( 228, -1, 20, 23 ) );
+    buttonCancel->setMinimumSize( QSize( 0, 23 ) );
+    buttonCancel->setMaximumSize( QSize( 20, 23 ) );
+    buttonCancel->setFocusPolicy( QPushButton::TabFocus );
+
+    url = new QLineEdit( this, "url" );
+    url->setGeometry( QRect( -1, 0, 210, 23 ) );
+    url->setMinimumSize( QSize( 210, 0 ) );
+    url->setFocusPolicy( QLineEdit::StrongFocus );
     languageChange();
     resize( QSize(250, 21).expandedTo(minimumSizeHint()) );
     clearWState( WState_Polished );
@@ -52,6 +55,7 @@ URL_Input::URL_Input( QWidget* parent, const char* name, bool modal, WFlags fl )
 
     // tab order
     setTabOrder( url, buttonOK );
+    setTabOrder( buttonOK, buttonCancel );
 }
 
 /*
@@ -69,9 +73,9 @@ URL_Input::~URL_Input()
 void URL_Input::languageChange()
 {
     setCaption( tr( "URL_Input" ) );
-    buttonCancel->setText( tr( "0" ) );
-    buttonCancel->setAccel( QKeySequence( QString::null ) );
     buttonOK->setText( tr( "1" ) );
     buttonOK->setAccel( QKeySequence( QString::null ) );
+    buttonCancel->setText( tr( "0" ) );
+    buttonCancel->setAccel( QKeySequence( QString::null ) );
 }
 

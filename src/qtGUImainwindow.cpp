@@ -1344,9 +1344,11 @@ QtGUIMainWindow::keyPressEvent(QKeyEvent *e) {
 	   	break;	
 
 	case Qt::Key_Escape:
-		lcd->clear();
+		hangupLine();
 		return;
-	   	break;
+		break;	
+
+
 	
 	case Qt::Key_Return:
 	case Qt::Key_Enter:
@@ -1363,14 +1365,20 @@ QtGUIMainWindow::keyPressEvent(QKeyEvent *e) {
 		this->toggleLine(e->key() - Qt::Key_F1);
 		return;
 	   	break;
-
+		
+	case Qt::Key_L:
+ 		if (e->state() == Qt::ControlButton ) {		
+			lcd->clear();
+			return;
+		}
+	   	break;
 	case Qt::Key_Q :
  		if (e->state() == Qt::ControlButton ) {
 			emit keyPressed(e->key());
 			return;			
 		}			
 		break;
-	case Qt::Key_L :
+	case Qt::Key_O :
  		if (e->state() == Qt::ControlButton ) {
 		 	urlinput->show();
 			return;			

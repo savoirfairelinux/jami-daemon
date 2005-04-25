@@ -320,11 +320,15 @@ Manager::actionHandle (int lineNumber, int action) {
 		break;
 		
 	case TRANSFER_CALL:
-		sip->manageActions (lineNumber, TRANSFER_CALL);
+		if (sip->call[lineNumber] != NULL) {
+			sip->manageActions (lineNumber, TRANSFER_CALL);
+		}
 		break;
 		
 	case CANCEL_CALL:
-		sip->manageActions (lineNumber, CANCEL_CALL);
+		if (sip->call[lineNumber] != NULL) {
+			sip->manageActions (lineNumber, CANCEL_CALL);
+		}
 		break;
 
 	default:

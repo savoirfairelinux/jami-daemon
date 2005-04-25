@@ -334,13 +334,12 @@ AudioRtpRTX::run (void) {
 			if (countTime < 10 and countTime > 0) {
 				manager->notificationIncomingCall();
 			}
-		}
-		
+		} 
+	  	
 		// Write data or notification
 		i = audioDevice->writeBuffer ();
 		delete adu;
-
-
+   
 		// Let's wait for the next transmit cycle
 		Thread::sleep(TimerPort::getTimer());
 		TimerPort::incTimer(frameSize); // 'frameSize' ms
