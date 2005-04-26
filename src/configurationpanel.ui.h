@@ -26,34 +26,36 @@ void ConfigurationPanel::init()
      // List skin choice from "skins" directory
    QDir dir(Skin::getPath(QString(SKINDIR)));
    if ( !dir.exists() ) {
-        printf ("Cannot find skins directory\n");
-    }
-   dir.setFilter( QDir::Dirs | QDir::NoSymLinks);
-   dir.setSorting( QDir::Name );
-    
-   QStringList list;
-   list = dir.entryList();
-   for (unsigned int i = 0; i < dir.count(); i++) {
-       if (list[i] != "." && list[i] != ".." && list[i] != "CVS") {
-      SkinChoice->insertItem(list[i]);
-       }
-   } 
+        printf ("\nCannot find 'skins' directory\n");
+    } else {
+    dir.setFilter( QDir::Dirs | QDir::NoSymLinks);
+    dir.setSorting( QDir::Name );
+  
+    QStringList list;
+    list = dir.entryList();
+    for (unsigned int i = 0; i < dir.count(); i++) {
+     if (list[i] != "." && list[i] != ".." && list[i] != "CVS") {
+    SkinChoice->insertItem(list[i]);
+     }
+    } 
+ }
    
-       // List ring choice from "rings" directory
+   // List ring choice from "rings" directory
    QDir ringdir(Skin::getPath(QString(RINGDIR)));
    if ( !ringdir.exists() ) {
-        printf ("Cannot find rings directory\n");
-    }
-   ringdir.setFilter( QDir::Files | QDir::NoSymLinks);
-   ringdir.setSorting( QDir::Name );
-    
-   QStringList ringlist;
-   ringlist = ringdir.entryList();
-   for (unsigned int i = 0; i < ringdir.count(); i++) {
-       if (ringlist[i] != "." && ringlist[i] != ".." && ringlist[i] != "CVS") {
-      ringsChoice->insertItem(ringlist[i]);
-       }
-   } 
+        printf ("\nCannot find 'rings' directory\n");
+    } else {
+    ringdir.setFilter( QDir::Files | QDir::NoSymLinks);
+    ringdir.setSorting( QDir::Name );
+  
+    QStringList ringlist;
+    ringlist = ringdir.entryList();
+    for (unsigned int i = 0; i < ringdir.count(); i++) {
+     if (ringlist[i] != "." && ringlist[i] != ".." && ringlist[i] != "CVS") {
+    ringsChoice->insertItem(ringlist[i]);
+     }
+    } 
+ }
   // For signalisations tab
    fullName->setText(QString(Config::getchar("Signalisations", "SIP.fullName", "")));
    userPart->setText(QString(Config::getchar("Signalisations", "SIP.userPart", "")));
@@ -69,13 +71,14 @@ void ConfigurationPanel::init()
       "stun.fwdnet.net:3478"));
 ((QRadioButton*)stunButtonGroup->find(Config::get("Signalisations", "STUN.useStun", 1)))->setChecked(true);
    // For audio tab
-   ossButton->setChecked(Config::get("Audio", "Drivers.driverOSS", (int)true));
-   alsaButton->setChecked(Config::get("Audio", "Drivers.driverALSA", (int)false));
+((QRadioButton*)DriverChoice->find(Config::get("Audio", "Drivers.driverName", 0)))->setChecked(true);
+
 #ifdef ALSA
    alsaButton->setEnabled(true);
 #else
    alsaButton->setEnabled(false);
 #endif
+
    codec1->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec1", "G711u")));
    codec2->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec2", "G711u")));
    codec3->setCurrentText(QString(Config::getchar("Audio", "Codecs.codec3", "G711u")));
@@ -139,15 +142,13 @@ void ConfigurationPanel::saveSlot()
    Config::set("Signalisations", "DTMF.sendDTMFas" , sendDTMFas->currentItem());
    Config::set("Signalisations", "STUN.STUNserver", STUNserver->text());
  
-   Config::set("Audio", "Drivers.driverALSA", alsaButton->isChecked());
-   Config::set("Audio", "Drivers.driverOSS", ossButton->isChecked());
-
    Config::set("Audio", "Codecs.codec1", codec1->currentText());
    Config::set("Audio", "Codecs.codec2", codec2->currentText());
    Config::set("Audio", "Codecs.codec3", codec3->currentText());
    Config::set("Audio", "Codecs.codec4", codec4->currentText());
    Config::set("Audio", "Codecs.codec5", codec5->currentText());
-   Config::set("Audio", "Rings.ringChoice", ringsChoice->currentText());
+   if (ringsChoice->currentText() != NULL)
+     Config::set("Audio", "Rings.ringChoice", ringsChoice->currentText());
    
    Config::set("Preferences", "Themes.skinChoice", SkinChoice->currentText());
    Config::set("Preferences", "Options.zoneToneChoice", 
@@ -236,5 +237,11 @@ void ConfigurationPanel::useStunSlot(int id)
 
 void ConfigurationPanel::applySkinSlot()
 {
-	Config::set("Preferences", "Themes.skinChoice", SkinChoice->currentText());
+ Config::set("Preferences", "Themes.skinChoice", SkinChoice->currentText());
+}
+
+
+void ConfigurationPanel::driverSlot(int id)
+{
+Config::set("Audio", "Drivers.driverName", id);
 }

@@ -33,7 +33,7 @@ ConfigurationTree::~ConfigurationTree (void) {
 int
 ConfigurationTree::populateFromFile (const char *fileName) {
 	if (fileName == NULL) {
-		printf("filename est NULL\n");
+		printf("Filename is NULL\n");
 		return 0;
 	}
 	
@@ -41,7 +41,7 @@ ConfigurationTree::populateFromFile (const char *fileName) {
 	file.open(fileName, fstream::in);
 	 
 	if (!file.is_open()) {
-        cout << "Error opening file";
+        printf("\nConfig-file is creating ...\n");
 		return 0;
   	}
 	
@@ -91,7 +91,7 @@ ConfigurationTree::saveToFile (const char *fileName) {
 	file.open(fileName, fstream::out);
 	 
 	if (!file.is_open()) {
-        cout << "Error opening file";
+        printf("\nError opening file\n");
 		return 0;
   	}
 

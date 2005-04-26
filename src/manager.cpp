@@ -141,11 +141,11 @@ Manager::createSettingsPath (void) {
  */
 void 
 Manager::selectAudioDriver (void) {
-	if (Config::getb("Audio", "Drivers.driverOSS")) {
+	if (Config::geti("Audio", "Drivers.driverName") == OSS_DRIVER) {
 		useAlsa = false; 
 		this->audiodriver = new AudioDriversOSS (AudioDrivers::ReadWrite, error);
 	}
-	if (Config::getb("Audio", "Drivers.driverALSA")) {
+	if (Config::geti("Audio", "Drivers.driverName") == ALSA_DRIVER) {
 #ifdef ALSA
 		useAlsa = true;
 		this->audiodriver = new AudioDriversALSA (AudioDrivers::WriteOnly, error);
@@ -393,7 +393,6 @@ Manager::getNumberPendingCalls (void) {
 void
 Manager::handleRemoteEvent (int code, char * reason, int remotetype, int line) {
 	QString qinfo;
-	int theline;
 	
 	switch (remotetype) {
 		// Registration success

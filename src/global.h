@@ -48,4 +48,6 @@
 														// bytes in buffer
 #define	YES						0
 #define NO						1
+#define OSS_DRIVER				0
+#define ALSA_DRIVER				1
 #endif	// __GLOBAL_H__
