@@ -22,7 +22,6 @@
 void ConfigurationPanel::init()
 {
     // For reading settings at application startup
-
      // List skin choice from "skins" directory
    QDir dir(Skin::getPath(QString(SKINDIR)));
    if ( !dir.exists() ) {
@@ -71,6 +70,7 @@ void ConfigurationPanel::init()
       "stun.fwdnet.net:3478"));
 ((QRadioButton*)stunButtonGroup->find(Config::get("Signalisations", "STUN.useStun", 1)))->setChecked(true);
    // For audio tab
+  
 ((QRadioButton*)DriverChoice->find(Config::get("Audio", "Drivers.driverName", 0)))->setChecked(true);
 
 #ifdef ALSA

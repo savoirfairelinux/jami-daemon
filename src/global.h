@@ -24,7 +24,7 @@
 #define PREFIX					"/usr/local"
 #endif
 
-#define VERSION					"0.2"
+#define VERSION					"0.3"
 #define PROGNAME				"sflphone"
 #define SKINDIR					"skins"
 #define PIXDIR					"pixmaps"

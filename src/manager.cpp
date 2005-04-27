@@ -59,16 +59,16 @@ Manager::Manager (QString *Dc = NULL) {
 	
 	exist = createSettingsPath();
 	
-	selectAudioDriver();
 	phonegui = new QtGUIMainWindow (0, 0 ,  
 					Qt::WDestructiveClose | 
 					Qt::WStyle_Customize |
 					Qt::WStyle_NoBorder,this);
 
+	error = new Error(this);
+	selectAudioDriver();
 	sip = new SIP(this);
 	tone = new ToneGenerator(this);
 	audioRTP = new AudioRtp(this);
-	error = new Error(this);
 	
 	sip_init();
 
@@ -91,6 +91,7 @@ Manager::Manager (QString *Dc = NULL) {
 	} 
 
 	initVolume ();	
+	
 }
 
 Manager::~Manager (void) {

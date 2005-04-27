@@ -101,7 +101,7 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 									: TransQWidget (parent, name, f) {
 	// Create configuration panel
 	panel = new ConfigurationPanel (0, 0, false);
-
+										
 	// Address book dialog
 	phonebook = new PhoneBook (0, 0, false);
 

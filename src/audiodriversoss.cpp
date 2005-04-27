@@ -83,7 +83,6 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	audio_fd = open (AUDIO_DEVICE, oflag | O_NONBLOCK );
 	if (audio_fd == -1) {
 		error->errorName(OPEN_FAILED_DEVICE, NULL);	
-
 		return -1;
 	}  
  
