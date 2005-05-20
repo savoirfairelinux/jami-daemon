@@ -9,6 +9,7 @@
 
 #include "configitem.h"
 #include "configurationtree.h"
+#include "global.h"
 
 using namespace std;
 
@@ -18,7 +19,7 @@ ConfigurationTree::ConfigurationTree (void) {
 }
 
 // Construct with file name, and load from this file
-ConfigurationTree::ConfigurationTree (const char *fileName) {
+ConfigurationTree::ConfigurationTree (const string& fileName) {
 	populateFromFile (fileName);
 }
 
@@ -31,67 +32,70 @@ ConfigurationTree::~ConfigurationTree (void) {
 
 // Create the tree from an existing ini file
 int
-ConfigurationTree::populateFromFile (const char *fileName) {
-	if (fileName == NULL) {
-		printf("Filename is NULL\n");
+ConfigurationTree::populateFromFile (const string& fileName) {
+	bool out = false;
+	if (fileName.empty()) {
 		return 0;
 	}
 	
 	fstream file;
-	file.open(fileName, fstream::in);
+	file.open(fileName.data(), fstream::in);
 	 
 	if (!file.is_open()) {
-        printf("\nConfig-file is creating ...\n");
-		return 0;
+		file.open(fileName.data(), fstream::out);
+		out = true;
+		if (!file.is_open()) {
+        	_debug("Error opening file (%s:%d)\n", __FILE__, __LINE__);
+			return 0;
+		}
+		return 2;
   	}
 	
 	char line[128];
 	bzero (line, 128);
 	
-	const char* section = NULL;
-	const char* key;
-	const char* val;
-	String s;
+	const string section("");
+	const string key("");
+	const string val("");
+	string s;
+	int pos;
 	
 	while (!file.eof()) {
 		// Read the file line by line
 		file.getline (line, 128 - 1);
-		String* str = new String(line);
-		if (*str[0] == '[') {
+		string str(line);
+		if (str[0] == '[') {
 			// If the line is a section
-			s = str->token("[",1);
-			s.trim("]");
-			section = s.data();
-	
-		} else if (*str != NULL and *str[0] != '#') {
+			pos = str.find(']');
+			section = str.substr(1, pos - 1);
+		} else if (!str.empty() and str[0] != '#') {
 			// If the line is "key=value" and doesn't begin with '#'(comments)
-			String k = str->token("=", 0);
-			key = k.data();
-			String v = str->token("=", 0);
-			val = v.data();
-			if (String(key).length() > 0 and String(val).length() > 0) {
+			pos = str.find('=');
+			key = str.substr(0, pos);
+			val = str.substr(pos + 1, str.length() - pos);
+		
+			if (key.length() > 0 and val.length() > 0) {
 				setValue(section, key, val);
 			} 
 		}
-		delete str;
 	}
-	
+
 	file.close();
 	return 1;
 }
 
 // Save tree's contents to a file
 int
-ConfigurationTree::saveToFile (const char *fileName) {
-	if (fileName == NULL || _head == NULL) {
+ConfigurationTree::saveToFile (const string& fileName) {
+	if (fileName.empty() || _head == NULL) {
 		return 0;
 	}
 	
 	fstream file;
-	file.open(fileName, fstream::out);
+	file.open(fileName.data(), fstream::out);
 	 
 	if (!file.is_open()) {
-        printf("\nError opening file\n");
+        _debug("Error opening file\n");
 		return 0;
   	}
 
@@ -104,7 +108,7 @@ ConfigurationTree::saveToFile (const char *fileName) {
 // set [section]/key to int value
 #define TMPBUFSIZE	32
 int
-ConfigurationTree::setValue (const char *section, const char *key, int value) {
+ConfigurationTree::setValue (const string& section, const string& key, int value) {
 	char tmpBuf[TMPBUFSIZE];
 
 	// Make string from int
@@ -116,8 +120,9 @@ ConfigurationTree::setValue (const char *section, const char *key, int value) {
 
 // set [section]/key to "value"
 int
-ConfigurationTree::setValue (const char *section, const char *key,
-							 const char *value) {
+ConfigurationTree::setValue (const string& section, const string& key,
+							 const string& value) {
+
 	if (_head != NULL) {
 		ConfigSection *list;
 		ConfigItem		*item;
@@ -145,11 +150,10 @@ ConfigurationTree::setValue (const char *section, const char *key,
 }
 
 // get [section]/key's value
-char *
-ConfigurationTree::getValue (const char *section, const char *key) {
-//	printf ("getValue(%s,%s)\n", section, key);
+string
+ConfigurationTree::getValue (const string& section, const string& key) {
 	if (_head != NULL) {
-		String *valuePtr;
+		string *valuePtr;
 		if (_head->getItemByKey(section)->head() != 0) {
 			// If config file exist
 			valuePtr = _head->getItemByKey(section)->head()->getValueByKey(key);
@@ -161,10 +165,10 @@ ConfigurationTree::getValue (const char *section, const char *key) {
 		if (valuePtr != NULL) {
 			return valuePtr->data();
 		} else {
-			return NULL;
+			return "";
 		}
 	} else {
-		return (char *) NULL;
+		return "";
 	}
 }
 

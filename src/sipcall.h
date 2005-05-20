@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 Savoir-Faire Linux inc.
+ * Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  * Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
  *
  * Portions Copyright (C) 2002,2003   Aymeric Moizard <jack@atosc.org>
@@ -23,41 +23,25 @@
 #define __SIP_CALL_H__
 
 #include <eXosip/eXosip.h>
-#include <qapplication.h>
+#include <vector>
 
-#include "manager.h"
+#include "audio/audiocodec.h"
+#include "audio/codecDescriptor.h"
 
 #define NOT_USED      0
+using namespace std;
 
+typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
+
+class AudioCodec;
 class SipCall {
 public:
-	SipCall (void);
-	SipCall (Manager *);
+	SipCall (short id, CodecDescriptorVector* cdv);
 	~SipCall (void);
 
-	Manager *manager;
-	bool 	 usehold;
-
-	int 	 cid;	// call id
-  	int 	 did;	// dialog id
-
-  	int  	 status_code;
-	
-	char 	*reason_phrase;
-  	char 	*textinfo;
-  	char 	*req_uri;
-  	char 	*local_uri;
-  	char 	*remote_uri;
-  	char 	*subject;
-	
-	char 	*remote_sdp_audio_ip;
-  	char 	*payload_name;
-	char	*sdp_body;
-	int		 local_audio_port;	
-  	int  	 remote_sdp_audio_port;
- 	int  	 payload;
-  	int  	 state;
-  	int  	 enable_audio; /* 1 started, -1 stopped */
+	bool 	usehold;
+ 	int  	payload;
+  	int  	enable_audio; /* 1 started, -1 stopped */
 	
 	int  	newIncomingCall 	(eXosip_event_t *);
 	int  	answeredCall 		(eXosip_event_t *);
@@ -74,11 +58,49 @@ public:
 
 	void	setLocalAudioPort 	(int);
 	int 	getLocalAudioPort 	(void);	
+	void 	setId				(short id);
+	short	getId				(void);
+	void 	setDid				(int did);
+	int 	getDid				(void);
+	void 	setCid				(int cid);
+	int 	getCid				(void);
+	int 	getRemoteSdpAudioPort (void);
+	char* 	getRemoteSdpAudioIp (void);
+	AudioCodec* getAudioCodec	(void);
+	void	setAudioCodec		(AudioCodec* ac);
+
+	inline void setStandBy (bool standby) { _standby = standby; }
+	inline bool getStandBy (void) { return _standby; }
 
 private:
-	void	alloc				(void);
-	void	dealloc				(void);
-		
+	void	alloc			(void);
+	void	dealloc			(void);
+	void 	noSupportedCodec(void);	
+	
+	CodecDescriptorVector* _cdv;
+	AudioCodec* _audiocodec;
+	
+	short 	_id;
+	int 	_cid;	// call id
+  	int 	_did;	// dialog id
+	bool	_standby;
+
+  	int  	_status_code;
+	
+	char*	_reason_phrase;
+  	char*	_textinfo;
+  	char*	_req_uri;
+  	char*	_local_uri;
+  	char*	_remote_uri;
+  	char*	_subject;
+	
+	char*	_remote_sdp_audio_ip;
+  	char*	_payload_name;
+	char*	_sdp_body;
+  	int  	_state;
+	int		_local_audio_port;
+  	int  	_remote_sdp_audio_port;
+	
 };
 
 #endif // __SIP_CALL_H__

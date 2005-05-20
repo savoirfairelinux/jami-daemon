@@ -20,12 +20,10 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#include <qsettings.h>
-#include <qstring.h>
+#include <string>
 
 #include "global.h"
 
-#include <string>
 using namespace std;
 
 class ConfigurationTree;
@@ -34,22 +32,23 @@ public:
 	Config					(void) {};
 	~Config					(void) {};
 
-	static std::string	 gets	(const char*, const char*);
-	static char* getschar	(const char*, const char*);
-	static int		 geti	(const char*, const char*);
-	static bool		 getb	(const char*, const char*);
+	static string	gets	(const string&, const string&);
+//	static string	getschar(const string&, const string&);
+	static int		geti	(const string&, const string&);
+//	static bool		getb	(const string&, const string&);
 	
-	static std::string	 get	(const char*, const char*, const char*);	
-	static char* getchar	(const char*, const char*, const char*);	
-	static int		 get	(const char*, const char*, int);
-	static bool		 get	(const char*, const char*, bool);
+	static string	get		(const string&, const string&, const string&);	
+	static string 	getchar	(const string&, const string&, const string&);	
+	static int		get		(const string&, const string&, int);
+	static bool		get		(const string&, const string&, bool);
 	
-	static int		 set	(const char*, const char*, int);
-	static bool		 set	(const char*, const char*, bool);
-	static std::string	 set	(const char*, const char*, const char*);
-	static char* setchar	(const char*, const char*, const char*);
+	static int		set		(const string&, const string&, int);
+	static bool		set		(const string&, const string&, bool);
+	static string	set		(const string&, const string&, const string&);
+	static string 	setchar	(const string&, const string&, const string&);
 
-	static void		 setTree (ConfigurationTree *);
+	static void		setTree (ConfigurationTree *);
+	static void		deleteTree (void);
 	static ConfigurationTree*	tree (void);
 };
 

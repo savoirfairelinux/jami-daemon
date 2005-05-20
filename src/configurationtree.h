@@ -28,14 +28,14 @@
 class ConfigurationTree {
 public:
 	ConfigurationTree (void);
-	ConfigurationTree (const char *);
+	ConfigurationTree (const string&);
 	~ConfigurationTree (void);	
 	ConfigSection*  head (void) { return this->_head; }
-	int				populateFromFile(const char*);
-	int				saveToFile		(const char*);
-	int				setValue		(const char*, const char*, int);
-	int				setValue		(const char*, const char*, const char*);
-	char*			getValue		(const char*, const char*);
+	int				populateFromFile(const string& );
+	int				saveToFile		(const string& );
+	int				setValue		(const string& , const string& , int);
+	int				setValue(const string& , const string& , const string& );
+	string			getValue		(const string& , const string& );
 	
 private:
 	ConfigSection *_head;

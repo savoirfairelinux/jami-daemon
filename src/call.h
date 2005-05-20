@@ -1,0 +1,136 @@
+/**
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *                                                                              
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *                                                                              
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *                                                                              
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#ifndef __CALL_H__
+#define __CALL_H__
+
+#include <string>
+#include <vector>
+using namespace std;
+
+#include "sipvoiplink.h"
+#include "voIPLink.h"
+
+
+enum CallState {
+	NotExist = 0,
+	Busy,
+	OnHold,
+	OffHold,
+	MuteOn,
+	MuteOff,
+	Transfered,
+	Hungup,
+	Answered,
+	Ringing,
+	Progressing,
+	Cancelled,	// for cancel outgoing ringing call
+	Refused		// for refuse incoming ringing call	
+};
+
+enum CallType {
+	Null = 0,
+	Incoming,
+	Outgoing
+};
+
+#include "manager.h"
+
+class AudioCodec;
+
+class Call {
+public:
+	Call(void);
+	Call(Manager* manager, short id, CallType type, VoIPLink* voiplink);
+	
+	~Call(void);
+	
+	short getId (void);
+	void setId (short id);
+	
+	unsigned int getTimestamp(void);
+	void setTimestamp (unsigned int timestamp);
+
+	short getVoIPLinkId(void);
+	void setVoIPLinkId (short voIPLinkId);
+	void setVoIPLink (VoIPLink* voIPLink);
+	VoIPLink* getVoIPLink(void);
+	void setAudioCodec(void);
+		
+	string getStatus (void);
+	void setStatus (const string& status);
+	
+	string getTo (void);
+	void setTo (const string& to);
+
+	string getCallerIdName (void);
+	void setCallerIdName (const string& callerId_name);
+	string getCallerIdNumber (void);
+	void setCallerIdNumber (const string& callerId_number);
+	
+	enum CallState getState (void);
+	void setState (enum CallState state);
+	enum CallType getType (void);
+	void setType (enum CallType type);
+
+	bool isBusy	(void);
+	bool isOnHold (void);
+	bool isOffHold (void);
+	bool isOnMute (void);
+	bool isTransfered (void);
+	bool isHungup (void);
+	bool isRinging (void);
+	bool isRefused (void);
+	bool isCancelled (void);
+	bool isAnswered (void);
+	bool isProgressing (void);
+	bool isOutgoingType (void);
+	bool isIncomingType (void);
+	
+	int outgoingCall  (const string& to);
+	int hangup  (void);
+	int answer  (void);
+	int onHold  (void);
+	int offHold  (void);
+	int transfer  (const string& to);
+	int muteOn (void);
+	int muteOff (void);
+	int refuse  (void);
+	int cancel  (void);
+
+
+private:
+	void initConstructor (void);
+	
+	Manager* _manager;
+	VoIPLink* _voIPLink;
+	AudioCodec* _audiocodec;
+	
+	short _id;
+	short _voIPLinkId;
+	unsigned int _timestamp;
+	enum CallState _state;
+	enum CallType _type;
+	string _to;
+	string _callerIdName;
+	string _callerIdNumber;
+	string _status;
+};
+
+#endif // __CALL_H__

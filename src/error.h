@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 
-#include "manager.h"
 
 typedef enum {
 	DEVICE_NOT_OPEN = 0,
@@ -35,10 +34,10 @@ typedef enum {
 
 } Error_enum;
 
-
+class Manager;
 class Error {
 public: 
-	Error (Manager *); 
+	Error (Manager *mngr); 
 	~Error (void) {};
 
 	int errorName (Error_enum, char *);
@@ -46,7 +45,7 @@ public:
 	inline void setError(int err) 	{ issetError = err; }
 
 private:
-	Manager *mngr;
+	Manager *_mngr;
 	int 	issetError;
 	
 };

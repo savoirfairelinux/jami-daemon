@@ -17,59 +17,73 @@ SKINS = skins
 RINGS = rings
 METAL_SKINS = metal
 
-ifdef ALSA
-endif
-	
-INCPATH  = -I. -I$(QTDIR)/include -I$(CCPPDIR)/include/cc++2 -I$(CCRTPDIR)/include -I$(OSIPDIR)/include -I$(EXOPSIP)/include -I/usr/include -I../gsm
+INCPATH  = -I. -I$(QTDIR)/include -I$(CCPPDIR)/include/cc++2 -I$(CCRTPDIR)/include -I$(OSIPDIR)/include -I$(EXOPSIP)/include -I/usr/include -Iaudio/gsm
 
 CXXFLAGS = -pipe -Wall -W -g -pipe -march=i386 -mcpu=i686  -DQT_NO_DEBUG -DQT_SHARED -DQT_THREAD_SUPPORT -fpermissive -Wno-deprecated $(INCPATH)
 
 LIBS=-L$(QTDIR)/lib -L/usr/X11R6/lib -lqt-mt -lXext -lX11 -lm -L/opt/lib -losip2 -leXosip -lccrtp1 -lasound `$(CCPPDIR)/bin/ccgnu2-config --flags --stdlibs` 
 
-EXTRALIBS=../gsm/libgsm.a
+EXTRALIBS=audio/gsm/libgsm.a
 
 CONFIGURE_CONF=$(shell ls ../configure.conf)
 
 	
 OBJS = \
-	audiobuffer.o \
-	audiocodec.o \
-	audiodrivers.o \
-	audiodriversoss.o \
-	audiodriversalsa.o \
-	audiortp.o \
-	configuration.o \
+	audio/audiobuffer.o \
+	audio/audiocodec.o \
+	audio/codecDescriptor.o \
+	audio/audiodrivers.o \
+	audio/audiodriversalsa.o \
+	audio/audiodriversoss.o \
+	audio/audiortp.o \
+	audio/dtmf.o \
+	audio/dtmfgenerator.o \
+	audio/tonegenerator.o \
+	audio/g711.o \
+	audio/gsmcodec.o \
+	audio/alaw.o \
+	audio/ulaw.o \
+	call.o \
 	configitem.o \
+	configuration.o \
 	configurationtree.o \
-	dtmf.o \
-	dtmfgenerator.o \
 	error.o \
-	g711.o \
+	eventthread.o \
+	gui/guiframework.o \
+	gui/qt/mydisplay.o \
+    gui/qt/numerickeypadtools.o \
+    gui/qt/phoneline.o \
+    gui/qt/point.o \
+	gui/qt/transqwidget.o \
+    gui/qt/trayicon.o \
+	gui/qt/trayicon.moc.o \
+	gui/qt/trayicon_x11.o \
+	gui/qt/vector.o \
+	gui/qt/volumecontrol.o \
+	gui/qt/volumecontrol.moc.o \
+    gui/qt/jpushbutton.o \
+	gui/qt/jpushbutton.moc.o \
+    gui/qt/numerickeypad.o \
+	gui/qt/numerickeypad.moc.o \
+	gui/qt/qjlistboxpixmap.o \
+    gui/qt/qtGUImainwindow.o \
+	gui/qt/qtGUImainwindow.moc.o \
+	gui/qt/configurationpanelui.o \
+	gui/qt/configurationpanelui.moc.o \
+	gui/qt/url_inputui.o \
+	gui/qt/url_inputui.moc.o \
 	main.o \
 	manager.o \
-	mydisplay.o \
-	numerickeypadtools.o \
-	phoneline.o \
-	point.o \
-	qjlistboxpixmap.o \
-	sip.o \
 	sipcall.o \
+	sipvoiplink.o \
 	skin.o \
-	url_inputui.o url_inputui.moc.o \
-	phonebookui.o phonebookui.moc.o \
-	configurationpanelui.o configurationpanelui.moc.o \
-	tonegenerator.o \
-	transqwidget.o \
-	trayicon.o trayicon.moc.o trayicon_x11.o \
-	jpushbutton.o jpushbutton.moc.o \
-	numerickeypad.o numerickeypad.moc.o \
-	qtGUImainwindow.o qtGUImainwindow.moc.o \
-	vector.o \
-	volumecontrol.o volumecontrol.moc.o \
-	stun.o udp.o  
+	voIPLink.o \
+	stun.o \
+	udp.o 
+  		
 	
 start:	check prereq all
-#start:	check  all
+#start:check all
 
 check:
 ifeq ($(CONFIGURE_CONF),../configure.conf)
@@ -81,14 +95,14 @@ endif
 .cpp.o:
 	$(CXX) $(DEFVARS) $(CXXFLAGS) -c -o $@ $<
 
-prereq:	phonebook.ui url_input.ui configurationpanel.ui
+prereq:	gui/qt/phonebook.ui gui/qt/url_input.ui gui/qt/configurationpanel.ui
 	@echo "Making User Interface files..."
-	$(UIC) -o phonebookui.h phonebook.ui
-	$(UIC) -o phonebookui.cpp -impl phonebookui.h phonebook.ui
-	$(UIC) -o url_inputui.h url_input.ui
-	$(UIC) -o url_inputui.cpp -impl url_inputui.h url_input.ui
-	$(UIC) -o configurationpanelui.h configurationpanel.ui
-	$(UIC) -o configurationpanelui.cpp -impl configurationpanelui.h configurationpanel.ui
+	$(UIC) -o gui/qt/phonebookui.h gui/qt/phonebook.ui
+	$(UIC) -o gui/qt/phonebookui.cpp -impl gui/qt/phonebookui.h gui/qt/phonebook.ui
+	$(UIC) -o gui/qt/url_inputui.h gui/qt/url_input.ui
+	$(UIC) -o gui/qt/url_inputui.cpp -impl gui/qt/url_inputui.h gui/qt/url_input.ui
+	$(UIC) -o gui/qt/configurationpanelui.h gui/qt/configurationpanel.ui
+	$(UIC) -o gui/qt/configurationpanelui.cpp -impl gui/qt/configurationpanelui.h gui/qt/configurationpanel.ui
 
 %.moc.cpp: %.h
 	$(MOC) -o $@ $<
@@ -106,21 +120,21 @@ all: $(PROGNAME)
 $(PROGNAME): $(OBJS) $(EXTRALIBS)
 	$(CXX) -o $@ $(OBJS) $(LIBS) $(EXTRALIBS)
 	
-install:	all
-	mkdir -p $(BIN_DIR)
-	mkdir -p $(SHARE_DIR)/$(PROGNAME)
-	install --mode=0755 $(PROGNAME) $(BIN_DIR)
-	cd ..; cp -R $(PIXMAPS) $(SHARE_DIR)/$(PROGNAME)/ ; \
-		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(PIXMAPS)
-	cd ..; cp -R $(SKINS) $(SHARE_DIR)/$(PROGNAME)/ ; \
-		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(SKINS)
-	cd ..; cp -R $(RINGS) $(SHARE_DIR)/$(PROGNAME)/ ; \
-		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(RINGS)
-
-uninstall: 
-	rm -f $(BIN_DIR)/$(PROGNAME)
-	rm -rf $(SHARE_DIR)/$(PROGNAME)
+#install:	all
+#	mkdir -p $(BIN_DIR)
+#	mkdir -p $(SHARE_DIR)/$(PROGNAME)
+#	install --mode=0755 $(PROGNAME) $(BIN_DIR)
+#	cd ..; cp -R $(PIXMAPS) $(SHARE_DIR)/$(PROGNAME)/ ; \
+#		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(PIXMAPS)
+#	cd ..; cp -R $(SKINS) $(SHARE_DIR)/$(PROGNAME)/ ; \
+#		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(SKINS)
+#	cd ..; cp -R $(RINGS) $(SHARE_DIR)/$(PROGNAME)/ ; \
+#		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(RINGS)
+#
+#uninstall: 
+#	rm -f $(BIN_DIR)/$(PROGNAME)
+#	rm -rf $(SHARE_DIR)/$(PROGNAME)
 
 clean:
-	rm -f $(PROGNAME) *.o *.a *~ *.moc.cpp *.bak core.*
+	rm -f $(PROGNAME) *.o audio/*.o audio/gsm/*.o gui/*.o gui/qt/*.o audio/gsm/*.a *~ *.moc.cpp *.bak core.*
 

@@ -3,14 +3,12 @@
 // (c) 2004 Savoir-faire Linux inc.
 //
 //
-#include <cc++/string.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "configitem.h"
 
-using namespace ost;
 using namespace std;
 
 ConfigItem::ConfigItem (void) {
@@ -18,16 +16,16 @@ ConfigItem::ConfigItem (void) {
 }
 
 // Create a new ConfigItem, with key name keyName
-ConfigItem::ConfigItem (const char *keyName) {
+ConfigItem::ConfigItem (const string& keyName) {
 	init();
-	this->_key = new String(keyName);
+	this->_key = new string(keyName);
 }
 
 // Create a new ConfigItem, with key name keyName and value keyVal.
-ConfigItem::ConfigItem (const char *keyName, const char *keyVal) {
+ConfigItem::ConfigItem (const string& keyName, const string& keyVal) {
 	init();
-	this->_key = new String(keyName);
-	this->_value = new String(keyVal);
+	this->_key = new string(keyName);
+	this->_value = new string(keyVal);
 }
 
 ConfigItem::~ConfigItem (void) {
@@ -37,8 +35,8 @@ ConfigItem::~ConfigItem (void) {
 
 
 // Get the value of the passed key
-String*
-ConfigItem::getValueByKey (const char *keyName) {
+string*
+ConfigItem::getValueByKey (const string& keyName) {
 	assert (_key != NULL);
 	
 	if (*_key == keyName) {
@@ -53,7 +51,7 @@ ConfigItem::getValueByKey (const char *keyName) {
 // Get item pointer using a key value.
 // If key value not found, new item is appended to list.
 ConfigItem*
-ConfigItem::getItemByKey (const char *keyName) {
+ConfigItem::getItemByKey (const string& keyName) {
 	assert (_key != NULL);
 
 	if (*_key == keyName) {
@@ -94,17 +92,17 @@ ConfigItem::saveToFile (fstream *fd) {
 
 // Set the current objects value
 void
-ConfigItem::setValue (const char *newValue) {
+ConfigItem::setValue (const string& newValue) {
 	if (_value != NULL) {
 		delete _value;
 	}
 	
-	_value = new String(newValue);
+	_value = new string(newValue);
 }
 
 // Set a value given its key name
 void
-ConfigItem::setValueByKey (const char *key, const char *value) {
+ConfigItem::setValueByKey (const string& key, const string& value) {
 	getItemByKey(key)->setValue(value);
 }
 

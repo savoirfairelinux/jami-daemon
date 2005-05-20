@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2004 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -20,15 +20,24 @@
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
 
+#define DEBUG
+
+#ifdef DEBUG
+	#define _debug(...)	fprintf(stderr, "[debug] " __VA_ARGS__)
+#else
+	#define _debug(...)
+#endif
+
 #ifndef PREFIX
 #define PREFIX					"/usr/local"
 #endif
 
-#define VERSION					"0.3"
+#define VERSION					"0.4"
 #define PROGNAME				"sflphone"
 #define SKINDIR					"skins"
 #define PIXDIR					"pixmaps"
 #define RINGDIR					"rings"
+#define CODECDIR				"codecs"
 
 #define SFLPHONE_LOGO			"logo_ico.png"
 #define TRAY_ICON				"tray-icon.png"
@@ -46,8 +55,6 @@
 #define	FORMAT					2			// for 16 bits format
 #define OCTETS					SAMPLING_RATE * FORMAT	// Number of writen 
 														// bytes in buffer
-#define	YES						0
-#define NO						1
 #define OSS_DRIVER				0
 #define ALSA_DRIVER				1
 #endif	// __GLOBAL_H__

@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2004 Savoir-Faire Linux inc.
+ *  Copyright (C) 2005 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -16,89 +16,101 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include "configurationtree.h"
 
 #include <getopt.h>
-
+#include "user_cfg.h"
+#ifdef QT_GUI
 #include <qapplication.h>
-#include <qmessagebox.h>
-#include <qtranslator.h>
-#include <qwidget.h>
+#include "gui/qt/qtGUImainwindow.h"
+#endif
 
+#include "configuration.h"
+#include "configurationtree.h"
 #include "manager.h"
-#include "mydisplay.h"
-#include "numerickeypad.h"
-#include "skin.h"
-#include "qtGUImainwindow.h"
 
 
-void OptionProcess (int argc,char **argv) ;
-QString *pOption = NULL;
-
+int OptionProcess (int argc,char **argv, Manager* manager);
 
 int
 main (int argc, char **argv) {
-	QApplication	a(argc, argv);
-	Manager *manager;
-	
+	Manager* manager;
 	Config::setTree(new ConfigurationTree());	
-	
-	OptionProcess (argc,argv);
-	manager = new Manager(pOption);
-/*
-	if ( pOption )  
-		manager = new Manager(pOption);
-	else
-		manager = new Manager(new QString());
-*/
+	manager = new Manager();
 
-#if 0
-	QTranslator translator (0);
-	translator.load("app_fr.qm", ".");
-	a.installTranslator (&translator);	
+	// Faire partir la gui selon l'option choisie
+		QApplication a(argc, argv);
+		QtGUIMainWindow *qtgui = new QtGUIMainWindow (0, 0 ,
+									Qt::WDestructiveClose |
+									Qt::WStyle_Customize |
+									Qt::WStyle_NoBorder,
+									manager);
+		manager->setGui(qtgui);
+		manager->init();		
+		
+		a.setMainWidget(qtgui);
+		return a.exec();
+//	int ret = OptionProcess (argc,argv, manager);
+//	return ret;
+}
+
+int OptionProcess (int argc,char **argv, Manager* manager) 
+{
+	int c;
+
+	while (1) {
+		int option_index = 0;
+		static struct option long_options[] =
+		{
+			{"ui", 1, 0, 'i'},
+			{"phonenumber", 1, 0, 'p'},
+			{"stun", 1, 0, 's'},
+			{"verbose", 0, 0, 'v'},
+			{"help", 0, 0, 'h'},
+			{0, 0, 0, 0}
+		};
+
+		c = getopt_long (argc, argv, "i:p:s:vh", long_options, &option_index);
+		if (c == -1)
+			break;
+
+		switch (c) {
+			case 'i':
+				{
+					string optStr(optarg);
+					if (optStr.compare("qt") == 0) {
+#ifdef QT_GUI
+						QApplication a(argc, argv);
+						QtGUIMainWindow *qtgui = new QtGUIMainWindow (0, 0 ,
+                    								Qt::WDestructiveClose |
+                    								Qt::WStyle_Customize |
+                    								Qt::WStyle_NoBorder,
+													manager);
+						cout << "a.setMainWidget(qtgui);" << endl;
+						a.setMainWidget(qtgui);
+						return a.exec();
 #endif
-
-	a.setMainWidget(manager->gui());
-	return a.exec();
+					} else if (optStr.compare("text")) {
+					} else {
+					}
+				}
+				break;				
+			case 'v':
+				break;
+			case 'p':
+				cout << "Phone number to call : " << optarg << endl;
+				break;
+			case 's':
+				break;
+			case '?':
+			case 'h':
+				break;
+			default:
+				cout << "Option " << c << "doesn't exist" <<endl;
+				break;
+		}
+	}
+	return 0;
 }
-
-
-void OptionProcess (int argc,char **argv) {
-int c;
-
-        while (1) {
-                int option_index = 0;
-                static struct option long_options[] =
-                {
-                                {"phonenumber", 1, 0, 'p'},
-                                {"stun", 1, 0, 's'},
-                                {"verbose", 0, 0, 'v'},
-                                {"help", 0, 0, 'h'},
-                                {0, 0, 0, 0}
-                };
-
-                c = getopt_long (argc, argv, "p:s:vh", long_options, &option_index);
-                if (c == -1)
-                        break;
-
-                switch (c) {
-                        case 'v':
-                                break;
-                        case 'p':
-				printf("Phone number to call : %s\n",optarg);
-				pOption = new QString(optarg);		
-                                break;
-                        case 's':
-                                break;
-                        case '?':
-                        case 'h':
-                                break;
-                        default:
-                                printf ("?? caractère de code 0%o ??\n", c);
-                }
-        }
-}
-
 
 
 

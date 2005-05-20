@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2004 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,8 @@
 
 #ifndef __SKIN_H__
 #define __SKIN_H__
+
+#include <string>
 
 #include "global.h"
 
@@ -98,18 +100,19 @@ extern const char* PIXMAP_LINE_NAMES[];
 }
 #endif
 
+using namespace std;
 
 class Skin {
 public:
 	Skin (void);
 	~Skin (void);
 	
-	static QString getPath(const QString &, const QString &, const QString &, 
-						const QString &, const QString &);
-	static QString getPath(const QString &,const QString &, const QString &);
-	static QString getPath(const QString &);
-	static QString getPathPixmap (const QString &, const QString &);
-	static QString getPathRing	 (const QString &, const QString &);
+	static string getPath(const string &, const string &, const string &, 
+						const string &, const string &);
+	static string getPath(const string &,const string &, const string &);
+	static string getPath(const string &);
+	static string getPathPixmap (const string &, const string &);
+	static string getPathRing	 (const string &, const string &);
 };
 
 #endif	// __SKIN_H__

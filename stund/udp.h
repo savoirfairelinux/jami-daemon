@@ -57,8 +57,8 @@ inline int getErrno() { return WSAGetLastError(); }
 
 #else
 
-typedef int Socket;
-//#define Socket			int
+//typedef int Socket;
+#define Socket			int
 #define INVALID_SOCKET	-1
 #define SOCKET_ERROR	-1
 

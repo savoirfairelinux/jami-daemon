@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2004 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <qstring.h>
 
 #include "global.h"
 #include "skin.h"
@@ -47,33 +46,33 @@ Skin::Skin (void) {
 Skin::~Skin (void) {
 }
 
-QString 
-Skin::getPath (const QString & prefix, const QString & progname, 
-	const QString & skindir, const QString & skin, 
-	const QString & filename) {
+string 
+Skin::getPath (const string & prefix, const string & progname, 
+	const string & skindir, const string & skin, 
+	const string & filename) {
 	return (prefix + "/" + progname + "/" + skindir + "/" + skin + "/" + 
 		filename);
 }
 
-QString 
-Skin::getPath (const QString & skindir, const QString & skintype, 
-	const QString & filename) {
-	return (QString(PROGSHAREDIR) + "/" + skindir + "/" + skintype + "/" + filename);
+string 
+Skin::getPath (const string & skindir, const string & skintype, 
+	const string & filename) {
+	return (string(PROGSHAREDIR) + "/" + skindir + "/" + skintype + "/" + filename);
 }
 		
-QString 
-Skin::getPath (const QString & dir) {
-	return (QString(PROGSHAREDIR) + "/" + dir);
+string 
+Skin::getPath (const string & dir) {
+	return (string(PROGSHAREDIR) + "/" + dir);
 }
 
-QString 
-Skin::getPathPixmap (const QString & pixdir, const QString & filename) {
-	return (QString(PROGSHAREDIR) + "/" + pixdir + "/" + filename);
+string 
+Skin::getPathPixmap (const string & pixdir, const string & filename) {
+	return (string(PROGSHAREDIR) + "/" + pixdir + "/" + filename);
 }
 
-QString 
-Skin::getPathRing (const QString & ringdir, const QString & filename) {
-	return (QString(PROGSHAREDIR) + "/" + ringdir + "/" + filename);
+string 
+Skin::getPathRing (const string & ringdir, const string & filename) {
+	return (string(PROGSHAREDIR) + "/" + ringdir + "/" + filename);
 }
 
 // EOF

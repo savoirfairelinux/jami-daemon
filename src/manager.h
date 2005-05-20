@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2004 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -20,119 +20,250 @@
 #ifndef __MANAGER_H__
 #define __MANAGER_H__
 
-#include "audiodrivers.h"
-#include "phoneline.h"
-#include "../stund/stun.h"
-
-// Status list
-#define LOGGED_IN_STATUS 	"Logged in"	
-#define REG_FAIL_STATUS		"Registration failure"	
-#define CONNECTED_STATUS	"Connected"
-#define	HUNGUP_STATUS		"Hung up"
-#define RINGING_STATUS		"Ringing"
-#define TRYING_STATUS		"Trying..."
-#define	REFUSED_CALL_STATUS	"Refused call"
-#define ENTER_NUMBER_STATUS	"Enter Phone Number:"
-#define TRANSFER_STATUS		"Transfer to:"
+#include <cc++/thread.h>
 
 #include <string>
+#include <vector>
+
+#include "audio/codecDescriptor.h"
+#include "audio/audiodrivers.h"
+#include "error.h"
+#include "call.h"
+#include "user_cfg.h"
+#include "voIPLink.h"
+#include "gui/guiframework.h"
+#include "../stund/stun.h"
+
 using namespace std;
+using namespace ost;
 
-class AudioRtp;
-class SIP;
-class SipCall;
+// Status
+#define CONNECTED_STATUS	"Connected"
+#define LOGGED_IN_STATUS	"Logged in"
+#define RINGING_STATUS		"Ringing"
+#define TRYING_STATUS		"Trying ..."
+#define HUNGUP_STATUS       "Hung up"
+#define ONHOLD_STATUS       "On hold ..."
+#define TRANSFER_STATUS     "Transfer to:"
+#define MUTE_ON_STATUS		"Mute on"
+#define ENTER_NUMBER_STATUS "Enter Phone Number:"
+
+/*
+ * Define a type for a list of call
+ */
+typedef vector<Call*, allocator<Call*> > CallVector;
+
+/*
+ * Define a type for a list of VoIPLink
+ */
+typedef vector<VoIPLink*, allocator<VoIPLink*> > VoIPLinkVector;
+
+/*
+ * Define a type for a list of CodecDescriptor
+ */
+typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
+
+class GuiFramework;
 class ToneGenerator;
-class QtGUIMainWindow;
-class Error;
-
 class Manager {
 public:
-	Manager (QString *);
+	Manager (void);
 	~Manager (void);
 
-	QtGUIMainWindow *phonegui;
-	SIP 			*sip;
-	PhoneLine		*phLines[NUMBER_OF_LINES];	
-	AudioRtp		*audioRTP;
-		
-	AudioDrivers	*audiodriver;
 #ifdef ALSA
-	AudioDrivers	*audiodriverReadAlsa;
+	AudioDrivers* audiodriverReadAlsa;
 #endif
-	Error 			*error;
+	AudioDrivers* audiodriver;
 
-	bool			 useAlsa;
-	ToneGenerator	*tone;
-	QString 		*DirectCall; // from -p argv
-	bool 			 mute;
-	bool 			 tonezone;
-	std::string		 path;
+	void init (void);
+	void setGui (GuiFramework* gui);
+	ToneGenerator* getTonegenerator(void);
+	Error* error(void);
 
-	inline
-	QtGUIMainWindow*gui				(void) { return this->phonegui; }
-	bool	ringing 				(void);
-	inline
-	void 	ring    				(void) { this->ring(true); }
-	void 	ring    				(bool);
-	void 	quitLibrary 			(void);
-	int		outgoingNewCall			(void);
-	void 	actionHandle			(int, int);
-	int 	findLineNumberNotUsed	(void);
-	int 	getNumberPendingCalls	(void);
-	void 	handleRemoteEvent		(int, char *, int, int = -1);
-	int		startSound				(SipCall *);
-	void 	closeSound 				(SipCall *);	
-	void	selectAudioDriver		(void);
-	QString	bufferTextRender		(void);
-	QString	getStatusRender			(void);
-	bool	isNotUsedLine			(int);
-	bool	isUsedLine				(int);
-	bool	isRingingLine			(int);
-	int		newCallLineNumber		(void);
-	void	getInfoStun		       	(StunAddress4 &);
-	int		getFirewallPort			(void);
-	void	setFirewallPort 		(int);
-	QString	getFirewallAddress		(void);
-	bool	otherLine				(void);
-	bool	isChosenLine			(void);
-	int		chosenLine				(void);
-	void	setChoose				(bool, bool);
-	bool	useStun					(void);
-	void	dtmf					(int, char);
-	int		getCurrentLineNumber	(void);
-#if 0
-	bool	getCallInProgress		(void);
-	void	setCallInProgress		(bool);
-#endif
-	bool	transferedCall			(void);
+	// Accessor to number of calls 
+	unsigned int getNumberOfCalls (void);
+	// Modifior of number of calls 
+	void setNumberOfCalls (unsigned int nCalls);
+	
+	// Accessor to current call id 
+	short getCurrentCallId (void);
+	// Modifior of current call id 
+	void setCurrentCallId (short currentCallId);
 
-	void	ringTone				(bool);
-	void	startDialTone			(void);
-	void	congestion				(bool); 
-	inline bool	getbCongestion		(void) { return b_congestion; } 
-	void	notificationIncomingCall(void);
-	void	errorDisplay			(char*);
-	void	nameDisplay				(char*);
-	void	spkrSoundVolume			(int);
-	void	micSoundVolume			(int);
-	inline 	int	getSpkrVolume (void) { return spkr_volume; }
-	inline 	int	getMicVolume (void) { return mic_volume; }
-	bool	tryingState (int);
+	// Accessor to the Call vector 
+	CallVector* getCallVector (void);
+	// Accessor to the Call with the id 'id' 
+	Call* getCall (short id);
+	
+	unsigned int getNumberOfCodecs (void);
+	void setNumberOfCodecs (unsigned int nb_codec);
+	
+	VoIPLinkVector* getVoIPLinkVector (void);
+
+	CodecDescriptorVector* getCodecDescVector(void);
+
+	inline bool getTonezone (void) { return _tonezone; }
+	inline void setTonezone (bool b) { _tonezone = b; }
+
+	/* 
+	 * Attribute a new random id for a new call 
+	 * and check if it's already attributed to existing calls. 
+	 * If not exists, returns 'id' otherwise return 0 
+	 */   
+	short generateNewCallId (void);
+
+	/*
+	 * Add a new call at the end of the CallVector with identifiant 'id'
+	 */
+	void pushBackNewCall (short id, enum CallType type);
+	void deleteCall	(short id);
+	
+	int outgoingCall (const string& to);
+	int hangupCall (short id);
+	int answerCall (short id);
+	int onHoldCall (short id);
+	int offHoldCall (short id);
+	int transferCall (short id, const string& to);
+	int muteOn (short id);
+	int muteOff (short id);
+	int refuseCall (short id);
+	int cancelCall (short id);
+
+	int saveConfig (void);
+	int registerVoIPLink (void);
+	int quitApplication (void);
+	int sendTextMessage (short id, const string& message);
+	int accessToDirectory (void);
+	
+	/**
+   	 * Handle choice of the DTMF-send-way
+ 	 *
+ 	 * @param   id: callid of the line.
+  	 * @param   code: pressed key.
+ 	 */
+	int sendDtmf (short id, char code);
+	
+
+	int incomingCall (short id);
+	int peerAnsweredCall (short id);
+	int peerRingingCall (short id);
+	int peerHungupCall (short id);
+	void displayTextMessage (short id, const string& message);
+	void displayError (const string& error);
+	void displayStatus (const string& status);
+
+	
+	/*
+	 * Handle audio sounds heard by a caller while they wait for their 
+	 * connection to a called party to be completed.
+	 */
+	void ringback (bool var);
+
+	void ringtone (bool var);
+	void congestion (bool var);
+	void notificationIncomingCall (void);
+
+	/*
+	 * Get information about firewall 
+	 * @param	stunSvrAddr: stun server
+	 */
+	void getStunInfo (StunAddress4& stunSvrAddr);
+	bool useStun (void);
+	
+	inline bool getbCongestion 	(void) { return _congestion; }
+	inline bool getbRingback 	(void) { return _ringback; }
+	inline bool getbRingtone 	(void) { return _ringtone; }
+	inline bool useAlsa 		(void) { return _useAlsa; }
+
+	inline int getSpkrVolume 	(void) 			{ return _spkr_volume; }
+	inline void setSpkrVolume 	(int spkr_vol) 	{ _spkr_volume = spkr_vol; }
+	inline int getMicroVolume 	(void) 			{ return _mic_volume; }
+	inline void setMicroVolume 	(int mic_vol) 	{ _mic_volume = mic_vol; }
+	
+	inline int getFirewallPort 		(void) 		{ return _firewallPort; }
+	inline void setFirewallPort 	(int port) 	{ _firewallPort = port; }
+	inline string getFirewallAddress (void) 	{ return _firewallAddr; }
 
 private:
-	bool    exist;
-	bool	b_ringing;
-	bool	b_ringtone;
-	bool	b_congestion;
-	int		firewallPort;
-	QString	firewallAddr;
-	int 	spkr_volume;
-	int 	mic_volume;
 
-	void 	sip_init			(void);
-	void 	initVolume			(void);
-	bool 	createSettingsPath	(void);
+	/*
+	 * Returns the number of calls in the vector
+	 */
+	unsigned int callVectorSize (void);
 
+	/**
+ 	 * Create .PROGNAME directory in home user and create 
+	 * configuration tree from the settings file if this file exists.
+ 	 *
+ 	 * @return	0 if creating file failed
+	 *			1 if config-file exists
+	 *			2 if file doesn't exist yet.
+ 	 */
+	int createSettingsPath (void);
+		
+	/*
+	 * Init default values for the different fields
+	 */
+	void initConfigFile (void);
+
+	void initAudioCodec(void);
+	void selectAudioDriver (void);
+	
+/////////////////////
+// Private variables
+/////////////////////
+	ToneGenerator* _tone;
+	Error* _error;
+	GuiFramework* _gui;
+	/*
+	 * Vector of VoIPLink
+	 */
+	VoIPLinkVector* _voIPLinkVector;
+	
+	/*
+	 * Vector of calls
+	 */
+	CallVector* _callVector;
+
+	/*
+	 * Vector of CodecDescriptor
+	 */
+	CodecDescriptorVector* _codecDescVector;
+
+	/*
+	 * Mutex to protect access to code section
+	 */
+	Mutex		_mutex;
+	
+	unsigned int _nCalls;
+	short _currentCallId;
+
+	/*
+	 * For the call timer
+	 */
+	unsigned int _startTime;
+	unsigned int _endTime;
+
+	/* Path of the ConfigFile 
+	 */
+	string 	_path;
+	int 	_exist;
+
+	unsigned int _nCodecs;
+	bool         _tonezone;
+	bool		 _congestion;
+	bool		 _ringback;
+	bool		 _ringtone;
+
+	bool 		_useAlsa;
+	
+	// To handle volume control
+	int 		_spkr_volume;
+	int 		_mic_volume;
+
+	// To handle firewall
+	int			_firewallPort;
+	string		_firewallAddr;
 };
 
 #endif // __MANAGER_H__

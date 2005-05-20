@@ -17,87 +17,91 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <qstring.h>
+#include <string>
 
 #include "configuration.h"
 #include "configurationtree.h"
 
+using namespace std;
+
 static ConfigurationTree	*globalConfigTree = NULL;
 
-string
-Config::gets (const char *section, const char *key) {
-	return Config::get (section, key, "");
-}
 
 string
-Config::get	(const char *section, const char *key, const char *defval) {
-	char *value = tree()->getValue (section, key);
-	if (value == NULL) {
-		tree()->setValue(section, key, defval);
-		return string(defval);
-	} else {
-		return string(value);
-	}
+Config::gets (const string& section, const string& key) {
+	return Config::get (section, key, string(""));
 }
 
-char *
-Config::getschar (const char *section, const char *key) {
-	return Config::getchar (section, key, "");
-}
 
-char *
-Config::getchar	(const char *section, const char *key, const char *defval) {
-	char *value = tree()->getValue (section, key);
-	if (value == NULL) {
+string
+Config::get	(const string& section, const string& key, const string& defval) {
+	string value = tree()->getValue (section, key);
+	if (value.empty()) {
 		tree()->setValue(section, key, defval);
-		return (char*)defval;
+		return defval;
 	} else {
 		return value;
 	}
 }
+/*
+string 
+Config::getschar (const string& section, const string& key) {
+	return Config::getchar (section, key, "");
+}*/
 
+string 
+Config::getchar	(const string& section, const string& key, const string& defval){
+	string value = tree()->getValue (section, key);
+	if (value == string("")) {
+		tree()->setValue(section, key, defval);
+		return defval;
+	} else {
+		return value;
+	}
+}
+/*
 bool
-Config::getb (const char *section, const char *key) {
+Config::getb (const string& section, const string& key) {
 	return (bool)Config::get (section, key, 0);
 }
 
-
+*/
 int
-Config::geti (const char *section, const char *key) {
+Config::geti (const string& section, const string& key) {
 	return Config::get (section, key, 0);
 }
 
 int
-Config::get	(const char *section, const char * key, int defval) {
-	char *value = tree()->getValue(section, key);
-	if (value == NULL) {
+Config::get	(const string& section, const string&  key, int defval) {
+	string value = tree()->getValue(section, key);
+	if (value == string("")) {
 		tree()->setValue(section, key, defval);
 		return defval;
 	} else {
-		return atoi(value);
+		return atoi(value.data());
 	} 
 }
 
 string
-Config::set	(const char *section, const char *key, const char *val) {
+Config::set	(const string& section, const string& key, const string& val) {
 	tree()->setValue(section, key, val);
-	return string(val);
+	return val;
 }
 
-char *
-Config::setchar	(const char *section, const char *key, const char *val) {
+string 
+Config::setchar	(const string& section, const string& key, const string& val) {
 	tree()->setValue(section, key, val);
-	return (char*)val;
+	return val;
 }
 
 int
-Config::set	(const char *section, const char *key, int val) {
+Config::set	(const string& section, const string& key, int val) {
 	tree()->setValue(section, key, val);
 	return val;
 }
 
 bool
-Config::set	(const char *section, const char *key, bool val) {
+Config::set	(const string& section, const string& key, bool val) {
 	tree()->setValue(section, key, (int)val);
 	return val;
 }
@@ -106,6 +110,11 @@ Config::set	(const char *section, const char *key, bool val) {
 void
 Config::setTree (ConfigurationTree *t) {
 	globalConfigTree = t;
+}
+
+void
+Config::deleteTree (void) {
+	delete globalConfigTree;
 }
 
 ConfigurationTree*

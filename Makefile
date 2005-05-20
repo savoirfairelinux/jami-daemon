@@ -4,7 +4,7 @@
 # Author: Laurielle Lea (laurielle.lea@savoirfairelinux.com)
 #
 all:
-	cd gsm ; make
+	cd src/audio/gsm ; make
 	cd src; make
 
 install:
@@ -15,5 +15,5 @@ uninstall:
 
 clean:
 	cd src; make clean
-	cd gsm ; make clean
+	cd src/audio/gsm ; make clean
 

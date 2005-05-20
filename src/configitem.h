@@ -9,31 +9,30 @@
 #include <iostream>
 #include <fstream>
 
-#include <cc++/string.h>
+#include <string>
 #include <stdio.h>
 
-using namespace ost;
 using namespace std;
 
 class ConfigItem {
 public:
 	ConfigItem  (void);
-	ConfigItem  (const char *);
-	ConfigItem  (const char *, const char *);
+	ConfigItem  (const string& );
+	ConfigItem  (const string& , const string& );
 	~ConfigItem (void);
-	String*		key (void) { return _key; }
-	String*		value (void) { return _value; }
+	string*		key (void) { return _key; }
+	string*		value (void) { return _value; }
 	ConfigItem* head (void) { return _head; }
 	void		setHead (ConfigItem *h) { _head = h; }
-	String*		getValueByKey   (const char *);
-	ConfigItem* getItemByKey	(const char *);
-	void		setValue		(const char *);
-	void		setValueByKey   (const char *, const char *);
+	string*		getValueByKey   (const string& );
+	ConfigItem* getItemByKey	(const string& );
+	void		setValue		(const string& );
+	void		setValueByKey   (const string& , const string& );
 	void		saveToFile		(fstream*);
 	
 private:
-	String*		_key;
-	String*		_value;
+	string*		_key;
+	string*		_value;
 	ConfigItem* _next;
 	ConfigItem* _head;
 	void init   (void);
