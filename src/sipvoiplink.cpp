@@ -404,7 +404,7 @@ SipVoIPLink::getEvent (void)
 			
 			id = _manager->generateNewCallId();
 			_manager->pushBackNewCall(id, Incoming);
-			_debug("\nIncoming Call with identifiant %d [cid = %d, did = %d]\n",
+			_debug("Incoming Call with identifiant %d [cid = %d, did = %d]\n",
 				   id, event->cid, event->did);
 			_debug("Local audio port: %d\n", _localPort);
 
@@ -424,7 +424,6 @@ SipVoIPLink::getEvent (void)
 			// Associate an audio port with a call
 			getSipCall(id)->setLocalAudioPort(_localPort);
 			
-			_manager->displayStatus(RINGING_STATUS);
 			break;
 
 		// The peer-user answers
@@ -439,6 +438,7 @@ SipVoIPLink::getEvent (void)
 			// Answer
 			if (id > 0 and !_manager->getCall(id)->isOnHold()
 					   and !_manager->getCall(id)->isOffHold()) {
+				getSipCall(id)->setStandBy(false);
 				getSipCall(id)->setLocalAudioPort(_localPort);
 				getSipCall(id)->answeredCall(event);
 				_manager->peerAnsweredCall(id);
@@ -449,7 +449,6 @@ SipVoIPLink::getEvent (void)
 							__FILE__, __LINE__);
 					exit(1);
 				}
-				_manager->displayStatus(CONNECTED_STATUS);
 			}
 			break;
 
@@ -463,13 +462,12 @@ SipVoIPLink::getEvent (void)
 				getSipCall(id)->ringingCall(event);
 				_manager->peerRingingCall(id);
 			} 
-			_manager->displayStatus(RINGING_STATUS);
 			break;
 
 		case EXOSIP_CALL_REDIRECTED:
 			break;
 
-		// The remote peer closed the phone call(we received BYE).
+		// The peer-user closed the phone call(we received BYE).
 		case EXOSIP_CALL_CLOSED:
 			id = findCallId(event);
 			_debug("Call is closed [id = %d, cid = %d, did = %d]\n", 
@@ -479,7 +477,6 @@ SipVoIPLink::getEvent (void)
 				_manager->peerHungupCall(id);
 				_audiortp->closeRtpSession(getSipCall(id));
 				deleteSipCall(id);
-				_manager->displayStatus(HUNGUP_STATUS);
 			}	
 			break;
 
@@ -654,7 +651,6 @@ void
 SipVoIPLink::newIncomingCall (short callid)
 {
 	SipCall* sipcall = new SipCall(callid, _manager->getCodecDescVector());
-	_debug("new SipCall @ 0X%d\n", sipcall);
 	_sipcallVector->push_back(sipcall);
 }
 

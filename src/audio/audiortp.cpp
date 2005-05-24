@@ -88,15 +88,16 @@ AudioRtp::createNewSession (SipCall *ca) {
 void
 AudioRtp::closeRtpSession (SipCall *ca) {
 	// This will make RTP threads finish.
-	ca->enable_audio = -1;
+	if (ca->enable_audio > 0) {
+		ca->enable_audio = -1;
 
-	if (_RTXThread != NULL) {
-		delete _RTXThread;
-		_RTXThread = NULL;
+		if (_RTXThread != NULL) {
+			delete _RTXThread;
+			_RTXThread = NULL;
+		}
+		// Flush audio read buffer
+		_manager->audiodriver->resetDevice();
 	}
-
-	// Flush audio read buffer
-	_manager->audiodriver->resetDevice();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

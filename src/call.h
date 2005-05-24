@@ -52,7 +52,7 @@ enum CallType {
 
 #include "manager.h"
 
-class AudioCodec;
+//class AudioCodec;
 
 class Call {
 public:
@@ -71,7 +71,7 @@ public:
 	void setVoIPLinkId (short voIPLinkId);
 	void setVoIPLink (VoIPLink* voIPLink);
 	VoIPLink* getVoIPLink(void);
-	void setAudioCodec(void);
+//	void setAudioCodec(void);
 		
 	string getStatus (void);
 	void setStatus (const string& status);
@@ -93,6 +93,7 @@ public:
 	bool isOnHold (void);
 	bool isOffHold (void);
 	bool isOnMute (void);
+	bool isOffMute (void);
 	bool isTransfered (void);
 	bool isHungup (void);
 	bool isRinging (void);
@@ -120,7 +121,7 @@ private:
 	
 	Manager* _manager;
 	VoIPLink* _voIPLink;
-	AudioCodec* _audiocodec;
+//	AudioCodec* _audiocodec;
 	
 	short _id;
 	short _voIPLinkId;

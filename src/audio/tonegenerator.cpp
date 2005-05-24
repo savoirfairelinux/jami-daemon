@@ -208,19 +208,19 @@ ToneGenerator::buildTone (int idCountry, int idTones, int samplingRate,
  */
 int
 ToneGenerator::idZoneName (const string& name) {
-	if (name.compare("North America")) {
+	if (name.compare("North America") == 0) {
 		return ID_NORTH_AMERICA;
-	} else if (name.compare("France")) {
+	} else if (name.compare("France") == 0) {
 		return ID_FRANCE;
-	} else if (name.compare("Australia")) {
+	} else if (name.compare("Australia") == 0) {
 		return ID_AUSTRALIA;
-	} else if (name.compare("United Kingdom")) {
+	} else if (name.compare("United Kingdom") == 0) {
 		return ID_UNITED_KINGDOM;
-	} else if (name.compare("Spain")) {
+	} else if (name.compare("Spain") == 0) {
 		return ID_SPAIN;
-	} else if (name.compare("Italy")) {
+	} else if (name.compare("Italy") == 0) {
 		return ID_ITALY;
-	} else if (name.compare("Japan")) {
+	} else if (name.compare("Japan") == 0) {
 		return ID_JAPAN;
 	} else {
 		_debug("Zone no supported\n");

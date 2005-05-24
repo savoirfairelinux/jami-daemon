@@ -1,3 +1,6 @@
+SFLphone (0.4)
+	* Reorganisation of SFLphone architecture
+
 SFLphone (0.3.1) / 2005-04-21
 	* Handle error messages on screen
 	* Handle refused call

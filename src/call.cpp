@@ -18,7 +18,7 @@
  */
 
 #include <iostream>
-#include "audio/audiocodec.h"
+//#include "audio/audiocodec.h"
 #include "call.h"
 #include "manager.h"
 #include "sipvoiplink.h"
@@ -104,12 +104,13 @@ Call::getVoIPLink (void)
 	return _voIPLink;
 }
 
+/*
 void
 Call::setAudioCodec (void)
 {
 	_audiocodec = _voIPLink->getAudioCodec(getId());
 }
-
+*/
 string 
 Call::getStatus (void)
 {
@@ -185,7 +186,7 @@ Call::setType (enum CallType type)
 bool
 Call::isBusy (void)
 {
-	if (isAnswered() or isOffHold() or isOnMute()) {
+	if (isAnswered() or isOffHold() or isOnMute() or isOffMute()) {
 		return true;
 	} else {
 		return false;
@@ -207,6 +208,12 @@ bool
 Call::isOnMute (void)
 {
 	return (_state == MuteOn) ? true : false;
+}
+
+bool 
+Call::isOffMute (void)
+{
+	return (_state == MuteOff) ? true : false;
 }
 
 bool 
@@ -274,35 +281,35 @@ Call::hangup  (void)
 {
 	int i = _voIPLink->hangup(_id);
 	_voIPLink->deleteSipCall(_id);
-	return 1;
+	return i;
 }
 
 int 
 Call::answer  (void)
 {
 	int i = _voIPLink->answer(_id);
-	return 1;
+	return i;
 }
 
 int 
 Call::onHold  (void)
 {
 	int i = _voIPLink->onhold(_id);
-	return 1;
+	return i;
 }
 
 int 
 Call::offHold  (void)
 {
 	int i = _voIPLink->offhold(_id);
-	return 1;
+	return i;
 }
 
 int 
 Call::transfer  (const string& to)
 {
 	int i = _voIPLink->transfer(_id, to);
-	return 1;
+	return i;
 }
 
 int 
@@ -322,7 +329,7 @@ Call::refuse  (void)
 {
 	int i = _voIPLink->refuse(_id);
 	_voIPLink->deleteSipCall(_id);
-	return 1;
+	return i;
 }
 
 int 
@@ -330,7 +337,7 @@ Call::cancel  (void)
 {
 	int i = _voIPLink->cancel(_id);
 	_voIPLink->deleteSipCall(_id);
-	return 1;
+	return i;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -343,5 +350,5 @@ Call::initConstructor(void)
 	_state = NotExist;
 	_type = Null;
 	_voIPLinkId = 1;
-	_audiocodec = NULL;
+//	_audiocodec = NULL;
 }

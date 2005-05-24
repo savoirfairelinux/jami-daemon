@@ -39,7 +39,6 @@ public:
 	SipCall (short id, CodecDescriptorVector* cdv);
 	~SipCall (void);
 
-	bool 	usehold;
  	int  	payload;
   	int  	enable_audio; /* 1 started, -1 stopped */
 	

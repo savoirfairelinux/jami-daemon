@@ -82,7 +82,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	}
 
 	if (err < 0) {
-		printf ("ERROR: ALSA/snd_pcm_open: Cannot open audio device (%s)\n",
+		_debug ("ERROR: ALSA/snd_pcm_open: Cannot open audio device (%s)\n",
 						snd_strerror (err));
 		error->errorName(OPEN_FAILED_DEVICE, NULL);
 		return -1;
@@ -95,7 +95,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 
 	err = snd_pcm_hw_params_malloc (&hw_params);
 	if (err < 0) {
-		printf ("Cannot allocate hardware parameter structure (%s)\n",
+		_debug ("Cannot allocate hardware parameter structure (%s)\n",
 				 snd_strerror (err));
 		error->errorName(PARAMETER_STRUCT_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
@@ -103,7 +103,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 
 	// Init hwparams with full configuration space 
 	if ((err = snd_pcm_hw_params_any (audio_hdl, hw_params)) < 0) {
-		printf ("Cannot initialize hardware parameter structure (%s)\n",
+		_debug ("Cannot initialize hardware parameter structure (%s)\n",
 				 snd_strerror (err));
 		error->errorName(PARAMETER_STRUCT_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
@@ -112,7 +112,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	err = snd_pcm_hw_params_set_access (audio_hdl, hw_params,
 					SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
-		printf ("Cannot set access type (%s)\n", snd_strerror (err));
+		_debug ("Cannot set access type (%s)\n", snd_strerror (err));
 		error->errorName(ACCESS_TYPE_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
@@ -121,7 +121,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	err = snd_pcm_hw_params_set_format (audio_hdl, hw_params,
 					SND_PCM_FORMAT_S16_LE);
 	if (err < 0) {
-		printf ("Cannot set sample format (%s)\n", snd_strerror (err));
+		_debug ("Cannot set sample format (%s)\n", snd_strerror (err));
 		error->errorName(SAMPLE_FORMAT_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	} 
@@ -134,18 +134,18 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	err = snd_pcm_hw_params_set_rate_near (audio_hdl, hw_params, 
 			&exact_rate, 0);
 	if (err < 0) {
-		printf ("Cannot set sample rate (%s)\n", snd_strerror (err));
+		_debug ("Cannot set sample rate (%s)\n", snd_strerror (err));
 		error->errorName(SAMPLE_RATE_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
 	if (exact_rate != rate) {
-      fprintf(stderr, "The rate %d Hz is not supported by your hardware.\n ==> Using %d Hz instead.\n", rate, exact_rate);
+      _debug("The rate %d Hz is not supported by your hardware.\n ==> Using %d Hz instead.\n", rate, exact_rate);
     }
 	
 	// Set number of channels - Mono(1) or Stereo(2) 
 	err = snd_pcm_hw_params_set_channels (audio_hdl, hw_params, MONO);
 	if (err < 0) {
-		printf ("Cannot set channel count (%s)\n", snd_strerror (err));
+		_debug ("Cannot set channel count (%s)\n", snd_strerror (err));
 		error->errorName(CHANNEL_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
@@ -153,7 +153,7 @@ AudioDriversALSA::initDevice (DeviceMode mode) {
 	// Apply previously setup parameters
 	err = snd_pcm_hw_params (audio_hdl, hw_params);
 	if (err < 0) {
-		printf ("Cannot set parameters (%s)\n", snd_strerror (err));
+		_debug ("Cannot set parameters (%s)\n", snd_strerror (err));
 		error->errorName(PARAM_SETUP_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
@@ -222,19 +222,18 @@ int
 AudioDriversALSA::resetDevice (void) {
 	int err;
 
-	printf("Resetting...\n");
+	_debug("Resetting...\n");
 	if ((err = snd_pcm_drop(audio_hdl)) < 0) {
-		printf ("ALSA: drop() error: %s\n", snd_strerror (err));				
+		_debug ("ALSA: drop() error: %s\n", snd_strerror (err));				
 		error->errorName(DROP_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
 
 	if ((err = snd_pcm_prepare(audio_hdl)) < 0) {
-		printf ("ALSA: prepare() error: %s\n", snd_strerror (err));			
+		_debug ("ALSA: prepare() error: %s\n", snd_strerror (err));			
 		error->errorName(PREPARE_ERROR_ALSA, (char*)snd_strerror(err));
 		return -1;
 	}
-
 	return 0;
 }
 

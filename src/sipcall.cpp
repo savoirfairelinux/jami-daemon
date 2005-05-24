@@ -37,7 +37,7 @@ SipCall::SipCall (short id, CodecDescriptorVector* cdv)
 	_cdv = cdv;
 	_audiocodec = NULL;
 	_standby = false;
-	//this->usehold = false;
+	enable_audio = -1;
 }
 
 

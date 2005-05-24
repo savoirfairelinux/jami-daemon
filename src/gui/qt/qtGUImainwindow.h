@@ -277,9 +277,9 @@ private:
 	// line by the user
 	bool _chooseLine;
 	int _chosenLine;
-	int _freeLine;
-	inline void setFreeLine(int line) { _freeLine = line; }
-	inline int getFreeLine(void) { return _freeLine; }
+	int _prevLine;
+	inline void setPrevLine(int line) { _prevLine = line; }
+	inline int getPrevLine(void) { return _prevLine; }
 
 	// Array of incoming calls
 	int _TabIncomingCalls[NUMBER_OF_LINES];

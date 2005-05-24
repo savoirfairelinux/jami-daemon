@@ -80,7 +80,7 @@
 #define CONFIRM_QUIT	"Options.confirmQuit"
 #define ZONE_TONE		"Options.zoneToneChoice"
 #define CHECKED_TRAY	"Options.checkedTray"
-#define VOICEMAIL_NUM	"Themes.voicemailNumber"
+#define VOICEMAIL_NUM	"Options.voicemailNumber"
 
 // Default values
 #define DFT_VOIP_LINK		0	// index of the first VoIP link by default

@@ -100,6 +100,11 @@ Manager::~Manager (void)
 	delete _voIPLinkVector;			
 	delete _error;
 	delete _tone;
+	delete _codecDescVector;
+	delete audiodriver;
+#ifdef ALSA
+	delete audiodriverReadAlsa;
+#endif
 } 
 
 void 
@@ -211,7 +216,6 @@ Manager::pushBackNewCall (short id, enum CallType type)
 {
 	Call* call = new Call(this, id, type, _voIPLinkVector->at(DFT_VOIP_LINK));
 	// Set the wanted voip-link (first of the list)
-	_debug("new Call @ 0X%d\n", call);
 	_callVector->push_back(call);
 }
 
@@ -242,7 +246,7 @@ Manager::outgoingCall (const string& to)
 	id = generateNewCallId();
 	pushBackNewCall(id, Outgoing);
 	
-	_debug("\nOutgoing Call with identifiant %d\n", id);
+	_debug("Outgoing Call with identifiant %d\n", id);
 	call = getCall(id);
 	
 	call->setStatus(string(TRYING_STATUS));
@@ -444,6 +448,7 @@ Manager::incomingCall (short id)
 	call->setState(Progressing);
 	ringtone(true);
 	_gui->incomingCall(id);
+	displayStatus(RINGING_STATUS);
 	return 1;
 }
 
@@ -458,6 +463,7 @@ Manager::peerAnsweredCall (short id)
 	call->setState(Answered);
 	_gui->peerAnsweredCall(id);
 	ringback(false);
+	displayStatus(CONNECTED_STATUS);
 	return 1;
 }
 
@@ -471,7 +477,7 @@ Manager::peerRingingCall (short id)
 	call->setState(Ringing);
 	_gui->peerRingingCall(id);
 	ringback(true);
-	
+	displayStatus(RINGING_STATUS);	
 	return 1;
 }
 

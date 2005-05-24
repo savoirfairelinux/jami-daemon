@@ -130,7 +130,7 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
                     					Qt::WStyle_NoBorder);
 	_currentLine = -1;
 	_chosenLine = -1;
-	_freeLine = -1;
+	_prevLine = -1;
  	_first = true;
 	_chooseLine = false;
 	_transfer = false;
@@ -590,7 +590,7 @@ QtGUIMainWindow::changeLineStatePixmap (int line, line_state state)
 	if (state == ONHOLD) {
 		// Because for the state of line pixmap there are just 2 states 
 		// (FREE and BUSY), so we associate ONHOLD to BUSY
-		state = state - 1;
+		state = BUSY;
 	}
    	phLines[line]->button()->setPixmap(TabLinePixmap[line][state]);
 }
@@ -612,6 +612,7 @@ QtGUIMainWindow::putOnHoldBusyLine (int line)
 {
 	if (line != -1 and !phLines[line]->getbRinging()) {
 		// Occurs when newly off-hook line replaces another one.
+		_debug("On hold line %d [id=%d]\n", line, line2id(line));
 		qt_onHoldCall(line2id(line));
 		changeLineStatePixmap(line, ONHOLD);
 		return 1;
@@ -749,15 +750,18 @@ QtGUIMainWindow::peerHungupCall (short id)
 {
 	int line = id2line(id);
 
+	if (line == getCurrentLine()) {
+		stopCallTimer(id);
+		_callmanager->displayStatus(HUNGUP_STATUS);
+		setCurrentLine(-1);
+	}
 	getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
 	changeLineStatePixmap(line, FREE);
-	stopCallTimer(id);
 	getPhoneLine(id)->setbRinging(false);
 	getPhoneLine(id)->setCallId(0);
 	setChooseLine(false);
-	setCurrentLine(-1);
 	_TabIncomingCalls[line] = -1;
-
+	
 	return 1;
 }
 
@@ -827,6 +831,7 @@ QtGUIMainWindow::qt_outgoingCall (void)
 	id = outgoingCall(to);
 	if (id > 0) {	
 		line = associateCall2Line(id);
+		_debug("Call %d -> line %d\n", id, line);
 
 		setCurrentLine(line);
 		displayStatus(TRYING_STATUS);
@@ -961,7 +966,6 @@ QtGUIMainWindow::toggleLine (int line)
 	busyLine = busyLineNumber();
 	
 	id = line2id(line);
-	_debug("line2id(line) = %d and busy line = %d\n", id, busyLine);
 	if (id > 0) {
 	// If the call-id already exists
 		call = getCall(id);
@@ -1007,11 +1011,13 @@ QtGUIMainWindow::toggleLine (int line)
 		setChosenLine(line);
 
 		putOnHoldBusyLine(busyLine);
-		if (getFreeLine() != -1 and getFreeLine() != line) {
-			changeLineStatePixmap(getFreeLine(), FREE);
+		if (getPrevLine() != -1 and getPrevLine() != line 
+				and phLines[getPrevLine()]->isFree()) {
+			changeLineStatePixmap(getPrevLine(), FREE);
 		}
 	
-		setFreeLine(line);			
+		setPrevLine(line);	
+		
 		_lcd->setInFunction(false);
 		_lcd->clearBuffer();
 		dialtone(true);
@@ -1136,6 +1142,7 @@ QtGUIMainWindow::volumeMicChanged (int val) {
 
 void
 QtGUIMainWindow::registerSlot (void) {
+	_panel->saveSlot();	
 	registerVoIPLink();
 }
 
@@ -1335,7 +1342,6 @@ QtGUIMainWindow::blinkRingSlot (void)
 {
     static bool isOn = false;
     int state = BUSY;
-    int line;
 	int i;
 
 	if (isThereIncomingCall() != -1) {

@@ -50,12 +50,11 @@ AudioDriversOSS::~AudioDriversOSS (void) {
 
 int
 AudioDriversOSS::resetDevice (void) {
-	printf ("Resetting...");
+	_debug ("Resetting...\n");
 	if (ioctl(audio_fd, SNDCTL_DSP_RESET) < 0) {
 		perror("ioctl");
 		return -1;
 	}
-	printf ("done\n");
 	return 0;
 }
 
@@ -93,7 +92,7 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	// Fragments : No limit (0x7FFF), 
 	int frag = ( ( 0x7FFF << 16 ) | 7 );
 	if (ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &frag)) {
-		printf ("ERROR: SETFRAG %s\n", strerror(errno));
+		_debug ("ERROR: SETFRAG %s\n", strerror(errno));
 		error->errorName(FRAGMENT_ERROR_OSS, strerror(errno));
 		return -1;
 	}
@@ -103,37 +102,37 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	format = AFMT_S16_LE;
 
 	if (ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format) == -1) {
-		printf("ERROR: SETFMT  %s\n", strerror(errno));
+		_debug("ERROR: SETFMT  %s\n", strerror(errno));
 		error->errorName(SAMPLE_FORMAT_ERROR_OSS, strerror(errno));
 		return -1;
 	}
 	if (format != AFMT_S16_LE) {
-		printf ("ERROR: Format not supported\n");
+		_debug ("ERROR: Format not supported\n");
 		return -1;
 	}
 
 	// Setup number of channels
 	int channels = MONO;
 	if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &channels) == -1) {
-		printf ("ERROR: DSP_STEREO %s\n", strerror(errno));
+		_debug ("ERROR: DSP_STEREO %s\n", strerror(errno));
 		error->errorName(CHANNEL_ERROR_OSS, strerror(errno));
 		return -1;
 	}
 	if (channels != MONO) {
-		printf ("ERROR: Unsupported Number of Channels\n");
+		_debug ("ERROR: Unsupported Number of Channels\n");
 		return -1;
 	}
 
 	// Setup sampling rate 8KHz
 	int rate = SAMPLING_RATE;
 	if (ioctl(audio_fd, SNDCTL_DSP_SPEED, &rate ) == -1 ) {
-		printf ("ERROR: DSP_SPEED  %s\n", strerror(errno));
+		_debug ("ERROR: DSP_SPEED  %s\n", strerror(errno));
 		error->errorName(SAMPLE_RATE_ERROR_OSS, strerror(errno));
 		return -1;
 	}
 
 	if (rate != SAMPLING_RATE) {
-		printf ("WARNING: driver rounded %d Hz request to %d Hz, off by %f%%\n"
+		_debug ("WARNING: driver rounded %d Hz request to %d Hz, off by %f%%\n"
 				, 8000, rate, 100*((rate-8000)/8000.0));
 	}
 
@@ -141,13 +140,13 @@ AudioDriversOSS::initDevice (DeviceMode mode) {
 	audio_buf_info info;
 	if (mode == WriteOnly) {
 		if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == -1) {
-			printf ("ERROR: GETISPACE %s\n", strerror(errno));
+			_debug ("ERROR: GETISPACE %s\n", strerror(errno));
 			error->errorName(GETISPACE_ERROR_OSS, strerror(errno));
 			return -1;
 		} 
 	} else {
 		if (ioctl(audio_fd, SNDCTL_DSP_GETISPACE, &info ) == -1) {
-			printf ("ERROR: GETOSPACE %s\n", strerror(errno));
+			_debug ("ERROR: GETOSPACE %s\n", strerror(errno));
 			error->errorName(GETOSPACE_ERROR_OSS, strerror(errno));
 			return -1;
 		}
@@ -169,13 +168,13 @@ bool
 AudioDriversOSS::openDevice (int exist_fd) {
 	audio_fd = exist_fd;
 	if (audio_fd == -1) {
-		printf ("ERROR: Open Failed\n");
+		_debug ("ERROR: Open Failed\n");
 		return false;
 	}
 
 	audio_buf_info info;
 	if (ioctl(audio_fd, SNDCTL_DSP_GETISPACE, &info) == -1) {
-		printf ("ERROR: GETISPACE  %s\n", strerror(errno));
+		_debug ("ERROR: GETISPACE  %s\n", strerror(errno));
 		return false;
 	}
 //	audio_buf.resize (info.fragsize * sizeof(short));
@@ -196,11 +195,11 @@ AudioDriversOSS::readBuffer (void *ptr, int bytes) {
  
 	rc = read (audio_fd, ptr, count);
 	if (rc < 0) {
-		printf ("rc < 0 read(): %s\n", strerror(errno));
+		_debug ("rc < 0 read(): %s\n", strerror(errno));
 	}
 	
 	else if (rc != count) {
-		printf ("WARNING: asked microphone for %d got %d\n", count, rc);
+		_debug ("WARNING: asked microphone for %d got %d\n", count, rc);
 	}
 
 	return rc;
@@ -221,11 +220,11 @@ AudioDriversOSS::readBuffer (int bytes) {
 
 	rc = read (audio_fd, buf, count);
 	if (rc < 0) {
-		printf ("rc < 0 read(): %s\n", strerror(errno));
+		_debug ("rc < 0 read(): %s\n", strerror(errno));
 	}
 	
 	else if (rc != count) {
-		printf ("WARNING: asked microphone for %d got %d\n", count, rc);
+		_debug ("WARNING: asked microphone for %d got %d\n", count, rc);
 	}
 
 	return rc;
@@ -251,7 +250,7 @@ AudioDriversOSS::writeBuffer (void *ptr, int len) {
 	for (;;) {
 		int a;
 		if ((a = write(audio_fd, ptr, len)) < 0) {
-			printf ("write(): %s\n", strerror(errno));
+			_debug ("write(): %s\n", strerror(errno));
 			break;
 		}
 		if (a > 0) { 
@@ -283,7 +282,7 @@ AudioDriversOSS::writeBuffer (void) {
 	for (;;) {
 		int a;
 		if ((a = write(audio_fd, buf, count)) < 0) {
-			printf ("write(): %s\n", strerror(errno));
+			_debug ("write(): %s\n", strerror(errno));
 			break;
 		}
 		if (a > 0) { 
@@ -317,7 +316,7 @@ AudioDriversOSS::readableBytes(void) {
 		return 0;
 	}
 	if (ioctl (audio_fd, SNDCTL_DSP_GETISPACE, &info) == -1) {
-		printf ("ERROR: readableBytes %s\n", strerror(errno));
+		_debug ("ERROR: readableBytes %s\n", strerror(errno));
 		return 0;
 	}
 
