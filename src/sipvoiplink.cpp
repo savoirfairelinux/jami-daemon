@@ -452,7 +452,7 @@ SipVoIPLink::getEvent (void)
 			}
 			break;
 
-		case EXOSIP_CALL_RINGING:
+		case EXOSIP_CALL_RINGING: //peer call is ringing
 			id = findCallIdWhenRinging();
 			
 			_debug("Call is ringing [id = %d, cid = %d, did = %d]\n", 

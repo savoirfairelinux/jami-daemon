@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form implementation generated from reading ui file 'gui/qt/phonebook.ui'
 **
-** Created: Tue May 24 16:49:52 2005
+** Created: Wed May 25 16:13:44 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!

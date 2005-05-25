@@ -82,7 +82,7 @@ Manager::Manager (void)
 	_path = ""; 
 	_tonezone = false;
 	_congestion = false;
-	_ringback = false;
+	_ringtone = false;
 	_ringback = false;
 	_useAlsa = false;
 	_exist = 0;
@@ -271,6 +271,9 @@ Manager::hangupCall (short id)
 	_nCalls -= 1;
 	_mutex.leaveMutex();
 	deleteCall(id);
+	if (getbRingback()) {
+		ringback(false);
+	}
 	return 1;
 }
 
