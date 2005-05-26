@@ -166,7 +166,6 @@ void ConfigurationPanel::saveSlot()
    "You must restart SFLPhone",
     QMessageBox::Yes);
 #endif
-   accept();
 }
 
 // Handle tab view  according to current item of listbox

@@ -162,7 +162,7 @@ Call::setCallerIdNumber (const string& callerId_number)
 enum CallState 
 Call::getState (void)
 {
-	return _state;
+	return _state;  
 }
 
 void 

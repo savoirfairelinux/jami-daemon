@@ -1,6 +1,6 @@
 #
 # Makefile for sflphone
-# (c) 2004 Savoir-faire Linux inc.
+# (c) 2004-2005 Savoir-faire Linux inc.
 # Authors : Laurielle Lea (laurielle.lea@savoirfairelinux.com)
 #           Jerome Oufella (jerome.oufella@savoirfairelinux.com)
 #
@@ -124,20 +124,20 @@ all: $(PROGNAME)
 $(PROGNAME): $(OBJS) $(EXTRALIBS)
 	$(CXX) -o $@ $(OBJS) $(LIBS) $(EXTRALIBS)
 	
-#install:	all
-#	mkdir -p $(BIN_DIR)
-#	mkdir -p $(SHARE_DIR)/$(PROGNAME)
-#	install --mode=0755 $(PROGNAME) $(BIN_DIR)
-#	cd ..; cp -R $(PIXMAPS) $(SHARE_DIR)/$(PROGNAME)/ ; \
-#		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(PIXMAPS)
-#	cd ..; cp -R $(SKINS) $(SHARE_DIR)/$(PROGNAME)/ ; \
-#		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(SKINS)
-#	cd ..; cp -R $(RINGS) $(SHARE_DIR)/$(PROGNAME)/ ; \
-#		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(RINGS)
-#
-#uninstall: 
-#	rm -f $(BIN_DIR)/$(PROGNAME)
-#	rm -rf $(SHARE_DIR)/$(PROGNAME)
+install:	all
+	mkdir -p $(BIN_DIR)
+	mkdir -p $(SHARE_DIR)/$(PROGNAME)
+	install --mode=0755 $(PROGNAME) $(BIN_DIR)
+	cd ..; cp -R $(PIXMAPS) $(SHARE_DIR)/$(PROGNAME)/ ; \
+		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(PIXMAPS)
+	cd ..; cp -R $(SKINS) $(SHARE_DIR)/$(PROGNAME)/ ; \
+		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(SKINS)
+	cd ..; cp -R $(RINGS) $(SHARE_DIR)/$(PROGNAME)/ ; \
+		chmod -R a+rX $(SHARE_DIR)/$(PROGNAME)/$(RINGS)
+
+uninstall: 
+	rm -f $(BIN_DIR)/$(PROGNAME)
+	rm -rf $(SHARE_DIR)/$(PROGNAME)
 
 clean:
 	rm -f $(PROGNAME) *.o audio/*.o audio/gsm/*.o gui/*.o gui/qt/*.o audio/gsm/*.a *~ *.moc.cpp *.bak core.*

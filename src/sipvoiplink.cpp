@@ -294,17 +294,19 @@ SipVoIPLink::answer (short id)
 int
 SipVoIPLink::hangup (short id) 
 {
-	int i;
-	_debug("Hang up call [id = %d, cid = %d, did = %d]\n", 
-			id, getSipCall(id)->getCid(), getSipCall(id)->getDid());	
-	// Release SIP stack.
-	eXosip_lock();
-	i = eXosip_terminate_call (getSipCall(id)->getCid(), 
-								getSipCall(id)->getDid());
-	eXosip_unlock();
+	int i = 1;
+	if (!_manager->getbCongestion()) {
+		_debug("Hang up call [id = %d, cid = %d, did = %d]\n", 
+				id, getSipCall(id)->getCid(), getSipCall(id)->getDid());	
+		// Release SIP stack.
+		eXosip_lock();
+		i = eXosip_terminate_call (getSipCall(id)->getCid(), 
+									getSipCall(id)->getDid());
+		eXosip_unlock();
 
-	// Release RTP channels
-	_audiortp->closeRtpSession(getSipCall(id));
+		// Release RTP channels
+		_audiortp->closeRtpSession(getSipCall(id));
+	}
 				
 	deleteSipCall(id);
 	return i;
@@ -431,6 +433,7 @@ SipVoIPLink::getEvent (void)
 			id = findCallId(event);
 			if (id == 0) {
 				id = findCallIdWhenRinging();
+				getSipCall(id)->setLocalAudioPort(_localPort);
 			}
 			_debug("Call is answered [id = %d, cid = %d, did = %d]\n", 
 					id, event->cid, event->did);
@@ -439,10 +442,10 @@ SipVoIPLink::getEvent (void)
 			if (id > 0 and !_manager->getCall(id)->isOnHold()
 					   and !_manager->getCall(id)->isOffHold()) {
 				getSipCall(id)->setStandBy(false);
-				getSipCall(id)->setLocalAudioPort(_localPort);
 				getSipCall(id)->answeredCall(event);
 				_manager->peerAnsweredCall(id);
 
+			
 				// Outgoing call is answered, start the sound channel.
 				if (_audiortp->createNewSession (getSipCall(id)) < 0) {
 					_debug("FATAL: Unable to start sound (%s:%d)\n", 
@@ -459,6 +462,7 @@ SipVoIPLink::getEvent (void)
 					id, event->cid, event->did);
 			
 			if (id > 0) {
+				getSipCall(id)->setLocalAudioPort(_localPort);
 				getSipCall(id)->ringingCall(event);
 				_manager->peerRingingCall(id);
 			} 
@@ -507,11 +511,17 @@ SipVoIPLink::getEvent (void)
 					eXosip_retry_call (event->cid);
 					eXosip_unlock();
 					break;
+				case BAD_REQ:
+				case UNAUTHORIZED:
 				case FORBIDDEN:
 				case NOT_FOUND:
+				case NOT_ALLOWED:
+				case NOT_ACCEPTABLE:
 				case REQ_TIMEOUT:
+				case TEMP_UNAVAILABLE:
 				case ADDR_INCOMPLETE:
-					// Faire remonter l'erreur
+				case BUSY_HERE:
+					// Display error on the screen phone
 					_manager->displayError(event->reason_phrase);
 					_manager->congestion(true);
 					break;
@@ -536,6 +546,15 @@ SipVoIPLink::getEvent (void)
 
 		case EXOSIP_CALL_GLOBALFAILURE:
 			// Handle 6XX errors
+			switch (event->status_code) {
+				case BUSY_EVERYWHERE:
+				case DECLINE:
+					_manager->ringback(false);
+					_manager->congestion(true);					
+					break;
+				default:
+					break;
+			}
 			break;
 
 		case EXOSIP_REGISTRATION_SUCCESS:
@@ -848,11 +867,16 @@ short
 SipVoIPLink::findCallIdWhenRinging (void)
 {
 	unsigned int k;
+	int i = _manager->selectedCall();
 	
-	for (k = 0; k < _sipcallVector->size(); k++) {
-		if (_sipcallVector->at(k)->getStandBy()) {
-			return _sipcallVector->at(k)->getId();
+	if (i != -1) {
+		return i;
+	} else {
+		for (k = 0; k < _sipcallVector->size(); k++) {
+			if (_sipcallVector->at(k)->getStandBy()) {
+				return _sipcallVector->at(k)->getId();
+			}
 		}
-    }
+	}
 	return 0;
 }

@@ -266,7 +266,7 @@ Manager::hangupCall (short id)
 	call = getCall(id);
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Hungup);
-	getCall(id)->hangup();
+	call->hangup();
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
@@ -519,6 +519,11 @@ Manager::displayStatus (const string& status)
 	_gui->displayStatus(status);
 }
 
+int
+Manager::selectedCall (void) 
+{
+	return _gui->selectedCall();
+}
 
 void
 Manager::congestion (bool var) {
@@ -732,8 +737,10 @@ Manager::selectAudioDriver (void)
         audiodriver = new AudioDriversOSS (AudioDrivers::ReadWrite, _error);
     } else {
 		_useAlsa = true;
+#ifdef ALSA
         audiodriver = new AudioDriversALSA (AudioDrivers::WriteOnly, _error);
         audiodriverReadAlsa = new AudioDriversALSA (AudioDrivers::ReadOnly, _error);
+#endif
     }
 }
 

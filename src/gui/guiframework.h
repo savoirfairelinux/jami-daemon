@@ -44,6 +44,7 @@ public:
 	virtual void displayContext (short id) = 0;
 	virtual string getRingtoneFile (void) = 0;
 	virtual void setup (void) = 0;
+	virtual int selectedCall (void) = 0;
 	
 	/* Child class to parent class */
 	int outgoingCall (const string& to); 	

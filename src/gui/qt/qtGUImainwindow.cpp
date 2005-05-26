@@ -114,8 +114,6 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	//VoIPLinkManagement* vlm = new VoIPLinkManagement();
 	//vlm->show();
 										
-	// Address book dialog
-
 	// URL input dialog
 	_urlinput = new URL_Input (this);
 	
@@ -614,9 +612,11 @@ int
 QtGUIMainWindow::putOnHoldBusyLine (int line)
 {
 	if (line != -1 and !phLines[line]->getbRinging()) {
-		// Occurs when newly off-hook line replaces another one.
-		_debug("On hold line %d [id=%d]\n", line, line2id(line));
-		qt_onHoldCall(line2id(line));
+		if (!getCall(line2id(line))->isRinging()) {
+			// Occurs when newly off-hook line replaces another one.
+			_debug("On hold line %d [id=%d]\n", line, line2id(line));
+			qt_onHoldCall(line2id(line));
+		} 
 		changeLineStatePixmap(line, ONHOLD);
 		return 1;
 	} 
@@ -808,7 +808,7 @@ QtGUIMainWindow::displayContext (short id)
 	} else if (getCall(id)->isOutgoingType()) {
 		displayTextMessage (id, getCall(id)->getCallerIdNumber());
 	} else {
-		_debug("No call with id *%d\n", id);
+		_debug("No call with id %d\n", id);
 	}
 }
 
@@ -816,6 +816,16 @@ void
 QtGUIMainWindow::setup (void) 
 {
 	configuration();
+}
+
+int
+QtGUIMainWindow::selectedCall (void) 
+{
+	int id = -1;
+	if (getChooseLine()) {
+		id = line2id(getChosenLine());
+	}
+	return id;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -827,13 +837,11 @@ QtGUIMainWindow::qt_outgoingCall (void)
 {
 	int id, line;
 	if (_lcd->getTextBuffer() == NULL) {
-		_debug("Enter a phone number\n");
 		_callmanager->displayStatus(ENTER_NUMBER_STATUS);
 		return -1;
 	}
 	const string to(_lcd->getTextBuffer().ascii());
 	if (to.empty()) {
-		_debug("Enter a phone number\n");
 		_callmanager->displayStatus(ENTER_NUMBER_STATUS);
 		return -1;
 	} 
@@ -982,15 +990,21 @@ QtGUIMainWindow::toggleLine (int line)
 		if (call == NULL) {
 		// Check if the call exists
 			return -1;
+		} else if (call->isRinging()){
+			// If call is ringing
+			_debug("CASE 1: Call %d is ringing\n", id);
+			changeLineStatePixmap(line, BUSY);
+			putOnHoldBusyLine(busyLine);
+			displayContext(id);
 		} else if (call->isBusy()){
 			// If call is busy, put this call on hold
-			_debug("CASE 1: Put Call %d on-hold\n", id);
+			_debug("CASE 2 Put Call %d on-hold\n", id);
 			changeLineStatePixmap(line, ONHOLD);
 			displayStatus(ONHOLD_STATUS);
 			qt_onHoldCall(id);
 		} else if (call->isOnHold()) {
 			// If call is on hold, put this call on busy state
-			_debug("CASE 2: Put Call %d off-hold\n", id);
+			_debug("CASE 3: Put Call %d off-hold\n", id);
 			changeLineStatePixmap(line, BUSY);
 			putOnHoldBusyLine(busyLine);
 			if (getChooseLine()) {
@@ -1004,7 +1018,7 @@ QtGUIMainWindow::toggleLine (int line)
 			displayContext(id);
 		} else if (call->isIncomingType()) {
 		// If incoming call occurs
-			_debug("CASE 3: Answer call %d\n", id);
+			_debug("CASE 4: Answer call %d\n", id);
 			changeLineStatePixmap(line, BUSY);
 			putOnHoldBusyLine(busyLine);
 			qt_answerCall(id);
@@ -1014,7 +1028,7 @@ QtGUIMainWindow::toggleLine (int line)
 		}	
 	} else {
 	// If just click on free line
-		_debug("CASE 4: New line off-hook\n");
+		_debug("CASE 5: New line off-hook\n");
 		phLines[line]->button()->setPixmap(TabLinePixmap[line][BUSY]);
 		displayStatus(ENTER_NUMBER_STATUS);
 		setChooseLine(true);
@@ -1047,17 +1061,14 @@ QtGUIMainWindow::dial (void)
 	
 	if ((i = isThereIncomingCall()) > 0) {
 		// If new incoming call 
-		_debug("Dial : new incoming call\n");
 		line = id2line(i);
 		_TabIncomingCalls[line] = -1;
 		toggleLine(line);
 	} else if (getTransfer()){
 		// If call transfer
-		_debug("Dial : call transfer\n");
 		qt_transferCall (line2id(getCurrentLine()));
 	} else {
 		// If new outgoing call  
-		_debug("Dial : outgoing call\n");
 		if (getCurrentLine() < 0 or getChooseLine()) {
 			line = qt_outgoingCall();
 		}
@@ -1074,16 +1085,17 @@ QtGUIMainWindow::hangupLine (void)
 	int line = getCurrentLine();
 	int id = phLines[line]->getCallId();
 	if (_callmanager->getbCongestion()) {
-		_callmanager->congestion(false);
+		// If congestion tone
+		changeLineStatePixmap(line, FREE);
         _lcd->clear(QString(ENTER_NUMBER_STATUS));
-	}
-	
-	if (id > 0 and getCall(id)->isProgressing()) {
+		qt_hangupCall(id);
+		_callmanager->congestion(false);
+		phLines[line]->setCallId(0);
+	} else if (line >= 0 and id > 0 and getCall(id)->isProgressing()) {
 		// If I want to cancel a call before ringing, i have to wait.
-	   	return;
-	}	   
-		
-	if (line >= 0 and id > 0) {
+	} else if (line >= 0 and id > 0) {
+		// If hangup current line normally
+		_debug("Hangup line %d\n", line);
 		qt_hangupCall(id);
 		changeLineStatePixmap(line, FREE);
 		phLines[line]->setCallId(0);
@@ -1098,6 +1110,7 @@ QtGUIMainWindow::hangupLine (void)
 		changeLineStatePixmap(line, FREE);
 		dialtone(false);
 		setChooseLine(false);
+		setCurrentLine(-1);
 	}
 }
 

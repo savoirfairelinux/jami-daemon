@@ -151,7 +151,7 @@ public:
 	void displayTextMessage (short id, const string& message);
 	void displayError (const string& error);
 	void displayStatus (const string& status);
-
+	int selectedCall (void);
 	
 	/*
 	 * Handle audio sounds heard by a caller while they wait for their 

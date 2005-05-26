@@ -96,6 +96,10 @@ public:
 	virtual void displayContext (short id);
 	virtual string getRingtoneFile (void);
 	virtual void setup (void);
+	/*
+	 * Return the id matching to the chosen line
+	 */
+	virtual int selectedCall (void);
 
 	// Handle IP-phone user actions
 	int qt_outgoingCall (void); 	

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'gui/qt/voIPLinkmanagement.ui'
 **
-** Created: Wed May 25 16:13:46 2005
+** Created: Thu May 26 16:51:18 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -46,7 +46,7 @@ public:
     QLabel* textLabel4;
     QLabel* textLabel5;
     QLabel* textLabel6;
-    QLineEdit* yourName;
+    QLineEdit* fullName;
     QLineEdit* userPart;
     QLineEdit* hostPart;
     QLineEdit* authUser;

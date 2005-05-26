@@ -82,7 +82,7 @@ private:
 	short 	_id;
 	int 	_cid;	// call id
   	int 	_did;	// dialog id
-	bool	_standby;
+	bool	_standby; // wait for a cid and did when outgoing call is made
 
   	int  	_status_code;
 	

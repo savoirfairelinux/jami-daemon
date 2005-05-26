@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'gui/qt/configurationpanel.ui'
 **
-** Created: Wed May 25 16:13:45 2005
+** Created: Thu May 26 16:51:17 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -18,16 +18,16 @@ class QVBoxLayout;
 class QHBoxLayout;
 class QGridLayout;
 class QSpacerItem;
-class QFrame;
-class QPushButton;
 class QListBox;
 class QListBoxItem;
 class QLabel;
+class QFrame;
 class QTabWidget;
 class QWidget;
 class QGroupBox;
 class QLineEdit;
 class QCheckBox;
+class QPushButton;
 class QButtonGroup;
 class QRadioButton;
 class QSpinBox;
@@ -41,10 +41,6 @@ public:
     ConfigurationPanel( QWidget* parent = 0, const char* name = 0, bool modal = FALSE, WFlags fl = 0 );
     ~ConfigurationPanel();
 
-    QFrame* line1;
-    QPushButton* buttonHelp;
-    QPushButton* buttonSave;
-    QPushButton* buttonCancel;
     QListBox* Menu;
     QLabel* TitleTab;
     QFrame* line2;
@@ -122,6 +118,11 @@ public:
     QWidget* CodecsPage_4;
     QLabel* textLabel1;
     QLabel* pixmapLabel2;
+    QFrame* line1;
+    QPushButton* buttonHelp;
+    QPushButton* buttonSave;
+    QPushButton* buttonOk;
+    QPushButton* buttonCancel;
 
 public slots:
     virtual void saveSlot();
@@ -131,10 +132,8 @@ public slots:
     virtual void driverSlot( int id );
 
 protected:
-    QGridLayout* ConfigurationPanelLayout;
-    QVBoxLayout* layout8;
-    QHBoxLayout* layout7;
-    QSpacerItem* Horizontal_Spacing2;
+    QVBoxLayout* layout20;
+    QHBoxLayout* layout31;
     QVBoxLayout* layout17;
     QVBoxLayout* layout24;
     QGridLayout* groupBox1Layout;
@@ -147,9 +146,9 @@ protected:
     QVBoxLayout* layout11;
     QHBoxLayout* layout10;
     QSpacerItem* spacer6;
-    QHBoxLayout* layout7_2;
+    QHBoxLayout* layout7;
     QSpacerItem* spacer3;
-    QHBoxLayout* layout8_2;
+    QHBoxLayout* layout8;
     QSpacerItem* spacer4;
     QVBoxLayout* DriverChoiceLayout;
     QGridLayout* CodecsChoiceLayout;
@@ -161,6 +160,9 @@ protected:
     QSpacerItem* spacer5;
     QHBoxLayout* layout16_2;
     QSpacerItem* spacer6_2;
+    QVBoxLayout* layout19_2;
+    QHBoxLayout* layout28;
+    QSpacerItem* Horizontal_Spacing2;
 
 protected slots:
     virtual void languageChange();

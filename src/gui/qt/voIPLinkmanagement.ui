@@ -210,7 +210,7 @@
                                         </property>
                                         <widget class="QLineEdit">
                                             <property name="name">
-                                                <cstring>yourName</cstring>
+                                                <cstring>fullName</cstring>
                                             </property>
                                         </widget>
                                         <widget class="QLineEdit">
@@ -232,10 +232,16 @@
                                             <property name="name">
                                                 <cstring>password</cstring>
                                             </property>
+                                            <property name="echoMode">
+                                                <enum>Password</enum>
+                                            </property>
                                         </widget>
                                         <widget class="QLineEdit">
                                             <property name="name">
                                                 <cstring>proxy</cstring>
+                                            </property>
+                                            <property name="echoMode">
+                                                <enum>Normal</enum>
                                             </property>
                                         </widget>
                                     </vbox>
@@ -258,10 +264,10 @@
 </widget>
 <images>
     <image name="image0">
-        <data format="PNG" length="206">89504e470d0a1a0a0000000d494844520000000d000000100806000000cda3f53900000095494441542891dd91310ec3200c451f4c8c9c23b90139bf19b3710f4636772911b856d5b95f42089ef0c310dadd600009fae8e49461c0514ead55c25caf3cf6d1b78d3e3a473915a0944b3d1edadd3e0c985863f40c36d6186785522ef7803d985306a98282fe3aa40a41e1abc14b902a4f4f735eaf3a1f61e54f4f2b58e371f79fd6783c6e8677456bb27cfba759d19a2cffc79e5e4048dcd70eb2adc50000000049454e44ae426082</data>
+        <data format="PNG" length="206">89504e470d0a1a0a0000000d494844520000000d000000100806000000cda3f53900000095494441542891dd91b10dc4200c459fa9b340ca640c32bf192003d0b2003d69ce11f1f97457df97108227fc30483d2b746081d61bebb242872defa314155bcf3cb5de1e1bad37b6bc0f809c8f1171a9677d33e0e28d2932f878a3584f9f0e84462dca80f1ebd0a2c880af061fd1a2774f36e77cdc85ec4a334ff62a339813f1f09fe6443c3d0caf8adee4f9e39faca23779fe8f3d5d9601dc62f81b177a0000000049454e44ae426082</data>
     </image>
     <image name="image1">
-        <data format="PNG" length="194">89504e470d0a1a0a0000000d494844520000000d000000100806000000cda3f53900000089494441542891dd913112c33008040f2a957a87d3e5ff6fa043efa0a4538a58194494d86e7d8d34dc2c37cc918a020ea000e6865a2ab6e7a3635713a5ecb3b94d037343d4cae7f1a9a5028ef71bb4f2794ad837e6a4ec73dcf0d99892b27fc79ba8031d17c54d94ae004d94d8dc70166ca234dd74040ee0aba75f6004963d6530027f7b1a604e18fe0b9785c55de7faf4530000000049454e44ae426082</data>
+        <data format="PNG" length="195">89504e470d0a1a0a0000000d494844520000000d000000100806000000cda3f5390000008a494441542891dd91b10dc3300c049facb5804a6780ec3f0707a04a2ec05e29620514a3c476eb6f24f0717c104f2a0a388002981b6aa9d89e8f8e5d4d94b2cfe6360dcc0d512b9fc7a7960a38de6fd0cae72961df9893b2cf71c367634acafe1d6fa20e745c143751ba0234516273c359b089d274d3113880af9e7e811158f694c108fced69803961f82f0746c5f7b2f4f32c0000000049454e44ae426082</data>
     </image>
 </images>
 <connections>
@@ -297,7 +303,7 @@
     </connection>
 </connections>
 <tabstops>
-    <tabstop>yourName</tabstop>
+    <tabstop>fullName</tabstop>
     <tabstop>userPart</tabstop>
     <tabstop>hostPart</tabstop>
     <tabstop>authUser</tabstop>

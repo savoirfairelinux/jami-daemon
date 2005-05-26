@@ -35,15 +35,23 @@ using namespace std;
 // 1XX responses
 #define DIALOG_ESTABLISHED 101
 // 4XX Errors
+#define	BAD_REQ			400
+#define	UNAUTHORIZED	401
 #define	FORBIDDEN		403
 #define NOT_FOUND		404
+#define NOT_ALLOWED		405
+#define NOT_ACCEPTABLE	406
 #define AUTH_REQUIRED	407
 #define REQ_TIMEOUT		408
+#define TEMP_UNAVAILABLE 480
 #define	ADDR_INCOMPLETE	484
 #define	BUSY_HERE		486
 #define	REQ_TERMINATED	487
 // 5XX errors
 #define SERVICE_UNAVAILABLE	503
+// 6XX errors
+#define	BUSY_EVERYWHERE	600
+#define DECLINE			603
 
 class AudioCodec;
 class AudioRtp;
