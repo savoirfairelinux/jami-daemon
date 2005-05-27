@@ -33,9 +33,7 @@ public:
 	~Config					(void) {};
 
 	static string	gets	(const string&, const string&);
-//	static string	getschar(const string&, const string&);
 	static int		geti	(const string&, const string&);
-//	static bool		getb	(const string&, const string&);
 	
 	static string	get		(const string&, const string&, const string&);	
 	static string 	getchar	(const string&, const string&, const string&);	

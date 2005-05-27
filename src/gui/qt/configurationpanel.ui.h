@@ -89,21 +89,19 @@ void ConfigurationPanel::init()
    
    // For preferences tab
    SkinChoice->setCurrentText(QString(get_config_fields_str(
-				   								PREFERENCES, SKIN_CHOICE)));
+               PREFERENCES, SKIN_CHOICE)));
    confirmationToQuit->setChecked(get_config_fields_int(
-			   									PREFERENCES, CONFIRM_QUIT));
+               PREFERENCES, CONFIRM_QUIT));
      zoneToneChoice->setCurrentText(QString(get_config_fields_str(
-					 							PREFERENCES, ZONE_TONE)));
+             PREFERENCES, ZONE_TONE)));
      checkedTray->setChecked(get_config_fields_int(
-			   									PREFERENCES, CHECKED_TRAY));
+               PREFERENCES, CHECKED_TRAY));
   voicemailNumber->setText(QString(get_config_fields_str(
-				   								PREFERENCES, VOICEMAIL_NUM)));
+               PREFERENCES, VOICEMAIL_NUM)));
   
    //  Init tab view order
     Tab_Signalisations->show();
     Tab_Audio->hide();
-    Tab_Video->hide();    
-    Tab_Network->hide();
     Tab_Preferences->hide();
     Tab_About->hide();
 
@@ -113,12 +111,7 @@ void ConfigurationPanel::init()
     new QjListBoxPixmap (QjListBoxPixmap::Above, 
  QPixmap(Skin::getPathPixmap(QString(PIXDIR), QString(PIXMAP_AUDIO))) ,
  "Audio", Menu );
-    new QjListBoxPixmap (QjListBoxPixmap::Above, 
- QPixmap(Skin::getPathPixmap(QString(PIXDIR), QString(PIXMAP_VIDEO))),
- "Video", Menu );
-    new QjListBoxPixmap (QjListBoxPixmap::Above, 
- QPixmap(Skin::getPathPixmap(QString(PIXDIR), QString(PIXMAP_NETWORK))),
- "Network", Menu );
+    
     new QjListBoxPixmap (QjListBoxPixmap::Above, 
  QPixmap(Skin::getPathPixmap(QString(PIXDIR), QString(PIXMAP_PREFERENCES))),
  "Preferences", Menu );
@@ -149,10 +142,10 @@ void ConfigurationPanel::saveSlot()
    Config::set("Audio", "Codecs.codec5", string(codec5->currentText().ascii()));
    if (ringsChoice->currentText() != NULL)
      Config::set("Audio", "Rings.ringChoice", 
-			 					string(ringsChoice->currentText().ascii()));
+         string(ringsChoice->currentText().ascii()));
    
    Config::set("Preferences", "Themes.skinChoice", 
-		   string(SkinChoice->currentText().ascii()));
+     string(SkinChoice->currentText().ascii()));
    Config::set("Preferences", "Options.zoneToneChoice", 
      string(zoneToneChoice->currentText().ascii()));
    Config::set("Preferences", "Options.confirmQuit", 
@@ -160,7 +153,7 @@ void ConfigurationPanel::saveSlot()
    Config::set("Preferences", "Options.checkedTray", checkedTray->isChecked());
 
    Config::set("Preferences", "Options.voicemailNumber", 
-		   string(voicemailNumber->text().ascii()));   
+     string(voicemailNumber->text().ascii()));   
 #if 0 
    QMessageBox::information(this, "Save settings",
    "You must restart SFLPhone",
@@ -176,8 +169,6 @@ void ConfigurationPanel::changeTabSlot()
  TitleTab->setText("Setup signalisation");
  Tab_Signalisations->show();
               Tab_Audio->hide();
- Tab_Video->hide();
-              Tab_Network->hide();
               Tab_Preferences->hide();
  Tab_About->hide();
               break;
@@ -185,44 +176,20 @@ void ConfigurationPanel::changeTabSlot()
  TitleTab->setText("Setup audio");
  Tab_Signalisations->hide();
               Tab_Audio->show();
- Tab_Video->hide();
-              Tab_Network->hide();
  Tab_Preferences->hide();
               Tab_About->hide();
               break;
    case 2:
-       TitleTab->setText("Setup video");
-              Tab_Signalisations->hide();
-              Tab_Audio->hide();
- Tab_Video->show();
-              Tab_Network->hide();
- Tab_Preferences->hide();
-              Tab_About->hide();
-              break;
-   case 3:
-       TitleTab->setText("Setup network");
-              Tab_Signalisations->hide();
-              Tab_Audio->hide();
- Tab_Video->hide();
-              Tab_Network->show();
- Tab_Preferences->hide();
-              Tab_About->hide();
-              break;
-   case 4:
        TitleTab->setText("Setup preferences");
               Tab_Signalisations->hide();
               Tab_Audio->hide();
- Tab_Video->hide();
-              Tab_Network->hide();
  Tab_Preferences->show();
               Tab_About->hide();
               break;
-   case 5:
+   case 3:
        TitleTab->setText("About");
               Tab_Signalisations->hide();
               Tab_Audio->hide();
- Tab_Video->hide();
-              Tab_Network->hide();
  Tab_Preferences->hide();
               Tab_About->show();
               break;

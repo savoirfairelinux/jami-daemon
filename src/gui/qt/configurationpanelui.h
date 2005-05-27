@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'gui/qt/configurationpanel.ui'
 **
-** Created: Thu May 26 16:51:17 2005
+** Created: Fri May 27 17:07:54 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -18,16 +18,16 @@ class QVBoxLayout;
 class QHBoxLayout;
 class QGridLayout;
 class QSpacerItem;
+class QFrame;
+class QPushButton;
 class QListBox;
 class QListBoxItem;
 class QLabel;
-class QFrame;
 class QTabWidget;
 class QWidget;
 class QGroupBox;
 class QLineEdit;
 class QCheckBox;
-class QPushButton;
 class QButtonGroup;
 class QRadioButton;
 class QSpinBox;
@@ -41,6 +41,11 @@ public:
     ConfigurationPanel( QWidget* parent = 0, const char* name = 0, bool modal = FALSE, WFlags fl = 0 );
     ~ConfigurationPanel();
 
+    QFrame* line1;
+    QPushButton* buttonHelp;
+    QPushButton* buttonSave;
+    QPushButton* buttonOk;
+    QPushButton* buttonCancel;
     QListBox* Menu;
     QLabel* TitleTab;
     QFrame* line2;
@@ -94,14 +99,8 @@ public:
     QLabel* textLabel1_4_5;
     QWidget* RingPage;
     QComboBox* ringsChoice;
-    QTabWidget* Tab_Video;
-    QWidget* DriversPage_2;
-    QWidget* CodecsPage_2;
-    QTabWidget* Tab_Network;
-    QWidget* DriversPage_3;
-    QWidget* CodecsPage_3;
     QTabWidget* Tab_Preferences;
-    QWidget* DriversPage_4;
+    QWidget* DriversPage_2;
     QComboBox* SkinChoice;
     QPushButton* buttonApplySkin;
     QWidget* TabPage;
@@ -112,17 +111,12 @@ public:
     QLabel* textLabel1_6;
     QLineEdit* voicemailNumber;
     QTabWidget* Tab_About;
-    QWidget* DriversPage_5;
+    QWidget* DriversPage_3;
     QLabel* pixmapLabel1;
     QLabel* textLabel2_2;
-    QWidget* CodecsPage_4;
+    QWidget* CodecsPage_2;
     QLabel* textLabel1;
     QLabel* pixmapLabel2;
-    QFrame* line1;
-    QPushButton* buttonHelp;
-    QPushButton* buttonSave;
-    QPushButton* buttonOk;
-    QPushButton* buttonCancel;
 
 public slots:
     virtual void saveSlot();
@@ -132,14 +126,16 @@ public slots:
     virtual void driverSlot( int id );
 
 protected:
-    QVBoxLayout* layout20;
-    QHBoxLayout* layout31;
+    QGridLayout* ConfigurationPanelLayout;
+    QVBoxLayout* layout19;
+    QHBoxLayout* layout28;
+    QSpacerItem* Horizontal_Spacing2;
     QVBoxLayout* layout17;
     QVBoxLayout* layout24;
     QGridLayout* groupBox1Layout;
     QVBoxLayout* layout23;
     QSpacerItem* spacer9;
-    QHBoxLayout* layout19;
+    QHBoxLayout* layout19_2;
     QSpacerItem* spacer7;
     QVBoxLayout* stunButtonGroupLayout;
     QGridLayout* SettingsDTMFLayout;
@@ -160,9 +156,6 @@ protected:
     QSpacerItem* spacer5;
     QHBoxLayout* layout16_2;
     QSpacerItem* spacer6_2;
-    QVBoxLayout* layout19_2;
-    QHBoxLayout* layout28;
-    QSpacerItem* Horizontal_Spacing2;
 
 protected slots:
     virtual void languageChange();

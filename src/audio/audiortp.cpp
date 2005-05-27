@@ -326,7 +326,6 @@ AudioRtpRTX::run (void) {
 		TimerPort::incTimer(frameSize); // 'frameSize' ms
 	}
 		 
-//	AudioCodec::destroy(_ca->payload);
 	delete[] data_for_speakers;
 	delete[] data_from_mic;
 	delete[] data_from_mic_tmp;

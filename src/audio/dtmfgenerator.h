@@ -51,9 +51,6 @@ public:
 class DTMFGenerator : public ToneGenerator 
 {
 private:
-//	unsigned int samplingRate; // Sampling rate used, default is 8000 Hz
-//	short amplitude;           // Amplitude of the resulting signal
-
 	struct DTMFTone {
 		unsigned char code; // Code of the tone
 		int lower;          // Lower frequency

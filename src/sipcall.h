@@ -44,14 +44,7 @@ public:
 	
 	int  	newIncomingCall 	(eXosip_event_t *);
 	int  	answeredCall 		(eXosip_event_t *);
-//	int  	proceedingCall		(eXosip_event_t *);
 	int  	ringingCall			(eXosip_event_t *);
-	int  	redirectedCall		(eXosip_event_t *);
-	int  	requestfailureCall	(eXosip_event_t *);
-	int  	serverfailureCall	(eXosip_event_t *);
-	int  	globalfailureCall	(eXosip_event_t *);
-	
-	int  	closedCall			(void);
 	int  	onholdCall			(eXosip_event_t *);
 	int  	offholdCall			(eXosip_event_t *);
 
@@ -99,7 +92,6 @@ private:
   	int  	_state;
 	int		_local_audio_port;
   	int  	_remote_sdp_audio_port;
-	
 };
 
 #endif // __SIP_CALL_H__

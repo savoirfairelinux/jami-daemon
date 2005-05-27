@@ -269,7 +269,6 @@ SipCall::answeredCall(eXosip_event_t *event) {
 		this->_status_code = event->status_code;
     }
 	this->_state = event->type;
-//	delete ac;
 	return 0;
 }
 
@@ -302,29 +301,6 @@ SipCall::offholdCall (eXosip_event_t *event) {
     ca->_status_code = event->status_code;
   
 	ca->_state = event->type;
-  	return 0;
-}
-
-int 
-SipCall::redirectedCall(eXosip_event_t *event) {
-	/*
-	if (ca->enable_audio>0) {
-		ca->enable_audio = -1;
-		os_sound_close(ca);
-    }
-	*/
-    this->_state = NOT_USED;
-	return 0;
-}
-
-int
-SipCall::closedCall (void) {
-	SipCall *ca = this;
-
-  	if (ca->enable_audio > 0) {
- //     	manager->closeSound(ca);
-    }
-
   	return 0;
 }
 

@@ -34,7 +34,6 @@ class Call;
 class Manager;
 class VoIPLink {
 public:
-	VoIPLink (void);
 	VoIPLink (short id, Manager* manager);
 	virtual ~VoIPLink (void);
 
@@ -52,7 +51,6 @@ public:
 	virtual int offhold (short id) = 0;
 	virtual int transfer (short id, const string& to) = 0;
 	virtual int refuse (short id) = 0;
-	virtual int cancel (short id) = 0;
 	virtual int setRegister (void) = 0;
 	virtual void carryingDTMFdigits(short id, char code) = 0;
 

@@ -43,11 +43,6 @@ Config::get	(const string& section, const string& key, const string& defval) {
 		return value;
 	}
 }
-/*
-string 
-Config::getschar (const string& section, const string& key) {
-	return Config::getchar (section, key, "");
-}*/
 
 string 
 Config::getchar	(const string& section, const string& key, const string& defval){
@@ -59,13 +54,7 @@ Config::getchar	(const string& section, const string& key, const string& defval)
 		return value;
 	}
 }
-/*
-bool
-Config::getb (const string& section, const string& key) {
-	return (bool)Config::get (section, key, 0);
-}
 
-*/
 int
 Config::geti (const string& section, const string& key) {
 	return Config::get (section, key, 0);

@@ -64,13 +64,6 @@ Point::getSubstrY (const char* key) {
  */
 int
 Point::getX (const char* key) {
-/*	
-	char * value = skinConfigTree->getValue(NULL, key);
-	string tmp(value);
-	int index = tmp.find(',');
-	return atoi((tmp.substr(0, index)).data());
-*/
-	
 	int index;
 	string tmp = getSubstrX(key);
 	
@@ -87,21 +80,6 @@ Point::getX (const char* key) {
  */
 int
 Point::getY (const char* key) {
-/*	
-	char * value = skinConfigTree->getValue(NULL, key);
-	string tmp(value);
-	int index1, index2;
-
-	index1 = tmp.find(',');
-	if (tmp.find('-') == string::npos) {
-		// If string tmp doesn't contain '-'
-		return atoi((tmp.substr(index1 + 1, tmp.length() - index1)).data());
-	} else {
-		// If string tmp contains '-', it looks like 'y-variation'
-		index2 = tmp.find('-');
-		return atoi((tmp.substr(index1 + 1, index2 - index1)).data());
-	}
-*/	
 	int index;
 	string tmp = getSubstrY(key);
 	
@@ -118,12 +96,6 @@ Point::getY (const char* key) {
  */
 int
 Point::getVariation (const char* key) {
-/*	
-	char * value = skinConfigTree->getValue(NULL, key);
-	string tmp(value);
-	int index = tmp.find('-');
-	return atoi((tmp.substr(index + 1, tmp.length() - index)).data());
-*/	
 	int index;
 	string str;
 	

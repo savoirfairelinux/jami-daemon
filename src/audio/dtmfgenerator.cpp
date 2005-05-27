@@ -164,7 +164,6 @@ void DTMFGenerator::getNextSamples(short* buffer, size_t n) throw(DTMFException)
  */
 short* DTMFGenerator::generateSample(unsigned char code) throw (DTMFException) {
 	short* ptr;
-//	double arg1, arg2;
 
 	//	try {
 		ptr = new short[SAMPLING_RATE];
@@ -172,16 +171,6 @@ short* DTMFGenerator::generateSample(unsigned char code) throw (DTMFException) {
 			     //throw new DTMFException("No memory left");
 			return 0;
 		}
-#if 0
-		arg1 = (double)2 * (double)M_PI * (double)tones[code].higher / (double)SAMPLING_RATE; 
-		arg2 = (double)2 * (double)M_PI * (double)tones[code].lower / (double)SAMPLING_RATE;
-
-		for(unsigned int i = 0; i < SAMPLING_RATE; i++) {
-			ptr[i] = (short)((double)(AMPLITUDE >> 2) * sin(arg1 * i) + (double)(AMPLITUDE >> 2) * sin(arg2 * i));
-		};
-		
-		return ptr;
-#endif
 		
 		generateSin(tones[code].higher, tones[code].lower, AMPLITUDE, 
 					SAMPLING_RATE, ptr);

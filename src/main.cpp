@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@ main (int argc, char **argv) {
 	manager = new Manager();
 
 	// Faire partir la gui selon l'option choisie
+#if 1
 		QApplication a(argc, argv);
 		QtGUIMainWindow *qtgui = new QtGUIMainWindow (0, 0 ,
 									Qt::WDestructiveClose |
@@ -49,8 +50,9 @@ main (int argc, char **argv) {
 		
 		a.setMainWidget(qtgui);
 		return a.exec();
-//	int ret = OptionProcess (argc,argv, manager);
-//	return ret;
+#endif
+	int ret = OptionProcess (argc,argv, manager);
+	return ret;
 }
 
 int OptionProcess (int argc,char **argv, Manager* manager) 
@@ -85,7 +87,8 @@ int OptionProcess (int argc,char **argv, Manager* manager)
                     								Qt::WStyle_Customize |
                     								Qt::WStyle_NoBorder,
 													manager);
-						cout << "a.setMainWidget(qtgui);" << endl;
+						manager->setGui(qtgui);
+						manager->init();
 						a.setMainWidget(qtgui);
 						return a.exec();
 #endif
@@ -103,6 +106,17 @@ int OptionProcess (int argc,char **argv, Manager* manager)
 				break;
 			case '?':
 			case 'h':
+				cout << "Usage: sflphone [OPTIONS] " << endl
+					 << "Valid Options:" << endl
+					 << "-i <interface>, --ui=<interface>" << endl
+				 	 << "	Select an user interface (right now just qt interface is available)" << endl
+					 << "-v, --verbose" << endl
+					 << "	Display all messages for debbugging" << endl
+					 << "-p <number>, --phonenumber=<number>" << endl
+					 << "	Compose directly the phone number that you want"
+					 	<< endl
+					 << "-h, --help" << endl
+					 << "	Display help options message" << endl;
 				break;
 			default:
 				cout << "Option " << c << "doesn't exist" <<endl;

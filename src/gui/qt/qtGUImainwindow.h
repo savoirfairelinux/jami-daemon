@@ -111,7 +111,6 @@ public:
 	void qt_muteOn (short id);
 	void qt_muteOff (short id);
 	int qt_refuseCall (short id);
-	int qt_cancelCall (short id);
 	
 	/*
 	 * Return the call corresponding to the id

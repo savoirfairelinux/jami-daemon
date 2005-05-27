@@ -72,8 +72,6 @@ OBJS = \
 	gui/qt/configurationpanelui.moc.o \
 	gui/qt/url_inputui.o \
 	gui/qt/url_inputui.moc.o \
-	gui/qt/voIPLinkmanagementui.o \
-	gui/qt/voIPLinkmanagementui.moc.o \
 	main.o \
 	manager.o \
 	sipcall.o \
@@ -97,16 +95,12 @@ endif
 .cpp.o:
 	$(CXX) $(DEFVARS) $(CXXFLAGS) -c -o $@ $<
 
-prereq:	gui/qt/phonebook.ui gui/qt/url_input.ui gui/qt/configurationpanel.ui gui/qt/voIPLinkmanagement.ui
+prereq:	gui/qt/url_input.ui gui/qt/configurationpanel.ui 
 	@echo "Making User Interface files..."
-	$(UIC) -o gui/qt/phonebookui.h gui/qt/phonebook.ui
-	$(UIC) -o gui/qt/phonebookui.cpp -impl gui/qt/phonebookui.h gui/qt/phonebook.ui
 	$(UIC) -o gui/qt/url_inputui.h gui/qt/url_input.ui
 	$(UIC) -o gui/qt/url_inputui.cpp -impl gui/qt/url_inputui.h gui/qt/url_input.ui
 	$(UIC) -o gui/qt/configurationpanelui.h gui/qt/configurationpanel.ui
 	$(UIC) -o gui/qt/configurationpanelui.cpp -impl gui/qt/configurationpanelui.h gui/qt/configurationpanel.ui
-	$(UIC) -o gui/qt/voIPLinkmanagementui.h gui/qt/voIPLinkmanagement.ui
-	$(UIC) -o gui/qt/voIPLinkmanagementui.cpp -impl gui/qt/voIPLinkmanagementui.h gui/qt/voIPLinkmanagement.ui
 
 %.moc.cpp: %.h
 	$(MOC) -o $@ $<

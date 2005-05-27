@@ -52,11 +52,8 @@ enum CallType {
 
 #include "manager.h"
 
-//class AudioCodec;
-
 class Call {
 public:
-	Call(void);
 	Call(Manager* manager, short id, CallType type, VoIPLink* voiplink);
 	
 	~Call(void);
@@ -71,7 +68,6 @@ public:
 	void setVoIPLinkId (short voIPLinkId);
 	void setVoIPLink (VoIPLink* voIPLink);
 	VoIPLink* getVoIPLink(void);
-//	void setAudioCodec(void);
 		
 	string getStatus (void);
 	void setStatus (const string& status);
@@ -113,15 +109,12 @@ public:
 	int muteOn (void);
 	int muteOff (void);
 	int refuse  (void);
-	int cancel  (void);
-
 
 private:
 	void initConstructor (void);
 	
 	Manager* _manager;
 	VoIPLink* _voIPLink;
-//	AudioCodec* _audiocodec;
 	
 	short _id;
 	short _voIPLinkId;

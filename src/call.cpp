@@ -18,19 +18,11 @@
  */
 
 #include <iostream>
-//#include "audio/audiocodec.h"
 #include "call.h"
 #include "manager.h"
 #include "sipvoiplink.h"
 #include "voIPLink.h"
 
-Call::Call (void) 
-{
- 	initConstructor();	
-	_id = 0;
-	_manager = NULL;
-	_voIPLink = NULL;
-}
 
 Call::Call (Manager* manager, short id, CallType type, VoIPLink* voiplink)
 {
@@ -104,13 +96,6 @@ Call::getVoIPLink (void)
 	return _voIPLink;
 }
 
-/*
-void
-Call::setAudioCodec (void)
-{
-	_audiocodec = _voIPLink->getAudioCodec(getId());
-}
-*/
 string 
 Call::getStatus (void)
 {
@@ -332,13 +317,6 @@ Call::refuse  (void)
 	return i;
 }
 
-int 
-Call::cancel  (void)
-{
-	int i = _voIPLink->cancel(_id);
-	_voIPLink->deleteSipCall(_id);
-	return i;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
@@ -350,5 +328,4 @@ Call::initConstructor(void)
 	_state = NotExist;
 	_type = Null;
 	_voIPLinkId = 1;
-//	_audiocodec = NULL;
 }

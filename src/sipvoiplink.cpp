@@ -48,15 +48,6 @@ using namespace std;
 #define	RANDOM_LOCAL_PORT	((rand() % 27250) + 5250)*2
 
 
-SipVoIPLink::SipVoIPLink (void) : VoIPLink ()
-{
-//	_evThread = new EventThread (this);
-	_sipcallVector = new SipCallVector();
-	_localPort = 0;
-	_manager = NULL;
-//	_audiortp = new AudioRtp(_manager);
-}
-
 SipVoIPLink::SipVoIPLink (short id, Manager* manager) : VoIPLink (id, manager)
 {
 	setId(id);
@@ -375,17 +366,6 @@ SipVoIPLink::refuse (short id)
 }
 
 int
-SipVoIPLink::cancel (short id)
-{
-	int i;
-	eXosip_lock();
-    i = eXosip_terminate_call (getSipCall(id)->getCid(), 
-								getSipCall(id)->getDid());
-    eXosip_unlock();
-	return i;
-}
-
-int
 SipVoIPLink::getEvent (void)
 {
 	eXosip_event_t *event;
@@ -394,7 +374,7 @@ SipVoIPLink::getEvent (void)
 	static int countReg = 0;
 
 	event = eXosip_event_wait (0, 50);
-	//event = eXosip_event_get();
+	eXosip_automatic_refresh();
 	if (event == NULL) {
 		return -1;
 	}	
@@ -680,7 +660,6 @@ SipVoIPLink::deleteSipCall (short callid)
 	while (i < _sipcallVector->size()) {
 		if (_sipcallVector->at(i)->getId() == callid) {
 			_sipcallVector->erase(_sipcallVector->begin()+i);
-	//		delete getSipCall(callid);	
 			return;
 		} else {
 			i++;
@@ -756,18 +735,6 @@ SipVoIPLink::setAuthentication (void)
 		_manager->error()->errorName(PASSWD_FIELD_EMPTY, NULL);				
 		return -1;
 	}
-
-#if 0
-	if (_manager->useStun()) {
-		realm = get_config_fields_str(SIGNALISATION, HOST_PART);
-	} else {
-		if (!get_config_fields_str(SIGNALISATION, PROXY).empty()) {
-			realm = get_config_fields_str(SIGNALISATION, PROXY);
-		} else {
-			realm = get_config_fields_str(SIGNALISATION, HOST_PART);
-		}
-	}
-#endif
 
 	if (eXosip_add_authentication_info(login.data(), login.data(), 
 		pass.data(), NULL, NULL) != 0) {

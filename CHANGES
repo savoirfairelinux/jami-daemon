@@ -1,11 +1,10 @@
-SFLphone (0.4)
-	* Reorganisation of SFLphone architecture
 
-SFLphone (0.3.1) / 2005-04-21
+SFLphone (0.3.1) / 2005-05-27
+	* Reorganisation of SFLphone architecture
 	* Handle error messages on screen
 	* Handle refused call
 	* Notification of remote RINGING event added
-	* Management of lines updated
+	* Call management updated
 
 SFLphone (0.3) / 2005-04-05
 	* ALSA driver support added 

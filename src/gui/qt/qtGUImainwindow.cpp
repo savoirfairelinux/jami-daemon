@@ -18,10 +18,6 @@
  */
 
 
-////////////////////////////////////////////////////////////////////////////////
-// QtGUIMainWindow Implementation                                             //
-////////////////////////////////////////////////////////////////////////////////
-
 #include "../../configurationtree.h"
 #include <stdio.h>
 
@@ -46,7 +42,6 @@
 #include "../../user_cfg.h"
 #include "../../skin.h"
 #include "configurationpanelui.h"
-#include "voIPLinkmanagementui.h"
 #include "jpushbutton.h"
 #include "numerickeypadtools.h"
 #include "point.h"
@@ -111,8 +106,6 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	
 	// Create configuration_panel
 	_panel = new ConfigurationPanel (0, 0, false);
-	//VoIPLinkManagement* vlm = new VoIPLinkManagement();
-	//vlm->show();
 										
 	// URL input dialog
 	_urlinput = new URL_Input (this);
@@ -943,17 +936,6 @@ QtGUIMainWindow::qt_refuseCall (short id)
 	return i;	
 }	
 	
-int 
-QtGUIMainWindow::qt_cancelCall (short id)
-{
-	int i;
-	i = cancelCall(id);
-	getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
-	displayStatus(HUNGUP_STATUS);
-	
-	return i;	
-}	
-
 ///////////////////////////////////////////////////////////////////////////////
 // Public Methods implementations                                            //
 ///////////////////////////////////////////////////////////////////////////////
@@ -1279,7 +1261,6 @@ QtGUIMainWindow::configuration (void) {
 
 void
 QtGUIMainWindow::addressBook (void) {
-//	TODO: phonebook->show();
 	QMessageBox::information(this, "Directory",
 		"This feature is not implemented yet", QMessageBox::Yes);
 }

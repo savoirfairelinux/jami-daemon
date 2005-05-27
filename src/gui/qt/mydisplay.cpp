@@ -34,9 +34,7 @@
 #define	TEXT_LINE	2
 #define	TIMER_LINE	4
 #define FONT_FAMILY	"Courier"
-//#define FONT_FAMILY	"Monospace"
-//#define FONT_FAMILY	"Fixed"
-//#define FONT_FAMILY	"MiscFixed"
+// Others fixed font support "Monospace", "Fixed", "MiscFixed"
 #define FONT_SIZE	10
 
 ///////////////////////////////////////////////////////////////////////////////

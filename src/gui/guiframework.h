@@ -56,7 +56,6 @@ public:
 	int muteOn (short id);
 	int muteOff (short id);
 	int refuseCall (short id);
-	int cancelCall (short id);
 
 	int saveConfig (void);
 	int registerVoIPLink (void);

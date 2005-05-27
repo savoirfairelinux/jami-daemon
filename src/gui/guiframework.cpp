@@ -117,16 +117,6 @@ GuiFramework::refuseCall (short id)
 }
 
 int 
-GuiFramework::cancelCall (short id)
-{
-	if (_manager->cancelCall(id)) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-int 
 GuiFramework::saveConfig (void)
 {
 	if (_manager->saveConfig()) {

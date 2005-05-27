@@ -116,6 +116,10 @@ public:
 	 * Add a new call at the end of the CallVector with identifiant 'id'
 	 */
 	void pushBackNewCall (short id, enum CallType type);
+	
+	/*
+	 * Erase the Call(id) from the CallVector
+	 */
 	void deleteCall	(short id);
 	
 	int outgoingCall (const string& to);
@@ -127,7 +131,6 @@ public:
 	int muteOn (short id);
 	int muteOff (short id);
 	int refuseCall (short id);
-	int cancelCall (short id);
 
 	int saveConfig (void);
 	int registerVoIPLink (void);
@@ -161,6 +164,10 @@ public:
 
 	void ringtone (bool var);
 	void congestion (bool var);
+
+	/*
+	 * Notification of incoming call when you are already busy
+	 */
 	void notificationIncomingCall (void);
 
 	/*

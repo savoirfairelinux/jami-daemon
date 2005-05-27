@@ -64,7 +64,6 @@ typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVe
 
 class SipVoIPLink : public VoIPLink {
 public:
-	SipVoIPLink (void);
 	SipVoIPLink (short id, Manager* manager);
 	virtual ~SipVoIPLink (void);
 	
@@ -79,7 +78,6 @@ public:
 	virtual int offhold (short id);
 	virtual int transfer (short id, const string& to);
 	virtual int refuse (short id);	
-	virtual int cancel (short id);	
 	virtual int getEvent (void);
 	virtual void carryingDTMFdigits (short id, char code);
 	
@@ -93,8 +91,7 @@ public:
 	void newIncomingCall(short callid);
 
 	/*
-	 * Erase the call(id) from the SipCallVector
-	 * and delete this call
+	 * Erase the SipCall(id) from the SipCallVector
 	 */
 	void deleteSipCall(short callid);
 	

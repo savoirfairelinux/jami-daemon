@@ -28,18 +28,24 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <cc++/thread.h>
-#include <cc++/file.h>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 
-
 #include "user_cfg.h"
 #include "audio/audiocodec.h"
 #include "audio/codecDescriptor.h"
 #include "audio/tonegenerator.h"
+#include "call.h"
+#include "configuration.h"
+#include "configurationtree.h"
+#include "manager.h"
+#include "sipvoiplink.h"
+#include "skin.h"
+#include "voIPLink.h"
+#include "../stund/udp.h"
 
 #ifdef ALSA
 #include "audio/audiodriversalsa.h"
@@ -49,14 +55,6 @@
 #include "audio/audiodriversoss.h"
 #endif
  
-#include "call.h"
-#include "configuration.h"
-#include "configurationtree.h"
-#include "manager.h"
-#include "sipvoiplink.h"
-#include "skin.h"
-#include "voIPLink.h"
-#include "../stund/udp.h"
 
 using namespace std;
 using namespace ost;
@@ -74,6 +72,7 @@ Manager::Manager (void)
 
 	// Set a sip voip link by default
 	_voIPLinkVector->push_back(new SipVoIPLink(DFT_VOIP_LINK, this));
+
 	_nCalls = 0;
 	_nCodecs = 0;
 	_currentCallId = 0;
@@ -226,7 +225,6 @@ Manager::deleteCall (short id)
 	while (i < _callVector->size()) {
 		if (_callVector->at(i)->getId() == id) {
 			_callVector->erase(_callVector->begin()+i);
-	//		delete getCall(id);	
 			return;
 		} else {
 			i++;
@@ -354,19 +352,6 @@ Manager::refuseCall (short id)
 	call->setState(Refused);	
 	call->refuse();
 	ringtone(false);
-	delete call;
-	return 1;
-}
-
-int 
-Manager::cancelCall (short id)
-{
-	Call *call;
-	call = getCall(id);
-	call->setStatus(string(LOGGED_IN_STATUS));
-	call->setState(Cancelled);	
-	call->cancel();
-	ringback(false);
 	delete call;
 	return 1;
 }
@@ -719,7 +704,7 @@ Manager::initAudioCodec (void)
 				CODEC_ALAW));
 	_codecDescVector->push_back(new CodecDescriptor(PAYLOAD_CODEC_GSM, 
 				CODEC_GSM));
-	// TODO: put to 1 when these codec will be implemented
+	// TODO: When these codec will be implemented, remove comment
 #if 0
 	_codecDescVector->push_back(new CodecDescriptor(PAYLOAD_CODEC_ILBC, 
 				CODEC_ILBC));
