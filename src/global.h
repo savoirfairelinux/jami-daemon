@@ -20,6 +20,12 @@
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
 
+#include <assert.h>
+
+typedef float float32;
+typedef short int16;
+
+
 #define DEBUG
 
 #ifdef DEBUG
@@ -50,11 +56,11 @@
 
 #define MONO					1
 #define	SAMPLING_RATE 			8000
-#define AMPLITUDE				8192
 #define SIZEBUF 				1024*1024
 #define	FORMAT					2			// for 16 bits format
 #define OCTETS					SAMPLING_RATE * FORMAT	// Number of writen 
 														// bytes in buffer
-#define OSS_DRIVER				0
-#define ALSA_DRIVER				1
+#define OSS_DRIVER              0
+#define ALSA_DRIVER             1
+
 #endif	// __GLOBAL_H__

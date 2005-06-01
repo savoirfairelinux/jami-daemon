@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "audio/codecDescriptor.h"
-#include "audio/audiodrivers.h"
+#include "audio/audiodriversportaudio.h"
 #include "error.h"
 #include "call.h"
 #include "user_cfg.h"
@@ -70,15 +70,11 @@ public:
 	Manager (void);
 	~Manager (void);
 
-#ifdef ALSA
-	AudioDrivers* audiodriverReadAlsa;
-#endif
-	AudioDrivers* audiodriver;
-
 	void init (void);
 	void setGui (GuiFramework* gui);
 	ToneGenerator* getTonegenerator(void);
 	Error* error(void);
+	AudioDriversPortAudio* getAudioDriver(void);
 
 	// Accessor to number of calls 
 	unsigned int getNumberOfCalls (void);
@@ -222,6 +218,7 @@ private:
 	ToneGenerator* _tone;
 	Error* _error;
 	GuiFramework* _gui;
+	AudioDriversPortAudio* _audiodriverPA;
 	/*
 	 * Vector of VoIPLink
 	 */

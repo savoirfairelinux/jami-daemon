@@ -246,7 +246,7 @@ private:
 	JPushButton*		dial_button;
 	JPushButton*		mute_button;
 	JPushButton*		dtmf_button;
-	short*				_buf;
+	float32*				_buf;
 	// Configuration skin file
 	Point*		pt;
 

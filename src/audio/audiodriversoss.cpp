@@ -20,6 +20,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#if defined(AUDIO_OSS)
+
 #include <errno.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -205,61 +207,6 @@ AudioDriversOSS::readBuffer (void *ptr, int bytes) {
 	return rc;
 }
 
-int
-AudioDriversOSS::readBuffer (int bytes) {
-	if( devstate != DeviceOpened ) {
-		return -1;
-	}
-
-	audio_buf.resize(bytes);
-	ssize_t count = bytes;
-
-	short *buf;
-	buf = (short*)audio_buf.getData();
-	ssize_t rc;
-
-	rc = read (audio_fd, buf, count);
-	if (rc < 0) {
-		_debug ("rc < 0 read(): %s\n", strerror(errno));
-	}
-	
-	else if (rc != count) {
-		_debug ("WARNING: asked microphone for %d got %d\n", count, rc);
-	}
-
-	return rc;
-}
-
-int
-AudioDriversOSS::writeBuffer (void *ptr, int len) {
-	if (devstate != DeviceOpened ) {
-		error->errorName(DEVICE_NOT_OPEN, NULL);
-		return -1;
-	}
-	
-	audio_buf_info info;
-	
-	if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == 0 ) {
-		if (info.fragstotal - info.fragments > 15) {
-			// drop the fragment if the buffer starts to fill up
-			return 1;
-		}
-	}
-	
-	// Loop into write() while buffer not complete.
-	for (;;) {
-		int a;
-		if ((a = write(audio_fd, ptr, len)) < 0) {
-			_debug ("write(): %s\n", strerror(errno));
-			break;
-		}
-		if (a > 0) { 
-			return a;
-			break;
-		}
-	}
-	return 1; 
-}
 
 int
 AudioDriversOSS::writeBuffer (void) {
@@ -323,4 +270,5 @@ AudioDriversOSS::readableBytes(void) {
 	return info.bytes;
 }
 
+#endif // defined(AUDIO_OSS)
 

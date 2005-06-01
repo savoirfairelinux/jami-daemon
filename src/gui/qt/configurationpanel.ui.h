@@ -74,12 +74,6 @@ void ConfigurationPanel::init()
   
 ((QRadioButton*)DriverChoice->find(get_config_fields_int(AUDIO, DRIVER_NAME)))->setChecked(true);
 
-#ifdef ALSA
-   alsaButton->setEnabled(true);
-#else
-   alsaButton->setEnabled(false);
-#endif
-
    codec1->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC1)));
    codec2->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC2)));
    codec3->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC3)));

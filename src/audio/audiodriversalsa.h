@@ -17,6 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+//#ifdef AUDIO_ALSA
+
 #ifndef _AUDIO_DRIVERS_ALSA_H_
 #define _AUDIO_DRIVERS_ALSA_H_
 
@@ -48,7 +50,6 @@ public:
 	int		resetDevice	(void);	
 	int 	writeBuffer	(void);
 	int		readBuffer 	(void *, int);
-	int		readBuffer 	(int) { return 0; }
 	unsigned int readableBytes (void) { return 0; }
 	
 private:
@@ -59,3 +60,5 @@ private:
 };
 
 #endif  // _AUDIO_DRIVERS_ALSA_H_
+
+//#endif // defined(AUDIO_ALSA)

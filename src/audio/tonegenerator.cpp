@@ -32,13 +32,15 @@
 
 using namespace std;
 
+#define DTMF_FREQ_MIX_RATE	0.45f
 
 ///////////////////////////////////////////////////////////////////////////////
 // ToneThread implementation
 ///////////////////////////////////////////////////////////////////////////////
-ToneThread::ToneThread (Manager *mngr, short *buf) {
+ToneThread::ToneThread (Manager *mngr, float32 *buf, int size) {
 	this->mngr = mngr;
 	this->buffer = buf;
+	this->size = size;
 }
 
 ToneThread::~ToneThread (void) {
@@ -48,9 +50,11 @@ ToneThread::~ToneThread (void) {
 void
 ToneThread::run (void) {
 	while (mngr->getTonezone()) {
-		mngr->audiodriver->audio_buf.setData(buffer, mngr->getSpkrVolume());
-		mngr->audiodriver->writeBuffer();
-	} 
+		if (mngr->getAudioDriver()->mydata.dataFilled >= 
+				mngr->getAudioDriver()->mydata.dataToAddRem) {
+			mngr->getAudioDriver()->mydata.dataFilled = 0;
+		}
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -60,7 +64,7 @@ ToneThread::run (void) {
 ToneGenerator::ToneGenerator (Manager *mngr) {	
 	this->initTone();
 	this->manager = mngr;
-	buf = new short[SIZEBUF];	
+	buf = new float32[SIZEBUF];	
 	tonethread = NULL;
 }
 
@@ -124,21 +128,19 @@ ToneGenerator::initTone (void) {
  *
  * @param	lower frequency
  * @param	higher frequency
- * @param	amplitude
  * @param	samplingRate
  * @param	ptr for result buffer
  */
 void
-ToneGenerator::generateSin (int lowerfreq, int higherfreq, int amplitude, 
-												int samplingRate, short*ptr) {
+ToneGenerator::generateSin (int lowerfreq, int higherfreq, 
+												int samplingRate, float32*ptr) {
 	double var1, var2;
 													
 	var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)samplingRate; 
 	var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)samplingRate;
 	
-	for(int i = 0; i < samplingRate; i++) {
-		ptr[i] = (short)((double)(amplitude >> 2) * sin(var1 * i) + 
-					(double)(amplitude >> 2) * sin(var2 * i));
+	for(int t = 0; t < samplingRate; t++) {
+		ptr[t] = DTMF_FREQ_MIX_RATE * (float32)(sin(var1 * t) + sin(var2 * t));
 	}
 }
 
@@ -149,18 +151,17 @@ ToneGenerator::generateSin (int lowerfreq, int higherfreq, int amplitude,
  * @param	idCountry		
  * @param	idTones			
  * @param 	samplingRate	
- * @param	amplitude		to calculate sinus
  * @param	ns				section number of format tone
  */
 void
 ToneGenerator::buildTone (int idCountry, int idTones, int samplingRate, 
-							int amplitude, short* temp) {
+							float32* temp) {
 	string s;
 	int count = 0;
 	int	byte = 0,
 		byte_temp = 0;
 	static int	nbcomma = 0;
-	short *buffer = new short[1024*1024];
+	float32 *buffer = new float32[SIZEBUF];
 	int pos;
 
 	string str(toneZone[idCountry][idTones]);
@@ -177,7 +178,7 @@ ToneGenerator::buildTone (int idCountry, int idTones, int samplingRate,
 		time = atoi((s.substr(pos + 1, s.length())).data());
 		
 		// Generate sinus, buffer is the result
-		generateSin(freq1, freq2, amplitude, samplingRate, buffer);
+		generateSin(freq1, freq2, samplingRate, buffer);
 		
 		// If there is time or if it's unlimited
 		if (time) {
@@ -239,17 +240,22 @@ ToneGenerator::toneHandle (int idr) {
 	int idz = idZoneName(get_config_fields_str(PREFERENCES, ZONE_TONE));
 	
 	if (idz != -1) {
-		buildTone (idz, idr, SAMPLING_RATE, AMPLITUDE, buf);
+		buildTone (idz, idr, SAMPLING_RATE, buf);
 
+		manager->getAudioDriver()->mydata.dataToAdd = buf;
+		manager->getAudioDriver()->mydata.dataToAddRem = totalbytes;
+		
 		// New thread for the tone
 		if (tonethread == NULL) {
-			tonethread = new ToneThread (manager, buf);
-			manager->audiodriver->audio_buf.resize(totalbytes);	
+			tonethread = new ToneThread (manager, buf, totalbytes);
+			if (!manager->getAudioDriver()->isStreamActive()) {
+				manager->getAudioDriver()->startStream();
+			}
 			tonethread->start();
 		}
 
 		if (!manager->getTonezone()) {
-			manager->audiodriver->resetDevice();
+			manager->getAudioDriver()->stopStream();
 			if (tonethread != NULL) {	
 				delete tonethread;
 				tonethread = NULL;
@@ -262,6 +268,7 @@ ToneGenerator::toneHandle (int idr) {
 int
 ToneGenerator::playRingtone (const char *fileName) {
 	short* dst = NULL;
+	float32* floatdst = NULL;
 	char* src = NULL;
 	int expandedsize, length;
 	Ulaw* ulaw = new Ulaw (PAYLOAD_CODEC_ULAW, CODEC_ULAW);
@@ -291,19 +298,28 @@ ToneGenerator::playRingtone (const char *fileName) {
 	// Decode file.ul
 	expandedsize = ulaw->codecDecode (dst, (unsigned char *)src, length);
 	
+	floatdst = new float32[expandedsize];
+	ulaw->int16ToFloat32 (dst, floatdst, expandedsize);
+	
+	manager->getAudioDriver()->mydata.dataToAdd = floatdst;
+	manager->getAudioDriver()->mydata.dataToAddRem = expandedsize;
+	
 	// Start tone thread
 	if (tonethread == NULL) {
-		tonethread = new ToneThread (manager, dst);
-		manager->audiodriver->audio_buf.resize(expandedsize);
+		tonethread = new ToneThread (manager, floatdst, expandedsize);
+		if (!manager->getAudioDriver()->isStreamActive()) {
+			manager->getAudioDriver()->startStream();
+		}
 		tonethread->start();
 	}
 	if (!manager->getTonezone()) {
-		manager->audiodriver->resetDevice();
+		manager->getAudioDriver()->stopStream();
 		if (tonethread != NULL) {	
 			delete tonethread;
 			tonethread = NULL;
 			delete[] dst;
 			delete[] src;
+			delete[] floatdst;
 		}
 	}
 	file.close();

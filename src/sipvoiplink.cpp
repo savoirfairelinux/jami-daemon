@@ -458,8 +458,10 @@ SipVoIPLink::getEvent (void)
 					id, event->cid, event->did);	
 			
 			if (id > 0) {	
+				if (!_manager->getCall(id)->isProgressing()) {
+					_audiortp->closeRtpSession(getSipCall(id));
+				}
 				_manager->peerHungupCall(id);
-				_audiortp->closeRtpSession(getSipCall(id));
 				deleteSipCall(id);
 			}	
 			break;

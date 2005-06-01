@@ -19,9 +19,14 @@
 
 #include <getopt.h>
 #include "user_cfg.h"
-#ifdef QT_GUI
-#include <qapplication.h>
-#include "gui/qt/qtGUImainwindow.h"
+
+#if defined(GUI_QT)
+# include <qapplication.h>
+# include "gui/qt/qtGUImainwindow.h"
+#elif defined(GUI_TEXT1)
+# error "GUI_TEXT1 not implemented yet."
+#elif defined(GUI_COCOA)
+# error "GUI_COCOA not implemented yet."
 #endif
 
 #include "configuration.h"
@@ -38,7 +43,7 @@ main (int argc, char **argv) {
 	manager = new Manager();
 
 	// Faire partir la gui selon l'option choisie
-#if 1
+#if defined(GUI_QT)
 		QApplication a(argc, argv);
 		QtGUIMainWindow *qtgui = new QtGUIMainWindow (0, 0 ,
 									Qt::WDestructiveClose |
@@ -79,22 +84,35 @@ int OptionProcess (int argc,char **argv, Manager* manager)
 			case 'i':
 				{
 					string optStr(optarg);
+#ifdef GUI_QT
 					if (optStr.compare("qt") == 0) {
-#ifdef QT_GUI
 						QApplication a(argc, argv);
 						QtGUIMainWindow *qtgui = new QtGUIMainWindow (0, 0 ,
                     								Qt::WDestructiveClose |
                     								Qt::WStyle_Customize |
                     								Qt::WStyle_NoBorder,
 													manager);
-						manager->setGui(qtgui);
-						manager->init();
+						// GUI= new QTGUIbidule();
 						a.setMainWidget(qtgui);
 						return a.exec();
-#endif
-					} else if (optStr.compare("text")) {
-					} else {
 					}
+#endif
+
+#ifdef GUI_TEXT1					
+					if (optStr.compare("text1")) {
+						// GUI=new Text1GUIbidule();
+						// ND
+					}
+#endif
+
+#if !defined(GUI_QT) && !defined(GUI_TEXT1) && !defined(GUI_COCOA)
+# error You MUST define at least one GUI to use !!
+#endif	
+
+					// Manager ne doit pas prendre un qtwindow
+					// mais un GUIFramework
+					//manager->setGui(GUI);
+					manager->init();
 				}
 				break;				
 			case 'v':
@@ -123,9 +141,9 @@ int OptionProcess (int argc,char **argv, Manager* manager)
 				break;
 		}
 	}
+
+//	return GUI->run();
 	return 0;
 }
 
-
-
-
+// EOF

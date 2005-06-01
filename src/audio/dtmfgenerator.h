@@ -62,13 +62,13 @@ private:
  */
 	struct DTMFState {
 		unsigned int offset;   // Offset in the sample currently being played
-		short* sample;         // Currently generated code
+		float32* sample;         // Currently generated code
 	};
 
 	DTMFState state;
 	static const DTMFTone tones[NUM_TONES];
 
-	short* samples[NUM_TONES];        // Generated samples
+	float32* samples[NUM_TONES];        // Generated samples
 
 public:
 	DTMFGenerator();
@@ -77,16 +77,16 @@ public:
 /*
  * Get n samples of the signal of code code
  */
-	void getSamples(short* buffer, size_t n, unsigned char code) throw (DTMFException);
+	void getSamples(float32* buffer, size_t n, unsigned char code) throw (DTMFException);
 
 /*
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-	void getNextSamples(short* buffer, size_t n) throw (DTMFException);
+	void getNextSamples(float32* buffer, size_t n) throw (DTMFException);
 
 private:
-	short* generateSample(unsigned char code) throw (DTMFException);
+	float32* generateSample(unsigned char code) throw (DTMFException);
 
 };
 

@@ -28,9 +28,9 @@
 using namespace ost;
 
 
-#define LEN_BUFFER	160
+#define MY_TIMESTAMP	160
 
-class AudioDrivers;
+class AudioDriversPortAudio;
 class Manager;
 class SipCall;
 
@@ -39,23 +39,20 @@ class SipCall;
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtpRTX : public Thread, public TimerPort {
 public:
-	AudioRtpRTX (SipCall *, AudioDrivers *, AudioDrivers *, Manager *, bool);
+	AudioRtpRTX (SipCall *, AudioDriversPortAudio*, Manager *, bool);
 	~AudioRtpRTX();
 
 	Time *time; 	// For incoming call notification 
 	virtual void run ();
 
 private:
-	SipCall*			_ca;
-	AudioDrivers*		_audioDevice;
-#ifdef ALSA
-	AudioDrivers*		_audioDeviceRead;
-#endif
-	RTPSession*			_sessionSend;
-	RTPSession*			_sessionRecv;
-	SymmetricRTPSession* _session;
-	Manager*			_manager;
-	bool			 	_sym;
+	SipCall*				_ca;
+	AudioDriversPortAudio*	_audioDevice;
+	RTPSession*				_sessionSend;
+	RTPSession*				_sessionRecv;
+	SymmetricRTPSession* 	_session;
+	Manager*				_manager;
+	bool			 		_sym;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

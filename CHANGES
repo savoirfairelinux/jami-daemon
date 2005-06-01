@@ -1,5 +1,6 @@
 
-SFLphone (0.3.1) / 2005-05-27
+SFLphone (0.3.1) / 2005-06-01
+	* Add PortAudio library to make easy sound portability
 	* Reorganisation of SFLphone architecture
 	* Handle error messages on screen
 	* Handle refused call

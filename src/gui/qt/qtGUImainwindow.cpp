@@ -115,7 +115,7 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 
 	// For DTMF
     _key = new DTMF ();
-    _buf = new short[SIZEBUF];
+    _buf = new float32[SIZEBUF];
 
 	// Create new display and numeric _keypad
 	_lcd = new MyDisplay(this, 0, this);
@@ -747,7 +747,7 @@ QtGUIMainWindow::peerHungupCall (short id)
 {
 	int line = id2line(id);
 
-	if (line == getCurrentLine()) {
+	if (line == getCurrentLine() or getCurrentLine() == -1) {
 		stopCallTimer(id);
 		_callmanager->displayStatus(HUNGUP_STATUS);
 		setCurrentLine(-1);
@@ -1454,29 +1454,26 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	callid = line2id(getCurrentLine());
     if (callid != -1 and getCall(callid)->isBusy()) {
         sendDtmf(callid, code); // pour envoyer DTMF
-    }
+    } else {
+		_lcd->appendText (code);
+	}
 
 	// Handle dtmf
     _key->startTone(code);
     _key->generateDTMF(_buf, SAMPLING_RATE);
-    _callmanager->audiodriver->audio_buf.resize(SAMPLING_RATE);
-    _callmanager->audiodriver->audio_buf.setData(
-                                        _buf, _callmanager->getSpkrVolume());
-                                                                                
-    pulselen = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
-    _callmanager->audiodriver->audio_buf.resize(pulselen * (OCTETS/1000));
-    a = _callmanager->audiodriver->writeBuffer();
-    if (a == 1) {
-        pressedKeySlot(id);
-    } else {
-        //if (_callmanager->error->getError() == 0)
-            _lcd->appendText (code);
-        /*else if (callmanager->error->getError() == 1) {
-            _lcd->clearBuffer();
-            _callmanager->error->setError(0);
-            _lcd->appendText (code);
-        }*/
-    }
+			
+	pulselen = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
+	int size = pulselen * (OCTETS/1000);
+	
+	_callmanager->getAudioDriver()->mydata.dataToAdd = _buf;
+	_callmanager->getAudioDriver()->mydata.dataToAddRem = size;
+	_callmanager->getAudioDriver()->mydata.dataFilled = 0;
+	
+	if (!_callmanager->getAudioDriver()->isStreamActive()) {
+		_callmanager->getAudioDriver()->startStream();
+	}
+	_callmanager->getAudioDriver()->sleep(pulselen);
+	_callmanager->getAudioDriver()->stopStream();
 }
 
 // Save settings in config-file
@@ -1493,7 +1490,6 @@ QtGUIMainWindow::applySkin (void) {
     setMainLCD();
     // For skin of the gui
     initSkin();
-
 }
 
 

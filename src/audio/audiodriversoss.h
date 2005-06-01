@@ -20,6 +20,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#if defined(AUDIO_OSS)
+
 #ifndef _AUDIO_DRIVERS_OSS_H
 #define _AUDIO_DRIVERS_OSS_H
 
@@ -38,10 +40,8 @@ public:
 	int		initDevice		(DeviceMode);
 	int		resetDevice		(void);
 	bool	openDevice 		(int);
-	int	 	writeBuffer		(void *, int);
 	int	 	writeBuffer		(void);
 	int 	readBuffer		(void *, int);
-	int 	readBuffer		(int);
 	unsigned int readableBytes (void);
 
 	int audio_fd;
@@ -51,3 +51,5 @@ private:
 };
 
 #endif // _AUDIO_DRIVERS_OSS_H
+
+#endif // defined(AUDIO_OSS)

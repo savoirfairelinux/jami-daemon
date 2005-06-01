@@ -20,9 +20,8 @@
 #ifndef __USER_CFG_H__
 #define __USER_CFG_H__
 
-#define ALSA 	1
-#define OSS 	1
-#define QT_GUI 	1
+//#define GUI_TEXT1
+#define GUI_QT
 
 #include <stdlib.h>
 

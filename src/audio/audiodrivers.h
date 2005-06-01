@@ -44,7 +44,6 @@ public:
 	virtual int	 resetDevice		(void) = 0;
 	virtual int  writeBuffer		(void) = 0;
 	virtual int	 readBuffer			(void *, int) = 0;
-	virtual int	 readBuffer			(int) = 0;
 	virtual unsigned int readableBytes (void) = 0;
 
 

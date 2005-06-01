@@ -17,6 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+//#if defined(AUDIO_ALSA)
+
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -237,4 +239,5 @@ AudioDriversALSA::resetDevice (void) {
 	return 0;
 }
 
+//#endif // defined(AUDIO_ALSA)
 // EOF

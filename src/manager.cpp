@@ -20,13 +20,13 @@
 #include <errno.h>
 #include <time.h>
 
-// For using inet_ntoa()
-#include <sys/socket.h>
+# include <sys/types.h> // mkdir(2)
+# include <sys/stat.h>	// mkdir(2)
+
+#include <sys/socket.h> // inet_ntoa()
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <cc++/thread.h>
 #include <cstdlib>
 #include <iostream>
@@ -47,14 +47,8 @@
 #include "voIPLink.h"
 #include "../stund/udp.h"
 
-#ifdef ALSA
-#include "audio/audiodriversalsa.h"
-#endif
+#include "audio/audiodriversportaudio.h"
 
-#ifdef OSS
-#include "audio/audiodriversoss.h"
-#endif
- 
 
 using namespace std;
 using namespace ost;
@@ -99,11 +93,8 @@ Manager::~Manager (void)
 	delete _voIPLinkVector;			
 	delete _error;
 	delete _tone;
-	delete _codecDescVector;
-	delete audiodriver;
-#ifdef ALSA
-	delete audiodriverReadAlsa;
-#endif
+	delete _codecDescVector; 
+	delete _audiodriverPA;
 } 
 
 void 
@@ -138,6 +129,12 @@ Error*
 Manager::error (void) 
 {
 	return _error;
+}
+
+AudioDriversPortAudio*
+Manager:: getAudioDriver(void) 
+{
+	return _audiodriverPA;
 }
 
 unsigned int 
@@ -554,12 +551,13 @@ Manager::ringtone (bool var) {
 
 void
 Manager::notificationIncomingCall (void) {
-    short *buffer = new short[SAMPLING_RATE];
+    float32 *buffer = new float32[SAMPLING_RATE];
                                                                                 
-    _tone->generateSin(440, 0, AMPLITUDE, SAMPLING_RATE, buffer);
+    _tone->generateSin(440, 0, SAMPLING_RATE, buffer);
                                                                                 
-    audiodriver->audio_buf.resize(SAMPLING_RATE/2);
-    audiodriver->audio_buf.setData(buffer, 50/*getSpkrVolume()*/);
+	getAudioDriver()->mydata.dataToAdd = buffer;
+	getAudioDriver()->mydata.dataToAddRem = SAMPLING_RATE/2;
+	
     delete[] buffer;
 }
 
@@ -713,21 +711,18 @@ Manager::initAudioCodec (void)
 #endif
 }
 
-
 void
 Manager::selectAudioDriver (void)
 {
-	if (get_config_fields_int(AUDIO, DRIVER_NAME) == OSS_DRIVER) {
-		_useAlsa = false;
-        audiodriver = new AudioDriversOSS (AudioDrivers::ReadWrite, _error);
-    } else {
-		_useAlsa = true;
-#ifdef ALSA
-        audiodriver = new AudioDriversALSA (AudioDrivers::WriteOnly, _error);
-        audiodriverReadAlsa = new AudioDriversALSA (AudioDrivers::ReadOnly, _error);
+	
+#if defined(AUDIO_PORTAUDIO)
+	_audiodriverPA = new AudioDriversPortAudio(this);
+	if (_audiodriverPA->openDevice()) {
+		_debug("Open device succeeded\n");
+	}
+#else
+# error You must define one AUDIO driver to use.
 #endif
-    }
 }
 
-
-
+// EOF

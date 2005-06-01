@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'gui/qt/configurationpanel.ui'
 **
-** Created: Fri May 27 17:07:54 2005
+** Created: Mon May 30 14:35:17 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!

@@ -33,10 +33,7 @@ CLASSIC_DIRS=/usr:/usr/local:/opt
 usage () {
 	echo "Usage: $0 [options]"
 	echo "Options:
-	-prefix DIR         Set install prefix
-	-oss                Enable OSS support
-	-alsa               Enable ALSA support 
-	-macosx             Enable MacOSX audio support [Not supported yet]"
+	-prefix DIR         Set install prefix"
 }
 
 # Check if $1 is contained in $PATH-style $2. Optionally $3 is "-p" to print
@@ -83,11 +80,11 @@ do
 			shift 2
 			;;
 		-oss)
-			DEFVARS="-DOSS ${DEFVARS}"
+			DEFVARS="-DAUDIO_OSS ${DEFVARS}"
 			shift
 			;;
 		-alsa)
-			DEFVARS="-DALSA ${DEFVARS}"
+			DEFVARS="-DAUDIO_ALSA ${DEFVARS}"
 			shift
 			;;
 		-help|--help|-h)

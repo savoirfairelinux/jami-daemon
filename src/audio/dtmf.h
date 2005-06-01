@@ -23,6 +23,7 @@
 #ifndef __DTMF_H_
 #define __DTMF_H_
 
+#include "../global.h"
 #include "dtmfgenerator.h"
 
 class DTMF {
@@ -31,7 +32,7 @@ public:
 	~DTMF (void);
 	
 	void startTone		(char);
-	bool generateDTMF	(short*, size_t);
+	bool generateDTMF	(float32*, size_t);
 
 	char currentTone;
 	char newTone;

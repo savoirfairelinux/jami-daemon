@@ -92,7 +92,7 @@ DTMFGenerator::~DTMFGenerator() {
 /*
  * Get n samples of the signal of code code
  */
-void DTMFGenerator::getSamples(short* buffer, size_t n, unsigned char code) throw(DTMFException) {
+void DTMFGenerator::getSamples(float32* buffer, size_t n, unsigned char code) throw(DTMFException) {
 	size_t i;
 	if (!buffer) {
 		     //	throw DTMFException("Invalid parameter value");
@@ -137,7 +137,7 @@ void DTMFGenerator::getSamples(short* buffer, size_t n, unsigned char code) thro
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void DTMFGenerator::getNextSamples(short* buffer, size_t n) throw(DTMFException)
+void DTMFGenerator::getNextSamples(float32* buffer, size_t n) throw(DTMFException)
 {
 	size_t i;
 
@@ -162,17 +162,17 @@ void DTMFGenerator::getNextSamples(short* buffer, size_t n) throw(DTMFException)
 /*
  * Generate a tone sample
  */
-short* DTMFGenerator::generateSample(unsigned char code) throw (DTMFException) {
-	short* ptr;
+float32* DTMFGenerator::generateSample(unsigned char code) throw (DTMFException) {
+	float32* ptr;
 
 	//	try {
-		ptr = new short[SAMPLING_RATE];
+		ptr = new float32[SAMPLING_RATE]; 
 		if (!ptr) {
 			     //throw new DTMFException("No memory left");
 			return 0;
 		}
-		
-		generateSin(tones[code].higher, tones[code].lower, AMPLITUDE, 
+		  
+		generateSin(tones[code].higher, tones[code].lower, 
 					SAMPLING_RATE, ptr);
 		
 		return ptr;

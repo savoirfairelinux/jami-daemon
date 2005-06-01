@@ -17,13 +17,31 @@ SKINS = skins
 RINGS = rings
 METAL_SKINS = metal
 
-INCPATH  = -I. -I$(QTDIR)/include -I$(CCPPDIR)/include/cc++2 -I$(CCRTPDIR)/include -I$(OSIPDIR)/include -I$(EXOPSIP)/include -I/usr/include -Iaudio/gsm
+# Platform-specific variables
+HOSTMACH = $(shell uname -m | sed -e 's/ //g')
+ifeq (${HOSTSYSTEM},PowerMacintosh)
+	MACHOPTS=-mpowerpc
+	HOSTDEFS=-DGUI_TEXT1 -DAUDIO_MACOSX
+else
+	HOSTSYS = $(shell uname -s)
+endif
 
-CXXFLAGS = -pipe -Wall -W -g -pipe -march=i386 -mcpu=i686  -DQT_NO_DEBUG -DQT_SHARED -DQT_THREAD_SUPPORT -fpermissive -Wno-deprecated $(INCPATH)
+ifeq (${HOSTSYS},Linux)
+	HOSTMACH = $(shell uname -m | sed -e 's/i.86/i386/')
+	HOSTLIBS=-lX11 -lXext -lasound -lqt-mt
+	# HOSTDEFS=-DGUI_TEXT1 -DAUDIO_OSS # eventually
+	HOSTDEFS=-DGUI_QT -DAUDIO_ALSA
+	ifeq (${HOSTMACH},i386)
+		MACHOPTS=-march=i386
+	endif
+endif
 
-LIBS=-L$(QTDIR)/lib -L/usr/X11R6/lib -lqt-mt -lXext -lX11 -lm -L/opt/lib -losip2 -leXosip -lccrtp1 -lasound `$(CCPPDIR)/bin/ccgnu2-config --flags --stdlibs` 
+INCPATH  = -I. -I$(QTDIR)/include -I$(CCPPDIR)/include/cc++2 -I$(CCRTPDIR)/include -I$(OSIPDIR)/include -I$(EXOPSIP)/include -I/usr/include -Iaudio/gsm -Iaudio/portaudio/pa_common 
+CXXFLAGS = -pipe -Wall -W -g $(MACHOPTS) -pipe -DQT_NO_DEBUG -DQT_SHARED -DQT_THREAD_SUPPORT -fpermissive -Wno-deprecated $(INCPATH)
 
-EXTRALIBS=audio/gsm/libgsm.a
+LIBS=-L$(QTDIR)/lib -L/usr/X11R6/lib -lm -L/opt/lib -losip2 -leXosip -lccrtp1 $(HOSTLIBS) `$(CCPPDIR)/bin/ccgnu2-config --flags --stdlibs` 
+
+EXTRALIBS=audio/gsm/libgsm.a audio/portaudio/lib/libportaudio.a
 
 CONFIGURE_CONF=$(shell ls ../configure.conf)
 
@@ -35,6 +53,7 @@ OBJS = \
 	audio/audiodrivers.o \
 	audio/audiodriversalsa.o \
 	audio/audiodriversoss.o \
+	audio/audiodriversportaudio.o \
 	audio/audiortp.o \
 	audio/dtmf.o \
 	audio/dtmfgenerator.o \
@@ -82,8 +101,8 @@ OBJS = \
 	udp.o 
   		
 	
-start:	check prereq all
-#start:check all
+#start:	check prereq all
+start:check all
 
 check:
 ifeq ($(CONFIGURE_CONF),../configure.conf)
@@ -93,7 +112,7 @@ else
 endif
 
 .cpp.o:
-	$(CXX) $(DEFVARS) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(DEFVARS) -DAUDIO_PORTAUDIO $(CXXFLAGS) -c -o $@ $<
 
 prereq:	gui/qt/url_input.ui gui/qt/configurationpanel.ui 
 	@echo "Making User Interface files..."

@@ -50,13 +50,14 @@ using namespace ost;
 ///////////////////////////////////////////////////////////////////////////////
 class ToneThread : public Thread {
 public:
-	ToneThread (Manager *, short *);
+	ToneThread (Manager *, float32 *, int);
 	~ToneThread (void);
 
 	virtual void run ();
 private:
 	Manager*	mngr;
-	short*		buffer;
+	float32*		buffer;
+	int			size;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -72,18 +73,18 @@ public:
 
 	int idZoneName 		(const string &);
 			
-	void generateSin	(int, int, int, int, short *);
-	void buildTone		(int, int, int, int, short*);
+	void generateSin	(int, int, int, float32 *);
+	void buildTone		(int, int, int, float32*);
 	void toneHandle 	(int);
 	int  playRingtone		(const char*);
 	
-	short *sample;
+	float32 *sample;
 	int freq1, 
 		freq2;
 	int time;
 	int totalbytes;
 
-	short   	*buf;
+	float32   	*buf;
 private:
 	/*
 	 * Initialisation of the supported tones according to the countries.

@@ -18,10 +18,20 @@
  */
 
 
-#include <endian.h>
+#if defined(__APPLE__)
+# include <machine/endian.h>
+#else
+# include <endian.h>
+#endif
 #include <string.h>
 #include <iostream>
 #include <string>
+
+#include "portaudio/pa_common/portaudio.h"
+#include "portaudio/pa_common/pa_converters.h"
+#include "portaudio/pa_common/pa_dither.h"
+
+#include "../global.h"
 
 #include "audiocodec.h"
 #include "../configuration.h"
@@ -49,6 +59,29 @@ AudioCodec::getCodecName (void)
 	return _codecName;
 }
 
+void 
+AudioCodec::float32ToInt16 (float32* src, int16* dst, int size) {
+	PaUtilConverter* myconverter;
+	struct  PaUtilTriangularDitherGenerator tdg;
+	PaUtil_InitializeTriangularDitherState (&tdg);
 
+	myconverter = PaUtil_SelectConverter (paFloat32, paInt16, paNoFlag);
+	if (myconverter != NULL) {
+		myconverter(dst, 1, src, 1, size, &tdg);
+	} else {
+		_debug("Format conversion is not supported\n");
+	}
+}
 
+void 
+AudioCodec::int16ToFloat32 (int16* src, float32* dst, int size) {
+	PaUtilConverter* myconverter;
+
+	myconverter = PaUtil_SelectConverter (paInt16, paFloat32, paNoFlag);
+	if (myconverter != NULL) {
+		myconverter(dst, 1, src, 1, size, NULL);
+	} else {
+		_debug("Format conversion is not supported\n");
+	}
+}
 
