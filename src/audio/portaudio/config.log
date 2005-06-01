@@ -1,0 +1,54 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:545: checking for gcc
+configure:658: checking whether the C compiler (gcc  ) works
+configure:674: gcc -o conftest    conftest.c  1>&5
+configure:700: checking whether the C compiler (gcc  ) is a cross-compiler
+configure:705: checking whether we are using GNU C
+configure:714: gcc -E conftest.c
+configure:733: checking whether gcc accepts -g
+configure:767: checking for ranlib
+configure:825: checking for a BSD compatible install
+configure:880: checking for ar
+configure:918: checking whether byte ordering is bigendian
+configure:936: gcc -c -g -O2  conftest.c 1>&5
+configure:951: gcc -c -g -O2  conftest.c 1>&5
+configure: In function `main':
+configure:946: error: `not' undeclared (first use in this function)
+configure:946: error: (Each undeclared identifier is reported only once
+configure:946: error: for each function it appears in.)
+configure:946: error: syntax error before "big"
+configure: failed program was:
+#line 940 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+int main() {
+
+#if BYTE_ORDER != BIG_ENDIAN
+ not big endian
+#endif
+; return 0; }
+configure:1018: checking for snd_pcm_open in -lasound
+configure:1037: gcc -o conftest -g -O2   conftest.c -lasound   1>&5
+configure:1066: checking host system type
+configure:1094: checking for pkg-config
+configure:1138: checking for jack
+configure:1257: checking size of short
+configure:1276: gcc -o conftest -g -O2 -Wall -DPA_LITTLE_ENDIAN   conftest.c  1>&5
+configure:1268: warning: return type defaults to `int'
+configure: In function `main':
+configure:1270: warning: implicit declaration of function `exit'
+configure:1296: checking size of int
+configure:1315: gcc -o conftest -g -O2 -Wall -DPA_LITTLE_ENDIAN   conftest.c  1>&5
+configure:1307: warning: return type defaults to `int'
+configure: In function `main':
+configure:1309: warning: implicit declaration of function `exit'
+configure:1335: checking size of long
+configure:1354: gcc -o conftest -g -O2 -Wall -DPA_LITTLE_ENDIAN   conftest.c  1>&5
+configure:1346: warning: return type defaults to `int'
+configure: In function `main':
+configure:1348: warning: implicit declaration of function `exit'
+configure:1629: checking for pthread_create in -lpthread
+configure:1648: gcc -o conftest -g -O2 -Wall -DPA_LITTLE_ENDIAN   conftest.c -lpthread   1>&5
