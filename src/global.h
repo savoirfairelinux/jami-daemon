@@ -57,7 +57,7 @@ typedef short int16;
 #define MONO					1
 #define	SAMPLING_RATE 			8000
 #define SIZEBUF 				1024*1024
-#define	FORMAT					2			// for 16 bits format
+#define	FORMAT					4			// for 16 bits format
 #define OCTETS					SAMPLING_RATE * FORMAT	// Number of writen 
 														// bytes in buffer
 #define OSS_DRIVER              0

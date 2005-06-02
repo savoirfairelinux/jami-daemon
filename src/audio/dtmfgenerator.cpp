@@ -172,8 +172,7 @@ float32* DTMFGenerator::generateSample(unsigned char code) throw (DTMFException)
 			return 0;
 		}
 		  
-		generateSin(tones[code].higher, tones[code].lower, 
-					SAMPLING_RATE, ptr);
+		generateSin(tones[code].higher, tones[code].lower, ptr);
 		
 		return ptr;
 		//	} catch(...) {

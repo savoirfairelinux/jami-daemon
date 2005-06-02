@@ -41,19 +41,28 @@ ToneThread::ToneThread (Manager *mngr, float32 *buf, int size) {
 	this->mngr = mngr;
 	this->buffer = buf;
 	this->size = size;
+	this->buf_ctrl_vol = new float32[size];
 }
 
 ToneThread::~ToneThread (void) {
+	delete[] buf_ctrl_vol;
 	this->terminate();
 }
 
 void
 ToneThread::run (void) {
 	while (mngr->getTonezone()) {
-		if (mngr->getAudioDriver()->mydata.dataFilled >= 
-				mngr->getAudioDriver()->mydata.dataToAddRem) {
-			mngr->getAudioDriver()->mydata.dataFilled = 0;
+		// Control volume
+		for (int j = 0; j < size; j++) {
+			this->buf_ctrl_vol[j] = buffer[j] * mngr->getSpkrVolume()/100;
 		}
+
+		if (mngr->getAudioDriver()->mydata.urg_remain <= 160) {
+			mngr->getAudioDriver()->mydata.urg_ptr = this->buf_ctrl_vol;
+			mngr->getAudioDriver()->mydata.urg_remain = size;
+		}
+		
+		mngr->getAudioDriver()->startStream();
 	}
 }
 
@@ -128,18 +137,16 @@ ToneGenerator::initTone (void) {
  *
  * @param	lower frequency
  * @param	higher frequency
- * @param	samplingRate
  * @param	ptr for result buffer
  */
 void
-ToneGenerator::generateSin (int lowerfreq, int higherfreq, 
-												int samplingRate, float32*ptr) {
+ToneGenerator::generateSin (int lowerfreq, int higherfreq, float32*ptr) {
 	double var1, var2;
 													
-	var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)samplingRate; 
-	var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)samplingRate;
+	var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)SAMPLING_RATE; 
+	var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)SAMPLING_RATE;
 	
-	for(int t = 0; t < samplingRate; t++) {
+	for(int t = 0; t < SAMPLING_RATE; t++) {
 		ptr[t] = DTMF_FREQ_MIX_RATE * (float32)(sin(var1 * t) + sin(var2 * t));
 	}
 }
@@ -150,12 +157,10 @@ ToneGenerator::generateSin (int lowerfreq, int higherfreq,
  *
  * @param	idCountry		
  * @param	idTones			
- * @param 	samplingRate	
  * @param	ns				section number of format tone
  */
 void
-ToneGenerator::buildTone (int idCountry, int idTones, int samplingRate, 
-							float32* temp) {
+ToneGenerator::buildTone (int idCountry, int idTones, float32* temp) {
 	string s;
 	int count = 0;
 	int	byte = 0,
@@ -178,13 +183,13 @@ ToneGenerator::buildTone (int idCountry, int idTones, int samplingRate,
 		time = atoi((s.substr(pos + 1, s.length())).data());
 		
 		// Generate sinus, buffer is the result
-		generateSin(freq1, freq2, samplingRate, buffer);
+		generateSin(freq1, freq2, buffer);
 		
 		// If there is time or if it's unlimited
 		if (time) {
-			byte = (samplingRate*2*time)/1000;
+			byte = (SAMPLING_RATE*2*time)/1000;
 		} else {
-			byte = samplingRate;
+			byte = SAMPLING_RATE;
 		}
 		
 		// To concatenate the different buffers for each section.
@@ -237,25 +242,34 @@ ToneGenerator::idZoneName (const string& name) {
  */
 void
 ToneGenerator::toneHandle (int idr) {
+	manager->getAudioDriver()->mydata.urg_remain = 0;
+	
 	int idz = idZoneName(get_config_fields_str(PREFERENCES, ZONE_TONE));
 	
 	if (idz != -1) {
-		buildTone (idz, idr, SAMPLING_RATE, buf);
+		buildTone (idz, idr, buf);
 
-		manager->getAudioDriver()->mydata.dataToAdd = buf;
-		manager->getAudioDriver()->mydata.dataToAddRem = totalbytes;
+		float32* tmp_urg_data;
+		// Free urg_data pointer
+		tmp_urg_data = manager->getAudioDriver()->mydata.urg_data;
+		if (tmp_urg_data != NULL) {
+			free (tmp_urg_data);
+		}
+
+		// Init struct mydata
+		tmp_urg_data = buf;
+		manager->getAudioDriver()->mydata.urg_ptr = tmp_urg_data;
+		manager->getAudioDriver()->mydata.urg_remain = totalbytes;
 		
 		// New thread for the tone
 		if (tonethread == NULL) {
-			tonethread = new ToneThread (manager, buf, totalbytes);
-			if (!manager->getAudioDriver()->isStreamActive()) {
-				manager->getAudioDriver()->startStream();
-			}
+			tonethread = new ToneThread (manager, tmp_urg_data, totalbytes);
 			tonethread->start();
 		}
 
 		if (!manager->getTonezone()) {
 			manager->getAudioDriver()->stopStream();
+			manager->getAudioDriver()->mydata.urg_remain = 0;	
 			if (tonethread != NULL) {	
 				delete tonethread;
 				tonethread = NULL;
@@ -297,23 +311,29 @@ ToneGenerator::playRingtone (const char *fileName) {
 	
 	// Decode file.ul
 	expandedsize = ulaw->codecDecode (dst, (unsigned char *)src, length);
-	
+		
 	floatdst = new float32[expandedsize];
 	ulaw->int16ToFloat32 (dst, floatdst, expandedsize);
-	
-	manager->getAudioDriver()->mydata.dataToAdd = floatdst;
-	manager->getAudioDriver()->mydata.dataToAddRem = expandedsize;
-	
+			
+	float32* tmp_urg_data;
+	// Free urg_data pointer
+	tmp_urg_data = manager->getAudioDriver()->mydata.urg_data;
+	if (tmp_urg_data != NULL) {
+		free (tmp_urg_data);
+	}
+
+	// Init struct mydata
+	tmp_urg_data = floatdst;
+	manager->getAudioDriver()->mydata.urg_ptr = tmp_urg_data;
+	manager->getAudioDriver()->mydata.urg_remain = expandedsize;
 	// Start tone thread
 	if (tonethread == NULL) {
-		tonethread = new ToneThread (manager, floatdst, expandedsize);
-		if (!manager->getAudioDriver()->isStreamActive()) {
-			manager->getAudioDriver()->startStream();
-		}
+		tonethread = new ToneThread (manager, tmp_urg_data, expandedsize);
 		tonethread->start();
 	}
 	if (!manager->getTonezone()) {
 		manager->getAudioDriver()->stopStream();
+		manager->getAudioDriver()->mydata.urg_remain = 0;
 		if (tonethread != NULL) {	
 			delete tonethread;
 			tonethread = NULL;

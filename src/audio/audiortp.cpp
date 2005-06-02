@@ -150,6 +150,7 @@ AudioRtpRTX::run (void) {
 	int	 			 countTime = 0;
 	int16			*data_for_speakers = NULL;
 	float32			*data_for_speakers_float = NULL;
+	float32			*data_for_speakers_float_tmp = NULL;
 	
 	data_from_mic = new float32[1024];
 	data_from_mic_tmp = new float32[1024];
@@ -236,6 +237,7 @@ AudioRtpRTX::run (void) {
 			_manager->getAudioDriver()->mydata.dataIn = data_mute;
 		}
 		
+		// Control volume for micro
 		for (int j = 0; j < size; j++) {
 			data_from_mic_tmp[j] = data_from_mic[j] * 
 												_manager->getMicroVolume()/100;
@@ -284,9 +286,15 @@ AudioRtpRTX::run (void) {
 		data_for_speakers_float = new float32[expandedSize];
 		ac->int16ToFloat32 (data_for_speakers, data_for_speakers_float, 
 				expandedSize);
-
+		
+		// control volume for speakers
+		data_for_speakers_float_tmp = new float32[expandedSize];
+		for (int j = 0; j < expandedSize; j++) {
+			data_for_speakers_float_tmp[j] = data_for_speakers_float[j] * 
+												_manager->getSpkrVolume()/100;
+		}
 		// Set decoded data to sound device
-		_manager->getAudioDriver()->mydata.dataOut = data_for_speakers_float;
+		_manager->getAudioDriver()->mydata.dataOut =data_for_speakers_float_tmp;
 
 		// Notify (with a bip) an incoming call when there is already a call 
 		countTime += time->getSecond();
@@ -304,14 +312,13 @@ AudioRtpRTX::run (void) {
 		Thread::sleep(TimerPort::getTimer());
 		TimerPort::incTimer(frameSize); // 'frameSize' ms
 
-		if (!_manager->getAudioDriver()->isStreamActive()) {
-			_manager->getAudioDriver()->mydata.dataToAddRem = 0;
-			_manager->getAudioDriver()->startStream();
-		}
+		// Start PortAudio
+		_manager->getAudioDriver()->startStream();
 	}
 		 
 	delete[] data_for_speakers;
 	delete[] data_for_speakers_float;
+	delete[] data_for_speakers_float_tmp;
 	delete[] data_from_mic;
 	delete[] data_from_mic_int16;
 	delete[] data_from_mic_tmp;

@@ -56,7 +56,8 @@ public:
 	virtual void run ();
 private:
 	Manager*	mngr;
-	float32*		buffer;
+	float32*	buffer;
+	float32*	buf_ctrl_vol;
 	int			size;
 };
 
@@ -73,8 +74,8 @@ public:
 
 	int idZoneName 		(const string &);
 			
-	void generateSin	(int, int, int, float32 *);
-	void buildTone		(int, int, int, float32*);
+	void generateSin	(int, int, float32 *);
+	void buildTone		(int, int, float32*);
 	void toneHandle 	(int);
 	int  playRingtone		(const char*);
 	

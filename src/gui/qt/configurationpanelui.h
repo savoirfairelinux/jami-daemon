@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Form interface generated from reading ui file 'gui/qt/configurationpanel.ui'
 **
-** Created: Mon May 30 14:35:17 2005
+** Created: Thu Jun 2 11:14:54 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -90,13 +90,9 @@ public:
     QComboBox* codec1;
     QComboBox* codec2;
     QComboBox* codec3;
-    QComboBox* codec4;
-    QComboBox* codec5;
     QLabel* textLabel1_4;
     QLabel* textLabel1_4_2;
     QLabel* textLabel1_4_3;
-    QLabel* textLabel1_4_4;
-    QLabel* textLabel1_4_5;
     QWidget* RingPage;
     QComboBox* ringsChoice;
     QTabWidget* Tab_Preferences;
@@ -130,12 +126,12 @@ protected:
     QVBoxLayout* layout19;
     QHBoxLayout* layout28;
     QSpacerItem* Horizontal_Spacing2;
-    QVBoxLayout* layout17;
+    QVBoxLayout* layout19_2;
     QVBoxLayout* layout24;
     QGridLayout* groupBox1Layout;
     QVBoxLayout* layout23;
     QSpacerItem* spacer9;
-    QHBoxLayout* layout19_2;
+    QHBoxLayout* layout19_3;
     QSpacerItem* spacer7;
     QVBoxLayout* stunButtonGroupLayout;
     QGridLayout* SettingsDTMFLayout;
@@ -147,10 +143,9 @@ protected:
     QHBoxLayout* layout8;
     QSpacerItem* spacer4;
     QVBoxLayout* DriverChoiceLayout;
-    QGridLayout* CodecsChoiceLayout;
-    QHBoxLayout* layout11_2;
-    QVBoxLayout* layout9;
-    QVBoxLayout* layout10_2;
+    QGridLayout* layout18;
+    QVBoxLayout* layout17;
+    QVBoxLayout* layout18_2;
     QVBoxLayout* layout17_2;
     QHBoxLayout* layout16;
     QSpacerItem* spacer5;

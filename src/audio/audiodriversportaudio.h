@@ -34,9 +34,9 @@ public:
 	struct paData {
 		float32 *dataIn;  	// From mic
 		float32 *dataOut;		// To spk
-		float32 *dataToAdd;		// To spk
-		int   dataToAddRem;
-		int   dataFilled;
+		float32 *urg_data;	// data in priority
+		float32 *urg_ptr;	
+		int urg_remain;		// data remained in urg_data
 	};
 	paData mydata;
 	

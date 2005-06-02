@@ -145,8 +145,7 @@ SipVoIPLink::initRtpmapCodec (void)
 		// Add payload to rtpmap if it is not already added
 		if (!isInRtpmap(i, payload, _manager->getCodecDescVector())) {
 			snprintf(rtpmap, 127, "%d %s/%d", payload, 
-				_manager->getCodecDescVector()->at(i)->rtpmapPayload(payload).data(), 
-				SAMPLING_RATE);
+				_manager->getCodecDescVector()->at(i)->rtpmapPayload(payload).data(), SAMPLING_RATE);
 			snprintf(tmp, 63, "%d", payload);
 			
 			eXosip_sdp_negotiation_add_codec( osip_strdup(tmp), NULL,
@@ -373,8 +372,9 @@ SipVoIPLink::getEvent (void)
 	char *name;
 	static int countReg = 0;
 
-	event = eXosip_event_wait (0, 50);
+	
 	eXosip_automatic_refresh();
+	event = eXosip_event_wait (0, 50);
 	if (event == NULL) {
 		return -1;
 	}	

@@ -45,6 +45,7 @@ class CodecDescriptor
 {
 public:
 	CodecDescriptor (int payload);
+	CodecDescriptor (const string& name);
 	CodecDescriptor (int payload, const string& name);
 	~CodecDescriptor (void);
 

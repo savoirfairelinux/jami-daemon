@@ -446,8 +446,8 @@ Manager::peerAnsweredCall (short id)
 	call = getCall(id);
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Answered);
-	_gui->peerAnsweredCall(id);
 	ringback(false);
+	_gui->peerAnsweredCall(id);
 	displayStatus(CONNECTED_STATUS);
 	return 1;
 }
@@ -460,8 +460,8 @@ Manager::peerRingingCall (short id)
 	call = getCall(id);
 	call->setStatus(string(RINGING_STATUS));
 	call->setState(Ringing);
-	_gui->peerRingingCall(id);
 	ringback(true);
+	_gui->peerRingingCall(id);
 	displayStatus(RINGING_STATUS);	
 	return 1;
 }
@@ -551,14 +551,37 @@ Manager::ringtone (bool var) {
 
 void
 Manager::notificationIncomingCall (void) {
-    float32 *buffer = new float32[SAMPLING_RATE];
+	float32* tmp_urg_data;
+    float32* buf_ctrl_vol;
+    float32* buffer = new float32[SAMPLING_RATE];
+	int size = SAMPLING_RATE/2;
                                                                                 
-    _tone->generateSin(440, 0, SAMPLING_RATE, buffer);
-                                                                                
-	getAudioDriver()->mydata.dataToAdd = buffer;
-	getAudioDriver()->mydata.dataToAddRem = SAMPLING_RATE/2;
+    _tone->generateSin(440, 0, buffer);
+           
+	// Control volume
+	buf_ctrl_vol = new float32[size];
+	for (int j = 0; j < size; j++) {
+		buf_ctrl_vol[j] = buffer[j] * getSpkrVolume()/100;
+	}
+	
+	// Free urg_data pointer
+	tmp_urg_data = getAudioDriver()->mydata.urg_data;
+	if (tmp_urg_data != NULL) {
+		free (tmp_urg_data);
+	}
+
+	// Init struct mydata
+	tmp_urg_data = buf_ctrl_vol;
+	getAudioDriver()->mydata.urg_ptr = tmp_urg_data;
+	getAudioDriver()->mydata.urg_remain = size;
+
+	getAudioDriver()->startStream();
+	getAudioDriver()->sleep(250);
+	getAudioDriver()->stopStream();
+	getAudioDriver()->mydata.urg_remain = 0;
 	
     delete[] buffer;
+    delete[] buf_ctrl_vol;
 }
 
 void
@@ -694,21 +717,17 @@ Manager::initConfigFile (void)
 void
 Manager::initAudioCodec (void)
 {
-	_nCodecs = 3;//get_config_fields_int(AUDIO, NB_CODEC);
+	_nCodecs = get_config_fields_int(AUDIO, NB_CODEC);
 	_codecDescVector = new CodecDescriptorVector();
-	_codecDescVector->push_back(new CodecDescriptor(PAYLOAD_CODEC_ULAW, 
-				CODEC_ULAW));
-	_codecDescVector->push_back(new CodecDescriptor(PAYLOAD_CODEC_ALAW, 
-				CODEC_ALAW));
-	_codecDescVector->push_back(new CodecDescriptor(PAYLOAD_CODEC_GSM, 
-				CODEC_GSM));
-	// TODO: When these codec will be implemented, remove comment
-#if 0
-	_codecDescVector->push_back(new CodecDescriptor(PAYLOAD_CODEC_ILBC, 
-				CODEC_ILBC));
-	_codecDescVector->push_back(new CodecDescriptor(PAYLOAD_CODEC_SPEEX, 
-				CODEC_SPEEX));
-#endif
+	
+	_codecDescVector->push_back(new CodecDescriptor(
+				get_config_fields_str(AUDIO, CODEC1)));
+
+	_codecDescVector->push_back(new CodecDescriptor(
+				get_config_fields_str(AUDIO, CODEC2)));
+	
+	_codecDescVector->push_back(new CodecDescriptor(
+				get_config_fields_str(AUDIO, CODEC3)));
 }
 
 void

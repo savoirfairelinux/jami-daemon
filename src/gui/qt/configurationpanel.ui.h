@@ -77,8 +77,7 @@ void ConfigurationPanel::init()
    codec1->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC1)));
    codec2->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC2)));
    codec3->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC3)));
-   codec4->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC4)));
-   codec5->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC5)));
+
    ringsChoice->setCurrentText(QString(get_config_fields_str(AUDIO, RING_CHOICE)));
    
    // For preferences tab
@@ -132,8 +131,7 @@ void ConfigurationPanel::saveSlot()
    Config::set("Audio", "Codecs.codec1", string(codec1->currentText().ascii()));
    Config::set("Audio", "Codecs.codec2", string(codec2->currentText().ascii()));
    Config::set("Audio", "Codecs.codec3", string(codec3->currentText().ascii()));
-   Config::set("Audio", "Codecs.codec4", string(codec4->currentText().ascii()));
-   Config::set("Audio", "Codecs.codec5", string(codec5->currentText().ascii()));
+
    if (ringsChoice->currentText() != NULL)
      Config::set("Audio", "Rings.ringChoice", 
          string(ringsChoice->currentText().ascii()));

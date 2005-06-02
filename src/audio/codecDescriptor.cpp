@@ -28,7 +28,13 @@
 CodecDescriptor::CodecDescriptor (int payload) 
 {
 	_payload = payload;
-	_codecName = "";
+	_codecName = rtpmapPayload(_payload);
+}
+
+CodecDescriptor::CodecDescriptor (const string& name) 
+{
+	_codecName = name;
+	_payload = matchPayloadCodec(name);
 }
 
 CodecDescriptor::CodecDescriptor (int payload, const string& name) 

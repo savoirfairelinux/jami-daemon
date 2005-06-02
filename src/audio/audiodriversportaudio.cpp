@@ -29,10 +29,10 @@
 
 AudioDriversPortAudio::AudioDriversPortAudio (Manager* manager) {
 	_manager = manager;
-	mydata.dataToAddRem = 0;
-	mydata.dataFilled = 0;
+	mydata.urg_remain = 0;
 	mydata.dataIn = NULL;
 	mydata.dataOut = NULL;
+	mydata.urg_data = NULL;
 	this->initDevice();
 }
 
@@ -76,13 +76,13 @@ bool
 AudioDriversPortAudio::openDevice (void) {
 	int err = Pa_OpenDefaultStream (
 	&_stream,       	/* passes back stream pointer */
-	1,              	/* mono input */
-	1,              	/* mono output */
+	2,              	/* input channel */
+	2,              	/* output channel */
 	paFloat32,     		/* 32 bit float output */
 	SAMPLING_RATE,  	/* sample rate */
 	FRAME_PER_BUFFER, 	/* frames per buffer */
 	audioCallback,  	/* specify our custom callback */
-	&mydata);         	/* pass our data through to callback */
+	&mydata);         	/* pass our data through to callback */  
 
 	if (err != paNoError) {
 		_debug ("PortAudio error in Pa_OpenDefaultStream: %s\n", Pa_GetErrorText(err));
@@ -95,11 +95,15 @@ AudioDriversPortAudio::openDevice (void) {
 
 int 
 AudioDriversPortAudio::readBuffer (void *ptr, int bytes) {
+	(void) ptr;
+	(void) bytes;
 	return 1;
 }
 
 int
 AudioDriversPortAudio::writeBuffer (void *ptr, int len) {
+	(void) ptr;
+	(void) len;
 	return 1;
 }
 
@@ -107,11 +111,13 @@ int
 AudioDriversPortAudio::startStream(void) 
 {
 	int err;
-	
-	err = Pa_StartStream (_stream);
-	if( err != paNoError ) {
-		_debug ("PortAudio error in Pa_StartStream: %s\n", Pa_GetErrorText(err));
-		return 0;
+	if (!Pa_IsStreamActive(_stream)) {
+		err = Pa_StartStream (_stream);
+		if( err != paNoError ) {
+			_debug ("PortAudio error in Pa_StartStream: %s\n", 
+					Pa_GetErrorText(err));
+			return 0;
+		}
 	}
 	
 	return 1;
@@ -122,11 +128,15 @@ AudioDriversPortAudio::stopStream(void)
 {
 	int err;
 	
-	err = Pa_StopStream (_stream);
-	if( err != paNoError ) {
-		_debug ("PortAudio error in Pa_StopStream: %s\n", Pa_GetErrorText(err));
-		return 0;
+	if (!Pa_IsStreamStopped(_stream)) {
+		err = Pa_StopStream (_stream);
+		if( err != paNoError ) {
+			_debug ("PortAudio error in Pa_StopStream: %s\n", 
+					Pa_GetErrorText(err));
+			return 0;
+		}
 	}
+	
 	return 1;
 }
 
@@ -168,52 +178,31 @@ AudioDriversPortAudio::audioCallback (const void *inputBuffer,
 	float32 *out = (float32 *) outputBuffer;
 
 	paData* data = (paData*) userData;
-	unsigned int i;
+	int i;
+	int it;
 
-#if 1
 	/* Fill output buffer */
-	int j = data->dataToAddRem;
-	int k = data->dataFilled;
-	for (i = 0; i < framesPerBuffer; i++) {
-		if (j > 0 && k < j) {
-			*out++ = data->dataToAdd[i+k]; 
+	for (i = 0; i < (int)framesPerBuffer; i++) { 
+		it = 2*i;
+		if (data->urg_remain - i > 0) {
+			out[it] = out[it+1] = data->urg_ptr[i];  
 		} else {
-			*out++ = data->dataOut[i];
+			out[it] = out[it+1] = data->dataOut[i];
 		}
-    }
-	k += framesPerBuffer;
-	if (k >= j) {
-		data->dataFilled = 0;
-	} else {
-		data->dataFilled = k;
 	}
-#endif
+
+	if ((data->urg_remain -i) > 0) {
+		data->urg_ptr +=i;
+		data->urg_remain-= i;
+	} else {
+		data->urg_remain = 0;
+	}
 	
 	/* Read input buffer */
 	if (data->dataIn != NULL) {
-		memcpy (data->dataIn, in, sizeof(float32) * framesPerBuffer);
+		memcpy (data->dataIn, in, 2*sizeof(float32) * framesPerBuffer);
 	}
 	
-#if 0
-	int j = data->dataToAddRem;
-	/* Fill output buffer */
-    for (i = 0; i < framesPerBuffer; i++) {
-		if (j > 0 && j >= i) {
-			*out++ = data->dataToAdd[j-i]; 
-		} else {
-			*out++ = data->dataOut[i];
-		}
-    }
-	
-	j = j - i;
-	if (j > 0) {
-		data->dataToAddRem = j;
-	} else {
-		data->dataToAddRem = 0;
-	//	cout << "please FREE data->dataToAdd now!!!" << endl;
-	}
-	
-#endif
 	return paContinue;
 }
 #endif // defined(AUDIO_PORTAUDIO)

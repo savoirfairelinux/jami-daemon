@@ -1428,8 +1428,9 @@ void
 QtGUIMainWindow::pressedKeySlot (int id) {
 	char code = 0;
     int pulselen = 0;
-    int a = 0;
 	int callid;
+	float32* tmp_urg_data;
+	float32* buf_ctrl_vol;
                                                                                 
     // Stop dial tone
     if (_dialtone) {
@@ -1464,16 +1465,30 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 			
 	pulselen = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
 	int size = pulselen * (OCTETS/1000);
-	
-	_callmanager->getAudioDriver()->mydata.dataToAdd = _buf;
-	_callmanager->getAudioDriver()->mydata.dataToAddRem = size;
-	_callmanager->getAudioDriver()->mydata.dataFilled = 0;
-	
-	if (!_callmanager->getAudioDriver()->isStreamActive()) {
-		_callmanager->getAudioDriver()->startStream();
+
+	// Control volume
+	buf_ctrl_vol = new float32[size];
+	for (int j = 0; j < size; j++) {
+		buf_ctrl_vol[j] = _buf[j] * _callmanager->getSpkrVolume()/100;
 	}
+	
+	// Free urg_data pointer
+	tmp_urg_data = _callmanager->getAudioDriver()->mydata.urg_data;
+	if (tmp_urg_data != NULL) {
+		free (tmp_urg_data);
+	}
+
+	// Init struct mydata
+	tmp_urg_data = buf_ctrl_vol;
+	_callmanager->getAudioDriver()->mydata.urg_ptr = tmp_urg_data;
+	_callmanager->getAudioDriver()->mydata.urg_remain = size;
+	
+	_callmanager->getAudioDriver()->startStream();
 	_callmanager->getAudioDriver()->sleep(pulselen);
 	_callmanager->getAudioDriver()->stopStream();
+	_callmanager->getAudioDriver()->mydata.urg_remain = 0;
+	
+	delete[] buf_ctrl_vol;
 }
 
 // Save settings in config-file
