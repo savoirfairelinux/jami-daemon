@@ -170,5 +170,4 @@ skins/Makefile \
 skins/emetal/Makefile \
 skins/metal/Makefile \
 rings/Makefile \
-sflphone.pc
 )
