@@ -1,2 +1,3 @@
 - We need to remove the KDE check
 - We need to clean the optimization flags handling.
+- We need to cleanup the compilation libs.

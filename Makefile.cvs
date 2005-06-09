@@ -1,2 +1,10 @@
 all:
-	make -f admin/Makefile.common
+	@echo "This Makefile is only for the CVS repository"
+	@echo "This will be deleted before making the distribution"
+	@echo ""
+	@if test ! -d admin; then \
+		echo "Please recheckout this module!" ;\
+		echo "for cvs: use checkout once and after that update again" ;\
+		exit 1 ;\
+	fi
+	$(MAKE) -f admin/Makefile.common cvs
