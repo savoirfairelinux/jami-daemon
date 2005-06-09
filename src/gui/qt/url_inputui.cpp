@@ -1,13 +1,13 @@
 /****************************************************************************
-** Form implementation generated from reading ui file 'gui/qt/url_input.ui'
+** Form implementation generated from reading ui file 'url_input.ui'
 **
-** Created: Thu Jun 2 11:14:54 2005
+** Created: Thu Jun 9 10:29:29 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
 ****************************************************************************/
 
-#include "gui/qt/url_inputui.h"
+#include "url_input.h"
 
 #include <qvariant.h>
 #include <qpushbutton.h>
@@ -15,7 +15,6 @@
 #include <qlayout.h>
 #include <qtooltip.h>
 #include <qwhatsthis.h>
-#include "url_input.ui.h"
 
 /*
  *  Constructs a URL_Input as a child of 'parent', with the

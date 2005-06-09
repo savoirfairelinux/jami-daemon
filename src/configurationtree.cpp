@@ -45,7 +45,10 @@ ConfigurationTree::populateFromFile (const string& fileName) {
 		file.open(fileName.data(), fstream::out);
 		out = true;
 		if (!file.is_open()) {
-        	_debug("Error opening file (%s:%d)\n", __FILE__, __LINE__);
+		  _debug("(%s:%d) Error opening file: %s\n",
+			 __FILE__, 
+			 __LINE__, 
+			 fileName.c_str());
 			return 0;
 		}
 		return 2;
@@ -54,9 +57,9 @@ ConfigurationTree::populateFromFile (const string& fileName) {
 	char line[128];
 	bzero (line, 128);
 	
-	const string section("");
-	const string key("");
-	const string val("");
+	string section("");
+	string key("");
+	string val("");
 	string s;
 	int pos;
 	
@@ -95,7 +98,10 @@ ConfigurationTree::saveToFile (const string& fileName) {
 	file.open(fileName.data(), fstream::out);
 	 
 	if (!file.is_open()) {
-        _debug("Error opening file\n");
+	  _debug("(%s:%d) Error opening file: %s\n",
+			 __FILE__, 
+			 __LINE__, 
+			 fileName.c_str());
 		return 0;
   	}
 

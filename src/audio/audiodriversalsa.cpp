@@ -59,7 +59,7 @@ AudioDriversALSA::closeDevice (void) {
 
 int
 AudioDriversALSA::initDevice (DeviceMode mode) {
-	int	 err;
+	int	err;
 		
 	if (devstate == DeviceOpened) {
 		error->errorName(DEVICE_ALREADY_OPEN, NULL);

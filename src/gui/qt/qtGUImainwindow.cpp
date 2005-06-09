@@ -41,7 +41,7 @@
 #include "../../manager.h"
 #include "../../user_cfg.h"
 #include "../../skin.h"
-#include "configurationpanelui.h"
+#include "configurationpanel.h"
 #include "jpushbutton.h"
 #include "numerickeypadtools.h"
 #include "point.h"
@@ -1711,5 +1711,8 @@ QtGUIMainWindow::keyPressEvent(QKeyEvent *e) {
 		_lcd->appendText(QChar(e->key()).lower());
 	}  
 }
+
+
+#include "qtGUImainwindowmoc.cpp"
 
 // EOF

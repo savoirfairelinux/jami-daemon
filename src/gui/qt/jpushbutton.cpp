@@ -194,3 +194,4 @@ JPushButton::mouseMoveEvent (QMouseEvent *e) {
 	e->accept();
 }
 
+#include "jpushbuttonmoc.cpp"

@@ -132,7 +132,7 @@ Manager::error (void)
 }
 
 AudioDriversPortAudio*
-Manager:: getAudioDriver(void) 
+Manager::getAudioDriver(void) 
 {
 	return _audiodriverPA;
 }
@@ -380,7 +380,7 @@ Manager::quitApplication (void)
 }
 
 int 
-Manager::sendTextMessage (short id, const string& message)
+Manager::sendTextMessage (short , const string& )
 {
 	return 1;
 }

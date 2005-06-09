@@ -19,10 +19,10 @@
 
 #include <iostream>
 
-#include "audio/audiocodec.h"
-#include "audio/gsmcodec.h"
-#include "audio/alaw.h"
-#include "audio/ulaw.h"
+#include "audiocodec.h"
+#include "gsmcodec.h"
+#include "alaw.h"
+#include "ulaw.h"
 #include "codecDescriptor.h"
 
 CodecDescriptor::CodecDescriptor (int payload) 

@@ -18,9 +18,8 @@
  */
 
 #include <iostream>
-#include "gsm/gsm.h"
-#include "gsmcodec.h"
 #include "../global.h"
+#include "gsmcodec.h"
 
 Gsm::Gsm(int payload, const string& codec) : AudioCodec(payload, codec)
 {

@@ -338,9 +338,9 @@ SipVoIPLink::transfer (short id, const string& to)
 {
 	int i;
 	string tmp_to;
-	to = toHeader(to);
-	if (to.find("@") == string::npos) {
-		tmp_to = to + "@" + get_config_fields_str(SIGNALISATION, HOST_PART);
+	tmp_to = toHeader(to);
+	if (tmp_to.find("@") == string::npos) {
+		tmp_to = tmp_to + "@" + get_config_fields_str(SIGNALISATION, HOST_PART);
 	}
 
 	eXosip_lock();

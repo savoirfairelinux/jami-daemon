@@ -19,7 +19,7 @@
  *
  */
 
-#include "trayicon.h"
+#include "gui/qt/trayicon.h"
 
 #include<qapplication.h>
 #include<qimage.h>

@@ -17,13 +17,13 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#if defined(AUDIO_PORTAUDIO)
+#include "../global.h"
+#ifdef AUDIO_PORTAUDIO
 
 #ifndef _AUDIO_DRIVERS_PORTAUDIO_H
 #define _AUDIO_DRIVERS_PORTAUDIO_H
 
 #include "portaudio/pa_common/portaudio.h"
-#include "../global.h"
 
 #define TABLE_SIZE			360
 #define FRAME_PER_BUFFER	160

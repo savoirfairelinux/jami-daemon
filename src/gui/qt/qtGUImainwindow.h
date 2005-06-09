@@ -38,7 +38,7 @@
 #include "../../skin.h"
 #include "../guiframework.h"
 #include "../../audio/dtmf.h"
-#include "configurationpanelui.h"
+#include "configurationpanel.h"
 #include "jpushbutton.h"
 #include "mydisplay.h"
 #include "numerickeypad.h"
@@ -46,7 +46,7 @@
 #include "phoneline.h"
 #include "transqwidget.h"
 #include "trayicon.h"
-#include "url_inputui.h"
+#include "url_input.h"
 #include "vector.h"
 #include "volumecontrol.h"
 

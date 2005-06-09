@@ -293,3 +293,5 @@ void TrayIcon::gotCloseEvent()
 	closed();
 }
 
+#include "trayiconmoc.cpp"
+

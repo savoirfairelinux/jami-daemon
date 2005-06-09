@@ -9,8 +9,10 @@
 #include	"config.h"
 
 
-//#ifdef	HAS_STDLIB_H
+/*
+  #ifdef	HAS_STDLIB_H
 //#include	<stdlib.h>
+*/
 #ifdef	HAS_STRING_H
 #include	<string.h>
 #else

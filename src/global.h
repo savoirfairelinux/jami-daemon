@@ -34,11 +34,6 @@ typedef short int16;
 	#define _debug(...)
 #endif
 
-#ifndef PREFIX
-#define PREFIX					"/usr/local"
-#endif
-
-#define VERSION					"0.3.1"
 #define PROGNAME				"sflphone"
 #define SKINDIR					"skins"
 #define PIXDIR					"pixmaps"
@@ -60,6 +55,7 @@ typedef short int16;
 #define	FORMAT					4			// for 16 bits format
 #define OCTETS					SAMPLING_RATE * FORMAT	// Number of writen 
 														// bytes in buffer
+
 #define OSS_DRIVER              0
 #define ALSA_DRIVER             1
 

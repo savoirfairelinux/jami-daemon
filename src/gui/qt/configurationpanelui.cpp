@@ -1,13 +1,13 @@
 /****************************************************************************
-** Form implementation generated from reading ui file 'gui/qt/configurationpanel.ui'
+** Form implementation generated from reading ui file 'configurationpanel.ui'
 **
-** Created: Thu Jun 2 11:14:54 2005
+** Created: Thu Jun 9 10:29:27 2005
 **      by: The User Interface Compiler ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
 ****************************************************************************/
 
-#include "gui/qt/configurationpanelui.h"
+#include "configurationpanel.h"
 
 #include <qvariant.h>
 #include <qpushbutton.h>
@@ -29,7 +29,6 @@
 #include <qimage.h>
 #include <qpixmap.h>
 
-#include "configurationpanel.ui.h"
 static const char* const image0_data[] = { 
 "312 91 104 2",
 ".R c #626562",
@@ -889,7 +888,7 @@ ConfigurationPanel::ConfigurationPanel( QWidget* parent, const char* name, bool 
     spacer9 = new QSpacerItem( 20, 21, QSizePolicy::Minimum, QSizePolicy::Expanding );
     layout23->addItem( spacer9 );
     layout24->addLayout( layout23 );
-    Tab_Signalisations->insertTab( SIPPage, QString("") );
+    Tab_Signalisations->insertTab( SIPPage, QString::fromLatin1("") );
 
     STUNPage = new QWidget( Tab_Signalisations, "STUNPage" );
 
@@ -917,7 +916,7 @@ ConfigurationPanel::ConfigurationPanel( QWidget* parent, const char* name, bool 
     useStunYes = new QRadioButton( stunButtonGroup, "useStunYes" );
     useStunYes->setChecked( FALSE );
     stunButtonGroupLayout->addWidget( useStunYes );
-    Tab_Signalisations->insertTab( STUNPage, QString("") );
+    Tab_Signalisations->insertTab( STUNPage, QString::fromLatin1("") );
 
     DTMFPage = new QWidget( Tab_Signalisations, "DTMFPage" );
 
@@ -966,7 +965,7 @@ ConfigurationPanel::ConfigurationPanel( QWidget* parent, const char* name, bool 
     layout11->addLayout( layout8 );
 
     SettingsDTMFLayout->addLayout( layout11, 0, 0 );
-    Tab_Signalisations->insertTab( DTMFPage, QString("") );
+    Tab_Signalisations->insertTab( DTMFPage, QString::fromLatin1("") );
     layout19_2->addWidget( Tab_Signalisations );
 
     Tab_Audio = new QTabWidget( this, "Tab_Audio" );
@@ -988,7 +987,7 @@ ConfigurationPanel::ConfigurationPanel( QWidget* parent, const char* name, bool 
     alsaButton = new QRadioButton( DriverChoice, "alsaButton" );
     alsaButton->setEnabled( TRUE );
     DriverChoiceLayout->addWidget( alsaButton );
-    Tab_Audio->insertTab( DriversPage, QString("") );
+    Tab_Audio->insertTab( DriversPage, QString::fromLatin1("") );
 
     CodecsPage = new QWidget( Tab_Audio, "CodecsPage" );
 
@@ -1024,13 +1023,13 @@ ConfigurationPanel::ConfigurationPanel( QWidget* parent, const char* name, bool 
     layout18_2->addWidget( textLabel1_4_3 );
 
     layout18->addLayout( layout18_2, 0, 1 );
-    Tab_Audio->insertTab( CodecsPage, QString("") );
+    Tab_Audio->insertTab( CodecsPage, QString::fromLatin1("") );
 
     RingPage = new QWidget( Tab_Audio, "RingPage" );
 
     ringsChoice = new QComboBox( FALSE, RingPage, "ringsChoice" );
     ringsChoice->setGeometry( QRect( 20, 21, 150, 30 ) );
-    Tab_Audio->insertTab( RingPage, QString("") );
+    Tab_Audio->insertTab( RingPage, QString::fromLatin1("") );
     layout19_2->addWidget( Tab_Audio );
 
     Tab_Preferences = new QTabWidget( this, "Tab_Preferences" );
@@ -1042,7 +1041,7 @@ ConfigurationPanel::ConfigurationPanel( QWidget* parent, const char* name, bool 
 
     buttonApplySkin = new QPushButton( DriversPage_2, "buttonApplySkin" );
     buttonApplySkin->setGeometry( QRect( 136, 40, 80, 32 ) );
-    Tab_Preferences->insertTab( DriversPage_2, QString("") );
+    Tab_Preferences->insertTab( DriversPage_2, QString::fromLatin1("") );
 
     TabPage = new QWidget( Tab_Preferences, "TabPage" );
 
@@ -1078,7 +1077,7 @@ ConfigurationPanel::ConfigurationPanel( QWidget* parent, const char* name, bool 
     spacer6_2 = new QSpacerItem( 61, 21, QSizePolicy::Expanding, QSizePolicy::Minimum );
     layout16_2->addItem( spacer6_2 );
     layout17_2->addLayout( layout16_2 );
-    Tab_Preferences->insertTab( TabPage, QString("") );
+    Tab_Preferences->insertTab( TabPage, QString::fromLatin1("") );
     layout19_2->addWidget( Tab_Preferences );
 
     Tab_About = new QTabWidget( this, "Tab_About" );
@@ -1092,7 +1091,7 @@ ConfigurationPanel::ConfigurationPanel( QWidget* parent, const char* name, bool 
 
     textLabel2_2 = new QLabel( DriversPage_3, "textLabel2_2" );
     textLabel2_2->setGeometry( QRect( 20, 170, 371, 121 ) );
-    Tab_About->insertTab( DriversPage_3, QString("") );
+    Tab_About->insertTab( DriversPage_3, QString::fromLatin1("") );
 
     CodecsPage_2 = new QWidget( Tab_About, "CodecsPage_2" );
 
@@ -1103,7 +1102,7 @@ ConfigurationPanel::ConfigurationPanel( QWidget* parent, const char* name, bool 
     pixmapLabel2->setGeometry( QRect( 130, 50, 173, 48 ) );
     pixmapLabel2->setPixmap( image1 );
     pixmapLabel2->setScaledContents( TRUE );
-    Tab_About->insertTab( CodecsPage_2, QString("") );
+    Tab_About->insertTab( CodecsPage_2, QString::fromLatin1("") );
     layout19_2->addWidget( Tab_About );
 
     ConfigurationPanelLayout->addLayout( layout19_2, 0, 1 );
@@ -1257,5 +1256,34 @@ void ConfigurationPanel::languageChange()
 "5505, Saint-Laurent - bureau 3030<br>\n"
 "Montreal, Quebec H2T 1S6</p>" ) );
     Tab_About->changeTab( CodecsPage_2, tr( "About Savoir-faire Linux inc." ) );
+}
+
+void ConfigurationPanel::saveSlot()
+{
+    qWarning( "ConfigurationPanel::saveSlot(): Not implemented yet" );
+}
+
+void ConfigurationPanel::changeTabSlot()
+{
+    qWarning( "ConfigurationPanel::changeTabSlot(): Not implemented yet" );
+}
+
+void ConfigurationPanel::useStunSlot(int)
+{
+    qWarning( "ConfigurationPanel::useStunSlot(int): Not implemented yet" );
+}
+
+void ConfigurationPanel::applySkinSlot()
+{
+    qWarning( "ConfigurationPanel::applySkinSlot(): Not implemented yet" );
+}
+
+void ConfigurationPanel::driverSlot(int)
+{
+    qWarning( "ConfigurationPanel::driverSlot(int): Not implemented yet" );
+}
+
+void ConfigurationPanel::init()
+{
 }
 

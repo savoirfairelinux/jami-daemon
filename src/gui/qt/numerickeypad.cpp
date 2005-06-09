@@ -116,4 +116,4 @@ NumericKeypad::keyPressEvent (QKeyEvent* e) {
 }
 
 
-
+#include "numerickeypadmoc.cpp"
