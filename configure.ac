@@ -103,7 +103,7 @@ CXXFLAGS="$CXXFLAGS -Werror"
 
 AC_MSG_CHECKING([whether to disable -O* optimization flags])
 AC_ARG_ENABLE(oflags,
-[  --disable-maintener      Disable -O* optimization flags [default=no]],
+[  --disable-oflags      Disable -O* optimization flags [default=no]],
 [
 AC_MSG_RESULT(yes)
     NEWFLAGS=""

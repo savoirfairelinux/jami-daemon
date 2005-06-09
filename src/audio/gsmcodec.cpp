@@ -27,7 +27,7 @@ Gsm::Gsm(int payload, const string& codec) : AudioCodec(payload, codec)
 	_payload = payload;
 	
 	if (!(_decode_gsmhandle = gsm_create() )) 
-		_debug("ERROR: decode_gsm_create\n");
+		_debug("AudioCodec: ERROR: decode_gsm_create\n");
 	if (!(_encode_gsmhandle = gsm_create() )) 
 		_debug("AudioCodec: ERROR: encode_gsm_create\n");
 }
@@ -36,7 +36,6 @@ Gsm::~Gsm (void)
 {
 	gsm_destroy(_decode_gsmhandle);
 	gsm_destroy(_encode_gsmhandle);
-
 }
 
 int
