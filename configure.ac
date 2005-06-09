@@ -3,7 +3,7 @@ AC_INIT(acinclude.m4)
 AM_CONFIG_HEADER(config.h)
 
 dnl figure out the sflphone version
-VERSION=`sed -ne 's/^#define SFLPHONE_VERSION "\(.*\)"/\1/p' ${srcdir}/sflphone.h`
+VERSION=`sed -ne 's/^#define SFLPHONE_VERSION "\(.*\)"/\1/p' ${srcdir}/src/global.h`
 AC_SUBST(VERSION)
 
 
@@ -14,7 +14,7 @@ AC_SUBST(RPM_VERSION)
 LIBS="$LIBS -lstdc++"
 dnl
 dnl we extract the numerical version 
-VERSIONNUM=`sed -ne 's/^#define SFLPHONE_VERSION_NUM 0x\(\\d\)/\1/p' ${srcdir}/sflphone.h`
+VERSIONNUM=`sed -ne 's/^#define SFLPHONE_VERSION_NUM 0x\(\\d\)/\1/p' ${srcdir}/src/global.h`
 AC_SUBST(VERSIONNUM)
 
 dnl

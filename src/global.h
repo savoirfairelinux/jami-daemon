@@ -34,6 +34,9 @@ typedef short int16;
 	#define _debug(...)
 #endif
 
+#define SFLPHONE_VERSION "0.3.0"
+#define SFLPHONE_VERSION_NUM 0x000300
+
 #define PROGNAME				"sflphone"
 #define SKINDIR					"skins"
 #define PIXDIR					"pixmaps"
