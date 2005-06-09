@@ -1,3 +1,5 @@
 - We need to remove the KDE check
 - We need to clean the optimization flags handling.
 - We need to cleanup the compilation libs.
+- We need to get rid of the pa_converters.h and pa_dither.h
+- We need to cleanup the -O* handling

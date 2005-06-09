@@ -26,10 +26,10 @@
 #include <string.h>
 #include <iostream>
 #include <string>
+#include <portaudio.h>
 
-#include "portaudio/pa_common/portaudio.h"
-#include "portaudio/pa_common/pa_converters.h"
-#include "portaudio/pa_common/pa_dither.h"
+#include "pa_converters.h"
+#include "pa_dither.h"
 
 #include "../global.h"
 

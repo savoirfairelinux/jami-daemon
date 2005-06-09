@@ -18,6 +18,7 @@ libaudio_la_SOURCES = \
 	dtmfgenerator.cpp dtmfgenerator.h \
 	g711.cpp g711.h \
 	gsmcodec.cpp gsmcodec.h \
+	pa_converters.h pa_dither.h \
 	tonegenerator.cpp tonegenerator.h \
 	ulaw.cpp ulaw.h 
 

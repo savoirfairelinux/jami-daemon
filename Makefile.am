@@ -1,3 +1,3 @@
-SUBDIRS = stund src skins rings
+SUBDIRS = stund src skins rings pixmaps
 
 

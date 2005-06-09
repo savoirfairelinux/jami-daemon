@@ -29,9 +29,7 @@ sflphone_SOURCES = \
 	phonegi-bin.h \
 	voIPLink.h \
 	sipcall.h \
-	skin.h \
-	stun.h \
-	udp.h 
+	skin.h 
 
 
 
@@ -40,7 +38,7 @@ sflphone_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\
 
 
 sflphone_LDFLAGS = $(KDE_RPATH) $(all_libraries) 
-sflphone_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la  -lpthread 
+sflphone_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la -lpthread 
 
 
 KDE_CXXFLAGS = $(USE_EXCEPTIONS)

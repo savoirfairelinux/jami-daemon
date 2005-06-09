@@ -23,7 +23,7 @@
 #ifndef _AUDIO_DRIVERS_PORTAUDIO_H
 #define _AUDIO_DRIVERS_PORTAUDIO_H
 
-#include "portaudio/pa_common/portaudio.h"
+#include <portaudio.h>
 
 #define TABLE_SIZE			360
 #define FRAME_PER_BUFFER	160

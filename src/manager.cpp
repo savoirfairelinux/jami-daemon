@@ -45,7 +45,6 @@
 #include "sipvoiplink.h"
 #include "skin.h"
 #include "voIPLink.h"
-#include "../stund/udp.h"
 
 #include "audio/audiodriversportaudio.h"
 
