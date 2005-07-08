@@ -18,6 +18,7 @@
  */
 
 #include <iostream>
+
 #include "call.h"
 #include "manager.h"
 #include "sipvoiplink.h"
@@ -256,15 +257,23 @@ Call::isIncomingType (void)
 }
 
 int 
-Call::outgoingCall  (const string& to)
+Call::outgoingCall  (short id, const string& to)
 {
-	return _voIPLink->outgoingInvite(to);
+	return _voIPLink->outgoingInvite(id, to);
 }
 
 int 
 Call::hangup  (void)
 {
 	int i = _voIPLink->hangup(_id);
+	_voIPLink->deleteSipCall(_id);
+	return i;
+}
+
+int 
+Call::cancel  (void)
+{
+	int i = _voIPLink->cancel(_id);
 	_voIPLink->deleteSipCall(_id);
 	return i;
 }

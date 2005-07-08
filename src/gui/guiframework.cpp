@@ -1,4 +1,4 @@
-/**
+/** 
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
@@ -40,6 +40,16 @@ int
 GuiFramework::hangupCall (short id)
 {
 	if (_manager->hangupCall(id)) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+int 
+GuiFramework::cancelCall (short id)
+{
+	if (_manager->cancelCall(id)) {
 		return 1;
 	} else {
 		return 0;

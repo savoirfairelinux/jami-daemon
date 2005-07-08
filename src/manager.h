@@ -25,18 +25,20 @@
 #include <string>
 #include <vector>
 
-#include "audio/codecDescriptor.h"
-#include "audio/audiodriversportaudio.h"
-#include "error.h"
-#include "call.h"
-#include "user_cfg.h"
-#include "voIPLink.h"
-#include "gui/guiframework.h"
 #include "../stund/stun.h"
+#include "call.h"
 
 using namespace std;
 using namespace ost;
 
+class AudioLayer;
+class CodecDescriptor;
+class Error;
+class GuiFramework;
+class ToneGenerator;
+class VoIPLink;
+
+#define	NOTIFICATION_LEN	250
 // Status
 #define CONNECTED_STATUS	"Connected"
 #define LOGGED_IN_STATUS	"Logged in"
@@ -63,18 +65,23 @@ typedef vector<VoIPLink*, allocator<VoIPLink*> > VoIPLinkVector;
  */
 typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
 
-class GuiFramework;
-class ToneGenerator;
+struct device_t{
+	const char* hostApiName;
+	const char* deviceName;
+};
+
 class Manager {
 public:
 	Manager (void);
 	~Manager (void);
 
+	static device_t deviceParam;
+	
 	void init (void);
 	void setGui (GuiFramework* gui);
 	ToneGenerator* getTonegenerator(void);
 	Error* error(void);
-	AudioDriversPortAudio* getAudioDriver(void);
+	AudioLayer* getAudioDriver(void);
 
 	// Accessor to number of calls 
 	unsigned int getNumberOfCalls (void);
@@ -120,6 +127,7 @@ public:
 	
 	int outgoingCall (const string& to);
 	int hangupCall (short id);
+	int cancelCall (short id);
 	int answerCall (short id);
 	int onHoldCall (short id);
 	int offHoldCall (short id);
@@ -148,9 +156,11 @@ public:
 	int peerRingingCall (short id);
 	int peerHungupCall (short id);
 	void displayTextMessage (short id, const string& message);
+	void displayErrorText (const string& message);
 	void displayError (const string& error);
 	void displayStatus (const string& status);
 	int selectedCall (void);
+	bool isCurrentId (short id);
 	
 	/*
 	 * Handle audio sounds heard by a caller while they wait for their 
@@ -176,8 +186,7 @@ public:
 	inline bool getbCongestion 	(void) { return _congestion; }
 	inline bool getbRingback 	(void) { return _ringback; }
 	inline bool getbRingtone 	(void) { return _ringtone; }
-	inline bool useAlsa 		(void) { return _useAlsa; }
-
+	
 	inline int getSpkrVolume 	(void) 			{ return _spkr_volume; }
 	inline void setSpkrVolume 	(int spkr_vol) 	{ _spkr_volume = spkr_vol; }
 	inline int getMicroVolume 	(void) 			{ return _mic_volume; }
@@ -187,6 +196,13 @@ public:
 	inline void setFirewallPort 	(int port) 	{ _firewallPort = port; }
 	inline string getFirewallAddress (void) 	{ return _firewallAddr; }
 
+	inline bool isDriverLoaded (void) { return _loaded; }
+	inline void loaded (bool l) { _loaded = l; }
+
+	static device_t deviceList (int);
+	static int deviceCount (void);
+	static bool defaultDevice (int);
+	
 private:
 
 	/*
@@ -218,7 +234,8 @@ private:
 	ToneGenerator* _tone;
 	Error* _error;
 	GuiFramework* _gui;
-	AudioDriversPortAudio* _audiodriverPA;
+	AudioLayer* _audiodriverPA;
+
 	/*
 	 * Vector of VoIPLink
 	 */
@@ -259,8 +276,6 @@ private:
 	bool		 _ringback;
 	bool		 _ringtone;
 
-	bool 		_useAlsa;
-	
 	// To handle volume control
 	int 		_spkr_volume;
 	int 		_mic_volume;
@@ -268,6 +283,9 @@ private:
 	// To handle firewall
 	int			_firewallPort;
 	string		_firewallAddr;
+
+	// Variables used in exception
+	bool 		_loaded;
 };
 
 #endif // __MANAGER_H__

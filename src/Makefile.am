@@ -15,7 +15,6 @@ sflphone_SOURCES = \
 	voIPLink.cpp \
 	sipcall.cpp \
 	skin.cpp \
-	trayicon_x11.cpp \
 	manager.h \
 	global.h \
 	configitem.h \
@@ -36,13 +35,12 @@ sflphone_SOURCES = \
 
 sflphone_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
 
-
-sflphone_LDFLAGS = $(KDE_RPATH) $(all_libraries) 
+sflphone_LDFLAGS = $(QT_LDFLAGS) $(X_LDFLAGS)
 sflphone_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la -lpthread 
 
 
 KDE_CXXFLAGS = $(USE_EXCEPTIONS)
-AM_CPPFLAGS = -I$(qt_includes) $(all_includes) 
+AM_CPPFLAGS = $(QT_INCLUDES) $(X_INCLUDES) -Iaudio/pacpp/include
 
 
 

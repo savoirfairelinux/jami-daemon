@@ -20,9 +20,9 @@
 #ifndef __VOLUME_CONTROL_H__
 #define __VOLUME_CONTROL_H__
 
-#include "vector.h"
 #include "jpushbutton.h"
 
+class Vector;
 class VolumeControl : public JPushButton {
 	Q_OBJECT
 public:

@@ -32,7 +32,7 @@ public:
 	~DTMF (void);
 	
 	void startTone		(char);
-	bool generateDTMF	(float32*, size_t);
+	bool generateDTMF	(int16*, size_t);
 
 	char currentTone;
 	char newTone;

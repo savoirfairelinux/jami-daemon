@@ -26,8 +26,7 @@
 #include <string>
 using namespace std;
 
-#include "../manager.h"
-
+class Manager;
 class GuiFramework {
 public:
 	GuiFramework (Manager* manager);
@@ -39,16 +38,19 @@ public:
 	virtual int peerRingingCall (short id) = 0;
 	virtual int peerHungupCall (short id) = 0;
 	virtual void displayTextMessage (short id, const string& message) = 0;
+	virtual void displayErrorText (const string& message) = 0;
 	virtual void displayError (const string& error) = 0;
 	virtual void displayStatus (const string& status) = 0;
 	virtual void displayContext (short id) = 0;
 	virtual string getRingtoneFile (void) = 0;
 	virtual void setup (void) = 0;
 	virtual int selectedCall (void) = 0;
+	virtual bool isCurrentId (short) = 0;
 	
 	/* Child class to parent class */
 	int outgoingCall (const string& to); 	
 	int hangupCall (short id);
+	int cancelCall (short id);
 	int answerCall (short id);
 	int onHoldCall (short id);
 	int offHoldCall (short id);

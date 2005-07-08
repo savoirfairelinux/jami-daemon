@@ -21,7 +21,6 @@
 #define __GSM_H__
 
 #include "audiocodec.h"
-
 extern "C" {
 #include "gsm/gsm.h"
 }

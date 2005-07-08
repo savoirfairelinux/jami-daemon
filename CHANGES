@@ -1,9 +1,15 @@
 
-SFLphone (0.3.1) / 2005-06-01
+SFLphone (0.4) / 2005-07-06
+	* Add autotools support
+	* Test on iMac with Ubuntu: Ok
+	* Handle CANCEL method
+	* PortAudio replace OSS and ALSA devices choice
+	* Add PortAudioCpp to make easy use of RingBuffer object for audio callback 
 	* Add PortAudio library to make easy sound portability
+	* Fix a few memory leak
 	* Reorganisation of SFLphone architecture
 	* Handle error messages on screen
-	* Handle refused call
+	* Handle "refused call"
 	* Notification of remote RINGING event added
 	* Call management updated
 

@@ -26,10 +26,8 @@
 #include <string.h>
 #include <iostream>
 #include <string>
-#include <portaudio.h>
 
-#include "pa_converters.h"
-#include "pa_dither.h"
+#include "portaudio.h"
 
 #include "../global.h"
 
@@ -59,29 +57,4 @@ AudioCodec::getCodecName (void)
 	return _codecName;
 }
 
-void 
-AudioCodec::float32ToInt16 (float32* src, int16* dst, int size) {
-	PaUtilConverter* myconverter;
-	struct  PaUtilTriangularDitherGenerator tdg;
-	PaUtil_InitializeTriangularDitherState (&tdg);
-
-	myconverter = PaUtil_SelectConverter (paFloat32, paInt16, paNoFlag);
-	if (myconverter != NULL) {
-		myconverter(dst, 1, src, 1, size, &tdg);
-	} else {
-		_debug("Format conversion is not supported\n");
-	}
-}
-
-void 
-AudioCodec::int16ToFloat32 (int16* src, float32* dst, int size) {
-	PaUtilConverter* myconverter;
-
-	myconverter = PaUtil_SelectConverter (paInt16, paFloat32, paNoFlag);
-	if (myconverter != NULL) {
-		myconverter(dst, 1, src, 1, size, NULL);
-	} else {
-		_debug("Format conversion is not supported\n");
-	}
-}
 

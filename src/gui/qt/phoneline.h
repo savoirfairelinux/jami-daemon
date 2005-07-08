@@ -23,7 +23,6 @@
 #include <qpushbutton.h>
 #include <qdatetime.h>
 
-#include "jpushbutton.h"
 
 #define NUMBER_OF_LINES		6
 #define NUMBER_OF_STATES	2 // for the init of phoneline button pixmap
@@ -36,6 +35,7 @@ enum line_state {
 	OFFHOLD		// Line is on hold	
 };
 
+class JPushButton;
 class PhoneLine {
 public:
 	PhoneLine					(void);

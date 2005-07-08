@@ -25,15 +25,14 @@
 #include <eXosip/eXosip.h>
 #include <vector>
 
-#include "audio/audiocodec.h"
-#include "audio/codecDescriptor.h"
+class CodecDescriptor;
+class AudioCodec;
 
 #define NOT_USED      0
 using namespace std;
 
 typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
 
-class AudioCodec;
 class SipCall {
 public:
 	SipCall (short id, CodecDescriptorVector* cdv);

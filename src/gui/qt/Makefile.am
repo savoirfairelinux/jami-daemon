@@ -1,24 +1,20 @@
 noinst_LTLIBRARIES = libsflphoneqt.la
 
-
-sflphone_UI = \
+BUILT_SOURCES = \
 	configurationpanel.h\
 	configurationpanelui.cpp\
 	configurationpanelmoc.cpp\
 	url_input.h \
 	url_inputui.cpp \
-	url_inputmoc.cpp
-
-BUILT_SOURCES = \
-	$(sflphone_UI) \
+	url_inputmoc.cpp \
+	jpushbuttonmoc.cpp \
 	trayiconmoc.cpp\
 	volumecontrolmoc.cpp\
-	jpushbuttonmoc.cpp \
 	numerickeypadmoc.cpp \
 	qtGUImainwindowmoc.cpp
 
 libsflphoneqt_la_SOURCES = \
-	$(sflphone_UI)\
+	$(BUILT_SOURCES) \
 	jpushbutton.cpp \
 	mydisplay.cpp \
 	numerickeypad.cpp \
@@ -39,11 +35,8 @@ CLEANFILES = \
 
 libsflphoneqt_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
 
-
-AM_LDFLAGS = $(KDE_RPATH) 
-
 KDE_CXXFLAGS = $(USE_EXCEPTIONS)
-AM_CPPFLAGS = -I$(qt_includes) $(all_includes)
+AM_CPPFLAGS = -I../../audio/pacpp/include/ $(QT_INCLUDES) $(X_INCLUDES) 
 
 
 %.h: %.ui

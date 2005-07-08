@@ -92,10 +92,10 @@ DTMFGenerator::~DTMFGenerator() {
 /*
  * Get n samples of the signal of code code
  */
-void DTMFGenerator::getSamples(float32* buffer, size_t n, unsigned char code) throw(DTMFException) {
+void DTMFGenerator::getSamples(int16* buffer, size_t n, unsigned char code) throw(DTMFException) {
 	size_t i;
 	if (!buffer) {
-		     //	throw DTMFException("Invalid parameter value");
+		     throw DTMFException("Invalid parameter value");
 	}
 
 	switch(code) {
@@ -120,7 +120,7 @@ void DTMFGenerator::getSamples(float32* buffer, size_t n, unsigned char code) th
 	case '*': state.sample = samples[14]; break;
 	case '#': state.sample = samples[15]; break;
 	default:
-		//		throw DTMFException("Invalid code");
+			throw DTMFException("Invalid code");
 		return;
 		break;
 	}
@@ -137,17 +137,17 @@ void DTMFGenerator::getSamples(float32* buffer, size_t n, unsigned char code) th
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void DTMFGenerator::getNextSamples(float32* buffer, size_t n) throw(DTMFException)
+void DTMFGenerator::getNextSamples(int16* buffer, size_t n) throw(DTMFException)
 {
 	size_t i;
 
 	if (!buffer) {
-		//		throw DTMFException("Invalid parameter");
+			throw DTMFException("Invalid parameter");
 		return;
 	}
 
 	if (state.sample == 0) {
-		//		throw DTMFException("DTMF generator not initialized");
+			throw DTMFException("DTMF generator not initialized");
 		return;
 	}
 
@@ -162,22 +162,22 @@ void DTMFGenerator::getNextSamples(float32* buffer, size_t n) throw(DTMFExceptio
 /*
  * Generate a tone sample
  */
-float32* DTMFGenerator::generateSample(unsigned char code) throw (DTMFException) {
-	float32* ptr;
+int16* DTMFGenerator::generateSample(unsigned char code) throw (DTMFException) {
+	int16* ptr;
 
-	//	try {
-		ptr = new float32[SAMPLING_RATE]; 
+	try {
+		ptr = new int16[SAMPLING_RATE]; 
 		if (!ptr) {
-			     //throw new DTMFException("No memory left");
+			  throw new DTMFException("No memory left");
 			return 0;
 		}
 		  
 		generateSin(tones[code].higher, tones[code].lower, ptr);
 		
 		return ptr;
-		//	} catch(...) {
-		//		throw new DTMFException("No memory left");
-		//		return 0;
-		//	}
+	} catch(...) {
+			throw new DTMFException("No memory left");
+			return 0;
+	}
 
 }

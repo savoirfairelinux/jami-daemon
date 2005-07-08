@@ -27,8 +27,13 @@ using namespace std;
  * Create a config-tree from file 'filename'
  */
 Point::Point (const string& filename) {
+	int opened = 1;
 	skinConfigTree = new ConfigurationTree();
-	skinConfigTree->populateFromFile (filename);
+	opened = skinConfigTree->populateFromFile (filename);
+	if (opened != 1) {
+	// If opening failed, stop the application
+		exit(0);
+	}
 }
 
 Point::~Point (void) {

@@ -45,9 +45,7 @@ ConfigurationTree::populateFromFile (const string& fileName) {
 		file.open(fileName.data(), fstream::out);
 		out = true;
 		if (!file.is_open()) {
-		  _debug("(%s:%d) Error opening file: %s\n",
-			 __FILE__, 
-			 __LINE__, 
+		  _debug("(%s:%d) Error opening file: %s\n", __FILE__, __LINE__, 
 			 fileName.c_str());
 			return 0;
 		}
@@ -80,6 +78,14 @@ ConfigurationTree::populateFromFile (const string& fileName) {
 			if (key.length() > 0 and val.length() > 0) {
 				setValue(section, key, val);
 			} 
+
+			// To display tree
+#if 0
+			if (!section.empty()) {
+				cout << section << "." << key << "			" << val << endl;
+			}
+			///////////////////
+#endif
 		}
 	}
 

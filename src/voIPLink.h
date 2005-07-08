@@ -21,7 +21,6 @@
 #define __VOIP_LINK_H__
 
 #include <string>
-#include "audio/audiocodec.h"
 
 using namespace std;
 
@@ -30,6 +29,7 @@ enum VoIPLinkType {
 	Iax
 };
 
+class AudioCodec;
 class Call;
 class Manager;
 class VoIPLink {
@@ -44,9 +44,10 @@ public:
 	virtual void newOutgoingCall (short callid) = 0;
 	virtual void newIncomingCall (short callid) = 0;
 	virtual void deleteSipCall (short callid) = 0;
-	virtual int outgoingInvite (const string& to_url) = 0;
+	virtual int outgoingInvite (short id, const string& to_url) = 0;
 	virtual int answer (short id) = 0;
 	virtual int hangup (short id) = 0;
+	virtual int cancel (short id) = 0;
 	virtual int onhold (short id) = 0;
 	virtual int offhold (short id) = 0;
 	virtual int transfer (short id, const string& to) = 0;

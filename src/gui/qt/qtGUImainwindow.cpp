@@ -21,28 +21,30 @@
 #include "../../configurationtree.h"
 #include <stdio.h>
 
-#include <qbitmap.h>
 #include <qcheckbox.h>
 #include <qcombobox.h>
 #include <qevent.h>
-#include <qinputdialog.h>
 #include <qlineedit.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
 #include <qregexp.h>
-#include <qsettings.h>
 #include <qspinbox.h>
-#include <qtimer.h>
+#include <qtimer.h> 
 #include <qtooltip.h>
 
-#include "../../audio/audiodrivers.h"
+#include "../../audio/audiolayer.h"
+#include "../../audio/dtmf.h"
+#include "../../audio/ringbuffer.h"
 #include "../../configuration.h"
+#include "../../error.h"
 #include "../../global.h"
 #include "../../manager.h"
 #include "../../user_cfg.h"
 #include "../../skin.h"
-#include "configurationpanel.h"
+#include "configurationpanelui.h"
 #include "jpushbutton.h"
+#include "mydisplay.h"
+#include "numerickeypad.h"
 #include "numerickeypadtools.h"
 #include "point.h"
 #include "phoneline.h"
@@ -53,6 +55,7 @@
 #define QCHAR_TO_STRIP	"-"
 #define REG_EXPR		"(-|\\(|\\)| )"
 	
+using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Tray Icon implementation
@@ -115,7 +118,7 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 
 	// For DTMF
     _key = new DTMF ();
-    _buf = new float32[SIZEBUF];
+    _buf = new int16[SIZEBUF];
 
 	// Create new display and numeric _keypad
 	_lcd = new MyDisplay(this, 0, this);
@@ -134,6 +137,7 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 
 	// Initialisation of all that concern the skin
 	initSkin();
+	
 	this->initBlinkTimer();
 
 	
@@ -605,7 +609,7 @@ int
 QtGUIMainWindow::putOnHoldBusyLine (int line)
 {
 	if (line != -1 and !phLines[line]->getbRinging()) {
-		if (!getCall(line2id(line))->isRinging()) {
+		if (!getCall(line2id(line))->isRinging() and !getCall(line2id(line))->isProgressing()) {
 			// Occurs when newly off-hook line replaces another one.
 			_debug("On hold line %d [id=%d]\n", line, line2id(line));
 			qt_onHoldCall(line2id(line));
@@ -618,15 +622,112 @@ QtGUIMainWindow::putOnHoldBusyLine (int line)
 
 void
 QtGUIMainWindow::dialtone (bool var) {
-    if (_callmanager->error()->getError() == 0) {
-        if (_dialtone != var) {
-            _dialtone = var;
-        }
-        _callmanager->setTonezone(var);
-        _callmanager->getTonegenerator()->toneHandle(ZT_TONE_DIALTONE);
-    } else {
-        _callmanager->error()->errorName(DEVICE_NOT_OPEN, NULL);
+	if (_callmanager->isDriverLoaded()) {
+		if (_dialtone != var) {
+			_dialtone = var;
+		}
+		_callmanager->setTonezone(var);
+		_callmanager->getTonegenerator()->toneHandle(ZT_TONE_DIALTONE);
+	} else {
+        _callmanager->error()->errorName(OPEN_FAILED_DEVICE);
     }
+}
+
+void
+QtGUIMainWindow::callIsRinging(int id, int line, int busyLine)
+{
+	changeLineStatePixmap(line, BUSY);
+	putOnHoldBusyLine(busyLine);
+	displayContext(id);
+	if (getChooseLine()) {
+		// If a free line is off-hook, set this line to free state
+		setChooseLine(false);
+		changeLineStatePixmap(getChosenLine(), FREE);
+		dialtone(false);
+	}
+}
+
+void
+QtGUIMainWindow::callIsProgressing (int id, int line, int busyLine)
+{
+	changeLineStatePixmap(line, BUSY);
+	putOnHoldBusyLine(busyLine);
+	displayContext(id);
+	if (getChooseLine()) {
+		// If a free line is off-hook, set this line to free state
+		setChooseLine(false);
+		changeLineStatePixmap(getChosenLine(), FREE);
+		dialtone(false);
+	}
+}
+
+void
+QtGUIMainWindow::callIsBusy (Call* call, int id, int line, int busyLine)
+{
+	if(call->isAnswered() and getPrevLine() != line) {
+	// If the current line is not the line which is answered
+		_debug("CASE 3 Call %d already answered\n", id);
+		changeLineStatePixmap(line, BUSY);
+		putOnHoldBusyLine(busyLine);
+		if (getChooseLine()) {
+			// If a free line is off-hook, set this line to free state
+			changeLineStatePixmap(getChosenLine(), FREE);
+			dialtone(false);
+		}
+		peerAnsweredCall(id);
+		displayContext(id);
+	} else {
+	// If call is busy, put this call on hold
+		_debug("CASE 4 Put Call %d on-hold\n", id);
+		changeLineStatePixmap(line, ONHOLD);
+		displayStatus(ONHOLD_STATUS);
+		qt_onHoldCall(id);
+	}
+}
+
+void
+QtGUIMainWindow::callIsOnHold(int id, int line, int busyLine)
+{
+	changeLineStatePixmap(line, BUSY);
+	putOnHoldBusyLine(busyLine);
+	if (getChooseLine()) {
+		// If a free line is off-hook, set this line to free state
+		setChooseLine(false);
+		changeLineStatePixmap(getChosenLine(), FREE);
+		dialtone(false);
+	}		
+	_lcd->setInFunction(true);
+	qt_offHoldCall(id);
+	displayContext(id);
+}
+
+void
+QtGUIMainWindow::callIsIncoming (int id, int line, int busyLine)
+{
+	changeLineStatePixmap(line, BUSY);
+	putOnHoldBusyLine(busyLine);
+	qt_answerCall(id);
+}
+
+void
+QtGUIMainWindow::clickOnFreeLine(int line, int busyLine)
+{
+	phLines[line]->button()->setPixmap(TabLinePixmap[line][BUSY]);
+	displayStatus(ENTER_NUMBER_STATUS);
+	setChooseLine(true);
+	setChosenLine(line);
+
+	putOnHoldBusyLine(busyLine);
+	if (getPrevLine() != -1 and getPrevLine() != line 
+			and phLines[getPrevLine()]->isFree()) {
+		changeLineStatePixmap(getPrevLine(), FREE);
+	}
+
+	setPrevLine(line);	
+
+	_lcd->setInFunction(false);
+	_lcd->clearBuffer();
+	dialtone(true);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -692,6 +793,16 @@ QtGUIMainWindow::setCurrentLine (int current)
 	_currentLine = current;
 }
 
+bool
+QtGUIMainWindow::isCurrentId (short id)
+{
+	if (line2id(getCurrentLine()) == id) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 int 
 QtGUIMainWindow::getElapse (void)
 {
@@ -726,9 +837,11 @@ QtGUIMainWindow::incomingCall (short id)
 int 
 QtGUIMainWindow::peerAnsweredCall (short id)
 {
+	dialtone(false);
 	getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
 	// Afficher call-timer
 	startCallTimer(id);
+	_callmanager->displayStatus(CONNECTED_STATUS);
 	setChooseLine(false);
 	
 	return 1;
@@ -771,10 +884,18 @@ QtGUIMainWindow::peerHungupCall (short id)
 void 
 QtGUIMainWindow::displayTextMessage (short id, const string& message)
 {
+	(void)id; // To remove warning message of unused parameter
 	_lcd->clearBuffer();
 	_lcd->appendText(message);
 }
 	
+void 
+QtGUIMainWindow::displayErrorText (const string& message)
+{
+	_lcd->clearBuffer();
+	_lcd->appendText(message);
+}
+
 void 
 QtGUIMainWindow::displayError (const string& error)
 {
@@ -828,7 +949,8 @@ QtGUIMainWindow::selectedCall (void)
 int 
 QtGUIMainWindow::qt_outgoingCall (void)
 {
-	int id, line;
+	int id;
+	int line = -1;
 	if (_lcd->getTextBuffer() == NULL) {
 		_callmanager->displayStatus(ENTER_NUMBER_STATUS);
 		return -1;
@@ -864,6 +986,16 @@ QtGUIMainWindow::qt_hangupCall (short id)
 	return i;
 }	
 	
+int 
+QtGUIMainWindow::qt_cancelCall (short id)
+{
+	int i;
+	i = cancelCall(id);
+	displayStatus(HUNGUP_STATUS);
+	setCurrentLine(-1);
+	return i;
+}
+
 int 
 QtGUIMainWindow::qt_answerCall (short id)
 {
@@ -929,7 +1061,6 @@ QtGUIMainWindow::qt_refuseCall (short id)
 {
 	int i;
 	i = refuseCall(id);
-//	getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
 	displayStatus(HUNGUP_STATUS);
 	getPhoneLine(id)->setbRinging(false);
 	_TabIncomingCalls[id2line(id)] = -1;
@@ -956,6 +1087,7 @@ QtGUIMainWindow::toggleLine (int line)
 {
 	int id;
 	int busyLine;
+	
 	Call* call;
 
 	if (line == -1) {
@@ -972,61 +1104,33 @@ QtGUIMainWindow::toggleLine (int line)
 		if (call == NULL) {
 		// Check if the call exists
 			return -1;
-		} else if (call->isRinging()){
+		} else if (call->isRinging()) {
 			// If call is ringing
 			_debug("CASE 1: Call %d is ringing\n", id);
-			changeLineStatePixmap(line, BUSY);
-			putOnHoldBusyLine(busyLine);
-			displayContext(id);
-		} else if (call->isBusy()){
-			// If call is busy, put this call on hold
-			_debug("CASE 2 Put Call %d on-hold\n", id);
-			changeLineStatePixmap(line, ONHOLD);
-			displayStatus(ONHOLD_STATUS);
-			qt_onHoldCall(id);
+			callIsRinging(id, line, busyLine);
+		} else if (!call->isIncomingType() and call->isProgressing()) {
+			// If call is progressing
+			_debug("CASE 2: Call %d is progressing\n", id);
+			callIsProgressing (id, line, busyLine);
+		} else if (call->isBusy()) {
+			callIsBusy (call, id, line, busyLine);
 		} else if (call->isOnHold()) {
 			// If call is on hold, put this call on busy state
-			_debug("CASE 3: Put Call %d off-hold\n", id);
-			changeLineStatePixmap(line, BUSY);
-			putOnHoldBusyLine(busyLine);
-			if (getChooseLine()) {
-				// If a free line is off-hook, set this line to free state
-				setChooseLine(false);
-				changeLineStatePixmap(getChosenLine(), FREE);
-				dialtone(false);
-			}		
-			_lcd->setInFunction(true);
-			qt_offHoldCall(id);
-			displayContext(id);
+			_debug("CASE 5: Put Call %d off-hold\n", id);
+			callIsOnHold(id, line, busyLine);
 		} else if (call->isIncomingType()) {
 		// If incoming call occurs
-			_debug("CASE 4: Answer call %d\n", id);
-			changeLineStatePixmap(line, BUSY);
-			putOnHoldBusyLine(busyLine);
-			qt_answerCall(id);
+			_debug("CASE 6: Answer call %d\n", id);
+			callIsIncoming (id, line, busyLine);
 		} else {
 			_debug("Others cases to handle\n");
 			return -1;
 		}	
+		setPrevLine(line);
 	} else {
 	// If just click on free line
-		_debug("CASE 5: New line off-hook\n");
-		phLines[line]->button()->setPixmap(TabLinePixmap[line][BUSY]);
-		displayStatus(ENTER_NUMBER_STATUS);
-		setChooseLine(true);
-		setChosenLine(line);
-
-		putOnHoldBusyLine(busyLine);
-		if (getPrevLine() != -1 and getPrevLine() != line 
-				and phLines[getPrevLine()]->isFree()) {
-			changeLineStatePixmap(getPrevLine(), FREE);
-		}
-	
-		setPrevLine(line);	
-		
-		_lcd->setInFunction(false);
-		_lcd->clearBuffer();
-		dialtone(true);
+		_debug("CASE 7: New line off-hook\n");
+		clickOnFreeLine(line, busyLine);
 	}
 	return 1;
 }
@@ -1041,20 +1145,24 @@ QtGUIMainWindow::dial (void)
 	short i;
 	int line = -1;
 	
-	if ((i = isThereIncomingCall()) > 0) {
-		// If new incoming call 
-		line = id2line(i);
-		_TabIncomingCalls[line] = -1;
-		toggleLine(line);
-	} else if (getTransfer()){
-		// If call transfer
-		qt_transferCall (line2id(getCurrentLine()));
-	} else {
-		// If new outgoing call  
-		if (getCurrentLine() < 0 or getChooseLine()) {
-			line = qt_outgoingCall();
-		}
-	}		
+	try {
+		if ((i = isThereIncomingCall()) > 0) {
+			// If new incoming call 
+			line = id2line(i);
+			_TabIncomingCalls[line] = -1;
+			toggleLine(line);
+		} else if (getTransfer()){
+			// If call transfer
+			qt_transferCall (line2id(getCurrentLine()));
+		} else {
+			// If new outgoing call  
+				if (getCurrentLine() < 0 or getChooseLine()) {
+					line = qt_outgoingCall();
+				}
+		}		
+	} catch (const exception &e) {
+		_callmanager->displayErrorText(e.what());
+	}
 }
 
 /**
@@ -1066,33 +1174,42 @@ QtGUIMainWindow::hangupLine (void)
 	int i;
 	int line = getCurrentLine();
 	int id = phLines[line]->getCallId();
-	if (_callmanager->getbCongestion()) {
-		// If congestion tone
-		changeLineStatePixmap(line, FREE);
-        _lcd->clear(QString(ENTER_NUMBER_STATUS));
-		qt_hangupCall(id);
-		_callmanager->congestion(false);
-		phLines[line]->setCallId(0);
-	} else if (line >= 0 and id > 0 and getCall(id)->isProgressing()) {
-		// If I want to cancel a call before ringing, i have to wait.
-	} else if (line >= 0 and id > 0) {
-		// If hangup current line normally
-		_debug("Hangup line %d\n", line);
-		qt_hangupCall(id);
-		changeLineStatePixmap(line, FREE);
-		phLines[line]->setCallId(0);
-		setChooseLine(false);
-	} else if ((i = isThereIncomingCall()) > 0){
-		// To refuse new incoming call 
-		_debug("Refuse call %d\n", id);
-		qt_refuseCall(i);
-		changeLineStatePixmap(id2line(i), FREE);
-	} else if (line >= 0) {
-		_debug("Just load free pixmap for the line %d\n", line);
-		changeLineStatePixmap(line, FREE);
-		dialtone(false);
-		setChooseLine(false);
-		setCurrentLine(-1);
+
+	try {
+		if (_callmanager->getbCongestion()) {
+			// If congestion tone
+			changeLineStatePixmap(line, FREE);
+			_lcd->clear(QString(ENTER_NUMBER_STATUS));
+			qt_hangupCall(id);
+			_callmanager->congestion(false);
+			phLines[line]->setCallId(0);
+		} else if (line >= 0 and id > 0 and getCall(id)->isProgressing()) {
+			// If I want to cancel a call before ringing.
+			qt_cancelCall(id);
+			changeLineStatePixmap(line, FREE);
+			phLines[line]->setCallId(0);
+			setChooseLine(false);
+		} else if (line >= 0 and id > 0) {
+			// If hangup current line normally
+			_debug("Hangup line %d\n", line);
+			qt_hangupCall(id);
+			changeLineStatePixmap(line, FREE);
+			phLines[line]->setCallId(0);
+			setChooseLine(false);
+		} else if ((i = isThereIncomingCall()) > 0){
+			// To refuse new incoming call 
+			_debug("Refuse call %d\n", id);
+			qt_refuseCall(i);
+			changeLineStatePixmap(id2line(i), FREE);
+		} else if (line >= 0) {
+			_debug("Just load free pixmap for the line %d\n", line);
+			changeLineStatePixmap(line, FREE);
+			dialtone(false);
+			setChooseLine(false);
+			setCurrentLine(-1);
+		}
+	} catch (const exception &e) {
+		_callmanager->displayErrorText(e.what());
 	}
 }
 
@@ -1429,8 +1546,8 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	char code = 0;
     int pulselen = 0;
 	int callid;
-	float32* tmp_urg_data;
-	float32* buf_ctrl_vol;
+	int k, spkrVolume;
+	int16* buf_ctrl_vol;
                                                                                 
     // Stop dial tone
     if (_dialtone) {
@@ -1455,39 +1572,36 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	callid = line2id(getCurrentLine());
     if (callid != -1 and getCall(callid)->isBusy()) {
         sendDtmf(callid, code); // pour envoyer DTMF
-    } else {
+    } else if (_callmanager->isDriverLoaded()) {
 		_lcd->appendText (code);
 	}
 
 	// Handle dtmf
-    _key->startTone(code);
-    _key->generateDTMF(_buf, SAMPLING_RATE);
-			
+	_key->startTone(code);
+	_key->generateDTMF(_buf, SAMPLING_RATE);
+	
+	// Determine dtmf pulse length
 	pulselen = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
-	int size = pulselen * (OCTETS/1000);
-
-	// Control volume
-	buf_ctrl_vol = new float32[size];
+	int size = pulselen * (OCTETS /1000);
+  
+	buf_ctrl_vol = new int16[size*CHANNELS];
+	spkrVolume = _callmanager->getSpkrVolume();
+	
+	// Control volume and format mono->stereo
 	for (int j = 0; j < size; j++) {
-		buf_ctrl_vol[j] = _buf[j] * _callmanager->getSpkrVolume()/100;
+		k = j*2;  
+		buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j] * spkrVolume/100;
 	}
-	
-	// Free urg_data pointer
-	tmp_urg_data = _callmanager->getAudioDriver()->mydata.urg_data;
-	if (tmp_urg_data != NULL) {
-		free (tmp_urg_data);
-	}
-
-	// Init struct mydata
-	tmp_urg_data = buf_ctrl_vol;
-	_callmanager->getAudioDriver()->mydata.urg_ptr = tmp_urg_data;
-	_callmanager->getAudioDriver()->mydata.urg_remain = size;
-	
+		
+	// Counters  reset 
+	_callmanager->getAudioDriver()->urgentRingBuffer()->flush();
+	// Put buffer to urgentRingBuffer 
+	_callmanager->getAudioDriver()->urgentRingBuffer()->Put(buf_ctrl_vol, 
+			size * CHANNELS);
 	_callmanager->getAudioDriver()->startStream();
 	_callmanager->getAudioDriver()->sleep(pulselen);
 	_callmanager->getAudioDriver()->stopStream();
-	_callmanager->getAudioDriver()->mydata.urg_remain = 0;
-	
+		
 	delete[] buf_ctrl_vol;
 }
 
@@ -1711,8 +1825,5 @@ QtGUIMainWindow::keyPressEvent(QKeyEvent *e) {
 		_lcd->appendText(QChar(e->key()).lower());
 	}  
 }
-
-
-#include "qtGUImainwindowmoc.cpp"
 
 // EOF

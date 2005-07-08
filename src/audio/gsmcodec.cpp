@@ -18,8 +18,8 @@
  */
 
 #include <iostream>
-#include "../global.h"
 #include "gsmcodec.h"
+#include "../global.h"
 
 Gsm::Gsm(int payload, const string& codec) : AudioCodec(payload, codec)
 {
@@ -27,7 +27,7 @@ Gsm::Gsm(int payload, const string& codec) : AudioCodec(payload, codec)
 	_payload = payload;
 	
 	if (!(_decode_gsmhandle = gsm_create() )) 
-		_debug("AudioCodec: ERROR: decode_gsm_create\n");
+		_debug("ERROR: decode_gsm_create\n");
 	if (!(_encode_gsmhandle = gsm_create() )) 
 		_debug("AudioCodec: ERROR: encode_gsm_create\n");
 }
@@ -36,11 +36,13 @@ Gsm::~Gsm (void)
 {
 	gsm_destroy(_decode_gsmhandle);
 	gsm_destroy(_encode_gsmhandle);
+
 }
 
 int
 Gsm::codecDecode (short *dst, unsigned char *src, unsigned int size) 
 {
+	(void)size;
 	if (gsm_decode(_decode_gsmhandle, (gsm_byte*)src, (gsm_signal*)dst) < 0) {
 		_debug("ERROR: gsm_decode\n");
 	}
@@ -50,6 +52,7 @@ Gsm::codecDecode (short *dst, unsigned char *src, unsigned int size)
 int
 Gsm::codecEncode (unsigned char *dst, short *src, unsigned int size) 
 {	
+	(void)size;
 	gsm_encode(_encode_gsmhandle, (gsm_signal*)src, (gsm_byte*)dst);
     return 33;
 }

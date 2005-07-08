@@ -21,10 +21,11 @@
 
 #include <osipparser2/sdp_message.h>
 #include <string.h>
-
+ 
 #include <iostream>
 
 #include "audio/audiocodec.h"
+#include "audio/codecDescriptor.h"
 #include "global.h"
 #include "sipcall.h"
 

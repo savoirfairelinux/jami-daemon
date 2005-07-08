@@ -28,30 +28,33 @@
 #include <arpa/inet.h>
 
 #include <cc++/thread.h>
-#include <cstdlib>
+#include <cstdlib> 
 #include <iostream>
-#include <fstream>
+#include <fstream> 
 #include <string>
 #include <vector>
 
-#include "user_cfg.h"
+#include "manager.h"
 #include "audio/audiocodec.h"
+#include "audio/audiolayer.h"
 #include "audio/codecDescriptor.h"
+#include "audio/ringbuffer.h"
 #include "audio/tonegenerator.h"
 #include "call.h"
-#include "configuration.h"
-#include "configurationtree.h"
-#include "manager.h"
+#include "configuration.h"  
+#include "configurationtree.h" 
+#include "error.h"
 #include "sipvoiplink.h"
-#include "skin.h"
-#include "voIPLink.h"
-
-#include "audio/audiodriversportaudio.h"
-
+#include "skin.h" 
+#include "user_cfg.h"
+#include "voIPLink.h" 
+#include "gui/guiframework.h"
 
 using namespace std;
 using namespace ost;
  
+device_t Manager::deviceParam;
+
 Manager::Manager (void)
 {
 	// initialize random generator  
@@ -76,8 +79,8 @@ Manager::Manager (void)
 	_congestion = false;
 	_ringtone = false;
 	_ringback = false;
-	_useAlsa = false;
 	_exist = 0;
+	_loaded = false;
 	
 	initConfigFile();
 	_exist = createSettingsPath();
@@ -104,7 +107,28 @@ Manager::init (void)
 		_gui->setup();
 	}
 	initAudioCodec();
-	selectAudioDriver();
+
+	try {
+		selectAudioDriver();
+		loaded(true);
+	}
+	catch (const portaudio::PaException &e)
+	{
+		displayErrorText(e.paErrorText());
+	}
+	catch (const portaudio::PaCppException &e)
+	{
+		displayErrorText(e.what());
+	}
+	catch (const exception &e)
+	{
+		displayErrorText(e.what());
+	}
+	catch (...)
+	{ 
+		displayErrorText("An unknown exception occured.");
+	}
+	
 	_voIPLinkVector->at(DFT_VOIP_LINK)->init();
 	if (get_config_fields_int(SIGNALISATION, AUTO_REGISTER) == YES and 
 			_exist == 1) {
@@ -130,7 +154,7 @@ Manager::error (void)
 	return _error;
 }
 
-AudioDriversPortAudio*
+AudioLayer*
 Manager::getAudioDriver(void) 
 {
 	return _audiodriverPA;
@@ -245,7 +269,7 @@ Manager::outgoingCall (const string& to)
 	
 	call->setStatus(string(TRYING_STATUS));
 	call->setState(Progressing);
-	if (call->outgoingCall(to) == 0) {
+	if (call->outgoingCall(id, to) == 0) {
 		return id;
 	} else {
 		return 0;
@@ -261,6 +285,25 @@ Manager::hangupCall (short id)
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Hungup);
 	call->hangup();
+	_mutex.enterMutex();
+	_nCalls -= 1;
+	_mutex.leaveMutex();
+	deleteCall(id);
+	if (getbRingback()) {
+		ringback(false);
+	}
+	return 1;
+}
+
+int
+Manager::cancelCall (short id)
+{
+	Call* call;
+
+	call = getCall(id);
+	call->setStatus(string(HUNGUP_STATUS));
+	call->setState(Hungup);
+	call->cancel();
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
@@ -371,11 +414,11 @@ Manager::quitApplication (void)
 	// Quit VoIP-link library
 	_voIPLinkVector->at(DFT_VOIP_LINK)->quit();
 	if (saveConfig()) {
+		Config::deleteTree();
 		return 1;
 	} else {
 		return 0;
 	}
-	Config::deleteTree();
 }
 
 int 
@@ -442,12 +485,16 @@ Manager::peerAnsweredCall (short id)
 {
 	Call* call;
 
+	if (getbRingback()) {
+		ringback(false);
+	}	
 	call = getCall(id);
 	call->setStatus(string(CONNECTED_STATUS));
+
 	call->setState(Answered);
-	ringback(false);
-	_gui->peerAnsweredCall(id);
-	displayStatus(CONNECTED_STATUS);
+	if (isCurrentId(id)) {
+		_gui->peerAnsweredCall(id);
+	}
 	return 1;
 }
 
@@ -459,6 +506,7 @@ Manager::peerRingingCall (short id)
 	call = getCall(id);
 	call->setStatus(string(RINGING_STATUS));
 	call->setState(Ringing);
+
 	ringback(true);
 	_gui->peerRingingCall(id);
 	displayStatus(RINGING_STATUS);	
@@ -474,7 +522,9 @@ Manager::peerHungupCall (short id)
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Hungup);
 	_gui->peerHungupCall(id);
-	ringback(false);
+	if (getbRingback()) {
+		ringback(false);
+	}
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
@@ -486,6 +536,12 @@ void
 Manager::displayTextMessage (short id, const string& message)
 {
 	_gui->displayTextMessage(id, message);
+}
+
+void 
+Manager::displayErrorText (const string& message)
+{
+	_gui->displayErrorText(message);
 }
 
 void 
@@ -506,78 +562,85 @@ Manager::selectedCall (void)
 	return _gui->selectedCall();
 }
 
+bool
+Manager::isCurrentId (short id)
+{
+	return _gui->isCurrentId(id);
+}
+
 void
 Manager::congestion (bool var) {
-    if (_error->getError() == 0) {
-        if (_congestion != var) {
-            _congestion = var;
-        }
-        _tonezone = var;
-        _tone->toneHandle(ZT_TONE_CONGESTION);
-    } else {
-        _error->errorName(DEVICE_NOT_OPEN, NULL);
+	if (isDriverLoaded()) {
+		if (_congestion != var) {
+			_congestion = var;
+		}
+		_tonezone = var;
+		_tone->toneHandle(ZT_TONE_CONGESTION);
+	} else {
+        _error->errorName(OPEN_FAILED_DEVICE);
     }
 }
 
 void
 Manager::ringback (bool var) {
-    if (_ringback != var) {
-        _ringback = var;
+	if (isDriverLoaded()) {
+		if (_ringback != var) {
+			_ringback = var;
+		}
+		_tonezone = var;
+		_tone->toneHandle(ZT_TONE_RINGTONE);
+	} else {
+        _error->errorName(OPEN_FAILED_DEVICE);
     }
-    _tonezone = var;
-    _tone->toneHandle(ZT_TONE_RINGTONE);
 }
 
 void
-Manager::ringtone (bool var) { 
-
-	if (getNumberOfCalls() > 1 and _tonezone and var == false) {
-		// If more than one line is ringing
-		_tonezone = false;
-		_tone->playRingtone((_gui->getRingtoneFile()).data());
-	}
-	
-	if (_ringtone != var) {
-        _ringtone = var;
+Manager::ringtone (bool var) 
+{ 
+	if (isDriverLoaded()) {
+		if (getNumberOfCalls() > 1 and _tonezone and var == false) {
+			// If more than one line is ringing
+			_tonezone = false;
+			_tone->playRingtone((_gui->getRingtoneFile()).data());
+		}
+		
+		if (_ringtone != var) {
+			_ringtone = var;
+		}
+																					
+		_tonezone = var;
+		if (getNumberOfCalls() == 1) {
+			// If just one line is ringing
+			_tone->playRingtone((_gui->getRingtoneFile()).data());
+		} 
+	} else {
+        _error->errorName(OPEN_FAILED_DEVICE);
     }
-                                                                                
-    _tonezone = var;
-	if (getNumberOfCalls() == 1) {
-		// If just one line is ringing
-	    _tone->playRingtone((_gui->getRingtoneFile()).data());
-	} 
 }
 
 void
 Manager::notificationIncomingCall (void) {
-	float32* tmp_urg_data;
-    float32* buf_ctrl_vol;
-    float32* buffer = new float32[SAMPLING_RATE];
+    int16* buf_ctrl_vol;
+    int16* buffer = new int16[SAMPLING_RATE];
 	int size = SAMPLING_RATE/2;
+	int k, spkrVolume;
                                                                                 
     _tone->generateSin(440, 0, buffer);
            
 	// Control volume
-	buf_ctrl_vol = new float32[size];
+	buf_ctrl_vol = new int16[size];
+	spkrVolume = getSpkrVolume();
 	for (int j = 0; j < size; j++) {
-		buf_ctrl_vol[j] = buffer[j] * getSpkrVolume()/100;
+		k = j*2;
+		buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
 	}
 	
-	// Free urg_data pointer
-	tmp_urg_data = getAudioDriver()->mydata.urg_data;
-	if (tmp_urg_data != NULL) {
-		free (tmp_urg_data);
-	}
-
-	// Init struct mydata
-	tmp_urg_data = buf_ctrl_vol;
-	getAudioDriver()->mydata.urg_ptr = tmp_urg_data;
-	getAudioDriver()->mydata.urg_remain = size;
+	getAudioDriver()->urgentRingBuffer()->Put(buf_ctrl_vol, 
+			size * CHANNELS);
 
 	getAudioDriver()->startStream();
-	getAudioDriver()->sleep(250);
+	getAudioDriver()->sleep(NOTIFICATION_LEN);
 	getAudioDriver()->stopStream();
-	getAudioDriver()->mydata.urg_remain = 0;
 	
     delete[] buffer;
     delete[] buf_ctrl_vol;
@@ -610,6 +673,40 @@ Manager::getStunInfo (StunAddress4& stunSvrAddr) {
     } else {
         _debug("Opened a stun socket pair FAILED\n");
     }
+}
+
+device_t
+Manager::deviceList (int index)
+{
+	portaudio::AutoSystem autoSys;
+	portaudio::System &sys = portaudio::System::instance(); 
+	deviceParam.hostApiName = sys.deviceByIndex(index).hostApi().name();
+	deviceParam.deviceName = sys.deviceByIndex(index).name();
+	return deviceParam;
+}
+
+int
+Manager::deviceCount (void)
+{
+	int numDevices = 0;
+	
+	portaudio::AutoSystem autoSys;
+	portaudio::System &sys = portaudio::System::instance();
+	numDevices = sys.deviceCount();
+	return numDevices;	
+}
+
+bool
+Manager::defaultDevice (int index) 
+{
+	bool defaultDisplayed = false;
+
+	portaudio::AutoSystem autoSys;
+	portaudio::System &sys = portaudio::System::instance(); 
+	if (sys.deviceByIndex(index).isSystemDefaultInputDevice()) {
+		defaultDisplayed = true;
+	}
+	return defaultDisplayed;
 }
 
 bool
@@ -734,10 +831,8 @@ Manager::selectAudioDriver (void)
 {
 	
 #if defined(AUDIO_PORTAUDIO)
-	_audiodriverPA = new AudioDriversPortAudio(this);
-	if (_audiodriverPA->openDevice()) {
-		_debug("Open device succeeded\n");
-	}
+	_audiodriverPA = new AudioLayer(this);
+	_audiodriverPA->openDevice(get_config_fields_int(AUDIO, DRIVER_NAME));
 #else
 # error You must define one AUDIO driver to use.
 #endif

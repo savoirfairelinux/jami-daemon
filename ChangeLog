@@ -1,2 +1,18 @@
-Jean-Philippe Barrette-LaPierre (9 June 2005) version 0.3.1
+Laurielle LEA (8 July 2005) version 0.4
+- Stop program when error opening skin file
+- Divide toggle() of qtguimainwindow.cpp in small functions
+
+Laurielle LEA (7 July 2005) version 0.4
+- Cleanup audiortp.cpp
+- Replace #define by global variable in codecDescriptor.cpp
+- Set mutex of ringbuffer in the functions of RingBuffer object
+- Divide run() of audiortp.cpp in 3 small functions
+- Changed device static function in Manager for configurationpanel.ui.h
+- Updated README
+
+Jean-Philippe Barrette-LaPierre (6 July 2005) version 0.4
+- Fixed all autotools problems.
+- Updated all autotools scripts to use PortAudioCpp
+
+Jean-Philippe Barrette-LaPierre (9 June 2005) version 0.4
 - Added the autotools support.

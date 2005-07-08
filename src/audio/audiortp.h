@@ -28,9 +28,10 @@
 using namespace ost;
 
 
-#define MY_TIMESTAMP	160
+#define RTP_FRAMES2SEND	160
+#define SIZEDATA		SAMPLES_SIZE(RTP_FRAMES2SEND)
 
-class AudioDriversPortAudio;
+class AudioLayer;
 class Manager;
 class SipCall;
 
@@ -39,7 +40,7 @@ class SipCall;
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtpRTX : public Thread, public TimerPort {
 public:
-	AudioRtpRTX (SipCall *, AudioDriversPortAudio*, Manager *, bool);
+	AudioRtpRTX (SipCall *, AudioLayer*, Manager *, bool);
 	~AudioRtpRTX();
 
 	Time *time; 	// For incoming call notification 
@@ -47,12 +48,16 @@ public:
 
 private:
 	SipCall*				_ca;
-	AudioDriversPortAudio*	_audioDevice;
+	AudioLayer*				_audioDevice;
 	RTPSession*				_sessionSend;
 	RTPSession*				_sessionRecv;
 	SymmetricRTPSession* 	_session;
 	Manager*				_manager;
 	bool			 		_sym;
+
+	void initAudioRtpSession (void);
+	void sendSessionFromMic (unsigned char*, int16*, int16*, int, int);
+	void receiveSessionForSpkr (int16*, int16*, int);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -1,5 +1,18 @@
-- We need to remove the KDE check
-- We need to clean the optimization flags handling.
-- We need to cleanup the compilation libs.
-- We need to get rid of the pa_converters.h and pa_dither.h
-- We need to cleanup the -O* handling
+ForGUI:
+-------
+Add Clear button for GUI to clear screen (like Ctrl+L)
+Add screen shell to display debug
+
+For project core:
+----------------
+Management Config like about:config in Mozilla
+Improvement of STUN
+Add ZeroConf
+Management of account (add, remove, ...)
+Management of exceptions
+Remove all warnings in compilation
+Add unregister method when application is closed
+
+For project dependencies:
+------------------------
+Improve the autotools scripts of PortAudioCpp

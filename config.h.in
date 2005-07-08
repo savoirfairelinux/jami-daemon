@@ -1,8 +1,5 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the <alsa/asoundlib.h> header file. */
-#undef HAVE_ALSA_ASOUNDLIB_H
-
 /* Define to 1 if you have the <Carbon/Carbon.h> header file. */
 #undef HAVE_CARBON_CARBON_H
 
@@ -53,9 +50,6 @@
 
 /* Define if you have the res_init prototype */
 #undef HAVE_RES_INIT_PROTO
-
-/* Define if you have a STL implementation by SGI */
-#undef HAVE_SGI_STL
 
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
@@ -143,9 +137,6 @@
 
 /* Version number of package */
 #undef VERSION
-
-/* Defined if compiling without arts */
-#undef WITHOUT_ARTS
 
 /*
  * jpeg.h needs HAVE_BOOLEAN, when the system uses boolean in system

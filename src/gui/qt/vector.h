@@ -20,9 +20,9 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
-#include "point.h"
 
 class TransQWidget;
+class Point;
 class QtGUIMainWindow;
 
 class Vector {

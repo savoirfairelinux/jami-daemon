@@ -22,11 +22,8 @@
 
 #include <string>
 #include <vector>
+
 using namespace std;
-
-#include "sipvoiplink.h"
-#include "voIPLink.h"
-
 
 enum CallState {
 	NotExist = 0,
@@ -50,7 +47,9 @@ enum CallType {
 	Outgoing
 };
 
-#include "manager.h"
+
+class Manager;
+class VoIPLink;
 
 class Call {
 public:
@@ -100,8 +99,9 @@ public:
 	bool isOutgoingType (void);
 	bool isIncomingType (void);
 	
-	int outgoingCall  (const string& to);
+	int outgoingCall  (short id, const string& to);
 	int hangup  (void);
+	int cancel  (void);
 	int answer  (void);
 	int onHold  (void);
 	int offHold  (void);

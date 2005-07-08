@@ -15,53 +15,59 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-#include <math.h>
+ */ 
+ 
+#include <math.h> 
 #include <iostream>
 #include <fstream>
-#include <stdlib.h>
-
+#include <stdlib.h>  
+ 
+#include "audiolayer.h"
+#include "audiortp.h"
 #include "codecDescriptor.h"
+#include "ringbuffer.h"
 #include "ulaw.h"
 #include "tonegenerator.h"
-#include "../configuration.h"
+#include "../configuration.h" 
 #include "../global.h"
 #include "../manager.h"
 #include "../user_cfg.h"
 
 using namespace std;
 
-#define DTMF_FREQ_MIX_RATE	0.45f
+int AMPLITUDE = 8192;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // ToneThread implementation
 ///////////////////////////////////////////////////////////////////////////////
-ToneThread::ToneThread (Manager *mngr, float32 *buf, int size) {
+ToneThread::ToneThread (Manager *mngr, int16 *buf, int size) : Thread () {
 	this->mngr = mngr;
-	this->buffer = buf;
+	this->buffer = buf;  
 	this->size = size;
-	this->buf_ctrl_vol = new float32[size];
+	this->buf_ctrl_vol = new int16[size*CHANNELS];
 }
 
 ToneThread::~ToneThread (void) {
 	delete[] buf_ctrl_vol;
-	this->terminate();
 }
 
 void
 ToneThread::run (void) {
+	int k;
+	int spkrVolume;
 	while (mngr->getTonezone()) {
-		// Control volume
+		spkrVolume = mngr->getSpkrVolume();
+		// control volume + mono->stereo
 		for (int j = 0; j < size; j++) {
-			this->buf_ctrl_vol[j] = buffer[j] * mngr->getSpkrVolume()/100;
-		}
-
-		if (mngr->getAudioDriver()->mydata.urg_remain <= 160) {
-			mngr->getAudioDriver()->mydata.urg_ptr = this->buf_ctrl_vol;
-			mngr->getAudioDriver()->mydata.urg_remain = size;
+			k = j*2;
+			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
 		}
 		
+		if (mngr->getAudioDriver()->mainSndRingBuffer()->Len() == 0) {
+			mngr->getAudioDriver()->mainSndRingBuffer()->Put(buf_ctrl_vol, 
+					SAMPLES_SIZE(size));
+		}
 		mngr->getAudioDriver()->startStream();
 	}
 }
@@ -73,7 +79,7 @@ ToneThread::run (void) {
 ToneGenerator::ToneGenerator (Manager *mngr) {	
 	this->initTone();
 	this->manager = mngr;
-	buf = new float32[SIZEBUF];	
+	buf = new int16[SIZEBUF];	
 	tonethread = NULL;
 }
 
@@ -140,14 +146,15 @@ ToneGenerator::initTone (void) {
  * @param	ptr for result buffer
  */
 void
-ToneGenerator::generateSin (int lowerfreq, int higherfreq, float32*ptr) {
+ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr) {
 	double var1, var2;
 													
 	var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)SAMPLING_RATE; 
 	var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)SAMPLING_RATE;
 	
 	for(int t = 0; t < SAMPLING_RATE; t++) {
-		ptr[t] = DTMF_FREQ_MIX_RATE * (float32)(sin(var1 * t) + sin(var2 * t));
+		ptr[t] = (int16)((double)(AMPLITUDE >> 2) * sin(var1 * t) +
+                    (double)(AMPLITUDE >> 2) * sin(var2 * t));
 	}
 }
 
@@ -160,13 +167,13 @@ ToneGenerator::generateSin (int lowerfreq, int higherfreq, float32*ptr) {
  * @param	ns				section number of format tone
  */
 void
-ToneGenerator::buildTone (int idCountry, int idTones, float32* temp) {
+ToneGenerator::buildTone (int idCountry, int idTones, int16* temp) {
 	string s;
 	int count = 0;
 	int	byte = 0,
 		byte_temp = 0;
 	static int	nbcomma = 0;
-	float32 *buffer = new float32[SIZEBUF];
+	int16 *buffer = new int16[SIZEBUF];
 	int pos;
 
 	string str(toneZone[idCountry][idTones]);
@@ -242,34 +249,20 @@ ToneGenerator::idZoneName (const string& name) {
  */
 void
 ToneGenerator::toneHandle (int idr) {
-	manager->getAudioDriver()->mydata.urg_remain = 0;
-	
 	int idz = idZoneName(get_config_fields_str(PREFERENCES, ZONE_TONE));
 	
 	if (idz != -1) {
 		buildTone (idz, idr, buf);
 
-		float32* tmp_urg_data;
-		// Free urg_data pointer
-		tmp_urg_data = manager->getAudioDriver()->mydata.urg_data;
-		if (tmp_urg_data != NULL) {
-			free (tmp_urg_data);
-		}
-
-		// Init struct mydata
-		tmp_urg_data = buf;
-		manager->getAudioDriver()->mydata.urg_ptr = tmp_urg_data;
-		manager->getAudioDriver()->mydata.urg_remain = totalbytes;
-		
 		// New thread for the tone
 		if (tonethread == NULL) {
-			tonethread = new ToneThread (manager, tmp_urg_data, totalbytes);
+			tonethread = new ToneThread (manager, buf, totalbytes);
 			tonethread->start();
 		}
 
 		if (!manager->getTonezone()) {
 			manager->getAudioDriver()->stopStream();
-			manager->getAudioDriver()->mydata.urg_remain = 0;	
+			manager->getAudioDriver()->mainSndRingBuffer()->flush();
 			if (tonethread != NULL) {	
 				delete tonethread;
 				tonethread = NULL;
@@ -282,10 +275,9 @@ ToneGenerator::toneHandle (int idr) {
 int
 ToneGenerator::playRingtone (const char *fileName) {
 	short* dst = NULL;
-	float32* floatdst = NULL;
 	char* src = NULL;
 	int expandedsize, length;
-	Ulaw* ulaw = new Ulaw (PAYLOAD_CODEC_ULAW, CODEC_ULAW);
+	Ulaw* ulaw = new Ulaw (PAYLOAD_CODEC_ULAW, "G711u");
 
 	if (fileName == NULL) {
 		return 0;
@@ -311,37 +303,23 @@ ToneGenerator::playRingtone (const char *fileName) {
 	
 	// Decode file.ul
 	expandedsize = ulaw->codecDecode (dst, (unsigned char *)src, length);
-		
-	floatdst = new float32[expandedsize];
-	ulaw->int16ToFloat32 (dst, floatdst, expandedsize);
-			
-	float32* tmp_urg_data;
-	// Free urg_data pointer
-	tmp_urg_data = manager->getAudioDriver()->mydata.urg_data;
-	if (tmp_urg_data != NULL) {
-		free (tmp_urg_data);
-	}
 
-	// Init struct mydata
-	tmp_urg_data = floatdst;
-	manager->getAudioDriver()->mydata.urg_ptr = tmp_urg_data;
-	manager->getAudioDriver()->mydata.urg_remain = expandedsize;
-	// Start tone thread
 	if (tonethread == NULL) {
-		tonethread = new ToneThread (manager, tmp_urg_data, expandedsize);
+		tonethread = new ToneThread (manager, (int16*)dst, expandedsize);
 		tonethread->start();
 	}
 	if (!manager->getTonezone()) {
 		manager->getAudioDriver()->stopStream();
-		manager->getAudioDriver()->mydata.urg_remain = 0;
+		manager->getAudioDriver()->mainSndRingBuffer()->flush();
 		if (tonethread != NULL) {	
 			delete tonethread;
 			tonethread = NULL;
 			delete[] dst;
 			delete[] src;
-			delete[] floatdst;
+			delete ulaw;
 		}
 	}
+	
 	file.close();
 	return 1;
 }

@@ -21,6 +21,7 @@
 #define __GLOBAL_H__
 
 #include <assert.h>
+#include <stdio.h>
 
 typedef float float32;
 typedef short int16;
@@ -34,8 +35,9 @@ typedef short int16;
 	#define _debug(...)
 #endif
 
-#define SFLPHONE_VERSION "0.3.0"
-#define SFLPHONE_VERSION_NUM 0x000300
+#define VERSION "0.4"
+#define VERSIONNUM 0x000400
+
 
 #define PROGNAME				"sflphone"
 #define SKINDIR					"skins"
@@ -53,13 +55,11 @@ typedef short int16;
 #define PIXMAP_ABOUT			"about.png" 
 
 #define MONO					1
+#define CHANNELS				2
 #define	SAMPLING_RATE 			8000
 #define SIZEBUF 				1024*1024
-#define	FORMAT					4			// for 16 bits format
+#define	FORMAT					4			
 #define OCTETS					SAMPLING_RATE * FORMAT	// Number of writen 
 														// bytes in buffer
-
-#define OSS_DRIVER              0
-#define ALSA_DRIVER             1
 
 #endif	// __GLOBAL_H__

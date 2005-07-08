@@ -1,0 +1,39 @@
+GNU(/Linux) build notes:
+------------------------
+
+Change to the 'build/gnu' directory.
+
+Make sure the configure script is executable by running 'chmod +x configure'.
+
+Run './configure' to create the Makefile. If this doesn't work out for you, run
+'autoconf' first to recreate the configure script.
+
+Run 'make' to create all the test programs in the 'examples' directory, as well
+as the static and dynamic libraries in the 'lib' directory. 
+
+Run 'make docs' to generate the Doxygen HTML documentation. And 'make clean' does
+the normal thing too.
+
+Currently, PortAudioCpp compiles under g++-2.95 as well as g++-3.3. The setup still
+needs testing under Darwin (I don't know how the library dependencies work on the Mac).
+
+Ludwig Schwardt
+9 October 2003
+
+
+
+MS Visual C++ 6.0 build notes:
+------------------------------
+
+Open either one of the .dsp files in the /build/vc6/ folder. Simply select 
+Build->Build ... (F7) to build the project.
+
+These projects assume you have downloaded and installed PortAudio V19 in a folder called 
+``portaudio_v19'', which must be a `sibling' folder of this (the ``PortAudioCpp'') 
+folder. If this is not the case, you will have to edit the ``Additional include directories'' 
+field from the projects settings (Project->Settings...->C/C++ tab->Preprocessor category).
+
+To compile the dynamic-link library project, you'll either have to include the source 
+files needed from PortAudio V19, or link against a pre-compiled library of PortAudio V19.
+
+The output files (.lib or .dll and .lib) will be placed in the /lib/ folder.

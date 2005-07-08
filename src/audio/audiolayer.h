@@ -1,0 +1,72 @@
+/**
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author:  Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *                                                                              
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *                                                                              
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#if defined(AUDIO_PORTAUDIO)
+
+#ifndef _AUDIO_LAYER_H
+#define _AUDIO_LAYER_H
+
+#include "portaudiocpp/PortAudioCpp.hxx"
+
+
+#include "../global.h"
+
+#define FRAME_PER_BUFFER	160
+#define MIC_CHANNELS 		2 // 1=mono 2=stereo
+#define SAMPLE_BYTES 		sizeof(int16)
+#define SAMPLES_SIZE(i) 	(i * MIC_CHANNELS * SAMPLE_BYTES)
+
+
+class RingBuffer;
+class Manager;
+
+class AudioLayer {
+public:
+	AudioLayer (Manager*);
+	~AudioLayer (void);
+
+	void	initDevice		(void);
+	void	openDevice 		(int);
+	void 	startStream		(void);
+	void 	stopStream		(void);
+	void    sleep			(int);
+	int		isStreamActive	(void);
+	int		isStreamStopped	(void);
+
+	int audioCallback (const void *, void *, unsigned long,
+			   const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
+
+	inline RingBuffer* urgentRingBuffer(void) { return _urgentRingBuffer; }
+	inline RingBuffer* mainSndRingBuffer(void) { return _mainSndRingBuffer; }
+	inline RingBuffer* micRingBuffer(void) { return _micRingBuffer; }
+
+private:
+	void	closeStream	(void);
+	Manager*	_manager;
+	RingBuffer* _urgentRingBuffer;
+	RingBuffer* _mainSndRingBuffer;
+	RingBuffer* _micRingBuffer;
+
+	portaudio::MemFunCallbackStream<AudioLayer> *_stream;
+	portaudio::AutoSystem *autoSys;
+};
+
+#endif // _AUDIO_LAYER_H_
+
+#endif // defined(AUDIO_PORTAUDIO)

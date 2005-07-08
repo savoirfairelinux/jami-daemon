@@ -1,16 +1,12 @@
-SUBDIRS = gsm
+SUBDIRS = gsm pacpp
 
 noinst_LTLIBRARIES = libaudio.la
 
 
 libaudio_la_SOURCES = \
 	alaw.cpp alaw.h \
-	audiobuffer.cpp audiobuffer.h \
 	audiocodec.cpp audiocodec.h \
-	audiodrivers.cpp audiodrivers.h \
-	audiodriversalsa.cpp audiodriversalsa.h \
-	audiodriversoss.cpp audiodriversoss.h \
-	audiodriversportaudio.cpp audiodriversportaudio.h \
+	audiolayer.cpp audiolayer.h \
 	audiortp.cpp audiortp.h \
 	codecDescriptor.cpp codecDescriptor.h \
 	common.h \
@@ -18,9 +14,10 @@ libaudio_la_SOURCES = \
 	dtmfgenerator.cpp dtmfgenerator.h \
 	g711.cpp g711.h \
 	gsmcodec.cpp gsmcodec.h \
-	pa_converters.h pa_dither.h \
+	ringbuffer.cpp ringbuffer.h \
 	tonegenerator.cpp tonegenerator.h \
 	ulaw.cpp ulaw.h 
 
-libaudio_la_LIBADD = gsm/libgsm.la
+AM_CXXFLAGS = -Ipacpp/include/
+libaudio_la_LIBADD = gsm/libgsm.la pacpp/source/portaudiocpp/libportaudiocpp.la
 

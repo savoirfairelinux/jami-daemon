@@ -19,7 +19,9 @@
 
 #include <qapplication.h>
 
+#include "point.h"
 #include "qtGUImainwindow.h"
+#include "vector.h"
 #include "volumecontrol.h"
 #include "../../skin.h"
 

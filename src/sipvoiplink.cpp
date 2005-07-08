@@ -18,19 +18,22 @@
  */
 #include <sys/time.h>
 
-#include <eXosip/eXosip.h>
+#include <eXosip/eXosip.h>  
 #include <osip2/osip.h>
 #include <osipparser2/osip_const.h>
 #include <osipparser2/osip_headers.h>
 #include <osipparser2/osip_body.h>
 
 #include <cc++/thread.h>
+#include <stdexcept>
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include "audio/audiortp.h"
+#include "audio/codecDescriptor.h"
 #include "call.h"
+#include "error.h"
 #include "eventthread.h"
 #include "global.h"
 #include "manager.h"
@@ -52,6 +55,7 @@ SipVoIPLink::SipVoIPLink (short id, Manager* manager) : VoIPLink (id, manager)
 {
 	setId(id);
 	_localPort = 0;
+	_cid = 0;
 	_manager = manager;
 	_evThread = new EventThread (this);
 	_sipcallVector = new SipCallVector();
@@ -89,27 +93,16 @@ SipVoIPLink::init (void)
 	// If use STUN server, firewall address setup
 	if (_manager->useStun()) {
 		eXosip_set_user_agent(tmp.data());
-		StunAddress4 stunSvrAddr;
-		stunSvrAddr.addr = 0;
-		
-		// Stun server
-		string svr = get_config_fields_str(SIGNALISATION, STUN_SERVER);
-		
-		// Convert char* to StunAddress4 structure
-		bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
-		if (!ret) {
-			_debug("SIP: Stun server address not valid\n");
+		if (behindNat() != 1) {
+			return 0;
 		}
-		
-		// Firewall address
-		_debug("STUN server: %s\n", svr.data());
-		_manager->getStunInfo(stunSvrAddr);
+
 		eXosip_set_firewallip((_manager->getFirewallAddress()).data());
 	} 
 	
 	eXosip_set_user_agent(tmp.data());
-	_evThread->start();
 	initRtpmapCodec();
+	_evThread->start();
 	return 1;
 }
 
@@ -174,35 +167,36 @@ SipVoIPLink::setRegister (void)
 							get_config_fields_str(SIGNALISATION, HOST_PART));
 
 	if (get_config_fields_str(SIGNALISATION, HOST_PART).empty()) {
-		_manager->error()->errorName(HOST_PART_FIELD_EMPTY, NULL);
+		_manager->error()->errorName(HOST_PART_FIELD_EMPTY);
 		return -1;
 	}
 	if (get_config_fields_str(SIGNALISATION, USER_PART).empty()) {
-		_manager->error()->errorName(USER_PART_FIELD_EMPTY, NULL);
+		_manager->error()->errorName(USER_PART_FIELD_EMPTY);
 		return -1;
 	}
 
 	eXosip_lock();
 	if (setAuthentication() == -1) {
+		_debug("No authentication\n");
 		eXosip_unlock();
 		return -1;
 	}
 	
 	_debug("register From: %s\n", from.data());
 	if (!get_config_fields_str(SIGNALISATION, PROXY).empty()) {
-		reg_id = eXosip_register_init((char*)from.data(), (char*)proxy.data(), 
-				NULL);
+		reg_id = eXosip_register_init((char*)from.data(), 
+				(char*)proxy.data(),NULL); 
 	} else {
-		reg_id = eXosip_register_init((char*)from.data(),(char*)hostname.data(),
-			   	NULL);
+		reg_id = eXosip_register_init((char*)from.data(),
+				(char*)hostname.data(), NULL);
 	}
 	if (reg_id < 0) {
 		eXosip_unlock();
 		return -1;
 	}	
 	
-	// TODO: port SIP session timer dans config
 	int i = eXosip_register(reg_id, EXPIRES_VALUE);
+	
 	if (i == -2) {
 		_debug("cannot build registration, check the setup\n"); 
 		eXosip_unlock();
@@ -218,7 +212,7 @@ SipVoIPLink::setRegister (void)
 	return 0;
 }
 int
-SipVoIPLink::outgoingInvite (const string& to_url) 
+SipVoIPLink::outgoingInvite (short id, const string& to_url) 
 {
 	string from;
 	string to;
@@ -239,7 +233,7 @@ SipVoIPLink::outgoingInvite (const string& to_url)
 
 	if (get_config_fields_str(SIGNALISATION, PROXY).empty()) {
 	// If no SIP proxy setting for direct call with only IP address
-		if (startCall(from, to, "", "") <= 0) {
+		if (startCall(id, from, to, "", "") <= 0) {
 			_debug("Warning SipVoIPLink: call not started\n");
 			return -1;
 		}
@@ -248,7 +242,7 @@ SipVoIPLink::outgoingInvite (const string& to_url)
 	// If SIP proxy setting
 		string route = "<sip:" + 
 			get_config_fields_str(SIGNALISATION, PROXY) + ";lr>";
-		if (startCall(from, to, "", route) <= 0) {
+		if (startCall(id, from, to, "", route) <= 0) {
 			_debug("Warning SipVoIPLink: call not started\n");
 			return -1;
 		}
@@ -262,8 +256,8 @@ SipVoIPLink::answer (short id)
 	int i;
 	char tmpbuf[64];
 	bzero (tmpbuf, 64);
-    // Get local port   
-    snprintf (tmpbuf, 63, "%d", getSipCall(id)->getLocalAudioPort());
+    // Get  port   
+    	snprintf (tmpbuf, 63, "%d", getSipCall(id)->getLocalAudioPort());
 	
 	_debug("Answer call [id = %d, cid = %d, did = %d]\n", 
 			id, getSipCall(id)->getCid(), getSipCall(id)->getDid());
@@ -298,6 +292,21 @@ SipVoIPLink::hangup (short id)
 		_audiortp->closeRtpSession(getSipCall(id));
 	}
 				
+	deleteSipCall(id);
+	return i;
+}
+
+int
+SipVoIPLink::cancel (short id) 
+{
+	int i = 1;
+	if (!_manager->getbCongestion()) {
+		_debug("Cancel call [id = %d, cid = %d]\n", id, getCid());
+		// Release SIP stack.
+		eXosip_lock();
+		i = eXosip_terminate_call (getCid(), -1);
+		eXosip_unlock();
+	}
 	deleteSipCall(id);
 	return i;
 }
@@ -372,7 +381,6 @@ SipVoIPLink::getEvent (void)
 	char *name;
 	static int countReg = 0;
 
-	
 	eXosip_automatic_refresh();
 	event = eXosip_event_wait (0, 50);
 	if (event == NULL) {
@@ -382,7 +390,15 @@ SipVoIPLink::getEvent (void)
 		// IP-Phone user receives a new call
 		case EXOSIP_CALL_NEW: //
 			// Set local random port for incoming call
-			setLocalPort(RANDOM_LOCAL_PORT);
+			if (!_manager->useStun()) {
+				setLocalPort(RANDOM_LOCAL_PORT);
+			} else {
+				if (behindNat() != 0) {
+					setLocalPort(_manager->getFirewallPort());
+				} else {
+					_debug("behindNat function returns 0\n");
+				}
+			}
 			
 			id = _manager->generateNewCallId();
 			_manager->pushBackNewCall(id, Incoming);
@@ -413,10 +429,9 @@ SipVoIPLink::getEvent (void)
 			id = findCallId(event);
 			if (id == 0) {
 				id = findCallIdWhenRinging();
-				getSipCall(id)->setLocalAudioPort(_localPort);
 			}
-			_debug("Call is answered [id = %d, cid = %d, did = %d]\n", 
-					id, event->cid, event->did);
+			_debug("Call is answered [id = %d, cid = %d, did = %d], localport=%d\n", 
+					id, event->cid, event->did,getSipCall(id)->getLocalAudioPort());
  
 			// Answer
 			if (id > 0 and !_manager->getCall(id)->isOnHold()
@@ -425,7 +440,6 @@ SipVoIPLink::getEvent (void)
 				getSipCall(id)->answeredCall(event);
 				_manager->peerAnsweredCall(id);
 
-			
 				// Outgoing call is answered, start the sound channel.
 				if (_audiortp->createNewSession (getSipCall(id)) < 0) {
 					_debug("FATAL: Unable to start sound (%s:%d)\n", 
@@ -442,7 +456,6 @@ SipVoIPLink::getEvent (void)
 					id, event->cid, event->did);
 			
 			if (id > 0) {
-				getSipCall(id)->setLocalAudioPort(_localPort);
 				getSipCall(id)->ringingCall(event);
 				_manager->peerRingingCall(id);
 			} 
@@ -545,6 +558,7 @@ SipVoIPLink::getEvent (void)
 			break;
 
 		case EXOSIP_REGISTRATION_FAILURE:
+			_debug("-- Registration failed --\n");
 			if (countReg <= 3) { 
 				setRegister();
 				countReg++;
@@ -689,14 +703,35 @@ SipVoIPLink::getAudioCodec (short callid)
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
 
+int
+SipVoIPLink::behindNat (void)
+{
+	StunAddress4 stunSvrAddr;
+	stunSvrAddr.addr = 0;
+	
+	// Stun server
+	string svr = get_config_fields_str(SIGNALISATION, STUN_SERVER);
+	
+	// Convert char* to StunAddress4 structure
+	bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
+	if (!ret) {
+		_debug("SIP: Stun server address not valid\n");
+		return 0;
+	}
+	
+	// Firewall address
+	_debug("STUN server: %s\n", svr.data());
+	_manager->getStunInfo(stunSvrAddr);
+
+	return 1;
+}
+
 int 
 SipVoIPLink::getLocalIp (void) 
 {
-	char* myIPAddress;
-	if (getLocalIpAddress().empty()) {
-		myIPAddress = new char[64];
-	}
-	int ret = eXosip_guess_localip (2, myIPAddress, 64);
+	int ret = 0;
+	char* myIPAddress = new char[65];
+	ret = eXosip_guess_localip (2, myIPAddress, 64);
 	setLocalIpAddress(string(myIPAddress));
 
 	return ret;
@@ -734,13 +769,12 @@ SipVoIPLink::setAuthentication (void)
 	}
 	pass = get_config_fields_str(SIGNALISATION, PASSWORD);
 	if (pass.empty()) {
-		_manager->error()->errorName(PASSWD_FIELD_EMPTY, NULL);				
+		_manager->error()->errorName(PASSWD_FIELD_EMPTY);				
 		return -1;
 	}
 
 	if (eXosip_add_authentication_info(login.data(), login.data(), 
 		pass.data(), NULL, NULL) != 0) {
-		_debug("No authentication\n");
 		return -1;
 	}
 	return 0;
@@ -765,18 +799,18 @@ SipVoIPLink::toHeader(const string& to)
 }
 
 int
-SipVoIPLink::startCall (const string& from, const string& to, 
+SipVoIPLink::startCall (short id, const string& from, const string& to, 
 							const string& subject,  const string& route) 
 {
   	osip_message_t *invite;
   	int i;
 
   	if (checkUrl(from) != 0) {
-		_manager->error()->errorName(FROM_ERROR, NULL);
+		_manager->error()->errorName(FROM_ERROR);
     	return -1;
   	}
   	if (checkUrl(to) != 0) {
-		_manager->error()->errorName(TO_ERROR, NULL);
+		_manager->error()->errorName(TO_ERROR);
     	return -1;
   	}
   	
@@ -793,21 +827,21 @@ SipVoIPLink::startCall (const string& from, const string& to,
 		// Set random port for outgoing call
 		setLocalPort(RANDOM_LOCAL_PORT);
 		_debug("Local audio port: %d\n",_localPort);
-
-		bzero (port, 64);
-		snprintf (port, 63, "%d", getLocalPort());
-		
-  		i = eXosip_initiate_call (invite, NULL, NULL, port);
-		
 	} else {
 		// If use Stun server
-		bzero (port, 64);
-		snprintf (port, 63, "%d", _manager->getFirewallPort());
-		
-		i = eXosip_initiate_call(invite, NULL, NULL, port);
-
-		_debug("sip invite: firewall port = %s\n", port);
+		if (behindNat() != 0) {
+			_debug("sip invite: firewall port = %d\n",_manager->getFirewallPort());	
+			setLocalPort(_manager->getFirewallPort());
+		} else {
+			return -1;
+		}
 	}
+	
+	getSipCall(id)->setLocalAudioPort(_localPort);
+	bzero (port, 64);
+	snprintf (port, 63, "%d", getLocalPort());
+		
+	i = eXosip_initiate_call(invite, NULL, NULL, port);
 
 	if (i <= 0) {
 		eXosip_unlock();
@@ -815,6 +849,10 @@ SipVoIPLink::startCall (const string& from, const string& to,
 	}
 
 	eXosip_unlock();
+
+	// Keep the cid in case of cancelling
+	setCid(i);
+
   	return i;	
 }
 

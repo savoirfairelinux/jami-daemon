@@ -89,7 +89,7 @@
 #define DFT_PULSE_LENGTH	250
 #define SIP_INFO			0
 #define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"
-#define DFT_DRIVER			OSS_DRIVER	
+#define DFT_DRIVER			0	
 #define DFT_NB_CODEC		3
 #define DFT_CODEC			"G711u"
 #define DFT_VOL_SPKR_X		365

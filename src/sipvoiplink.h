@@ -25,13 +25,11 @@
 #include <string>
 #include <vector>
 
-#include "audio/audiocodec.h"
-#include "audio/codecDescriptor.h"
 #include "voIPLink.h"
 
 using namespace std;
 
-#define EXPIRES_VALUE	3600
+#define EXPIRES_VALUE	180
 // 1XX responses
 #define DIALOG_ESTABLISHED 101
 // 4XX Errors
@@ -55,6 +53,7 @@ using namespace std;
 
 class AudioCodec;
 class AudioRtp;
+class CodecDescriptor;
 class EventThread;
 class Manager;
 class SipCall;
@@ -71,9 +70,10 @@ public:
 	virtual void initRtpmapCodec (void);
 	virtual void quit (void);
 	virtual int setRegister (void);
-	virtual int outgoingInvite (const string& to_url);	
+	virtual int outgoingInvite (short id, const string& to_url);	
 	virtual int answer (short id);
 	virtual int hangup (short id);
+	virtual int cancel (short id);
 	virtual int onhold (short id);
 	virtual int offhold (short id);
 	virtual int transfer (short id, const string& to);
@@ -101,14 +101,19 @@ public:
 	SipCall* getSipCall(short callid);
 
 	AudioCodec* getAudioCodec(short callid);
+
+	// To Cancel
+	inline void setCid (int cid) { _cid = cid; }
+	inline int getCid (void) { return _cid; }
 	
 private:
+	int behindNat (void);
 	int getLocalIp (void);
 	int checkUrl(const string& url);
 	int setAuthentication (void);
 	string fromHeader (const string& user, const string& host);
 	string toHeader(const string& to);
-	int startCall (const string& from, const string& to, 
+	int startCall (short id, const string& from, const string& to, 
 			const string& subject, const string& route);
 	/*
 	 * Look for call with same cid/did 
@@ -123,6 +128,7 @@ private:
 	SipCallVector* 	_sipcallVector;
 	AudioRtp* 		_audiortp;
 	int 			_localPort;
+	int 			_cid;
 	
 };
 

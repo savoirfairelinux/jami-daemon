@@ -25,6 +25,14 @@
 #include "ulaw.h"
 #include "codecDescriptor.h"
 
+
+const char* CODEC_ALAW = "G711a";
+const char* CODEC_ULAW = "G711u";
+const char* CODEC_GSM = "GSM";
+const char* CODEC_ILBC = "iLBC";
+const char* CODEC_SPEEX = "SPEEX";
+
+
 CodecDescriptor::CodecDescriptor (int payload) 
 {
 	_payload = payload;

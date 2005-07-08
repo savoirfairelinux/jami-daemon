@@ -38,8 +38,6 @@ public:
 	
 	void setCodecName (const string& codec);
 	string getCodecName (void);
-	void float32ToInt16 (float32* src, int16* dst, int size);
-	void int16ToFloat32 (int16* src, float32* dst, int size);
 
 private:
 	string _codecName;

@@ -20,9 +20,9 @@
 #ifndef __TONE_GENRATOR_H__
 #define __TONE_GENRATOR_H__
 
-#include <cc++/thread.h>
 #include <string>
 
+#include "../global.h"
 #include "../manager.h"
 
 using namespace std;
@@ -45,19 +45,20 @@ using namespace ost;
 #define	ID_ITALY			5
 #define	ID_JAPAN			6
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // ToneThread 
 ///////////////////////////////////////////////////////////////////////////////
 class ToneThread : public Thread {
 public:
-	ToneThread (Manager *, float32 *, int);
+	ToneThread (Manager *, int16 *, int);
 	~ToneThread (void);
 
 	virtual void run ();
 private:
 	Manager*	mngr;
-	float32*	buffer;
-	float32*	buf_ctrl_vol;
+	int16*	buffer;
+	int16*	buf_ctrl_vol;
 	int			size;
 };
 
@@ -74,18 +75,18 @@ public:
 
 	int idZoneName 		(const string &);
 			
-	void generateSin	(int, int, float32 *);
-	void buildTone		(int, int, float32*);
+	void generateSin	(int, int, int16 *);
+	void buildTone		(int, int, int16*);
 	void toneHandle 	(int);
 	int  playRingtone		(const char*);
 	
-	float32 *sample;
+	int16 *sample;
 	int freq1, 
 		freq2;
 	int time;
 	int totalbytes;
 
-	float32   	*buf;
+	int16   	*buf;
 private:
 	/*
 	 * Initialisation of the supported tones according to the countries.

@@ -3,19 +3,14 @@ AC_INIT(acinclude.m4)
 AM_CONFIG_HEADER(config.h)
 
 dnl figure out the sflphone version
-VERSION=`sed -ne 's/^#define SFLPHONE_VERSION "\(.*\)"/\1/p' ${srcdir}/src/global.h`
+VERSION=`sed -ne 's/^#define VERSION "\(.*\)"/\1/p' src/global.h`
 AC_SUBST(VERSION)
-
 
 dnl get rid of release number
 RPM_VERSION=`echo $VERSION | sed -ne 's/-//p' `
 AC_SUBST(RPM_VERSION)
 
 LIBS="$LIBS -lstdc++"
-dnl
-dnl we extract the numerical version 
-VERSIONNUM=`sed -ne 's/^#define SFLPHONE_VERSION_NUM 0x\(\\d\)/\1/p' ${srcdir}/src/global.h`
-AC_SUBST(VERSIONNUM)
 
 dnl
 dnl Solaris pkgadd support definitions
@@ -31,9 +26,16 @@ AC_LANG_CPLUSPLUS
 AC_PROG_CXX
 AC_PROG_CC
 
-KDE_USE_QT(3.3)
-KDE_DO_IT_ALL(sflphone, $VERSION)
+AC_PATH_QT
+dnl KDE_USE_QT(3.3)
+AC_CANONICAL_SYSTEM
+AC_ARG_PROGRAM
+AM_INIT_AUTOMAKE(sflphone, $VERSION)
+AM_DISABLE_LIBRARIES
+AC_PROG_LIBTOOL
+AC_CHECK_COMPILERS
 
+CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS "
 
 SFLPHONE_CXXFLAGS=""
 
@@ -53,10 +55,13 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS( \
 ostream \
 eXosip/eXosip.h \
-alsa/asoundlib.h \
 portaudio.h \
 )
 
+LIBCCGNU2_MIN_VERSION=1.3.1
+PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION})
+SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccgnu2_CFLAGS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS $libccgnu2_LIBS"
 
 LIBCCEXT2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(libccext2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
@@ -82,47 +87,6 @@ dnl if test $ac_cv_header_gsm_h = no; then
 dnl    AC_MSG_ERROR([*** missing gsm.h. You need a working GSM 06.10 lossy speech compression installation. See http://kbs.cs.tu-berlin.de/~jutta/toast.html])
 dnl fi
 dnl SFLPHONE_LIBS="$SFLPHONE_LIBS -lgsm"
-
-if test $ac_cv_header_alsa_asoundlib_h = no; then
-   AC_MSG_ERROR([*** missing alsa/asoundlib.h. You need a working alsa-lib installation. See http://www.alsa-project.org/])
-fi
-SFLPHONE_LIBS="$SFLPHONE_LIBS -lasound"
-
-
-AC_MSG_CHECKING([warning make an error on compilation])
-AC_ARG_ENABLE(ewarning,
-[  --enable-ewarning       Enable error on compilation warning [default=yes]],
-[ 
-AC_MSG_RESULT(no)
-],
-[
-AC_MSG_RESULT(yes)
-CXXFLAGS="$CXXFLAGS -Werror"
-]
-)
-
-AC_MSG_CHECKING([whether to disable -O* optimization flags])
-AC_ARG_ENABLE(oflags,
-[  --disable-oflags      Disable -O* optimization flags [default=no]],
-[
-AC_MSG_RESULT(yes)
-    NEWFLAGS=""
-    for flag in $CXXFLAGS; do
-      case "$flag" in
-      -O*)
-        dnl echo "cut off $flag"
-        ;;
-      *)
-        NEWFLAGS="$NEWFLAGS $flag"
-        ;;
-      esac
-    done
-    CXXFLAGS=$NEWFLAGS
-],
-[
-AC_MSG_RESULT(no)
-]
-)
 
 AC_MSG_CHECKING([whether to enable the maintener code])
 AC_ARG_ENABLE(maintener,
@@ -158,10 +122,16 @@ LIBS="$LIBS $SFLPHONE_LIBS $LIBQT"
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
+sflphone.spec \
 Makefile \
 src/Makefile \
 src/audio/Makefile \
 src/audio/gsm/Makefile \
+src/audio/pacpp/Makefile \
+src/audio/pacpp/include/Makefile \
+src/audio/pacpp/include/portaudiocpp/Makefile \
+src/audio/pacpp/source/Makefile \
+src/audio/pacpp/source/portaudiocpp/Makefile \
 src/gui/Makefile \
 src/gui/qt/Makefile \
 stund/Makefile \

@@ -20,17 +20,21 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ccrtp/rtp.h>
-#include <assert.h>
+#include <assert.h> 
 #include <iostream>
 #include <string>
 
+#include "audiocodec.h"
+#include "audiortp.h"
+#include "audiolayer.h"
+#include "codecDescriptor.h"
+#include "ringbuffer.h"
 #include "../configuration.h"
 #include "../manager.h"
 #include "../global.h"
 #include "../user_cfg.h"
 #include "../sipcall.h"
 #include "../../stund/stun.h"
-#include "audiortp.h"
 
 using namespace ost;
 using namespace std;
@@ -40,21 +44,12 @@ using namespace std;
 // AudioRtp                                                          
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtp::AudioRtp (Manager *manager) {
-	string svr;
-	
 	_manager = manager;
 	_RTXThread = NULL;
-	
-	if (!manager->useStun()) {
-		if (get_config_fields_str(SIGNALISATION, PROXY).empty()) {
-			svr = get_config_fields_str(SIGNALISATION, PROXY);
-		}
-	} else {
-		svr = get_config_fields_str(SIGNALISATION, HOST_PART);
-	}
 }
 
 AudioRtp::~AudioRtp (void) {
+	delete _RTXThread;
 }
 
 int 
@@ -69,6 +64,10 @@ AudioRtp::createNewSession (SipCall *ca) {
 
 	_RTXThread = new AudioRtpRTX (ca, _manager->getAudioDriver(), 
 								_manager, _symetric);
+	
+	// Start PortAudio
+	_manager->getAudioDriver()->micRingBuffer()->flush();
+	_manager->getAudioDriver()->startStream();
 	
 	if (_RTXThread->start() != 0) {
 		return -1;
@@ -88,15 +87,17 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 			delete _RTXThread;
 			_RTXThread = NULL;
 		}
-		// Flush audio read buffer
+		
+		// Stop portaudio and flush ringbuffer
 		_manager->getAudioDriver()->stopStream();
+		_manager->getAudioDriver()->mainSndRingBuffer()->flush();
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioDriversPortAudio* driver, 
+AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, 
 		Manager *mngr, bool sym) {
 	time = new Time();
 	_manager = mngr;
@@ -107,19 +108,16 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioDriversPortAudio* driver,
 	// TODO: Change bind address according to user settings.
 	InetHostAddress local_ip("0.0.0.0");
 
+	_debug("Audiortp localport : %d\n", _ca->getLocalAudioPort());
 	if (!_sym) {
-		_debug("Audiortp localport : %d\n", _ca->getLocalAudioPort());
 		_sessionRecv = new RTPSession (local_ip, _ca->getLocalAudioPort());
 		_sessionSend = new RTPSession (local_ip);
 	} else {
-		int forcedPort = _manager->getFirewallPort();
-		_session = new SymmetricRTPSession (local_ip, forcedPort);
+		_session = new SymmetricRTPSession (local_ip,  _ca->getLocalAudioPort());
 	}
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
-	terminate();
-	
 	if (!_sym) {
 		if (_sessionRecv != NULL) {
 			delete _sessionRecv;	
@@ -138,26 +136,8 @@ AudioRtpRTX::~AudioRtpRTX () {
 }
 
 void
-AudioRtpRTX::run (void) {
-	unsigned char	*data_to_send;
-	int16			*data_from_mic_int16;
-	float32			*data_mute;
-	float32			*data_from_mic;
-	float32			*data_from_mic_tmp;
-	int				 compSize, 
-					 timestamp;
-	int				 expandedSize;
-	int	 			 countTime = 0;
-	int16			*data_for_speakers = NULL;
-	float32			*data_for_speakers_float = NULL;
-	float32			*data_for_speakers_float_tmp = NULL;
-	
-	data_from_mic = new float32[1024];
-	data_from_mic_tmp = new float32[1024];
-	data_mute = new float32[1024];
-	data_to_send = new unsigned char[1024];
-	data_for_speakers = new int16[2048];
-
+AudioRtpRTX::initAudioRtpSession (void) 
+{
 	InetHostAddress remote_ip(_ca->getRemoteSdpAudioIp());
 	
 	if (!remote_ip) {
@@ -209,6 +189,127 @@ AudioRtpRTX::run (void) {
 			setCancel(cancelImmediate);
 		}
 	}
+}
+
+void
+AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_mic, int16* data_from_mic_tmp, int timestamp, int micVolume)
+{
+	int k; 
+	int compSize; 
+	
+	if (_manager->getCall(_ca->getId())->isOnMute() or
+				!_manager->isCurrentId(_ca->getId())) {
+		// Mute :send 0's over the network.
+		_manager->getAudioDriver()->micRingBuffer()->Get(data_from_mic, 
+			RTP_FRAMES2SEND*2*sizeof(int16));
+	} else {
+		// Control volume for micro
+		int availFromMic = _manager->getAudioDriver()->micRingBuffer()->AvailForGet(); 
+		int bytesAvail;
+		if (availFromMic < (int)RTP_FRAMES2SEND) { 
+			bytesAvail = availFromMic; 
+		} else {
+			bytesAvail = (int)RTP_FRAMES2SEND;
+		}
+
+		// Get bytes from micRingBuffer to data_from_mic
+		_manager->getAudioDriver()->micRingBuffer()->Get(data_from_mic, 
+				SAMPLES_SIZE(bytesAvail));
+		// control volume and stereo->mono
+		for (int j = 0; j < RTP_FRAMES2SEND; j++) {
+			k = j*2;
+			data_from_mic_tmp[j] = (int16)(0.5f*(data_from_mic[k] +
+												data_from_mic[k+1]) * 
+												micVolume/100); 
+		}
+	}
+	// Encode acquired audio sample
+	compSize = _ca->getAudioCodec()->codecEncode (data_to_send,
+												  data_from_mic_tmp, 
+												  RTP_FRAMES2SEND*2);
+	// Send encoded audio sample over the network
+	if (!_sym) {
+		_sessionSend->putData(timestamp, data_to_send, compSize);
+	} else {
+		_session->putData(timestamp, data_to_send, compSize);
+	}
+
+}
+
+void
+AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers, 
+		int16* data_for_speakers_tmp, int spkrVolume)
+{
+	int expandedSize;
+	int k;
+	int	countTime = 0;
+	const AppDataUnit* adu = NULL;
+
+	// Get audio data stream
+	do {
+		Thread::sleep(5); // in msec.
+		if (!_sym) {
+			adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
+		} else {
+			adu = _session->getData(_session->getFirstTimestamp());
+		}
+	} while (adu == NULL);
+
+	// Decode data with relevant codec
+	CodecDescriptor* cd = new CodecDescriptor (adu->getType());
+	
+	AudioCodec* ac = cd->alloc(adu->getType(), "");
+
+	expandedSize = ac->codecDecode (data_for_speakers,
+									(unsigned char*) adu->getData(),
+									adu->getSize());
+		
+	// control volume for speakers and mono->stereo
+	for (int j = 0; j < expandedSize; j++) {
+		k = j*2;
+		data_for_speakers_tmp[k] = data_for_speakers_tmp[k+1]= 
+			data_for_speakers[j] * spkrVolume/100;
+	}
+
+	// If the current call is the call which is answered
+	if (_manager->isCurrentId(_ca->getId())) {
+		// Set decoded data to sound device
+		_manager->getAudioDriver()->mainSndRingBuffer()->Put(data_for_speakers_tmp, SAMPLES_SIZE(RTP_FRAMES2SEND));
+	}
+	
+	// Notify (with a bip) an incoming call when there is already a call 
+	countTime += time->getSecond();
+	if (_manager->getNumberOfCalls() > 0 and _manager->getbRingtone()) {
+		countTime = countTime % 2000;
+		if (countTime < 10 and countTime > 0) {
+			_manager->notificationIncomingCall();
+		}
+	} 
+	_manager->getAudioDriver()->startStream();
+	
+	delete cd;
+	delete adu;
+}
+
+void
+AudioRtpRTX::run (void) {
+	int micVolume;
+	int spkrVolume;
+	unsigned char	*data_to_send;
+	int16			*data_from_mic;
+	int16			*data_from_mic_tmp;
+	int				 timestamp;
+	int16			*data_for_speakers = NULL;
+	int16			*data_for_speakers_tmp = NULL;
+	
+	data_from_mic = new int16[SIZEDATA]; 
+	data_from_mic_tmp = new int16[SIZEDATA];
+	data_to_send = new unsigned char[SIZEDATA];
+	data_for_speakers = new int16[SIZEDATA];
+	data_for_speakers_tmp = new int16[SIZEDATA*2];
+
+	// Init the session
+	initAudioRtpSession();
 	
 	timestamp = 0;
 
@@ -223,106 +324,35 @@ AudioRtpRTX::run (void) {
 	} else {
 		_session->startRunning();
 	}
-
+	
 	while (_ca->enable_audio != -1) {
+		// Store volume values
+		micVolume = _manager->getMicroVolume();
+	    spkrVolume = _manager->getSpkrVolume();
+
 		////////////////////////////
 		// Send session
 		////////////////////////////
-		int size = 320;
-		if (!_manager->getCall(_ca->getId())->isOnMute()) {	
-			_manager->getAudioDriver()->mydata.dataIn = data_from_mic;
-		} else {
-			// When IP-phone user click on mute button, we read buffer of a
-			// temp buffer to avoid delay in sound.
-			_manager->getAudioDriver()->mydata.dataIn = data_mute;
-		}
+		sendSessionFromMic(data_to_send, data_from_mic, data_from_mic_tmp,
+				timestamp, micVolume);
 		
-		// Control volume for micro
-		for (int j = 0; j < size; j++) {
-			data_from_mic_tmp[j] = data_from_mic[j] * 
-												_manager->getMicroVolume()/100;
-		}
+		timestamp += RTP_FRAMES2SEND;
 
-		// Convert float32 buffer to int16 to encode
-		data_from_mic_int16 = new int16[size];
-		_ca->getAudioCodec()->float32ToInt16 (data_from_mic_tmp, 
-				data_from_mic_int16, size);
-		
-		// Encode acquired audio sample
-		compSize = _ca->getAudioCodec()->codecEncode (data_to_send,
-													  data_from_mic_int16, 
-													  size);
-		// Send encoded audio sample
-		if (!_sym) {
-			_sessionSend->putData(timestamp, data_to_send, compSize);
-		} else {
-			_session->putData(timestamp, data_to_send, compSize);
-		}
-		timestamp += MY_TIMESTAMP;
 		////////////////////////////
 		// Recv session
 		////////////////////////////
-		const AppDataUnit* adu = NULL;
-
-		do {
-			Thread::sleep(5); // in msec.
-			if (!_sym) {
-				adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
-			} else {
-				adu = _session->getData(_session->getFirstTimestamp());
-			}
-		} while (adu == NULL);
-
-		// Decode data with relevant codec
-		CodecDescriptor* cd = new CodecDescriptor (adu->getType());
+		receiveSessionForSpkr(data_for_speakers, data_for_speakers_tmp,
+				spkrVolume);
 		
-		AudioCodec* ac = cd->alloc(adu->getType(), "");
-
-		expandedSize = ac->codecDecode (data_for_speakers,
-									    (unsigned char*) adu->getData(),
-										adu->getSize());
-			
-		// To convert int16 to float32 after decoding
-		data_for_speakers_float = new float32[expandedSize];
-		ac->int16ToFloat32 (data_for_speakers, data_for_speakers_float, 
-				expandedSize);
-		
-		// control volume for speakers
-		data_for_speakers_float_tmp = new float32[expandedSize];
-		for (int j = 0; j < expandedSize; j++) {
-			data_for_speakers_float_tmp[j] = data_for_speakers_float[j] * 
-												_manager->getSpkrVolume()/100;
-		}
-		// Set decoded data to sound device
-		_manager->getAudioDriver()->mydata.dataOut =data_for_speakers_float_tmp;
-
-		// Notify (with a bip) an incoming call when there is already a call 
-		countTime += time->getSecond();
-		if (_manager->getNumberOfCalls() > 0 and _manager->getbRingtone()) {
-			countTime = countTime % 2000;
-			if (countTime < 10 and countTime > 0) {
-				_manager->notificationIncomingCall();
-			}
-		} 
-	  	
-		delete cd;
-		delete adu;
-   
 		// Let's wait for the next transmit cycle
 		Thread::sleep(TimerPort::getTimer());
 		TimerPort::incTimer(frameSize); // 'frameSize' ms
-
-		// Start PortAudio
-		_manager->getAudioDriver()->startStream();
 	}
 		 
 	delete[] data_for_speakers;
-	delete[] data_for_speakers_float;
-	delete[] data_for_speakers_float_tmp;
+	delete[] data_for_speakers_tmp;
 	delete[] data_from_mic;
-	delete[] data_from_mic_int16;
 	delete[] data_from_mic_tmp;
-	delete[] data_mute;
 	delete[] data_to_send;
 	exit();
 }

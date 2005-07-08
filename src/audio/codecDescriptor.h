@@ -33,12 +33,6 @@ typedef enum {
 	PAYLOAD_CODEC_SPEEX = 110
 } codecType;
 
-#define CODEC_ALAW			string("G711a")
-#define CODEC_ULAW			string("G711u")
-#define CODEC_GSM			string("GSM")
-#define CODEC_ILBC			string("iLBC")
-#define CODEC_SPEEX			string("SPEEX")
-
 
 class AudioCodec;
 class CodecDescriptor 

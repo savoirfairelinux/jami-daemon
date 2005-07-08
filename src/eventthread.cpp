@@ -31,7 +31,6 @@ EventThread::EventThread (SipVoIPLink* sip) : Thread ()
 
 EventThread::~EventThread (void) 
 {
-	terminate();
 }
 
 /**

@@ -36,7 +36,7 @@ DTMF::startTone (char code) {
 }
 
 bool 
-DTMF::generateDTMF (float32* buffer, size_t n) {
+DTMF::generateDTMF (int16* buffer, size_t n) {
 	if (!buffer) return false;
 
 	if (currentTone != 0) {

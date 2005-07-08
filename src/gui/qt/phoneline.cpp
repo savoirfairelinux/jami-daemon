@@ -31,6 +31,7 @@ PhoneLine::PhoneLine (void) {
 	b_dial = false;
 	b_ringing = false;
 	_callid = 0;
+	_status = "";
 }
 
 PhoneLine::~PhoneLine (void) {

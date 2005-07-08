@@ -20,40 +20,37 @@
 #ifndef __QT_GUI_MAIN_WINDOW_H__
 #define __QT_GUI_MAIN_WINDOW_H__
 
-#include <qbitmap.h>
 #include <qimage.h>
-#include <qdragobject.h>
-#include <qevent.h>	
 #include <qpixmap.h>
 #include <qpopupmenu.h>
-#include <qpushbutton.h>
-#include <qsettings.h> 
-#include <qthread.h>
 #include <qwidget.h>
 
-#include "../../call.h"
 #include "../../configuration.h"
-#include "../../manager.h"
-#include "../../sipvoiplink.h"
 #include "../../skin.h"
 #include "../guiframework.h"
-#include "../../audio/dtmf.h"
-#include "configurationpanel.h"
-#include "jpushbutton.h"
-#include "mydisplay.h"
-#include "numerickeypad.h"
-#include "point.h"
+#include "configurationpanelui.h"
 #include "phoneline.h"
 #include "transqwidget.h"
 #include "trayicon.h"
 #include "url_input.h"
-#include "vector.h"
-#include "volumecontrol.h"
 
 #define	MAIN_INITIAL_POSITION	20
 #define TEXT_MODE				0
 #define NUM_MODE				1
 
+class Call;
+class DTMF;
+class JPushButton;
+class MyDisplay;
+class Manager;
+class MyTrayIcon;
+class NumericKeypad;
+class PhoneLine;		
+class Point;
+class SipVoIPLink;
+class URL_Input;
+class VolumeControl;
+class Vector;
 ///////////////////////////////////////////////////////////////////////////////
 // Tray Icon class
 ///////////////////////////////////////////////////////////////////////////////
@@ -91,6 +88,7 @@ public:
 	virtual int peerRingingCall (short id);
 	virtual int peerHungupCall (short id);
 	virtual void displayTextMessage (short id, const string& message);
+	virtual void displayErrorText (const string& message);
 	virtual void displayError (const string& error);
 	virtual void displayStatus (const string& status);
 	virtual void displayContext (short id);
@@ -104,6 +102,7 @@ public:
 	// Handle IP-phone user actions
 	int qt_outgoingCall (void); 	
 	int qt_hangupCall (short id);
+	int qt_cancelCall (short id);
 	int qt_answerCall (short id);
 	int qt_onHoldCall (short id);
 	int qt_offHoldCall (short id);
@@ -133,6 +132,11 @@ public:
 	void setCurrentLine (int current);
 
 	/*
+	 * Check if 'id' is the current id
+	 */
+	bool isCurrentId (short id);
+	
+	/*
 	 * Return elapse for call-timer
 	 */
 	int getElapse (void);
@@ -144,7 +148,7 @@ public:
 	/**
 	 * Sets the corresponding pixmap button according to its state.
 	 * Handle operations between lines (on hold, off hold) when you click on
-	 * a line. 
+	 * a line. Manage the different cases which could occur.
 	 * 
 	 * @param	line: number of the current line
 	 */
@@ -246,7 +250,7 @@ private:
 	JPushButton*		dial_button;
 	JPushButton*		mute_button;
 	JPushButton*		dtmf_button;
-	float32*				_buf;
+	int16*				_buf;
 	// Configuration skin file
 	Point*		pt;
 
@@ -360,6 +364,16 @@ private:
 	 * Handle dial tone
 	 */
 	void dialtone (bool var);
+
+	/* 
+	 * Functions of toggle function
+	 */
+	void callIsRinging(int id, int line, int busyLine);
+	void callIsProgressing (int id, int line, int busyLine);
+	void callIsBusy (Call* call, int id, int line, int busyLine);
+	void callIsOnHold(int id, int line, int busyLine);
+	void callIsIncoming (int id, int line, int busyLine);
+	void clickOnFreeLine(int line, int busyLine);
 
 };
 
