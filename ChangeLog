@@ -1,6 +1,7 @@
 Laurielle LEA (8 July 2005) version 0.4
 - Stop program when error opening skin file
 - Divide toggle() of qtguimainwindow.cpp in small functions
+- Add return test
 
 Laurielle LEA (7 July 2005) version 0.4
 - Cleanup audiortp.cpp

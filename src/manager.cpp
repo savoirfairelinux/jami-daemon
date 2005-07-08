@@ -132,7 +132,10 @@ Manager::init (void)
 	_voIPLinkVector->at(DFT_VOIP_LINK)->init();
 	if (get_config_fields_int(SIGNALISATION, AUTO_REGISTER) == YES and 
 			_exist == 1) {
-		registerVoIPLink();
+		if (registerVoIPLink() != 1) {
+			_debug("Registration failed\n");
+            displayErrorText("Check your configuration fields");
+		}
 	} 
 }
 
@@ -404,8 +407,11 @@ Manager::saveConfig (void)
 int 
 Manager::registerVoIPLink (void)
 {
-	_voIPLinkVector->at(DFT_VOIP_LINK)->setRegister();
-	return 1;
+	if (_voIPLinkVector->at(DFT_VOIP_LINK)->setRegister() == 0) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 int 
