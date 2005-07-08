@@ -626,7 +626,7 @@ QtGUIMainWindow::dialtone (bool var) {
 		if (_dialtone != var) {
 			_dialtone = var;
 		}
-		_callmanager->setTonezone(var);
+		_callmanager->setZonetone(var);
 		_callmanager->getTonegenerator()->toneHandle(ZT_TONE_DIALTONE);
 	} else {
         _callmanager->error()->errorName(OPEN_FAILED_DEVICE);

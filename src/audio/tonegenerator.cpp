@@ -56,7 +56,7 @@ void
 ToneThread::run (void) {
 	int k;
 	int spkrVolume;
-	while (mngr->getTonezone()) {
+	while (mngr->getZonetone()) {
 		spkrVolume = mngr->getSpkrVolume();
 		// control volume + mono->stereo
 		for (int j = 0; j < size; j++) {
@@ -260,7 +260,7 @@ ToneGenerator::toneHandle (int idr) {
 			tonethread->start();
 		}
 
-		if (!manager->getTonezone()) {
+		if (!manager->getZonetone()) {
 			manager->getAudioDriver()->stopStream();
 			manager->getAudioDriver()->mainSndRingBuffer()->flush();
 			if (tonethread != NULL) {	
@@ -308,7 +308,7 @@ ToneGenerator::playRingtone (const char *fileName) {
 		tonethread = new ToneThread (manager, (int16*)dst, expandedsize);
 		tonethread->start();
 	}
-	if (!manager->getTonezone()) {
+	if (!manager->getZonetone()) {
 		manager->getAudioDriver()->stopStream();
 		manager->getAudioDriver()->mainSndRingBuffer()->flush();
 		if (tonethread != NULL) {	

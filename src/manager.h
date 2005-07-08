@@ -105,8 +105,8 @@ public:
 
 	CodecDescriptorVector* getCodecDescVector(void);
 
-	inline bool getTonezone (void) { return _tonezone; }
-	inline void setTonezone (bool b) { _tonezone = b; }
+	inline bool getZonetone (void) { return _zonetone; }
+	inline void setZonetone (bool b) { _zonetone = b; }
 
 	/* 
 	 * Attribute a new random id for a new call 
@@ -271,7 +271,7 @@ private:
 	int 	_exist;
 
 	unsigned int _nCodecs;
-	bool         _tonezone;
+	bool         _zonetone;
 	bool		 _congestion;
 	bool		 _ringback;
 	bool		 _ringtone;

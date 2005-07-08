@@ -75,7 +75,7 @@ Manager::Manager (void)
 	_startTime = 0;
 	_endTime = 0;
 	_path = ""; 
-	_tonezone = false;
+	_zonetone = false;
 	_congestion = false;
 	_ringtone = false;
 	_ringback = false;
@@ -580,7 +580,7 @@ Manager::congestion (bool var) {
 		if (_congestion != var) {
 			_congestion = var;
 		}
-		_tonezone = var;
+		_zonetone = var;
 		_tone->toneHandle(ZT_TONE_CONGESTION);
 	} else {
         _error->errorName(OPEN_FAILED_DEVICE);
@@ -593,7 +593,7 @@ Manager::ringback (bool var) {
 		if (_ringback != var) {
 			_ringback = var;
 		}
-		_tonezone = var;
+		_zonetone = var;
 		_tone->toneHandle(ZT_TONE_RINGTONE);
 	} else {
         _error->errorName(OPEN_FAILED_DEVICE);
@@ -604,9 +604,9 @@ void
 Manager::ringtone (bool var) 
 { 
 	if (isDriverLoaded()) {
-		if (getNumberOfCalls() > 1 and _tonezone and var == false) {
+		if (getNumberOfCalls() > 1 and _zonetone and var == false) {
 			// If more than one line is ringing
-			_tonezone = false;
+			_zonetone = false;
 			_tone->playRingtone((_gui->getRingtoneFile()).data());
 		}
 		
@@ -614,7 +614,7 @@ Manager::ringtone (bool var)
 			_ringtone = var;
 		}
 																					
-		_tonezone = var;
+		_zonetone = var;
 		if (getNumberOfCalls() == 1) {
 			// If just one line is ringing
 			_tone->playRingtone((_gui->getRingtoneFile()).data());
