@@ -391,13 +391,15 @@ SipVoIPLink::getEvent (void)
 		case EXOSIP_CALL_NEW: //
 			// Set local random port for incoming call
 			if (!_manager->useStun()) {
+			// If no firewall
 				setLocalPort(RANDOM_LOCAL_PORT);
 			} else {
+			// If there is a firewall
 				if (behindNat() != 0) {
 					setLocalPort(_manager->getFirewallPort());
 				} else {
-					_debug("behindNat function returns 0\n");
-				}
+					return -1;
+				}	
 			}
 			
 			id = _manager->generateNewCallId();
@@ -412,12 +414,19 @@ SipVoIPLink::getEvent (void)
   			osip_from_parse(from, event->remote_uri);
 			name = osip_from_get_displayname(from);
 			_manager->displayTextMessage(id, name);
-			_manager->getCall(id)->setCallerIdName(name);
+			if (_manager->getCall(id) != NULL) {
+				_manager->getCall(id)->setCallerIdName(name);
+			} else {
+				return -1;
+			}
 			_debug("From: %s\n", name);
 			osip_from_free(from);
 			
 			getSipCall(id)->newIncomingCall(event);
-			_manager->incomingCall(id);
+			if (_manager->incomingCall(id) < 0) {
+				_manager->displayErrorText("Incoming call failed");
+				return -1;
+			}
 
 			// Associate an audio port with a call
 			getSipCall(id)->setLocalAudioPort(_localPort);
@@ -437,14 +446,15 @@ SipVoIPLink::getEvent (void)
 			if (id > 0 and !_manager->getCall(id)->isOnHold()
 					   and !_manager->getCall(id)->isOffHold()) {
 				getSipCall(id)->setStandBy(false);
-				getSipCall(id)->answeredCall(event);
-				_manager->peerAnsweredCall(id);
+				if (getSipCall(id)->answeredCall(event) != -1) {
+					_manager->peerAnsweredCall(id);
 
-				// Outgoing call is answered, start the sound channel.
-				if (_audiortp->createNewSession (getSipCall(id)) < 0) {
-					_debug("FATAL: Unable to start sound (%s:%d)\n", 
-							__FILE__, __LINE__);
-					exit(1);
+					// Outgoing call is answered, start the sound channel.
+					if (_audiortp->createNewSession (getSipCall(id)) < 0) {
+						_debug("FATAL: Unable to start sound (%s:%d)\n", 
+								__FILE__, __LINE__);
+						exit(1);
+					}
 				}
 			}
 			break;
@@ -458,7 +468,9 @@ SipVoIPLink::getEvent (void)
 			if (id > 0) {
 				getSipCall(id)->ringingCall(event);
 				_manager->peerRingingCall(id);
-			} 
+			} else {
+				return -1;
+			}
 			break;
 
 		case EXOSIP_CALL_REDIRECTED:
@@ -476,6 +488,8 @@ SipVoIPLink::getEvent (void)
 				}
 				_manager->peerHungupCall(id);
 				deleteSipCall(id);
+			} else {
+				return -1;
 			}	
 			break;
 
@@ -483,13 +497,17 @@ SipVoIPLink::getEvent (void)
 			id = findCallId(event);
 			if (id > 0) {
 				getSipCall(id)->onholdCall(event);
-			}
+			} else {
+			   return -1;
+			}	   
 			break;
 
 		case EXOSIP_CALL_OFFHOLD:
 			id = findCallId(event);
 			if (id > 0) {
 				getSipCall(id)->offholdCall(event);
+			} else {
+				return -1;
 			}
 			break;
 			
@@ -697,7 +715,11 @@ SipVoIPLink::getSipCall (short callid)
 AudioCodec*
 SipVoIPLink::getAudioCodec (short callid)
 {
-	return getSipCall(callid)->getAudioCodec();
+	if (getSipCall(callid)) {
+		return getSipCall(callid)->getAudioCodec();
+	} else {
+		return NULL;
+	}
 }
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
@@ -837,7 +859,12 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
 		}
 	}
 	
-	getSipCall(id)->setLocalAudioPort(_localPort);
+	if (getSipCall(id) != NULL) {
+		getSipCall(id)->setLocalAudioPort(_localPort);
+	} else {
+		return -1;
+	}
+	
 	bzero (port, 64);
 	snprintf (port, 63, "%d", getLocalPort());
 		

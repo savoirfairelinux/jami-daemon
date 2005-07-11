@@ -39,7 +39,7 @@ GuiFramework::outgoingCall (const string& to)
 int 
 GuiFramework::hangupCall (short id)
 {
-	if (_manager->hangupCall(id)) {
+	if (_manager->hangupCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -49,7 +49,7 @@ GuiFramework::hangupCall (short id)
 int 
 GuiFramework::cancelCall (short id)
 {
-	if (_manager->cancelCall(id)) {
+	if (_manager->cancelCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -59,7 +59,7 @@ GuiFramework::cancelCall (short id)
 int 
 GuiFramework::answerCall (short id)
 {
-	if (_manager->answerCall(id)) {
+	if (_manager->answerCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -69,7 +69,7 @@ GuiFramework::answerCall (short id)
 int 
 GuiFramework::onHoldCall (short id)
 {
-	if (_manager->onHoldCall(id)) {
+	if (_manager->onHoldCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -79,7 +79,7 @@ GuiFramework::onHoldCall (short id)
 int 
 GuiFramework::offHoldCall (short id)
 {
-	if (_manager->offHoldCall(id)) {
+	if (_manager->offHoldCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -89,37 +89,29 @@ GuiFramework::offHoldCall (short id)
 int 
 GuiFramework::transferCall (short id, const string& to)
 {
-	if (_manager->transferCall(id, to)) {
+	if (_manager->transferCall(id, to) == 1) {
 		return 1;
 	} else {
 		return 0;
 	}
 }
 
-int 
+void
 GuiFramework::muteOn (short id)
 {
-	if (_manager->muteOn(id)) {
-		return 1;
-	} else {
-		return 0;
-	}
+	_manager->muteOn(id);
 }
 
-int 
+void
 GuiFramework::muteOff (short id)
 {
-	if (_manager->muteOff(id)) {
-		return 1;
-	} else {
-		return 0;
-	}
+	_manager->muteOff(id);
 }
 
 int 
 GuiFramework::refuseCall (short id)
 {
-	if (_manager->refuseCall(id)) {
+	if (_manager->refuseCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;

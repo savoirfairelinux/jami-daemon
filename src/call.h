@@ -106,8 +106,6 @@ public:
 	int onHold  (void);
 	int offHold  (void);
 	int transfer  (const string& to);
-	int muteOn (void);
-	int muteOff (void);
 	int refuse  (void);
 
 private:

@@ -34,7 +34,7 @@ public:
 
 	/* Parent class to child class */
 	virtual int incomingCall (short id) = 0;
-	virtual int peerAnsweredCall (short id) = 0;
+	virtual void peerAnsweredCall (short id) = 0;
 	virtual int peerRingingCall (short id) = 0;
 	virtual int peerHungupCall (short id) = 0;
 	virtual void displayTextMessage (short id, const string& message) = 0;
@@ -55,8 +55,8 @@ public:
 	int onHoldCall (short id);
 	int offHoldCall (short id);
 	int transferCall (short id, const string& to);
-	int muteOn (short id);
-	int muteOff (short id);
+	void muteOn (short id);
+	void muteOff (short id);
 	int refuseCall (short id);
 
 	int saveConfig (void);

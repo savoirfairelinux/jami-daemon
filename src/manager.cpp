@@ -269,6 +269,8 @@ Manager::outgoingCall (const string& to)
 	
 	_debug("Outgoing Call with identifiant %d\n", id);
 	call = getCall(id);
+	if (call == NULL)
+		return 0;
 	
 	call->setStatus(string(TRYING_STATUS));
 	call->setState(Progressing);
@@ -285,9 +287,10 @@ Manager::hangupCall (short id)
 	Call* call;
 
 	call = getCall(id);
+	if (call == NULL)
+		return -1;
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Hungup);
-	call->hangup();
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
@@ -295,7 +298,7 @@ Manager::hangupCall (short id)
 	if (getbRingback()) {
 		ringback(false);
 	}
-	return 1;
+	return call->hangup();
 }
 
 int
@@ -304,9 +307,10 @@ Manager::cancelCall (short id)
 	Call* call;
 
 	call = getCall(id);
+	if (call == NULL)
+		return -1;
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Hungup);
-	call->cancel();
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
@@ -314,7 +318,7 @@ Manager::cancelCall (short id)
 	if (getbRingback()) {
 		ringback(false);
 	}
-	return 1;
+	return call->cancel();
 }
 
 int 
@@ -323,11 +327,12 @@ Manager::answerCall (short id)
 	Call* call;
 
 	call = getCall(id);
+	if (call == NULL)
+		return -1;
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Answered);
-	call->answer();
 	ringtone(false);
-	return 1;
+	return call->answer();
 }
 
 int 
@@ -335,10 +340,11 @@ Manager::onHoldCall (short id)
 {
 	Call* call;
 	call = getCall(id);
+	if (call == NULL)
+		return -1;
 	call->setStatus(string(ONHOLD_STATUS));
 	call->setState(OnHold);
-	call->onHold();
-	return 1;
+	return call->onHold();
 }
 
 int 
@@ -346,10 +352,11 @@ Manager::offHoldCall (short id)
 {
 	Call* call;
 	call = getCall(id);
+	if (call == NULL)
+		return -1;
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(OffHold);
-	call->offHold();	
-	return 1;
+	return call->offHold();	
 }
 
 int 
@@ -357,32 +364,37 @@ Manager::transferCall (short id, const string& to)
 {
 	Call* call;
 	call = getCall(id);
+	if (call == NULL)
+		return -1;
 	call->setStatus(string(TRANSFER_STATUS));
 	call->setState(Transfered);
-	call->transfer(to);
-	return 1;
+	if (call->transfer(to) != 0) {
+		return -1;
+	} else {
+		return 1;
+	}
 }
 
-int 
+void 
 Manager::muteOn (short id)
 {
 	Call* call;
 	call = getCall(id);
+	if (call == NULL)
+		return;
 	call->setStatus(string(MUTE_ON_STATUS));
 	call->setState(MuteOn);
-	call->muteOn();
-	return 1;
 }
 
-int 
+void 
 Manager::muteOff (short id)
 {
 	Call* call;
 	call = getCall(id);
+	if (call == NULL)
+		return;
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(MuteOff);
-	call->muteOff();
-	return 1;
 }
 
 int 
@@ -390,12 +402,13 @@ Manager::refuseCall (short id)
 {
 	Call *call;
 	call = getCall(id);
+	if (call == NULL)
+		return -1;
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Refused);	
-	call->refuse();
 	ringtone(false);
 	delete call;
-	return 1;
+	return call->refuse();
 }
 
 int
@@ -476,17 +489,18 @@ Manager::incomingCall (short id)
 {
 	Call* call;
 	call = getCall(id);
+	if (call == NULL)
+		return -1;
 	call->setType(Incoming);
 	call->setStatus(string(RINGING_STATUS));
 	call->setState(Progressing);
 	ringtone(true);
-	_gui->incomingCall(id);
 	displayStatus(RINGING_STATUS);
-	return 1;
+	return _gui->incomingCall(id);
 }
 
 // L'autre personne a repondu
-int 
+void 
 Manager::peerAnsweredCall (short id)
 {
 	Call* call;
@@ -501,7 +515,6 @@ Manager::peerAnsweredCall (short id)
 	if (isCurrentId(id)) {
 		_gui->peerAnsweredCall(id);
 	}
-	return 1;
 }
 
 int 

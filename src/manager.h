@@ -125,6 +125,9 @@ public:
 	 */
 	void deleteCall	(short id);
 	
+	/*
+	 * Functions which occur with a user's action
+	 */
 	int outgoingCall (const string& to);
 	int hangupCall (short id);
 	int cancelCall (short id);
@@ -132,8 +135,8 @@ public:
 	int onHoldCall (short id);
 	int offHoldCall (short id);
 	int transferCall (short id, const string& to);
-	int muteOn (short id);
-	int muteOff (short id);
+	void muteOn (short id);
+	void muteOff (short id);
 	int refuseCall (short id);
 
 	int saveConfig (void);
@@ -152,7 +155,7 @@ public:
 	
 
 	int incomingCall (short id);
-	int peerAnsweredCall (short id);
+	void peerAnsweredCall (short id);
 	int peerRingingCall (short id);
 	int peerHungupCall (short id);
 	void displayTextMessage (short id, const string& message);
@@ -168,7 +171,11 @@ public:
 	 */
 	void ringback (bool var);
 
+	/*
+	 * Handle played music when an incoming call occurs
+	 */
 	void ringtone (bool var);
+
 	void congestion (bool var);
 
 	/*
@@ -199,6 +206,9 @@ public:
 	inline bool isDriverLoaded (void) { return _loaded; }
 	inline void loaded (bool l) { _loaded = l; }
 
+	/* 
+	 * Functions about audio device
+	 */
 	static device_t deviceList (int);
 	static int deviceCount (void);
 	static bool defaultDevice (int);

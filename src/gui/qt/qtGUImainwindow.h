@@ -84,7 +84,7 @@ public:
 	
 	// Reimplementation of virtual functions
 	virtual int incomingCall (short id);
-	virtual int peerAnsweredCall (short id);
+	virtual void peerAnsweredCall (short id);
 	virtual int peerRingingCall (short id);
 	virtual int peerHungupCall (short id);
 	virtual void displayTextMessage (short id, const string& message);
@@ -366,13 +366,13 @@ private:
 	void dialtone (bool var);
 
 	/* 
-	 * Functions of toggle function
+	 * Functions used in toggle function
 	 */
 	void callIsRinging(int id, int line, int busyLine);
 	void callIsProgressing (int id, int line, int busyLine);
-	void callIsBusy (Call* call, int id, int line, int busyLine);
-	void callIsOnHold(int id, int line, int busyLine);
-	void callIsIncoming (int id, int line, int busyLine);
+	int callIsBusy (Call* call, int id, int line, int busyLine);
+	int callIsOnHold(int id, int line, int busyLine);
+	int callIsIncoming (int id, int line, int busyLine);
 	void clickOnFreeLine(int line, int busyLine);
 
 };

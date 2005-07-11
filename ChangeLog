@@ -1,3 +1,7 @@
+Laurielle LEA (11 July 2005) version 0.4
+- Check functions return.
+- Remove unused mute functions
+
 Laurielle LEA (8 July 2005) version 0.4
 - Stop program when error opening skin file
 - Divide toggle() of qtguimainwindow.cpp in small functions

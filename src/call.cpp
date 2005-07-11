@@ -307,18 +307,6 @@ Call::transfer  (const string& to)
 }
 
 int 
-Call::muteOn (void)
-{
-	return 1;
-}
-
-int 
-Call::muteOff (void)
-{
-	return 1;
-}
-
-int 
 Call::refuse  (void)
 {
 	int i = _voIPLink->refuse(_id);
