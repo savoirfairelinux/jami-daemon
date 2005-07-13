@@ -24,9 +24,9 @@
  
 #include <iostream>
 
+#include "global.h"
 #include "audio/audiocodec.h"
 #include "audio/codecDescriptor.h"
-#include "global.h"
 #include "sipcall.h"
 
 using namespace std;

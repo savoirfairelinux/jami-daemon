@@ -19,8 +19,8 @@
 
 #include <string>
 
-#include "error.h"
 #include "global.h"
+#include "error.h"
 #include "manager.h"
   
 using namespace std;

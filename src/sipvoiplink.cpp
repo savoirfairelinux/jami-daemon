@@ -30,15 +30,15 @@
 #include <string>
 #include <vector>
 
+#include "global.h"
+#include "sipvoiplink.h"
 #include "audio/audiortp.h"
 #include "audio/codecDescriptor.h"
 #include "call.h"
 #include "error.h"
 #include "eventthread.h"
-#include "global.h"
 #include "manager.h"
 #include "sipcall.h"
-#include "sipvoiplink.h"
 #include "user_cfg.h"
 #include "voIPLink.h"
  

@@ -18,7 +18,6 @@
  */
 
 
-#include "global.h"
 #include "skin.h"
 
 #ifndef PROGSHAREDIR

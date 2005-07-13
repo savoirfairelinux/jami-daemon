@@ -7,9 +7,9 @@
 #include <iostream>
 #include <string>
 
+#include "global.h"
 #include "configitem.h"
 #include "configurationtree.h"
-#include "global.h"
 
 using namespace std;
 

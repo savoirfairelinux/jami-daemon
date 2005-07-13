@@ -204,10 +204,6 @@ QtGUIMainWindow::deleteButtons (void) {
 	delete  phoneKey_transf;
 	delete  phoneKey_msg;
 	delete  phoneKey_conf;
-	delete  phoneKey_line0;
-	delete  phoneKey_line1;
-	delete  phoneKey_line2;
-	delete  phoneKey_line3;
 	delete  reduce_button;
 	delete  quit_button;
 	delete  addr_book_button;
