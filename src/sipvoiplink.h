@@ -55,7 +55,6 @@ class AudioCodec;
 class AudioRtp;
 class CodecDescriptor;
 class EventThread;
-class Manager;
 class SipCall;
 
 typedef vector<SipCall*, allocator<SipCall*> > SipCallVector;
@@ -63,7 +62,7 @@ typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVe
 
 class SipVoIPLink : public VoIPLink {
 public:
-	SipVoIPLink (short id, Manager* manager);
+	SipVoIPLink (short id);
 	virtual ~SipVoIPLink (void);
 	
 	virtual int init (void);
@@ -124,7 +123,6 @@ private:
 	short findCallIdWhenRinging (void);
 	bool isInRtpmap (int index, int payload, CodecDescriptorVector* cdv);
 	
-	Manager* 		_manager;
 	EventThread* 	_evThread;
 	SipCallVector* 	_sipcallVector;
 	AudioRtp* 		_audiortp;

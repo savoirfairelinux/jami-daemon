@@ -3054,7 +3054,7 @@ AC_DEFUN([AC_CHECK_COMPILERS],
 
   AC_PROG_CXX
 
-  KDE_CHECK_FOR_BAD_COMPILER
+  dnl KDE_CHECK_FOR_BAD_COMPILER
 
   if test "$GXX" = "yes" || test "$CXX" = "KCC"; then
     if test "$kde_use_debug_code" != "no"; then

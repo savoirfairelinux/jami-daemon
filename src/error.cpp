@@ -25,8 +25,7 @@
   
 using namespace std;
 
-Error::Error (Manager *mngr){
-	_mngr = mngr;
+Error::Error (){
 	issetError = 0;
 } 
 
@@ -36,31 +35,31 @@ Error::errorName (Error_enum num_name) {
 	switch (num_name){
 		// Handle opening device errors
 		case OPEN_FAILED_DEVICE:
-			_mngr->displayErrorText("Open device failed ");
+			Manager::instance().displayErrorText("Open device failed ");
 			issetError = 2; 
 			break;
 			
 		// Handle setup errors
 		case HOST_PART_FIELD_EMPTY:
-			_mngr->displayError("Fill host part field");
+			Manager::instance().displayError("Fill host part field");
 			issetError = 2;
 			break;	
 		case USER_PART_FIELD_EMPTY:
-			_mngr->displayError("Fill user part field");
+			Manager::instance().displayError("Fill user part field");
 			issetError = 2;
 			break;
 		case PASSWD_FIELD_EMPTY:
-			_mngr->displayError("Fill password field");
+			Manager::instance().displayError("Fill password field");
 			issetError = 2;
 			break; 
 
 		// Handle sip uri 
 		case FROM_ERROR:
-			_mngr->displayError("Error for 'From' header");
+			Manager::instance().displayError("Error for 'From' header");
 			issetError = 1;
 			break;
 		case TO_ERROR:
-			_mngr->displayError("Error for 'To' header");
+			Manager::instance().displayError("Error for 'To' header");
 			issetError = 1;
 			break;
 

@@ -35,7 +35,7 @@ AM_DISABLE_LIBRARIES
 AC_PROG_LIBTOOL
 AC_CHECK_COMPILERS
 
-CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS "
+CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS"
 
 SFLPHONE_CXXFLAGS=""
 
@@ -81,7 +81,10 @@ SFLPHONE_LIBS="$SFLPHONE_LIBS $libosip2_LIBS"
 if test $ac_cv_header_eXosip_eXosip_h = no; then
    AC_MSG_ERROR([*** missing eXipsip/eXosip.h. You need a working eXosip installation. See http://savannah.nongnu.org/projects/exosip/])
 fi
-SFLPHONE_LIBS="$SFLPHONE_LIBS -leXosip"
+libexosip_LIBS="-leXosip "
+SFLPHONE_LIBS="$SFLPHONE_LIBS $libexosip_LIBS"
+
+AC_SUBST(LIBQT)
 
 dnl if test $ac_cv_header_gsm_h = no; then
 dnl    AC_MSG_ERROR([*** missing gsm.h. You need a working GSM 06.10 lossy speech compression installation. See http://kbs.cs.tu-berlin.de/~jutta/toast.html])
@@ -109,16 +112,16 @@ AM_CONDITIONAL(MAINTENER_CODE, test x$maintener = xyes)
 if test $ac_cv_header_portaudio_h = no; then
    AC_MSG_ERROR([*** missing portaudio.h. You need a working PortAudio installation. See http://www.portaudio.com])
 fi
-SFLPHONE_LIBS="$SFLPHONE_LIBS -lportaudio"
-CXXFLAGS="$CXXFLAGS -DAUDIO_PORTAUDIO"
-
+portaudio_LIBS="-lportaudio "
+portaudio_CFLAGS="-DAUDIO_PORTAUDIO "
+SFLPHONE_LIBS="$SFLPHONE_LIBS $portaudio_LIBS"
+SFLPHONE_CXXFLAGS=="$SFLPHONE_CXXFLAGS $portaudio_CFLAGS"
+AC_SUBST(portaudio_CFLAGS)
+AC_SUBST(portaudio_LIB)
 
 AC_SUBST(SFLPHONE_CXXFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
-CXXFLAGS="$CXXFLAGS $SFLPHONE_CXXFLAGS"
 	
-
-LIBS="$LIBS $SFLPHONE_LIBS $LIBQT"
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(

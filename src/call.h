@@ -48,12 +48,11 @@ enum CallType {
 };
 
 
-class Manager;
 class VoIPLink;
 
 class Call {
 public:
-	Call(Manager* manager, short id, CallType type, VoIPLink* voiplink);
+	Call(short id, CallType type, VoIPLink* voiplink);
 	
 	~Call(void);
 	
@@ -111,7 +110,6 @@ public:
 private:
 	void initConstructor (void);
 	
-	Manager* _manager;
 	VoIPLink* _voIPLink;
 	
 	short _id;

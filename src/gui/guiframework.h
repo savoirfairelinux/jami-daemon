@@ -26,10 +26,9 @@
 #include <string>
 using namespace std;
 
-class Manager;
 class GuiFramework {
 public:
-	GuiFramework (Manager* manager);
+	GuiFramework ();
 	virtual ~GuiFramework (void);
 
 	/* Parent class to child class */
@@ -69,8 +68,6 @@ public:
 protected:
 	string _message;
 
-private:	
-	Manager* _manager;
 };
 
 #endif // __GUI_FRAMEWORK_H__

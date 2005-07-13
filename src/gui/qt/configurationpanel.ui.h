@@ -65,13 +65,13 @@ void ConfigurationPanel::init()
     const char* hostapiname;
  
     int top = 0;
-    device_t devStruct;
+    AudioDevice devStruct;
    
 	portaudio::AutoSystem autoSys;
 	// For each device
-    for (int i = 0; i < Manager::deviceCount(); i++) {
+    for (int i = 0; i < Manager::instance().deviceCount(); i++) {
 		// Fill the device structure
-    	devStruct = Manager::deviceList(i);
+    	devStruct = Manager::instance().deviceList(i);
    		hostapiname = devStruct.hostApiName;
         devicename = devStruct.deviceName;
  
@@ -89,7 +89,7 @@ void ConfigurationPanel::init()
  		QToolTip::add(device , devicename );
      
         top += 30;
-   		if (Manager::defaultDevice(i)) {
+   		if (Manager::instance().defaultDevice(i)) {
          	device->setChecked(true);   
         }
     }

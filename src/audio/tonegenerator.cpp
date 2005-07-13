@@ -41,8 +41,7 @@ int AMPLITUDE = 8192;
 ///////////////////////////////////////////////////////////////////////////////
 // ToneThread implementation
 ///////////////////////////////////////////////////////////////////////////////
-ToneThread::ToneThread (Manager *mngr, int16 *buf, int size) : Thread () {
-	this->mngr = mngr;
+ToneThread::ToneThread (int16 *buf, int size) : Thread () {
 	this->buffer = buf;  
 	this->size = size;
 	this->buf_ctrl_vol = new int16[size*CHANNELS];
@@ -56,19 +55,19 @@ void
 ToneThread::run (void) {
 	int k;
 	int spkrVolume;
-	while (mngr->getZonetone()) {
-		spkrVolume = mngr->getSpkrVolume();
+	while (Manager::instance().getZonetone()) {
+	  spkrVolume = Manager::instance().getSpkrVolume();
 		// control volume + mono->stereo
 		for (int j = 0; j < size; j++) {
 			k = j*2;
 			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
 		}
 		
-		if (mngr->getAudioDriver()->mainSndRingBuffer()->Len() == 0) {
-			mngr->getAudioDriver()->mainSndRingBuffer()->Put(buf_ctrl_vol, 
+		if (Manager::instance().getAudioDriver()->mainSndRingBuffer().Len() == 0) {
+			Manager::instance().getAudioDriver()->mainSndRingBuffer().Put(buf_ctrl_vol, 
 					SAMPLES_SIZE(size));
 		}
-		mngr->getAudioDriver()->startStream();
+		Manager::instance().getAudioDriver()->startStream();
 	}
 }
 
@@ -76,20 +75,12 @@ ToneThread::run (void) {
 // ToneGenerator implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-ToneGenerator::ToneGenerator (Manager *mngr) {	
-	this->initTone();
-	this->manager = mngr;
-	buf = new int16[SIZEBUF];	
-	tonethread = NULL;
-}
-
 ToneGenerator::ToneGenerator () {	
-	this->initTone();	
+	this->initTone();
 	tonethread = NULL;
 }
 
 ToneGenerator::~ToneGenerator (void) {
-	delete[] buf;
 	delete tonethread;
 }
 
@@ -256,13 +247,13 @@ ToneGenerator::toneHandle (int idr) {
 
 		// New thread for the tone
 		if (tonethread == NULL) {
-			tonethread = new ToneThread (manager, buf, totalbytes);
+			tonethread = new ToneThread (buf, totalbytes);
 			tonethread->start();
 		}
 
-		if (!manager->getZonetone()) {
-			manager->getAudioDriver()->stopStream();
-			manager->getAudioDriver()->mainSndRingBuffer()->flush();
+		if (!Manager::instance().getZonetone()) {
+			Manager::instance().getAudioDriver()->stopStream();
+			Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
 			if (tonethread != NULL) {	
 				delete tonethread;
 				tonethread = NULL;
@@ -305,12 +296,12 @@ ToneGenerator::playRingtone (const char *fileName) {
 	expandedsize = ulaw->codecDecode (dst, (unsigned char *)src, length);
 
 	if (tonethread == NULL) {
-		tonethread = new ToneThread (manager, (int16*)dst, expandedsize);
+		tonethread = new ToneThread ((int16*)dst, expandedsize);
 		tonethread->start();
 	}
-	if (!manager->getZonetone()) {
-		manager->getAudioDriver()->stopStream();
-		manager->getAudioDriver()->mainSndRingBuffer()->flush();
+	if (!Manager::instance().getZonetone()) {
+		Manager::instance().getAudioDriver()->stopStream();
+		Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
 		if (tonethread != NULL) {	
 			delete tonethread;
 			tonethread = NULL;

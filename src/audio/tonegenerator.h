@@ -51,12 +51,11 @@ using namespace ost;
 ///////////////////////////////////////////////////////////////////////////////
 class ToneThread : public Thread {
 public:
-	ToneThread (Manager *, int16 *, int);
-	~ToneThread (void);
+	ToneThread (int16 *, int);
+	virtual ~ToneThread (void);
 
 	virtual void run ();
 private:
-	Manager*	mngr;
 	int16*	buffer;
 	int16*	buf_ctrl_vol;
 	int			size;
@@ -67,7 +66,6 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 class ToneGenerator {
 public:
-	ToneGenerator (Manager *);
 	ToneGenerator ();
 	~ToneGenerator (void);
 	
@@ -86,7 +84,7 @@ public:
 	int time;
 	int totalbytes;
 
-	int16   	*buf;
+	int16   	buf[SIZEBUF];
 private:
 	/*
 	 * Initialisation of the supported tones according to the countries.
@@ -102,7 +100,6 @@ private:
 	 */
 	int		 	contains(const string& str, char c);
 	
-	Manager*	manager;
 	ToneThread*	tonethread;
 	
 };

@@ -38,23 +38,20 @@
 
 int
 main (int argc, char **argv) {
-	Manager* manager;
-	Config::setTree(new ConfigurationTree());	
-	manager = new Manager();
-	GuiFramework *GUI;
+  Config::setTree(new ConfigurationTree());	
+  GuiFramework *GUI;
 
 #if defined(GUI_QT)
-		QApplication a(argc, argv);
-		GUI = new QtGUIMainWindow (0, 0 ,
-									Qt::WDestructiveClose |
-									Qt::WStyle_Customize |
-									Qt::WStyle_NoBorder,
-									manager);
-		manager->setGui(GUI);
-		manager->init();		
+  QApplication a(argc, argv);
+  GUI = new QtGUIMainWindow (0, 0 ,
+			     Qt::WDestructiveClose |
+			     Qt::WStyle_Customize |
+			     Qt::WStyle_NoBorder);
+  Manager::instance().setGui(GUI);
+  Manager::instance().init();		
 		
-		a.setMainWidget((QtGUIMainWindow*)GUI);
-		return a.exec();
+  a.setMainWidget((QtGUIMainWindow*)GUI);
+  return a.exec();
 #endif
 }
 

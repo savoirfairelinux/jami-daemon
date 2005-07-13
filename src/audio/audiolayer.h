@@ -26,6 +26,7 @@
 
 
 #include "../global.h"
+#include "ringbuffer.h"
 
 #define FRAME_PER_BUFFER	160
 #define MIC_CHANNELS 		2 // 1=mono 2=stereo
@@ -34,37 +35,35 @@
 
 
 class RingBuffer;
-class Manager;
+
 
 class AudioLayer {
 public:
-	AudioLayer (Manager*);
+	AudioLayer();
 	~AudioLayer (void);
 
-	void	initDevice		(void);
 	void	openDevice 		(int);
 	void 	startStream		(void);
 	void 	stopStream		(void);
 	void    sleep			(int);
-	int		isStreamActive	(void);
-	int		isStreamStopped	(void);
+	bool    isStreamActive	        (void);
+	bool    isStreamStopped	        (void);
 
 	int audioCallback (const void *, void *, unsigned long,
 			   const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
 
-	inline RingBuffer* urgentRingBuffer(void) { return _urgentRingBuffer; }
-	inline RingBuffer* mainSndRingBuffer(void) { return _mainSndRingBuffer; }
-	inline RingBuffer* micRingBuffer(void) { return _micRingBuffer; }
+	inline RingBuffer &urgentRingBuffer(void) { return _urgentRingBuffer; }
+	inline RingBuffer &mainSndRingBuffer(void) { return _mainSndRingBuffer; }
+	inline RingBuffer &micRingBuffer(void) { return _micRingBuffer; }
 
 private:
 	void	closeStream	(void);
-	Manager*	_manager;
-	RingBuffer* _urgentRingBuffer;
-	RingBuffer* _mainSndRingBuffer;
-	RingBuffer* _micRingBuffer;
+	RingBuffer _urgentRingBuffer;
+	RingBuffer _mainSndRingBuffer;
+	RingBuffer _micRingBuffer;
 
 	portaudio::MemFunCallbackStream<AudioLayer> *_stream;
-	portaudio::AutoSystem *autoSys;
+	portaudio::AutoSystem autoSys;
 };
 
 #endif // _AUDIO_LAYER_H_

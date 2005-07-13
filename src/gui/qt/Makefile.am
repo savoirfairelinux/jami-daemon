@@ -33,10 +33,11 @@ libsflphoneqt_la_SOURCES = \
 CLEANFILES = \
 	$(BUILT_SOURCES)
 
-libsflphoneqt_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
+libsflphoneqt_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(portaudio_CFLAGS)
+libsflphoneqt_la_LIBADD = $(portaudio_LIBS)
 
 KDE_CXXFLAGS = $(USE_EXCEPTIONS)
-AM_CPPFLAGS = -I../../audio/pacpp/include/ $(QT_INCLUDES) $(X_INCLUDES) 
+AM_CPPFLAGS = -I../../audio/pacpp/include/ $(QT_INCLUDES) $(X_INCLUDES) $(libccext2_CFLAGS) $(portaudio_CFLAGS)
 
 
 %.h: %.ui

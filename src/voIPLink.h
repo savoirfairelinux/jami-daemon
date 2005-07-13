@@ -31,10 +31,9 @@ enum VoIPLinkType {
 
 class AudioCodec;
 class Call;
-class Manager;
 class VoIPLink {
 public:
-	VoIPLink (short id, Manager* manager);
+	VoIPLink (short id);
 	virtual ~VoIPLink (void);
 
 	virtual int getEvent (void) = 0;
@@ -75,7 +74,6 @@ protected:
 private:
 	void initConstructor(void);
 	
-	Manager* _manager;
 	short _id;
 	VoIPLinkType _type;
 	string _fullname;

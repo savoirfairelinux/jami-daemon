@@ -24,14 +24,14 @@
 #include <iostream>
 #include <string>
 
+#include "../global.h"
+#include "../manager.h"
 #include "audiocodec.h"
 #include "audiortp.h"
 #include "audiolayer.h"
 #include "codecDescriptor.h"
 #include "ringbuffer.h"
 #include "../configuration.h"
-#include "../manager.h"
-#include "../global.h"
 #include "../user_cfg.h"
 #include "../sipcall.h"
 #include "../../stund/stun.h"
@@ -43,9 +43,17 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp                                                          
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtp::AudioRtp (Manager *manager) {
-	_manager = manager;
+AudioRtp::AudioRtp () {
+	string svr;
+	
 	_RTXThread = NULL;
+	
+	if (!Manager::instance().useStun() &&
+	    get_config_fields_str(SIGNALISATION, PROXY).empty()) {
+	  svr = get_config_fields_str(SIGNALISATION, PROXY);
+	} else {
+	  svr = get_config_fields_str(SIGNALISATION, HOST_PART);
+	}
 }
 
 AudioRtp::~AudioRtp (void) {
@@ -56,18 +64,19 @@ int
 AudioRtp::createNewSession (SipCall *ca) {
 	// Start RTP Send/Receive threads
 	ca->enable_audio = 1;
-	if (!_manager->useStun()) { 
+	if (!Manager::instance().useStun()) { 
 		_symetric = false;
 	} else {
 		_symetric = true;
 	}
 
-	_RTXThread = new AudioRtpRTX (ca, _manager->getAudioDriver(), 
-								_manager, _symetric);
+	_RTXThread = new AudioRtpRTX (ca, 
+				      Manager::instance().getAudioDriver(), 
+				      _symetric);
 	
 	// Start PortAudio
-	_manager->getAudioDriver()->micRingBuffer()->flush();
-	_manager->getAudioDriver()->startStream();
+	Manager::instance().getAudioDriver()->micRingBuffer().flush();
+	Manager::instance().getAudioDriver()->startStream();
 	
 	if (_RTXThread->start() != 0) {
 		return -1;
@@ -89,18 +98,18 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 		}
 		
 		// Stop portaudio and flush ringbuffer
-		_manager->getAudioDriver()->stopStream();
-		_manager->getAudioDriver()->mainSndRingBuffer()->flush();
+		Manager::instance().getAudioDriver()->stopStream();
+		Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, 
-		Manager *mngr, bool sym) {
+AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, 
+			  AudioLayer* driver, 
+			  bool sym) {
 	time = new Time();
-	_manager = mngr;
 	_ca = sipcall;
 	_sym =sym;
 	_audioDevice = driver;
@@ -197,14 +206,14 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
 	int k; 
 	int compSize; 
 	
-	if (_manager->getCall(_ca->getId())->isOnMute() or
-				!_manager->isCurrentId(_ca->getId())) {
+	if (Manager::instance().getCall(_ca->getId())->isOnMute() or
+				!Manager::instance().isCurrentId(_ca->getId())) {
 		// Mute :send 0's over the network.
-		_manager->getAudioDriver()->micRingBuffer()->Get(data_from_mic, 
+		Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic, 
 			RTP_FRAMES2SEND*2*sizeof(int16));
 	} else {
 		// Control volume for micro
-		int availFromMic = _manager->getAudioDriver()->micRingBuffer()->AvailForGet(); 
+		int availFromMic = Manager::instance().getAudioDriver()->micRingBuffer().AvailForGet(); 
 		int bytesAvail;
 		if (availFromMic < (int)RTP_FRAMES2SEND) { 
 			bytesAvail = availFromMic; 
@@ -213,7 +222,7 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
 		}
 
 		// Get bytes from micRingBuffer to data_from_mic
-		_manager->getAudioDriver()->micRingBuffer()->Get(data_from_mic, 
+		Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic, 
 				SAMPLES_SIZE(bytesAvail));
 		// control volume and stereo->mono
 		for (int j = 0; j < RTP_FRAMES2SEND; j++) {
@@ -272,20 +281,20 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 	}
 
 	// If the current call is the call which is answered
-	if (_manager->isCurrentId(_ca->getId())) {
+	if (Manager::instance().isCurrentId(_ca->getId())) {
 		// Set decoded data to sound device
-		_manager->getAudioDriver()->mainSndRingBuffer()->Put(data_for_speakers_tmp, SAMPLES_SIZE(RTP_FRAMES2SEND));
+		Manager::instance().getAudioDriver()->mainSndRingBuffer().Put(data_for_speakers_tmp, SAMPLES_SIZE(RTP_FRAMES2SEND));
 	}
 	
 	// Notify (with a bip) an incoming call when there is already a call 
 	countTime += time->getSecond();
-	if (_manager->getNumberOfCalls() > 0 and _manager->getbRingtone()) {
+	if (Manager::instance().getNumberOfCalls() > 0 and Manager::instance().getbRingtone()) {
 		countTime = countTime % 2000;
 		if (countTime < 10 and countTime > 0) {
-			_manager->notificationIncomingCall();
+			Manager::instance().notificationIncomingCall();
 		}
 	} 
-	_manager->getAudioDriver()->startStream();
+	Manager::instance().getAudioDriver()->startStream();
 	
 	delete cd;
 	delete adu;
@@ -326,9 +335,8 @@ AudioRtpRTX::run (void) {
 	}
 	
 	while (_ca->enable_audio != -1) {
-		// Store volume values
-		micVolume = _manager->getMicroVolume();
-	    spkrVolume = _manager->getSpkrVolume();
+		micVolume = Manager::instance().getMicroVolume();
+	    spkrVolume = Manager::instance().getSpkrVolume();
 
 		////////////////////////////
 		// Send session

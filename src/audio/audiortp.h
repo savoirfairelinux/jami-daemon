@@ -32,7 +32,6 @@ using namespace ost;
 #define SIZEDATA		SAMPLES_SIZE(RTP_FRAMES2SEND)
 
 class AudioLayer;
-class Manager;
 class SipCall;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,7 +39,7 @@ class SipCall;
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtpRTX : public Thread, public TimerPort {
 public:
-	AudioRtpRTX (SipCall *, AudioLayer*, Manager *, bool);
+	AudioRtpRTX (SipCall *, AudioLayer*, bool);
 	~AudioRtpRTX();
 
 	Time *time; 	// For incoming call notification 
@@ -52,7 +51,6 @@ private:
 	RTPSession*				_sessionSend;
 	RTPSession*				_sessionRecv;
 	SymmetricRTPSession* 	_session;
-	Manager*				_manager;
 	bool			 		_sym;
 
 	void initAudioRtpSession (void);
@@ -65,15 +63,14 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtp {
 public:
-	AudioRtp (Manager *);
-	~AudioRtp (void);
+	AudioRtp();
+	~AudioRtp();
 
 	int 			createNewSession (SipCall *);
 	void			closeRtpSession	 (SipCall *);
 
 private:
 	AudioRtpRTX*	_RTXThread;
-	Manager*		_manager;
 	bool			_symetric;
 };
 

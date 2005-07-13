@@ -24,113 +24,113 @@
 #include <string.h>
 
 #include "audiolayer.h"
-#include "ringbuffer.h"
 #include "../error.h"
 #include "../global.h"
 #include "../manager.h"
 
 using namespace std;
 
-AudioLayer::AudioLayer (Manager* manager) {
-	_manager = manager;
-	initDevice();
-
-	_urgentRingBuffer = new RingBuffer(SIZEBUF);
-	_mainSndRingBuffer = new RingBuffer(SIZEBUF);
-	_micRingBuffer = new RingBuffer(SIZEBUF);
-}
+AudioLayer::AudioLayer () 
+  : _urgentRingBuffer(SIZEBUF)
+  , _mainSndRingBuffer(SIZEBUF)
+  , _micRingBuffer(SIZEBUF)
+  , _stream(NULL)
+{}
 
 // Destructor
 AudioLayer::~AudioLayer (void) 
 {
-	closeStream();
-	autoSys->terminate();
-	
-	delete autoSys;
-	delete _urgentRingBuffer;
-	delete _mainSndRingBuffer;
-	delete _micRingBuffer;
-
+  closeStream();
 }
 
 void
-AudioLayer::initDevice (void) {
-	autoSys = new portaudio::AutoSystem();
-	autoSys->initialize();
-} 
-
-void
-AudioLayer::closeStream (void) {
+AudioLayer::closeStream (void) 
+{
+  if(_stream) {
     _stream->close();
+    delete _stream;
+  }
 }
 
 void
 AudioLayer::openDevice (int index) 
 {
-	// Set up the System:
-	portaudio::System &sys = portaudio::System::instance();
-
-	// Set up the parameters required to open a (Callback)Stream:
-	portaudio::DirectionSpecificStreamParameters outParams(
-			sys.deviceByIndex(index), 2, portaudio::INT16, true, 
-			sys.deviceByIndex(index).defaultLowOutputLatency(), NULL);
+  closeStream();
+  // Set up the parameters required to open a (Callback)Stream:
+  portaudio::DirectionSpecificStreamParameters 
+    outParams(portaudio::System::instance().deviceByIndex(index), 
+	      2, portaudio::INT16, true, 
+	      portaudio::System::instance().deviceByIndex(index).defaultLowOutputLatency(), 
+	      NULL);
 	
-	portaudio::DirectionSpecificStreamParameters inParams(
-			sys.deviceByIndex(index), 2, portaudio::INT16, true, 
-			sys.deviceByIndex(index).defaultLowInputLatency(), NULL);
+  portaudio::DirectionSpecificStreamParameters 
+    inParams(portaudio::System::instance().deviceByIndex(index), 
+	     2, portaudio::INT16, true, 
+	     portaudio::System::instance().deviceByIndex(index).defaultLowInputLatency(), 
+	     NULL);
 	 
-	portaudio::StreamParameters const params(inParams, outParams, 
-			SAMPLING_RATE, FRAME_PER_BUFFER, paNoFlag);
+  portaudio::StreamParameters const params(inParams, outParams, 
+					   SAMPLING_RATE, FRAME_PER_BUFFER, paNoFlag);
 		  
-	// Create (and open) a new Stream, using the AudioLayer::audioCallback
-	_stream = new portaudio::MemFunCallbackStream<AudioLayer>(
-			params, *this, &AudioLayer::audioCallback);
+  // Create (and open) a new Stream, using the AudioLayer::audioCallback
+  _stream = new portaudio::MemFunCallbackStream<AudioLayer>(params, 
+							    *this, 
+							    &AudioLayer::audioCallback);
 }
 
 void
 AudioLayer::startStream(void) 
 {
-	if (_manager->isDriverLoaded()) {
-		if (!_stream->isActive()) {
-			_stream->start();
-		}
-	} 
+  if (Manager::instance().isDriverLoaded()) {
+    if (_stream && !_stream->isActive()) {
+      _stream->start();
+    }
+  } 
 }
 	
 void
 AudioLayer::stopStream(void) 
 {
-	if (_manager->isDriverLoaded()) {
-		if (!_stream->isStopped()) {
-			_stream->stop();
-		}
-	} 
+  if (Manager::instance().isDriverLoaded()) {
+    if (_stream && !_stream->isStopped()) {
+      _stream->stop();
+    }
+  } 
 }
 
 void
 AudioLayer::sleep(int msec) 
 {
-	portaudio::System &sys = portaudio::System::instance();
-	sys.sleep(msec);
+  portaudio::System::instance().sleep(msec);
 }
 
-int
+bool
 AudioLayer::isStreamActive (void) 
 {
-	return _stream->isActive();
+  if(_stream && _stream->isActive()) {
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
-int
+bool
 AudioLayer::isStreamStopped (void) 
 {
-	return _stream->isStopped();
+  if(_stream && _stream->isStopped()) {
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
 int 
 AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer, 
-                              unsigned long framesPerBuffer, 
-		                      const PaStreamCallbackTimeInfo *timeInfo, 
-                              PaStreamCallbackFlags statusFlags) {
+			   unsigned long framesPerBuffer, 
+			   const PaStreamCallbackTimeInfo *timeInfo, 
+			   PaStreamCallbackFlags statusFlags) {
    	(void) timeInfo;
 	(void) statusFlags;
 	
@@ -138,7 +138,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 	int16 *out = (int16 *) outputBuffer;
 	int toGet, toPut, urgentAvail, normalAvail, micAvailPut;
 	
-	urgentAvail = _urgentRingBuffer->AvailForGet();
+	urgentAvail = _urgentRingBuffer.AvailForGet();
 	if (urgentAvail > 0) {  
 	// Urgent data (dtmf, incoming call signal) come first.		
 		if (urgentAvail < (int)framesPerBuffer) {
@@ -146,24 +146,24 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 		} else {
 			toGet = framesPerBuffer;
 		}
-		_urgentRingBuffer->Get(out, SAMPLES_SIZE(toGet));
+		_urgentRingBuffer.Get(out, SAMPLES_SIZE(toGet));
 		
 		// Consume the regular one as well
-		_mainSndRingBuffer->Discard(SAMPLES_SIZE(toGet));
+		_mainSndRingBuffer.Discard(SAMPLES_SIZE(toGet));
 	}  
 	else {
 	// If nothing urgent, play the regular sound samples
-		normalAvail = _mainSndRingBuffer->AvailForGet();
+		normalAvail = _mainSndRingBuffer.AvailForGet();
 		toGet = (normalAvail < (int)framesPerBuffer) ? normalAvail : 
 			framesPerBuffer;
-		_mainSndRingBuffer->Get(out, SAMPLES_SIZE(toGet));
+		_mainSndRingBuffer.Get(out, SAMPLES_SIZE(toGet));
 	}
 
 	// Additionally handle the mike's audio stream 
-	micAvailPut = _micRingBuffer->AvailForPut();
+	micAvailPut = _micRingBuffer.AvailForPut();
 	toPut = (micAvailPut <= (int)framesPerBuffer) ? micAvailPut : 
 			framesPerBuffer;
-	_micRingBuffer->Put(in, SAMPLES_SIZE(toPut));
+	_micRingBuffer.Put(in, SAMPLES_SIZE(toPut));
    	
 	return paContinue;  
 }

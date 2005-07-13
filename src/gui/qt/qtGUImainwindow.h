@@ -42,7 +42,6 @@ class Call;
 class DTMF;
 class JPushButton;
 class MyDisplay;
-class Manager;
 class MyTrayIcon;
 class NumericKeypad;
 class PhoneLine;		
@@ -77,7 +76,7 @@ class QtGUIMainWindow : public TransQWidget, public GuiFramework {
 	Q_OBJECT
 public:
 	// Default Constructor and destructor
-	QtGUIMainWindow	(QWidget* = 0, const char* = 0,WFlags = 0,Manager * = NULL);
+	QtGUIMainWindow	(QWidget* = 0, const char* = 0,WFlags = 0);
 	~QtGUIMainWindow(void);
 	
 	QPixmap	 TabLinePixmap[NUMBER_OF_LINES][NUMBER_OF_STATES];
@@ -229,7 +228,6 @@ private:
 	QTimer*				_blinkTimer;
 	URL_Input* 			_urlinput;
 	ConfigurationPanel*	_panel;
-	Manager*			_callmanager;
 	QPopupMenu*			_mypop;
 	MyTrayIcon*			_trayicon;
 	DTMF*				_key;

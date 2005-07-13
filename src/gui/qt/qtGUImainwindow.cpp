@@ -96,12 +96,12 @@ MyTrayIcon::mousePressEvent (QMouseEvent *e)
  * Default Constructor
  * Init, Connections
  */
-QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f, 
-									Manager *mngr) 
-									: TransQWidget (parent, name, f), 
-									  GuiFramework(mngr) {	
-										    
-	for (int i = 0; i < NUMBER_OF_LINES; i++) {
+QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, 
+				  const char *name, 
+				  WFlags f)
+  : TransQWidget (parent, name, f), 
+    GuiFramework() {	
+  for (int i = 0; i < NUMBER_OF_LINES; i++) {
 		phLines[i] = new PhoneLine();
 		phLines[i]->setState(FREE);
 		_TabIncomingCalls[i] = -1;
@@ -113,8 +113,6 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent, const char *name, WFlags f,
 	// URL input dialog
 	_urlinput = new URL_Input (this);
 	
-	// For managing 
-	_callmanager = mngr;
 
 	// For DTMF
     _key = new DTMF ();
@@ -190,7 +188,6 @@ QtGUIMainWindow::~QtGUIMainWindow(void) {
 	delete  _keypad;
 	delete	_lcd;
 	delete  _urlinput;
-	delete	_callmanager;
 	delete 	_mypop;
 	delete 	_trayicon;
 	delete  pt;
@@ -343,8 +340,8 @@ QtGUIMainWindow::initMicVolumePosition (void) {
 void
 QtGUIMainWindow::initVolume (void) 
 {
-    _callmanager->setSpkrVolume(spkrVolVector->Y() - vol_spkr_y);
-    _callmanager->setMicroVolume(micVolVector->Y() - vol_mic_y);
+    Manager::instance().setSpkrVolume(spkrVolVector->Y() - vol_spkr_y);
+    Manager::instance().setMicroVolume(micVolVector->Y() - vol_mic_y);
 }
 
 /**
@@ -618,14 +615,14 @@ QtGUIMainWindow::putOnHoldBusyLine (int line)
 
 void
 QtGUIMainWindow::dialtone (bool var) {
-	if (_callmanager->isDriverLoaded()) {
+	if (Manager::instance().isDriverLoaded()) {
 		if (_dialtone != var) {
 			_dialtone = var;
 		}
-		_callmanager->setZonetone(var);
-		_callmanager->getTonegenerator()->toneHandle(ZT_TONE_DIALTONE);
+		Manager::instance().setZonetone(var);
+		Manager::instance().getTonegenerator()->toneHandle(ZT_TONE_DIALTONE);
 	} else {
-        _callmanager->error()->errorName(OPEN_FAILED_DEVICE);
+        Manager::instance().error()->errorName(OPEN_FAILED_DEVICE);
     }
 }
 
@@ -671,8 +668,8 @@ QtGUIMainWindow::callIsBusy (Call* call, int id, int line, int busyLine)
 		changeLineStatePixmap(line, ONHOLD);
 		displayStatus(ONHOLD_STATUS);
 		if (qt_onHoldCall(id) != 1) {
-			_callmanager->displayErrorText("On-hold call failed !\n");
-			return -1;
+		  Manager::instance().displayErrorText("On-hold call failed !\n");
+		  return -1;
 		}
 	}
 	return 1;
@@ -691,7 +688,7 @@ QtGUIMainWindow::callIsOnHold(int id, int line, int busyLine)
 	}		
 	_lcd->setInFunction(true);
 	if (qt_offHoldCall(id) != 1) {
-		_callmanager->displayErrorText("Off-hold call failed !\n");
+		Manager::instance().displayErrorText("Off-hold call failed !\n");
 		return -1;
 	}
 	displayContext(id);
@@ -704,7 +701,7 @@ QtGUIMainWindow::callIsIncoming (int id, int line, int busyLine)
 	changeLineStatePixmap(line, BUSY);
 	putOnHoldBusyLine(busyLine);
 	if (qt_answerCall(id) != 1) {
-		_callmanager->displayErrorText("Answered call failed !\n");
+		Manager::instance().displayErrorText("Answered call failed !\n");
 		return -1;
 	}
 	return 1;
@@ -737,7 +734,7 @@ QtGUIMainWindow::clickOnFreeLine(int line, int busyLine)
 Call* 
 QtGUIMainWindow::getCall (short id)
 {
-	return _callmanager->getCall(id);
+	return Manager::instance().getCall(id);
 }
 
 int 
@@ -842,7 +839,7 @@ QtGUIMainWindow::peerAnsweredCall (short id)
 	getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
 	// Afficher call-timer
 	startCallTimer(id);
-	_callmanager->displayStatus(CONNECTED_STATUS);
+	Manager::instance().displayStatus(CONNECTED_STATUS);
 	setChooseLine(false);
 }
 
@@ -861,7 +858,7 @@ QtGUIMainWindow::peerHungupCall (short id)
 
 	if (line == getCurrentLine() or getCurrentLine() == -1) {
 		stopCallTimer(id);
-		_callmanager->displayStatus(HUNGUP_STATUS);
+		Manager::instance().displayStatus(HUNGUP_STATUS);
 		setCurrentLine(-1);
 	} else {
 		// Stop the call timer when hang up
@@ -951,12 +948,12 @@ QtGUIMainWindow::qt_outgoingCall (void)
 	int id;
 	int line = -1;
 	if (_lcd->getTextBuffer() == NULL) {
-		_callmanager->displayStatus(ENTER_NUMBER_STATUS);
+		Manager::instance().displayStatus(ENTER_NUMBER_STATUS);
 		return -1;
 	}
 	const string to(_lcd->getTextBuffer().ascii());
 	if (to.empty()) {
-		_callmanager->displayStatus(ENTER_NUMBER_STATUS);
+		Manager::instance().displayStatus(ENTER_NUMBER_STATUS);
 		return -1;
 	} 
 	
@@ -967,7 +964,7 @@ QtGUIMainWindow::qt_outgoingCall (void)
 
 		setCurrentLine(line);
 		displayStatus(TRYING_STATUS);
-		_callmanager->getCall(id)->setCallerIdNumber(to);
+		Manager::instance().getCall(id)->setCallerIdNumber(to);
 		changeLineStatePixmap(line, BUSY);
 	} 
 	
@@ -1156,7 +1153,7 @@ QtGUIMainWindow::dial (void)
 	} else if (getTransfer()){
 		// If call transfer
 		if(qt_transferCall (line2id(getCurrentLine()) != 1)) {
-			_callmanager->displayErrorText("Transfer failed !\n");
+			Manager::instance().displayErrorText("Transfer failed !\n");
 		}
 	} else {
 		// If new outgoing call  
@@ -1181,15 +1178,15 @@ QtGUIMainWindow::hangupLine (void)
 	int line = getCurrentLine();
 	int id = phLines[line]->getCallId();
 
-	if (_callmanager->getbCongestion()) {
+	if (Manager::instance().getbCongestion()) {
 		// If congestion tone
 		if (qt_hangupCall(id)) {
 			changeLineStatePixmap(line, FREE);
 			_lcd->clear(QString(ENTER_NUMBER_STATUS));
-			_callmanager->congestion(false);
+			Manager::instance().congestion(false);
 			phLines[line]->setCallId(0);
 		} else {
-			_callmanager->displayErrorText("Hangup call failed !\n");
+			Manager::instance().displayErrorText("Hangup call failed !\n");
 		}
 	} else if (line >= 0 and id > 0 and getCall(id)->isProgressing()) {
 		// If I want to cancel a call before ringing.
@@ -1198,7 +1195,7 @@ QtGUIMainWindow::hangupLine (void)
 			phLines[line]->setCallId(0);
 			setChooseLine(false);
 		} else {
-			_callmanager->displayErrorText("Cancelled call failed !\n");
+			Manager::instance().displayErrorText("Cancelled call failed !\n");
 		}
 	} else if (line >= 0 and id > 0) {
 		// If hangup current line normally
@@ -1208,7 +1205,7 @@ QtGUIMainWindow::hangupLine (void)
 			phLines[line]->setCallId(0);
 			setChooseLine(false);
 		} else {
-			_callmanager->displayErrorText("Hangup call failed !\n");
+			Manager::instance().displayErrorText("Hangup call failed !\n");
 		}
 	} else if ((i = isThereIncomingCall()) > 0){
 		// To refuse new incoming call 
@@ -1216,7 +1213,7 @@ QtGUIMainWindow::hangupLine (void)
 		if (qt_refuseCall(i)) {
 			changeLineStatePixmap(id2line(i), FREE);
 		} else {
-			_callmanager->displayErrorText("Refused call failed !\n");
+			Manager::instance().displayErrorText("Refused call failed !\n");
 		}
 	} else if (line >= 0) {
 		_debug("Just load free pixmap for the line %d\n", line);
@@ -1274,12 +1271,12 @@ QtGUIMainWindow::startCallTimer (short id) {
 ///////////////////////////////////////////////////////////////////////////////
 void
 QtGUIMainWindow::volumeSpkrChanged (int val) {
-	_callmanager->setSpkrVolume(val);
+	Manager::instance().setSpkrVolume(val);
 }
 
 void
 QtGUIMainWindow::volumeMicChanged (int val) {
-	_callmanager->setMicroVolume(val);
+	Manager::instance().setMicroVolume(val);
 }
 
 void
@@ -1375,7 +1372,7 @@ QtGUIMainWindow::button_mute(void)
 	
 	int id = line2id(getCurrentLine());
 	
-	if (_callmanager->getNumberOfCalls() > 0) {
+	if (Manager::instance().getNumberOfCalls() > 0) {
     // If there is at least a pending call
         if(!isOn) {
 			qt_muteOff(id);
@@ -1588,7 +1585,7 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	callid = line2id(getCurrentLine());
     if (callid != -1 and getCall(callid)->isBusy()) {
         sendDtmf(callid, code); // pour envoyer DTMF
-    } else if (_callmanager->isDriverLoaded()) {
+    } else if (Manager::instance().isDriverLoaded()) {
 		_lcd->appendText (code);
 	}
 
@@ -1601,7 +1598,7 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	int size = pulselen * (OCTETS /1000);
   
 	buf_ctrl_vol = new int16[size*CHANNELS];
-	spkrVolume = _callmanager->getSpkrVolume();
+	spkrVolume = Manager::instance().getSpkrVolume();
 	
 	// Control volume and format mono->stereo
 	for (int j = 0; j < size; j++) {
@@ -1610,13 +1607,13 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	}
 		
 	// Counters  reset 
-	_callmanager->getAudioDriver()->urgentRingBuffer()->flush();
+	Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
 	// Put buffer to urgentRingBuffer 
-	_callmanager->getAudioDriver()->urgentRingBuffer()->Put(buf_ctrl_vol, 
+	Manager::instance().getAudioDriver()->urgentRingBuffer().Put(buf_ctrl_vol, 
 			size * CHANNELS);
-	_callmanager->getAudioDriver()->startStream();
-	_callmanager->getAudioDriver()->sleep(pulselen);
-	_callmanager->getAudioDriver()->stopStream();
+	Manager::instance().getAudioDriver()->startStream();
+	Manager::instance().getAudioDriver()->sleep(pulselen);
+	Manager::instance().getAudioDriver()->stopStream();
 		
 	delete[] buf_ctrl_vol;
 }

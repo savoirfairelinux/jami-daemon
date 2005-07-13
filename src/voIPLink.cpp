@@ -26,10 +26,9 @@
 using namespace std;
 
 
-VoIPLink::VoIPLink (short id, Manager* manager) 
+VoIPLink::VoIPLink (short id) 
 {
 	_id = id;
-	_manager = manager;
 	initConstructor();
 }
 

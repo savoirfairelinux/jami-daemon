@@ -35,10 +35,9 @@ typedef enum {
 
 } Error_enum;
 
-class Manager;
 class Error {
 public: 
-	Error (Manager *mngr); 
+	Error (); 
 	~Error (void) {};
 
 	int errorName (Error_enum);
@@ -46,7 +45,6 @@ public:
 	inline void setError(int err) 	{ issetError = err; }
 
 private:
-	Manager *_mngr;
 	int 	issetError;
 	
 };

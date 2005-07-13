@@ -51,15 +51,14 @@ using namespace std;
 #define	RANDOM_LOCAL_PORT	((rand() % 27250) + 5250)*2
 
 
-SipVoIPLink::SipVoIPLink (short id, Manager* manager) : VoIPLink (id, manager)
+SipVoIPLink::SipVoIPLink (short id) : VoIPLink (id)
 {
 	setId(id);
 	_localPort = 0;
 	_cid = 0;
-	_manager = manager;
 	_evThread = new EventThread (this);
 	_sipcallVector = new SipCallVector();
-	_audiortp = new AudioRtp(_manager);
+	_audiortp = new AudioRtp();
 }
 
 SipVoIPLink::~SipVoIPLink (void)
@@ -99,13 +98,13 @@ SipVoIPLink::init (void)
 		}
 	}
 	// If use STUN server, firewall address setup
-	if (_manager->useStun()) {
+	if (Manager::instance().useStun()) {
 		eXosip_set_user_agent(tmp.data());
 		if (behindNat() != 1) {
 			return 0;
 		}
 
-		eXosip_set_firewallip((_manager->getFirewallAddress()).data());
+		eXosip_set_firewallip((Manager::instance().getFirewallAddress()).data());
 	} 
 	
 	eXosip_set_user_agent(tmp.data());
@@ -139,14 +138,14 @@ SipVoIPLink::initRtpmapCodec (void)
   	eXosip_sdp_negotiation_remove_audio_payloads();
 	
 	// Set rtpmap according to the supported codec order
-	nb = _manager->getNumberOfCodecs();
+	nb = Manager::instance().getNumberOfCodecs();
 	for (unsigned int i = 0; i < nb; i++) {
-		payload = _manager->getCodecDescVector()->at(i)->getPayload();
+		payload = Manager::instance().getCodecDescVector()->at(i)->getPayload();
 
 		// Add payload to rtpmap if it is not already added
-		if (!isInRtpmap(i, payload, _manager->getCodecDescVector())) {
+		if (!isInRtpmap(i, payload, Manager::instance().getCodecDescVector())) {
 			snprintf(rtpmap, 127, "%d %s/%d", payload, 
-				_manager->getCodecDescVector()->at(i)->rtpmapPayload(payload).data(), SAMPLING_RATE);
+				Manager::instance().getCodecDescVector()->at(i)->rtpmapPayload(payload).data(), SAMPLING_RATE);
 			snprintf(tmp, 63, "%d", payload);
 			
 			eXosip_sdp_negotiation_add_codec( osip_strdup(tmp), NULL,
@@ -175,11 +174,11 @@ SipVoIPLink::setRegister (void)
 							get_config_fields_str(SIGNALISATION, HOST_PART));
 
 	if (get_config_fields_str(SIGNALISATION, HOST_PART).empty()) {
-		_manager->error()->errorName(HOST_PART_FIELD_EMPTY);
+		Manager::instance().error()->errorName(HOST_PART_FIELD_EMPTY);
 		return -1;
 	}
 	if (get_config_fields_str(SIGNALISATION, USER_PART).empty()) {
-		_manager->error()->errorName(USER_PART_FIELD_EMPTY);
+		Manager::instance().error()->errorName(USER_PART_FIELD_EMPTY);
 		return -1;
 	}
 
@@ -287,7 +286,7 @@ int
 SipVoIPLink::hangup (short id) 
 {
 	int i = 1;
-	if (!_manager->getbCongestion()) {
+	if (!Manager::instance().getbCongestion()) {
 		_debug("Hang up call [id = %d, cid = %d, did = %d]\n", 
 				id, getSipCall(id)->getCid(), getSipCall(id)->getDid());	
 		// Release SIP stack.
@@ -308,7 +307,7 @@ int
 SipVoIPLink::cancel (short id) 
 {
 	int i = 1;
-	if (!_manager->getbCongestion()) {
+	if (!Manager::instance().getbCongestion()) {
 		_debug("Cancel call [id = %d, cid = %d]\n", id, getCid());
 		// Release SIP stack.
 		eXosip_lock();
@@ -398,20 +397,19 @@ SipVoIPLink::getEvent (void)
 		// IP-Phone user receives a new call
 		case EXOSIP_CALL_NEW: //
 			// Set local random port for incoming call
-			if (!_manager->useStun()) {
-			// If no firewall
+			if (!Manager::instance().useStun()) {
 				setLocalPort(RANDOM_LOCAL_PORT);
 			} else {
 			// If there is a firewall
 				if (behindNat() != 0) {
-					setLocalPort(_manager->getFirewallPort());
+					setLocalPort(Manager::instance().getFirewallPort());
 				} else {
 					return -1;
 				}	
 			}
 			
-			id = _manager->generateNewCallId();
-			_manager->pushBackNewCall(id, Incoming);
+			id = Manager::instance().generateNewCallId();
+			Manager::instance().pushBackNewCall(id, Incoming);
 			_debug("Incoming Call with identifiant %d [cid = %d, did = %d]\n",
 				   id, event->cid, event->did);
 			_debug("Local audio port: %d\n", _localPort);
@@ -421,9 +419,9 @@ SipVoIPLink::getEvent (void)
   			osip_from_init(&from);
   			osip_from_parse(from, event->remote_uri);
 			name = osip_from_get_displayname(from);
-			_manager->displayTextMessage(id, name);
-			if (_manager->getCall(id) != NULL) {
-				_manager->getCall(id)->setCallerIdName(name);
+			Manager::instance().displayTextMessage(id, name);
+			if (Manager::instance().getCall(id) != NULL) {
+				Manager::instance().getCall(id)->setCallerIdName(name);
 			} else {
 				return -1;
 			}
@@ -431,8 +429,8 @@ SipVoIPLink::getEvent (void)
 			osip_from_free(from);
 			
 			getSipCall(id)->newIncomingCall(event);
-			if (_manager->incomingCall(id) < 0) {
-				_manager->displayErrorText("Incoming call failed");
+			if (Manager::instance().incomingCall(id) < 0) {
+				Manager::instance().displayErrorText("Incoming call failed");
 				return -1;
 			}
 
@@ -451,11 +449,11 @@ SipVoIPLink::getEvent (void)
 					id, event->cid, event->did,getSipCall(id)->getLocalAudioPort());
  
 			// Answer
-			if (id > 0 and !_manager->getCall(id)->isOnHold()
-					   and !_manager->getCall(id)->isOffHold()) {
+			if (id > 0 and !Manager::instance().getCall(id)->isOnHold()
+					   and !Manager::instance().getCall(id)->isOffHold()) {
 				getSipCall(id)->setStandBy(false);
 				if (getSipCall(id)->answeredCall(event) != -1) {
-					_manager->peerAnsweredCall(id);
+					Manager::instance().peerAnsweredCall(id);
 
 					// Outgoing call is answered, start the sound channel.
 					if (_audiortp->createNewSession (getSipCall(id)) < 0) {
@@ -475,7 +473,7 @@ SipVoIPLink::getEvent (void)
 			
 			if (id > 0) {
 				getSipCall(id)->ringingCall(event);
-				_manager->peerRingingCall(id);
+				Manager::instance().peerRingingCall(id);
 			} else {
 				return -1;
 			}
@@ -491,10 +489,10 @@ SipVoIPLink::getEvent (void)
 					id, event->cid, event->did);	
 			
 			if (id > 0) {	
-				if (!_manager->getCall(id)->isProgressing()) {
+				if (!Manager::instance().getCall(id)->isProgressing()) {
 					_audiortp->closeRtpSession(getSipCall(id));
 				}
-				_manager->peerHungupCall(id);
+				Manager::instance().peerHungupCall(id);
 				deleteSipCall(id);
 			} else {
 				return -1;
@@ -543,8 +541,8 @@ SipVoIPLink::getEvent (void)
 				case ADDR_INCOMPLETE:
 				case BUSY_HERE:
 					// Display error on the screen phone
-					_manager->displayError(event->reason_phrase);
-					_manager->congestion(true);
+					Manager::instance().displayError(event->reason_phrase);
+					Manager::instance().congestion(true);
 					break;
 				case REQ_TERMINATED:
 					break;
@@ -557,8 +555,8 @@ SipVoIPLink::getEvent (void)
 			// Handle 5XX errors
 			switch (event->status_code) {
 				case SERVICE_UNAVAILABLE:
-					_manager->ringback(false);
-					_manager->congestion(true);					
+					Manager::instance().ringback(false);
+					Manager::instance().congestion(true);					
 					break;
 				default:
 					break;
@@ -570,8 +568,8 @@ SipVoIPLink::getEvent (void)
 			switch (event->status_code) {
 				case BUSY_EVERYWHERE:
 				case DECLINE:
-					_manager->ringback(false);
-					_manager->congestion(true);					
+					Manager::instance().ringback(false);
+					Manager::instance().congestion(true);					
 					break;
 				default:
 					break;
@@ -580,7 +578,7 @@ SipVoIPLink::getEvent (void)
 
 		case EXOSIP_REGISTRATION_SUCCESS:
 			_debug("-- Registration succeeded --\n");
-			_manager->displayStatus(LOGGED_IN_STATUS);
+			Manager::instance().displayStatus(LOGGED_IN_STATUS);
 			break;
 
 		case EXOSIP_REGISTRATION_FAILURE:
@@ -682,7 +680,7 @@ void
 SipVoIPLink::newOutgoingCall (short callid)
 {
 	_sipcallVector->push_back(new SipCall(callid, 
-										  _manager->getCodecDescVector()));
+										  Manager::instance().getCodecDescVector()));
 	if (getSipCall(callid) != NULL) {
 		getSipCall(callid)->setStandBy(true);
 	}
@@ -691,7 +689,7 @@ SipVoIPLink::newOutgoingCall (short callid)
 void
 SipVoIPLink::newIncomingCall (short callid)
 {
-	SipCall* sipcall = new SipCall(callid, _manager->getCodecDescVector());
+	SipCall* sipcall = new SipCall(callid, Manager::instance().getCodecDescVector());
 	_sipcallVector->push_back(sipcall);
 }
 
@@ -751,7 +749,7 @@ SipVoIPLink::behindNat (void)
 	
 	// Firewall address
 	_debug("STUN server: %s\n", svr.data());
-	_manager->getStunInfo(stunSvrAddr);
+	Manager::instance().getStunInfo(stunSvrAddr);
 
 	return 1;
 }
@@ -799,7 +797,7 @@ SipVoIPLink::setAuthentication (void)
 	}
 	pass = get_config_fields_str(SIGNALISATION, PASSWORD);
 	if (pass.empty()) {
-		_manager->error()->errorName(PASSWD_FIELD_EMPTY);				
+		Manager::instance().error()->errorName(PASSWD_FIELD_EMPTY);				
 		return -1;
 	}
 
@@ -836,11 +834,11 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
   	int i;
 
   	if (checkUrl(from) != 0) {
-		_manager->error()->errorName(FROM_ERROR);
+		Manager::instance().error()->errorName(FROM_ERROR);
     	return -1;
   	}
   	if (checkUrl(to) != 0) {
-		_manager->error()->errorName(TO_ERROR);
+		Manager::instance().error()->errorName(TO_ERROR);
     	return -1;
   	}
   	
@@ -853,15 +851,15 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
 	eXosip_lock();
 	
 	char port[64];
-	if (!_manager->useStun()) {
+	if (!Manager::instance().useStun()) {
 		// Set random port for outgoing call
 		setLocalPort(RANDOM_LOCAL_PORT);
 		_debug("Local audio port: %d\n",_localPort);
 	} else {
 		// If use Stun server
 		if (behindNat() != 0) {
-			_debug("sip invite: firewall port = %d\n",_manager->getFirewallPort());	
-			setLocalPort(_manager->getFirewallPort());
+			_debug("sip invite: firewall port = %d\n",Manager::instance().getFirewallPort());	
+			setLocalPort(Manager::instance().getFirewallPort());
 		} else {
 			return -1;
 		}
@@ -909,7 +907,7 @@ short
 SipVoIPLink::findCallIdWhenRinging (void)
 {
 	unsigned int k;
-	int i = _manager->selectedCall();
+	int i = Manager::instance().selectedCall();
 	
 	if (i != -1) {
 		return i;

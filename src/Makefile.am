@@ -6,7 +6,6 @@ sflphone_SOURCES = \
 	configitem.cpp \
 	configuration.cpp \
 	configurationtree.cpp \
-	manager.cpp \
 	call.cpp \
 	eventthread.cpp \
 	error.cpp \
@@ -15,6 +14,8 @@ sflphone_SOURCES = \
 	voIPLink.cpp \
 	sipcall.cpp \
 	skin.cpp \
+	managerimpl.cpp \
+	managerimpl.h \
 	manager.h \
 	global.h \
 	configitem.h \
@@ -35,12 +36,10 @@ sflphone_SOURCES = \
 
 sflphone_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
 
-sflphone_LDFLAGS = $(QT_LDFLAGS) $(X_LDFLAGS)
-sflphone_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la -lpthread 
-
-
-KDE_CXXFLAGS = $(USE_EXCEPTIONS)
-AM_CPPFLAGS = $(QT_INCLUDES) $(X_INCLUDES) -Iaudio/pacpp/include
+sflphone_LDFLAGS = $(QT_LDFLAGS) $(X_LDFLAGS) 
+sflphone_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la -lpthread $(LIBQT) $(SFLPHONE_LIBS) 
+KDE_CXXFLAGS = $(USE_EXCEPTIONS) 
+AM_CPPFLAGS = $(QT_INCLUDES) $(X_INCLUDES) -Iaudio/pacpp/include  $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(portaudio_CFLAGS)
 
 
 

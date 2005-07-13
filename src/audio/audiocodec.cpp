@@ -27,12 +27,7 @@
 #include <iostream>
 #include <string>
 
-#include "portaudio.h"
-
-#include "../global.h"
-
 #include "audiocodec.h"
-#include "../configuration.h"
 
 using namespace std;
 

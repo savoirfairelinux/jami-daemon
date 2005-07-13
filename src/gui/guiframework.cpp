@@ -23,23 +23,21 @@ using namespace std;
 #include "guiframework.h"
 #include "../manager.h"
 
-GuiFramework::GuiFramework (Manager* manager)
-{
-	_manager = manager;
-}
+GuiFramework::GuiFramework ()
+{}
 
 GuiFramework::~GuiFramework (void) {}
 
 int 
 GuiFramework::outgoingCall (const string& to)
 {
-	return _manager->outgoingCall(to);
+  return Manager::instance().outgoingCall(to);
 }
 
 int 
 GuiFramework::hangupCall (short id)
 {
-	if (_manager->hangupCall(id) == 0) {
+	if (Manager::instance().hangupCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -49,7 +47,7 @@ GuiFramework::hangupCall (short id)
 int 
 GuiFramework::cancelCall (short id)
 {
-	if (_manager->cancelCall(id) == 0) {
+	if (Manager::instance().cancelCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -59,7 +57,7 @@ GuiFramework::cancelCall (short id)
 int 
 GuiFramework::answerCall (short id)
 {
-	if (_manager->answerCall(id) == 0) {
+	if (Manager::instance().answerCall(id)) {
 		return 1;
 	} else {
 		return 0;
@@ -69,7 +67,7 @@ GuiFramework::answerCall (short id)
 int 
 GuiFramework::onHoldCall (short id)
 {
-	if (_manager->onHoldCall(id) == 0) {
+	if (Manager::instance().onHoldCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -79,7 +77,7 @@ GuiFramework::onHoldCall (short id)
 int 
 GuiFramework::offHoldCall (short id)
 {
-	if (_manager->offHoldCall(id) == 0) {
+	if (Manager::instance().offHoldCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -89,7 +87,7 @@ GuiFramework::offHoldCall (short id)
 int 
 GuiFramework::transferCall (short id, const string& to)
 {
-	if (_manager->transferCall(id, to) == 1) {
+	if (Manager::instance().transferCall(id, to) == 1) {
 		return 1;
 	} else {
 		return 0;
@@ -99,19 +97,19 @@ GuiFramework::transferCall (short id, const string& to)
 void
 GuiFramework::muteOn (short id)
 {
-	_manager->muteOn(id);
+	Manager::instance().muteOn(id);
 }
 
 void
 GuiFramework::muteOff (short id)
 {
-	_manager->muteOff(id);
+	Manager::instance().muteOff(id);
 }
 
 int 
 GuiFramework::refuseCall (short id)
 {
-	if (_manager->refuseCall(id) == 0) {
+	if (Manager::instance().refuseCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -121,7 +119,7 @@ GuiFramework::refuseCall (short id)
 int 
 GuiFramework::saveConfig (void)
 {
-	if (_manager->saveConfig()) {
+	if (Manager::instance().saveConfig()) {
 		return 1;
 	} else {
 		return 0;
@@ -131,7 +129,7 @@ GuiFramework::saveConfig (void)
 int 
 GuiFramework::registerVoIPLink (void)
 {
-	if (_manager->registerVoIPLink()) {
+	if (Manager::instance().registerVoIPLink()) {
 		return 1;
 	} else {
 		return 0;
@@ -141,26 +139,26 @@ GuiFramework::registerVoIPLink (void)
 void 
 GuiFramework::sendDtmf (short id, char code)
 {
-	_manager->sendDtmf(id, code);
+	Manager::instance().sendDtmf(id, code);
 }
 
 int 
 GuiFramework::quitApplication (void)
 {
-	return (_manager->quitApplication() ? 1 : 0);
+	return (Manager::instance().quitApplication() ? 1 : 0);
 }
 
 int 
 GuiFramework::sendTextMessage (short id, const string& message)
 {
-	_manager->sendTextMessage(id, message);
+	Manager::instance().sendTextMessage(id, message);
 	return 1;
 }
 
 int 
 GuiFramework::accessToDirectory (void)
 {
-	_manager->accessToDirectory();
+	Manager::instance().accessToDirectory();
 	return 1;
 }
 

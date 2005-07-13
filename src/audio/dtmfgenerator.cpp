@@ -95,7 +95,7 @@ DTMFGenerator::~DTMFGenerator() {
 void DTMFGenerator::getSamples(int16* buffer, size_t n, unsigned char code) throw(DTMFException) {
 	size_t i;
 	if (!buffer) {
-		     throw DTMFException("Invalid parameter value");
+	  throw DTMFException("Invalid parameter value");
 	}
 
 	switch(code) {
@@ -142,17 +142,15 @@ void DTMFGenerator::getNextSamples(int16* buffer, size_t n) throw(DTMFException)
 	size_t i;
 
 	if (!buffer) {
-			throw DTMFException("Invalid parameter");
-		return;
+	  throw DTMFException("Invalid parameter");
 	}
 
 	if (state.sample == 0) {
-			throw DTMFException("DTMF generator not initialized");
-		return;
+	  throw DTMFException("DTMF generator not initialized");
 	}
 
 	for(i = 0; i < n; i++) {
-		buffer[i] = state.sample[(state.offset + i) % SAMPLING_RATE];
+	  buffer[i] = state.sample[(state.offset + i) % SAMPLING_RATE];
 	}
 	
 	state.offset = (state.offset + i) % SAMPLING_RATE;

@@ -25,12 +25,11 @@
 #include "voIPLink.h"
 
 
-Call::Call (Manager* manager, short id, CallType type, VoIPLink* voiplink)
+Call::Call (short id, CallType type, VoIPLink* voiplink)
 {
  	initConstructor();
 	_id = id; 
 	_type = type;
-	_manager = manager;
 	_voIPLink = voiplink;
 	
 	switch (_type) {
