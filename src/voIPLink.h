@@ -39,6 +39,7 @@ public:
 
 	virtual int getEvent (void) = 0;
 	virtual int init (void) = 0;
+	virtual bool checkNetwork (void) = 0;
 	virtual void initRtpmapCodec (void) = 0;
 	virtual void quit (void) = 0;
 	virtual void newOutgoingCall (short callid) = 0;

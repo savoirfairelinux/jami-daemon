@@ -67,6 +67,7 @@ public:
 	virtual ~SipVoIPLink (void);
 	
 	virtual int init (void);
+	virtual bool checkNetwork (void);
 	virtual void initRtpmapCodec (void);
 	virtual void quit (void);
 	virtual int setRegister (void);

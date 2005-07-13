@@ -72,16 +72,24 @@ SipVoIPLink::~SipVoIPLink (void)
 	delete _audiortp;
 }
 
+bool 
+SipVoIPLink::checkNetwork (void) 
+{
+	// Set IP address
+	if (getLocalIp() == -1) {
+		// If no network
+		return false;
+	} else {
+		return true;
+	}
+}
+
 int
 SipVoIPLink::init (void)
 {
 	string tmp;
 
 	tmp = string(PROGNAME) + "/" + string(VERSION);
-
-	// Set IP address
-	if (getLocalIp() == -1)
-		return -1;
 	
 	srand (time(NULL));
 	if (eXosip_init (NULL, NULL, DEFAULT_SIP_PORT) != 0) {

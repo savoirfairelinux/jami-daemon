@@ -130,13 +130,17 @@ Manager::init (void)
 	}
 	
 	_voIPLinkVector->at(DFT_VOIP_LINK)->init();
-	if (get_config_fields_int(SIGNALISATION, AUTO_REGISTER) == YES and 
-			_exist == 1) {
-		if (registerVoIPLink() != 1) {
-			_debug("Registration failed\n");
-            displayErrorText("Check your configuration fields");
-		}
-	} 
+
+	if (_voIPLinkVector->at(DFT_VOIP_LINK)->checkNetwork()) {
+	// If network is available
+		if (get_config_fields_int(SIGNALISATION, AUTO_REGISTER) == YES and 
+				_exist == 1) {
+			if (registerVoIPLink() != 1) {
+				_debug("Registration failed\n");
+				displayErrorText("Check your configuration fields");
+			}
+		} 
+	}
 }
 
 void

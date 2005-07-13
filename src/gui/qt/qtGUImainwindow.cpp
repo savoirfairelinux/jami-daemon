@@ -973,9 +973,7 @@ QtGUIMainWindow::qt_outgoingCall (void)
 		displayStatus(TRYING_STATUS);
 		_callmanager->getCall(id)->setCallerIdNumber(to);
 		changeLineStatePixmap(line, BUSY);
-	} else {
-		_callmanager->displayErrorText("Outgoing call failed !\n");
-	}
+	} 
 	
 	return line;
 }	

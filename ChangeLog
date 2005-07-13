@@ -1,3 +1,6 @@
+Laurielle LEA (13 July 2005) version 0.4
+- Fix bug if network is not available.
+
 Laurielle LEA (11 July 2005) version 0.4
 - Check functions return.
 - Remove unused mute functions

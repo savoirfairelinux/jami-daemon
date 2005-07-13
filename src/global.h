@@ -41,7 +41,7 @@ typedef short int16;
 
 #define PROGNAME				"sflphone"
 #define SKINDIR					"skins"
-#define PIXDIR					"pixmaps"
+#define PIXDIR					"icons"
 #define RINGDIR					"rings"
 #define CODECDIR				"codecs"
 
