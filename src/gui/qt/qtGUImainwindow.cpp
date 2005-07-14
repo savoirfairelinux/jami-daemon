@@ -1562,7 +1562,7 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	int k, spkrVolume;
 	int16* buf_ctrl_vol;
                                                                                 
-    // Stop dial tone
+    // Stop dial tone because we started dialing.
     if (_dialtone) {
         dialtone(false);
     }
@@ -1606,14 +1606,15 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 		buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j] * spkrVolume/100;
 	}
 		
-	// Counters  reset 
 	Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
 	// Put buffer to urgentRingBuffer 
 	Manager::instance().getAudioDriver()->urgentRingBuffer().Put(buf_ctrl_vol, 
 			size * CHANNELS);
+
 	Manager::instance().getAudioDriver()->startStream();
 	Manager::instance().getAudioDriver()->sleep(pulselen);
 	Manager::instance().getAudioDriver()->stopStream();
+	Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
 		
 	delete[] buf_ctrl_vol;
 }

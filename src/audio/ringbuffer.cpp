@@ -10,6 +10,7 @@
   overestimate.
 
 **********************************************************************/
+#include <iostream>  //debug
 #include <assert.h>
 #include <stdlib.h> 
 #include <string.h>  
@@ -138,8 +139,7 @@ RingBuffer::Get(void *buffer, int toCopy) {
       if (block > mBufferSize - mStart)
          block = mBufferSize - mStart;
 
-	  bcopy (mBuffer + mStart, dest, block);
-
+      bcopy (mBuffer + mStart, dest, block);
       dest += block;
       mStart = (mStart + block) % mBufferSize;
       toCopy -= block;

@@ -148,7 +148,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 		}
 		_urgentRingBuffer.Get(out, SAMPLES_SIZE(toGet));
 		
-		// Consume the regular one as well
+		// Consume the regular one as well (same amount of bytes)
 		_mainSndRingBuffer.Discard(SAMPLES_SIZE(toGet));
 	}  
 	else {

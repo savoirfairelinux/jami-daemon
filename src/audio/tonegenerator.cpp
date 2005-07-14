@@ -20,7 +20,7 @@
 #include <math.h> 
 #include <iostream>
 #include <fstream>
-#include <stdlib.h>  
+#include <stdlib.h>
  
 #include "audiolayer.h"
 #include "audiortp.h"
@@ -55,19 +55,31 @@ void
 ToneThread::run (void) {
 	int k;
 	int spkrVolume;
+	bool started = false;
+
+	// How long do 'size' samples play ?
+	unsigned int play_time = (size * 1000) / SAMPLING_RATE;
+
+	// Create a new stereo buffer with the volume adjusted
+	spkrVolume = mngr->getSpkrVolume();
+	for (int j = 0; j < size; j++) {
+		k = j*2;
+		buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
+	}
+
 	while (Manager::instance().getZonetone()) {
-	  spkrVolume = Manager::instance().getSpkrVolume();
-		// control volume + mono->stereo
-		for (int j = 0; j < size; j++) {
-			k = j*2;
-			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
+		// Push the tone to the audio FIFO
+		Manager::instance().getAudioDriver()->mainSndRingBuffer().Put(buf_ctrl_vol, 
+			SAMPLES_SIZE(size));
+
+		// The first iteration will start the audio stream if not already.
+		if (!started) {
+			started = true;
+			Manager::instance().getAudioDriver()->startStream();
 		}
 		
-		if (Manager::instance().getAudioDriver()->mainSndRingBuffer().Len() == 0) {
-			Manager::instance().getAudioDriver()->mainSndRingBuffer().Put(buf_ctrl_vol, 
-					SAMPLES_SIZE(size));
-		}
-		Manager::instance().getAudioDriver()->startStream();
+		// next iteration later, sound is playing.
+		this->sleep (play_time);
 	}
 }
 
@@ -164,7 +176,7 @@ ToneGenerator::buildTone (int idCountry, int idTones, int16* temp) {
 	int	byte = 0,
 		byte_temp = 0;
 	static int	nbcomma = 0;
-	int16 *buffer = new int16[SIZEBUF];
+	int16 *buffer = new int16[SIZEBUF]; //1kb
 	int pos;
 
 	string str(toneZone[idCountry][idTones]);
@@ -172,35 +184,67 @@ ToneGenerator::buildTone (int idCountry, int idTones, int16* temp) {
 
 	// Number of format sections 
 	for (int i = 0; i < nbcomma + 1; i++) {
+		// Sample string: "350+440" or "350+440/2000,244+655/2000"
 		pos = str.find(',');
-		s = str.substr(0, pos);
-		pos = s.find('+');
+		if (pos < 0) { // no comma found
+			pos = str.length();
+		}
+
+		s = str.substr(0, pos); // 
+
+		// The 1st frequency is before the first +
+		int pos_freq2;	
+		pos_freq2 = pos = s.find('+');
+		if (pos < 0) {
+			pos = s.length(); // no + found
+		}
 		freq1 = atoi((s.substr(0, pos)).data());
-		freq2 = atoi((s.substr(pos + 1, s.find('/'))).data());
+
+		int pos2 = s.find('/');
+		if (pos2 < 0) {
+			pos2 = s.length();
+		}
+		if (pos_freq2 < 0) {
+			// freq2 was not found
+			freq2 = 0;
+		} else {
+			// freq2 was found and is after the +
+			freq2 = atoi( s.substr(pos + 1, pos2).data() );
+		}
+
 		pos = s.find('/');
-		time = atoi((s.substr(pos + 1, s.length())).data());
+		if (pos < 0) {
+			time = 0; // No time specified, tone will last forever.
+		} else {
+			time = atoi((s.substr(pos + 1, s.length())).data());
+		}
 		
-		// Generate sinus, buffer is the result
+		// Generate SAMPLING_RATE samples of sinus, buffer is the result
 		generateSin(freq1, freq2, buffer);
 		
 		// If there is time or if it's unlimited
-		if (time) {
-			byte = (SAMPLING_RATE*2*time)/1000;
+		if (time > 0) {
+			byte = (SAMPLING_RATE * 2 * time) / 1000;
 		} else {
 			byte = SAMPLING_RATE;
 		}
 		
 		// To concatenate the different buffers for each section.
+		count = 0;
 		for (int j = byte_temp * i; j < byte + (byte_temp * i); j++) {
 			temp[j] = buffer[count++];
 		}		
 		byte_temp = byte;
-		count = 0;
 		
 		str = str.substr(str.find(',') + 1, str.length());
 	}
+
 	// Total number in final buffer
-	totalbytes = byte + (byte_temp * (nbcomma+1));
+	if (byte != SAMPLING_RATE) {
+		totalbytes = byte + (byte_temp * (nbcomma+1));
+	} else {
+		totalbytes = byte;
+	}
 	delete[] buffer;
 }
 

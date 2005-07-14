@@ -285,7 +285,7 @@ SipVoIPLink::answer (short id)
 int
 SipVoIPLink::hangup (short id) 
 {
-	int i = 1;
+	int i = 0;
 	if (!Manager::instance().getbCongestion()) {
 		_debug("Hang up call [id = %d, cid = %d, did = %d]\n", 
 				id, getSipCall(id)->getCid(), getSipCall(id)->getDid());	
@@ -306,7 +306,7 @@ SipVoIPLink::hangup (short id)
 int
 SipVoIPLink::cancel (short id) 
 {
-	int i = 1;
+	int i = 0;
 	if (!Manager::instance().getbCongestion()) {
 		_debug("Cancel call [id = %d, cid = %d]\n", id, getCid());
 		// Release SIP stack.
