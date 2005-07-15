@@ -240,19 +240,29 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
 
 	if (get_config_fields_str(SIGNALISATION, PROXY).empty()) {
 	// If no SIP proxy setting for direct call with only IP address
-		if (startCall(id, from, to, "", "") <= 0) {
-			_debug("Warning SipVoIPLink: call not started\n");
-			return -1;
-		}
+		if (checkNetwork()) {
+			if (startCall(id, from, to, "", "") <= 0) {
+				_debug("Warning SipVoIPLink: call not started\n");
+				return -1;
+			}
+		} else {
+			Manager::instance().displayErrorText("No network found\n");
+            return -1;
+        }
 		return 0;
 	} else {
 	// If SIP proxy setting
 		string route = "<sip:" + 
 			get_config_fields_str(SIGNALISATION, PROXY) + ";lr>";
-		if (startCall(id, from, to, "", route) <= 0) {
-			_debug("Warning SipVoIPLink: call not started\n");
-			return -1;
-		}
+		if (checkNetwork()) {
+			if (startCall(id, from, to, "", route) <= 0) {
+				_debug("Warning SipVoIPLink: call not started\n");
+				return -1;
+			}
+		} else {
+			Manager::instance().displayErrorText("No network found\n");
+            return -1;
+        }
 		return 0;
 	}
 }
