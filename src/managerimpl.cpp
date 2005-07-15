@@ -96,8 +96,6 @@ ManagerImpl::init (void)
 	// Set a sip voip link by default
 	_voIPLinkVector->push_back(new SipVoIPLink(DFT_VOIP_LINK));
 
-	initConfigFile();
-	_exist = createSettingsPath();
 	if (_exist == 0) {
 		_debug("Cannot create config file in your home directory\n");
 	} 
@@ -371,11 +369,7 @@ ManagerImpl::transferCall (short id, const string& to)
 		return -1;
 	call->setStatus(string(TRANSFER_STATUS));
 	call->setState(Transfered);
-	if (call->transfer(to) != 0) {
-		return -1;
-	} else {
-		return 1;
-	}
+	return call->transfer(to);
 }
 
 void 
@@ -410,7 +404,6 @@ ManagerImpl::refuseCall (short id)
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Refused);	
 	ringtone(false);
-	delete call;
 	return call->refuse();
 }
 
@@ -547,6 +540,9 @@ ManagerImpl::peerHungupCall (short id)
 	if (getbRingback()) {
 		ringback(false);
 	}
+	if (getbRingtone()) {
+		ringtone(false);
+	}
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
@@ -660,12 +656,15 @@ ManagerImpl::notificationIncomingCall (void) {
 	getAudioDriver()->urgentRingBuffer().Put(buf_ctrl_vol, 
 			size * CHANNELS);
 
+	_debug("---- Notification call\n");
+#if 0
 	getAudioDriver()->startStream();
 	getAudioDriver()->sleep(NOTIFICATION_LEN);
 	getAudioDriver()->stopStream();
+#endif
 	
-    delete[] buffer;
     delete[] buf_ctrl_vol;
+    delete[] buffer;
 }
 
 void
@@ -799,6 +798,8 @@ ManagerImpl::createSettingsPath (void) {
 void
 ManagerImpl::initConfigFile (void) 
 {
+	_exist = createSettingsPath();
+
 	fill_config_fields_int(SIGNALISATION, VOIP_LINK_ID, DFT_VOIP_LINK); 	
 	fill_config_fields_str(SIGNALISATION, FULL_NAME, EMPTY_FIELD);
 	fill_config_fields_str(SIGNALISATION, USER_PART, EMPTY_FIELD); 

@@ -57,7 +57,7 @@ GuiFramework::cancelCall (short id)
 int 
 GuiFramework::answerCall (short id)
 {
-	if (Manager::instance().answerCall(id)) {
+	if (Manager::instance().answerCall(id) == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -87,7 +87,7 @@ GuiFramework::offHoldCall (short id)
 int 
 GuiFramework::transferCall (short id, const string& to)
 {
-	if (Manager::instance().transferCall(id, to) == 1) {
+	if (Manager::instance().transferCall(id, to) == 0) {
 		return 1;
 	} else {
 		return 0;

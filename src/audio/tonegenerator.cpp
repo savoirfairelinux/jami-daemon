@@ -60,14 +60,15 @@ ToneThread::run (void) {
 	// How long do 'size' samples play ?
 	unsigned int play_time = (size * 1000) / SAMPLING_RATE;
 
-	// Create a new stereo buffer with the volume adjusted
-	spkrVolume = Manager::instance().getSpkrVolume();
-	for (int j = 0; j < size; j++) {
-		k = j*2;
-		buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
-	}
 
 	while (Manager::instance().getZonetone()) {
+		// Create a new stereo buffer with the volume adjusted
+		spkrVolume = Manager::instance().getSpkrVolume();
+		for (int j = 0; j < size; j++) {
+			k = j*2;
+			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
+		}
+
 		// Push the tone to the audio FIFO
 		Manager::instance().getAudioDriver()->mainSndRingBuffer().Put(buf_ctrl_vol, 
 			SAMPLES_SIZE(size));

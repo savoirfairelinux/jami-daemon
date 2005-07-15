@@ -55,7 +55,7 @@ private:
 
 	void initAudioRtpSession (void);
 	void sendSessionFromMic (unsigned char*, int16*, int16*, int, int);
-	void receiveSessionForSpkr (int16*, int16*, int);
+	void receiveSessionForSpkr (int16*, int16*, int, int&);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

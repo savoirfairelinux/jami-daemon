@@ -247,11 +247,10 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
 
 void
 AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers, 
-		int16* data_for_speakers_tmp, int spkrVolume)
+		int16* data_for_speakers_tmp, int spkrVolume, int& countTime)
 {
 	int expandedSize;
 	int k;
-	int	countTime = 0;
 	const AppDataUnit* adu = NULL;
 
 	// Get audio data stream
@@ -288,9 +287,10 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 	
 	// Notify (with a bip) an incoming call when there is already a call 
 	countTime += time->getSecond();
-	if (Manager::instance().getNumberOfCalls() > 0 and Manager::instance().getbRingtone()) {
+	if (Manager::instance().getNumberOfCalls() > 0 
+			and Manager::instance().getbRingtone()) {
 		countTime = countTime % 2000;
-		if (countTime < 10 and countTime > 0) {
+		if (countTime < 100 and countTime > 0) {
 			Manager::instance().notificationIncomingCall();
 		}
 	} 
@@ -310,6 +310,7 @@ AudioRtpRTX::run (void) {
 	int				 timestamp;
 	int16			*data_for_speakers = NULL;
 	int16			*data_for_speakers_tmp = NULL;
+	int              countTime = 0;
 	
 	data_from_mic = new int16[SIZEDATA]; 
 	data_from_mic_tmp = new int16[SIZEDATA];
@@ -350,7 +351,7 @@ AudioRtpRTX::run (void) {
 		// Recv session
 		////////////////////////////
 		receiveSessionForSpkr(data_for_speakers, data_for_speakers_tmp,
-				spkrVolume);
+				spkrVolume, countTime);
 		
 		// Let's wait for the next transmit cycle
 		Thread::sleep(TimerPort::getTimer());

@@ -43,12 +43,13 @@ main (int argc, char **argv) {
 
 #if defined(GUI_QT)
   QApplication a(argc, argv);
+  Manager::instance().initConfigFile();		
   GUI = new QtGUIMainWindow (0, 0 ,
 			     Qt::WDestructiveClose |
 			     Qt::WStyle_Customize |
 			     Qt::WStyle_NoBorder);
-  Manager::instance().setGui(GUI);
   Manager::instance().init();		
+  Manager::instance().setGui(GUI);
 		
   a.setMainWidget((QtGUIMainWindow*)GUI);
   return a.exec();

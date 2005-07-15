@@ -212,6 +212,11 @@ public:
 	int deviceCount (void);
 	bool defaultDevice (int);
 	
+	/*
+	 * Init default values for the different fields
+	 */
+	void initConfigFile (void);
+
 private:
 
 	/*
@@ -229,10 +234,7 @@ private:
  	 */
 	int createSettingsPath (void);
 		
-	/*
-	 * Init default values for the different fields
-	 */
-	void initConfigFile (void);
+
 
 	void initAudioCodec(void);
 	void selectAudioDriver (void);

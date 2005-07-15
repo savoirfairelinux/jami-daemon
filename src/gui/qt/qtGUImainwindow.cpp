@@ -773,7 +773,7 @@ QtGUIMainWindow::getPhoneLine (short id)
 		} 
 	}
 	if (i == NUMBER_OF_LINES) {
-		_debug("Id is not attributed to a phoneline\n");
+		_debug("getPhoneLine(id): Id %d is not attributed to a phoneline\n", id);
 		return NULL;
 	}
 	return NULL;
@@ -1028,7 +1028,7 @@ QtGUIMainWindow::qt_transferCall (short id)
 {
 	int i;
 	const string to(_lcd->getTextBuffer().ascii());;
-	_debug("Transfer call %d to %s\n", id, to.data());
+	_debug("qt_transferCall: Transfer call %d to %s\n", id, to.data());
 	i = transferCall(id, to);
 	getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
 	return i;	
@@ -1058,6 +1058,7 @@ QtGUIMainWindow::qt_refuseCall (short id)
 	displayStatus(HUNGUP_STATUS);
 	getPhoneLine(id)->setbRinging(false);
 	_TabIncomingCalls[id2line(id)] = -1;
+	setCurrentLine(-1);
 	return i;	
 }	
 	
@@ -1146,13 +1147,12 @@ QtGUIMainWindow::dial (void)
 		if (line != -1) {
 			_TabIncomingCalls[line] = -1;
 			toggleLine(line);
-			//setPrevLine(line);
 		} else {
 			return;
 		}
 	} else if (getTransfer()){
 		// If call transfer
-		if(qt_transferCall (line2id(getCurrentLine()) != 1)) {
+		if(qt_transferCall (line2id(getCurrentLine())) != 1) {
 			Manager::instance().displayErrorText("Transfer failed !\n");
 		}
 	} else {
@@ -1177,6 +1177,7 @@ QtGUIMainWindow::hangupLine (void)
 	int i;
 	int line = getCurrentLine();
 	int id = phLines[line]->getCallId();
+	_debug("id = %d et line = %d\n", id, line);
 
 	if (Manager::instance().getbCongestion()) {
 		// If congestion tone
@@ -1187,6 +1188,14 @@ QtGUIMainWindow::hangupLine (void)
 			phLines[line]->setCallId(0);
 		} else {
 			Manager::instance().displayErrorText("Hangup call failed !\n");
+		}
+	} else if ((i = isThereIncomingCall()) > 0){
+		// To refuse new incoming call 
+		_debug("Refuse call %d\n", id);
+		if (qt_refuseCall(i)) {
+			changeLineStatePixmap(id2line(i), FREE);
+		} else {
+			Manager::instance().displayErrorText("Refused call failed !\n");
 		}
 	} else if (line >= 0 and id > 0 and getCall(id)->isProgressing()) {
 		// If I want to cancel a call before ringing.
@@ -1206,14 +1215,6 @@ QtGUIMainWindow::hangupLine (void)
 			setChooseLine(false);
 		} else {
 			Manager::instance().displayErrorText("Hangup call failed !\n");
-		}
-	} else if ((i = isThereIncomingCall()) > 0){
-		// To refuse new incoming call 
-		_debug("Refuse call %d\n", id);
-		if (qt_refuseCall(i)) {
-			changeLineStatePixmap(id2line(i), FREE);
-		} else {
-			Manager::instance().displayErrorText("Refused call failed !\n");
 		}
 	} else if (line >= 0) {
 		_debug("Just load free pixmap for the line %d\n", line);
