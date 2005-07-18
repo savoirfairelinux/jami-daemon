@@ -48,8 +48,8 @@ main (int argc, char **argv) {
 			     Qt::WDestructiveClose |
 			     Qt::WStyle_Customize |
 			     Qt::WStyle_NoBorder);
-  Manager::instance().init();		
   Manager::instance().setGui(GUI);
+  Manager::instance().init();		
 		
   a.setMainWidget((QtGUIMainWindow*)GUI);
   return a.exec();
