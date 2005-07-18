@@ -150,6 +150,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 		
 		// Consume the regular one as well (same amount of bytes)
 		_mainSndRingBuffer.Discard(SAMPLES_SIZE(toGet));
+		
 	}  
 	else {
 	// If nothing urgent, play the regular sound samples

@@ -640,13 +640,13 @@ void
 ManagerImpl::notificationIncomingCall (void) {
     int16* buf_ctrl_vol;
     int16* buffer = new int16[SAMPLING_RATE];
-	int size = SAMPLING_RATE/2;
+	int size = SAMPLES_SIZE(FRAME_PER_BUFFER);//SAMPLING_RATE/2;
 	int k, spkrVolume;
                                                                                 
     _tone->generateSin(440, 0, buffer);
            
 	// Control volume
-	buf_ctrl_vol = new int16[size];
+	buf_ctrl_vol = new int16[size*CHANNELS];
 	spkrVolume = getSpkrVolume();
 	for (int j = 0; j < size; j++) {
 		k = j*2;
@@ -654,15 +654,8 @@ ManagerImpl::notificationIncomingCall (void) {
 	}
 	
 	getAudioDriver()->urgentRingBuffer().Put(buf_ctrl_vol, 
-			size * CHANNELS);
+			SAMPLES_SIZE(FRAME_PER_BUFFER));
 
-	_debug("---- Notification call\n");
-#if 0
-	getAudioDriver()->startStream();
-	getAudioDriver()->sleep(NOTIFICATION_LEN);
-	getAudioDriver()->stopStream();
-#endif
-	
     delete[] buf_ctrl_vol;
     delete[] buffer;
 }

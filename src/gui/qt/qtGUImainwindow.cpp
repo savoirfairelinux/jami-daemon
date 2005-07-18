@@ -1027,11 +1027,15 @@ int
 QtGUIMainWindow::qt_transferCall (short id)
 {
 	int i;
-	const string to(_lcd->getTextBuffer().ascii());;
-	_debug("qt_transferCall: Transfer call %d to %s\n", id, to.data());
-	i = transferCall(id, to);
-	getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
-	return i;	
+	if (id != -1) {
+		const string to(_lcd->getTextBuffer().ascii());;
+		_debug("qt_transferCall: Transfer call %d to %s\n", id, to.data());
+		i = transferCall(id, to);
+		getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
+		return i;	
+	} else {
+		return 0;
+	}
 }	
 	
 void 
@@ -1177,6 +1181,7 @@ QtGUIMainWindow::hangupLine (void)
 	int i;
 	int line = getCurrentLine();
 	int id = phLines[line]->getCallId();
+	setTransfer(false);
 	_debug("id = %d et line = %d\n", id, line);
 
 	if (Manager::instance().getbCongestion()) {
@@ -1320,7 +1325,8 @@ QtGUIMainWindow::button_msg (void) {
 // This number is validated by ok-button or typing Enter
 void
 QtGUIMainWindow::button_transfer (void) {
-	if (getCurrentLine() != -1) {
+	int line_num = getCurrentLine();
+    if (line_num != -1 and phLines[line_num]->isBusy()) {
 		setTransfer(true);
 		onHoldCall(line2id(getCurrentLine()));
 		displayStatus(TRANSFER_STATUS);

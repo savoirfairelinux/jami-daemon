@@ -289,7 +289,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 	countTime += time->getSecond();
 	if (Manager::instance().getNumberOfCalls() > 0 
 			and Manager::instance().getbRingtone()) {
-		countTime = countTime % 2000;
+		countTime = countTime % 4000;
 		if (countTime < 100 and countTime > 0) {
 			Manager::instance().notificationIncomingCall();
 		}
