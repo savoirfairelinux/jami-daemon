@@ -1,4 +1,7 @@
 Laurielle LEA (18 July 2005) version 0.4
+- Bug fix if error was raised before setGUI.
+
+Laurielle LEA (18 July 2005) version 0.4
 - Fix incoming call sound notification
 - Fix transfer if no busy line
 
