@@ -156,6 +156,7 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent,
 	// Handle the tray icon system
 	_mypop = new QPopupMenu(this);
 	_mypop->insertItem ("Quit", qApp, SLOT(quit()));
+	_mypop->insertItem ("Compose", _urlinput, SLOT(show()));
 
 	_trayicon = new MyTrayIcon(QPixmap(
 				Skin::getPathPixmap(QString(PIXDIR), QString(TRAY_ICON))), 
@@ -368,13 +369,13 @@ QtGUIMainWindow::initButtons (void) {
 	QToolTip::add(reduce_button, tr("Minimize window"));
 	QToolTip::add(quit_button, tr("Close window (Ctrl+Q)"));
 	QToolTip::add(phoneKey_msg, tr("Get your message"));
-	QToolTip::add(phoneKey_transf, tr("Call transfer"));
+	QToolTip::add(phoneKey_transf, tr("Call transfer (Ctrl+T)"));
 	QToolTip::add(phoneKey_conf, tr("Conference"));
 	QToolTip::add(addr_book_button, tr("Address book"));
 	QToolTip::add(configuration_button, tr("Configuration tools (Ctrl+C)"));
-	QToolTip::add(hangup_button, tr("Hangup"));
-	QToolTip::add(dial_button, tr("Dial"));
-	QToolTip::add(mute_button, tr("Mute"));
+	QToolTip::add(hangup_button, tr("Hangup (Esc)"));
+	QToolTip::add(dial_button, tr("Dial (Enter)"));
+	QToolTip::add(mute_button, tr("Mute (Ctrl+M)"));
 	QToolTip::add(dtmf_button, tr("Show DTMF _keypad (Ctrl+D)"));
 
 	// Buttons position
@@ -605,7 +606,9 @@ QtGUIMainWindow::putOnHoldBusyLine (int line)
 		if (!getCall(line2id(line))->isRinging() and !getCall(line2id(line))->isProgressing()) {
 			// Occurs when newly off-hook line replaces another one.
 			_debug("On hold line %d [id=%d]\n", line, line2id(line));
-			qt_onHoldCall(line2id(line));
+			if (qt_onHoldCall(line2id(line)) != 1) {
+				return -1;
+			}
 		} 
 		changeLineStatePixmap(line, ONHOLD);
 		return 1;
@@ -679,12 +682,17 @@ int
 QtGUIMainWindow::callIsOnHold(int id, int line, int busyLine)
 {
 	changeLineStatePixmap(line, BUSY);
-	putOnHoldBusyLine(busyLine);
+	if (putOnHoldBusyLine(busyLine) == -1) {
+		Manager::instance().displayErrorText("Off-hold call failed !\n");
+		return -1;
+	}
 	if (getChooseLine()) {
 		// If a free line is off-hook, set this line to free state
 		setChooseLine(false);
-		changeLineStatePixmap(getChosenLine(), FREE);
 		dialtone(false);
+		if (busyLine == -1) {
+			changeLineStatePixmap(getChosenLine(), FREE);
+		}
 	}		
 	_lcd->setInFunction(true);
 	if (qt_offHoldCall(id) != 1) {
@@ -715,7 +723,16 @@ QtGUIMainWindow::clickOnFreeLine(int line, int busyLine)
 	setChooseLine(true);
 	setChosenLine(line);
 
-	putOnHoldBusyLine(busyLine);
+	if (!Manager::instance().getbCongestion()) {
+		putOnHoldBusyLine(busyLine);
+	} else {
+		// When a new line is off-hook -> hangup the previous line 
+		// which runs congestion tone 
+		changeLineStatePixmap(busyLine, FREE);
+		_lcd->clear(QString(ENTER_NUMBER_STATUS));
+		Manager::instance().congestion(false);
+		phLines[busyLine]->setCallId(0);
+	}
 	if (getPrevLine() != -1 and getPrevLine() != line 
 			and phLines[getPrevLine()]->isFree()) {
 		changeLineStatePixmap(getPrevLine(), FREE);
@@ -1029,7 +1046,7 @@ QtGUIMainWindow::qt_transferCall (short id)
 	int i;
 	if (id != -1) {
 		const string to(_lcd->getTextBuffer().ascii());;
-		_debug("qt_transferCall: Transfer call %d to %s\n", id, to.data());
+		_debug("qt_transferCall: Transfer call %d to %s number\n", id, to.data());
 		i = transferCall(id, to);
 		getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
 		return i;	
@@ -1181,24 +1198,27 @@ QtGUIMainWindow::hangupLine (void)
 	int i;
 	int line = getCurrentLine();
 	int id = phLines[line]->getCallId();
-	setTransfer(false);
-	_debug("id = %d et line = %d\n", id, line);
 
-	if (Manager::instance().getbCongestion()) {
+	setTransfer(false);
+
+	if (Manager::instance().getbCongestion() and line != -1) {
 		// If congestion tone
-		if (qt_hangupCall(id)) {
+		if (id > 0 and qt_hangupCall(id)) {
 			changeLineStatePixmap(line, FREE);
 			_lcd->clear(QString(ENTER_NUMBER_STATUS));
 			Manager::instance().congestion(false);
 			phLines[line]->setCallId(0);
+		} else if (id == 0) {
+			changeLineStatePixmap(line, FREE);
 		} else {
 			Manager::instance().displayErrorText("Hangup call failed !\n");
-		}
+		}	
 	} else if ((i = isThereIncomingCall()) > 0){
 		// To refuse new incoming call 
 		_debug("Refuse call %d\n", id);
 		if (qt_refuseCall(i)) {
 			changeLineStatePixmap(id2line(i), FREE);
+			phLines[id2line(i)]->setCallId(0);
 		} else {
 			Manager::instance().displayErrorText("Refused call failed !\n");
 		}
@@ -1227,7 +1247,7 @@ QtGUIMainWindow::hangupLine (void)
 		dialtone(false);
 		setChooseLine(false);
 		setCurrentLine(-1);
-	}
+	} 
 }
 
 /**
@@ -1326,7 +1346,8 @@ QtGUIMainWindow::button_msg (void) {
 void
 QtGUIMainWindow::button_transfer (void) {
 	int line_num = getCurrentLine();
-    if (line_num != -1 and phLines[line_num]->isBusy()) {
+    if (line_num != -1 and phLines[line_num]->isBusy()
+			and !Manager::instance().getbCongestion()) {
 		setTransfer(true);
 		onHoldCall(line2id(getCurrentLine()));
 		displayStatus(TRANSFER_STATUS);
@@ -1379,7 +1400,7 @@ QtGUIMainWindow::button_mute(void)
 	
 	int id = line2id(getCurrentLine());
 	
-	if (Manager::instance().getNumberOfCalls() > 0) {
+	if (id != -1 and Manager::instance().getNumberOfCalls() > 0) {
     // If there is at least a pending call
         if(!isOn) {
 			qt_muteOff(id);
@@ -1553,6 +1574,7 @@ QtGUIMainWindow::stripSlot (void) {
     QRegExp rx(REG_EXPR);
     _lcd->appendText(_urlinput->url->text().remove(rx));
     _urlinput->close();
+	dial();
 }
 
 /**
@@ -1591,8 +1613,10 @@ QtGUIMainWindow::pressedKeySlot (int id) {
        
 	callid = line2id(getCurrentLine());
     if (callid != -1 and getCall(callid)->isBusy()) {
-        sendDtmf(callid, code); // pour envoyer DTMF
+	// To send DTMF during call, no display of them
+        sendDtmf(callid, code); 
     } else if (Manager::instance().isDriverLoaded()) {
+	// To compose, phone number appears in the screen
 		_lcd->appendText (code);
 	}
 
@@ -1618,10 +1642,15 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	Manager::instance().getAudioDriver()->urgentRingBuffer().Put(buf_ctrl_vol, 
 			size * CHANNELS);
 
-	Manager::instance().getAudioDriver()->startStream();
-	Manager::instance().getAudioDriver()->sleep(pulselen);
-	Manager::instance().getAudioDriver()->stopStream();
-	Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
+	// We activate the stream if it's not active yet.
+	if (!Manager::instance().getAudioDriver()->isStreamActive()) {
+		Manager::instance().getAudioDriver()->startStream();
+		Manager::instance().getAudioDriver()->sleep(pulselen);
+		Manager::instance().getAudioDriver()->stopStream();
+		Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
+	} else {
+        Manager::instance().getAudioDriver()->sleep(pulselen);
+    }
 		
 	delete[] buf_ctrl_vol;
 }
@@ -1767,36 +1796,46 @@ QtGUIMainWindow::keyPressEvent(QKeyEvent *e) {
 		return;
 	   	break;
 		
+	// To clear the screen	
 	case Qt::Key_L:
  		if (e->state() == Qt::ControlButton ) {		
 			_lcd->clear();
 			return;
 		}
 	   	break;
+	// To quit the application
 	case Qt::Key_Q :
  		if (e->state() == Qt::ControlButton ) {
 			emit keyPressed(e->key());
 			return;			
 		}			
 		break;
+
+	// To open input line
 	case Qt::Key_O :
  		if (e->state() == Qt::ControlButton ) {
 		 	_urlinput->show();
 			return;			
 		}			
 		break;
+
+	// To show window setup
 	case Qt::Key_C :
  		if (e->state() == Qt::ControlButton ) {
 		 	configuration();
 			return;			
 		}			
 		break;
+
+	// To show/hide dtmf-keypad
 	case Qt::Key_D :
  		if (e->state() == Qt::ControlButton ) {
 		 	dtmfKeypad();
 			return;			
 		}			
 		break;
+
+	// To set mode (text/num)
 	case Qt::Key_Space:
 		if (this->isInNumMode()) {
 			this->setMode(TEXT_MODE);
@@ -1805,6 +1844,22 @@ QtGUIMainWindow::keyPressEvent(QKeyEvent *e) {
 		}
 		return;
 		break;
+
+	// To put mute on/off the mike sound
+	case Qt::Key_M :
+	if (e->state() == Qt::ControlButton ) {
+		button_mute();
+		return;			
+	}			
+	break;
+
+	// To transfer call
+	case Qt::Key_T :
+	if (e->state() == Qt::ControlButton ) {
+		button_transfer();
+		return;			
+	}			
+	break;
 
 	case Qt::Key_Alt:
 	case Qt::Key_CapsLock:

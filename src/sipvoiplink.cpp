@@ -596,7 +596,8 @@ SipVoIPLink::getEvent (void)
 			if (countReg <= 3) { 
 				setRegister();
 				countReg++;
-			}
+			} 
+			
 			break;
 
 		case EXOSIP_OPTIONS_NEW:

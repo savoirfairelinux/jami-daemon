@@ -216,7 +216,6 @@ MyDisplay::renderText (QPainter &painter, QFontMetrics &fm, QString &str) {
 	if (fm.width(str) > (_centerImage.width() - 5)) {
 		extra_chars = str.length() - cpl;
 		x_offset = fm.width(str[0]) * extra_chars;
-		x_offset = fm.width(str[0]) * extra_chars;
 
 		// Hack the scrolled string to inform the user
 		backup_string[0] = str[extra_chars];

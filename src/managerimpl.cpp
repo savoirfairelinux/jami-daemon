@@ -288,8 +288,9 @@ ManagerImpl::hangupCall (short id)
 	Call* call;
 
 	call = getCall(id);
-	if (call == NULL)
+	if (call == NULL) {
 		return -1;
+	}
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Hungup);
 	_mutex.enterMutex();
