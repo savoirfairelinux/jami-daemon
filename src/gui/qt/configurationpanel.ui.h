@@ -60,7 +60,7 @@ void ConfigurationPanel::init()
      }
     } 
  }
-    // List audio devices from audiolayer 
+    // List audio devices 
     const char* devicename ; 
     const char* hostapiname;
  

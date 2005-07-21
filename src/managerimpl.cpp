@@ -346,6 +346,7 @@ ManagerImpl::onHoldCall (short id)
 		return -1;
 	call->setStatus(string(ONHOLD_STATUS));
 	call->setState(OnHold);
+	
 	return call->onHold();
 }
 

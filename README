@@ -33,6 +33,7 @@ Dependencies build instructions:
 	make
 	make install
 	
+
 How to compile SFLphone ?
 -------------------------
 
@@ -75,6 +76,34 @@ Why does it not compile ?
 	- If you don't install dependencies in classic install directories,
 	  you have to export CXXFLAGS. 
 	  ( example: export CXXFLAGS="-I/opt/include" )
+
+
+Short description of content of source tree:
+-------------------------------------------
+- skins/ contains the different available skins in separated directories.
+- pixmaps/ contains all the pixmaps used in the configuration window.
+- rings/ contains the different ringtones.
+- stund/ is an implementation of the protocol STUN used when there is a NAT.
+- utilspp/ allows to implement a singleton.
+
+- src/ is the core of SFLphone. It contains the main.cpp, managerimpl.cpp files,  audio and gui directories, and files about signalisation SIP. 
+  Later, it should be better, when IAX will be implemented, that a directory 
+  groups these protocols. 
+  The ManagerImpl class is the intermediaire between all the layer in the tree.
+
+- src/audio/ is the audio layer. It contains all about tones, dtmf, audiodriver,  rtp layer, audio codec ulaw, alaw and gsm.
+- src/audio/gsm/ contains the implementation of gsm audiocodec library.
+- src/audio/pacpp/ implements PortAudioCpp, a native C++ binding of 
+  PortAudio V19.
+
+- src/gui/ is the directory that contains all about different user interface.
+  The GuiFramework class is the base class of all user interface objects. It
+  receives mouse, keyboard events from GUI child class and calls ManagerImpl 
+  functions which correspond. GuiFramework receives also events from ManagerImpl
+  and handle them according to the GUI chosen by the user, with virtual 
+  functions.
+- src/gui/qt is the implementation of QT user interface.
+
 
 Of course we love patches. And contribution. See http://www.sflphone.org/ .    
 The project infrastructure (CVS, bugtraqer, MLs) is maintained on : 

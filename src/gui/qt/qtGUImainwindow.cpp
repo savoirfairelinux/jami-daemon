@@ -153,10 +153,11 @@ QtGUIMainWindow::QtGUIMainWindow (QWidget *parent,
 	// Show the GUI
 	this->show();	
 
-	// Handle the tray icon system
+	// Handle the tray icon system menu
 	_mypop = new QPopupMenu(this);
-	_mypop->insertItem ("Quit", qApp, SLOT(quit()));
 	_mypop->insertItem ("Compose", _urlinput, SLOT(show()));
+	_mypop->insertItem ("Setup", this, SLOT(configuration()));
+	_mypop->insertItem ("Quit", qApp, SLOT(quit()));
 
 	_trayicon = new MyTrayIcon(QPixmap(
 				Skin::getPathPixmap(QString(PIXDIR), QString(TRAY_ICON))), 
@@ -1044,6 +1045,8 @@ int
 QtGUIMainWindow::qt_transferCall (short id)
 {
 	int i;
+	
+	_debug("------- qt_transferCall id = %d\n", id);
 	if (id != -1) {
 		const string to(_lcd->getTextBuffer().ascii());;
 		_debug("qt_transferCall: Transfer call %d to %s number\n", id, to.data());
@@ -1113,6 +1116,7 @@ QtGUIMainWindow::toggleLine (int line)
 	
 	setCurrentLine(line);
 	busyLine = busyLineNumber();
+	setTransfer(false);
 	
 	id = line2id(line);
 	if (id > 0) {
@@ -1173,6 +1177,7 @@ QtGUIMainWindow::dial (void)
 		}
 	} else if (getTransfer()){
 		// If call transfer
+		setTransfer(false);
 		if(qt_transferCall (line2id(getCurrentLine())) != 1) {
 			Manager::instance().displayErrorText("Transfer failed !\n");
 		}
