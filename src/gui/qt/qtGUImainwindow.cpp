@@ -1046,7 +1046,6 @@ QtGUIMainWindow::qt_transferCall (short id)
 {
 	int i;
 	
-	_debug("------- qt_transferCall id = %d\n", id);
 	if (id != -1) {
 		const string to(_lcd->getTextBuffer().ascii());;
 		_debug("qt_transferCall: Transfer call %d to %s number\n", id, to.data());

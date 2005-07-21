@@ -44,16 +44,7 @@ using namespace std;
 // AudioRtp                                                          
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtp::AudioRtp () {
-	string svr;
-	
 	_RTXThread = NULL;
-	
-	if (!Manager::instance().useStun() &&
-	    get_config_fields_str(SIGNALISATION, PROXY).empty()) {
-	  svr = get_config_fields_str(SIGNALISATION, PROXY);
-	} else {
-	  svr = get_config_fields_str(SIGNALISATION, HOST_PART);
-	}
 }
 
 AudioRtp::~AudioRtp (void) {
