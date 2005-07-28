@@ -189,6 +189,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 			setCancel(cancelImmediate);
 		}
 	}
+	_debug("-----------------------\n");
 }
 
 void

@@ -20,7 +20,8 @@
 #ifndef __SIP_VOIP_LINK_H__
 #define __SIP_VOIP_LINK_H__
 
-#include <eXosip/eXosip.h>
+#include <eXosip2/eXosip.h>
+#include <osipparser2/sdp_message.h>
 
 #include <string>
 #include <vector>
@@ -30,8 +31,12 @@
 using namespace std;
 
 #define EXPIRES_VALUE	180
+#define INVITE_METHOD	"INVITE"
 // 1XX responses
 #define DIALOG_ESTABLISHED 101
+#define RINGING			180
+// 2XX
+#define OK				200
 // 4XX Errors
 #define	BAD_REQ			400
 #define	UNAUTHORIZED	401
@@ -41,6 +46,7 @@ using namespace std;
 #define NOT_ACCEPTABLE	406
 #define AUTH_REQUIRED	407
 #define REQ_TIMEOUT		408
+#define UNSUP_MEDIA_TYPE	415
 #define TEMP_UNAVAILABLE 480
 #define	ADDR_INCOMPLETE	484
 #define	BUSY_HERE		486
@@ -122,6 +128,21 @@ private:
 	short findCallId (eXosip_event_t *e);
 	short findCallIdWhenRinging (void);
 	bool isInRtpmap (int index, int payload, CodecDescriptorVector* cdv);
+
+	/*
+	 * To build sdp with 200 OK when answered call
+	 */
+	int sdp_complete_200ok(int did, osip_message_t * answer, int port);
+	
+	/*
+	 * To build sdp when call is on-hold
+	 */
+	int sdp_hold_call (sdp_message_t * sdp);
+	
+	/*
+	 * To build sdp when call is off-hold
+	 */
+	int sdp_off_hold_call (sdp_message_t * sdp);
 	
 	EventThread* 	_evThread;
 	SipCallVector* 	_sipcallVector;

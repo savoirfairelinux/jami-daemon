@@ -18,7 +18,7 @@
  */
 #include <sys/time.h>
 
-#include <eXosip/eXosip.h>  
+#include <eXosip2/eXosip.h>  
 #include <osip2/osip.h>
 #include <osipparser2/osip_const.h>
 #include <osipparser2/osip_headers.h>
@@ -87,16 +87,26 @@ int
 SipVoIPLink::init (void)
 {
 	string tmp;
+	int i;
 
 	tmp = string(PROGNAME) + "/" + string(VERSION);
 	
+	i = eXosip_init ();
+  	if (i != 0) {
+		_debug("Could not initialize eXosip\n");
+      	exit (0);
+    }
+	
 	srand (time(NULL));
-	if (eXosip_init (NULL, NULL, DEFAULT_SIP_PORT) != 0) {
-		if (eXosip_init (NULL, NULL, RANDOM_SIP_PORT) != 0) {
-			_debug("Cannot init eXosip\n");
+	i = eXosip_listen_addr(IPPROTO_UDP, NULL, DEFAULT_SIP_PORT, AF_INET, 0);
+	if (i != 0) {
+		i = eXosip_listen_addr(IPPROTO_UDP, NULL, RANDOM_SIP_PORT, AF_INET, 0);
+		if (i != 0) {
+			_debug("Could not initialize transport layer\n");
 			return -1;
 		}
 	}
+
 	// If use STUN server, firewall address setup
 	if (Manager::instance().useStun()) {
 		eXosip_set_user_agent(tmp.data());
@@ -104,11 +114,13 @@ SipVoIPLink::init (void)
 			return 0;
 		}
 
-		eXosip_set_firewallip((Manager::instance().getFirewallAddress()).data());
+		eXosip_masquerade_contact((Manager::instance().getFirewallAddress()).data(),
+				Manager::instance().getFirewallPort());
+		
 	} 
 	
 	eXosip_set_user_agent(tmp.data());
-	initRtpmapCodec();
+//	initRtpmapCodec();
 	_evThread->start();
 	return 1;
 }
@@ -126,33 +138,7 @@ SipVoIPLink::isInRtpmap (int index, int payload, CodecDescriptorVector* cdv) {
 void
 SipVoIPLink::initRtpmapCodec (void)
 {
-	int payload;
-	unsigned int nb;
-	char rtpmap[128];
-	char tmp[64];
 
-	bzero(rtpmap, 128);
-	bzero(tmp, 64);
-	
- 	/* reset all payload to fit application capabilities */
-  	eXosip_sdp_negotiation_remove_audio_payloads();
-	
-	// Set rtpmap according to the supported codec order
-	nb = Manager::instance().getNumberOfCodecs();
-	for (unsigned int i = 0; i < nb; i++) {
-		payload = Manager::instance().getCodecDescVector()->at(i)->getPayload();
-
-		// Add payload to rtpmap if it is not already added
-		if (!isInRtpmap(i, payload, Manager::instance().getCodecDescVector())) {
-			snprintf(rtpmap, 127, "%d %s/%d", payload, 
-				Manager::instance().getCodecDescVector()->at(i)->rtpmapPayload(payload).data(), SAMPLING_RATE);
-			snprintf(tmp, 63, "%d", payload);
-			
-			eXosip_sdp_negotiation_add_codec( osip_strdup(tmp), NULL,
-					   osip_strdup("RTP/AVP"), NULL, NULL, NULL, NULL,NULL,
-					   osip_strdup(rtpmap));
-		}
-	}
 }
 
 void
@@ -164,7 +150,9 @@ SipVoIPLink::quit(void)
 int
 SipVoIPLink::setRegister (void) 
 {
+	int i;
 	int reg_id = -1;
+	osip_message_t *reg = NULL;
 
 	string proxy = "sip:" + get_config_fields_str(SIGNALISATION, PROXY);
 
@@ -189,21 +177,20 @@ SipVoIPLink::setRegister (void)
 		return -1;
 	}
 	
-	_debug("register From: %s\n", from.data());
+	_debug("REGISTER From: %s\n", from.data());
 	if (!get_config_fields_str(SIGNALISATION, PROXY).empty()) {
-		reg_id = eXosip_register_init((char*)from.data(), 
-				(char*)proxy.data(),NULL); 
+		reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
+				(char*)proxy.data(), NULL, EXPIRES_VALUE, &reg);
 	} else {
-		reg_id = eXosip_register_init((char*)from.data(),
-				(char*)hostname.data(), NULL);
+		reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
+				(char*)hostname.data(), NULL, EXPIRES_VALUE, &reg);
 	}
 	if (reg_id < 0) {
 		eXosip_unlock();
 		return -1;
 	}	
-	
-	int i = eXosip_register(reg_id, EXPIRES_VALUE);
-	
+
+  	i = eXosip_register_send_register (reg_id, reg);
 	if (i == -2) {
 		_debug("cannot build registration, check the setup\n"); 
 		eXosip_unlock();
@@ -216,7 +203,7 @@ SipVoIPLink::setRegister (void)
 	}
 	
 	eXosip_unlock();
-	return 0;
+	return i;
 }
 int
 SipVoIPLink::outgoingInvite (short id, const string& to_url) 
@@ -271,6 +258,7 @@ int
 SipVoIPLink::answer (short id) 
 {
 	int i;
+	int port;
 	char tmpbuf[64];
 	bzero (tmpbuf, 64);
     // Get  port   
@@ -278,10 +266,34 @@ SipVoIPLink::answer (short id)
 	
 	_debug("Answer call [id = %d, cid = %d, did = %d]\n", 
 			id, getSipCall(id)->getCid(), getSipCall(id)->getDid());
-	_debug("Local audio port: %d\n", getSipCall(id)->getLocalAudioPort());
+	port = getSipCall(id)->getLocalAudioPort();
+	_debug("Local audio port: %d\n", port);
 	
+  
+	osip_message_t *answer = NULL;
+	SipCall* ca = getSipCall(id);
+
+	// Send 180 RINGING
+	eXosip_lock ();
+  	eXosip_call_send_answer (ca->getTid(), RINGING, NULL);
+  	eXosip_unlock ();
+
+	// Send 200 OK
 	eXosip_lock();
-    i = eXosip_answer_call(getSipCall(id)->getDid(), 200, tmpbuf);
+	i = eXosip_call_build_answer (ca->getTid(), OK, &answer);
+	if (i != 0) {
+		// Send 400 BAD_REQUEST
+     	eXosip_call_send_answer (ca->getTid(), BAD_REQ, NULL);
+  	} else {
+     	i = sdp_complete_200ok (ca->getDid(), answer, port);
+     	if (i != 0) {
+        	osip_message_free (answer);
+			// Send 415 UNSUPPORTED_MEDIA_TYPE
+        	eXosip_call_send_answer (ca->getTid(), UNSUP_MEDIA_TYPE, NULL);
+     	} else {
+        	eXosip_call_send_answer (ca->getTid(), OK, answer);
+		}
+  	}
 	eXosip_unlock();
 
 	// Incoming call is answered, start the sound channel.
@@ -301,7 +313,7 @@ SipVoIPLink::hangup (short id)
 				id, getSipCall(id)->getCid(), getSipCall(id)->getDid());	
 		// Release SIP stack.
 		eXosip_lock();
-		i = eXosip_terminate_call (getSipCall(id)->getCid(), 
+		i = eXosip_call_terminate (getSipCall(id)->getCid(), 
 									getSipCall(id)->getDid());
 		eXosip_unlock();
 
@@ -321,7 +333,7 @@ SipVoIPLink::cancel (short id)
 		_debug("Cancel call [id = %d, cid = %d]\n", id, getCid());
 		// Release SIP stack.
 		eXosip_lock();
-		i = eXosip_terminate_call (getCid(), -1);
+		i = eXosip_call_terminate (getCid(), -1);
 		eXosip_unlock();
 	}
 	deleteSipCall(id);
@@ -331,12 +343,64 @@ SipVoIPLink::cancel (short id)
 int
 SipVoIPLink::onhold (short id) 
 {
-	int i;
-	
-	eXosip_lock();
-	i = eXosip_on_hold_call(getSipCall(id)->getDid());
-	eXosip_unlock();
+	osip_message_t *invite;
+  	int i;
+	int did;
 
+  	sdp_message_t *local_sdp = NULL;
+
+	did = getSipCall(id)->getDid();
+	
+  	eXosip_lock ();
+  	local_sdp = eXosip_get_local_sdp (did);
+  	eXosip_unlock ();
+	
+  	if (local_sdp == NULL) {
+    	return -1;
+	}
+
+/*
+  	char port[10];
+  	snprintf (port, 10, "%d", getSipCall(id)->getLocalAudioPort());
+	*/
+
+  	eXosip_lock ();
+	// Build INVITE_METHOD for put call on-hold
+  	i = eXosip_call_build_request (did, INVITE_METHOD, &invite);
+  	eXosip_unlock ();
+
+  	if (i != 0) {
+      	sdp_message_free(local_sdp);
+      	return -1;
+    }
+
+  	/* add sdp body */
+  {
+    char *tmp = NULL;
+    
+    i = sdp_hold_call (local_sdp);
+    if (i != 0) {
+		sdp_message_free (local_sdp);
+		osip_message_free (invite);
+		return -1;
+    }
+    
+    i = sdp_message_to_str (local_sdp, &tmp);
+    sdp_message_free (local_sdp);
+    if (i != 0) {
+		osip_message_free (invite);
+		return -1;
+    }
+    osip_message_set_body (invite, tmp, strlen (tmp));
+    osip_free (tmp);
+    osip_message_set_content_type (invite, "application/sdp");
+  }
+  
+  	eXosip_lock ();
+	// Send request
+  	i = eXosip_call_send_request (did, invite);
+  	eXosip_unlock ();
+  
 	// Disable audio
 	_audiortp->closeRtpSession(getSipCall(id));
 	return i;
@@ -345,12 +409,62 @@ SipVoIPLink::onhold (short id)
 int
 SipVoIPLink::offhold (short id) 
 {
-	int i;
-	
-	eXosip_lock();
-	i = eXosip_off_hold_call(getSipCall(id)->getDid(), NULL, 0);
-	eXosip_unlock();
+	osip_message_t *invite;
+  	int i;
+  	int did;
 
+  	sdp_message_t *local_sdp = NULL;
+
+  	did = getSipCall(id)->getDid();
+  	eXosip_lock ();
+  	local_sdp = eXosip_get_local_sdp (did);
+  	eXosip_unlock ();
+  	if (local_sdp == NULL) {
+    	return -1;
+	}
+
+	/*
+  	char port[10];
+  	snprintf (port, 10, "%d", getSipCall(id)->getLocalAudioPort());
+	*/
+
+  	eXosip_lock ();
+	// Build INVITE_METHOD for put call off-hold
+  	i = eXosip_call_build_request (did, INVITE_METHOD, &invite);
+  	eXosip_unlock ();
+
+  	if (i != 0) {
+      	sdp_message_free(local_sdp);
+      	return -1;
+    }
+
+  /* add sdp body */
+  {
+    char *tmp = NULL;
+    
+    i = sdp_off_hold_call (local_sdp);
+    if (i != 0) {
+		sdp_message_free (local_sdp);
+		osip_message_free (invite);
+		return -1;
+    }
+    
+    i = sdp_message_to_str (local_sdp, &tmp);
+    sdp_message_free (local_sdp);
+    if (i != 0) {
+		osip_message_free (invite);
+		return -1;
+    }
+    osip_message_set_body (invite, tmp, strlen (tmp));
+    osip_free (tmp);
+    osip_message_set_content_type (invite, "application/sdp");
+  }
+
+  	eXosip_lock ();
+	// Send request
+  	i = eXosip_call_send_request (did, invite);
+  	eXosip_unlock ();
+  
 	// Enable audio
 	if (_audiortp->createNewSession (getSipCall(id)) < 0) {
 		_debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
@@ -362,6 +476,7 @@ SipVoIPLink::offhold (short id)
 int
 SipVoIPLink::transfer (short id, const string& to)
 {
+	osip_message_t *refer;
 	int i;
 	string tmp_to;
 	tmp_to = toHeader(to);
@@ -370,7 +485,13 @@ SipVoIPLink::transfer (short id, const string& to)
 	}
 
 	eXosip_lock();
-	i = eXosip_transfer_call(getSipCall(id)->getDid(), (char*)tmp_to.data());
+	// Build transfer request
+	i = eXosip_call_build_refer (getSipCall(id)->getDid(), (char*)tmp_to.data(),
+		   &refer);
+	if (i == 0) {
+		// Send transfer request
+		i = eXosip_call_send_request (getSipCall(id)->getDid(), refer);
+    }
 	eXosip_unlock();
 	return i;
 }
@@ -384,8 +505,12 @@ SipVoIPLink::refuse (short id)
     // Get local port   
     snprintf (tmpbuf, 63, "%d", getSipCall(id)->getLocalAudioPort());
 	
+	osip_message_t *answer = NULL;
 	eXosip_lock();
-	i = eXosip_answer_call(getSipCall(id)->getDid(), BUSY_HERE, tmpbuf);
+	i = eXosip_call_build_answer (getSipCall(id)->getTid(), BUSY_HERE, &answer);
+	if (i == 0) {
+	  i = eXosip_call_send_answer (getSipCall(id)->getTid(), BUSY_HERE, answer);
+	}
 	eXosip_unlock();
 	return i;
 }
@@ -396,16 +521,18 @@ SipVoIPLink::getEvent (void)
 	eXosip_event_t *event;
 	short id;
 	char *name;
-	static int countReg = 0;
 
-	eXosip_automatic_refresh();
 	event = eXosip_event_wait (0, 50);
+	eXosip_lock();
+	eXosip_automatic_action();
+	eXosip_unlock();
+
 	if (event == NULL) {
 		return -1;
 	}	
 	switch (event->type) {
 		// IP-Phone user receives a new call
-		case EXOSIP_CALL_NEW: //
+		case EXOSIP_CALL_INVITE: //
 			// Set local random port for incoming call
 			if (!Manager::instance().useStun()) {
 				setLocalPort(RANDOM_LOCAL_PORT);
@@ -418,6 +545,7 @@ SipVoIPLink::getEvent (void)
 				}	
 			}
 			
+			// Generate id
 			id = Manager::instance().generateNewCallId();
 			Manager::instance().pushBackNewCall(id, Incoming);
 			_debug("Incoming Call with identifiant %d [cid = %d, did = %d]\n",
@@ -427,7 +555,17 @@ SipVoIPLink::getEvent (void)
 			// Display the callerId-name
 			osip_from_t *from;
   			osip_from_init(&from);
-  			osip_from_parse(from, event->remote_uri);
+
+			if (event->request != NULL) {
+      			char *tmp = NULL;
+
+      			osip_from_to_str (event->request->from, &tmp);
+      			if (tmp != NULL) {
+          			snprintf (getSipCall(id)->getRemoteUri(), 256, "%s", tmp);
+          			osip_free (tmp);
+        		}
+    		}
+  			osip_from_parse(from, getSipCall(id)->getRemoteUri());
 			name = osip_from_get_displayname(from);
 			Manager::instance().displayTextMessage(id, name);
 			if (Manager::instance().getCall(id) != NULL) {
@@ -438,15 +576,16 @@ SipVoIPLink::getEvent (void)
 			_debug("From: %s\n", name);
 			osip_from_free(from);
 			
+			// Associate an audio port with a call
+			getSipCall(id)->setLocalAudioPort(_localPort);
+
+			
 			getSipCall(id)->newIncomingCall(event);
 			if (Manager::instance().incomingCall(id) < 0) {
 				Manager::instance().displayErrorText("Incoming call failed");
 				return -1;
 			}
 
-			// Associate an audio port with a call
-			getSipCall(id)->setLocalAudioPort(_localPort);
-			
 			break;
 
 		// The peer-user answers
@@ -463,6 +602,7 @@ SipVoIPLink::getEvent (void)
 					   and !Manager::instance().getCall(id)->isOffHold()) {
 				getSipCall(id)->setStandBy(false);
 				if (getSipCall(id)->answeredCall(event) != -1) {
+					getSipCall(id)->answeredCall_without_hold(event);
 					Manager::instance().peerAnsweredCall(id);
 
 					// Outgoing call is answered, start the sound channel.
@@ -472,9 +612,15 @@ SipVoIPLink::getEvent (void)
 						exit(1);
 					}
 				}
+			} else {
+			// Answer to on/off hold to send ACK
+				if (id > 0) {
+					getSipCall(id)->answeredCall(event);
+					_debug("-----------------------\n");
+				}
 			}
 			break;
-
+			
 		case EXOSIP_CALL_RINGING: //peer call is ringing
 			id = findCallIdWhenRinging();
 			
@@ -492,6 +638,17 @@ SipVoIPLink::getEvent (void)
 		case EXOSIP_CALL_REDIRECTED:
 			break;
 
+		case EXOSIP_CALL_ACK:
+			id = findCallId(event);
+			_debug("ACK received [id = %d, cid = %d, did = %d]\n", 
+					id, event->cid, event->did);
+			if (id > 0) {
+				getSipCall(id)->receivedAck(event);
+			} else {
+				return -1;
+			}
+			break;
+			
 		// The peer-user closed the phone call(we received BYE).
 		case EXOSIP_CALL_CLOSED:
 			id = findCallId(event);
@@ -509,35 +666,14 @@ SipVoIPLink::getEvent (void)
 			}	
 			break;
 
-		case EXOSIP_CALL_HOLD:
-			id = findCallId(event);
-			if (id > 0) {
-				getSipCall(id)->onholdCall(event);
-			} else {
-			   return -1;
-			}	   
-			break;
-
-		case EXOSIP_CALL_OFFHOLD:
-			id = findCallId(event);
-			if (id > 0) {
-				getSipCall(id)->offholdCall(event);
-			} else {
-				return -1;
-			}
-			break;
-			
 		case EXOSIP_CALL_REQUESTFAILURE:
 			id = findCallId(event);
 
 			// Handle 4XX errors
-			switch (event->status_code) {
+			switch (event->response->status_code) {
 				case AUTH_REQUIRED:
-					if (setAuthentication() == -1) {
-						break;
-					}
 					eXosip_lock();
-					eXosip_retry_call (event->cid);
+					eXosip_automatic_action();
 					eXosip_unlock();
 					break;
 				case BAD_REQ:
@@ -551,7 +687,7 @@ SipVoIPLink::getEvent (void)
 				case ADDR_INCOMPLETE:
 				case BUSY_HERE:
 					// Display error on the screen phone
-					Manager::instance().displayError(event->reason_phrase);
+					Manager::instance().displayError(event->response->reason_phrase);
 					Manager::instance().congestion(true);
 					break;
 				case REQ_TERMINATED:
@@ -563,7 +699,7 @@ SipVoIPLink::getEvent (void)
 
 		case EXOSIP_CALL_SERVERFAILURE:
 			// Handle 5XX errors
-			switch (event->status_code) {
+			switch (event->response->status_code) {
 				case SERVICE_UNAVAILABLE:
 					Manager::instance().ringback(false);
 					Manager::instance().congestion(true);					
@@ -575,7 +711,7 @@ SipVoIPLink::getEvent (void)
 
 		case EXOSIP_CALL_GLOBALFAILURE:
 			// Handle 6XX errors
-			switch (event->status_code) {
+			switch (event->response->status_code) {
 				case BUSY_EVERYWHERE:
 				case DECLINE:
 					Manager::instance().ringback(false);
@@ -587,64 +723,36 @@ SipVoIPLink::getEvent (void)
 			break;
 
 		case EXOSIP_REGISTRATION_SUCCESS:
-			_debug("-- Registration succeeded --\n");
 			Manager::instance().displayStatus(LOGGED_IN_STATUS);
 			break;
 
 		case EXOSIP_REGISTRATION_FAILURE:
-			_debug("-- Registration failed --\n");
-			if (countReg <= 3) { 
-				setRegister();
-				countReg++;
-			} 
-			
 			break;
 
-		case EXOSIP_OPTIONS_NEW:
-			/* answer the OPTIONS method */
-			/* 1: search for an existing call */
+		case EXOSIP_MESSAGE_NEW:
 			unsigned int k;
 				
-			for (k = 0; k < _sipcallVector->size(); k++) {
-				if (_sipcallVector->at(k)->getCid() == event->cid) { 
-					break;
+			if (event->request != NULL && MSG_IS_OPTIONS(event->request)) {
+				for (k = 0; k < _sipcallVector->size(); k++) {
+					if (_sipcallVector->at(k)->getCid() == event->cid) { 
+						break;
+					}
 				}
+			
+				// TODO: Que faire si rien trouve??
+				eXosip_lock();
+				if (_sipcallVector->at(k)->getCid() == event->cid) {
+					/* already answered! */
+				}
+				else if (k == _sipcallVector->size()) {
+					/* answer 200 ok */
+					eXosip_options_send_answer (event->tid, OK, NULL);
+				} else {
+					/* answer 486 ok */
+					eXosip_options_send_answer (event->tid, BUSY_HERE, NULL);
+				}
+				eXosip_unlock();
 			}
-		
-			// TODO: Que faire si rien trouve??
-			eXosip_lock();
-			if (_sipcallVector->at(k)->getCid() == event->cid) {
-				/* already answered! */
-			}
-			else if (k == _sipcallVector->size()) {
-				/* answer 200 ok */
-				eXosip_answer_options (event->cid, event->did, 200);
-			} else {
-				/* answer 486 ok */
-				eXosip_answer_options (event->cid, event->did, 486);
-			}
-			eXosip_unlock();
-			break;
-
-		case EXOSIP_OPTIONS_ANSWERED:
-			break;
-
-		case EXOSIP_OPTIONS_PROCEEDING:
-			break;
-
-		case EXOSIP_OPTIONS_REDIRECTED:
-			break;
-
-		case EXOSIP_OPTIONS_REQUESTFAILURE:
-			break;
-
-		case EXOSIP_OPTIONS_SERVERFAILURE:
-			break;
-
-		case EXOSIP_OPTIONS_GLOBALFAILURE:
-			break;
-
-		case EXOSIP_SUBSCRIPTION_NOTIFY:
 			break;
 
 		default:
@@ -671,17 +779,23 @@ SipVoIPLink::setLocalPort (int port)
 void
 SipVoIPLink::carryingDTMFdigits (short id, char code) {
 	  int duration = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
-      
-	  static const int body_len = 128;
+      osip_message_t *info;
+	  const int body_len = 1000;
+	  int i;
 
       char *dtmf_body = new char[body_len];
-	  snprintf(dtmf_body, body_len - 1,
-			  "Signal=%c\r\nDuration=%d\r\n",
-			  code, duration);
 
       eXosip_lock();
-      eXosip_info_call(getSipCall(id)->getDid(), "application/dtmf-relay", 
-			  dtmf_body);
+	  // Build info request
+	  i = eXosip_call_build_info (getSipCall(id)->getDid(), &info);
+	  if (i == 0) {
+	  		snprintf(dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n",
+			  code, duration);
+     		osip_message_set_content_type (info, "application/dtmf-relay");
+     		osip_message_set_body (info, dtmf_body, strlen (dtmf_body));
+			// Send info request
+     		i = eXosip_call_send_request (getSipCall(id)->getDid(), info);
+  	  }
       eXosip_unlock();
 	
 	  delete[] dtmf_body;
@@ -741,6 +855,178 @@ SipVoIPLink::getAudioCodec (short callid)
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
+int
+SipVoIPLink::sdp_hold_call (sdp_message_t * sdp)
+{
+  	int pos;
+  	int pos_media = -1;
+  	char *rcvsnd;
+  	int recv_send = -1;
+
+  	pos = 0;
+  	rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+  	while (rcvsnd != NULL) {
+      	if (rcvsnd != NULL && 0 == strcmp (rcvsnd, "sendonly")) {
+          	recv_send = 0;
+      	} else if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "recvonly")
+                                    || 0 == strcmp (rcvsnd, "sendrecv"))) {
+          	recv_send = 0;
+          	sprintf (rcvsnd, "sendonly");
+        }
+      	pos++;
+      	rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+    }
+
+  	pos_media = 0;
+  	while (!sdp_message_endof_media (sdp, pos_media)) {
+      	pos = 0;
+      	rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+      	while (rcvsnd != NULL) {
+          	if (rcvsnd != NULL && 0 == strcmp (rcvsnd, "sendonly")) {
+              	recv_send = 0;
+          	} else if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "recvonly")
+                                        || 0 == strcmp (rcvsnd, "sendrecv"))) {
+            	recv_send = 0;
+            	sprintf (rcvsnd, "sendonly");
+            }
+          	pos++;
+          	rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+        }
+      	pos_media++;
+    }
+
+  	if (recv_send == -1) {
+      	/* we need to add a global attribute with a field set to "sendonly" */
+      	sdp_message_a_attribute_add (sdp, -1, osip_strdup ("sendonly"), NULL);
+    }
+  	return 0;
+}
+
+int
+SipVoIPLink::sdp_off_hold_call (sdp_message_t * sdp)
+{
+  	int pos;
+  	int pos_media = -1;
+  	char *rcvsnd;
+
+  	pos = 0;
+  	rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+  	while (rcvsnd != NULL) {
+      	if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "sendonly")
+                             || 0 == strcmp (rcvsnd, "recvonly"))) {
+          	sprintf (rcvsnd, "sendrecv");
+        }
+      	pos++;
+      	rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+    }
+
+  	pos_media = 0;
+  	while (!sdp_message_endof_media (sdp, pos_media)) {
+      	pos = 0;
+      	rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+      	while (rcvsnd != NULL) {
+          	if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "sendonly")
+                                 || 0 == strcmp (rcvsnd, "recvonly"))) {
+              	sprintf (rcvsnd, "sendrecv");
+            }
+          	pos++;
+          	rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+        }
+      	pos_media++;
+    }
+
+  	return 0;
+}
+
+int
+SipVoIPLink::sdp_complete_200ok (int did, osip_message_t * answer, int port)
+{
+	sdp_message_t *remote_sdp;
+  	sdp_media_t *remote_med;
+  	char *tmp = NULL;
+  	char buf[4096];
+  	char port_tmp[64];
+	int pos;
+
+	char localip[128];
+
+	// Format port to a char*
+	bzero(port_tmp, 64);
+	snprintf(port_tmp, 63, "%d", port);
+
+	remote_sdp = eXosip_get_remote_sdp (did);
+	if (remote_sdp == NULL) {
+		  return -1;                /* no existing body? */
+	}
+
+	eXosip_guess_localip (AF_INET, localip, 128);
+	snprintf (buf, 4096,
+				"v=0\r\n"
+				"o=user 0 0 IN IP4 %s\r\n"
+				"s=session\r\n" "c=IN IP4 %s\r\n" "t=0 0\r\n", localip,localip);
+
+	pos = 0;
+	while (!osip_list_eol (remote_sdp->m_medias, pos)) {
+		char payloads[128];
+		int pos2;
+
+		memset (payloads, '\0', sizeof (payloads));
+		remote_med = (sdp_media_t *) osip_list_get (remote_sdp->m_medias, pos);
+
+		if (0 == osip_strcasecmp (remote_med->m_media, "audio")) {
+			pos2 = 0;
+			while (!osip_list_eol (remote_med->m_payloads, pos2)) {
+				tmp = (char *) osip_list_get (remote_med->m_payloads, pos2);
+				if (tmp != NULL && (0 == osip_strcasecmp (tmp, "0")
+					   || 0 == osip_strcasecmp (tmp, "8")
+					   || 0 == osip_strcasecmp (tmp, "3"))) {
+			    	strcat (payloads, tmp);
+					strcat (payloads, " ");
+				}
+				pos2++;
+			}
+			strcat (buf, "m=");
+			strcat (buf, remote_med->m_media);
+			if (pos2 == 0 || payloads[0] == '\0') {
+				strcat (buf, " 0 RTP/AVP \r\n");
+			    sdp_message_free (remote_sdp);
+				return -1;        /* refuse anyway */
+			} else {
+				strcat (buf, " ");
+				strcat (buf, port_tmp);
+				strcat (buf, " RTP/AVP ");
+				strcat (buf, payloads);
+				strcat (buf, "\r\n");
+
+				if (NULL != strstr (payloads, " 0 ")
+				  || (payloads[0] == '0' && payloads[1] == ' ')) {
+					strcat (buf, "a=rtpmap:0 PCMU/8000\r\n");
+				}
+				if (NULL != strstr (payloads, " 8 ")
+				  || (payloads[0] == '8' && payloads[1] == ' ')) {
+					strcat (buf, "a=rtpmap:8 PCMA/8000\r\n");
+				}
+				if (NULL != strstr (payloads, " 3")
+				  || (payloads[0] == '3' && payloads[1] == ' ')) {
+					strcat (buf, "a=rtpmap:3 GSM/8000\r\n");
+				}
+			}
+		} else {
+			strcat (buf, "m=");
+			strcat (buf, remote_med->m_media);
+			strcat (buf, " 0 ");
+			strcat (buf, remote_med->m_proto);
+			strcat (buf, " \r\n");
+		}
+		pos++;
+	}
+
+	osip_message_set_body (answer, buf, strlen (buf));
+	osip_message_set_content_type (answer, "application/sdp");
+	sdp_message_free (remote_sdp);
+	return 0;
+}
+
 
 int
 SipVoIPLink::behindNat (void)
@@ -852,18 +1138,10 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
 		Manager::instance().error()->errorName(TO_ERROR);
     	return -1;
   	}
-  	
-	i = eXosip_build_initial_invite(&invite,(char*)to.data(),(char*)from.data(),
-		   						(char*)route.data(), (char*)subject.data());	
-  	if (i != 0) {
-		return -1;
-    }
-  	
-	eXosip_lock();
 	
 	char port[64];
 	if (!Manager::instance().useStun()) {
-		// Set random port for outgoing call
+		// Set random port for outgoing call if no firewall
 		setLocalPort(RANDOM_LOCAL_PORT);
 		_debug("Local audio port: %d\n",_localPort);
 	} else {
@@ -876,6 +1154,7 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
 		}
 	}
 	
+	// Set local audio port for sipcall(id)
 	if (getSipCall(id) != NULL) {
 		getSipCall(id)->setLocalAudioPort(_localPort);
 	} else {
@@ -884,12 +1163,73 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
 	
 	bzero (port, 64);
 	snprintf (port, 63, "%d", getLocalPort());
-		
-	i = eXosip_initiate_call(invite, NULL, NULL, port);
+  	
+	i = eXosip_call_build_initial_invite (&invite, (char*)to.data(),
+                                        (char*)from.data(),
+                                        (char*)route.data(),
+                                        (char*)subject.data());
+  	if (i != 0) {
+		return -1;
+    }
+  	
+
+	int payload;
+	unsigned int nb;
+	char rtpmap[128];
+	char rtpmap_attr[2048];
+	char media[64];
+	char media_audio[64];
+
+	bzero(rtpmap, 128);
+	bzero(rtpmap_attr, 2048);
+	bzero(media, 64);
+	bzero(media_audio, 64);
+	
+	// Set rtpmap according to the supported codec order
+	nb = Manager::instance().getNumberOfCodecs();
+	for (unsigned int i = 0; i < nb; i++) {
+		payload = Manager::instance().getCodecDescVector()->at(i)->getPayload();
+
+		// Add payload to rtpmap if it is not already added
+		if (!isInRtpmap(i, payload, Manager::instance().getCodecDescVector())) {
+			snprintf(media, 63, "%d ", payload);
+			strcat (media_audio, media);
+			
+			snprintf(rtpmap, 127, "a=rtpmap: %d %s/%d\r\n", payload, 
+				Manager::instance().getCodecDescVector()->at(i)->rtpmapPayload(payload).data(), SAMPLING_RATE);
+			strcat(rtpmap_attr, rtpmap); 
+		}
+	}
+
+  /* add sdp body */
+  {
+    char tmp[4096];
+    char localip[128];
+
+    eXosip_guess_localip (AF_INET, localip, 128);
+    snprintf (tmp, 4096,
+              "v=0\r\n"
+              "o=SFLphone 0 0 IN IP4 %s\r\n"
+              "s=call\r\n"
+              "c=IN IP4 %s\r\n"
+              "t=0 0\r\n"
+              "m=audio %s RTP/AVP %s\r\n"
+			  "%s",
+              localip, localip, port, media_audio, rtpmap_attr);
+	
+    osip_message_set_body (invite, tmp, strlen (tmp));
+    osip_message_set_content_type (invite, "application/sdp");
+  }
+  
+	eXosip_lock();
+	
+	i = eXosip_call_send_initial_invite (invite);
 
 	if (i <= 0) {
 		eXosip_unlock();
 		return -1;
+	} else {
+		eXosip_call_set_reference (i, NULL);
 	}
 
 	eXosip_unlock();

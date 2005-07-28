@@ -286,7 +286,7 @@ private:
 	inline void setPrevLine(int line) { _prevLine = line; }
 	inline int getPrevLine(void) { return _prevLine; }
 
-	// Array of incoming calls
+	// Array of incoming calls, contains call-id
 	int _TabIncomingCalls[NUMBER_OF_LINES];
 
 	// The current phoneline

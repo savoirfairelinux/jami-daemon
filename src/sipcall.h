@@ -22,13 +22,16 @@
 #ifndef __SIP_CALL_H__
 #define __SIP_CALL_H__
 
-#include <eXosip/eXosip.h>
+#include <eXosip2/eXosip.h>
 #include <vector>
 
 class CodecDescriptor;
 class AudioCodec;
 
 #define NOT_USED      0
+#define _SENDRECV 0
+#define _SENDONLY 1
+#define _RECVONLY 2
 using namespace std;
 
 typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
@@ -43,9 +46,9 @@ public:
 	
 	int  	newIncomingCall 	(eXosip_event_t *);
 	int  	answeredCall 		(eXosip_event_t *);
+	void  	answeredCall_without_hold (eXosip_event_t *);
 	int  	ringingCall			(eXosip_event_t *);
-	int  	onholdCall			(eXosip_event_t *);
-	int  	offholdCall			(eXosip_event_t *);
+	int  	receivedAck			(eXosip_event_t *);
 
 	void	setLocalAudioPort 	(int);
 	int 	getLocalAudioPort 	(void);	
@@ -55,10 +58,14 @@ public:
 	int 	getDid				(void);
 	void 	setCid				(int cid);
 	int 	getCid				(void);
+	void 	setTid				(int tid);
+	int 	getTid				(void);
 	int 	getRemoteSdpAudioPort (void);
 	char* 	getRemoteSdpAudioIp (void);
 	AudioCodec* getAudioCodec	(void);
 	void	setAudioCodec		(AudioCodec* ac);
+
+	inline char* getRemoteUri (void) { return _remote_uri; }
 
 	inline void setStandBy (bool standby) { _standby = standby; }
 	inline bool getStandBy (void) { return _standby; }
@@ -67,6 +74,9 @@ private:
 	void	alloc			(void);
 	void	dealloc			(void);
 	void 	noSupportedCodec(void);	
+
+	int sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg);
+	int sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med);
 	
 	CodecDescriptorVector* _cdv;
 	AudioCodec* _audiocodec;
@@ -74,6 +84,7 @@ private:
 	short 	_id;
 	int 	_cid;	// call id
   	int 	_did;	// dialog id
+  	int 	_tid;	// transaction id
 	bool	_standby; // wait for a cid and did when outgoing call is made
 
   	int  	_status_code;
@@ -88,9 +99,12 @@ private:
 	char*	_remote_sdp_audio_ip;
   	char*	_payload_name;
 	char*	_sdp_body;
+	int		_payload;
   	int  	_state;
 	int		_local_audio_port;
   	int  	_remote_sdp_audio_port;
+	int 	_local_sendrecv;           /* _SENDRECV, _SENDONLY, _RECVONLY */
+  	int 	_remote_sendrecv;          /* _SENDRECV, _SENDONLY, _RECVONLY */
 };
 
 #endif // __SIP_CALL_H__

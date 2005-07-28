@@ -54,7 +54,7 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS( \
 ostream \
-eXosip/eXosip.h \
+eXosip2/eXosip.h \
 portaudio.h \
 )
 
@@ -78,11 +78,11 @@ PKG_CHECK_MODULES(libosip2, libosip2 >= ${LIBOSIP2_MIN_VERSION})
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libosip2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libosip2_LIBS"
 
-if test $ac_cv_header_eXosip_eXosip_h = no; then
-   AC_MSG_ERROR([*** missing eXipsip/eXosip.h. You need a working eXosip installation. See http://savannah.nongnu.org/projects/exosip/])
+if test $ac_cv_header_eXosip2_eXosip_h = no; then
+   AC_MSG_ERROR([*** missing eXosip2/eXosip.h. You need a working eXosip2 installation. See http://www.antisip.com/download/])
 fi
-libexosip_LIBS="-leXosip "
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libexosip_LIBS"
+libexosip2_LIBS="-leXosip2 "
+SFLPHONE_LIBS="$SFLPHONE_LIBS $libexosip2_LIBS"
 
 AC_SUBST(LIBQT)
 

@@ -707,6 +707,7 @@ QtGUIMainWindow::callIsOnHold(int id, int line, int busyLine)
 int
 QtGUIMainWindow::callIsIncoming (int id, int line, int busyLine)
 {
+	_TabIncomingCalls[line] = -1;
 	changeLineStatePixmap(line, BUSY);
 	putOnHoldBusyLine(busyLine);
 	if (qt_answerCall(id) != 1) {
@@ -1218,6 +1219,7 @@ QtGUIMainWindow::hangupLine (void)
 			Manager::instance().displayErrorText("Hangup call failed !\n");
 		}	
 	} else if ((i = isThereIncomingCall()) > 0){
+		_debug("&&&&&&&&&& i = %d\n", i);
 		// To refuse new incoming call 
 		_debug("Refuse call %d\n", id);
 		if (qt_refuseCall(i)) {
