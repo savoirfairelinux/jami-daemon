@@ -35,7 +35,7 @@ Error::errorName (Error_enum num_name) {
 	switch (num_name){
 		// Handle opening device errors
 		case OPEN_FAILED_DEVICE:
-			Manager::instance().displayErrorText("Open device failed ");
+			Manager::instance().displayError("Open device failed ");
 			issetError = 2; 
 			break;
 			

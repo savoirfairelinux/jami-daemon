@@ -158,7 +158,7 @@ public:
 	int peerRingingCall (short id);
 	int peerHungupCall (short id);
 	void displayTextMessage (short id, const string& message);
-	void displayErrorText (const string& message);
+	void displayErrorText (short id, const string& message);
 	void displayError (const string& error);
 	void displayStatus (const string& status);
 	int selectedCall (void);

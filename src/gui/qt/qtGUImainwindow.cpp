@@ -672,7 +672,7 @@ QtGUIMainWindow::callIsBusy (Call* call, int id, int line, int busyLine)
 		changeLineStatePixmap(line, ONHOLD);
 		displayStatus(ONHOLD_STATUS);
 		if (qt_onHoldCall(id) != 1) {
-		  Manager::instance().displayErrorText("On-hold call failed !\n");
+		  Manager::instance().displayErrorText(id, "On-hold call failed !\n");
 		  return -1;
 		}
 	}
@@ -684,7 +684,7 @@ QtGUIMainWindow::callIsOnHold(int id, int line, int busyLine)
 {
 	changeLineStatePixmap(line, BUSY);
 	if (putOnHoldBusyLine(busyLine) == -1) {
-		Manager::instance().displayErrorText("Off-hold call failed !\n");
+		Manager::instance().displayErrorText(id, "Off-hold call failed !\n");
 		return -1;
 	}
 	if (getChooseLine()) {
@@ -697,7 +697,7 @@ QtGUIMainWindow::callIsOnHold(int id, int line, int busyLine)
 	}		
 	_lcd->setInFunction(true);
 	if (qt_offHoldCall(id) != 1) {
-		Manager::instance().displayErrorText("Off-hold call failed !\n");
+		Manager::instance().displayErrorText(id, "Off-hold call failed !\n");
 		return -1;
 	}
 	displayContext(id);
@@ -711,7 +711,7 @@ QtGUIMainWindow::callIsIncoming (int id, int line, int busyLine)
 	changeLineStatePixmap(line, BUSY);
 	putOnHoldBusyLine(busyLine);
 	if (qt_answerCall(id) != 1) {
-		Manager::instance().displayErrorText("Answered call failed !\n");
+		Manager::instance().displayErrorText(id, "Answered call failed !\n");
 		return -1;
 	}
 	return 1;
@@ -847,7 +847,15 @@ QtGUIMainWindow::incomingCall (short id)
 			// Set the status to the phoneline
 			getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
 		}
+		
+		// To store information about stop scrolling text
+		_lcd->resetForScrolling (false);
+		phLines[i]->setStopScrolling(false);
+		// To store information about scrolling text or not
+		phLines[i]->setScrolling(true);
+		_lcd->setIsScrolling(true);
 	}
+	
 	return i;
 }
 	
@@ -874,6 +882,10 @@ int
 QtGUIMainWindow::peerHungupCall (short id)
 {
 	int line = id2line(id);
+
+	// To store information about scrolling text
+	_lcd->resetForScrolling (true);
+	phLines[line]->setStopScrolling(true);
 
 	if (line == getCurrentLine() or getCurrentLine() == -1) {
 		stopCallTimer(id);
@@ -905,10 +917,14 @@ QtGUIMainWindow::displayTextMessage (short id, const string& message)
 }
 	
 void 
-QtGUIMainWindow::displayErrorText (const string& message)
+QtGUIMainWindow::displayErrorText (short id, const string& message)
 {
 	_lcd->clearBuffer();
 	_lcd->appendText(message);
+
+	// To store information about scrolling text
+	_lcd->setIsScrolling(true);
+	phLines[id2line(id)]->setScrolling(true);
 }
 
 void 
@@ -932,6 +948,12 @@ void
 QtGUIMainWindow::displayContext (short id)
 {
 	displayStatus(getCall(id)->getStatus());
+	
+	// To fetch information about scrolling text according to the context 
+	// of the phoneline.
+	_lcd->setIsScrolling(phLines[id2line(id)]->scrolling());
+	_lcd->resetForScrolling(phLines[id2line(id)]->stopScrolling());
+	
 	if (getCall(id)->isIncomingType()) {
 		displayTextMessage (id, getCall(id)->getCallerIdName());
 	} else if (getCall(id)->isOutgoingType()) {
@@ -966,6 +988,8 @@ QtGUIMainWindow::qt_outgoingCall (void)
 {
 	int id;
 	int line = -1;
+
+	
 	if (_lcd->getTextBuffer() == NULL) {
 		Manager::instance().displayStatus(ENTER_NUMBER_STATUS);
 		return -1;
@@ -980,6 +1004,10 @@ QtGUIMainWindow::qt_outgoingCall (void)
 	if (id > 0) {	
 		line = associateCall2Line(id);
 		_debug("Call %d -> line %d\n", id, line);
+		
+		// To store information about stop scrolling text
+		_lcd->resetForScrolling (false);
+		phLines[line]->setStopScrolling(false);
 
 		setCurrentLine(line);
 		displayStatus(TRYING_STATUS);
@@ -1178,8 +1206,9 @@ QtGUIMainWindow::dial (void)
 	} else if (getTransfer()){
 		// If call transfer
 		setTransfer(false);
-		if(qt_transferCall (line2id(getCurrentLine())) != 1) {
-			Manager::instance().displayErrorText("Transfer failed !\n");
+		int id = line2id(getCurrentLine());
+		if(qt_transferCall (id) != 1) {
+			Manager::instance().displayErrorText(id, "Transfer failed !\n");
 		}
 	} else {
 		// If new outgoing call  
@@ -1206,6 +1235,10 @@ QtGUIMainWindow::hangupLine (void)
 
 	setTransfer(false);
 
+	// To store information about stop scrolling text
+	_lcd->resetForScrolling (true);
+	phLines[line]->setStopScrolling(true);
+
 	if (Manager::instance().getbCongestion() and line != -1) {
 		// If congestion tone
 		if (id > 0 and qt_hangupCall(id)) {
@@ -1215,38 +1248,32 @@ QtGUIMainWindow::hangupLine (void)
 			phLines[line]->setCallId(0);
 		} else if (id == 0) {
 			changeLineStatePixmap(line, FREE);
-		} else {
-			Manager::instance().displayErrorText("Hangup call failed !\n");
-		}	
+		} 
 	} else if ((i = isThereIncomingCall()) > 0){
-		_debug("&&&&&&&&&& i = %d\n", i);
 		// To refuse new incoming call 
 		_debug("Refuse call %d\n", id);
-		if (qt_refuseCall(i)) {
-			changeLineStatePixmap(id2line(i), FREE);
-			phLines[id2line(i)]->setCallId(0);
-		} else {
-			Manager::instance().displayErrorText("Refused call failed !\n");
+		if (!qt_refuseCall(i)) {
+			Manager::instance().displayErrorText(id, "Refused call failed !\n");
 		}
+		changeLineStatePixmap(id2line(i), FREE);
+		phLines[id2line(i)]->setCallId(0);
 	} else if (line >= 0 and id > 0 and getCall(id)->isProgressing()) {
 		// If I want to cancel a call before ringing.
-		if (qt_cancelCall(id)) {
-			changeLineStatePixmap(line, FREE);
-			phLines[line]->setCallId(0);
-			setChooseLine(false);
-		} else {
-			Manager::instance().displayErrorText("Cancelled call failed !\n");
+		if (!qt_cancelCall(id)) {
+			Manager::instance().displayErrorText(id, "Cancelled call failed !\n");
 		}
+		changeLineStatePixmap(line, FREE);
+		phLines[line]->setCallId(0);
+		setChooseLine(false);
 	} else if (line >= 0 and id > 0) {
 		// If hangup current line normally
 		_debug("Hangup line %d\n", line);
-		if (qt_hangupCall(id)) {
-			changeLineStatePixmap(line, FREE);
-			phLines[line]->setCallId(0);
-			setChooseLine(false);
-		} else {
-			Manager::instance().displayErrorText("Hangup call failed !\n");
+		if (!qt_hangupCall(id)) {
+			Manager::instance().displayErrorText(id, "Hangup call failed !\n");
 		}
+		changeLineStatePixmap(line, FREE);
+		phLines[line]->setCallId(0);
+		setChooseLine(false);
 	} else if (line >= 0) {
 		_debug("Just load free pixmap for the line %d\n", line);
 		changeLineStatePixmap(line, FREE);
@@ -1621,44 +1648,53 @@ QtGUIMainWindow::pressedKeySlot (int id) {
     if (callid != -1 and getCall(callid)->isBusy()) {
 	// To send DTMF during call, no display of them
         sendDtmf(callid, code); 
-    } else if (Manager::instance().isDriverLoaded()) {
-	// To compose, phone number appears in the screen
+    } else if (Manager::instance().isDriverLoaded()
+			and Manager::instance().error()->getError() == 0) {
+	// To compose, phone number appears in the screen if the driver is loaded
+	// and there is no error in configuration setup
 		_lcd->appendText (code);
+
+		// To store information about scrolling text
+		_lcd->setIsScrolling(false);
+		phLines[getCurrentLine()]->setScrolling(false);
 	}
 
-	// Handle dtmf
-	_key->startTone(code);
-	_key->generateDTMF(_buf, SAMPLING_RATE);
-	
-	// Determine dtmf pulse length
-	pulselen = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
-	int size = pulselen * (OCTETS /1000);
-  
-	buf_ctrl_vol = new int16[size*CHANNELS];
-	spkrVolume = Manager::instance().getSpkrVolume();
-	
-	// Control volume and format mono->stereo
-	for (int j = 0; j < size; j++) {
-		k = j*2;  
-		buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j] * spkrVolume/100;
-	}
+	// To generate the dtmf if there is no error in configuration
+	if (Manager::instance().error()->getError() == 0) {
+		// Handle dtmf
+		_key->startTone(code);
+		_key->generateDTMF(_buf, SAMPLING_RATE);
 		
-	Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
-	// Put buffer to urgentRingBuffer 
-	Manager::instance().getAudioDriver()->urgentRingBuffer().Put(buf_ctrl_vol, 
-			size * CHANNELS);
-
-	// We activate the stream if it's not active yet.
-	if (!Manager::instance().getAudioDriver()->isStreamActive()) {
-		Manager::instance().getAudioDriver()->startStream();
-		Manager::instance().getAudioDriver()->sleep(pulselen);
-		Manager::instance().getAudioDriver()->stopStream();
+		// Determine dtmf pulse length
+		pulselen = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
+		int size = pulselen * (OCTETS /1000);
+	  
+		buf_ctrl_vol = new int16[size*CHANNELS];
+		spkrVolume = Manager::instance().getSpkrVolume();
+		
+		// Control volume and format mono->stereo
+		for (int j = 0; j < size; j++) {
+			k = j*2;  
+			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j] * spkrVolume/100;
+		}
+			
 		Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
-	} else {
-        Manager::instance().getAudioDriver()->sleep(pulselen);
-    }
-		
-	delete[] buf_ctrl_vol;
+		// Put buffer to urgentRingBuffer 
+		Manager::instance().getAudioDriver()->urgentRingBuffer().Put(buf_ctrl_vol, 
+				size * CHANNELS);
+
+		// We activate the stream if it's not active yet.
+		if (!Manager::instance().getAudioDriver()->isStreamActive()) {
+			Manager::instance().getAudioDriver()->startStream();
+			Manager::instance().getAudioDriver()->sleep(pulselen);
+			Manager::instance().getAudioDriver()->stopStream();
+			Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
+		} else {
+			Manager::instance().getAudioDriver()->sleep(pulselen);
+		}
+			
+		delete[] buf_ctrl_vol;
+	}
 }
 
 // Save settings in config-file

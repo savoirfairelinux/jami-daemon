@@ -111,19 +111,19 @@ ManagerImpl::init (void)
 	}
 	catch (const portaudio::PaException &e)
 	{
-		displayErrorText(e.paErrorText());
+		displayError(e.paErrorText());
 	}
 	catch (const portaudio::PaCppException &e)
 	{
-		displayErrorText(e.what());
+		displayError(e.what());
 	}
 	catch (const exception &e)
 	{
-		displayErrorText(e.what());
+		displayError(e.what());
 	}
 	catch (...)
 	{ 
-		displayErrorText("An unknown exception occured.");
+		displayError("An unknown exception occured.");
 	}
 	
 	_voIPLinkVector->at(DFT_VOIP_LINK)->init();
@@ -134,7 +134,6 @@ ManagerImpl::init (void)
 				_exist == 1) {
 			if (registerVoIPLink() != 1) {
 				_debug("Registration failed\n");
-				displayErrorText("Check your configuration fields");
 			}
 		} 
 	}
@@ -559,9 +558,9 @@ ManagerImpl::displayTextMessage (short id, const string& message)
 }
 
 void 
-ManagerImpl::displayErrorText (const string& message)
+ManagerImpl::displayErrorText (short id, const string& message)
 {
-	_gui->displayErrorText(message);
+	_gui->displayErrorText(id, message);
 }
 
 void 

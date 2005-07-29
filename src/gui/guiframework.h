@@ -37,7 +37,7 @@ public:
 	virtual int peerRingingCall (short id) = 0;
 	virtual int peerHungupCall (short id) = 0;
 	virtual void displayTextMessage (short id, const string& message) = 0;
-	virtual void displayErrorText (const string& message) = 0;
+	virtual void displayErrorText (short id, const string& message) = 0;
 	virtual void displayError (const string& error) = 0;
 	virtual void displayStatus (const string& status) = 0;
 	virtual void displayContext (short id) = 0;

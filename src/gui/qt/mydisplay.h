@@ -25,6 +25,7 @@
 #include <qsettings.h>
 #include <qstring.h>
 #include <qthread.h>
+#include <qtimer.h>
 #include <qwidget.h>
 
 #include "../../global.h"
@@ -48,6 +49,7 @@ class QtGUIMainWindow;
 
 // Display
 class MyDisplay : public QWidget {
+	Q_OBJECT
 public:
 	MyDisplay 	();
 	MyDisplay 	(QWidget *, const char *, QtGUIMainWindow *);
@@ -64,6 +66,12 @@ public:
 	inline bool getInFunction (void) { return _inFunction; }
 	inline void setInFunction (bool b) { _inFunction = b; }
 
+	inline bool getIsScrolling (void) { return _isScrolling; }
+	inline void setIsScrolling (bool s) { _isScrolling = s; }
+
+	inline void resetForScrolling (bool r) { _reset = r; }
+	inline bool getReset (void) { return _reset; }
+
 public slots:
 	void	 appendText	(const QString &);
 	void	 appendText	(const char *);
@@ -72,6 +80,7 @@ public slots:
 	void	 clearBuffer(void);
 	void	 clear		(const QString &);
 	void 	 backspace	(void);
+	void 	 shift		(void);
 
 protected:
 	void	 paintEvent (QPaintEvent *);
@@ -85,6 +94,11 @@ private:
 	QString*			_textBuffer;		
 	QString*			_time;
 	bool 				_inFunction;
+	bool				_shift;
+	QTimer*				_timerForScrollingText;
+	bool 				_isScrolling;
+	bool				_reset;
+	unsigned int 		len_to_shift;
 	
 	void		initText		(void);
 	void		renderText		(QPainter &, QFontMetrics &, QString &);

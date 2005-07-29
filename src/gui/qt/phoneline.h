@@ -70,9 +70,17 @@ public:
 	inline short getCallId 		(void) { return _callid; }
 	inline void setCallId 		(short id) { _callid = id; }
 
+	inline bool scrolling		(void) { return _scrolling; }
+	inline void setScrolling    (bool s) { _scrolling = s; }
+
+	inline bool stopScrolling 	(void) { return _stopScrolling; }
+	inline void setStopScrolling(bool s) { _stopScrolling = s; }
+
 private:
 	short 			_callid;
 	QString			_status;
+	bool 			_scrolling; // if need scrolling message
+	bool			_stopScrolling;
 	
 	JPushButton*	jpb;
 	enum line_state	state;

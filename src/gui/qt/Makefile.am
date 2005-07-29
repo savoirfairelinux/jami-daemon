@@ -11,6 +11,7 @@ BUILT_SOURCES = \
 	trayiconmoc.cpp\
 	volumecontrolmoc.cpp\
 	numerickeypadmoc.cpp \
+	mydisplaymoc.cpp \
 	qtGUImainwindowmoc.cpp
 
 libsflphoneqt_la_SOURCES = \

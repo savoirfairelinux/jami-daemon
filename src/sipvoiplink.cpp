@@ -203,6 +203,8 @@ SipVoIPLink::setRegister (void)
 	}
 	
 	eXosip_unlock();
+
+	Manager::instance().error()->setError(0);
 	return i;
 }
 int
@@ -233,7 +235,7 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
 				return -1;
 			}
 		} else {
-			Manager::instance().displayErrorText("No network found\n");
+			Manager::instance().displayErrorText(id, "No network found\n");
             return -1;
         }
 		return 0;
@@ -247,7 +249,7 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
 				return -1;
 			}
 		} else {
-			Manager::instance().displayErrorText("No network found\n");
+			Manager::instance().displayErrorText(id, "No network found\n");
             return -1;
         }
 		return 0;
@@ -582,10 +584,10 @@ SipVoIPLink::getEvent (void)
 			
 			getSipCall(id)->newIncomingCall(event);
 			if (Manager::instance().incomingCall(id) < 0) {
-				Manager::instance().displayErrorText("Incoming call failed");
+				Manager::instance().displayErrorText(id, "Incoming call failed");
 				return -1;
 			}
-
+	
 			break;
 
 		// The peer-user answers
@@ -741,12 +743,11 @@ SipVoIPLink::getEvent (void)
 			
 				// TODO: Que faire si rien trouve??
 				eXosip_lock();
-				if (_sipcallVector->at(k)->getCid() == event->cid) {
-					/* already answered! */
-				}
-				else if (k == _sipcallVector->size()) {
+				if (k == _sipcallVector->size()) {
 					/* answer 200 ok */
 					eXosip_options_send_answer (event->tid, OK, NULL);
+				} else if (_sipcallVector->at(k)->getCid() == event->cid) {
+					/* already answered! */
 				} else {
 					/* answer 486 ok */
 					eXosip_options_send_answer (event->tid, BUSY_HERE, NULL);

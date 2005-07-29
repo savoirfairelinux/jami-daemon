@@ -89,6 +89,13 @@ MyDisplay::MyDisplay (QWidget *parent, const char *name, QtGUIMainWindow* qtgui)
 	_qtgui = qtgui;
 	this->initGraphics();
 	this->initText();
+
+	// For scrolling text
+	_timerForScrollingText = new QTimer(this);
+	connect (_timerForScrollingText, SIGNAL(timeout()), SLOT(shift()));
+	//emit signal every second
+	_timerForScrollingText->start(2000); 	
+	
 	// Graphics engine animation thread
 	_animationThread = new MyDisplayThread (this);
 	_animationThread->start();
@@ -103,6 +110,8 @@ MyDisplay::~MyDisplay (void) {
 	delete _qtgui;
 	delete _status;
 	delete _time;
+	_timerForScrollingText->stop();
+	delete _timerForScrollingText;
 }
 
 /**
@@ -191,6 +200,10 @@ MyDisplay::initText (void) {
 	_status = new QString(FREE_STATUS);
 	// No display call-timer
 	_inFunction = false;
+	// No scrolling
+	_isScrolling = false;
+	_reset = false;
+	len_to_shift = 0;
 }
 
 /**
@@ -211,23 +224,62 @@ MyDisplay::renderText (QPainter &painter, QFontMetrics &fm, QString &str) {
 	uint	 x_offset = 0;
 	uint	 extra_chars = 0;
 	QString	 backup_string(".");
-	
-	// If the string is larger than the screen...
-	if (fm.width(str) > (_centerImage.width() - 5)) {
-		extra_chars = str.length() - cpl;
-		x_offset = fm.width(str[0]) * extra_chars;
+	QString str_tmp = str;
 
-		// Hack the scrolled string to inform the user
-		backup_string[0] = str[extra_chars];
-		str.replace (extra_chars, backup_string.length(),QString("<"));
+	// If call is closed, reset len_to_shift to 0
+	if (getReset()) {
+		len_to_shift = 0;
 	}
 	
-	// Render text
-	painter.drawText (TABULATION - x_offset, fm.height() * TEXT_LINE, str);
+	// If don't need scrolling message
+	if (!getIsScrolling()) {
+		// If the string is larger than the screen...
+		if (fm.width(str) > (_centerImage.width() - 5)) {
+			extra_chars = str.length() - cpl;
+			x_offset = fm.width(str[0]) * extra_chars;
 
-	if (fm.width(str) > (_centerImage.width() - 5)) {
-		// Restore initial string.
-		str.replace(extra_chars, backup_string.length(), backup_string);
+			// Hack the scrolled string to inform the user
+			backup_string[0] = str[extra_chars];
+			str.replace (extra_chars, backup_string.length(),QString("<"));
+		}
+		// Render text
+		painter.drawText (TABULATION - x_offset, fm.height() * TEXT_LINE, str);
+		if (fm.width(str) > (_centerImage.width() - 5)) {
+			// Restore initial string.
+			str.replace(extra_chars, backup_string.length(), backup_string);
+		}
+	} else {
+		// if need scrolling text
+		if (_shift) {
+			len_to_shift += 1;
+		}
+
+		if (str.length() > cpl) {
+			str_tmp = str.left(len_to_shift);
+		} 
+		if (len_to_shift == cpl) {
+			str_tmp = str.right(len_to_shift);
+		}
+		if (len_to_shift == str.length()*2) {
+			str_tmp = str.left(len_to_shift);
+			len_to_shift = 0;
+		}
+
+		painter.drawText (TABULATION + _centerImage.width() - 
+				len_to_shift * fm.width(str[0]), 
+				fm.height() * TEXT_LINE, str_tmp);
+	}
+	
+}
+
+void
+MyDisplay::shift (void)
+{
+	if (getReset()) {
+		_shift = false;
+		len_to_shift = 0;
+	} else {
+		_shift = true;
 	}
 }
 

@@ -87,7 +87,7 @@ public:
 	virtual int peerRingingCall (short id);
 	virtual int peerHungupCall (short id);
 	virtual void displayTextMessage (short id, const string& message);
-	virtual void displayErrorText (const string& message);
+	virtual void displayErrorText (short id, const string& message);
 	virtual void displayError (const string& error);
 	virtual void displayStatus (const string& status);
 	virtual void displayContext (short id);
