@@ -35,6 +35,8 @@
 #include "url_input.h"
 
 #define	MAIN_INITIAL_POSITION	20
+
+// To type with keyboard what you want to appear in the screen.
 #define TEXT_MODE				0
 #define NUM_MODE				1
 
@@ -79,6 +81,7 @@ public:
 	QtGUIMainWindow	(QWidget* = 0, const char* = 0,WFlags = 0);
 	~QtGUIMainWindow(void);
 	
+	// To build an array of pixmap according to the state
 	QPixmap	 TabLinePixmap[NUMBER_OF_LINES][NUMBER_OF_STATES];
 	
 	// Reimplementation of virtual functions
@@ -140,8 +143,9 @@ public:
 	 */
 	int getElapse (void);
 
-	// Public functions
-	void 	 setMainLCD		 	(void);
+	/*
+	 * Set the skin path from the setup
+	 */ 
 	QString  setPathSkin		(void);
 
 	/**
@@ -159,15 +163,26 @@ public:
 	void	 stopCallTimer 		(short);
 	void	 startCallTimer 	(short);
 
+	/*
+	 * Stop the blinking-signal when you check your voicemail (not used yet)
+	 */
 	void 	 stopTimerMessage 	(void);
-	void	 dialTone			(bool);
 
+	/*
+	 * Manage if you selected a line before dialing 
+	 */
 	inline void setChooseLine (bool b) { _chooseLine = b; }
 	inline bool getChooseLine (void) { return _chooseLine; }
 	
+	/*
+	 * Store the line you selected before dialing
+	 */
 	inline void setChosenLine (int line) { _chosenLine = line; }
 	inline int getChosenLine (void) { return _chosenLine; }
 
+	/*
+	 * Manage if you are in transfer mode
+	 */
 	inline void setTransfer (bool b) { _transfer = b; }
 	inline bool getTransfer (void) {return _transfer; }
 
@@ -175,17 +190,40 @@ signals:
 	void 	 keyPressed			(int);
 
 public slots:
+	// Slot when you click on ok-button or type Enter
 	void 	 dial				(void);
+	
+	// Notification when you have received incoming call 
 	void 	 blinkRingSlot		(void);
+
+	// Notification when you have put on-hold a call
 	void 	 blinkLineSlot		(void);
+
+	// Notification when you have received message in your mailbox
 	void 	 blinkMessageSlot	(void);
-	void 	 qt_quitApplication	(void);
+
+	// Slot to use numeric keypad
 	void 	 pressedKeySlot		(int);
+
+	// To remove specified characters before appending the text in url-input 
 	void 	 stripSlot			(void);
+
+	// To show the address book (not implemented yet)
 	void 	 addressBook 		(void);
+
+	// To show keypad at the specified position
 	void	 dtmfKeypad			(void);
+
+	// To show setup windows
 	void 	 configuration		(void);
+
+	// Slot to hangup call
 	void 	 hangupLine			(void);
+
+	// Slot to quit application
+	void 	 qt_quitApplication	(void);
+	
+	// Manage different buttons in the phone	
 	void 	 button_mute		(void);
 	void 	 button_line0		(void);
 	void 	 button_line1		(void);
@@ -198,9 +236,8 @@ public slots:
 	void 	 button_conf		(void);
 	void 	 clickHandle 		(void);
 	void	 reduceHandle		(void);
-	void	 save				(void);
-	void	 applySkin			(void);
 	
+	// Handle pressed key of the dtmf keypad
 	void 	 pressedKey0		(void);
 	void 	 pressedKey1		(void);
 	void 	 pressedKey2		(void);
@@ -211,12 +248,19 @@ public slots:
 	void 	 pressedKey7		(void);
 	void 	 pressedKey8		(void);
 	void 	 pressedKey9		(void);
-	void 	 pressedKeyStar		(void);
-	void 	 pressedKeyHash		(void);
+	void 	 pressedKeyStar		(void); // (*)
+	void 	 pressedKeyHash		(void); // (#)
 
+	// Manage volume control
 	void	 volumeSpkrChanged		(int);
 	void	 volumeMicChanged		(int);
+
+	// To register manually
 	void	 registerSlot			(void);
+	// To save configuration
+	void	 save				(void);
+	// To apply selected skin
+	void	 applySkin			(void);
 
 protected:
 	// To handle the key pressed event
@@ -283,8 +327,6 @@ private:
 	bool _chooseLine;
 	int _chosenLine;
 	int _prevLine;
-	inline void setPrevLine(int line) { _prevLine = line; }
-	inline int getPrevLine(void) { return _prevLine; }
 
 	// Array of incoming calls, contains call-id
 	int _TabIncomingCalls[NUMBER_OF_LINES];
@@ -294,20 +336,42 @@ private:
 
 	bool _dialtone;
 	
+	////////////////////
+	// Private functions
+	////////////////////
+
+	inline void setPrevLine(int line) { _prevLine = line; }
+	inline int getPrevLine(void) { return _prevLine; }
+
+	// Set position for screen 
+	void setMainLCD		 	(void);
+
+	// Handle num/text mode
 	void setMode			(int);
 	bool isInTextMode		(void);
 	bool isInNumMode		(void);
+
+	// Initialize all the skin 
 	void initSkin			(void);
-	void initVolume 		(void);
 	void initButtons 		(void);
-	void initBlinkTimer	(void);
+	void initVolume 		(void);
 	void initSpkrVolumePosition (void);
 	void initMicVolumePosition (void);
-	void connections		(void);
-	string  ringFile			(void);
 
-	int  positionOffsetX	(void);
+	// Delete buttons called in destructor
 	void deleteButtons		(void);
+	
+	// Initialize timer for blinking notification
+	void initBlinkTimer		(void);
+
+	// Initialize all the connections (SIGNAL->SLOT) 
+	void connections		(void);
+
+	// Set the ringtone file path
+	string  ringFile		(void);
+
+	// Set position for numeric keypad
+	int  positionOffsetX	(void);
 
 	/*
 	 * Associate a phoneline number to a call identifiant

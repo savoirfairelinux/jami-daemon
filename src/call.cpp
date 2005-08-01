@@ -60,30 +60,6 @@ Call::setId (short id)
 	_id = id;
 }
 
-unsigned int 
-Call::getTimestamp(void)
-{
-	return _timestamp;
-}
-
-void 
-Call::setTimestamp (unsigned int timestamp)
-{
-	_timestamp = timestamp;
-}
-
-short
-Call::getVoIPLinkId (void)
-{
-	return _voIPLinkId;
-}
-
-void 
-Call::setVoIPLinkId (short voIPLinkId)
-{
-	_voIPLinkId = voIPLinkId;
-}
-
 void 
 Call::setVoIPLink (VoIPLink* voIPLink)
 {
@@ -106,18 +82,6 @@ void
 Call::setStatus (const string& status)
 {
 	_status = status;
-}
-
-string 
-Call::getTo (void)
-{
-	return _to;
-}
-
-void 
-Call::setTo (const string& to)
-{
-	_to = to;
 }
 
 string 
@@ -320,8 +284,6 @@ Call::refuse  (void)
 void
 Call::initConstructor(void)
 {
-	_timestamp = 0;
 	_state = NotExist;
 	_type = Null;
-	_voIPLinkId = 1;
 }

@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2004 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -25,10 +25,8 @@
 PhoneLine::PhoneLine (void) {
 	jpb = NULL;
 	setState (FREE);
-	setStateLine (FREE);
 	first = true;
 	timer = new QTime();	
-	b_dial = false;
 	b_ringing = false;
 	_callid = 0;
 	_status = "";
@@ -40,16 +38,6 @@ PhoneLine::~PhoneLine (void) {
 	if (timer != NULL) {
 		delete timer;
 	}
-}
-
-enum line_state
-PhoneLine::getStateLine (void) {
-	return stateLine;
-}
-
-void
-PhoneLine::setStateLine (enum line_state state) {
-	this->stateLine = state;
 }
 
 enum line_state

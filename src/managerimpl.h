@@ -66,6 +66,9 @@ typedef vector<VoIPLink*, allocator<VoIPLink*> > VoIPLinkVector;
  */
 typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
 
+/*
+ * Structure for audio device
+ */
 struct device_t{
 	const char* hostApiName;
 	const char* deviceName;
@@ -76,10 +79,19 @@ public:
 	ManagerImpl (void);
 	~ManagerImpl (void);
 
+	// Init a new VoIPLink, audio codec and audio driver
 	void init (void);
+
+	// Set the graphic user interface
 	void setGui (GuiFramework* gui);
+	
+	// Accessor to tonegenerator
 	ToneGenerator* getTonegenerator(void);
+
+	// Accessor to error
 	Error* error(void);
+
+	// Accessor to audiodriver
 	AudioLayer* getAudioDriver(void);
 
 	// Accessor to number of calls 
@@ -97,13 +109,16 @@ public:
 	// Accessor to the Call with the id 'id' 
 	Call* getCall (short id);
 	
+	// Handle codec number
 	unsigned int getNumberOfCodecs (void);
 	void setNumberOfCodecs (unsigned int nb_codec);
 	
+	// Accessor to VoIPLinkVector
 	VoIPLinkVector* getVoIPLinkVector (void);
 
 	CodecDescriptorVector* getCodecDescVector(void);
 
+	// Handle specified ring tone
 	inline bool getZonetone (void) { return _zonetone; }
 	inline void setZonetone (bool b) { _zonetone = b; }
 
@@ -189,19 +204,31 @@ public:
 	void getStunInfo (StunAddress4& stunSvrAddr);
 	bool useStun (void);
 	
+	/*
+	 * Inline functions to manage different kind of ringtone
+	 */
 	inline bool getbCongestion 	(void) { return _congestion; }
 	inline bool getbRingback 	(void) { return _ringback; }
 	inline bool getbRingtone 	(void) { return _ringtone; }
 	
+	/*
+	 * Inline functions to manage volume control
+	 */
 	inline int getSpkrVolume 	(void) 			{ return _spkr_volume; }
 	inline void setSpkrVolume 	(int spkr_vol) 	{ _spkr_volume = spkr_vol; }
 	inline int getMicroVolume 	(void) 			{ return _mic_volume; }
 	inline void setMicroVolume 	(int mic_vol) 	{ _mic_volume = mic_vol; }
 	
+	/*
+	 * Manage information about firewall
+	 */
 	inline int getFirewallPort 		(void) 		{ return _firewallPort; }
 	inline void setFirewallPort 	(int port) 	{ _firewallPort = port; }
 	inline string getFirewallAddress (void) 	{ return _firewallAddr; }
 
+	/*
+	 * Manage information about audio driver
+	 */
 	inline bool isDriverLoaded (void) { return _loaded; }
 	inline void loaded (bool l) { _loaded = l; }
 
@@ -233,15 +260,20 @@ private:
 	 *			2 if file doesn't exist yet.
  	 */
 	int createSettingsPath (void);
-		
 
-
+	/*
+	 * Initialize audiocodec
+	 */
 	void initAudioCodec(void);
+	
+	/*
+	 * Initialize audiodriver
+	 */
 	void selectAudioDriver (void);
 	
-/////////////////////
-// Private variables
-/////////////////////
+	/////////////////////
+	// Private variables
+	/////////////////////
 	ToneGenerator* _tone;
 	Error* _error;
 	GuiFramework* _gui;

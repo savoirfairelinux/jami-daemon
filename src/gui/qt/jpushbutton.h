@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 Savoir-Faire Linux inc.
+ * Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  * Author: Jerome Oufella (jerome.oufella@savoirfairelinux.com)
  *
  * Portions (c) Valentin Heinitz
@@ -21,6 +21,7 @@
 
 #ifndef __J_PUSH_BUTTON_H__
 #define __J_PUSH_BUTTON_H__
+
 #include <qbitmap.h>
 #include <qevent.h>
 #include <qimage.h>

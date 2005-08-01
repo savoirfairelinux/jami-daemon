@@ -700,7 +700,9 @@ QtGUIMainWindow::callIsOnHold(int id, int line, int busyLine)
 		Manager::instance().displayErrorText(id, "Off-hold call failed !\n");
 		return -1;
 	}
+
 	displayContext(id);
+	_lcd->setLenToShift(0);
 	return 1;
 }
 
@@ -851,7 +853,7 @@ QtGUIMainWindow::incomingCall (short id)
 		// To store information about stop scrolling text
 		_lcd->resetForScrolling (false);
 		phLines[i]->setStopScrolling(false);
-		// To store information about scrolling text or not
+		// Set scrolling mode
 		phLines[i]->setScrolling(true);
 		_lcd->setIsScrolling(true);
 	}
@@ -886,6 +888,9 @@ QtGUIMainWindow::peerHungupCall (short id)
 	// To store information about scrolling text
 	_lcd->resetForScrolling (true);
 	phLines[line]->setStopScrolling(true);
+	// Unset scrolling mode
+	_lcd->setIsScrolling(false);
+	phLines[getCurrentLine()]->setScrolling(false);
 
 	if (line == getCurrentLine() or getCurrentLine() == -1) {
 		stopCallTimer(id);
@@ -922,7 +927,7 @@ QtGUIMainWindow::displayErrorText (short id, const string& message)
 	_lcd->clearBuffer();
 	_lcd->appendText(message);
 
-	// To store information about scrolling text
+	// Set scrolling mode
 	_lcd->setIsScrolling(true);
 	phLines[id2line(id)]->setScrolling(true);
 }
@@ -1238,6 +1243,9 @@ QtGUIMainWindow::hangupLine (void)
 	// To store information about stop scrolling text
 	_lcd->resetForScrolling (true);
 	phLines[line]->setStopScrolling(true);
+	// Unset scrolling mode
+	_lcd->setIsScrolling(false);
+	phLines[getCurrentLine()]->setScrolling(false);
 
 	if (Manager::instance().getbCongestion() and line != -1) {
 		// If congestion tone
@@ -1654,7 +1662,7 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 	// and there is no error in configuration setup
 		_lcd->appendText (code);
 
-		// To store information about scrolling text
+		// Unset scrolling mode
 		_lcd->setIsScrolling(false);
 		phLines[getCurrentLine()]->setScrolling(false);
 	}

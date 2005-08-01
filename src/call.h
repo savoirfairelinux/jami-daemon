@@ -52,75 +52,72 @@ class VoIPLink;
 
 class Call {
 public:
+	// Constructor
 	Call(short id, CallType type, VoIPLink* voiplink);
-	
+	// Destructor
 	~Call(void);
 	
+
+	// Handle call-id
 	short getId (void);
 	void setId (short id);
 	
-	unsigned int getTimestamp(void);
-	void setTimestamp (unsigned int timestamp);
-
-	short getVoIPLinkId(void);
-	void setVoIPLinkId (short voIPLinkId);
-	void setVoIPLink (VoIPLink* voIPLink);
+	// Accessor and modifior of VoIPLink
 	VoIPLink* getVoIPLink(void);
+	void setVoIPLink (VoIPLink* voIPLink);
 		
+	// Accessor and modifior of status
 	string getStatus (void);
 	void setStatus (const string& status);
 	
-	string getTo (void);
-	void setTo (const string& to);
-
+	// Handle id name and id number
 	string getCallerIdName (void);
 	void setCallerIdName (const string& callerId_name);
 	string getCallerIdNumber (void);
 	void setCallerIdNumber (const string& callerId_number);
 	
+	// Handle state
 	enum CallState getState (void);
 	void setState (enum CallState state);
+	
+	// Handle type of call (incoming or outoing)
 	enum CallType getType (void);
 	void setType (enum CallType type);
 
-	bool isBusy	(void);
-	bool isOnHold (void);
-	bool isOffHold (void);
-	bool isOnMute (void);
-	bool isOffMute (void);
-	bool isTransfered (void);
-	bool isHungup (void);
-	bool isRinging (void);
-	bool isRefused (void);
-	bool isCancelled (void);
-	bool isAnswered (void);
-	bool isProgressing (void);
+	bool isBusy			(void);
+	bool isOnHold 		(void);
+	bool isOffHold 		(void);
+	bool isOnMute 		(void);
+	bool isOffMute 		(void);
+	bool isTransfered 	(void);
+	bool isHungup 		(void);
+	bool isRinging 		(void);
+	bool isRefused 		(void);
+	bool isCancelled 	(void);
+	bool isAnswered 	(void);
+	bool isProgressing 	(void);
 	bool isOutgoingType (void);
 	bool isIncomingType (void);
 	
-	int outgoingCall  (short id, const string& to);
-	int hangup  (void);
-	int cancel  (void);
-	int answer  (void);
-	int onHold  (void);
-	int offHold  (void);
-	int transfer  (const string& to);
-	int refuse  (void);
+	int outgoingCall  	(short id, const string& to);
+	int hangup  		(void);
+	int cancel  		(void);
+	int answer  		(void);
+	int onHold  		(void);
+	int offHold  		(void);
+	int transfer  		(const string& to);
+	int refuse  		(void);
 
 private:
 	void initConstructor (void);
 	
-	VoIPLink* _voIPLink;
-	
-	short _id;
-	short _voIPLinkId;
-	unsigned int _timestamp;
-	enum CallState _state;
-	enum CallType _type;
-	string _to;
-	string _callerIdName;
-	string _callerIdNumber;
-	string _status;
+	VoIPLink		*_voIPLink;	
+	short 		  	 _id;
+	enum CallState 	 _state;
+	enum CallType 	 _type;
+	string 			 _callerIdName;
+	string 			 _callerIdNumber;
+	string 			 _status;
 };
 
 #endif // __CALL_H__

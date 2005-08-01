@@ -20,6 +20,9 @@
 #ifndef __MYDISPLAY_H__
 #define __MYDISPLAY_H__
 
+
+#include <cc++/thread.h>
+
 #include <qevent.h>
 #include <qimage.h>
 #include <qsettings.h>
@@ -30,9 +33,26 @@
 
 #include "../../global.h"
 
+
 #define FREE_STATUS		"Welcome to SFLPhone"
 
+
+/*
+ * The screen looks like this:
+ *
+ *        	---------------------
+ *        	| STATUS			| 
+ *			|					|
+ *			| TextBuffer		|
+ *			|					|
+ *			| call-timer		|
+ *			---------------------
+ */
+
+using namespace ost;
+/////////////////////////////////////////////////////////////////////////////// 
 // Screen animation thread
+///////////////////////////////////////////////////////////////////////////////
 class MyDisplayThread : public QThread {
 public:
 	MyDisplayThread (QWidget *);
@@ -45,12 +65,16 @@ private:
 	bool	 	 alive;
 };
 
+
 class QtGUIMainWindow;
 
+///////////////////////////////////////////////////////////////////////////////
 // Display
+///////////////////////////////////////////////////////////////////////////////
 class MyDisplay : public QWidget {
 	Q_OBJECT
 public:
+	// Constructors and destructor
 	MyDisplay 	();
 	MyDisplay 	(QWidget *, const char *, QtGUIMainWindow *);
 	~MyDisplay	();
@@ -61,31 +85,49 @@ public:
 	QString &	getTimer (void);
 	void 		setTextBuffer (const QString &);
 	QString &	getTextBuffer (void);
+	
+	// To initialize screen image, position
 	void		initGraphics	(void);
 
+	// To switch between time and call-timer function
 	inline bool getInFunction (void) { return _inFunction; }
 	inline void setInFunction (bool b) { _inFunction = b; }
 
+	// To set/unset in scrolling mode
 	inline bool getIsScrolling (void) { return _isScrolling; }
-	inline void setIsScrolling (bool s) { _isScrolling = s; }
+	void setIsScrolling (bool s); 
 
-	inline void resetForScrolling (bool r) { _reset = r; }
+	// To setup to zero X-position for displaying text
 	inline bool getReset (void) { return _reset; }
+	void resetForScrolling (bool r) ;
+	void setLenToShift (unsigned int len) ;
 
 public slots:
-	void	 appendText	(const QString &);
-	void	 appendText	(const char *);
-	void	 appendText	(const QChar &);
-	void	 clear		(void);
-	void	 clearBuffer(void);
-	void	 clear		(const QString &);
-	void 	 backspace	(void);
-	void 	 shift		(void);
+	// To append text which you type
+	void appendText	(const QString &);
+	void appendText	(const char *);
+	void appendText	(const QChar &);
+
+	// To clear caller-id line and set FREE status
+	void clear (void);
+	
+	// To clear just caller-id line
+	void clearBuffer (void);
+	
+	// To clear caller-id line and set new status in parameter
+	void clear (const QString &);
+	
+	// To remove the last char of the string
+	void backspace (void);
+	
+	// Slot for the timeout of the scrolling mode
+	void shift (void);
 
 protected:
 	void	 paintEvent (QPaintEvent *);
 
 private:
+	Mutex  		 		_mutex;
 	QImage		 		_centerImage;	// text zone
 	QImage				_overImage;
 	QString*			_status;	
@@ -100,7 +142,9 @@ private:
 	bool				_reset;
 	unsigned int 		len_to_shift;
 	
+	// To initialize status, textbuffer and variables
 	void		initText		(void);
+
 	void		renderText		(QPainter &, QFontMetrics &, QString &);
 	void		renderStatus	(QPainter &, QFontMetrics &, QString &);
 	void		renderTime 		(QPainter &, QFontMetrics &);

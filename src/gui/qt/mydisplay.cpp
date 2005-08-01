@@ -17,7 +17,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
 #include <qapplication.h>
 #include <qdatetime.h>
 #include <qfont.h>
@@ -243,7 +242,9 @@ MyDisplay::renderText (QPainter &painter, QFontMetrics &fm, QString &str) {
 			str.replace (extra_chars, backup_string.length(),QString("<"));
 		}
 		// Render text
+		_mutex.enterMutex();
 		painter.drawText (TABULATION - x_offset, fm.height() * TEXT_LINE, str);
+		_mutex.leaveMutex();
 		if (fm.width(str) > (_centerImage.width() - 5)) {
 			// Restore initial string.
 			str.replace(extra_chars, backup_string.length(), backup_string);
@@ -265,23 +266,15 @@ MyDisplay::renderText (QPainter &painter, QFontMetrics &fm, QString &str) {
 			len_to_shift = 0;
 		}
 
+		_mutex.enterMutex();
 		painter.drawText (TABULATION + _centerImage.width() - 
 				len_to_shift * fm.width(str[0]), 
 				fm.height() * TEXT_LINE, str_tmp);
+		_mutex.leaveMutex();
 	}
 	
 }
 
-void
-MyDisplay::shift (void)
-{
-	if (getReset()) {
-		_shift = false;
-		len_to_shift = 0;
-	} else {
-		_shift = true;
-	}
-}
 
 /**
  * Draw status text.
@@ -420,6 +413,30 @@ MyDisplay::getTextBuffer (void) {
 	return *_textBuffer;
 }
 
+void
+MyDisplay::setIsScrolling (bool s) 
+{ 	
+	_mutex.enterMutex();
+	_isScrolling = s; 
+	_mutex.leaveMutex(); 
+}
+
+void 
+MyDisplay::resetForScrolling (bool r) 
+{ 
+	_mutex.enterMutex();
+	_reset = r; 
+	_mutex.leaveMutex();
+}
+
+void 
+MyDisplay::setLenToShift (unsigned int len) 
+{ 
+	_mutex.enterMutex();
+	len_to_shift = len; 
+	_mutex.leaveMutex();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation of the public slots                                        //
 ///////////////////////////////////////////////////////////////////////////////
@@ -463,4 +480,18 @@ MyDisplay::backspace (void) {
 	_textBuffer->remove(_textBuffer->length() - 1, 1);
 }
 
+void
+MyDisplay::shift (void)
+{
+	_mutex.enterMutex();
+	if (getReset()) {
+		_shift = false;
+		len_to_shift = 0;
+	} else {
+		_shift = true;
+	}
+	_mutex.leaveMutex();
+}
+
+#include "mydisplaymoc.cpp"
 // EOF

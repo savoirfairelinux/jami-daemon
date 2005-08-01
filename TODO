@@ -5,6 +5,7 @@ Add screen shell to display debug
 
 For project core:
 ----------------
+Management of message blinking-notification
 Management Config like about:config in Mozilla
 Improvement of STUN
 Add ZeroConf

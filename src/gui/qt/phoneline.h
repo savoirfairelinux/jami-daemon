@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2004 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -40,57 +40,61 @@ class PhoneLine {
 public:
 	PhoneLine					(void);
 	~PhoneLine					(void);
+	
+	// Handle different state
 	enum line_state	 getState	(void);
 	void			 setState	(enum line_state);
-	enum line_state	 getStateLine	(void);
-	void			 setStateLine	(enum line_state);
 	bool			 isFree		(void);
 	bool			 isBusy		(void);
 	bool			 isOnHold	(void);
 	void			 toggleState(void);
+	
+	// Handle a line like a push-button
 	void			 setButton	(JPushButton *);
 	JPushButton		*button		(void);
+	
+	// Handle timer for call-timer
 	void			 startTimer	(void);
 	void			 stopTimer	(void);
-	QTime			*timer;
-	QString			 text;
-	bool			 first;
-
+	
+	// Handle status for each phoneline
 	inline QString	getStatus 	(void) { return _status; }
 	inline void setStatus 		(const QString& status) { _status = status; }
-	inline void setbDial 		(bool dial) { b_dial = dial; }
-	inline bool getbDial 		(void) 		{ return b_dial; }
-	inline void setbInProgress 	(bool prog) { b_inProgress = prog; }
-	inline bool getbInProgress 	(void) 		{ return b_inProgress; }
-	
+
+	// Manage a ringtone notification if there is an incoming call 
 	inline bool getbRinging 	(void) 		{ return b_ringing; }
 	inline void setbRinging 	(bool ring) { if (this->b_ringing != ring) 
 												this->b_ringing = ring;
 											} 
+	
+	// Handle call-id for each phoneline
 	inline short getCallId 		(void) { return _callid; }
 	inline void setCallId 		(short id) { _callid = id; }
 
+	// Handle if need scrolling or not
 	inline bool scrolling		(void) { return _scrolling; }
 	inline void setScrolling    (bool s) { _scrolling = s; }
 
+	// Handle stop scrolling
 	inline bool stopScrolling 	(void) { return _stopScrolling; }
 	inline void setStopScrolling(bool s) { _stopScrolling = s; }
 
+	// For call-timer
+	QTime			*timer;
+	// To start just one time the call-timer per call
+	bool			 first;
+	
 private:
 	short 			_callid;
 	QString			_status;
-	bool 			_scrolling; // if need scrolling message
+	bool 			_scrolling; 
 	bool			_stopScrolling;
 	
 	JPushButton*	jpb;
 	enum line_state	state;
-	enum line_state	stateLine;
 
-	bool			b_dial; 		// if ok button is clicked (->true)
-	bool			b_inProgress;	// if outgoing call, 
-										// before remote callee answers (->true)
 	bool			b_ringing;		// if incoming call, 
-										// before IP-phone user answers (->true) 
+									// before IP-phone user answers (->true) 
 };
 
 #endif	// __PHONE_LINE_H__
