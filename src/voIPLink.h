@@ -31,15 +31,16 @@ enum VoIPLinkType {
 
 class AudioCodec;
 class Call;
+
 class VoIPLink {
 public:
 	VoIPLink (short id);
 	virtual ~VoIPLink (void);
 
+	// Pure virtual functions
 	virtual int getEvent (void) = 0;
 	virtual int init (void) = 0;
 	virtual bool checkNetwork (void) = 0;
-	virtual void initRtpmapCodec (void) = 0;
 	virtual void quit (void) = 0;
 	virtual void newOutgoingCall (short callid) = 0;
 	virtual void newIncomingCall (short callid) = 0;
@@ -54,9 +55,8 @@ public:
 	virtual int refuse (short id) = 0;
 	virtual int setRegister (void) = 0;
 	virtual void carryingDTMFdigits(short id, char code) = 0;
-
 	virtual AudioCodec* getAudioCodec (short callid) = 0;
-	
+	 
 	void setId (short id);
 	short getId (void);
 	void setType (VoIPLinkType type);

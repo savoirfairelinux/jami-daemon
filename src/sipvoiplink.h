@@ -31,6 +31,7 @@
 using namespace std;
 
 #define EXPIRES_VALUE	180
+// To build request
 #define INVITE_METHOD	"INVITE"
 // 1XX responses
 #define DIALOG_ESTABLISHED 101
@@ -63,7 +64,14 @@ class CodecDescriptor;
 class EventThread;
 class SipCall;
 
+/*
+ * Vector of Sipcall
+ */
 typedef vector<SipCall*, allocator<SipCall*> > SipCallVector;
+
+/*
+ * Vector of CodecDescriptor
+ */
 typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
 
 class SipVoIPLink : public VoIPLink {
@@ -73,7 +81,6 @@ public:
 	
 	virtual int init (void);
 	virtual bool checkNetwork (void);
-	virtual void initRtpmapCodec (void);
 	virtual void quit (void);
 	virtual int setRegister (void);
 	virtual int outgoingInvite (short id, const string& to_url);	
@@ -87,6 +94,9 @@ public:
 	virtual int getEvent (void);
 	virtual void carryingDTMFdigits (short id, char code);
 	
+	/*
+	 * To handle the local port
+	 */
 	int	getLocalPort (void);
 	void setLocalPort (int);
 
@@ -106,27 +116,78 @@ public:
 	 */
 	SipCall* getSipCall(short callid);
 
+	/*
+	 * Accessor to the audio codec of SipCall with identifiant 'id'
+	 */
 	AudioCodec* getAudioCodec(short callid);
 
-	// To Cancel
+	// Use to Cancel
 	inline void setCid (int cid) { _cid = cid; }
 	inline int getCid (void) { return _cid; }
 	
 private:
+	/*
+	 * If you are behind a NAT, you have to use STUN server, specified in 
+	 * STUN configuration(you can change this one by default) to give you an 
+	 * public IP address and assign a port number.
+	 * 
+	 * Return 0 if an error occured and 1 if no error.
+	 */
 	int behindNat (void);
+
+	/*
+     * To Store the local IP address, and allow to know if the network is 
+	 * available.
+	 *
+	 * Return -1 if an error occured and 0 if no error
+	 */	 
 	int getLocalIp (void);
+
+	/*
+	 * Return -1 if an error occured and 0 if no error
+	 */
 	int checkUrl(const string& url);
+
+	/*
+	 * Allow the authentication when you want register
+   	 * Return -1 if an error occured and 0 if no error 
+	 */	 
 	int setAuthentication (void);
+
+	/*
+	 * Build a sip address from the user configuration
+	 * Example: "Display user name" <sip:user@host.com>
+	 * Return the result in a string
+	 */
 	string fromHeader (const string& user, const string& host);
+
+	/*
+	 * Build a sip address with the number that you want to call
+	 * Example: sip:124@domain.com
+	 * Return the result in a string
+	 */
 	string toHeader(const string& to);
+
+	/*
+	 * Beginning point to make outgoing call.
+	 * Check the 'from' and 'to' url.
+	 * Allocate local audio port.
+	 * Build SDP body.
+	 * Return -1 if an error occured and 0 if no error
+	 */
 	int startCall (short id, const string& from, const string& to, 
 			const string& subject, const string& route);
+
 	/*
 	 * Look for call with same cid/did 
 	 * Return the id of the found call
 	 */
 	short findCallId (eXosip_event_t *e);
 	short findCallIdWhenRinging (void);
+
+	/*
+	 * Return true if payload is already in the rtpmap and false if not
+	 */
 	bool isInRtpmap (int index, int payload, CodecDescriptorVector* cdv);
 
 	/*
@@ -144,12 +205,14 @@ private:
 	 */
 	int sdp_off_hold_call (sdp_message_t * sdp);
 	
+	///////////////////////////
+	// Private member variables
+	///////////////////////////
 	EventThread* 	_evThread;
 	SipCallVector* 	_sipcallVector;
 	AudioRtp* 		_audiortp;
 	int 			_localPort;
 	int 			_cid;
-	
 };
 
 #endif // __SIP_VOIP_LINK_H__

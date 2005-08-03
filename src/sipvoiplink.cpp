@@ -120,7 +120,6 @@ SipVoIPLink::init (void)
 	} 
 	
 	eXosip_set_user_agent(tmp.data());
-//	initRtpmapCodec();
 	_evThread->start();
 	return 1;
 }
@@ -133,12 +132,6 @@ SipVoIPLink::isInRtpmap (int index, int payload, CodecDescriptorVector* cdv) {
         }
     }
     return false;
-}
-
-void
-SipVoIPLink::initRtpmapCodec (void)
-{
-
 }
 
 void
@@ -361,11 +354,6 @@ SipVoIPLink::onhold (short id)
     	return -1;
 	}
 
-/*
-  	char port[10];
-  	snprintf (port, 10, "%d", getSipCall(id)->getLocalAudioPort());
-	*/
-
   	eXosip_lock ();
 	// Build INVITE_METHOD for put call on-hold
   	i = eXosip_call_build_request (did, INVITE_METHOD, &invite);
@@ -424,11 +412,6 @@ SipVoIPLink::offhold (short id)
   	if (local_sdp == NULL) {
     	return -1;
 	}
-
-	/*
-  	char port[10];
-  	snprintf (port, 10, "%d", getSipCall(id)->getLocalAudioPort());
-	*/
 
   	eXosip_lock ();
 	// Build INVITE_METHOD for put call off-hold
