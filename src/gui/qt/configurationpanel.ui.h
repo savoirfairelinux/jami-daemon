@@ -79,14 +79,14 @@ void ConfigurationPanel::init()
         QString name = hostNameApi + " (device #" + QString::number(i) + ")";
 
 		// New radio button with found device name
-     	QRadioButton* device = new QRadioButton(DriverChoice, name);   
+     	QRadioButton* device = new QRadioButton(DriverChoice);   
      	device->setGeometry( QRect( 10, 30 + top, 390, 21 ) );
     
 		// Set label of radio button
-     	device->setText(name);
+     	device->setText(devicename);
 		
 		// Add tooltip for each one
- 		QToolTip::add(device , devicename );
+ 		QToolTip::add(device , name );
      
         top += 30;
    		if (Manager::instance().defaultDevice(i)) {
