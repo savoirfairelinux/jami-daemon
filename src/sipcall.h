@@ -28,12 +28,13 @@
 class CodecDescriptor;
 class AudioCodec;
 
-#define NOT_USED      0
 #define _SENDRECV 0
 #define _SENDONLY 1
 #define _RECVONLY 2
+
 using namespace std;
 
+// Vector of CodecDescriptor
 typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
 
 class SipCall {
@@ -44,14 +45,34 @@ public:
  	int  	payload;
   	int  	enable_audio; /* 1 started, -1 stopped */
 	
+	/*
+	 * Store information about incoming call and negociate payload
+	 */
 	int  	newIncomingCall 	(eXosip_event_t *);
+	
+	/*
+	 * Use to answer to a ONHOLD/OFFHOLD event 
+	 */
 	int  	answeredCall 		(eXosip_event_t *);
+	
+	/* 
+	 * Use to answer to an incoming call 
+	 */
 	void  	answeredCall_without_hold (eXosip_event_t *);
+	
 	int  	ringingCall			(eXosip_event_t *);
 	int  	receivedAck			(eXosip_event_t *);
 
+	/*
+	 * Manage local audio port for each sipcall
+	 */
 	void	setLocalAudioPort 	(int);
 	int 	getLocalAudioPort 	(void);	
+
+	/*
+	 * Manage id, did (dialog-id), cid (call-id) and tid (transaction-id) 
+	 * for each sipcall
+	*/ 
 	void 	setId				(short id);
 	short	getId				(void);
 	void 	setDid				(int did);
@@ -60,13 +81,28 @@ public:
 	int 	getCid				(void);
 	void 	setTid				(int tid);
 	int 	getTid				(void);
+
+	/*
+	 * Manage remote sdp audio port
+	 */
 	int 	getRemoteSdpAudioPort (void);
 	char* 	getRemoteSdpAudioIp (void);
+
+	/*
+	 * Manage audio codec
+	 */
 	AudioCodec* getAudioCodec	(void);
 	void	setAudioCodec		(AudioCodec* ac);
 
+	/*
+	 * Accessor to remote-uri
+	 */
 	inline char* getRemoteUri (void) { return _remote_uri; }
 
+	/*
+	 * To avoid confusion when an incoming call occured in the same time 
+	 * that you make an outgoing call
+	 */
 	inline void setStandBy (bool standby) { _standby = standby; }
 	inline bool getStandBy (void) { return _standby; }
 
@@ -78,28 +114,25 @@ private:
 	int sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg);
 	int sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med);
 	
+	///////////////////////////
+	// Private member variables
+	///////////////////////////
 	CodecDescriptorVector* _cdv;
 	AudioCodec* _audiocodec;
 	
 	short 	_id;
-	int 	_cid;	// call id
-  	int 	_did;	// dialog id
-  	int 	_tid;	// transaction id
-	bool	_standby; // wait for a cid and did when outgoing call is made
+	int 	_cid;		// call id
+  	int 	_did;		// dialog id
+  	int 	_tid;		// transaction id
+	bool	_standby; 	// wait for a cid and did when outgoing call is made
 
   	int  	_status_code;
 	
 	char*	_reason_phrase;
   	char*	_textinfo;
-  	char*	_req_uri;
-  	char*	_local_uri;
   	char*	_remote_uri;
-  	char*	_subject;
 	
 	char*	_remote_sdp_audio_ip;
-  	char*	_payload_name;
-	char*	_sdp_body;
-	int		_payload;
   	int  	_state;
 	int		_local_audio_port;
   	int  	_remote_sdp_audio_port;

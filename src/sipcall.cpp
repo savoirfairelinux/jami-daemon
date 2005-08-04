@@ -283,7 +283,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
                         }
                       	if (tmp != NULL) {
                           	ca->payload = atoi (tmp);
-    						_debug("For incoming _payload = %d\n", ca->payload);
+    						_debug("For incoming payload = %d\n", ca->payload);
     						setAudioCodec(_cdv->at(0)->alloc(ca->payload, ""));
                         }
 						if (tmp != NULL
@@ -608,7 +608,7 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
             }
           	if (tmp != NULL) {
               	ca->payload = atoi (tmp);
-				_debug("For outgoing call: ca->_payload = %d\n", ca->payload);
+				_debug("For outgoing call: ca->payload = %d\n", ca->payload);
 				setAudioCodec(_cdv->at(0)->alloc(ca->payload, ""));
             }
 			if (tmp != NULL
@@ -774,26 +774,16 @@ void
 SipCall::alloc(void) {
 	this->_reason_phrase = new char[50];
   	this->_textinfo = new char[256];
-  	this->_req_uri = new char[256];
-  	this->_local_uri = new char[256];
   	this->_remote_uri = new char[256];
-  	this->_subject = new char[256];
 	this->_remote_sdp_audio_ip = new char[50];
-  	this->_payload_name = new char[50];
-  	this->_sdp_body = new char[1000];
 }
 
 void
 SipCall::dealloc(void) {
 	delete _reason_phrase;
   	delete _textinfo;
-  	delete _req_uri;
-  	delete _local_uri;
   	delete _remote_uri;
-  	delete _subject;
 	delete _remote_sdp_audio_ip;
-  	delete _payload_name;
-	delete _sdp_body;
 }
 
 void
