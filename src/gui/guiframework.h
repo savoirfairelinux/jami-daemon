@@ -60,6 +60,7 @@ public:
 
 	int saveConfig (void);
 	int registerVoIPLink (void);
+	int unregisterVoIPLink (void);
 	int quitApplication (void);
 	int sendTextMessage (short id, const string& message);
 	int accessToDirectory (void);

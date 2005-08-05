@@ -62,6 +62,7 @@ http://www.sflphone.org/doc/SFLphoneDocFrancais.pdf
 
 Why does it not compile ?
 -------------------------
+
 	- You don't have the same library versions as we do.
 	  See http://www.sflphone.org in section Downloads.
 
@@ -80,6 +81,7 @@ Why does it not compile ?
 
 Short description of content of source tree:
 -------------------------------------------
+
 - skins/ contains the different available skins in separated directories.
 - pixmaps/ contains all the pixmaps used in the configuration window.
 - rings/ contains the different ringtones.
@@ -104,6 +106,39 @@ Short description of content of source tree:
   functions.
 - src/gui/qt is the implementation of QT user interface.
 
+
+How is structured SFLphone (>=0.4)
+----------------------------------
+
+		+------+	+--------+
+		|GUI Qt|	|GUI text|	...  
+		+------+ 	+--------+
+			|			|		
+		+---------------------------+	
+		|		GUI Framework		|
+		+---------------------------+
+					|
+		+---------------------------+
+		|		ManagerImpl			|  
+		+---------------------------+
+					|
+		+---------------------------+
+		|		VoIPLink			|
+		+---------------------------+
+			|					|
+		+-----------+ 		+-------+
+		|	SIP		|		|  IAX	|
+		|	RTP		|		+-------+
+		|	STUN	|
+		+-----------+
+
+It's in ManagerImpl where we declared Call vector and VoIPLink vector.
+VoIPLink vector contains all different VoIP link like SIP, IAX, ...
+Call vector contains all the calls according to the kind of VoIP link.
+
+
+Misc.
+-----
 
 Of course we love patches. And contribution. See http://www.sflphone.org/ .    
 The project infrastructure (CVS, bugtraqer, MLs) is maintained on : 

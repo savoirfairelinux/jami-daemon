@@ -136,6 +136,16 @@ GuiFramework::registerVoIPLink (void)
 	}
 }
 
+int 
+GuiFramework::unregisterVoIPLink (void)
+{
+	if (Manager::instance().unregisterVoIPLink()) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 void 
 GuiFramework::sendDtmf (short id, char code)
 {

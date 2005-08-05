@@ -9,6 +9,7 @@ Management of message blinking-notification
 Management Config like about:config in Mozilla
 Improvement of STUN
 Add ZeroConf
+Add IAX support
 Management of account (add, remove, ...)
 Management of exceptions
 Remove all warnings in compilation

@@ -1348,8 +1348,16 @@ QtGUIMainWindow::volumeMicChanged (int val) {
 
 void
 QtGUIMainWindow::registerSlot (void) {
+	static bool reg = false;
+	
 	_panel->saveSlot();	
-	registerVoIPLink();
+	if (!reg) {
+		registerVoIPLink();
+		reg = true;
+	} else {
+		unregisterVoIPLink();
+		reg = false;
+	}
 }
 
 /**
@@ -1376,6 +1384,7 @@ QtGUIMainWindow::blinkLineSlot (void) {
 void
 QtGUIMainWindow::button_msg (void) {
      stopTimerMessage();
+	 _lcd->clearBuffer();
      _lcd->appendText(get_config_fields_str(PREFERENCES, VOICEMAIL_NUM));
 	 if (qt_outgoingCall() == -1) {
 		 return;

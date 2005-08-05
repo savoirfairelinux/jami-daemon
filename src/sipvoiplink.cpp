@@ -56,6 +56,7 @@ SipVoIPLink::SipVoIPLink (short id) : VoIPLink (id)
 	setId(id);
 	_localPort = 0;
 	_cid = 0;
+	_reg_id = -1;
 	_evThread = new EventThread (this);
 	_sipcallVector = new SipCallVector();
 	_audiortp = new AudioRtp();
@@ -144,7 +145,7 @@ int
 SipVoIPLink::setRegister (void) 
 {
 	int i;
-	int reg_id = -1;
+//	int reg_id = -1;
 	osip_message_t *reg = NULL;
 
 	string proxy = "sip:" + get_config_fields_str(SIGNALISATION, PROXY);
@@ -172,18 +173,18 @@ SipVoIPLink::setRegister (void)
 	
 	_debug("REGISTER From: %s\n", from.data());
 	if (!get_config_fields_str(SIGNALISATION, PROXY).empty()) {
-		reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
+		_reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
 				(char*)proxy.data(), NULL, EXPIRES_VALUE, &reg);
 	} else {
-		reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
+		_reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
 				(char*)hostname.data(), NULL, EXPIRES_VALUE, &reg);
 	}
-	if (reg_id < 0) {
+	if (_reg_id < 0) {
 		eXosip_unlock();
 		return -1;
 	}	
 
-  	i = eXosip_register_send_register (reg_id, reg);
+  	i = eXosip_register_send_register (_reg_id, reg);
 	if (i == -2) {
 		_debug("cannot build registration, check the setup\n"); 
 		eXosip_unlock();
@@ -200,6 +201,42 @@ SipVoIPLink::setRegister (void)
 	Manager::instance().error()->setError(0);
 	return i;
 }
+
+int 
+SipVoIPLink::setUnregister (void)
+{
+	int i;
+//	int reg_id = -1;
+	osip_message_t *reg = NULL;
+
+	if (_reg_id > 0) {
+		_debug("UNREGISTER\n");
+		i = eXosip_register_build_register (_reg_id, 0, &reg);
+	}
+	
+	if (_reg_id < 0) {
+		eXosip_unlock();
+		return -1;
+	}	
+
+  	i = eXosip_register_send_register (_reg_id, reg);
+	if (i == -2) {
+		_debug("cannot build registration, check the setup\n"); 
+		eXosip_unlock();
+		return -1;
+	}
+	if (i == -1) {
+		_debug("Registration Failed\n");
+		eXosip_unlock();
+		return -1;
+	}
+	
+	eXosip_unlock();
+
+	Manager::instance().error()->setError(0);
+	return i;
+}
+
 int
 SipVoIPLink::outgoingInvite (short id, const string& to_url) 
 {

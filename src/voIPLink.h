@@ -54,6 +54,7 @@ public:
 	virtual int transfer (short id, const string& to) = 0;
 	virtual int refuse (short id) = 0;
 	virtual int setRegister (void) = 0;
+	virtual int setUnregister (void) = 0;
 	virtual void carryingDTMFdigits(short id, char code) = 0;
 	virtual AudioCodec* getAudioCodec (short callid) = 0;
 	 

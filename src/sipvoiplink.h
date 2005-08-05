@@ -83,6 +83,7 @@ public:
 	virtual bool checkNetwork (void);
 	virtual void quit (void);
 	virtual int setRegister (void);
+	virtual int setUnregister (void);
 	virtual int outgoingInvite (short id, const string& to_url);	
 	virtual int answer (short id);
 	virtual int hangup (short id);
@@ -213,6 +214,7 @@ private:
 	AudioRtp* 		_audiortp;
 	int 			_localPort;
 	int 			_cid;
+	int 			_reg_id;
 };
 
 #endif // __SIP_VOIP_LINK_H__

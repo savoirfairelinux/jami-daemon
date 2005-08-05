@@ -299,6 +299,9 @@ ManagerImpl::hangupCall (short id)
 	if (getbRingback()) {
 		ringback(false);
 	}
+	if (getbRingtone()) {
+		ringtone(false);
+	}
 	return call->hangup();
 }
 
@@ -405,6 +408,10 @@ ManagerImpl::refuseCall (short id)
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Refused);	
 	ringtone(false);
+	_mutex.enterMutex();
+	_nCalls -= 1;
+	_mutex.leaveMutex();
+	deleteCall(id);
 	return call->refuse();
 }
 
@@ -418,6 +425,16 @@ int
 ManagerImpl::registerVoIPLink (void)
 {
 	if (_voIPLinkVector->at(DFT_VOIP_LINK)->setRegister() == 0) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+int 
+ManagerImpl::unregisterVoIPLink (void)
+{
+	if (_voIPLinkVector->at(DFT_VOIP_LINK)->setUnregister() == 0) {
 		return 1;
 	} else {
 		return 0;
