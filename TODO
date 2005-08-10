@@ -8,7 +8,7 @@ For project core:
 Management of message blinking-notification
 Management Config like about:config in Mozilla
 Improvement of STUN
-Add ZeroConf
+Add ZeroConf support with mDNSResponder-107.1 library from apple
 Add IAX support
 Management of account (add, remove, ...)
 Management of exceptions

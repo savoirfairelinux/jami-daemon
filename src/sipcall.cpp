@@ -26,9 +26,6 @@
 
 // For AF_INET
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-//
 
 #include "global.h"
 #include "audio/audiocodec.h"

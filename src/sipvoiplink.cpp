@@ -2,6 +2,8 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
+ *  Portions Copyright (C) 2002,2003   Aymeric Moizard <jack@atosc.org>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -50,6 +52,8 @@ using namespace std;
 #define	DEFAULT_LOCAL_PORT	10500
 #define	RANDOM_LOCAL_PORT	((rand() % 27250) + 5250)*2
 
+#define VOICE_MSG			"Voice-Message"
+#define LENGTH_VOICE_MSG	15
 
 SipVoIPLink::SipVoIPLink (short id) : VoIPLink (id)
 {
@@ -57,6 +61,7 @@ SipVoIPLink::SipVoIPLink (short id) : VoIPLink (id)
 	_localPort = 0;
 	_cid = 0;
 	_reg_id = -1;
+	_nMsgVoicemail = 0;
 	_evThread = new EventThread (this);
 	_sipcallVector = new SipCallVector();
 	_audiortp = new AudioRtp();
@@ -120,7 +125,9 @@ SipVoIPLink::init (void)
 		
 	} 
 	
+	// Set user agent
 	eXosip_set_user_agent(tmp.data());
+	
 	_evThread->start();
 	return 1;
 }
@@ -145,7 +152,6 @@ int
 SipVoIPLink::setRegister (void) 
 {
 	int i;
-//	int reg_id = -1;
 	osip_message_t *reg = NULL;
 
 	string proxy = "sip:" + get_config_fields_str(SIGNALISATION, PROXY);
@@ -199,6 +205,7 @@ SipVoIPLink::setRegister (void)
 	eXosip_unlock();
 
 	Manager::instance().error()->setError(0);
+
 	return i;
 }
 
@@ -209,6 +216,8 @@ SipVoIPLink::setUnregister (void)
 //	int reg_id = -1;
 	osip_message_t *reg = NULL;
 
+	eXosip_lock();
+
 	if (_reg_id > 0) {
 		_debug("UNREGISTER\n");
 		i = eXosip_register_build_register (_reg_id, 0, &reg);
@@ -218,7 +227,7 @@ SipVoIPLink::setUnregister (void)
 		eXosip_unlock();
 		return -1;
 	}	
-
+	
   	i = eXosip_register_send_register (_reg_id, reg);
 	if (i == -2) {
 		_debug("cannot build registration, check the setup\n"); 
@@ -552,6 +561,7 @@ SipVoIPLink::getEvent (void)
 	if (event == NULL) {
 		return -1;
 	}	
+
 	switch (event->type) {
 		// IP-Phone user receives a new call
 		case EXOSIP_CALL_INVITE: //
@@ -698,8 +708,11 @@ SipVoIPLink::getEvent (void)
 					eXosip_automatic_action();
 					eXosip_unlock();
 					break;
-				case BAD_REQ:
 				case UNAUTHORIZED:
+					setAuthentication();
+					break;
+
+				case BAD_REQ:
 				case FORBIDDEN:
 				case NOT_FOUND:
 				case NOT_ALLOWED:
@@ -773,6 +786,48 @@ SipVoIPLink::getEvent (void)
 					eXosip_options_send_answer (event->tid, BUSY_HERE, NULL);
 				}
 				eXosip_unlock();
+			} 
+			
+			// Voice message 
+			else if (event->request != NULL && MSG_IS_NOTIFY(event->request)){
+				int ii;
+				unsigned int pos;
+				unsigned int pos_slash;
+				string *str;
+				string nb_msg;
+				osip_body_t *body;
+
+				// Get the message body
+				ii = osip_message_get_body(event->request, 0, &body);
+				if (ii != 0) {
+					_debug("Cannot get body\n");
+					return -1;
+				}
+				
+				// Analyse message body
+				str = new string(body->body);
+				pos = str->find (VOICE_MSG);
+				
+				if (pos == string::npos) {
+				// If the string is not found
+					return -1;
+				} 
+				
+				pos_slash = str->find ("/");
+				nb_msg = str->substr(pos + LENGTH_VOICE_MSG, 
+						pos_slash - (pos + LENGTH_VOICE_MSG));
+
+				// Set the number of voice-message
+				setMsgVoicemail(atoi(nb_msg.data()));
+
+				if (getMsgVoicemail() != 0) {
+					// If there is at least one voice-message, start notification
+					Manager::instance().startVoiceMessageNotification();
+				} else {
+					// Stop notification when there is 0 voice message
+					Manager::instance().stopVoiceMessageNotification();
+				}
+				delete str;
 			}
 			break;
 

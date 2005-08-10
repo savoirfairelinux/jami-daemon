@@ -179,6 +179,8 @@ public:
 	void displayStatus (const string& status);
 	int selectedCall (void);
 	bool isCurrentId (short id);
+	void startVoiceMessageNotification (void);
+	void stopVoiceMessageNotification (void);
 	
 	/*
 	 * Handle audio sounds heard by a caller while they wait for their 

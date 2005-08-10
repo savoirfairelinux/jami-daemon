@@ -69,22 +69,42 @@ public:
 	ToneGenerator ();
 	~ToneGenerator (void);
 	
-	string toneZone[NB_ZONES_MAX][NB_TONES_MAX];
-
+	/**
+ 	 * Returns id selected zone for tone choice
+ 	*/
 	int idZoneName 		(const string &);
 			
+	/**
+	 * Calculate sinus with superposition of 2 frequencies
+	 */
 	void generateSin	(int, int, int16 *);
+
+	/**
+ 	 * Build tone according to the id-zone, with initialisation of ring tone.
+ 	 * Generate sinus with frequencies alternatively by time
+ 	 */
 	void buildTone		(int, int, int16*);
+
+	/**
+	 * Handle the required tone
+	 */
 	void toneHandle 	(int);
+
+	/**
+	 * Play the ringtone when incoming call occured
+	 */
 	int  playRingtone		(const char*);
 	
+	///////////////////////////
+	// Public members variable
+	//////////////////////////
 	int16 *sample;
 	int freq1, 
 		freq2;
 	int time;
 	int totalbytes;
-
 	int16   	buf[SIZEBUF];
+	
 private:
 	/*
 	 * Initialisation of the supported tones according to the countries.
@@ -100,6 +120,10 @@ private:
 	 */
 	int		 	contains(const string& str, char c);
 	
+	//////////////////////////
+	// Private member variable
+	//////////////////////////
+	string toneZone[NB_ZONES_MAX][NB_TONES_MAX];
 	ToneThread*	tonethread;
 	
 };

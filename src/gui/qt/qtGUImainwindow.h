@@ -96,6 +96,7 @@ public:
 	virtual void displayContext (short id);
 	virtual string getRingtoneFile (void);
 	virtual void setup (void);
+		
 	/*
 	 * Return the id matching to the chosen line
 	 */
@@ -166,7 +167,8 @@ public:
 	/*
 	 * Stop the blinking-signal when you check your voicemail (not used yet)
 	 */
-	void 	 stopTimerMessage 	(void);
+	void 	stopVoiceMessageNotification	(void);
+	void 	startVoiceMessageNotification	(void);
 
 	/*
 	 * Manage if you selected a line before dialing 
@@ -184,7 +186,7 @@ public:
 	 * Manage if you are in transfer mode
 	 */
 	inline void setTransfer (bool b) { _transfer = b; }
-	inline bool getTransfer (void) {return _transfer; }
+	inline bool getTransfer (void) { return _transfer; }
 
 signals:
 	void 	 keyPressed			(int);

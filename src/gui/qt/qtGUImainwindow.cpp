@@ -1295,9 +1295,14 @@ QtGUIMainWindow::hangupLine (void)
  * Stop the blinking message slot and load the message-off button pixmap.
  */
 void
-QtGUIMainWindow::stopTimerMessage (void) {
+QtGUIMainWindow::stopVoiceMessageNotification (void) {
    	_msgVar = false;
     phoneKey_msg->setPixmap(TabMsgPixmap[FREE]);
+}
+
+void
+QtGUIMainWindow::startVoiceMessageNotification (void) {
+   	_msgVar = true;
 }
 
 /**
@@ -1348,16 +1353,8 @@ QtGUIMainWindow::volumeMicChanged (int val) {
 
 void
 QtGUIMainWindow::registerSlot (void) {
-	static bool reg = false;
-	
 	_panel->saveSlot();	
-	if (!reg) {
-		registerVoIPLink();
-		reg = true;
-	} else {
-		unregisterVoIPLink();
-		reg = false;
-	}
+	registerVoIPLink();
 }
 
 /**
@@ -1383,7 +1380,7 @@ QtGUIMainWindow::blinkLineSlot (void) {
 // Dial the voicemail Number automatically when button is clicked
 void
 QtGUIMainWindow::button_msg (void) {
-     stopTimerMessage();
+     stopVoiceMessageNotification();
 	 _lcd->clearBuffer();
      _lcd->appendText(get_config_fields_str(PREFERENCES, VOICEMAIL_NUM));
 	 if (qt_outgoingCall() == -1) {

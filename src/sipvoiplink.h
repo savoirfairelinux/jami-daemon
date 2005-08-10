@@ -1,7 +1,9 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
- *                                                                              
+ *        
+ *	Portions Copyright (C) 2002,2003   Aymeric Moizard <jack@atosc.org>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -125,6 +127,10 @@ public:
 	// Use to Cancel
 	inline void setCid (int cid) { _cid = cid; }
 	inline int getCid (void) { return _cid; }
+
+	// Handle voice-message
+	inline void setMsgVoicemail (int nMsg) { _nMsgVoicemail = nMsg; }
+	inline int getMsgVoicemail (void) { return _nMsgVoicemail; }
 	
 private:
 	/*
@@ -215,6 +221,7 @@ private:
 	int 			_localPort;
 	int 			_cid;
 	int 			_reg_id;
+	int 			_nMsgVoicemail;
 };
 
 #endif // __SIP_VOIP_LINK_H__

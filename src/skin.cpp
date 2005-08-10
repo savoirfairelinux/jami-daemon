@@ -20,9 +20,6 @@
 
 #include "skin.h"
 
-#ifndef PROGSHAREDIR
-#error "You must run configure to define PREFIX and PROGSHAREDIR."
-#endif
 
 const char* PIXMAP_LINE_NAMES[] = {
 	PIXMAP_LINE0_OFF,

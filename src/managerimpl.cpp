@@ -23,9 +23,9 @@
 # include <sys/types.h> // mkdir(2)
 # include <sys/stat.h>	// mkdir(2)
 
-#include <sys/socket.h> // inet_ntoa()
-#include <netinet/in.h>
-#include <arpa/inet.h>
+//#include <sys/socket.h> // inet_ntoa()
+//#include <netinet/in.h>
+//#include <arpa/inet.h>
 
 #include <cc++/thread.h>
 #include <cstdlib> 
@@ -64,7 +64,6 @@ ManagerImpl::ManagerImpl (void)
 	_error = new Error();
 	_tone = new ToneGenerator();	
 
-
 	_nCalls = 0;
 	_nCodecs = 0;
 	_currentCallId = 0;
@@ -77,7 +76,6 @@ ManagerImpl::ManagerImpl (void)
 	_ringback = false;
 	_exist = 0;
 	_loaded = false;
-	
 }
 
 ManagerImpl::~ManagerImpl (void) 
@@ -513,7 +511,6 @@ ManagerImpl::incomingCall (short id)
 	return _gui->incomingCall(id);
 }
 
-// L'autre personne a repondu
 void 
 ManagerImpl::peerAnsweredCall (short id)
 {
@@ -605,6 +602,18 @@ ManagerImpl::isCurrentId (short id)
 }
 
 void
+ManagerImpl::startVoiceMessageNotification (void)
+{
+	_gui->startVoiceMessageNotification();
+}
+
+void
+ManagerImpl::stopVoiceMessageNotification (void)
+{
+	_gui->stopVoiceMessageNotification();
+}
+
+void
 ManagerImpl::congestion (bool var) {
 	if (isDriverLoaded()) {
 		if (_congestion != var) {
@@ -643,7 +652,7 @@ ManagerImpl::ringtone (bool var)
 		if (_ringtone != var) {
 			_ringtone = var;
 		}
-																					
+
 		_zonetone = var;
 		if (getNumberOfCalls() == 1) {
 			// If just one line is ringing
@@ -663,7 +672,7 @@ ManagerImpl::notificationIncomingCall (void) {
                                                                                 
     _tone->generateSin(440, 0, buffer);
            
-	// Control volume
+	// Volume Control 
 	buf_ctrl_vol = new int16[size*CHANNELS];
 	spkrVolume = getSpkrVolume();
 	for (int j = 0; j < size; j++) {
@@ -751,7 +760,6 @@ ManagerImpl::useStun (void) {
     }
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
@@ -791,7 +799,7 @@ ManagerImpl::createSettingsPath (void) {
       	} 	
   	} 
 
-	// Load user's config
+	// Load user's configuration
 	_path = _path + "/" + PROGNAME + "rc";
 
 	exist = Config::tree()->populateFromFile(_path);

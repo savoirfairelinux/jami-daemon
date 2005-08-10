@@ -45,6 +45,8 @@ public:
 	virtual void setup (void) = 0;
 	virtual int selectedCall (void) = 0;
 	virtual bool isCurrentId (short) = 0;
+	virtual void startVoiceMessageNotification (void) = 0;
+	virtual void stopVoiceMessageNotification (void) = 0;
 	
 	/* Child class to parent class */
 	int outgoingCall (const string& to); 	
