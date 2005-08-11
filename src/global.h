@@ -35,7 +35,7 @@ typedef short int16;
 	#define _debug(...)
 #endif
 
-#define VERSION "0.4.1-rc1"
+#define VERSION "0.4.1-pre1"
 #define VERSIONNUM 0x000400
 
 
