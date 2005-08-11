@@ -1,6 +1,6 @@
 %define name sflphone
-%define version 0.4
-%define release 4
+%define version 0.4.1
+%define release 5
 %define prefix /usr
 Autoreq: 0
 
@@ -12,7 +12,7 @@ Copyright:	GPL
 Group:		Networking/Utilities
 URL:		http://www.sflphone.org
 Packager:	Cyrille Béraud <cyrille.beraud@savoirfairelinux.com>
-Source:		http://www.sflphone.org/sflphone-0.4.tar.gz
+Source:		http://www.sflphone.org/sflphone-0.4.1.tar.gz
 BuildRoot:	/tmp/sflphone-%{version}-%{release}
 
 %description

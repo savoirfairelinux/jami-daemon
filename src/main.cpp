@@ -17,8 +17,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <getopt.h>
-
 #define GUI_QT // remove when others UI are implemented
 
 #if defined(GUI_QT)

@@ -17,12 +17,6 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
-#if defined(__APPLE__)
-# include <machine/endian.h>
-#else
-# include <endian.h>
-#endif
 #include <string.h>
 #include <iostream>
 #include <string>

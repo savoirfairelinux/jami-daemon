@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 Savoir-Faire Linux inc.
+ * Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  * Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
  *
  * Portions (c) 2003 iptel.org

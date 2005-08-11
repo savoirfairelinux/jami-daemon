@@ -71,9 +71,6 @@ JPushButton::~JPushButton (void) {
 // This loads the pixmaps used for pressed/released state.
 void
 JPushButton::loadPixmaps (const char* pixname) {
-//	this->btnImg[0] = new QImage (QString(pixname) + REL_PREFIX + ".png");
-//	this->btnImg[1] = new QImage (QString(pixname) + PRESS_PREFIX + ".png");
-
 	QString pressedPixmapPath, releasedPixmapPath;
 	
 	pressedPixmapPath = Skin::getPath(QString(SKINDIR),
@@ -96,11 +93,7 @@ JPushButton::MyCreateHeuristicMask (const  QImage & img_XX, QImage &m,
 		return -1;
 	}
 
-	//if ( img.depth() != 32 )
-	//{
-		QImage img = img_XX.convertDepth(32);
-		//return MyCreateHeuristicMask( img32, m, transp_col);
-	//}
+	QImage img = img_XX.convertDepth(32);
 
 	int w = img.width();
 	int h = img.height();

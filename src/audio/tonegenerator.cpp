@@ -23,7 +23,6 @@
 #include <stdlib.h>
  
 #include "audiolayer.h"
-#include "audiortp.h"
 #include "codecDescriptor.h"
 #include "ringbuffer.h"
 #include "ulaw.h"
