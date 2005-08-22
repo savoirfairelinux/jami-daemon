@@ -36,22 +36,29 @@
 
 int
 main (int argc, char **argv) {
+  int exit_code;
   Config::setTree(new ConfigurationTree());	
   GuiFramework *GUI;
 
 #if defined(GUI_QT)
-  QApplication a(argc, argv);
-  Manager::instance().initConfigFile();		
-  GUI = new QtGUIMainWindow (0, 0 ,
-			     Qt::WDestructiveClose |
-			     Qt::WStyle_Customize |
-			     Qt::WStyle_NoBorder);
-  Manager::instance().setGui(GUI);
-  Manager::instance().init();		
-		
-  a.setMainWidget((QtGUIMainWindow*)GUI);
-  return a.exec();
+  {
+    utilspp::LifetimeLibraryGuard< utilspp::LifetimeLibrarySingleton > guard();
+    (void)guard;
+    QApplication a(argc, argv);
+    Manager::instance().initConfigFile();		
+    GUI = new QtGUIMainWindow (0, 0 ,
+			       Qt::WDestructiveClose |
+			       Qt::WStyle_Customize |
+			       Qt::WStyle_NoBorder);
+    Manager::instance().setGui(GUI);
+    Manager::instance().init();		
+    
+    a.setMainWidget((QtGUIMainWindow*)GUI);
+    exit_code = a.exec();
+  }
 #endif
+
+  return exit_code;
 }
 
 

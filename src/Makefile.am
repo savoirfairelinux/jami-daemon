@@ -36,8 +36,8 @@ sflphone_SOURCES = \
 
 sflphone_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
 
-sflphone_LDFLAGS = $(QT_LDFLAGS) $(X_LDFLAGS) 
-sflphone_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la -lpthread $(LIBQT) $(SFLPHONE_LIBS) 
+sflphone_LDFLAGS = $(QT_LDFLAGS) $(X_LDFLAGS) -static
+sflphone_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la ../utilspp/libutilspp.la -lpthread $(LIBQT) $(SFLPHONE_LIBS) 
 KDE_CXXFLAGS = $(USE_EXCEPTIONS) 
 AM_CPPFLAGS = $(QT_INCLUDES) $(X_INCLUDES) -Iaudio/pacpp/include  $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(portaudio_CFLAGS)
 

@@ -1,3 +1,7 @@
+Jean-Philippe Barette-LaPierre (28 April 2005) version 0.4.1-pre1
+- Manager has now a LifetimeLibrary policy.
+- Utilspp has been rearranged.
+	
 Laurielle LEA (10 August 2005) version 0.4
 - Add blink notification for voice-message
 - Cleanup code

@@ -137,11 +137,12 @@ src/audio/pacpp/source/Makefile \
 src/audio/pacpp/source/portaudiocpp/Makefile \
 src/gui/Makefile \
 src/gui/qt/Makefile \
+utilspp/Makefile \
+utilspp/singleton/Makefile \
 stund/Makefile \
 pixmaps/Makefile \
 skins/Makefile \
 skins/emetal/Makefile \
 skins/metal/Makefile \
 rings/Makefile \
-utilspp/Makefile \
 )

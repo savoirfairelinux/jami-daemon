@@ -21,12 +21,14 @@
 #ifndef SFLPHONE_MANAGER_H
 #define SFLPHONE_MANAGER_H
 
-#include "utilspp/singleton_holder.hpp"
+#include "utilspp/Singleton.hpp"
 #include "managerimpl.h"
 
 
-typedef utilspp::singleton_holder< ManagerImpl > Manager;
-
+typedef utilspp::SingletonHolder< ManagerImpl, 
+  utilspp::CreationUsingNew,
+  utilspp::LifetimeLibrary,
+  utilspp::ThreadingSingle > Manager;
 
 #endif 
 

@@ -1,3 +1,2 @@
-SUBDIRS = stund src skins rings pixmaps utilspp
-
+SUBDIRS = utilspp stund src skins rings pixmaps
 
