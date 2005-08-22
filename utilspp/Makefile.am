@@ -1,30 +1,29 @@
-SUBDIRS = singleton
+SUBDIRS = functor singleton
 
-lib_LTLIBRARIES=libutilspp.la
+noinst_LTLIBRARIES = libutilspp.la
 
 libutilspp_la_SOURCES = \
+	EmptyType.hpp \
+	Functors.hpp \
 	NonCopyable.hpp \
 	NullType.hpp \
 	Singleton.hpp \
 	SmartPtr.hpp \
-	ThreadingFactoryMutex.hpp \
-	ThreadingSingle.hpp \
-	TypeList.hpp \
-	TypeTrait.hpp
-
-pkginclude_HEADERS = \
-	NonCopyable.hpp \
-	NullType.hpp \
-	Singleton.hpp \
-	SmartPtr.hpp \
-	ThreadingFactoryMutex.hpp \
-	ThreadingSingle.hpp \
-	TypeList.hpp \
-	TypeTrait.hpp
-
-pkgincludedir=$(includedir)/utilspp
+	ThreadingFactoryMutex.hpp ThreadingFactoryMutex.inl \
+	ThreadingSingle.hpp ThreadingSingle.inl \
+	TypeList.hpp
 
 libutilspp_la_LIBADD = ./singleton/libsingleton.la
 
+pkginclude_HEADERS = \
+	EmptyType.hpp \
+	Functors.hpp \
+	NonCopyable.hpp \
+	NullType.hpp \
+	Singleton.hpp \
+	SmartPtr.hpp \
+	ThreadingFactoryMutex.hpp ThreadingFactoryMutex.inl \
+	ThreadingSingle.hpp ThreadingSingle.inl \
+	TypeList.hpp
 
-
+pkgincludedir=$(includedir)/utilspp/

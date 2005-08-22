@@ -21,21 +21,34 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef UTILSPP_FUNCTOR_INL
+#define UTILSPP_FUNCTOR_INL
 
-namespace utilspp
+template <typename R, class TList>
+template <typename Fun>
+utilspp::Functor<R, TList>::Functor(Fun fun)
+: mImpl(new FunctorHandler< Functor, Fun >(fun))
+{}
+
+template <typename R, class TList>
+template <typename PointerToObj, typename MemFun>
+utilspp::Functor<R, TList>::Functor(const PointerToObj &obj, MemFun fun)
+: mImpl(new MemFunHandler< Functor, PointerToObj, MemFun >(obj, fun))
+{}
+
+template <typename R, class TList>
+utilspp::Functor<R, TList>::Functor(const Functor &functor)
+: mImpl(functor->mImpl->clone())
+{}
+
+template <typename R, class TList>
+utilspp::Functor<R, TList> &
+utilspp::Functor<R, TList>::operator=(const Functor &functor)
 {
-   class NonCopyable
-   {
-      public:
-         NonCopyable()
-         {}
-
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
-   };
-};
+  delete(mImpl);
+  mImpl = functor->clone();
+  return (*this);
+}
 
 #endif
+

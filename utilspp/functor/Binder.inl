@@ -21,21 +21,19 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef CURLPP_BINDER_HPP
+#define CURLPP_BINDER_HPP
 
-namespace utilspp
+template< R, class TList >
+utilspp::Functor<R, typename TList::Tail> BindFirst(const Functor<R, TList>& fun,
+                                                    TList::Head bound)
 {
-   class NonCopyable
-   {
-      public:
-         NonCopyable()
-         {}
+  typedef Functor< R, TList > Incoming;
+  typedef Functor< R, typename TList::Tail > Outgoing;
 
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
-   };
-};
+  return Outgoing(std::auto_ptr< 
+    typename Outgoing::Impl >(new BinderFirst< Incoming >(fun, bound)));
+}
 
 #endif
+
