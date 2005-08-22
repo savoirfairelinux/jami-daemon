@@ -1,12 +1,30 @@
-noinst_HEADERS = \
-	creation_using_new.hpp \
-	lifetime_default.hpp \
-	lifetime_with_longevity.hpp \
-	lifetime_with_longevity.inl \
-	null_type.hpp \
-	private_members.hpp \
-	private_members.inl \
-	singleton.hpp \
-	singleton_holder.hpp \
-	singleton_holder.inl \
-	threading_single.hpp 
+SUBDIRS = singleton
+
+lib_LTLIBRARIES=libutilspp.la
+
+libutilspp_la_SOURCES = \
+	NonCopyable.hpp \
+	NullType.hpp \
+	Singleton.hpp \
+	SmartPtr.hpp \
+	ThreadingFactoryMutex.hpp \
+	ThreadingSingle.hpp \
+	TypeList.hpp \
+	TypeTrait.hpp
+
+pkginclude_HEADERS = \
+	NonCopyable.hpp \
+	NullType.hpp \
+	Singleton.hpp \
+	SmartPtr.hpp \
+	ThreadingFactoryMutex.hpp \
+	ThreadingSingle.hpp \
+	TypeList.hpp \
+	TypeTrait.hpp
+
+pkgincludedir=$(includedir)/utilspp
+
+libutilspp_la_LIBADD = ./singleton/libsingleton.la
+
+
+
