@@ -21,22 +21,36 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef LIFETIME_WITH_LONGEVITY_HPP
+#define LIFETIME_WITH_LONGEVITY_HPP
 
+#include <cassert>
+
+#include "PrivateMembers.hpp"
 
 namespace utilspp
 {
-   class NonCopyable
-   {
-      public:
-         NonCopyable()
-         {}
+   
+   template< typename T >
+   unsigned int getLongevity( T *p );
 
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
-   };
+   /**
+    * Assigns an object a longevity. Ensures ordered destructions of objects
+    * registered thusly during the exit sequence of the application.
+    */
+  template< typename T, typename TDestroyer >
+  void setLongevity(T *obj, 
+		    unsigned int longevity, 
+		    TDestroyer d = utilspp::PrivateMembers::Deleter< T >::deleteObject);
+  
+  template< typename T >
+  struct LifetimeWithLongevity
+  {
+    static void scheduleDestruction( T *obj, void (*func)() );
+    static void onDeadReference();
+  };
 };
+
+#include "LifetimeWithLongevity.inl"
 
 #endif

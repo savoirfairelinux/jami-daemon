@@ -21,22 +21,12 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
-
+#ifndef UTILSPP_NULLTYPE_HPP
+#define UTILSPP_NULLTYPE_HPP
 
 namespace utilspp
 {
-   class NonCopyable
-   {
-      public:
-         NonCopyable()
-         {}
-
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
-   };
+	struct NullType;
 };
 
 #endif

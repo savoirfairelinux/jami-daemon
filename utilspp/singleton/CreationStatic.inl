@@ -21,22 +21,23 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef CREATION_STATIC_INL
+#define CREATION_STATIC_INL
 
-
-namespace utilspp
+template< typename T >
+T*
+utilspp::CreationStatic::create()
 {
-   class NonCopyable
-   {
-      public:
-         NonCopyable()
-         {}
-
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
-   };
+   static T mObj;
+   return new(&mObj) T;
 };
+
+template< typename T >
+void
+utilspp::CreationStatic::destroy( T* obj )
+{
+  obj->~T();
+}
+
 
 #endif

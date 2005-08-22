@@ -21,22 +21,23 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef CREATION_USING_NEW_HPP
+#define CREATION_USING_NEW_HPP
 
-
+/**
+ * This class is a creation policy for the utilspp::singleton_holder. The
+ * policy is creating the singleton by a "new" call. 
+ */
 namespace utilspp
 {
-   class NonCopyable
+   template< typename T >
+   struct CreationUsingNew
    {
-      public:
-         NonCopyable()
-         {}
-
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
+         static T *create();
+         static void destroy( T *obj );
    };
 };
+
+#include "CreationUsingNew.inl"
 
 #endif

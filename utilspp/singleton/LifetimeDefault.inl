@@ -21,22 +21,22 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef LIFETIME_DEFAULT_INL
+#define LIFETIME_DEFAULT_INL
 
-
-namespace utilspp
+template< typename T >
+void 
+utilspp::LifetimeDefault< T >::scheduleDestruction( T *, void (*func)() )
 {
-   class NonCopyable
-   {
-      public:
-         NonCopyable()
-         {}
+   std::atexit(func);
+}
 
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
-   };
-};
+template< typename T >
+void
+utilspp::LifetimeDefault< T >::onDeadReference()
+{
+   throw std::logic_error( "Dead reference detected" );
+}
+
 
 #endif

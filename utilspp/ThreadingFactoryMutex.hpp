@@ -21,22 +21,24 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
-
+#ifndef THREADING_FACTORY_MUTEX_HPP
+#define THREADING_FACTORY_MUTEX_HPP
 
 namespace utilspp
 {
-   class NonCopyable
-   {
-      public:
-         NonCopyable()
-         {}
+   template < typename T >
+      struct ThreadingFactoryMutex
+      {
+         struct lock
+         {
+            lock();
+            lock( const T & );
+         };
 
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
-   };
+         typedef T VolatileType;
+      };
 };
+
+#include "ThreadingFactoryMutex.inl"
 
 #endif

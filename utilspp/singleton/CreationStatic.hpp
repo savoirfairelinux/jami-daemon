@@ -21,22 +21,29 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef CREATION_STATIC_HPP
+#define CREATION_STATIC_HPP
 
-
+/**
+ * This class is a creation policy for the utilspp::singleton_holder. The
+ * policy is creating the singleton by a static memory. The constructor is
+ * called the first time we call the utilspp::creation_static::create()
+ * function.
+ *
+ * Note don't use this class because it's not complete, and at this time it's
+ * not REALY complyant with the lifetime policy.
+ */
 namespace utilspp
 {
-   class NonCopyable
+   template< typename T >
+   class CreationStatic
    {
       public:
-         NonCopyable()
-         {}
-
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
+         static T* create();
+         static void destroy( T* obj );
    };
 };
+
+#include "CreationStatic.inl"
 
 #endif

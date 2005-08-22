@@ -21,22 +21,17 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef THREADING_FACTORY_MUTEX_INL
+#define THREADING_FACTORY_MUTEX_INL
 
+template< typename T >
+inline
+utilspp::ThreadingSingle< T >::lock::lock()
+{};
 
-namespace utilspp
-{
-   class NonCopyable
-   {
-      public:
-         NonCopyable()
-         {}
-
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
-   };
-};
+template< typename T >
+inline
+utilspp::ThreadingSingle< T >::lock::lock( const T & )
+{};
 
 #endif

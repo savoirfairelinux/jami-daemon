@@ -21,22 +21,32 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef SINGLE_THREADED_HPP
+#define SINGLE_THREADED_HPP
 
+#include "NullType.hpp"
 
 namespace utilspp
 {
-   class NonCopyable
-   {
-      public:
-         NonCopyable()
-         {}
+   template < typename T = utilspp::NullType >
+      struct ThreadingSingle
+      {
+         struct mutex
+         {
+            void lock();
+            void unlock();
+         };
+         
+         struct lock
+         {
+            lock();
+            lock( mutex &m );
+         };
 
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
-   };
+         typedef T VolatileType;
+      };
 };
+
+#include "ThreadingSingle.inl"
 
 #endif

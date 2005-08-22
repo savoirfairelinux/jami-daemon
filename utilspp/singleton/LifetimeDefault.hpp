@@ -21,22 +21,22 @@
  *    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILSPP_NONCOPYABLE_HPP
-#define UTILSPP_NONCOPYABLE_HPP
+#ifndef LIFETIME_DEFAULT_HPP
+#define LIFETIME_DEFAULT_HPP
 
+#include <stdexcept>
+#include <cstdlib>
 
 namespace utilspp
 {
-   class NonCopyable
+   template< typename T >
+   class LifetimeDefault
    {
       public:
-         NonCopyable()
-         {}
-
-      private:
-         NonCopyable(const NonCopyable& r)
-         {}
+         static void scheduleDestruction( T *obj, void (*func)() );
+         static void onDeadReference();
    };
 };
+
 
 #endif
