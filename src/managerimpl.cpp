@@ -794,7 +794,7 @@ ManagerImpl::createSettingsPath (void) {
   	if (mkdir (_path.data(), 0755) != 0) {
 		// If directory	creation failed
     	if (errno != EEXIST) {
-			_debug("Cannot create directory: %d\n", strerror(errno));
+			_debug("Cannot create directory: %s\n", strerror(errno));
 			return -1;
       	} 	
   	} 
