@@ -2,6 +2,10 @@ SUBDIRS = audio gui
 
 bin_PROGRAMS = sflphone
 
+if MAINTENER_CODE
+maintener_source = 
+endif
+
 sflphone_SOURCES = \
 	configitem.cpp \
 	configuration.cpp \
@@ -29,7 +33,8 @@ sflphone_SOURCES = \
 	phonegi-bin.h \
 	voIPLink.h \
 	sipcall.h \
-	skin.h 
+	skin.h \
+	${maintener_source}
 
 
 
