@@ -32,15 +32,15 @@ namespace utilspp
   {
   public:
     typedef typename ParentFunctor::ResultType ResultType;
-    MemFunHandler(const PointerToObj& obj, PointerToMemFn memFn) 
+    MemFunHandler(PointerToObj obj, PointerToMemFn memFn) 
       : mObj(obj)
       , mMemFn(memFn)
     {}
 
     MemFunHandler* clone() const
     {return new MemFunHandler(*this);}
-
-        ResultType operator()()
+    
+    ResultType operator()()
     {return ((*mObj).*mMemFn)();}
 
     ResultType operator()(typename ParentFunctor::Parm1 p1)
@@ -49,7 +49,9 @@ namespace utilspp
     ResultType operator()(typename ParentFunctor::Parm1 p1, typename ParentFunctor::Parm2 p2)
     {return ((*mObj).*mMemFn)(p1, p2);}
 
-    ResultType operator()(typename ParentFunctor::Parm1 p1, typename ParentFunctor::Parm2 p2, typename ParentFunctor::Parm3 p3)
+    ResultType operator()(typename ParentFunctor::Parm1 p1, 
+			  typename ParentFunctor::Parm2 p2, 
+			  typename ParentFunctor::Parm3 p3)
     {return ((*mObj).*mMemFn)(p1, p2, p3);}
 
     ResultType operator()(typename ParentFunctor::Parm1 p1, typename ParentFunctor::Parm2 p2, typename ParentFunctor::Parm3 p3, typename ParentFunctor::Parm4 p4)

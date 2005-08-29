@@ -38,15 +38,14 @@ utilspp::Functor<R, TList>::Functor(const PointerToObj &obj, MemFun fun)
 
 template <typename R, class TList>
 utilspp::Functor<R, TList>::Functor(const Functor &functor)
-: mImpl(functor->mImpl->clone())
+: mImpl(functor.mImpl->clone())
 {}
 
 template <typename R, class TList>
 utilspp::Functor<R, TList> &
 utilspp::Functor<R, TList>::operator=(const Functor &functor)
 {
-  delete(mImpl);
-  mImpl = functor->clone();
+  mImpl = std::auto_ptr< Impl >(functor.mImpl->clone());
   return (*this);
 }
 
