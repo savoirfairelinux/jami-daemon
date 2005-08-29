@@ -1,4 +1,7 @@
-Jean-Philippe Barette-LaPierre (28 April 2005) version 0.4.1-pre1
+Jean-Philippe Barette-LaPierre (29 April 2005) version 0.4.1-pre1
+- Bug fix when trying to use more than 6 lines.
+
+Jean-Philippe Barette-LaPierre (20 August 2005) version 0.4.1-pre1
 - Manager has now a LifetimeLibrary policy.
 - Utilspp has been rearranged.
 	

@@ -1007,9 +1007,14 @@ QtGUIMainWindow::qt_outgoingCall (void)
 	
 	id = outgoingCall(to);
 	if (id > 0) {	
-		line = associateCall2Line(id);
+	        line = associateCall2Line(id);
+		if(line == -1) {
+		  _debug("Call %d -> there's no available lines\n", id);
+		  return -1;
+		}
 		_debug("Call %d -> line %d\n", id, line);
 		
+
 		// To store information about stop scrolling text
 		_lcd->resetForScrolling (false);
 		phLines[line]->setStopScrolling(false);

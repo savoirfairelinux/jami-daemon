@@ -1,6 +1,7 @@
 
 SFLphone (0.4.1-pre2) / now
 	* rearranged utilspp use
+        * Bug fix when trying to use more than 6 lines.
 
 SFLphone (0.4.1-pre1) / 2005-08-11
 	* Use libeXosip2
