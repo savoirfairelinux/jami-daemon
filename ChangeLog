@@ -1,3 +1,7 @@
+Jean-Philippe Barette-LaPierre (30 April 2005) version 0.4.1-pre1
+- Now, we send a final response to reINVITEs
+  (thanks to Mikael Magnusson)
+
 Jean-Philippe Barette-LaPierre (29 April 2005) version 0.4.1-pre1
 - Bug fix when trying to use more than 6 lines.
 

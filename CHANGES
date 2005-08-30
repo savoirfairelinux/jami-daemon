@@ -2,6 +2,8 @@
 SFLphone (0.4.1-pre2) / now
 	* rearranged utilspp use
         * Bug fix when trying to use more than 6 lines.
+	* Now, we send a final response to reINVITEs 
+	  (thanks to Mikael Magnusson)
 
 SFLphone (0.4.1-pre1) / 2005-08-11
 	* Use libeXosip2
