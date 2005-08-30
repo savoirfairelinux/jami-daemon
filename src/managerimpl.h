@@ -81,6 +81,7 @@ public:
 
 	// Init a new VoIPLink, audio codec and audio driver
 	void init (void);
+	void terminate (void);
 
 	// Set the graphic user interface
 	void setGui (GuiFramework* gui);
@@ -285,17 +286,17 @@ private:
 	/*
 	 * Vector of VoIPLink
 	 */
-	VoIPLinkVector* _voIPLinkVector;
+	VoIPLinkVector _voIPLinkVector;
 	
 	/*
 	 * Vector of calls
 	 */
-	CallVector* _callVector;
+	CallVector _callVector;
 
 	/*
 	 * Vector of CodecDescriptor
 	 */
-	CodecDescriptorVector* _codecDescVector;
+	CodecDescriptorVector _codecDescVector;
 
 	/*
 	 * Mutex to protect access to code section

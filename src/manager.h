@@ -25,10 +25,7 @@
 #include "managerimpl.h"
 
 
-typedef utilspp::SingletonHolder< ManagerImpl, 
-  utilspp::CreationUsingNew,
-  utilspp::LifetimeLibrary,
-  utilspp::ThreadingSingle > Manager;
+typedef utilspp::SingletonHolder< ManagerImpl > Manager;
 
 #endif 
 

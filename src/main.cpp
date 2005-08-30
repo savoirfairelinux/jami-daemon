@@ -36,14 +36,12 @@
 
 int
 main (int argc, char **argv) {
-  int exit_code;
+  int exit_code = 0;
   Config::setTree(new ConfigurationTree());	
   GuiFramework *GUI;
 
 #if defined(GUI_QT)
   {
-    utilspp::LifetimeLibraryGuard< utilspp::LifetimeLibrarySingleton > guard();
-    (void)guard;
     QApplication a(argc, argv);
     Manager::instance().initConfigFile();		
     GUI = new QtGUIMainWindow (0, 0 ,
@@ -55,6 +53,7 @@ main (int argc, char **argv) {
     
     a.setMainWidget((QtGUIMainWindow*)GUI);
     exit_code = a.exec();
+    Manager::instance().terminate();
   }
 #endif
 

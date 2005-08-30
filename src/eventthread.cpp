@@ -27,10 +27,12 @@ using namespace std;
 EventThread::EventThread (SipVoIPLink* sip) : Thread () 
 {
 	_sipthread = sip;
+	setCancel(cancelDeferred);
 }
 
 EventThread::~EventThread (void) 
 {
+  terminate();
 }
 
 /**
@@ -39,8 +41,8 @@ EventThread::~EventThread (void)
 void
 EventThread::run (void) 
 {
-	while(1) {
-		_sipthread->getEvent();
-	}
+  while(testCancel()) {
+    _sipthread->getEvent();
+  }
 }
 

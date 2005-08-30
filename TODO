@@ -13,6 +13,7 @@ Management of account (add, remove, ...)
 Management of exceptions
 Remove all warnings in compilation
 Add unregister method when application is closed
+Better handling for an reINVITE request.
 
 For project dependencies:
 ------------------------

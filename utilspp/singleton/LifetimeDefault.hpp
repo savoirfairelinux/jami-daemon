@@ -38,5 +38,6 @@ namespace utilspp
    };
 };
 
+#include "LifetimeDefault.inl"
 
 #endif

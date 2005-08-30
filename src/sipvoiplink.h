@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "voIPLink.h"
+#include "eventthread.h"
 
 using namespace std;
 
@@ -63,7 +64,6 @@ using namespace std;
 class AudioCodec;
 class AudioRtp;
 class CodecDescriptor;
-class EventThread;
 class SipCall;
 
 /*
@@ -83,7 +83,7 @@ public:
 	
 	virtual int init (void);
 	virtual bool checkNetwork (void);
-	virtual void quit (void);
+	virtual void terminate (void);
 	virtual int setRegister (void);
 	virtual int setUnregister (void);
 	virtual int outgoingInvite (short id, const string& to_url);	
@@ -215,7 +215,7 @@ private:
 	///////////////////////////
 	// Private member variables
 	///////////////////////////
-	EventThread* 	_evThread;
+	EventThread 	*_evThread;
 	SipCallVector* 	_sipcallVector;
 	AudioRtp* 		_audiortp;
 	int 			_localPort;

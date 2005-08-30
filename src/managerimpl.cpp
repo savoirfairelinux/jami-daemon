@@ -55,86 +55,109 @@ using namespace ost;
  
 ManagerImpl::ManagerImpl (void)
 {
-	// initialize random generator  
-  	srand (time(NULL));
+  // initialize random generator  
+  srand (time(NULL));
+  
+  // Init private variables 
+  _error = new Error();
+  _tone = new ToneGenerator();	
 
-	// Init private variables 
-	_callVector = new CallVector();
-	_voIPLinkVector = new VoIPLinkVector();	
-	_error = new Error();
-	_tone = new ToneGenerator();	
-
-	_nCalls = 0;
-	_nCodecs = 0;
-	_currentCallId = 0;
-	_startTime = 0;
-	_endTime = 0;
-	_path = ""; 
-	_zonetone = false;
-	_congestion = false;
-	_ringtone = false;
-	_ringback = false;
-	_exist = 0;
-	_loaded = false;
+  _nCalls = 0;
+  _nCodecs = 0;
+  _currentCallId = 0;
+  _startTime = 0;
+  _endTime = 0;
+  _path = ""; 
+  _zonetone = false;
+  _congestion = false;
+  _ringtone = false;
+  _ringback = false;
+  _exist = 0;
+  _loaded = false;
 }
 
 ManagerImpl::~ManagerImpl (void) 
 {
-	delete _callVector;
-	delete _voIPLinkVector;			
-	delete _error;
-	delete _tone;
-	delete _codecDescVector; 
-	delete _audiodriverPA;
+  terminate();
+  for(VoIPLinkVector::iterator pos = _voIPLinkVector.begin();
+      pos != _voIPLinkVector.end();
+      pos++) {
+    delete *pos;
+  }
+
+  for(CallVector::iterator pos = _callVector.begin();
+      pos != _callVector.end();
+      pos++) {
+    delete *pos;
+  }
+
+  delete _error;
+  delete _tone;
+  delete _audiodriverPA;
 } 
 
 void 
 ManagerImpl::init (void) 
 {
-	// Set a sip voip link by default
-	_voIPLinkVector->push_back(new SipVoIPLink(DFT_VOIP_LINK));
+  terminate();
+  
+  // Set a sip voip link by default
+  _voIPLinkVector.push_back(new SipVoIPLink(DFT_VOIP_LINK));
+  
+  if (_exist == 0) {
+    _debug("Cannot create config file in your home directory\n");
+  } 
 
-	if (_exist == 0) {
-		_debug("Cannot create config file in your home directory\n");
-	} 
-	if (_exist == 2) {
-		// If config-file doesn't exist, launch configuration setup
-		_gui->setup();
-	}
-	initAudioCodec();
+  if (_exist == 2) {
+    // If config-file doesn't exist, launch configuration setup
+    _gui->setup();
+  }
 
-	try {
-		selectAudioDriver();
-		loaded(true);
-	}
-	catch (const portaudio::PaException &e)
-	{
-		displayError(e.paErrorText());
-	}
-	catch (const portaudio::PaCppException &e)
-	{
-		displayError(e.what());
-	}
-	catch (const exception &e)
-	{
-		displayError(e.what());
-	}
-	catch (...)
-	{ 
-		displayError("An unknown exception occured.");
-	}
+  initAudioCodec();
+
+  try {
+    selectAudioDriver();
+    loaded(true);
+  }
+  catch (const portaudio::PaException &e)
+    {
+      displayError(e.paErrorText());
+    }
+  catch (const portaudio::PaCppException &e)
+    {
+      displayError(e.what());
+    }
+  catch (const exception &e)
+    {
+      displayError(e.what());
+    }
+  catch (...)
+    { 
+      displayError("An unknown exception occured.");
+    }
 	
-	_voIPLinkVector->at(DFT_VOIP_LINK)->init();
+  _voIPLinkVector.at(DFT_VOIP_LINK)->init();
 
-	if (_voIPLinkVector->at(DFT_VOIP_LINK)->checkNetwork()) {
-	// If network is available
-		if (get_config_fields_int(SIGNALISATION, AUTO_REGISTER) == YES and 
-				_exist == 1) {
-			if (registerVoIPLink() != 1) {
-				_debug("Registration failed\n");
-			}
-		} 
-	}
+  if (_voIPLinkVector.at(DFT_VOIP_LINK)->checkNetwork()) {
+    // If network is available
+    if (get_config_fields_int(SIGNALISATION, AUTO_REGISTER) == YES and 
+	_exist == 1) {
+      if (registerVoIPLink() != 1) {
+	_debug("Registration failed\n");
+      }
+    } 
+  }
+}
+
+void ManagerImpl::terminate()
+{
+  for(VoIPLinkVector::iterator pos = _voIPLinkVector.begin();
+      pos != _voIPLinkVector.end();
+      pos++) {
+    (*pos)->terminate();
+  }
+
+  _voIPLinkVector.clear();
 }
 
 void
@@ -188,16 +211,22 @@ ManagerImpl::setCurrentCallId (short currentCallId)
 CallVector* 
 ManagerImpl::getCallVector (void)
 {
-	return _callVector;
+	return &_callVector;
+}
+
+CodecDescriptorVector* 
+ManagerImpl::getCodecDescVector (void)
+{
+	return &_codecDescVector;
 }
 
 Call*
 ManagerImpl::getCall (short id)
 {
-	if (id > 0 and _callVector->size() > 0) {
+	if (id > 0 and _callVector.size() > 0) {
 		for (unsigned int i = 0; i < _nCalls; i++) {
-			if (_callVector->at(i)->getId() == id) {
-				return _callVector->at(i);
+			if (_callVector.at(i)->getId() == id) {
+				return _callVector.at(i);
 			}
 		}
 		return NULL;
@@ -222,30 +251,24 @@ ManagerImpl::setNumberOfCodecs (unsigned int nb_codec)
 VoIPLinkVector* 
 ManagerImpl::getVoIPLinkVector (void)
 {
-	return _voIPLinkVector;
-}
-
-CodecDescriptorVector*
-ManagerImpl::getCodecDescVector (void)
-{
-	return _codecDescVector;
+	return &_voIPLinkVector;
 }
 
 void
 ManagerImpl::pushBackNewCall (short id, enum CallType type)
 {
-	Call* call = new Call(id, type, _voIPLinkVector->at(DFT_VOIP_LINK));
+	Call* call = new Call(id, type, _voIPLinkVector.at(DFT_VOIP_LINK));
 	// Set the wanted voip-link (first of the list)
-	_callVector->push_back(call);
+	_callVector.push_back(call);
 }
 
 void
 ManagerImpl::deleteCall (short id)
 {
 	unsigned int i = 0;
-	while (i < _callVector->size()) {
-		if (_callVector->at(i)->getId() == id) {
-			_callVector->erase(_callVector->begin()+i);
+	while (i < _callVector.size()) {
+		if (_callVector.at(i)->getId() == id) {
+			_callVector.erase(_callVector.begin()+i);
 			return;
 		} else {
 			i++;
@@ -422,7 +445,7 @@ ManagerImpl::saveConfig (void)
 int 
 ManagerImpl::registerVoIPLink (void)
 {
-	if (_voIPLinkVector->at(DFT_VOIP_LINK)->setRegister() == 0) {
+	if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -432,7 +455,7 @@ ManagerImpl::registerVoIPLink (void)
 int 
 ManagerImpl::unregisterVoIPLink (void)
 {
-	if (_voIPLinkVector->at(DFT_VOIP_LINK)->setUnregister() == 0) {
+	if (_voIPLinkVector.at(DFT_VOIP_LINK)->setUnregister() == 0) {
 		return 1;
 	} else {
 		return 0;
@@ -443,13 +466,8 @@ int
 ManagerImpl::quitApplication (void)
 {
 	// Quit VoIP-link library
-	_voIPLinkVector->at(DFT_VOIP_LINK)->quit();
-	if (saveConfig()) {
-		return 1;
-	} else {
-		return 0;
-	}
-	Config::deleteTree();
+  terminate();
+  Config::deleteTree();
 }
 
 int 
@@ -472,7 +490,7 @@ ManagerImpl::sendDtmf (short id, char code)
     switch (sendType) {
         // SIP INFO
         case 0:
-			_voIPLinkVector->at(DFT_VOIP_LINK)->carryingDTMFdigits(id, code);
+			_voIPLinkVector.at(DFT_VOIP_LINK)->carryingDTMFdigits(id, code);
 			return 1;
             break;
                                                                                 
@@ -783,7 +801,7 @@ ManagerImpl::generateNewCallId (void)
 unsigned int 
 ManagerImpl::callVectorSize (void)
 {
-	return _callVector->size();
+	return _callVector.size();
 }
 
 int
@@ -857,15 +875,13 @@ void
 ManagerImpl::initAudioCodec (void)
 {
 	_nCodecs = get_config_fields_int(AUDIO, NB_CODEC);
-	_codecDescVector = new CodecDescriptorVector();
-	
-	_codecDescVector->push_back(new CodecDescriptor(
+	_codecDescVector.push_back(new CodecDescriptor(
 				get_config_fields_str(AUDIO, CODEC1)));
 
-	_codecDescVector->push_back(new CodecDescriptor(
+	_codecDescVector.push_back(new CodecDescriptor(
 				get_config_fields_str(AUDIO, CODEC2)));
 	
-	_codecDescVector->push_back(new CodecDescriptor(
+	_codecDescVector.push_back(new CodecDescriptor(
 				get_config_fields_str(AUDIO, CODEC3)));
 }
 
