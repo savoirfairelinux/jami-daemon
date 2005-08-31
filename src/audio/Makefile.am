@@ -18,6 +18,6 @@ libaudio_la_SOURCES = \
 	tonegenerator.cpp tonegenerator.h \
 	ulaw.cpp ulaw.h 
 
-AM_CXXFLAGS = -Ipacpp/include/ $(libccext2_CFLAGS) $(libccrtp1_CFLAGS) $(portaudio_CFLAGS)
+AM_CXXFLAGS = -I$(top_srcdir) -I$(srcdir)/pacpp/include/ $(libccext2_CFLAGS) $(libccrtp1_CFLAGS) $(portaudio_CFLAGS)
 libaudio_la_LIBADD = gsm/libgsm.la pacpp/source/portaudiocpp/libportaudiocpp.la
 

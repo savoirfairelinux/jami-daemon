@@ -4,6 +4,10 @@ SFLphone (0.4.1-pre2) / now
         * Bug fix when trying to use more than 6 lines.
 	* Now, we send a final response to reINVITEs 
 	  (thanks to Mikael Magnusson)
+        * We can build in different build directories.
+          (thanks to Mikael Magnusson)
+	* We actualy check if portaudio and eXosip2 libs
+          are installed
 
 SFLphone (0.4.1-pre1) / 2005-08-11
 	* Use libeXosip2

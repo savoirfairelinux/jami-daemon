@@ -1,4 +1,12 @@
 Jean-Philippe Barette-LaPierre (30 April 2005) version 0.4.1-pre1
+- Changed the order of initialization of modules, in order to
+  removed a race condition.
+- We can build in different build directories.
+  (thanks to Mikael Magnusson)
+- We actualy check if portaudio and eXosip2 libs
+  are installed. (thanks to Mikael Magnusson)
+
+Jean-Philippe Barette-LaPierre (30 April 2005) version 0.4.1-pre1
 - Now, we send a final response to reINVITEs
   (thanks to Mikael Magnusson)
 
@@ -21,7 +29,7 @@ Laurielle LEA (29 July 2005) version 0.4
 
 Laurielle LEA (27 July 2005) version 0.4
 - Migrate from libeXoSIP 0.9.0 to libeXosip2-1.9.1-pre15 
-(http://www.antisip.com/download/)
+  (http://www.antisip.com/download/)
 
 Laurielle LEA (21 July 2005) version 0.4
 - Change README.

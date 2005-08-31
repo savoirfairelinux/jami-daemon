@@ -44,18 +44,30 @@ main (int argc, char **argv) {
   {
     QApplication a(argc, argv);
     Manager::instance().initConfigFile();		
+
+    try {
+      Manager::instance().init();		
+    }
+    catch (const exception &e) {
+      std::cerr << e.what() << std::endl;
+    }
+    catch (...) { 
+      std::cerr << 
+	"An unknown exception occured when initializing the system." << 
+	std::endl;
+    }
+
     GUI = new QtGUIMainWindow (0, 0 ,
 			       Qt::WDestructiveClose |
 			       Qt::WStyle_Customize |
 			       Qt::WStyle_NoBorder);
     Manager::instance().setGui(GUI);
-    Manager::instance().init();		
     
     a.setMainWidget((QtGUIMainWindow*)GUI);
     exit_code = a.exec();
     Manager::instance().terminate();
-  }
 #endif
+  }
 
   return exit_code;
 }

@@ -3,7 +3,7 @@ AC_INIT(acinclude.m4)
 AM_CONFIG_HEADER(config.h)
 
 dnl figure out the sflphone version
-VERSION=`sed -ne 's/^#define VERSION "\(.*\)"/\1/p' src/global.h`
+VERSION=`sed -ne 's/^#define VERSION "\(.*\)"/\1/p' ${srcdir}/src/global.h`
 AC_SUBST(VERSION)
 
 dnl get rid of release number
@@ -81,7 +81,10 @@ SFLPHONE_LIBS="$SFLPHONE_LIBS $libosip2_LIBS"
 if test $ac_cv_header_eXosip2_eXosip_h = no; then
    AC_MSG_ERROR([*** missing eXosip2/eXosip.h. You need a working eXosip2 installation. See http://www.antisip.com/download/])
 fi
-libexosip2_LIBS="-leXosip2 "
+
+AC_CHECK_LIB([eXosip2], [eXosip_init],[libexosip2_LIBS="-leXosip2 "],[
+   AC_MSG_ERROR([*** missing eXosip2 library. You need a working eXosip2 installation. See http://www.antisip.com/download/])])
+
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libexosip2_LIBS"
 
 AC_SUBST(LIBQT)
@@ -112,8 +115,11 @@ AM_CONDITIONAL(MAINTENER_CODE, test x$maintener = xyes)
 if test $ac_cv_header_portaudio_h = no; then
    AC_MSG_ERROR([*** missing portaudio.h. You need a working PortAudio installation. See http://www.portaudio.com])
 fi
-portaudio_LIBS="-lportaudio "
-portaudio_CFLAGS="-DAUDIO_PORTAUDIO "
+AC_CHECK_LIB([portaudio], [Pa_GetDeviceCount], [
+   portaudio_LIBS="-lportaudio "
+   portaudio_CFLAGS="-DAUDIO_PORTAUDIO "],
+   [AC_MSG_ERROR([*** missing portaudio V19 library. You need a working PortAudio installation. See http://www.portaudio.com])])
+
 SFLPHONE_LIBS="$SFLPHONE_LIBS $portaudio_LIBS"
 SFLPHONE_CXXFLAGS=="$SFLPHONE_CXXFLAGS $portaudio_CFLAGS"
 AC_SUBST(portaudio_CFLAGS)

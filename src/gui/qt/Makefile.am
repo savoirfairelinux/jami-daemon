@@ -38,7 +38,7 @@ libsflphoneqt_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/s
 libsflphoneqt_la_LIBADD = $(portaudio_LIBS)
 
 KDE_CXXFLAGS = $(USE_EXCEPTIONS)
-AM_CPPFLAGS = -I../../audio/pacpp/include/ $(QT_INCLUDES) $(X_INCLUDES) $(libccext2_CFLAGS) $(portaudio_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir) -I$(srcdir)/../../audio/pacpp/include/ $(QT_INCLUDES) $(X_INCLUDES) $(libccext2_CFLAGS) $(portaudio_CFLAGS)
 
 
 %.h: %.ui

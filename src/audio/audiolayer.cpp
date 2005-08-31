@@ -35,7 +35,9 @@ AudioLayer::AudioLayer ()
   , _mainSndRingBuffer(SIZEBUF)
   , _micRingBuffer(SIZEBUF)
   , _stream(NULL)
-{}
+{
+  portaudio::System::initialize();
+}
 
 // Destructor
 AudioLayer::~AudioLayer (void) 
@@ -53,20 +55,20 @@ AudioLayer::closeStream (void)
 }
 
 void
-AudioLayer::openDevice (int index) 
+AudioLayer::openDevice (int outputIndex, int inputIndex) 
 {
   closeStream();
   // Set up the parameters required to open a (Callback)Stream:
   portaudio::DirectionSpecificStreamParameters 
-    outParams(portaudio::System::instance().deviceByIndex(index), 
+    outParams(portaudio::System::instance().deviceByIndex(outputIndex), 
 	      2, portaudio::INT16, true, 
-	      portaudio::System::instance().deviceByIndex(index).defaultLowOutputLatency(), 
+	      portaudio::System::instance().deviceByIndex(outputIndex).defaultLowOutputLatency(), 
 	      NULL);
 	
   portaudio::DirectionSpecificStreamParameters 
-    inParams(portaudio::System::instance().deviceByIndex(index), 
+    inParams(portaudio::System::instance().deviceByIndex(inputIndex), 
 	     2, portaudio::INT16, true, 
-	     portaudio::System::instance().deviceByIndex(index).defaultLowInputLatency(), 
+	     portaudio::System::instance().deviceByIndex(inputIndex).defaultLowInputLatency(), 
 	     NULL);
 	 
   portaudio::StreamParameters const params(inParams, outParams, 
