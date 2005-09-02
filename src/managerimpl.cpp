@@ -874,8 +874,7 @@ ManagerImpl::initConfigFile (void)
 	fill_config_fields_str(SIGNALISATION, STUN_SERVER, DFT_STUN_SERVER); 
 	fill_config_fields_int(SIGNALISATION, USE_STUN, NO); 
 
-	fill_config_fields_int(AUDIO, OUTPUT_DRIVER_NAME, DFT_DRIVER); 
-	fill_config_fields_int(AUDIO, INPUT_DRIVER_NAME, DFT_DRIVER); 
+	fill_config_fields_int(AUDIO, DRIVER_NAME, DFT_DRIVER); 
 	fill_config_fields_int(AUDIO, NB_CODEC, DFT_NB_CODEC); 
 	fill_config_fields_str(AUDIO, CODEC1, DFT_CODEC); 
 	fill_config_fields_str(AUDIO, CODEC2, DFT_CODEC); 
@@ -915,8 +914,7 @@ ManagerImpl::selectAudioDriver (void)
 	
 #if defined(AUDIO_PORTAUDIO)
 	_audiodriverPA = new AudioLayer();
-	_audiodriverPA->openDevice(get_config_fields_int(AUDIO, OUTPUT_DRIVER_NAME), 
-				   get_config_fields_int(AUDIO, INPUT_DRIVER_NAME));
+	_audiodriverPA->openDevice(get_config_fields_int(AUDIO, DRIVER_NAME));
 #else
 # error You must define one AUDIO driver to use.
 #endif

@@ -42,7 +42,7 @@ public:
 	AudioLayer();
 	~AudioLayer (void);
 
-	void	openDevice 		(int, int);
+	void	openDevice 		(int);
 	void 	startStream		(void);
 	void 	stopStream		(void);
 	void    sleep			(int);

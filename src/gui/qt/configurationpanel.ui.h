@@ -111,7 +111,7 @@ void ConfigurationPanel::init()
 ((QRadioButton*)stunButtonGroup->find(get_config_fields_int(SIGNALISATION, USE_STUN)))->setChecked(true);
    // For audio tab
   
-((QRadioButton*)DriverChoice->find(get_config_fields_int(AUDIO, OUTPUT_DRIVER_NAME)))->setChecked(true);
+((QRadioButton*)DriverChoice->find(get_config_fields_int(AUDIO, DRIVER_NAME)))->setChecked(true);
 
    codec1->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC1)));
    codec2->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC2)));

@@ -55,20 +55,20 @@ AudioLayer::closeStream (void)
 }
 
 void
-AudioLayer::openDevice (int outputIndex, int inputIndex) 
+AudioLayer::openDevice (int index) 
 {
   closeStream();
   // Set up the parameters required to open a (Callback)Stream:
   portaudio::DirectionSpecificStreamParameters 
-    outParams(portaudio::System::instance().deviceByIndex(outputIndex), 
+    outParams(portaudio::System::instance().deviceByIndex(index), 
 	      2, portaudio::INT16, true, 
-	      portaudio::System::instance().deviceByIndex(outputIndex).defaultLowOutputLatency(), 
+	      portaudio::System::instance().deviceByIndex(index).defaultLowOutputLatency(), 
 	      NULL);
 	
   portaudio::DirectionSpecificStreamParameters 
-    inParams(portaudio::System::instance().deviceByIndex(inputIndex), 
+    inParams(portaudio::System::instance().deviceByIndex(index), 
 	     2, portaudio::INT16, true, 
-	     portaudio::System::instance().deviceByIndex(inputIndex).defaultLowInputLatency(), 
+	     portaudio::System::instance().deviceByIndex(index).defaultLowInputLatency(), 
 	     NULL);
 	 
   portaudio::StreamParameters const params(inParams, outParams, 
