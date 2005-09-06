@@ -80,6 +80,8 @@
 #define ZONE_TONE		"Options.zoneToneChoice"
 #define CHECKED_TRAY	"Options.checkedTray"
 #define VOICEMAIL_NUM	"Options.voicemailNumber"
+// zeroconfig module
+#define CONFIG_ZEROCONF "zeroconf.enable"
 
 // Default values
 #define DFT_VOIP_LINK		0	// index of the first VoIP link by default
@@ -100,6 +102,11 @@
 #define DFT_SKIN 			"metal"
 #define DFT_ZONE			"North America"
 #define DFT_VOICEMAIL 		"888"
-
+// zeroconfig default value
+#ifdef USE_ZEROCONF
+#define CONFIG_ZEROCONF_DEFAULT 1
+#else
+#define CONFIG_ZEROCONF_DEFAULT 0
+#endif
 
 #endif // __USER_CFG_H__

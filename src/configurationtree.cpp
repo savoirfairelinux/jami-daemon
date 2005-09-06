@@ -59,6 +59,7 @@ ConfigurationTree::populateFromFile (const string& fileName) {
 			 fileName.c_str());
 			return 0;
 		}
+    file.close();
 		return 2;
   	}
 	
@@ -114,7 +115,6 @@ ConfigurationTree::saveToFile (const string& fileName) {
   	}
 
 	_head->saveToFile (&file);
-	
 	file.close();
 	return 1;
 }

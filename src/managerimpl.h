@@ -38,6 +38,9 @@ class Error;
 class GuiFramework;
 class ToneGenerator;
 class VoIPLink;
+#ifdef USE_ZEROCONF
+class DNSService;
+#endif
 
 #define	NOTIFICATION_LEN	250
 // Status
@@ -250,6 +253,7 @@ public:
 
 private:
 
+  
 	/*
 	 * Returns the number of calls in the vector
 	 */
@@ -274,7 +278,17 @@ private:
 	 * Initialize audiodriver
 	 */
 	void selectAudioDriver (void);
-	
+
+  /*
+   * Initialize zeroconf module and scanning
+   */
+  void initZeroconf(void);
+  
+  /*
+   * Init the Gui interface (after setting it) inside setGui
+   */
+  void initGui();
+  
 	/////////////////////
 	// Private variables
 	/////////////////////
@@ -333,6 +347,16 @@ private:
 
 	// Variables used in exception
 	bool 		_loaded;
+
+  // look if zeroconf scanning should run or not
+  int _useZeroconf;
+
+#ifdef USE_ZEROCONF
+  // DNSService contain every zeroconf services
+  //  configuration detected on the network
+  DNSService *_DNSService;
+#endif
+
 };
 
 #endif // __MANAGER_H__

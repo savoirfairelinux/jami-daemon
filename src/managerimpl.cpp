@@ -50,6 +50,10 @@
 #include "voIPLink.h" 
 #include "gui/guiframework.h"
 
+#ifdef USE_ZEROCONF
+#include "zeroconf/DNSService.h"
+#endif
+
 using namespace std;
 using namespace ost;
  
@@ -61,6 +65,10 @@ ManagerImpl::ManagerImpl (void)
   // Init private variables 
   _error = new Error();
   _tone = new ToneGenerator();	
+  
+#ifdef USE_ZEROCONF
+  _DNSService = new DNSService();
+#endif
 
   _nCalls = 0;
   _nCodecs = 0;
@@ -96,12 +104,16 @@ ManagerImpl::~ManagerImpl (void)
   delete _error;
   delete _tone;
   delete _audiodriverPA;
+#ifdef USE_ZEROCONF
+  delete _DNSService;
+#endif
 } 
 
 void 
 ManagerImpl::init (void) 
 {
   terminate();
+  initZeroconf();
   
   // Set a sip voip link by default
   _voIPLinkVector.push_back(new SipVoIPLink(DFT_VOIP_LINK));
@@ -109,11 +121,6 @@ ManagerImpl::init (void)
   if (_exist == 0) {
     _debug("Cannot create config file in your home directory\n");
   } 
-
-  if (_exist == 2) {
-    // If config-file doesn't exist, launch configuration setup
-    _gui->setup();
-  }
 
   initAudioCodec();
 
@@ -166,7 +173,20 @@ void
 ManagerImpl::setGui (GuiFramework* gui)
 {
 	_gui = gui;
+  initGui();
 }
+
+/**
+ * Gui initialisation (after setting the gui)
+ */
+void 
+ManagerImpl::initGui() {
+  if (_exist == 2) {
+    // If config-file doesn't exist, launch configuration setup
+    _gui->setup();
+  }
+}
+
 
 ToneGenerator*
 ManagerImpl::getTonegenerator (void) 
@@ -892,6 +912,8 @@ ManagerImpl::initConfigFile (void)
 	fill_config_fields_str(PREFERENCES, ZONE_TONE, DFT_ZONE); 
 	fill_config_fields_int(PREFERENCES, CHECKED_TRAY, NO); 
 	fill_config_fields_str(PREFERENCES, VOICEMAIL_NUM, DFT_VOICEMAIL); 
+  
+	fill_config_fields_int(PREFERENCES, CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT); 
 }
 
 void
@@ -917,6 +939,22 @@ ManagerImpl::selectAudioDriver (void)
 	_audiodriverPA->openDevice(get_config_fields_int(AUDIO, DRIVER_NAME));
 #else
 # error You must define one AUDIO driver to use.
+#endif
+}
+
+/**
+ * Initialize the Zeroconf scanning services loop
+ * Informations will be store inside a map DNSService->_services
+ */
+void 
+ManagerImpl::initZeroconf(void) 
+{
+  _useZeroconf = get_config_fields_int(PREFERENCES, CONFIG_ZEROCONF);
+
+#ifdef USE_ZEROCONF
+  if (_useZeroconf) {
+    _DNSService->scanServices();
+  }
 #endif
 }
 
