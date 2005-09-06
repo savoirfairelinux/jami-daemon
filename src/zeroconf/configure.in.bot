@@ -1,0 +1,10 @@
+# inspired by kdelibs/dnssd/configure.in.bot
+if test "$have_libdns_sd" = "no"; then
+  echo ""
+  echo "You're missing Apple mDNSResponder 85 or later, therefore"
+  echo "dnssd will be compiled as stub, without any real functionality."
+  echo "If you want zeroconf support (www.zeroconf.org), you should install mDNSResponder first."
+  echo "See src/zeroconf/INSTALL for details."
+  echo ""
+  all_tests=bad
+fi
