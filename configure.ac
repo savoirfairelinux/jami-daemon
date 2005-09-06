@@ -127,7 +127,43 @@ AC_SUBST(portaudio_LIB)
 
 AC_SUBST(SFLPHONE_CXXFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
-	
+
+AC_ARG_ENABLE(zeroconf, [  --disable-zeroconf	don't require libdns_sd (browsing and publishing DNS-SD services will not be possible) ],  with_zeroconf=$enableval, with_zeroconf=yes)
+if test "$with_zeroconf" = "yes"; then
+AC_MSG_CHECKING(for DNS-SD support)
+save_dnssdtest_LIBS="$LIBS"
+save_dnssdtest_LDFLAGS="$LDFLAGS"
+save_dnssdtest_CPPFLAGS="$CPPFLAGS"
+LDFLAGS="$all_libraries $LDFLAGS"
+CPPFLAGS="$CPPFLAGS $all_includes"
+case $host_os in
+  darwin*) LIBS="" ;;
+  *) LIBS="-ldns_sd" ;;
+esac
+have_libdns_sd="no"
+AC_TRY_LINK(	[
+			#include <dns_sd.h>
+		],[
+			DNSServiceRefDeallocate( (DNSServiceRef) 0);
+			TXTRecordDeallocate( (TXTRecordRef*) 0);
+		],[
+			AC_DEFINE(HAVE_DNSSD,1,[Define if dns-sd is available])
+			case $host_os in
+				darwin*) LIB_DNSSD="" ;;
+				*) LIB_DNSSD="-ldns_sd" ;;
+			esac
+			have_libdns_sd="yes"
+			AC_MSG_RESULT(yes)
+		],[
+			AC_MSG_RESULT(no)
+                        LIB_DNSSD=""
+])
+CPPFLAGS=$save_dnssdtest_CPPFLAGS
+LDFLAGS=$save_dnssdtest_LDFLAGS
+LIBS=$save_dnssdtest_LIBS
+fi
+AC_SUBST(LIB_DNSSD)
+AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
@@ -143,6 +179,7 @@ src/audio/pacpp/source/Makefile \
 src/audio/pacpp/source/portaudiocpp/Makefile \
 src/gui/Makefile \
 src/gui/qt/Makefile \
+src/zeroconf/Makefile
 utilspp/Makefile \
 utilspp/functor/Makefile \
 utilspp/singleton/Makefile \

@@ -15,6 +15,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define if dns-sd is available */
+#undef HAVE_DNSSD
+
 /* Define to 1 if you have the <eXosip2/eXosip.h> header file. */
 #undef HAVE_EXOSIP2_EXOSIP_H
 

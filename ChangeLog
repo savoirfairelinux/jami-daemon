@@ -5,6 +5,7 @@ Jean-Philippe Barette-LaPierre (30 April 2005) version 0.4.1-pre1
   (thanks to Mikael Magnusson)
 - We actualy check if portaudio and eXosip2 libs
   are installed. (thanks to Mikael Magnusson)
+- zeroconf integration start
 
 Jean-Philippe Barette-LaPierre (30 April 2005) version 0.4.1-pre1
 - Now, we send a final response to reINVITEs
