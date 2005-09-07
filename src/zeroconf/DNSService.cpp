@@ -39,12 +39,10 @@ DNSService::DNSService()
 #endif
   
   // for the thread, the ifdef add a dynamic _regtypeList problem
-  int iThread=0; // _queryThread index for the loop
   for (std::list<std::string>::iterator iterThread=_regtypeList.begin();
        iterThread!=_regtypeList.end();
        iterThread++) {
     _queryThread.push_back(new DNSQueryThread(this, (*iterThread).c_str()));
-    iThread++;
   }
 }
 
@@ -126,7 +124,14 @@ DNSService::queryService(const std::string &service)
   DNSServiceRef       myServRef=0;
   DNSServiceFlags     resultFlags=0;
   
-  theErr = DNSServiceQueryRecord(&myServRef, resultFlags, 0, service.c_str(), kDNSServiceType_TXT, kDNSServiceClass_IN, DNSServiceQueryRecordCallback, (void*)this);
+  theErr = DNSServiceQueryRecord(&myServRef, 
+				 resultFlags, 
+				 0, 
+				 service.c_str(), 
+				 kDNSServiceType_TXT, 
+				 kDNSServiceClass_IN, 
+				 DNSServiceQueryRecordCallback, 
+				 (void*)this);
   if (theErr == kDNSServiceErr_NoError) {
     DNSServiceProcessResult(myServRef); // blockage...
     DNSServiceRefDeallocate(myServRef);
