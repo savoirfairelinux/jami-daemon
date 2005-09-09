@@ -75,7 +75,6 @@ DNSService::scanServices()
  */
 void DNSService::addService(const std::string &service) 
 {
-  // does push_back do a copy and I can use a reference & instead as service argument
   DNSServiceTXTRecord txtRecord;
   _mutex.enterMutex();
   _services[service] = txtRecord;
@@ -104,7 +103,7 @@ void
 DNSService::listServices() 
 {
   _debug("Number of services detected: %d\n", _services.size());
-  std::map<std::string, DNSServiceTXTRecord>::iterator iterTR;
+  DNSServiceMap::iterator iterTR;
   for (iterTR = _services.begin(); iterTR != _services.end(); iterTR++) {
     _debug("name: %s\n", iterTR->first.c_str());
     _debug("size: %d\n", iterTR->second.size());
@@ -173,9 +172,13 @@ DNSService::addTXTRecord(const char *fullname, uint16_t rdlen, const void *rdata
     if (value) {
       bcopy(value, valueTab, valueLen);
       valueTab[valueLen]='\0';
-      _services[std::string(fullname)].addKeyValue(std::string(key), std::string(valueTab));
+      _mutex.enterMutex(); // extra-careful
+      _services[fullname].addKeyValue(key, valueTab);
+      _mutex.leaveMutex();
     } else {
-      _services[std::string(fullname)].addKeyValue(std::string(key), std::string(""));
+      _mutex.enterMutex();
+      _services[fullname].removeKey(key);
+      _mutex.leaveMutex();
     }
   }
 
@@ -183,7 +186,6 @@ DNSService::addTXTRecord(const char *fullname, uint16_t rdlen, const void *rdata
   // addTXTRecord is a good function to know changes... 
   listServices();
 }
-
 
 void 
 DNSServiceAddServicesCallback(DNSServiceRef sdRef,
@@ -202,8 +204,10 @@ DNSServiceAddServicesCallback(DNSServiceRef sdRef,
       std::string tempService;
       tempService = std::string(serviceName) + "." + std::string(replyType) + std::string(replyDomain);
       if (flags&kDNSServiceFlagsAdd) {
+        _debug("DNSServiceAddServicesCallback call addService\n");
         service->addService(tempService);
       } else {
+        _debug("DNSServiceAddServicesCallback call removeService\n");
         service->removeService(tempService);
       }
     }
@@ -227,13 +231,12 @@ DNSServiceQueryRecordCallback(
 	void *context)
 {
   if (errorCode==kDNSServiceErr_NoError) {
-    if (flags) {
-        if (flags&kDNSServiceFlagsAdd) {
-          ((DNSService *)context)->addTXTRecord(fullname, rdlen, rdata);
-        }
+    if (flags&kDNSServiceFlagsAdd) {
+      _debug("DNSServiceQueryRecordCallback call addTXTRecord\n");
+      ((DNSService *)context)->addTXTRecord(fullname, rdlen, rdata);
+    } else {
+      _debug("DNSServiceQueryRecordCallback call removeService\n");
+      ((DNSService *)context)->removeService(fullname);
     }
-    if (!(flags&kDNSServiceFlagsMoreComing)) {
-      // TODO: stoping, if no blocking process here
-    } 
   }
 }

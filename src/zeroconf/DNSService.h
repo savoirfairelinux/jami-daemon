@@ -30,6 +30,7 @@
 class DNSQueryThread;
 class DNSServiceTXTRecord;
 
+typedef std::map<std::string, DNSServiceTXTRecord> DNSServiceMap;
 class DNSService
 {
 public:
@@ -45,9 +46,10 @@ public:
   void queryService(const std::string &service); // query the TXT record of a service
   void queryService(const char *service, const char *regtype, const char *domain);
   void addTXTRecord(const char *fullname, uint16_t rdlen, const void *rdata);
+  //void removeTXTRecord(const char *fullname);
 
 private:
-  std::map<std::string, DNSServiceTXTRecord> _services; //map
+  DNSServiceMap _services; //map
 
   std::vector<DNSQueryThread *> _queryThread;
   /**

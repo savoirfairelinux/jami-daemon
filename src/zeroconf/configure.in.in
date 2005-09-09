@@ -16,7 +16,7 @@ have_libdns_sd="no"
 AC_TRY_LINK(	[
 			#include <dns_sd.h>
 		],[
-			DNSServiceRefDeallocate( (DNSServiceRef*) 0);
+			DNSServiceRefDeallocate( (DNSServiceRef) 0);
 			TXTRecordDeallocate( (TXTRecordRef*) 0);
 		],[
 			AC_DEFINE(HAVE_DNSSD,1,[Define if dns-sd is available])

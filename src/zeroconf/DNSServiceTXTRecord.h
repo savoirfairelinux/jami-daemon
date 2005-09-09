@@ -22,12 +22,14 @@
 #include <string>
 #include <map>
 
+typedef std::map<std::string, std::string> TXTRecordMap;
 class DNSServiceTXTRecord
 {
 public:
   DNSServiceTXTRecord();
   ~DNSServiceTXTRecord();
   void addKeyValue(const std::string &key, const std::string &value);
+  void removeKey(const std::string &key);
   const std::string &getValue(const std::string &key);
   const std::string &getValue(const char *key);
   inline void clear(void) { _map.clear(); };
@@ -35,7 +37,7 @@ public:
   void listValue();
 
 private:
-  std::map<std::string, std::string> _map;
+  TXTRecordMap _map;
 };
 
 #endif // __DNSSD_DNSSERVICETXTRECORD_H__

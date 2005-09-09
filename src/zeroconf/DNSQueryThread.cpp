@@ -62,7 +62,7 @@ DNSQueryThread::run() {
             (void*)_parent);
 
   if (theErr == kDNSServiceErr_NoError) {
-    while(true) {
+    while(!testCancel()) {
       DNSServiceProcessResult(_serviceRef); // blockage if none...
     }
   }

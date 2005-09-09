@@ -44,6 +44,17 @@ DNSServiceTXTRecord::addKeyValue(const std::string &key, const std::string &valu
 {
   _map[key] = value;
 }
+
+/**
+ * remove a key inside the map or do nothing if it doesn't exist
+ * @param key    unique key inside the std::map
+ */
+void 
+DNSServiceTXTRecord::removeKey(const std::string &key) 
+{
+  _map.erase(key);
+}
+
 /**
  * get a value from a key
  * @param key    unique key inside the std::map
@@ -69,7 +80,7 @@ DNSServiceTXTRecord::getValue(const char* key)
 void 
 DNSServiceTXTRecord::listValue() 
 {
-  std::map<std::string, std::string>::iterator iter;
+  TXTRecordMap::iterator iter;
   for (iter=_map.begin(); iter != _map.end(); iter++) {
     _debug ( "\t%s:%s\n", iter->first.c_str(), iter->second.c_str());
   }
