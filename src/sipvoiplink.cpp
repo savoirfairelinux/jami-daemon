@@ -64,14 +64,6 @@ SipVoIPLink::SipVoIPLink (short id)
   _reg_id = -1;
   _nMsgVoicemail = 0;
   _evThread = new EventThread(this);
-  _sipcallVector = new SipCallVector();
-  _audiortp = new AudioRtp();
-}
-
-SipVoIPLink::~SipVoIPLink (void)
-{
-  delete _sipcallVector;
-  delete _audiortp;
 }
 
 bool 
@@ -336,7 +328,7 @@ SipVoIPLink::answer (short id)
   eXosip_unlock();
 
   // Incoming call is answered, start the sound channel.
-  if (_audiortp->createNewSession (getSipCall(id)) < 0) {
+  if (_audiortp.createNewSession (getSipCall(id)) < 0) {
     _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
     exit(1);
   }
@@ -357,7 +349,7 @@ SipVoIPLink::hangup (short id)
     eXosip_unlock();
 
     // Release RTP channels
-    _audiortp->closeRtpSession(getSipCall(id));
+    _audiortp.closeRtpSession(getSipCall(id));
   }
 				
   deleteSipCall(id);
@@ -436,7 +428,7 @@ SipVoIPLink::onhold (short id)
   eXosip_unlock ();
   
   // Disable audio
-  _audiortp->closeRtpSession(getSipCall(id));
+  _audiortp.closeRtpSession(getSipCall(id));
   return i;
 }
 
@@ -495,7 +487,7 @@ SipVoIPLink::offhold (short id)
   eXosip_unlock ();
   
   // Enable audio
-  if (_audiortp->createNewSession (getSipCall(id)) < 0) {
+  if (_audiortp.createNewSession (getSipCall(id)) < 0) {
     _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
     exit(1);
   }
@@ -640,7 +632,7 @@ SipVoIPLink::getEvent (void)
 	Manager::instance().peerAnsweredCall(id);
 
 	// Outgoing call is answered, start the sound channel.
-	if (_audiortp->createNewSession (getSipCall(id)) < 0) {
+	if (_audiortp.createNewSession (getSipCall(id)) < 0) {
 	  _debug("FATAL: Unable to start sound (%s:%d)\n", 
 		 __FILE__, __LINE__);
 	  exit(1);
@@ -691,7 +683,7 @@ SipVoIPLink::getEvent (void)
 			
     if (id > 0) {	
       if (!Manager::instance().getCall(id)->isProgressing()) {
-	_audiortp->closeRtpSession(getSipCall(id));
+	_audiortp.closeRtpSession(getSipCall(id));
       }
       Manager::instance().peerHungupCall(id);
       deleteSipCall(id);
@@ -770,18 +762,18 @@ SipVoIPLink::getEvent (void)
     unsigned int k;
 				
     if (event->request != NULL && MSG_IS_OPTIONS(event->request)) {
-      for (k = 0; k < _sipcallVector->size(); k++) {
-	if (_sipcallVector->at(k)->getCid() == event->cid) { 
+      for (k = 0; k < _sipcallVector.size(); k++) {
+	if (_sipcallVector.at(k)->getCid() == event->cid) { 
 	  break;
 	}
       }
 			
       // TODO: Que faire si rien trouve??
       eXosip_lock();
-      if (k == _sipcallVector->size()) {
+      if (k == _sipcallVector.size()) {
 	/* answer 200 ok */
 	eXosip_options_send_answer (event->tid, OK, NULL);
-      } else if (_sipcallVector->at(k)->getCid() == event->cid) {
+      } else if (_sipcallVector.at(k)->getCid() == event->cid) {
 	/* already answered! */
       } else {
 	/* answer 486 ok */
@@ -882,7 +874,7 @@ SipVoIPLink::carryingDTMFdigits (short id, char code) {
 void
 SipVoIPLink::newOutgoingCall (short callid)
 {
-  _sipcallVector->push_back(new SipCall(callid, 
+  _sipcallVector.push_back(new SipCall(callid, 
 					Manager::instance().getCodecDescVector()));
   if (getSipCall(callid) != NULL) {
     getSipCall(callid)->setStandBy(true);
@@ -893,16 +885,16 @@ void
 SipVoIPLink::newIncomingCall (short callid)
 {
   SipCall* sipcall = new SipCall(callid, Manager::instance().getCodecDescVector());
-  _sipcallVector->push_back(sipcall);
+  _sipcallVector.push_back(sipcall);
 }
 
 void
 SipVoIPLink::deleteSipCall (short callid)
 {
   unsigned int i = 0;
-  while (i < _sipcallVector->size()) {
-    if (_sipcallVector->at(i)->getId() == callid) {
-      _sipcallVector->erase(_sipcallVector->begin()+i);
+  while (i < _sipcallVector.size()) {
+    if (_sipcallVector.at(i)->getId() == callid) {
+      _sipcallVector.erase(_sipcallVector.begin()+i);
       return;
     } else {
       i++;
@@ -913,9 +905,9 @@ SipVoIPLink::deleteSipCall (short callid)
 SipCall*
 SipVoIPLink::getSipCall (short callid)
 {
-  for (unsigned int i = 0; i < _sipcallVector->size(); i++) {
-    if (_sipcallVector->at(i)->getId() == callid) {
-      return _sipcallVector->at(i);
+  for (unsigned int i = 0; i < _sipcallVector.size(); i++) {
+    if (_sipcallVector.at(i)->getId() == callid) {
+      return _sipcallVector.at(i);
     } 
   }
   return NULL;
@@ -1323,10 +1315,10 @@ SipVoIPLink::findCallId (eXosip_event_t *e)
 {
   unsigned int k;
 	
-  for (k = 0; k < _sipcallVector->size(); k++) {
-    if (_sipcallVector->at(k)->getCid() == e->cid and
-	_sipcallVector->at(k)->getDid()	== e->did) {
-      return _sipcallVector->at(k)->getId();
+  for (k = 0; k < _sipcallVector.size(); k++) {
+    if (_sipcallVector.at(k)->getCid() == e->cid and
+	_sipcallVector.at(k)->getDid()	== e->did) {
+      return _sipcallVector.at(k)->getId();
     }
   }
   return 0;
@@ -1341,9 +1333,9 @@ SipVoIPLink::findCallIdWhenRinging (void)
   if (i != -1) {
     return i;
   } else {
-    for (k = 0; k < _sipcallVector->size(); k++) {
-      if (_sipcallVector->at(k)->getStandBy()) {
-	return _sipcallVector->at(k)->getId();
+    for (k = 0; k < _sipcallVector.size(); k++) {
+      if (_sipcallVector.at(k)->getStandBy()) {
+	return _sipcallVector.at(k)->getId();
       }
     }
   }

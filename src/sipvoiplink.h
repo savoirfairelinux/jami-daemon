@@ -30,6 +30,7 @@
 
 #include "voIPLink.h"
 #include "eventthread.h"
+#include "audio/audiortp.h"
 
 using namespace std;
 
@@ -62,19 +63,10 @@ using namespace std;
 #define DECLINE			603
 
 class AudioCodec;
-class AudioRtp;
 class CodecDescriptor;
 class SipCall;
 
-/*
- * Vector of Sipcall
- */
-typedef vector<SipCall*, allocator<SipCall*> > SipCallVector;
-
-/*
- * Vector of CodecDescriptor
- */
-typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
+typedef vector< CodecDescriptor* > CodecDescriptorVector;
 
 class SipVoIPLink : public VoIPLink {
 public:
@@ -216,8 +208,8 @@ private:
 	// Private member variables
 	///////////////////////////
 	EventThread 	*_evThread;
-	SipCallVector* 	_sipcallVector;
-	AudioRtp* 		_audiortp;
+	std::vector< SipCall * > _sipcallVector;
+	AudioRtp 		_audiortp;
 	int 			_localPort;
 	int 			_cid;
 	int 			_reg_id;
