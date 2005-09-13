@@ -25,8 +25,6 @@
 #include <ccrtp/rtp.h>
 #include <cc++/numbers.h>
 
-using namespace ost;
-
 
 #define RTP_FRAMES2SEND	160
 #define SIZEDATA		SAMPLES_SIZE(RTP_FRAMES2SEND)
@@ -37,21 +35,21 @@ class SipCall;
 ///////////////////////////////////////////////////////////////////////////////
 // Two pair of sockets
 ///////////////////////////////////////////////////////////////////////////////
-class AudioRtpRTX : public Thread, public TimerPort {
+class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
 public:
 	AudioRtpRTX (SipCall *, AudioLayer*, bool);
 	~AudioRtpRTX();
 
-	Time *time; 	// For incoming call notification 
+	ost::Time *time; 	// For incoming call notification 
 	virtual void run ();
 
 private:
-	SipCall*				_ca;
-	AudioLayer*				_audioDevice;
-	RTPSession*				_sessionSend;
-	RTPSession*				_sessionRecv;
-	SymmetricRTPSession* 	_session;
-	bool			 		_sym;
+	SipCall* _ca;
+	AudioLayer* _audioDevice;
+	ost::RTPSession *_sessionSend;
+	ost::RTPSession *_sessionRecv;
+	ost::SymmetricRTPSession *_session;
+	bool _sym;
 
 	void initAudioRtpSession (void);
 	void sendSessionFromMic (unsigned char*, int16*, int16*, int, int);

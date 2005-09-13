@@ -46,7 +46,7 @@
 #include "configuration.h"  
 #include "configurationtree.h" 
 #include "error.h"
-#include "skin.h" 
+#include "sipvoiplink.h"
 #include "user_cfg.h"
 #include "voIPLink.h" 
 #include "gui/guiframework.h"

@@ -21,9 +21,6 @@
 #define __CALL_H__
 
 #include <string>
-#include <vector>
-
-using namespace std;
 
 enum CallState {
 	NotExist = 0,
@@ -67,14 +64,14 @@ public:
 	void setVoIPLink (VoIPLink* voIPLink);
 		
 	// Accessor and modifior of status
-	string getStatus (void);
-	void setStatus (const string& status);
+	std::string getStatus (void);
+	void setStatus (const std::string& status);
 	
 	// Handle id name and id number
-	string getCallerIdName (void);
-	void setCallerIdName (const string& callerId_name);
-	string getCallerIdNumber (void);
-	void setCallerIdNumber (const string& callerId_number);
+	std::string getCallerIdName (void);
+	void setCallerIdName (const std::string& callerId_name);
+	std::string getCallerIdNumber (void);
+	void setCallerIdNumber (const std::string& callerId_number);
 	
 	// Handle state
 	enum CallState getState (void);
@@ -99,13 +96,13 @@ public:
 	bool isOutgoingType (void);
 	bool isIncomingType (void);
 	
-	int outgoingCall  	(short id, const string& to);
+	int outgoingCall  	(short id, const std::string& to);
 	int hangup  		(void);
 	int cancel  		(void);
 	int answer  		(void);
 	int onHold  		(void);
 	int offHold  		(void);
-	int transfer  		(const string& to);
+	int transfer  		(const std::string& to);
 	int refuse  		(void);
 
 private:
@@ -115,9 +112,9 @@ private:
 	short 		  	 _id;
 	enum CallState 	 _state;
 	enum CallType 	 _type;
-	string 			 _callerIdName;
-	string 			 _callerIdNumber;
-	string 			 _status;
+	std::string 			 _callerIdName;
+	std::string 			 _callerIdNumber;
+	std::string 			 _status;
 };
 
 #endif // __CALL_H__

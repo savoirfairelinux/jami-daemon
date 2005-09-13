@@ -68,8 +68,8 @@ typedef vector< CodecDescriptor* > CodecDescriptorVector;
 
 class SipVoIPLink : public VoIPLink {
 public:
-	SipVoIPLink (short id);
-	virtual ~SipVoIPLink (void);
+  SipVoIPLink (short id);
+  virtual ~SipVoIPLink();
 	
 	virtual int init (void);
 	virtual bool checkNetwork (void);

@@ -21,16 +21,12 @@
 #define __MANAGER_H__
 
 #include <cc++/thread.h>
-
 #include <string>
 #include <vector>
 
 #include "../stund/stun.h"
 #include "call.h"
 #include "audio/audiodevice.h"
-
-using namespace std;
-using namespace ost;
 
 class AudioLayer;
 class CodecDescriptor;
@@ -57,17 +53,17 @@ class DNSService;
 /*
  * Define a type for a list of call
  */
-typedef vector<Call*, allocator<Call*> > CallVector;
+typedef std::vector< Call* > CallVector;
 
 /*
  * Define a type for a list of VoIPLink
  */
-typedef vector<VoIPLink*, allocator<VoIPLink*> > VoIPLinkVector;
+typedef std::vector< VoIPLink* > VoIPLinkVector;
 
 /*
  * Define a type for a list of CodecDescriptor
  */
-typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
+typedef std::vector< CodecDescriptor* > CodecDescriptorVector;
 
 /*
  * Structure for audio device
@@ -146,13 +142,13 @@ public:
 	/*
 	 * Functions which occur with a user's action
 	 */
-	int outgoingCall (const string& to);
+	int outgoingCall (const std::string& to);
 	int hangupCall (short id);
 	int cancelCall (short id);
 	int answerCall (short id);
 	int onHoldCall (short id);
 	int offHoldCall (short id);
-	int transferCall (short id, const string& to);
+	int transferCall (short id, const std::string& to);
 	void muteOn (short id);
 	void muteOff (short id);
 	int refuseCall (short id);
@@ -161,7 +157,7 @@ public:
 	int registerVoIPLink (void);
 	int unregisterVoIPLink (void);
 	int quitApplication (void);
-	int sendTextMessage (short id, const string& message);
+	int sendTextMessage (short id, const std::string& message);
 	int accessToDirectory (void);
 	
 	/**
@@ -177,10 +173,10 @@ public:
 	void peerAnsweredCall (short id);
 	int peerRingingCall (short id);
 	int peerHungupCall (short id);
-	void displayTextMessage (short id, const string& message);
-	void displayErrorText (short id, const string& message);
-	void displayError (const string& error);
-	void displayStatus (const string& status);
+	void displayTextMessage (short id, const std::string& message);
+	void displayErrorText (short id, const std::string& message);
+	void displayError (const std::string& error);
+	void displayStatus (const std::string& status);
 	int selectedCall (void);
 	bool isCurrentId (short id);
 	void startVoiceMessageNotification (void);
@@ -231,7 +227,7 @@ public:
 	 */
 	inline int getFirewallPort 		(void) 		{ return _firewallPort; }
 	inline void setFirewallPort 	(int port) 	{ _firewallPort = port; }
-	inline string getFirewallAddress (void) 	{ return _firewallAddr; }
+	inline std::string getFirewallAddress (void) 	{ return _firewallAddr; }
 
 	/*
 	 * Manage information about audio driver
@@ -315,7 +311,7 @@ private:
 	/*
 	 * Mutex to protect access to code section
 	 */
-	Mutex		_mutex;
+	ost::Mutex		_mutex;
 	
 	unsigned int _nCalls;
 	short _currentCallId;
@@ -328,7 +324,7 @@ private:
 
 	/* Path of the ConfigFile 
 	 */
-	string 	_path;
+	std::string 	_path;
 	int 	_exist;
 
 	unsigned int _nCodecs;
@@ -343,7 +339,7 @@ private:
 
 	// To handle firewall
 	int			_firewallPort;
-	string		_firewallAddr;
+	std::string		_firewallAddr;
 
 	// Variables used in exception
 	bool 		_loaded;

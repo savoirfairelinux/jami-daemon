@@ -1,6 +1,7 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
- *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Jean-Philippe Barrette-LaPierre
+ *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,21 +18,14 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __EVENT_THREAD_H__
-#define __EVENT_THREAD_H__
+#ifndef SFLPHONEGUI_ACCOUNT_H
+#define SFLPHONEGUI_ACCOUNT_H
 
-#include <cc++/thread.h>
-
-
-class SipVoIPLink;
-class EventThread : public ost::Thread {
+class Account {
 public:
-	EventThread (SipVoIPLink*);
-	~EventThread (void);
-	
-	virtual void 	 run ();
-private:
-	SipVoIPLink*	_sipthread;
+  void register(){};
+  void unregister(){};
 };
 
-#endif // __EVENT_THREAD_H__
+
+#endif

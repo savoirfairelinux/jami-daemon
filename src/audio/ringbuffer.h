@@ -26,7 +26,6 @@
 
 #include "../global.h"
 
-using namespace ost;
 
 typedef unsigned char* 	samplePtr;
 
@@ -60,7 +59,7 @@ class RingBuffer {
    void lock (void);
    void unlock (void);
 
-   Mutex  		 mMutex;
+   ost::Mutex  		 mMutex;
    int           mStart;
    int           mEnd;
    int           mBufferSize;

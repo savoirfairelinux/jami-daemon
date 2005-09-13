@@ -25,10 +25,6 @@
 #include "../global.h"
 #include "../manager.h"
 
-using namespace std;
-using namespace ost;
-
-
 #define ZT_TONE_DIALTONE	0
 #define ZT_TONE_BUSY		1
 #define ZT_TONE_RINGTONE	2
@@ -49,7 +45,7 @@ using namespace ost;
 ///////////////////////////////////////////////////////////////////////////////
 // ToneThread 
 ///////////////////////////////////////////////////////////////////////////////
-class ToneThread : public Thread {
+class ToneThread : public ost::Thread {
 public:
 	ToneThread (int16 *, int);
 	virtual ~ToneThread (void);
@@ -72,7 +68,7 @@ public:
 	/**
  	 * Returns id selected zone for tone choice
  	*/
-	int idZoneName 		(const string &);
+	int idZoneName 		(const std::string &);
 			
 	/**
 	 * Calculate sinus with superposition of 2 frequencies
@@ -112,18 +108,18 @@ private:
 	void		initTone (void);
 
 	/*
-	 * Count all the occurences of a character in a string
+	 * Count all the occurences of a character in a std::string
 	 *
 	 * @param	c character to locate
-	 * @param	str	string to work on
+	 * @param	str	std::string to work on
 	 * @return	return the number of time 'c' is found in 'str'
 	 */
-	int		 	contains(const string& str, char c);
+	int		 	contains(const std::string& str, char c);
 	
 	//////////////////////////
 	// Private member variable
 	//////////////////////////
-	string toneZone[NB_ZONES_MAX][NB_TONES_MAX];
+	std::string toneZone[NB_ZONES_MAX][NB_TONES_MAX];
 	ToneThread*	tonethread;
 	
 };
