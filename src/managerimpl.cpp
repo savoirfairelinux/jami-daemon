@@ -28,12 +28,14 @@
 //#include <arpa/inet.h>
 
 #include <cc++/thread.h>
+
 #include <cstdlib> 
 #include <iostream>
 #include <fstream> 
 #include <string>
 #include <vector>
 
+#include "sipvoiplink.h"
 #include "manager.h"
 #include "audio/audiocodec.h"
 #include "audio/audiolayer.h"
@@ -44,7 +46,6 @@
 #include "configuration.h"  
 #include "configurationtree.h" 
 #include "error.h"
-#include "sipvoiplink.h"
 #include "skin.h" 
 #include "user_cfg.h"
 #include "voIPLink.h" 

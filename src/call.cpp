@@ -20,8 +20,6 @@
 #include <iostream>
 
 #include "call.h"
-#include "manager.h"
-#include "sipvoiplink.h"
 #include "voIPLink.h"
 
 

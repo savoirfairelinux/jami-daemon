@@ -22,14 +22,11 @@
 #ifndef __SIP_VOIP_LINK_H__
 #define __SIP_VOIP_LINK_H__
 
-#include <eXosip2/eXosip.h>
-#include <osipparser2/sdp_message.h>
-
-#include <string>
 #include <vector>
+#include <eXosip2/eXosip.h>  
+//#include <osipparser2/sdp_message.h>
 
 #include "voIPLink.h"
-#include "eventthread.h"
 #include "audio/audiortp.h"
 
 using namespace std;
@@ -65,6 +62,7 @@ using namespace std;
 class AudioCodec;
 class CodecDescriptor;
 class SipCall;
+class EventThread;
 
 typedef vector< CodecDescriptor* > CodecDescriptorVector;
 

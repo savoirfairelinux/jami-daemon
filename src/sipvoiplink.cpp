@@ -18,31 +18,22 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <sys/time.h>
+//#include <sys/time.h>
 
 #include <eXosip2/eXosip.h>  
 #include <osip2/osip.h>
-#include <osipparser2/osip_const.h>
-#include <osipparser2/osip_headers.h>
-#include <osipparser2/osip_body.h>
 
-#include <cc++/thread.h>
-#include <stdexcept>
-#include <iostream>
 #include <string>
-#include <vector>
 
-#include "global.h"
 #include "sipvoiplink.h"
-#include "audio/audiortp.h"
+#include "global.h"
 #include "audio/codecDescriptor.h"
-#include "call.h"
 #include "error.h"
-#include "eventthread.h"
 #include "manager.h"
 #include "sipcall.h"
 #include "user_cfg.h"
-#include "voIPLink.h"
+#include "eventthread.h"
+
  
 using namespace ost;
 using namespace std;
@@ -64,6 +55,10 @@ SipVoIPLink::SipVoIPLink (short id)
   _reg_id = -1;
   _nMsgVoicemail = 0;
   _evThread = new EventThread(this);
+}
+
+SipVoIPLink::~SipVoIPLink(void) {
+  delete _evThread;
 }
 
 bool 
