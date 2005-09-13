@@ -44,7 +44,7 @@ AM_CPPFLAGS = -I$(top_srcdir) -I$(srcdir)/../../audio/pacpp/include/ $(QT_INCLUD
 %.h: %.ui
 	$(UIC) -o $@ $<
 
-%moc.cpp: %.h
+moc_%.cpp: %.h
 	$(MOC) -o $@ $<
 
 %ui.cpp: %.ui

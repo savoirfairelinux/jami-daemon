@@ -21,8 +21,11 @@
 #ifndef SFLPHONEGUI_ACCOUNT_H
 #define SFLPHONEGUI_ACCOUNT_H
 
+class Call;
+
 class Account {
 public:
+  void call(const std::string &to);
   void register(){};
   void unregister(){};
 };

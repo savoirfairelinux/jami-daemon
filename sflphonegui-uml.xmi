@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2005-09-13T16:01:03" xmi.version="1.2" >
+<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2005-09-13T16:56:03" xmi.version="1.2" >
  <XMI.header>
   <XMI.documentation>
    <XMI.exporter>umbrello uml modeller http://uml.sf.net</XMI.exporter>
@@ -25,18 +25,18 @@
      <UML:Classifier.feature>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2556" isRoot="false" isAbstract="false" name="version" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5054" type="2466" />
+        <UML:Parameter kind="return" xmi.id="5642" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2569" isRoot="false" isAbstract="false" name="connect" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5055" type="3277" />
+        <UML:Parameter kind="return" xmi.id="5643" type="3277" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="3437" isRoot="false" isAbstract="false" name="disconnect" />
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2611" isRoot="false" isAbstract="false" name="listConfig" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5056" type="2585" />
+        <UML:Parameter kind="return" xmi.id="5644" type="2585" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2655" isRoot="false" isAbstract="false" name="setOption" >
@@ -47,29 +47,29 @@
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2670" isRoot="false" isAbstract="false" name="getOption" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5057" type="2466" />
+        <UML:Parameter kind="return" xmi.id="5645" type="2466" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="2671" isRoot="false" value="" type="2466" isAbstract="false" name="name" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2687" isRoot="false" isAbstract="false" name="saveConfig" />
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2700" isRoot="false" isAbstract="false" name="listAudioDevices" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5058" type="2466" />
+        <UML:Parameter kind="return" xmi.id="5646" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2716" isRoot="false" isAbstract="false" name="listAudioCodecs" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5059" type="2466" />
+        <UML:Parameter kind="return" xmi.id="5647" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2826" isRoot="false" isAbstract="false" name="listAccounts" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5060" type="2466" />
+        <UML:Parameter kind="return" xmi.id="5648" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2834" isRoot="false" isAbstract="false" name="getAccount" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5061" type="2521" />
+        <UML:Parameter kind="return" xmi.id="5649" type="2521" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="2835" isRoot="false" value="" type="2466" isAbstract="false" name="name" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
@@ -100,7 +100,7 @@
      <UML:Classifier.feature>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2524" isRoot="false" isAbstract="false" name="call" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5062" type="2468" />
+        <UML:Parameter kind="return" xmi.id="5650" type="2468" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="2525" isRoot="false" value="" type="2466" isAbstract="false" name="to" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
@@ -116,7 +116,7 @@
       <UML:Attribute isSpecification="false" isLeaf="false" visibility="public" xmi.id="2602" isRoot="false" initialValue="" type="2466" isAbstract="false" name="mValue" />
      </UML:Classifier.feature>
     </UML:Class>
-    <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="2999" isRoot="false" isAbstract="false" name="Task" >
+    <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="2999" isRoot="false" isAbstract="false" name="CallTask" >
      <UML:Classifier.feature>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="3033" isRoot="false" isAbstract="false" name="Task" >
        <UML:BehavioralFeature.parameter>
@@ -153,7 +153,7 @@
      <UML:Classifier.feature>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="4219" isRoot="false" isAbstract="false" name="createHoldTask" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5063" type="3814" />
+        <UML:Parameter kind="return" xmi.id="5651" type="3814" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
      </UML:Classifier.feature>
@@ -163,7 +163,7 @@
       <UML:Attribute isSpecification="false" isLeaf="false" visibility="private" xmi.id="3927" isRoot="false" initialValue="" type="3600" isAbstract="false" name="mFactory" />
       <UML:Operation isSpecification="false" isLeaf="false" visibility="private" xmi.id="4600" isRoot="false" isAbstract="false" name="getTaskFactory" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="5064" type="3600" />
+        <UML:Parameter kind="return" xmi.id="5652" type="3600" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
      </UML:Classifier.feature>
@@ -209,6 +209,49 @@
       <UML:Generalization xmi.idref="4904" />
      </UML:GeneralizableElement.generalization>
     </UML:Class>
+    <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="5065" isRoot="false" isAbstract="false" name="ListTask" >
+     <UML:Classifier.feature>
+      <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="5143" isRoot="false" isAbstract="false" name="onEntry" >
+       <UML:BehavioralFeature.parameter>
+        <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="5144" isRoot="false" value="" type="2458" isAbstract="false" name="code" />
+        <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="5156" isRoot="false" value="" type="2458" isAbstract="false" name="index" />
+        <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="5179" isRoot="false" value="" type="2466" isAbstract="false" name="value" />
+       </UML:BehavioralFeature.parameter>
+      </UML:Operation>
+      <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="5224" isRoot="false" isAbstract="false" name="onEnd" >
+       <UML:BehavioralFeature.parameter>
+        <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="5225" isRoot="false" value="" type="2458" isAbstract="false" name="code" />
+        <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="5237" isRoot="false" value="" type="2466" isAbstract="false" name="message" />
+       </UML:BehavioralFeature.parameter>
+      </UML:Operation>
+      <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="5304" isRoot="false" isAbstract="false" name="onError" >
+       <UML:BehavioralFeature.parameter>
+        <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="5305" isRoot="false" value="" type="2458" isAbstract="false" name="code" />
+        <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="5317" isRoot="false" value="" type="2466" isAbstract="false" name="message" />
+       </UML:BehavioralFeature.parameter>
+      </UML:Operation>
+     </UML:Classifier.feature>
+    </UML:Class>
+    <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="5428" isRoot="false" isAbstract="false" name="ListConfigTask" >
+     <UML:GeneralizableElement.generalization>
+      <UML:Generalization xmi.idref="5440" />
+     </UML:GeneralizableElement.generalization>
+    </UML:Class>
+    <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="5465" isRoot="false" isAbstract="false" name="ListAudioDevicesTask" >
+     <UML:GeneralizableElement.generalization>
+      <UML:Generalization xmi.idref="5584" />
+     </UML:GeneralizableElement.generalization>
+    </UML:Class>
+    <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="5477" isRoot="false" isAbstract="false" name="ListAudioCodecsTask" >
+     <UML:GeneralizableElement.generalization>
+      <UML:Generalization xmi.idref="5534" />
+     </UML:GeneralizableElement.generalization>
+    </UML:Class>
+    <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="5489" isRoot="false" isAbstract="false" name="ListAccountsTask" >
+     <UML:GeneralizableElement.generalization>
+      <UML:Generalization xmi.idref="5559" />
+     </UML:GeneralizableElement.generalization>
+    </UML:Class>
     <UML:Association isSpecification="false" visibility="public" xmi.id="2539" name="" >
      <UML:Association.connection>
       <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="2540" aggregation="none" type="2521" name="" />
@@ -235,18 +278,22 @@
     <UML:Generalization isSpecification="false" child="4856" visibility="public" xmi.id="4979" parent="2999" discriminator="" name="" />
     <UML:Generalization isSpecification="false" child="4844" visibility="public" xmi.id="5004" parent="2999" discriminator="" name="" />
     <UML:Generalization isSpecification="false" child="4821" visibility="public" xmi.id="5029" parent="2999" discriminator="" name="" />
+    <UML:Generalization isSpecification="false" child="5428" visibility="public" xmi.id="5440" parent="5065" discriminator="" name="" />
+    <UML:Generalization isSpecification="false" child="5477" visibility="public" xmi.id="5534" parent="5065" discriminator="" name="" />
+    <UML:Generalization isSpecification="false" child="5489" visibility="public" xmi.id="5559" parent="5065" discriminator="" name="" />
+    <UML:Generalization isSpecification="false" child="5465" visibility="public" xmi.id="5584" parent="5065" discriminator="" name="" />
    </UML:Namespace.ownedElement>
   </UML:Model>
  </XMI.content>
  <XMI.extensions xmi.extender="umbrello" >
-  <docsettings viewid="2457" documentation="" uniqueid="5064" />
+  <docsettings viewid="2457" documentation="" uniqueid="5652" />
   <diagrams>
-   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1019" snapy="10" showatts="1" xmi.id="2457" documentation="" type="402" showops="1" showpackage="0" name="class diagram" localid="900000" showstereotype="0" showscope="1" snapcsgrid="0" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="538" >
+   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1198" snapy="10" showatts="1" xmi.id="2457" documentation="" type="402" showops="1" showpackage="0" name="class diagram" localid="900000" showstereotype="0" showscope="1" snapcsgrid="0" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="847" >
     <widgets>
-     <classwidget usesdiagramfillcolour="0" width="272" showattsigs="601" usesdiagramusefillcolour="0" x="467" linecolour="#ff0000" y="8" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="202" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2467" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="165" showattsigs="601" usesdiagramusefillcolour="0" x="521" linecolour="#ff0000" y="399" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="135" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2468" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="155" showattsigs="601" usesdiagramusefillcolour="0" x="526" linecolour="#ff0000" y="278" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="67" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2521" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="162" showattsigs="601" usesdiagramusefillcolour="0" x="853" linecolour="#ff0000" y="22" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="82" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2585" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="0" width="272" showattsigs="601" usesdiagramusefillcolour="0" x="756" linecolour="#ff0000" y="30" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="202" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2467" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="0" width="165" showattsigs="601" usesdiagramusefillcolour="0" x="699" linecolour="#ff0000" y="383" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="135" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2468" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="0" width="155" showattsigs="601" usesdiagramusefillcolour="0" x="704" linecolour="#ff0000" y="262" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="67" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2521" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="0" width="162" showattsigs="601" usesdiagramusefillcolour="0" x="1032" linecolour="#ff0000" y="290" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="82" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2585" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="0" width="343" showattsigs="601" usesdiagramusefillcolour="0" x="7" linecolour="#ff0000" y="364" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="67" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2999" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="204" showattsigs="601" usesdiagramusefillcolour="1" x="24" linecolour="none" y="148" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="37" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="3600" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="0" width="218" showattsigs="601" usesdiagramusefillcolour="0" x="17" linecolour="#ff0000" y="19" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="45" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="3611" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
@@ -258,19 +305,24 @@
      <classwidget usesdiagramfillcolour="1" width="89" showattsigs="601" usesdiagramusefillcolour="1" x="382" linecolour="none" y="376" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="4868" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="84" showattsigs="601" usesdiagramusefillcolour="1" x="366" linecolour="none" y="325" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="4880" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="102" showattsigs="601" usesdiagramusefillcolour="1" x="260" linecolour="none" y="295" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="4892" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="1" width="306" showattsigs="601" usesdiagramusefillcolour="1" x="76" linecolour="none" y="613" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="67" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="5065" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="1" width="105" showattsigs="601" usesdiagramusefillcolour="1" x="145" linecolour="none" y="781" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="5428" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="1" width="149" showattsigs="601" usesdiagramusefillcolour="1" x="21" linecolour="none" y="719" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="5465" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="1" width="146" showattsigs="601" usesdiagramusefillcolour="1" x="285" linecolour="none" y="770" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="5477" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="1" width="121" showattsigs="601" usesdiagramusefillcolour="1" x="203" linecolour="none" y="814" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="5489" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
     </widgets>
     <messages/>
     <associations>
      <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" widgetbid="2468" widgetaid="2521" xmi.id="2539" >
       <linepath>
-       <startpoint startx="603" starty="345" />
-       <endpoint endx="603" endy="399" />
+       <startpoint startx="781" starty="329" />
+       <endpoint endx="781" endy="383" />
       </linepath>
      </assocwidget>
      <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" widgetbid="2521" widgetaid="2467" xmi.id="2899" >
       <linepath>
-       <startpoint startx="603" starty="210" />
-       <endpoint endx="603" endy="278" />
+       <startpoint startx="892" starty="232" />
+       <endpoint endx="781" endy="262" />
       </linepath>
      </assocwidget>
      <assocwidget totalcounta="2" indexa="1" totalcountb="5" indexb="1" widgetbid="2999" widgetaid="3814" xmi.id="3851" >
@@ -328,6 +380,30 @@
        <endpoint endx="144" endy="431" />
       </linepath>
      </assocwidget>
+     <assocwidget totalcounta="2" indexa="1" totalcountb="5" indexb="2" widgetbid="5065" widgetaid="5428" xmi.id="5440" >
+      <linepath>
+       <startpoint startx="197" starty="781" />
+       <endpoint endx="198" endy="680" />
+      </linepath>
+     </assocwidget>
+     <assocwidget totalcounta="2" indexa="1" totalcountb="5" indexb="4" widgetbid="5065" widgetaid="5477" xmi.id="5534" >
+      <linepath>
+       <startpoint startx="358" starty="770" />
+       <endpoint endx="320" endy="680" />
+      </linepath>
+     </assocwidget>
+     <assocwidget totalcounta="2" indexa="1" totalcountb="5" indexb="3" widgetbid="5065" widgetaid="5489" xmi.id="5559" >
+      <linepath>
+       <startpoint startx="263" starty="814" />
+       <endpoint endx="259" endy="680" />
+      </linepath>
+     </assocwidget>
+     <assocwidget totalcounta="2" indexa="1" totalcountb="5" indexb="1" widgetbid="5065" widgetaid="5465" xmi.id="5584" >
+      <linepath>
+       <startpoint startx="95" starty="719" />
+       <endpoint endx="137" endy="680" />
+      </linepath>
+     </assocwidget>
     </associations>
    </diagram>
   </diagrams>
@@ -351,6 +427,11 @@
       <listitem open="0" type="815" id="2506" />
       <listitem open="0" type="815" id="2509" />
      </listitem>
+     <listitem open="1" type="813" id="2999" >
+      <listitem open="0" type="815" id="3033" />
+      <listitem open="0" type="815" id="3083" />
+      <listitem open="0" type="815" id="3156" />
+     </listitem>
      <listitem open="1" type="813" id="4844" />
      <listitem open="1" type="813" id="2585" >
       <listitem open="0" type="814" id="2591" />
@@ -360,6 +441,15 @@
      </listitem>
      <listitem open="1" type="813" id="4868" />
      <listitem open="1" type="813" id="3814" />
+     <listitem open="1" type="813" id="5489" />
+     <listitem open="1" type="813" id="5477" />
+     <listitem open="1" type="813" id="5465" />
+     <listitem open="1" type="813" id="5428" />
+     <listitem open="1" type="813" id="5065" >
+      <listitem open="0" type="815" id="5143" />
+      <listitem open="0" type="815" id="5224" />
+      <listitem open="0" type="815" id="5304" />
+     </listitem>
      <listitem open="1" type="813" id="4880" />
      <listitem open="1" type="813" id="2467" >
       <listitem open="0" type="815" id="2556" />
@@ -379,11 +469,6 @@
      <listitem open="1" type="813" id="3277" >
       <listitem open="0" type="815" id="3334" />
       <listitem open="0" type="815" id="3406" />
-     </listitem>
-     <listitem open="1" type="813" id="2999" >
-      <listitem open="0" type="815" id="3033" />
-      <listitem open="0" type="815" id="3083" />
-      <listitem open="0" type="815" id="3156" />
      </listitem>
      <listitem open="1" type="813" id="3600" >
       <listitem open="0" type="815" id="4219" />
@@ -496,7 +581,7 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			sflclient.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 15:50:14&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			sflclient.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:52:46&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields/>
     </classifiercodedocument>
@@ -695,7 +780,7 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			configentry.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 15:51:56&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			configentry.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:52:43&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="2591" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -786,9 +871,9 @@
       <codecomment tag="" />
      </header>
     </codedocument>
-    <classifiercodedocument writeOutCode="true" package="" id="2999" parent_class="2999" fileExt=".cpp" fileName="task" >
+    <classifiercodedocument writeOutCode="true" package="" id="2999" parent_class="2999" fileExt=".cpp" fileName="calltask" >
      <textblocks>
-      <codeblockwithcomments tag="includes" text="#include &quot;task.h&quot;&amp;#010;" >
+      <codeblockwithcomments tag="includes" text="#include &quot;calltask.h&quot;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
@@ -823,7 +908,7 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			task.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:00:52&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			calltask.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:49:46&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="3851" field_type="72" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
@@ -1161,7 +1246,7 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			taskfactory.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 15:58:21&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			taskfactory.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:55:21&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="3955" field_type="4" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
@@ -1770,7 +1855,7 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			refusetask.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:00:38&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			refusetask.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:37&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="4929" field_type="4587589" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
@@ -1864,6 +1949,432 @@
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="4" parent_id="4904" tag="" canDelete="false" writeOutText="false" classfield_id="4904" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="5065" parent_class="5065" fileExt=".cpp" fileName="listtask" >
+     <textblocks>
+      <codeblockwithcomments tag="includes" text="#include &quot;listtask.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="constructionMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Constructors/Destructors" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+      <hierarchicalcodeblock tag="otherMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Methods" />
+       </header>
+       <textblocks>
+        <codeoperation parent_id="5143" tag="operation_5143" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeoperation>
+        <codeoperation parent_id="5224" tag="operation_5224" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeoperation>
+        <codeoperation parent_id="5304" tag="operation_5304" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeoperation>
+       </textblocks>
+      </hierarchicalcodeblock>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listtask.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:55:14&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5440" field_type="2097255" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="5534" field_type="6619245" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="5559" field_type="6619245" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="5584" field_type="6619245" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="5428" parent_class="5428" fileExt=".cpp" fileName="listconfigtask" >
+     <textblocks>
+      <codeblockwithcomments tag="includes" text="#include &quot;listconfigtask.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="constructionMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Constructors/Destructors" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+      <hierarchicalcodeblock tag="otherMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Methods" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listconfigtask.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:39&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5440" field_type="16" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5440" tag="" canDelete="false" writeOutText="false" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="5465" parent_class="5465" fileExt=".cpp" fileName="listaudiodevicestask" >
+     <textblocks>
+      <codeblockwithcomments tag="includes" text="#include &quot;listaudiodevicestask.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="constructionMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Constructors/Destructors" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+      <hierarchicalcodeblock tag="otherMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Methods" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listaudiodevicestask.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:36&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5584" field_type="2293770" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5584" tag="" canDelete="false" writeOutText="false" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="5477" parent_class="5477" fileExt=".cpp" fileName="listaudiocodecstask" >
+     <textblocks>
+      <codeblockwithcomments tag="includes" text="#include &quot;listaudiocodecstask.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="constructionMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Constructors/Destructors" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+      <hierarchicalcodeblock tag="otherMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Methods" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listaudiocodecstask.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:39&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5534" field_type="6881382" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5534" tag="" canDelete="false" writeOutText="false" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="5489" parent_class="5489" fileExt=".cpp" fileName="listaccountstask" >
+     <textblocks>
+      <codeblockwithcomments tag="includes" text="#include &quot;listaccountstask.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="constructionMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Constructors/Destructors" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+      <hierarchicalcodeblock tag="otherMethodsBlock" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" text="Methods" />
+       </header>
+       <textblocks/>
+      </hierarchicalcodeblock>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listaccountstask.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:39&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5559" field_type="5505140" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text="FIX ME;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5559" tag="" canDelete="false" writeOutText="false" classfield_id="5559" role_id="0" >
         <header>
          <cppcodedocumentation tag="" />
         </header>
@@ -2134,7 +2645,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			sflclient.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 15:50:14&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			sflclient.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:52:46&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields/>
     </classifiercodedocument>
@@ -2904,7 +3415,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			configentry.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 15:51:56&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			configentry.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:52:43&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="2591" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -2989,9 +3500,9 @@
       </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="" id="cppheader2999" parent_class="2999" fileExt=".h" fileName="task" >
+    <classifiercodedocument writeOutCode="true" package="" id="cppheader2999" parent_class="2999" fileExt=".h" fileName="calltask" >
      <textblocks>
-      <codeblockwithcomments tag="hashDefBlock" text="#ifndef TASK_H&amp;#010;#define TASK_H" >
+      <codeblockwithcomments tag="hashDefBlock" text="#ifndef CALLTASK_H&amp;#010;#define CALLTASK_H" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
@@ -3018,7 +3529,7 @@
         </codeblockwithcomments>
         <cppheaderclassdeclarationblock parent_id="2999" tag="classDeclarationBlock" canDelete="false" >
          <header>
-          <cppcodedocumentation tag="" text="Class Task&amp;#010;" />
+          <cppcodedocumentation tag="" text="Class CallTask&amp;#010;" />
          </header>
          <textblocks>
           <hierarchicalcodeblock tag="publicBlock" canDelete="false" >
@@ -3200,14 +3711,14 @@
         </cppheaderclassdeclarationblock>
        </textblocks>
       </hierarchicalcodeblock>
-      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //TASK_H" >
+      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //CALLTASK_H" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			task.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:00:52&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			calltask.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:49:46&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="3851" field_type="2883692" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
@@ -3914,7 +4425,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			taskfactory.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 15:58:21&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			taskfactory.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:55:22&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="3955" field_type="4" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
@@ -5971,7 +6482,7 @@
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
-      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;task.h&quot;&amp;#010;" >
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;calltask.h&quot;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
@@ -6166,14 +6677,14 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			refusetask.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:00:38&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			refusetask.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:37&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="4929" field_type="7602291" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
        <header>
         <cppcodedocumentation tag="" />
        </header>
-       <ccfdeclarationcodeblock parent_id="4929" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text=" Task ;" >
+       <ccfdeclarationcodeblock parent_id="4929" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text=" CallTask ;" >
         <header>
          <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
         </header>
@@ -6441,6 +6952,1337 @@
         </header>
        </codeaccessormethod>
        <codeaccessormethod accessType="4" parent_id="4904" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="4904" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="cppheader5065" parent_class="5065" fileExt=".h" fileName="listtask" >
+     <textblocks>
+      <codeblockwithcomments tag="hashDefBlock" text="#ifndef LISTTASK_H&amp;#010;#define LISTTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="using" writeOutText="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="namespace" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" text="Namespace" />
+       </header>
+       <textblocks>
+        <codeblockwithcomments tag="enums" writeOutText="false" >
+         <header>
+          <cppcodedocumentation tag="" writeOutText="false" />
+         </header>
+        </codeblockwithcomments>
+        <cppheaderclassdeclarationblock parent_id="5065" tag="classDeclarationBlock" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" text="Class ListTask&amp;#010;" />
+         </header>
+         <textblocks>
+          <hierarchicalcodeblock tag="publicBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Public stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="publicFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="pubMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks>
+                <codeblockwithcomments tag="emptyconstructor" writeOutText="false" indentLevel="1" text="ListTask ( ) { }" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="Empty Constructor" />
+                 </header>
+                </codeblockwithcomments>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="pubStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="pubRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks>
+                <codeoperation parent_id="5143" tag="operation_5143" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="&amp;#010;@param code &amp;#010;@param index &amp;#010;@param value " />
+                 </header>
+                </codeoperation>
+                <codeoperation parent_id="5224" tag="operation_5224" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="&amp;#010;@param code &amp;#010;@param message " />
+                 </header>
+                </codeoperation>
+                <codeoperation parent_id="5304" tag="operation_5304" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="&amp;#010;@param code &amp;#010;@param message " />
+                 </header>
+                </codeoperation>
+               </textblocks>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="protectedBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Protected stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="protectedFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="protMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="protStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="protRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="privateBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Private stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="privateFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="privMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="privStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="privRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+         </textblocks>
+        </cppheaderclassdeclarationblock>
+       </textblocks>
+      </hierarchicalcodeblock>
+      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //LISTTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listtask.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:55:14&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5440" field_type="7667820" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text=" ListConfigTask ;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="5534" field_type="7012467" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text=" ListAudioCodecsTask ;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="5559" field_type="2097196" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text=" ListAccountsTask ;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+      <codeclassfield parent_id="5584" field_type="2097196" initialValue="" role_id="0" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="1" text=" ListAudioDevicesTask ;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="1" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="cppheader5428" parent_class="5428" fileExt=".h" fileName="listconfigtask" >
+     <textblocks>
+      <codeblockwithcomments tag="hashDefBlock" text="#ifndef LISTCONFIGTASK_H&amp;#010;#define LISTCONFIGTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;listtask.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="using" writeOutText="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="namespace" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" text="Namespace" />
+       </header>
+       <textblocks>
+        <codeblockwithcomments tag="enums" writeOutText="false" >
+         <header>
+          <cppcodedocumentation tag="" writeOutText="false" />
+         </header>
+        </codeblockwithcomments>
+        <cppheaderclassdeclarationblock parent_id="5428" tag="classDeclarationBlock" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" text="Class ListConfigTask&amp;#010;" />
+         </header>
+         <textblocks>
+          <hierarchicalcodeblock tag="publicBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Public stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="publicFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="pubMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks>
+                <codeblockwithcomments tag="emptyconstructor" writeOutText="false" indentLevel="1" text="ListConfigTask ( ) { }" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="Empty Constructor" />
+                 </header>
+                </codeblockwithcomments>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="pubStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="pubRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="protectedBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Protected stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="protectedFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="protMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="protStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="protRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="privateBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Private stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="privateFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="privMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="privStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="privRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+         </textblocks>
+        </cppheaderclassdeclarationblock>
+       </textblocks>
+      </hierarchicalcodeblock>
+      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //LISTCONFIGTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listconfigtask.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:39&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5440" field_type="5505140" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text=" ListTask ;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5440" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5440" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="cppheader5465" parent_class="5465" fileExt=".h" fileName="listaudiodevicestask" >
+     <textblocks>
+      <codeblockwithcomments tag="hashDefBlock" text="#ifndef LISTAUDIODEVICESTASK_H&amp;#010;#define LISTAUDIODEVICESTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;listtask.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="using" writeOutText="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="namespace" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" text="Namespace" />
+       </header>
+       <textblocks>
+        <codeblockwithcomments tag="enums" writeOutText="false" >
+         <header>
+          <cppcodedocumentation tag="" writeOutText="false" />
+         </header>
+        </codeblockwithcomments>
+        <cppheaderclassdeclarationblock parent_id="5465" tag="classDeclarationBlock" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" text="Class ListAudioDevicesTask&amp;#010;" />
+         </header>
+         <textblocks>
+          <hierarchicalcodeblock tag="publicBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Public stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="publicFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="pubMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks>
+                <codeblockwithcomments tag="emptyconstructor" writeOutText="false" indentLevel="1" text="ListAudioDevicesTask ( ) { }" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="Empty Constructor" />
+                 </header>
+                </codeblockwithcomments>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="pubStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="pubRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="protectedBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Protected stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="protectedFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="protMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="protStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="protRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="privateBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Private stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="privateFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="privMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="privStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="privRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+         </textblocks>
+        </cppheaderclassdeclarationblock>
+       </textblocks>
+      </hierarchicalcodeblock>
+      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //LISTAUDIODEVICESTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listaudiodevicestask.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:36&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5584" field_type="7602277" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text=" ListTask ;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5584" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5584" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="cppheader5477" parent_class="5477" fileExt=".h" fileName="listaudiocodecstask" >
+     <textblocks>
+      <codeblockwithcomments tag="hashDefBlock" text="#ifndef LISTAUDIOCODECSTASK_H&amp;#010;#define LISTAUDIOCODECSTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;listtask.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="using" writeOutText="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="namespace" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" text="Namespace" />
+       </header>
+       <textblocks>
+        <codeblockwithcomments tag="enums" writeOutText="false" >
+         <header>
+          <cppcodedocumentation tag="" writeOutText="false" />
+         </header>
+        </codeblockwithcomments>
+        <cppheaderclassdeclarationblock parent_id="5477" tag="classDeclarationBlock" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" text="Class ListAudioCodecsTask&amp;#010;" />
+         </header>
+         <textblocks>
+          <hierarchicalcodeblock tag="publicBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Public stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="publicFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="pubMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks>
+                <codeblockwithcomments tag="emptyconstructor" writeOutText="false" indentLevel="1" text="ListAudioCodecsTask ( ) { }" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="Empty Constructor" />
+                 </header>
+                </codeblockwithcomments>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="pubStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="pubRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="protectedBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Protected stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="protectedFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="protMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="protStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="protRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="privateBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Private stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="privateFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="privMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="privStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="privRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+         </textblocks>
+        </cppheaderclassdeclarationblock>
+       </textblocks>
+      </hierarchicalcodeblock>
+      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //LISTAUDIOCODECSTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listaudiocodecstask.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:39&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5534" field_type="6226036" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text=" ListTask ;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5534" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5534" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+      </codeclassfield>
+     </classfields>
+    </classifiercodedocument>
+    <classifiercodedocument writeOutCode="true" package="" id="cppheader5489" parent_class="5489" fileExt=".h" fileName="listaccountstask" >
+     <textblocks>
+      <codeblockwithcomments tag="hashDefBlock" text="#ifndef LISTACCOUNTSTASK_H&amp;#010;#define LISTACCOUNTSTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="includes" text="#include &lt;string>&amp;#010;#include &quot;listtask.h&quot;&amp;#010;" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <codeblockwithcomments tag="using" writeOutText="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+      <hierarchicalcodeblock tag="namespace" canDelete="false" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" text="Namespace" />
+       </header>
+       <textblocks>
+        <codeblockwithcomments tag="enums" writeOutText="false" >
+         <header>
+          <cppcodedocumentation tag="" writeOutText="false" />
+         </header>
+        </codeblockwithcomments>
+        <cppheaderclassdeclarationblock parent_id="5489" tag="classDeclarationBlock" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" text="Class ListAccountsTask&amp;#010;" />
+         </header>
+         <textblocks>
+          <hierarchicalcodeblock tag="publicBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Public stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="publicFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="pubMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks>
+                <codeblockwithcomments tag="emptyconstructor" writeOutText="false" indentLevel="1" text="ListAccountsTask ( ) { }" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="Empty Constructor" />
+                 </header>
+                </codeblockwithcomments>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="pubStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="pubRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="protectedBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Protected stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="protectedFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="protMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="protStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="protRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+          <hierarchicalcodeblock tag="privateBlock" canDelete="false" >
+           <header>
+            <cppcodedocumentation tag="" text="Private stuff" />
+           </header>
+           <textblocks>
+            <hierarchicalcodeblock tag="privateFieldsDecl" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" text="Fields" />
+             </header>
+             <textblocks/>
+            </hierarchicalcodeblock>
+            <hierarchicalcodeblock tag="privMethodsBlock" canDelete="false" indentLevel="1" >
+             <header>
+              <cppcodedocumentation tag="" indentLevel="1" />
+             </header>
+             <textblocks>
+              <hierarchicalcodeblock tag="constructionMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Constructors" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="accessorMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Accessor Methods" />
+               </header>
+               <textblocks>
+                <hierarchicalcodeblock tag="privStaticAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+                <hierarchicalcodeblock tag="privRegularAccessorMethods" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+                 </header>
+                 <textblocks/>
+                </hierarchicalcodeblock>
+               </textblocks>
+              </hierarchicalcodeblock>
+              <hierarchicalcodeblock tag="operationMethods" canDelete="false" indentLevel="1" >
+               <header>
+                <cppcodedocumentation tag="" indentLevel="1" text="Operations" />
+               </header>
+               <textblocks/>
+              </hierarchicalcodeblock>
+             </textblocks>
+            </hierarchicalcodeblock>
+           </textblocks>
+          </hierarchicalcodeblock>
+         </textblocks>
+        </cppheaderclassdeclarationblock>
+       </textblocks>
+      </hierarchicalcodeblock>
+      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //LISTACCOUNTSTASK_H" >
+       <header>
+        <cppcodedocumentation tag="" writeOutText="false" />
+       </header>
+      </codeblockwithcomments>
+     </textblocks>
+     <header>
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			listaccountstask.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Tue Sep 13 2005 at 16:54:39&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+     </header>
+     <classfields>
+      <codeclassfield parent_id="5559" field_type="7536745" initialValue="" role_id="1" writeOutMethods="true" listClassName="" >
+       <header>
+        <cppcodedocumentation tag="" />
+       </header>
+       <ccfdeclarationcodeblock parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" role_id="0" text=" ListTask ;" >
+        <header>
+         <cppcodedocumentation tag="" writeOutText="false" indentLevel="1" />
+        </header>
+       </ccfdeclarationcodeblock>
+       <codeaccessormethod accessType="0" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="1" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="2" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="3" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="0" >
+        <header>
+         <cppcodedocumentation tag="" indentLevel="1" />
+        </header>
+       </codeaccessormethod>
+       <codeaccessormethod accessType="4" parent_id="5559" tag="" canDelete="false" writeOutText="false" indentLevel="1" classfield_id="5559" role_id="0" >
         <header>
          <cppcodedocumentation tag="" indentLevel="1" />
         </header>
