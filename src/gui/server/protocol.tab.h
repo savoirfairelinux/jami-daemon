@@ -31,36 +31,20 @@
    enum yytokentype {
      AROBASE = 258,
      SIP_URL_PREFIX = 259,
-     CMD_CALL = 260,
-     CMD_CONFIG = 261,
-     CMD_HANGUP = 262,
-     CMD_HOLD = 263,
-     CMD_TRANSFER = 264,
-     CMD_QUIT = 265,
-     TOKEN_VOICEMAIL = 266,
-     TOKEN_RECEPTION = 267,
-     TOKEN_ALL = 268,
-     TOKEN_GET = 269,
-     TOKEN_SET = 270,
-     NUMBER = 271,
-     USERNAME = 272
+     COMMAND = 260,
+     CSEQ = 261,
+     CALLID = 262,
+     USERNAME = 263,
+     NUMBER = 264
    };
 #endif
 #define AROBASE 258
 #define SIP_URL_PREFIX 259
-#define CMD_CALL 260
-#define CMD_CONFIG 261
-#define CMD_HANGUP 262
-#define CMD_HOLD 263
-#define CMD_TRANSFER 264
-#define CMD_QUIT 265
-#define TOKEN_VOICEMAIL 266
-#define TOKEN_RECEPTION 267
-#define TOKEN_ALL 268
-#define TOKEN_GET 269
-#define TOKEN_SET 270
-#define NUMBER 271
-#define USERNAME 272
+#define COMMAND 260
+#define CSEQ 261
+#define CALLID 262
+#define USERNAME 263
+#define NUMBER 264
 
 
 

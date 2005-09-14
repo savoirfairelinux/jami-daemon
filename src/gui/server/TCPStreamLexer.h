@@ -9,11 +9,13 @@ public:
     _lexer = new yyFlexLexer(this, this);
 		_gui = gui;
 	}
-	~TCPStreamLexer() { }
-	void parse(void);
+	~TCPStreamLexer() { delete _lexer; }
+	void parse();
 	void sip();
 	void callsip();
-  yyFlexLexer *_lexer;
+	void newCommand();
+  
+	yyFlexLexer *_lexer;
 private:
 	GUIServer *_gui;
 };

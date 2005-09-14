@@ -55,36 +55,20 @@
    enum yytokentype {
      AROBASE = 258,
      SIP_URL_PREFIX = 259,
-     CMD_CALL = 260,
-     CMD_CONFIG = 261,
-     CMD_HANGUP = 262,
-     CMD_HOLD = 263,
-     CMD_TRANSFER = 264,
-     CMD_QUIT = 265,
-     TOKEN_VOICEMAIL = 266,
-     TOKEN_RECEPTION = 267,
-     TOKEN_ALL = 268,
-     TOKEN_GET = 269,
-     TOKEN_SET = 270,
-     NUMBER = 271,
-     USERNAME = 272
+     COMMAND = 260,
+     CSEQ = 261,
+     CALLID = 262,
+     USERNAME = 263,
+     NUMBER = 264
    };
 #endif
 #define AROBASE 258
 #define SIP_URL_PREFIX 259
-#define CMD_CALL 260
-#define CMD_CONFIG 261
-#define CMD_HANGUP 262
-#define CMD_HOLD 263
-#define CMD_TRANSFER 264
-#define CMD_QUIT 265
-#define TOKEN_VOICEMAIL 266
-#define TOKEN_RECEPTION 267
-#define TOKEN_ALL 268
-#define TOKEN_GET 269
-#define TOKEN_SET 270
-#define NUMBER 271
-#define USERNAME 272
+#define COMMAND 260
+#define CSEQ 261
+#define CALLID 262
+#define USERNAME 263
+#define NUMBER 264
 
 
 
@@ -97,11 +81,16 @@
 #include <iostream>
 
 #include "TCPStreamLexer.h"
-#include "FlexLexer.h"
 
 #define YYPARSE_PARAM tsl
 #define YYLEX_PARAM tsl
 #define YYPARSE_PARAM_TYPE TCPStreamLexer*
+#define YYSTYPE_IS_DECLARED 1
+
+struct YYSTYPE {
+ int a;
+ int b;
+};
 
 int 
 yyerror(const char *str) {}
@@ -112,7 +101,7 @@ extern "C"
 int 
 yylex(void *y, void *tsl) 
 { 
-  ((TCPStreamLexer*)tsl)->_lexer->yylex(y);
+  ((TCPStreamLexer*)tsl)->_lexer->yylex();
 }
 void 
 TCPStreamLexer::parse( ) 
@@ -128,6 +117,11 @@ void
 TCPStreamLexer::callsip() 
 {
 	*this << "200 Calling " << std::endl;
+}
+void
+TCPStreamLexer::newCommand() 
+{
+	*this << "Receive a new command" << std::endl;
 }
 
 
@@ -157,7 +151,7 @@ typedef int YYSTYPE;
 
 
 /* Line 214 of yacc.c.  */
-#line 161 "protocol.tab.c"
+#line 155 "protocol.tab.c"
 
 #if ! defined (yyoverflow) || YYERROR_VERBOSE
 
@@ -261,22 +255,22 @@ union yyalloc
 #endif
 
 /* YYFINAL -- State number of the termination state. */
-#define YYFINAL  2
+#define YYFINAL  4
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   25
+#define YYLAST   4
 
 /* YYNTOKENS -- Number of terminals. */
-#define YYNTOKENS  18
+#define YYNTOKENS  10
 /* YYNNTS -- Number of nonterminals. */
-#define YYNNTS  10
+#define YYNNTS  2
 /* YYNRULES -- Number of rules. */
-#define YYNRULES  21
+#define YYNRULES  2
 /* YYNRULES -- Number of states. */
-#define YYNSTATES  34
+#define YYNSTATES  6
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   272
+#define YYMAXUTOK   264
 
 #define YYTRANSLATE(YYX) 						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -310,8 +304,7 @@ static const unsigned char yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17
+       5,     6,     7,     8,     9
 };
 
 #if YYDEBUG
@@ -319,29 +312,19 @@ static const unsigned char yytranslate[] =
    YYRHS.  */
 static const unsigned char yyprhs[] =
 {
-       0,     0,     3,     4,     7,     9,    11,    13,    15,    17,
-      19,    24,    27,    30,    33,    37,    41,    46,    49,    52,
-      55,    59
+       0,     0,     3
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS. */
 static const yysigned_char yyrhs[] =
 {
-      19,     0,    -1,    -1,    19,    20,    -1,    22,    -1,    23,
-      -1,    24,    -1,    26,    -1,    25,    -1,    27,    -1,     4,
-      17,     3,    17,    -1,     5,    12,    -1,     5,    11,    -1,
-       5,    21,    -1,     6,    14,    13,    -1,     6,    14,    17,
-      -1,     6,    15,    17,    17,    -1,     7,    13,    -1,     7,
-      16,    -1,     8,    16,    -1,     9,    16,    21,    -1,    10,
-      -1
+      11,     0,    -1,     5,     6,     7,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const unsigned char yyrline[] =
 {
-       0,    49,    49,    50,    54,    55,    56,    57,    58,    59,
-      63,    72,    77,    82,    90,    94,    98,   105,   109,   116,
-     123,   130
+       0,    59,    59
 };
 #endif
 
@@ -350,12 +333,8 @@ static const unsigned char yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals. */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "AROBASE", "SIP_URL_PREFIX", "CMD_CALL",
-  "CMD_CONFIG", "CMD_HANGUP", "CMD_HOLD", "CMD_TRANSFER", "CMD_QUIT",
-  "TOKEN_VOICEMAIL", "TOKEN_RECEPTION", "TOKEN_ALL", "TOKEN_GET",
-  "TOKEN_SET", "NUMBER", "USERNAME", "$accept", "commands", "command",
-  "sip_url", "command_call", "command_config", "command_hangup",
-  "command_hold", "command_transfer", "command_quit", 0
+  "$end", "error", "$undefined", "AROBASE", "SIP_URL_PREFIX", "COMMAND",
+  "CSEQ", "CALLID", "USERNAME", "NUMBER", "$accept", "request", 0
 };
 #endif
 
@@ -364,25 +343,20 @@ static const char *const yytname[] =
    token YYLEX-NUM.  */
 static const unsigned short yytoknum[] =
 {
-       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272
+       0,   256,   257,   258,   259,   260,   261,   262,   263,   264
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const unsigned char yyr1[] =
 {
-       0,    18,    19,    19,    20,    20,    20,    20,    20,    20,
-      21,    22,    22,    22,    23,    23,    23,    24,    24,    25,
-      26,    27
+       0,    10,    11
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const unsigned char yyr2[] =
 {
-       0,     2,     0,     2,     1,     1,     1,     1,     1,     1,
-       4,     2,     2,     2,     3,     3,     4,     2,     2,     2,
-       3,     1
+       0,     2,     3
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -390,33 +364,27 @@ static const unsigned char yyr2[] =
    means the default is an error.  */
 static const unsigned char yydefact[] =
 {
-       2,     0,     1,     0,     0,     0,     0,     0,    21,     3,
-       4,     5,     6,     8,     7,     9,     0,    12,    11,    13,
-       0,     0,    17,    18,    19,     0,     0,    14,    15,     0,
-      20,     0,    16,    10
+       0,     0,     0,     0,     1,     2
 };
 
 /* YYDEFGOTO[NTERM-NUM]. */
 static const yysigned_char yydefgoto[] =
 {
-      -1,     1,     9,    19,    10,    11,    12,    13,    14,    15
+      -1,     2
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -15
+#define YYPACT_NINF -6
 static const yysigned_char yypact[] =
 {
-     -15,     0,   -15,     7,     6,   -12,   -14,   -13,   -15,   -15,
-     -15,   -15,   -15,   -15,   -15,   -15,    -4,   -15,   -15,   -15,
-      -1,    -3,   -15,   -15,   -15,    11,    14,   -15,   -15,     5,
-     -15,     8,   -15,   -15
+      -5,    -4,     1,    -3,    -6,    -6
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yysigned_char yypgoto[] =
 {
-     -15,   -15,   -15,    -2,   -15,   -15,   -15,   -15,   -15,   -15
+      -6,    -6
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -426,26 +394,19 @@ static const yysigned_char yypgoto[] =
 #define YYTABLE_NINF -1
 static const unsigned char yytable[] =
 {
-       2,    22,    24,    25,    23,     3,     4,     5,     6,     7,
-       8,    16,    27,    26,    29,    16,    28,    31,    17,    18,
-      20,    21,    32,    30,     0,    33
+       1,     4,     3,     0,     5
 };
 
 static const yysigned_char yycheck[] =
 {
-       0,    13,    16,    16,    16,     5,     6,     7,     8,     9,
-      10,     4,    13,    17,    17,     4,    17,     3,    11,    12,
-      14,    15,    17,    25,    -1,    17
+       5,     0,     6,    -1,     7
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const unsigned char yystos[] =
 {
-       0,    19,     0,     5,     6,     7,     8,     9,    10,    20,
-      22,    23,    24,    25,    26,    27,     4,    11,    12,    21,
-      14,    15,    13,    16,    16,    16,    17,    13,    17,    17,
-      21,     3,    17,    17
+       0,     5,    11,     6,     0,     7
 };
 
 #if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
@@ -1055,90 +1016,10 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 10:
-#line 64 "protocol.y"
+        case 2:
+#line 60 "protocol.y"
     {
-	//	$$=$2;
-	//	tsl->sip($2);
-	//	printf ("(debug) saw url: %s\n", $$);
-	;}
-    break;
-
-  case 11:
-#line 73 "protocol.y"
-    {
-		printf ("200 Calling Receptionist\n");
-	;}
-    break;
-
-  case 12:
-#line 78 "protocol.y"
-    {
-		printf ("200 Calling VoiceMail\n");
-	;}
-    break;
-
-  case 13:
-#line 83 "protocol.y"
-    {
-	//	tsl->callsip($2);
-	//	printf ("200 Calling \"%s\"\n", $2);
-	;}
-    break;
-
-  case 14:
-#line 91 "protocol.y"
-    {
-		printf ("200 Sending ALL config variables\n");
-	;}
-    break;
-
-  case 15:
-#line 95 "protocol.y"
-    {
-	//	printf ("200 Sending config variable \"%s\"\n", $3);
-	;}
-    break;
-
-  case 16:
-#line 99 "protocol.y"
-    {
-	//	printf ("200 Setting config variable \"%s\"=\"%s\"\n", $3,$4);
-	;}
-    break;
-
-  case 17:
-#line 106 "protocol.y"
-    {
-		printf ("200 Hangup all calls  !!!\n");
-	;}
-    break;
-
-  case 18:
-#line 110 "protocol.y"
-    {
-	//	printf ("200 Hangup call %d\n", $2);
-	;}
-    break;
-
-  case 19:
-#line 117 "protocol.y"
-    {
-	//	printf ("200 Call %d on hold.\n", $2);
-	;}
-    break;
-
-  case 20:
-#line 124 "protocol.y"
-    {
-	//	printf ("200 Transferring call %d to \"%s\"\n", $2, $3);
-	;}
-    break;
-
-  case 21:
-#line 131 "protocol.y"
-    {
-		printf ("200 Quitting...Bye Bye\n");
+		((TCPStreamLexer*)tsl)->newCommand();
 	;}
     break;
 
@@ -1146,7 +1027,7 @@ yyreduce:
     }
 
 /* Line 1000 of yacc.c.  */
-#line 1150 "protocol.tab.c"
+#line 1031 "protocol.tab.c"
 
   yyvsp -= yylen;
   yyssp -= yylen;
