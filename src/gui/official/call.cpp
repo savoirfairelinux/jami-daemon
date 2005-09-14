@@ -18,34 +18,59 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_ACCOUNT_H
-#define SFLPHONEGUI_ACCOUNT_H
 
-#include <string>
+#include "call.h"
 
-class Call;
+std::string
+Call::call(const std::string &destination) 
+{
+  std::list< std::string> args;
+  args.push_back(mAccountId);
+  args.push_back(to);
+  return Requester::instance().sendCallCommand(mSession, mId, "answer", args)
+}
 
-class Account {
- public:
-  /**
-   * This will generate a call ready to be used.
-   */
-  Call createCall();
+std::string
+Call::answer() 
+{
+  return Requester::instance().sendCallCommand(mSession, mId, "answer")
+}
 
-  std::string register();
-  std::string unregister();
+std::string
+Call::hangup() 
+{
+  return Requester::instance().sendCallCommand(mSession, mId, "hangup")
+}
 
- private:  
-  /**
-   * This is the session id that we are related to.
-   */
-  std::string mSessionId;
+std::string
+Call::cancel() 
+{
+  return Requester::instance().sendCallCommand(mSession, mId, "cancel")
+}
 
-  /**
-   * This is the account id that we are related to.
-   */
-  std::string mId;
-};
+std::string
+Call::hold() 
+{
+  return Requester::instance().sendCallCommand(mSession, mId, "hold")
+}
 
+std::string
+Call::unhold() 
+{
+  return Requester::instance().sendCallCommand(mSession, mId, "unhold")
+}
 
-#endif
+std::string
+Call::refuse() 
+{
+  return Requester::instance().sendCallCommand(mSession, mId, "refuse")
+}
+
+std::string
+Call::sendDtmf(char c) 
+{
+  std::list< std::string > args;
+  args.push_back(std::string(c));
+  return Requester::instance().sendCallCommand(mSession, mId, "senddtmf", args)
+}
+

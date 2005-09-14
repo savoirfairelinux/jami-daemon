@@ -1,0 +1,88 @@
+/**
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Jean-Philippe Barrette-LaPierre
+ *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
+ *                                                                              
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *                                                                              
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *                                                                              
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+#include <stdexcept>
+
+#include "requesterimpl.h"
+
+RequesterImpl::RequesterImpl()
+  : mCallIdCount(0)
+  , mSessionIdCount(0)
+  , mSequenceIdCount(0)
+{}
+
+SessionImpl *
+getSessionImpl(const std::string &sessionId)
+{
+  std::map< std::string, SessionImpl * >::iterator pos = mSessions.find(sessionId);
+  if(pos == mSessions.end()) {
+    throw std::runtime_error("The session is not valid.");
+  }
+
+  return (*pos).second;
+}
+
+std::string 
+RequesterImpl::sendCallCommand(const std::string &sessionId,
+			       const std::string &callId, 
+			       const std::string &command)
+{
+  // We retreive the internal of a session.
+  SessionImpl *session = getSessionImpl(sessionId);
+
+  // We ask the factory to create the request.
+  Request *request = mCallRequestFactory.create(command, sequenceId, callId)
+
+  std::string sequenceId = generateSequenceId();
+  registerRequest(sessionId, sequenceId, request);
+  s->send(request);
+  
+  return sequenceId;
+}
+
+void
+RequesterImpl::receiveCallCommand 		       
+
+std::string
+RequesterImpl::generateCallId()
+{
+  std::ostream id;
+  id << "cCallID:" << mCallIdCount;
+  mCallIdCount++;
+  return id.str();
+}
+
+std::string
+RequesterImpl::generateSessionId()
+{
+  std::ostream id;
+  id << "cSessionID:" << mSessionIdCount;
+  mSessionIdCount++;
+  return id.str();
+}
+
+std::string
+RequesterImpl::generateSequenceId()
+{
+  std::ostream id;
+  id << "cSequenceID:" << mSequenceIdCount;
+  mSequenceIdCount++;
+  return id.str();
+}
+

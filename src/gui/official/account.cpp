@@ -15,37 +15,32 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_ACCOUNT_H
-#define SFLPHONEGUI_ACCOUNT_H
+#include "account.h"
+#include "requester.h"
 
-#include <string>
+Account::Account(const std::string &id)
+  : mId(id)
+{}
 
-class Call;
+Call
+Account::createCall()
+{
+  std::string callId = Requester::instance().generateCallId();
+  return Call(mSessionId, mAccountId, callId);
+}
 
-class Account {
- public:
-  /**
-   * This will generate a call ready to be used.
-   */
-  Call createCall();
+std::string
+Account::register()
+{
+  return Requester::instance().sendAccountRequest(mSessionId, mId, "register");
+}
 
-  std::string register();
-  std::string unregister();
+std::string
+Account::unregister()
+{
+  return Requester::instance().sendAccountRequest(mSessionId, mId, "unregister");
+}
 
- private:  
-  /**
-   * This is the session id that we are related to.
-   */
-  std::string mSessionId;
-
-  /**
-   * This is the account id that we are related to.
-   */
-  std::string mId;
-};
-
-
-#endif
