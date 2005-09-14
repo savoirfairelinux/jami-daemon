@@ -20,7 +20,6 @@
 #ifndef __USER_CFG_H__
 #define __USER_CFG_H__
 
-//#define GUI_TEXT1
 #define GUI_QT
 
 #include <stdlib.h>

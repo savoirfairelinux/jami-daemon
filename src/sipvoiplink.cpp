@@ -1301,7 +1301,7 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
 
   // Keep the cid in case of cancelling
   setCid(i);
-
+  
   return i;	
 }
 

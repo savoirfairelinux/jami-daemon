@@ -46,7 +46,6 @@
 #include "configuration.h"  
 #include "configurationtree.h" 
 #include "error.h"
-#include "sipvoiplink.h"
 #include "user_cfg.h"
 #include "voIPLink.h" 
 #include "gui/guiframework.h"
@@ -118,7 +117,7 @@ ManagerImpl::init (void)
   
   // Set a sip voip link by default
   _voIPLinkVector.push_back(new SipVoIPLink(DFT_VOIP_LINK));
-  
+
   if (_exist == 0) {
     _debug("Cannot create config file in your home directory\n");
   } 
@@ -145,11 +144,14 @@ ManagerImpl::init (void)
     { 
       displayError("An unknown exception occured.");
     }
-	
+
   _voIPLinkVector.at(DFT_VOIP_LINK)->init();
+
+
 
   if (_voIPLinkVector.at(DFT_VOIP_LINK)->checkNetwork()) {
     // If network is available
+
     if (get_config_fields_int(SIGNALISATION, AUTO_REGISTER) == YES and 
 	_exist == 1) {
       if (registerVoIPLink() != 1) {
@@ -157,6 +159,7 @@ ManagerImpl::init (void)
       }
     } 
   }
+  
 }
 
 void ManagerImpl::terminate()

@@ -179,7 +179,8 @@ src/audio/pacpp/source/Makefile \
 src/audio/pacpp/source/portaudiocpp/Makefile \
 src/gui/Makefile \
 src/gui/qt/Makefile \
-src/zeroconf/Makefile
+src/gui/server/Makefile \
+src/zeroconf/Makefile \
 utilspp/Makefile \
 utilspp/functor/Makefile \
 utilspp/singleton/Makefile \

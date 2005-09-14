@@ -17,13 +17,13 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define GUI_QT // remove when others UI are implemented
+#include "user_cfg.h"
 
-#if defined(GUI_QT)
+#if defined(ENABLE_MAINTENER)
+# include "gui/server/guiserver.h"
+#elif defined(GUI_QT)
 # include <qapplication.h>
 # include "gui/qt/qtGUImainwindow.h"
-#elif defined(GUI_TEXT1)
-# error "GUI_TEXT1 not implemented yet."
 #elif defined(GUI_COCOA)
 # error "GUI_COCOA not implemented yet."
 #endif
@@ -40,7 +40,25 @@ main (int argc, char **argv) {
   Config::setTree(new ConfigurationTree());	
   GuiFramework *GUI;
 
-#if defined(GUI_QT)
+#if defined(ENABLE_MAINTENER)
+  {
+    Manager::instance().initConfigFile();
+    try {
+      Manager::instance().init();
+    }
+    catch (...) {
+      std::cerr << 
+	"An unknown exception occured when initializing the system." << 
+	std::endl;
+    }
+    
+    GUI = new GUIServer();
+    Manager::instance().setGui(GUI);
+    exit_code = ((GUIServer*)GUI)->exec();
+    Manager::instance().terminate();
+    delete GUI;
+  }  
+#elif defined(GUI_QT)
   {
     QApplication a(argc, argv);
     Manager::instance().initConfigFile();		
@@ -66,8 +84,9 @@ main (int argc, char **argv) {
     a.setMainWidget((QtGUIMainWindow*)GUI);
     exit_code = a.exec();
     Manager::instance().terminate();
-#endif
   }
+    
+#endif
 
   return exit_code;
 }
