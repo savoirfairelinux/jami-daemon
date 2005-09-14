@@ -24,7 +24,6 @@
 /* The GuiFramework class is the base of all user interface */
 
 #include <string>
-using namespace std;
 
 class GuiFramework {
 public:
@@ -36,12 +35,12 @@ public:
 	virtual void peerAnsweredCall (short id) = 0;
 	virtual int peerRingingCall (short id) = 0;
 	virtual int peerHungupCall (short id) = 0;
-	virtual void displayTextMessage (short id, const string& message) = 0;
-	virtual void displayErrorText (short id, const string& message) = 0;
-	virtual void displayError (const string& error) = 0;
-	virtual void displayStatus (const string& status) = 0;
+	virtual void displayTextMessage (short id, const std::string& message) = 0;
+	virtual void displayErrorText (short id, const std::string& message) = 0;
+	virtual void displayError (const std::string& error) = 0;
+	virtual void displayStatus (const std::string& status) = 0;
 	virtual void displayContext (short id) = 0;
-	virtual string getRingtoneFile (void) = 0;
+	virtual std::string getRingtoneFile (void) = 0;
 	virtual void setup (void) = 0;
 	virtual int selectedCall (void) = 0;
 	virtual bool isCurrentId (short) = 0;
@@ -49,13 +48,13 @@ public:
 	virtual void stopVoiceMessageNotification (void) = 0;
 	
 	/* Child class to parent class */
-	int outgoingCall (const string& to); 	
+	int outgoingCall (const std::string& to); 	
 	int hangupCall (short id);
 	int cancelCall (short id);
 	int answerCall (short id);
 	int onHoldCall (short id);
 	int offHoldCall (short id);
-	int transferCall (short id, const string& to);
+	int transferCall (short id, const std::string& to);
 	void muteOn (short id);
 	void muteOff (short id);
 	int refuseCall (short id);
@@ -64,12 +63,12 @@ public:
 	int registerVoIPLink (void);
 	int unregisterVoIPLink (void);
 	int quitApplication (void);
-	int sendTextMessage (short id, const string& message);
+	int sendTextMessage (short id, const std::string& message);
 	int accessToDirectory (void);
 	void sendDtmf (short id, char code);
 	
 protected:
-	string _message;
+	std::string _message;
 
 };
 
