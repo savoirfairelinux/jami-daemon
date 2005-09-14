@@ -63,7 +63,6 @@ private:
   std::list<std::string> _regtypeList;
 };
 
-
 void DNSServiceAddServicesCallback(DNSServiceRef sdRef,
 						DNSServiceFlags flags,
 						uint32_t interfaceIndex,

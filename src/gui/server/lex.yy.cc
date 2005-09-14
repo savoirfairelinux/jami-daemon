@@ -235,7 +235,7 @@ typedef unsigned char YY_CHAR;
 #define yytext_ptr yytext
 #define YY_INTERACTIVE
 
-#include <FlexLexer.h>
+#include "FlexLexer.h"
 
 
 /* Done after the current pattern has been matched and before the
@@ -370,11 +370,19 @@ static yyconst short int yy_chk[111] =
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "y.tab.h"
+#include "protocol.tab.h"
 extern YYSTYPE yylval;
 #define YY_FATAL_ERROR 
+#define YY_DECL int yyFlexLexer::yylex( void * )
+#define YY_MAIN 0
 
-#line 378 "lex.yy.cc"
+struct parser_control
+{
+  int nastiness;
+  int randomness;
+};
+
+#line 386 "lex.yy.cc"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -501,9 +509,9 @@ YY_DECL
 	register char *yy_cp = NULL, *yy_bp = NULL;
 	register int yy_act;
 
-#line 12 "protocol.l"
+#line 20 "protocol.l"
 
-#line 507 "lex.yy.cc"
+#line 515 "lex.yy.cc"
 
 	if ( yy_init )
 		{
@@ -588,95 +596,95 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 13 "protocol.l"
+#line 21 "protocol.l"
 return AROBASE;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 14 "protocol.l"
-yylval.number=atoi(yytext); return NUMBER;
+#line 22 "protocol.l"
+return NUMBER;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 15 "protocol.l"
+#line 23 "protocol.l"
 return SIP_URL_PREFIX;
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 16 "protocol.l"
+#line 24 "protocol.l"
 return TOKEN_VOICEMAIL;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 17 "protocol.l"
+#line 25 "protocol.l"
 return TOKEN_RECEPTION;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 18 "protocol.l"
+#line 26 "protocol.l"
 return TOKEN_ALL;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 19 "protocol.l"
+#line 27 "protocol.l"
 return TOKEN_GET;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 20 "protocol.l"
+#line 28 "protocol.l"
 return TOKEN_SET;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 21 "protocol.l"
+#line 29 "protocol.l"
 return CMD_CALL;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 22 "protocol.l"
+#line 30 "protocol.l"
 return CMD_HANGUP;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 23 "protocol.l"
+#line 31 "protocol.l"
 return CMD_HOLD;
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 24 "protocol.l"
+#line 32 "protocol.l"
 return CMD_TRANSFER;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 25 "protocol.l"
+#line 33 "protocol.l"
 return CMD_QUIT;
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 26 "protocol.l"
+#line 34 "protocol.l"
 return CMD_CONFIG;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 27 "protocol.l"
-yylval.username=strdup(yytext); return USERNAME;
+#line 35 "protocol.l"
+return USERNAME;
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 28 "protocol.l"
+#line 36 "protocol.l"
 /* ignore */
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 29 "protocol.l"
+#line 37 "protocol.l"
 /* ignore blanks */
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 30 "protocol.l"
+#line 38 "protocol.l"
 ECHO;
 	YY_BREAK
-#line 680 "lex.yy.cc"
+#line 688 "lex.yy.cc"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1481,5 +1489,5 @@ int main()
 	return 0;
 	}
 #endif
-#line 30 "protocol.l"
+#line 38 "protocol.l"
 

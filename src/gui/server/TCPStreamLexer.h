@@ -1,24 +1,21 @@
-#ifndef __TCPSTREAMLEXER_H__
-#define __TCPSTREAMLEXER_H__
 #include <cc++/socket.h>
-//#include "y.tab.h"
 #include "FlexLexer.h"
-static FlexLexer* lexer;
 
+class yyFlexLexer;
 class GUIServer;
 class TCPStreamLexer : public ost::TCPStream {
 public:
 	TCPStreamLexer(ost::TCPSocket &socket, GUIServer* gui) : ost::TCPStream(socket) {
+    _lexer = new yyFlexLexer(this, this);
 		_gui = gui;
-		lexer = new yyFlexLexer(this, this);
 	}
-	~TCPStreamLexer() { delete lexer; }
+	~TCPStreamLexer() { }
 	void parse(void);
-	void sip(YYSTYPE &y);
-	void callsip(YYSTYPE &y);
+	void sip();
+	void callsip();
+  yyFlexLexer *_lexer;
 private:
 	GUIServer *_gui;
 };
 
-#endif // __TCPSTREAMLEXER_H__
 

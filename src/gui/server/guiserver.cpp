@@ -20,8 +20,9 @@
 #include "guiserver.h"
 #include <string>
 #include <iostream>
-#include "y.tab.h" // need by TCPStreamLexer.h but can't put in it
+#include "protocol.tab.h" // need by TCPStreamLexer.h but can't put in it
 #include "TCPStreamLexer.h"
+
 
 // default constructor
 GUIServer::GUIServer()
@@ -45,6 +46,7 @@ GUIServer::exec() {
     
     int callid;
     std::string status;
+
     while (std::cin.good()) {
     
       // waiting for a new connection
@@ -59,7 +61,6 @@ GUIServer::exec() {
       
       std::string output;
       *aServerStream << "Welcome to this serveur2" << std::endl;
-      lexer = new yyFlexLexer(aServerStream, aServerStream);
       while(aServerStream->good() && output!="quit") {
         // lire
         //std::getline(*aServerStream, output);
@@ -67,7 +68,10 @@ GUIServer::exec() {
         
         // analyser
         //std::cout << output << ":" << output.length() << std::endl;
+        
       	aServerStream->parse();
+        
+        /*
         if ( output.find("call ") == 0 ) {
           callid = outgoingCall(output.substr(5,output.size()-5));
           if ( callid ) {
@@ -85,11 +89,11 @@ GUIServer::exec() {
           status += " Hangup.";
           displayStatus(status);
         }
-        
+        */
         // repondre
         //*aServerStream << output.length() << std::endl;
       }
-      delete lexer;
+      
       delete aServerStream;
       std::cout << "end of connection\n";
     }

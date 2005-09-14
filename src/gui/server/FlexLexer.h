@@ -65,13 +65,13 @@ public:
 	virtual void yy_delete_buffer( struct yy_buffer_state* b ) = 0;
 	virtual void yyrestart( std::istream* s ) = 0;
 
-	virtual int yylex() = 0;
+	virtual int yylex(void *) = 0;
 
 	// Call yylex with new input/output sources.
-	int yylex( std::istream* new_in, std::ostream* new_out = 0 )
+	int yylex( std::istream* new_in, std::ostream* new_out = 0, void *p=0)
 		{
 		switch_streams( new_in, new_out );
-		return yylex();
+		return yylex(p);
 		}
 
 	// Switch to new input/output streams.  A nil stream pointer
@@ -113,7 +113,7 @@ public:
 	void yy_delete_buffer( struct yy_buffer_state* b );
 	void yyrestart( std::istream* s );
 
-	virtual int yylex();
+	virtual int yylex(void *);
 	virtual void switch_streams( std::istream* new_in, std::ostream* new_out );
 
 protected:
