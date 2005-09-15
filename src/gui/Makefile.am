@@ -1,4 +1,4 @@
-SUBDIRS = qt server
+SUBDIRS = qt server 
 
 noinst_LTLIBRARIES = libguiframework.la
 

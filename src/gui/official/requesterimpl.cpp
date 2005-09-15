@@ -17,6 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #include <stdexcept>
 
 #include "requesterimpl.h"
@@ -44,14 +45,14 @@ RequesterImpl::sendCallCommand(const std::string &sessionId,
 			       const std::string &command)
 {
   // We retreive the internal of a session.
-  SessionImpl *session = getSessionImpl(sessionId);
+  SessionSender *session = getSessionSender(sessionId);
 
   // We ask the factory to create the request.
   Request *request = mCallRequestFactory.create(command, sequenceId, callId)
 
   std::string sequenceId = generateSequenceId();
   registerRequest(sessionId, sequenceId, request);
-  s->send(request);
+  s->send(request.toString());
   
   return sequenceId;
 }

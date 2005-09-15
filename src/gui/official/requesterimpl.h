@@ -22,6 +22,7 @@
 #define SFLPHONEGUI_REQUESTERIMPL_H
 
 class Call;
+class SessionIO;
 
 class RequesterImpl
 {
@@ -65,7 +66,7 @@ class RequesterImpl
 
 
  private:
-  std::map< std::string, SessionImpl * > mSessions;
+  std::map< std::string, SessionIO * > mSessions;
 
 
   /**

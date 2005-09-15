@@ -15,36 +15,31 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_ACCOUNT_H
-#define SFLPHONEGUI_ACCOUNT_H
-
-#include <string>
-
-class Call;
-
-class Account {
- public:
-  /**
-   * This will generate a call ready to be used.
-   */
-  Call call(const std::string &to);
-  std::string register();
-  std::string unregister();
-
- private:  
-  /**
-   * This is the session id that we are related to.
-   */
-  std::string mSessionId;
-
-  /**
-   * This is the account id that we are related to.
-   */
-  std::string mId;
-};
+#include "objectpool.h"
 
 
-#endif
+template< T >
+void
+LinePool< T >::push(const T &value)
+{
+  QMutexLocker guard(&mMutex);
+  mPool.push_back(value);
+  mDataAvailable.wakeOne();
+}
+
+template< T >
+T
+LinePool< T >::pop()
+{
+  QMutexLocker guard(&mMutex);
+  while(mPool.begin() == mPool.end()) {
+    mDataAvailable.wait(guard.mutex());
+  }
+  
+  std::list< T >::iterator pos = mPool.begin();
+  mDataAvailable.pop_front();
+  return (*pos);
+}

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2005-09-15T14:16:28" xmi.version="1.2" >
+<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2005-09-15T15:11:28" xmi.version="1.2" >
  <XMI.header>
   <XMI.documentation>
    <XMI.exporter>umbrello uml modeller http://uml.sf.net</XMI.exporter>
@@ -28,56 +28,56 @@
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="3437" isRoot="false" isAbstract="false" name="disconnect" />
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2834" isRoot="false" isAbstract="false" name="getAccount" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15945" type="2521" />
+        <UML:Parameter kind="return" xmi.id="16250" type="2521" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="2835" isRoot="false" value="" type="2466" isAbstract="false" name="name" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2556" isRoot="false" isAbstract="false" name="version" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15946" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16251" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2611" isRoot="false" isAbstract="false" name="listConfig" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15947" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16252" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2655" isRoot="false" isAbstract="false" name="setOption" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15948" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16253" type="2466" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="2656" isRoot="false" value="" type="2466" isAbstract="false" name="name" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="2660" isRoot="false" value="" type="2466" isAbstract="false" name="value" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2670" isRoot="false" isAbstract="false" name="getOption" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15949" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16254" type="2466" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="2671" isRoot="false" value="" type="2466" isAbstract="false" name="name" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2687" isRoot="false" isAbstract="false" name="saveConfig" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15950" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16255" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2700" isRoot="false" isAbstract="false" name="listAudioDevices" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15951" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16256" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2716" isRoot="false" isAbstract="false" name="listAudioCodecs" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15952" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16257" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2826" isRoot="false" isAbstract="false" name="listAccounts" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15953" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16258" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="15090" isRoot="false" isAbstract="false" name="handleevents" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15954" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16259" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
      </UML:Classifier.feature>
@@ -119,7 +119,7 @@
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="2524" isRoot="false" isAbstract="false" name="call" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15955" type="2468" />
+        <UML:Parameter kind="return" xmi.id="16260" type="2468" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="10314" isRoot="false" value="" type="2466" isAbstract="false" name="to" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
@@ -174,7 +174,7 @@
      <UML:Classifier.feature>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="4219" isRoot="false" isAbstract="false" name="createHoldTask" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15956" type="3814" />
+        <UML:Parameter kind="return" xmi.id="16261" type="3814" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="7283" isRoot="false" isAbstract="false" name="addTask" >
@@ -189,7 +189,7 @@
       <UML:Attribute isSpecification="false" isLeaf="false" visibility="private" xmi.id="3927" isRoot="false" initialValue="" type="3600" isAbstract="false" name="mFactory" />
       <UML:Operation isSpecification="false" isLeaf="false" visibility="private" xmi.id="4600" isRoot="false" isAbstract="false" name="getTaskFactory" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15957" type="3600" />
+        <UML:Parameter kind="return" xmi.id="16262" type="3600" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
      </UML:Classifier.feature>
@@ -371,7 +371,7 @@
       <UML:Attribute isSpecification="false" isLeaf="false" visibility="private" xmi.id="6951" isRoot="false" initialValue="" type="2470" isAbstract="false" name="mapSeqToCommand&lt; string, Command>" />
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="6799" isRoot="false" isAbstract="false" name="sendCallCommand" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15958" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16263" type="2466" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="8075" isRoot="false" value="" type="2466" isAbstract="false" name="sessionId" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="8118" isRoot="false" value="" type="2466" isAbstract="false" name="callId" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="6800" isRoot="false" value="" type="2466" isAbstract="false" name="command" />
@@ -380,7 +380,7 @@
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="8161" isRoot="false" isAbstract="false" name="sendAccountCommand" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15959" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16264" type="2466" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="8176" isRoot="false" value="" type="2466" isAbstract="false" name="sessionId" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="8191" isRoot="false" value="" type="2466" isAbstract="false" name="accountId" />
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="8206" isRoot="false" value="" type="2466" isAbstract="false" name="command" />
@@ -394,19 +394,24 @@
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="7150" isRoot="false" value="" type="2466" isAbstract="false" name="message" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
+      <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="16168" isRoot="false" isAbstract="false" name="receiveAnswer" >
+       <UML:BehavioralFeature.parameter>
+        <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="16169" isRoot="false" value="" type="2466" isAbstract="false" name="answer" />
+       </UML:BehavioralFeature.parameter>
+      </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="private" xmi.id="8297" isRoot="false" isAbstract="false" name="createSessionId" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15960" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16265" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="private" xmi.id="8386" isRoot="false" isAbstract="false" name="createCallId" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15961" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16266" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="private" xmi.id="8406" isRoot="false" isAbstract="false" name="createRequestId" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15962" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16267" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
      </UML:Classifier.feature>
@@ -418,7 +423,7 @@
       <UML:Attribute isSpecification="false" isLeaf="false" visibility="private" xmi.id="7050" isRoot="false" initialValue="" type="2466" isAbstract="false" name="listOfarguments" />
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="6926" isRoot="false" isAbstract="false" name="toString" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15963" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16268" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
      </UML:Classifier.feature>
@@ -464,18 +469,19 @@
       </UML:Operation>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="8893" isRoot="false" isAbstract="false" name="toString" >
        <UML:BehavioralFeature.parameter>
-        <UML:Parameter kind="return" xmi.id="15964" type="2466" />
+        <UML:Parameter kind="return" xmi.id="16269" type="2466" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
      </UML:Classifier.feature>
     </UML:Class>
-    <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="11167" isRoot="false" isAbstract="false" name="SessionImpl" >
+    <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="11167" isRoot="false" isAbstract="false" name="SessionSender" >
      <UML:Classifier.feature>
       <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="11208" isRoot="false" isAbstract="false" name="send" >
        <UML:BehavioralFeature.parameter>
         <UML:Parameter isSpecification="false" isLeaf="false" visibility="private" xmi.id="11209" isRoot="false" value="" type="8547" isAbstract="false" name="request" />
        </UML:BehavioralFeature.parameter>
       </UML:Operation>
+      <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="16087" isRoot="false" isAbstract="false" name="run" />
      </UML:Classifier.feature>
     </UML:Class>
     <UML:Class isSpecification="false" isLeaf="false" visibility="public" xmi.id="14744" isRoot="false" isAbstract="false" name="CallRequest" >
@@ -565,9 +571,9 @@
   </UML:Model>
  </XMI.content>
  <XMI.extensions xmi.extender="umbrello" >
-  <docsettings viewid="2457" documentation="" uniqueid="15964" />
+  <docsettings viewid="2457" documentation="" uniqueid="16269" />
   <diagrams>
-   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="2460" snapy="10" showatts="1" xmi.id="2457" documentation="" type="402" showops="1" showpackage="0" name="class diagram" localid="900000" showstereotype="0" showscope="1" snapcsgrid="0" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1016" >
+   <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="2460" snapy="10" showatts="1" xmi.id="2457" documentation="" type="402" showops="1" showpackage="0" name="class diagram" localid="900000" showstereotype="0" showscope="1" snapcsgrid="0" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1031" >
     <widgets>
      <classwidget usesdiagramfillcolour="0" width="321" showattsigs="601" usesdiagramusefillcolour="0" x="1775" linecolour="#ff0000" y="104" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="202" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2467" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="0" width="357" showattsigs="601" usesdiagramusefillcolour="0" x="1757" linecolour="#ff0000" y="535" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="180" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2468" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
@@ -575,7 +581,7 @@
      <classwidget usesdiagramfillcolour="0" width="162" showattsigs="601" usesdiagramusefillcolour="0" x="2211" linecolour="#ff0000" y="172" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="82" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2585" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="0" width="336" showattsigs="601" usesdiagramusefillcolour="0" x="248" linecolour="#ff0000" y="200" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="90" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="2999" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,1,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="226" showattsigs="601" usesdiagramusefillcolour="1" x="2230" linecolour="none" y="471" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="52" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="3600" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="218" showattsigs="601" usesdiagramusefillcolour="0" x="2223" linecolour="#ff0000" y="360" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="45" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="3611" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="0" width="218" showattsigs="601" usesdiagramusefillcolour="0" x="2234" linecolour="#ff0000" y="376" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="45" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="3611" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="90" showattsigs="601" usesdiagramusefillcolour="1" x="91" linecolour="none" y="249" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="3814" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="107" showattsigs="601" usesdiagramusefillcolour="1" x="91" linecolour="none" y="100" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="4821" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="105" showattsigs="601" usesdiagramusefillcolour="1" x="664" linecolour="none" y="208" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="4844" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
@@ -593,10 +599,10 @@
      <classwidget usesdiagramfillcolour="0" width="370" showattsigs="601" usesdiagramusefillcolour="0" x="858" linecolour="#ff0000" y="650" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="67" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="5921" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="125" showattsigs="601" usesdiagramusefillcolour="1" x="1071" linecolour="none" y="834" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="5999" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="126" showattsigs="601" usesdiagramusefillcolour="1" x="1291" linecolour="none" y="697" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="6011" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="0" width="695" showattsigs="601" usesdiagramusefillcolour="0" x="278" linecolour="#ff0000" y="892" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="120" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="6732" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="1" width="161" showattsigs="601" usesdiagramusefillcolour="1" x="2144" linecolour="none" y="351" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="75" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="6858" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="0" width="695" showattsigs="601" usesdiagramusefillcolour="0" x="278" linecolour="#ff0000" y="892" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="135" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="6732" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="1" width="161" showattsigs="601" usesdiagramusefillcolour="1" x="2165" linecolour="none" y="271" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="75" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="6858" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="0" width="458" showattsigs="601" usesdiagramusefillcolour="0" x="396" linecolour="#ff0000" y="429" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="0" fillcolour="#ffffc0" height="135" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="8547" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
-     <classwidget usesdiagramfillcolour="1" width="177" showattsigs="601" usesdiagramusefillcolour="1" x="2142" linecolour="none" y="57" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="37" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="11167" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
+     <classwidget usesdiagramfillcolour="1" width="177" showattsigs="601" usesdiagramusefillcolour="1" x="2169" linecolour="none" y="38" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="52" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="11167" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="86" showattsigs="601" usesdiagramusefillcolour="1" x="316" linecolour="none" y="793" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="29" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="14744" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
      <classwidget usesdiagramfillcolour="1" width="340" showattsigs="601" usesdiagramusefillcolour="1" x="979" linecolour="none" y="290" showopsigs="601" linewidth="none" usesdiagramlinewidth="1" usesdiagramlinecolour="1" fillcolour="none" height="67" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="15208" showoperations="1" showpackage="0" showscope="1" showstereotype="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" />
     </widgets>
@@ -622,7 +628,7 @@
      </assocwidget>
      <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" widgetbid="3600" widgetaid="3611" xmi.id="3927" type="510" changeabilityA="900" changeabilityB="900" visibilityA="200" >
       <linepath>
-       <startpoint startx="2332" starty="405" />
+       <startpoint startx="2343" starty="421" />
        <endpoint endx="2343" endy="471" />
       </linepath>
       <floatingtext usesdiagramfillcolour="1" width="69" usesdiagramusefillcolour="1" x="2272" linecolour="none" y="450" linewidth="none" usesdiagramlinewidth="1" posttext="" usesdiagramlinecolour="1" role="710" fillcolour="none" height="19" usefillcolor="1" pretext="+" isinstance="0" xmi.id="15556" text="mFactory" font="Sans Serif,10,-1,5,50,0,0,0,0,0" />
@@ -837,6 +843,7 @@
       <listitem open="0" type="815" id="6799" />
       <listitem open="0" type="815" id="8161" />
       <listitem open="0" type="815" id="7123" />
+      <listitem open="0" type="815" id="16168" />
       <listitem open="0" type="815" id="8297" />
       <listitem open="0" type="815" id="8386" />
       <listitem open="0" type="815" id="8406" />
@@ -861,6 +868,7 @@
      </listitem>
      <listitem open="1" type="813" id="11167" >
       <listitem open="0" type="815" id="11208" />
+      <listitem open="0" type="815" id="16087" />
      </listitem>
      <listitem open="1" type="813" id="5921" >
       <listitem open="0" type="815" id="6401" />
@@ -1658,7 +1666,7 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			taskmanager.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:16:23&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			taskmanager.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:41:45&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="3927" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -2355,11 +2363,16 @@
           <cppcodedocumentation tag="" />
          </header>
         </codeoperation>
+        <codeoperation parent_id="16168" tag="operation_16168" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeoperation>
        </textblocks>
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			requester.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:16:23&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			requester.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 15:08:13&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="6951" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -2441,7 +2454,7 @@
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			command.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:16:23&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			command.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:35:29&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="6881" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -2679,9 +2692,9 @@
       </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="" id="11167" parent_class="11167" fileExt=".cpp" fileName="sessionimpl" >
+    <classifiercodedocument writeOutCode="true" package="" id="11167" parent_class="11167" fileExt=".cpp" fileName="sessionsender" >
      <textblocks>
-      <codeblockwithcomments tag="includes" text="#include &quot;sessionimpl.h&quot;&amp;#010;" >
+      <codeblockwithcomments tag="includes" text="#include &quot;sessionsender.h&quot;&amp;#010;" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
@@ -2702,11 +2715,16 @@
           <cppcodedocumentation tag="" />
          </header>
         </codeoperation>
+        <codeoperation parent_id="16087" tag="operation_16087" canDelete="false" >
+         <header>
+          <cppcodedocumentation tag="" />
+         </header>
+        </codeoperation>
        </textblocks>
       </hierarchicalcodeblock>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			sessionimpl.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:16:23&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			sessionsender.cpp - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.cpp&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 15:07:40&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields/>
     </classifiercodedocument>
@@ -5066,7 +5084,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			taskmanager.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:16:23&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			taskmanager.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:41:45&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="3927" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -9431,6 +9449,11 @@
                   <cppcodedocumentation tag="" indentLevel="1" text="&amp;#010;@param code &amp;#010;@param noSeq &amp;#010;@param message " />
                  </header>
                 </codeoperation>
+                <codeoperation parent_id="16168" tag="operation_16168" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" text="&amp;#010;@param answer " />
+                 </header>
+                </codeoperation>
                </textblocks>
               </hierarchicalcodeblock>
              </textblocks>
@@ -9583,7 +9606,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			requester.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:16:23&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			requester.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 15:08:13&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="6951" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -9863,7 +9886,7 @@
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			command.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:16:23&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			command.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:35:29&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields>
       <codeclassfield parent_id="6881" field_type="0" initialValue="" role_id="-1" writeOutMethods="true" listClassName="" >
@@ -10480,9 +10503,9 @@
       </codeclassfield>
      </classfields>
     </classifiercodedocument>
-    <classifiercodedocument writeOutCode="true" package="" id="cppheader11167" parent_class="11167" fileExt=".h" fileName="sessionimpl" >
+    <classifiercodedocument writeOutCode="true" package="" id="cppheader11167" parent_class="11167" fileExt=".h" fileName="sessionsender" >
      <textblocks>
-      <codeblockwithcomments tag="hashDefBlock" text="#ifndef SESSIONIMPL_H&amp;#010;#define SESSIONIMPL_H" >
+      <codeblockwithcomments tag="hashDefBlock" text="#ifndef SESSIONSENDER_H&amp;#010;#define SESSIONSENDER_H" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
@@ -10509,7 +10532,7 @@
         </codeblockwithcomments>
         <cppheaderclassdeclarationblock parent_id="11167" tag="classDeclarationBlock" canDelete="false" >
          <header>
-          <cppcodedocumentation tag="" text="Class SessionImpl&amp;#010;" />
+          <cppcodedocumentation tag="" text="Class SessionSender&amp;#010;" />
          </header>
          <textblocks>
           <hierarchicalcodeblock tag="publicBlock" canDelete="false" >
@@ -10567,6 +10590,11 @@
                 <codeoperation parent_id="11208" tag="operation_11208" canDelete="false" indentLevel="1" >
                  <header>
                   <cppcodedocumentation tag="" indentLevel="1" text="&amp;#010;@param request " />
+                 </header>
+                </codeoperation>
+                <codeoperation parent_id="16087" tag="operation_16087" canDelete="false" indentLevel="1" >
+                 <header>
+                  <cppcodedocumentation tag="" indentLevel="1" />
                  </header>
                 </codeoperation>
                </textblocks>
@@ -10681,14 +10709,14 @@
         </cppheaderclassdeclarationblock>
        </textblocks>
       </hierarchicalcodeblock>
-      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //SESSIONIMPL_H" >
+      <codeblockwithcomments tag="hashDefBlockEnd" text="#endif //SESSIONSENDER_H" >
        <header>
         <cppcodedocumentation tag="" writeOutText="false" />
        </header>
       </codeblockwithcomments>
      </textblocks>
      <header>
-      <codecomment tag="" text="/************************************************************************&amp;#010;  			sessionimpl.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 14:16:23&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
+      <codecomment tag="" text="/************************************************************************&amp;#010;  			sessionsender.h - Copyright jpbarrette&amp;#010;&amp;#010;Here you can write a license for your code, some comments or any other&amp;#010;information you want to have in your generated code. To to this simply&amp;#010;configure the &quot;headings&quot; directory in uml to point to a directory&amp;#010;where you have your heading files.&amp;#010;&amp;#010;or you can just replace the contents of this file with your own.&amp;#010;If you want to do this, this file is located at&amp;#010;&amp;#010;/usr/share/apps/umbrello/headings/heading.h&amp;#010;&amp;#010;-->Code Generators searches for heading files based on the file extension&amp;#010;   i.e. it will look for a file name ending in &quot;.h&quot; to include in C++ header&amp;#010;   files, and for a file name ending in &quot;.java&quot; to include in all generated&amp;#010;   java code.&amp;#010;   If you name the file &quot;heading.&lt;extension>&quot;, Code Generator will always&amp;#010;   choose this file even if there are other files with the same extension in the&amp;#010;   directory. If you name the file something else, it must be the only one with that&amp;#010;   extension in the directory to guarantee that Code Generator will choose it.&amp;#010;&amp;#010;you can use variables in your heading files which are replaced at generation&amp;#010;time. possible variables are : author, date, time, filename and filepath.&amp;#010;just write %variable_name%&amp;#010;&amp;#010;This file was generated on Thu Sep 15 2005 at 15:07:40&amp;#010;The original location of this file is &amp;#010;**************************************************************************/&amp;#010;" />
      </header>
      <classfields/>
     </classifiercodedocument>

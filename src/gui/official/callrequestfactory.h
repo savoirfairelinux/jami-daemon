@@ -15,36 +15,23 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_ACCOUNT_H
-#define SFLPHONEGUI_ACCOUNT_H
+#ifndef SFLPHONEGUI_CALLREQUESTFACTORY_H
+#define SFLPHONEGUI_CALLREQUESTFACTORY_H
 
-#include <string>
+#include <map>
 
-class Call;
 
-class Account {
+class CallRequestFactory
+{
  public:
-  /**
-   * This will generate a call ready to be used.
-   */
-  Call call(const std::string &to);
-  std::string register();
-  std::string unregister();
+  CallRequest *create(const std::string &command
 
- private:  
-  /**
-   * This is the session id that we are related to.
-   */
-  std::string mSessionId;
+ private:
+  std::map< std::string, CallRequestCreatorBase > mCreators;
+}
 
-  /**
-   * This is the account id that we are related to.
-   */
-  std::string mId;
-};
+#endif 
 
-
-#endif

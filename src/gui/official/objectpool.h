@@ -15,36 +15,36 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_ACCOUNT_H
-#define SFLPHONEGUI_ACCOUNT_H
+#ifndef SFLPHONEGUI_OBJECTPOOL_H
+#define SFLPHONEGUI_OBJECTPOOL_H
 
 #include <string>
+#include <QMutex>
+#include <QWaitCondition>
 
-class Call;
-
-class Account {
+template< T >
+class ObjectPool
+{
  public:
   /**
-   * This will generate a call ready to be used.
+   * This function will push a line in the pool.
    */
-  Call call(const std::string &to);
-  std::string register();
-  std::string unregister();
-
- private:  
-  /**
-   * This is the session id that we are related to.
-   */
-  std::string mSessionId;
+  void push(const T &line);
 
   /**
-   * This is the account id that we are related to.
+   * This function will wait for an available line.
    */
-  std::string mId;
+  T pop();
+
+ private:
+  std::list< T > mPool;
+  
+  QMutex mMutex;
+  QWaitCondition mDataAvailable;
 };
 
-
 #endif
+
