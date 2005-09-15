@@ -20,9 +20,6 @@
 #include "guiserver.h"
 #include <string>
 #include <iostream>
-#include "protocol.tab.h" // need by TCPStreamLexer.h but can't put in it
-#include "TCPStreamLexer.h"
-
 
 // default constructor
 GUIServer::GUIServer()
@@ -41,12 +38,12 @@ GUIServer::exec() {
     
     //Creating a listening socket.
     ost::TCPSocket aServer(addr, 3999);
+    RequestFactory factory;
+    Request *request;
     
     std::cout << "listening on " << aServer.getLocal() << ":" << 3999 << std::endl;
     
-    int callid;
-    std::string status;
-
+    std::string output;
     while (std::cin.good()) {
     
       // waiting for a new connection
@@ -54,22 +51,26 @@ GUIServer::exec() {
       
       //I'm accepting an incomming connection
       
-      aServerStream = new TCPStreamLexer(aServer, this);
+      aServerStream = new ost::TCPStream(aServer);
       
       // wait for the first message
       std::cout << "accepting connection..." << std::endl;
       
-      std::string output;
       *aServerStream << "Welcome to this serveur2" << std::endl;
+      output = "";
       while(aServerStream->good() && output!="quit") {
         // lire
-        //std::getline(*aServerStream, output);
+        std::getline(*aServerStream, output);
+        
         //_eventList.push_back(Event(output));
         
         // analyser
-        //std::cout << output << ":" << output.length() << std::endl;
+        std::cout << output << ":" << output.length() << std::endl;
+        request = factory.createNewRequest(output);
+        request->execute();
+        delete request;
         
-      	aServerStream->parse();
+      	//aServerStream->parse();
         
         /*
         if ( output.find("call ") == 0 ) {
@@ -91,7 +92,7 @@ GUIServer::exec() {
         }
         */
         // repondre
-        //*aServerStream << output.length() << std::endl;
+        *aServerStream << output.length() << std::endl;
       }
       
       delete aServerStream;

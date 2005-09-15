@@ -23,22 +23,61 @@
 #include <string>
 #include <list>
 #include <cc++/socket.h>
+#include <map>
 
-class Event {
+class Request 
+{
 public:
-  Event();
-  Event(const std::string &event) {
-    _message = event;
+  Request(const std::string &cseq) { 
+    _cseq = cseq;
   }
-  ~Event() {}
+  virtual ~Request(){}
+  virtual std::string execute();
+  std::string error(const std::string &code, const std::string &error) {
+    std::string returnError = code + " " + _cseq + " " + error;
+    return returnError;
+  }
 private:
   std::string _cseq;
-  std::string _callid;
-  std::string _message;
 };
 
-typedef std::list<Event> EventList;
-class TCPStreamLexer;
+
+class RequestCall : public Request
+{
+public:
+  RequestCall(const std::string &cseq) : Request(cseq) {}
+  ~RequestCall() {}
+  std::string execute() { return ""; }
+};
+
+class RequestSyntaxError : public Request 
+{
+public:
+  RequestSyntaxError(const std::string &cseq = "seq0") : Request(cseq) {}
+  ~RequestSyntaxError() {}
+  std::string execute() {
+    return error("501", "Syntax Error");
+  }
+};
+
+class RequestFactory 
+{
+public:
+  RequestFactory(){
+  }
+  ~RequestFactory(){
+  }
+  
+  Request* createNewRequest(const std::string &requestLine) 
+  {
+    int spacePos = requestLine.find(' ');
+    // we find a spacePos
+    if ( spacePos != -1 ) {
+      return new RequestSyntaxError();
+    }
+  }
+};
+
 class GUIServer : public GuiFramework {
 public:
   // GUIServer constructor
@@ -48,7 +87,6 @@ public:
   
   // exec loop
   int exec(void);
-  
   
   // Reimplementation of virtual functions
 	virtual int incomingCall (short id);
@@ -68,8 +106,8 @@ public:
 	virtual void stopVoiceMessageNotification (void);  
   
 private:
-  EventList _eventList;
-  TCPStreamLexer *aServerStream;
+  ost::TCPStream* aServerStream;
+  std::map<std::string, Request*> _requestMap; 
 };
 
 #endif // __GUI_SERVER_H__
