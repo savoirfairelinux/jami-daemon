@@ -18,6 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "request.h"
 
 Request::Request(const std::string &sequenceId,
 		 const std::string &command,
