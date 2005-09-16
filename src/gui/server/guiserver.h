@@ -28,32 +28,85 @@
 class Request 
 {
 public:
-  Request(const std::string &cseq) { 
-    _cseq = cseq;
-  }
-  virtual ~Request(){}
-  virtual std::string execute();
-  std::string error(const std::string &code, const std::string &error) {
-    std::string returnError = code + " " + _cseq + " " + error;
+  Request(const std::string &sequenceId) : _sequenceId(sequenceId) {}
+  virtual ~Request() {}
+  virtual std::string execute() { return ""; }
+  virtual std::string error(const std::string &code, const std::string &error) 
+  {
+    std::string returnError = code + " " + _sequenceId + " " + error;
     return returnError;
   }
-private:
-  std::string _cseq;
+protected:
+  std::string _sequenceId;
 };
 
 
 class RequestCall : public Request
 {
 public:
-  RequestCall(const std::string &cseq) : Request(cseq) {}
-  ~RequestCall() {}
-  std::string execute() { return ""; }
+  RequestCall(const std::string &sequenceId, const std::string &arg) : Request(sequenceId), _arg(arg) {}
+  virtual ~RequestCall() {}
+  virtual std::string execute() 
+  {
+    std::string returnOK = std::string("200 ") + _sequenceId + " OK";
+    return returnOK; 
+  }
+  std::string _arg;
 };
+
+class RequestAnswer : public RequestCall {
+public:
+  RequestAnswer(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+};
+class RequestRefuse : public RequestCall {
+public:
+  RequestRefuse(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+};
+class RequestHold : public RequestCall {
+public:
+  RequestHold(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+};
+class RequestUnhold : public RequestCall {
+public:
+  RequestUnhold(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+};
+class RequestTransfer : public RequestCall {
+public:
+  RequestTransfer(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+};
+
+
+class RequestGlobal : public Request
+{
+public:
+  RequestGlobal(const std::string &sequenceId) : Request(sequenceId) {}
+  virtual ~RequestGlobal() {}
+  virtual std::string execute() 
+  {
+    std::string returnOK = std::string("200 ") + _sequenceId + " OK";
+    return returnOK; 
+  }
+};
+
+class RequestMute : public RequestGlobal {
+public:
+  RequestMute(const std::string &sequenceId) : RequestGlobal(sequenceId) {}
+};
+class RequestUnmute : public RequestGlobal {
+public:
+  RequestUnmute(const std::string &sequenceId) : RequestGlobal(sequenceId) {}
+};
+class RequestQuit : public RequestGlobal {
+public:
+  RequestQuit(const std::string &sequenceId) : RequestGlobal(sequenceId) {}
+};
+
+
 
 class RequestSyntaxError : public Request 
 {
 public:
-  RequestSyntaxError(const std::string &cseq = "seq0") : Request(cseq) {}
+  RequestSyntaxError(const std::string &sequenceId = "seq0") : Request(sequenceId) {}
   ~RequestSyntaxError() {}
   std::string execute() {
     return error("501", "Syntax Error");
@@ -70,12 +123,68 @@ public:
   
   Request* createNewRequest(const std::string &requestLine) 
   {
-    int spacePos = requestLine.find(' ');
+    unsigned int spacePos = requestLine.find(' ');
     // we find a spacePos
-    if ( spacePos != -1 ) {
-      return new RequestSyntaxError();
+    if (spacePos != std::string::npos) {
+      /*
+      012345678901234
+      call seq1 cdddd
+      spacePos  = 4
+      spacePos2 = 9
+      0 for 4  = 0 for spacePos
+      5 for 4  = (spacePos+1 for spacePos2-spacePos-1)
+      10 for 5 = (spacePos2+1 for size - spacePos2+1)
+      */
+      std::string cmd = requestLine.substr(0, spacePos);
+      
+      unsigned int spacePos2 = requestLine.find(' ', spacePos+1);
+      if (spacePos2 == std::string::npos) {
+        // command that end with a sequence number
+        std::string seq = requestLine.substr(spacePos+1, requestLine.size()-spacePos+1);
+        
+        if (cmd == CMD_MUTE) {
+          return new RequestMute(seq);  
+        } else if (cmd == CMD_UNMUTE) {
+          return new RequestUnmute(seq);  
+        } else if (cmd == CMD_QUIT) {
+          return new RequestQuit(seq);  
+        } else {
+          return new RequestSyntaxError(seq);
+        }
+      } else {
+        std::string seq = requestLine.substr(spacePos+1, spacePos2-spacePos-1);
+        std::string arg = requestLine.substr(spacePos2+1, requestLine.size()-spacePos2+1);
+        
+        // command with args
+        if (cmd == CMD_CALL) {
+          return new RequestCall(seq, arg);
+        } else if (cmd == CMD_ANWSER) {
+          return new RequestAnswer(seq, arg);  
+        } else if (cmd == CMD_REFUSE) {
+          return new RequestRefuse(seq, arg);  
+        } else if (cmd == CMD_HOLD) {
+          return new RequestHold(seq, arg);  
+        } else if (cmd == CMD_UNHOLD) {
+          return new RequestUnhold(seq, arg);  
+        } else if (cmd == CMD_TRANSFER) {
+          return new RequestTransfer(seq, arg);  
+        } else {
+          return new RequestSyntaxError(seq);
+        }
+      }
     }
+    std::cout << "RequestLine: " << requestLine << std::endl;
+    return new RequestSyntaxError();
   }
+  static const std::string CMD_CALL;
+  static const std::string CMD_ANWSER;
+  static const std::string CMD_REFUSE;
+  static const std::string CMD_HOLD;
+  static const std::string CMD_UNHOLD;
+  static const std::string CMD_TRANSFER;
+  static const std::string CMD_MUTE;
+  static const std::string CMD_UNMUTE;
+  static const std::string CMD_QUIT;
 };
 
 class GUIServer : public GuiFramework {

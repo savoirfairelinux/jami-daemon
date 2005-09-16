@@ -21,6 +21,16 @@
 #include <string>
 #include <iostream>
 
+const std::string RequestFactory::CMD_CALL    = "call";
+const std::string RequestFactory::CMD_QUIT    = "quit";
+const std::string RequestFactory::CMD_ANWSER  = "anwser";
+const std::string RequestFactory::CMD_REFUSE  = "refuse";
+const std::string RequestFactory::CMD_HOLD    = "hold";
+const std::string RequestFactory::CMD_UNHOLD  = "unhold";
+const std::string RequestFactory::CMD_TRANSFER= "transfer";
+const std::string RequestFactory::CMD_MUTE    = "mute";
+const std::string RequestFactory::CMD_UNMUTE  = "unmute";
+
 // default constructor
 GUIServer::GUIServer()
 {
@@ -43,7 +53,8 @@ GUIServer::exec() {
     
     std::cout << "listening on " << aServer.getLocal() << ":" << 3999 << std::endl;
     
-    std::string output;
+    std::string input; // TCPStream input line
+    std::string output; // TCPStream output line
     while (std::cin.good()) {
     
       // waiting for a new connection
@@ -57,17 +68,18 @@ GUIServer::exec() {
       std::cout << "accepting connection..." << std::endl;
       
       *aServerStream << "Welcome to this serveur2" << std::endl;
+      input = "";
       output = "";
-      while(aServerStream->good() && output!="quit") {
+      while(aServerStream->good() && input!="quit") {
         // lire
-        std::getline(*aServerStream, output);
+        std::getline(*aServerStream, input);
         
         //_eventList.push_back(Event(output));
         
         // analyser
-        std::cout << output << ":" << output.length() << std::endl;
-        request = factory.createNewRequest(output);
-        request->execute();
+        std::cout << input << ":" << input.length() << std::endl;
+        request = factory.createNewRequest(input);
+        output = request->execute();
         delete request;
         
       	//aServerStream->parse();
@@ -92,7 +104,7 @@ GUIServer::exec() {
         }
         */
         // repondre
-        *aServerStream << output.length() << std::endl;
+        *aServerStream << output << std::endl;
       }
       
       delete aServerStream;
