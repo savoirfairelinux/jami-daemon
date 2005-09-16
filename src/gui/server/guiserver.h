@@ -34,12 +34,9 @@ class Request
 public:
   Request(const std::string &sequenceId, const std::string &arg) : _sequenceId(sequenceId), _arg(arg) {}
   virtual ~Request() {}
-  virtual std::string execute(GUIServer *gui) { return ""; }
-  virtual std::string message(const std::string &code, const std::string &message) 
-  {
-    std::string returnMessage = code + " " + _sequenceId + " " + message;
-    return returnMessage;
-  }
+  virtual std::string execute(GUIServer* gui) { return ""; }
+  virtual std::string message(const std::string &code, const std::string &message);
+  
 protected:
   std::string _sequenceId;
   std::string _arg;
@@ -60,11 +57,7 @@ public:
     }
   }
   virtual ~RequestGlobalCall() {}
-  virtual std::string execute(GUIServer *gui) 
-  {
-    std::string returnOK = std::string("200 ") + _sequenceId + " OK";
-    return returnOK; 
-  }
+  
 protected:
   std::string _callid;
 };
@@ -117,11 +110,8 @@ class RequestGlobal : public Request
 public:
   RequestGlobal(const std::string &sequenceId, const std::string &arg) : Request(sequenceId,arg) {}
   virtual ~RequestGlobal() {}
-  virtual std::string execute(const GUIServer *gui) 
-  {
-    std::string returnOK = std::string("200 ") + _sequenceId + " OK";
-    return returnOK; 
-  }
+  virtual std::string execute(GUIServer *gui);
+
 };
 
 class RequestMute : public RequestGlobal {
@@ -144,7 +134,7 @@ class RequestSyntaxError : public Request
 public:
   RequestSyntaxError(const std::string &sequenceId, const std::string &arg) : Request(sequenceId, arg) {}
   ~RequestSyntaxError() {}
-  std::string execute() {
+  std::string execute(GUIServer *gui) {
     return message("501", "Syntax Error");
   }
 };

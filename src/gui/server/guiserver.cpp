@@ -39,12 +39,27 @@ TCPSessionWriter::run()
    *this << _gui->popResponseMessage() << std::endl;
   }
 }
+
+std::string 
+Request::message(const std::string &code, const std::string &message)  
+{
+  std::string returnMessage = code + " " + _sequenceId + " " + message;
+  return returnMessage;
+}
 std::string
-RequestCall::execute(GUIServer *gui)
+RequestGlobal::execute(GUIServer* gui)
+{
+  std::string returnOK = std::string("200 ") + _sequenceId + " OK";
+  return returnOK; 
+}
+
+std::string
+RequestCall::execute(GUIServer* gui)
 {
   int serverCallId = gui->outgoingCall(_destination); 
   if (serverCallId) {
-    return message("150", "Trying...");
+    gui->pushResponseMessage(message("150", "Trying..."));
+    return message("200", "OK");
   } else {
     return message("500","Server Error");
   }
