@@ -21,6 +21,7 @@
 #ifndef SFLPHONEGUI_OBJECTPOOL_H
 #define SFLPHONEGUI_OBJECTPOOL_H
 
+#include <list>
 #include <string>
 #include <qmutex.h>
 #include <qwaitcondition.h>

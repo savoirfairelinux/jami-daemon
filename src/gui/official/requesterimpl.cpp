@@ -19,6 +19,7 @@
  */
 
 #include <stdexcept>
+#include <sstream>
 
 #include "requesterimpl.h"
 #include "sessionio.h"
@@ -53,7 +54,7 @@ RequesterImpl::send(const std::string &sessionId,
   Request *request = mRequestFactory.create(command, sequenceId, args);
 
   registerRequest(sessionId, sequenceId, request);
-  s->send(request.toString());
+  session->send(request->toString());
   
   return sequenceId;
 }
@@ -84,33 +85,34 @@ RequesterImpl::registerSession(const std::string &id,
   s->start();
 }
 
+int
+RequesterImpl::getCodeCategory(const std::string &code)
+{
+  int c;
+  std::istringstream s(code);
+  s >> c;
+  return c / 100;
+}
+
 void
 RequesterImpl::receiveAnswer(const std::string &answer)
 {
   std::string code;
   std::string seq;
   std::string message;
-  std::istream s(answer);
+  std::istringstream s(answer);
   s >> code >> seq;
   getline(s, message);
   receiveAnswer(code, seq, message);
 }
 
-int
-RequesterImpl::getCodeCategory(const std::string &code)
-{
-  int c;
-  std::istream s(code);
-  s >> c;
-  return c / 100;
-}
 
 void
 RequesterImpl::receiveAnswer(const std::string &code, 
 			     const std::string &sequence, 
 			     const std::string &message)
 {
-  c = getCodeCategory(code);
+  int c = getCodeCategory(code);
 
   std::map< std::string, Request * >::iterator pos;
   pos = mRequests.find(sequence);
@@ -121,17 +123,17 @@ RequesterImpl::receiveAnswer(const std::string &code,
 
   if(c <= 1) {
     //Other answers will come for this request.
-    (*pos)->onEntry(code, message);
+    pos->second->onEntry(code, message);
   }
   else{
     //This is the final answer of this request.
     if(c == 2) {
-      (*pos)->onSuccess(code, message);
+      pos->second->onSuccess(code, message);
     }
     else {
-      (*pos)->onError(code, message);
+      pos->second->onError(code, message);
     }
-    delete(*pos);
+    delete pos->second;
     mRequests.erase(pos);
   }
 }	       
@@ -139,7 +141,7 @@ RequesterImpl::receiveAnswer(const std::string &code,
 std::string
 RequesterImpl::generateCallId()
 {
-  std::ostream id;
+  std::ostringstream id;
   id << "cCallID:" << mCallIdCount;
   mCallIdCount++;
   return id.str();
@@ -148,7 +150,7 @@ RequesterImpl::generateCallId()
 std::string
 RequesterImpl::generateSessionId()
 {
-  std::ostream id;
+  std::ostringstream id;
   id << "cSessionID:" << mSessionIdCount;
   mSessionIdCount++;
   return id.str();
@@ -157,7 +159,7 @@ RequesterImpl::generateSessionId()
 std::string
 RequesterImpl::generateSequenceId()
 {
-  std::ostream id;
+  std::ostringstream id;
   id << "cSequenceID:" << mSequenceIdCount;
   mSequenceIdCount++;
   return id.str();

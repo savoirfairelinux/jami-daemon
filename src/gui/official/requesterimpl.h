@@ -41,6 +41,12 @@ class RequesterImpl
 		   const std::string &command,
 		   const std::list< std::string > &args);
 
+  void receiveAnswer(const std::string &answer);
+  void receiveAnswer(const std::string &code, 
+		     const std::string &sequence, 
+		     const std::string &message);
+
+
   static int getCodeCategory(const std::string &code);
 
   /**
@@ -67,6 +73,11 @@ class RequesterImpl
   std::string getSessionIdFromSequenceId(const std::string &sequence)
     {return mSequenceToSession[sequence];}
 
+  /**
+   * Register the session.
+   */
+  void registerSession(const std::string &id, SessionIO *io);
+
  private:
 
   /**
@@ -74,11 +85,6 @@ class RequesterImpl
    * the session ID.
    */
   SessionIO *getSessionIO(const std::string &sessionId);
-
-  /**
-   * Register the session.
-   */
-  void registerSession(const std::string &id, SessionIO *io);
 
   /**
    * Register the string to return a Actual type.

@@ -36,6 +36,10 @@ Request::onError(const std::string &, const std::string &)
 {}
 
 void
+Request::onEntry(const std::string &, const std::string &)
+{}
+
+void
 Request::onSuccess(const std::string &, const std::string &)
 {}
 
@@ -71,7 +75,20 @@ CallRequest::onError(const std::string &code, const std::string &message)
 }
 
 void
-CallRequest::onError(Call , const std::string &, const std::string &)
+CallRequest::onError(Call, const std::string &, const std::string &)
+{}
+
+void
+CallRequest::onEntry(const std::string &code, const std::string &message)
+{
+  onEntry(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
+	       mCallId), 
+	  code, 
+	  message);
+}
+
+void
+CallRequest::onEntry(Call, const std::string &, const std::string &)
 {}
 
 void

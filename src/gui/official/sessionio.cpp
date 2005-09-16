@@ -18,6 +18,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "sessionio.h"
+
 InputStreamer::InputStreamer(SessionIO *sessionIO)
   : mSessionIO(sessionIO)
 {}
@@ -30,7 +32,6 @@ InputStreamer::run()
   }
 }
 
-void 
 OutputStreamer::OutputStreamer(SessionIO *sessionIO)
   : mSessionIO(sessionIO)
 {}
@@ -56,13 +57,22 @@ SessionIO::~SessionIO()
   stop();
 }
 
+bool
+SessionIO::isUp() 
+{
+  {
+    QMutexLocker guard(&mMutex);
+    return mIsUp;
+  }
+}
+
 void
 SessionIO::start()
 {
   stop();
   //just protecting the mutex
   {
-    QMutexLock guard(&mMutex);
+    QMutexLocker guard(&mMutex);
     mInputStreamer.start();
     mOutputStreamer.start();
     mIsUp = true;
@@ -95,15 +105,15 @@ SessionIO::receive(std::string &answer)
 void
 SessionIO::send()
 {
-  (*mOutputStream) << mOutputPool.pop();
-  mOutputPool->sync();
+  (*mOutput) << mOutputPool.pop();
+  mOutput->flush();
 }
 
 void
 SessionIO::receive()
 {
   std::string s;
-  std::getline(*mInputStream, s);
+  std::getline(*mInput, s);
   mInputPool.push(s);
 }
 

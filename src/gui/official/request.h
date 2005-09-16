@@ -80,7 +80,6 @@ class Request
 
  private:
   const std::string mSequenceId;
-  const std::string mSessionId;
   const std::string mCommand;
   const std::list< std::string > mArgs;
 };
@@ -127,6 +126,15 @@ class CallRequest : public Request
    * the call linked to this request.
    */
   virtual void onError(const std::string &code, 
+		       const std::string &message);
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the there's other answer to 
+   * come. This function will call the onEntry, but with
+   * the call linked to this request.
+   */
+  virtual void onEntry(const std::string &code, 
 		       const std::string &message);
 
   /**

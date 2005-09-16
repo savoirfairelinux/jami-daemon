@@ -27,70 +27,7 @@
 
 #include "objectpool.h"
 
-/**
- * This is the main class that will handle 
- * the IO.
- */
-class SessionIO
-{
- public:
-  friend class OutputStreamer;
-  friend class InputStreamer;
-
-  /**
-   * Those streams will be the streams read or write to.
-   */
-  SessionIO(std::istream *input, std::ostream *output);
-    
-  /**
-   * This is the function that will start the threads
-   * that will handle the streams.
-   */
-  void start();
-
-  /**
-   * This function will stop the streaming
-   * processing.
-   */
-  void stop();
-
-  /**
-   * You can use this function for sending request.
-   * The sending is non-blocking. This function will
-   * send the data as it is; it will NOT add an EOL.
-   * the stream will be "sync"ed.
-   */
-  void send(const std::string &request);
-
-  /**
-   * You can use this function to receive answers.
-   * This function will wait until there's an 
-   * answer to be processed.
-   */
-  void receive(std::string &answer);
-
- private:
-  /**
-   * This function will send to the stream 
-   * the given data. EOL will be added at the
-   * end of the data.
-   */
-  void send();
-  
-  /**
-   * This function will read a line of data from
-   * the stream.
-   */
-  void receive();
-
- private:
-  QMutex mMutex;
-  bool mIsUp;
-
-  ObjectPool< std::string > mInputPool;
-  ObjectPool< std::string > mOutputPool;
-};
-
+class SessionIO;
 
 /**
  * This class is the thread that will read
@@ -129,8 +66,82 @@ class OutputStreamer : public QThread
   virtual void run();
 
  private:
-  SessionIO *sessionIO;
+  SessionIO *mSessionIO;
 };
+
+
+/**
+ * This is the main class that will handle 
+ * the IO.
+ */
+class SessionIO
+{
+ public:
+  friend class OutputStreamer;
+  friend class InputStreamer;
+
+  /**
+   * Those streams will be the streams read or write to.
+   */
+  SessionIO(std::istream *input, std::ostream *output);
+  ~SessionIO();
+
+  /**
+   * This is the function that will start the threads
+   * that will handle the streams.
+   */
+  void start();
+
+  /**
+   * This function will stop the streaming
+   * processing.
+   */
+  void stop();
+
+  /**
+   * You can use this function for sending request.
+   * The sending is non-blocking. This function will
+   * send the data as it is; it will NOT add an EOL.
+   * the stream will be "sync"ed.
+   */
+  void send(const std::string &request);
+
+  /**
+   * You can use this function to receive answers.
+   * This function will wait until there's an 
+   * answer to be processed.
+   */
+  void receive(std::string &answer);
+
+  bool isUp();
+
+ private:
+  /**
+   * This function will send to the stream 
+   * the given data. EOL will be added at the
+   * end of the data.
+   */
+  void send();
+  
+  /**
+   * This function will read a line of data from
+   * the stream.
+   */
+  void receive();
+
+ private:
+  QMutex mMutex;
+  bool mIsUp;
+
+  ObjectPool< std::string > mInputPool;
+  ObjectPool< std::string > mOutputPool;
+
+  std::istream *mInput;
+  std::ostream *mOutput;
+  InputStreamer mInputStreamer;
+  OutputStreamer mOutputStreamer;
+};
+
 
 
 #endif
