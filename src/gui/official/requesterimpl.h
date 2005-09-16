@@ -41,7 +41,7 @@ class RequesterImpl
 		       const std::string &callId, 
 		       char *command);
 
-  
+  static int getCodeCategory(const std::string &code);
 
  private:
   /**
@@ -64,9 +64,15 @@ class RequesterImpl
    */
   std::string generateSequenceId();
 
+  /**
+   * Return the SessionIO instance related to
+   * the session ID.
+   */
+  SessionIO *getSessionIO(const std::string &sessionId);
 
  private:
   std::map< std::string, SessionIO * > mSessions;
+  std::map< std::string, Request * > mRequests;
 
 
   /**

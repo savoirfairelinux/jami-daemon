@@ -21,6 +21,7 @@
 #include <stdexcept>
 
 #include "requesterimpl.h"
+#include "sessionio.h"
 
 RequesterImpl::RequesterImpl()
   : mCallIdCount(0)
@@ -45,7 +46,7 @@ RequesterImpl::sendCallCommand(const std::string &sessionId,
 			       const std::string &command)
 {
   // We retreive the internal of a session.
-  SessionSender *session = getSessionSender(sessionId);
+  SessionIO *session = getSessionIO(sessionId);
 
   // We ask the factory to create the request.
   Request *request = mCallRequestFactory.create(command, sequenceId, callId)
@@ -58,7 +59,68 @@ RequesterImpl::sendCallCommand(const std::string &sessionId,
 }
 
 void
-RequesterImpl::receiveCallCommand 		       
+RequesterImpl::registerRequest(const std::string &sessionId, 
+			       const std::string &sequenceId,
+			       Request *request)
+{
+  if(mRequests.find(sequenceId) != mRequests.end()) {
+    throw std::logic_error("Registering an already know sequence ID");
+  }
+
+  mRequests.insert(std::make_pair(sequenceId, request));
+}
+
+void
+RequesterImpl::receiveAnswer(const std::string &answer)
+{
+  std::string code;
+  std::string seq;
+  std::string message;
+  std::istream s(answer);
+  s >> code >> seq;
+  getline(s, message);
+  receiveAnswer(code, seq, message);
+}
+
+int
+RequesterImpl::getCodeCategory(const std::string &code)
+{
+  int c;
+  std::istream s(code);
+  s >> c;
+  return c / 100;
+}
+
+void
+RequesterImpl::receiveAnswer(const std::string &code, 
+			     const std::string &sequence, 
+			     const std::string &message)
+{
+  c = getCodeCategory(code);
+
+  std::map< std::string, Request * >::iterator pos;
+  pos = mRequests.find(sequence);
+  if(pos == mRequests.end()) {
+    std::cerr << "We received an answer with an unknown sequence" << std::endl;
+    return;
+  }
+
+  if(c <= 1) {
+    //Other answers will come for this request.
+    (*pos)->onEntry(code, message);
+  }
+  else{
+    //This is the final answer of this request.
+    if(c == 2) {
+      (*pos)->onSuccess(code, message);
+    }
+    else {
+      (*pos)->onError(code, message);
+    }
+    delete(*pos);
+    mRequests.erase(pos);
+  }
+}	       
 
 std::string
 RequesterImpl::generateCallId()
