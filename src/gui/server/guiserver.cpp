@@ -21,24 +21,55 @@
 #include <string>
 #include <iostream>
 
-const std::string RequestFactory::CMD_CALL    = "call";
-const std::string RequestFactory::CMD_QUIT    = "quit";
-const std::string RequestFactory::CMD_ANWSER  = "anwser";
-const std::string RequestFactory::CMD_REFUSE  = "refuse";
-const std::string RequestFactory::CMD_HOLD    = "hold";
-const std::string RequestFactory::CMD_UNHOLD  = "unhold";
-const std::string RequestFactory::CMD_TRANSFER= "transfer";
-const std::string RequestFactory::CMD_MUTE    = "mute";
-const std::string RequestFactory::CMD_UNMUTE  = "unmute";
+
+void 
+TCPSessionReader::run() 
+{
+  while(!testCancel() && good()) {
+    std::string output;
+    std::getline(*this, output);
+    _gui->pushRequestMessage(output);
+  }
+}
+
+void 
+TCPSessionWriter::run() 
+{
+  while (!testCancel() && good()) {
+   *this << _gui->popResponseMessage() << std::endl;
+  }
+}
+std::string
+RequestCall::execute(GUIServer *gui)
+{
+  int serverCallId = gui->outgoingCall(_destination); 
+  if (serverCallId) {
+    return message("150", "Trying...");
+  } else {
+    return message("500","Server Error");
+  }
+}
 
 // default constructor
 GUIServer::GUIServer()
 {
+  _factory = new RequestFactory();
+  _factory->registerRequest< RequestSyntaxError > ("syntaxerror");
+  _factory->registerRequest< RequestCall >     ("call");
+  _factory->registerRequest< RequestQuit >     ("quit");
+  _factory->registerRequest< RequestAnswer >   ("anwser");
+  _factory->registerRequest< RequestRefuse >   ("refuse");
+  _factory->registerRequest< RequestHold >     ("hold");
+  _factory->registerRequest< RequestUnhold >   ("unhold");
+  _factory->registerRequest< RequestTransfer > ("transfer");
+  _factory->registerRequest< RequestMute >     ("mute");
+  _factory->registerRequest< RequestUnmute >   ("unmute");
 }
 
 // destructor
 GUIServer::~GUIServer()
 {
+  delete _factory;
 }
 
 int
@@ -48,69 +79,35 @@ GUIServer::exec() {
     
     //Creating a listening socket.
     ost::TCPSocket aServer(addr, 3999);
-    RequestFactory factory;
-    Request *request;
     
     std::cout << "listening on " << aServer.getLocal() << ":" << 3999 << std::endl;
     
-    std::string input; // TCPStream input line
     std::string output; // TCPStream output line
+    Request *request;
+    
     while (std::cin.good()) {
     
       // waiting for a new connection
       std::cout << "waiting for a new connection..." << std::endl;
       
       //I'm accepting an incomming connection
+      sessionIn = new TCPSessionReader(aServer, this);
+      sessionOut = new TCPSessionWriter(aServer, this);
       
-      aServerStream = new ost::TCPStream(aServer);
+      sessionIn->start();
+      sessionOut->start();
       
       // wait for the first message
       std::cout << "accepting connection..." << std::endl;
       
-      *aServerStream << "Welcome to this serveur2" << std::endl;
-      input = "";
       output = "";
-      while(aServerStream->good() && input!="quit") {
-        // lire
-        std::getline(*aServerStream, input);
-        
-        //_eventList.push_back(Event(output));
-        
-        // analyser
-        std::cout << input << ":" << input.length() << std::endl;
-        request = factory.createNewRequest(input);
-        output = request->execute();
+      while(sessionIn->good() && sessionOut->good()) {
+        request = popRequest();
+        output = request->execute(this);
+        pushResponseMessage(output);
         delete request;
-        
-      	//aServerStream->parse();
-        
-        /*
-        if ( output.find("call ") == 0 ) {
-          callid = outgoingCall(output.substr(5,output.size()-5));
-          if ( callid ) {
-            status = "200 OK ";
-            status += callid;
-            status += " Trying status...";
-            displayStatus(status);
-          }
-          
-        } else if ( output.find("hangup ") == 0 ) {
-          //hangup <CSeq/Client> <Call-Id>
-          int i = hangupCall(callid);
-          status = "200 OK ";
-          status += callid;
-          status += " Hangup.";
-          displayStatus(status);
-        }
-        */
-        // repondre
-        *aServerStream << output << std::endl;
       }
-      
-      delete aServerStream;
-      std::cout << "end of connection\n";
     }
-    std::cout << "end of listening" << std::endl;
   }
   catch(ost::Socket *e) {
     std::cerr << e->getErrorString() << std::endl;
@@ -118,6 +115,57 @@ GUIServer::exec() {
 
   return 0;
 }
+
+void 
+GUIServer::pushRequestMessage(const std::string &request)  
+{
+  std::cout << "pushRequestMessage" << std::endl;
+  _mutex.enterMutex();
+  _requests.push_back(_factory->create(request));
+  _mutex.leaveMutex();
+}
+
+Request *
+GUIServer::popRequest() 
+{
+  Request *request = 0;
+  while(!request) {
+    _mutex.enterMutex();
+    if ( _requests.size() ) {
+      request = _requests.front();
+      _requests.pop_front();
+    }
+    _mutex.leaveMutex();
+  }
+  return request;
+}
+
+void 
+GUIServer::pushResponseMessage(const std::string &response) 
+{
+  std::cout << "pushResponseMessage" << std::endl;
+  _mutex.enterMutex();
+  _responses.push_back(response);
+  _mutex.leaveMutex();
+}
+
+std::string 
+GUIServer::popResponseMessage() 
+{
+  bool canPop = false;
+  std::string message;
+  while(!canPop) {
+    _mutex.enterMutex();
+    if ( _responses.size() ) {
+      message = _responses.front();
+      _responses.pop_front();
+      canPop = true;
+    }
+    _mutex.leaveMutex();
+  }
+  return message;
+}
+
 
 int 
 GUIServer::incomingCall (short id) 
@@ -146,74 +194,70 @@ GUIServer::peerHungupCall (short id)
 void  
 GUIServer::displayTextMessage (short id, const std::string& message) 
 {
-  if ( aServerStream ) {
-    *aServerStream << "TEXTMESSAGE " << id << " " << message << std::endl;
-  }
+  std::string requestMessage = "500 seq0 s";
+  requestMessage += id + " text message: " + message;
+  pushRequestMessage(requestMessage);
 }
 
 void  
 GUIServer::displayErrorText (short id, const std::string& message) 
 {
-  if ( aServerStream ) {
-    *aServerStream << "ERRORTEXT " << id << " " << message << std::endl;
-  }
+  std::string requestMessage = "500 seq0 s";
+  requestMessage += id + " error text: " + message;
+  pushRequestMessage(requestMessage);
 }
 
 void  
 GUIServer::displayError (const std::string& error) 
 {
-  if ( aServerStream ) {
-    *aServerStream << "ERROR " << error << std::endl;
-  }
+  std::string requestMessage = "500 seq0 ";
+  requestMessage += error;
+  pushRequestMessage(requestMessage);
 }
 
 void  
 GUIServer::displayStatus (const std::string& status) 
 {
-  if ( aServerStream ) {
-    *aServerStream << status << std::endl;
-  }
+  std::string requestMessage = "500 seq0 ";
+  requestMessage += status;
+  pushRequestMessage(requestMessage);
 }
 
 void  
 GUIServer::displayContext (short id) 
 {
-  if ( aServerStream ) {
-    *aServerStream << "CONTEXT " << id << std::endl;
-  }
+  std::string requestMessage = "500 seq0 s";
+  requestMessage += id + " context";
+  pushRequestMessage(requestMessage);
 }
 
 std::string  
 GUIServer::getRingtoneFile (void) 
 {
-  
 }
 
 void  
 GUIServer::setup (void) 
 {
-  
 }
 
 int  
 GUIServer::selectedCall (void) 
 {
-  
+ 
 }
 
 bool  
 GUIServer::isCurrentId (short) 
 {
-  
 }
 
 void  
-GUIServer::startVoiceMessageNotification (void) {
-  
+GUIServer::startVoiceMessageNotification (void) 
+{
 }
 
 void  
 GUIServer::stopVoiceMessageNotification (void) 
 {
-  
 }

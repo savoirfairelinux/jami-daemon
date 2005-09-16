@@ -21,67 +21,103 @@
 
 #include "../guiframework.h"
 #include <string>
+#include <iostream>
+#include <stdexcept>
 #include <list>
 #include <cc++/socket.h>
+#include <cc++/thread.h>
 #include <map>
 
+class GUIServer;
 class Request 
 {
 public:
-  Request(const std::string &sequenceId) : _sequenceId(sequenceId) {}
+  Request(const std::string &sequenceId, const std::string &arg) : _sequenceId(sequenceId), _arg(arg) {}
   virtual ~Request() {}
-  virtual std::string execute() { return ""; }
-  virtual std::string error(const std::string &code, const std::string &error) 
+  virtual std::string execute(GUIServer *gui) { return ""; }
+  virtual std::string message(const std::string &code, const std::string &message) 
   {
-    std::string returnError = code + " " + _sequenceId + " " + error;
-    return returnError;
+    std::string returnMessage = code + " " + _sequenceId + " " + message;
+    return returnMessage;
   }
 protected:
   std::string _sequenceId;
+  std::string _arg;
 };
 
 
-class RequestCall : public Request
+class RequestGlobalCall : public Request
 {
 public:
-  RequestCall(const std::string &sequenceId, const std::string &arg) : Request(sequenceId), _arg(arg) {}
-  virtual ~RequestCall() {}
-  virtual std::string execute() 
+  RequestGlobalCall(const std::string &sequenceId, const std::string &arg) : Request(sequenceId,arg) {
+    unsigned int spacePos = _arg.find(' ');
+    if (spacePos == std::string::npos) {
+      // only one argument, so it's must be the callid
+      _callid = _arg;
+    } else {
+      _callid = _arg.substr(0, spacePos);
+      _arg = _arg.substr(spacePos+1, _arg.size()-spacePos+1);
+    }
+  }
+  virtual ~RequestGlobalCall() {}
+  virtual std::string execute(GUIServer *gui) 
   {
     std::string returnOK = std::string("200 ") + _sequenceId + " OK";
     return returnOK; 
   }
-  std::string _arg;
+protected:
+  std::string _callid;
 };
 
-class RequestAnswer : public RequestCall {
+class RequestCall : public RequestGlobalCall {
 public:
-  RequestAnswer(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+  RequestCall(const std::string &sequenceId, const std::string &arg) : RequestGlobalCall(sequenceId,arg) {
+    // only one argument, so it's must be the account (that switch is JP fault)
+    _account = _callid;
+    _callid = "";
+    unsigned int spacePos = _arg.find(' ');
+    if (spacePos == std::string::npos) {
+      _callid = _arg;
+    } else {
+      _callid = _arg.substr(0, spacePos);
+      _destination = _arg.substr(spacePos+1, _arg.size()-spacePos+1);
+    }
+  }
+  std::string execute(GUIServer *gui);
+
+private:
+  std::string _destination;
+  std::string _account;
 };
-class RequestRefuse : public RequestCall {
+
+class RequestAnswer : public RequestGlobalCall {
 public:
-  RequestRefuse(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+  RequestAnswer(const std::string &sequenceId, const std::string &arg) : RequestGlobalCall(sequenceId,arg) {}
 };
-class RequestHold : public RequestCall {
+class RequestRefuse : public RequestGlobalCall {
 public:
-  RequestHold(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+  RequestRefuse(const std::string &sequenceId, const std::string &arg) : RequestGlobalCall(sequenceId,arg) {}
 };
-class RequestUnhold : public RequestCall {
+class RequestHold : public RequestGlobalCall {
 public:
-  RequestUnhold(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+  RequestHold(const std::string &sequenceId, const std::string &arg) : RequestGlobalCall(sequenceId,arg) {}
 };
-class RequestTransfer : public RequestCall {
+class RequestUnhold : public RequestGlobalCall {
 public:
-  RequestTransfer(const std::string &sequenceId, const std::string &arg) : RequestCall(sequenceId,arg) {}
+  RequestUnhold(const std::string &sequenceId, const std::string &arg) : RequestGlobalCall(sequenceId,arg) {}
+};
+class RequestTransfer : public RequestGlobalCall {
+public:
+  RequestTransfer(const std::string &sequenceId, const std::string &arg) : RequestGlobalCall(sequenceId,arg) {}
 };
 
 
 class RequestGlobal : public Request
 {
 public:
-  RequestGlobal(const std::string &sequenceId) : Request(sequenceId) {}
+  RequestGlobal(const std::string &sequenceId, const std::string &arg) : Request(sequenceId,arg) {}
   virtual ~RequestGlobal() {}
-  virtual std::string execute() 
+  virtual std::string execute(const GUIServer *gui) 
   {
     std::string returnOK = std::string("200 ") + _sequenceId + " OK";
     return returnOK; 
@@ -90,15 +126,15 @@ public:
 
 class RequestMute : public RequestGlobal {
 public:
-  RequestMute(const std::string &sequenceId) : RequestGlobal(sequenceId) {}
+  RequestMute(const std::string &sequenceId, const std::string &arg) : RequestGlobal(sequenceId,arg) {}
 };
 class RequestUnmute : public RequestGlobal {
 public:
-  RequestUnmute(const std::string &sequenceId) : RequestGlobal(sequenceId) {}
+  RequestUnmute(const std::string &sequenceId, const std::string &arg) : RequestGlobal(sequenceId,arg) {}
 };
 class RequestQuit : public RequestGlobal {
 public:
-  RequestQuit(const std::string &sequenceId) : RequestGlobal(sequenceId) {}
+  RequestQuit(const std::string &sequenceId, const std::string &arg) : RequestGlobal(sequenceId,arg) {}
 };
 
 
@@ -106,23 +142,45 @@ public:
 class RequestSyntaxError : public Request 
 {
 public:
-  RequestSyntaxError(const std::string &sequenceId = "seq0") : Request(sequenceId) {}
+  RequestSyntaxError(const std::string &sequenceId, const std::string &arg) : Request(sequenceId, arg) {}
   ~RequestSyntaxError() {}
   std::string execute() {
-    return error("501", "Syntax Error");
+    return message("501", "Syntax Error");
   }
 };
 
-class RequestFactory 
+class RequestCreatorBase
 {
 public:
-  RequestFactory(){
-  }
-  ~RequestFactory(){
-  }
-  
-  Request* createNewRequest(const std::string &requestLine) 
+  virtual Request *create(const std::string &sequenceId, const std::string &arg) = 0;
+  virtual RequestCreatorBase *clone() = 0;
+};
+
+template< typename T >
+class RequestCreator : public RequestCreatorBase
+{
+public:
+  virtual Request *create(const std::string &sequenceId, const std::string &arg)
   {
+    return new T(sequenceId, arg);
+  }
+
+  virtual RequestCreatorBase *clone()
+  {
+    return new RequestCreator< T >();
+  }
+};
+
+
+class RequestFactory
+{
+public:
+  Request *create(const std::string &requestLine)
+  {
+    std::string requestName;
+    std::string sequenceId="seq0";
+    std::string arguments;
+    
     unsigned int spacePos = requestLine.find(' ');
     // we find a spacePos
     if (spacePos != std::string::npos) {
@@ -135,57 +193,83 @@ public:
       5 for 4  = (spacePos+1 for spacePos2-spacePos-1)
       10 for 5 = (spacePos2+1 for size - spacePos2+1)
       */
-      std::string cmd = requestLine.substr(0, spacePos);
+      requestName = requestLine.substr(0, spacePos);
       
       unsigned int spacePos2 = requestLine.find(' ', spacePos+1);
       if (spacePos2 == std::string::npos) {
         // command that end with a sequence number
-        std::string seq = requestLine.substr(spacePos+1, requestLine.size()-spacePos+1);
-        
-        if (cmd == CMD_MUTE) {
-          return new RequestMute(seq);  
-        } else if (cmd == CMD_UNMUTE) {
-          return new RequestUnmute(seq);  
-        } else if (cmd == CMD_QUIT) {
-          return new RequestQuit(seq);  
-        } else {
-          return new RequestSyntaxError(seq);
-        }
+        sequenceId = requestLine.substr(spacePos+1, requestLine.size()-spacePos+1);
       } else {
-        std::string seq = requestLine.substr(spacePos+1, spacePos2-spacePos-1);
-        std::string arg = requestLine.substr(spacePos2+1, requestLine.size()-spacePos2+1);
-        
-        // command with args
-        if (cmd == CMD_CALL) {
-          return new RequestCall(seq, arg);
-        } else if (cmd == CMD_ANWSER) {
-          return new RequestAnswer(seq, arg);  
-        } else if (cmd == CMD_REFUSE) {
-          return new RequestRefuse(seq, arg);  
-        } else if (cmd == CMD_HOLD) {
-          return new RequestHold(seq, arg);  
-        } else if (cmd == CMD_UNHOLD) {
-          return new RequestUnhold(seq, arg);  
-        } else if (cmd == CMD_TRANSFER) {
-          return new RequestTransfer(seq, arg);  
-        } else {
-          return new RequestSyntaxError(seq);
-        }
+        sequenceId = requestLine.substr(spacePos+1, spacePos2-spacePos-1);
+        arguments = requestLine.substr(spacePos2+1, requestLine.size()-spacePos2+1);
+      }
+    } else {
+      requestName = "syntaxerror";
+    }
+    
+    return create(requestName, sequenceId, arguments);
+  }
+  
+  Request *create(
+    const std::string &requestname, 
+    const std::string &sequenceId, 
+    const std::string &arg)
+  {
+    std::map< std::string, RequestCreatorBase * >::iterator pos = mRequests.find(requestname);
+    if(pos == mRequests.end()) {
+      pos = mRequests.find("syntaxerror");
+      if(pos == mRequests.end()) {
+        throw std::runtime_error("there's no request of that name");
       }
     }
-    std::cout << "RequestLine: " << requestLine << std::endl;
-    return new RequestSyntaxError();
+    
+    return pos->second->create(sequenceId, arg);
   }
-  static const std::string CMD_CALL;
-  static const std::string CMD_ANWSER;
-  static const std::string CMD_REFUSE;
-  static const std::string CMD_HOLD;
-  static const std::string CMD_UNHOLD;
-  static const std::string CMD_TRANSFER;
-  static const std::string CMD_MUTE;
-  static const std::string CMD_UNMUTE;
-  static const std::string CMD_QUIT;
+
+  template< typename T >
+  void registerRequest(const std::string &requestname)
+  {
+    std::map< std::string, RequestCreatorBase * >::iterator pos = 
+      mRequests.find(requestname);
+    if(pos != mRequests.end()) {
+      delete pos->second;
+      mRequests.erase(pos);
+    }
+    
+    mRequests.insert(std::make_pair(requestname, new RequestCreator< T >()));
+  }
+
+ private:
+  std::map< std::string, RequestCreatorBase * > mRequests;
 };
+
+
+class TCPSessionReader : public ost::TCPSession 
+{
+public:
+  TCPSessionReader(ost::TCPSocket &server, GUIServer *gui) : 
+    ost::TCPSession(server), 
+    _gui(gui) {}
+
+  void run();
+      
+private:
+  GUIServer *_gui;
+};
+
+class TCPSessionWriter : public ost::TCPSession 
+{
+public:
+  TCPSessionWriter(ost::TCPSocket &server, GUIServer *gui) : 
+    ost::TCPSession(server), 
+    _gui(gui) {}
+    
+  void run();
+    
+private:
+  GUIServer *_gui;
+};
+  
 
 class GUIServer : public GuiFramework {
 public:
@@ -196,6 +280,10 @@ public:
   
   // exec loop
   int exec(void);
+  void pushRequestMessage(const std::string& request);
+  Request *popRequest(void);
+  void pushResponseMessage(const std::string& response);
+  std::string popResponseMessage(void);
   
   // Reimplementation of virtual functions
 	virtual int incomingCall (short id);
@@ -213,10 +301,16 @@ public:
 	virtual bool isCurrentId (short);
 	virtual void startVoiceMessageNotification (void);
 	virtual void stopVoiceMessageNotification (void);  
-  
+
+  int outgoingCall (const std::string& to) {return GuiFramework::outgoingCall(to);}
+    
 private:
-  ost::TCPStream* aServerStream;
-  std::map<std::string, Request*> _requestMap; 
+  ost::TCPSession* sessionIn;
+  ost::TCPSession* sessionOut;
+  std::list<Request*> _requests; 
+  std::list<std::string> _responses;
+  RequestFactory *_factory;
+  ost::Mutex _mutex;
 };
 
 #endif // __GUI_SERVER_H__
