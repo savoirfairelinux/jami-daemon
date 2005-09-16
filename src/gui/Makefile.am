@@ -1,4 +1,8 @@
-SUBDIRS = qt server 
+if NEWGUI_CODE
+officialdir = official
+endif
+
+SUBDIRS = $(officialdir) qt server
 
 noinst_LTLIBRARIES = libguiframework.la
 

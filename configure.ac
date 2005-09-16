@@ -111,6 +111,22 @@ maintener="no"
 AM_CONDITIONAL(MAINTENER_CODE, test x$maintener = xyes)
 
 
+AC_MSG_CHECKING([whether to enable the new gui])
+AC_ARG_ENABLE(newgui,
+[  --enable-newgui      Enable new gui code [default=no]],
+[
+AC_MSG_RESULT(yes)
+newgui="yes"
+],
+[
+AC_MSG_RESULT(no)
+newgui="no"
+]
+)
+
+AM_CONDITIONAL(NEWGUI_CODE, test x$newgui = xyes)
+
+
 
 if test $ac_cv_header_portaudio_h = no; then
    AC_MSG_ERROR([*** missing portaudio.h. You need a working PortAudio installation. See http://www.portaudio.com])
@@ -179,6 +195,7 @@ src/audio/pacpp/source/Makefile \
 src/audio/pacpp/source/portaudiocpp/Makefile \
 src/gui/Makefile \
 src/gui/qt/Makefile \
+src/gui/official/Makefile \
 src/gui/server/Makefile \
 src/zeroconf/Makefile \
 utilspp/Makefile \

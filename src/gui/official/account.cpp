@@ -20,27 +20,38 @@
 
 #include "account.h"
 #include "requester.h"
+#include "call.h"
 
-Account::Account(const std::string &id)
-  : mId(id)
+Account::Account(const std::string &sessionId,
+		 const std::string &name)
+  : mSessionId(sessionId)
+  , mId(name)
 {}
 
 Call
-Account::createCall()
+Account::call(const std::string &to)
 {
   std::string callId = Requester::instance().generateCallId();
-  return Call(mSessionId, mAccountId, callId);
+  std::list< std::string > args;
+  args.push_back(mId);
+  args.push_back(to);
+  Requester::instance().send(mSessionId, "register", args);
+  return Call(mSessionId, callId);
 }
 
 std::string
-Account::register()
+Account::registerAccount()
 {
-  return Requester::instance().sendAccountRequest(mSessionId, mId, "register");
+  std::list< std::string > args;
+  args.push_back(mId);
+  return Requester::instance().send(mSessionId, "register", args);
 }
 
 std::string
-Account::unregister()
+Account::unregisterAccount()
 {
-  return Requester::instance().sendAccountRequest(mSessionId, mId, "unregister");
+  std::list< std::string > args;
+  args.push_back(mId);
+  return Requester::instance().send(mSessionId, "unregister", args);
 }
 

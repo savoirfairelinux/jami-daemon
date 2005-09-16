@@ -27,15 +27,8 @@ class Call
 {
  public:
   Call(const std::string &sessionId, 
-       const std::string &accountId,
        const std::string &callId);
 
-  /**
-   * This function will try to call the destination.
-   * 
-   */
-  std::string call(const std::string &destination);
-  
   /**
    * This function will answer the call.
    */
@@ -81,19 +74,14 @@ class Call
  private:
   
   /**
-   * This is the unique identifier of the call.
-   */
-  std::string mId;
-
-  /**
    * This is the session id that we belong to.
    */
   std::string mSessionId;
 
   /**
-   * This is the account id that we belong to.
+   * This is the unique identifier of the call.
    */
-  std::string mAccountId;
+  std::string mId;
 };
 
 #endif

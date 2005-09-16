@@ -21,6 +21,9 @@
 #ifndef SFLPHONEGUI_REQUESTERIMPL_H
 #define SFLPHONEGUI_REQUESTERIMPL_H
 
+#include "request.h"
+#include "objectfactory.h"
+
 class Call;
 class SessionIO;
 
@@ -34,26 +37,17 @@ class RequesterImpl
    * This command is non-blocking. The command linked
    * to this command will be executed.
    */
-  void sendCallCommand(const std::string &sessionId,
-		       const std::string &callId, 
-		       const std::string &command);
-  void sendCallCommand(const std::string &sessionId,
-		       const std::string &callId, 
-		       char *command);
+  std::string send(const std::string &sessionId,
+		   const std::string &command,
+		   const std::list< std::string > &args);
 
   static int getCodeCategory(const std::string &code);
 
- private:
   /**
    * Generate a unique call ID. 
    */
   std::string generateCallId();
 
-  /**
-   * Generate a unique account ID.
-   */
-  std::string generateAccountId();
-  
   /**
    * Generate a unique session ID.
    */
@@ -65,49 +59,50 @@ class RequesterImpl
   std::string generateSequenceId();
 
   /**
+   * Register the string to return a Actual type.
+   */
+  template< typename Actual >
+    void registerObject(const std::string &name);
+
+  std::string getSessionIdFromSequenceId(const std::string &sequence)
+    {return mSequenceToSession[sequence];}
+
+ private:
+
+  /**
    * Return the SessionIO instance related to
    * the session ID.
    */
   SessionIO *getSessionIO(const std::string &sessionId);
 
+  /**
+   * Register the session.
+   */
+  void registerSession(const std::string &id, SessionIO *io);
+
+  /**
+   * Register the string to return a Actual type.
+   */
+  void registerRequest(const std::string &sessionId,
+		       const std::string &sequenceId,
+		       Request *request);
+
+
  private:
+  ObjectFactory< Request > mRequestFactory;
   std::map< std::string, SessionIO * > mSessions;
   std::map< std::string, Request * > mRequests;
-
-
-  /**
-   * This map is used to map accounts ids to session ids. 
-   */
-  std::map< std::string, std::string > mAccountToSessionMap;
-
-  /**
-   * This map is used to map call ids to session ids.
-   */
-  std::map< std::string, std::string > mCallToSessionMap;
-
-  /**
-   * This is the list of all accounts in each session.
-   */
-  std::map< std::string, std::list< std::string > > mSessionAccounts;
-
-  /**
-   * This is the list of all calls ids in each accounts.
-   */
-  std::map< std::string, std::list< std::string > > mAccountCalls;
-
-  /**
-   * Those maps are used to create a request from a request
-   * string.
-   */
-  std::map< std::string, * CallRequestCreator > mCallCommandCreators;
-  std::map< std::string, * AccountRequestCreator > mAccountRequestCreators;
-  std::map< std::string, * SessionRequestCreator > mSessionRequestCreators;
-  std::map< std::string, * SessionListRequestCreator > mSessionListRequestCreators;
-
+  std::map< std::string, std::string > mSequenceToSession;
+  
+  
   /**
    * This is the integer used to generate the call IDs.
    */
   unsigned long mCallIdCount;
-}
+  unsigned long mSessionIdCount;
+  unsigned long mSequenceIdCount;
+};
+
+#include "requesterimpl.inl"
 
 #endif

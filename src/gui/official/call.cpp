@@ -18,59 +18,75 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <string>
+#include <list>
 
 #include "call.h"
+#include "requester.h"
 
-std::string
-Call::call(const std::string &destination) 
-{
-  std::list< std::string> args;
-  args.push_back(mAccountId);
-  args.push_back(to);
-  return Requester::instance().sendCallCommand(mSession, mId, "answer", args)
-}
+
+Call::Call(const std::string &sessionId,
+	   const std::string &callId)
+  : mSessionId(sessionId)
+  , mId(callId)
+{}
 
 std::string
 Call::answer() 
 {
-  return Requester::instance().sendCallCommand(mSession, mId, "answer")
+  std::list< std::string> args;
+  args.push_back(mId);
+  return Requester::instance().send(mSessionId, "answer", args);
 }
 
 std::string
 Call::hangup() 
 {
-  return Requester::instance().sendCallCommand(mSession, mId, "hangup")
+  std::list< std::string> args;
+  args.push_back(mId);
+  return Requester::instance().send(mSessionId, "hangup", args);
 }
 
 std::string
 Call::cancel() 
 {
-  return Requester::instance().sendCallCommand(mSession, mId, "cancel")
+  std::list< std::string> args;
+  args.push_back(mId);
+  return Requester::instance().send(mSessionId, "cancel", args);
 }
 
 std::string
 Call::hold() 
 {
-  return Requester::instance().sendCallCommand(mSession, mId, "hold")
+  std::list< std::string> args;
+  args.push_back(mId);
+  return Requester::instance().send(mSessionId, "hold", args);
 }
 
 std::string
 Call::unhold() 
 {
-  return Requester::instance().sendCallCommand(mSession, mId, "unhold")
+  std::list< std::string> args;
+  args.push_back(mId);
+  return Requester::instance().send(mSessionId, "unhold", args);
 }
 
 std::string
 Call::refuse() 
 {
-  return Requester::instance().sendCallCommand(mSession, mId, "refuse")
+  std::list< std::string> args;
+  args.push_back(mId);
+  return Requester::instance().send(mSessionId, "refuse", args);
 }
 
 std::string
 Call::sendDtmf(char c) 
 {
-  std::list< std::string > args;
-  args.push_back(std::string(c));
-  return Requester::instance().sendCallCommand(mSession, mId, "senddtmf", args)
+  std::list< std::string> args;
+  args.push_back(mId);
+  std::string s;
+  s += c;
+  args.push_back(s);
+  return Requester::instance().send(mSessionId, "senddtmf", args);
 }
 

@@ -21,6 +21,11 @@
 #ifndef SFLPHONEGUI_REQUEST_H
 #define SFLPHONEGUI_REQUEST_H
 
+#include <list>
+#include <string>
+
+#include "call.h"
+
 class Request
 {
  public:
@@ -33,14 +38,20 @@ class Request
    * receive its answer, if the request didn't successfully
    * ended.
    */
-  virtual void onError(int code, const std::string &message);
+  virtual void onError(const std::string &code, const std::string &message);
+
+  /**
+   * This function will be called when the request 
+   * receive an answer, but there's other answers to come.
+   */
+  virtual void onEntry(const std::string &code, const std::string &message);
 
   /**
    * This function will be called when the request 
    * receive its answer, if the request successfully
    * ended.
    */
-  virtual void onSuccess(int code, const std::string &message);
+  virtual void onSuccess(const std::string &code, const std::string &message);
 
   /**
    * This function will translate the function into a string.
@@ -51,7 +62,7 @@ class Request
   /**
    * Return the sequence ID.
    */
-  std::string getSequenceID()
+  std::string getSequenceId()
     {return mSequenceId;}
 
   /**
@@ -63,21 +74,21 @@ class Request
   /**
    * Return the args.
    */
-  std::string getArgs()
+  std::list< std::string > getArgs()
     {return mArgs;}
 
 
  private:
   const std::string mSequenceId;
+  const std::string mSessionId;
   const std::string mCommand;
   const std::list< std::string > mArgs;
-}
+};
 
 class CallRequest : public Request
 {
  public:
   CallRequest(const std::string &sequenceId,
-	      const std::string &callId,
 	      const std::string &command,
 	      const std::list< std::string > &args);
 
@@ -87,14 +98,26 @@ class CallRequest : public Request
    * receive its answer, if the request didn't successfully
    * ended. 
    */
-  virtual void onError(Call call, int code, const std::string &message);
+  virtual void onError(Call call, 
+		       const std::string &code, 
+		       const std::string &message);
+
+  /**
+   * This function will be called when the request 
+   * receive an answer, but there's other answers to come.
+   */
+  virtual void onEntry(Call call,
+		       const std::string &code, 
+		       const std::string &message);
 
   /**
    * This function will be called when the request 
    * receive its answer, if the request successfully
    * ended.
    */
-  virtual void onSuccess(Call call, const std::string &message);
+  virtual void onSuccess(Call call, 
+			 const std::string &code,
+			 const std::string &message);
 
  private:
   /**
@@ -103,7 +126,8 @@ class CallRequest : public Request
    * ended. This function will call the onError, but with
    * the call linked to this request.
    */
-  virtual void onError(int code, const std::string &message);
+  virtual void onError(const std::string &code, 
+		       const std::string &message);
 
   /**
    * This function will be called when the request 
@@ -111,11 +135,12 @@ class CallRequest : public Request
    * ended. This function will call the onSuccess function, 
    * but with the call linked to this request.
    */
-  virtual void onSuccess(int code, const std::string &message);
+  virtual void onSuccess(const std::string &code, 
+			 const std::string &message);
 
 
  private:
   const std::string mCallId;
-}
+};
 
 #endif

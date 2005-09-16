@@ -22,10 +22,10 @@
 #define SFLPHONEGUI_OBJECTPOOL_H
 
 #include <string>
-#include <QMutex>
-#include <QWaitCondition>
+#include <qmutex.h>
+#include <qwaitcondition.h>
 
-template< T >
+template< typename T >
 class ObjectPool
 {
  public:

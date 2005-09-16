@@ -29,10 +29,10 @@ RequesterImpl::RequesterImpl()
   , mSequenceIdCount(0)
 {}
 
-SessionImpl *
-getSessionImpl(const std::string &sessionId)
+SessionIO *
+RequesterImpl::getSessionIO(const std::string &sessionId)
 {
-  std::map< std::string, SessionImpl * >::iterator pos = mSessions.find(sessionId);
+  std::map< std::string, SessionIO * >::iterator pos = mSessions.find(sessionId);
   if(pos == mSessions.end()) {
     throw std::runtime_error("The session is not valid.");
   }
@@ -41,17 +41,17 @@ getSessionImpl(const std::string &sessionId)
 }
 
 std::string 
-RequesterImpl::sendCallCommand(const std::string &sessionId,
-			       const std::string &callId, 
-			       const std::string &command)
+RequesterImpl::send(const std::string &sessionId,
+		    const std::string &command,
+		    const std::list< std::string > &args)
 {
   // We retreive the internal of a session.
   SessionIO *session = getSessionIO(sessionId);
 
   // We ask the factory to create the request.
-  Request *request = mCallRequestFactory.create(command, sequenceId, callId)
-
   std::string sequenceId = generateSequenceId();
+  Request *request = mRequestFactory.create(command, sequenceId, args);
+
   registerRequest(sessionId, sequenceId, request);
   s->send(request.toString());
   
@@ -68,6 +68,20 @@ RequesterImpl::registerRequest(const std::string &sessionId,
   }
 
   mRequests.insert(std::make_pair(sequenceId, request));
+  mSequenceToSession.insert(std::make_pair(sequenceId, sessionId));
+}
+
+
+void
+RequesterImpl::registerSession(const std::string &id,
+			       SessionIO *s)
+{
+  if(mSessions.find(id) != mSessions.end()) {
+    throw std::logic_error("Registering an already know Session ID");
+  }
+
+  mSessions.insert(std::make_pair(id, s));
+  s->start();
 }
 
 void

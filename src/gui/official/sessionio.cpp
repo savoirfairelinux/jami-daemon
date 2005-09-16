@@ -57,7 +57,7 @@ SessionIO::~SessionIO()
 }
 
 void
-SessionIO::run()
+SessionIO::start()
 {
   stop();
   //just protecting the mutex

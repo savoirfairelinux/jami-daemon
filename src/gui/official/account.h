@@ -27,14 +27,19 @@ class Call;
 
 class Account {
  public:
+  Account(const std::string &sessionId,
+	  const std::string &name);
+
   /**
    * This will generate a call ready to be used.
    */
   Call call(const std::string &to);
-  std::string register();
-  std::string unregister();
+  std::string registerAccount();
+  std::string unregisterAccount();
 
  private:  
+  Account();
+
   /**
    * This is the session id that we are related to.
    */

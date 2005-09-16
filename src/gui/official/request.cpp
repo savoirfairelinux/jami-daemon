@@ -18,7 +18,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <sstream>
+
 #include "request.h"
+#include "requester.h"
 
 Request::Request(const std::string &sequenceId,
 		 const std::string &command,
@@ -29,19 +32,19 @@ Request::Request(const std::string &sequenceId,
 {}
 
 void
-Request::onError(int code, const std::string &message)
+Request::onError(const std::string &, const std::string &)
 {}
 
 void
-Request::onSuccess(int code, const std::string &message)
+Request::onSuccess(const std::string &, const std::string &)
 {}
 
 std::string
 Request::toString()
 {
-  std::ostream id;
+  std::ostringstream id;
   id << mCommand << mSequenceId;
-  for(std::list< std::string >::iterator pos = mArgs.begin();
+  for(std::list< std::string >::const_iterator pos = mArgs.begin();
       pos != mArgs.end();
       pos++) {
     id << " " << (*pos);
@@ -52,30 +55,35 @@ Request::toString()
 
 
 CallRequest::CallRequest(const std::string &sequenceId,
-			 const std::string &callId,
 			 const std::string &command,
 			 const std::list< std::string > &args)
   : Request(sequenceId, command, args)
-  , mCallId(callId)
+  , mCallId(*args.begin())
 {}
 
 void
-CallRequest::onError(int code, const std::string &message)
+CallRequest::onError(const std::string &code, const std::string &message)
 {
-  onError(Call(mCallId), code, message);
+  onError(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
+	       mCallId), 
+	  code, 
+	  message);
 }
 
 void
-CallRequest::onError(Call call, int code, const std::string &message)
+CallRequest::onError(Call , const std::string &, const std::string &)
 {}
 
 void
-CallRequest::onSuccess(int code, const std::string &message)
+CallRequest::onSuccess(const std::string &code, const std::string &message)
 {
-  onSuccess(Call(mCallId), code, message);
+  onSuccess(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
+		 mCallId), 
+	    code, 
+	    message);
 }
 
 void
-CallRequest::onSuccess(Call call, int code, const std::string &message)
+CallRequest::onSuccess(Call, const std::string &, const std::string &)
 {}
 

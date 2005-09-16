@@ -23,7 +23,7 @@
 
 #include <string>
 #include <iostream>
-#include <cc++/thread.h>
+#include <qthread.h>
 
 #include "objectpool.h"
 
@@ -46,7 +46,7 @@ class SessionIO
    * This is the function that will start the threads
    * that will handle the streams.
    */
-  void run();
+  void start();
 
   /**
    * This function will stop the streaming
