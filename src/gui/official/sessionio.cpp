@@ -19,6 +19,7 @@
  */
 
 #include "global.h"
+#include "requester.h"
 #include "sessionio.h"
 
 InputStreamer::InputStreamer(SessionIO *sessionIO)
@@ -33,6 +34,7 @@ InputStreamer::run()
   }
 
   _debug("The Session input is down.\n");
+  Requester::instance().inputIsDown(mSessionIO->id);
 }
 
 OutputStreamer::OutputStreamer(SessionIO *sessionIO)
@@ -49,8 +51,11 @@ OutputStreamer::run()
   _debug("The Session output is down.\n");
 }
 
-SessionIO::SessionIO(std::istream *input, std::ostream *output)
-  : mIsUp(false)
+SessionIO::SessionIO(const std::string &sessionId, 
+		     std::istream *input, 
+		     std::ostream *output)
+  : id(sessionId)
+  , mIsUp(false)
   , mInput(input)
   , mOutput(output)
   , mInputStreamer(this)
@@ -60,6 +65,7 @@ SessionIO::SessionIO(std::istream *input, std::ostream *output)
 SessionIO::~SessionIO()
 {
   stop();
+  waitStop();
 }
 
 bool
@@ -75,6 +81,7 @@ void
 SessionIO::start()
 {
   stop();
+  waitStop();
   //just protecting the mutex
   {
     QMutexLocker guard(&mMutex);
@@ -90,7 +97,11 @@ SessionIO::stop()
   mMutex.lock();
   mIsUp = false;
   mMutex.unlock();
+}
 
+void
+SessionIO::waitStop() 
+{
   mInputStreamer.wait();
   mOutputStreamer.wait();
 }
@@ -104,7 +115,7 @@ SessionIO::send(const std::string &request)
 void 
 SessionIO::receive(std::string &answer)
 {
-  answer = mInputPool.pop();
+  mInputPool.pop(answer);
 }
 
 void
@@ -116,8 +127,11 @@ SessionIO::send()
     mMutex.unlock();
   }
   else {
-    (*mOutput) << mOutputPool.pop();
-    mOutput->flush();
+    std::string output;
+    if(mOutputPool.pop(output, 100)) {
+      (*mOutput) << output;
+      mOutput->flush();
+    }
   }
 }
 

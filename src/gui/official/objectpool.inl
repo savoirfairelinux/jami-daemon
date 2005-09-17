@@ -31,17 +31,21 @@ ObjectPool< T >::push(const T &value)
 }
 
 template< typename T >
-T
-ObjectPool< T >::pop()
+bool
+ObjectPool< T >::pop(T &value, unsigned long time)
 {
   QMutexLocker guard(&mMutex);
-  while(mPool.begin() == mPool.end()) {
-    mDataAvailable.wait(guard.mutex());
-  }
+  mDataAvailable.wait(guard.mutex(), time);
   
-  typename std::list< T >::iterator pos = mPool.begin();
-  mPool.pop_front();
-  return (*pos);
+  if(mPool.begin() == mPool.end()) {
+    return false;
+  }
+  else {
+    typename std::list< T >::iterator pos = mPool.begin();
+    mPool.pop_front();
+    value = (*pos);
+    return true;
+  }
 }
 
 #endif

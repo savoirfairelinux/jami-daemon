@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <sstream>
 
+#include "global.h"
 #include "requesterimpl.h"
 #include "sessionio.h"
 #include "answerreceiver.h"
@@ -171,3 +172,21 @@ RequesterImpl::generateSequenceId()
   return id.str();
 }
 
+void
+RequesterImpl::inputIsDown(const std::string &sessionId)
+{
+  std::map< std::string, SessionIO * >::iterator pos;
+  pos = mSessions.find(sessionId);
+  if(pos == mSessions.end()) {
+    // we will not thow an exception, but this is 
+    // a logic error
+    _debug("SessionIO input for session %s is down, but we don't have that session.\n",
+	   sessionId.c_str());
+  }
+  else {
+    // If we no longer can receive, it means it's 
+    // not possible to receive answer for new requests,
+    // so we close the session.
+    pos->second->stop();
+  }
+}

@@ -68,7 +68,6 @@ class OutputStreamer : public QThread
   SessionIO *mSessionIO;
 };
 
-
 /**
  * This is the main class that will handle 
  * the IO.
@@ -82,7 +81,9 @@ class SessionIO
   /**
    * Those streams will be the streams read or write to.
    */
-  SessionIO(std::istream *input, std::ostream *output);
+  SessionIO(const std::string &id, 
+	    std::istream *input, 
+	    std::ostream *output);
   ~SessionIO();
 
   /**
@@ -93,9 +94,17 @@ class SessionIO
 
   /**
    * This function will stop the streaming
-   * processing.
+   * processing. On return, the service 
+   * might not be completly down. You need
+   * to use waitStop if you want to be sure.
    */
   void stop();
+
+  /**
+   * This function will wait until the 
+   * service is really down.
+   */
+  void waitStop();
 
   /**
    * You can use this function for sending request.
@@ -128,6 +137,9 @@ class SessionIO
    */
   void receive();
 
+ public:
+  const std::string id;
+  
  private:
   QMutex mMutex;
   bool mIsUp;

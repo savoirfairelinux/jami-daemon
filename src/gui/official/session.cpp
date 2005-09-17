@@ -32,7 +32,7 @@ Session::Session(const std::string &id)
 Session::Session()
 {
   mId = Requester::instance().generateSessionId();
-  SessionIO *s = new SessionIO(&std::cin, &std::cout);
+  SessionIO *s = new SessionIO(mId, &std::cin, &std::cout);
   Requester::instance().registerSession(mId, s);
 }
 

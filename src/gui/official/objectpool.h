@@ -38,7 +38,7 @@ class ObjectPool
   /**
    * This function will wait for an available line.
    */
-  T pop();
+  bool pop(T &value, unsigned long time = ULONG_MAX);
 
  private:
   std::list< T > mPool;

@@ -79,6 +79,24 @@ class RequesterImpl
    */
   void registerSession(const std::string &id, SessionIO *io);
 
+  /**
+   * This function is used to notify that the SessionIO
+   * input of a session is down. It means that we no longer
+   * can receive answers. 
+   *
+   * Note: Only SessionIO related classes should call this function.
+   */
+  void inputIsDown(const std::string &sessionId);
+
+  /**
+   * This function is used to notify that the SessionIO
+   * output of a session is down. It means that we no longer
+   * can send requests.
+   *
+   * Note: Only SessionIO related classes should call this function.
+   */
+  void outputIsDown(const std::string &sessionId);
+
  private:
 
   /**
