@@ -13,7 +13,7 @@ CLEANFILES = \
 test_LDFLAGS = $(QT_LDFLAGS) $(X_LDFLAGS) -static
 test_LDADD =  ../../../utilspp/libutilspp.la -lpthread $(LIBQT)
 KDE_CXXFLAGS = $(USE_EXCEPTIONS)
-AM_CPPFLAGS = $(QT_INCLUDES) $(X_INCLUDES) -I$(top_srcdir)
+AM_CPPFLAGS = $(QT_INCLUDES) $(X_INCLUDES) -I$(top_srcdir)/src
 
 
 

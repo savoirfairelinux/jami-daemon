@@ -20,6 +20,7 @@
 
 #include <sstream>
 
+#include "global.h"
 #include "request.h"
 #include "requester.h"
 
@@ -32,16 +33,31 @@ Request::Request(const std::string &sequenceId,
 {}
 
 void
-Request::onError(const std::string &, const std::string &)
-{}
+Request::onError(const std::string &code, const std::string &message)
+{
+  _debug("Received an error:\n  Code: %s\n  SequenceID: %s\n  Message%s\n", 
+	 code.c_str(),
+	 mSequenceId.c_str(),
+	 message.c_str());
+}
 
 void
-Request::onEntry(const std::string &, const std::string &)
-{}
+Request::onEntry(const std::string &code, const std::string &message)
+{
+  _debug("Received a temp info:\n  Code: %s\n  SequenceID: %s\n  Message%s\n", 
+	 code.c_str(),
+	 mSequenceId.c_str(),
+	 message.c_str());
+}
 
 void
-Request::onSuccess(const std::string &, const std::string &)
-{}
+Request::onSuccess(const std::string &code, const std::string &message)
+{
+  _debug("Received a success:\n  Code: %s\n  SequenceID: %s\n  Message%s\n", 
+	 code.c_str(),
+	 mSequenceId.c_str(),
+	 message.c_str());
+}
 
 std::string
 Request::toString()

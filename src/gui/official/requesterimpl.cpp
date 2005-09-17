@@ -30,7 +30,7 @@ RequesterImpl::RequesterImpl()
   , mSessionIdCount(0)
   , mSequenceIdCount(0)
 {
-  registerObject< AccountRequest >(std::string("register"));
+  registerObject< Request >(std::string("register"));
 }
 
 SessionIO *

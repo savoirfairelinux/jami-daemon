@@ -18,6 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "global.h"
 #include "sessionio.h"
 
 InputStreamer::InputStreamer(SessionIO *sessionIO)
@@ -30,6 +31,8 @@ InputStreamer::run()
   while(mSessionIO->isUp()) {
     mSessionIO->receive();
   }
+
+  _debug("The Session input is down.\n");
 }
 
 OutputStreamer::OutputStreamer(SessionIO *sessionIO)
@@ -42,6 +45,8 @@ OutputStreamer::run()
   while(mSessionIO->isUp()) {
     mSessionIO->send();
   }
+
+  _debug("The Session output is down.\n");
 }
 
 SessionIO::SessionIO(std::istream *input, std::ostream *output)
@@ -105,16 +110,32 @@ SessionIO::receive(std::string &answer)
 void
 SessionIO::send()
 {
-  (*mOutput) << mOutputPool.pop();
-  mOutput->flush();
+  if(!mOutput->good()) {
+    mMutex.lock();
+    mIsUp = false;
+    mMutex.unlock();
+  }
+  else {
+    (*mOutput) << mOutputPool.pop();
+    mOutput->flush();
+  }
 }
 
 void
 SessionIO::receive()
 {
-  std::string s;
-  std::getline(*mInput, s);
-  mInputPool.push(s);
+  if(!mInput->good()) {
+    mMutex.lock();
+    mIsUp = false;
+    mMutex.unlock();
+  }
+  else {
+    std::string s;
+    std::getline(*mInput, s);
+    if(s.size() > 0) {
+      mInputPool.push(s);
+    }
+  }
 }
 
 
