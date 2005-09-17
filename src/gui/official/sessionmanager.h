@@ -18,28 +18,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <iostream>
-#include <stdexcept>
-#include <string>
+#ifndef SFLPHONEGUI_SESSIONMANAGER_H
+#define SFLPHONEGUI_SESSIONMANAGER_H
 
-#include "session.h"
+#include <qthread.h>
 
-int main(int, char **)
-{
-  try {
-    while(std::cin.good()) {
-      std::string line;
-      std::getline(&std::cin, line);
-    Session session;
-    Account account = session.getAccount("patate");
-    account.registerAccount();
-    while(1) {
-      sleep(2);
-    }
-  }
-  catch(std::exception &e) {
-    std::cerr << e.what() << std::endl;
-  }
 
-  return 0;
-}
+
+
+#endif
