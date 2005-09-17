@@ -23,12 +23,15 @@
 
 #include "requesterimpl.h"
 #include "sessionio.h"
+#include "answerreceiver.h"
 
 RequesterImpl::RequesterImpl()
   : mCallIdCount(0)
   , mSessionIdCount(0)
   , mSequenceIdCount(0)
-{}
+{
+  registerObject< AccountRequest >(std::string("register"));
+}
 
 SessionIO *
 RequesterImpl::getSessionIO(const std::string &sessionId)
@@ -81,8 +84,11 @@ RequesterImpl::registerSession(const std::string &id,
     throw std::logic_error("Registering an already know Session ID");
   }
 
+  AnswerReceiver *a = new AnswerReceiver(this, s);
+  mAnswerReceivers.insert(std::make_pair(id, a));
   mSessions.insert(std::make_pair(id, s));
   s->start();
+  a->start();
 }
 
 int

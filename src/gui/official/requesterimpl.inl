@@ -18,36 +18,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_OBJECTPOOL_H
-#define SFLPHONEGUI_OBJECTPOOL_H
 
-#include <list>
-#include <string>
-#include <qmutex.h>
-#include <qwaitcondition.h>
+#ifndef SFLPHONEGUI_REQUESTERIMPL_INL
+#define SFLPHONEGUI_REQUESTERIMPL_INL
 
-template< typename T >
-class ObjectPool
+template< typename Actual >
+void 
+RequesterImpl::registerObject(const std::string &name)
 {
- public:
-  /**
-   * This function will push a line in the pool.
-   */
-  void push(const T &line);
+  mRequestFactory.registerObject< Actual >(name);
+}
 
-  /**
-   * This function will wait for an available line.
-   */
-  T pop();
-
- private:
-  std::list< T > mPool;
-  
-  QMutex mMutex;
-  QWaitCondition mDataAvailable;
-};
-
-#include "objectpool.inl"
 
 #endif
-

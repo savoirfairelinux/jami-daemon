@@ -37,7 +37,6 @@ class InputStreamer : public QThread
 {
  public:
   InputStreamer(SessionIO *sessionIO);
-  ~InputStreamer();
 
   /**
    * This is the main processing function.

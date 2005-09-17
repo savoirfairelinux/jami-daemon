@@ -18,36 +18,33 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_OBJECTPOOL_H
-#define SFLPHONEGUI_OBJECTPOOL_H
+#ifndef SFLPHONEGUI_ANSWERRECIVER_H
+#define SFLPHONEGUI_ANSWERRECIVER_H
 
-#include <list>
-#include <string>
-#include <qmutex.h>
-#include <qwaitcondition.h>
+#include <qthread.h>
 
-template< typename T >
-class ObjectPool
+class RequesterImpl;
+class SessionIO;
+
+/**
+ * This class is the thread that will read
+ * from the SessionIO.
+ */
+class AnswerReceiver : public QThread
 {
  public:
-  /**
-   * This function will push a line in the pool.
-   */
-  void push(const T &line);
+  AnswerReceiver(RequesterImpl *requester,
+		 SessionIO *session);
 
   /**
-   * This function will wait for an available line.
+   * This is the main processing function.
    */
-  T pop();
+  virtual void run();
+
 
  private:
-  std::list< T > mPool;
-  
-  QMutex mMutex;
-  QWaitCondition mDataAvailable;
+  RequesterImpl *mRequester;
+  SessionIO *mSession;
 };
 
-#include "objectpool.inl"
-
 #endif
-

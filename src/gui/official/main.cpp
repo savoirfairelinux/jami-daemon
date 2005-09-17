@@ -18,36 +18,25 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_OBJECTPOOL_H
-#define SFLPHONEGUI_OBJECTPOOL_H
+#include <iostream>
+#include <stdexcept>
+#include <unistd.h>
 
-#include <list>
-#include <string>
-#include <qmutex.h>
-#include <qwaitcondition.h>
+#include "session.h"
 
-template< typename T >
-class ObjectPool
+int main(int, char **)
 {
- public:
-  /**
-   * This function will push a line in the pool.
-   */
-  void push(const T &line);
+  try {
+    Session session;
+    Account account = session.getAccount("patate");
+    account.registerAccount();
+    while(1) {
+      sleep(2);
+    }
+  }
+  catch(std::exception &e) {
+    std::cerr << e.what() << std::endl;
+  }
 
-  /**
-   * This function will wait for an available line.
-   */
-  T pop();
-
- private:
-  std::list< T > mPool;
-  
-  QMutex mMutex;
-  QWaitCondition mDataAvailable;
-};
-
-#include "objectpool.inl"
-
-#endif
-
+  return 0;
+}

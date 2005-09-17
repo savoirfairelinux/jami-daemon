@@ -47,12 +47,13 @@ std::string
 Request::toString()
 {
   std::ostringstream id;
-  id << mCommand << mSequenceId;
+  id << mCommand << " " << mSequenceId;
   for(std::list< std::string >::const_iterator pos = mArgs.begin();
       pos != mArgs.end();
       pos++) {
     id << " " << (*pos);
   }
+  id << std::endl;
 
   return id.str();
 }
@@ -102,5 +103,51 @@ CallRequest::onSuccess(const std::string &code, const std::string &message)
 
 void
 CallRequest::onSuccess(Call, const std::string &, const std::string &)
+{}
+
+AccountRequest::AccountRequest(const std::string &sequenceId,
+			 const std::string &command,
+			 const std::list< std::string > &args)
+  : Request(sequenceId, command, args)
+  , mAccountId(*args.begin())
+{}
+
+void
+AccountRequest::onError(const std::string &code, const std::string &message)
+{
+  onError(Account(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
+	       mAccountId), 
+	  code, 
+	  message);
+}
+
+void
+AccountRequest::onError(Account, const std::string &, const std::string &)
+{}
+
+void
+AccountRequest::onEntry(const std::string &code, const std::string &message)
+{
+  onEntry(Account(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
+	       mAccountId), 
+	  code, 
+	  message);
+}
+
+void
+AccountRequest::onEntry(Account, const std::string &, const std::string &)
+{}
+
+void
+AccountRequest::onSuccess(const std::string &code, const std::string &message)
+{
+  onSuccess(Account(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
+		 mAccountId), 
+	    code, 
+	    message);
+}
+
+void
+AccountRequest::onSuccess(Account, const std::string &, const std::string &)
 {}
 

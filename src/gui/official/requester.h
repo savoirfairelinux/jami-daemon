@@ -1,7 +1,7 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
- *  Author: Jean-Philippe Barrette-LaPierre
- *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
+ *  Author : Jean-Philippe Barrette-LaPierre 
+ *              <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,39 +15,16 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_OBJECTPOOL_H
-#define SFLPHONEGUI_OBJECTPOOL_H
+#ifndef SFLPHONEGUI_REQUESTER_H
+#define SFLPHONEGUI_REQUESTER_H
 
-#include <list>
-#include <string>
-#include <qmutex.h>
-#include <qwaitcondition.h>
+#include "utilspp/Singleton.hpp"
+#include "requesterimpl.h"
 
-template< typename T >
-class ObjectPool
-{
- public:
-  /**
-   * This function will push a line in the pool.
-   */
-  void push(const T &line);
-
-  /**
-   * This function will wait for an available line.
-   */
-  T pop();
-
- private:
-  std::list< T > mPool;
-  
-  QMutex mMutex;
-  QWaitCondition mDataAvailable;
-};
-
-#include "objectpool.inl"
+typedef utilspp::SingletonHolder< RequesterImpl > Requester;
 
 #endif
 

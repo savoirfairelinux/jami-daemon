@@ -24,6 +24,8 @@
 #include <list>
 #include <string>
 
+
+#include "account.h"
 #include "call.h"
 
 class Request
@@ -149,6 +151,73 @@ class CallRequest : public Request
 
  private:
   const std::string mCallId;
+};
+
+class AccountRequest : public Request
+{
+ public:
+  AccountRequest(const std::string &sequenceId,
+		 const std::string &command,
+		 const std::list< std::string > &args);
+
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request didn't successfully
+   * ended. 
+   */
+  virtual void onError(Account account, 
+		       const std::string &code, 
+		       const std::string &message);
+
+  /**
+   * This function will be called when the request 
+   * receive an answer, but there's other answers to come.
+   */
+  virtual void onEntry(Account account,
+		       const std::string &code, 
+		       const std::string &message);
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request successfully
+   * ended.
+   */
+  virtual void onSuccess(Account account, 
+			 const std::string &code,
+			 const std::string &message);
+
+ private:
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request didn't successfully
+   * ended. This function will call the onError, but with
+   * the account linked to this request.
+   */
+  virtual void onError(const std::string &code, 
+		       const std::string &message);
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the there's other answer to 
+   * come. This function will call the onEntry, but with
+   * the account linked to this request.
+   */
+  virtual void onEntry(const std::string &code, 
+		       const std::string &message);
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request successfully
+   * ended. This function will call the onSuccess function, 
+   * but with the account linked to this request.
+   */
+  virtual void onSuccess(const std::string &code, 
+			 const std::string &message);
+
+
+ private:
+  const std::string mAccountId;
 };
 
 #endif

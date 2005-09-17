@@ -18,36 +18,30 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_OBJECTPOOL_H
-#define SFLPHONEGUI_OBJECTPOOL_H
-
-#include <list>
-#include <string>
-#include <qmutex.h>
-#include <qwaitcondition.h>
+#ifndef SFLPHONEGUI_OBJECTPOOL_INL
+#define SFLPHONEGUI_OBJECTPOOL_INL
 
 template< typename T >
-class ObjectPool
+void
+ObjectPool< T >::push(const T &value)
 {
- public:
-  /**
-   * This function will push a line in the pool.
-   */
-  void push(const T &line);
+  QMutexLocker guard(&mMutex);
+  mPool.push_back(value);
+  mDataAvailable.wakeOne();
+}
 
-  /**
-   * This function will wait for an available line.
-   */
-  T pop();
-
- private:
-  std::list< T > mPool;
+template< typename T >
+T
+ObjectPool< T >::pop()
+{
+  QMutexLocker guard(&mMutex);
+  while(mPool.begin() == mPool.end()) {
+    mDataAvailable.wait(guard.mutex());
+  }
   
-  QMutex mMutex;
-  QWaitCondition mDataAvailable;
-};
-
-#include "objectpool.inl"
+  typename std::list< T >::iterator pos = mPool.begin();
+  mPool.pop_front();
+  return (*pos);
+}
 
 #endif
-
