@@ -84,6 +84,6 @@ VolumeControl::mousePressEvent (QMouseEvent *e) {
 	mouse_y = e->y();
 }
 
-#include "volumecontrolmoc.cpp"
+#include "moc_volumecontrol.cpp"
 
 // EOF

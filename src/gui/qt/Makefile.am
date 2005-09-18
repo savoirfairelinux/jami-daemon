@@ -3,16 +3,16 @@ noinst_LTLIBRARIES = libsflphoneqt.la
 BUILT_SOURCES = \
 	configurationpanel.h\
 	configurationpanelui.cpp\
-	configurationpanelmoc.cpp\
+	moc_configurationpanel.cpp\
 	url_input.h \
 	url_inputui.cpp \
-	url_inputmoc.cpp \
-	jpushbuttonmoc.cpp \
-	trayiconmoc.cpp\
-	volumecontrolmoc.cpp\
-	numerickeypadmoc.cpp \
-	mydisplaymoc.cpp \
-	qtGUImainwindowmoc.cpp
+	moc_url_input.cpp \
+	moc_jpushbutton.cpp \
+	moc_trayicon.cpp\
+	moc_volumecontrol.cpp\
+	moc_numerickeypad.cpp \
+	moc_mydisplay.cpp \
+	moc_qtGUImainwindow.cpp
 
 libsflphoneqt_la_SOURCES = \
 	$(BUILT_SOURCES) \

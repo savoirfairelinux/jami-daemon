@@ -493,5 +493,5 @@ MyDisplay::shift (void)
 	_mutex.leaveMutex();
 }
 
-#include "mydisplaymoc.cpp"
+#include "moc_mydisplay.cpp"
 // EOF
