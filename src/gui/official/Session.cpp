@@ -18,12 +18,26 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_SESSIONMANAGER_H
-#define SFLPHONEGUI_SESSIONMANAGER_H
+#include <iostream>
 
-#include <qthread.h>
+#include "Session.hpp"
+#include "Requester.hpp"
+#include "SessionIO.hpp"
 
 
+Session::Session(const std::string &id)
+  : mId(id)
+{}
 
+Session::Session()
+{
+  mId = Requester::instance().generateSessionId();
+  SessionIO *s = new SessionIO(mId, &std::cin, &std::cout);
+  Requester::instance().registerSession(mId, s);
+}
 
-#endif
+Account
+Session::getAccount(const std::string &name)
+{
+  return Account(mId, name);
+}

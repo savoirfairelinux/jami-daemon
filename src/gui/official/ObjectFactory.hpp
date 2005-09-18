@@ -32,7 +32,7 @@
 template< typename Base >
 class ObjectCreatorBase
 {
-public:
+ public:
   virtual Base *create(const std::string &command,
 		       const std::string &sequenceId,
 		       const std::list< std::string > &args) = 0;
@@ -45,9 +45,9 @@ public:
  * the request. It will return a Request 
  */
 template< typename Base, typename Actual >
-class ObjectCreator : public ObjectCreatorBase< Base >
+  class ObjectCreator : public ObjectCreatorBase< Base >
 {
-public:
+ public:
   virtual Actual *create(const std::string &command,
 			 const std::string &sequenceId,
 			 const std::list< std::string > &args);
@@ -76,13 +76,12 @@ public:
    * Register the string to return a Actual type.
    */
   template< typename Actual >
-  void registerObject(const std::string &name);
+    void registerObject(const std::string &name);
   
-private:
+ private:
   std::map< std::string, ObjectCreatorBase< Base > * > mObjectCreators;
-  typedef std::map< std::string, ObjectCreatorBase< Base > * >::iterator iterator;
 };
 
-#include "objectfactory.inl"
+#include "ObjectFactory.inl"
 
 #endif

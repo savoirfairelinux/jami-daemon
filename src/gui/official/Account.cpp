@@ -18,9 +18,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "account.h"
-#include "requester.h"
-#include "call.h"
+#include "Account.hpp"
+#include "Requester.hpp"
+#include "Call.hpp"
 
 Account::Account(const std::string &sessionId,
 		 const std::string &name)

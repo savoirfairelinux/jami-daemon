@@ -22,9 +22,9 @@
 #include <sstream>
 
 #include "global.h"
-#include "requesterimpl.h"
-#include "sessionio.h"
-#include "answerreceiver.h"
+#include "RequesterImpl.hpp"
+#include "SessionIO.hpp"
+#include "AnswerReceiver.hpp"
 
 RequesterImpl::RequesterImpl()
   : mCallIdCount(0)

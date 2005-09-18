@@ -1,7 +1,7 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
- *  Author: Jean-Philippe Barrette-LaPierre
- *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
+ *  Author : Jean-Philippe Barrette-LaPierre 
+ *              <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,29 +15,16 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <iostream>
+#ifndef SFLPHONEGUI_REQUESTER_H
+#define SFLPHONEGUI_REQUESTER_H
 
-#include "session.h"
-#include "requester.h"
-#include "sessionio.h"
+#include "utilspp/Singleton.hpp"
+#include "RequesterImpl.hpp"
 
+typedef utilspp::SingletonHolder< RequesterImpl > Requester;
 
-Session::Session(const std::string &id)
-  : mId(id)
-{}
+#endif
 
-Session::Session()
-{
-  mId = Requester::instance().generateSessionId();
-  SessionIO *s = new SessionIO(mId, &std::cin, &std::cout);
-  Requester::instance().registerSession(mId, s);
-}
-
-Account
-Session::getAccount(const std::string &name)
-{
-  return Account(mId, name);
-}

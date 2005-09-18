@@ -25,7 +25,7 @@
 #include <iostream>
 #include <qthread.h>
 
-#include "objectpool.h"
+#include "ObjectPool.hpp"
 
 class SessionIO;
 

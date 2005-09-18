@@ -21,8 +21,8 @@
 #include <sstream>
 
 #include "global.h"
-#include "request.h"
-#include "requester.h"
+#include "Request.hpp"
+#include "Requester.hpp"
 
 Request::Request(const std::string &sequenceId,
 		 const std::string &command,

@@ -21,8 +21,8 @@
 #include <string>
 #include <list>
 
-#include "call.h"
-#include "requester.h"
+#include "Call.hpp"
+#include "Requester.hpp"
 
 
 Call::Call(const std::string &sessionId,

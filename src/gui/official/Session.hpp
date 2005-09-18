@@ -18,20 +18,26 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_CALLREQUESTFACTORY_H
-#define SFLPHONEGUI_CALLREQUESTFACTORY_H
+#ifndef SFLPHONEGUI_SESSION_H
+#define SFLPHONEGUI_SESSION_H
 
-#include <map>
+#include <string>
 
+#include "Account.hpp"
 
-class CallRequestFactory
+class Session
 {
  public:
-  CallRequest *create(const std::string &command
+  Session();
+  Session(const std::string &id);
+  
+  /**
+   * retreive the account identified by name.
+   */
+  Account getAccount(const std::string &name);
 
  private:
-  std::map< std::string, CallRequestCreatorBase > mCreators;
-}
+  std::string mId;
+};
 
-#endif 
-
+#endif

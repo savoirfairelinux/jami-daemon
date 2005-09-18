@@ -14,14 +14,14 @@ BUILT_SOURCESsss = \
 	qtGUImainwindowmoc.cpp
 
 servertest_SOURCES = \
-	account.cpp \
-	answerreceiver.cpp \
-	call.cpp \
+	Account.cpp \
+	AnswerReceiver.cpp \
+	Call.cpp \
 	main.cpp \
-	request.cpp \
-	requesterimpl.cpp \
-	session.cpp \
-	sessionio.cpp
+	Request.cpp \
+	RequesterImpl.cpp \
+	Session.cpp \
+	SessionIO.cpp
 
 SOURCES_GUI = \
 	$(BUILT_SOURCES) \

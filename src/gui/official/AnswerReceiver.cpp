@@ -18,26 +18,24 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_SESSION_H
-#define SFLPHONEGUI_SESSION_H
-
 #include <string>
 
-#include "account.h"
+#include "AnswerReceiver.hpp"
+#include "RequesterImpl.hpp"
+#include "SessionIO.hpp"
 
-class Session
+AnswerReceiver::AnswerReceiver(RequesterImpl *requester,
+			       SessionIO *session)
+  : mRequester(requester)
+  , mSession(session)
+{}
+
+void 
+AnswerReceiver::run()
 {
- public:
-  Session();
-  Session(const std::string &id);
-  
-  /**
-   * retreive the account identified by name.
-   */
-  Account getAccount(const std::string &name);
-
- private:
-  std::string mId;
-};
-
-#endif
+  std::string answer;
+  while(mSession->isUp()) {
+    mSession->receive(answer);
+    mRequester->receiveAnswer(answer);
+  }
+}

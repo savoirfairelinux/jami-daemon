@@ -22,7 +22,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "session.h"
+#include "Session.hpp"
 
 int main(int, char **)
 {

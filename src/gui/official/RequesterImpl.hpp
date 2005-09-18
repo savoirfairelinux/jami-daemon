@@ -21,8 +21,8 @@
 #ifndef SFLPHONEGUI_REQUESTERIMPL_H
 #define SFLPHONEGUI_REQUESTERIMPL_H
 
-#include "request.h"
-#include "objectfactory.h"
+#include "Request.hpp"
+#include "ObjectFactory.hpp"
 
 class AnswerReceiver;
 class Call;
@@ -129,6 +129,6 @@ class RequesterImpl
   unsigned long mSequenceIdCount;
 };
 
-#include "requesterimpl.inl"
+#include "RequesterImpl.inl"
 
 #endif

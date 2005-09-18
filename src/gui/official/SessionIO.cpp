@@ -19,8 +19,8 @@
  */
 
 #include "global.h"
-#include "requester.h"
-#include "sessionio.h"
+#include "Requester.hpp"
+#include "SessionIO.hpp"
 
 InputStreamer::InputStreamer(SessionIO *sessionIO)
   : mSessionIO(sessionIO)

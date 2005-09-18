@@ -25,8 +25,8 @@
 #include <string>
 
 
-#include "account.h"
-#include "call.h"
+#include "Account.hpp"
+#include "Call.hpp"
 
 class Request
 {
@@ -150,7 +150,7 @@ class CallRequest : public Request
 
 
  private:
-  const std::string mCallId;
+  std::string mCallId;
 };
 
 class AccountRequest : public Request
