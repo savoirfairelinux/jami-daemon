@@ -31,7 +31,7 @@ ObjectCreator< Base, Actual >::create(const std::string &command,
 				      const std::string &sequenceId,
 				      const std::list< std::string > &args)
 {
-  return new Actual(command, sequenceId, args);
+  return new Actual(sequenceId, command, args);
 }
 
 template< typename Base, typename Actual >

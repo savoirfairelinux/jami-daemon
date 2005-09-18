@@ -27,9 +27,6 @@
 int main(int, char **)
 {
   try {
-    while(std::cin.good()) {
-      std::string line;
-      std::getline(&std::cin, line);
     Session session;
     Account account = session.getAccount("patate");
     account.registerAccount();

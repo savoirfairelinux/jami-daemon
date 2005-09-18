@@ -1,8 +1,8 @@
-bin_PROGRAMS = sflphonegui
+#bin_PROGRAMS = sflphonegui
 noinst_PROGRAMS = servertest
 
 #configurationpanel.h configurationpanelui.cpp configurationpanelmoc.cpp 
-BUILT_SOURCES = \
+BUILT_SOURCESsss = \
 	url_input.h \
 	url_inputui.cpp \
 	url_inputmoc.cpp \
@@ -23,7 +23,7 @@ servertest_SOURCES = \
 	session.cpp \
 	sessionio.cpp
 
-sflphonegui_SOURCES = \
+SOURCES_GUI = \
 	$(BUILT_SOURCES) \
 	jpushbutton.cpp \
 	mydisplay.cpp \
