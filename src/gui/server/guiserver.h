@@ -27,6 +27,7 @@
 #include <cc++/socket.h>
 #include <cc++/thread.h>
 #include <map>
+#include "responsemessage.h"
 
 class GUIServer;
 class Request 
@@ -34,8 +35,11 @@ class Request
 public:
   Request(const std::string &sequenceId, const std::string &arg) : _sequenceId(sequenceId), _arg(arg) {}
   virtual ~Request() {}
-  virtual std::string execute(GUIServer* gui) { return ""; }
-  virtual std::string message(const std::string &code, const std::string &message);
+  virtual ResponseMessage execute(GUIServer& gui) = 0;
+  ResponseMessage message(const std::string &code, const std::string &message) {
+    ResponseMessage response(_sequenceId, code, message);
+    return response;
+  }
   
 protected:
   std::string _sequenceId;
@@ -57,7 +61,7 @@ public:
     }
   }
   virtual ~RequestGlobalCall() {}
-  
+
 protected:
   std::string _callid;
 };
@@ -76,7 +80,7 @@ public:
       _destination = _arg.substr(spacePos+1, _arg.size()-spacePos+1);
     }
   }
-  std::string execute(GUIServer *gui);
+  virtual ResponseMessage execute(GUIServer& gui);
 
 private:
   std::string _destination;
@@ -110,8 +114,7 @@ class RequestGlobal : public Request
 public:
   RequestGlobal(const std::string &sequenceId, const std::string &arg) : Request(sequenceId,arg) {}
   virtual ~RequestGlobal() {}
-  virtual std::string execute(GUIServer *gui);
-
+  virtual ResponseMessage execute(GUIServer& gui) { return message("200","OK"); }
 };
 
 class RequestMute : public RequestGlobal {
@@ -134,7 +137,7 @@ class RequestSyntaxError : public Request
 public:
   RequestSyntaxError(const std::string &sequenceId, const std::string &arg) : Request(sequenceId, arg) {}
   ~RequestSyntaxError() {}
-  std::string execute(GUIServer *gui) {
+  ResponseMessage execute(GUIServer& gui) {
     return message("501", "Syntax Error");
   }
 };
@@ -272,8 +275,10 @@ public:
   int exec(void);
   void pushRequestMessage(const std::string& request);
   Request *popRequest(void);
-  void pushResponseMessage(const std::string& response);
+  void pushResponseMessage(const ResponseMessage& response);
   std::string popResponseMessage(void);
+  void removeRequest(const std::string& request);
+  
   
   // Reimplementation of virtual functions
 	virtual int incomingCall (short id);
@@ -297,7 +302,7 @@ public:
 private:
   ost::TCPSession* sessionIn;
   ost::TCPSession* sessionOut;
-  std::list<Request*> _requests; 
+  std::list<Request*> _requests;
   std::list<std::string> _responses;
   RequestFactory *_factory;
   ost::Mutex _mutex;

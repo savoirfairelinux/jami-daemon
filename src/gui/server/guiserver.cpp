@@ -40,26 +40,12 @@ TCPSessionWriter::run()
   }
 }
 
-std::string 
-Request::message(const std::string &code, const std::string &message)  
+ResponseMessage
+RequestCall::execute(GUIServer& gui)
 {
-  std::string returnMessage = code + " " + _sequenceId + " " + message;
-  return returnMessage;
-}
-std::string
-RequestGlobal::execute(GUIServer* gui)
-{
-  std::string returnOK = std::string("200 ") + _sequenceId + " OK";
-  return returnOK; 
-}
-
-std::string
-RequestCall::execute(GUIServer* gui)
-{
-  int serverCallId = gui->outgoingCall(_destination); 
+  int serverCallId = gui.outgoingCall(_destination); 
   if (serverCallId) {
-    gui->pushResponseMessage(message("150", "Trying..."));
-    return message("200", "OK");
+    return message("150", "Trying...");
   } else {
     return message("500","Server Error");
   }
@@ -118,7 +104,7 @@ GUIServer::exec() {
       output = "";
       while(sessionIn->good() && sessionOut->good()) {
         request = popRequest();
-        output = request->execute(this);
+        output = request->execute(*this);
         pushResponseMessage(output);
         delete request;
       }
@@ -156,12 +142,17 @@ GUIServer::popRequest()
 }
 
 void 
-GUIServer::pushResponseMessage(const std::string &response) 
+GUIServer::pushResponseMessage(const ResponseMessage &response) 
 {
   std::cout << "pushResponseMessage" << std::endl;
   _mutex.enterMutex();
-  _responses.push_back(response);
+  _responses.push_back(response.toString());
   _mutex.leaveMutex();
+
+  // remove the request from the list 
+  if (response.isFinal()) {
+    removeRequest(response.sequenceId());
+  }
 }
 
 std::string 
