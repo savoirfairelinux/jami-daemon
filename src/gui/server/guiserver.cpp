@@ -20,7 +20,8 @@
 #include "guiserver.h"
 #include <string>
 #include <iostream>
-
+#include "responsemessage.h"
+#include "request.h"
 
 void 
 TCPSessionReader::run() 
@@ -40,37 +41,14 @@ TCPSessionWriter::run()
   }
 }
 
-ResponseMessage
-RequestCall::execute(GUIServer& gui)
-{
-  int serverCallId = gui.outgoingCall(_destination); 
-  if (serverCallId) {
-    return message("150", "Trying...");
-  } else {
-    return message("500","Server Error");
-  }
-}
-
 // default constructor
 GUIServer::GUIServer()
 {
-  _factory = new RequestFactory();
-  _factory->registerRequest< RequestSyntaxError > ("syntaxerror");
-  _factory->registerRequest< RequestCall >     ("call");
-  _factory->registerRequest< RequestQuit >     ("quit");
-  _factory->registerRequest< RequestAnswer >   ("anwser");
-  _factory->registerRequest< RequestRefuse >   ("refuse");
-  _factory->registerRequest< RequestHold >     ("hold");
-  _factory->registerRequest< RequestUnhold >   ("unhold");
-  _factory->registerRequest< RequestTransfer > ("transfer");
-  _factory->registerRequest< RequestMute >     ("mute");
-  _factory->registerRequest< RequestUnmute >   ("unmute");
-}
+  _factory.registerAll();}
 
 // destructor
 GUIServer::~GUIServer()
 {
-  delete _factory;
 }
 
 int
@@ -83,7 +61,7 @@ GUIServer::exec() {
     
     std::cout << "listening on " << aServer.getLocal() << ":" << 3999 << std::endl;
     
-    std::string output; // TCPStream output line
+    ResponseMessage output; // TCPStream output line
     Request *request;
     
     while (std::cin.good()) {
@@ -101,12 +79,10 @@ GUIServer::exec() {
       // wait for the first message
       std::cout << "accepting connection..." << std::endl;
       
-      output = "";
       while(sessionIn->good() && sessionOut->good()) {
         request = popRequest();
         output = request->execute(*this);
         pushResponseMessage(output);
-        delete request;
       }
     }
   }
@@ -122,7 +98,7 @@ GUIServer::pushRequestMessage(const std::string &request)
 {
   std::cout << "pushRequestMessage" << std::endl;
   _mutex.enterMutex();
-  _requests.push_back(_factory->create(request));
+  _requests.push_back(_factory.create(request));
   _mutex.leaveMutex();
 }
 
@@ -172,74 +148,109 @@ GUIServer::popResponseMessage()
   return message;
 }
 
+/**
+ * Remove a request with its sequence id
+ */
+void 
+GUIServer::removeRequest(const std::string& sequenceId)
+{
+  std::list<Request*>::iterator iter;
+  for(iter=_requests.begin(); iter!=_requests.end(); iter++) {
+    if ( (*iter)->sequenceId() == sequenceId ) {
+      delete (*iter);
+    }
+  }
+}
+
+/** 
+ * SubCall operations
+ *  insert
+ *  remove
+ */
+void 
+GUIServer::insertSubCall(short id, SubCall& subCall) {
+  _callMap[id] = subCall;
+}
+
+void
+GUIServer::removeSubCall(short id) {
+  _callMap.erase(id);
+}
+
 
 int 
 GUIServer::incomingCall (short id) 
 {
-  
+  return 0;
 }
 
 void  
 GUIServer::peerAnsweredCall (short id) 
 {
-  
+  CallMap::iterator iter = _callMap.find(id);
+  if ( iter != _callMap.end() ) {
+    pushResponseMessage(ResponseMessage("200", iter->second.sequenceId(), "OK"));
+  } 
 }
 
 int  
 GUIServer::peerRingingCall (short id) 
 {
-  
+  CallMap::iterator iter = _callMap.find(id);
+  if ( iter != _callMap.end() ) {
+    pushResponseMessage(ResponseMessage("151", iter->second.sequenceId(), "Ringing"));
+  } 
+  return 0;
 }
 
 int  
 GUIServer::peerHungupCall (short id) 
 {
-  
+  return 0;
 }
 
 void  
 GUIServer::displayTextMessage (short id, const std::string& message) 
 {
-  std::string requestMessage = "500 seq0 s";
-  requestMessage += id + " text message: " + message;
-  pushRequestMessage(requestMessage);
+  std::string responseMessage = "s";
+  responseMessage += id + " text message: " + message;
+  pushResponseMessage(ResponseMessage("700", "seq0", responseMessage));
 }
 
 void  
 GUIServer::displayErrorText (short id, const std::string& message) 
 {
-  std::string requestMessage = "500 seq0 s";
-  requestMessage += id + " error text: " + message;
-  pushRequestMessage(requestMessage);
+  std::string responseMessage = "s";
+  responseMessage += id + " error text: " + message;
+  pushResponseMessage(ResponseMessage("700", "seq0", responseMessage));
 }
 
 void  
 GUIServer::displayError (const std::string& error) 
 {
-  std::string requestMessage = "500 seq0 ";
-  requestMessage += error;
-  pushRequestMessage(requestMessage);
+  std::string responseMessage = "error: " + error;
+  pushResponseMessage(ResponseMessage("700", "seq0", responseMessage));
 }
 
 void  
 GUIServer::displayStatus (const std::string& status) 
 {
-  std::string requestMessage = "500 seq0 ";
-  requestMessage += status;
-  pushRequestMessage(requestMessage);
+  std::string responseMessage = "status: " + status;
+  pushResponseMessage(ResponseMessage("700", "seq0", responseMessage));
 }
 
 void  
 GUIServer::displayContext (short id) 
 {
-  std::string requestMessage = "500 seq0 s";
-  requestMessage += id + " context";
-  pushRequestMessage(requestMessage);
+  std::string responseMessage = "s";
+  responseMessage += id;
+  pushResponseMessage(ResponseMessage("700", "seq0", responseMessage));
 }
 
 std::string  
 GUIServer::getRingtoneFile (void) 
 {
+  return std::string("");
 }
 
 void  
@@ -250,12 +261,13 @@ GUIServer::setup (void)
 int  
 GUIServer::selectedCall (void) 
 {
- 
+  return 0;
 }
 
 bool  
 GUIServer::isCurrentId (short) 
 {
+  return false;
 }
 
 void  
