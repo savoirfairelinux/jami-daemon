@@ -23,6 +23,7 @@
 #include <map>
 
 #include "request.h"
+#include "argtokenizer.h"
 
 class Request;
 /**
@@ -30,7 +31,7 @@ class Request;
 class RequestCreatorBase
 {
 public:
-  virtual Request *create(const std::string &sequenceId, const std::string &arg) = 0;
+  virtual Request *create(const std::string &sequenceId, const TokenList& argList) = 0;
   virtual RequestCreatorBase *clone() = 0;
 };
 
@@ -38,9 +39,9 @@ template< typename T >
 class RequestCreator : public RequestCreatorBase
 {
 public:
-  virtual Request *create(const std::string &sequenceId, const std::string &arg)
+  virtual Request *create(const std::string &sequenceId, const TokenList& argList)
   {
-    return new T(sequenceId, arg);
+    return new T(sequenceId, argList);
   }
 
   virtual RequestCreatorBase *clone()
@@ -53,17 +54,18 @@ public:
 class RequestFactory
 {
 public:
-  Request *create(const std::string &requestLine);
+  Request *create(const std::string& requestLine);
   Request *create(
-    const std::string &requestname, 
-    const std::string &sequenceId, 
-    const std::string &arg);
+    const std::string& requestname, 
+    const std::string& sequenceId, 
+    const TokenList& argList);
 
   template< typename T >
-  void registerRequest(const std::string &requestname);
+  void registerRequest(const std::string& requestname);
   void registerAll();
 private:
   std::map< std::string, RequestCreatorBase * > mRequests;
+  ArgTokenizer _tokenizer;
 };
 
 

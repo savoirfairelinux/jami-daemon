@@ -23,48 +23,39 @@
 #include "request.h"
 
 Request *
-RequestFactory::create(const std::string &requestLine)
+RequestFactory::create(const std::string& requestLine)
 {
-  std::string requestName;
-  std::string sequenceId="seq0";
-  std::string arguments;
   
-  unsigned int spacePos = requestLine.find(' ');
-  // we find a spacePos
-  if (spacePos != std::string::npos) {
-    /*
-    012345678901234
-    call seq1 cdddd
-    spacePos  = 4
-    spacePos2 = 9
-    0 for 4  = 0 for spacePos
-    5 for 4  = (spacePos+1 for spacePos2-spacePos-1)
-    10 for 5 = (spacePos2+1 for size - spacePos2+1)
-    */
-    requestName = requestLine.substr(0, spacePos);
-    
-    unsigned int spacePos2 = requestLine.find(' ', spacePos+1);
-    if (spacePos2 == std::string::npos) {
-      // command that end with a sequence number
-      sequenceId = requestLine.substr(spacePos+1, requestLine.size()-spacePos+1);
-    } else {
-      sequenceId = requestLine.substr(spacePos+1, spacePos2-spacePos-1);
-      arguments = requestLine.substr(spacePos2+1, requestLine.size()-spacePos2+1);
+  TokenList tList = _tokenizer.tokenize(requestLine);
+  TokenList::iterator iter = tList.begin();
+  // there is atleast one token (the command)
+  if (iter != tList.end()) {
+    std::string requestName = *iter;
+    tList.pop_front();
+    iter = tList.begin();
+    // there is atleast a second token (the sequenceId)
+    if (iter != tList.end() && iter->find("seq") == 0 ) {
+      std::string sequenceId = *iter;
+      tList.pop_front();
+      try {
+        Request *r = create(requestName, sequenceId, tList);
+        return r;
+      } catch (...) {
+        // if the create return an exception
+        // we create a syntaxerror
+      }
     }
-  } else {
-    requestName = "syntaxerror";
   }
-  
-  return create(requestName, sequenceId, arguments);
+  return create("syntaxerror", "seq0", tList);
 }
 
 Request *
 RequestFactory::create(
-  const std::string &requestname, 
-  const std::string &sequenceId, 
-  const std::string &arg)
+  const std::string& requestName, 
+  const std::string& sequenceId, 
+  const TokenList& argList)
 {
-  std::map< std::string, RequestCreatorBase * >::iterator pos = mRequests.find(requestname);
+  std::map< std::string, RequestCreatorBase * >::iterator pos = mRequests.find(requestName);
   if(pos == mRequests.end()) {
     pos = mRequests.find("syntaxerror");
     if(pos == mRequests.end()) {
@@ -72,7 +63,7 @@ RequestFactory::create(
     }
   }
   
-  return pos->second->create(sequenceId, arg);
+  return pos->second->create(sequenceId, argList);
 }
 
 template< typename T >

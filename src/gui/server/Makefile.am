@@ -8,4 +8,5 @@ libsflphoneguiserver_la_LIBADD =
 
 AM_CPPFLAGS = -I$(top_srcdir) $(libccext2_CFLAGS)
 
-noinst_HEADERS = responsemessage.h request.h requestfactory.h subcall.h
+noinst_HEADERS = responsemessage.h request.h requestfactory.h subcall.h \
+	argtokenizer.h
