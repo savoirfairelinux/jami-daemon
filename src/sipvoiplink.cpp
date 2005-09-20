@@ -747,11 +747,12 @@ SipVoIPLink::getEvent (void)
     }
     break;
 
-  case EXOSIP_REGISTRATION_SUCCESS:
+  case EXOSIP_REGISTRATION_SUCCESS: //1
     Manager::instance().displayStatus(LOGGED_IN_STATUS);
     break;
 
-  case EXOSIP_REGISTRATION_FAILURE:
+  case EXOSIP_REGISTRATION_FAILURE: // 2
+    Manager::instance().displayError("getEvent:Registration Failure");
     break;
 
   case EXOSIP_MESSAGE_NEW:

@@ -181,6 +181,7 @@ void
 GUIServer::hangup(const std::string& callId) {
   try {
     short id = getIdFromCallId(callId);
+    // There was a problem when hanging up...
     if (!GuiFramework::hangupCall(id)) {
       throw std::runtime_error("Error when hangup");
     }
