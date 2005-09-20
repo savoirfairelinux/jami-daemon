@@ -6,16 +6,19 @@
 
 int main(int, char**)
 {
-  int code;
-  std::string seq;
-  std::string message;
-  std::istringstream s(std::string("100 seq12 Ma réponse"));
+  std::istringstream s(std::string("100 seq12 Maréponse \"sldkfjdfj s;dlfk\""));
+  
+  std::string output;
+  std::list< std::string > args;
+  while(s.good()) {
+    s >> output;
+    args.push_back(output);
+  }
 
-  s >> code >> seq;
-  getline(s, message);
-  std::cout << "Code: " << code << std::endl;
-  std::cout << "Seq: " << seq << std::endl;
-  std::cout << "Message: " << message << std::endl;
-  return 0;
+  for(std::list< std::string >::iterator pos = args.begin();
+      pos != args.end();
+      pos++) {
+    std::cout << *pos << std::endl;
+  }
 }
 
