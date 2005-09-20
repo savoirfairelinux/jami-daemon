@@ -28,11 +28,13 @@ RequestFactory::create(const std::string& requestLine)
   
   TokenList tList = _tokenizer.tokenize(requestLine);
   TokenList::iterator iter = tList.begin();
+
   // there is atleast one token (the command)
   if (iter != tList.end()) {
     std::string requestName = *iter;
     tList.pop_front();
     iter = tList.begin();
+
     // there is atleast a second token (the sequenceId)
     if (iter != tList.end() && iter->find("seq") == 0 ) {
       std::string sequenceId = *iter;
@@ -89,6 +91,7 @@ RequestFactory::registerAll() {
   registerRequest<RequestRefuse>   ("refuse");
   registerRequest<RequestHold>     ("hold");
   registerRequest<RequestUnhold>   ("unhold");
+  registerRequest<RequestHangup>   ("hangup");
   registerRequest<RequestTransfer> ("transfer");
   registerRequest<RequestMute>     ("mute");
   registerRequest<RequestUnmute>   ("unmute");

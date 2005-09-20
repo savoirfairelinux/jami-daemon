@@ -29,8 +29,9 @@ class ResponseMessage
 public:
     // default constructor with empty seq/code/message
     ResponseMessage() {}
-    ResponseMessage(const std::string& seq, const std::string& code,const std::string& message
-    );
+    // build a constructor with a TokenList
+    // so that they will be encoded..
+    ResponseMessage(const std::string& code,const std::string& seq, const std::string& message);
     ~ResponseMessage();
 
     std::string sequenceId() const { return _seq; }
@@ -39,8 +40,8 @@ public:
     bool isFinal() const;
 private:
     // 3 numbers long sequenceId
-    std::string _seq;
     std::string _code;
+    std::string _seq;
     std::string _message;
 
     static const std::string FINALCODE;

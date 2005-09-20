@@ -22,13 +22,12 @@
 
 #include <list>
 #include <string>
-#include <iostream>
 
 typedef std::list<std::string> TokenList;
 
 /**
 Separate a string into token
-a b "c d" = 3 tokens: [a], [b], [c d]
+a b c%20d = 3 tokens: [a], [b], [c d]
 
 Example:
 #include <argtokenizer.h>
@@ -45,68 +44,12 @@ public:
   ArgTokenizer() {}   //  ctor
   ~ArgTokenizer() {}  //  dtor
 
-  TokenList tokenize(const std::string& str)
-  {
-     TokenList stack; // token stack
-     std::string::size_type length = str.size();
-     std::string::size_type i, pos;
-     std::string temp;
-
-     bool inToken = false; // if we are inside a token or not
-     bool inQuote = false; // look if we are inside a "quoted-string"
-     char lastChar = '\0'; // lastChar for \" escaping inside quote
-     char c;
-
-     pos = 0; // position inside quoted string, to escape backslashed-doublequote
-     for (i=0;i<length;i++) {
-       c = str[i];
-       // for the new token
-       if (inToken == false) {
-         if (c == ' ') { continue; }   // escape space outside a token
-         else if (c == '"') {
-            inToken = true;
-            inQuote = true;
-            lastChar = '\0';
-            pos = 0;
-            continue;
-         } else {
-           inToken = true;
-         }
-       }
-       if (inToken) {
-       // we are inside a token
-         if (inQuote) { // we are looking for a " token
-           if ( c == '"' ) { 
-             if (lastChar == '\\') { 
-               temp[pos-1] = '"';
-             } else { // end of the string
-               if (temp.size()) { stack.push_back(temp); temp=""; }
-               temp = "";
-               inToken = false;
-               inQuote = false;
-             }
-           } else { // normal character to append
-             temp += c;
-             pos++;
-           }
-           lastChar = c;
-         } else { // not in quote, stop to first space
-           if ( c == ' ' ) {
-              if (temp.size()) { stack.push_back(temp); temp=""; }
-              inToken = false;
-           } else {
-             temp += c;
-           }
-         }
-       }
-     }
-     if (temp.size()) { stack.push_back(temp); } // add last keyword
-
-     return stack;
-  }
-
-  // look at http://yansanmo.no-ip.org/test/cpp/argtokenizer.h
-  // for test
+  /**
+   * Tokenize a string into a list of string
+   * Separators are: space, newline and tab ( ,\n,\t)
+   * @author: Jean-Philippe Barrette-LaPierre
+   */
+  TokenList tokenize(const std::string& str);
 };
 
 #endif // __ARG_TOKENIZER__

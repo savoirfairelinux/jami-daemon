@@ -41,7 +41,7 @@ EventThread::~EventThread (void)
 void
 EventThread::run (void) 
 {
-  while(testCancel()) {
+  while(!testCancel()) {
     _sipthread->getEvent();
   }
 }

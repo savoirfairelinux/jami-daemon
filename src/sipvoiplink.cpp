@@ -547,6 +547,7 @@ SipVoIPLink::getEvent (void)
     return -1;
   }	
 
+  Manager::instance().displayErrorText(event->type, "getEvent");
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //
@@ -820,7 +821,13 @@ SipVoIPLink::getEvent (void)
     }
     break;
 
+  case EXOSIP_CALL_RELEASED:
+    //TODO: find the id...
+    Manager::instance().displayErrorText(0, "getEvent:CallReleased");
+
+    break;
   default:
+    Manager::instance().displayErrorText(event->type, "getEvent:default");
     return -1;
     break;
   }

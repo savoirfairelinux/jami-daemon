@@ -1,7 +1,7 @@
 noinst_LTLIBRARIES = libsflphoneguiserver.la
 
 libsflphoneguiserver_la_SOURCES = $(BUILT_SOURCES) 	guiserver.cpp \
-		responsemessage.cpp request.cpp requestfactory.cpp
+			responsemessage.cpp request.cpp requestfactory.cpp argtokenizer.cpp
 
 libsflphoneguiserver_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
 libsflphoneguiserver_la_LIBADD = 

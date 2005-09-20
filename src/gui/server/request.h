@@ -44,7 +44,7 @@ public:
   virtual ~Request() {}
   virtual ResponseMessage execute(GUIServer& gui) = 0;
   ResponseMessage message(const std::string &code, const std::string &message) {
-    ResponseMessage response(_sequenceId, code, message);
+    ResponseMessage response(code, _sequenceId, message);
     return response;
   }
   std::string sequenceId () const { return _sequenceId; }
@@ -131,7 +131,11 @@ class RequestTransfer : public RequestGlobalCall {
 public:
   RequestTransfer(const std::string &sequenceId, const TokenList& argList) : RequestGlobalCall(sequenceId,argList) {}
 };
-
+class RequestHangup : public RequestGlobalCall {
+public:
+  RequestHangup(const std::string &sequenceId, const TokenList& argList) : RequestGlobalCall(sequenceId,argList) {}
+  ResponseMessage execute(GUIServer& gui);
+};
 
 class RequestGlobal : public Request
 {

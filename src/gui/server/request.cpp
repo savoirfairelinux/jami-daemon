@@ -34,4 +34,14 @@ RequestCall::execute(GUIServer& gui)
   }
 }
 
+ResponseMessage
+RequestHangup::execute(GUIServer& gui)
+{
+  try {
+    gui.hangup(_callId);
+    return message("200", "OK");
+  } catch (...) {
+    return message("500", "Hangup Error");
+  }
+}
 

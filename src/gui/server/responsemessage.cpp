@@ -24,9 +24,9 @@
  */
 const std::string ResponseMessage::FINALCODE = "2456";
 
-ResponseMessage::ResponseMessage(const std::string& seq,
-      const std::string& code,
-      const std::string& message) : _seq(seq), _code(code), _message(message)
+ResponseMessage::ResponseMessage(const std::string& code,
+      const std::string& seq,
+      const std::string& message) : _code(code), _seq(seq), _message(message)
 {
 }
 

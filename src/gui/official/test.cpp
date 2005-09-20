@@ -6,7 +6,7 @@
 
 int main(int, char**)
 {
-  std::istringstream s(std::string("100 seq12 Maréponse \"sldkfjdfj s;dlfk\""));
+  std::istringstream s(std::string("100 seq12 Marï¿½onse \"sldk fjdfj\n\ns;d\tlfk\""));
   
   std::string output;
   std::list< std::string > args;

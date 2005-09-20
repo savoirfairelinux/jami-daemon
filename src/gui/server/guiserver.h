@@ -31,10 +31,10 @@
 #include "requestfactory.h"
 
 class GUIServer;
-class TCPSessionReader : public ost::TCPSession 
+class TCPSessionIO : public ost::TCPSession 
 {
 public:
-  TCPSessionReader(ost::TCPSocket &server, GUIServer *gui) : 
+  TCPSessionIO(ost::TCPSocket &server, GUIServer *gui) : 
     ost::TCPSession(server), 
     _gui(gui) {}
 
@@ -43,20 +43,6 @@ public:
 private:
   GUIServer *_gui;
 };
-
-class TCPSessionWriter : public ost::TCPSession 
-{
-public:
-  TCPSessionWriter(ost::TCPSocket &server, GUIServer *gui) : 
-    ost::TCPSession(server), 
-    _gui(gui) {}
-    
-  void run();
-    
-private:
-  GUIServer *_gui;
-};
-
 
 typedef std::map<short, SubCall> CallMap;
 class ResponseMessage;
@@ -72,13 +58,13 @@ public:
   void pushRequestMessage(const std::string& request);
   Request *popRequest(void);
   void pushResponseMessage(const ResponseMessage& response);
-  std::string popResponseMessage(void);
   void removeRequest(const std::string& sequenceId);
 
   void insertSubCall(short id, SubCall& subCall);
   void removeSubCall(short id);
-  
-  
+  std::string getSequenceIdFromId(short id);
+  short getIdFromCallId(const std::string& callId);
+
   // Reimplementation of virtual functions
 	virtual int incomingCall (short id);
 	virtual void peerAnsweredCall (short id);
@@ -97,10 +83,11 @@ public:
 	virtual void stopVoiceMessageNotification (void);  
 
   int outgoingCall (const std::string& to) {return GuiFramework::outgoingCall(to);}
+  void hangup(const std::string& callId);
     
 private:
-  ost::TCPSession* sessionIn;
-  ost::TCPSession* sessionOut;
+  ost::TCPSession* _sessionIO;
+
   /**
    * This callMap is necessary because
    * ManagerImpl use callid-int
@@ -109,7 +96,6 @@ private:
    */
   CallMap _callMap;
   std::list<Request*> _requests;
-  std::list<std::string> _responses;
   RequestFactory _factory;
   ost::Mutex _mutex;
 };
