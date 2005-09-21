@@ -40,9 +40,6 @@ class ObjectPool
    */
   bool pop(T &value, unsigned long time = ULONG_MAX);
 
-  typename std::list< T >::iterator begin();
-  typename std::list< T >::iterator end();
-
  private:
   std::list< T > mPool;
 

@@ -31,50 +31,25 @@ ObjectPool< T >::push(const T &value)
   ost::MutexLock guard(mMutex);
   mPool.push_back(value);
   mSemaphore.post();
-  std::cerr << "push value..." << std::endl;
 }
 
 template< typename T >
 bool
 ObjectPool< T >::pop(T &value, unsigned long time)
 {
-  ost::MutexLock guard(mMutex);
-  mSemaphore.wait(time);
-  
-  if(mPool.begin() == mPool.end()) {
-    std::cerr << "empty list" << std::endl;
-    return false;
-  } else {
-    std::cerr << "pop value..." << std::endl;
-    typename std::list< T >::iterator pos = mPool.begin();
-    value = (*pos);
-    mPool.pop_front();
-    return true;
+  //ost::MutexLock guard(mMutex);
+  if (mSemaphore.wait(time)) {
+
+    if(mPool.begin() == mPool.end()) {
+      return false;
+    } else {
+      typename std::list< T >::iterator pos = mPool.begin();
+      value = (*pos);
+      mPool.pop_front();
+      return true;
+    }
   }
+  return false;
 }
-
-template< typename T >
-typename std::list< T >::iterator
-ObjectPool< T >::begin()
-{
-  
-  ost::MutexLock guard(mMutex);
-  std::cerr << mPool.size();
-  typename std::list< T >::iterator iter = mPool.begin();
-  mSemaphore.post();
-  return iter;
-}
-
-template< typename T >
-typename std::list< T >::iterator
-ObjectPool< T >::end()
-{
-  ost::MutexLock guard(mMutex);
-  std::cerr << mPool.size();
-  typename std::list< T >::iterator iter = mPool.end();
-  mSemaphore.post();
-  return iter;
-}
-
 
 #endif

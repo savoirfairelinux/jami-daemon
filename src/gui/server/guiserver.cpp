@@ -27,11 +27,15 @@
 
 void 
 TCPSessionIO::run() {
+  std::string response;
   while(!testCancel() && good()) {
-    if (isPending(ost::TCPSocket::pendingInput)) {
-      std::string output;
-      std::getline(*this, output);
-      _gui->pushRequestMessage(output);
+    if (isPending(ost::TCPSocket::pendingInput, 10)) {
+      std::string input;
+      std::getline(*this, input);
+      _gui->pushRequestMessage(input);
+    }
+    if (_outputPool.pop(response, 10)) {
+      *this << response << std::endl;
     }
   }
 }
@@ -45,6 +49,14 @@ GUIServer::GUIServer()
 // destructor
 GUIServer::~GUIServer()
 {
+  // Waiting Requests cleanup
+  std::map<std::string, Request*>::iterator iter = _waitingRequests.begin();
+  while (iter != _waitingRequests.end()) {
+    _waitingRequests.erase(iter);
+    delete (iter->second);
+    iter++;
+  }
+  
 }
 
 int
@@ -75,8 +87,7 @@ GUIServer::exec() {
       while(_sessionIO->good()) {
         if ( _requests.pop(request, 1000)) {
           output = request->execute(*this);
-          pushResponseMessage(output);
-          delete request;
+          handleExecutedRequest(request, output);
         }
       }
     }
@@ -93,7 +104,6 @@ GUIServer::pushRequestMessage(const std::string &request)
 {
   Request *tempRequest = _factory.create(request);
   std::cout << "pushRequestMessage" << std::endl;
-  //ost::MutexLock lock(_mutex);
   _requests.push(tempRequest);
 }
 
@@ -101,28 +111,36 @@ void
 GUIServer::pushResponseMessage(const ResponseMessage &response) 
 {
   std::cout << "pushResponseMessage" << std::endl;
-  //ost::MutexLock lock(_mutex);
-  *_sessionIO << response.toString() << std::endl;
+  _sessionIO->push(response.toString());
 
   // remove the request from the list 
-  //if (response.isFinal()) {
-  //  removeRequest(response.sequenceId());
-  //}
+  if (response.isFinal()) {
+    std::map<std::string, Request*>::iterator iter = _waitingRequests.find(response.sequenceId());
+    if (iter != _waitingRequests.end()) {
+      _waitingRequests.erase(iter);
+      delete (iter->second);
+    }
+  }
 }
 
 /**
- * Remove a request with its sequence id
+ * Delete the request from the list of request
+ * or send it into the waitingRequest map
  */
 void 
-GUIServer::removeRequest(const std::string& sequenceId)
+GUIServer::handleExecutedRequest(Request * const request, const ResponseMessage& response) 
 {
-  ost::MutexLock lock(_mutex);
-  std::list<Request*>::iterator iter;
-  for(iter=_requests.begin(); iter!=_requests.end(); iter++) {
-    if ( (*iter)->sequenceId() == sequenceId ) {
-      delete (*iter);
+  if (response.isFinal()) {
+    delete request;
+  } else {
+    if (_waitingRequests.find(request->sequenceId()) == _waitingRequests.end()) {
+      _waitingRequests[response.sequenceId()] = request;
+    } else {
+      // we don't deal with requests with a sequenceId already send...
+      delete request;
     }
   }
+  _sessionIO->push(response.toString());
 }
 
 /** 

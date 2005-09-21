@@ -40,9 +40,13 @@ public:
     _gui(gui) {}
 
   void run();
-      
+  void push(const std::string &response) {
+    _outputPool.push(response);
+  }
+  
 private:
   GUIServer *_gui;
+  ObjectPool<std::string> _outputPool;
 };
 
 typedef std::map<short, SubCall> CallMap;
@@ -56,10 +60,11 @@ public:
   
   // exec loop
   int exec(void);
+  //void handleExecutedRequest(Request* request, const 
   void pushRequestMessage(const std::string& request);
   Request *popRequest(void);
   void pushResponseMessage(const ResponseMessage& response);
-  void removeRequest(const std::string& sequenceId);
+  void handleExecutedRequest(Request * const request, const ResponseMessage& response);
 
   void insertSubCall(short id, SubCall& subCall);
   void removeSubCall(short id);
@@ -87,7 +92,7 @@ public:
   void hangup(const std::string& callId);
     
 private:
-  ost::TCPSession* _sessionIO;
+  TCPSessionIO* _sessionIO;
 
   /**
    * This callMap is necessary because
@@ -96,7 +101,11 @@ private:
    * and also a sequence number
    */
   CallMap _callMap;
+  // Incoming requests not executed
   ObjectPool<Request*> _requests;
+  // Requests executed but waiting for a final response
+  std::map<std::string, Request*> _waitingRequests;
+
   RequestFactory _factory;
   ost::Mutex _mutex;
 };
