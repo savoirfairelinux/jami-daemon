@@ -36,6 +36,12 @@ Session::Session()
   Requester::instance().registerSession(mId, s);
 }
 
+std::string 
+Session::id()
+{
+  return mId;
+}
+
 Account
 Session::getAccount(const std::string &name)
 {

@@ -10,8 +10,10 @@ public:
   SFLPhoneWindow();
   ~SFLPhoneWindow();
 
+private:
   void initLineButtons();
 
 private:
-  std::list< JPushButton * > mLines;
+  std::list< JPushButton * > mLineButtons;
+  std::list< PhoneLine > mPhoneLines;
 };

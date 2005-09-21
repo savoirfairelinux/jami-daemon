@@ -1,0 +1,19 @@
+<RCC>
+    <qresource prefix="/images" >
+        <file alias="main-img.png">images/main.png</file>
+        <file alias="overscreen.png">images/overscreen.png</file>
+        <file alias="line1on-img.png">images/l1_on.png</file>
+        <file alias="line1off-img.png">images/l1_off.png</file>
+        <file alias="line2on-img.png">images/l2_on.png</file>
+        <file alias="line2off-img.png">images/l2_off.png</file>
+        <file alias="line3on-img.png">images/l3_on.png</file>
+        <file alias="line3off-img.png">images/l3_off.png</file>
+        <file alias="line4on-img.png">images/l4_on.png</file>
+        <file alias="line4off-img.png">images/l4_off.png</file>
+        <file alias="line5on-img.png">images/l5_on.png</file>
+        <file alias="line5off-img.png">images/l5_off.png</file>
+        <file alias="line6on-img.png">images/l6_on.png</file>
+        <file alias="line6off-img.png">images/l6_off.png</file>	
+	<file alias="icon.png">images/logo_ico.png</file>	
+    </qresource>
+</RCC>

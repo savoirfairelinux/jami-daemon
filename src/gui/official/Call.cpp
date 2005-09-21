@@ -31,6 +31,13 @@ Call::Call(const std::string &sessionId,
   , mId(callId)
 {}
 
+Call::Call(const Session &session,
+	   const std::string &callId)
+  : mSessionId(session.id())
+  , mId(callId)
+{}
+
+
 std::string
 Call::answer() 
 {

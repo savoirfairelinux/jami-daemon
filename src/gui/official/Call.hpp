@@ -23,10 +23,14 @@
 
 #include <string>
 
+class Session;
+
 class Call
 {
  public:
   Call(const std::string &sessionId, 
+       const std::string &callId);
+  Call(const Session &session, 
        const std::string &callId);
 
   /**

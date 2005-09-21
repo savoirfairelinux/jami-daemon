@@ -11,13 +11,21 @@
 
 SFLPhoneWindow::SFLPhoneWindow()
   : QMainWindow(NULL, 0)
-  //	Qt::FramelessWindowHint)
+  , mSession()
+  , mAccount(mSession.getAccount("monaccount")
 {
   QLabel *l = new QLabel(this);
   QPixmap main(":/images/main-img.png");
   l->setPixmap(main);
   resize(main.size());
   l->resize(main.size());
+
+//   QLabel *os = new QLabel(this);
+//   QPixmap overscreen(":/images/overscreen.png");
+//   os->setPixmap(overscreen);
+//   os->resize(overscreen.size());
+//   os->move(22,44);
+  
 
   initLineButtons();
 }
@@ -45,7 +53,7 @@ SFLPhoneWindow::initLineButtons()
 					this);
     line->move(xpos, ypos);
     xpos += offset;
-    mLines.push_back(line);
+    mLineButtons.push_back(line);
   }
 }
 
