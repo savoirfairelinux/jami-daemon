@@ -22,21 +22,14 @@
 #include <stdexcept>
 #include <string>
 
-#include "Session.hpp"
+#include <QApplication>
+#include <QPushButton>
+#include "SFLPhoneWindow.hpp"
 
-int main(int, char **)
+int main(int argc, char **argv)
 {
-  try {
-    Session session;
-    Account account = session.getAccount("patate");
-    account.registerAccount();
-    while(1) {
-      sleep(2);
-    }
-  }
-  catch(std::exception &e) {
-    std::cerr << e.what() << std::endl;
-  }
-
-  return 0;
+  QApplication app(argc, argv);
+  SFLPhoneWindow sfl;
+  sfl.show();
+  return app.exec();
 }
