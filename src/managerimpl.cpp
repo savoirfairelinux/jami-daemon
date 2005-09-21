@@ -280,12 +280,13 @@ ManagerImpl::getVoIPLinkVector (void)
 	return &_voIPLinkVector;
 }
 
-void
+Call *
 ManagerImpl::pushBackNewCall (short id, enum CallType type)
 {
 	Call* call = new Call(id, type, _voIPLinkVector.at(DFT_VOIP_LINK));
 	// Set the wanted voip-link (first of the list)
 	_callVector.push_back(call);
+  return call;
 }
 
 void
@@ -312,16 +313,16 @@ ManagerImpl::outgoingCall (const string& to)
 	Call* call;
 	
 	id = generateNewCallId();
-	pushBackNewCall(id, Outgoing);
-	
+	call = pushBackNewCall(id, Outgoing);
 	_debug("Outgoing Call with identifiant %d\n", id);
-	call = getCall(id);
-	if (call == NULL)
-		return 0;
+	
+	//call = getCall(id);
+	//if (call == NULL)
+	//	return 0;
 	
 	call->setStatus(string(TRYING_STATUS));
 	call->setState(Progressing);
-	if (call->outgoingCall(id, to) == 0) {
+	if (call->outgoingCall(to) == 0) {
 		return id;
 	} else {
 		return 0;
@@ -568,9 +569,9 @@ ManagerImpl::peerAnsweredCall (short id)
 	call->setStatus(string(CONNECTED_STATUS));
 
 	call->setState(Answered);
-	if (isCurrentId(id)) {
+	//if (isCurrentId(id)) {
 		_gui->peerAnsweredCall(id);
-	}
+	//}
 }
 
 int 

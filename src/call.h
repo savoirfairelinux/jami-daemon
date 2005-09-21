@@ -96,7 +96,7 @@ public:
 	bool isOutgoingType (void);
 	bool isIncomingType (void);
 	
-	int outgoingCall  	(short id, const std::string& to);
+	int outgoingCall  	(const std::string& to);
 	int hangup  		(void);
 	int cancel  		(void);
 	int answer  		(void);

@@ -28,10 +28,40 @@ RequestCall::execute(GUIServer& gui)
   if (serverCallId) {
     SubCall scIndex(_sequenceId,_callId);
     gui.insertSubCall(serverCallId, scIndex);
-    return message("150", "Trying...");
+    return message("150", "Trying");
   } else {
     return message("500","Server Error");
   }
+}
+
+ResponseMessage
+RequestAnswer::execute(GUIServer& gui)
+{
+  return message("200","TODO");
+}
+
+ResponseMessage
+RequestRefuse::execute(GUIServer& gui)
+{
+  return message("200","TODO");
+}
+
+ResponseMessage
+RequestHold::execute(GUIServer& gui)
+{
+  return message("200","TODO");
+}
+
+ResponseMessage
+RequestUnhold::execute(GUIServer& gui)
+{
+  return message("200","TODO");
+}
+
+ResponseMessage
+RequestTransfer::execute(GUIServer& gui)
+{
+  return message("200","TODO");
 }
 
 ResponseMessage
@@ -43,5 +73,25 @@ RequestHangup::execute(GUIServer& gui)
   } catch (...) {
     return message("500", "Hangup Error");
   }
+}
+
+
+ResponseMessage
+RequestMute::execute(GUIServer& gui)
+{
+  return message("200","TODO");
+}
+
+ResponseMessage
+RequestUnmute::execute(GUIServer& gui)
+{
+  return message("200","TODO");
+}
+
+ResponseMessage
+RequestQuit::execute(GUIServer& gui)
+{
+  gui.quit();
+  return message("200", "Quitting");
 }
 

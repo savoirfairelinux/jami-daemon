@@ -198,8 +198,8 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
 	int k; 
 	int compSize; 
 	
-	if (Manager::instance().getCall(_ca->getId())->isOnMute() or
-				!Manager::instance().isCurrentId(_ca->getId())) {
+	if (Manager::instance().getCall(_ca->getId())->isOnMute()/* or
+				!Manager::instance().isCurrentId(_ca->getId())*/) {
 		// Mute :send 0's over the network.
 		Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic, 
 			RTP_FRAMES2SEND*2*sizeof(int16));

@@ -90,6 +90,7 @@ public:
 
   int outgoingCall (const std::string& to) {return GuiFramework::outgoingCall(to);}
   void hangup(const std::string& callId);
+  void quit() {_shouldQuit=true;}
     
 private:
   TCPSessionIO* _sessionIO;
@@ -108,6 +109,7 @@ private:
 
   RequestFactory _factory;
   ost::Mutex _mutex;
+  bool _shouldQuit;
 };
 
 #endif // __GUI_SERVER_H__

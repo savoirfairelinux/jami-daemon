@@ -132,7 +132,7 @@ public:
 	/*
 	 * Add a new call at the end of the CallVector with identifiant 'id'
 	 */
-	void pushBackNewCall (short id, enum CallType type);
+	Call* pushBackNewCall (short id, enum CallType type);
 	
 	/*
 	 * Erase the Call(id) from the CallVector

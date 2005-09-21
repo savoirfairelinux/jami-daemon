@@ -36,7 +36,11 @@ using namespace std;
 
 SipCall::SipCall (short id, CodecDescriptorVector* cdv) 
 {
-	_id = id;	// Same id of Call object
+	_id = id;	  // Same id of Call object
+	_cid = 0; // call id, from the sipvoiplink
+	_did = 0; // dialog id
+	_tid = 0; // transaction id
+
 	alloc();
 	_cdv = cdv;
 	_audiocodec = NULL;

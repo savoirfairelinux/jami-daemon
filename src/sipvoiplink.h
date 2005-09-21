@@ -114,11 +114,7 @@ public:
 	 */
 	AudioCodec* getAudioCodec(short callid);
 
-	// Use to Cancel
-	inline void setCid (int cid) { _cid = cid; }
-	inline int getCid (void) { return _cid; }
-
-	// Handle voice-message
+// Handle voice-message
 	inline void setMsgVoicemail (int nMsg) { _nMsgVoicemail = nMsg; }
 	inline int getMsgVoicemail (void) { return _nMsgVoicemail; }
 	
@@ -180,6 +176,7 @@ private:
 	 * Return the id of the found call
 	 */
 	short findCallId (eXosip_event_t *e);
+  short findCallIdInitial (eXosip_event_t *e);
 	short findCallIdWhenRinging (void);
 
 	/*
@@ -209,7 +206,6 @@ private:
 	std::vector< SipCall * > _sipcallVector;
 	AudioRtp 		_audiortp;
 	int 			_localPort;
-	int 			_cid;
 	int 			_reg_id;
 	int 			_nMsgVoicemail;
 };

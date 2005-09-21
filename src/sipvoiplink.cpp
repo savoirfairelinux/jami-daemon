@@ -51,7 +51,6 @@ SipVoIPLink::SipVoIPLink (short id)
 {
   setId(id);
   _localPort = 0;
-  _cid = 0;
   _reg_id = -1;
   _nMsgVoicemail = 0;
   _evThread = new EventThread(this);
@@ -356,10 +355,11 @@ SipVoIPLink::cancel (short id)
 {
   int i = 0;
   if (!Manager::instance().getbCongestion()) {
-    _debug("Cancel call [id = %d, cid = %d]\n", id, getCid());
+    SipCall *call = getSipCall(id);
+    _debug("Cancel call [id = %d, cid = %d]\n", id, call->getCid());
     // Release SIP stack.
     eXosip_lock();
-    i = eXosip_call_terminate (getCid(), -1);
+    i = eXosip_call_terminate (call->getCid(), -1);
     eXosip_unlock();
   }
   deleteSipCall(id);
@@ -614,37 +614,41 @@ SipVoIPLink::getEvent (void)
   case EXOSIP_CALL_ANSWERED: 
     id = findCallId(event);
     if (id == 0) {
-      id = findCallIdWhenRinging();
+      id = findCallIdInitial(event);
     }
-    _debug("Call is answered [id = %d, cid = %d, did = %d], localport=%d\n", 
-	   id, event->cid, event->did,getSipCall(id)->getLocalAudioPort());
+    SipCall *call = getSipCall(id);
+    if ( call ) {
+      _debug("Call is answered [id = %d, cid = %d, did = %d], localport=%d\n", 
+	   id, event->cid, event->did,call->getLocalAudioPort());
+    }
  
     // Answer
-    if (id > 0 and !Manager::instance().getCall(id)->isOnHold()
-	and !Manager::instance().getCall(id)->isOffHold()) {
-      getSipCall(id)->setStandBy(false);
-      if (getSipCall(id)->answeredCall(event) != -1) {
-	getSipCall(id)->answeredCall_without_hold(event);
-	Manager::instance().peerAnsweredCall(id);
+    if (id > 0 && !Manager::instance().getCall(id)->isOnHold()
+               && !Manager::instance().getCall(id)->isOffHold()) {
+      call->setStandBy(false);
+      if (call->answeredCall(event) != -1) {
+        call->answeredCall_without_hold(event);
+        Manager::instance().peerAnsweredCall(id);
 
-	// Outgoing call is answered, start the sound channel.
-	if (_audiortp.createNewSession (getSipCall(id)) < 0) {
-	  _debug("FATAL: Unable to start sound (%s:%d)\n", 
-		 __FILE__, __LINE__);
-	  exit(1);
-	}
+        // Outgoing call is answered, start the sound channel.
+        if (_audiortp.createNewSession (call) < 0) {
+          _debug("FATAL: Unable to start sound (%s:%d)\n", 
+          __FILE__, __LINE__);
+          exit(1);
+        }
       }
     } else {
       // Answer to on/off hold to send ACK
       if (id > 0) {
-	getSipCall(id)->answeredCall(event);
-	_debug("-----------------------\n");
+        call->answeredCall(event);
+        _debug("-----------------------\n");
       }
     }
     break;
 			
   case EXOSIP_CALL_RINGING: //peer call is ringing
-    id = findCallIdWhenRinging();
+    id = findCallId(event);
+    //id = findCallIdWhenRinging();
 			
     _debug("Call is ringing [id = %d, cid = %d, did = %d]\n", 
 	   id, event->cid, event->did);
@@ -712,7 +716,8 @@ SipVoIPLink::getEvent (void)
     case ADDR_INCOMPLETE:
     case BUSY_HERE:
       // Display error on the screen phone
-      Manager::instance().displayError(event->response->reason_phrase);
+      //Manager::instance().displayError(event->response->reason_phrase);
+      Manager::instance().displayErrorText(id, event->response->reason_phrase);
       Manager::instance().congestion(true);
       break;
     case REQ_TERMINATED:
@@ -879,8 +884,9 @@ SipVoIPLink::newOutgoingCall (short callid)
 {
   _sipcallVector.push_back(new SipCall(callid, 
 					Manager::instance().getCodecDescVector()));
-  if (getSipCall(callid) != NULL) {
-    getSipCall(callid)->setStandBy(true);
+  SipCall *call = getSipCall(callid);
+  if ( call != NULL) {
+    call->setStandBy(true);
   }
 }
 
@@ -1200,6 +1206,10 @@ int
 SipVoIPLink::startCall (short id, const string& from, const string& to, 
 			const string& subject,  const string& route) 
 {
+  SipCall *call = getSipCall(id);
+  if ( call == NULL) {
+    return -1; // error, we can't find the sipcall
+  }
   osip_message_t *invite;
   int i;
 
@@ -1228,11 +1238,7 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
   }
 	
   // Set local audio port for sipcall(id)
-  if (getSipCall(id) != NULL) {
-    getSipCall(id)->setLocalAudioPort(_localPort);
-  } else {
-    return -1;
-  }
+  call->setLocalAudioPort(_localPort);
 	
   bzero (port, 64);
   snprintf (port, 63, "%d", getLocalPort());
@@ -1242,7 +1248,7 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
                                         (char*)route.data(),
                                         (char*)subject.data());
   if (i != 0) {
-    return -1;
+    return -1; // error when building the invite
   }
   	
 
@@ -1296,37 +1302,62 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
   
   eXosip_lock();
 	
-  i = eXosip_call_send_initial_invite (invite);
+  // this is the cid (call id from exosip)
+  int cid = eXosip_call_send_initial_invite (invite);
 
-  if (i <= 0) {
+  // Keep the cid in case of cancelling
+  call->setCid(cid);
+
+  if (cid <= 0) {
     eXosip_unlock();
     return -1;
   } else {
-    eXosip_call_set_reference (i, NULL);
+    eXosip_call_set_reference (cid, NULL);
   }
 
   eXosip_unlock();
 
-  // Keep the cid in case of cancelling
-  setCid(i);
-  
-  return i;	
+  return cid; // this is the Cid
 }
 
 short
 SipVoIPLink::findCallId (eXosip_event_t *e)
 {
-  unsigned int k;
-	
-  for (k = 0; k < _sipcallVector.size(); k++) {
-    if (_sipcallVector.at(k)->getCid() == e->cid and
-	_sipcallVector.at(k)->getDid()	== e->did) {
-      return _sipcallVector.at(k)->getId();
+  for (unsigned int k = 0; k < _sipcallVector.size(); k++) {
+    SipCall *call = _sipcallVector.at(k);
+    if (call->getCid() == e->cid &&
+        call->getDid() == e->did) {
+      return call->getId();
     }
   }
   return 0;
 }
 
+/**
+ * This function is used when findCallId failed (return 0)
+ * ie: the dialog id change
+ *     can be use when anwsering a new call or 
+ *         when cancelling a call
+ */
+short
+SipVoIPLink::findCallIdInitial (eXosip_event_t *e)
+{
+  for (unsigned int k = 0; k < _sipcallVector.size(); k++) {
+    SipCall *call = _sipcallVector.at(k);
+    // the dialog id is not set when you do a new call
+    // so you can't check it when you want to retreive it
+    // for the first call anwser
+    if (call->getCid() == e->cid) {
+      return call->getId();
+    }
+  }
+  return 0;
+}
+/**
+ * YM: (2005-09-21) This function is really really bad..
+ * Should be removed !
+ * Don't ask the GUI which call it use...
+ */
 short
 SipVoIPLink::findCallIdWhenRinging (void)
 {

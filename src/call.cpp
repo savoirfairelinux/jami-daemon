@@ -218,9 +218,9 @@ Call::isIncomingType (void)
 }
 
 int 
-Call::outgoingCall  (short id, const string& to)
+Call::outgoingCall(const string& to)
 {
-	return _voIPLink->outgoingInvite(id, to);
+	return _voIPLink->outgoingInvite(_id, to);
 }
 
 int 

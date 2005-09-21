@@ -44,6 +44,8 @@ TCPSessionIO::run() {
 GUIServer::GUIServer()
 {
   _factory.registerAll();
+  _sessionIO = 0;
+  _shouldQuit = false;
 }
 
 // destructor
@@ -73,7 +75,7 @@ GUIServer::exec() {
     Request *request;
     
     while (std::cin.good()) {
-    
+      
       // waiting for a new connection
       std::cout << "waiting for a new connection..." << std::endl;
 
@@ -84,7 +86,8 @@ GUIServer::exec() {
       // wait for the first message
       std::cout << "accepting connection..." << std::endl;
 
-      while(_sessionIO->good()) {
+      _shouldQuit = false;
+      while(_sessionIO->good() && !_shouldQuit) {
         if ( _requests.pop(request, 1000)) {
           output = request->execute(*this);
           handleExecutedRequest(request, output);
@@ -103,15 +106,17 @@ void
 GUIServer::pushRequestMessage(const std::string &request)
 {
   Request *tempRequest = _factory.create(request);
-  std::cout << "pushRequestMessage" << std::endl;
   _requests.push(tempRequest);
 }
 
 void 
 GUIServer::pushResponseMessage(const ResponseMessage &response) 
 {
-  std::cout << "pushResponseMessage" << std::endl;
-  _sessionIO->push(response.toString());
+  if (_sessionIO) {
+    _sessionIO->push(response.toString());
+  } else {
+    std::cerr << "PushResponseMessage: " << response.toString() << std::endl;
+  }
 
   // remove the request from the list 
   if (response.isFinal()) {
@@ -140,7 +145,9 @@ GUIServer::handleExecutedRequest(Request * const request, const ResponseMessage&
       delete request;
     }
   }
-  _sessionIO->push(response.toString());
+  if (_sessionIO) {
+    _sessionIO->push(response.toString());
+  }
 }
 
 /** 
@@ -207,7 +214,11 @@ GUIServer::peerAnsweredCall (short id)
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
     pushResponseMessage(ResponseMessage("200", iter->second.sequenceId(), "OK"));
-  } 
+  } else {
+    std::ostringstream responseMessage;
+    responseMessage << "Peer Answered Call: " << id;
+    pushResponseMessage(ResponseMessage("500", "seq0", responseMessage.str()));
+  }
 }
 
 int  
@@ -283,12 +294,14 @@ GUIServer::setup (void)
 int  
 GUIServer::selectedCall (void) 
 {
+  std::cout << "should not be here" << std::endl;
   return 0;
 }
 
 bool  
 GUIServer::isCurrentId (short) 
 {
+  std::cout << "should not be here" << std::endl;
   return false;
 }
 
