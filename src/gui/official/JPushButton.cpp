@@ -23,7 +23,6 @@
 
 #include <QEvent>
 #include <QMouseEvent>
-#include <QPixmap>
 
 #include "JPushButton.hpp"
 
@@ -33,29 +32,26 @@ JPushButton::JPushButton(const QPixmap &released,
 			 Qt::WFlags flags)
   : QLabel(parent, flags) 
 {
-  mImages[0] = new QPixmap(released);
-  mImages[1] = new QPixmap(pressed);
+  mImages[0] = released;
+  mImages[1] = pressed;
   release();
 }
 
 JPushButton::~JPushButton()
-{
-  delete mImages[0];
-  delete mImages[1];
-}
+{}
 
 void
 JPushButton::release() 
 {
-  resize(mImages[0]->size());
-  setPixmap (*mImages[0]);
+  resize(mImages[0].size());
+  setPixmap (mImages[0]);
 }
 
 void
 JPushButton::press() 
 {
-  resize(mImages[1]->size());
-  setPixmap (*mImages[1]);
+  resize(mImages[1].size());
+  setPixmap (mImages[1]);
 }
 
 // Mouse button released

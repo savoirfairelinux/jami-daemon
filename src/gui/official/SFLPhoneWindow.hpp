@@ -8,6 +8,7 @@ class SFLPhoneWindow : public QMainWindow
 {
 public:
   SFLPhoneWindow();
+  ~SFLPhoneWindow();
 
   void initLineButtons();
 

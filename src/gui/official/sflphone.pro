@@ -6,10 +6,10 @@ TEMPLATE = app
 TARGET += 
 DEPENDPATH += .
 INCLUDEPATH += .
-
 # Input
 HEADERS += JPushButton.hpp \
-           SFLPhoneWindow.hpp
+           SFLPhoneWindow.hpp \
+           globals.h
 SOURCES += main.cpp \
            JPushButton.cpp \
            SFLPhoneWindow.cpp

@@ -25,6 +25,7 @@
 #define __J_PUSH_BUTTON_H__
 
 #include <QLabel>
+#include <QPixmap>
 
 /**
  * This class Emulate a PushButton but takes two
@@ -49,7 +50,7 @@ private:
 
 
 private:
-  QPixmap* mImages[2];
+  QPixmap mImages[2];
   
 protected:
   void mousePressEvent(QMouseEvent *);
@@ -58,6 +59,7 @@ protected:
   
 signals:
   void clicked(void);
+
 };
 
 #endif	// defined(__J_PUSH_BUTTON_H__)
