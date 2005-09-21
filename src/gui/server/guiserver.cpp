@@ -64,18 +64,20 @@ GUIServer::exec() {
     
       // waiting for a new connection
       std::cout << "waiting for a new connection..." << std::endl;
-      
+
       //I'm accepting an incomming connection
-      _sessionIO   = new TCPSessionIO(aServer, this);
+      _sessionIO = new TCPSessionIO(aServer, this);
       _sessionIO->start();
-      
+
       // wait for the first message
       std::cout << "accepting connection..." << std::endl;
-      
+
       while(_sessionIO->good()) {
-        request = popRequest();
-        output = request->execute(*this);
-        pushResponseMessage(output);
+        if ( _requests.pop(request, 1000)) {
+          output = request->execute(*this);
+          pushResponseMessage(output);
+          delete request;
+        }
       }
     }
   }
@@ -87,41 +89,25 @@ GUIServer::exec() {
 }
 
 void 
-GUIServer::pushRequestMessage(const std::string &request)  
+GUIServer::pushRequestMessage(const std::string &request)
 {
+  Request *tempRequest = _factory.create(request);
   std::cout << "pushRequestMessage" << std::endl;
-  _mutex.enterMutex();
-  _requests.push_back(_factory.create(request));
-  _mutex.leaveMutex();
-}
-
-Request *
-GUIServer::popRequest() 
-{
-  Request *request = 0;
-  while(!request) {
-    _mutex.enterMutex();
-    if ( _requests.begin() != _requests.end() ) {
-      request = _requests.front();
-      _requests.pop_front();
-    }
-    _mutex.leaveMutex();
-  }
-  return request;
+  //ost::MutexLock lock(_mutex);
+  _requests.push(tempRequest);
 }
 
 void 
 GUIServer::pushResponseMessage(const ResponseMessage &response) 
 {
   std::cout << "pushResponseMessage" << std::endl;
-  _mutex.enterMutex();
+  //ost::MutexLock lock(_mutex);
   *_sessionIO << response.toString() << std::endl;
-  _mutex.leaveMutex();
 
   // remove the request from the list 
-  if (response.isFinal()) {
-    removeRequest(response.sequenceId());
-  }
+  //if (response.isFinal()) {
+  //  removeRequest(response.sequenceId());
+  //}
 }
 
 /**
@@ -130,6 +116,7 @@ GUIServer::pushResponseMessage(const ResponseMessage &response)
 void 
 GUIServer::removeRequest(const std::string& sequenceId)
 {
+  ost::MutexLock lock(_mutex);
   std::list<Request*>::iterator iter;
   for(iter=_requests.begin(); iter!=_requests.end(); iter++) {
     if ( (*iter)->sequenceId() == sequenceId ) {

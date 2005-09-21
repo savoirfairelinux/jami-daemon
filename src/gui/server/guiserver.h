@@ -29,6 +29,7 @@
 
 #include "subcall.h"
 #include "requestfactory.h"
+#include "ObjectPool.hpp"
 
 class GUIServer;
 class TCPSessionIO : public ost::TCPSession 
@@ -95,7 +96,7 @@ private:
    * and also a sequence number
    */
   CallMap _callMap;
-  std::list<Request*> _requests;
+  ObjectPool<Request*> _requests;
   RequestFactory _factory;
   ost::Mutex _mutex;
 };
