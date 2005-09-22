@@ -1,4 +1,5 @@
 #include "PhoneLineLocker.hpp"
+#include "PhoneLine.hpp"
 
 PhoneLineLocker::PhoneLineLocker(PhoneLine *line)
   : mPhoneLine(line)

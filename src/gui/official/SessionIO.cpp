@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "global.h"
+#include "globals.h"
 #include "Requester.hpp"
 #include "SessionIO.hpp"
 

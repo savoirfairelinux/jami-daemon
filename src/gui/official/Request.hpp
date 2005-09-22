@@ -35,6 +35,8 @@ class Request
 	  const std::string &command,
 	  const std::list< std::string > &args);
 
+  virtual ~Request(){}
+
   /**
    * This function will be called when the request 
    * receive its answer, if the request didn't successfully

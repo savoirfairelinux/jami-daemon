@@ -33,6 +33,7 @@ template< typename Base >
 class ObjectCreatorBase
 {
  public:
+  virtual ~ObjectCreatorBase(){}
   virtual Base *create(const std::string &command,
 		       const std::string &sequenceId,
 		       const std::list< std::string > &args) = 0;

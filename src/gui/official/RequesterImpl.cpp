@@ -21,7 +21,7 @@
 #include <stdexcept>
 #include <sstream>
 
-#include "global.h"
+#include "globals.h"
 #include "RequesterImpl.hpp"
 #include "SessionIO.hpp"
 #include "AnswerReceiver.hpp"

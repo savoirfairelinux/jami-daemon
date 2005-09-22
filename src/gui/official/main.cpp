@@ -22,14 +22,15 @@
 #include <stdexcept>
 #include <string>
 
-#include <QApplication>
 #include <QPushButton>
+#include "SFLPhoneApp.hpp"
 #include "SFLPhoneWindow.hpp"
 
 int main(int argc, char **argv)
 {
-  QApplication app(argc, argv);
+  SFLPhoneApp app(argc, argv);
   SFLPhoneWindow sfl;
+  app.initConnections(&sfl);
   sfl.show();
   return app.exec();
 }

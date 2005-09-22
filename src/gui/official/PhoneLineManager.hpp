@@ -1,17 +1,26 @@
+#ifndef __PHONELINEMANAGER_HPP__
+#define __PHONELINEMANAGER_HPP__
+
 #include <QObject>
 #include <QMutex>
 #include <utility>
 #include <vector>
 
-/**
- * This is the class that ma
- */
+class PhoneLine;
 
+#include "Account.hpp"
+#include "Session.hpp"
+
+/**
+ * This is the class that manages phone lines
+ */
 class PhoneLineManager : public QObject
 {
   Q_OBJECT
 
 public:
+  PhoneLineManager(unsigned int nbLines);
+
   /**
    * This function will make a call on the 
    * current line. If there's no selected
@@ -19,11 +28,6 @@ public:
    */
   void call(const QString &to);
   
-  /**
-   * This function will switch the lines. If the line
-   * is invalid, it just do nothing.
-   */
-  void selectLine(unsigned int line);
 
   /**
    * This function hangup the selected line.
@@ -41,14 +45,20 @@ public:
    * This function hangup the 
    */
 
-slots:
+public slots:
   void clicked();
+
+  /**
+   * This function will switch the lines. If the line
+   * is invalid, it just do nothing.
+   */
+  void selectLine(unsigned int line);
 
 private:
   /**
    * Returns the PhoneLine in position line.
    */
-  PhoneLine * getPhoneLine(unsigned int line);
+  PhoneLine *getPhoneLine(unsigned int line);
 
 private:
   Session mSession;
@@ -62,3 +72,4 @@ private:
 };
 
 
+#endif

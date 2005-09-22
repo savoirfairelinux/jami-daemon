@@ -2,7 +2,7 @@
 #include <QMutex>
 #include <string>
 
-#include "Call.h"
+class Call;
 
 class PhoneLine : public QObject
 {
@@ -10,7 +10,7 @@ class PhoneLine : public QObject
   
 public:
   PhoneLine();
-  ~PhoneLine();
+  ~PhoneLine(){}
 
   void call(const std::string &to);
 
@@ -31,6 +31,16 @@ public:
    */
   void unlock();
 
+  /**
+   * The user selected this line.
+   */
+  void select();
+
+  /**
+   * This phoneline is no longer selected.
+   */
+  void unselect();
+
 signals:
   void selected();
   void unselected();
@@ -38,4 +48,4 @@ signals:
 private:
   Call *mCall;
   QMutex mPhoneLineMutex;
-}
+};

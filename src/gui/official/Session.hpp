@@ -34,9 +34,11 @@ class Session
   /**
    * retreive the account identified by name.
    */
-  Account getAccount(const std::string &name);
+  Account getAccount(const std::string &name) const;
+
+  Account getDefaultAccount() const;
   
-  std::string id();
+  std::string id() const;
 
  private:
   std::string mId;

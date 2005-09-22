@@ -19,6 +19,7 @@
  */
 
 #include <iostream>
+#include <string>
 
 #include "Session.hpp"
 #include "Requester.hpp"
@@ -37,13 +38,19 @@ Session::Session()
 }
 
 std::string 
-Session::id()
+Session::id() const
 {
   return mId;
 }
 
 Account
-Session::getAccount(const std::string &name)
+Session::getAccount(const std::string &name) const
 {
   return Account(mId, name);
+}
+
+Account
+Session::getDefaultAccount() const
+{
+  return Account(mId, std::string("mydefaultaccount"));
 }

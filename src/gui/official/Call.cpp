@@ -22,6 +22,7 @@
 #include <list>
 
 #include "Call.hpp"
+#include "Session.hpp"
 #include "Requester.hpp"
 
 

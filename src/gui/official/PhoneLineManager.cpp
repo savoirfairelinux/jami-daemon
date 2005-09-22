@@ -1,11 +1,19 @@
 #include <iostream>
 
+#include "globals.h"
+
+#include "PhoneLine.hpp"
+#include "PhoneLineLocker.hpp"
 #include "PhoneLineManager.hpp"
 
-PhoneLineManager::PhoneLineManager()
+PhoneLineManager::PhoneLineManager(unsigned int nbLines)
   : mAccount(mSession.getDefaultAccount())
   , mCurrentLine(NULL)
-{}
+{
+  for(unsigned int i = 0; i < nbLines; i++) {
+    mPhoneLines.push_back(new PhoneLine());
+  }
+}
 
 void PhoneLineManager::clicked()
 {
@@ -30,6 +38,7 @@ PhoneLineManager::selectLine(unsigned int line)
   }
    
   if(selectedLine != NULL) {
+    _debug("Line %d selected.\n", line);
     mCurrentLineMutex.lock();
     PhoneLine *oldLine = mCurrentLine;
     mCurrentLine = selectedLine;
@@ -45,12 +54,12 @@ PhoneLineManager::selectLine(unsigned int line)
       selectedLine->select();
     }
   }
+  else {
+    _debug("Tried to selected line %d, which appears to be invalid.\n", line);
+  }
 }
 
 void
 PhoneLineManager::call(const QString &to)
 {
-  {
-    QMutexLock currentLineGuard(&mCurrentLineMutex);
-    if
 }

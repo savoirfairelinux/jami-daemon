@@ -41,13 +41,11 @@ public:
 	      Qt::WFlags flags = 0);
   ~JPushButton();
   
-private:
   /**
    * This function will switch the button
    */
   void press();
   void release();
-
 
 private:
   QPixmap mImages[2];

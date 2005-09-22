@@ -1,6 +1,7 @@
-
 #ifndef SFLPHONEGUI_PHONELINELOCKER_HPP
 #define SFLPHONEGUI_PHONELINELOCKER_HPP
+
+class PhoneLine;
 
 /**
  * This class is used as a Lock. It means
@@ -21,7 +22,10 @@ public:
   /**
    * Unlock the currently locked PhoneLine.
    */
-  ~PhoneLine();
-}
+  ~PhoneLineLocker();
+
+private:
+  PhoneLine *mPhoneLine;
+};
 
 #endif

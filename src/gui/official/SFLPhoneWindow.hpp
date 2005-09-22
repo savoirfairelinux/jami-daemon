@@ -2,10 +2,12 @@
 #include <QMainWindow>
 #include <list>
 
-class JPushButton;
+class PhoneLineButton;
 
 class SFLPhoneWindow : public QMainWindow
 {
+  friend class SFLPhoneApp;
+
 public:
   SFLPhoneWindow();
   ~SFLPhoneWindow();
@@ -14,7 +16,5 @@ private:
   void initLineButtons();
 
 private:
-  std::list< PhoneLineButton * > mLineButtons;
-
-  PhoneLineManager mPhoneLineManager;
+  std::list< PhoneLineButton * > mPhoneLineButtons;
 };

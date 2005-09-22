@@ -20,7 +20,7 @@
 
 #include <sstream>
 
-#include "global.h"
+#include "globals.h"
 #include "Request.hpp"
 #include "Requester.hpp"
 
