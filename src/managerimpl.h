@@ -177,8 +177,8 @@ public:
 	void displayErrorText (short id, const std::string& message);
 	void displayError (const std::string& error);
 	void displayStatus (const std::string& status);
-	int selectedCall (void);
-	bool isCurrentId (short id);
+//	int selectedCall (void);
+//	bool isCurrentId (short id);
 	void startVoiceMessageNotification (void);
 	void stopVoiceMessageNotification (void);
 	
@@ -284,6 +284,11 @@ private:
    * Init the Gui interface (after setting it) inside setGui
    */
   void initGui();
+
+  /*
+   * Init the volume for speakers/micro from 0 to 100 value
+   */ 
+  void initVolume();
   
 	/////////////////////
 	// Private variables

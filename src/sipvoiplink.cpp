@@ -1358,6 +1358,7 @@ SipVoIPLink::findCallIdInitial (eXosip_event_t *e)
  * Should be removed !
  * Don't ask the GUI which call it use...
  */
+/*
 short
 SipVoIPLink::findCallIdWhenRinging (void)
 {
@@ -1375,3 +1376,4 @@ SipVoIPLink::findCallIdWhenRinging (void)
   }
   return 0;
 }
+*/

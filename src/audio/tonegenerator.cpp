@@ -60,6 +60,7 @@ ToneThread::run (void) {
 	unsigned int play_time = (size * 1000) / SAMPLING_RATE;
 
 	while (Manager::instance().getZonetone()) {
+			
 		// Create a new stereo buffer with the volume adjusted
 		spkrVolume = Manager::instance().getSpkrVolume();
 		for (int j = 0; j < size; j++) {

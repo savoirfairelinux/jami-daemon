@@ -70,6 +70,11 @@
 #define CODEC4			"Codecs.codec4"
 #define CODEC5			"Codecs.codec5"
 #define RING_CHOICE		"Rings.ringChoice"
+
+// speakers and volume 0 to 100
+#define VOLUME_SPKR	"Volume.speakers"
+#define VOLUME_MICRO	"Volume.speakers"
+
 #define VOLUME_SPKR_X	"Volume.speakers_x"
 #define VOLUME_SPKR_Y	"Volume.speakers_y"
 #define VOLUME_MICRO_X	"Volume.micro_x"
@@ -92,7 +97,12 @@
 #define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"
 #define DFT_DRIVER			0	
 #define DFT_NB_CODEC		3
+
 #define DFT_CODEC			"G711u"
+// volume by default 100%
+#define DFT_VOL_SPKR		100
+#define DFT_VOL_MICRO		100
+
 #define DFT_VOL_SPKR_X		365
 #define DFT_VOL_SPKR_Y		100
 #define DFT_VOL_MICRO_X		347

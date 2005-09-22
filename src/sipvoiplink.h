@@ -177,7 +177,7 @@ private:
 	 */
 	short findCallId (eXosip_event_t *e);
   short findCallIdInitial (eXosip_event_t *e);
-	short findCallIdWhenRinging (void);
+	//short findCallIdWhenRinging (void);
 
 	/*
 	 * Return true if payload is already in the rtpmap and false if not

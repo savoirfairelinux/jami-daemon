@@ -83,8 +83,6 @@ public:
 	virtual void displayContext (short id);
 	virtual std::string getRingtoneFile (void);
 	virtual void setup (void);
-	virtual int selectedCall (void);
-	virtual bool isCurrentId (short);
 	virtual void startVoiceMessageNotification (void);
 	virtual void stopVoiceMessageNotification (void);  
 

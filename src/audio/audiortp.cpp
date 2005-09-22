@@ -272,10 +272,10 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 	}
 
 	// If the current call is the call which is answered
-	if (Manager::instance().isCurrentId(_ca->getId())) {
+	//if (Manager::instance().isCurrentId(_ca->getId())) {
 		// Set decoded data to sound device
 		Manager::instance().getAudioDriver()->mainSndRingBuffer().Put(data_for_speakers_tmp, SAMPLES_SIZE(RTP_FRAMES2SEND));
-	}
+	//}
 	
 	// Notify (with a bip) an incoming call when there is already a call 
 	countTime += time->getSecond();

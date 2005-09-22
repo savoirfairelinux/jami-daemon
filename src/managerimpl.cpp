@@ -84,6 +84,10 @@ ManagerImpl::ManagerImpl (void)
   _loaded = false;
   _gui = NULL;
   _audiodriverPA = NULL;
+
+  // Initialize after by init() -> initVolume()
+  _spkr_volume = 0;
+  _mic_volume  = 0;
 }
 
 ManagerImpl::~ManagerImpl (void) 
@@ -114,7 +118,8 @@ ManagerImpl::init (void)
 {
   terminate();
   initZeroconf();
-  
+  initVolume();
+
   // Set a sip voip link by default
   _voIPLinkVector.push_back(new SipVoIPLink(DFT_VOIP_LINK));
 
@@ -655,18 +660,18 @@ ManagerImpl::displayStatus (const string& status)
   }
 }
 
-int
-ManagerImpl::selectedCall (void) 
-{
-	return _gui->selectedCall();
-}
-
-bool
-ManagerImpl::isCurrentId (short id)
-{
-	return _gui->isCurrentId(id);
-}
-
+//int
+//ManagerImpl::selectedCall (void) 
+//{
+//	return _gui->selectedCall();
+//}
+//
+//bool
+//ManagerImpl::isCurrentId (short id)
+//{
+//	return _gui->isCurrentId(id);
+//}
+//
 void
 ManagerImpl::startVoiceMessageNotification (void)
 {
@@ -686,6 +691,7 @@ ManagerImpl::congestion (bool var) {
 			_congestion = var;
 		}
 		_zonetone = var;
+		_debug("ManagerImpl::congestion : Tone Handle Congestion\n");
 		_tone->toneHandle(ZT_TONE_CONGESTION);
 	} else {
         _error->errorName(OPEN_FAILED_DEVICE);
@@ -907,6 +913,9 @@ ManagerImpl::initConfigFile (void)
 	fill_config_fields_str(AUDIO, CODEC4, DFT_CODEC); 
 	fill_config_fields_str(AUDIO, CODEC5, DFT_CODEC); 
 	fill_config_fields_str(AUDIO, RING_CHOICE, DFT_RINGTONE); 
+	fill_config_fields_int(AUDIO, VOLUME_SPKR, DFT_VOL_SPKR); 
+	fill_config_fields_int(AUDIO, VOLUME_MICRO, DFT_VOL_MICRO); 
+
 	fill_config_fields_int(AUDIO, VOLUME_SPKR_X, DFT_VOL_SPKR_X); 
 	fill_config_fields_int(AUDIO, VOLUME_SPKR_Y, DFT_VOL_SPKR_Y); 
 	fill_config_fields_int(AUDIO, VOLUME_MICRO_X, DFT_VOL_MICRO_X); 
@@ -961,6 +970,16 @@ ManagerImpl::initZeroconf(void)
     _DNSService->scanServices();
   }
 #endif
+}
+
+/*
+ * Init the volume for speakers/micro from 0 to 100 value
+ */
+void
+ManagerImpl::initVolume()
+{
+	setSpkrVolume(get_config_fields_int(AUDIO, VOLUME_SPKR));
+	setMicroVolume(get_config_fields_int(AUDIO, VOLUME_MICRO));
 }
 
 // EOF

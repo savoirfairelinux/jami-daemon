@@ -291,20 +291,6 @@ GUIServer::setup (void)
 {
 }
 
-int  
-GUIServer::selectedCall (void) 
-{
-  std::cout << "should not be here" << std::endl;
-  return 0;
-}
-
-bool  
-GUIServer::isCurrentId (short) 
-{
-  std::cout << "should not be here" << std::endl;
-  return false;
-}
-
 void  
 GUIServer::startVoiceMessageNotification (void) 
 {
