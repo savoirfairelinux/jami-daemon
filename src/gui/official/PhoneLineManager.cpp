@@ -6,22 +6,46 @@ PhoneLineManager::PhoneLineManager()
   , mCurrentLine(NULL)
 {}
 
+
+/**
+ * Warning: This function might 'cause a problem if
+ * we select 2 line in a very short time.
+ */
 void
-PhoneLineManager::selectLine(int line)
+PhoneLineManager::selectLine(unsigned int line)
 {
-  PhoneLine *newline = NULL;
-  QMutexLock currentLineGuard(&mCurrentLineMutex);
+  PhoneLine *selectedLine = NULL;
+  // getting the wanted line;
   {
-    QMutexLock phoneLinesGuard(&mPhoneLinesMutex);
+    mPhoneLinesMutex.lock();
     if(mPhoneLines.size() > line) {
-      if(mCurrentLine != mPhoneLines[line]) {
-	if(mCurrentLine != NULL) {
-	  mCurrentLine->unselect();
-	}
-	mCurrentLine = mPhoneLines[line];
-	mCurrentLine->select();
+      selectedLine = mPhoneLines[line];
+    }
+    mPhoneLinesMutex.unlock();
+  }
+   
+  if(selectedLine != NULL) {
+    mCurrentLineMutex.lock();
+    PhoneLine *oldLine = mCurrentLine;
+    mCurrentLine = selectedLine;
+    mCurrentLineMutex.unlock();
+    
+    if(oldLine != selectedLine) {
+      if(oldLine != NULL) {
+	PhoneLineLocker guard(oldLine);
+	oldLine->unselect();
       }
+
+      PhoneLineLocker guard(selectedLine);
+      selectedLine->select();
     }
   }
-    
+}
+
+void
+PhoneLineManager::call(const QString &to)
+{
+  {
+    QMutexLock currentLineGuard(&mCurrentLineMutex);
+    if
 }
