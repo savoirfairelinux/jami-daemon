@@ -14,6 +14,7 @@ SFLPhoneWindow::SFLPhoneWindow()
   , mSession()
   , mAccount(mSession.getAccount("monaccount")
 {
+  // Initialize the background image
   QLabel *l = new QLabel(this);
   QPixmap main(":/images/main-img.png");
   l->setPixmap(main);
@@ -51,6 +52,8 @@ SFLPhoneWindow::initLineButtons()
 						QString::number(i + 1) + 
 						"on-img.png"),
 					this);
+    connect(line, clicked()
+	    &mPhoneLineManager, clicked());
     line->move(xpos, ypos);
     xpos += offset;
     mLineButtons.push_back(line);

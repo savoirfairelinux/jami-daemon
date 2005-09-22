@@ -41,6 +41,9 @@ public:
    * This function hangup the 
    */
 
+slots:
+  void clicked();
+
 private:
   /**
    * Returns the PhoneLine in position line.

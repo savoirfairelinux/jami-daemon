@@ -14,6 +14,7 @@ private:
   void initLineButtons();
 
 private:
-  std::list< JPushButton * > mLineButtons;
-  std::list< PhoneLine > mPhoneLines;
+  std::list< PhoneLineButton * > mLineButtons;
+
+  PhoneLineManager mPhoneLineManager;
 };

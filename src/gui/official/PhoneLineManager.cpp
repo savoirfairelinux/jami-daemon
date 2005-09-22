@@ -1,3 +1,4 @@
+#include <iostream>
 
 #include "PhoneLineManager.hpp"
 
@@ -6,6 +7,10 @@ PhoneLineManager::PhoneLineManager()
   , mCurrentLine(NULL)
 {}
 
+void PhoneLineManager::clicked()
+{
+  std::cout << "Clicked" << std::endl;
+}
 
 /**
  * Warning: This function might 'cause a problem if
