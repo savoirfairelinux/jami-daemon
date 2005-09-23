@@ -355,7 +355,9 @@ ManagerImpl::hangupCall (short id)
 	if (getbRingtone()) {
 		ringtone(false);
 	}
-	return call->hangup();
+	int result = call->hangup();
+  congestion(false);
+  return result;
 }
 
 int
@@ -720,11 +722,7 @@ ManagerImpl::ringtone (bool var)
 			_zonetone = false;
 			_tone->playRingtone((_gui->getRingtoneFile()).data());
 		}
-		
-		if (_ringtone != var) {
-			_ringtone = var;
-		}
-
+		_ringtone = var;
 		_zonetone = var;
 		if (getNumberOfCalls() == 1) {
 			// If just one line is ringing

@@ -51,10 +51,9 @@ main (int argc, char **argv) {
 	"An unknown exception occured when initializing the system." << 
 	std::endl;
     }
-    
-    GUI = new GUIServer();
+    GUI = &(GUIServer::instance());
     Manager::instance().setGui(GUI);
-    exit_code = ((GUIServer*)GUI)->exec();
+    exit_code = GUIServer::instance().exec();
     Manager::instance().terminate();
     delete GUI;
   }  

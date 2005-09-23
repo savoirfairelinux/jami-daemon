@@ -32,8 +32,6 @@ and execute on the server
 Request execution always return a ResponseMessage
 @author Yan Morin
 */
-class GUIServer;
-
 class RequestConstructorException {
 };
 
@@ -42,7 +40,7 @@ class Request
 public:
   Request(const std::string &sequenceId, const TokenList& argList) : _sequenceId(sequenceId), _argList(argList) {}
   virtual ~Request() {}
-  virtual ResponseMessage execute(GUIServer& gui) = 0;
+  virtual ResponseMessage execute() = 0;
   ResponseMessage message(const std::string &code, const std::string &message) {
     ResponseMessage response(code, _sequenceId, message);
     return response;
@@ -83,7 +81,7 @@ public:
       throw RequestConstructorException();
     }
   }
-  virtual ResponseMessage execute(GUIServer& gui);
+  virtual ResponseMessage execute();
 
 private:
   std::string _callId;
@@ -105,7 +103,7 @@ public:
     }
   }
   virtual ~RequestGlobalCall() {}
-  virtual ResponseMessage execute(GUIServer& gui) = 0;
+  virtual ResponseMessage execute() = 0;
 
 protected:
   std::string _callId;
@@ -114,32 +112,32 @@ protected:
 class RequestAnswer : public RequestGlobalCall {
 public:
   RequestAnswer(const std::string &sequenceId, const TokenList& argList) : RequestGlobalCall(sequenceId,argList) {}
-  ResponseMessage execute(GUIServer& gui);
+  ResponseMessage execute();
 };
 class RequestRefuse : public RequestGlobalCall {
 public:
   RequestRefuse(const std::string &sequenceId, const TokenList& argList) : RequestGlobalCall(sequenceId,argList) {}
-  ResponseMessage execute(GUIServer& gui);
+  ResponseMessage execute();
 };
 class RequestHold : public RequestGlobalCall {
 public:
   RequestHold(const std::string &sequenceId, const TokenList& argList) : RequestGlobalCall(sequenceId,argList) {}
-  ResponseMessage execute(GUIServer& gui);
+  ResponseMessage execute();
 };
 class RequestUnhold : public RequestGlobalCall {
 public:
   RequestUnhold(const std::string &sequenceId, const TokenList& argList) : RequestGlobalCall(sequenceId,argList) {}
-  ResponseMessage execute(GUIServer& gui);
+  ResponseMessage execute();
 };
 class RequestTransfer : public RequestGlobalCall {
 public:
   RequestTransfer(const std::string &sequenceId, const TokenList& argList) : RequestGlobalCall(sequenceId,argList) {}
-  ResponseMessage execute(GUIServer& gui);
+  ResponseMessage execute();
 };
 class RequestHangup : public RequestGlobalCall {
 public:
   RequestHangup(const std::string &sequenceId, const TokenList& argList) : RequestGlobalCall(sequenceId,argList) {}
-  ResponseMessage execute(GUIServer& gui);
+  ResponseMessage execute();
 };
 
 class RequestGlobal : public Request
@@ -147,23 +145,23 @@ class RequestGlobal : public Request
 public:
   RequestGlobal(const std::string &sequenceId, const TokenList& argList) : Request(sequenceId,argList) {}
   virtual ~RequestGlobal() {}
-  virtual ResponseMessage execute(GUIServer& gui) = 0;
+  virtual ResponseMessage execute() = 0;
 };
 
 class RequestMute : public RequestGlobal {
 public:
   RequestMute(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
-  ResponseMessage execute(GUIServer& gui);
+  ResponseMessage execute();
 };
 class RequestUnmute : public RequestGlobal {
 public:
   RequestUnmute(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
-  ResponseMessage execute(GUIServer& gui);
+  ResponseMessage execute();
 };
 class RequestQuit : public RequestGlobal {
 public:
   RequestQuit(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
-  ResponseMessage execute(GUIServer& gui);
+  ResponseMessage execute();
 };
 
 class RequestSyntaxError : public Request 
@@ -171,7 +169,7 @@ class RequestSyntaxError : public Request
 public:
   RequestSyntaxError(const std::string &sequenceId, const TokenList& argList) : Request(sequenceId, argList) {}
   ~RequestSyntaxError() {}
-  ResponseMessage execute(GUIServer& gui) {
+  ResponseMessage execute() {
     return message("501", "Syntax Error");
   }
 };

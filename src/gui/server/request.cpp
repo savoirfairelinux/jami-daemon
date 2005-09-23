@@ -22,12 +22,9 @@
 #include "subcall.h"
 
 ResponseMessage
-RequestCall::execute(GUIServer& gui)
+RequestCall::execute()
 {
-  short serverCallId = gui.outgoingCall(_destination); 
-  if (serverCallId) {
-    SubCall scIndex(_sequenceId,_callId);
-    gui.insertSubCall(serverCallId, scIndex);
+  if ( GUIServer::instance().outgoingCall(_sequenceId, _callId, _destination) ) {
     return message("150", "Trying");
   } else {
     return message("500","Server Error");
@@ -35,40 +32,40 @@ RequestCall::execute(GUIServer& gui)
 }
 
 ResponseMessage
-RequestAnswer::execute(GUIServer& gui)
+RequestAnswer::execute()
 {
   return message("200","TODO");
 }
 
 ResponseMessage
-RequestRefuse::execute(GUIServer& gui)
+RequestRefuse::execute()
 {
   return message("200","TODO");
 }
 
 ResponseMessage
-RequestHold::execute(GUIServer& gui)
+RequestHold::execute()
 {
   return message("200","TODO");
 }
 
 ResponseMessage
-RequestUnhold::execute(GUIServer& gui)
+RequestUnhold::execute()
 {
   return message("200","TODO");
 }
 
 ResponseMessage
-RequestTransfer::execute(GUIServer& gui)
+RequestTransfer::execute()
 {
   return message("200","TODO");
 }
 
 ResponseMessage
-RequestHangup::execute(GUIServer& gui)
+RequestHangup::execute()
 {
   try {
-    gui.hangup(_callId);
+    GUIServer::instance().hangup(_callId);
     return message("200", "OK");
   } catch (...) {
     return message("500", "Hangup Error");
@@ -77,21 +74,21 @@ RequestHangup::execute(GUIServer& gui)
 
 
 ResponseMessage
-RequestMute::execute(GUIServer& gui)
+RequestMute::execute()
 {
   return message("200","TODO");
 }
 
 ResponseMessage
-RequestUnmute::execute(GUIServer& gui)
+RequestUnmute::execute()
 {
   return message("200","TODO");
 }
 
 ResponseMessage
-RequestQuit::execute(GUIServer& gui)
+RequestQuit::execute()
 {
-  gui.quit();
+  GUIServer::instance().quit();
   return message("200", "Quitting");
 }
 

@@ -106,9 +106,9 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall,
 	_audioDevice = driver;
 
 	// TODO: Change bind address according to user settings.
-	InetHostAddress local_ip("0.0.0.0");
+	InetHostAddress local_ip("192.168.1.172");
 
-	_debug("Audiortp localport : %d\n", _ca->getLocalAudioPort());
+	_debug("RTP: listening on local port : %d\n", _ca->getLocalAudioPort());
 	if (!_sym) {
 		_sessionRecv = new RTPSession (local_ip, _ca->getLocalAudioPort());
 		_sessionSend = new RTPSession (local_ip);
@@ -141,10 +141,10 @@ AudioRtpRTX::initAudioRtpSession (void)
 	InetHostAddress remote_ip(_ca->getRemoteSdpAudioIp());
 	
 	if (!remote_ip) {
-	   _debug("RTX: IP address is not correct!\n");
+	   _debug("RTP: Target IP address [%s] is not correct!\n", _ca->getRemoteSdpAudioIp());
 	   exit();
 	} else {
-		_debug("RTX: Connected to %s : %d\n", _ca->getRemoteSdpAudioIp(), 
+		_debug("RTP: Sending to %s : %d\n", _ca->getRemoteSdpAudioIp(), 
 				_ca->getRemoteSdpAudioPort());
 	}
 	

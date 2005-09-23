@@ -796,8 +796,8 @@ SipVoIPLink::getEvent (void)
       // Get the message body
       ii = osip_message_get_body(event->request, 0, &body);
       if (ii != 0) {
-	_debug("Cannot get body\n");
-	return -1;
+        _debug("Cannot get body\n");
+        return -1;
       }
 				
       // Analyse message body
@@ -805,8 +805,9 @@ SipVoIPLink::getEvent (void)
       pos = str->find (VOICE_MSG);
 				
       if (pos == string::npos) {
-	// If the string is not found
-	return -1;
+	     // If the string is not found
+       delete str;
+	     return -1;
       } 
 				
       pos_slash = str->find ("/");
@@ -818,10 +819,10 @@ SipVoIPLink::getEvent (void)
 
       if (getMsgVoicemail() != 0) {
 	// If there is at least one voice-message, start notification
-	Manager::instance().startVoiceMessageNotification();
+        Manager::instance().startVoiceMessageNotification();
       } else {
 	// Stop notification when there is 0 voice message
-	Manager::instance().stopVoiceMessageNotification();
+        Manager::instance().stopVoiceMessageNotification();
       }
       delete str;
     }
@@ -1136,8 +1137,8 @@ SipVoIPLink::getLocalIp (void)
   int ret = 0;
   char* myIPAddress = new char[65];
   ret = eXosip_guess_localip (2, myIPAddress, 64);
-  setLocalIpAddress(string(myIPAddress));
-
+  setLocalIpAddress(std::string(myIPAddress));
+   delete [] myIPAddress;
   return ret;
 }
 
