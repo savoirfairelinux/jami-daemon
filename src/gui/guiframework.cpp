@@ -146,10 +146,10 @@ GuiFramework::unregisterVoIPLink (void)
 	}
 }
 
-void 
+bool 
 GuiFramework::sendDtmf (short id, char code)
 {
-	Manager::instance().sendDtmf(id, code);
+	return Manager::instance().sendDtmf(id, code);
 }
 
 int 

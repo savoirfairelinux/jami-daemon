@@ -164,9 +164,9 @@ public:
    	 * Handle choice of the DTMF-send-way
  	 *
  	 * @param   id: callid of the line.
-  	 * @param   code: pressed key.
+   * @param   code: pressed key.
  	 */
-	int sendDtmf (short id, char code);
+	bool sendDtmf (short id, char code);
 	
 
 	int incomingCall (short id);

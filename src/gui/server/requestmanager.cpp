@@ -21,6 +21,7 @@
 #include <iostream>
 
 #include "tcpsessionio.h"
+#include "../../global.h"
 
 RequestManager::RequestManager() : _sessionIO(0)
 {
@@ -56,10 +57,10 @@ RequestManager::exec()
 
     // std::cin.good() is only there to close the server when
     // we do a CTRL+D
-    while(std::cin.good()) {
+    while(_sessionIO->good() && std::cin.good()) {
 
       if (_sessionIO->receive(input)) {
-
+        _debug("Receive Input...: %s\n", input.c_str());
         request = _factory.create(input);
         outputResponse = request->execute();
 
@@ -122,6 +123,7 @@ RequestManager::flushWaitingRequest()
 void
 RequestManager::sendResponse(const ResponseMessage& response) {
   if (_sessionIO) {
+    _debug("Sending output...\n");
     _sessionIO->send(response.toString());
   } 
 

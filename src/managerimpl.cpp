@@ -517,26 +517,25 @@ ManagerImpl::accessToDirectory (void)
 	return 1;
 }
 
-int 
+bool 
 ManagerImpl::sendDtmf (short id, char code)
 {
-	int sendType = get_config_fields_int(SIGNALISATION, SEND_DTMF_AS);
-                                                                                
-    switch (sendType) {
+  int sendType = get_config_fields_int(SIGNALISATION, SEND_DTMF_AS);
+  switch (sendType) {
         // SIP INFO
         case 0:
 			_voIPLinkVector.at(DFT_VOIP_LINK)->carryingDTMFdigits(id, code);
-			return 1;
+			return true;
             break;
                                                                                 
         // Audio way
         case 1:
-			return 1;
+			return false;
             break;
                                                                                 
         // rfc 2833
         case 2:
-			return 1;
+			return false;
             break;
                                                                                 
         default:

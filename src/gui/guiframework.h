@@ -65,7 +65,7 @@ public:
 	int quitApplication (void);
 	int sendTextMessage (short id, const std::string& message);
 	int accessToDirectory (void);
-	void sendDtmf (short id, char code);
+	bool sendDtmf (short id, char code);
 	
 protected:
 	std::string _message;

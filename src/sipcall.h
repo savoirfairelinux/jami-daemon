@@ -120,24 +120,24 @@ private:
 	CodecDescriptorVector* _cdv;
 	AudioCodec* _audiocodec;
 	
-	short 	_id;
-	int 	_cid;		// call id
-  	int 	_did;		// dialog id
-  	int 	_tid;		// transaction id
-	bool	_standby; 	// wait for a cid and did when outgoing call is made
-
-  	int  	_status_code;
-	
-	char*	_reason_phrase;
-  	char*	_textinfo;
-  	char*	_remote_uri;
-	
-	char*	_remote_sdp_audio_ip;
-  	int  	_state;
-	int		_local_audio_port;
-  	int  	_remote_sdp_audio_port;
-	int 	_local_sendrecv;           /* _SENDRECV, _SENDONLY, _RECVONLY */
-  	int 	_remote_sendrecv;          /* _SENDRECV, _SENDONLY, _RECVONLY */
+  short 	_id;
+  int 	_cid;		// call id
+  int 	_did;		// dialog id
+  int 	_tid;		// transaction id
+  bool	_standby; 	// wait for a cid and did when outgoing call is made
+  
+  int  	_status_code;
+  
+  char*	_reason_phrase;
+  char*	_textinfo;
+  char*	_remote_uri;
+  
+  char*	_remote_sdp_audio_ip;
+  int  	_state;
+  int		_local_audio_port;
+  int  	_remote_sdp_audio_port;
+  int 	_local_sendrecv;           /* _SENDRECV, _SENDONLY, _RECVONLY */
+  int 	_remote_sendrecv;          /* _SENDRECV, _SENDONLY, _RECVONLY */
 };
 
 #endif // __SIP_CALL_H__

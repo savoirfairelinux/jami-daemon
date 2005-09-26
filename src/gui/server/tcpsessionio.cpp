@@ -10,8 +10,6 @@
 //
 //
 #include "tcpsessionio.h"
-#include "../../global.h"
-
 
 const int TCPSessionIO::PORT = 3999;
 const char * const TCPSessionIO::IP = "127.0.0.1";
@@ -36,10 +34,8 @@ bool
 TCPSessionIO::good()
 {
   if (_clientStream) { // just in case
-    _debug("_clientStream->good() == %d\n", _clientStream->good());
     return _clientStream->good();
   }
-  _debug("_clientStream doesn't exists yet...");
   return false;
 }
 

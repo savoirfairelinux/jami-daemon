@@ -69,6 +69,7 @@ AudioRtp::createNewSession (SipCall *ca) {
 	Manager::instance().getAudioDriver()->micRingBuffer().flush();
 	Manager::instance().getAudioDriver()->startStream();
 	
+  _debug("AudioRtp::createNewSession: starting RTX thread\n");
 	if (_RTXThread->start() != 0) {
 		return -1;
 	}
@@ -144,13 +145,12 @@ AudioRtpRTX::initAudioRtpSession (void)
 	   _debug("RTP: Target IP address [%s] is not correct!\n", _ca->getRemoteSdpAudioIp());
 	   exit();
 	} else {
-		_debug("RTP: Sending to %s : %d\n", _ca->getRemoteSdpAudioIp(), 
-				_ca->getRemoteSdpAudioPort());
+		_debug("RTP: Sending to %s : %d\n", _ca->getRemoteSdpAudioIp(), _ca->getRemoteSdpAudioPort());
 	}
 	
 	// Initialization
 	if (!_sym) {
-		_sessionRecv->setSchedulingTimeout (100000);
+		//_sessionRecv->setSchedulingTimeout (10000);
 		_sessionRecv->setExpireTimeout(1000000);
 		
 		_sessionSend->setSchedulingTimeout(10000);
@@ -172,20 +172,19 @@ AudioRtpRTX::initAudioRtpSession (void)
 					(unsigned short) _ca->getRemoteSdpAudioPort());
 		}
 
-		_sessionRecv->setPayloadFormat(StaticPayloadFormat(
-				(StaticPayloadType) _ca->payload));
-		_sessionSend->setPayloadFormat(StaticPayloadFormat(
-				(StaticPayloadType) _ca->payload));
+    //setPayloadFormat(StaticPayloadFormat(sptPCMU));
+    _debug("Payload Format: %d\n", _ca->payload);
+		_sessionRecv->setPayloadFormat(StaticPayloadFormat((StaticPayloadType) _ca->payload));
+		_sessionSend->setPayloadFormat(StaticPayloadFormat((StaticPayloadType) _ca->payload));
+
 		setCancel(cancelImmediate);
 		_sessionSend->setMark(true);
 
 	} else {
-		if (!_session->addDestination (remote_ip, 
-					(unsigned short) _ca->getRemoteSdpAudioPort())) {
+		if (!_session->addDestination (remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort())) {
 			exit();
 		} else {
-			_session->setPayloadFormat(StaticPayloadFormat(
-				(StaticPayloadType) _ca->payload));
+			_session->setPayloadFormat(StaticPayloadFormat((StaticPayloadType) _ca->payload));
 			setCancel(cancelImmediate);
 		}
 	}
@@ -246,8 +245,9 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 	const AppDataUnit* adu = NULL;
 
 	// Get audio data stream
+
 	do {
-		Thread::sleep(5); // in msec.
+    Thread::sleep(5); // in msec.
 		if (!_sym) {
 			adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
 		} else {
@@ -286,8 +286,10 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 			Manager::instance().notificationIncomingCall();
 		}
 	} 
+  
 	Manager::instance().getAudioDriver()->startStream();
 	
+
 	delete cd;
 	delete adu;
 }
@@ -322,14 +324,14 @@ AudioRtpRTX::run (void) {
 	// start running the packet queue scheduler.
 	if (!_sym) {
 		_sessionRecv->startRunning();
-		_sessionSend->startRunning();	
+		_sessionSend->startRunning();
 	} else {
 		_session->startRunning();
 	}
 	
 	while (_ca->enable_audio != -1) {
 		micVolume = Manager::instance().getMicroVolume();
-	    spkrVolume = Manager::instance().getSpkrVolume();
+	  spkrVolume = Manager::instance().getSpkrVolume();
 
 		////////////////////////////
 		// Send session

@@ -135,6 +135,7 @@ SipVoIPLink::terminate(void)
 int
 SipVoIPLink::setRegister (void) 
 {
+  _debug("SipVoIPLink::setRegister()\n");
   int i;
   osip_message_t *reg = NULL;
 
@@ -410,6 +411,7 @@ SipVoIPLink::onhold (short id)
     sdp_message_free (local_sdp);
     if (i != 0) {
       osip_message_free (invite);
+      osip_free (tmp);
       return -1;
     }
     osip_message_set_body (invite, tmp, strlen (tmp));
@@ -469,6 +471,7 @@ SipVoIPLink::offhold (short id)
     sdp_message_free (local_sdp);
     if (i != 0) {
       osip_message_free (invite);
+      osip_free (tmp);
       return -1;
     }
     osip_message_set_body (invite, tmp, strlen (tmp));
@@ -545,9 +548,10 @@ SipVoIPLink::getEvent (void)
 
   if (event == NULL) {
     return -1;
-  }	
+  }
 
-  Manager::instance().displayErrorText(event->type, "getEvent");
+  _debug("GetEvent : %d\n", event->type);
+
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //
@@ -691,18 +695,26 @@ SipVoIPLink::getEvent (void)
       return -1;
     }	
     break;
+  case EXOSIP_CALL_RELEASED:
+    id = findCallIdInitial(event);
+    _debug("Id Released: %d\n", id);
+    //TODO: find the id...
+    //Manager::instance().displayErrorText(0, "getEvent:CallReleased");
 
+    break;
   case EXOSIP_CALL_REQUESTFAILURE:
     id = findCallId(event);
 
     // Handle 4XX errors
     switch (event->response->status_code) {
     case AUTH_REQUIRED:
+      _debug("EXOSIP_CALL_REQUESTFAILURE :: AUTH_REQUIRED\n");
       eXosip_lock();
       eXosip_automatic_action();
       eXosip_unlock();
       break;
     case UNAUTHORIZED:
+      _debug("EXOSIP_CALL_REQUESTFAILURE :: UNAUTHORIZED\n");
       setAuthentication();
       break;
 
@@ -757,7 +769,7 @@ SipVoIPLink::getEvent (void)
     break;
 
   case EXOSIP_REGISTRATION_FAILURE: // 2
-    Manager::instance().displayError("getEvent:Registration Failure");
+    Manager::instance().displayError("getEvent : Registration Failure\n");
     break;
 
   case EXOSIP_MESSAGE_NEW:
@@ -828,13 +840,8 @@ SipVoIPLink::getEvent (void)
     }
     break;
 
-  case EXOSIP_CALL_RELEASED:
-    //TODO: find the id...
-    Manager::instance().displayErrorText(0, "getEvent:CallReleased");
-
-    break;
   default:
-    Manager::instance().displayErrorText(event->type, "getEvent:default");
+    //Manager::instance().displayErrorText(event->type, "getEvent:default");
     return -1;
     break;
   }
@@ -979,6 +986,7 @@ SipVoIPLink::sdp_hold_call (sdp_message_t * sdp)
     /* we need to add a global attribute with a field set to "sendonly" */
     sdp_message_a_attribute_add (sdp, -1, osip_strdup ("sendonly"), NULL);
   }
+
   return 0;
 }
 
@@ -1138,7 +1146,7 @@ SipVoIPLink::getLocalIp (void)
   char* myIPAddress = new char[65];
   ret = eXosip_guess_localip (2, myIPAddress, 64);
   setLocalIpAddress(std::string(myIPAddress));
-   delete [] myIPAddress;
+  delete [] myIPAddress;
   return ret;
 }
 
@@ -1251,7 +1259,6 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
   if (i != 0) {
     return -1; // error when building the invite
   }
-  	
 
   int payload;
   unsigned int nb;
@@ -1277,9 +1284,13 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
 			
       snprintf(rtpmap, 127, "a=rtpmap: %d %s/%d\r\n", payload, 
 	       Manager::instance().getCodecDescVector()->at(i)->rtpmapPayload(payload).data(), SAMPLING_RATE);
-      strcat(rtpmap_attr, rtpmap); 
+      strcat(rtpmap_attr, rtpmap);
     }
   }
+
+  // http://www.antisip.com/documentation/eXosip2/group__howto1__initialize.html
+  // tell sip if we support SIP extension like 100rel
+  // osip_message_set_supported (invite, "100rel");
 
   /* add sdp body */
   {
@@ -1294,9 +1305,10 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
               "c=IN IP4 %s\r\n"
               "t=0 0\r\n"
               "m=audio %s RTP/AVP %s\r\n"
-	      "%s",
+	            "%s",
               localip, localip, port, media_audio, rtpmap_attr);
-	
+    // media_audio should be one, two or three numbers?
+	  _debug("%s %d", tmp, strlen(tmp));
     osip_message_set_body (invite, tmp, strlen (tmp));
     osip_message_set_content_type (invite, "application/sdp");
   }

@@ -58,6 +58,7 @@ ToneThread::run (void) {
 
 	// How long do 'size' samples play ?
 	unsigned int play_time = (size * 1000) / SAMPLING_RATE;
+  unsigned int pause = (size) / SAMPLING_RATE;
 
 	while (Manager::instance().getZonetone()) {
 			
@@ -79,7 +80,7 @@ ToneThread::run (void) {
 		}
 		
 		// next iteration later, sound is playing.
-		this->sleep (play_time);
+		this->sleep (pause);
 	}
 }
 
@@ -330,8 +331,8 @@ ToneGenerator::playRingtone (const char *fileName) {
   	file.seekg (0, ios::beg);
 
   	// allocate memory:
-  	src = new char [length];
-	dst = new short[length*2];
+  src = new char [length];
+  dst = new short[length*2];
 	
   	// read data as a block:
   	file.read (src,length);
