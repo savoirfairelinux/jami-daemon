@@ -37,8 +37,11 @@ class Session
   Account getAccount(const std::string &name) const;
 
   Account getDefaultAccount() const;
+
+  Call createCall() const;
   
   std::string id() const;
+  std::string sendTone() const;
 
  private:
   std::string mId;

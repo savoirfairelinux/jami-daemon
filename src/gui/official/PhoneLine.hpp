@@ -1,18 +1,22 @@
+#include <QChar>
 #include <QObject>
 #include <QMutex>
 #include <string>
 
-class Call;
+#include "Call.hpp"
 
 class PhoneLine : public QObject
 {
   Q_OBJECT
   
 public:
-  PhoneLine();
+  PhoneLine(const Call &call, unsigned int line);
   ~PhoneLine(){}
 
   void call(const std::string &to);
+  void call();
+
+  unsigned int line();
 
   /**
    * This will lock the current phone line.
@@ -31,6 +35,19 @@ public:
    */
   void unlock();
 
+
+  /**
+   * This function will return true if there's no 
+   * activity on this line. It means that even 
+   * if we typed something on this line, but haven't
+   * started any communication, this will be available.
+   */
+  bool isAvailable()
+  {return !mInUse;}
+
+  void sendKey(Qt::Key c);
+  
+public slots:
   /**
    * The user selected this line.
    */
@@ -41,11 +58,19 @@ public:
    */
   void unselect();
 
+
 signals:
   void selected();
   void unselected();
+  void backgrounded();
 
 private:
-  Call *mCall;
+  Call mCall;
   QMutex mPhoneLineMutex;
+  unsigned int mLine;
+
+  bool mSelected;
+  bool mInUse;
+  //This is the buffer when the line is not in use;
+  std::string mBuffer;
 };

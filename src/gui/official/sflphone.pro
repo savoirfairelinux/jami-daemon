@@ -6,6 +6,7 @@ TEMPLATE = app
 TARGET += 
 DEPENDPATH += .
 INCLUDEPATH += .
+#CONFIG += debug
 
 # Input
 HEADERS += Account.hpp \

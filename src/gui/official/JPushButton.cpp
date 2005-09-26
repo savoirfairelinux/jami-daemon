@@ -44,14 +44,14 @@ void
 JPushButton::release() 
 {
   resize(mImages[0].size());
-  setPixmap (mImages[0]);
+  setPixmap(mImages[0]);
 }
 
 void
 JPushButton::press() 
 {
   resize(mImages[1].size());
-  setPixmap (mImages[1]);
+  setPixmap(mImages[1]);
 }
 
 // Mouse button released

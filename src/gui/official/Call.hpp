@@ -33,6 +33,8 @@ class Call
   Call(const Session &session, 
        const std::string &callId);
 
+  std::string call(const std::string &to);
+
   /**
    * This function will answer the call.
    */

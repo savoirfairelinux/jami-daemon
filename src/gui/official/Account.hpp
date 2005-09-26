@@ -33,7 +33,6 @@ class Account {
   /**
    * This will generate a call ready to be used.
    */
-  Call call(const std::string &to);
   std::string registerAccount();
   std::string unregisterAccount();
 

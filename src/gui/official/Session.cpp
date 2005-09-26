@@ -43,6 +43,12 @@ Session::id() const
   return mId;
 }
 
+std::string
+Session::sendTone() const
+{
+  return Requester::instance().send(mId, "sendtone", std::list< std::string >());
+}
+
 Account
 Session::getAccount(const std::string &name) const
 {
@@ -53,4 +59,10 @@ Account
 Session::getDefaultAccount() const
 {
   return Account(mId, std::string("mydefaultaccount"));
+}
+
+Call
+Session::createCall() const
+{
+  return Call(mId, Requester::instance().generateCallId());
 }

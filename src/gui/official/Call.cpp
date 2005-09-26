@@ -38,6 +38,14 @@ Call::Call(const Session &session,
   , mId(callId)
 {}
 
+std::string
+Call::call(const std::string &to) 
+{
+  std::list< std::string> args;
+  args.push_back(mId);
+  args.push_back(to);
+  return Requester::instance().send(mSessionId, "call", args);
+}
 
 std::string
 Call::answer() 

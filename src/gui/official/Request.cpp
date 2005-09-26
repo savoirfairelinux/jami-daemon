@@ -75,7 +75,7 @@ Request::toString()
 }
 
 
-CallRequest::CallRequest(const std::string &sequenceId,
+CallRelatedRequest::CallRelatedRequest(const std::string &sequenceId,
 			 const std::string &command,
 			 const std::list< std::string > &args)
   : Request(sequenceId, command, args)
@@ -83,7 +83,7 @@ CallRequest::CallRequest(const std::string &sequenceId,
 {}
 
 void
-CallRequest::onError(const std::string &code, const std::string &message)
+CallRelatedRequest::onError(const std::string &code, const std::string &message)
 {
   onError(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
 	       mCallId), 
@@ -92,11 +92,11 @@ CallRequest::onError(const std::string &code, const std::string &message)
 }
 
 void
-CallRequest::onError(Call, const std::string &, const std::string &)
+CallRelatedRequest::onError(Call, const std::string &, const std::string &)
 {}
 
 void
-CallRequest::onEntry(const std::string &code, const std::string &message)
+CallRelatedRequest::onEntry(const std::string &code, const std::string &message)
 {
   onEntry(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
 	       mCallId), 
@@ -105,11 +105,11 @@ CallRequest::onEntry(const std::string &code, const std::string &message)
 }
 
 void
-CallRequest::onEntry(Call, const std::string &, const std::string &)
+CallRelatedRequest::onEntry(Call, const std::string &, const std::string &)
 {}
 
 void
-CallRequest::onSuccess(const std::string &code, const std::string &message)
+CallRelatedRequest::onSuccess(const std::string &code, const std::string &message)
 {
   onSuccess(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
 		 mCallId), 
@@ -118,7 +118,7 @@ CallRequest::onSuccess(const std::string &code, const std::string &message)
 }
 
 void
-CallRequest::onSuccess(Call, const std::string &, const std::string &)
+CallRelatedRequest::onSuccess(Call, const std::string &, const std::string &)
 {}
 
 AccountRequest::AccountRequest(const std::string &sequenceId,

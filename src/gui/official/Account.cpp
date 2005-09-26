@@ -28,17 +28,6 @@ Account::Account(const std::string &sessionId,
   , mId(name)
 {}
 
-Call
-Account::call(const std::string &to)
-{
-  std::string callId = Requester::instance().generateCallId();
-  std::list< std::string > args;
-  args.push_back(mId);
-  args.push_back(to);
-  Requester::instance().send(mSessionId, "register", args);
-  return Call(mSessionId, callId);
-}
-
 std::string
 Account::registerAccount()
 {

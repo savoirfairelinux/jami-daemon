@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QObject>
 #include <QPixmap>
+#include <QTimer>
 
 #include "JPushButton.hpp"
 
@@ -25,15 +26,23 @@ public:
 
   virtual ~PhoneLineButton(){}
   
-protected:
-  void mouseReleaseEvent(QMouseEvent *);
-  
 signals:
   void clicked(unsigned int);
 
+ public slots:
+  void suspend();
+  void press();
+  void release();
+
+protected:
+  void mouseReleaseEvent(QMouseEvent *);
+  void swap();
+
 private:
   unsigned int mLine;
-
+  QTimer mTimer;
+  unsigned int mFace;
+  
 };
 
 #endif	// defined(__J_PUSH_BUTTON_H__)

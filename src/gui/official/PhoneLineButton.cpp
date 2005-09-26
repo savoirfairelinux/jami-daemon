@@ -9,17 +9,52 @@ PhoneLineButton::PhoneLineButton(const QPixmap &released,
 				 Qt::WFlags flags)
   : JPushButton(released, pressed, parent, flags)
   , mLine(line)
-{}
+  , mTimer(this)
+  , mFace(0)
+{
+  connect(&mTimer, SIGNAL(timeout()),
+	  this, SLOT(swap()));
+}
+
+void
+PhoneLineButton::suspend()
+{
+  mTimer.start(500);
+}
+
+void
+PhoneLineButton::swap()
+{
+  mFace = (mFace + 1) / 2;
+  resize(mImages[mFace].size());
+  setPixmap(mImages[mFace]);
+}
+
+void 
+PhoneLineButton::press()
+{
+  mTimer.stop();
+  JPushButton::press();
+}
+
+void 
+PhoneLineButton::release()
+{
+  mTimer.stop();
+  JPushButton::release();
+}
 
 void 
 PhoneLineButton::mouseReleaseEvent (QMouseEvent *e)
 {
   switch (e->button()) {
   case Qt::LeftButton:
-    release();
     // Emulate the left mouse click
     if (this->rect().contains(e->pos())) {
       emit clicked(mLine);
+    }
+    else {
+      release();
     }
     break;
     

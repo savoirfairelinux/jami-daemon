@@ -1,6 +1,7 @@
 #ifndef __PHONELINEMANAGER_HPP__
 #define __PHONELINEMANAGER_HPP__
 
+#include <Qt>
 #include <QObject>
 #include <QMutex>
 #include <utility>
@@ -41,24 +42,22 @@ public:
    */
   void hangup(unsigned int line);
 
-  /**
-   * This function hangup the 
-   */
+  PhoneLine *getPhoneLine(unsigned int line);
+
+signals:
+  void unselected(unsigned int);
+  void selected(unsigned int);
 
 public slots:
-  void clicked();
+  void sendKey(Qt::Key c);
 
   /**
    * This function will switch the lines. If the line
    * is invalid, it just do nothing.
    */
   void selectLine(unsigned int line);
-
-private:
-  /**
-   * Returns the PhoneLine in position line.
-   */
-  PhoneLine *getPhoneLine(unsigned int line);
+  
+  void selectAvailableLine();
 
 private:
   Session mSession;

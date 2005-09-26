@@ -88,12 +88,12 @@ class Request
   const std::list< std::string > mArgs;
 };
 
-class CallRequest : public Request
+class CallRelatedRequest : public Request
 {
  public:
-  CallRequest(const std::string &sequenceId,
-	      const std::string &command,
-	      const std::list< std::string > &args);
+  CallRelatedRequest(const std::string &sequenceId,
+		     const std::string &command,
+		     const std::list< std::string > &args);
 
 
   /**

@@ -1,4 +1,6 @@
+#include <QMutexLocker>
 #include <iostream>
+#include <stdexcept>
 
 #include "globals.h"
 
@@ -11,14 +13,66 @@ PhoneLineManager::PhoneLineManager(unsigned int nbLines)
   , mCurrentLine(NULL)
 {
   for(unsigned int i = 0; i < nbLines; i++) {
-    mPhoneLines.push_back(new PhoneLine());
+    mPhoneLines.push_back(new PhoneLine(mSession.createCall(),
+					i));
   }
 }
 
-void PhoneLineManager::clicked()
+void 
+PhoneLineManager::selectAvailableLine()
 {
-  std::cout << "Clicked" << std::endl;
+  PhoneLine *selectedLine = NULL;
+
+  mPhoneLinesMutex.lock();
+  unsigned int i = 0;
+  while(i < mPhoneLines.size() && !selectedLine) {
+    PhoneLineLocker guard(mPhoneLines[i]);
+    if(mPhoneLines[i]->isAvailable()) {
+      selectedLine = mPhoneLines[i];
+    }
+    else {
+      i++;
+    }
+  }
+  mPhoneLinesMutex.unlock();
+  
+  if(selectedLine) {
+    selectLine(i);
+  }
 }
+
+PhoneLine *
+PhoneLineManager::getPhoneLine(unsigned int line)
+{
+  QMutexLocker guard(&mPhoneLinesMutex);
+  if(mPhoneLines.size() <= line) {
+    throw std::runtime_error("Trying to get an invalid Line");
+  }
+  
+  return mPhoneLines[line];
+}
+
+void
+PhoneLineManager::sendKey(Qt::Key c)
+{
+  PhoneLine *selectedLine = NULL;
+  mCurrentLineMutex.lock();
+  selectedLine = mCurrentLine;
+  mCurrentLineMutex.unlock();
+
+  if(!selectedLine) {
+    selectAvailableLine();
+    mCurrentLineMutex.lock();
+    selectedLine = mCurrentLine;
+    mCurrentLineMutex.unlock();
+  }
+
+  if(selectedLine) {
+    PhoneLineLocker guard(selectedLine);
+    selectedLine->sendKey(c);
+  }
+}
+
 
 /**
  * Warning: This function might 'cause a problem if
@@ -52,6 +106,9 @@ PhoneLineManager::selectLine(unsigned int line)
 
       PhoneLineLocker guard(selectedLine);
       selectedLine->select();
+      if(selectedLine->isAvailable()) {
+	mSession.sendTone();
+      }
     }
   }
   else {
@@ -60,6 +117,6 @@ PhoneLineManager::selectLine(unsigned int line)
 }
 
 void
-PhoneLineManager::call(const QString &to)
+PhoneLineManager::call(const QString &)
 {
 }

@@ -26,6 +26,7 @@
 
 #include <QLabel>
 #include <QPixmap>
+#include <QImage>
 
 /**
  * This class Emulate a PushButton but takes two
@@ -40,14 +41,15 @@ public:
 	      QWidget *parent, 
 	      Qt::WFlags flags = 0);
   ~JPushButton();
-  
+
+public slots:  
   /**
    * This function will switch the button
    */
   void press();
   void release();
 
-private:
+protected:
   QPixmap mImages[2];
   
 protected:
@@ -56,7 +58,7 @@ protected:
   void mouseMoveEvent(QMouseEvent *);
   
 signals:
-  void clicked(void);
+  void clicked();
 
 };
 

@@ -2,36 +2,36 @@
 
 #include <QLabel>
 #include <QPixmap>
+#include <QKeyEvent>
 #include <iostream>
 
 #include "globals.h"
 #include "PhoneLineButton.hpp"
+#include "JPushButton.hpp"
 
 SFLPhoneWindow::SFLPhoneWindow()
-  : QMainWindow(NULL, 0)
+  : QMainWindow()
 {
   // Initialize the background image
   QLabel *l = new QLabel(this);
-  QPixmap main(":/images/main-img.png");
+  QPixmap main(":/sflphone/images/main.png");
   l->setPixmap(main);
   resize(main.size());
   l->resize(main.size());
 
-  //   QLabel *os = new QLabel(this);
+//   QLabel *os = new QLabel(this);
 //   QPixmap overscreen(":/images/overscreen.png");
 //   os->setPixmap(overscreen);
 //   os->resize(overscreen.size());
 //   os->move(22,44);
-  
 
+  
+  initWindowButtons();
   initLineButtons();
 }
 
 SFLPhoneWindow::~SFLPhoneWindow()
-{
-  int i = 0;
-  i++;
-}
+{}
 
 void 
 SFLPhoneWindow::initLineButtons()
@@ -40,12 +40,12 @@ SFLPhoneWindow::initLineButtons()
   int ypos = 151;
   int offset = 31;
   for(int i = 0; i < NB_PHONELINES; i++) {
-    PhoneLineButton *line = new PhoneLineButton(QPixmap(QString(":/images/line") + 
-							QString::number(i + 1) + 
-							"off-img.png"),
-						QPixmap(QString(":/images/line") + 
-							QString::number(i + 1) + 
-							"on-img.png"),
+    PhoneLineButton *line = new PhoneLineButton(QPixmap(QString(":/sflphone/images/l") +
+							QString::number(i + 1) +
+							"_off.png"),
+						QPixmap(QString(":/sflphone/images/l") +
+							QString::number(i + 1) +
+							"_on.png"),
 						i,
 						this);
     line->move(xpos, ypos);
@@ -54,3 +54,27 @@ SFLPhoneWindow::initLineButtons()
   }
 }
 
+void SFLPhoneWindow::initWindowButtons()
+{
+  mCloseButton = new JPushButton(QPixmap(":/sflphone/images/close_off.png"),
+				 QPixmap(":/sflphone/images/close_on.png"),
+				 this);
+  QObject::connect(mCloseButton, SIGNAL(clicked()),
+		   this, SLOT(close()));
+  mCloseButton->move(374,5);
+  mMinimizeButton = new JPushButton(QPixmap(":/sflphone/images/minimize_off.png"),
+				    QPixmap(":/sflphone/images/minimize_on.png"),
+				    this);
+  QObject::connect(mMinimizeButton, SIGNAL(clicked()),
+		   this, SLOT(lower()));
+  mMinimizeButton->move(354,5);
+  //  JPushButton *b = new JPushButton(QPixmap(":/sflphone/images/closeoff.png"),
+  //			   QPixmap(":/sflphone/images/closeon.png").
+
+}
+
+void
+SFLPhoneWindow::keyPressEvent(QKeyEvent *e) {
+  // Misc. key	  
+  emit keyPressed(Qt::Key(e->key()));
+}
