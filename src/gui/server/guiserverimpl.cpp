@@ -42,19 +42,6 @@ GUIServerImpl::exec() {
 }
 
 
-bool 
-GUIServerImpl::outgoingCall (const std::string& seq, const std::string& callid, const std::string& to) 
-{
-  short serverCallId = GuiFramework::outgoingCall(to);
-  if ( serverCallId ) {
-    SubCall subcall(seq, callid);
-    insertSubCall(serverCallId, subcall);
-    return true;
-  } else {
-    return false;
-  }
-}
-
 /** 
  * SubCall operations
  *  insert
@@ -95,17 +82,100 @@ GUIServerImpl::getIdFromCallId(const std::string& callId)
   throw std::runtime_error("No match for this CallId");
 }
 
-void 
-GUIServerImpl::hangup(const std::string& callId) {
+bool 
+GUIServerImpl::outgoingCall (const std::string& seq, const std::string& callid, const std::string& to) 
+{
+  short serverCallId = GuiFramework::outgoingCall(to);
+  if ( serverCallId ) {
+    SubCall subcall(seq, callid);
+    insertSubCall(serverCallId, subcall);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool 
+GUIServerImpl::answerCall(const std::string& callId) 
+{
   try {
     short id = getIdFromCallId(callId);
-    // There was a problem when hanging up...
-    if (!GuiFramework::hangupCall(id)) {
-      throw std::runtime_error("Error when hangup");
+    if (GuiFramework::answerCall(id)) {
+      return true;
     }
   } catch(...) {
-    throw;
+    return false;
   }
+  return false;
+}
+
+bool
+GUIServerImpl::refuseCall(const std::string& callId) 
+{
+  try {
+    short id = getIdFromCallId(callId);
+    if (GuiFramework::refuseCall(id)) {
+      return true;
+    }
+  } catch(...) {
+    return false;
+  }
+  return false;
+}
+
+bool
+GUIServerImpl::holdCall(const std::string& callId) 
+{
+  try {
+    short id = getIdFromCallId(callId);
+    if (GuiFramework::onHoldCall(id)) {
+      return true;
+    }
+  } catch(...) {
+    return false;
+  }
+  return false;
+}
+
+bool
+GUIServerImpl::unholdCall(const std::string& callId) 
+{
+  try {
+    short id = getIdFromCallId(callId);
+    if (GuiFramework::offHoldCall(id)) {
+      return true;
+    }
+  } catch(...) {
+    return false;
+  }
+  return false;
+}
+
+bool
+GUIServerImpl::hangupCall(const std::string& callId) 
+{
+  try {
+    short id = getIdFromCallId(callId);
+    if (GuiFramework::hangupCall(id)) {
+      return true;
+    }
+  } catch(...) {
+    return false;
+  }
+  return false;
+}
+
+bool 
+GUIServerImpl::dtmfCall(const std::string& callId, const std::string& dtmfKey) 
+{
+  try {
+    short id = getIdFromCallId(callId);
+    char code = dtmfKey[0];
+    return GuiFramework::sendDtmf(id, code);
+  } catch(...) {
+    return false;
+  }
+  return false;
 }
 
 int 
@@ -140,6 +210,16 @@ GUIServerImpl::peerRingingCall (short id)
 int  
 GUIServerImpl::peerHungupCall (short id) 
 {
+  CallMap::iterator iter = _callMap.find(id);
+  if ( iter != _callMap.end() ) {
+    std::ostringstream responseMessage;
+    responseMessage << iter->second.callId() << " hangup";
+
+    _requestManager.sendResponse(ResponseMessage("250", "seq0", responseMessage.str()));
+    
+    // remove this call...
+    _callMap.erase(id);
+  }
   return 0;
 }
 

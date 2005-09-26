@@ -16,37 +16,15 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef REQUESTMANAGER_H
-#define REQUESTMANAGER_H
-
-#include <cc++/thread.h>
-
 #include "sessionio.h"
-#include "requestfactory.h"
-#include "responsemessage.h"
 
-/**
-@author Yan Morin
-*/
-class RequestManager{
-public:
-    RequestManager();
+SessionIO::SessionIO()
+{
+}
 
-    ~RequestManager();
 
-    int exec(void);
-    void sendResponse(const ResponseMessage& response);
+SessionIO::~SessionIO()
+{
+}
 
-private:
-  void flushWaitingRequest();
-  void handleExecutedRequest(Request * const request, const ResponseMessage& response);
 
-  RequestFactory _factory;
-  SessionIO* _sessionIO;
-
-  // waiting requests
-  ost::Mutex _waitingRequestsMutex;
-  std::map<std::string, Request*> _waitingRequests;
-};
-
-#endif

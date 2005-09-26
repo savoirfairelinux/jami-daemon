@@ -26,33 +26,44 @@ RequestCall::execute()
 {
   if ( GUIServer::instance().outgoingCall(_sequenceId, _callId, _destination) ) {
     return message("150", "Trying");
-  } else {
-    return message("500","Server Error");
   }
+  return message("500","Server Error");
 }
 
 ResponseMessage
 RequestAnswer::execute()
 {
-  return message("200","TODO");
+  if ( GUIServer::instance().answerCall(_callId) ) {
+    return message("200", "OK");
+  }
+  return message("500","Server Error");
 }
 
 ResponseMessage
 RequestRefuse::execute()
 {
-  return message("200","TODO");
+  if ( GUIServer::instance().refuseCall(_callId) ) {
+    return message("200", "OK");
+  }
+  return message("500","Server Error");
 }
 
 ResponseMessage
 RequestHold::execute()
 {
-  return message("200","TODO");
+  if ( GUIServer::instance().holdCall(_callId) ) {
+    return message("200", "OK");
+  }
+  return message("500","Server Error");
 }
 
 ResponseMessage
 RequestUnhold::execute()
 {
-  return message("200","TODO");
+  if ( GUIServer::instance().unholdCall(_callId) ) {
+    return message("200", "OK");
+  }
+  return message("500","Server Error");
 }
 
 ResponseMessage
@@ -64,12 +75,37 @@ RequestTransfer::execute()
 ResponseMessage
 RequestHangup::execute()
 {
-  try {
-    GUIServer::instance().hangup(_callId);
+  if ( GUIServer::instance().hangupCall(_callId) ) {
     return message("200", "OK");
-  } catch (...) {
-    return message("500", "Hangup Error");
   }
+  return message("500", "Hangup Error");
+}
+
+RequestDTMF::RequestDTMF(const std::string &sequenceId, 
+    const TokenList& argList) : RequestGlobalCall(sequenceId, argList)
+{
+
+  TokenList::iterator iter = _argList.begin();
+
+  // check for the dtmf key
+  bool argsAreValid = false;
+  if (iter != _argList.end() && (*iter).length()==1) {
+    _dtmfKey = *iter;
+    _argList.pop_front();
+    argsAreValid = true;
+  }
+  if (!argsAreValid) {
+    throw RequestConstructorException();
+  }
+}
+
+ResponseMessage
+RequestDTMF::execute()
+{
+  if ( GUIServer::instance().dtmfCall(_callId, _dtmfKey) ) {
+    return message("200", "OK");
+  }
+  return message("500", "DTMF Error");
 }
 
 

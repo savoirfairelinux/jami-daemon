@@ -61,8 +61,13 @@ public:
   bool outgoingCall (const std::string& seq, 
     const std::string& callid, 
     const std::string& to);
+  bool answerCall(const std::string& callId);
+  bool refuseCall(const std::string& callId);
+  bool holdCall(const std::string& callId);
+  bool unholdCall(const std::string& callId);
+  bool hangupCall(const std::string& callId);
+  bool dtmfCall(const std::string& callId, const std::string& dtmfKey);
 
-  void hangup(const std::string& callId);
   void quit() {_shouldQuit=true;}
 
 private:

@@ -30,6 +30,7 @@ RequestManager::RequestManager() : _sessionIO(0)
 
 RequestManager::~RequestManager()
 {
+  delete _sessionIO;
   flushWaitingRequest();
 }
 
@@ -37,43 +38,39 @@ int
 RequestManager::exec() 
 {
   try {
-    ost::InetAddress addr("127.0.0.1");
+    // waiting for a new connection
+    std::cout << "waiting for a new connection..." << std::endl;
 
-    //Creating a listening socket
-    ost::TCPSocket aServer(addr, 3999);
+    // TCPSessionIO start a thread for the stream socket
+    _sessionIO = new TCPSessionIO();
+
+    // wait for the first message
+    std::cout << "accepting connection..." << std::endl;
 
     ResponseMessage outputResponse; // TCPStream output line
     std::string input;
     std::string output;
     Request *request;
 
-    while (std::cin.good()) {
+    _sessionIO->init();
 
-      // waiting for a new connection
-      std::cout << "waiting for a new connection..." << std::endl;
+    // std::cin.good() is only there to close the server when
+    // we do a CTRL+D
+    while(std::cin.good()) {
 
-      //I'm accepting an incomming connection
-      _sessionIO = new TCPSessionIO(aServer);
-      _sessionIO->start();
+      if (_sessionIO->receive(input)) {
 
-      // wait for the first message
-      std::cout << "accepting connection..." << std::endl;
+        request = _factory.create(input);
+        outputResponse = request->execute();
 
-      while(_sessionIO->good()) {
+        _sessionIO->send(outputResponse.toString());
 
-        if ( _sessionIO->receive(input)) {
+        handleExecutedRequest(request, outputResponse);
+      } // end pop
 
-          request = _factory.create(input);
-          outputResponse = request->execute();
-
-          _sessionIO->send(outputResponse.toString());
-
-          handleExecutedRequest(request, outputResponse);
-        } // end pop
-
-      } // end streaming
-
-    } // end server side : ctrl + d
+    } // end streaming
+    delete _sessionIO;
+    _sessionIO = 0;
 
   } catch(ost::Socket *e) {
     std::cerr << e->getErrorString() << std::endl;
@@ -126,9 +123,7 @@ void
 RequestManager::sendResponse(const ResponseMessage& response) {
   if (_sessionIO) {
     _sessionIO->send(response.toString());
-  } else {
-    std::cerr << "RequestManager::sendResponse: no initialize sessionIO" << response.toString() << std::endl;
-  }
+  } 
 
   // remove the request from the waiting requests list
   if (response.isFinal()) {

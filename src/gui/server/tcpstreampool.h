@@ -16,37 +16,38 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef REQUESTMANAGER_H
-#define REQUESTMANAGER_H
+#ifndef TCPSTREAMPOOL_H
+#define TCPSTREAMPOOL_H
 
-#include <cc++/thread.h>
+#include <string>
+#include <cc++/socket.h>
 
-#include "sessionio.h"
-#include "requestfactory.h"
-#include "responsemessage.h"
+#include "ObjectPool.hpp"
 
 /**
-@author Yan Morin
+ * Utilisation:
+ * TCPSessionIO session = TCPStreamPool(aServer);
+ * std::string response = "hello";
+ * std::string request;
+ * session.start();
+ * session.send(response);
+ * while(session.receive(request)) {
+ *   std::cout << request << std::endl;
+ * }
+ * @author Yan Morin
 */
-class RequestManager{
+class TCPStreamPool : public ost::TCPSession 
+{
 public:
-    RequestManager();
+  TCPStreamPool(ost::TCPSocket& server) : ost::TCPSession(server) {}
 
-    ~RequestManager();
-
-    int exec(void);
-    void sendResponse(const ResponseMessage& response);
+  void run();
+  void send(const std::string& response);
+  bool receive(std::string& request);
 
 private:
-  void flushWaitingRequest();
-  void handleExecutedRequest(Request * const request, const ResponseMessage& response);
-
-  RequestFactory _factory;
-  SessionIO* _sessionIO;
-
-  // waiting requests
-  ost::Mutex _waitingRequestsMutex;
-  std::map<std::string, Request*> _waitingRequests;
+  ObjectPool<std::string> _outputPool;
+  ObjectPool<std::string> _inputPool;
 };
 
 #endif

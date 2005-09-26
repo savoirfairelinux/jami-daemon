@@ -140,6 +140,17 @@ public:
   ResponseMessage execute();
 };
 
+class RequestDTMF : public RequestGlobalCall {
+public:
+  RequestDTMF(const std::string &sequenceId, 
+    const TokenList& argList);
+
+  ResponseMessage execute();
+private:
+  std::string _dtmfKey;
+};
+
+
 class RequestGlobal : public Request
 {
 public:

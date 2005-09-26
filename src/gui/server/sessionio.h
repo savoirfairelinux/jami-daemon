@@ -16,37 +16,25 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef REQUESTMANAGER_H
-#define REQUESTMANAGER_H
+#ifndef SESSIONIO_H
+#define SESSIONIO_H
 
-#include <cc++/thread.h>
-
-#include "sessionio.h"
-#include "requestfactory.h"
-#include "responsemessage.h"
+#include <string>
 
 /**
+Session IO Interface to send and receive requests
+Could be over network or locally
 @author Yan Morin
 */
-class RequestManager{
+class SessionIO {
 public:
-    RequestManager();
+    SessionIO();
+    virtual ~SessionIO();
 
-    ~RequestManager();
-
-    int exec(void);
-    void sendResponse(const ResponseMessage& response);
-
-private:
-  void flushWaitingRequest();
-  void handleExecutedRequest(Request * const request, const ResponseMessage& response);
-
-  RequestFactory _factory;
-  SessionIO* _sessionIO;
-
-  // waiting requests
-  ost::Mutex _waitingRequestsMutex;
-  std::map<std::string, Request*> _waitingRequests;
+    virtual void send(const std::string& response) = 0;
+    virtual bool receive(std::string& request) = 0;
+    virtual bool good() = 0;
+    virtual void init() = 0;
 };
 
 #endif

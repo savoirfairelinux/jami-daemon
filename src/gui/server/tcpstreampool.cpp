@@ -16,37 +16,37 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef REQUESTMANAGER_H
-#define REQUESTMANAGER_H
+#include "tcpstreampool.h"
 
-#include <cc++/thread.h>
+void 
+TCPStreamPool::run() {
+  std::string output;
+  std::string input;
 
-#include "sessionio.h"
-#include "requestfactory.h"
-#include "responsemessage.h"
+  while(!testCancel() && good()) {
+    if (isPending(ost::TCPSocket::pendingInput, 2)) {
+      std::getline(*this, input);
+      _inputPool.push(input);
+    }
+    if (_outputPool.pop(output, 2LU)) {
+      *this << output << std::endl;
+    }
+  }
+}
 
-/**
-@author Yan Morin
-*/
-class RequestManager{
-public:
-    RequestManager();
+void 
+TCPStreamPool::send(const std::string& response)
+{
+  _outputPool.push(response);
+}
 
-    ~RequestManager();
+bool 
+TCPStreamPool::receive(std::string& request)
+{
+  if ( _inputPool.pop(request, 2LU) ) {
+    return true;
+  }
+  return false;
+}
 
-    int exec(void);
-    void sendResponse(const ResponseMessage& response);
 
-private:
-  void flushWaitingRequest();
-  void handleExecutedRequest(Request * const request, const ResponseMessage& response);
-
-  RequestFactory _factory;
-  SessionIO* _sessionIO;
-
-  // waiting requests
-  ost::Mutex _waitingRequestsMutex;
-  std::map<std::string, Request*> _waitingRequests;
-};
-
-#endif

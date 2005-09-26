@@ -92,6 +92,7 @@ RequestFactory::registerAll() {
   registerRequest<RequestHold>     ("hold");
   registerRequest<RequestUnhold>   ("unhold");
   registerRequest<RequestHangup>   ("hangup");
+  registerRequest<RequestDTMF> ("dtmf");
   registerRequest<RequestTransfer> ("transfer");
   registerRequest<RequestMute>     ("mute");
   registerRequest<RequestUnmute>   ("unmute");
