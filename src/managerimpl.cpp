@@ -87,7 +87,8 @@ ManagerImpl::ManagerImpl (void)
 
   // Initialize after by init() -> initVolume()
   _spkr_volume = 0;
-  _mic_volume  = 0;
+  _mic_volume  = 0; 
+  _mic_volume_before_mute = 0;
 }
 
 ManagerImpl::~ManagerImpl (void) 
@@ -430,6 +431,16 @@ ManagerImpl::transferCall (short id, const string& to)
 	call->setState(Transfered);
 	return call->transfer(to);
 }
+void
+ManagerImpl::mute() {
+  _mic_volume_before_mute = _mic_volume;
+  _mic_volume = 0;
+}
+
+void
+ManagerImpl::unmute() {
+  _mic_volume = _mic_volume_before_mute;
+}
 
 void 
 ManagerImpl::muteOn (short id)
@@ -559,7 +570,7 @@ ManagerImpl::incomingCall (short id)
 	call->setStatus(string(RINGING_STATUS));
 	call->setState(Progressing);
 	ringtone(true);
-	displayStatus(RINGING_STATUS);
+	//displayStatus(RINGING_STATUS);
 	return _gui->incomingCall(id);
 }
 

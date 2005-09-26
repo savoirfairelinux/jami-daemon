@@ -149,6 +149,8 @@ public:
 	int onHoldCall (short id);
 	int offHoldCall (short id);
 	int transferCall (short id, const std::string& to);
+  void mute();
+  void unmute();
 	void muteOn (short id);
 	void muteOff (short id);
 	int refuseCall (short id);
@@ -220,7 +222,7 @@ public:
 	inline int getSpkrVolume 	(void) 			{ return _spkr_volume; }
 	inline void setSpkrVolume 	(int spkr_vol) 	{ _spkr_volume = spkr_vol; }
 	inline int getMicroVolume 	(void) 			{ return _mic_volume; }
-	inline void setMicroVolume 	(int mic_vol) 	{ _mic_volume = mic_vol; }
+	inline void setMicroVolume 	(int mic_vol) 	{ _mic_volume = _mic_volume_before_mute = mic_vol; }
 	
 	/*
 	 * Manage information about firewall
@@ -341,6 +343,7 @@ private:
 	// To handle volume control
 	int 		_spkr_volume;
 	int 		_mic_volume;
+  int 		_mic_volume_before_mute;
 
 	// To handle firewall
 	int			_firewallPort;

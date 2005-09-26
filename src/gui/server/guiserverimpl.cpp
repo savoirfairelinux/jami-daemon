@@ -181,6 +181,16 @@ GUIServerImpl::dtmfCall(const std::string& callId, const std::string& dtmfKey)
 int 
 GUIServerImpl::incomingCall (short id) 
 {
+  std::ostringstream responseMessage, callId;
+  callId << "s" << id;
+  responseMessage << "acc1 " << callId.str() << " call";
+
+  SubCall subcall("seq0", callId.str());
+
+  insertSubCall(id, subcall);
+
+  _requestManager.sendResponse(ResponseMessage("001", "seq0", responseMessage.str()));
+
   return 0;
 }
 
@@ -228,7 +238,7 @@ GUIServerImpl::displayTextMessage (short id, const std::string& message)
 {
   std::ostringstream responseMessage;
   std::string seq = getSequenceIdFromId(id);
-  responseMessage <<"s" << id << "text message: " + message;
+  responseMessage << "s" << id << " text message: " + message;
   _requestManager.sendResponse(ResponseMessage("700", seq, responseMessage.str()));
 }
 

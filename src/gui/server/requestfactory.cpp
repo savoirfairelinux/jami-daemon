@@ -87,12 +87,12 @@ RequestFactory::registerAll() {
   registerRequest<RequestSyntaxError> ("syntaxerror");
   registerRequest<RequestCall>     ("call");
   registerRequest<RequestQuit>     ("quit");
-  registerRequest<RequestAnswer>   ("anwser");
+  registerRequest<RequestAnswer>   ("answer");
   registerRequest<RequestRefuse>   ("refuse");
   registerRequest<RequestHold>     ("hold");
   registerRequest<RequestUnhold>   ("unhold");
   registerRequest<RequestHangup>   ("hangup");
-  registerRequest<RequestDTMF> ("dtmf");
+  registerRequest<RequestDTMF>     ("dtmf");
   registerRequest<RequestTransfer> ("transfer");
   registerRequest<RequestMute>     ("mute");
   registerRequest<RequestUnmute>   ("unmute");

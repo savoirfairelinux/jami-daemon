@@ -95,6 +95,17 @@ GuiFramework::transferCall (short id, const string& to)
 }
 
 void
+GuiFramework::mute() 
+{
+  Manager::instance().mute();
+}
+void
+GuiFramework::unmute() 
+{
+  Manager::instance().unmute();
+}
+
+void
 GuiFramework::muteOn (short id)
 {
 	Manager::instance().muteOn(id);

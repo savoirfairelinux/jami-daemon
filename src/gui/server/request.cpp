@@ -112,13 +112,15 @@ RequestDTMF::execute()
 ResponseMessage
 RequestMute::execute()
 {
-  return message("200","TODO");
+  GUI::instance().muteOn();
+  return message("200","OK");
 }
 
 ResponseMessage
 RequestUnmute::execute()
 {
-  return message("200","TODO");
+  GUI::instance().unmute();
+  return message("200","OK");
 }
 
 ResponseMessage

@@ -55,6 +55,8 @@ public:
 	int onHoldCall (short id);
 	int offHoldCall (short id);
 	int transferCall (short id, const std::string& to);
+	void mute ();
+	void unmute ();
 	void muteOn (short id);
 	void muteOff (short id);
 	int refuseCall (short id);

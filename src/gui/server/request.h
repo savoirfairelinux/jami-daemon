@@ -95,6 +95,7 @@ class RequestGlobalCall : public Request
 public:
   RequestGlobalCall(const std::string &sequenceId, const TokenList& argList) : Request(sequenceId, argList) {
     TokenList::iterator iter = _argList.begin();
+
     if (iter != _argList.end() && ((*iter)[0]=='c' || (*iter)[0]=='s') ) {
       _callId = *iter;
       _argList.pop_front();

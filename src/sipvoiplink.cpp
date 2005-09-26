@@ -526,9 +526,10 @@ SipVoIPLink::refuse (short id)
 	
   osip_message_t *answer = NULL;
   eXosip_lock();
-  i = eXosip_call_build_answer (getSipCall(id)->getTid(), BUSY_HERE, &answer);
+  // not BUSY.. where decline the invitation!
+  i = eXosip_call_build_answer (getSipCall(id)->getTid(), SIP_DECLINE, &answer);
   if (i == 0) {
-    i = eXosip_call_send_answer (getSipCall(id)->getTid(), BUSY_HERE, answer);
+    i = eXosip_call_send_answer (getSipCall(id)->getTid(), SIP_DECLINE, answer);
   }
   eXosip_unlock();
   return i;
@@ -570,7 +571,7 @@ SipVoIPLink::getEvent (void)
     // Generate id
     id = Manager::instance().generateNewCallId();
     Manager::instance().pushBackNewCall(id, Incoming);
-    _debug("Incoming Call with identifiant %d [cid = %d, did = %d]\n",
+    _debug("Incoming Call with id %d [cid = %d, did = %d]\n",
 	   id, event->cid, event->did);
     _debug("Local audio port: %d\n", _localPort);
 
@@ -737,6 +738,7 @@ SipVoIPLink::getEvent (void)
     default:
       break;
     }
+
     break; 
 
   case EXOSIP_CALL_SERVERFAILURE:
