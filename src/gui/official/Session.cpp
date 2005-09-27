@@ -44,9 +44,9 @@ Session::id() const
 }
 
 std::string
-Session::sendTone() const
+Session::playTone() const
 {
-  return Requester::instance().send(mId, "sendtone", std::list< std::string >());
+  return Requester::instance().send(mId, "playtone", std::list< std::string >());
 }
 
 std::string

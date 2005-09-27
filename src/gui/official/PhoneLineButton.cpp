@@ -23,7 +23,6 @@ PhoneLineButton::PhoneLineButton(const QPixmap &released,
 void
 PhoneLineButton::suspend()
 {
-  _debug("Swapping started.\n");
   if(isPressed()) {
     mFace = 1;
   }
@@ -45,7 +44,6 @@ PhoneLineButton::swap()
 void 
 PhoneLineButton::press()
 {
-  _debug("Pressed");
   mTimer->stop();
   JPushButton::press();
 }

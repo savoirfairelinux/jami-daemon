@@ -48,7 +48,7 @@ class Session
   Call createCall() const;
   
   std::string id() const;
-  std::string sendTone() const;
+  std::string playTone() const;
 
  private:
   std::string mId;

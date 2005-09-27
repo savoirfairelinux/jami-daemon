@@ -125,7 +125,7 @@ PhoneLineManagerImpl::selectLine(unsigned int line)
       PhoneLineLocker guard(selectedLine);
       selectedLine->select();
       if(selectedLine->isAvailable()) {
-	mSession.sendTone();
+	mSession.playTone();
       }
     }
   }

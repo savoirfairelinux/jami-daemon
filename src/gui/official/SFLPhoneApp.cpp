@@ -14,9 +14,10 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   , mAccount(mSession.getDefaultAccount())
 {
   PhoneLineManager::instance().setNbLines(NB_PHONELINES);
-  Requester::instance().registerObject< Request >(std::string("sendtone"));
+  Requester::instance().registerObject< Request >(std::string("playtone"));
   Requester::instance().registerObject< Request >(std::string("playdtmf"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("senddtmf"));
+  Requester::instance().registerObject< CallRelatedRequest >(std::string("playdtmf"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("call"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("hold"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("unhold"));
