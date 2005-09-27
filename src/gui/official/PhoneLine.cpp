@@ -102,7 +102,9 @@ PhoneLine::sendKey(Qt::Key c)
 void
 PhoneLine::call()
 {
-  call(mBuffer);
+  if(mBuffer.size()) {
+    call(mBuffer);
+  }
 }
 
 void 
