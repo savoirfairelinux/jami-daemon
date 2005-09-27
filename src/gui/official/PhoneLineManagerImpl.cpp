@@ -189,7 +189,6 @@ PhoneLineManagerImpl::clear()
   mCurrentLineMutex.lock();
   PhoneLine *selectedLine = mCurrentLine;
   PhoneLineLocker guard(selectedLine);
-  mCurrentLine = NULL;
   mCurrentLineMutex.unlock();
 
   if(selectedLine) {
