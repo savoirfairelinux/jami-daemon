@@ -34,6 +34,11 @@ SFLPhoneWindow::SFLPhoneWindow()
 			QPixmap(":/sflphone/images/ok_on"),
 			this);
   mOk->move(225,182);
+
+  mClear = new JPushButton(QPixmap(":/sflphone/images/clear_off"),
+			   QPixmap(":/sflphone/images/clear_on"),
+			   this);
+  mClear->move(225,130);
   
 //   QLabel *os = new QLabel(this);
 //   QPixmap overscreen(":/images/overscreen.png");

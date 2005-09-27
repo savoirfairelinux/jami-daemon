@@ -71,6 +71,12 @@ public slots:
    * is invalid, it just do nothing.
    */
   void selectLine(unsigned int line);
+
+  /**
+   * This function will clear the buffer of the active
+   * line. If there's no active line, it will do nothing.
+   */
+  void clear();
   
   PhoneLine *selectNextAvailableLine();
 

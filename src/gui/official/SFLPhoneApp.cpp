@@ -50,6 +50,8 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   &PhoneLineManager::instance(), SLOT(hangup()));
   QObject::connect(w->mHold, SIGNAL(clicked()),
 		   &PhoneLineManager::instance(), SLOT(hold()));
+  QObject::connect(w->mClear, SIGNAL(clicked()),
+		   &PhoneLineManager::instance(), SLOT(clear()));
   QObject::connect(w, SIGNAL(keyPressed(Qt::Key)),
 		   &PhoneLineManager::instance(), SLOT(sendKey(Qt::Key)));
 }

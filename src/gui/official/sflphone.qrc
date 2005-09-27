@@ -1,6 +1,8 @@
 <RCC>
     <qresource prefix="/sflphone" >
         <file>images/audio.png</file>
+        <file>images/clear_off.png</file>
+        <file>images/clear_on.png</file>
         <file>images/close_off.png</file>
         <file>images/close_on.png</file>
         <file>images/directory_on.png</file>

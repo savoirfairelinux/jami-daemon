@@ -34,4 +34,5 @@ private:
   JPushButton *mHangup;
   JPushButton *mHold;
   JPushButton *mOk;
+  JPushButton *mClear;
 };

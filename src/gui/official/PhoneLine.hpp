@@ -53,6 +53,11 @@ public:
   
 public slots:
   /**
+   * Clears the buffer of the line.
+   */
+  void clear();
+  
+  /**
    * The user selected this line.
    */
   void select();

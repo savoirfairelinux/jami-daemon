@@ -53,7 +53,6 @@ JPushButton::release()
 void
 JPushButton::press() 
 {
-  _debug("Pressed.\n");
   mIsPressed = true;
   resize(mImages[1].size());
   setPixmap(mImages[1]);

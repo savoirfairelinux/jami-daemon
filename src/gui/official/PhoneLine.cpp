@@ -62,10 +62,16 @@ PhoneLine::unselect()
       emit backgrounded();
     }
     else {
-      mBuffer.clear();
+      clear();
       emit unselected();
     }
   }
+}
+
+void 
+PhoneLine::clear()
+{ 
+  mBuffer.clear();
 }
 
 void 
