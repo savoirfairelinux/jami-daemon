@@ -20,6 +20,7 @@ HEADERS += Account.hpp \
            PhoneLineButton.hpp \
            PhoneLineLocker.hpp \
            PhoneLineManager.hpp \
+           PhoneLineManagerImpl.hpp \
            Request.hpp \
            Requester.hpp \
            RequesterImpl.hpp \
@@ -40,7 +41,7 @@ SOURCES += Account.cpp \
            PhoneLine.cpp \
            PhoneLineButton.cpp \
            PhoneLineLocker.cpp \
-           PhoneLineManager.cpp \
+           PhoneLineManagerImpl.cpp \
            Request.cpp \
            RequesterImpl.cpp \
            Session.cpp \

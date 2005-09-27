@@ -10,10 +10,10 @@
 
 SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   : QApplication(argc, argv)
-  , mPhoneLineManager(NB_PHONELINES)
   , mSession()
   , mAccount(mSession.getDefaultAccount())
 {
+  PhoneLineManager::instance().setNbLines(NB_PHONELINES);
   Requester::instance().registerObject< Request >(std::string("sendtone"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("call"));
 }
@@ -26,10 +26,10 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
   for(std::list< PhoneLineButton * >::iterator pos = w->mPhoneLineButtons.begin();
       pos != w->mPhoneLineButtons.end();
       pos++) {
-    PhoneLine *line = mPhoneLineManager.getPhoneLine(i);
+    PhoneLine *line = PhoneLineManager::instance().getPhoneLine(i);
     QObject::connect(*pos, SIGNAL(clicked(unsigned int)),
-		     &mPhoneLineManager, SLOT(selectLine(unsigned int)));
-    QObject::connect(line, SIGNAL(selected()),
+		     &PhoneLineManager::instance(), SLOT(selectLine(unsigned int)));
+    QObject::connect(&PhoneLineManager::instance(), SIGNAL(selected()),
 		     *pos, SLOT(press()));
     QObject::connect(line, SIGNAL(unselected()),
 		     *pos, SLOT(release()));
@@ -40,5 +40,5 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
   }
 
   QObject::connect(w, SIGNAL(keyPressed(Qt::Key)),
-		   &mPhoneLineManager, SLOT(sendKey(Qt::Key)));
+		   &PhoneLineManager::instance(), SLOT(sendKey(Qt::Key)));
 }

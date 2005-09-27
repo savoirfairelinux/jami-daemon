@@ -1,74 +1,30 @@
+/**
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author : Jean-Philippe Barrette-LaPierre 
+ *              <jean-philippe.barrette-lapierre@savoirfairelinux.com>
+ *                                                                              
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *                                                                              
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *                                                                              
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #ifndef __PHONELINEMANAGER_HPP__
 #define __PHONELINEMANAGER_HPP__
 
-#include <Qt>
-#include <QObject>
-#include <QMutex>
-#include <utility>
-#include <vector>
+#include "utilspp/Singleton.hpp"
+#include "PhoneLineManagerImpl.hpp"
 
-class PhoneLine;
-
-#include "Account.hpp"
-#include "Session.hpp"
-
-/**
- * This is the class that manages phone lines
- */
-class PhoneLineManager : public QObject
-{
-  Q_OBJECT
-
-public:
-  PhoneLineManager(unsigned int nbLines);
-
-  /**
-   * This function will make a call on the 
-   * current line. If there's no selected
-   * line, it will choose the first available.
-   */
-  void call(const QString &to);
-  
-
-  /**
-   * This function hangup the selected line.
-   * If there's no current line, it does nothing.
-   */
-  void hangup();
-
-  /**
-   * This function hangup the line given in argument.
-   * If the line is not valid, it doesn't do nothing.
-   */
-  void hangup(unsigned int line);
-
-  PhoneLine *getPhoneLine(unsigned int line);
-
-signals:
-  void unselected(unsigned int);
-  void selected(unsigned int);
-
-public slots:
-  void sendKey(Qt::Key c);
-
-  /**
-   * This function will switch the lines. If the line
-   * is invalid, it just do nothing.
-   */
-  void selectLine(unsigned int line);
-  
-  void selectAvailableLine();
-
-private:
-  Session mSession;
-  Account mAccount;
-
-  std::vector< PhoneLine * > mPhoneLines;
-  QMutex mPhoneLinesMutex;
-
-  PhoneLine *mCurrentLine;
-  QMutex mCurrentLineMutex;
-};
-
+typedef utilspp::SingletonHolder< PhoneLineManagerImpl > PhoneLineManager;
 
 #endif
+

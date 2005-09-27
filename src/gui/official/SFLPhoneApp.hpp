@@ -21,7 +21,6 @@ public:
   void initConnections(SFLPhoneWindow *w);
 
 private:
-  PhoneLineManager mPhoneLineManager;
   Session mSession;
   Account mAccount;
 };
