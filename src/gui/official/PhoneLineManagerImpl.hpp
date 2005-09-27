@@ -10,6 +10,7 @@
 class PhoneLine;
 
 #include "Account.hpp"
+#include "EventFactory.hpp"
 #include "Session.hpp"
 
 /**

@@ -8,6 +8,12 @@
 
 class EventRequest : public Request
 {
+public:
+  EventRequest(const std::string &sequenceId,
+	       const std::string &command,
+	       const std::list< std::string > &args);
+
+
   virtual ~EventRequest(){}
 
   /**

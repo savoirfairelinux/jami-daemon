@@ -50,6 +50,12 @@ Session::playTone() const
 }
 
 std::string
+Session::getEvents() const
+{
+  return Requester::instance().send(mId, "getevents", std::list< std::string >());
+}
+
+std::string
 Session::playDtmf(char c) const
 {
   std::string s;

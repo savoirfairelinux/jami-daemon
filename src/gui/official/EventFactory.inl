@@ -19,8 +19,8 @@
  */
 
 
-#ifndef SFLPHONEGUI_OBJECTFACTORY_INL
-#define SFLPHONEGUI_OBJECTFACTORY_INL
+#ifndef __EVENTFACTORY_INL__
+#define __EVENTFACTORY_INL__
 
 #include <stdexcept>
 
@@ -42,7 +42,7 @@ EventCreator< Base, Actual >::clone()
 
 template< typename Base >
 Base *
-EventFactory< Base >::create(const std::string &code, 
+EventFactoryImpl< Base >::create(const std::string &code, 
 			     const std::list< std::string > &args)
 {
   typename std::map< std::string, EventCreatorBase< Base > * >::iterator pos = mEventCreators.find(code);
@@ -56,7 +56,7 @@ EventFactory< Base >::create(const std::string &code,
 template< typename Base >
 template< typename Actual >
 void 
-EventFactory< Base >::registerEvent(const std::string &code)
+EventFactoryImpl< Base >::registerEvent(const std::string &code)
 {
   if(mEventCreators.find(code) != mEventCreators.end()) {
     delete mEventCreators[code];

@@ -4,6 +4,7 @@
 
 #include "globals.h"
 
+#include "Event.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineLocker.hpp"
 #include "PhoneLineManager.hpp"
@@ -11,7 +12,10 @@
 PhoneLineManagerImpl::PhoneLineManagerImpl()
   : mAccount(mSession.getDefaultAccount())
   , mCurrentLine(NULL)
-{}
+{
+  EventFactory::instance().registerEvent< HangupEvent >("002");
+  mSession.getEvents();
+}
 
 PhoneLine *
 PhoneLineManagerImpl::getCurrentLine()

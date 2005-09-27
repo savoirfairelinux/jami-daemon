@@ -2,6 +2,7 @@
 
 #include "SFLPhoneApp.hpp"
 #include "SFLPhoneWindow.hpp"
+#include "SFLRequest.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineButton.hpp"
 #include "Requester.hpp"
@@ -13,15 +14,16 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   , mSession()
   , mAccount(mSession.getDefaultAccount())
 {
-  PhoneLineManager::instance().setNbLines(NB_PHONELINES);
   Requester::instance().registerObject< Request >(std::string("playtone"));
   Requester::instance().registerObject< Request >(std::string("playdtmf"));
+  Requester::instance().registerObject< EventRequest >(std::string("getevents"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("senddtmf"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("playdtmf"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("call"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("hold"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("unhold"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("hangup"));
+  PhoneLineManager::instance().setNbLines(NB_PHONELINES);
 }
 
 void

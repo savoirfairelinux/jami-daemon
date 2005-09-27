@@ -12,6 +12,7 @@ INCLUDEPATH += .
 HEADERS += Account.hpp \
            AnswerReceiver.hpp \
            Call.hpp \
+           Event.hpp \
            EventFactory.hpp \
            EventFactory.inl \
            globals.h \
@@ -30,6 +31,7 @@ HEADERS += Account.hpp \
            SessionIO.hpp \
            SFLPhoneApp.hpp \
            SFLPhoneWindow.hpp \
+           SFLRequest.hpp \
            transqwidget.h \
            ObjectFactory.inl \
            RequesterImpl.inl \
@@ -38,6 +40,7 @@ FORMS += SFLPhoneWindow.ui
 SOURCES += Account.cpp \
            AnswerReceiver.cpp \
            Call.cpp \
+           Event.cpp \
            JPushButton.cpp \
            main.cpp \
            PhoneLine.cpp \
@@ -49,5 +52,6 @@ SOURCES += Account.cpp \
            Session.cpp \
            SessionIO.cpp \
            SFLPhoneApp.cpp \
-           SFLPhoneWindow.cpp
+           SFLPhoneWindow.cpp \
+           SFLRequest.cpp
 RESOURCES += sflphone.qrc

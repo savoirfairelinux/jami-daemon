@@ -18,12 +18,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_OBJECTFACTORY_H
-#define SFLPHONEGUI_OBJECTFACTORY_H
+#ifndef __EVENTFACTORY_HPP__
+#define __EVENTFACTORY_HPP__
 
 #include <list>
 #include <map>
 #include <string>
+
+#include "Event.hpp"
 
 /**
  * This is the base class that we will use to
@@ -61,7 +63,7 @@ template< typename Base, typename Actual >
  * with the default constructor.
  */
 template< typename Base >
-class EventFactory
+class EventFactoryImpl
 {
 public:
   /**
@@ -81,5 +83,10 @@ public:
 };
 
 #include "EventFactory.inl"
+
+#include "utilspp/Singleton.hpp"
+
+typedef utilspp::SingletonHolder< EventFactoryImpl< Event > > EventFactory;
+
 
 #endif

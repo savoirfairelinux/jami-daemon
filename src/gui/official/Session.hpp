@@ -44,6 +44,11 @@ class Session
    */
   std::string playDtmf(char c) const;
 
+  /**
+   * This function will register to receive events
+   */
+  std::string getEvents() const;
+
 
   Call createCall() const;
   
