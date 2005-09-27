@@ -12,6 +12,8 @@ INCLUDEPATH += .
 HEADERS += Account.hpp \
            AnswerReceiver.hpp \
            Call.hpp \
+           EventFactory.hpp \
+           EventFactory.inl \
            globals.h \
            JPushButton.hpp \
            ObjectFactory.hpp \
