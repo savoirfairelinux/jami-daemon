@@ -21,6 +21,7 @@
 #include <stdexcept>
 
 #include "request.h"
+#include "requestconfig.h"
 
 Request *
 RequestFactory::create(const std::string& requestLine)
@@ -85,17 +86,31 @@ RequestFactory::registerRequest(const std::string &requestname)
 void 
 RequestFactory::registerAll() {
   registerRequest<RequestSyntaxError> ("syntaxerror");
-  registerRequest<RequestCall>      ("call");
-  registerRequest<RequestAnswer>    ("answer");
-  registerRequest<RequestRefuse>    ("refuse");
-  registerRequest<RequestHold>      ("hold");
-  registerRequest<RequestUnhold>    ("unhold");
-  registerRequest<RequestHangup>    ("hangup");
-  registerRequest<RequestHangupAll> ("hangupall");
-  registerRequest<RequestDTMF>      ("dtmf");
-  registerRequest<RequestTransfer>  ("transfer");
-  registerRequest<RequestMute>      ("mute");
-  registerRequest<RequestUnmute>    ("unmute");
-  registerRequest<RequestVersion>   ("version");
-  registerRequest<RequestQuit>      ("quit");
+  registerRequest<RequestCall>        ("call");
+  registerRequest<RequestAnswer>      ("answer");
+  registerRequest<RequestRefuse>      ("refuse");
+  registerRequest<RequestHold>        ("hold");
+  registerRequest<RequestUnhold>      ("unhold");
+  registerRequest<RequestHangup>      ("hangup");
+  registerRequest<RequestHangupAll>   ("hangupall");
+  registerRequest<RequestDTMF>        ("senddtmf");
+  registerRequest<RequestPlayDtmf>    ("playdtmf");
+  registerRequest<RequestPlayTone>    ("playtone");
+  registerRequest<RequestTransfer>    ("transfer");
+  registerRequest<RequestMute>        ("mute");
+  registerRequest<RequestUnmute>      ("unmute");
+  registerRequest<RequestVersion>     ("version");
+  registerRequest<RequestQuit>        ("quit");
+
+  // request config
+  registerRequest<RequestZeroconf>    ("getzeroconf");
+  registerRequest<RequestZeroconfEvent>("getzeroconfevents");
+  registerRequest<RequestCallStatus>  ("getcallstatus");
+  registerRequest<RequestConfigGetAll>("configgetall");
+  registerRequest<RequestConfigGet>   ("configget");
+  registerRequest<RequestConfigSet>   ("configset");
+  registerRequest<RequestConfigSave>  ("configsave");
+  registerRequest<RequestList>        ("list");
+
+
 } 

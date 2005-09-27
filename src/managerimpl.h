@@ -169,6 +169,8 @@ public:
    * @param   code: pressed key.
  	 */
 	bool sendDtmf (short id, char code);
+	bool playDtmf (char code);
+	bool playTone ();
 	
 
 	int incomingCall (short id);

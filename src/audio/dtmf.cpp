@@ -39,30 +39,35 @@ bool
 DTMF::generateDTMF (int16* buffer, size_t n) {
 	if (!buffer) return false;
 
-	if (currentTone != 0) {
-		// Currently generating a DTMF tone
-		if (currentTone == newTone) {
-			// Continue generating the same tone
-			dtmf.getNextSamples(buffer, n);
-			return true;
-		} else if (newTone != 0) {
-			// New tone requested
-			dtmf.getSamples(buffer, n, newTone);
-			currentTone = newTone;
-			return true;
-		} else {
-			// Stop requested
-			currentTone = newTone;
-			return false;
-		}
-	} else {
-		// Not generating any DTMF tone
-		if (newTone) {
-			// Requested to generate a DTMF tone
-			dtmf.getSamples(buffer, n, newTone);
-			currentTone = newTone;
-			return true;
-		}
-		return false;
-	}
+  try {
+    if (currentTone != 0) {
+      // Currently generating a DTMF tone
+      if (currentTone == newTone) {
+        // Continue generating the same tone
+        dtmf.getNextSamples(buffer, n);
+        return true;
+      } else if (newTone != 0) {
+        // New tone requested
+        dtmf.getSamples(buffer, n, newTone);
+        currentTone = newTone;
+        return true;
+      } else {
+        // Stop requested
+        currentTone = newTone;
+        return false;
+      }
+    } else {
+      // Not generating any DTMF tone
+      if (newTone) {
+        // Requested to generate a DTMF tone
+        dtmf.getSamples(buffer, n, newTone);
+        currentTone = newTone;
+        return true;
+      }
+      return false;
+    }
+  } catch(DTMFException e) {
+    // invalid key
+    return false;
+  }
 }

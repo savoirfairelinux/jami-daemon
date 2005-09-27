@@ -69,6 +69,8 @@ public:
 	int sendTextMessage (short id, const std::string& message);
 	int accessToDirectory (void);
 	bool sendDtmf (short id, char code);
+  bool playDtmf (char code);
+  bool playTone ();
 	
 protected:
 	std::string _message;

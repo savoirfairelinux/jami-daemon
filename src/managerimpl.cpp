@@ -42,6 +42,7 @@
 #include "audio/codecDescriptor.h"
 #include "audio/ringbuffer.h"
 #include "audio/tonegenerator.h"
+#include "audio/dtmf.h"
 #include "call.h"
 #include "configuration.h"  
 #include "configurationtree.h" 
@@ -554,6 +555,63 @@ ManagerImpl::sendDtmf (short id, char code)
 			return -1;
             break;
     }
+}
+/**
+ * @source 
+ */
+bool
+ManagerImpl::playDtmf(char code)
+{
+  int16* _buf = new int16[SIZEBUF];
+  bool returnValue = false;
+
+  // Handle dtmf
+  DTMF key;
+  key.startTone(code);
+  if ( key.generateDTMF(_buf, SAMPLING_RATE) ) {
+
+    int k, spkrVolume;
+    int16* buf_ctrl_vol;
+
+    // Determine dtmf pulse length
+    int pulselen = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
+    int size = pulselen * (OCTETS /1000);
+  
+    buf_ctrl_vol = new int16[size*CHANNELS];
+    spkrVolume = getSpkrVolume();
+  
+    // Control volume and format mono->stereo
+    for (int j = 0; j < size; j++) {
+      k = j*2;
+      buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j] * spkrVolume/100;
+    }
+  
+    AudioLayer *audiolayer = getAudioDriver();
+    audiolayer->urgentRingBuffer().flush();
+  
+    // Put buffer to urgentRingBuffer 
+    audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, size * CHANNELS);
+  
+    // We activate the stream if it's not active yet.
+    if (!audiolayer->isStreamActive()) {
+      audiolayer->startStream();
+      audiolayer->sleep(pulselen);
+      audiolayer->stopStream();
+      audiolayer->urgentRingBuffer().flush();
+    } else {
+      audiolayer->sleep(pulselen);
+    }
+    delete[] buf_ctrl_vol;
+    returnValue = true;
+  }
+  delete[] _buf;
+  return returnValue;
+}
+
+bool
+ManagerImpl::playTone()
+{
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

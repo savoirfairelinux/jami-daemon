@@ -186,6 +186,26 @@ public:
   ResponseMessage execute();
 };
 
+class RequestPlayDtmf : public RequestGlobal {
+public:
+  RequestPlayDtmf(const std::string &sequenceId, 
+    const TokenList& argList);
+  ResponseMessage execute();
+private:
+  std::string _dtmfKey;
+};
+
+class RequestPlayTone : public RequestGlobal {
+public:
+  RequestPlayTone(const std::string &sequenceId, 
+    const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  ResponseMessage execute();
+};
+
+
+
+
+
 class RequestSyntaxError : public Request 
 {
 public:

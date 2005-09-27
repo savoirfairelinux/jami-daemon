@@ -117,6 +117,41 @@ RequestDTMF::execute()
   return message("500", "DTMF Error");
 }
 
+RequestPlayDtmf::RequestPlayDtmf(const std::string &sequenceId, 
+    const TokenList& argList) : RequestGlobal(sequenceId, argList)
+{
+
+  TokenList::iterator iter = _argList.begin();
+
+  // check for the dtmf key
+  bool argsAreValid = false;
+  if (iter != _argList.end() && (*iter).length()==1) {
+    _dtmfKey = *iter;
+    _argList.pop_front();
+    argsAreValid = true;
+  }
+  if (!argsAreValid) {
+    throw RequestConstructorException();
+  }
+}
+
+ResponseMessage
+RequestPlayDtmf::execute()
+{
+  if ( GUIServer::instance().playDtmf(_dtmfKey[0]) ) {
+    return message("200", "OK");
+  }
+  return message("500", "DTMF Error");
+}
+
+ResponseMessage
+RequestPlayTone::execute()
+{
+  if ( GUIServer::instance().playTone() ) {
+    return message("200", "OK");
+  }
+  return message("500", "DTMF Error");
+}
 
 ResponseMessage
 RequestMute::execute()

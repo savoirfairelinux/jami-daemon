@@ -173,6 +173,18 @@ GuiFramework::sendDtmf (short id, char code)
 	return Manager::instance().sendDtmf(id, code);
 }
 
+bool 
+GuiFramework::playDtmf (char code)
+{
+	return Manager::instance().playDtmf(code);
+}
+
+bool 
+GuiFramework::playTone ()
+{
+	return Manager::instance().playTone();
+}
+
 int 
 GuiFramework::quitApplication (void)
 {
