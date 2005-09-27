@@ -1,6 +1,10 @@
+#include "globals.h" 
+
 #include "PhoneLineButton.hpp"
 
 #include <QMouseEvent>
+#include <QTimer>
+
 
 PhoneLineButton::PhoneLineButton(const QPixmap &released, 
 				 const QPixmap &pressed,
@@ -9,23 +13,31 @@ PhoneLineButton::PhoneLineButton(const QPixmap &released,
 				 Qt::WFlags flags)
   : JPushButton(released, pressed, parent, flags)
   , mLine(line)
-  , mTimer(this)
   , mFace(0)
 {
-  connect(&mTimer, SIGNAL(timeout()),
+  mTimer = new QTimer(this);
+  connect(mTimer, SIGNAL(timeout()),
 	  this, SLOT(swap()));
 }
 
 void
 PhoneLineButton::suspend()
 {
-  mTimer.start(500);
+  _debug("Swapping started.\n");
+  if(isPressed()) {
+    mFace = 1;
+  }
+  else {
+    mFace = 0;
+  }
+  swap();
+  mTimer->start(500);
 }
 
 void
 PhoneLineButton::swap()
 {
-  mFace = (mFace + 1) / 2;
+  mFace = (mFace + 1) % 2;
   resize(mImages[mFace].size());
   setPixmap(mImages[mFace]);
 }
@@ -33,14 +45,15 @@ PhoneLineButton::swap()
 void 
 PhoneLineButton::press()
 {
-  mTimer.stop();
+  _debug("Pressed");
+  mTimer->stop();
   JPushButton::press();
 }
 
 void 
 PhoneLineButton::release()
 {
-  mTimer.stop();
+  mTimer->stop();
   JPushButton::release();
 }
 

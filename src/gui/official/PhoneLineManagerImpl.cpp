@@ -13,36 +13,57 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   , mCurrentLine(NULL)
 {}
 
+PhoneLine *
+PhoneLineManagerImpl::getCurrentLine()
+{
+  QMutexLocker guard(&mCurrentLineMutex);
+  return mCurrentLine;
+}
+
 void 
 PhoneLineManagerImpl::setNbLines(unsigned int nb)
 {
   mPhoneLines.clear();
   for(unsigned int i = 0; i < nb; i++) {
-    mPhoneLines.push_back(new PhoneLine(mSession.createCall(),i));
+    mPhoneLines.push_back(new PhoneLine(mSession, i + 1));
   }
 }
 
-void 
-PhoneLineManagerImpl::selectAvailableLine()
+PhoneLine *
+PhoneLineManagerImpl::selectNextAvailableLine()
 {
   PhoneLine *selectedLine = NULL;
 
-  mPhoneLinesMutex.lock();
+  QMutexLocker guard(&mPhoneLinesMutex);
+  QMutexLocker guard2(&mCurrentLineMutex);
+
   unsigned int i = 0;
   while(i < mPhoneLines.size() && !selectedLine) {
     PhoneLineLocker guard(mPhoneLines[i]);
-    if(mPhoneLines[i]->isAvailable()) {
+    if(mPhoneLines[i]->isAvailable() && 
+       mPhoneLines[i] != mCurrentLine) {
       selectedLine = mPhoneLines[i];
     }
     else {
       i++;
     }
   }
-  mPhoneLinesMutex.unlock();
-  
+
+  // If we found one available line.
   if(selectedLine) {
-    selectLine(i);
+    if(mCurrentLine) {
+      PhoneLineLocker guard(mCurrentLine);
+      mCurrentLine->unselect();
+    }
+    mCurrentLine = selectedLine;
+    
+    // select current line.
+    {
+      PhoneLineLocker guard(mCurrentLine);
+      mCurrentLine->select();
+    }
   }
+  return selectedLine;
 }
 
 PhoneLine *
@@ -59,16 +80,10 @@ PhoneLineManagerImpl::getPhoneLine(unsigned int line)
 void
 PhoneLineManagerImpl::sendKey(Qt::Key c)
 {
-  PhoneLine *selectedLine = NULL;
-  mCurrentLineMutex.lock();
-  selectedLine = mCurrentLine;
-  mCurrentLineMutex.unlock();
+  PhoneLine *selectedLine = getCurrentLine();
 
   if(!selectedLine) {
-    selectAvailableLine();
-    mCurrentLineMutex.lock();
-    selectedLine = mCurrentLine;
-    mCurrentLineMutex.unlock();
+    selectedLine = selectNextAvailableLine();
   }
 
   if(selectedLine) {
@@ -120,6 +135,51 @@ PhoneLineManagerImpl::selectLine(unsigned int line)
 }
 
 void
-PhoneLineManagerImpl::call(const QString &)
+PhoneLineManagerImpl::call(const QString &to)
 {
+  PhoneLine *current = getCurrentLine();
+  if(current) {
+    PhoneLineLocker guard(current);
+    current->call(to.toStdString());
+  }
 }
+
+
+void
+PhoneLineManagerImpl::call()
+{
+  PhoneLine *current = getCurrentLine();
+  if(current) {
+    PhoneLineLocker guard(current);
+    current->call();
+  }
+}
+
+void
+PhoneLineManagerImpl::hold()
+{
+  mCurrentLineMutex.lock();
+  PhoneLine *selectedLine = mCurrentLine;
+  PhoneLineLocker guard(selectedLine);
+  mCurrentLine = NULL;
+  mCurrentLineMutex.unlock();
+
+  if(selectedLine) {
+    selectedLine->hold();
+  }
+}
+
+void
+PhoneLineManagerImpl::hangup()
+{
+  mCurrentLineMutex.lock();
+  PhoneLine *selectedLine = mCurrentLine;
+  PhoneLineLocker guard(selectedLine);
+  mCurrentLine = NULL;
+  mCurrentLineMutex.unlock();
+
+  if(selectedLine) {
+    selectedLine->hangup();
+  }
+}
+

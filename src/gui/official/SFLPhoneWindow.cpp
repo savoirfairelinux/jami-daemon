@@ -19,6 +19,22 @@ SFLPhoneWindow::SFLPhoneWindow()
   resize(main.size());
   l->resize(main.size());
 
+  mHangup = new JPushButton(QPixmap(":/sflphone/images/hangup_off"),
+			    QPixmap(":/sflphone/images/hangup_on"),
+			    this);
+  mHangup->move(225,156);
+  
+  mHold = new JPushButton(QPixmap(":/sflphone/images/hold_off"),
+			  QPixmap(":/sflphone/images/hold_on"),
+			  this);
+  mHold->move(225,68);
+  
+  
+  mOk = new JPushButton(QPixmap(":/sflphone/images/ok_off"),
+			QPixmap(":/sflphone/images/ok_on"),
+			this);
+  mOk->move(225,182);
+  
 //   QLabel *os = new QLabel(this);
 //   QPixmap overscreen(":/images/overscreen.png");
 //   os->setPixmap(overscreen);
@@ -68,9 +84,6 @@ void SFLPhoneWindow::initWindowButtons()
   QObject::connect(mMinimizeButton, SIGNAL(clicked()),
 		   this, SLOT(lower()));
   mMinimizeButton->move(354,5);
-  //  JPushButton *b = new JPushButton(QPixmap(":/sflphone/images/closeoff.png"),
-  //			   QPixmap(":/sflphone/images/closeon.png").
-
 }
 
 void

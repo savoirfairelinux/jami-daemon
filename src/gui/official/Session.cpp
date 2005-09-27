@@ -49,6 +49,16 @@ Session::sendTone() const
   return Requester::instance().send(mId, "sendtone", std::list< std::string >());
 }
 
+std::string
+Session::playDtmf(char c) const
+{
+  std::string s;
+  s += c;
+  std::list< std::string > args;
+  args.push_back(s);
+  return Requester::instance().send(mId, "playdtmf", args);
+}
+
 Account
 Session::getAccount(const std::string &name) const
 {

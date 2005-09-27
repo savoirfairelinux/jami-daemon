@@ -3,18 +3,22 @@
 #include <QMutex>
 #include <string>
 
-#include "Call.hpp"
+#include "Session.hpp"
+
+class Call;
 
 class PhoneLine : public QObject
 {
   Q_OBJECT
   
 public:
-  PhoneLine(const Call &call, unsigned int line);
-  ~PhoneLine(){}
+  PhoneLine(const Session &session, unsigned int line);
+  ~PhoneLine();
 
   void call(const std::string &to);
   void call();
+  void hangup();
+  void hold();
 
   unsigned int line();
 
@@ -43,7 +47,7 @@ public:
    * started any communication, this will be available.
    */
   bool isAvailable()
-  {return !mInUse;}
+  {return !mCall;}
 
   void sendKey(Qt::Key c);
   
@@ -65,7 +69,8 @@ signals:
   void backgrounded();
 
 private:
-  Call mCall;
+  Session mSession;
+  Call *mCall;
   QMutex mPhoneLineMutex;
   unsigned int mLine;
 

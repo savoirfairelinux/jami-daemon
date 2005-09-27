@@ -42,15 +42,19 @@ public:
 	      Qt::WFlags flags = 0);
   ~JPushButton();
 
+  bool isPressed()
+  {return mIsPressed;}
+
 public slots:  
   /**
    * This function will switch the button
    */
-  void press();
-  void release();
+  virtual void press();
+  virtual void release();
 
 protected:
   QPixmap mImages[2];
+  bool mIsPressed;
   
 protected:
   void mousePressEvent(QMouseEvent *);

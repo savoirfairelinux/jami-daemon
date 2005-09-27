@@ -22,27 +22,11 @@ class PhoneLineManagerImpl : public QObject
 public:
   PhoneLineManagerImpl();
 
-  /**
-   * This function will make a call on the 
-   * current line. If there's no selected
-   * line, it will choose the first available.
-   */
-  void call(const QString &to);
+  
   
 
-  /**
-   * This function hangup the selected line.
-   * If there's no current line, it does nothing.
-   */
-  void hangup();
-
-  /**
-   * This function hangup the line given in argument.
-   * If the line is not valid, it doesn't do nothing.
-   */
-  void hangup(unsigned int line);
-
   PhoneLine *getPhoneLine(unsigned int line);
+  PhoneLine *getCurrentLine();
 
   void setNbLines(unsigned int line);
 
@@ -54,12 +38,41 @@ public slots:
   void sendKey(Qt::Key c);
 
   /**
+   * This function will put the current line
+   * on hold. If there's no current line,
+   * it will do nothing.
+   */
+  void hold();
+
+  /**
+   * This function will hanp up the current line
+   * If there's no current line, it will do nothing.
+   */
+  void hangup();
+
+  /**
+   * This function will make a call on the 
+   * current line. If there's no selected
+   * line, it will choose the first available.
+   */
+  void call(const QString &to);
+
+  /**
+   * This function will make a call on the 
+   * current line. If there's no selected
+   * line. It will do nothing. It will call 
+   * the destination contained in the
+   * PhoneLine buffer, if any. 
+   */
+  void call();
+
+  /**
    * This function will switch the lines. If the line
    * is invalid, it just do nothing.
    */
   void selectLine(unsigned int line);
   
-  void selectAvailableLine();
+  PhoneLine *selectNextAvailableLine();
 
 private:
   Session mSession;

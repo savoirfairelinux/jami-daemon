@@ -4,6 +4,10 @@
         <file>images/close_off.png</file>
         <file>images/close_on.png</file>
         <file>images/directory_on.png</file>
+        <file>images/hangup_off.png</file>
+        <file>images/hangup_on.png</file>
+        <file>images/hold_off.png</file>
+        <file>images/hold_on.png</file>
         <file>images/l1_off.png</file>
         <file>images/l1_on.png</file>
         <file>images/l2_off.png</file>
@@ -20,6 +24,8 @@
         <file>images/main.png</file>
         <file>images/minimize_off.png</file>
         <file>images/minimize_on.png</file>
+        <file>images/ok_off.png</file>
+        <file>images/ok_on.png</file>
         <file>images/overscreen.png</file>
     </qresource>
 </RCC>

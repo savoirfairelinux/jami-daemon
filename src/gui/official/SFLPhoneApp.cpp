@@ -15,7 +15,12 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
 {
   PhoneLineManager::instance().setNbLines(NB_PHONELINES);
   Requester::instance().registerObject< Request >(std::string("sendtone"));
+  Requester::instance().registerObject< Request >(std::string("playdtmf"));
+  Requester::instance().registerObject< CallRelatedRequest >(std::string("senddtmf"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("call"));
+  Requester::instance().registerObject< CallRelatedRequest >(std::string("hold"));
+  Requester::instance().registerObject< CallRelatedRequest >(std::string("unhold"));
+  Requester::instance().registerObject< CallRelatedRequest >(std::string("hangup"));
 }
 
 void
@@ -29,7 +34,7 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
     PhoneLine *line = PhoneLineManager::instance().getPhoneLine(i);
     QObject::connect(*pos, SIGNAL(clicked(unsigned int)),
 		     &PhoneLineManager::instance(), SLOT(selectLine(unsigned int)));
-    QObject::connect(&PhoneLineManager::instance(), SIGNAL(selected()),
+    QObject::connect(line, SIGNAL(selected()),
 		     *pos, SLOT(press()));
     QObject::connect(line, SIGNAL(unselected()),
 		     *pos, SLOT(release()));
@@ -39,6 +44,12 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
     i++;
   }
 
+  QObject::connect(w->mOk, SIGNAL(clicked()),
+		   &PhoneLineManager::instance(), SLOT(call()));
+  QObject::connect(w->mHangup, SIGNAL(clicked()),
+		   &PhoneLineManager::instance(), SLOT(hangup()));
+  QObject::connect(w->mHold, SIGNAL(clicked()),
+		   &PhoneLineManager::instance(), SLOT(hold()));
   QObject::connect(w, SIGNAL(keyPressed(Qt::Key)),
 		   &PhoneLineManager::instance(), SLOT(sendKey(Qt::Key)));
 }

@@ -5,9 +5,11 @@
 #include <QLabel>
 #include <QObject>
 #include <QPixmap>
-#include <QTimer>
 
 #include "JPushButton.hpp"
+
+class QTimer;
+
 
 /**
  * This class Emulate a PushButton but takes two
@@ -28,19 +30,21 @@ public:
   
 signals:
   void clicked(unsigned int);
-
- public slots:
-  void suspend();
-  void press();
-  void release();
-
+  
+public slots:
+  virtual void suspend();
+  virtual void press();
+  virtual void release();
+  
+private slots:
+  void swap();
+  
 protected:
   void mouseReleaseEvent(QMouseEvent *);
-  void swap();
 
 private:
   unsigned int mLine;
-  QTimer mTimer;
+  QTimer *mTimer;
   unsigned int mFace;
   
 };

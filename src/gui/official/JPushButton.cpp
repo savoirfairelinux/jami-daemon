@@ -24,6 +24,8 @@
 #include <QEvent>
 #include <QMouseEvent>
 
+#include "globals.h"
+
 #include "JPushButton.hpp"
 
 JPushButton::JPushButton(const QPixmap &released,
@@ -43,6 +45,7 @@ JPushButton::~JPushButton()
 void
 JPushButton::release() 
 {
+  mIsPressed = false;
   resize(mImages[0].size());
   setPixmap(mImages[0]);
 }
@@ -50,6 +53,8 @@ JPushButton::release()
 void
 JPushButton::press() 
 {
+  _debug("Pressed.\n");
+  mIsPressed = true;
   resize(mImages[1].size());
   setPixmap(mImages[1]);
 }

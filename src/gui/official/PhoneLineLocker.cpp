@@ -4,12 +4,16 @@
 PhoneLineLocker::PhoneLineLocker(PhoneLine *line)
   : mPhoneLine(line)
 {
-  mPhoneLine->lock();
+  if(mPhoneLine) {
+    mPhoneLine->lock();
+  }
 }
 
 PhoneLineLocker::~PhoneLineLocker()
 {
-  mPhoneLine->unlock();
+  if(mPhoneLine) {
+    mPhoneLine->unlock();
+  }
 }
 
 

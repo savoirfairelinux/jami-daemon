@@ -38,6 +38,13 @@ class Session
 
   Account getDefaultAccount() const;
 
+  /**
+   * This function will play a tone. This is
+   * just a ear candy.
+   */
+  std::string playDtmf(char c) const;
+
+
   Call createCall() const;
   
   std::string id() const;
