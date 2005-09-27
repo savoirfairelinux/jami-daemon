@@ -81,6 +81,15 @@ RequestHangup::execute()
   return message("500", "Hangup Error");
 }
 
+ResponseMessage
+RequestHangupAll::execute()
+{
+  if ( GUIServer::instance().hangupAll() ) {
+    return message("200", "OK");
+  }
+  return message("500", "Hangup Error");
+}
+
 RequestDTMF::RequestDTMF(const std::string &sequenceId, 
     const TokenList& argList) : RequestGlobalCall(sequenceId, argList)
 {
@@ -112,15 +121,21 @@ RequestDTMF::execute()
 ResponseMessage
 RequestMute::execute()
 {
-  GUI::instance().muteOn();
+  GUIServer::instance().mute();
   return message("200","OK");
 }
 
 ResponseMessage
 RequestUnmute::execute()
 {
-  GUI::instance().unmute();
+  GUIServer::instance().unmute();
   return message("200","OK");
+}
+
+ResponseMessage
+RequestVersion::execute()
+{
+  return message("200",GUIServer::instance().version());
 }
 
 ResponseMessage

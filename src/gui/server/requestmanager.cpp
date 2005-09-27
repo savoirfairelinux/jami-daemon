@@ -26,6 +26,7 @@
 RequestManager::RequestManager() : _sessionIO(0)
 {
   _factory.registerAll();
+  _quit = false;
 }
 
 
@@ -57,7 +58,7 @@ RequestManager::exec()
 
     // std::cin.good() is only there to close the server when
     // we do a CTRL+D
-    while(_sessionIO->good() && std::cin.good()) {
+    while(_sessionIO && _sessionIO->good() && std::cin.good() && !_quit) {
 
       if (_sessionIO->receive(input)) {
         _debug("Receive Input...: %s\n", input.c_str());
@@ -68,7 +69,6 @@ RequestManager::exec()
 
         handleExecutedRequest(request, outputResponse);
       } // end pop
-
     } // end streaming
     delete _sessionIO;
     _sessionIO = 0;

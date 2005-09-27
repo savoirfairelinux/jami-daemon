@@ -170,9 +170,19 @@ public:
   RequestUnmute(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
   ResponseMessage execute();
 };
+class RequestVersion : public RequestGlobal {
+public:
+  RequestVersion(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  ResponseMessage execute();
+};
 class RequestQuit : public RequestGlobal {
 public:
   RequestQuit(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  ResponseMessage execute();
+};
+class RequestHangupAll : public RequestGlobal {
+public:
+  RequestHangupAll(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
   ResponseMessage execute();
 };
 

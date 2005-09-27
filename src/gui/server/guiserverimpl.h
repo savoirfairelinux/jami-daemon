@@ -67,8 +67,10 @@ public:
   bool unholdCall(const std::string& callId);
   bool hangupCall(const std::string& callId);
   bool dtmfCall(const std::string& callId, const std::string& dtmfKey);
+  bool hangupAll();
 
-  void quit() {_shouldQuit=true;}
+  std::string version();
+  void quit() { _requestManager.quit(); }
 
 private:
 
@@ -83,7 +85,6 @@ private:
   // RequestManager execute received request 
   // and send response
   RequestManager _requestManager;
-  bool _shouldQuit;
 };
 
 #endif // __GUI_SERVER_H__

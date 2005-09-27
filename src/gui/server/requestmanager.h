@@ -36,6 +36,7 @@ public:
 
     int exec(void);
     void sendResponse(const ResponseMessage& response);
+    void quit() { _quit = true; }
 
 private:
   void flushWaitingRequest();
@@ -47,6 +48,8 @@ private:
   // waiting requests
   ost::Mutex _waitingRequestsMutex;
   std::map<std::string, Request*> _waitingRequests;
+
+  bool _quit; // tell to quit and end the exec loop
 };
 
 #endif

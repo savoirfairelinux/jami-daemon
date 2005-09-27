@@ -39,7 +39,10 @@
 class TCPStreamPool : public ost::TCPSession 
 {
 public:
-  TCPStreamPool(ost::TCPSocket& server) : ost::TCPSession(server) {}
+  TCPStreamPool(ost::TCPSocket& server) : ost::TCPSession(server) 
+  {
+    setCancel(cancelDeferred);
+  }
 
   void run();
   void send(const std::string& response);

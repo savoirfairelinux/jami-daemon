@@ -23,12 +23,12 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "../../global.h" // for VERSION and PROGNAME
 #include "responsemessage.h"
 
 // default constructor
 GUIServerImpl::GUIServerImpl()
 {
-  _shouldQuit = false;
 }
 
 // destructor
@@ -157,12 +157,32 @@ GUIServerImpl::hangupCall(const std::string& callId)
   try {
     short id = getIdFromCallId(callId);
     if (GuiFramework::hangupCall(id)) {
+      _callMap.erase(id);
       return true;
     }
   } catch(...) {
     return false;
   }
   return false;
+}
+
+bool
+GUIServerImpl::hangupAll()
+{
+  bool result = true;
+  short id;
+  CallMap::iterator iter = _callMap.begin();
+  // try to hangup every call, even if one fail
+  while(iter!=_callMap.end()) {
+    id = iter->first;
+    if (!GuiFramework::hangupCall(id)) {
+      result = false;
+    } else {
+      _callMap.erase(id);
+    }
+    iter++;
+  }
+  return result;
 }
 
 bool 
@@ -177,6 +197,20 @@ GUIServerImpl::dtmfCall(const std::string& callId, const std::string& dtmfKey)
   }
   return false;
 }
+
+/**
+ * Version constant are in global.h
+ * @return the version (name number)
+ */
+std::string 
+GUIServerImpl::version() 
+{
+  std::ostringstream version;
+  version << PROGNAME << " " << VERSION;
+  return version.str();
+}
+
+
 
 int 
 GUIServerImpl::incomingCall (short id) 

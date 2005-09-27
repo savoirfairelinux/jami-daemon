@@ -85,15 +85,17 @@ RequestFactory::registerRequest(const std::string &requestname)
 void 
 RequestFactory::registerAll() {
   registerRequest<RequestSyntaxError> ("syntaxerror");
-  registerRequest<RequestCall>     ("call");
-  registerRequest<RequestQuit>     ("quit");
-  registerRequest<RequestAnswer>   ("answer");
-  registerRequest<RequestRefuse>   ("refuse");
-  registerRequest<RequestHold>     ("hold");
-  registerRequest<RequestUnhold>   ("unhold");
-  registerRequest<RequestHangup>   ("hangup");
-  registerRequest<RequestDTMF>     ("dtmf");
-  registerRequest<RequestTransfer> ("transfer");
-  registerRequest<RequestMute>     ("mute");
-  registerRequest<RequestUnmute>   ("unmute");
-}
+  registerRequest<RequestCall>      ("call");
+  registerRequest<RequestAnswer>    ("answer");
+  registerRequest<RequestRefuse>    ("refuse");
+  registerRequest<RequestHold>      ("hold");
+  registerRequest<RequestUnhold>    ("unhold");
+  registerRequest<RequestHangup>    ("hangup");
+  registerRequest<RequestHangupAll> ("hangupall");
+  registerRequest<RequestDTMF>      ("dtmf");
+  registerRequest<RequestTransfer>  ("transfer");
+  registerRequest<RequestMute>      ("mute");
+  registerRequest<RequestUnmute>    ("unmute");
+  registerRequest<RequestVersion>   ("version");
+  registerRequest<RequestQuit>      ("quit");
+} 
