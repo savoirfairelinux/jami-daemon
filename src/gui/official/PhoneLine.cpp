@@ -44,7 +44,12 @@ PhoneLine::select()
     mSelected = true;
 
     if(mCall) {
-      mCall->unhold();
+      if(mCall->isIncomming()) {
+	mCall->answer();
+      }
+      else {
+	mCall->unhold();
+      }
     }
 
     emit selected();
@@ -65,6 +70,18 @@ PhoneLine::unselect()
       clear();
       emit unselected();
     }
+  }
+}
+
+void
+PhoneLine::incomming(const Call &call)
+{
+  if(mCall) {
+    _debug("PhoneLine %d: Trying to set an incomming call to an active call.\n", mLine);
+  }
+  else {
+    mCall = new Call(call);
+    emit backgrounded();
   }
 }
 
@@ -138,6 +155,8 @@ PhoneLine::hangup()
     mCall = NULL;
   }
 
+  //This is a hack for unselect;
+  mSelected = true;
   unselect();
 }
 

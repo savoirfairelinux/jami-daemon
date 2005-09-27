@@ -27,16 +27,24 @@
 
 
 Call::Call(const std::string &sessionId,
-	   const std::string &callId)
+	   const std::string &callId,
+	   bool incomming)
   : mSessionId(sessionId)
   , mId(callId)
+  , mIsIncomming(incomming)
 {}
 
 Call::Call(const Session &session,
-	   const std::string &callId)
+	   const std::string &callId,
+	   bool incomming)
   : mSessionId(session.id())
   , mId(callId)
+  , mIsIncomming(incomming)
 {}
+
+bool
+Call::isIncomming()
+{return mIsIncomming;}
 
 std::string
 Call::call(const std::string &to) 
@@ -50,6 +58,7 @@ Call::call(const std::string &to)
 std::string
 Call::answer() 
 {
+  mIsIncomming = false;
   std::list< std::string> args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "answer", args);
@@ -90,9 +99,19 @@ Call::unhold()
 std::string
 Call::refuse() 
 {
+  mIsIncomming = false;
   std::list< std::string> args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "refuse", args);
+}
+
+std::string
+Call::notAvailable() 
+{
+  mIsIncomming = false;
+  std::list< std::string> args;
+  args.push_back(mId);
+  return Requester::instance().send(mSessionId, "notavailable", args);
 }
 
 std::string

@@ -82,6 +82,11 @@ public slots:
    */
   void call(const QString &to);
 
+  void incomming(const std::string &accountId,
+		 const std::string &origin,
+		 const std::string &callId);
+
+
   /**
    * This function will make a call on the 
    * current line. If there's no selected
@@ -103,6 +108,16 @@ public slots:
    */
   void clear();
   
+  /**
+   * This function will return the next available line.
+   * The line is locked, So you'll need to unlock it.
+   */
+  PhoneLine *getNextAvailableLine();
+
+  /**
+   * This function will return the next available line.
+   * The line is NOT locked.
+   */
   PhoneLine *selectNextAvailableLine();
 
 private:

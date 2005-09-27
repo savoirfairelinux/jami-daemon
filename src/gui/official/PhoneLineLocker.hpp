@@ -17,7 +17,7 @@ public:
    * Retreive the "line" PhoneLine and
    * locks it.
    */
-  PhoneLineLocker(PhoneLine *line);
+  PhoneLineLocker(PhoneLine *line, bool lock = true);
 
   /**
    * Unlock the currently locked PhoneLine.

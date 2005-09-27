@@ -35,22 +35,50 @@ public:
 
   virtual std::string toString();
 
+  std::list< std::string > getUnusedArgs()
+  {return mUnusedArgs;}
+
+  void setUnusedArgs(const std::list< std::string > &args)
+  {mUnusedArgs = args;}
+
 private:
   std::string mCode;
+  std::list< std::string > mUnusedArgs;
   std::list< std::string > mArgs;
 };
 
+class CallRelatedEvent : public Event
+{
+public:
+  CallRelatedEvent(const std::string &code,
+		   const std::list< std::string > &args);
 
-class HangupEvent : public Event
+  std::string getCallId();
+  
+private:
+  std::string mCallId;
+};
+
+class HangupEvent : public CallRelatedEvent
 {
 public:
   HangupEvent(const std::string &code,
 	      const std::list< std::string > &args);
   
   virtual void execute();
+};
+
+class IncommingEvent : public CallRelatedEvent
+{
+public:
+  IncommingEvent(const std::string &code,
+		 const std::list< std::string > &args);
+  
+  virtual void execute();
 
 private:
-  std::string mCallId;
+  std::string mAccountId;
+  std::string mOrigin;
 };
 
 

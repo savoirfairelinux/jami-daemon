@@ -1,10 +1,10 @@
 #include "PhoneLineLocker.hpp"
 #include "PhoneLine.hpp"
 
-PhoneLineLocker::PhoneLineLocker(PhoneLine *line)
+PhoneLineLocker::PhoneLineLocker(PhoneLine *line, bool lock)
   : mPhoneLine(line)
 {
-  if(mPhoneLine) {
+  if(mPhoneLine && lock) {
     mPhoneLine->lock();
   }
 }

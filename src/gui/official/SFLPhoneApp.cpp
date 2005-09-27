@@ -17,6 +17,9 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< Request >(std::string("playtone"));
   Requester::instance().registerObject< Request >(std::string("playdtmf"));
   Requester::instance().registerObject< EventRequest >(std::string("getevents"));
+  Requester::instance().registerObject< CallRelatedRequest >(std::string("answer"));
+  Requester::instance().registerObject< CallRelatedRequest >(std::string("notavailable"));
+  Requester::instance().registerObject< CallRelatedRequest >(std::string("refuse"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("senddtmf"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("playdtmf"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("call"));

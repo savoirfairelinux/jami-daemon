@@ -29,9 +29,17 @@ class Call
 {
  public:
   Call(const std::string &sessionId, 
-       const std::string &callId);
+       const std::string &callId,
+       bool incomming = false);
   Call(const Session &session, 
-       const std::string &callId);
+       const std::string &callId,
+       bool incomming = false);
+
+  /**
+   * This function returns true if the 
+   * call is waiting to be picked up.
+   */
+  bool isIncomming();
 
   std::string id() 
   {return mId;}
@@ -72,6 +80,14 @@ class Call
    */
   std::string refuse();
 
+  /**
+   * This function will set this client to be
+   * not able to receive the call. It means that 
+   * the phone can still ring. But if every client
+   * sent notavailable, then it will be refused.
+   */
+  std::string notAvailable();
+
 
   /**
    * This function will send a tone to the line.
@@ -91,6 +107,8 @@ class Call
    * This is the unique identifier of the call.
    */
   std::string mId;
+
+  bool mIsIncomming;
 };
 
 #endif

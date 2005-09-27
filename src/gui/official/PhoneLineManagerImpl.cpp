@@ -4,6 +4,7 @@
 
 #include "globals.h"
 
+#include "Call.hpp"
 #include "Event.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineLocker.hpp"
@@ -14,6 +15,7 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   , mCurrentLine(NULL)
 {
   EventFactory::instance().registerEvent< HangupEvent >("002");
+  EventFactory::instance().registerEvent< IncommingEvent >("001");
   mSession.getEvents();
 }
 
@@ -34,7 +36,7 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
 }
 
 PhoneLine *
-PhoneLineManagerImpl::selectNextAvailableLine()
+PhoneLineManagerImpl::getNextAvailableLine()
 {
   PhoneLine *selectedLine = NULL;
 
@@ -43,18 +45,29 @@ PhoneLineManagerImpl::selectNextAvailableLine()
 
   unsigned int i = 0;
   while(i < mPhoneLines.size() && !selectedLine) {
-    PhoneLineLocker guard(mPhoneLines[i]);
+    mPhoneLines[i]->lock();
     if(mPhoneLines[i]->isAvailable() && 
        mPhoneLines[i] != mCurrentLine) {
       selectedLine = mPhoneLines[i];
     }
     else {
+      mPhoneLines[i]->unlock();
       i++;
     }
   }
 
+  return selectedLine;
+}
+
+PhoneLine *
+PhoneLineManagerImpl::selectNextAvailableLine()
+{
+  PhoneLine *selectedLine = getNextAvailableLine();
+  PhoneLineLocker guard(selectedLine, false);
+
   // If we found one available line.
   if(selectedLine) {
+    QMutexLocker guard(&mCurrentLineMutex);
     if(mCurrentLine) {
       PhoneLineLocker guard(mCurrentLine);
       mCurrentLine->unselect();
@@ -66,9 +79,13 @@ PhoneLineManagerImpl::selectNextAvailableLine()
       PhoneLineLocker guard(mCurrentLine);
       mCurrentLine->select();
     }
+    
   }
+
   return selectedLine;
 }
+
+
 
 PhoneLine *
 PhoneLineManagerImpl::getPhoneLine(unsigned int line)
@@ -241,3 +258,21 @@ PhoneLineManagerImpl::clear()
   }
 }
 
+void 
+PhoneLineManagerImpl::incomming(const std::string &,
+				const std::string &,
+				const std::string &callId)
+{
+  PhoneLine *selectedLine = getNextAvailableLine();
+  PhoneLineLocker guard(selectedLine, false);
+
+  Call call(mSession, callId, true);
+  if(selectedLine) {
+    selectedLine->incomming(call);
+  }
+  else {
+    _debug("There's no available lines here for the incomming call ID: %s.\n",
+	   callId.c_str());
+    call.notAvailable();
+  }
+}

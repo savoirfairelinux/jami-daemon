@@ -54,6 +54,8 @@ public:
   void sendKey(Qt::Key c);
   
 public slots:
+  void incomming(const Call &call);
+
   /**
    * Clears the buffer of the line.
    */
