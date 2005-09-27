@@ -81,6 +81,27 @@ PhoneLineManagerImpl::getPhoneLine(unsigned int line)
   return mPhoneLines[line];
 }
 
+PhoneLine *
+PhoneLineManagerImpl::getPhoneLine(const std::string &callId)
+{
+  PhoneLine *selectedLine = NULL;
+
+  QMutexLocker guard(&mPhoneLinesMutex);
+  unsigned int i = 0;
+  while(i < mPhoneLines.size() &&
+	!selectedLine) {
+    if(mPhoneLines[i]->getCallId() == callId) {
+      selectedLine = mPhoneLines[i];
+    }
+    else {
+      i++;
+    }
+  }
+  
+  return selectedLine;
+}
+
+
 void
 PhoneLineManagerImpl::sendKey(Qt::Key c)
 {
@@ -183,6 +204,26 @@ PhoneLineManagerImpl::hangup()
   mCurrentLineMutex.unlock();
 
   if(selectedLine) {
+    selectedLine->hangup();
+  }
+}
+
+void
+PhoneLineManagerImpl::hangup(const std::string &callId)
+{
+  PhoneLine *selectedLine = getPhoneLine(callId);
+  if(selectedLine) {
+    PhoneLineLocker guard(selectedLine);
+    selectedLine->hangup();
+  }
+}
+
+void
+PhoneLineManagerImpl::hangup(unsigned int line)
+{
+  PhoneLine *selectedLine = getPhoneLine(line);
+  if(selectedLine) {
+    PhoneLineLocker guard(selectedLine);
     selectedLine->hangup();
   }
 }

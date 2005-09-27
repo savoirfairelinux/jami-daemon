@@ -20,6 +20,8 @@ public:
   void hangup();
   void hold();
 
+  std::string getCallId();
+
   unsigned int line();
 
   /**

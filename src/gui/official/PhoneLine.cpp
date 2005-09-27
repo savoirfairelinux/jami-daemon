@@ -140,3 +140,15 @@ PhoneLine::hangup()
 
   unselect();
 }
+
+
+std::string 
+PhoneLine::getCallId()
+{
+  std::string id;
+  if(mCall) {
+    id = mCall->id();
+  }
+
+  return id;
+}

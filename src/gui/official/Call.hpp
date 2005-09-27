@@ -33,6 +33,9 @@ class Call
   Call(const Session &session, 
        const std::string &callId);
 
+  std::string id() 
+  {return mId;}
+
   std::string call(const std::string &to);
 
   /**

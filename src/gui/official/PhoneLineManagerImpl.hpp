@@ -23,10 +23,20 @@ class PhoneLineManagerImpl : public QObject
 public:
   PhoneLineManagerImpl();
 
-  
-  
 
+  /**
+   * Will return the PhoneLine linked to the line 
+   * number.
+   */
   PhoneLine *getPhoneLine(unsigned int line);
+
+  /**
+   * Will return the PhoneLine with the call ID.
+   * If there's no PhoneLine of call ID, it will
+   * return NULL.
+   */
+  PhoneLine *getPhoneLine(const std::string &callId);
+
   PhoneLine *getCurrentLine();
 
   void setNbLines(unsigned int line);
@@ -50,6 +60,20 @@ public slots:
    * If there's no current line, it will do nothing.
    */
   void hangup();
+
+  /**
+   * This function will hanp up the line number given 
+   * argument. Be aware that the first line is 1, not 
+   * zero.
+   */
+  void hangup(unsigned int line);
+
+  /**
+   * This function will hanp up the line with the
+   * following call ID. If there's no line with 
+   * the call ID, it will do nothing.
+   */
+  void hangup(const std::string &callId);
 
   /**
    * This function will make a call on the 
