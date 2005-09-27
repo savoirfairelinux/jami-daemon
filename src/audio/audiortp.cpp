@@ -246,14 +246,24 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 
 	// Get audio data stream
 
+#if 0
 	do {
     Thread::sleep(5); // in msec.
+#endif
 		if (!_sym) {
 			adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
 		} else {
 			adu = _session->getData(_session->getFirstTimestamp());
 		}
+# if 0
 	} while (adu == NULL);
+#else
+  if (adu == NULL) {
+    Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
+    //Manager::instance().getAudioDriver()->stopStream();
+  return;
+}
+#endif
 
 	// Decode data with relevant codec
 	CodecDescriptor* cd = new CodecDescriptor (adu->getType());
@@ -277,7 +287,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 		Manager::instance().getAudioDriver()->mainSndRingBuffer().Put(data_for_speakers_tmp, SAMPLES_SIZE(RTP_FRAMES2SEND));
 	//}
 	
-	// Notify (with a bip) an incoming call when there is already a call 
+	// Notify (with a beep) an incoming call when there is already a call 
 	countTime += time->getSecond();
 	if (Manager::instance().getNumberOfCalls() > 0 
 			and Manager::instance().getbRingtone()) {

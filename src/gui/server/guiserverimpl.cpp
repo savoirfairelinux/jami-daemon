@@ -224,8 +224,8 @@ GUIServerImpl::incomingCall (short id, const std::string& accountId, const std::
   TokenList arg;
   std::ostringstream callId;
   callId << "s" << id;
-  arg.push_back(accountId);
   arg.push_back(callId.str());
+  arg.push_back(accountId);
   arg.push_back(from);
   arg.push_back("call");
 
