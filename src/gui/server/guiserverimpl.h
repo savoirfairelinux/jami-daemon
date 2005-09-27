@@ -44,19 +44,22 @@ public:
   short getIdFromCallId(const std::string& callId);
 
   // Reimplementation of virtual functions
-	virtual int incomingCall (short id);
-	virtual void peerAnsweredCall (short id);
-	virtual int peerRingingCall (short id);
-	virtual int peerHungupCall (short id);
-	virtual void displayTextMessage (short id, const std::string& message);
-	virtual void displayErrorText (short id, const std::string& message);
-	virtual void displayError (const std::string& error);
-	virtual void displayStatus (const std::string& status);
-	virtual void displayContext (short id);
-	virtual std::string getRingtoneFile (void);
-	virtual void setup (void);
-	virtual void startVoiceMessageNotification (void);
-	virtual void stopVoiceMessageNotification (void);  
+  // TODO: remove incomingCall with one parameter
+	int incomingCall (short id);
+  int incomingCall(short id, const std::string& accountId, const std::string& from);
+
+	void peerAnsweredCall (short id);
+	int peerRingingCall (short id);
+	int peerHungupCall (short id);
+	void displayTextMessage (short id, const std::string& message);
+	void displayErrorText (short id, const std::string& message);
+	void displayError (const std::string& error);
+	void displayStatus (const std::string& status);
+	void displayContext (short id);
+	std::string getRingtoneFile (void);
+	void setup (void);
+	void startVoiceMessageNotification (void);
+	void stopVoiceMessageNotification (void);  
 
   bool outgoingCall (const std::string& seq, 
     const std::string& callid, 

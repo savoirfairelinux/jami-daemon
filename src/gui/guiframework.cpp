@@ -28,6 +28,16 @@ GuiFramework::GuiFramework ()
 
 GuiFramework::~GuiFramework (void) {}
 
+/**
+ * This function is only to not redeclare it in old qt-gui code
+ * Since isn't not virtual
+ */
+int
+GuiFramework::incomingCall(short id, const std::string& accountId, const std::string& from) 
+{
+  return incomingCall(id);
+} 
+
 int 
 GuiFramework::outgoingCall (const string& to)
 {

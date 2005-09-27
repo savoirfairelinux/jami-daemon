@@ -562,12 +562,12 @@ SipVoIPLink::getEvent (void)
     } else {
       // If there is a firewall
       if (behindNat() != 0) {
-	setLocalPort(Manager::instance().getFirewallPort());
+        setLocalPort(Manager::instance().getFirewallPort());
       } else {
-	return -1;
-      }	
+        return -1;
+      }
     }
-			
+
     // Generate id
     id = Manager::instance().generateNewCallId();
     Manager::instance().pushBackNewCall(id, Incoming);
@@ -584,31 +584,38 @@ SipVoIPLink::getEvent (void)
 
       osip_from_to_str (event->request->from, &tmp);
       if (tmp != NULL) {
-	snprintf (getSipCall(id)->getRemoteUri(), 256, "%s", tmp);
-	osip_free (tmp);
+        snprintf (getSipCall(id)->getRemoteUri(), 256, "%s", tmp);
+        osip_free (tmp);
       }
     }
     osip_from_parse(from, getSipCall(id)->getRemoteUri());
     name = osip_from_get_displayname(from);
-    Manager::instance().displayTextMessage(id, name);
-    if (Manager::instance().getCall(id) != NULL) {
-      Manager::instance().getCall(id)->setCallerIdName(name);
+
+    //Don't need this display text message now that we send the name
+    //inside the Manager to the gui
+    //Manager::instance().displayTextMessage(id, name);
+    Call *call = Manager::instance().getCall(id);
+    if ( call != NULL) {
+      call->setCallerIdName(name);
+      osip_uri_t* url = osip_from_get_url(from);
+      if ( url != NULL ) {
+        call->setCallerIdNumber(url->username);
+      }
     } else {
+      osip_from_free(from);
       return -1;
     }
     _debug("From: %s\n", name);
     osip_from_free(from);
-			
+
     // Associate an audio port with a call
     getSipCall(id)->setLocalAudioPort(_localPort);
 
-			
     getSipCall(id)->newIncomingCall(event);
     if (Manager::instance().incomingCall(id) < 0) {
       Manager::instance().displayErrorText(id, "Incoming call failed");
       return -1;
     }
-	
     break;
 
   case EXOSIP_CALL_REINVITE:
@@ -621,22 +628,22 @@ SipVoIPLink::getEvent (void)
     if (id == 0) {
       id = findCallIdInitial(event);
     }
-    SipCall *call = getSipCall(id);
-    if ( call ) {
+    SipCall *sipcall = getSipCall(id);
+    if ( sipcall ) {
       _debug("Call is answered [id = %d, cid = %d, did = %d], localport=%d\n", 
-	   id, event->cid, event->did,call->getLocalAudioPort());
+	   id, event->cid, event->did,sipcall->getLocalAudioPort());
     }
  
     // Answer
     if (id > 0 && !Manager::instance().getCall(id)->isOnHold()
                && !Manager::instance().getCall(id)->isOffHold()) {
-      call->setStandBy(false);
-      if (call->answeredCall(event) != -1) {
-        call->answeredCall_without_hold(event);
+      sipcall->setStandBy(false);
+      if (sipcall->answeredCall(event) != -1) {
+        sipcall->answeredCall_without_hold(event);
         Manager::instance().peerAnsweredCall(id);
 
         // Outgoing call is answered, start the sound channel.
-        if (_audiortp.createNewSession (call) < 0) {
+        if (_audiortp.createNewSession (sipcall) < 0) {
           _debug("FATAL: Unable to start sound (%s:%d)\n", 
           __FILE__, __LINE__);
           exit(1);
@@ -645,7 +652,7 @@ SipVoIPLink::getEvent (void)
     } else {
       // Answer to on/off hold to send ACK
       if (id > 0) {
-        call->answeredCall(event);
+        sipcall->answeredCall(event);
         _debug("-----------------------\n");
       }
     }
@@ -697,10 +704,8 @@ SipVoIPLink::getEvent (void)
     }	
     break;
   case EXOSIP_CALL_RELEASED:
-    id = findCallIdInitial(event);
-    _debug("Id Released: %d\n", id);
-    //TODO: find the id...
-    //Manager::instance().displayErrorText(0, "getEvent:CallReleased");
+    //id = findCallIdInitial(event);
+    //_debug("Id Released: %d\n", id);
 
     break;
   case EXOSIP_CALL_REQUESTFAILURE:
@@ -771,7 +776,7 @@ SipVoIPLink::getEvent (void)
     break;
 
   case EXOSIP_REGISTRATION_FAILURE: // 2
-    Manager::instance().displayError("getEvent : Registration Failure\n");
+    Manager::instance().displayError("getEvent : Registration Failure");
     break;
 
   case EXOSIP_MESSAGE_NEW:
@@ -779,25 +784,25 @@ SipVoIPLink::getEvent (void)
 				
     if (event->request != NULL && MSG_IS_OPTIONS(event->request)) {
       for (k = 0; k < _sipcallVector.size(); k++) {
-	if (_sipcallVector.at(k)->getCid() == event->cid) { 
-	  break;
-	}
+        if (_sipcallVector.at(k)->getCid() == event->cid) { 
+          break;
+        }
       }
 			
       // TODO: Que faire si rien trouve??
       eXosip_lock();
       if (k == _sipcallVector.size()) {
-	/* answer 200 ok */
-	eXosip_options_send_answer (event->tid, OK, NULL);
+        /* answer 200 ok */
+        eXosip_options_send_answer (event->tid, OK, NULL);
       } else if (_sipcallVector.at(k)->getCid() == event->cid) {
-	/* already answered! */
+        /* already answered! */
       } else {
-	/* answer 486 ok */
-	eXosip_options_send_answer (event->tid, BUSY_HERE, NULL);
+        /* answer 486 ok */
+      	eXosip_options_send_answer (event->tid, BUSY_HERE, NULL);
       }
       eXosip_unlock();
     } 
-			
+
     // Voice message 
     else if (event->request != NULL && MSG_IS_NOTIFY(event->request)){
       int ii;
@@ -813,29 +818,29 @@ SipVoIPLink::getEvent (void)
         _debug("Cannot get body\n");
         return -1;
       }
-				
+
       // Analyse message body
       str = new string(body->body);
       pos = str->find (VOICE_MSG);
-				
+
       if (pos == string::npos) {
 	     // If the string is not found
        delete str;
 	     return -1;
       } 
-				
+
       pos_slash = str->find ("/");
       nb_msg = str->substr(pos + LENGTH_VOICE_MSG, 
-			   pos_slash - (pos + LENGTH_VOICE_MSG));
+      pos_slash - (pos + LENGTH_VOICE_MSG));
 
       // Set the number of voice-message
       setMsgVoicemail(atoi(nb_msg.data()));
 
       if (getMsgVoicemail() != 0) {
-	// If there is at least one voice-message, start notification
+        // If there is at least one voice-message, start notification
         Manager::instance().startVoiceMessageNotification();
       } else {
-	// Stop notification when there is 0 voice message
+        // Stop notification when there is 0 voice message
         Manager::instance().stopVoiceMessageNotification();
       }
       delete str;

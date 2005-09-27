@@ -354,6 +354,8 @@ private:
 
   // look if zeroconf scanning should run or not
   int _useZeroconf;
+  // tell if we have zeroconf d'enable
+  int _hasZeroconf;
 
 #ifdef USE_ZEROCONF
   // DNSService contain every zeroconf services

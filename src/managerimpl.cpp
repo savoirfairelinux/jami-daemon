@@ -65,8 +65,9 @@ ManagerImpl::ManagerImpl (void)
   // Init private variables 
   _error = new Error();
   _tone = new ToneGenerator();	
-  
+  _hasZeroconf = false;
 #ifdef USE_ZEROCONF
+  _hasZeroconf = true;
   _DNSService = new DNSService();
 #endif
 
@@ -562,16 +563,27 @@ ManagerImpl::sendDtmf (short id, char code)
 int 
 ManagerImpl::incomingCall (short id)
 {
-	Call* call;
-	call = getCall(id);
+	Call* call = getCall(id);
 	if (call == NULL)
 		return -1;
+
 	call->setType(Incoming);
 	call->setStatus(string(RINGING_STATUS));
 	call->setState(Progressing);
 	ringtone(true);
 	//displayStatus(RINGING_STATUS);
-	return _gui->incomingCall(id);
+
+  // TODO: Account not yet implemented
+  std::string accountId = "acc1";
+  std::string from = call->getCallerIdName();
+  std::string number = call->getCallerIdNumber();
+  if ( number.length() ) {
+    from.append(" <");
+    from.append(number);
+    from.append(">");
+  }
+
+  return _gui->incomingCall(id, accountId, from);
 }
 
 void 
@@ -687,7 +699,7 @@ ManagerImpl::displayStatus (const string& status)
 void
 ManagerImpl::startVoiceMessageNotification (void)
 {
-	_gui->startVoiceMessageNotification();
+  _gui->startVoiceMessageNotification();
 }
 
 void

@@ -20,6 +20,8 @@
 #define __RESPONSEMESSAGE_H__
 
 #include <string>
+#include "argtokenizer.h" // for TokenList declare
+
 /**
 Response Message stock a message from a request when it is executed.
 @author Yan Morin
@@ -32,6 +34,7 @@ public:
     // build a constructor with a TokenList
     // so that they will be encoded..
     ResponseMessage(const std::string& code,const std::string& seq, const std::string& message);
+    ResponseMessage(const std::string& code,const std::string& seq, TokenList& arg);
     ~ResponseMessage();
 
     std::string sequenceId() const { return _seq; }

@@ -72,7 +72,7 @@ public:
 	void setCallerIdName (const std::string& callerId_name);
 	std::string getCallerIdNumber (void);
 	void setCallerIdNumber (const std::string& callerId_number);
-	
+ 	
 	// Handle state
 	enum CallState getState (void);
 	void setState (enum CallState state);
@@ -114,7 +114,7 @@ private:
 	enum CallType 	 _type;
 	std::string 			 _callerIdName;
 	std::string 			 _callerIdNumber;
-	std::string 			 _status;
+  std::string        _status;
 };
 
 #endif // __CALL_H__

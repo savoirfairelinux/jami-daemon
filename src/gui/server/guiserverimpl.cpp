@@ -211,19 +211,29 @@ GUIServerImpl::version()
 }
 
 
-
 int 
 GUIServerImpl::incomingCall (short id) 
 {
-  std::ostringstream responseMessage, callId;
+  _debug("ERROR: GUIServerImpl::incomingCall(%d) should not be call\n",id);
+  return 0;
+}
+
+int 
+GUIServerImpl::incomingCall (short id, const std::string& accountId, const std::string& from) 
+{
+  TokenList arg;
+  std::ostringstream callId;
   callId << "s" << id;
-  responseMessage << "acc1 " << callId.str() << " call";
+  arg.push_back(accountId);
+  arg.push_back(callId.str());
+  arg.push_back(from);
+  arg.push_back("call");
 
   SubCall subcall("seq0", callId.str());
 
   insertSubCall(id, subcall);
 
-  _requestManager.sendResponse(ResponseMessage("001", "seq0", responseMessage.str()));
+  _requestManager.sendResponse(ResponseMessage("001", "seq0", arg));
 
   return 0;
 }
@@ -259,7 +269,7 @@ GUIServerImpl::peerHungupCall (short id)
     std::ostringstream responseMessage;
     responseMessage << iter->second.callId() << " hangup";
 
-    _requestManager.sendResponse(ResponseMessage("250", "seq0", responseMessage.str()));
+    _requestManager.sendResponse(ResponseMessage("002", "seq0", responseMessage.str()));
     
     // remove this call...
     _callMap.erase(id);
@@ -324,9 +334,11 @@ GUIServerImpl::setup (void)
 void  
 GUIServerImpl::startVoiceMessageNotification (void) 
 {
+  _requestManager.sendResponse(ResponseMessage("020", "seq0", "voice message"));
 }
 
 void  
 GUIServerImpl::stopVoiceMessageNotification (void) 
 {
+  _requestManager.sendResponse(ResponseMessage("021", "seq0", "no voice message"));
 }

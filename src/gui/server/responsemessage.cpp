@@ -30,6 +30,28 @@ ResponseMessage::ResponseMessage(const std::string& code,
 {
 }
 
+/*
+ * Construct a message with a list of argument
+ * and a space separator between each argument
+ */
+ResponseMessage::ResponseMessage(const std::string& code,
+      const std::string& seq,
+      TokenList& arg) : _code(code), _seq(seq)
+{
+  TokenList::iterator iter=arg.begin();
+  if (iter!=arg.end()) {
+    _message = *iter;
+    iter++;
+  }
+  // add space between each
+  while(iter!=arg.end()) {
+    _message.append(" ");
+    // TODO: encode string here
+    _message.append(*iter);
+    iter++;
+  }
+}
+
 
 ResponseMessage::~ResponseMessage()
 {
