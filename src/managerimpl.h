@@ -28,6 +28,7 @@
 #include "call.h"
 #include "audio/audiodevice.h"
 #include "observer.h"
+#include "config/config.h"
 
 class AudioLayer;
 class CodecDescriptor;
@@ -374,6 +375,8 @@ private:
   int _useZeroconf;
   // tell if we have zeroconf d'enable
   int _hasZeroconf;
+
+  Conf::ConfigTree _config;
 
 #ifdef USE_ZEROCONF
   // DNSService contain every zeroconf services

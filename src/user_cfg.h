@@ -98,6 +98,17 @@
 #define DFT_DRIVER			0	
 #define DFT_NB_CODEC		3
 
+#define DFT_VOIP_LINK_STR    "0"
+#define	YES_STR              "1"
+#define	NO_STR               "0"
+#define DFT_PULSE_LENGTH_STR "250"
+#define SIP_INFO_STR         "0"
+#define DFT_DRIVER_STR       "0"
+#define DFT_NB_CODEC_STR     "3"
+#define DFT_VOL_SPKR_STR     "100"
+#define DFT_VOL_MICRO_STR    "100"
+
+
 #define DFT_CODEC			"G711u"
 // volume by default 100%
 #define DFT_VOL_SPKR		100
@@ -114,8 +125,10 @@
 // zeroconfig default value
 #ifdef USE_ZEROCONF
 #define CONFIG_ZEROCONF_DEFAULT 1
+#define CONFIG_ZEROCONF_DEFAULT_STR "1"
 #else
 #define CONFIG_ZEROCONF_DEFAULT 0
+#define CONFIG_ZEROCONF_DEFAULT_STR "0"
 #endif
 
 #endif // __USER_CFG_H__

@@ -22,45 +22,79 @@
 
 #include <map>
 #include <string>
+#include <list>
 
 namespace Conf {
 
-class ConfigItem;
-typedef std::map<std::string, ConfigItem> ItemMap;
+class ConfigTreeItem;
+typedef std::map<std::string, ConfigTreeItem> ItemMap;
 typedef std::map<std::string, ItemMap*> SectionMap;
+typedef std::list<std::string> TokenList;
 
-class ConfigItemException {
+class ConfigTreeItemException {
 public:
-  ConfigItemException() {}
-  ~ConfigItemException() {}
+  ConfigTreeItemException() {}
+  ~ConfigTreeItemException() {}
 };
 
-class Config {
+class ConfigTree;
+class ConfigTreeIterator 
+{
 public:
-  Config();
-  ~Config();
+  TokenList begin();
+  const TokenList& end() const { return _endToken; }
+  TokenList next();
+  
+private:
+  friend class ConfigTree;
+  ConfigTreeIterator(ConfigTree *configTree) : _tree(configTree) {}
+
+  ConfigTree* _tree;
+  TokenList _endToken;
+  SectionMap::iterator _iter;
+  ItemMap::iterator _iterItem;
+};
+
+class ConfigTree {
+public:
+  ConfigTree();
+  ~ConfigTree();
 
   void createSection(const std::string& section);
-  void addConfigItem(const std::string& section, const ConfigItem &item);
-  void setConfigItem(const std::string& section, const std::string& itemName, const std::string& value);
+  void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
+  bool setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
 
-  // throw a ConfigItemException if not found
-  std::string getConfigItemValue(const std::string& section, const std::string& itemName);
-  int getConfigItemIntValue(const std::string& section, const std::string& itemName);
+  // throw a ConfigTreeItemException if not found
+  std::string getConfigTreeItemValue(const std::string& section, const std::string& itemName);
+  int getConfigTreeItemIntValue(const std::string& section, const std::string& itemName);
+  bool saveConfigTree(const std::string& fileName);
+  int  populateFromFile(const std::string& fileName);
+
+  bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, TokenList& arg);
 
 private:
-  ConfigItem* getConfigItem(const std::string& section, const std::string& itemName);
+  ConfigTreeItem* getConfigTreeItem(const std::string& section, const std::string& itemName);
 
   SectionMap _sections;
+  friend class ConfigTreeIterator;
+
+public:
+  ConfigTreeIterator createIterator() {
+    return ConfigTreeIterator(this);
+  }
 };
 
-class ConfigItem {
+class ConfigTreeItem {
 public:
-  ConfigItem() : _defaultValue(""), _type("string") {}
-  ConfigItem(const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) : 
+  ConfigTreeItem() : _defaultValue(""), _type("string") {}
+  // defaultvalue = value
+  ConfigTreeItem(const std::string& name, const std::string& value, const std::string& type) : 
+    _name(name), _value(value), 
+    _defaultValue(value), _type(type) {}
+  ConfigTreeItem(const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) : 
     _name(name), _value(value), 
     _defaultValue(defaultValue), _type(type) {}
-  ~ConfigItem();
+  ~ConfigTreeItem() {}
 
   void setValue(const std::string& value) { _value = value; }
   const std::string getName() const { return _name; }
@@ -75,7 +109,6 @@ private:
   std::string _type;
 };
 
-
-} // end namespace Config
+} // end namespace ConfigTree
 
 #endif

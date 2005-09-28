@@ -56,6 +56,11 @@
 #include "zeroconf/DNSServiceTXTRecord.h"
 #endif
 
+#define fill_config_str(name, value) \
+  (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))
+#define fill_config_int(name, value) \
+  (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
+
 using namespace std;
 using namespace ost;
  
@@ -487,7 +492,8 @@ ManagerImpl::refuseCall (short id)
 int
 ManagerImpl::saveConfig (void)
 {
-	return (Config::tree()->saveToFile(_path.data()) ? 1 : 0);
+	(Config::tree()->saveToFile(_path.data()) ? 1 : 0);
+  return (_config.saveConfigTree(_path.data()) ? 1 : 0);
 }
 
 int 
@@ -954,6 +960,7 @@ ManagerImpl::createSettingsPath (void) {
 	_path = _path + "/" + PROGNAME + "rc";
 
 	exist = Config::tree()->populateFromFile(_path);
+  exist = _config.populateFromFile(_path + "2");
 	
 	if (exist == 0){
 		// If populateFromFile failed
@@ -968,9 +975,49 @@ ManagerImpl::createSettingsPath (void) {
 void
 ManagerImpl::initConfigFile (void) 
 {
-	_exist = createSettingsPath();
+  _exist = createSettingsPath();
 
-	fill_config_fields_int(SIGNALISATION, VOIP_LINK_ID, DFT_VOIP_LINK); 	
+  std::string type_str("string");
+  std::string type_int("int");
+
+  std::string section;
+  section = SIGNALISATION;
+  fill_config_int(VOIP_LINK_ID, DFT_VOIP_LINK_STR);
+  fill_config_str(FULL_NAME, EMPTY_FIELD);
+  fill_config_str(USER_PART, EMPTY_FIELD);
+  fill_config_str(AUTH_USER_NAME, EMPTY_FIELD);
+  fill_config_str(PASSWORD, EMPTY_FIELD);
+  fill_config_str(HOST_PART, EMPTY_FIELD);
+  fill_config_str(PROXY, EMPTY_FIELD);
+  fill_config_int(AUTO_REGISTER, YES_STR);
+  fill_config_int(PLAY_TONES, YES_STR);
+  fill_config_int(PULSE_LENGTH, DFT_PULSE_LENGTH_STR);
+  fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
+  fill_config_str(STUN_SERVER, DFT_STUN_SERVER);
+  fill_config_int(USE_STUN, NO_STR);
+
+  section = AUDIO;
+  fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);
+  fill_config_int(NB_CODEC, DFT_NB_CODEC_STR);
+  fill_config_str(CODEC1, DFT_CODEC);
+  fill_config_str(CODEC2, DFT_CODEC);
+  fill_config_str(CODEC3, DFT_CODEC);
+  fill_config_str(CODEC4, DFT_CODEC);
+  fill_config_str(CODEC5, DFT_CODEC);
+  fill_config_str(RING_CHOICE, DFT_RINGTONE);
+  fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
+  fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
+
+  section = PREFERENCES;
+  fill_config_str(SKIN_CHOICE, DFT_SKIN);
+  fill_config_int(CONFIRM_QUIT, YES_STR);
+  fill_config_str(ZONE_TONE, DFT_ZONE);
+  fill_config_int(CHECKED_TRAY, NO_STR);
+  fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
+  fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
+
+  // old way
+	fill_config_fields_int(SIGNALISATION, VOIP_LINK_ID, DFT_VOIP_LINK);
 	fill_config_fields_str(SIGNALISATION, FULL_NAME, EMPTY_FIELD);
 	fill_config_fields_str(SIGNALISATION, USER_PART, EMPTY_FIELD); 
 	fill_config_fields_str(SIGNALISATION, AUTH_USER_NAME, EMPTY_FIELD); 
@@ -1135,21 +1182,28 @@ bool
 ManagerImpl::getConfigAll(const std::string& sequenceId)
 {
   bool returnValue = false;
+  Conf::ConfigTreeIterator iter = _config.createIterator();
+  TokenList tk = iter.begin();
+  if (tk.size()) {
+    returnValue = true;
+  }
+  while (tk.size()) {
+    _gui->sendMessage("100", sequenceId, tk);
+    tk = iter.next();
+  }
   return returnValue;
 }
 
 bool 
 ManagerImpl::getConfig(const std::string& section, const std::string& name, TokenList& arg)
 {
-  bool returnValue = false;
-  return returnValue;
+  return _config.getConfigTreeItemToken(section, name, arg);
 }
 
 bool 
 ManagerImpl::setConfig(const std::string& section, const std::string& name, const std::string& value)
 {
-  bool returnValue = false;
-  return returnValue;
+  return _config.setConfigTreeItem(section, name, value);
 }
 
 bool 
