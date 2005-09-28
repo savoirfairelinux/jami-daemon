@@ -57,7 +57,7 @@ ToneThread::run (void) {
 	bool started = false;
 
 	// How long do 'size' samples play ?
-	unsigned int play_time = (size * 1000) / SAMPLING_RATE;
+	// unsigned int play_time = (size * 1000) / SAMPLING_RATE;
   unsigned int pause = (size) / SAMPLING_RATE;
 
 	while (Manager::instance().getZonetone()) {

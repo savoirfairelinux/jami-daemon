@@ -89,13 +89,21 @@ public:
 	virtual void peerAnsweredCall (short id);
 	virtual int peerRingingCall (short id);
 	virtual int peerHungupCall (short id);
-	virtual void displayTextMessage (short id, const string& message);
-	virtual void displayErrorText (short id, const string& message);
-	virtual void displayError (const string& error);
-	virtual void displayStatus (const string& status);
+	virtual void displayTextMessage (short id, const std::string& message);
+	virtual void displayErrorText (short id, const std::string& message);
+	virtual void displayError (const std::string& error);
+	virtual void displayStatus (const std::string& status);
 	virtual void displayContext (short id);
-	virtual string getRingtoneFile (void);
+	virtual std::string getRingtoneFile (void);
 	virtual void setup (void);
+	virtual void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg) {}
+	virtual void sendCallMessage(const std::string& seqId, 
+    short id,
+    const std::string& accountId,
+    const std::string& status
+  ) {}
+
+
 		
 	/*
 	 * Return the id matching to the chosen line

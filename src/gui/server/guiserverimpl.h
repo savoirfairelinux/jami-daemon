@@ -41,7 +41,9 @@ public:
   void insertSubCall(short id, SubCall& subCall);
   void removeSubCall(short id);
   std::string getSequenceIdFromId(short id);
+  std::string getCallIdFromId(short id);
   short getIdFromCallId(const std::string& callId);
+
 
   // Reimplementation of virtual functions
   // TODO: remove incomingCall with one parameter
@@ -59,7 +61,14 @@ public:
 	std::string getRingtoneFile (void);
 	void setup (void);
 	void startVoiceMessageNotification (void);
-	void stopVoiceMessageNotification (void);  
+	void stopVoiceMessageNotification (void);
+
+  void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg);
+  void sendCallMessage(const std::string& seqId, 
+    short id,
+    const std::string& accountId,
+    const std::string& status
+  );
 
   bool outgoingCall (const std::string& seq, 
     const std::string& callid, 
@@ -74,6 +83,9 @@ public:
 
   std::string version();
   void quit() { _requestManager.quit(); }
+
+  // observer methods
+  void update();
 
 private:
 

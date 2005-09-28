@@ -58,7 +58,7 @@ GUIServerImpl::removeSubCall(short id) {
 }
 
 /**
- * Retreive the subcall or send 0
+ * Retreive the sequenceId or send seq0
  */
 std::string 
 GUIServerImpl::getSequenceIdFromId(short id) {
@@ -67,6 +67,17 @@ GUIServerImpl::getSequenceIdFromId(short id) {
     return iter->second.sequenceId();
   }
   return "seq0";
+}
+/**
+ * Retreive the string callid from the id
+ */
+std::string 
+GUIServerImpl::getCallIdFromId(short id) {
+  CallMap::iterator iter = _callMap.find(id);
+  if (iter != _callMap.end()) {
+    return iter->second.callId();
+  }
+  throw std::runtime_error("No match for this id");
 }
 
 short
@@ -341,4 +352,35 @@ void
 GUIServerImpl::stopVoiceMessageNotification (void) 
 {
   _requestManager.sendResponse(ResponseMessage("021", "seq0", "no voice message"));
+}
+
+void 
+GUIServerImpl::sendMessage(const std::string& code, const std::string& seqId, TokenList& arg) 
+{
+  _requestManager.sendResponse(ResponseMessage(code, seqId, arg));
+}
+
+void 
+GUIServerImpl::sendCallMessage(const std::string& seqId, 
+    short id,
+    const std::string& accountId,
+    const std::string& status
+  ) 
+{
+  try {
+    std::string callid = getCallIdFromId(id);
+    TokenList arg;
+    arg.push_back(callid);
+    arg.push_back(accountId);
+    arg.push_back(status);
+    _requestManager.sendResponse(ResponseMessage("100", seqId, arg));
+  } catch(...) {
+    // no callid found
+  }
+}
+
+void 
+GUIServerImpl::update()
+{
+  
 }

@@ -21,57 +21,125 @@
 #include "guiserver.h"
 #include "subcall.h"
 
-
 ResponseMessage
 RequestZeroconf::execute()
 {
-  return message("500","TODO");
-}
-
-ResponseMessage
-Request::execute()
-{
-  return message("500","TODO");
+  if (GUIServer::instance().getZeroconf(_sequenceId)) {
+    return message("200", "OK");
+  } else {
+    return message("501","Zeroconf not enabled or activated");
+  }
 }
 
 ResponseMessage
 RequestZeroconfEvent::execute()
 {
-  return message("500","TODO");
+  if (GUIServer::instance().attachZeroconfEvents(_sequenceId)) {
+    return message("200", "OK");
+  } else {
+    return message("501","Zeroconf not enabled or activated");
+  }
 }
 
 ResponseMessage
 RequestCallStatus::execute()
 {
-  return message("500","TODO");
+  if (GUIServer::instance().getCallStatus(_sequenceId)) {
+    return message("200", "OK");
+  } else {
+    return message("500","Server Error");
+  }
 }
 
 ResponseMessage
 RequestConfigGetAll::execute()
 {
-  return message("500","TODO");
+  if (GUIServer::instance().getConfigAll(_sequenceId)) {
+    return message("200", "OK");
+  } else {
+    return message("500","Server Error");
+  }
+}
+
+RequestConfigGet::RequestConfigGet(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
+{
+  TokenList::iterator iter = _argList.begin();
+  if (iter != _argList.end()) {
+    _name = *iter;
+    _argList.pop_front();
+  } else {
+    throw RequestConstructorException();
+  }
 }
 
 ResponseMessage
 RequestConfigGet::execute()
 {
-  return message("500","TODO");
+  if (GUIServer::instance().getConfig(_sequenceId, _name)) {
+    return message("200", "OK");
+  } else {
+    return message("500","Server Error");
+  }
+}
+
+RequestConfigSet::RequestConfigSet(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
+{
+  TokenList::iterator iter = _argList.begin();
+
+  // get two strings arguments
+  bool argsAreValid = false;
+  if (iter != _argList.end()) {
+    _name = *iter;
+    _argList.pop_front();
+    iter++;
+    if (iter != _argList.end()) {
+      _value = *iter;
+      _argList.pop_front();
+      argsAreValid = true;
+    }
+  }
+  if (!argsAreValid) {
+    throw RequestConstructorException();
+  }
 }
 
 ResponseMessage
 RequestConfigSet::execute()
 {
-  return message("500","TODO");
+  if (GUIServer::instance().setConfig(_name, _value)) {
+    return message("200", "OK");
+  } else {
+    return message("500","Server Error");
+  }
 }
 
 ResponseMessage
 RequestConfigSave::execute()
 {
-  return message("500","TODO");
+  if (GUIServer::instance().saveConfig()) {
+    return message("200", "Config saved");
+  } else {
+    return message("400","Error Unable to save the configuration");
+  }
+}
+
+RequestList::RequestList(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
+{
+  TokenList::iterator iter = _argList.begin();
+  if (iter != _argList.end()) {
+    _name = *iter;
+    _argList.pop_front();
+  } else {
+    throw RequestConstructorException();
+  }
 }
 
 ResponseMessage
 RequestList::execute()
 {
-  return message("500","TODO");
+  if (GUIServer::instance().getConfigList(_sequenceId, _name)) {
+    return message("200", "OK");
+  } else {
+    return message("500","Server Error");
+  }
 }

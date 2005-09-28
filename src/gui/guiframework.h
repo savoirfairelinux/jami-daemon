@@ -19,13 +19,14 @@
 
 #ifndef __GUI_FRAMEWORK_H__
 #define __GUI_FRAMEWORK_H__
-
 /* Inherited class by GUI classes */
 /* The GuiFramework class is the base of all user interface */
 
 #include <string>
+#include "server/argtokenizer.h"
+#include "../observer.h"
 
-class GuiFramework {
+class GuiFramework : public Pattern::Observer {
 public:
 	GuiFramework ();
 	virtual ~GuiFramework (void);
@@ -48,6 +49,13 @@ public:
 	virtual void startVoiceMessageNotification (void) = 0;
 	virtual void stopVoiceMessageNotification (void) = 0;
 	
+  virtual void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg) = 0;
+  virtual void sendCallMessage(const std::string& seqId, 
+    short id,
+    const std::string& accountId,
+    const std::string& status
+  ) = 0;
+
 	/* Child class to parent class */
 	int outgoingCall (const std::string& to); 	
 	int hangupCall (short id);
@@ -71,10 +79,21 @@ public:
 	bool sendDtmf (short id, char code);
   bool playDtmf (char code);
   bool playTone ();
-	
+
+  // config
+  bool getZeroconf(const std::string& sequenceId);
+  bool attachZeroconfEvents(const std::string& sequenceId);
+  bool getCallStatus(const std::string& sequenceId);
+  bool getConfigAll(const std::string& sequenceId);
+  bool getConfig(const std::string& sequenceId, const std::string& name);
+  bool setConfig(const std::string& name, const std::string& value);
+  bool getConfigList(const std::string& sequenceId, const std::string& name);
+
+  // Observer methods
+  virtual void update() {}
+
 protected:
 	std::string _message;
-
 };
 
 #endif // __GUI_FRAMEWORK_H__

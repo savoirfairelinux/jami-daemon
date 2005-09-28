@@ -93,7 +93,6 @@ RequestHangupAll::execute()
 RequestDTMF::RequestDTMF(const std::string &sequenceId, 
     const TokenList& argList) : RequestGlobalCall(sequenceId, argList)
 {
-
   TokenList::iterator iter = _argList.begin();
 
   // check for the dtmf key

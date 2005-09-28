@@ -14,35 +14,12 @@ ZEROCONFLIB =
 ZEROCONFFLAGS =  
 endif
 
-sflphone_SOURCES = \
-	configitem.cpp \
-	configuration.cpp \
-	configurationtree.cpp \
-	call.cpp \
-	eventthread.cpp \
-	error.cpp \
-	main.cpp \
-	sipvoiplink.cpp \
-	voIPLink.cpp \
-	sipcall.cpp \
-	skin.cpp \
-	managerimpl.cpp \
-	managerimpl.h \
-	manager.h \
-	global.h \
-	configitem.h \
-	configuration.h \
-	configurationtree.h \
-	eventthread.h \
-	error.h \
-	sipvoiplink.h \
-	user_cfg.h \
-	call.h \
-	phonegi-bin.h \
-	voIPLink.h \
-	sipcall.h \
-	skin.h \
-	${maintener_source}
+sflphone_SOURCES = configitem.cpp 	configuration.cpp 	configurationtree.cpp \
+		call.cpp 	eventthread.cpp 	error.cpp 	main.cpp 	sipvoiplink.cpp 	voIPLink.cpp \
+		sipcall.cpp 	skin.cpp 	managerimpl.cpp 	managerimpl.h 	manager.h 	global.h \
+		configitem.h 	configuration.h 	configurationtree.h 	eventthread.h 	error.h \
+		sipvoiplink.h 	user_cfg.h 	call.h 	phonegi-bin.h 	voIPLink.h 	sipcall.h 	skin.h \
+		${maintener_source} observer.cpp
 
 
 
@@ -54,3 +31,4 @@ sflphone_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la .
 KDE_CXXFLAGS = $(USE_EXCEPTIONS)
 AM_CPPFLAGS = $(QT_INCLUDES) $(X_INCLUDES) -I$(top_srcdir) -Igui/qt -I$(srcdir)/audio/pacpp/include  $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(portaudio_CFLAGS)
 
+noinst_HEADERS = observer.h

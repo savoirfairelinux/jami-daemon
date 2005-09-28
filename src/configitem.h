@@ -23,27 +23,25 @@
 #include <string>
 #include <stdio.h>
 
-using namespace std;
-
 class ConfigItem {
 public:
 	ConfigItem  (void);
-	ConfigItem  (const string& );
-	ConfigItem  (const string& , const string& );
+	ConfigItem  (const std::string& );
+	ConfigItem  (const std::string& , const std::string& );
 	~ConfigItem (void);
-	string*		key (void) { return _key; }
-	string*		value (void) { return _value; }
+	std::string*		key (void) { return _key; }
+	std::string*		value (void) { return _value; }
 	ConfigItem* head (void) { return _head; }
 	void		setHead (ConfigItem *h) { _head = h; }
-	string*		getValueByKey   (const string& );
-	ConfigItem* getItemByKey	(const string& );
-	void		setValue		(const string& );
-	void		setValueByKey   (const string& , const string& );
-	void		saveToFile		(fstream*);
+	std::string*		getValueByKey   (const std::string& );
+	ConfigItem* getItemByKey	(const std::string& );
+	void		setValue		(const std::string& );
+	void		setValueByKey   (const std::string& , const std::string& );
+	void		saveToFile		(std::fstream*);
 	
 private:
-	string*		_key;
-	string*		_value;
+	std::string*		_key;
+	std::string*		_value;
 	ConfigItem* _next;
 	ConfigItem* _head;
 	void init   (void);

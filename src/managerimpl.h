@@ -27,6 +27,7 @@
 #include "../stund/stun.h"
 #include "call.h"
 #include "audio/audiodevice.h"
+#include "observer.h"
 
 class AudioLayer;
 class CodecDescriptor;
@@ -72,6 +73,11 @@ struct device_t{
 	const char* hostApiName;
 	const char* deviceName;
 };
+
+/**
+ * To send multiple string
+ */
+typedef std::list<std::string> TokenList;
 
 class ManagerImpl {
 public:
@@ -185,7 +191,17 @@ public:
 //	bool isCurrentId (short id);
 	void startVoiceMessageNotification (void);
 	void stopVoiceMessageNotification (void);
-	
+
+  // configuration function requests
+  bool getZeroconf(const std::string& sequenceId);
+  bool attachZeroconfEvents(const std::string& sequenceId, const Pattern::Observer &observer);
+  bool getCallStatus(const std::string& sequenceId);
+  bool getConfigAll(const std::string& sequenceId);
+  bool getConfig(const std::string& sequenceId, const std::string& name);
+  bool setConfig(const std::string& name, const std::string& value);
+  bool getConfigList(const std::string& sequenceId, const std::string& name);
+
+
 	/*
 	 * Handle audio sounds heard by a caller while they wait for their 
 	 * connection to a called party to be completed.

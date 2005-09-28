@@ -53,15 +53,20 @@ public:
 
 class RequestConfigGet : public RequestGlobal {
 public:
-  RequestConfigGet(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  RequestConfigGet(const std::string &sequenceId, const TokenList& argList);
   ResponseMessage execute();
+private:
+  std::string _name;
 };
 
 
 class RequestConfigSet : public RequestGlobal {
 public:
-  RequestConfigSet(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  RequestConfigSet(const std::string &sequenceId, const TokenList& argList);
   ResponseMessage execute();
+private:
+  std::string _name;
+  std::string _value;
 };
 
 
@@ -73,8 +78,10 @@ public:
 
 class RequestList : public RequestGlobal {
 public:
-  RequestList(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  RequestList(const std::string &sequenceId, const TokenList& argList);
   ResponseMessage execute();
+private:
+  std::string _name;
 };
 
 #endif // __REQUESTCONFIG_H__

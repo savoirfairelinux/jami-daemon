@@ -26,12 +26,13 @@
 
 #include <dns_sd.h>
 #include <cc++/thread.h>
+#include "../observer.h"
 
 class DNSQueryThread;
 class DNSServiceTXTRecord;
 
 typedef std::map<std::string, DNSServiceTXTRecord> DNSServiceMap;
-class DNSService
+class DNSService : public Pattern::Subject
 {
 public:
   DNSService();
@@ -41,6 +42,7 @@ public:
   void addService(const std::string &service); // adding every services
   void removeService(const std::string &service); // remove a service
   void listServices(); // listing services (call addService before)
+  DNSServiceMap getServices(); // get all DNS Service
   void stop(); // after the browsing loop stop
   
   void queryService(const std::string &service); // query the TXT record of a service

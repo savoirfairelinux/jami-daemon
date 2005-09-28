@@ -23,6 +23,7 @@ using namespace std;
 #include "guiframework.h"
 #include "../manager.h"
 
+
 GuiFramework::GuiFramework ()
 {}
 
@@ -203,5 +204,50 @@ GuiFramework::accessToDirectory (void)
 {
 	Manager::instance().accessToDirectory();
 	return 1;
+}
+
+/**
+ * Configuration section / redirection
+ */
+bool 
+GuiFramework::getZeroconf(const std::string& sequenceId) 
+{
+  return Manager::instance().getZeroconf(sequenceId);
+}
+
+bool 
+GuiFramework::attachZeroconfEvents(const std::string& sequenceId)
+{
+  return Manager::instance().attachZeroconfEvents(sequenceId, *this);
+}
+
+bool 
+GuiFramework::getCallStatus(const std::string& sequenceId)
+{
+  return Manager::instance().getCallStatus(sequenceId);
+}
+
+bool 
+GuiFramework::getConfigAll(const std::string& sequenceId)
+{
+  return Manager::instance().getConfigAll(sequenceId);
+}
+
+bool 
+GuiFramework::getConfig(const std::string& sequenceId, const std::string& name)
+{
+  return Manager::instance().getConfig(sequenceId, name);
+}
+
+bool 
+GuiFramework::setConfig(const std::string& name, const std::string& value)
+{
+  return Manager::instance().setConfig(name, value);
+}
+
+bool 
+GuiFramework::getConfigList(const std::string& sequenceId, const std::string& name)
+{
+  return Manager::instance().getConfigList(sequenceId, name);
 }
 

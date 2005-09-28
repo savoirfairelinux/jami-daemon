@@ -53,6 +53,7 @@
 
 #ifdef USE_ZEROCONF
 #include "zeroconf/DNSService.h"
+#include "zeroconf/DNSServiceTXTRecord.h"
 #endif
 
 using namespace std;
@@ -1058,6 +1059,104 @@ ManagerImpl::initVolume()
 {
 	setSpkrVolume(get_config_fields_int(AUDIO, VOLUME_SPKR));
 	setMicroVolume(get_config_fields_int(AUDIO, VOLUME_MICRO));
+}
+
+// configuration function requests
+bool 
+ManagerImpl::getZeroconf(const std::string& sequenceId)
+{
+  bool returnValue = false;
+#ifdef USE_ZEROCONF
+  if (_useZeroconf && _gui != NULL) {
+    TokenList arg;
+    TokenList argTXT;
+    std::string newService = "new service";
+    std::string newTXT = "new txt record";
+    DNSServiceMap services = _DNSService->getServices();
+    DNSServiceMap::iterator iter = services.begin();
+    arg.push_back(newService);
+    while(iter!=services.end()) {
+      arg.push_first(iter->first);
+      _gui.sendMessage("100",sequenceId,arg);
+      arg.pop_first(); // remove the first, the name
+
+      TXTRecordMap record = iter->second.getTXTRecords();
+      TXTRecordMap::iterator iterTXT = record.begin();
+      while(iterTXT!=record.end()) {
+        argTXT.flush();
+        argTXT.push_back(iter->first);
+        argTXT.push_back(iterTXT->first);
+        argTXT.push_back(iterTXT->second);
+        argTXT.push_back(newTXT);
+        _gui.sendMessage("101",sequenceId,arg);
+        iterTXT++;
+      }
+      iter++;
+    }
+    returnValue = true;
+  }
+#endif
+  return returnValue;
+}
+
+bool 
+ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, const Pattern::Observer &observer)
+{
+  bool returnValue = false;
+  // don't need the _gui like getZeroconf function
+  // because Observer is here
+#ifdef USE_ZEROCONF
+  if (_useZeroconf) {
+    _DNSService->attach(sequenceId,observer);
+    returnValue = true;
+  }
+#endif
+  return returnValue;
+}
+
+bool 
+ManagerImpl::getCallStatus(const std::string& sequenceId)
+{
+  bool returnValue = false;
+  // TODO: implement account
+  std::string accountId = "acc1"; 
+  if (_gui!=NULL) {
+    CallVector::iterator iter = _callVector.begin();
+    while(iter!=_callVector.end()){
+      _gui->sendCallMessage(sequenceId, (*iter)->getId(), accountId, (*iter)->getStatus());
+      iter++;
+    }
+    returnValue = true;
+  }
+  return returnValue;
+}
+
+bool 
+ManagerImpl::getConfigAll(const std::string& sequenceId)
+{
+  bool returnValue = false;
+  return returnValue;
+}
+
+bool 
+ManagerImpl::getConfig(const std::string& sequenceId, const std::string& name)
+{
+  bool returnValue = false;
+  return returnValue;
+}
+
+bool 
+ManagerImpl::setConfig(const std::string& name, const std::string& value)
+{
+  bool returnValue = false;
+  return returnValue;
+}
+
+bool 
+ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& name)
+{
+  bool returnValue = false;
+  return returnValue;
 }
 
 // EOF

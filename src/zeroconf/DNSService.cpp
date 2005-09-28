@@ -90,9 +90,8 @@ void DNSService::addService(const std::string &service)
  */
 void DNSService::removeService(const std::string &service) 
 {
-  _mutex.enterMutex();
+  ost::MutexLock(_mutex);
   _services.erase(service);
-  _mutex.leaveMutex();
 }
 
 /**
@@ -110,6 +109,17 @@ DNSService::listServices()
     iterTR->second.listValue();
   }
 }
+
+/**
+ * Return every services
+ */
+DNSServiceMap
+DNSService::getServices() 
+{
+  ost::MutexLock(_mutex);
+  return _services;
+}
+
 
 /**
  * Query a service and wait for the anwser

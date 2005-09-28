@@ -260,7 +260,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 #else
   if (adu == NULL) {
     Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
-    //Manager::instance().getAudioDriver()->stopStream();
+    Manager::instance().getAudioDriver()->stopStream();
   return;
 }
 #endif
@@ -330,7 +330,12 @@ AudioRtpRTX::run (void) {
 	// TODO: get frameSize from user config 
 	int frameSize = 20; // 20ms frames
 	TimerPort::setTimer(frameSize);
-	
+
+  // flush stream:
+  AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+  audiolayer->mainSndRingBuffer().flush();
+  audiolayer->urgentRingBuffer().flush();
+
 	// start running the packet queue scheduler.
 	if (!_sym) {
 		_sessionRecv->startRunning();
@@ -338,6 +343,8 @@ AudioRtpRTX::run (void) {
 	} else {
 		_session->startRunning();
 	}
+
+  
 	
 	while (_ca->enable_audio != -1) {
 		micVolume = Manager::instance().getMicroVolume();
@@ -361,6 +368,10 @@ AudioRtpRTX::run (void) {
 		Thread::sleep(TimerPort::getTimer());
 		TimerPort::incTimer(frameSize); // 'frameSize' ms
 	}
+
+  audiolayer->mainSndRingBuffer().flush();
+  //audiolayer->urgentRingBuffer().flush();
+  audiolayer->stopStream();
 		 
 	delete[] data_for_speakers;
 	delete[] data_for_speakers_tmp;
