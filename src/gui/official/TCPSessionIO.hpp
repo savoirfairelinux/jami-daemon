@@ -18,41 +18,70 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __SESSIONIO_HPP__
-#define __SESSIONIO_HPP__
+#ifndef __TCPSESSIONIO_HPP__
+#define __TCPSESSIONIO_HPP__
 
-#include <QObject>
-#include <string>
+#include <QMutex>
+#include <QString>
+#include <QTcpSocket>
+#include <QTextStream>
+#include <list>
 
-/**
- * This is the main class that will handle 
- * the IO.
- */
-class SessionIO : public QObject
+#include "SessionIO.hpp"
+
+
+class TCPSessionIO : public SessionIO
 {
   Q_OBJECT
+
+public:
+  TCPSessionIO(const QString &hostname, 
+	       quint16 port);
+
+  virtual ~TCPSessionIO();
+
+signals:
+  void connected();
   
- public:
-  virtual ~SessionIO(){}
+public slots:
+  /**
+   * This function send the request that we were
+   * unable to send.
+   */
+  void sendWaitingRequests();
 
   /**
-   * You can use this function for sending request.
-   * The sending is non-blocking. This function will
-   * send the data as it is; it will NOT add an EOL.
-   * the stream will be "sync"ed.
+   * Those function are the actual function
+   * that write to the socket.
    */
-  virtual void send(const std::string &request) = 0;
+  virtual void send(const QString &request);
+  virtual void send(const std::string &request);
 
   /**
-   * You can use this function to receive answers.
-   * This function will wait until there's an 
-   * answer to be processed.
    */
-  virtual void receive(std::string &answer) = 0;
+  void askReconnect();
 
+  /**
+   * This function is called when we have 
+   * incomming data on the socket.
+   */
+  virtual void receive();
+
+  /**
+   * Those function are the actual function
+   * that read from the socket.
+   */
+  virtual void receive(QString &answer);
+  virtual void receive(std::string &answer);
+  virtual void connect();
+
+private:
+  QTcpSocket *mSocket;
+  QString mHostname;
+  quint16 mPort;
+
+  QMutex mStackMutex;
+  std::list< QString > mStack;
 };
 
-
-
 #endif
-

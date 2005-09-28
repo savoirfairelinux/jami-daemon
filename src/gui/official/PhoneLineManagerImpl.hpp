@@ -46,7 +46,7 @@ signals:
   void selected(unsigned int);
 
 public slots:
-  void connect();
+  void start();
   
   void sendKey(Qt::Key c);
 

@@ -18,41 +18,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __SESSIONIO_HPP__
-#define __SESSIONIO_HPP__
+#ifndef __SESSIONIOFACTORY_HPP__
+#define __SESSIONIOFACTORY_HPP__
 
-#include <QObject>
-#include <string>
+#include "utilspp/Singleton.hpp"
+#include "Factory.hpp"
+#include "SessionIO.hpp"
 
-/**
- * This is the main class that will handle 
- * the IO.
- */
-class SessionIO : public QObject
-{
-  Q_OBJECT
-  
- public:
-  virtual ~SessionIO(){}
-
-  /**
-   * You can use this function for sending request.
-   * The sending is non-blocking. This function will
-   * send the data as it is; it will NOT add an EOL.
-   * the stream will be "sync"ed.
-   */
-  virtual void send(const std::string &request) = 0;
-
-  /**
-   * You can use this function to receive answers.
-   * This function will wait until there's an 
-   * answer to be processed.
-   */
-  virtual void receive(std::string &answer) = 0;
-
-};
-
-
+typedef utilspp::SingletonHolder< Factory< SessionIO > > SessionIOFactory;
 
 #endif
 

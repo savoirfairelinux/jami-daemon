@@ -33,6 +33,8 @@ TCPSessionIO::TCPSessionIO(const QString &hostname, quint16 port)
 		   this, SLOT(receive()));
   QObject::connect(mSocket, SIGNAL(connected()),
 		   this, SLOT(sendWaitingRequests()));
+  QObject::connect(mSocket, SIGNAL(connected()),
+		   this, SIGNAL(connected()));
   QObject::connect(mSocket, SIGNAL(disconnected()),
 		   this, SLOT(askReconnect()));
   QObject::connect(mSocket, SIGNAL(error(QAbstractSocket::SocketError)),
@@ -91,10 +93,6 @@ TCPSessionIO::sendWaitingRequests()
 	mStack.size() > 0) {
     stream << *mStack.begin();
     mStack.pop_front();
-  }
-
-  if(mSocket->state() == QAbstractSocket::ConnectedState) {
-    emit connected();
   }
 }
 

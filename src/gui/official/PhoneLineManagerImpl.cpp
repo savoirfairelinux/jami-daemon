@@ -19,9 +19,9 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
 }
 
 void 
-PhoneLineManagerImpl::connect()
+PhoneLineManagerImpl::start()
 {
-  //mSession.getEvents();
+  mSession.getEvents();
 }
 
 
