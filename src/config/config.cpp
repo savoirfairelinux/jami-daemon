@@ -152,7 +152,7 @@ ConfigTree::setConfigTreeItem(const std::string& section, const std::string& ite
 // Save config to a file (ini format)
 bool 
 ConfigTree::saveConfigTree(const std::string& fileName) {
-  if (fileName.empty() && _sections.begin() != _sections.end() ) {
+  if (fileName.empty() && _sections.begin() == _sections.end() ) {
     return false;
   }
 

@@ -960,7 +960,7 @@ ManagerImpl::createSettingsPath (void) {
 	_path = _path + "/" + PROGNAME + "rc";
 
 	exist = Config::tree()->populateFromFile(_path);
-  exist = _config.populateFromFile(_path + "2");
+  exist = _config.populateFromFile(_path);
 	
 	if (exist == 0){
 		// If populateFromFile failed
