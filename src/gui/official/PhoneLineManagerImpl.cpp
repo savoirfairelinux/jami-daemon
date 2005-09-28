@@ -41,13 +41,16 @@ PhoneLineManagerImpl::getNextAvailableLine()
   PhoneLine *selectedLine = NULL;
 
   QMutexLocker guard(&mPhoneLinesMutex);
-  QMutexLocker guard2(&mCurrentLineMutex);
+  mCurrentLineMutex.lock();
+  PhoneLine *current = mCurrentLine;
+  mCurrentLineMutex.unlock();
+    
 
   unsigned int i = 0;
   while(i < mPhoneLines.size() && !selectedLine) {
     mPhoneLines[i]->lock();
     if(mPhoneLines[i]->isAvailable() && 
-       mPhoneLines[i] != mCurrentLine) {
+       mPhoneLines[i] != current) {
       selectedLine = mPhoneLines[i];
     }
     else {
@@ -75,11 +78,9 @@ PhoneLineManagerImpl::selectNextAvailableLine()
     mCurrentLine = selectedLine;
     
     // select current line.
-    {
-      PhoneLineLocker guard(mCurrentLine);
-      mCurrentLine->select();
-    }
-    
+    // We don't need to lock it, since it is
+    // done at the top.
+    selectedLine->select();
   }
 
   return selectedLine;

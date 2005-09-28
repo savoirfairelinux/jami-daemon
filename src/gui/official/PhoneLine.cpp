@@ -106,12 +106,14 @@ PhoneLine::sendKey(Qt::Key c)
     break;
 
   default:
-    if(!mCall) {
-      mSession.playDtmf(c);
-      mBuffer += QString(c).toStdString();
-    }
-    else {
-      mCall->sendDtmf(c);
+    if (QChar(c).isDigit()) {
+      if(!mCall) {
+	mSession.playDtmf(c);
+	mBuffer += QString(c).toStdString();
+      }
+      else {
+	mCall->sendDtmf(c);
+      }
     }
   }
 }
