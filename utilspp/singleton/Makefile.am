@@ -21,5 +21,3 @@ pkginclude_HEADERS = \
 
 pkgincludedir=$(includedir)/utilspp/singleton
 
-
-noinst_HEADERS = guiserversingleton.h

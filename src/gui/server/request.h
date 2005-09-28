@@ -45,6 +45,10 @@ public:
     ResponseMessage response(code, _sequenceId, message);
     return response;
   }
+  ResponseMessage message(const std::string &code, TokenList& arg) {
+    ResponseMessage response(code, _sequenceId, arg);
+    return response;
+  }
   std::string sequenceId () const { return _sequenceId; }
   
 protected:

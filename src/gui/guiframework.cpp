@@ -234,15 +234,15 @@ GuiFramework::getConfigAll(const std::string& sequenceId)
 }
 
 bool 
-GuiFramework::getConfig(const std::string& sequenceId, const std::string& name)
+GuiFramework::getConfig(const std::string& section, const std::string& name, TokenList& arg)
 {
-  return Manager::instance().getConfig(sequenceId, name);
+  return Manager::instance().getConfig(section, name, arg);
 }
 
 bool 
-GuiFramework::setConfig(const std::string& name, const std::string& value)
+GuiFramework::setConfig(const std::string& section, const std::string& name, const std::string& value)
 {
-  return Manager::instance().setConfig(name, value);
+  return Manager::instance().setConfig(section, name, value);
 }
 
 bool 

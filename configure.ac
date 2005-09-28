@@ -193,6 +193,7 @@ src/audio/pacpp/include/Makefile \
 src/audio/pacpp/include/portaudiocpp/Makefile \
 src/audio/pacpp/source/Makefile \
 src/audio/pacpp/source/portaudiocpp/Makefile \
+src/config/Makefile \
 src/gui/Makefile \
 src/gui/qt/Makefile \
 src/gui/official/Makefile \

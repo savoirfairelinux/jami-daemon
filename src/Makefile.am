@@ -5,11 +5,11 @@ maintener_source =
 endif
 
 if USE_ZEROCONF
-SUBDIRS = audio gui zeroconf
+SUBDIRS = audio gui zeroconf config
 ZEROCONFLIB = zeroconf/libzeroconf.la
 ZEROCONFFLAGS = -DUSE_ZEROCONF
 else
-SUBDIRS = audio gui
+SUBDIRS = audio gui config
 ZEROCONFLIB =
 ZEROCONFFLAGS =  
 endif

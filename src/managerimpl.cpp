@@ -1139,14 +1139,14 @@ ManagerImpl::getConfigAll(const std::string& sequenceId)
 }
 
 bool 
-ManagerImpl::getConfig(const std::string& sequenceId, const std::string& name)
+ManagerImpl::getConfig(const std::string& section, const std::string& name, TokenList& arg)
 {
   bool returnValue = false;
   return returnValue;
 }
 
 bool 
-ManagerImpl::setConfig(const std::string& name, const std::string& value)
+ManagerImpl::setConfig(const std::string& section, const std::string& name, const std::string& value)
 {
   bool returnValue = false;
   return returnValue;
@@ -1156,6 +1156,18 @@ bool
 ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& name)
 {
   bool returnValue = false;
+  if (name=="") {
+    
+    returnValue = true;
+  } else if (name=="") {
+    returnValue = true;
+  } else if (name=="") {
+    returnValue = true;
+  } else if (name=="") {
+    returnValue = true;
+  } else if (name=="") {
+    returnValue = true;
+  }
   return returnValue;
 }
 

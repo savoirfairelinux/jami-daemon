@@ -41,14 +41,14 @@
 class ConfigurationTree {
 public:
 	ConfigurationTree (void);
-	ConfigurationTree (const std::string&);
+	ConfigurationTree (const string&);
 	~ConfigurationTree (void);	
 	ConfigSection*  head (void) { return this->_head; }
-	int				populateFromFile(const std::string& );
-	int				saveToFile		(const std::string& );
-	int				setValue		(const std::string& , const std::string& , int);
-	int				setValue(const std::string& , const std::string& , const std::string& );
-	std::string			getValue		(const std::string& , const std::string& );
+	int				populateFromFile(const string& );
+	int				saveToFile		(const string& );
+	int				setValue		(const string& , const string& , int);
+	int				setValue(const string& , const string& , const string& );
+	string			getValue		(const string& , const string& );
 	
 private:
 	ConfigSection *_head;

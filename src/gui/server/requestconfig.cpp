@@ -64,36 +64,13 @@ RequestConfigGetAll::execute()
 RequestConfigGet::RequestConfigGet(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
 {
   TokenList::iterator iter = _argList.begin();
-  if (iter != _argList.end()) {
-    _name = *iter;
-    _argList.pop_front();
-  } else {
-    throw RequestConstructorException();
-  }
-}
-
-ResponseMessage
-RequestConfigGet::execute()
-{
-  if (GUIServer::instance().getConfig(_sequenceId, _name)) {
-    return message("200", "OK");
-  } else {
-    return message("500","Server Error");
-  }
-}
-
-RequestConfigSet::RequestConfigSet(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
-{
-  TokenList::iterator iter = _argList.begin();
-
-  // get two strings arguments
   bool argsAreValid = false;
   if (iter != _argList.end()) {
-    _name = *iter;
+    _section = *iter;
     _argList.pop_front();
     iter++;
     if (iter != _argList.end()) {
-      _value = *iter;
+      _name = *iter;
       _argList.pop_front();
       argsAreValid = true;
     }
@@ -104,9 +81,46 @@ RequestConfigSet::RequestConfigSet(const std::string &sequenceId, const TokenLis
 }
 
 ResponseMessage
+RequestConfigGet::execute()
+{
+  TokenList arg;
+  if (GUIServer::instance().getConfig(_section, _name, arg)) {
+    return message("200", arg);
+  } else {
+    return message("500","Server Error");
+  }
+}
+
+RequestConfigSet::RequestConfigSet(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
+{
+  TokenList::iterator iter = _argList.begin();
+
+  // get three strings arguments
+  bool argsAreValid = false;
+  if (iter != _argList.end()) {
+    _section = *iter;
+    _argList.pop_front();
+    iter++;
+    if (iter != _argList.end()) {
+      _name = *iter;
+      _argList.pop_front();
+      iter++;
+      if (iter != _argList.end()) {
+        _value = *iter;
+        _argList.pop_front();
+        argsAreValid = true;
+      }
+    }
+  }
+  if (!argsAreValid) {
+    throw RequestConstructorException();
+  }
+}
+
+ResponseMessage
 RequestConfigSet::execute()
 {
-  if (GUIServer::instance().setConfig(_name, _value)) {
+  if (GUIServer::instance().setConfig(_section, _name, _value)) {
     return message("200", "OK");
   } else {
     return message("500","Server Error");

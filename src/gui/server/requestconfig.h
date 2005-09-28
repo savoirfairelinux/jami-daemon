@@ -56,6 +56,7 @@ public:
   RequestConfigGet(const std::string &sequenceId, const TokenList& argList);
   ResponseMessage execute();
 private:
+  std::string _section;
   std::string _name;
 };
 
@@ -65,6 +66,7 @@ public:
   RequestConfigSet(const std::string &sequenceId, const TokenList& argList);
   ResponseMessage execute();
 private:
+  std::string _section;
   std::string _name;
   std::string _value;
 };
