@@ -45,13 +45,14 @@ TCPSessionIO::~TCPSessionIO()
 void 
 TCPSessionIO::askReconnect()
 {
+  _debug("TCPSessionIO: Link broken.\n");
   int ret = QMessageBox::critical(NULL, 
 				  tr("SFLPhone disconnected"),
 				  tr("The link between SFLPhone and SFLPhoned is broken.\n"
 				     "Do you want to try to reconnect?"),
 				  QMessageBox::Retry | QMessageBox::Default,
 				  QMessageBox::Cancel | QMessageBox::Escape);
-  if (ret == QMessageBox::Yes) {
+  if (ret == QMessageBox::Retry) {
     connect();
   }
 }
@@ -84,7 +85,6 @@ void
 TCPSessionIO::sendWaitingRequests()
 {
   _debug("TCPSessionIO: Connected.\n");
-  _debug("TCPSessionIO: Sending waiting data.\n");
   QTextStream stream(mSocket);
   QMutexLocker guard(&mStackMutex);
   while(mSocket->state() == QAbstractSocket::ConnectedState &&
@@ -92,7 +92,10 @@ TCPSessionIO::sendWaitingRequests()
     stream << *mStack.begin();
     mStack.pop_front();
   }
-  emit connected();
+
+  if(mSocket->state() == QAbstractSocket::ConnectedState) {
+    emit connected();
+  }
 }
 
 void

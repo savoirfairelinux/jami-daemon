@@ -11,6 +11,13 @@ Event::Event(const std::string &code,
   , mArgs(args)
 {}
 
+
+void
+Event::execute()
+{
+  _debug("Received: %s.\n", toString().c_str());
+}
+
 std::string
 Event::toString()
 {

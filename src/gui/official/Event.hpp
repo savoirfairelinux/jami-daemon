@@ -31,7 +31,7 @@ public:
 	const std::list< std::string > &args);    
   virtual ~Event(){}
   
-  virtual void execute(){};
+  virtual void execute();
 
   virtual std::string toString();
 

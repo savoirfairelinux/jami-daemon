@@ -21,7 +21,7 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
 void 
 PhoneLineManagerImpl::connect()
 {
-  mSession.getEvents();
+  //mSession.getEvents();
 }
 
 
