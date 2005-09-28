@@ -6,15 +6,15 @@ TEMPLATE = app
 TARGET += 
 DEPENDPATH += .
 INCLUDEPATH += .
+QT += network
 CONFIG += debug
 
 # Input
 HEADERS += Account.hpp \
-           AnswerReceiver.hpp \
            Call.hpp \
            Event.hpp \
-           EventFactory.hpp \
-           EventFactory.inl \
+           EventFactory.hpp EventFactory.inl \
+           Factory.hpp Factory.inl \
            globals.h \
            JPushButton.hpp \
            ObjectFactory.hpp \
@@ -29,16 +29,18 @@ HEADERS += Account.hpp \
            RequesterImpl.hpp \
            Session.hpp \
            SessionIO.hpp \
+           SessionIOFactory.hpp \
            SFLPhoneApp.hpp \
            SFLPhoneWindow.hpp \
            SFLRequest.hpp \
+           TCPSessionIO.hpp \
+           TCPSessionIOCreator.hpp \
            transqwidget.h \
            ObjectFactory.inl \
            RequesterImpl.inl \
            ObjectPool.inl
 FORMS += SFLPhoneWindow.ui
 SOURCES += Account.cpp \
-           AnswerReceiver.cpp \
            Call.cpp \
            Event.cpp \
            JPushButton.cpp \
@@ -50,8 +52,9 @@ SOURCES += Account.cpp \
            Request.cpp \
            RequesterImpl.cpp \
            Session.cpp \
-           SessionIO.cpp \
            SFLPhoneApp.cpp \
            SFLPhoneWindow.cpp \
-           SFLRequest.cpp
+           SFLRequest.cpp \
+           TCPSessionIO.cpp \
+           TCPSessionIOCreator.cpp 
 RESOURCES += sflphone.qrc

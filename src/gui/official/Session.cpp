@@ -23,7 +23,7 @@
 
 #include "Session.hpp"
 #include "Requester.hpp"
-#include "SessionIO.hpp"
+#include "SessionIOFactory.hpp"
 
 
 Session::Session(const std::string &id)
@@ -33,7 +33,7 @@ Session::Session(const std::string &id)
 Session::Session()
 {
   mId = Requester::instance().generateSessionId();
-  SessionIO *s = new SessionIO(mId, &std::cin, &std::cout);
+  SessionIO *s = SessionIOFactory::instance().create();
   Requester::instance().registerSession(mId, s);
 }
 

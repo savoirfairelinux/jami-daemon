@@ -1,19 +1,21 @@
 #include "globals.h"
 
-#include "SFLPhoneApp.hpp"
-#include "SFLPhoneWindow.hpp"
-#include "SFLRequest.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineButton.hpp"
 #include "Requester.hpp"
+#include "SessionIOFactory.hpp"
+#include "SFLPhoneApp.hpp"
+#include "SFLPhoneWindow.hpp"
+#include "SFLRequest.hpp"
+#include "TCPSessionIOCreator.hpp"
 
 
 
 SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   : QApplication(argc, argv)
-  , mSession()
-  , mAccount(mSession.getDefaultAccount())
 {
+  SessionIOFactory::instance().setCreator(new TCPSessionIOCreator(QString("localhost"), 3999));
+  PhoneLineManager::instance().setNbLines(NB_PHONELINES);
   Requester::instance().registerObject< Request >(std::string("playtone"));
   Requester::instance().registerObject< Request >(std::string("playdtmf"));
   Requester::instance().registerObject< EventRequest >(std::string("getevents"));
@@ -26,7 +28,6 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< CallRelatedRequest >(std::string("hold"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("unhold"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("hangup"));
-  PhoneLineManager::instance().setNbLines(NB_PHONELINES);
 }
 
 void

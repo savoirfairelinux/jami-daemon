@@ -18,24 +18,41 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <string>
+#ifndef __FACTORY_HPP__
+#define __FACTORY_HPP__
 
-#include "AnswerReceiver.hpp"
-#include "RequesterImpl.hpp"
-#include "SessionIO.hpp"
-
-AnswerReceiver::AnswerReceiver(RequesterImpl *requester,
-			       SessionIO *session)
-  : mRequester(requester)
-  , mSession(session)
-{}
-
-void 
-AnswerReceiver::run()
+template< typename T >
+struct Creator
 {
-  std::string answer;
-  while(mSession->isUp()) {
-    mSession->receive(answer);
-    mRequester->receiveAnswer(answer);
-  }
-}
+  virtual ~Creator(){}
+
+  virtual T *create() = 0;
+};
+
+template< typename T >
+class Factory
+{
+public:
+  Factory();
+  ~Factory();
+  
+  /**
+   * This function will set the creator. The 
+   * Factory owns the creator instance.
+   */
+  void setCreator(Creator< T > *creator);
+
+  /**
+   * It ask the creator to create a SessionIO.
+   * If there's no creator set, it will throw
+   * a std::logic_error.
+   */
+  T *create();
+
+private:
+  Creator< T > *mCreator;
+};
+
+#include "Factory.inl"
+
+#endif

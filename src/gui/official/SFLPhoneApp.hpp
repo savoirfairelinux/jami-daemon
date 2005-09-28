@@ -20,9 +20,6 @@ public:
    */
   void initConnections(SFLPhoneWindow *w);
 
-private:
-  Session mSession;
-  Account mAccount;
 };
 
 #endif 

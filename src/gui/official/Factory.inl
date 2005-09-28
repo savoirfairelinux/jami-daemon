@@ -18,33 +18,35 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_ANSWERRECIVER_H
-#define SFLPHONEGUI_ANSWERRECIVER_H
+#include <stdexcept>
 
-#include <qthread.h>
+template< typename T >
+Factory< T >::Factory()
+  : mCreator(0)
+{}
 
-class RequesterImpl;
-class SessionIO;
-
-/**
- * This class is the thread that will read
- * from the SessionIO.
- */
-class AnswerReceiver : public QThread
+template< typename T >
+Factory< T >::~Factory()
 {
- public:
-  AnswerReceiver(RequesterImpl *requester,
-		 SessionIO *session);
+  delete mCreator;
+}
 
-  /**
-   * This is the main processing function.
-   */
-  virtual void run();
+template< typename T >
+void
+Factory< T >::setCreator(Creator< T > *creator)
+{
+  mCreator = creator;
+}
 
+template< typename T >
+T *
+Factory< T >::create()
+{
+  if(!mCreator) {
+    throw std::logic_error("Trying to create without a creator.");
+  }
+  else {
+    return mCreator->create();
+  }
+}
 
- private:
-  RequesterImpl *mRequester;
-  SessionIO *mSession;
-};
-
-#endif

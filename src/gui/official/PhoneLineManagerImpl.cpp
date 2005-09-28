@@ -16,8 +16,14 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
 {
   EventFactory::instance().registerEvent< HangupEvent >("002");
   EventFactory::instance().registerEvent< IncommingEvent >("001");
+}
+
+void 
+PhoneLineManagerImpl::connect()
+{
   mSession.getEvents();
 }
+
 
 PhoneLine *
 PhoneLineManagerImpl::getCurrentLine()

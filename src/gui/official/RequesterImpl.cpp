@@ -18,13 +18,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <iostream>
 #include <stdexcept>
 #include <sstream>
 
 #include "globals.h"
 #include "RequesterImpl.hpp"
 #include "SessionIO.hpp"
-#include "AnswerReceiver.hpp"
 
 RequesterImpl::RequesterImpl()
   : mCallIdCount(0)
@@ -83,11 +83,7 @@ RequesterImpl::registerSession(const std::string &id,
     throw std::logic_error("Registering an already know Session ID");
   }
 
-  AnswerReceiver *a = new AnswerReceiver(this, s);
-  mAnswerReceivers.insert(std::make_pair(id, a));
   mSessions.insert(std::make_pair(id, s));
-  s->start();
-  a->start();
 }
 
 int
@@ -180,11 +176,5 @@ RequesterImpl::inputIsDown(const std::string &sessionId)
     // a logic error
     _debug("SessionIO input for session %s is down, but we don't have that session.\n",
 	   sessionId.c_str());
-  }
-  else {
-    // If we no longer can receive, it means it's 
-    // not possible to receive answer for new requests,
-    // so we close the session.
-    pos->second->stop();
   }
 }

@@ -116,7 +116,6 @@ class RequesterImpl
  private:
   ObjectFactory< Request > mRequestFactory;
   std::map< std::string, SessionIO * > mSessions;
-  std::map< std::string, AnswerReceiver * > mAnswerReceivers;
   std::map< std::string, Request * > mRequests;
   std::map< std::string, std::string > mSequenceToSession;
   
