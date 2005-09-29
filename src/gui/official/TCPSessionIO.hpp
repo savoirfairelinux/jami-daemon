@@ -42,6 +42,7 @@ public:
 
 signals:
   void connected();
+  void disconnected();
   
 public slots:
   /**
@@ -58,10 +59,6 @@ public slots:
   virtual void send(const std::string &request);
 
   /**
-   */
-  void askReconnect();
-
-  /**
    * This function is called when we have 
    * incomming data on the socket.
    */
@@ -74,6 +71,13 @@ public slots:
   virtual void receive(QString &answer);
   virtual void receive(std::string &answer);
   virtual void connect();
+
+ private slots:
+  /**
+   * This function is called when we have an error
+   * on the socket.
+   */
+  void error();
 
 private:
   QTcpSocket *mSocket;

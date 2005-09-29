@@ -80,6 +80,11 @@ class RequesterImpl
   void registerSession(const std::string &id, SessionIO *io);
 
   /**
+   * Will ask the session IO with id to connect.
+   */
+  void connect(const std::string &id);
+
+  /**
    * This function is used to notify that the SessionIO
    * input of a session is down. It means that we no longer
    * can receive answers. 

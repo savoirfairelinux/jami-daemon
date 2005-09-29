@@ -21,6 +21,14 @@ private:
 
 signals:
   void keyPressed(Qt::Key);
+  void reconnectAsked();
+
+ public slots:
+  /**
+   * This function will prompt a message box, to ask
+   * if the user want to reconnect to sflphoned.
+   */
+  void askReconnect();
 
 protected:
   void keyPressEvent(QKeyEvent *e);

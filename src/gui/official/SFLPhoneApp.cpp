@@ -29,6 +29,7 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< CallRelatedRequest >(std::string("hold"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("unhold"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("hangup"));
+  PhoneLineManager::instance().start();
 }
 
 void
@@ -62,4 +63,9 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   &PhoneLineManager::instance(), SLOT(clear()));
   QObject::connect(w, SIGNAL(keyPressed(Qt::Key)),
 		   &PhoneLineManager::instance(), SLOT(sendKey(Qt::Key)));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(disconnected()),
+		   w, SLOT(askReconnect()));
+  QObject::connect(w, SIGNAL(reconnectAsked()),
+		   &PhoneLineManager::instance(), SLOT(connect()));
 }
+

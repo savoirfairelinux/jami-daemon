@@ -18,8 +18,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <QMessageBox>
-
 #include "globals.h"
 #include "Requester.hpp"
 #include "TCPSessionIO.hpp"
@@ -35,28 +33,22 @@ TCPSessionIO::TCPSessionIO(const QString &hostname, quint16 port)
 		   this, SLOT(sendWaitingRequests()));
   QObject::connect(mSocket, SIGNAL(connected()),
 		   this, SIGNAL(connected()));
-  QObject::connect(mSocket, SIGNAL(disconnected()),
-		   this, SLOT(askReconnect()));
   QObject::connect(mSocket, SIGNAL(error(QAbstractSocket::SocketError)),
-		   this, SLOT(askReconnect()));
+		   this, SLOT(error()));
+  QObject::connect(mSocket, SIGNAL(error(QAbstractSocket::SocketError)),
+		   this, SIGNAL(disconnected()));
 }
 
 TCPSessionIO::~TCPSessionIO()
 {}
 
 void 
-TCPSessionIO::askReconnect()
+TCPSessionIO::error()
 {
-  _debug("TCPSessionIO: Link broken.\n");
-  int ret = QMessageBox::critical(NULL, 
-				  tr("SFLPhone disconnected"),
-				  tr("The link between SFLPhone and SFLPhoned is broken.\n"
-				     "Do you want to try to reconnect?"),
-				  QMessageBox::Retry | QMessageBox::Default,
-				  QMessageBox::Cancel | QMessageBox::Escape);
-  if (ret == QMessageBox::Retry) {
-    connect();
-  }
+  _debug("TCPSessionIO: %s. %d\n", 
+	 mSocket->errorString().toStdString().c_str(),
+	 mSocket->state());
+  mSocket->close();
 }
 
 void 

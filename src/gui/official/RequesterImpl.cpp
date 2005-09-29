@@ -86,6 +86,18 @@ RequesterImpl::registerSession(const std::string &id,
   mSessions.insert(std::make_pair(id, s));
 }
 
+void
+RequesterImpl::connect(const std::string &id)
+{
+  std::map< std::string, SessionIO * >::iterator pos = mSessions.find(id);
+  if(pos == mSessions.end()) {
+    throw std::logic_error("Trying to connect an unknown session.");
+  }
+
+  pos->second->connect();
+}
+
+
 int
 RequesterImpl::getCodeCategory(const std::string &code)
 {

@@ -44,6 +44,8 @@ public:
 signals:
   void unselected(unsigned int);
   void selected(unsigned int);
+  void connected();
+  void disconnected();
 
 public slots:
   /**
@@ -56,11 +58,18 @@ public slots:
   void initialize();
 
   /**
-   * This will send all the command needed when a
-   * connection has just been established. 
+   * This function will make the process to start.
+   * It will connect to the server, and start the
+   * event handling.
    */
-  void startSession();
-  
+  void start();
+
+  /**
+   * This will ask the session to connect
+   * to the sflphone server.
+   */
+  void connect();
+
   void sendKey(Qt::Key c);
 
   /**
@@ -134,6 +143,13 @@ public slots:
    * The line is NOT locked.
    */
   PhoneLine *selectNextAvailableLine();
+
+ private slots:
+  /**
+   * This will send all the command needed when a
+   * connection has just been established. 
+   */
+  void startSession();
 
 private:
   void isInitialized();

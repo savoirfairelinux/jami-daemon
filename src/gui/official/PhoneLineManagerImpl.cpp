@@ -18,6 +18,9 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
 {
   EventFactory::instance().registerEvent< HangupEvent >("002");
   EventFactory::instance().registerEvent< IncommingEvent >("001");
+  QObject::connect(this, SIGNAL(connected()),
+		   this, SLOT(startSession()));
+  
 }
 
 PhoneLineManagerImpl::~PhoneLineManagerImpl()
@@ -42,12 +45,26 @@ PhoneLineManagerImpl::initialize()
   }
 }
 
+void 
+PhoneLineManagerImpl::start()
+{
+  isInitialized();
+
+  mSession->connect();
+}
+
 void PhoneLineManagerImpl::isInitialized()
 {
   QMutexLocker guard(&mIsInitializedMutex);
   if(!mIsInitialized) {
     throw std::logic_error("Trying to use PhoneLineManager without prior initialize.");
   }
+}
+
+void
+PhoneLineManagerImpl::connect()
+{
+  mSession->connect();
 }
 
 void 

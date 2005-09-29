@@ -35,6 +35,9 @@ class SessionIO : public QObject
  public:
   virtual ~SessionIO(){}
 
+public slots:
+  virtual void connect() {}
+
   /**
    * You can use this function for sending request.
    * The sending is non-blocking. This function will

@@ -49,6 +49,13 @@ Session::playTone() const
   return Requester::instance().send(mId, "playtone", std::list< std::string >());
 }
 
+void
+Session::connect() const
+{
+  return Requester::instance().connect(mId);
+}
+
+
 std::string
 Session::getEvents() const
 {

@@ -49,6 +49,11 @@ class Session
    */
   std::string getEvents() const;
 
+  /**
+   * This function will ask to the SessionIO
+   * linked to this session to connect.
+   */
+  void connect() const;
 
   Call createCall() const;
   

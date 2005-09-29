@@ -1,6 +1,7 @@
 #include "SFLPhoneWindow.hpp"
 
 #include <QLabel>
+#include <QMessageBox>
 #include <QPixmap>
 #include <QKeyEvent>
 #include <iostream>
@@ -95,4 +96,22 @@ void
 SFLPhoneWindow::keyPressEvent(QKeyEvent *e) {
   // Misc. key	  
   emit keyPressed(Qt::Key(e->key()));
+}
+
+void 
+SFLPhoneWindow::askReconnect()
+{
+  int ret = QMessageBox::critical(NULL, 
+				  tr("SFLPhone disconnected"),
+				  tr("The link between SFLPhone and SFLPhoned is broken.\n"
+				     "Do you want to try to reconnect? If not, the application\n"
+				     "will close."),
+				  QMessageBox::Retry | QMessageBox::Default,
+				  QMessageBox::Cancel | QMessageBox::Escape);
+  if (ret == QMessageBox::Retry) {
+    emit reconnectAsked();
+  }
+  else {
+    close();
+  }
 }
