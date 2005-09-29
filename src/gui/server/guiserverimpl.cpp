@@ -27,7 +27,7 @@
 #include "responsemessage.h"
 
 // default constructor
-GUIServerImpl::GUIServerImpl()
+GUIServerImpl::GUIServerImpl() : _getEventsSequenceId("seq0")
 {
 }
 
@@ -58,7 +58,7 @@ GUIServerImpl::removeSubCall(short id) {
 }
 
 /**
- * Retreive the sequenceId or send seq0
+ * Retreive the sequenceId or send default sequenceId
  */
 std::string 
 GUIServerImpl::getSequenceIdFromId(short id) {
@@ -66,7 +66,7 @@ GUIServerImpl::getSequenceIdFromId(short id) {
   if (iter != _callMap.end()) {
     return iter->second.sequenceId();
   }
-  return "seq0";
+  return _getEventsSequenceId;
 }
 /**
  * Retreive the string callid from the id
@@ -80,6 +80,20 @@ GUIServerImpl::getCallIdFromId(short id) {
   throw std::runtime_error("No match for this id");
 }
 
+bool
+GUIServerImpl::getCurrentCallId(std::string& callId) {
+  try {
+    short id = GuiFramework::getCurrentId();
+    if (id!=0) {
+      callId = getCallIdFromId(id);
+    }
+    return true;
+  } catch(...) {
+    return false;
+  }
+  return false;
+}
+
 short
 GUIServerImpl::getIdFromCallId(const std::string& callId) 
 {
@@ -91,6 +105,20 @@ GUIServerImpl::getIdFromCallId(const std::string& callId)
     iter++;
   }
   throw std::runtime_error("No match for this CallId");
+}
+
+bool 
+GUIServerImpl::getEvents(const std::string& sequenceId)
+{
+  _getEventsSequenceId=sequenceId;
+  return true;
+}
+bool
+GUIServerImpl::sendGetEventsEnd()
+{
+  _requestManager.sendResponse(ResponseMessage("202", _getEventsSequenceId,
+"getcallstatus request stopped me"));
+  return true;
 }
 
 bool 
@@ -240,11 +268,12 @@ GUIServerImpl::incomingCall (short id, const std::string& accountId, const std::
   arg.push_back(from);
   arg.push_back("call");
 
-  SubCall subcall("seq0", callId.str());
+  SubCall subcall(_getEventsSequenceId, callId.str());
 
   insertSubCall(id, subcall);
 
-  _requestManager.sendResponse(ResponseMessage("001", "seq0", arg));
+  _requestManager.sendResponse(ResponseMessage("001", _getEventsSequenceId,
+arg));
 
   return 0;
 }
@@ -258,7 +287,8 @@ GUIServerImpl::peerAnsweredCall (short id)
   } else {
     std::ostringstream responseMessage;
     responseMessage << "Peer Answered Call: " << id;
-    _requestManager.sendResponse(ResponseMessage("500", "seq0", responseMessage.str()));
+    _requestManager.sendResponse(ResponseMessage("500", _getEventsSequenceId,
+responseMessage.str()));
   }
 }
 
@@ -280,7 +310,8 @@ GUIServerImpl::peerHungupCall (short id)
     std::ostringstream responseMessage;
     responseMessage << iter->second.callId() << " hangup";
 
-    _requestManager.sendResponse(ResponseMessage("002", "seq0", responseMessage.str()));
+    _requestManager.sendResponse(ResponseMessage("002", _getEventsSequenceId,
+responseMessage.str()));
     
     // remove this call...
     _callMap.erase(id);
@@ -311,7 +342,8 @@ GUIServerImpl::displayError (const std::string& error)
 {
   std::ostringstream responseMessage;
   responseMessage << "error: " << error;
-  _requestManager.sendResponse(ResponseMessage("700", "seq0", responseMessage.str()));
+  _requestManager.sendResponse(ResponseMessage("700", _getEventsSequenceId,
+responseMessage.str()));
 }
 
 void  
@@ -319,7 +351,8 @@ GUIServerImpl::displayStatus (const std::string& status)
 {
   std::ostringstream responseMessage;
   responseMessage << "status: " + status;
-  _requestManager.sendResponse(ResponseMessage("700", "seq0", responseMessage.str()));
+  _requestManager.sendResponse(ResponseMessage("700", _getEventsSequenceId,
+responseMessage.str()));
 }
 
 void  
@@ -342,16 +375,10 @@ GUIServerImpl::setup (void)
 {
 }
 
-void  
-GUIServerImpl::startVoiceMessageNotification (void) 
+void
+GUIServerImpl::sendVoiceNbMessage(const std::string& nb_msg)
 {
-  _requestManager.sendResponse(ResponseMessage("020", "seq0", "voice message"));
-}
-
-void  
-GUIServerImpl::stopVoiceMessageNotification (void) 
-{
-  _requestManager.sendResponse(ResponseMessage("021", "seq0", "no voice message"));
+  _requestManager.sendResponse(ResponseMessage("020", _getEventsSequenceId, nb_msg));
 }
 
 void 

@@ -43,7 +43,8 @@ private:
   void handleExecutedRequest(Request * const request, const ResponseMessage& response);
 
   RequestFactory _factory;
-  SessionIO* _sessionIO;
+  SessionIO*  _sessionIO;
+  ost::Mutex  _sessionMutex;
 
   // waiting requests
   ost::Mutex _waitingRequestsMutex;

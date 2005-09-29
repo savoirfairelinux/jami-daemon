@@ -22,6 +22,13 @@
 #include "subcall.h"
 
 ResponseMessage
+RequestGetEvents::execute()
+{
+  GUIServer::instance().getEvents(_sequenceId);
+  return message("000", "OK");
+}
+
+ResponseMessage
 RequestZeroconf::execute()
 {
   if (GUIServer::instance().getZeroconf(_sequenceId)) {
@@ -44,10 +51,16 @@ RequestZeroconfEvent::execute()
 ResponseMessage
 RequestCallStatus::execute()
 {
-  if (GUIServer::instance().getCallStatus(_sequenceId)) {
-    return message("200", "OK");
+  GUIServer::instance().sendGetEventsEnd();
+  std::string callid;
+  if (GUIServer::instance().getCurrentCallId(callid)) {
+    GUIServer::instance().getCallStatus(_sequenceId);
+    TokenList tk;
+    tk.push_back(callid);
+    tk.push_back("OK");
+    return message("205", tk);
   } else {
-    return message("500","Server Error");
+    return message("206","OK");
   }
 }
 

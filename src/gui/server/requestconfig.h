@@ -23,6 +23,12 @@
 #include "request.h"
 
 
+class RequestGetEvents : public RequestGlobal {
+public:
+  RequestGetEvents(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  ResponseMessage execute();
+};
+
 class RequestZeroconf : public RequestGlobal {
 public:
   RequestZeroconf(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}

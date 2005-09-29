@@ -177,6 +177,7 @@ public:
 	 */
 	void 	stopVoiceMessageNotification	(void);
 	void 	startVoiceMessageNotification	(void);
+  void  sendVoiceNbMessage(const std::string& nb_msg) {}
 
 	/*
 	 * Manage if you selected a line before dialing 

@@ -809,7 +809,7 @@ SipVoIPLink::getEvent (void)
       unsigned int pos;
       unsigned int pos_slash;
       string *str;
-      string nb_msg;
+      std::string nb_msg;
       osip_body_t *body;
 
       // Get the message body
@@ -838,7 +838,7 @@ SipVoIPLink::getEvent (void)
 
       if (getMsgVoicemail() != 0) {
         // If there is at least one voice-message, start notification
-        Manager::instance().startVoiceMessageNotification();
+        Manager::instance().startVoiceMessageNotification(nb_msg);
       } else {
         // Stop notification when there is 0 voice message
         Manager::instance().stopVoiceMessageNotification();

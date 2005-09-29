@@ -226,6 +226,11 @@ GuiFramework::getCallStatus(const std::string& sequenceId)
 {
   return Manager::instance().getCallStatus(sequenceId);
 }
+short
+GuiFramework::getCurrentId() 
+{
+  return Manager::instance().getCurrentCallId();
+}
 
 bool 
 GuiFramework::getConfigAll(const std::string& sequenceId)

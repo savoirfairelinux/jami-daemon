@@ -400,6 +400,7 @@ ManagerImpl::answerCall (short id)
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Answered);
 	ringtone(false);
+  setCurrentCallId(id);
 	return call->answer();
 }
 
@@ -412,7 +413,6 @@ ManagerImpl::onHoldCall (short id)
 		return -1;
 	call->setStatus(string(ONHOLD_STATUS));
 	call->setState(OnHold);
-	
 	return call->onHold();
 }
 
@@ -425,6 +425,7 @@ ManagerImpl::offHoldCall (short id)
 		return -1;
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(OffHold);
+  setCurrentCallId(id);
 	return call->offHold();	
 }
 
@@ -486,6 +487,7 @@ ManagerImpl::refuseCall (short id)
 	_nCalls -= 1;
 	_mutex.leaveMutex();
 	deleteCall(id);
+  setCurrentCallId(0);
 	return call->refuse();
 }
 
@@ -647,7 +649,6 @@ ManagerImpl::incomingCall (short id)
     from.append(number);
     from.append(">");
   }
-
   return _gui->incomingCall(id, accountId, from);
 }
 
@@ -702,6 +703,7 @@ ManagerImpl::peerHungupCall (short id)
 	_nCalls -= 1;
 	_mutex.leaveMutex();
 	deleteCall(id);
+  setCurrentCallId(0);
 	return 1;
 }
 
@@ -762,15 +764,17 @@ ManagerImpl::displayStatus (const string& status)
 //}
 //
 void
-ManagerImpl::startVoiceMessageNotification (void)
+ManagerImpl::startVoiceMessageNotification (const std::string& nb_msg)
 {
-  _gui->startVoiceMessageNotification();
+  //_gui->startVoiceMessageNotification();
+  _gui->sendVoiceNbMessage(nb_msg);
 }
 
 void
 ManagerImpl::stopVoiceMessageNotification (void)
 {
-	_gui->stopVoiceMessageNotification();
+	//_gui->stopVoiceMessageNotification();
+  _gui->sendVoiceNbMessage(std::string("0"));
 }
 
 void
@@ -1164,7 +1168,6 @@ ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, const Pattern::
 bool 
 ManagerImpl::getCallStatus(const std::string& sequenceId)
 {
-  bool returnValue = false;
   // TODO: implement account
   std::string accountId = "acc1"; 
   if (_gui!=NULL) {
@@ -1173,9 +1176,8 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
       _gui->sendCallMessage(sequenceId, (*iter)->getId(), accountId, (*iter)->getStatus());
       iter++;
     }
-    returnValue = true;
   }
-  return returnValue;
+  return true;
 }
 
 bool 

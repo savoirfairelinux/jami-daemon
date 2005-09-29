@@ -168,8 +168,8 @@ ConfigTree::saveConfigTree(const std::string& fileName) {
   while(iter != _sections.end()) {
     file << "[" << iter->first << "]" << std::endl;
     ItemMap::iterator iterItem = iter->second->begin();
-    while ( iterItem == iter->second->end() ) {
-      file << iterItem->first << iterItem->second.getValue() << std::endl;
+    while ( iterItem != iter->second->end() ) {
+      file << iterItem->first << "=" << iterItem->second.getValue() << std::endl;
       iterItem++;
     }
     file << std::endl;

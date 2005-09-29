@@ -46,8 +46,9 @@ public:
 	virtual void setup (void) = 0;
 	//virtual int selectedCall (void) = 0;
 	//virtual bool isCurrentId (short) = 0;
-	virtual void startVoiceMessageNotification (void) = 0;
-	virtual void stopVoiceMessageNotification (void) = 0;
+	virtual void startVoiceMessageNotification (void) {}
+	virtual void stopVoiceMessageNotification (void) {}
+  virtual void sendVoiceNbMessage(const std::string& nb_msg) = 0;
 	
   virtual void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg) = 0;
   virtual void sendCallMessage(const std::string& seqId, 
@@ -91,6 +92,7 @@ public:
 
   // Observer methods
   virtual void update() {}
+  short getCurrentId();
 
 protected:
 	std::string _message;

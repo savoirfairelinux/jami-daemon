@@ -190,7 +190,7 @@ public:
 	void displayStatus (const std::string& status);
 //	int selectedCall (void);
 //	bool isCurrentId (short id);
-	void startVoiceMessageNotification (void);
+	void startVoiceMessageNotification (const std::string& nb_msg);
 	void stopVoiceMessageNotification (void);
 
   // configuration function requests

@@ -38,13 +38,6 @@ public:
   // exec loop
   int exec(void);
 
-  void insertSubCall(short id, SubCall& subCall);
-  void removeSubCall(short id);
-  std::string getSequenceIdFromId(short id);
-  std::string getCallIdFromId(short id);
-  short getIdFromCallId(const std::string& callId);
-
-
   // Reimplementation of virtual functions
   // TODO: remove incomingCall with one parameter
 	int incomingCall (short id);
@@ -60,15 +53,20 @@ public:
 	void displayContext (short id);
 	std::string getRingtoneFile (void);
 	void setup (void);
-	void startVoiceMessageNotification (void);
-	void stopVoiceMessageNotification (void);
+	//void startVoiceMessageNotification (void);
+	//void stopVoiceMessageNotification (void);
+  void sendVoiceNbMessage(const std::string& nb_msg);
 
-  void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg);
+  void sendMessage(const std::string& code, const std::string& seqId, TokenList&
+arg);
   void sendCallMessage(const std::string& seqId, 
     short id,
     const std::string& accountId,
     const std::string& status
   );
+
+  bool getEvents(const std::string& sequenceId);
+  bool sendGetEventsEnd();
 
   bool outgoingCall (const std::string& seq, 
     const std::string& callid, 
@@ -80,6 +78,7 @@ public:
   bool hangupCall(const std::string& callId);
   bool dtmfCall(const std::string& callId, const std::string& dtmfKey);
   bool hangupAll();
+  bool getCurrentCallId(std::string& callId);
 
   std::string version();
   void quit() { _requestManager.quit(); }
@@ -88,6 +87,11 @@ public:
   void update();
 
 private:
+  void insertSubCall(short id, SubCall& subCall);
+  void removeSubCall(short id);
+  std::string getSequenceIdFromId(short id);
+  std::string getCallIdFromId(short id);
+  short getIdFromCallId(const std::string& callId);
 
   /**
    * This callMap is necessary because
@@ -100,6 +104,8 @@ private:
   // RequestManager execute received request 
   // and send response
   RequestManager _requestManager;
+
+  std::string _getEventsSequenceId; // default is seq0
 };
 
 #endif // __GUI_SERVER_H__

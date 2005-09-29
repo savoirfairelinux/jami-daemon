@@ -103,6 +103,7 @@ RequestFactory::registerAll() {
   registerRequest<RequestQuit>        ("quit");
 
   // request config
+  registerRequest<RequestGetEvents>   ("getevents");
   registerRequest<RequestZeroconf>    ("getzeroconf");
   registerRequest<RequestZeroconfEvent>("getzeroconfevents");
   registerRequest<RequestCallStatus>  ("getcallstatus");

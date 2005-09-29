@@ -43,36 +43,49 @@ RequestManager::exec()
     // waiting for a new connection
     std::cout << "waiting for a new connection..." << std::endl;
 
-    // TCPSessionIO start a thread for the stream socket
-    _sessionIO = new TCPSessionIO();
+    while(std::cin.good()) {
 
-    // wait for the first message
-    std::cout << "accepting connection..." << std::endl;
+      // TCPSessionIO start a thread for the stream socket
+      {
+        _sessionMutex.enterMutex(); 
+        _sessionIO = new TCPSessionIO();
+        _sessionMutex.leaveMutex();
+      }
+      // wait for the first message
+      std::cout << "accepting connection..." << std::endl;
 
-    ResponseMessage outputResponse; // TCPStream output line
-    std::string input;
-    std::string output;
-    Request *request;
+      ResponseMessage outputResponse; // TCPStream output line
+      std::string input;
+      std::string output;
+      Request *request;
 
-    _sessionIO->init();
+      _sessionIO->init();
 
-    // std::cin.good() is only there to close the server when
-    // we do a CTRL+D
-    while(_sessionIO && _sessionIO->good() && std::cin.good() && !_quit) {
+      // std::cin.good() is only there to close the server when
+      // we do a CTRL+D
+      quit = false;
+      while(_sessionIO && _sessionIO->good() && std::cin.good() && !_quit) {
 
-      if (_sessionIO->receive(input)) {
-        _debug("Receive Input...: %s\n", input.c_str());
-        request = _factory.create(input);
-        outputResponse = request->execute();
+        if (_sessionIO->receive(input)) {
+          _debug("Receive Input...: %s\n", input.c_str());
+          request = _factory.create(input);
+          outputResponse = request->execute();
 
-        _sessionIO->send(outputResponse.toString());
+          _sessionIO->send(outputResponse.toString());
 
-        handleExecutedRequest(request, outputResponse);
-      } // end pop
-    } // end streaming
-    delete _sessionIO;
-    _sessionIO = 0;
+          handleExecutedRequest(request, outputResponse);
+        } // end pop
+      } // end streaming
 
+      { // session mutex block
+        _sessionMutex.enterMutex(); 
+        delete _sessionIO;
+        _sessionIO = 0;
+        _sessionMutex.leaveMutex();
+      }
+
+    } // end while
+ 
   } catch(ost::Socket *e) {
     std::cerr << e->getErrorString() << std::endl;
   }
@@ -122,10 +135,11 @@ RequestManager::flushWaitingRequest()
  */
 void
 RequestManager::sendResponse(const ResponseMessage& response) {
+  _sessionMutex.enterMutex();
   if (_sessionIO) {
-    _debug("Sending output...\n");
     _sessionIO->send(response.toString());
   } 
+  _sessionMutex.leaveMutex();
 
   // remove the request from the waiting requests list
   if (response.isFinal()) {
