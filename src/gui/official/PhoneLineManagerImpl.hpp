@@ -10,6 +10,7 @@
 class PhoneLine;
 
 #include "Account.hpp"
+#include "Call.hpp"
 #include "EventFactory.hpp"
 #include "Session.hpp"
 
@@ -46,6 +47,9 @@ signals:
   void selected(unsigned int);
   void connected();
   void disconnected();
+  void readyToSendStatus();
+  void readyToHandleEvents();
+  void gotErrorOnCallStatus();
 
 public slots:
   /**
@@ -106,10 +110,25 @@ public slots:
    */
   void call(const QString &to);
 
+  /**
+   * This function will add an incomming call
+   * on a phone line.
+   */
   void incomming(const std::string &accountId,
-		 const std::string &origin,
-		 const std::string &callId);
+		 const std::string &callId,
+		 const std::string &peer);
 
+  /**
+   * This function is used to add a call on a 
+   * phone line.
+   */
+  void addCall(Call call,
+	       const std::string &peer, 
+	       const std::string &state);
+  void addCall(const std::string &accountId, 
+	       const std::string &callId, 
+	       const std::string &peer, 
+	       const std::string &state);
 
   /**
    * This function will make a call on the 
@@ -124,7 +143,16 @@ public slots:
    * This function will switch the lines. If the line
    * is invalid, it just do nothing.
    */
-  void selectLine(unsigned int line);
+  void selectLine(unsigned int line, 
+		  bool hardselect = false);
+
+  /**
+   * This function will switch the line to the line having
+   * the given call id. If the line is invalid, it just do 
+   * nothing.
+   */
+  void selectLine(const std::string &callId,
+		  bool hardselect = false);
 
   /**
    * This function will clear the buffer of the active
@@ -144,12 +172,31 @@ public slots:
    */
   PhoneLine *selectNextAvailableLine();
 
+  /**
+   * This function will send the getevents request
+   * to the server.
+   *
+   * NOTE: This function MUST be called AFTER getcallstatus's
+   * completion.
+   */
+  void handleEvents();
+
+  void errorOnCallStatus()
+  {emit gotErrorOnCallStatus();}
+
  private slots:
   /**
    * This will send all the command needed when a
    * connection has just been established. 
    */
   void startSession();
+
+  /**
+   * This function is called when we are disconnected
+   * from the server. This will unselect all phone lines. 
+   */
+  void closeSession();
+
 
 private:
   void isInitialized();

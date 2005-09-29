@@ -107,9 +107,27 @@ SFLPhoneWindow::askReconnect()
 				     "Do you want to try to reconnect? If not, the application\n"
 				     "will close."),
 				  QMessageBox::Retry | QMessageBox::Default,
-				  QMessageBox::Cancel | QMessageBox::Escape);
+				  QMessageBox::No | QMessageBox::Escape);
   if (ret == QMessageBox::Retry) {
     emit reconnectAsked();
+  }
+  else {
+    close();
+  }
+}
+
+void 
+SFLPhoneWindow::askResendStatus()
+{
+  int ret = QMessageBox::critical(NULL, 
+				  tr("SFLPhone status error"),
+				  tr("The server returned an error for the lines status.\n"
+				     "Do you want to try to resend this command? If not,\n"
+				     "the application will close."),
+				  QMessageBox::Retry | QMessageBox::Default,
+				  QMessageBox::No | QMessageBox::Escape);
+  if (ret == QMessageBox::Retry) {
+    emit resendStatusAsked();
   }
   else {
     close();

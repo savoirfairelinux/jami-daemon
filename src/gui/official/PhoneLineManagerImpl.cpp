@@ -4,8 +4,9 @@
 
 #include "globals.h"
 
-#include "Call.hpp"
-#include "Event.hpp"
+#include "CallStatusFactory.hpp"
+#include "SFLEvents.hpp"
+#include "SFLCallStatus.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineLocker.hpp"
 #include "PhoneLineManager.hpp"
@@ -16,9 +17,22 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   , mCurrentLine(NULL)
   , mIsInitialized(false)
 {
-  EventFactory::instance().registerEvent< HangupEvent >("002");
   EventFactory::instance().registerEvent< IncommingEvent >("001");
+  EventFactory::instance().registerEvent< HangupEvent >("002");
+  EventFactory::instance().registerEvent< TryingStatus >("110");
+  EventFactory::instance().registerEvent< RingingStatus >("111");
+  EventFactory::instance().registerEvent< HoldStatus >("112");
+  EventFactory::instance().registerEvent< EstablishedStatus >("113");
+  EventFactory::instance().registerEvent< BusyStatus >("114");
+  EventFactory::instance().registerEvent< CongestionStatus >("115");
+  EventFactory::instance().registerEvent< WrongNumberStatus >("116");
+  QObject::connect(this, SIGNAL(disconnected()),
+		   this, SLOT(closeSession()));
+  QObject::connect(this, SIGNAL(readyToHandleEvents),
+		   this, SLOT(handleEvents()));
   QObject::connect(this, SIGNAL(connected()),
+		   this, SIGNAL(readyToSendStatus()));
+  QObject::connect(this, SIGNAL(readyToSendStatus()),
 		   this, SLOT(startSession()));
   
 }
@@ -72,7 +86,34 @@ PhoneLineManagerImpl::startSession()
 {
   isInitialized();
 
+  mSession->getCallStatus();
+}
+
+void 
+PhoneLineManagerImpl::handleEvents()
+{
+  isInitialized();
+
   mSession->getEvents();
+}
+
+
+void 
+PhoneLineManagerImpl::closeSession()
+{
+  isInitialized();
+
+  QMutexLocker guard(&mPhoneLinesMutex);
+  mCurrentLineMutex.lock();
+  mCurrentLine = NULL;
+  mCurrentLineMutex.unlock();
+    
+  unsigned int i = 0;
+  while(i < mPhoneLines.size()) {
+    PhoneLineLocker guard(mPhoneLines[i]);
+    mPhoneLines[i]->disconnect();
+    i++;
+  }
 }
 
 
@@ -90,6 +131,7 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
 {
   isInitialized();
 
+  QMutexLocker guard(&mPhoneLinesMutex);
   mPhoneLines.clear();
   for(unsigned int i = 0; i < nb; i++) {
     mPhoneLines.push_back(new PhoneLine(*mSession, i + 1));
@@ -209,12 +251,39 @@ PhoneLineManagerImpl::sendKey(Qt::Key c)
 }
 
 
+void 
+PhoneLineManagerImpl::selectLine(const std::string &callId, bool hardselect)
+{
+  isInitialized();
+
+  PhoneLine *selectedLine = NULL;
+  mPhoneLinesMutex.lock();
+  unsigned int line = 0;
+  while(!selectedLine && line < mPhoneLines.size()) {
+    if(mPhoneLines[line]->getCallId() == callId) {
+      selectedLine = mPhoneLines[line];
+    }
+    else {
+      line++;
+    }
+  }
+  mPhoneLinesMutex.unlock();
+
+  if(selectedLine) {
+    selectLine(line, hardselect);
+  }
+  else {
+    _debug("PhoneLineManager: Tried to selected line with call ID (%s), "
+	   "which appears to be invalid.\n", callId.c_str());
+  }
+}
+
 /**
  * Warning: This function might 'cause a problem if
  * we select 2 line in a very short time.
  */
 void
-PhoneLineManagerImpl::selectLine(unsigned int line)
+PhoneLineManagerImpl::selectLine(unsigned int line, bool hardselect)
 {
   isInitialized();
 
@@ -237,18 +306,18 @@ PhoneLineManagerImpl::selectLine(unsigned int line)
     if(oldLine != selectedLine) {
       if(oldLine != NULL) {
 	PhoneLineLocker guard(oldLine);
-	oldLine->unselect();
+	oldLine->unselect(hardselect);
       }
 
       PhoneLineLocker guard(selectedLine);
-      selectedLine->select();
+      selectedLine->select(hardselect);
       if(selectedLine->isAvailable()) {
 	mSession->playTone();
       }
     }
   }
   else {
-    _debug("Tried to selected line %d, which appears to be invalid.\n", line);
+    _debug("PhoneLineManager: Tried to selected line %d, which appears to be invalid.\n", line);
   }
 }
 
@@ -336,19 +405,38 @@ PhoneLineManagerImpl::clear()
 
 void 
 PhoneLineManagerImpl::incomming(const std::string &,
-				const std::string &,
+				const std::string &peer,
 				const std::string &callId)
+{
+  Call call(*mSession, callId, true);
+  addCall(call, peer, "Incomming");
+}
+
+void 
+PhoneLineManagerImpl::addCall(const std::string &,
+			      const std::string &callId,
+			      const std::string &peer,
+			      const std::string &state)
+{
+  addCall(Call(*mSession, callId), peer, state);
+}
+
+void 
+PhoneLineManagerImpl::addCall(Call call,
+			      const std::string &peer,
+			      const std::string &state)
 {
   PhoneLine *selectedLine = getNextAvailableLine();
   PhoneLineLocker guard(selectedLine, false);
 
-  Call call(*mSession, callId, true);
   if(selectedLine) {
     selectedLine->incomming(call);
+    selectedLine->setPeer(peer);
+    selectedLine->setState(state);
   }
   else {
-    _debug("There's no available lines here for the incomming call ID: %s.\n",
-	   callId.c_str());
+    _debug("PhoneLineManager: There's no available lines here for the incomming call ID: %s.\n",
+	   call.id().c_str());
     call.notAvailable();
   }
 }

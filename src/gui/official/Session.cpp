@@ -63,6 +63,12 @@ Session::getEvents() const
 }
 
 std::string
+Session::getCallStatus() const
+{
+  return Requester::instance().send(mId, "getcallstatus", std::list< std::string >());
+}
+
+std::string
 Session::playDtmf(char c) const
 {
   std::string s;

@@ -59,27 +59,5 @@ private:
   std::string mCallId;
 };
 
-class HangupEvent : public CallRelatedEvent
-{
-public:
-  HangupEvent(const std::string &code,
-	      const std::list< std::string > &args);
-  
-  virtual void execute();
-};
-
-class IncommingEvent : public CallRelatedEvent
-{
-public:
-  IncommingEvent(const std::string &code,
-		 const std::list< std::string > &args);
-  
-  virtual void execute();
-
-private:
-  std::string mAccountId;
-  std::string mOrigin;
-};
-
 
 #endif

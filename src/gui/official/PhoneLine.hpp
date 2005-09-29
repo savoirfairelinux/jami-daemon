@@ -64,12 +64,21 @@ public slots:
   /**
    * The user selected this line.
    */
-  void select();
+  void select(bool hardselect = false);
 
   /**
    * This phoneline is no longer selected.
    */
-  void unselect();
+  void unselect(bool hardselect = false);
+
+  /**
+   * This will do a hard unselect. it means it
+   * will remove the call if there's one.
+   */
+  void disconnect();
+
+  void setState(const std::string &){}
+  void setPeer(const std::string &){}
 
 
 signals:

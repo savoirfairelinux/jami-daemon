@@ -18,55 +18,24 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_SESSION_H
-#define SFLPHONEGUI_SESSION_H
+#ifndef __CALLSTATUS_HPP__
+#define __CALLSTATUS_HPP__
 
-#include <string>
+#include "Event.hpp"
 
-#include "Account.hpp"
-
-class Session
+class CallStatus : public CallRelatedEvent
 {
- public:
-  Session();
-  Session(const std::string &id);
+public:
+  CallStatus(const std::string &code,
+	     const std::list< std::string > &args);
   
-  /**
-   * retreive the account identified by name.
-   */
-  Account getAccount(const std::string &name) const;
+  void execute();
 
-  Account getDefaultAccount() const;
-
-  /**
-   * This function will play a tone. This is
-   * just a ear candy.
-   */
-  std::string playDtmf(char c) const;
-
-  /**
-   * This function will register to receive events
-   */
-  std::string getEvents() const;
-
-  /**
-   * This function will ask for all calls status.
-   */
-  std::string getCallStatus() const;
-
-  /**
-   * This function will ask to the SessionIO
-   * linked to this session to connect.
-   */
-  void connect() const;
-
-  Call createCall() const;
-  
-  std::string id() const;
-  std::string playTone() const;
-
- private:
-  std::string mId;
+protected:
+  std::string mAccountId;
+  std::string mDestination;
+  std::string mStatus;
 };
 
 #endif
+

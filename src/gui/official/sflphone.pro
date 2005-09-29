@@ -12,6 +12,8 @@ QT += network
 # Input
 HEADERS += Account.hpp \
            Call.hpp \
+           CallStatus.hpp \
+           CallStatusFactory.hpp \
            Event.hpp \
            EventFactory.hpp EventFactory.inl \
            Factory.hpp Factory.inl \
@@ -30,6 +32,7 @@ HEADERS += Account.hpp \
            Session.hpp \
            SessionIO.hpp \
            SessionIOFactory.hpp \
+           SFLEvents.hpp \
            SFLPhoneApp.hpp \
            SFLPhoneWindow.hpp \
            SFLRequest.hpp \
@@ -42,6 +45,7 @@ HEADERS += Account.hpp \
 FORMS += SFLPhoneWindow.ui
 SOURCES += Account.cpp \
            Call.cpp \
+           CallStatus.cpp \
            Event.cpp \
            JPushButton.cpp \
            main.cpp \
@@ -52,6 +56,7 @@ SOURCES += Account.cpp \
            Request.cpp \
            RequesterImpl.cpp \
            Session.cpp \
+           SFLEvents.cpp \
            SFLPhoneApp.cpp \
            SFLPhoneWindow.cpp \
            SFLRequest.cpp \

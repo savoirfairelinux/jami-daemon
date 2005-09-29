@@ -41,7 +41,7 @@ class Call
    */
   bool isIncomming();
 
-  std::string id() 
+  std::string id() const
   {return mId;}
 
   std::string call(const std::string &to);

@@ -37,18 +37,20 @@ PhoneLine::unlock()
 }
 
 void 
-PhoneLine::select()
+PhoneLine::select(bool hardselect)
 {
   if(!mSelected) {
     _debug("PhoneLine %d: I am selected.\n", mLine);
     mSelected = true;
 
-    if(mCall) {
-      if(mCall->isIncomming()) {
-	mCall->answer();
-      }
-      else {
-	mCall->unhold();
+    if(!hardselect) {
+      if(mCall) {
+	if(mCall->isIncomming()) {
+	  mCall->answer();
+	}
+	else {
+	  mCall->unhold();
+	}
       }
     }
 
@@ -56,14 +58,29 @@ PhoneLine::select()
   }
 }
 
+void 
+PhoneLine::disconnect()
+{
+  mSelected = false;
+  _debug("PhoneLine %d: I am disconnected.\n", mLine);
+  if(mCall) {
+    delete mCall;
+    mCall = NULL;
+  }
+
+  emit unselected();
+}
+
 void
-PhoneLine::unselect()
+PhoneLine::unselect(bool hardselect)
 {
   if(mSelected) {
     _debug("PhoneLine %d: I am unselected.\n", mLine);
     mSelected = false;
     if(mCall) {
-      mCall->hold();
+      if(!hardselect) {
+	mCall->hold();
+      }
       emit backgrounded();
     }
     else {
@@ -77,7 +94,7 @@ void
 PhoneLine::incomming(const Call &call)
 {
   if(mCall) {
-    _debug("PhoneLine %d: Trying to set an incomming call to an active call.\n", mLine);
+    _debug("PhoneLine %d: Trying to set a phone line to an active call.\n", mLine);
   }
   else {
     mCall = new Call(call);
@@ -173,3 +190,4 @@ PhoneLine::getCallId()
 
   return id;
 }
+

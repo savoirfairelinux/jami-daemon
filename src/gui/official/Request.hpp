@@ -38,6 +38,12 @@ class Request
   virtual ~Request(){}
 
   /**
+   * This function will parse the message and will cut the message
+   * in many arguments.
+   */
+  static std::list< std::string > parseArgs(const std::string &message);
+
+  /**
    * This function will be called when the request 
    * receive its answer, if the request didn't successfully
    * ended.
@@ -161,7 +167,6 @@ class AccountRequest : public Request
   AccountRequest(const std::string &sequenceId,
 		 const std::string &command,
 		 const std::list< std::string > &args);
-
 
   /**
    * This function will be called when the request 

@@ -32,6 +32,20 @@ Request::Request(const std::string &sequenceId,
   , mArgs(args)
 {}
 
+std::list< std::string >
+Request::parseArgs(const std::string &message)
+{
+  std::istringstream stream(message);
+  std::string s;
+  std::list< std::string > args;
+  while(stream.good()) {
+    stream >> s;
+    args.push_back(s);
+  }
+
+  return args;
+}
+
 void
 Request::onError(const std::string &code, const std::string &message)
 {

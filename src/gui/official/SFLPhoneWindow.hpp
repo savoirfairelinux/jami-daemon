@@ -22,6 +22,7 @@ private:
 signals:
   void keyPressed(Qt::Key);
   void reconnectAsked();
+  void resendStatusAsked();
 
  public slots:
   /**
@@ -29,6 +30,12 @@ signals:
    * if the user want to reconnect to sflphoned.
    */
   void askReconnect();
+
+  /**
+   * This function will prompt a message box, to ask
+   * if the user want to resend the getcallstatus request.
+   */
+  void askResendStatus();
 
 protected:
   void keyPressEvent(QKeyEvent *e);
