@@ -46,8 +46,20 @@ signals:
   void selected(unsigned int);
 
 public slots:
+  /**
+   * You need to call this function once. It must be
+   * call before doing anything in this class.
+   * 
+   * NOTE: You need to set the creator to SessionIOFactory
+   * before calling this function.
+   */
   void initialize();
-  void start();
+
+  /**
+   * This will send all the command needed when a
+   * connection has just been established. 
+   */
+  void startSession();
   
   void sendKey(Qt::Key c);
 

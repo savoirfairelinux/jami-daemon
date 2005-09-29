@@ -35,9 +35,11 @@ void
 PhoneLineManagerImpl::initialize()
 {
   QMutexLocker guard(&mIsInitializedMutex);
-  mIsInitialized = true;
-  mSession = new Session();
-  mAccount = new Account(mSession->getDefaultAccount());
+  if(!mIsInitialized) {
+    mIsInitialized = true;
+    mSession = new Session();
+    mAccount = new Account(mSession->getDefaultAccount());
+  }
 }
 
 void PhoneLineManagerImpl::isInitialized()
@@ -49,7 +51,7 @@ void PhoneLineManagerImpl::isInitialized()
 }
 
 void 
-PhoneLineManagerImpl::start()
+PhoneLineManagerImpl::startSession()
 {
   isInitialized();
 

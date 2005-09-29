@@ -12,7 +12,7 @@ TCPSessionIOCreator::create()
 {
   TCPSessionIO *t = new TCPSessionIO(mHostname, mPort);
   QObject::connect(t, SIGNAL(connected()),
-		   &PhoneLineManager::instance(), SLOT(start()));
+		   &PhoneLineManager::instance(), SLOT(startSession()));
   t->connect();
   return t;
 }
