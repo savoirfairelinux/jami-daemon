@@ -71,7 +71,7 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 
   QObject::connect(&PhoneLineManager::instance(), SIGNAL(gotErrorOnCallStatus()),
 		   w, SLOT(askResendStatus()));
-  QObject::connect(w, SIGNAL(resendStatusAsked),
+  QObject::connect(w, SIGNAL(resendStatusAsked()),
 		   &PhoneLineManager::instance(), SIGNAL(readyToSendStatus()));
 
 }
