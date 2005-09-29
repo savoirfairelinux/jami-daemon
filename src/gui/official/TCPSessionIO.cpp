@@ -45,9 +45,8 @@ TCPSessionIO::~TCPSessionIO()
 void 
 TCPSessionIO::error()
 {
-  _debug("TCPSessionIO: %s. %d\n", 
-	 mSocket->errorString().toStdString().c_str(),
-	 mSocket->state());
+  _debug("TCPSessionIO: %s. \n", 
+	 mSocket->errorString().toStdString().c_str());
   mSocket->close();
 }
 

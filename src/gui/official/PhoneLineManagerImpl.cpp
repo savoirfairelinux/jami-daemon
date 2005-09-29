@@ -196,10 +196,12 @@ PhoneLineManagerImpl::sendKey(Qt::Key c)
 
   PhoneLine *selectedLine = getCurrentLine();
 
-  if(!selectedLine) {
+  // Only digits that select a line if there's
+  // no current line.
+  if (!selectedLine && QChar(c).isDigit()) {
     selectedLine = selectNextAvailableLine();
   }
-
+  
   if(selectedLine) {
     PhoneLineLocker guard(selectedLine);
     selectedLine->sendKey(c);
