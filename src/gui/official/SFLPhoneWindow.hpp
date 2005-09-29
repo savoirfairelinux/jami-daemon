@@ -1,5 +1,6 @@
-#include <QObject>
 #include <QMainWindow>
+#include <QObject>
+#include <QPoint>
 #include <list>
 
 class PhoneLineButton;
@@ -16,6 +17,7 @@ public:
   ~SFLPhoneWindow();
 
 private:
+  void initGUIButtons();
   void initLineButtons();
   void initWindowButtons();
 
@@ -25,6 +27,9 @@ signals:
   void resendStatusAsked();
 
  public slots:
+  void mousePressEvent(QMouseEvent *event);
+  void mouseMoveEvent(QMouseEvent *event);
+
   /**
    * This function will prompt a message box, to ask
    * if the user want to reconnect to sflphoned.
@@ -50,4 +55,6 @@ private:
   JPushButton *mHold;
   JPushButton *mOk;
   JPushButton *mClear;
+
+  QPoint mLastPos;
 };

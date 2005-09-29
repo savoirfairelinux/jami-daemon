@@ -1,7 +1,9 @@
 #include "SFLPhoneWindow.hpp"
 
+#include <QIcon>
 #include <QLabel>
 #include <QMessageBox>
+#include <QMouseEvent>
 #include <QPixmap>
 #include <QKeyEvent>
 #include <iostream>
@@ -11,7 +13,7 @@
 #include "JPushButton.hpp"
 
 SFLPhoneWindow::SFLPhoneWindow()
-  : QMainWindow()
+  : QMainWindow(NULL, Qt::FramelessWindowHint)
 {
   // Initialize the background image
   QLabel *l = new QLabel(this);
@@ -20,6 +22,28 @@ SFLPhoneWindow::SFLPhoneWindow()
   resize(main.size());
   l->resize(main.size());
 
+  setWindowIcon(QIcon(QPixmap(":/sflphone/images/logo_ico")));
+  setMouseTracking(false);
+
+  mLastPos = pos();
+  
+//   QLabel *os = new QLabel(this);
+//   QPixmap overscreen(":/images/overscreen.png");
+//   os->setPixmap(overscreen);
+//   os->resize(overscreen.size());
+//   os->move(22,44);
+
+  initGUIButtons();
+  initWindowButtons();
+  initLineButtons();
+}
+
+SFLPhoneWindow::~SFLPhoneWindow()
+{}
+
+void
+SFLPhoneWindow::initGUIButtons()
+{
   mHangup = new JPushButton(QPixmap(":/sflphone/images/hangup_off"),
 			    QPixmap(":/sflphone/images/hangup_on"),
 			    this);
@@ -40,20 +64,7 @@ SFLPhoneWindow::SFLPhoneWindow()
 			   QPixmap(":/sflphone/images/clear_on"),
 			   this);
   mClear->move(225,130);
-  
-//   QLabel *os = new QLabel(this);
-//   QPixmap overscreen(":/images/overscreen.png");
-//   os->setPixmap(overscreen);
-//   os->resize(overscreen.size());
-//   os->move(22,44);
-
-  
-  initWindowButtons();
-  initLineButtons();
 }
-
-SFLPhoneWindow::~SFLPhoneWindow()
-{}
 
 void 
 SFLPhoneWindow::initLineButtons()
@@ -132,4 +143,16 @@ SFLPhoneWindow::askResendStatus()
   else {
     close();
   }
+}
+
+void 
+SFLPhoneWindow::mousePressEvent(QMouseEvent *e)
+{
+  mLastPos = e->pos();
+}
+
+void 
+SFLPhoneWindow::mouseMoveEvent(QMouseEvent *e)
+{
+    move(e->globalPos() - mLastPos);
 }
