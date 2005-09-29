@@ -7,7 +7,7 @@ TARGET +=
 DEPENDPATH += .
 INCLUDEPATH += .
 QT += network
-CONFIG += debug
+#CONFIG += debug 
 
 # Input
 HEADERS += Account.hpp \

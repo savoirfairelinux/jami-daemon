@@ -22,7 +22,7 @@ class PhoneLineManagerImpl : public QObject
 
 public:
   PhoneLineManagerImpl();
-
+  ~PhoneLineManagerImpl();
 
   /**
    * Will return the PhoneLine linked to the line 
@@ -46,6 +46,7 @@ signals:
   void selected(unsigned int);
 
 public slots:
+  void initialize();
   void start();
   
   void sendKey(Qt::Key c);
@@ -123,14 +124,20 @@ public slots:
   PhoneLine *selectNextAvailableLine();
 
 private:
-  Session mSession;
-  Account mAccount;
+  void isInitialized();
+
+private:
+  Session *mSession;
+  Account *mAccount;
 
   std::vector< PhoneLine * > mPhoneLines;
   QMutex mPhoneLinesMutex;
 
   PhoneLine *mCurrentLine;
   QMutex mCurrentLineMutex;
+
+  bool mIsInitialized;
+  QMutex mIsInitializedMutex;
 };
 
 

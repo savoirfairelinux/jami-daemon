@@ -23,8 +23,8 @@
 
 #include <list>
 #include <string>
-#include <qmutex.h>
-#include <qwaitcondition.h>
+#include <QMutex>
+#include <QWaitCondition>
 
 template< typename T >
 class ObjectPool

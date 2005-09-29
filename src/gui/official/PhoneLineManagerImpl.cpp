@@ -11,23 +11,57 @@
 #include "PhoneLineManager.hpp"
 
 PhoneLineManagerImpl::PhoneLineManagerImpl()
-  : mAccount(mSession.getDefaultAccount())
+  : mSession(NULL)
+  , mAccount(NULL)
   , mCurrentLine(NULL)
+  , mIsInitialized(false)
 {
   EventFactory::instance().registerEvent< HangupEvent >("002");
   EventFactory::instance().registerEvent< IncommingEvent >("001");
 }
 
+PhoneLineManagerImpl::~PhoneLineManagerImpl()
+{
+  delete mSession;
+  delete mAccount;
+  for(std::vector< PhoneLine * >::iterator pos = mPhoneLines.begin();
+      pos != mPhoneLines.end();
+      pos++) {
+    delete *pos;
+  }
+}
+
+void
+PhoneLineManagerImpl::initialize()
+{
+  QMutexLocker guard(&mIsInitializedMutex);
+  mIsInitialized = true;
+  mSession = new Session();
+  mAccount = new Account(mSession->getDefaultAccount());
+}
+
+void PhoneLineManagerImpl::isInitialized()
+{
+  QMutexLocker guard(&mIsInitializedMutex);
+  if(!mIsInitialized) {
+    throw std::logic_error("Trying to use PhoneLineManager without prior initialize.");
+  }
+}
+
 void 
 PhoneLineManagerImpl::start()
 {
-  mSession.getEvents();
+  isInitialized();
+
+  mSession->getEvents();
 }
 
 
 PhoneLine *
 PhoneLineManagerImpl::getCurrentLine()
 {
+  isInitialized();
+
   QMutexLocker guard(&mCurrentLineMutex);
   return mCurrentLine;
 }
@@ -35,15 +69,19 @@ PhoneLineManagerImpl::getCurrentLine()
 void 
 PhoneLineManagerImpl::setNbLines(unsigned int nb)
 {
+  isInitialized();
+
   mPhoneLines.clear();
   for(unsigned int i = 0; i < nb; i++) {
-    mPhoneLines.push_back(new PhoneLine(mSession, i + 1));
+    mPhoneLines.push_back(new PhoneLine(*mSession, i + 1));
   }
 }
 
 PhoneLine *
 PhoneLineManagerImpl::getNextAvailableLine()
 {
+  isInitialized();
+
   PhoneLine *selectedLine = NULL;
 
   QMutexLocker guard(&mPhoneLinesMutex);
@@ -71,6 +109,8 @@ PhoneLineManagerImpl::getNextAvailableLine()
 PhoneLine *
 PhoneLineManagerImpl::selectNextAvailableLine()
 {
+  isInitialized();
+
   PhoneLine *selectedLine = getNextAvailableLine();
   PhoneLineLocker guard(selectedLine, false);
 
@@ -97,6 +137,8 @@ PhoneLineManagerImpl::selectNextAvailableLine()
 PhoneLine *
 PhoneLineManagerImpl::getPhoneLine(unsigned int line)
 {
+  isInitialized();
+
   QMutexLocker guard(&mPhoneLinesMutex);
   if(mPhoneLines.size() <= line) {
     throw std::runtime_error("Trying to get an invalid Line");
@@ -108,6 +150,8 @@ PhoneLineManagerImpl::getPhoneLine(unsigned int line)
 PhoneLine *
 PhoneLineManagerImpl::getPhoneLine(const std::string &callId)
 {
+  isInitialized();
+
   PhoneLine *selectedLine = NULL;
 
   QMutexLocker guard(&mPhoneLinesMutex);
@@ -129,6 +173,8 @@ PhoneLineManagerImpl::getPhoneLine(const std::string &callId)
 void
 PhoneLineManagerImpl::sendKey(Qt::Key c)
 {
+  isInitialized();
+
   PhoneLine *selectedLine = getCurrentLine();
 
   if(!selectedLine) {
@@ -149,6 +195,8 @@ PhoneLineManagerImpl::sendKey(Qt::Key c)
 void
 PhoneLineManagerImpl::selectLine(unsigned int line)
 {
+  isInitialized();
+
   PhoneLine *selectedLine = NULL;
   // getting the wanted line;
   {
@@ -174,7 +222,7 @@ PhoneLineManagerImpl::selectLine(unsigned int line)
       PhoneLineLocker guard(selectedLine);
       selectedLine->select();
       if(selectedLine->isAvailable()) {
-	mSession.playTone();
+	mSession->playTone();
       }
     }
   }
@@ -273,7 +321,7 @@ PhoneLineManagerImpl::incomming(const std::string &,
   PhoneLine *selectedLine = getNextAvailableLine();
   PhoneLineLocker guard(selectedLine, false);
 
-  Call call(mSession, callId, true);
+  Call call(*mSession, callId, true);
   if(selectedLine) {
     selectedLine->incomming(call);
   }

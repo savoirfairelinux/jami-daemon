@@ -15,6 +15,7 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   : QApplication(argc, argv)
 {
   SessionIOFactory::instance().setCreator(new TCPSessionIOCreator(QString("localhost"), 3999));
+  PhoneLineManager::instance().initialize();
   PhoneLineManager::instance().setNbLines(NB_PHONELINES);
   Requester::instance().registerObject< Request >(std::string("playtone"));
   Requester::instance().registerObject< Request >(std::string("playdtmf"));
