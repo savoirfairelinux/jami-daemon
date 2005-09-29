@@ -64,7 +64,7 @@ CallStatusRequest::onSuccess(const std::string &code, const std::string &message
   if(code == "206") {
     std::list< std::string > args = Request::parseArgs(message);
     if(args.size() >= 2) {
-      PhoneLineManager::instance().selectLine(*args.begin());
+      PhoneLineManager::instance().selectLine(*args.begin(), true);
     }
     else {
       _debug("CallStatusRequest Error: cannot get current line.\n");
