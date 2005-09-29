@@ -6,8 +6,8 @@
 #include <QTimer>
 
 
-PhoneLineButton::PhoneLineButton(const QPixmap &released, 
-				 const QPixmap &pressed,
+PhoneLineButton::PhoneLineButton(const QString &released, 
+				 const QString &pressed,
 				 unsigned int line,
 				 QWidget *parent, 
 				 Qt::WFlags flags)

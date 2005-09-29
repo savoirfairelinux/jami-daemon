@@ -21,41 +21,67 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <QBitmap>
 #include <QEvent>
+#include <QImage>
 #include <QMouseEvent>
 
 #include "globals.h"
 
 #include "JPushButton.hpp"
 
-JPushButton::JPushButton(const QPixmap &released,
-			 const QPixmap &pressed,
+JPushButton::JPushButton(const QString &released,
+			 const QString &pressed,
 			 QWidget* parent, 
 			 Qt::WFlags flags)
   : QLabel(parent, flags) 
 {
-  mImages[0] = released;
-  mImages[1] = pressed;
+
+  mImages[0] = transparize(released);
+  mImages[1] = transparize(pressed);
   release();
 }
 
 JPushButton::~JPushButton()
 {}
 
+QPixmap
+JPushButton::transparize(const QString &image)
+{
+  QPixmap p(image);
+  
+  if (!p.mask()) {
+    if (p.hasAlphaChannel()) {
+      p.setMask(p.alphaChannel());
+    } 
+    else {
+      p.setMask(p.createHeuristicMask());
+    }
+  }
+
+  return p;
+}
+
 void
 JPushButton::release() 
 {
   mIsPressed = false;
-  resize(mImages[0].size());
   setPixmap(mImages[0]);
+  if(mImages[0].hasAlpha()) {
+    setMask(mImages[0].mask());
+  }
+  resize(mImages[0].size());
 }
 
 void
 JPushButton::press() 
 {
   mIsPressed = true;
-  resize(mImages[1].size());
   setPixmap(mImages[1]);
+  if(mImages[1].hasAlpha()) {
+    setMask(mImages[1].mask());
+  }
+  resize(mImages[1].size());
 }
 
 // Mouse button released

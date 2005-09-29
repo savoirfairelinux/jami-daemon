@@ -20,8 +20,8 @@ class PhoneLineButton : public JPushButton
   Q_OBJECT
   
 public:
-  PhoneLineButton(const QPixmap &released, 
-		  const QPixmap &pressed,
+  PhoneLineButton(const QString &released, 
+		  const QString &pressed,
 		  unsigned int line,
 		  QWidget *parent, 
 		  Qt::WFlags flags = 0);

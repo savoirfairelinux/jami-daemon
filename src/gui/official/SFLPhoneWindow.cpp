@@ -1,5 +1,6 @@
 #include "SFLPhoneWindow.hpp"
 
+#include <QBitmap>
 #include <QIcon>
 #include <QLabel>
 #include <QMessageBox>
@@ -17,8 +18,12 @@ SFLPhoneWindow::SFLPhoneWindow()
 {
   // Initialize the background image
   QLabel *l = new QLabel(this);
-  QPixmap main(":/sflphone/images/main.png");
+  QPixmap main(JPushButton::transparize(":/sflphone/images/main.png"));
   l->setPixmap(main);
+  if(main.hasAlpha()) {
+    setMask(main.mask());
+  }
+
   resize(main.size());
   l->resize(main.size());
 
@@ -44,24 +49,24 @@ SFLPhoneWindow::~SFLPhoneWindow()
 void
 SFLPhoneWindow::initGUIButtons()
 {
-  mHangup = new JPushButton(QPixmap(":/sflphone/images/hangup_off"),
-			    QPixmap(":/sflphone/images/hangup_on"),
+  mHangup = new JPushButton(":/sflphone/images/hangup_off",
+			    ":/sflphone/images/hangup_on",
 			    this);
   mHangup->move(225,156);
   
-  mHold = new JPushButton(QPixmap(":/sflphone/images/hold_off"),
-			  QPixmap(":/sflphone/images/hold_on"),
+  mHold = new JPushButton(":/sflphone/images/hold_off",
+			  ":/sflphone/images/hold_on",
 			  this);
   mHold->move(225,68);
   
   
-  mOk = new JPushButton(QPixmap(":/sflphone/images/ok_off"),
-			QPixmap(":/sflphone/images/ok_on"),
+  mOk = new JPushButton(":/sflphone/images/ok_off",
+			":/sflphone/images/ok_on",
 			this);
   mOk->move(225,182);
 
-  mClear = new JPushButton(QPixmap(":/sflphone/images/clear_off"),
-			   QPixmap(":/sflphone/images/clear_on"),
+  mClear = new JPushButton(":/sflphone/images/clear_off",
+			   ":/sflphone/images/clear_on",
 			   this);
   mClear->move(225,130);
 }
@@ -73,12 +78,12 @@ SFLPhoneWindow::initLineButtons()
   int ypos = 151;
   int offset = 31;
   for(int i = 0; i < NB_PHONELINES; i++) {
-    PhoneLineButton *line = new PhoneLineButton(QPixmap(QString(":/sflphone/images/l") +
-							QString::number(i + 1) +
-							"_off.png"),
-						QPixmap(QString(":/sflphone/images/l") +
-							QString::number(i + 1) +
-							"_on.png"),
+    PhoneLineButton *line = new PhoneLineButton(QString(":/sflphone/images/l") +
+						QString::number(i + 1) +
+						"_off.png",
+						QString(":/sflphone/images/l") +
+						QString::number(i + 1) +
+						"_on.png",
 						i,
 						this);
     line->move(xpos, ypos);
@@ -89,14 +94,14 @@ SFLPhoneWindow::initLineButtons()
 
 void SFLPhoneWindow::initWindowButtons()
 {
-  mCloseButton = new JPushButton(QPixmap(":/sflphone/images/close_off.png"),
-				 QPixmap(":/sflphone/images/close_on.png"),
+  mCloseButton = new JPushButton(":/sflphone/images/close_off.png",
+				 ":/sflphone/images/close_on.png",
 				 this);
   QObject::connect(mCloseButton, SIGNAL(clicked()),
 		   this, SLOT(close()));
   mCloseButton->move(374,5);
-  mMinimizeButton = new JPushButton(QPixmap(":/sflphone/images/minimize_off.png"),
-				    QPixmap(":/sflphone/images/minimize_on.png"),
+  mMinimizeButton = new JPushButton(":/sflphone/images/minimize_off.png",
+				    ":/sflphone/images/minimize_on.png",
 				    this);
   QObject::connect(mMinimizeButton, SIGNAL(clicked()),
 		   this, SLOT(lower()));
@@ -154,5 +159,8 @@ SFLPhoneWindow::mousePressEvent(QMouseEvent *e)
 void 
 SFLPhoneWindow::mouseMoveEvent(QMouseEvent *e)
 {
-    move(e->globalPos() - mLastPos);
+  // Note that moving the windows is very slow
+  // 'cause it redraw the screen each time.
+  // Usually it doesn't. We could do it by a timer.
+  move(e->globalPos() - mLastPos);
 }

@@ -36,8 +36,8 @@ class JPushButton : public QLabel {
   Q_OBJECT
     
 public:
-  JPushButton(const QPixmap &released, 
-	      const QPixmap &pressed,
+  JPushButton(const QString &released, 
+	      const QString &pressed,
 	      QWidget *parent, 
 	      Qt::WFlags flags = 0);
   ~JPushButton();
@@ -45,6 +45,8 @@ public:
   bool isPressed()
   {return mIsPressed;}
 
+  static QPixmap transparize(const QString &image);
+  
 public slots:  
   /**
    * This function will switch the button
@@ -60,7 +62,6 @@ protected:
   void mousePressEvent(QMouseEvent *);
   void mouseReleaseEvent(QMouseEvent *);
   void mouseMoveEvent(QMouseEvent *);
-  
 signals:
   void clicked();
 
