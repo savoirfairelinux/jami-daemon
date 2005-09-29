@@ -47,7 +47,7 @@ EventFactoryImpl< Base >::create(const std::string &code,
 {
   typename std::map< std::string, EventCreatorBase< Base > * >::iterator pos = mEventCreators.find(code);
   if(pos == mEventCreators.end()) {
-    throw std::runtime_error("The code \"" + code + "\" has no creator registered.");
+    _debug("The code %s has no creator registered.", code.c_str());
   }
   
   return pos->second->create(code, args);
