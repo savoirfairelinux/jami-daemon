@@ -38,51 +38,51 @@ class RequesterImpl
    * This command is non-blocking. The command linked
    * to this command will be executed.
    */
-  std::string send(const std::string &sessionId,
-		   const std::string &command,
-		   const std::list< std::string > &args);
+  QString send(const QString &sessionId,
+		   const QString &command,
+		   const std::list< QString > &args);
 
-  void receiveAnswer(const std::string &answer);
-  void receiveAnswer(const std::string &code, 
-		     const std::string &sequence, 
-		     const std::string &message);
+  void receiveAnswer(const QString &answer);
+  void receiveAnswer(const QString &code, 
+		     const QString &sequence, 
+		     const QString &message);
 
 
-  static int getCodeCategory(const std::string &code);
+  static int getCodeCategory(const QString &code);
 
   /**
    * Generate a unique call ID. 
    */
-  std::string generateCallId();
+  QString generateCallId();
 
   /**
    * Generate a unique session ID.
    */
-  std::string generateSessionId();
+  QString generateSessionId();
 
   /**
    * Generate a unique sequence ID.
    */
-  std::string generateSequenceId();
+  QString generateSequenceId();
 
   /**
    * Register the string to return a Actual type.
    */
   template< typename Actual >
-    void registerObject(const std::string &name);
+    void registerObject(const QString &name);
 
-  std::string getSessionIdFromSequenceId(const std::string &sequence)
-    {return mSequenceToSession[sequence];}
+  QString getSessionIdFromSequenceId(const QString &sequence)
+  {return mSequenceToSession[sequence];}
 
   /**
    * Register the session.
    */
-  void registerSession(const std::string &id, SessionIO *io);
+  void registerSession(const QString &id, SessionIO *io);
 
   /**
    * Will ask the session IO with id to connect.
    */
-  void connect(const std::string &id);
+  void connect(const QString &id);
 
   /**
    * This function is used to notify that the SessionIO
@@ -91,7 +91,7 @@ class RequesterImpl
    *
    * Note: Only SessionIO related classes should call this function.
    */
-  void inputIsDown(const std::string &sessionId);
+  void inputIsDown(const QString &sessionId);
 
   /**
    * This function is used to notify that the SessionIO
@@ -100,7 +100,7 @@ class RequesterImpl
    *
    * Note: Only SessionIO related classes should call this function.
    */
-  void outputIsDown(const std::string &sessionId);
+  void outputIsDown(const QString &sessionId);
 
  private:
 
@@ -108,21 +108,21 @@ class RequesterImpl
    * Return the SessionIO instance related to
    * the session ID.
    */
-  SessionIO *getSessionIO(const std::string &sessionId);
+  SessionIO *getSessionIO(const QString &sessionId);
 
   /**
    * Register the string to return a Actual type.
    */
-  void registerRequest(const std::string &sessionId,
-		       const std::string &sequenceId,
+  void registerRequest(const QString &sessionId,
+		       const QString &sequenceId,
 		       Request *request);
 
 
  private:
   ObjectFactory< Request > mRequestFactory;
-  std::map< std::string, SessionIO * > mSessions;
-  std::map< std::string, Request * > mRequests;
-  std::map< std::string, std::string > mSequenceToSession;
+  std::map< QString, SessionIO * > mSessions;
+  std::map< QString, Request * > mRequests;
+  std::map< QString, QString > mSequenceToSession;
   
   
   /**

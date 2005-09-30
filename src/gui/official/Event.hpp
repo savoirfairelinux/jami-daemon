@@ -22,41 +22,41 @@
 #define __EVENT_HPP__
 
 #include <list>
-#include <string>
+#include <QString>
 
 class Event
 {
 public:
-  Event(const std::string &code,
-	const std::list< std::string > &args);    
+  Event(const QString &code,
+	const std::list< QString > &args);    
   virtual ~Event(){}
   
   virtual void execute();
 
-  virtual std::string toString();
+  virtual QString toString();
 
-  std::list< std::string > getUnusedArgs()
+  std::list< QString > getUnusedArgs()
   {return mUnusedArgs;}
 
-  void setUnusedArgs(const std::list< std::string > &args)
+  void setUnusedArgs(const std::list< QString > &args)
   {mUnusedArgs = args;}
 
 private:
-  std::string mCode;
-  std::list< std::string > mUnusedArgs;
-  std::list< std::string > mArgs;
+  QString mCode;
+  std::list< QString > mUnusedArgs;
+  std::list< QString > mArgs;
 };
 
 class CallRelatedEvent : public Event
 {
 public:
-  CallRelatedEvent(const std::string &code,
-		   const std::list< std::string > &args);
+  CallRelatedEvent(const QString &code,
+		   const std::list< QString > &args);
 
-  std::string getCallId();
+  QString getCallId();
   
 private:
-  std::string mCallId;
+  QString mCallId;
 };
 
 

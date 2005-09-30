@@ -18,19 +18,19 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   SessionIOFactory::instance().setCreator(new TCPSessionIOCreator(QString("localhost"), 3999));
   PhoneLineManager::instance().initialize();
   PhoneLineManager::instance().setNbLines(NB_PHONELINES);
-  Requester::instance().registerObject< Request >(std::string("playtone"));
-  Requester::instance().registerObject< Request >(std::string("playdtmf"));
-  Requester::instance().registerObject< EventRequest >(std::string("getevents"));
-  Requester::instance().registerObject< CallStatusRequest >(std::string("getcallstatus"));
-  Requester::instance().registerObject< CallRelatedRequest >(std::string("answer"));
-  Requester::instance().registerObject< CallRelatedRequest >(std::string("notavailable"));
-  Requester::instance().registerObject< CallRelatedRequest >(std::string("refuse"));
-  Requester::instance().registerObject< CallRelatedRequest >(std::string("senddtmf"));
-  Requester::instance().registerObject< CallRelatedRequest >(std::string("playdtmf"));
-  Requester::instance().registerObject< CallRelatedRequest >(std::string("call"));
-  Requester::instance().registerObject< CallRelatedRequest >(std::string("hold"));
-  Requester::instance().registerObject< CallRelatedRequest >(std::string("unhold"));
-  Requester::instance().registerObject< CallRelatedRequest >(std::string("hangup"));
+  Requester::instance().registerObject< Request >(QString("playtone"));
+  Requester::instance().registerObject< Request >(QString("playdtmf"));
+  Requester::instance().registerObject< EventRequest >(QString("getevents"));
+  Requester::instance().registerObject< CallStatusRequest >(QString("getcallstatus"));
+  Requester::instance().registerObject< CallRelatedRequest >(QString("answer"));
+  Requester::instance().registerObject< CallRelatedRequest >(QString("notavailable"));
+  Requester::instance().registerObject< CallRelatedRequest >(QString("refuse"));
+  Requester::instance().registerObject< CallRelatedRequest >(QString("senddtmf"));
+  Requester::instance().registerObject< CallRelatedRequest >(QString("playdtmf"));
+  Requester::instance().registerObject< CallRelatedRequest >(QString("call"));
+  Requester::instance().registerObject< CallRelatedRequest >(QString("hold"));
+  Requester::instance().registerObject< CallRelatedRequest >(QString("unhold"));
+  Requester::instance().registerObject< CallRelatedRequest >(QString("hangup"));
 }
 
 void

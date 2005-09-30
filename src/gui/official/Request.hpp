@@ -22,7 +22,7 @@
 #define SFLPHONEGUI_REQUEST_H
 
 #include <list>
-#include <string>
+#include <QString>
 
 
 #include "Account.hpp"
@@ -31,9 +31,9 @@
 class Request
 {
  public:
-  Request(const std::string &sequenceId,
-	  const std::string &command,
-	  const std::list< std::string > &args);
+  Request(const QString &sequenceId,
+	  const QString &command,
+	  const std::list< QString > &args);
 
   virtual ~Request(){}
 
@@ -41,65 +41,65 @@ class Request
    * This function will parse the message and will cut the message
    * in many arguments.
    */
-  static std::list< std::string > parseArgs(const std::string &message);
+  static std::list< QString > parseArgs(const QString &message);
 
   /**
    * This function will be called when the request 
    * receive its answer, if the request didn't successfully
    * ended.
    */
-  virtual void onError(const std::string &code, const std::string &message);
+  virtual void onError(const QString &code, const QString &message);
 
   /**
    * This function will be called when the request 
    * receive an answer, but there's other answers to come.
    */
-  virtual void onEntry(const std::string &code, const std::string &message);
+  virtual void onEntry(const QString &code, const QString &message);
 
   /**
    * This function will be called when the request 
    * receive its answer, if the request successfully
    * ended.
    */
-  virtual void onSuccess(const std::string &code, const std::string &message);
+  virtual void onSuccess(const QString &code, const QString &message);
 
   /**
    * This function will translate the function into a string.
    * This is used for sending the request through a text channel.
    */
-  std::string toString();
+  QString toString();
 
   /**
    * Return the sequence ID.
    */
-  std::string getSequenceId()
+  QString getSequenceId()
     {return mSequenceId;}
 
   /**
    * Return the command.
    */
-  std::string getCommand()
+  QString getCommand()
     {return mCommand;}
 
   /**
    * Return the args.
    */
-  std::list< std::string > getArgs()
+  std::list< QString > getArgs()
     {return mArgs;}
 
 
  private:
-  const std::string mSequenceId;
-  const std::string mCommand;
-  const std::list< std::string > mArgs;
+  const QString mSequenceId;
+  const QString mCommand;
+  const std::list< QString > mArgs;
 };
 
 class CallRelatedRequest : public Request
 {
  public:
-  CallRelatedRequest(const std::string &sequenceId,
-		     const std::string &command,
-		     const std::list< std::string > &args);
+  CallRelatedRequest(const QString &sequenceId,
+		     const QString &command,
+		     const std::list< QString > &args);
 
 
   /**
@@ -108,16 +108,16 @@ class CallRelatedRequest : public Request
    * ended. 
    */
   virtual void onError(Call call, 
-		       const std::string &code, 
-		       const std::string &message);
+		       const QString &code, 
+		       const QString &message);
 
   /**
    * This function will be called when the request 
    * receive an answer, but there's other answers to come.
    */
   virtual void onEntry(Call call,
-		       const std::string &code, 
-		       const std::string &message);
+		       const QString &code, 
+		       const QString &message);
 
   /**
    * This function will be called when the request 
@@ -125,8 +125,8 @@ class CallRelatedRequest : public Request
    * ended.
    */
   virtual void onSuccess(Call call, 
-			 const std::string &code,
-			 const std::string &message);
+			 const QString &code,
+			 const QString &message);
 
  private:
   /**
@@ -135,8 +135,8 @@ class CallRelatedRequest : public Request
    * ended. This function will call the onError, but with
    * the call linked to this request.
    */
-  virtual void onError(const std::string &code, 
-		       const std::string &message);
+  virtual void onError(const QString &code, 
+		       const QString &message);
 
   /**
    * This function will be called when the request 
@@ -144,8 +144,8 @@ class CallRelatedRequest : public Request
    * come. This function will call the onEntry, but with
    * the call linked to this request.
    */
-  virtual void onEntry(const std::string &code, 
-		       const std::string &message);
+  virtual void onEntry(const QString &code, 
+		       const QString &message);
 
   /**
    * This function will be called when the request 
@@ -153,20 +153,20 @@ class CallRelatedRequest : public Request
    * ended. This function will call the onSuccess function, 
    * but with the call linked to this request.
    */
-  virtual void onSuccess(const std::string &code, 
-			 const std::string &message);
+  virtual void onSuccess(const QString &code, 
+			 const QString &message);
 
 
  private:
-  std::string mCallId;
+  QString mCallId;
 };
 
 class AccountRequest : public Request
 {
  public:
-  AccountRequest(const std::string &sequenceId,
-		 const std::string &command,
-		 const std::list< std::string > &args);
+  AccountRequest(const QString &sequenceId,
+		 const QString &command,
+		 const std::list< QString > &args);
 
   /**
    * This function will be called when the request 
@@ -174,16 +174,16 @@ class AccountRequest : public Request
    * ended. 
    */
   virtual void onError(Account account, 
-		       const std::string &code, 
-		       const std::string &message);
+		       const QString &code, 
+		       const QString &message);
 
   /**
    * This function will be called when the request 
    * receive an answer, but there's other answers to come.
    */
   virtual void onEntry(Account account,
-		       const std::string &code, 
-		       const std::string &message);
+		       const QString &code, 
+		       const QString &message);
 
   /**
    * This function will be called when the request 
@@ -191,8 +191,8 @@ class AccountRequest : public Request
    * ended.
    */
   virtual void onSuccess(Account account, 
-			 const std::string &code,
-			 const std::string &message);
+			 const QString &code,
+			 const QString &message);
 
  private:
   /**
@@ -201,8 +201,8 @@ class AccountRequest : public Request
    * ended. This function will call the onError, but with
    * the account linked to this request.
    */
-  virtual void onError(const std::string &code, 
-		       const std::string &message);
+  virtual void onError(const QString &code, 
+		       const QString &message);
 
   /**
    * This function will be called when the request 
@@ -210,8 +210,8 @@ class AccountRequest : public Request
    * come. This function will call the onEntry, but with
    * the account linked to this request.
    */
-  virtual void onEntry(const std::string &code, 
-		       const std::string &message);
+  virtual void onEntry(const QString &code, 
+		       const QString &message);
 
   /**
    * This function will be called when the request 
@@ -219,12 +219,12 @@ class AccountRequest : public Request
    * ended. This function will call the onSuccess function, 
    * but with the account linked to this request.
    */
-  virtual void onSuccess(const std::string &code, 
-			 const std::string &message);
+  virtual void onSuccess(const QString &code, 
+			 const QString &message);
 
 
  private:
-  const std::string mAccountId;
+  const QString mAccountId;
 };
 
 #endif

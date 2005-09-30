@@ -3,11 +3,11 @@
 #include "CallStatus.hpp"
 #include "PhoneLineManager.hpp"
 
-CallStatus::CallStatus(const std::string &code,
-		       const std::list< std::string > &args)
+CallStatus::CallStatus(const QString &code,
+		       const std::list< QString > &args)
   : CallRelatedEvent(code, args)
 {
-  std::list< std::string > l = getUnusedArgs();
+  std::list< QString > l = getUnusedArgs();
   if(l.size() >= 3) {
     mAccountId = *l.begin();
     l.pop_front();
@@ -22,15 +22,15 @@ CallStatus::CallStatus(const std::string &code,
 void
 CallStatus::execute()
 {
-  std::string id = getCallId();
+  QString id = getCallId();
   if(id.size() > 0) {
     _debug("%s status received for call ID: %s.\n", 
-	   mStatus.c_str(),
-	   id.c_str());
+	   mStatus.toStdString().c_str(),
+	   id.toStdString().c_str());
     PhoneLineManager::instance().addCall(mAccountId, getCallId(), mDestination, mStatus);
   }
   else {
-    _debug("Status invalid: %s\n", toString().c_str());
+    _debug("Status invalid: %s\n", toString().toStdString().c_str());
   }
 }
 

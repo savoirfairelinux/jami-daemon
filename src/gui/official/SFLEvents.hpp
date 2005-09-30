@@ -26,8 +26,8 @@
 class HangupEvent : public CallRelatedEvent
 {
 public:
-  HangupEvent(const std::string &code,
-	      const std::list< std::string > &args);
+  HangupEvent(const QString &code,
+	      const std::list< QString > &args);
   
   virtual void execute();
 };
@@ -35,14 +35,14 @@ public:
 class IncommingEvent : public CallRelatedEvent
 {
 public:
-  IncommingEvent(const std::string &code,
-		 const std::list< std::string > &args);
+  IncommingEvent(const QString &code,
+		 const std::list< QString > &args);
   
   virtual void execute();
 
 private:
-  std::string mAccountId;
-  std::string mOrigin;
+  QString mAccountId;
+  QString mOrigin;
 };
 
 

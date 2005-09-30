@@ -23,7 +23,7 @@
 
 #include <list>
 #include <map>
-#include <string>
+#include <QString>
 
 /**
  * This is the base class that we will use to
@@ -34,9 +34,9 @@ class ObjectCreatorBase
 {
  public:
   virtual ~ObjectCreatorBase(){}
-  virtual Base *create(const std::string &command,
-		       const std::string &sequenceId,
-		       const std::list< std::string > &args) = 0;
+  virtual Base *create(const QString &command,
+		       const QString &sequenceId,
+		       const std::list< QString > &args) = 0;
   
   virtual ObjectCreatorBase *clone() = 0;
 };
@@ -49,9 +49,9 @@ template< typename Base, typename Actual >
   class ObjectCreator : public ObjectCreatorBase< Base >
 {
  public:
-  virtual Actual *create(const std::string &command,
-			 const std::string &sequenceId,
-			 const std::list< std::string > &args);
+  virtual Actual *create(const QString &command,
+			 const QString &sequenceId,
+			 const std::list< QString > &args);
   
   virtual ObjectCreatorBase< Base > *clone();
 };
@@ -69,18 +69,18 @@ public:
   /**
    * Ask for a new object linked to the string.
    */
-  Base *create(const std::string &requestname,
-	       const std::string &sequenceId,
-	       const std::list< std::string > &args);
+  Base *create(const QString &requestname,
+	       const QString &sequenceId,
+	       const std::list< QString > &args);
 
   /**
    * Register the string to return a Actual type.
    */
   template< typename Actual >
-    void registerObject(const std::string &name);
+    void registerObject(const QString &name);
   
  private:
-  std::map< std::string, ObjectCreatorBase< Base > * > mObjectCreators;
+  std::map< QString, ObjectCreatorBase< Base > * > mObjectCreators;
 };
 
 #include "ObjectFactory.inl"

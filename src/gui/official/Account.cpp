@@ -22,24 +22,24 @@
 #include "Requester.hpp"
 #include "Call.hpp"
 
-Account::Account(const std::string &sessionId,
-		 const std::string &name)
+Account::Account(const QString &sessionId,
+		 const QString &name)
   : mSessionId(sessionId)
   , mId(name)
 {}
 
-std::string
+QString
 Account::registerAccount()
 {
-  std::list< std::string > args;
+  std::list< QString > args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "register", args);
 }
 
-std::string
+QString
 Account::unregisterAccount()
 {
-  std::list< std::string > args;
+  std::list< QString > args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "unregister", args);
 }

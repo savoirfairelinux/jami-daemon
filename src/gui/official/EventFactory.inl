@@ -27,8 +27,8 @@
 
 template< typename Base, typename Actual >
 Actual *
-EventCreator< Base, Actual >::create(const std::string &code,
-				     const std::list< std::string > &args)
+EventCreator< Base, Actual >::create(const QString &code,
+				     const std::list< QString > &args)
 {
   return new Actual(code, args);
 }
@@ -42,12 +42,12 @@ EventCreator< Base, Actual >::clone()
 
 template< typename Base >
 Base *
-EventFactoryImpl< Base >::create(const std::string &code, 
-			     const std::list< std::string > &args)
+EventFactoryImpl< Base >::create(const QString &code, 
+			     const std::list< QString > &args)
 {
-  typename std::map< std::string, EventCreatorBase< Base > * >::iterator pos = mEventCreators.find(code);
+  typename std::map< QString, EventCreatorBase< Base > * >::iterator pos = mEventCreators.find(code);
   if(pos == mEventCreators.end()) {
-    _debug("The code %s has no creator registered.", code.c_str());
+    _debug("The code %s has no creator registered.", code.toStdString().c_str());
   }
   
   return pos->second->create(code, args);
@@ -56,7 +56,7 @@ EventFactoryImpl< Base >::create(const std::string &code,
 template< typename Base >
 template< typename Actual >
 void 
-EventFactoryImpl< Base >::registerEvent(const std::string &code)
+EventFactoryImpl< Base >::registerEvent(const QString &code)
 {
   if(mEventCreators.find(code) != mEventCreators.end()) {
     delete mEventCreators[code];

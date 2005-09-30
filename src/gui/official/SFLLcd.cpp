@@ -12,16 +12,13 @@
 
 SFLLcd::SFLLcd(QWidget *parent, Qt::WFlags flags)
   : QLabel(parent, flags)
-  , mScreen(":/sflphone/images/screen_main")
+  , mScreen(JPushButton::transparize(":/sflphone/images/screen_main"))
   , mOverscreen(JPushButton::transparize(":/sflphone/images/overscreen.png"))
   , mGlobalStatusPos(-1)
   , mLineStatusPos(-1)
   , mIsTimed(false)
   , mFont(FONT_FAMILY, FONT_SIZE)
 {
-  mFont.setBold(true);
-
-  setPixmap(mScreen);
   resize(mScreen.size());
   move(22,44);
   
@@ -121,6 +118,7 @@ SFLLcd::paintEvent(QPaintEvent *)
 	     extractVisibleText(mLineStatus, mLineStatusPos));
 
   p.drawText(QPoint(margin, mScreen.size().height() - margin), getTimeStatus());
+  //p.drawPixmap(0,0, mScreen);
   p.drawPixmap(0,0, mOverscreen);
   p.end();
 }

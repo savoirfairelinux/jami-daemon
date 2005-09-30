@@ -20,7 +20,7 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <string>
+#include <QString>
 
 #include <QPushButton>
 #include "SFLPhoneApp.hpp"

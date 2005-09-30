@@ -24,80 +24,80 @@
 #include "Request.hpp"
 #include "Requester.hpp"
 
-Request::Request(const std::string &sequenceId,
-		 const std::string &command,
-		 const std::list< std::string > &args)
+Request::Request(const QString &sequenceId,
+		 const QString &command,
+		 const std::list< QString > &args)
   : mSequenceId(sequenceId)
   , mCommand(command)
   , mArgs(args)
 {}
 
-std::list< std::string >
-Request::parseArgs(const std::string &message)
+std::list< QString >
+Request::parseArgs(const QString &message)
 {
-  std::istringstream stream(message);
+  std::istringstream stream(message.toStdString());
   std::string s;
-  std::list< std::string > args;
+  std::list< QString > args;
   while(stream.good()) {
     stream >> s;
-    args.push_back(s);
+    args.push_back(QString::fromStdString(s));
   }
 
   return args;
 }
 
 void
-Request::onError(const std::string &code, const std::string &message)
+Request::onError(const QString &code, const QString &message)
 {
   _debug("Received an error:\n  Code: %s\n  SequenceID: %s\n  Message%s\n", 
-	 code.c_str(),
-	 mSequenceId.c_str(),
-	 message.c_str());
+	 code.toStdString().c_str(),
+	 mSequenceId.toStdString().c_str(),
+	 message.toStdString().c_str());
 }
 
 void
-Request::onEntry(const std::string &code, const std::string &message)
+Request::onEntry(const QString &code, const QString &message)
 {
   _debug("Received a temp info:\n  Code: %s\n  SequenceID: %s\n  Message%s\n", 
-	 code.c_str(),
-	 mSequenceId.c_str(),
-	 message.c_str());
+	 code.toStdString().c_str(),
+	 mSequenceId.toStdString().c_str(),
+	 message.toStdString().c_str());
 }
 
 void
-Request::onSuccess(const std::string &code, const std::string &message)
+Request::onSuccess(const QString &code, const QString &message)
 {
   _debug("Received a success:\n  Code: %s\n  SequenceID: %s\n  Message%s\n", 
-	 code.c_str(),
-	 mSequenceId.c_str(),
-	 message.c_str());
+	 code.toStdString().c_str(),
+	 mSequenceId.toStdString().c_str(),
+	 message.toStdString().c_str());
 }
 
-std::string
+QString
 Request::toString()
 {
   std::ostringstream id;
-  id << mCommand << " " << mSequenceId;
-  for(std::list< std::string >::const_iterator pos = mArgs.begin();
+  id << mCommand.toStdString() << " " << mSequenceId.toStdString();
+  for(std::list< QString >::const_iterator pos = mArgs.begin();
       pos != mArgs.end();
       pos++) {
-    id << " " << (*pos);
+    id << " " << (*pos).toStdString();
   }
   id << std::endl;
 
-  return id.str();
+  return QString::fromStdString(id.str());
 }
 
 
-CallRelatedRequest::CallRelatedRequest(const std::string &sequenceId,
-			 const std::string &command,
-			 const std::list< std::string > &args)
+CallRelatedRequest::CallRelatedRequest(const QString &sequenceId,
+			 const QString &command,
+			 const std::list< QString > &args)
   : Request(sequenceId, command, args)
   , mCallId(*args.begin())
 {}
 
 void
-CallRelatedRequest::onError(const std::string &code, const std::string &message)
+CallRelatedRequest::onError(const QString &code, const QString &message)
 {
   onError(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
 	       mCallId), 
@@ -106,11 +106,11 @@ CallRelatedRequest::onError(const std::string &code, const std::string &message)
 }
 
 void
-CallRelatedRequest::onError(Call, const std::string &, const std::string &)
+CallRelatedRequest::onError(Call, const QString &, const QString &)
 {}
 
 void
-CallRelatedRequest::onEntry(const std::string &code, const std::string &message)
+CallRelatedRequest::onEntry(const QString &code, const QString &message)
 {
   onEntry(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
 	       mCallId), 
@@ -119,11 +119,11 @@ CallRelatedRequest::onEntry(const std::string &code, const std::string &message)
 }
 
 void
-CallRelatedRequest::onEntry(Call, const std::string &, const std::string &)
+CallRelatedRequest::onEntry(Call, const QString &, const QString &)
 {}
 
 void
-CallRelatedRequest::onSuccess(const std::string &code, const std::string &message)
+CallRelatedRequest::onSuccess(const QString &code, const QString &message)
 {
   onSuccess(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
 		 mCallId), 
@@ -132,18 +132,18 @@ CallRelatedRequest::onSuccess(const std::string &code, const std::string &messag
 }
 
 void
-CallRelatedRequest::onSuccess(Call, const std::string &, const std::string &)
+CallRelatedRequest::onSuccess(Call, const QString &, const QString &)
 {}
 
-AccountRequest::AccountRequest(const std::string &sequenceId,
-			 const std::string &command,
-			 const std::list< std::string > &args)
+AccountRequest::AccountRequest(const QString &sequenceId,
+			 const QString &command,
+			 const std::list< QString > &args)
   : Request(sequenceId, command, args)
   , mAccountId(*args.begin())
 {}
 
 void
-AccountRequest::onError(const std::string &code, const std::string &message)
+AccountRequest::onError(const QString &code, const QString &message)
 {
   onError(Account(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
 	       mAccountId), 
@@ -152,11 +152,11 @@ AccountRequest::onError(const std::string &code, const std::string &message)
 }
 
 void
-AccountRequest::onError(Account, const std::string &, const std::string &)
+AccountRequest::onError(Account, const QString &, const QString &)
 {}
 
 void
-AccountRequest::onEntry(const std::string &code, const std::string &message)
+AccountRequest::onEntry(const QString &code, const QString &message)
 {
   onEntry(Account(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
 	       mAccountId), 
@@ -165,11 +165,11 @@ AccountRequest::onEntry(const std::string &code, const std::string &message)
 }
 
 void
-AccountRequest::onEntry(Account, const std::string &, const std::string &)
+AccountRequest::onEntry(Account, const QString &, const QString &)
 {}
 
 void
-AccountRequest::onSuccess(const std::string &code, const std::string &message)
+AccountRequest::onSuccess(const QString &code, const QString &message)
 {
   onSuccess(Account(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
 		 mAccountId), 
@@ -178,6 +178,6 @@ AccountRequest::onSuccess(const std::string &code, const std::string &message)
 }
 
 void
-AccountRequest::onSuccess(Account, const std::string &, const std::string &)
+AccountRequest::onSuccess(Account, const QString &, const QString &)
 {}
 

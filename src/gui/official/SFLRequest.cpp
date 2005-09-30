@@ -1,6 +1,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <QString>
 
 #include "globals.h"
 #include "PhoneLineManager.hpp"
@@ -8,21 +9,23 @@
 #include "CallStatus.hpp"
 #include "CallStatusFactory.hpp"
 
-EventRequest::EventRequest(const std::string &sequenceId,
-			   const std::string &command,
-			   const std::list< std::string > &args)
+EventRequest::EventRequest(const QString &sequenceId,
+			   const QString &command,
+			   const std::list< QString > &args)
   : Request(sequenceId, command, args)
 {}
 
 
 void
-EventRequest::onError(const std::string &code, const std::string &message)
+EventRequest::onError(const QString &code, const QString &message)
 {
-  _debug("EventRequest error: (%s)%s\n", code.c_str(), message.c_str());
+  _debug("EventRequest error: (%s)%s\n", 
+	 code.toStdString().c_str(), 
+	 message.toStdString().c_str());
 }
 
 void
-EventRequest::onEntry(const std::string &code, const std::string &message)
+EventRequest::onEntry(const QString &code, const QString &message)
 {
   std::auto_ptr< Event > 
     e(EventFactory::instance().create(code, Request::parseArgs(message)));
@@ -30,27 +33,31 @@ EventRequest::onEntry(const std::string &code, const std::string &message)
 }
 
 void
-EventRequest::onSuccess(const std::string &code, const std::string &message)
+EventRequest::onSuccess(const QString &code, const QString &message)
 {
-  _debug("EventRequest success: (%s)%s\n", code.c_str(), message.c_str());
+  _debug("EventRequest success: (%s)%s\n", 
+	 code.toStdString().c_str(), 
+	 message.toStdString().c_str());
 }
 
-CallStatusRequest::CallStatusRequest(const std::string &sequenceId,
-				     const std::string &command,
-				     const std::list< std::string > &args)
+CallStatusRequest::CallStatusRequest(const QString &sequenceId,
+				     const QString &command,
+				     const std::list< QString > &args)
   : Request(sequenceId, command, args)
 {}
 
 
 void
-CallStatusRequest::onError(const std::string &code, const std::string &message)
+CallStatusRequest::onError(const QString &code, const QString &message)
 {
-  _debug("CallStatusRequest error: (%s)%s\n", code.c_str(), message.c_str());
+  _debug("CallStatusRequest error: (%s)%s\n", 
+	 code.toStdString().c_str(), 
+	 message.toStdString().c_str());
   PhoneLineManager::instance().errorOnCallStatus();
 }
 
 void
-CallStatusRequest::onEntry(const std::string &code, const std::string &message)
+CallStatusRequest::onEntry(const QString &code, const QString &message)
 {
   std::auto_ptr< Event > 
     e(EventFactory::instance().create(code, Request::parseArgs(message)));
@@ -58,11 +65,13 @@ CallStatusRequest::onEntry(const std::string &code, const std::string &message)
 }
 
 void
-CallStatusRequest::onSuccess(const std::string &code, const std::string &message)
+CallStatusRequest::onSuccess(const QString &code, const QString &message)
 {
-  _debug("CallStatusRequest success: (%s)%s\n", code.c_str(), message.c_str());
+  _debug("CallStatusRequest success: (%s)%s\n", 
+	 code.toStdString().c_str(), 
+	 message.toStdString().c_str());
   if(code == "206") {
-    std::list< std::string > args = Request::parseArgs(message);
+    std::list< QString > args = Request::parseArgs(message);
     if(args.size() >= 2) {
       PhoneLineManager::instance().selectLine(*args.begin(), true);
     }

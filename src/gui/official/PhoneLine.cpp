@@ -10,7 +10,7 @@ PhoneLine::PhoneLine(const Session &session,
   , mCall(NULL)
   , mLine(line)
   , mSelected(false)
-    , mLineStatus("test")
+  , mLineStatus("test")
 {}
 
 PhoneLine::~PhoneLine()
@@ -19,10 +19,19 @@ PhoneLine::~PhoneLine()
   mCall = NULL;
 }
 
-std::string
+QString
 PhoneLine::getLineStatus()
 { 
   return mLineStatus;
+}
+
+void
+PhoneLine::setLineStatus(const QString &status)
+{ 
+  mLineStatus = status;
+  if(mSelected) {
+    emit lineStatusChanged(mLineStatus);
+  }
 }
 
 unsigned int 
@@ -53,11 +62,14 @@ PhoneLine::select(bool hardselect)
     if(!hardselect) {
       if(mCall) {
 	if(mCall->isIncomming()) {
-	  mCall->answer();
+	  answer();
 	}
 	else {
-	  mCall->unhold();
+	  unhold();
 	}
+      }
+      else {
+	setLineStatus("Ready.");
       }
     }
 
@@ -105,6 +117,7 @@ PhoneLine::incomming(const Call &call)
   }
   else {
     mCall = new Call(call);
+    setLineStatus("Incomming...");
     emit backgrounded();
   }
 }
@@ -133,7 +146,7 @@ PhoneLine::sendKey(Qt::Key c)
     if (QChar(c).isDigit()) {
       if(!mCall) {
 	mSession.playDtmf(c);
-	mBuffer += QString(c).toStdString();
+	mBuffer += QString(c);
       }
       else {
 	mCall->sendDtmf(c);
@@ -151,10 +164,11 @@ PhoneLine::call()
 }
 
 void 
-PhoneLine::call(const std::string &to) 
+PhoneLine::call(const QString &to) 
 {
-  _debug("PhoneLine %d: Calling %s.\n", mLine, to.c_str());
+  _debug("PhoneLine %d: Calling %s.\n", mLine, to.toStdString().c_str());
   if(!mCall) {
+    setLineStatus("Calling " + to + "...");
     mCall = new Call(mSession.createCall());
     mCall->call(to);
   }
@@ -164,6 +178,7 @@ void
 PhoneLine::hold() 
 {
   if(mCall) {
+    setLineStatus("Holded.");
     _debug("PhoneLine %d: Trying to Hold.\n", mLine);
     mCall->hold();
   }
@@ -172,9 +187,30 @@ PhoneLine::hold()
 }
 
 void 
+PhoneLine::unhold() 
+{
+  if(mCall) {
+    setLineStatus("Unholding...");
+    _debug("PhoneLine %d: Trying to Unhold.\n", mLine);
+    mCall->unhold();
+  }
+}
+
+void 
+PhoneLine::answer() 
+{
+  if(mCall) {
+    setLineStatus("Answering...");
+    _debug("PhoneLine %d: Trying to answer.\n", mLine);
+    mCall->answer();
+  }
+}
+
+void 
 PhoneLine::hangup() 
 {
   if(mCall) {
+    setLineStatus("Hanguping...");
     _debug("PhoneLine %d: Trying to Hangup.\n", mLine);
     mCall->hangup();
     delete mCall;
@@ -187,10 +223,10 @@ PhoneLine::hangup()
 }
 
 
-std::string 
+QString 
 PhoneLine::getCallId()
 {
-  std::string id;
+  QString id;
   if(mCall) {
     id = mCall->id();
   }

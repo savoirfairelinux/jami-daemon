@@ -21,18 +21,18 @@
 #ifndef SFLPHONEGUI_CALL_H
 #define SFLPHONEGUI_CALL_H
 
-#include <string>
+#include <QString>
 
 class Session;
 
 class Call
 {
  public:
-  Call(const std::string &sessionId, 
-       const std::string &callId,
+  Call(const QString &sessionId, 
+       const QString &callId,
        bool incomming = false);
   Call(const Session &session, 
-       const std::string &callId,
+       const QString &callId,
        bool incomming = false);
 
   /**
@@ -41,44 +41,44 @@ class Call
    */
   bool isIncomming();
 
-  std::string id() const
+  QString id() const
   {return mId;}
 
-  std::string call(const std::string &to);
+  QString call(const QString &to);
 
   /**
    * This function will answer the call.
    */
-  std::string answer();
+  QString answer();
 
   /**
    * This function will hangup on a call.
    */
-  std::string hangup();
+  QString hangup();
 
   /**
    * ///TODO need to clarify this function.
    */
-  std::string cancel();
+  QString cancel();
   
   /**
    * This function will put the call on hold.
    * This *should* stop temporarly the streaming.
    */
-  std::string hold();
+  QString hold();
 
   /**
    * This function will unhold a holding call.
    * This *should* restart a stopped streaming.
    */
-  std::string unhold();
+  QString unhold();
 
   /**
    * This function refuse and incomming call.
    * It means that the phone is ringing but we
    * don't want to answer.
    */
-  std::string refuse();
+  QString refuse();
 
   /**
    * This function will set this client to be
@@ -86,7 +86,7 @@ class Call
    * the phone can still ring. But if every client
    * sent notavailable, then it will be refused.
    */
-  std::string notAvailable();
+  QString notAvailable();
 
 
   /**
@@ -94,19 +94,19 @@ class Call
    * This is used if you make a choice when you
    * have a voice menu.
    */
-  std::string sendDtmf(char c);
+  QString sendDtmf(char c);
 
  private:
   
   /**
    * This is the session id that we belong to.
    */
-  std::string mSessionId;
+  QString mSessionId;
 
   /**
    * This is the unique identifier of the call.
    */
-  std::string mId;
+  QString mId;
 
   bool mIsIncomming;
 };

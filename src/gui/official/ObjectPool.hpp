@@ -22,7 +22,7 @@
 #define SFLPHONEGUI_OBJECTPOOL_H
 
 #include <list>
-#include <string>
+#include <QString>
 #include <QMutex>
 #include <QWaitCondition>
 

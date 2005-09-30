@@ -21,7 +21,7 @@
 #ifndef SFLPHONEGUI_SESSION_H
 #define SFLPHONEGUI_SESSION_H
 
-#include <string>
+#include <QString>
 
 #include "Account.hpp"
 
@@ -29,12 +29,12 @@ class Session
 {
  public:
   Session();
-  Session(const std::string &id);
+  Session(const QString &id);
   
   /**
    * retreive the account identified by name.
    */
-  Account getAccount(const std::string &name) const;
+  Account getAccount(const QString &name) const;
 
   Account getDefaultAccount() const;
 
@@ -42,17 +42,17 @@ class Session
    * This function will play a tone. This is
    * just a ear candy.
    */
-  std::string playDtmf(char c) const;
+  QString playDtmf(char c) const;
 
   /**
    * This function will register to receive events
    */
-  std::string getEvents() const;
+  QString getEvents() const;
 
   /**
    * This function will ask for all calls status.
    */
-  std::string getCallStatus() const;
+  QString getCallStatus() const;
 
   /**
    * This function will ask to the SessionIO
@@ -62,11 +62,11 @@ class Session
 
   Call createCall() const;
   
-  std::string id() const;
-  std::string playTone() const;
+  QString id() const;
+  QString playTone() const;
 
  private:
-  std::string mId;
+  QString mId;
 };
 
 #endif

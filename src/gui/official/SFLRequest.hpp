@@ -9,9 +9,9 @@
 class EventRequest : public Request
 {
 public:
-  EventRequest(const std::string &sequenceId,
-	       const std::string &command,
-	       const std::list< std::string > &args);
+  EventRequest(const QString &sequenceId,
+	       const QString &command,
+	       const std::list< QString > &args);
 
 
   virtual ~EventRequest(){}
@@ -22,14 +22,14 @@ public:
    * ended. When we have an error on an EventRequest, we should
    * quit the program.
    */
-  virtual void onError(const std::string &code, const std::string &message);
+  virtual void onError(const QString &code, const QString &message);
 
   /**
    * This function will be called when the request 
    * receive an answer, but there's other answers to come.
    * This will be dispatched to the valid event.
    */
-  virtual void onEntry(const std::string &code, const std::string &message);
+  virtual void onEntry(const QString &code, const QString &message);
 
   /**
    * This function will be called when the request 
@@ -37,16 +37,16 @@ public:
    * ended. The event handling is gone, so we should 
    * quit.
    */
-  virtual void onSuccess(const std::string &code, const std::string &message);
+  virtual void onSuccess(const QString &code, const QString &message);
 
 };
 
 class CallStatusRequest : public Request
 {
 public:
-  CallStatusRequest(const std::string &sequenceId,
-		    const std::string &command,
-		    const std::list< std::string > &args);
+  CallStatusRequest(const QString &sequenceId,
+		    const QString &command,
+		    const std::list< QString > &args);
 
 
   virtual ~CallStatusRequest(){}
@@ -57,14 +57,14 @@ public:
    * ended. When we have an error on an EventRequest, we should
    * quit the program.
    */
-  virtual void onError(const std::string &code, const std::string &message);
+  virtual void onError(const QString &code, const QString &message);
 
   /**
    * This function will be called when the request 
    * receive an answer, but there's other answers to come.
    * This will be dispatched to the valid event.
    */
-  virtual void onEntry(const std::string &code, const std::string &message);
+  virtual void onEntry(const QString &code, const QString &message);
 
   /**
    * This function will be called when the request 
@@ -72,7 +72,7 @@ public:
    * ended. The event handling is gone, so we should 
    * quit.
    */
-  virtual void onSuccess(const std::string &code, const std::string &message);
+  virtual void onSuccess(const QString &code, const QString &message);
 
 };
 

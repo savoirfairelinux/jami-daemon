@@ -3,8 +3,8 @@
 #include "Call.hpp"
 #include "Event.hpp"
 
-Event::Event(const std::string &code,
-	     const std::list< std::string > &args)
+Event::Event(const QString &code,
+	     const std::list< QString > &args)
   : mCode(code)
   , mUnusedArgs(args)
   , mArgs(args)
@@ -14,14 +14,14 @@ Event::Event(const std::string &code,
 void
 Event::execute()
 {
-  _debug("Received: %s\n", toString().c_str());
+  _debug("Received: %s\n", toString().toStdString().c_str());
 }
 
-std::string
+QString
 Event::toString()
 {
-  std::string output(mCode);
-  for(std::list< std::string >::iterator pos = mArgs.begin();
+  QString output(mCode);
+  for(std::list< QString >::iterator pos = mArgs.begin();
       pos != mArgs.end();
       pos++) {
     output += *pos;
@@ -30,11 +30,11 @@ Event::toString()
   return output;
 }
 
-CallRelatedEvent::CallRelatedEvent(const std::string &code,
-				   const std::list< std::string > &args)
+CallRelatedEvent::CallRelatedEvent(const QString &code,
+				   const std::list< QString > &args)
   : Event(code, args)
 {
-  std::list< std::string > l(getUnusedArgs());
+  std::list< QString > l(getUnusedArgs());
   if(l.size() != 0) {
     mCallId = *l.begin();
     l.pop_front();
@@ -42,7 +42,7 @@ CallRelatedEvent::CallRelatedEvent(const std::string &code,
   }
 }
 
-std::string
+QString
 CallRelatedEvent::getCallId()
 {
   return mCallId;

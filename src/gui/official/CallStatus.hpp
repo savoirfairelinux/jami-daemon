@@ -26,15 +26,15 @@
 class CallStatus : public CallRelatedEvent
 {
 public:
-  CallStatus(const std::string &code,
-	     const std::list< std::string > &args);
+  CallStatus(const QString &code,
+	     const std::list< QString > &args);
   
   void execute();
 
 protected:
-  std::string mAccountId;
-  std::string mDestination;
-  std::string mStatus;
+  QString mAccountId;
+  QString mDestination;
+  QString mStatus;
 };
 
 #endif

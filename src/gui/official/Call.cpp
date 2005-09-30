@@ -18,7 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <string>
+#include <QString>
 #include <list>
 
 #include "Call.hpp"
@@ -26,8 +26,8 @@
 #include "Requester.hpp"
 
 
-Call::Call(const std::string &sessionId,
-	   const std::string &callId,
+Call::Call(const QString &sessionId,
+	   const QString &callId,
 	   bool incomming)
   : mSessionId(sessionId)
   , mId(callId)
@@ -35,7 +35,7 @@ Call::Call(const std::string &sessionId,
 {}
 
 Call::Call(const Session &session,
-	   const std::string &callId,
+	   const QString &callId,
 	   bool incomming)
   : mSessionId(session.id())
   , mId(callId)
@@ -46,80 +46,80 @@ bool
 Call::isIncomming()
 {return mIsIncomming;}
 
-std::string
-Call::call(const std::string &to) 
+QString
+Call::call(const QString &to) 
 {
-  std::list< std::string> args;
+  std::list< QString> args;
   args.push_back(mId);
   args.push_back(to);
   return Requester::instance().send(mSessionId, "call", args);
 }
 
-std::string
+QString
 Call::answer() 
 {
   mIsIncomming = false;
-  std::list< std::string> args;
+  std::list< QString> args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "answer", args);
 }
 
-std::string
+QString
 Call::hangup() 
 {
-  std::list< std::string> args;
+  std::list< QString> args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "hangup", args);
 }
 
-std::string
+QString
 Call::cancel() 
 {
-  std::list< std::string> args;
+  std::list< QString> args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "cancel", args);
 }
 
-std::string
+QString
 Call::hold() 
 {
-  std::list< std::string> args;
+  std::list< QString> args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "hold", args);
 }
 
-std::string
+QString
 Call::unhold() 
 {
-  std::list< std::string> args;
+  std::list< QString> args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "unhold", args);
 }
 
-std::string
+QString
 Call::refuse() 
 {
   mIsIncomming = false;
-  std::list< std::string> args;
+  std::list< QString> args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "refuse", args);
 }
 
-std::string
+QString
 Call::notAvailable() 
 {
   mIsIncomming = false;
-  std::list< std::string> args;
+  std::list< QString> args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "notavailable", args);
 }
 
-std::string
+QString
 Call::sendDtmf(char c) 
 {
-  std::list< std::string> args;
+  std::list< QString> args;
   args.push_back(mId);
-  std::string s;
+  QString s;
   s += c;
   args.push_back(s);
   return Requester::instance().send(mSessionId, "senddtmf", args);

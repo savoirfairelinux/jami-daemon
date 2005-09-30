@@ -27,9 +27,9 @@
 
 template< typename Base, typename Actual >
 Actual *
-ObjectCreator< Base, Actual >::create(const std::string &command,
-				      const std::string &sequenceId,
-				      const std::list< std::string > &args)
+ObjectCreator< Base, Actual >::create(const QString &command,
+				      const QString &sequenceId,
+				      const std::list< QString > &args)
 {
   return new Actual(sequenceId, command, args);
 }
@@ -43,13 +43,13 @@ ObjectCreator< Base, Actual >::clone()
 
 template< typename Base >
 Base *
-ObjectFactory< Base >::create(const std::string &command, 
-			      const std::string &sequenceId,
-			      const std::list< std::string > &args)
+ObjectFactory< Base >::create(const QString &command, 
+			      const QString &sequenceId,
+			      const std::list< QString > &args)
 {
-  typename std::map< std::string, ObjectCreatorBase< Base > * >::iterator pos = mObjectCreators.find(command);
+  typename std::map< QString, ObjectCreatorBase< Base > * >::iterator pos = mObjectCreators.find(command);
   if(pos == mObjectCreators.end()) {
-    throw std::runtime_error("The command \"" + command + "\" has no creator registered.");
+    throw std::runtime_error("The command \"" + command.toStdString() + "\" has no creator registered.");
   }
   
   return pos->second->create(command, sequenceId, args);
@@ -58,7 +58,7 @@ ObjectFactory< Base >::create(const std::string &command,
 template< typename Base >
 template< typename Actual >
 void 
-ObjectFactory< Base >::registerObject(const std::string &name)
+ObjectFactory< Base >::registerObject(const QString &name)
 {
   if(mObjectCreators.find(name) != mObjectCreators.end()) {
     delete mObjectCreators[name];

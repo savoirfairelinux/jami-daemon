@@ -24,7 +24,7 @@
 
 template< typename Actual >
 void 
-RequesterImpl::registerObject(const std::string &name)
+RequesterImpl::registerObject(const QString &name)
 {
   mRequestFactory.registerObject< Actual >(name);
 }

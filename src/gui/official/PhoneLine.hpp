@@ -1,7 +1,7 @@
 #include <QChar>
 #include <QObject>
 #include <QMutex>
-#include <string>
+#include <QString>
 
 #include "Session.hpp"
 
@@ -15,12 +15,14 @@ public:
   PhoneLine(const Session &session, unsigned int line);
   ~PhoneLine();
 
-  void call(const std::string &to);
+  void call(const QString &to);
   void call();
+  void answer();
   void hangup();
   void hold();
+  void unhold();
 
-  std::string getCallId();
+  QString getCallId();
 
   unsigned int line();
 
@@ -53,7 +55,8 @@ public:
 
   void sendKey(Qt::Key c);
 
-  std::string getLineStatus();
+  QString getLineStatus();
+  void setLineStatus(const QString &);
   
 public slots:
   void incomming(const Call &call);
@@ -79,14 +82,15 @@ public slots:
    */
   void disconnect();
 
-  void setState(const std::string &){}
-  void setPeer(const std::string &){}
+  void setState(const QString &){}
+  void setPeer(const QString &){}
 
 
 signals:
   void selected();
   void unselected();
   void backgrounded();
+  void lineStatusChanged(const QString &);
 
 private:
   Session mSession;
@@ -97,7 +101,7 @@ private:
   bool mSelected;
   bool mInUse;
   //This is the buffer when the line is not in use;
-  std::string mBuffer;
+  QString mBuffer;
 
-  std::string mLineStatus;
+  QString mLineStatus;
 };

@@ -55,7 +55,7 @@ TCPSessionIO::receive()
 {
   QString s;
   receive(s);
-  Requester::instance().receiveAnswer(s.toStdString());
+  Requester::instance().receiveAnswer(s);
 }
 
 void
@@ -67,12 +67,6 @@ TCPSessionIO::connect()
   mSocket->connectToHost(mHostname, mPort);
 }
 
-
-void
-TCPSessionIO::send(const std::string &request)
-{
-  send(QString::fromStdString(request));
-}
 
 void
 TCPSessionIO::sendWaitingRequests()
@@ -102,15 +96,6 @@ TCPSessionIO::send(const QString &request)
     mStackMutex.unlock();
   }
 }
-
-void
-TCPSessionIO::receive(std::string &answer)
-{
-  QString a;
-  receive(a);
-  answer = a.toStdString();
-}
-
 
 void
 TCPSessionIO::receive(QString &answer)

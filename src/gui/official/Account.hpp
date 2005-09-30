@@ -21,20 +21,20 @@
 #ifndef SFLPHONEGUI_ACCOUNT_H
 #define SFLPHONEGUI_ACCOUNT_H
 
-#include <string>
+#include <QString>
 
 class Call;
 
 class Account {
  public:
-  Account(const std::string &sessionId,
-	  const std::string &name);
+  Account(const QString &sessionId,
+	  const QString &name);
 
   /**
    * This will generate a call ready to be used.
    */
-  std::string registerAccount();
-  std::string unregisterAccount();
+  QString registerAccount();
+  QString unregisterAccount();
 
  private:  
   Account();
@@ -42,12 +42,12 @@ class Account {
   /**
    * This is the session id that we are related to.
    */
-  std::string mSessionId;
+  QString mSessionId;
 
   /**
    * This is the account id that we are related to.
    */
-  std::string mId;
+  QString mId;
 };
 
 

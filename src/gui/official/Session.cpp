@@ -19,14 +19,14 @@
  */
 
 #include <iostream>
-#include <string>
+#include <QString>
 
 #include "Session.hpp"
 #include "Requester.hpp"
 #include "SessionIOFactory.hpp"
 
 
-Session::Session(const std::string &id)
+Session::Session(const QString &id)
   : mId(id)
 {}
 
@@ -37,16 +37,16 @@ Session::Session()
   Requester::instance().registerSession(mId, s);
 }
 
-std::string 
+QString 
 Session::id() const
 {
   return mId;
 }
 
-std::string
+QString
 Session::playTone() const
 {
-  return Requester::instance().send(mId, "playtone", std::list< std::string >());
+  return Requester::instance().send(mId, "playtone", std::list< QString >());
 }
 
 void
@@ -56,30 +56,30 @@ Session::connect() const
 }
 
 
-std::string
+QString
 Session::getEvents() const
 {
-  return Requester::instance().send(mId, "getevents", std::list< std::string >());
+  return Requester::instance().send(mId, "getevents", std::list< QString >());
 }
 
-std::string
+QString
 Session::getCallStatus() const
 {
-  return Requester::instance().send(mId, "getcallstatus", std::list< std::string >());
+  return Requester::instance().send(mId, "getcallstatus", std::list< QString >());
 }
 
-std::string
+QString
 Session::playDtmf(char c) const
 {
-  std::string s;
+  QString s;
   s += c;
-  std::list< std::string > args;
+  std::list< QString > args;
   args.push_back(s);
   return Requester::instance().send(mId, "playdtmf", args);
 }
 
 Account
-Session::getAccount(const std::string &name) const
+Session::getAccount(const QString &name) const
 {
   return Account(mId, name);
 }
@@ -87,7 +87,7 @@ Session::getAccount(const std::string &name) const
 Account
 Session::getDefaultAccount() const
 {
-  return Account(mId, std::string("mydefaultaccount"));
+  return Account(mId, QString("mydefaultaccount"));
 }
 
 Call

@@ -23,7 +23,7 @@
 
 #include <list>
 #include <map>
-#include <string>
+#include <QString>
 
 #include "Event.hpp"
 
@@ -36,8 +36,8 @@ class EventCreatorBase
 {
  public:
   virtual ~EventCreatorBase(){}
-  virtual Base *create(const std::string &code,
-		       const std::list< std::string > &args) = 0;
+  virtual Base *create(const QString &code,
+		       const std::list< QString > &args) = 0;
   
   virtual EventCreatorBase *clone() = 0;
 };
@@ -50,8 +50,8 @@ template< typename Base, typename Actual >
   class EventCreator : public EventCreatorBase< Base >
 {
  public:
-  virtual Actual *create(const std::string &code,
-			 const std::list< std::string > &args);
+  virtual Actual *create(const QString &code,
+			 const std::list< QString > &args);
   
   virtual EventCreatorBase< Base > *clone();
 };
@@ -69,17 +69,17 @@ public:
   /**
    * Ask for a new object linked to the string.
    */
-  Base *create(const std::string &code,
-	       const std::list< std::string > &args);
+  Base *create(const QString &code,
+	       const std::list< QString > &args);
 
   /**
    * Register the string to return a Actual type.
    */
   template< typename Actual >
-    void registerEvent(const std::string &code);
+    void registerEvent(const QString &code);
   
  private:
-  std::map< std::string, EventCreatorBase< Base > * > mEventCreators;
+  std::map< QString, EventCreatorBase< Base > * > mEventCreators;
 };
 
 #include "EventFactory.inl"

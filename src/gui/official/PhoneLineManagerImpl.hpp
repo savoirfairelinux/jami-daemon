@@ -36,7 +36,7 @@ public:
    * If there's no PhoneLine of call ID, it will
    * return NULL.
    */
-  PhoneLine *getPhoneLine(const std::string &callId);
+  PhoneLine *getPhoneLine(const QString &callId);
 
   PhoneLine *getCurrentLine();
 
@@ -103,7 +103,7 @@ public slots:
    * following call ID. If there's no line with 
    * the call ID, it will do nothing.
    */
-  void hangup(const std::string &callId);
+  void hangup(const QString &callId);
 
   /**
    * This function will make a call on the 
@@ -116,21 +116,21 @@ public slots:
    * This function will add an incomming call
    * on a phone line.
    */
-  void incomming(const std::string &accountId,
-		 const std::string &callId,
-		 const std::string &peer);
+  void incomming(const QString &accountId,
+		 const QString &callId,
+		 const QString &peer);
 
   /**
    * This function is used to add a call on a 
    * phone line.
    */
   void addCall(Call call,
-	       const std::string &peer, 
-	       const std::string &state);
-  void addCall(const std::string &accountId, 
-	       const std::string &callId, 
-	       const std::string &peer, 
-	       const std::string &state);
+	       const QString &peer, 
+	       const QString &state);
+  void addCall(const QString &accountId, 
+	       const QString &callId, 
+	       const QString &peer, 
+	       const QString &state);
 
   /**
    * This function will make a call on the 
@@ -153,7 +153,7 @@ public slots:
    * the given call id. If the line is invalid, it just do 
    * nothing.
    */
-  void selectLine(const std::string &callId,
+  void selectLine(const QString &callId,
 		  bool hardselect = false);
 
   /**

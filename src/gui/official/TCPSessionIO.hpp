@@ -56,7 +56,6 @@ public slots:
    * that write to the socket.
    */
   virtual void send(const QString &request);
-  virtual void send(const std::string &request);
 
   /**
    * This function is called when we have 
@@ -69,7 +68,6 @@ public slots:
    * that read from the socket.
    */
   virtual void receive(QString &answer);
-  virtual void receive(std::string &answer);
   virtual void connect();
 
  private slots:

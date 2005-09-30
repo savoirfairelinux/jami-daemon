@@ -33,9 +33,9 @@ RequesterImpl::RequesterImpl()
 {}
 
 SessionIO *
-RequesterImpl::getSessionIO(const std::string &sessionId)
+RequesterImpl::getSessionIO(const QString &sessionId)
 {
-  std::map< std::string, SessionIO * >::iterator pos = mSessions.find(sessionId);
+  std::map< QString, SessionIO * >::iterator pos = mSessions.find(sessionId);
   if(pos == mSessions.end()) {
     throw std::runtime_error("The session is not valid.");
   }
@@ -43,16 +43,16 @@ RequesterImpl::getSessionIO(const std::string &sessionId)
   return (*pos).second;
 }
 
-std::string 
-RequesterImpl::send(const std::string &sessionId,
-		    const std::string &command,
-		    const std::list< std::string > &args)
+QString 
+RequesterImpl::send(const QString &sessionId,
+		    const QString &command,
+		    const std::list< QString > &args)
 {
   // We retreive the internal of a session.
   SessionIO *session = getSessionIO(sessionId);
 
   // We ask the factory to create the request.
-  std::string sequenceId = generateSequenceId();
+  QString sequenceId = generateSequenceId();
   Request *request = mRequestFactory.create(command, sequenceId, args);
 
   registerRequest(sessionId, sequenceId, request);
@@ -62,8 +62,8 @@ RequesterImpl::send(const std::string &sessionId,
 }
 
 void
-RequesterImpl::registerRequest(const std::string &sessionId, 
-			       const std::string &sequenceId,
+RequesterImpl::registerRequest(const QString &sessionId, 
+			       const QString &sequenceId,
 			       Request *request)
 {
   if(mRequests.find(sequenceId) != mRequests.end()) {
@@ -76,7 +76,7 @@ RequesterImpl::registerRequest(const std::string &sessionId,
 
 
 void
-RequesterImpl::registerSession(const std::string &id,
+RequesterImpl::registerSession(const QString &id,
 			       SessionIO *s)
 {
   if(mSessions.find(id) != mSessions.end()) {
@@ -87,9 +87,9 @@ RequesterImpl::registerSession(const std::string &id,
 }
 
 void
-RequesterImpl::connect(const std::string &id)
+RequesterImpl::connect(const QString &id)
 {
-  std::map< std::string, SessionIO * >::iterator pos = mSessions.find(id);
+  std::map< QString, SessionIO * >::iterator pos = mSessions.find(id);
   if(pos == mSessions.end()) {
     throw std::logic_error("Trying to connect an unknown session.");
   }
@@ -99,35 +99,37 @@ RequesterImpl::connect(const std::string &id)
 
 
 int
-RequesterImpl::getCodeCategory(const std::string &code)
+RequesterImpl::getCodeCategory(const QString &code)
 {
   int c;
-  std::istringstream s(code);
+  std::istringstream s(code.toStdString());
   s >> c;
   return c / 100;
 }
 
 void
-RequesterImpl::receiveAnswer(const std::string &answer)
+RequesterImpl::receiveAnswer(const QString &answer)
 {
   std::string code;
   std::string seq;
   std::string message;
-  std::istringstream s(answer);
+  std::istringstream s(answer.toStdString());
   s >> code >> seq;
   getline(s, message);
-  receiveAnswer(code, seq, message);
+  receiveAnswer(QString::fromStdString(code), 
+		QString::fromStdString(seq),
+		QString::fromStdString(message));
 }
 
 
 void
-RequesterImpl::receiveAnswer(const std::string &code, 
-			     const std::string &sequence, 
-			     const std::string &message)
+RequesterImpl::receiveAnswer(const QString &code, 
+			     const QString &sequence, 
+			     const QString &message)
 {
   int c = getCodeCategory(code);
 
-  std::map< std::string, Request * >::iterator pos;
+  std::map< QString, Request * >::iterator pos;
   pos = mRequests.find(sequence);
   if(pos == mRequests.end()) {
     std::cerr << "We received an answer with an unknown sequence" << std::endl;
@@ -151,42 +153,42 @@ RequesterImpl::receiveAnswer(const std::string &code,
   }
 }	       
 
-std::string
+QString
 RequesterImpl::generateCallId()
 {
   std::ostringstream id;
   id << "cCallID:" << mCallIdCount;
   mCallIdCount++;
-  return id.str();
+  return QString::fromStdString(id.str());
 }
 
-std::string
+QString
 RequesterImpl::generateSessionId()
 {
   std::ostringstream id;
   id << "cSessionID:" << mSessionIdCount;
   mSessionIdCount++;
-  return id.str();
+  return QString::fromStdString(id.str());
 }
 
-std::string
+QString
 RequesterImpl::generateSequenceId()
 {
   std::ostringstream id;
   id << "cSequenceID:" << mSequenceIdCount;
   mSequenceIdCount++;
-  return id.str();
+  return QString::fromStdString(id.str());
 }
 
 void
-RequesterImpl::inputIsDown(const std::string &sessionId)
+RequesterImpl::inputIsDown(const QString &sessionId)
 {
-  std::map< std::string, SessionIO * >::iterator pos;
+  std::map< QString, SessionIO * >::iterator pos;
   pos = mSessions.find(sessionId);
   if(pos == mSessions.end()) {
     // we will not thow an exception, but this is 
     // a logic error
     _debug("SessionIO input for session %s is down, but we don't have that session.\n",
-	   sessionId.c_str());
+	   sessionId.toStdString().c_str());
   }
 }

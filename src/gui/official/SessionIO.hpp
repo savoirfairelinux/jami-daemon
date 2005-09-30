@@ -22,7 +22,7 @@
 #define __SESSIONIO_HPP__
 
 #include <QObject>
-#include <string>
+#include <QString>
 
 /**
  * This is the main class that will handle 
@@ -44,14 +44,14 @@ public slots:
    * send the data as it is; it will NOT add an EOL.
    * the stream will be "sync"ed.
    */
-  virtual void send(const std::string &request) = 0;
+  virtual void send(const QString &request) = 0;
 
   /**
    * You can use this function to receive answers.
    * This function will wait until there's an 
    * answer to be processed.
    */
-  virtual void receive(std::string &answer) = 0;
+  virtual void receive(QString &answer) = 0;
 
 };
 

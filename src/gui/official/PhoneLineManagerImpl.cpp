@@ -140,7 +140,10 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
   QMutexLocker guard(&mPhoneLinesMutex);
   mPhoneLines.clear();
   for(unsigned int i = 0; i < nb; i++) {
-    mPhoneLines.push_back(new PhoneLine(*mSession, i + 1));
+    PhoneLine *p = new PhoneLine(*mSession, i + 1);
+    QObject::connect(p, SIGNAL(lineStatusChanged(const QString &)),
+		     this, SIGNAL(lineStatusSet(const QString &)));
+    mPhoneLines.push_back(p);
   }
 }
 
@@ -194,7 +197,7 @@ PhoneLineManagerImpl::selectNextAvailableLine()
     // We don't need to lock it, since it is
     // done at the top.
     selectedLine->select();
-    emit lineStatusSet(QString::fromStdString(selectedLine->getLineStatus()));
+    emit lineStatusSet(selectedLine->getLineStatus());
   }
 
   return selectedLine;
@@ -216,7 +219,7 @@ PhoneLineManagerImpl::getPhoneLine(unsigned int line)
 }
 
 PhoneLine *
-PhoneLineManagerImpl::getPhoneLine(const std::string &callId)
+PhoneLineManagerImpl::getPhoneLine(const QString &callId)
 {
   isInitialized();
 
@@ -259,7 +262,7 @@ PhoneLineManagerImpl::sendKey(Qt::Key c)
 
 
 void 
-PhoneLineManagerImpl::selectLine(const std::string &callId, bool hardselect)
+PhoneLineManagerImpl::selectLine(const QString &callId, bool hardselect)
 {
   isInitialized();
 
@@ -281,7 +284,7 @@ PhoneLineManagerImpl::selectLine(const std::string &callId, bool hardselect)
   }
   else {
     _debug("PhoneLineManager: Tried to selected line with call ID (%s), "
-	   "which appears to be invalid.\n", callId.c_str());
+	   "which appears to be invalid.\n", callId.toStdString().c_str());
   }
 }
 
@@ -318,7 +321,7 @@ PhoneLineManagerImpl::selectLine(unsigned int line, bool hardselect)
 
       PhoneLineLocker guard(selectedLine);
       selectedLine->select(hardselect);
-      emit lineStatusSet(QString::fromStdString(selectedLine->getLineStatus()));
+      emit lineStatusSet(selectedLine->getLineStatus());
       if(selectedLine->isAvailable()) {
 	mSession->playTone();
       }
@@ -335,7 +338,7 @@ PhoneLineManagerImpl::call(const QString &to)
   PhoneLine *current = getCurrentLine();
   if(current) {
     PhoneLineLocker guard(current);
-    current->call(to.toStdString());
+    current->call(to);
   }
 }
 
@@ -379,7 +382,7 @@ PhoneLineManagerImpl::hangup()
 }
 
 void
-PhoneLineManagerImpl::hangup(const std::string &callId)
+PhoneLineManagerImpl::hangup(const QString &callId)
 {
   PhoneLine *selectedLine = getPhoneLine(callId);
   if(selectedLine) {
@@ -412,27 +415,27 @@ PhoneLineManagerImpl::clear()
 }
 
 void 
-PhoneLineManagerImpl::incomming(const std::string &,
-				const std::string &peer,
-				const std::string &callId)
+PhoneLineManagerImpl::incomming(const QString &,
+				const QString &peer,
+				const QString &callId)
 {
   Call call(*mSession, callId, true);
   addCall(call, peer, "Incomming");
 }
 
 void 
-PhoneLineManagerImpl::addCall(const std::string &,
-			      const std::string &callId,
-			      const std::string &peer,
-			      const std::string &state)
+PhoneLineManagerImpl::addCall(const QString &,
+			      const QString &callId,
+			      const QString &peer,
+			      const QString &state)
 {
   addCall(Call(*mSession, callId), peer, state);
 }
 
 void 
 PhoneLineManagerImpl::addCall(Call call,
-			      const std::string &peer,
-			      const std::string &state)
+			      const QString &peer,
+			      const QString &state)
 {
   PhoneLine *selectedLine = getNextAvailableLine();
   PhoneLineLocker guard(selectedLine, false);
@@ -444,7 +447,7 @@ PhoneLineManagerImpl::addCall(Call call,
   }
   else {
     _debug("PhoneLineManager: There's no available lines here for the incomming call ID: %s.\n",
-	   call.id().c_str());
+	   call.id().toStdString().c_str());
     call.notAvailable();
   }
 }
