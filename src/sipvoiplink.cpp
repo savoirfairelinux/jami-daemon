@@ -556,6 +556,22 @@ SipVoIPLink::getEvent (void)
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //
+    // TODO: remove this hack, when there is no 
+    // buffer overflow in event->request->bodies->body...
+    if (event->request!=NULL && event->request->bodies!=NULL) {
+      if (!osip_list_eol (event->request->bodies, 0)) {
+        osip_body_t* t = (osip_body_t *)osip_list_get (event->request->bodies, 0);
+        if (t!=NULL && t->body!=NULL) {
+          char *lastnewline = strrchr(t->body, '\n');
+          if (lastnewline != NULL ) {
+            lastnewline++;
+            if (*lastnewline != '\0') { 
+              _debug("EXOSIP_CALL_INVITE: request error patched\n"); }
+            *lastnewline = '\0';
+          }
+        }
+      }
+    }
     // Set local random port for incoming call
     if (!Manager::instance().useStun()) {
       setLocalPort(RANDOM_LOCAL_PORT);

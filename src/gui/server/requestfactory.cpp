@@ -37,7 +37,7 @@ RequestFactory::create(const std::string& requestLine)
     iter = tList.begin();
 
     // there is atleast a second token (the sequenceId)
-    if (iter != tList.end() && iter->find("seq") == 0 ) {
+    if (iter != tList.end() && iter->size() != 0 ) {
       std::string sequenceId = *iter;
       tList.pop_front();
       try {

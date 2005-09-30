@@ -5,7 +5,7 @@
 TEMPLATE = app
 TARGET += 
 DEPENDPATH += .
-INCLUDEPATH += .
+INCLUDEPATH +=  /usr/lib/qt4/include/Qt/
 QT += network
 #CONFIG += debug 
 
