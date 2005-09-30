@@ -136,8 +136,10 @@ public:
 };
 class RequestTransfer : public RequestGlobalCall {
 public:
-  RequestTransfer(const std::string &sequenceId, const TokenList& argList) : RequestGlobalCall(sequenceId,argList) {}
+  RequestTransfer(const std::string &sequenceId, const TokenList& argList);
   ResponseMessage execute();
+private:
+  std::string _destination;
 };
 class RequestHangup : public RequestGlobalCall {
 public:

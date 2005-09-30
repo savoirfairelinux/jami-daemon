@@ -75,6 +75,7 @@ arg);
   bool holdCall(const std::string& callId);
   bool unholdCall(const std::string& callId);
   bool hangupCall(const std::string& callId);
+  bool transferCall(const std::string& callId, const std::string& to);
   bool dtmfCall(const std::string& callId, const std::string& dtmfKey);
   bool hangupAll();
   bool getCurrentCallId(std::string& callId);

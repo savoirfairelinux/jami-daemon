@@ -162,6 +162,19 @@ GUIServerImpl::refuseCall(const std::string& callId)
   }
   return false;
 }
+bool 
+GUIServerImpl::transferCall(const std::string& callId, const std::string& to)
+{
+  try {
+    short id = getIdFromCallId(callId);
+    if (GuiFramework::transferCall(id, to)) {
+      return true;
+    }
+  } catch(...) {
+    return false;
+  }
+  return false;
+}
 
 bool
 GUIServerImpl::holdCall(const std::string& callId) 

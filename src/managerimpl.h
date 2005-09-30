@@ -379,6 +379,8 @@ private:
 
   Conf::ConfigTree _config;
 
+  void switchCall(short id);
+
 #ifdef USE_ZEROCONF
   // DNSService contain every zeroconf services
   //  configuration detected on the network

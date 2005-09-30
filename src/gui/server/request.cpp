@@ -66,10 +66,30 @@ RequestUnhold::execute()
   return message("500","Server Error");
 }
 
+RequestTransfer::RequestTransfer(const std::string &sequenceId, 
+    const TokenList& argList) : RequestGlobalCall(sequenceId, argList)
+{
+  TokenList::iterator iter = _argList.begin();
+
+  // check for the transfer destination
+  bool argsAreValid = false;
+  if (iter != _argList.end()) {
+    _destination = *iter;
+    _argList.pop_front();
+    argsAreValid = true;
+  }
+  if (!argsAreValid) {
+    throw RequestConstructorException();
+  }
+}
+
 ResponseMessage
 RequestTransfer::execute()
 {
-  return message("200","TODO");
+  if ( GUIServer::instance().transferCall(_callId, _destination) ) {
+    return message("200", "OK");
+  }
+  return message("500","Server Error");
 }
 
 ResponseMessage

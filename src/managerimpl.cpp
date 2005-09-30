@@ -405,7 +405,8 @@ ManagerImpl::answerCall (short id)
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Answered);
 	ringtone(false);
-  setCurrentCallId(id);
+
+  switchCall(id);
 	return call->answer();
 }
 
@@ -676,8 +677,8 @@ ManagerImpl::peerAnsweredCall (short id)
 
 	call->setState(Answered);
 	//if (isCurrentId(id)) {
-    setCurrentCallId(id);
-		_gui->peerAnsweredCall(id);
+  switchCall(id);
+  _gui->peerAnsweredCall(id);
 	//}
 }
 
@@ -1295,6 +1296,16 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
     returnValue = true;
   }
   return returnValue;
+}
+
+void 
+ManagerImpl::switchCall(short id)
+{
+  short currentCallId = getCurrentCallId();
+  if (currentCallId!=0 && id!=currentCallId) {
+    onHoldCall(currentCallId);
+  }
+  setCurrentCallId(id);
 }
 
 // EOF
