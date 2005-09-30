@@ -50,6 +50,8 @@ signals:
   void readyToSendStatus();
   void readyToHandleEvents();
   void gotErrorOnCallStatus();
+  void globalStatusSet(const QString &);
+  void lineStatusSet(const QString &);
 
 public slots:
   /**

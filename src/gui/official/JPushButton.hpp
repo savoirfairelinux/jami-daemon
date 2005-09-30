@@ -32,7 +32,8 @@
  * This class Emulate a PushButton but takes two
  * images to display its state.
  */
-class JPushButton : public QLabel {
+class JPushButton : public QLabel 
+{
   Q_OBJECT
     
 public:

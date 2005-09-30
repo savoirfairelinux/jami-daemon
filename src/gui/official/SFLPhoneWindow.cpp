@@ -10,8 +10,9 @@
 #include <iostream>
 
 #include "globals.h"
-#include "PhoneLineButton.hpp"
 #include "JPushButton.hpp"
+#include "PhoneLineButton.hpp"
+#include "SFLLcd.hpp"
 
 SFLPhoneWindow::SFLPhoneWindow()
   : QMainWindow(NULL, Qt::FramelessWindowHint)
@@ -32,19 +33,21 @@ SFLPhoneWindow::SFLPhoneWindow()
 
   mLastPos = pos();
   
-//   QLabel *os = new QLabel(this);
-//   QPixmap overscreen(":/images/overscreen.png");
-//   os->setPixmap(overscreen);
-//   os->resize(overscreen.size());
-//   os->move(22,44);
-
   initGUIButtons();
   initWindowButtons();
   initLineButtons();
+  initLCD();
 }
 
 SFLPhoneWindow::~SFLPhoneWindow()
 {}
+
+void
+SFLPhoneWindow::initLCD()
+{
+  mLcd = new SFLLcd(this);
+  mLcd->show();
+}
 
 void
 SFLPhoneWindow::initGUIButtons()

@@ -64,6 +64,7 @@ PhoneLineManagerImpl::start()
 {
   isInitialized();
 
+  emit globalStatusSet(QString(tr("Trying to connect to sflphone server..")));
   mSession->connect();
 }
 
@@ -78,6 +79,9 @@ void PhoneLineManagerImpl::isInitialized()
 void
 PhoneLineManagerImpl::connect()
 {
+  isInitialized();
+
+  emit globalStatusSet(QString(tr("Trying to connect to sflphone server..")));
   mSession->connect();
 }
 
@@ -86,6 +90,7 @@ PhoneLineManagerImpl::startSession()
 {
   isInitialized();
 
+  emit globalStatusSet(QString(tr("Trying to get line status...")));
   mSession->getCallStatus();
 }
 
@@ -94,6 +99,7 @@ PhoneLineManagerImpl::handleEvents()
 {
   isInitialized();
 
+  emit globalStatusSet(QString(tr("SFLPhone is ready to serve you, master.")));
   mSession->getEvents();
 }
 
@@ -188,6 +194,7 @@ PhoneLineManagerImpl::selectNextAvailableLine()
     // We don't need to lock it, since it is
     // done at the top.
     selectedLine->select();
+    emit lineStatusSet(QString::fromStdString(selectedLine->getLineStatus()));
   }
 
   return selectedLine;
@@ -311,6 +318,7 @@ PhoneLineManagerImpl::selectLine(unsigned int line, bool hardselect)
 
       PhoneLineLocker guard(selectedLine);
       selectedLine->select(hardselect);
+      emit lineStatusSet(QString::fromStdString(selectedLine->getLineStatus()));
       if(selectedLine->isAvailable()) {
 	mSession->playTone();
       }

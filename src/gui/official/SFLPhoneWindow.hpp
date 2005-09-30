@@ -3,8 +3,9 @@
 #include <QPoint>
 #include <list>
 
-class PhoneLineButton;
 class JPushButton;
+class PhoneLineButton;
+class SFLLcd;
 
 class SFLPhoneWindow : public QMainWindow
 {
@@ -17,6 +18,7 @@ public:
   ~SFLPhoneWindow();
 
 private:
+  void initLCD();
   void initGUIButtons();
   void initLineButtons();
   void initWindowButtons();
@@ -55,6 +57,8 @@ private:
   JPushButton *mHold;
   JPushButton *mOk;
   JPushButton *mClear;
+
+  SFLLcd *mLcd;
 
   QPoint mLastPos;
 };

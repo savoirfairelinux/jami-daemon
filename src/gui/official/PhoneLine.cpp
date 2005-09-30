@@ -10,12 +10,19 @@ PhoneLine::PhoneLine(const Session &session,
   , mCall(NULL)
   , mLine(line)
   , mSelected(false)
+    , mLineStatus("test")
 {}
 
 PhoneLine::~PhoneLine()
 {
   delete mCall;
   mCall = NULL;
+}
+
+std::string
+PhoneLine::getLineStatus()
+{ 
+  return mLineStatus;
 }
 
 unsigned int 

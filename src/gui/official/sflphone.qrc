@@ -29,5 +29,6 @@
         <file>images/ok_off.png</file>
         <file>images/ok_on.png</file>
         <file>images/overscreen.png</file>
+        <file>images/screen_main.png</file>
     </qresource>
 </RCC>

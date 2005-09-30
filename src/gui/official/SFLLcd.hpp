@@ -18,20 +18,51 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <iostream>
-#include <stdexcept>
-#include <string>
+#ifndef __SFLLCD_HPP__
+#define __SFLLCD_HPP__
 
-#include <QPushButton>
-#include "SFLPhoneApp.hpp"
-#include "SFLPhoneWindow.hpp"
+#include <QLabel>
+#include <QObject>
+#include <QPixmap>
+#include <QTime>
+#include <QTimer>
 
-int main(int argc, char **argv)
+class SFLLcd : public QLabel
 {
-  SFLPhoneApp app(argc, argv);
-  SFLPhoneWindow sfl;
-  app.initConnections(&sfl);
-  sfl.show();
-  PhoneLineManager::instance().start();
-  return app.exec();
-}
+  Q_OBJECT
+  
+public:
+  SFLLcd(QWidget *parent = NULL, Qt::WFlags flags = 0);
+
+  bool textIsTooBig(const QString &text);
+
+public slots:
+  virtual void paintEvent(QPaintEvent *event);
+  QString getTimeStatus();
+
+  void setGlobalStatus(const QString &global);
+  void setLineStatus(const QString &line);
+
+  void startTiming();
+  void stopTiming();
+  void updateText();
+  QString extractVisibleText(const QString &text, int &pos);
+  
+private:
+  QPixmap mScreen;
+  QPixmap mOverscreen;
+  
+  QString mGlobalStatus;
+  QString mLineStatus;
+  int mGlobalStatusPos;
+  int mLineStatusPos;
+
+  bool mIsTimed;
+  QTime mTime;
+  QTimer *mTimer;
+  QTimer *mTextTimer;
+
+  QFont mFont;
+};
+
+#endif

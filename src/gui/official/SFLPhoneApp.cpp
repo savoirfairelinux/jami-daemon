@@ -4,6 +4,7 @@
 #include "PhoneLineButton.hpp"
 #include "Requester.hpp"
 #include "SessionIOFactory.hpp"
+#include "SFLLcd.hpp"
 #include "SFLPhoneApp.hpp"
 #include "SFLPhoneWindow.hpp"
 #include "SFLRequest.hpp"
@@ -30,7 +31,6 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< CallRelatedRequest >(std::string("hold"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("unhold"));
   Requester::instance().registerObject< CallRelatedRequest >(std::string("hangup"));
-  PhoneLineManager::instance().start();
 }
 
 void
@@ -64,6 +64,16 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   &PhoneLineManager::instance(), SLOT(clear()));
   QObject::connect(w, SIGNAL(keyPressed(Qt::Key)),
 		   &PhoneLineManager::instance(), SLOT(sendKey(Qt::Key)));
+
+  // LCD Connections.
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(lineStatusSet(const QString &)),
+		   w->mLcd, SLOT(setLineStatus(const QString &)));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(globalStatusSet(const QString &)),
+		   w->mLcd, SLOT(setGlobalStatus(const QString &)));
+
+
+
+
   QObject::connect(&PhoneLineManager::instance(), SIGNAL(disconnected()),
 		   w, SLOT(askReconnect()));
   QObject::connect(w, SIGNAL(reconnectAsked()),
@@ -73,6 +83,7 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   w, SLOT(askResendStatus()));
   QObject::connect(w, SIGNAL(resendStatusAsked()),
 		   &PhoneLineManager::instance(), SIGNAL(readyToSendStatus()));
+
 
 }
 

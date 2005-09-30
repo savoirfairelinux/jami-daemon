@@ -33,6 +33,7 @@ HEADERS += Account.hpp \
            SessionIO.hpp \
            SessionIOFactory.hpp \
            SFLEvents.hpp \
+           SFLLcd.hpp \
            SFLPhoneApp.hpp \
            SFLPhoneWindow.hpp \
            SFLRequest.hpp \
@@ -42,7 +43,6 @@ HEADERS += Account.hpp \
            ObjectFactory.inl \
            RequesterImpl.inl \
            ObjectPool.inl
-FORMS += SFLPhoneWindow.ui
 SOURCES += Account.cpp \
            Call.cpp \
            CallStatus.cpp \
@@ -57,6 +57,7 @@ SOURCES += Account.cpp \
            RequesterImpl.cpp \
            Session.cpp \
            SFLEvents.cpp \
+           SFLLcd.cpp \
            SFLPhoneApp.cpp \
            SFLPhoneWindow.cpp \
            SFLRequest.cpp \

@@ -52,6 +52,8 @@ public:
   {return !mCall;}
 
   void sendKey(Qt::Key c);
+
+  std::string getLineStatus();
   
 public slots:
   void incomming(const Call &call);
@@ -96,4 +98,6 @@ private:
   bool mInUse;
   //This is the buffer when the line is not in use;
   std::string mBuffer;
+
+  std::string mLineStatus;
 };
