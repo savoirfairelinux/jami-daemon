@@ -290,6 +290,7 @@ private:
 	 * Initialize audiocodec
 	 */
 	void initAudioCodec(void);
+  void unloadAudioCodec(void);
 	
 	/*
 	 * Initialize audiodriver

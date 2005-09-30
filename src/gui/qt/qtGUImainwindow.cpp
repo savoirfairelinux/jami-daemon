@@ -1677,7 +1677,7 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 		_lcd->setIsScrolling(false);
 		phLines[getCurrentLine()]->setScrolling(false);
 	}
-
+  AudioLayer* audiolayer = Manager::instance().getAudioDriver();
 	// To generate the dtmf if there is no error in configuration
 	if (Manager::instance().error()->getError() == 0) {
 		// Handle dtmf
@@ -1697,19 +1697,19 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j] * spkrVolume/100;
 		}
 			
-		Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
+		audiolayer->urgentRingBuffer().flush();
 		// Put buffer to urgentRingBuffer 
-		Manager::instance().getAudioDriver()->urgentRingBuffer().Put(buf_ctrl_vol, 
+		audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, 
 				size * CHANNELS);
 
 		// We activate the stream if it's not active yet.
-		if (!Manager::instance().getAudioDriver()->isStreamActive()) {
-			Manager::instance().getAudioDriver()->startStream();
-			Manager::instance().getAudioDriver()->sleep(pulselen);
-			Manager::instance().getAudioDriver()->stopStream();
-			Manager::instance().getAudioDriver()->urgentRingBuffer().flush();
+		if (!audiolayer->isStreamActive()) {
+			audiolayer->startStream();
+			audiolayer->sleep(pulselen);
+			audiolayer->stopStream();
+			audiolayer->urgentRingBuffer().flush();
 		} else {
-			Manager::instance().getAudioDriver()->sleep(pulselen);
+			audiolayer->sleep(pulselen);
 		}
 			
 		delete[] buf_ctrl_vol;

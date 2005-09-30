@@ -52,16 +52,18 @@ ResponseMessage
 RequestCallStatus::execute()
 {
   GUIServer::instance().sendGetEventsEnd();
+  TokenList tk;
+  tk.push_back("OK");
+  std::string code = "205";
+  GUIServer::instance().getCallStatus(_sequenceId);
+
   std::string callid;
   if (GUIServer::instance().getCurrentCallId(callid)) {
-    GUIServer::instance().getCallStatus(_sequenceId);
-    TokenList tk;
-    tk.push_back(callid);
-    tk.push_back("OK");
-    return message("205", tk);
+    tk.push_front(callid);
   } else {
-    return message("206","OK");
+    code = "206";
   }
+  return message(code, tk);
 }
 
 ResponseMessage

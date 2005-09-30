@@ -114,9 +114,12 @@ ManagerImpl::~ManagerImpl (void)
     delete *pos;
   }
 
+  unloadAudioCodec();
+
   delete _error;
   delete _tone;
   delete _audiodriverPA;
+
 #ifdef USE_ZEROCONF
   delete _DNSService;
 #endif
@@ -129,14 +132,9 @@ ManagerImpl::init (void)
   initZeroconf();
   initVolume();
 
-  // Set a sip voip link by default
-  _voIPLinkVector.push_back(new SipVoIPLink(DFT_VOIP_LINK));
-
   if (_exist == 0) {
     _debug("Cannot create config file in your home directory\n");
   } 
-
-  initAudioCodec();
 
   try {
     selectAudioDriver();
@@ -145,23 +143,29 @@ ManagerImpl::init (void)
   catch (const portaudio::PaException &e)
     {
       displayError(e.paErrorText());
+      throw e;
     }
   catch (const portaudio::PaCppException &e)
     {
       displayError(e.what());
+      throw e;
     }
   catch (const exception &e)
     {
       displayError(e.what());
+      throw e;
     }
   catch (...)
     { 
       displayError("An unknown exception occured.");
+      throw;
     }
 
+  initAudioCodec();
+
+  // Set a sip voip link by default
+  _voIPLinkVector.push_back(new SipVoIPLink(DFT_VOIP_LINK));
   _voIPLinkVector.at(DFT_VOIP_LINK)->init();
-
-
 
   if (_voIPLinkVector.at(DFT_VOIP_LINK)->checkNetwork()) {
     // If network is available
@@ -336,6 +340,7 @@ ManagerImpl::outgoingCall (const string& to)
 	
 	call->setStatus(string(TRYING_STATUS));
 	call->setState(Progressing);
+  call->setCallerIdNumber(to);
 	if (call->outgoingCall(to) == 0) {
 		return id;
 	} else {
@@ -438,6 +443,7 @@ ManagerImpl::transferCall (short id, const string& to)
 		return -1;
 	call->setStatus(string(TRANSFER_STATUS));
 	call->setState(Transfered);
+  setCurrentCallId(0);
 	return call->transfer(to);
 }
 void
@@ -480,13 +486,18 @@ ManagerImpl::refuseCall (short id)
 	call = getCall(id);
 	if (call == NULL)
 		return -1;
-	call->setStatus(string(HUNGUP_STATUS));
-	call->setState(Refused);	
-	ringtone(false);
-	_mutex.enterMutex();
-	_nCalls -= 1;
-	_mutex.leaveMutex();
-	deleteCall(id);
+  // don't cause a very bad segmentation fault
+  // we refuse the call when we are trying to establish connection
+  if ( call->getState() != Progressing )
+    return -1;
+
+  call->setStatus(string(HUNGUP_STATUS));
+  call->setState(Refused);	
+  ringtone(false);
+  _mutex.enterMutex();
+  _nCalls -= 1;
+  _mutex.leaveMutex();
+  deleteCall(id);
   setCurrentCallId(0);
 	return call->refuse();
 }
@@ -665,6 +676,7 @@ ManagerImpl::peerAnsweredCall (short id)
 
 	call->setState(Answered);
 	//if (isCurrentId(id)) {
+    setCurrentCallId(id);
 		_gui->peerAnsweredCall(id);
 	//}
 }
@@ -979,8 +991,6 @@ ManagerImpl::createSettingsPath (void) {
 void
 ManagerImpl::initConfigFile (void) 
 {
-  _exist = createSettingsPath();
-
   std::string type_str("string");
   std::string type_int("int");
 
@@ -1019,6 +1029,8 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CHECKED_TRAY, NO_STR);
   fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
+
+  _exist = createSettingsPath();
 
   // old way
 	fill_config_fields_int(SIGNALISATION, VOIP_LINK_ID, DFT_VOIP_LINK);
@@ -1074,13 +1086,30 @@ ManagerImpl::initAudioCodec (void)
 				get_config_fields_str(AUDIO, CODEC3)));
 }
 
+void 
+ManagerImpl::unloadAudioCodec()
+{
+  CodecDescriptorVector::iterator iter = _codecDescVector.begin();
+  while(iter!=_codecDescVector.end()) {
+    delete *iter;
+    *iter = NULL;
+    _codecDescVector.erase(iter);
+    iter++;
+  }
+}
+
+
 void
 ManagerImpl::selectAudioDriver (void)
 {
 	
 #if defined(AUDIO_PORTAUDIO)
+  try {
 	_audiodriverPA = new AudioLayer();
 	_audiodriverPA->openDevice(get_config_fields_int(AUDIO, DRIVER_NAME));
+  } catch(...) {
+    throw;
+  }
 #else
 # error You must define one AUDIO driver to use.
 #endif
@@ -1170,11 +1199,52 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
 {
   // TODO: implement account
   std::string accountId = "acc1"; 
+  std::string code;
+  TokenList tk;
+  Call* call;
+
   if (_gui!=NULL) {
     CallVector::iterator iter = _callVector.begin();
     while(iter!=_callVector.end()){
-      _gui->sendCallMessage(sequenceId, (*iter)->getId(), accountId, (*iter)->getStatus());
+      call = (*iter);
+      std::string status = call->getStatus();
+      switch( call->getState() ) {
+      case Busy:
+        code="113";
+        break;
+
+      case Answered:
+        code="112";
+        status = "Established";
+        break;
+
+      case Ringing:
+        code="111";
+        break;
+
+      case Progressing:
+        code="110";
+        status="Trying";
+        break;
+      default:
+        code="115";
+      }
+      // No Congestion
+      // No Wrong Number
+      // 116 <CSeq> <call-id> <acc> <destination> Busy
+      std::string destination = call->getCallerIdName();
+      std::string number = call->getCallerIdNumber();
+      if (number!="") {
+        destination.append(" <");
+        destination.append(number);
+        destination.append(">");
+      }
+      tk.push_back(accountId);
+      tk.push_back(destination);
+      tk.push_back(status);
+      _gui->sendCallMessage(code, sequenceId, (*iter)->getId(), tk);
       iter++;
+      tk.clear();
     }
   }
   return true;

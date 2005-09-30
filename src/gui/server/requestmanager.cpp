@@ -87,7 +87,7 @@ RequestManager::exec()
     } // end while
  
   } catch(ost::Socket *e) {
-    std::cerr << e->getErrorString() << std::endl;
+    std::cerr << "Exception: " << e->getErrorString() << std::endl;
   }
   return 0;
 }

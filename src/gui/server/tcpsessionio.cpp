@@ -20,10 +20,10 @@ TCPSessionIO::TCPSessionIO() : SessionIO()
   ost::InetAddress addr(IP);
 
   //Creating a listening socket
-  _serverSocket = new ost::TCPSocket(addr, PORT);
-  if (_serverSocket == 0 ) {
-    throw new ost::SockException(ost::String("Unable to bind port"),
-ost::Socket::errBindingFailed);
+  try {
+    _serverSocket = new ost::TCPSocket(addr, PORT);
+  } catch( ost::Socket *e ) {
+    throw e;
   }
 }
 

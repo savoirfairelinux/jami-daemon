@@ -59,11 +59,10 @@ public:
 
   void sendMessage(const std::string& code, const std::string& seqId, TokenList&
 arg);
-  void sendCallMessage(const std::string& seqId, 
-    short id,
-    const std::string& accountId,
-    const std::string& status
-  );
+  void sendCallMessage(const std::string& code, 
+  const std::string& sequenceId, 
+  short id, 
+  TokenList arg);
 
   bool getEvents(const std::string& sequenceId);
   bool sendGetEventsEnd();

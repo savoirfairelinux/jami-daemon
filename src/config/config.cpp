@@ -150,6 +150,8 @@ ConfigTree::setConfigTreeItem(const std::string& section, const std::string& ite
 }
 
 // Save config to a file (ini format)
+// return false if empty, no config, or enable to open
+// return true if everything is ok
 bool 
 ConfigTree::saveConfigTree(const std::string& fileName) {
   if (fileName.empty() && _sections.begin() == _sections.end() ) {
@@ -178,7 +180,7 @@ ConfigTree::saveConfigTree(const std::string& fileName) {
   }
 
   file.close();
-  return false;
+  return true;
 }
 
 // Create the tree from an existing ini file

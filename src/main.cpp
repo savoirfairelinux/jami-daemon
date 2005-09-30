@@ -42,21 +42,25 @@ main (int argc, char **argv) {
 
 #if defined(ENABLE_MAINTENER)
   {
-    Manager::instance().initConfigFile();
+    bool initOK = false;
     try {
+      Manager::instance().initConfigFile();
       Manager::instance().init();
+      initOK = true;
     }
     catch (...) {
       std::cerr << 
-	"An unknown exception occured when initializing the system." << 
-	std::endl;
+    "An exception occured when initializing the system." << 
+    std::endl;
     }
-    GUI = &(GUIServer::instance());
-    Manager::instance().setGui(GUI);
-    exit_code = GUIServer::instance().exec();
-    Manager::instance().terminate();
-    delete GUI;
-  }  
+    if (initOK) {
+      GUI = &(GUIServer::instance());
+      Manager::instance().setGui(GUI);
+      exit_code = GUIServer::instance().exec();
+      Manager::instance().terminate();
+      delete GUI;
+    }
+  }
 #elif defined(GUI_QT)
   {
     QApplication a(argc, argv);

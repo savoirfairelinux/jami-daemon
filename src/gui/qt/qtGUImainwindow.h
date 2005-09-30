@@ -97,11 +97,10 @@ public:
 	virtual std::string getRingtoneFile (void);
 	virtual void setup (void);
 	virtual void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg) {}
-	virtual void sendCallMessage(const std::string& seqId, 
-    short id,
-    const std::string& accountId,
-    const std::string& status
-  ) {}
+	virtual void sendCallMessage(const std::string& code, 
+  const std::string& sequenceId, 
+  short id, 
+  TokenList arg) {}
 
 
 		

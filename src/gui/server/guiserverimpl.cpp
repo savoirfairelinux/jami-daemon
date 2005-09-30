@@ -389,19 +389,15 @@ GUIServerImpl::sendMessage(const std::string& code, const std::string& seqId, To
 }
 
 void 
-GUIServerImpl::sendCallMessage(const std::string& seqId, 
-    short id,
-    const std::string& accountId,
-    const std::string& status
-  ) 
+GUIServerImpl::sendCallMessage(const std::string& code, 
+  const std::string& sequenceId, 
+  short id, 
+  TokenList arg) 
 {
   try {
     std::string callid = getCallIdFromId(id);
-    TokenList arg;
-    arg.push_back(callid);
-    arg.push_back(accountId);
-    arg.push_back(status);
-    _requestManager.sendResponse(ResponseMessage("100", seqId, arg));
+    arg.push_front(callid);
+    _requestManager.sendResponse(ResponseMessage(code, sequenceId, arg));
   } catch(...) {
     // no callid found
   }
