@@ -103,7 +103,6 @@ PhoneLine::unselect(bool hardselect)
       emit backgrounded();
     }
     else {
-      clear();
       emit unselected();
     }
   }
@@ -126,6 +125,7 @@ void
 PhoneLine::clear()
 { 
   mBuffer.clear();
+  emit bufferStatusChanged(mBuffer);
 }
 
 void 
@@ -147,6 +147,7 @@ PhoneLine::sendKey(Qt::Key c)
       if(!mCall) {
 	mSession.playDtmf(c);
 	mBuffer += QString(c);
+	emit bufferStatusChanged(mBuffer);
       }
       else {
 	mCall->sendDtmf(c);
@@ -171,6 +172,7 @@ PhoneLine::call(const QString &to)
     setLineStatus("Calling " + to + "...");
     mCall = new Call(mSession.createCall());
     mCall->call(to);
+    clear();
   }
 }
 
@@ -215,6 +217,9 @@ PhoneLine::hangup()
     mCall->hangup();
     delete mCall;
     mCall = NULL;
+  }
+  else {
+    clear();
   }
 
   //This is a hack for unselect;

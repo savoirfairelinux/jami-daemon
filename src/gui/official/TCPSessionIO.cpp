@@ -86,7 +86,7 @@ TCPSessionIO::send(const QString &request)
 {
   QTextStream stream(mSocket);
   if(mSocket->state() == QAbstractSocket::ConnectedState) {
-    _debug("Sending request to sflphone: %s", 
+    _debug("TCPSessioIO: Sending request to sflphone: %s", 
 	   request.toStdString().c_str());
     stream << request;
   }
@@ -103,6 +103,8 @@ TCPSessionIO::receive(QString &answer)
   if(mSocket->isReadable()) {
     QTextStream stream(mSocket);
     answer = stream.readLine();
+    _debug("TCPSessionIO: Received answer from sflphone: %s", 
+	   answer.toStdString().c_str());
   }
 }
 

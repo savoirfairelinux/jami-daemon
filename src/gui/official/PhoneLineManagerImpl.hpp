@@ -51,6 +51,7 @@ signals:
   void readyToHandleEvents();
   void gotErrorOnCallStatus();
   void globalStatusSet(const QString &);
+  void bufferStatusSet(const QString &);
   void lineStatusSet(const QString &);
 
 public slots:

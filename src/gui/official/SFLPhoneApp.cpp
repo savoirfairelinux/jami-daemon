@@ -70,6 +70,8 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   w->mLcd, SLOT(setLineStatus(const QString &)));
   QObject::connect(&PhoneLineManager::instance(), SIGNAL(globalStatusSet(const QString &)),
 		   w->mLcd, SLOT(setGlobalStatus(const QString &)));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(bufferStatusSet(const QString &)),
+		   w->mLcd, SLOT(setBufferStatus(const QString &)));
 
 
 

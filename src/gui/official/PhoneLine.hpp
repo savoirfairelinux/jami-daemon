@@ -56,6 +56,8 @@ public:
   void sendKey(Qt::Key c);
 
   QString getLineStatus();
+  QString getBuffer()
+  {return mBuffer;}
   void setLineStatus(const QString &);
   
 public slots:
@@ -91,6 +93,7 @@ signals:
   void unselected();
   void backgrounded();
   void lineStatusChanged(const QString &);
+  void bufferStatusChanged(const QString &);
 
 private:
   Session mSession;

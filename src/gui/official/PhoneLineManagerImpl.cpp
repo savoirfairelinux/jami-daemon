@@ -143,6 +143,8 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
     PhoneLine *p = new PhoneLine(*mSession, i + 1);
     QObject::connect(p, SIGNAL(lineStatusChanged(const QString &)),
 		     this, SIGNAL(lineStatusSet(const QString &)));
+    QObject::connect(p, SIGNAL(bufferStatusChanged(const QString &)),
+		     this, SIGNAL(bufferStatusSet(const QString &)));
     mPhoneLines.push_back(p);
   }
 }
@@ -198,6 +200,7 @@ PhoneLineManagerImpl::selectNextAvailableLine()
     // done at the top.
     selectedLine->select();
     emit lineStatusSet(selectedLine->getLineStatus());
+    emit bufferStatusSet(selectedLine->getBuffer());
   }
 
   return selectedLine;
@@ -322,6 +325,7 @@ PhoneLineManagerImpl::selectLine(unsigned int line, bool hardselect)
       PhoneLineLocker guard(selectedLine);
       selectedLine->select(hardselect);
       emit lineStatusSet(selectedLine->getLineStatus());
+      emit bufferStatusSet(selectedLine->getBuffer());
       if(selectedLine->isAvailable()) {
 	mSession->playTone();
       }

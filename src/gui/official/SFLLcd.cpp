@@ -16,6 +16,7 @@ SFLLcd::SFLLcd(QWidget *parent, Qt::WFlags flags)
   , mOverscreen(JPushButton::transparize(":/sflphone/images/overscreen.png"))
   , mGlobalStatusPos(-1)
   , mLineStatusPos(-1)
+  , mBufferStatusPos(-1)
   , mIsTimed(false)
   , mFont(FONT_FAMILY, FONT_SIZE)
 {
@@ -40,6 +41,10 @@ SFLLcd::updateText()
 
   if(mLineStatusPos >= 0) {
     mLineStatusPos++;
+  }
+
+  if(mBufferStatusPos >= 0) {
+    mBufferStatusPos++;
   }
 }
 
@@ -69,10 +74,22 @@ SFLLcd::setGlobalStatus(const QString &global)
 }
 
 void
+SFLLcd::setBufferStatus(const QString &buffer)
+{
+  if(textIsTooBig(buffer)) {
+    mBufferStatusPos = 0;
+  }
+  else {
+    mBufferStatusPos = -1;
+  }
+  mBufferStatus = buffer;
+}
+
+void
 SFLLcd::setLineStatus(const QString &line)
 {
   if(textIsTooBig(line)) {
-    mGlobalStatusPos = 0;
+    mLineStatusPos = 0;
   }
   else {
     mLineStatusPos = -1;
@@ -116,6 +133,8 @@ SFLLcd::paintEvent(QPaintEvent *)
 	     extractVisibleText(mGlobalStatus, mGlobalStatusPos));
   p.drawText(QPoint(margin, 2*fm.height()), 
 	     extractVisibleText(mLineStatus, mLineStatusPos));
+  p.drawText(QPoint(margin, 3*fm.height()), 
+	     extractVisibleText(mBufferStatus, mBufferStatusPos));
 
   p.drawText(QPoint(margin, mScreen.size().height() - margin), getTimeStatus());
   //p.drawPixmap(0,0, mScreen);
