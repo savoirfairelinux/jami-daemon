@@ -59,11 +59,11 @@ RequestManager::exec()
       std::string output;
       Request *request;
 
+      _quit = false;
       _sessionIO->init();
 
       // std::cin.good() is only there to close the server when
       // we do a CTRL+D
-      quit = false;
       while(_sessionIO && _sessionIO->good() && std::cin.good() && !_quit) {
 
         if (_sessionIO->receive(input)) {

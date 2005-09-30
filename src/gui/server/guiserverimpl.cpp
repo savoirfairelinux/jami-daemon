@@ -82,16 +82,17 @@ GUIServerImpl::getCallIdFromId(short id) {
 
 bool
 GUIServerImpl::getCurrentCallId(std::string& callId) {
+  bool returnValue = false;
   try {
     short id = GuiFramework::getCurrentId();
     if (id!=0) {
       callId = getCallIdFromId(id);
+      returnValue = true;
     }
-    return true;
   } catch(...) {
-    return false;
+    // nothing, it's false
   }
-  return false;
+  return returnValue;
 }
 
 short

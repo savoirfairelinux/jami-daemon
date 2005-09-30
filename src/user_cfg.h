@@ -73,7 +73,7 @@
 
 // speakers and volume 0 to 100
 #define VOLUME_SPKR	"Volume.speakers"
-#define VOLUME_MICRO	"Volume.speakers"
+#define VOLUME_MICRO	"Volume.micro"
 
 #define VOLUME_SPKR_X	"Volume.speakers_x"
 #define VOLUME_SPKR_Y	"Volume.speakers_y"
@@ -85,7 +85,7 @@
 #define CHECKED_TRAY	"Options.checkedTray"
 #define VOICEMAIL_NUM	"Options.voicemailNumber"
 // zeroconfig module
-#define CONFIG_ZEROCONF "zeroconf.enable"
+#define CONFIG_ZEROCONF "Zeroconf.enable"
 
 // Default values
 #define DFT_VOIP_LINK		0	// index of the first VoIP link by default
