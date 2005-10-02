@@ -56,6 +56,9 @@
 #define CODEC4			"Codecs.codec4"
 #define CODEC5			"Codecs.codec5"
 #define RING_CHOICE		"Rings.ringChoice"
+#define LOCAL_IP    "Local.IP"
+#define LOCAL_IP_DEFAULT "127.0.0.1"
+
 
 // speakers and volume 0 to 100
 #define VOLUME_SPKR	"Volume.speakers"

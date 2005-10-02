@@ -1004,6 +1004,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
   fill_config_str(STUN_SERVER, DFT_STUN_SERVER);
   fill_config_int(USE_STUN, NO_STR);
+  fill_config_int(LOCAL_IP, LOCAL_IP_DEFAULT);
 
   section = AUDIO;
   fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);

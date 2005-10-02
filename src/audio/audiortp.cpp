@@ -106,9 +106,10 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall,
 	_audioDevice = driver;
 
 	// TODO: Change bind address according to user settings.
-	InetHostAddress local_ip("127.0.0.1");
+  std::string localipConfig = Manager::instance().getConfigString(SIGNALISATION,LOCAL_IP);
+	InetHostAddress local_ip(localipConfig.c_str());
 
-	_debug("RTP: listening on local port : %d\n", _ca->getLocalAudioPort());
+	_debug("RTP: listening on IP %s local port : %d\n", localipConfig.c_str(), _ca->getLocalAudioPort());
 	if (!_sym) {
 		_sessionRecv = new RTPSession (local_ip, _ca->getLocalAudioPort());
 		_sessionSend = new RTPSession (local_ip);
