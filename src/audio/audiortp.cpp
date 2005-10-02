@@ -31,7 +31,6 @@
 #include "audiolayer.h"
 #include "codecDescriptor.h"
 #include "ringbuffer.h"
-#include "../configuration.h"
 #include "../user_cfg.h"
 #include "../sipcall.h"
 #include "../../stund/stun.h"
@@ -107,7 +106,7 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall,
 	_audioDevice = driver;
 
 	// TODO: Change bind address according to user settings.
-	InetHostAddress local_ip("192.168.1.172");
+	InetHostAddress local_ip("127.0.0.1");
 
 	_debug("RTP: listening on local port : %d\n", _ca->getLocalAudioPort());
 	if (!_sym) {

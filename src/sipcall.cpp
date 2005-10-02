@@ -185,27 +185,24 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
     }
 
   	if (remote_sdp == NULL) {
-      	_debug("missing SDP in INVITE request\n");
+      	_debug("SipCall::newIncomingCall: missing SDP in INVITE request\n");
     }
 
   	if (remote_sdp != NULL) {      /* TODO: else build an offer */
-      	sdp_connection_t *conn;
-      	sdp_media_t *remote_med;
-		char *tmp = NULL;
 
       	if (remote_sdp == NULL) {
-        	_debug("No remote SDP body found for call\n");
+        	_debug("SipCall::newIncomingCall: No remote SDP body found for call\n");
 			// Send 400 BAD REQUEST
           	eXosip_call_send_answer (_tid, 400, NULL);
-	  		sdp_message_free (remote_sdp);
+	  		    sdp_message_free (remote_sdp);
           	return 0;
         }
 
-      	conn = eXosip_get_audio_connection (remote_sdp);
+        sdp_connection_t *conn = eXosip_get_audio_connection (remote_sdp);
       	if (conn != NULL && conn->c_addr != NULL) {
           	snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
         }
-      	remote_med = eXosip_get_audio_media (remote_sdp);
+        sdp_media_t *remote_med = eXosip_get_audio_media (remote_sdp);
 
       	if (remote_med == NULL || remote_med->m_port == NULL) {
           	/* no audio media proposed */
@@ -217,6 +214,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
 
       	_remote_sdp_audio_port = atoi (remote_med->m_port);
 
+    char *tmp = NULL;
 		if (_remote_sdp_audio_port > 0 && _remote_sdp_audio_ip[0] != '\0') {
 			int pos;
 			pos = 0;
@@ -292,7 +290,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
                         }
                       	if (tmp != NULL) {
                           	ca->payload = atoi (tmp);
-    						_debug("For incoming payload = %d\n", ca->payload);
+    						_debug("SipCall::newIncomingCall: For incoming payload = %d\n", ca->payload);
     						setAudioCodec(_cdv->at(0)->alloc(ca->payload, ""));
                         }
 						if (tmp != NULL
@@ -320,7 +318,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
             }
 
             if (i != 0) {
-              	_debug("cannot send 183 progress?\n");
+              	_debug("SipCall::newIncomingCall: cannot send 183 progress?\n");
             }
       	}
       	eXosip_unlock ();
@@ -367,11 +365,11 @@ SipCall::ringingCall (eXosip_event_t *event) {
     local_sdp = eXosip_get_sdp_info (event->request);
     remote_sdp = eXosip_get_sdp_info (event->response);
     if (remote_sdp == NULL) {
-    	_debug("No remote SDP body found for call\n");
+    	_debug("SipCall::ringingCall: No remote SDP body found for call\n");
           /* TODO: remote_sdp = retreive from ack above */
     }
     if (local_sdp == NULL) {
-    	_debug("SDP body was probably in the ACK (TODO)\n");
+    	_debug("SipCall::ringingCall: SDP body was probably in the ACK (TODO)\n");
     }
     if (remote_sdp != NULL && local_sdp != NULL) {
         sdp_connection_t *conn;
@@ -430,14 +428,13 @@ SipCall::receivedAck (eXosip_event_t *event)
     _cid = event->cid;
     _did = event->did;
 
-
   	if (event->ack != NULL) {
       	sdp_message_t *remote_sdp;
       	remote_sdp = eXosip_get_sdp_info (event->ack);
       	if (remote_sdp != NULL) {
-	  		_debug("SDP detected in ACK!\n");
+	  		_debug("SipCall::receivedAck: SDP detected in ACK!\n");
 		} else {
-	  		_debug("no SDP detected in ACK!\n");
+	  		_debug("SipCall::receivedAck: no SDP detected in ACK!\n");
 		}
     }
 
@@ -448,7 +445,7 @@ SipCall::receivedAck (eXosip_event_t *event)
       	remote_sdp = eXosip_get_remote_sdp (_did);
       	local_sdp = eXosip_get_local_sdp (_did);
       	if (remote_sdp == NULL) {
-          	_debug("No remote SDP body found for call\n");
+          	_debug("SipCall::receivedAck: No remote SDP body found for call\n");
         }
       	if (remote_sdp != NULL && local_sdp != NULL) {
           	sdp_connection_t *conn;
@@ -535,7 +532,7 @@ SipCall::answeredCall(eXosip_event_t *event) {
 
     i = eXosip_call_build_ack (_did, &ack);
     if (i != 0) {
-    	_debug("Cannot build ACK for call!\n");
+    	_debug("SipCall::answeredCall: Cannot build ACK for call!\n");
     } else {
         sdp_message_t *local_sdp = NULL;
         sdp_message_t *remote_sdp = NULL;
@@ -548,7 +545,7 @@ SipCall::answeredCall(eXosip_event_t *event) {
             /* sdp in ACK */
             i = sdp_complete_message (remote_sdp, ack);
             if (i != 0) {
-                _debug("Cannot complete ACK with sdp body?!\n");
+                _debug("SipCall::answeredCall: Cannot complete ACK with sdp body?!\n");
             }
         }
 		sdp_message_free (local_sdp);
@@ -586,7 +583,7 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
     sdp_message_t *remote_sdp = eXosip_get_sdp_info (event->response);
 
     if (remote_sdp == NULL) {
-      _debug("No remote SDP body found for call\n");
+      _debug("SipCall::answeredCall_without_hold: No remote SDP body found for call\n");
       /* TODO: remote_sdp = retreive from ack above */
     } else {
 
@@ -606,14 +603,14 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
 
       if (tmp != NULL) {
         ca->payload = atoi (tmp);
-        _debug("For outgoing call: ca->payload = %d\n", ca->payload);
+        _debug("SipCall::answeredCall_without_hold: For outgoing call: ca->payload = %d\n", ca->payload);
         setAudioCodec(_cdv->at(0)->alloc(ca->payload, ""));
       }
 
     }
 
     if (local_sdp == NULL) {
-        _debug("SDP body was probably in the ACK (TODO)\n");
+      _debug("SipCall::answeredCall_without_hold: SDP body was probably in the ACK (TODO)\n");
     }
 
     if (remote_sdp != NULL && local_sdp != NULL) {
@@ -662,11 +659,11 @@ SipCall::sdp_complete_message(sdp_message_t * remote_sdp,
 	snprintf(port_tmp, 63, "%d", _local_audio_port);
 	
   	if (remote_sdp == NULL) {
-      	_debug("No remote SDP body found for call\n");
+      	_debug("SipCall::sdp_complete_message: No remote SDP body found for call\n");
       	return -1;
     }
   	if (msg == NULL) {
-    	_debug("No message to complete\n");
+    	_debug("SipCall::sdp_complete_message: No message to complete\n");
       	return -1;
     }
 
@@ -793,7 +790,7 @@ SipCall::alloc(void) {
   this->_reason_phrase[0] = '\0';
   this->_textinfo[0] = '\0';
   this->_remote_uri[0] = '\0';
-  strcpy(this->_remote_sdp_audio_ip, "0.0.0.0");
+  strcpy(this->_remote_sdp_audio_ip, "127.0.0.1");
 }
 
 void
@@ -806,6 +803,6 @@ SipCall::dealloc(void) {
 
 void
 SipCall::noSupportedCodec (void) {
-	_debug("Codec no supported\n");
+	_debug("SipCall::noSupportedCodec: Codec no supported\n");
 }
 

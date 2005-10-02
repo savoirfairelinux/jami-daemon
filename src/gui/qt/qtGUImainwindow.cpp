@@ -18,7 +18,6 @@
  */
 
 
-#include "../../configurationtree.h"
 #include <stdio.h>
 
 #include <qcheckbox.h>
@@ -35,7 +34,6 @@
 #include "../../audio/audiolayer.h"
 #include "../../audio/dtmf.h"
 #include "../../audio/ringbuffer.h"
-#include "../../configuration.h"
 #include "../../error.h"
 #include "../../global.h"
 #include "../../manager.h"
@@ -239,22 +237,28 @@ QtGUIMainWindow::initBlinkTimer(void) {
  */
 QString
 QtGUIMainWindow::setPathSkin (void) {
-	return QString(Config::getchar(
-					"Preferences", "Themes.skinChoice", "metal"));
+  std::string skinChoice = Manager::instance().getConfigString("Preferences",
+"Themes.skinChoice");
+  if ( skinChoice.empty() ) {
+    skinChoice = "metal";
+    Manager::instance().setConfig("Preferences", "Themes.skinChoice",
+skinChoice);
+  }
+	return QString(skinChoice);
 }
 
 /**
  * Init variable with ring choice
  */
-string
+std::string
 QtGUIMainWindow::ringFile(void) {
-	return get_config_fields_str(AUDIO, RING_CHOICE);
+	return Manager::instance().getConfigString(AUDIO, RING_CHOICE);
 }
 
 /**
  * Get whole path for rings
  */
-string
+std::string
 QtGUIMainWindow::getRingtoneFile (void) {
 	string ringFilename(Skin::getPathRing(string(RINGDIR), ringFile()));
 	return ringFilename;
@@ -313,8 +317,9 @@ QtGUIMainWindow::initSkin (void) {
 
 void
 QtGUIMainWindow::initSpkrVolumePosition (void) {
+/*
     if (pt->getDirection(VOL_SPKR) == VERTICAL) {
-        vol_spkr_x = Config::get("Audio", "Volume.speakers_x",
+        vol_spkr_x = Manager::("Audio", "Volume.speakers_x",
                 pt->getX(VOL_SPKR));
         vol_spkr_y = Config::get("Audio", "Volume.speakers_y",
                 pt->getVariation(VOL_SPKR));
@@ -324,10 +329,14 @@ QtGUIMainWindow::initSpkrVolumePosition (void) {
         vol_spkr_y = Config::get("Audio", "Volume.speakers_y",
                 pt->getY(VOL_SPKR));
     }
+ // TODO: will have to calculate the volume with pourcentage
+*/
 }
                                                                                 
 void
 QtGUIMainWindow::initMicVolumePosition (void) {
+/*
+  // TODO: will have to calculate the volume with pourcetage
     if (pt->getDirection(VOL_MIC) == VERTICAL) {
         vol_mic_x = Config::get("Audio", "Volume.micro_x", pt->getX(VOL_MIC));
         vol_mic_y = Config::get("Audio", "Volume.micro_y",
@@ -337,13 +346,15 @@ QtGUIMainWindow::initMicVolumePosition (void) {
                 pt->getX(VOL_MIC) + pt->getVariation(VOL_MIC));
         vol_mic_y = Config::get("Audio", "Volume.micro_y", pt->getY(VOL_MIC));
     }
+*/
 }
 
 void
 QtGUIMainWindow::initVolume (void) 
 {
-    Manager::instance().setSpkrVolume(spkrVolVector->Y() - vol_spkr_y);
-    Manager::instance().setMicroVolume(micVolVector->Y() - vol_mic_y);
+    // TODO: the manager already know the volume...
+    //Manager::instance().setSpkrVolume(spkrVolVector->Y() - vol_spkr_y);
+    //Manager::instance().setMicroVolume(micVolVector->Y() - vol_mic_y);
 }
 
 /**
@@ -1387,7 +1398,8 @@ void
 QtGUIMainWindow::button_msg (void) {
      stopVoiceMessageNotification();
 	 _lcd->clearBuffer();
-     _lcd->appendText(get_config_fields_str(PREFERENCES, VOICEMAIL_NUM));
+     _lcd->appendText(Manager::instance().getConfigString(PREFERENCES,
+VOICEMAIL_NUM));
 	 if (qt_outgoingCall() == -1) {
 		 return;
 	 }
@@ -1586,6 +1598,7 @@ QtGUIMainWindow::qt_quitApplication (void)
 {
 	// Save volume positions
     // TODO: save position if direction is horizontal
+/*
     Config::set("Audio", "Volume.speakers_x",  pt->getX(VOL_SPKR));
     if (vol_spkr->getValue() != 0) {
         Config::set("Audio", "Volume.speakers_y",  pt->getY(VOL_SPKR) -
@@ -1596,10 +1609,11 @@ QtGUIMainWindow::qt_quitApplication (void)
         Config::set("Audio", "Volume.micro_y",  pt->getY(VOL_MIC) -
             vol_mic->getValue());
     }
+*/
     // Save current position of the controls volume
     save();
 	
-	if (get_config_fields_int(PREFERENCES, CONFIRM_QUIT) == YES) {
+	if (Manager::instance().getConfigInt(PREFERENCES, CONFIRM_QUIT)) {
 		// If message-box
 		if (QMessageBox::question(this, "Confirm quit",
 		"Are you sure you want to quit SFLPhone ?",
@@ -1638,10 +1652,7 @@ QtGUIMainWindow::stripSlot (void) {
 void
 QtGUIMainWindow::pressedKeySlot (int id) {
 	char code = 0;
-    int pulselen = 0;
 	int callid;
-	int k, spkrVolume;
-	int16* buf_ctrl_vol;
                                                                                 
     // Stop dial tone because we started dialing.
     if (_dialtone) {
@@ -1677,43 +1688,10 @@ QtGUIMainWindow::pressedKeySlot (int id) {
 		_lcd->setIsScrolling(false);
 		phLines[getCurrentLine()]->setScrolling(false);
 	}
-  AudioLayer* audiolayer = Manager::instance().getAudioDriver();
 	// To generate the dtmf if there is no error in configuration
 	if (Manager::instance().error()->getError() == 0) {
-		// Handle dtmf
-		_key->startTone(code);
-		_key->generateDTMF(_buf, SAMPLING_RATE);
-		
-		// Determine dtmf pulse length
-		pulselen = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
-		int size = pulselen * (OCTETS /1000);
-	  
-		buf_ctrl_vol = new int16[size*CHANNELS];
-		spkrVolume = Manager::instance().getSpkrVolume();
-		
-		// Control volume and format mono->stereo
-		for (int j = 0; j < size; j++) {
-			k = j*2;  
-			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j] * spkrVolume/100;
-		}
-			
-		audiolayer->urgentRingBuffer().flush();
-		// Put buffer to urgentRingBuffer 
-		audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, 
-				size * CHANNELS);
-
-		// We activate the stream if it's not active yet.
-		if (!audiolayer->isStreamActive()) {
-			audiolayer->startStream();
-			audiolayer->sleep(pulselen);
-			audiolayer->stopStream();
-			audiolayer->urgentRingBuffer().flush();
-		} else {
-			audiolayer->sleep(pulselen);
-		}
-			
-		delete[] buf_ctrl_vol;
-	}
+    Manager::instance().playDtmf(code);
+  }
 }
 
 // Save settings in config-file
@@ -1736,7 +1714,8 @@ QtGUIMainWindow::applySkin (void) {
 // Handle operation to minimize the application
 void 
 QtGUIMainWindow::reduceHandle (void) {
-	if (get_config_fields_int(PREFERENCES, CHECKED_TRAY)) {
+	if (Manager::instance().getConfigInt(PREFERENCES,
+CHECKED_TRAY)) {
         clickHandle();
     } else {
         showMinimized();

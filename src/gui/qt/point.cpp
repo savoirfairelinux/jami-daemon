@@ -17,19 +17,57 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "../../configurationtree.h"
 #include "point.h"
 
 #include <string>
+#include "../../skin.h"
 using namespace std;
 
 /**
  * Create a config-tree from file 'filename'
  */
-Point::Point (const string& filename) {
+Point::Point (const std::string& filename) {
 	int opened = 1;
-	skinConfigTree = new ConfigurationTree();
-	opened = skinConfigTree->populateFromFile (filename);
+  std::string s = "SKIN";
+  using namespace Conf;
+  _config.addConfigTreeItem(s, ConfigTreeItem(LINE1, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(LINE2, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(LINE3, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(LINE4, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(LINE5, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(LINE6, "", ""));
+
+  _config.addConfigTreeItem(s, ConfigTreeItem(VOICEMAIL, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DIRECTORY, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(CONFERENCE, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(TRANSFER, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(CLOSE, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(MINIMIZE, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(SETUP, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(HANGUP, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(CONNECT, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(MUTE, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_SHOW, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(VOLUME, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(VOL_MIC, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(VOL_SPKR, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(SCREEN, "", ""));
+
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_0, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_1, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_2, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_3, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_4, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_5, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_6, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_7, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_8, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_9, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_STAR, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_POUND, "", ""));
+  _config.addConfigTreeItem(s, ConfigTreeItem(DTMF_CLOSE, "", ""));
+
+	opened = _config.populateFromFile (filename);
 	if (opened != 1) {
 	// If opening failed, stop the application
 		exit(0);
@@ -37,10 +75,6 @@ Point::Point (const string& filename) {
 }
 
 Point::~Point (void) {
-	if (skinConfigTree != NULL) {
-		delete skinConfigTree;
-		skinConfigTree = NULL;
-	}
 }
 
 
@@ -49,7 +83,7 @@ Point::~Point (void) {
  */
 string
 Point::getSubstrX (const char* key) {
-	string value = skinConfigTree->getValue("", string(key));
+	std::string value = _config.getConfigTreeItemValue("SKIN", string(key));
 	int index = value.find(',');
 	return value.substr(0, index);
 }
@@ -59,7 +93,7 @@ Point::getSubstrX (const char* key) {
  */
 string
 Point::getSubstrY (const char* key) {
-	string value = skinConfigTree->getValue("", string(key));
+	string value = _config.getConfigTreeItemValue("SKIN", string(key));
 	int index = value.find(',');
 	return value.substr(index + 1, value.length() - index);
 }

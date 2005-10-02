@@ -14,10 +14,9 @@ ZEROCONFLIB =
 ZEROCONFFLAGS =  
 endif
 
-sflphone_SOURCES = configitem.cpp 	configuration.cpp 	configurationtree.cpp \
-		call.cpp 	eventthread.cpp 	error.cpp 	main.cpp 	sipvoiplink.cpp 	voIPLink.cpp \
+sflphone_SOURCES = call.cpp 	eventthread.cpp 	error.cpp 	main.cpp 	sipvoiplink.cpp 	voIPLink.cpp \
 		sipcall.cpp 	skin.cpp 	managerimpl.cpp 	managerimpl.h 	manager.h 	global.h \
-		configitem.h 	configuration.h 	configurationtree.h 	eventthread.h 	error.h \
+		eventthread.h 	error.h \
 		sipvoiplink.h 	user_cfg.h 	call.h 	phonegi-bin.h 	voIPLink.h 	sipcall.h 	skin.h \
 		${maintener_source} observer.cpp
 

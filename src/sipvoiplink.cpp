@@ -135,23 +135,23 @@ SipVoIPLink::terminate(void)
 int
 SipVoIPLink::setRegister (void) 
 {
+  ManagerImpl& manager = Manager::instance();
   _debug("SipVoIPLink::setRegister()\n");
   int i;
   osip_message_t *reg = NULL;
 
-  string proxy = "sip:" + get_config_fields_str(SIGNALISATION, PROXY);
+  // all this will be inside the profil associate with the voip link
+  string proxy = "sip:" + manager.getConfigString(SIGNALISATION, PROXY);
+  string hostname = "sip:" + manager.getConfigString(SIGNALISATION, HOST_PART);
+  string from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), 
+			   manager.getConfigString(SIGNALISATION, HOST_PART));
 
-  string hostname = "sip:" + get_config_fields_str(SIGNALISATION, HOST_PART);
-	
-  string from = fromHeader(get_config_fields_str(SIGNALISATION, USER_PART), 
-			   get_config_fields_str(SIGNALISATION, HOST_PART));
-
-  if (get_config_fields_str(SIGNALISATION, HOST_PART).empty()) {
-    Manager::instance().error()->errorName(HOST_PART_FIELD_EMPTY);
+  if (manager.getConfigString(SIGNALISATION, HOST_PART).empty()) {
+    manager.error()->errorName(HOST_PART_FIELD_EMPTY);
     return -1;
   }
-  if (get_config_fields_str(SIGNALISATION, USER_PART).empty()) {
-    Manager::instance().error()->errorName(USER_PART_FIELD_EMPTY);
+  if (manager.getConfigString(SIGNALISATION, USER_PART).empty()) {
+    manager.error()->errorName(USER_PART_FIELD_EMPTY);
     return -1;
   }
 
@@ -163,7 +163,7 @@ SipVoIPLink::setRegister (void)
   }
 	
   _debug("REGISTER From: %s\n", from.data());
-  if (!get_config_fields_str(SIGNALISATION, PROXY).empty()) {
+  if (!manager.getConfigString(SIGNALISATION, PROXY).empty()) {
     _reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
 						      (char*)proxy.data(), NULL, EXPIRES_VALUE, &reg);
   } else {
@@ -189,7 +189,7 @@ SipVoIPLink::setRegister (void)
 	
   eXosip_unlock();
 
-  Manager::instance().error()->setError(0);
+  manager.error()->setError(0);
 
   return i;
 }
@@ -237,21 +237,23 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
   string from;
   string to;
 
+  // TODO: should be inside account settings
+  ManagerImpl& manager = Manager::instance();
   // Form the From header field basis on configuration panel
-  from = fromHeader(get_config_fields_str(SIGNALISATION, USER_PART),
-		    get_config_fields_str(SIGNALISATION, HOST_PART));
+  from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART),
+		    manager.getConfigString(SIGNALISATION, HOST_PART));
 	
   to = toHeader(to_url);
 
   if (to.find("@") == string::npos and 
-      get_config_fields_int(SIGNALISATION, AUTO_REGISTER) == YES) {
-    to = to + "@" + get_config_fields_str(SIGNALISATION, HOST_PART);
+      manager.getConfigInt(SIGNALISATION, AUTO_REGISTER)) {
+    to = to + "@" + manager.getConfigString(SIGNALISATION, HOST_PART);
   }
 		
   _debug("From: %s\n", from.data());
   _debug("To: %s\n", to.data());
 
-  if (get_config_fields_str(SIGNALISATION, PROXY).empty()) {
+  if (manager.getConfigString(SIGNALISATION, PROXY).empty()) {
     // If no SIP proxy setting for direct call with only IP address
     if (checkNetwork()) {
       if (startCall(id, from, to, "", "") <= 0) {
@@ -259,21 +261,21 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
 	return -1;
       }
     } else {
-      Manager::instance().displayErrorText(id, "No network found\n");
+      manager.displayErrorText(id, "No network found\n");
       return -1;
     }
     return 0;
   } else {
     // If SIP proxy setting
     string route = "<sip:" + 
-      get_config_fields_str(SIGNALISATION, PROXY) + ";lr>";
+      manager.getConfigString(SIGNALISATION, PROXY) + ";lr>";
     if (checkNetwork()) {
       if (startCall(id, from, to, "", route) <= 0) {
 	_debug("Warning SipVoIPLink: call not started\n");
 	return -1;
       }
     } else {
-      Manager::instance().displayErrorText(id, "No network found\n");
+      manager.displayErrorText(id, "No network found\n");
       return -1;
     }
     return 0;
@@ -500,7 +502,8 @@ SipVoIPLink::transfer (short id, const string& to)
   string tmp_to;
   tmp_to = toHeader(to);
   if (tmp_to.find("@") == string::npos) {
-    tmp_to = tmp_to + "@" + get_config_fields_str(SIGNALISATION, HOST_PART);
+    tmp_to = tmp_to + "@" + Manager::instance().getConfigString(SIGNALISATION,
+HOST_PART);
   }
 
   eXosip_lock();
@@ -887,7 +890,7 @@ SipVoIPLink::setLocalPort (int port)
 
 void
 SipVoIPLink::carryingDTMFdigits (short id, char code) {
-  int duration = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
+  int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
   osip_message_t *info;
   const int body_len = 1000;
   int i;
@@ -1146,7 +1149,9 @@ SipVoIPLink::behindNat (void)
   stunSvrAddr.addr = 0;
 	
   // Stun server
-  string svr = get_config_fields_str(SIGNALISATION, STUN_SERVER);
+  string svr =
+Manager::instance().getConfigString(SIGNALISATION,
+STUN_SERVER);
 	
   // Convert char* to StunAddress4 structure
   bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
@@ -1198,14 +1203,15 @@ SipVoIPLink::checkUrl (const string& url)
 int
 SipVoIPLink::setAuthentication (void) 
 {
-  string login, pass, realm;
-  login = get_config_fields_str(SIGNALISATION, AUTH_USER_NAME);
+  ManagerImpl& manager = Manager::instance();
+  std::string login, pass, realm;
+  login = manager.getConfigString(SIGNALISATION, AUTH_USER_NAME);
   if (login.empty()) {
-    login = get_config_fields_str(SIGNALISATION, USER_PART);
+    login = manager.getConfigString(SIGNALISATION, USER_PART);
   }
-  pass = get_config_fields_str(SIGNALISATION, PASSWORD);
+  pass = manager.getConfigString(SIGNALISATION, PASSWORD);
   if (pass.empty()) {
-    Manager::instance().error()->errorName(PASSWD_FIELD_EMPTY);				
+    manager.error()->errorName(PASSWD_FIELD_EMPTY);				
     return -1;
   }
 
@@ -1219,7 +1225,8 @@ SipVoIPLink::setAuthentication (void)
 string
 SipVoIPLink::fromHeader (const string& user, const string& host) 
 {
-  string displayname = get_config_fields_str(SIGNALISATION, FULL_NAME);
+  string displayname = Manager::instance().getConfigString(SIGNALISATION,
+FULL_NAME);
   return ("\"" + displayname + "\"" + " <sip:" + user + "@" + host + ">");
 }
 
@@ -1254,7 +1261,6 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
     return -1;
   }
 	
-  char port[64];
   if (!Manager::instance().useStun()) {
     // Set random port for outgoing call if no firewall
     setLocalPort(RANDOM_LOCAL_PORT);
@@ -1271,10 +1277,8 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
 	
   // Set local audio port for sipcall(id)
   call->setLocalAudioPort(_localPort);
-	
-  bzero (port, 64);
-  snprintf (port, 63, "%d", getLocalPort());
-  	
+
+
   i = eXosip_call_build_initial_invite (&invite, (char*)to.data(),
                                         (char*)from.data(),
                                         (char*)route.data(),
@@ -1321,6 +1325,10 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
     char localip[128];
 
     eXosip_guess_localip (AF_INET, localip, 128);
+    char port[64];
+    bzero (port, 64);
+    snprintf (port, 63, "%d", getLocalPort());
+
     snprintf (tmp, 4096,
               "v=0\r\n"
               "o=SFLphone 0 0 IN IP4 %s\r\n"

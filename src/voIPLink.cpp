@@ -18,9 +18,10 @@
  */
 
 #include <string>
- 
+
 #include "user_cfg.h"
 #include "voIPLink.h"
+#include "manager.h"
 
 
 using namespace std;
@@ -100,7 +101,10 @@ void
 VoIPLink::initConstructor(void)
 {
 	_type = Sip;
-	_fullname = get_config_fields_str(SIGNALISATION,FULL_NAME);
-	_hostname = get_config_fields_str(SIGNALISATION,HOST_PART);
+  // TODO: should be inside the account
+	_fullname =
+Manager::instance().getConfigString(SIGNALISATION,FULL_NAME
+) ;
+	_hostname = Manager::instance().getConfigString(SIGNALISATION,HOST_PART);
 	_localIpAddress = "";
 }

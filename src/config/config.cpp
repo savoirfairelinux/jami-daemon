@@ -81,7 +81,7 @@ ConfigTree::getConfigTreeItemValue(const std::string& section, const std::string
   if (item!=NULL) {
     return item->getValue();
   } else {
-    throw new ConfigTreeItemException();
+    throw ConfigTreeItemException();
   }
   return "";
 }
@@ -94,7 +94,7 @@ ConfigTree::getConfigTreeItemIntValue(const std::string& section, const std::str
   if (item!=NULL && item->getType() == "int") {
     return atoi(item->getValue().data());
   } else {
-    throw new ConfigTreeItemException();
+    throw ConfigTreeItemException();
   }
   return 0;
 }

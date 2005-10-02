@@ -29,15 +29,13 @@
 #endif
 
 #include "gui/guiframework.h"
-#include "configuration.h"
-#include "configurationtree.h"
 #include "manager.h"
 
 
 int
 main (int argc, char **argv) {
   int exit_code = 0;
-  Config::setTree(new ConfigurationTree());	
+  //Config::setTree(new ConfigurationTree());	
   GuiFramework *GUI;
 
 #if defined(ENABLE_MAINTENER)

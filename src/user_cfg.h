@@ -24,20 +24,6 @@
 
 #include <stdlib.h>
 
-#include "configuration.h"
-
-#define fill_config_fields_str(main_menu, value, default_value)	\
-	(Config::get(string(main_menu), string(value), string(default_value)))
-
-#define fill_config_fields_int(main_menu, value, default_value)	\
-	(Config::get(string(main_menu), string(value), default_value))
-
-#define get_config_fields_str(main_menu, value)	\
-	(Config::gets(string(main_menu), string(value)))
-
-#define get_config_fields_int(main_menu, value)	\
-	(Config::geti(string(main_menu), value))
-
 // Home directory
 #define HOMEDIR	(getenv ("HOME"))
 
@@ -88,46 +74,31 @@
 #define CONFIG_ZEROCONF "Zeroconf.enable"
 
 // Default values
-#define DFT_VOIP_LINK		0	// index of the first VoIP link by default
 #define EMPTY_FIELD			""
-#define	YES					1
-#define	NO					0
-#define DFT_PULSE_LENGTH	250
-#define SIP_INFO			0
 #define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"
-#define DFT_DRIVER			0	
-#define DFT_NB_CODEC		3
 
-#define DFT_VOIP_LINK_STR    "0"
+#define DFT_VOIP_LINK         0
+#define DFT_VOIP_LINK_STR    "0" // index of the first VoIP link by default
 #define	YES_STR              "1"
 #define	NO_STR               "0"
 #define DFT_PULSE_LENGTH_STR "250"
 #define SIP_INFO_STR         "0"
 #define DFT_DRIVER_STR       "0"
 #define DFT_NB_CODEC_STR     "3"
+// volume by default 100%
 #define DFT_VOL_SPKR_STR     "100"
 #define DFT_VOL_MICRO_STR    "100"
 
 
 #define DFT_CODEC			"G711u"
-// volume by default 100%
-#define DFT_VOL_SPKR		100
-#define DFT_VOL_MICRO		100
-
-#define DFT_VOL_SPKR_X		365
-#define DFT_VOL_SPKR_Y		100
-#define DFT_VOL_MICRO_X		347
-#define DFT_VOL_MICRO_Y		100	
 #define DFT_RINGTONE 		"konga.ul"
 #define DFT_SKIN 			"metal"
 #define DFT_ZONE			"North America"
 #define DFT_VOICEMAIL 		"888"
 // zeroconfig default value
 #ifdef USE_ZEROCONF
-#define CONFIG_ZEROCONF_DEFAULT 1
 #define CONFIG_ZEROCONF_DEFAULT_STR "1"
 #else
-#define CONFIG_ZEROCONF_DEFAULT 0
 #define CONFIG_ZEROCONF_DEFAULT_STR "0"
 #endif
 

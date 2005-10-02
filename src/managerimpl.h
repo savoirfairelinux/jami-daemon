@@ -200,8 +200,15 @@ public:
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);
   bool setConfig(const std::string& section, const std::string& name, const std::string& value);
+  bool setConfig(const std::string& section, const std::string& name,
+int value);
   bool getConfigList(const std::string& sequenceId, const std::string& name);
 
+  // configuration function for extern
+  // throw an Conf::ConfigTreeItemException if not found
+  int getConfigInt(const std::string& section, const std::string& name);
+  std::string getConfigString(const std::string& section, const std::string&
+name);
 
 	/*
 	 * Handle audio sounds heard by a caller while they wait for their 

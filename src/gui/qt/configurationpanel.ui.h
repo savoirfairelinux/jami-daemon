@@ -12,7 +12,6 @@
 #include <qdir.h>
 #include <qstringlist.h>
 
-#include "../../configuration.h"
 #include "../../global.h"
 #include "../../manager.h"
 #include "../../skin.h"
@@ -96,39 +95,51 @@ void ConfigurationPanel::init()
 	// Set position of the button group, with appropriate length
  	DriverChoice->setGeometry( QRect( 10, 10, 410, top + 30 ) );
     
+  ManagerImpl& manager = Manager::instance();
   // For signalisations tab
-   fullName->setText(QString(get_config_fields_str(SIGNALISATION, FULL_NAME)));
-   userPart->setText(QString(get_config_fields_str(SIGNALISATION, USER_PART)));
-   username->setText(QString(get_config_fields_str(SIGNALISATION, AUTH_USER_NAME)));
-   password->setText(QString(get_config_fields_str(SIGNALISATION, PASSWORD)));
-   hostPart->setText(QString(get_config_fields_str(SIGNALISATION, HOST_PART)));
-   sipproxy->setText(QString(get_config_fields_str(SIGNALISATION, PROXY)));
-   autoregister->setChecked(get_config_fields_int(SIGNALISATION, AUTO_REGISTER));
-   playTones->setChecked(get_config_fields_int(SIGNALISATION, PLAY_TONES));
-   pulseLength->setValue(get_config_fields_int(SIGNALISATION, PULSE_LENGTH));
-   sendDTMFas->setCurrentItem(get_config_fields_int(SIGNALISATION, SEND_DTMF_AS));
-   STUNserver->setText(QString(get_config_fields_str(SIGNALISATION, STUN_SERVER)));
-((QRadioButton*)stunButtonGroup->find(get_config_fields_int(SIGNALISATION, USE_STUN)))->setChecked(true);
+  
+fullName->setText(QString(manager.getConfigString(
+SIGNALISATION , FULL_NAME)));
+   userPart->setText(QString(manager.getConfigString(SIGNALISATION,
+USER_PART)));
+   username->setText(QString(manager.getConfigString(SIGNALISATION,
+AUTH_USER_NAME)));
+   password->setText(QString(manager.getConfigString(SIGNALISATION, PASSWORD)));
+   hostPart->setText(QString(manager.getConfigString(SIGNALISATION,
+HOST_PART)));
+   sipproxy->setText(QString(manager.getConfigString(SIGNALISATION, PROXY)));
+   autoregister->setChecked(manager.getConfigInt(SIGNALISATION,
+AUTO_REGISTER));
+   playTones->setChecked(manager.getConfigInt(SIGNALISATION, PLAY_TONES));
+   pulseLength->setValue(manager.getConfigInt(SIGNALISATION, PULSE_LENGTH));
+   sendDTMFas->setCurrentItem(manager.getConfigInt(SIGNALISATION,
+SEND_DTMF_AS));
+   STUNserver->setText(QString(manager.getConfigString(SIGNALISATION,
+STUN_SERVER)));
+((QRadioButton*)stunButtonGroup->find(manager.getConfigInt(SIGNALISATION,
+USE_STUN)))->setChecked(true);
    // For audio tab
   
-((QRadioButton*)DriverChoice->find(get_config_fields_int(AUDIO, DRIVER_NAME)))->setChecked(true);
+((QRadioButton*)DriverChoice->find(manager.getConfigInt(AUDIO,
+DRIVER_NAME)))->setChecked(true);
 
-   codec1->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC1)));
-   codec2->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC2)));
-   codec3->setCurrentText(QString(get_config_fields_str(AUDIO, CODEC3)));
+   codec1->setCurrentText(QString(manager.getConfigString(AUDIO, CODEC1)));
+   codec2->setCurrentText(QString(manager.getConfigString(AUDIO, CODEC2)));
+   codec3->setCurrentText(QString(manager.getConfigString(AUDIO, CODEC3)));
 
-   ringsChoice->setCurrentText(QString(get_config_fields_str(AUDIO, RING_CHOICE)));
+   ringsChoice->setCurrentText(QString(manager.getConfigString(AUDIO,
+RING_CHOICE)));
    
    // For preferences tab
-   SkinChoice->setCurrentText(QString(get_config_fields_str(
+   SkinChoice->setCurrentText(QString(manager.getConfigString(
                PREFERENCES, SKIN_CHOICE)));
-   confirmationToQuit->setChecked(get_config_fields_int(
+   confirmationToQuit->setChecked(manager.getConfigInt(
                PREFERENCES, CONFIRM_QUIT));
-     zoneToneChoice->setCurrentText(QString(get_config_fields_str(
+     zoneToneChoice->setCurrentText(QString(manager.getConfigString(
              PREFERENCES, ZONE_TONE)));
-     checkedTray->setChecked(get_config_fields_int(
+     checkedTray->setChecked(manager.getConfigInt(
                PREFERENCES, CHECKED_TRAY));
-  voicemailNumber->setText(QString(get_config_fields_str(
+  voicemailNumber->setText(QString(manager.getConfigString(
                PREFERENCES, VOICEMAIL_NUM)));
   
    //  Init tab view order
@@ -154,37 +165,48 @@ void ConfigurationPanel::init()
 
 // For saving settings at application 'save'
 void ConfigurationPanel::saveSlot()
-{ 
-   Config::set("VoIPLink", "SIP.fullName", string(fullName->text().ascii()));
-   Config::set("VoIPLink", "SIP.userPart", string(userPart->text().ascii()));
-   Config::set("VoIPLink", "SIP.username", string(username->text().ascii()));
-   Config::set("VoIPLink", "SIP.password", string(password->text().ascii()));
-   Config::set("VoIPLink", "SIP.hostPart", string(hostPart->text().ascii()));
-   Config::set("VoIPLink", "SIP.proxy", string(sipproxy->text().ascii()));
-   Config::set("VoIPLink", "SIP.autoregister",autoregister->isChecked());
-   Config::set("VoIPLink", "DTMF.pulseLength",  pulseLength->value());
-   Config::set("VoIPLink", "DTMF.playTones",  playTones->isChecked());
-   Config::set("VoIPLink", "DTMF.sendDTMFas" , sendDTMFas->currentItem());
-   Config::set("VoIPLink", "STUN.STUNserver", string(STUNserver->text().ascii()));
- 
-   Config::set("Audio", "Codecs.codec1", string(codec1->currentText().ascii()));
-   Config::set("Audio", "Codecs.codec2", string(codec2->currentText().ascii()));
-   Config::set("Audio", "Codecs.codec3", string(codec3->currentText().ascii()));
+{
+  ManagerImpl& manager = Manager::instance();
+  manager.setConfig("VoIPLink", "SIP.fullName",
+string(fullName->text().ascii()));
+  manager.setConfig("VoIPLink", "SIP.userPart",
+string(userPart->text().ascii()));
+  manager.setConfig("VoIPLink", "SIP.username",
+string(username->text().ascii()));
+  manager.setConfig("VoIPLink", "SIP.password",
+string(password->text().ascii()));
+  manager.setConfig("VoIPLink", "SIP.hostPart",
+string(hostPart->text().ascii()));
+  manager.setConfig("VoIPLink", "SIP.proxy", string(sipproxy->text().ascii()));
+  manager.setConfig("VoIPLink", "SIP.autoregister", autoregister->isChecked());
+  manager.setConfig("VoIPLink", "DTMF.pulseLength",  pulseLength->value());
+  manager.setConfig("VoIPLink", "DTMF.playTones",  playTones->isChecked());
+  manager.setConfig("VoIPLink", "DTMF.sendDTMFas" , sendDTMFas->currentItem());
+  manager.setConfig("VoIPLink", "STUN.STUNserver",
+string(STUNserver->text().ascii()));
 
-   if (ringsChoice->currentText() != NULL)
-     Config::set("Audio", "Rings.ringChoice", 
+  manager.setConfig("Audio", "Codecs.codec1",
+string(codec1->currentText().ascii()));
+  manager.setConfig("Audio", "Codecs.codec2",
+string(codec2->currentText().ascii()));
+  manager.setConfig("Audio", "Codecs.codec3",
+string(codec3->currentText().ascii()));
+
+  if (ringsChoice->currentText() != NULL)
+    manager.setConfig("Audio", "Rings.ringChoice", 
          string(ringsChoice->currentText().ascii()));
-   
-   Config::set("Preferences", "Themes.skinChoice", 
-     string(SkinChoice->currentText().ascii()));
-   Config::set("Preferences", "Options.zoneToneChoice", 
-     string(zoneToneChoice->currentText().ascii()));
-   Config::set("Preferences", "Options.confirmQuit", 
-     confirmationToQuit->isChecked());
-   Config::set("Preferences", "Options.checkedTray", checkedTray->isChecked());
 
-   Config::set("Preferences", "Options.voicemailNumber", 
-     string(voicemailNumber->text().ascii()));   
+  manager.setConfig("Preferences", "Themes.skinChoice", 
+    string(SkinChoice->currentText().ascii()));
+  manager.setConfig("Preferences", "Options.zoneToneChoice", 
+    string(zoneToneChoice->currentText().ascii()));
+  manager.setConfig("Preferences", "Options.confirmQuit", 
+    confirmationToQuit->isChecked());
+  manager.setConfig("Preferences", "Options.checkedTray",
+checkedTray->isChecked());
+
+  manager.setConfig("Preferences", "Options.voicemailNumber", 
+    string(voicemailNumber->text().ascii()));   
 #if 0 
    QMessageBox::information(this, "Save settings",
    "You must restart SFLPhone",
@@ -230,17 +252,18 @@ void ConfigurationPanel::changeTabSlot()
 
 void ConfigurationPanel::useStunSlot(int id)
 {
-    Config::set("VoIPLink", "STUN.useStun", id);
+  Manager::instance().setConfig("VoIPLink", "STUN.useStun", id);
 }
 
 
 void ConfigurationPanel::applySkinSlot()
 {
- Config::set("Preferences", "Themes.skinChoice", string(SkinChoice->currentText().ascii()));
+ Manager::instance().setConfig("Preferences", "Themes.skinChoice",
+string(SkinChoice->currentText().ascii()));
 }
 
 
 void ConfigurationPanel::driverSlot(int id)
 {
-Config::set("Audio", "Drivers.driverName", id);
+  Manager::instance().setConfig("Audio", "Drivers.driverName", id);
 }

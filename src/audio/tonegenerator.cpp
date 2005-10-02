@@ -27,7 +27,6 @@
 #include "ringbuffer.h"
 #include "ulaw.h"
 #include "tonegenerator.h"
-#include "../configuration.h" 
 #include "../global.h"
 #include "../manager.h"
 #include "../user_cfg.h"
@@ -285,7 +284,9 @@ ToneGenerator::idZoneName (const string& name) {
  */
 void
 ToneGenerator::toneHandle (int idr) {
-	int idz = idZoneName(get_config_fields_str(PREFERENCES, ZONE_TONE));
+  std::string zone = Manager::instance().getConfigString(PREFERENCES,
+ZONE_TONE);
+  int idz = idZoneName(zone);
 	
 	if (idz != -1) {
 		buildTone (idz, idr, buf);

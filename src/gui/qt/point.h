@@ -21,13 +21,12 @@
 #define __POINT_H__
 
 #include <string>
+#include "../../config/config.h"
 using namespace std;
 
 #define NO_DIRECTION	0
 #define HORIZONTAL		1
 #define VERTICAL		2
-
-class ConfigurationTree;
 
 class Point {
 public:
@@ -40,7 +39,7 @@ public:
 	int getDirection	(const char*);	
 	
 private:
-	ConfigurationTree* 	skinConfigTree;
+	Conf::ConfigTree _config;
 	string 	getSubstrX	(const char*);	
 	string 	getSubstrY	(const char*);	
 };

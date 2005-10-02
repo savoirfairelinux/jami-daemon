@@ -25,7 +25,6 @@
 #include <qpopupmenu.h>
 #include <qwidget.h>
 
-#include "../../configuration.h"
 #include "../../skin.h"
 #include "../guiframework.h"
 #include "configurationpanelui.h"

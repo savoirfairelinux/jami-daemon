@@ -44,8 +44,6 @@
 #include "audio/tonegenerator.h"
 #include "audio/dtmf.h"
 #include "call.h"
-#include "configuration.h"  
-#include "configurationtree.h" 
 #include "error.h"
 #include "user_cfg.h"
 #include "voIPLink.h" 
@@ -170,8 +168,7 @@ ManagerImpl::init (void)
   if (_voIPLinkVector.at(DFT_VOIP_LINK)->checkNetwork()) {
     // If network is available
 
-    if (get_config_fields_int(SIGNALISATION, AUTO_REGISTER) == YES and 
-	_exist == 1) {
+    if (getConfigInt(SIGNALISATION, AUTO_REGISTER) && _exist == 1) {
       if (registerVoIPLink() != 1) {
 	_debug("Registration failed\n");
       }
@@ -506,7 +503,6 @@ ManagerImpl::refuseCall (short id)
 int
 ManagerImpl::saveConfig (void)
 {
-	(Config::tree()->saveToFile(_path.data()) ? 1 : 0);
   return (_config.saveConfigTree(_path.data()) ? 1 : 0);
 }
 
@@ -535,7 +531,6 @@ ManagerImpl::quitApplication (void)
 {
   // Quit VoIP-link library
   terminate();
-  Config::deleteTree();
   return 0;
 }
 
@@ -554,7 +549,7 @@ ManagerImpl::accessToDirectory (void)
 bool 
 ManagerImpl::sendDtmf (short id, char code)
 {
-  int sendType = get_config_fields_int(SIGNALISATION, SEND_DTMF_AS);
+  int sendType = getConfigInt(SIGNALISATION, SEND_DTMF_AS);
   switch (sendType) {
         // SIP INFO
         case 0:
@@ -595,7 +590,7 @@ ManagerImpl::playDtmf(char code)
     int16* buf_ctrl_vol;
 
     // Determine dtmf pulse length
-    int pulselen = get_config_fields_int(SIGNALISATION, PULSE_LENGTH);
+    int pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
     int size = pulselen * (OCTETS /1000);
   
     buf_ctrl_vol = new int16[size*CHANNELS];
@@ -927,7 +922,7 @@ ManagerImpl::defaultDevice (int index)
 
 bool
 ManagerImpl::useStun (void) {
-    if (get_config_fields_int(SIGNALISATION, USE_STUN) == YES) {
+    if (getConfigInt(SIGNALISATION, USE_STUN)) {
         return true;
     } else {
         return false;
@@ -976,7 +971,6 @@ ManagerImpl::createSettingsPath (void) {
 	// Load user's configuration
 	_path = _path + "/" + PROGNAME + "rc";
 
-	exist = Config::tree()->populateFromFile(_path);
   exist = _config.populateFromFile(_path);
 	
 	if (exist == 0){
@@ -1032,59 +1026,21 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
 
   _exist = createSettingsPath();
-
-  // old way
-	fill_config_fields_int(SIGNALISATION, VOIP_LINK_ID, DFT_VOIP_LINK);
-	fill_config_fields_str(SIGNALISATION, FULL_NAME, EMPTY_FIELD);
-	fill_config_fields_str(SIGNALISATION, USER_PART, EMPTY_FIELD); 
-	fill_config_fields_str(SIGNALISATION, AUTH_USER_NAME, EMPTY_FIELD); 
-	fill_config_fields_str(SIGNALISATION, PASSWORD, EMPTY_FIELD); 
-	fill_config_fields_str(SIGNALISATION, HOST_PART, EMPTY_FIELD); 
-	fill_config_fields_str(SIGNALISATION, PROXY, EMPTY_FIELD); 
-	fill_config_fields_int(SIGNALISATION, AUTO_REGISTER, YES);
-	fill_config_fields_int(SIGNALISATION, PLAY_TONES, YES); 
-	fill_config_fields_int(SIGNALISATION, PULSE_LENGTH, DFT_PULSE_LENGTH); 
-	fill_config_fields_int(SIGNALISATION, SEND_DTMF_AS, SIP_INFO); 
-	fill_config_fields_str(SIGNALISATION, STUN_SERVER, DFT_STUN_SERVER); 
-	fill_config_fields_int(SIGNALISATION, USE_STUN, NO); 
-
-	fill_config_fields_int(AUDIO, DRIVER_NAME, DFT_DRIVER); 
-	fill_config_fields_int(AUDIO, NB_CODEC, DFT_NB_CODEC); 
-	fill_config_fields_str(AUDIO, CODEC1, DFT_CODEC); 
-	fill_config_fields_str(AUDIO, CODEC2, DFT_CODEC); 
-	fill_config_fields_str(AUDIO, CODEC3, DFT_CODEC); 
-	fill_config_fields_str(AUDIO, CODEC4, DFT_CODEC); 
-	fill_config_fields_str(AUDIO, CODEC5, DFT_CODEC); 
-	fill_config_fields_str(AUDIO, RING_CHOICE, DFT_RINGTONE); 
-	fill_config_fields_int(AUDIO, VOLUME_SPKR, DFT_VOL_SPKR); 
-	fill_config_fields_int(AUDIO, VOLUME_MICRO, DFT_VOL_MICRO); 
-
-	fill_config_fields_int(AUDIO, VOLUME_SPKR_X, DFT_VOL_SPKR_X); 
-	fill_config_fields_int(AUDIO, VOLUME_SPKR_Y, DFT_VOL_SPKR_Y); 
-	fill_config_fields_int(AUDIO, VOLUME_MICRO_X, DFT_VOL_MICRO_X); 
-	fill_config_fields_int(AUDIO, VOLUME_MICRO_Y, DFT_VOL_MICRO_Y); 
-
-	fill_config_fields_str(PREFERENCES, SKIN_CHOICE, DFT_SKIN); 
-	fill_config_fields_int(PREFERENCES, CONFIRM_QUIT, YES); 
-	fill_config_fields_str(PREFERENCES, ZONE_TONE, DFT_ZONE); 
-	fill_config_fields_int(PREFERENCES, CHECKED_TRAY, NO); 
-	fill_config_fields_str(PREFERENCES, VOICEMAIL_NUM, DFT_VOICEMAIL); 
-  
-	fill_config_fields_int(PREFERENCES, CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT); 
 }
 
 void
 ManagerImpl::initAudioCodec (void)
 {
-	_nCodecs = get_config_fields_int(AUDIO, NB_CODEC);
+  // TODO: need to be more dynamic...
+	_nCodecs = getConfigInt(AUDIO, NB_CODEC);
 	_codecDescVector.push_back(new CodecDescriptor(
-				get_config_fields_str(AUDIO, CODEC1)));
+				getConfigString(AUDIO, CODEC1)));
 
 	_codecDescVector.push_back(new CodecDescriptor(
-				get_config_fields_str(AUDIO, CODEC2)));
+				getConfigString(AUDIO, CODEC2)));
 	
 	_codecDescVector.push_back(new CodecDescriptor(
-				get_config_fields_str(AUDIO, CODEC3)));
+				getConfigString(AUDIO, CODEC3)));
 }
 
 void 
@@ -1107,7 +1063,7 @@ ManagerImpl::selectAudioDriver (void)
 #if defined(AUDIO_PORTAUDIO)
   try {
 	_audiodriverPA = new AudioLayer();
-	_audiodriverPA->openDevice(get_config_fields_int(AUDIO, DRIVER_NAME));
+	_audiodriverPA->openDevice(getConfigInt(AUDIO, DRIVER_NAME));
   } catch(...) {
     throw;
   }
@@ -1123,7 +1079,7 @@ ManagerImpl::selectAudioDriver (void)
 void 
 ManagerImpl::initZeroconf(void) 
 {
-  _useZeroconf = get_config_fields_int(PREFERENCES, CONFIG_ZEROCONF);
+  _useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
 
 #ifdef USE_ZEROCONF
   if (_useZeroconf) {
@@ -1138,8 +1094,8 @@ ManagerImpl::initZeroconf(void)
 void
 ManagerImpl::initVolume()
 {
-	setSpkrVolume(get_config_fields_int(AUDIO, VOLUME_SPKR));
-	setMicroVolume(get_config_fields_int(AUDIO, VOLUME_MICRO));
+	setSpkrVolume(getConfigInt(AUDIO, VOLUME_SPKR));
+	setMicroVolume(getConfigInt(AUDIO, VOLUME_MICRO));
 }
 
 // configuration function requests
@@ -1273,10 +1229,43 @@ ManagerImpl::getConfig(const std::string& section, const std::string& name, Toke
   return _config.getConfigTreeItemToken(section, name, arg);
 }
 
+// throw an Conf::ConfigTreeItemException if not found
+int 
+ManagerImpl::getConfigInt(const std::string& section, const std::string& name)
+{
+  try {
+    return _config.getConfigTreeItemIntValue(section, name);
+  } catch (Conf::ConfigTreeItemException& e) {
+    throw e;
+  }
+  return 0;
+}
+
+std::string 
+ManagerImpl::getConfigString(const std::string& section, const std::string&
+name)
+{
+  try {
+    return _config.getConfigTreeItemValue(section, name);
+  } catch (Conf::ConfigTreeItemException& e) {
+    throw e;
+  }
+  return "";
+}
+
 bool 
 ManagerImpl::setConfig(const std::string& section, const std::string& name, const std::string& value)
 {
   return _config.setConfigTreeItem(section, name, value);
+}
+
+bool 
+ManagerImpl::setConfig(const std::string& section, const std::string& name,
+int value)
+{
+  std::ostringstream valueStream;
+  valueStream << value;
+  return _config.setConfigTreeItem(section, name, valueStream.str());
 }
 
 bool 
