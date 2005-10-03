@@ -143,6 +143,8 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
     PhoneLine *p = new PhoneLine(*mSession, i + 1);
     QObject::connect(p, SIGNAL(lineStatusChanged(const QString &)),
 		     this, SIGNAL(lineStatusSet(const QString &)));
+    QObject::connect(p, SIGNAL(actionChanged(const QString &)),
+		     this, SIGNAL(actionSet(const QString &)));
     QObject::connect(p, SIGNAL(bufferStatusChanged(const QString &)),
 		     this, SIGNAL(bufferStatusSet(const QString &)));
     mPhoneLines.push_back(p);
@@ -189,7 +191,7 @@ PhoneLineManagerImpl::getLine(const Call &call)
   unsigned int i = 0;
   while(i < mPhoneLines.size() && !selectedLine) {
     mPhoneLines[i]->lock();
-    if(mPhoneLines[i]->getCallId() == call->id())
+    if(mPhoneLines[i]->getCallId() == call.id()) {
       selectedLine = mPhoneLines[i];
     }
     else {

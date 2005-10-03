@@ -17,6 +17,7 @@ SFLLcd::SFLLcd(QWidget *parent, Qt::WFlags flags)
   , mGlobalStatusPos(-1)
   , mLineStatusPos(-1)
   , mBufferStatusPos(-1)
+  , mActionPos(-1)
   , mIsTimed(false)
   , mFont(FONT_FAMILY, FONT_SIZE)
 {
@@ -45,6 +46,10 @@ SFLLcd::updateText()
 
   if(mBufferStatusPos >= 0) {
     mBufferStatusPos++;
+  }
+
+  if(mActionPos >= 0) {
+    mActionPos++;
   }
 }
 
@@ -97,6 +102,18 @@ SFLLcd::setLineStatus(const QString &line)
   mLineStatus = line;
 }
 
+void
+SFLLcd::setAction(const QString &line)
+{
+  if(textIsTooBig(line)) {
+    mActionPos = 0;
+  }
+  else {
+    mActionPos = -1;
+  }
+  mAction = line;
+}
+
 QString
 SFLLcd::getTimeStatus()
 {
@@ -134,6 +151,8 @@ SFLLcd::paintEvent(QPaintEvent *)
   p.drawText(QPoint(margin, 2*fm.height()), 
 	     extractVisibleText(mLineStatus, mLineStatusPos));
   p.drawText(QPoint(margin, 3*fm.height()), 
+	     extractVisibleText(mAction, mActionPos));
+  p.drawText(QPoint(margin, 4*fm.height()), 
 	     extractVisibleText(mBufferStatus, mBufferStatusPos));
 
   p.drawText(QPoint(margin, mScreen.size().height() - margin), getTimeStatus());

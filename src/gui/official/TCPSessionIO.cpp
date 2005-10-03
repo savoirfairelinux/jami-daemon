@@ -103,7 +103,7 @@ TCPSessionIO::receive(QString &answer)
   if(mSocket->isReadable()) {
     QTextStream stream(mSocket);
     answer = stream.readLine();
-    _debug("TCPSessionIO: Received answer from sflphone: %s", 
+    _debug("TCPSessionIO: Received answer from sflphone: %s\n", 
 	   answer.toStdString().c_str());
   }
 }

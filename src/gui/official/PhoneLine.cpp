@@ -11,7 +11,12 @@ PhoneLine::PhoneLine(const Session &session,
   , mLine(line)
   , mSelected(false)
   , mLineStatus("test")
-{}
+  , mActionTimer(new QTimer(this))
+  , mIsOnError(false)
+{
+  QObject::connect(mActionTimer, SIGNAL(timeout()),
+		   this, SLOT(resetAction()));
+}
 
 PhoneLine::~PhoneLine()
 {
@@ -26,11 +31,31 @@ PhoneLine::getLineStatus()
 }
 
 void
+PhoneLine::resetAction()
+{
+  setAction("");
+}
+
+void
 PhoneLine::setLineStatus(const QString &status)
 { 
+  mActionTimer->stop();
+  mAction.clear();
+
   mLineStatus = status;
   if(mSelected) {
     emit lineStatusChanged(mLineStatus);
+  }
+}
+
+void
+PhoneLine::setAction(const QString &status)
+{ 
+  mActionTimer->stop();
+  mActionTimer->start(3000);
+  mAction = status;
+  if(mSelected) {
+    emit actionChanged(mAction);
   }
 }
 
@@ -61,7 +86,10 @@ PhoneLine::select(bool hardselect)
 
     if(!hardselect) {
       if(mCall) {
-	if(mCall->isIncomming()) {
+	if(mIsOnError) {
+	  close();
+	}
+	else if(mCall->isIncomming()) {
 	  answer();
 	}
 	else {
@@ -75,6 +103,7 @@ PhoneLine::select(bool hardselect)
 
     emit selected();
   }
+
 }
 
 void 
@@ -82,12 +111,26 @@ PhoneLine::disconnect()
 {
   mSelected = false;
   _debug("PhoneLine %d: I am disconnected.\n", mLine);
+  close();
+
+  emit unselected();
+}
+
+void
+PhoneLine::close()
+{
+  _debug("PhoneLine %d: I am closed.\n", mLine);
   if(mCall) {
     delete mCall;
     mCall = NULL;
   }
+  mIsOnError = false;
+}
 
-  emit unselected();
+void
+PhoneLine::error()
+{
+  mIsOnError = true;
 }
 
 void
@@ -96,6 +139,9 @@ PhoneLine::unselect(bool hardselect)
   if(mSelected) {
     _debug("PhoneLine %d: I am unselected.\n", mLine);
     mSelected = false;
+    if(mIsOnError) {
+      close();
+    }
     if(mCall) {
       if(!hardselect) {
 	mCall->hold();
@@ -180,7 +226,7 @@ void
 PhoneLine::hold() 
 {
   if(mCall) {
-    setLineStatus("Holded.");
+    setAction("Holded.");
     _debug("PhoneLine %d: Trying to Hold.\n", mLine);
     mCall->hold();
   }
@@ -192,7 +238,7 @@ void
 PhoneLine::unhold() 
 {
   if(mCall) {
-    setLineStatus("Unholding...");
+    setAction("Unholding...");
     _debug("PhoneLine %d: Trying to Unhold.\n", mLine);
     mCall->unhold();
   }
@@ -202,7 +248,7 @@ void
 PhoneLine::answer() 
 {
   if(mCall) {
-    setLineStatus("Answering...");
+    setAction("Answering...");
     _debug("PhoneLine %d: Trying to answer.\n", mLine);
     mCall->answer();
   }
@@ -212,7 +258,7 @@ void
 PhoneLine::hangup() 
 {
   if(mCall) {
-    setLineStatus("Hanguping...");
+    setAction("Hanguping...");
     _debug("PhoneLine %d: Trying to Hangup.\n", mLine);
     mCall->hangup();
     delete mCall;

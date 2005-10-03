@@ -22,15 +22,14 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< Request >(QString("playdtmf"));
   Requester::instance().registerObject< EventRequest >(QString("getevents"));
   Requester::instance().registerObject< CallStatusRequest >(QString("getcallstatus"));
-  Requester::instance().registerObject< CallRelatedRequest >(QString("answer"));
-  Requester::instance().registerObject< CallRelatedRequest >(QString("notavailable"));
-  Requester::instance().registerObject< CallRelatedRequest >(QString("refuse"));
-  Requester::instance().registerObject< CallRelatedRequest >(QString("senddtmf"));
-  Requester::instance().registerObject< CallRelatedRequest >(QString("playdtmf"));
-  Requester::instance().registerObject< CallRelatedRequest >(QString("call"));
-  Requester::instance().registerObject< CallRelatedRequest >(QString("hold"));
-  Requester::instance().registerObject< CallRelatedRequest >(QString("unhold"));
-  Requester::instance().registerObject< CallRelatedRequest >(QString("hangup"));
+  Requester::instance().registerObject< PermanentRequest >(QString("answer"));
+  Requester::instance().registerObject< PermanentRequest >(QString("notavailable"));
+  Requester::instance().registerObject< PermanentRequest >(QString("refuse"));
+  Requester::instance().registerObject< TemporaryRequest >(QString("senddtmf"));
+  Requester::instance().registerObject< PermanentRequest >(QString("call"));
+  Requester::instance().registerObject< TemporaryRequest >(QString("hold"));
+  Requester::instance().registerObject< TemporaryRequest >(QString("unhold"));
+  Requester::instance().registerObject< PermanentRequest >(QString("hangup"));
 }
 
 void
@@ -68,6 +67,8 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
   // LCD Connections.
   QObject::connect(&PhoneLineManager::instance(), SIGNAL(lineStatusSet(const QString &)),
 		   w->mLcd, SLOT(setLineStatus(const QString &)));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(actionSet(const QString &)),
+		   w->mLcd, SLOT(setAction(const QString &)));
   QObject::connect(&PhoneLineManager::instance(), SIGNAL(globalStatusSet(const QString &)),
 		   w->mLcd, SLOT(setGlobalStatus(const QString &)));
   QObject::connect(&PhoneLineManager::instance(), SIGNAL(bufferStatusSet(const QString &)),

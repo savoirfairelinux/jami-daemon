@@ -76,4 +76,76 @@ public:
 
 };
 
+
+class PermanentRequest : public CallRelatedRequest
+{
+ public:
+  PermanentRequest(const QString &sequenceId,
+		   const QString &command,
+		   const std::list< QString > &args);
+
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request didn't successfully
+   * ended. 
+   */
+  virtual void onError(Call call, 
+		       const QString &code, 
+		       const QString &message);
+
+  /**
+   * This function will be called when the request 
+   * receive an answer, but there's other answers to come.
+   */
+  virtual void onEntry(Call call,
+		       const QString &code, 
+		       const QString &message);
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request successfully
+   * ended.
+   */
+  virtual void onSuccess(Call call, 
+			 const QString &code,
+			 const QString &message);
+};
+
+class TemporaryRequest : public CallRelatedRequest
+{
+ public:
+  TemporaryRequest(const QString &sequenceId,
+		   const QString &command,
+		   const std::list< QString > &args);
+
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request didn't successfully
+   * ended. 
+   */
+  virtual void onError(Call call, 
+		       const QString &code, 
+		       const QString &message);
+
+  /**
+   * This function will be called when the request 
+   * receive an answer, but there's other answers to come.
+   */
+  virtual void onEntry(Call call,
+		       const QString &code, 
+		       const QString &message);
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request successfully
+   * ended.
+   */
+  virtual void onSuccess(Call call, 
+			 const QString &code,
+			 const QString &message);
+};
+
+
 #endif

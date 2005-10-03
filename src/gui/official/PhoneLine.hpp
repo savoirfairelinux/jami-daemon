@@ -2,6 +2,7 @@
 #include <QObject>
 #include <QMutex>
 #include <QString>
+#include <QTimer>
 
 #include "Session.hpp"
 
@@ -58,9 +59,11 @@ public:
   QString getLineStatus();
   QString getBuffer()
   {return mBuffer;}
-  void setLineStatus(const QString &);
   
 public slots:
+  void setLineStatus(const QString &);
+  void setAction(const QString &);
+  void resetAction();
   void incomming(const Call &call);
 
   /**
@@ -84,6 +87,19 @@ public slots:
    */
   void disconnect();
 
+  /**
+   * This will close the current call. it means it
+   * will remove the call if there's one.
+   */
+  void close();
+
+  /**
+   * This will close the current call. it means it
+   * will remove the call if there's one. The line
+   * will be in an error state.
+   */
+  void error();
+
   void setState(const QString &){}
   void setPeer(const QString &){}
 
@@ -93,6 +109,7 @@ signals:
   void unselected();
   void backgrounded();
   void lineStatusChanged(const QString &);
+  void actionChanged(const QString &);
   void bufferStatusChanged(const QString &);
 
 private:
@@ -107,4 +124,8 @@ private:
   QString mBuffer;
 
   QString mLineStatus;
+  QString mAction;
+  QTimer *mActionTimer;
+
+  bool mIsOnError;
 };

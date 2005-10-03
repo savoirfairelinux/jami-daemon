@@ -4,10 +4,12 @@
 #include <QString>
 
 #include "globals.h"
-#include "PhoneLineManager.hpp"
-#include "SFLRequest.hpp"
 #include "CallStatus.hpp"
 #include "CallStatusFactory.hpp"
+#include "PhoneLine.hpp"
+#include "PhoneLineLocker.hpp"
+#include "PhoneLineManager.hpp"
+#include "SFLRequest.hpp"
 
 EventRequest::EventRequest(const QString &sequenceId,
 			   const QString &command,
@@ -80,4 +82,123 @@ CallStatusRequest::onSuccess(const QString &code, const QString &message)
     }
   }
   PhoneLineManager::instance().handleEvents();
+}
+
+
+PermanentRequest::PermanentRequest(const QString &sequenceId,
+			 const QString &command,
+			 const std::list< QString > &args)
+  : CallRelatedRequest(sequenceId, command, args)
+{}
+
+void
+PermanentRequest::onError(Call call, 
+		     const QString &, 
+		     const QString &message)
+{
+  PhoneLine *line = PhoneLineManager::instance().getLine(call);
+  if(line) {
+    PhoneLineLocker guard(line, false);
+    line->setLineStatus(message);
+    line->error();
+  }
+  else {
+    _debug("We received an error on a call "
+	   "that doesn't have a phone line (%s).\n", 
+	   call.id().toStdString().c_str());
+  }
+}
+
+void
+PermanentRequest::onEntry(Call call, 
+			    const QString &, 
+			    const QString &message)
+{
+  PhoneLine *line = PhoneLineManager::instance().getLine(call);
+  if(line) {
+    PhoneLineLocker guard(line, false);
+    line->setLineStatus(message);
+  }
+  else {
+    _debug("We received a status on a call related request "
+	   "that doesn't have a phone line (%s).\n", 
+	   call.id().toStdString().c_str());
+  }
+}
+
+void
+PermanentRequest::onSuccess(Call call, 
+		       const QString &, 
+			    const QString &message)
+{
+  PhoneLine *line = PhoneLineManager::instance().getLine(call);
+  if(line) {
+    PhoneLineLocker guard(line, false);
+    line->setLineStatus(message);
+  }
+  else {
+    _debug("We received a success on a call related request "
+	   "that doesn't have a phone line (%s).\n", 
+	   call.id().toStdString().c_str());
+  }
+}
+
+TemporaryRequest::TemporaryRequest(const QString &sequenceId,
+				   const QString &command,
+				   const std::list< QString > &args)
+  : CallRelatedRequest(sequenceId, command, args)
+{}
+
+void
+TemporaryRequest::onError(Call call, 
+			  const QString &, 
+			  const QString &message)
+{
+  PhoneLine *line = PhoneLineManager::instance().getLine(call);
+  if(line) {
+    PhoneLineLocker guard(line, false);
+    line->setAction(message);
+  }
+  else {
+    _debug("We received an error on a temporary call "
+	   "related request that doesn't have a phone "
+	   "line (%s).\n", 
+	   call.id().toStdString().c_str());
+  }
+}
+
+void
+TemporaryRequest::onEntry(Call call, 
+			  const QString &, 
+			  const QString &message)
+{
+  PhoneLine *line = PhoneLineManager::instance().getLine(call);
+  if(line) {
+    PhoneLineLocker guard(line, false);
+    line->setAction(message);
+  }
+  else {
+    _debug("We received a status on a temporary call "
+	   "related request that doesn't have a phone "
+	   "line (%s).\n", 
+	   call.id().toStdString().c_str());
+  }
+}
+
+void
+TemporaryRequest::onSuccess(Call call, 
+		       const QString &, 
+			    const QString &message)
+{
+  PhoneLine *line = PhoneLineManager::instance().getLine(call);
+  if(line) {
+    PhoneLineLocker guard(line, false);
+    line->setAction(message);
+  }
+  else {
+    _debug("We received a success on a temporary call "
+	   "related request that doesn't have a phone "
+	   "line (%s).\n", 
+	   call.id().toStdString().c_str());
+  }
 }

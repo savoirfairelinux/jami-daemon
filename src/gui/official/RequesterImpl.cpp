@@ -116,6 +116,7 @@ RequesterImpl::receiveAnswer(const QString &answer)
   std::istringstream s(answer.toStdString());
   s >> code >> seq;
   getline(s, message);
+  message.erase(0, 1);
   receiveAnswer(QString::fromStdString(code), 
 		QString::fromStdString(seq),
 		QString::fromStdString(message));

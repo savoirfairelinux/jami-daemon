@@ -42,6 +42,7 @@ public slots:
 
   void setGlobalStatus(const QString &global);
   void setLineStatus(const QString &line);
+  void setAction(const QString &line);
   void setBufferStatus(const QString &line);
 
   void startTiming();
@@ -56,9 +57,11 @@ private:
   QString mGlobalStatus;
   QString mLineStatus;
   QString mBufferStatus;
+  QString mAction;
   int mGlobalStatusPos;
   int mLineStatusPos;
   int mBufferStatusPos;
+  int mActionPos;
 
   bool mIsTimed;
   QTime mTime;
