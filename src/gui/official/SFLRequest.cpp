@@ -151,52 +151,32 @@ TemporaryRequest::TemporaryRequest(const QString &sequenceId,
 
 void
 TemporaryRequest::onError(Call call, 
-			  const QString &, 
+			  const QString &code, 
 			  const QString &message)
 {
-  PhoneLine *line = PhoneLineManager::instance().getLine(call);
-  if(line) {
-    PhoneLineLocker guard(line, false);
-    line->setAction(message);
-  }
-  else {
-    _debug("We received an error on a temporary call "
-	   "related request that doesn't have a phone "
-	   "line (%s).\n", 
-	   call.id().toStdString().c_str());
-  }
+  onSuccess(call, code, message);
 }
 
 void
 TemporaryRequest::onEntry(Call call, 
-			  const QString &, 
+			  const QString &code,
 			  const QString &message)
 {
-  PhoneLine *line = PhoneLineManager::instance().getLine(call);
-  if(line) {
-    PhoneLineLocker guard(line, false);
-    line->setAction(message);
-  }
-  else {
-    _debug("We received a status on a temporary call "
-	   "related request that doesn't have a phone "
-	   "line (%s).\n", 
-	   call.id().toStdString().c_str());
-  }
+  onSuccess(call, code, message);
 }
 
 void
 TemporaryRequest::onSuccess(Call call, 
-		       const QString &, 
+			    const QString &, 
 			    const QString &message)
 {
   PhoneLine *line = PhoneLineManager::instance().getLine(call);
   if(line) {
     PhoneLineLocker guard(line, false);
-    line->setAction(message);
+    line->setTempAction(message);
   }
   else {
-    _debug("We received a success on a temporary call "
+    _debug("We received an answer on a temporary call "
 	   "related request that doesn't have a phone "
 	   "line (%s).\n", 
 	   call.id().toStdString().c_str());

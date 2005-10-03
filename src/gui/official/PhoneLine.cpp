@@ -52,6 +52,16 @@ void
 PhoneLine::setAction(const QString &status)
 { 
   mActionTimer->stop();
+  mAction = status;
+  if(mSelected) {
+    emit actionChanged(mAction);
+  }
+}
+
+void
+PhoneLine::setTempAction(const QString &status)
+{ 
+  mActionTimer->stop();
   mActionTimer->start(3000);
   mAction = status;
   if(mSelected) {
@@ -98,6 +108,7 @@ PhoneLine::select(bool hardselect)
       }
       else {
 	setLineStatus("Ready.");
+	setAction("");
       }
     }
 
@@ -226,7 +237,7 @@ void
 PhoneLine::hold() 
 {
   if(mCall) {
-    setAction("Holded.");
+    setAction("Holding...");
     _debug("PhoneLine %d: Trying to Hold.\n", mLine);
     mCall->hold();
   }

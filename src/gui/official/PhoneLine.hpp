@@ -63,6 +63,7 @@ public:
 public slots:
   void setLineStatus(const QString &);
   void setAction(const QString &);
+  void setTempAction(const QString &);
   void resetAction();
   void incomming(const Call &call);
 

@@ -25,11 +25,11 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< PermanentRequest >(QString("answer"));
   Requester::instance().registerObject< PermanentRequest >(QString("notavailable"));
   Requester::instance().registerObject< PermanentRequest >(QString("refuse"));
-  Requester::instance().registerObject< TemporaryRequest >(QString("senddtmf"));
   Requester::instance().registerObject< PermanentRequest >(QString("call"));
+  Requester::instance().registerObject< PermanentRequest >(QString("hangup"));
   Requester::instance().registerObject< TemporaryRequest >(QString("hold"));
   Requester::instance().registerObject< TemporaryRequest >(QString("unhold"));
-  Requester::instance().registerObject< PermanentRequest >(QString("hangup"));
+  Requester::instance().registerObject< TemporaryRequest >(QString("senddtmf"));
 }
 
 void
