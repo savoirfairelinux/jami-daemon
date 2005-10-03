@@ -170,6 +170,21 @@ public slots:
   PhoneLine *getNextAvailableLine();
 
   /**
+   * This function will return the PhoneLine with the 
+   * given id. If there's no such line, it will return 
+   * NULL. The line is locked, So you'll need to unlock it.
+   */
+  PhoneLine *getLine(unsigned int line);
+
+  /**
+   * This function will return the PhoneLine with the
+   * given call id. If there's no such line, it will 
+   * return NULL. The line is locked, So you'll need to 
+   * unlock it.
+   */
+  PhoneLine *getLine(const Call &call);
+
+  /**
    * This function will return the next available line.
    * The line is NOT locked.
    */

@@ -179,6 +179,45 @@ PhoneLineManagerImpl::getNextAvailableLine()
 }
 
 PhoneLine *
+PhoneLineManagerImpl::getLine(const Call &call)
+{
+  isInitialized();
+
+  PhoneLine *selectedLine = NULL;
+  QMutexLocker guard(&mPhoneLinesMutex);
+
+  unsigned int i = 0;
+  while(i < mPhoneLines.size() && !selectedLine) {
+    mPhoneLines[i]->lock();
+    if(mPhoneLines[i]->getCallId() == call->id())
+      selectedLine = mPhoneLines[i];
+    }
+    else {
+      mPhoneLines[i]->unlock();
+      i++;
+    }
+  }
+
+  return selectedLine;
+}
+
+PhoneLine *
+PhoneLineManagerImpl::getLine(unsigned int line)
+{
+  isInitialized();
+
+  PhoneLine *selectedLine = NULL;
+
+  QMutexLocker guard(&mPhoneLinesMutex);
+  if(line < mPhoneLines.size()) {
+    selectedLine = mPhoneLines[line];
+    selectedLine->lock();
+  }
+
+  return selectedLine;
+}
+
+PhoneLine *
 PhoneLineManagerImpl::selectNextAvailableLine()
 {
   isInitialized();
