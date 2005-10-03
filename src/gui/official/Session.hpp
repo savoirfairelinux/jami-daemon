@@ -55,6 +55,16 @@ class Session
   QString getCallStatus() const;
 
   /**
+   * This function will mute the microphone.
+   */
+  QString mute() const;
+
+  /**
+   * This function will unmute the microphone.
+   */
+  QString unmute() const;
+
+  /**
    * This function will ask to the SessionIO
    * linked to this session to connect.
    */

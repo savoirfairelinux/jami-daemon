@@ -63,6 +63,18 @@ Session::getEvents() const
 }
 
 QString
+Session::mute() const
+{
+  return Requester::instance().send(mId, "mute", std::list< QString >());
+}
+
+QString
+Session::unmute() const
+{
+  return Requester::instance().send(mId, "unmute", std::list< QString >());
+}
+
+QString
 Session::getCallStatus() const
 {
   return Requester::instance().send(mId, "getcallstatus", std::list< QString >());

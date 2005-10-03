@@ -52,8 +52,10 @@ public slots:
   /**
    * This function will switch the button
    */
-  virtual void press();
-  virtual void release();
+  virtual void press(bool modify = true);
+  virtual void release(bool modify = true);
+
+  virtual void setToggle(bool toggled);
 
 protected:
   QPixmap mImages[2];
@@ -63,9 +65,13 @@ protected:
   void mousePressEvent(QMouseEvent *);
   void mouseReleaseEvent(QMouseEvent *);
   void mouseMoveEvent(QMouseEvent *);
+
 signals:
+  void clicked(bool);
   void clicked();
 
+private:
+  bool mIsToggling;
 };
 
 #endif	// defined(__J_PUSH_BUTTON_H__)

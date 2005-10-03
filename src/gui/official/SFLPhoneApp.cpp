@@ -27,6 +27,8 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< PermanentRequest >(QString("refuse"));
   Requester::instance().registerObject< PermanentRequest >(QString("call"));
   Requester::instance().registerObject< PermanentRequest >(QString("hangup"));
+  Requester::instance().registerObject< TemporaryRequest >(QString("mute"));
+  Requester::instance().registerObject< TemporaryRequest >(QString("unmute"));
   Requester::instance().registerObject< TemporaryRequest >(QString("hold"));
   Requester::instance().registerObject< TemporaryRequest >(QString("unhold"));
   Requester::instance().registerObject< TemporaryRequest >(QString("senddtmf"));
@@ -55,6 +57,8 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 
   QObject::connect(w->mOk, SIGNAL(clicked()),
 		   &PhoneLineManager::instance(), SLOT(call()));
+  QObject::connect(w->mMute, SIGNAL(clicked(bool)),
+		   &PhoneLineManager::instance(), SLOT(mute(bool)));
   QObject::connect(w->mHangup, SIGNAL(clicked()),
 		   &PhoneLineManager::instance(), SLOT(hangup()));
   QObject::connect(w->mHold, SIGNAL(clicked()),

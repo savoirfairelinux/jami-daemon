@@ -57,6 +57,7 @@ private:
   JPushButton *mHold;
   JPushButton *mOk;
   JPushButton *mClear;
+  JPushButton *mMute;
 
   SFLLcd *mLcd;
 

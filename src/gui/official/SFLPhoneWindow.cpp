@@ -72,6 +72,12 @@ SFLPhoneWindow::initGUIButtons()
 			   ":/sflphone/images/clear_on",
 			   this);
   mClear->move(225,130);
+
+  mMute = new JPushButton(":/sflphone/images/mute_off",
+			   ":/sflphone/images/mute_on",
+			   this);
+  mMute->move(225,94);
+  mMute->setToggle(true);
 }
 
 void 

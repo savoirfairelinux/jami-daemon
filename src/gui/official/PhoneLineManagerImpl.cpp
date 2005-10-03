@@ -427,6 +427,33 @@ PhoneLineManagerImpl::hangup()
 }
 
 void
+PhoneLineManagerImpl::mute(bool muting)
+{
+  if(muting) {
+    mute();
+  }
+  else {
+    unmute();
+  }
+}
+
+void
+PhoneLineManagerImpl::mute()
+{
+  isInitialized();
+  
+  mSession->mute();
+}
+
+void
+PhoneLineManagerImpl::unmute()
+{
+  isInitialized();
+
+  mSession->unmute();
+}
+
+void
 PhoneLineManagerImpl::hangup(const QString &callId)
 {
   PhoneLine *selectedLine = getPhoneLine(callId);

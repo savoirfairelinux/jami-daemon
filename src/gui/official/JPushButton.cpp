@@ -35,8 +35,9 @@ JPushButton::JPushButton(const QString &released,
 			 QWidget* parent, 
 			 Qt::WFlags flags)
   : QLabel(parent, flags) 
+  , mIsPressed(false)
+  , mIsToggling(false)
 {
-
   mImages[0] = transparize(released);
   mImages[1] = transparize(pressed);
   release();
@@ -44,6 +45,12 @@ JPushButton::JPushButton(const QString &released,
 
 JPushButton::~JPushButton()
 {}
+
+void
+JPushButton::setToggle(bool toggle)
+{
+  mIsToggling = toggle;
+}
 
 QPixmap
 JPushButton::transparize(const QString &image)
@@ -63,9 +70,8 @@ JPushButton::transparize(const QString &image)
 }
 
 void
-JPushButton::release() 
+JPushButton::release(bool modify) 
 {
-  mIsPressed = false;
   setPixmap(mImages[0]);
   if(mImages[0].hasAlpha()) {
     setMask(mImages[0].mask());
@@ -74,9 +80,8 @@ JPushButton::release()
 }
 
 void
-JPushButton::press() 
+JPushButton::press(bool modify) 
 {
-  mIsPressed = true;
   setPixmap(mImages[1]);
   if(mImages[1].hasAlpha()) {
     setMask(mImages[1].mask());
@@ -104,11 +109,24 @@ void
 JPushButton::mouseReleaseEvent (QMouseEvent *e) {
   switch (e->button()) {
   case Qt::LeftButton:
-    release();
-    // Emulate the left mouse click
-    if (this->rect().contains(e->pos())) {
+    if(mIsToggling) {
+      mIsPressed = !mIsPressed;
+      if(mIsPressed) {
+	press();
+      }
+      else {
+	release();
+      }
+      emit clicked(mIsPressed);
+    }
+    else {
+      release();
       emit clicked();
     }
+    // Emulate the left mouse click
+    //if (this->rect().contains(e->pos())) {
+    //  emit clicked();
+    //}
     break;
     
   default:

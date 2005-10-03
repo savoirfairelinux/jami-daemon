@@ -94,6 +94,25 @@ public slots:
   void hangup();
 
   /**
+   * This function will mute the current line if muting
+   * is true, it will unmute otherwise.
+   * If there's no current line, it will do nothing.
+   */
+  void mute(bool);
+
+  /**
+   * This function will mute the current line
+   * If there's no current line, it will do nothing.
+   */
+  void mute();
+
+  /**
+   * This function will unmute the current line
+   * If there's no current line, it will do nothing.
+   */
+  void unmute();
+
+  /**
    * This function will hanp up the line number given 
    * argument. Be aware that the first line is 1, not 
    * zero.

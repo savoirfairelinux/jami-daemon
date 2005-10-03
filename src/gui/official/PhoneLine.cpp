@@ -284,7 +284,6 @@ PhoneLine::hangup()
   unselect();
 }
 
-
 QString 
 PhoneLine::getCallId()
 {
