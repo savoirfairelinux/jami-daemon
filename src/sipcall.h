@@ -24,6 +24,7 @@
 
 #include <eXosip2/eXosip.h>
 #include <vector>
+#include <string>
 
 class CodecDescriptor;
 class AudioCodec;
@@ -68,6 +69,9 @@ public:
 	 */
 	void	setLocalAudioPort 	(int);
 	int 	getLocalAudioPort 	(void);	
+
+  std::string getLocalIp() { return _localIp; }
+  void setLocalIp(const std::string& ip) { _localIp = ip; }
 
 	/*
 	 * Manage id, did (dialog-id), cid (call-id) and tid (transaction-id) 
@@ -138,6 +142,7 @@ private:
   int  	_remote_sdp_audio_port;
   int 	_local_sendrecv;           /* _SENDRECV, _SENDONLY, _RECVONLY */
   int 	_remote_sendrecv;          /* _SENDRECV, _SENDONLY, _RECVONLY */
+  std::string _localIp;
 };
 
 #endif // __SIP_CALL_H__

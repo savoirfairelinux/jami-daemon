@@ -23,12 +23,14 @@
 #include <string>
 
 #include "../global.h"
-#include "../manager.h"
+#include "ulaw.h"
+#include <cc++/thread.h>
 
-#define ZT_TONE_DIALTONE	0
-#define ZT_TONE_BUSY		1
-#define ZT_TONE_RINGTONE	2
-#define ZT_TONE_CONGESTION	3
+#define ZT_TONE_NULL       99
+#define ZT_TONE_DIALTONE   0
+#define ZT_TONE_BUSY       1
+#define ZT_TONE_RINGTONE   2
+#define ZT_TONE_CONGESTION 3
 
 #define NB_TONES_MAX		4
 #define NB_ZONES_MAX		7
@@ -73,18 +75,24 @@ public:
 	/**
 	 * Calculate sinus with superposition of 2 frequencies
 	 */
-	void generateSin	(int, int, int16 *);
+	void generateSin	(int, int, int16 *) const;
 
 	/**
  	 * Build tone according to the id-zone, with initialisation of ring tone.
  	 * Generate sinus with frequencies alternatively by time
  	 */
-	void buildTone		(int, int, int16*);
+	void buildTone		(unsigned int, unsigned int, int16*);
 
 	/**
 	 * Handle the required tone
 	 */
-	void toneHandle 	(int);
+	void toneHandle 	(unsigned int, const std::string& zone);
+
+  /**
+   * Stop tone
+   */
+  void stopTone();
+
 
 	/**
 	 * Play the ringtone when incoming call occured
@@ -121,7 +129,13 @@ private:
 	//////////////////////////
 	std::string toneZone[NB_ZONES_MAX][NB_TONES_MAX];
 	ToneThread*	tonethread;
-	
+
+	short* _dst;
+	char* _src;
+	Ulaw* _ulaw;
+
+  unsigned int _currentTone;
+  unsigned int _currentZone;
 };
 
 #endif // __TONE_GENRATOR_H__

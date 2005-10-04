@@ -42,7 +42,6 @@ public:
 	virtual void displayError (const std::string& error) = 0;
 	virtual void displayStatus (const std::string& status) = 0;
 	virtual void displayContext (short id) = 0;
-	virtual std::string getRingtoneFile (void) = 0;
 	virtual void setup (void) = 0;
 	//virtual int selectedCall (void) = 0;
 	//virtual bool isCurrentId (short) = 0;

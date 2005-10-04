@@ -45,25 +45,13 @@ RingBuffer::RingBuffer(int size) {
 RingBuffer::~RingBuffer() {
    free (mBuffer);
 }
-
-void
-RingBuffer::lock (void) 
-{
-	mMutex.enterMutex();
-} 
- 
-void
-RingBuffer::unlock (void) 
-{
-	mMutex.leaveMutex();
-}
  
 void
 RingBuffer::flush (void) {
-	lock();
+	mMutex.enterMutex();
 	mStart = 0; 
 	mEnd = 0;
-	unlock();
+	mMutex.leaveMutex();
 } 
 
 int 
@@ -88,7 +76,7 @@ RingBuffer::Put(void* buffer, int toCopy) {
    int pos;
    int len = Len();
   
-   lock();
+   mMutex.enterMutex();
    if (toCopy > (mBufferSize-4) - len)
       toCopy = (mBufferSize-4) - len; 
 
@@ -113,7 +101,7 @@ RingBuffer::Put(void* buffer, int toCopy) {
 
    mEnd = pos;
    
-   unlock();
+   mMutex.leaveMutex();
 
    // How many items copied.
    return copied;
@@ -137,7 +125,7 @@ RingBuffer::Get(void *buffer, int toCopy) {
    int copied;
    int len = Len();
 	
-   lock();
+   mMutex.enterMutex();
    if (toCopy > len)
       toCopy = len;
 
@@ -156,7 +144,7 @@ RingBuffer::Get(void *buffer, int toCopy) {
       copied += block;
    }
 	
-   unlock();
+   mMutex.leaveMutex();
    return copied;
 }
 

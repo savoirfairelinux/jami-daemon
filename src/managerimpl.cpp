@@ -42,7 +42,6 @@
 #include "audio/codecDescriptor.h"
 #include "audio/ringbuffer.h"
 #include "audio/tonegenerator.h"
-#include "audio/dtmf.h"
 #include "call.h"
 #include "error.h"
 #include "user_cfg.h"
@@ -95,6 +94,8 @@ ManagerImpl::ManagerImpl (void)
   _spkr_volume = 0;
   _mic_volume  = 0; 
   _mic_volume_before_mute = 0;
+
+  _toneType = 0;
 }
 
 ManagerImpl::~ManagerImpl (void) 
@@ -206,13 +207,6 @@ ManagerImpl::initGui() {
   }
 }
 
-
-ToneGenerator*
-ManagerImpl::getTonegenerator (void) 
-{
-	return _tone;
-}
-
 Error*
 ManagerImpl::error (void) 
 {
@@ -307,15 +301,16 @@ ManagerImpl::pushBackNewCall (short id, enum CallType type)
 void
 ManagerImpl::deleteCall (short id)
 {
-	unsigned int i = 0;
-	while (i < _callVector.size()) {
-		if (_callVector.at(i)->getId() == id) {
-			_callVector.erase(_callVector.begin()+i);
-			return;
-		} else {
-			i++;
-		}
-	}
+  CallVector::iterator iter = _callVector.begin();
+
+  while(iter!=_callVector.end()) {
+    if ((*iter)->getId() == id) {
+      delete (*iter);
+      _callVector.erase(iter);
+      return;
+    }
+    iter++;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -356,18 +351,13 @@ ManagerImpl::hangupCall (short id)
 	}
 	call->setStatus(string(HUNGUP_STATUS));
 	call->setState(Hungup);
+
+	int result = call->hangup();
+
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
 	deleteCall(id);
-	if (getbRingback()) {
-		ringback(false);
-	}
-	if (getbRingtone()) {
-		ringtone(false);
-	}
-	int result = call->hangup();
-  congestion(false);
   return result;
 }
 
@@ -385,9 +375,7 @@ ManagerImpl::cancelCall (short id)
 	_nCalls -= 1;
 	_mutex.leaveMutex();
 	deleteCall(id);
-	if (getbRingback()) {
-		ringback(false);
-	}
+  stopTone();
 	return call->cancel();
 }
 
@@ -401,8 +389,8 @@ ManagerImpl::answerCall (short id)
 		return -1;
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Answered);
-	ringtone(false);
 
+  stopTone();
   switchCall(id);
 	return call->answer();
 }
@@ -480,6 +468,7 @@ ManagerImpl::muteOff (short id)
 int 
 ManagerImpl::refuseCall (short id)
 {
+  stopTone();
 	Call *call;
 	call = getCall(id);
 	if (call == NULL)
@@ -491,13 +480,15 @@ ManagerImpl::refuseCall (short id)
 
   call->setStatus(string(HUNGUP_STATUS));
   call->setState(Refused);	
-  ringtone(false);
+  
   _mutex.enterMutex();
   _nCalls -= 1;
   _mutex.leaveMutex();
-  deleteCall(id);
+
   setCurrentCallId(0);
-	return call->refuse();
+	int refuse = call->refuse();
+  deleteCall(id);
+  return refuse;
 }
 
 int
@@ -578,13 +569,14 @@ ManagerImpl::sendDtmf (short id, char code)
 bool
 ManagerImpl::playDtmf(char code)
 {
+  stopTone();
+
   int16* _buf = new int16[SIZEBUF];
   bool returnValue = false;
 
   // Handle dtmf
-  DTMF key;
-  key.startTone(code);
-  if ( key.generateDTMF(_buf, SAMPLING_RATE) ) {
+  _key.startTone(code);
+  if ( _key.generateDTMF(_buf, SAMPLING_RATE) ) {
 
     int k, spkrVolume;
     int16* buf_ctrl_vol;
@@ -603,31 +595,28 @@ ManagerImpl::playDtmf(char code)
     }
   
     AudioLayer *audiolayer = getAudioDriver();
+    _mutex.enterMutex();
     audiolayer->urgentRingBuffer().flush();
-  
+
     // Put buffer to urgentRingBuffer 
     audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, size * CHANNELS);
-  
+
     // We activate the stream if it's not active yet.
     if (!audiolayer->isStreamActive()) {
       audiolayer->startStream();
       audiolayer->sleep(pulselen);
-      audiolayer->stopStream();
       audiolayer->urgentRingBuffer().flush();
+      audiolayer->stopStream();
     } else {
       audiolayer->sleep(pulselen);
     }
+    _mutex.leaveMutex();
+    //setZonetone(false);
     delete[] buf_ctrl_vol;
     returnValue = true;
   }
   delete[] _buf;
   return returnValue;
-}
-
-bool
-ManagerImpl::playTone()
-{
-  return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -662,57 +651,47 @@ ManagerImpl::incomingCall (short id)
 void 
 ManagerImpl::peerAnsweredCall (short id)
 {
-	Call* call;
+  stopTone();
 
-	if (getbRingback()) {
-		ringback(false);
-	}	
-	call = getCall(id);
-	call->setStatus(string(CONNECTED_STATUS));
+  Call* call = getCall(id);
+  call->setStatus(string(CONNECTED_STATUS));
+  call->setState(Answered);
 
-	call->setState(Answered);
-	//if (isCurrentId(id)) {
+  // switch current call
   switchCall(id);
   _gui->peerAnsweredCall(id);
-	//}
 }
 
-int 
+int
 ManagerImpl::peerRingingCall (short id)
 {
-	Call* call;
+  Call* call = getCall(id);
+  call->setStatus(string(RINGING_STATUS));
+  call->setState(Ringing);
 
-	call = getCall(id);
-	call->setStatus(string(RINGING_STATUS));
-	call->setState(Ringing);
-
-	ringback(true);
-	_gui->peerRingingCall(id);
-	displayStatus(RINGING_STATUS);	
-	return 1;
+  // ring
+  ringback(true);
+  _gui->peerRingingCall(id);
+  return 1;
 }
 
 int 
 ManagerImpl::peerHungupCall (short id)
 {
-	Call* call;
+  stopTone();
+  Call* call = getCall(id);
+  call->setStatus(string(HUNGUP_STATUS));
+  call->setState(Hungup);
 
-	call = getCall(id);
-	call->setStatus(string(HUNGUP_STATUS));
-	call->setState(Hungup);
-	_gui->peerHungupCall(id);
-	if (getbRingback()) {
-		ringback(false);
-	}
-	if (getbRingtone()) {
-		ringtone(false);
-	}
-	_mutex.enterMutex();
-	_nCalls -= 1;
-	_mutex.leaveMutex();
-	deleteCall(id);
+  _gui->peerHungupCall(id);
+
+  // end up call
+  _mutex.enterMutex();
+  _nCalls -= 1;
+  _mutex.leaveMutex();
+  deleteCall(id);
   setCurrentCallId(0);
-	return 1;
+  return 1;
 }
 
 void 
@@ -785,75 +764,78 @@ ManagerImpl::stopVoiceMessageNotification (void)
   _gui->sendVoiceNbMessage(std::string("0"));
 }
 
+bool 
+ManagerImpl::playATone(unsigned int tone) {
+  if (isDriverLoaded()) {
+    ost::MutexLock m(_toneMutex); 
+    _toneType = tone;
+    _tone->toneHandle(_toneType, getConfigString(PREFERENCES, ZONE_TONE));
+    return true;
+  }
+  return false;
+}
+
+void 
+ManagerImpl::stopTone() {
+  if (isDriverLoaded()) {
+    ost::MutexLock m(_toneMutex);
+    _toneType = ZT_TONE_NULL;
+    _tone->stopTone();
+    _mutex.enterMutex();
+    getAudioDriver()->stopStream();
+    _mutex.leaveMutex();
+  }
+}
+
+bool
+ManagerImpl::playTone()
+{
+  return playATone(ZT_TONE_DIALTONE);
+}
+
 void
 ManagerImpl::congestion (bool var) {
-	if (isDriverLoaded()) {
-		if (_congestion != var) {
-			_congestion = var;
-		}
-		_zonetone = var;
-		_debug("ManagerImpl::congestion : Tone Handle Congestion\n");
-		_tone->toneHandle(ZT_TONE_CONGESTION);
-	} else {
-        _error->errorName(OPEN_FAILED_DEVICE);
-    }
+  playATone(ZT_TONE_CONGESTION);
 }
 
 void
 ManagerImpl::ringback (bool var) {
-	if (isDriverLoaded()) {
-		if (_ringback != var) {
-			_ringback = var;
-		}
-		_zonetone = var;
-		_tone->toneHandle(ZT_TONE_RINGTONE);
-	} else {
-        _error->errorName(OPEN_FAILED_DEVICE);
-    }
+  playATone(ZT_TONE_RINGTONE);
+}
+void
+ManagerImpl::busy() {
+  playATone(ZT_TONE_BUSY);
 }
 
 void
-ManagerImpl::ringtone (bool var) 
+ManagerImpl::ringtone(bool var) 
 { 
-	if (isDriverLoaded()) {
-		if (getNumberOfCalls() > 1 and _zonetone and var == false) {
-			// If more than one line is ringing
-			_zonetone = false;
-			_tone->playRingtone((_gui->getRingtoneFile()).data());
-		}
-		_ringtone = var;
-		_zonetone = var;
-		if (getNumberOfCalls() == 1) {
-			// If just one line is ringing
-			_tone->playRingtone((_gui->getRingtoneFile()).data());
-		} 
-	} else {
-        _error->errorName(OPEN_FAILED_DEVICE);
-    }
+  playATone(ZT_TONE_RINGTONE); // not a file...
 }
 
+/**
+ * Use Urgent Buffer
+ */
 void
 ManagerImpl::notificationIncomingCall (void) {
-    int16* buf_ctrl_vol;
-    int16* buffer = new int16[SAMPLING_RATE];
-	int size = SAMPLES_SIZE(FRAME_PER_BUFFER);//SAMPLING_RATE/2;
-	int k, spkrVolume;
-                                                                                
-    _tone->generateSin(440, 0, buffer);
-           
-	// Volume Control 
-	buf_ctrl_vol = new int16[size*CHANNELS];
-	spkrVolume = getSpkrVolume();
-	for (int j = 0; j < size; j++) {
-		k = j*2;
-		buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
-	}
-	
-	getAudioDriver()->urgentRingBuffer().Put(buf_ctrl_vol, 
-			SAMPLES_SIZE(FRAME_PER_BUFFER));
+  int16* buf_ctrl_vol;
+  int16* buffer = new int16[SAMPLING_RATE];
+  int size = SAMPLES_SIZE(FRAME_PER_BUFFER);//SAMPLING_RATE/2;
+  int k, spkrVolume;
 
-    delete[] buf_ctrl_vol;
-    delete[] buffer;
+  _tone->generateSin(440, 0, buffer);
+
+  // Volume Control 
+  buf_ctrl_vol = new int16[size*CHANNELS];
+  spkrVolume = getSpkrVolume();
+  for (int j = 0; j < size; j++) {
+    k = j*2;
+    buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
+  }
+  getAudioDriver()->putUrgent(buf_ctrl_vol, SAMPLES_SIZE(FRAME_PER_BUFFER));
+
+  delete[] buf_ctrl_vol;
+  delete[] buffer;
 }
 
 void
@@ -863,7 +845,7 @@ ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr) {
 	char* addr;
 	char to[16];
 	bzero (to, 16);
-                                                                                
+
     int fd3, fd4;
     bool ok = stunOpenSocketPair(stunSvrAddr,
                                       &mappedAddr,
@@ -1004,7 +986,6 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
   fill_config_str(STUN_SERVER, DFT_STUN_SERVER);
   fill_config_int(USE_STUN, NO_STR);
-  fill_config_int(LOCAL_IP, LOCAL_IP_DEFAULT);
 
   section = AUDIO;
   fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);
@@ -1274,7 +1255,6 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
 {
   bool returnValue = false;
   if (name=="") {
-    
     returnValue = true;
   } else if (name=="") {
     returnValue = true;

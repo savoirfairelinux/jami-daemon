@@ -56,9 +56,6 @@ class RingBuffer {
  private:
  //  T getNextSample(void);
 
-   void lock (void);
-   void unlock (void);
-
    ost::Mutex  		 mMutex;
    int           mStart;
    int           mEnd;

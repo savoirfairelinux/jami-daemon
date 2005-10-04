@@ -25,7 +25,6 @@
 #include "audiolayer.h"
 #include "codecDescriptor.h"
 #include "ringbuffer.h"
-#include "ulaw.h"
 #include "tonegenerator.h"
 #include "../global.h"
 #include "../manager.h"
@@ -40,8 +39,9 @@ int AMPLITUDE = 8192;
 // ToneThread implementation
 ///////////////////////////////////////////////////////////////////////////////
 ToneThread::ToneThread (int16 *buf, int size) : Thread () {
-	this->buffer = buf;  
+	this->buffer = buf;
 	this->size = size;
+  // channels is 2 (global.h)
 	this->buf_ctrl_vol = new int16[size*CHANNELS];
 }
 
@@ -59,23 +59,23 @@ ToneThread::run (void) {
 	// unsigned int play_time = (size * 1000) / SAMPLING_RATE;
   unsigned int pause = (size) / SAMPLING_RATE;
 
-	while (Manager::instance().getZonetone()) {
-			
+  ManagerImpl& manager = Manager::instance();
+	while (!testCancel()) {
+
 		// Create a new stereo buffer with the volume adjusted
-		spkrVolume = Manager::instance().getSpkrVolume();
+		spkrVolume = manager.getSpkrVolume();
 		for (int j = 0; j < size; j++) {
-			k = j*2;
+			k = j*2; // channels is 2 (global.h)
 			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
 		}
 
 		// Push the tone to the audio FIFO
-		Manager::instance().getAudioDriver()->mainSndRingBuffer().Put(buf_ctrl_vol, 
-			SAMPLES_SIZE(size));
+		manager.getAudioDriver()->putMain(buf_ctrl_vol, SAMPLES_SIZE(size));
 
 		// The first iteration will start the audio stream if not already.
 		if (!started) {
 			started = true;
-			Manager::instance().getAudioDriver()->startStream();
+			manager.getAudioDriver()->startStream();
 		}
 		
 		// next iteration later, sound is playing.
@@ -90,10 +90,19 @@ ToneThread::run (void) {
 ToneGenerator::ToneGenerator () {	
 	this->initTone();
 	tonethread = NULL;
+	_dst = NULL;
+	_src = NULL;
+	_ulaw = new Ulaw (PAYLOAD_CODEC_ULAW, "G711u");
+
+  _currentTone = ZT_TONE_NULL;
+  _currentZone = 0;
 }
 
 ToneGenerator::~ToneGenerator (void) {
 	delete tonethread;
+  delete [] _dst;
+  delete [] _src;
+  delete _ulaw;
 }
 
 /**
@@ -103,7 +112,7 @@ void
 ToneGenerator::initTone (void) {
 	toneZone[ID_NORTH_AMERICA][ZT_TONE_DIALTONE] = "350+440";
 	toneZone[ID_NORTH_AMERICA][ZT_TONE_BUSY] = "480+620/500,0/500";
-	toneZone[ID_NORTH_AMERICA][ZT_TONE_RINGTONE] = "440+480/2000,0/4000";
+	toneZone[ID_NORTH_AMERICA][ZT_TONE_RINGTONE] = "440+480/2000,0/2000";
 	toneZone[ID_NORTH_AMERICA][ZT_TONE_CONGESTION] = "480+620/250,0/250"; 
 
 	toneZone[ID_FRANCE][ZT_TONE_DIALTONE] = "440";
@@ -149,7 +158,7 @@ ToneGenerator::initTone (void) {
  * @param	ptr for result buffer
  */
 void
-ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr) {
+ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr) const {
 	double var1, var2;
 													
 	var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)SAMPLING_RATE; 
@@ -170,11 +179,11 @@ ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr) {
  * @param	ns				section number of format tone
  */
 void
-ToneGenerator::buildTone (int idCountry, int idTones, int16* temp) {
+ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* temp) {
 	string s;
 	int count = 0;
 	int	byte = 0,
-		byte_temp = 0;
+	byte_temp = 0;
 	static int	nbcomma = 0;
 	int16 *buffer = new int16[SIZEBUF]; //1kb
 	int pos;
@@ -283,38 +292,51 @@ ToneGenerator::idZoneName (const string& name) {
  * @param	var: indicates begin/end of the tone
  */
 void
-ToneGenerator::toneHandle (int idr) {
-  std::string zone = Manager::instance().getConfigString(PREFERENCES,
-ZONE_TONE);
-  int idz = idZoneName(zone);
-	
-	if (idz != -1) {
-		buildTone (idz, idr, buf);
+ToneGenerator::toneHandle (unsigned int idr, const std::string& zone) {
+  if (idr == ZT_TONE_NULL) return;
+  unsigned int idz = idZoneName(zone);
+  // if the tonethread run
+  if ( tonethread != NULL ) {
+    // if it's the good tone and good zone, do nothing
+    if (idr == _currentTone && idz == _currentZone ) {
+      // do nothing
+      return;
+    } else {
 
-		// New thread for the tone
-		if (tonethread == NULL) {
-			tonethread = new ToneThread (buf, totalbytes);
-			tonethread->start();
-		}
-
-		if (!Manager::instance().getZonetone()) {
-			Manager::instance().getAudioDriver()->stopStream();
-			Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
-			if (tonethread != NULL) {	
-				delete tonethread;
-				tonethread = NULL;
-			}
-		}
-	}
+      stopTone();
+      _currentTone = idr;
+      _currentZone = idz;
+    }
+  } else {
+    _currentTone = idr;
+    _currentZone = idz;
+  }
+  buildTone(idz, idr, buf);
+  tonethread = new ToneThread(buf, totalbytes);
+  tonethread->start();
 }
 
+void
+ToneGenerator::stopTone() {
+  _currentTone = ZT_TONE_NULL;
+
+  // we end the last thread
+  delete tonethread;
+  tonethread = NULL;
+
+  // we flush the main buffer (with blank)
+  Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
+}
 
 int
 ToneGenerator::playRingtone (const char *fileName) {
-	short* dst = NULL;
-	char* src = NULL;
+  if (tonethread != NULL) {
+    stopTone();
+  }
+  delete [] _dst;
+  delete [] _src;
+
 	int expandedsize, length;
-	Ulaw* ulaw = new Ulaw (PAYLOAD_CODEC_ULAW, "G711u");
 
 	if (fileName == NULL) {
 		return 0;
@@ -332,29 +354,18 @@ ToneGenerator::playRingtone (const char *fileName) {
   	file.seekg (0, ios::beg);
 
   	// allocate memory:
-  src = new char [length];
-  dst = new short[length*2];
+  _src = new char [length];
+  _dst = new short[length*2];
 	
-  	// read data as a block:
-  	file.read (src,length);
+ 	// read data as a block:
+ 	file.read (_src,length);
 	
 	// Decode file.ul
-	expandedsize = ulaw->codecDecode (dst, (unsigned char *)src, length);
+	expandedsize = _ulaw->codecDecode (_dst, (unsigned char *)_src, length);
 
 	if (tonethread == NULL) {
-		tonethread = new ToneThread ((int16*)dst, expandedsize);
+		tonethread = new ToneThread ((int16*)_dst, expandedsize);
 		tonethread->start();
-	}
-	if (!Manager::instance().getZonetone()) {
-		Manager::instance().getAudioDriver()->stopStream();
-		Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
-		if (tonethread != NULL) {	
-			delete tonethread;
-			tonethread = NULL;
-			delete[] dst;
-			delete[] src;
-			delete ulaw;
-		}
 	}
 	
 	file.close();

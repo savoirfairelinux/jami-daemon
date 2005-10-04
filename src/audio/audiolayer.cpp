@@ -42,12 +42,14 @@ AudioLayer::AudioLayer ()
 // Destructor
 AudioLayer::~AudioLayer (void) 
 {
+  portaudio::System::terminate();
   closeStream();
 }
 
 void
 AudioLayer::closeStream (void) 
 {
+  ost::MutexLock guard(_mutex);
   if(_stream) {
     _stream->close();
     delete _stream;
@@ -57,6 +59,7 @@ AudioLayer::closeStream (void)
 void
 AudioLayer::openDevice (int index) 
 {
+  ost::MutexLock guard(_mutex);
   closeStream();
   // Set up the parameters required to open a (Callback)Stream:
   portaudio::DirectionSpecificStreamParameters 
@@ -83,6 +86,7 @@ AudioLayer::openDevice (int index)
 void
 AudioLayer::startStream(void) 
 {
+  ost::MutexLock guard(_mutex);
   if (Manager::instance().isDriverLoaded()) {
     if (_stream && !_stream->isActive()) {
       _stream->start();
@@ -93,6 +97,7 @@ AudioLayer::startStream(void)
 void
 AudioLayer::stopStream(void) 
 {
+  ost::MutexLock guard(_mutex);
   if (Manager::instance().isDriverLoaded()) {
     if (_stream && !_stream->isStopped()) {
       _stream->stop();
@@ -109,6 +114,7 @@ AudioLayer::sleep(int msec)
 bool
 AudioLayer::isStreamActive (void) 
 {
+  ost::MutexLock guard(_mutex);
   if(_stream && _stream->isActive()) {
     return true;
   }
@@ -117,9 +123,22 @@ AudioLayer::isStreamActive (void)
   }
 }
 
+void
+AudioLayer::putMain(void* buffer, int toCopy)
+{
+  ost::MutexLock guard(_mutex);
+  _mainSndRingBuffer.Put(buffer, toCopy);
+}
+void
+AudioLayer::putUrgent(void* buffer, int toCopy)
+{
+  ost::MutexLock guard(_mutex);
+  _urgentRingBuffer.Put(buffer, toCopy);
+}
 bool
 AudioLayer::isStreamStopped (void) 
 {
+  ost::MutexLock guard(_mutex);
   if(_stream && _stream->isStopped()) {
     return true;
   }
@@ -159,6 +178,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 		normalAvail = _mainSndRingBuffer.AvailForGet();
 		toGet = (normalAvail < (int)framesPerBuffer) ? normalAvail : 
 			framesPerBuffer;
+    //_debug("%d vs %d : %d\t", normalAvail, (int)framesPerBuffer, toGet);
 		_mainSndRingBuffer.Get(out, SAMPLES_SIZE(toGet));
 	}
 

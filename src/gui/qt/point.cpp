@@ -21,6 +21,7 @@
 
 #include <string>
 #include "../../skin.h"
+#include <iostream>
 using namespace std;
 
 /**
@@ -70,6 +71,7 @@ Point::Point (const std::string& filename) {
 	opened = _config.populateFromFile (filename);
 	if (opened != 1) {
 	// If opening failed, stop the application
+    std::cerr << "Fatal Error: Unable to open skin configuration file\n";
 		exit(0);
 	}
 }

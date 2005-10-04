@@ -102,7 +102,8 @@ RequestConfigGet::execute()
   if (GUIServer::instance().getConfig(_section, _name, arg)) {
     return message("200", arg);
   } else {
-    return message("500","Server Error");
+    //  402 seq10001 Variable unknown
+    return message("402","Variable unknown");
   }
 }
 

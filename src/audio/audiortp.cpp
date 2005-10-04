@@ -91,6 +91,7 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 		// Stop portaudio and flush ringbuffer
 		Manager::instance().getAudioDriver()->stopStream();
 		Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
+    _debug("AudioRtp::closeRtpSession : flushing stream\n");
 	}
 }
 
@@ -102,11 +103,11 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall,
 			  bool sym) {
 	time = new Time();
 	_ca = sipcall;
-	_sym =sym;
+	_sym = sym;
 	_audioDevice = driver;
 
 	// TODO: Change bind address according to user settings.
-  std::string localipConfig = Manager::instance().getConfigString(SIGNALISATION,LOCAL_IP);
+  std::string localipConfig = _ca->getLocalIp();
 	InetHostAddress local_ip(localipConfig.c_str());
 
 	_debug("RTP: listening on IP %s local port : %d\n", localipConfig.c_str(), _ca->getLocalAudioPort());
@@ -119,21 +120,16 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall,
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
-	if (!_sym) {
-		if (_sessionRecv != NULL) {
-			delete _sessionRecv;	
-			_sessionRecv = NULL;
-		}
-		if (_sessionSend != NULL) {
-			delete _sessionSend;	
-			_sessionSend = NULL;
-		}
-	} else {
-		if (_session != NULL) {
-			delete _session;
-			_session = NULL;
-		}
-	}
+  if (!_sym) {
+    delete _sessionRecv;	
+    _sessionRecv = NULL;
+    delete _sessionSend;	
+    _sessionSend = NULL;
+  } else {
+    delete _session;
+    _session = NULL;
+  }
+  delete time;
 }
 
 void
@@ -143,7 +139,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 	
 	if (!remote_ip) {
 	   _debug("RTP: Target IP address [%s] is not correct!\n", _ca->getRemoteSdpAudioIp());
-	   exit();
+	   return;
 	} else {
 		_debug("RTP: Sending to %s : %d\n", _ca->getRemoteSdpAudioIp(), _ca->getRemoteSdpAudioPort());
 	}
@@ -165,7 +161,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 					(unsigned short) _ca->getRemoteSdpAudioPort())) {
 			_debug("RTX send: could not connect to port %d\n",  
 					_ca->getRemoteSdpAudioPort());
-			exit();
+			return;
 		} else {
 			_debug("RTP(Send): Added destination %s : %d\n", 
 					remote_ip.getHostname(), 
@@ -182,7 +178,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 
 	} else {
 		if (!_session->addDestination (remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort())) {
-			exit();
+			return;
 		} else {
 			_session->setPayloadFormat(StaticPayloadFormat((StaticPayloadType) _ca->payload));
 			setCancel(cancelImmediate);
@@ -284,7 +280,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 	// If the current call is the call which is answered
 	//if (Manager::instance().isCurrentId(_ca->getId())) {
 		// Set decoded data to sound device
-		Manager::instance().getAudioDriver()->mainSndRingBuffer().Put(data_for_speakers_tmp, SAMPLES_SIZE(RTP_FRAMES2SEND));
+		Manager::instance().getAudioDriver()->putMain(data_for_speakers_tmp, SAMPLES_SIZE(RTP_FRAMES2SEND));
 	//}
 	
 	// Notify (with a beep) an incoming call when there is already a call 
@@ -299,7 +295,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
   
 	Manager::instance().getAudioDriver()->startStream();
 	
-
+  delete ac;
 	delete cd;
 	delete adu;
 }
@@ -332,7 +328,8 @@ AudioRtpRTX::run (void) {
 	TimerPort::setTimer(frameSize);
 
   // flush stream:
-  AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+  ManagerImpl& manager = Manager::instance();
+  AudioLayer *audiolayer = manager.getAudioDriver();
   audiolayer->mainSndRingBuffer().flush();
   audiolayer->urgentRingBuffer().flush();
 
@@ -344,11 +341,9 @@ AudioRtpRTX::run (void) {
 		_session->startRunning();
 	}
 
-  
-	
-	while (_ca->enable_audio != -1) {
-		micVolume = Manager::instance().getMicroVolume();
-	  spkrVolume = Manager::instance().getSpkrVolume();
+	while (!testCancel() && _ca->enable_audio != -1) {
+		micVolume = manager.getMicroVolume();
+	  spkrVolume = manager.getSpkrVolume();
 
 		////////////////////////////
 		// Send session
@@ -369,16 +364,15 @@ AudioRtpRTX::run (void) {
 		TimerPort::incTimer(frameSize); // 'frameSize' ms
 	}
 
+	delete[] data_for_speakers_tmp;
+	delete[] data_for_speakers;
+	delete[] data_to_send;
+	delete[] data_from_mic_tmp;
+	delete[] data_from_mic;
+
   audiolayer->mainSndRingBuffer().flush();
   //audiolayer->urgentRingBuffer().flush();
   audiolayer->stopStream();
-		 
-	delete[] data_for_speakers;
-	delete[] data_for_speakers_tmp;
-	delete[] data_from_mic;
-	delete[] data_from_mic_tmp;
-	delete[] data_to_send;
-	exit();
 }
 
 

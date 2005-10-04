@@ -51,7 +51,6 @@ public:
 	void displayError (const std::string& error);
 	void displayStatus (const std::string& status);
 	void displayContext (short id);
-	std::string getRingtoneFile (void);
 	void setup (void);
 	//void startVoiceMessageNotification (void);
 	//void stopVoiceMessageNotification (void);

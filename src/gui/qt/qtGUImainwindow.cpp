@@ -630,15 +630,9 @@ QtGUIMainWindow::putOnHoldBusyLine (int line)
 
 void
 QtGUIMainWindow::dialtone (bool var) {
-	if (Manager::instance().isDriverLoaded()) {
-		if (_dialtone != var) {
-			_dialtone = var;
-		}
-		Manager::instance().setZonetone(var);
-		Manager::instance().getTonegenerator()->toneHandle(ZT_TONE_DIALTONE);
-	} else {
-        Manager::instance().error()->errorName(OPEN_FAILED_DEVICE);
-    }
+  if (var) {
+    Manager::instance().playTone();
+  }
 }
 
 void

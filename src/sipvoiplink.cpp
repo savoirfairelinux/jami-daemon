@@ -18,12 +18,10 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-//#include <sys/time.h>
-
-#include <eXosip2/eXosip.h>  
-#include <osip2/osip.h>
-
 #include <string>
+
+#include <eXosip2/eXosip.h>
+#include <osip2/osip.h>
 
 #include "sipvoiplink.h"
 #include "global.h"
@@ -34,7 +32,6 @@
 #include "user_cfg.h"
 #include "eventthread.h"
 
- 
 using namespace ost;
 using namespace std;
 
@@ -49,11 +46,12 @@ using namespace std;
 SipVoIPLink::SipVoIPLink (short id) 
   : VoIPLink (id)
 {
-  setId(id);
-  _localPort = 0;
-  _reg_id = -1;
-  _nMsgVoicemail = 0;
+  // default _audioRTP object initialization
   _evThread = new EventThread(this);
+  _localPort = 0;
+  _nMsgVoicemail = 0;
+  _reg_id = -1;
+  // defautlt _sipcallVector object initialization
 }
 
 SipVoIPLink::~SipVoIPLink(void) {
@@ -103,8 +101,7 @@ SipVoIPLink::init (void)
       return 0;
     }
 
-    eXosip_masquerade_contact((Manager::instance().getFirewallAddress()).data(),
-			      Manager::instance().getFirewallPort());
+    eXosip_masquerade_contact((Manager::instance().getFirewallAddress()).data(), Manager::instance().getFirewallPort());
 		
   } 
 	
@@ -129,22 +126,20 @@ void
 SipVoIPLink::terminate(void) 
 {
   delete _evThread;
-  eXosip_quit();	
+  eXosip_quit();
 }
 
 int
 SipVoIPLink::setRegister (void) 
 {
   ManagerImpl& manager = Manager::instance();
+
   _debug("SipVoIPLink::setRegister()\n");
-  int i;
-  osip_message_t *reg = NULL;
 
   // all this will be inside the profil associate with the voip link
-  string proxy = "sip:" + manager.getConfigString(SIGNALISATION, PROXY);
-  string hostname = "sip:" + manager.getConfigString(SIGNALISATION, HOST_PART);
-  string from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), 
-			   manager.getConfigString(SIGNALISATION, HOST_PART));
+  std::string proxy = "sip:" + manager.getConfigString(SIGNALISATION, PROXY);
+  std::string hostname = "sip:" + manager.getConfigString(SIGNALISATION, HOST_PART);
+  std::string from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), manager.getConfigString(SIGNALISATION, HOST_PART));
 
   if (manager.getConfigString(SIGNALISATION, HOST_PART).empty()) {
     manager.error()->errorName(HOST_PART_FIELD_EMPTY);
@@ -155,14 +150,14 @@ SipVoIPLink::setRegister (void)
     return -1;
   }
 
-  eXosip_lock();
   if (setAuthentication() == -1) {
     _debug("No authentication\n");
-    eXosip_unlock();
     return -1;
   }
-	
+
   _debug("REGISTER From: %s\n", from.data());
+  osip_message_t *reg = NULL;
+  eXosip_lock();
   if (!manager.getConfigString(SIGNALISATION, PROXY).empty()) {
     _reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
 						      (char*)proxy.data(), NULL, EXPIRES_VALUE, &reg);
@@ -175,7 +170,7 @@ SipVoIPLink::setRegister (void)
     return -1;
   }	
 
-  i = eXosip_register_send_register (_reg_id, reg);
+  int i = eXosip_register_send_register (_reg_id, reg);
   if (i == -2) {
     _debug("cannot build registration, check the setup\n"); 
     eXosip_unlock();
@@ -186,7 +181,6 @@ SipVoIPLink::setRegister (void)
     eXosip_unlock();
     return -1;
   }
-	
   eXosip_unlock();
 
   manager.error()->setError(0);
@@ -197,8 +191,7 @@ SipVoIPLink::setRegister (void)
 int 
 SipVoIPLink::setUnregister (void)
 {
-  int i;
-  //	int reg_id = -1;
+  int i = 0;
   osip_message_t *reg = NULL;
 
   eXosip_lock();
@@ -282,6 +275,9 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
   }
 }
 
+/**
+ * @return 0 is good, -1 is bad
+ */
 int
 SipVoIPLink::answer (short id) 
 {
@@ -327,7 +323,7 @@ SipVoIPLink::answer (short id)
   // Incoming call is answered, start the sound channel.
   if (_audiortp.createNewSession (getSipCall(id)) < 0) {
     _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
-    exit(1);
+    i = -1;
   }
   return i;
 }
@@ -388,8 +384,8 @@ SipVoIPLink::onhold (short id)
     return -1;
   }
 
-  eXosip_lock ();
   // Build INVITE_METHOD for put call on-hold
+  eXosip_lock ();
   i = eXosip_call_build_request (did, INVITE_METHOD, &invite);
   eXosip_unlock ();
 
@@ -431,6 +427,9 @@ SipVoIPLink::onhold (short id)
   return i;
 }
 
+/**
+ * @return 0 is good, -1 is bad
+ */
 int
 SipVoIPLink::offhold (short id) 
 {
@@ -489,7 +488,7 @@ SipVoIPLink::offhold (short id)
   // Enable audio
   if (_audiortp.createNewSession (getSipCall(id)) < 0) {
     _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
-    exit(1);
+    i = -1;
   }
   return i;
 }
@@ -554,27 +553,14 @@ SipVoIPLink::getEvent (void)
     return -1;
   }
 
+  int returnValue = 0;
   _debug("GetEvent : %d\n", event->type);
 
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //
-    // TODO: remove this hack, when there is no 
-    // buffer overflow in event->request->bodies->body...
-    if (event->request!=NULL && event->request->bodies!=NULL) {
-      if (!osip_list_eol (event->request->bodies, 0)) {
-        osip_body_t* t = (osip_body_t *)osip_list_get (event->request->bodies, 0);
-        if (t!=NULL && t->body!=NULL) {
-          char *lastnewline = strrchr(t->body, '\n');
-          if (lastnewline != NULL ) {
-            lastnewline++;
-            if (*lastnewline != '\0') { 
-              _debug("EXOSIP_CALL_INVITE: request error patched\n"); }
-            *lastnewline = '\0';
-          }
-        }
-      }
-    }
+    checkNetwork();
+
     // Set local random port for incoming call
     if (!Manager::instance().useStun()) {
       setLocalPort(RANDOM_LOCAL_PORT);
@@ -583,7 +569,8 @@ SipVoIPLink::getEvent (void)
       if (behindNat() != 0) {
         setLocalPort(Manager::instance().getFirewallPort());
       } else {
-        return -1;
+        returnValue = -1;
+        break;
       }
     }
 
@@ -622,18 +609,20 @@ SipVoIPLink::getEvent (void)
       }
     } else {
       osip_from_free(from);
-      return -1;
+      returnValue = -1;
+      break;
     }
     _debug("From: %s\n", name);
     osip_from_free(from);
 
+    SipCall *sipcall = getSipCall(id);
     // Associate an audio port with a call
-    getSipCall(id)->setLocalAudioPort(_localPort);
+    sipcall->setLocalAudioPort(_localPort);
+    sipcall->setLocalIp(getLocalIpAddress());
 
-    getSipCall(id)->newIncomingCall(event);
+    sipcall->newIncomingCall(event);
     if (Manager::instance().incomingCall(id) < 0) {
       Manager::instance().displayErrorText(id, "Incoming call failed");
-      return -1;
     }
     break;
 
@@ -641,8 +630,13 @@ SipVoIPLink::getEvent (void)
     eXosip_call_send_answer(event->tid, 403, NULL);
     break;
 
+  case EXOSIP_CALL_PROCEEDING: // 8
+    // proceeding call...
+    break;
+
     // The peer-user answers
-  case EXOSIP_CALL_ANSWERED: 
+  case EXOSIP_CALL_ANSWERED: // 10
+  {
     id = findCallId(event);
     if (id == 0) {
       id = findCallIdInitial(event);
@@ -665,7 +659,8 @@ SipVoIPLink::getEvent (void)
         if (_audiortp.createNewSession (sipcall) < 0) {
           _debug("FATAL: Unable to start sound (%s:%d)\n", 
           __FILE__, __LINE__);
-          exit(1);
+          returnValue = -1;
+          break;
         }
       }
     } else {
@@ -676,11 +671,12 @@ SipVoIPLink::getEvent (void)
       }
     }
     break;
-			
+	}	
   case EXOSIP_CALL_RINGING: //peer call is ringing
     id = findCallId(event);
-    //id = findCallIdWhenRinging();
-			
+		if (id == 0) {
+      id = findCallIdInitial(event);
+    }	
     _debug("Call is ringing [id = %d, cid = %d, did = %d]\n", 
 	   id, event->cid, event->did);
 			
@@ -688,7 +684,8 @@ SipVoIPLink::getEvent (void)
       getSipCall(id)->ringingCall(event);
       Manager::instance().peerRingingCall(id);
     } else {
-      return -1;
+      returnValue = -1;
+      break;
     }
     break;
 
@@ -702,10 +699,11 @@ SipVoIPLink::getEvent (void)
     if (id > 0) {
       getSipCall(id)->receivedAck(event);
     } else {
-      return -1;
+      returnValue = -1;
+      break;
     }
     break;
-			
+
     // The peer-user closed the phone call(we received BYE).
   case EXOSIP_CALL_CLOSED:
     id = findCallId(event);
@@ -719,7 +717,8 @@ SipVoIPLink::getEvent (void)
       Manager::instance().peerHungupCall(id);
       deleteSipCall(id);
     } else {
-      return -1;
+      returnValue = -1;
+      break;
     }	
     break;
   case EXOSIP_CALL_RELEASED:
@@ -751,11 +750,14 @@ SipVoIPLink::getEvent (void)
     case REQ_TIMEOUT:
     case TEMP_UNAVAILABLE:
     case ADDR_INCOMPLETE:
-    case BUSY_HERE:
       // Display error on the screen phone
       //Manager::instance().displayError(event->response->reason_phrase);
       Manager::instance().displayErrorText(id, event->response->reason_phrase);
       Manager::instance().congestion(true);
+    break;
+    case BUSY_HERE:
+      Manager::instance().displayErrorText(id, event->response->reason_phrase);
+      Manager::instance().busy();
       break;
     case REQ_TERMINATED:
       break;
@@ -769,8 +771,7 @@ SipVoIPLink::getEvent (void)
     // Handle 5XX errors
     switch (event->response->status_code) {
     case SERVICE_UNAVAILABLE:
-      Manager::instance().ringback(false);
-      Manager::instance().congestion(true);					
+      Manager::instance().congestion(true);
       break;
     default:
       break;
@@ -782,15 +783,18 @@ SipVoIPLink::getEvent (void)
     switch (event->response->status_code) {
     case BUSY_EVERYWHERE:
     case DECLINE:
-      Manager::instance().ringback(false);
-      Manager::instance().congestion(true);					
+      Manager::instance().congestion(true);
       break;
     default:
       break;
     }
     break;
 
-  case EXOSIP_REGISTRATION_SUCCESS: //1
+  case EXOSIP_CALL_MESSAGE_NEW: // 18
+    // TODO:
+    break;
+
+  case EXOSIP_REGISTRATION_SUCCESS: // 1
     Manager::instance().displayStatus(LOGGED_IN_STATUS);
     break;
 
@@ -827,29 +831,34 @@ SipVoIPLink::getEvent (void)
       int ii;
       unsigned int pos;
       unsigned int pos_slash;
-      string *str;
+      
       std::string nb_msg;
-      osip_body_t *body;
+      osip_body_t *body = NULL;
 
       // Get the message body
       ii = osip_message_get_body(event->request, 0, &body);
       if (ii != 0) {
         _debug("Cannot get body\n");
-        return -1;
+        returnValue = -1;
+        break;
       }
 
       // Analyse message body
-      str = new string(body->body);
-      pos = str->find (VOICE_MSG);
+      if (!body || !body->body) {
+        returnValue = -1;
+        break;
+      }
+      std::string str(body->body);
+      pos = str.find(VOICE_MSG);
 
       if (pos == string::npos) {
 	     // If the string is not found
-       delete str;
-	     return -1;
+        returnValue = -1;
+        break;
       } 
 
-      pos_slash = str->find ("/");
-      nb_msg = str->substr(pos + LENGTH_VOICE_MSG, 
+      pos_slash = str.find ("/");
+      nb_msg = str.substr(pos + LENGTH_VOICE_MSG, 
       pos_slash - (pos + LENGTH_VOICE_MSG));
 
       // Set the number of voice-message
@@ -862,18 +871,18 @@ SipVoIPLink::getEvent (void)
         // Stop notification when there is 0 voice message
         Manager::instance().stopVoiceMessageNotification();
       }
-      delete str;
     }
     break;
 
   default:
     //Manager::instance().displayErrorText(event->type, "getEvent:default");
-    return -1;
+    returnValue = -1;
     break;
   }
+  _debug("End of GetEvent : %d / %d\n", event->type, returnValue);
   eXosip_event_free(event);
- 	
-  return 0;
+
+  return returnValue;
 }
 
 int
@@ -934,14 +943,15 @@ SipVoIPLink::newIncomingCall (short callid)
 void
 SipVoIPLink::deleteSipCall (short callid)
 {
-  unsigned int i = 0;
-  while (i < _sipcallVector.size()) {
-    if (_sipcallVector.at(i)->getId() == callid) {
-      _sipcallVector.erase(_sipcallVector.begin()+i);
+  std::vector< SipCall * >::iterator iter = _sipcallVector.begin();
+
+  while(iter != _sipcallVector.end()) {
+    if ((*iter)->getId() == callid) {
+      delete *iter;
+      _sipcallVector.erase(iter);
       return;
-    } else {
-      i++;
     }
+    iter++;
   }
 }
 
@@ -1172,7 +1182,7 @@ SipVoIPLink::getLocalIp (void)
 {
   int ret = 0;
   char* myIPAddress = new char[65];
-  ret = eXosip_guess_localip (2, myIPAddress, 64);
+  ret = eXosip_guess_localip (AF_INET, myIPAddress, 64);
   setLocalIpAddress(std::string(myIPAddress));
   delete [] myIPAddress;
   return ret;
@@ -1211,15 +1221,17 @@ SipVoIPLink::setAuthentication (void)
   }
   pass = manager.getConfigString(SIGNALISATION, PASSWORD);
   if (pass.empty()) {
-    manager.error()->errorName(PASSWD_FIELD_EMPTY);				
+    manager.error()->errorName(PASSWD_FIELD_EMPTY);
     return -1;
   }
-
+  int returnValue = 0;
+  eXosip_lock();
   if (eXosip_add_authentication_info(login.data(), login.data(), 
 				     pass.data(), NULL, NULL) != 0) {
-    return -1;
+    returnValue = -1;
   }
-  return 0;
+  eXosip_unlock();
+  return returnValue;
 }
 
 string
@@ -1245,8 +1257,8 @@ int
 SipVoIPLink::startCall (short id, const string& from, const string& to, 
 			const string& subject,  const string& route) 
 {
-  SipCall *call = getSipCall(id);
-  if ( call == NULL) {
+  SipCall *sipcall = getSipCall(id);
+  if ( sipcall == NULL) {
     return -1; // error, we can't find the sipcall
   }
   osip_message_t *invite;
@@ -1276,8 +1288,8 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
   }
 	
   // Set local audio port for sipcall(id)
-  call->setLocalAudioPort(_localPort);
-
+  sipcall->setLocalAudioPort(_localPort);
+  sipcall->setLocalIp(getLocalIpAddress());
 
   i = eXosip_call_build_initial_invite (&invite, (char*)to.data(),
                                         (char*)from.data(),
@@ -1339,7 +1351,6 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
 	            "%s",
               localip, localip, port, media_audio, rtpmap_attr);
     // media_audio should be one, two or three numbers?
-	  _debug("%s %d", tmp, strlen(tmp));
     osip_message_set_body (invite, tmp, strlen (tmp));
     osip_message_set_content_type (invite, "application/sdp");
   }
@@ -1350,7 +1361,7 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
   int cid = eXosip_call_send_initial_invite (invite);
 
   // Keep the cid in case of cancelling
-  call->setCid(cid);
+  sipcall->setCid(cid);
 
   if (cid <= 0) {
     eXosip_unlock();

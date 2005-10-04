@@ -169,7 +169,7 @@ RequestPlayTone::execute()
   if ( GUIServer::instance().playTone() ) {
     return message("200", "OK");
   }
-  return message("500", "DTMF Error");
+  return message("500", "Tone Error");
 }
 
 ResponseMessage

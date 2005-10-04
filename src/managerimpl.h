@@ -29,6 +29,7 @@
 #include "audio/audiodevice.h"
 #include "observer.h"
 #include "config/config.h"
+#include "audio/dtmf.h"
 
 class AudioLayer;
 class CodecDescriptor;
@@ -70,10 +71,10 @@ typedef std::vector< CodecDescriptor* > CodecDescriptorVector;
 /*
  * Structure for audio device
  */
-struct device_t{
-	const char* hostApiName;
-	const char* deviceName;
-};
+//struct device_t{
+//	const char* hostApiName;
+//	const char* deviceName;
+//};
 
 /**
  * To send multiple string
@@ -92,9 +93,6 @@ public:
 	// Set the graphic user interface
 	void setGui (GuiFramework* gui);
 	
-	// Accessor to tonegenerator
-	ToneGenerator* getTonegenerator(void);
-
 	// Accessor to error
 	Error* error(void);
 
@@ -126,8 +124,8 @@ public:
 	CodecDescriptorVector* getCodecDescVector(void);
 
 	// Handle specified ring tone
-	inline bool getZonetone (void) { return _zonetone; }
-	inline void setZonetone (bool b) { _zonetone = b; }
+	inline bool getZonetone (void) { ost::MutexLock m(_toneMutex); return _zonetone; }
+	inline void setZonetone (bool b) { ost::MutexLock m(_toneMutex); _zonetone = b; }
 
 	/* 
 	 * Attribute a new random id for a new call 
@@ -220,8 +218,8 @@ name);
 	 * Handle played music when an incoming call occurs
 	 */
 	void ringtone (bool var);
-
 	void congestion (bool var);
+  void busy();
 
 	/*
 	 * Notification of incoming call when you are already busy
@@ -245,10 +243,10 @@ name);
 	/*
 	 * Inline functions to manage volume control
 	 */
-	inline int getSpkrVolume 	(void) 			{ return _spkr_volume; }
-	inline void setSpkrVolume 	(int spkr_vol) 	{ _spkr_volume = spkr_vol; }
-	inline int getMicroVolume 	(void) 			{ return _mic_volume; }
-	inline void setMicroVolume 	(int mic_vol) 	{ _mic_volume = _mic_volume_before_mute = mic_vol; }
+	inline int getSpkrVolume 	(void) 			{ ost::MutexLock m(_mutex); return _spkr_volume; }
+	inline void setSpkrVolume 	(int spkr_vol) 	{ ost::MutexLock m(_mutex); _spkr_volume = spkr_vol; }
+	inline int getMicroVolume 	(void) 			{ ost::MutexLock m(_mutex); return _mic_volume; }
+	inline void setMicroVolume 	(int mic_vol) 	{ ost::MutexLock m(_mutex); _mic_volume = _mic_volume_before_mute = mic_vol; }
 	
 	/*
 	 * Manage information about firewall
@@ -260,7 +258,7 @@ name);
 	/*
 	 * Manage information about audio driver
 	 */
-	inline bool isDriverLoaded (void) { return _loaded; }
+	inline bool isDriverLoaded (void) const { return _loaded; }
 	inline void loaded (bool l) { _loaded = l; }
 
 	/* 
@@ -318,14 +316,25 @@ private:
    * Init the volume for speakers/micro from 0 to 100 value
    */ 
   void initVolume();
+
+  /*
+   * Play one tone
+   * @return false if the driver is uninitialize
+   */
+  bool playATone(unsigned int tone);
+  void stopTone();
   
 	/////////////////////
 	// Private variables
 	/////////////////////
 	ToneGenerator* _tone;
+  ost::Mutex _toneMutex;
+  int _toneType;
+
 	Error* _error;
 	GuiFramework* _gui;
 	AudioLayer* _audiodriverPA;
+  DTMF _key;
 
 	/*
 	 * Vector of VoIPLink
@@ -345,7 +354,7 @@ private:
 	/*
 	 * Mutex to protect access to code section
 	 */
-	ost::Mutex		_mutex;
+	ost::Mutex _mutex;
 	
 	unsigned int _nCalls;
 	short _currentCallId;

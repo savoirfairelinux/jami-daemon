@@ -378,12 +378,6 @@ GUIServerImpl::displayContext (short id)
   _requestManager.sendResponse(ResponseMessage("700", seq, responseMessage.str()));
 }
 
-std::string  
-GUIServerImpl::getRingtoneFile (void) 
-{
-  return std::string("");
-}
-
 void  
 GUIServerImpl::setup (void) 
 {

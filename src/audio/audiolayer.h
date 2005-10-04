@@ -27,6 +27,7 @@
 
 #include "../global.h"
 #include "ringbuffer.h"
+#include <cc++/thread.h>
 
 #define FRAME_PER_BUFFER	160
 #define MIC_CHANNELS 		2 // 1=mono 2=stereo
@@ -49,6 +50,9 @@ public:
 	bool    isStreamActive	        (void);
 	bool    isStreamStopped	        (void);
 
+  void putMain(void* buffer, int toCopy);
+  void putUrgent(void* buffer, int toCopy);
+
 	int audioCallback (const void *, void *, unsigned long,
 			   const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
 
@@ -64,6 +68,7 @@ private:
 
 	portaudio::MemFunCallbackStream<AudioLayer> *_stream;
 	portaudio::AutoSystem autoSys;
+  ost::Mutex _mutex;
 };
 
 #endif // _AUDIO_LAYER_H_
