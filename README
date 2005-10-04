@@ -33,6 +33,15 @@ Dependencies build instructions:
 	./configure [option]
 	make
 	make install
+
+6/  If you want the new gui
+use: ./configure --enable-newgui
+and do
+cd src/gui/official
+QTDIR=/usr/lib/qt4 qmake4 sflphone.pro
+ln -s ../../../utilspp
+QTDIR=/usr/lib/qt4 make
+
 	
 
 How to compile SFLphone ?

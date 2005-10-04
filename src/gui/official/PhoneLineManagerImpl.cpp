@@ -17,6 +17,7 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   , mCurrentLine(NULL)
   , mIsInitialized(false)
 {
+  EventFactory::instance().registerEvent< CallRelatedEvent >("000");
   EventFactory::instance().registerEvent< IncommingEvent >("001");
   EventFactory::instance().registerEvent< HangupEvent >("002");
   EventFactory::instance().registerEvent< TryingStatus >("110");

@@ -115,9 +115,9 @@ ManagerImpl::~ManagerImpl (void)
 
   unloadAudioCodec();
 
-  delete _error;
-  delete _tone;
   delete _audiodriverPA;
+  delete _tone;
+  delete _error;
 
 #ifdef USE_ZEROCONF
   delete _DNSService;

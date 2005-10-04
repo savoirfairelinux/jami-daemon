@@ -196,7 +196,6 @@ src/audio/pacpp/source/portaudiocpp/Makefile \
 src/config/Makefile \
 src/gui/Makefile \
 src/gui/qt/Makefile \
-src/gui/official/Makefile \
 src/gui/server/Makefile \
 src/zeroconf/Makefile \
 utilspp/Makefile \
