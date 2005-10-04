@@ -69,9 +69,7 @@ public:
       _account = *iter;
       _argList.pop_front();
       iter = _argList.begin();
-      // a call method can only begin by 'c' since it's only the client that 
-      // call with method
-      if (iter != _argList.end() && (*iter)[0]=='c') {
+      if (iter != _argList.end()) {
         _callId = *iter;
         iter++;
         // last arg is the destination
@@ -100,7 +98,7 @@ public:
   RequestGlobalCall(const std::string &sequenceId, const TokenList& argList) : Request(sequenceId, argList) {
     TokenList::iterator iter = _argList.begin();
 
-    if (iter != _argList.end() && ((*iter)[0]=='c' || (*iter)[0]=='s') ) {
+    if (iter != _argList.end() && iter->length() != 0 ) {
       _callId = *iter;
       _argList.pop_front();
     } else {
