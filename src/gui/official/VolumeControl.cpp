@@ -27,7 +27,7 @@ VolumeControl::VolumeControl (const QString &pixname,
 			      QWidget *parent, 
 			      int minValue,
 			      int maxValue) 
-  : TransparentWidget(parent) 
+  : QLabel(parent) 
   , mMin(minValue)
   , mMax(maxValue)
   , mValue(minValue)
@@ -45,12 +45,21 @@ void
 VolumeControl::resize()
 {
   if(mOrientation == VolumeControl::Horizontal) {
-    QLabel::resize(QSize(mSlider->size().width(), 
+    QWidget::resize(QSize(mSlider->size().width(), 
 			 mMaxPosition + mSlider->size().height()));
   }
   else {
-    QLabel::resize(QSize(mMaxPosition + mSlider->size().width(), 
+    QWidget::resize(QSize(mMaxPosition + mSlider->size().width(), 
 			 mSlider->size().height()));
+  }
+  QPixmap q(TransparentWidget::transparize(QString(":/sflphone/images/slider")));
+  std::cout << "mask isNull: " << q.mask().isNull() << std::endl;
+  std::cout << "isNull: " << q.isNull() << std::endl;
+  std::cout << q.size().width() << "," << q.size().height() << std::endl;
+  setPixmap(q);
+  if(q.hasAlpha()) {
+    std::cout << "has alpha" << std::endl;
+    setMask(q.mask());
   }
 }
 
@@ -118,12 +127,7 @@ VolumeControl::mouseMoveEvent (QMouseEvent *e) {
 void
 VolumeControl::updateValue()
 {
-  std::cout << "offset: " << offset() << std::endl;
-  std::cout << "max pos: " << mMaxPosition << std::endl;
-  std::cout << "min: " << mMin << std::endl;
-  std::cout << "max: " << mMax << std::endl;
   int value = (int)((float)offset() / mMaxPosition * (mMax - mMin));
-  std::cout << "Real Value: " << value << std::endl;
   mValue = value;
   emit valueUpdated(mValue);
 }

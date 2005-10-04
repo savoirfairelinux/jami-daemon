@@ -19,15 +19,16 @@ SFLPhoneWindow::SFLPhoneWindow()
   : QMainWindow(NULL, Qt::FramelessWindowHint)
 {
   // Initialize the background image
-  QLabel *l = new QLabel(this);
+  mMain = new QLabel(this);
   QPixmap main(JPushButton::transparize(":/sflphone/images/main.png"));
-  l->setPixmap(main);
+  mMain->setPixmap(main);
+  //mMain->move(100,100);
   if(main.hasAlpha()) {
     setMask(main.mask());
   }
 
   resize(main.size());
-  l->resize(main.size());
+  mMain->resize(main.size());
 
   setWindowIcon(QIcon(QPixmap(":/sflphone/images/logo_ico")));
   setMouseTracking(false);
@@ -46,7 +47,7 @@ SFLPhoneWindow::~SFLPhoneWindow()
 void
 SFLPhoneWindow::initLCD()
 {
-  mLcd = new SFLLcd(this);
+  mLcd = new SFLLcd(mMain);
   mLcd->show();
 }
 
@@ -55,35 +56,35 @@ SFLPhoneWindow::initGUIButtons()
 {
   mHangup = new JPushButton(":/sflphone/images/hangup_off",
 			    ":/sflphone/images/hangup_on",
-			    this);
+			    mMain);
   mHangup->move(225,156);
   
   mHold = new JPushButton(":/sflphone/images/hold_off",
 			  ":/sflphone/images/hold_on",
-			  this);
+			  mMain);
   mHold->move(225,68);
   
   
   mOk = new JPushButton(":/sflphone/images/ok_off",
 			":/sflphone/images/ok_on",
-			this);
+			mMain);
   mOk->move(225,182);
 
   mClear = new JPushButton(":/sflphone/images/clear_off",
 			   ":/sflphone/images/clear_on",
-			   this);
+			   mMain);
   mClear->move(225,130);
 
   mMute = new JPushButton(":/sflphone/images/mute_off",
 			   ":/sflphone/images/mute_on",
-			   this);
+			   mMain);
   mMute->move(225,94);
   mMute->setToggle(true);
 
   mVolume = new VolumeControl(":/sflphone/images/volume.png",
-			      this);
+			      mMain);
   mVolume->setOrientation(VolumeControl::Vertical);
-  mVolume->move(10,10);
+  mVolume->move(0,0);
 			      
 }
 
@@ -101,7 +102,7 @@ SFLPhoneWindow::initLineButtons()
 						QString::number(i + 1) +
 						"_on.png",
 						i,
-						this);
+						mMain);
     line->move(xpos, ypos);
     xpos += offset;
     mPhoneLineButtons.push_back(line);
@@ -112,13 +113,13 @@ void SFLPhoneWindow::initWindowButtons()
 {
   mCloseButton = new JPushButton(":/sflphone/images/close_off.png",
 				 ":/sflphone/images/close_on.png",
-				 this);
+				 mMain);
   QObject::connect(mCloseButton, SIGNAL(clicked()),
 		   this, SLOT(close()));
   mCloseButton->move(374,5);
   mMinimizeButton = new JPushButton(":/sflphone/images/minimize_off.png",
 				    ":/sflphone/images/minimize_on.png",
-				    this);
+				    mMain);
   QObject::connect(mMinimizeButton, SIGNAL(clicked()),
 		   this, SLOT(lower()));
   mMinimizeButton->move(354,5);

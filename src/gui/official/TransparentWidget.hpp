@@ -21,6 +21,7 @@
 #ifndef __TRANSPARENT_WIDGET_HPP__
 #define __TRANSPARENT_WIDGET_HPP__
 
+#include <QBitmap>
 #include <QLabel>
 #include <QPixmap>
 #include <QImage>
@@ -41,7 +42,14 @@ public:
 		    Qt::WFlags flags = 0);
   ~TransparentWidget();
 
+  static QPixmap transparize(const QSize &size);
   static QPixmap transparize(const QString &image);
+
+  bool hasAlpha()
+  {return mImage.hasAlpha();}
+
+  QBitmap mask() const
+  {return mImage.mask();}
   
 private:  
   QPixmap mImage;

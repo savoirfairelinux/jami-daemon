@@ -19,6 +19,8 @@
  */
 
 #include <QBitmap>
+#include <QColor>
+#include <iostream>
 
 #include "TransparentWidget.hpp"
 
@@ -40,6 +42,22 @@ TransparentWidget::TransparentWidget(QWidget* parent,
 				     Qt::WFlags flags)
   : QLabel(parent, flags) 
 {}
+
+
+QPixmap
+TransparentWidget::transparize(const QSize &size)
+{
+
+  QImage image(size, QImage::Format_RGB32);
+  QColor c(12,32,35,123);
+  image.fill(c.rgb());
+
+  QPixmap p(QPixmap::fromImage(image));
+  p.setMask(p.createHeuristicMask());
+  //p.setMask(p.alphaChannel());
+
+  return p;
+}
 
 TransparentWidget::~TransparentWidget()
 {}

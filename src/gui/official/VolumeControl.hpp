@@ -20,9 +20,10 @@
 #ifndef __VOLUMECONTROL_HPP__
 #define __VOLUMECONTROL_HPP__
 
+#include <qlabel.h>
 #include "TransparentWidget.hpp"
 
-class VolumeControl : public TransparentWidget
+class VolumeControl : public QLabel
 {
   Q_OBJECT
 

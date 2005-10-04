@@ -1,3 +1,4 @@
+#include <QLabel>
 #include <QMainWindow>
 #include <QObject>
 #include <QPoint>
@@ -63,6 +64,7 @@ private:
   VolumeControl *mVolume;
 
   SFLLcd *mLcd;
+  QLabel *mMain;
 
   QPoint mLastPos;
 };
