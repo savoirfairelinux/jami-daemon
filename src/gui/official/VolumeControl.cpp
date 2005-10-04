@@ -79,8 +79,12 @@ VolumeControl::setMin(int value)
 void 
 VolumeControl::setValue(int value) 
 {
-  if(value <= mMax && value >= mMin) {
-    mValue = value;
+  if(value != mValue) {
+    if(value <= mMax && value >= mMin) {
+      mValue = value;
+      updateSlider(value);
+      emit valueUpdated(mValue);
+    }
   }
 }
 
@@ -89,29 +93,71 @@ void
 VolumeControl::mouseMoveEvent (QMouseEvent *e) {
   if (mOrientation == VolumeControl::Vertical) {
     // If the slider for the volume is vertical	
-    int yoffset = e->y() - mPos.y();
-    std::cout << "yoffset: " << yoffset << std::endl;
-    if(yoffset < 0) {
-      yoffset = 0;
+    int newpos = mSlider->y() + e->globalY() - mPos.y();
+      
+    mPos = e->globalPos();
+    if(newpos < 0) {
+      mPos.setY(mPos.y() - newpos);
+      newpos = 0;
     }
 
-    if(yoffset > mMaxPosition) {
-      yoffset = mMaxPosition;
+    if(newpos > mMaxPosition) {
+      mPos.setY(mPos.y() - (newpos - mMaxPosition));
+      newpos = mMaxPosition;
     } 
-      
-    std::cout << "new yoffset: " << yoffset << std::endl << std::endl;
 
-    mSlider->move(mSlider->x(), yoffset);
+    mSlider->move(mSlider->x(), newpos);
+    updateValue();
   }
   else {
     mSlider->move(e->y() - mPos.x(), mSlider->y());
+  }
+
+}
+
+void
+VolumeControl::updateValue()
+{
+  std::cout << "offset: " << offset() << std::endl;
+  std::cout << "max pos: " << mMaxPosition << std::endl;
+  std::cout << "min: " << mMin << std::endl;
+  std::cout << "max: " << mMax << std::endl;
+  int value = (int)((float)offset() / mMaxPosition * (mMax - mMin));
+  std::cout << "Real Value: " << value << std::endl;
+  mValue = value;
+  emit valueUpdated(mValue);
+}
+
+
+void
+VolumeControl::updateSlider(int value)
+{
+  if(mOrientation == VolumeControl::Vertical) {
+    std::cout <<  "Move again to : " << 
+      value / (mMax - mMin) * mMaxPosition << 
+      std::endl << std::endl;
+    mSlider->move(mSlider->x(), value / (mMax - mMin) * mMaxPosition);
+  }
+  else {
+    mSlider->move(value / (mMax - mMin) * mMaxPosition, mSlider->y());
+  }
+}
+
+int
+VolumeControl::offset()
+{
+  if(mOrientation == VolumeControl::Vertical) {
+    return mSlider->y();
+  }
+  else {
+    return mSlider->x();
   }
 }
 
 void
 VolumeControl::mousePressEvent (QMouseEvent *e) 
 {
-  mPos = e->pos();
+  mPos = e->globalPos();
 }
 
 // EOF

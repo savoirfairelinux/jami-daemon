@@ -35,17 +35,26 @@ public:
 		int maxValue = 100);
   ~VolumeControl(void);
 
-  void setOrientation(Orientation orientation);
+  int getValue()
+  {return mValue;}
+
+  int offset();
+  int minY();
+  int maxY();
+
+signals:
+  void valueUpdated(int);
+
+public slots:
+  void updateValue();
   void setMin(int value);
   void setMax(int value);
   void setValue(int value);
   void resize();
-
-signals:
-  void setVolumeValue(int);
+  void setOrientation(Orientation orientation);
 
 private:
-	
+  void updateSlider(int value);
   void mouseMoveEvent(QMouseEvent*);
   void mousePressEvent(QMouseEvent*);
 
