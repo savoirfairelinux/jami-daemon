@@ -39,7 +39,8 @@ HEADERS += Account.hpp \
            SFLRequest.hpp \
            TCPSessionIO.hpp \
            TCPSessionIOCreator.hpp \
-           transqwidget.h \
+           TransparentWidget.hpp \
+           VolumeControl.hpp \
            ObjectFactory.inl \
            RequesterImpl.inl \
            ObjectPool.inl
@@ -62,5 +63,7 @@ SOURCES += Account.cpp \
            SFLPhoneWindow.cpp \
            SFLRequest.cpp \
            TCPSessionIO.cpp \
-           TCPSessionIOCreator.cpp 
+           TCPSessionIOCreator.cpp \
+           TransparentWidget.cpp \
+           VolumeControl.cpp
 RESOURCES += sflphone.qrc

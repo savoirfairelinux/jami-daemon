@@ -6,6 +6,7 @@
 class JPushButton;
 class PhoneLineButton;
 class SFLLcd;
+class VolumeControl;
 
 class SFLPhoneWindow : public QMainWindow
 {
@@ -58,6 +59,8 @@ private:
   JPushButton *mOk;
   JPushButton *mClear;
   JPushButton *mMute;
+  
+  VolumeControl *mVolume;
 
   SFLLcd *mLcd;
 

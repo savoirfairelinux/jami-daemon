@@ -423,6 +423,7 @@ PhoneLineManagerImpl::hangup()
 
   if(selectedLine) {
     selectedLine->hangup();
+    lineStatusSet("");
   }
 }
 

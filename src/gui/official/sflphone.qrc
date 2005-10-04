@@ -32,5 +32,8 @@
         <file>images/ok_on.png</file>
         <file>images/overscreen.png</file>
         <file>images/screen_main.png</file>
+        <file>images/volume.png</file>
+        <file>images/volume_off.png</file>
+        <file>images/volume_on.png</file>
     </qresource>
 </RCC>

@@ -13,6 +13,7 @@
 #include "JPushButton.hpp"
 #include "PhoneLineButton.hpp"
 #include "SFLLcd.hpp"
+#include "VolumeControl.hpp"
 
 SFLPhoneWindow::SFLPhoneWindow()
   : QMainWindow(NULL, Qt::FramelessWindowHint)
@@ -78,6 +79,12 @@ SFLPhoneWindow::initGUIButtons()
 			   this);
   mMute->move(225,94);
   mMute->setToggle(true);
+
+  mVolume = new VolumeControl(":/sflphone/images/volume.png",
+			      this);
+  mVolume->setOrientation(VolumeControl::Vertical);
+  mVolume->move(10,10);
+			      
 }
 
 void 
