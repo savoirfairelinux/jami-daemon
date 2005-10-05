@@ -23,7 +23,7 @@
 #include "jpushbutton.h"
 #include "numerickeypad.h"
 #include "qtGUImainwindow.h"
-#include "../../skin.h"
+#include "skin.h"
 
 using namespace std;
 

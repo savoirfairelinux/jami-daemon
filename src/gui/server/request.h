@@ -69,7 +69,7 @@ public:
       _account = *iter;
       _argList.pop_front();
       iter = _argList.begin();
-      if (iter != _argList.end()) {
+      if (iter != _argList.end() && iter->length() != 0) {
         _callId = *iter;
         iter++;
         // last arg is the destination

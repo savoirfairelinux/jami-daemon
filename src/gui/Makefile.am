@@ -10,7 +10,7 @@ serverlib = qt/libsflphoneqt.la
 endif
 
 
-SUBDIRS = $(officialdir) $(serverdir)
+SUBDIRS = $(serverdir)
 
 noinst_LTLIBRARIES = libguiframework.la
 

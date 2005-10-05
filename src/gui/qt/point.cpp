@@ -20,7 +20,7 @@
 #include "point.h"
 
 #include <string>
-#include "../../skin.h"
+#include "skin.h"
 #include <iostream>
 using namespace std;
 

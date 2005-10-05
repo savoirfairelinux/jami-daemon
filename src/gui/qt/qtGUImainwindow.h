@@ -25,7 +25,7 @@
 #include <qpopupmenu.h>
 #include <qwidget.h>
 
-#include "../../skin.h"
+#include "skin.h"
 #include "../guiframework.h"
 #include "configurationpanelui.h"
 #include "phoneline.h"

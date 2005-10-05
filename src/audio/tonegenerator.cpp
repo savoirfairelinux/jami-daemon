@@ -60,6 +60,7 @@ ToneThread::run (void) {
   unsigned int pause = (size) / SAMPLING_RATE;
 
   ManagerImpl& manager = Manager::instance();
+  manager.getAudioDriver()->mainSndRingBuffer().flush();
 	while (!testCancel()) {
 
 		// Create a new stereo buffer with the volume adjusted

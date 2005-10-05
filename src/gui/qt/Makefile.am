@@ -28,7 +28,8 @@ libsflphoneqt_la_SOURCES = \
 	transqwidget.cpp \
 	trayicon_x11.cpp \
 	vector.cpp \
-	volumecontrol.cpp 
+	volumecontrol.cpp \
+	skin.cpp skin.h 
 
 
 CLEANFILES = \

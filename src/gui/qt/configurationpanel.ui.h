@@ -14,7 +14,7 @@
 
 #include "../../global.h"
 #include "../../manager.h"
-#include "../../skin.h"
+#include "skin.h"
 #include "../../user_cfg.h"
 #include "../../audio/audiolayer.h"
 #include "qjlistboxpixmap.h"

@@ -27,7 +27,7 @@
 #include <qevent.h>
 
 #include "jpushbutton.h"
-#include "../../skin.h"
+#include "skin.h"
 #include "qtGUImainwindow.h"
 
 // This is the default constructor, it must be called with pixname being

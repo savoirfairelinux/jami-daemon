@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "../../skin.h"
+#include "skin.h"
 #include "mydisplay.h"
 #include "qtGUImainwindow.h"
 

@@ -23,7 +23,7 @@
 #include "qtGUImainwindow.h"
 #include "vector.h"
 #include "volumecontrol.h"
-#include "../../skin.h"
+#include "skin.h"
 
 VolumeControl::VolumeControl (QWidget *parent, const char *name, 
 		const char* pixname, Vector *v) : JPushButton(parent, name, pixname) {

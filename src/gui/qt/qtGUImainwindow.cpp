@@ -38,7 +38,7 @@
 #include "../../global.h"
 #include "../../manager.h"
 #include "../../user_cfg.h"
-#include "../../skin.h"
+#include "skin.h"
 #include "configurationpanelui.h"
 #include "jpushbutton.h"
 #include "mydisplay.h"
