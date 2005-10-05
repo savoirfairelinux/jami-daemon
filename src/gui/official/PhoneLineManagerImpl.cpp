@@ -17,6 +17,7 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   , mCurrentLine(NULL)
   , mIsInitialized(false)
 {
+  EventFactory::instance().registerDefaultEvent< DefaultEvent >();
   // TODO: 000
   EventFactory::instance().registerEvent< CallRelatedEvent >("000");
   EventFactory::instance().registerEvent< IncommingEvent >("001");

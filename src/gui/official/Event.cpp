@@ -14,7 +14,7 @@ Event::Event(const QString &code,
 void
 Event::execute()
 {
-  _debug("Received: %s\n", toString().toStdString().c_str());
+  _debug("Event: Received: %s\n", toString().toStdString().c_str());
 }
 
 QString
@@ -24,6 +24,7 @@ Event::toString()
   for(std::list< QString >::iterator pos = mArgs.begin();
       pos != mArgs.end();
       pos++) {
+    output += " ";
     output += *pos;
   }
   

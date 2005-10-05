@@ -133,7 +133,7 @@ RequesterImpl::receiveAnswer(const QString &code,
   std::map< QString, Request * >::iterator pos;
   pos = mRequests.find(sequence);
   if(pos == mRequests.end()) {
-    std::cerr << "We received an answer with an unknown sequence" << std::endl;
+    _debug("Requester: We received an answer with an unknown sequence.\n");
     return;
   }
 
@@ -189,7 +189,8 @@ RequesterImpl::inputIsDown(const QString &sessionId)
   if(pos == mSessions.end()) {
     // we will not thow an exception, but this is 
     // a logic error
-    _debug("SessionIO input for session %s is down, but we don't have that session.\n",
+    _debug("Requester: SessionIO input for session %s is down, "
+	   "but we don't have that session.\n",
 	   sessionId.toStdString().c_str());
   }
 }

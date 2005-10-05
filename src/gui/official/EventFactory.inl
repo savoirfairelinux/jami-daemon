@@ -41,13 +41,25 @@ EventCreator< Base, Actual >::clone()
 }
 
 template< typename Base >
+EventFactoryImpl< Base >::EventFactoryImpl()
+  : mDefaultCreator(NULL)
+{}
+
+template< typename Base >
 Base *
 EventFactoryImpl< Base >::create(const QString &code, 
 			     const std::list< QString > &args)
 {
   typename std::map< QString, EventCreatorBase< Base > * >::iterator pos = mEventCreators.find(code);
   if(pos == mEventCreators.end()) {
-    _debug("The code %s has no creator registered.", code.toStdString().c_str());
+    if(mDefaultCreator) {
+      return mDefaultCreator->create(code, args);
+    }
+    else{
+      throw std::logic_error(QString("The code %s has no creator registered "
+				     "and there's no default creator"
+				     ).arg(code).toStdString().c_str());
+    }
   }
   
   return pos->second->create(code, args);
@@ -63,6 +75,18 @@ EventFactoryImpl< Base >::registerEvent(const QString &code)
   }
   
   mEventCreators[code] = new EventCreator< Base, Actual >();
+}
+
+template< typename Base >
+template< typename Actual >
+void 
+EventFactoryImpl< Base >::registerDefaultEvent()
+{
+  if(mDefaultCreator) {
+    delete mDefaultCreator;
+  }
+  
+  mDefaultCreator = new EventCreator< Base, Actual >();
 }
 
 

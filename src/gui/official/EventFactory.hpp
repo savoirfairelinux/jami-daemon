@@ -66,6 +66,8 @@ template< typename Base >
 class EventFactoryImpl
 {
 public:
+  EventFactoryImpl();
+
   /**
    * Ask for a new object linked to the string.
    */
@@ -76,10 +78,14 @@ public:
    * Register the string to return a Actual type.
    */
   template< typename Actual >
-    void registerEvent(const QString &code);
+  void registerEvent(const QString &code);
+
+  template< typename Actual >
+  void registerDefaultEvent();
   
  private:
   std::map< QString, EventCreatorBase< Base > * > mEventCreators;
+  EventCreatorBase< Base > *mDefaultCreator;
 };
 
 #include "EventFactory.inl"

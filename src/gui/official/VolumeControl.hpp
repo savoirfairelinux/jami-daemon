@@ -1,6 +1,7 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
- *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Jean-Philippe Barrette-LaPierre
+              <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

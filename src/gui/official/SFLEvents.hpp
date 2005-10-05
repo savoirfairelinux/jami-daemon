@@ -23,6 +23,15 @@
 
 #include "Event.hpp"
 
+class DefaultEvent : public Event
+{
+public:
+  DefaultEvent(const QString &code,
+	       const std::list< QString > &args);
+  
+  virtual void execute();
+};
+
 class HangupEvent : public CallRelatedEvent
 {
 public:

@@ -94,21 +94,18 @@ public slots:
   void hangup();
 
   /**
-   * This function will mute the current line if muting
+   * This function will mute the microphone if muting
    * is true, it will unmute otherwise.
-   * If there's no current line, it will do nothing.
    */
   void mute(bool);
 
   /**
-   * This function will mute the current line
-   * If there's no current line, it will do nothing.
+   * This function will mute the microphone
    */
   void mute();
 
   /**
-   * This function will unmute the current line
-   * If there's no current line, it will do nothing.
+   * This function will unmute the microphone
    */
   void unmute();
 

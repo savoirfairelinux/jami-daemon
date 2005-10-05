@@ -127,7 +127,7 @@ void SFLPhoneWindow::initWindowButtons()
 				    mMain);
   QObject::connect(mMinimizeButton, SIGNAL(clicked()),
 		   this, SLOT(lower()));
-  mMinimizeButton->move(354,5);
+  mMinimizeButton->move(353,5);
 }
 
 void

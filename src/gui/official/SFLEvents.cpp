@@ -3,6 +3,19 @@
 #include "PhoneLineManager.hpp"
 #include "SFLEvents.hpp"
 
+DefaultEvent::DefaultEvent(const QString &code,
+			 const std::list< QString > &args)
+  : Event(code, args)
+{
+}
+
+void
+DefaultEvent::execute()
+{
+  _debug("DefaultEvent: We don't handle: %s\n", toString().toStdString().c_str());
+}
+
+
 HangupEvent::HangupEvent(const QString &code,
 			 const std::list< QString > &args)
   : CallRelatedEvent(code, args)
