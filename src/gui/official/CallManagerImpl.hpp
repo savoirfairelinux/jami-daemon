@@ -15,45 +15,35 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_ACCOUNT_H
-#define SFLPHONEGUI_ACCOUNT_H
+#ifndef __CALL_MANAGER_IMPL_HPP__
+#define __CALL_MANAGER_IMPL_HPP__
 
+#include <QMutex>
 #include <QString>
+#include <map>
 
-class Call;
+#include "Call.hpp"
 
-class Account {
- public:
-  Account(const QString &sessionId,
-	  const QString &name);
-
-  /**
-   * This will generate a call ready to be used.
-   */
-  QString registerAccount() const;
-  QString unregisterAccount() const;
-
-  QString id() const
-  {return mId;}
-
-  Call createCall(const QString &to) const;
-  
-private:  
-  Account();
+class CallManagerImpl
+{
+public:
+  void registerCall(const Call &call);
+  void unregisterCall(const Call &call);
+  void unregisterCall(const QString &id);
 
   /**
-   * This is the session id that we are related to.
+   * Return the call with the given id. If
+   * there's no such call it will throw a
+   * std::runtime_error.
    */
-  QString mSessionId;
+  Call getCall(const QString &id);
 
-  /**
-   * This is the account id that we are related to.
-   */
-  QString mId;
+private:
+  QMutex mCallsMutex;
+  std::map< QString, Call > mCalls;
 };
-
 
 #endif

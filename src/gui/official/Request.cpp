@@ -21,6 +21,7 @@
 #include <sstream>
 
 #include "globals.h"
+#include "CallManager.hpp"
 #include "Request.hpp"
 #include "Requester.hpp"
 
@@ -93,14 +94,12 @@ CallRelatedRequest::CallRelatedRequest(const QString &sequenceId,
 			 const QString &command,
 			 const std::list< QString > &args)
   : Request(sequenceId, command, args)
-  , mCallId(*args.begin())
 {}
 
 void
 CallRelatedRequest::onError(const QString &code, const QString &message)
 {
-  onError(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
-	       mCallId), 
+  onError(CallManager::instance().getCall(mCallId), 
 	  code, 
 	  message);
 }
@@ -112,8 +111,7 @@ CallRelatedRequest::onError(Call, const QString &, const QString &)
 void
 CallRelatedRequest::onEntry(const QString &code, const QString &message)
 {
-  onEntry(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
-	       mCallId), 
+  onEntry(CallManager::instance().getCall(mCallId),
 	  code, 
 	  message);
 }
@@ -125,8 +123,7 @@ CallRelatedRequest::onEntry(Call, const QString &, const QString &)
 void
 CallRelatedRequest::onSuccess(const QString &code, const QString &message)
 {
-  onSuccess(Call(Requester::instance().getSessionIdFromSequenceId(getSequenceId()), 
-		 mCallId), 
+  onSuccess(CallManager::instance().getCall(mCallId),
 	    code, 
 	    message);
 }

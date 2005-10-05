@@ -29,7 +29,7 @@ Account::Account(const QString &sessionId,
 {}
 
 QString
-Account::registerAccount()
+Account::registerAccount() const
 {
   std::list< QString > args;
   args.push_back(mId);
@@ -37,10 +37,24 @@ Account::registerAccount()
 }
 
 QString
-Account::unregisterAccount()
+Account::unregisterAccount() const
 {
   std::list< QString > args;
   args.push_back(mId);
   return Requester::instance().send(mSessionId, "unregister", args);
 }
+
+Call
+Account::createCall(const QString &to) const
+{
+  QString callId = Requester::instance().generateCallId();
+
+  std::list< QString> args;
+  args.push_back(mId);
+  args.push_back(callId);
+  args.push_back(to);
+  Requester::instance().send(mSessionId, "call", args);
+  return Call(mSessionId, mId, callId);
+}
+
 

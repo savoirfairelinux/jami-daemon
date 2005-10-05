@@ -15,45 +15,47 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_ACCOUNT_H
-#define SFLPHONEGUI_ACCOUNT_H
+#include <stdexcept>
 
-#include <QString>
+#include "CallManagerImpl.hpp"
 
-class Call;
+void
+CallManagerImpl::registerCall(const Call &call)
+{
+  mCallsMutex.lock();
+  mCalls.insert(std::make_pair(call.id(), call));
+  mCallsMutex.unlock();
+}
 
-class Account {
- public:
-  Account(const QString &sessionId,
-	  const QString &name);
+void
+CallManagerImpl::unregisterCall(const Call &call)
+{
+  unregisterCall(call.id());
+}
 
-  /**
-   * This will generate a call ready to be used.
-   */
-  QString registerAccount() const;
-  QString unregisterAccount() const;
+void
+CallManagerImpl::unregisterCall(const QString &id) 
+{
+  QMutexLocker guard(&mCallsMutex);
+  std::map< QString, Call >::iterator pos = mCalls.find(id);
+  if(pos == mCalls.end()) {
+    throw std::runtime_error("Trying to unregister an unregistred call");
+  }
 
-  QString id() const
-  {return mId;}
+  mCalls.erase(pos);
+}
 
-  Call createCall(const QString &to) const;
-  
-private:  
-  Account();
+Call
+CallManagerImpl::getCall(const QString &id)
+{
+  QMutexLocker guard(&mCallsMutex);
+  std::map< QString, Call >::iterator pos = mCalls.find(id);
+  if(pos == mCalls.end()) {
+    throw std::runtime_error("Trying to retreive an unregistred call");
+  }
 
-  /**
-   * This is the session id that we are related to.
-   */
-  QString mSessionId;
-
-  /**
-   * This is the account id that we are related to.
-   */
-  QString mId;
-};
-
-
-#endif
+  return pos->second;
+}

@@ -5,8 +5,10 @@
 #include "Call.hpp"
 
 PhoneLine::PhoneLine(const Session &session,
+		     const Account &account,
 		     unsigned int line)
   : mSession(session)
+  , mAccount(account)
   , mCall(NULL)
   , mLine(line)
   , mSelected(false)
@@ -227,8 +229,7 @@ PhoneLine::call(const QString &to)
   _debug("PhoneLine %d: Calling %s.\n", mLine, to.toStdString().c_str());
   if(!mCall) {
     setLineStatus("Calling " + to + "...");
-    mCall = new Call(mSession.createCall());
-    mCall->call(to);
+    mCall = new Call(mAccount.createCall(to));
     clear();
   }
 }

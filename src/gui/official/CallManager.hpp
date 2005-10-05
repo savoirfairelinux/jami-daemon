@@ -1,7 +1,7 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
- *  Author: Jean-Philippe Barrette-LaPierre
- *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
+ *  Author : Jean-Philippe Barrette-LaPierre 
+ *              <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,42 +18,13 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef SFLPHONEGUI_ACCOUNT_H
-#define SFLPHONEGUI_ACCOUNT_H
+#ifndef __CALL_MANAGER_HPP__
+#define __CALL_MANAGER_HPP__
 
-#include <QString>
+#include "utilspp/Singleton.hpp"
+#include "CallManagerImpl.hpp"
 
-class Call;
-
-class Account {
- public:
-  Account(const QString &sessionId,
-	  const QString &name);
-
-  /**
-   * This will generate a call ready to be used.
-   */
-  QString registerAccount() const;
-  QString unregisterAccount() const;
-
-  QString id() const
-  {return mId;}
-
-  Call createCall(const QString &to) const;
-  
-private:  
-  Account();
-
-  /**
-   * This is the session id that we are related to.
-   */
-  QString mSessionId;
-
-  /**
-   * This is the account id that we are related to.
-   */
-  QString mId;
-};
-
+typedef utilspp::SingletonHolder< CallManagerImpl > CallManager;
 
 #endif
+

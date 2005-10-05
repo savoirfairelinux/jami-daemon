@@ -24,14 +24,22 @@
 #include <QString>
 
 class Session;
+class Account;
 
 class Call
 {
  public:
+  /**
+   * A call is automaticaly registered in
+   * the CallManager. However, a call isn't
+   * registered when you have a copy constructor.
+   */
   Call(const QString &sessionId, 
+       const QString &accountId,
        const QString &callId,
        bool incomming = false);
   Call(const Session &session, 
+       const Account &account,
        const QString &callId,
        bool incomming = false);
 
@@ -43,8 +51,6 @@ class Call
 
   QString id() const
   {return mId;}
-
-  QString call(const QString &to);
 
   /**
    * This function will answer the call.
@@ -102,6 +108,11 @@ class Call
    * This is the session id that we belong to.
    */
   QString mSessionId;
+
+  /**
+   * This is the account id that we belong to.
+   */
+  QString mAccountId;
 
   /**
    * This is the unique identifier of the call.

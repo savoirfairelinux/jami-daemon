@@ -21,40 +21,40 @@
 #include <QString>
 #include <list>
 
+#include "Account.hpp"
 #include "Call.hpp"
+#include "CallManager.hpp"
 #include "Session.hpp"
 #include "Requester.hpp"
 
 
 Call::Call(const QString &sessionId,
+	   const QString &accountId,
 	   const QString &callId,
 	   bool incomming)
   : mSessionId(sessionId)
+  , mAccountId(accountId)
   , mId(callId)
   , mIsIncomming(incomming)
-{}
+{
+  CallManager::instance().registerCall(*this);
+}
 
 Call::Call(const Session &session,
+	   const Account &account,
 	   const QString &callId,
 	   bool incomming)
   : mSessionId(session.id())
+  , mAccountId(account.id())
   , mId(callId)
   , mIsIncomming(incomming)
-{}
+{
+  CallManager::instance().registerCall(*this);
+}
 
 bool
 Call::isIncomming()
 {return mIsIncomming;}
-
-QString
-Call::call(const QString &to) 
-{
-  std::list< QString> args;
-  args.push_back("acc1");
-  args.push_back(mId);
-  args.push_back(to);
-  return Requester::instance().send(mSessionId, "call", args);
-}
 
 QString
 Call::answer() 

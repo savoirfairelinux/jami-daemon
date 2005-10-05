@@ -70,8 +70,6 @@ class Session
    */
   void connect() const;
 
-  Call createCall() const;
-  
   QString id() const;
   QString playTone() const;
 

@@ -11,6 +11,8 @@ QT += network
 
 # Input
 HEADERS += Account.hpp \
+           CallManager.hpp \
+           CallManagerImpl.hpp \
            Call.hpp \
            CallStatus.hpp \
            CallStatusFactory.hpp \
@@ -46,6 +48,7 @@ HEADERS += Account.hpp \
            ObjectPool.inl
 SOURCES += Account.cpp \
            Call.cpp \
+           CallManagerImpl.cpp \
            CallStatus.cpp \
            Event.cpp \
            JPushButton.cpp \

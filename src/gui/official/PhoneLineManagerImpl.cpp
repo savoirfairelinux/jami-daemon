@@ -145,7 +145,7 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
   QMutexLocker guard(&mPhoneLinesMutex);
   mPhoneLines.clear();
   for(unsigned int i = 0; i < nb; i++) {
-    PhoneLine *p = new PhoneLine(*mSession, i + 1);
+    PhoneLine *p = new PhoneLine(*mSession, *mAccount, i + 1);
     QObject::connect(p, SIGNAL(lineStatusChanged(const QString &)),
 		     this, SIGNAL(lineStatusSet(const QString &)));
     QObject::connect(p, SIGNAL(actionChanged(const QString &)),
@@ -493,21 +493,21 @@ PhoneLineManagerImpl::clear()
 }
 
 void 
-PhoneLineManagerImpl::incomming(const QString &,
+PhoneLineManagerImpl::incomming(const QString &accountId,
 				const QString &peer,
 				const QString &callId)
 {
-  Call call(*mSession, callId, true);
+  Call call(mSession->id(), accountId, callId, true);
   addCall(call, peer, "Incomming");
 }
 
 void 
-PhoneLineManagerImpl::addCall(const QString &,
+PhoneLineManagerImpl::addCall(const QString &accountId,
 			      const QString &callId,
 			      const QString &peer,
 			      const QString &state)
 {
-  addCall(Call(*mSession, callId), peer, state);
+  addCall(Call(mSession->id(), accountId, callId), peer, state);
 }
 
 void 

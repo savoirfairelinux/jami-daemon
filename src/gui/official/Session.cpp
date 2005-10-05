@@ -102,8 +102,3 @@ Session::getDefaultAccount() const
   return Account(mId, QString("mydefaultaccount"));
 }
 
-Call
-Session::createCall() const
-{
-  return Call(mId, Requester::instance().generateCallId());
-}

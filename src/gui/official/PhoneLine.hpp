@@ -13,7 +13,9 @@ class PhoneLine : public QObject
   Q_OBJECT
   
 public:
-  PhoneLine(const Session &session, unsigned int line);
+  PhoneLine(const Session &session, 
+	    const Account &account, 
+	    unsigned int line);
   ~PhoneLine();
 
   void call(const QString &to);
@@ -115,6 +117,7 @@ signals:
 
 private:
   Session mSession;
+  Account mAccount;
   Call *mCall;
   QMutex mPhoneLineMutex;
   unsigned int mLine;
