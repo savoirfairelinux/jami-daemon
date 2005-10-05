@@ -191,7 +191,8 @@ public:
 
   // configuration function requests
   bool getZeroconf(const std::string& sequenceId);
-  bool attachZeroconfEvents(const std::string& sequenceId, const Pattern::Observer &observer);
+  bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
+  bool removeZeroconfEvents(Pattern::Observer& observer);
   bool getCallStatus(const std::string& sequenceId);
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);
@@ -261,10 +262,11 @@ name);
 	/* 
 	 * Functions about audio device
 	 */
+/*
 	AudioDevice deviceList (int);
 	int deviceCount (void);
 	bool defaultDevice (int);
-	
+*/	
 	/*
 	 * Init default values for the different fields
 	 */
@@ -313,6 +315,13 @@ private:
    * Init the volume for speakers/micro from 0 to 100 value
    */ 
   void initVolume();
+
+  /**
+   * Configuration
+   */
+  bool getDirListing(const std::string& sequenceId, const std::string& path, int *nbFile);
+  bool getAudioDeviceList(const std::string& sequenceId);
+  Conf::ConfigTree _config;
 
   /*
    * Play one tone
@@ -394,12 +403,8 @@ private:
 	// Variables used in exception
 	bool 		_loaded;
 
-  // look if zeroconf scanning should run or not
-  int _useZeroconf;
-  // tell if we have zeroconf d'enable
+  // tell if we have zeroconf is enabled
   int _hasZeroconf;
-
-  Conf::ConfigTree _config;
 
   void switchCall(short id);
 

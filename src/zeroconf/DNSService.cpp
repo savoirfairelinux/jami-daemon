@@ -33,11 +33,12 @@
  */
 DNSService::DNSService()
 {
+  _start = false;
   _regtypeList.push_back("_sip._udp");
 #ifdef USE_IAX2
   _regtypeList.push_back("_iax._udp");
 #endif
-  
+
   // for the thread, the ifdef add a dynamic _regtypeList problem
   for (std::list<std::string>::iterator iterThread=_regtypeList.begin();
        iterThread!=_regtypeList.end();
@@ -62,11 +63,12 @@ DNSService::~DNSService()
  * Look for zeroconf services and add them to _services
  */
 void
-DNSService::scanServices() 
+DNSService::startScanServices() 
 {
   for (std::vector<DNSQueryThread *>::iterator iter = _queryThread.begin();iter!=_queryThread.end();iter++) {
     (*iter)->start();
   }
+  _start = true;
 }
 
 /**
@@ -81,6 +83,7 @@ void DNSService::addService(const std::string &service)
   // we leave before the queryService since, each 
   // thread will modify a DNSServiceTXTRecord of a difference services
   _mutex.leaveMutex();
+  notify();
   queryService(service);
 }
 
@@ -90,8 +93,10 @@ void DNSService::addService(const std::string &service)
  */
 void DNSService::removeService(const std::string &service) 
 {
-  ost::MutexLock(_mutex);
+  _mutex.enterMutex();
   _services.erase(service);
+  _mutex.leaveMutex();
+  notify();
 }
 
 /**
@@ -116,7 +121,7 @@ DNSService::listServices()
 DNSServiceMap
 DNSService::getServices() 
 {
-  ost::MutexLock(_mutex);
+  ost::MutexLock m(_mutex);
   return _services;
 }
 
@@ -192,9 +197,7 @@ DNSService::addTXTRecord(const char *fullname, uint16_t rdlen, const void *rdata
     }
   }
 
-  // TODO: remove this call, when we do not debug..
-  // addTXTRecord is a good function to know changes... 
-  listServices();
+  notify();
 }
 
 void 

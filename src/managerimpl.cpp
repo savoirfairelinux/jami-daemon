@@ -1038,7 +1038,7 @@ ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr) {
         _debug("Opened a stun socket pair FAILED\n");
     }
 }
-
+/*
 AudioDevice
 ManagerImpl::deviceList (int index)
 {
@@ -1073,6 +1073,7 @@ ManagerImpl::defaultDevice (int index)
 	}
 	return defaultDisplayed;
 }
+*/
 
 bool
 ManagerImpl::useStun (void) {
@@ -1252,11 +1253,11 @@ ManagerImpl::selectAudioDriver (void)
 void 
 ManagerImpl::initZeroconf(void) 
 {
-  _useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
+  int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
 
 #ifdef USE_ZEROCONF
-  if (_useZeroconf) {
-    _DNSService->scanServices();
+  if (useZeroconf) {
+    _DNSService->startScanServices();
   }
 #endif
 }
@@ -1281,28 +1282,30 @@ ManagerImpl::getZeroconf(const std::string& sequenceId)
 {
   bool returnValue = false;
 #ifdef USE_ZEROCONF
-  if (_useZeroconf && _gui != NULL) {
+  int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
+  if (useZeroconf && _gui != NULL) {
     TokenList arg;
     TokenList argTXT;
     std::string newService = "new service";
     std::string newTXT = "new txt record";
+    if (!_DNSService->isStart()) { _DNSService->startScanServices(); }
     DNSServiceMap services = _DNSService->getServices();
     DNSServiceMap::iterator iter = services.begin();
     arg.push_back(newService);
     while(iter!=services.end()) {
-      arg.push_first(iter->first);
-      _gui.sendMessage("100",sequenceId,arg);
-      arg.pop_first(); // remove the first, the name
+      arg.push_front(iter->first);
+      _gui->sendMessage("100",sequenceId,arg);
+      arg.pop_front(); // remove the first, the name
 
       TXTRecordMap record = iter->second.getTXTRecords();
       TXTRecordMap::iterator iterTXT = record.begin();
       while(iterTXT!=record.end()) {
-        argTXT.flush();
+        argTXT.clear();
         argTXT.push_back(iter->first);
         argTXT.push_back(iterTXT->first);
         argTXT.push_back(iterTXT->second);
         argTXT.push_back(newTXT);
-        _gui.sendMessage("101",sequenceId,arg);
+        _gui->sendMessage("101",sequenceId,argTXT);
         iterTXT++;
       }
       iter++;
@@ -1317,20 +1320,31 @@ ManagerImpl::getZeroconf(const std::string& sequenceId)
  * Main Thread
  */
 bool 
-ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, const Pattern::Observer &observer)
+ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer)
 {
   bool returnValue = false;
   // don't need the _gui like getZeroconf function
   // because Observer is here
 #ifdef USE_ZEROCONF
-  if (_useZeroconf) {
-    _DNSService->attach(sequenceId,observer);
+  int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
+  if (useZeroconf) {
+    if (!_DNSService->isStart()) { _DNSService->startScanServices(); }
+    _DNSService->attach(observer);
     returnValue = true;
   }
 #endif
   return returnValue;
 }
-
+bool
+ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
+{
+  bool returnValue = false;
+#ifdef USE_ZEROCONF
+  _DNSService->detach(observer);
+  returnValue = true;
+#endif
+  return returnValue;
+}
 /**
  * Main Thread
  */
@@ -1476,10 +1490,10 @@ bool
 ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& name)
 {
   bool returnValue = false;
+  TokenList tk;
   if (name=="codecdescriptor") {
-    TokenList tk;
+
     CodecMap::iterator iter = _codecMap.begin();
-    
     while( iter != _codecMap.end() ) {
       tk.clear();
       std::ostringstream strType;
@@ -1492,30 +1506,76 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
     returnValue = true;
   } else if (name=="ringtones") {
     std::string path = std::string(PROGSHAREDIR) + "/" + RINGDIR;
-    try {
-      ost::Dir dir(path.c_str());
-      const char *cFileName = NULL;
-      std::string fileName;
-      std::string filePathName;
-      while ( (cFileName=dir++) != NULL ) {
-        fileName = cFileName;
-        filePathName = path + "/" + cFileName;
-        if (fileName.length() && fileName[0]!='.' && !ost::isDir(fileName.c_str())) {
-          _debug("Filename: %s\n", fileName.c_str());
-        }
-      }
-      returnValue = true;
-    } catch (...) {
-      // error to open file dir
-    }
-  } else if (name=="") {
-    returnValue = true;
+    int nbFile = 0;
+    returnValue = getDirListing(sequenceId, path, &nbFile);
+
+    path = std::string(HOMEDIR) + "/." + PROGNAME + "/" + RINGDIR;
+    getDirListing(sequenceId, path, &nbFile);
+  } else if (name=="audiodevice") {
+    returnValue = getAudioDeviceList(sequenceId);
   } else if (name=="") {
     returnValue = true;
   } else if (name=="") {
     returnValue = true;
   }
   return returnValue;
+}
+
+/**
+ * User request Main Thread (list)
+ */
+bool 
+ManagerImpl::getAudioDeviceList(const std::string& sequenceId) 
+{
+  TokenList tk;
+  portaudio::AutoSystem autoSys;
+  portaudio::System& sys = portaudio::System::instance();
+
+  const char *hostApiName;
+  const char *deviceName;
+
+  for (int index = 0; index < sys.deviceCount(); index++ ) {
+    portaudio::Device& device = sys.deviceByIndex(index);
+    hostApiName = device.hostApi().name();
+    deviceName  = device.name();
+
+    tk.clear();
+    std::ostringstream str; str << index; tk.push_back(str.str());
+    tk.push_back(std::string(hostApiName) + " (device #" + str.str() + ")");
+    _gui->sendMessage("100", sequenceId, tk);
+  }
+  return true;
+}
+
+/**
+ * User action : main thread
+ */
+bool
+ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& path, int *nbFile) {
+  TokenList tk;
+  try {
+    ost::Dir dir(path.c_str());
+    const char *cFileName = NULL;
+    std::string fileName;
+    std::string filePathName;
+    while ( (cFileName=dir++) != NULL ) {
+      fileName = cFileName;
+      filePathName = path + "/" + cFileName;
+      if (fileName.length() && fileName[0]!='.' && !ost::isDir(filePathName.c_str())) {
+        tk.clear();
+        std::ostringstream str;
+        str << (*nbFile);
+        tk.push_back(str.str());
+        tk.push_back(filePathName);
+        _gui->sendMessage("100", sequenceId, tk);
+        (*nbFile)++;
+      }
+    }
+    return true;
+  } catch (...) {
+    // error to open file dir
+    return false;
+  }
 }
 
 /**

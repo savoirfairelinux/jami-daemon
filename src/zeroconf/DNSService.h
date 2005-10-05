@@ -38,7 +38,7 @@ public:
   DNSService();
   ~DNSService();
   
-  void scanServices(); // looking for services
+  void startScanServices(); // looking for services
   void addService(const std::string &service); // adding every services
   void removeService(const std::string &service); // remove a service
   void listServices(); // listing services (call addService before)
@@ -49,6 +49,8 @@ public:
   void queryService(const char *service, const char *regtype, const char *domain);
   void addTXTRecord(const char *fullname, uint16_t rdlen, const void *rdata);
   //void removeTXTRecord(const char *fullname);
+
+  bool isStart() const { return _start; }
 
 private:
   DNSServiceMap _services; //map
@@ -63,6 +65,8 @@ private:
    * It will be use to initialize the DNSQueryThread
    */
   std::list<std::string> _regtypeList;
+
+  bool _start;
 };
 
 void DNSServiceAddServicesCallback(DNSServiceRef sdRef,

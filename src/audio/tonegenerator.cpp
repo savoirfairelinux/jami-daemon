@@ -364,6 +364,7 @@ ToneGenerator::playRingtone (const char *fileName) {
 	
  	// read data as a block:
  	file.read (_src,length);
+	file.close();
 	
 	// Decode file.ul
 	expandedsize = _ulaw->codecDecode (_dst, (unsigned char *)_src, length);
@@ -373,7 +374,6 @@ ToneGenerator::playRingtone (const char *fileName) {
 		tonethread->start();
 	}
 	
-	file.close();
 	return 1;
 }
 

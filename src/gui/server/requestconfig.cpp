@@ -41,11 +41,22 @@ RequestZeroconf::execute()
 ResponseMessage
 RequestZeroconfEvent::execute()
 {
-  if (GUIServer::instance().attachZeroconfEvents(_sequenceId)) {
+  if (GUIServer::instance().attachZeroconfEvents(_sequenceId, *this)) {
     return message("200", "OK");
   } else {
     return message("501","Zeroconf not enabled or activated");
   }
+}
+
+RequestZeroconfEvent::~RequestZeroconfEvent() 
+{
+  GUIServer::instance.removeZeroconfEvents(*this);
+}
+
+ResponseMessage
+RequestZeroconfEvent::update()
+{
+  return message("100", "New Zeroconf events - Not Implemented");
 }
 
 ResponseMessage

@@ -25,9 +25,8 @@
 
 #include <string>
 #include "server/argtokenizer.h"
-#include "../observer.h"
 
-class GuiFramework : public Pattern::Observer {
+class GuiFramework {
 public:
 	GuiFramework ();
 	virtual ~GuiFramework (void);
@@ -82,7 +81,7 @@ public:
 
   // config
   bool getZeroconf(const std::string& sequenceId);
-  bool attachZeroconfEvents(const std::string& sequenceId);
+  bool attachZeroconfEvents(const std::string& sequenceId, Observer& observer);
   bool getCallStatus(const std::string& sequenceId);
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section,  const std::string& name, TokenList& arg);

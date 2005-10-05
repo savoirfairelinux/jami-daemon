@@ -24,7 +24,6 @@ using namespace std;
 #include "guiframework.h"
 #include "../manager.h"
 
-
 GuiFramework::GuiFramework ()
 {}
 
@@ -217,9 +216,9 @@ GuiFramework::getZeroconf(const std::string& sequenceId)
 }
 
 bool 
-GuiFramework::attachZeroconfEvents(const std::string& sequenceId)
+GuiFramework::attachZeroconfEvents(const std::string& sequenceId, Observer& observer)
 {
-  return Manager::instance().attachZeroconfEvents(sequenceId, *this);
+  return Manager::instance().attachZeroconfEvents(sequenceId, observer);
 }
 
 bool 

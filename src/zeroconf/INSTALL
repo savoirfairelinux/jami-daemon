@@ -9,6 +9,7 @@ Howl's one is named 'mDNSResponder'.
  - or you can get tarball from: http://helios.et.put.poznan.pl/~jstachow/pub/mDNSResponder-98.tar.gz
     (for those who don't like registration)
  - you can also use the last mDNSResponder
+   like http://helios.et.put.poznan.pl/~jstachow/pub/mDNSResponder-107.1.tar.gz
 
 2) compile and install
  Build system for mDNSResponder is quite weird so here are instructions:

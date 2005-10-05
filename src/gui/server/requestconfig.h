@@ -21,7 +21,7 @@
 #define __REQUESTCONFIG_H__
 
 #include "request.h"
-
+#include "../../observer.h"
 
 class RequestGetEvents : public RequestGlobal {
 public:
@@ -36,9 +36,10 @@ public:
 };
 
 
-class RequestZeroconfEvent : public RequestGlobal {
+class RequestZeroconfEvent : public RequestGlobal, public Pattern::Observer {
 public:
   RequestZeroconfEvent(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  ~RequestZeroconfEvent();
   ResponseMessage execute();
 };
 
