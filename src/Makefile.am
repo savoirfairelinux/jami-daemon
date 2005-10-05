@@ -5,14 +5,16 @@ maintener_source =
 endif
 
 if USE_ZEROCONF
-SUBDIRS = audio gui zeroconf config
+ZEROCONFDIR = zeroconf
 ZEROCONFLIB = zeroconf/libzeroconf.la
 ZEROCONFFLAGS = -DUSE_ZEROCONF
 else
-SUBDIRS = audio gui config
+ZEROCONFDIR =
 ZEROCONFLIB =
 ZEROCONFFLAGS =  
 endif
+
+SUBDIRS = audio config gui $(ZEROCONFDIR)
 
 sflphone_SOURCES = call.cpp 	eventthread.cpp 	error.cpp 	main.cpp 	sipvoiplink.cpp 	voIPLink.cpp \
 		sipcall.cpp 	managerimpl.cpp 	managerimpl.h 	manager.h 	global.h \
