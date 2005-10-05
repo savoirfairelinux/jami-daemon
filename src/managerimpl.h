@@ -1,5 +1,6 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -30,6 +31,7 @@
 #include "observer.h"
 #include "config/config.h"
 #include "audio/dtmf.h"
+#include "audio/codecDescriptor.h"
 
 class AudioLayer;
 class CodecDescriptor;
@@ -345,6 +347,9 @@ private:
 	 * Vector of CodecDescriptor
 	 */
 	CodecDescriptorVector _codecDescVector;
+
+  // map of codec (for configlist request)
+  CodecMap _codecMap;
 
 	/*
 	 * Mutex to protect access to code section

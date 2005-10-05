@@ -1,5 +1,6 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -39,7 +40,6 @@
 #include "manager.h"
 #include "audio/audiocodec.h"
 #include "audio/audiolayer.h"
-#include "audio/codecDescriptor.h"
 #include "audio/ringbuffer.h"
 #include "audio/tonegenerator.h"
 #include "call.h"
@@ -94,6 +94,8 @@ ManagerImpl::ManagerImpl (void)
   _toneType = 0;
 
   _nbIncomingWaitingCall=0;
+
+  _codecMap = CodecDescriptorMap().getMap();
 }
 
 ManagerImpl::~ManagerImpl (void) 
@@ -1473,7 +1475,19 @@ bool
 ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& name)
 {
   bool returnValue = false;
-  if (name=="") {
+  if (name=="codecdescriptor") {
+    TokenList tk;
+    CodecMap::iterator iter = _codecMap.begin();
+    
+    while( iter != _codecMap.end() ) {
+      tk.clear();
+      std::ostringstream strType;
+      strType << iter->first;
+      tk.push_back(strType.str());
+      tk.push_back(iter->second);
+      _gui->sendMessage("100", sequenceId, tk);
+      iter++;
+    }
     returnValue = true;
   } else if (name=="") {
     returnValue = true;

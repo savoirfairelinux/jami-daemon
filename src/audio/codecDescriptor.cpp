@@ -1,5 +1,6 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -25,13 +26,21 @@
 #include "ulaw.h"
 #include "codecDescriptor.h"
 
-
 const char* CODEC_ALAW = "G711a";
 const char* CODEC_ULAW = "G711u";
 const char* CODEC_GSM = "GSM";
 const char* CODEC_ILBC = "iLBC";
 const char* CODEC_SPEEX = "SPEEX";
 
+CodecDescriptorMap::CodecDescriptorMap() 
+{
+  _codecMap[PAYLOAD_CODEC_ALAW] = CODEC_ALAW;
+  _codecMap[PAYLOAD_CODEC_ULAW] = CODEC_ULAW;
+  _codecMap[PAYLOAD_CODEC_GSM] = CODEC_GSM;
+// theses one are not implemented yet..
+//  _codecMap[PAYLOAD_CODEC_ILBC] = CODEC_ILBC;
+//  _codecMap[PAYLOAD_CODEC_SPEEX] = CODEC_SPEEX;
+}
 
 CodecDescriptor::CodecDescriptor (int payload) 
 {
@@ -39,13 +48,13 @@ CodecDescriptor::CodecDescriptor (int payload)
 	_codecName = rtpmapPayload(_payload);
 }
 
-CodecDescriptor::CodecDescriptor (const string& name) 
+CodecDescriptor::CodecDescriptor (const std::string& name) 
 {
 	_codecName = name;
 	_payload = matchPayloadCodec(name);
 }
 
-CodecDescriptor::CodecDescriptor (int payload, const string& name) 
+CodecDescriptor::CodecDescriptor (int payload, const std::string& name) 
 {
 	_payload = payload;
 	_codecName = name;
@@ -56,7 +65,7 @@ CodecDescriptor::~CodecDescriptor (void)
 }
 
 AudioCodec*
-CodecDescriptor::alloc (int payload, const string& name)
+CodecDescriptor::alloc (int payload, const std::string& name)
 {
 	switch(payload) {
 	case PAYLOAD_CODEC_ULAW:
@@ -87,19 +96,19 @@ CodecDescriptor::getPayload (void)
 }
 	
 void 
-CodecDescriptor::setNameCodec (const string& name)
+CodecDescriptor::setNameCodec (const std::string& name)
 {
 	_codecName = name;
 }
 	
-string 
+std::string 
 CodecDescriptor::getNameCodec (void)
 {
 	return _codecName;
 }
 
 int
-CodecDescriptor::matchPayloadCodec (const string& codecname) {
+CodecDescriptor::matchPayloadCodec (const std::string& codecname) {
 	if (codecname == CODEC_ALAW) {
 		return PAYLOAD_CODEC_ALAW;
 	} else if (codecname == CODEC_ULAW) {
@@ -114,8 +123,10 @@ CodecDescriptor::matchPayloadCodec (const string& codecname) {
 		return -1;
 }
 
-string
+std::string
 CodecDescriptor::rtpmapPayload (int payload) {
+  // we don't want to use the CodecDescriptorMap Here
+  // we create one, but in MainManager for the list
 	switch (payload) {
 		case PAYLOAD_CODEC_ALAW:
  			return string("PCMA");

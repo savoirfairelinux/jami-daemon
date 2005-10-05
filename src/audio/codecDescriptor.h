@@ -1,5 +1,6 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -22,46 +23,62 @@
 #define __CODEC_DESCRIPTOR_H__
 
 #include <string>
-
-using namespace std;
+#include <map>
 
 typedef enum {
-	PAYLOAD_CODEC_ULAW = 0,
-	PAYLOAD_CODEC_GSM = 3,
-	PAYLOAD_CODEC_ALAW = 8,
-	PAYLOAD_CODEC_ILBC = 97,
-	PAYLOAD_CODEC_SPEEX = 110
+  PAYLOAD_CODEC_ULAW = 0,
+  PAYLOAD_CODEC_GSM = 3,
+  PAYLOAD_CODEC_ALAW = 8,
+  PAYLOAD_CODEC_ILBC = 97,
+  PAYLOAD_CODEC_SPEEX = 110
 } codecType;
 
+/**
+ * This class should be singleton
+ * But I didn't want to add Singleton template to it.. and an extra header
+ * I didn't want to make my own Singleton structure to not 
+ * add an extra function to delete the new CodecDescriptorMap
+ * when the application stop
+ */
+typedef std::map<codecType, std::string> CodecMap;
+class CodecDescriptorMap {
+public:
+  CodecDescriptorMap();
+  ~CodecDescriptorMap() {};
+  CodecMap getMap() const { return _codecMap; } // by Copy
+private:
+  CodecMap _codecMap;
+};
 
 class AudioCodec;
 class CodecDescriptor 
 {
 public:
+
 	CodecDescriptor (int payload);
-	CodecDescriptor (const string& name);
-	CodecDescriptor (int payload, const string& name);
+	CodecDescriptor (const std::string& name);
+	CodecDescriptor (int payload, const std::string& name);
 	~CodecDescriptor (void);
 
-	AudioCodec* alloc (int payload, const string& name);
+	AudioCodec* alloc (int payload, const std::string& name);
 
 	void setPayload (int payload);
 	int getPayload (void);
-	void setNameCodec (const string& name);
-	string getNameCodec (void);
+	void setNameCodec (const std::string& name);
+	std::string getNameCodec (void);
 	
 	/*
 	 * Match codec name to the payload
 	 */
-	int	matchPayloadCodec (const string&);
+	int	matchPayloadCodec (const std::string&);
 	/*
 	 * Match a payload to the codec name
 	 */
-	string rtpmapPayload (int);
+	std::string rtpmapPayload (int);
 
 private:
 	int _payload;
-	string _codecName;
+	std::string _codecName;
 };
 
 #endif // __CODEC_DESCRIPTOR_H__

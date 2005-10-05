@@ -1,5 +1,6 @@
 /**
  *  Copyright (C) 2005 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
