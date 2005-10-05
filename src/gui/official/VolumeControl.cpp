@@ -44,23 +44,10 @@ VolumeControl::~VolumeControl()
 void
 VolumeControl::resize()
 {
-  if(mOrientation == VolumeControl::Horizontal) {
-    QWidget::resize(QSize(mSlider->size().width(), 
-			 mMaxPosition + mSlider->size().height()));
-  }
-  else {
-    QWidget::resize(QSize(mMaxPosition + mSlider->size().width(), 
-			 mSlider->size().height()));
-  }
-  QPixmap q(TransparentWidget::transparize(QString(":/sflphone/images/slider")));
-  std::cout << "mask isNull: " << q.mask().isNull() << std::endl;
-  std::cout << "isNull: " << q.isNull() << std::endl;
-  std::cout << q.size().width() << "," << q.size().height() << std::endl;
+  QPixmap q(QString(":/sflphone/images/slider"));
   setPixmap(q);
-  if(q.hasAlpha()) {
-    std::cout << "has alpha" << std::endl;
-    setMask(q.mask());
-  }
+  QWidget::resize(q.size());
+  mMaxPosition = q.height() - mSlider->height();
 }
 
 void 

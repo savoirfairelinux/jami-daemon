@@ -62,6 +62,7 @@ private:
   JPushButton *mMute;
   
   VolumeControl *mVolume;
+  VolumeControl *mMicVolume;
 
   SFLLcd *mLcd;
   QLabel *mMain;

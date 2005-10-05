@@ -84,7 +84,12 @@ SFLPhoneWindow::initGUIButtons()
   mVolume = new VolumeControl(":/sflphone/images/volume.png",
 			      mMain);
   mVolume->setOrientation(VolumeControl::Vertical);
-  mVolume->move(0,0);
+  mVolume->move(365,91);
+
+  mMicVolume = new VolumeControl(":/sflphone/images/volume.png",
+				  mMain);
+  mMicVolume->setOrientation(VolumeControl::Vertical);
+  mMicVolume->move(347,91);
 			      
 }
 
