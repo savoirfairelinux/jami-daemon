@@ -899,7 +899,7 @@ QtGUIMainWindow::peerHungupCall (short id)
 
 	if (line == getCurrentLine() or getCurrentLine() == -1) {
 		stopCallTimer(id);
-		Manager::instance().displayStatus(HUNGUP_STATUS);
+		Manager::instance().displayStatus(HANGUP_STATUS);
 		setCurrentLine(-1);
 	} else {
 		// Stop the call timer when hang up
@@ -947,7 +947,7 @@ QtGUIMainWindow::displayError (const string& error)
 void 
 QtGUIMainWindow::displayStatus (const string& status)
 {
-	if (status.compare(HUNGUP_STATUS) == 0 or 
+	if (status.compare(HANGUP_STATUS) == 0 or 
 			status.compare(TRANSFER_STATUS) == 0) {
 		_lcd->clearBuffer();
 	}
@@ -1039,7 +1039,7 @@ QtGUIMainWindow::qt_hangupCall (short id)
 	int i;
 	i = hangupCall(id);
 	stopCallTimer(id);	
-	displayStatus(HUNGUP_STATUS);
+	displayStatus(HANGUP_STATUS);
 	setCurrentLine(-1);
 	return i;
 }	
@@ -1049,7 +1049,7 @@ QtGUIMainWindow::qt_cancelCall (short id)
 {
 	int i;
 	i = cancelCall(id);
-	displayStatus(HUNGUP_STATUS);
+	displayStatus(HANGUP_STATUS);
 	setCurrentLine(-1);
 	return i;
 }
@@ -1122,7 +1122,7 @@ QtGUIMainWindow::qt_refuseCall (short id)
 {
 	int i;
 	i = refuseCall(id);
-	displayStatus(HUNGUP_STATUS);
+	displayStatus(HANGUP_STATUS);
 	getPhoneLine(id)->setbRinging(false);
 	_TabIncomingCalls[id2line(id)] = -1;
 	setCurrentLine(-1);

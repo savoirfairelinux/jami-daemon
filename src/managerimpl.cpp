@@ -81,10 +81,6 @@ ManagerImpl::ManagerImpl (void)
   _startTime = 0;
   _endTime = 0;
   _path = ""; 
-  _zonetone = false;
-  _congestion = false;
-  _ringtone = false;
-  _ringback = false;
   _exist = 0;
   _loaded = false;
   _gui = NULL;
@@ -96,6 +92,8 @@ ManagerImpl::ManagerImpl (void)
   _mic_volume_before_mute = 0;
 
   _toneType = 0;
+
+  _nbIncomingWaitingCall=0;
 }
 
 ManagerImpl::~ManagerImpl (void) 
@@ -289,6 +287,9 @@ ManagerImpl::getVoIPLinkVector (void)
 	return &_voIPLinkVector;
 }
 
+/**
+ * Multi Thread
+ */
 Call *
 ManagerImpl::pushBackNewCall (short id, enum CallType type)
 {
@@ -316,30 +317,30 @@ ManagerImpl::deleteCall (short id)
 ///////////////////////////////////////////////////////////////////////////////
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
+/**
+ * Main thread
+ */
 int 
 ManagerImpl::outgoingCall (const string& to)
 {	
-	short id;
-	Call* call;
-	
-	id = generateNewCallId();
-	call = pushBackNewCall(id, Outgoing);
-	_debug("Outgoing Call with identifiant %d\n", id);
-	
-	//call = getCall(id);
-	//if (call == NULL)
-	//	return 0;
-	
-	call->setStatus(string(TRYING_STATUS));
-	call->setState(Progressing);
+  short id = generateNewCallId();
+  Call *call = pushBackNewCall(id, Outgoing);
+  _debug("Outgoing Call with identifiant %d\n", id);
+
+  call->setStatus(string(TRYING_STATUS));
+  call->setState(Call::Progressing);
   call->setCallerIdNumber(to);
-	if (call->outgoingCall(to) == 0) {
-		return id;
-	} else {
-		return 0;
-	}
+  if (call->outgoingCall(to) == 0) {
+    return id;
+  } else {
+    return 0;
+  }
 }
 
+/**
+ * User action (main thread)
+ * Every Call
+ */
 int 
 ManagerImpl::hangupCall (short id)
 {
@@ -349,18 +350,23 @@ ManagerImpl::hangupCall (short id)
 	if (call == NULL) {
 		return -1;
 	}
-	call->setStatus(string(HUNGUP_STATUS));
-	call->setState(Hungup);
+	call->setStatus(string(HANGUP_STATUS));
+	call->setState(Call::Hungup);
 
 	int result = call->hangup();
 
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
+
 	deleteCall(id);
   return result;
 }
 
+/**
+ * User action (main thread)
+ * Every Call
+ */
 int
 ManagerImpl::cancelCall (short id)
 {
@@ -369,16 +375,21 @@ ManagerImpl::cancelCall (short id)
 	call = getCall(id);
 	if (call == NULL)
 		return -1;
-	call->setStatus(string(HUNGUP_STATUS));
-	call->setState(Hungup);
+	call->setStatus(string(HANGUP_STATUS));
+	call->setState(Call::Hungup);
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
 	deleteCall(id);
+  decWaitingCall();
   stopTone();
 	return call->cancel();
 }
 
+/**
+ * User action (main thread)
+ * Incoming Call
+ */
 int 
 ManagerImpl::answerCall (short id)
 {
@@ -387,14 +398,20 @@ ManagerImpl::answerCall (short id)
 	call = getCall(id);
 	if (call == NULL)
 		return -1;
-	call->setStatus(string(CONNECTED_STATUS));
-	call->setState(Answered);
 
+	call->setStatus(string(CONNECTED_STATUS));
+	call->setState(Call::Answered);
+
+  decWaitingCall();
   stopTone();
   switchCall(id);
 	return call->answer();
 }
 
+/**
+ * User action (main thread)
+ * Every Call
+ */
 int 
 ManagerImpl::onHoldCall (short id)
 {
@@ -403,10 +420,14 @@ ManagerImpl::onHoldCall (short id)
 	if (call == NULL)
 		return -1;
 	call->setStatus(string(ONHOLD_STATUS));
-	call->setState(OnHold);
+	call->setState(Call::OnHold);
 	return call->onHold();
 }
 
+/**
+ * User action (main thread)
+ * Every Call
+ */
 int 
 ManagerImpl::offHoldCall (short id)
 {
@@ -415,11 +436,15 @@ ManagerImpl::offHoldCall (short id)
 	if (call == NULL)
 		return -1;
 	call->setStatus(string(CONNECTED_STATUS));
-	call->setState(OffHold);
+	call->setState(Call::OffHold);
   setCurrentCallId(id);
 	return call->offHold();	
 }
 
+/**
+ * User action (main thread)
+ * Every Call
+ */
 int 
 ManagerImpl::transferCall (short id, const string& to)
 {
@@ -428,21 +453,34 @@ ManagerImpl::transferCall (short id, const string& to)
 	if (call == NULL)
 		return -1;
 	call->setStatus(string(TRANSFER_STATUS));
-	call->setState(Transfered);
+	call->setState(Call::Transfered);
   setCurrentCallId(0);
 	return call->transfer(to);
 }
+
+/**
+ * User action (main thread)
+ * All Call
+ */
 void
 ManagerImpl::mute() {
   _mic_volume_before_mute = _mic_volume;
   _mic_volume = 0;
 }
 
+/**
+ * User action (main thread)
+ * All Call
+ */
 void
 ManagerImpl::unmute() {
   _mic_volume = _mic_volume_before_mute;
 }
 
+/**
+ * User action (main thread)
+ * Every Call
+ */
 void 
 ManagerImpl::muteOn (short id)
 {
@@ -451,9 +489,13 @@ ManagerImpl::muteOn (short id)
 	if (call == NULL)
 		return;
 	call->setStatus(string(MUTE_ON_STATUS));
-	call->setState(MuteOn);
+	call->setState(Call::MuteOn);
 }
 
+/**
+ * User action (main thread)
+ * Every Call
+ */
 void 
 ManagerImpl::muteOff (short id)
 {
@@ -462,9 +504,13 @@ ManagerImpl::muteOff (short id)
 	if (call == NULL)
 		return;
 	call->setStatus(string(CONNECTED_STATUS));
-	call->setState(MuteOff);
+	call->setState(Call::MuteOff);
 }
 
+/**
+ * User action (main thread)
+ * Call Incoming
+ */
 int 
 ManagerImpl::refuseCall (short id)
 {
@@ -475,11 +521,13 @@ ManagerImpl::refuseCall (short id)
 		return -1;
   // don't cause a very bad segmentation fault
   // we refuse the call when we are trying to establish connection
-  if ( call->getState() != Progressing )
+  decWaitingCall();
+
+  if ( call->getState() != Call::Progressing )
     return -1;
 
-  call->setStatus(string(HUNGUP_STATUS));
-  call->setState(Refused);	
+  call->setStatus(string(HANGUP_STATUS));
+  call->setState(Call::Refused);
   
   _mutex.enterMutex();
   _nCalls -= 1;
@@ -491,12 +539,18 @@ ManagerImpl::refuseCall (short id)
   return refuse;
 }
 
+/**
+ * User action (main thread)
+ */
 int
 ManagerImpl::saveConfig (void)
 {
   return (_config.saveConfigTree(_path.data()) ? 1 : 0);
 }
 
+/**
+ * Initialize action (main thread)
+ */
 int 
 ManagerImpl::registerVoIPLink (void)
 {
@@ -507,6 +561,9 @@ ManagerImpl::registerVoIPLink (void)
 	}
 }
 
+/**
+ * Terminate action (main thread)
+ */
 int 
 ManagerImpl::unregisterVoIPLink (void)
 {
@@ -517,6 +574,9 @@ ManagerImpl::unregisterVoIPLink (void)
 	}
 }
 
+/**
+ * Terminate action (main thread)
+ */
 int 
 ManagerImpl::quitApplication (void)
 {
@@ -525,18 +585,27 @@ ManagerImpl::quitApplication (void)
   return 0;
 }
 
+/**
+ * ??? action
+ */
 int 
 ManagerImpl::sendTextMessage (short , const string& )
 {
 	return 1;
 }
 
+/**
+ * ??? action
+ */
 int 
 ManagerImpl::accessToDirectory (void)
 {
 	return 1;
 }
 
+/**
+ * User action (main thread)
+ */
 bool 
 ManagerImpl::sendDtmf (short id, char code)
 {
@@ -563,8 +632,9 @@ ManagerImpl::sendDtmf (short id, char code)
             break;
     }
 }
+
 /**
- * @source 
+ * User action (main thread)
  */
 bool
 ManagerImpl::playDtmf(char code)
@@ -621,8 +691,31 @@ ManagerImpl::playDtmf(char code)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Management of event peer IP-phone 
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * Multi-thread
+ */
+bool 
+ManagerImpl::incomingCallWaiting() {
+  ost::MutexLock m(_incomingCallMutex);
+  return (_nbIncomingWaitingCall > 0) ? true : false;
+}
 
+void
+ManagerImpl::incWaitingCall() {
+  ost::MutexLock m(_incomingCallMutex);
+  _nbIncomingWaitingCall++;
+}
+
+void
+ManagerImpl::decWaitingCall() {
+  ost::MutexLock m(_incomingCallMutex);
+  _nbIncomingWaitingCall--;
+}
+
+/**
+ * SipEvent Thread
+ */
 int 
 ManagerImpl::incomingCall (short id)
 {
@@ -632,9 +725,10 @@ ManagerImpl::incomingCall (short id)
 
 	call->setType(Incoming);
 	call->setStatus(string(RINGING_STATUS));
-	call->setState(Progressing);
-	ringtone(true);
-	//displayStatus(RINGING_STATUS);
+	call->setState(Call::Progressing);
+
+  incWaitingCall();
+	ringtone();
 
   // TODO: Account not yet implemented
   std::string accountId = "acc1";
@@ -648,6 +742,10 @@ ManagerImpl::incomingCall (short id)
   return _gui->incomingCall(id, accountId, from);
 }
 
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
 void 
 ManagerImpl::peerAnsweredCall (short id)
 {
@@ -655,33 +753,47 @@ ManagerImpl::peerAnsweredCall (short id)
 
   Call* call = getCall(id);
   call->setStatus(string(CONNECTED_STATUS));
-  call->setState(Answered);
+  call->setState(Call::Answered);
 
   // switch current call
   switchCall(id);
   _gui->peerAnsweredCall(id);
 }
 
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
 int
 ManagerImpl::peerRingingCall (short id)
 {
   Call* call = getCall(id);
   call->setStatus(string(RINGING_STATUS));
-  call->setState(Ringing);
+  call->setState(Call::Ringing);
 
   // ring
-  ringback(true);
+  ringback();
   _gui->peerRingingCall(id);
   return 1;
 }
 
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
 int 
 ManagerImpl::peerHungupCall (short id)
 {
   stopTone();
   Call* call = getCall(id);
-  call->setStatus(string(HUNGUP_STATUS));
-  call->setState(Hungup);
+  // TODO: check if it hungup when waiting or in a conversation
+  //       to decWaitingCall ?
+  if ( call->getState() != Call::Ringing) {
+    decWaitingCall();
+  }
+
+  call->setStatus(string(HANGUP_STATUS));
+  call->setState(Call::Hungup);
 
   _gui->peerHungupCall(id);
 
@@ -694,6 +806,10 @@ ManagerImpl::peerHungupCall (short id)
   return 1;
 }
 
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
 void 
 ManagerImpl::displayTextMessage (short id, const string& message)
 {
@@ -705,6 +821,10 @@ ManagerImpl::displayTextMessage (short id, const string& message)
   }
 }
 
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
 void 
 ManagerImpl::displayErrorText (short id, const string& message)
 {
@@ -716,6 +836,10 @@ ManagerImpl::displayErrorText (short id, const string& message)
   }
 }
 
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
 void 
 ManagerImpl::displayError (const string& error)
 {
@@ -727,6 +851,10 @@ ManagerImpl::displayError (const string& error)
   }
 }
 
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
 void 
 ManagerImpl::displayStatus (const string& status)
 {
@@ -738,18 +866,10 @@ ManagerImpl::displayStatus (const string& status)
   }
 }
 
-//int
-//ManagerImpl::selectedCall (void) 
-//{
-//	return _gui->selectedCall();
-//}
-//
-//bool
-//ManagerImpl::isCurrentId (short id)
-//{
-//	return _gui->isCurrentId(id);
-//}
-//
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
 void
 ManagerImpl::startVoiceMessageNotification (const std::string& nb_msg)
 {
@@ -757,6 +877,10 @@ ManagerImpl::startVoiceMessageNotification (const std::string& nb_msg)
   _gui->sendVoiceNbMessage(nb_msg);
 }
 
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
 void
 ManagerImpl::stopVoiceMessageNotification (void)
 {
@@ -764,6 +888,9 @@ ManagerImpl::stopVoiceMessageNotification (void)
   _gui->sendVoiceNbMessage(std::string("0"));
 }
 
+/**
+ * Multi Thread
+ */
 bool 
 ManagerImpl::playATone(unsigned int tone) {
   if (isDriverLoaded()) {
@@ -775,6 +902,9 @@ ManagerImpl::playATone(unsigned int tone) {
   return false;
 }
 
+/**
+ * Multi Thread
+ */
 void 
 ManagerImpl::stopTone() {
   if (isDriverLoaded()) {
@@ -787,34 +917,70 @@ ManagerImpl::stopTone() {
   }
 }
 
+/**
+ * Multi Thread
+ */
 bool
 ManagerImpl::playTone()
 {
   return playATone(ZT_TONE_DIALTONE);
 }
 
+/**
+ * Multi Thread
+ */
 void
-ManagerImpl::congestion (bool var) {
+ManagerImpl::congestion () {
   playATone(ZT_TONE_CONGESTION);
 }
 
+/**
+ * Multi Thread
+ */
 void
-ManagerImpl::ringback (bool var) {
+ManagerImpl::ringback () {
   playATone(ZT_TONE_RINGTONE);
 }
+
+/**
+ * Multi Thread
+ */
 void
-ManagerImpl::busy() {
+ManagerImpl::callBusy(short id) {
   playATone(ZT_TONE_BUSY);
+  Call* call = getCall(id);
+  call->setState(Call::Busy);
 }
 
+/**
+ * Multi Thread
+ */
 void
-ManagerImpl::ringtone(bool var) 
+ManagerImpl::callFailure(short id) {
+  playATone(ZT_TONE_BUSY);
+  getCall(id)->setState(Call::Error);
+}
+
+/**
+ * Multi Thread
+ */
+void
+ManagerImpl::ringtone() 
 { 
-  playATone(ZT_TONE_RINGTONE); // not a file...
+  if (isDriverLoaded()) {
+    _toneMutex.enterMutex(); 
+    _toneType = ZT_TONE_NULL;
+    int play = _tone->playRingtone(getConfigString(AUDIO, RING_CHOICE).c_str());
+    _toneMutex.leaveMutex();
+    if (play!=1) {
+      ringback();
+    }
+  }
 }
 
 /**
  * Use Urgent Buffer
+ * By AudioRTP thread
  */
 void
 ManagerImpl::notificationIncomingCall (void) {
@@ -838,6 +1004,9 @@ ManagerImpl::notificationIncomingCall (void) {
   delete[] buffer;
 }
 
+/**
+ * Multi Thread
+ */
 void
 ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr) {
     StunAddress4 mappedAddr;
@@ -915,6 +1084,9 @@ ManagerImpl::useStun (void) {
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Multi Thread
+ */
 short 
 ManagerImpl::generateNewCallId (void)
 {
@@ -937,6 +1109,9 @@ ManagerImpl::callVectorSize (void)
 	return _callVector.size();
 }
 
+/**
+ * Initialization: Main Thread
+ */
 int
 ManagerImpl::createSettingsPath (void) {
 	int exist = 1;
@@ -965,6 +1140,9 @@ ManagerImpl::createSettingsPath (void) {
 	return exist;
 }
 
+/**
+ * Initialization: Main Thread
+ */
 void
 ManagerImpl::initConfigFile (void) 
 {
@@ -1010,6 +1188,9 @@ ManagerImpl::initConfigFile (void)
   _exist = createSettingsPath();
 }
 
+/**
+ * Initialization: Main Thread
+ */
 void
 ManagerImpl::initAudioCodec (void)
 {
@@ -1025,6 +1206,9 @@ ManagerImpl::initAudioCodec (void)
 				getConfigString(AUDIO, CODEC3)));
 }
 
+/**
+ * Terminate: Main Thread
+ */
 void 
 ManagerImpl::unloadAudioCodec()
 {
@@ -1038,6 +1222,9 @@ ManagerImpl::unloadAudioCodec()
 }
 
 
+/**
+ * Initialization: Main Thread
+ */
 void
 ManagerImpl::selectAudioDriver (void)
 {
@@ -1057,6 +1244,7 @@ ManagerImpl::selectAudioDriver (void)
 /**
  * Initialize the Zeroconf scanning services loop
  * Informations will be store inside a map DNSService->_services
+ * Initialization: Main Thread
  */
 void 
 ManagerImpl::initZeroconf(void) 
@@ -1070,8 +1258,9 @@ ManagerImpl::initZeroconf(void)
 #endif
 }
 
-/*
+/**
  * Init the volume for speakers/micro from 0 to 100 value
+ * Initialization: Main Thread
  */
 void
 ManagerImpl::initVolume()
@@ -1080,7 +1269,10 @@ ManagerImpl::initVolume()
 	setMicroVolume(getConfigInt(AUDIO, VOLUME_MICRO));
 }
 
-// configuration function requests
+/**
+ * configuration function requests
+ * Main Thread
+ */
 bool 
 ManagerImpl::getZeroconf(const std::string& sequenceId)
 {
@@ -1118,6 +1310,9 @@ ManagerImpl::getZeroconf(const std::string& sequenceId)
   return returnValue;
 }
 
+/**
+ * Main Thread
+ */
 bool 
 ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, const Pattern::Observer &observer)
 {
@@ -1133,6 +1328,9 @@ ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, const Pattern::
   return returnValue;
 }
 
+/**
+ * Main Thread
+ */
 bool 
 ManagerImpl::getCallStatus(const std::string& sequenceId)
 {
@@ -1148,20 +1346,20 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
       call = (*iter);
       std::string status = call->getStatus();
       switch( call->getState() ) {
-      case Busy:
+      case Call::Busy:
         code="113";
         break;
 
-      case Answered:
+      case Call::Answered:
         code="112";
         status = "Established";
         break;
 
-      case Ringing:
+      case Call::Ringing:
         code="111";
         break;
 
-      case Progressing:
+      case Call::Progressing:
         code="110";
         status="Trying";
         break;
@@ -1189,6 +1387,9 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
   return true;
 }
 
+/**
+ * Main Thread
+ */
 bool 
 ManagerImpl::getConfigAll(const std::string& sequenceId)
 {
@@ -1205,12 +1406,18 @@ ManagerImpl::getConfigAll(const std::string& sequenceId)
   return returnValue;
 }
 
+/**
+ * Main Thread
+ */
 bool 
 ManagerImpl::getConfig(const std::string& section, const std::string& name, TokenList& arg)
 {
   return _config.getConfigTreeItemToken(section, name, arg);
 }
 
+/**
+ * Main Thread
+ */
 // throw an Conf::ConfigTreeItemException if not found
 int 
 ManagerImpl::getConfigInt(const std::string& section, const std::string& name)
@@ -1223,6 +1430,9 @@ ManagerImpl::getConfigInt(const std::string& section, const std::string& name)
   return 0;
 }
 
+/**
+ * Main Thread
+ */
 std::string 
 ManagerImpl::getConfigString(const std::string& section, const std::string&
 name)
@@ -1235,12 +1445,18 @@ name)
   return "";
 }
 
+/**
+ * Main Thread
+ */
 bool 
 ManagerImpl::setConfig(const std::string& section, const std::string& name, const std::string& value)
 {
   return _config.setConfigTreeItem(section, name, value);
 }
 
+/**
+ * Main Thread
+ */
 bool 
 ManagerImpl::setConfig(const std::string& section, const std::string& name,
 int value)
@@ -1250,6 +1466,9 @@ int value)
   return _config.setConfigTreeItem(section, name, valueStream.str());
 }
 
+/**
+ * Main Thread
+ */
 bool 
 ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& name)
 {
@@ -1268,6 +1487,9 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
   return returnValue;
 }
 
+/**
+ * Multi Thread
+ */
 void 
 ManagerImpl::switchCall(short id)
 {

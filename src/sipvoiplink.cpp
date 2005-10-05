@@ -331,18 +331,23 @@ SipVoIPLink::answer (short id)
 int
 SipVoIPLink::hangup (short id) 
 {
+  Call    *call    = Manager::instance().getCall(id);
+
   int i = 0;
-  if (!Manager::instance().getbCongestion()) {
+  if (call->getState() != Call::Error) {
+    SipCall *sipcall = getSipCall(id);
     _debug("Hang up call [id = %d, cid = %d, did = %d]\n", 
-	   id, getSipCall(id)->getCid(), getSipCall(id)->getDid());	
+	   id, sipcall->getCid(), sipcall->getDid());	
     // Release SIP stack.
     eXosip_lock();
-    i = eXosip_call_terminate (getSipCall(id)->getCid(), 
-			       getSipCall(id)->getDid());
+    i = eXosip_call_terminate (sipcall->getCid(), 
+			       sipcall->getDid());
     eXosip_unlock();
 
     // Release RTP channels
-    _audiortp.closeRtpSession(getSipCall(id));
+    _audiortp.closeRtpSession(sipcall);
+  } else {
+    _debug("The call was in error state, so delete it");
   }
 				
   deleteSipCall(id);
@@ -353,12 +358,13 @@ int
 SipVoIPLink::cancel (short id) 
 {
   int i = 0;
-  if (!Manager::instance().getbCongestion()) {
-    SipCall *call = getSipCall(id);
-    _debug("Cancel call [id = %d, cid = %d]\n", id, call->getCid());
+  Call *call = Manager::instance().getCall(id);
+  if (call->getState() != Call::Error) {
+    SipCall *sipcall = getSipCall(id);
+    _debug("Cancel call [id = %d, cid = %d]\n", id, sipcall->getCid());
     // Release SIP stack.
     eXosip_lock();
-    i = eXosip_call_terminate (call->getCid(), -1);
+    i = eXosip_call_terminate (sipcall->getCid(), -1);
     eXosip_unlock();
   }
   deleteSipCall(id);
@@ -712,7 +718,7 @@ SipVoIPLink::getEvent (void)
 			
     if (id > 0) {	
       if (!Manager::instance().getCall(id)->isProgressing()) {
-	_audiortp.closeRtpSession(getSipCall(id));
+	       _audiortp.closeRtpSession(getSipCall(id));
       }
       Manager::instance().peerHungupCall(id);
       deleteSipCall(id);
@@ -753,11 +759,11 @@ SipVoIPLink::getEvent (void)
       // Display error on the screen phone
       //Manager::instance().displayError(event->response->reason_phrase);
       Manager::instance().displayErrorText(id, event->response->reason_phrase);
-      Manager::instance().congestion(true);
+      Manager::instance().callFailure(id);
     break;
     case BUSY_HERE:
       Manager::instance().displayErrorText(id, event->response->reason_phrase);
-      Manager::instance().busy();
+      Manager::instance().callBusy(id);
       break;
     case REQ_TERMINATED:
       break;
@@ -771,7 +777,8 @@ SipVoIPLink::getEvent (void)
     // Handle 5XX errors
     switch (event->response->status_code) {
     case SERVICE_UNAVAILABLE:
-      Manager::instance().congestion(true);
+      id = findCallId(event);
+      Manager::instance().callFailure(id);
       break;
     default:
       break;
@@ -783,7 +790,8 @@ SipVoIPLink::getEvent (void)
     switch (event->response->status_code) {
     case BUSY_EVERYWHERE:
     case DECLINE:
-      Manager::instance().congestion(true);
+      id = findCallId(event);
+      Manager::instance().callFailure(id);
       break;
     default:
       break;
@@ -925,11 +933,10 @@ SipVoIPLink::carryingDTMFdigits (short id, char code) {
 void
 SipVoIPLink::newOutgoingCall (short callid)
 {
-  _sipcallVector.push_back(new SipCall(callid, 
-					Manager::instance().getCodecDescVector()));
-  SipCall *call = getSipCall(callid);
-  if ( call != NULL) {
-    call->setStandBy(true);
+  SipCall *sipcall = new SipCall(callid, Manager::instance().getCodecDescVector());
+  if (sipcall != NULL) {
+    _sipcallVector.push_back(sipcall);
+    sipcall->setStandBy(true);
   }
 }
 
@@ -937,7 +944,9 @@ void
 SipVoIPLink::newIncomingCall (short callid)
 {
   SipCall* sipcall = new SipCall(callid, Manager::instance().getCodecDescVector());
-  _sipcallVector.push_back(sipcall);
+  if (sipcall != NULL) {
+    _sipcallVector.push_back(sipcall);
+  }
 }
 
 void

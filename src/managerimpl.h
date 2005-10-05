@@ -47,7 +47,7 @@ class DNSService;
 #define LOGGED_IN_STATUS	"Logged in"
 #define RINGING_STATUS		"Ringing"
 #define TRYING_STATUS		"Trying ..."
-#define HUNGUP_STATUS       "Hung up"
+#define HANGUP_STATUS       "Hang up"
 #define ONHOLD_STATUS       "On hold ..."
 #define TRANSFER_STATUS     "Transfer to:"
 #define MUTE_ON_STATUS		"Mute on"
@@ -123,11 +123,7 @@ public:
 
 	CodecDescriptorVector* getCodecDescVector(void);
 
-	// Handle specified ring tone
-	inline bool getZonetone (void) { ost::MutexLock m(_toneMutex); return _zonetone; }
-	inline void setZonetone (bool b) { ost::MutexLock m(_toneMutex); _zonetone = b; }
-
-	/* 
+  /* 
 	 * Attribute a new random id for a new call 
 	 * and check if it's already attributed to existing calls. 
 	 * If not exists, returns 'id' otherwise return 0 
@@ -212,15 +208,21 @@ name);
 	 * Handle audio sounds heard by a caller while they wait for their 
 	 * connection to a called party to be completed.
 	 */
-	void ringback (bool var);
+	void ringback ();
 
 	/*
 	 * Handle played music when an incoming call occurs
 	 */
-	void ringtone (bool var);
-	void congestion (bool var);
-  void busy();
+	void ringtone ();
+	void congestion ();
+  void callBusy(short callId);
+  void callFailure(short callId);
 
+  /**
+   * @return true is there is one or many incoming call waiting
+   * new call, not anwsered or refused
+   */
+  bool incomingCallWaiting(void);
 	/*
 	 * Notification of incoming call when you are already busy
 	 */
@@ -232,13 +234,6 @@ name);
 	 */
 	void getStunInfo (StunAddress4& stunSvrAddr);
 	bool useStun (void);
-	
-	/*
-	 * Inline functions to manage different kind of ringtone
-	 */
-	inline bool getbCongestion 	(void) { return _congestion; }
-	inline bool getbRingback 	(void) { return _ringback; }
-	inline bool getbRingtone 	(void) { return _ringtone; }
 	
 	/*
 	 * Inline functions to manage volume control
@@ -355,8 +350,18 @@ private:
 	 * Mutex to protect access to code section
 	 */
 	ost::Mutex _mutex;
+
+  /**
+   * Incomings Call:
+   */
+  ost::Mutex _incomingCallMutex;
+  unsigned int _nbIncomingWaitingCall;
+  void incWaitingCall(void);
+  void decWaitingCall(void);
 	
+  // Number of calls
 	unsigned int _nCalls;
+  // Current callid 
 	short _currentCallId;
 
 	/*
@@ -371,10 +376,6 @@ private:
 	int 	_exist;
 
 	unsigned int _nCodecs;
-	bool         _zonetone;
-	bool		 _congestion;
-	bool		 _ringback;
-	bool		 _ringtone;
 
 	// To handle volume control
 	int 		_spkr_volume;

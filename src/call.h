@@ -22,21 +22,6 @@
 
 #include <string>
 
-enum CallState {
-	NotExist = 0,
-	Busy,
-	OnHold,
-	OffHold,
-	MuteOn,
-	MuteOff,
-	Transfered,
-	Hungup,
-	Answered,
-	Ringing,
-	Progressing,
-	Cancelled,	// for cancel outgoing ringing call
-	Refused		// for refuse incoming ringing call	
-};
 
 enum CallType {
 	Null = 0,
@@ -49,6 +34,23 @@ class VoIPLink;
 
 class Call {
 public:
+  enum CallState {
+    NotExist = 0,
+    Busy,
+    OnHold,
+    OffHold,
+    MuteOn,
+    MuteOff,
+    Transfered,
+    Hungup,
+    Answered,
+    Ringing,
+    Progressing,
+    Cancelled,	// for cancel outgoing ringing call
+    Refused,	// for refuse incoming ringing call	
+    Error     // when a error occur
+  };
+
 	// Constructor
 	Call(short id, CallType type, VoIPLink* voiplink);
 	// Destructor
@@ -74,8 +76,8 @@ public:
 	void setCallerIdNumber (const std::string& callerId_number);
  	
 	// Handle state
-	enum CallState getState (void);
-	void setState (enum CallState state);
+	CallState getState (void);
+	void setState (CallState state);
 	
 	// Handle type of call (incoming or outoing)
 	enum CallType getType (void);

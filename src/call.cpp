@@ -106,14 +106,14 @@ Call::setCallerIdNumber (const string& callerId_number)
 	_callerIdNumber = callerId_number;
 }
 
-enum CallState 
+Call::CallState
 Call::getState (void)
 {
 	return _state;  
 }
 
 void 
-Call::setState (enum CallState state) 
+Call::setState (Call::CallState state) 
 {
 	_state = state;
 }

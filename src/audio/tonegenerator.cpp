@@ -329,6 +329,9 @@ ToneGenerator::stopTone() {
   Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
 }
 
+/**
+ * @return 1 if everything is ok
+ */
 int
 ToneGenerator::playRingtone (const char *fileName) {
   if (tonethread != NULL) {
