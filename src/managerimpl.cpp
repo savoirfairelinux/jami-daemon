@@ -29,6 +29,7 @@
 //#include <arpa/inet.h>
 
 #include <cc++/thread.h>
+#include <cc++/file.h>
 
 #include <cstdlib> 
 #include <iostream>
@@ -1489,8 +1490,24 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
       iter++;
     }
     returnValue = true;
-  } else if (name=="") {
-    returnValue = true;
+  } else if (name=="ringtones") {
+    std::string path = std::string(PROGSHAREDIR) + "/" + RINGDIR;
+    try {
+      ost::Dir dir(path.c_str());
+      const char *cFileName = NULL;
+      std::string fileName;
+      std::string filePathName;
+      while ( (cFileName=dir++) != NULL ) {
+        fileName = cFileName;
+        filePathName = path + "/" + cFileName;
+        if (fileName.length() && fileName[0]!='.' && !ost::isDir(fileName.c_str())) {
+          _debug("Filename: %s\n", fileName.c_str());
+        }
+      }
+      returnValue = true;
+    } catch (...) {
+      // error to open file dir
+    }
   } else if (name=="") {
     returnValue = true;
   } else if (name=="") {

@@ -64,7 +64,7 @@ arg);
   TokenList arg);
 
   bool getEvents(const std::string& sequenceId);
-  bool sendGetEventsEnd();
+  bool sendGetEventsEnd(const std::string& sequenceId);
 
   bool outgoingCall (const std::string& seq, 
     const std::string& callid, 

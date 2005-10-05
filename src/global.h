@@ -41,19 +41,19 @@ typedef short int16;
 
 
 #define PROGNAME				"sflphone"
-#define SKINDIR					"skins"
-#define PIXDIR					"icons"
-#define RINGDIR					"rings"
+//#define SKINDIR					"skins"
+//#define PIXDIR					"icons"
+#define RINGDIR					"ringtones"
 #define CODECDIR				"codecs"
 
-#define SFLPHONE_LOGO			"logo_ico.png"
-#define TRAY_ICON				"tray-icon.png"
-#define PIXMAP_SIGNALISATIONS	"signalisations.png" 
-#define PIXMAP_AUDIO			"audio.png" 
-#define PIXMAP_VIDEO			"video.png" 
-#define PIXMAP_NETWORK			"network.png" 
-#define PIXMAP_PREFERENCES		"preferences.png" 
-#define PIXMAP_ABOUT			"about.png" 
+//#define SFLPHONE_LOGO			"logo_ico.png"
+//#define TRAY_ICON				"tray-icon.png"
+//#define PIXMAP_SIGNALISATIONS	"signalisations.png" 
+//#define PIXMAP_AUDIO			"audio.png" 
+//#define PIXMAP_VIDEO			"video.png" 
+//#define PIXMAP_NETWORK			"network.png" 
+//#define PIXMAP_PREFERENCES		"preferences.png" 
+//#define PIXMAP_ABOUT			"about.png" 
 
 #define MONO					1
 #define CHANNELS				2

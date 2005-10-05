@@ -115,9 +115,9 @@ GUIServerImpl::getEvents(const std::string& sequenceId)
   return true;
 }
 bool
-GUIServerImpl::sendGetEventsEnd()
+GUIServerImpl::sendGetEventsEnd(const std::string& sequenceId)
 {
-  _requestManager.sendResponse(ResponseMessage("202", _getEventsSequenceId,
+  _requestManager.sendResponse(ResponseMessage("202", sequenceId,
 "getcallstatus request stopped me"));
   return true;
 }

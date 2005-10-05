@@ -201,5 +201,5 @@ utilspp/Makefile \
 utilspp/functor/Makefile \
 utilspp/singleton/Makefile \
 stund/Makefile \
-rings/Makefile \
+ringtones/Makefile \
 )

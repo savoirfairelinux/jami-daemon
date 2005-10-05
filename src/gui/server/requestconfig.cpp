@@ -51,7 +51,7 @@ RequestZeroconfEvent::execute()
 ResponseMessage
 RequestCallStatus::execute()
 {
-  GUIServer::instance().sendGetEventsEnd();
+  GUIServer::instance().sendGetEventsEnd(_sequenceId);
   TokenList tk;
   tk.push_back("OK");
   std::string code = "205";
