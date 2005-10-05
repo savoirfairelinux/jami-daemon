@@ -20,7 +20,7 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   PhoneLineManager::instance().setNbLines(NB_PHONELINES);
   Requester::instance().registerObject< Request >(QString("playtone"));
   Requester::instance().registerObject< Request >(QString("playdtmf"));
-  Requester::instance().registerObject< AccountRequest >(QString("call"));
+  Requester::instance().registerObject< CallRequest >(QString("call"));
   Requester::instance().registerObject< EventRequest >(QString("getevents"));
   Requester::instance().registerObject< CallStatusRequest >(QString("getcallstatus"));
   Requester::instance().registerObject< PermanentRequest >(QString("answer"));

@@ -77,6 +77,44 @@ public:
 };
 
 
+class CallRequest : public AccountRequest
+{
+ public:
+  CallRequest(const QString &sequenceId,
+	      const QString &command,
+	      const std::list< QString > &args);
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request didn't successfully
+   * ended. 
+   */
+  virtual void onError(Account account, 
+		       const QString &code, 
+		       const QString &message);
+
+  /**
+   * This function will be called when the request 
+   * receive an answer, but there's other answers to come.
+   */
+  virtual void onEntry(Account account,
+		       const QString &code, 
+		       const QString &message);
+
+  /**
+   * This function will be called when the request 
+   * receive its answer, if the request successfully
+   * ended.
+   */
+  virtual void onSuccess(Account account, 
+			 const QString &code,
+			 const QString &message);
+
+private:
+  QString mCallId;
+};
+
+
 class PermanentRequest : public CallRelatedRequest
 {
  public:

@@ -1,9 +1,11 @@
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <QString>
 
 #include "globals.h"
+#include "CallManager.hpp"
 #include "CallStatus.hpp"
 #include "CallStatusFactory.hpp"
 #include "PhoneLine.hpp"
@@ -128,7 +130,7 @@ PermanentRequest::onEntry(Call call,
 
 void
 PermanentRequest::onSuccess(Call call, 
-		       const QString &, 
+			    const QString &, 
 			    const QString &message)
 {
   PhoneLine *line = PhoneLineManager::instance().getLine(call);
@@ -180,5 +182,71 @@ TemporaryRequest::onSuccess(Call call,
 	   "related request that doesn't have a phone "
 	   "line (%s).\n", 
 	   call.id().toStdString().c_str());
+  }
+}
+
+CallRequest::CallRequest(const QString &sequenceId,
+			 const QString &command,
+			 const std::list< QString > &args)
+  : AccountRequest(sequenceId, command, args)
+{
+  
+  std::list< QString >::const_iterator pos = args.begin();
+  pos++;
+  mCallId = *pos;
+}
+
+void
+CallRequest::onError(Account, 
+		     const QString &, 
+		     const QString &message)
+{
+  PhoneLine *line = 
+    PhoneLineManager::instance().getLine(CallManager::instance().getCall(mCallId));
+  if(line) {
+    PhoneLineLocker guard(line, false);
+    line->setLineStatus(message);
+    line->error();
+  }
+  else {
+    _debug("We received an error on a call "
+	   "that doesn't have a phone line (%s).\n", 
+	   mCallId.toStdString().c_str());
+  }
+}
+
+void
+CallRequest::onEntry(Account, 
+		     const QString &, 
+		     const QString &message)
+{
+  PhoneLine *line = 
+    PhoneLineManager::instance().getLine(CallManager::instance().getCall(mCallId));
+  if(line) {
+    PhoneLineLocker guard(line, false);
+    line->setLineStatus(message);
+  }
+  else {
+    _debug("We received a status on a call related request "
+	   "that doesn't have a phone line (%s).\n", 
+	   mCallId.toStdString().c_str());
+  }
+}
+
+void
+CallRequest::onSuccess(Account, 
+		       const QString &, 
+		       const QString &message)
+{
+  PhoneLine *line = 
+    PhoneLineManager::instance().getLine(CallManager::instance().getCall(mCallId));
+  if(line) {
+    PhoneLineLocker guard(line, false);
+    line->setLineStatus(message);
+  }
+  else {
+    _debug("We received a success on a call related request "
+	   "that doesn't have a phone line (%s).\n", 
+	   mCallId.toStdString().c_str());
   }
 }

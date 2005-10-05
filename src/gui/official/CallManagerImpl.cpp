@@ -42,7 +42,7 @@ CallManagerImpl::unregisterCall(const QString &id)
   QMutexLocker guard(&mCallsMutex);
   std::map< QString, Call >::iterator pos = mCalls.find(id);
   if(pos == mCalls.end()) {
-    throw std::runtime_error("Trying to unregister an unregistred call");
+    throw std::runtime_error(QString("Trying to unregister an unregistred call (%1)").arg(id).toStdString().c_str());
   }
 
   mCalls.erase(pos);
@@ -54,7 +54,7 @@ CallManagerImpl::getCall(const QString &id)
   QMutexLocker guard(&mCallsMutex);
   std::map< QString, Call >::iterator pos = mCalls.find(id);
   if(pos == mCalls.end()) {
-    throw std::runtime_error("Trying to retreive an unregistred call");
+    throw std::runtime_error(QString("Trying to retreive an unregistred call (%1)").arg(id).toStdString().c_str());
   }
 
   return pos->second;
