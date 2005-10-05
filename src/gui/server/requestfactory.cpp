@@ -46,6 +46,7 @@ RequestFactory::create(const std::string& requestLine)
       } catch (...) {
         // if the create return an exception
         // we create a syntaxerror
+        return create("syntaxerror", sequenceId, tList);
       }
     }
   }

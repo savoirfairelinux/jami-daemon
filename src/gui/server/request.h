@@ -65,7 +65,7 @@ public:
     bool argsAreValid = false;
     // Args are: account callid destination
     //           acc1000 c10345 sip:test@test.com
-    if (iter != _argList.end() && iter->find("acc")==0) {
+    if (iter != _argList.end() && iter->length()!=0) {
       _account = *iter;
       _argList.pop_front();
       iter = _argList.begin();
