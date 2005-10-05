@@ -41,6 +41,7 @@ public:
   RequestZeroconfEvent(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
   ~RequestZeroconfEvent();
   ResponseMessage execute();
+  void update();
 };
 
 

@@ -192,7 +192,7 @@ public:
   // configuration function requests
   bool getZeroconf(const std::string& sequenceId);
   bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
-  bool removeZeroconfEvents(Pattern::Observer& observer);
+  bool detachZeroconfEvents(Pattern::Observer& observer);
   bool getCallStatus(const std::string& sequenceId);
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);

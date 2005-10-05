@@ -216,9 +216,15 @@ GuiFramework::getZeroconf(const std::string& sequenceId)
 }
 
 bool 
-GuiFramework::attachZeroconfEvents(const std::string& sequenceId, Observer& observer)
+GuiFramework::attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer)
 {
   return Manager::instance().attachZeroconfEvents(sequenceId, observer);
+}
+
+bool 
+GuiFramework::detachZeroconfEvents(Pattern::Observer& observer)
+{
+  return Manager::instance().detachZeroconfEvents(observer);
 }
 
 bool 

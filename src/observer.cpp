@@ -43,7 +43,9 @@ Subject::notify()
 {
   std::list<Observer*>::iterator iter = _observers.begin();
   while( iter != _observers.end()) {
-    (*iter)->update();
+    if (*iter) {
+      (*iter)->update();
+    }
     iter++;
   }
 }

@@ -42,7 +42,7 @@ ResponseMessage
 RequestZeroconfEvent::execute()
 {
   if (GUIServer::instance().attachZeroconfEvents(_sequenceId, *this)) {
-    return message("200", "OK");
+    return message("000", "Zeroconf Events are running");
   } else {
     return message("501","Zeroconf not enabled or activated");
   }
@@ -50,13 +50,14 @@ RequestZeroconfEvent::execute()
 
 RequestZeroconfEvent::~RequestZeroconfEvent() 
 {
-  GUIServer::instance.removeZeroconfEvents(*this);
+  GUIServer::instance().detachZeroconfEvents(*this);
 }
 
-ResponseMessage
+void
 RequestZeroconfEvent::update()
 {
-  return message("100", "New Zeroconf events - Not Implemented");
+  TokenList tk; tk.push_back("New Zeroconf events - Not Implemented");
+  GUIServer::instance().sendMessage("100", _sequenceId, tk);
 }
 
 ResponseMessage

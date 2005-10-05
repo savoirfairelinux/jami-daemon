@@ -1340,8 +1340,10 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
 {
   bool returnValue = false;
 #ifdef USE_ZEROCONF
-  _DNSService->detach(observer);
-  returnValue = true;
+  if (_DNSService) {
+    _DNSService->detach(observer);
+    returnValue = true;
+  }
 #endif
   return returnValue;
 }
