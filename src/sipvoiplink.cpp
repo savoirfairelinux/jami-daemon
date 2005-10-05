@@ -550,6 +550,8 @@ SipVoIPLink::getEvent (void)
   eXosip_event_t *event;
   short id;
   char *name;
+  Call *call = NULL;
+  SipCall *sipcall = NULL;
 
   event = eXosip_event_wait (0, 50);
   eXosip_lock();
@@ -583,7 +585,7 @@ SipVoIPLink::getEvent (void)
 
     // Generate id
     id = Manager::instance().generateNewCallId();
-    Manager::instance().pushBackNewCall(id, Incoming);
+    call = Manager::instance().pushBackNewCall(id, Incoming);
     _debug("Incoming Call with id %d [cid = %d, did = %d]\n",
 	   id, event->cid, event->did);
     _debug("Local audio port: %d\n", _localPort);
@@ -592,22 +594,22 @@ SipVoIPLink::getEvent (void)
     osip_from_t *from;
     osip_from_init(&from);
 
+    sipcall = getSipCall(id);
     if (event->request != NULL) {
       char *tmp = NULL;
 
       osip_from_to_str (event->request->from, &tmp);
       if (tmp != NULL) {
-        snprintf (getSipCall(id)->getRemoteUri(), 256, "%s", tmp);
+        snprintf (sipcall->getRemoteUri(), 256, "%s", tmp);
         osip_free (tmp);
       }
     }
-    osip_from_parse(from, getSipCall(id)->getRemoteUri());
+    osip_from_parse(from, sipcall->getRemoteUri());
     name = osip_from_get_displayname(from);
 
     //Don't need this display text message now that we send the name
     //inside the Manager to the gui
     //Manager::instance().displayTextMessage(id, name);
-    Call *call = Manager::instance().getCall(id);
     if ( call != NULL) {
       call->setCallerIdName(name);
       osip_uri_t* url = osip_from_get_url(from);
@@ -622,7 +624,6 @@ SipVoIPLink::getEvent (void)
     _debug("From: %s\n", name);
     osip_from_free(from);
 
-    SipCall *sipcall = getSipCall(id);
     // Associate an audio port with a call
     sipcall->setLocalAudioPort(_localPort);
     sipcall->setLocalIp(getLocalIpAddress());
@@ -648,7 +649,7 @@ SipVoIPLink::getEvent (void)
     if (id == 0) {
       id = findCallIdInitial(event);
     }
-    SipCall *sipcall = getSipCall(id);
+    sipcall = getSipCall(id);
     if ( sipcall ) {
       _debug("Call is answered [id = %d, cid = %d, did = %d], localport=%d\n", 
 	   id, event->cid, event->did,sipcall->getLocalAudioPort());
