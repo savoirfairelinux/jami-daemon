@@ -37,6 +37,8 @@
 
 // Fields to fill
 #define VOIP_LINK_ID	"VoIPLink.index"
+#define SYMMETRIC     "VoIPLink.symmetric"
+
 #define FULL_NAME		"SIP.fullName"
 #define USER_PART		"SIP.userPart"
 #define AUTH_USER_NAME	"SIP.username"

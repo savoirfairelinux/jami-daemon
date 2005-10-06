@@ -70,7 +70,7 @@ public:
 
 private:
 	AudioRtpRTX*	_RTXThread;
-	bool			_symetric;
+	bool			_symmetric;
 };
 
 #endif // __AUDIO_RTP_H__

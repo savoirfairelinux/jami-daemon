@@ -55,15 +55,14 @@ int
 AudioRtp::createNewSession (SipCall *ca) {
 	// Start RTP Send/Receive threads
 	ca->enable_audio = 1;
-	if (!Manager::instance().useStun()) { 
-		_symetric = false;
+	if (Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC)) { 
+		_symmetric = true;
 	} else {
-		_symetric = true;
+		_symmetric = false;
 	}
 
-	_RTXThread = new AudioRtpRTX (ca, 
-				      Manager::instance().getAudioDriver(), 
-				      _symetric);
+	_RTXThread = new AudioRtpRTX (ca, Manager::instance().getAudioDriver(), 
+				      _symmetric);
 	
 	// Start PortAudio
 	Manager::instance().getAudioDriver()->micRingBuffer().flush();

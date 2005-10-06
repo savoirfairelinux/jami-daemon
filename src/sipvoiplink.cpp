@@ -101,13 +101,13 @@ SipVoIPLink::init (void)
     if (behindNat() != 1) {
       return 0;
     }
-
+    // This method is used to replace contact address with the public address of your NAT.
     eXosip_masquerade_contact((Manager::instance().getFirewallAddress()).data(), Manager::instance().getFirewallPort());
 		
-  } 
-	
-  // Set user agent
-  eXosip_set_user_agent(tmp.data());
+  } else {
+    // Set user agent
+    eXosip_set_user_agent(tmp.data());
+  }
 	
   _evThread->start();
   return 1;
@@ -134,8 +134,6 @@ int
 SipVoIPLink::setRegister (void) 
 {
   ManagerImpl& manager = Manager::instance();
-
-  _debug("SipVoIPLink::setRegister()\n");
 
   // all this will be inside the profil associate with the voip link
   std::string proxy = "sip:" + manager.getConfigString(SIGNALISATION, PROXY);
@@ -563,8 +561,7 @@ SipVoIPLink::getEvent (void)
   }
 
   int returnValue = 0;
-  _debug("GetEvent : %d\n", event->type);
-
+  _debug("GetEvent : %d ", event->type);
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //
@@ -805,11 +802,11 @@ SipVoIPLink::getEvent (void)
     break;
 
   case EXOSIP_REGISTRATION_SUCCESS: // 1
-    Manager::instance().displayStatus(LOGGED_IN_STATUS);
+    //Manager::instance().displayStatus(LOGGED_IN_STATUS);
     break;
 
   case EXOSIP_REGISTRATION_FAILURE: // 2
-    Manager::instance().displayError("getEvent : Registration Failure");
+    //Manager::instance().displayError("getEvent : Registration Failure");
     break;
 
   case EXOSIP_MESSAGE_NEW:
@@ -889,7 +886,7 @@ SipVoIPLink::getEvent (void)
     returnValue = -1;
     break;
   }
-  _debug("End of GetEvent : %d / %d\n", event->type, returnValue);
+  _debug(" : end event : %d / %d\n", event->type, returnValue);
   eXosip_event_free(event);
 
   return returnValue;
@@ -1170,9 +1167,7 @@ SipVoIPLink::behindNat (void)
   stunSvrAddr.addr = 0;
 	
   // Stun server
-  string svr =
-Manager::instance().getConfigString(SIGNALISATION,
-STUN_SERVER);
+  string svr = Manager::instance().getConfigString(SIGNALISATION, STUN_SERVER);
 	
   // Convert char* to StunAddress4 structure
   bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);

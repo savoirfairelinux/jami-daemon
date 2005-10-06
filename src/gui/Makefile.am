@@ -1,14 +1,5 @@
-if NEWGUI_CODE
-officialdir = official
-endif
-if MAINTENER_CODE
 serverdir = server
 serverlib = server/libsflphoneguiserver.la
-else
-serverdir = qt
-serverlib = qt/libsflphoneqt.la
-endif
-
 
 SUBDIRS = $(serverdir)
 

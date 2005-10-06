@@ -54,6 +54,7 @@ using namespace std;
 #define	ADDR_INCOMPLETE	484
 #define	BUSY_HERE		486
 #define	REQ_TERMINATED	487
+#define NOT_ACCEPTABLE_HERE 488 // Not Acceptable Here
 // 5XX errors
 #define SERVICE_UNAVAILABLE	503
 // 6XX errors

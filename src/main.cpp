@@ -19,27 +19,15 @@
  */
 
 #include "user_cfg.h"
-
-#if defined(ENABLE_MAINTENER)
-# include "gui/server/guiserver.h"
-#elif defined(GUI_QT)
-# include <qapplication.h>
-# include "gui/qt/qtGUImainwindow.h"
-#elif defined(GUI_COCOA)
-# error "GUI_COCOA not implemented yet."
-#endif
-
+#include "gui/server/guiserver.h"
 #include "gui/guiframework.h"
 #include "manager.h"
-
 
 int
 main (int argc, char **argv) {
   int exit_code = 0;
-  //Config::setTree(new ConfigurationTree());	
   GuiFramework *GUI;
 
-#if defined(ENABLE_MAINTENER)
   {
     bool initOK = false;
     try {
@@ -51,6 +39,7 @@ main (int argc, char **argv) {
       std::cerr << 
     "An exception occured when initializing the system." << 
     std::endl;
+      exit_code = -1;
     }
     if (initOK) {
       GUI = &(GUIServer::instance());
@@ -60,38 +49,9 @@ main (int argc, char **argv) {
       delete GUI;
     }
   }
-#elif defined(GUI_QT)
-  {
-    QApplication a(argc, argv);
-    Manager::instance().initConfigFile();		
-
-    try {
-      Manager::instance().init();		
-    }
-    catch (const exception &e) {
-      std::cerr << e.what() << std::endl;
-    }
-    catch (...) { 
-      std::cerr << 
-	"An unknown exception occured when initializing the system." << 
-	std::endl;
-    }
-
-    GUI = new QtGUIMainWindow (0, 0 ,
-			       Qt::WDestructiveClose |
-			       Qt::WStyle_Customize |
-			       Qt::WStyle_NoBorder);
-    Manager::instance().setGui(GUI);
-    
-    a.setMainWidget((QtGUIMainWindow*)GUI);
-    exit_code = a.exec();
-    Manager::instance().terminate();
-  }
-    
-#endif
 
   return exit_code;
 }
 
-
 // EOF
+

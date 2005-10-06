@@ -26,7 +26,7 @@ AC_LANG_CPLUSPLUS
 AC_PROG_CXX
 AC_PROG_CC
 
-AC_PATH_QT
+dnl AC_PATH_QT
 dnl KDE_USE_QT(3.3)
 AC_CANONICAL_SYSTEM
 AC_ARG_PROGRAM
@@ -73,7 +73,8 @@ PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
 
-LIBOSIP2_MIN_VERSION=2.2.0
+dnl 2.2.0 is buggy, header corruption
+LIBOSIP2_MIN_VERSION=2.2.1
 PKG_CHECK_MODULES(libosip2, libosip2 >= ${LIBOSIP2_MIN_VERSION})
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libosip2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libosip2_LIBS"
@@ -87,29 +88,7 @@ AC_CHECK_LIB([eXosip2], [eXosip_init],[libexosip2_LIBS="-leXosip2 "],[
 
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libexosip2_LIBS"
 
-AC_SUBST(LIBQT)
-
-dnl if test $ac_cv_header_gsm_h = no; then
-dnl    AC_MSG_ERROR([*** missing gsm.h. You need a working GSM 06.10 lossy speech compression installation. See http://kbs.cs.tu-berlin.de/~jutta/toast.html])
-dnl fi
-dnl SFLPHONE_LIBS="$SFLPHONE_LIBS -lgsm"
-
-AC_MSG_CHECKING([whether to enable the maintener code])
-AC_ARG_ENABLE(maintener,
-[  --enable-maintener      Enable maintener code [default=no]],
-[
-CXXFLAGS="$CXXFLAGS -DENABLE_MAINTENER"
-AC_MSG_RESULT(yes)
-maintener="yes"
-],
-[
-AC_MSG_RESULT(no)
-maintener="no"
-]
-)
-
-AM_CONDITIONAL(MAINTENER_CODE, test x$maintener = xyes)
-
+dnl AC_SUBST(LIBQT)
 
 AC_MSG_CHECKING([whether to enable the new gui])
 AC_ARG_ENABLE(newgui,

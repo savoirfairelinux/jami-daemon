@@ -1156,6 +1156,7 @@ ManagerImpl::initConfigFile (void)
   std::string section;
   section = SIGNALISATION;
   fill_config_int(VOIP_LINK_ID, DFT_VOIP_LINK_STR);
+  fill_config_int(SYMMETRIC, YES_STR);
   fill_config_str(FULL_NAME, EMPTY_FIELD);
   fill_config_str(USER_PART, EMPTY_FIELD);
   fill_config_str(AUTH_USER_NAME, EMPTY_FIELD);

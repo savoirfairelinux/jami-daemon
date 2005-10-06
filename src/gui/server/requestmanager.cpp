@@ -18,10 +18,9 @@
  */
 #include "requestmanager.h"
 
-#include <iostream>
-
 #include "tcpsessionio.h"
 #include "../../global.h"
+#include <iostream>
 
 RequestManager::RequestManager() : _sessionIO(0)
 {
@@ -40,9 +39,6 @@ int
 RequestManager::exec() 
 {
   try {
-    // waiting for a new connection
-    std::cout << "waiting for a new connection..." << std::endl;
-
     while(std::cin.good()) {
 
       // TCPSessionIO start a thread for the stream socket
@@ -51,8 +47,6 @@ RequestManager::exec()
         _sessionIO = new TCPSessionIO();
         _sessionMutex.leaveMutex();
       }
-      // wait for the first message
-      std::cout << "accepting connection..." << std::endl;
 
       ResponseMessage outputResponse; // TCPStream output line
       std::string input;
