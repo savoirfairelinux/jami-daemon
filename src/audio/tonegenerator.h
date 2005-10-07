@@ -76,7 +76,7 @@ public:
 	/**
 	 * Calculate sinus with superposition of 2 frequencies
 	 */
-	void generateSin	(int, int, int16 *) const;
+	void generateSin	(int, int, int16 *, int len=SAMPLING_RATE) const;
 
 	/**
  	 * Build tone according to the id-zone, with initialisation of ring tone.
@@ -108,7 +108,6 @@ public:
 		freq2;
 	int time;
 	int totalbytes;
-	int16   	buf[SIZEBUF];
 	
 private:
 	/*
@@ -137,6 +136,7 @@ private:
 
   unsigned int _currentTone;
   unsigned int _currentZone;
+	int16 _buf[SIZEBUF];
 };
 
 #endif // __TONE_GENRATOR_H__

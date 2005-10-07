@@ -1,5 +1,6 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
  *
  *  Portions (c) Dominic Mazzoni (Audacity)
@@ -30,20 +31,21 @@
  
 #define MIN_BUFFER_SIZE	1280
 
-
-
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer(int size) {
    mBufferSize = (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE);
    mStart = 0;
    mEnd = 0;
    mBuffer = (samplePtr) malloc (mBufferSize);
+   mBlank = (samplePtr) malloc (MIN_BUFFER_SIZE);
+   bzero(mBlank, MIN_BUFFER_SIZE);
    assert (mBuffer != NULL);
 }
 
 // Free memory on object deletion
 RingBuffer::~RingBuffer() {
    free (mBuffer);
+   free (mBlank);
 }
  
 void
@@ -55,7 +57,7 @@ RingBuffer::flush (void) {
 } 
 
 int 
-RingBuffer::Len() { 
+RingBuffer::Len() const { 
    return (mEnd + mBufferSize - mStart) % mBufferSize;
 }
  
@@ -63,9 +65,17 @@ RingBuffer::Len() {
 // For the writer only:
 //
 int 
-RingBuffer::AvailForPut() {
+RingBuffer::AvailForPut() const {
    return (mBufferSize-4) - Len();
 } 
+
+int 
+RingBuffer::PutZero(int toZero)
+{
+  unsigned char p[toZero];
+  bzero(p, toZero);
+  Put(p, toZero);
+}
 
 // This one puts some data inside the ring buffer.
 int 
@@ -75,13 +85,13 @@ RingBuffer::Put(void* buffer, int toCopy) {
    int copied;
    int pos;
    int len = Len();
-  
+
    mMutex.enterMutex();
    if (toCopy > (mBufferSize-4) - len)
-      toCopy = (mBufferSize-4) - len; 
+      toCopy = (mBufferSize-4) - len;
 
    src = (samplePtr) buffer; 
-   
+
    copied = 0;
    pos = mEnd;
 
@@ -90,9 +100,9 @@ RingBuffer::Put(void* buffer, int toCopy) {
       if (block > mBufferSize - pos) // from current pos. to end of buffer
          block = mBufferSize - pos; 
 
-	  // put the data inside the buffer.
-	  bcopy (src, mBuffer + pos, block);
-      
+      // put the data inside the buffer.
+      bcopy (src, mBuffer + pos, block);
+
       src += block;
       pos = (pos + block) % mBufferSize;
       toCopy -= block;
@@ -100,7 +110,6 @@ RingBuffer::Put(void* buffer, int toCopy) {
    }
 
    mEnd = pos;
-   
    mMutex.leaveMutex();
 
    // How many items copied.
@@ -112,7 +121,7 @@ RingBuffer::Put(void* buffer, int toCopy) {
 //
 
 int 
-RingBuffer::AvailForGet() {
+RingBuffer::AvailForGet() const {
 	// Used space
    return Len();
 }
@@ -131,10 +140,10 @@ RingBuffer::Get(void *buffer, int toCopy) {
 
    dest = (samplePtr) buffer;
    copied = 0;
-   
+
    while(toCopy) {
       block = toCopy;
-      if (block > mBufferSize - mStart)
+      if (block > (mBufferSize - mStart))
          block = mBufferSize - mStart;
 
       bcopy (mBuffer + mStart, dest, block);

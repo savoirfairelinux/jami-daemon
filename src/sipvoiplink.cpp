@@ -108,9 +108,55 @@ SipVoIPLink::init (void)
     // Set user agent
     eXosip_set_user_agent(tmp.data());
   }
-	
+
+  _debug("Thread: start event thread\n");
   _evThread->start();
   return 1;
+}
+
+/**
+ * Subscibe to message-summary notify
+ * It allows eXosip to not send ' 481 Subcription Does Not Exist ' response
+ */
+void
+SipVoIPLink::subscribeMessageSummary()
+{
+  osip_message_t *subscribe;
+  const char *route= NULL;
+
+  // from/to
+  ManagerImpl& manager = Manager::instance();
+  std::string from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), manager.getConfigString(SIGNALISATION, HOST_PART));
+
+  // to
+  std::string to;
+  to = manager.getConfigString(SIGNALISATION, PROXY);
+  if (!to.empty()) {
+    to = toHeader(manager.getConfigString(SIGNALISATION, USER_PART)) + "@" + to;
+  } else {
+    to = from;
+  }
+  
+
+  // like in http://www.faqs.org/rfcs/rfc3842.html
+  const char *event="message-summary";
+  int expires = 86400;
+
+  // return 0 if no error
+  // the first from is the to... but we send the same
+  int error = eXosip_subscribe_build_initial_request(&subscribe, to.c_str(), from.c_str(), route, event, expires);
+
+  if (error == 0) {
+    // Accept: application/simple-message-summary
+    osip_message_set_header (subscribe, "Accept", "application/simple-message-summary");
+
+    _debug("Sending Message-summary subscription");
+    eXosip_lock();
+    // return 0 if ok
+    error = eXosip_subscribe_send_initial_request (subscribe);
+    _debug(" and return %d\n", error);
+    eXosip_unlock();
+  }
 }
 
 bool
@@ -126,6 +172,7 @@ SipVoIPLink::isInRtpmap (int index, int payload, CodecDescriptorVector* cdv) {
 void
 SipVoIPLink::terminate(void) 
 {
+  _debug("Thread: stop event thread\n");
   delete _evThread;
   eXosip_quit();
 }
@@ -184,6 +231,8 @@ SipVoIPLink::setRegister (void)
 
   manager.error()->setError(0);
 
+  // subscribe to message one time?
+  subscribeMessageSummary();
   return i;
 }
 
@@ -802,7 +851,7 @@ SipVoIPLink::getEvent (void)
     break;
 
   case EXOSIP_REGISTRATION_SUCCESS: // 1
-    //Manager::instance().displayStatus(LOGGED_IN_STATUS);
+    // Manager::instance().displayStatus(LOGGED_IN_STATUS);
     break;
 
   case EXOSIP_REGISTRATION_FAILURE: // 2
@@ -879,6 +928,12 @@ SipVoIPLink::getEvent (void)
         Manager::instance().stopVoiceMessageNotification();
       }
     }
+    break;
+
+  case EXOSIP_SUBSCRIPTION_ANSWERED: 
+    eXosip_lock();
+    eXosip_automatic_action();
+    eXosip_unlock();
     break;
 
   default:

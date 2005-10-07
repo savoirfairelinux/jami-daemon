@@ -27,7 +27,7 @@
 #include "../global.h"
 
 
-typedef unsigned char* 	samplePtr;
+typedef unsigned char* samplePtr;
 
 // template <typename T>
 class RingBuffer {
@@ -41,17 +41,18 @@ class RingBuffer {
    //
    // For the writer only:
    //
-   int AvailForPut (void);
+   int AvailForPut (void) const;
    int Put (void*, int);
+   int PutZero(int);
 
    //
    // For the reader only:
    //
-   int AvailForGet (void);
+   int AvailForGet (void) const;
    int Get (void *, int);
    int Discard(int);
 
-   int Len();
+   int Len() const;
    
  private:
  //  T getNextSample(void);
@@ -61,6 +62,7 @@ class RingBuffer {
    int           mEnd;
    int           mBufferSize;
    samplePtr     mBuffer;
+   samplePtr     mBlank;
 };
 
 #endif /*  __RING_BUFFER__ */

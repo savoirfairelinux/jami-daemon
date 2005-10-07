@@ -90,6 +90,7 @@ AudioLayer::startStream(void)
   ost::MutexLock guard(_mutex);
   if (Manager::instance().isDriverLoaded()) {
     if (_stream && !_stream->isActive()) {
+      _debug("Thread: start audiolayer stream\n");
       _stream->start();
     }
   } 
@@ -101,6 +102,7 @@ AudioLayer::stopStream(void)
   ost::MutexLock guard(_mutex);
   if (Manager::instance().isDriverLoaded()) {
     if (_stream && !_stream->isStopped()) {
+      _debug("Thread: stop audiolayer stream\n");
       _stream->stop();
     }
   } 
@@ -176,11 +178,18 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 	}  
 	else {
 	// If nothing urgent, play the regular sound samples
-		normalAvail = _mainSndRingBuffer.AvailForGet();
-		toGet = (normalAvail < (int)framesPerBuffer) ? normalAvail : 
-			framesPerBuffer;
+		normalAvail = _mainSndRingBuffer.AvailForGet() / (MIC_CHANNELS * SAMPLE_BYTES);
+		toGet = (normalAvail < (int)framesPerBuffer) ? normalAvail : framesPerBuffer;
+    // MIC_CHANNELS * SAMPLE_BYTES
+
     //_debug("%d vs %d : %d\t", normalAvail, (int)framesPerBuffer, toGet);
-		_mainSndRingBuffer.Get(out, SAMPLES_SIZE(toGet));
+    if (toGet) {
+		  _mainSndRingBuffer.Get(out, SAMPLES_SIZE(toGet));
+    } else {
+      toGet = SAMPLES_SIZE(framesPerBuffer);
+      _mainSndRingBuffer.PutZero(toGet);
+      _mainSndRingBuffer.Get(out, toGet);
+    }
 	}
 
 	// Additionally handle the mike's audio stream 

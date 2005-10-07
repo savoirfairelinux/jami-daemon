@@ -383,8 +383,10 @@ ManagerImpl::cancelCall (short id)
 	_mutex.enterMutex();
 	_nCalls -= 1;
 	_mutex.leaveMutex();
+  if (call->isIncomingType()) {
+    decWaitingCall();
+  }
 	deleteCall(id);
-  decWaitingCall();
   stopTone();
 	return call->cancel();
 }
@@ -405,7 +407,9 @@ ManagerImpl::answerCall (short id)
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Call::Answered);
 
-  decWaitingCall();
+  if (call->isIncomingType()) {
+    decWaitingCall();
+  }
   stopTone();
   switchCall(id);
 	return call->answer();
@@ -441,7 +445,11 @@ ManagerImpl::offHoldCall (short id)
 	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Call::OffHold);
   setCurrentCallId(id);
-	return call->offHold();	
+  int returnValue = call->offHold();	
+  if (returnValue) {
+    getAudioDriver()->startStream();
+  }
+  return returnValue;
 }
 
 /**
@@ -524,7 +532,9 @@ ManagerImpl::refuseCall (short id)
 		return -1;
   // don't cause a very bad segmentation fault
   // we refuse the call when we are trying to establish connection
-  decWaitingCall();
+  if (call->isIncomingType()) {
+    decWaitingCall();
+  }
 
   if ( call->getState() != Call::Progressing )
     return -1;
@@ -708,12 +718,14 @@ void
 ManagerImpl::incWaitingCall() {
   ost::MutexLock m(_incomingCallMutex);
   _nbIncomingWaitingCall++;
+  _debug("incWaitingCall: %d\n", _nbIncomingWaitingCall);
 }
 
 void
 ManagerImpl::decWaitingCall() {
   ost::MutexLock m(_incomingCallMutex);
   _nbIncomingWaitingCall--;
+  _debug("decWaitingCall: %d\n", _nbIncomingWaitingCall);
 }
 
 /**
@@ -791,7 +803,7 @@ ManagerImpl::peerHungupCall (short id)
   Call* call = getCall(id);
   // TODO: check if it hungup when waiting or in a conversation
   //       to decWaitingCall ?
-  if ( call->getState() != Call::Ringing) {
+  if ( call->getState() != Call::Ringing && call->isIncomingType() ) {
     decWaitingCall();
   }
 

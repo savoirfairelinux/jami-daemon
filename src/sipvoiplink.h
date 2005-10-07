@@ -200,7 +200,12 @@ private:
 	 * To build sdp when call is off-hold
 	 */
 	int sdp_off_hold_call (sdp_message_t * sdp);
-	
+
+  /**
+   * Subscribe to message summary
+   */
+	void subscribeMessageSummary();
+
 	///////////////////////////
 	// Private member variables
 	///////////////////////////

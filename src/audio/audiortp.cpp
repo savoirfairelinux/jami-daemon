@@ -84,6 +84,7 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 		ca->enable_audio = -1;
 
 		if (_RTXThread != NULL) {
+      _debug("Thread: stop AudioRTP\n");
 			delete _RTXThread;
 			_RTXThread = NULL;
 		}
@@ -120,6 +121,7 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall,
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
+  _debug("Thread: stop session\n");
   if (!_sym) {
     delete _sessionRecv;	
     _sessionRecv = NULL;
@@ -290,8 +292,8 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 		if (countTime < 100 and countTime > 0) {
 			Manager::instance().notificationIncomingCall();
 		}
-	} 
-  
+	}
+
 	Manager::instance().getAudioDriver()->startStream();
 	
   delete ac;
@@ -333,6 +335,7 @@ AudioRtpRTX::run (void) {
   audiolayer->urgentRingBuffer().flush();
 
 	// start running the packet queue scheduler.
+  _debug("Thread: start session of AudioRtpRTX\n");
 	if (!_sym) {
 		_sessionRecv->startRunning();
 		_sessionSend->startRunning();

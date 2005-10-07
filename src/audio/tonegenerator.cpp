@@ -58,12 +58,12 @@ ToneThread::run (void) {
 
 	// How long do 'size' samples play ?
 	// unsigned int play_time = (size * 1000) / SAMPLING_RATE;
-  unsigned int pause = (size) / SAMPLING_RATE;
+  unsigned int pause = (size * 1000) / SAMPLING_RATE - 100;
 
   ManagerImpl& manager = Manager::instance();
   manager.getAudioDriver()->mainSndRingBuffer().flush();
-	while (!testCancel()) {
 
+	while (!testCancel()) {
 		// Create a new stereo buffer with the volume adjusted
 		spkrVolume = manager.getSpkrVolume();
 		for (int j = 0; j < size; j++) {
@@ -77,11 +77,12 @@ ToneThread::run (void) {
 		// The first iteration will start the audio stream if not already.
 		if (!started) {
 			started = true;
+//      _debug("Start Audio Stream tone generator:\n");
 			manager.getAudioDriver()->startStream();
 		}
 		
 		// next iteration later, sound is playing.
-		this->sleep (pause);
+		this->sleep (pause); // this is not a pause, this is the sound that play
 	}
 }
 
@@ -160,13 +161,13 @@ ToneGenerator::initTone (void) {
  * @param	ptr for result buffer
  */
 void
-ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr) const {
+ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr, int len) const {
 	double var1, var2;
 													
 	var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)SAMPLING_RATE; 
 	var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)SAMPLING_RATE;
 	
-	for(int t = 0; t < SAMPLING_RATE; t++) {
+	for(int t = 0; t < len; t++) {
 		ptr[t] = (int16)((double)(AMPLITUDE >> 2) * sin(var1 * t) +
                     (double)(AMPLITUDE >> 2) * sin(var2 * t));
 	}
@@ -184,9 +185,8 @@ void
 ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* temp) {
 	string s;
 	int count = 0;
-	int	byte = 0,
-	byte_temp = 0;
-	static int	nbcomma = 0;
+	int byte = 0;
+	int nbcomma = 0;
 	int16 *buffer = new int16[SIZEBUF]; //1kb
 	int pos;
 
@@ -194,6 +194,7 @@ ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* t
 	nbcomma = contains(toneZone[idCountry][idTones], ',');
 
 	// Number of format sections 
+	int byte_temp = 0;
 	for (int i = 0; i < nbcomma + 1; i++) {
 		// Sample string: "350+440" or "350+440/2000,244+655/2000"
 		pos = str.find(',');
@@ -230,32 +231,35 @@ ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* t
 			time = atoi((s.substr(pos + 1, s.length())).data());
 		}
 		
-		// Generate SAMPLING_RATE samples of sinus, buffer is the result
-		generateSin(freq1, freq2, buffer);
-		
 		// If there is time or if it's unlimited
 		if (time > 0) {
-			byte = (SAMPLING_RATE * 2 * time) / 1000;
+			byte = (SAMPLING_RATE * time) / 1000;
 		} else {
 			byte = SAMPLING_RATE;
 		}
+		// Generate SAMPLING_RATE samples of sinus, buffer is the result
+		generateSin(freq1, freq2, buffer, byte);
 		
+    //_debug("freq1: %d, freq2: %d, time: %d, byte: %d, byte_temp: %d\n", freq1, freq2, time, byte, byte_temp);
 		// To concatenate the different buffers for each section.
 		count = 0;
-		for (int j = byte_temp * i; j < byte + (byte_temp * i); j++) {
+		for (int j = byte_temp; j < byte + byte_temp; j++) {
 			temp[j] = buffer[count++];
 		}		
-		byte_temp = byte;
+		byte_temp += byte;
 		
 		str = str.substr(str.find(',') + 1, str.length());
 	}
 
+  totalbytes = byte_temp;
+/*
 	// Total number in final buffer
 	if (byte != SAMPLING_RATE) {
-		totalbytes = byte + (byte_temp * (nbcomma+1));
+		totalbytes = byte + (byte_temp);
 	} else {
 		totalbytes = byte;
 	}
+*/
 	delete[] buffer;
 }
 
@@ -313,8 +317,9 @@ ToneGenerator::toneHandle (unsigned int idr, const std::string& zone) {
     _currentTone = idr;
     _currentZone = idz;
   }
-  buildTone(idz, idr, buf);
-  tonethread = new ToneThread(buf, totalbytes);
+  buildTone(idz, idr, _buf);
+  tonethread = new ToneThread(_buf, totalbytes);
+  _debug("Thread: start tonethread\n");
   tonethread->start();
 }
 
@@ -323,6 +328,7 @@ ToneGenerator::stopTone() {
   _currentTone = ZT_TONE_NULL;
 
   // we end the last thread
+  _debug("Thread: stop tonethread\n");
   delete tonethread;
   tonethread = NULL;
 
@@ -370,6 +376,7 @@ ToneGenerator::playRingtone (const char *fileName) {
 	expandedsize = _ulaw->codecDecode (_dst, (unsigned char *)_src, length);
 
 	if (tonethread == NULL) {
+    _debug("Thread: start tonethread\n");
 		tonethread = new ToneThread ((int16*)_dst, expandedsize);
 		tonethread->start();
 	}
