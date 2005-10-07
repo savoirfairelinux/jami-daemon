@@ -1,6 +1,9 @@
+#include <qobject.h>
+
 #include "globals.h"
 
 #include "Call.hpp"
+#include "DebugOutput.hpp"
 #include "Event.hpp"
 
 Event::Event(const QString &code,
@@ -14,7 +17,7 @@ Event::Event(const QString &code,
 void
 Event::execute()
 {
-  _debug("Event: Received: %s\n", toString().toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("Event: Received: %1\n").arg(toString());
 }
 
 QString

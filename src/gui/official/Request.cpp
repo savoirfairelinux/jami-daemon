@@ -18,9 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <qobject.h>
 #include <sstream>
 
 #include "globals.h"
+#include "DebugOutput.hpp"
 #include "CallManager.hpp"
 #include "Request.hpp"
 #include "Requester.hpp"
@@ -36,12 +38,12 @@ Request::Request(const QString &sequenceId,
 std::list< QString >
 Request::parseArgs(const QString &message)
 {
-  std::istringstream stream(message.toStdString());
+  std::istringstream stream(message);
   std::string s;
   std::list< QString > args;
   while(stream.good()) {
     stream >> s;
-    args.push_back(QString::fromStdString(s));
+    args.push_back(s);
   }
 
   return args;
@@ -50,43 +52,50 @@ Request::parseArgs(const QString &message)
 void
 Request::onError(const QString &code, const QString &message)
 {
-  _debug("Received an error:\n  Code: %s\n  SequenceID: %s\n  Message%s\n", 
-	 code.toStdString().c_str(),
-	 mSequenceId.toStdString().c_str(),
-	 message.toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("Received an error:\n  "
+					 "Code: %1\n  "
+					 "SequenceID: %2\n  Message: %3\n")
+    .arg(code)
+    .arg(mSequenceId)
+    .arg(message);
 }
 
 void
 Request::onEntry(const QString &code, const QString &message)
 {
-  _debug("Received a temp info:\n  Code: %s\n  SequenceID: %s\n  Message%s\n", 
-	 code.toStdString().c_str(),
-	 mSequenceId.toStdString().c_str(),
-	 message.toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("Received a temp info:\n  "
+					 "Code: %1\n  "
+					 "SequenceID: %2\n  "
+					 "Message: %3\n")
+    .arg(code)
+    .arg(mSequenceId)
+    .arg(message);
 }
 
 void
 Request::onSuccess(const QString &code, const QString &message)
 {
-  _debug("Received a success:\n  Code: %s\n  SequenceID: %s\n  Message%s\n", 
-	 code.toStdString().c_str(),
-	 mSequenceId.toStdString().c_str(),
-	 message.toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("Received a success info:\n  "
+					 "Code: %1\n  "
+					 "SequenceID: %2\n  "
+					 "Message: %3\n")
+    .arg(code)
+    .arg(mSequenceId)
+    .arg(message);
 }
 
 QString
 Request::toString()
 {
-  std::ostringstream id;
-  id << mCommand.toStdString() << " " << mSequenceId.toStdString();
+  QString output = mCommand + " " + mSequenceId;
   for(std::list< QString >::const_iterator pos = mArgs.begin();
       pos != mArgs.end();
       pos++) {
-    id << " " << (*pos).toStdString();
+    output += " " + (*pos);
   }
-  id << std::endl;
+  output += "\n";
 
-  return QString::fromStdString(id.str());
+  return output;
 }
 
 

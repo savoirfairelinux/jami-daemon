@@ -12,7 +12,7 @@ DefaultEvent::DefaultEvent(const QString &code,
 void
 DefaultEvent::execute()
 {
-  _debug("DefaultEvent: We don't handle: %s\n", toString().toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("DefaultEvent: We don't handle: %1\n").arg(toString());
 }
 
 
@@ -25,12 +25,14 @@ void
 HangupEvent::execute()
 {
   QString id = getCallId();
-  if(id.size() > 0) {
-    _debug("Hangup Event received for call ID: %s.\n", id.toStdString().c_str());
+  if(id.length() > 0) {
+    DebugOutput::instance() << QObject::tr("Hangup Event received for call ID: %1.\n")
+      .arg(id);
     PhoneLineManager::instance().hangup(id);
   }
   else {
-    _debug("Hangup Event invalid (missing call ID): %s\n", toString().toStdString().c_str());
+    DebugOutput::instance() << QObject::tr("Hangup Event invalid (missing call ID): %1\n")
+      .arg(toString());
   }
 }
 
@@ -52,11 +54,13 @@ void
 IncommingEvent::execute()
 {
   QString id = getCallId();
-  if(id.size() > 0) {
-    _debug("Incomming Event received for call ID: %s.\n", id.toStdString().c_str());
+  if(id.length() > 0) {
+    DebugOutput::instance() << QObject::tr("Incomming Event received for call ID: %1.\n")
+      .arg(id);
     PhoneLineManager::instance().incomming(mAccountId, getCallId(), mOrigin);
   }
   else {
-    _debug("Incomming Event invalid: %s\n", toString().toStdString().c_str());
+    DebugOutput::instance() << QObject::tr("Incomming Event invalid: %1\n")
+      .arg(toString());
   }
 }

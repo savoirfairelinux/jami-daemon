@@ -2,7 +2,7 @@
 #include "PhoneLineManager.hpp"
 
 TCPSessionIOCreator::TCPSessionIOCreator(const QString &hostname, 
-					 quint16 port)
+					 Q_UINT16 port)
   : mHostname(hostname)
   , mPort(port)
 {}

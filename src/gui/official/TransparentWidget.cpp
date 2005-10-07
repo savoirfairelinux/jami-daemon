@@ -18,36 +18,36 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <QBitmap>
-#include <QColor>
+#include <qbitmap.h>
+#include <qcolor.h>
 #include <iostream>
 
 #include "TransparentWidget.hpp"
 
 
 TransparentWidget::TransparentWidget(const QString &pixmap,
-			 QWidget* parent, 
-			 Qt::WFlags flags)
-  : QLabel(parent, flags) 
+				     QWidget* parent)
+  : QLabel(parent) 
 {
   mImage = transparize(pixmap);
   setPixmap(mImage);
+  /*
   if(mImage.hasAlpha()) {
     setMask(mImage.mask());
   }
+  */
   resize(mImage.size());
 }
 
-TransparentWidget::TransparentWidget(QWidget* parent, 
-				     Qt::WFlags flags)
-  : QLabel(parent, flags) 
+TransparentWidget::TransparentWidget(QWidget* parent)
+  : QLabel(parent) 
 {}
 
 
 QPixmap
-TransparentWidget::transparize(const QSize &size)
+TransparentWidget::transparize(const QSize &)
 {
-
+  /*
   QImage image(size, QImage::Format_RGB32);
   QColor c(12,32,35,123);
   image.fill(c.rgb());
@@ -55,8 +55,8 @@ TransparentWidget::transparize(const QSize &size)
   QPixmap p(QPixmap::fromImage(image));
   p.setMask(p.createHeuristicMask());
   //p.setMask(p.alphaChannel());
-
-  return p;
+  */
+  return QPixmap();
 }
 
 TransparentWidget::~TransparentWidget()
@@ -66,7 +66,7 @@ QPixmap
 TransparentWidget::transparize(const QString &image)
 {
   QPixmap p(image);
-  
+  /*
   if (!p.mask()) {
     if (p.hasAlphaChannel()) {
       p.setMask(p.alphaChannel());
@@ -75,7 +75,7 @@ TransparentWidget::transparize(const QString &image)
       p.setMask(p.createHeuristicMask());
     }
   }
-
+  */
   return p;
 }
 

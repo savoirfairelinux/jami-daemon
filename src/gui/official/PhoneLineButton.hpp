@@ -2,9 +2,9 @@
 #ifndef __PHONELINEBUTTON_HPP__
 #define __PHONELINEBUTTON_HPP__
 
-#include <QLabel>
-#include <QObject>
-#include <QPixmap>
+#include <qlabel.h>
+#include <qobject.h>
+#include <qpixmap.h>
 
 #include "JPushButton.hpp"
 
@@ -23,8 +23,7 @@ public:
   PhoneLineButton(const QString &released, 
 		  const QString &pressed,
 		  unsigned int line,
-		  QWidget *parent, 
-		  Qt::WFlags flags = 0);
+		  QWidget *parent);
 
   virtual ~PhoneLineButton(){}
   

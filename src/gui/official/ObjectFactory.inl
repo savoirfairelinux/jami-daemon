@@ -49,7 +49,8 @@ ObjectFactory< Base >::create(const QString &command,
 {
   typename std::map< QString, ObjectCreatorBase< Base > * >::iterator pos = mObjectCreators.find(command);
   if(pos == mObjectCreators.end()) {
-    throw std::runtime_error("The command \"" + command.toStdString() + "\" has no creator registered.");
+		throw std::logic_error("We need to have a better handling");
+    //throw std::runtime_error("The command \"" + command.toStdString() + "\" has no creator registered.");
   }
   
   return pos->second->create(command, sequenceId, args);

@@ -23,7 +23,7 @@
 
 #include <list>
 #include <map>
-#include <QString>
+#include <qstring.h>
 
 #include "Event.hpp"
 

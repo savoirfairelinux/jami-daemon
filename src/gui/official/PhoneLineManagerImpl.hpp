@@ -1,9 +1,9 @@
 #ifndef __PHONELINEMANAGERIMPL_HPP__
 #define __PHONELINEMANAGERIMPL_HPP__
 
-#include <Qt>
-#include <QObject>
-#include <QMutex>
+//#include <qt.h>
+#include <qobject.h>
+#include <qmutex.h>
 #include <utility>
 #include <vector>
 

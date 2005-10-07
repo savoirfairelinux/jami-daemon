@@ -23,7 +23,7 @@
 
 #include <list>
 #include <map>
-#include <QString>
+#include <qstring.h>
 
 /**
  * This is the base class that we will use to

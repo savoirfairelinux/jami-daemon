@@ -1,6 +1,6 @@
-#include <QDateTime>
-#include <QPainter>
-#include <QPaintEvent>
+#include <qdatetime.h>
+#include <qpainter.h>
+#include <qevent.h>
 
 #include "globals.h"
 #include "JPushButton.hpp"
@@ -10,10 +10,12 @@
 // Others fixed font support "Monospace", "Fixed", "MiscFixed"
 #define FONT_SIZE	10
 
-SFLLcd::SFLLcd(QWidget *parent, Qt::WFlags flags)
-  : QLabel(parent, flags)
-  , mScreen(JPushButton::transparize(":/sflphone/images/screen_main"))
-  , mOverscreen(JPushButton::transparize(":/sflphone/images/overscreen.png"))
+#define SCREEN "screen_main"
+#define OVERSCREEN "overscreen"
+SFLLcd::SFLLcd(QWidget *parent)
+  : QLabel(parent)
+  , mScreen(JPushButton::transparize(QPixmap::fromMimeSource(SCREEN)))
+  , mOverscreen(JPushButton::transparize(QPixmap::fromMimeSource(OVERSCREEN)))
   , mGlobalStatusPos(-1)
   , mLineStatusPos(-1)
   , mBufferStatusPos(-1)
@@ -24,7 +26,7 @@ SFLLcd::SFLLcd(QWidget *parent, Qt::WFlags flags)
   resize(mScreen.size());
   move(22,44);
   
-
+  
   mTimer = new QTimer(this);
   QObject::connect(mTimer, SIGNAL(timeout()), 
 		   this, SLOT(updateText()));
@@ -185,7 +187,7 @@ SFLLcd::extractVisibleText(const QString &text, int &pos)
 
   int nbCharBetween = 8;
 
-  if(pos >= tmp.size() + nbCharBetween) {
+  if(pos >= tmp.length() + nbCharBetween) {
     pos = 0;
   }
 
@@ -202,7 +204,7 @@ SFLLcd::extractVisibleText(const QString &text, int &pos)
 
     tmp.remove(0, pos);
     while(textIsTooBig(tmp)) {
-      tmp.chop(1);
+      tmp.remove(tmp.length() - 1, 1);
     }
   }
 

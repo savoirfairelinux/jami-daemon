@@ -23,14 +23,14 @@ void
 CallStatus::execute()
 {
   QString id = getCallId();
-  if(id.size() > 0) {
-    _debug("%s status received for call ID: %s.\n", 
-	   mStatus.toStdString().c_str(),
-	   id.toStdString().c_str());
+  if(id.length() > 0) {
+    DebugOutput::instance() << QObject::tr("%1 status received for call ID: %2.\n")
+      .arg(mStatus)
+      .arg(id);
     PhoneLineManager::instance().addCall(mAccountId, getCallId(), mDestination, mStatus);
   }
   else {
-    _debug("Status invalid: %s\n", toString().toStdString().c_str());
+    DebugOutput::instance() << QObject::tr("Status invalid: %1\n").arg(toString());
   }
 }
 

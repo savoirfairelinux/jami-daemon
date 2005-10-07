@@ -18,11 +18,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <qtextstream.h>
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
 
 #include "globals.h"
+#include "DebugOutput.hpp"
 #include "RequesterImpl.hpp"
 #include "SessionIO.hpp"
 
@@ -101,25 +103,22 @@ RequesterImpl::connect(const QString &id)
 int
 RequesterImpl::getCodeCategory(const QString &code)
 {
-  int c;
-  std::istringstream s(code.toStdString());
-  s >> c;
-  return c / 100;
+  return code.toInt() / 100;
 }
 
 void
 RequesterImpl::receiveAnswer(const QString &answer)
 {
-  std::string code;
-  std::string seq;
-  std::string message;
-  std::istringstream s(answer.toStdString());
+  QString a(answer);
+  QString code;
+  QString seq;
+  QString message;
+
+  QTextStream s(&a, IO_ReadOnly);
   s >> code >> seq;
-  getline(s, message);
-  message.erase(0, 1);
-  receiveAnswer(QString::fromStdString(code), 
-		QString::fromStdString(seq),
-		QString::fromStdString(message));
+  message = s.readLine();
+  message.remove(0, 1);
+  receiveAnswer(code, seq, message);
 }
 
 
@@ -157,28 +156,28 @@ RequesterImpl::receiveAnswer(const QString &code,
 QString
 RequesterImpl::generateCallId()
 {
-  std::ostringstream id;
-  id << "cCallID:" << mCallIdCount;
+  QString s("cCallID:");
+  s += mCallIdCount;
   mCallIdCount++;
-  return QString::fromStdString(id.str());
+  return s;
 }
 
 QString
 RequesterImpl::generateSessionId()
 {
-  std::ostringstream id;
-  id << "cSessionID:" << mSessionIdCount;
+  QString s("cSessionID:");
+  s += mSessionIdCount;
   mSessionIdCount++;
-  return QString::fromStdString(id.str());
+  return s;
 }
 
 QString
 RequesterImpl::generateSequenceId()
 {
-  std::ostringstream id;
-  id << "cSequenceID:" << mSequenceIdCount;
+  QString s("cSequenceID:");
+  s += mSequenceIdCount;
   mSequenceIdCount++;
-  return QString::fromStdString(id.str());
+  return s;
 }
 
 void
@@ -189,8 +188,8 @@ RequesterImpl::inputIsDown(const QString &sessionId)
   if(pos == mSessions.end()) {
     // we will not thow an exception, but this is 
     // a logic error
-    _debug("Requester: SessionIO input for session %s is down, "
-	   "but we don't have that session.\n",
-	   sessionId.toStdString().c_str());
+    DebugOutput::instance() << QObject::tr("Requester: SessionIO input for session %1 is down, "
+					   "but we don't have that session.\n")
+      .arg(sessionId);
   }
 }

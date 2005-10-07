@@ -1,12 +1,18 @@
 #include "SFLPhoneWindow.hpp"
 
-#include <QBitmap>
+#include <qbitmap.h>
+
+//To test if we are in QT4
+#include <qt.h>
+#ifdef quint16
 #include <QIcon>
-#include <QLabel>
-#include <QMessageBox>
-#include <QMouseEvent>
-#include <QPixmap>
-#include <QKeyEvent>
+#endif
+
+
+#include <qlabel.h>
+#include <qmessagebox.h>
+#include <qevent.h>
+#include <qpixmap.h>
 #include <iostream>
 
 #include "globals.h"
@@ -15,23 +21,36 @@
 #include "SFLLcd.hpp"
 #include "VolumeControl.hpp"
 
+#define LOGO_IMAGE "logo_ico"
+#define BACKGROUND_IMAGE "main"
+
 SFLPhoneWindow::SFLPhoneWindow()
+#ifdef quint16
   : QMainWindow(NULL, Qt::FramelessWindowHint)
+#else
+    : QMainWindow(NULL)
+#endif
 {
   // Initialize the background image
   mMain = new QLabel(this);
-  QPixmap main(JPushButton::transparize(":/sflphone/images/main.png"));
+  QPixmap main(JPushButton::transparize(QPixmap::fromMimeSource(BACKGROUND_IMAGE)));
   mMain->setPixmap(main);
   //mMain->move(100,100);
+  /*
   if(main.hasAlpha()) {
     setMask(main.mask());
   }
+  */
 
   resize(main.size());
   mMain->resize(main.size());
 
-  setWindowIcon(QIcon(QPixmap(":/sflphone/images/logo_ico")));
-  setMouseTracking(false);
+  QPixmap logo(QPixmap::fromMimeSource(LOGO_IMAGE));
+#ifdef QIcon
+  setWindowIcon(QIcon(logo));
+#else
+  setIcon(logo);
+#endif
 
   mLastPos = pos();
   

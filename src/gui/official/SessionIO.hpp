@@ -21,8 +21,8 @@
 #ifndef __SESSIONIO_HPP__
 #define __SESSIONIO_HPP__
 
-#include <QObject>
-#include <QString>
+#include <qobject.h>
+#include <qstring.h>
 
 /**
  * This is the main class that will handle 

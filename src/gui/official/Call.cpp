@@ -18,7 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <QString>
+#include <qstring.h>
 #include <list>
 
 #include "Account.hpp"

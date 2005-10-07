@@ -1,4 +1,4 @@
-#include <QMutexLocker>
+#include <qmutex.h>
 #include <iostream>
 #include <stdexcept>
 
@@ -146,12 +146,12 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
   mPhoneLines.clear();
   for(unsigned int i = 0; i < nb; i++) {
     PhoneLine *p = new PhoneLine(*mSession, *mAccount, i + 1);
-    QObject::connect(p, SIGNAL(lineStatusChanged(const QString &)),
-		     this, SIGNAL(lineStatusSet(const QString &)));
-    QObject::connect(p, SIGNAL(actionChanged(const QString &)),
-		     this, SIGNAL(actionSet(const QString &)));
-    QObject::connect(p, SIGNAL(bufferStatusChanged(const QString &)),
-		     this, SIGNAL(bufferStatusSet(const QString &)));
+    QObject::connect(p, SIGNAL(lineStatusChanged(QString)),
+		     this, SIGNAL(lineStatusSet(QString)));
+    QObject::connect(p, SIGNAL(actionChanged(QString)),
+		     this, SIGNAL(actionSet(QString)));
+    QObject::connect(p, SIGNAL(bufferStatusChanged(QString)),
+		     this, SIGNAL(bufferStatusSet(QString)));
     mPhoneLines.push_back(p);
   }
 }
@@ -332,8 +332,8 @@ PhoneLineManagerImpl::selectLine(const QString &callId, bool hardselect)
     selectLine(line, hardselect);
   }
   else {
-    _debug("PhoneLineManager: Tried to selected line with call ID (%s), "
-	   "which appears to be invalid.\n", callId.toStdString().c_str());
+    DebugOutput::instance() << QObject::tr("PhoneLineManager: Tried to selected line with call ID (%1), "
+					   "which appears to be invalid.\n").arg(callId);
   }
 }
 
@@ -524,8 +524,9 @@ PhoneLineManagerImpl::addCall(Call call,
     selectedLine->setState(state);
   }
   else {
-    _debug("PhoneLineManager: There's no available lines here for the incomming call ID: %s.\n",
-	   call.id().toStdString().c_str());
+    DebugOutput::instance() << QObject::tr("PhoneLineManager: There's no available lines"
+					     "here for the incomming call ID: %1.\n")
+      .arg(call.id());
     call.notAvailable();
   }
 }

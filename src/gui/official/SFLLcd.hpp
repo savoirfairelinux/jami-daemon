@@ -21,18 +21,18 @@
 #ifndef __SFLLCD_HPP__
 #define __SFLLCD_HPP__
 
-#include <QLabel>
-#include <QObject>
-#include <QPixmap>
-#include <QTime>
-#include <QTimer>
+#include <qlabel.h>
+#include <qobject.h>
+#include <qpixmap.h>
+#include <qdatetime.h>
+#include <qtimer.h>
 
 class SFLLcd : public QLabel
 {
   Q_OBJECT
   
 public:
-  SFLLcd(QWidget *parent = NULL, Qt::WFlags flags = 0);
+  SFLLcd(QWidget *parent = NULL);
 
   bool textIsTooBig(const QString &text);
 

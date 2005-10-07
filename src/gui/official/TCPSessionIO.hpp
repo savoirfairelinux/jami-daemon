@@ -21,13 +21,21 @@
 #ifndef __TCPSESSIONIO_HPP__
 #define __TCPSESSIONIO_HPP__
 
-#include <QMutex>
-#include <QString>
-#include <QTcpSocket>
-#include <QTextStream>
+#include <qobject.h>
+#include <qmutex.h>
+#include <qstring.h>
+#include <qsocket.h>
+#include <qtextstream.h>
 #include <list>
 
 #include "SessionIO.hpp"
+
+#ifdef QT3_SUPPORT
+#include <Q3Socket>
+typedef Q3Socket QSocket;
+#else
+#include <qsocket.h>
+#endif
 
 
 class TCPSessionIO : public SessionIO
@@ -36,7 +44,7 @@ class TCPSessionIO : public SessionIO
 
 public:
   TCPSessionIO(const QString &hostname, 
-	       quint16 port);
+	       Q_UINT16 port);
 
   virtual ~TCPSessionIO();
 
@@ -75,12 +83,12 @@ public slots:
    * This function is called when we have an error
    * on the socket.
    */
-  void error();
+ void error(int);
 
 private:
-  QTcpSocket *mSocket;
+  QSocket *mSocket;
   QString mHostname;
-  quint16 mPort;
+  Q_UINT16 mPort;
 
   QMutex mStackMutex;
   std::list< QString > mStack;

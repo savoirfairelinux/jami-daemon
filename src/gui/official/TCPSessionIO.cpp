@@ -19,11 +19,13 @@
  */
 
 #include "globals.h"
+#include "DebugOutput.hpp"
 #include "Requester.hpp"
 #include "TCPSessionIO.hpp"
 
-TCPSessionIO::TCPSessionIO(const QString &hostname, quint16 port)
-  : mSocket(new QTcpSocket(this))
+
+TCPSessionIO::TCPSessionIO(const QString &hostname, Q_UINT16 port)
+  : mSocket(new QSocket(this))
   , mHostname(hostname)
   , mPort(port)
 {
@@ -33,9 +35,9 @@ TCPSessionIO::TCPSessionIO(const QString &hostname, quint16 port)
 		   this, SLOT(sendWaitingRequests()));
   QObject::connect(mSocket, SIGNAL(connected()),
 		   this, SIGNAL(connected()));
-  QObject::connect(mSocket, SIGNAL(error(QAbstractSocket::SocketError)),
+  QObject::connect(mSocket, SIGNAL(error(int)),
 		   this, SLOT(error()));
-  QObject::connect(mSocket, SIGNAL(error(QAbstractSocket::SocketError)),
+  QObject::connect(mSocket, SIGNAL(error(int)),
 		   this, SIGNAL(disconnected()));
 }
 
@@ -43,10 +45,10 @@ TCPSessionIO::~TCPSessionIO()
 {}
 
 void 
-TCPSessionIO::error()
+TCPSessionIO::error(int err)
 {
-  _debug("TCPSessionIO: %s. \n", 
-	 mSocket->errorString().toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("TCPSessionIO: Error number %1. \n")
+    .arg(err);
   mSocket->close();
 }
 
@@ -61,12 +63,11 @@ TCPSessionIO::receive()
 void
 TCPSessionIO::connect()
 {
-  _debug("TCPSessionIO: Tring to connect to %s:%d.\n", 
-	 mHostname.toStdString().c_str(), 
-	 mPort);
+  DebugOutput::instance() << QObject::tr("TCPSessionIO: Tring to connect to %1:%2.\n")
+    .arg(mHostname)
+    .arg(mPort);
   mSocket->connectToHost(mHostname, mPort);
 }
-
 
 void
 TCPSessionIO::sendWaitingRequests()
@@ -74,7 +75,7 @@ TCPSessionIO::sendWaitingRequests()
   _debug("TCPSessionIO: Connected.\n");
   QTextStream stream(mSocket);
   QMutexLocker guard(&mStackMutex);
-  while(mSocket->state() == QAbstractSocket::ConnectedState &&
+  while(mSocket->state() == QSocket::Connected &&
 	mStack.size() > 0) {
     stream << *mStack.begin();
     mStack.pop_front();
@@ -85,9 +86,9 @@ void
 TCPSessionIO::send(const QString &request)
 {
   QTextStream stream(mSocket);
-  if(mSocket->state() == QAbstractSocket::ConnectedState) {
-    _debug("TCPSessioIO: Sending request to sflphone: %s", 
-	   request.toStdString().c_str());
+  if(mSocket->state() == QSocket::Connected) {
+    DebugOutput::instance() << QObject::tr("TCPSessioIO: Sending request to sflphone: %1")
+      .arg(request);
     stream << request;
   }
   else {
@@ -103,8 +104,8 @@ TCPSessionIO::receive(QString &answer)
   if(mSocket->isReadable()) {
     QTextStream stream(mSocket);
     answer = stream.readLine();
-    _debug("TCPSessionIO: Received answer from sflphone: %s\n", 
-	   answer.toStdString().c_str());
+    DebugOutput::instance() << QObject::tr("TCPSessionIO: Received answer from sflphone: %1")
+      .arg(answer);
   }
 }
 

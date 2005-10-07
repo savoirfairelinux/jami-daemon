@@ -22,8 +22,10 @@
 #ifndef __EVENTFACTORY_INL__
 #define __EVENTFACTORY_INL__
 
+#include <qobject.h>
 #include <stdexcept>
 
+#include "DebugOutput.hpp"
 
 template< typename Base, typename Actual >
 Actual *
@@ -56,9 +58,8 @@ EventFactoryImpl< Base >::create(const QString &code,
       return mDefaultCreator->create(code, args);
     }
     else{
-      throw std::logic_error(QString("The code %s has no creator registered "
-				     "and there's no default creator"
-				     ).arg(code).toStdString().c_str());
+      DebugOutput::instance() <<  QObject::tr("The code %1 has no creator registered.\n"
+					      "and there's no default creator").arg(code);
     }
   }
   

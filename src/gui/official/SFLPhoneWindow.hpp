@@ -1,7 +1,7 @@
-#include <QLabel>
-#include <QMainWindow>
-#include <QObject>
-#include <QPoint>
+#include <qlabel.h>
+#include <qmainwindow.h>
+#include <qobject.h>
+#include <qpoint.h>
 #include <list>
 
 class JPushButton;

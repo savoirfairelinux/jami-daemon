@@ -20,9 +20,8 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <QString>
+#include <qstring.h>
 
-#include <QPushButton>
 #include "SFLPhoneApp.hpp"
 #include "SFLPhoneWindow.hpp"
 

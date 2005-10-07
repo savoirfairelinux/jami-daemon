@@ -2,7 +2,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <QString>
+#include <qstring.h>
 
 #include "globals.h"
 #include "CallManager.hpp"
@@ -23,9 +23,9 @@ EventRequest::EventRequest(const QString &sequenceId,
 void
 EventRequest::onError(const QString &code, const QString &message)
 {
-  _debug("EventRequest error: (%s)%s\n", 
-	 code.toStdString().c_str(), 
-	 message.toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("EventRequest error: (%1) %1\n")
+    .arg(code)
+    .arg(message);
 }
 
 void
@@ -39,9 +39,9 @@ EventRequest::onEntry(const QString &code, const QString &message)
 void
 EventRequest::onSuccess(const QString &code, const QString &message)
 {
-  _debug("EventRequest success: (%s)%s\n", 
-	 code.toStdString().c_str(), 
-	 message.toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("EventRequest success: (%1) %1\n")
+    .arg(code)
+    .arg(message);
 }
 
 CallStatusRequest::CallStatusRequest(const QString &sequenceId,
@@ -54,9 +54,9 @@ CallStatusRequest::CallStatusRequest(const QString &sequenceId,
 void
 CallStatusRequest::onError(const QString &code, const QString &message)
 {
-  _debug("CallStatusRequest error: (%s)%s\n", 
-	 code.toStdString().c_str(), 
-	 message.toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("CallStatusRequest error: (%1) %1\n")
+    .arg(code)
+    .arg(message);
   PhoneLineManager::instance().errorOnCallStatus();
 }
 
@@ -71,16 +71,16 @@ CallStatusRequest::onEntry(const QString &code, const QString &message)
 void
 CallStatusRequest::onSuccess(const QString &code, const QString &message)
 {
-  _debug("CallStatusRequest success: (%s)%s\n", 
-	 code.toStdString().c_str(), 
-	 message.toStdString().c_str());
+  DebugOutput::instance() << QObject::tr("CallStatusRequest success: (%1) %1\n")
+    .arg(code)
+    .arg(message);
   if(code == "206") {
     std::list< QString > args = Request::parseArgs(message);
     if(args.size() >= 2) {
       PhoneLineManager::instance().selectLine(*args.begin(), true);
     }
     else {
-      _debug("CallStatusRequest Error: cannot get current line.\n");
+      DebugOutput::instance() << QObject::tr("CallStatusRequest Error: cannot get current line.\n");
     }
   }
   PhoneLineManager::instance().handleEvents();
@@ -105,9 +105,10 @@ PermanentRequest::onError(Call call,
     line->error();
   }
   else {
-    _debug("We received an error on a call "
-	   "that doesn't have a phone line (%s).\n", 
-	   call.id().toStdString().c_str());
+    DebugOutput::instance() << 
+      QObject::tr("We received an error on a call "
+		  "that doesn't have a phone line (%1).\n")
+      .arg(call.id());
   }
 }
 
@@ -122,9 +123,10 @@ PermanentRequest::onEntry(Call call,
     line->setLineStatus(message);
   }
   else {
-    _debug("We received a status on a call related request "
-	   "that doesn't have a phone line (%s).\n", 
-	   call.id().toStdString().c_str());
+    DebugOutput::instance() << 
+      QObject::tr("We received a status on a call related request "
+		  "that doesn't have a phone line (%1).\n")
+      .arg(call.id());
   }
 }
 
@@ -139,9 +141,10 @@ PermanentRequest::onSuccess(Call call,
     line->setLineStatus(message);
   }
   else {
-    _debug("We received a success on a call related request "
-	   "that doesn't have a phone line (%s).\n", 
-	   call.id().toStdString().c_str());
+    DebugOutput::instance() << 
+      QObject::tr("We received a success on a call related request "
+		  "that doesn't have a phone line (%1).\n")
+      .arg(call.id());
   }
 }
 
@@ -178,10 +181,11 @@ TemporaryRequest::onSuccess(Call call,
     line->setTempAction(message);
   }
   else {
-    _debug("We received an answer on a temporary call "
-	   "related request that doesn't have a phone "
-	   "line (%s).\n", 
-	   call.id().toStdString().c_str());
+    DebugOutput::instance() << 
+      QObject::tr("We received an answer on a temporary call "
+		  "related request that doesn't have a phone "
+		  "line (%1).\n")
+      .arg(call.id());
   }
 }
 
@@ -209,9 +213,10 @@ CallRequest::onError(Account,
     line->error();
   }
   else {
-    _debug("We received an error on a call "
-	   "that doesn't have a phone line (%s).\n", 
-	   mCallId.toStdString().c_str());
+    DebugOutput::instance() << 
+      QObject::tr("We received an error on a call "
+		  "that doesn't have a phone line (%1).\n")
+      .arg(mCallId);
   }
 }
 
@@ -227,9 +232,10 @@ CallRequest::onEntry(Account,
     line->setLineStatus(message);
   }
   else {
-    _debug("We received a status on a call related request "
-	   "that doesn't have a phone line (%s).\n", 
-	   mCallId.toStdString().c_str());
+    DebugOutput::instance() << 
+      QObject::tr("We received a status on a call related request "
+		  "that doesn't have a phone line (%1).\n")
+      .arg(mCallId);
   }
 }
 
@@ -245,8 +251,9 @@ CallRequest::onSuccess(Account,
     line->setLineStatus(message);
   }
   else {
-    _debug("We received a success on a call related request "
-	   "that doesn't have a phone line (%s).\n", 
-	   mCallId.toStdString().c_str());
+    DebugOutput::instance() <<
+      QObject::tr("We received a success on a call related request "
+		  "that doesn't have a phone line (%1).\n")
+      .arg(mCallId);
   }
 }

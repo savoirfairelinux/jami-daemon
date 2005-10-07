@@ -24,9 +24,9 @@
 #ifndef __J_PUSH_BUTTON_H__
 #define __J_PUSH_BUTTON_H__
 
-#include <QLabel>
-#include <QPixmap>
-#include <QImage>
+#include <qlabel.h>
+#include <qpixmap.h>
+#include <qimage.h>
 
 /**
  * This class Emulate a PushButton but takes two
@@ -39,14 +39,13 @@ class JPushButton : public QLabel
 public:
   JPushButton(const QString &released, 
 	      const QString &pressed,
-	      QWidget *parent, 
-	      Qt::WFlags flags = 0);
+	      QWidget *parent);
   ~JPushButton();
 
   bool isPressed()
   {return mIsPressed;}
 
-  static QPixmap transparize(const QString &image);
+  static QPixmap transparize(const QPixmap &image);
   
 public slots:  
   /**

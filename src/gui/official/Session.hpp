@@ -21,7 +21,7 @@
 #ifndef SFLPHONEGUI_SESSION_H
 #define SFLPHONEGUI_SESSION_H
 
-#include <QString>
+#include <qstring.h>
 
 #include "Account.hpp"
 

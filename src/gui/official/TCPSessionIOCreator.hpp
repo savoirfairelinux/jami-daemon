@@ -28,14 +28,14 @@ class TCPSessionIOCreator : public Creator< SessionIO >
 {
 public:
   TCPSessionIOCreator(const QString &hostname, 
-		      quint16 port);
+		      Q_UINT16 port);
   virtual ~TCPSessionIOCreator(){}
 
   virtual TCPSessionIO *create();
 
 private:
   QString mHostname;
-  quint16 mPort;
+  Q_UINT16 mPort;
 };
 
 #endif

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  * Author: Jean-Philippe Barrette-LaPierre
- *           (jean-philippe.barrette-lapierre@savoirfairelinux.com)
+ *                (jean-philippe.barrette-lapierre@savoirfairelinux.com)
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -18,40 +18,14 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __TRANSPARENT_WIDGET_HPP__
-#define __TRANSPARENT_WIDGET_HPP__
+#include "globals.h"
 
-#include <qbitmap.h>
-#include <qlabel.h>
-#include <qpixmap.h>
-#include <qimage.h>
+#include "DebugOutputImpl.hpp"
 
-/**
- * This class Emulate a PushButton but takes two
- * images to display its state.
- */
-class TransparentWidget : public QLabel 
-{
-  Q_OBJECT
-    
-public:
-  TransparentWidget(const QString &pixmap, 
-		    QWidget *parent);
-  TransparentWidget(QWidget *parent);
-  ~TransparentWidget();
-
-  static QPixmap transparize(const QSize &size);
-  static QPixmap transparize(const QString &image);
-
-  bool hasAlpha()
-  {return mImage.hasAlpha();}
-
-  QBitmap mask() const
-  {return *mImage.mask();}
-  
-private:  
-  QPixmap mImage;
-
-};
-
+DebugOutputImpl::DebugOutputImpl()
+#ifdef DEBUG
+  : QTextStream(stdout, IO_WriteOnly)
+#else
+    : QTextStream(&mOutputString, IO_WriteOnly)
 #endif
+{}

@@ -19,7 +19,7 @@
  */
 
 #include <iostream>
-#include <QString>
+#include <qstring.h>
 
 #include "Session.hpp"
 #include "Requester.hpp"

@@ -21,10 +21,10 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <QBitmap>
-#include <QEvent>
-#include <QImage>
-#include <QMouseEvent>
+#include <qbitmap.h>
+#include <qevent.h>
+#include <qimage.h>
+#include <qevent.h>
 
 #include "globals.h"
 
@@ -32,9 +32,8 @@
 
 JPushButton::JPushButton(const QString &released,
 			 const QString &pressed,
-			 QWidget* parent, 
-			 Qt::WFlags flags)
-  : QLabel(parent, flags) 
+			 QWidget* parent)
+  : QLabel(parent)
   , mIsPressed(false)
   , mIsToggling(false)
 {
@@ -53,10 +52,9 @@ JPushButton::setToggle(bool toggle)
 }
 
 QPixmap
-JPushButton::transparize(const QString &image)
+JPushButton::transparize(const QPixmap &image)
 {
-  QPixmap p(image);
-  
+  /**
   if (!p.mask()) {
     if (p.hasAlphaChannel()) {
       p.setMask(p.alphaChannel());
@@ -65,17 +63,19 @@ JPushButton::transparize(const QString &image)
       p.setMask(p.createHeuristicMask());
     }
   }
-
-  return p;
+  */
+  return image;
 }
 
 void
 JPushButton::release(bool modify) 
 {
   setPixmap(mImages[0]);
+  /*
   if(mImages[0].hasAlpha()) {
     setMask(mImages[0].mask());
   }
+  */
   resize(mImages[0].size());
 }
 
@@ -83,9 +83,10 @@ void
 JPushButton::press(bool modify) 
 {
   setPixmap(mImages[1]);
+  /*
   if(mImages[1].hasAlpha()) {
     setMask(mImages[1].mask());
-  }
+    }*/
   resize(mImages[1].size());
 }
 

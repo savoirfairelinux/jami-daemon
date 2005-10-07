@@ -1,7 +1,7 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
- *  Author: Jean-Philippe Barrette-LaPierre
- *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
+ *  Author : Jean-Philippe Barrette-LaPierre 
+ *              <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,49 +15,16 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __EVENT_HPP__
-#define __EVENT_HPP__
+#ifndef __DEBUGOUTPUT_HPP__
+#define __DEBUGOUTPUT_HPP__
 
-#include <list>
-#include <qstring.h>
+#include "utilspp/Singleton.hpp"
+#include "DebugOutputImpl.hpp"
 
-class Event
-{
-public:
-  Event(const QString &code,
-	const std::list< QString > &args);    
-  virtual ~Event(){}
-  
-  virtual void execute();
-
-  virtual QString toString();
-
-  std::list< QString > getUnusedArgs()
-  {return mUnusedArgs;}
-
-  void setUnusedArgs(const std::list< QString > &args)
-  {mUnusedArgs = args;}
-
-private:
-  QString mCode;
-  std::list< QString > mUnusedArgs;
-  std::list< QString > mArgs;
-};
-
-class CallRelatedEvent : public Event
-{
-public:
-  CallRelatedEvent(const QString &code,
-		   const std::list< QString > &args);
-
-  QString getCallId();
-  
-private:
-  QString mCallId;
-};
-
+typedef utilspp::SingletonHolder< DebugOutputImpl > DebugOutput;
 
 #endif
+

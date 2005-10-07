@@ -21,7 +21,7 @@
 #ifndef SFLPHONEGUI_ACCOUNT_H
 #define SFLPHONEGUI_ACCOUNT_H
 
-#include <QString>
+#include <qstring.h>
 
 class Call;
 

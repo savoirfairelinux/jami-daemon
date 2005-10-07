@@ -1,9 +1,9 @@
-#include <QChar>
-#include <QObject>
-#include <QMutex>
-#include <QString>
-#include <QTimer>
+#include <qobject.h>
+#include <qmutex.h>
+#include <qstring.h>
+#include <qtimer.h>
 
+#include "Account.hpp"
 #include "Session.hpp"
 
 class Call;
@@ -111,9 +111,9 @@ signals:
   void selected();
   void unselected();
   void backgrounded();
-  void lineStatusChanged(const QString &);
-  void actionChanged(const QString &);
-  void bufferStatusChanged(const QString &);
+  void lineStatusChanged(QString);
+  void actionChanged(QString);
+  void bufferStatusChanged(QString);
 
 private:
   Session mSession;

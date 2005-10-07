@@ -22,7 +22,7 @@
 #define SFLPHONEGUI_REQUEST_H
 
 #include <list>
-#include <QString>
+#include <qstring.h>
 
 
 #include "Account.hpp"

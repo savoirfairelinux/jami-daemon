@@ -2,16 +2,15 @@
 
 #include "PhoneLineButton.hpp"
 
-#include <QMouseEvent>
-#include <QTimer>
+#include <qevent.h>
+#include <qtimer.h>
 
 
 PhoneLineButton::PhoneLineButton(const QString &released, 
 				 const QString &pressed,
 				 unsigned int line,
-				 QWidget *parent, 
-				 Qt::WFlags flags)
-  : JPushButton(released, pressed, parent, flags)
+				 QWidget *parent)
+  : JPushButton(released, pressed, parent)
   , mLine(line)
   , mFace(0)
 {

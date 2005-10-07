@@ -21,7 +21,7 @@
 #ifndef SFLPHONEGUI_CALL_H
 #define SFLPHONEGUI_CALL_H
 
-#include <QString>
+#include <qstring.h>
 
 class Session;
 class Account;

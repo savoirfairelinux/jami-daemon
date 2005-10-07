@@ -1,7 +1,7 @@
 #ifndef __SFLPHONEAPP_HPP__
 #define __SFLPHONEAPP_HPP__
 
-#include <QApplication>
+#include <qapplication.h>
 
 #include "PhoneLineManager.hpp"
 #include "Session.hpp"

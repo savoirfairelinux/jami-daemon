@@ -6,7 +6,7 @@ TEMPLATE = app
 TARGET += 
 DEPENDPATH += .
 INCLUDEPATH +=  /usr/lib/qt4/include/Qt/
-QT += network
+QT += network qt3support
 #CONFIG += debug 
 
 # Input
@@ -16,6 +16,8 @@ HEADERS += Account.hpp \
            Call.hpp \
            CallStatus.hpp \
            CallStatusFactory.hpp \
+           DebugOutput.hpp \
+           DebugOutputImpl.hpp \
            Event.hpp \
            EventFactory.hpp EventFactory.inl \
            Factory.hpp Factory.inl \
@@ -50,6 +52,7 @@ SOURCES += Account.cpp \
            Call.cpp \
            CallManagerImpl.cpp \
            CallStatus.cpp \
+           DebugOutputImpl.cpp \
            Event.cpp \
            JPushButton.cpp \
            main.cpp \

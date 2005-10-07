@@ -21,8 +21,8 @@
 #ifndef __CALL_MANAGER_IMPL_HPP__
 #define __CALL_MANAGER_IMPL_HPP__
 
-#include <QMutex>
-#include <QString>
+#include <qmutex.h>
+#include <qstring.h>
 #include <map>
 
 #include "Call.hpp"
