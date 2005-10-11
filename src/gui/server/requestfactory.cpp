@@ -70,6 +70,16 @@ RequestFactory::create(
   return pos->second->create(sequenceId, argList);
 }
 
+RequestFactory::~RequestFactory() 
+{
+  std::map< std::string, RequestCreatorBase * >::iterator iter = mRequests.begin();
+  while ( iter != mRequests.end() ) {
+    // delete RequestCreator< T >
+    delete iter->second;
+    iter++;
+  }
+}
+
 template< typename T >
 void 
 RequestFactory::registerRequest(const std::string &requestname)
@@ -113,6 +123,4 @@ RequestFactory::registerAll() {
   registerRequest<RequestConfigSet>   ("configset");
   registerRequest<RequestConfigSave>  ("configsave");
   registerRequest<RequestList>        ("list");
-
-
 } 

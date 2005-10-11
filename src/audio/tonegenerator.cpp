@@ -103,9 +103,13 @@ ToneGenerator::ToneGenerator () {
 
 ToneGenerator::~ToneGenerator (void) {
 	delete tonethread;
+  tonethread = 0;
   delete [] _dst;
+  _dst = 0;
   delete [] _src;
+  _src = 0;
   delete _ulaw;
+  _ulaw = 0;
 }
 
 /**

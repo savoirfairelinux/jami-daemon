@@ -32,7 +32,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-, root, root)
-%{prefix}/bin/sflphone
+%{prefix}/bin/sflphoned
 %dir %{prefix}/share/sflphone/ringtones
 %{prefix}/share/sflphone/ringtones/*
 

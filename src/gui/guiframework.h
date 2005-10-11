@@ -33,8 +33,7 @@ public:
 	virtual ~GuiFramework (void);
 
 	/* Parent class to child class */
-	virtual int incomingCall (short id) = 0;
-	virtual int incomingCall (short id, const std::string& accountId, const std::string& from);
+	virtual int incomingCall (short id, const std::string& accountId, const std::string& from) = 0;
 	virtual void peerAnsweredCall (short id) = 0;
 	virtual int peerRingingCall (short id) = 0;
 	virtual int peerHungupCall (short id) = 0;

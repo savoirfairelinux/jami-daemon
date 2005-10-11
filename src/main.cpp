@@ -22,13 +22,24 @@
 #include "gui/server/guiserver.h"
 #include "gui/guiframework.h"
 #include "manager.h"
+#include "cstring"
+#include "iostream"
 
 int
 main (int argc, char **argv) {
   int exit_code = 0;
-  GuiFramework *GUI;
 
-  {
+  if (argc == 1 && strcmp(argv[0], "--help") == 0) {
+
+    std::cout << PROGNAME << " Deamon " << VERSION << ", by Savoir-Faire Linux 2004-2005" << std::endl << std::endl;
+    std::cout << "USAGE: sflphoned [--help]" << std::endl;
+    std::cout << "Parameters: " << std::endl;
+    std::cout << "  --help for this message" << std::endl << std::endl;
+    std::cout << "See http://www.sflphone.org/ for more information" << std::endl;
+
+  } else {
+
+    GuiFramework *GUI;
     bool initOK = false;
     try {
       Manager::instance().initConfigFile();

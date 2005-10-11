@@ -265,13 +265,6 @@ GUIServerImpl::version()
 
 
 int 
-GUIServerImpl::incomingCall (short id) 
-{
-  _debug("ERROR: GUIServerImpl::incomingCall(%d) should not be call\n",id);
-  return 0;
-}
-
-int 
 GUIServerImpl::incomingCall (short id, const std::string& accountId, const std::string& from) 
 {
   TokenList arg;

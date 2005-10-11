@@ -54,6 +54,7 @@ public:
 class RequestFactory
 {
 public:
+  ~RequestFactory();
   Request *create(const std::string& requestLine);
   Request *create(
     const std::string& requestname, 

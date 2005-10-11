@@ -36,16 +36,16 @@ RingBuffer::RingBuffer(int size) {
    mBufferSize = (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE);
    mStart = 0;
    mEnd = 0;
-   mBuffer = (samplePtr) malloc (mBufferSize);
-   mBlank = (samplePtr) malloc (MIN_BUFFER_SIZE);
+   mBuffer = new unsigned char[mBufferSize];
+   mBlank = new unsigned char[MIN_BUFFER_SIZE];
    bzero(mBlank, MIN_BUFFER_SIZE);
    assert (mBuffer != NULL);
 }
 
 // Free memory on object deletion
 RingBuffer::~RingBuffer() {
-   free (mBuffer);
-   free (mBlank);
+   delete[] mBlank;   mBlank  = 0;
+   delete[] mBuffer;  mBuffer = 0;
 }
  
 void
@@ -69,7 +69,7 @@ RingBuffer::AvailForPut() const {
    return (mBufferSize-4) - Len();
 } 
 
-int 
+void 
 RingBuffer::PutZero(int toZero)
 {
   unsigned char p[toZero];

@@ -43,7 +43,7 @@ class RingBuffer {
    //
    int AvailForPut (void) const;
    int Put (void*, int);
-   int PutZero(int);
+   void PutZero(int);
 
    //
    // For the reader only:

@@ -86,6 +86,7 @@ DTMFGenerator::DTMFGenerator(): ToneGenerator ()
 DTMFGenerator::~DTMFGenerator() {
 	for(int i = 0; i < NUM_TONES; i++) {
 		delete[] samples[i];
+    samples[i] = NULL;
 	}
 }
 

@@ -99,36 +99,15 @@ ManagerImpl::ManagerImpl (void)
   _codecMap = CodecDescriptorMap().getMap();
 }
 
+// never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void) 
 {
   terminate();
-  for(VoIPLinkVector::iterator pos = _voIPLinkVector.begin();
-      pos != _voIPLinkVector.end();
-      pos++) {
-    delete *pos;
-  }
-
-  for(CallVector::iterator pos = _callVector.begin();
-      pos != _callVector.end();
-      pos++) {
-    delete *pos;
-  }
-
-  unloadAudioCodec();
-
-  delete _audiodriverPA;
-  delete _tone;
-  delete _error;
-
-#ifdef USE_ZEROCONF
-  delete _DNSService;
-#endif
 } 
 
 void 
 ManagerImpl::init (void) 
 {
-  terminate();
   initZeroconf();
   initVolume();
 
@@ -188,6 +167,33 @@ void ManagerImpl::terminate()
   }
 
   _voIPLinkVector.clear();
+
+  for(VoIPLinkVector::iterator pos = _voIPLinkVector.begin();
+      pos != _voIPLinkVector.end();
+      pos++) {
+    delete *pos;
+  }
+
+  for(CallVector::iterator pos = _callVector.begin();
+      pos != _callVector.end();
+      pos++) {
+    delete *pos;
+  }
+
+  unloadAudioCodec();
+
+  delete _audiodriverPA;
+  _audiodriverPA = 0;
+  delete _tone;
+  _tone = 0;
+  delete _error;
+  _error = 0;
+
+#ifdef USE_ZEROCONF
+  delete _DNSService;
+  _DNSService = 0;
+#endif
+  _debug("ManagerImpl::terminate() was called");
 }
 
 void
@@ -696,9 +702,11 @@ ManagerImpl::playDtmf(char code)
     _mutex.leaveMutex();
     //setZonetone(false);
     delete[] buf_ctrl_vol;
+    buf_ctrl_vol = 0;
     returnValue = true;
   }
   delete[] _buf;
+  _buf = 0;
   return returnValue;
 }
 
@@ -1016,7 +1024,9 @@ ManagerImpl::notificationIncomingCall (void) {
   getAudioDriver()->putUrgent(buf_ctrl_vol, SAMPLES_SIZE(FRAME_PER_BUFFER));
 
   delete[] buf_ctrl_vol;
+  buf_ctrl_vol = 0;
   delete[] buffer;
+  buffer = 0;
 }
 
 /**

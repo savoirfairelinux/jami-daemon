@@ -49,6 +49,7 @@ AudioRtp::AudioRtp () {
 
 AudioRtp::~AudioRtp (void) {
 	delete _RTXThread;
+  _RTXThread = NULL;
 }
 
 int 
@@ -84,15 +85,10 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 		ca->enable_audio = -1;
 
 		if (_RTXThread != NULL) {
-      _debug("Thread: stop AudioRTP\n");
+      _debug("Thread: stop AudioRTP for sipcall: %d\n", ca->getId());
 			delete _RTXThread;
 			_RTXThread = NULL;
 		}
-		
-		// Stop portaudio and flush ringbuffer
-		Manager::instance().getAudioDriver()->stopStream();
-		Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
-    _debug("AudioRtp::closeRtpSession : flushing stream\n");
 	}
 }
 
@@ -121,17 +117,14 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall,
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
-  _debug("Thread: stop session\n");
+  _debug("Thread: AudioRtpRTX stop session\n");
   if (!_sym) {
-    delete _sessionRecv;	
-    _sessionRecv = NULL;
-    delete _sessionSend;	
-    _sessionSend = NULL;
+    delete _sessionRecv; _sessionRecv = NULL;
+    delete _sessionSend; _sessionSend = NULL;
   } else {
-    delete _session;
-    _session = NULL;
+    delete _session;     _session = NULL;
   }
-  delete time;
+  delete time; time = NULL;
 }
 
 void
@@ -297,8 +290,11 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 	Manager::instance().getAudioDriver()->startStream();
 	
   delete ac;
+  ac = NULL;
 	delete cd;
+  cd = NULL;
 	delete adu;
+  adu = NULL;
 }
 
 void
@@ -366,15 +362,15 @@ AudioRtpRTX::run (void) {
 		TimerPort::incTimer(frameSize); // 'frameSize' ms
 	}
 
-	delete[] data_for_speakers_tmp;
-	delete[] data_for_speakers;
-	delete[] data_to_send;
-	delete[] data_from_mic_tmp;
-	delete[] data_from_mic;
+	delete [] data_for_speakers_tmp; data_for_speakers_tmp = 0;
+  delete [] data_for_speakers;     data_for_speakers     = 0;
+	delete [] data_to_send;          data_to_send          = 0;
+	delete [] data_from_mic_tmp;     data_from_mic_tmp     = 0;
+	delete [] data_from_mic;         data_from_mic         = 0;
 
+  audiolayer->stopStream();
   audiolayer->mainSndRingBuffer().flush();
   //audiolayer->urgentRingBuffer().flush();
-  audiolayer->stopStream();
 }
 
 

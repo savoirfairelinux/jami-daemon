@@ -54,6 +54,7 @@ AudioLayer::closeStream (void)
   if(_stream) {
     _stream->close();
     delete _stream;
+    _stream = 0;
   }
 }
 
