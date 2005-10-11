@@ -19,6 +19,8 @@
 #include "argtokenizer.h"
 #include <iostream>
 #include <sstream>
+#include <cc++/url.h>
+#include <cstring>
 
 TokenList 
 ArgTokenizer::tokenize(const std::string& str) {
@@ -28,8 +30,11 @@ ArgTokenizer::tokenize(const std::string& str) {
   TokenList args;
   while(s.good()) {
     s >> output;
-    //TODO: add urlDecode here
-    args.push_back(output);
+    char *tmp = new char[output.length()+1];
+    strcpy(tmp, output.c_str());
+    ost::urlDecode(tmp, NULL);
+    args.push_back(tmp);
+    delete[] tmp;
   }
   return args;
 }

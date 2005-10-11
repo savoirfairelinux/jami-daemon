@@ -112,12 +112,29 @@ bool
 GUIServerImpl::getEvents(const std::string& sequenceId)
 {
   _getEventsSequenceId=sequenceId;
+
+  TokenList tk;
+  std::ostringstream percentSpkr;
+  // 021 <CSeq> <percentage of speaker volume> Speaker volume changed.
+  percentSpkr << GuiFramework::getSpkrVolume();
+  tk.push_back(percentSpkr.str());
+  tk.push_back("Speaker volume changed");
+  _requestManager.sendResponse(ResponseMessage("021", sequenceId,tk));
+
+  // 022 <CSeq> <percentage of microphone volume> Microphone volume changed.
+  tk.clear();
+  std::ostringstream percentMic;
+  percentMic << GuiFramework::getMicVolume();
+  tk.push_back(percentMic.str());
+  tk.push_back("Microphone volume changed");
+  _requestManager.sendResponse(ResponseMessage("022", sequenceId,tk));
+
   return true;
 }
 bool
-GUIServerImpl::sendGetEventsEnd(const std::string& sequenceId)
+GUIServerImpl::sendGetEventsEnd()
 {
-  _requestManager.sendResponse(ResponseMessage("202", sequenceId,
+  _requestManager.sendResponse(ResponseMessage("202", _getEventsSequenceId,
 "getcallstatus request stopped me"));
   return true;
 }

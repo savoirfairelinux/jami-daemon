@@ -63,7 +63,7 @@ RequestZeroconfEvent::update()
 ResponseMessage
 RequestCallStatus::execute()
 {
-  GUIServer::instance().sendGetEventsEnd(_sequenceId);
+  GUIServer::instance().sendGetEventsEnd();
   TokenList tk;
   tk.push_back("OK");
   std::string code = "205";
@@ -185,3 +185,56 @@ RequestList::execute()
     return message("500","Server Error");
   }
 }
+
+RequestVolumeSpkr::RequestVolumeSpkr(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
+{
+  TokenList::iterator iter = _argList.begin();
+  bool error = true;
+  if (iter != _argList.end()) {
+    _percent = atoi(iter->c_str());
+    if (_percent >= 0 && _percent <= 100) {
+      _argList.pop_front();
+      error = false;
+    }
+  }
+  if (error) {
+    throw RequestConstructorException();
+  }
+}
+
+ResponseMessage
+RequestVolumeSpkr::execute()
+{
+  if (GUIServer::instance().setSpkrVolume(_percent)) {
+    return message("200", "OK");
+  } else {
+    return message("500","Server Error");
+  }
+}
+
+RequestVolumeMic::RequestVolumeMic(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
+{
+  TokenList::iterator iter = _argList.begin();
+  bool error = true;
+  if (iter != _argList.end()) {
+    _percent = atoi(iter->c_str());
+    if (_percent >= 0 && _percent <= 100) {
+      _argList.pop_front();
+      error = false;
+    }
+  }
+  if (error) {
+    throw RequestConstructorException();
+  }
+}
+
+ResponseMessage
+RequestVolumeMic::execute()
+{
+  if (GUIServer::instance().setMicVolume(_percent)) {
+    return message("200", "OK");
+  } else {
+    return message("500","Server Error");
+  }
+}
+

@@ -243,8 +243,8 @@ name);
 	 */
 	inline int getSpkrVolume 	(void) 			{ ost::MutexLock m(_mutex); return _spkr_volume; }
 	inline void setSpkrVolume 	(int spkr_vol) 	{ ost::MutexLock m(_mutex); _spkr_volume = spkr_vol; }
-	inline int getMicroVolume 	(void) 			{ ost::MutexLock m(_mutex); return _mic_volume; }
-	inline void setMicroVolume 	(int mic_vol) 	{ ost::MutexLock m(_mutex); _mic_volume = _mic_volume_before_mute = mic_vol; }
+	inline int getMicVolume 	(void) 			{ ost::MutexLock m(_mutex); return _mic_volume; }
+	inline void setMicVolume 	(int mic_vol) 	{ ost::MutexLock m(_mutex); _mic_volume = _mic_volume_before_mute = mic_vol; }
 	
 	/*
 	 * Manage information about firewall
@@ -322,7 +322,10 @@ private:
   bool getDirListing(const std::string& sequenceId, const std::string& path, int *nbFile);
   bool getAudioDeviceList(const std::string& sequenceId);
   Conf::ConfigTree _config;
+  bool getCountryTones(const std::string& sequenceId);
+  void sendCountryTone(const std::string& sequenceId, int index, const std::string& name);
 
+  
   /*
    * Play one tone
    * @return false if the driver is uninitialize

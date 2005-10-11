@@ -563,6 +563,9 @@ ManagerImpl::refuseCall (short id)
 int
 ManagerImpl::saveConfig (void)
 {
+  setConfig(AUDIO, VOLUME_SPKR, getSpkrVolume());
+  setConfig(AUDIO, VOLUME_MICRO, getMicVolume());
+
   return (_config.saveConfigTree(_path.data()) ? 1 : 0);
 }
 
@@ -1303,7 +1306,7 @@ void
 ManagerImpl::initVolume()
 {
 	setSpkrVolume(getConfigInt(AUDIO, VOLUME_SPKR));
-	setMicroVolume(getConfigInt(AUDIO, VOLUME_MICRO));
+	setMicVolume(getConfigInt(AUDIO, VOLUME_MICRO));
 }
 
 /**
@@ -1510,8 +1513,7 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, cons
  * Main Thread
  */
 bool 
-ManagerImpl::setConfig(const std::string& section, const std::string& name,
-int value)
+ManagerImpl::setConfig(const std::string& section, const std::string& name, int value)
 {
   std::ostringstream valueStream;
   valueStream << value;
@@ -1548,10 +1550,8 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
     getDirListing(sequenceId, path, &nbFile);
   } else if (name=="audiodevice") {
     returnValue = getAudioDeviceList(sequenceId);
-  } else if (name=="") {
-    returnValue = true;
-  } else if (name=="") {
-    returnValue = true;
+  } else if (name=="countrytones") {
+    returnValue = getCountryTones(sequenceId);
   }
   return returnValue;
 }
@@ -1580,6 +1580,29 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId)
     _gui->sendMessage("100", sequenceId, tk);
   }
   return true;
+}
+
+bool
+ManagerImpl::getCountryTones(const std::string& sequenceId)
+{
+  // see ToneGenerator for the list...
+  sendCountryTone(sequenceId, 1, "North America");
+  sendCountryTone(sequenceId, 2, "France");
+  sendCountryTone(sequenceId, 3, "Australia");
+  sendCountryTone(sequenceId, 4, "United Kingdom");
+  sendCountryTone(sequenceId, 5, "Spain");
+  sendCountryTone(sequenceId, 6, "Italy");
+  sendCountryTone(sequenceId, 7, "Japan");
+
+  return true;
+}
+
+void 
+ManagerImpl::sendCountryTone(const std::string& sequenceId, int index, const std::string& name) {
+  TokenList tk;
+  std::ostringstream str; str << index; tk.push_back(str.str());
+  tk.push_back(name);
+  _gui->sendMessage("100", sequenceId, tk);
 }
 
 /**

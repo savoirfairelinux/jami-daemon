@@ -340,7 +340,7 @@ AudioRtpRTX::run (void) {
 	}
 
 	while (!testCancel() && _ca->enable_audio != -1) {
-		micVolume = manager.getMicroVolume();
+		micVolume = manager.getMicVolume();
 	  spkrVolume = manager.getSpkrVolume();
 
 		////////////////////////////

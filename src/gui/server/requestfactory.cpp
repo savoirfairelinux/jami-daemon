@@ -123,4 +123,6 @@ RequestFactory::registerAll() {
   registerRequest<RequestConfigSet>   ("configset");
   registerRequest<RequestConfigSave>  ("configsave");
   registerRequest<RequestList>        ("list");
-} 
+  registerRequest<RequestVolumeSpkr>  ("setspkrvolume");
+  registerRequest<RequestVolumeMic>  ("setmicvolume");
+}

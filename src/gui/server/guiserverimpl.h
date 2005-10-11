@@ -65,7 +65,7 @@ arg);
   void callFailure(short id);
 
   bool getEvents(const std::string& sequenceId);
-  bool sendGetEventsEnd(const std::string& sequenceId);
+  bool sendGetEventsEnd();
 
   bool outgoingCall (const std::string& seq, 
     const std::string& callid, 

@@ -252,3 +252,28 @@ GuiFramework::getConfigList(const std::string& sequenceId, const std::string& na
   return Manager::instance().getConfigList(sequenceId, name);
 }
 
+bool 
+GuiFramework::setSpkrVolume(int volume)
+{
+  Manager::instance().setSpkrVolume(volume);
+  return true;
+}
+
+bool 
+GuiFramework::setMicVolume(int volume)
+{
+  Manager::instance().setMicVolume(volume);
+  return true;
+}
+
+int
+GuiFramework::getSpkrVolume()
+{
+  return Manager::instance().getSpkrVolume();
+}
+
+int
+GuiFramework::getMicVolume()
+{
+  return Manager::instance().getMicVolume();
+}

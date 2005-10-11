@@ -94,4 +94,20 @@ private:
   std::string _name;
 };
 
+class RequestVolumeSpkr : public RequestGlobal {
+public:
+  RequestVolumeSpkr(const std::string &sequenceId, const TokenList& argList);
+  ResponseMessage execute();
+private:
+  int _percent;
+};
+
+class RequestVolumeMic : public RequestGlobal {
+public:
+  RequestVolumeMic(const std::string &sequenceId, const TokenList& argList);
+  ResponseMessage execute();
+private:
+  int _percent;
+};
+
 #endif // __REQUESTCONFIG_H__

@@ -17,6 +17,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "responsemessage.h"
+#include <cc++/url.h>
 
 /**
  * Used by isFinal() to check for the first digit
@@ -46,8 +47,14 @@ ResponseMessage::ResponseMessage(const std::string& code,
   // add space between each
   while(iter!=arg.end()) {
     _message.append(" ");
-    // TODO: encode string here
-    _message.append(*iter);
+    int len = iter->length();
+    if (len) {
+      char *tmp = new char[len*3+2];
+      ost::urlEncode(iter->c_str(), tmp, len*3+2);
+      // we don't have to put a '\0' right?
+      _message.append(tmp);
+      delete [] tmp;
+    }
     iter++;
   }
 }

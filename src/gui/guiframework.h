@@ -90,6 +90,10 @@ public:
   bool getConfig(const std::string& section,  const std::string& name, TokenList& arg);
   bool setConfig(const std::string& section, const std::string& name, const std::string& value);
   bool getConfigList(const std::string& sequenceId, const std::string& name);
+  bool setSpkrVolume(int volume);
+  bool setMicVolume(int volume);
+  int getSpkrVolume();
+  int getMicVolume();
 
   // Observer methods
   virtual void update() {}
