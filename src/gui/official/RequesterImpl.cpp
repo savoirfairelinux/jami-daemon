@@ -174,10 +174,7 @@ RequesterImpl::generateSessionId()
 QString
 RequesterImpl::generateSequenceId()
 {
-  QString s("cSequenceID:");
-  s += mSequenceIdCount;
-  mSequenceIdCount++;
-  return s;
+  return QString("cSequenceID:%1").arg(mSequenceIdCount++);
 }
 
 void

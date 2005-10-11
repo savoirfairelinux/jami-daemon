@@ -10,12 +10,13 @@
 // Others fixed font support "Monospace", "Fixed", "MiscFixed"
 #define FONT_SIZE	10
 
-#define SCREEN "screen_main"
-#define OVERSCREEN "overscreen"
+#define SCREEN "images/screen_main.png"
+#define OVERSCREEN "images/overscreen.png"
+
 SFLLcd::SFLLcd(QWidget *parent)
   : QLabel(parent)
-  , mScreen(JPushButton::transparize(QPixmap::fromMimeSource(SCREEN)))
-  , mOverscreen(JPushButton::transparize(QPixmap::fromMimeSource(OVERSCREEN)))
+  , mScreen(JPushButton::transparize(SCREEN))
+  , mOverscreen(JPushButton::transparize(OVERSCREEN))
   , mGlobalStatusPos(-1)
   , mLineStatusPos(-1)
   , mBufferStatusPos(-1)
@@ -69,7 +70,7 @@ SFLLcd::stopTiming()
 }
 
 void
-SFLLcd::setGlobalStatus(const QString &global)
+SFLLcd::setGlobalStatus(QString global)
 {
   if(textIsTooBig(global)) {
     mGlobalStatusPos = 0;
@@ -81,7 +82,7 @@ SFLLcd::setGlobalStatus(const QString &global)
 }
 
 void
-SFLLcd::setBufferStatus(const QString &buffer)
+SFLLcd::setBufferStatus(QString buffer)
 {
   if(textIsTooBig(buffer)) {
     mBufferStatusPos = 0;
@@ -93,7 +94,7 @@ SFLLcd::setBufferStatus(const QString &buffer)
 }
 
 void
-SFLLcd::setLineStatus(const QString &line)
+SFLLcd::setLineStatus(QString line)
 {
   if(textIsTooBig(line)) {
     mLineStatusPos = 0;
@@ -105,7 +106,7 @@ SFLLcd::setLineStatus(const QString &line)
 }
 
 void
-SFLLcd::setAction(const QString &line)
+SFLLcd::setAction(QString line)
 {
   if(textIsTooBig(line)) {
     mActionPos = 0;
@@ -187,7 +188,7 @@ SFLLcd::extractVisibleText(const QString &text, int &pos)
 
   int nbCharBetween = 8;
 
-  if(pos >= tmp.length() + nbCharBetween) {
+  if(pos > 0 && ((unsigned int)pos >= tmp.length() + nbCharBetween)) {
     pos = 0;
   }
 

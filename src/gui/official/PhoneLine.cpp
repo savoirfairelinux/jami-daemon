@@ -94,7 +94,7 @@ void
 PhoneLine::select(bool hardselect)
 {
   if(!mSelected) {
-    DebugOutput::instance() << tr("PhoneLine %d: I am selected.\n").arg(mLine);
+    DebugOutput::instance() << tr("PhoneLine %1: I am selected.\n").arg(mLine);
     mSelected = true;
 
     if(!hardselect) {
@@ -151,7 +151,7 @@ void
 PhoneLine::unselect(bool hardselect)
 {
   if(mSelected) {
-    DebugOutput::instance() << tr("PhoneLine %d: I am unselected.\n").arg(mLine);
+    DebugOutput::instance() << tr("PhoneLine %1: I am unselected.\n").arg(mLine);
     mSelected = false;
     if(mIsOnError) {
       close();
@@ -172,7 +172,7 @@ void
 PhoneLine::incomming(const Call &call)
 {
   if(mCall) {
-    DebugOutput::instance() << tr("PhoneLine %d: Trying to set a phone line to an active call.\n").arg(mLine);
+    DebugOutput::instance() << tr("PhoneLine %1: Trying to set a phone line to an active call.\n").arg(mLine);
   }
   else {
     mCall = new Call(call);
@@ -227,9 +227,9 @@ PhoneLine::call()
 void 
 PhoneLine::call(const QString &to) 
 {
-  DebugOutput::instance() << tr("PhoneLine %d: Calling %s.\n").arg(mLine).arg(to);
+  DebugOutput::instance() << tr("PhoneLine %1: Calling %2.\n").arg(mLine).arg(to);
   if(!mCall) {
-    setLineStatus(tr("Calling %s...").arg(to));
+    setLineStatus(tr("Calling %1...").arg(to));
     mCall = new Call(mAccount.createCall(to));
     clear();
   }
@@ -240,7 +240,7 @@ PhoneLine::hold()
 {
   if(mCall) {
       setAction(tr("Holding..."));
-    DebugOutput::instance() << tr("PhoneLine %d: Trying to Hold.\n").arg(mLine);
+    DebugOutput::instance() << tr("PhoneLine %1: Trying to Hold.\n").arg(mLine);
     mCall->hold();
   }
 
@@ -252,7 +252,7 @@ PhoneLine::unhold()
 {
   if(mCall) {
     setAction("Unholding...");
-    DebugOutput::instance() << tr("PhoneLine %d: Trying to Unhold.\n").arg(mLine);
+    DebugOutput::instance() << tr("PhoneLine %1: Trying to Unhold.\n").arg(mLine);
     mCall->unhold();
   }
 }
@@ -262,7 +262,7 @@ PhoneLine::answer()
 {
   if(mCall) {
     setAction("Answering...");
-    DebugOutput::instance() << tr("PhoneLine %d: Trying to answer.\n").arg(mLine);
+    DebugOutput::instance() << tr("PhoneLine %1: Trying to answer.\n").arg(mLine);
     mCall->answer();
   }
 }
@@ -272,7 +272,7 @@ PhoneLine::hangup()
 {
   if(mCall) {
     setAction("Hanguping...");
-    DebugOutput::instance() << tr("PhoneLine %d: Trying to Hangup.\n").arg(mLine);
+    DebugOutput::instance() << tr("PhoneLine %1: Trying to Hangup.\n").arg(mLine);
     mCall->hangup();
     delete mCall;
     mCall = NULL;

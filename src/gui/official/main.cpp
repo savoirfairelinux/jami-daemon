@@ -28,9 +28,12 @@
 int main(int argc, char **argv)
 {
   SFLPhoneApp app(argc, argv);
-  SFLPhoneWindow sfl;
-  app.initConnections(&sfl);
-  sfl.show();
+  SFLPhoneWindow* sfl = new SFLPhoneWindow();
+  app.initConnections(sfl);
+#ifndef QT3_SUPPORT
+  app.setMainWidget(sfl);
+#endif
+  sfl->show();
   PhoneLineManager::instance().start();
   return app.exec();
 }

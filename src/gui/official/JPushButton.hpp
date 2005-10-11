@@ -45,7 +45,7 @@ public:
   bool isPressed()
   {return mIsPressed;}
 
-  static QPixmap transparize(const QPixmap &image);
+  static QPixmap transparize(const QString &image);
   
 public slots:  
   /**

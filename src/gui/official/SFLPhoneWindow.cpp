@@ -3,8 +3,7 @@
 #include <qbitmap.h>
 
 //To test if we are in QT4
-#include <qt.h>
-#ifdef quint16
+#ifdef QT3_SUPPORT 
 #include <QIcon>
 #endif
 
@@ -21,19 +20,30 @@
 #include "SFLLcd.hpp"
 #include "VolumeControl.hpp"
 
-#define LOGO_IMAGE "logo_ico"
-#define BACKGROUND_IMAGE "main"
-
+#define LOGO_IMAGE "images/logo_ico.png"
+#define BACKGROUND_IMAGE "images/main.png"
+#define HANGUP_RELEASED_IMAGE "images/hangup_off.png"
+#define HANGUP_PRESSED_IMAGE "images/hangup_on.png"
+#define HOLD_RELEASED_IMAGE "images/hold_off.png"
+#define HOLD_PRESSED_IMAGE "images/hold_on.png"
+#define OK_RELEASED_IMAGE "images/ok_off.png"
+#define OK_PRESSED_IMAGE "images/ok_on.png"
+#define CLEAR_RELEASED_IMAGE "images/clear_off.png"
+#define CLEAR_PRESSED_IMAGE "images/clear_on.png"
+#define MUTE_RELEASED_IMAGE "images/mute_off.png"
+#define MUTE_PRESSED_IMAGE "images/mute_on.png"
+#define VOLUME_IMAGE "images/volume.png"
+			    
 SFLPhoneWindow::SFLPhoneWindow()
-#ifdef quint16
+#ifdef QT3_SUPPORT
   : QMainWindow(NULL, Qt::FramelessWindowHint)
 #else
-    : QMainWindow(NULL)
+    : QMainWindow(NULL, NULL, Qt::WDestructiveClose)
 #endif
 {
   // Initialize the background image
   mMain = new QLabel(this);
-  QPixmap main(JPushButton::transparize(QPixmap::fromMimeSource(BACKGROUND_IMAGE)));
+  QPixmap main(JPushButton::transparize(BACKGROUND_IMAGE));
   mMain->setPixmap(main);
   //mMain->move(100,100);
   /*
@@ -73,40 +83,40 @@ SFLPhoneWindow::initLCD()
 void
 SFLPhoneWindow::initGUIButtons()
 {
-  mHangup = new JPushButton(":/sflphone/images/hangup_off",
-			    ":/sflphone/images/hangup_on",
+  mHangup = new JPushButton(QString(HANGUP_RELEASED_IMAGE),
+			    QString(HANGUP_PRESSED_IMAGE),
 			    mMain);
   mHangup->move(225,156);
   
-  mHold = new JPushButton(":/sflphone/images/hold_off",
-			  ":/sflphone/images/hold_on",
-			  mMain);
+  mHold = new JPushButton(QString(HOLD_RELEASED_IMAGE),
+			  QString(HOLD_PRESSED_IMAGE),
+						  mMain);
   mHold->move(225,68);
   
   
-  mOk = new JPushButton(":/sflphone/images/ok_off",
-			":/sflphone/images/ok_on",
+  mOk = new JPushButton(QString(OK_RELEASED_IMAGE),
+			QString(OK_PRESSED_IMAGE),
 			mMain);
   mOk->move(225,182);
 
-  mClear = new JPushButton(":/sflphone/images/clear_off",
-			   ":/sflphone/images/clear_on",
+  mClear = new JPushButton(QString(CLEAR_RELEASED_IMAGE),
+			   QString(CLEAR_PRESSED_IMAGE),
 			   mMain);
   mClear->move(225,130);
 
-  mMute = new JPushButton(":/sflphone/images/mute_off",
-			   ":/sflphone/images/mute_on",
+  mMute = new JPushButton(QString(MUTE_RELEASED_IMAGE),
+			  QString(MUTE_PRESSED_IMAGE),
 			   mMain);
   mMute->move(225,94);
   mMute->setToggle(true);
 
-  mVolume = new VolumeControl(":/sflphone/images/volume.png",
+  mVolume = new VolumeControl(QString(VOLUME_IMAGE),
 			      mMain);
   mVolume->setOrientation(VolumeControl::Vertical);
   mVolume->move(365,91);
 
-  mMicVolume = new VolumeControl(":/sflphone/images/volume.png",
-				  mMain);
+  mMicVolume = new VolumeControl(QString(VOLUME_IMAGE),
+				 mMain);
   mMicVolume->setOrientation(VolumeControl::Vertical);
   mMicVolume->move(347,91);
 			      
@@ -119,12 +129,8 @@ SFLPhoneWindow::initLineButtons()
   int ypos = 151;
   int offset = 31;
   for(int i = 0; i < NB_PHONELINES; i++) {
-    PhoneLineButton *line = new PhoneLineButton(QString(":/sflphone/images/l") +
-						QString::number(i + 1) +
-						"_off.png",
-						QString(":/sflphone/images/l") +
-						QString::number(i + 1) +
-						"_on.png",
+    PhoneLineButton *line = new PhoneLineButton(QString("images/l%1_off.png").arg(i + 1),
+						QString("images/l%1_on.png").arg(i + 1),
 						i,
 						mMain);
     line->move(xpos, ypos);

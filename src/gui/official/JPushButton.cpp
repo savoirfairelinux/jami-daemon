@@ -52,7 +52,7 @@ JPushButton::setToggle(bool toggle)
 }
 
 QPixmap
-JPushButton::transparize(const QPixmap &image)
+JPushButton::transparize(const QString &image)
 {
   /**
   if (!p.mask()) {
@@ -64,7 +64,7 @@ JPushButton::transparize(const QPixmap &image)
     }
   }
   */
-  return image;
+  return QPixmap::fromMimeSource(image);
 }
 
 void

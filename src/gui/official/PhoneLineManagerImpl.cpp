@@ -33,7 +33,7 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   EventFactory::instance().registerEvent< WrongNumberStatus >("116");
   QObject::connect(this, SIGNAL(disconnected()),
 		   this, SLOT(closeSession()));
-  QObject::connect(this, SIGNAL(readyToHandleEvents),
+  QObject::connect(this, SIGNAL(readyToHandleEvents()),
 		   this, SLOT(handleEvents()));
   QObject::connect(this, SIGNAL(connected()),
 		   this, SIGNAL(readyToSendStatus()));
@@ -378,7 +378,8 @@ PhoneLineManagerImpl::selectLine(unsigned int line, bool hardselect)
     }
   }
   else {
-    _debug("PhoneLineManager: Tried to selected line %d, which appears to be invalid.\n", line);
+    DebugOutput::instance() << QObject::tr("PhoneLineManager: Tried to selected line %1, "
+					   "which appears to be invalid.\n").arg(line);
   }
 }
 

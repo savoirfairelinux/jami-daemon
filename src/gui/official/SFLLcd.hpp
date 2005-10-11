@@ -40,10 +40,10 @@ public slots:
   virtual void paintEvent(QPaintEvent *event);
   QString getTimeStatus();
 
-  void setGlobalStatus(const QString &global);
-  void setLineStatus(const QString &line);
-  void setAction(const QString &line);
-  void setBufferStatus(const QString &line);
+  void setGlobalStatus(QString global);
+  void setLineStatus(QString line);
+  void setAction(QString line);
+  void setBufferStatus(QString line);
 
   void startTiming();
   void stopTiming();

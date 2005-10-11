@@ -36,7 +36,7 @@ TCPSessionIO::TCPSessionIO(const QString &hostname, Q_UINT16 port)
   QObject::connect(mSocket, SIGNAL(connected()),
 		   this, SIGNAL(connected()));
   QObject::connect(mSocket, SIGNAL(error(int)),
-		   this, SLOT(error()));
+		   this, SLOT(error(int)));
   QObject::connect(mSocket, SIGNAL(error(int)),
 		   this, SIGNAL(disconnected()));
 }
