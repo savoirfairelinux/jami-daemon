@@ -55,6 +55,8 @@ public:
   short id, 
   TokenList arg) = 0;
 
+  virtual void callFailure(short id) = 0;
+
 	/* Child class to parent class */
 	int outgoingCall (const std::string& to); 	
 	int hangupCall (short id);

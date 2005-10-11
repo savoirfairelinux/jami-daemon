@@ -408,3 +408,15 @@ GUIServerImpl::update()
 {
   
 }
+
+void
+GUIServerImpl::callFailure(short id)
+{
+  CallMap::iterator iter = _callMap.find(id);
+  if ( iter != _callMap.end() ) {
+    std::ostringstream responseMessage;
+    responseMessage << iter->second.callId() << " Wrong number";
+
+    _requestManager.sendResponse(ResponseMessage("504", iter->second.sequenceId(), responseMessage.str()));
+  }
+}

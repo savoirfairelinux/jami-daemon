@@ -62,6 +62,7 @@ arg);
   const std::string& sequenceId, 
   short id, 
   TokenList arg);
+  void callFailure(short id);
 
   bool getEvents(const std::string& sequenceId);
   bool sendGetEventsEnd(const std::string& sequenceId);

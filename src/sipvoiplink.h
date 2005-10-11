@@ -215,6 +215,8 @@ private:
 	int 			_localPort;
 	int 			_reg_id;
 	int 			_nMsgVoicemail;
+
+  bool _registrationSend; // unregistered 
 };
 
 #endif // __SIP_VOIP_LINK_H__

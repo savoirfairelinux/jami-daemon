@@ -53,6 +53,8 @@ SipVoIPLink::SipVoIPLink (short id)
   _nMsgVoicemail = 0;
   _reg_id = -1;
   // defautlt _sipcallVector object initialization
+
+  _registrationSend = false;
 }
 
 SipVoIPLink::~SipVoIPLink(void) {
@@ -216,6 +218,9 @@ SipVoIPLink::setRegister (void)
     return -1;
   }	
 
+  osip_message_set_header (reg, "Event", "Registration");
+  osip_message_set_header (reg, "Allow-Events", "presence");
+
   int i = eXosip_register_send_register (_reg_id, reg);
   if (i == -2) {
     _debug("cannot build registration, check the setup\n"); 
@@ -232,44 +237,53 @@ SipVoIPLink::setRegister (void)
   manager.error()->setError(0);
 
   // subscribe to message one time?
-  subscribeMessageSummary();
+  // subscribeMessageSummary();
+
+  _registrationSend = true;
   return i;
 }
 
+/**
+ * setUnregister 
+ * unregister if we already send the first registration
+ * @return -1 if there is an error
+ */
 int 
 SipVoIPLink::setUnregister (void)
 {
-  int i = 0;
-  osip_message_t *reg = NULL;
+  if ( _registrationSend ) {
+    int i = 0;
+    osip_message_t *reg = NULL;
 
-  eXosip_lock();
+    eXosip_lock();
 
-  if (_reg_id > 0) {
-    _debug("UNREGISTER\n");
-    i = eXosip_register_build_register (_reg_id, 0, &reg);
-  }
-	
-  if (_reg_id < 0) {
-    eXosip_unlock();
-    return -1;
-  }	
-	
-  i = eXosip_register_send_register (_reg_id, reg);
-  if (i == -2) {
-    _debug("cannot build registration, check the setup\n"); 
-    eXosip_unlock();
-    return -1;
-  }
-  if (i == -1) {
-    _debug("Registration Failed\n");
-    eXosip_unlock();
-    return -1;
-  }
-	
-  eXosip_unlock();
+    if (_reg_id > 0) {
+      _debug("UNREGISTER\n");
+      i = eXosip_register_build_register (_reg_id, 0, &reg);
+    }
+    if (_reg_id < 0) {
+      eXosip_unlock();
+      return -1;
+    }	
 
-  Manager::instance().error()->setError(0);
-  return i;
+    i = eXosip_register_send_register (_reg_id, reg);
+    if (i == -2) {
+      _debug("(unregister) Cannot build registration, check the setup\n"); 
+      eXosip_unlock();
+      return -1;
+    }
+    if (i == -1) {
+      _debug("(unregister) Registration Failed\n");
+      eXosip_unlock();
+      return -1;
+    }
+    eXosip_unlock();
+    Manager::instance().error()->setError(0);
+    return i;
+  } else {
+    // no registration send before
+    return -1;
+  }
 }
 
 int
@@ -787,6 +801,7 @@ SipVoIPLink::getEvent (void)
     switch (event->response->status_code) {
     case AUTH_REQUIRED:
       _debug("EXOSIP_CALL_REQUESTFAILURE :: AUTH_REQUIRED\n");
+      setAuthentication();
       eXosip_lock();
       eXosip_automatic_action();
       eXosip_unlock();
@@ -930,10 +945,13 @@ SipVoIPLink::getEvent (void)
     }
     break;
 
-  case EXOSIP_SUBSCRIPTION_ANSWERED: 
+  case EXOSIP_SUBSCRIPTION_ANSWERED: // 38
     eXosip_lock();
     eXosip_automatic_action();
     eXosip_unlock();
+    break;
+
+  case EXOSIP_SUBSCRIPTION_REQUESTFAILURE: //40
     break;
 
   default:

@@ -150,12 +150,10 @@ ManagerImpl::init (void)
     // If network is available
 
     if (getConfigInt(SIGNALISATION, AUTO_REGISTER) && _exist == 1) {
-      if (registerVoIPLink() != 1) {
-	_debug("Registration failed\n");
-      }
-    } 
+      registerVoIPLink();
+    }
   }
-  
+
 }
 
 void ManagerImpl::terminate()
@@ -353,6 +351,7 @@ ManagerImpl::outgoingCall (const string& to)
 int 
 ManagerImpl::hangupCall (short id)
 {
+  stopTone(); // stop tone, like a 700 error: number not found Not Found
 	Call* call;
 
 	call = getCall(id);
@@ -569,19 +568,26 @@ ManagerImpl::saveConfig (void)
 
 /**
  * Initialize action (main thread)
+ * Note that Registration is only send if STUN is not activated
+ * @return 1 if setRegister is call without failure, else return 0
  */
 int 
 ManagerImpl::registerVoIPLink (void)
 {
-	if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+  int returnValue = 0;
+  if ( !useStun() ) {
+    if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() == 0) {
+      returnValue = true;
+    } else {
+      _debug("ManagerImpl::registerVoIPLink: Registration Failed\n");
+    }
+  }
+  return returnValue;
 }
 
 /**
  * Terminate action (main thread)
+ * @return 1 if the unregister method is send correctly
  */
 int 
 ManagerImpl::unregisterVoIPLink (void)
@@ -982,6 +988,10 @@ void
 ManagerImpl::callFailure(short id) {
   playATone(ZT_TONE_BUSY);
   getCall(id)->setState(Call::Error);
+
+  if (_gui) {
+    _gui->callFailure(id);
+  }
 }
 
 /**
