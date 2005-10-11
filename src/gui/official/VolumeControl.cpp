@@ -20,8 +20,11 @@
 #include <qevent.h>
 #include <iostream>
 
-#include "VolumeControl.hpp"
+
 #include "TransparentWidget.hpp"
+#include "VolumeControl.hpp"
+
+#define SLIDER_IMAGE "images/slider.png"
 
 VolumeControl::VolumeControl (const QString &pixname,
 			      QWidget *parent, 
@@ -44,7 +47,7 @@ VolumeControl::~VolumeControl()
 void
 VolumeControl::resize()
 {
-  QPixmap q(QString(":/sflphone/images/slider"));
+  QPixmap q(TransparentWidget::transparize(SLIDER_IMAGE));
   setPixmap(q);
   QWidget::resize(q.size());
   mMaxPosition = q.height() - mSlider->height();
@@ -108,15 +111,16 @@ VolumeControl::mouseMoveEvent (QMouseEvent *e) {
   else {
     mSlider->move(e->y() - mPos.x(), mSlider->y());
   }
-
 }
 
 void
 VolumeControl::updateValue()
 {
   int value = (int)((float)offset() / mMaxPosition * (mMax - mMin));
-  mValue = value;
-  emit valueUpdated(mValue);
+  if(mValue != value) {
+    mValue = value;
+    emit valueUpdated(mValue);
+  }
 }
 
 
@@ -125,9 +129,9 @@ VolumeControl::updateSlider(int value)
 {
   if(mOrientation == VolumeControl::Vertical) {
     std::cout <<  "Move again to : " << 
-      value / (mMax - mMin) * mMaxPosition << 
+      (float)value / (mMax - mMin) * mMaxPosition << 
       std::endl << std::endl;
-    mSlider->move(mSlider->x(), value / (mMax - mMin) * mMaxPosition);
+    mSlider->move(mSlider->x(), (float)value / (mMax - mMin) * mMaxPosition);
   }
   else {
     mSlider->move(value / (mMax - mMin) * mMaxPosition, mSlider->y());

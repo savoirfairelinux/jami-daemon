@@ -64,3 +64,32 @@ IncommingEvent::execute()
       .arg(toString());
   }
 }
+
+VolumeEvent::VolumeEvent(const QString &code,
+			 const std::list< QString > &args)
+  : Event(code, args)
+{
+  std::list< QString > l = getUnusedArgs();
+  if(l.size() >= 1) {
+    mVolume = l.begin()->toUInt();
+    l.pop_front();
+    setUnusedArgs(l);
+  }
+}
+
+void
+VolumeEvent::execute()
+{
+  PhoneLineManager::instance().updateVolume(mVolume);
+}
+
+MicVolumeEvent::MicVolumeEvent(const QString &code,
+			       const std::list< QString > &args)
+  : VolumeEvent(code, args)
+{}
+
+void
+MicVolumeEvent::execute()
+{
+  PhoneLineManager::instance().updateMicVolume(mVolume);
+}

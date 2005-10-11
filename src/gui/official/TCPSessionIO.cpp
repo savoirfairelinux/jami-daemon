@@ -104,7 +104,7 @@ TCPSessionIO::receive(QString &answer)
   if(mSocket->isReadable()) {
     QTextStream stream(mSocket);
     answer = stream.readLine();
-    DebugOutput::instance() << QObject::tr("TCPSessionIO: Received answer from sflphone: %1")
+    DebugOutput::instance() << QObject::tr("TCPSessionIO: Received answer from sflphone: %1\n")
       .arg(answer);
   }
 }

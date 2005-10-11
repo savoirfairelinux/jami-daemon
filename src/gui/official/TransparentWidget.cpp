@@ -65,7 +65,7 @@ TransparentWidget::~TransparentWidget()
 QPixmap
 TransparentWidget::transparize(const QString &image)
 {
-  QPixmap p(image);
+  QPixmap p(QPixmap::fromMimeSource(image));
   /*
   if (!p.mask()) {
     if (p.hasAlphaChannel()) {

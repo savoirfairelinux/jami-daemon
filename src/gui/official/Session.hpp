@@ -60,6 +60,18 @@ class Session
   QString mute() const;
 
   /**
+   * This function will set the volume to 
+   * the given percentage
+   */
+  QString volume(unsigned int volume) const;
+
+  /**
+   * This function will set the mic volume to 
+   * the given percentage
+   */
+  QString micVolume(unsigned int volume) const;
+
+  /**
    * This function will unmute the microphone.
    */
   QString unmute() const;

@@ -55,6 +55,9 @@ signals:
   void actionSet(QString);
   void lineStatusSet(QString);
 
+  void volumeUpdated(int);
+  void micVolumeUpdated(int);
+
 public slots:
   /**
    * You need to call this function once. It must be
@@ -216,6 +219,28 @@ public slots:
    */
   void handleEvents();
 
+  /**
+   * This function will simply signal the volume change.
+   */
+  void updateVolume(int volume);
+
+  /**
+   * This function will send a request to sflphoned
+   * to change the volume to the given percentage.
+   */
+  void setVolume(int volume);
+
+  /**
+   * This function will simply signal the mic volume change.
+   */
+  void updateMicVolume(int volume);
+
+  /**
+   * This function will send a request to sflphoned
+   * to change the mic volume to the given percentage.
+   */
+  void setMicVolume(int volume);
+
   void errorOnCallStatus()
   {emit gotErrorOnCallStatus();}
 
@@ -248,6 +273,9 @@ private:
 
   bool mIsInitialized;
   QMutex mIsInitializedMutex;
+
+  int mVolume;
+  int mMicVolume;
 };
 
 

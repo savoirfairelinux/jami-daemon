@@ -16,6 +16,8 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   , mAccount(NULL)
   , mCurrentLine(NULL)
   , mIsInitialized(false)
+  , mVolume(-1)
+  , mMicVolume(-1)
 {
   EventFactory::instance().registerDefaultEvent< DefaultEvent >();
   // TODO: 000
@@ -24,6 +26,8 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   EventFactory::instance().registerEvent< HangupEvent >("002");
   // TODO: 020
   EventFactory::instance().registerEvent< CallRelatedEvent >("020");
+  EventFactory::instance().registerEvent< VolumeEvent >("021");
+  EventFactory::instance().registerEvent< MicVolumeEvent >("022");
   EventFactory::instance().registerEvent< TryingStatus >("110");
   EventFactory::instance().registerEvent< RingingStatus >("111");
   EventFactory::instance().registerEvent< HoldStatus >("112");
@@ -529,5 +533,37 @@ PhoneLineManagerImpl::addCall(Call call,
 					     "here for the incomming call ID: %1.\n")
       .arg(call.id());
     call.notAvailable();
+  }
+}
+
+void
+PhoneLineManagerImpl::updateVolume(int volume)
+{
+  mVolume = volume;
+  emit volumeUpdated((unsigned int)volume);
+}
+
+void
+PhoneLineManagerImpl::updateMicVolume(int volume)
+{
+  mMicVolume = volume;
+  emit micVolumeUpdated((unsigned int)volume);
+}
+
+void 
+PhoneLineManagerImpl::setVolume(int volume)
+{
+  if(mVolume != volume) {
+    mSession->volume(volume);
+    updateVolume(volume);
+  }
+}
+
+void 
+PhoneLineManagerImpl::setMicVolume(int volume)
+{
+  if(mMicVolume != volume) {
+    mSession->micVolume(volume);
+    updateMicVolume(volume);
   }
 }

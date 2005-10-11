@@ -50,6 +50,7 @@ RequesterImpl::send(const QString &sessionId,
 		    const QString &command,
 		    const std::list< QString > &args)
 {
+  DebugOutput::instance() << QObject::tr("Requester: Trying to create command \"%1\"\n").arg(command);
   // We retreive the internal of a session.
   SessionIO *session = getSessionIO(sessionId);
 

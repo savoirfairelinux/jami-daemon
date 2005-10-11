@@ -55,4 +55,26 @@ private:
 };
 
 
+class VolumeEvent : public Event
+{
+public:
+  VolumeEvent(const QString &code,
+	       const std::list< QString > &args);
+  
+  virtual void execute();
+
+protected:
+  unsigned int mVolume;
+};
+
+class MicVolumeEvent : public VolumeEvent
+{
+public:
+  MicVolumeEvent(const QString &code,
+		 const std::list< QString > &args);
+  
+  virtual void execute();
+
+};
+
 #endif

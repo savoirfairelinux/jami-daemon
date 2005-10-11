@@ -9,6 +9,7 @@
 #include "SFLPhoneWindow.hpp"
 #include "SFLRequest.hpp"
 #include "TCPSessionIOCreator.hpp"
+#include "VolumeControl.hpp"
 
 
 
@@ -32,6 +33,8 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< TemporaryRequest >(QString("hold"));
   Requester::instance().registerObject< TemporaryRequest >(QString("unhold"));
   Requester::instance().registerObject< TemporaryRequest >(QString("senddtmf"));
+  Requester::instance().registerObject< Request >(QString("volume"));
+  Requester::instance().registerObject< Request >(QString("micvolume"));
 }
 
 void
@@ -78,6 +81,16 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
   QObject::connect(&PhoneLineManager::instance(), SIGNAL(bufferStatusSet(QString)),
 		   w->mLcd, SLOT(setBufferStatus(QString)));
 
+
+  //Volume connections
+  QObject::connect(w->mVolume, SIGNAL(valueUpdated(int)),
+		   &PhoneLineManager::instance(), SLOT(setVolume(int)));
+  QObject::connect(w->mMicVolume, SIGNAL(valueUpdated(int)),
+		   &PhoneLineManager::instance(), SLOT(setMicVolume(int)));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(volumeUpdated(int)),
+		   w->mVolume, SLOT(setValue(int)));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(micVolumeUpdated(int)),
+		   w->mMicVolume, SLOT(setValue(int)));
 
 
 

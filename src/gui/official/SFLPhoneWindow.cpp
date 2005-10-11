@@ -33,12 +33,21 @@
 #define MUTE_RELEASED_IMAGE "images/mute_off.png"
 #define MUTE_PRESSED_IMAGE "images/mute_on.png"
 #define VOLUME_IMAGE "images/volume.png"
+#define CLOSE_RELEASED_IMAGE "images/close_off.png"
+#define CLOSE_PRESSED_IMAGE "images/close_on.png"
+#define MINIMIZE_RELEASED_IMAGE "images/minimize_off.png"
+#define MINIMIZE_PRESSED_IMAGE "images/minimize_on.png"
+
+
 			    
 SFLPhoneWindow::SFLPhoneWindow()
 #ifdef QT3_SUPPORT
   : QMainWindow(NULL, Qt::FramelessWindowHint)
 #else
-    : QMainWindow(NULL, NULL, Qt::WDestructiveClose)
+    : QMainWindow(NULL, NULL, 
+		  Qt::WDestructiveClose | 
+		  Qt::WStyle_Customize | 
+		  Qt::WStyle_NoBorder)
 #endif
 {
   // Initialize the background image
@@ -114,11 +123,15 @@ SFLPhoneWindow::initGUIButtons()
 			      mMain);
   mVolume->setOrientation(VolumeControl::Vertical);
   mVolume->move(365,91);
-
+  QObject::connect(mVolume, SIGNAL(valueUpdated(int)),
+		   this, SIGNAL(volumeUpdated(int)));
+  
   mMicVolume = new VolumeControl(QString(VOLUME_IMAGE),
 				 mMain);
   mMicVolume->setOrientation(VolumeControl::Vertical);
   mMicVolume->move(347,91);
+  QObject::connect(mVolume, SIGNAL(valueUpdated(int)),
+		   this, SIGNAL(micVolumeUpdated(int)));
 			      
 }
 
@@ -141,14 +154,14 @@ SFLPhoneWindow::initLineButtons()
 
 void SFLPhoneWindow::initWindowButtons()
 {
-  mCloseButton = new JPushButton(":/sflphone/images/close_off.png",
-				 ":/sflphone/images/close_on.png",
+  mCloseButton = new JPushButton(CLOSE_RELEASED_IMAGE,
+				 CLOSE_PRESSED_IMAGE,
 				 mMain);
   QObject::connect(mCloseButton, SIGNAL(clicked()),
 		   this, SLOT(close()));
   mCloseButton->move(374,5);
-  mMinimizeButton = new JPushButton(":/sflphone/images/minimize_off.png",
-				    ":/sflphone/images/minimize_on.png",
+  mMinimizeButton = new JPushButton(MINIMIZE_RELEASED_IMAGE,
+				    MINIMIZE_PRESSED_IMAGE,
 				    mMain);
   QObject::connect(mMinimizeButton, SIGNAL(clicked()),
 		   this, SLOT(lower()));

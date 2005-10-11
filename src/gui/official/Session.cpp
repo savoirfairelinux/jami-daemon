@@ -75,6 +75,22 @@ Session::unmute() const
 }
 
 QString
+Session::volume(unsigned int volume) const
+{
+  std::list< QString > args;
+  args.push_back(QString("%1").arg(volume));
+  return Requester::instance().send(mId, "volume", args);
+}
+
+QString
+Session::micVolume(unsigned int volume) const
+{
+  std::list< QString > args;
+  args.push_back(QString("%1").arg(volume));
+  return Requester::instance().send(mId, "micvolume", args);
+}
+
+QString
 Session::getCallStatus() const
 {
   return Requester::instance().send(mId, "getcallstatus", std::list< QString >());

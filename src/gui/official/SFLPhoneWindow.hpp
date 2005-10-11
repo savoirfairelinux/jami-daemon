@@ -29,6 +29,8 @@ signals:
   void keyPressed(Qt::Key);
   void reconnectAsked();
   void resendStatusAsked();
+  void volumeUpdated(int);
+  void micVolumeUpdated(int);
 
  public slots:
   void mousePressEvent(QMouseEvent *event);
