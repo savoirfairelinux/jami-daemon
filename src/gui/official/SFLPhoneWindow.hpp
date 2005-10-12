@@ -46,7 +46,7 @@ signals:
    * This function will prompt a message box, to ask
    * if the user want to resend the getcallstatus request.
    */
-  void askResendStatus();
+  void askResendStatus(QString);
 
 protected:
   void keyPressEvent(QKeyEvent *e);

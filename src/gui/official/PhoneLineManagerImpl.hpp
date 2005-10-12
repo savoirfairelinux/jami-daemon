@@ -49,7 +49,8 @@ signals:
   void disconnected();
   void readyToSendStatus();
   void readyToHandleEvents();
-  void gotErrorOnCallStatus();
+  void gotErrorOnGetEvents(QString);
+  void gotErrorOnCallStatus(QString);
   void globalStatusSet(QString);
   void bufferStatusSet(QString);
   void actionSet(QString);
@@ -241,8 +242,11 @@ public slots:
    */
   void setMicVolume(int volume);
 
-  void errorOnCallStatus()
-  {emit gotErrorOnCallStatus();}
+  void errorOnGetEvents(const QString &message)
+  {emit gotErrorOnGetEvents(message);}
+
+  void errorOnCallStatus(const QString &message)
+  {emit gotErrorOnCallStatus(message);}
 
  private slots:
   /**

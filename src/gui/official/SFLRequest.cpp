@@ -26,6 +26,7 @@ EventRequest::onError(const QString &code, const QString &message)
   DebugOutput::instance() << QObject::tr("EventRequest error: (%1) %1\n")
     .arg(code)
     .arg(message);
+  PhoneLineManager::instance().errorOnGetEvents(message);
 }
 
 void
@@ -42,6 +43,7 @@ EventRequest::onSuccess(const QString &code, const QString &message)
   DebugOutput::instance() << QObject::tr("EventRequest success: (%1) %1\n")
     .arg(code)
     .arg(message);
+  PhoneLineManager::instance().start();
 }
 
 CallStatusRequest::CallStatusRequest(const QString &sequenceId,
@@ -57,7 +59,7 @@ CallStatusRequest::onError(const QString &code, const QString &message)
   DebugOutput::instance() << QObject::tr("CallStatusRequest error: (%1) %1\n")
     .arg(code)
     .arg(message);
-  PhoneLineManager::instance().errorOnCallStatus();
+  PhoneLineManager::instance().errorOnCallStatus(message);
 }
 
 void

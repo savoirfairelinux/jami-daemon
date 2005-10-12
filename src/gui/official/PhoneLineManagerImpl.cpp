@@ -99,6 +99,7 @@ PhoneLineManagerImpl::startSession()
 {
   isInitialized();
 
+  closeSession();
   emit globalStatusSet(QString(tr("Trying to get line status...")));
   mSession->getCallStatus();
 }
@@ -129,6 +130,10 @@ PhoneLineManagerImpl::closeSession()
     mPhoneLines[i]->disconnect();
     i++;
   }
+
+  emit lineStatusSet("");
+  emit bufferStatusSet("");
+  emit globalStatusSet("Disconnected.");
 }
 
 

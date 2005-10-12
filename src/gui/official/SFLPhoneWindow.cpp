@@ -181,7 +181,7 @@ SFLPhoneWindow::askReconnect()
 				  tr("SFLPhone disconnected"),
 				  tr("The link between SFLPhone and SFLPhoned is broken.\n"
 				     "Do you want to try to reconnect? If not, the application\n"
-				     "will close."),
+				     "will close. Be sure that sflphoned is running."),
 				  QMessageBox::Retry | QMessageBox::Default,
 				  QMessageBox::No | QMessageBox::Escape);
   if (ret == QMessageBox::Retry) {
@@ -193,13 +193,14 @@ SFLPhoneWindow::askReconnect()
 }
 
 void 
-SFLPhoneWindow::askResendStatus()
+SFLPhoneWindow::askResendStatus(QString message)
 {
   int ret = QMessageBox::critical(NULL, 
 				  tr("SFLPhone status error"),
 				  tr("The server returned an error for the lines status.\n"
+				     "<i>\n%1\n</i>"
 				     "Do you want to try to resend this command? If not,\n"
-				     "the application will close."),
+				     "the application will close.").arg(message),
 				  QMessageBox::Retry | QMessageBox::Default,
 				  QMessageBox::No | QMessageBox::Escape);
   if (ret == QMessageBox::Retry) {
