@@ -44,8 +44,8 @@ public:
   int incomingCall(short id, const std::string& accountId, const std::string& from);
 
 	void peerAnsweredCall (short id);
-	int peerRingingCall (short id);
-	int peerHungupCall (short id);
+	void peerRingingCall (short id);
+	void peerHungupCall (short id);
 	void displayStatus (const std::string& status);
   void displayConfigError(const std::string& error);
 	void displayTextMessage (short id, const std::string& message);

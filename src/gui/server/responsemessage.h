@@ -42,7 +42,10 @@ public:
     std::string toString() const;
     bool isFinal() const;
 private:
-    // 3 numbers long sequenceId
+    // append an encoded string to the message
+    void appendMessage(const std::string& strToken);
+
+    // 3 numbers long code
     std::string _code;
     std::string _seq;
     std::string _message;

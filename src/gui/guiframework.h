@@ -35,8 +35,8 @@ public:
 	/* Parent class to child class */
 	virtual int incomingCall (short id, const std::string& accountId, const std::string& from) = 0;
 	virtual void peerAnsweredCall (short id) = 0;
-	virtual int peerRingingCall (short id) = 0;
-	virtual int peerHungupCall (short id) = 0;
+	virtual void peerRingingCall (short id) = 0;
+	virtual void peerHungupCall (short id) = 0;
 	virtual void displayStatus (const std::string& status) = 0;
 	virtual void displayConfigError (const std::string& error) = 0;
 	virtual void displayTextMessage (short id, const std::string& message) = 0;

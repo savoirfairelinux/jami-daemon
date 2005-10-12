@@ -244,6 +244,10 @@ GUIServerImpl::hangupCall(const std::string& callId)
   return false;
 }
 
+/*
+ * we hangup everything in callmap, and flush it
+ * @return false if atleast one hangup failed
+ */
 bool
 GUIServerImpl::hangupAll()
 {
@@ -303,8 +307,7 @@ GUIServerImpl::incomingCall (short id, const std::string& accountId, const std::
 
   insertSubCall(id, subcall);
 
-  _requestManager.sendResponse(ResponseMessage("001", _getEventsSequenceId,
-arg));
+  _requestManager.sendResponse(ResponseMessage("001", _getEventsSequenceId,arg));
 
   return 0;
 }
@@ -315,39 +318,32 @@ GUIServerImpl::peerAnsweredCall (short id)
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
     _requestManager.sendResponse(ResponseMessage("200", iter->second.sequenceId(), "OK"));
-  } else {
-    std::ostringstream responseMessage;
-    responseMessage << "Peer Answered Call: " << id;
-    _requestManager.sendResponse(ResponseMessage("500", _getEventsSequenceId,
-responseMessage.str()));
   }
 }
 
-int  
+void
 GUIServerImpl::peerRingingCall (short id) 
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
     _requestManager.sendResponse(ResponseMessage("151", iter->second.sequenceId(), "Ringing"));
   } 
-  return 0;
 }
 
-int  
+void
 GUIServerImpl::peerHungupCall (short id) 
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
-    std::ostringstream responseMessage;
-    responseMessage << iter->second.callId() << " hangup";
+    TokenList tk;
+    tk.push_back(iter->second.callId());
+    tk.push_back("hangup");
 
-    _requestManager.sendResponse(ResponseMessage("002", _getEventsSequenceId,
-responseMessage.str()));
+    _requestManager.sendResponse(ResponseMessage("002", _getEventsSequenceId,tk));
     
     // remove this call...
     _callMap.erase(id);
   }
-  return 0;
 }
 
 void  
@@ -453,9 +449,10 @@ GUIServerImpl::callFailure(short id)
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
-    std::ostringstream responseMessage;
-    responseMessage << iter->second.callId() << " Wrong number";
+    TokenList tk;
+    tk.push_back(iter->second.callId());
+    tk.push_back("Wrong number");
 
-    _requestManager.sendResponse(ResponseMessage("504", iter->second.sequenceId(), responseMessage.str()));
+    _requestManager.sendResponse(ResponseMessage("504", iter->second.sequenceId(), tk));
   }
 }

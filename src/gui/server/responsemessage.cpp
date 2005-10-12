@@ -29,14 +29,8 @@ ResponseMessage::ResponseMessage(const std::string& code,
       const std::string& seq,
       const std::string& message) : _code(code), _seq(seq)
 {
-    int len = message.length();
-    if (len) {
-      char *tmp = new char[len*3+2];
-      ost::urlEncode(message.c_str(), tmp, len*3+2);
-      // we don't have to put a '\0' right?
-      _message = tmp;
-      delete [] tmp; tmp = NULL;
-    }
+    _message = "";
+    appendMessage(message);
 }
 
 /*
@@ -49,20 +43,13 @@ ResponseMessage::ResponseMessage(const std::string& code,
 {
   TokenList::iterator iter=arg.begin();
   if (iter!=arg.end()) {
-    _message = *iter;
+    appendMessage(*iter);
     iter++;
   }
   // add space between each
   while(iter!=arg.end()) {
     _message.append(" ");
-    int len = iter->length();
-    if (len) {
-      char *tmp = new char[len*3+2];
-      ost::urlEncode(iter->c_str(), tmp, len*3+2);
-      // we don't have to put a '\0' right?
-      _message.append(tmp);
-      delete [] tmp; tmp = NULL;
-    }
+    appendMessage(*iter);
     iter++;
   }
 }
@@ -102,4 +89,16 @@ ResponseMessage::isFinal() const
   return final;
 }
 
+void
+ResponseMessage::appendMessage(const std::string& strToken)
+{
+  int len = strToken.length();
+  if (len) {
+    char *tmp = new char[len*3+2];
+    ost::urlEncode(strToken.c_str(), tmp, len*3+2);
+    // we don't have to put a '\0' right?
+    _message.append(tmp);
+    delete [] tmp; tmp = NULL;
+  }
+}
 

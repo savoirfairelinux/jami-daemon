@@ -310,8 +310,8 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
     // If no SIP proxy setting for direct call with only IP address
     if (checkNetwork()) {
       if (startCall(id, from, to, "", "") <= 0) {
-	_debug("Warning SipVoIPLink: call not started\n");
-	return -1;
+    	 _debug("Warning SipVoIPLink: call not started\n");
+	     return -1;
       }
     } else {
       manager.displayErrorText(id, "No network found\n");
@@ -324,8 +324,8 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
       manager.getConfigString(SIGNALISATION, PROXY) + ";lr>";
     if (checkNetwork()) {
       if (startCall(id, from, to, "", route) <= 0) {
-	_debug("Warning SipVoIPLink: call not started\n");
-	return -1;
+	     _debug("Warning SipVoIPLink: call not started\n");
+	     return -1;
       }
     } else {
       manager.displayErrorText(id, "No network found\n");
