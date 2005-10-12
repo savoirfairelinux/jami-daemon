@@ -35,6 +35,11 @@ public:
   void unregisterCall(const QString &id);
 
   /**
+   * Return true if the call is registered.
+   */
+  bool exist(const QString &id);
+
+  /**
    * Return the call with the given id. If
    * there's no such call it will throw a
    * std::runtime_error.

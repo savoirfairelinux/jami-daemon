@@ -100,6 +100,7 @@ PermanentRequest::onError(Call call,
 		     const QString &, 
 		     const QString &message)
 {
+  DebugOutput::instance() << QObject::tr("PermanentRequest: Error: %1").arg(toString());
   PhoneLine *line = PhoneLineManager::instance().getLine(call);
   if(line) {
     PhoneLineLocker guard(line, false);
@@ -207,18 +208,23 @@ CallRequest::onError(Account,
 		     const QString &, 
 		     const QString &message)
 {
-  PhoneLine *line = 
-    PhoneLineManager::instance().getLine(CallManager::instance().getCall(mCallId));
-  if(line) {
-    PhoneLineLocker guard(line, false);
-    line->setLineStatus(message);
-    line->error();
+  if(CallManager::instance().exist(mCallId)) {
+    PhoneLine *line = 
+      PhoneLineManager::instance().getLine(CallManager::instance().getCall(mCallId));
+    if(line) {
+      PhoneLineLocker guard(line, false);
+      line->setLineStatus(message);
+      line->error();
+    }
+    else {
+      DebugOutput::instance() << 
+	QObject::tr("We received an error on a call "
+		    "that doesn't have a phone line (%1).\n")
+	.arg(mCallId);
+    }
   }
   else {
-    DebugOutput::instance() << 
-      QObject::tr("We received an error on a call "
-		  "that doesn't have a phone line (%1).\n")
-      .arg(mCallId);
+    DebugOutput::instance() << QObject::tr("CallRequest: Trying to retreive an unregistred call (%1)\n").arg(mCallId);
   }
 }
 
@@ -227,17 +233,22 @@ CallRequest::onEntry(Account,
 		     const QString &, 
 		     const QString &message)
 {
-  PhoneLine *line = 
-    PhoneLineManager::instance().getLine(CallManager::instance().getCall(mCallId));
-  if(line) {
-    PhoneLineLocker guard(line, false);
-    line->setLineStatus(message);
+  if(CallManager::instance().exist(mCallId)) {
+    PhoneLine *line = 
+      PhoneLineManager::instance().getLine(CallManager::instance().getCall(mCallId));
+    if(line) {
+      PhoneLineLocker guard(line, false);
+      line->setLineStatus(message);
+    }
+    else {
+      DebugOutput::instance() << 
+	QObject::tr("We received a status on a call related request "
+		    "that doesn't have a phone line (%1).\n")
+	.arg(mCallId);
+    }
   }
   else {
-    DebugOutput::instance() << 
-      QObject::tr("We received a status on a call related request "
-		  "that doesn't have a phone line (%1).\n")
-      .arg(mCallId);
+    DebugOutput::instance() << QObject::tr("CallRequest: Trying to retreive an unregistred call (%1)\n").arg(mCallId);
   }
 }
 
@@ -246,16 +257,21 @@ CallRequest::onSuccess(Account,
 		       const QString &, 
 		       const QString &message)
 {
-  PhoneLine *line = 
-    PhoneLineManager::instance().getLine(CallManager::instance().getCall(mCallId));
-  if(line) {
-    PhoneLineLocker guard(line, false);
-    line->setLineStatus(message);
+  if(CallManager::instance().exist(mCallId)) {
+    PhoneLine *line = 
+      PhoneLineManager::instance().getLine(CallManager::instance().getCall(mCallId));
+    if(line) {
+      PhoneLineLocker guard(line, false);
+      line->setLineStatus(message);
+    }
+    else {
+      DebugOutput::instance() <<
+	QObject::tr("We received a success on a call related request "
+		    "that doesn't have a phone line (%1).\n")
+	.arg(mCallId);
+    }
   }
   else {
-    DebugOutput::instance() <<
-      QObject::tr("We received a success on a call related request "
-		  "that doesn't have a phone line (%1).\n")
-      .arg(mCallId);
+    DebugOutput::instance() << QObject::tr("CallRequest: Trying to retreive an unregistred call (%1)\n").arg(mCallId);
   }
 }

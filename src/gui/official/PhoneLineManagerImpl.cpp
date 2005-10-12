@@ -133,6 +133,7 @@ PhoneLineManagerImpl::closeSession()
 
   emit lineStatusSet("");
   emit bufferStatusSet("");
+  emit actionSet("");
   emit globalStatusSet("Disconnected.");
 }
 

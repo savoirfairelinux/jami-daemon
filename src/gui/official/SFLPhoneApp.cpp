@@ -28,13 +28,13 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< PermanentRequest >(QString("notavailable"));
   Requester::instance().registerObject< PermanentRequest >(QString("refuse"));
   Requester::instance().registerObject< PermanentRequest >(QString("hangup"));
-  Requester::instance().registerObject< TemporaryRequest >(QString("mute"));
   Requester::instance().registerObject< TemporaryRequest >(QString("unmute"));
   Requester::instance().registerObject< TemporaryRequest >(QString("hold"));
   Requester::instance().registerObject< TemporaryRequest >(QString("unhold"));
   Requester::instance().registerObject< TemporaryRequest >(QString("senddtmf"));
   Requester::instance().registerObject< Request >(QString("setspkrvolume"));
   Requester::instance().registerObject< Request >(QString("setmicvolume"));
+  Requester::instance().registerObject< Request >(QString("mute"));
 }
 
 void

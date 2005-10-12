@@ -103,14 +103,23 @@ CallRelatedRequest::CallRelatedRequest(const QString &sequenceId,
 			 const QString &command,
 			 const std::list< QString > &args)
   : Request(sequenceId, command, args)
-{}
+{
+  if(args.begin() != args.end()) {
+    mCallId = *args.begin();
+  }
+}
 
 void
 CallRelatedRequest::onError(const QString &code, const QString &message)
 {
-  onError(CallManager::instance().getCall(mCallId), 
-	  code, 
-	  message);
+  if(CallManager::instance().exist(mCallId)) {
+    onError(CallManager::instance().getCall(mCallId), 
+	    code, 
+	    message);
+  }
+  else {
+    DebugOutput::instance() << QObject::tr("CallRelatedRequest: Trying to retreive an unregistred call (%1)\n").arg(mCallId);
+  }
 }
 
 void
@@ -120,9 +129,14 @@ CallRelatedRequest::onError(Call, const QString &, const QString &)
 void
 CallRelatedRequest::onEntry(const QString &code, const QString &message)
 {
-  onEntry(CallManager::instance().getCall(mCallId),
-	  code, 
-	  message);
+  if(CallManager::instance().exist(mCallId)) {
+    onEntry(CallManager::instance().getCall(mCallId),
+	    code, 
+	    message);
+  }
+  else {
+    DebugOutput::instance() << QObject::tr("CallRelatedRequest: Trying to retreive an unregistred call (%1)\n").arg(mCallId);
+  }
 }
 
 void
@@ -132,9 +146,14 @@ CallRelatedRequest::onEntry(Call, const QString &, const QString &)
 void
 CallRelatedRequest::onSuccess(const QString &code, const QString &message)
 {
-  onSuccess(CallManager::instance().getCall(mCallId),
-	    code, 
-	    message);
+  if(CallManager::instance().exist(mCallId)) {
+    onSuccess(CallManager::instance().getCall(mCallId),
+	      code, 
+	      message);
+  }
+  else {
+    DebugOutput::instance() << QObject::tr("CallRelatedRequest: Trying to retreive an unregistred call (%1)\n").arg(mCallId);
+  }
 }
 
 void

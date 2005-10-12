@@ -158,19 +158,13 @@ RequesterImpl::receiveAnswer(const QString &code,
 QString
 RequesterImpl::generateCallId()
 {
-  QString s("cCallID:");
-  s += mCallIdCount;
-  mCallIdCount++;
-  return s;
+  return QString("cCallID:%1").arg(mCallIdCount++);
 }
 
 QString
 RequesterImpl::generateSessionId()
 {
-  QString s("cSessionID:");
-  s += mSessionIdCount;
-  mSessionIdCount++;
-  return s;
+  return QString("cSessionID:").arg(mSequenceIdCount++);
 }
 
 QString

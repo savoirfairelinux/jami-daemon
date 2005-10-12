@@ -18,9 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <qobject.h>
 #include <stdexcept>
 
 #include "CallManagerImpl.hpp"
+#include "DebugOutput.hpp"
 
 void
 CallManagerImpl::registerCall(const Call &call)
@@ -41,12 +43,21 @@ CallManagerImpl::unregisterCall(const QString &id)
 {
   QMutexLocker guard(&mCallsMutex);
   std::map< QString, Call >::iterator pos = mCalls.find(id);
+  if(pos != mCalls.end()) {
+    mCalls.erase(pos);
+  }
+}
+
+bool
+CallManagerImpl::exist(const QString &id)
+{
+  QMutexLocker guard(&mCallsMutex);
+  std::map< QString, Call >::iterator pos = mCalls.find(id);
   if(pos == mCalls.end()) {
-    //TODO
-    //throw std::runtime_error(QString("Trying to unregister an unregistred call (%1)").arg(id).toStdString().c_str());
+    return false;
   }
 
-  mCalls.erase(pos);
+  return true;
 }
 
 Call
@@ -55,8 +66,7 @@ CallManagerImpl::getCall(const QString &id)
   QMutexLocker guard(&mCallsMutex);
   std::map< QString, Call >::iterator pos = mCalls.find(id);
   if(pos == mCalls.end()) {
-    //TODO
-    //throw std::runtime_error(QString("Trying to retreive an unregistred call (%1)").arg(id).toStdString().c_str());
+    throw std::runtime_error("Trying to retreive an unregistred call\n");
   }
 
   return pos->second;

@@ -198,7 +198,7 @@ SFLPhoneWindow::askResendStatus(QString message)
   int ret = QMessageBox::critical(NULL, 
 				  tr("SFLPhone status error"),
 				  tr("The server returned an error for the lines status.\n"
-				     "<i>\n%1\n</i>"
+				     "\n%1\n\n"
 				     "Do you want to try to resend this command? If not,\n"
 				     "the application will close.").arg(message),
 				  QMessageBox::Retry | QMessageBox::Default,
