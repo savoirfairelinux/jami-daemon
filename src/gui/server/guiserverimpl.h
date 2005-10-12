@@ -46,15 +46,15 @@ public:
 	void peerAnsweredCall (short id);
 	int peerRingingCall (short id);
 	int peerHungupCall (short id);
+	void displayStatus (const std::string& status);
+  void displayConfigError(const std::string& error);
 	void displayTextMessage (short id, const std::string& message);
 	void displayErrorText (short id, const std::string& message);
 	void displayError (const std::string& error);
-	void displayStatus (const std::string& status);
-	void displayContext (short id);
-	void setup (void);
 	//void startVoiceMessageNotification (void);
 	//void stopVoiceMessageNotification (void);
   void sendVoiceNbMessage(const std::string& nb_msg);
+  void setup();
 
   void sendMessage(const std::string& code, const std::string& seqId, TokenList&
 arg);
@@ -81,7 +81,7 @@ arg);
   bool getCurrentCallId(std::string& callId);
 
   std::string version();
-  void quit() { _requestManager.quit(); }
+  void quit() { _getEventsSequenceId="seq0"; _requestManager.quit(); }
   void stop() { _requestManager.stop(); }
 
   // observer methods

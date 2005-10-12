@@ -37,18 +37,15 @@ public:
 	virtual void peerAnsweredCall (short id) = 0;
 	virtual int peerRingingCall (short id) = 0;
 	virtual int peerHungupCall (short id) = 0;
+	virtual void displayStatus (const std::string& status) = 0;
+	virtual void displayConfigError (const std::string& error) = 0;
 	virtual void displayTextMessage (short id, const std::string& message) = 0;
 	virtual void displayErrorText (short id, const std::string& message) = 0;
 	virtual void displayError (const std::string& error) = 0;
-	virtual void displayStatus (const std::string& status) = 0;
-	virtual void displayContext (short id) = 0;
-	virtual void setup (void) = 0;
-	//virtual int selectedCall (void) = 0;
-	//virtual bool isCurrentId (short) = 0;
 	virtual void startVoiceMessageNotification (void) {}
 	virtual void stopVoiceMessageNotification (void) {}
   virtual void sendVoiceNbMessage(const std::string& nb_msg) = 0;
-	
+	virtual void setup() = 0;
   virtual void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg) = 0;
   virtual void sendCallMessage(const std::string& code, 
   const std::string& sequenceId, 

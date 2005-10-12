@@ -27,8 +27,16 @@ const std::string ResponseMessage::FINALCODE = "2456";
 
 ResponseMessage::ResponseMessage(const std::string& code,
       const std::string& seq,
-      const std::string& message) : _code(code), _seq(seq), _message(message)
+      const std::string& message) : _code(code), _seq(seq)
 {
+    int len = message.length();
+    if (len) {
+      char *tmp = new char[len*3+2];
+      ost::urlEncode(message.c_str(), tmp, len*3+2);
+      // we don't have to put a '\0' right?
+      _message = tmp;
+      delete [] tmp; tmp = NULL;
+    }
 }
 
 /*

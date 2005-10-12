@@ -571,7 +571,7 @@ ManagerImpl::registerVoIPLink (void)
 {
   int returnValue = 0;
   if ( !useStun() ) {
-    if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() == 0) {
+    if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() >= 0) {
       returnValue = true;
     } else {
       _debug("ManagerImpl::registerVoIPLink: Registration Failed\n");
@@ -849,7 +849,8 @@ void
 ManagerImpl::displayError (const string& error)
 {
   if(_gui) {
-    _gui->displayStatus(error);
+    _debug("Display Error: %s\n", error.c_str());
+    _gui->displayError(error);
   }
 }
 

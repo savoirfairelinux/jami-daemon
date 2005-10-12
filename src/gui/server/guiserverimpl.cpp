@@ -342,59 +342,74 @@ responseMessage.str()));
 }
 
 void  
+GUIServerImpl::displayStatus (const std::string& status) 
+{
+  TokenList tk;
+  tk.push_back(status);
+  tk.push_back("Status");
+  _requestManager.sendResponse(ResponseMessage("100", _getEventsSequenceId, tk));
+}
+
+void  
+GUIServerImpl::displayConfigError (const std::string& error) 
+{
+  TokenList tk;
+  tk.push_back(error);
+  tk.push_back("Config Error");
+  _requestManager.sendResponse(ResponseMessage("101", _getEventsSequenceId, tk));
+}
+
+void  
 GUIServerImpl::displayTextMessage (short id, const std::string& message) 
 {
-  std::ostringstream responseMessage;
-  std::string seq = getSequenceIdFromId(id);
-  responseMessage << "s" << id << " text message: " + message;
-  _requestManager.sendResponse(ResponseMessage("700", seq, responseMessage.str()));
+  try {
+    std::string callId = getCallIdFromId(id);
+    TokenList tk;
+    tk.push_back(callId);
+    tk.push_back(message);
+    tk.push_back("Text message");
+    _requestManager.sendResponse(ResponseMessage("102", _getEventsSequenceId, tk));
+  } catch(...) {
+    TokenList tk;
+    tk.push_back(message);
+    tk.push_back("Text message");
+    _requestManager.sendResponse(ResponseMessage("103", _getEventsSequenceId, tk));
+  }
 }
 
 void  
 GUIServerImpl::displayErrorText (short id, const std::string& message) 
 {
-  std::ostringstream responseMessage;
-  std::string seq = getSequenceIdFromId(id);
-  responseMessage << "s" << id << " error text: " << message;
-  _requestManager.sendResponse(ResponseMessage("700", seq, responseMessage.str()));
+  try {
+    std::string callId = getCallIdFromId(id);
+    TokenList tk;
+    tk.push_back(callId);
+    tk.push_back(message);
+    tk.push_back("Error");
+    _requestManager.sendResponse(ResponseMessage("104", _getEventsSequenceId, tk));
+  } catch(...) {
+    displayError(message);
+  }
 }
 
 void  
 GUIServerImpl::displayError (const std::string& error) 
 {
-  std::ostringstream responseMessage;
-  responseMessage << "error: " << error;
-  _requestManager.sendResponse(ResponseMessage("700", _getEventsSequenceId,
-responseMessage.str()));
-}
-
-void  
-GUIServerImpl::displayStatus (const std::string& status) 
-{
-  std::ostringstream responseMessage;
-  responseMessage << "status: " + status;
-  _requestManager.sendResponse(ResponseMessage("700", _getEventsSequenceId,
-responseMessage.str()));
-}
-
-void  
-GUIServerImpl::displayContext (short id) 
-{
-  std::ostringstream responseMessage;
-  responseMessage << "s" << id;
-  std::string seq = getSequenceIdFromId(id);
-  _requestManager.sendResponse(ResponseMessage("700", seq, responseMessage.str()));
-}
-
-void  
-GUIServerImpl::setup (void) 
-{
+  TokenList tk;
+  tk.push_back(error);
+  tk.push_back("Error");
+  _requestManager.sendResponse(ResponseMessage("105", _getEventsSequenceId, tk));
 }
 
 void
 GUIServerImpl::sendVoiceNbMessage(const std::string& nb_msg)
 {
   _requestManager.sendResponse(ResponseMessage("020", _getEventsSequenceId, nb_msg));
+}
+
+void
+GUIServerImpl::setup() 
+{
 }
 
 void 

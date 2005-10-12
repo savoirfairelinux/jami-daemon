@@ -62,7 +62,6 @@ RequestManager::exec()
       while(_sessionIO && _sessionIO->good() && std::cin.good() && !_quit) {
 
         if (_sessionIO->receive(input)) {
-          _debug("Receive Input...: %s\n", input.c_str());
           request = _factory.create(input);
           outputResponse = request->execute();
 
