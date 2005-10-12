@@ -33,8 +33,8 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< TemporaryRequest >(QString("hold"));
   Requester::instance().registerObject< TemporaryRequest >(QString("unhold"));
   Requester::instance().registerObject< TemporaryRequest >(QString("senddtmf"));
-  Requester::instance().registerObject< Request >(QString("volume"));
-  Requester::instance().registerObject< Request >(QString("micvolume"));
+  Requester::instance().registerObject< Request >(QString("setspkrvolume"));
+  Requester::instance().registerObject< Request >(QString("setmicvolume"));
 }
 
 void

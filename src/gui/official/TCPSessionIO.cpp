@@ -35,6 +35,8 @@ TCPSessionIO::TCPSessionIO(const QString &hostname, Q_UINT16 port)
 		   this, SLOT(sendWaitingRequests()));
   QObject::connect(mSocket, SIGNAL(connected()),
 		   this, SIGNAL(connected()));
+  QObject::connect(mSocket, SIGNAL(connectionClosed()),
+		   this, SIGNAL(disconnected()));
   QObject::connect(mSocket, SIGNAL(error(int)),
 		   this, SLOT(error(int)));
   QObject::connect(mSocket, SIGNAL(error(int)),

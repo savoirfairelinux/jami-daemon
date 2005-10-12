@@ -68,7 +68,7 @@ JPushButton::transparize(const QString &image)
 }
 
 void
-JPushButton::release(bool modify) 
+JPushButton::release() 
 {
   setPixmap(mImages[0]);
   /*
@@ -80,7 +80,7 @@ JPushButton::release(bool modify)
 }
 
 void
-JPushButton::press(bool modify) 
+JPushButton::press() 
 {
   setPixmap(mImages[1]);
   /*

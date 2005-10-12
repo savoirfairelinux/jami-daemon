@@ -51,8 +51,8 @@ public slots:
   /**
    * This function will switch the button
    */
-  virtual void press(bool modify = true);
-  virtual void release(bool modify = true);
+  virtual void press();
+  virtual void release();
 
   virtual void setToggle(bool toggled);
 
