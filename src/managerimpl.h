@@ -183,6 +183,8 @@ public:
 	void displayErrorText (short id, const std::string& message);
 	void displayError (const std::string& error);
 	void displayStatus (const std::string& status);
+  void displayConfigError(const std::string& message);
+
 //	int selectedCall (void);
 //	bool isCurrentId (short id);
 	void startVoiceMessageNotification (const std::string& nb_msg);

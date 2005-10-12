@@ -86,8 +86,8 @@ public:
 	// Reimplementation of virtual functions
 	virtual int incomingCall (short id);
 	virtual void peerAnsweredCall (short id);
-	virtual int peerRingingCall (short id);
-	virtual int peerHungupCall (short id);
+	virtual void peerRingingCall (short id);
+	virtual void peerHungupCall (short id);
 	virtual void displayTextMessage (short id, const std::string& message);
 	virtual void displayErrorText (short id, const std::string& message);
 	virtual void displayError (const std::string& error);

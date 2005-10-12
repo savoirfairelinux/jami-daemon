@@ -30,8 +30,6 @@
 #include "voIPLink.h"
 #include "audio/audiortp.h"
 
-using namespace std;
-
 #define EXPIRES_VALUE	180
 // To build request
 #define INVITE_METHOD	"INVITE"
@@ -66,7 +64,7 @@ class CodecDescriptor;
 class SipCall;
 class EventThread;
 
-typedef vector< CodecDescriptor* > CodecDescriptorVector;
+typedef std::vector< CodecDescriptor* > CodecDescriptorVector;
 
 class SipVoIPLink : public VoIPLink {
 public:
@@ -78,13 +76,13 @@ public:
 	virtual void terminate (void);
 	virtual int setRegister (void);
 	virtual int setUnregister (void);
-	virtual int outgoingInvite (short id, const string& to_url);	
+	virtual int outgoingInvite (short id, const std::string& to_url);	
 	virtual int answer (short id);
 	virtual int hangup (short id);
 	virtual int cancel (short id);
 	virtual int onhold (short id);
 	virtual int offhold (short id);
-	virtual int transfer (short id, const string& to);
+	virtual int transfer (short id, const std::string& to);
 	virtual int refuse (short id);	
 	virtual int getEvent (void);
 	virtual void carryingDTMFdigits (short id, char code);
@@ -131,17 +129,17 @@ private:
 	int behindNat (void);
 
 	/*
-     * To Store the local IP address, and allow to know if the network is 
+   * To Store the local IP address, and allow to know if the network is 
 	 * available.
 	 *
-	 * Return -1 if an error occured and 0 if no error
+	 * Return false if an error occured and true if no error
 	 */	 
-	int getLocalIp (void);
+	bool getLocalIp (void);
 
 	/*
 	 * Return -1 if an error occured and 0 if no error
 	 */
-	int checkUrl(const string& url);
+	int checkUrl(const std::string& url);
 
 	/*
 	 * Allow the authentication when you want register
@@ -154,14 +152,14 @@ private:
 	 * Example: "Display user name" <sip:user@host.com>
 	 * Return the result in a string
 	 */
-	string fromHeader (const string& user, const string& host);
+	std::string fromHeader (const std::string& user, const std::string& host);
 
 	/*
 	 * Build a sip address with the number that you want to call
 	 * Example: sip:124@domain.com
 	 * Return the result in a string
 	 */
-	string toHeader(const string& to);
+	std::string toHeader(const std::string& to);
 
 	/*
 	 * Beginning point to make outgoing call.
@@ -170,8 +168,8 @@ private:
 	 * Build SDP body.
 	 * Return -1 if an error occured and 0 if no error
 	 */
-	int startCall (short id, const string& from, const string& to, 
-			const string& subject, const string& route);
+	int startCall (short id, const std::string& from, const std::string& to, 
+			const std::string& subject, const std::string& route);
 
 	/*
 	 * Look for call with same cid/did 
@@ -205,6 +203,11 @@ private:
    * Subscribe to message summary
    */
 	void subscribeMessageSummary();
+
+  /**
+   * End all sip call not deleted
+   */
+  void endSipCalls();
 
 	///////////////////////////
 	// Private member variables

@@ -877,7 +877,7 @@ QtGUIMainWindow::peerAnsweredCall (short id)
 	setChooseLine(false);
 }
 
-int 
+void 
 QtGUIMainWindow::peerRingingCall (short id)
 {
 	getPhoneLine(id)->setStatus(QString(getCall(id)->getStatus()));
@@ -885,7 +885,7 @@ QtGUIMainWindow::peerRingingCall (short id)
 }
 
 	
-int 
+void 
 QtGUIMainWindow::peerHungupCall (short id)
 {
 	int line = id2line(id);

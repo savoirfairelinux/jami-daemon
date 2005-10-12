@@ -204,6 +204,7 @@ RequestVersion::execute()
 ResponseMessage
 RequestQuit::execute()
 {
+  GUIServer::instance().stopTone();
   GUIServer::instance().quit();
   return message("200", "Quitting");
 }
@@ -211,6 +212,7 @@ RequestQuit::execute()
 ResponseMessage
 RequestStop::execute()
 {
+  GUIServer::instance().stopTone();
   GUIServer::instance().stop();
   return message("200", "Stopping server");
 }

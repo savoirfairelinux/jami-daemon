@@ -71,38 +71,26 @@ Call::getVoIPLink (void)
 	return _voIPLink;
 }
 
-string 
-Call::getStatus (void)
-{
-	return _status;
-}
-
-void 
-Call::setStatus (const string& status)
-{
-	_status = status;
-}
-
-string 
+std::string 
 Call::getCallerIdName (void)
 {
 	return _callerIdName;
 }
 
 void 
-Call::setCallerIdName (const string& callerId_name)
+Call::setCallerIdName (const std::string& callerId_name)
 {
 	_callerIdName = callerId_name;
 }
 
-string 
+std::string 
 Call::getCallerIdNumber (void)
 {
 	return _callerIdNumber;
 }
 
 void 
-Call::setCallerIdNumber (const string& callerId_number)
+Call::setCallerIdNumber (const std::string& callerId_number)
 {
 	_callerIdNumber = callerId_number;
 }
@@ -219,7 +207,7 @@ Call::isIncomingType (void)
 }
 
 int 
-Call::outgoingCall(const string& to)
+Call::outgoingCall(const std::string& to)
 {
 	return _voIPLink->outgoingInvite(_id, to);
 }
@@ -228,7 +216,6 @@ int
 Call::hangup  (void)
 {
 	int i = _voIPLink->hangup(_id);
-	_voIPLink->deleteSipCall(_id);
 	return i;
 }
 
@@ -236,7 +223,6 @@ int
 Call::cancel  (void)
 {
 	int i = _voIPLink->cancel(_id);
-	_voIPLink->deleteSipCall(_id);
 	return i;
 }
 
@@ -262,7 +248,7 @@ Call::offHold  (void)
 }
 
 int 
-Call::transfer  (const string& to)
+Call::transfer  (const std::string& to)
 {
 	int i = _voIPLink->transfer(_id, to);
 	return i;
@@ -272,7 +258,6 @@ int
 Call::refuse  (void)
 {
 	int i = _voIPLink->refuse(_id);
-	_voIPLink->deleteSipCall(_id);
 	return i;
 }
 

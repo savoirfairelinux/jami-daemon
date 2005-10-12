@@ -21,12 +21,8 @@
 #include <errno.h>
 #include <time.h>
 
-# include <sys/types.h> // mkdir(2)
-# include <sys/stat.h>	// mkdir(2)
-
-//#include <sys/socket.h> // inet_ntoa()
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
+#include <sys/types.h> // mkdir(2)
+#include <sys/stat.h>	// mkdir(2)
 
 #include <cc++/thread.h>
 #include <cc++/file.h>
@@ -59,8 +55,8 @@
 #define fill_config_int(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
 
-using namespace std;
-using namespace ost;
+//using namespace std;
+//using namespace ost;
  
 ManagerImpl::ManagerImpl (void)
 {
@@ -309,13 +305,12 @@ ManagerImpl::deleteCall (short id)
  * Main thread
  */
 int 
-ManagerImpl::outgoingCall (const string& to)
+ManagerImpl::outgoingCall (const std::string& to)
 {	
   short id = generateNewCallId();
   Call *call = pushBackNewCall(id, Outgoing);
   _debug("Outgoing Call with identifiant %d\n", id);
 
-  call->setStatus(string(TRYING_STATUS));
   call->setState(Call::Progressing);
   call->setCallerIdNumber(to);
   if (call->outgoingCall(to) == 0) {
@@ -339,7 +334,6 @@ ManagerImpl::hangupCall (short id)
 	if (call == NULL) {
 		return -1;
 	}
-	call->setStatus(string(HANGUP_STATUS));
 	call->setState(Call::Hungup);
 
 	int result = call->hangup();
@@ -364,7 +358,6 @@ ManagerImpl::cancelCall (short id)
 	call = getCall(id);
 	if (call == NULL)
 		return -1;
-	call->setStatus(string(HANGUP_STATUS));
 	call->setState(Call::Hungup);
 	_mutex.enterMutex();
 	_nCalls -= 1;
@@ -390,7 +383,6 @@ ManagerImpl::answerCall (short id)
 	if (call == NULL)
 		return -1;
 
-	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Call::Answered);
 
   if (call->isIncomingType()) {
@@ -412,7 +404,6 @@ ManagerImpl::onHoldCall (short id)
 	call = getCall(id);
 	if (call == NULL)
 		return -1;
-	call->setStatus(string(ONHOLD_STATUS));
 	call->setState(Call::OnHold);
 	return call->onHold();
 }
@@ -428,7 +419,6 @@ ManagerImpl::offHoldCall (short id)
 	call = getCall(id);
 	if (call == NULL)
 		return -1;
-	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Call::OffHold);
   setCurrentCallId(id);
   int returnValue = call->offHold();	
@@ -443,13 +433,12 @@ ManagerImpl::offHoldCall (short id)
  * Every Call
  */
 int 
-ManagerImpl::transferCall (short id, const string& to)
+ManagerImpl::transferCall (short id, const std::string& to)
 {
 	Call* call;
 	call = getCall(id);
 	if (call == NULL)
 		return -1;
-	call->setStatus(string(TRANSFER_STATUS));
 	call->setState(Call::Transfered);
   setCurrentCallId(0);
 	return call->transfer(to);
@@ -485,7 +474,6 @@ ManagerImpl::muteOn (short id)
 	call = getCall(id);
 	if (call == NULL)
 		return;
-	call->setStatus(string(MUTE_ON_STATUS));
 	call->setState(Call::MuteOn);
 }
 
@@ -500,7 +488,6 @@ ManagerImpl::muteOff (short id)
 	call = getCall(id);
 	if (call == NULL)
 		return;
-	call->setStatus(string(CONNECTED_STATUS));
 	call->setState(Call::MuteOff);
 }
 
@@ -525,7 +512,6 @@ ManagerImpl::refuseCall (short id)
   if ( call->getState() != Call::Progressing )
     return -1;
 
-  call->setStatus(string(HANGUP_STATUS));
   call->setState(Call::Refused);
   
   _mutex.enterMutex();
@@ -588,7 +574,7 @@ ManagerImpl::unregisterVoIPLink (void)
  * ??? action
  */
 int 
-ManagerImpl::sendTextMessage (short , const string& )
+ManagerImpl::sendTextMessage (short , const std::string& )
 {
 	return 1;
 }
@@ -725,7 +711,6 @@ ManagerImpl::incomingCall (short id)
 		return -1;
 
 	call->setType(Incoming);
-	call->setStatus(string(RINGING_STATUS));
 	call->setState(Call::Progressing);
 
   incWaitingCall();
@@ -753,7 +738,6 @@ ManagerImpl::peerAnsweredCall (short id)
   stopTone();
 
   Call* call = getCall(id);
-  call->setStatus(string(CONNECTED_STATUS));
   call->setState(Call::Answered);
 
   // switch current call
@@ -769,7 +753,6 @@ int
 ManagerImpl::peerRingingCall (short id)
 {
   Call* call = getCall(id);
-  call->setStatus(string(RINGING_STATUS));
   call->setState(Call::Ringing);
 
   // ring
@@ -793,7 +776,6 @@ ManagerImpl::peerHungupCall (short id)
     decWaitingCall();
   }
 
-  call->setStatus(string(HANGUP_STATUS));
   call->setState(Call::Hungup);
 
   if (_gui) _gui->peerHungupCall(id);
@@ -812,7 +794,7 @@ ManagerImpl::peerHungupCall (short id)
  * for outgoing call, send by SipEvent
  */
 void 
-ManagerImpl::displayTextMessage (short id, const string& message)
+ManagerImpl::displayTextMessage (short id, const std::string& message)
 {
   if(_gui) {
     _gui->displayTextMessage(id, message);
@@ -824,7 +806,7 @@ ManagerImpl::displayTextMessage (short id, const string& message)
  * for outgoing call, send by SipEvent
  */
 void 
-ManagerImpl::displayErrorText (short id, const string& message)
+ManagerImpl::displayErrorText (short id, const std::string& message)
 {
   if(_gui) {
     _gui->displayErrorText(id, message);
@@ -836,7 +818,7 @@ ManagerImpl::displayErrorText (short id, const string& message)
  * for outgoing call, send by SipEvent
  */
 void 
-ManagerImpl::displayError (const string& error)
+ManagerImpl::displayError (const std::string& error)
 {
   _debug("Display Error: %s\n", error.c_str());
   if(_gui) {
@@ -849,10 +831,22 @@ ManagerImpl::displayError (const string& error)
  * for outgoing call, send by SipEvent
  */
 void 
-ManagerImpl::displayStatus (const string& status)
+ManagerImpl::displayStatus (const std::string& status)
 {
   if(_gui) {
     _gui->displayStatus(status);
+  }
+}
+
+/**
+ * SipEvent Thread
+ * for outgoing call, send by SipEvent
+ */
+void 
+ManagerImpl::displayConfigError (const std::string& message)
+{
+  if(_gui) {
+    _gui->displayConfigError(message);
   }
 }
 
@@ -1023,48 +1017,12 @@ ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr) {
 		// Convert ipv4 address to host byte ordering
 		in.s_addr = ntohl (mappedAddr.addr);
 		addr = inet_ntoa(in);
-        _firewallAddr = string(addr);
+        _firewallAddr = std::string(addr);
         _debug("address firewall = %s\n",_firewallAddr.data());
     } else {
         _debug("Opened a stun socket pair FAILED\n");
     }
 }
-/*
-AudioDevice
-ManagerImpl::deviceList (int index)
-{
-  AudioDevice deviceParam;
-  deviceParam.hostApiName = 
-    portaudio::System::instance().deviceByIndex(index).hostApi().name();
-  deviceParam.deviceName = 
-    portaudio::System::instance().deviceByIndex(index).name();
-  return deviceParam;
-}
-
-int
-ManagerImpl::deviceCount (void)
-{
-	int numDevices = 0;
-	
-	portaudio::AutoSystem autoSys;
-	portaudio::System &sys = portaudio::System::instance();
-	numDevices = sys.deviceCount();
-	return numDevices;	
-}
-
-bool
-ManagerImpl::defaultDevice (int index) 
-{
-	bool defaultDisplayed = false;
-
-	portaudio::AutoSystem autoSys;
-	portaudio::System &sys = portaudio::System::instance(); 
-	if (sys.deviceByIndex(index).isSystemDefaultInputDevice()) {
-		defaultDisplayed = true;
-	}
-	return defaultDisplayed;
-}
-*/
 
 bool
 ManagerImpl::useStun (void) {
@@ -1110,7 +1068,7 @@ ManagerImpl::callVectorSize (void)
 int
 ManagerImpl::createSettingsPath (void) {
 	int exist = 1;
-  	_path = string(HOMEDIR) + "/." + PROGNAME;
+  	_path = std::string(HOMEDIR) + "/." + PROGNAME;
              
   	if (mkdir (_path.data(), 0755) != 0) {
 		// If directory	creation failed
@@ -1348,6 +1306,7 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
   // TODO: implement account
   std::string accountId = "acc1"; 
   std::string code;
+  std::string status;
   TokenList tk;
   Call* call;
 
@@ -1355,10 +1314,10 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
     CallVector::iterator iter = _callVector.begin();
     while(iter!=_callVector.end()){
       call = (*iter);
-      std::string status = call->getStatus();
       switch( call->getState() ) {
       case Call::Busy:
         code="113";
+        status = "Busy";
         break;
 
       case Call::Answered:
@@ -1368,14 +1327,17 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
 
       case Call::Ringing:
         code="111";
+        status = "Ringing";
         break;
 
       case Call::Progressing:
         code="110";
         status="Trying";
         break;
+
       default:
         code="115";
+        status="Other";
       }
       // No Congestion
       // No Wrong Number

@@ -34,10 +34,8 @@ class AudioCodec;
 #define _SENDONLY 1
 #define _RECVONLY 2
 
-using namespace std;
-
 // Vector of CodecDescriptor
-typedef vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
+typedef std::vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescriptorVector;
 
 class SipCall {
 public:

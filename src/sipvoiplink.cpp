@@ -19,8 +19,6 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <string>
-
 #include <eXosip2/eXosip.h>
 #include <osip2/osip.h>
 
@@ -58,10 +56,12 @@ SipVoIPLink::SipVoIPLink (short id)
 }
 
 SipVoIPLink::~SipVoIPLink(void) {
+  endSipCalls();
   eXosip_quit();
   delete _evThread; _evThread = NULL;
 }
 
+// for voIPLink interface
 void
 SipVoIPLink::terminate(void) 
 {
@@ -71,21 +71,16 @@ bool
 SipVoIPLink::checkNetwork (void) 
 {
   // Set IP address
-  if (getLocalIp() == -1) {
-    // If no network
-    return false;
-  } else {
-    return true;
-  }
+  return getLocalIp();
 }
 
 int
 SipVoIPLink::init (void)
 {
-  string tmp;
+  std::string tmp;
   int i;
 
-  tmp = string(PROGNAME) + "/" + string(VERSION);
+  tmp = std::string(PROGNAME) + "/" + std::string(VERSION);
 	
   i = eXosip_init ();
   if (i != 0) {
@@ -188,11 +183,11 @@ SipVoIPLink::setRegister (void)
   std::string from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), manager.getConfigString(SIGNALISATION, HOST_PART));
 
   if (manager.getConfigString(SIGNALISATION, HOST_PART).empty()) {
-    manager.error()->errorName(HOST_PART_FIELD_EMPTY);
+    manager.displayConfigError("Fill host part field");
     return -1;
   }
   if (manager.getConfigString(SIGNALISATION, USER_PART).empty()) {
-    manager.error()->errorName(USER_PART_FIELD_EMPTY);
+    manager.displayConfigError("Fill user part field");
     return -1;
   }
 
@@ -285,10 +280,10 @@ SipVoIPLink::setUnregister (void)
 }
 
 int
-SipVoIPLink::outgoingInvite (short id, const string& to_url) 
+SipVoIPLink::outgoingInvite (short id, const std::string& to_url) 
 {
-  string from;
-  string to;
+  std::string from;
+  std::string to;
 
   // TODO: should be inside account settings
   ManagerImpl& manager = Manager::instance();
@@ -298,7 +293,7 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
 	
   to = toHeader(to_url);
 
-  if (to.find("@") == string::npos and 
+  if (to.find("@") == std::string::npos and 
       manager.getConfigInt(SIGNALISATION, AUTO_REGISTER)) {
     to = to + "@" + manager.getConfigString(SIGNALISATION, HOST_PART);
   }
@@ -320,7 +315,7 @@ SipVoIPLink::outgoingInvite (short id, const string& to_url)
     return 0;
   } else {
     // If SIP proxy setting
-    string route = "<sip:" + 
+    std::string route = "<sip:" + 
       manager.getConfigString(SIGNALISATION, PROXY) + ";lr>";
     if (checkNetwork()) {
       if (startCall(id, from, to, "", route) <= 0) {
@@ -400,8 +395,7 @@ SipVoIPLink::hangup (short id)
 	   id, sipcall->getCid(), sipcall->getDid());	
     // Release SIP stack.
     eXosip_lock();
-    i = eXosip_call_terminate (sipcall->getCid(), 
-			       sipcall->getDid());
+    i = eXosip_call_terminate (sipcall->getCid(), sipcall->getDid());
     eXosip_unlock();
 
     // Release RTP channels
@@ -427,6 +421,7 @@ SipVoIPLink::cancel (short id)
     i = eXosip_call_terminate (sipcall->getCid(), -1);
     eXosip_unlock();
   }
+
   deleteSipCall(id);
   return i;
 }
@@ -560,13 +555,13 @@ SipVoIPLink::offhold (short id)
 }
 
 int
-SipVoIPLink::transfer (short id, const string& to)
+SipVoIPLink::transfer (short id, const std::string& to)
 {
   osip_message_t *refer;
   int i;
-  string tmp_to;
+  std::string tmp_to;
   tmp_to = toHeader(to);
-  if (tmp_to.find("@") == string::npos) {
+  if (tmp_to.find("@") == std::string::npos) {
     tmp_to = tmp_to + "@" + Manager::instance().getConfigString(SIGNALISATION,
 HOST_PART);
   }
@@ -920,7 +915,7 @@ SipVoIPLink::getEvent (void)
       std::string str(body->body);
       pos = str.find(VOICE_MSG);
 
-      if (pos == string::npos) {
+      if (pos == std::string::npos) {
 	     // If the string is not found
         returnValue = -1;
         break;
@@ -1030,6 +1025,16 @@ SipVoIPLink::deleteSipCall (short callid)
       _sipcallVector.erase(iter);
       return;
     }
+    iter++;
+  }
+}
+
+void
+SipVoIPLink::endSipCalls()
+{
+  std::vector< SipCall * >::iterator iter = _sipcallVector.begin();
+  while(iter != _sipcallVector.end()) {
+    hangup( (*iter)->getId() );
     iter++;
   }
 }
@@ -1238,7 +1243,7 @@ SipVoIPLink::behindNat (void)
   stunSvrAddr.addr = 0;
 	
   // Stun server
-  string svr = Manager::instance().getConfigString(SIGNALISATION, STUN_SERVER);
+  std::string svr = Manager::instance().getConfigString(SIGNALISATION, STUN_SERVER);
 	
   // Convert char* to StunAddress4 structure
   bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
@@ -1254,19 +1259,26 @@ SipVoIPLink::behindNat (void)
   return 1;
 }
 
-int 
+/**
+ * Get the local Ip by eXosip 
+ * setLocalIpAdress
+ * @return false if not found
+ */
+bool
 SipVoIPLink::getLocalIp (void) 
 {
-  int ret = 0;
+  bool returnValue = true;
   char* myIPAddress = new char[65];
-  ret = eXosip_guess_localip (AF_INET, myIPAddress, 64);
+  if (eXosip_guess_localip (AF_INET, myIPAddress, 64) == -1) {
+    returnValue = false;
+  }
   setLocalIpAddress(std::string(myIPAddress));
   delete [] myIPAddress; myIPAddress = NULL;
-  return ret;
+  return returnValue;
 }
 
 int
-SipVoIPLink::checkUrl (const string& url)
+SipVoIPLink::checkUrl (const std::string& url)
 {
   int i;
 	
@@ -1298,7 +1310,7 @@ SipVoIPLink::setAuthentication (void)
   }
   pass = manager.getConfigString(SIGNALISATION, PASSWORD);
   if (pass.empty()) {
-    manager.error()->errorName(PASSWD_FIELD_EMPTY);
+    manager.displayConfigError("Fill password field");
     return -1;
   }
   int returnValue = 0;
@@ -1311,16 +1323,16 @@ SipVoIPLink::setAuthentication (void)
   return returnValue;
 }
 
-string
-SipVoIPLink::fromHeader (const string& user, const string& host) 
+std::string
+SipVoIPLink::fromHeader (const std::string& user, const std::string& host) 
 {
-  string displayname = Manager::instance().getConfigString(SIGNALISATION,
+  std::string displayname = Manager::instance().getConfigString(SIGNALISATION,
 FULL_NAME);
   return ("\"" + displayname + "\"" + " <sip:" + user + "@" + host + ">");
 }
 
 
-string
+std::string
 SipVoIPLink::toHeader(const string& to) 
 {
   if (to.find("sip:") == string::npos) {
@@ -1331,8 +1343,8 @@ SipVoIPLink::toHeader(const string& to)
 }
 
 int
-SipVoIPLink::startCall (short id, const string& from, const string& to, 
-			const string& subject,  const string& route) 
+SipVoIPLink::startCall (short id, const std::string& from, const std::string& to, 
+			const std::string& subject,  const std::string& route) 
 {
   SipCall *sipcall = getSipCall(id);
   if ( sipcall == NULL) {
@@ -1342,7 +1354,7 @@ SipVoIPLink::startCall (short id, const string& from, const string& to,
   int i;
 
   if (checkUrl(from) != 0) {
-    Manager::instance().error()->errorName(FROM_ERROR);
+    Manager::instance().displayConfigError("Error for 'From' header");
     return -1;
   }
   if (checkUrl(to) != 0) {

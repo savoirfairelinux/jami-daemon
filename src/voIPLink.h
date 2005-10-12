@@ -23,8 +23,6 @@
 
 #include <string>
 
-using namespace std;
-
 enum VoIPLinkType {
 	Sip = 0,
 	Iax
@@ -45,14 +43,13 @@ public:
 	virtual void terminate (void) = 0;
 	virtual void newOutgoingCall (short callid) = 0;
 	virtual void newIncomingCall (short callid) = 0;
-	virtual void deleteSipCall (short callid) = 0;
-	virtual int outgoingInvite (short id, const string& to_url) = 0;
+	virtual int outgoingInvite (short id, const std::string& to_url) = 0;
 	virtual int answer (short id) = 0;
 	virtual int hangup (short id) = 0;
 	virtual int cancel (short id) = 0;
 	virtual int onhold (short id) = 0;
 	virtual int offhold (short id) = 0;
-	virtual int transfer (short id, const string& to) = 0;
+	virtual int transfer (short id, const std::string& to) = 0;
 	virtual int refuse (short id) = 0;
 	virtual int setRegister (void) = 0;
 	virtual int setUnregister (void) = 0;
@@ -63,12 +60,12 @@ public:
 	short getId (void);
 	void setType (VoIPLinkType type);
 	VoIPLinkType getType (void);
-	void setFullName (const string& fullname);
-	string getFullName (void);
-	void setHostName (const string& hostname);
-	string getHostName (void);
-	void setLocalIpAddress (const string& ipAdress);
-	string getLocalIpAddress (void);
+	void setFullName (const std::string& fullname);
+	std::string getFullName (void);
+	void setHostName (const std::string& hostname);
+	std::string getHostName (void);
+	void setLocalIpAddress (const std::string& ipAdress);
+	std::string getLocalIpAddress (void);
 
 	
 protected:
@@ -78,9 +75,9 @@ private:
 	
 	short _id;
 	VoIPLinkType _type;
-	string _fullname;
-	string _hostname;
-	string _localIpAddress;
+	std::string _fullname;
+	std::string _hostname;
+	std::string _localIpAddress;
 };
 
 #endif // __VOIP_LINK_H__

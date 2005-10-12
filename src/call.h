@@ -66,10 +66,6 @@ public:
 	VoIPLink* getVoIPLink(void);
 	void setVoIPLink (VoIPLink* voIPLink);
 		
-	// Accessor and modifior of status
-	std::string getStatus (void);
-	void setStatus (const std::string& status);
-	
 	// Handle id name and id number
 	std::string getCallerIdName (void);
 	void setCallerIdName (const std::string& callerId_name);
@@ -117,7 +113,6 @@ private:
 	enum CallType 	 _type;
 	std::string 			 _callerIdName;
 	std::string 			 _callerIdNumber;
-  std::string        _status;
 };
 
 #endif // __CALL_H__
