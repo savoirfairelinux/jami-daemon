@@ -48,8 +48,7 @@ AudioRtp::AudioRtp () {
 }
 
 AudioRtp::~AudioRtp (void) {
-	delete _RTXThread;
-  _RTXThread = NULL;
+	delete _RTXThread; _RTXThread = NULL;
 }
 
 int 
@@ -86,8 +85,7 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 
 		if (_RTXThread != NULL) {
       _debug("Thread: stop AudioRTP for sipcall: %d\n", ca->getId());
-			delete _RTXThread;
-			_RTXThread = NULL;
+			delete _RTXThread; _RTXThread = NULL;
 		}
 	}
 }
@@ -289,12 +287,9 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 
 	Manager::instance().getAudioDriver()->startStream();
 	
-  delete ac;
-  ac = NULL;
-	delete cd;
-  cd = NULL;
-	delete adu;
-  adu = NULL;
+  delete ac;  ac = NULL;
+	delete cd;  cd = NULL;
+	delete adu; adu = NULL;
 }
 
 void

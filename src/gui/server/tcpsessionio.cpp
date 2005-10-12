@@ -37,8 +37,8 @@ TCPSessionIO::TCPSessionIO() : SessionIO()
 
 TCPSessionIO::~TCPSessionIO()
 {
-  delete _clientStream;
-  delete _serverSocket;
+  delete _clientStream; _clientStream = NULL;
+  delete _serverSocket; _serverSocket = NULL;
 }
 
 bool

@@ -65,7 +65,7 @@ public:
     std::map< std::string, RequestCreatorBase * >::iterator pos = 
       mRequests.find(requestname);
     if(pos != mRequests.end()) {
-      delete pos->second;
+      delete pos->second; pos->second = NULL;
       mRequests.erase(pos);
     }
     

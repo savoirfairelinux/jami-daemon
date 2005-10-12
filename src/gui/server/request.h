@@ -184,6 +184,11 @@ public:
   RequestQuit(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
   ResponseMessage execute();
 };
+class RequestStop : public RequestGlobal {
+public:
+  RequestStop(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  ResponseMessage execute();
+};
 class RequestHangupAll : public RequestGlobal {
 public:
   RequestHangupAll(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
@@ -202,6 +207,13 @@ private:
 class RequestPlayTone : public RequestGlobal {
 public:
   RequestPlayTone(const std::string &sequenceId, 
+    const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  ResponseMessage execute();
+};
+
+class RequestStopTone : public RequestGlobal {
+public:
+  RequestStopTone(const std::string &sequenceId, 
     const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
   ResponseMessage execute();
 };

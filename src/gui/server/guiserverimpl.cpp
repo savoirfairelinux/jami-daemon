@@ -41,7 +41,6 @@ GUIServerImpl::exec() {
   return _requestManager.exec();
 }
 
-
 /** 
  * SubCall operations
  *  insert
@@ -247,11 +246,10 @@ GUIServerImpl::hangupAll()
     id = iter->first;
     if (!GuiFramework::hangupCall(id)) {
       result = false;
-    } else {
-      _callMap.erase(id);
     }
     iter++;
   }
+  _callMap.clear();
   return result;
 }
 

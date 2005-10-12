@@ -82,6 +82,7 @@ arg);
 
   std::string version();
   void quit() { _requestManager.quit(); }
+  void stop() { _requestManager.stop(); }
 
   // observer methods
   void update();

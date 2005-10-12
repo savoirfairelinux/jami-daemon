@@ -37,10 +37,11 @@ public:
     int exec(void);
     void sendResponse(const ResponseMessage& response);
     void quit() { _quit = true; }
+    void stop() { _stop = true; quit(); }
 
 private:
   void flushWaitingRequest();
-  void handleExecutedRequest(Request * const request, const ResponseMessage& response);
+  void handleExecutedRequest(Request * request, const ResponseMessage& response);
 
   RequestFactory _factory;
   SessionIO*  _sessionIO;
@@ -50,7 +51,8 @@ private:
   ost::Mutex _waitingRequestsMutex;
   std::map<std::string, Request*> _waitingRequests;
 
-  bool _quit; // tell to quit and end the exec loop
+  bool _quit; // tell to quit and end the exec loop for one client
+  bool _stop; // tell to stop the exec loop
 };
 
 #endif

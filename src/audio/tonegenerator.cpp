@@ -47,7 +47,7 @@ ToneThread::ToneThread (int16 *buf, int size) : Thread () {
 }
 
 ToneThread::~ToneThread (void) {
-	delete[] buf_ctrl_vol;
+	delete[] buf_ctrl_vol; buf_ctrl_vol=NULL;
 }
 
 void
@@ -102,14 +102,10 @@ ToneGenerator::ToneGenerator () {
 }
 
 ToneGenerator::~ToneGenerator (void) {
-	delete tonethread;
-  tonethread = 0;
-  delete [] _dst;
-  _dst = 0;
-  delete [] _src;
-  _src = 0;
-  delete _ulaw;
-  _ulaw = 0;
+	delete tonethread; tonethread = 0;
+  delete [] _dst;    _dst = 0;
+  delete [] _src;    _src = 0;
+  delete _ulaw;      _ulaw = 0;
 }
 
 /**
@@ -264,7 +260,7 @@ ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* t
 		totalbytes = byte;
 	}
 */
-	delete[] buffer;
+	delete[] buffer; buffer=NULL;
 }
 
 /**
@@ -333,8 +329,7 @@ ToneGenerator::stopTone() {
 
   // we end the last thread
   _debug("Thread: stop tonethread\n");
-  delete tonethread;
-  tonethread = NULL;
+  delete tonethread; tonethread = NULL;
 
   // we flush the main buffer (with blank)
   Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
@@ -348,8 +343,8 @@ ToneGenerator::playRingtone (const char *fileName) {
   if (tonethread != NULL) {
     stopTone();
   }
-  delete [] _dst;
-  delete [] _src;
+  delete [] _dst; _dst = NULL;
+  delete [] _src; _src = NULL;
 
 	int expandedsize, length;
 

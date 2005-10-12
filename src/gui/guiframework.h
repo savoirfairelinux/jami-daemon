@@ -74,12 +74,12 @@ public:
 	int saveConfig (void);
 	int registerVoIPLink (void);
 	int unregisterVoIPLink (void);
-	int quitApplication (void);
 	int sendTextMessage (short id, const std::string& message);
 	int accessToDirectory (void);
 	bool sendDtmf (short id, char code);
   bool playDtmf (char code);
   bool playTone ();
+  bool stopTone ();
 
   // config
   bool getZeroconf(const std::string& sequenceId);

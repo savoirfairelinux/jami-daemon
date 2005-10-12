@@ -176,10 +176,11 @@ GuiFramework::playTone ()
 	return Manager::instance().playTone();
 }
 
-int 
-GuiFramework::quitApplication (void)
+bool 
+GuiFramework::stopTone ()
 {
-	return (Manager::instance().quitApplication() ? 1 : 0);
+  Manager::instance().stopTone();
+  return true;
 }
 
 int 

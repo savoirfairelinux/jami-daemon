@@ -36,24 +36,13 @@ typedef short int16;
 	#define _debug(...)
 #endif
 
-#define VERSION "0.4.1-pre1"
-#define VERSIONNUM 0x000400
+#define VERSION "0.5"
+#define VERSIONNUM 0x000500
 
 
-#define PROGNAME				"sflphone"
-//#define SKINDIR					"skins"
-//#define PIXDIR					"icons"
+#define PROGNAME				"sflphoned"
 #define RINGDIR					"ringtones"
 #define CODECDIR				"codecs"
-
-//#define SFLPHONE_LOGO			"logo_ico.png"
-//#define TRAY_ICON				"tray-icon.png"
-//#define PIXMAP_SIGNALISATIONS	"signalisations.png" 
-//#define PIXMAP_AUDIO			"audio.png" 
-//#define PIXMAP_VIDEO			"video.png" 
-//#define PIXMAP_NETWORK			"network.png" 
-//#define PIXMAP_PREFERENCES		"preferences.png" 
-//#define PIXMAP_ABOUT			"about.png" 
 
 #define MONO					1
 #define CHANNELS				2

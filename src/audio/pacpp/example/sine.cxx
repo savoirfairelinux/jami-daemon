@@ -32,7 +32,7 @@ public:
 
 	~SineGenerator()
 	{
-		delete[] table_;
+		delete[] table_; table_ = NULL;
 	}
 
 	int generate(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer, 

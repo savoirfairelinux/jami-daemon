@@ -44,8 +44,8 @@ RingBuffer::RingBuffer(int size) {
 
 // Free memory on object deletion
 RingBuffer::~RingBuffer() {
-   delete[] mBlank;   mBlank  = 0;
-   delete[] mBuffer;  mBuffer = 0;
+   delete[] mBlank;   mBlank  = NULL;
+   delete[] mBuffer;  mBuffer = NULL;
 }
  
 void

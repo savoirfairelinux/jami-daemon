@@ -53,7 +53,7 @@ ResponseMessage::ResponseMessage(const std::string& code,
       ost::urlEncode(iter->c_str(), tmp, len*3+2);
       // we don't have to put a '\0' right?
       _message.append(tmp);
-      delete [] tmp;
+      delete [] tmp; tmp = NULL;
     }
     iter++;
   }

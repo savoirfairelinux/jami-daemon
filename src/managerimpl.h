@@ -161,7 +161,6 @@ public:
 	int saveConfig (void);
 	int registerVoIPLink (void);
 	int unregisterVoIPLink (void);
-	int quitApplication (void);
 	int sendTextMessage (short id, const std::string& message);
 	int accessToDirectory (void);
 	
@@ -174,7 +173,7 @@ public:
 	bool sendDtmf (short id, char code);
 	bool playDtmf (char code);
 	bool playTone ();
-	
+  void stopTone();
 
 	int incomingCall (short id);
 	void peerAnsweredCall (short id);
@@ -331,7 +330,6 @@ private:
    * @return false if the driver is uninitialize
    */
   bool playATone(unsigned int tone);
-  void stopTone();
   
 	/////////////////////
 	// Private variables

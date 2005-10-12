@@ -103,7 +103,15 @@ ManagerImpl::ManagerImpl (void)
 ManagerImpl::~ManagerImpl (void) 
 {
   terminate();
-} 
+#ifdef USE_ZEROCONF
+  delete _DNSService; _DNSService = NULL;
+#endif
+
+  delete _tone;  _tone = NULL;
+  delete _error; _error = NULL;
+
+  _debug("%s stop correctly\n", PROGNAME);
+}
 
 void 
 ManagerImpl::init (void) 
@@ -161,37 +169,21 @@ void ManagerImpl::terminate()
   for(VoIPLinkVector::iterator pos = _voIPLinkVector.begin();
       pos != _voIPLinkVector.end();
       pos++) {
-    (*pos)->terminate();
-  }
-
-  _voIPLinkVector.clear();
-
-  for(VoIPLinkVector::iterator pos = _voIPLinkVector.begin();
-      pos != _voIPLinkVector.end();
-      pos++) {
     delete *pos;
+    *pos = NULL;
   }
+  _voIPLinkVector.clear();
 
   for(CallVector::iterator pos = _callVector.begin();
       pos != _callVector.end();
       pos++) {
-    delete *pos;
+    delete *pos;   *pos = NULL;
   }
+  _callVector.clear();
 
   unloadAudioCodec();
 
-  delete _audiodriverPA;
-  _audiodriverPA = 0;
-  delete _tone;
-  _tone = 0;
-  delete _error;
-  _error = 0;
-
-#ifdef USE_ZEROCONF
-  delete _DNSService;
-  _DNSService = 0;
-#endif
-  _debug("ManagerImpl::terminate() was called");
+  delete _audiodriverPA; _audiodriverPA = NULL;
 }
 
 void
@@ -313,7 +305,7 @@ ManagerImpl::deleteCall (short id)
 
   while(iter!=_callVector.end()) {
     if ((*iter)->getId() == id) {
-      delete (*iter);
+      delete (*iter); *iter = NULL;
       _callVector.erase(iter);
       return;
     }
@@ -603,17 +595,6 @@ ManagerImpl::unregisterVoIPLink (void)
 }
 
 /**
- * Terminate action (main thread)
- */
-int 
-ManagerImpl::quitApplication (void)
-{
-  // Quit VoIP-link library
-  terminate();
-  return 0;
-}
-
-/**
  * ??? action
  */
 int 
@@ -710,12 +691,10 @@ ManagerImpl::playDtmf(char code)
     }
     _mutex.leaveMutex();
     //setZonetone(false);
-    delete[] buf_ctrl_vol;
-    buf_ctrl_vol = 0;
+    delete[] buf_ctrl_vol; buf_ctrl_vol = 0;
     returnValue = true;
   }
-  delete[] _buf;
-  _buf = 0;
+  delete[] _buf; _buf = 0;
   return returnValue;
 }
 
@@ -789,7 +768,7 @@ ManagerImpl::peerAnsweredCall (short id)
 
   // switch current call
   switchCall(id);
-  _gui->peerAnsweredCall(id);
+  if (_gui) _gui->peerAnsweredCall(id);
 }
 
 /**
@@ -805,7 +784,7 @@ ManagerImpl::peerRingingCall (short id)
 
   // ring
   ringback();
-  _gui->peerRingingCall(id);
+  if (_gui) _gui->peerRingingCall(id);
   return 1;
 }
 
@@ -827,7 +806,7 @@ ManagerImpl::peerHungupCall (short id)
   call->setStatus(string(HANGUP_STATUS));
   call->setState(Call::Hungup);
 
-  _gui->peerHungupCall(id);
+  if (_gui) _gui->peerHungupCall(id);
 
   // end up call
   _mutex.enterMutex();
@@ -848,9 +827,6 @@ ManagerImpl::displayTextMessage (short id, const string& message)
   if(_gui) {
     _gui->displayTextMessage(id, message);
   }
-  else {
-    std::cout << message << std::endl;
-  }
 }
 
 /**
@@ -862,9 +838,6 @@ ManagerImpl::displayErrorText (short id, const string& message)
 {
   if(_gui) {
     _gui->displayErrorText(id, message);
-  }
-  else {
-    std::cerr << message << std::endl;
   }
 }
 
@@ -878,9 +851,6 @@ ManagerImpl::displayError (const string& error)
   if(_gui) {
     _gui->displayStatus(error);
   }
-  else {
-    std::cerr << error << std::endl;
-  }
 }
 
 /**
@@ -893,9 +863,6 @@ ManagerImpl::displayStatus (const string& status)
   if(_gui) {
     _gui->displayStatus(status);
   }
-  else {
-    std::cout<< status << std::endl;
-  }
 }
 
 /**
@@ -906,7 +873,7 @@ void
 ManagerImpl::startVoiceMessageNotification (const std::string& nb_msg)
 {
   //_gui->startVoiceMessageNotification();
-  _gui->sendVoiceNbMessage(nb_msg);
+  if (_gui) _gui->sendVoiceNbMessage(nb_msg);
 }
 
 /**
@@ -917,7 +884,7 @@ void
 ManagerImpl::stopVoiceMessageNotification (void)
 {
 	//_gui->stopVoiceMessageNotification();
-  _gui->sendVoiceNbMessage(std::string("0"));
+  if (_gui) _gui->sendVoiceNbMessage(std::string("0"));
 }
 
 /**
@@ -1036,10 +1003,8 @@ ManagerImpl::notificationIncomingCall (void) {
   }
   getAudioDriver()->putUrgent(buf_ctrl_vol, SAMPLES_SIZE(FRAME_PER_BUFFER));
 
-  delete[] buf_ctrl_vol;
-  buf_ctrl_vol = 0;
-  delete[] buffer;
-  buffer = 0;
+  delete[] buf_ctrl_vol;  buf_ctrl_vol = NULL;
+  delete[] buffer;        buffer = NULL;
 }
 
 /**
@@ -1254,11 +1219,10 @@ ManagerImpl::unloadAudioCodec()
 {
   CodecDescriptorVector::iterator iter = _codecDescVector.begin();
   while(iter!=_codecDescVector.end()) {
-    delete *iter;
-    *iter = NULL;
-    _codecDescVector.erase(iter);
+    delete *iter; *iter = NULL;
     iter++;
   }
+  _codecDescVector.clear();
 }
 
 
@@ -1356,7 +1320,7 @@ ManagerImpl::getZeroconf(const std::string& sequenceId)
  * Main Thread
  */
 bool 
-ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer)
+ManagerImpl::attachZeroconfEvents(const std::string& , Pattern::Observer& observer)
 {
   bool returnValue = false;
   // don't need the _gui like getZeroconf function

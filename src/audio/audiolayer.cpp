@@ -53,8 +53,7 @@ AudioLayer::closeStream (void)
   ost::MutexLock guard(_mutex);
   if(_stream) {
     _stream->close();
-    delete _stream;
-    _stream = 0;
+    delete _stream; _stream = NULL;
   }
 }
 

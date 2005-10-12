@@ -54,11 +54,10 @@ GUIServer::~GUIServer()
   // Waiting Requests cleanup
   std::map<std::string, Request*>::iterator iter = _waitingRequests.begin();
   while (iter != _waitingRequests.end()) {
-    _waitingRequests.erase(iter);
-    delete (iter->second);
+    delete iter->second; iter->second = NULL;
     iter++;
   }
-  
+ _waitingRequests.clear();
 }
 
 int
@@ -122,8 +121,8 @@ GUIServer::pushResponseMessage(const ResponseMessage &response)
   if (response.isFinal()) {
     std::map<std::string, Request*>::iterator iter = _waitingRequests.find(response.sequenceId());
     if (iter != _waitingRequests.end()) {
+      delete iter->second; iter->second = NULL;
       _waitingRequests.erase(iter);
-      delete (iter->second);
     }
   }
 }
@@ -136,13 +135,13 @@ void
 GUIServer::handleExecutedRequest(Request * const request, const ResponseMessage& response) 
 {
   if (response.isFinal()) {
-    delete request;
+    delete request; request = NULL;
   } else {
     if (_waitingRequests.find(request->sequenceId()) == _waitingRequests.end()) {
       _waitingRequests[response.sequenceId()] = request;
     } else {
       // we don't deal with requests with a sequenceId already send...
-      delete request;
+      delete request; request = NULL;
     }
   }
   if (_sessionIO) {

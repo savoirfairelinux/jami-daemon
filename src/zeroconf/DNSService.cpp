@@ -54,8 +54,7 @@ DNSService::~DNSService()
 {
   int cntThread = _queryThread.size();
   for (int iThread=0;iThread<cntThread;iThread++) {
-    delete _queryThread[iThread];
-    _queryThread[iThread] = NULL;
+    delete _queryThread[iThread]; _queryThread[iThread] = NULL;
   }
 }
 

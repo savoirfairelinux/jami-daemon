@@ -61,8 +61,7 @@ SipCall::SipCall (short id, CodecDescriptorVector* cdv) : _localIp("127.0.0.1")
 SipCall::~SipCall (void) 
 {
 	dealloc();
-  delete _audiocodec;
-  _audiocodec = NULL;
+  delete _audiocodec; _audiocodec = NULL;
 }
 
 void
@@ -147,8 +146,7 @@ void
 SipCall::setAudioCodec (AudioCodec* ac)
 {
   // it use a new!
-  delete _audiocodec;
-	_audiocodec = ac;
+  delete _audiocodec; _audiocodec = ac;
 }
 
 // newIncomingCall is called when the IP-Phone user receives a new call.
@@ -791,10 +789,10 @@ SipCall::alloc(void) {
 
 void
 SipCall::dealloc(void) {
-  delete [] _reason_phrase;
-  delete [] _textinfo;
-  delete [] _remote_uri;
-  delete [] _remote_sdp_audio_ip;
+  delete [] _reason_phrase;       _reason_phrase = NULL;
+  delete [] _textinfo;            _textinfo      = NULL;
+  delete [] _remote_uri;          _remote_uri    = NULL;
+  delete [] _remote_sdp_audio_ip; _remote_sdp_audio_ip = NULL;
 }
 
 void

@@ -75,9 +75,10 @@ RequestFactory::~RequestFactory()
   std::map< std::string, RequestCreatorBase * >::iterator iter = mRequests.begin();
   while ( iter != mRequests.end() ) {
     // delete RequestCreator< T >
-    delete iter->second;
+    delete iter->second; iter->second = NULL;
     iter++;
   }
+  mRequests.clear();
 }
 
 template< typename T >
@@ -87,7 +88,7 @@ RequestFactory::registerRequest(const std::string &requestname)
   std::map< std::string, RequestCreatorBase * >::iterator pos = 
     mRequests.find(requestname);
   if(pos != mRequests.end()) {
-    delete pos->second;
+    delete pos->second; pos->second = NULL;
     mRequests.erase(pos);
   }
   
@@ -107,11 +108,13 @@ RequestFactory::registerAll() {
   registerRequest<RequestDTMF>        ("senddtmf");
   registerRequest<RequestPlayDtmf>    ("playdtmf");
   registerRequest<RequestPlayTone>    ("playtone");
+  registerRequest<RequestStopTone>    ("stoptone");
   registerRequest<RequestTransfer>    ("transfer");
   registerRequest<RequestMute>        ("mute");
   registerRequest<RequestUnmute>      ("unmute");
   registerRequest<RequestVersion>     ("version");
   registerRequest<RequestQuit>        ("quit");
+  registerRequest<RequestStop>        ("stop");
 
   // request config
   registerRequest<RequestGetEvents>   ("getevents");
@@ -124,5 +127,5 @@ RequestFactory::registerAll() {
   registerRequest<RequestConfigSave>  ("configsave");
   registerRequest<RequestList>        ("list");
   registerRequest<RequestVolumeSpkr>  ("setspkrvolume");
-  registerRequest<RequestVolumeMic>  ("setmicvolume");
+  registerRequest<RequestVolumeMic>   ("setmicvolume");
 }

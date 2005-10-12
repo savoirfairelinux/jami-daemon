@@ -31,7 +31,7 @@ RequestManager::RequestManager() : _sessionIO(0)
 
 RequestManager::~RequestManager()
 {
-  delete _sessionIO;
+  delete _sessionIO; _sessionIO = NULL;
   flushWaitingRequest();
 }
 
@@ -39,7 +39,8 @@ int
 RequestManager::exec() 
 {
   try {
-    while(std::cin.good()) {
+    _stop = false;
+    while(std::cin.good() && !_stop) {
 
       // TCPSessionIO start a thread for the stream socket
       {
@@ -73,8 +74,7 @@ RequestManager::exec()
 
       { // session mutex block
         _sessionMutex.enterMutex(); 
-        delete _sessionIO;
-        _sessionIO = 0;
+        delete _sessionIO; _sessionIO = NULL;
         _sessionMutex.leaveMutex();
       }
 
@@ -91,10 +91,10 @@ RequestManager::exec()
  * or send it into the waitingRequest map
  */
 void 
-RequestManager::handleExecutedRequest(Request * const request, const ResponseMessage& response) 
+RequestManager::handleExecutedRequest(Request * request, const ResponseMessage& response) 
 {
   if (response.isFinal()) {
-    delete request;
+    delete request; request = NULL;
   } else {
     ost::MutexLock lock(_waitingRequestsMutex);
     if (_waitingRequests.find(request->sequenceId()) == _waitingRequests.end()) {
@@ -102,7 +102,7 @@ RequestManager::handleExecutedRequest(Request * const request, const ResponseMes
       _waitingRequests[response.sequenceId()] = request;
     } else {
       // we don't deal with requests with a sequenceId already send...
-      delete request;
+      delete request; request = NULL;
     }
   }
 }
@@ -117,10 +117,10 @@ RequestManager::flushWaitingRequest()
   // Waiting Requests cleanup
   std::map<std::string, Request*>::iterator iter = _waitingRequests.begin();
   while (iter != _waitingRequests.end()) {
-    _waitingRequests.erase(iter);
-    delete (iter->second);
+    delete iter->second; iter->second = NULL;
     iter++;
   }
+  _waitingRequests.clear();
 }
 
 /**
@@ -141,8 +141,8 @@ RequestManager::sendResponse(const ResponseMessage& response) {
     std::map<std::string, Request*>::iterator iter = _waitingRequests.find(response.sequenceId());
 
     if (iter != _waitingRequests.end()) {
+      delete iter->second; iter->second = NULL;
       _waitingRequests.erase(iter);
-      delete (iter->second);
     }
   }
 }

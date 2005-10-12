@@ -58,7 +58,13 @@ SipVoIPLink::SipVoIPLink (short id)
 }
 
 SipVoIPLink::~SipVoIPLink(void) {
-  delete _evThread;
+  eXosip_quit();
+  delete _evThread; _evThread = NULL;
+}
+
+void
+SipVoIPLink::terminate(void) 
+{
 }
 
 bool 
@@ -169,14 +175,6 @@ SipVoIPLink::isInRtpmap (int index, int payload, CodecDescriptorVector* cdv) {
     }
   }
   return false;
-}
-
-void
-SipVoIPLink::terminate(void) 
-{
-  _debug("Thread: stop event thread\n");
-  delete _evThread;
-  eXosip_quit();
 }
 
 int
@@ -411,7 +409,7 @@ SipVoIPLink::hangup (short id)
   } else {
     _debug("The call was in error state, so delete it");
   }
-				
+
   deleteSipCall(id);
   return i;
 }
@@ -999,7 +997,7 @@ SipVoIPLink::carryingDTMFdigits (short id, char code) {
   }
   eXosip_unlock();
 	
-  delete[] dtmf_body;
+  delete[] dtmf_body; dtmf_body = NULL;
 }
  
 void
@@ -1028,7 +1026,7 @@ SipVoIPLink::deleteSipCall (short callid)
 
   while(iter != _sipcallVector.end()) {
     if ((*iter)->getId() == callid) {
-      delete *iter;
+      delete *iter; *iter = NULL;
       _sipcallVector.erase(iter);
       return;
     }
@@ -1263,7 +1261,7 @@ SipVoIPLink::getLocalIp (void)
   char* myIPAddress = new char[65];
   ret = eXosip_guess_localip (AF_INET, myIPAddress, 64);
   setLocalIpAddress(std::string(myIPAddress));
-  delete [] myIPAddress;
+  delete [] myIPAddress; myIPAddress = NULL;
   return ret;
 }
 

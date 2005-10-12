@@ -33,8 +33,7 @@ ConfigTree::~ConfigTree()
   // erase every new ItemMap (by CreateSection)
   SectionMap::iterator iter = _sections.begin();
   while(iter != _sections.end()) {
-    delete iter->second;
-    iter->second = NULL;
+    delete iter->second; iter->second = NULL;
     iter++;
   }
 }

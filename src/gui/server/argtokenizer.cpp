@@ -34,7 +34,7 @@ ArgTokenizer::tokenize(const std::string& str) {
     strcpy(tmp, output.c_str());
     ost::urlDecode(tmp, NULL);
     args.push_back(tmp);
-    delete[] tmp;
+    delete[] tmp; tmp = NULL;
   }
   return args;
 }

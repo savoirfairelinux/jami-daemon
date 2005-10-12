@@ -173,6 +173,15 @@ RequestPlayTone::execute()
 }
 
 ResponseMessage
+RequestStopTone::execute()
+{
+  if ( GUIServer::instance().stopTone() ) {
+    return message("200", "OK");
+  }
+  return message("500", "Tone Error");
+}
+
+ResponseMessage
 RequestMute::execute()
 {
   GUIServer::instance().mute();
@@ -199,3 +208,9 @@ RequestQuit::execute()
   return message("200", "Quitting");
 }
 
+ResponseMessage
+RequestStop::execute()
+{
+  GUIServer::instance().stop();
+  return message("200", "Stopping server");
+}

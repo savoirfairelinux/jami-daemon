@@ -29,7 +29,7 @@ int
 main (int argc, char **argv) {
   int exit_code = 0;
 
-  if (argc == 1 && strcmp(argv[0], "--help") == 0) {
+  if (argc == 2 && strcmp(argv[1], "--help") == 0) {
 
     std::cout << PROGNAME << " Deamon " << VERSION << ", by Savoir-Faire Linux 2004-2005" << std::endl << std::endl;
     std::cout << "USAGE: sflphoned [--help]" << std::endl;
@@ -38,7 +38,6 @@ main (int argc, char **argv) {
     std::cout << "See http://www.sflphone.org/ for more information" << std::endl;
 
   } else {
-
     GuiFramework *GUI;
     bool initOK = false;
     try {
@@ -56,8 +55,6 @@ main (int argc, char **argv) {
       GUI = &(GUIServer::instance());
       Manager::instance().setGui(GUI);
       exit_code = GUIServer::instance().exec();
-      Manager::instance().terminate();
-      delete GUI;
     }
   }
 
