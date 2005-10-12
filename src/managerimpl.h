@@ -158,7 +158,7 @@ public:
 	void muteOff (short id);
 	int refuseCall (short id);
 
-	int saveConfig (void);
+	bool saveConfig (void);
 	int registerVoIPLink (void);
 	int unregisterVoIPLink (void);
 	int sendTextMessage (short id, const std::string& message);
@@ -244,6 +244,8 @@ name);
 	inline void setSpkrVolume 	(int spkr_vol) 	{ ost::MutexLock m(_mutex); _spkr_volume = spkr_vol; }
 	inline int getMicVolume 	(void) 			{ ost::MutexLock m(_mutex); return _mic_volume; }
 	inline void setMicVolume 	(int mic_vol) 	{ ost::MutexLock m(_mutex); _mic_volume = _mic_volume_before_mute = mic_vol; }
+
+  bool hasLoadedSetup() { return _setupLoaded; }
 	
 	/*
 	 * Manage information about firewall
@@ -388,7 +390,8 @@ private:
 	/* Path of the ConfigFile 
 	 */
 	std::string 	_path;
-	int 	_exist;
+	int _exist;
+  int _setupLoaded;
 
 	unsigned int _nCodecs;
 

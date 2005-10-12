@@ -66,14 +66,14 @@ RequestCallStatus::execute()
   GUIServer::instance().sendGetEventsEnd();
   TokenList tk;
   tk.push_back("OK");
-  std::string code = "205";
+  std::string code = "206";
   GUIServer::instance().getCallStatus(_sequenceId);
 
   std::string callid;
   if (GUIServer::instance().getCurrentCallId(callid)) {
     tk.push_front(callid);
   } else {
-    code = "206";
+    code = "205";
   }
   return message(code, tk);
 }

@@ -83,6 +83,7 @@ ManagerImpl::ManagerImpl (void)
   _endTime = 0;
   _path = ""; 
   _exist = 0;
+  _setupLoaded = false;
   _loaded = false;
   _gui = NULL;
   _audiodriverPA = NULL;
@@ -190,18 +191,6 @@ void
 ManagerImpl::setGui (GuiFramework* gui)
 {
 	_gui = gui;
-  initGui();
-}
-
-/**
- * Gui initialisation (after setting the gui)
- */
-void 
-ManagerImpl::initGui() {
-  if (_exist == 2) {
-    // If config-file doesn't exist, launch configuration setup
-    _gui->setup();
-  }
 }
 
 Error*
@@ -552,13 +541,14 @@ ManagerImpl::refuseCall (short id)
 /**
  * User action (main thread)
  */
-int
+bool
 ManagerImpl::saveConfig (void)
 {
   setConfig(AUDIO, VOLUME_SPKR, getSpkrVolume());
   setConfig(AUDIO, VOLUME_MICRO, getMicVolume());
 
-  return (_config.saveConfigTree(_path.data()) ? 1 : 0);
+  _setupLoaded = _config.saveConfigTree(_path.data());
+  return _setupLoaded;
 }
 
 /**
@@ -848,8 +838,8 @@ ManagerImpl::displayErrorText (short id, const string& message)
 void 
 ManagerImpl::displayError (const string& error)
 {
+  _debug("Display Error: %s\n", error.c_str());
   if(_gui) {
-    _debug("Display Error: %s\n", error.c_str());
     _gui->displayError(error);
   }
 }
@@ -1192,6 +1182,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
 
   _exist = createSettingsPath();
+  _setupLoaded = (_exist == 2 ) ? false : true;
 }
 
 /**

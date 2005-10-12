@@ -68,7 +68,7 @@ public:
 	void muteOff (short id);
 	int refuseCall (short id);
 
-	int saveConfig (void);
+	bool saveConfig (void);
 	int registerVoIPLink (void);
 	int unregisterVoIPLink (void);
 	int sendTextMessage (short id, const std::string& message);
@@ -92,8 +92,8 @@ public:
   int getSpkrVolume();
   int getMicVolume();
 
+  bool hasLoadedSetup();
   // Observer methods
-  virtual void update() {}
   short getCurrentId();
 
 protected:

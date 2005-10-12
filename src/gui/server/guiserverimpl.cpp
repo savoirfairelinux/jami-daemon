@@ -112,13 +112,19 @@ GUIServerImpl::getEvents(const std::string& sequenceId)
 {
   _getEventsSequenceId=sequenceId;
 
+  // didn't loaded the setup?
+  // 010 <CSeq> Load setup
+  if ( !GuiFramework::hasLoadedSetup() ) {
+    _requestManager.sendResponse(ResponseMessage("010", sequenceId, "Load setup"));
+  }
+
   TokenList tk;
   std::ostringstream percentSpkr;
   // 021 <CSeq> <percentage of speaker volume> Speaker volume changed.
   percentSpkr << GuiFramework::getSpkrVolume();
   tk.push_back(percentSpkr.str());
   tk.push_back("Speaker volume changed");
-  _requestManager.sendResponse(ResponseMessage("021", sequenceId,tk));
+  _requestManager.sendResponse(ResponseMessage("021", sequenceId, tk));
 
   // 022 <CSeq> <percentage of microphone volume> Microphone volume changed.
   tk.clear();
@@ -130,11 +136,14 @@ GUIServerImpl::getEvents(const std::string& sequenceId)
 
   return true;
 }
+
 bool
 GUIServerImpl::sendGetEventsEnd()
 {
-  _requestManager.sendResponse(ResponseMessage("202", _getEventsSequenceId,
+  if ( _getEventsSequenceId != "seq0" ) {
+    _requestManager.sendResponse(ResponseMessage("202", _getEventsSequenceId,
 "getcallstatus request stopped me"));
+  }
   return true;
 }
 

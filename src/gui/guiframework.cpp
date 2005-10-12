@@ -128,14 +128,10 @@ GuiFramework::refuseCall (short id)
 	}
 }
 
-int 
+bool
 GuiFramework::saveConfig (void)
 {
-	if (Manager::instance().saveConfig()) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return Manager::instance().saveConfig();
 }
 
 int 
@@ -277,4 +273,10 @@ int
 GuiFramework::getMicVolume()
 {
   return Manager::instance().getMicVolume();
+}
+
+bool
+GuiFramework::hasLoadedSetup()
+{
+  return Manager::instance().hasLoadedSetup();
 }
