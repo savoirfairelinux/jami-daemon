@@ -58,8 +58,10 @@ void
 TCPSessionIO::receive()
 {
   QString s;
-  receive(s);
-  Requester::instance().receiveAnswer(s);
+  while(mSocket->canReadLine()) {
+    receive(s);
+    Requester::instance().receiveAnswer(s);
+  }
 }
 
 void

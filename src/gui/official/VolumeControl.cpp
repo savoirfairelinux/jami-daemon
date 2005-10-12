@@ -128,9 +128,6 @@ void
 VolumeControl::updateSlider(int value)
 {
   if(mOrientation == VolumeControl::Vertical) {
-    std::cout <<  "Move again to : " << 
-      (float)value / (mMax - mMin) * mMaxPosition << 
-      std::endl << std::endl;
     mSlider->move(mSlider->x(), (float)value / (mMax - mMin) * mMaxPosition);
   }
   else {
