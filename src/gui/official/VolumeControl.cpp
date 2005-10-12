@@ -128,7 +128,7 @@ void
 VolumeControl::updateSlider(int value)
 {
   if(mOrientation == VolumeControl::Vertical) {
-    mSlider->move(mSlider->x(), (float)value / (mMax - mMin) * mMaxPosition);
+    mSlider->move(mSlider->x(), mMaxPosition - (int)((float)value / (mMax - mMin) * mMaxPosition));
   }
   else {
     mSlider->move(value / (mMax - mMin) * mMaxPosition, mSlider->y());
@@ -139,7 +139,7 @@ int
 VolumeControl::offset()
 {
   if(mOrientation == VolumeControl::Vertical) {
-    return mSlider->y();
+    return mMaxPosition - mSlider->y();
   }
   else {
     return mSlider->x();
