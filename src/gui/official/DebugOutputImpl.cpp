@@ -19,7 +19,7 @@
  */
 
 #include "globals.h"
-
+#include <qfile.h>
 #include "DebugOutputImpl.hpp"
 
 DebugOutputImpl::DebugOutputImpl()

@@ -5,7 +5,9 @@
 TEMPLATE = app
 TARGET += 
 DEPENDPATH += .
-INCLUDEPATH +=  /usr/lib/qt4/include/Qt/
+INCLUDEPATH += .
+# This line is for qt4:
+# INCLUDEPATH +=  /usr/lib/qt4/include/Qt/
 QT += network qt3support
 #CONFIG += debug 
 
