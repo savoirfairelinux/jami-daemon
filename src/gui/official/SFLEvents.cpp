@@ -28,7 +28,7 @@ HangupEvent::execute()
   if(id.length() > 0) {
     DebugOutput::instance() << QObject::tr("Hangup Event received for call ID: %1.\n")
       .arg(id);
-    PhoneLineManager::instance().hangup(id);
+    PhoneLineManager::instance().hangup(id, false);
   }
   else {
     DebugOutput::instance() << QObject::tr("Hangup Event invalid (missing call ID): %1\n")

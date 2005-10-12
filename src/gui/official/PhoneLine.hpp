@@ -21,7 +21,7 @@ public:
   void call(const QString &to);
   void call();
   void answer();
-  void hangup();
+  void hangup(bool sendrequest = true);
   void hold();
   void unhold();
 

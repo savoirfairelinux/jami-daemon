@@ -424,12 +424,13 @@ PhoneLineManagerImpl::hold()
   mCurrentLineMutex.unlock();
 
   if(selectedLine) {
+    mSession->stopTone();
     selectedLine->hold();
   }
 }
 
 void
-PhoneLineManagerImpl::hangup()
+PhoneLineManagerImpl::hangup(bool sendrequest)
 {
   mCurrentLineMutex.lock();
   PhoneLine *selectedLine = mCurrentLine;
@@ -438,7 +439,8 @@ PhoneLineManagerImpl::hangup()
   mCurrentLineMutex.unlock();
 
   if(selectedLine) {
-    selectedLine->hangup();
+    mSession->stopTone();
+    selectedLine->hangup(sendrequest);
     lineStatusSet("");
   }
 }
@@ -471,22 +473,24 @@ PhoneLineManagerImpl::unmute()
 }
 
 void
-PhoneLineManagerImpl::hangup(const QString &callId)
+PhoneLineManagerImpl::hangup(const QString &callId, bool sendrequest)
 {
   PhoneLine *selectedLine = getPhoneLine(callId);
   if(selectedLine) {
+    mSession->stopTone();
     PhoneLineLocker guard(selectedLine);
-    selectedLine->hangup();
+    selectedLine->hangup(sendrequest);
   }
 }
 
 void
-PhoneLineManagerImpl::hangup(unsigned int line)
+PhoneLineManagerImpl::hangup(unsigned int line, bool sendrequest)
 {
   PhoneLine *selectedLine = getPhoneLine(line);
   if(selectedLine) {
+    mSession->stopTone();
     PhoneLineLocker guard(selectedLine);
-    selectedLine->hangup();
+    selectedLine->hangup(sendrequest);
   }
 }
 
@@ -505,8 +509,8 @@ PhoneLineManagerImpl::clear()
 
 void 
 PhoneLineManagerImpl::incomming(const QString &accountId,
-				const QString &peer,
-				const QString &callId)
+				const QString &callId,
+				const QString &peer)
 {
   Call call(mSession->id(), accountId, callId, true);
   addCall(call, peer, "Incomming");

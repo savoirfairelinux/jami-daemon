@@ -268,14 +268,23 @@ PhoneLine::answer()
 }
 
 void 
-PhoneLine::hangup() 
+PhoneLine::hangup(bool sendrequest) 
 {
+  if(sendrequest) {
+    setAction(tr("Hanguping..."));
+  }
+  else {
+    setAction(tr("Hanguped."));
+  }
+
   if(mCall) {
-    setAction("Hanguping...");
-    DebugOutput::instance() << tr("PhoneLine %1: Trying to Hangup.\n").arg(mLine);
-    mCall->hangup();
-    delete mCall;
-    mCall = NULL;
+    if(sendrequest) {
+      mCall->hangup();
+    }
+    else {
+      delete mCall;
+      mCall = NULL;
+    }
   }
   else {
     clear();

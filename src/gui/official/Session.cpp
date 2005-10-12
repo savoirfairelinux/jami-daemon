@@ -49,6 +49,12 @@ Session::playTone() const
   return Requester::instance().send(mId, "playtone", std::list< QString >());
 }
 
+QString
+Session::stopTone() const
+{
+  return Requester::instance().send(mId, "stoptone", std::list< QString >());
+}
+
 void
 Session::connect() const
 {

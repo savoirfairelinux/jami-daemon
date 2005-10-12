@@ -83,6 +83,7 @@ class Session
   void connect() const;
 
   QString id() const;
+  QString stopTone() const;
   QString playTone() const;
 
  private:

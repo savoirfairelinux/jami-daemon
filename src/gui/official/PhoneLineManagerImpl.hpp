@@ -95,7 +95,7 @@ public slots:
    * This function will hanp up the current line
    * If there's no current line, it will do nothing.
    */
-  void hangup();
+  void hangup(bool sendrequest = true);
 
   /**
    * This function will mute the microphone if muting
@@ -118,14 +118,14 @@ public slots:
    * argument. Be aware that the first line is 1, not 
    * zero.
    */
-  void hangup(unsigned int line);
+  void hangup(unsigned int line, bool sendrequest = true);
 
   /**
    * This function will hanp up the line with the
    * following call ID. If there's no line with 
    * the call ID, it will do nothing.
    */
-  void hangup(const QString &callId);
+  void hangup(const QString &callId, bool sendrequest = true);
 
   /**
    * This function will make a call on the 
