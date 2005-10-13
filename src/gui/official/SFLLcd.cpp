@@ -15,7 +15,7 @@
 #define OVERSCREEN "overscreen.png"
 
 SFLLcd::SFLLcd(QWidget *parent)
-  : QLabel(parent)
+  : QLabel(parent, "SFLLcd", Qt::WNoAutoErase)
   , mScreen(TransparentWidget::retreive(SCREEN))
   , mOverscreen(TransparentWidget::transparize(OVERSCREEN))
   , mGlobalStatusPos(-1)
@@ -140,14 +140,20 @@ SFLLcd::getTimeStatus()
 }
 
 void
-SFLLcd::paintEvent(QPaintEvent *) 
+SFLLcd::paintEvent(QPaintEvent *event) 
 {
+  static QPixmap pixmap(size());
+
+  QRect rect = event->rect();
+  QSize newSize = rect.size().expandedTo(pixmap.size());
+  pixmap.resize(newSize);
+  pixmap.fill(this, rect.topLeft());
+  QPainter p(&pixmap, this);
+
   // Painter settings 
   QFontMetrics fm(mFont);
 
   int margin = 2;
-
-  QPainter p(this);
   p.setFont(mFont);
   p.drawPixmap(0,0, mScreen);
   p.drawText(QPoint(margin, fm.height()), 
@@ -162,6 +168,8 @@ SFLLcd::paintEvent(QPaintEvent *)
   p.drawText(QPoint(margin, mScreen.size().height() - margin), getTimeStatus());
   p.drawPixmap(0,0, mOverscreen);
   p.end();
+
+  bitBlt(this, event->rect().topLeft(), &pixmap);
 }
 
 bool 
