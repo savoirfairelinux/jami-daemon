@@ -152,6 +152,7 @@ PhoneLine::unselect(bool hardselect)
 {
   if(mSelected) {
     DebugOutput::instance() << tr("PhoneLine %1: I am unselected.\n").arg(mLine);
+    setAction("");
     mSelected = false;
     if(mIsOnError) {
       close();
@@ -281,10 +282,8 @@ PhoneLine::hangup(bool sendrequest)
     if(sendrequest) {
       mCall->hangup();
     }
-    else {
-      delete mCall;
-      mCall = NULL;
-    }
+    delete mCall;
+    mCall = NULL;
   }
   else {
     clear();
