@@ -83,6 +83,7 @@ TCPSessionIO::sendWaitingRequests()
 	mStack.size() > 0) {
     stream << *mStack.begin();
     mStack.pop_front();
+    mSocket->flush();
   }
 }
 
@@ -94,6 +95,7 @@ TCPSessionIO::send(const QString &request)
     DebugOutput::instance() << QObject::tr("TCPSessioIO: Sending request to sflphone: %1")
       .arg(request);
     stream << request;
+    mSocket->flush();
   }
   else {
     mStackMutex.lock();
