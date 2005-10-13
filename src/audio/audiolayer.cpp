@@ -38,6 +38,7 @@ AudioLayer::AudioLayer ()
   , _stream(NULL)
 {
   portaudio::System::initialize();
+  listDevices();
 }
 
 // Destructor
@@ -55,6 +56,18 @@ AudioLayer::closeStream (void)
     _stream->close();
     delete _stream; _stream = NULL;
   }
+}
+
+void
+AudioLayer::listDevices()
+{
+  ost::MutexLock guard(_mutex);
+  portaudio::System::DeviceIterator pos = portaudio::System::instance().devicesBegin();
+  while(pos != portaudio::System::instance().devicesEnd()) {
+    _debug("AudioLayer: Device (%d) %s\n", pos->index(), pos->name());
+    pos++;
+  }
+
 }
 
 void
