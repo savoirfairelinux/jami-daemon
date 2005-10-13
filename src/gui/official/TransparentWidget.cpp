@@ -103,6 +103,7 @@ TransparentWidget::transparize(const QString &image)
   
     QBitmap bm;
     if (img.hasAlphaBuffer()) {
+      DebugOutput::instance() << QObject::tr("Image has alpha buffer (%1)\n").arg(image);
       bm = img.createAlphaMask();
     } 
     else {

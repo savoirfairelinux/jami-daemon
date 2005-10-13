@@ -17,7 +17,7 @@
 SFLLcd::SFLLcd(QWidget *parent)
   : QLabel(parent, "SFLLcd", Qt::WNoAutoErase)
   , mScreen(TransparentWidget::retreive(SCREEN))
-  , mOverscreen(TransparentWidget::transparize(OVERSCREEN))
+  , mOverscreen(TransparentWidget::retreive(OVERSCREEN))
   , mGlobalStatusPos(-1)
   , mLineStatusPos(-1)
   , mBufferStatusPos(-1)
