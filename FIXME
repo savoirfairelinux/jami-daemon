@@ -1,0 +1,3 @@
+- sflphoned don't return any result at the second time getcallstatus is called.
+- sflphoned getcallstatus 206 answer don't specify the callid
+

@@ -1,6 +1,5 @@
 ForGUI:
 -------
-Add Clear button for GUI to clear screen (like Ctrl+L)
 Add screen shell to display debug
 
 For project core:
@@ -18,3 +17,5 @@ Better handling for an reINVITE request.
 For project dependencies:
 ------------------------
 Improve the autotools scripts of PortAudioCpp
+
+
