@@ -5,18 +5,19 @@
 #include "globals.h"
 #include "JPushButton.hpp"
 #include "SFLLcd.hpp"
+#include "TransparentWidget.hpp"
 
 #define FONT_FAMILY	"Courier"
 // Others fixed font support "Monospace", "Fixed", "MiscFixed"
 #define FONT_SIZE	10
 
-#define SCREEN "images/screen_main.png"
-#define OVERSCREEN "images/overscreen.png"
+#define SCREEN "screen_main.png"
+#define OVERSCREEN "overscreen.png"
 
 SFLLcd::SFLLcd(QWidget *parent)
   : QLabel(parent)
-  , mScreen(JPushButton::transparize(SCREEN))
-  , mOverscreen(JPushButton::transparize(OVERSCREEN))
+  , mScreen(TransparentWidget::retreive(SCREEN))
+  , mOverscreen(TransparentWidget::transparize(OVERSCREEN))
   , mGlobalStatusPos(-1)
   , mLineStatusPos(-1)
   , mBufferStatusPos(-1)
@@ -159,7 +160,6 @@ SFLLcd::paintEvent(QPaintEvent *)
 	     extractVisibleText(mBufferStatus, mBufferStatusPos));
 
   p.drawText(QPoint(margin, mScreen.size().height() - margin), getTimeStatus());
-  //p.drawPixmap(0,0, mScreen);
   p.drawPixmap(0,0, mOverscreen);
   p.end();
 }

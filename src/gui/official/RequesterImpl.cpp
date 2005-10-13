@@ -164,7 +164,7 @@ RequesterImpl::generateCallId()
 QString
 RequesterImpl::generateSessionId()
 {
-  return QString("cSessionID:").arg(mSequenceIdCount++);
+  return QString("cSessionID:%1").arg(mSequenceIdCount++);
 }
 
 QString

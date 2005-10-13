@@ -76,7 +76,7 @@ TCPSessionIO::connect()
 void
 TCPSessionIO::sendWaitingRequests()
 {
-  _debug("TCPSessionIO: Connected.\n");
+  DebugOutput::instance() << QObject::tr("TCPSessionIO: Connected.\n");
   QTextStream stream(mSocket);
   QMutexLocker guard(&mStackMutex);
   while(mSocket->state() == QSocket::Connected &&

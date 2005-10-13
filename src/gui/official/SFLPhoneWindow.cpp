@@ -20,23 +20,23 @@
 #include "SFLLcd.hpp"
 #include "VolumeControl.hpp"
 
-#define LOGO_IMAGE "images/logo_ico.png"
-#define BACKGROUND_IMAGE "images/main.png"
-#define HANGUP_RELEASED_IMAGE "images/hangup_off.png"
-#define HANGUP_PRESSED_IMAGE "images/hangup_on.png"
-#define HOLD_RELEASED_IMAGE "images/hold_off.png"
-#define HOLD_PRESSED_IMAGE "images/hold_on.png"
-#define OK_RELEASED_IMAGE "images/ok_off.png"
-#define OK_PRESSED_IMAGE "images/ok_on.png"
-#define CLEAR_RELEASED_IMAGE "images/clear_off.png"
-#define CLEAR_PRESSED_IMAGE "images/clear_on.png"
-#define MUTE_RELEASED_IMAGE "images/mute_off.png"
-#define MUTE_PRESSED_IMAGE "images/mute_on.png"
-#define VOLUME_IMAGE "images/volume.png"
-#define CLOSE_RELEASED_IMAGE "images/close_off.png"
-#define CLOSE_PRESSED_IMAGE "images/close_on.png"
-#define MINIMIZE_RELEASED_IMAGE "images/minimize_off.png"
-#define MINIMIZE_PRESSED_IMAGE "images/minimize_on.png"
+#define LOGO_IMAGE "logo_ico.png"
+#define BACKGROUND_IMAGE "main.png"
+#define HANGUP_RELEASED_IMAGE "hangup_off.png"
+#define HANGUP_PRESSED_IMAGE "hangup_on.png"
+#define HOLD_RELEASED_IMAGE "hold_off.png"
+#define HOLD_PRESSED_IMAGE "hold_on.png"
+#define OK_RELEASED_IMAGE "ok_off.png"
+#define OK_PRESSED_IMAGE "ok_on.png"
+#define CLEAR_RELEASED_IMAGE "clear_off.png"
+#define CLEAR_PRESSED_IMAGE "clear_on.png"
+#define MUTE_RELEASED_IMAGE "mute_off.png"
+#define MUTE_PRESSED_IMAGE "mute_on.png"
+#define VOLUME_IMAGE "volume.png"
+#define CLOSE_RELEASED_IMAGE "close_off.png"
+#define CLOSE_PRESSED_IMAGE "close_on.png"
+#define MINIMIZE_RELEASED_IMAGE "minimize_off.png"
+#define MINIMIZE_PRESSED_IMAGE "minimize_on.png"
 
 
 			    
@@ -54,12 +54,9 @@ SFLPhoneWindow::SFLPhoneWindow()
   mMain = new QLabel(this);
   QPixmap main(JPushButton::transparize(BACKGROUND_IMAGE));
   mMain->setPixmap(main);
-  //mMain->move(100,100);
-  /*
   if(main.hasAlpha()) {
-    setMask(main.mask());
+    setMask(*main.mask());
   }
-  */
 
   resize(main.size());
   mMain->resize(main.size());
@@ -142,8 +139,8 @@ SFLPhoneWindow::initLineButtons()
   int ypos = 151;
   int offset = 31;
   for(int i = 0; i < NB_PHONELINES; i++) {
-    PhoneLineButton *line = new PhoneLineButton(QString("images/l%1_off.png").arg(i + 1),
-						QString("images/l%1_on.png").arg(i + 1),
+    PhoneLineButton *line = new PhoneLineButton(QString("l%1_off.png").arg(i + 1),
+						QString("l%1_on.png").arg(i + 1),
 						i,
 						mMain);
     line->move(xpos, ypos);

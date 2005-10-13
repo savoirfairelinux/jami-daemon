@@ -24,7 +24,7 @@
 #include "TransparentWidget.hpp"
 #include "VolumeControl.hpp"
 
-#define SLIDER_IMAGE "images/slider.png"
+#define SLIDER_IMAGE "slider.png"
 
 VolumeControl::VolumeControl (const QString &pixname,
 			      QWidget *parent, 
@@ -47,8 +47,12 @@ VolumeControl::~VolumeControl()
 void
 VolumeControl::resize()
 {
-  QPixmap q(TransparentWidget::transparize(SLIDER_IMAGE));
+  QPixmap q(QPixmap::fromMimeSource(SLIDER_IMAGE));
   setPixmap(q);
+  if(q.hasAlpha()) {
+    setMask(*q.mask());
+  }
+
   QWidget::resize(q.size());
   mMaxPosition = q.height() - mSlider->height();
 }

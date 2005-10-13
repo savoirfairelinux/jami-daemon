@@ -40,8 +40,16 @@ public:
   TransparentWidget(QWidget *parent);
   ~TransparentWidget();
 
+  static QPixmap retreive(const QString &size);
   static QPixmap transparize(const QSize &size);
   static QPixmap transparize(const QString &image);
+
+  /**
+   * This function will update the mask of the widget
+   * to the QPixmap mask.
+   */
+  void updateMask(QWidget *w, QPixmap image);
+
 
   bool hasAlpha()
   {return mImage.hasAlpha();}

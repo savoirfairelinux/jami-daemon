@@ -20,8 +20,11 @@
 
 #include <qbitmap.h>
 #include <qcolor.h>
+#include <qdragobject.h>
+#include <qmime.h>
 #include <iostream>
 
+#include "DebugOutput.hpp"
 #include "TransparentWidget.hpp"
 
 
@@ -31,11 +34,8 @@ TransparentWidget::TransparentWidget(const QString &pixmap,
 {
   mImage = transparize(pixmap);
   setPixmap(mImage);
-  /*
-  if(mImage.hasAlpha()) {
-    setMask(mImage.mask());
-  }
-  */
+  updateMask(this, mImage);
+
   resize(mImage.size());
 }
 
@@ -43,6 +43,25 @@ TransparentWidget::TransparentWidget(QWidget* parent)
   : QLabel(parent) 
 {}
 
+void
+TransparentWidget::updateMask(QWidget *w, QPixmap image)
+{
+#ifdef QT3_SUPPORT
+  if(image.hasAlpha()) {
+    w->setMask(image.mask());
+  }
+#else
+  if(image.mask()) {
+    w->setMask(*image.mask());
+  }
+#endif
+}
+
+QPixmap
+TransparentWidget::retreive(const QString &image)
+{
+  return QPixmap::fromMimeSource(image);
+}
 
 QPixmap
 TransparentWidget::transparize(const QSize &)
@@ -65,8 +84,8 @@ TransparentWidget::~TransparentWidget()
 QPixmap
 TransparentWidget::transparize(const QString &image)
 {
-  QPixmap p(QPixmap::fromMimeSource(image));
-  /*
+#ifdef QT3_SUPPORT
+  QPixmap p(retreive(image));
   if (!p.mask()) {
     if (p.hasAlphaChannel()) {
       p.setMask(p.alphaChannel());
@@ -75,7 +94,22 @@ TransparentWidget::transparize(const QString &image)
       p.setMask(p.createHeuristicMask());
     }
   }
-  */
+#else
+  //  QPixmap p(QPixmap::fromMimeSource(image));
+  QImage img(QImage::fromMimeSource(image));
+  QPixmap p;
+  p.convertFromImage(img);
+  
+  
+    QBitmap bm;
+    if (img.hasAlphaBuffer()) {
+      bm = img.createAlphaMask();
+    } 
+    else {
+      bm = img.createHeuristicMask();
+    }
+    p.setMask(bm);
+#endif
   return p;
 }
 

@@ -29,6 +29,7 @@
 #include "globals.h"
 
 #include "JPushButton.hpp"
+#include "TransparentWidget.hpp"
 
 JPushButton::JPushButton(const QString &released,
 			 const QString &pressed,
@@ -54,28 +55,16 @@ JPushButton::setToggle(bool toggle)
 QPixmap
 JPushButton::transparize(const QString &image)
 {
-  /**
-  if (!p.mask()) {
-    if (p.hasAlphaChannel()) {
-      p.setMask(p.alphaChannel());
-    } 
-    else {
-      p.setMask(p.createHeuristicMask());
-    }
-  }
-  */
-  return QPixmap::fromMimeSource(image);
+  return TransparentWidget::transparize(image);
 }
 
 void
 JPushButton::release() 
 {
   setPixmap(mImages[0]);
-  /*
   if(mImages[0].hasAlpha()) {
-    setMask(mImages[0].mask());
+    setMask(*mImages[0].mask());
   }
-  */
   resize(mImages[0].size());
 }
 
@@ -83,10 +72,9 @@ void
 JPushButton::press() 
 {
   setPixmap(mImages[1]);
-  /*
   if(mImages[1].hasAlpha()) {
-    setMask(mImages[1].mask());
-    }*/
+    setMask(*mImages[1].mask());
+  }
   resize(mImages[1].size());
 }
 

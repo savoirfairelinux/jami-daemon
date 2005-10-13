@@ -86,6 +86,7 @@ images/setup_on.png \
 images/sfl-logo.png \
 images/sflphone_logo.png \
 images/signalisations.png \
+images/slider.png \
 images/transfer_off.png \
 images/transfer_on.png \
 images/tray-icon.png \
