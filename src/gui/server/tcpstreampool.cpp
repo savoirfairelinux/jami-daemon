@@ -17,16 +17,22 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "tcpstreampool.h"
+#include "../../global.h"
 
 void 
 TCPStreamPool::run() {
   std::string output;
   std::string input;
+  std::string null = ""; // we don't want empty string 
+  char cr13 = '\r'; // we don't want carriage return in empty line
 
   while(!testCancel() && good()) {
-    if (isPending(ost::TCPSocket::pendingInput, 2)) {
+    if (isPending(ost::TCPSocket::pendingInput, 2LU)) {
       std::getline(*this, input);
-      _inputPool.push(input);
+      if (input != null && input[0]!=cr13) {
+        _debug("%d", input[0]);
+        _inputPool.push(input);
+      }
     }
     if (_outputPool.pop(output, 2LU)) {
       *this << output << std::endl;

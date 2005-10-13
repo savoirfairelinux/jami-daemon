@@ -58,31 +58,31 @@ GuiFramework::cancelCall (short id)
 int 
 GuiFramework::answerCall (short id)
 {
-	if (Manager::instance().answerCall(id) == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+  if (Manager::instance().answerCall(id) == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 int 
 GuiFramework::onHoldCall (short id)
 {
-	if (Manager::instance().onHoldCall(id) == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+  if (Manager::instance().onHoldCall(id) == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 int 
 GuiFramework::offHoldCall (short id)
 {
-	if (Manager::instance().offHoldCall(id) == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+  if (Manager::instance().offHoldCall(id) == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 int 
@@ -104,18 +104,6 @@ void
 GuiFramework::unmute() 
 {
   Manager::instance().unmute();
-}
-
-void
-GuiFramework::muteOn (short id)
-{
-	Manager::instance().muteOn(id);
-}
-
-void
-GuiFramework::muteOff (short id)
-{
-	Manager::instance().muteOff(id);
 }
 
 int 
@@ -177,20 +165,6 @@ GuiFramework::stopTone ()
 {
   Manager::instance().stopTone();
   return true;
-}
-
-int 
-GuiFramework::sendTextMessage (short id, const string& message)
-{
-	Manager::instance().sendTextMessage(id, message);
-	return 1;
-}
-
-int 
-GuiFramework::accessToDirectory (void)
-{
-	Manager::instance().accessToDirectory();
-	return 1;
 }
 
 /**

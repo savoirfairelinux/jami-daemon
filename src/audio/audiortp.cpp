@@ -48,6 +48,7 @@ AudioRtp::AudioRtp () {
 }
 
 AudioRtp::~AudioRtp (void) {
+  terminate();
 	delete _RTXThread; _RTXThread = NULL;
 }
 
@@ -115,6 +116,7 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall,
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
+  terminate();
   _debug("Thread: AudioRtpRTX stop session\n");
   if (!_sym) {
     delete _sessionRecv; _sessionRecv = NULL;
@@ -186,32 +188,26 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
 	int k; 
 	int compSize; 
 	
-	if (Manager::instance().getCall(_ca->getId())->isOnMute()/* or
-				!Manager::instance().isCurrentId(_ca->getId())*/) {
-		// Mute :send 0's over the network.
-		Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic, 
-			RTP_FRAMES2SEND*2*sizeof(int16));
-	} else {
-		// Control volume for micro
-		int availFromMic = Manager::instance().getAudioDriver()->micRingBuffer().AvailForGet(); 
-		int bytesAvail;
-		if (availFromMic < (int)RTP_FRAMES2SEND) { 
-			bytesAvail = availFromMic; 
-		} else {
-			bytesAvail = (int)RTP_FRAMES2SEND;
-		}
+  // Control volume for micro
+  int availFromMic = Manager::instance().getAudioDriver()->micRingBuffer().AvailForGet(); 
+  int bytesAvail;
+  if (availFromMic < (int)RTP_FRAMES2SEND) { 
+    bytesAvail = availFromMic; 
+  } else {
+    bytesAvail = (int)RTP_FRAMES2SEND;
+  }
 
-		// Get bytes from micRingBuffer to data_from_mic
-		Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic, 
-				SAMPLES_SIZE(bytesAvail));
-		// control volume and stereo->mono
-		for (int j = 0; j < RTP_FRAMES2SEND; j++) {
-			k = j*2;
-			data_from_mic_tmp[j] = (int16)(0.5f*(data_from_mic[k] +
-												data_from_mic[k+1]) * 
-												micVolume/100); 
-		}
-	}
+  // Get bytes from micRingBuffer to data_from_mic
+  Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic, 
+      SAMPLES_SIZE(bytesAvail));
+  // control volume and stereo->mono
+  for (int j = 0; j < RTP_FRAMES2SEND; j++) {
+    k = j*2;
+    data_from_mic_tmp[j] = (int16)(0.5f*(data_from_mic[k] +
+                      data_from_mic[k+1]) * 
+                      micVolume/100); 
+  }
+
 	// Encode acquired audio sample
 	compSize = _ca->getAudioCodec()->codecEncode (data_to_send,
 												  data_from_mic_tmp, 
@@ -233,26 +229,17 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 	int k;
 	const AppDataUnit* adu = NULL;
 
-	// Get audio data stream
-
-#if 0
-	do {
-    Thread::sleep(5); // in msec.
-#endif
-		if (!_sym) {
-			adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
-		} else {
-			adu = _session->getData(_session->getFirstTimestamp());
-		}
-# if 0
-	} while (adu == NULL);
-#else
+  // Get audio data stream
+  if (!_sym) {
+    adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
+  } else {
+    adu = _session->getData(_session->getFirstTimestamp());
+  }
   if (adu == NULL) {
     Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
     Manager::instance().getAudioDriver()->stopStream();
-  return;
-}
-#endif
+    return;
+  }
 
 	// Decode data with relevant codec
 	CodecDescriptor* cd = new CodecDescriptor (adu->getType());

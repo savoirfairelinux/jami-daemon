@@ -72,7 +72,6 @@ ManagerImpl::ManagerImpl (void)
   _DNSService = new DNSService();
 #endif
 
-  _nCalls = 0;
   _nCodecs = 0;
   _currentCallId = 0;
   _startTime = 0;
@@ -89,7 +88,7 @@ ManagerImpl::ManagerImpl (void)
   _mic_volume  = 0; 
   _mic_volume_before_mute = 0;
 
-  _toneType = 0;
+  _toneType = ZT_TONE_NULL;
 
   _nbIncomingWaitingCall=0;
 
@@ -189,108 +188,53 @@ ManagerImpl::setGui (GuiFramework* gui)
 	_gui = gui;
 }
 
-Error*
-ManagerImpl::error (void) 
-{
-	return _error;
-}
-
-AudioLayer*
-ManagerImpl::getAudioDriver(void) 
-{
-	return _audiodriverPA;
-}
-
-unsigned int 
-ManagerImpl::getNumberOfCalls (void)
-{
-	return _nCalls;
-}
-
-void 
-ManagerImpl::setNumberOfCalls (unsigned int nCalls)
-{
-	_nCalls = nCalls;
-}
-
-short
-ManagerImpl::getCurrentCallId (void)
-{
-	return _currentCallId;
-}
-
-void 
-ManagerImpl::setCurrentCallId (short currentCallId)
-{
-	_currentCallId = currentCallId;
-}
-
-CallVector* 
-ManagerImpl::getCallVector (void)
-{
-	return &_callVector;
-}
-
-CodecDescriptorVector* 
-ManagerImpl::getCodecDescVector (void)
-{
-	return &_codecDescVector;
-}
-
-Call*
-ManagerImpl::getCall (short id)
-{
-	if (id > 0 and _callVector.size() > 0) {
-		for (unsigned int i = 0; i < _nCalls; i++) {
-			if (_callVector.at(i)->getId() == id) {
-				return _callVector.at(i);
-			}
-		}
-		return NULL;
-	} else {
-		return NULL;
-	}
-}
-
-
-unsigned int
-ManagerImpl::getNumberOfCodecs (void)
-{
-	return _nCodecs;
-}
-
-void
-ManagerImpl::setNumberOfCodecs (unsigned int nb_codec)
-{
-	_nCodecs = nb_codec;
-}
-
-VoIPLinkVector* 
-ManagerImpl::getVoIPLinkVector (void)
-{
-	return &_voIPLinkVector;
-}
-
 /**
- * Multi Thread
+ * Multi Thread with _mutex for callVector
  */
 Call *
 ManagerImpl::pushBackNewCall (short id, enum CallType type)
 {
-	Call* call = new Call(id, type, _voIPLinkVector.at(DFT_VOIP_LINK));
-	// Set the wanted voip-link (first of the list)
-	_callVector.push_back(call);
+  Call* call = new Call(id, type, _voIPLinkVector.at(DFT_VOIP_LINK));
+  // Set the wanted voip-link (first of the list)
+  ost::MutexLock m(_mutex);
+  _callVector.push_back(call);
   return call;
 }
 
+/**
+ * Multi Thread with _mutex for callVector
+ */
+Call*
+ManagerImpl::getCall (short id)
+{
+  Call* call = NULL;
+  unsigned int size = _callVector.size();
+  if (id > 0) {
+    for (unsigned int i = 0; i < size; i++) {
+      if (_callVector.at(i)->getId() == id) {
+        call = _callVector.at(i);
+        break;
+      }
+    }
+  }
+  return call;
+}
+
+/**
+ * Multi Thread with _mutex for callVector
+ */
 void
 ManagerImpl::deleteCall (short id)
 {
   CallVector::iterator iter = _callVector.begin();
-
   while(iter!=_callVector.end()) {
-    if ((*iter)->getId() == id) {
-      delete (*iter); *iter = NULL;
+    Call *call = *iter;
+    if (call->getId() == id) {
+      if (call->isIncomingType() && call->getState()!=Call::Ringing) {
+        decWaitingCall();
+      }
+      delete (*iter); *iter = NULL; 
+      call = NULL;
       _callVector.erase(iter);
       return;
     }
@@ -327,47 +271,39 @@ ManagerImpl::outgoingCall (const std::string& to)
 int 
 ManagerImpl::hangupCall (short id)
 {
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call == NULL) {
+    return -1;
+  }
+  call->setState(Call::Hungup);
+  int result = call->hangup();
+
+  deleteCall(id);
   stopTone(); // stop tone, like a 700 error: number not found Not Found
-	Call* call;
-
-	call = getCall(id);
-	if (call == NULL) {
-		return -1;
-	}
-	call->setState(Call::Hungup);
-
-	int result = call->hangup();
-
-	_mutex.enterMutex();
-	_nCalls -= 1;
-	_mutex.leaveMutex();
-
-	deleteCall(id);
   return result;
 }
 
 /**
  * User action (main thread)
  * Every Call
+ * -1 : call not found
+ *  0 : already in this state...
  */
 int
 ManagerImpl::cancelCall (short id)
 {
-	Call* call;
-
-	call = getCall(id);
-	if (call == NULL)
-		return -1;
-	call->setState(Call::Hungup);
-	_mutex.enterMutex();
-	_nCalls -= 1;
-	_mutex.leaveMutex();
-  if (call->isIncomingType()) {
-    decWaitingCall();
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call == NULL) { 
+    return -1; 
   }
-	deleteCall(id);
+  call->setState(Call::Hungup);
+  int result = call->cancel();
+
+  deleteCall(id);
   stopTone();
-	return call->cancel();
+  return result;
 }
 
 /**
@@ -377,35 +313,38 @@ ManagerImpl::cancelCall (short id)
 int 
 ManagerImpl::answerCall (short id)
 {
-	Call* call;
-
-	call = getCall(id);
-	if (call == NULL)
-		return -1;
-
-	call->setState(Call::Answered);
-
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call == NULL) {
+    return -1;
+  }
+  call->setState(Call::Answered);
   if (call->isIncomingType()) {
     decWaitingCall();
   }
-  stopTone();
   switchCall(id);
-	return call->answer();
+  stopTone(); // before answer, don't stop the audio stream after open it...
+  return call->answer();
 }
 
 /**
  * User action (main thread)
  * Every Call
+ * @return 0 if it fails, -1 if not present
  */
 int 
 ManagerImpl::onHoldCall (short id)
 {
-	Call* call;
-	call = getCall(id);
-	if (call == NULL)
-		return -1;
-	call->setState(Call::OnHold);
-	return call->onHold();
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call == NULL) {
+    return -1;
+  }
+  if ( call->getState() == Call::OnHold) {
+    return 1;
+  }
+  call->setState(Call::OnHold);
+  return call->onHold();
 }
 
 /**
@@ -415,13 +354,17 @@ ManagerImpl::onHoldCall (short id)
 int 
 ManagerImpl::offHoldCall (short id)
 {
-	Call* call;
-	call = getCall(id);
-	if (call == NULL)
-		return -1;
-	call->setState(Call::OffHold);
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call == NULL) {
+    return -1;
+  }
+  if (call->getState() == Call::OffHold) {
+    return 1;
+  }
+  call->setState(Call::OffHold);
   setCurrentCallId(id);
-  int returnValue = call->offHold();	
+  int returnValue = call->offHold();
   if (returnValue) {
     getAudioDriver()->startStream();
   }
@@ -435,13 +378,14 @@ ManagerImpl::offHoldCall (short id)
 int 
 ManagerImpl::transferCall (short id, const std::string& to)
 {
-	Call* call;
-	call = getCall(id);
-	if (call == NULL)
-		return -1;
-	call->setState(Call::Transfered);
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call == NULL) {
+    return -1;
+  }
+  call->setState(Call::Transfered);
   setCurrentCallId(0);
-	return call->transfer(to);
+  return call->transfer(to);
 }
 
 /**
@@ -451,7 +395,7 @@ ManagerImpl::transferCall (short id, const std::string& to)
 void
 ManagerImpl::mute() {
   _mic_volume_before_mute = _mic_volume;
-  _mic_volume = 0;
+  setMicVolume(0);
 }
 
 /**
@@ -460,35 +404,7 @@ ManagerImpl::mute() {
  */
 void
 ManagerImpl::unmute() {
-  _mic_volume = _mic_volume_before_mute;
-}
-
-/**
- * User action (main thread)
- * Every Call
- */
-void 
-ManagerImpl::muteOn (short id)
-{
-	Call* call;
-	call = getCall(id);
-	if (call == NULL)
-		return;
-	call->setState(Call::MuteOn);
-}
-
-/**
- * User action (main thread)
- * Every Call
- */
-void 
-ManagerImpl::muteOff (short id)
-{
-	Call* call;
-	call = getCall(id);
-	if (call == NULL)
-		return;
-	call->setState(Call::MuteOff);
+  setMicVolume(_mic_volume_before_mute);
 }
 
 /**
@@ -498,29 +414,21 @@ ManagerImpl::muteOff (short id)
 int 
 ManagerImpl::refuseCall (short id)
 {
-  stopTone();
-	Call *call;
-	call = getCall(id);
-	if (call == NULL)
-		return -1;
-  // don't cause a very bad segmentation fault
-  // we refuse the call when we are trying to establish connection
-  if (call->isIncomingType()) {
-    decWaitingCall();
+  ost::MutexLock m(_mutex);
+  Call *call = getCall(id);
+  if (call == NULL) {
+    return -1;
   }
 
-  if ( call->getState() != Call::Progressing )
+  if ( call->getState() != Call::Progressing ) {
     return -1;
-
+  }
   call->setState(Call::Refused);
-  
-  _mutex.enterMutex();
-  _nCalls -= 1;
-  _mutex.leaveMutex();
+  int refuse = call->refuse();
 
   setCurrentCallId(0);
-	int refuse = call->refuse();
   deleteCall(id);
+  stopTone();
   return refuse;
 }
 
@@ -571,51 +479,27 @@ ManagerImpl::unregisterVoIPLink (void)
 }
 
 /**
- * ??? action
- */
-int 
-ManagerImpl::sendTextMessage (short , const std::string& )
-{
-	return 1;
-}
-
-/**
- * ??? action
- */
-int 
-ManagerImpl::accessToDirectory (void)
-{
-	return 1;
-}
-
-/**
  * User action (main thread)
  */
 bool 
 ManagerImpl::sendDtmf (short id, char code)
 {
   int sendType = getConfigInt(SIGNALISATION, SEND_DTMF_AS);
+  int returnValue = false;
   switch (sendType) {
-        // SIP INFO
-        case 0:
-			_voIPLinkVector.at(DFT_VOIP_LINK)->carryingDTMFdigits(id, code);
-			return true;
-            break;
-                                                                                
-        // Audio way
-        case 1:
-			return false;
-            break;
-                                                                                
-        // rfc 2833
-        case 2:
-			return false;
-            break;
-                                                                                
-        default:
-			return -1;
-            break;
-    }
+  case 0: // SIP INFO
+    _voIPLinkVector.at(DFT_VOIP_LINK)->carryingDTMFdigits(id, code);
+    returnValue = true;
+    break;
+
+  case 1: // Audio way
+    break;
+  case 2: // rfc 2833
+    break;
+  default: // unknown - error config?
+    break;
+  }
+  return returnValue;
 }
 
 /**
@@ -639,18 +523,17 @@ ManagerImpl::playDtmf(char code)
     // Determine dtmf pulse length
     int pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
     int size = pulselen * (OCTETS /1000);
-  
+
     buf_ctrl_vol = new int16[size*CHANNELS];
     spkrVolume = getSpkrVolume();
-  
+
     // Control volume and format mono->stereo
     for (int j = 0; j < size; j++) {
       k = j*2;
       buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j] * spkrVolume/100;
     }
-  
+
     AudioLayer *audiolayer = getAudioDriver();
-    _mutex.enterMutex();
     audiolayer->urgentRingBuffer().flush();
 
     // Put buffer to urgentRingBuffer 
@@ -665,7 +548,6 @@ ManagerImpl::playDtmf(char code)
     } else {
       audiolayer->sleep(pulselen);
     }
-    _mutex.leaveMutex();
     //setZonetone(false);
     delete[] buf_ctrl_vol; buf_ctrl_vol = 0;
     returnValue = true;
@@ -680,7 +562,7 @@ ManagerImpl::playDtmf(char code)
 /**
  * Multi-thread
  */
-bool 
+bool
 ManagerImpl::incomingCallWaiting() {
   ost::MutexLock m(_incomingCallMutex);
   return (_nbIncomingWaitingCall > 0) ? true : false;
@@ -702,19 +584,67 @@ ManagerImpl::decWaitingCall() {
 
 /**
  * SipEvent Thread
+ * ask if it can hangup the call
+ */
+bool
+ManagerImpl::callCanHangup(short id) {
+  bool returnValue = false;
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call != NULL && call->getState() != Call::Error) {
+    returnValue = true;
+  }
+  return returnValue;
+}
+
+/**
+ * SipEvent Thread
+ * ask if it can hangup the call
+ */
+bool
+ManagerImpl::callCanClose(short id) {
+  bool returnValue = false;
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call != NULL && call->getState() != Call::Progressing) {
+    returnValue = true;
+  }
+  return returnValue;
+}
+
+/**
+ * SipEvent Thread
+ * ask if it can answer the call
+ */
+bool
+ManagerImpl::callCanAnswer(short id) {
+  bool returnValue = false;
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call != NULL && 
+      call->getState() != Call::OnHold && 
+      call->getState() != Call::OffHold) {
+    returnValue = true;
+  }
+  return returnValue;
+}
+
+/**
+ * SipEvent Thread
  */
 int 
 ManagerImpl::incomingCall (short id)
 {
-	Call* call = getCall(id);
-	if (call == NULL)
-		return -1;
-
-	call->setType(Incoming);
-	call->setState(Call::Progressing);
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call == NULL) {
+    return -1;
+  }
+  call->setType(Incoming);
+  call->setState(Call::Progressing);
 
   incWaitingCall();
-	ringtone();
+  ringtone();
 
   // TODO: Account not yet implemented
   std::string accountId = "acc1";
@@ -735,11 +665,11 @@ ManagerImpl::incomingCall (short id)
 void 
 ManagerImpl::peerAnsweredCall (short id)
 {
-  stopTone();
-
+  ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   call->setState(Call::Answered);
 
+  stopTone();
   // switch current call
   switchCall(id);
   if (_gui) _gui->peerAnsweredCall(id);
@@ -752,6 +682,7 @@ ManagerImpl::peerAnsweredCall (short id)
 int
 ManagerImpl::peerRingingCall (short id)
 {
+  ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   call->setState(Call::Ringing);
 
@@ -768,22 +699,16 @@ ManagerImpl::peerRingingCall (short id)
 int 
 ManagerImpl::peerHungupCall (short id)
 {
-  stopTone();
+  ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  // TODO: check if it hungup when waiting or in a conversation
-  //       to decWaitingCall ?
-  if ( call->getState() != Call::Ringing && call->isIncomingType() ) {
-    decWaitingCall();
+  if ( call == NULL ) {
+    return -1;
   }
-
+  stopTone();
   call->setState(Call::Hungup);
 
   if (_gui) _gui->peerHungupCall(id);
 
-  // end up call
-  _mutex.enterMutex();
-  _nCalls -= 1;
-  _mutex.leaveMutex();
   deleteCall(id);
   setCurrentCallId(0);
   return 1;
@@ -820,7 +745,6 @@ ManagerImpl::displayErrorText (short id, const std::string& message)
 void 
 ManagerImpl::displayError (const std::string& error)
 {
-  _debug("Display Error: %s\n", error.c_str());
   if(_gui) {
     _gui->displayError(error);
   }
@@ -857,7 +781,6 @@ ManagerImpl::displayConfigError (const std::string& message)
 void
 ManagerImpl::startVoiceMessageNotification (const std::string& nb_msg)
 {
-  //_gui->startVoiceMessageNotification();
   if (_gui) _gui->sendVoiceNbMessage(nb_msg);
 }
 
@@ -868,7 +791,6 @@ ManagerImpl::startVoiceMessageNotification (const std::string& nb_msg)
 void
 ManagerImpl::stopVoiceMessageNotification (void)
 {
-	//_gui->stopVoiceMessageNotification();
   if (_gui) _gui->sendVoiceNbMessage(std::string("0"));
 }
 
@@ -893,11 +815,11 @@ void
 ManagerImpl::stopTone() {
   if (isDriverLoaded()) {
     ost::MutexLock m(_toneMutex);
-    _toneType = ZT_TONE_NULL;
-    _tone->stopTone();
-    _mutex.enterMutex();
-    getAudioDriver()->stopStream();
-    _mutex.leaveMutex();
+    if ( _toneType != ZT_TONE_NULL ) {
+      _toneType = ZT_TONE_NULL;
+      _tone->stopTone();
+      getAudioDriver()->stopStream();
+    }
   }
 }
 
@@ -933,7 +855,9 @@ void
 ManagerImpl::callBusy(short id) {
   playATone(ZT_TONE_BUSY);
   Call* call = getCall(id);
-  call->setState(Call::Busy);
+  if (call != NULL) {
+    call->setState(Call::Busy);
+  }
 }
 
 /**
@@ -942,7 +866,10 @@ ManagerImpl::callBusy(short id) {
 void
 ManagerImpl::callFailure(short id) {
   playATone(ZT_TONE_BUSY);
-  getCall(id)->setState(Call::Error);
+  Call* call = getCall(id);
+  if (call != NULL) {
+    getCall(id)->setState(Call::Error);
+  }
 
   if (_gui) {
     _gui->callFailure(id);
@@ -957,7 +884,7 @@ ManagerImpl::ringtone()
 { 
   if (isDriverLoaded()) {
     _toneMutex.enterMutex(); 
-    _toneType = ZT_TONE_NULL;
+    _toneType = ZT_TONE_FILE;
     int play = _tone->playRingtone(getConfigString(AUDIO, RING_CHOICE).c_str());
     _toneMutex.leaveMutex();
     if (play!=1) {
@@ -996,41 +923,42 @@ ManagerImpl::notificationIncomingCall (void) {
  * Multi Thread
  */
 void
-ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr) {
-    StunAddress4 mappedAddr;
-	struct in_addr in;
-	char* addr;
-	char to[16];
-	bzero (to, 16);
+ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr) 
+{
+  StunAddress4 mappedAddr;
+  struct in_addr in;
+  char* addr;
+  char to[16];
+  bzero (to, 16);
 
-    int fd3, fd4;
-    bool ok = stunOpenSocketPair(stunSvrAddr,
-                                      &mappedAddr,
-                                      &fd3,
-                                      &fd4);
-    if (ok) {
-        closesocket(fd3);
-        closesocket(fd4);
-        _debug("Got port pair at %d\n", mappedAddr.port);
-        _firewallPort = mappedAddr.port;
-		
-		// Convert ipv4 address to host byte ordering
-		in.s_addr = ntohl (mappedAddr.addr);
-		addr = inet_ntoa(in);
-        _firewallAddr = std::string(addr);
-        _debug("address firewall = %s\n",_firewallAddr.data());
-    } else {
-        _debug("Opened a stun socket pair FAILED\n");
-    }
+  int fd3, fd4;
+  bool ok = stunOpenSocketPair(stunSvrAddr,
+                                    &mappedAddr,
+                                    &fd3,
+                                    &fd4);
+  if (ok) {
+    closesocket(fd3);
+    closesocket(fd4);
+    _debug("Got port pair at %d\n", mappedAddr.port);
+    _firewallPort = mappedAddr.port;
+    // Convert ipv4 address to host byte ordering
+    in.s_addr = ntohl (mappedAddr.addr);
+    addr = inet_ntoa(in);
+    _firewallAddr = std::string(addr);
+    _debug("address firewall = %s\n",_firewallAddr.data());
+  } else {
+    _debug("Opened a stun socket pair FAILED\n");
+  }
 }
 
 bool
-ManagerImpl::useStun (void) {
-    if (getConfigInt(SIGNALISATION, USE_STUN)) {
-        return true;
-    } else {
-        return false;
-    }
+ManagerImpl::useStun (void) 
+{
+  if (getConfigInt(SIGNALISATION, USE_STUN)) {
+      return true;
+  } else {
+      return false;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1043,54 +971,38 @@ ManagerImpl::useStun (void) {
 short 
 ManagerImpl::generateNewCallId (void)
 {
-	short random_id = rand();  
-	
-	// Check if already a call with this id exists 
-	while (getCall(random_id) != NULL or random_id <= 0) {
-		random_id = rand();
-	}
-	_mutex.enterMutex();
-	_nCalls += 1;
-	_mutex.leaveMutex();
-	// If random_id is not attributed, returns it.
-	return random_id;
-}
+  short random_id = rand();
 
-unsigned int 
-ManagerImpl::callVectorSize (void)
-{
-	return _callVector.size();
+  // Check if already a call with this id exists 
+  while (getCall(random_id) != NULL or random_id == 0) {
+    random_id = rand();
+  }
+  // If random_id is not attributed, returns it.
+  return random_id;
 }
 
 /**
  * Initialization: Main Thread
+ * @return 1: ok
+          -1: error directory
+           0: unable to load the setting
+           2: file doesn't exist yet
  */
 int
 ManagerImpl::createSettingsPath (void) {
-	int exist = 1;
-  	_path = std::string(HOMEDIR) + "/." + PROGNAME;
-             
-  	if (mkdir (_path.data(), 0755) != 0) {
-		// If directory	creation failed
-    	if (errno != EEXIST) {
-			_debug("Cannot create directory: %s\n", strerror(errno));
-			return -1;
-      	} 	
-  	} 
+  _path = std::string(HOMEDIR) + "/." + PROGDIR;
 
-	// Load user's configuration
-	_path = _path + "/" + PROGNAME + "rc";
+  if (mkdir (_path.data(), 0755) != 0) {
+    // If directory	creation failed
+    if (errno != EEXIST) {
+      _debug("Cannot create directory: %s\n", strerror(errno));
+      return -1;
+    }
+  }
 
-  exist = _config.populateFromFile(_path);
-	
-	if (exist == 0){
-		// If populateFromFile failed
-		return 0;
-	} else if (exist == 2) {
-		// If  file doesn't exist yet
-		return 2;
-	}
-	return exist;
+  // Load user's configuration
+  _path = _path + "/" + PROGNAME + "rc";
+  return _config.populateFromFile(_path);
 }
 
 /**
@@ -1104,7 +1016,6 @@ ManagerImpl::initConfigFile (void)
 
   std::string section;
   section = SIGNALISATION;
-  fill_config_int(VOIP_LINK_ID, DFT_VOIP_LINK_STR);
   fill_config_int(SYMMETRIC, YES_STR);
   fill_config_str(FULL_NAME, EMPTY_FIELD);
   fill_config_str(USER_PART, EMPTY_FIELD);
@@ -1121,12 +1032,9 @@ ManagerImpl::initConfigFile (void)
 
   section = AUDIO;
   fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);
-  fill_config_int(NB_CODEC, DFT_NB_CODEC_STR);
   fill_config_str(CODEC1, DFT_CODEC);
   fill_config_str(CODEC2, DFT_CODEC);
   fill_config_str(CODEC3, DFT_CODEC);
-  fill_config_str(CODEC4, DFT_CODEC);
-  fill_config_str(CODEC5, DFT_CODEC);
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
@@ -1150,15 +1058,9 @@ void
 ManagerImpl::initAudioCodec (void)
 {
   // TODO: need to be more dynamic...
-	_nCodecs = getConfigInt(AUDIO, NB_CODEC);
-	_codecDescVector.push_back(new CodecDescriptor(
-				getConfigString(AUDIO, CODEC1)));
-
-	_codecDescVector.push_back(new CodecDescriptor(
-				getConfigString(AUDIO, CODEC2)));
-	
-	_codecDescVector.push_back(new CodecDescriptor(
-				getConfigString(AUDIO, CODEC3)));
+  _codecDescVector.push_back(new CodecDescriptor(getConfigString(AUDIO, CODEC1)));
+  _codecDescVector.push_back(new CodecDescriptor(getConfigString(AUDIO, CODEC2)));
+  _codecDescVector.push_back(new CodecDescriptor(getConfigString(AUDIO, CODEC3)));
 }
 
 /**
@@ -1182,11 +1084,10 @@ ManagerImpl::unloadAudioCodec()
 void
 ManagerImpl::selectAudioDriver (void)
 {
-	
 #if defined(AUDIO_PORTAUDIO)
   try {
-	_audiodriverPA = new AudioLayer();
-	_audiodriverPA->openDevice(getConfigInt(AUDIO, DRIVER_NAME));
+    _audiodriverPA = new AudioLayer();
+    _audiodriverPA->openDevice(getConfigInt(AUDIO, DRIVER_NAME));
   } catch(...) {
     throw;
   }
@@ -1219,8 +1120,8 @@ ManagerImpl::initZeroconf(void)
 void
 ManagerImpl::initVolume()
 {
-	setSpkrVolume(getConfigInt(AUDIO, VOLUME_SPKR));
-	setMicVolume(getConfigInt(AUDIO, VOLUME_MICRO));
+  setSpkrVolume(getConfigInt(AUDIO, VOLUME_SPKR));
+  setMicVolume(getConfigInt(AUDIO, VOLUME_MICRO));
 }
 
 /**
@@ -1464,7 +1365,7 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
     int nbFile = 0;
     returnValue = getDirListing(sequenceId, path, &nbFile);
 
-    path = std::string(HOMEDIR) + "/." + PROGNAME + "/" + RINGDIR;
+    path = std::string(HOMEDIR) + "/." + PROGDIR + "/" + RINGDIR;
     getDirListing(sequenceId, path, &nbFile);
   } else if (name=="audiodevice") {
     returnValue = getAudioDeviceList(sequenceId);

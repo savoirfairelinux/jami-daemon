@@ -39,15 +39,16 @@ int AMPLITUDE = 8192;
 ///////////////////////////////////////////////////////////////////////////////
 // ToneThread implementation
 ///////////////////////////////////////////////////////////////////////////////
-ToneThread::ToneThread (int16 *buf, int size) : Thread () {
-	this->buffer = buf;
-	this->size = size;
+ToneThread::ToneThread (int16 *buf, int size) : ost::Thread () {
+  this->buffer = buf;
+  this->size = size;
   // channels is 2 (global.h)
-	this->buf_ctrl_vol = new int16[size*CHANNELS];
+  this->buf_ctrl_vol = new int16[size*CHANNELS];
 }
 
 ToneThread::~ToneThread (void) {
-	delete[] buf_ctrl_vol; buf_ctrl_vol=NULL;
+  terminate();
+  delete[] buf_ctrl_vol; buf_ctrl_vol=NULL;
 }
 
 void
@@ -330,9 +331,6 @@ ToneGenerator::stopTone() {
   // we end the last thread
   _debug("Thread: stop tonethread\n");
   delete tonethread; tonethread = NULL;
-
-  // we flush the main buffer (with blank)
-  Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
 }
 
 /**

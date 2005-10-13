@@ -386,10 +386,8 @@ SipVoIPLink::answer (short id)
 int
 SipVoIPLink::hangup (short id) 
 {
-  Call    *call    = Manager::instance().getCall(id);
-
   int i = 0;
-  if (call->getState() != Call::Error) {
+  if (Manager::instance().callCanHangup(id)) {
     SipCall *sipcall = getSipCall(id);
     _debug("Hang up call [id = %d, cid = %d, did = %d]\n", 
 	   id, sipcall->getCid(), sipcall->getDid());	
@@ -412,8 +410,7 @@ int
 SipVoIPLink::cancel (short id) 
 {
   int i = 0;
-  Call *call = Manager::instance().getCall(id);
-  if (call->getState() != Call::Error) {
+  if (Manager::instance().callCanHangup(id)) {
     SipCall *sipcall = getSipCall(id);
     _debug("Cancel call [id = %d, cid = %d]\n", id, sipcall->getCid());
     // Release SIP stack.
@@ -421,7 +418,6 @@ SipVoIPLink::cancel (short id)
     i = eXosip_call_terminate (sipcall->getCid(), -1);
     eXosip_unlock();
   }
-
   deleteSipCall(id);
   return i;
 }
@@ -709,8 +705,7 @@ SipVoIPLink::getEvent (void)
     }
  
     // Answer
-    if (id > 0 && !Manager::instance().getCall(id)->isOnHold()
-               && !Manager::instance().getCall(id)->isOffHold()) {
+    if (id > 0 && Manager::instance().callCanAnswer(id)) {
       sipcall->setStandBy(false);
       if (sipcall->answeredCall(event) != -1) {
         sipcall->answeredCall_without_hold(event);
@@ -771,8 +766,8 @@ SipVoIPLink::getEvent (void)
     _debug("Call is closed [id = %d, cid = %d, did = %d]\n", 
 	   id, event->cid, event->did);	
 			
-    if (id > 0) {	
-      if (!Manager::instance().getCall(id)->isProgressing()) {
+    if (id > 0) {
+      if (Manager::instance().callCanClose(id)) {
 	       _audiortp.closeRtpSession(getSipCall(id));
       }
       Manager::instance().peerHungupCall(id);
@@ -1033,9 +1028,11 @@ void
 SipVoIPLink::endSipCalls()
 {
   std::vector< SipCall * >::iterator iter = _sipcallVector.begin();
+  std::vector< SipCall * >::iterator tmp;
   while(iter != _sipcallVector.end()) {
-    hangup( (*iter)->getId() );
-    iter++;
+    tmp = iter; tmp++; // go to next
+    hangup( (*iter)->getId() ); // we delete the call here...
+    iter = tmp;
   }
 }
 
@@ -1389,7 +1386,6 @@ SipVoIPLink::startCall (short id, const std::string& from, const std::string& to
   }
 
   int payload;
-  unsigned int nb;
   char rtpmap[128];
   char rtpmap_attr[2048];
   char media[64];
@@ -1401,17 +1397,18 @@ SipVoIPLink::startCall (short id, const std::string& from, const std::string& to
   bzero(media_audio, 64);
 	
   // Set rtpmap according to the supported codec order
-  nb = Manager::instance().getNumberOfCodecs();
+  CodecDescriptorVector* cdv = Manager::instance().getCodecDescVector();
+  unsigned int nb = cdv->size();
   for (unsigned int i = 0; i < nb; i++) {
-    payload = Manager::instance().getCodecDescVector()->at(i)->getPayload();
+    payload = cdv->at(i)->getPayload();
 
     // Add payload to rtpmap if it is not already added
-    if (!isInRtpmap(i, payload, Manager::instance().getCodecDescVector())) {
+    if (!isInRtpmap(i, payload, cdv)) {
       snprintf(media, 63, "%d ", payload);
       strcat (media_audio, media);
 			
       snprintf(rtpmap, 127, "a=rtpmap: %d %s/%d\r\n", payload, 
-	       Manager::instance().getCodecDescVector()->at(i)->rtpmapPayload(payload).data(), SAMPLING_RATE);
+	       cdv->at(i)->rtpmapPayload(payload).data(), SAMPLING_RATE);
       strcat(rtpmap_attr, rtpmap);
     }
   }

@@ -27,11 +27,12 @@
 #include "ulaw.h"
 #include <cc++/thread.h>
 
-#define ZT_TONE_NULL       99
 #define ZT_TONE_DIALTONE   0
 #define ZT_TONE_BUSY       1
 #define ZT_TONE_RINGTONE   2
 #define ZT_TONE_CONGESTION 3
+#define ZT_TONE_FILE       98
+#define ZT_TONE_NULL       99
 
 #define NB_TONES_MAX		4
 #define NB_ZONES_MAX		7

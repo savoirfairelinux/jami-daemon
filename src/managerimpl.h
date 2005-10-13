@@ -96,34 +96,25 @@ public:
 	void setGui (GuiFramework* gui);
 	
 	// Accessor to error
-	Error* error(void);
+	Error* error(void) const { return _error; }
 
 	// Accessor to audiodriver
-	AudioLayer* getAudioDriver(void);
+  // it multi-thread and use mutex internally
+	AudioLayer* getAudioDriver(void) const { return _audiodriverPA ;}
 
-	// Accessor to number of calls 
-	unsigned int getNumberOfCalls (void);
-	// Modifior of number of calls 
-	void setNumberOfCalls (unsigned int nCalls);
-	
-	// Accessor to current call id 
-	short getCurrentCallId (void);
-	// Modifior of current call id 
-	void setCurrentCallId (short currentCallId);
+  // Accessor to current call id 
+  short getCurrentCallId (void) { 
+    ost::MutexLock m(_mutex); return _currentCallId; 
+  }
+  // Modifior of current call id 
+  void setCurrentCallId (short currentCallId) { 
+    ost::MutexLock m(_mutex);_currentCallId = currentCallId; 
+  }
 
-	// Accessor to the Call vector 
-	CallVector* getCallVector (void);
-	// Accessor to the Call with the id 'id' 
-	Call* getCall (short id);
-	
-	// Handle codec number
-	unsigned int getNumberOfCodecs (void);
-	void setNumberOfCodecs (unsigned int nb_codec);
-	
-	// Accessor to VoIPLinkVector
-	VoIPLinkVector* getVoIPLinkVector (void);
-
-	CodecDescriptorVector* getCodecDescVector(void);
+  // Accessor to VoIPLinkVector
+  VoIPLinkVector* getVoIPLinkVector (void) {return &_voIPLinkVector;}
+  // Codec Descriptor
+  CodecDescriptorVector* getCodecDescVector(void) {return &_codecDescVector;}
 
   /* 
 	 * Attribute a new random id for a new call 
@@ -137,10 +128,9 @@ public:
 	 */
 	Call* pushBackNewCall (short id, enum CallType type);
 	
-	/*
-	 * Erase the Call(id) from the CallVector
-	 */
-	void deleteCall	(short id);
+  bool callCanHangup(short id);
+  bool callCanAnswer(short id);
+  bool callCanClose(short id);
 	
 	/*
 	 * Functions which occur with a user's action
@@ -154,15 +144,11 @@ public:
 	int transferCall (short id, const std::string& to);
   void mute();
   void unmute();
-	void muteOn (short id);
-	void muteOff (short id);
 	int refuseCall (short id);
 
 	bool saveConfig (void);
 	int registerVoIPLink (void);
 	int unregisterVoIPLink (void);
-	int sendTextMessage (short id, const std::string& message);
-	int accessToDirectory (void);
 	
 	/**
    	 * Handle choice of the DTMF-send-way
@@ -278,11 +264,6 @@ name);
 private:
 
   
-	/*
-	 * Returns the number of calls in the vector
-	 */
-	unsigned int callVectorSize (void);
-
 	/**
  	 * Create .PROGNAME directory in home user and create 
 	 * configuration tree from the settings file if this file exists.
@@ -328,7 +309,12 @@ private:
   bool getCountryTones(const std::string& sequenceId);
   void sendCountryTone(const std::string& sequenceId, int index, const std::string& name);
 
-  
+  /*
+   * Erase the Call(id) from the CallVector
+   */
+  void deleteCall	(short id);
+  Call* getCall (short id);
+
   /*
    * Play one tone
    * @return false if the driver is uninitialize
@@ -378,8 +364,6 @@ private:
   void incWaitingCall(void);
   void decWaitingCall(void);
 	
-  // Number of calls
-	unsigned int _nCalls;
   // Current callid 
 	short _currentCallId;
 

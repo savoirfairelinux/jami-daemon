@@ -64,15 +64,11 @@ public:
 	int transferCall (short id, const std::string& to);
 	void mute ();
 	void unmute ();
-	void muteOn (short id);
-	void muteOff (short id);
 	int refuseCall (short id);
 
 	bool saveConfig (void);
 	int registerVoIPLink (void);
 	int unregisterVoIPLink (void);
-	int sendTextMessage (short id, const std::string& message);
-	int accessToDirectory (void);
 	bool sendDtmf (short id, char code);
   bool playDtmf (char code);
   bool playTone ();

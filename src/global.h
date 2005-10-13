@@ -41,6 +41,7 @@ typedef short int16;
 
 
 #define PROGNAME				"sflphoned"
+#define PROGDIR         "sflphone"
 #define RINGDIR					"ringtones"
 #define CODECDIR				"codecs"
 
