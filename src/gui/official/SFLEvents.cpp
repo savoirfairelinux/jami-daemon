@@ -41,7 +41,7 @@ IncommingEvent::IncommingEvent(const QString &code,
   : CallRelatedEvent(code, args)
 {
   std::list< QString > l = getUnusedArgs();
-  if(l.size() >= 3) {
+  if(l.size() >= 2) {
     mAccountId = *l.begin();
     l.pop_front();
     mOrigin = *l.begin();

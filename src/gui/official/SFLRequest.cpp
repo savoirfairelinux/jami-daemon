@@ -105,6 +105,7 @@ PermanentRequest::onError(Call call,
   if(line) {
     PhoneLineLocker guard(line, false);
     line->setLineStatus(message);
+    line->setAction("");
     line->error();
   }
   else {
@@ -124,6 +125,7 @@ PermanentRequest::onEntry(Call call,
   if(line) {
     PhoneLineLocker guard(line, false);
     line->setLineStatus(message);
+    line->setAction("");
   }
   else {
     DebugOutput::instance() << 
@@ -142,6 +144,7 @@ PermanentRequest::onSuccess(Call call,
   if(line) {
     PhoneLineLocker guard(line, false);
     line->setLineStatus(message);
+    line->setAction("");
   }
   else {
     DebugOutput::instance() << 

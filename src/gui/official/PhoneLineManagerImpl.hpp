@@ -128,6 +128,12 @@ public slots:
   void hangup(const QString &callId, bool sendrequest = true);
 
   /**
+   * This function will hanp up the given line. If the
+   * line is NULL, nothing will be done.
+   */
+  void hangup(PhoneLine *line, bool sendrequest = true);
+
+  /**
    * This function will make a call on the 
    * current line. If there's no selected
    * line, it will choose the first available.
@@ -264,6 +270,8 @@ public slots:
 
 private:
   void isInitialized();
+  void select(PhoneLine *line, bool hardselect = false);
+  void unselect();
 
 private:
   Session *mSession;

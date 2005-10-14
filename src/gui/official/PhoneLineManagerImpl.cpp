@@ -60,7 +60,6 @@ PhoneLineManagerImpl::~PhoneLineManagerImpl()
 void
 PhoneLineManagerImpl::initialize()
 {
-  QMutexLocker guard(&mIsInitializedMutex);
   if(!mIsInitialized) {
     mIsInitialized = true;
     mSession = new Session();
@@ -79,7 +78,6 @@ PhoneLineManagerImpl::start()
 
 void PhoneLineManagerImpl::isInitialized()
 {
-  QMutexLocker guard(&mIsInitializedMutex);
   if(!mIsInitialized) {
     throw std::logic_error("Trying to use PhoneLineManager without prior initialize.");
   }
@@ -119,14 +117,10 @@ PhoneLineManagerImpl::closeSession()
 {
   isInitialized();
 
-  QMutexLocker guard(&mPhoneLinesMutex);
-  mCurrentLineMutex.lock();
   mCurrentLine = NULL;
-  mCurrentLineMutex.unlock();
     
   unsigned int i = 0;
   while(i < mPhoneLines.size()) {
-    PhoneLineLocker guard(mPhoneLines[i]);
     mPhoneLines[i]->disconnect();
     i++;
   }
@@ -143,7 +137,6 @@ PhoneLineManagerImpl::getCurrentLine()
 {
   isInitialized();
 
-  QMutexLocker guard(&mCurrentLineMutex);
   return mCurrentLine;
 }
 
@@ -152,12 +145,11 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
 {
   isInitialized();
 
-  QMutexLocker guard(&mPhoneLinesMutex);
   mPhoneLines.clear();
   for(unsigned int i = 0; i < nb; i++) {
     PhoneLine *p = new PhoneLine(*mSession, *mAccount, i + 1);
     QObject::connect(p, SIGNAL(lineStatusChanged(QString)),
-		     this, SIGNAL(lineStatusSet(QString)));
+		     this, SIGNAL(unselectedLineStatusSet(QString)));
     QObject::connect(p, SIGNAL(actionChanged(QString)),
 		     this, SIGNAL(actionSet(QString)));
     QObject::connect(p, SIGNAL(bufferStatusChanged(QString)),
@@ -172,22 +164,16 @@ PhoneLineManagerImpl::getNextAvailableLine()
   isInitialized();
 
   PhoneLine *selectedLine = NULL;
-
-  QMutexLocker guard(&mPhoneLinesMutex);
-  mCurrentLineMutex.lock();
   PhoneLine *current = mCurrentLine;
-  mCurrentLineMutex.unlock();
     
 
   unsigned int i = 0;
   while(i < mPhoneLines.size() && !selectedLine) {
-    mPhoneLines[i]->lock();
     if(mPhoneLines[i]->isAvailable() && 
        mPhoneLines[i] != current) {
       selectedLine = mPhoneLines[i];
     }
     else {
-      mPhoneLines[i]->unlock();
       i++;
     }
   }
@@ -201,16 +187,13 @@ PhoneLineManagerImpl::getLine(const Call &call)
   isInitialized();
 
   PhoneLine *selectedLine = NULL;
-  QMutexLocker guard(&mPhoneLinesMutex);
 
   unsigned int i = 0;
   while(i < mPhoneLines.size() && !selectedLine) {
-    mPhoneLines[i]->lock();
     if(mPhoneLines[i]->getCallId() == call.id()) {
       selectedLine = mPhoneLines[i];
     }
     else {
-      mPhoneLines[i]->unlock();
       i++;
     }
   }
@@ -225,13 +208,55 @@ PhoneLineManagerImpl::getLine(unsigned int line)
 
   PhoneLine *selectedLine = NULL;
 
-  QMutexLocker guard(&mPhoneLinesMutex);
   if(line < mPhoneLines.size()) {
     selectedLine = mPhoneLines[line];
-    selectedLine->lock();
   }
 
   return selectedLine;
+}
+
+void
+PhoneLineManagerImpl::select(PhoneLine *line, bool hardselect)
+{
+  if(line && (mCurrentLine != line)) {
+    unselect();
+    
+    QObject::disconnect(line, SIGNAL(lineStatusChanged(QString)),
+			this, SIGNAL(unselectedLineStatusSet(QString)));
+    QObject::connect(line, SIGNAL(lineStatusChanged(QString)),
+		     this, SIGNAL(lineStatusSet(QString)));
+    QObject::connect(line, SIGNAL(actionChanged(QString)),
+		     this, SIGNAL(actionSet(QString)));
+    QObject::connect(line, SIGNAL(bufferStatusChanged(QString)),
+		     this, SIGNAL(bufferStatusSet(QString)));
+    
+    
+    mCurrentLine = line;
+    mCurrentLine->select(hardselect);
+    if(mCurrentLine->isAvailable()) {
+      mSession->playTone();
+    }
+    emit lineStatusSet(mCurrentLine->getLineStatus());
+    emit bufferStatusSet(mCurrentLine->getBuffer());
+  }
+}
+
+void
+PhoneLineManagerImpl::unselect()
+{
+  if(mCurrentLine) {
+    QObject::disconnect(mCurrentLine, SIGNAL(lineStatusChanged(QString)),
+			this, SIGNAL(lineStatusSet(QString)));
+    QObject::disconnect(mCurrentLine, SIGNAL(actionChanged(QString)),
+			this, SIGNAL(actionSet(QString)));
+    QObject::disconnect(mCurrentLine, SIGNAL(bufferStatusChanged(QString)),
+			this, SIGNAL(bufferStatusSet(QString)));
+    QObject::connect(mCurrentLine, SIGNAL(lineStatusChanged(QString)),
+		     this, SIGNAL(unselectedLineStatusSet(QString)));
+    
+    mCurrentLine->unselect();
+    mCurrentLine = NULL;
+  }
 }
 
 PhoneLine *
@@ -240,23 +265,11 @@ PhoneLineManagerImpl::selectNextAvailableLine()
   isInitialized();
 
   PhoneLine *selectedLine = getNextAvailableLine();
-  PhoneLineLocker guard(selectedLine, false);
 
   // If we found one available line.
   if(selectedLine) {
-    QMutexLocker guard(&mCurrentLineMutex);
-    if(mCurrentLine) {
-      PhoneLineLocker guard(mCurrentLine);
-      mCurrentLine->unselect();
-    }
-    mCurrentLine = selectedLine;
-    
-    // select current line.
-    // We don't need to lock it, since it is
-    // done at the top.
-    selectedLine->select();
-    emit lineStatusSet(selectedLine->getLineStatus());
-    emit bufferStatusSet(selectedLine->getBuffer());
+    unselect();
+    select(selectedLine);
   }
 
   return selectedLine;
@@ -269,7 +282,6 @@ PhoneLineManagerImpl::getPhoneLine(unsigned int line)
 {
   isInitialized();
 
-  QMutexLocker guard(&mPhoneLinesMutex);
   if(mPhoneLines.size() <= line) {
     throw std::runtime_error("Trying to get an invalid Line");
   }
@@ -284,7 +296,6 @@ PhoneLineManagerImpl::getPhoneLine(const QString &callId)
 
   PhoneLine *selectedLine = NULL;
 
-  QMutexLocker guard(&mPhoneLinesMutex);
   unsigned int i = 0;
   while(i < mPhoneLines.size() &&
 	!selectedLine) {
@@ -314,7 +325,6 @@ PhoneLineManagerImpl::sendKey(Qt::Key c)
   }
   
   if(selectedLine) {
-    PhoneLineLocker guard(selectedLine);
     selectedLine->sendKey(c);
   }
 }
@@ -326,7 +336,6 @@ PhoneLineManagerImpl::selectLine(const QString &callId, bool hardselect)
   isInitialized();
 
   PhoneLine *selectedLine = NULL;
-  mPhoneLinesMutex.lock();
   unsigned int line = 0;
   while(!selectedLine && line < mPhoneLines.size()) {
     if(mPhoneLines[line]->getCallId() == callId) {
@@ -336,7 +345,6 @@ PhoneLineManagerImpl::selectLine(const QString &callId, bool hardselect)
       line++;
     }
   }
-  mPhoneLinesMutex.unlock();
 
   if(selectedLine) {
     selectLine(line, hardselect);
@@ -359,32 +367,16 @@ PhoneLineManagerImpl::selectLine(unsigned int line, bool hardselect)
   PhoneLine *selectedLine = NULL;
   // getting the wanted line;
   {
-    mPhoneLinesMutex.lock();
     if(mPhoneLines.size() > line) {
       selectedLine = mPhoneLines[line];
     }
-    mPhoneLinesMutex.unlock();
   }
    
   if(selectedLine != NULL) {
-    mCurrentLineMutex.lock();
     PhoneLine *oldLine = mCurrentLine;
-    mCurrentLine = selectedLine;
-    mCurrentLineMutex.unlock();
-    
-    if(oldLine != selectedLine) {
-      if(oldLine != NULL) {
-	PhoneLineLocker guard(oldLine);
-	oldLine->unselect(hardselect);
-      }
 
-      PhoneLineLocker guard(selectedLine);
-      selectedLine->select(hardselect);
-      emit lineStatusSet(selectedLine->getLineStatus());
-      emit bufferStatusSet(selectedLine->getBuffer());
-      if(selectedLine->isAvailable()) {
-	mSession->playTone();
-      }
+    if(oldLine != selectedLine) {
+      select(selectedLine, hardselect);
     }
   }
   else {
@@ -398,7 +390,6 @@ PhoneLineManagerImpl::call(const QString &to)
 {
   PhoneLine *current = getCurrentLine();
   if(current) {
-    PhoneLineLocker guard(current);
     current->call(to);
   }
 }
@@ -409,7 +400,6 @@ PhoneLineManagerImpl::call()
 {
   PhoneLine *current = getCurrentLine();
   if(current) {
-    PhoneLineLocker guard(current);
     current->call();
   }
 }
@@ -417,11 +407,8 @@ PhoneLineManagerImpl::call()
 void
 PhoneLineManagerImpl::hold()
 {
-  mCurrentLineMutex.lock();
   PhoneLine *selectedLine = mCurrentLine;
-  PhoneLineLocker guard(selectedLine);
   mCurrentLine = NULL;
-  mCurrentLineMutex.unlock();
 
   if(selectedLine) {
     mSession->stopTone();
@@ -432,12 +419,9 @@ PhoneLineManagerImpl::hold()
 void
 PhoneLineManagerImpl::hangup(bool sendrequest)
 {
-  mCurrentLineMutex.lock();
   PhoneLine *selectedLine = mCurrentLine;
-  PhoneLineLocker guard(selectedLine);
   mCurrentLine = NULL;
-  mCurrentLineMutex.unlock();
-
+  
   if(selectedLine) {
     mSession->stopTone();
     selectedLine->hangup(sendrequest);
@@ -468,7 +452,7 @@ void
 PhoneLineManagerImpl::unmute()
 {
   isInitialized();
-
+  
   mSession->unmute();
 }
 
@@ -476,31 +460,31 @@ void
 PhoneLineManagerImpl::hangup(const QString &callId, bool sendrequest)
 {
   PhoneLine *selectedLine = getPhoneLine(callId);
-  if(selectedLine) {
-    mSession->stopTone();
-    PhoneLineLocker guard(selectedLine);
-    selectedLine->hangup(sendrequest);
-  }
+  hangup(selectedLine, sendrequest);
 }
-
+ 
 void
 PhoneLineManagerImpl::hangup(unsigned int line, bool sendrequest)
 {
   PhoneLine *selectedLine = getPhoneLine(line);
-  if(selectedLine) {
-    mSession->stopTone();
-    PhoneLineLocker guard(selectedLine);
-    selectedLine->hangup(sendrequest);
+  hangup(selectedLine, sendrequest);
+}
+ 
+void 
+PhoneLineManagerImpl::hangup(PhoneLine *line, bool sendrequest)
+{
+  if(line) {
+    line->hangup(sendrequest);
+    if(mCurrentLine == line) {
+      unselect();
+    }
   }
 }
 
 void
 PhoneLineManagerImpl::clear()
 {
-  mCurrentLineMutex.lock();
   PhoneLine *selectedLine = mCurrentLine;
-  PhoneLineLocker guard(selectedLine);
-  mCurrentLineMutex.unlock();
 
   if(selectedLine) {
     selectedLine->clear();
@@ -513,7 +497,8 @@ PhoneLineManagerImpl::incomming(const QString &accountId,
 				const QString &peer)
 {
   Call call(mSession->id(), accountId, callId, true);
-  addCall(call, peer, "Incomming");
+  addCall(call, peer, QObject::tr("Incomming"));
+  emit globalStatusSet(QObject::tr("Ringing (%1)...").arg(peer));
 }
 
 void 
@@ -531,7 +516,6 @@ PhoneLineManagerImpl::addCall(Call call,
 			      const QString &state)
 {
   PhoneLine *selectedLine = getNextAvailableLine();
-  PhoneLineLocker guard(selectedLine, false);
 
   if(selectedLine) {
     selectedLine->incomming(call);
