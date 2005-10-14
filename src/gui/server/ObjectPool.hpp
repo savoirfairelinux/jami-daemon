@@ -1,8 +1,8 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com> (cc++ mutex)
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
- *          Yan Morin <yan.morin@savoirfairelinux.com> (cc++ mutex)
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
