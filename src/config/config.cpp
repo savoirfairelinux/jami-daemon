@@ -63,7 +63,7 @@ ConfigTree::addConfigTreeItem(const std::string& section, const ConfigTreeItem i
     iter = _sections.find(section);
   }
   // be prudent here
-  if (iter != NULL && iter != _sections.end()) {
+  if (iter != _sections.end()) {
     std::string name = item.getName();
 
     if ( iter->second->find(name) == iter->second->end()) {
