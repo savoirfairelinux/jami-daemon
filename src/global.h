@@ -27,18 +27,16 @@
 typedef float float32;
 typedef short int16;
 
-
 #define DEBUG
 
 #ifdef DEBUG
-	#define _debug(...)	fprintf(stderr, "[debug] " __VA_ARGS__)
+	#define _debug(...)	fprintf(stderr, "[sflphoned] " __VA_ARGS__)
 #else
 	#define _debug(...)
 #endif
 
 #define VERSION "0.5"
 #define VERSIONNUM 0x000500
-
 
 #define PROGNAME				"sflphoned"
 #define PROGDIR         "sflphone"

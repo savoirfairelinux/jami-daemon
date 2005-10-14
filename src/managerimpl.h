@@ -103,12 +103,12 @@ public:
 	AudioLayer* getAudioDriver(void) const { return _audiodriverPA ;}
 
   // Accessor to current call id 
-  short getCurrentCallId (void) { 
+  CALLID getCurrentCallId (void) { 
     ost::MutexLock m(_mutex); return _currentCallId; 
   }
   // Modifior of current call id 
-  void setCurrentCallId (short currentCallId) { 
-    ost::MutexLock m(_mutex);_currentCallId = currentCallId; 
+  void setCurrentCallId (CALLID id) { 
+    ost::MutexLock m(_mutex); _currentCallId = id; 
   }
 
   // Accessor to VoIPLinkVector
@@ -120,31 +120,30 @@ public:
 	 * Attribute a new random id for a new call 
 	 * and check if it's already attributed to existing calls. 
 	 * If not exists, returns 'id' otherwise return 0 
-	 */   
-	short generateNewCallId (void);
+	 */ 
+	CALLID generateNewCallId (void);
 
 	/*
 	 * Add a new call at the end of the CallVector with identifiant 'id'
 	 */
-	Call* pushBackNewCall (short id, enum CallType type);
-	
-  bool callCanHangup(short id);
-  bool callCanAnswer(short id);
-  bool callCanClose(short id);
+  Call* pushBackNewCall (CALLID id, enum CallType type);
+  void callSetInfo(CALLID id, const std::string& name, const std::string& number);
+  bool callCanBeAnswered(CALLID id);
+  bool callCanBeClosed(CALLID id);
 	
 	/*
 	 * Functions which occur with a user's action
 	 */
 	int outgoingCall (const std::string& to);
-	int hangupCall (short id);
-	int cancelCall (short id);
-	int answerCall (short id);
-	int onHoldCall (short id);
-	int offHoldCall (short id);
-	int transferCall (short id, const std::string& to);
+	int hangupCall (CALLID id);
+	int cancelCall (CALLID id);
+	int answerCall (CALLID id);
+	int onHoldCall (CALLID id);
+	int offHoldCall (CALLID id);
+	int transferCall (CALLID id, const std::string& to);
   void mute();
   void unmute();
-	int refuseCall (short id);
+	int refuseCall (CALLID id);
 
 	bool saveConfig (void);
 	int registerVoIPLink (void);
@@ -156,23 +155,21 @@ public:
  	 * @param   id: callid of the line.
    * @param   code: pressed key.
  	 */
-	bool sendDtmf (short id, char code);
+	bool sendDtmf (CALLID id, char code);
 	bool playDtmf (char code);
 	bool playTone ();
   void stopTone();
 
-	int incomingCall (short id);
-	void peerAnsweredCall (short id);
-	int peerRingingCall (short id);
-	int peerHungupCall (short id);
-	void displayTextMessage (short id, const std::string& message);
-	void displayErrorText (short id, const std::string& message);
+	int incomingCall (CALLID id);
+	void peerAnsweredCall (CALLID id);
+	int peerRingingCall (CALLID id);
+	int peerHungupCall (CALLID id);
+	void displayTextMessage (CALLID id, const std::string& message);
+	void displayErrorText (CALLID id, const std::string& message);
 	void displayError (const std::string& error);
 	void displayStatus (const std::string& status);
   void displayConfigError(const std::string& message);
 
-//	int selectedCall (void);
-//	bool isCurrentId (short id);
 	void startVoiceMessageNotification (const std::string& nb_msg);
 	void stopVoiceMessageNotification (void);
 
@@ -205,8 +202,8 @@ name);
 	 */
 	void ringtone ();
 	void congestion ();
-  void callBusy(short callId);
-  void callFailure(short callId);
+  void callBusy(CALLID id);
+  void callFailure(CALLID id);
 
   /**
    * @return true is there is one or many incoming call waiting
@@ -312,8 +309,8 @@ private:
   /*
    * Erase the Call(id) from the CallVector
    */
-  void deleteCall	(short id);
-  Call* getCall (short id);
+  void deleteCall	(CALLID id);
+  Call* getCall (CALLID id);
 
   /*
    * Play one tone
@@ -365,7 +362,7 @@ private:
   void decWaitingCall(void);
 	
   // Current callid 
-	short _currentCallId;
+	CALLID _currentCallId;
 
 	/*
 	 * For the call timer
@@ -396,7 +393,7 @@ private:
   // tell if we have zeroconf is enabled
   int _hasZeroconf;
 
-  void switchCall(short id);
+  void switchCall(CALLID id);
 
 #ifdef USE_ZEROCONF
   // DNSService contain every zeroconf services

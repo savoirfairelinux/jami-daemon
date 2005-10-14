@@ -26,6 +26,7 @@
 #include <eXosip2/eXosip.h>
 #include <vector>
 #include <string>
+#include "call.h"
 
 class CodecDescriptor;
 class AudioCodec;
@@ -39,21 +40,21 @@ typedef std::vector<CodecDescriptor*, allocator<CodecDescriptor*> > CodecDescrip
 
 class SipCall {
 public:
-	SipCall (short id, CodecDescriptorVector* cdv);
+	SipCall (CALLID id, CodecDescriptorVector* cdv);
 	~SipCall (void);
 
- 	int  	payload;
-  	int  	enable_audio; /* 1 started, -1 stopped */
+  int payload;
+  int enable_audio; /* 1 started, -1 stopped */
 	
 	/*
 	 * Store information about incoming call and negociate payload
 	 */
-	int  	newIncomingCall 	(eXosip_event_t *);
+	int newIncomingCall 	(eXosip_event_t *);
 	
 	/*
 	 * Use to answer to a ONHOLD/OFFHOLD event 
 	 */
-	int  	answeredCall 		(eXosip_event_t *);
+	int answeredCall 		(eXosip_event_t *);
 	
 	/* 
 	 * Use to answer to an incoming call 
@@ -76,8 +77,8 @@ public:
 	 * Manage id, did (dialog-id), cid (call-id) and tid (transaction-id) 
 	 * for each sipcall
 	*/ 
-	void 	setId				(short id);
-	short	getId				(void);
+	void 	setId				(CALLID id);
+	CALLID	getId				(void);
 	void 	setDid				(int did);
 	int 	getDid				(void);
 	void 	setCid				(int cid);
@@ -123,7 +124,7 @@ private:
 	CodecDescriptorVector* _cdv;
 	AudioCodec* _audiocodec;
 	
-  short 	_id;
+  CALLID 	_id;
   int 	_cid;		// call id
   int 	_did;		// dialog id
   int 	_tid;		// transaction id

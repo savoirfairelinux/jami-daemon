@@ -29,6 +29,7 @@
 
 #include "voIPLink.h"
 #include "audio/audiortp.h"
+#include "call.h" // for CALLID
 
 #define EXPIRES_VALUE	180
 // To build request
@@ -68,7 +69,7 @@ typedef std::vector< CodecDescriptor* > CodecDescriptorVector;
 
 class SipVoIPLink : public VoIPLink {
 public:
-  SipVoIPLink (short id);
+  SipVoIPLink();
   virtual ~SipVoIPLink();
 	
 	virtual int init (void);
@@ -76,16 +77,16 @@ public:
 	virtual void terminate (void);
 	virtual int setRegister (void);
 	virtual int setUnregister (void);
-	virtual int outgoingInvite (short id, const std::string& to_url);	
-	virtual int answer (short id);
-	virtual int hangup (short id);
-	virtual int cancel (short id);
-	virtual int onhold (short id);
-	virtual int offhold (short id);
-	virtual int transfer (short id, const std::string& to);
-	virtual int refuse (short id);	
+	virtual int outgoingInvite (CALLID id, const std::string& to_url);	
+	virtual int answer (CALLID id);
+	virtual int hangup (CALLID id);
+	virtual int cancel (CALLID id);
+	virtual int onhold (CALLID id);
+	virtual int offhold (CALLID id);
+	virtual int transfer (CALLID id, const std::string& to);
+	virtual int refuse (CALLID id);	
 	virtual int getEvent (void);
-	virtual void carryingDTMFdigits (short id, char code);
+	virtual void carryingDTMFdigits (CALLID id, char code);
 	
 	/*
 	 * To handle the local port
@@ -96,23 +97,23 @@ public:
 	/*
 	 * Add a new SipCall at the end of the SipCallVector with identifiant 'id'
 	 */
-	void newOutgoingCall(short callid);
-	void newIncomingCall(short callid);
+	void newOutgoingCall(CALLID callid);
+	void newIncomingCall(CALLID callid);
 
 	/*
 	 * Erase the SipCall(id) from the SipCallVector
 	 */
-	void deleteSipCall(short callid);
+	void deleteSipCall(CALLID callid);
 	
 	/*
 	 * Return a pointer to the SipCall with identifiant 'id'
 	 */
-	SipCall* getSipCall(short callid);
+	SipCall* getSipCall(CALLID callid);
 
 	/*
 	 * Accessor to the audio codec of SipCall with identifiant 'id'
 	 */
-	AudioCodec* getAudioCodec(short callid);
+	AudioCodec* getAudioCodec(CALLID callid);
 
 // Handle voice-message
 	inline void setMsgVoicemail (int nMsg) { _nMsgVoicemail = nMsg; }
@@ -168,16 +169,15 @@ private:
 	 * Build SDP body.
 	 * Return -1 if an error occured and 0 if no error
 	 */
-	int startCall (short id, const std::string& from, const std::string& to, 
+	int startCall (CALLID id, const std::string& from, const std::string& to, 
 			const std::string& subject, const std::string& route);
 
 	/*
 	 * Look for call with same cid/did 
 	 * Return the id of the found call
 	 */
-	short findCallId (eXosip_event_t *e);
-  short findCallIdInitial (eXosip_event_t *e);
-	//short findCallIdWhenRinging (void);
+	CALLID findCallId (eXosip_event_t *e);
+  CALLID findCallIdInitial (eXosip_event_t *e);
 
 	/*
 	 * Return true if payload is already in the rtpmap and false if not

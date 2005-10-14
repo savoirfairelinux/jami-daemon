@@ -35,7 +35,7 @@
 
 using namespace std;
 
-SipCall::SipCall (short id, CodecDescriptorVector* cdv) : _localIp("127.0.0.1")
+SipCall::SipCall (CALLID id, CodecDescriptorVector* cdv) : _localIp("127.0.0.1")
 {
   _id = id;	  // Same id of Call object
   _cid = 0; // call id, from the sipvoiplink
@@ -77,12 +77,12 @@ SipCall::getLocalAudioPort (void)
 }
 
 void
-SipCall::setId (short id)
+SipCall::setId (CALLID id)
 {
 	_id = id;
 }
 
-short
+CALLID
 SipCall::getId (void)
 {
 	return _id;

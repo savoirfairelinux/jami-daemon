@@ -29,12 +29,13 @@ TCPStreamPool::run() {
   while(!testCancel() && good()) {
     if (isPending(ost::TCPSocket::pendingInput, 2LU)) {
       std::getline(*this, input);
+      _debug("TCPStreamPool getline %s\n", input.c_str());
       if (input != null && input[0]!=cr13) {
-        _debug("%d", input[0]);
         _inputPool.push(input);
       }
     }
     if (_outputPool.pop(output, 2LU)) {
+      _debug("TCPStreamPool send %s\n", output.c_str());
       *this << output << std::endl;
     }
   }
@@ -49,10 +50,7 @@ TCPStreamPool::send(const std::string& response)
 bool 
 TCPStreamPool::receive(std::string& request)
 {
-  if ( _inputPool.pop(request, 2LU) ) {
-    return true;
-  }
-  return false;
+  return _inputPool.pop(request, 2LU);
 }
 
 

@@ -22,6 +22,7 @@
 #define __VOIP_LINK_H__
 
 #include <string>
+#include "call.h"
 
 enum VoIPLinkType {
 	Sip = 0,
@@ -33,7 +34,7 @@ class Call;
 
 class VoIPLink {
 public:
-	VoIPLink (short id);
+	VoIPLink ();
 	virtual ~VoIPLink (void);
 
 	// Pure virtual functions
@@ -41,23 +42,21 @@ public:
 	virtual int init (void) = 0;
 	virtual bool checkNetwork (void) = 0;
 	virtual void terminate (void) = 0;
-	virtual void newOutgoingCall (short callid) = 0;
-	virtual void newIncomingCall (short callid) = 0;
-	virtual int outgoingInvite (short id, const std::string& to_url) = 0;
-	virtual int answer (short id) = 0;
-	virtual int hangup (short id) = 0;
-	virtual int cancel (short id) = 0;
-	virtual int onhold (short id) = 0;
-	virtual int offhold (short id) = 0;
-	virtual int transfer (short id, const std::string& to) = 0;
-	virtual int refuse (short id) = 0;
+	virtual void newOutgoingCall (CALLID id) = 0;
+	virtual void newIncomingCall (CALLID id) = 0;
+	virtual int outgoingInvite (CALLID id, const std::string& to_url) = 0;
+	virtual int answer (CALLID id) = 0;
+	virtual int hangup (CALLID id) = 0;
+	virtual int cancel (CALLID id) = 0;
+	virtual int onhold (CALLID id) = 0;
+	virtual int offhold (CALLID id) = 0;
+	virtual int transfer (CALLID id, const std::string& to) = 0;
+	virtual int refuse (CALLID id) = 0;
 	virtual int setRegister (void) = 0;
 	virtual int setUnregister (void) = 0;
-	virtual void carryingDTMFdigits(short id, char code) = 0;
-	virtual AudioCodec* getAudioCodec (short callid) = 0;
-	 
-	void setId (short id);
-	short getId (void);
+	virtual void carryingDTMFdigits(CALLID id, char code) = 0;
+	virtual AudioCodec* getAudioCodec (CALLID id) = 0;
+
 	void setType (VoIPLinkType type);
 	VoIPLinkType getType (void);
 	void setFullName (const std::string& fullname);
@@ -73,7 +72,6 @@ protected:
 private:
 	void initConstructor(void);
 	
-	short _id;
 	VoIPLinkType _type;
 	std::string _fullname;
 	std::string _hostname;

@@ -41,7 +41,6 @@ public:
   void startScanServices(); // looking for services
   void addService(const std::string &service); // adding every services
   void removeService(const std::string &service); // remove a service
-  void listServices(); // listing services (call addService before)
   DNSServiceMap getServices(); // get all DNS Service
   void stop(); // after the browsing loop stop
   

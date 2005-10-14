@@ -26,6 +26,7 @@
 #include <string>
 #include "server/argtokenizer.h"
 #include "../observer.h"
+#include "../call.h"
 
 class GuiFramework {
 public:
@@ -33,14 +34,14 @@ public:
 	virtual ~GuiFramework (void);
 
 	/* Parent class to child class */
-	virtual int incomingCall (short id, const std::string& accountId, const std::string& from) = 0;
-	virtual void peerAnsweredCall (short id) = 0;
-	virtual void peerRingingCall (short id) = 0;
-	virtual void peerHungupCall (short id) = 0;
+	virtual int incomingCall (CALLID id, const std::string& accountId, const std::string& from) = 0;
+	virtual void peerAnsweredCall (CALLID id) = 0;
+	virtual void peerRingingCall (CALLID id) = 0;
+	virtual void peerHungupCall (CALLID id) = 0;
 	virtual void displayStatus (const std::string& status) = 0;
 	virtual void displayConfigError (const std::string& error) = 0;
-	virtual void displayTextMessage (short id, const std::string& message) = 0;
-	virtual void displayErrorText (short id, const std::string& message) = 0;
+	virtual void displayTextMessage (CALLID id, const std::string& message) = 0;
+	virtual void displayErrorText (CALLID id, const std::string& message) = 0;
 	virtual void displayError (const std::string& error) = 0;
 	virtual void startVoiceMessageNotification (void) {}
 	virtual void stopVoiceMessageNotification (void) {}
@@ -49,27 +50,27 @@ public:
   virtual void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg) = 0;
   virtual void sendCallMessage(const std::string& code, 
   const std::string& sequenceId, 
-  short id, 
+  CALLID id, 
   TokenList arg) = 0;
 
-  virtual void callFailure(short id) = 0;
+  virtual void callFailure(CALLID id) = 0;
 
 	/* Child class to parent class */
 	int outgoingCall (const std::string& to); 	
-	int hangupCall (short id);
-	int cancelCall (short id);
-	int answerCall (short id);
-	int onHoldCall (short id);
-	int offHoldCall (short id);
-	int transferCall (short id, const std::string& to);
+	int hangupCall (CALLID id);
+	int cancelCall (CALLID id);
+	int answerCall (CALLID id);
+	int onHoldCall (CALLID id);
+	int offHoldCall (CALLID id);
+	int transferCall (CALLID id, const std::string& to);
 	void mute ();
 	void unmute ();
-	int refuseCall (short id);
+	int refuseCall (CALLID id);
 
 	bool saveConfig (void);
 	int registerVoIPLink (void);
 	int unregisterVoIPLink (void);
-	bool sendDtmf (short id, char code);
+	bool sendDtmf (CALLID id, char code);
   bool playDtmf (char code);
   bool playTone ();
   bool stopTone ();
@@ -89,8 +90,7 @@ public:
   int getMicVolume();
 
   bool hasLoadedSetup();
-  // Observer methods
-  short getCurrentId();
+  CALLID getCurrentId();
 
 protected:
 	std::string _message;

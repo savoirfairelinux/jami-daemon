@@ -28,26 +28,13 @@
 using namespace std;
 
 
-VoIPLink::VoIPLink (short id) 
+VoIPLink::VoIPLink ()
 {
-	_id = id;
 	initConstructor();
 }
 
 VoIPLink::~VoIPLink (void) 
 {
-}
-
-void
-VoIPLink::setId (short id) 
-{
-	_id = id;
-}
-
-short
-VoIPLink::getId (void)
-{
-	return _id;
 }
 
 void

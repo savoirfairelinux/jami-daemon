@@ -23,6 +23,7 @@
 
 #include <string>
 
+typedef unsigned int CALLID;
 
 enum CallType {
 	Null = 0,
@@ -47,20 +48,19 @@ public:
     Answered,
     Ringing,
     Progressing,
-    Cancelled,	// for cancel outgoing ringing call
     Refused,	// for refuse incoming ringing call	
     Error     // when a error occur
   };
 
 	// Constructor
-	Call(short id, CallType type, VoIPLink* voiplink);
+	Call(CALLID id, CallType type, VoIPLink* voiplink);
 	// Destructor
 	~Call(void);
 	
 
 	// Handle call-id
-	short getId (void);
-	void setId (short id);
+	CALLID getId (void);
+	void setId (CALLID id);
 	
 	// Accessor and modifior of VoIPLink
 	VoIPLink* getVoIPLink(void);
@@ -80,7 +80,8 @@ public:
 	enum CallType getType (void);
 	void setType (enum CallType type);
 
-	bool isBusy			(void);
+  bool isNotAnswered(void);
+	bool isBusy			  (void);
 	bool isOnHold 		(void);
 	bool isOffHold 		(void);
 	bool isOnMute 		(void);
@@ -89,7 +90,6 @@ public:
 	bool isHungup 		(void);
 	bool isRinging 		(void);
 	bool isRefused 		(void);
-	bool isCancelled 	(void);
 	bool isAnswered 	(void);
 	bool isProgressing 	(void);
 	bool isOutgoingType (void);
@@ -108,7 +108,7 @@ private:
 	void initConstructor (void);
 	
 	VoIPLink		*_voIPLink;	
-	short 		  	 _id;
+	CALLID 		  	 _id;
 	enum CallState 	 _state;
 	enum CallType 	 _type;
 	std::string 			 _callerIdName;

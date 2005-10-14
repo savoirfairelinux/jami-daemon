@@ -36,7 +36,7 @@ GuiFramework::outgoingCall (const string& to)
 }
 
 int 
-GuiFramework::hangupCall (short id)
+GuiFramework::hangupCall (CALLID id)
 {
 	if (Manager::instance().hangupCall(id) == 0) {
 		return 1;
@@ -46,7 +46,7 @@ GuiFramework::hangupCall (short id)
 }
 
 int 
-GuiFramework::cancelCall (short id)
+GuiFramework::cancelCall (CALLID id)
 {
 	if (Manager::instance().cancelCall(id) == 0) {
 		return 1;
@@ -56,7 +56,7 @@ GuiFramework::cancelCall (short id)
 }
 
 int 
-GuiFramework::answerCall (short id)
+GuiFramework::answerCall (CALLID id)
 {
   if (Manager::instance().answerCall(id) == 0) {
     return 1;
@@ -66,7 +66,7 @@ GuiFramework::answerCall (short id)
 }
 
 int 
-GuiFramework::onHoldCall (short id)
+GuiFramework::onHoldCall (CALLID id)
 {
   if (Manager::instance().onHoldCall(id) == 0) {
     return 1;
@@ -76,7 +76,7 @@ GuiFramework::onHoldCall (short id)
 }
 
 int 
-GuiFramework::offHoldCall (short id)
+GuiFramework::offHoldCall (CALLID id)
 {
   if (Manager::instance().offHoldCall(id) == 0) {
     return 1;
@@ -86,7 +86,7 @@ GuiFramework::offHoldCall (short id)
 }
 
 int 
-GuiFramework::transferCall (short id, const string& to)
+GuiFramework::transferCall (CALLID id, const string& to)
 {
 	if (Manager::instance().transferCall(id, to) == 0) {
 		return 1;
@@ -107,7 +107,7 @@ GuiFramework::unmute()
 }
 
 int 
-GuiFramework::refuseCall (short id)
+GuiFramework::refuseCall (CALLID id)
 {
 	if (Manager::instance().refuseCall(id) == 0) {
 		return 1;
@@ -143,7 +143,7 @@ GuiFramework::unregisterVoIPLink (void)
 }
 
 bool 
-GuiFramework::sendDtmf (short id, char code)
+GuiFramework::sendDtmf (CALLID id, char code)
 {
 	return Manager::instance().sendDtmf(id, code);
 }
@@ -193,7 +193,8 @@ GuiFramework::getCallStatus(const std::string& sequenceId)
 {
   return Manager::instance().getCallStatus(sequenceId);
 }
-short
+
+CALLID
 GuiFramework::getCurrentId() 
 {
   return Manager::instance().getCurrentCallId();

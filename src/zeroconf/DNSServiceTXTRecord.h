@@ -34,7 +34,6 @@ public:
   const std::string &getValue(const char *key);
   inline void clear(void) { _map.clear(); };
   inline int size(void) { return _map.size(); };
-  void listValue();
   TXTRecordMap getTXTRecords() { return _map; }
 
 private:

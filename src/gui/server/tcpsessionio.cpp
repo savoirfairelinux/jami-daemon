@@ -17,7 +17,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "tcpsessionio.h"
-#include "../../global.h"
 
 const int TCPSessionIO::PORT = 3999;
 const char * const TCPSessionIO::IP = "127.0.0.1";
@@ -56,7 +55,6 @@ TCPSessionIO::send(const std::string& response)
 {
   if (_clientStream) { // just in case
     _clientStream->send(response);
-    _debug("SessionIO: Sending: %s\n", response.c_str());
   }
 }
 
@@ -66,7 +64,6 @@ TCPSessionIO::receive(std::string& request)
   bool returnValue = false;
   if (_clientStream) { // just in case
     returnValue = _clientStream->receive(request);
-    if (returnValue) _debug("SessionIO: Receiving: %s\n", request.c_str());
   }
   return returnValue;
 }

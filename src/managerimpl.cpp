@@ -147,7 +147,7 @@ ManagerImpl::init (void)
   initAudioCodec();
 
   // Set a sip voip link by default
-  _voIPLinkVector.push_back(new SipVoIPLink(DFT_VOIP_LINK));
+  _voIPLinkVector.push_back(new SipVoIPLink());
   _voIPLinkVector.at(DFT_VOIP_LINK)->init();
 
   if (_voIPLinkVector.at(DFT_VOIP_LINK)->checkNetwork()) {
@@ -170,12 +170,14 @@ void ManagerImpl::terminate()
   }
   _voIPLinkVector.clear();
 
+  _mutex.enterMutex();
   for(CallVector::iterator pos = _callVector.begin();
       pos != _callVector.end();
       pos++) {
     delete *pos;   *pos = NULL;
   }
   _callVector.clear();
+  _mutex.leaveMutex();
 
   unloadAudioCodec();
 
@@ -192,7 +194,7 @@ ManagerImpl::setGui (GuiFramework* gui)
  * Multi Thread with _mutex for callVector
  */
 Call *
-ManagerImpl::pushBackNewCall (short id, enum CallType type)
+ManagerImpl::pushBackNewCall (CALLID id, enum CallType type)
 {
   Call* call = new Call(id, type, _voIPLinkVector.at(DFT_VOIP_LINK));
   // Set the wanted voip-link (first of the list)
@@ -205,16 +207,16 @@ ManagerImpl::pushBackNewCall (short id, enum CallType type)
  * Multi Thread with _mutex for callVector
  */
 Call*
-ManagerImpl::getCall (short id)
+ManagerImpl::getCall (CALLID id)
 {
   Call* call = NULL;
   unsigned int size = _callVector.size();
-  if (id > 0) {
-    for (unsigned int i = 0; i < size; i++) {
-      if (_callVector.at(i)->getId() == id) {
-        call = _callVector.at(i);
-        break;
-      }
+  for (unsigned int i = 0; i < size; i++) {
+    call = _callVector.at(i);
+    if (call && call->getId() == id) {
+      break;
+    } else {
+      call = NULL;
     }
   }
   return call;
@@ -224,13 +226,13 @@ ManagerImpl::getCall (short id)
  * Multi Thread with _mutex for callVector
  */
 void
-ManagerImpl::deleteCall (short id)
+ManagerImpl::deleteCall (CALLID id)
 {
   CallVector::iterator iter = _callVector.begin();
   while(iter!=_callVector.end()) {
     Call *call = *iter;
-    if (call->getId() == id) {
-      if (call->isIncomingType() && call->getState()!=Call::Ringing) {
+    if (call != NULL && call->getId() == id) {
+      if (call->isIncomingType() && call->isNotAnswered()) {
         decWaitingCall();
       }
       delete (*iter); *iter = NULL; 
@@ -251,7 +253,7 @@ ManagerImpl::deleteCall (short id)
 int 
 ManagerImpl::outgoingCall (const std::string& to)
 {	
-  short id = generateNewCallId();
+  CALLID id = generateNewCallId();
   Call *call = pushBackNewCall(id, Outgoing);
   _debug("Outgoing Call with identifiant %d\n", id);
 
@@ -269,14 +271,13 @@ ManagerImpl::outgoingCall (const std::string& to)
  * Every Call
  */
 int 
-ManagerImpl::hangupCall (short id)
+ManagerImpl::hangupCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  if (call == NULL) {
+  if (call == NULL && call->getState() != Call::Error) {
     return -1;
   }
-  call->setState(Call::Hungup);
   int result = call->hangup();
 
   deleteCall(id);
@@ -291,14 +292,13 @@ ManagerImpl::hangupCall (short id)
  *  0 : already in this state...
  */
 int
-ManagerImpl::cancelCall (short id)
+ManagerImpl::cancelCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) { 
     return -1; 
   }
-  call->setState(Call::Hungup);
   int result = call->cancel();
 
   deleteCall(id);
@@ -311,14 +311,13 @@ ManagerImpl::cancelCall (short id)
  * Incoming Call
  */
 int 
-ManagerImpl::answerCall (short id)
+ManagerImpl::answerCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) {
     return -1;
   }
-  call->setState(Call::Answered);
   if (call->isIncomingType()) {
     decWaitingCall();
   }
@@ -333,7 +332,7 @@ ManagerImpl::answerCall (short id)
  * @return 0 if it fails, -1 if not present
  */
 int 
-ManagerImpl::onHoldCall (short id)
+ManagerImpl::onHoldCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -343,7 +342,6 @@ ManagerImpl::onHoldCall (short id)
   if ( call->getState() == Call::OnHold) {
     return 1;
   }
-  call->setState(Call::OnHold);
   return call->onHold();
 }
 
@@ -352,7 +350,7 @@ ManagerImpl::onHoldCall (short id)
  * Every Call
  */
 int 
-ManagerImpl::offHoldCall (short id)
+ManagerImpl::offHoldCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -362,7 +360,6 @@ ManagerImpl::offHoldCall (short id)
   if (call->getState() == Call::OffHold) {
     return 1;
   }
-  call->setState(Call::OffHold);
   setCurrentCallId(id);
   int returnValue = call->offHold();
   if (returnValue) {
@@ -376,14 +373,13 @@ ManagerImpl::offHoldCall (short id)
  * Every Call
  */
 int 
-ManagerImpl::transferCall (short id, const std::string& to)
+ManagerImpl::transferCall (CALLID id, const std::string& to)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) {
     return -1;
   }
-  call->setState(Call::Transfered);
   setCurrentCallId(0);
   return call->transfer(to);
 }
@@ -412,7 +408,7 @@ ManagerImpl::unmute() {
  * Call Incoming
  */
 int 
-ManagerImpl::refuseCall (short id)
+ManagerImpl::refuseCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call *call = getCall(id);
@@ -423,7 +419,6 @@ ManagerImpl::refuseCall (short id)
   if ( call->getState() != Call::Progressing ) {
     return -1;
   }
-  call->setState(Call::Refused);
   int refuse = call->refuse();
 
   setCurrentCallId(0);
@@ -482,7 +477,7 @@ ManagerImpl::unregisterVoIPLink (void)
  * User action (main thread)
  */
 bool 
-ManagerImpl::sendDtmf (short id, char code)
+ManagerImpl::sendDtmf (CALLID id, char code)
 {
   int sendType = getConfigInt(SIGNALISATION, SEND_DTMF_AS);
   int returnValue = false;
@@ -582,27 +577,28 @@ ManagerImpl::decWaitingCall() {
   _debug("decWaitingCall: %d\n", _nbIncomingWaitingCall);
 }
 
+
 /**
  * SipEvent Thread
- * ask if it can hangup the call
+ * Set the call info for incoming call
  */
-bool
-ManagerImpl::callCanHangup(short id) {
-  bool returnValue = false;
+void
+ManagerImpl::callSetInfo(CALLID id, const std::string& name, const std::string& number)
+{
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  if (call != NULL && call->getState() != Call::Error) {
-    returnValue = true;
+  if (call != NULL) {
+    call->setCallerIdName(name);
+    call->setCallerIdNumber(number);
   }
-  return returnValue;
 }
 
 /**
  * SipEvent Thread
- * ask if it can hangup the call
+ * ask if it can close the call
  */
 bool
-ManagerImpl::callCanClose(short id) {
+ManagerImpl::callCanBeClosed(CALLID id) {
   bool returnValue = false;
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -617,7 +613,7 @@ ManagerImpl::callCanClose(short id) {
  * ask if it can answer the call
  */
 bool
-ManagerImpl::callCanAnswer(short id) {
+ManagerImpl::callCanBeAnswered(CALLID id) {
   bool returnValue = false;
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -633,7 +629,7 @@ ManagerImpl::callCanAnswer(short id) {
  * SipEvent Thread
  */
 int 
-ManagerImpl::incomingCall (short id)
+ManagerImpl::incomingCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -642,6 +638,8 @@ ManagerImpl::incomingCall (short id)
   }
   call->setType(Incoming);
   call->setState(Call::Progressing);
+
+  switchCall(id);
 
   incWaitingCall();
   ringtone();
@@ -663,7 +661,7 @@ ManagerImpl::incomingCall (short id)
  * for outgoing call, send by SipEvent
  */
 void 
-ManagerImpl::peerAnsweredCall (short id)
+ManagerImpl::peerAnsweredCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -680,7 +678,7 @@ ManagerImpl::peerAnsweredCall (short id)
  * for outgoing call, send by SipEvent
  */
 int
-ManagerImpl::peerRingingCall (short id)
+ManagerImpl::peerRingingCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -697,7 +695,7 @@ ManagerImpl::peerRingingCall (short id)
  * for outgoing call, send by SipEvent
  */
 int 
-ManagerImpl::peerHungupCall (short id)
+ManagerImpl::peerHungupCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -719,7 +717,7 @@ ManagerImpl::peerHungupCall (short id)
  * for outgoing call, send by SipEvent
  */
 void 
-ManagerImpl::displayTextMessage (short id, const std::string& message)
+ManagerImpl::displayTextMessage (CALLID id, const std::string& message)
 {
   if(_gui) {
     _gui->displayTextMessage(id, message);
@@ -731,7 +729,7 @@ ManagerImpl::displayTextMessage (short id, const std::string& message)
  * for outgoing call, send by SipEvent
  */
 void 
-ManagerImpl::displayErrorText (short id, const std::string& message)
+ManagerImpl::displayErrorText (CALLID id, const std::string& message)
 {
   if(_gui) {
     _gui->displayErrorText(id, message);
@@ -852,7 +850,7 @@ ManagerImpl::ringback () {
  * Multi Thread
  */
 void
-ManagerImpl::callBusy(short id) {
+ManagerImpl::callBusy(CALLID id) {
   playATone(ZT_TONE_BUSY);
   Call* call = getCall(id);
   if (call != NULL) {
@@ -864,7 +862,7 @@ ManagerImpl::callBusy(short id) {
  * Multi Thread
  */
 void
-ManagerImpl::callFailure(short id) {
+ManagerImpl::callFailure(CALLID id) {
   playATone(ZT_TONE_BUSY);
   Call* call = getCall(id);
   if (call != NULL) {
@@ -968,13 +966,13 @@ ManagerImpl::useStun (void)
 /**
  * Multi Thread
  */
-short 
+CALLID 
 ManagerImpl::generateNewCallId (void)
 {
-  short random_id = rand();
+  CALLID random_id = (unsigned)rand();
 
   // Check if already a call with this id exists 
-  while (getCall(random_id) != NULL or random_id == 0) {
+  while (getCall(random_id) != NULL && random_id != 0) {
     random_id = rand();
   }
   // If random_id is not attributed, returns it.
@@ -1204,6 +1202,7 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
 bool 
 ManagerImpl::getCallStatus(const std::string& sequenceId)
 {
+  ost::MutexLock m(_mutex);
   // TODO: implement account
   std::string accountId = "acc1"; 
   std::string code;
@@ -1459,9 +1458,9 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
  * Multi Thread
  */
 void 
-ManagerImpl::switchCall(short id)
+ManagerImpl::switchCall(CALLID id)
 {
-  short currentCallId = getCurrentCallId();
+  CALLID currentCallId = getCurrentCallId();
   if (currentCallId!=0 && id!=currentCallId) {
     onHoldCall(currentCallId);
   }

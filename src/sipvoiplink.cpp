@@ -31,9 +31,6 @@
 #include "user_cfg.h"
 #include "eventthread.h"
 
-using namespace ost;
-using namespace std;
-
 #define DEFAULT_SIP_PORT	5060
 #define RANDOM_SIP_PORT		rand() % 64000 + 1024
 #define	DEFAULT_LOCAL_PORT	10500
@@ -42,8 +39,7 @@ using namespace std;
 #define VOICE_MSG			"Voice-Message"
 #define LENGTH_VOICE_MSG	15
 
-SipVoIPLink::SipVoIPLink (short id) 
-  : VoIPLink (id)
+SipVoIPLink::SipVoIPLink()
 {
   // default _audioRTP object initialization
   _evThread = new EventThread(this);
@@ -280,7 +276,7 @@ SipVoIPLink::setUnregister (void)
 }
 
 int
-SipVoIPLink::outgoingInvite (short id, const std::string& to_url) 
+SipVoIPLink::outgoingInvite (CALLID id, const std::string& to_url) 
 {
   std::string from;
   std::string to;
@@ -334,7 +330,7 @@ SipVoIPLink::outgoingInvite (short id, const std::string& to_url)
  * @return 0 is good, -1 is bad
  */
 int
-SipVoIPLink::answer (short id) 
+SipVoIPLink::answer (CALLID id) 
 {
   int i;
   int port;
@@ -384,46 +380,41 @@ SipVoIPLink::answer (short id)
 }
 
 int
-SipVoIPLink::hangup (short id) 
+SipVoIPLink::hangup (CALLID id) 
 {
   int i = 0;
-  if (Manager::instance().callCanHangup(id)) {
-    SipCall *sipcall = getSipCall(id);
-    _debug("Hang up call [id = %d, cid = %d, did = %d]\n", 
-	   id, sipcall->getCid(), sipcall->getDid());	
-    // Release SIP stack.
-    eXosip_lock();
-    i = eXosip_call_terminate (sipcall->getCid(), sipcall->getDid());
-    eXosip_unlock();
+  SipCall* sipcall = getSipCall(id);
+  _debug("Hang up call [id = %d, cid = %d, did = %d]\n", 
+    id, sipcall->getCid(), sipcall->getDid());	
+  // Release SIP stack.
+  eXosip_lock();
+  i = eXosip_call_terminate (sipcall->getCid(), sipcall->getDid());
+  eXosip_unlock();
 
-    // Release RTP channels
-    _audiortp.closeRtpSession(sipcall);
-  } else {
-    _debug("The call was in error state, so delete it");
-  }
+  // Release RTP channels
+  _audiortp.closeRtpSession(sipcall);
 
   deleteSipCall(id);
   return i;
 }
 
 int
-SipVoIPLink::cancel (short id) 
+SipVoIPLink::cancel (CALLID id) 
 {
   int i = 0;
-  if (Manager::instance().callCanHangup(id)) {
-    SipCall *sipcall = getSipCall(id);
-    _debug("Cancel call [id = %d, cid = %d]\n", id, sipcall->getCid());
-    // Release SIP stack.
-    eXosip_lock();
-    i = eXosip_call_terminate (sipcall->getCid(), -1);
-    eXosip_unlock();
-  }
+  SipCall* sipcall = getSipCall(id);
+  _debug("Cancel call [id = %d, cid = %d]\n", id, sipcall->getCid());
+  // Release SIP stack.
+  eXosip_lock();
+  i = eXosip_call_terminate (sipcall->getCid(), -1);
+  eXosip_unlock();
+
   deleteSipCall(id);
   return i;
 }
 
 int
-SipVoIPLink::onhold (short id) 
+SipVoIPLink::onhold (CALLID id) 
 {
   osip_message_t *invite;
   int i;
@@ -488,7 +479,7 @@ SipVoIPLink::onhold (short id)
  * @return 0 is good, -1 is bad
  */
 int
-SipVoIPLink::offhold (short id) 
+SipVoIPLink::offhold (CALLID id) 
 {
   osip_message_t *invite;
   int i;
@@ -551,7 +542,7 @@ SipVoIPLink::offhold (short id)
 }
 
 int
-SipVoIPLink::transfer (short id, const std::string& to)
+SipVoIPLink::transfer (CALLID id, const std::string& to)
 {
   osip_message_t *refer;
   int i;
@@ -575,7 +566,7 @@ HOST_PART);
 }
 
 int
-SipVoIPLink::refuse (short id)
+SipVoIPLink::refuse (CALLID id)
 {
   int i;
   char tmpbuf[64];
@@ -597,13 +588,7 @@ SipVoIPLink::refuse (short id)
 int
 SipVoIPLink::getEvent (void)
 {
-  eXosip_event_t *event;
-  short id;
-  char *name;
-  Call *call = NULL;
-  SipCall *sipcall = NULL;
-
-  event = eXosip_event_wait (0, 50);
+  eXosip_event_t* event = eXosip_event_wait (0, 50);
   eXosip_lock();
   eXosip_automatic_action();
   eXosip_unlock();
@@ -612,8 +597,11 @@ SipVoIPLink::getEvent (void)
     return -1;
   }
 
+  SipCall* sipcall = NULL;
+  CALLID id = 0;
   int returnValue = 0;
-  _debug("GetEvent : %d ", event->type);
+
+  //_debug("GetEvent : %d ", event->type);
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //
@@ -634,8 +622,8 @@ SipVoIPLink::getEvent (void)
 
     // Generate id
     id = Manager::instance().generateNewCallId();
-    call = Manager::instance().pushBackNewCall(id, Incoming);
-    _debug("Incoming Call with id %d [cid = %d, did = %d]\n",
+    Manager::instance().pushBackNewCall(id, Incoming);
+    _debug("Incoming call with id %d [cid = %d, did = %d]\n",
 	   id, event->cid, event->did);
     _debug("Local audio port: %d\n", _localPort);
 
@@ -654,23 +642,19 @@ SipVoIPLink::getEvent (void)
       }
     }
     osip_from_parse(from, sipcall->getRemoteUri());
-    name = osip_from_get_displayname(from);
-
+    {
+      std::string name = osip_from_get_displayname(from);
+      std::string urlUsername("");
+      osip_uri_t* url = osip_from_get_url(from); 
+      if ( url != NULL ) {
+        urlUsername = url->username;
+      }
+      Manager::instance().callSetInfo(id, name, urlUsername);
+      _debug("From: %s\n", name.c_str());
+    }
     //Don't need this display text message now that we send the name
     //inside the Manager to the gui
     //Manager::instance().displayTextMessage(id, name);
-    if ( call != NULL) {
-      call->setCallerIdName(name);
-      osip_uri_t* url = osip_from_get_url(from);
-      if ( url != NULL ) {
-        call->setCallerIdNumber(url->username);
-      }
-    } else {
-      osip_from_free(from);
-      returnValue = -1;
-      break;
-    }
-    _debug("From: %s\n", name);
     osip_from_free(from);
 
     // Associate an audio port with a call
@@ -694,54 +678,46 @@ SipVoIPLink::getEvent (void)
     // The peer-user answers
   case EXOSIP_CALL_ANSWERED: // 10
   {
-    id = findCallId(event);
-    if (id == 0) {
-      id = findCallIdInitial(event);
-    }
-    sipcall = getSipCall(id);
-    if ( sipcall ) {
-      _debug("Call is answered [id = %d, cid = %d, did = %d], localport=%d\n", 
-	   id, event->cid, event->did,sipcall->getLocalAudioPort());
-    }
- 
-    // Answer
-    if (id > 0 && Manager::instance().callCanAnswer(id)) {
-      sipcall->setStandBy(false);
-      if (sipcall->answeredCall(event) != -1) {
-        sipcall->answeredCall_without_hold(event);
-        Manager::instance().peerAnsweredCall(id);
+    id = findCallIdInitial(event);
+    if ( id != 0) {
+      sipcall = getSipCall(id);
+      if ( sipcall ) {
+       _debug("Call is answered [id = %d, cid = %d, did = %d], localport=%d\n", 
+      id, event->cid, event->did,sipcall->getLocalAudioPort());
+      }
 
-        // Outgoing call is answered, start the sound channel.
-        if (_audiortp.createNewSession (sipcall) < 0) {
-          _debug("FATAL: Unable to start sound (%s:%d)\n", 
-          __FILE__, __LINE__);
-          returnValue = -1;
-          break;
+      // Answer
+      if (Manager::instance().callCanBeAnswered(id)) {
+        sipcall->setStandBy(false);
+        if (sipcall->answeredCall(event) != -1) {
+          sipcall->answeredCall_without_hold(event);
+          Manager::instance().peerAnsweredCall(id);
+
+          // Outgoing call is answered, start the sound channel.
+          if (_audiortp.createNewSession (sipcall) < 0) {
+            _debug("FATAL: Unable to start sound (%s:%d)\n", 
+            __FILE__, __LINE__);
+            returnValue = -1;
+            break;
+          }
         }
-      }
-    } else {
-      // Answer to on/off hold to send ACK
-      if (id > 0) {
+      } else {
+        // Answer to on/off hold to send ACK
         sipcall->answeredCall(event);
-        _debug("-----------------------\n");
       }
+      break;
+    } else {
+      returnValue = -1;
     }
-    break;
-	}	
+  }
   case EXOSIP_CALL_RINGING: //peer call is ringing
-    id = findCallId(event);
-		if (id == 0) {
-      id = findCallIdInitial(event);
-    }	
-    _debug("Call is ringing [id = %d, cid = %d, did = %d]\n", 
-	   id, event->cid, event->did);
-			
-    if (id > 0) {
+    id = findCallIdInitial(event);
+    _debug("Call is ringing [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);
+    if (id != 0) {
       getSipCall(id)->ringingCall(event);
       Manager::instance().peerRingingCall(id);
     } else {
       returnValue = -1;
-      break;
     }
     break;
 
@@ -750,37 +726,29 @@ SipVoIPLink::getEvent (void)
 
   case EXOSIP_CALL_ACK:
     id = findCallId(event);
-    _debug("ACK received [id = %d, cid = %d, did = %d]\n", 
-	   id, event->cid, event->did);
-    if (id > 0) {
+    _debug("ACK received [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);
+    if (id != 0) {
       getSipCall(id)->receivedAck(event);
     } else {
       returnValue = -1;
-      break;
     }
     break;
 
     // The peer-user closed the phone call(we received BYE).
   case EXOSIP_CALL_CLOSED:
     id = findCallId(event);
-    _debug("Call is closed [id = %d, cid = %d, did = %d]\n", 
-	   id, event->cid, event->did);	
-			
-    if (id > 0) {
-      if (Manager::instance().callCanClose(id)) {
+    _debug("Call is closed [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);	
+    if (id != 0) {
+      if (Manager::instance().callCanBeClosed(id)) {
 	       _audiortp.closeRtpSession(getSipCall(id));
       }
       Manager::instance().peerHungupCall(id);
       deleteSipCall(id);
     } else {
       returnValue = -1;
-      break;
     }	
     break;
   case EXOSIP_CALL_RELEASED:
-    //id = findCallIdInitial(event);
-    //_debug("Id Released: %d\n", id);
-
     break;
   case EXOSIP_CALL_REQUESTFAILURE:
     id = findCallId(event);
@@ -947,7 +915,7 @@ SipVoIPLink::getEvent (void)
     returnValue = -1;
     break;
   }
-  _debug(" : end event : %d / %d\n", event->type, returnValue);
+  //_debug(" : end event : %d / %d\n", event->type, returnValue);
   eXosip_event_free(event);
 
   return returnValue;
@@ -966,7 +934,7 @@ SipVoIPLink::setLocalPort (int port)
 }
 
 void
-SipVoIPLink::carryingDTMFdigits (short id, char code) {
+SipVoIPLink::carryingDTMFdigits (CALLID id, char code) {
   int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
   osip_message_t *info;
   const int body_len = 1000;
@@ -991,9 +959,9 @@ SipVoIPLink::carryingDTMFdigits (short id, char code) {
 }
  
 void
-SipVoIPLink::newOutgoingCall (short callid)
+SipVoIPLink::newOutgoingCall (CALLID id)
 {
-  SipCall *sipcall = new SipCall(callid, Manager::instance().getCodecDescVector());
+  SipCall* sipcall = new SipCall(id, Manager::instance().getCodecDescVector());
   if (sipcall != NULL) {
     _sipcallVector.push_back(sipcall);
     sipcall->setStandBy(true);
@@ -1001,21 +969,21 @@ SipVoIPLink::newOutgoingCall (short callid)
 }
 
 void
-SipVoIPLink::newIncomingCall (short callid)
+SipVoIPLink::newIncomingCall (CALLID id)
 {
-  SipCall* sipcall = new SipCall(callid, Manager::instance().getCodecDescVector());
+  SipCall* sipcall = new SipCall(id, Manager::instance().getCodecDescVector());
   if (sipcall != NULL) {
     _sipcallVector.push_back(sipcall);
   }
 }
 
 void
-SipVoIPLink::deleteSipCall (short callid)
+SipVoIPLink::deleteSipCall (CALLID id)
 {
-  std::vector< SipCall * >::iterator iter = _sipcallVector.begin();
+  std::vector< SipCall* >::iterator iter = _sipcallVector.begin();
 
   while(iter != _sipcallVector.end()) {
-    if ((*iter)->getId() == callid) {
+    if (*iter && (*iter)->getId() == id) {
       delete *iter; *iter = NULL;
       _sipcallVector.erase(iter);
       return;
@@ -1027,31 +995,43 @@ SipVoIPLink::deleteSipCall (short callid)
 void
 SipVoIPLink::endSipCalls()
 {
-  std::vector< SipCall * >::iterator iter = _sipcallVector.begin();
-  std::vector< SipCall * >::iterator tmp;
+  std::vector< SipCall* >::iterator iter = _sipcallVector.begin();
   while(iter != _sipcallVector.end()) {
-    tmp = iter; tmp++; // go to next
-    hangup( (*iter)->getId() ); // we delete the call here...
-    iter = tmp;
+    if ( *iter ) {
+
+      // Release SIP stack.
+      eXosip_lock();
+      eXosip_call_terminate ((*iter)->getCid(), (*iter)->getDid());
+      eXosip_unlock();
+
+      // Release RTP channels
+      _audiortp.closeRtpSession(*iter);
+      delete *iter; *iter = NULL;
+    }
+    iter++;
   }
+  _sipcallVector.clear();
 }
 
 SipCall*
-SipVoIPLink::getSipCall (short callid)
+SipVoIPLink::getSipCall (CALLID id)
 {
+  SipCall* sipcall = NULL;
   for (unsigned int i = 0; i < _sipcallVector.size(); i++) {
-    if (_sipcallVector.at(i)->getId() == callid) {
-      return _sipcallVector.at(i);
+    sipcall = _sipcallVector.at(i);
+    if (sipcall && sipcall->getId() == id) {
+      return sipcall;
     } 
   }
   return NULL;
 }
 
 AudioCodec*
-SipVoIPLink::getAudioCodec (short callid)
+SipVoIPLink::getAudioCodec (CALLID id)
 {
-  if (getSipCall(callid)) {
-    return getSipCall(callid)->getAudioCodec();
+  SipCall* sipcall = getSipCall(id);
+  if (sipcall != NULL) {
+    return sipcall->getAudioCodec();
   } else {
     return NULL;
   }
@@ -1340,10 +1320,10 @@ SipVoIPLink::toHeader(const string& to)
 }
 
 int
-SipVoIPLink::startCall (short id, const std::string& from, const std::string& to, 
+SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& to, 
 			const std::string& subject,  const std::string& route) 
 {
-  SipCall *sipcall = getSipCall(id);
+  SipCall* sipcall = getSipCall(id);
   if ( sipcall == NULL) {
     return -1; // error, we can't find the sipcall
   }
@@ -1461,14 +1441,14 @@ SipVoIPLink::startCall (short id, const std::string& from, const std::string& to
   return cid; // this is the Cid
 }
 
-short
+CALLID
 SipVoIPLink::findCallId (eXosip_event_t *e)
 {
   for (unsigned int k = 0; k < _sipcallVector.size(); k++) {
-    SipCall *call = _sipcallVector.at(k);
-    if (call->getCid() == e->cid &&
-        call->getDid() == e->did) {
-      return call->getId();
+    SipCall* sipcall = _sipcallVector.at(k);
+    if (sipcall && sipcall->getCid() == e->cid &&
+        sipcall->getDid() == e->did) {
+      return sipcall->getId();
     }
   }
   return 0;
@@ -1480,41 +1460,17 @@ SipVoIPLink::findCallId (eXosip_event_t *e)
  *     can be use when anwsering a new call or 
  *         when cancelling a call
  */
-short
+CALLID
 SipVoIPLink::findCallIdInitial (eXosip_event_t *e)
 {
   for (unsigned int k = 0; k < _sipcallVector.size(); k++) {
-    SipCall *call = _sipcallVector.at(k);
+    SipCall* sipcall = _sipcallVector.at(k);
     // the dialog id is not set when you do a new call
     // so you can't check it when you want to retreive it
     // for the first call anwser
-    if (call->getCid() == e->cid) {
-      return call->getId();
+    if (sipcall && sipcall->getCid() == e->cid) {
+      return sipcall->getId();
     }
   }
   return 0;
 }
-/**
- * YM: (2005-09-21) This function is really really bad..
- * Should be removed !
- * Don't ask the GUI which call it use...
- */
-/*
-short
-SipVoIPLink::findCallIdWhenRinging (void)
-{
-  unsigned int k;
-  int i = Manager::instance().selectedCall();
-	
-  if (i != -1) {
-    return i;
-  } else {
-    for (k = 0; k < _sipcallVector.size(); k++) {
-      if (_sipcallVector.at(k)->getStandBy()) {
-	return _sipcallVector.at(k)->getId();
-      }
-    }
-  }
-  return 0;
-}
-*/

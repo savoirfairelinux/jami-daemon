@@ -26,7 +26,7 @@
 #include "subcall.h"
 #include "requestmanager.h"
 
-typedef std::map<short, SubCall> CallMap;
+typedef std::map<CALLID, SubCall> CallMap;
 
 class GUIServerImpl : public GuiFramework {
 public:
@@ -40,16 +40,16 @@ public:
 
   // Reimplementation of virtual functions
   // TODO: remove incomingCall with one parameter
-	int incomingCall (short id);
-  int incomingCall(short id, const std::string& accountId, const std::string& from);
+	int incomingCall (CALLID id);
+  int incomingCall(CALLID id, const std::string& accountId, const std::string& from);
 
-	void peerAnsweredCall (short id);
-	void peerRingingCall (short id);
-	void peerHungupCall (short id);
+	void peerAnsweredCall (CALLID id);
+	void peerRingingCall (CALLID id);
+	void peerHungupCall (CALLID id);
 	void displayStatus (const std::string& status);
   void displayConfigError(const std::string& error);
-	void displayTextMessage (short id, const std::string& message);
-	void displayErrorText (short id, const std::string& message);
+	void displayTextMessage (CALLID id, const std::string& message);
+	void displayErrorText (CALLID id, const std::string& message);
 	void displayError (const std::string& error);
 	//void startVoiceMessageNotification (void);
 	//void stopVoiceMessageNotification (void);
@@ -60,9 +60,9 @@ public:
 arg);
   void sendCallMessage(const std::string& code, 
   const std::string& sequenceId, 
-  short id, 
+  CALLID id, 
   TokenList arg);
-  void callFailure(short id);
+  void callFailure(CALLID id);
 
   bool getEvents(const std::string& sequenceId);
   bool sendGetEventsEnd();
@@ -88,11 +88,11 @@ arg);
   void update();
 
 private:
-  void insertSubCall(short id, SubCall& subCall);
-  void removeSubCall(short id);
-  std::string getSequenceIdFromId(short id);
-  std::string getCallIdFromId(short id);
-  short getIdFromCallId(const std::string& callId);
+  void insertSubCall(CALLID id, SubCall& subCall);
+  void removeSubCall(CALLID id);
+  std::string getSequenceIdFromId(CALLID id);
+  std::string getCallIdFromId(CALLID id);
+  CALLID getIdFromCallId(const std::string& callId);
 
   /**
    * This callMap is necessary because

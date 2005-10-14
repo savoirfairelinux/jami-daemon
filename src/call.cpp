@@ -23,8 +23,7 @@
 #include "call.h"
 #include "voIPLink.h"
 
-
-Call::Call (short id, CallType type, VoIPLink* voiplink)
+Call::Call (CALLID id, CallType type, VoIPLink* voiplink)
 {
  	initConstructor();
 	_id = id; 
@@ -47,14 +46,14 @@ Call::~Call (void)
 {
 }
 
-short
+CALLID
 Call::getId (void)
 {
 	return _id;
 }
 
 void 
-Call::setId (short id)
+Call::setId (CALLID id)
 {
 	_id = id;
 }
@@ -176,16 +175,17 @@ Call::isRefused (void)
 	return (_state == Refused) ? true : false;
 }
 
-bool 
-Call::isCancelled (void)
-{
-	return (_state == Cancelled) ? true : false;
-}
 
 bool 
 Call::isAnswered (void)
 {
 	return (_state == Answered) ? true : false;
+}
+
+bool 
+Call::isNotAnswered (void)
+{
+	return (_state == Error || _state == NotExist ) ? true : false;
 }
 
 bool 
@@ -216,6 +216,7 @@ int
 Call::hangup  (void)
 {
 	int i = _voIPLink->hangup(_id);
+  setState(Hungup);
 	return i;
 }
 
@@ -223,6 +224,7 @@ int
 Call::cancel  (void)
 {
 	int i = _voIPLink->cancel(_id);
+  setState(Hungup);
 	return i;
 }
 
@@ -230,6 +232,7 @@ int
 Call::answer  (void)
 {
 	int i = _voIPLink->answer(_id);
+  setState(Answered);
 	return i;
 }
 
@@ -237,6 +240,7 @@ int
 Call::onHold  (void)
 {
 	int i = _voIPLink->onhold(_id);
+  setState(OnHold);
 	return i;
 }
 
@@ -244,6 +248,7 @@ int
 Call::offHold  (void)
 {
 	int i = _voIPLink->offhold(_id);
+  setState(OffHold);
 	return i;
 }
 
@@ -251,6 +256,7 @@ int
 Call::transfer  (const std::string& to)
 {
 	int i = _voIPLink->transfer(_id, to);
+  setState(Transfered);
 	return i;
 }
 

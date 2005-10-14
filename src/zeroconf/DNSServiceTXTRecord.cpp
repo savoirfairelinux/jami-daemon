@@ -17,8 +17,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "DNSServiceTXTRecord.h"
-#include "../global.h" // for _debug
-
 
 /**
  * Simple constructor
@@ -75,13 +73,4 @@ const std::string &
 DNSServiceTXTRecord::getValue(const char* key) 
 {
   return getValue(std::string(key));
-}
-
-void 
-DNSServiceTXTRecord::listValue() 
-{
-  TXTRecordMap::iterator iter;
-  for (iter=_map.begin(); iter != _map.end(); iter++) {
-    _debug ( "\t%s:%s\n", iter->first.c_str(), iter->second.c_str());
-  }
 }

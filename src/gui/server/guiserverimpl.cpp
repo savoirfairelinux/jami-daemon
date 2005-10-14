@@ -47,12 +47,12 @@ GUIServerImpl::exec() {
  *  remove
  */
 void 
-GUIServerImpl::insertSubCall(short id, SubCall& subCall) {
+GUIServerImpl::insertSubCall(CALLID id, SubCall& subCall) {
   _callMap[id] = subCall;
 }
 
 void
-GUIServerImpl::removeSubCall(short id) {
+GUIServerImpl::removeSubCall(CALLID id) {
   _callMap.erase(id);
 }
 
@@ -60,7 +60,7 @@ GUIServerImpl::removeSubCall(short id) {
  * Retreive the sequenceId or send default sequenceId
  */
 std::string 
-GUIServerImpl::getSequenceIdFromId(short id) {
+GUIServerImpl::getSequenceIdFromId(CALLID id) {
   CallMap::iterator iter = _callMap.find(id);
   if (iter != _callMap.end()) {
     return iter->second.sequenceId();
@@ -71,7 +71,7 @@ GUIServerImpl::getSequenceIdFromId(short id) {
  * Retreive the string callid from the id
  */
 std::string 
-GUIServerImpl::getCallIdFromId(short id) {
+GUIServerImpl::getCallIdFromId(CALLID id) {
   CallMap::iterator iter = _callMap.find(id);
   if (iter != _callMap.end()) {
     return iter->second.callId();
@@ -83,7 +83,7 @@ bool
 GUIServerImpl::getCurrentCallId(std::string& callId) {
   bool returnValue = false;
   try {
-    short id = GuiFramework::getCurrentId();
+    CALLID id = GuiFramework::getCurrentId();
     if (id!=0) {
       callId = getCallIdFromId(id);
       returnValue = true;
@@ -94,7 +94,7 @@ GUIServerImpl::getCurrentCallId(std::string& callId) {
   return returnValue;
 }
 
-short
+CALLID
 GUIServerImpl::getIdFromCallId(const std::string& callId) 
 {
   CallMap::iterator iter = _callMap.begin();
@@ -150,7 +150,7 @@ GUIServerImpl::sendGetEventsEnd()
 bool 
 GUIServerImpl::outgoingCall (const std::string& seq, const std::string& callid, const std::string& to) 
 {
-  short serverCallId = GuiFramework::outgoingCall(to);
+  CALLID serverCallId = GuiFramework::outgoingCall(to);
   if ( serverCallId ) {
     SubCall subcall(seq, callid);
     insertSubCall(serverCallId, subcall);
@@ -164,7 +164,7 @@ bool
 GUIServerImpl::answerCall(const std::string& callId) 
 {
   try {
-    short id = getIdFromCallId(callId);
+    CALLID id = getIdFromCallId(callId);
     if (GuiFramework::answerCall(id)) {
       return true;
     }
@@ -178,7 +178,7 @@ bool
 GUIServerImpl::refuseCall(const std::string& callId) 
 {
   try {
-    short id = getIdFromCallId(callId);
+    CALLID id = getIdFromCallId(callId);
     if (GuiFramework::refuseCall(id)) {
       return true;
     }
@@ -191,7 +191,7 @@ bool
 GUIServerImpl::transferCall(const std::string& callId, const std::string& to)
 {
   try {
-    short id = getIdFromCallId(callId);
+    CALLID id = getIdFromCallId(callId);
     if (GuiFramework::transferCall(id, to)) {
       return true;
     }
@@ -205,7 +205,7 @@ bool
 GUIServerImpl::holdCall(const std::string& callId) 
 {
   try {
-    short id = getIdFromCallId(callId);
+    CALLID id = getIdFromCallId(callId);
     if (GuiFramework::onHoldCall(id)) {
       return true;
     }
@@ -219,7 +219,7 @@ bool
 GUIServerImpl::unholdCall(const std::string& callId) 
 {
   try {
-    short id = getIdFromCallId(callId);
+    CALLID id = getIdFromCallId(callId);
     if (GuiFramework::offHoldCall(id)) {
       return true;
     }
@@ -233,7 +233,7 @@ bool
 GUIServerImpl::hangupCall(const std::string& callId) 
 {
   try {
-    short id = getIdFromCallId(callId);
+    CALLID id = getIdFromCallId(callId);
     if (GuiFramework::hangupCall(id)) {
       _callMap.erase(id);
       return true;
@@ -252,7 +252,7 @@ bool
 GUIServerImpl::hangupAll()
 {
   bool result = true;
-  short id;
+  CALLID id;
   CallMap::iterator iter = _callMap.begin();
   // try to hangup every call, even if one fail
   while(iter!=_callMap.end()) {
@@ -270,7 +270,7 @@ bool
 GUIServerImpl::dtmfCall(const std::string& callId, const std::string& dtmfKey) 
 {
   try {
-    short id = getIdFromCallId(callId);
+    CALLID id = getIdFromCallId(callId);
     char code = dtmfKey[0];
     return GuiFramework::sendDtmf(id, code);
   } catch(...) {
@@ -293,7 +293,7 @@ GUIServerImpl::version()
 
 
 int 
-GUIServerImpl::incomingCall (short id, const std::string& accountId, const std::string& from) 
+GUIServerImpl::incomingCall (CALLID id, const std::string& accountId, const std::string& from) 
 {
   TokenList arg;
   std::ostringstream callId;
@@ -313,7 +313,7 @@ GUIServerImpl::incomingCall (short id, const std::string& accountId, const std::
 }
 
 void  
-GUIServerImpl::peerAnsweredCall (short id) 
+GUIServerImpl::peerAnsweredCall (CALLID id) 
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
@@ -322,7 +322,7 @@ GUIServerImpl::peerAnsweredCall (short id)
 }
 
 void
-GUIServerImpl::peerRingingCall (short id) 
+GUIServerImpl::peerRingingCall (CALLID id) 
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
@@ -331,7 +331,7 @@ GUIServerImpl::peerRingingCall (short id)
 }
 
 void
-GUIServerImpl::peerHungupCall (short id) 
+GUIServerImpl::peerHungupCall (CALLID id) 
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
@@ -365,7 +365,7 @@ GUIServerImpl::displayConfigError (const std::string& error)
 }
 
 void  
-GUIServerImpl::displayTextMessage (short id, const std::string& message) 
+GUIServerImpl::displayTextMessage (CALLID id, const std::string& message) 
 {
   try {
     std::string callId = getCallIdFromId(id);
@@ -383,7 +383,7 @@ GUIServerImpl::displayTextMessage (short id, const std::string& message)
 }
 
 void  
-GUIServerImpl::displayErrorText (short id, const std::string& message) 
+GUIServerImpl::displayErrorText (CALLID id, const std::string& message) 
 {
   try {
     std::string callId = getCallIdFromId(id);
@@ -426,7 +426,7 @@ GUIServerImpl::sendMessage(const std::string& code, const std::string& seqId, To
 void 
 GUIServerImpl::sendCallMessage(const std::string& code, 
   const std::string& sequenceId, 
-  short id, 
+  CALLID id, 
   TokenList arg) 
 {
   try {
@@ -445,7 +445,7 @@ GUIServerImpl::update()
 }
 
 void
-GUIServerImpl::callFailure(short id)
+GUIServerImpl::callFailure(CALLID id)
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {

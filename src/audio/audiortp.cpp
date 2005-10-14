@@ -81,14 +81,19 @@ AudioRtp::createNewSession (SipCall *ca) {
 void
 AudioRtp::closeRtpSession (SipCall *ca) {
 	// This will make RTP threads finish.
-	if (ca->enable_audio > 0) {
-		ca->enable_audio = -1;
+	if (ca) {
+    if (ca->enable_audio > 0) {
+      ca->enable_audio = -1;
 
-		if (_RTXThread != NULL) {
-      _debug("Thread: stop AudioRTP for sipcall: %d\n", ca->getId());
-			delete _RTXThread; _RTXThread = NULL;
-		}
-	}
+      if (_RTXThread != NULL) {
+        _debug("Thread: stop AudioRTP for sipcall: %d\n", ca->getId());
+        delete _RTXThread; _RTXThread = NULL;
+      }
+  	}
+  } else {
+    _debug("Thread: stop AudioRTP for no sipcall\n");
+    delete _RTXThread; _RTXThread = NULL;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -236,8 +241,8 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
     adu = _session->getData(_session->getFirstTimestamp());
   }
   if (adu == NULL) {
-    Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
-    Manager::instance().getAudioDriver()->stopStream();
+//    Manager::instance().getAudioDriver()->mainSndRingBuffer().flush();
+//    Manager::instance().getAudioDriver()->stopStream();
     return;
   }
 
@@ -258,7 +263,6 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 	}
 
 	// If the current call is the call which is answered
-	//if (Manager::instance().isCurrentId(_ca->getId())) {
 		// Set decoded data to sound device
 		Manager::instance().getAudioDriver()->putMain(data_for_speakers_tmp, SAMPLES_SIZE(RTP_FRAMES2SEND));
 	//}

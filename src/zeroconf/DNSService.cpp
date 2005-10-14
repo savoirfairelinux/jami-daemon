@@ -99,22 +99,6 @@ void DNSService::removeService(const std::string &service)
 }
 
 /**
- * Display the list of available services
- * run() method should be call before
- */
-void 
-DNSService::listServices() 
-{
-  _debug("Number of services detected: %d\n", _services.size());
-  DNSServiceMap::iterator iterTR;
-  for (iterTR = _services.begin(); iterTR != _services.end(); iterTR++) {
-    _debug("name: %s\n", iterTR->first.c_str());
-    _debug("size: %d\n", iterTR->second.size());
-    iterTR->second.listValue();
-  }
-}
-
-/**
  * Return every services
  */
 DNSServiceMap
@@ -200,9 +184,9 @@ DNSService::addTXTRecord(const char *fullname, uint16_t rdlen, const void *rdata
 }
 
 void 
-DNSServiceAddServicesCallback(DNSServiceRef sdRef,
+DNSServiceAddServicesCallback(DNSServiceRef,
 						DNSServiceFlags flags,
-						uint32_t interfaceIndex,
+						uint32_t,
 						DNSServiceErrorType errorCode,
 						const char *serviceName,
 						const char *replyType,
@@ -230,16 +214,16 @@ DNSServiceAddServicesCallback(DNSServiceRef sdRef,
 
 void 
 DNSServiceQueryRecordCallback(
-	DNSServiceRef DNSServiceRef,
+	DNSServiceRef,
 	DNSServiceFlags flags,
-	uint32_t interfaceIndex,
+	uint32_t,
 	DNSServiceErrorType errorCode,
 	const char *fullname,
-	uint16_t rrtype,
-	uint16_t rrclass,
+	uint16_t,
+	uint16_t,
 	uint16_t rdlen,
 	const void *rdata,
-	uint32_t ttl,
+	uint32_t,
 	void *context)
 {
   if (errorCode==kDNSServiceErr_NoError) {
