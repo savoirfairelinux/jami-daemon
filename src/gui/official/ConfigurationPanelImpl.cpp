@@ -18,52 +18,54 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __CONFIGURATION_PANEL_IMPL_HPP__
-#define __CONFIGURATION_PANEL_IMPL_HPP__
+#include <qbutton.h>
+#include <qhbox.h>
+#include <qlabel.h>
+#include <qlineedit.h>
+#include <qsizepolicy.h>
 
-#include <list>
-#include <map>
-#include <qlayout.h>
-#include <qdialog.h>
+#include "ConfigurationPanelImpl.hpp"
 
-struct ConfigEntry
+ConfigurationPanelImpl::ConfigurationPanelImpl(QWidget *parent)
+  : QDialog(parent)
 {
-public:
-  ConfigEntry(QString s,
-	      QString n,
-	      QString t,
-	      QString d,
-	      QString v) 
-  {
-    section = s;
-    name = n;
-    type = t;
-    def = d;
-    value = v;
+  mLayout = new QVBoxLayout(this);
+
+}
+
+void
+ConfigurationPanelImpl::add(const ConfigEntry &entry)
+{
+  mEntries[entry.section].push_back(entry);
+}
+
+void
+ConfigurationPanelImpl::generate()
+{
+  std::map< QString, std::list< ConfigEntry > >::iterator pos = mEntries.begin();
+  while(pos != mEntries.end()) {
+    QVBoxLayout *l = new QVBoxLayout(this);
+    
+    std::list< ConfigEntry > entries = pos->second;
+    std::list< ConfigEntry >::iterator entrypos = entries.begin();
+    while(entrypos != entries.end()) {
+      QHBox *hbox = new QHBox(this);
+      mLayout->addWidget(hbox);
+
+      QLabel *label = new QLabel(hbox);
+      label->setText((*entrypos).name);
+      QLineEdit *edit = new QLineEdit(hbox);
+      edit->setText((*entrypos).value);
+
+      entrypos++;
+    }
+
+    pos++;
   }
 
-  QString section;
-  QString name;
-  QString type;
-  QString def;
-  QString value;
-};
+  QButton *ok = new QButton(this);
+  ok->setText(QObject::tr("Ok"));
+  mLayout->addWidget(ok);
 
-class ConfigurationPanelImpl : public QDialog
-{
-  Q_OBJECT
-
-public:
-  ConfigurationPanelImpl(QWidget *parent = NULL);
-
-public slots:
-  void add(const ConfigEntry &entry);
-  void generate();
-
-private:
-  std::map< QString, std::list< ConfigEntry > > mEntries;
-  QVBoxLayout *mLayout;
-};
-
-
-#endif 
+  show();
+}

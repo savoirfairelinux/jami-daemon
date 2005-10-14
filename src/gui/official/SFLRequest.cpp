@@ -315,7 +315,7 @@ ConfigGetAllRequest::onEntry(const QString &code, const QString &message)
     def = *args.begin();
     args.pop_front();
     val = *args.begin();
-    ConfigurationPanel::instance().add(section, variable, type, def, val);
+    ConfigurationPanel::instance().add(ConfigEntry(section, variable, type, def, val));
   }
 }
 
@@ -325,5 +325,5 @@ ConfigGetAllRequest::onSuccess(const QString &code, const QString &message)
   DebugOutput::instance() << QObject::tr("ConfigGetAllRequest success: (%1) %1\n")
     .arg(code)
     .arg(message);
-  ConfigurationPanel::instance().show();
+  ConfigurationPanel::instance().generate();
 }
