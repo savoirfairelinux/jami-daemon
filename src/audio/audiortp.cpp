@@ -21,8 +21,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ccrtp/rtp.h>
-#include <assert.h> 
-#include <iostream>
+#include <assert.h>
 #include <string>
 
 #include "../global.h"
@@ -36,10 +35,6 @@
 #include "../sipcall.h"
 #include "../../stund/stun.h"
 
-using namespace ost;
-using namespace std;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp                                                          
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +43,6 @@ AudioRtp::AudioRtp () {
 }
 
 AudioRtp::~AudioRtp (void) {
-  terminate();
 	delete _RTXThread; _RTXThread = NULL;
 }
 
@@ -102,21 +96,24 @@ AudioRtp::closeRtpSession (SipCall *ca) {
 AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, 
 			  AudioLayer* driver, 
 			  bool sym) {
-	time = new Time();
+	time = new ost::Time();
 	_ca = sipcall;
 	_sym = sym;
 	_audioDevice = driver;
 
 	// TODO: Change bind address according to user settings.
   std::string localipConfig = _ca->getLocalIp();
-	InetHostAddress local_ip(localipConfig.c_str());
+	ost::InetHostAddress local_ip(localipConfig.c_str());
 
 	_debug("RTP: listening on IP %s local port : %d\n", localipConfig.c_str(), _ca->getLocalAudioPort());
 	if (!_sym) {
-		_sessionRecv = new RTPSession (local_ip, _ca->getLocalAudioPort());
-		_sessionSend = new RTPSession (local_ip);
+		_sessionRecv = new ost::RTPSession (local_ip, _ca->getLocalAudioPort());
+		_sessionSend = new ost::RTPSession (local_ip);
+    _session = NULL;
 	} else {
-		_session = new SymmetricRTPSession (local_ip,  _ca->getLocalAudioPort());
+		_session = new ost::SymmetricRTPSession (local_ip, _ca->getLocalAudioPort());
+    _sessionRecv = NULL;
+    _sessionSend = NULL;
 	}
 }
 
@@ -135,7 +132,7 @@ AudioRtpRTX::~AudioRtpRTX () {
 void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
-	InetHostAddress remote_ip(_ca->getRemoteSdpAudioIp());
+	ost::InetHostAddress remote_ip(_ca->getRemoteSdpAudioIp());
 	
 	if (!remote_ip) {
 	   _debug("RTP: Target IP address [%s] is not correct!\n", _ca->getRemoteSdpAudioIp());
@@ -170,8 +167,8 @@ AudioRtpRTX::initAudioRtpSession (void)
 
     //setPayloadFormat(StaticPayloadFormat(sptPCMU));
     _debug("Payload Format: %d\n", _ca->payload);
-		_sessionRecv->setPayloadFormat(StaticPayloadFormat((StaticPayloadType) _ca->payload));
-		_sessionSend->setPayloadFormat(StaticPayloadFormat((StaticPayloadType) _ca->payload));
+		_sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _ca->payload));
+		_sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _ca->payload));
 
 		setCancel(cancelImmediate);
 		_sessionSend->setMark(true);
@@ -180,7 +177,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 		if (!_session->addDestination (remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort())) {
 			return;
 		} else {
-			_session->setPayloadFormat(StaticPayloadFormat((StaticPayloadType) _ca->payload));
+			_session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _ca->payload));
 			setCancel(cancelImmediate);
 		}
 	}
@@ -232,7 +229,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 {
 	int expandedSize;
 	int k;
-	const AppDataUnit* adu = NULL;
+	const ost::AppDataUnit* adu = NULL;
 
   // Get audio data stream
   if (!_sym) {

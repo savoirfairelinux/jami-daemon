@@ -129,23 +129,23 @@ CodecDescriptor::rtpmapPayload (int payload) {
   // we create one, but in MainManager for the list
 	switch (payload) {
 		case PAYLOAD_CODEC_ALAW:
- 			return string("PCMA");
+ 			return std::string("PCMA");
  			break;
 
  		case PAYLOAD_CODEC_ULAW:
- 			return string("PCMU");
+ 			return std::string("PCMU");
  			break;
 
  		case PAYLOAD_CODEC_GSM:
- 			return string("GSM");
+ 			return std::string("GSM");
  			break;
 
  		case PAYLOAD_CODEC_ILBC:
- 			return string("iLBC");
+ 			return std::string("iLBC");
  			break;
 
  		case PAYLOAD_CODEC_SPEEX:
- 			return string("speex");
+ 			return std::string("speex");
  			break;
 
 		default:

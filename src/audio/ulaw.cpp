@@ -20,7 +20,7 @@
 #include "g711.h"
 #include "ulaw.h"
 
-Ulaw::Ulaw(int payload, const string& codec) : AudioCodec(payload, codec)
+Ulaw::Ulaw(int payload, const std::string& codec) : AudioCodec(payload, codec)
 {
 	_codecName = codec;
 	_payload = payload;

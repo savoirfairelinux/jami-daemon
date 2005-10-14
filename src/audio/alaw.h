@@ -24,14 +24,14 @@
 
 class Alaw : public AudioCodec {
 public:
-	Alaw (int payload, const string& codec);
+	Alaw (int payload, const std::string& codec);
 	~Alaw (void);
 	
 	int	codecDecode	(short *, unsigned char *, unsigned int);
 	int	codecEncode	(unsigned char *, short *, unsigned int);
 
 private:
-	string _codecName;
+	std::string _codecName;
 	int _payload;
 };
 

@@ -19,17 +19,14 @@
  */
 
 #ifdef AUDIO_PORTAUDIO
-  
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "audiolayer.h"
 #include "../error.h"
 #include "../global.h"
 #include "../manager.h"
-
-using namespace std;
 
 AudioLayer::AudioLayer () 
   : _urgentRingBuffer(SIZEBUF)
@@ -210,8 +207,8 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 	toPut = (micAvailPut <= (int)framesPerBuffer) ? micAvailPut : 
 			framesPerBuffer;
 	_micRingBuffer.Put(in, SAMPLES_SIZE(toPut));
-   	
-	return paContinue;  
+
+	return paContinue;
 }
 
 #endif // defined(AUDIO_PORTAUDIO)

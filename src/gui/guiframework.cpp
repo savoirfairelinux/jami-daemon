@@ -19,8 +19,6 @@
  */
 
 #include <string>
-using namespace std;
-
 #include "guiframework.h"
 #include "../manager.h"
 
@@ -30,7 +28,7 @@ GuiFramework::GuiFramework ()
 GuiFramework::~GuiFramework (void) {}
 
 int 
-GuiFramework::outgoingCall (const string& to)
+GuiFramework::outgoingCall (const std::string& to)
 {
   return Manager::instance().outgoingCall(to);
 }
@@ -86,7 +84,7 @@ GuiFramework::offHoldCall (CALLID id)
 }
 
 int 
-GuiFramework::transferCall (CALLID id, const string& to)
+GuiFramework::transferCall (CALLID id, const std::string& to)
 {
 	if (Manager::instance().transferCall(id, to) == 0) {
 		return 1;

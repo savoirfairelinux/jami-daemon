@@ -55,9 +55,6 @@
 #define fill_config_int(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
 
-//using namespace std;
-//using namespace ost;
- 
 ManagerImpl::ManagerImpl (void)
 {
   // initialize random generator  
@@ -133,7 +130,7 @@ ManagerImpl::init (void)
       displayError(e.what());
       throw e;
     }
-  catch (const exception &e)
+  catch (const std::exception &e)
     {
       displayError(e.what());
       throw e;

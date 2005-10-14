@@ -31,8 +31,6 @@
 #include "../manager.h"
 #include "../user_cfg.h"
 
-using namespace std;
-
 int AMPLITUDE = 8192;
 
 
@@ -184,14 +182,14 @@ ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr, int len) 
  */
 void
 ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* temp) {
-	string s;
+	std::string s;
 	int count = 0;
 	int byte = 0;
 	int nbcomma = 0;
 	int16 *buffer = new int16[SIZEBUF]; //1kb
 	int pos;
 
-	string str(toneZone[idCountry][idTones]);
+	std::string str(toneZone[idCountry][idTones]);
 	nbcomma = contains(toneZone[idCountry][idTones], ',');
 
 	// Number of format sections 
@@ -271,7 +269,7 @@ ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* t
  * @return	id of the zone
  */
 int
-ToneGenerator::idZoneName (const string& name) {
+ToneGenerator::idZoneName (const std::string& name) {
 	if (name.compare("North America") == 0) {
 		return ID_NORTH_AMERICA;
 	} else if (name.compare("France") == 0) {
@@ -350,16 +348,16 @@ ToneGenerator::playRingtone (const char *fileName) {
 		return 0;
 	}
 	
-	fstream file;
-	file.open(fileName, fstream::in);
+	std::fstream file;
+	file.open(fileName, std::fstream::in);
 	if (!file.is_open()) {
 		return 0;
   	}
 
 	// get length of file:
-  	file.seekg (0, ios::end);
+  	file.seekg (0, std::ios::end);
   	length = file.tellg();
-  	file.seekg (0, ios::beg);
+  	file.seekg (0, std::ios::beg);
 
   	// allocate memory:
   _src = new char [length];
@@ -382,12 +380,12 @@ ToneGenerator::playRingtone (const char *fileName) {
 }
 
 int
-ToneGenerator::contains (const string& str, char c)
+ToneGenerator::contains (const std::string& str, char c)
 {
 	static int nb = 0;
 	
 	unsigned int pos = str.find(c);
-	if (pos != string::npos) {
+	if (pos != std::string::npos) {
 		nb = nb + 1;
 		return contains(str.substr(pos + 1, str.length()), c);
 	} else {

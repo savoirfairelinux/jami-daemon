@@ -1,5 +1,6 @@
 /**
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author:  Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -24,23 +25,19 @@
 #include <string> 
 #include "../global.h"
 
-using namespace std;
-
-
-
 class AudioCodec {
 public:
-	AudioCodec(int payload, const string& codec);		
+	AudioCodec(int payload, const std::string& codec);
 	virtual ~AudioCodec	(void);	
 
 	virtual int	codecDecode	(short *, unsigned char *, unsigned int) = 0;
 	virtual int	codecEncode	(unsigned char *, short *, unsigned int) = 0;
 	
-	void setCodecName (const string& codec);
-	string getCodecName (void);
+	void setCodecName (const std::string& codec);
+	std::string getCodecName (void);
 
 private:
-	string _codecName;
+	std::string _codecName;
 	int _payload;
 };
 

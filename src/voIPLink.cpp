@@ -24,10 +24,6 @@
 #include "voIPLink.h"
 #include "manager.h"
 
-
-using namespace std;
-
-
 VoIPLink::VoIPLink ()
 {
 	initConstructor();
@@ -50,36 +46,36 @@ VoIPLink::getType (void)
 }
 
 void 
-VoIPLink::setFullName (const string& fullname)
+VoIPLink::setFullName (const std::string& fullname)
 {
 	_fullname = fullname;
 }
 
-string 
+std::string
 VoIPLink::getFullName (void)
 {
 	return _fullname;
 }
 
 void 
-VoIPLink::setHostName (const string& hostname)
+VoIPLink::setHostName (const std::string& hostname)
 {
 	_hostname = hostname;
 }
 
-string 
+std::string
 VoIPLink::getHostName (void)
 {
 	return _hostname;
 } 
 
 void 
-VoIPLink::setLocalIpAddress (const string& ipAdress)
+VoIPLink::setLocalIpAddress (const std::string& ipAdress)
 {
 	_localIpAddress = ipAdress;
 }
 
-string 
+std::string 
 VoIPLink::getLocalIpAddress (void)
 {
 	return _localIpAddress;

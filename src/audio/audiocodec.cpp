@@ -22,10 +22,7 @@
 
 #include "audiocodec.h"
 
-using namespace std;
-
-
-AudioCodec::AudioCodec (int payload, const string& codec) {
+AudioCodec::AudioCodec (int payload, const std::string& codec) {
 	_codecName = codec;
 	_payload = payload;
 }
@@ -34,12 +31,12 @@ AudioCodec::~AudioCodec (void) {
 }
 
 void
-AudioCodec::setCodecName (const string& codec)
+AudioCodec::setCodecName (const std::string& codec)
 {
 	_codecName = codec;
 }
 
-string
+std::string
 AudioCodec::getCodecName (void)
 {
 	return _codecName;

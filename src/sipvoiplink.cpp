@@ -53,8 +53,8 @@ SipVoIPLink::SipVoIPLink()
 
 SipVoIPLink::~SipVoIPLink(void) {
   endSipCalls();
-  eXosip_quit();
   delete _evThread; _evThread = NULL;
+  eXosip_quit();
 }
 
 // for voIPLink interface
@@ -1310,9 +1310,9 @@ FULL_NAME);
 
 
 std::string
-SipVoIPLink::toHeader(const string& to) 
+SipVoIPLink::toHeader(const std::string& to) 
 {
-  if (to.find("sip:") == string::npos) {
+  if (to.find("sip:") == std::string::npos) {
     return ("sip:" + to );
   } else {
     return to;

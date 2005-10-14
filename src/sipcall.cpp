@@ -21,10 +21,8 @@
  */
 
 #include <osipparser2/sdp_message.h>
-#include <string.h>
+#include <string.h> // strcpy
  
-#include <iostream>
-
 // For AF_INET
 #include <sys/socket.h>
 
@@ -32,8 +30,6 @@
 #include "audio/audiocodec.h"
 #include "audio/codecDescriptor.h"
 #include "sipcall.h"
-
-using namespace std;
 
 SipCall::SipCall (CALLID id, CodecDescriptorVector* cdv) : _localIp("127.0.0.1")
 {

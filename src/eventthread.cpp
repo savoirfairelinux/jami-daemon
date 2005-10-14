@@ -17,12 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <iostream>
-
 #include "eventthread.h"
 #include "sipvoiplink.h"
-
-using namespace std;
 
 EventThread::EventThread (SipVoIPLink* sip) : Thread () 
 {

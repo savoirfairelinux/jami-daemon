@@ -27,14 +27,14 @@ extern "C" {
 
 class Gsm : public AudioCodec {
 public:
-	Gsm (int payload, const string& codec);
+	Gsm (int payload, const std::string& codec);
 	~Gsm (void);
 	
 	int	codecDecode	(short *, unsigned char *, unsigned int);
 	int	codecEncode	(unsigned char *, short *, unsigned int);
 
 private:
-	string _codecName;
+	std::string _codecName;
 	int _payload;
 	gsm _decode_gsmhandle;
 	gsm _encode_gsmhandle;

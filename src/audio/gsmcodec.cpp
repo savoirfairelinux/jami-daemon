@@ -21,7 +21,7 @@
 #include "gsmcodec.h"
 #include "../global.h"
 
-Gsm::Gsm(int payload, const string& codec) : AudioCodec(payload, codec)
+Gsm::Gsm(int payload, const std::string& codec) : AudioCodec(payload, codec)
 {
 	_codecName = codec;
 	_payload = payload;

@@ -22,8 +22,6 @@
 #include "global.h"
 #include "error.h"
 #include "manager.h"
-  
-using namespace std;
 
 Error::Error (){
 	issetError = 0;
@@ -31,7 +29,6 @@ Error::Error (){
 
 int
 Error::errorName (Error_enum num_name) {
-	string str;
 	switch (num_name){
 		// Handle opening device errors
 		case OPEN_FAILED_DEVICE:
