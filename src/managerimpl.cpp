@@ -809,12 +809,13 @@ ManagerImpl::playATone(unsigned int tone) {
 void 
 ManagerImpl::stopTone() {
   if (isDriverLoaded()) {
-    ost::MutexLock m(_toneMutex);
+    _toneMutex.enterMutex();
     if ( _toneType != ZT_TONE_NULL ) {
       _toneType = ZT_TONE_NULL;
       _tone->stopTone();
-      getAudioDriver()->stopStream();
     }
+    _toneMutex.leaveMutex();
+    getAudioDriver()->stopStream();
   }
 }
 

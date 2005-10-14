@@ -317,7 +317,7 @@ GUIServerImpl::peerAnsweredCall (CALLID id)
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
-    _requestManager.sendResponse(ResponseMessage("200", iter->second.sequenceId(), "OK"));
+    _requestManager.sendResponse(ResponseMessage("200", iter->second.sequenceId(), "Established"));
   }
 }
 

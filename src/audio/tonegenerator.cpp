@@ -45,7 +45,11 @@ ToneThread::ToneThread (int16 *buf, int size) : ost::Thread () {
 }
 
 ToneThread::~ToneThread (void) {
-  terminate();
+  try {
+    terminate();
+  } catch (...) {
+    _debug("ToneThread: try to terminate, but catch an exception...\n");
+  }
   delete[] buf_ctrl_vol; buf_ctrl_vol=NULL;
 }
 
@@ -109,12 +113,13 @@ ToneGenerator::~ToneGenerator (void) {
 
 /**
  * Initialisation of ring tone for supported zone
+ * http://nemesis.lonestar.org/reference/telecom/signaling/busy.html
  */
 void
 ToneGenerator::initTone (void) {
 	toneZone[ID_NORTH_AMERICA][ZT_TONE_DIALTONE] = "350+440";
 	toneZone[ID_NORTH_AMERICA][ZT_TONE_BUSY] = "480+620/500,0/500";
-	toneZone[ID_NORTH_AMERICA][ZT_TONE_RINGTONE] = "440+480/2000,0/2000";
+	toneZone[ID_NORTH_AMERICA][ZT_TONE_RINGTONE] = "440+480/2000,0/4000";
 	toneZone[ID_NORTH_AMERICA][ZT_TONE_CONGESTION] = "480+620/250,0/250"; 
 
 	toneZone[ID_FRANCE][ZT_TONE_DIALTONE] = "440";
@@ -326,9 +331,10 @@ void
 ToneGenerator::stopTone() {
   _currentTone = ZT_TONE_NULL;
 
-  // we end the last thread
-  _debug("Thread: stop tonethread\n");
+  _debug("Thread: delete tonethread\n");
   delete tonethread; tonethread = NULL;
+  // we end the last thread
+  _debug("Thread: tonethread deleted\n");
 }
 
 /**

@@ -118,7 +118,11 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall,
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
-  terminate();
+  try {
+    terminate();
+  } catch (...) {
+    _debug("AudioRtpRTX: try to terminate, but catch an exception...\n");
+  }
   _debug("Thread: AudioRtpRTX stop session\n");
   if (!_sym) {
     delete _sessionRecv; _sessionRecv = NULL;
