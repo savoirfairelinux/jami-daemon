@@ -228,7 +228,7 @@ PhoneLineManagerImpl::select(PhoneLine *line, bool hardselect)
     
     mCurrentLine = line;
     mCurrentLine->select(hardselect);
-    if(!mCurrentLine->isAvailable()) {
+    if(mCurrentLine->isAvailable() && !hardselect) {
       mSession->playTone();
     }
     emit lineStatusSet(mCurrentLine->getLineStatus());
