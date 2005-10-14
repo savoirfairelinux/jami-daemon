@@ -171,7 +171,6 @@ PhoneLine::incomming(const Call &call)
   }
   else {
     mCall = new Call(call);
-    setLineStatus("Incomming...");
     emit backgrounded();
   }
 }

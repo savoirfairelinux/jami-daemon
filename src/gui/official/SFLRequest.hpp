@@ -185,5 +185,20 @@ class TemporaryRequest : public CallRelatedRequest
 			 const QString &message);
 };
 
+class ConfigGetAllRequest : public Request
+{
+public:
+  ConfigGetAllRequest(const QString &sequenceId,
+		   const QString &command,
+		   const std::list< QString > &args);
+
+
+  virtual ~ConfigGetAllRequest(){}
+
+
+  virtual void onError(const QString &code, const QString &message);
+  virtual void onEntry(const QString &code, const QString &message);
+  virtual void onSuccess(const QString &code, const QString &message);
+};
 
 #endif

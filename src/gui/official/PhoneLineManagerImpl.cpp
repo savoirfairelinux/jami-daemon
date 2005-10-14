@@ -450,6 +450,14 @@ PhoneLineManagerImpl::mute()
 }
 
 void
+PhoneLineManagerImpl::setup()
+{
+  isInitialized();
+  
+  mSession->configGetAll();
+}
+
+void
 PhoneLineManagerImpl::unmute()
 {
   isInitialized();
@@ -523,7 +531,7 @@ PhoneLineManagerImpl::addCall(Call call,
   if(selectedLine) {
     selectedLine->incomming(call);
     selectedLine->setPeer(peer);
-    selectedLine->setState(state);
+    selectedLine->setLineStatus(state);
   }
   else {
     DebugOutput::instance() << QObject::tr("PhoneLineManager: There's no available lines"

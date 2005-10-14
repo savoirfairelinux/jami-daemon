@@ -23,6 +23,7 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< Request >(QString("stoptone"));
   Requester::instance().registerObject< Request >(QString("playdtmf"));
   Requester::instance().registerObject< CallRequest >(QString("call"));
+  Requester::instance().registerObject< ConfigGetAllRequest >(QString("configgetall"));
   Requester::instance().registerObject< EventRequest >(QString("getevents"));
   Requester::instance().registerObject< CallStatusRequest >(QString("getcallstatus"));
   Requester::instance().registerObject< PermanentRequest >(QString("answer"));
@@ -63,6 +64,8 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   &PhoneLineManager::instance(), SLOT(call()));
   QObject::connect(w->mMute, SIGNAL(clicked(bool)),
 		   &PhoneLineManager::instance(), SLOT(mute(bool)));
+  QObject::connect(w->mSetup, SIGNAL(clicked()),
+		   &PhoneLineManager::instance(), SLOT(setup()));
   QObject::connect(w->mHangup, SIGNAL(clicked()),
 		   &PhoneLineManager::instance(), SLOT(hangup()));
   QObject::connect(w->mHold, SIGNAL(clicked()),

@@ -59,6 +59,8 @@ class Session
    */
   QString mute() const;
 
+  QString configGetAll() const;
+
   /**
    * This function will set the volume to 
    * the given percentage

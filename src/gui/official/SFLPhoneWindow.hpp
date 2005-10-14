@@ -62,6 +62,7 @@ private:
   JPushButton *mOk;
   JPushButton *mClear;
   JPushButton *mMute;
+  JPushButton *mSetup;
   
   VolumeControl *mVolume;
   VolumeControl *mMicVolume;

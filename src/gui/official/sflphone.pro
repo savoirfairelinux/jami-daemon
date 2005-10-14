@@ -104,6 +104,8 @@ HEADERS += Account.hpp \
            Call.hpp \
            CallStatus.hpp \
            CallStatusFactory.hpp \
+           ConfigurationPanel.hpp \
+           ConfigurationPanelImpl.hpp \
            DebugOutput.hpp \
            DebugOutputImpl.hpp \
            Event.hpp \
@@ -140,6 +142,7 @@ SOURCES += Account.cpp \
            Call.cpp \
            CallManagerImpl.cpp \
            CallStatus.cpp \
+           ConfigurationPanelImpl.cpp \
            DebugOutputImpl.cpp \
            Event.cpp \
            JPushButton.cpp \

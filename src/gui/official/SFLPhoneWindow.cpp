@@ -37,7 +37,8 @@
 #define CLOSE_PRESSED_IMAGE "close_on.png"
 #define MINIMIZE_RELEASED_IMAGE "minimize_off.png"
 #define MINIMIZE_PRESSED_IMAGE "minimize_on.png"
-
+#define SETUP_RELEASED_IMAGE "setup_off.png"
+#define SETUP_PRESSED_IMAGE "setup_on.png"
 
 			    
 SFLPhoneWindow::SFLPhoneWindow()
@@ -115,6 +116,12 @@ SFLPhoneWindow::initGUIButtons()
 			   mMain);
   mMute->move(225,94);
   mMute->setToggle(true);
+
+  mSetup = new JPushButton(QString(SETUP_RELEASED_IMAGE),
+			   QString(SETUP_PRESSED_IMAGE),
+			   mMain);
+  //mSetup->move(225,42);
+  mSetup->move(318,68);
 
   mVolume = new VolumeControl(QString(VOLUME_IMAGE),
 			      mMain);

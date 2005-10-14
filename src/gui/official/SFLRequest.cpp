@@ -8,6 +8,7 @@
 #include "CallManager.hpp"
 #include "CallStatus.hpp"
 #include "CallStatusFactory.hpp"
+#include "ConfigurationPanel.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineLocker.hpp"
 #include "PhoneLineManager.hpp"
@@ -277,4 +278,52 @@ CallRequest::onSuccess(Account,
   else {
     DebugOutput::instance() << QObject::tr("CallRequest: Trying to retreive an unregistred call (%1)\n").arg(mCallId);
   }
+}
+
+
+
+ConfigGetAllRequest::ConfigGetAllRequest(const QString &sequenceId,
+			   const QString &command,
+			   const std::list< QString > &args)
+  : Request(sequenceId, command, args)
+{}
+
+
+void
+ConfigGetAllRequest::onError(const QString &code, const QString &message)
+{
+  DebugOutput::instance() << QObject::tr("ConfigGetAllRequest error: (%1) %1\n")
+    .arg(code)
+    .arg(message);
+}
+
+void
+ConfigGetAllRequest::onEntry(const QString &code, const QString &message)
+{
+  DebugOutput::instance() << QObject::tr("ConfigGetAllRequest entry: (%1) %1\n")
+    .arg(code)
+    .arg(message);
+  std::list< QString > args = Request::parseArgs(message);
+  if(args.size() >= 5) {
+    QString section, variable, type, def, val;
+    section = *args.begin();
+    args.pop_front();
+    variable = *args.begin();
+    args.pop_front();
+    type = *args.begin();
+    args.pop_front();
+    def = *args.begin();
+    args.pop_front();
+    val = *args.begin();
+    ConfigurationPanel::instance().add(section, variable, type, def, val);
+  }
+}
+
+void
+ConfigGetAllRequest::onSuccess(const QString &code, const QString &message)
+{
+  DebugOutput::instance() << QObject::tr("ConfigGetAllRequest success: (%1) %1\n")
+    .arg(code)
+    .arg(message);
+  ConfigurationPanel::instance().show();
 }

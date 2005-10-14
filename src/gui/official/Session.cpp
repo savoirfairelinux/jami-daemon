@@ -68,6 +68,12 @@ Session::getEvents() const
   return Requester::instance().send(mId, "getevents", std::list< QString >());
 }
 
+QString 
+Session::configGetAll() const
+{
+  return Requester::instance().send(mId, "configgetall", std::list< QString >());
+}
+
 QString
 Session::mute() const
 {

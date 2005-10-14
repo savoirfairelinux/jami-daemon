@@ -113,6 +113,8 @@ public slots:
    */
   void unmute();
 
+  void setup();
+
   /**
    * This function will hanp up the line number given 
    * argument. Be aware that the first line is 1, not 
