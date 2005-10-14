@@ -46,9 +46,7 @@ PhoneLine::setLineStatus(const QString &status)
   mAction = "";
 
   mLineStatus = status;
-  if(mSelected) {
-    emit lineStatusChanged(mLineStatus);
-  }
+  emit lineStatusChanged(mLineStatus);
 }
 
 void
@@ -56,9 +54,7 @@ PhoneLine::setAction(const QString &status)
 { 
   mActionTimer->stop();
   mAction = status;
-  if(mSelected) {
-    emit actionChanged(mAction);
-  }
+  emit actionChanged(mAction);
 }
 
 void
@@ -67,9 +63,7 @@ PhoneLine::setTempAction(const QString &status)
   mActionTimer->stop();
   mActionTimer->start(3000);
   mAction = status;
-  if(mSelected) {
-    emit actionChanged(mAction);
-  }
+  emit actionChanged(mAction);
 }
 
 unsigned int 

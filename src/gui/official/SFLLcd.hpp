@@ -41,6 +41,7 @@ public slots:
   QString getTimeStatus();
 
   void setGlobalStatus(QString global);
+  void setUnselectedLineStatus(QString line);
   void setLineStatus(QString line);
   void setAction(QString line);
   void setBufferStatus(QString line);
@@ -48,6 +49,7 @@ public slots:
   void startTiming();
   void stopTiming();
   void updateText();
+  void updateGlobalText();
   QString extractVisibleText(const QString &text, int &pos);
   
 private:
@@ -55,10 +57,12 @@ private:
   QPixmap mOverscreen;
   
   QString mGlobalStatus;
+  QString mUnselectedLineStatus;
   QString mLineStatus;
   QString mBufferStatus;
   QString mAction;
   int mGlobalStatusPos;
+  int mUnselectedLineStatusPos;
   int mLineStatusPos;
   int mBufferStatusPos;
   int mActionPos;
@@ -66,7 +70,7 @@ private:
   bool mIsTimed;
   QTime mTime;
   QTimer *mTimer;
-  QTimer *mTextTimer;
+  QTimer *mUnselectedLineTimer;
 
   QFont mFont;
 };

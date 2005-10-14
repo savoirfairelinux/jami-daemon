@@ -1,4 +1,3 @@
-#include <qmutex.h>
 #include <iostream>
 #include <stdexcept>
 
@@ -150,10 +149,6 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
     PhoneLine *p = new PhoneLine(*mSession, *mAccount, i + 1);
     QObject::connect(p, SIGNAL(lineStatusChanged(QString)),
 		     this, SIGNAL(unselectedLineStatusSet(QString)));
-    QObject::connect(p, SIGNAL(actionChanged(QString)),
-		     this, SIGNAL(actionSet(QString)));
-    QObject::connect(p, SIGNAL(bufferStatusChanged(QString)),
-		     this, SIGNAL(bufferStatusSet(QString)));
     mPhoneLines.push_back(p);
   }
 }
@@ -233,7 +228,7 @@ PhoneLineManagerImpl::select(PhoneLine *line, bool hardselect)
     
     mCurrentLine = line;
     mCurrentLine->select(hardselect);
-    if(mCurrentLine->isAvailable()) {
+    if(!mCurrentLine->isAvailable()) {
       mSession->playTone();
     }
     emit lineStatusSet(mCurrentLine->getLineStatus());
@@ -253,7 +248,9 @@ PhoneLineManagerImpl::unselect()
 			this, SIGNAL(bufferStatusSet(QString)));
     QObject::connect(mCurrentLine, SIGNAL(lineStatusChanged(QString)),
 		     this, SIGNAL(unselectedLineStatusSet(QString)));
-    
+    if(mCurrentLine->isAvailable()) {
+      mSession->stopTone();
+    }
     mCurrentLine->unselect();
     mCurrentLine = NULL;
   }
@@ -411,7 +408,9 @@ PhoneLineManagerImpl::hold()
   mCurrentLine = NULL;
 
   if(selectedLine) {
-    mSession->stopTone();
+    if(selectedLine->isAvailable()) {
+      mSession->stopTone();
+    }
     selectedLine->hold();
   }
 }
@@ -423,7 +422,9 @@ PhoneLineManagerImpl::hangup(bool sendrequest)
   mCurrentLine = NULL;
   
   if(selectedLine) {
-    mSession->stopTone();
+    if(selectedLine->isAvailable()) {
+      mSession->stopTone();
+    }
     selectedLine->hangup(sendrequest);
     lineStatusSet("");
   }
@@ -497,20 +498,22 @@ PhoneLineManagerImpl::incomming(const QString &accountId,
 				const QString &peer)
 {
   Call call(mSession->id(), accountId, callId, true);
-  addCall(call, peer, QObject::tr("Incomming"));
-  emit globalStatusSet(QObject::tr("Ringing (%1)...").arg(peer));
+  PhoneLine *line = addCall(call, peer, QObject::tr("Incomming"));
+  if(line) {
+    line->setLineStatus(QObject::tr("Ringing (%1)...").arg(peer));
+  }
 }
 
-void 
+PhoneLine *
 PhoneLineManagerImpl::addCall(const QString &accountId,
 			      const QString &callId,
 			      const QString &peer,
 			      const QString &state)
 {
-  addCall(Call(mSession->id(), accountId, callId), peer, state);
+  return addCall(Call(mSession->id(), accountId, callId), peer, state);
 }
 
-void 
+PhoneLine *
 PhoneLineManagerImpl::addCall(Call call,
 			      const QString &peer,
 			      const QString &state)
@@ -528,6 +531,8 @@ PhoneLineManagerImpl::addCall(Call call,
       .arg(call.id());
     call.notAvailable();
   }
+
+  return selectedLine;
 }
 
 void

@@ -3,7 +3,6 @@
 
 //#include <qt.h>
 #include <qobject.h>
-#include <qmutex.h>
 #include <utility>
 #include <vector>
 
@@ -54,6 +53,7 @@ signals:
   void globalStatusSet(QString);
   void bufferStatusSet(QString);
   void actionSet(QString);
+  void unselectedLineStatusSet(QString);
   void lineStatusSet(QString);
 
   void volumeUpdated(int);
@@ -152,13 +152,13 @@ public slots:
    * This function is used to add a call on a 
    * phone line.
    */
-  void addCall(Call call,
-	       const QString &peer, 
-	       const QString &state);
-  void addCall(const QString &accountId, 
-	       const QString &callId, 
-	       const QString &peer, 
-	       const QString &state);
+  PhoneLine *addCall(Call call,
+		     const QString &peer, 
+		     const QString &state);
+  PhoneLine *addCall(const QString &accountId, 
+		     const QString &callId, 
+		     const QString &peer, 
+		     const QString &state);
 
   /**
    * This function will make a call on the 
@@ -278,13 +278,8 @@ private:
   Account *mAccount;
 
   std::vector< PhoneLine * > mPhoneLines;
-  QMutex mPhoneLinesMutex;
-
   PhoneLine *mCurrentLine;
-  QMutex mCurrentLineMutex;
-
   bool mIsInitialized;
-  QMutex mIsInitializedMutex;
 
   int mVolume;
   int mMicVolume;

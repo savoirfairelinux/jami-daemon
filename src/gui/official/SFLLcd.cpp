@@ -19,6 +19,7 @@ SFLLcd::SFLLcd(QWidget *parent)
   , mScreen(TransparentWidget::retreive(SCREEN))
   , mOverscreen(TransparentWidget::retreive(OVERSCREEN))
   , mGlobalStatusPos(-1)
+  , mUnselectedLineStatusPos(-1)
   , mLineStatusPos(-1)
   , mBufferStatusPos(-1)
   , mActionPos(-1)
@@ -28,7 +29,10 @@ SFLLcd::SFLLcd(QWidget *parent)
   resize(mScreen.size());
   move(22,44);
   
-  
+  mUnselectedLineTimer = new QTimer(this);
+  QObject::connect(mUnselectedLineTimer, SIGNAL(timeout()), 
+		   this, SLOT(updateGlobalText()));
+
   mTimer = new QTimer(this);
   QObject::connect(mTimer, SIGNAL(timeout()), 
 		   this, SLOT(updateText()));
@@ -55,6 +59,12 @@ SFLLcd::updateText()
   if(mActionPos >= 0) {
     mActionPos++;
   }
+}
+
+void
+SFLLcd::updateGlobalText()
+{
+  mUnselectedLineStatus = "";
 }
 
 void
@@ -107,6 +117,19 @@ SFLLcd::setLineStatus(QString line)
 }
 
 void
+SFLLcd::setUnselectedLineStatus(QString line)
+{
+  if(textIsTooBig(line)) {
+    mUnselectedLineStatusPos = 0;
+  }
+  else {
+    mUnselectedLineStatusPos = -1;
+  }
+  mUnselectedLineStatus = line;
+  mUnselectedLineTimer->start(3000, true);
+}
+
+void
 SFLLcd::setAction(QString line)
 {
   if(textIsTooBig(line)) {
@@ -153,11 +176,22 @@ SFLLcd::paintEvent(QPaintEvent *event)
   // Painter settings 
   QFontMetrics fm(mFont);
 
+  int *globalStatusPos;
+  QString globalStatus;
+  if(mUnselectedLineStatus.length() > 0) { 
+    globalStatus = mUnselectedLineStatus;
+    globalStatusPos = &mUnselectedLineStatusPos;
+  }
+  else {
+    globalStatus = mGlobalStatus;
+    globalStatusPos = &mGlobalStatusPos;
+  }
+
   int margin = 2;
   p.setFont(mFont);
   p.drawPixmap(0,0, mScreen);
   p.drawText(QPoint(margin, fm.height()), 
-	     extractVisibleText(mGlobalStatus, mGlobalStatusPos));
+	     extractVisibleText(globalStatus, *globalStatusPos));
   p.drawText(QPoint(margin, 2*fm.height()), 
 	     extractVisibleText(mLineStatus, mLineStatusPos));
   p.drawText(QPoint(margin, 3*fm.height()), 
