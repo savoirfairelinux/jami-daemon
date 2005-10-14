@@ -336,7 +336,7 @@ ManagerImpl::onHoldCall (CALLID id)
   if (call == NULL) {
     return -1;
   }
-  if ( call->getState() == Call::OnHold) {
+  if ( call->getState() == Call::OnHold || call->isNotAnswered()) {
     return 1;
   }
   return call->onHold();
@@ -349,6 +349,7 @@ ManagerImpl::onHoldCall (CALLID id)
 int 
 ManagerImpl::offHoldCall (CALLID id)
 {
+  stopTone();
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) {
@@ -480,6 +481,7 @@ ManagerImpl::sendDtmf (CALLID id, char code)
   int returnValue = false;
   switch (sendType) {
   case 0: // SIP INFO
+    playDtmf(code);
     _voIPLinkVector.at(DFT_VOIP_LINK)->carryingDTMFdigits(id, code);
     returnValue = true;
     break;
@@ -509,7 +511,8 @@ ManagerImpl::playDtmf(char code)
   _key.startTone(code);
   if ( _key.generateDTMF(_buf, SAMPLING_RATE) ) {
 
-    int k, spkrVolume;
+    int k;
+    //int spkrVolume;
     int16* buf_ctrl_vol;
 
     // Determine dtmf pulse length
@@ -517,12 +520,13 @@ ManagerImpl::playDtmf(char code)
     int size = pulselen * (OCTETS /1000);
 
     buf_ctrl_vol = new int16[size*CHANNELS];
-    spkrVolume = getSpkrVolume();
+    //spkrVolume = getSpkrVolume();
 
     // Control volume and format mono->stereo
     for (int j = 0; j < size; j++) {
-      k = j*2;
-      buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j] * spkrVolume/100;
+      k = j<<1; // fast multiply by two
+      buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j];
+      // * spkrVolume/100;
     }
 
     AudioLayer *audiolayer = getAudioDriver();
@@ -815,7 +819,6 @@ ManagerImpl::stopTone() {
       _tone->stopTone();
     }
     _toneMutex.leaveMutex();
-    getAudioDriver()->mainSndRingBuffer().flush();
     getAudioDriver()->stopStream();
   }
 }
@@ -899,16 +902,18 @@ ManagerImpl::notificationIncomingCall (void) {
   int16* buf_ctrl_vol;
   int16* buffer = new int16[SAMPLING_RATE];
   int size = SAMPLES_SIZE(FRAME_PER_BUFFER);//SAMPLING_RATE/2;
-  int k, spkrVolume;
+  int k;
+  //int spkrVolume;
 
   _tone->generateSin(440, 0, buffer);
 
   // Volume Control 
   buf_ctrl_vol = new int16[size*CHANNELS];
-  spkrVolume = getSpkrVolume();
+  // spkrVolume = getSpkrVolume();
   for (int j = 0; j < size; j++) {
-    k = j*2;
-    buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
+    k = j<<1; // fast multiply by two
+    buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j];
+    // * spkrVolume/100;
   }
   getAudioDriver()->putUrgent(buf_ctrl_vol, SAMPLES_SIZE(FRAME_PER_BUFFER));
 
@@ -1083,7 +1088,7 @@ ManagerImpl::selectAudioDriver (void)
 {
 #if defined(AUDIO_PORTAUDIO)
   try {
-    _audiodriverPA = new AudioLayer();
+    _audiodriverPA = new AudioLayer(*this);
     _audiodriverPA->openDevice(getConfigInt(AUDIO, DRIVER_NAME));
   } catch(...) {
     throw;

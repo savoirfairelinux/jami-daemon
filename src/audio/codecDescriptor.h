@@ -77,8 +77,13 @@ public:
 	std::string rtpmapPayload (int);
 
 private:
+	void initCache();
 	int _payload;
 	std::string _codecName;
+
+	AudioCodec* _ac1;
+	AudioCodec* _ac2;
+	AudioCodec* _ac3;
 };
 
 #endif // __CODEC_DESCRIPTOR_H__

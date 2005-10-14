@@ -379,11 +379,16 @@ SipVoIPLink::answer (CALLID id)
   return i;
 }
 
+
+/**
+ * @return > 0 is good, -1 is bad
+ */
 int
 SipVoIPLink::hangup (CALLID id) 
 {
   int i = 0;
   SipCall* sipcall = getSipCall(id);
+  if (sipcall == NULL) { return -1; }
   _debug("Hang up call [id = %d, cid = %d, did = %d]\n", 
     id, sipcall->getCid(), sipcall->getDid());	
   // Release SIP stack.
@@ -392,7 +397,8 @@ SipVoIPLink::hangup (CALLID id)
   eXosip_unlock();
 
   // Release RTP channels
-  _audiortp.closeRtpSession(sipcall);
+  sipcall->enable_audio = false;
+  _audiortp.closeRtpSession();
 
   deleteSipCall(id);
   return i;
@@ -413,6 +419,9 @@ SipVoIPLink::cancel (CALLID id)
   return i;
 }
 
+/*
+ * @return -1 = sipcall not present
+ */
 int
 SipVoIPLink::onhold (CALLID id) 
 {
@@ -422,12 +431,15 @@ SipVoIPLink::onhold (CALLID id)
 
   sdp_message_t *local_sdp = NULL;
 
-  did = getSipCall(id)->getDid();
-	
+  SipCall *sipcall = getSipCall(id);
+  if ( sipcall == NULL ) { return -1; }
+
+  did = sipcall->getDid();
+
   eXosip_lock ();
   local_sdp = eXosip_get_local_sdp (did);
   eXosip_unlock ();
-	
+
   if (local_sdp == NULL) {
     return -1;
   }
@@ -445,7 +457,7 @@ SipVoIPLink::onhold (CALLID id)
   /* add sdp body */
   {
     char *tmp = NULL;
-    
+
     i = sdp_hold_call (local_sdp);
     if (i != 0) {
       sdp_message_free (local_sdp);
@@ -471,7 +483,8 @@ SipVoIPLink::onhold (CALLID id)
   eXosip_unlock ();
   
   // Disable audio
-  _audiortp.closeRtpSession(getSipCall(id));
+  sipcall->enable_audio = false;
+  _audiortp.closeRtpSession();
   return i;
 }
 
@@ -740,7 +753,9 @@ SipVoIPLink::getEvent (void)
     _debug("Call is closed [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);	
     if (id != 0) {
       if (Manager::instance().callCanBeClosed(id)) {
-	       _audiortp.closeRtpSession(getSipCall(id));
+         SipCall* sipcall = getSipCall(id);
+         if ( sipcall != NULL ) { sipcall->enable_audio = false; }
+         _audiortp.closeRtpSession();
       }
       Manager::instance().peerHungupCall(id);
       deleteSipCall(id);
@@ -1005,7 +1020,7 @@ SipVoIPLink::endSipCalls()
       eXosip_unlock();
 
       // Release RTP channels
-      _audiortp.closeRtpSession(*iter);
+      _audiortp.closeRtpSession();
       delete *iter; *iter = NULL;
     }
     iter++;

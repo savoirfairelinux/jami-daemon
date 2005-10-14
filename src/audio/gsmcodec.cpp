@@ -36,7 +36,6 @@ Gsm::~Gsm (void)
 {
 	gsm_destroy(_decode_gsmhandle);
 	gsm_destroy(_encode_gsmhandle);
-
 }
 
 int

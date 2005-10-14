@@ -50,10 +50,8 @@ RingBuffer::~RingBuffer() {
  
 void
 RingBuffer::flush (void) {
-	mMutex.enterMutex();
 	mStart = 0; 
 	mEnd = 0;
-	mMutex.leaveMutex();
 } 
 
 int 
@@ -78,19 +76,19 @@ RingBuffer::PutZero(int toZero)
 }
 
 // This one puts some data inside the ring buffer.
+// Change the volume if it's not 0
 int 
-RingBuffer::Put(void* buffer, int toCopy) {
+RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
    samplePtr src;
    int block;
    int copied;
    int pos;
    int len = Len();
 
-   mMutex.enterMutex();
    if (toCopy > (mBufferSize-4) - len)
       toCopy = (mBufferSize-4) - len;
 
-   src = (samplePtr) buffer; 
+   src = (samplePtr) buffer;
 
    copied = 0;
    pos = mEnd;
@@ -98,9 +96,15 @@ RingBuffer::Put(void* buffer, int toCopy) {
    while(toCopy) {
       block = toCopy;
       if (block > mBufferSize - pos) // from current pos. to end of buffer
-         block = mBufferSize - pos; 
+         block = mBufferSize - pos;
 
       // put the data inside the buffer.
+      if (volume) {
+        int16* src16 = (int16*)src;
+        int int16len = (block >> 1);
+        for (int i=0; i< int16len; i++) { src16[i] = src16[i] * volume / 100; }
+      }
+      // bcopy(src, dest, len)
       bcopy (src, mBuffer + pos, block);
 
       src += block;
@@ -110,7 +114,6 @@ RingBuffer::Put(void* buffer, int toCopy) {
    }
 
    mEnd = pos;
-   mMutex.leaveMutex();
 
    // How many items copied.
    return copied;
@@ -128,13 +131,14 @@ RingBuffer::AvailForGet() const {
 
 // Get will move 'toCopy' bytes from the internal FIFO to 'buffer'
 int 
-RingBuffer::Get(void *buffer, int toCopy) {
+RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
    samplePtr dest;
    int block;
    int copied;
    int len = Len();
-	
-   mMutex.enterMutex();
+   int int16len;
+   int16* start;
+
    if (toCopy > len)
       toCopy = len;
 
@@ -146,14 +150,17 @@ RingBuffer::Get(void *buffer, int toCopy) {
       if (block > (mBufferSize - mStart))
          block = mBufferSize - mStart;
 
-      bcopy (mBuffer + mStart, dest, block);
+      start = (int16*)(mBuffer + mStart);
+      int16len = (block >> 1);
+      for (int i=0; i<int16len; i++) { start[i] = start[i] * volume / 100; }
+      // bcopy(src, dest, len)
+      bcopy (start, dest, block);
       dest += block;
       mStart = (mStart + block) % mBufferSize;
       toCopy -= block;
       copied += block;
    }
 	
-   mMutex.leaveMutex();
    return copied;
 }
 
@@ -169,10 +176,3 @@ RingBuffer::Discard(int toDiscard) {
 
    return toDiscard;
 }
-
-/*
-T
-RingBuffer::getNextItem (void) {
-   return (T) 0;
-}
-*/

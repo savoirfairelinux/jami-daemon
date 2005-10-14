@@ -25,6 +25,7 @@
 
 #include <ccrtp/rtp.h>
 #include <cc++/numbers.h>
+#include "codecDescriptor.h"
 
 
 #define RTP_FRAMES2SEND	160
@@ -52,9 +53,14 @@ private:
 	ost::SymmetricRTPSession *_session;
 	bool _sym;
 
+  // build codec...
+  CodecDescriptor _codecBuilder;
+
 	void initAudioRtpSession (void);
-	void sendSessionFromMic (unsigned char*, int16*, int16*, int, int);
-	void receiveSessionForSpkr (int16*, int16*, int, int&);
+//  void sendSessionFromMic (unsigned char*, int16*, int16*, int, int);
+  void sendSessionFromMic (unsigned char*, int16*, int16*, int);
+//	void receiveSessionForSpkr (int16*, int16*, int, int&);
+  void receiveSessionForSpkr (int16*, int16*, int&);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,7 +72,7 @@ public:
 	~AudioRtp();
 
 	int 			createNewSession (SipCall *);
-	void			closeRtpSession	 (SipCall *);
+	void			closeRtpSession	 ();
 
 private:
 	AudioRtpRTX*	_RTXThread;

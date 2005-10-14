@@ -29,6 +29,7 @@
 #include "../global.h"
 #include "ringbuffer.h"
 #include <cc++/thread.h>
+#include "../manager.h"
 
 #define FRAME_PER_BUFFER	160
 #define MIC_CHANNELS 		2 // 1=mono 2=stereo
@@ -38,10 +39,9 @@
 
 class RingBuffer;
 
-
 class AudioLayer {
 public:
-	AudioLayer();
+	AudioLayer(ManagerImpl& manager);
 	~AudioLayer (void);
 
 	void listDevices();
@@ -52,6 +52,7 @@ public:
 	bool    isStreamActive	        (void);
 	bool    isStreamStopped	        (void);
 
+  void flushMain();
   void putMain(void* buffer, int toCopy);
   void putUrgent(void* buffer, int toCopy);
 
@@ -59,7 +60,6 @@ public:
 			   const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
 
 	inline RingBuffer &urgentRingBuffer(void) { return _urgentRingBuffer; }
-	inline RingBuffer &mainSndRingBuffer(void) { return _mainSndRingBuffer; }
 	inline RingBuffer &micRingBuffer(void) { return _micRingBuffer; }
 
 private:
@@ -71,6 +71,7 @@ private:
 	portaudio::MemFunCallbackStream<AudioLayer> *_stream;
 	portaudio::AutoSystem autoSys;
   ost::Mutex _mutex;
+  ManagerImpl& _manager;
 };
 
 #endif // _AUDIO_LAYER_H_

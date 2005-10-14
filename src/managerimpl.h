@@ -222,13 +222,27 @@ name);
 	void getStunInfo (StunAddress4& stunSvrAddr);
 	bool useStun (void);
 	
-	/*
-	 * Inline functions to manage volume control
-	 */
-	inline int getSpkrVolume 	(void) 			{ ost::MutexLock m(_mutex); return _spkr_volume; }
-	inline void setSpkrVolume 	(int spkr_vol) 	{ ost::MutexLock m(_mutex); _spkr_volume = spkr_vol; }
-	inline int getMicVolume 	(void) 			{ ost::MutexLock m(_mutex); return _mic_volume; }
-	inline void setMicVolume 	(int mic_vol) 	{ ost::MutexLock m(_mutex); _mic_volume = _mic_volume_before_mute = mic_vol; }
+  /*
+   * Inline functions to manage volume control
+   * Read by main thread and AudioLayer thread
+   * Write by main thread only
+   */
+  unsigned short getSpkrVolume(void) { 
+    //ost::MutexLock m(_mutex); 
+    return _spkr_volume; 
+  }
+  void setSpkrVolume(unsigned short spkr_vol) { 
+    //ost::MutexLock m(_mutex); 
+    _spkr_volume = spkr_vol;
+  }
+  unsigned short getMicVolume(void) { 
+    //ost::MutexLock m(_mutex); 
+    return _mic_volume;
+  }
+  void setMicVolume(unsigned short mic_vol) { 
+    //ost::MutexLock m(_mutex); 
+    _mic_volume = _mic_volume_before_mute = mic_vol; 
+  }
 
   bool hasLoadedSetup() { return _setupLoaded; }
 	
@@ -378,10 +392,10 @@ private:
 
 	unsigned int _nCodecs;
 
-	// To handle volume control
-	int 		_spkr_volume;
-	int 		_mic_volume;
-  int 		_mic_volume_before_mute;
+  // To handle volume control
+  short _spkr_volume;
+  short _mic_volume;
+  short _mic_volume_before_mute;
 
 	// To handle firewall
 	int			_firewallPort;

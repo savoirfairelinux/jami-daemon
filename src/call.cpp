@@ -185,7 +185,7 @@ Call::isAnswered (void)
 bool 
 Call::isNotAnswered (void)
 {
-	return (_state == Error || _state == NotExist ) ? true : false;
+	return (_state == Error || _state == NotExist || _state == Busy) ? true : false;
 }
 
 bool 

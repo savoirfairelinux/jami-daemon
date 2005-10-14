@@ -28,11 +28,11 @@
 #include "../global.h"
 #include "../manager.h"
 
-AudioLayer::AudioLayer () 
+AudioLayer::AudioLayer(ManagerImpl& manager)
   : _urgentRingBuffer(SIZEBUF)
   , _mainSndRingBuffer(SIZEBUF)
   , _micRingBuffer(SIZEBUF)
-  , _stream(NULL)
+  , _stream(NULL), _manager(manager)
 {
   portaudio::System::initialize();
   listDevices();
@@ -98,7 +98,7 @@ void
 AudioLayer::startStream(void) 
 {
   ost::MutexLock guard(_mutex);
-  if (Manager::instance().isDriverLoaded()) {
+  if (_manager.isDriverLoaded()) {
     if (_stream && !_stream->isActive()) {
       _debug("Thread: start audiolayer stream\n");
       _stream->start();
@@ -110,10 +110,11 @@ void
 AudioLayer::stopStream(void) 
 {
   ost::MutexLock guard(_mutex);
-  if (Manager::instance().isDriverLoaded()) {
+  if (_manager.isDriverLoaded()) {
     if (_stream && !_stream->isStopped()) {
       _debug("Thread: stop audiolayer stream\n");
       _stream->stop();
+      _mainSndRingBuffer.flush();
     }
   } 
 }
@@ -142,6 +143,14 @@ AudioLayer::putMain(void* buffer, int toCopy)
   ost::MutexLock guard(_mutex);
   _mainSndRingBuffer.Put(buffer, toCopy);
 }
+
+void
+AudioLayer::flushMain()
+{
+  ost::MutexLock guard(_mutex);
+  _mainSndRingBuffer.flush();
+}
+
 void
 AudioLayer::putUrgent(void* buffer, int toCopy)
 {
@@ -165,13 +174,14 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 			   unsigned long framesPerBuffer, 
 			   const PaStreamCallbackTimeInfo *timeInfo, 
 			   PaStreamCallbackFlags statusFlags) {
-   	(void) timeInfo;
-	(void) statusFlags;
+
+  (void) timeInfo;
+  (void) statusFlags;
 	
 	int16 *in  = (int16 *) inputBuffer;
 	int16 *out = (int16 *) outputBuffer;
 	int toGet, toPut, urgentAvail, normalAvail, micAvailPut;
-	
+
 	urgentAvail = _urgentRingBuffer.AvailForGet();
 	if (urgentAvail > 0) {  
 	// Urgent data (dtmf, incoming call signal) come first.		
@@ -180,11 +190,10 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 		} else {
 			toGet = framesPerBuffer;
 		}
-		_urgentRingBuffer.Get(out, SAMPLES_SIZE(toGet));
+		_urgentRingBuffer.Get(out, SAMPLES_SIZE(toGet), _manager.getSpkrVolume());
 		
 		// Consume the regular one as well (same amount of bytes)
 		_mainSndRingBuffer.Discard(SAMPLES_SIZE(toGet));
-		
 	}  
 	else {
 	// If nothing urgent, play the regular sound samples
@@ -194,19 +203,18 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 
     //_debug("%d vs %d : %d\t", normalAvail, (int)framesPerBuffer, toGet);
     if (toGet) {
-		  _mainSndRingBuffer.Get(out, SAMPLES_SIZE(toGet));
+		  _mainSndRingBuffer.Get(out, SAMPLES_SIZE(toGet), _manager.getSpkrVolume());
     } else {
       toGet = SAMPLES_SIZE(framesPerBuffer);
       _mainSndRingBuffer.PutZero(toGet);
-      _mainSndRingBuffer.Get(out, toGet);
+      _mainSndRingBuffer.Get(out, toGet, 0);
     }
 	}
 
 	// Additionally handle the mike's audio stream 
 	micAvailPut = _micRingBuffer.AvailForPut();
-	toPut = (micAvailPut <= (int)framesPerBuffer) ? micAvailPut : 
-			framesPerBuffer;
-	_micRingBuffer.Put(in, SAMPLES_SIZE(toPut));
+	toPut = (micAvailPut <= (int)framesPerBuffer) ? micAvailPut : framesPerBuffer;
+	_micRingBuffer.Put(in, SAMPLES_SIZE(toPut), _manager.getMicVolume());
 
 	return paContinue;
 }

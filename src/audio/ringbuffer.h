@@ -42,14 +42,14 @@ class RingBuffer {
    // For the writer only:
    //
    int AvailForPut (void) const;
-   int Put (void*, int);
+   int Put (void*, int, unsigned short = 0);
    void PutZero(int);
 
    //
    // For the reader only:
    //
    int AvailForGet (void) const;
-   int Get (void *, int);
+   int Get (void *, int, unsigned short);
    int Discard(int);
 
    int Len() const;
@@ -57,7 +57,6 @@ class RingBuffer {
  private:
  //  T getNextSample(void);
 
-   ost::Mutex  		 mMutex;
    int           mStart;
    int           mEnd;
    int           mBufferSize;

@@ -46,36 +46,63 @@ CodecDescriptor::CodecDescriptor (int payload)
 {
 	_payload = payload;
 	_codecName = rtpmapPayload(_payload);
+	initCache();
 }
 
 CodecDescriptor::CodecDescriptor (const std::string& name) 
 {
 	_codecName = name;
 	_payload = matchPayloadCodec(name);
+	initCache();
 }
 
 CodecDescriptor::CodecDescriptor (int payload, const std::string& name) 
 {
 	_payload = payload;
 	_codecName = name;
+	initCache();
 }
 
-CodecDescriptor::~CodecDescriptor (void)
+void CodecDescriptor::initCache() 
 {
+  _ac1 = NULL;  
+  _ac2 = NULL;
+  _ac3 = NULL;
+}
+
+
+CodecDescriptor::~CodecDescriptor (void)
+{	
+  delete _ac1;
+  delete _ac2;
+  delete _ac3;
 }
 
 AudioCodec*
 CodecDescriptor::alloc (int payload, const std::string& name)
 {
+	// _ac1, _ac2 and _ac3 are caching...
 	switch(payload) {
 	case PAYLOAD_CODEC_ULAW:
-		return new Ulaw(payload, name);
+		if ( _ac1 == NULL ) {
+			_ac1 = new Ulaw(payload, name);
+      //return new Ulaw(payload, name);
+		}
+		return _ac1;
 		break;
 	case PAYLOAD_CODEC_ALAW:
-		return new Alaw(payload, name);
+		if ( _ac2 == NULL ) {
+			_ac2 = new Alaw(payload, name);
+      //return new Alaw(payload, name);
+		}
+		return _ac2;
 		break;
 	case PAYLOAD_CODEC_GSM:
-		return new Gsm(payload, name);
+		if ( _ac3 == NULL ) {
+			_ac3 = new Gsm(payload, name);
+      //return new Gsm(payload, name);
+		}
+		return _ac3;
 		break;
 	default:
 		return NULL;

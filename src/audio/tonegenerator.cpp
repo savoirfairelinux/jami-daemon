@@ -56,7 +56,7 @@ ToneThread::~ToneThread (void) {
 void
 ToneThread::run (void) {
 	int k;
-	int spkrVolume;
+	//int spkrVolume;
 	bool started = false;
 
 	// How long do 'size' samples play ?
@@ -64,14 +64,16 @@ ToneThread::run (void) {
   unsigned int pause = (size * 1000) / SAMPLING_RATE - 100;
 
   ManagerImpl& manager = Manager::instance();
-  manager.getAudioDriver()->mainSndRingBuffer().flush();
+  manager.getAudioDriver()->flushMain();
 
 	while (!testCancel()) {
 		// Create a new stereo buffer with the volume adjusted
-		spkrVolume = manager.getSpkrVolume();
+		//spkrVolume = manager.getSpkrVolume();
 		for (int j = 0; j < size; j++) {
-			k = j*2; // channels is 2 (global.h)
-			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j] * spkrVolume/100;
+			k = j<<1; // channels is 2 (global.h)
+                // split in two
+			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j];
+      // * spkrVolume/100;
 		}
 
 		// Push the tone to the audio FIFO

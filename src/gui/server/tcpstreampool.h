@@ -43,6 +43,7 @@ public:
   {
     setCancel(cancelDeferred);
   }
+  TCPStreamPool::~TCPStreamPool() {terminate();}
 
   void run();
   void send(const std::string& response);
