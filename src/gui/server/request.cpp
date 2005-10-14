@@ -52,7 +52,7 @@ ResponseMessage
 RequestHold::execute()
 {
   if ( GUIServer::instance().holdCall(_callId) ) {
-    return message("200", "OK");
+    return message("200", "Holded");
   }
   return message("500","Server Error");
 }
@@ -61,7 +61,7 @@ ResponseMessage
 RequestUnhold::execute()
 {
   if ( GUIServer::instance().unholdCall(_callId) ) {
-    return message("200", "OK");
+    return message("200", "Unholded");
   }
   return message("500","Server Error");
 }
@@ -87,7 +87,7 @@ ResponseMessage
 RequestTransfer::execute()
 {
   if ( GUIServer::instance().transferCall(_callId, _destination) ) {
-    return message("200", "OK");
+    return message("200", "Transfered");
   }
   return message("500","Server Error");
 }
@@ -96,7 +96,7 @@ ResponseMessage
 RequestHangup::execute()
 {
   if ( GUIServer::instance().hangupCall(_callId) ) {
-    return message("200", "OK");
+    return message("200", "Hungup");
   }
   return message("500", "Hangup Error");
 }
@@ -105,7 +105,7 @@ ResponseMessage
 RequestHangupAll::execute()
 {
   if ( GUIServer::instance().hangupAll() ) {
-    return message("200", "OK");
+    return message("200", "All hungup");
   }
   return message("500", "Hangup Error");
 }
@@ -185,14 +185,14 @@ ResponseMessage
 RequestMute::execute()
 {
   GUIServer::instance().mute();
-  return message("200","OK");
+  return message("200","Muted");
 }
 
 ResponseMessage
 RequestUnmute::execute()
 {
   GUIServer::instance().unmute();
-  return message("200","OK");
+  return message("200","Unmuted");
 }
 
 ResponseMessage

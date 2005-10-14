@@ -815,6 +815,7 @@ ManagerImpl::stopTone() {
       _tone->stopTone();
     }
     _toneMutex.leaveMutex();
+    getAudioDriver()->mainSndRingBuffer().flush();
     getAudioDriver()->stopStream();
   }
 }
