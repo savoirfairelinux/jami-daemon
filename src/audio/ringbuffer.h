@@ -43,14 +43,14 @@ class RingBuffer {
    // For the writer only:
    //
    int AvailForPut (void) const;
-   int Put (void*, int, unsigned short = 0);
+   int Put (void*, int, unsigned short volume = 100);
    void PutZero(int);
 
    //
    // For the reader only:
    //
    int AvailForGet (void) const;
-   int Get (void *, int, unsigned short);
+   int Get (void *, int, unsigned short volume = 100);
    int Discard(int);
 
    int Len() const;

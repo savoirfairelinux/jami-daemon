@@ -192,7 +192,7 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
   }
 
   // Get bytes from micRingBuffer to data_from_mic
-  Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic, SAMPLES_SIZE(bytesAvail), 0);
+  Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic, SAMPLES_SIZE(bytesAvail), 100);
   // control volume and stereo->mono
   for (int j = 0; j < RTP_FRAMES2SEND; j++) {
     k = j<<1;
@@ -211,7 +211,7 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
       } else {
         _session->putData(timestamp, data_to_send, compSize);
       }
-    }
+    } else { _debug("No AudioCodec for the mic\n"); }
   }
 }
 

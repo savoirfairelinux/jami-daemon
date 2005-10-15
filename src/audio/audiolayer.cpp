@@ -207,7 +207,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
     } else {
       toGet = SAMPLES_SIZE(framesPerBuffer);
       _mainSndRingBuffer.PutZero(toGet);
-      _mainSndRingBuffer.Get(out, toGet, 0);
+      _mainSndRingBuffer.Get(out, toGet, 100);
     }
 	}
 

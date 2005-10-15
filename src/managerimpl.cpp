@@ -1106,9 +1106,9 @@ ManagerImpl::selectAudioDriver (void)
 void 
 ManagerImpl::initZeroconf(void) 
 {
+#ifdef USE_ZEROCONF
   int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
 
-#ifdef USE_ZEROCONF
   if (useZeroconf) {
     _DNSService->startScanServices();
   }

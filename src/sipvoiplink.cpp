@@ -1240,7 +1240,7 @@ SipVoIPLink::behindNat (void)
   // Convert char* to StunAddress4 structure
   bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
   if (!ret) {
-    _debug("SIP: Stun server address not valid\n");
+    _debug("SIP: Stun server address (%s) is not valid\n", svr.data());
     return 0;
   }
 	

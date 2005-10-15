@@ -61,7 +61,7 @@ ToneThread::run (void) {
 
 	// How long do 'size' samples play ?
 	// unsigned int play_time = (size * 1000) / SAMPLING_RATE;
-  unsigned int pause = (size * 1000) / SAMPLING_RATE - 100;
+  unsigned int pause = (size * 1000) / SAMPLING_RATE;
 
   ManagerImpl& manager = Manager::instance();
   manager.getAudioDriver()->flushMain();
@@ -82,7 +82,6 @@ ToneThread::run (void) {
 		// The first iteration will start the audio stream if not already.
 		if (!started) {
 			started = true;
-//      _debug("Start Audio Stream tone generator:\n");
 			manager.getAudioDriver()->startStream();
 		}
 		
@@ -192,6 +191,7 @@ ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* t
 	std::string s;
 	int count = 0;
 	int byte = 0;
+  int byte_max = 0;
 	int nbcomma = 0;
 	int16 *buffer = new int16[SIZEBUF]; //1kb
 	int pos;
@@ -249,7 +249,8 @@ ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* t
     //_debug("freq1: %d, freq2: %d, time: %d, byte: %d, byte_temp: %d\n", freq1, freq2, time, byte, byte_temp);
 		// To concatenate the different buffers for each section.
 		count = 0;
-		for (int j = byte_temp; j < byte + byte_temp; j++) {
+    byte_max = byte + byte_temp;
+		for (int j = byte_temp; j < byte_max; j++) {
 			temp[j] = buffer[count++];
 		}		
 		byte_temp += byte;
@@ -293,7 +294,7 @@ ToneGenerator::idZoneName (const std::string& name) {
 		return ID_JAPAN;
 	} else {
 		_debug("Zone no supported\n");
-		return -1;
+		return ID_NORTH_AMERICA; // default, we don't want segmentation fault
 	}
 }
 

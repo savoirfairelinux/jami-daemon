@@ -76,7 +76,7 @@ RingBuffer::PutZero(int toZero)
 }
 
 // This one puts some data inside the ring buffer.
-// Change the volume if it's not 0
+// Change the volume if it's not 100
 int 
 RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
    samplePtr src;
@@ -99,7 +99,7 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
          block = mBufferSize - pos;
 
       // put the data inside the buffer.
-      if (volume) {
+      if (volume!=100) {
         int16* src16 = (int16*)src;
         int int16len = (block >> 1);
         for (int i=0; i< int16len; i++) { src16[i] = src16[i] * volume / 100; }
@@ -136,8 +136,6 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
    int block;
    int copied;
    int len = Len();
-   int int16len;
-   int16* start;
 
    if (toCopy > len)
       toCopy = len;
@@ -150,11 +148,13 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
       if (block > (mBufferSize - mStart))
          block = mBufferSize - mStart;
 
-      start = (int16*)(mBuffer + mStart);
-      int16len = (block >> 1);
-      for (int i=0; i<int16len; i++) { start[i] = start[i] * volume / 100; }
+      if(volume!=100) {
+        int16* start = (int16*)(mBuffer + mStart);
+        int int16len = (block >> 1);
+        for (int i=0; i<int16len; i++) { start[i] = start[i] * volume / 100; }
+      }
       // bcopy(src, dest, len)
-      bcopy (start, dest, block);
+      bcopy (mBuffer + mStart, dest, block);
       dest += block;
       mStart = (mStart + block) % mBufferSize;
       toCopy -= block;
