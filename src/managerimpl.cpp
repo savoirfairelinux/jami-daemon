@@ -90,6 +90,8 @@ ManagerImpl::ManagerImpl (void)
   _nbIncomingWaitingCall=0;
 
   _codecMap = CodecDescriptorMap().getMap();
+
+  _registerState = UNREGISTERED;
 }
 
 // never call if we use only the singleton...
@@ -448,9 +450,13 @@ ManagerImpl::registerVoIPLink (void)
   if ( !useStun() ) {
     if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() >= 0) {
       returnValue = true;
+      _registerState = REGISTERED;
     } else {
       _debug("ManagerImpl::registerVoIPLink: Registration failed\n");
+      _registerState = FAILED;
     }
+  } else {
+    _registerState = UNREGISTERED;
   }
   return returnValue;
 }

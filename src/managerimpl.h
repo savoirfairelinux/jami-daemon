@@ -228,19 +228,15 @@ name);
    * Write by main thread only
    */
   unsigned short getSpkrVolume(void) { 
-    //ost::MutexLock m(_mutex); 
     return _spkr_volume; 
   }
   void setSpkrVolume(unsigned short spkr_vol) { 
-    //ost::MutexLock m(_mutex); 
     _spkr_volume = spkr_vol;
   }
   unsigned short getMicVolume(void) { 
-    //ost::MutexLock m(_mutex); 
     return _mic_volume;
   }
   void setMicVolume(unsigned short mic_vol) { 
-    //ost::MutexLock m(_mutex); 
     _mic_volume = _mic_volume_before_mute = mic_vol; 
   }
 
@@ -259,18 +255,18 @@ name);
 	inline bool isDriverLoaded (void) const { return _loaded; }
 	inline void loaded (bool l) { _loaded = l; }
 
-	/* 
-	 * Functions about audio device
-	 */
-/*
-	AudioDevice deviceList (int);
-	int deviceCount (void);
-	bool defaultDevice (int);
-*/	
 	/*
 	 * Init default values for the different fields
 	 */
 	void initConfigFile (void);
+
+  enum REGISTRATION_STATE {
+    UNREGISTERED,
+    REGISTERED,
+    FAILED
+  };
+
+  REGISTRATION_STATE getRegistrationState() { return _registerState; }
 
 private:
 
@@ -377,6 +373,9 @@ private:
 	
   // Current callid 
 	CALLID _currentCallId;
+
+  // Register state
+  REGISTRATION_STATE _registerState;
 
 	/*
 	 * For the call timer

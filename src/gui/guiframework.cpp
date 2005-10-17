@@ -253,3 +253,29 @@ GuiFramework::hasLoadedSetup()
 {
   return Manager::instance().hasLoadedSetup();
 }
+
+bool 
+GuiFramework::getRegistrationState(std::string& stateCode, std::string& stateMessage) {
+  ManagerImpl::REGISTRATION_STATE state = Manager::instance().getRegistrationState();
+  bool returnValue = false;
+  switch( state ) {
+    case ManagerImpl::REGISTERED:
+      returnValue = true;
+      stateCode    = "103";
+      stateMessage = "Registration succeed";
+    break;
+
+    case ManagerImpl::FAILED:
+      returnValue = true;
+      stateCode    = "104";
+      stateMessage = "Registration failed";
+    break;
+
+    case ManagerImpl::UNREGISTERED:
+      returnValue = false;
+      stateCode    = "";
+      stateMessage = "";
+    break;
+  }
+  return returnValue;
+}

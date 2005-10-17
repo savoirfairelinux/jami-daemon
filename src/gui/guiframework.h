@@ -91,9 +91,10 @@ public:
 
   bool hasLoadedSetup();
   CALLID getCurrentId();
+  bool getRegistrationState(std::string& stateCode, std::string& stateMessage);
 
 protected:
-	std::string _message;
+  std::string _message;
 };
 
 #endif // __GUI_FRAMEWORK_H__

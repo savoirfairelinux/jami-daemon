@@ -132,7 +132,14 @@ GUIServerImpl::getEvents(const std::string& sequenceId)
   percentMic << GuiFramework::getMicVolume();
   tk.push_back(percentMic.str());
   tk.push_back("Microphone volume changed");
-  _requestManager.sendResponse(ResponseMessage("022", sequenceId,tk));
+  _requestManager.sendResponse(ResponseMessage("022", sequenceId, tk));
+
+  std::string stateCode;
+  std::string stateMessage;
+  if (GuiFramework::getRegistrationState(stateCode,stateMessage)) {
+    _requestManager.sendResponse(ResponseMessage(stateCode, sequenceId, stateMessage));
+  }
+
 
   return true;
 }
