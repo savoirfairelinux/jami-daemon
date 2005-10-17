@@ -276,7 +276,6 @@ ManagerImpl::hangupCall (CALLID id)
     return -1;
   }
   int result = call->hangup();
-
   deleteCall(id);
   stopTone(); // stop tone, like a 700 error: number not found Not Found
   return result;
@@ -297,7 +296,6 @@ ManagerImpl::cancelCall (CALLID id)
     return -1; 
   }
   int result = call->cancel();
-
   deleteCall(id);
   stopTone();
   return result;
@@ -705,11 +703,11 @@ ManagerImpl::peerHungupCall (CALLID id)
     return -1;
   }
   stopTone();
-  call->setState(Call::Hungup);
 
   if (_gui) _gui->peerHungupCall(id);
-
   deleteCall(id);
+  call->setState(Call::Hungup);
+
   setCurrentCallId(0);
   return 1;
 }

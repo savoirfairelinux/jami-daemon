@@ -60,7 +60,7 @@ ToneThread::run (void) {
 	bool started = false;
 
 	// How long do 'size' samples play ?
-	unsigned int play_time = (size * 1000) / SAMPLING_RATE;
+	unsigned int play_time = (size * 1000) / SAMPLING_RATE - 10;
 
   ManagerImpl& manager = Manager::instance();
   manager.getAudioDriver()->flushMain();
@@ -73,15 +73,17 @@ ToneThread::run (void) {
     // * spkrVolume/100;
 	}
 
-		// Create a new stereo buffer with the volume adjusted
-		//spkrVolume = manager.getSpkrVolume();
-		// Push the tone to the audio FIFO
+  // Create a new stereo buffer with the volume adjusted
+  // spkrVolume = manager.getSpkrVolume();
+  // Push the tone to the audio FIFO
 
   // size = number of int16 * 2 (two channels) * 
   // int16 are the buf_ctrl_vol 
   //  unsigned char are the sample_ptr inside ringbuffer
 
   int size_in_char = size * 2 * (sizeof(int16)/sizeof(unsigned char));
+  _debug(" size : %d\t size_in_char : %d\n", size, size_in_char);
+
  	while (!testCancel()) {
     manager.getAudioDriver()->putMain(buf_ctrl_vol, size_in_char);
 		// The first iteration will start the audio stream if not already.
@@ -176,9 +178,11 @@ ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr, int len) 
 													
 	var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)SAMPLING_RATE; 
 	var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)SAMPLING_RATE;
+
+  double amp = (double)(AMPLITUDE >> 2);
 	
 	for(int t = 0; t < len; t++) {
-		ptr[t] = (int16)((double)(AMPLITUDE >> 1) * ((sin(var1 * t) + sin(var2 * t))));
+		ptr[t] = (int16)(amp * ((sin(var1 * t) + sin(var2 * t))));
 	}
 }
 
@@ -367,29 +371,32 @@ ToneGenerator::playRingtone (const char *fileName) {
 		return 0;
   	}
 
-	// get length of file:
-  	file.seekg (0, std::ios::end);
-  	length = file.tellg();
-  	file.seekg (0, std::ios::beg);
+  // get length of file:
+  file.seekg (0, std::ios::end);
+  length = file.tellg();
+  file.seekg (0, std::ios::beg);
 
-  	// allocate memory:
+    // allocate memory:
   _src = new char [length];
   _dst = new short[length*2];
-	
- 	// read data as a block:
- 	file.read (_src,length);
-	file.close();
-	
-	// Decode file.ul
-	expandedsize = _ulaw->codecDecode (_dst, (unsigned char *)_src, length);
 
-	if (tonethread == NULL) {
+  // read data as a block:
+  file.read (_src,length);
+  file.close();
+
+  // Decode file.ul
+  expandedsize = _ulaw->codecDecode (_dst, (unsigned char *)_src, length);
+
+  _debug("length (pre-ulaw) : %d\n", length);
+  _debug("expandedsize (post-ulaw) : %d\n", expandedsize);
+
+  if (tonethread == NULL) {
     _debug("Thread: start tonethread\n");
-		tonethread = new ToneThread ((int16*)_dst, expandedsize);
-		tonethread->start();
-	}
-	
-	return 1;
+    tonethread = new ToneThread ((int16*)_dst, expandedsize);
+    tonethread->start();
+  }
+
+  return 1;
 }
 
 int

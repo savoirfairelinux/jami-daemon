@@ -201,7 +201,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 		toGet = (normalAvail < (int)framesPerBuffer) ? normalAvail : framesPerBuffer;
     // MIC_CHANNELS * SAMPLE_BYTES
 
-    //_debug("%d vs %d : %d\t", normalAvail, (int)framesPerBuffer, toGet);
+    //_debug("mainsndringbuffer.get: %d vs %d : %d\n", normalAvail, (int)framesPerBuffer, toGet);
     if (toGet) {
 		  _mainSndRingBuffer.Get(out, SAMPLES_SIZE(toGet), _manager.getSpkrVolume());
     } else {

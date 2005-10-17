@@ -20,7 +20,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
 #include <assert.h>
 #include <stdlib.h> 
 #include <string.h>  
@@ -94,7 +93,7 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
 
    while(toCopy) {
       block = toCopy;
-      if (block > mBufferSize - pos) // from current pos. to end of buffer
+      if (block > (mBufferSize - pos)) // from current pos. to end of buffer
          block = mBufferSize - pos;
 
       // put the data inside the buffer.
@@ -105,7 +104,6 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
       }
       // bcopy(src, dest, len)
       bcopy (src, mBuffer + pos, block);
-
       src += block;
       pos = (pos + block) % mBufferSize;
       toCopy -= block;
@@ -142,6 +140,7 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
    dest = (samplePtr) buffer;
    copied = 0;
 
+   //fprintf(stderr, "get start... ");
    while(toCopy) {
       block = toCopy;
       if (block > (mBufferSize - mStart))
@@ -154,6 +153,7 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
       }
       // bcopy(src, dest, len)
       bcopy (mBuffer + mStart, dest, block);
+      //_debug("get %d chars at address %ld, mBufferSize=%d, toCopy=%d\n", block, mBuffer+mStart, mBufferSize, toCopy);
       dest += block;
       mStart = (mStart + block) % mBufferSize;
       toCopy -= block;
