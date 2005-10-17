@@ -49,7 +49,7 @@ public:
     ResponseMessage response(code, _sequenceId, arg);
     return response;
   }
-  std::string sequenceId () const { return _sequenceId; }
+  std::string getSequenceId () const { return _sequenceId; }
   
 protected:
   std::string _sequenceId;

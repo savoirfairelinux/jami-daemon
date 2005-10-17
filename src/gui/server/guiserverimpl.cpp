@@ -286,9 +286,9 @@ GUIServerImpl::dtmfCall(const std::string& callId, const std::string& dtmfKey)
 std::string 
 GUIServerImpl::version() 
 {
-  std::ostringstream version;
-  version << PROGNAME << " " << SFLPHONED_VERSION;
-  return version.str();
+  std::ostringstream programVersion;
+  programVersion << PROGNAME << " " << SFLPHONED_VERSION;
+  return programVersion.str();
 }
 
 

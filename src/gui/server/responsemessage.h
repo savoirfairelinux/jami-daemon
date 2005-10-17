@@ -37,7 +37,7 @@ public:
     ResponseMessage(const std::string& code,const std::string& seq, TokenList& arg);
     ~ResponseMessage();
 
-    std::string sequenceId() const { return _seq; }
+    std::string getSequenceId() const { return _seq; }
 
     std::string toString() const;
     bool isFinal() const;

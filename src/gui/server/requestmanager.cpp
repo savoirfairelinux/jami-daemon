@@ -96,9 +96,9 @@ RequestManager::handleExecutedRequest(Request * request, const ResponseMessage& 
     delete request; request = NULL;
   } else {
     ost::MutexLock lock(_waitingRequestsMutex);
-    if (_waitingRequests.find(request->sequenceId()) == _waitingRequests.end()) {
+    if (_waitingRequests.find(request->getSequenceId()) == _waitingRequests.end()) {
       // add the requests
-      _waitingRequests[response.sequenceId()] = request;
+      _waitingRequests[response.getSequenceId()] = request;
     } else {
       // we don't deal with requests with a sequenceId already send...
       delete request; request = NULL;
@@ -137,7 +137,7 @@ RequestManager::sendResponse(const ResponseMessage& response) {
   // remove the request from the waiting requests list
   if (response.isFinal()) {
     ost::MutexLock lock(_waitingRequestsMutex);
-    std::map<std::string, Request*>::iterator iter = _waitingRequests.find(response.sequenceId());
+    std::map<std::string, Request*>::iterator iter = _waitingRequests.find(response.getSequenceId());
 
     if (iter != _waitingRequests.end()) {
       delete iter->second; iter->second = NULL;
