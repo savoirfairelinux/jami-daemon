@@ -528,7 +528,7 @@ ManagerImpl::playDtmf(char code)
       buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j];
       // * spkrVolume/100;
     }
-
+    _toneMutex.enterMutex();
     AudioLayer *audiolayer = getAudioDriver();
     audiolayer->urgentRingBuffer().flush();
 
@@ -544,6 +544,7 @@ ManagerImpl::playDtmf(char code)
     } else {
       audiolayer->sleep(pulselen);
     }
+    _toneMutex.leaveMutex();
     //setZonetone(false);
     delete[] buf_ctrl_vol; buf_ctrl_vol = 0;
     returnValue = true;

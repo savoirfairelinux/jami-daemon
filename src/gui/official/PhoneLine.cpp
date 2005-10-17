@@ -197,7 +197,7 @@ PhoneLine::sendKey(Qt::Key c)
     break;
 
   default:
-    if (QChar(c).isDigit()) {
+    if (QChar(c).isDigit() || c == Qt::Key_Asterisk || c == Qt::Key_NumberSign) {
       if(!mCall) {
 	mSession.playDtmf(c);
 	mBuffer += c;

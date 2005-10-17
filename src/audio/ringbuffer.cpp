@@ -21,7 +21,6 @@
  */
 
 
-#include <iostream>  //debug
 #include <assert.h>
 #include <stdlib.h> 
 #include <string.h>  
@@ -102,7 +101,7 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
       if (volume!=100) {
         int16* src16 = (int16*)src;
         int int16len = (block >> 1);
-        for (int i=0; i< int16len; i++) { src16[i] = src16[i] * volume / 100; }
+        for (int i=0; i < int16len; i++) { src16[i] = src16[i] * volume / 100; }
       }
       // bcopy(src, dest, len)
       bcopy (src, mBuffer + pos, block);

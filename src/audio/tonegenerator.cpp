@@ -31,7 +31,7 @@
 #include "../manager.h"
 #include "../user_cfg.h"
 
-int AMPLITUDE = 8192;
+int AMPLITUDE = 32767;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -60,33 +60,38 @@ ToneThread::run (void) {
 	bool started = false;
 
 	// How long do 'size' samples play ?
-	// unsigned int play_time = (size * 1000) / SAMPLING_RATE;
-  unsigned int pause = (size * 1000) / SAMPLING_RATE;
+	unsigned int play_time = (size * 1000) / SAMPLING_RATE;
 
   ManagerImpl& manager = Manager::instance();
   manager.getAudioDriver()->flushMain();
 
-	while (!testCancel()) {
+  // this loop can be outside the stream, since we put the volume inside the ringbuffer
+  for (int j = 0; j < size; j++) {
+		k = j<<1; // channels is 2 (global.h)
+              // split in two
+		buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j];
+    // * spkrVolume/100;
+	}
+
 		// Create a new stereo buffer with the volume adjusted
 		//spkrVolume = manager.getSpkrVolume();
-		for (int j = 0; j < size; j++) {
-			k = j<<1; // channels is 2 (global.h)
-                // split in two
-			buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j];
-      // * spkrVolume/100;
-		}
-
 		// Push the tone to the audio FIFO
-		manager.getAudioDriver()->putMain(buf_ctrl_vol, SAMPLES_SIZE(size));
 
+  // size = number of int16 * 2 (two channels) * 
+  // int16 are the buf_ctrl_vol 
+  //  unsigned char are the sample_ptr inside ringbuffer
+
+  int size_in_char = size * 2 * (sizeof(int16)/sizeof(unsigned char));
+ 	while (!testCancel()) {
+    manager.getAudioDriver()->putMain(buf_ctrl_vol, size_in_char);
 		// The first iteration will start the audio stream if not already.
-		if (!started) {
-			started = true;
-			manager.getAudioDriver()->startStream();
-		}
+    if (!started) {
+	  	started = true;
+		  manager.getAudioDriver()->startStream();
+	  }
 		
 		// next iteration later, sound is playing.
-		this->sleep (pause); // this is not a pause, this is the sound that play
+		this->sleep(play_time); // this is not a pause, this is the sound that play
 	}
 }
 
@@ -173,8 +178,7 @@ ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr, int len) 
 	var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)SAMPLING_RATE;
 	
 	for(int t = 0; t < len; t++) {
-		ptr[t] = (int16)((double)(AMPLITUDE >> 2) * sin(var1 * t) +
-                    (double)(AMPLITUDE >> 2) * sin(var2 * t));
+		ptr[t] = (int16)((double)(AMPLITUDE >> 1) * ((sin(var1 * t) + sin(var2 * t))));
 	}
 }
 
@@ -251,8 +255,8 @@ ToneGenerator::buildTone (unsigned int idCountry, unsigned int idTones, int16* t
 		count = 0;
     byte_max = byte + byte_temp;
 		for (int j = byte_temp; j < byte_max; j++) {
-			temp[j] = buffer[count++];
-		}		
+			temp[j] = buffer[count++]; // copy each int16 data...
+		}
 		byte_temp += byte;
 		
 		str = str.substr(str.find(',') + 1, str.length());
