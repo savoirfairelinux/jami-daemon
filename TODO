@@ -6,12 +6,10 @@ For project core:
 ----------------
 Management Config like about:config in Mozilla
 Improvement of STUN
-Add ZeroConf support 
 Add IAX support
 Management of account (add, remove, ...)
 Management of exceptions
 Remove all warnings in compilation
-Add unregister method when application is closed
 Better handling for an reINVITE request.
 
 For project dependencies:

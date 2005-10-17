@@ -287,7 +287,7 @@ std::string
 GUIServerImpl::version() 
 {
   std::ostringstream version;
-  version << PROGNAME << " " << VERSION;
+  version << PROGNAME << " " << SFLPHONED_VERSION;
   return version.str();
 }
 

@@ -76,7 +76,7 @@ SipVoIPLink::init (void)
   std::string tmp;
   int i;
 
-  tmp = std::string(PROGNAME) + "/" + std::string(VERSION);
+  tmp = std::string(PROGNAME) + "/" + std::string(SFLPHONED_VERSION);
 	
   i = eXosip_init ();
   if (i != 0) {

@@ -1,5 +1,10 @@
+SFLphoned/SFLphone (0.5) / 2005-10-17
+	* sflphoned
+	* bug fixes
+	* sflphone-qt
+	* client/server protocol
 
-SFLphone (0.4.1-pre2) / now
+SFLphone (0.4.1-pre2) / 2005-09-30
 	* rearranged utilspp use
         * Bug fix when trying to use more than 6 lines.
 	* Now, we send a final response to reINVITEs 

@@ -3,7 +3,7 @@ AC_INIT(acinclude.m4)
 AM_CONFIG_HEADER(config.h)
 
 dnl figure out the sflphone version
-VERSION=`sed -ne 's/^#define VERSION "\(.*\)"/\1/p' ${srcdir}/src/global.h`
+VERSION=`sed -ne 's/^#define SFLPHONED_VERSION "\(.*\)"/\1/p' ${srcdir}/src/global.h`
 AC_SUBST(VERSION)
 
 dnl get rid of release number
@@ -14,8 +14,8 @@ LIBS="$LIBS -lstdc++"
 
 dnl
 dnl Solaris pkgadd support definitions
-PKGADD_PKG="SFLPhone"
-PKGADD_NAME="SFLPhone - a SIP client"
+PKGADD_PKG="SFLPhoned"
+PKGADD_NAME="SFLPhone - a SIP client and deamon"
 PKGADD_VENDOR="http://www.sflphone.org/"
 AC_SUBST(PKGADD_PKG)
 AC_SUBST(PKGADD_NAME)
