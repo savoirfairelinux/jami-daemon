@@ -57,3 +57,19 @@ ConfigurationManagerImpl::set(const QString &section,
   }
 }
 
+QString
+ConfigurationManagerImpl::get(const QString &section,
+			      const QString &name)
+{
+  QString value;
+  SectionMap::iterator pos = mEntries.find(section);
+  if(pos != mEntries.end()) {
+    VariableMap::iterator vpos = pos->second.find(name);
+    if(vpos != pos->second.end()) {
+      value = vpos->second.value;
+    }
+  }
+
+  return value;
+}
+

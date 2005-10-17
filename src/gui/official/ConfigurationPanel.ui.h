@@ -13,6 +13,7 @@
 #include <qmessagebox.h>
 #include <qstringlist.h>
 
+#include "globals.h"
 #include "ConfigurationManager.hpp"
 #include "DebugOutput.hpp"
 #include "QjListBoxPixmap.hpp"
@@ -73,45 +74,6 @@ void ConfigurationPanel::init()
  }
   */
     
-    // Set position of the button group, with appropriate length
-    //DriverChoice->setGeometry( QRect( 10, 10, 410, top + 30 ) );
-    
-    //ManagerImpl& manager = Manager::instance();
-    // For signalisations tab
-    /*
-      fullName->setText(QString(manager.getConfigString(
-SIGNALISATION , FULL_NAME)));
-   userPart->setText(QString(manager.getConfigString(SIGNALISATION,
-USER_PART)));
-   username->setText(QString(manager.getConfigString(SIGNALISATION,
-AUTH_USER_NAME)));
-   password->setText(QString(manager.getConfigString(SIGNALISATION, PASSWORD)));
-   hostPart->setText(QString(manager.getConfigString(SIGNALISATION,
-HOST_PART)));
-   sipproxy->setText(QString(manager.getConfigString(SIGNALISATION, PROXY)));
-   autoregister->setChecked(manager.getConfigInt(SIGNALISATION,
-AUTO_REGISTER));
-   playTones->setChecked(manager.getConfigInt(SIGNALISATION, PLAY_TONES));
-   pulseLength->setValue(manager.getConfigInt(SIGNALISATION, PULSE_LENGTH));
-   sendDTMFas->setCurrentItem(manager.getConfigInt(SIGNALISATION,
-SEND_DTMF_AS));
-   STUNserver->setText(QString(manager.getConfigString(SIGNALISATION,
-STUN_SERVER)));
-((QRadioButton*)stunButtonGroup->find(manager.getConfigInt(SIGNALISATION,
-USE_STUN)))->setChecked(true);
-*/
-
-
-   // For audio tab
-  /*
-((QRadioButton*)DriverChoice->find(manager.getConfigInt(AUDIO,
-DRIVER_NAME)))->setChecked(true);
-
-   codec1->setCurrentText(QString(manager.getConfigString(AUDIO, CODEC1)));
-   codec2->setCurrentText(QString(manager.getConfigString(AUDIO, CODEC2)));
-   codec3->setCurrentText(QString(manager.getConfigString(AUDIO, CODEC3)));
-*/
-
   /*
    ringsChoice->setCurrentText(QString(manager.getConfigString(AUDIO,
 RING_CHOICE)));
@@ -154,89 +116,139 @@ RING_CHOICE)));
 void 
 ConfigurationPanel::generate()
 {
-  DebugOutput::instance() << "ConfigurationPanel::generate()\n";
-    int top = 0;
-    std::list< AudioDevice > audio = ConfigurationManager::instance().getAudioDevices();
-    std::list< AudioDevice >::iterator pos;
-    
-    for (pos = audio.begin(); pos != audio.end(); pos++) {
-      QString name = pos->description;
-      DebugOutput::instance() << 
-	QObject::tr("ConfigurationPanel::generate(): name: %1\n").arg(name);
+   // For audio tab
+  codec1->setCurrentText(ConfigurationManager::instance()
+			 .get(AUDIO_SECTION, AUDIO_CODEC1));
+  codec2->setCurrentText(ConfigurationManager::instance()
+			 .get(AUDIO_SECTION, AUDIO_CODEC2));
+  codec3->setCurrentText(ConfigurationManager::instance()
+			 .get(AUDIO_SECTION, AUDIO_CODEC3));
 
-      // New radio button with found device name
-      QRadioButton* device = new QRadioButton(DriverChoice); 
-      device->setGeometry( QRect( 10, 30 + top, 390, 21 ) );
-      // Set label of radio button
-      device->setText(name);
+  int top = 0;
+  std::list< AudioDevice > audio = ConfigurationManager::instance().getAudioDevices();
+  std::list< AudioDevice >::iterator pos;
+    
+  for (pos = audio.begin(); pos != audio.end(); pos++) {
+    QString name = pos->description;
+
+    // New radio button with found device name
+    QRadioButton* device = new QRadioButton(DriverChoice); 
+    device->setGeometry( QRect( 10, 30 + top, 390, 21 ) );
+    // Set label of radio button
+    device->setText(name);
       
-      // Add tooltip for each one
-      //QToolTip::add(device , name);
-     
-      top += 30;
-      //if (ConfigurationManager::instance().(i)) {
-      //	device->setChecked(true);   
-      //}
+    top += 30;
+    if (ConfigurationManager::instance().get(AUDIO_SECTION, 
+					     AUDIO_DEFAULT_DEVICE) == pos->index) {
+      device->setChecked(true);   
     }
-    // Set position of the button group, with appropriate length
-        DriverChoice->setGeometry( QRect( 10, 10, 410, top + 30 ) );
+  }
+  // Set position of the button group, with appropriate length
+  DriverChoice->setGeometry( QRect( 10, 10, 410, top + 30 ) );
+
+
+  // For signalisations tab
+  fullName->setText(ConfigurationManager::instance()
+		    .get(SIGNALISATION_SECTION, 
+			 SIGNALISATION_FULL_NAME));
+  userPart->setText(ConfigurationManager::instance()
+		    .get(SIGNALISATION_SECTION,
+			 SIGNALISATION_USER_PART));
+  username->setText(ConfigurationManager::instance()
+		    .get(SIGNALISATION_SECTION,
+			 SIGNALISATION_AUTH_USER_NAME));
+  password->setText(ConfigurationManager::instance()
+		    .get(SIGNALISATION_SECTION, 
+			 SIGNALISATION_PASSWORD));
+  hostPart->setText(ConfigurationManager::instance()
+		    .get(SIGNALISATION_SECTION,
+			 SIGNALISATION_HOST_PART));
+  sipproxy->setText(ConfigurationManager::instance()
+		    .get(SIGNALISATION_SECTION, 
+			 SIGNALISATION_PROXY));
+  autoregister->setChecked(ConfigurationManager::instance()
+			   .get(SIGNALISATION_SECTION,
+				SIGNALISATION_AUTO_REGISTER));
+  playTones->setChecked(ConfigurationManager::instance()
+			.get(SIGNALISATION_SECTION, 
+			     SIGNALISATION_PLAY_TONES).toUInt());
+  pulseLength->setValue(ConfigurationManager::instance()
+			.get(SIGNALISATION_SECTION, 
+			     SIGNALISATION_PULSE_LENGTH).toUInt());
+  sendDTMFas->setCurrentItem(ConfigurationManager::instance()
+			     .get(SIGNALISATION_SECTION,
+				  SIGNALISATION_SEND_DTMF_AS).toUInt());
+  STUNserver->setText(ConfigurationManager::instance()
+		      .get(SIGNALISATION_SECTION,
+			   SIGNALISATION_STUN_SERVER));
+  ((QRadioButton*)stunButtonGroup->find(ConfigurationManager::instance()
+					.get(SIGNALISATION_SECTION,
+					     SIGNALISATION_USE_STUN).toUInt()))->setChecked(true);
+
+
+
+  /*
+   ringsChoice->setCurrentText(QString(manager.getConfigString(AUDIO,
+RING_CHOICE)));
+  */
+
 }
 
 // For saving settings at application 'save'
 void ConfigurationPanel::saveSlot()
 {
-  /*
-  manager.setConfig("VoIPLink", "SIP.fullName",
-		    string(fullName->text().ascii()));
-  manager.setConfig("VoIPLink", "SIP.userPart",
-		    string(userPart->text().ascii()));
-  manager.setConfig("VoIPLink", "SIP.username",
-		    string(username->text().ascii()));
-  manager.setConfig("VoIPLink", "SIP.password",
-		    string(password->text().ascii()));
-  manager.setConfig("VoIPLink", "SIP.hostPart",
-		    string(hostPart->text().ascii()));
-  manager.setConfig("VoIPLink", "SIP.proxy", 
-		    string(sipproxy->text().ascii()));
-  manager.setConfig("VoIPLink", "SIP.autoregister", 
-		    autoregister->isChecked());
-  manager.setConfig("VoIPLink", "DTMF.pulseLength",  
-		    pulseLength->value());
-  manager.setConfig("VoIPLink", "DTMF.playTones",  
-		    playTones->isChecked());
-  manager.setConfig("VoIPLink", "DTMF.sendDTMFas" , 
-		    sendDTMFas->currentItem());
-  manager.setConfig("VoIPLink", "STUN.STUNserver",
-		    string(STUNserver->text().ascii()));
+  ConfigurationManager::instance().set("VoIPLink", "SIP.fullName",
+				       fullName->text());
+  ConfigurationManager::instance().set("VoIPLink", "SIP.userPart",
+				       userPart->text());
+  ConfigurationManager::instance().set("VoIPLink", "SIP.username",
+				       username->text());
+  ConfigurationManager::instance().set("VoIPLink", "SIP.password",
+				       password->text());
+  ConfigurationManager::instance().set("VoIPLink", "SIP.hostPart",
+				       hostPart->text());
+  ConfigurationManager::instance().set("VoIPLink", "SIP.proxy", 
+				       sipproxy->text());
+  ConfigurationManager::instance().set("VoIPLink", "SIP.autoregister", 
+				       QString::number(autoregister->isChecked()));
+  ConfigurationManager::instance().set("VoIPLink", "DTMF.pulseLength",  
+				       QString::number(pulseLength->value()));
+  ConfigurationManager::instance().set("VoIPLink", "DTMF.playTones",  
+				       QString::number(playTones->isChecked()));
+  ConfigurationManager::instance().set("VoIPLink", "DTMF.sendDTMFas" , 
+				       QString::number(sendDTMFas->currentItem()));
+  ConfigurationManager::instance().set("VoIPLink", "STUN.STUNserver",
+				       STUNserver->text());
 
-  manager.setConfig("Audio", "Codecs.codec1",
-		    string(codec1->currentText().ascii()));
-  manager.setConfig("Audio", "Codecs.codec2",
-		    string(codec2->currentText().ascii()));
-  manager.setConfig("Audio", "Codecs.codec3",
-		    string(codec3->currentText().ascii()));
+  ConfigurationManager::instance().set("Audio", "Codecs.codec1",
+				       codec1->currentText());
+  ConfigurationManager::instance().set("Audio", "Codecs.codec2",
+				       codec2->currentText());
+  ConfigurationManager::instance().set("Audio", "Codecs.codec3",
+				       codec3->currentText());
   
   if (ringsChoice->currentText() != NULL)
-    manager.setConfig("Audio", "Rings.ringChoice", 
-		      string(ringsChoice->currentText().ascii()));
+    ConfigurationManager::instance().set("Audio", "Rings.ringChoice", 
+		      ringsChoice->currentText());
   
-  manager.setConfig("Preferences", "Themes.skinChoice", 
-		    string(SkinChoice->currentText().ascii()));
-  manager.setConfig("Preferences", "Options.zoneToneChoice", 
-		    string(zoneToneChoice->currentText().ascii()));
-  manager.setConfig("Preferences", "Options.confirmQuit", 
-		    confirmationToQuit->isChecked());
-  manager.setConfig("Preferences", "Options.checkedTray",
-		    checkedTray->isChecked());
+  ConfigurationManager::instance().set("Preferences", "Themes.skinChoice", 
+		    SkinChoice->currentText());
+  ConfigurationManager::instance().set("Preferences", "Options.zoneToneChoice", 
+		    zoneToneChoice->currentText());
+  ConfigurationManager::instance().set("Preferences", "Options.confirmQuit", 
+				       QString::number(confirmationToQuit->isChecked()));
+  ConfigurationManager::instance().set("Preferences", "Options.checkedTray",
+				       QString::number(checkedTray->isChecked()));
   
-  manager.setConfig("Preferences", "Options.voicemailNumber", 
-		    string(voicemailNumber->text().ascii()));   
-  */
+  ConfigurationManager::instance().set("Preferences", "Options.voicemailNumber", 
+				       voicemailNumber->text());
 #if 0 
   QMessageBox::information(this, "Save settings",
 			   "You must restart SFLPhone",
 			   QMessageBox::Yes);
 #endif
+
+  ConfigurationManager::instance().save();
 }
 
 // Handle tab view  according to current item of listbox

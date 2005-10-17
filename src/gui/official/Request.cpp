@@ -19,6 +19,7 @@
  */
 
 #include <qobject.h>
+#include <Url.hpp>
 #include <sstream>
 
 #include "globals.h"
@@ -43,7 +44,9 @@ Request::parseArgs(const QString &message)
   std::list< QString > args;
   while(stream.good()) {
     stream >> s;
-    args.push_back(s);
+    QString qs(s);
+    Url::decode(qs);
+    args.push_back(qs);
   }
 
   return args;

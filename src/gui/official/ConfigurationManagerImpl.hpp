@@ -91,7 +91,11 @@ public:
   void set(const QString &section, 
 	   const QString &name,
 	   const QString &value);
-
+  
+  QString get(const QString &section, 
+	      const QString &name);
+	   
+  
   void add(const ConfigEntry &entry);
 
   void add(const AudioDevice &entry);
@@ -103,6 +107,8 @@ public:
   
   void complete()
   {emit updated();}
+
+  void save();
 
 private:
   typedef std::map< QString, ConfigEntry > VariableMap;

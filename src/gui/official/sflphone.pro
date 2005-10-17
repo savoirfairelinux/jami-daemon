@@ -138,6 +138,7 @@ HEADERS += Account.hpp \
            TCPSessionIO.hpp \
            TCPSessionIOCreator.hpp \
            TransparentWidget.hpp \
+           Url.hpp \
            VolumeControl.hpp 
 SOURCES += Account.cpp \
            Call.cpp \
@@ -164,5 +165,6 @@ SOURCES += Account.cpp \
            TCPSessionIO.cpp \
            TCPSessionIOCreator.cpp \
            TransparentWidget.cpp \
+           Url.cpp \
            VolumeControl.cpp 
 RESOURCES += sflphone.qrc

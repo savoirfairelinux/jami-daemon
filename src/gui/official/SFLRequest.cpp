@@ -283,8 +283,8 @@ CallRequest::onSuccess(Account,
 
 
 ConfigGetAllRequest::ConfigGetAllRequest(const QString &sequenceId,
-			   const QString &command,
-			   const std::list< QString > &args)
+					 const QString &command,
+					 const std::list< QString > &args)
   : Request(sequenceId, command, args)
 {}
 
@@ -298,13 +298,10 @@ ConfigGetAllRequest::onError(const QString &code, const QString &message)
 }
 
 void
-ConfigGetAllRequest::onEntry(const QString &code, const QString &message)
+ConfigGetAllRequest::onEntry(const QString &, const QString &message)
 {
-  DebugOutput::instance() << QObject::tr("ConfigGetAllRequest entry: (%1) %1\n")
-    .arg(code)
-    .arg(message);
   std::list< QString > args = Request::parseArgs(message);
-  if(args.size() >= 5) {
+  if(args.size() >= 4) {
     QString section, variable, type, def, val;
     section = *args.begin();
     args.pop_front();
@@ -312,19 +309,18 @@ ConfigGetAllRequest::onEntry(const QString &code, const QString &message)
     args.pop_front();
     type = *args.begin();
     args.pop_front();
-    def = *args.begin();
-    args.pop_front();
     val = *args.begin();
+    args.pop_front();
+    if(args.size() >= 1) {
+      def = *args.begin();
+    }
     ConfigurationManager::instance().add(ConfigEntry(section, variable, type, def, val));
   }
 }
 
 void
-ConfigGetAllRequest::onSuccess(const QString &code, const QString &message)
+ConfigGetAllRequest::onSuccess(const QString &, const QString &)
 {
-  DebugOutput::instance() << QObject::tr("ConfigGetAllRequest success: (%1) %1\n")
-    .arg(code)
-    .arg(message);
   ConfigurationManager::instance().complete();
 }
 
