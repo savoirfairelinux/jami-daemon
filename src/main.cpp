@@ -45,6 +45,10 @@ main (int argc, char **argv) {
       Manager::instance().init();
       initOK = true;
     }
+    catch (std::exception &e) {
+      std::cerr << e.what() << std::endl;
+      exit_code = -1;
+    }
     catch (...) {
       std::cerr << 
     "An exception occured when initializing the system." << 
