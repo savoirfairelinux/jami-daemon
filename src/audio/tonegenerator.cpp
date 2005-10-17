@@ -385,6 +385,7 @@ ToneGenerator::playRingtone (const char *fileName) {
   file.close();
 
   // Decode file.ul
+  // expandedsize is the number of bytes, not the number of int
   expandedsize = _ulaw->codecDecode (_dst, (unsigned char *)_src, length);
 
   _debug("length (pre-ulaw) : %d\n", length);
@@ -392,7 +393,8 @@ ToneGenerator::playRingtone (const char *fileName) {
 
   if (tonethread == NULL) {
     _debug("Thread: start tonethread\n");
-    tonethread = new ToneThread ((int16*)_dst, expandedsize);
+    // send the number of int16, so device by two
+    tonethread = new ToneThread ((int16*)_dst, expandedsize>>1);
     tonethread->start();
   }
 

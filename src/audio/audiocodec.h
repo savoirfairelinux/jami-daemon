@@ -21,9 +21,7 @@
 #ifndef __CODEC_AUDIO_H__
 #define __CODEC_AUDIO_H__
 
-
 #include <string> 
-#include "../global.h"
 
 class AudioCodec {
 public:

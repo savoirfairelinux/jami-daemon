@@ -338,14 +338,13 @@ SipVoIPLink::answer (CALLID id)
   bzero (tmpbuf, 64);
   // Get  port   
   snprintf (tmpbuf, 63, "%d", getSipCall(id)->getLocalAudioPort());
-	
-  _debug("Answer call [id = %d, cid = %d, did = %d]\n", 
-	 id, getSipCall(id)->getCid(), getSipCall(id)->getDid());
+
+  _debug("Answer call [id = %d, cid = %d, did = %d]\n", id, getSipCall(id)->getCid(), getSipCall(id)->getDid());
   port = getSipCall(id)->getLocalAudioPort();
   _debug("Local audio port: %d\n", port);
-	
-  
-  osip_message_t *answer = NULL;
+
+
+  osip_message_t *answerMessage = NULL;
   SipCall* ca = getSipCall(id);
 
   // Send 180 RINGING
@@ -355,18 +354,18 @@ SipVoIPLink::answer (CALLID id)
 
   // Send 200 OK
   eXosip_lock();
-  i = eXosip_call_build_answer (ca->getTid(), OK, &answer);
+  i = eXosip_call_build_answer (ca->getTid(), OK, &answerMessage);
   if (i != 0) {
     // Send 400 BAD_REQUEST
     eXosip_call_send_answer (ca->getTid(), BAD_REQ, NULL);
   } else {
-    i = sdp_complete_200ok (ca->getDid(), answer, port);
+    i = sdp_complete_200ok (ca->getDid(), answerMessage, port);
     if (i != 0) {
-      osip_message_free (answer);
+      osip_message_free (answerMessage);
       // Send 415 UNSUPPORTED_MEDIA_TYPE
       eXosip_call_send_answer (ca->getTid(), UNSUP_MEDIA_TYPE, NULL);
     } else {
-      eXosip_call_send_answer (ca->getTid(), OK, answer);
+      eXosip_call_send_answer (ca->getTid(), OK, answerMessage);
     }
   }
   eXosip_unlock();
@@ -587,12 +586,12 @@ SipVoIPLink::refuse (CALLID id)
   // Get local port   
   snprintf (tmpbuf, 63, "%d", getSipCall(id)->getLocalAudioPort());
 	
-  osip_message_t *answer = NULL;
+  osip_message_t *answerMessage = NULL;
   eXosip_lock();
   // not BUSY.. where decline the invitation!
-  i = eXosip_call_build_answer (getSipCall(id)->getTid(), SIP_DECLINE, &answer);
+  i = eXosip_call_build_answer (getSipCall(id)->getTid(), SIP_DECLINE, &answerMessage);
   if (i == 0) {
-    i = eXosip_call_send_answer (getSipCall(id)->getTid(), SIP_DECLINE, answer);
+    i = eXosip_call_send_answer (getSipCall(id)->getTid(), SIP_DECLINE, answerMessage);
   }
   eXosip_unlock();
   return i;
@@ -753,7 +752,7 @@ SipVoIPLink::getEvent (void)
     _debug("Call is closed [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);	
     if (id != 0) {
       if (Manager::instance().callCanBeClosed(id)) {
-         SipCall* sipcall = getSipCall(id);
+         sipcall = getSipCall(id);
          if ( sipcall != NULL ) { sipcall->enable_audio = false; }
          _audiortp.closeRtpSession();
       }
@@ -1139,7 +1138,7 @@ SipVoIPLink::sdp_off_hold_call (sdp_message_t * sdp)
 }
 
 int
-SipVoIPLink::sdp_complete_200ok (int did, osip_message_t * answer, int port)
+SipVoIPLink::sdp_complete_200ok (int did, osip_message_t * answerMessage, int port)
 {
   sdp_message_t *remote_sdp;
   sdp_media_t *remote_med;
@@ -1161,10 +1160,10 @@ SipVoIPLink::sdp_complete_200ok (int did, osip_message_t * answer, int port)
 
   eXosip_guess_localip (AF_INET, localip, 128);
   snprintf (buf, 4096,
-	    "v=0\r\n"
-	    "o=user 0 0 IN IP4 %s\r\n"
-	    "s=session\r\n" "c=IN IP4 %s\r\n" "t=0 0\r\n", localip,localip);
-
+      "v=0\r\n"
+      "o=user 0 0 IN IP4 %s\r\n"
+      "s=session\r\n" "c=IN IP4 %s\r\n" "t=0 0\r\n", localip,localip);
+ 
   pos = 0;
   while (!osip_list_eol (remote_sdp->m_medias, pos)) {
     char payloads[128];
@@ -1176,40 +1175,40 @@ SipVoIPLink::sdp_complete_200ok (int did, osip_message_t * answer, int port)
     if (0 == osip_strcasecmp (remote_med->m_media, "audio")) {
       pos2 = 0;
       while (!osip_list_eol (remote_med->m_payloads, pos2)) {
-	tmp = (char *) osip_list_get (remote_med->m_payloads, pos2);
-	if (tmp != NULL && (0 == osip_strcasecmp (tmp, "0")
-			    || 0 == osip_strcasecmp (tmp, "8")
-			    || 0 == osip_strcasecmp (tmp, "3"))) {
-	  strcat (payloads, tmp);
-	  strcat (payloads, " ");
-	}
-	pos2++;
+        tmp = (char *) osip_list_get (remote_med->m_payloads, pos2);
+        if (tmp != NULL && (0 == osip_strcasecmp (tmp, "0")
+                || 0 == osip_strcasecmp (tmp, "8")
+                || 0 == osip_strcasecmp (tmp, "3"))) {
+          strcat (payloads, tmp);
+          strcat (payloads, " ");
+        }
+        pos2++;
       }
       strcat (buf, "m=");
       strcat (buf, remote_med->m_media);
       if (pos2 == 0 || payloads[0] == '\0') {
-	strcat (buf, " 0 RTP/AVP \r\n");
-	sdp_message_free (remote_sdp);
-	return -1;        /* refuse anyway */
+        strcat (buf, " 0 RTP/AVP \r\n");
+        sdp_message_free (remote_sdp);
+        return -1;        /* refuse anyway */
       } else {
-	strcat (buf, " ");
-	strcat (buf, port_tmp);
-	strcat (buf, " RTP/AVP ");
-	strcat (buf, payloads);
-	strcat (buf, "\r\n");
+        strcat (buf, " ");
+        strcat (buf, port_tmp);
+        strcat (buf, " RTP/AVP ");
+        strcat (buf, payloads);
+        strcat (buf, "\r\n");
 
-	if (NULL != strstr (payloads, " 0 ")
-	    || (payloads[0] == '0' && payloads[1] == ' ')) {
-	  strcat (buf, "a=rtpmap:0 PCMU/8000\r\n");
-	}
-	if (NULL != strstr (payloads, " 8 ")
-	    || (payloads[0] == '8' && payloads[1] == ' ')) {
-	  strcat (buf, "a=rtpmap:8 PCMA/8000\r\n");
-	}
-	if (NULL != strstr (payloads, " 3")
-	    || (payloads[0] == '3' && payloads[1] == ' ')) {
-	  strcat (buf, "a=rtpmap:3 GSM/8000\r\n");
-	}
+        if (NULL != strstr (payloads, " 0 ")
+            || (payloads[0] == '0' && payloads[1] == ' ')) {
+          strcat (buf, "a=rtpmap:0 PCMU/8000\r\n");
+        }
+        if (NULL != strstr (payloads, " 8 ")
+            || (payloads[0] == '8' && payloads[1] == ' ')) {
+          strcat (buf, "a=rtpmap:8 PCMA/8000\r\n");
+        }
+        if (NULL != strstr (payloads, " 3")
+            || (payloads[0] == '3' && payloads[1] == ' ')) {
+          strcat (buf, "a=rtpmap:3 GSM/8000\r\n");
+        }
       }
     } else {
       strcat (buf, "m=");
@@ -1221,8 +1220,8 @@ SipVoIPLink::sdp_complete_200ok (int did, osip_message_t * answer, int port)
     pos++;
   }
 
-  osip_message_set_body (answer, buf, strlen (buf));
-  osip_message_set_content_type (answer, "application/sdp");
+  osip_message_set_body (answerMessage, buf, strlen (buf));
+  osip_message_set_content_type (answerMessage, "application/sdp");
   sdp_message_free (remote_sdp);
   return 0;
 }
@@ -1335,15 +1334,13 @@ SipVoIPLink::toHeader(const std::string& to)
 }
 
 int
-SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& to, 
-			const std::string& subject,  const std::string& route) 
+SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& to, const std::string& subject, const std::string& route) 
 {
   SipCall* sipcall = getSipCall(id);
   if ( sipcall == NULL) {
     return -1; // error, we can't find the sipcall
   }
   osip_message_t *invite;
-  int i;
 
   if (checkUrl(from) != 0) {
     Manager::instance().displayConfigError("Error for 'From' header");
@@ -1372,7 +1369,7 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   sipcall->setLocalAudioPort(_localPort);
   sipcall->setLocalIp(getLocalIpAddress());
 
-  i = eXosip_call_build_initial_invite (&invite, (char*)to.data(),
+  int i = eXosip_call_build_initial_invite (&invite, (char*)to.data(),
                                         (char*)from.data(),
                                         (char*)route.data(),
                                         (char*)subject.data());
@@ -1390,20 +1387,20 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   bzero(rtpmap_attr, 2048);
   bzero(media, 64);
   bzero(media_audio, 64);
-	
+
   // Set rtpmap according to the supported codec order
   CodecDescriptorVector* cdv = Manager::instance().getCodecDescVector();
   unsigned int nb = cdv->size();
-  for (unsigned int i = 0; i < nb; i++) {
-    payload = cdv->at(i)->getPayload();
+  for (unsigned int iCodec = 0; iCodec < nb; iCodec++) {
+    payload = cdv->at(iCodec)->getPayload();
 
     // Add payload to rtpmap if it is not already added
-    if (!isInRtpmap(i, payload, cdv)) {
+    if (!isInRtpmap(iCodec, payload, cdv)) {
       snprintf(media, 63, "%d ", payload);
       strcat (media_audio, media);
-			
+
       snprintf(rtpmap, 127, "a=rtpmap: %d %s/%d\r\n", payload, 
-	       cdv->at(i)->rtpmapPayload(payload).data(), SAMPLING_RATE);
+	       cdv->at(iCodec)->rtpmapPayload(payload).data(), SAMPLING_RATE);
       strcat(rtpmap_attr, rtpmap);
     }
   }

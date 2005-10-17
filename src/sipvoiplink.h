@@ -187,7 +187,7 @@ private:
 	/*
 	 * To build sdp with 200 OK when answered call
 	 */
-	int sdp_complete_200ok(int did, osip_message_t * answer, int port);
+	int sdp_complete_200ok(int did, osip_message_t * answerMessage, int port);
 	
 	/*
 	 * To build sdp when call is on-hold

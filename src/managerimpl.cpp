@@ -449,7 +449,7 @@ ManagerImpl::registerVoIPLink (void)
     if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() >= 0) {
       returnValue = true;
     } else {
-      _debug("ManagerImpl::registerVoIPLink: Registration Failed\n");
+      _debug("ManagerImpl::registerVoIPLink: Registration failed\n");
     }
   }
   return returnValue;
@@ -741,10 +741,10 @@ ManagerImpl::displayErrorText (CALLID id, const std::string& message)
  * for outgoing call, send by SipEvent
  */
 void 
-ManagerImpl::displayError (const std::string& error)
+ManagerImpl::displayError (const std::string& voIPError)
 {
   if(_gui) {
-    _gui->displayError(error);
+    _gui->displayError(voIPError);
   }
 }
 
@@ -1218,14 +1218,9 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
     while(iter!=_callVector.end()){
       call = (*iter);
       switch( call->getState() ) {
-      case Call::Busy:
-        code="113";
-        status = "Busy";
-        break;
-
-      case Call::Answered:
-        code="112";
-        status = "Established";
+      case Call::Progressing:
+        code="110";
+        status="Trying";
         break;
 
       case Call::Ringing:
@@ -1233,13 +1228,28 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
         status = "Ringing";
         break;
 
-      case Call::Progressing:
-        code="110";
-        status="Trying";
+      case Call::Answered:
+        code="112";
+        status = "Established";
+        break;
+
+      case Call::Busy:
+        code="113";
+        status = "Busy";
+        break;
+
+      case Call::OnHold:
+        code="114";
+        status = "Holded";
+        break;
+
+      case Call::OffHold:
+        code="115";
+        status = "Unholded";
         break;
 
       default:
-        code="115";
+        code="125";
         status="Other";
       }
       // No Congestion
