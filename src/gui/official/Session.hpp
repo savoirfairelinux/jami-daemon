@@ -44,6 +44,12 @@ class Session
    */
   QString playDtmf(char c) const;
 
+
+  /**
+   * This function will retreive the given list.
+   */
+  QString list(const QString &category) const;
+
   /**
    * This function will register to receive events
    */

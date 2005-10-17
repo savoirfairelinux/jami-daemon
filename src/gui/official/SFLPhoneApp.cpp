@@ -1,5 +1,6 @@
 #include "globals.h"
 
+#include "ConfigurationManager.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineButton.hpp"
 #include "Requester.hpp"
@@ -22,6 +23,8 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< Request >(QString("playtone"));
   Requester::instance().registerObject< Request >(QString("stoptone"));
   Requester::instance().registerObject< Request >(QString("playdtmf"));
+  Requester::instance().registerObject< ListRequest >(QString("list"));
+
   Requester::instance().registerObject< CallRequest >(QString("call"));
   Requester::instance().registerObject< ConfigGetAllRequest >(QString("configgetall"));
   Requester::instance().registerObject< EventRequest >(QString("getevents"));
@@ -111,6 +114,9 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   w, SLOT(askResendStatus(QString)));
   QObject::connect(w, SIGNAL(resendStatusAsked()),
 		   &PhoneLineManager::instance(), SIGNAL(readyToSendStatus()));
+  
+  QObject::connect(&ConfigurationManager::instance(), SIGNAL(updated()),
+		   w, SLOT(showSetup()));
 
 
 }

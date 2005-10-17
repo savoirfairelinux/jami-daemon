@@ -118,6 +118,14 @@ Session::playDtmf(char c) const
   return Requester::instance().send(mId, "playdtmf", args);
 }
 
+QString
+Session::list(const QString &category) const
+{
+  std::list< QString > args;
+  args.push_back(category);
+  return Requester::instance().send(mId, "list", args);
+}
+
 Account
 Session::getAccount(const QString &name) const
 {

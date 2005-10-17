@@ -51,6 +51,7 @@ SFLPhoneWindow::SFLPhoneWindow()
 		  Qt::WStyle_NoBorder)
 #endif
 {
+  mSetupPanel = new ConfigurationPanel(this, "ConfigurationPanel");
   // Initialize the background image
   mMain = new QLabel(this);
   QPixmap main(JPushButton::transparize(BACKGROUND_IMAGE));
@@ -194,6 +195,13 @@ SFLPhoneWindow::askReconnect()
   else {
     close();
   }
+}
+
+void
+SFLPhoneWindow::showSetup()
+{
+  mSetupPanel->generate();
+  mSetupPanel->show();
 }
 
 void 

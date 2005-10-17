@@ -201,4 +201,21 @@ public:
   virtual void onSuccess(const QString &code, const QString &message);
 };
 
+
+class ListRequest : public Request
+{
+public:
+  ListRequest(const QString &sequenceId,
+	      const QString &command,
+	      const std::list< QString > &args);
+
+
+  virtual ~ListRequest(){}
+
+
+  virtual void onError(const QString &code, const QString &message);
+  virtual void onEntry(const QString &code, const QString &message);
+  virtual void onSuccess(const QString &code, const QString &message);
+};
+
 #endif

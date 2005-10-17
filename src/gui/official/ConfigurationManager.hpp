@@ -18,12 +18,13 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __CONFIGURATION_PANEL_HPP__
-#define __CONFIGURATION_PANEL_HPP__
+#ifndef __CONFIGURATION_MANAGER_HPP__
+#define __CONFIGURATION_MANAGER_HPP__
 
 #include "utilspp/Singleton.hpp"
-#include "ConfigurationPanelImpl.hpp"
+#include "ConfigurationManagerImpl.hpp"
 
-typedef utilspp::SingletonHolder< ConfigurationPanelImpl > ConfigurationPanel;
+typedef utilspp::SingletonHolder< ConfigurationManagerImpl > ConfigurationManager;
 
 #endif
+

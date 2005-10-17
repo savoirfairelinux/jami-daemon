@@ -9,8 +9,10 @@ TARGET +=
 # This line is for qt4:
 # INCLUDEPATH +=  /usr/lib/qt4/include/Qt/
 QT += network qt3support
-#CONFIG += debug
+CONFIG += debug
 DEFINES += QT_THREAD_SUPPORT
+
+FORMS = ConfigurationPanel.ui
 
 IMAGES += \
 images/about.png \
@@ -105,8 +107,8 @@ HEADERS += Account.hpp \
            Call.hpp \
            CallStatus.hpp \
            CallStatusFactory.hpp \
-           ConfigurationPanel.hpp \
-           ConfigurationPanelImpl.hpp \
+           ConfigurationManager.hpp \
+           ConfigurationManagerImpl.hpp \
            DebugOutput.hpp \
            DebugOutputImpl.hpp \
            Event.hpp \
@@ -121,9 +123,10 @@ HEADERS += Account.hpp \
            PhoneLineLocker.hpp \
            PhoneLineManager.hpp \
            PhoneLineManagerImpl.hpp \
+           QjListBoxPixmap.hpp \
            Request.hpp \
            Requester.hpp \
-           RequesterImpl.hpp \
+           RequesterImpl.hpp RequesterImpl.inl \
            Session.hpp \
            SessionIO.hpp \
            SessionIOFactory.hpp \
@@ -135,15 +138,12 @@ HEADERS += Account.hpp \
            TCPSessionIO.hpp \
            TCPSessionIOCreator.hpp \
            TransparentWidget.hpp \
-           VolumeControl.hpp \
-           ObjectFactory.inl \
-           RequesterImpl.inl \
-           ObjectPool.inl
+           VolumeControl.hpp 
 SOURCES += Account.cpp \
            Call.cpp \
            CallManagerImpl.cpp \
            CallStatus.cpp \
-           ConfigurationPanelImpl.cpp \
+           ConfigurationManagerImpl.cpp \
            DebugOutputImpl.cpp \
            Event.cpp \
            JPushButton.cpp \
@@ -152,6 +152,7 @@ SOURCES += Account.cpp \
            PhoneLineButton.cpp \
            PhoneLineLocker.cpp \
            PhoneLineManagerImpl.cpp \
+           QjListBoxPixmap.cpp \
            Request.cpp \
            RequesterImpl.cpp \
            Session.cpp \
@@ -163,5 +164,5 @@ SOURCES += Account.cpp \
            TCPSessionIO.cpp \
            TCPSessionIOCreator.cpp \
            TransparentWidget.cpp \
-           VolumeControl.cpp
+           VolumeControl.cpp 
 RESOURCES += sflphone.qrc

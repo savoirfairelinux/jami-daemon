@@ -108,6 +108,7 @@ PhoneLineManagerImpl::handleEvents()
 
   emit globalStatusSet(QString(tr("SFLPhone is ready to serve you, master.")));
   mSession->getEvents();
+  mSession->list("audiodevice");
 }
 
 

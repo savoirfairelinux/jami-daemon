@@ -4,6 +4,8 @@
 #include <qpoint.h>
 #include <list>
 
+#include "ConfigurationPanel.h"
+
 class JPushButton;
 class PhoneLineButton;
 class SFLLcd;
@@ -32,7 +34,7 @@ signals:
   void volumeUpdated(int);
   void micVolumeUpdated(int);
 
- public slots:
+public slots:
   void mousePressEvent(QMouseEvent *event);
   void mouseMoveEvent(QMouseEvent *event);
 
@@ -47,6 +49,8 @@ signals:
    * if the user want to resend the getcallstatus request.
    */
   void askResendStatus(QString);
+
+  void showSetup();
 
 protected:
   void keyPressEvent(QKeyEvent *e);
@@ -71,4 +75,6 @@ private:
   QLabel *mMain;
 
   QPoint mLastPos;
+
+  ConfigurationPanel *mSetupPanel;
 };

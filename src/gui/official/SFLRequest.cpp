@@ -8,7 +8,7 @@
 #include "CallManager.hpp"
 #include "CallStatus.hpp"
 #include "CallStatusFactory.hpp"
-#include "ConfigurationPanel.hpp"
+#include "ConfigurationManager.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineLocker.hpp"
 #include "PhoneLineManager.hpp"
@@ -315,7 +315,7 @@ ConfigGetAllRequest::onEntry(const QString &code, const QString &message)
     def = *args.begin();
     args.pop_front();
     val = *args.begin();
-    ConfigurationPanel::instance().add(ConfigEntry(section, variable, type, def, val));
+    ConfigurationManager::instance().add(ConfigEntry(section, variable, type, def, val));
   }
 }
 
@@ -325,5 +325,46 @@ ConfigGetAllRequest::onSuccess(const QString &code, const QString &message)
   DebugOutput::instance() << QObject::tr("ConfigGetAllRequest success: (%1) %1\n")
     .arg(code)
     .arg(message);
-  ConfigurationPanel::instance().generate();
+  ConfigurationManager::instance().complete();
+}
+
+
+ListRequest::ListRequest(const QString &sequenceId,
+			 const QString &command,
+			 const std::list< QString > &args)
+  : Request(sequenceId, command, args)
+{}
+
+
+void
+ListRequest::onError(const QString &code, const QString &message)
+{
+  DebugOutput::instance() << QObject::tr("ListRequest error: (%1) %1\n")
+    .arg(code)
+    .arg(message);
+}
+
+void
+ListRequest::onEntry(const QString &code, const QString &message)
+{
+  DebugOutput::instance() << QObject::tr("ListRequest entry: (%1) %1\n")
+    .arg(code)
+    .arg(message);
+  std::list< QString > args = Request::parseArgs(message);
+  if(args.size() >= 2) {
+    AudioDevice device;
+    device.index = *args.begin();
+    args.pop_front();
+    device.description = *args.begin();
+    args.pop_front();
+    ConfigurationManager::instance().add(device);
+  }
+}
+
+void
+ListRequest::onSuccess(const QString &code, const QString &message)
+{
+  DebugOutput::instance() << QObject::tr("ListRequest success: (%1) %1\n")
+    .arg(code)
+    .arg(message);
 }
