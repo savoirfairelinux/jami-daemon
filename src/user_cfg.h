@@ -78,8 +78,6 @@
 #define EMPTY_FIELD			""
 #define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"
 
-#define DFT_VOIP_LINK         0
-#define DFT_VOIP_LINK_STR    "0" // index of the first VoIP link by default
 #define	YES_STR              "1"
 #define	NO_STR               "0"
 #define DFT_PULSE_LENGTH_STR "250"

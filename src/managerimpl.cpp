@@ -55,6 +55,8 @@
 #define fill_config_int(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
 
+#define DFT_VOIP_LINK 0
+
 ManagerImpl::ManagerImpl (void)
 {
   // initialize random generator  
@@ -339,6 +341,7 @@ ManagerImpl::onHoldCall (CALLID id)
   if ( call->getState() == Call::OnHold || call->isNotAnswered()) {
     return 1;
   }
+  setCurrentCallId(0);
   return call->onHold();
 }
 
@@ -707,7 +710,9 @@ ManagerImpl::peerHungupCall (CALLID id)
   if ( call == NULL ) {
     return -1;
   }
-  stopTone();
+  if ( _currentCallId == id ) {
+    stopTone();
+  }
 
   if (_gui) _gui->peerHungupCall(id);
   deleteCall(id);
@@ -1418,7 +1423,8 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId)
 
     tk.clear();
     std::ostringstream str; str << index; tk.push_back(str.str());
-    tk.push_back(std::string(hostApiName) + " (device #" + str.str() + ")");
+    tk.push_back(deviceName);
+    tk.push_back(std::string(hostApiName));
     _gui->sendMessage("100", sequenceId, tk);
   }
   return true;

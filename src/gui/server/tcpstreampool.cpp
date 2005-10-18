@@ -27,7 +27,7 @@ TCPStreamPool::run() {
   char cr13 = '\r'; // we don't want carriage return in empty line
 
   while(!testCancel() && good()) {
-    if (isPending(ost::TCPSocket::pendingInput, 2LU)) {
+    while (isPending(ost::TCPSocket::pendingInput, 2LU)) {
       std::getline(*this, input);
       _debug("TCPStreamPool getline %s\n", input.c_str());
       if (input != null && input[0]!=cr13) {
