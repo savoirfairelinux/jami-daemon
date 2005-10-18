@@ -510,36 +510,44 @@ ManagerImpl::playDtmf(char code)
 {
   stopTone();
 
-  int16* _buf = new int16[SIZEBUF];
+  // length in milliseconds
+  int pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
+  if (!pulselen) { return false; }
+
+  // numbers of int = length in milliseconds / 1000 (number of seconds)
+  //                = number of seconds * SAMPLING_RATE by SECONDS
+  int size = pulselen * (SAMPLING_RATE/1000);
+
+  // this buffer is for mono
+  int16* _buf = new int16[size];
   bool returnValue = false;
 
   // Handle dtmf
   _key.startTone(code);
-  if ( _key.generateDTMF(_buf, SAMPLING_RATE) ) {
 
+  // copy the sound...
+  if ( _key.generateDTMF(_buf, size) ) {
     int k;
-    //int spkrVolume;
-    int16* buf_ctrl_vol;
 
-    // Determine dtmf pulse length
-    int pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
-    int size = pulselen * (OCTETS /1000);
-
-    buf_ctrl_vol = new int16[size*CHANNELS];
-    //spkrVolume = getSpkrVolume();
+    // allocation of more space, for stereo conversion
+    int16* buf_ctrl_vol = new int16[size*CHANNELS];
 
     // Control volume and format mono->stereo
     for (int j = 0; j < size; j++) {
-      k = j<<1; // fast multiply by two
+      k = j<<1; // fast multiplication by two
       buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = _buf[j];
-      // * spkrVolume/100;
     }
-    _toneMutex.enterMutex();
+
     AudioLayer *audiolayer = getAudioDriver();
+
+    _toneMutex.enterMutex();
     audiolayer->urgentRingBuffer().flush();
 
     // Put buffer to urgentRingBuffer 
-    audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, size * CHANNELS);
+    // put the size in bytes...
+    // so size * CHANNELS * 2 (bytes for the int16)
+    int nbInt16InChar = sizeof(int16)/sizeof(char);
+    audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, size * CHANNELS * nbInt16InChar);
 
     // We activate the stream if it's not active yet.
     if (!audiolayer->isStreamActive()) {
@@ -548,7 +556,7 @@ ManagerImpl::playDtmf(char code)
       audiolayer->urgentRingBuffer().flush();
       audiolayer->stopStream();
     } else {
-      audiolayer->sleep(pulselen);
+      audiolayer->sleep(pulselen); // in milliseconds
     }
     _toneMutex.leaveMutex();
     //setZonetone(false);

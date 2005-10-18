@@ -48,7 +48,4 @@ typedef short int16;
 #define	SAMPLING_RATE 			8000
 #define SIZEBUF 				1024*1024
 #define	FORMAT					4			
-#define OCTETS					SAMPLING_RATE * FORMAT	// Number of writen 
-														// bytes in buffer
-
 #endif	// __GLOBAL_H__

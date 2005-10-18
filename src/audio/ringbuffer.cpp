@@ -103,6 +103,7 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
         for (int i=0; i < int16len; i++) { src16[i] = src16[i] * volume / 100; }
       }
       // bcopy(src, dest, len)
+      //fprintf(stderr, "has %d put %d\t", len, block);
       bcopy (src, mBuffer + pos, block);
       src += block;
       pos = (pos + block) % mBufferSize;
@@ -153,6 +154,7 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
       }
       // bcopy(src, dest, len)
       bcopy (mBuffer + mStart, dest, block);
+      //fprintf(stderr, "has %d get %d\t", len, block);
       //_debug("get %d chars at address %ld, mBufferSize=%d, toCopy=%d\n", block, mBuffer+mStart, mBufferSize, toCopy);
       dest += block;
       mStart = (mStart + block) % mBufferSize;
