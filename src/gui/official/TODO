@@ -1,5 +1,0 @@
-need to consolidated Request and Answers.
-need to set temp status.
-
-PhoneLineManager should connect only to the selected line, it could simplify the signaling process.
-
