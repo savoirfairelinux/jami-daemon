@@ -449,10 +449,9 @@ ManagerImpl::registerVoIPLink (void)
   int returnValue = 0;
   if ( !useStun() ) {
     if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() >= 0) {
-      returnValue = true;
+      returnValue = 1;
       _registerState = REGISTERED;
     } else {
-      _debug("ManagerImpl::registerVoIPLink: Registration failed\n");
       _registerState = FAILED;
     }
   } else {
@@ -890,7 +889,13 @@ ManagerImpl::ringtone()
   if (isDriverLoaded()) {
     _toneMutex.enterMutex(); 
     _toneType = ZT_TONE_FILE;
-    int play = _tone->playRingtone(getConfigString(AUDIO, RING_CHOICE).c_str());
+    std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
+    // if there is no / inside the path
+    if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
+      // check inside global share directory
+      ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
+    }
+    int play = _tone->playRingtone(ringchoice.c_str());
     _toneMutex.leaveMutex();
     if (play!=1) {
       ringback();
@@ -997,7 +1002,7 @@ ManagerImpl::generateNewCallId (void)
  */
 int
 ManagerImpl::createSettingsPath (void) {
-  _path = std::string(HOMEDIR) + "/." + PROGDIR;
+  _path = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR;
 
   if (mkdir (_path.data(), 0755) != 0) {
     // If directory	creation failed
@@ -1008,7 +1013,7 @@ ManagerImpl::createSettingsPath (void) {
   }
 
   // Load user's configuration
-  _path = _path + "/" + PROGNAME + "rc";
+  _path = _path + DIR_SEPARATOR_STR + PROGNAME + "rc";
   return _config.populateFromFile(_path);
 }
 
@@ -1379,11 +1384,11 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
     }
     returnValue = true;
   } else if (name=="ringtones") {
-    std::string path = std::string(PROGSHAREDIR) + "/" + RINGDIR;
+    std::string path = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR;
     int nbFile = 0;
     returnValue = getDirListing(sequenceId, path, &nbFile);
 
-    path = std::string(HOMEDIR) + "/." + PROGDIR + "/" + RINGDIR;
+    path = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR + DIR_SEPARATOR_STR + RINGDIR;
     getDirListing(sequenceId, path, &nbFile);
   } else if (name=="audiodevice") {
     returnValue = getAudioDeviceList(sequenceId);
@@ -1455,7 +1460,7 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
     std::string filePathName;
     while ( (cFileName=dir++) != NULL ) {
       fileName = cFileName;
-      filePathName = path + "/" + cFileName;
+      filePathName = path + DIR_SEPARATOR_STR + cFileName;
       if (fileName.length() && fileName[0]!='.' && !ost::isDir(filePathName.c_str())) {
         tk.clear();
         std::ostringstream str;

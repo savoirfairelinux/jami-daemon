@@ -41,8 +41,8 @@ public:
   Request(const std::string &sequenceId, const TokenList& argList) : _sequenceId(sequenceId), _argList(argList) {}
   virtual ~Request() {}
   virtual ResponseMessage execute() = 0;
-  ResponseMessage message(const std::string &code, const std::string &message) {
-    ResponseMessage response(code, _sequenceId, message);
+  ResponseMessage message(const std::string &code, const std::string &aMessage) {
+    ResponseMessage response(code, _sequenceId, aMessage);
     return response;
   }
   ResponseMessage message(const std::string &code, TokenList& arg) {

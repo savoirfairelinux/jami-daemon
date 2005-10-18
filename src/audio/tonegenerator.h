@@ -56,9 +56,9 @@ public:
 
 	virtual void run ();
 private:
-	int16*	buffer;
-	int16*	buf_ctrl_vol;
-	int			size;
+	int16* buffer;
+	int16* buf_ctrl_vol;
+	int    _size;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

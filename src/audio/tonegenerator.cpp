@@ -39,7 +39,7 @@ int AMPLITUDE = 32767;
 ///////////////////////////////////////////////////////////////////////////////
 ToneThread::ToneThread (int16 *buf, int size) : ost::Thread () {
   this->buffer = buf;
-  this->size = size;
+  this->_size = size;
   // channels is 2 (global.h)
   this->buf_ctrl_vol = new int16[size*CHANNELS];
 }
@@ -60,13 +60,13 @@ ToneThread::run (void) {
 	bool started = false;
 
 	// How long do 'size' samples play ?
-	unsigned int play_time = (size * 1000) / SAMPLING_RATE - 10;
+	unsigned int play_time = (_size * 1000) / SAMPLING_RATE - 10;
 
   ManagerImpl& manager = Manager::instance();
   manager.getAudioDriver()->flushMain();
 
   // this loop can be outside the stream, since we put the volume inside the ringbuffer
-  for (int j = 0; j < size; j++) {
+  for (int j = 0; j < _size; j++) {
 		k = j<<1; // channels is 2 (global.h)
               // split in two
 		buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j];
@@ -81,8 +81,8 @@ ToneThread::run (void) {
   // int16 are the buf_ctrl_vol 
   //  unsigned char are the sample_ptr inside ringbuffer
 
-  int size_in_char = size * 2 * (sizeof(int16)/sizeof(unsigned char));
-  _debug(" size : %d\t size_in_char : %d\n", size, size_in_char);
+  int size_in_char = _size * 2 * (sizeof(int16)/sizeof(unsigned char));
+  _debug(" size : %d\t size_in_char : %d\n", _size, size_in_char);
 
  	while (!testCancel()) {
     manager.getAudioDriver()->putMain(buf_ctrl_vol, size_in_char);

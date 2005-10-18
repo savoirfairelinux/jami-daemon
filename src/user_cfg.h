@@ -21,12 +21,14 @@
 #ifndef __USER_CFG_H__
 #define __USER_CFG_H__
 
-#define GUI_QT
-
 #include <stdlib.h>
 
 // Home directory
 #define HOMEDIR	(getenv ("HOME"))
+
+// TODO: change for a \ in Windows Environment
+#define DIR_SEPARATOR_CH '/'
+#define DIR_SEPARATOR_STR "/"
 
 // Main menu
 #define SIGNALISATION	"VoIPLink"
@@ -64,11 +66,6 @@
 // speakers and volume 0 to 100
 #define VOLUME_SPKR	"Volume.speakers"
 #define VOLUME_MICRO	"Volume.micro"
-
-#define VOLUME_SPKR_X	"Volume.speakers_x"
-#define VOLUME_SPKR_Y	"Volume.speakers_y"
-#define VOLUME_MICRO_X	"Volume.micro_x"
-#define VOLUME_MICRO_Y	"Volume.micro_y"
 #define SKIN_CHOICE		"Themes.skinChoice"
 #define CONFIRM_QUIT	"Options.confirmQuit"
 #define ZONE_TONE		"Options.zoneToneChoice"
