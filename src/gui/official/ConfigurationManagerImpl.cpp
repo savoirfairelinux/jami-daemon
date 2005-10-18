@@ -73,3 +73,7 @@ ConfigurationManagerImpl::get(const QString &section,
   return value;
 }
 
+void 
+ConfigurationManagerImpl::save() 
+{
+}
