@@ -33,6 +33,8 @@ TCPStreamPool::run() {
       if (input != null && input[0]!=cr13) {
         _inputPool.push(input);
       }
+      // security check, since we are inside a loop
+      if (testCancel() || !good()) {break;}
     }
     if (_outputPool.pop(output, 2LU)) {
       _debug("TCPStreamPool send %s\n", output.c_str());
