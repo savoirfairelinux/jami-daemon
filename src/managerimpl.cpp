@@ -1112,7 +1112,16 @@ ManagerImpl::selectAudioDriver (void)
 #if defined(AUDIO_PORTAUDIO)
   try {
     _audiodriverPA = new AudioLayer(*this);
-    _audiodriverPA->openDevice(getConfigInt(AUDIO, DRIVER_NAME));
+    int noDevice = getConfigInt(AUDIO, DRIVER_NAME);
+    int nbDevice = portaudio::System::instance().deviceCount();
+    if (nbDevice == 0 ) {
+      throw std::runtime_error("Portaudio detect no sound card.");
+    } else if (noDevice >= nbDevice) {
+      _debug("Portaudio auto-select device #0 because device #%d is not found\n", noDevice);
+      _setupLoaded = false;
+      noDevice = 0;
+    }
+    _audiodriverPA->openDevice(noDevice);
   } catch(...) {
     throw;
   }

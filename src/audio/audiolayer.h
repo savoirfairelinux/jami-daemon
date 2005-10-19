@@ -55,6 +55,7 @@ public:
   void flushMain();
   void putMain(void* buffer, int toCopy);
   void putUrgent(void* buffer, int toCopy);
+  void flushMic();
 
 	int audioCallback (const void *, void *, unsigned long,
 			   const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);

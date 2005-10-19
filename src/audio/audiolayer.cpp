@@ -156,6 +156,13 @@ AudioLayer::putUrgent(void* buffer, int toCopy)
   ost::MutexLock guard(_mutex);
   _urgentRingBuffer.Put(buffer, toCopy);
 }
+
+void
+AudioLayer::flushMic()
+{
+  _micRingBuffer.flush();
+}
+
 bool
 AudioLayer::isStreamStopped (void) 
 {

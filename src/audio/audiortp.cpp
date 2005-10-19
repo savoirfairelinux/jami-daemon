@@ -172,6 +172,8 @@ AudioRtpRTX::initAudioRtpSession (void)
 			setCancel(cancelImmediate);
 		}
 	}
+  Manager::instance().getAudioDriver()->flushMic();
+  Manager::instance().getAudioDriver()->flushMain();
 	_debug("-----------------------\n");
 }
 
@@ -266,7 +268,6 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers,
 			Manager::instance().notificationIncomingCall();
 		}
 	}
-
 	Manager::instance().getAudioDriver()->startStream();
 	
 	delete adu; adu = NULL;
