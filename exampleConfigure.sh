@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SFL_PREFIX=/home/$HOME/sflphone
+SFL_PREFIX=$HOME/sflphone
 
 export LD_LIBRARY_PATH=$SFL_PREFIX/lib
 export LDFLAGS="-L$SFL_PREFIX/lib"

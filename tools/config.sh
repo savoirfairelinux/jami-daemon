@@ -1,6 +1,6 @@
 # prefix is without slash
 # default for redhat is /usr
-SFL_PREFIX=/home/$USER/sflphone
+SFL_PREFIX=$HOME/sflphone
 SFL_INSTALL_USER=$USER # could be root too...
 LD_LIBRARY_PATH=$SFL_PREFIX/lib:$LD_LIBRARY_PATH
 
