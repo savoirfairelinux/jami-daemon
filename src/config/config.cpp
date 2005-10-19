@@ -205,6 +205,15 @@ ConfigTree::populateFromFile(const std::string& fileName) {
     file.close();
     return 2;
   }
+  // get length of file:
+  file.seekg (0, std::ios::end);
+  int length = file.tellg();
+  file.seekg (0, std::ios::beg);
+
+  if ( length == 0 ) {
+    file.close();
+    return 2; // should load config
+  }
 
   std::string line;
   std::string section("");

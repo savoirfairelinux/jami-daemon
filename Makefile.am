@@ -1,1 +1,1 @@
-SUBDIRS = utilspp stund src ringtones
+SUBDIRS = utilspp stund src ringtones tools

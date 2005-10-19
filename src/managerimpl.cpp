@@ -113,7 +113,6 @@ ManagerImpl::~ManagerImpl (void)
 void 
 ManagerImpl::init (void) 
 {
-  initZeroconf();
   initVolume();
 
   if (_exist == 0) {
@@ -159,6 +158,7 @@ ManagerImpl::init (void)
     }
   }
 
+  initZeroconf();
 }
 
 void ManagerImpl::terminate()
@@ -751,6 +751,8 @@ ManagerImpl::displayErrorText (CALLID id, const std::string& message)
 {
   if(_gui) {
     _gui->displayErrorText(id, message);
+  } else {
+    std::cerr << message << std::endl;
   }
 }
 
@@ -1114,7 +1116,7 @@ ManagerImpl::selectAudioDriver (void)
     _audiodriverPA = new AudioLayer(*this);
     int noDevice = getConfigInt(AUDIO, DRIVER_NAME);
     int nbDevice = portaudio::System::instance().deviceCount();
-    if (nbDevice == 0 ) {
+    if (nbDevice == 0) {
       throw std::runtime_error("Portaudio detect no sound card.");
     } else if (noDevice >= nbDevice) {
       _debug("Portaudio auto-select device #0 because device #%d is not found\n", noDevice);
