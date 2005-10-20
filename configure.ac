@@ -164,5 +164,4 @@ utilspp/functor/Makefile \
 utilspp/singleton/Makefile \
 stund/Makefile \
 ringtones/Makefile \
-tools/Makefile \
 )
