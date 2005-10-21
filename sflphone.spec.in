@@ -1,22 +1,22 @@
-%define name sflphone
+%define name sflphoned
 %define version 0.5
 %define release 1
 %define prefix /usr
 Autoreq: 0
 
 Name:		%name
-Summary:	An other VoIP client
+Summary:	A VoIP daemon with SIP protocol
 Version:	%version
 Release:	%release
 License:	GPL
 Group:		Networking/Utilities
 URL:		http://www.sflphone.org/
 Packager:	Cyrille Béraud <cyrille.beraud@savoirfairelinux.com>
-Source:		http://www.sflphone.org/sflphone-0.5.tar.gz
+Source:		http://www.sflphone.org/releases/sflphone-0.5.tar.gz
 BuildRoot:	/tmp/sflphone-%{version}-%{release}
 
 %description
-SFLPhone is a VoIP client for a X11 environment.
+SFLPhoned is a VoIP daemon with SIP protocol.
 %prep
 %setup
 CXXFLAGS="$RPM_OPT_FLAGS" ./configure --prefix %{prefix}

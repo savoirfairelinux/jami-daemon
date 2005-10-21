@@ -27,7 +27,7 @@
 typedef float float32;
 typedef short int16;
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 	#define _debug(...)	fprintf(stderr, "[sflphoned] " __VA_ARGS__)

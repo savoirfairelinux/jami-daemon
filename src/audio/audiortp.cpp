@@ -59,10 +59,10 @@ AudioRtp::createNewSession (SipCall *ca) {
 				      _symmetric);
 	
 	// Start PortAudio
-	Manager::instance().getAudioDriver()->micRingBuffer().flush();
-	Manager::instance().getAudioDriver()->startStream();
+	//Manager::instance().getAudioDriver()->flushMic();
+	//Manager::instance().getAudioDriver()->startStream();
 	
-  _debug("AudioRtp::createNewSession: starting RTX thread\n");
+  //_debug("AudioRtp::createNewSession: starting RTX thread\n");
 	if (_RTXThread->start() != 0) {
 		return -1;
 	}
@@ -80,27 +80,27 @@ AudioRtp::closeRtpSession () {
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, 
-			  bool sym) : _codecBuilder(0) {
-	time = new ost::Time();
-	_ca = sipcall;
-	_sym = sym;
-	_audioDevice = driver;
+AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, bool sym) : _codecBuilder(0) {
 
-	// TODO: Change bind address according to user settings.
+  time = new ost::Time();
+  _ca = sipcall;
+  _sym = sym;
+  _audioDevice = driver;
+
+  // TODO: Change bind address according to user settings.
   std::string localipConfig = _ca->getLocalIp();
-	ost::InetHostAddress local_ip(localipConfig.c_str());
+  ost::InetHostAddress local_ip(localipConfig.c_str());
 
-	_debug("RTP: listening on IP %s local port : %d\n", localipConfig.c_str(), _ca->getLocalAudioPort());
-	if (!_sym) {
-		_sessionRecv = new ost::RTPSession (local_ip, _ca->getLocalAudioPort());
-		_sessionSend = new ost::RTPSession (local_ip);
+  if (!_sym) {
+    _sessionRecv = new ost::RTPSession (local_ip, _ca->getLocalAudioPort());
+    _sessionSend = new ost::RTPSession (local_ip);
     _session = NULL;
-	} else {
-		_session = new ost::SymmetricRTPSession (local_ip, _ca->getLocalAudioPort());
+  } else {
+    _debug("Symmetric RTP Session on local: %s:%d\n", localipConfig.c_str(), _ca->getLocalAudioPort());
+    _session = new ost::SymmetricRTPSession (local_ip, _ca->getLocalAudioPort());
     _sessionRecv = NULL;
     _sessionSend = NULL;
-	}
+  }
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
@@ -110,13 +110,14 @@ AudioRtpRTX::~AudioRtpRTX () {
     _debug("AudioRtpRTX: try to terminate, but catch an exception...\n");
   }
   _ca = NULL;
-  _debug("Thread: AudioRtpRTX stop session\n");
+
   if (!_sym) {
     delete _sessionRecv; _sessionRecv = NULL;
     delete _sessionSend; _sessionSend = NULL;
   } else {
     delete _session;     _session = NULL;
   }
+
   delete time; time = NULL;
 }
 
@@ -128,8 +129,6 @@ AudioRtpRTX::initAudioRtpSession (void)
 	if (!remote_ip) {
 	   _debug("RTP: Target IP address [%s] is not correct!\n", _ca->getRemoteSdpAudioIp());
 	   return;
-	} else {
-		_debug("RTP: Sending to %s : %d\n", _ca->getRemoteSdpAudioIp(), _ca->getRemoteSdpAudioPort());
 	}
 	
 	// Initialization
@@ -150,31 +149,34 @@ AudioRtpRTX::initAudioRtpSession (void)
 			_debug("RTX send: could not connect to port %d\n",  
 					_ca->getRemoteSdpAudioPort());
 			return;
-		} else {
-			_debug("RTP(Send): Added destination %s : %d\n", 
-					remote_ip.getHostname(), 
-					(unsigned short) _ca->getRemoteSdpAudioPort());
 		}
+    _debug("RTP(Send): Added sessionSend destination %s:%d\n", 
+        remote_ip.getHostname(), (unsigned short) _ca->getRemoteSdpAudioPort());
 
     //setPayloadFormat(StaticPayloadFormat(sptPCMU));
-    _debug("Payload Format: %d\n", _ca->payload);
+    //_debug("Payload Format: %d\n", _ca->payload);
 		_sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _ca->payload));
 		_sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _ca->payload));
 
-		setCancel(cancelImmediate);
-		_sessionSend->setMark(true);
+    setCancel(cancelImmediate);
+    _sessionSend->setMark(true);
 
-	} else {
-		if (!_session->addDestination (remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort())) {
-			return;
-		} else {
-			_session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _ca->payload));
-			setCancel(cancelImmediate);
-		}
-	}
+  } else {
+
+    _debug("RTP(Send): Added session destination %s:%d\n", 
+        remote_ip.getHostname(), (unsigned short) _ca->getRemoteSdpAudioPort());
+
+    if (!_session->addDestination (remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort())) {
+      return;
+    }
+
+    _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _ca->payload));
+    setCancel(cancelImmediate);
+  }
+
   Manager::instance().getAudioDriver()->flushMic();
   Manager::instance().getAudioDriver()->flushMain();
-	_debug("-----------------------\n");
+  _debug("== AudioRtpRTX::initAudioRtpSession end == \n");
 }
 
 void
@@ -306,7 +308,7 @@ AudioRtpRTX::run (void) {
   audiolayer->urgentRingBuffer().flush();
 
 	// start running the packet queue scheduler.
-  _debug("Thread: start session of AudioRtpRTX\n");
+  //_debug("Thread: start session of AudioRtpRTX\n");
 	if (!_sym) {
 		_sessionRecv->startRunning();
 		_sessionSend->startRunning();

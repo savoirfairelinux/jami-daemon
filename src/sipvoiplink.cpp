@@ -613,7 +613,7 @@ SipVoIPLink::getEvent (void)
   CALLID id = 0;
   int returnValue = 0;
 
-  //_debug("GetEvent : %d ", event->type);
+  _debug("GetEvent : %d ", event->type);
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //
@@ -635,9 +635,7 @@ SipVoIPLink::getEvent (void)
     // Generate id
     id = Manager::instance().generateNewCallId();
     Manager::instance().pushBackNewCall(id, Incoming);
-    _debug("Incoming call with id %d [cid = %d, did = %d]\n",
-	   id, event->cid, event->did);
-    _debug("Local audio port: %d\n", _localPort);
+    _debug("New INVITE Event: call with id %d [cid = %d, did = %d]\n",id, event->cid, event->did);
 
     // Display the callerId-name
     osip_from_t *from;
@@ -662,7 +660,7 @@ SipVoIPLink::getEvent (void)
         urlUsername = url->username;
       }
       Manager::instance().callSetInfo(id, name, urlUsername);
-      _debug("From: %s\n", name.c_str());
+      _debug("New INVITE Event: From: %s\n", name.c_str());
     }
     //Don't need this display text message now that we send the name
     //inside the Manager to the gui
@@ -672,15 +670,31 @@ SipVoIPLink::getEvent (void)
     // Associate an audio port with a call
     sipcall->setLocalAudioPort(_localPort);
     sipcall->setLocalIp(getLocalIpAddress());
+    _debug("New INVITE Event: we set the local audio to: %s:%d\n", getLocalIpAddress().c_str(), _localPort);
 
     sipcall->newIncomingCall(event);
     if (Manager::instance().incomingCall(id) < 0) {
-      Manager::instance().displayErrorText(id, "Incoming call failed");
+      Manager::instance().displayErrorText(id, "New INVITE Event: Incoming call failed");
     }
     break;
 
   case EXOSIP_CALL_REINVITE:
-    eXosip_call_send_answer(event->tid, 403, NULL);
+    _debug("!!! EXOSIP_CALL_REINVITE: Should reinvite? !!!\n");
+    //eXosip_call_send_answer(event->tid, 403, NULL);
+    //488 as http://www.atosc.org/pipermail/public/osip/2005-June/005385.html
+    id = findCallId(event);
+    if (id != 0) {
+      sipcall = getSipCall(id);
+      if (sipcall != NULL) {
+        _debug("Call reinvite : [id = %d, cid = %d, did = %d], localport=%d\n", id, event->cid, event->did,sipcall->getLocalAudioPort());
+
+        _audiortp.closeRtpSession();
+        sipcall->newIncomingCall(event);
+        _audiortp.createNewSession(sipcall);
+      }
+    } else {
+      eXosip_call_send_answer(event->tid, 488, NULL);
+    }
     break;
 
   case EXOSIP_CALL_PROCEEDING: // 8
@@ -770,14 +784,14 @@ SipVoIPLink::getEvent (void)
     // Handle 4XX errors
     switch (event->response->status_code) {
     case AUTH_REQUIRED:
-      _debug("EXOSIP_CALL_REQUESTFAILURE :: AUTH_REQUIRED\n");
+      _debug("SIP Server ask required authentification: loging...\n");
       setAuthentication();
       eXosip_lock();
       eXosip_automatic_action();
       eXosip_unlock();
       break;
     case UNAUTHORIZED:
-      _debug("EXOSIP_CALL_REQUESTFAILURE :: UNAUTHORIZED\n");
+      _debug("Request is unauthorized. SIP Server ask authentification: loging...\n");
       setAuthentication();
       break;
 
@@ -852,7 +866,7 @@ SipVoIPLink::getEvent (void)
           break;
         }
       }
-			
+
       // TODO: Que faire si rien trouve??
       eXosip_lock();
       if (k == _sipcallVector.size()) {
@@ -879,7 +893,7 @@ SipVoIPLink::getEvent (void)
       // Get the message body
       ii = osip_message_get_body(event->request, 0, &body);
       if (ii != 0) {
-        _debug("Cannot get body\n");
+        _debug("Cannot get body in a new EXOSIP_MESSAGE_NEW event\n");
         returnValue = -1;
         break;
       }
@@ -1244,7 +1258,7 @@ SipVoIPLink::behindNat (void)
   }
 	
   // Firewall address
-  _debug("STUN server: %s\n", svr.data());
+  //_debug("STUN server: %s\n", svr.data());
   Manager::instance().getStunInfo(stunSvrAddr);
 
   return 1;
@@ -1354,11 +1368,11 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   if (!Manager::instance().useStun()) {
     // Set random port for outgoing call if no firewall
     setLocalPort(RANDOM_LOCAL_PORT);
-    _debug("Local audio port: %d\n",_localPort);
+    _debug("SipVoIPLink::startCall: Local audio port: %d\n",_localPort);
   } else {
     // If use Stun server
     if (behindNat() != 0) {
-      _debug("sip invite: firewall port = %d\n",Manager::instance().getFirewallPort());	
+      _debug("SipVoIPLink::startCall: sip invite: firewall port = %d\n",Manager::instance().getFirewallPort());	
       setLocalPort(Manager::instance().getFirewallPort());
     } else {
       return -1;

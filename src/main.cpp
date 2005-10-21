@@ -31,7 +31,7 @@ main (int argc, char **argv) {
 
   if (argc == 2 && strcmp(argv[1], "--help") == 0) {
 
-    std::cout << PROGNAME << " Deamon " << SFLPHONED_VERSION << ", by Savoir-Faire Linux 2004-2005" << std::endl << std::endl;
+    std::cout << PROGNAME << " Daemon " << SFLPHONED_VERSION << ", by Savoir-Faire Linux 2004-2005" << std::endl << std::endl;
     std::cout << "USAGE: sflphoned [--help]" << std::endl;
     std::cout << "Parameters: " << std::endl;
     std::cout << "  --help for this message" << std::endl << std::endl;

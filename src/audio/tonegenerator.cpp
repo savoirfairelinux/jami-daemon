@@ -18,7 +18,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */ 
  
-#include <iostream>
 #include <fstream>
 #include <math.h> 
 #include <stdlib.h>
@@ -331,7 +330,7 @@ ToneGenerator::toneHandle (unsigned int idr, const std::string& zone) {
   }
   buildTone(idz, idr, _buf);
   tonethread = new ToneThread(_buf, totalbytes);
-  _debug("Thread: start tonethread\n");
+  //_debug("Thread: start tonethread\n");
   tonethread->start();
 }
 
@@ -339,10 +338,10 @@ void
 ToneGenerator::stopTone() {
   _currentTone = ZT_TONE_NULL;
 
-  _debug("Thread: delete tonethread\n");
+  //_debug("Thread: delete tonethread\n");
   delete tonethread; tonethread = NULL;
   // we end the last thread
-  _debug("Thread: tonethread deleted\n");
+  //_debug("Thread: tonethread deleted\n");
 }
 
 /**
@@ -385,11 +384,11 @@ ToneGenerator::playRingtone (const char *fileName) {
   // expandedsize is the number of bytes, not the number of int
   expandedsize = _ulaw->codecDecode (_dst, (unsigned char *)_src, length);
 
-  _debug("length (pre-ulaw) : %d\n", length);
-  _debug("expandedsize (post-ulaw) : %d\n", expandedsize);
+  //_debug("length (pre-ulaw) : %d\n", length);
+  //_debug("expandedsize (post-ulaw) : %d\n", expandedsize);
 
   if (tonethread == NULL) {
-    _debug("Thread: start tonethread\n");
+    //_debug("Thread: start tonethread\n");
     // send the number of int16, so device by two
     tonethread = new ToneThread ((int16*)_dst, expandedsize>>1);
     tonethread->start();

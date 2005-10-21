@@ -15,7 +15,7 @@ LIBS="$LIBS -lstdc++"
 dnl
 dnl Solaris pkgadd support definitions
 PKGADD_PKG="SFLPhoned"
-PKGADD_NAME="SFLPhone - a SIP client and deamon"
+PKGADD_NAME="SFLPhone - a SIP client and daemon"
 PKGADD_VENDOR="http://www.sflphone.org/"
 AC_SUBST(PKGADD_PKG)
 AC_SUBST(PKGADD_NAME)
@@ -146,6 +146,7 @@ AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
 sflphone.spec \
+sflphoned-fedora.spec \
 Makefile \
 src/Makefile \
 src/audio/Makefile \
