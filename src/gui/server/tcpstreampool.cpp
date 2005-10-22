@@ -19,6 +19,14 @@
 #include "tcpstreampool.h"
 #include "../../global.h"
 
+TCPStreamPool::~TCPStreamPool() 
+{
+  terminate();
+  std::string output;
+  while (good() && _outputPool.pop(output, 2LU))  {
+    *this << output << std::endl;
+  }
+}
 void 
 TCPStreamPool::run() {
   std::string output;
@@ -46,7 +54,9 @@ TCPStreamPool::run() {
 void 
 TCPStreamPool::send(const std::string& response)
 {
-  _outputPool.push(response);
+ if (!testCancel()) {
+   _outputPool.push(response);
+ }
 }
 
 bool 
