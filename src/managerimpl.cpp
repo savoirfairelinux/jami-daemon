@@ -276,7 +276,7 @@ ManagerImpl::hangupCall (CALLID id)
   if (call == NULL) {
     return -1;
   }
-  if (call->getState() != Call::Error) { 
+  if (call->getState() == Call::Error) { 
     return -1; 
   }
   int result = call->hangup();
