@@ -273,8 +273,11 @@ ManagerImpl::hangupCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  if (call == NULL && call->getState() != Call::Error) {
+  if (call == NULL) {
     return -1;
+  }
+  if (call->getState() != Call::Error) { 
+    return -1; 
   }
   int result = call->hangup();
   deleteCall(id);
