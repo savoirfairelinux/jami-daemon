@@ -194,7 +194,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   // AvailForGet tell the number of chars inside the buffer
   // framePerBuffer are the number of int16 for one channel (left)
   // so we divise by short/char * 2 channels
-  int NBCHARFORTWOINT16 = sizeof(int16)/sizeof(char) * CHANNELS;
+  int NBCHARFORTWOINT16 = sizeof(int16)/sizeof(unsigned char) * CHANNELS;
 	urgentAvail = _urgentRingBuffer.AvailForGet() / NBCHARFORTWOINT16;
 	if (urgentAvail > 0) {  
 	// Urgent data (dtmf, incoming call signal) come first.		
@@ -209,11 +209,13 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 		normalAvail = _mainSndRingBuffer.AvailForGet() / NBCHARFORTWOINT16;
 		toGet = (normalAvail < (int)framesPerBuffer) ? normalAvail : framesPerBuffer;
 
-    //_debug("mainsndringbuffer.get: %d vs %d : %d\n", normalAvail, (int)framesPerBuffer, toGet);
-    if (toGet) {
+   // _debug("mainsndringbuffer.get: %d vs %d : %d\n", normalAvail, (int)framesPerBuffer, toGet);
+   // fprintf(stderr, "%p:%d:%d:%ud\t",out,toGet*NBCHARFORTWOINT16,normalAvail,framesPerBuffer);
+   if (toGet) {
 		  _mainSndRingBuffer.Get(out, toGet*NBCHARFORTWOINT16, _manager.getSpkrVolume());
     } else {
       toGet = framesPerBuffer * NBCHARFORTWOINT16;
+      //fprintf(stderr, "put zero... %d (in bytes)\n", toGet);
       _mainSndRingBuffer.PutZero(toGet);
       _mainSndRingBuffer.Get(out, toGet, 100);
     }
@@ -224,6 +226,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   micAvailPut = _micRingBuffer.AvailForPut();
   toPut = (micAvailPut <= (int)framesPerBuffer) ? micAvailPut : framesPerBuffer;
   _micRingBuffer.Put(in, SAMPLES_SIZE(toPut), micVolume );
+  //fprintf(stderr, "|mic:%p|", in);
 
 	return paContinue;
 }

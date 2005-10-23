@@ -49,12 +49,15 @@ SipVoIPLink::SipVoIPLink()
   // defautlt _sipcallVector object initialization
 
   _registrationSend = false;
+  _started = false;
 }
 
 SipVoIPLink::~SipVoIPLink(void) {
   endSipCalls();
   delete _evThread; _evThread = NULL;
-  eXosip_quit();
+  if (_started) {
+    eXosip_quit();
+  }
 }
 
 // for voIPLink interface
@@ -79,6 +82,8 @@ SipVoIPLink::init (void)
   tmp = std::string(PROGNAME) + "/" + std::string(SFLPHONED_VERSION);
 	
   i = eXosip_init ();
+  _started = true;
+
   if (i != 0) {
     _debug("Could not initialize eXosip\n");
     exit (0);

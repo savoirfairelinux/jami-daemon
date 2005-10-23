@@ -174,6 +174,7 @@ public:
 	void stopVoiceMessageNotification (void);
 
   // configuration function requests
+  bool getEvents();
   bool getZeroconf(const std::string& sequenceId);
   bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
   bool detachZeroconfEvents(Pattern::Observer& observer);
@@ -374,9 +375,6 @@ private:
   // Current callid 
 	CALLID _currentCallId;
 
-  // Register state
-  REGISTRATION_STATE _registerState;
-
 	/*
 	 * For the call timer
 	 */
@@ -403,10 +401,17 @@ private:
 	// Variables used in exception
 	bool 		_loaded;
 
-  // tell if we have zeroconf is enabled
-  int _hasZeroconf;
+  // true if we tried to register Once
+  void initRegisterVoIPLink();
+  bool    _hasTriedToRegister;
+  // Register state
+  REGISTRATION_STATE _registerState;
+
 
   void switchCall(CALLID id);
+
+  // tell if we have zeroconf is enabled
+  int _hasZeroconf;
 
 #ifdef USE_ZEROCONF
   // DNSService contain every zeroconf services

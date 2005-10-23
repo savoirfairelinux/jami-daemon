@@ -111,8 +111,9 @@ ManagerImpl::~ManagerImpl (void)
 }
 
 void 
-ManagerImpl::init (void) 
+ManagerImpl::init() 
 {
+  _debugInit("Volume Initialisation");
   initVolume();
 
   if (_exist == 0) {
@@ -120,6 +121,7 @@ ManagerImpl::init (void)
   } 
 
   try {
+    _debugInit("Audio Driver Selection");
     selectAudioDriver();
     loaded(true);
   }
@@ -133,7 +135,7 @@ ManagerImpl::init (void)
       displayError(e.what());
       throw e;
     }
-  catch (const std::exception &e)
+  catch (const std::runtime_error &e)
     {
       displayError(e.what());
       throw e;
@@ -143,20 +145,15 @@ ManagerImpl::init (void)
       displayError("An unknown exception occured.");
       throw;
     }
-
+  _debugInit("Audio Codec Initialization");
   initAudioCodec();
 
+  _debugInit("Adding new VoIP Link");
   // Set a sip voip link by default
   _voIPLinkVector.push_back(new SipVoIPLink());
-  _voIPLinkVector.at(DFT_VOIP_LINK)->init();
 
-  if (_voIPLinkVector.at(DFT_VOIP_LINK)->checkNetwork()) {
-    // If network is available
-
-    if (getConfigInt(SIGNALISATION, AUTO_REGISTER) && _exist == 1) {
-      registerVoIPLink();
-    }
-  }
+  // initRegisterVoIP was here, but we doing it after the gui loaded... 
+  // the stun detection is long, so it's a better idea to do it after getEvents
 
   initZeroconf();
 }
@@ -439,6 +436,25 @@ ManagerImpl::saveConfig (void)
 
   _setupLoaded = _config.saveConfigTree(_path.data());
   return _setupLoaded;
+}
+
+/**
+ * Main Thread
+ */
+void 
+ManagerImpl::initRegisterVoIPLink() 
+{
+  if (_hasTriedToRegister == false) {
+   _voIPLinkVector.at(DFT_VOIP_LINK)->init(); // we call here, because it's long...
+   if (_voIPLinkVector.at(DFT_VOIP_LINK)->checkNetwork()) {
+      // If network is available
+  
+      if (getConfigInt(SIGNALISATION, AUTO_REGISTER) && _exist == 1) {
+        registerVoIPLink();
+      }
+    }
+    _hasTriedToRegister = true;
+  }
 }
 
 /**
@@ -1113,16 +1129,20 @@ ManagerImpl::selectAudioDriver (void)
 {
 #if defined(AUDIO_PORTAUDIO)
   try {
+    _debugInit("  AudioLayer Creation");
     _audiodriverPA = new AudioLayer(*this);
     int noDevice = getConfigInt(AUDIO, DRIVER_NAME);
+    _debugInit("  AudioLayer Device Count");
     int nbDevice = portaudio::System::instance().deviceCount();
     if (nbDevice == 0) {
+      _debug("Portaudio detect no sound cart.");
       throw std::runtime_error("Portaudio detect no sound card.");
     } else if (noDevice >= nbDevice) {
       _debug("Portaudio auto-select device #0 because device #%d is not found\n", noDevice);
       _setupLoaded = false;
       noDevice = 0;
     }
+    _debugInit("  AudioLayer Opening Device");
     _audiodriverPA->openDevice(noDevice);
   } catch(...) {
     throw;
@@ -1141,6 +1161,7 @@ void
 ManagerImpl::initZeroconf(void) 
 {
 #ifdef USE_ZEROCONF
+  _debugInit("Zeroconf Initialization");
   int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
 
   if (useZeroconf) {
@@ -1234,6 +1255,16 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
 #endif
   return returnValue;
 }
+
+/**
+ * Main Thread
+ */
+bool
+ManagerImpl::getEvents() {
+  initRegisterVoIPLink();
+  return true;
+}
+
 /**
  * Main Thread
  */

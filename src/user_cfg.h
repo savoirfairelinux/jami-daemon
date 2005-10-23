@@ -58,8 +58,6 @@
 #define CODEC1			"Codecs.codec1"
 #define CODEC2			"Codecs.codec2"
 #define CODEC3			"Codecs.codec3"
-#define CODEC4			"Codecs.codec4"
-#define CODEC5			"Codecs.codec5"
 #define RING_CHOICE		"Rings.ringChoice"
 
 

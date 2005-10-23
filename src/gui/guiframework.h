@@ -76,6 +76,7 @@ public:
   bool stopTone ();
 
   // config
+  bool getEvents();
   bool getZeroconf(const std::string& sequenceId);
   bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
   bool detachZeroconfEvents(Pattern::Observer& observer);

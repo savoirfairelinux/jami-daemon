@@ -40,7 +40,7 @@ ToneThread::ToneThread (int16 *buf, int size) : ost::Thread () {
   this->buffer = buf;
   this->_size = size;
   // channels is 2 (global.h)
-  this->buf_ctrl_vol = new int16[size*CHANNELS];
+  this->buf_ctrl_vol = new int16[_size*CHANNELS];
 }
 
 ToneThread::~ToneThread (void) {
@@ -59,7 +59,8 @@ ToneThread::run (void) {
 	bool started = false;
 
 	// How long do 'size' samples play ?
-	unsigned int play_time = (_size * 1000) / SAMPLING_RATE - 20;
+  // let's play it a bit smaller that it should to put more inside the buffer
+	unsigned int play_time = _size / (SAMPLING_RATE/1000);
 
   ManagerImpl& manager = Manager::instance();
   manager.getAudioDriver()->flushMain();

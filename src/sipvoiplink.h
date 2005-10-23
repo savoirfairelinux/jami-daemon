@@ -220,6 +220,7 @@ private:
 	int 			_nMsgVoicemail;
 
   bool _registrationSend; // unregistered 
+  bool _started; // eXosip_init and eXosip_start
 };
 
 #endif // __SIP_VOIP_LINK_H__

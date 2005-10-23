@@ -166,6 +166,15 @@ GuiFramework::stopTone ()
 }
 
 /**
+ * Initialization section / redirection
+ */
+bool
+GuiFramework::getEvents() 
+{
+  return Manager::instance().getEvents();
+}
+
+/**
  * Configuration section / redirection
  */
 bool 

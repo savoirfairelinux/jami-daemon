@@ -136,6 +136,10 @@ GUIServerImpl::getEvents(const std::string& sequenceId)
 
   std::string stateCode;
   std::string stateMessage;
+
+  // try to register, if not done yet...
+  GuiFramework::getEvents();
+
   if (GuiFramework::getRegistrationState(stateCode,stateMessage)) {
     _requestManager.sendResponse(ResponseMessage(stateCode, sequenceId, stateMessage));
   }
