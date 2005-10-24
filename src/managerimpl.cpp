@@ -230,8 +230,9 @@ ManagerImpl::deleteCall (CALLID id)
   while(iter!=_callVector.end()) {
     Call *call = *iter;
     if (call != NULL && call->getId() == id) {
-      if (call->isIncomingType() && call->isNotAnswered()) {
+      if (call->getFlagNotAnswered()) {
         decWaitingCall();
+        call->setFlagNotAnswered(false);
       }
       delete (*iter); *iter = NULL; 
       call = NULL;
@@ -281,7 +282,10 @@ ManagerImpl::hangupCall (CALLID id)
     result = call->hangup();
   }
   deleteCall(id);
-  stopTone(); // stop tone, like a 700 error: number not found Not Found
+  // current call id or no line selected
+  if (id == _currentCallId || _currentCallId == 0) {
+    stopTone(); // stop tone, like a 700 error: number not found Not Found
+  }
   return result;
 }
 
@@ -317,8 +321,9 @@ ManagerImpl::answerCall (CALLID id)
   if (call == NULL) {
     return -1;
   }
-  if (call->isIncomingType()) {
+  if (call->getFlagNotAnswered()) {
     decWaitingCall();
+    call->setFlagNotAnswered(false);
   }
   switchCall(id);
   stopTone(); // before answer, don't stop the audio stream after open it...
@@ -469,16 +474,17 @@ int
 ManagerImpl::registerVoIPLink (void)
 {
   int returnValue = 0;
-  if ( !useStun() ) {
+  // Cyrille always want to register to receive call | 2005-10-24 10:50
+  //if ( !useStun() ) {
     if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() >= 0) {
       returnValue = 1;
       _registerState = REGISTERED;
     } else {
       _registerState = FAILED;
     }
-  } else {
-    _registerState = UNREGISTERED;
-  }
+  //} else {
+  //  _registerState = UNREGISTERED;
+  //}
   return returnValue;
 }
 
@@ -674,10 +680,13 @@ ManagerImpl::incomingCall (CALLID id)
   call->setType(Incoming);
   call->setState(Call::Progressing);
 
-  switchCall(id);
-
-  incWaitingCall();
-  ringtone();
+  if ( _currentCallId == 0 ) {
+    switchCall(id);
+    call->setFlagNotAnswered(false);
+    ringtone();
+  } else {
+    incWaitingCall();
+  }
 
   // TODO: Account not yet implemented
   std::string accountId = "acc1";
@@ -1138,7 +1147,6 @@ ManagerImpl::selectAudioDriver (void)
     _debugInit("  AudioLayer Device Count");
     int nbDevice = portaudio::System::instance().deviceCount();
     if (nbDevice == 0) {
-      _debug("Portaudio detect no sound cart.");
       throw std::runtime_error("Portaudio detect no sound card.");
     } else if (noDevice >= nbDevice) {
       _debug("Portaudio auto-select device #0 because device #%d is not found\n", noDevice);
@@ -1463,7 +1471,6 @@ bool
 ManagerImpl::getAudioDeviceList(const std::string& sequenceId) 
 {
   TokenList tk;
-  portaudio::AutoSystem autoSys;
   portaudio::System& sys = portaudio::System::instance();
 
   const char *hostApiName;

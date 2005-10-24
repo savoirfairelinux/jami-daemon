@@ -19,7 +19,7 @@
 #include "tcpstreampool.h"
 #include "../../global.h"
 
-#define WAITING_TIME 10UL
+#define WAITING_TIME 2UL
 
 TCPStreamPool::~TCPStreamPool() 
 {

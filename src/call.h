@@ -103,6 +103,8 @@ public:
 	int offHold  		(void);
 	int transfer  		(const std::string& to);
 	int refuse  		(void);
+  void setFlagNotAnswered(bool value) { _flagNotAnswered = value; }
+  bool getFlagNotAnswered() const { return _flagNotAnswered; }
 
 private:
 	void initConstructor (void);
@@ -113,6 +115,8 @@ private:
 	enum CallType 	 _type;
 	std::string 			 _callerIdName;
 	std::string 			 _callerIdNumber;
+
+  bool _flagNotAnswered;
 };
 
 #endif // __CALL_H__

@@ -29,6 +29,7 @@ Call::Call (CALLID id, CallType type, VoIPLink* voiplink)
 	_id = id; 
 	_type = type;
 	_voIPLink = voiplink;
+  _flagNotAnswered = false;
 	
 	switch (_type) {
 	case Outgoing:
@@ -36,6 +37,7 @@ Call::Call (CALLID id, CallType type, VoIPLink* voiplink)
 		break;
 	case Incoming:
 		_voIPLink->newIncomingCall(_id);
+    _flagNotAnswered = true;
 		break;
 	default:
 		break;
