@@ -34,7 +34,10 @@ AudioLayer::AudioLayer(ManagerImpl& manager)
   , _micRingBuffer(SIZEBUF)
   , _stream(NULL), _manager(manager)
 {
+  _debugInit("   portaudio initialization...");
   portaudio::System::initialize();
+  _debugInit("   portaudio end initialization.");
+  NBCHARFORTWOINT16 = sizeof(int16)/sizeof(unsigned char) * CHANNELS;
 }
 
 // Destructor
@@ -83,7 +86,8 @@ AudioLayer::openDevice (int index)
 	     2, portaudio::INT16, true, 
 	     portaudio::System::instance().deviceByIndex(index).defaultLowInputLatency(), 
 	     NULL);
-	 
+	
+  // we could put 0 instead of FRAME_PER_BUFFER to be variable
   portaudio::StreamParameters const params(inParams, outParams, 
 					   SAMPLING_RATE, FRAME_PER_BUFFER, paNoFlag);
 		  
@@ -190,43 +194,39 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   int urgentAvail, // number of int16 right and int16 left
       normalAvail, // number of int16 right and int16 left
       micAvailPut;
+  unsigned short spkrVolume = _manager.getSpkrVolume();
+  unsigned short micVolume  = _manager.getMicVolume();
 
   // AvailForGet tell the number of chars inside the buffer
   // framePerBuffer are the number of int16 for one channel (left)
-  // so we divise by short/char * 2 channels
-  int NBCHARFORTWOINT16 = sizeof(int16)/sizeof(unsigned char) * CHANNELS;
-	urgentAvail = _urgentRingBuffer.AvailForGet() / NBCHARFORTWOINT16;
+  framesPerBuffer *= NBCHARFORTWOINT16;
+	urgentAvail = _urgentRingBuffer.AvailForGet();
 	if (urgentAvail > 0) {  
 	// Urgent data (dtmf, incoming call signal) come first.		
 		toGet = (urgentAvail < (int)framesPerBuffer) ? urgentAvail : framesPerBuffer;
-		_urgentRingBuffer.Get(out, toGet * NBCHARFORTWOINT16, _manager.getSpkrVolume());
+		_urgentRingBuffer.Get(out, toGet, spkrVolume);
 		
 		// Consume the regular one as well (same amount of bytes)
-		_mainSndRingBuffer.Discard(toGet * NBCHARFORTWOINT16);
+		_mainSndRingBuffer.Discard(toGet);
 	}  
 	else {
 	// If nothing urgent, play the regular sound samples
-		normalAvail = _mainSndRingBuffer.AvailForGet() / NBCHARFORTWOINT16;
+		normalAvail = _mainSndRingBuffer.AvailForGet();
 		toGet = (normalAvail < (int)framesPerBuffer) ? normalAvail : framesPerBuffer;
 
-   // _debug("mainsndringbuffer.get: %d vs %d : %d\n", normalAvail, (int)framesPerBuffer, toGet);
-   // fprintf(stderr, "%p:%d:%d:%ud\t",out,toGet*NBCHARFORTWOINT16,normalAvail,framesPerBuffer);
    if (toGet) {
-		  _mainSndRingBuffer.Get(out, toGet*NBCHARFORTWOINT16, _manager.getSpkrVolume());
+		  _mainSndRingBuffer.Get(out, toGet, spkrVolume);
     } else {
-      toGet = framesPerBuffer * NBCHARFORTWOINT16;
-      //fprintf(stderr, "put zero... %d (in bytes)\n", toGet);
+      toGet = framesPerBuffer;
       _mainSndRingBuffer.PutZero(toGet);
       _mainSndRingBuffer.Get(out, toGet, 100);
     }
 	}
 
 	// Additionally handle the mic's audio stream 
-  short micVolume = _manager.getMicVolume();
   micAvailPut = _micRingBuffer.AvailForPut();
   toPut = (micAvailPut <= (int)framesPerBuffer) ? micAvailPut : framesPerBuffer;
-  _micRingBuffer.Put(in, SAMPLES_SIZE(toPut), micVolume );
-  //fprintf(stderr, "|mic:%p|", in);
+  _micRingBuffer.Put(in, toPut, micVolume );
 
 	return paContinue;
 }

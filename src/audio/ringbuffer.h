@@ -62,7 +62,6 @@ class RingBuffer {
    int           mEnd;
    int           mBufferSize;
    samplePtr     mBuffer;
-   samplePtr     mBlank;
 };
 
 #endif /*  __RING_BUFFER__ */

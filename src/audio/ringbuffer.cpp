@@ -35,14 +35,11 @@ RingBuffer::RingBuffer(int size) {
    mStart = 0;
    mEnd = 0;
    mBuffer = new unsigned char[mBufferSize];
-   mBlank = new unsigned char[MIN_BUFFER_SIZE];
-   bzero(mBlank, MIN_BUFFER_SIZE);
    assert (mBuffer != NULL);
 }
 
 // Free memory on object deletion
 RingBuffer::~RingBuffer() {
-   delete[] mBlank;   mBlank  = NULL;
    delete[] mBuffer;  mBuffer = NULL;
 }
  

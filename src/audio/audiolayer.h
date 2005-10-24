@@ -70,9 +70,10 @@ private:
 	RingBuffer _micRingBuffer;
 
 	portaudio::MemFunCallbackStream<AudioLayer> *_stream;
-	portaudio::AutoSystem autoSys;
+//	portaudio::AutoSystem autoSys;
   ost::Mutex _mutex;
   ManagerImpl& _manager;
+  int NBCHARFORTWOINT16;
 };
 
 #endif // _AUDIO_LAYER_H_

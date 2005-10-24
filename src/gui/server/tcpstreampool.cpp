@@ -19,11 +19,13 @@
 #include "tcpstreampool.h"
 #include "../../global.h"
 
+#define WAITING_TIME 10UL
+
 TCPStreamPool::~TCPStreamPool() 
 {
   terminate();
   std::string output;
-  while (good() && _outputPool.pop(output, 2LU))  {
+  while (good() && _outputPool.pop(output, WAITING_TIME))  {
     *this << output << std::endl;
   }
 }
@@ -35,7 +37,7 @@ TCPStreamPool::run() {
   char cr13 = '\r'; // we don't want carriage return in empty line
 
   while(!testCancel() && good()) {
-    while (isPending(ost::TCPSocket::pendingInput, 2LU)) {
+    while (isPending(ost::TCPSocket::pendingInput, WAITING_TIME)) {
       std::getline(*this, input);
       //_debug("TCPStreamPool getline %s\n", input.c_str());
       if (input != null && input[0]!=cr13) {
@@ -44,7 +46,7 @@ TCPStreamPool::run() {
       // security check, since we are inside a loop
       if (testCancel() || !good()) {break;}
     }
-    if (_outputPool.pop(output, 2LU)) {
+    if (_outputPool.pop(output, WAITING_TIME)) {
       //_debug("TCPStreamPool send %s\n", output.c_str());
       *this << output << std::endl;
     }
@@ -62,7 +64,7 @@ TCPStreamPool::send(const std::string& response)
 bool 
 TCPStreamPool::receive(std::string& request)
 {
-  return _inputPool.pop(request, 2LU);
+  return _inputPool.pop(request, WAITING_TIME);
 }
 
 
