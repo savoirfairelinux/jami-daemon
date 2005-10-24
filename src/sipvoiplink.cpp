@@ -90,6 +90,7 @@ SipVoIPLink::init (void)
   }
 	
   srand (time(NULL));
+  //should be NULL or INADDR_ANY for the second parameter?
   i = eXosip_listen_addr(IPPROTO_UDP, NULL, DEFAULT_SIP_PORT, AF_INET, 0);
   if (i != 0) {
     i = eXosip_listen_addr(IPPROTO_UDP, NULL, RANDOM_SIP_PORT, AF_INET, 0);
@@ -605,7 +606,7 @@ SipVoIPLink::refuse (CALLID id)
 int
 SipVoIPLink::getEvent (void)
 {
-  eXosip_event_t* event = eXosip_event_wait (0, 50);
+  eXosip_event_t* event = eXosip_event_wait (0, 1);
   eXosip_lock();
   eXosip_automatic_action();
   eXosip_unlock();
@@ -618,7 +619,7 @@ SipVoIPLink::getEvent (void)
   CALLID id = 0;
   int returnValue = 0;
 
-  //_debug("GetEvent : %d ", event->type);
+  _debug("Receive SipEvent #%d\n", event->type);
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //

@@ -406,7 +406,9 @@ ManagerImpl::mute() {
  */
 void
 ManagerImpl::unmute() {
-  setMicVolume(_mic_volume_before_mute);
+  if ( _mic_volume == 0 ) {
+    setMicVolume(_mic_volume_before_mute);
+  }
 }
 
 /**
@@ -954,7 +956,7 @@ void
 ManagerImpl::notificationIncomingCall (void) {
   int16* buf_ctrl_vol;
   int16* buffer = new int16[SAMPLING_RATE];
-  int size = SAMPLES_SIZE(FRAME_PER_BUFFER);//SAMPLING_RATE/2;
+  int size = SAMPLES_SIZE(FRAME_PER_BUFFER); //SAMPLING_RATE/2;
   int k;
   //int spkrVolume;
 

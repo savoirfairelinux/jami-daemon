@@ -238,7 +238,7 @@ name);
     return _mic_volume;
   }
   void setMicVolume(unsigned short mic_vol) { 
-    _mic_volume = _mic_volume_before_mute = mic_vol; 
+    _mic_volume = mic_vol; 
   }
 
   bool hasLoadedSetup() { return _setupLoaded; }
