@@ -60,7 +60,7 @@ ToneThread::run (void) {
 
 	// How long do 'size' samples play ?
   // let's play it a bit smaller that it should to put more inside the buffer
-	unsigned int play_time = _size / (SAMPLING_RATE/1000);
+	unsigned int play_time = _size / (SAMPLING_RATE/1000) - 20;
 
   ManagerImpl& manager = Manager::instance();
   manager.getAudioDriver()->flushMain();

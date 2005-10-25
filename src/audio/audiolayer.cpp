@@ -86,10 +86,11 @@ AudioLayer::openDevice (int index)
 	     2, portaudio::INT16, true, 
 	     portaudio::System::instance().deviceByIndex(index).defaultLowInputLatency(), 
 	     NULL);
+
 	
   // we could put 0 instead of FRAME_PER_BUFFER to be variable
   portaudio::StreamParameters const params(inParams, outParams, 
-					   SAMPLING_RATE, FRAME_PER_BUFFER, paNoFlag);
+					   SAMPLING_RATE, paFramesPerBufferUnspecified, paPrimeOutputBuffersUsingStreamCallback | paNeverDropInput /*paNoFlag*/);
 		  
   // Create (and open) a new Stream, using the AudioLayer::audioCallback
   _stream = new portaudio::MemFunCallbackStream<AudioLayer>(params, 
