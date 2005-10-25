@@ -1144,7 +1144,7 @@ ManagerImpl::selectAudioDriver (void)
 #if defined(AUDIO_PORTAUDIO)
   try {
     _debugInit("  AudioLayer Creation");
-    _audiodriverPA = new AudioLayer(*this);
+    _audiodriverPA = new AudioLayer();
     int noDevice = getConfigInt(AUDIO, DRIVER_NAME);
     _debugInit("  AudioLayer Device Count");
     int nbDevice = portaudio::System::instance().deviceCount();
@@ -1199,7 +1199,7 @@ ManagerImpl::initVolume()
  * Main Thread
  */
 bool 
-ManagerImpl::getZeroconf(const std::string& sequenceId)
+ManagerImpl::getZeroconf(const std::string& )
 {
   bool returnValue = false;
 #ifdef USE_ZEROCONF
@@ -1241,7 +1241,7 @@ ManagerImpl::getZeroconf(const std::string& sequenceId)
  * Main Thread
  */
 bool 
-ManagerImpl::attachZeroconfEvents(const std::string& , Pattern::Observer& observer)
+ManagerImpl::attachZeroconfEvents(const std::string& , Pattern::Observer& )
 {
   bool returnValue = false;
   // don't need the _gui like getZeroconf function
@@ -1257,7 +1257,7 @@ ManagerImpl::attachZeroconfEvents(const std::string& , Pattern::Observer& observ
   return returnValue;
 }
 bool
-ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
+ManagerImpl::detachZeroconfEvents(Pattern::Observer& )
 {
   bool returnValue = false;
 #ifdef USE_ZEROCONF

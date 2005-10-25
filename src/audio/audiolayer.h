@@ -41,7 +41,7 @@ class RingBuffer;
 
 class AudioLayer {
 public:
-	AudioLayer(ManagerImpl& manager);
+	AudioLayer();
 	~AudioLayer (void);
 
 	void listDevices();
@@ -72,7 +72,6 @@ private:
 	portaudio::MemFunCallbackStream<AudioLayer> *_stream;
 //	portaudio::AutoSystem autoSys;
   ost::Mutex _mutex;
-  ManagerImpl& _manager;
   int NBCHARFORTWOINT16;
 };
 

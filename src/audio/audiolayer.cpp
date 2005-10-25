@@ -28,11 +28,11 @@
 #include "../global.h"
 #include "../manager.h"
 
-AudioLayer::AudioLayer(ManagerImpl& manager)
+AudioLayer::AudioLayer()
   : _urgentRingBuffer(SIZEBUF)
   , _mainSndRingBuffer(SIZEBUF)
   , _micRingBuffer(SIZEBUF)
-  , _stream(NULL), _manager(manager)
+  , _stream(NULL)
 {
   _debugInit("   portaudio initialization...");
   portaudio::System::initialize();
@@ -102,7 +102,7 @@ void
 AudioLayer::startStream(void) 
 {
   ost::MutexLock guard(_mutex);
-  if (_manager.isDriverLoaded()) {
+  if (Manager::instance().isDriverLoaded()) {
     if (_stream && !_stream->isActive()) {
       _debug("Thread: start audiolayer stream\n");
       _stream->start();
@@ -114,7 +114,7 @@ void
 AudioLayer::stopStream(void) 
 {
   ost::MutexLock guard(_mutex);
-  if (_manager.isDriverLoaded()) {
+  if (Manager::instance().isDriverLoaded()) {
     if (_stream && !_stream->isStopped()) {
       _debug("Thread: stop audiolayer stream\n");
        _stream->stop();
@@ -195,8 +195,8 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   int urgentAvail, // number of int16 right and int16 left
       normalAvail, // number of int16 right and int16 left
       micAvailPut;
-  unsigned short spkrVolume = _manager.getSpkrVolume();
-  unsigned short micVolume  = _manager.getMicVolume();
+  unsigned short spkrVolume = Manager::instance().getSpkrVolume();
+  unsigned short micVolume  = Manager::instance().getMicVolume();
 
   // AvailForGet tell the number of chars inside the buffer
   // framePerBuffer are the number of int16 for one channel (left)
