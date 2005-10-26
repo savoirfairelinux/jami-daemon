@@ -619,7 +619,7 @@ SipVoIPLink::getEvent (void)
   CALLID id = 0;
   int returnValue = 0;
 
-  _debug("Receive SipEvent #%d\n", event->type);
+  _debug("Receive SipEvent #%d %s\n", event->type, event->textinfo);
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //
