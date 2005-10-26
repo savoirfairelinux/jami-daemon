@@ -39,6 +39,8 @@
 #include "audio/audiolayer.h"
 #include "audio/ringbuffer.h"
 #include "audio/tonegenerator.h"
+#include "audio/tonelist.h"
+
 #include "call.h"
 #include "error.h"
 #include "user_cfg.h"
@@ -65,6 +67,7 @@ ManagerImpl::ManagerImpl (void)
   // Init private variables 
   _error = new Error();
   _tone = new ToneGenerator();	
+
   _hasZeroconf = false;
 #ifdef USE_ZEROCONF
   _hasZeroconf = true;
@@ -78,7 +81,6 @@ ManagerImpl::ManagerImpl (void)
   _path = ""; 
   _exist = 0;
   _setupLoaded = false;
-  _loaded = false;
   _gui = NULL;
   _audiodriverPA = NULL;
 
@@ -123,7 +125,6 @@ ManagerImpl::init()
   try {
     _debugInit("Audio Driver Selection");
     selectAudioDriver();
-    loaded(true);
   }
   catch (const portaudio::PaException &e)
     {
@@ -156,10 +157,15 @@ ManagerImpl::init()
   // the stun detection is long, so it's a better idea to do it after getEvents
 
   initZeroconf();
+
+  std::string country = getConfigString(PREFERENCES, ZONE_TONE);
+  _telephoneTone = new TelephoneTone(country);
 }
 
 void ManagerImpl::terminate()
 {
+  delete _telephoneTone; _telephoneTone = 0;
+
   for(VoIPLinkVector::iterator pos = _voIPLinkVector.begin();
       pos != _voIPLinkVector.end();
       pos++) {
@@ -574,7 +580,11 @@ ManagerImpl::playDtmf(char code)
     // put the size in bytes...
     // so size * CHANNELS * 2 (bytes for the int16)
     int nbInt16InChar = sizeof(int16)/sizeof(char);
-    audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, size * CHANNELS * nbInt16InChar);
+    int toSend = audiolayer->urgentRingBuffer().AvailForPut();
+    if (toSend > size * CHANNELS * nbInt16InChar ) {
+      toSend = size * CHANNELS * nbInt16InChar;
+    }
+    audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, toSend);
 
     // We activate the stream if it's not active yet.
     if (!audiolayer->isStreamActive()) {
@@ -846,14 +856,13 @@ ManagerImpl::stopVoiceMessageNotification (void)
  * Multi Thread
  */
 bool 
-ManagerImpl::playATone(unsigned int tone) {
-  if (isDriverLoaded()) {
-    ost::MutexLock m(_toneMutex); 
-    _toneType = tone;
-    _tone->toneHandle(_toneType, getConfigString(PREFERENCES, ZONE_TONE));
-    return true;
-  }
-  return false;
+ManagerImpl::playATone(Tone::TONEID toneId) {
+  ost::MutexLock m(_toneMutex); 
+  //_toneType = tone;
+  //_tone->toneHandle(_toneType, getConfigString(PREFERENCES, ZONE_TONE));
+  _telephoneTone->setCurrentTone(toneId);
+  getAudioDriver()->startStream();
+  return true;
 }
 
 /**
@@ -861,15 +870,14 @@ ManagerImpl::playATone(unsigned int tone) {
  */
 void 
 ManagerImpl::stopTone() {
-  if (isDriverLoaded()) {
-    _toneMutex.enterMutex();
-    if ( _toneType != ZT_TONE_NULL ) {
-      _toneType = ZT_TONE_NULL;
-      _tone->stopTone();
-    }
-    _toneMutex.leaveMutex();
-    getAudioDriver()->stopStream();
-  }
+  _toneMutex.enterMutex();
+  _telephoneTone->setCurrentTone(Tone::TONE_NULL);
+//  if ( _toneType != ZT_TONE_NULL ) {
+//    _toneType = ZT_TONE_NULL;
+//    _tone->stopTone();
+//  }
+  _toneMutex.leaveMutex();
+  getAudioDriver()->stopStream();
 }
 
 /**
@@ -878,7 +886,7 @@ ManagerImpl::stopTone() {
 bool
 ManagerImpl::playTone()
 {
-  return playATone(ZT_TONE_DIALTONE);
+  return playATone(Tone::TONE_DIALTONE);
 }
 
 /**
@@ -886,7 +894,7 @@ ManagerImpl::playTone()
  */
 void
 ManagerImpl::congestion () {
-  playATone(ZT_TONE_CONGESTION);
+  playATone(Tone::TONE_CONGESTION);
 }
 
 /**
@@ -894,7 +902,7 @@ ManagerImpl::congestion () {
  */
 void
 ManagerImpl::ringback () {
-  playATone(ZT_TONE_RINGTONE);
+  playATone(Tone::TONE_RINGTONE);
 }
 
 /**
@@ -902,7 +910,7 @@ ManagerImpl::ringback () {
  */
 void
 ManagerImpl::callBusy(CALLID id) {
-  playATone(ZT_TONE_BUSY);
+  playATone(Tone::TONE_BUSY);
   Call* call = getCall(id);
   if (call != NULL) {
     call->setState(Call::Busy);
@@ -914,7 +922,7 @@ ManagerImpl::callBusy(CALLID id) {
  */
 void
 ManagerImpl::callFailure(CALLID id) {
-  playATone(ZT_TONE_BUSY);
+  playATone(Tone::TONE_BUSY);
   Call* call = getCall(id);
   if (call != NULL) {
     getCall(id)->setState(Call::Error);
@@ -930,21 +938,19 @@ ManagerImpl::callFailure(CALLID id) {
  */
 void
 ManagerImpl::ringtone() 
-{ 
-  if (isDriverLoaded()) {
-    _toneMutex.enterMutex(); 
-    _toneType = ZT_TONE_FILE;
-    std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
-    // if there is no / inside the path
-    if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
-      // check inside global share directory
-      ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
-    }
-    int play = _tone->playRingtone(ringchoice.c_str());
-    _toneMutex.leaveMutex();
-    if (play!=1) {
-      ringback();
-    }
+{
+  _toneMutex.enterMutex(); 
+  _toneType = ZT_TONE_FILE;
+  std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
+  // if there is no / inside the path
+  if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
+    // check inside global share directory
+    ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
+  }
+  int play = _tone->playRingtone(ringchoice.c_str());
+  _toneMutex.leaveMutex();
+  if (play!=1) {
+    ringback();
   }
 }
 

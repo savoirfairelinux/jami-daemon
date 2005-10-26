@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include "audio/tonelist.h" // for Tone::TONEID declaration
 #include "../stund/stun.h"
 #include "call.h"
 #include "audio/audiodevice.h"
@@ -38,6 +39,9 @@ class CodecDescriptor;
 class Error;
 class GuiFramework;
 class ToneGenerator;
+
+class TelephoneTone;
+
 class VoIPLink;
 #ifdef USE_ZEROCONF
 class DNSService;
@@ -69,14 +73,6 @@ typedef std::vector< VoIPLink* > VoIPLinkVector;
  * Define a type for a list of CodecDescriptor
  */
 typedef std::vector< CodecDescriptor* > CodecDescriptorVector;
-
-/*
- * Structure for audio device
- */
-//struct device_t{
-//	const char* hostApiName;
-//	const char* deviceName;
-//};
 
 /**
  * To send multiple string
@@ -206,6 +202,9 @@ name);
   void callBusy(CALLID id);
   void callFailure(CALLID id);
 
+  // return 0 if no tone (init before calling this function)
+  Tone* getTelephoneTone() { return _telephoneTone->getCurrentTone(); };
+
   /**
    * @return true is there is one or many incoming call waiting
    * new call, not anwsered or refused
@@ -249,12 +248,6 @@ name);
 	inline int getFirewallPort 		(void) 		{ return _firewallPort; }
 	inline void setFirewallPort 	(int port) 	{ _firewallPort = port; }
 	inline std::string getFirewallAddress (void) 	{ return _firewallAddr; }
-
-	/*
-	 * Manage information about audio driver
-	 */
-	inline bool isDriverLoaded (void) const { return _loaded; }
-	inline void loaded (bool l) { _loaded = l; }
 
 	/*
 	 * Init default values for the different fields
@@ -327,12 +320,14 @@ private:
    * Play one tone
    * @return false if the driver is uninitialize
    */
-  bool playATone(unsigned int tone);
+  bool playATone(Tone::TONEID toneId);
+  //bool playATone(unsigned int tone);
   
 	/////////////////////
 	// Private variables
 	/////////////////////
 	ToneGenerator* _tone;
+  TelephoneTone* _telephoneTone;
   ost::Mutex _toneMutex;
   int _toneType;
 
@@ -397,9 +392,6 @@ private:
 	// To handle firewall
 	int			_firewallPort;
 	std::string		_firewallAddr;
-
-	// Variables used in exception
-	bool 		_loaded;
 
   // true if we tried to register Once
   void initRegisterVoIPLink();

@@ -88,9 +88,9 @@ AudioLayer::openDevice (int index)
 	     NULL);
 
 	
-  // we could put 0 instead of FRAME_PER_BUFFER to be variable
+  // we could put paFramesPerBufferUnspecified instead of FRAME_PER_BUFFER to be variable
   portaudio::StreamParameters const params(inParams, outParams, 
-					   SAMPLING_RATE, paFramesPerBufferUnspecified, paPrimeOutputBuffersUsingStreamCallback | paNeverDropInput /*paNoFlag*/);
+					   SAMPLING_RATE, paFramesPerBufferUnspecified, paNoFlag /*paPrimeOutputBuffersUsingStreamCallback | paNeverDropInput*/);
 		  
   // Create (and open) a new Stream, using the AudioLayer::audioCallback
   _stream = new portaudio::MemFunCallbackStream<AudioLayer>(params, 
@@ -102,25 +102,21 @@ void
 AudioLayer::startStream(void) 
 {
   ost::MutexLock guard(_mutex);
-  if (Manager::instance().isDriverLoaded()) {
-    if (_stream && !_stream->isActive()) {
-      _debug("Thread: start audiolayer stream\n");
-      _stream->start();
-    }
-  } 
+  if (_stream && !_stream->isActive()) {
+    _debug("Thread: start audiolayer stream\n");
+    _stream->start();
+  }
 }
 	
 void
 AudioLayer::stopStream(void) 
 {
   ost::MutexLock guard(_mutex);
-  if (Manager::instance().isDriverLoaded()) {
-    if (_stream && !_stream->isStopped()) {
-      _debug("Thread: stop audiolayer stream\n");
-       _stream->stop();
-      _mainSndRingBuffer.flush();
-    }
-  } 
+  if (_stream && !_stream->isStopped()) {
+    _debug("Thread: stop audiolayer stream\n");
+      _stream->stop();
+    _mainSndRingBuffer.flush();
+  }
 }
 
 void
@@ -145,7 +141,12 @@ void
 AudioLayer::putMain(void* buffer, int toCopy)
 {
   ost::MutexLock guard(_mutex);
-  _mainSndRingBuffer.Put(buffer, toCopy);
+  int a = _mainSndRingBuffer.AvailForPut();
+  if ( a >= toCopy ) {
+    _mainSndRingBuffer.Put(buffer, toCopy);
+  } else {
+    _mainSndRingBuffer.Put(buffer, a);
+  }
 }
 
 void
@@ -159,7 +160,12 @@ void
 AudioLayer::putUrgent(void* buffer, int toCopy)
 {
   ost::MutexLock guard(_mutex);
-  _urgentRingBuffer.Put(buffer, toCopy);
+  int a = _mainSndRingBuffer.AvailForPut();
+  if ( a >= toCopy ) {
+    _urgentRingBuffer.Put(buffer, toCopy);
+  } else {
+    _urgentRingBuffer.Put(buffer, a);
+  }
 }
 
 void
@@ -195,38 +201,43 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   int urgentAvail, // number of int16 right and int16 left
       normalAvail, // number of int16 right and int16 left
       micAvailPut;
-  unsigned short spkrVolume = Manager::instance().getSpkrVolume();
-  unsigned short micVolume  = Manager::instance().getMicVolume();
+  ManagerImpl& _manager = Manager::instance();
+  unsigned short spkrVolume = _manager.getSpkrVolume();
+  unsigned short micVolume  = _manager.getMicVolume();
 
   // AvailForGet tell the number of chars inside the buffer
   // framePerBuffer are the number of int16 for one channel (left)
-  framesPerBuffer *= NBCHARFORTWOINT16;
 	urgentAvail = _urgentRingBuffer.AvailForGet();
 	if (urgentAvail > 0) {  
 	// Urgent data (dtmf, incoming call signal) come first.		
-		toGet = (urgentAvail < (int)framesPerBuffer) ? urgentAvail : framesPerBuffer;
+		toGet = (urgentAvail < (int)framesPerBuffer * NBCHARFORTWOINT16) ? urgentAvail : framesPerBuffer * NBCHARFORTWOINT16;
 		_urgentRingBuffer.Get(out, toGet, spkrVolume);
 		
 		// Consume the regular one as well (same amount of bytes)
 		_mainSndRingBuffer.Discard(toGet);
 	}  
 	else {
-	// If nothing urgent, play the regular sound samples
-		normalAvail = _mainSndRingBuffer.AvailForGet();
-		toGet = (normalAvail < (int)framesPerBuffer) ? normalAvail : framesPerBuffer;
-
-   if (toGet) {
-		  _mainSndRingBuffer.Get(out, toGet, spkrVolume);
+    Tone* tone = _manager.getTelephoneTone();
+    if ( tone != 0) {
+      tone->getNext(out, framesPerBuffer, spkrVolume);
     } else {
-      toGet = framesPerBuffer;
-      _mainSndRingBuffer.PutZero(toGet);
-      _mainSndRingBuffer.Get(out, toGet, 100);
-    }
+      // If nothing urgent, play the regular sound samples
+      normalAvail = _mainSndRingBuffer.AvailForGet();
+      toGet = (normalAvail < (int)framesPerBuffer * NBCHARFORTWOINT16) ? normalAvail : framesPerBuffer * NBCHARFORTWOINT16;
+
+      if (toGet) {
+          _mainSndRingBuffer.Get(out, toGet, spkrVolume);
+        } else {
+          toGet = framesPerBuffer;
+          _mainSndRingBuffer.PutZero(toGet);
+          _mainSndRingBuffer.Get(out, toGet, 100);
+        }
+      }
 	}
 
 	// Additionally handle the mic's audio stream 
   micAvailPut = _micRingBuffer.AvailForPut();
-  toPut = (micAvailPut <= (int)framesPerBuffer) ? micAvailPut : framesPerBuffer;
+  toPut = (micAvailPut <= (int)framesPerBuffer) ? micAvailPut : framesPerBuffer * NBCHARFORTWOINT16;
   _micRingBuffer.Put(in, toPut, micVolume );
 
 	return paContinue;

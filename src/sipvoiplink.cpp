@@ -290,8 +290,11 @@ SipVoIPLink::outgoingInvite (CALLID id, const std::string& to_url)
   // TODO: should be inside account settings
   ManagerImpl& manager = Manager::instance();
   // Form the From header field basis on configuration panel
-  from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART),
-		    manager.getConfigString(SIGNALISATION, HOST_PART));
+  std::string host = manager.getConfigString(SIGNALISATION, HOST_PART);
+  if ( host.empty() ) {
+    host = getLocalIpAddress();
+  }
+  from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), host);
 	
   to = toHeader(to_url);
 
@@ -783,6 +786,11 @@ SipVoIPLink::getEvent (void)
     }	
     break;
   case EXOSIP_CALL_RELEASED:
+    id = findCallId(event);
+    if (id!=0) {
+      Manager::instance().peerHungupCall(id);
+      deleteSipCall(id);
+    }
     break;
   case EXOSIP_CALL_REQUESTFAILURE:
     id = findCallId(event);

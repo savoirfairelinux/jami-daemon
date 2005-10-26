@@ -18,8 +18,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __TONE_GENRATOR_H__
-#define __TONE_GENRATOR_H__
+#ifndef __TONE_GENERATOR_H__
+#define __TONE_GENERATOR_H__
 
 #include <string>
 

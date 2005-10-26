@@ -337,7 +337,7 @@ ToneGenerator::toneHandle (unsigned int idr, const std::string& zone) {
 
 void
 ToneGenerator::stopTone() {
-  _currentTone = ZT_TONE_NULL;
+  //_currentTone = ZT_TONE_NULL;
 
   //_debug("Thread: delete tonethread\n");
   delete tonethread; tonethread = NULL;

@@ -29,7 +29,6 @@
 #include "../global.h"
 #include "ringbuffer.h"
 #include <cc++/thread.h>
-#include "../manager.h"
 
 #define FRAME_PER_BUFFER	160
 #define MIC_CHANNELS 		2 // 1=mono 2=stereo

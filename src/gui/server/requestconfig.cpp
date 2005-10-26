@@ -137,6 +137,9 @@ RequestConfigSet::RequestConfigSet(const std::string &sequenceId, const TokenLis
         _value = *iter;
         _argList.pop_front();
         argsAreValid = true;
+      } else {
+        _value = "";
+        argsAreValid = true;
       }
     }
   }
