@@ -92,11 +92,10 @@ dnl AC_SUBST(LIBQT)
 
 if test $ac_cv_header_portaudio_h = no; then
    AC_MSG_ERROR([*** missing portaudio.h. You need a working PortAudio installation. See http://www.portaudio.com])
-fi
-AC_CHECK_LIB([portaudio], [Pa_GetDeviceCount], [
+else 
    portaudio_LIBS="-lportaudio "
-   portaudio_CFLAGS="-DAUDIO_PORTAUDIO "],
-   [AC_MSG_ERROR([*** missing portaudio V19 library. You need a working PortAudio installation. See http://www.portaudio.com])])
+   portaudio_CFLAGS="-DAUDIO_PORTAUDIO "
+fi
 
 SFLPHONE_LIBS="$SFLPHONE_LIBS $portaudio_LIBS"
 SFLPHONE_CXXFLAGS=="$SFLPHONE_CXXFLAGS $portaudio_CFLAGS"

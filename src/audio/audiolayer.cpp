@@ -201,9 +201,8 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   int urgentAvail, // number of int16 right and int16 left
       normalAvail, // number of int16 right and int16 left
       micAvailPut;
-  ManagerImpl& _manager = Manager::instance();
-  unsigned short spkrVolume = _manager.getSpkrVolume();
-  unsigned short micVolume  = _manager.getMicVolume();
+  unsigned short spkrVolume = Manager::instance().getSpkrVolume();
+  unsigned short micVolume  = Manager::instance().getMicVolume();
 
   // AvailForGet tell the number of chars inside the buffer
   // framePerBuffer are the number of int16 for one channel (left)
@@ -217,7 +216,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 		_mainSndRingBuffer.Discard(toGet);
 	}  
 	else {
-    Tone* tone = _manager.getTelephoneTone();
+    Tone* tone = Manager::instance().getTelephoneTone();
     if ( tone != 0) {
       tone->getNext(out, framesPerBuffer, spkrVolume);
     } else {
