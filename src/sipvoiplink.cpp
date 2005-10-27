@@ -628,6 +628,7 @@ SipVoIPLink::getEvent (void)
   switch (event->type) {
     // IP-Phone user receives a new call
   case EXOSIP_CALL_INVITE: //
+    _debug("> INVITE (receive)\n");
     checkNetwork();
 
     // Set local random port for incoming call
@@ -646,7 +647,7 @@ SipVoIPLink::getEvent (void)
     // Generate id
     id = Manager::instance().generateNewCallId();
     Manager::instance().pushBackNewCall(id, Incoming);
-    _debug("New INVITE Event: call with id %d [cid = %d, did = %d]\n",id, event->cid, event->did);
+    _debug("  ID: %d [cid = %d, did = %d]\n",id, event->cid, event->did);
 
     // Display the callerId-name
     osip_from_t *from;
@@ -659,6 +660,7 @@ SipVoIPLink::getEvent (void)
       osip_from_to_str (event->request->from, &tmp);
       if (tmp != NULL) {
         snprintf (sipcall->getRemoteUri(), 256, "%s", tmp);
+        _debug("  Remote URI: %s\n", tmp);
         osip_free (tmp);
       }
     }
@@ -671,7 +673,7 @@ SipVoIPLink::getEvent (void)
         urlUsername = url->username;
       }
       Manager::instance().callSetInfo(id, name, urlUsername);
-      _debug("New INVITE Event: From: %s\n", name.c_str());
+      _debug("   Name/Username: %s/%s\n", name.c_str(), urlUsername.c_str());
     }
     //Don't need this display text message now that we send the name
     //inside the Manager to the gui
@@ -681,11 +683,12 @@ SipVoIPLink::getEvent (void)
     // Associate an audio port with a call
     sipcall->setLocalAudioPort(_localPort);
     sipcall->setLocalIp(getLocalIpAddress());
-    _debug("New INVITE Event: we set the local audio to: %s:%d\n", getLocalIpAddress().c_str(), _localPort);
+    _debug("  Local listening port: %d\n", _localPort);
+    _debug("  Local listening IP: %s\n", getLocalIpAddress().c_str());
 
     sipcall->newIncomingCall(event);
     if (Manager::instance().incomingCall(id) < 0) {
-      Manager::instance().displayErrorText(id, "New INVITE Event: Incoming call failed");
+      Manager::instance().displayErrorText(id, "  Incoming Call Failed");
     }
     break;
 
@@ -800,14 +803,14 @@ SipVoIPLink::getEvent (void)
     // Handle 4XX errors
     switch (event->response->status_code) {
     case AUTH_REQUIRED:
-      _debug("SIP Server ask required authentification: loging...\n");
+      _debug("SIP Server ask required authentification: logging...\n");
       setAuthentication();
       eXosip_lock();
       eXosip_automatic_action();
       eXosip_unlock();
       break;
     case UNAUTHORIZED:
-      _debug("Request is unauthorized. SIP Server ask authentification: loging...\n");
+      _debug("Request is unauthorized. SIP Server ask authentification: logging...\n");
       setAuthentication();
       break;
 

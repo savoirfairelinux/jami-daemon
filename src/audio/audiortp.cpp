@@ -133,8 +133,9 @@ AudioRtpRTX::initAudioRtpSession (void)
   }
 
   if (!_sym) {
+    std::string localipConfig = _ca->getLocalIp();
     ost::InetHostAddress local_ip(localipConfig.c_str());
-    if (!_sessionRecv->addDestination (local_ip, (unsigned short), _ca->getLocalAudioPort()) ) {
+    if ( !_sessionRecv->addDestination(local_ip, (unsigned short) _ca->getLocalAudioPort()) ) {
       _debug("RTX recv: could not connect to port %d\n",  _ca->getLocalAudioPort());
       return;
     }

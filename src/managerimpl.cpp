@@ -718,12 +718,14 @@ ManagerImpl::peerAnsweredCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  call->setState(Call::Answered);
-
-  stopTone();
-  // switch current call
-  switchCall(id);
-  if (_gui) _gui->peerAnsweredCall(id);
+  if (call != 0) {
+    call->setState(Call::Answered);
+  
+    stopTone();
+    // switch current call
+    switchCall(id);
+    if (_gui) _gui->peerAnsweredCall(id);
+  }
 }
 
 /**
@@ -735,11 +737,13 @@ ManagerImpl::peerRingingCall (CALLID id)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  call->setState(Call::Ringing);
+  if (call != 0) {
+    call->setState(Call::Ringing);
 
-  // ring
-  ringback();
-  if (_gui) _gui->peerRingingCall(id);
+    // ring
+    ringback();
+    if (_gui) _gui->peerRingingCall(id);
+  }
   return 1;
 }
 
