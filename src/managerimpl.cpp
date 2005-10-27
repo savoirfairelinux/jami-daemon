@@ -933,6 +933,18 @@ ManagerImpl::callFailure(CALLID id) {
   }
 }
 
+Tone *
+ManagerImpl::getTelephoneTone()
+{
+  if(_telephoneTone) {
+    return _telephoneTone->getCurrentTone();
+  }
+  else {
+    return NULL;
+  }
+}
+
+
 /**
  * Multi Thread
  */

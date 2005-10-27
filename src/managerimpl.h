@@ -203,7 +203,7 @@ name);
   void callFailure(CALLID id);
 
   // return 0 if no tone (init before calling this function)
-  Tone* getTelephoneTone() { return _telephoneTone->getCurrentTone(); };
+  Tone* getTelephoneTone();
 
   /**
    * @return true is there is one or many incoming call waiting
