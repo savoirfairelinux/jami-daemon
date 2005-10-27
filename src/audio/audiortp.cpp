@@ -83,8 +83,8 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, bool sym) : _cod
   _debug("AudioRtpRTX ctor : Local IP:port %s:%d\tsymmetric:%d\n", local_ip.getHostname(), _ca->getLocalAudioPort(), _sym);
 
   if (!_sym) {
-    _sessionRecv = new ost::RTPSession (local_ip, _ca->getLocalAudioPort());
-    _sessionSend = new ost::RTPSession (local_ip);
+    _sessionRecv = new ost::RTPSession(local_ip, _ca->getRemoteSdpAudioPort());
+    _sessionSend = new ost::RTPSession(local_ip, _ca->getLocalAudioPort());
     _session = NULL;
   } else {
     _session = new ost::SymmetricRTPSession (local_ip, _ca->getLocalAudioPort());
@@ -122,7 +122,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 
   // Initialization
   if (!_sym) {
-    //_sessionRecv->setSchedulingTimeout (10000);
+    _sessionRecv->setSchedulingTimeout (10000);
     _sessionRecv->setExpireTimeout(1000000);
 
     _sessionSend->setSchedulingTimeout(10000);
@@ -133,6 +133,11 @@ AudioRtpRTX::initAudioRtpSession (void)
   }
 
   if (!_sym) {
+    ost::InetHostAddress local_ip(localipConfig.c_str());
+    if (!_sessionRecv->addDestination (local_ip, (unsigned short), _ca->getLocalAudioPort()) ) {
+      _debug("RTX recv: could not connect to port %d\n",  _ca->getLocalAudioPort());
+      return;
+    }
     if (!_sessionSend->addDestination (remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort())) {
       _debug("RTX send: could not connect to port %d\n",  _ca->getRemoteSdpAudioPort());
       return;
