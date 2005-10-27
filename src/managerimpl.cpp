@@ -679,7 +679,7 @@ ManagerImpl::callCanBeAnswered(CALLID id) {
  * SipEvent Thread
  */
 int 
-ManagerImpl::incomingCall (CALLID id)
+ManagerImpl::incomingCall (CALLID id, const std::string& name, const std::string& number)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -699,9 +699,9 @@ ManagerImpl::incomingCall (CALLID id)
 
   // TODO: Account not yet implemented
   std::string accountId = "acc1";
-  std::string from = call->getCallerIdName();
-  std::string number = call->getCallerIdNumber();
-  if ( number.length() ) {
+  std::string from = name;     call->setCallerIdName(name);
+  call->setCallerIdNumber(number);
+  if ( !number.empty() ) {
     from.append(" <");
     from.append(number);
     from.append(">");
@@ -873,10 +873,11 @@ void
 ManagerImpl::stopTone() {
   _toneMutex.enterMutex();
   _telephoneTone->setCurrentTone(Tone::TONE_NULL);
-//  if ( _toneType != ZT_TONE_NULL ) {
-//    _toneType = ZT_TONE_NULL;
-//    _tone->stopTone();
-//  }
+  // for ringing tone..
+  if ( _toneType != ZT_TONE_NULL ) {
+    _toneType = ZT_TONE_NULL;
+    _tone->stopTone();
+  }
   _toneMutex.leaveMutex();
   getAudioDriver()->stopStream();
 }

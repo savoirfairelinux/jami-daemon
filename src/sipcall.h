@@ -110,6 +110,9 @@ public:
 	inline void setStandBy (bool standby) { _standby = standby; }
 	inline bool getStandBy (void) { return _standby; }
 
+  std::string getName() const { return _name; }
+  std::string getNumber() const { return _number; }
+
 private:
 	void	alloc			(void);
 	void	dealloc			(void);
@@ -137,12 +140,13 @@ private:
   char*	_remote_uri;
   
   char*	_remote_sdp_audio_ip;
-  int  	_state;
   int		_local_audio_port;
   int  	_remote_sdp_audio_port;
   int 	_local_sendrecv;           /* _SENDRECV, _SENDONLY, _RECVONLY */
   int 	_remote_sendrecv;          /* _SENDRECV, _SENDONLY, _RECVONLY */
   std::string _localIp;
+  std::string _name;   // set by incoming call
+  std::string _number; // set by incoming call
 };
 
 #endif // __SIP_CALL_H__

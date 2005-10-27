@@ -649,45 +649,15 @@ SipVoIPLink::getEvent (void)
     Manager::instance().pushBackNewCall(id, Incoming);
     _debug("  ID: %d [cid = %d, did = %d]\n",id, event->cid, event->did);
 
-    // Display the callerId-name
-    osip_from_t *from;
-    osip_from_init(&from);
-
-    sipcall = getSipCall(id);
-    if (event->request != NULL) {
-      char *tmp = NULL;
-
-      osip_from_to_str (event->request->from, &tmp);
-      if (tmp != NULL) {
-        snprintf (sipcall->getRemoteUri(), 256, "%s", tmp);
-        _debug("  Remote URI: %s\n", tmp);
-        osip_free (tmp);
-      }
-    }
-    osip_from_parse(from, sipcall->getRemoteUri());
-    {
-      std::string name = osip_from_get_displayname(from);
-      std::string urlUsername("");
-      osip_uri_t* url = osip_from_get_url(from); 
-      if ( url != NULL ) {
-        urlUsername = url->username;
-      }
-      Manager::instance().callSetInfo(id, name, urlUsername);
-      _debug("   Name/Username: %s/%s\n", name.c_str(), urlUsername.c_str());
-    }
-    //Don't need this display text message now that we send the name
-    //inside the Manager to the gui
-    //Manager::instance().displayTextMessage(id, name);
-    osip_from_free(from);
-
     // Associate an audio port with a call
+    sipcall = getSipCall(id);
     sipcall->setLocalAudioPort(_localPort);
     sipcall->setLocalIp(getLocalIpAddress());
     _debug("  Local listening port: %d\n", _localPort);
     _debug("  Local listening IP: %s\n", getLocalIpAddress().c_str());
 
     sipcall->newIncomingCall(event);
-    if (Manager::instance().incomingCall(id) < 0) {
+    if (Manager::instance().incomingCall(id, sipcall->getName(), sipcall->getNumber()) < 0) {
       Manager::instance().displayErrorText(id, "  Incoming Call Failed");
     }
     break;

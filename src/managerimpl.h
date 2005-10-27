@@ -156,7 +156,7 @@ public:
 	bool playTone ();
   void stopTone();
 
-	int incomingCall (CALLID id);
+	int incomingCall (CALLID id, const std::string& name, const std::string& number);
 	void peerAnsweredCall (CALLID id);
 	int peerRingingCall (CALLID id);
 	int peerHungupCall (CALLID id);
