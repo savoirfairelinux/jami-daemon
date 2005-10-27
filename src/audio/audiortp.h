@@ -29,7 +29,6 @@
 
 
 #define RTP_FRAMES2SEND	160
-#define SIZEDATA		SAMPLES_SIZE(RTP_FRAMES2SEND)
 
 class AudioLayer;
 class SipCall;

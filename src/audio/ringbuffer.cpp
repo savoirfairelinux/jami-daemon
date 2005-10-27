@@ -62,14 +62,6 @@ RingBuffer::AvailForPut() const {
    return (mBufferSize-4) - Len();
 } 
 
-void 
-RingBuffer::PutZero(int toZero)
-{
-  unsigned char p[toZero];
-  bzero(p, toZero);
-  Put(p, toZero);
-}
-
 // This one puts some data inside the ring buffer.
 // Change the volume if it's not 100
 int 

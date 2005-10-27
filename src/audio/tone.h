@@ -49,6 +49,7 @@ public:
    * @return the number of int16 sent (nb*2)
    */
   int getNext(int16* output, int nb, short volume=100);
+  void reset() { _pos = 0; }
 
 private:
   /**

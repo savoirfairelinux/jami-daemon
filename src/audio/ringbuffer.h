@@ -44,7 +44,6 @@ class RingBuffer {
    //
    int AvailForPut (void) const;
    int Put (void*, int, unsigned short volume = 100);
-   void PutZero(int);
 
    //
    // For the reader only:

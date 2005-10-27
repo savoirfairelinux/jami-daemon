@@ -572,16 +572,14 @@ ManagerImpl::playDtmf(char code)
     }
 
     AudioLayer *audiolayer = getAudioDriver();
-
     _toneMutex.enterMutex();
-    audiolayer->urgentRingBuffer().flush();
 
     // Put buffer to urgentRingBuffer 
     // put the size in bytes...
     // so size * CHANNELS * 2 (bytes for the int16)
     int nbInt16InChar = sizeof(int16)/sizeof(char);
     int toSend = audiolayer->urgentRingBuffer().AvailForPut();
-    if (toSend > size * CHANNELS * nbInt16InChar ) {
+    if (toSend > (size * CHANNELS * nbInt16InChar)) {
       toSend = size * CHANNELS * nbInt16InChar;
     }
     audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, toSend);
@@ -589,14 +587,13 @@ ManagerImpl::playDtmf(char code)
     // We activate the stream if it's not active yet.
     if (!audiolayer->isStreamActive()) {
       audiolayer->startStream();
-      audiolayer->sleep(pulselen);
-      audiolayer->urgentRingBuffer().flush();
-      audiolayer->stopStream();
+      //TODO: Is this really what we want?
+      //audiolayer->sleep(pulselen);
+      //audiolayer->stopStream();
     } else {
       audiolayer->sleep(pulselen); // in milliseconds
     }
     _toneMutex.leaveMutex();
-    //setZonetone(false);
     delete[] buf_ctrl_vol; buf_ctrl_vol = 0;
     returnValue = true;
   }

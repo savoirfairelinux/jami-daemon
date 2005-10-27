@@ -90,7 +90,7 @@ AudioLayer::openDevice (int index)
 	
   // we could put paFramesPerBufferUnspecified instead of FRAME_PER_BUFFER to be variable
   portaudio::StreamParameters const params(inParams, outParams, 
-					   SAMPLING_RATE, paFramesPerBufferUnspecified, paNoFlag /*paPrimeOutputBuffersUsingStreamCallback | paNeverDropInput*/);
+					   SAMPLING_RATE, FRAME_PER_BUFFER /*paFramesPerBufferUnspecified*/, paNoFlag /*paPrimeOutputBuffersUsingStreamCallback | paNeverDropInput*/);
 		  
   // Create (and open) a new Stream, using the AudioLayer::audioCallback
   _stream = new portaudio::MemFunCallbackStream<AudioLayer>(params, 
@@ -103,7 +103,6 @@ AudioLayer::startStream(void)
 {
   ost::MutexLock guard(_mutex);
   if (_stream && !_stream->isActive()) {
-    _debug("Thread: start audiolayer stream\n");
     _stream->start();
   }
 }
@@ -113,9 +112,10 @@ AudioLayer::stopStream(void)
 {
   ost::MutexLock guard(_mutex);
   if (_stream && !_stream->isStopped()) {
-    _debug("Thread: stop audiolayer stream\n");
-      _stream->stop();
+     _stream->stop();
     _mainSndRingBuffer.flush();
+    _urgentRingBuffer.flush();
+    _micRingBuffer.flush();
   }
 }
 
@@ -225,13 +225,11 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
       toGet = (normalAvail < (int)framesPerBuffer * NBCHARFORTWOINT16) ? normalAvail : framesPerBuffer * NBCHARFORTWOINT16;
 
       if (toGet) {
-          _mainSndRingBuffer.Get(out, toGet, spkrVolume);
-        } else {
-          toGet = framesPerBuffer;
-          _mainSndRingBuffer.PutZero(toGet);
-          _mainSndRingBuffer.Get(out, toGet, 100);
-        }
+        _mainSndRingBuffer.Get(out, toGet, spkrVolume);
+      } else {
+        bzero(out, framesPerBuffer * NBCHARFORTWOINT16);
       }
+    }
 	}
 
 	// Additionally handle the mic's audio stream 

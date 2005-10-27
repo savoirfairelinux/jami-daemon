@@ -487,12 +487,13 @@ SipVoIPLink::onhold (CALLID id)
   
   eXosip_lock ();
   // Send request
+  _audiortp.closeRtpSession();
+
   i = eXosip_call_send_request (did, invite);
   eXosip_unlock ();
   
   // Disable audio
   sipcall->enable_audio = false;
-  _audiortp.closeRtpSession();
   return i;
 }
 
@@ -609,7 +610,8 @@ SipVoIPLink::refuse (CALLID id)
 int
 SipVoIPLink::getEvent (void)
 {
-  eXosip_event_t* event = eXosip_event_wait (0, 1);
+  // wait for 0 s, 50 ms
+  eXosip_event_t* event = eXosip_event_wait (0, 50);
   eXosip_lock();
   eXosip_automatic_action();
   eXosip_unlock();
@@ -786,11 +788,11 @@ SipVoIPLink::getEvent (void)
     }	
     break;
   case EXOSIP_CALL_RELEASED:
-    id = findCallId(event);
-    if (id!=0) {
-      Manager::instance().peerHungupCall(id);
-      deleteSipCall(id);
-    }
+    //id = findCallId(event);
+    //if (id!=0) {
+    //Manager::instance().peerHungupCall(id);
+    //deleteSipCall(id);
+    //}
     break;
   case EXOSIP_CALL_REQUESTFAILURE:
     id = findCallId(event);
