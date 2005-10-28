@@ -64,10 +64,7 @@ public:
 	void setHostName (const std::string& hostname);
 	std::string getHostName (void);
 	void setLocalIpAddress (const std::string& ipAdress);
-	std::string getLocalIpAddress (void);
-
-	
-protected:
+  std::string getLocalIpAddress (void);
 
 private:
 	void initConstructor(void);

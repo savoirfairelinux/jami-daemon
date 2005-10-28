@@ -83,7 +83,7 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, bool sym) : _cod
   _debug("AudioRtpRTX ctor : Local IP:port %s:%d\tsymmetric:%d\n", local_ip.getHostname(), _ca->getLocalAudioPort(), _sym);
 
   if (!_sym) {
-    _sessionRecv = new ost::RTPSession(local_ip, _ca->getRemoteSdpAudioPort());
+    _sessionRecv = new ost::RTPSession(local_ip, _ca->getLocalAudioPort());
     _sessionSend = new ost::RTPSession(local_ip, _ca->getLocalAudioPort());
     _session = NULL;
   } else {
@@ -133,9 +133,7 @@ AudioRtpRTX::initAudioRtpSession (void)
   }
 
   if (!_sym) {
-    std::string localipConfig = _ca->getLocalIp();
-    ost::InetHostAddress local_ip(localipConfig.c_str());
-    if ( !_sessionRecv->addDestination(local_ip, (unsigned short) _ca->getLocalAudioPort()) ) {
+    if ( !_sessionRecv->addDestination(remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort()) ) {
       _debug("RTX recv: could not connect to port %d\n",  _ca->getLocalAudioPort());
       return;
     }

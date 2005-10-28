@@ -39,7 +39,7 @@
 #define VOICE_MSG			"Voice-Message"
 #define LENGTH_VOICE_MSG	15
 
-SipVoIPLink::SipVoIPLink()
+SipVoIPLink::SipVoIPLink() : VoIPLink()
 {
   // default _audioRTP object initialization
   _evThread = new EventThread(this);
@@ -70,27 +70,24 @@ bool
 SipVoIPLink::checkNetwork (void) 
 {
   // Set IP address
-  return getLocalIp();
+  return getSipLocalIp();
 }
 
 int
 SipVoIPLink::init (void)
 {
   std::string tmp;
-  int i;
-
   tmp = std::string(PROGNAME) + "/" + std::string(SFLPHONED_VERSION);
 	
-  i = eXosip_init ();
-  _started = true;
-
-  if (i != 0) {
+  if (0 != eXosip_init()) {
     _debug("Could not initialize eXosip\n");
     exit (0);
   }
-	
+  _started = true;
+
   srand (time(NULL));
   //should be NULL or INADDR_ANY for the second parameter?
+  int i;
   i = eXosip_listen_addr(IPPROTO_UDP, NULL, DEFAULT_SIP_PORT, AF_INET, 0);
   if (i != 0) {
     i = eXosip_listen_addr(IPPROTO_UDP, NULL, RANDOM_SIP_PORT, AF_INET, 0);
@@ -114,7 +111,7 @@ SipVoIPLink::init (void)
     eXosip_set_user_agent(tmp.data());
   }
 
-  _debug("Thread: start event thread\n");
+  _debug("SIP VoIP Link: listen to SIP Events\n");
   _evThread->start();
   return 1;
 }
@@ -792,6 +789,7 @@ SipVoIPLink::getEvent (void)
     case REQ_TIMEOUT:
     case TEMP_UNAVAILABLE:
     case ADDR_INCOMPLETE:
+    case NOT_ACCEPTABLE_HERE: // 488
       // Display error on the screen phone
       //Manager::instance().displayError(event->response->reason_phrase);
       Manager::instance().displayErrorText(id, event->response->reason_phrase);
@@ -1255,19 +1253,22 @@ SipVoIPLink::behindNat (void)
 
 /**
  * Get the local Ip by eXosip 
+ * only if the local ip address is to his default value: 127.0.0.1
  * setLocalIpAdress
  * @return false if not found
  */
 bool
-SipVoIPLink::getLocalIp (void) 
+SipVoIPLink::getSipLocalIp (void) 
 {
   bool returnValue = true;
-  char* myIPAddress = new char[65];
-  if (eXosip_guess_localip (AF_INET, myIPAddress, 64) == -1) {
-    returnValue = false;
+  if (getLocalIpAddress() == "127.0.0.1") {
+    char* myIPAddress = new char[65];
+    if (eXosip_guess_localip (AF_INET, myIPAddress, 64) == -1) {
+      returnValue = false;
+    }
+    setLocalIpAddress(std::string(myIPAddress));
+    delete [] myIPAddress; myIPAddress = NULL;
   }
-  setLocalIpAddress(std::string(myIPAddress));
-  delete [] myIPAddress; myIPAddress = NULL;
   return returnValue;
 }
 
@@ -1489,3 +1490,4 @@ SipVoIPLink::findCallIdInitial (eXosip_event_t *e)
   }
   return 0;
 }
+

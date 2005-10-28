@@ -370,19 +370,12 @@ private:
   // Current callid 
 	CALLID _currentCallId;
 
-	/*
-	 * For the call timer
-	 */
-	unsigned int _startTime;
-	unsigned int _endTime;
-
-	/* Path of the ConfigFile 
+	/**
+   * Path of the ConfigFile 
 	 */
 	std::string 	_path;
 	int _exist;
   int _setupLoaded;
-
-	unsigned int _nCodecs;
 
   // To handle volume control
   short _spkr_volume;

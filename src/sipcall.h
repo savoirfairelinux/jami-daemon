@@ -60,7 +60,7 @@ public:
 	 * Use to answer to an incoming call 
 	 */
 	void  	answeredCall_without_hold (eXosip_event_t *);
-	
+
 	int  	ringingCall			(eXosip_event_t *);
 	int  	receivedAck			(eXosip_event_t *);
 
@@ -144,6 +144,7 @@ private:
   int  	_remote_sdp_audio_port;
   int 	_local_sendrecv;           /* _SENDRECV, _SENDONLY, _RECVONLY */
   int 	_remote_sendrecv;          /* _SENDRECV, _SENDONLY, _RECVONLY */
+
   std::string _localIp;
   std::string _name;   // set by incoming call
   std::string _number; // set by incoming call

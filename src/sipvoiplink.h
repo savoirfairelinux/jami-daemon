@@ -93,6 +93,7 @@ public:
 	 */
 	int	getLocalPort (void);
 	void setLocalPort (int);
+  bool getSipLocalIp (void);
 
 	/*
 	 * Add a new SipCall at the end of the SipCallVector with identifiant 'id'
@@ -128,14 +129,6 @@ private:
 	 * Return 0 if an error occured and 1 if no error.
 	 */
 	int behindNat (void);
-
-	/*
-   * To Store the local IP address, and allow to know if the network is 
-	 * available.
-	 *
-	 * Return false if an error occured and true if no error
-	 */	 
-	bool getLocalIp (void);
 
 	/*
 	 * Return -1 if an error occured and 0 if no error

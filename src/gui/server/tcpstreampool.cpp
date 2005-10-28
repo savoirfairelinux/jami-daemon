@@ -26,6 +26,7 @@ TCPStreamPool::~TCPStreamPool()
   terminate();
   std::string output;
   while (good() && _outputPool.pop(output, WAITING_TIME))  {
+    //_debug("sending last message...\n");
     *this << output << std::endl;
   }
 }
@@ -46,7 +47,7 @@ TCPStreamPool::run() {
       // security check, since we are inside a loop
       if (testCancel() || !good()) {break;}
     }
-    if (_outputPool.pop(output, WAITING_TIME)) {
+    if (good() && _outputPool.pop(output, WAITING_TIME)) {
       //_debug("TCPStreamPool send %s\n", output.c_str());
       *this << output << std::endl;
     }

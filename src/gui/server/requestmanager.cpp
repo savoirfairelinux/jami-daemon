@@ -38,6 +38,7 @@ RequestManager::~RequestManager()
 int 
 RequestManager::exec() 
 {
+  _debug("Request manager waiting TCP session\n");
   try {
     _stop = false;
     while(std::cin.good() && !_stop) {
@@ -55,6 +56,7 @@ RequestManager::exec()
       Request *request;
 
       _quit = false;
+      _debug("Initiate a new TCP Session... \n");
       _sessionIO->init();
 
       // std::cin.good() is only there to close the server when
@@ -72,16 +74,19 @@ RequestManager::exec()
       } // end streaming
 
       { // session mutex block
+        _debug("Closing TCP Session... \n");
         _sessionMutex.enterMutex(); 
         delete _sessionIO; _sessionIO = NULL;
         _sessionMutex.leaveMutex();
+        _debug("TCP Session has closed\n");
       }
 
     } // end while
- 
+
   } catch(ost::Socket *e) {
     std::cerr << "Exception: " << e->getErrorString() << std::endl;
   }
+  _debug("Request manager has closed\n");
   return 0;
 }
 

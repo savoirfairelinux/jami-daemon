@@ -61,12 +61,8 @@
 
 ManagerImpl::ManagerImpl (void)
 {
-  // initialize random generator  
-  srand (time(NULL));
-  
   // Init private variables 
   _error = new Error();
-  _tone = new ToneGenerator();	
 
   _hasZeroconf = false;
 #ifdef USE_ZEROCONF
@@ -74,14 +70,14 @@ ManagerImpl::ManagerImpl (void)
   _DNSService = new DNSService();
 #endif
 
-  _nCodecs = 0;
-  _currentCallId = 0;
-  _startTime = 0;
-  _endTime = 0;
+  // setup
   _path = ""; 
   _exist = 0;
   _setupLoaded = false;
   _gui = NULL;
+
+  // SOUND:
+  _codecMap = CodecDescriptorMap().getMap();
   _audiodriverPA = NULL;
 
   // Initialize after by init() -> initVolume()
@@ -89,41 +85,47 @@ ManagerImpl::ManagerImpl (void)
   _mic_volume  = 0; 
   _mic_volume_before_mute = 0;
 
+  _tone = new ToneGenerator();	
   _toneType = ZT_TONE_NULL;
 
+  // Call
+  _currentCallId = 0;
   _nbIncomingWaitingCall=0;
-
-  _codecMap = CodecDescriptorMap().getMap();
-
   _registerState = UNREGISTERED;
+  _hasTriedToRegister = false;
+  // initialize random generator for call id
+  srand (time(NULL));
 }
 
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void) 
 {
   terminate();
+  delete _tone;  _tone = NULL;
+
 #ifdef USE_ZEROCONF
   delete _DNSService; _DNSService = NULL;
 #endif
 
-  delete _tone;  _tone = NULL;
   delete _error; _error = NULL;
 
-  _debug("%s stop correctly\n", PROGNAME);
+  _debug("%s stop correctly.\n", PROGNAME);
 }
 
 void 
 ManagerImpl::init() 
 {
-  _debugInit("Volume Initialisation");
   initVolume();
 
   if (_exist == 0) {
     _debug("Cannot create config file in your home directory\n");
-  } 
+  }
+
+  _debugInit("Load Telephone Tone");
+  std::string country = getConfigString(PREFERENCES, ZONE_TONE);
+  _telephoneTone = new TelephoneTone(country);
 
   try {
-    _debugInit("Audio Driver Selection");
     selectAudioDriver();
   }
   catch (const portaudio::PaException &e)
@@ -142,11 +144,10 @@ ManagerImpl::init()
       throw e;
     }
   catch (...)
-    { 
+    {
       displayError("An unknown exception occured.");
       throw;
     }
-  _debugInit("Audio Codec Initialization");
   initAudioCodec();
 
   _debugInit("Adding new VoIP Link");
@@ -155,17 +156,14 @@ ManagerImpl::init()
 
   // initRegisterVoIP was here, but we doing it after the gui loaded... 
   // the stun detection is long, so it's a better idea to do it after getEvents
-
   initZeroconf();
-
-  std::string country = getConfigString(PREFERENCES, ZONE_TONE);
-  _telephoneTone = new TelephoneTone(country);
 }
 
 void ManagerImpl::terminate()
 {
-  delete _telephoneTone; _telephoneTone = 0;
+  saveConfig();
 
+  _debug("Removing VoIP Links...\n");
   for(VoIPLinkVector::iterator pos = _voIPLinkVector.begin();
       pos != _voIPLinkVector.end();
       pos++) {
@@ -174,6 +172,7 @@ void ManagerImpl::terminate()
   }
   _voIPLinkVector.clear();
 
+  _debug("Removing calls\n");
   _mutex.enterMutex();
   for(CallVector::iterator pos = _callVector.begin();
       pos != _callVector.end();
@@ -185,7 +184,11 @@ void ManagerImpl::terminate()
 
   unloadAudioCodec();
 
+  _debug("Unload Audio Driver\n");
   delete _audiodriverPA; _audiodriverPA = NULL;
+
+  _debug("Unload Telephone Tone\n");
+  delete _telephoneTone; _telephoneTone = 0;
 }
 
 void
@@ -447,6 +450,7 @@ ManagerImpl::refuseCall (CALLID id)
 bool
 ManagerImpl::saveConfig (void)
 {
+  _debug("Saving Configuration...\n");
   setConfig(AUDIO, VOLUME_SPKR, getSpkrVolume());
   setConfig(AUDIO, VOLUME_MICRO, getMicVolume());
 
@@ -460,6 +464,7 @@ ManagerImpl::saveConfig (void)
 void 
 ManagerImpl::initRegisterVoIPLink() 
 {
+  _debug("Initiate VoIP Link Registration\n");
   if (_hasTriedToRegister == false) {
    _voIPLinkVector.at(DFT_VOIP_LINK)->init(); // we call here, because it's long...
    if (_voIPLinkVector.at(DFT_VOIP_LINK)->checkNetwork()) {
@@ -481,6 +486,7 @@ ManagerImpl::initRegisterVoIPLink()
 int 
 ManagerImpl::registerVoIPLink (void)
 {
+  _debug("Register VoIP Link\n");
   int returnValue = 0;
   // Cyrille always want to register to receive call | 2005-10-24 10:50
   //if ( !useStun() ) {
@@ -503,6 +509,7 @@ ManagerImpl::registerVoIPLink (void)
 int 
 ManagerImpl::unregisterVoIPLink (void)
 {
+  _debug("Unregister VoIP Link\n");
 	if (_voIPLinkVector.at(DFT_VOIP_LINK)->setUnregister() == 0) {
 		return 1;
 	} else {
@@ -572,7 +579,6 @@ ManagerImpl::playDtmf(char code)
     }
 
     AudioLayer *audiolayer = getAudioDriver();
-    _toneMutex.enterMutex();
 
     // Put buffer to urgentRingBuffer 
     // put the size in bytes...
@@ -593,7 +599,6 @@ ManagerImpl::playDtmf(char code)
     } else {
       audiolayer->sleep(pulselen); // in milliseconds
     }
-    _toneMutex.leaveMutex();
     delete[] buf_ctrl_vol; buf_ctrl_vol = 0;
     returnValue = true;
   }
@@ -858,10 +863,9 @@ ManagerImpl::stopVoiceMessageNotification (void)
  */
 bool 
 ManagerImpl::playATone(Tone::TONEID toneId) {
-  ost::MutexLock m(_toneMutex); 
-  //_toneType = tone;
-  //_tone->toneHandle(_toneType, getConfigString(PREFERENCES, ZONE_TONE));
+  _toneMutex.enterMutex();
   _telephoneTone->setCurrentTone(toneId);
+  _toneMutex.leaveMutex();
   getAudioDriver()->startStream();
   return true;
 }
@@ -871,6 +875,10 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
  */
 void 
 ManagerImpl::stopTone() {
+  _debug("TONE: stop tone/stream...\n");
+  getAudioDriver()->stopStream();
+
+  _debug("TONE: stop tone...\n");
   _toneMutex.enterMutex();
   _telephoneTone->setCurrentTone(Tone::TONE_NULL);
   // for ringing tone..
@@ -879,7 +887,7 @@ ManagerImpl::stopTone() {
     _tone->stopTone();
   }
   _toneMutex.leaveMutex();
-  getAudioDriver()->stopStream();
+  _debug("TONE: tone stopped\n");
 }
 
 /**
@@ -888,6 +896,7 @@ ManagerImpl::stopTone() {
 bool
 ManagerImpl::playTone()
 {
+  _debug("TONE: play dialtone...\n");
   return playATone(Tone::TONE_DIALTONE);
 }
 
@@ -939,6 +948,7 @@ Tone *
 ManagerImpl::getTelephoneTone()
 {
   if(_telephoneTone) {
+    ost::MutexLock m(_toneMutex);
     return _telephoneTone->getCurrentTone();
   }
   else {
@@ -953,14 +963,14 @@ ManagerImpl::getTelephoneTone()
 void
 ManagerImpl::ringtone() 
 {
-  _toneMutex.enterMutex(); 
-  _toneType = ZT_TONE_FILE;
   std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
   // if there is no / inside the path
   if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
     // check inside global share directory
     ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
   }
+  _toneMutex.enterMutex(); 
+  _toneType = ZT_TONE_FILE;
   int play = _tone->playRingtone(ringchoice.c_str());
   _toneMutex.leaveMutex();
   if (play!=1) {
@@ -1134,6 +1144,7 @@ ManagerImpl::initConfigFile (void)
 void
 ManagerImpl::initAudioCodec (void)
 {
+  _debugInit("Load Audio Codecs");
   // TODO: need to be more dynamic...
   _codecDescVector.push_back(new CodecDescriptor(getConfigString(AUDIO, CODEC1)));
   _codecDescVector.push_back(new CodecDescriptor(getConfigString(AUDIO, CODEC2)));
@@ -1146,6 +1157,7 @@ ManagerImpl::initAudioCodec (void)
 void 
 ManagerImpl::unloadAudioCodec()
 {
+  _debug("Unload Audio Codecs\n");
   CodecDescriptorVector::iterator iter = _codecDescVector.begin();
   while(iter!=_codecDescVector.end()) {
     delete *iter; *iter = NULL;
@@ -1163,10 +1175,10 @@ ManagerImpl::selectAudioDriver (void)
 {
 #if defined(AUDIO_PORTAUDIO)
   try {
-    _debugInit("  AudioLayer Creation");
+    _debugInit("AudioLayer Creation");
     _audiodriverPA = new AudioLayer();
     int noDevice = getConfigInt(AUDIO, DRIVER_NAME);
-    _debugInit("  AudioLayer Device Count");
+    _debugInit(" AudioLayer Device Count");
     int nbDevice = portaudio::System::instance().deviceCount();
     if (nbDevice == 0) {
       throw std::runtime_error("Portaudio detect no sound card.");
@@ -1175,7 +1187,7 @@ ManagerImpl::selectAudioDriver (void)
       _setupLoaded = false;
       noDevice = 0;
     }
-    _debugInit("  AudioLayer Opening Device");
+    _debugInit(" AudioLayer Opening Device");
     _audiodriverPA->openDevice(noDevice);
   } catch(...) {
     throw;
@@ -1210,6 +1222,7 @@ ManagerImpl::initZeroconf(void)
 void
 ManagerImpl::initVolume()
 {
+  _debugInit("Initiate Volume\n");
   setSpkrVolume(getConfigInt(AUDIO, VOLUME_SPKR));
   setMicVolume(getConfigInt(AUDIO, VOLUME_MICRO));
 }

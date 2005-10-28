@@ -111,11 +111,15 @@ void
 AudioLayer::stopStream(void) 
 {
   ost::MutexLock guard(_mutex);
-  if (_stream && !_stream->isStopped()) {
-     _stream->stop();
-    _mainSndRingBuffer.flush();
-    _urgentRingBuffer.flush();
-    _micRingBuffer.flush();
+  try {
+    if (_stream && !_stream->isStopped()) {
+      _stream->stop();
+      _mainSndRingBuffer.flush();
+      _urgentRingBuffer.flush();
+      _micRingBuffer.flush();
+    }
+  } catch (...) {
+    _debug("Portaudio error: error when stoping audiolayer stream\n");
   }
 }
 
