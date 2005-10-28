@@ -41,7 +41,7 @@ class TCPStreamPool : public ost::TCPSession
 public:
   TCPStreamPool(ost::TCPSocket& server) : ost::TCPSession(server) 
   {
-    setCancel(cancelDeferred);
+    setCancel(cancelImmediate);
   }
   TCPStreamPool::~TCPStreamPool();
 

@@ -181,7 +181,6 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
   }
 
   // Get bytes from micRingBuffer to data_from_mic
-  Manager::instance().getAudioDriver()->startStream();
   Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic_stereo, bytesAvail, 100);
   // control volume and stereo->mono
   // the j is in int16 RTP_FRAMES2SEND
@@ -192,6 +191,7 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
   }
   if ( bytesAvail != maxBytesToGet ) {
     // fill end with 0...
+    _debug("Padding mic: %d bytes\n", (maxBytesToGet-bytesAvail)/2);
     bzero(data_from_mic_mono + (bytesAvail/4), (maxBytesToGet-bytesAvail)/2);
   }
 
@@ -258,6 +258,8 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
   Manager::instance().getAudioDriver()->putMain(data_for_speakers_stereo, expandedSize*2);
   //}
 	
+  Manager::instance().getAudioDriver()->startStream();
+
 	// Notify (with a beep) an incoming call when there is already a call 
 	countTime += time->getSecond();
 	if (Manager::instance().incomingCallWaiting() > 0) {

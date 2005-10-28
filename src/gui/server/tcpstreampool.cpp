@@ -23,9 +23,14 @@
 
 TCPStreamPool::~TCPStreamPool() 
 {
+  _debug("TCPStreamPool terminate\n");
   terminate();
+  _debug("terminate done\n");
+
+
   std::string output;
-  while (good() && _outputPool.pop(output, WAITING_TIME))  {
+  while (_outputPool.pop(output, WAITING_TIME))  {
+    _debug("TCPStreamPool send %s\n", output.c_str());
     //_debug("sending last message...\n");
     *this << output << std::endl;
   }
@@ -40,7 +45,7 @@ TCPStreamPool::run() {
   while(!testCancel() && good()) {
     while (isPending(ost::TCPSocket::pendingInput, WAITING_TIME)) {
       std::getline(*this, input);
-      //_debug("TCPStreamPool getline %s\n", input.c_str());
+      _debug("TCPStreamPool getline %s\n", input.c_str());
       if (input != null && input[0]!=cr13) {
         _inputPool.push(input);
       }
@@ -48,7 +53,7 @@ TCPStreamPool::run() {
       if (testCancel() || !good()) {break;}
     }
     if (good() && _outputPool.pop(output, WAITING_TIME)) {
-      //_debug("TCPStreamPool send %s\n", output.c_str());
+      _debug("TCPStreamPool send %s\n", output.c_str());
       *this << output << std::endl;
     }
   }

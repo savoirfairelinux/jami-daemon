@@ -103,6 +103,7 @@ AudioLayer::startStream(void)
 {
   ost::MutexLock guard(_mutex);
   if (_stream && !_stream->isActive()) {
+    _debug("starting stream...\n");
     _stream->start();
   }
 }
@@ -113,6 +114,7 @@ AudioLayer::stopStream(void)
   ost::MutexLock guard(_mutex);
   try {
     if (_stream && !_stream->isStopped()) {
+      _debug("stopping stream...\n");
       _stream->stop();
       _mainSndRingBuffer.flush();
       _urgentRingBuffer.flush();
@@ -163,8 +165,7 @@ AudioLayer::flushMain()
 void
 AudioLayer::putUrgent(void* buffer, int toCopy)
 {
-  ost::MutexLock guard(_mutex);
-  int a = _mainSndRingBuffer.AvailForPut();
+  int a = _urgentRingBuffer.AvailForPut();
   if ( a >= toCopy ) {
     _urgentRingBuffer.Put(buffer, toCopy);
   } else {

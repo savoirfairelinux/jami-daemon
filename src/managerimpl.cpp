@@ -881,13 +881,17 @@ ManagerImpl::stopTone() {
   _debug("TONE: stop tone...\n");
   _toneMutex.enterMutex();
   _telephoneTone->setCurrentTone(Tone::TONE_NULL);
+  _toneMutex.leaveMutex();
+  _debug("TONE: tone stopped\n");
+
   // for ringing tone..
+  _toneMutex.enterMutex();
   if ( _toneType != ZT_TONE_NULL ) {
     _toneType = ZT_TONE_NULL;
     _tone->stopTone();
   }
   _toneMutex.leaveMutex();
-  _debug("TONE: tone stopped\n");
+  _debug("TONE: leave stop tone function\n");
 }
 
 /**
@@ -963,19 +967,19 @@ ManagerImpl::getTelephoneTone()
 void
 ManagerImpl::ringtone() 
 {
-  std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
+  //std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
   // if there is no / inside the path
-  if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
+  //if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
     // check inside global share directory
-    ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
-  }
-  _toneMutex.enterMutex(); 
-  _toneType = ZT_TONE_FILE;
-  int play = _tone->playRingtone(ringchoice.c_str());
-  _toneMutex.leaveMutex();
-  if (play!=1) {
+  //  ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
+  //}
+  //_toneMutex.enterMutex(); 
+  //_toneType = ZT_TONE_FILE;
+  //int play = _tone->playRingtone(ringchoice.c_str());
+  //_toneMutex.leaveMutex();
+  //if (play!=1) {
     ringback();
-  }
+  //}
 }
 
 /**
