@@ -42,7 +42,7 @@
 #include "audio/tonelist.h"
 
 #include "call.h"
-#include "error.h"
+//#include "error.h"
 #include "user_cfg.h"
 #include "voIPLink.h" 
 #include "gui/guiframework.h"
@@ -62,7 +62,7 @@
 ManagerImpl::ManagerImpl (void)
 {
   // Init private variables 
-  _error = new Error();
+  //_error = new Error();
 
   _hasZeroconf = false;
 #ifdef USE_ZEROCONF
@@ -107,7 +107,7 @@ ManagerImpl::~ManagerImpl (void)
   delete _DNSService; _DNSService = NULL;
 #endif
 
-  delete _error; _error = NULL;
+  //delete _error; _error = NULL;
 
   _debug("%s stop correctly.\n", PROGNAME);
 }

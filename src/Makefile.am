@@ -12,9 +12,9 @@ endif
 
 SUBDIRS = audio config gui $(ZEROCONFDIR)
 
-sflphoned_SOURCES = call.cpp 	eventthread.cpp 	error.cpp 	main.cpp 	sipvoiplink.cpp 	voIPLink.cpp \
+sflphoned_SOURCES = call.cpp 	eventthread.cpp 	main.cpp 	sipvoiplink.cpp 	voIPLink.cpp \
 		sipcall.cpp 	managerimpl.cpp 	managerimpl.h 	manager.h 	global.h \
-		eventthread.h 	error.h \
+		eventthread.h 	\
 		sipvoiplink.h 	user_cfg.h 	call.h 	voIPLink.h 	sipcall.h 	\
 		observer.cpp
 

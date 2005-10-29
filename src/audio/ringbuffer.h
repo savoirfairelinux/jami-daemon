@@ -22,15 +22,10 @@
 
 #ifndef __RING_BUFFER__
 #define __RING_BUFFER__
-
 #include <cc++/thread.h>
-
-#include "../global.h"
-
 
 typedef unsigned char* samplePtr;
 
-// template <typename T>
 class RingBuffer {
  public:
    RingBuffer(int size);
@@ -55,7 +50,6 @@ class RingBuffer {
    int Len() const;
    
  private:
- //  T getNextSample(void);
 
    int           mStart;
    int           mEnd;

@@ -25,7 +25,6 @@
 
 #include "portaudiocpp/PortAudioCpp.hxx"
 
-
 #include "../global.h"
 #include "ringbuffer.h"
 #include <cc++/thread.h>

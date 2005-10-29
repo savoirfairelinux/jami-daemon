@@ -36,7 +36,7 @@
 
 class AudioLayer;
 class CodecDescriptor;
-class Error;
+//class Error;
 class GuiFramework;
 class ToneGenerator;
 
@@ -92,7 +92,7 @@ public:
 	void setGui (GuiFramework* gui);
 	
 	// Accessor to error
-	Error* error(void) const { return _error; }
+	//Error* error(void) const { return _error; }
 
 	// Accessor to audiodriver
   // it multi-thread and use mutex internally
@@ -332,7 +332,7 @@ private:
   ost::Mutex _toneMutex;
   int _toneType;
 
-	Error* _error;
+	//Error* _error;
 	GuiFramework* _gui;
 	AudioLayer* _audiodriverPA;
   DTMF _key;

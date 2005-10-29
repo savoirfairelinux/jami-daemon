@@ -25,7 +25,6 @@
 #include "sipvoiplink.h"
 #include "global.h"
 #include "audio/codecDescriptor.h"
-#include "error.h"
 #include "manager.h"
 #include "sipcall.h"
 #include "user_cfg.h"
@@ -226,8 +225,6 @@ SipVoIPLink::setRegister (void)
   }
   eXosip_unlock();
 
-  manager.error()->setError(0);
-
   // subscribe to message one time?
   // subscribeMessageSummary();
 
@@ -270,7 +267,6 @@ SipVoIPLink::setUnregister (void)
       return -1;
     }
     eXosip_unlock();
-    Manager::instance().error()->setError(0);
     return i;
   } else {
     // no registration send before
@@ -1349,11 +1345,11 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   osip_message_t *invite;
 
   if (checkUrl(from) != 0) {
-    Manager::instance().displayConfigError("Error for 'From' header");
+    Manager::instance().displayConfigError("Error in source address");
     return -1;
   }
   if (checkUrl(to) != 0) {
-    Manager::instance().error()->errorName(TO_ERROR);
+    Manager::instance().displayErrorText(id, "Error in destination address");
     return -1;
   }
 	
