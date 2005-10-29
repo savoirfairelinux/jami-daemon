@@ -64,7 +64,6 @@ private:
    */
   void genBuffer(const std::string& definition);
 
-  int contains (const std::string& str, char c);
   int16* _buffer;
   int _size; // number of int16 inside the buffer, not the delay
   int _pos; // current position, set to 0, when initialize

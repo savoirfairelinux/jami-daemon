@@ -232,9 +232,8 @@ ManagerImpl::deleteCall (CALLID id)
   while(iter!=_callVector.end()) {
     Call *call = *iter;
     if (call != NULL && call->getId() == id) {
-      if (call->getFlagNotAnswered()) {
+      if (call->getFlagNotAnswered() || call->isIncomingType()) {
         decWaitingCall();
-        call->setFlagNotAnswered(false);
       }
       delete (*iter); *iter = NULL; 
       call = NULL;
@@ -661,9 +660,23 @@ ManagerImpl::callCanBeAnswered(CALLID id) {
   bool returnValue = false;
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  if (call != NULL && 
-      call->getState() != Call::OnHold && 
-      call->getState() != Call::OffHold) {
+  if (call != NULL && ( call->getFlagNotAnswered() || 
+       (call->getState()!=Call::OnHold && call->getState()!=Call::OffHold) )) {
+    returnValue = true;
+  }
+  return returnValue;
+}
+
+/**
+ * SipEvent Thread
+ * ask if it can start the sound thread
+ */
+bool
+ManagerImpl::callIsOnHold(CALLID id) {
+  bool returnValue = false;
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call != NULL && (call->getState()==Call::OnHold)) {
     returnValue = true;
   }
   return returnValue;
@@ -713,8 +726,9 @@ ManagerImpl::peerAnsweredCall (CALLID id)
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call != 0) {
+    call->setFlagNotAnswered(false);
     call->setState(Call::Answered);
-  
+
     stopTone();
     // switch current call
     switchCall(id);

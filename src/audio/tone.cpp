@@ -156,14 +156,3 @@ Tone::getNext(int16* output, int nb, short volume)
   return copied;
 }
 
-int
-Tone::contains (const std::string& str, char c)
-{
-  int nb = 0;
-  unsigned int pos = str.find(c);
-  while (pos != std::string::npos ) {
-    nb++;
-    pos = str.find(c, pos+1);
-  }
-  return nb;
-}

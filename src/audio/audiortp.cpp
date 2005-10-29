@@ -69,7 +69,7 @@ AudioRtp::closeRtpSession () {
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, bool sym) : _codecBuilder(0) {
-
+  setCancel(cancelDeferred);
   time = new ost::Time();
   _ca = sipcall;
   _sym = sym;

@@ -126,6 +126,7 @@ public:
   void callSetInfo(CALLID id, const std::string& name, const std::string& number);
   bool callCanBeAnswered(CALLID id);
   bool callCanBeClosed(CALLID id);
+  bool callIsOnHold(CALLID id);
 	
 	/*
 	 * Functions which occur with a user's action

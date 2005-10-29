@@ -705,20 +705,25 @@ SipVoIPLink::getEvent (void)
       // Answer
       if (Manager::instance().callCanBeAnswered(id)) {
         sipcall->setStandBy(false);
+        _debug("Answering call first time\n");
         if (sipcall->answeredCall(event) != -1) {
           sipcall->answeredCall_without_hold(event);
           Manager::instance().peerAnsweredCall(id);
 
-          // Outgoing call is answered, start the sound channel.
-          if (_audiortp.createNewSession (sipcall) < 0) {
-            _debug("FATAL: Unable to start sound (%s:%d)\n", 
-            __FILE__, __LINE__);
-            returnValue = -1;
-            break;
+          if(!Manager::instance().callIsOnHold(id)) {
+            // Outgoing call is answered, start the sound channel.
+            _debug("Starting AudioRTP\n");
+            if (_audiortp.createNewSession (sipcall) < 0) {
+              _debug("FATAL: Unable to start sound (%s:%d)\n", 
+              __FILE__, __LINE__);
+              returnValue = -1;
+              break;
+            }
           }
         }
       } else {
         // Answer to on/off hold to send ACK
+        _debug("Answering call\n");
         sipcall->answeredCall(event);
       }
       break;

@@ -122,10 +122,10 @@ TelephoneTone::~TelephoneTone()
 void
 TelephoneTone::setCurrentTone(Tone::TONEID toneId)
 {
-  _currentTone = toneId;
-  if ( _currentTone != Tone::TONE_NULL ) {
-    _tone[_currentTone]->reset();
+  if ( toneId != Tone::TONE_NULL && _currentTone != toneId ) {
+    _tone[toneId]->reset();
   }
+  _currentTone = toneId;
 }
 
 Tone*
