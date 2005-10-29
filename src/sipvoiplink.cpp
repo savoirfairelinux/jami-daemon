@@ -402,7 +402,6 @@ SipVoIPLink::hangup (CALLID id)
   eXosip_unlock();
 
   // Release RTP channels
-  sipcall->enable_audio = false;
   _audiortp.closeRtpSession();
 
   deleteSipCall(id);
@@ -482,15 +481,14 @@ SipVoIPLink::onhold (CALLID id)
     osip_message_set_content_type (invite, "application/sdp");
   }
   
-  eXosip_lock ();
   // Send request
   _audiortp.closeRtpSession();
 
+  eXosip_lock ();
   i = eXosip_call_send_request (did, invite);
   eXosip_unlock ();
   
   // Disable audio
-  sipcall->enable_audio = false;
   return i;
 }
 
@@ -682,7 +680,18 @@ SipVoIPLink::getEvent (void)
     // proceeding call...
     break;
 
-    // The peer-user answers
+  case EXOSIP_CALL_RINGING: // 9 peer call is ringing
+    id = findCallIdInitial(event);
+    _debug("Call is ringing [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);
+    if (id != 0) {
+      getSipCall(id)->ringingCall(event);
+      Manager::instance().peerRingingCall(id);
+    } else {
+      returnValue = -1;
+    }
+    break;
+
+  // The peer-user answers
   case EXOSIP_CALL_ANSWERED: // 10
   {
     id = findCallIdInitial(event);
@@ -717,17 +726,6 @@ SipVoIPLink::getEvent (void)
       returnValue = -1;
     }
   }
-  case EXOSIP_CALL_RINGING: //peer call is ringing
-    id = findCallIdInitial(event);
-    _debug("Call is ringing [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);
-    if (id != 0) {
-      getSipCall(id)->ringingCall(event);
-      Manager::instance().peerRingingCall(id);
-    } else {
-      returnValue = -1;
-    }
-    break;
-
   case EXOSIP_CALL_REDIRECTED:
     break;
 
@@ -748,7 +746,6 @@ SipVoIPLink::getEvent (void)
     if (id != 0) {
       if (Manager::instance().callCanBeClosed(id)) {
          sipcall = getSipCall(id);
-         if ( sipcall != NULL ) { sipcall->enable_audio = false; }
          _audiortp.closeRtpSession();
       }
       Manager::instance().peerHungupCall(id);

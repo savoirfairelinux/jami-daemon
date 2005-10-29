@@ -33,10 +33,9 @@ AudioLayer::AudioLayer()
   , _mainSndRingBuffer(SIZEBUF)
   , _micRingBuffer(SIZEBUF)
   , _stream(NULL)
+  , _errorMessage("")
 {
-  _debugInit("   portaudio initialization...");
   portaudio::System::initialize();
-  _debugInit("   portaudio end initialization.");
   NBCHARFORTWOINT16 = sizeof(int16)/sizeof(unsigned char) * CHANNELS;
 }
 
@@ -61,7 +60,7 @@ void
 AudioLayer::listDevices()
 {
   ost::MutexLock guard(_mutex);
-  portaudio::System::DeviceIterator pos = portaudio::System::instance().devicesBegin();
+  portaudio::System::DeviceIterator pos =  portaudio::System::instance().devicesBegin();
   while(pos != portaudio::System::instance().devicesEnd()) {
     _debug("AudioLayer: Device (%d) %s\n", pos->index(), pos->name());
     pos++;
@@ -72,8 +71,8 @@ AudioLayer::listDevices()
 void
 AudioLayer::openDevice (int index) 
 {
-  ost::MutexLock guard(_mutex);
   closeStream();
+
   // Set up the parameters required to open a (Callback)Stream:
   portaudio::DirectionSpecificStreamParameters 
     outParams(portaudio::System::instance().deviceByIndex(index), 
@@ -93,6 +92,7 @@ AudioLayer::openDevice (int index)
 					   SAMPLING_RATE, FRAME_PER_BUFFER /*paFramesPerBufferUnspecified*/, paNoFlag /*paPrimeOutputBuffersUsingStreamCallback | paNeverDropInput*/);
 		  
   // Create (and open) a new Stream, using the AudioLayer::audioCallback
+  ost::MutexLock guard(_mutex);
   _stream = new portaudio::MemFunCallbackStream<AudioLayer>(params, 
 							    *this, 
 							    &AudioLayer::audioCallback);
@@ -128,7 +128,9 @@ AudioLayer::stopStream(void)
 void
 AudioLayer::sleep(int msec) 
 {
-  portaudio::System::instance().sleep(msec);
+  if (_stream) {
+    portaudio::System::instance().sleep(msec);
+  }
 }
 
 bool
@@ -143,16 +145,19 @@ AudioLayer::isStreamActive (void)
   }
 }
 
-void
+int 
 AudioLayer::putMain(void* buffer, int toCopy)
 {
   ost::MutexLock guard(_mutex);
-  int a = _mainSndRingBuffer.AvailForPut();
-  if ( a >= toCopy ) {
-    _mainSndRingBuffer.Put(buffer, toCopy);
-  } else {
-    _mainSndRingBuffer.Put(buffer, a);
+  if (_stream) {
+    int a = _mainSndRingBuffer.AvailForPut();
+    if ( a >= toCopy ) {
+      return _mainSndRingBuffer.Put(buffer, toCopy);
+    } else {
+      return _mainSndRingBuffer.Put(buffer, a);
+    }
   }
+  return 0;
 }
 
 void
@@ -162,14 +167,37 @@ AudioLayer::flushMain()
   _mainSndRingBuffer.flush();
 }
 
-void
+int
 AudioLayer::putUrgent(void* buffer, int toCopy)
 {
-  int a = _urgentRingBuffer.AvailForPut();
-  if ( a >= toCopy ) {
-    _urgentRingBuffer.Put(buffer, toCopy);
+  if (_stream) {
+    int a = _urgentRingBuffer.AvailForPut();
+    if ( a >= toCopy ) {
+      return _urgentRingBuffer.Put(buffer, toCopy);
+    } else {
+      return _urgentRingBuffer.Put(buffer, a);
+    }
+  }
+  return 0;
+}
+
+int
+AudioLayer::canGetMic()
+{
+  if (_stream) {
+    return _micRingBuffer.AvailForGet();
   } else {
-    _urgentRingBuffer.Put(buffer, a);
+    return 0;
+  }
+}
+
+int 
+AudioLayer::getMic(void *buffer, int toCopy)
+{
+  if(_stream) {
+    return _micRingBuffer.Get(buffer, toCopy, 100);
+  } else {
+    return 0;
   }
 }
 

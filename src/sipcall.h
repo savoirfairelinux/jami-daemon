@@ -44,7 +44,6 @@ public:
 	~SipCall (void);
 
   int payload;
-  bool enable_audio; /* true = started, false = stopped */
 	
 	/*
 	 * Store information about incoming call and negociate payload

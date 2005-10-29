@@ -44,7 +44,6 @@ SipCall::SipCall (CALLID id, CodecDescriptorVector* cdv) : _localIp("127.0.0.1")
   alloc(); // char* allocation
   _cdv = cdv;
   _audiocodec = NULL;
-  enable_audio = false;
 
   _local_audio_port = 0;
   _remote_sdp_audio_port = 0;
@@ -262,7 +261,6 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
       eXosip_call_send_answer (_tid, 415, NULL);
       _debug("< Sending Answer 415\n");
     } else {
-      enable_audio = false;
 
       sdp_message_t *local_sdp = eXosip_get_sdp_info(answer);
       sdp_media_t *local_med = NULL;
@@ -397,18 +395,17 @@ SipCall::answeredCall(eXosip_event_t *event) {
 void
 SipCall::answeredCall_without_hold (eXosip_event_t *event) 
 {
-  if (enable_audio == true && event->response != NULL) {
+  if (event->response == NULL ) { return; }
+
+  if (_cid!=0) {
     sdp_message_t *sdp = eXosip_get_sdp_info (event->response);
     if (sdp != NULL) {
         /* audio is started and session has just been modified */
-      enable_audio = false;
       sdp_message_free (sdp);
     }
   }
 
-  if (enable_audio == false && 
-      event->request  != NULL && 
-      event->response != NULL) {   /* audio is started */ 
+  if (event->request != NULL) {   /* audio is started */ 
 
     sdp_message_t *local_sdp = eXosip_get_sdp_info (event->request);
     sdp_message_t *remote_sdp = eXosip_get_sdp_info (event->response);

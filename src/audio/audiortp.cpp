@@ -48,7 +48,6 @@ AudioRtp::~AudioRtp (void) {
 int 
 AudioRtp::createNewSession (SipCall *ca) {
   // Start RTP Send/Receive threads
-  ca->enable_audio = 1;
   _symmetric = Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC) ? true : false;
   _RTXThread = new AudioRtpRTX (ca, Manager::instance().getAudioDriver(), _symmetric);
 
@@ -169,7 +168,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 void
 AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_mic_stereo, int16* data_from_mic_mono, int timestamp)
 {
-  int availBytesFromMic = Manager::instance().getAudioDriver()->micRingBuffer().AvailForGet();
+  int availBytesFromMic = Manager::instance().getAudioDriver()->canGetMic();
   int maxBytesToGet = RTP_FRAMES2SEND * 2 * 2; // * channels * int16/byte
   int bytesAvail;
 
@@ -181,7 +180,7 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
   }
 
   // Get bytes from micRingBuffer to data_from_mic
-  Manager::instance().getAudioDriver()->micRingBuffer().Get(data_from_mic_stereo, bytesAvail, 100);
+  Manager::instance().getAudioDriver()->getMic(data_from_mic_stereo, bytesAvail);
   // control volume and stereo->mono
   // the j is in int16 RTP_FRAMES2SEND
   // data_from_mic_mono = 0 to RTP_FRAME2SEND [in int16]
@@ -225,7 +224,6 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
     adu = _session->getData(_session->getFirstTimestamp());
   }
   if (adu == NULL) {
-    //Manager::instance().getAudioDriver()->flushMain();
     return;
   }
 
@@ -256,8 +254,6 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
   // Set decoded data to sound device
   // expandedSize is in mono/bytes, since we double in stereo, we send two time more
   Manager::instance().getAudioDriver()->putMain(data_for_speakers_stereo, expandedSize*2);
-  //}
-	
   Manager::instance().getAudioDriver()->startStream();
 
 	// Notify (with a beep) an incoming call when there is already a call 
@@ -309,7 +305,7 @@ AudioRtpRTX::run (void) {
   TimerPort::setTimer(frameSize);
 
   audiolayer->flushMic();
-	while (!testCancel() && _ca != NULL && _ca->enable_audio != -1) {
+	while (!testCancel() && _ca != NULL) {
 		////////////////////////////
 		// Send session
 		////////////////////////////
@@ -325,14 +321,13 @@ AudioRtpRTX::run (void) {
 		Thread::sleep(TimerPort::getTimer());
 		TimerPort::incTimer(frameSize); // 'frameSize' ms
 	}
+  audiolayer->stopStream();
 
 	delete [] data_for_speakers_stereo; data_for_speakers_stereo = 0;
   delete [] data_for_speakers_recv;   data_for_speakers_recv   = 0;
 	delete [] char_to_send;          char_to_send          = 0;
 	delete [] data_from_mic_mono;    data_from_mic_mono    = 0;
 	delete [] data_from_mic_stereo;  data_from_mic_stereo  = 0;
-
-  audiolayer->stopStream();
 }
 
 

@@ -128,26 +128,19 @@ ManagerImpl::init()
   try {
     selectAudioDriver();
   }
-  catch (const portaudio::PaException &e)
-    {
-      displayError(e.paErrorText());
-      throw e;
-    }
-  catch (const portaudio::PaCppException &e)
-    {
-      displayError(e.what());
-      throw e;
-    }
-  catch (const std::runtime_error &e)
-    {
-      displayError(e.what());
-      throw e;
-    }
-  catch (...)
-    {
-      displayError("An unknown exception occured.");
+  catch (const portaudio::PaException &e) {
+      getAudioDriver()->setErrorMessage(e.paErrorText());
+  }
+  catch (const portaudio::PaCppException &e) {
+      getAudioDriver()->setErrorMessage(e.what());
+  }
+  catch (const std::runtime_error &e) {
+      getAudioDriver()->setErrorMessage(e.what());
+  }
+  catch (...) {
+      displayError("An unknown exception occured while selecting audio driver.");
       throw;
-    }
+  }
   initAudioCodec();
 
   _debugInit("Adding new VoIP Link");
@@ -584,11 +577,7 @@ ManagerImpl::playDtmf(char code)
     // put the size in bytes...
     // so size * CHANNELS * 2 (bytes for the int16)
     int nbInt16InChar = sizeof(int16)/sizeof(char);
-    int toSend = audiolayer->urgentRingBuffer().AvailForPut();
-    if (toSend > (size * CHANNELS * nbInt16InChar)) {
-      toSend = size * CHANNELS * nbInt16InChar;
-    }
-    audiolayer->urgentRingBuffer().Put(buf_ctrl_vol, toSend);
+    audiolayer->putUrgent(buf_ctrl_vol, size * CHANNELS * nbInt16InChar);
 
     // We activate the stream if it's not active yet.
     if (!audiolayer->isStreamActive()) {
@@ -1509,24 +1498,31 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
 bool 
 ManagerImpl::getAudioDeviceList(const std::string& sequenceId) 
 {
-  TokenList tk;
-  portaudio::System& sys = portaudio::System::instance();
+  bool returnValue = false;
+  try {
+    // TODO: test when there is an error on initializing...
+    TokenList tk;
+    portaudio::System& sys = portaudio::System::instance();
 
-  const char *hostApiName;
-  const char *deviceName;
+    const char *hostApiName;
+    const char *deviceName;
 
-  for (int index = 0; index < sys.deviceCount(); index++ ) {
-    portaudio::Device& device = sys.deviceByIndex(index);
-    hostApiName = device.hostApi().name();
-    deviceName  = device.name();
+    for (int index = 0; index < sys.deviceCount(); index++ ) {
+      portaudio::Device& device = sys.deviceByIndex(index);
+      hostApiName = device.hostApi().name();
+      deviceName  = device.name();
 
-    tk.clear();
-    std::ostringstream str; str << index; tk.push_back(str.str());
-    tk.push_back(deviceName);
-    tk.push_back(std::string(hostApiName));
-    _gui->sendMessage("100", sequenceId, tk);
+      tk.clear();
+      std::ostringstream str; str << index; tk.push_back(str.str());
+      tk.push_back(deviceName);
+      tk.push_back(std::string(hostApiName));
+      _gui->sendMessage("100", sequenceId, tk);
+    }
+    returnValue = true;
+  } catch (...) {
+    returnValue = false;
   }
-  return true;
+  return returnValue;
 }
 
 bool

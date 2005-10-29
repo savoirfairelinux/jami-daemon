@@ -52,23 +52,26 @@ public:
 	bool    isStreamStopped	        (void);
 
   void flushMain();
-  void putMain(void* buffer, int toCopy);
-  void putUrgent(void* buffer, int toCopy);
+  int putMain(void* buffer, int toCopy);
+  int putUrgent(void* buffer, int toCopy);
+  int canGetMic();
+  int getMic(void *, int);
   void flushMic();
 
-	int audioCallback (const void *, void *, unsigned long,
-			   const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
+  int audioCallback (const void *, void *, unsigned long,
+        const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
 
-	inline RingBuffer &urgentRingBuffer(void) { return _urgentRingBuffer; }
-	inline RingBuffer &micRingBuffer(void) { return _micRingBuffer; }
+  void setErrorMessage(const std::string& error) { _errorMessage = error; }
+  std::string getErrorMessage() { return _errorMessage; }
 
 private:
-	void	closeStream	(void);
-	RingBuffer _urgentRingBuffer;
-	RingBuffer _mainSndRingBuffer;
-	RingBuffer _micRingBuffer;
+  void	closeStream	(void);
+  RingBuffer _urgentRingBuffer;
+  RingBuffer _mainSndRingBuffer;
+  RingBuffer _micRingBuffer;
 
 	portaudio::MemFunCallbackStream<AudioLayer> *_stream;
+  std::string _errorMessage;
 //	portaudio::AutoSystem autoSys;
   ost::Mutex _mutex;
   int NBCHARFORTWOINT16;
