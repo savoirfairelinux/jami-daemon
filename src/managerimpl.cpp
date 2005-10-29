@@ -1345,12 +1345,12 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
 
       case Call::OnHold:
         code="114";
-        status = "Holded";
+        status = "Held";
         break;
 
       case Call::OffHold:
         code="115";
-        status = "Unholded";
+        status = "Unheld";
         break;
 
       default:

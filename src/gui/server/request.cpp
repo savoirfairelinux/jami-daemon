@@ -52,7 +52,7 @@ ResponseMessage
 RequestHold::execute()
 {
   if ( GUIServer::instance().holdCall(_callId) ) {
-    return message("200", "Holded");
+    return message("200", "Held");
   }
   return message("500","Server Error");
 }
@@ -61,7 +61,7 @@ ResponseMessage
 RequestUnhold::execute()
 {
   if ( GUIServer::instance().unholdCall(_callId) ) {
-    return message("200", "Unholded");
+    return message("200", "Unheld");
   }
   return message("500","Server Error");
 }
