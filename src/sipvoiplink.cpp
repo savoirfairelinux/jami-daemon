@@ -547,10 +547,10 @@ SipVoIPLink::offhold (CALLID id)
   eXosip_unlock ();
   
   // Enable audio
-  if (_audiortp.createNewSession (getSipCall(id)) < 0) {
-    _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
-    i = -1;
-  }
+    if (_audiortp.createNewSession (getSipCall(id)) < 0) {
+      _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
+      i = -1;
+    }
   return i;
 }
 
@@ -665,7 +665,9 @@ SipVoIPLink::getEvent (void)
 
         _audiortp.closeRtpSession();
         sipcall->newIncomingCall(event);
-        _audiortp.createNewSession(sipcall);
+        if(!Manager::instance().callIsOnHold(id)) {
+          _audiortp.createNewSession(sipcall);
+        }
       }
     } else {
       eXosip_call_send_answer(event->tid, 488, NULL);

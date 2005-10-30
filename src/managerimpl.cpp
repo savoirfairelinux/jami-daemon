@@ -196,9 +196,9 @@ ManagerImpl::setGui (GuiFramework* gui)
 Call *
 ManagerImpl::pushBackNewCall (CALLID id, enum CallType type)
 {
+  ost::MutexLock m(_mutex);
   Call* call = new Call(id, type, _voIPLinkVector.at(DFT_VOIP_LINK));
   // Set the wanted voip-link (first of the list)
-  ost::MutexLock m(_mutex);
   _callVector.push_back(call);
   return call;
 }
@@ -232,7 +232,7 @@ ManagerImpl::deleteCall (CALLID id)
   while(iter!=_callVector.end()) {
     Call *call = *iter;
     if (call != NULL && call->getId() == id) {
-      if (call->getFlagNotAnswered() || call->isIncomingType()) {
+      if (call->getFlagNotAnswered() && call->isIncomingType()) {
         decWaitingCall();
       }
       delete (*iter); *iter = NULL; 
@@ -256,7 +256,7 @@ ManagerImpl::outgoingCall (const std::string& to)
   CALLID id = generateNewCallId();
   Call *call = pushBackNewCall(id, Outgoing);
   _debug("Outgoing Call with identifiant %d\n", id);
-
+  ost::MutexLock m(_mutex);
   call->setState(Call::Progressing);
   call->setCallerIdNumber(to);
   if (call->outgoingCall(to) == 0) {
@@ -347,7 +347,7 @@ ManagerImpl::onHoldCall (CALLID id)
   if ( call->getState() == Call::OnHold || call->isNotAnswered()) {
     return 1;
   }
-  setCurrentCallId(0);
+  _currentCallId = 0;
   return call->onHold();
 }
 
@@ -358,18 +358,19 @@ ManagerImpl::onHoldCall (CALLID id)
 int 
 ManagerImpl::offHoldCall (CALLID id)
 {
-  stopTone();
   ost::MutexLock m(_mutex);
+  stopTone();
   Call* call = getCall(id);
-  if (call == NULL) {
+  if (call == 0) {
     return -1;
   }
   if (call->getState() == Call::OffHold) {
     return 1;
   }
-  setCurrentCallId(id);
+  _currentCallId = id;
   int returnValue = call->offHold();
-  if (returnValue) {
+  // start audio if it's ok
+  if (returnValue != -1) {
     getAudioDriver()->startStream();
   }
   return returnValue;
@@ -384,10 +385,10 @@ ManagerImpl::transferCall (CALLID id, const std::string& to)
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  if (call == NULL) {
+  if (call == 0) {
     return -1;
   }
-  setCurrentCallId(0);
+  _currentCallId = 0;
   return call->transfer(to);
 }
 
@@ -430,7 +431,7 @@ ManagerImpl::refuseCall (CALLID id)
   }
   int refuse = call->refuse();
 
-  setCurrentCallId(0);
+  _currentCallId = 0;
   deleteCall(id);
   stopTone();
   return refuse;
@@ -630,7 +631,7 @@ ManagerImpl::callSetInfo(CALLID id, const std::string& name, const std::string& 
 {
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  if (call != NULL) {
+  if (call != 0) {
     call->setCallerIdName(name);
     call->setCallerIdNumber(number);
   }
@@ -775,7 +776,7 @@ ManagerImpl::peerHungupCall (CALLID id)
   deleteCall(id);
   call->setState(Call::Hungup);
 
-  setCurrentCallId(0);
+  _currentCallId = 0;
   return 1;
 }
 
@@ -929,8 +930,9 @@ ManagerImpl::ringback () {
 void
 ManagerImpl::callBusy(CALLID id) {
   playATone(Tone::TONE_BUSY);
+  ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  if (call != NULL) {
+  if (call != 0) {
     call->setState(Call::Busy);
   }
 }
@@ -941,11 +943,12 @@ ManagerImpl::callBusy(CALLID id) {
 void
 ManagerImpl::callFailure(CALLID id) {
   playATone(Tone::TONE_BUSY);
+  _mutex.enterMutex();
   Call* call = getCall(id);
-  if (call != NULL) {
-    getCall(id)->setState(Call::Error);
+  if (call != 0) {
+    call->setState(Call::Error);
   }
-
+  _mutex.leaveMutex();
   if (_gui) {
     _gui->callFailure(id);
   }
@@ -959,7 +962,7 @@ ManagerImpl::getTelephoneTone()
     return _telephoneTone->getCurrentTone();
   }
   else {
-    return NULL;
+    return 0;
   }
 }
 
@@ -1068,9 +1071,11 @@ ManagerImpl::generateNewCallId (void)
   CALLID random_id = (unsigned)rand();
 
   // Check if already a call with this id exists 
+  _mutex.enterMutex();
   while (getCall(random_id) != NULL && random_id != 0) {
     random_id = rand();
   }
+  _mutex.leaveMutex();
   // If random_id is not attributed, returns it.
   return random_id;
 }
@@ -1324,7 +1329,6 @@ ManagerImpl::getEvents() {
 bool 
 ManagerImpl::getCallStatus(const std::string& sequenceId)
 {
-  ost::MutexLock m(_mutex);
   // TODO: implement account
   std::string accountId = "acc1"; 
   std::string code;
@@ -1333,44 +1337,20 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
   Call* call;
 
   if (_gui!=NULL) {
+    ost::MutexLock m(_mutex);
     CallVector::iterator iter = _callVector.begin();
     while(iter!=_callVector.end()){
       call = (*iter);
       switch( call->getState() ) {
-      case Call::Progressing:
-        code="110";
-        status="Trying";
-        break;
-
-      case Call::Ringing:
-        code="111";
-        status = "Ringing";
-        break;
-
-      case Call::Answered:
-        code="112";
-        status = "Established";
-        break;
-
-      case Call::Busy:
-        code="113";
-        status = "Busy";
-        break;
-
-      case Call::OnHold:
-        code="114";
-        status = "Held";
-        break;
-
-      case Call::OffHold:
-        code="115";
-        status = "Unheld";
-        break;
-
-      default:
-        code="125";
-        status="Other";
+       case Call::Progressing: code="110"; status="Trying";        break;
+       case Call::Ringing:     code="111"; status = "Ringing";     break;
+       case Call::Answered:    code="112"; status = "Established"; break;
+       case Call::Busy:        code="113"; status = "Busy";        break;
+       case Call::OnHold:      code="114"; status = "Held";        break;
+       case Call::OffHold:     code="115"; status = "Unheld";      break;
+       default:                code="125"; status="Other";    
       }
+
       // No Congestion
       // No Wrong Number
       // 116 <CSeq> <call-id> <acc> <destination> Busy
@@ -1599,11 +1579,10 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
 void 
 ManagerImpl::switchCall(CALLID id)
 {
-  CALLID currentCallId = getCurrentCallId();
-  if (currentCallId!=0 && id!=currentCallId) {
-    onHoldCall(currentCallId);
+  if (_currentCallId!=0 && id!=_currentCallId) {
+    //onHoldCall(_currentCallId); <-- this function block _mutex...
   }
-  setCurrentCallId(id);
+  _currentCallId = id;
 }
 
-// EOF
+
