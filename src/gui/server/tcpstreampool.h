@@ -47,6 +47,7 @@ public:
 
   void run();
   void send(const std::string& response);
+  void sendLast();
   bool receive(std::string& request);
 
 private:

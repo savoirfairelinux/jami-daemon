@@ -76,6 +76,7 @@ RequestManager::exec()
       { // session mutex block
         _debug("Closing TCP Session... \n");
         _sessionMutex.enterMutex(); 
+	if (_sessionIO) _sessionIO->sendLast();
         delete _sessionIO; _sessionIO = NULL;
         _sessionMutex.leaveMutex();
         _debug("TCP Session has closed\n");

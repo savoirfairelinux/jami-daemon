@@ -61,6 +61,13 @@ TCPSessionIO::send(const std::string& response)
     _clientStream->send(response);
   }
 }
+void
+TCPSessionIO::sendLast()
+{
+  if (_clientStream) {
+    _clientStream->sendLast();
+  }
+}
 
 bool 
 TCPSessionIO::receive(std::string& request)

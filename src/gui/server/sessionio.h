@@ -32,6 +32,7 @@ public:
     virtual ~SessionIO();
 
     virtual void send(const std::string& response) = 0;
+    virtual void sendLast() = 0;
     virtual bool receive(std::string& request) = 0;
     virtual bool good() = 0;
     virtual void init() = 0;

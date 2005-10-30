@@ -33,6 +33,7 @@ public:
     ~TCPSessionIO();
 
     void send(const std::string& response);
+    void sendLast();
     bool receive(std::string& request);
     bool good();
     void init();

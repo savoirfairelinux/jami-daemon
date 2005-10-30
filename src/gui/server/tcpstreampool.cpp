@@ -26,15 +26,8 @@ TCPStreamPool::~TCPStreamPool()
   _debug("TCPStreamPool terminate\n");
   terminate();
   _debug("terminate done\n");
-
-
-  std::string output;
-  while (_outputPool.pop(output, WAITING_TIME))  {
-    _debug("TCPStreamPool send %s\n", output.c_str());
-    //_debug("sending last message...\n");
-    *this << output << std::endl;
-  }
 }
+
 void 
 TCPStreamPool::run() {
   std::string output;
@@ -45,15 +38,15 @@ TCPStreamPool::run() {
   while(!testCancel() && good()) {
     while (isPending(ost::TCPSocket::pendingInput, WAITING_TIME)) {
       std::getline(*this, input);
-      _debug("TCPStreamPool getline %s\n", input.c_str());
+      //_debug("TCPStreamPool getline %s\n", input.c_str());
       if (input != null && input[0]!=cr13) {
         _inputPool.push(input);
       }
       // security check, since we are inside a loop
       if (testCancel() || !good()) {break;}
     }
-    if (good() && _outputPool.pop(output, WAITING_TIME)) {
-      _debug("TCPStreamPool send %s\n", output.c_str());
+    if (_outputPool.pop(output, WAITING_TIME)) {
+      //_debug("TCPStreamPool send %s\n", output.c_str());
       *this << output << std::endl;
     }
   }
@@ -62,9 +55,16 @@ TCPStreamPool::run() {
 void 
 TCPStreamPool::send(const std::string& response)
 {
- if (!testCancel()) {
-   _outputPool.push(response);
- }
+  _outputPool.push(response);
+}
+void
+TCPStreamPool::sendLast() {
+  std::string output;
+  while (good() && _outputPool.pop(output, WAITING_TIME))  {
+    _debug("TCPStreamPool send last %s\n", output.c_str());
+    //_debug("sending last message...\n");
+    *this << output << std::endl;
+  }
 }
 
 bool 
