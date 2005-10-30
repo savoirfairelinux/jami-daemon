@@ -90,5 +90,5 @@ VoIPLink::initConstructor(void)
 Manager::instance().getConfigString(SIGNALISATION,FULL_NAME
 ) ;
 	_hostname = Manager::instance().getConfigString(SIGNALISATION,HOST_PART);
-	_localIpAddress = "";
+	_localIpAddress = "127.0.0.1"; // sipvoip require this value to check network
 }

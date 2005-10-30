@@ -65,15 +65,15 @@ SipVoIPLink::terminate(void)
 {
 }
 
-bool 
-SipVoIPLink::checkNetwork (void) 
+bool
+SipVoIPLink::checkNetwork (void)
 {
   // Set IP address
   return getSipLocalIp();
 }
 
 int
-SipVoIPLink::init (void)
+SipVoIPLink::init(void)
 {
   std::string tmp;
   tmp = std::string(PROGNAME) + "/" + std::string(SFLPHONED_VERSION);
@@ -110,6 +110,7 @@ SipVoIPLink::init (void)
     eXosip_set_user_agent(tmp.data());
   }
 
+  checkNetwork();
   _debug("SIP VoIP Link: listen to SIP Events\n");
   _evThread->start();
   return 1;
@@ -145,18 +146,20 @@ SipVoIPLink::subscribeMessageSummary()
 
   // return 0 if no error
   // the first from is the to... but we send the same
+  eXosip_lock();
   int error = eXosip_subscribe_build_initial_request(&subscribe, to.c_str(), from.c_str(), route, event, expires);
+  eXosip_unlock();
 
   if (error == 0) {
     // Accept: application/simple-message-summary
     osip_message_set_header (subscribe, "Accept", "application/simple-message-summary");
 
     _debug("Sending Message-summary subscription");
-    eXosip_lock();
     // return 0 if ok
+    eXosip_lock();
     error = eXosip_subscribe_send_initial_request (subscribe);
-    _debug(" and return %d\n", error);
     eXosip_unlock();
+    _debug(" and return %d\n", error);
   }
 }
 
@@ -277,6 +280,7 @@ SipVoIPLink::setUnregister (void)
 int
 SipVoIPLink::outgoingInvite (CALLID id, const std::string& to_url) 
 {
+  bool has_ip = checkNetwork();
   std::string from;
   std::string to;
 
@@ -301,7 +305,7 @@ SipVoIPLink::outgoingInvite (CALLID id, const std::string& to_url)
 
   if (manager.getConfigString(SIGNALISATION, PROXY).empty()) {
     // If no SIP proxy setting for direct call with only IP address
-    if (checkNetwork()) {
+    if (has_ip) {
       if (startCall(id, from, to, "", "") <= 0) {
     	 _debug("Warning SipVoIPLink: call not started\n");
 	     return -1;
@@ -315,7 +319,7 @@ SipVoIPLink::outgoingInvite (CALLID id, const std::string& to_url)
     // If SIP proxy setting
     std::string route = "<sip:" + 
       manager.getConfigString(SIGNALISATION, PROXY) + ";lr>";
-    if (checkNetwork()) {
+    if (has_ip) {
       if (startCall(id, from, to, "", route) <= 0) {
 	     _debug("Warning SipVoIPLink: call not started\n");
 	     return -1;
@@ -361,6 +365,7 @@ SipVoIPLink::answer (CALLID id)
     // Send 400 BAD_REQUEST
     eXosip_call_send_answer (ca->getTid(), BAD_REQ, NULL);
   } else {
+    // use exosip, bug locked
     i = sdp_complete_200ok (ca->getDid(), answerMessage, port);
     if (i != 0) {
       osip_message_free (answerMessage);
@@ -508,8 +513,8 @@ SipVoIPLink::offhold (CALLID id)
     return -1;
   }
 
-  eXosip_lock ();
   // Build INVITE_METHOD for put call off-hold
+  eXosip_lock ();
   i = eXosip_call_build_request (did, INVITE_METHOD, &invite);
   eXosip_unlock ();
 
@@ -541,8 +546,8 @@ SipVoIPLink::offhold (CALLID id)
     osip_message_set_content_type (invite, "application/sdp");
   }
 
-  eXosip_lock ();
   // Send request
+  eXosip_lock ();
   i = eXosip_call_send_request (did, invite);
   eXosip_unlock ();
   
@@ -670,7 +675,9 @@ SipVoIPLink::getEvent (void)
         }
       }
     } else {
+      eXosip_lock();
       eXosip_call_send_answer(event->tid, 488, NULL);
+      eXosip_unlock();
     }
     break;
 
@@ -1154,6 +1161,7 @@ SipVoIPLink::sdp_complete_200ok (int did, osip_message_t * answerMessage, int po
   bzero(port_tmp, 64);
   snprintf(port_tmp, 63, "%d", port);
 
+  // thus exosip call is protected by an extern lock
   remote_sdp = eXosip_get_remote_sdp (did);
   if (remote_sdp == NULL) {
     return -1;                /* no existing body? */
@@ -1263,10 +1271,12 @@ SipVoIPLink::getSipLocalIp (void)
   bool returnValue = true;
   if (getLocalIpAddress() == "127.0.0.1") {
     char* myIPAddress = new char[65];
-    if (eXosip_guess_localip (AF_INET, myIPAddress, 64) == -1) {
+    if (eXosip_guess_localip(AF_INET, myIPAddress, 64) == -1) {
       returnValue = false;
+    } else {
+      setLocalIpAddress(std::string(myIPAddress));
+      _debug("Checking network, setting local ip address to: %s\n", myIPAddress);
     }
-    setLocalIpAddress(std::string(myIPAddress));
     delete [] myIPAddress; myIPAddress = NULL;
   }
   return returnValue;
@@ -1373,11 +1383,14 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   sipcall->setLocalAudioPort(_localPort);
   sipcall->setLocalIp(getLocalIpAddress());
 
+  eXosip_lock();
   int i = eXosip_call_build_initial_invite (&invite, (char*)to.data(),
                                         (char*)from.data(),
                                         (char*)route.data(),
                                         (char*)subject.data());
+  
   if (i != 0) {
+    eXosip_unlock();
     return -1; // error when building the invite
   }
 
@@ -1416,31 +1429,26 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   /* add sdp body */
   {
     char tmp[4096];
-    char localip[128];
-
-    eXosip_guess_localip (AF_INET, localip, 128);
-    char port[64];
-    bzero (port, 64);
-    snprintf (port, 63, "%d", getLocalPort());
-
     snprintf (tmp, 4096,
               "v=0\r\n"
               "o=SFLphone 0 0 IN IP4 %s\r\n"
               "s=call\r\n"
               "c=IN IP4 %s\r\n"
               "t=0 0\r\n"
-              "m=audio %s RTP/AVP %s\r\n"
+              "m=audio %d RTP/AVP %s\r\n"
 	            "%s",
-              localip, localip, port, media_audio, rtpmap_attr);
+              getLocalIpAddress().c_str(), getLocalIpAddress().c_str(), getLocalPort(), media_audio, rtpmap_attr);
     // media_audio should be one, two or three numbers?
     osip_message_set_body (invite, tmp, strlen (tmp));
     osip_message_set_content_type (invite, "application/sdp");
   }
   
-  eXosip_lock();
-	
   // this is the cid (call id from exosip)
   int cid = eXosip_call_send_initial_invite (invite);
+
+  _debug("> Start a new Call: Send INVITE\n");
+  _debug("  Local IP:port: %s:%d\n", getLocalIpAddress().c_str(), getLocalPort());
+  _debug("  Payload:       %s\n", media_audio);
 
   // Keep the cid in case of cancelling
   sipcall->setCid(cid);
@@ -1451,7 +1459,6 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   } else {
     eXosip_call_set_reference (cid, NULL);
   }
-
   eXosip_unlock();
 
   return cid; // this is the Cid

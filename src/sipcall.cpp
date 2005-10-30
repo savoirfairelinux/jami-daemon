@@ -194,25 +194,33 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
   /* negotiate payloads */
   sdp_message_t *remote_sdp = NULL;
   if (event->request != NULL) {
+    eXosip_lock();
     remote_sdp = eXosip_get_sdp_info (event->request);
+    eXosip_unlock();
   }
   if (remote_sdp == NULL) {
     _debug("SipCall::newIncomingCall: No remote SDP in INVITE request. Sending 400 BAD REQUEST\n");
     // Send 400 BAD REQUEST
+    eXosip_lock();
     eXosip_call_send_answer (_tid, 400, NULL);
+    eXosip_unlock();
     return 0;
   }
   /* TODO: else build an offer */
 
   // Remote Media IP
+  eXosip_lock();
   sdp_connection_t *conn = eXosip_get_audio_connection (remote_sdp);
+  eXosip_unlock();
   if (conn != NULL && conn->c_addr != NULL) {
       snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
       _debug("  Remote Audio IP: %s\n", _remote_sdp_audio_ip);
   }
 
   // Remote Media Port
+  eXosip_lock();
   sdp_media_t *remote_med = eXosip_get_audio_media (remote_sdp);
+  eXosip_unlock();
   if (remote_med == NULL || remote_med->m_port == NULL) {
     // no audio media proposed
     _debug("< Sending 415 Unsupported media type\n");
@@ -397,18 +405,23 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
 {
   if (event->response == NULL ) { return; }
 
+  // TODO: understand this code..
   if (_cid!=0) {
+    eXosip_lock();
     sdp_message_t *sdp = eXosip_get_sdp_info (event->response);
+    eXosip_unlock();
     if (sdp != NULL) {
-        /* audio is started and session has just been modified */
+       /* audio is started and session has just been modified */
       sdp_message_free (sdp);
     }
   }
 
   if (event->request != NULL) {   /* audio is started */ 
 
+    eXosip_lock();
     sdp_message_t *local_sdp = eXosip_get_sdp_info (event->request);
     sdp_message_t *remote_sdp = eXosip_get_sdp_info (event->response);
+    eXosip_unlock();
 
     sdp_media_t *remote_med = NULL;
     char *tmp = NULL;
@@ -416,6 +429,7 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
       _debug("SipCall::answeredCall_without_hold: No remote SDP body found for call\n");
       /* TODO: remote_sdp = retreive from ack above */
     } else {
+      eXosip_lock();
       sdp_connection_t *conn = eXosip_get_audio_connection (remote_sdp);
       if (conn != NULL && conn->c_addr != NULL) {
           snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
@@ -425,6 +439,7 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
       if (remote_med != NULL && remote_med->m_port != NULL) {
         _remote_sdp_audio_port = atoi (remote_med->m_port);
       }
+      eXosip_unlock();
 
       if (_remote_sdp_audio_port > 0 && _remote_sdp_audio_ip[0] != '\0' && 
         remote_med != NULL) {
@@ -444,7 +459,9 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
 
     if (remote_sdp != NULL && local_sdp != NULL) {
       int audio_port = 0;
+      eXosip_lock();
       sdp_media_t *local_med = eXosip_get_audio_media (local_sdp);
+      eXosip_unlock();
       if (local_med != NULL && local_med->m_port != NULL) {
         audio_port = atoi (local_med->m_port);
       }
@@ -494,6 +511,7 @@ SipCall::sdp_complete_message(sdp_message_t * remote_sdp,
       	return -1;
     }
 
+        // this exosip is locked and is protected by other function
   	eXosip_guess_localip (AF_INET, localip, 128);
   	snprintf (buf, 4096,
             "v=0\r\n"
