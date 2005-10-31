@@ -47,13 +47,19 @@ AudioRtp::~AudioRtp (void) {
 
 int 
 AudioRtp::createNewSession (SipCall *ca) {
+  ost::MutexLock m(_threadMutex);
   // Start RTP Send/Receive threads
   _symmetric = Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC) ? true : false;
   _RTXThread = new AudioRtpRTX (ca, Manager::instance().getAudioDriver(), _symmetric);
 
-  //_debug("AudioRtp::createNewSession: starting RTX thread\n");
-  if (_RTXThread->start() != 0) {
-    return -1;
+  _debug("AudioRtp::createNewSession: starting RTX thread\n");
+  try {
+    if (_RTXThread->start() != 0) {
+//    if (_RTXThread->start() != 0) {
+      return -1;
+    }
+  } catch(...) {
+    _debug("exception on start?");
   }
   return 0;
 }
@@ -62,6 +68,8 @@ AudioRtp::createNewSession (SipCall *ca) {
 void
 AudioRtp::closeRtpSession () {
   // This will make RTP threads finish.
+  _debug("waiting start signal...\n");
+  _debug("receive start signal...");
   delete _RTXThread; _RTXThread = NULL;
 }
 
@@ -79,7 +87,7 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, bool sym) : _cod
   std::string localipConfig = _ca->getLocalIp();
   ost::InetHostAddress local_ip(localipConfig.c_str());
 
-  _debug("AudioRtpRTX ctor : Local IP:port %s:%d\tsymmetric:%d\n", local_ip.getHostname(), _ca->getLocalAudioPort(), _sym);
+  //_debug("AudioRtpRTX ctor : Local IP:port %s:%d\tsymmetric:%d\n", local_ip.getHostname(), _ca->getLocalAudioPort(), _sym);
 
   if (!_sym) {
     _sessionRecv = new ost::RTPSession(local_ip, _ca->getLocalAudioPort());
@@ -93,11 +101,15 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, bool sym) : _cod
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
+  _start.wait();
+
   try {
-    terminate();
-  } catch (...) {
-    _debug("AudioRtpRTX: try to terminate, but catch an exception...\n");
+    this->terminate();
+  } catch(...) {
+    _debug("audiortprtx dtor catches an exception\n");
+    throw;
   }
+  //_debug("terminate audiortprtx ended...\n");
   _ca = NULL;
 
   if (!_sym) {
@@ -113,6 +125,8 @@ AudioRtpRTX::~AudioRtpRTX () {
 void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
+  try {
+  //_debug("Init audio RTP session\n");
   ost::InetHostAddress remote_ip(_ca->getRemoteSdpAudioIp());
   if (!remote_ip) {
     _debug("RTP: Target IP address [%s] is not correct!\n", _ca->getRemoteSdpAudioIp());
@@ -148,8 +162,7 @@ AudioRtpRTX::initAudioRtpSession (void)
     _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _ca->payload));
 
     _sessionSend->setMark(true);
-    setCancel(cancelImmediate);
-
+    //setCancel(cancelImmediate);
   } else {
 
     _debug("RTP(Send): Added session destination %s:%d\n", 
@@ -160,9 +173,13 @@ AudioRtpRTX::initAudioRtpSession (void)
     }
 
     _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _ca->payload));
-    setCancel(cancelImmediate);
+    //setCancel(cancelImmediate);
   }
   _debug("== AudioRtpRTX::initAudioRtpSession end == \n");
+  } catch(...) {
+    _debug("initAudioRtpSession catch an exception\n");
+    throw;
+  }
 }
 
 void
@@ -190,7 +207,7 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
   }
   if ( bytesAvail != maxBytesToGet ) {
     // fill end with 0...
-    _debug("Padding mic: %d bytes\n", (maxBytesToGet-bytesAvail)/2);
+    //_debug("Padding mic: %d bytes\n", (maxBytesToGet-bytesAvail)/2);
     bzero(data_from_mic_mono + (bytesAvail/4), (maxBytesToGet-bytesAvail)/2);
   }
 
@@ -203,12 +220,15 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
       int compSize = ac->codecEncode (data_to_send, data_from_mic_mono, RTP_FRAMES2SEND*2);
       // encode divise by two
       // Send encoded audio sample over the network
+      //fprintf(stderr, "m");
       if (!_sym) {
         _sessionSend->putData(timestamp, data_to_send, compSize);
       } else {
         _session->putData(timestamp, data_to_send, compSize);
       }
-    } else { _debug("No AudioCodec for the mic\n"); }
+    } else { 
+      _debug("No AudioCodec for the mic\n"); 
+    }
   }
 }
 
@@ -253,6 +273,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
   // If the current call is the call which is answered
   // Set decoded data to sound device
   // expandedSize is in mono/bytes, since we double in stereo, we send two time more
+  //fprintf(stderr, "r");
   Manager::instance().getAudioDriver()->putMain(data_for_speakers_stereo, expandedSize*2);
   Manager::instance().getAudioDriver()->startStream();
 
@@ -269,7 +290,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
 }
 
 void
-AudioRtpRTX::run (void) {
+AudioRtpRTX::run () {
   //mic, we receive from soundcard in stereo, and we send encoded
   //encoding before sending
   int16 *data_from_mic_stereo = new int16[RTP_FRAMES2SEND*2];
@@ -281,53 +302,64 @@ AudioRtpRTX::run (void) {
   int16 *data_for_speakers_recv = new int16[RTP_FRAMES2SEND];
   int16 *data_for_speakers_stereo = new int16[RTP_FRAMES2SEND*2];
 
-  // Init the session
-  initAudioRtpSession();
+  try {
+    _debug("Audio RtpRTX is running\n");
 
-  // flush stream:
-  ManagerImpl& manager = Manager::instance();
-  AudioLayer *audiolayer = manager.getAudioDriver();
+    // Init the session
+    initAudioRtpSession();
+    _start.post();
 
-  // start running the packet queue scheduler.
-  //_debug("Thread: start session of AudioRtpRTX\n");
-  if (!_sym) {
-    _sessionRecv->startRunning();
-    _sessionSend->startRunning();
-  } else {
-    _session->startRunning();
-    _debug("Session is now: %d active?\n", _session->isActive());
+    // flush stream:
+    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+
+    // start running the packet queue scheduler.
+    _debug("Thread: start session of AudioRtpRTX\n");
+    if (!_sym) {
+      _sessionRecv->startRunning();
+      _sessionSend->startRunning();
+    } else {
+      _session->startRunning();
+      _debug("Session is now: %d active?\n", _session->isActive());
+    }
+  
+    int timestamp = 0; // for mic
+    int countTime = 0; // for receive
+    // TODO: get frameSize from user config 
+    int frameSize = 20; // 20ms frames
+    TimerPort::setTimer(frameSize);
+  
+    audiolayer->flushMic();
+    audiolayer->startStream();
+    while (!testCancel()) {
+      ////////////////////////////
+      // Send session
+      ////////////////////////////
+      sendSessionFromMic(char_to_send, data_from_mic_stereo, data_from_mic_mono, timestamp);
+      timestamp += RTP_FRAMES2SEND;
+
+      ////////////////////////////
+      // Recv session
+      ////////////////////////////
+      receiveSessionForSpkr(data_for_speakers_stereo, data_for_speakers_recv, countTime);
+
+      // Let's wait for the next transmit cycle
+      Thread::sleep(TimerPort::getTimer());
+      TimerPort::incTimer(frameSize); // 'frameSize' ms
+    }
+    //_debug("stop stream for audiortp loop\n");
+    audiolayer->stopStream();
+  } catch(std::exception &e) {
+    _debug("AudioRTP Thread, run function, has caught an exception here: %s\n", e.what());
+    throw;
+  } catch(...) {
+    _debug("AudioRTP Thread, run function, has caught an unknown exception here\n");
+    throw;
   }
-
-  int timestamp = 0; // for mic
-  int countTime = 0; // for receive
-  // TODO: get frameSize from user config 
-  int frameSize = 20; // 20ms frames
-  TimerPort::setTimer(frameSize);
-
-  audiolayer->flushMic();
-	while (!testCancel() && _ca != NULL) {
-		////////////////////////////
-		// Send session
-		////////////////////////////
-		sendSessionFromMic(char_to_send, data_from_mic_stereo, data_from_mic_mono, timestamp);
-		timestamp += RTP_FRAMES2SEND;
-
-		////////////////////////////
-		// Recv session
-		////////////////////////////
-    receiveSessionForSpkr(data_for_speakers_stereo, data_for_speakers_recv, countTime);
-		
-		// Let's wait for the next transmit cycle
-		Thread::sleep(TimerPort::getTimer());
-		TimerPort::incTimer(frameSize); // 'frameSize' ms
-	}
-  audiolayer->stopStream();
-
-	delete [] data_for_speakers_stereo; data_for_speakers_stereo = 0;
+  delete [] data_for_speakers_stereo; data_for_speakers_stereo = 0;
   delete [] data_for_speakers_recv;   data_for_speakers_recv   = 0;
-	delete [] char_to_send;          char_to_send          = 0;
-	delete [] data_from_mic_mono;    data_from_mic_mono    = 0;
-	delete [] data_from_mic_stereo;  data_from_mic_stereo  = 0;
+  delete [] char_to_send;          char_to_send          = 0;
+  delete [] data_from_mic_mono;    data_from_mic_mono    = 0;
+  delete [] data_from_mic_stereo;  data_from_mic_stereo  = 0;
 }
 
 

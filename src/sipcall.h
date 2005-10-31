@@ -44,11 +44,12 @@ public:
 	~SipCall (void);
 
   int payload;
-	
-	/*
-	 * Store information about incoming call and negociate payload
-	 */
-	int newIncomingCall 	(eXosip_event_t *);
+
+  /**
+   * Store information about incoming call and negociate payload
+   */
+  int newIncomingCall(eXosip_event_t *);
+  int newReinviteCall(eXosip_event_t *);
 	
 	/*
 	 * Use to answer to a ONHOLD/OFFHOLD event 
@@ -71,6 +72,9 @@ public:
 
   std::string getLocalIp() { return _localIp; }
   void setLocalIp(const std::string& ip) { _localIp = ip; }
+
+  bool isReinvite() { return _reinvite; }
+  void endReinvite() { _reinvite = false; }; 
 
 	/*
 	 * Manage id, did (dialog-id), cid (call-id) and tid (transaction-id) 
@@ -147,6 +151,8 @@ private:
   std::string _localIp;
   std::string _name;   // set by incoming call
   std::string _number; // set by incoming call
+
+  bool _reinvite;
 };
 
 #endif // __SIP_CALL_H__

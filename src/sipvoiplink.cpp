@@ -93,9 +93,12 @@ SipVoIPLink::init(void)
     if (i != 0) {
       _debug("Could not initialize transport layer\n");
       return -1;
+    } else {
+      _debug("VoIP Link listen on random port %d\n", RANDOM_SIP_PORT);
     }
+  } else {
+   _debug("VoIP Link listen on port %d\n", DEFAULT_SIP_PORT);
   }
-
   // If use STUN server, firewall address setup
   if (Manager::instance().useStun()) {
     eXosip_set_user_agent(tmp.data());
@@ -217,12 +220,12 @@ SipVoIPLink::setRegister (void)
 
   int i = eXosip_register_send_register (_reg_id, reg);
   if (i == -2) {
-    _debug("cannot build registration, check the setup\n"); 
+    _debug("Cannot build registration, check the setup\n"); 
     eXosip_unlock();
     return -1;
   }
   if (i == -1) {
-    _debug("Registration Failed\n");
+    _debug("Registration sending failed\n");
     eXosip_unlock();
     return -1;
   }
@@ -378,6 +381,7 @@ SipVoIPLink::answer (CALLID id)
   eXosip_unlock();
 
   // Incoming call is answered, start the sound channel.
+  _debug("Starting AudioRTP\n");
   if (_audiortp.createNewSession (getSipCall(id)) < 0) {
     _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
     i = -1;
@@ -403,6 +407,7 @@ SipVoIPLink::hangup (CALLID id)
   eXosip_unlock();
 
   // Release RTP channels
+  _debug("Stopping AudioRTP\n");
   _audiortp.closeRtpSession();
 
   deleteSipCall(id);
@@ -483,6 +488,7 @@ SipVoIPLink::onhold (CALLID id)
   }
   
   // Send request
+  _debug("Stopping AudioRTP\n");
   _audiortp.closeRtpSession();
 
   eXosip_lock ();
@@ -552,10 +558,11 @@ SipVoIPLink::offhold (CALLID id)
   eXosip_unlock ();
   
   // Enable audio
-    if (_audiortp.createNewSession (getSipCall(id)) < 0) {
-      _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
-      i = -1;
-    }
+  _debug("Stopping AudioRTP\n");
+  if (_audiortp.createNewSession (getSipCall(id)) < 0) {
+    _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
+    i = -1;
+  }
   return i;
 }
 
@@ -659,22 +666,23 @@ SipVoIPLink::getEvent (void)
     break;
 
   case EXOSIP_CALL_REINVITE:
-    _debug("!!! EXOSIP_CALL_REINVITE: Should reinvite? !!!\n");
+    _debug("> INVITE (reinvite)\n");
     //eXosip_call_send_answer(event->tid, 403, NULL);
     //488 as http://www.atosc.org/pipermail/public/osip/2005-June/005385.html
+
     id = findCallId(event);
     if (id != 0) {
       sipcall = getSipCall(id);
-      if (sipcall != NULL) {
-        _debug("Call reinvite : [id = %d, cid = %d, did = %d], localport=%d\n", id, event->cid, event->did,sipcall->getLocalAudioPort());
+      if (sipcall != 0) {
+        _debug("  Info [id = %d, cid = %d, did = %d], localport=%d\n", id, event->cid, event->did,sipcall->getLocalAudioPort());
 
+        _debug("Stopping AudioRTP\n");
         _audiortp.closeRtpSession();
-        sipcall->newIncomingCall(event);
-        if(!Manager::instance().callIsOnHold(id)) {
-          _audiortp.createNewSession(sipcall);
-        }
+        sipcall->newReinviteCall(event);
+        // we should receive an ack after that...
       }
     } else {
+      _debug("< Send 488 Not Acceptable Here");
       eXosip_lock();
       eXosip_call_send_answer(event->tid, 488, NULL);
       eXosip_unlock();
@@ -687,7 +695,7 @@ SipVoIPLink::getEvent (void)
 
   case EXOSIP_CALL_RINGING: // 9 peer call is ringing
     id = findCallIdInitial(event);
-    _debug("Call is ringing [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);
+    _debug("> Receive Call Ringing [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);
     if (id != 0) {
       getSipCall(id)->ringingCall(event);
       Manager::instance().peerRingingCall(id);
@@ -702,60 +710,69 @@ SipVoIPLink::getEvent (void)
     id = findCallIdInitial(event);
     if ( id != 0) {
       sipcall = getSipCall(id);
-      if ( sipcall ) {
-       _debug("Call is answered [id = %d, cid = %d, did = %d], localport=%d\n", 
-      id, event->cid, event->did,sipcall->getLocalAudioPort());
-      }
+      if ( sipcall != 0 ) {
+        _debug("> Receive Call Answer [id = %d, cid = %d, did = %d], localport=%d\n", id, event->cid, event->did, sipcall->getLocalAudioPort());
 
-      // Answer
-      if (Manager::instance().callCanBeAnswered(id)) {
-        sipcall->setStandBy(false);
-        _debug("Answering call first time\n");
-        if (sipcall->answeredCall(event) != -1) {
-          sipcall->answeredCall_without_hold(event);
-          Manager::instance().peerAnsweredCall(id);
-
-          if(!Manager::instance().callIsOnHold(id)) {
-            // Outgoing call is answered, start the sound channel.
-            _debug("Starting AudioRTP\n");
-            if (_audiortp.createNewSession (sipcall) < 0) {
-              _debug("FATAL: Unable to start sound (%s:%d)\n", 
-              __FILE__, __LINE__);
-              returnValue = -1;
-              break;
+        // Answer
+        if (Manager::instance().callCanBeAnswered(id)) {
+          sipcall->setStandBy(false);
+          if (sipcall->answeredCall(event) != -1) {
+            sipcall->answeredCall_without_hold(event);
+            Manager::instance().peerAnsweredCall(id);
+  
+            if(!Manager::instance().callIsOnHold(id)) {
+              // Outgoing call is answered, start the sound channel.
+              _debug("Starting AudioRTP\n");
+              if (_audiortp.createNewSession (sipcall) < 0) {
+                _debug("FATAL: Unable to start sound (%s:%d)\n", 
+                __FILE__, __LINE__);
+                returnValue = -1;
+                break;
+              }
             }
           }
+        } else {
+          // Answer to on/off hold to send ACK
+          _debug("Answering call\n");
+          sipcall->answeredCall(event);
         }
-      } else {
-        // Answer to on/off hold to send ACK
-        _debug("Answering call\n");
-        sipcall->answeredCall(event);
       }
       break;
     } else {
       returnValue = -1;
     }
   }
-  case EXOSIP_CALL_REDIRECTED:
+  case EXOSIP_CALL_REDIRECTED: // 11
     break;
 
-  case EXOSIP_CALL_ACK:
+  case EXOSIP_CALL_ACK: // 15
     id = findCallId(event);
-    _debug("ACK received [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);
-    if (id != 0) {
-      getSipCall(id)->receivedAck(event);
+    _debug("> Receive ACK [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);
+    if (id != 0 ) {
+      sipcall = getSipCall(id);
+      if(sipcall != 0 ) { 
+        sipcall->receivedAck(event);
+        if (sipcall->isReinvite()) {
+          sipcall->endReinvite();
+          if(!Manager::instance().callIsOnHold(id)) {
+            _debug("Starting AudioRTP\n");
+            _audiortp.createNewSession(sipcall);
+          }
+        }
+      }
     } else {
       returnValue = -1;
     }
     break;
 
     // The peer-user closed the phone call(we received BYE).
-  case EXOSIP_CALL_CLOSED:
+  case EXOSIP_CALL_CLOSED: // 25
     id = findCallId(event);
-    _debug("Call is closed [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);	
+    _debug("> BYE [id = %d, cid = %d, did = %d]\n", id, event->cid, event->did);	
     if (id != 0) {
       if (Manager::instance().callCanBeClosed(id)) {
          sipcall = getSipCall(id);
+         _debug("Stopping AudioRTP\n");
          _audiortp.closeRtpSession();
       }
       Manager::instance().peerHungupCall(id);
@@ -765,6 +782,9 @@ SipVoIPLink::getEvent (void)
     }	
     break;
   case EXOSIP_CALL_RELEASED:
+    if (event) {
+      _debug("SIP call released: [cid = %d, did = %d]\n", event->cid, event->did);
+    }
     //id = findCallId(event);
     //if (id!=0) {
     //Manager::instance().peerHungupCall(id);
@@ -851,7 +871,7 @@ SipVoIPLink::getEvent (void)
     //Manager::instance().displayError("getEvent : Registration Failure");
     break;
 
-  case EXOSIP_MESSAGE_NEW:
+  case EXOSIP_MESSAGE_NEW: //27
     unsigned int k;
 				
     if (event->request != NULL && MSG_IS_OPTIONS(event->request)) {
@@ -877,6 +897,7 @@ SipVoIPLink::getEvent (void)
 
     // Voice message 
     else if (event->request != NULL && MSG_IS_NOTIFY(event->request)){
+      _debug("> NOTIFY Voice message\n");
       int ii;
       unsigned int pos;
       unsigned int pos_slash;
@@ -1027,6 +1048,7 @@ SipVoIPLink::endSipCalls()
       eXosip_unlock();
 
       // Release RTP channels
+      _debug("Stopping AudioRTP\n");
       _audiortp.closeRtpSession();
       delete *iter; *iter = NULL;
     }
@@ -1308,20 +1330,18 @@ int
 SipVoIPLink::setAuthentication (void) 
 {
   ManagerImpl& manager = Manager::instance();
-  std::string login, pass, realm;
-  login = manager.getConfigString(SIGNALISATION, AUTH_USER_NAME);
+  std::string login = manager.getConfigString(SIGNALISATION, AUTH_USER_NAME);
   if (login.empty()) {
     login = manager.getConfigString(SIGNALISATION, USER_PART);
   }
-  pass = manager.getConfigString(SIGNALISATION, PASSWORD);
+  std::string pass = manager.getConfigString(SIGNALISATION, PASSWORD);
   if (pass.empty()) {
     manager.displayConfigError("Fill password field");
     return -1;
   }
   int returnValue = 0;
   eXosip_lock();
-  if (eXosip_add_authentication_info(login.data(), login.data(), 
-				     pass.data(), NULL, NULL) != 0) {
+  if (eXosip_add_authentication_info(login.data(), login.data(), pass.data(), NULL, NULL) != 0) {
     returnValue = -1;
   }
   eXosip_unlock();
@@ -1368,12 +1388,12 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   if (!Manager::instance().useStun()) {
     // Set random port for outgoing call if no firewall
     setLocalPort(RANDOM_LOCAL_PORT);
-    _debug("SipVoIPLink::startCall: Local audio port: %d\n",_localPort);
+    _debug("  Setting local port to random: %d\n",_localPort);
   } else {
     // If use Stun server
     if (behindNat() != 0) {
-      _debug("SipVoIPLink::startCall: sip invite: firewall port = %d\n",Manager::instance().getFirewallPort());	
       setLocalPort(Manager::instance().getFirewallPort());
+      _debug("  Setting local port to firewall port: %d\n", _localPort);	
     } else {
       return -1;
     }

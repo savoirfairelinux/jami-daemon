@@ -882,11 +882,9 @@ ManagerImpl::stopTone() {
   _debug("TONE: stop tone/stream...\n");
   getAudioDriver()->stopStream();
 
-  _debug("TONE: stop tone...\n");
   _toneMutex.enterMutex();
   _telephoneTone->setCurrentTone(Tone::TONE_NULL);
   _toneMutex.leaveMutex();
-  _debug("TONE: tone stopped\n");
 
   // for ringing tone..
   _toneMutex.enterMutex();
@@ -895,7 +893,6 @@ ManagerImpl::stopTone() {
     _tone->stopTone();
   }
   _toneMutex.leaveMutex();
-  _debug("TONE: leave stop tone function\n");
 }
 
 /**

@@ -50,6 +50,7 @@ private:
 	ost::RTPSession *_sessionSend;
 	ost::RTPSession *_sessionRecv;
 	ost::SymmetricRTPSession *_session;
+  ost::Semaphore _start;
 	bool _sym;
 
   // build codec...
@@ -76,6 +77,7 @@ public:
 private:
 	AudioRtpRTX*	_RTXThread;
 	bool			_symmetric;
+  ost::Mutex _threadMutex;
 };
 
 #endif // __AUDIO_RTP_H__
