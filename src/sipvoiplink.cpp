@@ -409,7 +409,9 @@ SipVoIPLink::hangup (CALLID id)
 
   // Release RTP channels
   _debug("Stopping AudioRTP\n");
-  _audiortp.closeRtpSession();
+  if (id == Manager::instance().getCurrentCallId()) {
+    _audiortp.closeRtpSession();
+  }
 
   deleteSipCall(id);
   return i;
@@ -684,8 +686,10 @@ SipVoIPLink::getEvent (void)
       if (sipcall != 0) {
         _debug("  Info [id = %d, cid = %d, did = %d], localport=%d\n", id, event->cid, event->did,sipcall->getLocalAudioPort());
 
-        _debug("Stopping AudioRTP\n");
-        _audiortp.closeRtpSession();
+        if ( id == Manager::instance().getCurrentCallId() ) {
+          _debug("Stopping AudioRTP\n");
+          _audiortp.closeRtpSession();
+        }
         sipcall->newReinviteCall(event);
         // we should receive an ack after that...
       }
@@ -728,14 +732,13 @@ SipVoIPLink::getEvent (void)
             sipcall->answeredCall_without_hold(event);
             Manager::instance().peerAnsweredCall(id);
   
-            if(!Manager::instance().callIsOnHold(id)) {
+            if(!Manager::instance().callIsOnHold(id) && Manager::instance().getCurrentCallId()==id) {
               // Outgoing call is answered, start the sound channel.
               _debug("Starting AudioRTP\n");
-              if (_audiortp.createNewSession (sipcall) < 0) {
+              if (_audiortp.createNewSession(sipcall) < 0) {
                 _debug("FATAL: Unable to start sound (%s:%d)\n", 
                 __FILE__, __LINE__);
                 returnValue = -1;
-                break;
               }
             }
           }
@@ -745,11 +748,11 @@ SipVoIPLink::getEvent (void)
           sipcall->answeredCall(event);
         }
       }
-      break;
     } else {
       returnValue = -1;
     }
   }
+   break;
   case EXOSIP_CALL_REDIRECTED: // 11
     break;
 
@@ -762,7 +765,7 @@ SipVoIPLink::getEvent (void)
         sipcall->receivedAck(event);
         if (sipcall->isReinvite()) {
           sipcall->endReinvite();
-          if(!Manager::instance().callIsOnHold(id)) {
+          if(!Manager::instance().callIsOnHold(id) && Manager::instance().getCurrentCallId()==id) {
             _debug("Starting AudioRTP\n");
             _audiortp.createNewSession(sipcall);
           }
@@ -1502,6 +1505,7 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   }
   
   // this is the cid (call id from exosip)
+  _debug("< INVITE (%d)", id);
   int cid = eXosip_call_send_initial_invite (invite);
 
   _debug("> Start a new Call: Send INVITE\n");

@@ -290,9 +290,11 @@ private:
 
   /*
    * Erase the Call(id) from the CallVector
+   * Protected by other function by _mutex lock
    */
   void deleteCall	(CALLID id);
   Call* getCall (CALLID id);
+  void setCurrentCallId(CALLID id);
 
   /*
    * Play one tone

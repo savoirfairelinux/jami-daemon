@@ -38,16 +38,23 @@
 // AudioRtp                                                          
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtp::AudioRtp () {
-	_RTXThread = NULL;
+	_RTXThread = 0;
 }
 
 AudioRtp::~AudioRtp (void) {
-	delete _RTXThread; _RTXThread = NULL;
+	delete _RTXThread; _RTXThread = 0;
 }
 
 int 
 AudioRtp::createNewSession (SipCall *ca) {
   ost::MutexLock m(_threadMutex);
+
+  // something should stop the thread before...
+  if ( _RTXThread != 0 ) { 
+    _debug("AudioRTP error: try to create a new audio rtp thread...\n");
+    return -1; 
+  }
+
   // Start RTP Send/Receive threads
   _symmetric = Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC) ? true : false;
   _RTXThread = new AudioRtpRTX (ca, Manager::instance().getAudioDriver(), _symmetric);
@@ -70,7 +77,7 @@ AudioRtp::closeRtpSession () {
   // This will make RTP threads finish.
   _debug("waiting start signal...\n");
   _debug("receive start signal...");
-  delete _RTXThread; _RTXThread = NULL;
+  delete _RTXThread; _RTXThread = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

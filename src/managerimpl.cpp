@@ -209,6 +209,7 @@ ManagerImpl::pushBackNewCall (CALLID id, enum CallType type)
 Call*
 ManagerImpl::getCall (CALLID id)
 {
+  _debug("CALL: Getting call %d\n", id);
   Call* call = NULL;
   unsigned int size = _callVector.size();
   for (unsigned int i = 0; i < size; i++) {
@@ -228,6 +229,7 @@ ManagerImpl::getCall (CALLID id)
 void
 ManagerImpl::deleteCall (CALLID id)
 {
+  _debug("CALL: Deleting call %d\n", id);
   CallVector::iterator iter = _callVector.begin();
   while(iter!=_callVector.end()) {
     Call *call = *iter;
@@ -244,6 +246,13 @@ ManagerImpl::deleteCall (CALLID id)
   }
 }
 
+void
+ManagerImpl::setCurrentCallId(CALLID id)
+{
+  _debug("CALL: Setting current callid %d to %d\n", _currentCallId, id);
+  _currentCallId = id;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
@@ -255,7 +264,6 @@ ManagerImpl::outgoingCall (const std::string& to)
 {	
   CALLID id = generateNewCallId();
   Call *call = pushBackNewCall(id, Outgoing);
-  _debug("Outgoing Call with identifiant %d\n", id);
   ost::MutexLock m(_mutex);
   call->setState(Call::Progressing);
   call->setCallerIdNumber(to);
@@ -326,8 +334,10 @@ ManagerImpl::answerCall (CALLID id)
     decWaitingCall();
     call->setFlagNotAnswered(false);
   }
-  switchCall(id);
-  stopTone(); // before answer, don't stop the audio stream after open it...
+  if (call->getState() != Call::OnHold) {
+    switchCall(id);
+  }
+  stopTone(); // before answer, don't stop the audio stream after open it
   return call->answer();
 }
 
@@ -347,7 +357,7 @@ ManagerImpl::onHoldCall (CALLID id)
   if ( call->getState() == Call::OnHold || call->isNotAnswered()) {
     return 1;
   }
-  _currentCallId = 0;
+  setCurrentCallId(0);
   return call->onHold();
 }
 
@@ -367,7 +377,8 @@ ManagerImpl::offHoldCall (CALLID id)
   if (call->getState() == Call::OffHold) {
     return 1;
   }
-  _currentCallId = id;
+  _debug("CALL: setting current id = %d\n", id);
+  setCurrentCallId(id);
   int returnValue = call->offHold();
   // start audio if it's ok
   if (returnValue != -1) {
@@ -388,7 +399,7 @@ ManagerImpl::transferCall (CALLID id, const std::string& to)
   if (call == 0) {
     return -1;
   }
-  _currentCallId = 0;
+  setCurrentCallId(0);
   return call->transfer(to);
 }
 
@@ -431,7 +442,7 @@ ManagerImpl::refuseCall (CALLID id)
   }
   int refuse = call->refuse();
 
-  _currentCallId = 0;
+  setCurrentCallId(0);
   deleteCall(id);
   stopTone();
   return refuse;
@@ -780,7 +791,7 @@ ManagerImpl::peerHungupCall (CALLID id)
   deleteCall(id);
   call->setState(Call::Hungup);
 
-  _currentCallId = 0;
+  setCurrentCallId(0);
   return 1;
 }
 
@@ -1580,10 +1591,11 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
 void 
 ManagerImpl::switchCall(CALLID id)
 {
-  if (_currentCallId!=0 && id!=_currentCallId) {
-    //onHoldCall(_currentCallId); <-- this function block _mutex...
+  // we can only switch the current call id if we 
+  // it's not selected yet..
+  if (_currentCallId == 0 ) {
+    setCurrentCallId(id);
   }
-  _currentCallId = id;
 }
 
 
