@@ -665,7 +665,7 @@ ManagerImpl::callCanBeAnswered(CALLID id) {
   bool returnValue = false;
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  if (id == _currentCallId && call != NULL && ( call->getFlagNotAnswered() || 
+  if (call != NULL && ( call->getFlagNotAnswered() || 
        (call->getState()!=Call::OnHold && call->getState()!=Call::OffHold) )) {
     returnValue = true;
   }
