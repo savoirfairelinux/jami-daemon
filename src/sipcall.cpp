@@ -204,12 +204,11 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
     eXosip_unlock();
   }
   if (remote_sdp == NULL) {
-    _debug("SipCall::newIncomingCall: No remote SDP in INVITE request. Sending 400 BAD REQUEST\n");
-    // Send 400 BAD REQUEST
+    _debug("< Sending 400 Bad Request (no SDP)\n");
     eXosip_lock();
     eXosip_call_send_answer (_tid, 400, NULL);
     eXosip_unlock();
-    return 0;
+    return -1;
   }
   /* TODO: else build an offer */
 
@@ -234,7 +233,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
     eXosip_call_send_answer (_tid, 415, NULL);
     eXosip_unlock();
     sdp_message_free (remote_sdp);
-    return 0;
+    return -1;
   }
   _remote_sdp_audio_port = atoi(remote_med->m_port);
   _debug("  Remote Audio Port: %d\n", _remote_sdp_audio_port);
@@ -262,7 +261,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
     eXosip_call_send_answer (_tid, 415, NULL);
     eXosip_unlock();
     sdp_message_free (remote_sdp);
-    return 0;
+    return -1;
   }
 
   osip_message_t *answer = 0;
@@ -272,8 +271,8 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
     if ( 0 != sdp_complete_message(remote_sdp, answer)) {
       osip_message_free(answer);
       // Send 415 Unsupported media type
-      eXosip_call_send_answer (_tid, 415, NULL);
       _debug("< Sending Answer 415\n");
+      eXosip_call_send_answer (_tid, 415, NULL);
     } else {
 
       sdp_message_t *local_sdp = eXosip_get_sdp_info(answer);
@@ -365,7 +364,7 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
     eXosip_unlock();
   }
   if (remote_sdp == NULL) {
-    _debug("SipCall::newIncomingCall: No remote SDP in REINVITE request. Sending 400 BAD REQUEST\n");
+    _debug("< Sending 400 Bad Request (no sdp)\n");
     // Send 400 BAD REQUEST
     eXosip_lock();
     eXosip_call_send_answer (_tid, 400, NULL);

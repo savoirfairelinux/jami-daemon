@@ -107,8 +107,6 @@ public:
   bool getFlagNotAnswered() const { return _flagNotAnswered; }
 
 private:
-	void initConstructor (void);
-	
 	VoIPLink		*_voIPLink;	
 	CALLID 		  	 _id;
 	enum CallState 	 _state;

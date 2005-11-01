@@ -25,7 +25,8 @@
 
 Call::Call (CALLID id, CallType type, VoIPLink* voiplink)
 {
- 	initConstructor();
+	_state = NotExist;
+	_type = Null;
 	_id = id; 
 	_type = type;
 	_voIPLink = voiplink;
@@ -267,15 +268,4 @@ Call::refuse  (void)
 {
 	int i = _voIPLink->refuse(_id);
 	return i;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Private functions
-///////////////////////////////////////////////////////////////////////////////
-void
-Call::initConstructor(void)
-{
-	_state = NotExist;
-	_type = Null;
 }

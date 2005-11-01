@@ -232,7 +232,7 @@ ManagerImpl::deleteCall (CALLID id)
   while(iter!=_callVector.end()) {
     Call *call = *iter;
     if (call != NULL && call->getId() == id) {
-      if (call->getFlagNotAnswered() && call->isIncomingType()) {
+      if (call->getFlagNotAnswered() && call->isIncomingType() && call->getState() != Call::NotExist) {
         decWaitingCall();
       }
       delete (*iter); *iter = NULL; 
@@ -454,22 +454,26 @@ ManagerImpl::saveConfig (void)
 /**
  * Main Thread
  */
-void 
+bool
 ManagerImpl::initRegisterVoIPLink() 
 {
+  int returnValue = true;
   _debug("Initiate VoIP Link Registration\n");
   if (_hasTriedToRegister == false) {
-   _voIPLinkVector.at(DFT_VOIP_LINK)->init(); // we call here, because it's long...
-   if (_voIPLinkVector.at(DFT_VOIP_LINK)->checkNetwork()) {
-      // If network is available
-  
+    if ( _voIPLinkVector.at(DFT_VOIP_LINK)->init() ) { 
+      // we call here, because it's long...
+      // If network is available and exosip is start..
       if (getConfigInt(SIGNALISATION, AUTO_REGISTER) && _exist == 1) {
         registerVoIPLink();
+        _hasTriedToRegister = true;
       }
+    } else {
+      returnValue = false;
     }
-    _hasTriedToRegister = true;
   }
+  return returnValue;
 }
+
 
 /**
  * Initialize action (main thread)
@@ -661,7 +665,7 @@ ManagerImpl::callCanBeAnswered(CALLID id) {
   bool returnValue = false;
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
-  if (call != NULL && ( call->getFlagNotAnswered() || 
+  if (id == _currentCallId && call != NULL && ( call->getFlagNotAnswered() || 
        (call->getState()!=Call::OnHold && call->getState()!=Call::OffHold) )) {
     returnValue = true;
   }

@@ -17,6 +17,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "argtokenizer.h"
+#include <ios>
 #include <iostream>
 #include <sstream>
 #include <cc++/url.h>
@@ -30,11 +31,15 @@ ArgTokenizer::tokenize(const std::string& str) {
   TokenList args;
   while(s.good()) {
     s >> output;
-    char *tmp = new char[output.length()+1];
-    strcpy(tmp, output.c_str());
-    ost::urlDecode(tmp, NULL);
-    args.push_back(tmp);
-    delete[] tmp; tmp = NULL;
+    // if we have a string that end with an space
+    // failbit is set
+    if ( ! ( s.rdstate() & std::ios_base::failbit) ) {
+      char *tmp = new char[output.length()+1];
+      strcpy(tmp, output.c_str());
+      ost::urlDecode(tmp, NULL);
+      args.push_back(tmp);
+      delete[] tmp; tmp = NULL;
+    }
   }
   return args;
 }

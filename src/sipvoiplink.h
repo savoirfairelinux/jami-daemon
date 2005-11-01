@@ -72,7 +72,7 @@ public:
   SipVoIPLink();
   virtual ~SipVoIPLink();
 	
-	virtual int init (void);
+	virtual bool init (void);
 	virtual bool checkNetwork (void);
 	virtual void terminate (void);
 	virtual int setRegister (void);

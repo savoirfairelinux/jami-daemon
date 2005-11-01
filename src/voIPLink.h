@@ -39,7 +39,7 @@ public:
 
 	// Pure virtual functions
 	virtual int getEvent (void) = 0;
-	virtual int init (void) = 0;
+	virtual bool init (void) = 0;
 	virtual bool checkNetwork (void) = 0;
 	virtual void terminate (void) = 0;
 	virtual void newOutgoingCall (CALLID id) = 0;

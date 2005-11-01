@@ -72,51 +72,49 @@ SipVoIPLink::checkNetwork (void)
   return getSipLocalIp();
 }
 
-int
+bool
 SipVoIPLink::init(void)
 {
-  std::string tmp;
-  tmp = std::string(PROGNAME) + "/" + std::string(SFLPHONED_VERSION);
-	
   if (0 != eXosip_init()) {
     _debug("Could not initialize eXosip\n");
-    exit (0);
+    return false;
   }
   _started = true;
 
   srand (time(NULL));
-  //should be NULL or INADDR_ANY for the second parameter?
+  // second parameter, NULL is "::" for ipv6 and "0.0.0.0" for ipv4
   int i;
   i = eXosip_listen_addr(IPPROTO_UDP, NULL, DEFAULT_SIP_PORT, AF_INET, 0);
   if (i != 0) {
     i = eXosip_listen_addr(IPPROTO_UDP, NULL, RANDOM_SIP_PORT, AF_INET, 0);
     if (i != 0) {
       _debug("Could not initialize transport layer\n");
-      return -1;
+      return false;
     } else {
       _debug("VoIP Link listen on random port %d\n", RANDOM_SIP_PORT);
     }
   } else {
    _debug("VoIP Link listen on port %d\n", DEFAULT_SIP_PORT);
   }
+  // Set user agent
+  std::string tmp = std::string(PROGNAME) + "/" + std::string(SFLPHONED_VERSION);
+  eXosip_set_user_agent(tmp.data());
+
   // If use STUN server, firewall address setup
   if (Manager::instance().useStun()) {
-    eXosip_set_user_agent(tmp.data());
     if (behindNat() != 1) {
-      return 0;
+      return false;
     }
-    // This method is used to replace contact address with the public address of your NAT.
+    // This method is used to replace contact address with the public address of your NAT
     eXosip_masquerade_contact((Manager::instance().getFirewallAddress()).data(), Manager::instance().getFirewallPort());
-		
-  } else {
-    // Set user agent
-    eXosip_set_user_agent(tmp.data());
   }
 
-  checkNetwork();
+  if ( !checkNetwork() ) {
+    return false;
+  }
   _debug("SIP VoIP Link: listen to SIP Events\n");
   _evThread->start();
-  return 1;
+  return true;
 }
 
 /**
@@ -291,16 +289,19 @@ SipVoIPLink::outgoingInvite (CALLID id, const std::string& to_url)
   ManagerImpl& manager = Manager::instance();
   // Form the From header field basis on configuration panel
   std::string host = manager.getConfigString(SIGNALISATION, HOST_PART);
-  if ( host.empty() ) {
-    host = getLocalIpAddress();
+  std::string hostFrom = host;
+  if ( hostFrom.empty() ) {
+    hostFrom = getLocalIpAddress();
   }
-  from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), host);
+  from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), hostFrom);
 	
   to = toHeader(to_url);
 
   if (to.find("@") == std::string::npos and 
       manager.getConfigInt(SIGNALISATION, AUTO_REGISTER)) {
-    to = to + "@" + manager.getConfigString(SIGNALISATION, HOST_PART);
+    if(!host.empty()) {
+      to = to + "@" + manager.getConfigString(SIGNALISATION, HOST_PART);
+    }
   }
 		
   _debug("From: %s\n", from.data());
@@ -553,12 +554,13 @@ SipVoIPLink::offhold (CALLID id)
   }
 
   // Send request
+  _debug("< Send off hold request\n");
   eXosip_lock ();
   i = eXosip_call_send_request (did, invite);
   eXosip_unlock ();
-  
+
   // Enable audio
-  _debug("Stopping AudioRTP\n");
+  _debug("Starting AudioRTP\n");
   if (_audiortp.createNewSession (getSipCall(id)) < 0) {
     _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
     i = -1;
@@ -659,9 +661,15 @@ SipVoIPLink::getEvent (void)
     _debug("  Local listening port: %d\n", _localPort);
     _debug("  Local listening IP: %s\n", getLocalIpAddress().c_str());
 
-    sipcall->newIncomingCall(event);
-    if (Manager::instance().incomingCall(id, sipcall->getName(), sipcall->getNumber()) < 0) {
-      Manager::instance().displayErrorText(id, "  Incoming Call Failed");
+    if (sipcall->newIncomingCall(event) == 0 ) {
+      if (Manager::instance().incomingCall(id, sipcall->getName(), sipcall->getNumber()) == -1) {
+        Manager::instance().displayError("  Incoming Call Failed");
+        deleteSipCall(id);
+      }
+    } else {
+      Manager::instance().peerHungupCall(id);
+      deleteSipCall(id);
+      Manager::instance().displayError("  Incoming Call Failed");
     }
     break;
 
@@ -872,9 +880,13 @@ SipVoIPLink::getEvent (void)
     break;
 
   case EXOSIP_MESSAGE_NEW: //27
+
+    if ( event->request == NULL) {
+      break; // do nothing
+    }
     unsigned int k;
 				
-    if (event->request != NULL && MSG_IS_OPTIONS(event->request)) {
+    if (MSG_IS_OPTIONS(event->request)) {
       for (k = 0; k < _sipcallVector.size(); k++) {
         if (_sipcallVector.at(k)->getCid() == event->cid) { 
           break;
@@ -896,15 +908,13 @@ SipVoIPLink::getEvent (void)
     } 
 
     // Voice message 
-    else if (event->request != NULL && MSG_IS_NOTIFY(event->request)){
+    else if (MSG_IS_NOTIFY(event->request)){
       _debug("> NOTIFY Voice message\n");
       int ii;
       unsigned int pos;
       unsigned int pos_slash;
-      
-      std::string nb_msg;
-      osip_body_t *body = NULL;
 
+      osip_body_t *body = NULL;
       // Get the message body
       ii = osip_message_get_body(event->request, 0, &body);
       if (ii != 0) {
@@ -928,7 +938,7 @@ SipVoIPLink::getEvent (void)
       } 
 
       pos_slash = str.find ("/");
-      nb_msg = str.substr(pos + LENGTH_VOICE_MSG, 
+      std::string nb_msg = str.substr(pos + LENGTH_VOICE_MSG, 
       pos_slash - (pos + LENGTH_VOICE_MSG));
 
       // Set the number of voice-message
@@ -941,6 +951,34 @@ SipVoIPLink::getEvent (void)
         // Stop notification when there is 0 voice message
         Manager::instance().stopVoiceMessageNotification();
       }
+    // http://www.jdrosen.net/papers/draft-ietf-simple-im-session-00.txt
+    } else if (MSG_IS_MESSAGE(event->request)) {
+      _debug("> MESSAGE received\n");
+      // osip_content_type_t* osip_message::content_type
+      osip_content_type_t* c_t = event->request->content_type;
+      if (c_t != 0) {
+        _debug("  Content Type of the message: %s/%s\n", c_t->type, c_t->subtype);
+
+        osip_body_t *body = NULL;
+        // Get the message body
+        if (0 == osip_message_get_body(event->request, 0, &body)) {
+          _debug("  Body length: %d\n", body->length);
+          if (body->body!=0 && 
+              strcmp(c_t->type,"text") == 0 && 
+              strcmp(c_t->subtype,"plain") == 0
+            ) {
+            _debug("  Text body: %s\n", body->body);
+          }
+        }
+      }
+      osip_message_t *answerOK;
+      int tid = event->tid;
+      eXosip_lock();
+      if ( 0 == eXosip_message_build_answer(tid, OK, &answerOK)) {
+          _debug("< Sending 200 OK\n");
+          eXosip_message_send_answer(tid, OK, answerOK);
+      }
+      eXosip_unlock();
     }
     break;
 

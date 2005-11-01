@@ -379,8 +379,9 @@ private:
   int			_firewallPort;
   std::string		_firewallAddr;
 
+  // return false if exosip or the network checking failed
+  bool initRegisterVoIPLink();
   // true if we tried to register Once
-  void initRegisterVoIPLink();
   bool    _hasTriedToRegister;
   // Register state
   REGISTRATION_STATE _registerState;
