@@ -4,6 +4,7 @@
  *
  *  Inspired by tonegenerator of 
  *   Laurielle Lea <laurielle.lea@savoirfairelinux.com> (2004)
+ *  Inspired by ringbuffer of Audacity Project
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,45 +18,28 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef __TONE_H__
-#define __TONE_H__
+#ifndef __AUDIOFILE_H__
+#define __AUDIOFILE_H__
 
-#include <string>
 #include "audioloop.h"
-
-#define TONE_NBTONE 4
-#define TONE_NBCOUNTRY 7
+#include "ulaw.h"
 
 /**
- * @author Yan Morin <yan.morin@savoirfairelinux.com>
- */
-class Tone : public AudioLoop {
+	@author Yan Morin <yan.morin@savoirfairelinux.com>
+*/
+class AudioFile : public AudioLoop
+{
 public:
-  Tone(const std::string& definition);
-  ~Tone();
-  enum TONEID {
-    TONE_DIALTONE = 0,
-    TONE_BUSY,
-    TONE_RINGTONE,
-    TONE_CONGESTION,
-    TONE_NULL
-  };
+  AudioFile();
+  ~AudioFile();
+
+  bool loadFile(const std::string& filename);
 
 private:
-  /**
-   * add a simple or double sin to the buffer, it double the sin in stereo 
-   * @param nb are the number of int16 (mono) to generate
-   * by example nb=5 generate 10 int16, 5 for the left, 5 for the right
-   */
-  void genSin(int16 *buffer, int frequency1, int frequency2, int nb);
-
-  /**
-   * allocate the memory with the definition
-   */
-  void genBuffer(const std::string& definition);
+  std::string _filename;
+  Ulaw* _ulaw;
 };
 
-#endif // __TONE_H__
-
+#endif // __AUDIOFILE_H__

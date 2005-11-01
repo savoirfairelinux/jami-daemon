@@ -25,17 +25,13 @@
 
 int INT16_AMPLITUDE = 32767;
 
-Tone::Tone(const std::string& definition) 
+Tone::Tone(const std::string& definition) : AudioLoop()
 {
-  _buffer = 0;
-  _pos    = 0;
-  _size   = 0;
   genBuffer(definition); // allocate memory with definition parameter
 }
 
 Tone::~Tone()
 {
-  delete _buffer; _buffer = 0;
 }
 
 void 
@@ -124,35 +120,3 @@ Tone::genSin(int16 *buffer, int frequency1, int frequency2, int nb)
     buffer[k] = buffer[k+1] = (int16)(amp * ((sin(var1 * t) + sin(var2 * t))));
   }
 }
-
-int
-Tone::getNext(int16* output, int nb, short volume)
-{
-  int copied = 0;
-  int block;
-  int pos = _pos;
-  nb<<=1; // double the number of int16 (stereo)
-  while(nb) {
-    block = nb;
-    if ( block > (_size-pos) ) {
-      block = _size-pos;
-    }
-    // src, dest, len
-    bcopy(_buffer+pos, output, block<<1); // short>char conversion
-    if (volume!=100) {
-      for (int i=0;i<block;i++) {
-        *output = (*output * volume)/100;
-        output++;
-      }
-    } else {
-      output += block; // this is the destination...
-    }
-    // should adjust sound here, in output???
-    pos = (pos + block ) % _size;
-    nb -= block;
-    copied += block;
-  }
-  _pos = pos;
-  return copied;
-}
-

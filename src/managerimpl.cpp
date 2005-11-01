@@ -354,10 +354,10 @@ ManagerImpl::onHoldCall (CALLID id)
   if (call == NULL) {
     return -1;
   }
+  setCurrentCallId(0);
   if ( call->getState() == Call::OnHold || call->isNotAnswered()) {
     return 1;
   }
-  setCurrentCallId(0);
   return call->onHold();
 }
 
@@ -377,7 +377,6 @@ ManagerImpl::offHoldCall (CALLID id)
   if (call->getState() == Call::OffHold) {
     return 1;
   }
-  _debug("CALL: setting current id = %d\n", id);
   setCurrentCallId(id);
   int returnValue = call->offHold();
   // start audio if it's ok

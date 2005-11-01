@@ -19,43 +19,34 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef __TONE_H__
-#define __TONE_H__
+#ifndef __AUDIOLOOP_H__
+#define __AUDIOLOOP_H__
 
 #include <string>
-#include "audioloop.h"
-
-#define TONE_NBTONE 4
-#define TONE_NBCOUNTRY 7
+#include "../global.h" // for int16 declaration and SAMPLING_RATE
 
 /**
  * @author Yan Morin <yan.morin@savoirfairelinux.com>
  */
-class Tone : public AudioLoop {
+class AudioLoop {
 public:
-  Tone(const std::string& definition);
-  ~Tone();
-  enum TONEID {
-    TONE_DIALTONE = 0,
-    TONE_BUSY,
-    TONE_RINGTONE,
-    TONE_CONGESTION,
-    TONE_NULL
-  };
-
-private:
-  /**
-   * add a simple or double sin to the buffer, it double the sin in stereo 
-   * @param nb are the number of int16 (mono) to generate
-   * by example nb=5 generate 10 int16, 5 for the left, 5 for the right
-   */
-  void genSin(int16 *buffer, int frequency1, int frequency2, int nb);
+  AudioLoop();
+  virtual ~AudioLoop();
 
   /**
-   * allocate the memory with the definition
+   * get the next fragment of the tone
+   * the function change the intern position, and will loop
+   * @param nb of int16 (mono) to send
+   * @return the number of int16 sent (nb*2)
    */
-  void genBuffer(const std::string& definition);
+  int getNext(int16* output, int nb, short volume=100);
+  void reset() { _pos = 0; }
+
+protected:
+  int16* _buffer;
+  int _size; // number of int16 inside the buffer, not the delay
+  int _pos; // current position, set to 0, when initialize
 };
 
-#endif // __TONE_H__
+#endif // __AUDIOLOOP_H__
 
