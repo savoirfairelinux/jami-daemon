@@ -249,8 +249,10 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 		_mainSndRingBuffer.Discard(toGet);
 	}  
 	else {
-    Tone* tone = Manager::instance().getTelephoneTone();
+    AudioLoop* tone = Manager::instance().getTelephoneTone();
     if ( tone != 0) {
+      tone->getNext(out, framesPerBuffer, spkrVolume);
+    } else if ( (tone=Manager::instance().getTelephoneFile()) != 0 ) {
       tone->getNext(out, framesPerBuffer, spkrVolume);
     } else {
       // If nothing urgent, play the regular sound samples

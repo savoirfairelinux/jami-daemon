@@ -23,11 +23,12 @@
 #ifndef _AUDIO_LAYER_H
 #define _AUDIO_LAYER_H
 
+#include <cc++/thread.h> // for ost::Mutex
+
 #include "portaudiocpp/PortAudioCpp.hxx"
 
 #include "../global.h"
 #include "ringbuffer.h"
-#include <cc++/thread.h>
 
 #define FRAME_PER_BUFFER	160
 #define MIC_CHANNELS 		2 // 1=mono 2=stereo

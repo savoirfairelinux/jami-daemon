@@ -29,6 +29,7 @@ AudioFile::AudioFile()
 {
   // could vary later...
   _ulaw = new Ulaw (PAYLOAD_CODEC_ULAW, "G711u");
+  _start = false;
 }
 
 

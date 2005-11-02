@@ -41,6 +41,8 @@ public:
    */
   int getNext(int16* output, int nb, short volume=100);
   void reset() { _pos = 0; }
+  unsigned int getMonoSize() { return _size>>1; }
+  unsigned int getSize() { return _size; }
 
 protected:
   int16* _buffer;

@@ -20,31 +20,29 @@
 
 #include <errno.h>
 #include <time.h>
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
 
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>	// mkdir(2)
 
-#include <cc++/thread.h>
+#include <cc++/socket.h>   // why do I need this here?
+#include <ccrtp/channel.h> // why do I need this here?
+#include <ccrtp/rtp.h>     // why do I need this here?
 #include <cc++/file.h>
 
-#include <cstdlib> 
-#include <iostream>
-#include <fstream> 
-#include <string>
-#include <vector>
-
-#include "sipvoiplink.h"
 #include "manager.h"
-#include "audio/audiocodec.h"
 #include "audio/audiolayer.h"
-#include "audio/ringbuffer.h"
-#include "audio/tonegenerator.h"
+#include "audio/audiocodec.h"
+//#include "audio/ringbuffer.h"
 #include "audio/tonelist.h"
 
+#include "sipvoiplink.h"
+#include "voIPLink.h"
 #include "call.h"
-//#include "error.h"
+
 #include "user_cfg.h"
-#include "voIPLink.h" 
 #include "gui/guiframework.h"
 
 #ifdef USE_ZEROCONF
@@ -85,9 +83,6 @@ ManagerImpl::ManagerImpl (void)
   _mic_volume  = 0; 
   _mic_volume_before_mute = 0;
 
-  _tone = new ToneGenerator();	
-  _toneType = ZT_TONE_NULL;
-
   // Call
   _currentCallId = 0;
   _nbIncomingWaitingCall=0;
@@ -101,7 +96,6 @@ ManagerImpl::ManagerImpl (void)
 ManagerImpl::~ManagerImpl (void) 
 {
   terminate();
-  delete _tone;  _tone = NULL;
 
 #ifdef USE_ZEROCONF
   delete _DNSService; _DNSService = NULL;
@@ -884,6 +878,7 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
   _toneMutex.enterMutex();
   _telephoneTone->setCurrentTone(toneId);
   _toneMutex.leaveMutex();
+
   getAudioDriver()->startStream();
   return true;
 }
@@ -893,7 +888,6 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
  */
 void 
 ManagerImpl::stopTone() {
-  _debug("TONE: stop tone/stream...\n");
   getAudioDriver()->stopStream();
 
   _toneMutex.enterMutex();
@@ -902,10 +896,7 @@ ManagerImpl::stopTone() {
 
   // for ringing tone..
   _toneMutex.enterMutex();
-  if ( _toneType != ZT_TONE_NULL ) {
-    _toneType = ZT_TONE_NULL;
-    _tone->stopTone();
-  }
+  _audiofile.stop();
   _toneMutex.leaveMutex();
 }
 
@@ -915,7 +906,6 @@ ManagerImpl::stopTone() {
 bool
 ManagerImpl::playTone()
 {
-  _debug("TONE: play dialtone...\n");
   return playATone(Tone::TONE_DIALTONE);
 }
 
@@ -933,6 +923,31 @@ ManagerImpl::congestion () {
 void
 ManagerImpl::ringback () {
   playATone(Tone::TONE_RINGTONE);
+}
+
+/**
+ * Multi Thread
+ */
+void
+ManagerImpl::ringtone() 
+{
+  std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
+  //if there is no / inside the path
+  if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
+    // check inside global share directory
+    ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
+  }
+  _toneMutex.enterMutex(); 
+  bool loadFile = _audiofile.loadFile(ringchoice);
+  _toneMutex.leaveMutex(); 
+  if (loadFile) {
+    _toneMutex.enterMutex(); 
+    _audiofile.start();
+    _toneMutex.leaveMutex(); 
+    getAudioDriver()->startStream();
+  } else {
+    ringback();
+  }
 }
 
 /**
@@ -965,7 +980,7 @@ ManagerImpl::callFailure(CALLID id) {
   }
 }
 
-Tone *
+AudioLoop*
 ManagerImpl::getTelephoneTone()
 {
   if(_telephoneTone) {
@@ -977,27 +992,17 @@ ManagerImpl::getTelephoneTone()
   }
 }
 
-
-/**
- * Multi Thread
- */
-void
-ManagerImpl::ringtone() 
+AudioLoop*
+ManagerImpl::getTelephoneFile()
 {
-  //std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
-  // if there is no / inside the path
-  //if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
-    // check inside global share directory
-  //  ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
-  //}
-  //_toneMutex.enterMutex(); 
-  //_toneType = ZT_TONE_FILE;
-  //int play = _tone->playRingtone(ringchoice.c_str());
-  //_toneMutex.leaveMutex();
-  //if (play!=1) {
-    ringback();
-  //}
+  ost::MutexLock m(_toneMutex);
+  if(_audiofile.isStarted()) {
+    return &_audiofile;
+  } else {
+    return 0;
+  }
 }
+
 
 /**
  * Use Urgent Buffer
@@ -1005,26 +1010,19 @@ ManagerImpl::ringtone()
  */
 void
 ManagerImpl::notificationIncomingCall (void) {
-  int16* buf_ctrl_vol;
-  int16* buffer = new int16[SAMPLING_RATE];
-  int size = SAMPLES_SIZE(FRAME_PER_BUFFER); //SAMPLING_RATE/2;
-  int k;
-  //int spkrVolume;
 
-  _tone->generateSin(440, 0, buffer);
+  AudioLayer* audiolayer = getAudioDriver();
+  if (audiolayer != 0) {
+    std::ostringstream frequency;
+    frequency << "440/" << FRAME_PER_BUFFER;
 
-  // Volume Control 
-  buf_ctrl_vol = new int16[size*CHANNELS];
-  // spkrVolume = getSpkrVolume();
-  for (int j = 0; j < size; j++) {
-    k = j<<1; // fast multiply by two
-    buf_ctrl_vol[k] = buf_ctrl_vol[k+1] = buffer[j];
-    // * spkrVolume/100;
+    Tone tone(frequency.str());
+    unsigned int nbInt16 = tone.getSize();
+    int16 buf[nbInt16];
+    tone.getNext(buf, tone.getMonoSize());
+    audiolayer->putUrgent(buf, sizeof(int16)*nbInt16);
   }
-  getAudioDriver()->putUrgent(buf_ctrl_vol, SAMPLES_SIZE(FRAME_PER_BUFFER));
 
-  delete[] buf_ctrl_vol;  buf_ctrl_vol = NULL;
-  delete[] buffer;        buffer = NULL;
 }
 
 /**

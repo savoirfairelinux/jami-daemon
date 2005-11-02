@@ -110,6 +110,8 @@ TelephoneTone::TelephoneTone(const std::string& countryName) {
   _tone[Tone::TONE_BUSY] = new Tone(_toneList.getDefinition(countryId, Tone::TONE_BUSY));
   _tone[Tone::TONE_RINGTONE] = new Tone(_toneList.getDefinition(countryId, Tone::TONE_RINGTONE));
   _tone[Tone::TONE_CONGESTION] = new Tone(_toneList.getDefinition(countryId, Tone::TONE_CONGESTION));
+
+  _currentTone = Tone::TONE_NULL; 
 }
 
 TelephoneTone::~TelephoneTone() 

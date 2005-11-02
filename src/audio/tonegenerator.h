@@ -22,10 +22,9 @@
 #define __TONE_GENERATOR_H__
 
 #include <string>
+#include <cc++/thread.h>
 
 #include "../global.h"
-#include "ulaw.h"
-#include <cc++/thread.h>
 
 #define ZT_TONE_DIALTONE   0
 #define ZT_TONE_BUSY       1
@@ -96,17 +95,11 @@ public:
   void stopTone();
 
 
-	/**
-	 * Play the ringtone when incoming call occured
-	 */
-	int  playRingtone		(const char*);
-	
 	///////////////////////////
 	// Public members variable
 	//////////////////////////
 	int16 *sample;
-	int freq1, 
-		freq2;
+	int freq1, freq2;
 	int time;
 	int totalbytes;
 	
@@ -130,10 +123,6 @@ private:
 	//////////////////////////
 	std::string toneZone[NB_ZONES_MAX][NB_TONES_MAX];
 	ToneThread*	tonethread;
-
-	short* _dst;
-	char* _src;
-	Ulaw* _ulaw;
 
   unsigned int _currentTone;
   unsigned int _currentZone;

@@ -22,7 +22,6 @@
 
 #ifndef __RING_BUFFER__
 #define __RING_BUFFER__
-#include <cc++/thread.h>
 
 typedef unsigned char* samplePtr;
 

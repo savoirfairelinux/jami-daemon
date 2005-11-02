@@ -101,9 +101,6 @@ ToneThread::run (void) {
 ToneGenerator::ToneGenerator () {	
 	this->initTone();
 	tonethread = NULL;
-	_dst = NULL;
-	_src = NULL;
-	_ulaw = new Ulaw (PAYLOAD_CODEC_ULAW, "G711u");
 
   _currentTone = ZT_TONE_NULL;
   _currentZone = 0;
@@ -111,9 +108,6 @@ ToneGenerator::ToneGenerator () {
 
 ToneGenerator::~ToneGenerator (void) {
 	delete tonethread; tonethread = 0;
-  delete [] _dst;    _dst = 0;
-  delete [] _src;    _src = 0;
-  delete _ulaw;      _ulaw = 0;
 }
 
 /**
@@ -343,59 +337,6 @@ ToneGenerator::stopTone() {
   delete tonethread; tonethread = NULL;
   // we end the last thread
   //_debug("Thread: tonethread deleted\n");
-}
-
-/**
- * @return 1 if everything is ok
- */
-int
-ToneGenerator::playRingtone (const char *fileName) {
-  if (tonethread != NULL) {
-    stopTone();
-  }
-  delete [] _dst; _dst = NULL;
-  delete [] _src; _src = NULL;
-
-	int expandedsize, length;
-
-	if (fileName == NULL) {
-		return 0;
-	}
-	
-	std::fstream file;
-	file.open(fileName, std::fstream::in);
-	if (!file.is_open()) {
-		return 0;
-  	}
-
-  // get length of file:
-  file.seekg (0, std::ios::end);
-  length = file.tellg();
-  file.seekg (0, std::ios::beg);
-
-    // allocate memory:
-  _src = new char [length];
-  _dst = new short[length*2];
-
-  // read data as a block:
-  file.read (_src,length);
-  file.close();
-
-  // Decode file.ul
-  // expandedsize is the number of bytes, not the number of int
-  expandedsize = _ulaw->codecDecode (_dst, (unsigned char *)_src, length);
-
-  //_debug("length (pre-ulaw) : %d\n", length);
-  //_debug("expandedsize (post-ulaw) : %d\n", expandedsize);
-
-  if (tonethread == NULL) {
-    //_debug("Thread: start tonethread\n");
-    // send the number of int16, so device by two
-    tonethread = new ToneThread ((int16*)_dst, expandedsize>>1);
-    tonethread->start();
-  }
-
-  return 1;
 }
 
 int

@@ -36,10 +36,14 @@ public:
   ~AudioFile();
 
   bool loadFile(const std::string& filename);
+  void start() { _start = true; }
+  void stop()  { _start = false; }
+  bool isStarted() { return _start; }
 
 private:
   std::string _filename;
   Ulaw* _ulaw;
+  bool _start;
 };
 
 #endif // __AUDIOFILE_H__

@@ -21,24 +21,24 @@
 #ifndef __MANAGER_H__
 #define __MANAGER_H__
 
-#include <cc++/thread.h>
 #include <string>
 #include <vector>
+#include <cc++/thread.h>
 
-#include "audio/tonelist.h" // for Tone::TONEID declaration
 #include "../stund/stun.h"
 #include "call.h"
-#include "audio/audiodevice.h"
 #include "observer.h"
 #include "config/config.h"
+
+#include "audio/audiodevice.h"
+#include "audio/tonelist.h" // for Tone::TONEID declaration
+#include "audio/audiofile.h"
 #include "audio/dtmf.h"
 #include "audio/codecDescriptor.h"
 
 class AudioLayer;
 class CodecDescriptor;
-//class Error;
 class GuiFramework;
-class ToneGenerator;
 
 class TelephoneTone;
 
@@ -191,7 +191,9 @@ public:
   void callFailure(CALLID id);
 
   // return 0 if no tone (init before calling this function)
-  Tone* getTelephoneTone();
+  AudioLoop* getTelephoneTone();
+  // return 0 if the wav is stopped
+  AudioLoop* getTelephoneFile();
 
   /**
    * @return true is there is one or many incoming call waiting
@@ -305,10 +307,10 @@ private:
   /////////////////////
   // Private variables
   /////////////////////
-  ToneGenerator* _tone;
+  //ToneGenerator* _tone;
   TelephoneTone* _telephoneTone;
+  AudioFile _audiofile;
   ost::Mutex _toneMutex;
-  int _toneType;
 
   //
   // Multithread variable with extern accessor and change only inside the main thread
@@ -378,8 +380,8 @@ private:
   short _mic_volume_before_mute;
 
 	// To handle firewall
-  int			_firewallPort;
-  std::string		_firewallAddr;
+  int _firewallPort;
+  std::string _firewallAddr;
 
   // return false if exosip or the network checking failed
   bool initRegisterVoIPLink();
