@@ -150,6 +150,8 @@ public:
   void peerAnsweredCall (CALLID id);
   int peerRingingCall (CALLID id);
   int peerHungupCall (CALLID id);
+  void incomingMessage(const std::string& message);
+
   void displayTextMessage (CALLID id, const std::string& message);
   void displayErrorText (CALLID id, const std::string& message);
   void displayError (const std::string& error);

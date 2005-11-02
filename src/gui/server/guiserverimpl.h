@@ -38,10 +38,8 @@ public:
   // exec loop
   int exec(void);
 
-  // Reimplementation of virtual functions
-  // TODO: remove incomingCall with one parameter
-	int incomingCall (CALLID id);
   int incomingCall(CALLID id, const std::string& accountId, const std::string& from);
+  void incomingMessage(const std::string& message);
 
 	void peerAnsweredCall (CALLID id);
 	void peerRingingCall (CALLID id);

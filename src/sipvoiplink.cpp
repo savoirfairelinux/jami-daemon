@@ -972,6 +972,7 @@ SipVoIPLink::getEvent (void)
               strcmp(c_t->subtype,"plain") == 0
             ) {
             _debug("  Text body: %s\n", body->body);
+            Manager::instance().incomingMessage(body->body);
           }
         }
       }

@@ -38,6 +38,7 @@ public:
 	virtual void peerAnsweredCall (CALLID id) = 0;
 	virtual void peerRingingCall (CALLID id) = 0;
 	virtual void peerHungupCall (CALLID id) = 0;
+  virtual void incomingMessage(const std::string& message) = 0;
 	virtual void displayStatus (const std::string& status) = 0;
 	virtual void displayConfigError (const std::string& error) = 0;
 	virtual void displayTextMessage (CALLID id, const std::string& message) = 0;

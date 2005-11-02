@@ -746,6 +746,17 @@ ManagerImpl::incomingCall (CALLID id, const std::string& name, const std::string
 
 /**
  * SipEvent Thread
+ * for outgoing message, send by SipEvent
+ */
+void 
+ManagerImpl::incomingMessage(const std::string& message) {
+  if (_gui) {
+    _gui->incomingMessage(message);
+  }
+}
+
+/**
+ * SipEvent Thread
  * for outgoing call, send by SipEvent
  */
 void 

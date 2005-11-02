@@ -323,6 +323,11 @@ GUIServerImpl::incomingCall (CALLID id, const std::string& accountId, const std:
   return 0;
 }
 
+void
+GUIServerImpl::incomingMessage(const std::string& message) {
+  _requestManager.sendResponse(ResponseMessage("030", _getEventsSequenceId, message));
+}
+
 void  
 GUIServerImpl::peerAnsweredCall (CALLID id) 
 {
