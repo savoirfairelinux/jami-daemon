@@ -297,6 +297,7 @@ private:
   void deleteCall	(CALLID id);
   Call* getCall (CALLID id);
   void setCurrentCallId(CALLID id);
+  void removeCallFromCurrent(CALLID id);
 
   /*
    * Play one tone

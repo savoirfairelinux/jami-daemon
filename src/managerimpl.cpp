@@ -203,7 +203,7 @@ ManagerImpl::pushBackNewCall (CALLID id, enum CallType type)
 Call*
 ManagerImpl::getCall (CALLID id)
 {
-  _debug("CALL: Getting call %d\n", id);
+  _debug("%10d: Getting call\n", id);
   Call* call = NULL;
   unsigned int size = _callVector.size();
   for (unsigned int i = 0; i < size; i++) {
@@ -223,7 +223,7 @@ ManagerImpl::getCall (CALLID id)
 void
 ManagerImpl::deleteCall (CALLID id)
 {
-  _debug("CALL: Deleting call %d\n", id);
+  _debug("%10d: Deleting call\n", id);
   CallVector::iterator iter = _callVector.begin();
   while(iter!=_callVector.end()) {
     Call *call = *iter;
@@ -243,9 +243,19 @@ ManagerImpl::deleteCall (CALLID id)
 void
 ManagerImpl::setCurrentCallId(CALLID id)
 {
-  _debug("CALL: Setting current callid %d to %d\n", _currentCallId, id);
+  _debug("%10d: Setting current callid, old one was: %d\n", id, _currentCallId);
   _currentCallId = id;
 }
+
+void
+ManagerImpl::removeCallFromCurrent(CALLID id)
+{
+  if ( _currentCallId == id ) {
+  _debug("%10d: Setting current callid, old one was: %d\n", 0, _currentCallId);
+    _currentCallId = 0;
+  }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Management of events' IP-phone user
@@ -275,6 +285,7 @@ ManagerImpl::outgoingCall (const std::string& to)
 int 
 ManagerImpl::hangupCall (CALLID id)
 {
+  _debug("%10d: Hangup Call\n", id);
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) {
@@ -287,6 +298,7 @@ ManagerImpl::hangupCall (CALLID id)
   deleteCall(id);
   // current call id or no line selected
   if (id == _currentCallId || _currentCallId == 0) {
+    removeCallFromCurrent(id);
     stopTone(); // stop tone, like a 700 error: number not found Not Found
   }
   return result;
@@ -301,6 +313,7 @@ ManagerImpl::hangupCall (CALLID id)
 int
 ManagerImpl::cancelCall (CALLID id)
 {
+  _debug("%10d: Cancel Call\n", id);
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) { 
@@ -319,6 +332,7 @@ ManagerImpl::cancelCall (CALLID id)
 int 
 ManagerImpl::answerCall (CALLID id)
 {
+  _debug("%10d: Answer Call\n", id);
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) {
@@ -343,12 +357,13 @@ ManagerImpl::answerCall (CALLID id)
 int 
 ManagerImpl::onHoldCall (CALLID id)
 {
+  _debug("%10d: On Hold Call\n", id);
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) {
     return -1;
   }
-  setCurrentCallId(0);
+  removeCallFromCurrent(id);
   if ( call->getState() == Call::OnHold || call->isNotAnswered()) {
     return 1;
   }
@@ -362,6 +377,7 @@ ManagerImpl::onHoldCall (CALLID id)
 int 
 ManagerImpl::offHoldCall (CALLID id)
 {
+  _debug("%10d: Off Hold Call\n", id);
   ost::MutexLock m(_mutex);
   stopTone();
   Call* call = getCall(id);
@@ -387,12 +403,13 @@ ManagerImpl::offHoldCall (CALLID id)
 int 
 ManagerImpl::transferCall (CALLID id, const std::string& to)
 {
+  _debug("%10d: Transfer Call to %s\n", id, to.c_str());
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == 0) {
     return -1;
   }
-  setCurrentCallId(0);
+  removeCallFromCurrent(id);
   return call->transfer(to);
 }
 
@@ -424,6 +441,7 @@ ManagerImpl::unmute() {
 int 
 ManagerImpl::refuseCall (CALLID id)
 {
+  _debug("%10d: Refuse Call\n", id);
   ost::MutexLock m(_mutex);
   Call *call = getCall(id);
   if (call == NULL) {
@@ -433,9 +451,9 @@ ManagerImpl::refuseCall (CALLID id)
   if ( call->getState() != Call::Progressing ) {
     return -1;
   }
-  int refuse = call->refuse();
 
-  setCurrentCallId(0);
+  int refuse = call->refuse();
+  removeCallFromCurrent(id);
   deleteCall(id);
   stopTone();
   return refuse;
@@ -697,6 +715,7 @@ ManagerImpl::callIsOnHold(CALLID id) {
 int 
 ManagerImpl::incomingCall (CALLID id, const std::string& name, const std::string& number)
 {
+  _debug("%10d: Incoming call\n", id);
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) {
@@ -706,9 +725,9 @@ ManagerImpl::incomingCall (CALLID id, const std::string& name, const std::string
   call->setState(Call::Progressing);
 
   if ( _currentCallId == 0 ) {
-    switchCall(id);
     call->setFlagNotAnswered(false);
     ringtone();
+    switchCall(id);
   } else {
     incWaitingCall();
   }
@@ -732,6 +751,7 @@ ManagerImpl::incomingCall (CALLID id, const std::string& name, const std::string
 void 
 ManagerImpl::peerAnsweredCall (CALLID id)
 {
+  _debug("%10d: Peer Answered Call\n", id);
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call != 0) {
@@ -752,6 +772,7 @@ ManagerImpl::peerAnsweredCall (CALLID id)
 int
 ManagerImpl::peerRingingCall (CALLID id)
 {
+  _debug("%10d: Peer Ringing Call\n", id);
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call != 0) {
@@ -771,6 +792,7 @@ ManagerImpl::peerRingingCall (CALLID id)
 int 
 ManagerImpl::peerHungupCall (CALLID id)
 {
+  _debug("%10d: Peer Hungup Call\n", id);
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if ( call == NULL ) {
@@ -784,7 +806,7 @@ ManagerImpl::peerHungupCall (CALLID id)
   deleteCall(id);
   call->setState(Call::Hungup);
 
-  setCurrentCallId(0);
+  removeCallFromCurrent(id);
   return 1;
 }
 
@@ -955,6 +977,7 @@ ManagerImpl::ringtone()
  */
 void
 ManagerImpl::callBusy(CALLID id) {
+  _debug("%10d: Call is busy\n", id);
   playATone(Tone::TONE_BUSY);
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
@@ -968,6 +991,7 @@ ManagerImpl::callBusy(CALLID id) {
  */
 void
 ManagerImpl::callFailure(CALLID id) {
+  _debug("%10d: Call failed\n", id);
   playATone(Tone::TONE_BUSY);
   _mutex.enterMutex();
   Call* call = getCall(id);

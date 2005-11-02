@@ -349,15 +349,15 @@ SipVoIPLink::answer (CALLID id)
   // Get  port   
   snprintf (tmpbuf, 63, "%d", getSipCall(id)->getLocalAudioPort());
 
-  _debug("Answer call [id = %d, cid = %d, did = %d]\n", id, getSipCall(id)->getCid(), getSipCall(id)->getDid());
+  _debug("%10d: Answer call [cid = %d, did = %d]\n", id, getSipCall(id)->getCid(), getSipCall(id)->getDid());
   port = getSipCall(id)->getLocalAudioPort();
   _debug("Local audio port: %d\n", port);
-
 
   osip_message_t *answerMessage = NULL;
   SipCall* ca = getSipCall(id);
 
   // Send 180 RINGING
+  _debug("< Send 180 Ringing\n");
   eXosip_lock ();
   eXosip_call_send_answer (ca->getTid(), RINGING, NULL);
   eXosip_unlock ();
@@ -366,16 +366,17 @@ SipVoIPLink::answer (CALLID id)
   eXosip_lock();
   i = eXosip_call_build_answer (ca->getTid(), OK, &answerMessage);
   if (i != 0) {
-    // Send 400 BAD_REQUEST
+   _debug("< Send 400 Bad Request\n");
     eXosip_call_send_answer (ca->getTid(), BAD_REQ, NULL);
   } else {
     // use exosip, bug locked
     i = sdp_complete_200ok (ca->getDid(), answerMessage, port);
     if (i != 0) {
       osip_message_free (answerMessage);
-      // Send 415 UNSUPPORTED_MEDIA_TYPE
+      _debug("< Send 415 Unsupported Media Type\n");
       eXosip_call_send_answer (ca->getTid(), UNSUP_MEDIA_TYPE, NULL);
     } else {
+      _debug("< Send 200 OK\n");
       eXosip_call_send_answer (ca->getTid(), OK, answerMessage);
     }
   }

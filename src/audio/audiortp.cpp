@@ -287,8 +287,8 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
 	// Notify (with a beep) an incoming call when there is already a call 
 	countTime += time->getSecond();
 	if (Manager::instance().incomingCallWaiting() > 0) {
-		countTime = countTime % 2000; // more often...
-		if (countTime < 100 and countTime > 0) {
+		countTime = countTime % 500; // more often...
+		if (countTime == 0) {
 			Manager::instance().notificationIncomingCall();
 		}
 	}
