@@ -26,11 +26,11 @@ cmmi() {
 	if [ $configok -eq 0 ]; then
 		echo -en 'Do you want to make and make install the package? (y/n) '
 		read r
-		if [ "$r" != "y" ]; then
+		if [ "$r" = "y" ]; then
 			configok=2
 		fi
 	fi
-	if [ $configok -eq 0 ]; then
+	if [ $configok -eq 2 ]; then
 		make || return 
 		echo "Enter you password to install the package as $USER (make install): "
 		if [ "$SFL_INSTALL_USER" = "$USER" ]; then
