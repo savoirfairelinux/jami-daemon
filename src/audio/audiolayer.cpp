@@ -24,7 +24,6 @@
 #include <stdlib.h>
 
 #include "audiolayer.h"
-#include "../error.h"
 #include "../global.h"
 #include "../manager.h"
 
