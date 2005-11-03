@@ -95,7 +95,7 @@ RequestConfigGet::RequestConfigGet(const std::string &sequenceId, const TokenLis
   if (iter != _argList.end()) {
     _section = *iter;
     _argList.pop_front();
-    iter++;
+    iter = _argList.begin();
     if (iter != _argList.end()) {
       _name = *iter;
       _argList.pop_front();
@@ -128,11 +128,11 @@ RequestConfigSet::RequestConfigSet(const std::string &sequenceId, const TokenLis
   if (iter != _argList.end()) {
     _section = *iter;
     _argList.pop_front();
-    iter++;
+    iter = _argList.begin();
     if (iter != _argList.end()) {
       _name = *iter;
       _argList.pop_front();
-      iter++;
+      iter = _argList.begin();
       if (iter != _argList.end()) {
         _value = *iter;
         _argList.pop_front();

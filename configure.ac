@@ -148,6 +148,7 @@ sflphone.spec \
 sflphoned-fedora.spec \
 Makefile \
 src/Makefile \
+src/sflphone \
 src/audio/Makefile \
 src/audio/gsm/Makefile \
 src/audio/pacpp/Makefile \

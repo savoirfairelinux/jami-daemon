@@ -71,8 +71,8 @@ public:
       iter = _argList.begin();
       if (iter != _argList.end() && iter->length() != 0) {
         _callId = *iter;
-        iter++;
         // last arg is the destination
+        iter++;
         if (iter != _argList.end()) {
           _destination = *iter;
           argsAreValid = true;

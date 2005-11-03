@@ -817,6 +817,46 @@ ManagerImpl::peerHungupCall (CALLID id)
 }
 
 /**
+ * Multi Thread
+ */
+void
+ManagerImpl::callBusy(CALLID id) {
+  _debug("%10d: Call is busy\n", id);
+  playATone(Tone::TONE_BUSY);
+  ost::MutexLock m(_mutex);
+  Call* call = getCall(id);
+  if (call != 0) {
+    call->setState(Call::Busy);
+  }
+  deleteCall(id);
+  call->setState(Call::Hungup);
+
+  removeCallFromCurrent(id);
+}
+
+/**
+ * Multi Thread
+ */
+void
+ManagerImpl::callFailure(CALLID id) {
+  _debug("%10d: Call failed\n", id);
+  playATone(Tone::TONE_BUSY);
+  _mutex.enterMutex();
+  Call* call = getCall(id);
+  if (call != 0) {
+    call->setState(Call::Error);
+  }
+  _mutex.leaveMutex();
+  if (_gui) {
+    _gui->callFailure(id);
+  }
+  deleteCall(id);
+  call->setState(Call::Hungup);
+
+  removeCallFromCurrent(id);
+}
+
+/**
  * SipEvent Thread
  * for outgoing call, send by SipEvent
  */
@@ -993,38 +1033,6 @@ ManagerImpl::ringtone()
     getAudioDriver()->startStream();
   } else {
     ringback();
-  }
-}
-
-/**
- * Multi Thread
- */
-void
-ManagerImpl::callBusy(CALLID id) {
-  _debug("%10d: Call is busy\n", id);
-  playATone(Tone::TONE_BUSY);
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call != 0) {
-    call->setState(Call::Busy);
-  }
-}
-
-/**
- * Multi Thread
- */
-void
-ManagerImpl::callFailure(CALLID id) {
-  _debug("%10d: Call failed\n", id);
-  playATone(Tone::TONE_BUSY);
-  _mutex.enterMutex();
-  Call* call = getCall(id);
-  if (call != 0) {
-    call->setState(Call::Error);
-  }
-  _mutex.leaveMutex();
-  if (_gui) {
-    _gui->callFailure(id);
   }
 }
 

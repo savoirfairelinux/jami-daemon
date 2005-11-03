@@ -97,7 +97,7 @@ SipVoIPLink::init(void)
    _debug("VoIP Link listen on port %d\n", DEFAULT_SIP_PORT);
   }
   // Set user agent
-  std::string tmp = std::string(PROGNAME) + "/" + std::string(SFLPHONED_VERSION);
+  std::string tmp = std::string(PROGNAME_GLOBAL) + "/" + std::string(SFLPHONED_VERSION);
   eXosip_set_user_agent(tmp.data());
 
   // If use STUN server, firewall address setup
@@ -806,6 +806,14 @@ SipVoIPLink::getEvent (void)
   case EXOSIP_CALL_RELEASED:
     if (event) {
       _debug("SIP call released: [cid = %d, did = %d]\n", event->cid, event->did);
+      id = findCallId(event);
+      if (id!=0) {
+        // not supposed to be execute on a current call...
+        _debug("send a call failure...");
+        Manager::instance().callFailure(id);
+        deleteSipCall(id);
+      }
+
     }
     //id = findCallId(event);
     //if (id!=0) {
@@ -843,10 +851,12 @@ SipVoIPLink::getEvent (void)
       //Manager::instance().displayError(event->response->reason_phrase);
       Manager::instance().displayErrorText(id, event->response->reason_phrase);
       Manager::instance().callFailure(id);
+      deleteSipCall(id);
     break;
     case BUSY_HERE:
       Manager::instance().displayErrorText(id, event->response->reason_phrase);
       Manager::instance().callBusy(id);
+      deleteSipCall(id);
       break;
     case REQ_TERMINATED:
       break;

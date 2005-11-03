@@ -44,10 +44,11 @@ typedef short int16;
 #define SFLPHONED_VERSION "0.5"
 #define SFLPHONED_VERSIONNUM 0x000500
 
-#define PROGNAME				"sflphoned"
-#define PROGDIR         "sflphone"
-#define RINGDIR					"ringtones"
-#define CODECDIR				"codecs"
+#define PROGNAME         "sflphoned"
+#define PROGNAME_GLOBAL  "sflphone"
+#define PROGDIR          "sflphone"
+#define RINGDIR          "ringtones"
+#define CODECDIR         "codecs"
 
 #define MONO					1
 #define CHANNELS				2
