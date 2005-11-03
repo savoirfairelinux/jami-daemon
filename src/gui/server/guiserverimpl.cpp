@@ -429,6 +429,15 @@ GUIServerImpl::sendVoiceNbMessage(const std::string& nb_msg)
 }
 
 void
+GUIServerImpl::sendRegistrationState(bool state) 
+{
+  if (state == true) {
+  _requestManager.sendResponse(ResponseMessage("003", _getEventsSequenceId, "Registration succeed"));
+  } else {
+  _requestManager.sendResponse(ResponseMessage("004", _getEventsSequenceId, "Registration failed"));
+  }
+}
+void
 GUIServerImpl::setup() 
 {
 }

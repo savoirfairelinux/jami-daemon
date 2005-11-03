@@ -131,8 +131,8 @@ public:
   int refuseCall (CALLID id);
 
   bool saveConfig (void);
-  int registerVoIPLink (void);
-  int unregisterVoIPLink (void);
+  bool registerVoIPLink (void);
+  bool unregisterVoIPLink (void);
 	
   /**
    * Handle choice of the DTMF-send-way
@@ -160,6 +160,9 @@ public:
 
   void startVoiceMessageNotification (const std::string& nb_msg);
   void stopVoiceMessageNotification (void);
+
+  void registrationSucceed();
+  void registrationFailed();
 
   // configuration function requests
   bool getEvents();

@@ -500,39 +500,34 @@ ManagerImpl::initRegisterVoIPLink()
 /**
  * Initialize action (main thread)
  * Note that Registration is only send if STUN is not activated
- * @return 1 if setRegister is call without failure, else return 0
+ * @return true if setRegister is call without failure, else return false
  */
-int 
+bool
 ManagerImpl::registerVoIPLink (void)
 {
   _debug("Register VoIP Link\n");
-  int returnValue = 0;
-  // Cyrille always want to register to receive call | 2005-10-24 10:50
-  //if ( !useStun() ) {
-    if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() >= 0) {
-      returnValue = 1;
-      _registerState = REGISTERED;
-    } else {
-      _registerState = FAILED;
-    }
-  //} else {
-  //  _registerState = UNREGISTERED;
-  //}
+  int returnValue = false;
+  if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() >= 0) {
+    returnValue = true;
+    _registerState = REGISTERED;
+  } else {
+    _registerState = FAILED;
+  }
   return returnValue;
 }
 
 /**
  * Terminate action (main thread)
- * @return 1 if the unregister method is send correctly
+ * @return true if the unregister method is send correctly
  */
-int 
+bool 
 ManagerImpl::unregisterVoIPLink (void)
 {
   _debug("Unregister VoIP Link\n");
 	if (_voIPLinkVector.at(DFT_VOIP_LINK)->setUnregister() == 0) {
-		return 1;
+		return true;
 	} else {
-		return 0;
+		return false;
 	}
 }
 
@@ -901,6 +896,24 @@ void
 ManagerImpl::stopVoiceMessageNotification (void)
 {
   if (_gui) _gui->sendVoiceNbMessage(std::string("0"));
+}
+
+/**
+ * SipEvent Thread
+ */
+void 
+ManagerImpl::registrationSucceed()
+{
+  if (_gui) _gui->sendRegistrationState(true);
+}
+
+/**
+ * SipEvent Thread
+ */
+void 
+ManagerImpl::registrationFailed()
+{
+  if (_gui) _gui->sendRegistrationState(false);
 }
 
 /**

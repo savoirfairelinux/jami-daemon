@@ -120,24 +120,16 @@ GuiFramework::saveConfig (void)
 	return Manager::instance().saveConfig();
 }
 
-int 
+bool 
 GuiFramework::registerVoIPLink (void)
 {
-	if (Manager::instance().registerVoIPLink()) {
-		return 1;
-	} else {
-		return 0;
-	}
+  return Manager::instance().registerVoIPLink();
 }
 
-int 
+bool 
 GuiFramework::unregisterVoIPLink (void)
 {
-	if (Manager::instance().unregisterVoIPLink()) {
-		return 1;
-	} else {
-		return 0;
-	}
+  return Manager::instance().unregisterVoIPLink();
 }
 
 bool 

@@ -110,4 +110,16 @@ private:
   int _percent;
 };
 
+class RequestRegister : public RequestGlobal {
+public:
+  RequestRegister(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId, argList) {}
+  ResponseMessage execute();
+};
+
+class RequestUnregister : public RequestGlobal {
+public:
+  RequestUnregister(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId, argList) {}
+  ResponseMessage execute();
+};
+
 #endif // __REQUESTCONFIG_H__

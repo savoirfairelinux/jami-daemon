@@ -179,6 +179,11 @@ SipVoIPLink::setRegister (void)
 {
   ManagerImpl& manager = Manager::instance();
 
+  if (_reg_id != -1) {
+    manager.displayError("Registration already sent. Try to unregister");
+    return -1;
+  }
+
   // all this will be inside the profil associate with the voip link
   std::string proxy = "sip:" + manager.getConfigString(SIGNALISATION, PROXY);
   std::string hostname = "sip:" + manager.getConfigString(SIGNALISATION, HOST_PART);
@@ -193,11 +198,6 @@ SipVoIPLink::setRegister (void)
     return -1;
   }
 
-  if (setAuthentication() == -1) {
-    _debug("No authentication\n");
-    return -1;
-  }
-
   _debug("REGISTER From: %s\n", from.data());
   osip_message_t *reg = NULL;
   eXosip_lock();
@@ -208,14 +208,20 @@ SipVoIPLink::setRegister (void)
     _reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
 						      (char*)hostname.data(), NULL, EXPIRES_VALUE, &reg);
   }
+  eXosip_unlock();
   if (_reg_id < 0) {
-    eXosip_unlock();
     return -1;
-  }	
+  }
+
+  if (setAuthentication() == -1) {
+    _debug("No authentication\n");
+    return -1;
+  }
 
   osip_message_set_header (reg, "Event", "Registration");
   osip_message_set_header (reg, "Allow-Events", "presence");
 
+  eXosip_lock();
   int i = eXosip_register_send_register (_reg_id, reg);
   if (i == -2) {
     _debug("Cannot build registration, check the setup\n"); 
@@ -231,7 +237,6 @@ SipVoIPLink::setRegister (void)
 
   // subscribe to message one time?
   // subscribeMessageSummary();
-
   _registrationSend = true;
   return i;
 }
@@ -254,11 +259,17 @@ SipVoIPLink::setUnregister (void)
       _debug("UNREGISTER\n");
       i = eXosip_register_build_register (_reg_id, 0, &reg);
     }
-    if (_reg_id < 0) {
-      eXosip_unlock();
+    eXosip_unlock();
+    if (i < 0) {
       return -1;
-    }	
+    }
 
+    if (setAuthentication() == -1) {
+      _debug("No authentication\n");
+      return -1;
+    }
+
+    eXosip_lock();
     i = eXosip_register_send_register (_reg_id, reg);
     if (i == -2) {
       _debug("(unregister) Cannot build registration, check the setup\n"); 
@@ -267,10 +278,9 @@ SipVoIPLink::setUnregister (void)
     }
     if (i == -1) {
       _debug("(unregister) Registration Failed\n");
-      eXosip_unlock();
-      return -1;
     }
     eXosip_unlock();
+    _reg_id = -1;
     return i;
   } else {
     // no registration send before
@@ -877,10 +887,12 @@ SipVoIPLink::getEvent (void)
 
   case EXOSIP_REGISTRATION_SUCCESS: // 1
     // Manager::instance().displayStatus(LOGGED_IN_STATUS);
+    Manager::instance().registrationSucceed();
     break;
 
   case EXOSIP_REGISTRATION_FAILURE: // 2
     //Manager::instance().displayError("getEvent : Registration Failure");
+    Manager::instance().registrationFailed();
     break;
 
   case EXOSIP_MESSAGE_NEW: //27

@@ -49,9 +49,8 @@ public:
 	void displayTextMessage (CALLID id, const std::string& message);
 	void displayErrorText (CALLID id, const std::string& message);
 	void displayError (const std::string& error);
-	//void startVoiceMessageNotification (void);
-	//void stopVoiceMessageNotification (void);
   void sendVoiceNbMessage(const std::string& nb_msg);
+  void sendRegistrationState(bool state);
   void setup();
 
   void sendMessage(const std::string& code, const std::string& seqId, TokenList&

@@ -241,3 +241,24 @@ RequestVolumeMic::execute()
   }
 }
 
+ResponseMessage
+RequestRegister::execute()
+{
+  if (GUIServer::instance().registerVoIPLink()) {
+    return message("200", "OK");
+  } else {
+    return message("500","Registration sending failed");
+  }
+}
+
+ResponseMessage
+RequestUnregister::execute()
+{
+  if (GUIServer::instance().unregisterVoIPLink()) {
+    return message("200", "OK");
+  } else {
+    return message("500","Unregistration sending failed");
+  }
+}
+
+

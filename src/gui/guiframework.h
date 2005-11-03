@@ -50,10 +50,8 @@ public:
 	virtual void setup() = 0;
   virtual void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg) = 0;
   virtual void sendCallMessage(const std::string& code, 
-  const std::string& sequenceId, 
-  CALLID id, 
-  TokenList arg) = 0;
-
+  const std::string& sequenceId, CALLID id, TokenList arg) = 0;
+  virtual void sendRegistrationState(bool state) = 0;
   virtual void callFailure(CALLID id) = 0;
 
 	/* Child class to parent class */
@@ -68,10 +66,10 @@ public:
 	void unmute ();
 	int refuseCall (CALLID id);
 
-	bool saveConfig (void);
-	int registerVoIPLink (void);
-	int unregisterVoIPLink (void);
-	bool sendDtmf (CALLID id, char code);
+  bool saveConfig(void);
+  bool registerVoIPLink(void);
+  bool unregisterVoIPLink(void);
+  bool sendDtmf (CALLID id, char code);
   bool playDtmf (char code);
   bool playTone ();
   bool stopTone ();
