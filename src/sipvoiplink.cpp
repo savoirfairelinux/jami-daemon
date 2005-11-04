@@ -1529,10 +1529,8 @@ SipVoIPLink::startCall (CALLID id, const std::string& from, const std::string& t
   }
   
   // this is the cid (call id from exosip)
-  _debug("< INVITE (%d)", id);
+  _debug("< INVITE (%d)\n", id);
   int cid = eXosip_call_send_initial_invite (invite);
-
-  _debug("> Start a new Call: Send INVITE\n");
   _debug("  Local IP:port: %s:%d\n", getLocalIpAddress().c_str(), getLocalPort());
   _debug("  Payload:       %s\n", media_audio);
 

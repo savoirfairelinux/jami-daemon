@@ -287,6 +287,9 @@ ManagerImpl::hangupCall (CALLID id)
 {
   _debug("%10d: Hangup Call\n", id);
   ost::MutexLock m(_mutex);
+  if (id == _currentCallId || _currentCallId == 0) {
+    stopTone(); // stop tone, like a 700 error: number not found Not Found
+  }
   Call* call = getCall(id);
   if (call == NULL) {
     return -1;

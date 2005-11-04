@@ -186,7 +186,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
         _name = name;
       }
       osip_uri_t* url = osip_from_get_url(from); 
-      if ( url != NULL ) {
+      if ( url != NULL && url->username != NULL) {
         _number = url->username;
       }
       osip_from_free(from);
@@ -346,7 +346,7 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
         _name = name;
       }
       osip_uri_t* url = osip_from_get_url(from); 
-      if ( url != NULL ) {
+      if ( url != NULL && url->username != NULL ) {
         _number = url->username;
       }
       osip_from_free(from);

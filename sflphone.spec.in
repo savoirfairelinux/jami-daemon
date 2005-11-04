@@ -1,5 +1,5 @@
 %define name sflphoned
-%define version 0.5
+%define version 0.6
 %define release 1
 %define prefix /usr
 Autoreq: 0
