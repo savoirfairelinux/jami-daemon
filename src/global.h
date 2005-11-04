@@ -27,22 +27,20 @@
 typedef float float32;
 typedef short int16;
 
-#define DEBUG
-#define DEBUG_LEVEL 
+//#define DEBUG
 
 #ifdef DEBUG
-	#define _debug(...)	fprintf(stderr, "[sflphoned] " __VA_ARGS__)
+	#define _debug(...)          fprintf(stderr, "[sflphoned] " __VA_ARGS__)
+  #define _debugException(...) fprintf(stderr, "[sflphoned-exception] " __VA_ARGS__ "\n")
+	#define _debugInit(...)      fprintf(stderr, "[sflphoned-init] " __VA_ARGS__ "\n")
 #else
 	#define _debug(...)
-#endif
-#ifdef DEBUG_LEVEL
-	#define _debugInit(...)	fprintf(stderr, "[sflphoned-init] " __VA_ARGS__ "\n")
-#else
+  #define _debugException(...)
 	#define _debugInit(...)
 #endif
 
-#define SFLPHONED_VERSION "0.5"
-#define SFLPHONED_VERSIONNUM 0x000500
+#define SFLPHONED_VERSION "0.6"
+#define SFLPHONED_VERSIONNUM 0x000600
 
 #define PROGNAME         "sflphoned"
 #define PROGNAME_GLOBAL  "sflphone"

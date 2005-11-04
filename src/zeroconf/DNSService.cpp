@@ -24,7 +24,6 @@
 #include "DNSService.h"
 #include "DNSServiceTXTRecord.h"
 #include "DNSQueryThread.h"
-#include "../global.h" // for _debug()
 
 #include <cc++/thread.h>
 
@@ -200,10 +199,10 @@ DNSServiceAddServicesCallback(DNSServiceRef,
       std::string tempService;
       tempService = std::string(serviceName) + "." + std::string(replyType) + std::string(replyDomain);
       if (flags&kDNSServiceFlagsAdd) {
-        _debug("DNSServiceAddServicesCallback call addService\n");
+//        _debug("DNSServiceAddServicesCallback call addService\n");
         service->addService(tempService);
       } else {
-        _debug("DNSServiceAddServicesCallback call removeService\n");
+//        _debug("DNSServiceAddServicesCallback call removeService\n");
         service->removeService(tempService);
       }
     }
@@ -228,10 +227,10 @@ DNSServiceQueryRecordCallback(
 {
   if (errorCode==kDNSServiceErr_NoError) {
     if (flags&kDNSServiceFlagsAdd) {
-      _debug("DNSServiceQueryRecordCallback call addTXTRecord\n");
+//      _debug("DNSServiceQueryRecordCallback call addTXTRecord\n");
       ((DNSService *)context)->addTXTRecord(fullname, rdlen, rdata);
     } else {
-      _debug("DNSServiceQueryRecordCallback call removeService\n");
+//      _debug("DNSServiceQueryRecordCallback call removeService\n");
       ((DNSService *)context)->removeService(fullname);
     }
   }

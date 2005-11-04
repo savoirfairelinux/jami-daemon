@@ -16,6 +16,7 @@ Yan Morin
 (yan dot morin at savoifairelinux dot com)
 	- zeroconf integration
 	- sflphoned deamon
+	- add and improve sip core feature
 	- tests and debugging
 
 

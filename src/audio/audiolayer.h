@@ -40,16 +40,15 @@ class RingBuffer;
 
 class AudioLayer {
 public:
-	AudioLayer();
-	~AudioLayer (void);
+  AudioLayer();
+  ~AudioLayer(void);
 
-	void listDevices();
-	void	openDevice 		(int);
-	void 	startStream		(void);
-	void 	stopStream		(void);
-	void    sleep			(int);
-	bool    isStreamActive	        (void);
-	bool    isStreamStopped	        (void);
+  void openDevice(int);
+  void startStream(void);
+  void stopStream(void);
+  void sleep(int);
+  bool isStreamActive(void);
+  bool isStreamStopped(void);
 
   void flushMain();
   int putMain(void* buffer, int toCopy);

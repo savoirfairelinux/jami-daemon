@@ -101,8 +101,6 @@ ManagerImpl::~ManagerImpl (void)
   delete _DNSService; _DNSService = NULL;
 #endif
 
-  //delete _error; _error = NULL;
-
   _debug("%s stop correctly.\n", PROGNAME);
 }
 
@@ -203,7 +201,7 @@ ManagerImpl::pushBackNewCall (CALLID id, enum CallType type)
 Call*
 ManagerImpl::getCall (CALLID id)
 {
-  _debug("%10d: Getting call\n", id);
+  //_debug("%10d: Getting call\n", id);
   Call* call = NULL;
   unsigned int size = _callVector.size();
   for (unsigned int i = 0; i < size; i++) {
@@ -223,7 +221,7 @@ ManagerImpl::getCall (CALLID id)
 void
 ManagerImpl::deleteCall (CALLID id)
 {
-  _debug("%10d: Deleting call\n", id);
+  //_debug("%10d: Deleting call\n", id);
   CallVector::iterator iter = _callVector.begin();
   while(iter!=_callVector.end()) {
     Call *call = *iter;
@@ -243,7 +241,7 @@ ManagerImpl::deleteCall (CALLID id)
 void
 ManagerImpl::setCurrentCallId(CALLID id)
 {
-  _debug("%10d: Setting current callid, old one was: %d\n", id, _currentCallId);
+  //_debug("%10d: Setting current callid, old one was: %d\n", id, _currentCallId);
   _currentCallId = id;
 }
 
@@ -251,7 +249,7 @@ void
 ManagerImpl::removeCallFromCurrent(CALLID id)
 {
   if ( _currentCallId == id ) {
-  _debug("%10d: Setting current callid, old one was: %d\n", 0, _currentCallId);
+    //_debug("%10d: Setting current callid, old one was: %d\n", 0, _currentCallId);
     _currentCallId = 0;
   }
 }
@@ -265,8 +263,9 @@ ManagerImpl::removeCallFromCurrent(CALLID id)
  */
 int 
 ManagerImpl::outgoingCall (const std::string& to)
-{	
+{
   CALLID id = generateNewCallId();
+  _debug("%10d: Outgoing Call\n", id);
   Call *call = pushBackNewCall(id, Outgoing);
   ost::MutexLock m(_mutex);
   call->setState(Call::Progressing);
@@ -287,22 +286,21 @@ ManagerImpl::hangupCall (CALLID id)
 {
   _debug("%10d: Hangup Call\n", id);
   ost::MutexLock m(_mutex);
-  if (id == _currentCallId || _currentCallId == 0) {
-    stopTone(); // stop tone, like a 700 error: number not found Not Found
-  }
   Call* call = getCall(id);
   if (call == NULL) {
+    stopTone();
     return -1;
   }
   int result = -1;
   if (call->getState() != Call::Error) { 
     result = call->hangup();
+  } else {
+    stopTone();
   }
   deleteCall(id);
   // current call id or no line selected
   if (id == _currentCallId || _currentCallId == 0) {
     removeCallFromCurrent(id);
-    stopTone(); // stop tone, like a 700 error: number not found Not Found
   }
   return result;
 }
@@ -394,7 +392,11 @@ ManagerImpl::offHoldCall (CALLID id)
   int returnValue = call->offHold();
   // start audio if it's ok
   if (returnValue != -1) {
-    getAudioDriver()->startStream();
+    try {
+      getAudioDriver()->startStream();
+    } catch(...) {
+      _debugException("Off hold could not start audio stream");
+    }
   }
   return returnValue;
 }
@@ -483,7 +485,7 @@ bool
 ManagerImpl::initRegisterVoIPLink() 
 {
   int returnValue = true;
-  _debug("Initiate VoIP Link Registration\n");
+  _debugInit("Initiate VoIP Link Registration\n");
   if (_hasTriedToRegister == false) {
     if ( _voIPLinkVector.at(DFT_VOIP_LINK)->init() ) { 
       // we call here, because it's long...
@@ -603,14 +605,15 @@ ManagerImpl::playDtmf(char code)
     int nbInt16InChar = sizeof(int16)/sizeof(char);
     audiolayer->putUrgent(buf_ctrl_vol, size * CHANNELS * nbInt16InChar);
 
-    // We activate the stream if it's not active yet.
-    if (!audiolayer->isStreamActive()) {
-      audiolayer->startStream();
-      //TODO: Is this really what we want?
-      //audiolayer->sleep(pulselen);
-      //audiolayer->stopStream();
-    } else {
-      audiolayer->sleep(pulselen); // in milliseconds
+    try {
+      // We activate the stream if it's not active yet.
+      if (!audiolayer->isStreamActive()) {
+        audiolayer->startStream();
+      } else {
+        audiolayer->sleep(pulselen); // in milliseconds
+      }
+    } catch(...) {
+      _debugException("Portaudio exception when playing a dtmf");
     }
     delete[] buf_ctrl_vol; buf_ctrl_vol = 0;
     returnValue = true;
@@ -635,14 +638,14 @@ void
 ManagerImpl::incWaitingCall() {
   ost::MutexLock m(_incomingCallMutex);
   _nbIncomingWaitingCall++;
-  _debug("incWaitingCall: %d\n", _nbIncomingWaitingCall);
+  //_debug("incWaitingCall: %d\n", _nbIncomingWaitingCall);
 }
 
 void
 ManagerImpl::decWaitingCall() {
   ost::MutexLock m(_incomingCallMutex);
   _nbIncomingWaitingCall--;
-  _debug("decWaitingCall: %d\n", _nbIncomingWaitingCall);
+  //_debug("decWaitingCall: %d\n", _nbIncomingWaitingCall);
 }
 
 
@@ -968,7 +971,11 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
   _telephoneTone->setCurrentTone(toneId);
   _toneMutex.leaveMutex();
 
-  getAudioDriver()->startStream();
+  try {
+    getAudioDriver()->startStream();
+  } catch(...) {
+    _debugException("Off hold could not start audio stream");
+  }
   return true;
 }
 
@@ -977,7 +984,11 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
  */
 void 
 ManagerImpl::stopTone() {
-  getAudioDriver()->stopStream();
+  try {
+    getAudioDriver()->stopStream();
+  } catch(...) {
+    _debugException("Stop tone and stop stream");
+  }
 
   _toneMutex.enterMutex();
   _telephoneTone->setCurrentTone(Tone::TONE_NULL);
@@ -1033,7 +1044,11 @@ ManagerImpl::ringtone()
     _toneMutex.enterMutex(); 
     _audiofile.start();
     _toneMutex.leaveMutex(); 
-    getAudioDriver()->startStream();
+    try {
+      getAudioDriver()->startStream();
+    } catch(...) {
+      _debugException("Audio file couldn't start audio stream");
+    }
   } else {
     ringback();
   }
@@ -1104,15 +1119,14 @@ ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr)
   if (ok) {
     closesocket(fd3);
     closesocket(fd4);
-    _debug("Got port pair at %d\n", mappedAddr.port);
     _firewallPort = mappedAddr.port;
     // Convert ipv4 address to host byte ordering
     in.s_addr = ntohl (mappedAddr.addr);
     addr = inet_ntoa(in);
     _firewallAddr = std::string(addr);
-    _debug("address firewall = %s\n",_firewallAddr.data());
+    _debug("STUN Firewall: [%s:%d]\n", _firewallAddr.data(), _firewallPort);
   } else {
-    _debug("Opened a stun socket pair FAILED\n");
+    _debug("Opening a stun socket pair failed\n");
   }
 }
 
@@ -1263,7 +1277,7 @@ ManagerImpl::selectAudioDriver (void)
     if (nbDevice == 0) {
       throw std::runtime_error("Portaudio detect no sound card.");
     } else if (noDevice >= nbDevice) {
-      _debug("Portaudio auto-select device #0 because device #%d is not found\n", noDevice);
+      _debug(" Portaudio auto-select device #0 because device #%d is not found\n", noDevice);
       _setupLoaded = false;
       noDevice = 0;
     }

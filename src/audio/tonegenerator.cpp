@@ -47,7 +47,7 @@ ToneThread::~ToneThread (void) {
   try {
     terminate();
   } catch (...) {
-    _debug("ToneThread: try to terminate, but catch an exception...\n");
+    _debugException("ToneThread: didn't terminate correctly");
   }
   delete[] buf_ctrl_vol; buf_ctrl_vol=NULL;
 }
@@ -79,7 +79,6 @@ ToneThread::run (void) {
   // int16 are the buf_ctrl_vol 
   //  unsigned char are the sample_ptr inside ringbuffer
   int size_in_char = _size * 2 * (sizeof(int16)/sizeof(unsigned char));
-  //_debug(" size : %d\t size_in_char : %d\n", _size, size_in_char);
 
  	while (!testCancel()) {
     manager.getAudioDriver()->putMain(buf_ctrl_vol, size_in_char);
@@ -331,8 +330,6 @@ ToneGenerator::toneHandle (unsigned int idr, const std::string& zone) {
 
 void
 ToneGenerator::stopTone() {
-  //_currentTone = ZT_TONE_NULL;
-
   //_debug("Thread: delete tonethread\n");
   delete tonethread; tonethread = NULL;
   // we end the last thread

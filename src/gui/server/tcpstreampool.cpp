@@ -17,15 +17,12 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "tcpstreampool.h"
-#include "../../global.h"
 
 #define WAITING_TIME 2UL
 
 TCPStreamPool::~TCPStreamPool() 
 {
-  _debug("TCPStreamPool terminate\n");
   terminate();
-  _debug("terminate done\n");
 }
 
 void 
@@ -61,8 +58,6 @@ void
 TCPStreamPool::sendLast() {
   std::string output;
   while (good() && _outputPool.pop(output, WAITING_TIME))  {
-    _debug("TCPStreamPool send last %s\n", output.c_str());
-    //_debug("sending last message...\n");
     *this << output << std::endl;
   }
 }
@@ -72,5 +67,3 @@ TCPStreamPool::receive(std::string& request)
 {
   return _inputPool.pop(request, WAITING_TIME);
 }
-
-

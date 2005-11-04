@@ -2,17 +2,17 @@
  *  Copyright (C) 2005 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
- *                                                                              
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -41,7 +41,11 @@ AudioLayer::AudioLayer()
 // Destructor
 AudioLayer::~AudioLayer (void) 
 {
-  portaudio::System::terminate();
+  try {
+    portaudio::System::terminate();
+  } catch (const portaudio::PaException &e) {
+    _debug("Catch an exception when portaudio tried to terminate\n");
+  }
   closeStream();
 }
 
@@ -56,22 +60,11 @@ AudioLayer::closeStream (void)
 }
 
 void
-AudioLayer::listDevices()
-{
-  ost::MutexLock guard(_mutex);
-  portaudio::System::DeviceIterator pos =  portaudio::System::instance().devicesBegin();
-  while(pos != portaudio::System::instance().devicesEnd()) {
-    _debug("AudioLayer: Device (%d) %s\n", pos->index(), pos->name());
-    pos++;
-  }
-
-}
-
-void
 AudioLayer::openDevice (int index) 
 {
   closeStream();
 
+  try {
   // Set up the parameters required to open a (Callback)Stream:
   portaudio::DirectionSpecificStreamParameters 
     outParams(portaudio::System::instance().deviceByIndex(index), 
@@ -84,7 +77,6 @@ AudioLayer::openDevice (int index)
 	     2, portaudio::INT16, true, 
 	     portaudio::System::instance().deviceByIndex(index).defaultLowInputLatency(), 
 	     NULL);
-
 	
   // we could put paFramesPerBufferUnspecified instead of FRAME_PER_BUFFER to be variable
   portaudio::StreamParameters const params(inParams, outParams, 
@@ -95,32 +87,46 @@ AudioLayer::openDevice (int index)
   _stream = new portaudio::MemFunCallbackStream<AudioLayer>(params, 
 							    *this, 
 							    &AudioLayer::audioCallback);
+  } catch(...) {
+    throw;
+  }
 }
 
 void
 AudioLayer::startStream(void) 
 {
-  ost::MutexLock guard(_mutex);
-  if (_stream && !_stream->isActive()) {
-    _debug("starting stream...\n");
-    _stream->start();
+  try {
+    ost::MutexLock guard(_mutex);
+    if (_stream && !_stream->isActive()) {
+      //_debug("Starting sound stream\n");
+        _stream->start();
+    }
+  } catch (const portaudio::PaException &e) {
+    _debugException("Portaudio error: error on starting audiolayer stream");
+    throw;
+  } catch(...) {
+    _debugException("stream start error");
+    throw;
   }
 }
 	
 void
 AudioLayer::stopStream(void) 
 {
-  ost::MutexLock guard(_mutex);
   try {
+    ost::MutexLock guard(_mutex);
     if (_stream && !_stream->isStopped()) {
-      _debug("stopping stream...\n");
       _stream->stop();
       _mainSndRingBuffer.flush();
       _urgentRingBuffer.flush();
       _micRingBuffer.flush();
     }
-  } catch (...) {
-    _debug("Portaudio error: error when stoping audiolayer stream\n");
+  } catch (const portaudio::PaException &e) {
+    _debugException("Portaudio error: error on stoping audiolayer stream");
+    throw;
+  } catch(...) {
+    _debugException("stream stop error");
+    throw;
   }
 }
 

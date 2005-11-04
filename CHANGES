@@ -1,4 +1,11 @@
-SFLphoned/SFLphone (0.5) / 2005-10-17
+SFLphoned/SFLphone (0.6)  / 2005-11-04
+	* improve sip protocol
+	* can now receive text message
+	* accept reinvite call
+	* cleaning headers
+	* improving bash launcher script
+
+SFLphoned/SFLphone (0.5a) / 2005-10-17
 	* sflphoned
 	* bug fixes
 	* sflphone-qt

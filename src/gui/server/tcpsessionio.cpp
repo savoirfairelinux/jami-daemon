@@ -17,7 +17,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "tcpsessionio.h"
-#include <cstdio>
 
 const int TCPSessionIO::PORT = 3999;
 const char * const TCPSessionIO::IP = "127.0.0.1";
@@ -38,11 +37,8 @@ TCPSessionIO::TCPSessionIO() : SessionIO()
 
 TCPSessionIO::~TCPSessionIO()
 {
-  fprintf(stderr, "TCPSessionIO: delete clientStream\n");
   delete _clientStream; _clientStream = NULL;
-  fprintf(stderr, "TCPSessionIO: delete serverSocket\n");
   delete _serverSocket; _serverSocket = NULL;
-  fprintf(stderr, "TCPSessionIO: end\n");
 }
 
 bool

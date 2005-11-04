@@ -143,8 +143,6 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
       }
       // bcopy(src, dest, len)
       bcopy (mBuffer + mStart, dest, block);
-      //fprintf(stderr, "has %d get %d\t", len, block);
-      //_debug("get %d chars at address %ld, mBufferSize=%d, toCopy=%d\n", block, mBuffer+mStart, mBufferSize, toCopy);
       dest += block;
       mStart = (mStart + block) % mBufferSize;
       toCopy -= block;

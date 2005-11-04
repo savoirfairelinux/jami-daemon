@@ -163,7 +163,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
   if (event->response != NULL) {
     _status_code = event->response->status_code;
     snprintf (_reason_phrase, 49, "%s", event->response->reason_phrase);
-    _debug("  Status: %d %s\n", _status_code, _reason_phrase);
+    _debug("            Status: %d %s\n", _status_code, _reason_phrase);
   }
 
   strcpy(_remote_uri, "");
@@ -192,9 +192,9 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
       osip_from_free(from);
     }
   }
-  _debug("  Name: %s\n", _name.c_str());
-  _debug("  Number: %s\n", _number.c_str());
-  _debug("  Remote URI: %s\n", _remote_uri);
+  _debug("            Name: %s\n", _name.c_str());
+  _debug("            Number: %s\n", _number.c_str());
+  _debug("            Remote URI: %s\n", _remote_uri);
 
   /* negotiate payloads */
   sdp_message_t *remote_sdp = NULL;
@@ -218,7 +218,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
   eXosip_unlock();
   if (conn != NULL && conn->c_addr != NULL) {
       snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
-      _debug("  Remote Audio IP: %s\n", _remote_sdp_audio_ip);
+      _debug("            Remote Audio IP: %s\n", _remote_sdp_audio_ip);
   }
 
   // Remote Media Port
@@ -236,7 +236,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
     return -1;
   }
   _remote_sdp_audio_port = atoi(remote_med->m_port);
-  _debug("  Remote Audio Port: %d\n", _remote_sdp_audio_port);
+  _debug("            Remote Audio Port: %d\n", _remote_sdp_audio_port);
 
   // Remote Payload
   char *tmp = NULL;
@@ -253,7 +253,7 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
   }
   if (tmp != NULL) {
     payload = atoi (tmp);
-    _debug("  Payload: %d\n", payload);
+    _debug("            Payload: %d\n", payload);
     setAudioCodec(_cdv->at(0)->alloc(payload, "")); // codec builder for the mic
   } else {
     _debug("< Sending 415 Unsupported media type\n");
@@ -284,16 +284,16 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
         /* search if stream is sendonly or recvonly */
         _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
         _local_sendrecv =  sdp_analyse_attribute (local_sdp, local_med);
-        _debug("  Remote SendRecv: %d\n", _remote_sendrecv);
-        _debug("  Local  SendRecv: %d\n", _local_sendrecv);
+        _debug("            Remote SendRecv: %d\n", _remote_sendrecv);
+        _debug("            Local  SendRecv: %d\n", _local_sendrecv);
         if (_local_sendrecv == _SENDRECV) {
           if (_remote_sendrecv == _SENDONLY)      { _local_sendrecv = _RECVONLY; }
           else if (_remote_sendrecv == _RECVONLY) { _local_sendrecv = _SENDONLY; }
         }
-        _debug("  Final Local SendRecv: %d\n", _local_sendrecv);
+        _debug("            Final Local SendRecv: %d\n", _local_sendrecv);
         sdp_message_free (local_sdp);
       }
-      _debug("  < Sending answer 183\n");
+      _debug("< Sending answer 183\n");
       if (0 != eXosip_call_send_answer (_tid, 183, answer)) {
         _debug("SipCall::newIncomingCall: cannot send 183 progress?\n");
       }
@@ -323,7 +323,7 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
   if (event->response != NULL) {
     _status_code = event->response->status_code;
     snprintf (_reason_phrase, 49, "%s", event->response->reason_phrase);
-    _debug("  Status: %d %s\n", _status_code, _reason_phrase);
+    _debug("            Status: %d %s\n", _status_code, _reason_phrase);
   }
 
   strcpy(_remote_uri, "");
@@ -352,9 +352,9 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
       osip_from_free(from);
     }
   }
-  _debug("  Name: %s\n", _name.c_str());
-  _debug("  Number: %s\n", _number.c_str());
-  _debug("  Remote URI: %s\n", _remote_uri);
+  _debug("            Name: %s\n", _name.c_str());
+  _debug("            Number: %s\n", _number.c_str());
+  _debug("            Remote URI: %s\n", _remote_uri);
 
   /* negotiate payloads */
   sdp_message_t *remote_sdp = NULL;
@@ -379,7 +379,7 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
   eXosip_unlock();
   if (conn != NULL && conn->c_addr != NULL) {
       snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
-      _debug("  Remote Audio IP: %s\n", _remote_sdp_audio_ip);
+      _debug("            Remote Audio IP: %s\n", _remote_sdp_audio_ip);
   }
 
   // Remote Media Port
@@ -397,7 +397,7 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
     return 0;
   }
   _remote_sdp_audio_port = atoi(remote_med->m_port);
-  _debug("  Remote Audio Port: %d\n", _remote_sdp_audio_port);
+  _debug("            Remote Audio Port: %d\n", _remote_sdp_audio_port);
 
   // Remote Payload
   char *tmp = NULL;
@@ -414,7 +414,7 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
   }
   if (tmp != NULL) {
     payload = atoi (tmp);
-    _debug("  Payload: %d\n", payload);
+    _debug("            Payload: %d\n", payload);
     setAudioCodec(_cdv->at(0)->alloc(payload, "")); // codec builder for the mic
   } else {
     _debug("< Sending 415 Unsupported media type\n");
@@ -445,13 +445,13 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
         /* search if stream is sendonly or recvonly */
         _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
         _local_sendrecv =  sdp_analyse_attribute (local_sdp, local_med);
-        _debug("  Remote SendRecv: %d\n", _remote_sendrecv);
-        _debug("  Local  SendRecv: %d\n", _local_sendrecv);
+        _debug("            Remote SendRecv: %d\n", _remote_sendrecv);
+        _debug("            Local  SendRecv: %d\n", _local_sendrecv);
         if (_local_sendrecv == _SENDRECV) {
           if (_remote_sendrecv == _SENDONLY)      { _local_sendrecv = _RECVONLY; }
           else if (_remote_sendrecv == _RECVONLY) { _local_sendrecv = _SENDONLY; }
         }
-        _debug("  Final Local SendRecv: %d\n", _local_sendrecv);
+        _debug("            Final Local SendRecv: %d\n", _local_sendrecv);
         sdp_message_free (local_sdp);
       }
       _debug("< Sending answer 200\n");
@@ -528,8 +528,8 @@ SipCall::answeredCall(eXosip_event_t *event) {
         osip_free (tmp);
     }
   }
-  _debug("  Status: %d %s\n", _status_code, _reason_phrase);
-  _debug("  From URI: %s\n", _remote_uri);
+  _debug("            Status: %d %s\n", _status_code, _reason_phrase);
+  _debug("            From URI: %s\n", _remote_uri);
 
   eXosip_lock ();
   {
@@ -606,7 +606,7 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
         _remote_sdp_audio_port = atoi (remote_med->m_port);
       }
       eXosip_unlock();
-      _debug("  Remote Audio: %s:%d\n", _remote_sdp_audio_ip, _remote_sdp_audio_port);
+      _debug("            Remote Audio: %s:%d\n", _remote_sdp_audio_ip, _remote_sdp_audio_port);
 
       if (_remote_sdp_audio_port > 0 && _remote_sdp_audio_ip[0] != '\0' && 
         remote_med != NULL) {
@@ -618,7 +618,7 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
         setAudioCodec(_cdv->at(0)->alloc(payload, ""));
       }
     }
-    _debug("  Remote Payload: %d\n", payload);
+    _debug("            Remote Payload: %d\n", payload);
 
     if (local_sdp == NULL) {
       _debug("SipCall::answeredCall_without_hold: SDP body was probably in the ACK (TODO)\n");
@@ -632,7 +632,7 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
       if (local_med != NULL && local_med->m_port != NULL) {
         audio_port = atoi (local_med->m_port);
       }
-      _debug("  Local Audio port: %d\n", audio_port);
+      _debug("            Local Audio port: %d\n", audio_port);
 
       if (tmp != NULL && audio_port > 0
           && _remote_sdp_audio_port > 0
@@ -648,8 +648,8 @@ SipCall::answeredCall_without_hold (eXosip_event_t *event)
               _local_sendrecv = _SENDONLY;
         }
       }
-      _debug("  Remote Sendrecv: %d\n", _remote_sendrecv);
-      _debug("  Local Sendrecv: %d\n", _local_sendrecv);
+      _debug("            Remote Sendrecv: %d\n", _remote_sendrecv);
+      _debug("            Local Sendrecv: %d\n", _local_sendrecv);
     }
     sdp_message_free (local_sdp);
     sdp_message_free (remote_sdp);
