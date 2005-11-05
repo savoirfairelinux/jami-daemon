@@ -1,14 +1,21 @@
-This is SFLPhoned-0.5 release.
+This is SFLPhoned-0.6 release.
 
 You need ccrtp-1.3.5 which needs commoncpp2>=1.3.20
-libeXosip2-1.9.1-pre17 needs libosip2-2.2.0
+Note that commoncpp2 needs libxml2, libxml2-devel and pkgconfig to compile.
+libeXosip2-1.9.1-pre17 needs libosip2-2.2.1
 You also need PortAudio_v19
 See http://www.sflphone.org/#downloads to download required libraries.
 
 Dependencies build instructions:
 --------------------------------
+You can use the builds script in tools directory.
+1. Change the default configuration in config.sh (~/sflphone) is the prefix
+2. ./download.sh
+3. ./install.sh
+ 
+You can also compile each dependencies, one by one:
 
-1/	For commoncpp2-1.3.20
+1/	For commoncpp2-1.3.21
 	./configure [option]
 	make
 	make install
@@ -48,9 +55,9 @@ How to use it ?
 
 If you have the sflphone 0.3 or 0.4 release, copy the file sflphonerc to sflphonedrc
 cp ~/.sflphone/sflphonerc ~/.sflphone/sflphonedrc
-If you have an oldre version, remove your sflphonerc file located in $HOME/.sflphone
+If you have an older version, remove your sflphonerc file located in $HOME/.sflphone
 
-1. Lauch sflphone-qt interface, a setup window appears. 
+1. Lauch sflphone interface, a setup window appears. 
 
 2. If you do have a SIP account, fill the SIP stuff where related. You can use
    STUN too.
@@ -105,7 +112,7 @@ Short description of content of source tree:
   to sflphone client. The slfphone client can be a console program or a graphical interface
 
 
-How is structured SFLphone (>=0.4)
+How is structured SFLphone (>=0.5)
 ----------------------------------
 
 		+------------+

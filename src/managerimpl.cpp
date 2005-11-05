@@ -285,17 +285,15 @@ int
 ManagerImpl::hangupCall (CALLID id)
 {
   _debug("%10d: Hangup Call\n", id);
+  stopTone();
   ost::MutexLock m(_mutex);
   Call* call = getCall(id);
   if (call == NULL) {
-    stopTone();
     return -1;
   }
   int result = -1;
   if (call->getState() != Call::Error) { 
     result = call->hangup();
-  } else {
-    stopTone();
   }
   deleteCall(id);
   // current call id or no line selected
