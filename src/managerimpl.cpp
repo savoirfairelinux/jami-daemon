@@ -1324,7 +1324,7 @@ ManagerImpl::initVolume()
  * Main Thread
  */
 bool 
-ManagerImpl::getZeroconf(const std::string& )
+ManagerImpl::getZeroconf(const std::string& sequenceId)
 {
   bool returnValue = false;
 #ifdef USE_ZEROCONF
@@ -1366,7 +1366,7 @@ ManagerImpl::getZeroconf(const std::string& )
  * Main Thread
  */
 bool 
-ManagerImpl::attachZeroconfEvents(const std::string& , Pattern::Observer& )
+ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer)
 {
   bool returnValue = false;
   // don't need the _gui like getZeroconf function
@@ -1382,7 +1382,7 @@ ManagerImpl::attachZeroconfEvents(const std::string& , Pattern::Observer& )
   return returnValue;
 }
 bool
-ManagerImpl::detachZeroconfEvents(Pattern::Observer& )
+ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
 {
   bool returnValue = false;
 #ifdef USE_ZEROCONF
