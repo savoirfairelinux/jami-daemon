@@ -43,10 +43,11 @@ public:
   AudioLayer();
   ~AudioLayer(void);
 
-  void openDevice(int);
+  void openDevice(int, int);
   void startStream(void);
   void stopStream(void);
   void sleep(int);
+  bool hasStream(void);
   bool isStreamActive(void);
   bool isStreamStopped(void);
 
@@ -62,6 +63,8 @@ public:
 
   void setErrorMessage(const std::string& error) { _errorMessage = error; }
   std::string getErrorMessage() { return _errorMessage; }
+
+  enum IODEVICE {InputDevice=0x01, OutputDevice=0x02 };
 
 private:
   void	closeStream	(void);

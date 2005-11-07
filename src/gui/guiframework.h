@@ -88,6 +88,7 @@ public:
   bool setMicVolume(int volume);
   int getSpkrVolume();
   int getMicVolume();
+  bool setSwitch(const std::string& switchName);
 
   bool hasLoadedSetup();
   CALLID getCurrentId();

@@ -130,4 +130,6 @@ RequestFactory::registerAll() {
   registerRequest<RequestVolumeMic>   ("setmicvolume");
   registerRequest<RequestRegister>    ("register");
   registerRequest<RequestUnregister>  ("unregister");
+
+  registerRequest<RequestSwitch>      ("switch");
 }

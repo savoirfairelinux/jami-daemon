@@ -121,5 +121,13 @@ public:
   RequestUnregister(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId, argList) {}
   ResponseMessage execute();
 };
+class RequestSwitch : public RequestGlobal {
+public:
+  RequestSwitch(const std::string &sequenceId, const TokenList& argList);
+  ResponseMessage execute();
+private:
+  std::string _switchName;
+};
+
 
 #endif // __REQUESTCONFIG_H__

@@ -59,23 +59,30 @@ AudioLayer::closeStream (void)
   }
 }
 
+bool
+AudioLayer::hasStream(void) {
+  ost::MutexLock guard(_mutex);
+  return (_stream!=0 ? true : false); 
+}
+
+
 void
-AudioLayer::openDevice (int index) 
+AudioLayer::openDevice (int indexIn, int indexOut) 
 {
   closeStream();
 
   try {
   // Set up the parameters required to open a (Callback)Stream:
   portaudio::DirectionSpecificStreamParameters 
-    outParams(portaudio::System::instance().deviceByIndex(index), 
+    outParams(portaudio::System::instance().deviceByIndex(indexOut), 
 	      2, portaudio::INT16, true, 
-	      portaudio::System::instance().deviceByIndex(index).defaultLowOutputLatency(), 
+	      portaudio::System::instance().deviceByIndex(indexOut).defaultLowOutputLatency(), 
 	      NULL);
 	
   portaudio::DirectionSpecificStreamParameters 
-    inParams(portaudio::System::instance().deviceByIndex(index), 
+    inParams(portaudio::System::instance().deviceByIndex(indexIn), 
 	     2, portaudio::INT16, true, 
-	     portaudio::System::instance().deviceByIndex(index).defaultLowInputLatency(), 
+	     portaudio::System::instance().deviceByIndex(indexIn).defaultLowInputLatency(), 
 	     NULL);
 	
   // we could put paFramesPerBufferUnspecified instead of FRAME_PER_BUFFER to be variable

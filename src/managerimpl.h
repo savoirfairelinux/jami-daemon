@@ -175,6 +175,8 @@ public:
   bool setConfig(const std::string& section, const std::string& name, const std::string& value);
   bool setConfig(const std::string& section, const std::string& name, int value);
   bool getConfigList(const std::string& sequenceId, const std::string& name);
+  void selectAudioDriver(void);
+  bool setSwitch(const std::string& switchName);
 
   // configuration function for extern
   // throw an Conf::ConfigTreeItemException if not found
@@ -269,7 +271,7 @@ private:
   /*
    * Initialize audiodriver
    */
-  void selectAudioDriver (void);
+  void initAudioDriver(void);
 
   /*
    * Initialize zeroconf module and scanning
@@ -290,7 +292,7 @@ private:
    * Configuration
    */
   bool getDirListing(const std::string& sequenceId, const std::string& path, int *nbFile);
-  bool getAudioDeviceList(const std::string& sequenceId);
+  bool getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask);
   Conf::ConfigTree _config;
   bool getCountryTones(const std::string& sequenceId);
   void sendCountryTone(const std::string& sequenceId, int index, const std::string& name);

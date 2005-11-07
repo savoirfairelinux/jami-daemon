@@ -54,6 +54,8 @@
 #define STUN_SERVER		"STUN.STUNserver"
 #define USE_STUN		"STUN.useStun"
 #define DRIVER_NAME		"Drivers.driverName"
+#define DRIVER_NAME_IN		"Drivers.driverNameIn"
+#define DRIVER_NAME_OUT		"Drivers.driverNameOut"
 #define NB_CODEC		"Codecs.nbCodec"
 #define CODEC1			"Codecs.codec1"
 #define CODEC2			"Codecs.codec2"

@@ -261,4 +261,24 @@ RequestUnregister::execute()
   }
 }
 
+RequestSwitch::RequestSwitch(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
+{
+  TokenList::iterator iter = _argList.begin();
+  if (iter != _argList.end()) {
+    _switchName = *iter;
+  } else {
+    throw RequestConstructorException();
+  }
+}
+
+ResponseMessage
+RequestSwitch::execute()
+{
+  if (GUIServer::instance().setSwitch(_switchName)) {
+    return message("200", "OK");
+  } else {
+    return message("500","Server Error");
+  }
+}
+
 
