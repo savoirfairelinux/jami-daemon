@@ -12,6 +12,8 @@ AC_SUBST(RPM_VERSION)
 
 LIBS="$LIBS -lstdc++"
 
+ac_configure_args="$ac_configure_args --disable-josua"
+
 dnl
 dnl Solaris pkgadd support definitions
 PKGADD_PKG="SFLPhoned"
@@ -55,7 +57,6 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS( \
 ostream \
 eXosip2/eXosip.h \
-portaudio.h \
 )
 
 LIBCCGNU2_MIN_VERSION=1.3.1
@@ -90,17 +91,22 @@ SFLPHONE_LIBS="$SFLPHONE_LIBS $libexosip2_LIBS"
 
 dnl AC_SUBST(LIBQT)
 
-if test $ac_cv_header_portaudio_h = no; then
-   AC_MSG_ERROR([*** missing portaudio.h. You need a working PortAudio installation. See http://www.portaudio.com])
-else 
-   portaudio_LIBS="-lportaudio "
-   portaudio_CFLAGS="-DAUDIO_PORTAUDIO "
-fi
+dnl if test $ac_cv_header_portaudio_h = no; then
+dnl   ;
+   dnl AC_MSG_WARNING([*** You have an already installed version of portaudio. We'll use this version instead of the version included in the package. This might broke the compilation.])
+dnl else
+dnl fi
+LDFLAGS="$LDFLAGS -L"'$(top_srcdir)/portaudio/lib/'
+CPPFLAGS="$CPPFLAGS "'-I$(top_srcdir)/portaudio/pa_common/'
+CXXFLAGS="$CXXFLAGS"' `bash $(top_srcdir)/portaudio/portaudio-config --cflags`'
 
+portaudio_LIBS='`bash $(top_srcdir)/portaudio/portaudio-config --libs`'
+portaudio_CFLAGS="-DAUDIO_PORTAUDIO "
 SFLPHONE_LIBS="$SFLPHONE_LIBS $portaudio_LIBS"
 SFLPHONE_CXXFLAGS=="$SFLPHONE_CXXFLAGS $portaudio_CFLAGS"
 AC_SUBST(portaudio_CFLAGS)
 AC_SUBST(portaudio_LIB)
+
 
 AC_SUBST(SFLPHONE_CXXFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
@@ -142,11 +148,19 @@ fi
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
 
+AC_CONFIG_SUBDIRS(\
+deps/ccrtp-1.3.5 \
+deps/commoncpp2-1.3.21 \
+deps/libeXosip2-1.9.1-pre17 \
+deps/libosip2-2.2.1 \
+deps/portaudio)
+
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
 sflphone.spec \
 sflphoned-fedora.spec \
 Makefile \
+deps/Makefile \
 src/Makefile \
 src/sflphone \
 src/audio/Makefile \
