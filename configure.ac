@@ -55,39 +55,60 @@ AM_CONDITIONAL(NO_UNDEFINED, test x$need_no_undefined = xyes)
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS( \
-ostream \
 eXosip2/eXosip.h \
 )
 
 LIBCCGNU2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION})
+PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION}, [],
+[
+	compile_commoncpp2=yes
+])
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccgnu2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccgnu2_LIBS"
 
 LIBCCEXT2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES(libccext2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
+PKG_CHECK_MODULES(libccext2, libccext2 >= ${LIBCCEXT2_MIN_VERSION}, [],
+[
+	compile_commoncpp2=yes
+])
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccext2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccext2_LIBS"
+AM_CONDITIONAL(COMPILE_COMMONCPP2, test x$compile_commoncpp2 = xyes)
+if test x$compile_commoncpp2 = xyes; then
+   AC_CONFIG_SUBDIRS(deps/commoncpp2-1.3.21)
+fi
+
+
 
 LIBCCRT_MIN_VERSION=1.3.0
-PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
+PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION}, [], 
+[
+	compile_ccrtp=yes
+	AC_CONFIG_SUBDIRS(deps/ccrtp-1.3.5)
+])
+AM_CONDITIONAL(COMPILE_CCRTP, test x$compile_ccrtp = xyes)
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
 
 dnl 2.2.0 is buggy, header corruption
 LIBOSIP2_MIN_VERSION=2.2.1
-PKG_CHECK_MODULES(libosip2, libosip2 >= ${LIBOSIP2_MIN_VERSION})
+PKG_CHECK_MODULES(libosip2, libosip2 >= ${LIBOSIP2_MIN_VERSION}, [],
+[
+	compile_osip=yes
+	AC_CONFIG_SUBDIRS(deps/libosip2-2.2.1)	
+]
+)
+AM_CONDITIONAL(COMPILE_OSIP, test x$compile_osip = xyes)
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libosip2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libosip2_LIBS"
 
 if test $ac_cv_header_eXosip2_eXosip_h = no; then
-   AC_MSG_ERROR([*** missing eXosip2/eXosip.h. You need a working eXosip2 installation. See http://www.antisip.com/download/])
+   compile_exosip=yes
+  AC_CONFIG_SUBDIRS(deps/libeXosip2-1.9.1-pre17)	
 fi
+AM_CONDITIONAL(COMPILE_EXOSIP, test x$compile_exosip = xyes)
 
-AC_CHECK_LIB([eXosip2], [eXosip_init],[libexosip2_LIBS="-leXosip2 "],[
-   AC_MSG_ERROR([*** missing eXosip2 library. You need a working eXosip2 installation. See http://www.antisip.com/download/])])
-
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libexosip2_LIBS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS -leXosip2"
 
 dnl AC_SUBST(LIBQT)
 
@@ -96,11 +117,13 @@ dnl   ;
    dnl AC_MSG_WARNING([*** You have an already installed version of portaudio. We'll use this version instead of the version included in the package. This might broke the compilation.])
 dnl else
 dnl fi
-LDFLAGS="$LDFLAGS -L"'$(top_srcdir)/portaudio/lib/'
-CPPFLAGS="$CPPFLAGS "'-I$(top_srcdir)/portaudio/pa_common/'
-CXXFLAGS="$CXXFLAGS"' `bash $(top_srcdir)/portaudio/portaudio-config --cflags`'
+AC_CONFIG_SUBDIRS(deps/portaudio)	
+AM_CONDITIONAL(COMPILE_PORTAUDIO, true)
+LDFLAGS="$LDFLAGS -L"'$(top_srcdir)/deps/portaudio/lib/'
+CPPFLAGS="$CPPFLAGS "'-I$(top_srcdir)/deps/portaudio/pa_common/'
+CXXFLAGS="$CXXFLAGS"' `bash $(top_srcdir)/deps/portaudio/portaudio-config --cflags`'
 
-portaudio_LIBS='`bash $(top_srcdir)/portaudio/portaudio-config --libs`'
+portaudio_LIBS='`bash $(top_srcdir)/deps/portaudio/portaudio-config --libs`'
 portaudio_CFLAGS="-DAUDIO_PORTAUDIO "
 SFLPHONE_LIBS="$SFLPHONE_LIBS $portaudio_LIBS"
 SFLPHONE_CXXFLAGS=="$SFLPHONE_CXXFLAGS $portaudio_CFLAGS"
@@ -147,13 +170,6 @@ LIBS=$save_dnssdtest_LIBS
 fi
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
-
-AC_CONFIG_SUBDIRS(\
-deps/ccrtp-1.3.5 \
-deps/commoncpp2-1.3.21 \
-deps/libeXosip2-1.9.1-pre17 \
-deps/libosip2-2.2.1 \
-deps/portaudio)
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
