@@ -24,8 +24,7 @@
 #define __SIP_VOIP_LINK_H__
 
 #include <vector>
-#include <eXosip2/eXosip.h>  
-//#include <osipparser2/sdp_message.h>
+#include <eXosip2/eXosip.h>
 
 #include "voIPLink.h"
 #include "audio/audiortp.h"
@@ -201,6 +200,11 @@ private:
    * End all sip call not deleted
    */
   void endSipCalls();
+
+  /**
+   * Handle DTMF Relay INFO Request
+   */
+  bool handleDtmfRelay(eXosip_event_t* event);
 
 	///////////////////////////
 	// Private member variables

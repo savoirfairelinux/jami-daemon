@@ -82,11 +82,11 @@ SipVoIPLink::init(void)
   _started = true;
 
   srand (time(NULL));
-  // second parameter, NULL is "::" for ipv6 and "0.0.0.0" for ipv4
+  // second parameter, NULL is "::" for ipv6 and "0.0.0.0" for ipv4, we can put INADDR_ANY
   int i;
-  i = eXosip_listen_addr(IPPROTO_UDP, NULL, DEFAULT_SIP_PORT, AF_INET, 0);
+  i = eXosip_listen_addr(IPPROTO_UDP, INADDR_ANY, DEFAULT_SIP_PORT, AF_INET, 0);
   if (i != 0) {
-    i = eXosip_listen_addr(IPPROTO_UDP, NULL, RANDOM_SIP_PORT, AF_INET, 0);
+    i = eXosip_listen_addr(IPPROTO_UDP, INADDR_ANY, RANDOM_SIP_PORT, AF_INET, 0);
     if (i != 0) {
       _debug("Could not initialize transport layer\n");
       return false;
@@ -761,7 +761,7 @@ SipVoIPLink::getEvent (void)
     break;
 
   case EXOSIP_CALL_ACK: // 15
-    id = findCallId(event);
+    id = findCallId(event); 
     _debug("%10d: Receive ACK [cid = %d, did = %d]\n", id, event->cid, event->did);
     if (id != 0 ) {
       sipcall = getSipCall(id);
@@ -785,6 +785,7 @@ SipVoIPLink::getEvent (void)
     // The peer-user closed the phone call(we received BYE).
   case EXOSIP_CALL_CLOSED: // 25
     id = findCallId(event);
+    if (id==0) { id = findCallIdInitial(event); }
     _debug("%10d: Receive BYE [cid = %d, did = %d]\n", id, event->cid, event->did);	
     if (id != 0) {
       if (Manager::instance().callCanBeClosed(id)) {
@@ -880,9 +881,30 @@ SipVoIPLink::getEvent (void)
     break;
 
   case EXOSIP_CALL_MESSAGE_NEW: // 18
-    // TODO:
-    break;
+    if (0 == event->request) break;
+    if (MSG_IS_INFO(event->request)) {
+      _debug("Receive a call message request info\n");
+      osip_content_type_t* c_t = event->request->content_type;
+      if (c_t != 0 && c_t->type != 0 && c_t->subtype != 0 ) {
+        _debug("  Content Type of the message: %s/%s\n", c_t->type, c_t->subtype);
+        // application/dtmf-relay
+        if (strcmp(c_t->type, "application") == 0 && strcmp(c_t->subtype, "dtmf-relay") == 0) {
+          handleDtmfRelay(event);
+        }
+      }
+    }
 
+    osip_message_t *answerOKNewMessage;
+    eXosip_lock();
+    if ( 0 == eXosip_call_build_answer(event->tid, OK, &answerOKNewMessage)) {
+      _debug("< Sending 200 OK\n");
+      eXosip_call_send_answer(event->tid, OK, answerOKNewMessage);
+    } else {
+      _debug("Could not sent an OK message\n");
+    }
+    eXosip_unlock();
+    break;
+ 
   case EXOSIP_REGISTRATION_SUCCESS: // 1
     // Manager::instance().displayStatus(LOGGED_IN_STATUS);
     Manager::instance().registrationSucceed();
@@ -970,7 +992,7 @@ SipVoIPLink::getEvent (void)
       _debug("> MESSAGE received\n");
       // osip_content_type_t* osip_message::content_type
       osip_content_type_t* c_t = event->request->content_type;
-      if (c_t != 0) {
+      if (c_t != 0 &&  c_t->type != 0 && c_t->subtype != 0 ) {
         _debug("  Content Type of the message: %s/%s\n", c_t->type, c_t->subtype);
 
         osip_body_t *body = NULL;
@@ -987,11 +1009,10 @@ SipVoIPLink::getEvent (void)
         }
       }
       osip_message_t *answerOK;
-      int tid = event->tid;
       eXosip_lock();
-      if ( 0 == eXosip_message_build_answer(tid, OK, &answerOK)) {
+      if ( 0 == eXosip_message_build_answer(event->tid, OK, &answerOK)) {
           _debug("< Sending 200 OK\n");
-          eXosip_message_send_answer(tid, OK, answerOK);
+          eXosip_message_send_answer(event->tid, OK, answerOK);
       }
       eXosip_unlock();
     }
@@ -1029,6 +1050,9 @@ SipVoIPLink::setLocalPort (int port)
 
 void
 SipVoIPLink::carryingDTMFdigits (CALLID id, char code) {
+  SipCall* sipcall = getSipCall(id);
+  if (sipcall == 0) { return; }
+
   int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
   osip_message_t *info;
   const int body_len = 1000;
@@ -1045,7 +1069,7 @@ SipVoIPLink::carryingDTMFdigits (CALLID id, char code) {
     osip_message_set_content_type (info, "application/dtmf-relay");
     osip_message_set_body (info, dtmf_body, strlen (dtmf_body));
     // Send info request
-    i = eXosip_call_send_request (getSipCall(id)->getDid(), info);
+    i = eXosip_call_send_request(sipcall->getDid(), info);
   }
   eXosip_unlock();
 	
@@ -1565,5 +1589,58 @@ SipVoIPLink::findCallIdInitial (eXosip_event_t *e)
     }
   }
   return 0;
+}
+
+/**
+ * Handle an INFO with application/dtmf-relay content-type
+ * @param event eXosip Event
+ */
+bool
+SipVoIPLink::handleDtmfRelay(eXosip_event_t* event) {
+  bool returnValue = false;
+  osip_body_t *body = NULL;
+  // Get the message body
+  if (0 == osip_message_get_body(event->request, 0, &body) && body->body != 0 )   {
+    _debug("  Text body: %s\n", body->body);
+    std::string dtmfBody(body->body);
+    unsigned int posStart = 0;
+    unsigned int posEnd = 0;
+    std::string signal;
+    std::string duration;
+    // search for signal=and duration=
+    posStart = dtmfBody.find("Signal=");
+    if (posStart != std::string::npos) {
+      posStart += strlen("Signal=");
+      posEnd = dtmfBody.find("\n", posStart);
+      if (posEnd == std::string::npos) {
+        posEnd = dtmfBody.length();
+      }
+      signal = dtmfBody.substr(posStart, posEnd-posStart+1);
+      _debug("Signal value: %s\n", signal.c_str());
+      
+      if (!signal.empty()) {
+        int id = findCallId(event);
+        if (id!=0 && id == Manager::instance().getCurrentCallId()) {
+          Manager::instance().playDtmf(signal[0]);
+        }
+      }
+/*
+ // we receive the duration, but we use our configuration...
+
+      posStart = dtmfBody.find("Duration=");
+      if (posStart != std::string::npos) {
+        posStart += strlen("Duration=");
+        posEnd = dtmfBody.find("\n", posStart);
+        if (posEnd == std::string::npos) {
+            posEnd = dtmfBody.length();
+        }
+        duration = dtmfBody.substr(posStart, posEnd-posStart+1);
+        _debug("Duration value: %s\n", duration.c_str());
+        returnValue = true;
+      }
+*/
+    }
+  }
+  return returnValue;
 }
 

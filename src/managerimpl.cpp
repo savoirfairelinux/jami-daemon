@@ -565,6 +565,7 @@ ManagerImpl::sendDtmf (CALLID id, char code)
 
 /**
  * User action (main thread)
+ * Or sip event (dtmf body submit)
  */
 bool
 ManagerImpl::playDtmf(char code)
@@ -1597,10 +1598,19 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
     }
     returnValue = true;
   } else if (name=="ringtones") {
+    // add empty line
+    std::ostringstream str;
+    str << 1;
+    tk.push_back(str.str());
+    tk.push_back(""); // filepath
+    _gui->sendMessage("100", sequenceId, tk);
+
+    // share directory
     std::string path = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR;
-    int nbFile = 0;
+    int nbFile = 1;
     returnValue = getDirListing(sequenceId, path, &nbFile);
 
+    // home directory
     path = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR + DIR_SEPARATOR_STR + RINGDIR;
     getDirListing(sequenceId, path, &nbFile);
   } else if (name=="audiodevice") {

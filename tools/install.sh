@@ -43,9 +43,9 @@ cmmi() {
 }
 
 
-cmmi $SFL_FILE_CCPP2 ''
-export CPPFLAGS="-I$SFL_PREFIX/include/cc++2"
+cmmi $SFL_FILE_CCPP2 '' '--without-libxml2'
 echo "Settings CPPFLAGS to $CPPFLAGS"
+export CPPFLAGS="-I$SFL_PREFIX/include/cc++2"
 cmmi $SFL_FILE_CCRTP ''
 cmmi $SFL_FILE_LIBOSIP2 ''
 cmmi $SFL_FILE_LIBEXOSIP2 '' --disable-josua
