@@ -58,34 +58,53 @@ AC_CHECK_HEADERS( \
 eXosip2/eXosip.h \
 )
 
+dnl check for CCGNU2
 LIBCCGNU2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION}, [],
-[
-	compile_commoncpp2=yes
-])
-SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccgnu2_CFLAGS"
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libccgnu2_LIBS"
+PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION})
 
 LIBCCEXT2_MIN_VERSION=1.3.1
-PKG_CHECK_MODULES(libccext2, libccext2 >= ${LIBCCEXT2_MIN_VERSION}, [],
-[
-	compile_commoncpp2=yes
-])
-SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccext2_CFLAGS"
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libccext2_LIBS"
+PKG_CHECK_MODULES(libccext2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
 AM_CONDITIONAL(COMPILE_COMMONCPP2, test x$compile_commoncpp2 = xyes)
 if test x$compile_commoncpp2 = xyes; then
    AC_CONFIG_SUBDIRS(deps/commoncpp2-1.3.21)
+   libccgnu2_LIBS='${top_srcdir}/deps/commoncpp2-1.3.21/src/libccgnu2.la'
+   libccext2_LIBS='${top_srcdir}/deps/commoncpp2-1.3.21/src/libccext2.la'
+   libccgnu2_CFLAGS='-I${top_srcdir}/deps/commoncpp2-1.3.21/include/'
+   libccext2_CFLAGS='-I${top_srcdir}/deps/commoncpp2-1.3.21/include/'
 fi
+SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccext2_CFLAGS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS $libccext2_LIBS"
+SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccgnu2_CFLAGS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS $libccgnu2_LIBS"
 
-
+top_srcdir=`pwd`
 
 LIBCCRT_MIN_VERSION=1.3.0
-PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION}, [], 
+PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
+dnl  [], 
+dnl [
+dnl 	compile_ccrtp=yes
+dnl 	AC_CONFIG_SUBDIRS(deps/ccrtp-1.3.5)
+dnl 	libccrtp1_LIBS='${top_srcdir}/deps/ccrtp-1.3.5/src/libccrtp1.la'
+dnl ])
+AC_MSG_CHECKING([need to compile libccrtp1])
+AC_ARG_ENABLE(libccrtp1-compilation,
+[  --enable-libccrtp1-compilation       Enable libccrtp1 compilation [default=yes]],
+[ 
+  echo "with $enableval"
+if test x$compile_ccrtp = xyes -a ; then
+   AC_MSG_RESULT(yes)
+else
+   AC_MSG_ERROR([*** You don't have a detectable libccrtp1 distribution enabled and you disabled the libccrtp1 compilation.])
+fi
+],
 [
-	compile_ccrtp=yes
-	AC_CONFIG_SUBDIRS(deps/ccrtp-1.3.5)
-])
+  echo "without $enableval"
+AC_MSG_RESULT(yes)
+CXXFLAGS="$CXXFLAGS -W -Wall"
+]
+)
+
 AM_CONDITIONAL(COMPILE_CCRTP, test x$compile_ccrtp = xyes)
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
@@ -94,8 +113,12 @@ dnl 2.2.0 is buggy, header corruption
 LIBOSIP2_MIN_VERSION=2.2.1
 PKG_CHECK_MODULES(libosip2, libosip2 >= ${LIBOSIP2_MIN_VERSION}, [],
 [
+	AC_CONFIG_SUBDIRS(deps/libosip2-2.2.1)
 	compile_osip=yes
-	AC_CONFIG_SUBDIRS(deps/libosip2-2.2.1)	
+	libosip2_LIBS="${top_srcdir}/deps/libosip2-2.2.1/src/osip2/libosip2.la"
+	LDFLAGS="$LDFLAGS -L${top_srcdir}/deps/libosip2-2.2.1/src/osip2"
+	LDFLAGS="$LDFLAGS -L${top_srcdir}/deps/libosip2-2.2.1/src/osipparser2"
+	CPPFLAGS="$CPPFLAGS -I${top_srcdir}/deps/libosip2-2.2.1/include"
 ]
 )
 AM_CONDITIONAL(COMPILE_OSIP, test x$compile_osip = xyes)
@@ -104,11 +127,15 @@ SFLPHONE_LIBS="$SFLPHONE_LIBS $libosip2_LIBS"
 
 if test $ac_cv_header_eXosip2_eXosip_h = no; then
    compile_exosip=yes
-  AC_CONFIG_SUBDIRS(deps/libeXosip2-1.9.1-pre17)	
+   AC_CONFIG_SUBDIRS(deps/libeXosip2-1.9.1-pre17)	
+   libeXosip2_LIBS=${top_srcdir}/deps/libeXosip2-1.9.1-pre17/src/libeXosip2.la
+   LDFLAGS="$LDFLAGS -L${top_srcdir}/deps/libeXosip2-1.9.1-pre17/src/"
+   CPPFLAGS="$CPPFLAGS -I${top_srcdir}/deps/libeXosip2-1.9.1-pre17/include"
+else
+   libeXosip2_LIBS="-leXosip2"
 fi
+SFLPHONE_LIBS="$SFLPHONE_LIBS $libeXosip2_LIBS"
 AM_CONDITIONAL(COMPILE_EXOSIP, test x$compile_exosip = xyes)
-
-SFLPHONE_LIBS="$SFLPHONE_LIBS -leXosip2"
 
 dnl AC_SUBST(LIBQT)
 
@@ -119,11 +146,11 @@ dnl else
 dnl fi
 AC_CONFIG_SUBDIRS(deps/portaudio)	
 AM_CONDITIONAL(COMPILE_PORTAUDIO, true)
-LDFLAGS="$LDFLAGS -L"'$(top_srcdir)/deps/portaudio/lib/'
-CPPFLAGS="$CPPFLAGS "'-I$(top_srcdir)/deps/portaudio/pa_common/'
-CXXFLAGS="$CXXFLAGS"' `bash $(top_srcdir)/deps/portaudio/portaudio-config --cflags`'
+LDFLAGS="$LDFLAGS -L${top_srcdir}/deps/portaudio/lib/"
+CPPFLAGS="$CPPFLAGS -I${top_srcdir}/deps/portaudio/pa_common/"
+CXXFLAGS="$CXXFLAGS "'`bash '"${top_srcdir}"'/deps/portaudio/portaudio-config --cflags`'
 
-portaudio_LIBS='`bash $(top_srcdir)/deps/portaudio/portaudio-config --libs`'
+portaudio_LIBS='`bash '"${top_srcdir}/deps/portaudio/portaudio-config "'--libs`'
 portaudio_CFLAGS="-DAUDIO_PORTAUDIO "
 SFLPHONE_LIBS="$SFLPHONE_LIBS $portaudio_LIBS"
 SFLPHONE_CXXFLAGS=="$SFLPHONE_CXXFLAGS $portaudio_CFLAGS"
@@ -171,6 +198,12 @@ fi
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
 
+export LDFLAGS
+export CPPFLAGS
+echo $LDFLAGS
+echo $CPPFLAGS
+
+
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
 sflphone.spec \
@@ -196,3 +229,5 @@ utilspp/singleton/Makefile \
 stund/Makefile \
 ringtones/Makefile \
 )
+
+

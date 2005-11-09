@@ -33,4 +33,4 @@ deps/portaudio: deps/pa_snapshot_v19.tar.gz
 	cd deps/ && \
 	tar zxvf pa_snapshot_v19.tar.gz
 
-all: autotools $(DEPS)
+all: autotools deps
