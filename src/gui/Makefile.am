@@ -1,9 +1,9 @@
 serverdir = server
 serverlib = server/libsflphoneguiserver.la
 
-libexec_PROGRAMS = qt/sflphoned
+libexec_PROGRAMS = qt/sflphone-qt
 
-qt/sflphoned:
+qt/sflphone-qt:
 	cd qt && make
 
 SUBDIRS = $(serverdir)
