@@ -1,0 +1,21 @@
+Design:
+- Need to consolidate Request and Answers.
+
+Behavior:
+- Link lines with F* keys. (done)
+- Backspace should work. (done)
+- Add tooltip on lines with the caller id. (done)
+- Zone Tone in Signalisation. (done)
+- Add keypad. (done)
+- Add caller id on the LCD. (done)
+- Time of communication. (done)
+
+- put Transfert button. 
+- Skin system (important).
+- Keypad must be attracted to the main window.
+
+- Add the solo option. (later)
+- Add a timed paint event. (later)
+- Add "Confirmation to quit". (later)
+
+- Put codec on the LCD (won't be done)

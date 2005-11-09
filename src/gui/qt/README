@@ -1,0 +1,38 @@
+Description:
+
+        Read this if you want to know how to build SFLPhone
+        using TrollTech's qmake.
+
+        Why have qmake enter the picture? Frankly; I find the
+        GNU auto tools to be a great idea - if you never have
+        to figure them out. However, the GNU auto-tools are 
+	not a simple solution for OSX and Windows users.
+
+Requirements:
+
+        Guess what? You are going to need qmake. If you have
+        Qt installed then you probably already have qmake
+        installed. If not then go to www.trolltech.com and 
+        get it. If you're on a Linux system, it is probably
+	already included in your distribution.
+
+        I recommend getting the whole Qt C++ class library. It
+        is large and takes quite awhile to build but once complete
+        you will have the tiny qmake program AND everything you
+        need to build the cool GUI stuff included in SFLPhone.
+        
+Make & Install:
+
+        The qmake project files have .pro extensions. You may want
+        to edit them to your liking. 
+
+        Here are the steps to build using qmake;
+        
+        1. $ qmake
+        2. $ make
+        
+        Currently; these qmake project files lack an install but... 
+
+        You can copy the binary (sflphone) to your PATH or copy it
+        somewhere like /usr/local/bin. The binary is self-sufficient.
+
