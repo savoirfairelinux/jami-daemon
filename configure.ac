@@ -87,25 +87,25 @@ dnl 	compile_ccrtp=yes
 dnl 	AC_CONFIG_SUBDIRS(deps/ccrtp-1.3.5)
 dnl 	libccrtp1_LIBS='${top_srcdir}/deps/ccrtp-1.3.5/src/libccrtp1.la'
 dnl ])
-AC_MSG_CHECKING([need to compile libccrtp1])
-AC_ARG_ENABLE(libccrtp1-compilation,
-[  --enable-libccrtp1-compilation       Enable libccrtp1 compilation [default=yes]],
-[ 
-  echo "with $enableval"
-if test x$compile_ccrtp = xyes -a ; then
-   AC_MSG_RESULT(yes)
-else
-   AC_MSG_ERROR([*** You don't have a detectable libccrtp1 distribution enabled and you disabled the libccrtp1 compilation.])
-fi
-],
-[
-  echo "without $enableval"
-AC_MSG_RESULT(yes)
-CXXFLAGS="$CXXFLAGS -W -Wall"
-]
-)
+dnl AC_MSG_CHECKING([need to compile libccrtp1])
+dnl AC_ARG_ENABLE(libccrtp1-compilation,
+dnl [  --enable-libccrtp1-compilation       Enable libccrtp1 compilation [default=yes]],
+dnl [ 
+dnl   echo "with $enableval"
+dnl if test x$compile_ccrtp = xyes -a ; then
+dnl    AC_MSG_RESULT(yes)
+dnl else
+dnl    AC_MSG_ERROR([*** You don't have a detectable libccrtp1 distribution enabled and you disabled the libccrtp1 compilation.])
+dnl fi
+dnl ],
+dnl [
+dnl   echo "without $enableval"
+dnl AC_MSG_RESULT(yes)
+dnl CXXFLAGS="$CXXFLAGS -W -Wall"
+dnl ]
+dnl )
+dnl AM_CONDITIONAL(COMPILE_CCRTP, test x$compile_ccrtp = xyes)
 
-AM_CONDITIONAL(COMPILE_CCRTP, test x$compile_ccrtp = xyes)
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
 
