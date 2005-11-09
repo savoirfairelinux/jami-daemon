@@ -1,6 +1,11 @@
 serverdir = server
 serverlib = server/libsflphoneguiserver.la
 
+libexec_PROGRAMS = qt/sflphoned
+
+qt/sflphoned:
+	cd qt && make
+
 SUBDIRS = $(serverdir)
 
 noinst_LTLIBRARIES = libguiframework.la

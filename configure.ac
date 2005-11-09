@@ -203,6 +203,7 @@ export CPPFLAGS
 echo $LDFLAGS
 echo $CPPFLAGS
 
+AC_CONFIG_SUBDIRS(src/gui/qt)
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(

@@ -17,5 +17,7 @@ deps/%: deps/%.tar.gz
 	cd deps/ && \
 	tar zxvf $*.tar.gz
 
+qt: 
+	cd src/gui/qt && qmake
 
-all: autotools 
+all: autotools qt
