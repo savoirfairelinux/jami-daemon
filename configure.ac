@@ -93,7 +93,7 @@ dnl AC_SUBST(LIBQT)
 if test $ac_cv_header_portaudio_h = no; then
    AC_MSG_ERROR([*** missing portaudio.h. You need a working PortAudio installation. See http://www.portaudio.com])
 else 
-   portaudio_LIBS="-lportaudio "
+   portaudio_LIBS="-lportaudio -lasound "
    portaudio_CFLAGS="-DAUDIO_PORTAUDIO "
 fi
 
@@ -141,6 +141,8 @@ LIBS=$save_dnssdtest_LIBS
 fi
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
+
+AC_CONFIG_SUBDIRS(src/gui/qt)
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
