@@ -1,3 +1,5 @@
+all: autotools qt
+
 autotools: 
 	@echo "This Makefile is only for the CVS repository"
 	@echo "This will be deleted before making the distribution"
@@ -12,5 +14,4 @@ autotools:
 qt: 
 	cd src/gui/qt && qmake
 
-all: autotools qt
 
