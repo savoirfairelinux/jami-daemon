@@ -6,6 +6,7 @@ AUTOHEADER="autoheader"
 AUTOM4TE="autom4te"
 AUTOMAKE="automake"
 ACLOCAL="aclocal"
+UNSERMAKE="no"
 
 # Please add higher versions first. The last version number is the minimum
 # needed to compile KDE. Do not forget to include the name/version #
