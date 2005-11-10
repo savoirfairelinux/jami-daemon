@@ -1,6 +1,7 @@
-all: autotools qt
+all: autotools 
 
 autotools: 
+	autogen.sh
 	@echo "This Makefile is only for the CVS repository"
 	@echo "This will be deleted before making the distribution"
 	@echo ""
@@ -9,7 +10,7 @@ autotools:
 		echo "for cvs: use checkout once and after that update again" ;\
 		exit 1 ;\
 	fi
-	$(MAKE) -f admin/Makefile.common cvs
+	@$(MAKE) -f admin/Makefile.common cvs
 
 qt: 
 	cd src/gui/qt && qmake
