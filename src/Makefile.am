@@ -22,8 +22,8 @@ sflphoned_SOURCES = call.cpp 	eventthread.cpp 	main.cpp 	sipvoiplink.cpp 	voIPLi
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS)
 
 #sflphoned_LDFLAGS = -static
-sflphoned_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la ../utilspp/libutilspp.la -lpthread $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) config/libconfig.la 
+sflphoned_LDADD =  gui/libguiframework.la audio/libaudio.la ../stund/libstun.la ../utilspp/libutilspp.la $(top_builddir)/exosip2/libeXosip2.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) config/libconfig.la 
 #KDE_CXXFLAGS = $(USE_EXCEPTIONS)
-AM_CPPFLAGS = -I$(top_srcdir) -I$(srcdir)/audio/pacpp/include  $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(portaudio_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(srcdir)/audio/pacpp/include  $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(portaudio_CFLAGS)
 
 noinst_HEADERS = observer.h

@@ -1,4 +1,4 @@
-AC_INIT(acinclude.m4)
+AC_INIT(aclocal.m4)
 
 AM_CONFIG_HEADER(config.h)
 
@@ -31,9 +31,8 @@ dnl KDE_USE_QT(3.3)
 AC_CANONICAL_SYSTEM
 AC_ARG_PROGRAM
 AM_INIT_AUTOMAKE(sflphoned, $VERSION)
-AM_DISABLE_LIBRARIES
 AC_PROG_LIBTOOL
-AC_CHECK_COMPILERS
+dnl AC_CHECK_COMPILERS
 
 CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS"
 
@@ -54,7 +53,6 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS( \
 ostream \
-eXosip2/eXosip.h \
 portaudio.h \
 )
 
@@ -73,22 +71,17 @@ PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
 
-dnl 2.2.0 is buggy, header corruption
-LIBOSIP2_MIN_VERSION=2.2.1
-PKG_CHECK_MODULES(libosip2, libosip2 >= ${LIBOSIP2_MIN_VERSION})
-SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libosip2_CFLAGS"
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libosip2_LIBS"
+dnl check for osip2
+LP_CHECK_OSIP2
 
-if test $ac_cv_header_eXosip2_eXosip_h = no; then
-   AC_MSG_ERROR([*** missing eXosip2/eXosip.h. You need a working eXosip2 installation. See http://www.antisip.com/download/])
-fi
+dnl setup flags for embedded exosip library
+LP_SETUP_EXOSIP
 
-AC_CHECK_LIB([eXosip2], [eXosip_init],[libexosip2_LIBS="-leXosip2 "],[
-   AC_MSG_ERROR([*** missing eXosip2 library. You need a working eXosip2 installation. See http://www.antisip.com/download/])])
+SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $OSIP_CFLAGS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS $OSIP_LIBS"
+SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $EXOSIP_CFLAGS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS $EXOSIP_LIBS"
 
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libexosip2_LIBS"
-
-dnl AC_SUBST(LIBQT)
 
 if test $ac_cv_header_portaudio_h = no; then
    AC_MSG_ERROR([*** missing portaudio.h. You need a working PortAudio installation. See http://www.portaudio.com])
@@ -142,13 +135,13 @@ fi
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
 
-AC_CONFIG_SUBDIRS(src/gui/qt)
-
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
 sflphone.spec \
 sflphoned-fedora.spec \
 Makefile \
+m4/Makefile \
+exosip2/Makefile \
 src/Makefile \
 src/sflphone \
 src/audio/Makefile \

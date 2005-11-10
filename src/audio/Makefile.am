@@ -10,7 +10,7 @@ libaudio_la_SOURCES = alaw.cpp alaw.h 	audiocodec.cpp audiocodec.h \
 			tonegenerator.cpp tonegenerator.h 	ulaw.cpp ulaw.h tone.cpp tonelist.cpp audioloop.cpp \
 	audiofile.cpp
 
-AM_CXXFLAGS = -I$(top_srcdir) -I$(srcdir)/pacpp/include/ $(libccext2_CFLAGS) $(libccrtp1_CFLAGS) $(portaudio_CFLAGS)
+AM_CXXFLAGS = -I$(top_srcdir)/include -I$(srcdir)/pacpp/include/ $(libccext2_CFLAGS) $(libccrtp1_CFLAGS) $(portaudio_CFLAGS)
 libaudio_la_LIBADD = gsm/libgsm.la pacpp/source/portaudiocpp/libportaudiocpp.la
 
 noinst_HEADERS = tone.h tonelist.h audioloop.h audiofile.h
