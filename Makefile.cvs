@@ -1,10 +1,4 @@
-DEPS=deps/ccrtp-1.3.5 deps/libosip2-2.2.1 deps/portaudio deps/commoncpp2-1.3.21 deps/libeXosip2-1.9.1-pre17
-
 autotools: 
-	cd deps && \
-	tar zxvf libosip2-2.2.1.tar.gz && \
-	tar zxvf portaudio.tar.gz && \
-	tar zxvf libeXosip2-1.9.1-pre17.tar.gz
 	@echo "This Makefile is only for the CVS repository"
 	@echo "This will be deleted before making the distribution"
 	@echo ""
