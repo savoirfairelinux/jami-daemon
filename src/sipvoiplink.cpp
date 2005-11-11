@@ -1619,8 +1619,8 @@ SipVoIPLink::handleDtmfRelay(eXosip_event_t* event) {
       _debug("Signal value: %s\n", signal.c_str());
       
       if (!signal.empty()) {
-        int id = findCallId(event);
-        if (id!=0 && id == Manager::instance().getCurrentCallId()) {
+        unsigned int id = findCallId(event);
+        if (id !=0 && id == Manager::instance().getCurrentCallId()) {
           Manager::instance().playDtmf(signal[0]);
         }
       }

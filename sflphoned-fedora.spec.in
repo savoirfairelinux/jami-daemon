@@ -14,7 +14,7 @@ URL:		http://www.sflphone.org/
 Packager:	Cyrille Béraud <cyrille.beraud@savoirfairelinux.com>
 Source0:	http://www.sflphone.org/releases/%{name}-%{version}.tar.gz
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: 	commoncpp2 ccrtp libosip2 libeXosip2 portaudio
+Requires: 	commoncpp2 ccrtp libosip2 portaudio
 BuildRequires:  autoconf
 BuildRequires:  automake
 
