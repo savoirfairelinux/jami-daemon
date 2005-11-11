@@ -128,7 +128,6 @@ AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
 sflphone.spec \
-sflphoned-fedora.spec \
 Makefile \
 m4/Makefile \
 exosip2/Makefile \
@@ -151,4 +150,5 @@ utilspp/functor/Makefile \
 utilspp/singleton/Makefile \
 stund/Makefile \
 ringtones/Makefile \
+platform/fedora/sflphoned.spec \
 )
