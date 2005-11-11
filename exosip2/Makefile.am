@@ -10,7 +10,7 @@ noinst_LTLIBRARIES = libeXosip2.la
 #	-Werror
 #
 AM_CFLAGS = $(EXOSIP_CFLAGS) @CFLAGS@  
-noinstall_HEADERS = eXosip2.h  inet_ntop.h  jpipe.h
+noinst_HEADERS = eXosip2.h  inet_ntop.h  jpipe.h
 
 libeXosip2_la_SOURCES =      \
 eXosip.c         eXconf.c    \
