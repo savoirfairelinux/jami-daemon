@@ -3,9 +3,8 @@ noinst_LTLIBRARIES = libportaudio.la
 libportaudio_la_CFLAGS = $(PORTAUDIO_CFLAGS) 
 libportaudio_la_LIBADD = $(PORTAUDIO_LIBS)
 libportaudio_la_CXXFLAGS = $(PORTAUDIO_CXXFLAGS)
-libportaudio_la_CPPFLAGS = $(PORTAUDIO_CPPFLAGS) -Ipa_common/
+libportaudio_la_CPPFLAGS = $(PORTAUDIO_CPPFLAGS) -I$(top_srcdir)/portaudio/pa_common/
 
-pkginclude_HEADERS = pa_common/portaudio.h
 
 if ENABLE_OSS
 OSS=pa_unix_oss/pa_unix_oss.c
@@ -19,8 +18,13 @@ if ENABLE_ALSA
 ALSA=pa_linux_alsa/pa_linux_alsa.c
 endif
 
-
 SOURCES=$(OSS) $(UNIX) $(ALSA)
+
+noinst_HEADERS = pa_common/portaudio.h \
+pa_common/pa_allocation.h  pa_common/pa_dither.h      pa_common/pa_process.h  pa_common/pa_types.h  \
+pa_common/pa_converters.h  pa_common/pa_endianness.h  pa_common/pa_stream.h   pa_common/pa_util.h   \
+pa_common/pa_cpuload.h     pa_common/pa_hostapi.h     pa_common/pa_trace.h    pa_common/portaudio.h \
+pa_unix/pa_unix_util.h pa_linux_alsa/pa_linux_alsa.h
 
 libportaudio_la_SOURCES = $(SOURCES) \
 	pa_common/pa_allocation.c \

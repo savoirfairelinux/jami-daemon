@@ -1,7 +1,5 @@
 libexec_PROGRAMS = sflphoned
 bin_SCRIPTS = sflphone
-lib_LTLIBRARIES = libsflphone.la
-
 
 if USE_ZEROCONF
 ZEROCONFDIR = zeroconf
@@ -16,11 +14,8 @@ endif
 SUBDIRS = audio config gui $(ZEROCONFDIR)
 
 sflphoned_SOURCES = call.cpp 	eventthread.cpp 	main.cpp 	sipvoiplink.cpp 	voIPLink.cpp \
-		sipcall.cpp 	managerimpl.cpp 	managerimpl.h 	manager.h 	global.h \
-		eventthread.h 	\
-		sipvoiplink.h 	user_cfg.h 	call.h 	voIPLink.h 	sipcall.h 	\
+		sipcall.cpp 	managerimpl.cpp	\
 		observer.cpp
-
 
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS)
 
@@ -41,5 +36,6 @@ libsflphone_la_LIBADD = \
 
 libsflphone_la_SOURCES =
 
-
-noinst_HEADERS = observer.h
+noinst_LTLIBRARIES = libsflphone.la
+noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h sipvoiplink.h user_cfg.h \
+                 call.h voIPLink.h sipcall.h

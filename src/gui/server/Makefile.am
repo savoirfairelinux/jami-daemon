@@ -10,4 +10,4 @@ libsflphoneguiserver_la_LIBADD =
 
 noinst_HEADERS = responsemessage.h request.h requestfactory.h subcall.h \
 		argtokenizer.h tcpsessionio.h requestmanager.h guiserver.h guiserverimpl.h sessionio.h \
-		tcpsessionio.h tcpstreampool.h requestconfig.h
+		tcpsessionio.h tcpstreampool.h requestconfig.h ObjectPool.hpp ObjectPool.inl

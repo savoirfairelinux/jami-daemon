@@ -2,6 +2,8 @@ EXTRA_DIST = ChangeLog INSTALL MACHINES MANIFEST README COPYRIGHT
 
 noinst_LTLIBRARIES = libgsm.la
 
+noinst_HEADERS = config.h  gsm.h  private.h  proto.h  toast.h  unproto.h
+
 libgsm_la_SOURCES = \
 	add.c\
 	gsm_create.c\

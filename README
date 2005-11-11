@@ -30,17 +30,6 @@ You can also compile each dependencies, one by one:
 	make
 	make install
 
-4/ 	For libeXosip2-1.9.1-pre17
-	./configure --disable-josua [option]
-	make
-	make install
-
-5/  For PortAudio_v19
-	./configure [option]
-	make
-	make install
-
-
 How to compile SFLphoned ?
 -------------------------
 
@@ -57,16 +46,17 @@ If you have the sflphone 0.3 or 0.4 release, copy the file sflphonerc to sflphon
 cp ~/.sflphone/sflphonerc ~/.sflphone/sflphonedrc
 If you have an older version, remove your sflphonerc file located in $HOME/.sflphone
 
-1. Lauch sflphone interface, a setup window appears. 
+1. Install a GUI like sflphone-qt
 
-2. If you do have a SIP account, fill the SIP stuff where related. You can use
+2. Lauch sflphone interface, a setup window appears. 
+
+3. If you do have a SIP account, fill the SIP stuff where related. You can use
    STUN too.
 
-3. Save your settings, restart it. You're done.
+4. Save your settings, restart it. You're done.
 
 A user's guide will be available on:
-http://www.sflphone.org/doc/SFLphoneDocEnglish.pdf
-http://www.sflphone.org/doc/SFLphoneDocFrancais.pdf
+http://www.sflphone.org/doc/
 
 
 Why does it not compile ?
@@ -91,7 +81,7 @@ Why does it not compile ?
 Short description of content of source tree:
 -------------------------------------------
 
-- rings/ contains the different ringtones.
+- ringtones/ contains the different ringtones.
 - stund/ is an implementation of the protocol STUN used when there is a NAT.
 - utilspp/ allows to implement a singleton.
 
