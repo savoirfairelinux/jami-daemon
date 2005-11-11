@@ -1272,16 +1272,12 @@ ManagerImpl::unloadAudioCodec()
 void
 ManagerImpl::initAudioDriver(void) 
 {
-#if defined(AUDIO_PORTAUDIO)
   try {
     _debugInit("AudioLayer Creation");
     _audiodriverPA = new AudioLayer();
   } catch(...) {
     throw;
   }
-#else
-# error You must define one AUDIO driver to use.
-#endif
 }
 
 /**
@@ -1290,7 +1286,6 @@ ManagerImpl::initAudioDriver(void)
 void
 ManagerImpl::selectAudioDriver (void)
 {
-#if defined(AUDIO_PORTAUDIO)
   try {
     int noDevice    = getConfigInt(AUDIO, DRIVER_NAME);
     int noDeviceIn  = getConfigInt(AUDIO, DRIVER_NAME_IN);
@@ -1323,9 +1318,6 @@ ManagerImpl::selectAudioDriver (void)
   } catch(...) {
     throw;
   }
-#else
-# error You must define one AUDIO driver to use.
-#endif
 }
 
 /**

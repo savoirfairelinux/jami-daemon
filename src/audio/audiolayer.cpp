@@ -18,8 +18,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifdef AUDIO_PORTAUDIO
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -287,5 +285,4 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 	return paContinue;
 }
 
-#endif // defined(AUDIO_PORTAUDIO)
 

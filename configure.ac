@@ -34,6 +34,15 @@ AM_INIT_AUTOMAKE(sflphoned, $VERSION)
 AC_PROG_LIBTOOL
 dnl AC_CHECK_COMPILERS
 
+dnl check for portaudio
+LP_SETUP_PORTAUDIO
+
+dnl check for osip2
+LP_CHECK_OSIP2
+
+dnl setup flags for embedded exosip library
+LP_SETUP_EXOSIP
+
 CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS"
 
 SFLPHONE_CXXFLAGS=""
@@ -53,8 +62,8 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS( \
 ostream \
-portaudio.h \
 )
+
 
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION})
@@ -71,29 +80,12 @@ PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
 
-dnl check for osip2
-LP_CHECK_OSIP2
-
-dnl setup flags for embedded exosip library
-LP_SETUP_EXOSIP
 
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $OSIP_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $OSIP_LIBS"
 SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $EXOSIP_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $EXOSIP_LIBS"
 
-
-if test $ac_cv_header_portaudio_h = no; then
-   AC_MSG_ERROR([*** missing portaudio.h. You need a working PortAudio installation. See http://www.portaudio.com])
-else 
-   portaudio_LIBS="-lportaudio -lasound "
-   portaudio_CFLAGS="-DAUDIO_PORTAUDIO "
-fi
-
-SFLPHONE_LIBS="$SFLPHONE_LIBS $portaudio_LIBS"
-SFLPHONE_CXXFLAGS=="$SFLPHONE_CXXFLAGS $portaudio_CFLAGS"
-AC_SUBST(portaudio_CFLAGS)
-AC_SUBST(portaudio_LIB)
 
 AC_SUBST(SFLPHONE_CXXFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
@@ -142,6 +134,7 @@ sflphoned-fedora.spec \
 Makefile \
 m4/Makefile \
 exosip2/Makefile \
+portaudio/Makefile \
 src/Makefile \
 src/sflphone \
 src/audio/Makefile \

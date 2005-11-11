@@ -2,23 +2,6 @@ AC_DEFUN([LP_SETUP_EXOSIP],[
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_REQUIRE([LP_CHECK_OSIP2])
 
-dnl *********************************************************************
-dnl Source packaging numbers
-EXOSIP_MAJOR_VERSION=1
-EXOSIP_MINOR_VERSION=9
-EXOSIP_MICRO_VERSION=1
-
-SONAME_MAJOR_VERSION=5
-SONAME_MINOR_VERSION=0
-SONAME_MICRO_VERSION=0
-
-dnl program extension
-EXOSIP_VERSION=$EXOSIP_MAJOR_VERSION.$EXOSIP_MINOR_VERSION.$EXOSIP_MICRO_VERSION
-LIBEXOSIP_SO_VERSION=$SONAME_MAJOR_VERSION:$SONAME_MINOR_VERSION:$SONAME_MICRO_VERSION
-
-AC_SUBST(LIBEXOSIP_SO_VERSION)
-AC_SUBST(EXOSIP_VERSION)
-
 dnl support for linux-thread or posix thread (pthread.h)
 AC_ARG_ENABLE(pthread,
 [  --enable-pthread        enable support for POSIX threads. (autodetect)],

@@ -18,8 +18,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#if defined(AUDIO_PORTAUDIO)
-
 #ifndef _AUDIO_LAYER_H
 #define _AUDIO_LAYER_H
 
@@ -81,4 +79,3 @@ private:
 
 #endif // _AUDIO_LAYER_H_
 
-#endif // defined(AUDIO_PORTAUDIO)

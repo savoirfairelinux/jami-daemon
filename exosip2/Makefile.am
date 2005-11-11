@@ -1,6 +1,6 @@
 
 
-lib_LTLIBRARIES = libeXosip2.la
+noinst_LTLIBRARIES = libeXosip2.la
 
 #
 # Other flags to add someday:
@@ -9,7 +9,7 @@ lib_LTLIBRARIES = libeXosip2.la
 #	-Wstrict-prototypes
 #	-Werror
 #
-AM_CFLAGS = @EXOSIP_CFLAGS@ @CFLAGS@  
+AM_CFLAGS = $(EXOSIP_CFLAGS) @CFLAGS@  
 
 libeXosip2_la_SOURCES =      \
 eXosip.c         eXconf.c    \
@@ -27,7 +27,6 @@ misc.c           eXosip2.h     \
 jpipe.c          jpipe.h                 jauth.c      \
 sdp_offans.c     jpublish.c
 
-libeXosip2_la_LDFLAGS = -L$(prefix)/lib -version-info $(LIBEXOSIP_SO_VERSION)
-libeXosip2_la_LIBADD = -losip2  @EXOSIP_LIBS@ 
+libeXosip2_la_LIBADD = -losip2  @EXOSIP_LIBS@
 
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/include -I$(includedir)

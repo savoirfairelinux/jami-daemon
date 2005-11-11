@@ -21,6 +21,9 @@
 /* Define to 1 if you have the `osipparser2' library (-losipparser2). */
 #undef HAVE_LIBOSIPPARSER2
 
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
 
@@ -29,9 +32,6 @@
 
 /* Define to 1 if you have the <ostream> header file. */
 #undef HAVE_OSTREAM
-
-/* Define to 1 if you have the <portaudio.h> header file. */
-#undef HAVE_PORTAUDIO_H
 
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
@@ -102,12 +102,34 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Alsa */
+#undef PA_USE_ALSA
+
+/* Jack */
+#undef PA_USE_JACK
+
+/* OSS */
+#undef PA_USE_OSS
+
 /* Define to the necessary symbol if this constant uses a non-standard name on
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
+
+/* The size of a `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of a `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of a `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
 /* Version number of package */
 #undef VERSION
+
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
