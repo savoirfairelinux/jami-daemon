@@ -26,7 +26,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(srcdir)/audio/pacpp/include  $(libccex
 
 libsflphone_la_LDFLAGS= -version-info 0:1:0
 libsflphone_la_LIBADD = \
-	$(top_builddir)/exosip2/libeXosip2.la \
+	$(top_builddir)/eXosip2/libeXosip2.la \
 	$(top_builddir)/portaudio/libportaudio.la \
 	$(top_builddir)/stund/libstun.la \
 	$(top_builddir)/utilspp/libutilspp.la \

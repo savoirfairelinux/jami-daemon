@@ -130,7 +130,7 @@ AC_OUTPUT(
 sflphone.spec \
 Makefile \
 m4/Makefile \
-exosip2/Makefile \
+eXosip2/Makefile \
 portaudio/Makefile \
 src/Makefile \
 src/sflphone \
