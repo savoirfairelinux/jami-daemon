@@ -27,7 +27,7 @@ sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone
 #sflphoned_LDFLAGS = -static
 sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) 
 #KDE_CXXFLAGS = $(USE_EXCEPTIONS)
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(srcdir)/audio/pacpp/include  $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(portaudio_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(srcdir)/audio/pacpp/include  $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(portaudio_CFLAGS) -I$(top_srcdir)/portaudio/pa_common
 
 libsflphone_la_LDFLAGS= -version-info 0:1:0
 libsflphone_la_LIBADD = \

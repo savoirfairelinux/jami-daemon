@@ -35,7 +35,6 @@
 #include "manager.h"
 #include "audio/audiolayer.h"
 #include "audio/audiocodec.h"
-//#include "audio/ringbuffer.h"
 #include "audio/tonelist.h"
 
 #include "sipvoiplink.h"

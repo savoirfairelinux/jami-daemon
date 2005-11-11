@@ -19,4 +19,4 @@ libportaudiocpp_la_SOURCES = \
 	SystemHostApiIterator.cxx 
 
 
-AM_CXXFLAGS = -I$(srcdir)/../../include
+AM_CXXFLAGS = -I$(srcdir)/../../include -I$(srcdir)/../../../../../portaudio/pa_common

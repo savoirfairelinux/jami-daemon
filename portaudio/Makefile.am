@@ -7,7 +7,6 @@ libportaudio_la_CPPFLAGS = $(PORTAUDIO_CPPFLAGS) -Ipa_common/
 
 pkginclude_HEADERS = pa_common/portaudio.h
 
-
 if ENABLE_OSS
 OSS=pa_unix_oss/pa_unix_oss.c
 endif
@@ -16,19 +15,14 @@ if ENABLE_UNIX
 UNIX=pa_unix/pa_unix_hostapis.c pa_unix/pa_unix_util.c
 endif
 
-if ENABLE_JACK
-JACK=pa_jack/pa_jack.c
-endif
-
 if ENABLE_ALSA
 ALSA=pa_linux_alsa/pa_linux_alsa.c
 endif
 
 
-SOURCES=${OSS} ${UNIX} ${JACK} ${ALSA}
+SOURCES=$(OSS) $(UNIX) $(ALSA)
 
-
-libportaudio_la_SOURCES = ${SOURCES} \
+libportaudio_la_SOURCES = $(SOURCES) \
 	pa_common/pa_allocation.c \
 	pa_common/pa_converters.c \
 	pa_common/pa_cpuload.c \
