@@ -1,9 +1,0 @@
-all: autotools 
-
-autotools: 
-	./autogen.sh
-
-qt: 
-	cd src/gui/qt && qmake
-
-
