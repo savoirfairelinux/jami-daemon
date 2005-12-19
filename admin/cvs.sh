@@ -487,7 +487,7 @@ fi
 acinclude_m4()
 {
   echo "*** Creating acinclude.m4"
-  adds=
+  adds=m4/*
   if grep '\$(top_srcdir)/acinclude.m4:' $makefile_am >/dev/null; then 
     strip_makefile
     rm -f acinclude.m4

@@ -34,7 +34,6 @@ AC_PATH_QT
 AC_CHECK_COMPILERS
 AC_SUBST(LIBQT)
 
-LIBS="$LIBS -lstdc++ $LIB_QT"
 
 AC_CANONICAL_SYSTEM
 AC_ARG_PROGRAM
@@ -160,8 +159,13 @@ CPPFLAGS=$save_dnssdtest_CPPFLAGS
 LDFLAGS=$save_dnssdtest_LDFLAGS
 LIBS=$save_dnssdtest_LIBS
 fi
+
+sflphone_datadir=$datadir/sflphone
+AC_SUBST(sflphone_datadir)
+
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
+LIBS="$LIBS -lstdc++ $LIB_QT"
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(

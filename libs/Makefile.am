@@ -1,1 +1,1 @@
-SUBDIRS = eXosip2 portaudio stund utilspp
+SUBDIRS = eXosip2 portaudio stund taxidermy utilspp
