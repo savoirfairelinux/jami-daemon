@@ -8,6 +8,8 @@
 
 unset MAKEFLAGS
 
+ACLOCALFLAGS = -I m4/
+
 call_and_fix_autoconf()
 {
   $AUTOCONF || exit 1
@@ -134,7 +136,7 @@ if egrep "^AM_CONFIG_HEADER" configure.in >/dev/null 2>&1; then
 fi
 
 echo "*** Creating Makefile templates"
-$AUTOMAKE || exit 1
+$AUTOMAKE --add-missing || exit 1
 
 if test "$UNSERMAKE" = no; then
   echo "*** Postprocessing Makefile templates"
@@ -487,7 +489,7 @@ fi
 acinclude_m4()
 {
   echo "*** Creating acinclude.m4"
-  adds=m4/*
+  adds=
   if grep '\$(top_srcdir)/acinclude.m4:' $makefile_am >/dev/null; then 
     strip_makefile
     rm -f acinclude.m4
