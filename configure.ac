@@ -30,15 +30,16 @@ AC_LANG_CPLUSPLUS
 AC_PROG_CXX
 AC_PROG_CC
 
-dnl AM_GNU_GETTEXT
+AC_PATH_QT
+AC_CHECK_COMPILERS
+AC_SUBST(LIBQT)
 
-dnl AC_PATH_QT
-dnl KDE_USE_QT(3.3)
+LIBS="$LIBS -lstdc++ $LIB_QT"
+
 AC_CANONICAL_SYSTEM
 AC_ARG_PROGRAM
 AM_INIT_AUTOMAKE(sflphoned, $VERSION)
 AC_PROG_LIBTOOL
-dnl AC_CHECK_COMPILERS
 
 dnl check for portaudio
 LP_SETUP_PORTAUDIO
@@ -168,6 +169,7 @@ debian/changelog \
 sflphone.spec \
 Makefile \
 m4/Makefile \
+libs/taxidermy/Makefile \
 libs/Makefile \
 libs/eXosip2/Makefile \
 libs/portaudio/Makefile \
@@ -177,6 +179,9 @@ libs/utilspp/functor/Makefile \
 libs/utilspp/singleton/Makefile \
 include/Makefile \
 include/eXosip2/Makefile \
+skins/Makefile \
+skins/metal/Makefile \
+skins/gmetal/Makefile \
 src/Makefile \
 src/sflphone \
 src/audio/Makefile \
@@ -188,6 +193,7 @@ src/audio/pacpp/source/Makefile \
 src/audio/pacpp/source/portaudiocpp/Makefile \
 src/config/Makefile \
 src/gui/Makefile \
+src/gui/qt/Makefile \
 src/gui/server/Makefile \
 src/zeroconf/Makefile \
 ringtones/Makefile \
