@@ -1,0 +1,37 @@
+SUBDIRS = gsm pacpp
+
+noinst_LTLIBRARIES = libaudio.la
+
+if USE_SPEEX
+SPEEX_SOURCES=CodecSpeex.cpp
+SPEEX_FLAG=-DHAVE_SPEEX
+SPEEX_LIB=-lspeex
+else
+SPEEX_SOURCES=
+SPEEX_FLAG=
+SPEEX_LIB=
+endif
+
+if USE_SAMPLERATE
+SAMPLERATE_FLAG=-DUSE_SAMPLERATE
+SAMPLERATE_LIB =-lsamplerate
+else
+SAMPLERATE_FLAG=
+SAMPLERATE_LIB=
+endif
+
+libaudio_la_SOURCES = alaw.cpp        audiofile.cpp	g711.cpp tonelist.cpp     \
+audiortp.cpp         dtmf.cpp   tone.cpp audiocodec.cpp  audiolayer.cpp  dtmfgenerator.cpp  gsmcodec.cpp \
+tonegenerator.cpp  ulaw.cpp codecDescriptor.cpp \
+audioloop.cpp ringbuffer.cpp $(SPEEX_SOURCES)
+
+AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs -I$(srcdir)/pacpp/include/ $(libccext2_CFLAGS) $(libccrtp1_CFLAGS) $(portaudio_CFLAGS) -I$(top_srcdir)/libs/portaudio/pa_common
+libaudio_la_LIBADD = gsm/libgsm.la pacpp/source/portaudiocpp/libportaudiocpp.la $(SPEEX_LIB) $(SAMPLERATE_LIB)
+libaudio_la_CPPFLAGS = $(SPEEX_FLAG) $(SAMPLERATE_FLAG)
+ 
+
+noinst_HEADERS = audioloop.h       common.h ringbuffer.h alaw.h          audiofile.h g711.h \
+ tonelist.h         audiortp.h audiocodec.h    audiolayer.h \
+ dtmfgenerator.h    gsmcodec.h      tonegenerator.h    ulaw.h \
+ audiodevice.h codecDescriptor.h    dtmf.h tone.h \
+ CodecSpeex.h

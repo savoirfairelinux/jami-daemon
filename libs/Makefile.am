@@ -1,0 +1,1 @@
+SUBDIRS = eXosip2 portaudio stund utilspp

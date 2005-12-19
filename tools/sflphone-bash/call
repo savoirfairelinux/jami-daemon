@@ -1,0 +1,37 @@
+#!/bin/sh
+# Copyright (C) 2005 Yan Morin <yan.morin@savoirfairelinux.com>
+##
+# Use the daemon to make a call (with netcat)
+# @author Yan Morin
+# example of use:
+#  ./call 124
+# kaddressbook (script-hooks phone):
+#  /usr/local/sflphone-bash/call "%N"
+##
+
+. ./global
+
+if [ -z $1 ]; then 
+  echo "You need a sip number to compose."
+  exit -1; 
+fi
+
+callid=`date +%s%N`
+telephonenumber=$1
+
+if [ -z `$pidof 'sflphoned'` ]; then
+  $SFLPHONED_PATH/sflphoned &
+  echo -n "waiting for sflphone activation: "
+  echo -n "."; sleep 1
+  echo -n "."; sleep 1
+  callstring="getevents all\n";
+  echo -en $callstring | $netcat localhost 3999
+  echo -n "."; sleep 1
+  echo -en "\n";
+fi
+
+callstring="call someone with $callid $telephonenumber\n"
+echo "Calling $telephonenumber..."
+
+echo -en $callstring | $netcat
+

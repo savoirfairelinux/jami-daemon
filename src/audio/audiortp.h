@@ -1,0 +1,84 @@
+/*
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ * 
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#ifndef __AUDIO_RTP_H__
+#define __AUDIO_RTP_H__
+
+#include <cstdio>
+#include <cstdlib>
+
+#include <ccrtp/rtp.h>
+#include <cc++/numbers.h>
+
+#define RTP_FRAMES2SEND 160
+
+class AudioLayer;
+class SipCall;
+
+///////////////////////////////////////////////////////////////////////////////
+// Two pair of sockets
+///////////////////////////////////////////////////////////////////////////////
+class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
+public:
+	AudioRtpRTX (SipCall *, AudioLayer*, bool);
+	~AudioRtpRTX();
+
+	ost::Time *time; 	// For incoming call notification 
+	virtual void run ();
+
+private:
+	SipCall* _ca;
+	AudioLayer* _audioDevice;
+	ost::RTPSession *_sessionSend;
+	ost::RTPSession *_sessionRecv;
+	ost::SymmetricRTPSession *_session;
+  ost::Semaphore _start;
+	bool _sym;
+
+  int _nbFrames;
+#ifdef USE_SAMPLERATE
+  float *_floatBufferIn;
+  float *_floatBufferOut;
+#endif
+
+	void initAudioRtpSession (void);
+//  void sendSessionFromMic (unsigned char*, int16*, int16*, int, int);
+  void sendSessionFromMic (unsigned char*, int16*, int16*, int);
+//	void receiveSessionForSpkr (int16*, int16*, int, int&);
+  void receiveSessionForSpkr (int16*, int16*, int&);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Main class rtp
+///////////////////////////////////////////////////////////////////////////////
+class AudioRtp {
+public:
+  AudioRtp();
+  ~AudioRtp();
+
+  int 			createNewSession (SipCall *);
+  void			closeRtpSession	 ();
+
+private:
+  AudioRtpRTX*	_RTXThread;
+  bool			_symmetric;
+  ost::Mutex _threadMutex;
+};
+
+#endif // __AUDIO_RTP_H__

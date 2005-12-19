@@ -1,0 +1,38 @@
+%define name sflphoned
+%define version 0.6
+%define release 1
+%define prefix /usr
+Autoreq: 0
+
+Name:		%name
+Summary:	A VoIP daemon with SIP protocol
+Version:	%version
+Release:	%release
+License:	GPL
+Group:		Networking/Utilities
+URL:		http://www.sflphone.org/
+Packager:	Cyrille Béraud <cyrille.beraud@savoirfairelinux.com>
+Source:		http://www.sflphone.org/releases/sflphone-0.5.tar.gz
+BuildRoot:	/tmp/sflphone-%{version}-%{release}
+
+%description
+SFLPhoned is a VoIP daemon with SIP protocol.
+%prep
+%setup
+CXXFLAGS="$RPM_OPT_FLAGS" ./configure --prefix %{prefix}
+
+%build
+make
+
+%install
+make DESTDIR=$RPM_BUILD_ROOT install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-, root, root)
+%{prefix}/bin/sflphoned
+%dir %{prefix}/share/sflphone/ringtones
+%{prefix}/share/sflphone/ringtones/*
+

@@ -1,0 +1,9 @@
+Appel:
+playtone s1   [joue tant que playtone = false]
+playdtmf s2 1 [si playtone = true ( playtone = false) flush, start playdtmf]
+playdtmf s3 0 []
+playdtmf s4 3 []
+
+
+
+

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+netcat="/usr/bin/nc localhost 3999"
+pidof=/sbin/pidof
+SFLPHONED_PATH=/home/ymorin/sflphone/sflphoned/src
+

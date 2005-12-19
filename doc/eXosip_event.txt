@@ -1,0 +1,94 @@
+include/osip2/osip.h
+type_t = INT
+
+    542   struct osip_event
+    543   {
+    544     type_t type;             /**< Event Type */
+    545     int transactionid;       /**< identifier of the related osip transaction */
+    546     osip_message_t *sip;     /**< SIP message (optional) */
+    547   };
+
+include/osipparser2/osip_message.h
+     52 /**
+     53  * Structure for SIP Message (REQUEST and RESPONSE).
+     54  * @struct osip_message
+     55  */
+     56   struct osip_message
+     57   {
+     58     char *sip_version;                /**< SIP version (SIP request only) */
+     59     osip_uri_t *req_uri;              /**< Request-Uri (SIP request only) */
+     60     char *sip_method;                 /**< METHOD (SIP request only) */
+     61
+     62     int status_code;                  /**< Status Code (SIP answer only) */
+     63     char *reason_phrase;              /**< Reason Phrase (SIP answer only) */
+     64
+     65     osip_list_t *accepts;             /**< Accept headers */
+     66     osip_list_t *accept_encodings;    /**< Accept-Encoding headers */
+     67     osip_list_t *accept_languages;    /**< Accept-Language headers */
+     68     osip_list_t *alert_infos;         /**< Alert-Info headers */
+     69     osip_list_t *allows;              /**< Allows headers */
+     70     osip_list_t *authentication_infos;/**< authentication_info headers */
+     71     osip_list_t *authorizations;      /**< Authorizations headers */
+     72     osip_call_id_t *call_id;          /**< Call-ID header */
+     73     osip_list_t *call_infos;          /**< Call-Infos header */
+     74     osip_list_t *contacts;            /**< Contacts headers */
+     75     osip_list_t *content_dispositions;/**< Content-Dispositions headers */
+     76     osip_list_t *content_encodings;   /**< Content-Encodings headers */
+     77     osip_content_length_t *content_length;   /**< Content-Length header */
+     78     osip_content_type_t *content_type;       /**< Content-Type header */
+     79     osip_cseq_t *cseq;                /**< CSeq header */
+     80     osip_list_t *error_infos;         /**< Error-Info headers */
+     81     osip_from_t *from;                /**< From header */
+     82     osip_mime_version_t *mime_version;/**< Mime-Version header */
+     83     osip_list_t *proxy_authenticates; /**< Proxy-Authenticate headers */
+     84     osip_list_t *proxy_authentication_infos; /**< P-Authentication-Info headers */
+     85     osip_list_t *proxy_authorizations;/**< Proxy-authorization headers */
+     86     osip_list_t *record_routes;       /**< Record-Route headers */
+     87     osip_list_t *routes;              /**< Route headers */
+     88     osip_to_t *to;                    /**< To header */
+     89     osip_list_t *vias;                /**< Vias headers */
+     90     osip_list_t *www_authenticates;   /**< WWW-Authenticate headers */
+     91
+     92     osip_list_t *headers;             /**< Other headers */
+     93
+     94     osip_list_t *bodies;              /**< List of attachements */
+     95
+     96     /*
+     97        1: structure and buffer "message" are identical.
+     98        2: buffer "message" is not up to date with the structure info (call osip_message_to_str to update it).
+     99      */
+    100     int message_property;             /**@internal */
+    101     char *message;                    /**@internal */
+    102     size_t message_length;            /**@internal */
+    103
+    104     void *application_data;           /**can be used by upper layer*/
+    105   };
+
+
+    249  * @struct eXosip_event
+    250  */
+    251   struct eXosip_event
+    252   {
+    253     eXosip_event_type_t type;               /**< type of the event */
+    254     char                textinfo[256];      /**< text description of event */
+    255     void               *external_reference; /**< external reference (for calls) */
+    256
+    257     osip_message_t     *request;   /**< request within current transaction */
+    258     osip_message_t     *response;  /**< last response within current transaction */
+    259     osip_message_t     *ack;       /**< ack within current transaction */
+    260
+    261     int tid; /**< unique id for transactions (to be used for answers) */
+    262     int did; /**< unique id for SIP dialogs */
+    263
+    264     int rid; /**< unique id for registration */
+    265     int cid; /**< unique id for SIP calls (but multiple dialogs!) */
+    266     int sid; /**< unique id for outgoing subscriptions */
+    267     int nid; /**< unique id for incoming subscriptions */
+    268
+    269     int ss_status;  /**< current Subscription-State for subscription */
+    270     int ss_reason;  /**< current Reason status for subscription */
+    271   };
+
+opip_fifo_get retourne un void*
+el = osip_list_get (ff->queue, 0);
+

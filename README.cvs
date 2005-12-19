@@ -1,0 +1,10 @@
+Starting from CVS there are a few things that need to be done before
+the normal build procedure. These require autoconf and automake to
+be installed.
+
+Then run the following;
+
+make -f Makefile.cvs
+
+After this the normal build procedure in the README file can be
+followed.

@@ -1,0 +1,15 @@
+For project core:
+----------------
+Management Config like about:config in Mozilla
+Improvement of STUN
+Add IAX support
+Management of account (add, remove, ...)
+Management of exceptions
+Remove all warnings in compilation
+Better handling for an reINVITE request. (done?)
+
+For project dependencies:
+------------------------
+Improve the autotools scripts of PortAudioCpp
+
+
