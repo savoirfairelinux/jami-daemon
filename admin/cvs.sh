@@ -8,7 +8,7 @@
 
 unset MAKEFLAGS
 
-ACLOCALFLAGS = -I m4/
+ACLOCALFLAGS="-I m4/"
 
 call_and_fix_autoconf()
 {
