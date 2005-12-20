@@ -165,7 +165,9 @@ AC_SUBST(sflphone_datadir)
 
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
-LIBS="$LIBS -lstdc++ $LIB_QT"
+LIBS="$LIBS -lstdc++"
+
+AC_SUBST(LIB_QT)
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
