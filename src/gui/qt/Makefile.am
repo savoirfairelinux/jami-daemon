@@ -1,9 +1,9 @@
 libexec_PROGRAMS = sflphone-qt
 
 BUILT_SOURCES = \
-    ./moc_ConfigurationPanel.cpp \
     ./ConfigurationPanelui.cpp \
     ./ConfigurationPanel.h \
+    ./ConfigurationPanelmocpp.cpp \
     ./ConfigurationManagerImplmoc.cpp \
     ./ConfigurationPanelImplmoc.cpp \
     ./JPushButtonmoc.cpp \
@@ -120,13 +120,14 @@ KDE_CXXFLAGS = $(USE_EXCEPTIONS)
 AM_CPPFLAGS = -I$(top_srcdir)/libs/ $(KDE_INCLUDES) $(QT_INCLUDES) $(X_INCLUDES) $(all_includes)
 AM_LDFLAGS = $(KDE_LDFLAGS) $(QT_LDFLAGS) $(X_LDFLAGS) $(all_libraries)
 
+
 qmake_image_collection.cpp: $(IMAGES)
 	$(UIC) -embed sflphone-qt $(IMAGES) -o $@
 
 %.h: %.ui
 	$(UIC) -o $@ $<
 
-moc_%.cpp: %.h
+%mocpp.cpp: %.h
 	$(MOC) -o $@ $<
 
 %moc.cpp: %.hpp
