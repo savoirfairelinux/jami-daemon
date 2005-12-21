@@ -238,7 +238,7 @@ void
 SFLPhoneApp::loadSkin() 
 {
   SkinManager::instance().setApplication(this);
-  SkinManager::instance().load();
+  SkinManager::instance().load("metal");
 }
 
 void

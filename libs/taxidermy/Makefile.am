@@ -44,7 +44,7 @@ CLEANFILES = \
 KDE_CXXFLAGS = $(USE_EXCEPTIONS)
 AM_CPPFLAGS = -I$(top_srcdir)/libs/ $(QT_INCLUDES) $(X_INCLUDES) 
 AM_LDFLAGS = $(QT_LDFLAGS) $(X_LDFLAGS) 
-AM_LDADD = $(LIB_QT)
+libtaxidermy_la_LIBADD = $(LIB_QT)
 
 
 

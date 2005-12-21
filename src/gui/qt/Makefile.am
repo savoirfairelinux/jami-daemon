@@ -112,7 +112,7 @@ sflphone_qt_SOURCES = \
 CLEANFILES = \
 	$(BUILT_SOURCES)
 
-sflphone_qt_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DDATADIR=\"$(datadir)\"
+sflphone_qt_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DDATADIR=\"$(sflphone_datadir)\"
 sflphone_qt_LDADD = $(LIB_QT) $(top_srcdir)/libs/taxidermy/libtaxidermy.la
 
 KDE_CXXFLAGS = $(USE_EXCEPTIONS)
