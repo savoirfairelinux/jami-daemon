@@ -52,4 +52,6 @@
 #define PREFERENCES_SECTION "Preferences"
 #define PREFERENCES_THEME "Themes.skinChoice"
 
+#define SKINDIR DATADIR "/skins"
+
 #endif

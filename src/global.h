@@ -39,8 +39,8 @@ typedef short int16;
 	#define _debugInit(...)
 #endif
 
-#define SFLPHONED_VERSION "0.6.1"
-#define SFLPHONED_VERSIONNUM 0x000605
+#define SFLPHONED_VERSION "0.6.3"
+#define SFLPHONED_VERSIONNUM 0x000603
 
 #define PROGNAME         "sflphoned"
 #define PROGNAME_GLOBAL  "sflphone"

@@ -37,7 +37,7 @@ AC_SUBST(LIBQT)
 
 AC_CANONICAL_SYSTEM
 AC_ARG_PROGRAM
-AM_INIT_AUTOMAKE(sflphoned, $VERSION)
+AM_INIT_AUTOMAKE(sflphone, $VERSION)
 AC_PROG_LIBTOOL
 
 dnl check for portaudio
@@ -165,7 +165,6 @@ AC_SUBST(sflphone_datadir)
 
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
-LIBS="$LIBS -lstdc++"
 
 AC_SUBST(LIB_QT)
 

@@ -22,6 +22,15 @@
 
 #include <qbitmap.h>
 #include <qimage.h>
+#include <qmime.h>
+
+
+void
+taxidermy::qtutils::addFilePath(const QString &path)
+{
+  QMimeSourceFactory *factory = QMimeSourceFactory::defaultFactory();
+  factory->addFilePath(path);
+}
 
 QPixmap 
 taxidermy::qtutils::transparize(const QString &image)
@@ -37,7 +46,6 @@ taxidermy::qtutils::transparize(const QString &image)
     }
   }
 #else
-  //  QPixmap p(QPixmap::fromMimeSource(image));
   QImage img(QImage::fromMimeSource(image));
   QPixmap p;
   p.convertFromImage(img);

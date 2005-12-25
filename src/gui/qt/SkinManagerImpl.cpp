@@ -24,9 +24,10 @@
 
 SkinManagerImpl::SkinManagerImpl() 
   : mApp(NULL)
-  , mHunter(DATADIR)
+  , mHunter(SKINDIR)
 {
   mSettings.setPath("savoirfairelinux.com", PROGNAME);
+  mSettings.beginGroup("/" PROGNAME);
   mPaths = mSettings.readListEntry("SkinPaths");
 }
 
@@ -39,7 +40,11 @@ SkinManagerImpl::setApplication(QApplication *app)
 void
 SkinManagerImpl::load()
 {
-  load(mSettings.readEntry("Skin", "metal"));
+  bool ok;
+  load(mSettings.readEntry("Skin", "metal", &ok));
+  if(!ok) {
+    mSettings.writeEntry("Skin", "metal");
+  }
 }
 
 void 

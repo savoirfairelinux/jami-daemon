@@ -25,6 +25,7 @@
 #include "WidgetBuilder.hpp"
 #include "WidgetBuilderFactory.hpp"
 #include "config.h"
+#include "qtutils.hpp"
 
 
 #define DEFAULT_DIRECTORY "skins/"
@@ -37,15 +38,21 @@
 
 taxidermy::Hunter::Hunter()
   : mSkinsDirectory(DEFAULT_DIRECTORY)
-{}
+{
+  qtutils::addFilePath(mSkinsDirectory.absPath());
+}
 
 taxidermy::Hunter::Hunter(const QString &directory)
   : mSkinsDirectory(directory)
-{}
+{
+  qtutils::addFilePath(mSkinsDirectory.absPath());
+}
 
 taxidermy::Hunter::Hunter(const QDir &directory)
   : mSkinsDirectory(directory)
-{}
+{
+  qtutils::addFilePath(mSkinsDirectory.absPath());
+}
 
 QStringList
 taxidermy::Hunter::getSkinNames() 
@@ -72,6 +79,7 @@ taxidermy::Taxidermist
 taxidermy::Hunter::getTaxidermist(const QString &skinName)
 {
   taxidermy::Taxidermist skin(skinName);
+  qtutils::addFilePath(mSkinsDirectory.absFilePath(skinName));
   load(&skin);
   
   return skin;
