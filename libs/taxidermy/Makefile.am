@@ -5,6 +5,7 @@ BUILT_SOURCES = \
            Huntermoc.cpp \
            PaintEventFiltermoc.cpp \
            QButtonBuildermoc.cpp \
+           QWidgetBuildermoc.cpp \
            WidgetBuilderCreatormoc.cpp \
            WidgetBuilderFactorymoc.cpp \
            WidgetBuilderFactoryImplmoc.cpp \
@@ -15,6 +16,7 @@ noinst_HEADERS = \
            EventFilter.hpp \
            Hunter.hpp \
            PaintEventFilter.hpp \
+           QWidgetBuilder.hpp \
            QButtonBuilder.hpp \
            Taxidermist.hpp \
            WidgetBuilderCreator.hpp WidgetBuilderCreator.inl \
@@ -30,6 +32,7 @@ libtaxidermy_la_SOURCES = \
 	EventFilter.cpp \
            Hunter.cpp \
            PaintEventFilter.cpp \
+           QWidgetBuilder.cpp \
            QButtonBuilder.cpp \
            Taxidermist.cpp \
            WidgetBuilder.cpp \

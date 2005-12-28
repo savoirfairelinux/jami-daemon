@@ -101,7 +101,10 @@ taxidermy::Hunter::load(taxidermy::Taxidermist *skin)
     Conf::ValuesMap values = config.getSection(*it);
     Conf::ValuesMap::iterator type = values.find("type");
 
-    if(type != values.end()) {
+    if(type == values.end()) {
+      std::cerr << "Widget named \"" << *it << "\" don't have a type.\n";
+    }
+    else {
       QMap< QString, QString > v;
       WidgetBuilder *builder = 
 	taxidermy::WidgetBuilderFactory::instance().create(type->second);

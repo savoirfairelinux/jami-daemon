@@ -18,40 +18,37 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __TAXIDERMY_WIDGET_BUILDER_HPP__
-#define __TAXIDERMY_WIDGET_BUILDER_HPP__
+#ifndef __TAXIDERMY_QWIDGET_BUILDER_HPP__
+#define __TAXIDERMY_QWIDGET_BUILDER_HPP__
 
-#include <qmap.h>
-#include <qobject.h>
-#include <qsettings.h>
-#include <qstring.h>
+#include <qpixmap.h>
 #include <qwidget.h>
 
-namespace taxidermy {
-  /**
-   * This class is responsible of loading a skin for a
-   * type of widget from a QSettings, and then be able to
-   * set the values loaded to a widget.
-   */
-  class WidgetBuilder : public QObject
+#include "WidgetBuilder.hpp"
+
+namespace taxidermy 
+{
+  class QWidgetBuilder : public WidgetBuilder
   {
-    Q_OBJECT			
+    Q_OBJECT;
 
   private:
-    QString mObjectType;
+    QWidget *mWidget;
 
-  private:
-    WidgetBuilder();
+    //Position
+    bool mPosSet;
+    int mX;
+    int mY;
+
+    //Images
+    QPixmap mBackground;
 
   public:
-    WidgetBuilder(const QString &objectType);
-    virtual ~WidgetBuilder() {}
+    QWidgetBuilder();
 
-    QString getObjectType();
-    
-    virtual void load(const QMap< QString, QString > &entries) = 0;
-    virtual void update() = 0;
-    virtual void update(QWidget *widget) = 0;
+    virtual void load(const QMap< QString, QString > &entries);
+    virtual void update();
+    virtual void update(QWidget *widget);
   };
 };
 

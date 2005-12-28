@@ -68,12 +68,7 @@ SFLPhoneWindow::SFLPhoneWindow()
 	  this, SIGNAL(needRegister()));
 
   // Initialize the background image
-  mMain = new QLabel(this);
-  QPixmap main(JPushButton::transparize(BACKGROUND_IMAGE));
-  mMain->setPixmap(main);
-  if(main.hasAlpha()) {
-    setMask(*main.mask());
-  }
+  setName("main");
 
   mPaintTimer = new QTimer(this);
   connect(mPaintTimer, SIGNAL(timeout()),
@@ -81,8 +76,6 @@ SFLPhoneWindow::SFLPhoneWindow()
   mPaintTimer->start(50);
   
 
-  resize(main.size());
-  mMain->resize(main.size());
 
   QPixmap logo(QPixmap::fromMimeSource(LOGO_IMAGE));
 #ifdef QIcon
@@ -105,33 +98,33 @@ SFLPhoneWindow::~SFLPhoneWindow()
 void
 SFLPhoneWindow::initLCD()
 {
-  mLcd = new SFLLcd(mMain);
+  mLcd = new SFLLcd(this);
   mLcd->show();
 }
 
 void
 SFLPhoneWindow::initGUIButtons()
 {
-  mHangup = new QPushButton(QObject::tr("Hangup"), mMain, "hangup");
-  mHold = new QPushButton(QObject::tr("Hold"), mMain, "hold");
-  mOk = new QPushButton(QObject::tr("Ok"), mMain, "ok");
-  mClear = new QPushButton(QObject::tr("Clear"), mMain, "clear");
-  mMute = new QPushButton(QObject::tr("Mute"), mMain, "mute");
+  mHangup = new QPushButton(QObject::tr("Hangup"), this, "hangup");
+  mHold = new QPushButton(QObject::tr("Hold"), this, "hold");
+  mOk = new QPushButton(QObject::tr("Ok"), this, "ok");
+  mClear = new QPushButton(QObject::tr("Clear"), this, "clear");
+  mMute = new QPushButton(QObject::tr("Mute"), this, "mute");
   mMute->setToggleButton(true);
-  mDtmf = new QPushButton(QObject::tr("DTMF"), mMain, "dtmf");
+  mDtmf = new QPushButton(QObject::tr("DTMF"), this, "dtmf");
   mDtmf->setToggleButton(true);
-  mSetup = new QPushButton(QObject::tr("Setup"), mMain, "setup");
-  mTransfer = new QPushButton(QObject::tr("Transfer"), mMain, "transfer");
-  mRedial = new QPushButton(QObject::tr("Redial"), mMain, "redial");
+  mSetup = new QPushButton(QObject::tr("Setup"), this, "setup");
+  mTransfer = new QPushButton(QObject::tr("Transfer"), this, "transfer");
+  mRedial = new QPushButton(QObject::tr("Redial"), this, "redial");
   mVolume = new VolumeControl(QString(VOLUME_IMAGE),
-			      mMain);
+			      this);
   mVolume->setOrientation(VolumeControl::Vertical);
   mVolume->move(365,91);
   QObject::connect(mVolume, SIGNAL(valueUpdated(int)),
 		   this, SIGNAL(volumeUpdated(int)));
   
   mMicVolume = new VolumeControl(QString(VOLUME_IMAGE),
-				 mMain);
+				 this);
   mMicVolume->setOrientation(VolumeControl::Vertical);
   mMicVolume->move(347,91);
   QObject::connect(mVolume, SIGNAL(valueUpdated(int)),
@@ -143,17 +136,17 @@ void
 SFLPhoneWindow::initLineButtons()
 {
   for(int i = 0; i < NB_PHONELINES; i++) {
-    PhoneLineButton *line = new PhoneLineButton(i, mMain);
+    PhoneLineButton *line = new PhoneLineButton(i, this);
     mPhoneLineButtons.push_back(line);
   }
 }
 
 void SFLPhoneWindow::initWindowButtons()
 {
-  mCloseButton = new QPushButton(QObject::tr("Close"), mMain, "close");
+  mCloseButton = new QPushButton(QObject::tr("Close"), this, "close");
   QObject::connect(mCloseButton, SIGNAL(clicked()),
 		   this, SLOT(finish()));
-  mMinimizeButton = new QPushButton(QObject::tr("Minimize"), mMain, "minimize");
+  mMinimizeButton = new QPushButton(QObject::tr("Minimize"), this, "minimize");
   QObject::connect(mMinimizeButton, SIGNAL(clicked()),
 		   this, SLOT(showMinimized()));
 }

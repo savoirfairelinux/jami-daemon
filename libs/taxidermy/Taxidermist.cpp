@@ -18,6 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <iostream>
 #include <stdexcept>
 #include <qapplication.h>
 #include <qwidgetlist.h>
@@ -41,6 +42,8 @@ void
 taxidermy::Taxidermist::skin(QWidget *widget)
 {
   QMap< QString, WidgetBuilder * >::Iterator pos = mBuilders.find(widget->name());
+  std::cout << "Trying to find a skin for: " << widget->name() << std::endl;
+
   if(pos != mBuilders.end()) {
     (*pos)->update(widget);
   }
@@ -51,6 +54,7 @@ taxidermy::Taxidermist::update(QApplication *app)
 {
   QWidget *mainWidget = app->mainWidget();
   if(mainWidget) {
+    skin(mainWidget);
     for(QMap< QString, WidgetBuilder * >::Iterator pos = mBuilders.begin();
 	pos != mBuilders.end();
 	pos++) {

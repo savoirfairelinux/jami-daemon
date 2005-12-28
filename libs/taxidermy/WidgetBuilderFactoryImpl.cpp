@@ -20,10 +20,12 @@
 
 #include "WidgetBuilderFactoryImpl.hpp"
 #include "QButtonBuilder.hpp"
+#include "QWidgetBuilder.hpp"
 
 taxidermy::WidgetBuilderFactoryImpl::WidgetBuilderFactoryImpl()
 {
   add<QButtonBuilder>("QButton");
+  add<QWidgetBuilder>("QWidget");
 }
 
 
