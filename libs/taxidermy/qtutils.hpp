@@ -26,6 +26,6 @@ namespace taxidermy
   {
     QPixmap transparize(const QString &image, bool hard = false);
     void addFilePath(const QString &path);
-
+    void retreive(const QString &image, QPixmap &pixmap);
   };
 };

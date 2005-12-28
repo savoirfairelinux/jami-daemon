@@ -32,6 +32,12 @@ taxidermy::qtutils::addFilePath(const QString &path)
   factory->addFilePath(path);
 }
 
+void
+taxidermy::qtutils::retreive(const QString &image, QPixmap &pixmap)
+{
+  pixmap = QPixmap::fromMimeSource(image);
+}
+
 QPixmap 
 taxidermy::qtutils::transparize(const QString &image, bool hard)
 {

@@ -38,8 +38,6 @@
 // Others fixed font support "Monospace", "Fixed", "MiscFixed"
 #define FONT_SIZE	10
 
-#define SCREEN "screen_main.png"
-#define OVERSCREEN "overscreen.png"
 
 SFLLcd::SFLLcd(QWidget *parent)
   : QLabel(parent, "screen", Qt::WNoAutoErase)
@@ -54,7 +52,8 @@ SFLLcd::SFLLcd(QWidget *parent)
 {
   setPaletteBackgroundColor(QColor("gray"));
   mOverscreen.setPaletteBackgroundColor(QColor("gray"));
-  //mOverscreen.hide();
+  mOverscreen.show();
+  mOverscreen.setText("test");
   mUnselectedLineTimer = new QTimer(this);
   QObject::connect(mUnselectedLineTimer, SIGNAL(timeout()), 
 		   this, SLOT(updateGlobalText()));

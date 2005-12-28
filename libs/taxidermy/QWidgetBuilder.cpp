@@ -51,9 +51,16 @@ taxidermy::QWidgetBuilder::load(const QMap< QString, QString > &values)
     mWidth = (*width).toInt();
   }
 
+  QMap< QString, QString >::ConstIterator transparent = values.find("transparent");
   QMap< QString, QString >::ConstIterator bimage = values.find("bImage");
   if(bimage != values.end()) {
-    mBackgroundImage = qtutils::transparize(*bimage);
+    if(transparent == values.end() || (*transparent).toInt()) {
+      mBackgroundImage = qtutils::transparize(*bimage);
+    }
+    else {
+      std::cout << *bimage << " is not trans\n";
+      qtutils::retreive(*bimage, mBackgroundImage);
+    }
   }
 
   QMap< QString, QString >::ConstIterator bcolor = values.find("bColor");
