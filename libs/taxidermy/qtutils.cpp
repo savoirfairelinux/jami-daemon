@@ -33,7 +33,7 @@ taxidermy::qtutils::addFilePath(const QString &path)
 }
 
 QPixmap 
-taxidermy::qtutils::transparize(const QString &image)
+taxidermy::qtutils::transparize(const QString &image, bool hard)
 {
 #ifdef QT3_SUPPORT
   QPixmap p(retreive(image));
@@ -55,7 +55,7 @@ taxidermy::qtutils::transparize(const QString &image)
     if (img.hasAlphaBuffer()) {
       bm = img.createAlphaMask();
     } 
-    else {
+    else if(hard) {
       bm = img.createHeuristicMask();
     }
     p.setMask(bm);

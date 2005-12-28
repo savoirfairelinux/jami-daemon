@@ -21,6 +21,7 @@
 #ifndef __TAXIDERMY_QWIDGET_BUILDER_HPP__
 #define __TAXIDERMY_QWIDGET_BUILDER_HPP__
 
+#include <qcolor.h>
 #include <qpixmap.h>
 #include <qwidget.h>
 
@@ -40,8 +41,14 @@ namespace taxidermy
     int mX;
     int mY;
 
+    //Size
+    bool mSizeSet;
+    int mWidth;
+    int mHeight;
+
     //Images
-    QPixmap mBackground;
+    QPixmap mBackgroundImage;
+    QColor mBackgroundColor;
 
   public:
     QWidgetBuilder();

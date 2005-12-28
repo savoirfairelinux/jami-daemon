@@ -24,7 +24,7 @@ namespace taxidermy
 {
   namespace qtutils
   {
-    QPixmap transparize(const QString &image);
+    QPixmap transparize(const QString &image, bool hard = false);
     void addFilePath(const QString &path);
 
   };

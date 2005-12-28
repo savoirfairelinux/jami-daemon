@@ -29,6 +29,7 @@ taxidermy::QWidgetBuilder::QWidgetBuilder()
   : WidgetBuilder("QWidget")
   , mWidget(NULL)
   , mPosSet(false)
+  , mSizeSet(false)
 {}
 
 void
@@ -42,9 +43,22 @@ taxidermy::QWidgetBuilder::load(const QMap< QString, QString > &values)
     mY = (*ypos).toInt();
   }
 
-  QMap< QString, QString >::ConstIterator background = values.find("background");
-  if(background != values.end()) {
-    mBackground = qtutils::transparize(*background);
+  QMap< QString, QString >::ConstIterator height = values.find("height");
+  QMap< QString, QString >::ConstIterator width = values.find("width");
+  if(height != values.end() && width != values.end()) {
+    mSizeSet = true;
+    mHeight = (*height).toInt();
+    mWidth = (*width).toInt();
+  }
+
+  QMap< QString, QString >::ConstIterator bimage = values.find("bImage");
+  if(bimage != values.end()) {
+    mBackgroundImage = qtutils::transparize(*bimage);
+  }
+
+  QMap< QString, QString >::ConstIterator bcolor = values.find("bColor");
+  if(bcolor != values.end()) {
+    mBackgroundColor = QColor(*bcolor);
   }
 }
 
@@ -64,12 +78,21 @@ taxidermy::QWidgetBuilder::update(QWidget *widget)
       mWidget->move(mX, mY);
     }
 
-    if(!mBackground.isNull()) {
-      mWidget->setPaletteBackgroundPixmap(mBackground);
-      if(mBackground.hasAlpha()) {
-	mWidget->setMask(*mBackground.mask());
+    if(!mBackgroundImage.isNull()) {
+      mWidget->setPaletteBackgroundPixmap(mBackgroundImage);
+      if(mBackgroundImage.hasAlpha()) {
+	mWidget->setMask(*mBackgroundImage.mask());
       }
-      mWidget->resize(mBackground.size());
+      mWidget->resize(mBackgroundImage.size());
+    }
+    else if(mBackgroundColor.isValid()) {
+      mWidget->setPaletteBackgroundColor(mBackgroundColor);
+    }
+
+    //If the user took the energy to specify the size,
+    //Then we must use this size.
+    if(mSizeSet) {
+      mWidget->resize(mWidth, mHeight);
     }
   }
 }

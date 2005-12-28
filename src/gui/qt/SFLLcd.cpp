@@ -42,9 +42,8 @@
 #define OVERSCREEN "overscreen.png"
 
 SFLLcd::SFLLcd(QWidget *parent)
-  : QLabel(parent, "SFLLcd", Qt::WNoAutoErase)
-  , mScreen(TransparentWidget::retreive(SCREEN))
-  , mOverscreen(TransparentWidget::retreive(OVERSCREEN))
+  : QLabel(parent, "screen", Qt::WNoAutoErase)
+  , mOverscreen(parent, "overscreen")
   , mGlobalStatusPos(-1)
   , mUnselectedLineStatusPos(-1)
   , mLineStatusPos(-1)
@@ -53,9 +52,9 @@ SFLLcd::SFLLcd(QWidget *parent)
   , mIsTimed(false)
   , mFont(FONT_FAMILY, FONT_SIZE)
 {
-  resize(mScreen.size());
-  move(22,44);
-  
+  setPaletteBackgroundColor(QColor("gray"));
+  mOverscreen.setPaletteBackgroundColor(QColor("gray"));
+  //mOverscreen.hide();
   mUnselectedLineTimer = new QTimer(this);
   QObject::connect(mUnselectedLineTimer, SIGNAL(timeout()), 
 		   this, SLOT(updateGlobalText()));
@@ -195,7 +194,7 @@ void
 SFLLcd::paintEvent(QPaintEvent *event) 
 {
   static QPixmap pixmap(size());
-
+  pixmap.resize(size());
   QRect rect = event->rect();
   QSize newSize = rect.size().expandedTo(pixmap.size());
   pixmap.resize(newSize);
@@ -218,7 +217,8 @@ SFLLcd::paintEvent(QPaintEvent *event)
 
   int margin = 2;
   p.setFont(mFont);
-  p.drawPixmap(0,0, mScreen);
+  QPoint pointtest(margin, fm.height());
+
   p.drawText(QPoint(margin, fm.height()), 
 	     extractVisibleText(globalStatus, *globalStatusPos));
   p.drawText(QPoint(margin, 2*fm.height()), 
@@ -228,11 +228,14 @@ SFLLcd::paintEvent(QPaintEvent *event)
   p.drawText(QPoint(margin, 4*fm.height()), 
 	     extractVisibleText(mBufferStatus, mBufferStatusPos));
 
-  p.drawText(QPoint(margin, mScreen.size().height() - margin), getTimeStatus());
-  p.drawPixmap(0,0, mOverscreen);
+  p.drawText(QPoint(margin, pixmap.size().height() - margin), getTimeStatus());
+  const QPixmap *pix = mOverscreen.paletteBackgroundPixmap();
+  if(pix != NULL && !pix->isNull()) {
+    p.drawPixmap(0,0, *pix);
+  }
   p.end();
 
-  bitBlt(this, event->rect().topLeft(), &pixmap);
+  bitBlt(this, QPoint(0,0), &pixmap);
 }
 
 bool 
@@ -240,7 +243,7 @@ SFLLcd::textIsTooBig(const QString &text)
 {
   QFontMetrics fm(mFont);
 
-  int screenWidth = mScreen.width() - 4;
+  int screenWidth = width() - 4;
   int textWidth = fm.boundingRect(text).width();
 
   if(textWidth > screenWidth) {

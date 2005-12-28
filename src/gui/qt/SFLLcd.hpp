@@ -63,8 +63,7 @@ private:
   void dragEnterEvent(QDragEnterEvent* event);
   void dropEvent(QDropEvent* event);
 
-  QPixmap mScreen;
-  QPixmap mOverscreen;
+  QLabel mOverscreen;
   
   QString mGlobalStatus;
   QString mUnselectedLineStatus;
