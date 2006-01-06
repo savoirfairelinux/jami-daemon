@@ -58,7 +58,6 @@ taxidermy::QWidgetBuilder::load(const QMap< QString, QString > &values)
       mBackgroundImage = qtutils::transparize(*bimage);
     }
     else {
-      std::cout << *bimage << " is not trans\n";
       qtutils::retreive(*bimage, mBackgroundImage);
     }
   }
