@@ -1,0 +1,1 @@
+example01.cpp: This is an enumeration of device example.

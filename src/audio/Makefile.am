@@ -1,4 +1,4 @@
-SUBDIRS = gsm pacpp
+SUBDIRS = gsm pacpp OpenAL
 
 noinst_LTLIBRARIES = libaudio.la
 
