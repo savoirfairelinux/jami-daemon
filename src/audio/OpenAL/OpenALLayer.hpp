@@ -33,9 +33,6 @@ namespace SFLAudio
     virtual std::list< std::string > getDevicesNames();
     virtual Device *openDevice();
     virtual Device *openDevice(const std::string &name);
-
-    static void clearError();
-    static void assertError();
   };
 }
 

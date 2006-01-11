@@ -18,6 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <iostream>
 #include <AL/al.h>
 #include <AL/alc.h>
 
@@ -30,16 +31,34 @@ SFLAudio::OpenALDevice::OpenALDevice()
   : mDevice(0)
 {}
 
+SFLAudio::OpenALDevice::~OpenALDevice()
+{
+  unload();
+}
+
+void
+SFLAudio::OpenALDevice::unload() {
+  if(mDevice) {
+    alcCloseDevice(mDevice);
+    mDevice = 0;
+  }
+}
+
+
 bool
 SFLAudio::OpenALDevice::load() {
-  OpenALLayer::clearError(); 
   mDevice = alcOpenDevice(0);
-  OpenALLayer::assertError();
+  ALenum error = alcGetError(mDevice);
+  if (error != AL_NO_ERROR) {
+    std::cerr << "OpenAL::alcOpenDevice: " << alGetString(error) << std::endl;
+    unload();
+  }
 
   if(mDevice != 0) {
     const ALCchar *device = alcGetString(mDevice, ALC_DEVICE_SPECIFIER);
     setName(device);
   }
+
   return mDevice;
 }
 

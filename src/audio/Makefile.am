@@ -1,8 +1,4 @@
-if MAINTENER_CODE
-maintener_directories = OpenAL
-endif
-
-SUBDIRS = gsm pacpp ${maintener_directories}
+SUBDIRS = gsm pacpp OpenAL
 
 noinst_LTLIBRARIES = libaudio.la
 

@@ -1,3 +1,4 @@
+if MAINTENER_CODE
 noinst_PROGRAMS = example01 example02
 noinst_LTLIBRARIES = libsflaudio.la
 
@@ -26,5 +27,5 @@ LDADD = libsflaudio.la $(PORTAUDIO_LIBS) -lopenal ../pacpp/source/portaudiocpp/l
 
 example01_SOURCES = example01.cpp
 example02_SOURCES = example02.cpp
-
+endif
 

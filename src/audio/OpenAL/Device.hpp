@@ -39,6 +39,7 @@ namespace SFLAudio
      * the load is successfull.
      */
     virtual bool load() = 0;
+    virtual void unload() = 0;
 
     /**
      * This will create a context for the device.

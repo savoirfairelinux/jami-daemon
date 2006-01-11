@@ -32,6 +32,7 @@ namespace SFLAudio
     Context *createContext();
 
     virtual bool load();
+    virtual void unload();
     bool isNull();
   };
 }

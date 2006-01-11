@@ -74,17 +74,4 @@ SFLAudio::OpenALLayer::openDevice(const std::string &)
   return new NullDevice();
 }
 
-void
-SFLAudio::OpenALLayer::assertError()
-{
-  ALenum error;
-  if ((error = alGetError()) != AL_NO_ERROR) {
-    std::cerr << "OpenAL::alcOpenDevice: " << alGetString(error) << std::endl;
-  }
-}
 
-void
-SFLAudio::OpenALLayer::clearError()
-{
-  alGetError();
-}

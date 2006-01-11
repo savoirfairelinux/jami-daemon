@@ -31,6 +31,7 @@ namespace SFLAudio
   public:
     OpenALDevice();
     virtual bool load();
+    virtual void unload();
     virtual Context *createContext();
 
   private:

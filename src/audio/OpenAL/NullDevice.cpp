@@ -42,6 +42,10 @@ SFLAudio::NullDevice::load()
   return true;
 }
 
+void 
+SFLAudio::NullDevice::unload()
+{}
+
 bool
 SFLAudio::NullDevice::isNull() 
 {
