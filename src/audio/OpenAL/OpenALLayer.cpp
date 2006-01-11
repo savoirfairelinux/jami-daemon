@@ -26,6 +26,8 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 
+#define DEFAULT_DEVICE_NAME "default"
+
 SFLAudio::OpenALLayer::OpenALLayer() 
   : AudioLayer("openal")
 {}
@@ -42,6 +44,10 @@ SFLAudio::OpenALLayer::getDevicesNames()
       devname += sizeof(ALCchar) * (strlen(devname) + 1);
     }
   }
+  else {
+    devices.push_back(DEFAULT_DEVICE_NAME);
+  }
+  
 
   return devices;
 
@@ -51,7 +57,10 @@ SFLAudio::Device *
 SFLAudio::OpenALLayer::openDevice()
 {
   Device *dev = new OpenALDevice();
-  if(dev->load() == false) {
+  if(dev->load()) {
+    dev->setName(DEFAULT_DEVICE_NAME);
+  }
+  else {
     delete dev;
     dev = new NullDevice();
   }

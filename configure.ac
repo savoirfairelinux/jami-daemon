@@ -163,6 +163,23 @@ fi
 sflphone_datadir=$datadir/sflphone
 AC_SUBST(sflphone_datadir)
 
+
+AC_MSG_CHECKING([whether to enable the maintener code])
+AC_ARG_ENABLE(maintener,
+[  --enable-maintener      Enable maintener code [default=no]],
+[
+CXXFLAGS="$CXXFLAGS -DENABLE_MAINTENER"
+AC_MSG_RESULT(yes)
+maintener="yes"
+],
+[
+AC_MSG_RESULT(no)
+maintener="no"
+]
+)
+AM_CONDITIONAL(MAINTENER_CODE, test x$maintener = xyes)
+
+
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
 
