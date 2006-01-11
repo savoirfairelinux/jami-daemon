@@ -2,7 +2,7 @@ noinst_LTLIBRARIES = libportaudio.la
 libportaudio_la_CFLAGS = $(PORTAUDIO_CFLAGS) 
 libportaudio_la_LIBADD = $(PORTAUDIO_LIBS)
 libportaudio_la_CXXFLAGS = $(PORTAUDIO_CXXFLAGS)
-libportaudio_la_CPPFLAGS = $(PORTAUDIO_CPPFLAGS) -I$(top_srcdir)/libs/portaudio/pa_common/
+libportaudio_la_CPPFLAGS = $(PORTAUDIO_CPPFLAGS) 
 
 
 if ENABLE_OSS

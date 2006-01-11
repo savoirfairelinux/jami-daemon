@@ -191,6 +191,7 @@ src/Makefile \
 src/sflphone \
 src/audio/Makefile \
 src/audio/gsm/Makefile \
+src/audio/OpenAL/Makefile \
 src/audio/pacpp/Makefile \
 src/audio/pacpp/include/Makefile \
 src/audio/pacpp/include/portaudiocpp/Makefile \

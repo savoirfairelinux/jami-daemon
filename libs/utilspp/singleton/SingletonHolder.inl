@@ -47,7 +47,7 @@ ThreadingModel
     }
 
     return ( *mInstance );
-};
+}
 
 template
 <

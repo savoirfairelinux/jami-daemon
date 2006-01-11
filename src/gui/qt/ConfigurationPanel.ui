@@ -47,7 +47,7 @@
             </sizepolicy>
         </property>
         <property name="cursor">
-            <cursor>13</cursor>
+            <cursor>2</cursor>
         </property>
         <property name="currentItem">
             <number>-1</number>
@@ -157,7 +157,7 @@
                                     <property name="name">
                                         <cstring>unnamed</cstring>
                                     </property>
-                                    <widget class="QLabel" row="0" column="0" colspan="3">
+                                    <widget class="QLabel" row="0" column="0" rowspan="1" colspan="3">
                                         <property name="name">
                                             <cstring>lblFullName</cstring>
                                         </property>
@@ -165,7 +165,7 @@
                                             <string>Full name</string>
                                         </property>
                                     </widget>
-                                    <widget class="QLineEdit" row="1" column="0" colspan="3">
+                                    <widget class="QLineEdit" row="1" column="0" rowspan="1" colspan="3">
                                         <property name="name">
                                             <cstring>fullName</cstring>
                                         </property>
@@ -178,7 +178,7 @@
                                             </sizepolicy>
                                         </property>
                                     </widget>
-                                    <widget class="QLabel" row="2" column="0" colspan="3">
+                                    <widget class="QLabel" row="2" column="0" rowspan="1" colspan="3">
                                         <property name="name">
                                             <cstring>lblUserHostPart</cstring>
                                         </property>
@@ -204,8 +204,8 @@
                                             <cstring>hostPart</cstring>
                                         </property>
                                     </widget>
-				</grid>
-			    </widget>
+                                </grid>
+                            </widget>
                             <widget class="QGroupBox">
                                 <property name="name">
                                     <cstring>groupBox2</cstring>
@@ -217,6 +217,9 @@
                                     <string></string>
                                 </property>
                                 <grid>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
                                     <widget class="QLabel" row="0" column="0">
                                         <property name="name">
                                             <cstring>lblAuthorizationUsre</cstring>
@@ -921,7 +924,7 @@
                     <attribute name="title">
                         <string>Themes</string>
                     </attribute>
-                    <widget class="QComboBox">
+                    <widget class="QListBox">
                         <property name="name">
                             <cstring>SkinChoice</cstring>
                         </property>
@@ -931,29 +934,13 @@
                         <property name="geometry">
                             <rect>
                                 <x>12</x>
-                                <y>42</y>
-                                <width>110</width>
-                                <height>27</height>
+                                <y>20</y>
+                                <width>122</width>
+                                <height>110</height>
                             </rect>
                         </property>
-                    </widget>
-                    <widget class="QPushButton">
-                        <property name="name">
-                            <cstring>buttonApplySkin</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>136</x>
-                                <y>40</y>
-                                <width>80</width>
-                                <height>32</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>&amp;Apply</string>
-                        </property>
-                        <property name="accel">
-                            <string>Alt+A</string>
+                        <property name="lineWidth">
+                            <number>10</number>
                         </property>
                     </widget>
                 </widget>
@@ -1402,12 +1389,6 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
         <slot>accept()</slot>
     </connection>
     <connection>
-        <sender>buttonApplySkin</sender>
-        <signal>clicked()</signal>
-        <receiver>ConfigurationPanel</receiver>
-        <slot>applySkinSlot()</slot>
-    </connection>
-    <connection>
         <sender>Menu</sender>
         <signal>clicked(QListBoxItem*)</signal>
         <receiver>ConfigurationPanel</receiver>
@@ -1443,6 +1424,12 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
         <receiver>ConfigurationPanel</receiver>
         <slot>useStunSlot(int)</slot>
     </connection>
+    <connection>
+        <sender>SkinChoice</sender>
+        <signal>highlighted(const QString&amp;)</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>applySkinSlot()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>fullName</tabstop>
@@ -1470,7 +1457,6 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
     <tabstop>Tab_Preferences</tabstop>
     <tabstop>Tab_About</tabstop>
     <tabstop>useStunNo</tabstop>
-    <tabstop>buttonApplySkin</tabstop>
 </tabstops>
 <includes>
     <include location="local" impldecl="in implementation">ConfigurationPanel.ui.h</include>
@@ -1485,10 +1471,11 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
     <slot>useStunSlot( int id )</slot>
     <slot>applySkinSlot()</slot>
     <slot>driverSlot( int id )</slot>
-    <slot>updateRingtones()</slot>
-    <slot>updateAudioDevices()</slot>
-    <slot>updateCodecs()</slot>
     <slot>updateSkins()</slot>
+    <slot>updateRingtones()</slot>
+    <slot>updateCodecs()</slot>
+    <slot>updateAudioDevices()</slot>
+    <slot>SkinChoice_selected( const QString &amp; )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

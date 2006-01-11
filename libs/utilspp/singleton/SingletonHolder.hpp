@@ -59,7 +59,7 @@ namespace utilspp
     static bool mDestroyed;
   };
 
-};
+}
 
 #include "SingletonHolder.inl"
 

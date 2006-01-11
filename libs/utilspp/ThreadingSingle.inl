@@ -27,7 +27,7 @@
 template< typename T >
 inline
 utilspp::ThreadingSingle< T >::lock::lock()
-{};
+{}
 
 template< typename T >
 inline
@@ -39,12 +39,12 @@ template< typename T >
 inline
 void
 utilspp::ThreadingSingle< T >::mutex::lock()
-{};
+{}
 
 template< typename T >
 inline
 void
 utilspp::ThreadingSingle< T >::mutex::unlock()
-{};
+{}
 
 #endif

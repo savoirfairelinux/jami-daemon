@@ -309,7 +309,7 @@ void ConfigurationPanel::updateSkins()
 {
   SkinChoice->clear();
   SkinChoice->insertStringList(SkinManager::instance().getSkins());
-  SkinChoice->setCurrentText(SkinManager::instance().getCurrentSkin());
+  SkinChoice->setSelected(SkinChoice->findItem(SkinManager::instance().getCurrentSkin(), Qt::ExactMatch), true);
 }
 
 void ConfigurationPanel::updateRingtones()
@@ -386,4 +386,10 @@ void ConfigurationPanel::updateAudioDevices()
   }
   // Set position of the button group, with appropriate length
   DriverChoice->setGeometry( QRect( 10, 10, 410, top + 30 ) );
+}
+
+
+void ConfigurationPanel::SkinChoice_selected( const QString & )
+{
+
 }
