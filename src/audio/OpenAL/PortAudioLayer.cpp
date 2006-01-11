@@ -19,9 +19,7 @@
  */
 
 #include "PortAudioLayer.hpp"
-#include "portaudiocpp/Device.hxx"
-#include "portaudiocpp/HostApi.hxx"
-#include "portaudiocpp/System.hxx"
+#include "portaudio.h"
 
 #include "NullDevice.hpp"
 
@@ -29,28 +27,52 @@
 SFLAudio::PortAudioLayer::PortAudioLayer()
   : AudioLayer("portaudio")
 {
-  portaudio::System::initialize();
+  Pa_Initialize();
 }
 
 SFLAudio::PortAudioLayer::~PortAudioLayer()
 {
-  portaudio::System::terminate();
+  Pa_Terminate();
 }
+
+
 
 std::list< std::string >
 SFLAudio::PortAudioLayer::getDevicesNames() 
 {
-  std::list< std::string > devices;
-  for(int index = 0; index < portaudio::System::instance().deviceCount(); index++ ) {
-    portaudio::Device &device = portaudio::System::instance().deviceByIndex(index);
+  refreshDevices();
 
-    std::string name(device.hostApi().name());
-    name += ": ";
-    name += device.name();
-    devices.push_back(name);
+  std::list< std::string > devices;
+  for(DevicesType::iterator pos = mDevices.begin();
+      pos != mDevices.end();
+      pos++) {
+    devices.push_back(pos->first);
   }
 
   return devices;
+}
+
+
+void
+SFLAudio::PortAudioLayer::refreshDevices() 
+{
+  mDevices.clear();
+  for(int index = 0; index < Pa_GetDeviceCount(); index++ ) {
+    const PaDeviceInfo *device = NULL;
+    const PaHostApiInfo *host = NULL;
+
+    device = Pa_GetDeviceInfo(index);
+    if(device != NULL) {
+      host = Pa_GetHostApiInfo(device->hostApi);
+    }
+    
+    if(device != NULL && host != NULL) {
+      std::string name(host->name);
+      name += ": ";
+      name += device->name;
+      mDevices.insert(std::make_pair(name, index));
+    }
+  }
 }
 
 SFLAudio::Device *

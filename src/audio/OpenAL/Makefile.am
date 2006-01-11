@@ -17,12 +17,12 @@ libsflaudio_la_SOURCES = \
 	SFLAudio.hpp \
 	Source.hpp 
 
-AM_CPPFLAGS = $(PORTAUDIO_CFLAGS) -I../pacpp/include -I$(top_srcdir)/libs/portaudio/pa_common -I$(top_srcdir)/libs/
+AM_CPPFLAGS = $(PORTAUDIO_CFLAGS) -I$(top_srcdir)/libs/portaudio/pa_common -I$(top_srcdir)/libs/
 AM_CXXFLAGS = $(PORTAUDIO_CXXFLAGS) -I$(top_srcdir)/libs/
 AM_LDFLAGS  =  -L$(top_srcdir)/libs/portaudio/ 
 
 LIBADD = $(PORTAUDIO_LIBS) -lportaudio -lopenal
-LDADD = libsflaudio.la $(PORTAUDIO_LIBS) -lopenal ../pacpp/source/portaudiocpp/libportaudiocpp.la -lportaudio
+LDADD = libsflaudio.la $(PORTAUDIO_LIBS) -lopenal -lportaudio
 
 
 example01_SOURCES = example01.cpp

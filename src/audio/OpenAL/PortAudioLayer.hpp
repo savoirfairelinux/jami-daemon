@@ -38,7 +38,11 @@ namespace SFLAudio
     virtual Device *openDevice(const std::string &name);
 
   private:
-    std::map< std::string, std::pair< int, int > > mDevices;
+    virtual void refreshDevices();
+
+  private:
+    typedef std::map< std::string, int > DevicesType;
+    DevicesType mDevices;
   };
 }
 
