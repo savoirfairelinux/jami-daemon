@@ -109,8 +109,8 @@ SFLPHONE_LIBS="$SFLPHONE_LIBS $OSIP_LIBS $EXOSIP_LIBS "
 AC_SUBST(SFLPHONE_CXXFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
 
-#zeroconf...
-AC_ARG_ENABLE(speex, [  --enable-speex	compile with speex codec ], with_speex=$enableval, with_speex=yes)
+#speex disable by default...
+AC_ARG_ENABLE(speex, [  --enable-speex	compile with speex codec (default: no) ], with_speex=$enableval, with_speex=no)
 
 if test "x$with_speex" = "xyes" ; then
   AC_CHECK_HEADER([speex/speex.h], [
@@ -124,7 +124,7 @@ if test "x$with_speex" = "xyes" ; then
 fi
 AM_CONDITIONAL(USE_SPEEX, test "x$with_speex" = "xyes" )
 
-
+#zeroconf
 AC_ARG_ENABLE(zeroconf, [  --disable-zeroconf	don't require libdns_sd (browsing and publishing DNS-SD services will not be possible) ],  with_zeroconf=$enableval, with_zeroconf=yes)
 if test "$with_zeroconf" = "yes"; then
 AC_MSG_CHECKING(for DNS-SD support)
