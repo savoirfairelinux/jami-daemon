@@ -33,6 +33,7 @@ namespace SFLAudio
     virtual bool isNull() {return true;};
     virtual bool isPlaying();
     virtual void play(void *data, int size);
+    virtual void stop();
   };
 }
 

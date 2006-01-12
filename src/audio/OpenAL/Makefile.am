@@ -1,5 +1,5 @@
 if MAINTENER_CODE
-noinst_PROGRAMS = example01 example02
+noinst_PROGRAMS = example01 example02 example03
 noinst_LTLIBRARIES = libsflaudio.la
 
 libsflaudio_la_SOURCES = \
@@ -29,5 +29,6 @@ LDADD = libsflaudio.la $(PORTAUDIO_LIBS) -lopenal -lportaudio
 
 example01_SOURCES = example01.cpp
 example02_SOURCES = example02.cpp
+example03_SOURCES = example03.cpp
 endif
 

@@ -170,6 +170,8 @@ SFLAudio::OpenALSource::play(void *data, int size)
 {
   ALboolean loop;
 
+  alGetError();
+
   // Copy test.wav data into AL Buffer 0
   alBufferData(mBuffer, getFormat(), data, size, getFrequency());
   ALenum error = alGetError();
@@ -178,4 +180,10 @@ SFLAudio::OpenALSource::play(void *data, int size)
   }
 
   alSourcePlay(mSource);
+}
+
+void
+SFLAudio::OpenALSource::stop()
+{
+  alSourceStop(mSource);
 }

@@ -32,29 +32,46 @@ using namespace SFLAudio;
 
 int main(int, char* []) 
 {
-  ALenum format;
-  ALvoid *data;
-  ALsizei size;
-  ALsizei freq;
-  ALboolean loop;
+  ALenum format1;
+  ALvoid *data1;
+  ALsizei size1;
+  ALsizei freq1;
+  ALboolean loop1;
+
+  ALenum format2;
+  ALvoid *data2;
+  ALsizei size2;
+  ALsizei freq2;
+  ALboolean loop2;
 
   AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
   Device *device = layer->openDevice();
   Context *context = device->createContext();
 
   // Load test.wav
-  alutLoadWAVFile("test.wav",&format,&data,&size,&freq,&loop);
+  alutLoadWAVFile("test.wav",&format1,&data1,&size1,&freq1,&loop1);
   ALenum error = alGetError();
   if (error != AL_NO_ERROR) {
     std::cerr << "OpenAL: loadWAVFile : " << alGetString(error);
     return 1;
   }
 
-  Source *source = context->createSource(format, freq);
-  source->play(data, size);
+  // Load test2.wav
+  alutLoadWAVFile("test2.wav",&format2,&data2,&size2,&freq2,&loop2);
+  error = alGetError();
+  if (error != AL_NO_ERROR) {
+    std::cerr << "OpenAL: loadWAVFile : " << alGetString(error);
+    return 1;
+  }
 
-  // Unload test.wav
-  alutUnloadWAV(format, data, size, freq);
+  Source *source1 = context->createSource(format1, freq1);
+  source1->play(data1, size1);
+  Source *source2 = context->createSource(format2, freq2);
+  source2->play(data2, size2);
+
+  // Unload test.wav and test2.wav
+  alutUnloadWAV(format1, data1, size1, freq1);
+  alutUnloadWAV(format2, data2, size2, freq2);
   std::cin.get();
   error = alGetError();
 
@@ -64,3 +81,4 @@ int main(int, char* [])
 
 
 }
+
