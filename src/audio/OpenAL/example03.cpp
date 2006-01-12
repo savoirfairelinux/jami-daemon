@@ -51,8 +51,8 @@ int main(int argc, char* argv[])
   Info *infos = new Info[argc-1];
   ALenum error;
 
+  // Load wav files
   for(int i = 0; i < 2; i++) {
-    // Load test.wav
     alutLoadWAVFile(files[i],
 		    &infos[i].format,
 		    &infos[i].data,
@@ -68,24 +68,26 @@ int main(int argc, char* argv[])
     i++;
   }
 
+  // Start the wav playing.
   for(int i = 0; i < argc - 1; i++) {
     Source *source = context->createSource(infos[i].format, infos[i].freq);
     source->play(&infos[i].data, infos[i].size);
   }
 
+  // Unload wav files
   for(int i = 0; i < argc - 1; i++) {
-    // Unload wav files
     alutUnloadWAV(infos[i].format, 
 		  infos[i].data, 
 		  infos[i].size, 
 		  infos[i].freq);
+    error = alGetError();
+    if (error != AL_NO_ERROR) {
+      std::cerr << "OpenAL: unloadWAV : " << alGetString(error);
+    }
   }
-   
-  std::cin.get();
   
-  error = alGetError();
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL: unloadWAV : " << alGetString(error);
-  }
+  // Wait for user input.
+  std::cout << "Press any key to quit the program." << std::endl;
+  std::cin.get();
 }
 
