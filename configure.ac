@@ -1,5 +1,5 @@
-AC_INIT(aclocal.m4)
-
+dnl AC_INIT(aclocal.m4)
+AC_INIT(sflphone,0.7,sflphoneteam@savoirfairelinux.com,SFLphone)
 AM_CONFIG_HEADER(config.h)
 
 dnl figure out the sflphone version
@@ -53,19 +53,16 @@ CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS"
 
 SFLPHONE_CXXFLAGS=""
 
+dnl check for if no is undefined
+dnl check also for samplerate for $host ~= *darwin* (mac) only
 with_samplerate=no
 case $host in
   *darwin*)
     need_no_undefined=no
     AC_CHECK_HEADER([libsamplerate.h], [
-      AC_CHECK_LIB(samplerate, src_simple, 
-       [
-        with_samplerate=yes
-       ], [ with_samplerate=no ]
-      ) 
+      AC_CHECK_LIB(samplerate, src_simple, [with_samplerate=yes], [with_samplerate=no]) 
      ], [ with_samplerate=no ]
     )
-
     ;;
 
   *-*-cygwin | *-*-mingw* | *-*-pw32*)
@@ -76,8 +73,8 @@ case $host in
     ;;
 esac
 
-AM_CONDITIONAL(USE_SAMPLERATE, test x$with_samplerate = xyes)
 AM_CONDITIONAL(NO_UNDEFINED, test x$need_no_undefined = xyes)
+AM_CONDITIONAL(USE_SAMPLERATE, test x$with_samplerate = xyes)
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -109,8 +106,15 @@ SFLPHONE_LIBS="$SFLPHONE_LIBS $OSIP_LIBS $EXOSIP_LIBS "
 AC_SUBST(SFLPHONE_CXXFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
 
-#speex disable by default...
-AC_ARG_ENABLE(speex, [  --enable-speex	compile with speex codec (default: no) ], with_speex=$enableval, with_speex=no)
+dnl check for speex...
+AC_ARG_ENABLE(speex, 
+  AC_HELP_STRING(
+    [--enable-speex],
+    [compile with speex codec @<:@default=no@:>@]
+  ), 
+  [with_speex=$enableval], 
+  [with_speex=no]
+)
 
 if test "x$with_speex" = "xyes" ; then
   AC_CHECK_HEADER([speex/speex.h], [
@@ -124,21 +128,29 @@ if test "x$with_speex" = "xyes" ; then
 fi
 AM_CONDITIONAL(USE_SPEEX, test "x$with_speex" = "xyes" )
 
-#zeroconf
-AC_ARG_ENABLE(zeroconf, [  --disable-zeroconf	don't require libdns_sd (browsing and publishing DNS-SD services will not be possible) ],  with_zeroconf=$enableval, with_zeroconf=yes)
-if test "$with_zeroconf" = "yes"; then
-AC_MSG_CHECKING(for DNS-SD support)
-save_dnssdtest_LIBS="$LIBS"
-save_dnssdtest_LDFLAGS="$LDFLAGS"
-save_dnssdtest_CPPFLAGS="$CPPFLAGS"
-LDFLAGS="$all_libraries $LDFLAGS"
-CPPFLAGS="$CPPFLAGS $all_includes"
-case $host_os in
-  darwin*) LIBS="" ;;
-  *) LIBS="-ldns_sd" ;;
-esac
-have_libdns_sd="no"
-AC_TRY_LINK(	[
+
+dnl check for zeroconf (from apple)
+AC_ARG_ENABLE(zeroconf, 
+  AC_HELP_STRING(
+    [--disable-zeroconf],
+    [disables libdns_sd (browsing and publishing DNS-SD services will not be possible) @<:@default=no@:>@]
+  ),  
+  [without_zeroconf=$enableval], 
+  [without_zeroconf="no"]
+)
+if test "x$without_zeroconf" = "xno"; then
+  AC_MSG_CHECKING(for DNS-SD support)
+  save_dnssdtest_LIBS="$LIBS"
+  save_dnssdtest_LDFLAGS="$LDFLAGS"
+  save_dnssdtest_CPPFLAGS="$CPPFLAGS"
+  LDFLAGS="$all_libraries $LDFLAGS"
+  CPPFLAGS="$CPPFLAGS $all_includes"
+  case $host_os in
+    darwin*) LIBS="" ;;
+    *) LIBS="-ldns_sd" ;;
+  esac
+  have_libdns_sd="no"
+  AC_TRY_LINK(	[
 			#include <dns_sd.h>
 		],[
 			DNSServiceRefDeallocate( (DNSServiceRef) 0);
@@ -154,35 +166,37 @@ AC_TRY_LINK(	[
 		],[
 			AC_MSG_RESULT(no)
                         LIB_DNSSD=""
-])
-CPPFLAGS=$save_dnssdtest_CPPFLAGS
-LDFLAGS=$save_dnssdtest_LDFLAGS
-LIBS=$save_dnssdtest_LIBS
+  ])
+  CPPFLAGS=$save_dnssdtest_CPPFLAGS
+  LDFLAGS=$save_dnssdtest_LDFLAGS
+  LIBS=$save_dnssdtest_LIBS
 fi
-
-sflphone_datadir=$datadir/sflphone
-AC_SUBST(sflphone_datadir)
-
-
-AC_MSG_CHECKING([whether to enable the maintener code])
-AC_ARG_ENABLE(maintener,
-[  --enable-maintener      Enable maintener code [default=no]],
-[
-CXXFLAGS="$CXXFLAGS -DENABLE_MAINTENER"
-AC_MSG_RESULT(yes)
-maintener="yes"
-],
-[
-AC_MSG_RESULT(no)
-maintener="no"
-]
-)
-AM_CONDITIONAL(MAINTENER_CODE, test x$maintener = xyes)
-
-
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
 
+dnl datadir directory
+sflphone_datadir=$datadir/sflphone
+AC_SUBST(sflphone_datadir)
+
+dnl maintener code
+AC_MSG_CHECKING([whether to enable the maintener code])
+AC_ARG_ENABLE(maintener, 
+  AC_HELP_STRING(
+    [--enable-maintener],
+    [enables maintener code @<:@default=no@:>@]
+  ),  
+  [with_maintener=$enableval], 
+  [with_maintener=no]
+)
+AM_CONDITIONAL(MAINTENER_CODE, test x$maintener = xyes)
+if test "x$maintener" = "xyes"; then
+  AC_MSG_RESULT(yes)
+  CXXFLAGS="$CXXFLAGS -DENABLE_MAINTENER"
+else
+  AC_MSG_RESULT(no)
+fi
+
+dnl QT substitution?
 AC_SUBST(LIB_QT)
 
 dnl AC_CONFIG_FILES(
