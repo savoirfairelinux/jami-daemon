@@ -30,55 +30,62 @@
 
 using namespace SFLAudio;
 
-int main(int, char* []) 
+struct Info
 {
-  ALenum format1;
-  ALvoid *data1;
-  ALsizei size1;
-  ALsizei freq1;
-  ALboolean loop1;
+  ALenum format;
+  ALvoid *data;
+  ALsizei size;
+  ALsizei freq;
+  ALboolean loop;
+};
 
-  ALenum format2;
-  ALvoid *data2;
-  ALsizei size2;
-  ALsizei freq2;
-  ALboolean loop2;
-
+int main(int argc, char* argv[]) 
+{
   AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
   Device *device = layer->openDevice();
   Context *context = device->createContext();
 
-  // Load test.wav
-  alutLoadWAVFile("test.wav",&format1,&data1,&size1,&freq1,&loop1);
-  ALenum error = alGetError();
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL: loadWAVFile : " << alGetString(error);
-    return 1;
+  ALbyte *files[] = {"test.wav", "test2.wav"};
+
+
+  Info *infos = new Info[argc-1];
+  ALenum error;
+
+  for(int i = 0; i < 2; i++) {
+    // Load test.wav
+    alutLoadWAVFile(files[i],
+		    &infos[i].format,
+		    &infos[i].data,
+		    &infos[i].size,
+		    &infos[i].freq,
+		    &infos[i].loop);
+    error = alGetError();
+    if (error != AL_NO_ERROR) {
+      std::cerr << "OpenAL: loadWAVFile : " << alGetString(error);
+      return 1;
+    }
+
+    i++;
   }
 
-  // Load test2.wav
-  alutLoadWAVFile("test2.wav",&format2,&data2,&size2,&freq2,&loop2);
-  error = alGetError();
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL: loadWAVFile : " << alGetString(error);
-    return 1;
+  for(int i = 0; i < argc - 1; i++) {
+    Source *source = context->createSource(infos[i].format, infos[i].freq);
+    source->play(&infos[i].data, infos[i].size);
   }
 
-  Source *source1 = context->createSource(format1, freq1);
-  source1->play(data1, size1);
-  Source *source2 = context->createSource(format2, freq2);
-  source2->play(data2, size2);
-
-  // Unload test.wav and test2.wav
-  alutUnloadWAV(format1, data1, size1, freq1);
-  alutUnloadWAV(format2, data2, size2, freq2);
+  for(int i = 0; i < argc - 1; i++) {
+    // Unload wav files
+    alutUnloadWAV(infos[i].format, 
+		  infos[i].data, 
+		  infos[i].size, 
+		  infos[i].freq);
+  }
+   
   std::cin.get();
+  
   error = alGetError();
-
   if (error != AL_NO_ERROR) {
     std::cerr << "OpenAL: unloadWAV : " << alGetString(error);
   }
-
-
 }
 
