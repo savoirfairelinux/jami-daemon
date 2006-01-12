@@ -27,6 +27,12 @@ namespace SFLAudio
 {
   class NullSource : public Source
   {
+  public:
+    NullSource();
+
+    virtual bool isNull() {return true;};
+    virtual bool isPlaying();
+    virtual void play(void *data, int size);
   };
 }
 

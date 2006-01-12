@@ -28,7 +28,8 @@ namespace SFLAudio
   class NullContext : public Context
   {
   public:
-    Source *createSource();
+    virtual bool isNull() {return true;}
+    Source *createSource(int format, int freq);
   };
 }
 

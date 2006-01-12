@@ -18,6 +18,26 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "Context.hpp"
+#include <iostream>
+
+#include "OpenALContext.hpp"
+#include "OpenALSource.hpp"
 #include "NullSource.hpp"
 
+SFLAudio::OpenALContext::OpenALContext(ALCcontext *context)
+  : mContext(context)
+{}
+
+SFLAudio::Source *
+SFLAudio::OpenALContext::createSource(int format, int freq)
+{
+  Source *source = 0;
+  if(mContext == 0) {
+    source = new NullSource();
+  }
+  else {
+    source = OpenALSource::create(this, format, freq);
+  }
+
+  return source;
+}

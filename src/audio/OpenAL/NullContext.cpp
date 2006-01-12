@@ -22,7 +22,7 @@
 #include "NullSource.hpp"
 
 SFLAudio::Source *
-SFLAudio::NullContext::createSource()
+SFLAudio::NullContext::createSource(int, int)
 {
   return new NullSource();
 }

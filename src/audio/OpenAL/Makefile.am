@@ -5,17 +5,19 @@ noinst_LTLIBRARIES = libsflaudio.la
 libsflaudio_la_SOURCES = \
 	AudioLayer.cpp AudioLayer.hpp \
 	AudioManagerImpl.cpp AudioManagerImpl.hpp \
-	Context.cpp Context.hpp \
+	Context.hpp \
 	Device.cpp Device.hpp \
 	NullLayer.cpp NullLayer.hpp \
 	NullDevice.cpp NullDevice.hpp \
 	NullContext.cpp NullContext.hpp \
-	NullSource.hpp \
+	NullSource.cpp NullSource.hpp \
 	OpenALLayer.cpp OpenALLayer.hpp \
 	OpenALDevice.cpp OpenALDevice.hpp \
+	OpenALContext.cpp OpenALContext.hpp \
+	OpenALSource.cpp OpenALSource.hpp \
 	PortAudioLayer.cpp PortAudioLayer.hpp \
 	SFLAudio.hpp \
-	Source.hpp 
+	Source.cpp Source.hpp 
 
 AM_CPPFLAGS = $(PORTAUDIO_CFLAGS) -I$(top_srcdir)/libs/portaudio/pa_common -I$(top_srcdir)/libs/
 AM_CXXFLAGS = $(PORTAUDIO_CXXFLAGS) -I$(top_srcdir)/libs/

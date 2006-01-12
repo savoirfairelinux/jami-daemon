@@ -22,23 +22,50 @@
 #include <list>
 #include <string>
 
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <AL/alut.h>
+
 #include "SFLAudio.hpp"
 
 using namespace SFLAudio;
 
 int main(int, char* []) 
 {
-  std::list< SFLAudio::AudioLayer * > layers = 
-    SFLAudio::AudioManager::instance().getLayers();
-  for(std::list< SFLAudio::AudioLayer *>::iterator it = layers.begin();
-      it != layers.end();
-      it++) {
-    std::cout << "Layer: " << (*it)->getName() << std::endl;
+  ALenum format;
+  ALvoid *data;
+  ALsizei size;
+  ALsizei freq;
+  ALboolean loop;
 
-    AudioLayer *layer = *it;
-    Device *device = layer->openDevice();
-    std::cout << "  Device: " << device->getName() << std::endl;
-    Context *context = device->createContext();
-    Source *source = context->createSource();
+  AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
+  std::cout << "Layer: " << layer->getName() << std::endl;
+
+  Device *device = layer->openDevice();
+  std::cout << "  Device: " << device->getName() << std::endl;
+  Context *context = device->createContext();
+  std::cout << "  Context is null: " << (context->isNull() ? "true" : "false") << std::endl;
+
+  // Load test.wav
+  alutLoadWAVFile("test.wav",&format,&data,&size,&freq,&loop);
+  ALenum error = alGetError();
+  if (error != AL_NO_ERROR) {
+    std::cerr << "OpenAL: loadWAVFile : " << alGetString(error);
+    return 1;
   }
+
+  Source *source = context->createSource(format, freq);
+  std::cout << "  Source is null: " << (source->isNull() ? "true" : "false") << std::endl;
+  source->play(data, size);
+
+  std::cout << "Unloading test.wav" << std::endl;
+  // Unload test.wav
+  alutUnloadWAV(format, data, size, freq);
+  error = alGetError();
+  if (error != AL_NO_ERROR) {
+    std::cerr << "OpenAL: unloadWAV : " << alGetString(error);
+  }
+
+
+  std::cin.get();
 }

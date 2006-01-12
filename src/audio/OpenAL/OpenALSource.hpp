@@ -18,6 +18,46 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "Context.hpp"
-#include "NullSource.hpp"
+#ifndef __SFLAUDIO_OPENAL_SOURCE_HPP__
+#define __SFLAUDIO_OPENAL_SOURCE_HPP__
 
+#include <AL/alc.h>
+#include "Source.hpp"
+
+namespace SFLAudio
+{
+  class OpenALContext;
+
+  class OpenALSource : public Source
+  {
+  private:
+    OpenALSource();
+
+  public:
+    OpenALSource(int format, int freq, ALuint buffer, ALuint source);
+    ~OpenALSource();
+
+    static Source *create(OpenALContext *context, int format, int freq);
+
+    // Source functions
+    virtual bool isPlaying();
+    virtual void play(void *data, int size);
+
+  private:
+    static bool genBuffer(ALuint &buffer);
+    static bool genSource(ALuint &source);
+    static bool deleteBuffer(ALuint &buffer);
+    static bool deleteSource(ALuint &source);
+    static bool attach(ALuint source, ALuint buffer);
+    
+    
+  private:
+    // Buffers to hold sound data.
+    ALuint mBuffer;
+
+    // Sources are points of emitting sound.
+    ALuint mSource;
+  };
+}
+
+#endif

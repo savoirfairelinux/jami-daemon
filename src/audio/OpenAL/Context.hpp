@@ -28,10 +28,12 @@ namespace SFLAudio
   class Context
   {
   public:
+    virtual bool isNull() {return false;}
+
     /**
      * Create a source for the context.
      */
-    Source *createSource();
+    virtual Source *createSource(int format, int freq) = 0;
   };
 }
 

@@ -22,7 +22,9 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 
+
 #include "OpenALDevice.hpp"
+#include "OpenALContext.hpp"
 #include "OpenALLayer.hpp"
 #include "NullContext.hpp"
 #include "NullDevice.hpp"
@@ -66,5 +68,25 @@ SFLAudio::OpenALDevice::load() {
 SFLAudio::Context *
 SFLAudio::OpenALDevice::createContext()
 {
-  return new NullContext();
+  SFLAudio::Context *context = NULL;
+  if (mDevice) {
+    ALCcontext *c = alcCreateContext(mDevice, NULL);
+    alcMakeContextCurrent(c);
+    if(c == NULL) {
+      ALenum error = alcGetError(mDevice);
+      if (error != AL_NO_ERROR) {
+	std::cerr << "OpenAL::alcCreateContext: " << alGetString(error) << std::endl;
+      }
+      context = new NullContext();
+    }
+    else {
+      alcMakeContextCurrent(c);
+      context = new OpenALContext(c);
+    }
+  }
+  else {
+    context = new NullContext();
+  }
+
+  return context;
 }

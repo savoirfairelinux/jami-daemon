@@ -25,6 +25,22 @@ namespace SFLAudio
 {
   class Source
   {
+  private:
+    Source();
+    
+  public:
+    Source(int format, int freq);
+
+    virtual bool isNull() {return false;}
+    virtual bool isPlaying() = 0;
+    virtual void play(void *data, int size) = 0;
+
+    int getFrequency() {return mFreq;}
+    int getFormat() {return mFormat;}
+
+  private:
+    int mFormat;
+    int mFreq;
   };
 }
 

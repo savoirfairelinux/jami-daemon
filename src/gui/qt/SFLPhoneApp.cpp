@@ -93,9 +93,9 @@ SFLPhoneApp::handleArg()
 void
 SFLPhoneApp::launch()
 {
-//   if(mLauncher) {
-//     mLauncher->start();
-//   }
+   if(mLauncher) {
+     mLauncher->start();
+   }
 }
 
 void

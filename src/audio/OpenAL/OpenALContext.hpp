@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
- *
+ *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -18,6 +18,26 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "Context.hpp"
-#include "NullSource.hpp"
+#ifndef __SFLAUDIO_OPENAL_CONTEXT_HPP__
+#define __SFLAUDIO_OPENAL_CONTEXT_HPP__
 
+#include "Context.hpp"
+#include "AL/alc.h"
+
+namespace SFLAudio 
+{
+  class OpenALContext : public Context
+  {
+  private:
+    OpenALContext();
+
+  public:
+    OpenALContext(ALCcontext *context);
+    Source *createSource(int format, int freq);
+
+  private:
+    ALCcontext *mContext;
+  };
+}
+
+#endif
