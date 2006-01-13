@@ -52,13 +52,8 @@ SFLAudio::OpenALDevice::unload() {
 
 bool
 SFLAudio::OpenALDevice::load() {
-  mDevice = alcOpenDevice(0);
-  ALenum error = alcGetError(mDevice);
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL::alcOpenDevice: " << alGetString(error) << std::endl;
-    unload();
-  }
-
+  ALCcontext *context = alcGetCurrentContext();
+  mDevice = alcGetContextsDevice(context);
   if(mDevice != 0) {
     const ALCchar *device = alcGetString(mDevice, ALC_DEVICE_SPECIFIER);
     setName(device);

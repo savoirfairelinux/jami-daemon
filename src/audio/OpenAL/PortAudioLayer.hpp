@@ -35,6 +35,7 @@ namespace SFLAudio
 
     virtual std::list< std::string > getDevicesNames();
     virtual Device *openDevice();
+    virtual Emitter *openCaptureDevice();
     virtual Device *openDevice(const std::string &name);
 
   private:

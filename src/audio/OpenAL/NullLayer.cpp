@@ -20,6 +20,7 @@
 
 #include "NullLayer.hpp"
 #include "NullDevice.hpp"
+#include "NullEmitter.hpp"
 
 SFLAudio::NullLayer::NullLayer()
   : AudioLayer("NullLayer")
@@ -33,6 +34,12 @@ SFLAudio::Device *
 SFLAudio::NullLayer::openDevice()
 {
   return new NullDevice();
+}
+
+SFLAudio::Emitter *
+SFLAudio::NullLayer::openCaptureDevice()
+{
+  return new NullEmitter();
 }
 
 SFLAudio::Device *

@@ -21,6 +21,7 @@
 #ifndef __SFLAUDIO_OPENAL_SOURCE_HPP__
 #define __SFLAUDIO_OPENAL_SOURCE_HPP__
 
+#include <AL/al.h>
 #include <AL/alc.h>
 #include "Source.hpp"
 

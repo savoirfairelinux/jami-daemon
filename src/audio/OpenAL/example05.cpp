@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
- *
+ *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -18,43 +18,26 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __SFLAUDIO_EMITTER_HPP__
-#define __SFLAUDIO_EMITTER_HPP__
+#include <iostream>
+#include <list>
+#include <string>
 
-namespace SFLAudio
+#include "SFLAudio.hpp"
+#include "Emitter.hpp"
+
+using namespace SFLAudio;
+
+int main(int, char* []) 
 {
-  class Context;
-  class Source;
+  AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
+  Device *device = layer->openDevice();
+  Context *context = device->createContext();
+  Emitter *mic = layer->openCaptureDevice();
 
-  class Emitter 
-  {
-  public:
-    Emitter();
-    Emitter(int format, int freq);
+  mic->connect(context);
+  mic->play();
 
-    int getFrequency();
-    int getFormat();
-    
-    void setFrequency(int freq);
-    void setFormat(int format);
-
-    void connect(Source *source);
-    void connect(Context *context);
-    Source *getSource();
-
-    virtual bool isNull();
-
-    virtual void play() = 0;
-    
-    
-  private:
-    Source *mSource;
-
-    int mFormat;
-    int mFreq;
-  };
-
+  // Wait for user input.
+  std::cout << "Press any key to quit the program." << std::endl;
+  std::cin.get();
 }
-
-#endif
-

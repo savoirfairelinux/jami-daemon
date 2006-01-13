@@ -64,3 +64,6 @@ SFLAudio::Source *
 SFLAudio::Emitter::getSource()
 {return mSource;}
 
+bool
+SFLAudio::Emitter::isNull()
+{return false;}

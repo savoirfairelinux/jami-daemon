@@ -22,6 +22,7 @@
 #include "portaudio.h"
 
 #include "NullDevice.hpp"
+#include "NullEmitter.hpp"
 
 
 SFLAudio::PortAudioLayer::PortAudioLayer()
@@ -79,6 +80,12 @@ SFLAudio::Device *
 SFLAudio::PortAudioLayer::openDevice()
 {
   return new NullDevice();
+}
+
+SFLAudio::Emitter *
+SFLAudio::PortAudioLayer::openCaptureDevice()
+{
+  return new NullEmitter();
 }
 
 SFLAudio::Device *

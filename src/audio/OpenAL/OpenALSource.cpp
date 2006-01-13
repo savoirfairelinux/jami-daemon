@@ -159,7 +159,11 @@ SFLAudio::OpenALSource::create(OpenALContext *, int format, int freq) {
 bool
 SFLAudio::OpenALSource::isPlaying() 
 {
-  ALenum state;
+  ALint state;
+  if(alIsSource(mSource) == AL_FALSE) {
+    return false;
+  }
+
   alGetSourcei(mSource, AL_SOURCE_STATE, &state);
     
   return (state == AL_PLAYING);

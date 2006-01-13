@@ -27,6 +27,7 @@
 namespace SFLAudio 
 {
   class Device;
+  class Emitter;
 
   class AudioLayer 
   {
@@ -54,6 +55,11 @@ namespace SFLAudio
      * Open the default device.
      */
     virtual Device *openDevice() = 0;
+
+    /**
+     * Open the default capture device.
+     */
+    virtual Emitter *openCaptureDevice() = 0;
     
     /**
      * Open the specified device. If the device don't 

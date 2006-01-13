@@ -20,18 +20,60 @@
 
 #include "OpenALLayer.hpp"
 #include "OpenALDevice.hpp"
+#include "MicEmitter.hpp"
 #include "NullDevice.hpp"
+#include "NullEmitter.hpp"
 
 #include <iostream>
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <AL/alext.h>
+#include <AL/alut.h>
 
 #define DEFAULT_DEVICE_NAME "default"
 #define DEFAULT_CAPTURE_DEVICE_NAME "default"
 
+#define FREQ          22050
+#define SAMPLES       (5 * FREQ)
+#define SIZE (SAMPLES * 2)
+
+#define GP(type,var,name) \
+        var = (type)alGetProcAddress((const ALchar*) name); \
+	if( var == NULL ) { \
+		fprintf( stderr, "Could not get %s extension entry\n", name ); \
+	}
+
+
+
 SFLAudio::OpenALLayer::OpenALLayer() 
   : AudioLayer("openal")
-{}
+{
+  alutInit(0, 0);
+  GP( PFNALCAPTUREINITPROC, palCaptureInit, "alCaptureInit_EXT" );
+  GP( PFNALCAPTUREDESTROYPROC, palCaptureDestroy,
+      "alCaptureDestroy_EXT" );
+  GP( PFNALCAPTURESTARTPROC, palCaptureStart, "alCaptureStart_EXT" );
+  GP( PFNALCAPTURESTOPPROC, palCaptureStop, "alCaptureStop_EXT" );
+  GP( PFNALCAPTUREGETDATAPROC, palCaptureGetData,
+      "alCaptureGetData_EXT" );
+}
+
+
+SFLAudio::Emitter *
+SFLAudio::OpenALLayer::openCaptureDevice()
+{
+  if(palCaptureInit == 0 || 
+     !palCaptureInit( AL_FORMAT_MONO16, FREQ, 1024 ) ) {
+    printf( "Unable to initialize capture\n" );
+    return new NullEmitter();
+  }
+
+  return new MicEmitter(AL_FORMAT_MONO16, FREQ, SIZE,
+			palCaptureStart,
+			palCaptureStop,
+			palCaptureGetData);
+}
+
 
 std::list< std::string > 
 SFLAudio::OpenALLayer::getDevicesNames() 
@@ -94,7 +136,7 @@ SFLAudio::OpenALLayer::openDevice()
 SFLAudio::Device *
 SFLAudio::OpenALLayer::openDevice(const std::string &)
 {
-  return new NullDevice();
+  return openDevice();
 }
 
 

@@ -18,40 +18,21 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __SFLAUDIO_EMITTER_HPP__
-#define __SFLAUDIO_EMITTER_HPP__
+#ifndef __SFLAUDIO_NULL_EMITTER_HPP__
+#define __SFLAUDIO_NULL_EMITTER_HPP__
+
+#include "Emitter.hpp"
 
 namespace SFLAudio
 {
   class Context;
   class Source;
 
-  class Emitter 
+  class NullEmitter : public Emitter
   {
   public:
-    Emitter();
-    Emitter(int format, int freq);
-
-    int getFrequency();
-    int getFormat();
-    
-    void setFrequency(int freq);
-    void setFormat(int format);
-
-    void connect(Source *source);
-    void connect(Context *context);
-    Source *getSource();
-
-    virtual bool isNull();
-
-    virtual void play() = 0;
-    
-    
-  private:
-    Source *mSource;
-
-    int mFormat;
-    int mFreq;
+    virtual bool isNull() {return true;}
+    virtual void play() {}
   };
 
 }

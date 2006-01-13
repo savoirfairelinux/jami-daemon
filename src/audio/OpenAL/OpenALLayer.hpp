@@ -21,10 +21,12 @@
 #ifndef __SFLAUDIO_OPENAL_LAYER_HPP__
 #define __SFLAUDIO_OPENAL_LAYER_HPP__
 
+#include <AL/alext.h>
 #include "AudioLayer.hpp"
 
 namespace SFLAudio 
 {
+  
   class OpenALLayer : public AudioLayer
   {
   public:
@@ -32,8 +34,17 @@ namespace SFLAudio
 
     virtual std::list< std::string > getDevicesNames();
     virtual std::list< std::string > getCaptureDevicesNames();
+    virtual Emitter *openCaptureDevice();
     virtual Device *openDevice();
     virtual Device *openDevice(const std::string &name);
+
+  private:
+    PFNALCAPTUREINITPROC palCaptureInit;
+    PFNALCAPTUREDESTROYPROC palCaptureDestroy;
+    PFNALCAPTURESTARTPROC palCaptureStart;
+    PFNALCAPTURESTOPPROC palCaptureStop;
+    PFNALCAPTUREGETDATAPROC palCaptureGetData;
+    
   };
 }
 

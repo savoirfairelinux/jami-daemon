@@ -1,5 +1,5 @@
 if MAINTENER_CODE
-noinst_PROGRAMS = example01 example02 example03 example04
+noinst_PROGRAMS = example01 example02 example03 example04 example05
 noinst_LTLIBRARIES = libsflaudio.la
 
 libsflaudio_la_SOURCES = \
@@ -8,9 +8,11 @@ libsflaudio_la_SOURCES = \
 	Context.cpp Context.hpp \
 	Device.cpp Device.hpp \
 	Emitter.cpp Emitter.hpp \
+	MicEmitter.cpp MicEmitter.hpp \
 	NullLayer.cpp NullLayer.hpp \
-	NullDevice.cpp NullDevice.hpp \
 	NullContext.cpp NullContext.hpp \
+	NullDevice.cpp NullDevice.hpp \
+	NullEmitter.hpp \
 	NullSource.cpp NullSource.hpp \
 	OpenALLayer.cpp OpenALLayer.hpp \
 	OpenALDevice.cpp OpenALDevice.hpp \
@@ -25,13 +27,14 @@ AM_CPPFLAGS = $(PORTAUDIO_CFLAGS) -I$(top_srcdir)/libs/portaudio/pa_common -I$(t
 AM_CXXFLAGS = $(PORTAUDIO_CXXFLAGS) -I$(top_srcdir)/libs/
 AM_LDFLAGS  =  -L$(top_srcdir)/libs/portaudio/ 
 
-LIBADD = $(PORTAUDIO_LIBS) -lportaudio -lopenal
-LDADD = libsflaudio.la $(PORTAUDIO_LIBS) -lopenal -lportaudio
+LIBADD = $(PORTAUDIO_LIBS) -lportaudio -lopenal -lalut 
+LDADD = libsflaudio.la $(PORTAUDIO_LIBS) -lopenal -lportaudio -lalut
 
 
 example01_SOURCES = example01.cpp
 example02_SOURCES = example02.cpp
 example03_SOURCES = example03.cpp
 example04_SOURCES = example04.cpp
+example05_SOURCES = example05.cpp 
 endif
 

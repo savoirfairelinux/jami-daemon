@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -18,28 +18,50 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <AL/alut.h>
+#include <AL/alut.h>
 #include <iostream>
-#include <list>
-#include <string>
 
-#include "SFLAudio.hpp"
-#include "WavEmitter.hpp"
+#include "OpenALLayer.hpp"
+#include "MicEmitter.hpp"
+#include "Source.hpp"
 
-using namespace SFLAudio;
-
-int main(int, char* []) 
+SFLAudio::MicEmitter::MicEmitter(int format, int freq, int size,
+				 PFNALCAPTURESTARTPROC palCaptureStart,
+				 PFNALCAPTURESTOPPROC palCaptureStop,
+				 PFNALCAPTUREGETDATAPROC palCaptureGetData)
+  : Emitter(format, freq)
+    , mSize(size)
+    , mAlCaptureStart(palCaptureStart)
+    , mAlCaptureStop(palCaptureStop)
+    , mAlCaptureGetData(palCaptureGetData)
 {
-  AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
-  Device *device = layer->openDevice();
-  Context *context = device->createContext();
+  mData = (ALchar *)malloc(mSize);
+}
 
-  // Load test.wav
-  SFLAudio::WavEmitter wav("test.wav");
-  wav.connect(context);
 
-  wav.play();
+void
+SFLAudio::MicEmitter::play()
+{
+  fprintf( stderr, "recording... " );
+  mAlCaptureStart();
 
-  // Wait for user input.
-  std::cout << "Press any key to quit the program." << std::endl;
-  std::cin.get();
+  ALsizei retval = 0;
+  while(retval < mSize) {
+    void *data = &mData[retval];
+    ALsizei size = mSize - retval;
+    retval += mAlCaptureGetData(&mData[retval], 
+				mSize - retval,
+				getFormat(), 
+				getFrequency());
+  }
+  mAlCaptureStop();
+
+  std::cout << "done." << std::endl;
+  std::cout << "playing... ";
+  Source *source = getSource();
+  if(source && mData) {
+    source->play(mData, mSize);
+  }
+  std::cout << "done." << std::endl;
 }
