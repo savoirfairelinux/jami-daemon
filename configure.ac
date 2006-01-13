@@ -1,19 +1,21 @@
 dnl AC_INIT(aclocal.m4)
 AC_INIT(sflphone,0.7,sflphoneteam@savoirfairelinux.com,SFLphone)
+
+# Initializing config.h header...
 AM_CONFIG_HEADER(config.h)
 
-dnl figure out the sflphone version
+# Getting project version
 VERSION=`sed -ne 's/^#define SFLPHONED_VERSION "\(.*\)"/\1/p' ${srcdir}/src/global.h`
 
 dnl get rid of release number
 RPM_VERSION=`echo $VERSION | cut -d- -f1`
-AC_SUBST(RPM_VERSION)
+ AC_SUBST(RPM_VERSION)
 RPM_RELEASE=`echo $VERSION | sed -ne 's/.*-\(.*\)/\1/p' `
-AC_SUBST(RPM_RELEASE)
-
+ AC_SUBST(RPM_RELEASE)
 VERSION=`echo $VERSION | cut -d- -f1`
-AC_SUBST(VERSION)
+ AC_SUBST(VERSION)
 
+# Setting needs Standard C++ Library
 LIBS="$LIBS -lstdc++"
 
 dnl
@@ -25,13 +27,23 @@ AC_SUBST(PKGADD_PKG)
 AC_SUBST(PKGADD_NAME)
 AC_SUBST(PKGADD_VENDOR)
 
+# Defining C++ as default language
 AC_LANG_CPLUSPLUS
 
-AC_PROG_CXX
-AC_PROG_CC
+dnl These functions are call inside AC_CHECK_COMPILERS
+dnl AC_PROG_CXX
+dnl AC_PROG_CC
 
-AC_PATH_QT
+# Checking compilers capacities
 AC_CHECK_COMPILERS
+
+# Declaring a debug constant
+if test "x$kde_use_debug_code" != "xno"; then
+ CXXFLAGS="$CXXFLAGS -DDEBUG"
+fi
+
+# Setting QT Path
+AC_PATH_QT
 AC_SUBST(LIBQT)
 
 
@@ -48,10 +60,6 @@ LP_CHECK_OSIP2
 
 dnl setup flags for embedded exosip library
 LP_SETUP_EXOSIP
-
-CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS"
-
-SFLPHONE_CXXFLAGS=""
 
 dnl check for if no is undefined
 dnl check also for samplerate for $host ~= *darwin* (mac) only
@@ -82,28 +90,22 @@ AC_CHECK_HEADERS( \
 ostream \
 )
 
+CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS"
+SFLPHONE_LIBS=""
 
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION})
-SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccgnu2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccgnu2_LIBS"
 
 LIBCCEXT2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(libccext2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
-SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccext2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccext2_LIBS"
 
 LIBCCRT_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
-SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
 
-
-SFLPHONE_CXXFLAGS="$SFLPHONE_CXXFLAGS $OSIP_CFLAGS $EXOSIP_CFLAGS $PORTAUDIO_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $OSIP_LIBS $EXOSIP_LIBS "
-
-
-AC_SUBST(SFLPHONE_CXXFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
 
 dnl check for speex...
