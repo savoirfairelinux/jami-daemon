@@ -18,25 +18,45 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __SFLAUDIO_CONTEXT_HPP__
-#define __SFLAUDIO_CONTEXT_HPP__
+#include <AL/alut.h>
+#include <iostream>
 
-namespace SFLAudio
+#include "WavEmitter.hpp"
+#include "Source.hpp"
+
+SFLAudio::WavEmitter::WavEmitter(char *filename) 
+  : mData(0)
+  , mSize(0)
 {
-  class Emitter;
-  class Source;
+  ALenum format;
+  ALsizei freq;
+  ALboolean loop;
 
-  class Context
-  {
-  public:
-    virtual bool isNull() {return false;}
-
-    /**
-     * Create a source for the context.
-     */
-    virtual Source *createSource(int format, int freq) = 0;
-    Source *createSource(Emitter *emitter);
-  };
+  // Load test.wav
+  alutLoadWAVFile(filename, &format,&mData,&mSize,&freq,&loop);
+  ALenum error = alGetError();
+  if (error != AL_NO_ERROR) {
+    std::cerr << "OpenAL: loadWAVFile : " << alGetString(error);
+    mData = 0;
+  }
+  else {
+    setFrequency(freq);
+    setFormat(format);
+  }
 }
 
-#endif
+void
+SFLAudio::WavEmitter::play()
+{
+  Source *source = getSource();
+  if(source && mData) {
+    source->play(mData, mSize);
+
+    // Unload test.wav
+    alutUnloadWAV(getFormat(), mData, mSize, getFrequency());
+    ALenum error = alGetError();
+    if (error != AL_NO_ERROR) {
+      std::cerr << "OpenAL: unloadWAV : " << alGetString(error);
+    }
+  }
+}

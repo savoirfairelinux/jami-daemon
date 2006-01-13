@@ -27,6 +27,7 @@
 #include <AL/alc.h>
 
 #define DEFAULT_DEVICE_NAME "default"
+#define DEFAULT_CAPTURE_DEVICE_NAME "default"
 
 SFLAudio::OpenALLayer::OpenALLayer() 
   : AudioLayer("openal")
@@ -52,6 +53,28 @@ SFLAudio::OpenALLayer::getDevicesNames()
   return devices;
 
 }
+
+std::list< std::string > 
+SFLAudio::OpenALLayer::getCaptureDevicesNames() 
+{
+  std::list< std::string > devices;
+  if (alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT") == AL_TRUE) {
+    const ALCchar *devs = alcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
+    const ALCchar *devname = devs;
+    while(devname) {
+      devices.push_back(devname);
+      devname += sizeof(ALCchar) * (strlen(devname) + 1);
+    }
+  }
+  else {
+    devices.push_back(DEFAULT_CAPTURE_DEVICE_NAME);
+  }
+  
+
+  return devices;
+
+}
+
 
 SFLAudio::Device *
 SFLAudio::OpenALLayer::openDevice()

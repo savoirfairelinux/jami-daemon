@@ -18,25 +18,49 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __SFLAUDIO_CONTEXT_HPP__
-#define __SFLAUDIO_CONTEXT_HPP__
+#include "Context.hpp"
+#include "Emitter.hpp"
 
-namespace SFLAudio
-{
-  class Emitter;
-  class Source;
 
-  class Context
-  {
-  public:
-    virtual bool isNull() {return false;}
+SFLAudio::Emitter::Emitter() 
+  : mSource(0)
+  , mFormat(0)
+  , mFreq(0)
+{}
 
-    /**
-     * Create a source for the context.
-     */
-    virtual Source *createSource(int format, int freq) = 0;
-    Source *createSource(Emitter *emitter);
-  };
-}
 
-#endif
+SFLAudio::Emitter::Emitter(int format, int freq) 
+  : mSource(0)
+  , mFormat(format)
+  , mFreq(freq)
+{}
+
+
+int 
+SFLAudio::Emitter::getFrequency()
+{return mFreq;}
+
+int 
+SFLAudio::Emitter::getFormat()
+{return mFormat;}
+
+void 
+SFLAudio::Emitter::setFrequency(int freq)
+{mFreq = freq;}
+
+void 
+SFLAudio::Emitter::setFormat(int format)
+{mFormat = format;}
+
+void
+SFLAudio::Emitter::connect(Source *source)
+{mSource = source;}
+
+void
+SFLAudio::Emitter::connect(Context *context)
+{mSource = context->createSource(this);}
+
+SFLAudio::Source *
+SFLAudio::Emitter::getSource()
+{return mSource;}
+

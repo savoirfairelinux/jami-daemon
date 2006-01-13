@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
- *
+ *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -18,25 +18,29 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __SFLAUDIO_CONTEXT_HPP__
-#define __SFLAUDIO_CONTEXT_HPP__
+#include <iostream>
+#include <list>
+#include <string>
 
-namespace SFLAudio
+#include "SFLAudio.hpp"
+#include "WavEmitter.hpp"
+
+using namespace SFLAudio;
+
+int main(int, char* []) 
 {
-  class Emitter;
-  class Source;
 
-  class Context
-  {
-  public:
-    virtual bool isNull() {return false;}
+  AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
+  Device *device = layer->openDevice();
+  Context *context = device->createContext();
 
-    /**
-     * Create a source for the context.
-     */
-    virtual Source *createSource(int format, int freq) = 0;
-    Source *createSource(Emitter *emitter);
-  };
+  // Load test.wav
+  SFLAudio::WavEmitter wav("test.wav");
+  wav.connect(context);
+
+  wav.play();
+
+  // Wait for user input.
+  std::cout << "Press any key to quit the program." << std::endl;
+  std::cin.get();
 }
-
-#endif

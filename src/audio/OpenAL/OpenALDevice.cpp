@@ -41,7 +41,10 @@ SFLAudio::OpenALDevice::~OpenALDevice()
 void
 SFLAudio::OpenALDevice::unload() {
   if(mDevice) {
-    alcCloseDevice(mDevice);
+    if(alcCloseDevice(mDevice) == ALC_FALSE) {
+      ALenum error = alcGetError(mDevice);
+      std::cerr << "OpenAL::alcCloseDevice: " << alGetString(error) << std::endl;
+    }
     mDevice = 0;
   }
 }

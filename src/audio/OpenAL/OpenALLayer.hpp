@@ -31,6 +31,7 @@ namespace SFLAudio
     OpenALLayer();
 
     virtual std::list< std::string > getDevicesNames();
+    virtual std::list< std::string > getCaptureDevicesNames();
     virtual Device *openDevice();
     virtual Device *openDevice(const std::string &name);
   };

@@ -19,5 +19,11 @@
  */
 
 #include "Context.hpp"
-#include "NullSource.hpp"
+#include "Emitter.hpp"
 
+SFLAudio::Source *
+SFLAudio::Context::createSource(SFLAudio::Emitter *emitter) 
+{
+  Source *source = createSource(emitter->getFormat(), emitter->getFrequency());
+  emitter->connect(source);
+}

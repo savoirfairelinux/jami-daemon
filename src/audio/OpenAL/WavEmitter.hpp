@@ -18,24 +18,28 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __SFLAUDIO_CONTEXT_HPP__
-#define __SFLAUDIO_CONTEXT_HPP__
+#ifndef __SFLAUDIO_WAV_EMITTER_HPP__
+#define __SFLAUDIO_WAV_EMITTER_HPP__
+
+#include <AL/al.h>
+#include "Emitter.hpp"
 
 namespace SFLAudio
 {
-  class Emitter;
   class Source;
-
-  class Context
+  
+  class WavEmitter : public Emitter
   {
-  public:
-    virtual bool isNull() {return false;}
+  private:
+    WavEmitter();
 
-    /**
-     * Create a source for the context.
-     */
-    virtual Source *createSource(int format, int freq) = 0;
-    Source *createSource(Emitter *emitter);
+  public:
+    WavEmitter(char *filename);
+    void play();
+
+  private:
+    ALvoid *mData;
+    ALsizei mSize;
   };
 }
 
