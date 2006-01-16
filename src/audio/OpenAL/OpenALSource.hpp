@@ -43,6 +43,7 @@ namespace SFLAudio
     // Source functions
     virtual bool isPlaying();
     virtual void play(void *data, int size);
+    virtual void stream(void *data, int size);
     virtual void stop();
 
   private:

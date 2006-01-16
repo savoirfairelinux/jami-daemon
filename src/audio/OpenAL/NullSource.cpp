@@ -33,5 +33,9 @@ SFLAudio::NullSource::play(void *, int)
 {}
 
 void
+SFLAudio::NullSource::stream(void *, int)
+{}
+
+void
 SFLAudio::NullSource::stop()
 {}

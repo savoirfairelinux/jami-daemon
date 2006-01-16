@@ -170,6 +170,11 @@ SFLAudio::OpenALSource::isPlaying()
 }
 
 void
+SFLAudio::OpenALSource::stream(void *data, int size)
+{
+}
+
+void
 SFLAudio::OpenALSource::play(void *data, int size)
 {
   ALboolean loop;
