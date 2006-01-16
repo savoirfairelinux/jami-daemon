@@ -22,12 +22,34 @@
 #define __SFLAUDIO_MIC_EMITTER_HPP__
 
 #include <AL/al.h>
+#include <cc++/thread.h>
 #include "Emitter.hpp"
+
 
 namespace SFLAudio
 {
   class Source;
   
+  class MicEmitterThread : public ost::Thread
+  {
+  public:
+    MicEmitterThread(int format, int freq, int size, PFNALCAPTUREGETDATAPROC palCaptureGetData);
+    ~MicEmitterThread();
+
+    void setSource(SFLAudio::Source *source);
+    virtual void run();
+    void fill();
+
+  private:
+    SFLAudio::Source *mSource;
+    ALchar *mData;
+    ALsizei mFormat;
+    ALsizei mFreq;
+    ALsizei mSize;
+
+    PFNALCAPTUREGETDATAPROC mAlCaptureGetData;
+  };
+
   class MicEmitter : public Emitter
   {
   private:
@@ -39,15 +61,18 @@ namespace SFLAudio
 	       PFNALCAPTURESTOPPROC palCaptureStop,
 	       PFNALCAPTUREGETDATAPROC palCaptureGetData);
     virtual void play();
+    virtual void stop();
+    
 
   private:
-    ALchar *mData;
     ALsizei mSize;
-    
     PFNALCAPTURESTARTPROC mAlCaptureStart;
     PFNALCAPTURESTOPPROC mAlCaptureStop;
     PFNALCAPTUREGETDATAPROC mAlCaptureGetData;
+    
+    MicEmitterThread* mThread;
   };
+
 }
 
 #endif

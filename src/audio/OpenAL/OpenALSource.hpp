@@ -21,6 +21,8 @@
 #ifndef __SFLAUDIO_OPENAL_SOURCE_HPP__
 #define __SFLAUDIO_OPENAL_SOURCE_HPP__
 
+#include <list>
+
 #include <AL/al.h>
 #include <AL/alc.h>
 #include "Source.hpp"
@@ -47,19 +49,34 @@ namespace SFLAudio
     virtual void stop();
 
   private:
+    ALuint getSourceState();
+    bool isStatic();
+    bool isAttached();
+    bool isStreaming();
+    bool isUndetermined();
+    bool attach();
+    bool detach();
+
+    bool check(const char *message);
+
     static bool genBuffer(ALuint &buffer);
     static bool genSource(ALuint &source);
     static bool deleteBuffer(ALuint &buffer);
     static bool deleteSource(ALuint &source);
-    static bool attach(ALuint source, ALuint buffer);
     
     
   private:
+    // Buffers that we'll eventually need to delete
+    std::list< ALuint > mBuffers;
+
     // Buffers to hold sound data.
     ALuint mBuffer;
 
     // Sources are points of emitting sound.
     ALuint mSource;
+
+    bool mIsAttached;
+    bool mIsStatic;
   };
 }
 

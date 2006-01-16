@@ -33,9 +33,10 @@
 #define DEFAULT_DEVICE_NAME "default"
 #define DEFAULT_CAPTURE_DEVICE_NAME "default"
 
-#define FREQ          22050
+#define MIC_FORMAT AL_FORMAT_MONO8
+#define FREQ          8192
 #define SAMPLES       (5 * FREQ)
-#define SIZE (SAMPLES * 2)
+#define SIZE (SAMPLES * 1)
 
 #define GP(type,var,name) \
         var = (type)alGetProcAddress((const ALchar*) name); \
@@ -63,12 +64,12 @@ SFLAudio::Emitter *
 SFLAudio::OpenALLayer::openCaptureDevice()
 {
   if(palCaptureInit == 0 || 
-     !palCaptureInit( AL_FORMAT_MONO16, FREQ, 1024 ) ) {
+     !palCaptureInit( MIC_FORMAT, FREQ, 1024 ) ) {
     printf( "Unable to initialize capture\n" );
     return new NullEmitter();
   }
 
-  return new MicEmitter(AL_FORMAT_MONO16, FREQ, SIZE,
+  return new MicEmitter(MIC_FORMAT, FREQ, SIZE,
 			palCaptureStart,
 			palCaptureStop,
 			palCaptureGetData);

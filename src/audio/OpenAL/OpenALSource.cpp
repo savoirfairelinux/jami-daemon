@@ -32,7 +32,11 @@ SFLAudio::OpenALSource::OpenALSource(int format, int freq, ALuint buffer, ALuint
   : Source(format, freq)
   , mBuffer(buffer)
   , mSource(source)
-{}
+  , mIsAttached(false)
+  , mIsStatic(true)
+{
+  mBuffers.push_back(buffer);
+}
 
 SFLAudio::OpenALSource::~OpenALSource()
 {
@@ -44,10 +48,14 @@ SFLAudio::OpenALSource::~OpenALSource()
     std::cerr << "OpenAL: alDeleteSources : " << alGetString(error) << std::endl;
   }
 
-  alDeleteBuffers(1, &mBuffer);
-  error = alGetError();
-  if(error != AL_NO_ERROR) {
-    std::cerr << "OpenAL: alDeleteBuffers : " << alGetString(error) << std::endl;
+  for(std::list< ALuint >::iterator pos = mBuffers.begin();
+      pos != mBuffers.end();
+      pos++) {
+    alDeleteBuffers(1, &(*pos));
+    error = alGetError();
+    if(error != AL_NO_ERROR) {
+      std::cerr << "OpenAL: alDeleteBuffers : " << alGetString(error) << std::endl;
+    }
   }
 }
 
@@ -115,44 +123,125 @@ SFLAudio::OpenALSource::deleteBuffer(ALuint &buffer) {
 }
 
 bool
-SFLAudio::OpenALSource::attach(ALuint source, ALuint buffer) {
-  // Attach buffer to source
-  alSourcei(source, AL_BUFFER, buffer);
+SFLAudio::OpenALSource::detach() 
+{
+  alSourcei(mSource, AL_BUFFER, 0);
   ALenum error = alGetError();
   if(error != AL_NO_ERROR) {
     std::cerr << "OpenAL: alSourcei : " << alGetString(error);
     return false;
   }
 
+  mIsAttached = false;
+
+  return true;
+}
+
+ALuint
+SFLAudio::OpenALSource::getSourceState()
+{
+//   ALint answer;
+//   alGetError();
+  
+//   alGetSourcei(mSource, AL_SOURCE_TYPE, &answer);
+//   ALenum error = alGetError();
+//   if(error != AL_NO_ERROR) {
+//     std::cerr << "OpenAL: alGetSourcei(state) : " << alGetString(error);
+//     return AL_UNDETERMINED;
+//   }
+  
+//   return answer;
+
+  if(!mIsAttached) {
+    return AL_UNDETERMINED;
+  }
+
+  if(mIsStatic) {
+    return AL_STATIC;
+  }
+
+  return AL_STREAMING;
+}
+
+bool 
+SFLAudio::OpenALSource::isStatic()
+{
+  return (getSourceState() == AL_STATIC);
+}
+
+bool 
+SFLAudio::OpenALSource::isUndetermined()
+{
+  return (getSourceState() == AL_UNDETERMINED);
+}
+
+bool 
+SFLAudio::OpenALSource::isStreaming()
+{
+  return (getSourceState() == AL_STREAMING);
+}
+
+bool 
+SFLAudio::OpenALSource::isAttached()
+{
+  return (getSourceState() != AL_UNDETERMINED);
+}
+
+bool check(const char *message) {
+  ALenum error = alGetError();
+  if(error != AL_NO_ERROR) {
+    std::cerr << message << alGetString(error);
+    return false;
+  }
+
+  return true;
+}
+
+bool
+SFLAudio::OpenALSource::attach() 
+{
+  if(isAttached()) {
+    if(isStatic() == true) {
+      // it's already attached as static
+      return true;
+    }
+    
+    detach();
+  }
+
+  // Attach buffer to source
+  alSourcei(mSource, AL_BUFFER, mBuffer);
+  ALenum error = alGetError();
+  if(error != AL_NO_ERROR) {
+    std::cerr << "OpenAL: alSourcei : " << alGetString(error);
+    return false;
+  }
+
+  mIsAttached = true;
+  mIsStatic = true;
+
   return true;
 }
 
 SFLAudio::Source *
 SFLAudio::OpenALSource::create(OpenALContext *, int format, int freq) {
-    ALuint buffer;
-    ALuint source;
-
-    // Generate buffer
-    if(!genBuffer(buffer)){
-      deleteBuffer(buffer);
-      return new NullSource();
-    }
-
-    // Generate source
-    if(!genSource(source)){
-      deleteBuffer(buffer);
-      deleteSource(source);
-      return new NullSource();
-    }
-
-    // Attach buffer to source
-    if(!attach(source, buffer)) {
-      deleteBuffer(buffer);
-      deleteSource(source);
-      return new NullSource();
-    }
-
-    return new OpenALSource(format, freq, buffer, source);
+  ALuint buffer;
+  ALuint source;
+  
+  // Generate buffer
+  if(!genBuffer(buffer)){
+    deleteBuffer(buffer);
+    return new NullSource();
+  }
+  
+  // Generate source
+  if(!genSource(source)){
+    deleteBuffer(buffer);
+    deleteSource(source);
+    return new NullSource();
+  }
+  
+  return new OpenALSource(format, freq, buffer, source);
 }
 
 
@@ -172,16 +261,49 @@ SFLAudio::OpenALSource::isPlaying()
 void
 SFLAudio::OpenALSource::stream(void *data, int size)
 {
+  int processed;
+  ALuint buffer;
+
+  alGetSourcei(mSource, AL_BUFFERS_PROCESSED, &processed);
+  
+  if(processed == 0) {
+    if(genBuffer(buffer) == false) {
+      return;
+    }
+
+    // Attach streaming buffer to source
+    alSourceQueueBuffers(mSource, 1, &buffer);
+    ALenum error = alGetError();
+    if(error != AL_NO_ERROR) {
+      std::cerr << "OpenAL: alSourceQueueBuffers : " << alGetString(error);
+      return;
+    }
+    mBuffers.push_back(buffer);
+
+    mIsAttached = true;
+    mIsStatic = false;
+
+  }
+  else {
+    alSourceUnqueueBuffers(mSource, 1, &buffer);
+  }
+    
+  alBufferData(buffer, getFormat(), data, size, getFrequency());
+  alSourceQueueBuffers(mSource, 1, &buffer);
+
+  if(!isPlaying()) {
+    alSourcePlay(mSource);
+  }
 }
 
 void
 SFLAudio::OpenALSource::play(void *data, int size)
 {
-  ALboolean loop;
+  attach();
 
   alGetError();
 
-  // Copy test.wav data into AL Buffer 0
+  // Copy data into AL Buffer 
   alBufferData(mBuffer, getFormat(), data, size, getFrequency());
   ALenum error = alGetError();
   if (error != AL_NO_ERROR) {

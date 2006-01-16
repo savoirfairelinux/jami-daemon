@@ -23,12 +23,12 @@ libsflaudio_la_SOURCES = \
 	Source.cpp Source.hpp \
 	WavEmitter.cpp WavEmitter.hpp
 
-AM_CPPFLAGS = $(PORTAUDIO_CFLAGS) -I$(top_srcdir)/libs/portaudio/pa_common -I$(top_srcdir)/libs/
-AM_CXXFLAGS = $(PORTAUDIO_CXXFLAGS) -I$(top_srcdir)/libs/
+AM_CPPFLAGS = -I$(top_srcdir)/libs/portaudio/pa_common -I$(top_srcdir)/libs/
+AM_CXXFLAGS = $(PORTAUDIO_CXXFLAGS) $(PORTAUDIO_CFLAGS) -I$(top_srcdir)/libs/ $(libccext2_CFLAGS) $(libccgnu2_CFLAGS)
 AM_LDFLAGS  =  -L$(top_srcdir)/libs/portaudio/ 
 
-LIBADD = $(PORTAUDIO_LIBS) -lportaudio -lopenal -lalut 
-LDADD = libsflaudio.la $(PORTAUDIO_LIBS) -lopenal -lportaudio -lalut
+LIBADD = $(PORTAUDIO_LIBS) -lportaudio -lopenal -lalut
+LDADD = libsflaudio.la $(PORTAUDIO_LIBS) -lopenal -lportaudio -lalut $(libccgnu2_LIBS)
 
 
 example01_SOURCES = example01.cpp

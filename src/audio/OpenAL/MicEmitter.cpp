@@ -35,33 +35,87 @@ SFLAudio::MicEmitter::MicEmitter(int format, int freq, int size,
     , mAlCaptureStart(palCaptureStart)
     , mAlCaptureStop(palCaptureStop)
     , mAlCaptureGetData(palCaptureGetData)
-{
-  mData = (ALchar *)malloc(mSize);
-}
-
+    , mThread(0)
+{}
 
 void
 SFLAudio::MicEmitter::play()
 {
-  fprintf( stderr, "recording... " );
-  mAlCaptureStart();
+  if(mThread == 0) {
+    mAlCaptureStart();
+    
+    mThread = new MicEmitterThread(getFormat(), getFrequency(), mSize, mAlCaptureGetData);
+    mThread->setSource(getSource());
+    mThread->start();
+  }
+}
 
+void
+SFLAudio::MicEmitter::stop()
+{
+  if(mThread != 0) {
+    delete mThread;
+    mThread = 0;
+  }
+}
+
+
+SFLAudio::MicEmitterThread::MicEmitterThread(int format,
+					     int freq,
+					     int size,
+					     PFNALCAPTUREGETDATAPROC palCaptureGetData)
+  : mSource(0)
+    , mFormat(format)
+    , mFreq(freq)
+  , mSize(size)
+  , mAlCaptureGetData(palCaptureGetData)
+{
+  setCancel(cancelDeferred);
+  mData = (ALchar *)malloc(mSize);
+}
+
+SFLAudio::MicEmitterThread::~MicEmitterThread()
+{
+  terminate();
+  free(mData);
+}
+
+void
+SFLAudio::MicEmitterThread::setSource(SFLAudio::Source *source) {
+  mSource = source;
+}
+
+void
+SFLAudio::MicEmitterThread::fill() {
   ALsizei retval = 0;
+  std::cout << "filling capture buffer...\n";
   while(retval < mSize) {
-    void *data = &mData[retval];
-    ALsizei size = mSize - retval;
-    retval += mAlCaptureGetData(&mData[retval], 
-				mSize - retval,
-				getFormat(), 
-				getFrequency());
+    int size = mAlCaptureGetData(&mData[retval], 
+				 mSize - retval,
+				 mFormat, 
+				 mFreq);
+    retval += size;
+    if(size != 0)
+      std::cout << "read " << size << 
+	" bytes from capture, for a total of " << retval << std::endl;
   }
-  mAlCaptureStop();
+  std::cout << "capture buffer filled!\n";
+}
 
-  std::cout << "done." << std::endl;
-  std::cout << "playing... ";
-  Source *source = getSource();
-  if(source && mData) {
-    source->play(mData, mSize);
+void
+SFLAudio::MicEmitterThread::run()
+{
+  while (!testCancel()) {
+    if(mData) {
+      fill();
+    }
+
+    if(mSource && mData) {
+      mSource->stream(mData, mSize);
+    }
+    else {
+      std::cerr << "source or buffer invalid.\n";
+    }
+    std::cout << "done." << std::endl;
   }
-  std::cout << "done." << std::endl;
 }
