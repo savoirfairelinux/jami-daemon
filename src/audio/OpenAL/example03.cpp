@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
   ALbyte *files[] = {"test.wav", "test2.wav"};
 
 
-  Info *infos = new Info[argc-1];
+  Info *infos = new Info[2];
   ALenum error;
 
   // Load wav files
@@ -64,18 +64,16 @@ int main(int argc, char* argv[])
       std::cerr << "OpenAL: loadWAVFile : " << alGetString(error);
       return 1;
     }
-
-    i++;
   }
 
   // Start the wav playing.
-  for(int i = 0; i < argc - 1; i++) {
+  for(int i = 0; i < 2; i++) {
     Source *source = context->createSource(infos[i].format, infos[i].freq);
-    source->play(&infos[i].data, infos[i].size);
+    source->play(infos[i].data, infos[i].size);
   }
 
   // Unload wav files
-  for(int i = 0; i < argc - 1; i++) {
+  for(int i = 0; i < 2; i++) {
     alutUnloadWAV(infos[i].format, 
 		  infos[i].data, 
 		  infos[i].size, 
