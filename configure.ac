@@ -53,7 +53,7 @@ AM_INIT_AUTOMAKE(sflphone, $VERSION)
 AC_PROG_LIBTOOL
 
 dnl check for portaudio
-LP_SETUP_PORTAUDIO
+PORTAUDIO_SETUP
 
 dnl check for osip2
 LP_CHECK_OSIP2

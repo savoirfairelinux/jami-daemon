@@ -1,12 +1,26 @@
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <readline/readline.h>
-#include <readline/history.h>
 #include "display.h"
 #include "setup.h"
 #include "sflphone.h"
 
+#define IBUFSIZE 512
 
+static char ibuf[IBUFSIZE + 1];
+
+char *
+read_input (const char *string) {
+  printf("%s", string);
+  return fgets(ibuf, IBUFSIZE, stdin);
+}
+
+#ifdef HAVE_LIBREADLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+#else
+#define readline read_input
+#endif
 
 int
 setup_first (void) {
