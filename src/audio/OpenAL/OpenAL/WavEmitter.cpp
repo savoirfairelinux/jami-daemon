@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -18,49 +18,45 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <iostream>
-#include <list>
-#include <string>
-
-#include <AL/al.h>
-#include <AL/alc.h>
 #include <AL/alut.h>
+#include <iostream>
 
-#include "SFLAudio.hpp"
+#include "WavEmitter.hpp"
+#include "Source.hpp"
 
-using namespace SFLAudio;
-
-int main(int, char* []) 
+SFLAudio::WavEmitter::WavEmitter(char *filename) 
+  : mData(0)
+  , mSize(0)
 {
   ALenum format;
-  ALvoid *data;
-  ALsizei size;
   ALsizei freq;
   ALboolean loop;
 
-  AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
-  Device *device = layer->openDevice();
-  Context *context = device->createContext();
-
   // Load test.wav
-  alutLoadWAVFile("test.wav",&format,&data,&size,&freq,&loop);
+  alutLoadWAVFile(filename, &format,&mData,&mSize,&freq,&loop);
   ALenum error = alGetError();
   if (error != AL_NO_ERROR) {
     std::cerr << "OpenAL/OpenAL: loadWAVFile : " << alGetString(error);
-    return 1;
+    mData = 0;
   }
-
-  Source *source = context->createSource(format, freq);
-  source->play(data, size);
-
-  // Unload test.wav
-  alutUnloadWAV(format, data, size, freq);
-  std::cin.get();
-  error = alGetError();
-
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL/OpenAL: unloadWAV : " << alGetString(error);
+  else {
+    setFrequency(freq);
+    setFormat(format);
   }
+}
 
+void
+SFLAudio::WavEmitter::play()
+{
+  Source *source = getSource();
+  if(source && mData) {
+    source->play(mData, mSize);
 
+    // Unload test.wav
+    alutUnloadWAV(getFormat(), mData, mSize, getFrequency());
+    ALenum error = alGetError();
+    if (error != AL_NO_ERROR) {
+      std::cerr << "OpenAL/OpenAL: unloadWAV : " << alGetString(error);
+    }
+  }
 }

@@ -18,17 +18,24 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alut.h>
-#include <iostream>
-#include <unistd.h>
+#ifndef __SFLAUDIO_NULL_EMITTER_HPP__
+#define __SFLAUDIO_NULL_EMITTER_HPP__
 
-#include "Context.hpp"
-#include "Null/NullSource.hpp"
-#include "OpenAL/OpenALSource.hpp"
+#include "Emitter.hpp"
 
-SFLAudio::Source::Source(int format, int freq)
-  : mFormat(format)
-  , mFreq(freq)
-{}
+namespace SFLAudio
+{
+  class Context;
+  class Source;
+
+  class NullEmitter : public Emitter
+  {
+  public:
+    virtual bool isNull() {return true;}
+    virtual void play() {}
+  };
+
+}
+
+#endif
+

@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -18,49 +18,29 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <iostream>
-#include <list>
-#include <string>
+#ifndef __SFLAUDIO_WAV_EMITTER_HPP__
+#define __SFLAUDIO_WAV_EMITTER_HPP__
 
 #include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alut.h>
+#include "Emitter.hpp"
 
-#include "SFLAudio.hpp"
-
-using namespace SFLAudio;
-
-int main(int, char* []) 
+namespace SFLAudio
 {
-  ALenum format;
-  ALvoid *data;
-  ALsizei size;
-  ALsizei freq;
-  ALboolean loop;
+  class Source;
+  
+  class WavEmitter : public Emitter
+  {
+  private:
+    WavEmitter();
 
-  AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
-  Device *device = layer->openDevice();
-  Context *context = device->createContext();
+  public:
+    WavEmitter(char *filename);
+    void play();
 
-  // Load test.wav
-  alutLoadWAVFile("test.wav",&format,&data,&size,&freq,&loop);
-  ALenum error = alGetError();
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL/OpenAL: loadWAVFile : " << alGetString(error);
-    return 1;
-  }
-
-  Source *source = context->createSource(format, freq);
-  source->play(data, size);
-
-  // Unload test.wav
-  alutUnloadWAV(format, data, size, freq);
-  std::cin.get();
-  error = alGetError();
-
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL/OpenAL: unloadWAV : " << alGetString(error);
-  }
-
-
+  private:
+    ALvoid *mData;
+    ALsizei mSize;
+  };
 }
+
+#endif

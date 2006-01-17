@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -19,48 +19,25 @@
  */
 
 #include <iostream>
-#include <list>
-#include <string>
 
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alut.h>
+#include "OpenAL/OpenALContext.hpp"
+#include "OpenAL/OpenALSource.hpp"
+#include "Null/NullSource.hpp"
 
-#include "SFLAudio.hpp"
+SFLAudio::OpenALContext::OpenALContext(ALCcontext *context)
+  : mContext(context)
+{}
 
-using namespace SFLAudio;
-
-int main(int, char* []) 
+SFLAudio::Source *
+SFLAudio::OpenALContext::createSource(int format, int freq)
 {
-  ALenum format;
-  ALvoid *data;
-  ALsizei size;
-  ALsizei freq;
-  ALboolean loop;
-
-  AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
-  Device *device = layer->openDevice();
-  Context *context = device->createContext();
-
-  // Load test.wav
-  alutLoadWAVFile("test.wav",&format,&data,&size,&freq,&loop);
-  ALenum error = alGetError();
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL/OpenAL: loadWAVFile : " << alGetString(error);
-    return 1;
+  Source *source = 0;
+  if(mContext == 0) {
+    source = new NullSource();
+  }
+  else {
+    source = OpenALSource::create(this, format, freq);
   }
 
-  Source *source = context->createSource(format, freq);
-  source->play(data, size);
-
-  // Unload test.wav
-  alutUnloadWAV(format, data, size, freq);
-  std::cin.get();
-  error = alGetError();
-
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL/OpenAL: unloadWAV : " << alGetString(error);
-  }
-
-
+  return source;
 }

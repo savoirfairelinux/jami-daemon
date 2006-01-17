@@ -19,9 +19,9 @@
  */
 
 #include "AudioManagerImpl.hpp"
-#include "NullLayer.hpp"
-#include "OpenALLayer.hpp"
-#include "PortAudioLayer.hpp"
+#include "Null/NullLayer.hpp"
+#include "OpenAL/OpenALLayer.hpp"
+#include "PortAudio/PortAudioLayer.hpp"
 
 SFLAudio::AudioManagerImpl::AudioManagerImpl() 
 {

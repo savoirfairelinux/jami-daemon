@@ -18,49 +18,19 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <iostream>
-#include <list>
-#include <string>
+#ifndef __SFLAUDIO_NULL_CONTEXT_HPP__
+#define __SFLAUDIO_NULL_CONTEXT_HPP__
 
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alut.h>
+#include "Context.hpp"
 
-#include "SFLAudio.hpp"
-
-using namespace SFLAudio;
-
-int main(int, char* []) 
+namespace SFLAudio 
 {
-  ALenum format;
-  ALvoid *data;
-  ALsizei size;
-  ALsizei freq;
-  ALboolean loop;
-
-  AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
-  Device *device = layer->openDevice();
-  Context *context = device->createContext();
-
-  // Load test.wav
-  alutLoadWAVFile("test.wav",&format,&data,&size,&freq,&loop);
-  ALenum error = alGetError();
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL/OpenAL: loadWAVFile : " << alGetString(error);
-    return 1;
-  }
-
-  Source *source = context->createSource(format, freq);
-  source->play(data, size);
-
-  // Unload test.wav
-  alutUnloadWAV(format, data, size, freq);
-  std::cin.get();
-  error = alGetError();
-
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL/OpenAL: unloadWAV : " << alGetString(error);
-  }
-
-
+  class NullContext : public Context
+  {
+  public:
+    virtual bool isNull() {return true;}
+    Source *createSource(int format, int freq);
+  };
 }
+
+#endif

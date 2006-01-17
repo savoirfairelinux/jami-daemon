@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 		    &infos[i].loop);
     error = alGetError();
     if (error != AL_NO_ERROR) {
-      std::cerr << "OpenAL: loadWAVFile : " << alGetString(error);
+      std::cerr << "OpenAL/OpenAL: loadWAVFile : " << alGetString(error);
       return 1;
     }
   }
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 		  infos[i].freq);
     error = alGetError();
     if (error != AL_NO_ERROR) {
-      std::cerr << "OpenAL: unloadWAV : " << alGetString(error);
+      std::cerr << "OpenAL/OpenAL: unloadWAV : " << alGetString(error);
     }
   }
   

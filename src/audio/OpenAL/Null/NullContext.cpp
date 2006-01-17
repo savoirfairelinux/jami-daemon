@@ -18,17 +18,11 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alut.h>
-#include <iostream>
-#include <unistd.h>
-
-#include "Context.hpp"
+#include "Null/NullContext.hpp"
 #include "Null/NullSource.hpp"
-#include "OpenAL/OpenALSource.hpp"
 
-SFLAudio::Source::Source(int format, int freq)
-  : mFormat(format)
-  , mFreq(freq)
-{}
+SFLAudio::Source *
+SFLAudio::NullContext::createSource(int, int)
+{
+  return new NullSource();
+}

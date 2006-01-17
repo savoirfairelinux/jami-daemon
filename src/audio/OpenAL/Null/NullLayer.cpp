@@ -18,49 +18,37 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <iostream>
-#include <list>
-#include <string>
+#include "Null/NullLayer.hpp"
+#include "Null/NullDevice.hpp"
+#include "Null/NullEmitter.hpp"
 
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alut.h>
+SFLAudio::NullLayer::NullLayer()
+  : AudioLayer("Null/NullLayer")
+{}
 
-#include "SFLAudio.hpp"
+std::list< std::string >
+SFLAudio::NullLayer::getDevicesNames()
+{return std::list< std::string >();}
 
-using namespace SFLAudio;
+std::list< std::string >
+SFLAudio::NullLayer::getCaptureDevicesNames()
+{return std::list< std::string >();}
 
-int main(int, char* []) 
+SFLAudio::Device *
+SFLAudio::NullLayer::openDevice()
 {
-  ALenum format;
-  ALvoid *data;
-  ALsizei size;
-  ALsizei freq;
-  ALboolean loop;
-
-  AudioLayer *layer = SFLAudio::AudioManager::instance().currentLayer();
-  Device *device = layer->openDevice();
-  Context *context = device->createContext();
-
-  // Load test.wav
-  alutLoadWAVFile("test.wav",&format,&data,&size,&freq,&loop);
-  ALenum error = alGetError();
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL/OpenAL: loadWAVFile : " << alGetString(error);
-    return 1;
-  }
-
-  Source *source = context->createSource(format, freq);
-  source->play(data, size);
-
-  // Unload test.wav
-  alutUnloadWAV(format, data, size, freq);
-  std::cin.get();
-  error = alGetError();
-
-  if (error != AL_NO_ERROR) {
-    std::cerr << "OpenAL/OpenAL: unloadWAV : " << alGetString(error);
-  }
-
-
+  return new NullDevice();
 }
+
+SFLAudio::Emitter *
+SFLAudio::NullLayer::openCaptureDevice()
+{
+  return new NullEmitter();
+}
+
+SFLAudio::Device *
+SFLAudio::NullLayer::openDevice(const std::string &)
+{
+  return new NullDevice();
+}
+
