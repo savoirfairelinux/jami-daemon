@@ -42,6 +42,9 @@
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
 
+/* Define to 1 if you have a fully functional readline library. */
+#undef HAVE_LIBREADLINE
+
 /* Define if you have libz */
 #undef HAVE_LIBZ
 

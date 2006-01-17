@@ -6,7 +6,7 @@ serverlib = server/libsflphoneguiserver.la
 #qt/sflphone-qt:
 #	cd qt && make
 
-SUBDIRS = $(serverdir) qt
+SUBDIRS = $(serverdir) qt cli
 
 noinst_LTLIBRARIES = libguiframework.la
 

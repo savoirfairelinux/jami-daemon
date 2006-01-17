@@ -130,6 +130,7 @@ if test "x$with_speex" = "xyes" ; then
 fi
 AM_CONDITIONAL(USE_SPEEX, test "x$with_speex" = "xyes" )
 
+GNUPG_CHECK_READLINE
 
 dnl check for zeroconf (from apple)
 AC_ARG_ENABLE(zeroconf, 
@@ -224,7 +225,6 @@ src/Makefile \
 src/sflphone \
 src/audio/Makefile \
 src/audio/gsm/Makefile \
-src/audio/OpenAL/Makefile \
 src/audio/pacpp/Makefile \
 src/audio/pacpp/include/Makefile \
 src/audio/pacpp/include/portaudiocpp/Makefile \
@@ -233,6 +233,7 @@ src/audio/pacpp/source/portaudiocpp/Makefile \
 src/config/Makefile \
 src/gui/Makefile \
 src/gui/qt/Makefile \
+src/gui/cli/Makefile \
 src/gui/server/Makefile \
 src/zeroconf/Makefile \
 ringtones/Makefile \

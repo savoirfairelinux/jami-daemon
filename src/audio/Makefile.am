@@ -1,4 +1,4 @@
-SUBDIRS = gsm pacpp OpenAL
+SUBDIRS = gsm pacpp 
 
 noinst_LTLIBRARIES = libaudio.la
 
@@ -28,7 +28,7 @@ audioloop.cpp ringbuffer.cpp $(SPEEX_SOURCES)
 AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs -I$(srcdir)/pacpp/include/ $(libccext2_CFLAGS) $(libccrtp1_CFLAGS) $(portaudio_CFLAGS) -I$(top_srcdir)/libs/portaudio/pa_common
 libaudio_la_LIBADD = gsm/libgsm.la pacpp/source/portaudiocpp/libportaudiocpp.la $(SPEEX_LIB) $(SAMPLERATE_LIB)
 libaudio_la_CPPFLAGS = $(SPEEX_FLAG) $(SAMPLERATE_FLAG)
- 
+
 
 noinst_HEADERS = audioloop.h       common.h ringbuffer.h alaw.h          audiofile.h g711.h \
  tonelist.h         audiortp.h audiocodec.h    audiolayer.h \
