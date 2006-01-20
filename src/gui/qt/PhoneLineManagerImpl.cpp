@@ -130,7 +130,7 @@ PhoneLineManagerImpl::registerToServer()
   isInitialized();
   
   Request *r = mSession->registerToServer();
-  QObject::connect(r, SIGNAL(success()),
+  QObject::connect(r, SIGNAL(success(QString, QString)),
 		   this, SIGNAL(registered()));
 }
 

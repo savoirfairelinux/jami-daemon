@@ -107,7 +107,7 @@ void ConfigurationPanel::init()
 			 "About", 
 			 Menu);
     
-    QObject::connect(Register, SIGNAL(clicked()),
+    QObject::connect(buttonRegister, SIGNAL(clicked()),
 		     this, SIGNAL(needRegister()));
 }
 

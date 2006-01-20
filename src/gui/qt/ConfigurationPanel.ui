@@ -310,10 +310,10 @@
                                             </spacer>
                                             <widget class="QPushButton">
                                                 <property name="name">
-                                                    <cstring>Register</cstring>
+                                                    <cstring>buttonRegister</cstring>
                                                 </property>
                                                 <property name="enabled">
-                                                    <bool>false</bool>
+                                                    <bool>true</bool>
                                                 </property>
                                                 <property name="text">
                                                     <string>Register</string>
@@ -1439,7 +1439,7 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
     <tabstop>password</tabstop>
     <tabstop>sipproxy</tabstop>
     <tabstop>autoregister</tabstop>
-    <tabstop>Register</tabstop>
+    <tabstop>buttonRegister</tabstop>
     <tabstop>buttonOk</tabstop>
     <tabstop>buttonCancel</tabstop>
     <tabstop>Tab_Signalisations</tabstop>

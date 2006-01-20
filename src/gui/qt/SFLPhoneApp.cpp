@@ -57,6 +57,7 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< Request >(QString("stoptone"));
   Requester::instance().registerObject< Request >(QString("playdtmf"));
 
+  Requester::instance().registerObject< Request >(QString("register"));
   Requester::instance().registerObject< ConfigGetAllRequest >(QString("configgetall"));
   Requester::instance().registerObject< ConfigSaveRequest >(QString("configsave"));
   Requester::instance().registerObject< StopRequest >(QString("stop"));
