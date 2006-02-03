@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES = libportaudio.la
 libportaudio_la_CFLAGS = $(PORTAUDIO_CFLAGS) -Ipa_common/ 
-libportaudio_la_LIBADD = $(PORTAUDIO)
+libportaudio_la_LIBADD = $(PORTAUDIO) $(PORTAUDIO_LIBS)
 libportaudio_la_CXXFLAGS = $(PORTAUDIO_CFLAGS)
 libportaudio_la_CPPFLAGS = $(PORTAUDIO_CPPFLAGS)
 
