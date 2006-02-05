@@ -1,5 +1,6 @@
 /**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -32,6 +33,7 @@
 #include <qdir.h>
 #include <qmessagebox.h>
 #include <qstringlist.h>
+#include <qcolor.h>
 
 #include "globals.h"
 #include "ConfigurationManager.hpp"
@@ -48,7 +50,8 @@
 
 void ConfigurationPanel::init()
 {
-  DebugOutput::instance() << "ConfigurationPanel::init()\n";
+  DebugOutput::instance() << "ConfigurationPanel::init()\n"; 
+    lblError->hide();
     Tab_Signalisations->show();
     Tab_Audio->hide();
     Tab_Preferences->hide();
@@ -389,7 +392,25 @@ void ConfigurationPanel::updateAudioDevices()
 }
 
 
-void ConfigurationPanel::SkinChoice_selected( const QString & )
+void 
+ConfigurationPanel::SkinChoice_selected( const QString & )
 {
 
 }
+
+void 
+ConfigurationPanel::slotRegisterFailed( QString message ) 
+{
+	lblError->setPaletteForegroundColor(QColor(255,0,0)); // red
+	lblError->setText("Register failed");
+	lblError->show();
+}
+
+void 
+ConfigurationPanel::slotRegisterSucceed( QString message ) 
+{
+	lblError->setPaletteForegroundColor(QColor(0,0,0)); // black
+	lblError->setText("Register Succeed");
+	lblError->show(); 
+}
+

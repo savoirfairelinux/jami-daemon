@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
@@ -82,9 +82,10 @@ signals:
   void lineStatusSet(QString);
   void talkingStarted(QTime);
   void talkingStopped();
+  void registerFailed(QString);
+  void registerSucceed(QString);
 
   void stopped();
-  void registered();
 
   void volumeUpdated(int);
   void micVolumeUpdated(int);
@@ -97,6 +98,8 @@ public slots:
   void hasDisconnected();
 
   void registerToServer();
+  void slotRegisterFailed(QString, QString);
+  void slotRegisterSucceed(QString, QString);
 
   /**
    * You need to call this function once. It must be

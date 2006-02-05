@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
@@ -127,6 +127,9 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 
   QObject::connect(w, SIGNAL(needRegister()),
 		   &PhoneLineManager::instance(), SLOT(registerToServer()));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(registerFailed(QString)), w, SIGNAL(registerFailed(QString)));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(registerSucceed(QString)), w, SIGNAL(registerSucceed(QString)));
+
   //QObject::connect(&PhoneLineManager::instance(), SIGNAL(registered()),
   //		   w, SIGNAL(registered()));
   QObject::connect(w->mOk, SIGNAL(clicked()),
@@ -135,8 +138,10 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   &PhoneLineManager::instance(), SLOT(mute(bool)));
   QObject::connect(w->mDtmf, SIGNAL(toggled(bool)),
 		   mKeypad, SLOT(setShown(bool)));
-  QObject::connect(mKeypad, SIGNAL(hidden()),
-		   w->mDtmf, SLOT(release()));
+  //QObject::connect(mKeypad, SIGNAL(hidden()),
+  //		   w->mDtmf, SLOT(release()));
+  QObject::connect(mKeypad, SIGNAL(isShown(bool)),
+		   w->mDtmf, SLOT(setOn(bool)));
   QObject::connect(w->mSetup, SIGNAL(clicked()),
 		   &PhoneLineManager::instance(), SLOT(setup()));
   QObject::connect(w->mHangup, SIGNAL(clicked()),

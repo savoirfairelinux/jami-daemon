@@ -1,5 +1,6 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -161,7 +162,7 @@ NumericKeypad::NumericKeypad()
   connect(mKeyClose, SIGNAL(clicked()),
 	  this, SLOT(hide()));
   connect(mKeyClose, SIGNAL(clicked()),
-	  this, SIGNAL(hidden()));
+	  this, SLOT(slotHidden()));
 }
 
 NumericKeypad::~NumericKeypad() 
@@ -263,3 +264,9 @@ NumericKeypad::dtmfStarClick()
 void
 NumericKeypad::dtmfHashClick()
 {emit keyPressed(Qt::Key_NumberSign);}
+
+void 
+NumericKeypad::slotHidden() 
+{
+  emit isShown(false);
+}

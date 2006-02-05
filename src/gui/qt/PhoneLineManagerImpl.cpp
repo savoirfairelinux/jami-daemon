@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
@@ -131,7 +131,21 @@ PhoneLineManagerImpl::registerToServer()
   
   Request *r = mSession->registerToServer();
   QObject::connect(r, SIGNAL(success(QString, QString)),
-		   this, SIGNAL(registered()));
+		   this, SLOT(slotRegisterSucceed(QString, QString)));
+  QObject::connect(r, SIGNAL(error(QString, QString)),
+		   this, SLOT(slotRegisterFailed(QString,QString)));
+}
+
+void 
+PhoneLineManagerImpl::slotRegisterSucceed(QString /*code*/, QString message) 
+{
+  emit registerSucceed(message);
+}
+
+void 
+PhoneLineManagerImpl::slotRegisterFailed(QString /*code*/, QString message) 
+{
+  emit registerFailed(message);
 }
 
 void

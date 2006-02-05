@@ -321,6 +321,17 @@
                                             </widget>
                                         </hbox>
                                     </widget>
+				    <widget class="QLabel">
+					    <property name="name">
+						    <cstring>lblError</cstring>
+					    </property>
+					    <property name="text">
+						    <string></string>
+					    </property>
+					    <property name="paletteForegroundColor">
+						    <color><red>255</red><green>0</green><blue>0</blue></color>
+					    </property>
+				    </widget>
                                     <spacer>
                                         <property name="name">
                                             <cstring>spacer9</cstring>
@@ -1466,6 +1477,8 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
 </signals>
 <slots>
     <slot>generate()</slot>
+    <slot>slotRegisterFailed( QString )</slot>
+    <slot>slotRegisterSucceed( QString )</slot>
     <slot>saveSlot()</slot>
     <slot>changeTabSlot()</slot>
     <slot>useStunSlot( int id )</slot>
