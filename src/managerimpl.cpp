@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
@@ -588,6 +588,8 @@ bool
 ManagerImpl::playDtmf(char code)
 {
   stopTone();
+  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_DTMF);
+  if (!hasToPlayTone) return false;
 
   // length in milliseconds
   int pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
@@ -612,7 +614,6 @@ ManagerImpl::playDtmf(char code)
 
   // copy the sound...
   if ( _dtmfKey->generateDTMF(_buf, size * outChannel) ) {
-    int k;
 
     // Put buffer to urgentRingBuffer 
     // put the size in bytes...
@@ -980,6 +981,9 @@ ManagerImpl::registrationFailed()
  */
 bool 
 ManagerImpl::playATone(Tone::TONEID toneId) {
+  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
+  if (!hasToPlayTone) return false;
+
   if (_telephoneTone != 0) {
     _toneMutex.enterMutex();
     _telephoneTone->setCurrentTone(toneId);
@@ -999,6 +1003,9 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
  */
 void 
 ManagerImpl::stopTone() {
+  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
+  if (!hasToPlayTone) return;
+
   try {
     getAudioDriver()->stopStream();
   } catch(...) {
@@ -1048,6 +1055,9 @@ ManagerImpl::ringback () {
 void
 ManagerImpl::ringtone() 
 {
+  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
+  if (!hasToPlayTone) return;
+
   std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
   //if there is no / inside the path
   if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
@@ -1224,6 +1234,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_str(HOST_PART, EMPTY_FIELD);
   fill_config_str(PROXY, EMPTY_FIELD);
   fill_config_int(AUTO_REGISTER, YES_STR);
+  fill_config_int(PLAY_DTMF, YES_STR);
   fill_config_int(PLAY_TONES, YES_STR);
   fill_config_int(PULSE_LENGTH, DFT_PULSE_LENGTH_STR);
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);

@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -48,7 +48,8 @@
 #define HOST_PART		"SIP.hostPart"
 #define PROXY			"SIP.proxy"
 #define AUTO_REGISTER	"SIP.autoregister"
-#define PLAY_TONES		"DTMF.playTones"
+#define PLAY_DTMF       "DTMF.playDtmf"
+#define PLAY_TONES      "DTMF.playTones" 
 #define PULSE_LENGTH	"DTMF.pulseLength"
 #define SEND_DTMF_AS	"DTMF.sendDTMFas"
 #define STUN_SERVER		"STUN.STUNserver"
