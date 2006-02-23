@@ -51,6 +51,10 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   EventFactory::instance().registerEvent< CallRelatedEvent >("000");
   EventFactory::instance().registerEvent< IncommingEvent >("001");
   EventFactory::instance().registerEvent< HangupEvent >("002");
+
+  EventFactory::instance().registerEvent< RegisterSucceededEvent >("003");
+  EventFactory::instance().registerEvent< RegisterFailedEvent >("004");
+
   // TODO: 020
   EventFactory::instance().registerEvent< LoadSetupEvent >("010");
   EventFactory::instance().registerEvent< CallRelatedEvent >("020");

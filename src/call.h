@@ -25,17 +25,17 @@
 
 typedef unsigned int CALLID;
 
-enum CallType {
-	Null = 0,
-	Incoming,
-	Outgoing
-};
-
 
 class VoIPLink;
 
 class Call {
 public:
+  enum CallType {
+  	Null = 0,
+  	Incoming,
+	Outgoing
+  };
+
   enum CallState {
     NotExist = 0,
     Busy,

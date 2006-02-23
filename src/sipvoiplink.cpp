@@ -100,9 +100,14 @@ SipVoIPLink::init(void)
   } else {
    _debug("VoIP Link listen on port %d\n", DEFAULT_SIP_PORT);
   }
+
   // Set user agent
   std::string tmp = std::string(PROGNAME_GLOBAL) + "/" + std::string(SFLPHONED_VERSION);
   eXosip_set_user_agent(tmp.data());
+
+  if ( !checkNetwork() ) {
+    return false;
+  }
 
   // If use STUN server, firewall address setup
   if (Manager::instance().useStun()) {
@@ -113,9 +118,6 @@ SipVoIPLink::init(void)
     eXosip_masquerade_contact((Manager::instance().getFirewallAddress()).data(), Manager::instance().getFirewallPort());
   }
 
-  if ( !checkNetwork() ) {
-    return false;
-  }
   _debug("SIP VoIP Link: listen to SIP Events\n");
   _evThread->start();
   return true;
@@ -192,13 +194,14 @@ SipVoIPLink::setRegister (void)
     return EXOSIP_ERROR_STD;
   }
 
-  _debug("REGISTER From: %s\n", from.data());
   osip_message_t *reg = NULL;
   eXosip_lock();
   if (!manager.getConfigString(SIGNALISATION, PROXY).empty()) {
+    _debug("REGISTER From: %s to %s\n", from.data(), proxy.data());
     _reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
 						      (char*)proxy.data(), NULL, EXPIRES_VALUE, &reg);
   } else {
+    _debug("REGISTER From: %s to %s\n", from.data(), hostname.data());
     _reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
 						      (char*)hostname.data(), NULL, EXPIRES_VALUE, &reg);
   }
@@ -675,7 +678,7 @@ SipVoIPLink::getEvent (void)
 
     // Generate id
     id = Manager::instance().generateNewCallId();
-    Manager::instance().pushBackNewCall(id, Incoming);
+    Manager::instance().pushBackNewCall(id, Call::Incoming);
     _debug("%10d: [cid = %d, did = %d]\n", id, event->cid, event->did);
 
     // Associate an audio port with a call

@@ -106,7 +106,7 @@ public:
   /*
    * Add a new call at the end of the CallVector with identifiant 'id'
    */
-  Call* pushBackNewCall (CALLID id, enum CallType type);
+  Call* pushBackNewCall (CALLID id, Call::CallType type);
   void callSetInfo(CALLID id, const std::string& name, const std::string& number);
   bool callCanBeAnswered(CALLID id);
   bool callCanBeClosed(CALLID id);

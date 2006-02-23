@@ -111,8 +111,8 @@ TCPSessionIO::send(const QString &request)
 {
   QTextStream stream(mSocket);
   if(mSocket->state() == QSocket::Connected) {
-    DebugOutput::instance() << QObject::tr("TCPSessioIO: Sending request to sflphone: %1")
-      .arg(request);
+//    DebugOutput::instance() << QObject::tr("TCPSessioIO: Sending request to sflphone: %1")
+//      .arg(request);
     stream << request;
     mSocket->flush();
   }
@@ -127,8 +127,8 @@ TCPSessionIO::receive(QString &answer)
   if(mSocket->isReadable()) {
     QTextStream stream(mSocket);
     answer = stream.readLine();
-    DebugOutput::instance() << QObject::tr("TCPSessionIO: Received answer from sflphone: %1\n")
-      .arg(answer);
+//    DebugOutput::instance() << QObject::tr("TCPSessionIO: Received answer from sflphone: %1\n")
+//      .arg(answer);
   }
 }
 

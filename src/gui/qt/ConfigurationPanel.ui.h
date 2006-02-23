@@ -110,8 +110,11 @@ void ConfigurationPanel::init()
 			 "About", 
 			 Menu);
     
+    // we save the configuration, then we try to register
+    QObject::connect(buttonRegister, SIGNAL(clicked()), this, SLOT(saveSlot()));
     QObject::connect(buttonRegister, SIGNAL(clicked()),
 		     this, SIGNAL(needRegister()));
+
 }
 
 void 

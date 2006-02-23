@@ -28,9 +28,9 @@ typedef float float32;
 typedef short int16;
 
 #ifdef DEBUG
-  #define _debug(...)          fprintf(stderr, "[sflphoned] " __VA_ARGS__)
-  #define _debugException(...) fprintf(stderr, "[sflphoned-exception] " __VA_ARGS__ "\n")
-  #define _debugInit(...)      fprintf(stderr, "[sflphoned-init] " __VA_ARGS__ "\n")
+  #define _debug(...)          fprintf(stderr, "[sfl-debug] " __VA_ARGS__)
+  #define _debugException(...) fprintf(stderr, "[sfl-excep] " __VA_ARGS__ "\n")
+  #define _debugInit(...)      fprintf(stderr, "[sfl-init.] " __VA_ARGS__ "\n")
 #else
   #define _debug(...)
   #define _debugException(...)

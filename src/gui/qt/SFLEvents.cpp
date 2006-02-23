@@ -1,5 +1,6 @@
 /**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -54,6 +55,26 @@ HangupEvent::execute()
     DebugOutput::instance() << QObject::tr("Hangup Event invalid (missing call ID): %1\n")
       .arg(toString());
   }
+}
+
+RegisterSucceededEvent::RegisterSucceededEvent(const QString &code, const std::list< QString > &args)
+  : Event(code, args)
+{}
+
+void
+RegisterSucceededEvent::execute()
+{
+  DebugOutput::instance() << QObject::tr("Register succedded\n");
+}
+
+RegisterFailedEvent::RegisterFailedEvent(const QString &code, const std::list< QString > &args)
+  : Event(code, args)
+{}
+
+void
+RegisterFailedEvent::execute()
+{
+  DebugOutput::instance() << QObject::tr("Register failed\n");
 }
 
 IncommingEvent::IncommingEvent(const QString &code,

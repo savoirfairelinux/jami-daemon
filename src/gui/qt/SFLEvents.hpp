@@ -1,5 +1,6 @@
 /**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -37,6 +38,24 @@ class HangupEvent : public CallRelatedEvent
 {
 public:
   HangupEvent(const QString &code,
+	      const std::list< QString > &args);
+  
+  virtual void execute();
+};
+
+class RegisterSucceededEvent : public Event
+{
+public:
+  RegisterSucceededEvent(const QString &code,
+	      const std::list< QString > &args);
+  
+  virtual void execute();
+};
+
+class RegisterFailedEvent : public Event
+{
+public:
+  RegisterFailedEvent(const QString &code,
 	      const std::list< QString > &args);
   
   virtual void execute();

@@ -23,7 +23,7 @@
 #include "call.h"
 #include "voIPLink.h"
 
-Call::Call (CALLID id, CallType type, VoIPLink* voiplink)
+Call::Call (CALLID id, Call::CallType type, VoIPLink* voiplink)
 {
 	_state = NotExist;
 	_type = Null;
@@ -108,14 +108,14 @@ Call::setState (Call::CallState state)
 	_state = state;
 }
 
-enum CallType 
+Call::CallType 
 Call::getType (void)
 {
 	return _type;
 }
 
 void 
-Call::setType (enum CallType type)
+Call::setType (Call::CallType type)
 {
 	_type = type;
 }

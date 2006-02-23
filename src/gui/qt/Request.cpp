@@ -54,9 +54,9 @@ Request::parseArgs(const QString &message)
 void
 Request::onError(const QString &code, const QString &message)
 {
-  DebugOutput::instance() << QObject::tr("Received an error:\n  "
-					 "Code: %1\n  "
-					 "SequenceID: %2\n  Message: %3\n")
+  DebugOutput::instance() << QObject::tr("Received an error:        " 
+					 "Code/SeqID: %1/%2\t"
+					 "Message: %3\n")
     .arg(code)
     .arg(mSequenceId)
     .arg(message);
@@ -67,9 +67,8 @@ Request::onError(const QString &code, const QString &message)
 void
 Request::onEntry(const QString &code, const QString &message)
 {
-  DebugOutput::instance() << QObject::tr("Received a temp info:\n  "
-					 "Code: %1\n  "
-					 "SequenceID: %2\n  "
+  DebugOutput::instance() << QObject::tr("Received a temp info:     "
+					 "Code/SeqID: %1/%2\t"
 					 "Message: %3\n")
     .arg(code)
     .arg(mSequenceId)
@@ -106,9 +105,8 @@ Request::onEntry(const QString &code, const QString &message)
 void
 Request::onSuccess(const QString &code, const QString &message)
 {
-  DebugOutput::instance() << QObject::tr("Received a success info:\n  "
-					 "Code: %1\n  "
-					 "SequenceID: %2\n  "
+  DebugOutput::instance() << QObject::tr("Received a success info:  "
+					 "Code/SeqID: %1/%2\t"
 					 "Message: %3\n")
     .arg(code)
     .arg(mSequenceId)

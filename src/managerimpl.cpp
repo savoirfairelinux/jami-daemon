@@ -198,7 +198,7 @@ ManagerImpl::setGui(GuiFramework* gui)
  * Multi Thread with _mutex for callVector
  */
 Call *
-ManagerImpl::pushBackNewCall(CALLID id, enum CallType type)
+ManagerImpl::pushBackNewCall(CALLID id, Call::CallType type)
 {
   ost::MutexLock m(_mutex);
   Call* call = new Call(id, type, _voIPLinkVector.at(DFT_VOIP_LINK));
@@ -278,7 +278,7 @@ ManagerImpl::outgoingCall (const std::string& to)
 {
   CALLID id = generateNewCallId();
   _debug("%10d: Outgoing Call\n", id);
-  Call *call = pushBackNewCall(id, Outgoing);
+  Call *call = pushBackNewCall(id, Call::Outgoing);
   ost::MutexLock m(_mutex);
   call->setState(Call::Progressing);
   call->setCallerIdNumber(to);
@@ -736,7 +736,7 @@ ManagerImpl::incomingCall (CALLID id, const std::string& name, const std::string
   if (call == NULL) {
     return -1;
   }
-  call->setType(Incoming);
+  call->setType(Call::Incoming);
   call->setState(Call::Progressing);
 
   if ( _currentCallId == 0 ) {
