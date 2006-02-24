@@ -33,5 +33,5 @@ libaudio_la_CPPFLAGS = $(SPEEX_FLAG) $(SAMPLERATE_FLAG)
 noinst_HEADERS = audioloop.h       common.h ringbuffer.h alaw.h          audiofile.h g711.h \
  tonelist.h         audiortp.h audiocodec.h    audiolayer.h \
  dtmfgenerator.h    gsmcodec.h      tonegenerator.h    ulaw.h \
- audiodevice.h codecDescriptor.h    dtmf.h tone.h \
+ codecDescriptor.h    dtmf.h tone.h \
  CodecSpeex.h
