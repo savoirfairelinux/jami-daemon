@@ -132,10 +132,11 @@ private:
 	 * If you are behind a NAT, you have to use STUN server, specified in 
 	 * STUN configuration(you can change this one by default) to give you an 
 	 * public IP address and assign a port number.
+         * @param port : on which port we want to listen to
 	 * 
-	 * Return 0 if an error occured and 1 if no error.
+	 * Return false if an error occured and true if no error.
 	 */
-	int behindNat (void);
+	bool behindNat(int port);
 
 	/*
 	 * Return -1 if an error occured and 0 if no error

@@ -79,7 +79,7 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
 
    copied = 0;
    pos = mEnd;
-
+   //fprintf(stderr, "P");
    while(toCopy) {
       block = toCopy;
       if (block > (mBufferSize - pos)) // from current pos. to end of buffer
@@ -130,7 +130,7 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
    dest = (samplePtr) buffer;
    copied = 0;
 
-   //fprintf(stderr, "get start... ");
+   //fprintf(stderr, "G");
    while(toCopy) {
       block = toCopy;
       if (block > (mBufferSize - mStart))

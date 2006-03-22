@@ -1131,32 +1131,32 @@ ManagerImpl::notificationIncomingCall (void) {
 /**
  * Multi Thread
  */
-void
-ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr) 
+bool
+ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr, int port) 
 {
   StunAddress4 mappedAddr;
   struct in_addr in;
   char* addr;
-  char to[16];
-  bzero (to, 16);
 
-  int fd3, fd4;
-  bool ok = stunOpenSocketPair(stunSvrAddr,
-                                    &mappedAddr,
-                                    &fd3,
-                                    &fd4);
+  //int fd3, fd4;
+  // bool ok = stunOpenSocketPair(stunSvrAddr, &mappedAddr, &fd3, &fd4, port);
+  int fd1 = stunOpenSocket(stunSvrAddr, &mappedAddr, port);
+  bool ok = (fd1 == -1 || fd1 == INVALID_SOCKET) ? false : true;
   if (ok) {
-    closesocket(fd3);
-    closesocket(fd4);
+    closesocket(fd1);
+    //closesocket(fd3);
+    //closesocket(fd4);
     _firewallPort = mappedAddr.port;
     // Convert ipv4 address to host byte ordering
     in.s_addr = ntohl (mappedAddr.addr);
     addr = inet_ntoa(in);
     _firewallAddr = std::string(addr);
     _debug("STUN Firewall: [%s:%d]\n", _firewallAddr.data(), _firewallPort);
+    return true;
   } else {
     _debug("Opening a stun socket pair failed\n");
   }
+  return false;
 }
 
 bool

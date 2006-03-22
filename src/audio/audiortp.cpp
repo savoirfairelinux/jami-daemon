@@ -288,6 +288,7 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
       // encode divise by two
       // Send encoded audio sample over the network
       if (compSize > RTP_FRAMES2SEND) { _debug("%d should be %d\n", compSize, _nbFrames);}
+      //fprintf(stderr, "S");
       if (!_sym) {
         _sessionSend->putData(timestamp, data_to_send, compSize);
       } else {
@@ -382,6 +383,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
       // If the current call is the call which is answered
       // Set decoded data to sound device
       // expandedSize is in mono/bytes, since we double in stereo, we send two time more
+      //fprintf(stderr, "R");
       audiolayer->putMain(data_for_speakers_stereo, toPut * sizeof(int16));
       //Manager::instance().getAudioDriver()->startStream();
   

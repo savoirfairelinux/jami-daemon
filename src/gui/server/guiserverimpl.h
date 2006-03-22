@@ -57,21 +57,17 @@ public:
   void sendRegistrationState(bool state);
   void setup();
 
-  void sendMessage(const std::string& code, const std::string& seqId, TokenList&
-arg);
-  void sendCallMessage(const std::string& code, 
-  const std::string& sequenceId, 
-  CALLID id, 
-  TokenList arg);
+  void sendMessage(const std::string& code, const std::string& seqId, 
+    TokenList& arg);
+  void sendCallMessage(const std::string& code, const std::string& sequenceId, 
+    CALLID id, TokenList arg);
   void callFailure(CALLID id);
 
   bool getEvents(const std::string& sequenceId);
   bool sendGetEventsEnd();
 
-  bool outgoingCall (const std::string& seq, 
-    const std::string& account,
-    const std::string& callid, 
-    const std::string& to);
+  bool outgoingCall (const std::string& seq, const std::string& account,
+    const std::string& callid, const std::string& to);
   bool answerCall(const std::string& callId);
   bool refuseCall(const std::string& callId);
   bool holdCall(const std::string& callId);
@@ -99,6 +95,7 @@ private:
   std::string getSequenceIdFromId(CALLID id);
   std::string getCallIdFromId(CALLID id);
   CALLID getIdFromCallId(const std::string& callId);
+
 
   /**
    * This callMap is necessary because

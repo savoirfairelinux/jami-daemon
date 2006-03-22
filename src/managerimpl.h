@@ -210,11 +210,13 @@ public:
 	 */
   void notificationIncomingCall (void);
 
-	/*
-	 * Get information about firewall 
-	 * @param	stunSvrAddr: stun server
-	 */
-  void getStunInfo (StunAddress4& stunSvrAddr);
+  /*
+   * Get information about firewall 
+   * @param  stunSvrAddr: stun server
+   * @param  port         port number to open to test the connection
+   * @return true if the connection is successful
+   */
+  bool getStunInfo(StunAddress4& stunSvrAddr, int port);
   bool useStun (void);
 	
   /*

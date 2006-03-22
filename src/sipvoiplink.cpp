@@ -76,6 +76,14 @@ SipVoIPLink::checkNetwork (void)
   return getSipLocalIp();
 }
 
+
+/**
+ * Steps:
+ * 1. Init eXosip
+ * 2. Try to listen two times on a port
+ *    if we use stun, we check if we can use 5060, before connecting to eXosip...
+ *    if we can't we check on a random port
+ */
 bool
 SipVoIPLink::init(void)
 {
@@ -86,39 +94,54 @@ SipVoIPLink::init(void)
   _started = true;
 
   srand (time(NULL));
-  // second parameter, NULL is "::" for ipv6 and "0.0.0.0" for ipv4, we can put INADDR_ANY
   int i;
-  i = eXosip_listen_addr(IPPROTO_UDP, INADDR_ANY, DEFAULT_SIP_PORT, AF_INET, 0);
-  if (i != 0) {
-    i = eXosip_listen_addr(IPPROTO_UDP, INADDR_ANY, RANDOM_SIP_PORT, AF_INET, 0);
-    if (i != 0) {
-      _debug("Could not initialize transport layer\n");
-      return false;
-    } else {
-      _debug("VoIP Link listen on random port %d\n", RANDOM_SIP_PORT);
+
+  // check networking capabilities
+  if ( !checkNetwork() ) {
+    return false;
+  }
+
+  // if we useStun and we failed to receive something on port 5060, we try a random port
+  // If use STUN server, firewall address setup
+  bool useStun = Manager::instance().useStun();
+  int port = DEFAULT_SIP_PORT;
+
+  int nbTry = 2; // number of times to try to start SIP listener
+  int iTry = 1;  // try number..
+
+  do {
+    if (useStun && !behindNat(port)) { 
+      port = RANDOM_SIP_PORT; 
+      if (!behindNat(port)) {
+        return false; // hoho we can't use the random sip port too...
+      }
     }
-  } else {
-   _debug("VoIP Link listen on port %d\n", DEFAULT_SIP_PORT);
+
+    // second parameter, NULL is "::" for ipv6 and "0.0.0.0" for ipv4, we can put INADDR_ANY
+    i = eXosip_listen_addr(IPPROTO_UDP, INADDR_ANY, port, AF_INET, 0);
+    if (i != 0) {
+      _debug("SIP ERROR: [%d/%d] could not initialize SIP listener on port %d\n", iTry, nbTry, port);
+      port = RANDOM_SIP_PORT;
+    }
+  } while ( i != 0 && iTry < nbTry );
+
+  if ( i != 0 ) { // we didn't succeeded
+    _debug("SIP FAILURE: SIP failed to listen on port %d\n", port);
+    return false;
+  }
+  _debug("SIP Init: listening on port %d\n", port);
+  
+  if (useStun) {
+    // This method is used to replace contact address with the public address of your NAT
+    // it should be call after eXosip_listen_addr
+    eXosip_masquerade_contact((Manager::instance().getFirewallAddress()).data(), Manager::instance().getFirewallPort());
   }
 
   // Set user agent
   std::string tmp = std::string(PROGNAME_GLOBAL) + "/" + std::string(SFLPHONED_VERSION);
   eXosip_set_user_agent(tmp.data());
 
-  if ( !checkNetwork() ) {
-    return false;
-  }
-
-  // If use STUN server, firewall address setup
-  if (Manager::instance().useStun()) {
-    if (behindNat() != 1) {
-      return false;
-    }
-    // This method is used to replace contact address with the public address of your NAT
-    eXosip_masquerade_contact((Manager::instance().getFirewallAddress()).data(), Manager::instance().getFirewallPort());
-  }
-
-  _debug("SIP VoIP Link: listen to SIP Events\n");
+  _debug("SIP Init: starting loop thread (SIP events)\n");
   _evThread->start();
   return true;
 }
@@ -652,10 +675,7 @@ SipVoIPLink::getEvent (void)
   CALLID id = 0;
   int returnValue = EXOSIP_ERROR_NO;
 
-  _debug("#############################################\n"
-         "            SipEvent #%03d %s\n"
-         "            #############################################\n",
-          event->type, event->textinfo);
+  _debug("SIP Event: #%03d %s\n", event->type, event->textinfo);
 
   switch (event->type) {
     // IP-Phone user receives a new call
@@ -668,7 +688,7 @@ SipVoIPLink::getEvent (void)
       setLocalPort(RANDOM_LOCAL_PORT);
     } else {
       // If there is a firewall
-      if (behindNat() != 0) {
+      if (behindNat(DEFAULT_LOCAL_PORT) != 0) {
         setLocalPort(Manager::instance().getFirewallPort());
       } else {
         returnValue = EXOSIP_ERROR_STD;
@@ -1281,8 +1301,8 @@ SipVoIPLink::sdp_off_hold_call (sdp_message_t * sdp)
   return 0;
 }
 
-int
-SipVoIPLink::behindNat (void)
+bool
+SipVoIPLink::behindNat(int port)
 {
   StunAddress4 stunSvrAddr;
   stunSvrAddr.addr = 0;
@@ -1299,9 +1319,7 @@ SipVoIPLink::behindNat (void)
 	
   // Firewall address
   //_debug("STUN server: %s\n", svr.data());
-  Manager::instance().getStunInfo(stunSvrAddr);
-
-  return 1;
+  return Manager::instance().getStunInfo(stunSvrAddr, port);
 }
 
 /**
@@ -1413,17 +1431,18 @@ SipVoIPLink::startCall(CALLID id, const std::string& from, const std::string& to
     _debug("            Setting local port to random: %d\n",_localPort);
   } else {
     // If use Stun server
-    if (behindNat() != 0) {
+    if (behindNat(_localPort)) {
+      setLocalIpAddress(Manager::instance().getFirewallAddress());
       setLocalPort(Manager::instance().getFirewallPort());
-      _debug("            Setting local port to firewall port: %d\n", _localPort);	
+      _debug("            Setting local port to firewall port: %d\n", _localPort);
     } else {
       return -1;
     }
   }
 	
   // Set local audio port for sipcall(id)
-  sipcall->setLocalAudioPort(_localPort);
   sipcall->setLocalIp(getLocalIpAddress());
+  sipcall->setLocalAudioPort(_localPort);
 
   eXosip_lock();
   int i = eXosip_call_build_initial_invite (&invite, (char*)to.data(),
