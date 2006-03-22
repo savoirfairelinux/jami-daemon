@@ -160,7 +160,7 @@ SFLPhoneWindow::keyPressEvent(QKeyEvent *e) {
   // Misc. key	  
   if (e->state() & Qt::ControlButton || e->key() == Qt::Key_Control) {
     emit shortcutPressed(e);
-  } else {
+  } else if (e->key() != Qt::Key_Shift) {
     emit keyPressed(Qt::Key(e->key()));
   }
 }

@@ -26,7 +26,6 @@
 #include "Request.hpp"
 #include "ObjectFactory.hpp"
 
-class AnswerReceiver;
 class Call;
 class SessionIO;
 
