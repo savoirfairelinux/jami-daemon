@@ -37,6 +37,7 @@
 #include "audio/audiocodec.h"
 #include "audio/tonelist.h"
 
+#include "accountcreator.h" // create new account
 #include "sipvoiplink.h"
 #include "voIPLink.h"
 #include "call.h"
@@ -106,9 +107,11 @@ void
 ManagerImpl::init() 
 {
 #ifdef TEST
+  testAccountMap();
+  loadAccountMap();
   testCallAccountMap();
+  unloadAccountMap();
 #endif
-
   initVolume();
 
   if (_exist == 0) {
@@ -154,6 +157,7 @@ ManagerImpl::init()
   // Set a sip voip link by default
   _voIPLinkVector.push_back(new SipVoIPLink());
 
+  loadAccountMap();
   // initRegisterVoIP was here, but we doing it after the gui loaded... 
   // the stun detection is long, so it's a better idea to do it after getEvents
   initZeroconf();
@@ -181,6 +185,8 @@ void ManagerImpl::terminate()
   }
   _callVector.clear();
   _mutex.leaveMutex();
+
+  unloadAccountMap();
 
   _debug("Unload DTMF Key\n");
   delete _dtmfKey;
@@ -1787,14 +1793,14 @@ ManagerImpl::setSwitch(const std::string& switchName) {
 bool
 ManagerImpl::associateCallToAccount(CALLID callID, const AccountID& accountID)
 {
-  if (getAccountFromCall(callID) == "") { // nothing with the same ID
-    //if (  accountExists(accountID)  ) { // account id exist in AccountMap
+  if (getAccountFromCall(callID) == AccountNULL) { // nothing with the same ID
+    if (  accountExists(accountID)  ) { // account id exist in AccountMap
       ost::MutexLock m(_callAccountMapMutex);
       _callAccountMap[callID] = accountID;
       return true;
-    //} else {
-    //  return false; 
-    //}
+    } else {
+      return false; 
+    }
   } else {
     return false;
   }
@@ -1806,7 +1812,7 @@ ManagerImpl::getAccountFromCall(const CALLID callID)
   ost::MutexLock m(_callAccountMapMutex);
   CallAccountMap::iterator iter = _callAccountMap.find(callID);
   if ( iter == 0 || iter == _callAccountMap.end()) {
-    return "";
+    return AccountNULL;
   } else {
     return iter->second;
   }
@@ -1827,10 +1833,62 @@ ManagerImpl::getNewCallID()
 {
   CALLID random_id = (unsigned)rand();
   // when it's not found, it return ""
-  while (getAccountFromCall(random_id) != "") {
+  while (getAccountFromCall(random_id) != AccountNULL) {
     random_id = rand();
   }
   return random_id;
+}
+
+
+
+AccountMap _accountMap;
+
+short
+ManagerImpl::loadAccountMap()
+{
+  short nbAccount = 0;
+
+
+  AccountID accID = "acc0";
+  _accountMap[accID] = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accID);
+  nbAccount++;
+
+  accID = "acc1";
+  _accountMap[accID] = AccountCreator::createAccount(AccountCreator::AIX_ACCOUNT, accID);
+  nbAccount++;
+
+  return nbAccount;
+}
+
+void
+ManagerImpl::unloadAccountMap()
+{
+  AccountMap::iterator iter = _accountMap.begin();
+  while ( iter != _accountMap.end() ) {
+    delete iter->second; iter->second = 0;
+    iter++;
+  }
+  _accountMap.clear();
+}
+
+bool
+ManagerImpl::accountExists(AccountID accountID)
+{
+  AccountMap::iterator iter = _accountMap.find(accountID);
+  if ( iter == 0 || iter == _accountMap.end() ) {
+    return false;
+  }
+  return true;
+}
+
+Account*
+ManagerImpl::getAccount(AccountID accountID)
+{
+  AccountMap::iterator iter = _accountMap.find(accountID);
+  if ( iter == 0 || iter == _accountMap.end() ) {
+    return 0;
+  }
+  return iter->second;
 }
 
 #ifdef TEST
@@ -1839,7 +1897,7 @@ ManagerImpl::getNewCallID()
  */
 bool ManagerImpl::testCallAccountMap()
 {
-  if ( getAccountFromCall(1) != "" ) {
+  if ( getAccountFromCall(1) != AccountNULL ) {
     _debug("TEST: getAccountFromCall with empty list failed\n");
   }
   if ( removeCallAccount(1) != false ) {
@@ -1863,6 +1921,33 @@ bool ManagerImpl::testCallAccountMap()
     _debug("TEST: removeCallAccount don't remove the association\n");
   }
 
+  return true;
+}
+
+/**
+ * Test AccountMap
+ */
+bool ManagerImpl::testAccountMap() 
+{
+  if (loadAccountMap() != 2) {
+    _debug("TEST: loadAccountMap didn't load 2 account\n");
+  }
+  if (accountExists("acc0") == false) {
+    _debug("TEST: accountExists didn't find acc0\n");
+  }
+  if (accountExists("accZ") != false) {
+    _debug("TEST: accountExists found an unknown account\n");
+  }
+  if (getAccount("acc0") == 0) {
+    _debug("TEST: getAccount didn't find acc0\n");
+  }
+  if (getAccount("accZ") != 0) {
+    _debug("TEST: getAccount found an unknown account\n");
+  }
+  unloadAccountMap();
+  if ( accountExists("acc0") == true ) {
+    _debug("TEST: accountExists found an account after unloadAccount\n");
+  }
   return true;
 }
 #endif

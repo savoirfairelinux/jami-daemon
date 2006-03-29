@@ -78,6 +78,11 @@ typedef std::vector< VoIPLink* > VoIPLinkVector;
  * Define a type for a CallID to AccountID Map inside ManagerImpl
  */
 typedef std::map<CALLID, AccountID> CallAccountMap;
+
+/**
+ * Define a type for a AccountMap container
+ */
+typedef std::map<AccountID, Account*> AccountMap;
  
 /**
  * To send multiple string
@@ -454,11 +459,38 @@ private:
    */
   CALLID getNewCallID();
 
-  // bool accountExists(AccountID accountID);
+  /** Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
+  AccountMap _accountMap;
+
+  /**
+   * Load the account from configuration
+   * @return number of account
+   */
+  short loadAccountMap();
+
+  /**
+   * Unload the account (delete them)
+   */
+  void unloadAccountMap();
+
+  /**
+   * Tell if an account exists
+   * @param accountID account ID check
+   */
+  bool accountExists(AccountID accountID);
+
+  /**
+   * Get an account pointer
+   * @param accountID account ID to get
+   * @param the account pointer or 0
+   */
+  Account* getAccount(AccountID accountID);
 
   #ifdef TEST
   bool testCallAccountMap();
+  bool testAccountMap();
   #endif
+
 };
 
 #endif // __MANAGER_H__

@@ -23,6 +23,7 @@
 
 class VoIPLink;
 typedef std::string AccountID;
+#define AccountNULL ""
 
 /**
 	@author Yan Morin 
@@ -35,13 +36,6 @@ public:
     Account(const AccountID& accountID);
 
     ~Account();
-
-  /**
-   * Create a unique voIPLink() depending on the protocol
-   * Multiple call to this function do nothing (if the voiplink pointer is 0)
-   * @return false if an error occurs
-   */
-  virtual bool createVoIPLink() = 0;
 
   /**
    * Register the account
@@ -68,6 +62,13 @@ public:
   virtual bool terminate() = 0;
 
 private:
+  /**
+   * Create a unique voIPLink() depending on the protocol
+   * Multiple call to this function do nothing (if the voiplink pointer is 0)
+   * @return false if an error occurs
+   */
+  virtual bool createVoIPLink() = 0;
+
   /**
    * Account ID are assign in constructor and shall not changed
    */
