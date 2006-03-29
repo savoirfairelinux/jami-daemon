@@ -105,6 +105,10 @@ ManagerImpl::~ManagerImpl (void)
 void 
 ManagerImpl::init() 
 {
+#ifdef TEST
+  testCallAccountMap();
+#endif
+
   initVolume();
 
   if (_exist == 0) {
@@ -1778,3 +1782,87 @@ ManagerImpl::setSwitch(const std::string& switchName) {
     return false;
   }
 }
+
+// ACCOUNT handling
+bool
+ManagerImpl::associateCallToAccount(CALLID callID, const AccountID& accountID)
+{
+  if (getAccountFromCall(callID) == "") { // nothing with the same ID
+    //if (  accountExists(accountID)  ) { // account id exist in AccountMap
+      ost::MutexLock m(_callAccountMapMutex);
+      _callAccountMap[callID] = accountID;
+      return true;
+    //} else {
+    //  return false; 
+    //}
+  } else {
+    return false;
+  }
+}
+
+AccountID
+ManagerImpl::getAccountFromCall(const CALLID callID)
+{
+  ost::MutexLock m(_callAccountMapMutex);
+  CallAccountMap::iterator iter = _callAccountMap.find(callID);
+  if ( iter == 0 || iter == _callAccountMap.end()) {
+    return "";
+  } else {
+    return iter->second;
+  }
+}
+
+bool
+ManagerImpl::removeCallAccount(CALLID callID)
+{
+  ost::MutexLock m(_callAccountMapMutex);
+  if ( _callAccountMap.erase(callID) ) {
+    return true;
+  }
+  return false;
+}
+
+CALLID
+ManagerImpl::getNewCallID() 
+{
+  CALLID random_id = (unsigned)rand();
+  // when it's not found, it return ""
+  while (getAccountFromCall(random_id) != "") {
+    random_id = rand();
+  }
+  return random_id;
+}
+
+#ifdef TEST
+/** 
+ * Test accountMap
+ */
+bool ManagerImpl::testCallAccountMap()
+{
+  if ( getAccountFromCall(1) != "" ) {
+    _debug("TEST: getAccountFromCall with empty list failed\n");
+  }
+  if ( removeCallAccount(1) != false ) {
+    _debug("TEST: removeCallAccount with empty list failed\n");
+  }
+  CALLID newid = getNewCallID();
+  if ( associateCallToAccount(newid, "acc0") == false ) {
+    _debug("TEST: associateCallToAccount with new CallID empty list failed\n");
+  }
+  if ( associateCallToAccount(newid, "acc1") == true ) {
+    _debug("TEST: associateCallToAccount with a known CallID failed\n");
+  }
+  if ( getAccountFromCall( newid ) != "acc0" ) {
+    _debug("TEST: getAccountFromCall don't return the good account id\n");
+  }
+  CALLID secondnewid = getNewCallID();
+  if ( associateCallToAccount(secondnewid, "xxxx") == true ) {
+    _debug("TEST: associateCallToAccount with unknown account id failed\n");
+  }
+  if ( removeCallAccount( newid ) != true ) {
+    _debug("TEST: removeCallAccount don't remove the association\n");
+  }
+
+  return true;
+}
+#endif

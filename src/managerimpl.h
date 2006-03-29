@@ -21,14 +21,18 @@
 #ifndef __MANAGER_H__
 #define __MANAGER_H__
 
+//#define TEST
+
 #include <string>
 #include <vector>
+#include <map>
 #include <cc++/thread.h>
 
 #include "stund/stun.h"
 #include "call.h"
 #include "observer.h"
 #include "config/config.h"
+#include "account.h"
 
 //#include "audio/audiodevice.h"
 #include "audio/tonelist.h" // for Tone::TONEID declaration
@@ -70,6 +74,11 @@ typedef std::vector< Call* > CallVector;
  */
 typedef std::vector< VoIPLink* > VoIPLinkVector;
 
+/**
+ * Define a type for a CallID to AccountID Map inside ManagerImpl
+ */
+typedef std::map<CALLID, AccountID> CallAccountMap;
+ 
 /**
  * To send multiple string
  */
@@ -411,6 +420,45 @@ private:
   DNSService *_DNSService;
 #endif
 
+// CALLID
+
+  /** Map to associate a CallID to the good account */
+  CallAccountMap _callAccountMap;
+  /** Mutex to lock the call account map (main thread + voiplink thread) */
+  ost::Mutex _callAccountMapMutex;
+
+  /** Associate a new CallID to a AccountID
+   * Protected by mutex
+   * @param callID the new CallID not in the list yet
+   * @param accountID the known accountID present in accountMap
+   * @return true if the new association is create
+   */
+  bool associateCallToAccount(CALLID callID, const AccountID& accountID);
+
+  /** Return the AccountID from a CallID
+   * Protected by mutex
+   * @param callID the CallID in the list
+   * @return the accountID associated or "" if the callID is not found
+   */
+  AccountID getAccountFromCall(const CALLID callID);
+
+  /** Remove a CallID/AccountID association
+   * Protected by mutex
+   * @param callID the CallID to remove
+   * @return true if association is removed
+   */
+  bool removeCallAccount(CALLID callID);
+
+  /** Return a new random callid that is not present in the list
+   * @return a brand new callid
+   */
+  CALLID getNewCallID();
+
+  // bool accountExists(AccountID accountID);
+
+  #ifdef TEST
+  bool testCallAccountMap();
+  #endif
 };
 
 #endif // __MANAGER_H__

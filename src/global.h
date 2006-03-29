@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
@@ -50,4 +50,5 @@ typedef short int16;
 #define MONO					1
 #define CHANNELS				2
 #define SIZEBUF 				1024*1024
+
 #endif	// __GLOBAL_H__
