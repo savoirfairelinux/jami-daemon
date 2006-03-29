@@ -486,6 +486,12 @@ private:
    */
   Account* getAccount(AccountID accountID);
 
+  /**
+   * load default account variable for each protocol
+   */
+  void initConfigAccount();
+  
+
   #ifdef TEST
   bool testCallAccountMap();
   bool testAccountMap();

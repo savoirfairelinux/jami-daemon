@@ -32,5 +32,3 @@ Account::~Account()
 {
   delete _link; _link = 0;
 }
-
-

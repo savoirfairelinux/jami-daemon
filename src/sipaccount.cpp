@@ -17,6 +17,16 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "sipaccount.h"
+#define SIP_FULL_NAME      "SIP.fullName"
+#define SIP_USER_PART      "SIP.userPart"
+#define SIP_AUTH_USER_NAME "SIP.username"
+#define SIP_PASSWORD       "SIP.password"
+#define SIP_HOST_PART      "SIP.hostPart"
+#define SIP_PROXY          "SIP.proxy"
+#define SIP_AUTO_REGISTER  "SIP.autoregister"
+#define SIP_STUN_SERVER    "STUN.STUNserver"
+#define SIP_USE_STUN       "STUN.useStun"
+
 
 SIPAccount::SIPAccount(const AccountID& accountID)
  : Account(accountID)
@@ -57,5 +67,23 @@ bool
 SIPAccount::terminate()
 {
   return false;
+}
+
+void 
+SIPAccount::initConfig(Conf::ConfigTree& config)
+{
+  std::string section(_accountID);
+  std::string type_str("string");
+  std::string type_int("int");
+  
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_TYPE, "SIP", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ENABLE,"1", type_int));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_FULL_NAME, "", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_USER_PART, "", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_AUTH_USER_NAME, "", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_PROXY, "", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_AUTO_REGISTER, "1", type_int));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_STUN_SERVER, "stun.fwdnet.net:3478", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_USE_STUN, "0", type_int));
 }
 

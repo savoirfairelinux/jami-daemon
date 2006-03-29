@@ -37,6 +37,10 @@
 #define NETWORK			"Network"
 #define PREFERENCES		"Preferences"
 
+#define ACCOUNT_SIP0  "SIP0"
+#define ACCOUNT_AIX0  "AIX0"
+
+
 // Fields to fill
 #define VOIP_LINK_ID	"VoIPLink.index"
 #define SYMMETRIC     "VoIPLink.symmetric"

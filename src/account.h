@@ -20,10 +20,14 @@
 #define ACCOUNT_H
 
 #include <string>
+#include "config/config.h"
 
 class VoIPLink;
+
 typedef std::string AccountID;
 #define AccountNULL ""
+#define CONFIG_ACCOUNT_TYPE   "Account.type"
+#define CONFIG_ACCOUNT_ENABLE "Account.enable"
 
 /**
 	@author Yan Morin 
@@ -36,6 +40,11 @@ public:
     Account(const AccountID& accountID);
 
     ~Account();
+
+  /**
+   * Load the default properties for the account
+   */
+  virtual void initConfig(Conf::ConfigTree& config) = 0;
 
   /**
    * Register the account
@@ -70,10 +79,6 @@ private:
   virtual bool createVoIPLink() = 0;
 
   /**
-   * Account ID are assign in constructor and shall not changed
-   */
-  AccountID _accountID;
-  /**
    * Voice over IP Link contains a listener thread and calls
    */
   VoIPLink* _link;
@@ -95,6 +100,13 @@ private:
    * Modified by unregister/register
    */
   bool _registered;
+
+protected:
+  /**
+   * Account ID are assign in constructor and shall not changed
+   */
+  AccountID _accountID;
+
 };
 
 #endif

@@ -89,6 +89,16 @@ ManagerImpl::ManagerImpl (void)
   _hasTriedToRegister = false;
   // initialize random generator for call id
   srand (time(NULL));
+
+#ifdef TEST
+  testAccountMap();
+  loadAccountMap();
+  testCallAccountMap();
+  unloadAccountMap();
+#endif
+
+  // should be call before initConfigFile
+  loadAccountMap();
 }
 
 // never call if we use only the singleton...
@@ -106,12 +116,6 @@ ManagerImpl::~ManagerImpl (void)
 void 
 ManagerImpl::init() 
 {
-#ifdef TEST
-  testAccountMap();
-  loadAccountMap();
-  testCallAccountMap();
-  unloadAccountMap();
-#endif
   initVolume();
 
   if (_exist == 0) {
@@ -157,7 +161,6 @@ ManagerImpl::init()
   // Set a sip voip link by default
   _voIPLinkVector.push_back(new SipVoIPLink());
 
-  loadAccountMap();
   // initRegisterVoIP was here, but we doing it after the gui loaded... 
   // the stun detection is long, so it's a better idea to do it after getEvents
   initZeroconf();
@@ -1270,6 +1273,8 @@ ManagerImpl::initConfigFile (void)
   fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
 
+  initConfigAccount();
+
   _exist = createSettingsPath();
   _setupLoaded = (_exist == 2 ) ? false : true;
 }
@@ -1839,22 +1844,15 @@ ManagerImpl::getNewCallID()
   return random_id;
 }
 
-
-
-AccountMap _accountMap;
-
 short
 ManagerImpl::loadAccountMap()
 {
   short nbAccount = 0;
 
-
-  AccountID accID = "acc0";
-  _accountMap[accID] = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accID);
+  _accountMap[ACCOUNT_SIP0] = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, ACCOUNT_SIP0);
   nbAccount++;
 
-  accID = "acc1";
-  _accountMap[accID] = AccountCreator::createAccount(AccountCreator::AIX_ACCOUNT, accID);
+  _accountMap[ACCOUNT_AIX0] = AccountCreator::createAccount(AccountCreator::AIX_ACCOUNT, ACCOUNT_AIX0);
   nbAccount++;
 
   return nbAccount;
@@ -1889,6 +1887,17 @@ ManagerImpl::getAccount(AccountID accountID)
     return 0;
   }
   return iter->second;
+}
+
+void
+ManagerImpl::initConfigAccount() {
+  AccountMap::iterator iter = _accountMap.begin();
+  while ( iter != _accountMap.end() ) {
+    if (iter!=0 && iter->second!=0) {
+      iter->second->initConfig(_config);
+    }
+    iter++;
+  }
 }
 
 #ifdef TEST

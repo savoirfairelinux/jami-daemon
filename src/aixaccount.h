@@ -33,6 +33,7 @@ public:
     ~AIXAccount();
 
   /* virtual Account function implementation */
+  void initConfig(Conf::ConfigTree& config);
   bool registerAccount();
   bool unregisterAccount();
   bool init();
