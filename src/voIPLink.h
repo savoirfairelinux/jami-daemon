@@ -24,11 +24,6 @@
 #include <string>
 #include "call.h"
 
-enum VoIPLinkType {
-	Sip = 0,
-	Iax
-};
-
 class AudioCodec;
 class Call;
 
@@ -58,8 +53,6 @@ public:
 	virtual AudioCodec* getAudioCodec (CALLID id) = 0;
   virtual bool sendMessage(const std::string& to, const std::string& body) = 0;
 
-	void setType (VoIPLinkType type);
-	VoIPLinkType getType (void);
 	void setFullName (const std::string& fullname);
 	std::string getFullName (void);
 	void setHostName (const std::string& hostname);
@@ -67,10 +60,8 @@ public:
 	void setLocalIpAddress (const std::string& ipAdress);
   std::string getLocalIpAddress (void);
 
-private:
-	void initConstructor(void);
+protected:
 	
-	VoIPLinkType _type;
 	std::string _fullname;
 	std::string _hostname;
 	std::string _localIpAddress;

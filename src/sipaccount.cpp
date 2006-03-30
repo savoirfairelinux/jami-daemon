@@ -17,6 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "sipaccount.h"
+#include "sipvoiplink.h"
+
 #define SIP_FULL_NAME      "SIP.fullName"
 #define SIP_USER_PART      "SIP.userPart"
 #define SIP_AUTH_USER_NAME "SIP.username"
@@ -31,6 +33,7 @@
 SIPAccount::SIPAccount(const AccountID& accountID)
  : Account(accountID)
 {
+  createVoIPLink();
 }
 
 
@@ -42,30 +45,49 @@ SIPAccount::~SIPAccount()
 bool
 SIPAccount::createVoIPLink()
 {
-  return false;
+  if (!_link) {
+    _link = new SipVoIPLink();
+  }
+  return (_link != 0 ? true : false);
 }
 
 bool
 SIPAccount::registerAccount()
 {
-  return false;
+  if (_link && !_registered) {
+    _registered = (_link->setRegister() >= 0) ? true : false;
+  }
+  return _registered;
 }
 
 bool
 SIPAccount::unregisterAccount()
 {
-  return false;
+  if (_link && _registered) {
+    _registered = (_link->setUnregister() == 0) ? false : true;
+  }
+  return !_registered;
 }
 
 bool
 SIPAccount::init()
 {
+  if (_link && !_enabled) {
+    _link->init();
+    _enabled = true;
+    return true;
+  }
   return false;
 }
 
 bool
 SIPAccount::terminate()
 {
+  if (_link && _enabled) {
+    _link->terminate();
+    _enabled = false;
+    return true;
+  }
   return false;
 }
 

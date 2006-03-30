@@ -38,7 +38,6 @@
 #include "audio/tonelist.h"
 
 #include "accountcreator.h" // create new account
-#include "sipvoiplink.h"
 #include "voIPLink.h"
 #include "call.h"
 
@@ -158,8 +157,6 @@ ManagerImpl::init()
   }
 
   _debugInit("Adding new VoIP Link");
-  // Set a sip voip link by default
-  _voIPLinkVector.push_back(new SipVoIPLink());
 
   // initRegisterVoIP was here, but we doing it after the gui loaded... 
   // the stun detection is long, so it's a better idea to do it after getEvents
@@ -170,14 +167,7 @@ void ManagerImpl::terminate()
 {
   saveConfig();
 
-  _debug("Removing VoIP Links...\n");
-  for(VoIPLinkVector::iterator pos = _voIPLinkVector.begin();
-      pos != _voIPLinkVector.end();
-      pos++) {
-    delete *pos;
-    *pos = NULL;
-  }
-  _voIPLinkVector.clear();
+  unloadAccountMap();
 
   _debug("Removing calls\n");
   _mutex.enterMutex();
@@ -188,8 +178,6 @@ void ManagerImpl::terminate()
   }
   _callVector.clear();
   _mutex.leaveMutex();
-
-  unloadAccountMap();
 
   _debug("Unload DTMF Key\n");
   delete _dtmfKey;
@@ -214,7 +202,8 @@ Call *
 ManagerImpl::pushBackNewCall(CALLID id, Call::CallType type)
 {
   ost::MutexLock m(_mutex);
-  Call* call = new Call(id, type, _voIPLinkVector.at(DFT_VOIP_LINK));
+
+  Call* call = new Call(id, type, getAccountLink(ACCOUNT_SIP0));
   // Set the wanted voip-link (first of the list)
   _callVector.push_back(call);
   return call;
@@ -308,7 +297,7 @@ ManagerImpl::outgoingCall (const std::string& to)
 bool 
 ManagerImpl::sendTextMessage(const std::string&, const std::string& to, const std::string& message) 
 {
-  return _voIPLinkVector.at(DFT_VOIP_LINK)->sendMessage(to, message);
+  return getAccountLink(ACCOUNT_SIP0)->sendMessage(to, message);
 }
 
 /**
@@ -519,7 +508,7 @@ ManagerImpl::initRegisterVoIPLink()
   int returnValue = true;
   _debugInit("Initiate VoIP Link Registration\n");
   if (_hasTriedToRegister == false) {
-    if ( _voIPLinkVector.at(DFT_VOIP_LINK)->init() ) { 
+    if ( getAccount(ACCOUNT_SIP0)->init() ) { 
       // we call here, because it's long...
       // If network is available and exosip is start..
       if (getConfigInt(SIGNALISATION, AUTO_REGISTER) && _exist == 1) {
@@ -544,8 +533,8 @@ ManagerImpl::registerVoIPLink (void)
 {
   _debug("Register VoIP Link\n");
   int returnValue = false;
-  if (_voIPLinkVector.at(DFT_VOIP_LINK)->setRegister() >= 0) {
-    returnValue = true;
+  returnValue = getAccount(ACCOUNT_SIP0)->registerAccount();
+  if (returnValue) {
     _registerState = REGISTERED;
   } else {
     _registerState = FAILED;
@@ -561,11 +550,7 @@ bool
 ManagerImpl::unregisterVoIPLink (void)
 {
   _debug("Unregister VoIP Link\n");
-	if (_voIPLinkVector.at(DFT_VOIP_LINK)->setUnregister() == 0) {
-		return true;
-	} else {
-		return false;
-	}
+	return getAccount(ACCOUNT_SIP0)->unregisterAccount();
 }
 
 /**
@@ -579,7 +564,7 @@ ManagerImpl::sendDtmf (CALLID id, char code)
   switch (sendType) {
   case 0: // SIP INFO
     playDtmf(code);
-    _voIPLinkVector.at(DFT_VOIP_LINK)->carryingDTMFdigits(id, code);
+    getAccountLink(ACCOUNT_SIP0)->carryingDTMFdigits(id, code);
     returnValue = true;
     break;
 
@@ -920,10 +905,10 @@ ManagerImpl::displayErrorText (CALLID id, const std::string& message)
  * for outgoing call, send by SipEvent
  */
 void 
-ManagerImpl::displayError (const std::string& voIPError)
+ManagerImpl::displayError (const std::string& error)
 {
   if(_gui) {
-    _gui->displayError(voIPError);
+    _gui->displayError(error);
   }
 }
 
@@ -1870,7 +1855,7 @@ ManagerImpl::unloadAccountMap()
 }
 
 bool
-ManagerImpl::accountExists(AccountID accountID)
+ManagerImpl::accountExists(const AccountID& accountID)
 {
   AccountMap::iterator iter = _accountMap.find(accountID);
   if ( iter == 0 || iter == _accountMap.end() ) {
@@ -1880,13 +1865,23 @@ ManagerImpl::accountExists(AccountID accountID)
 }
 
 Account*
-ManagerImpl::getAccount(AccountID accountID)
+ManagerImpl::getAccount(const AccountID& accountID)
 {
   AccountMap::iterator iter = _accountMap.find(accountID);
   if ( iter == 0 || iter == _accountMap.end() ) {
     return 0;
   }
   return iter->second;
+}
+
+VoIPLink* 
+ManagerImpl::getAccountLink(const AccountID& accountID)
+{
+  Account* acc = getAccount(accountID);
+  if ( acc ) {
+    return acc->getVoIPLink();
+  }
+  return 0;
 }
 
 void

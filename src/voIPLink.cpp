@@ -26,23 +26,10 @@
 
 VoIPLink::VoIPLink ()
 {
-	initConstructor();
 }
 
 VoIPLink::~VoIPLink (void) 
 {
-}
-
-void
-VoIPLink::setType (VoIPLinkType type) 
-{
-	_type = type;
-}
-
-VoIPLinkType
-VoIPLink::getType (void)
-{
-	return _type;
 }
 
 void 
@@ -80,15 +67,3 @@ VoIPLink::getLocalIpAddress (void)
 {
 	return _localIpAddress;
 } 
-
-void
-VoIPLink::initConstructor(void)
-{
-	_type = Sip;
-  // TODO: should be inside the account
-	_fullname =
-Manager::instance().getConfigString(SIGNALISATION,FULL_NAME
-) ;
-	_hostname = Manager::instance().getConfigString(SIGNALISATION,HOST_PART);
-	_localIpAddress = "127.0.0.1"; // sipvoip require this value to check network
-}

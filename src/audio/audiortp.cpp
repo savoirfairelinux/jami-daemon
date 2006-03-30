@@ -107,7 +107,8 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, bool sym) {
 #endif
 
   // TODO: Change bind address according to user settings.
-  std::string localipConfig = _ca->getLocalIp();
+  // TODO: this should be the local ip not the external (router) IP
+  std::string localipConfig = "0.0.0.0"; // _ca->getLocalIp();
   ost::InetHostAddress local_ip(localipConfig.c_str());
 
   //_debug("AudioRtpRTX ctor : Local IP:port %s:%d\tsymmetric:%d\n", local_ip.getHostname(), _ca->getLocalAudioPort(), _sym);

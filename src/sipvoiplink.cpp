@@ -53,6 +53,7 @@ SipVoIPLink::SipVoIPLink() : VoIPLink()
 
   _registrationSend = false;
   _started = false;
+  _localIpAddress = "127.0.0.1"; // sipvoip require this value to check network
 }
 
 SipVoIPLink::~SipVoIPLink(void) {
@@ -87,6 +88,10 @@ SipVoIPLink::checkNetwork (void)
 bool
 SipVoIPLink::init(void)
 {
+  // TODO: should be inside the account
+  _fullname = Manager::instance().getConfigString(SIGNALISATION,FULL_NAME) ;
+  _hostname = Manager::instance().getConfigString(SIGNALISATION,HOST_PART);
+
   if (0 != eXosip_init()) {
     _debug("Could not initialize eXosip\n");
     return false;

@@ -48,6 +48,7 @@ class GuiFramework;
 class TelephoneTone;
 
 class VoIPLink;
+
 #ifdef USE_ZEROCONF
 class DNSService;
 #endif
@@ -68,11 +69,6 @@ class DNSService;
  * Define a type for a list of call
  */
 typedef std::vector< Call* > CallVector;
-
-/*
- * Define a type for a list of VoIPLink
- */
-typedef std::vector< VoIPLink* > VoIPLinkVector;
 
 /**
  * Define a type for a CallID to AccountID Map inside ManagerImpl
@@ -105,8 +101,6 @@ public:
         // it's multi-thread and use mutex internally
   AudioLayer* getAudioDriver(void) const { return _audiodriverPA ;}
 
-  	// Accessor to VoIPLinkVector
-  VoIPLinkVector* getVoIPLinkVector (void) {return &_voIPLinkVector;}
   // Codec Descriptor
   CodecDescriptorMap& getCodecDescriptorMap(void) {return _codecDescriptorMap;}
 
@@ -328,8 +322,6 @@ private:
   //
   // Multithread variable with extern accessor and change only inside the main thread
   //
-  /** Vector of VoIPLink */
-  VoIPLinkVector _voIPLinkVector;
   /** Vector of CodecDescriptor */
   CodecDescriptor* _codecBuilder;
 
@@ -477,14 +469,21 @@ private:
    * Tell if an account exists
    * @param accountID account ID check
    */
-  bool accountExists(AccountID accountID);
+  bool accountExists(const AccountID& accountID);
 
   /**
    * Get an account pointer
    * @param accountID account ID to get
    * @param the account pointer or 0
    */
-  Account* getAccount(AccountID accountID);
+  Account* getAccount(const AccountID& accountID);
+
+  /**
+   * Get the voip link from the account pointer
+   * @param accountID account ID to get
+   * @param the voip link from the account pointer or 0
+   */
+  VoIPLink* getAccountLink(const AccountID& accountID);
 
   /**
    * load default account variable for each protocol

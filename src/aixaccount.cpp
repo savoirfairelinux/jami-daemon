@@ -17,10 +17,12 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "aixaccount.h"
+#include "aixvoiplink.h"
 
 AIXAccount::AIXAccount(const AccountID& accountID)
  : Account(accountID)
 {
+  createVoIPLink();
 }
 
 
@@ -32,30 +34,49 @@ AIXAccount::~AIXAccount()
 bool
 AIXAccount::createVoIPLink()
 {
-  return false;
+  if (!_link) {
+    _link = new AIXVoIPLink();
+  }
+  return (_link != 0 ? true : false);
 }
 
 bool
 AIXAccount::registerAccount()
 {
-  return false;
+  if (_link && !_registered) {
+    _registered = (_link->setRegister() >= 0) ? true : false;
+  }
+  return _registered;
 }
 
 bool
 AIXAccount::unregisterAccount()
 {
-  return false;
+  if (_link && _registered) {
+    _registered = (_link->setUnregister() == 0) ? false : true;
+  }
+  return !_registered;
 }
 
 bool
 AIXAccount::init()
 {
+  if (_link && !_enabled) {
+    _link->init();
+    _enabled = true;
+    return true;
+  }
   return false;
 }
 
 bool
 AIXAccount::terminate()
 {
+  if (_link && _enabled) {
+    _link->terminate();
+    _enabled = false;
+    return true;
+  }
   return false;
 }
 

@@ -46,6 +46,13 @@ public:
    */
   virtual void initConfig(Conf::ConfigTree& config) = 0;
 
+
+  /**
+   * Get the voiplink pointer
+   * @return the pointer or 0
+   */
+  inline VoIPLink* getVoIPLink() { return _link; }
+
   /**
    * Register the account
    * @return false is an error occurs
@@ -78,6 +85,12 @@ private:
    */
   virtual bool createVoIPLink() = 0;
 
+protected:
+  /**
+   * Account ID are assign in constructor and shall not changed
+   */
+  AccountID _accountID;
+
   /**
    * Voice over IP Link contains a listener thread and calls
    */
@@ -100,12 +113,6 @@ private:
    * Modified by unregister/register
    */
   bool _registered;
-
-protected:
-  /**
-   * Account ID are assign in constructor and shall not changed
-   */
-  AccountID _accountID;
 
 };
 
