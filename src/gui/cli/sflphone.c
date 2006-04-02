@@ -46,8 +46,8 @@ sflphone_set_fullname (char *s) {
 	if (strlen (s) < 1) {
 		return;
 	}
-	fprintf (fdsocket, "configset seq%d VoIPLink SIP.fullName %s\n",
-					get_next_seq (), s);
+	fprintf (fdsocket, "configset seq%d %s SIP.fullName %s\n",
+					get_next_seq (), DEFAULT_ACCOUNT, s);
 	fflush (fdsocket);
 	display_info ("Set SIP User name: %s\n", s);
 }
@@ -59,10 +59,10 @@ sflphone_set_sipuser (char *s) {
 	if (strlen (s) < 1) {
 		return;
 	}
-	fprintf (fdsocket, "configset seq%d VoIPLink SIP.userPart %s\n",
-					get_next_seq (), s);
-	fprintf (fdsocket, "configset seq%d VoIPLink SIP.username %s\n",
-					get_next_seq (), s);
+	fprintf (fdsocket, "configset seq%d %s SIP.userPart %s\n",
+					get_next_seq (), DEFAULT_ACCOUNT, s);
+	fprintf (fdsocket, "configset seq%d %s SIP.username %s\n",
+					get_next_seq (), DEFAULT_ACCOUNT, s);
 	fflush (fdsocket);
 	display_info ("Set SIP User: %s\n", s);
 }
@@ -74,8 +74,8 @@ sflphone_set_siphost (char *s) {
 	if (strlen (s) < 3) {
 		return;
 	}
-	fprintf (fdsocket, "configset seq%d VoIPLink SIP.hostPart %s\n",
-					get_next_seq (), s);
+	fprintf (fdsocket, "configset seq%d %s SIP.hostPart %s\n",
+					get_next_seq (), DEFAULT_ACCOUNT, s);
 	fflush (fdsocket);
 	display_info ("Set SIP host: %s\n", s);
 }
@@ -87,8 +87,8 @@ sflphone_set_password (char *s) {
 	if (strlen (s) < 2) {
 		return;
 	}
-	fprintf (fdsocket, "configset seq%d VoIPLink SIP.password %s\n",
-					get_next_seq (), s);
+	fprintf (fdsocket, "configset seq%d %s SIP.password %s\n",
+					get_next_seq (), DEFAULT_ACCOUNT, s);
 	fflush (fdsocket);
 	display_info ("Set SIP password: ****\n");
 }
@@ -100,8 +100,8 @@ sflphone_set_proxy (char *s) {
 	if (strlen (s) < 3) {
 		return;
 	}
-	fprintf (fdsocket, "configset seq%d VoIPLink SIP.proxy %s\n",
-					get_next_seq (), s);
+	fprintf (fdsocket, "configset seq%d %s SIP.proxy %s\n",
+					get_next_seq (), DEFAULT_ACCOUNT, s);
 	fflush (fdsocket);
 	display_info ("Set SIP proxy: %s\n", s);
 }
@@ -115,8 +115,8 @@ sflphone_set_stun (char *s) {
 		use = 1;
 	}
 
-	fprintf (fdsocket, "configset seq%d VoIPLink SIP.useStun %d\n",
-					get_next_seq (), use);
+	fprintf (fdsocket, "configset seq%d %s SIP.useStun %d\n",
+					get_next_seq (), DEFAULT_ACCOUNT, use);
 	fflush (fdsocket);
 	display_info ("Set SIP STUN usage: %d\n", use);
 }
@@ -125,7 +125,6 @@ sflphone_set_stun (char *s) {
 // dest is the destination to call
 void
 sflphone_call (char *dest) {
-	int accno = 1; // must change when multiple accounts.
 	int seq;
 	char call_id[CIDMAX];
 	char seq_id[CIDMAX];
@@ -155,7 +154,7 @@ sflphone_call (char *dest) {
 	call_push_new (seq_id, call_id, dest);
 	
 	// Send the command
-	fprintf (fdsocket, "call %s acc%d %s %s\n", seq_id, accno, call_id, dest);
+	fprintf (fdsocket, "call %s %s %s %s\n", seq_id, DEFAULT_ACCOUNT, call_id, dest);
 	fflush (fdsocket);
 }
 

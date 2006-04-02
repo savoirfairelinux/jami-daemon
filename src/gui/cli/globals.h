@@ -6,4 +6,6 @@
 extern FILE	*fdsocket;
 extern int	 core_pid;
 
+#define DEFAULT_ACCOUNT "SIP0"
+
 #endif	// __GLOBALS_H__
