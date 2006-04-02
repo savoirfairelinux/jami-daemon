@@ -20,7 +20,6 @@
 #include "global.h"
 #include "request.h"
 #include "guiserver.h"
-#include "subcall.h"
 
 ResponseMessage
 RequestCall::execute()

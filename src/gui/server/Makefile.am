@@ -8,6 +8,6 @@ libsflphoneguiserver_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${dat
 libsflphoneguiserver_la_CPPFLAGS = -I$(top_srcdir)/libs -I$(top_srcdir)/src $(libccext2_CFLAGS)
 libsflphoneguiserver_la_LIBADD = 
 
-noinst_HEADERS = responsemessage.h request.h requestfactory.h subcall.h \
+noinst_HEADERS = responsemessage.h request.h requestfactory.h \
 		argtokenizer.h tcpsessionio.h requestmanager.h guiserver.h guiserverimpl.h sessionio.h \
 		tcpsessionio.h tcpstreampool.h requestconfig.h ObjectPool.hpp ObjectPool.inl
