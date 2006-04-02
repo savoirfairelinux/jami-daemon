@@ -39,7 +39,6 @@
 
 #include "accountcreator.h" // create new account
 #include "voIPLink.h"
-#include "call.h"
 
 #include "user_cfg.h"
 #include "gui/guiframework.h"
@@ -53,8 +52,6 @@
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))
 #define fill_config_int(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
-
-#define DFT_VOIP_LINK 0
 
 ManagerImpl::ManagerImpl (void)
 {
@@ -73,19 +70,18 @@ ManagerImpl::ManagerImpl (void)
   _setupLoaded = false;
   _gui = NULL;
 
+  // sound
   _audiodriverPA = NULL;
   _dtmfKey = 0;
-
-  // Initialize after by init() -> initVolume()
-  _spkr_volume = 0;
-  _mic_volume  = 0; 
-  _mic_volume_before_mute = 0;
+  _spkr_volume = 0; // Initialize after by init() -> initVolume()
+  _mic_volume  = 0;  // Initialize after by init() -> initVolume()
+  _mic_volume_before_mute = 0; 
 
   // Call
-  _currentCallId = 0;
   _nbIncomingWaitingCall=0;
   _registerState = UNREGISTERED;
   _hasTriedToRegister = false;
+
   // initialize random generator for call id
   srand (time(NULL));
 
@@ -156,8 +152,6 @@ ManagerImpl::init()
     _dtmfKey = new DTMF(sampleRate, outChannel);
   }
 
-  _debugInit("Adding new VoIP Link");
-
   // initRegisterVoIP was here, but we doing it after the gui loaded... 
   // the stun detection is long, so it's a better idea to do it after getEvents
   initZeroconf();
@@ -169,16 +163,6 @@ void ManagerImpl::terminate()
 
   unloadAccountMap();
 
-  _debug("Removing calls\n");
-  _mutex.enterMutex();
-  for(CallVector::iterator pos = _callVector.begin();
-      pos != _callVector.end();
-      pos++) {
-    delete *pos;   *pos = NULL;
-  }
-  _callVector.clear();
-  _mutex.leaveMutex();
-
   _debug("Unload DTMF Key\n");
   delete _dtmfKey;
 
@@ -189,230 +173,165 @@ void ManagerImpl::terminate()
   delete _telephoneTone; _telephoneTone = 0;
 }
 
-void
-ManagerImpl::setGui(GuiFramework* gui)
-{
-	_gui = gui;
+bool
+ManagerImpl::isCurrentCall(const CallID& callId) {
+  ost::MutexLock m(_currentCallMutex);
+  return (_currentCallId2 == callId ? true : false);
 }
 
-/**
- * Multi Thread with _mutex for callVector
- */
-Call *
-ManagerImpl::pushBackNewCall(CALLID id, Call::CallType type)
-{
-  ost::MutexLock m(_mutex);
-
-  Call* call = new Call(id, type, getAccountLink(ACCOUNT_SIP0));
-  // Set the wanted voip-link (first of the list)
-  _callVector.push_back(call);
-  return call;
-}
-
-/**
- * Multi Thread with _mutex for callVector
- */
-Call*
-ManagerImpl::getCall(CALLID id)
-{
-  //_debug("%10d: Getting call\n", id);
-  Call* call = NULL;
-  unsigned int size = _callVector.size();
-  for (unsigned int i = 0; i < size; i++) {
-    call = _callVector.at(i);
-    if (call && call->getId() == id) {
-      break;
-    } else {
-      call = NULL;
-    }
+bool
+ManagerImpl::hasCurrentCall() {
+  ost::MutexLock m(_currentCallMutex);
+  if ( _currentCallId2 != "") {
+    return true;
   }
-  return call;
+  return false;
 }
 
-/**
- * Multi Thread with _mutex for callVector
- */
-void
-ManagerImpl::deleteCall (CALLID id)
-{
-  //_debug("%10d: Deleting call\n", id);
-  CallVector::iterator iter = _callVector.begin();
-  while(iter!=_callVector.end()) {
-    Call *call = *iter;
-    if (call != NULL && call->getId() == id) {
-      if (call->getFlagNotAnswered() && call->isIncomingType() && call->getState() != Call::NotExist) {
-        decWaitingCall();
-      }
-      delete (*iter); *iter = NULL; 
-      call = NULL;
-      _callVector.erase(iter);
-      return;
-    }
-    iter++;
-  }
+const CallID& 
+ManagerImpl::getCurrentCallId() {
+  ost::MutexLock m(_currentCallMutex);
+  return _currentCallId2;
 }
 
 void
-ManagerImpl::setCurrentCallId(CALLID id)
-{
-  //_debug("%10d: Setting current callid, old one was: %d\n", id, _currentCallId);
-  _currentCallId = id;
-}
-
-void
-ManagerImpl::removeCallFromCurrent(CALLID id)
-{
-  if ( _currentCallId == id ) {
-    //_debug("%10d: Setting current callid, old one was: %d\n", 0, _currentCallId);
-    _currentCallId = 0;
-  }
+ManagerImpl::switchCall(const CallID& id ) {
+  ost::MutexLock m(_currentCallMutex);
+  _currentCallId2 = id;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
-/**
- * Main thread
- */
-int 
-ManagerImpl::outgoingCall (const std::string& to)
+/* Main Thread */ 
+bool
+ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
-  CALLID id = generateNewCallId();
-  _debug("%10d: Outgoing Call\n", id);
-  Call *call = pushBackNewCall(id, Call::Outgoing);
-  ost::MutexLock m(_mutex);
-  call->setState(Call::Progressing);
-  call->setCallerIdNumber(to);
-  if (call->outgoingCall(to) == 0) {
-    return id;
-  } else {
-    return 0;
+  if (!accountExists(accountid)) {
+    _debug("Outgoing Call: account doesn't exist\n");
+    return false;
   }
-}
-
-/**
- * Main thread
- */
-bool 
-ManagerImpl::sendTextMessage(const std::string&, const std::string& to, const std::string& message) 
-{
-  return getAccountLink(ACCOUNT_SIP0)->sendMessage(to, message);
-}
-
-/**
- * User action (main thread)
- * Every Call
- */
-int 
-ManagerImpl::hangupCall (CALLID id)
-{
-  _debug("%10d: Hangup Call\n", id);
-  stopTone();
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call == NULL) {
-    return -1;
+  if (getAccountFromCall(id) != AccountNULL) {
+    _debug("Outgoing Call: call id already exists\n");
+    return false;
   }
-  int result = -1;
-  if (call->getState() != Call::Error) { 
-    result = call->hangup();
-  }
-  deleteCall(id);
-  // current call id or no line selected
-  if (id == _currentCallId || _currentCallId == 0) {
-    removeCallFromCurrent(id);
-  }
-  return result;
-}
-
-/**
- * User action (main thread)
- * Every Call
- * -1 : call not found
- *  0 : already in this state...
- */
-int
-ManagerImpl::cancelCall (CALLID id)
-{
-  _debug("%10d: Cancel Call\n", id);
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call == NULL) { 
-    return -1; 
-  }
-  int result = call->cancel();
-  deleteCall(id);
-  stopTone();
-  return result;
-}
-
-/**
- * User action (main thread)
- * Incoming Call
- */
-int 
-ManagerImpl::answerCall (CALLID id)
-{
-  _debug("%10d: Answer Call\n", id);
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call == NULL) {
-    return -1;
-  }
-  if (call->getFlagNotAnswered()) {
-    decWaitingCall();
-    call->setFlagNotAnswered(false);
-  }
-  if (call->getState() != Call::OnHold) {
+  _debug("Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
+  if ( getAccountLink(accountid)->newOutgoingCall(id, to) ) {
+    associateCallToAccount( id, accountid );
     switchCall(id);
+    return true;
+  } else {
+    _debug("An error occur, the call was not created\n");
   }
-  stopTone(); // before answer, don't stop the audio stream after open it
-  return call->answer();
+  return false;
 }
 
-/**
- * User action (main thread)
- * Every Call
- * @return 0 if it fails, -1 if not present
- */
-int 
-ManagerImpl::onHoldCall (CALLID id)
+//THREAD=Main : for outgoing Call
+bool
+ManagerImpl::answerCall(const CallID& id)
 {
-  _debug("%10d: On Hold Call\n", id);
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call == NULL) {
-    return -1;
+  stopTone(); 
+
+  AccountID accountid = getAccountFromCall( id );
+  if (accountid == AccountNULL) {
+    _debug("Answering Call: Call doesn't exists\n");
+    return false;
   }
-  removeCallFromCurrent(id);
-  if ( call->getState() == Call::OnHold || call->isNotAnswered()) {
-    return 1;
+
+  if (!getAccountLink(accountid)->answer(id)) {
+    // error when receiving...
+    removeCallAccount(id);
+    return false;
   }
-  return call->onHold();
+
+  // if it was waiting, it's waiting no more
+  removeWaitingCall(id);
+  switchCall(id);
+  return true;
 }
 
-/**
- * User action (main thread)
- * Every Call
- */
-int 
-ManagerImpl::offHoldCall (CALLID id)
+//THREAD=Main
+bool 
+ManagerImpl::sendTextMessage(const AccountID& accountId, const std::string& to, const std::string& message) 
 {
-  _debug("%10d: Off Hold Call\n", id);
-  ost::MutexLock m(_mutex);
+  if (accountExists(accountId)) {
+    return getAccountLink(accountId)->sendMessage(to, message);
+  }
+  return false;
+}
+
+//THREAD=Main
+bool
+ManagerImpl::hangupCall(const CallID& id)
+{
   stopTone();
-  Call* call = getCall(id);
-  if (call == 0) {
-    return -1;
+
+  AccountID accountid = getAccountFromCall( id );
+  if (accountid == AccountNULL) {
+    _debug("Hangup Call: Call doesn't exists\n");
+    return false;
   }
-  if (call->getState() == Call::OffHold) {
-    return 1;
+
+  bool returnValue = getAccountLink(accountid)->hangup(id);
+  removeCallAccount(id);
+  switchCall("");
+
+  return returnValue;
+}
+
+//THREAD=Main
+bool
+ManagerImpl::cancelCall (const CallID& id)
+{
+  stopTone();
+  AccountID accountid = getAccountFromCall( id );
+  if (accountid == AccountNULL) {
+    _debug("Cancel Call: Call doesn't exists\n");
+    return false;
   }
-  setCurrentCallId(id);
-  int returnValue = call->offHold();
-  // start audio if it's ok
-  if (returnValue != -1) {
+
+  bool returnValue = getAccountLink(accountid)->cancel(id);
+  // it could be a waiting call?
+  removeWaitingCall(id);
+  removeCallAccount(id);
+  switchCall("");
+  
+  return returnValue;
+}
+
+//THREAD=Main
+bool
+ManagerImpl::onHoldCall(const CallID& id)
+{
+  stopTone();
+  AccountID accountid = getAccountFromCall( id );
+  if (accountid == AccountNULL) {
+    _debug("On Hold Call: Call doesn't exists\n");
+    return false;
+  }
+
+  bool returnValue = getAccountLink(accountid)->onhold(id);
+  removeWaitingCall(id);
+  switchCall("");
+  
+  return returnValue;
+}
+
+//THREAD=Main
+bool
+ManagerImpl::offHoldCall(const CallID& id)
+{
+  stopTone();
+  AccountID accountid = getAccountFromCall( id );
+  if (accountid == AccountNULL) {
+    _debug("OffHold Call: Call doesn't exists\n");
+    return false;
+  }
+  bool returnValue = getAccountLink(accountid)->offhold(id);
+  switchCall(id);
+
+  if (returnValue) {
     try {
       getAudioDriver()->startStream();
     } catch(...) {
@@ -422,37 +341,32 @@ ManagerImpl::offHoldCall (CALLID id)
   return returnValue;
 }
 
-/**
- * User action (main thread)
- * Every Call
- */
-int 
-ManagerImpl::transferCall (CALLID id, const std::string& to)
+//THREAD=Main
+bool
+ManagerImpl::transferCall(const CallID& id, const std::string& to)
 {
-  _debug("%10d: Transfer Call to %s\n", id, to.c_str());
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call == 0) {
-    return -1;
+  stopTone();
+  AccountID accountid = getAccountFromCall( id );
+  if (accountid == AccountNULL) {
+    _debug("Transfer Call: Call doesn't exists\n");
+    return false;
   }
-  removeCallFromCurrent(id);
-  return call->transfer(to);
+  bool returnValue = getAccountLink(accountid)->transfer(id, to);
+  removeWaitingCall(id);
+  removeCallAccount(id);
+  switchCall("");
+
+  return returnValue;
 }
 
-/**
- * User action (main thread)
- * All Call
- */
+//THREAD=Main
 void
 ManagerImpl::mute() {
   _mic_volume_before_mute = _mic_volume;
   setMicVolume(0);
 }
 
-/**
- * User action (main thread)
- * All Call
- */
+//THREAD=Main
 void
 ManagerImpl::unmute() {
   if ( _mic_volume == 0 ) {
@@ -460,34 +374,24 @@ ManagerImpl::unmute() {
   }
 }
 
-/**
- * User action (main thread)
- * Call Incoming
- */
-int 
-ManagerImpl::refuseCall (CALLID id)
+//THREAD=Main : Call:Incoming
+bool
+ManagerImpl::refuseCall (const CallID& id)
 {
-  _debug("%10d: Refuse Call\n", id);
-  ost::MutexLock m(_mutex);
-  Call *call = getCall(id);
-  if (call == NULL) {
-    return -1;
-  }
-
-  if ( call->getState() != Call::Progressing ) {
-    return -1;
-  }
-
-  int refuse = call->refuse();
-  removeCallFromCurrent(id);
-  deleteCall(id);
   stopTone();
-  return refuse;
+  AccountID accountid = getAccountFromCall( id );
+  if (accountid == AccountNULL) {
+    _debug("OffHold Call: Call doesn't exists\n");
+    return false;
+  }
+  bool returnValue = getAccountLink(accountid)->refuse(id);
+  removeWaitingCall(id);
+  removeCallAccount(id);
+  switchCall("");
+  return returnValue;
 }
 
-/**
- * User action (main thread)
- */
+//THREAD=Main
 bool
 ManagerImpl::saveConfig (void)
 {
@@ -499,73 +403,67 @@ ManagerImpl::saveConfig (void)
   return _setupLoaded;
 }
 
-/**
- * Main Thread
- */
+//THREAD=Main
 bool
 ManagerImpl::initRegisterVoIPLink() 
 {
-  int returnValue = true;
-  _debugInit("Initiate VoIP Link Registration\n");
-  if (_hasTriedToRegister == false) {
-    if ( getAccount(ACCOUNT_SIP0)->init() ) { 
-      // we call here, because it's long...
-      // If network is available and exosip is start..
-      if (getConfigInt(SIGNALISATION, AUTO_REGISTER) && _exist == 1) {
-        registerVoIPLink();
-        _hasTriedToRegister = true;
+  _debugInit("Initiate VoIP Links Registration\n");
+  AccountMap::iterator iter = _accountMap.begin();
+  while( iter != _accountMap.end() ) {
+    if ( iter->second) {
+      iter->second->loadConfig();
+      if ( iter->second->shouldInitOnStart() ) {
+        iter->second->init();
+        if (iter->second->shouldRegisterOnStart()) {
+          iter->second->registerAccount();
+        }
       }
-    } else {
-      returnValue = false;
     }
+    iter++;
   }
-  return returnValue;
+  return true;
 }
 
-
-/**
- * Initialize action (main thread)
- * Note that Registration is only send if STUN is not activated
- * @return true if setRegister is call without failure, else return false
- */
+//THREAD=Main
 bool
-ManagerImpl::registerVoIPLink (void)
+ManagerImpl::registerVoIPLink(const AccountID& accountId)
 {
   _debug("Register VoIP Link\n");
   int returnValue = false;
-  returnValue = getAccount(ACCOUNT_SIP0)->registerAccount();
-  if (returnValue) {
-    _registerState = REGISTERED;
-  } else {
-    _registerState = FAILED;
+  if (accountExists( accountId ) ) {
+    returnValue = getAccount(accountId)->registerAccount();
   }
   return returnValue;
 }
 
-/**
- * Terminate action (main thread)
- * @return true if the unregister method is send correctly
- */
+//THREAD=Main
 bool 
-ManagerImpl::unregisterVoIPLink (void)
+ManagerImpl::unregisterVoIPLink(const AccountID& accountId)
 {
   _debug("Unregister VoIP Link\n");
-	return getAccount(ACCOUNT_SIP0)->unregisterAccount();
+  int returnValue = false;
+  if (accountExists( accountId ) ) {
+    returnValue = getAccount(accountId)->registerAccount();
+  }
+  return returnValue;
 }
 
-/**
- * User action (main thread)
- */
+//THREAD=Main
 bool 
-ManagerImpl::sendDtmf (CALLID id, char code)
+ManagerImpl::sendDtmf(const CallID& id, char code)
 {
+  AccountID accountid = getAccountFromCall( id );
+  if (accountid == AccountNULL) {
+    _debug("Send DTMF: call doesn't exists\n");
+    return false;
+  }
+
   int sendType = getConfigInt(SIGNALISATION, SEND_DTMF_AS);
-  int returnValue = false;
+  bool returnValue = false;
   switch (sendType) {
   case 0: // SIP INFO
     playDtmf(code);
-    getAccountLink(ACCOUNT_SIP0)->carryingDTMFdigits(id, code);
-    returnValue = true;
+    returnValue = getAccountLink(accountid)->carryingDTMFdigits(id, code);
     break;
 
   case 1: // Audio way
@@ -578,10 +476,7 @@ ManagerImpl::sendDtmf (CALLID id, char code)
   return returnValue;
 }
 
-/**
- * User action (main thread)
- * Or sip event (dtmf body submit)
- */
+//THREAD=Main | VoIPLink
 bool
 ManagerImpl::playDtmf(char code)
 {
@@ -595,7 +490,6 @@ ManagerImpl::playDtmf(char code)
 
   // numbers of int = length in milliseconds / 1000 (number of seconds)
   //                = number of seconds * SAMPLING_RATE by SECONDS
-
   AudioLayer* audiolayer = getAudioDriver();
 
   // fast return, no sound, so no dtmf
@@ -634,264 +528,158 @@ ManagerImpl::playDtmf(char code)
   return returnValue;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Management of event peer IP-phone 
-////////////////////////////////////////////////////////////////////////////////
-/**
- * Multi-thread
- */
+
+
+// Multi-thread 
 bool
 ManagerImpl::incomingCallWaiting() {
-  ost::MutexLock m(_incomingCallMutex);
+  ost::MutexLock m(_waitingCallMutex);
   return (_nbIncomingWaitingCall > 0) ? true : false;
 }
 
 void
-ManagerImpl::incWaitingCall() {
-  ost::MutexLock m(_incomingCallMutex);
+ManagerImpl::addWaitingCall(const CallID& id) {
+  ost::MutexLock m(_waitingCallMutex);
+  _waitingCall.insert(id);
   _nbIncomingWaitingCall++;
-  //_debug("incWaitingCall: %d\n", _nbIncomingWaitingCall);
 }
 
 void
-ManagerImpl::decWaitingCall() {
-  ost::MutexLock m(_incomingCallMutex);
-  _nbIncomingWaitingCall--;
-  //_debug("decWaitingCall: %d\n", _nbIncomingWaitingCall);
+ManagerImpl::removeWaitingCall(const CallID& id) {
+  ost::MutexLock m(_waitingCallMutex);
+  // should return more than 1 if it erase a call
+  if (_waitingCall.erase(id)) {
+    _nbIncomingWaitingCall--;
+  }
+}
+
+bool
+ManagerImpl::isWaitingCall(const CallID& id) {
+  ost::MutexLock m(_waitingCallMutex);
+  CallIDSet::iterator iter = _waitingCall.find(id);
+  if (iter != _waitingCall.end()) {
+    return false;
+  }
+  return true;
 }
 
 
-/**
- * SipEvent Thread
- * Set the call info for incoming call
- */
-void
-ManagerImpl::callSetInfo(CALLID id, const std::string& name, const std::string& number)
+
+///////////////////////////////////////////////////////////////////////////////
+// Management of event peer IP-phone 
+////////////////////////////////////////////////////////////////////////////////
+// SipEvent Thread 
+bool 
+ManagerImpl::incomingCall(Call* call, const AccountID& accountId) 
 {
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call != 0) {
-    call->setCallerIdName(name);
-    call->setCallerIdNumber(number);
-  }
-}
-
-/**
- * SipEvent Thread
- * ask if it can close the call
- */
-bool
-ManagerImpl::callCanBeClosed(CALLID id) {
-  bool returnValue = false;
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call != NULL && call->getState() != Call::Progressing) {
-    returnValue = true;
-  }
-  return returnValue;
-}
-
-/**
- * SipEvent Thread
- * ask if it can answer the call
- */
-bool
-ManagerImpl::callCanBeAnswered(CALLID id) {
-  bool returnValue = false;
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call != NULL && ( call->getFlagNotAnswered() || 
-       (call->getState()!=Call::OnHold && call->getState()!=Call::OffHold) )) {
-    returnValue = true;
-  }
-  return returnValue;
-}
-
-/**
- * SipEvent Thread
- * ask if it can start the sound thread
- */
-bool
-ManagerImpl::callIsOnHold(CALLID id) {
-  bool returnValue = false;
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call != NULL && (call->getState()==Call::OnHold)) {
-    returnValue = true;
-  }
-  return returnValue;
-}
-
-/**
- * SipEvent Thread
- */
-int 
-ManagerImpl::incomingCall (CALLID id, const std::string& name, const std::string& number)
-{
-  _debug("%10d: Incoming call\n", id);
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call == NULL) {
-    return -1;
-  }
-  call->setType(Call::Incoming);
-  call->setState(Call::Progressing);
-
-  if ( _currentCallId == 0 ) {
-    call->setFlagNotAnswered(false);
+  _debug("Incoming call\n");
+  associateCallToAccount(call->getCallId(), accountId);
+  if ( !hasCurrentCall() ) {
+    call->setConnectionState(Call::Ringing);
     ringtone();
-    switchCall(id);
+    switchCall(call->getCallId());
   } else {
-    incWaitingCall();
+     addWaitingCall(call->getCallId());
   }
 
-  // TODO: Account not yet implemented
-  std::string accountId = "acc1";
-  std::string from = name;     call->setCallerIdName(name);
-  call->setCallerIdNumber(number);
+  std::string from = call->getPeerName();
+  std::string number = call->getPeerNumber();
+
   if ( !number.empty() ) {
     from.append(" <");
     from.append(number);
     from.append(">");
   }
-  return _gui->incomingCall(id, accountId, from);
+  _gui->incomingCall(accountId, call->getCallId(), from);
+
+  return true;
 }
 
-/**
- * SipEvent Thread
- * for outgoing message, send by SipEvent
- */
-void 
-ManagerImpl::incomingMessage(const std::string& message) {
+//THREAD=VoIP
+void
+ManagerImpl::incomingMessage(const AccountID& accountId, const std::string& message) {
   if (_gui) {
-    _gui->incomingMessage(message);
+    _gui->incomingMessage(accountId, message);
   }
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
-void 
-ManagerImpl::peerAnsweredCall (CALLID id)
+//THREAD=VoIP CALL=Outgoing
+void
+ManagerImpl::peerAnsweredCall(const CallID& id)
 {
-  _debug("%10d: Peer Answered Call\n", id);
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call != 0) {
-    call->setFlagNotAnswered(false);
-    call->setState(Call::Answered);
-
+  if (isCurrentCall(id)) {
     stopTone();
-    // switch current call
-    switchCall(id);
-    if (_gui) _gui->peerAnsweredCall(id);
   }
+  if (_gui) _gui->peerAnsweredCall(id);
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
-int
-ManagerImpl::peerRingingCall (CALLID id)
+//THREAD=VoIP Call=Outgoing
+void
+ManagerImpl::peerRingingCall(const CallID& id)
 {
-  _debug("%10d: Peer Ringing Call\n", id);
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call != 0) {
-    call->setState(Call::Ringing);
-
-    // ring
+  if (isCurrentCall(id)) {
     ringback();
-    if (_gui) _gui->peerRingingCall(id);
   }
-  return 1;
+  if (_gui) _gui->peerRingingCall(id);
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
-int 
-ManagerImpl::peerHungupCall (CALLID id)
+//THREAD=VoIP Call=Outgoing/Ingoing
+void
+ManagerImpl::peerHungupCall(const CallID& id)
 {
-  _debug("%10d: Peer Hungup Call\n", id);
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if ( call == NULL ) {
-    return -1;
+  AccountID accountid = getAccountFromCall( id );
+  if (accountid == AccountNULL) {
+    _debug("peerHungupCall: Call doesn't exists\n");
+    return;
   }
-  if ( _currentCallId == id ) {
+  if (isCurrentCall(id)) {
     stopTone();
+    switchCall("");
   }
-
-  if (_gui) _gui->peerHungupCall(id);
-  deleteCall(id);
-  call->setState(Call::Hungup);
-
-  removeCallFromCurrent(id);
-  return 1;
+  removeWaitingCall(id);
+  removeCallAccount(id);
 }
 
-/**
- * Multi Thread
- */
+//THREAD=VoIP
 void
-ManagerImpl::callBusy(CALLID id) {
-  _debug("%10d: Call is busy\n", id);
-  playATone(Tone::TONE_BUSY);
-  ost::MutexLock m(_mutex);
-  Call* call = getCall(id);
-  if (call != 0) {
-    call->setState(Call::Busy);
+ManagerImpl::callBusy(const CallID& id) {
+  _debug("Call busy\n");
+  if (isCurrentCall(id) ) {
+    playATone(Tone::TONE_BUSY);
+    switchCall("");
   }
-  deleteCall(id);
-  call->setState(Call::Hungup);
-
-  removeCallFromCurrent(id);
+  removeCallAccount(id);
+  removeWaitingCall(id);
 }
 
-/**
- * Multi Thread
- */
+//THREAD=VoIP
 void
-ManagerImpl::callFailure(CALLID id) {
-  _debug("%10d: Call failed\n", id);
-  playATone(Tone::TONE_BUSY);
-  _mutex.enterMutex();
-  Call* call = getCall(id);
-  if (call != 0) {
-    call->setState(Call::Error);
+ManagerImpl::callFailure(const CallID& id) 
+{
+  _debug("Call failed\n");
+  if (isCurrentCall(id) ) {
+    playATone(Tone::TONE_BUSY);
+    switchCall("");
   }
-  _mutex.leaveMutex();
   if (_gui) {
     _gui->callFailure(id);
   }
-  deleteCall(id);
-  call->setState(Call::Hungup);
-
-  removeCallFromCurrent(id);
+  removeCallAccount(id);
+  removeWaitingCall(id);
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
+//THREAD=VoIP
 void 
-ManagerImpl::displayTextMessage (CALLID id, const std::string& message)
+ManagerImpl::displayTextMessage(const CallID& id, const std::string& message)
 {
   if(_gui) {
-    _gui->displayTextMessage(id, message);
+   _gui->displayTextMessage(id, message);
   }
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
+//THREAD=VoIP
 void 
-ManagerImpl::displayErrorText (CALLID id, const std::string& message)
+ManagerImpl::displayErrorText(const CallID& id, const std::string& message)
 {
   if(_gui) {
     _gui->displayErrorText(id, message);
@@ -900,10 +688,7 @@ ManagerImpl::displayErrorText (CALLID id, const std::string& message)
   }
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
+//THREAD=VoIP
 void 
 ManagerImpl::displayError (const std::string& error)
 {
@@ -912,22 +697,16 @@ ManagerImpl::displayError (const std::string& error)
   }
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
+//THREAD=VoIP
 void 
-ManagerImpl::displayStatus (const std::string& status)
+ManagerImpl::displayStatus(const std::string& status)
 {
   if(_gui) {
     _gui->displayStatus(status);
   }
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
+//THREAD=VoIP
 void 
 ManagerImpl::displayConfigError (const std::string& message)
 {
@@ -936,42 +715,32 @@ ManagerImpl::displayConfigError (const std::string& message)
   }
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
+//THREAD=VoIP
 void
-ManagerImpl::startVoiceMessageNotification (const std::string& nb_msg)
+ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, const std::string& nb_msg)
 {
-  if (_gui) _gui->sendVoiceNbMessage(nb_msg);
+  if (_gui) _gui->sendVoiceNbMessage(accountId, nb_msg);
 }
 
-/**
- * SipEvent Thread
- * for outgoing call, send by SipEvent
- */
+//THREAD=VoIP
 void
-ManagerImpl::stopVoiceMessageNotification (void)
+ManagerImpl::stopVoiceMessageNotification(const AccountID& accountId)
 {
-  if (_gui) _gui->sendVoiceNbMessage(std::string("0"));
+  if (_gui) _gui->sendVoiceNbMessage(accountId, std::string("0"));
 }
 
-/**
- * SipEvent Thread
- */
+//THREAD=VoIP
 void 
-ManagerImpl::registrationSucceed()
+ManagerImpl::registrationSucceed(const AccountID& accountid)
 {
-  if (_gui) _gui->sendRegistrationState(true);
+  if (_gui) _gui->sendRegistrationState(accountid, true);
 }
 
-/**
- * SipEvent Thread
- */
+//THREAD=VoIP
 void 
-ManagerImpl::registrationFailed()
+ManagerImpl::registrationFailed(const AccountID& accountid)
 {
-  if (_gui) _gui->sendRegistrationState(false);
+  if (_gui) _gui->sendRegistrationState(accountid, false);
 }
 
 /**
@@ -1109,7 +878,7 @@ ManagerImpl::getTelephoneFile()
  * By AudioRTP thread
  */
 void
-ManagerImpl::notificationIncomingCall (void) {
+ManagerImpl::notificationIncomingCall(void) {
 
   AudioLayer* audiolayer = getAudioDriver();
   if (audiolayer != 0) {
@@ -1123,7 +892,6 @@ ManagerImpl::notificationIncomingCall (void) {
     tone.getNext(buf, tone.getSize());
     audiolayer->putUrgent(buf, sizeof(int16)*nbInt16);
   }
-
 }
 
 /**
@@ -1158,37 +926,30 @@ ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr, int port)
 }
 
 bool
-ManagerImpl::useStun (void) 
+ManagerImpl::behindNat(int port)
 {
-  if (getConfigInt(SIGNALISATION, USE_STUN)) {
-      return true;
-  } else {
-      return false;
+  StunAddress4 stunSvrAddr;
+  stunSvrAddr.addr = 0;
+  
+  // Stun server
+  std::string svr = getConfigString(SIGNALISATION, STUN_SERVER);
+  
+  // Convert char* to StunAddress4 structure
+  bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
+  if (!ret) {
+    _debug("SIP: Stun server address (%s) is not valid\n", svr.data());
+    return 0;
   }
+  
+  // Firewall address
+  //_debug("STUN server: %s\n", svr.data());
+  return getStunInfo(stunSvrAddr, port);
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
-
-/**
- * Multi Thread
- */
-CALLID 
-ManagerImpl::generateNewCallId (void)
-{
-  CALLID random_id = (unsigned)rand();
-
-  // Check if already a call with this id exists 
-  _mutex.enterMutex();
-  while (getCall(random_id) != NULL && random_id != 0) {
-    random_id = rand();
-  }
-  _mutex.leaveMutex();
-  // If random_id is not attributed, returns it.
-  return random_id;
-}
-
 /**
  * Initialization: Main Thread
  * @return 1: ok
@@ -1357,7 +1118,7 @@ ManagerImpl::initZeroconf(void)
 void
 ManagerImpl::initVolume()
 {
-  _debugInit("Initiate Volume\n");
+  _debugInit("Initiate Volume");
   setSpkrVolume(getConfigInt(AUDIO, VOLUME_SPKR));
   setMicVolume(getConfigInt(AUDIO, VOLUME_MICRO));
 }
@@ -1453,58 +1214,68 @@ ManagerImpl::getEvents() {
   return true;
 }
 
+// TODO: rewrite this
 /**
  * Main Thread
  */
 bool 
 ManagerImpl::getCallStatus(const std::string& sequenceId)
 {
-  // TODO: implement account
-  std::string accountId = "acc1"; 
+  if (!_gui) { return false; }
+  ost::MutexLock m(_callAccountMapMutex);
+  CallAccountMap::iterator iter = _callAccountMap.begin();
+  TokenList tk;
   std::string code;
   std::string status;
-  TokenList tk;
-  Call* call;
+  std::string destination;  
+  std::string number;
 
-  if (_gui!=NULL) {
-    ost::MutexLock m(_mutex);
-    CallVector::iterator iter = _callVector.begin();
-    while(iter!=_callVector.end()){
-      call = (*iter);
-      switch( call->getState() ) {
-       case Call::Progressing: code="110"; status="Trying";        break;
-       case Call::Ringing:     code="111"; status = "Ringing";     break;
-       case Call::Answered:    code="112"; status = "Established"; break;
-       case Call::Busy:        code="113"; status = "Busy";        break;
-       case Call::OnHold:      code="114"; status = "Held";        break;
-       case Call::OffHold:     code="115"; status = "Unheld";      break;
-       default:                code="125"; status="Other";    
+  while (iter != _callAccountMap.begin())
+  {
+    Call* call = getAccountLink(iter->second)->getCall(iter->first);
+    Call::ConnectionState state = call->getConnectionState();
+    if (state != Call::Connected) {
+      switch(state) {
+        case Call::Trying:       code="110"; status = "Trying";       break;
+        case Call::Ringing:      code="111"; status = "Ringing";      break;
+        case Call::Progressing:  code="125"; status = "Progressing";  break;
+        case Call::Disconnected: code="125"; status = "Disconnected"; break;
+        default: code=""; status= "";
       }
-
-      // No Congestion
-      // No Wrong Number
-      // 116 <CSeq> <call-id> <acc> <destination> Busy
-      std::string destination = call->getCallerIdName();
-      std::string number = call->getCallerIdNumber();
-      if (number!="") {
-        destination.append(" <");
-        destination.append(number);
-        destination.append(">");
+    } else {
+      switch (call->getState()) {
+        case Call::Active:       code="112"; status = "Established";  break;
+        case Call::Hold:         code="114"; status = "Held";         break;
+        case Call::Busy:         code="113"; status = "Busy";         break;
+        case Call::Refused:      code="125"; status = "Refused";      break;
+        case Call::Error:        code="125"; status = "Error";        break;
+        case Call::Inactive:     code="125"; status = "Inactive";     break;
       }
-      tk.push_back(accountId);
-      tk.push_back(destination);
-      tk.push_back(status);
-      _gui->sendCallMessage(code, sequenceId, (*iter)->getId(), tk);
-      iter++;
-      tk.clear();
     }
+
+    // No Congestion
+    // No Wrong Number
+    // 116 <CSeq> <call-id> <acc> <destination> Busy
+    destination = call->getPeerName();
+    number = call->getPeerNumber();
+    if (number!="") {
+      destination.append(" <");
+      destination.append(number);
+      destination.append(">");
+    }
+    tk.push_back(iter->second);
+    tk.push_back(destination);
+    tk.push_back(status);
+    _gui->sendCallMessage(code, sequenceId, iter->first, tk);
+    tk.clear();
+
+    iter++;
   }
+  
   return true;
 }
 
-/**
- * Main Thread
- */
+//THREAD=Main
 bool 
 ManagerImpl::getConfigAll(const std::string& sequenceId)
 {
@@ -1521,18 +1292,14 @@ ManagerImpl::getConfigAll(const std::string& sequenceId)
   return returnValue;
 }
 
-/**
- * Main Thread
- */
+//THREAD=Main
 bool 
 ManagerImpl::getConfig(const std::string& section, const std::string& name, TokenList& arg)
 {
   return _config.getConfigTreeItemToken(section, name, arg);
 }
 
-/**
- * Main Thread
- */
+//THREAD=Main
 // throw an Conf::ConfigTreeItemException if not found
 int 
 ManagerImpl::getConfigInt(const std::string& section, const std::string& name)
@@ -1545,9 +1312,7 @@ ManagerImpl::getConfigInt(const std::string& section, const std::string& name)
   return 0;
 }
 
-/**
- * Main Thread
- */
+//THREAD=Main
 std::string 
 ManagerImpl::getConfigString(const std::string& section, const std::string&
 name)
@@ -1560,18 +1325,14 @@ name)
   return "";
 }
 
-/**
- * Main Thread
- */
+//THREAD=Main
 bool 
 ManagerImpl::setConfig(const std::string& section, const std::string& name, const std::string& value)
 {
   return _config.setConfigTreeItem(section, name, value);
 }
 
-/**
- * Main Thread
- */
+//THREAD=Main
 bool 
 ManagerImpl::setConfig(const std::string& section, const std::string& name, int value)
 {
@@ -1580,9 +1341,7 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, int 
   return _config.setConfigTreeItem(section, name, valueStream.str());
 }
 
-/**
- * Main Thread
- */
+//THREAD=Main
 bool 
 ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& name)
 {
@@ -1634,9 +1393,7 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
   return returnValue;
 }
 
-/**
- * User request Main Thread (list)
- */
+//THREAD=Main
 bool 
 ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask) 
 {
@@ -1672,6 +1429,7 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
   return returnValue;
 }
 
+//THREAD=Main
 bool
 ManagerImpl::getCountryTones(const std::string& sequenceId)
 {
@@ -1687,6 +1445,7 @@ ManagerImpl::getCountryTones(const std::string& sequenceId)
   return true;
 }
 
+//THREAD=Main
 void 
 ManagerImpl::sendCountryTone(const std::string& sequenceId, int index, const std::string& name) {
   TokenList tk;
@@ -1695,9 +1454,7 @@ ManagerImpl::sendCountryTone(const std::string& sequenceId, int index, const std
   _gui->sendMessage("100", sequenceId, tk);
 }
 
-/**
- * User action : main thread
- */
+//THREAD=Main
 bool
 ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& path, int *nbFile) {
   TokenList tk;
@@ -1726,21 +1483,8 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
   }
 }
 
-/**
- * Multi Thread
- */
-void 
-ManagerImpl::switchCall(CALLID id)
-{
-  // we can only switch the current call id if we 
-  // it's not selected yet..
-  if (_currentCallId == 0 ) {
-    setCurrentCallId(id);
-  }
-}
-
-/**
- * Main Thread - Gui
+//THREAD=Main
+/*
  * Experimental...
  */
 bool
@@ -1781,7 +1525,7 @@ ManagerImpl::setSwitch(const std::string& switchName) {
 
 // ACCOUNT handling
 bool
-ManagerImpl::associateCallToAccount(CALLID callID, const AccountID& accountID)
+ManagerImpl::associateCallToAccount(const CallID& callID, const AccountID& accountID)
 {
   if (getAccountFromCall(callID) == AccountNULL) { // nothing with the same ID
     if (  accountExists(accountID)  ) { // account id exist in AccountMap
@@ -1797,7 +1541,7 @@ ManagerImpl::associateCallToAccount(CALLID callID, const AccountID& accountID)
 }
 
 AccountID
-ManagerImpl::getAccountFromCall(const CALLID callID)
+ManagerImpl::getAccountFromCall(const CallID& callID)
 {
   ost::MutexLock m(_callAccountMapMutex);
   CallAccountMap::iterator iter = _callAccountMap.find(callID);
@@ -1809,7 +1553,7 @@ ManagerImpl::getAccountFromCall(const CALLID callID)
 }
 
 bool
-ManagerImpl::removeCallAccount(CALLID callID)
+ManagerImpl::removeCallAccount(const CallID& callID)
 {
   ost::MutexLock m(_callAccountMapMutex);
   if ( _callAccountMap.erase(callID) ) {
@@ -1818,15 +1562,19 @@ ManagerImpl::removeCallAccount(CALLID callID)
   return false;
 }
 
-CALLID
+CallID 
 ManagerImpl::getNewCallID() 
 {
-  CALLID random_id = (unsigned)rand();
+  std::ostringstream random_id("s");
+  random_id << (unsigned)rand();
+  
   // when it's not found, it return ""
-  while (getAccountFromCall(random_id) != AccountNULL) {
-    random_id = rand();
+  while (getAccountFromCall(random_id.str()) != AccountNULL) {
+    random_id.clear();
+    random_id << "s";
+    random_id << (unsigned)rand();
   }
-  return random_id;
+  return random_id.str();
 }
 
 short
@@ -1837,7 +1585,7 @@ ManagerImpl::loadAccountMap()
   _accountMap[ACCOUNT_SIP0] = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, ACCOUNT_SIP0);
   nbAccount++;
 
-  _accountMap[ACCOUNT_AIX0] = AccountCreator::createAccount(AccountCreator::AIX_ACCOUNT, ACCOUNT_AIX0);
+  _accountMap[ACCOUNT_IAX0] = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, ACCOUNT_IAX0);
   nbAccount++;
 
   return nbAccount;
@@ -1907,7 +1655,7 @@ bool ManagerImpl::testCallAccountMap()
   if ( removeCallAccount(1) != false ) {
     _debug("TEST: removeCallAccount with empty list failed\n");
   }
-  CALLID newid = getNewCallID();
+  CallID newid = getNewCallID();
   if ( associateCallToAccount(newid, "acc0") == false ) {
     _debug("TEST: associateCallToAccount with new CallID empty list failed\n");
   }
@@ -1917,7 +1665,7 @@ bool ManagerImpl::testCallAccountMap()
   if ( getAccountFromCall( newid ) != "acc0" ) {
     _debug("TEST: getAccountFromCall don't return the good account id\n");
   }
-  CALLID secondnewid = getNewCallID();
+  CallID secondnewid = getNewCallID();
   if ( associateCallToAccount(secondnewid, "xxxx") == true ) {
     _debug("TEST: associateCallToAccount with unknown account id failed\n");
   }

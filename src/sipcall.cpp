@@ -1,270 +1,107 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
+ *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
- * Portions Copyright (C) 2002,2003   Aymeric Moizard <jack@atosc.org>
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * This is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2,
- * or (at your option) any later version.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
- * This is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with dpkg; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <osipparser2/sdp_message.h>
-#include <string.h> // strcpy
- 
-// For AF_INET
-#include <sys/socket.h>
-#include <sstream>
-
-#include "global.h"
-#include "audio/audiocodec.h"
-#include "audio/codecDescriptor.h"
 #include "sipcall.h"
+#include "global.h" // for _debug
+#include <sstream> // for media buffer
 
-SipCall::SipCall (CALLID id, CodecDescriptorMap& codecMap) : _localIp("127.0.0.1"), _codecMap(codecMap)
+#define _SENDRECV 0
+#define _SENDONLY 1
+#define _RECVONLY 2
+
+SIPCall::SIPCall(const CallID& id, Call::CallType type) : Call(id, type), 
+ _localIPAddress(""), _remoteIPAddress("")  
 {
-  _id = id;	  // Same id of Call object
-  _cid = 0; // call id, from the sipvoiplink
-  _did = 0; // dialog id
-  _tid = 0; // transaction id
-
-  _standby = false;
-  _status_code = 0;
-
-  alloc(); // char* allocation
-  _audiocodec = 0;
-
-  _local_audio_port = 0;
-  _remote_sdp_audio_port = 0;
-  _local_sendrecv  = 0;           /* _SENDRECV, _SENDONLY, _RECVONLY */
-  _remote_sendrecv = 0;
-
-  _reinvite = false;
+  _cid = 0;
+  _did = 0;
+  _tid = 0;
+  _audioCodec = 0;
+  _localAudioPort = 0;
+  _localExternalAudioPort = 0;
+  _remoteAudioPort = 0;
 }
 
-
-SipCall::~SipCall (void) 
+SIPCall::~SIPCall() 
 {
-	dealloc();
-  //delete _audiocodec;  don't delete it, the Manager will do it...
-  _audiocodec = 0;
 }
 
-void
-SipCall::setLocalAudioPort (int newport) 
+CodecDescriptorMap& 
+SIPCall::getCodecMap()
 {
-	_local_audio_port = newport;
+  return _codecMap;
 }
 
-int
-SipCall::getLocalAudioPort (void) 
+/**
+ * Answer incoming call correclty before telling the user
+ * @param event eXosip Event
+ */
+bool 
+SIPCall::SIPCallInvite(eXosip_event_t *event)
 {
-	return _local_audio_port;
-}
-
-void
-SipCall::setId (CALLID id)
-{
-	_id = id;
-}
-
-CALLID
-SipCall::getId (void)
-{
-	return _id;
-}
-
-void
-SipCall::setDid (int did)
-{
-	_did = did;
-}
-
-int
-SipCall::getDid (void)
-{
-	return _did;
-}
-
-void
-SipCall::setCid (int cid)
-{
-	_cid = cid;
-}
-
-int
-SipCall::getCid (void)
-{
-	return _cid;
-}
-
-void
-SipCall::setTid (int tid)
-{
-	_tid = tid;
-}
-
-int
-SipCall::getTid (void)
-{
-	return _tid;
-}
-
-int
-SipCall::getRemoteSdpAudioPort (void)
-{
-	return _remote_sdp_audio_port;
-}
-
-char*
-SipCall::getRemoteSdpAudioIp (void)
-{
-	return _remote_sdp_audio_ip;
-}
-
-// newIncomingCall is called when the IP-Phone user receives a new call.
-int 
-SipCall::newIncomingCall (eXosip_event_t *event) {	
-
-  _cid = event->cid;
-  _did = event->did;
-  _tid = event->tid;
-
   if (_did < 1 && _cid < 1) {
-    return -1; /* not enough information for this event?? */
-  }
-  osip_strncpy (_textinfo, event->textinfo, 255);
-
-  if (event->response != NULL) {
-    _status_code = event->response->status_code;
-    snprintf (_reason_phrase, 49, "%s", event->response->reason_phrase);
-    _debug("            Status: code:%1$d reason:%2$s\n", _status_code, _reason_phrase);
+    _debug("SIP Failure: Invalid cid and did\n");
+    return false;
   }
 
-  strcpy(_remote_uri, "");
-  _name = "";
-  _number = "";
-  if (event->request != NULL) {
-    char *tmp = NULL;
-
-    osip_from_to_str(event->request->from, &tmp);
-    if (tmp != NULL) {
-      snprintf (_remote_uri, 255, "%s", tmp);
-      osip_free (tmp);
-
-      // Get the name/number
-      osip_from_t *from;
-      osip_from_init(&from);
-      osip_from_parse(from, _remote_uri);
-      char *name = osip_from_get_displayname(from);
-      if ( name != NULL ) {
-        _name = name;
-      }
-      osip_uri_t* url = osip_from_get_url(from); 
-      if ( url != NULL && url->username != NULL) {
-        _number = url->username;
-      }
-      osip_from_free(from);
-    }
-  }
-  _debug("            Name: %s\n", _name.c_str());
-  _debug("            Number: %s\n", _number.c_str());
-  _debug("            Remote URI: %s\n", _remote_uri);
-
-  /* negotiate payloads */
-  sdp_message_t *remote_sdp = NULL;
-  if (event->request != NULL) {
-    eXosip_lock();
-    remote_sdp = eXosip_get_sdp_info (event->request);
-    eXosip_unlock();
-  }
-  if (remote_sdp == NULL) {
-    _debug("< Sending 400 Bad Request (no SDP)\n");
-    eXosip_lock();
-    eXosip_call_send_answer (_tid, 400, NULL);
-    eXosip_unlock();
-    return -1;
-  }
-  /* TODO: else build an offer */
-
-  // Remote Media IP
-  eXosip_lock();
-  sdp_connection_t *conn = eXosip_get_audio_connection (remote_sdp);
-  eXosip_unlock();
-  if (conn != NULL && conn->c_addr != NULL) {
-      snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
-      _debug("            Remote Audio IP: %s\n", _remote_sdp_audio_ip);
+  if (event->request == NULL) {
+    _debug("SIP Failure: No request into the event\n");
+    return false;
   }
 
-  // Remote Media Port
-  eXosip_lock();
-  sdp_media_t *remote_med = eXosip_get_audio_media (remote_sdp);
-  eXosip_unlock();
+  setCid(event->cid);
+  setDid(event->did);
+  setTid(event->tid);
 
-  if (remote_med == NULL || remote_med->m_port == NULL) {
-    // no audio media proposed
-    _debug("< Sending 415 Unsupported media type\n");
-    eXosip_lock();
-    eXosip_call_send_answer (_tid, 415, NULL);
-    eXosip_unlock();
+  setPeerInfoFromRequest(event);
+  
+  sdp_message_t* remote_sdp = getRemoteSDPFromRequest(event);
+  if (remote_sdp == 0) {
+    return false;
+  }
+
+  sdp_media_t* remote_med = getRemoteMedia(event->tid, remote_sdp);
+  if (remote_med == 0) {
     sdp_message_free (remote_sdp);
-    return -1;
+    return false;
   }
-  _remote_sdp_audio_port = atoi(remote_med->m_port);
-  _debug("            Remote Audio Port: %d\n", _remote_sdp_audio_port);
 
-  // Remote Payload
-  char *tmp = NULL;
-  if (_remote_sdp_audio_port > 0 && _remote_sdp_audio_ip[0] != '\0') {
-    int pos = 0;
-    while (!osip_list_eol (remote_med->m_payloads, pos)) {
-      tmp = (char *) osip_list_get (remote_med->m_payloads, pos);
-      if (tmp != NULL ) {
-        int payload = atoi(tmp);
-        // stop if we find a correct codec
-        if (0 != _codecMap.getCodec((CodecType)payload)){
-           break;
-        }
-      }
-      tmp = NULL;
-      pos++;
-    }
-  }
-  setAudioCodec(0);
-  if (tmp != NULL) {
-    int payload = atoi (tmp);
-    _debug("            Payload: %d\n", payload);
-    setAudioCodec(_codecMap.getCodec((CodecType)payload)); // codec builder for the mic
-  }
-  if (getAudioCodec() == 0) {
-    _debug("< Sending 415 Unsupported media type\n");
-    eXosip_lock();
-    eXosip_call_send_answer (_tid, 415, NULL);
-    eXosip_unlock();
+  if (!setRemoteAudioFromSDP(remote_med, remote_sdp)) {
+    _debug("SIP Failure: unable to set IP address and port from SDP\n");
     sdp_message_free (remote_sdp);
-    return -1;
+    return false;
+  }
+
+  if (!setAudioCodecFromSDP(remote_med, event->tid)) {
+    sdp_message_free (remote_sdp);
+    return false;
   }
 
   osip_message_t *answer = 0;
   eXosip_lock();
   _debug("< Building Answer 183\n");
-  if (0 == eXosip_call_build_answer (_tid, 183, &answer)) {
+  if (0 == eXosip_call_build_answer (event->tid, 183, &answer)) {
     if ( 0 != sdp_complete_message(remote_sdp, answer)) {
       osip_message_free(answer);
       // Send 415 Unsupported media type
-      _debug("< Sending Answer 415\n");
-      eXosip_call_send_answer (_tid, 415, NULL);
+      _debug("< Sending Answer 415 : unsupported media type\n");
+      eXosip_call_send_answer (event->tid, 415, NULL);
     } else {
 
       sdp_message_t *local_sdp = eXosip_get_sdp_info(answer);
@@ -274,8 +111,8 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
       }
       if (local_sdp != NULL && local_med != NULL) {
         /* search if stream is sendonly or recvonly */
-        _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
-        _local_sendrecv =  sdp_analyse_attribute (local_sdp, local_med);
+        int _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
+        int _local_sendrecv =  sdp_analyse_attribute (local_sdp, local_med);
         _debug("            Remote SendRecv: %d\n", _remote_sendrecv);
         _debug("            Local  SendRecv: %d\n", _local_sendrecv);
         if (_local_sendrecv == _SENDRECV) {
@@ -286,149 +123,73 @@ SipCall::newIncomingCall (eXosip_event_t *event) {
         sdp_message_free (local_sdp);
       }
       _debug("< Sending answer 183\n");
-      if (0 != eXosip_call_send_answer (_tid, 183, answer)) {
+      if (0 != eXosip_call_send_answer (event->tid, 183, answer)) {
         _debug("SipCall::newIncomingCall: cannot send 183 progress?\n");
       }
     }
   }
   eXosip_unlock ();
-  sdp_message_free (remote_sdp);
 
-  return 0;
+  sdp_message_free (remote_sdp);
+  return true;
 }
 
-// newReinviteCall is called when the IP-Phone user receives a change in the call
-// it's almost an newIncomingCall but we send a 200 OK
-// See: 3.7.  Session with re-INVITE (IP Address Change)
-int 
-SipCall::newReinviteCall (eXosip_event_t *event) {
-
-  _cid = event->cid;
-  _did = event->did;
-  _tid = event->tid;
-
+/**
+  * newReinviteCall is called when the IP-Phone user receives a change in the call
+  * it's almost an newIncomingCall but we send a 200 OK
+  * See: 3.7.  Session with re-INVITE (IP Address Change)
+  * @param event eXosip Event
+  * @return true if ok
+  */
+bool 
+SIPCall::SIPCallReinvite(eXosip_event_t *event)
+{
   if (_did < 1 && _cid < 1) {
-    return -1; /* not enough information for this event?? */
-  }
-  osip_strncpy (_textinfo, event->textinfo, 255);
-
-  if (event->response != NULL) {
-    _status_code = event->response->status_code;
-    snprintf (_reason_phrase, 49, "%s", event->response->reason_phrase);
-    _debug("            Status: %d %s\n", _status_code, _reason_phrase);
+    _debug("SIP Failure: Invalid cid and did\n");
+    return false;
   }
 
-  strcpy(_remote_uri, "");
-  _name = "";
-  _number = "";
-  if (event->request != NULL) {
-    char *tmp = NULL;
-
-    osip_from_to_str(event->request->from, &tmp);
-    if (tmp != NULL) {
-      snprintf (_remote_uri, 255, "%s", tmp);
-      osip_free (tmp);
-
-      // Get the name/number
-      osip_from_t *from;
-      osip_from_init(&from);
-      osip_from_parse(from, _remote_uri);
-      char *name = osip_from_get_displayname(from);
-      if ( name != NULL ) {
-        _name = name;
-      }
-      osip_uri_t* url = osip_from_get_url(from); 
-      if ( url != NULL && url->username != NULL ) {
-        _number = url->username;
-      }
-      osip_from_free(from);
-    }
-  }
-  _debug("            Name: %s\n", _name.c_str());
-  _debug("            Number: %s\n", _number.c_str());
-  _debug("            Remote URI: %s\n", _remote_uri);
-
-  /* negotiate payloads */
-  sdp_message_t *remote_sdp = NULL;
-  if (event->request != NULL) {
-    eXosip_lock();
-    remote_sdp = eXosip_get_sdp_info (event->request);
-    eXosip_unlock();
-  }
-  if (remote_sdp == NULL) {
-    _debug("< Sending 400 Bad Request (no sdp)\n");
-    // Send 400 BAD REQUEST
-    eXosip_lock();
-    eXosip_call_send_answer (_tid, 400, NULL);
-    eXosip_unlock();
-    return 0;
-  }
-  /* TODO: else build an offer */
-
-  // Remote Media IP
-  eXosip_lock();
-  sdp_connection_t *conn = eXosip_get_audio_connection (remote_sdp);
-  eXosip_unlock();
-  if (conn != NULL && conn->c_addr != NULL) {
-      snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
-      _debug("            Remote Audio IP: %s\n", _remote_sdp_audio_ip);
+  if (event->request == NULL) {
+    _debug("SIP Failure: No request into the event\n");
+    return false;
   }
 
-  // Remote Media Port
-  eXosip_lock();
-  sdp_media_t *remote_med = eXosip_get_audio_media (remote_sdp);
-  eXosip_unlock();
+  setCid(event->cid);
+  setDid(event->did);
+  setTid(event->tid);
 
-  if (remote_med == NULL || remote_med->m_port == NULL) {
-    // no audio media proposed
-    _debug("< Sending 415 Unsupported media type\n");
-    eXosip_lock();
-    eXosip_call_send_answer (_tid, 415, NULL);
-    eXosip_unlock();
+  setPeerInfoFromRequest(event);
+
+  sdp_message_t* remote_sdp = getRemoteSDPFromRequest(event);
+  if (remote_sdp == 0) {
+    return false;
+  }
+
+  sdp_media_t* remote_med = getRemoteMedia(event->tid, remote_sdp);
+  if (remote_med == 0) {
     sdp_message_free (remote_sdp);
-    return 0;
-  }
-  _remote_sdp_audio_port = atoi(remote_med->m_port);
-  _debug("            Remote Audio Port: %d\n", _remote_sdp_audio_port);
-
-  // Remote Payload
-  char *tmp = NULL;
-  if (_remote_sdp_audio_port > 0 && _remote_sdp_audio_ip[0] != '\0') {
-    int pos = 0;
-    while (!osip_list_eol (remote_med->m_payloads, pos)) {
-      tmp = (char *) osip_list_get (remote_med->m_payloads, pos);
-      if (tmp != NULL) {
-        // we could check if the payload is active here...
-        break;
-      }
-      tmp = NULL;
-      pos++;
-    }
+    return false;
   }
 
-  setAudioCodec(0);
-  if (tmp != NULL) {
-    int payload = atoi (tmp);
-    _debug("            Payload: %d\n", payload);
-    setAudioCodec(_codecMap.getCodec((CodecType)payload)); // codec builder for the mic
-  }
-  if (getAudioCodec() == 0) {
-    _debug("< Sending 415 Unsupported media type\n");
-    eXosip_lock();
-    eXosip_call_send_answer (_tid, 415, NULL);
-    eXosip_unlock();
+  if (!setRemoteAudioFromSDP(remote_med, remote_sdp)) {
+    _debug("SIP Failure: unable to set IP address and port from SDP\n");
     sdp_message_free (remote_sdp);
-    return 0;
+    return false;
+  }
+
+  if (!setAudioCodecFromSDP(remote_med, event->tid)) {
+    sdp_message_free (remote_sdp);
+    return false;
   }
 
   osip_message_t *answer = 0;
   eXosip_lock();
   _debug("< Building Answer 200\n");
-  if (0 == eXosip_call_build_answer (_tid, 200, &answer)) {
+  if (0 == eXosip_call_build_answer (event->tid, 200, &answer)) {
     if ( 0 != sdp_complete_message(remote_sdp, answer)) {
       osip_message_free(answer);
       // Send 415 Unsupported media type
-      eXosip_call_send_answer (_tid, 415, NULL);
+      eXosip_call_send_answer (event->tid, 415, NULL);
       _debug("< Sending Answer 415\n");
     } else {
 
@@ -439,8 +200,8 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
       }
       if (local_sdp != NULL && local_med != NULL) {
         /* search if stream is sendonly or recvonly */
-        _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
-        _local_sendrecv =  sdp_analyse_attribute (local_sdp, local_med);
+        int _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
+        int _local_sendrecv =  sdp_analyse_attribute (local_sdp, local_med);
         _debug("            Remote SendRecv: %d\n", _remote_sendrecv);
         _debug("            Local  SendRecv: %d\n", _local_sendrecv);
         if (_local_sendrecv == _SENDRECV) {
@@ -451,88 +212,44 @@ SipCall::newReinviteCall (eXosip_event_t *event) {
         sdp_message_free (local_sdp);
       }
       _debug("< Sending answer 200\n");
-      if (0 != eXosip_call_send_answer (_tid, 200, answer)) {
+      if (0 != eXosip_call_send_answer (event->tid, 200, answer)) {
         _debug("SipCall::newIncomingCall: cannot send 200 OK?\n");
       }
     }
   }
   eXosip_unlock ();
   sdp_message_free (remote_sdp);
-  _reinvite = true;
-  return 0;
+  return true;
 }
 
-int 
-SipCall::ringingCall (eXosip_event_t *event) {     
-
-  this->_cid = event->cid;
-  this->_did = event->did;
-  this->_tid = event->tid;
-
-  if (this->_did < 1 && this->_cid < 1) {
-    return -1; 
-  }
-
-  osip_strncpy (_textinfo, event->textinfo, 255);
-
-  if (event->response != NULL) {
-    _status_code = event->response->status_code;
-    snprintf (_reason_phrase, 49, "%s", event->response->reason_phrase);
-  }
-
-  if (event->request != NULL) {
-    char *tmp = NULL;
-
-    osip_from_to_str (event->request->from, &tmp);
-    if (tmp != NULL) {
-      snprintf (_remote_uri, 255, "%s", tmp);
-      osip_free (tmp);
-    }
-  }
-  	return 0;
-}
-
-int
-SipCall::receivedAck (eXosip_event_t *event)
+  /**
+   * Peer answered to a call (on hold or not)
+   * @param event eXosip Event
+   * @return true if ok
+   */
+bool 
+SIPCall::SIPCallAnswered(eXosip_event_t *event)
 {
-  _cid = event->cid;
-  _did = event->did;
-  return 0;
-}
-
-
-
-int 
-SipCall::answeredCall(eXosip_event_t *event) {
-  _cid = event->cid;
-  _did = event->did;
-
-  if (_did < 1 && _cid < 1)	{
-    return -1; /* not enough information for this event?? */
+  if (_did < 1 && _cid < 1) {
+    _debug("SIP Failure: Invalid cid and did\n");
+    return false;
   }
-  osip_strncpy(this->_textinfo,   event->textinfo, 255);
 
-  if (event->response != NULL) {
-    _status_code = event->response->status_code;
-    snprintf (_reason_phrase, 49, "%s", event->response->reason_phrase);
-
-    char *tmp = NULL;
-
-    osip_from_to_str (event->response->from, &tmp);
-    if (tmp != NULL) {
-        snprintf (_remote_uri, 255, "%s", tmp);
-        osip_free (tmp);
-    }
+  if (event->request == NULL) {
+    _debug("SIP Failure: No request into the event\n");
+    return false;
   }
-  _debug("            Status: %d %s\n", _status_code, _reason_phrase);
-  _debug("            From URI: %s\n", _remote_uri);
+
+  setCid(event->cid);
+  setDid(event->did);
+
+  //setPeerInfoFromResponse()
 
   eXosip_lock ();
   {
     osip_message_t *ack = NULL;
     int i;
-
-    i = eXosip_call_build_ack (_did, &ack);
+    i = eXosip_call_build_ack (event->did, &ack);
     if (i != 0) {
       _debug("SipCall::answeredCall: Cannot build ACK for call!\n");
     } else {
@@ -554,114 +271,120 @@ SipCall::answeredCall(eXosip_event_t *event) {
       sdp_message_free (remote_sdp);
 
       _debug("< Send ACK\n");
-      eXosip_call_send_ack (_did, ack);
+      eXosip_call_send_ack (event->did, ack);
     }
   }
   eXosip_unlock ();
-
-  return 0;
+  return true;  
 }
-
-void
-SipCall::answeredCall_without_hold (eXosip_event_t *event) 
+  /**
+   * We retreive final SDP info if they changed
+   * @param event eXosip Event
+   * @return true if ok (change / no change) or false on error
+   */
+bool 
+SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t *event)
 {
-  if (event->response == NULL ) { return; }
-
-  // TODO: understand this code..
-  if (_cid!=0) {
-    eXosip_lock();
-    sdp_message_t *sdp = eXosip_get_sdp_info (event->response);
-    eXosip_unlock();
-    if (sdp != NULL) {
-       /* audio is started and session has just been modified */
-      sdp_message_free (sdp);
-    }
+  if (event->response == NULL || event->request  == NULL) { return false; }
+  
+  eXosip_lock();
+  sdp_message_t *remote_sdp = eXosip_get_sdp_info (event->response);
+  eXosip_unlock();
+  if (remote_sdp == NULL) {
+    _debug("SIP Failure: no remote sdp\n");
+    sdp_message_free(remote_sdp);
+    return false;
   }
 
-  if (event->request != NULL) {   /* audio is started */ 
-
-    eXosip_lock();
-    sdp_message_t *local_sdp = eXosip_get_sdp_info (event->request);
-    sdp_message_t *remote_sdp = eXosip_get_sdp_info (event->response);
-    eXosip_unlock();
-
-    sdp_media_t *remote_med = NULL;
-    char *tmp = NULL;
-    if (remote_sdp == NULL) {
-      _debug("SipCall::answeredCall_without_hold: No remote SDP body found for call\n");
-      /* TODO: remote_sdp = retreive from ack above */
-    } else {
-      eXosip_lock();
-      sdp_connection_t *conn = eXosip_get_audio_connection (remote_sdp);
-      if (conn != NULL && conn->c_addr != NULL) {
-          snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
-      }
-
-      remote_med = eXosip_get_audio_media (remote_sdp);
-      if (remote_med != NULL && remote_med->m_port != NULL) {
-        _remote_sdp_audio_port = atoi (remote_med->m_port);
-      }
-      eXosip_unlock();
-      _debug("            Remote Audio: %s:%d\n", _remote_sdp_audio_ip, _remote_sdp_audio_port);
-
-      if (_remote_sdp_audio_port > 0 && _remote_sdp_audio_ip[0] != '\0' && 
-        remote_med != NULL) {
-        tmp = (char *) osip_list_get (remote_med->m_payloads, 0);
-      }
-
-      setAudioCodec(0);
-      if (tmp != NULL) {
-        int payload = atoi (tmp);
-        _debug("            Remote Payload: %d\n", payload);
-        setAudioCodec(_codecMap.getCodec((CodecType)payload)); // codec builder for the mic
-      }
-    }
-
-    if (local_sdp == NULL) {
-      _debug("SipCall::answeredCall_without_hold: SDP body was probably in the ACK (TODO)\n");
-    }
-
-    if (remote_sdp != NULL && local_sdp != NULL) {
-      int audio_port = 0;
-      eXosip_lock();
-      sdp_media_t *local_med = eXosip_get_audio_media (local_sdp);
-      eXosip_unlock();
-      if (local_med != NULL && local_med->m_port != NULL) {
-        audio_port = atoi (local_med->m_port);
-      }
-      _debug("            Local Audio port: %d\n", audio_port);
-
-      if (tmp != NULL && audio_port > 0
-          && _remote_sdp_audio_port > 0
-          && _remote_sdp_audio_ip[0] != '\0') {
-
-        /* search if stream is sendonly or recvonly */
-        _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
-        _local_sendrecv = sdp_analyse_attribute (local_sdp, local_med);
-        if (_local_sendrecv == _SENDRECV) {
-          if (_remote_sendrecv == _SENDONLY)
-              _local_sendrecv = _RECVONLY;
-          else if (_remote_sendrecv == _RECVONLY)
-              _local_sendrecv = _SENDONLY;
-        }
-      }
-      _debug("            Remote Sendrecv: %d\n", _remote_sendrecv);
-      _debug("            Local Sendrecv: %d\n", _local_sendrecv);
-    }
-    sdp_message_free (local_sdp);
-    sdp_message_free (remote_sdp);
+  sdp_media_t *remote_med = getRemoteMedia(event->tid, remote_sdp);
+  if (remote_med==NULL) {
+    sdp_message_free(remote_sdp);
+    return false;
   }
+  if ( ! setRemoteAudioFromSDP(remote_med, remote_sdp) ) {
+    sdp_message_free(remote_sdp);
+    return false;
+  }
+
+  char *tmp = (char *) osip_list_get (remote_med->m_payloads, 0);
+
+  setAudioCodec(0);
+  if (tmp != NULL) {
+    int payload = atoi (tmp);
+    _debug("            Remote Payload: %d\n", payload);
+    setAudioCodec(_codecMap.getCodec((CodecType)payload)); // codec builder for the mic
+  }
+
+/*
+    // search if stream is sendonly or recvonly
+    _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
+    _local_sendrecv = sdp_analyse_attribute (local_sdp, local_med);
+    if (_local_sendrecv == _SENDRECV) {
+      if (_remote_sendrecv == _SENDONLY)
+          _local_sendrecv = _RECVONLY;
+      else if (_remote_sendrecv == _RECVONLY)
+          _local_sendrecv = _SENDONLY;
+    }
+  _debug("            Remote Sendrecv: %d\n", _remote_sendrecv);
+  _debug("            Local Sendrecv: %d\n", _local_sendrecv);
+*/
+  sdp_message_free (remote_sdp);
+  return true;
 }
 
-int
-SipCall::sdp_complete_message(sdp_message_t * remote_sdp, 
-		osip_message_t * msg)
+const std::string& 
+SIPCall::getLocalIp()
 {
-  char *tmp = NULL;
-  char buf[4096];
+  ost::MutexLock m(_callMutex);  
+  return _localIPAddress;
+}
 
-  char localip[128];
+unsigned int 
+SIPCall::getLocalAudioPort()
+{
+  ost::MutexLock m(_callMutex);  
+  return _localAudioPort;
+}
 
+unsigned int 
+SIPCall::getRemoteAudioPort()
+{
+  ost::MutexLock m(_callMutex);  
+  return _remoteAudioPort;
+}
+
+const std::string& 
+SIPCall::getRemoteIp()
+{
+  ost::MutexLock m(_callMutex);  
+  return _remoteIPAddress;
+}
+
+AudioCodec* 
+SIPCall::getAudioCodec()
+{
+  ost::MutexLock m(_callMutex);  
+  return _audioCodec;  
+}
+
+void 
+SIPCall::setAudioStart(bool start)
+{
+  ost::MutexLock m(_callMutex);  
+  _audioStarted = start;  
+}
+
+bool 
+SIPCall::isAudioStarted()
+{
+  ost::MutexLock m(_callMutex);  
+  return _audioStarted;
+}
+
+  //TODO: humm?
+int 
+SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
+{
   // Format port to a char*
   if (remote_sdp == NULL) {
     _debug("SipCall::sdp_complete_message: No remote SDP body found for call\n");
@@ -672,13 +395,11 @@ SipCall::sdp_complete_message(sdp_message_t * remote_sdp,
     return -1;
   }
 
-  // this exosip is locked and is protected by other function
-  eXosip_guess_localip(AF_INET, localip, 128);
-
   std::ostringstream media;
 
   // for each medias
   int iMedia = 0;
+  char *tmp = NULL;
   while (!osip_list_eol(remote_sdp->m_medias, iMedia)) {
     sdp_media_t *remote_med = (sdp_media_t *)osip_list_get(remote_sdp->m_medias, iMedia);
     if (remote_med == 0) { continue; }
@@ -712,19 +433,20 @@ SipCall::sdp_complete_message(sdp_message_t * remote_sdp,
         media << "m=" << remote_med->m_media << " 0 << " << remote_med->m_proto << " \r\n";
       } else {
         // we add the media line + a=rtpmap list
-        media << "m=" << remote_med->m_media << " " << _local_audio_port << " RTP/AVP " << listCodec.str() << "\r\n";
+        media << "m=" << remote_med->m_media << " " << getLocalExternAudioPort() << " RTP/AVP " << listCodec.str() << "\r\n";
         media << listRtpMap.str();
       }
     }
     iMedia++;
   }
+  char buf[4096];
   snprintf (buf, 4096,
     "v=0\r\n"
     "o=user 0 0 IN IP4 %s\r\n"
     "s=session\r\n"
     "c=IN IP4 %s\r\n"
     "t=0 0\r\n"
-    "%s\n", localip, localip, media.str().c_str());
+    "%s\n", getLocalIp().c_str(), getLocalIp().c_str(), media.str().c_str());
 
   osip_message_set_body (msg, buf, strlen (buf));
   osip_message_set_content_type (msg, "application/sdp");
@@ -732,78 +454,200 @@ SipCall::sdp_complete_message(sdp_message_t * remote_sdp,
   return 0;
 }
 
-int
-SipCall::sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med)
+
+  // TODO: hum???
+int 
+SIPCall::sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med)
 {
-  	int pos;
-  	int pos_media;
+  int pos;
+  int pos_media;
 
-  	/* test media attributes */
-  	pos = 0;
-  	while (!osip_list_eol (med->a_attributes, pos)) {
-      	sdp_attribute_t *at;
+  /* test media attributes */
+  pos = 0;
+  while (!osip_list_eol (med->a_attributes, pos)) {
+      sdp_attribute_t *at;
 
-      	at = (sdp_attribute_t *) osip_list_get (med->a_attributes, pos);
-      	if (at->a_att_field != NULL && 
-				0 == strcmp (at->a_att_field, "sendonly")) {
-		  	return _SENDONLY;
-      	} else if (at->a_att_field != NULL &&
-                 0 == strcmp (at->a_att_field, "recvonly")) {
-          	return _RECVONLY;
-      	} else if (at->a_att_field != NULL &&
-                 0 == strcmp (at->a_att_field, "sendrecv")) {
-          	return _SENDRECV;
-        }
-      	pos++;
+      at = (sdp_attribute_t *) osip_list_get (med->a_attributes, pos);
+      if (at->a_att_field != NULL && 
+      0 == strcmp (at->a_att_field, "sendonly")) {
+      return _SENDONLY;
+      } else if (at->a_att_field != NULL &&
+                0 == strcmp (at->a_att_field, "recvonly")) {
+          return _RECVONLY;
+      } else if (at->a_att_field != NULL &&
+                0 == strcmp (at->a_att_field, "sendrecv")) {
+          return _SENDRECV;
+      }
+      pos++;
+  }
+
+  /* test global attributes */
+  pos_media = -1;
+  pos = 0;
+  while (!osip_list_eol (sdp->a_attributes, pos)) {
+      sdp_attribute_t *at;
+
+      at = (sdp_attribute_t *) osip_list_get (sdp->a_attributes, pos);
+      if (at->a_att_field != NULL && 
+      0 == strcmp (at->a_att_field, "sendonly")) {
+          return _SENDONLY;
+      } else if (at->a_att_field != NULL &&
+                0 == strcmp (at->a_att_field, "recvonly")) {
+          return _RECVONLY;
+      } else if (at->a_att_field != NULL &&
+                0 == strcmp (at->a_att_field, "sendrecv")) {
+          return _SENDRECV;
+      }
+      pos++;
+  }
+
+  return _SENDRECV;
+}
+
+bool 
+SIPCall::setPeerInfoFromRequest(eXosip_event_t *event)
+{
+  // event->request should not be NULL!
+  char remote_uri[256] = "";
+  std::string name("");
+  std::string number("");
+
+  char *tmp = NULL;
+  osip_from_to_str(event->request->from, &tmp);
+  if (tmp != NULL) {
+    snprintf (remote_uri, 255, "%s", tmp);
+    remote_uri[255] = '\0';
+    osip_free (tmp);
+
+    // Get the name/number
+    osip_from_t *from;
+    osip_from_init(&from);
+    osip_from_parse(from, remote_uri);
+    char *tmpname = osip_from_get_displayname(from);
+    if ( tmpname != NULL ) {
+      name = tmpname;
     }
-
-  	/* test global attributes */
-  	pos_media = -1;
-  	pos = 0;
-  	while (!osip_list_eol (sdp->a_attributes, pos)) {
-      	sdp_attribute_t *at;
-
-      	at = (sdp_attribute_t *) osip_list_get (sdp->a_attributes, pos);
-      	if (at->a_att_field != NULL && 
-				0 == strcmp (at->a_att_field, "sendonly")) {
-          	return _SENDONLY;
-      	} else if (at->a_att_field != NULL &&
-                 0 == strcmp (at->a_att_field, "recvonly")) {
-          	return _RECVONLY;
-      	} else if (at->a_att_field != NULL &&
-                 0 == strcmp (at->a_att_field, "sendrecv")) {
-          	return _SENDRECV;
-        }
-      	pos++;
+    osip_uri_t* url = osip_from_get_url(from); 
+    if ( url != NULL && url->username != NULL) {
+      number = url->username;
     }
+    osip_from_free(from);
+  }
 
-  	return _SENDRECV;
+  _debug("            Name: %s\n", name.c_str());
+  _debug("            Number: %s\n", number.c_str());
+  _debug("            Remote URI: %s\n", remote_uri);
+
+  setPeerName(name);
+  setPeerNumber(number);  
+  return true;
 }
 
-void
-SipCall::alloc(void) {
-  this->_reason_phrase = new char[50];
-  this->_textinfo = new char[256];
-  this->_remote_uri = new char[256];
-  this->_remote_sdp_audio_ip = new char[50];
-
-  // initialize the strings...
-  this->_reason_phrase[0] = '\0';
-  this->_textinfo[0] = '\0';
-  this->_remote_uri[0] = '\0';
-  strcpy(this->_remote_sdp_audio_ip, "127.0.0.1");
+sdp_message_t* 
+SIPCall::getRemoteSDPFromRequest(eXosip_event_t *event)
+{
+  // event->request should not be null!
+  /* negotiate payloads */
+  sdp_message_t *remote_sdp = NULL;
+  if (event->request != NULL) {
+    eXosip_lock();
+    remote_sdp = eXosip_get_sdp_info (event->request);
+    eXosip_unlock();
+  }
+  if (remote_sdp == NULL) {
+    _debug("SIP Failure: No SDP into the request\n");
+    _debug("< Sending 400 Bad Request (no SDP)\n");
+    eXosip_lock();
+    eXosip_call_send_answer (event->tid, 400, NULL);
+    eXosip_unlock();
+    return 0;
+  }
+  return remote_sdp;
 }
 
-void
-SipCall::dealloc(void) {
-  delete [] _reason_phrase;       _reason_phrase = NULL;
-  delete [] _textinfo;            _textinfo      = NULL;
-  delete [] _remote_uri;          _remote_uri    = NULL;
-  delete [] _remote_sdp_audio_ip; _remote_sdp_audio_ip = NULL;
+sdp_media_t* 
+SIPCall::getRemoteMedia(int tid, sdp_message_t* remote_sdp)
+{
+  // Remote Media Port
+  eXosip_lock();
+  sdp_media_t *remote_med = eXosip_get_audio_media(remote_sdp);
+  eXosip_unlock();
+
+  if (remote_med == NULL || remote_med->m_port == NULL) {
+    // no audio media proposed
+    _debug("SIP Failure: unsupported media\n");
+    _debug("< Sending 415 Unsupported media type\n");
+    eXosip_lock();
+    eXosip_call_send_answer (tid, 415, NULL);
+    eXosip_unlock();
+    sdp_message_free (remote_sdp);
+    return 0;
+  }
+  return remote_med;
 }
 
-void
-SipCall::noSupportedCodec (void) {
-	_debug("SipCall::noSupportedCodec: Codec no supported\n");
+bool 
+SIPCall::setRemoteAudioFromSDP(sdp_media_t* remote_med, sdp_message_t* remote_sdp)
+{
+  // Remote Media IP
+  eXosip_lock();
+  sdp_connection_t *conn = eXosip_get_audio_connection(remote_sdp);
+  eXosip_unlock();
+  if (conn != NULL && conn->c_addr != NULL) {
+    char _remote_sdp_audio_ip[50] = "";
+    snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
+    _remote_sdp_audio_ip[49] = '\0';
+    _debug("            Remote Audio IP: %s\n", _remote_sdp_audio_ip);
+    setRemoteIP(_remote_sdp_audio_ip);
+    if (_remote_sdp_audio_ip[0] == '\0') {
+      setRemoteAudioPort(0);
+      return false;
+    }
+  }
+
+  // Remote port
+  int _remote_sdp_audio_port = atoi(remote_med->m_port);
+  _debug("            Remote Audio Port: %d\n", _remote_sdp_audio_port);
+  setRemoteAudioPort(_remote_sdp_audio_port);
+
+  if (_remote_sdp_audio_port == 0) {
+    return false;
+  }
+  return true;
 }
 
+bool 
+SIPCall::setAudioCodecFromSDP(sdp_media_t* remote_med, int tid)
+{
+  // Remote Payload
+  char *tmp = NULL;
+  int pos = 0;
+  while (!osip_list_eol (remote_med->m_payloads, pos)) {
+    tmp = (char *) osip_list_get (remote_med->m_payloads, pos);
+    if (tmp != NULL ) {
+      int payload = atoi(tmp);
+      // stop if we find a correct codec
+      if (0 != _codecMap.getCodec((CodecType)payload)){
+          break;
+      }
+    }
+    tmp = NULL;
+    pos++;
+  }
+
+  setAudioCodec(0);
+  if (tmp != NULL) {
+    int payload = atoi (tmp);
+    _debug("            Payload: %d\n", payload);
+    setAudioCodec(_codecMap.getCodec((CodecType)payload)); // codec builder for the mic
+  }
+  if (getAudioCodec() == 0) {
+    _debug("SIPCall Failure: Unable to set codec\n");
+    _debug("< Sending 415 Unsupported media type\n");
+    eXosip_lock();
+    eXosip_call_send_answer(tid, 415, NULL);
+    eXosip_unlock();
+    return false;
+  }
+  return true;
+}

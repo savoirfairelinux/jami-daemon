@@ -49,7 +49,7 @@ AudioRtp::~AudioRtp (void) {
 }
 
 int 
-AudioRtp::createNewSession (SipCall *ca) {
+AudioRtp::createNewSession (SIPCall *ca) {
   ost::MutexLock m(_threadMutex);
 
   // something should stop the thread before...
@@ -90,7 +90,7 @@ AudioRtp::closeRtpSession () {
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, bool sym) {
+AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, AudioLayer* driver, bool sym) {
   setCancel(cancelDeferred);
   time = new ost::Time();
   _ca = sipcall;
@@ -108,7 +108,7 @@ AudioRtpRTX::AudioRtpRTX (SipCall *sipcall, AudioLayer* driver, bool sym) {
 
   // TODO: Change bind address according to user settings.
   // TODO: this should be the local ip not the external (router) IP
-  std::string localipConfig = "0.0.0.0"; // _ca->getLocalIp();
+  std::string localipConfig = _ca->getLocalIp(); // _ca->getLocalIp();
   ost::InetHostAddress local_ip(localipConfig.c_str());
 
   //_debug("AudioRtpRTX ctor : Local IP:port %s:%d\tsymmetric:%d\n", local_ip.getHostname(), _ca->getLocalAudioPort(), _sym);
@@ -159,9 +159,9 @@ AudioRtpRTX::initAudioRtpSession (void)
     if (_ca == 0) { return; }
 
     //_debug("Init audio RTP session\n");
-    ost::InetHostAddress remote_ip(_ca->getRemoteSdpAudioIp());
+    ost::InetHostAddress remote_ip(_ca->getRemoteIp().c_str());
     if (!remote_ip) {
-      _debug("AudioRTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getRemoteSdpAudioIp());
+      _debug("AudioRTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getRemoteIp().data());
       return;
     }
 
@@ -178,12 +178,12 @@ AudioRtpRTX::initAudioRtpSession (void)
     }
 
     if (!_sym) {
-      if ( !_sessionRecv->addDestination(remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort()) ) {
-        _debug("AudioRTP Thread Error: could not connect to port %d\n",  _ca->getLocalAudioPort());
+      if ( !_sessionRecv->addDestination(remote_ip, (unsigned short) _ca->getRemoteAudioPort()) ) {
+        _debug("AudioRTP Thread Error: could not connect to port %d\n",  _ca->getRemoteAudioPort());
         return;
       }
-      if (!_sessionSend->addDestination (remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort())) {
-        _debug("AudioRTP Thread Error: could not connect to port %d\n",  _ca->getRemoteSdpAudioPort());
+      if (!_sessionSend->addDestination (remote_ip, (unsigned short) _ca->getRemoteAudioPort())) {
+        _debug("AudioRTP Thread Error: could not connect to port %d\n",  _ca->getRemoteAudioPort());
         return;
       }
 
@@ -202,7 +202,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 
       //_debug("AudioRTP Thread: Added session destination %s:%d\n", remote_ip.getHostname(), (unsigned short) _ca->getRemoteSdpAudioPort());
 
-      if (!_session->addDestination (remote_ip, (unsigned short) _ca->getRemoteSdpAudioPort())) {
+      if (!_session->addDestination (remote_ip, (unsigned short) _ca->getRemoteAudioPort())) {
         return;
       }
 
@@ -451,6 +451,7 @@ AudioRtpRTX::run () {
     audiolayer->flushMic();
     audiolayer->startStream();
     _start.post();
+    _debug("AudioRTP Start\n");
     while (!testCancel()) {
       ////////////////////////////
       // Send session
@@ -471,11 +472,11 @@ AudioRtpRTX::run () {
     audiolayer->stopStream();
   } catch(std::exception &e) {
     _start.post();
-    _debug("AudioRTP Thread, run: %s\n", e.what());
+    _debug("AudioRTP Stop: %s\n", e.what());
     throw;
   } catch(...) {
     _start.post();
-    _debugException("AudioRTP Thread, run()");
+    _debugException("AudioRTP Stop");
     throw;
   }
   delete [] data_for_speakers_stereo; data_for_speakers_stereo = 0;

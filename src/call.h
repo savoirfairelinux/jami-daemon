@@ -1,120 +1,109 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
- *                                                                              
+ *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
- *                                                                              
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
-#ifndef __CALL_H__
-#define __CALL_H__
+#ifndef CALL_H
+#define CALL_H
 
 #include <string>
+#include <cc++/thread.h> // for mutex
 
-typedef unsigned int CALLID;
+//TODO: remove this, it's only for call ID
+typedef std::string CallID;
 
-
-class VoIPLink;
-
-class Call {
+/**
+	@author Yan Morin <yan.morin@gmail.com>
+  A call is the base classes for protocol-based calls
+*/
+class Call{
 public:
-  enum CallType {
-  	Null = 0,
-  	Incoming,
-	Outgoing
-  };
+    enum CallType {Incoming, Outgoing};
+    enum ConnectionState {Disconnected, Trying, Progressing, Ringing, Connected };
+    enum CallState {Inactive, Active, Hold, Busy, Refused, Error};
 
-  enum CallState {
-    NotExist = 0,
-    Busy,
-    OnHold,
-    OffHold,
-    MuteOn,
-    MuteOff,
-    Transfered,
-    Hungup,
-    Answered,
-    Ringing,
-    Progressing,
-    Refused,	// for refuse incoming ringing call	
-    Error     // when a error occur
-  };
+    /**
+     * Constructor of a call
+     * @param id Unique identifier of the call
+     * @param type set definitely this call as incoming/outgoing
+     */
+    Call(const CallID& id, Call::CallType type);
+    virtual ~Call();
 
-	// Constructor
-	Call(CALLID id, CallType type, VoIPLink* voiplink);
-	// Destructor
-	~Call(void);
-	
+    /** 
+     * Return a reference on the call id
+     * @return call id
+     */
+    CallID& getCallId() {return _id; }
 
-	// Handle call-id
-	CALLID getId (void);
-	void setId (CALLID id);
-	
-	// Accessor and modifior of VoIPLink
-	VoIPLink* getVoIPLink(void);
-	void setVoIPLink (VoIPLink* voIPLink);
-		
-	// Handle id name and id number
-	std::string getCallerIdName (void);
-	void setCallerIdName (const std::string& callerId_name);
-	std::string getCallerIdNumber (void);
-	void setCallerIdNumber (const std::string& callerId_number);
- 	
-	// Handle state
-	CallState getState (void);
-	void setState (CallState state);
-	
-	// Handle type of call (incoming or outoing)
-	enum CallType getType (void);
-	void setType (enum CallType type);
+    /** 
+     * Set the peer number (destination on outgoing)
+     * not protected by mutex (when created)
+     * @param number peer number
+     */
+    void setPeerNumber(const std::string& number) {  _peerNumber = number; }
+    const std::string& getPeerNumber() {  return _peerNumber; }
 
-  bool isNotAnswered(void);
-	bool isBusy			  (void);
-	bool isOnHold 		(void);
-	bool isOffHold 		(void);
-	bool isOnMute 		(void);
-	bool isOffMute 		(void);
-	bool isTransfered 	(void);
-	bool isHungup 		(void);
-	bool isRinging 		(void);
-	bool isRefused 		(void);
-	bool isAnswered 	(void);
-	bool isProgressing 	(void);
-	bool isOutgoingType (void);
-	bool isIncomingType (void);
-	
-	int outgoingCall  	(const std::string& to);
-	int hangup  		(void);
-	int cancel  		(void);
-	int answer  		(void);
-	int onHold  		(void);
-	int offHold  		(void);
-	int transfer  		(const std::string& to);
-	int refuse  		(void);
-  void setFlagNotAnswered(bool value) { _flagNotAnswered = value; }
-  bool getFlagNotAnswered() const { return _flagNotAnswered; }
+    /** 
+     * Set the peer name (caller in ingoing)
+     * not protected by mutex (when created)
+     * @param number peer number
+     */
+    void setPeerName(const std::string& name) {  _peerName = name; }
+    const std::string& getPeerName() {  return _peerName; }
 
-private:
-	VoIPLink		*_voIPLink;	
-	CALLID 		  	 _id;
-	enum CallState 	 _state;
-	enum CallType 	 _type;
-	std::string 			 _callerIdName;
-	std::string 			 _callerIdNumber;
+    /** 
+     * Set the connection state of the call (protected by mutex)
+     */
+    void setConnectionState(ConnectionState state);
+    /** 
+     * get the connection state of the call (protected by mutex)
+     */
+    ConnectionState getConnectionState();
 
-  bool _flagNotAnswered;
+    /**
+     * Set the state of the call (protected by mutex)
+     */
+    void setState(CallState state);
+    /** 
+     * get the call state of the call (protected by mutex)
+     */
+    CallState getState();
+
+protected:
+    /** Protect every attribute that can be changed by two threads */
+    ost::Mutex _callMutex;
+
+private:  
+    /** Unique ID of the call */
+    CallID _id;
+
+    /** Type of the call */
+    CallType _type;
+    /** Disconnected/Progressing/Trying/Ringing/Connected */
+    ConnectionState _connectionState;
+    /** Inactive/Active/Hold/Busy/Refused/Error */
+    CallState _callState;
+
+    /** Name of the peer */
+    std::string _peerName;
+
+    /** Number of the peer */
+    std::string _peerNumber;
 };
 
-#endif // __CALL_H__
+#endif

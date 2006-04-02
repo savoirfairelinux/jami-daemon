@@ -16,32 +16,16 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef AIXACCOUNT_H
-#define AIXACCOUNT_H
+#include "iaxvoiplink.h"
 
-#include "account.h"
-
-/**
-	@author Yan Morin <yan.morin@gmail.com>
-  An AIX Account specify AIX specific functions and objects (AIXCall/AIXVoIPLink)
-*/
-class AIXAccount : public Account
+IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
+ : VoIPLink(accountID)
 {
-public:
-    AIXAccount(const AccountID& accountID);
+}
 
-    ~AIXAccount();
 
-  /* virtual Account function implementation */
-  void initConfig(Conf::ConfigTree& config);
-  bool registerAccount();
-  bool unregisterAccount();
-  bool init();
-  bool terminate();
+IAXVoIPLink::~IAXVoIPLink()
+{
+}
 
-private:
-  /* virtual Account function implementation */
-  bool createVoIPLink();
-};
 
-#endif

@@ -32,7 +32,6 @@
 #define AUDIO_CODEC3 "Codecs.codec3"
 #define AUDIO_RINGTONE "Rings.ringChoice"
 
-
 #define SIGNALISATION_SECTION "VoIPLink"
 #define SIGNALISATION_FULL_NAME "SIP.fullName"
 #define SIGNALISATION_USER_PART "SIP.userPart"
@@ -40,12 +39,16 @@
 #define SIGNALISATION_PASSWORD "SIP.password"
 #define SIGNALISATION_HOST_PART "SIP.hostPart"
 #define SIGNALISATION_PROXY "SIP.proxy"
-#define SIGNALISATION_AUTO_REGISTER "SIP.autoregister"
+#define SIGNALISATION_STUN_SERVER "STUN.STUNserver"
+#define SIGNALISATION_USE_STUN "STUN.useStun"
 #define SIGNALISATION_PLAY_TONES "DTMF.playTones"
 #define SIGNALISATION_PULSE_LENGTH "DTMF.pulseLength"
 #define SIGNALISATION_SEND_DTMF_AS "DTMF.sendDTMFas"
-#define SIGNALISATION_STUN_SERVER "STUN.STUNserver"
-#define SIGNALISATION_USE_STUN "STUN.useStun"
+
+#define ACCOUNT_DEFAULT_NAME "SIP0"
+#define ACCOUNT_TYPE "Account.type"
+#define ACCOUNT_ENABLE "Account.enable"
+#define ACCOUNT_AUTO_REGISTER "Account.autoregister"
 
 #define PREFERENCES_SECTION "Preferences"
 #define PREFERENCES_THEME "Themes.skinChoice"

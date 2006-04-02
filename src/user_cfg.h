@@ -38,7 +38,7 @@
 #define PREFERENCES		"Preferences"
 
 #define ACCOUNT_SIP0  "SIP0"
-#define ACCOUNT_AIX0  "AIX0"
+#define ACCOUNT_IAX0  "IAX0"
 
 
 // Fields to fill

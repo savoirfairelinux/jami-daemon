@@ -1,9 +1,7 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
- *
- *  Portions Copyright (C) 2002,2003   Aymeric Moizard <jack@atosc.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,373 +17,547 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <eXosip2/eXosip.h>
-#include <osip2/osip.h>
-#include <osipparser2/osip_const.h>
-
 #include "sipvoiplink.h"
-#include "global.h"
-#include "audio/codecDescriptor.h"
-#include "manager.h"
-#include "sipcall.h"
-#include "user_cfg.h"
 #include "eventthread.h"
+#include "sipcall.h"
+#include <sstream> // for ostringstream
 
-#define DEFAULT_SIP_PORT	5060
-#define RANDOM_SIP_PORT		rand() % 64000 + 1024
-#define	DEFAULT_LOCAL_PORT	10500
-#define	RANDOM_LOCAL_PORT	((rand() % 27250) + 5250)*2
+#include "manager.h"
+#include "user_cfg.h" // SIGNALISATION / PULSE #define
+
+// for listener
+#define DEFAULT_SIP_PORT  5060
+#define RANDOM_SIP_PORT   rand() % 64000 + 1024
+#define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 
 #define EXOSIP_ERROR_NO   0
 #define EXOSIP_ERROR_STD -1
 #define EXOSIP_ERROR_BUILDING -2
 
-#define VOICE_MSG			"Voice-Message"
-#define LENGTH_VOICE_MSG	15
+// for registration
+#define EXPIRES_VALUE 180
 
-SipVoIPLink::SipVoIPLink() : VoIPLink()
+// 1XX responses
+#define DIALOG_ESTABLISHED 101
+// see: osip_const.h
+
+// FOR VOICE Message handling
+#define VOICE_MSG     "Voice-Message"
+#define LENGTH_VOICE_MSG  15
+
+// need for hold/unhold
+#define INVITE_METHOD "INVITE"
+
+
+SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
+ : VoIPLink(accountID), _localExternAddress("")
 {
-  // default _audioRTP object initialization
   _evThread = new EventThread(this);
-  _localPort = 0;
-  _nMsgVoicemail = 0;
-  _reg_id = EXOSIP_ERROR_STD;
 
-  _registrationSend = false;
-  _started = false;
-  _localIpAddress = "127.0.0.1"; // sipvoip require this value to check network
+  _nMsgVoicemail = 0;
+  _eXosipRegID = EXOSIP_ERROR_STD;
+  _eXosipStarted = false;
+
+  _nbTryListenAddr = 2; // number of times to try to start SIP listener
+  _localExternPort = 0;
+
+  // to get random number for RANDOM_PORT
+  srand (time(NULL));
 }
 
-SipVoIPLink::~SipVoIPLink(void) {
-  endSipCalls();
-  delete _evThread; _evThread = NULL;
-  if (_started) {
+SIPVoIPLink::~SIPVoIPLink()
+{
+  delete _evThread; _evThread = 0;
+  terminate();
+}
+
+bool 
+SIPVoIPLink::init()
+{
+  if (!_eXosipStarted) {
+    if (0 != eXosip_init()) {
+      _debug("Could not initialize eXosip\n");
+      return false;
+    }
+    _eXosipStarted = true;
+  
+    // check networking capabilities
+    if ( !checkNetwork() ) {
+      _debug("SIP FAILURE: Unable to determine network capabilities\n");
+      return false;
+    }
+  
+    // if we useStun and we failed to receive something on port 5060, we try a random port
+    // If use STUN server, firewall address setup
+    int errExosip = 0;
+    int port = DEFAULT_SIP_PORT;
+  
+    int iTry = 1;  // try number..
+  
+    do {
+      if (_useStun && !Manager::instance().behindNat(port)) { 
+        port = RANDOM_SIP_PORT; 
+        if (!Manager::instance().behindNat(port)) {
+         _debug("SIP FAILURE: Unable to check NAT setting\n");
+          return false; // hoho we can't use the random sip port too...
+        }
+      }
+  
+      // second parameter, NULL is "::" for ipv6 and "0.0.0.0" for ipv4, we can put INADDR_ANY
+      errExosip = eXosip_listen_addr(IPPROTO_UDP, INADDR_ANY, port, AF_INET, 0);
+      if (errExosip != 0) {
+        _debug("SIP ERROR: [%d/%d] could not initialize SIP listener on port %d\n", iTry, _nbTryListenAddr, port);
+        port = RANDOM_SIP_PORT;
+      }
+    } while ( errExosip != 0 && iTry < _nbTryListenAddr );
+  
+    if ( errExosip != 0 ) { // we didn't succeeded
+      _debug("SIP FAILURE: SIP failed to listen on port %d\n", port);
+      return false;
+    }
+    _localPort = port;
+    _debug("SIP Init: listening on port %d\n", port);
+    
+    if (_useStun) {
+      // This method is used to replace contact address with the public address of your NAT
+      // it should be call after eXosip_listen_addr
+      // set by last behindNat() call (ish)...
+      _localExternAddress  = Manager::instance().getFirewallAddress();
+      _localExternPort     = Manager::instance().getFirewallPort();
+      eXosip_masquerade_contact(_localExternAddress.data(), _localExternPort);
+    } else {
+      _localExternAddress = _localIPAddress;
+      _localExternPort    = _localPort;
+    }
+    
+    // Set user agent
+    std::string tmp = std::string(PROGNAME_GLOBAL) + "/" + std::string(SFLPHONED_VERSION);
+    eXosip_set_user_agent(tmp.data());
+  
+    _debug("SIP Init: starting loop thread (SIP events)\n");
+    _evThread->start();
+  }
+  return _eXosipStarted;
+}
+
+
+
+void 
+SIPVoIPLink::terminate()
+{
+  terminateSIPCall(); 
+  if (_eXosipStarted) {
     eXosip_quit();
+    _eXosipStarted = false;
   }
 }
 
-// for voIPLink interface
 void
-SipVoIPLink::terminate(void) 
+SIPVoIPLink::terminateSIPCall()
 {
+  ost::MutexLock m(_callMapMutex);
+  CallMap::iterator iter = _callMap.begin();
+  SIPCall *call;
+  while( iter != _callMap.end() ) {
+    call = dynamic_cast<SIPCall*>(iter->second);
+    if (call) {
+      // Release SIP stack.
+      eXosip_lock();
+      eXosip_call_terminate(call->getCid(), call->getDid() );
+      eXosip_unlock();
+      delete call; call = 0;
+    }
+    iter++;
+  }
+  _callMap.clear();
 }
 
 bool
-SipVoIPLink::checkNetwork (void)
+SIPVoIPLink::checkNetwork()
 {
   // Set IP address
-  return getSipLocalIp();
+  return loadSIPLocalIP();
 }
 
-
-/**
- * Steps:
- * 1. Init eXosip
- * 2. Try to listen two times on a port
- *    if we use stun, we check if we can use 5060, before connecting to eXosip...
- *    if we can't we check on a random port
- */
 bool
-SipVoIPLink::init(void)
+SIPVoIPLink::loadSIPLocalIP() 
 {
-  // TODO: should be inside the account
-  _fullname = Manager::instance().getConfigString(SIGNALISATION,FULL_NAME) ;
-  _hostname = Manager::instance().getConfigString(SIGNALISATION,HOST_PART);
-
-  if (0 != eXosip_init()) {
-    _debug("Could not initialize eXosip\n");
-    return false;
-  }
-  _started = true;
-
-  srand (time(NULL));
-  int i;
-
-  // check networking capabilities
-  if ( !checkNetwork() ) {
-    return false;
-  }
-
-  // if we useStun and we failed to receive something on port 5060, we try a random port
-  // If use STUN server, firewall address setup
-  bool useStun = Manager::instance().useStun();
-  int port = DEFAULT_SIP_PORT;
-
-  int nbTry = 2; // number of times to try to start SIP listener
-  int iTry = 1;  // try number..
-
-  do {
-    if (useStun && !behindNat(port)) { 
-      port = RANDOM_SIP_PORT; 
-      if (!behindNat(port)) {
-        return false; // hoho we can't use the random sip port too...
-      }
+  bool returnValue = true;
+  if (_localIPAddress == "127.0.0.1") {
+    char* myIPAddress = new char[65];
+    if (eXosip_guess_localip(AF_INET, myIPAddress, 64) == EXOSIP_ERROR_STD) {
+      returnValue = false;
+    } else {
+      _localIPAddress = std::string(myIPAddress);
+      _debug("Checking network, setting local IP address to: %s\n", myIPAddress);
     }
-
-    // second parameter, NULL is "::" for ipv6 and "0.0.0.0" for ipv4, we can put INADDR_ANY
-    i = eXosip_listen_addr(IPPROTO_UDP, INADDR_ANY, port, AF_INET, 0);
-    if (i != 0) {
-      _debug("SIP ERROR: [%d/%d] could not initialize SIP listener on port %d\n", iTry, nbTry, port);
-      port = RANDOM_SIP_PORT;
-    }
-  } while ( i != 0 && iTry < nbTry );
-
-  if ( i != 0 ) { // we didn't succeeded
-    _debug("SIP FAILURE: SIP failed to listen on port %d\n", port);
-    return false;
+    delete [] myIPAddress; myIPAddress = NULL;
   }
-  _debug("SIP Init: listening on port %d\n", port);
-  
-  if (useStun) {
-    // This method is used to replace contact address with the public address of your NAT
-    // it should be call after eXosip_listen_addr
-    eXosip_masquerade_contact((Manager::instance().getFirewallAddress()).data(), Manager::instance().getFirewallPort());
-  }
-
-  // Set user agent
-  std::string tmp = std::string(PROGNAME_GLOBAL) + "/" + std::string(SFLPHONED_VERSION);
-  eXosip_set_user_agent(tmp.data());
-
-  _debug("SIP Init: starting loop thread (SIP events)\n");
-  _evThread->start();
-  return true;
+  return returnValue;
 }
 
-/**
- * Subscibe to message-summary notify
- * It allows eXosip to not send ' 481 Subcription Does Not Exist ' response
- */
 void
-SipVoIPLink::subscribeMessageSummary()
+SIPVoIPLink::getEvent()
 {
-  osip_message_t *subscribe;
-  const char *route= NULL;
-
-  // from/to
-  ManagerImpl& manager = Manager::instance();
-  std::string from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), manager.getConfigString(SIGNALISATION, HOST_PART));
-
-  // to
-  std::string to;
-  to = manager.getConfigString(SIGNALISATION, PROXY);
-  if (!to.empty()) {
-    to = toHeader(manager.getConfigString(SIGNALISATION, USER_PART)) + "@" + to;
-  } else {
-    to = from;
-  }
-  
-
-  // like in http://www.faqs.org/rfcs/rfc3842.html
-  const char *event="message-summary";
-  int expires = 86400;
-
-  // return 0 if no error
-  // the first from is the to... but we send the same
+  eXosip_event_t* event = eXosip_event_wait(0, 50);
   eXosip_lock();
-  int error = eXosip_subscribe_build_initial_request(&subscribe, to.c_str(), from.c_str(), route, event, expires);
+  eXosip_automatic_action();
   eXosip_unlock();
 
-  if (error == 0) {
-    // Accept: application/simple-message-summary
-    osip_message_set_header (subscribe, "Accept", "application/simple-message-summary");
-
-    _debug("Sending Message-summary subscription");
-    // return 0 if ok
-    eXosip_lock();
-    error = eXosip_subscribe_send_initial_request (subscribe);
-    eXosip_unlock();
-    _debug(" and return %d\n", error);
+  if (event == NULL) {
+    return;
   }
+
+  _debug("SIP Event: [cdt=%4d:%4d:%4d] type=#%03d %s \n", event->cid, event->did, event->tid, event->type, event->textinfo);
+  switch (event->type) {
+     /* REGISTER related events */
+     case EXOSIP_REGISTRATION_NEW:         /** 00 < announce new registration.       */
+       _debug("EXOSIP_REGISTRATION_NEW event is not implemented\n");
+       break;
+     case EXOSIP_REGISTRATION_SUCCESS:     /** 01 < user is successfully registred.  */
+       Manager::instance().registrationSucceed(getAccountID());
+       break;
+     case EXOSIP_REGISTRATION_FAILURE:     /** 02 < user is not registred.           */
+       Manager::instance().registrationFailed(getAccountID());
+       break;
+     case EXOSIP_REGISTRATION_REFRESHED:   /** 03 < registration has been refreshed. */
+       _debug("EXOSIP_REGISTRATION_REFRESHED event is not implemented\n");
+       break;
+     case EXOSIP_REGISTRATION_TERMINATED:  /** 04 < UA is not registred any more.    */
+       _debug("EXOSIP_REGISTRATION_TERMINATED event is not implmeneted\n");
+       break;
+      
+      /* INVITE related events within calls */
+     case EXOSIP_CALL_INVITE:          /** 05 < announce a new call                   */
+       SIPCallInvite(event);
+       break;
+     case EXOSIP_CALL_REINVITE:        /** 06 < announce a new INVITE within call     */
+       SIPCallReinvite(event);
+       break;
+
+     case EXOSIP_CALL_NOANSWER:        /** 07 < announce no answer within the timeout */
+       _debug("EXOSIP_CALL_NOANSWER event is not implemented\n");
+       break;
+     case EXOSIP_CALL_PROCEEDING:      /** 08 < announce processing by a remote app   */
+       _debug("EXOSIP_CALL_NOANSWER event is not implemented\n");
+       break;
+     case EXOSIP_CALL_RINGING:         /** 09 < announce ringback                     */
+       SIPCallRinging(event);
+       break;
+     case EXOSIP_CALL_ANSWERED:        /** 10 < announce start of call                */
+       SIPCallAnswered(event);
+       break;
+     case EXOSIP_CALL_REDIRECTED:      /** 11 < announce a redirection                */
+       _debug("EXOSIP_CALL_REDIRECTED event is not implemented\n");
+       break;
+     case EXOSIP_CALL_REQUESTFAILURE:  /** 12 < announce a request failure            */
+       SIPCallRequestFailure(event);
+       break;
+     case EXOSIP_CALL_SERVERFAILURE:   /** 13 < announce a server failure             */
+       SIPCallServerFailure(event);
+       break;
+     case EXOSIP_CALL_GLOBALFAILURE:   /** 14 < announce a global failure             */
+       SIPCallServerFailure(event);
+       break;
+     case EXOSIP_CALL_ACK:             /** 15 < ACK received for 200ok to INVITE      */
+       SIPCallAck(event);
+       break;
+      
+     case EXOSIP_CALL_CANCELLED:       /** 16 < announce that call has been cancelled */
+     case EXOSIP_CALL_TIMEOUT:         /** 17 < announce that call has failed         */
+       Manager::instance().displayError("EXOSIP Call Error not implemented yet");
+       break;
+
+      /* request related events within calls (except INVITE) */
+     case EXOSIP_CALL_MESSAGE_NEW:            /** 18 < announce new incoming MESSAGE. */
+      SIPCallMessageNew(event);
+      break;
+     case EXOSIP_CALL_MESSAGE_PROCEEDING:     /** 19 < announce a 1xx for MESSAGE. */
+     case EXOSIP_CALL_MESSAGE_ANSWERED:       /** 20 < announce a 200ok  */
+       // 200 OK
+     case EXOSIP_CALL_MESSAGE_REDIRECTED:     /** 21 < announce a failure. */
+     case EXOSIP_CALL_MESSAGE_REQUESTFAILURE: /** 22 < announce a failure. */
+     case EXOSIP_CALL_MESSAGE_SERVERFAILURE:  /** 23 < announce a failure. */
+     case EXOSIP_CALL_MESSAGE_GLOBALFAILURE:  /** 24 < announce a failure. */
+       Manager::instance().displayError("EXOSIP Call Message not implemented yet");
+       break;
+
+     case EXOSIP_CALL_CLOSED:          /** 25 < a BYE was received for this call      */
+       SIPCallClosed(event);
+       break;
+
+      /* for both UAS & UAC events */
+     case EXOSIP_CALL_RELEASED:           /** 26 < call context is cleared.            */
+       SIPCallReleased(event);
+       break;
+     
+      /* response received for request outside calls */
+     case EXOSIP_MESSAGE_NEW:            /** 27 < announce new incoming MESSAGE. */
+       if (event->request == NULL) { break; }
+       SIPMessageNew(event);
+       break;
+     case EXOSIP_MESSAGE_PROCEEDING:     /** 28 < announce a 1xx for MESSAGE. */
+     case EXOSIP_MESSAGE_ANSWERED:       /** 29 < announce a 200ok  */
+     case EXOSIP_MESSAGE_REDIRECTED:     /** 30 < announce a failure. */
+       Manager::instance().displayError("EXOSIP Message not implemented yet");
+     break;
+
+     case EXOSIP_MESSAGE_REQUESTFAILURE: /** 31 < announce a failure. */
+       if (event->response !=0 && event->response->status_code == SIP_METHOD_NOT_ALLOWED) {
+         Manager::instance().incomingMessage(getAccountID(), "Message are not allowed");
+       } else {
+         Manager::instance().displayError("EXOSIP_MESSAGE_REQUESTFAILURE not implemented yet");
+       }
+     break;
+     case EXOSIP_MESSAGE_SERVERFAILURE:  /** 32 < announce a failure. */
+     case EXOSIP_MESSAGE_GLOBALFAILURE:  /** 33 < announce a failure. */
+       Manager::instance().displayError("EXOSIP Message not implemented yet");
+       break;
+      
+      /* Presence and Instant Messaging */
+     case EXOSIP_SUBSCRIPTION_UPDATE:       /** 34 < announce incoming SUBSCRIBE.      */
+     case EXOSIP_SUBSCRIPTION_CLOSED:       /** 35 < announce end of subscription.     */
+       Manager::instance().displayError("EXOSIP Subscription not implemented yet");
+       break;
+      
+     case EXOSIP_SUBSCRIPTION_NOANSWER:        /** 37 < announce no answer              */
+     case EXOSIP_SUBSCRIPTION_PROCEEDING:      /** 38 < announce a 1xx                  */
+       Manager::instance().displayError("EXOSIP Subscription resposne not implemented yet");
+       break;
+     case EXOSIP_SUBSCRIPTION_ANSWERED:        /** 39 < announce a 200ok                */
+       eXosip_lock();
+       eXosip_automatic_action();
+       eXosip_unlock();
+     break;
+
+     case EXOSIP_SUBSCRIPTION_REDIRECTED:      /** 40 < announce a redirection          */
+     case EXOSIP_SUBSCRIPTION_REQUESTFAILURE:  /** 41 < announce a request failure      */
+     case EXOSIP_SUBSCRIPTION_SERVERFAILURE:   /** 42 < announce a server failure       */
+     case EXOSIP_SUBSCRIPTION_GLOBALFAILURE:   /** 43 < announce a global failure       */
+     case EXOSIP_SUBSCRIPTION_NOTIFY:          /** 44 < announce new NOTIFY request     */
+     case EXOSIP_SUBSCRIPTION_RELEASED:        /** 45 < call context is cleared.        */
+       Manager::instance().displayError("EXOSIP Subscription resposne not implemented yet");
+       break;
+      
+     case EXOSIP_IN_SUBSCRIPTION_NEW:          /** 46 < announce new incoming SUBSCRIBE.*/
+     case EXOSIP_IN_SUBSCRIPTION_RELEASED:     /** 47 < announce end of subscription.   */
+       Manager::instance().displayError("EXOSIP Subscription not implemented yet");
+       break;
+      
+     case EXOSIP_EVENT_COUNT:               /** 48 < MAX number of events  */
+      break;
+  }  
+  eXosip_event_free(event);
 }
 
-int
-SipVoIPLink::setRegister (void) 
+bool
+SIPVoIPLink::setRegister()
 {
-  ManagerImpl& manager = Manager::instance();
-
-  if (_reg_id != EXOSIP_ERROR_STD) {
-    manager.displayError("Registration already sent. Try to unregister");
-    return EXOSIP_ERROR_STD;
+  if (_eXosipRegID != EXOSIP_ERROR_STD) {
+    Manager::instance().displayError("SIP Error: Registration already sent. Try to unregister");
+    return false;
   }
 
-  // all this will be inside the profil associate with the voip link
-  std::string proxy = "sip:" + manager.getConfigString(SIGNALISATION, PROXY);
-  std::string hostname = "sip:" + manager.getConfigString(SIGNALISATION, HOST_PART);
-  std::string from = fromHeader(manager.getConfigString(SIGNALISATION, USER_PART), manager.getConfigString(SIGNALISATION, HOST_PART));
-
-  if (manager.getConfigString(SIGNALISATION, HOST_PART).empty()) {
-    manager.displayConfigError("Fill host part field");
-    return EXOSIP_ERROR_STD;
-  }
-  if (manager.getConfigString(SIGNALISATION, USER_PART).empty()) {
-    manager.displayConfigError("Fill user part field");
-    return EXOSIP_ERROR_STD;
+  std::string hostname = getHostName();
+  if (hostname.empty()) {
+    Manager::instance().displayConfigError("Fill host part field");
+    return false;
   }
 
+  if (_userpart.empty()) {
+    Manager::instance().displayConfigError("Fill user part field");
+    return false;
+  }
+
+
+  std::string proxy = "sip:" + _proxy;
+  hostname = "sip:" + hostname;
+  std::string from = SIPFromHeader(_userpart, getHostName());
+  
   osip_message_t *reg = NULL;
   eXosip_lock();
-  if (!manager.getConfigString(SIGNALISATION, PROXY).empty()) {
-    _debug("REGISTER From: %s to %s\n", from.data(), proxy.data());
-    _reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
-						      (char*)proxy.data(), NULL, EXPIRES_VALUE, &reg);
+  if (!_proxy.empty()) {
+    _debug("SIP Register: From: %s to %s\n", from.data(), proxy.data());
+    _eXosipRegID = eXosip_register_build_initial_register(from.data(), 
+                  proxy.data(), NULL, EXPIRES_VALUE, &reg);
   } else {
-    _debug("REGISTER From: %s to %s\n", from.data(), hostname.data());
-    _reg_id = eXosip_register_build_initial_register ((char*)from.data(), 
-						      (char*)hostname.data(), NULL, EXPIRES_VALUE, &reg);
+    _debug("SIP Register: From: %s to %s\n", from.data(), hostname.data());
+    _eXosipRegID = eXosip_register_build_initial_register(from.data(), 
+                  hostname.data(), NULL, EXPIRES_VALUE, &reg);
   }
   eXosip_unlock();
-  if (_reg_id < EXOSIP_ERROR_NO ) {
-    return EXOSIP_ERROR_STD;
+  if (_eXosipRegID < EXOSIP_ERROR_NO ) {
+    return false;
   }
 
-  if (setAuthentication() != EXOSIP_ERROR_NO) {
-    _debug("No authentication\n");
-    return EXOSIP_ERROR_STD;
+  if (!sendSIPAuthentification()) {
+    _debug("SIP Register: No authentication\n");
+    return false;
   }
 
   osip_message_set_header (reg, "Event", "Registration");
   osip_message_set_header (reg, "Allow-Events", "presence");
 
   eXosip_lock();
-  int i = eXosip_register_send_register (_reg_id, reg);
-  if (i == -2) {
-    _debug("Cannot build registration, check the setup\n"); 
+  int eXosipErr = eXosip_register_send_register(_eXosipRegID, reg);
+  if (eXosipErr == EXOSIP_ERROR_BUILDING) {
+    _debug("SIP Failure: Cannot build registration, check the setup\n"); 
     eXosip_unlock();
-    return EXOSIP_ERROR_STD;
+    return false;
   }
-  if (i == -1) {
-    _debug("Registration sending failed\n");
+  if (eXosipErr == EXOSIP_ERROR_STD) {
+    _debug("SIP Failure: Registration sending failed\n");
     eXosip_unlock();
-    return EXOSIP_ERROR_STD;
+    return false;
   }
   eXosip_unlock();
 
-  // subscribe to message one time?
-  // subscribeMessageSummary();
-  _registrationSend = true;
-  return i;
+  return true;
 }
 
-/**
- * setUnregister 
- * unregister if we already send the first registration
- * @return -1 if there is an error
- */
-int 
-SipVoIPLink::setUnregister (void)
+std::string
+SIPVoIPLink::SIPFromHeader(const std::string& userpart, const std::string& hostpart) 
 {
-  if ( _registrationSend ) {
-    int i = 0;
-    osip_message_t *reg = NULL;
+  return ("\"" + getFullName() + "\"" + " <sip:" + userpart + "@" + hostpart + ">");
+}
 
-    eXosip_lock();
+bool
+SIPVoIPLink::sendSIPAuthentification() 
+{
+  std::string login = _authname;
+  if (login.empty()) {
+    login = _userpart;
+  }
+  if (login.empty()) {
+    Manager::instance().displayConfigError("Fill authentification name");
+    return false;
+  }
+  if (_password.empty()) {
+    Manager::instance().displayConfigError("Fill password field");
+    return false;
+  }
+  eXosip_lock();
+  int returnValue = eXosip_add_authentication_info(login.data(), login.data(), _password.data(), NULL, NULL);
+  eXosip_unlock();
 
-    if (_reg_id > 0) {
-      i = eXosip_register_build_register (_reg_id, 0, &reg);
-    }
+  return (returnValue != EXOSIP_ERROR_STD ? true : false);
+}
+
+bool
+SIPVoIPLink::setUnregister()
+{
+  if ( _eXosipRegID == EXOSIP_ERROR_STD) return false;
+  int eXosipErr = EXOSIP_ERROR_NO;
+  osip_message_t *reg = NULL;
+
+  eXosip_lock();
+  eXosipErr = eXosip_register_build_register (_eXosipRegID, 0, &reg);
+  eXosip_unlock();
+
+  if (eXosipErr != EXOSIP_ERROR_NO) {
+    _debug("SIP Failure: Unable to build registration for setUnregister");
+    return false;
+  }
+
+  eXosip_lock();
+  _debug("< Sending REGISTER (expire=0)\n");
+  eXosipErr = eXosip_register_send_register (_eXosipRegID, reg);
+  if (eXosipErr == EXOSIP_ERROR_BUILDING) {
+    _debug("SIP Failure: Cannot build registration (unregister), check the setup\n"); 
     eXosip_unlock();
-    if (i < 0) {
-      return EXOSIP_ERROR_STD;
-    }
-
-    eXosip_lock();
-    _debug("< Sending REGISTER (expire=0)\n");
-    i = eXosip_register_send_register (_reg_id, reg);
-    if (i == EXOSIP_ERROR_BUILDING) {
-      _debug("  Cannot build registration (unregister), check the setup\n"); 
-      eXosip_unlock();
-      return EXOSIP_ERROR_STD;
-    }
-    if (i == EXOSIP_ERROR_STD) {
-      _debug("  Registration (unregister) Failed\n");
-    }
-    eXosip_unlock();
-    _reg_id = EXOSIP_ERROR_STD;
-    return i;
-  } else {
-    // no registration send before
-    return EXOSIP_ERROR_STD;
+    return false;
   }
+  if (eXosipErr == EXOSIP_ERROR_STD) {
+    _debug("SIP Failure: Unable to send registration (unregister)\n");
+  }
+  eXosip_unlock();
+  _eXosipRegID = EXOSIP_ERROR_STD;
+
+  return true;
 }
 
-/**
- * Get the Sip FROM url (add sip:, add @host, etc...)
- */ 
-std::string
-SipVoIPLink::getSipFrom() {
-
-  // Form the From header field basis on configuration panel
-  std::string user = Manager::instance().getConfigString(SIGNALISATION, USER_PART);
-  std::string host = Manager::instance().getConfigString(SIGNALISATION, HOST_PART);
-  if ( host.empty() ) {
-    host = getLocalIpAddress();
-  }
-  return fromHeader(user, host);
-}
-
-/**
- * Get the Sip TO url (add sip:, add @host, etc...)
- */
-std::string
-SipVoIPLink::getSipTo(const std::string& to_url) {
-  // Form the From header field basis on configuration panel
-  bool isRegistered = (_reg_id < EXOSIP_ERROR_NO) ? false : true;
-
-  // add a @host if we are registered and there is no one inside the url
-  if (to_url.find("@") == std::string::npos && isRegistered) {
-    std::string host = Manager::instance().getConfigString(SIGNALISATION, HOST_PART);
-    if(!host.empty()) {
-      return toHeader(to_url + "@" + host);
-    }
-  }
-  return toHeader(to_url);
-}
-
-/**
- * Get the sip proxy (add sip: if there is one) 
- * @return empty string or <sip:proxy;lr> url
- */
-std::string
-SipVoIPLink::getSipRoute() {
-  std::string proxy = Manager::instance().getConfigString(SIGNALISATION, PROXY);
-  if ( !proxy.empty() ) {
-    proxy = "<sip:" + proxy + ";lr>";
-  }
-  return proxy; // return empty
-}
-
-int
-SipVoIPLink::outgoingInvite (CALLID id, const std::string& to_url) 
+Call* 
+SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 {
-  bool has_ip = checkNetwork();
-  std::string from  = getSipFrom();
-  std::string to    = getSipTo(to_url);
-  std::string route = getSipRoute();
-
-  _debug("            From: %s\n", from.data());
-  _debug("            To: %s\n", to.data());
-  _debug("            Route: %s\n", route.data());
-
-  // If no SIP proxy setting for direct call with only IP address
-  if (has_ip) {
-    if (startCall(id, from, to, "", route) <= 0) {
-      _debug("Warning SipVoIPLink: call not started\n");
-      return EXOSIP_ERROR_STD;
+  SIPCall* call = new SIPCall(id, Call::Outgoing);
+  if (call) {
+    call->setPeerNumber(toUrl);
+    // we have to add the codec before using it in SIPOutgoingInvite...
+    call->setCodecMap(Manager::instance().getCodecDescriptorMap());
+    if ( SIPOutgoingInvite(call) ) {
+      call->setConnectionState(Call::Progressing);
+      call->setState(Call::Active);
+      addCall(call);
+    } else {
+      delete call; call = 0;
     }
-  } else {
-    Manager::instance().displayErrorText(id, "No network found\n");
-    return EXOSIP_ERROR_STD;
   }
-  return 0;
+  return call;
 }
 
-/**
- * @return 0 is good, -1 is bad
- */
-int
-SipVoIPLink::answer(CALLID id) 
+bool
+SIPVoIPLink::answer(const CallID& id)
 {
-  int i;
+  _debug("SIP Action: start answering\n");
+
+  SIPCall* call = getSIPCall(id);
+  if (call==0) {
+    _debug("SIP Failure: SIPCall doesn't exists\n");
+    return false;
+  }
+
+  // Send 180 RINGING
+  _debug("< Send 180 Ringing\n");
+  eXosip_lock ();
+  eXosip_call_send_answer(call->getTid(), SIP_RINGING, NULL);
+  eXosip_unlock ();
+  call->setConnectionState(Call::Ringing);
+
+  // Send 200 OK
+  osip_message_t *answerMessage = NULL;
+  eXosip_lock();
+  _debug("< Building 200 OK\n");
+  int i = eXosip_call_build_answer(call->getTid(), SIP_OK, &answerMessage);
+  if (i != 0) {
+   _debug("< Send 400 Bad Request\n");
+    eXosip_call_send_answer (call->getTid(), SIP_BAD_REQUEST, NULL);
+  } else {
+    // use exosip, bug locked
+    i = 0;
+    sdp_message_t *remote_sdp = eXosip_get_remote_sdp(call->getDid());
+    if (remote_sdp!=NULL) {
+      i = call->sdp_complete_message(remote_sdp, answerMessage);
+      if (i!=0) {
+        osip_message_free(answerMessage);
+      }
+      sdp_message_free(remote_sdp);
+    }
+    if (i != 0) {
+      _debug("< Send 415 Unsupported Media Type\n");
+      eXosip_call_send_answer (call->getTid(), SIP_UNSUPPORTED_MEDIA_TYPE, NULL);
+    } else {
+      _debug("< Send 200 OK\n");
+      eXosip_call_send_answer (call->getTid(), SIP_OK, answerMessage);
+    }
+  }
+  eXosip_unlock();
+
+  if(i==0) {
+    // Incoming call is answered, start the sound channel.
+    _debug("          Starting AudioRTP\n");
+    if (_audiortp.createNewSession(call) >= 0) {
+      call->setAudioStart(true);
+      call->setConnectionState(Call::Connected);
+      call->setState(Call::Active);
+      return true;
+    } else {
+      _debug("FATAL: Unable to start sound when answering %s/%d\n", __FILE__, __LINE__);
+    }
+  }
+  removeCall(call->getCallId());
+  return false;
+
+/*  int i;
   int port;
   char tmpbuf[64];
   bzero (tmpbuf, 64);
@@ -395,188 +567,136 @@ SipVoIPLink::answer(CALLID id)
   _debug("%10d: Answer call [cid = %d, did = %d]\n", id, getSipCall(id)->getCid(), getSipCall(id)->getDid());
   port = getSipCall(id)->getLocalAudioPort();
   _debug("            Local audio port: %d\n", port);
-
-  osip_message_t *answerMessage = NULL;
-  SipCall* ca = getSipCall(id);
-
-  // Send 180 RINGING
-  _debug("< Send 180 Ringing\n");
-  eXosip_lock ();
-  eXosip_call_send_answer(ca->getTid(), RINGING, NULL);
-  eXosip_unlock ();
-
-  // Send 200 OK
-  eXosip_lock();
-  i = eXosip_call_build_answer(ca->getTid(), OK, &answerMessage);
-  if (i != 0) {
-   _debug("< Send 400 Bad Request\n");
-    eXosip_call_send_answer (ca->getTid(), BAD_REQ, NULL);
-  } else {
-    // use exosip, bug locked
-    i = 0;
-    sdp_message_t *remote_sdp = eXosip_get_remote_sdp(ca->getDid());
-    if (remote_sdp!=NULL) {
-      i = ca->sdp_complete_message(remote_sdp, answerMessage);
-      if (i!=0) {
-        osip_message_free(answerMessage);
-      }
-      sdp_message_free (remote_sdp);
-    }
-    if (i != 0) {
-      _debug("< Send 415 Unsupported Media Type\n");
-      eXosip_call_send_answer (ca->getTid(), UNSUP_MEDIA_TYPE, NULL);
-    } else {
-      _debug("< Send 200 OK\n");
-      eXosip_call_send_answer (ca->getTid(), OK, answerMessage);
-    }
-  }
-  eXosip_unlock();
-
-  // Incoming call is answered, start the sound channel.
-  _debug("          Starting AudioRTP\n");
-  if (_audiortp.createNewSession (getSipCall(id)) < 0) {
-    _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
-    i = EXOSIP_ERROR_STD;
-  }
-  return i;
+*/
 }
 
-
-/**
- * @return > 0 is good, -1 is bad
- */
-int
-SipVoIPLink::hangup (CALLID id) 
+bool
+SIPVoIPLink::hangup(const CallID& id)
 {
-  int i = 0;
-  SipCall* sipcall = getSipCall(id);
-  if (sipcall == NULL) { return EXOSIP_ERROR_STD; }
-  _debug("%10d: Hang up call [cid = %d, did = %d]\n", 
-    id, sipcall->getCid(), sipcall->getDid());	
+  SIPCall* call = getSIPCall(id);
+  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
+
+  _debug("Hang up call %s [cd: %3d %3d]\n", id.data(), call->getCid(), call->getDid()); 
   // Release SIP stack.
   eXosip_lock();
-  i = eXosip_call_terminate (sipcall->getCid(), sipcall->getDid());
+  eXosip_call_terminate(call->getCid(), call->getDid());
   eXosip_unlock();
 
   // Release RTP channels
-  if (id == Manager::instance().getCurrentCallId()) {
+  if (Manager::instance().isCurrentCall(id)) {
     _audiortp.closeRtpSession();
   }
-
-  deleteSipCall(id);
-  return i;
+  removeCall(id);
+  return true;
 }
 
-int
-SipVoIPLink::cancel (CALLID id) 
+bool
+SIPVoIPLink::cancel(const CallID& id)
 {
-  int i = 0;
-  SipCall* sipcall = getSipCall(id);
-  _debug("%10d: Cancel call [cid = %d]\n", id, sipcall->getCid());
+  SIPCall* call = getSIPCall(id);
+  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
+
+  _debug("Cancel call %s [cid: %3d]\n", id.data(), call->getCid()); 
   // Release SIP stack.
   eXosip_lock();
-  i = eXosip_call_terminate (sipcall->getCid(), -1);
+  eXosip_call_terminate(call->getCid(), -1);
   eXosip_unlock();
 
-  deleteSipCall(id);
-  return i;
+  removeCall(id);
+  return true;
 }
 
-/*
- * @return -1 = sipcall not present
- */
-int
-SipVoIPLink::onhold (CALLID id) 
+bool
+SIPVoIPLink::onhold(const CallID& id)
 {
-  osip_message_t *invite;
-  int i;
-  int did;
+  SIPCall* call = getSIPCall(id);
+  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
 
-  sdp_message_t *local_sdp = NULL;
-
-  SipCall *sipcall = getSipCall(id);
-  if ( sipcall == NULL ) { return EXOSIP_ERROR_STD; }
-
-  did = sipcall->getDid();
+  int did = call->getDid();
 
   eXosip_lock ();
-  local_sdp = eXosip_get_local_sdp (did);
+  sdp_message_t *local_sdp = eXosip_get_local_sdp(did);
   eXosip_unlock ();
 
   if (local_sdp == NULL) {
-    return EXOSIP_ERROR_STD;
+    _debug("SIP Failure: unable to find local_sdp\n");
+    return false;
   }
 
   // Build INVITE_METHOD for put call on-hold
+  osip_message_t *invite = NULL;
   eXosip_lock ();
-  i = eXosip_call_build_request (did, INVITE_METHOD, &invite);
+  int exosipErr = eXosip_call_build_request (did, INVITE_METHOD, &invite);
   eXosip_unlock ();
 
-  if (i != 0) {
+  if (exosipErr != 0) {
     sdp_message_free(local_sdp);
-    return EXOSIP_ERROR_STD;
+    _debug("SIP Failure: unable to build invite method to hold call\n");
+    return false;
   }
 
   /* add sdp body */
   {
     char *tmp = NULL;
 
-    i = sdp_hold_call (local_sdp);
+    int i = sdp_hold_call(local_sdp);
     if (i != 0) {
       sdp_message_free (local_sdp);
       osip_message_free (invite);
-      return EXOSIP_ERROR_STD;
+      _debug("SIP Failure: Unable to hold call in SDP\n");
+      return false;
     }
     
-    i = sdp_message_to_str (local_sdp, &tmp);
-    sdp_message_free (local_sdp);
+    i = sdp_message_to_str(local_sdp, &tmp);
+    sdp_message_free(local_sdp);
     if (i != 0) {
       osip_message_free (invite);
       osip_free (tmp);
-      return EXOSIP_ERROR_STD;
+      _debug("SIP Failure: Unable to translate sdp message to string\n");
+      return false;
     }
     osip_message_set_body (invite, tmp, strlen (tmp));
     osip_free (tmp);
     osip_message_set_content_type (invite, "application/sdp");
   }
   
-  // Send request
+  // Stop sound
+  call->setAudioStart(false);
   _audiortp.closeRtpSession();
 
+  // send request
+  _debug("< Send on hold request\n");
   eXosip_lock ();
-  i = eXosip_call_send_request (did, invite);
+  exosipErr = eXosip_call_send_request (did, invite);
   eXosip_unlock ();
   
-  // Disable audio
-  return i;
+  return true;
 }
 
-/**
- * @return 0 is good, -1 is bad
- */
-int
-SipVoIPLink::offhold (CALLID id) 
+bool 
+SIPVoIPLink::offhold(const CallID& id)
 {
-  osip_message_t *invite;
-  int i;
-  int did;
+  SIPCall* call = getSIPCall(id);
+  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
 
-  sdp_message_t *local_sdp = NULL;
+  int did = call->getDid();
 
-  did = getSipCall(id)->getDid();
   eXosip_lock ();
-  local_sdp = eXosip_get_local_sdp (did);
+  sdp_message_t *local_sdp = eXosip_get_local_sdp(did);
   eXosip_unlock ();
+
   if (local_sdp == NULL) {
-    return EXOSIP_ERROR_STD;
+    _debug("SIP Failure: unable to find local_sdp\n");
+    return false;
   }
 
   // Build INVITE_METHOD for put call off-hold
+  osip_message_t *invite;
   eXosip_lock ();
-  i = eXosip_call_build_request (did, INVITE_METHOD, &invite);
+  int exosipErr = eXosip_call_build_request (did, INVITE_METHOD, &invite);
   eXosip_unlock ();
 
-  if (i != 0) {
+  if (exosipErr != 0) {
     sdp_message_free(local_sdp);
     return EXOSIP_ERROR_STD;
   }
@@ -585,11 +705,11 @@ SipVoIPLink::offhold (CALLID id)
   {
     char *tmp = NULL;
     
-    i = sdp_off_hold_call (local_sdp);
+    int i = sdp_off_hold_call (local_sdp);
     if (i != 0) {
       sdp_message_free (local_sdp);
       osip_message_free (invite);
-      return EXOSIP_ERROR_STD;
+      return false;
     }
     
     i = sdp_message_to_str (local_sdp, &tmp);
@@ -597,7 +717,7 @@ SipVoIPLink::offhold (CALLID id)
     if (i != 0) {
       osip_message_free (invite);
       osip_free (tmp);
-      return EXOSIP_ERROR_STD;
+      return false;
     }
     osip_message_set_body (invite, tmp, strlen (tmp));
     osip_free (tmp);
@@ -607,516 +727,67 @@ SipVoIPLink::offhold (CALLID id)
   // Send request
   _debug("< Send off hold request\n");
   eXosip_lock ();
-  i = eXosip_call_send_request (did, invite);
+  exosipErr = eXosip_call_send_request (did, invite);
   eXosip_unlock ();
 
   // Enable audio
   _debug("          Starting AudioRTP\n");
-  if (_audiortp.createNewSession (getSipCall(id)) < 0) {
-    _debug("FATAL: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
-    i = EXOSIP_ERROR_STD;
+  // it's sure that this is the current call id...
+  if (_audiortp.createNewSession(call) < 0) {
+    _debug("SIP Failure: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
+    return false;
   }
-  return i;
+  return true;
 }
 
-int
-SipVoIPLink::transfer (CALLID id, const std::string& to)
+bool 
+SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 {
-  osip_message_t *refer;
-  int i;
-  std::string tmp_to;
-  tmp_to = toHeader(to);
+  SIPCall* call = getSIPCall(id);
+  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
+
+  std::string tmp_to = SIPToHeader(to);
   if (tmp_to.find("@") == std::string::npos) {
-    tmp_to = tmp_to + "@" + Manager::instance().getConfigString(SIGNALISATION,
-HOST_PART);
+    tmp_to = tmp_to + "@" + getHostName();
   }
 
+  osip_message_t *refer;
   eXosip_lock();
   // Build transfer request
-  i = eXosip_call_build_refer (getSipCall(id)->getDid(), (char*)tmp_to.data(),
-			       &refer);
-  if (i == 0) {
+  int exosipErr = eXosip_call_build_refer(call->getDid(), (char*)tmp_to.data(), &refer);
+  if (exosipErr == 0) {
     // Send transfer request
-    i = eXosip_call_send_request (getSipCall(id)->getDid(), refer);
+    exosipErr = eXosip_call_send_request(call->getDid(), refer);
   }
   eXosip_unlock();
-  return i;
+
+  // shall we delete the call?
+  removeCall(id);
+  return true;
 }
 
-int
-SipVoIPLink::refuse (CALLID id)
+bool
+SIPVoIPLink::refuse (const CallID& id)
 {
-  int i;
-  char tmpbuf[64];
-  bzero (tmpbuf, 64);
-  // Get local port   
-  snprintf (tmpbuf, 63, "%d", getSipCall(id)->getLocalAudioPort());
-	
+  SIPCall* call = getSIPCall(id);
+  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
+
   osip_message_t *answerMessage = NULL;
   eXosip_lock();
   // not BUSY.. where decline the invitation!
-  i = eXosip_call_build_answer (getSipCall(id)->getTid(), SIP_DECLINE, &answerMessage);
-  if (i == 0) {
-    i = eXosip_call_send_answer (getSipCall(id)->getTid(), SIP_DECLINE, answerMessage);
+  int exosipErr = eXosip_call_build_answer(call->getTid(), SIP_DECLINE, &answerMessage);
+  if (exosipErr == 0) {
+    exosipErr = eXosip_call_send_answer(call->getTid(), SIP_DECLINE, answerMessage);
   }
   eXosip_unlock();
-  return i;
+  return true;
 }
 
-int
-SipVoIPLink::getEvent (void)
+bool 
+SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code)
 {
-  // wait for 0 s, 50 ms
-  eXosip_event_t* event = eXosip_event_wait (0, 50);
-  eXosip_lock();
-  eXosip_automatic_action();
-  eXosip_unlock();
-
-  if (event == NULL) {
-    return EXOSIP_ERROR_STD;
-  }
-
-  SipCall* sipcall = NULL;
-  CALLID id = 0;
-  int returnValue = EXOSIP_ERROR_NO;
-
-  _debug("SIP Event: #%03d %s\n", event->type, event->textinfo);
-
-  switch (event->type) {
-    // IP-Phone user receives a new call
-  case EXOSIP_CALL_INVITE: //
-    _debug("> INVITE (receive)\n");
-    checkNetwork();
-
-    // Set local random port for incoming call
-    if (!Manager::instance().useStun()) {
-      setLocalPort(RANDOM_LOCAL_PORT);
-    } else {
-      // If there is a firewall
-      if (behindNat(DEFAULT_LOCAL_PORT) != 0) {
-        setLocalPort(Manager::instance().getFirewallPort());
-      } else {
-        returnValue = EXOSIP_ERROR_STD;
-        break;
-      }
-    }
-
-    // Generate id
-    id = Manager::instance().generateNewCallId();
-    Manager::instance().pushBackNewCall(id, Call::Incoming);
-    _debug("%10d: [cid = %d, did = %d]\n", id, event->cid, event->did);
-
-    // Associate an audio port with a call
-    sipcall = getSipCall(id);
-    sipcall->setLocalAudioPort(_localPort);
-    sipcall->setLocalIp(getLocalIpAddress());
-    _debug("            Local listening port: %d\n", _localPort);
-    _debug("            Local listening IP: %s\n", getLocalIpAddress().c_str());
-
-    if (sipcall->newIncomingCall(event) == 0 ) {
-      if (Manager::instance().incomingCall(id, sipcall->getName(), sipcall->getNumber()) == EXOSIP_ERROR_STD) {
-        Manager::instance().displayError("Incoming Call Failed");
-        deleteSipCall(id);
-      }
-    } else {
-      Manager::instance().peerHungupCall(id);
-      deleteSipCall(id);
-      Manager::instance().displayError("Incoming Call Failed");
-    }
-    break;
-
-  case EXOSIP_CALL_REINVITE:
-    _debug("> INVITE (reinvite)\n");
-    //eXosip_call_send_answer(event->tid, 403, NULL);
-    //488 as http://www.atosc.org/pipermail/public/osip/2005-June/005385.html
-
-    id = findCallId(event);
-    if (id != 0) {
-      sipcall = getSipCall(id);
-      if (sipcall != 0) {
-        _debug("%10d: Receive Reinvite [cid = %d, did = %d], localport=%d\n", id, event->cid, event->did,sipcall->getLocalAudioPort());
-
-        if ( id == Manager::instance().getCurrentCallId() ) {
-          Manager::instance().stopTone();
-          _audiortp.closeRtpSession();
-        }
-        sipcall->newReinviteCall(event);
-        // we should receive an ack after that...
-      }
-    } else {
-      _debug("< Send 488 Not Acceptable Here");
-      eXosip_lock();
-      eXosip_call_send_answer(event->tid, 488, NULL);
-      eXosip_unlock();
-    }
-    break;
-
-  case EXOSIP_CALL_PROCEEDING: // 8
-    // proceeding call...
-    break;
-
-  case EXOSIP_CALL_RINGING: // 9 peer call is ringing
-    id = findCallIdInitial(event);
-    _debug("%10d: Receive Call Ringing [cid = %d, did = %d]\n", id, event->cid, event->did);
-    if (id != 0) {
-      getSipCall(id)->ringingCall(event);
-      Manager::instance().peerRingingCall(id);
-    } else {
-      returnValue = -1;
-    }
-    break;
-
-  // The peer-user answers
-  case EXOSIP_CALL_ANSWERED: // 10
-  {
-    id = findCallIdInitial(event);
-    if ( id != 0) {
-      sipcall = getSipCall(id);
-      if ( sipcall != 0 ) {
-        _debug("%10d: Receive Call Answer [cid = %d, did = %d], localport=%d\n", id, event->cid, event->did, sipcall->getLocalAudioPort());
-
-        // Answer
-        if (Manager::instance().callCanBeAnswered(id)) {
-          sipcall->setStandBy(false);
-          if (sipcall->answeredCall(event) != -1) {
-            sipcall->answeredCall_without_hold(event);
-            Manager::instance().peerAnsweredCall(id);
-  
-            if(!Manager::instance().callIsOnHold(id) && Manager::instance().getCurrentCallId()==id) {
-              // Outgoing call is answered, start the sound channel.
-              _debug("            Starting AudioRTP\n");
-              if (_audiortp.createNewSession(sipcall) < 0) {
-                _debug("            FATAL: Unable to start sound (%s:%d)\n", 
-                __FILE__, __LINE__);
-                returnValue = -1;
-              }
-            }
-          }
-        } else {
-          // Answer to on/off hold to send ACK
-          _debug("            Answering call\n");
-          sipcall->answeredCall(event);
-        }
-      }
-    } else {
-      returnValue = -1;
-    }
-  }
-   break;
-  case EXOSIP_CALL_REDIRECTED: // 11
-    break;
-
-  case EXOSIP_CALL_ACK: // 15
-    id = findCallId(event); 
-    _debug("%10d: Receive ACK [cid = %d, did = %d]\n", id, event->cid, event->did);
-    if (id != 0 ) {
-      sipcall = getSipCall(id);
-      if(sipcall != 0 ) { 
-        sipcall->receivedAck(event);
-        if (sipcall->isReinvite()) {
-          sipcall->endReinvite();
-          if(!Manager::instance().callIsOnHold(id) && Manager::instance().getCurrentCallId()==id) {
-            _debug("            Starting AudioRTP\n");
-            _audiortp.createNewSession(sipcall);
-          } else {
-            _debug("            Didn't start RTP because it's on hold or it's not the current call id\n");
-          }
-        }
-      }
-    } else {
-      returnValue = -1;
-    }
-    break;
-
-    // The peer-user closed the phone call(we received BYE).
-  case EXOSIP_CALL_CLOSED: // 25
-    id = findCallId(event);
-    if (id==0) { id = findCallIdInitial(event); }
-    _debug("%10d: Receive BYE [cid = %d, did = %d]\n", id, event->cid, event->did);	
-    if (id != 0) {
-      if (Manager::instance().callCanBeClosed(id)) {
-         sipcall = getSipCall(id);
-         _audiortp.closeRtpSession();
-      }
-      Manager::instance().peerHungupCall(id);
-      deleteSipCall(id);
-    } else {
-      returnValue = -1;
-    }	
-    break;
-  case EXOSIP_CALL_RELEASED:
-    if (event) {
-      _debug("SIP call released: [cid = %d, did = %d]\n", event->cid, event->did);
-      id = findCallId(event);
-      if (id!=0) {
-        // not supposed to be execute on a current call...
-        Manager::instance().callFailure(id);
-        deleteSipCall(id);
-      }
-
-    }
-    break;
-  case EXOSIP_CALL_REQUESTFAILURE: //12
-
-    _debug("Request Failure, receive code %d\n", event->response->status_code);
-    // Handle 4XX errors
-    switch (event->response->status_code) {
-    case AUTH_REQUIRED: 
-      _debug("SIP Server ask required authentification: logging...\n");
-      setAuthentication();
-      eXosip_lock();
-      eXosip_automatic_action();
-      eXosip_unlock();
-      break;
-    case UNAUTHORIZED:
-      _debug("Request is unauthorized. SIP Server ask authentification: logging...\n");
-      setAuthentication();
-      break;
-
-    case BAD_REQ:
-    case FORBIDDEN:
-    case NOT_FOUND:
-    case NOT_ALLOWED:
-    case NOT_ACCEPTABLE:
-    case REQ_TIMEOUT:
-    case TEMP_UNAVAILABLE:
-    case ADDR_INCOMPLETE:
-    case NOT_ACCEPTABLE_HERE: // 488
-      // Display error on the screen phone
-      //Manager::instance().displayError(event->response->reason_phrase);
-      id = findCallId(event);
-      Manager::instance().displayErrorText(id, event->response->reason_phrase);
-      Manager::instance().callFailure(id);
-      deleteSipCall(id);
-    break;
-    case BUSY_HERE:
-      id = findCallId(event);
-      Manager::instance().displayErrorText(id, event->response->reason_phrase);
-      Manager::instance().callBusy(id);
-      deleteSipCall(id);
-      break;
-    case REQ_TERMINATED:
-      break;
-    default:
-      // sipphone.com send 478 Unresolveable destination (478/TM)
-      id = findCallId(event);
-      Manager::instance().displayErrorText(id, event->response->reason_phrase);
-      Manager::instance().callFailure(id);
-      deleteSipCall(id);
-      break;
-    }
-
-    break; 
-
-  case EXOSIP_CALL_SERVERFAILURE:
-    // Handle 5XX errors
-    switch (event->response->status_code) {
-    case SERVICE_UNAVAILABLE:
-      id = findCallId(event);
-      Manager::instance().callFailure(id);
-      break;
-    default:
-      break;
-    }
-    break;
-
-  case EXOSIP_CALL_GLOBALFAILURE:
-    // Handle 6XX errors
-    switch (event->response->status_code) {
-    case BUSY_EVERYWHERE:
-    case DECLINE:
-      id = findCallId(event);
-      Manager::instance().callFailure(id);
-      break;
-    default:
-      break;
-    }
-    break;
-
-  case EXOSIP_CALL_MESSAGE_NEW: // 18
-    if (0 == event->request) break;
-    if (MSG_IS_INFO(event->request)) {
-      _debug("Receive a call message request info\n");
-      osip_content_type_t* c_t = event->request->content_type;
-      if (c_t != 0 && c_t->type != 0 && c_t->subtype != 0 ) {
-        _debug("  Content Type of the message: %s/%s\n", c_t->type, c_t->subtype);
-        // application/dtmf-relay
-        if (strcmp(c_t->type, "application") == 0 && strcmp(c_t->subtype, "dtmf-relay") == 0) {
-          handleDtmfRelay(event);
-        }
-      }
-    }
-
-    osip_message_t *answerOKNewMessage;
-    eXosip_lock();
-    if ( 0 == eXosip_call_build_answer(event->tid, OK, &answerOKNewMessage)) {
-      _debug("< Sending 200 OK\n");
-      eXosip_call_send_answer(event->tid, OK, answerOKNewMessage);
-    } else {
-      _debug("Could not sent an OK message\n");
-    }
-    eXosip_unlock();
-    break;
- 
-  case EXOSIP_REGISTRATION_SUCCESS: // 1
-    // Manager::instance().displayStatus(LOGGED_IN_STATUS);
-    Manager::instance().registrationSucceed();
-    break;
-
-  case EXOSIP_REGISTRATION_FAILURE: // 2
-    //Manager::instance().displayError("getEvent : Registration Failure");
-    Manager::instance().registrationFailed();
-    break;
-
-  case EXOSIP_MESSAGE_NEW: //27
-
-    if ( event->request == NULL) {
-      break; // do nothing
-    }
-    unsigned int k;
-				
-    if (MSG_IS_OPTIONS(event->request)) {
-      for (k = 0; k < _sipcallVector.size(); k++) {
-        if (_sipcallVector.at(k)->getCid() == event->cid) { 
-          break;
-        }
-      }
-
-      // TODO: Que faire si rien trouve??
-      eXosip_lock();
-      if (k == _sipcallVector.size()) {
-        /* answer 200 ok */
-        eXosip_options_send_answer (event->tid, OK, NULL);
-
-      } else if (_sipcallVector.at(k)->getCid() == event->cid) {
-        /* already answered! */
-      } else {
-        /* answer 486 ok */
-      	eXosip_options_send_answer (event->tid, BUSY_HERE, NULL);
-      }
-      eXosip_unlock();
-    } 
-
-    // Voice message 
-    else if (MSG_IS_NOTIFY(event->request)){
-      _debug("> NOTIFY Voice message\n");
-      int ii;
-      unsigned int pos;
-      unsigned int pos_slash;
-
-      osip_body_t *body = NULL;
-      // Get the message body
-      ii = osip_message_get_body(event->request, 0, &body);
-      if (ii != 0) {
-        _debug("  Cannot get body in a new EXOSIP_MESSAGE_NEW event\n");
-        returnValue = EXOSIP_ERROR_STD;
-        break;
-      }
-
-      // Analyse message body
-      if (!body || !body->body) {
-        returnValue = EXOSIP_ERROR_STD;
-        break;
-      }
-      std::string str(body->body);
-      pos = str.find(VOICE_MSG);
-
-      if (pos == std::string::npos) {
-	     // If the string is not found
-        returnValue = EXOSIP_ERROR_STD;
-        break;
-      } 
-
-      pos_slash = str.find ("/");
-      std::string nb_msg = str.substr(pos + LENGTH_VOICE_MSG, 
-      pos_slash - (pos + LENGTH_VOICE_MSG));
-
-      // Set the number of voice-message
-      setMsgVoicemail(atoi(nb_msg.data()));
-
-      if (getMsgVoicemail() != 0) {
-        // If there is at least one voice-message, start notification
-        Manager::instance().startVoiceMessageNotification(nb_msg);
-      } else {
-        // Stop notification when there is 0 voice message
-        Manager::instance().stopVoiceMessageNotification();
-      }
-    // http://www.jdrosen.net/papers/draft-ietf-simple-im-session-00.txt
-    } else if (MSG_IS_MESSAGE(event->request)) {
-      _debug("> MESSAGE received\n");
-      // osip_content_type_t* osip_message::content_type
-      osip_content_type_t* c_t = event->request->content_type;
-      if (c_t != 0 &&  c_t->type != 0 && c_t->subtype != 0 ) {
-        _debug("  Content Type of the message: %s/%s\n", c_t->type, c_t->subtype);
-
-        osip_body_t *body = NULL;
-        // Get the message body
-        if (0 == osip_message_get_body(event->request, 0, &body)) {
-          _debug("  Body length: %d\n", body->length);
-          if (body->body!=0 && 
-              strcmp(c_t->type,"text") == 0 && 
-              strcmp(c_t->subtype,"plain") == 0
-            ) {
-            _debug("  Text body: %s\n", body->body);
-            Manager::instance().incomingMessage(body->body);
-          }
-        }
-      }
-      osip_message_t *answerOK;
-      eXosip_lock();
-      if ( 0 == eXosip_message_build_answer(event->tid, OK, &answerOK)) {
-          _debug("< Sending 200 OK\n");
-          eXosip_message_send_answer(event->tid, OK, answerOK);
-      }
-      eXosip_unlock();
-    }
-    break;
-
-  case EXOSIP_MESSAGE_REQUESTFAILURE: // 31
-    // 405 Method Not Allowed
-    if (event->response != 0 && event->response->status_code == SIP_METHOD_NOT_ALLOWED) {
-//      setAllows(event);
-//      AllowList::iterator iter = _allowList.find(std::string("MESSAGE"));
-//      if (iter==_allowList.end()) {
-        Manager::instance().incomingMessage("Message are not allowed");
-//      }
-    }
-    break;
-
-  case EXOSIP_SUBSCRIPTION_ANSWERED: // 38
-    eXosip_lock();
-    eXosip_automatic_action();
-    eXosip_unlock();
-    break;
-
-  case EXOSIP_SUBSCRIPTION_REQUESTFAILURE: //40
-    break;
-
-  default:
-    returnValue = EXOSIP_ERROR_STD;
-    break;
-  }
-  eXosip_event_free(event);
-
-  return returnValue;
-}
-
-int
-SipVoIPLink::getLocalPort (void) 
-{
-  return _localPort;
-}
-
-void
-SipVoIPLink::setLocalPort (int port) 
-{
-  _localPort = port;
-}
-
-void
-SipVoIPLink::carryingDTMFdigits (CALLID id, char code) {
-  SipCall* sipcall = getSipCall(id);
-  if (sipcall == 0) { return; }
+  SIPCall* call = getSIPCall(id);
+  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
 
   int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
   osip_message_t *info;
@@ -1127,338 +798,115 @@ SipVoIPLink::carryingDTMFdigits (CALLID id, char code) {
 
   eXosip_lock();
   // Build info request
-  i = eXosip_call_build_info (getSipCall(id)->getDid(), &info);
+  i = eXosip_call_build_info(call->getDid(), &info);
   if (i == 0) {
-    snprintf(dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n",
-	     code, duration);
+    snprintf(dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
     osip_message_set_content_type (info, "application/dtmf-relay");
     osip_message_set_body (info, dtmf_body, strlen (dtmf_body));
     // Send info request
-    i = eXosip_call_send_request(sipcall->getDid(), info);
+    i = eXosip_call_send_request(call->getDid(), info);
   }
   eXosip_unlock();
-	
+  
   delete[] dtmf_body; dtmf_body = NULL;
-}
- 
-void
-SipVoIPLink::newOutgoingCall (CALLID id)
-{
-  SipCall* sipcall = new SipCall(id, Manager::instance().getCodecDescriptorMap());
-  if (sipcall != NULL) {
-    _sipcallVector.push_back(sipcall);
-    sipcall->setStandBy(true);
-  }
-}
-
-void
-SipVoIPLink::newIncomingCall (CALLID id)
-{
-  SipCall* sipcall = new SipCall(id, Manager::instance().getCodecDescriptorMap());
-  if (sipcall != NULL) {
-    _sipcallVector.push_back(sipcall);
-  }
-}
-
-void
-SipVoIPLink::deleteSipCall (CALLID id)
-{
-  std::vector< SipCall* >::iterator iter = _sipcallVector.begin();
-
-  while(iter != _sipcallVector.end()) {
-    if (*iter && (*iter)->getId() == id) {
-      delete *iter; *iter = NULL;
-      _sipcallVector.erase(iter);
-      return;
-    }
-    iter++;
-  }
-}
-
-void
-SipVoIPLink::endSipCalls()
-{
-  std::vector< SipCall* >::iterator iter = _sipcallVector.begin();
-  while(iter != _sipcallVector.end()) {
-    if ( *iter ) {
-
-      // Release SIP stack.
-      eXosip_lock();
-      eXosip_call_terminate ((*iter)->getCid(), (*iter)->getDid());
-      eXosip_unlock();
-
-      // Release RTP channels
-      _audiortp.closeRtpSession();
-      delete *iter; *iter = NULL;
-    }
-    iter++;
-  }
-  _sipcallVector.clear();
-}
-
-SipCall*
-SipVoIPLink::getSipCall (CALLID id)
-{
-  SipCall* sipcall = NULL;
-  for (unsigned int i = 0; i < _sipcallVector.size(); i++) {
-    sipcall = _sipcallVector.at(i);
-    if (sipcall && sipcall->getId() == id) {
-      return sipcall;
-    } 
-  }
-  return NULL;
-}
-
-AudioCodec*
-SipVoIPLink::getAudioCodec (CALLID id)
-{
-  SipCall* sipcall = getSipCall(id);
-  if (sipcall != NULL) {
-    return sipcall->getAudioCodec();
-  } else {
-    return NULL;
-  }
-}
-///////////////////////////////////////////////////////////////////////////////
-// Private functions
-///////////////////////////////////////////////////////////////////////////////
-int
-SipVoIPLink::sdp_hold_call (sdp_message_t * sdp)
-{
-  int pos;
-  int pos_media = -1;
-  char *rcvsnd;
-  int recv_send = -1;
-
-  pos = 0;
-  rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
-  while (rcvsnd != NULL) {
-    if (rcvsnd != NULL && 0 == strcmp (rcvsnd, "sendonly")) {
-      recv_send = 0;
-    } else if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "recvonly")
-				  || 0 == strcmp (rcvsnd, "sendrecv"))) {
-      recv_send = 0;
-      sprintf (rcvsnd, "sendonly");
-    }
-    pos++;
-    rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
-  }
-
-  pos_media = 0;
-  while (!sdp_message_endof_media (sdp, pos_media)) {
-    pos = 0;
-    rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
-    while (rcvsnd != NULL) {
-      if (rcvsnd != NULL && 0 == strcmp (rcvsnd, "sendonly")) {
-	recv_send = 0;
-      } else if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "recvonly")
-				    || 0 == strcmp (rcvsnd, "sendrecv"))) {
-	recv_send = 0;
-	sprintf (rcvsnd, "sendonly");
-      }
-      pos++;
-      rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
-    }
-    pos_media++;
-  }
-
-  if (recv_send == -1) {
-    /* we need to add a global attribute with a field set to "sendonly" */
-    sdp_message_a_attribute_add (sdp, -1, osip_strdup ("sendonly"), NULL);
-  }
-
-  return 0;
-}
-
-int
-SipVoIPLink::sdp_off_hold_call (sdp_message_t * sdp)
-{
-  int pos;
-  int pos_media = -1;
-  char *rcvsnd;
-
-  pos = 0;
-  rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
-  while (rcvsnd != NULL) {
-    if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "sendonly")
-			   || 0 == strcmp (rcvsnd, "recvonly"))) {
-      sprintf (rcvsnd, "sendrecv");
-    }
-    pos++;
-    rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
-  }
-
-  pos_media = 0;
-  while (!sdp_message_endof_media (sdp, pos_media)) {
-    pos = 0;
-    rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
-    while (rcvsnd != NULL) {
-      if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "sendonly")
-			     || 0 == strcmp (rcvsnd, "recvonly"))) {
-	sprintf (rcvsnd, "sendrecv");
-      }
-      pos++;
-      rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
-    }
-    pos_media++;
-  }
-
-  return 0;
+  return true;
 }
 
 bool
-SipVoIPLink::behindNat(int port)
+SIPVoIPLink::sendMessage(const std::string& to, const std::string& body)
 {
-  StunAddress4 stunSvrAddr;
-  stunSvrAddr.addr = 0;
-	
-  // Stun server
-  std::string svr = Manager::instance().getConfigString(SIGNALISATION, STUN_SERVER);
-	
-  // Convert char* to StunAddress4 structure
-  bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
-  if (!ret) {
-    _debug("SIP: Stun server address (%s) is not valid\n", svr.data());
-    return 0;
-  }
-	
-  // Firewall address
-  //_debug("STUN server: %s\n", svr.data());
-  return Manager::instance().getStunInfo(stunSvrAddr, port);
-}
+  bool returnValue = false;
 
-/**
- * Get the local Ip by eXosip 
- * only if the local ip address is to his default value: 127.0.0.1
- * setLocalIpAdress
- * @return false if not found
- */
-bool
-SipVoIPLink::getSipLocalIp (void) 
-{
-  bool returnValue = true;
-  if (getLocalIpAddress() == "127.0.0.1") {
-    char* myIPAddress = new char[65];
-    if (eXosip_guess_localip(AF_INET, myIPAddress, 64) == -1) {
-      returnValue = false;
-    } else {
-      setLocalIpAddress(std::string(myIPAddress));
-      _debug("Checking network, setting local ip address to: %s\n", myIPAddress);
-    }
-    delete [] myIPAddress; myIPAddress = NULL;
-  }
-  return returnValue;
-}
+  // fast return
+  if (body.empty()) {return returnValue; }
 
-int
-SipVoIPLink::checkUrl (const std::string& url)
-{
-  int i;
-	
-  osip_from_t *to;
-  i = osip_from_init(&to);
-  if (i != 0) {
-    _debug("Warning: Cannot initialize\n");
-    return EXOSIP_ERROR_STD;
-  }
-  i = osip_from_parse(to, url.data());
-  if (i != 0) {
-    _debug("Warning: Cannot parse url\n");
-    return EXOSIP_ERROR_STD;
-  }
+  osip_message_t* message = 0;
+  const char* method = "MESSAGE";
 
-  // Free memory
-  osip_from_free (to);
-  return 0;
-}
+  std::string sipFrom = getSipFrom();
+  std::string sipTo   = getSipTo(to);
+  std::string sipRoute = getSipRoute();
 
-int
-SipVoIPLink::setAuthentication (void) 
-{
-  ManagerImpl& manager = Manager::instance();
-  std::string login = manager.getConfigString(SIGNALISATION, AUTH_USER_NAME);
-  if (login.empty()) {
-    login = manager.getConfigString(SIGNALISATION, USER_PART);
-  }
-  std::string pass = manager.getConfigString(SIGNALISATION, PASSWORD);
-  if (pass.empty()) {
-    manager.displayConfigError("Fill password field");
-    return EXOSIP_ERROR_STD;
-  }
-  eXosip_lock();
-
-  int returnValue = eXosip_add_authentication_info(login.data(), login.data(), pass.data(), NULL, NULL);
-  eXosip_unlock();
-
-  return returnValue;
-}
-
-std::string
-SipVoIPLink::fromHeader (const std::string& user, const std::string& host) 
-{
-  std::string displayname = Manager::instance().getConfigString(SIGNALISATION,
-FULL_NAME);
-  return ("\"" + displayname + "\"" + " <sip:" + user + "@" + host + ">");
-}
-
-
-std::string
-SipVoIPLink::toHeader(const std::string& to) 
-{
-  if (to.find("sip:") == std::string::npos) {
-    return ("sip:" + to );
-  } else {
-    return to;
-  }
-}
-
-int
-SipVoIPLink::startCall(CALLID id, const std::string& from, const std::string& to, const std::string& subject, const std::string& route) 
-{
-  SipCall* sipcall = getSipCall(id);
-  if ( sipcall == NULL) {
-    return -1; // error, we can't find the sipcall
-  }
-  osip_message_t *invite;
-
-  if (checkUrl(from) != 0) {
+  if (!SIPCheckUrl(sipFrom)) {
     Manager::instance().displayConfigError("Error in source address");
-    return -1;
+    return returnValue;
   }
-  if (checkUrl(to) != 0) {
-    Manager::instance().displayErrorText(id, "Error in destination address");
-    return -1;
+  if (!SIPCheckUrl(sipTo)) {
+    Manager::instance().displayError("Error in destination address");
+    return returnValue;
   }
-	
-  if (!Manager::instance().useStun()) {
-    // Set random port for outgoing call if no firewall
-    setLocalPort(RANDOM_LOCAL_PORT);
-    _debug("            Setting local port to random: %d\n",_localPort);
+
+  int eXosipError = EXOSIP_ERROR_STD;
+  eXosip_lock();
+  if ( sipRoute.empty() ) {
+    eXosipError = eXosip_message_build_request(&message, method, sipTo.c_str(), sipFrom.c_str(), NULL);
   } else {
-    // If use Stun server
-    if (behindNat(_localPort)) {
-      setLocalIpAddress(Manager::instance().getFirewallAddress());
-      setLocalPort(Manager::instance().getFirewallPort());
-      _debug("            Setting local port to firewall port: %d\n", _localPort);
-    } else {
-      return -1;
+    eXosipError = eXosip_message_build_request(&message, method, sipTo.c_str(), sipFrom.c_str(), sipRoute.c_str());
+  }
+
+  if (eXosipError == EXOSIP_ERROR_NO) {
+    // add body
+    // add message
+    // src: http://www.atosc.org/pipermail/public/osip/2005-October/006007.html
+    osip_message_set_expires(message, "120");
+    osip_message_set_body(message, body.c_str(), body.length());
+    osip_message_set_content_type(message, "text/plain");
+
+    eXosipError = eXosip_message_send_request(message);
+    if (eXosipError == EXOSIP_ERROR_NO) {
+      // correctly send the message
+      returnValue = true;
     }
   }
-	
-  // Set local audio port for sipcall(id)
-  sipcall->setLocalIp(getLocalIpAddress());
-  sipcall->setLocalAudioPort(_localPort);
+  eXosip_unlock();
+  return returnValue;
+}
 
+bool
+SIPVoIPLink::SIPOutgoingInvite(SIPCall* call) 
+{
+  // If no SIP proxy setting for direct call with only IP address
+  if (!SIPStartCall(call, "")) {
+    _debug("SIP Failure: call not started\n");
+    return false;
+  }
+  return true;
+}
+
+bool
+SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject) 
+{
+  if (!call) return false;
+
+  std::string to    = getSipTo(call->getPeerNumber());
+  std::string from  = getSipFrom();
+  std::string route = getSipRoute();
+  _debug("            From: %s\n", from.data());
+  _debug("            Route: %s\n", route.data());
+
+  if (!SIPCheckUrl(from)) {
+    _debug("SIP Error: Source address is invalid %s\n", from.data());
+    Manager::instance().displayConfigError("Error in source address");
+    return false;
+  }
+  if (!SIPCheckUrl(to)) {
+    Manager::instance().displayErrorText(call->getCallId(), "Error in destination address");
+    return false;
+  }
+
+  osip_message_t *invite;
   eXosip_lock();
-  int i = eXosip_call_build_initial_invite (&invite, (char*)to.data(),
+  int eXosipError = eXosip_call_build_initial_invite (&invite, (char*)to.data(),
                                         (char*)from.data(),
                                         (char*)route.data(),
                                         (char*)subject.data());
   
-  if (i != 0) {
+  if (eXosipError != 0) {
     eXosip_unlock();
-    return EXOSIP_ERROR_STD; // error when building the invite
+    return false; // error when building the invite
   }
+
+  setCallAudioLocal(call);
 
   std::ostringstream media_audio;
   std::ostringstream rtpmap_attr;
@@ -1466,7 +914,7 @@ SipVoIPLink::startCall(CALLID id, const std::string& from, const std::string& to
   int nbChannel;
 
   // Set rtpmap according to the supported codec order
-  CodecMap map = Manager::instance().getCodecDescriptorMap().getMap();
+  CodecMap map = call->getCodecMap().getMap();
   CodecMap::iterator iter = map.begin();
 
   while(iter != map.end()) {
@@ -1502,63 +950,514 @@ SipVoIPLink::startCall(CALLID id, const std::string& from, const std::string& to
               "c=IN IP4 %s\r\n"
               "t=0 0\r\n"
               "m=audio %d RTP/AVP %s\r\n"
-	            "%s",
-              getLocalIpAddress().c_str(), getLocalIpAddress().c_str(), getLocalPort(), media_audio.str().c_str(), rtpmap_attr.str().c_str());
+              "%s",
+              _localExternAddress.c_str(), _localExternAddress.c_str(), call->getLocalExternAudioPort(), media_audio.str().c_str(), rtpmap_attr.str().c_str());
     // media_audio should be one, two or three numbers?
     osip_message_set_body (invite, tmp, strlen (tmp));
     osip_message_set_content_type (invite, "application/sdp");
     _debug("SDP send: %s", tmp);
   }
   
-  // this is the cid (call id from exosip)
-  _debug("%10d: Receive INVITE\n", id);
-  int cid = eXosip_call_send_initial_invite (invite);
-  _debug("            Local IP:port: %s:%d\n", getLocalIpAddress().c_str(), getLocalPort());
+  _debug("> INVITE To <%s>\n", to.data());
+  int cid = eXosip_call_send_initial_invite(invite);
 
   // Keep the cid in case of cancelling
-  sipcall->setCid(cid);
+  call->setCid(cid);
 
   if (cid <= 0) {
     eXosip_unlock();
-    return EXOSIP_ERROR_STD;
+    return false ;
   } else {
+    _debug("SIP Info: Outgoing callID is %s, cid=%d\n", call->getCallId().data(), cid);
     eXosip_call_set_reference (cid, NULL);
   }
   eXosip_unlock();
 
-  return cid; // this is the Cid
+  return true;
 }
 
-CALLID
-SipVoIPLink::findCallId (eXosip_event_t *e)
-{
-  for (unsigned int k = 0; k < _sipcallVector.size(); k++) {
-    SipCall* sipcall = _sipcallVector.at(k);
-    if (sipcall && sipcall->getCid() == e->cid &&
-        sipcall->getDid() == e->did) {
-      return sipcall->getId();
+/**
+ * Get the Sip FROM url (add sip:, add @host, etc...)
+ */ 
+std::string
+SIPVoIPLink::getSipFrom() {
+
+  // Form the From header field basis on configuration panel
+  std::string host = getHostName();
+  if ( host.empty() ) {
+    host = _localIPAddress;
+  }
+  return SIPFromHeader(_userpart, host);
+}
+
+/**
+ * Get the Sip TO url (add sip:, add @host, etc...)
+ */
+std::string
+SIPVoIPLink::getSipTo(const std::string& to_url) {
+  // Form the From header field basis on configuration panel
+  bool isRegistered = (_eXosipRegID == EXOSIP_ERROR_STD) ? false : true;
+
+  // add a @host if we are registered and there is no one inside the url
+  if (to_url.find("@") == std::string::npos && isRegistered) {
+    std::string host = getHostName();
+    if(!host.empty()) {
+      return SIPToHeader(to_url + "@" + host);
     }
+  }
+  return SIPToHeader(to_url);
+}
+
+/**
+ * Get the sip proxy (add sip: if there is one) 
+ * @return empty string or <sip:proxy;lr> url
+ */
+std::string
+SIPVoIPLink::getSipRoute() {
+  std::string proxy = _proxy;
+  if ( !proxy.empty() ) {
+    proxy = "<sip:" + proxy + ";lr>";
+  }
+  return proxy; // return empty
+}
+
+std::string
+SIPVoIPLink::SIPToHeader(const std::string& to) 
+{
+  if (to.find("sip:") == std::string::npos) {
+    return ("sip:" + to );
+  } else {
+    return to;
+  }
+}
+
+bool
+SIPVoIPLink::SIPCheckUrl(const std::string& url)
+{
+  int i;
+
+  osip_from_t *to;
+  i = osip_from_init(&to);
+  if (i != 0) {
+    _debug("SIP Warning: Cannot initialize osip parser\n");
+    return false;
+  }
+  i = osip_from_parse(to, url.data());
+  if (i != 0) {
+    _debug("SIP Warning: Cannot parse url %s\n", url.data());
+    return false;
+  }
+
+  // Free memory
+  osip_from_free (to);
+  return true;
+}
+
+bool
+SIPVoIPLink::setCallAudioLocal(SIPCall* call) 
+{
+  // Setting Audio
+  unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
+  unsigned int callLocalExternAudioPort = callLocalAudioPort;
+  if (_useStun) {
+    // If use Stun server
+    if (Manager::instance().behindNat(callLocalAudioPort)) {
+      callLocalExternAudioPort = Manager::instance().getFirewallPort();
+    }
+  }
+  _debug("            Setting local audio port to: %d\n", callLocalAudioPort);
+  _debug("            Setting local audio port (external) to: %d\n", callLocalExternAudioPort);
+  
+  // Set local audio port for SIPCall(id)
+  call->setLocalIp(_localIPAddress);
+  call->setLocalAudioPort(callLocalAudioPort);
+  call->setLocalExternAudioPort(callLocalExternAudioPort);
+
+  return true;
+}
+
+void
+SIPVoIPLink::SIPCallInvite(eXosip_event_t *event)
+{
+  _debug("> INVITE (receive)\n");
+
+  CallID id = Manager::instance().getNewCallID();
+
+  SIPCall* call = new SIPCall(id, Call::Incoming);
+  if (!call) {
+    _debug("SIP Failure: unable to create an incoming call");
+    return;
+  }
+  setCallAudioLocal(call);
+  call->setConnectionState(Call::Progressing);
+  if (call->SIPCallInvite(event)) {
+    if (Manager::instance().incomingCall(call, getAccountID())) {
+      addCall(call);
+    } else {
+      delete call; call = 0;
+    }
+  } else {
+    delete call; call = 0;
+  }
+}
+
+void
+SIPVoIPLink::SIPCallReinvite(eXosip_event_t *event)
+{
+  _debug("> REINVITE (receive)\n");
+  SIPCall* call = findSIPCallWithCidDid(event->cid, event->did);
+  if (call == 0) {
+    _debug("SIP Failure: unknown call\n");
+    _debug("< Send 488 Not Acceptable Here");
+    eXosip_lock();
+    eXosip_call_send_answer(event->tid, 488, NULL);
+    eXosip_unlock();
+    return;
+  }
+  if ( call->getCallId() == Manager::instance().getCurrentCallId()) {
+    // STOP tone
+    Manager::instance().stopTone();
+    // STOP old rtp session
+    _audiortp.closeRtpSession();
+    call->setAudioStart(false);
+  }
+  call->SIPCallReinvite(event);
+}
+
+void
+SIPVoIPLink::SIPCallRinging(eXosip_event_t *event)
+{
+  SIPCall* call = findSIPCallWithCidDid(event->cid, event->did);
+  if (!call) {
+    _debug("SIP Failure: unknown call\n");
+    return;
+  }
+  // we could set the cid/did/tid and get the FROM here...
+  // but we found the call with the cid/did already, why setting it again?
+  // call->ringingCall(event);
+  call->setConnectionState(Call::Ringing);
+  Manager::instance().peerRingingCall(call->getCallId());
+}
+
+void
+SIPVoIPLink::SIPCallAnswered(eXosip_event_t *event)
+{
+  SIPCall* call = findSIPCallWithCid(event->cid);
+  if (!call) {
+    _debug("SIP Failure: unknown call\n");
+    return;
+  }
+  call->setDid(event->did);
+
+  if (call->getConnectionState() != Call::Connected) {
+    call->SIPCallAnswered(event);
+    call->SIPCallAnsweredWithoutHold(event);
+
+    call->setConnectionState(Call::Connected);
+    call->setState(Call::Active);
+
+    Manager::instance().peerAnsweredCall(call->getCallId());
+    if (Manager::instance().isCurrentCall(call->getCallId())) {
+      _debug("SIP: Starting AudioRTP\n");
+      if ( _audiortp.createNewSession(call) < 0) {
+        _debug("RTP Failure: unable to create new session\n");
+      } else {
+        call->setAudioStart(true);
+      }
+    }
+  } else {
+    _debug("Answering call (on/off hold to send ACK)\n");
+     call->SIPCallAnswered(event);
+  }
+}
+
+void
+SIPVoIPLink::SIPCallRequestFailure(eXosip_event_t *event)
+{
+  if (!event->response) { return; }
+  // 404 error
+  _debug("SIP Event: Request Failure, receive code %d\n", event->response->status_code);
+  // Handle 4XX errors
+  switch (event->response->status_code) {
+  case SIP_PROXY_AUTHENTICATION_REQUIRED: 
+    _debug("SIP Server ask required authentification: logging...\n");
+    sendSIPAuthentification();
+    eXosip_lock();
+    eXosip_automatic_action();
+    eXosip_unlock();
+    break;
+  case SIP_UNAUTHORIZED:
+    _debug("Request is unauthorized. SIP Server ask authentification: logging...\n");
+    sendSIPAuthentification();
+    break;
+
+  case SIP_BUSY_HERE:  // 486
+    {
+      SIPCall* call = findSIPCallWithCid(event->cid);
+      if (call!=0) {
+        CallID& id = call->getCallId();
+        call->setConnectionState(Call::Connected);
+        call->setState(Call::Busy);
+        Manager::instance().displayErrorText(id, event->response->reason_phrase);
+        Manager::instance().callBusy(id);
+        removeCall(id);
+      }
+    }
+    break;
+  case SIP_REQUEST_TERMINATED: // 487
+    break;
+
+  default:
+  /*case SIP_BAD_REQUEST:
+  case SIP_FORBIDDEN:
+  case SIP_NOT_FOUND:
+  case SIP_METHOD_NOT_ALLOWED:
+  case SIP_406_NOT_ACCEPTABLE:
+  case SIP_REQ_TIME_OUT:
+  case SIP_TEMPORARILY_UNAVAILABLE:
+  case SIP_ADDRESS_INCOMPLETE:
+  case SIP_NOT_ACCEPTABLE_HERE: // 488 */
+    // Display error on the screen phone
+    {
+      SIPCall* call = findSIPCallWithCid(event->cid);
+      if (call!=0) {
+        CallID& id = call->getCallId();
+        call->setConnectionState(Call::Connected);
+        call->setState(Call::Error);
+        Manager::instance().displayErrorText(id, event->response->reason_phrase);
+        Manager::instance().callFailure(id);
+        removeCall(id);
+      }
+    }
+  }
+}
+
+void
+SIPVoIPLink::SIPCallServerFailure(eXosip_event_t *event) 
+{
+  if (!event->response) { return; }
+  switch(event->response->status_code) {
+  case SIP_SERVICE_UNAVAILABLE: // 500
+  case SIP_BUSY_EVRYWHERE:     // 600
+  case SIP_DECLINE:             // 603
+    SIPCall* call = findSIPCallWithCid(event->cid);
+    if (call != 0) {
+      CallID id = call->getCallId();
+      Manager::instance().callFailure(id);
+      removeCall(id);
+    }
+  break;
+  }
+}
+
+void
+SIPVoIPLink::SIPCallAck(eXosip_event_t *event) 
+{
+  SIPCall* call = findSIPCallWithCidDid(event->cid, event->did);
+  if (!call) { return; }
+  if (!call->isAudioStarted()) {
+    if (Manager::instance().isCurrentCall(call->getCallId())) {
+      _debug("            Starting AudioRTP\n");
+      if ( _audiortp.createNewSession(call) ) {
+        call->setAudioStart(true);
+      }
+    }
+  }
+}
+
+void
+SIPVoIPLink::SIPCallMessageNew(eXosip_event_t *event) 
+{
+  if (0 == event->request) return;
+
+  _debug("Receive a call message\n");
+
+  if (MSG_IS_INFO(event->request)) {
+    _debug("It's a Request Info\n");
+    osip_content_type_t* c_t = event->request->content_type;
+    if (c_t != 0 && c_t->type != 0 && c_t->subtype != 0 ) {
+      _debug("  Content Type of the message: %s/%s\n", c_t->type, c_t->subtype);
+      // application/dtmf-relay
+      if (strcmp(c_t->type, "application") == 0 && strcmp(c_t->subtype, "dtmf-relay") == 0) {
+         handleDtmfRelay(event);
+      }
+    }
+  }
+
+  osip_message_t *answerOKNewMessage;
+  eXosip_lock();
+  if ( 0 == eXosip_call_build_answer(event->tid, SIP_OK, &answerOKNewMessage)) {
+    _debug("< Sending 200 OK\n");
+    eXosip_call_send_answer(event->tid, SIP_OK, answerOKNewMessage);
+  } else {
+    _debug("SIP Failure: Could not sent an OK message\n");
+  }
+  eXosip_unlock();
+
+}
+
+void
+SIPVoIPLink::SIPCallClosed(eXosip_event_t *event) 
+{
+  // it was without did before
+  SIPCall* call = findSIPCallWithCid(event->cid);
+  if (!call) { return; }
+
+  CallID id = call->getCallId();
+  call->setDid(event->did);
+  if (Manager::instance().isCurrentCall(id)) {
+    call->setAudioStart(false);
+    _audiortp.closeRtpSession();
+  }  
+  Manager::instance().peerHungupCall(id);
+  removeCall(id);
+}
+
+void
+SIPVoIPLink::SIPCallReleased(eXosip_event_t *event)
+{
+  // do cleanup if exists
+  // only cid because did is always 0 in these case..
+  SIPCall* call = findSIPCallWithCid(event->cid);
+  if (!call) { return; }
+
+  // if we are here.. something when wrong before...
+  CallID id = call->getCallId();
+  Manager::instance().callFailure(id);
+  removeCall(id);
+}
+
+void
+SIPVoIPLink::SIPMessageNew(eXosip_event_t *event)
+{
+  if (MSG_IS_OPTIONS(event->request)) {
+    // old handling was
+    // - send 200 OK if call id is not found
+    // - send nothing if call id is found
+    eXosip_lock();
+    eXosip_options_send_answer (event->tid, SIP_OK, NULL);
+    eXosip_unlock();
+  }
+  // Voice message 
+  else if (MSG_IS_NOTIFY(event->request)){
+    _debug("> NOTIFY Voice message\n");
+    int ii;
+    unsigned int pos;
+    unsigned int pos_slash;
+
+    osip_body_t *body = NULL;
+    // Get the message body
+    ii = osip_message_get_body(event->request, 0, &body);
+    if (ii != 0) {
+      _debug("  Cannot get body in a new EXOSIP_MESSAGE_NEW event\n");
+      return;
+    }
+
+    // Analyse message body
+    if (!body || !body->body) {
+       return;
+    }
+    std::string str(body->body);
+    pos = str.find(VOICE_MSG);
+
+    if (pos == std::string::npos) {
+      // If the string is not found
+      return;
+    } 
+
+    pos_slash = str.find ("/");
+    std::string nb_msg = str.substr(pos + LENGTH_VOICE_MSG, 
+    pos_slash - (pos + LENGTH_VOICE_MSG));
+
+    // Set the number of voice-message
+    int msgVoicemail = atoi(nb_msg.data());
+
+    if (msgVoicemail != 0) {
+      // If there is at least one voice-message, start notification
+      Manager::instance().startVoiceMessageNotification(getAccountID(), nb_msg);
+    } else {
+      // Stop notification when there is 0 voice message
+      Manager::instance().stopVoiceMessageNotification(getAccountID());
+    }
+
+  // http://www.jdrosen.net/papers/draft-ietf-simple-im-session-00.txt
+  } else if (MSG_IS_MESSAGE(event->request)) {
+    _debug("> MESSAGE received\n");
+    // osip_content_type_t* osip_message::content_type
+    osip_content_type_t* c_t = event->request->content_type;
+    if (c_t != 0 &&  c_t->type != 0 && c_t->subtype != 0 ) {
+      _debug("  Content Type of the message: %s/%s\n", c_t->type, c_t->subtype);
+
+      osip_body_t *body = NULL;
+      // Get the message body
+      if (0 == osip_message_get_body(event->request, 0, &body)) {
+        _debug("  Body length: %d\n", body->length);
+        if (body->body!=0 && 
+            strcmp(c_t->type,"text") == 0 && 
+            strcmp(c_t->subtype,"plain") == 0
+          ) {
+          _debug("  Text body: %s\n", body->body);
+          Manager::instance().incomingMessage(getAccountID(), body->body);
+        }
+      }
+    }
+    osip_message_t *answerOK;
+    eXosip_lock();
+    if ( 0 == eXosip_message_build_answer(event->tid, SIP_OK, &answerOK)) {
+        _debug("< Sending 200 OK\n");
+        eXosip_message_send_answer(event->tid, SIP_OK, answerOK);
+    }
+    eXosip_unlock();
+  }
+
+}
+
+SIPCall* 
+SIPVoIPLink::findSIPCallWithCid(int cid) 
+{
+  if (cid < 1) {
+    _debug("Not enough information for this event\n");
+    return 0;
+  }
+  ost::MutexLock m(_callMapMutex);
+  SIPCall* call = 0;
+  CallMap::iterator iter = _callMap.begin();
+  while(iter != _callMap.end()) {
+    call = dynamic_cast<SIPCall*>(iter->second);
+    if (call && call->getCid() == cid) {
+      return call;
+    }
+    iter++;
   }
   return 0;
 }
 
-/**
- * This function is used when findCallId failed (return 0)
- * ie: the dialog id change
- *     can be use when anwsering a new call or 
- *         when cancelling a call
- */
-CALLID
-SipVoIPLink::findCallIdInitial (eXosip_event_t *e)
+SIPCall* 
+SIPVoIPLink::findSIPCallWithCidDid(int cid, int did) 
 {
-  for (unsigned int k = 0; k < _sipcallVector.size(); k++) {
-    SipCall* sipcall = _sipcallVector.at(k);
-    // the dialog id is not set when you do a new call
-    // so you can't check it when you want to retreive it
-    // for the first call anwser
-    if (sipcall && sipcall->getCid() == e->cid) {
-      return sipcall->getId();
+  if (cid < 1 && did < -1) {
+    _debug("Not enough information for this event\n");
+    return 0;
+  }
+  ost::MutexLock m(_callMapMutex);
+  SIPCall* call = 0;
+  CallMap::iterator iter = _callMap.begin();
+  while(iter != _callMap.end()) {
+    call = dynamic_cast<SIPCall*>(iter->second);
+    if (call && call->getCid() == cid && call->getDid() == did) {
+      return call;
     }
+    iter++;
+  }
+  return 0;
+}
+
+SIPCall*
+SIPVoIPLink::getSIPCall(const CallID& id) 
+{
+  Call* call = getCall(id);
+  if (call) {
+    return dynamic_cast<SIPCall*>(call);
   }
   return 0;
 }
@@ -1568,7 +1467,12 @@ SipVoIPLink::findCallIdInitial (eXosip_event_t *e)
  * @param event eXosip Event
  */
 bool
-SipVoIPLink::handleDtmfRelay(eXosip_event_t* event) {
+SIPVoIPLink::handleDtmfRelay(eXosip_event_t* event) {
+
+  SIPCall* call = findSIPCallWithCidDid(event->cid, event->did);
+  if (call==0) { return false; }
+
+
   bool returnValue = false;
   osip_body_t *body = NULL;
   // Get the message body
@@ -1591,9 +1495,9 @@ SipVoIPLink::handleDtmfRelay(eXosip_event_t* event) {
       _debug("Signal value: %s\n", signal.c_str());
       
       if (!signal.empty()) {
-        unsigned int id = findCallId(event);
-        if (id !=0 && id == Manager::instance().getCurrentCallId()) {
+        if (Manager::instance().isCurrentCall(call->getCallId())) {
           Manager::instance().playDtmf(signal[0]);
+          returnValue = true;
         }
       }
 /*
@@ -1616,77 +1520,89 @@ SipVoIPLink::handleDtmfRelay(eXosip_event_t* event) {
   return returnValue;
 }
 
-// http://www.ietf.org/rfc/rfc3428.txt
-// The size of MESSAGE requests outside of a media session MUST NOT
-// exceed 1300 bytes, unless the UAC has positive knowledge that the
-// message will not traverse a congestion-unsafe link at any hop, or
-// that the message size is at least 200 bytes less than the lowest MTU
-// value found en route to the UAS.  
-bool
-SipVoIPLink::sendMessage(const std::string& to, const std::string& body) {
-  bool returnValue = false;
+///////////////////////////////////////////////////////////////////////////////
+// Private functions
+///////////////////////////////////////////////////////////////////////////////
+int
+SIPVoIPLink::sdp_hold_call (sdp_message_t * sdp)
+{
+  int pos;
+  int pos_media = -1;
+  char *rcvsnd;
+  int recv_send = -1;
 
-  // fast return
-  if (body.empty()) {return returnValue; }
-
-  osip_message_t* message = 0;
-  const char* method = "MESSAGE";
-
-  std::string sipFrom = getSipFrom();
-  std::string sipTo   = getSipTo(to);
-  std::string sipRoute = getSipRoute();
-
-  if (checkUrl(sipFrom) != 0) {
-    Manager::instance().displayConfigError("Error in source address");
-    return returnValue;
-  }
-  if (checkUrl(sipTo) != 0) {
-    Manager::instance().displayError("Error in destination address");
-    return returnValue;
-  }
-
-  int eXosipError = EXOSIP_ERROR_STD;
-  eXosip_lock();
-  if ( sipRoute.empty() ) {
-    eXosipError = eXosip_message_build_request(&message, method, sipTo.c_str(), sipFrom.c_str(), NULL);
-  } else {
-    eXosipError = eXosip_message_build_request(&message, method, sipTo.c_str(), sipFrom.c_str(), sipRoute.c_str());
-  }
-
-  if (eXosipError == EXOSIP_ERROR_NO) {
-    // add body
-    // add message
-    // src: http://www.atosc.org/pipermail/public/osip/2005-October/006007.html
-    osip_message_set_expires(message, "120");
-    osip_message_set_body(message, body.c_str(), body.length());
-    osip_message_set_content_type(message, "text/plain");
-
-    eXosipError = eXosip_message_send_request(message);
-    if (eXosipError == EXOSIP_ERROR_NO) {
-      // correctly send the message
-      returnValue = true;
+  pos = 0;
+  rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+  while (rcvsnd != NULL) {
+    if (rcvsnd != NULL && 0 == strcmp (rcvsnd, "sendonly")) {
+      recv_send = 0;
+    } else if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "recvonly")
+          || 0 == strcmp (rcvsnd, "sendrecv"))) {
+      recv_send = 0;
+      sprintf (rcvsnd, "sendonly");
     }
+    pos++;
+    rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
   }
-  eXosip_unlock();
-  return returnValue;
+
+  pos_media = 0;
+  while (!sdp_message_endof_media (sdp, pos_media)) {
+    pos = 0;
+    rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+    while (rcvsnd != NULL) {
+      if (rcvsnd != NULL && 0 == strcmp (rcvsnd, "sendonly")) {
+        recv_send = 0;
+      } else if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "recvonly")
+            || 0 == strcmp (rcvsnd, "sendrecv"))) {
+        recv_send = 0;
+        sprintf (rcvsnd, "sendonly");
+      }
+      pos++;
+      rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+    }
+    pos_media++;
+  }
+
+  if (recv_send == -1) {
+    /* we need to add a global attribute with a field set to "sendonly" */
+    sdp_message_a_attribute_add (sdp, -1, osip_strdup ("sendonly"), NULL);
+  }
+
+  return 0;
 }
 
-bool
-SipVoIPLink::setAllows(eXosip_event_t *event) {
-  bool returnValue = false;
+int
+SIPVoIPLink::sdp_off_hold_call (sdp_message_t * sdp)
+{
+  int pos;
+  int pos_media = -1;
+  char *rcvsnd;
 
-  _allowList.clear();
-
-  if (event->response!=0 && event->response->allows!=0) {
-    int allowsSize = osip_list_size(event->response->allows);
-    if (allowsSize != 0) { returnValue = true;}
-    osip_allow_t *allows = 0;
-    for(int pos=0; pos<allowsSize; pos++) {
-      allows = (osip_allow_t*)osip_list_get(event->response->allows, pos);
-      if (allows!=0 && allows->value!=0) {
-        _allowList.push_back(std::string(allows->value));
-      }
+  pos = 0;
+  rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+  while (rcvsnd != NULL) {
+    if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "sendonly")
+         || 0 == strcmp (rcvsnd, "recvonly"))) {
+      sprintf (rcvsnd, "sendrecv");
     }
+    pos++;
+    rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
   }
-  return returnValue;
+
+  pos_media = 0;
+  while (!sdp_message_endof_media (sdp, pos_media)) {
+    pos = 0;
+    rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+    while (rcvsnd != NULL) {
+      if (rcvsnd != NULL && (0 == strcmp (rcvsnd, "sendonly")
+           || 0 == strcmp (rcvsnd, "recvonly"))) {
+        sprintf (rcvsnd, "sendrecv");
+      }
+      pos++;
+      rcvsnd = sdp_message_a_att_field_get (sdp, pos_media, pos);
+    }
+    pos_media++;
+  }
+
+  return 0;
 }

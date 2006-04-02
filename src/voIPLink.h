@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2005-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -22,49 +22,87 @@
 #define __VOIP_LINK_H__
 
 #include <string>
+#include "account.h" // for AccountID
 #include "call.h"
+#include <map>
+#include <cc++/thread.h> // for mutex
 
 class AudioCodec;
-class Call;
+
+typedef std::map<CallID, Call*> CallMap;
 
 class VoIPLink {
 public:
-	VoIPLink ();
+	VoIPLink(const AccountID& accountID);
 	virtual ~VoIPLink (void);
 
 	// Pure virtual functions
-	virtual int getEvent (void) = 0;
+	virtual void getEvent (void) = 0;
 	virtual bool init (void) = 0;
 	virtual bool checkNetwork (void) = 0;
 	virtual void terminate (void) = 0;
-	virtual void newOutgoingCall (CALLID id) = 0;
-	virtual void newIncomingCall (CALLID id) = 0;
-	virtual int outgoingInvite (CALLID id, const std::string& to_url) = 0;
-	virtual int answer (CALLID id) = 0;
-	virtual int hangup (CALLID id) = 0;
-	virtual int cancel (CALLID id) = 0;
-	virtual int onhold (CALLID id) = 0;
-	virtual int offhold (CALLID id) = 0;
-	virtual int transfer (CALLID id, const std::string& to) = 0;
-	virtual int refuse (CALLID id) = 0;
-	virtual int setRegister (void) = 0;
-	virtual int setUnregister (void) = 0;
-	virtual void carryingDTMFdigits(CALLID id, char code) = 0;
-	virtual AudioCodec* getAudioCodec (CALLID id) = 0;
+  virtual bool setRegister (void) = 0;
+  virtual bool setUnregister (void) = 0;
+
+  /** Add a new outgoing call and return the call pointer or 0 if and error occurs */
+  virtual Call* newOutgoingCall(const CallID& id, const std::string& toUrl) = 0;
+  virtual bool answer(const CallID& id) = 0;
+
+	virtual bool hangup(const CallID& id) = 0;
+	virtual bool cancel(const CallID& id) = 0;
+	virtual bool onhold(const CallID& id) = 0;
+	virtual bool offhold(const CallID& id) = 0;
+	virtual bool transfer(const CallID& id, const std::string& to) = 0;
+	virtual bool refuse(const CallID& id) = 0;
+	virtual bool carryingDTMFdigits(const CallID& id, char code) = 0;
   virtual bool sendMessage(const std::string& to, const std::string& body) = 0;
 
-	void setFullName (const std::string& fullname);
-	std::string getFullName (void);
-	void setHostName (const std::string& hostname);
-	std::string getHostName (void);
-	void setLocalIpAddress (const std::string& ipAdress);
-  std::string getLocalIpAddress (void);
+  // these method are set only with 'Account init'  and can be get by everyone
+  void setFullName (const std::string& fullname) { _fullname = fullname; }
+  std::string& getFullName (void) { return _fullname; }
+  void setHostName (const std::string& hostname) {  _hostname = hostname; }
+  std::string& getHostName (void) { return _hostname; } 
+  AccountID& getAccountID(void) { return _accountID; }
+
+  /** Get the call pointer from the call map (protected by mutex)
+   * @param id A Call ID
+   * @return call pointer or 0
+   */
+  Call* getCall(const CallID& id);
+
+
+private:
+  std::string _fullname;
+  std::string _hostname;
+  AccountID _accountID;
 
 protected:
-	
-	std::string _fullname;
-	std::string _hostname;
-	std::string _localIpAddress;
+  /** Add a call to the call map (protected by mutex)
+   * @param call A call pointer with a unique pointer
+   * @return true if the call was unique and added
+   */
+  bool addCall(Call* call);
+
+  /** remove a call from the call map (protected by mutex)
+   * @param id A Call ID
+   * @return true if the call was correctly removed
+   */
+  bool removeCall(const CallID& id);
+
+  /**
+   * Remove all the call from the map
+   */
+  bool clearCallMap();
+
+  /** Contains all the calls for this Link, protected by mutex */
+  CallMap _callMap;
+  /** Mutex to protect call map */
+  ost::Mutex _callMapMutex;
+
+  /** Get Local IP Address (ie: 127.0.0.1, 192.168.0.1, ...) */
+  std::string _localIPAddress;
+  /** Get local listening port (5060 for SIP, ...) */
+  unsigned int _localPort;
 };
 
 #endif // __VOIP_LINK_H__

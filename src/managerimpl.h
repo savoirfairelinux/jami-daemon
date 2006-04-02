@@ -25,16 +25,17 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <map>
 #include <cc++/thread.h>
 
 #include "stund/stun.h"
-#include "call.h"
 #include "observer.h"
 #include "config/config.h"
-#include "account.h"
 
-//#include "audio/audiodevice.h"
+#include "account.h"
+#include "call.h"
+
 #include "audio/tonelist.h" // for Tone::TONEID declaration
 #include "audio/audiofile.h"
 #include "audio/dtmf.h"
@@ -42,44 +43,40 @@
 
 class AudioLayer;
 class CodecDescriptor;
-
 class GuiFramework;
-
 class TelephoneTone;
-
 class VoIPLink;
 
 #ifdef USE_ZEROCONF
 class DNSService;
 #endif
 
-#define	NOTIFICATION_LEN	250
 // Status
-#define CONNECTED_STATUS	"Connected"
-#define LOGGED_IN_STATUS	"Logged in"
-#define RINGING_STATUS		"Ringing"
-#define TRYING_STATUS		"Trying ..."
-#define HANGUP_STATUS       "Hang up"
-#define ONHOLD_STATUS       "On hold ..."
-#define TRANSFER_STATUS     "Transfer to:"
-#define MUTE_ON_STATUS		"Mute on"
-#define ENTER_NUMBER_STATUS "Enter Phone Number:"
-
-/*
- * Define a type for a list of call
- */
-typedef std::vector< Call* > CallVector;
-
-/**
- * Define a type for a CallID to AccountID Map inside ManagerImpl
- */
-typedef std::map<CALLID, AccountID> CallAccountMap;
+//#define CONNECTED_STATUS	"Connected"
+//#define LOGGED_IN_STATUS	"Logged in"
+//#define RINGING_STATUS		"Ringing"
+//#define TRYING_STATUS		"Trying ..."
+//#define HANGUP_STATUS       "Hang up"
+//#define ONHOLD_STATUS       "On hold ..."
+//#define TRANSFER_STATUS     "Transfer to:"
+//#define MUTE_ON_STATUS		"Mute on"
+//#define ENTER_NUMBER_STATUS "Enter Phone Number:"
 
 /**
  * Define a type for a AccountMap container
  */
 typedef std::map<AccountID, Account*> AccountMap;
  
+/**
+ * Define a type for a CallID to AccountID Map inside ManagerImpl
+ */
+typedef std::map<CallID, AccountID> CallAccountMap;
+
+/**
+ * Define a type for CallID vector (waiting list, incoming not answered)
+ */
+typedef std::set<CallID> CallIDSet;
+
 /**
  * To send multiple string
  */
@@ -91,87 +88,107 @@ public:
   ~ManagerImpl (void);
 
 	// Init a new VoIPLink, audio codec and audio driver
+  /**
+   * Initialisation of thread (sound) and map
+   */
   void init (void);
+
+  /**
+   * Terminate all thread (sound, link) and clear map
+   */
   void terminate (void);
 
-	// Set the graphic user interface
-  void setGui (GuiFramework* gui);
+  /**
+   * Set the graphic user interface : only GuiServer right now
+   * @param gui A GuiFramework gui implmentation
+   */
+  void setGui (GuiFramework* gui) { _gui = gui; }
 
 	// Accessor to audiodriver
-        // it's multi-thread and use mutex internally
+  // it's multi-thread and use mutex internally
   AudioLayer* getAudioDriver(void) const { return _audiodriverPA ;}
 
-  // Codec Descriptor
+  /**
+   * Get a descriptor map of codec available
+   */
   CodecDescriptorMap& getCodecDescriptorMap(void) {return _codecDescriptorMap;}
 
-  /* 
-   * Attribute a new random id for a new call 
-   * and check if it's already attributed to existing calls. 
-   * If not exists, returns 'id' otherwise return 0 
-   */ 
-  CALLID generateNewCallId (void);
-
-  /*
-   * Add a new call at the end of the CallVector with identifiant 'id'
-   */
-  Call* pushBackNewCall (CALLID id, Call::CallType type);
-  void callSetInfo(CALLID id, const std::string& name, const std::string& number);
-  bool callCanBeAnswered(CALLID id);
-  bool callCanBeClosed(CALLID id);
-  bool callIsOnHold(CALLID id);
-	
-  /*
+  /**
    * Functions which occur with a user's action
    */
-  int outgoingCall (const std::string& to);
-  int hangupCall (CALLID id);
-  int cancelCall (CALLID id);
-  int answerCall (CALLID id);
-  int onHoldCall (CALLID id);
-  int offHoldCall (CALLID id);
-  int transferCall (CALLID id, const std::string& to);
+  bool outgoingCall(const AccountID& accountId, const CallID& id, const std::string& to);
+  bool answerCall(const CallID& id);
+  bool hangupCall(const CallID& id);
+  bool cancelCall(const CallID& id);
+  bool onHoldCall(const CallID& id);
+  bool offHoldCall(const CallID& id);
+  bool transferCall(const CallID& id, const std::string& to);
   void mute();
   void unmute();
-  int refuseCall (CALLID id);
+  bool refuseCall(const CallID& id);
 
+  /** Save config on file */
   bool saveConfig (void);
-  bool registerVoIPLink (void);
-  bool unregisterVoIPLink (void);
-
-  bool sendTextMessage(const std::string& account, const std::string& to, const std::string& message);
-	
   /**
+  * Initialize action (main thread)
+  * @param accountId Account to register
+  * @return true if setRegister is call without failure, else return false
+  */
+  bool registerVoIPLink(const AccountID& accountId);
+  /**
+  * Unregister an account
+  * @param accountId Account to unregister
+  * @return true if the unregister method is send correctly
+  */
+  bool unregisterVoIPLink(const AccountID& accountId);
+
+  bool sendTextMessage(const AccountID& accountId, const std::string& to, const std::string& message);
+	
+  /*
    * Handle choice of the DTMF-send-way
    *
    * @param   id: callid of the line.
    * @param   code: pressed key.
    */
-  bool sendDtmf (CALLID id, char code);
-  bool playDtmf (char code);
+  bool sendDtmf(const CallID& id, char code);
+  bool playDtmf(char code);
   bool playTone ();
   void stopTone();
-  CALLID getCurrentCallId() { ost::MutexLock m(_mutex); return _currentCallId; }
 
-  int incomingCall (CALLID id, const std::string& name, const std::string& number);
-  void peerAnsweredCall (CALLID id);
-  int peerRingingCall (CALLID id);
-  int peerHungupCall (CALLID id);
-  void incomingMessage(const std::string& message);
+  // From links
+  /**
+   * When receiving a new incoming call, add it to the callaccount map
+   * and notify user
+   * @param call A call pointer
+   * @param accountid an account id
+   * @return true if the call was added correctly
+   */
+  bool incomingCall(Call* call, const AccountID& accountId);
+  void peerAnsweredCall(const CallID& id);
+  void peerRingingCall(const CallID& id);
+  void peerHungupCall(const CallID& id);
+  void incomingMessage(const AccountID& accountId, const std::string& message);
 
-  void displayTextMessage (CALLID id, const std::string& message);
-  void displayErrorText (CALLID id, const std::string& message);
-  void displayError (const std::string& error);
-  void displayStatus (const std::string& status);
+  void displayTextMessage (const CallID& id, const std::string& message);
+  void displayErrorText (const CallID& id, const std::string& message);
+  void displayError(const std::string& error);
+  void displayStatus(const std::string& status);
   void displayConfigError(const std::string& message);
 
-  void startVoiceMessageNotification (const std::string& nb_msg);
-  void stopVoiceMessageNotification (void);
+  void startVoiceMessageNotification(const AccountID& accountId, const std::string& nb_msg);
+  void stopVoiceMessageNotification(const AccountID& accountId);
 
-  void registrationSucceed();
-  void registrationFailed();
+  /** Notify the user that registration succeeded  */
+  void registrationSucceed(const AccountID& accountId);
+  /** Notify the user that registration succeeded  */
+  void registrationFailed(const AccountID& accountId);
 
   // configuration function requests
+  /** Start events thread*/
+  // TODO: receive account name
   bool getEvents();
+
+  //
   bool getZeroconf(const std::string& sequenceId);
   bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
   bool detachZeroconfEvents(Pattern::Observer& observer);
@@ -182,30 +199,33 @@ public:
   bool setConfig(const std::string& section, const std::string& name, int value);
   bool getConfigList(const std::string& sequenceId, const std::string& name);
   void selectAudioDriver(void);
+  /** Set Audio Driver with switchName == audiodriver */
   bool setSwitch(const std::string& switchName);
 
   // configuration function for extern
   // throw an Conf::ConfigTreeItemException if not found
+  /** Get a int from the config tree */
   int getConfigInt(const std::string& section, const std::string& name);
+  /** Get a string from the config tree */
   std::string getConfigString(const std::string& section, const std::string& name);
 
-	/*
+	/**
 	 * Handle audio sounds heard by a caller while they wait for their 
 	 * connection to a called party to be completed.
 	 */
   void ringback ();
 
-	/*
+	/**
 	 * Handle played music when an incoming call occurs
 	 */
   void ringtone ();
   void congestion ();
-  void callBusy(CALLID id);
-  void callFailure(CALLID id);
+  void callBusy(const CallID& id);
+  void callFailure(const CallID& id);
 
-  // return 0 if no tone (init before calling this function)
+  /** @return 0 if no tone (init before calling this function) */
   AudioLoop* getTelephoneTone();
-  // return 0 if the wav is stopped
+  /** @return 0 if the wav is stopped */
   AudioLoop* getTelephoneFile();
 
   /**
@@ -213,20 +233,12 @@ public:
    * new call, not anwsered or refused
    */
   bool incomingCallWaiting(void);
-	/*
+	/**
 	 * Notification of incoming call when you are already busy
 	 */
-  void notificationIncomingCall (void);
+  void notificationIncomingCall(void);
 
-  /*
-   * Get information about firewall 
-   * @param  stunSvrAddr: stun server
-   * @param  port         port number to open to test the connection
-   * @return true if the connection is successful
-   */
-  bool getStunInfo(StunAddress4& stunSvrAddr, int port);
-  bool useStun (void);
-	
+
   /*
    * Inline functions to manage volume control
    * Read by main thread and AudioLayer thread
@@ -237,20 +249,40 @@ public:
   unsigned short getMicVolume(void) {  return _mic_volume;  }
   void setMicVolume(unsigned short mic_vol) {    _mic_volume = mic_vol;   }
 
+  // Manage information about firewall
   /*
-   * Manage information about firewall
+   * Get information about firewall 
+   * @param  stunSvrAddr: stun server
+   * @param  port         port number to open to test the connection
+   * @return true if the connection is successful
    */
+  bool getStunInfo(StunAddress4& stunSvrAddr, int port);
+
   inline int getFirewallPort 		(void) 		{ return _firewallPort; }
   inline void setFirewallPort 	(int port) 	{ _firewallPort = port; }
   inline std::string getFirewallAddress (void) 	{ return _firewallAddr; }
 
-	/*
+  /**
+   * If you are behind a NAT, you have to use STUN server, specified in 
+   * STUN configuration(you can change this one by default) to give you an 
+   * public IP address and assign a port number.
+   * Note: Set firewall port/address retreive
+         * @param port : on which port we want to listen to
+   * 
+   * Return true if we are behind a NAT (without error)
+   */
+  bool behindNat(int port);
+
+	/**
 	 * Init default values for the different fields
 	 */
   void initConfigFile (void);
+
+  /**
+   * Tell if the setup was already loaded
+   */
   bool hasLoadedSetup() { return _setupLoaded; }
 	
-
   enum REGISTRATION_STATE {
     UNREGISTERED,
     REGISTERED,
@@ -258,6 +290,24 @@ public:
   };
 
   REGISTRATION_STATE getRegistrationState() { return _registerState; }
+
+  /** Return a new random callid that is not present in the list
+   * @return a brand new callid
+   */
+  CallID getNewCallID();
+
+  /**
+   * Get the current call id
+   * @return the call id or ""
+   */
+  const CallID& getCurrentCallId();
+
+  /**
+   * Check if a call is the current one
+   * @param id the new callid
+   * @return if the id is the current call
+   */
+  bool isCurrentCall(const CallID& callId);
 
 private:
  /**
@@ -304,14 +354,24 @@ private:
   bool getCountryTones(const std::string& sequenceId);
   void sendCountryTone(const std::string& sequenceId, int index, const std::string& name);
 
-  /*
-   * Erase the Call(id) from the CallVector
-   * Protected by other function by _mutex lock
+  /**
+   * Tell if there is a current call processed
+   * @return true if there is a current call
    */
-  void deleteCall	(CALLID id);
-  Call* getCall (CALLID id);
-  void setCurrentCallId(CALLID id);
-  void removeCallFromCurrent(CALLID id);
+  bool hasCurrentCall();
+
+  /**
+   * Switch of current call id
+   * @param id the new callid
+   */
+  void switchCall(const CallID& id);
+
+  /** Current Call ID */
+  CallID _currentCallId2;
+
+  /** Protected current call access */
+  ost::Mutex _currentCallMutex;
+
 
   /*
    * Play one tone
@@ -347,45 +407,41 @@ private:
   short _spkr_volume;
   short _mic_volume;
   short _mic_volume_before_mute;
-
-  //
   // End of sound variable
-  //
+
 
   // Multithread variable (protected by _mutex)
   // 
   /** Mutex to protect access to code section */
   ost::Mutex _mutex;
-  /* Vector of calls  */
-  CallVector _callVector;
-  // Current callid : protected implicitely by function using _mutex 
-  CALLID _currentCallId; 
-  // functions that set mutex:
-  //  terminate, pushBackNewCall, generateNewCallId, outgoingCall (after gen/push)
-  //  hangupCall, cancelCall, answerCall, onHoldCall, offHoldCall, transferCall, refuseCall, 
-  //  callSetInfo, callCanBeClosed, callCanBeAnswered, callIsOnHold, incomingCall,
-  //  peerAnsweredCall, peerRingingCall, peerHunguCall, callBusy, callFailure
-  //  getCallStatus, getCurrentCallId
-  // functions that are called by those functions
-  //  getCall, deleteCall, stopTone, switchCall, decWaitingCall, setCurrentCallId, getAudioDriver, ringtone, incWaitingCall
-
-  // warning, incomingCallWaiting | incWaitingCall | decWaitingCall are prtected by _incomingCallMutex
-  
 
   //
   // Multithread variable (non protected)
   //
   GuiFramework* _gui;
 
-  /**
-   * Multithreaded
-   * Incomings Call:
-   */
-  ost::Mutex _incomingCallMutex;
+  /** Waiting Call Vectors */
+  CallIDSet _waitingCall;
+  /** Protect waiting call list, access by many voip/audio threads */
+  ost::Mutex _waitingCallMutex;
+  /** Number of waiting call, synchronize with waitingcall callidvector */
   unsigned int _nbIncomingWaitingCall;
-  void incWaitingCall(void);
-  void decWaitingCall(void);
-	
+  /**
+   * Add incoming callid to the waiting list
+   * @param id CallID to add
+   */
+  void addWaitingCall(const CallID& id);
+  /**
+   * Remove incoming callid to the waiting list
+   * @param id CallID to remove
+   */
+  void removeWaitingCall(const CallID& id);
+  /**
+   * Tell if a call is waiting and should be remove
+   * @param id CallID to test
+   * @return true if the call is waiting
+   */
+  bool isWaitingCall(const CallID& id);
 
 	/**
    * Path of the ConfigFile 
@@ -401,12 +457,9 @@ private:
   // return false if exosip or the network checking failed
   bool initRegisterVoIPLink();
   // true if we tried to register Once
-  bool    _hasTriedToRegister;
+  bool _hasTriedToRegister;
   // Register state
   REGISTRATION_STATE _registerState;
-
-
-  void switchCall(CALLID id);
 
   // tell if we have zeroconf is enabled
   int _hasZeroconf;
@@ -416,8 +469,6 @@ private:
   //  configuration detected on the network
   DNSService *_DNSService;
 #endif
-
-// CALLID
 
   /** Map to associate a CallID to the good account */
   CallAccountMap _callAccountMap;
@@ -430,26 +481,21 @@ private:
    * @param accountID the known accountID present in accountMap
    * @return true if the new association is create
    */
-  bool associateCallToAccount(CALLID callID, const AccountID& accountID);
+  bool associateCallToAccount(const CallID& callID, const AccountID& accountID);
 
   /** Return the AccountID from a CallID
    * Protected by mutex
    * @param callID the CallID in the list
    * @return the accountID associated or "" if the callID is not found
    */
-  AccountID getAccountFromCall(const CALLID callID);
+  AccountID getAccountFromCall(const CallID& callID);
 
   /** Remove a CallID/AccountID association
    * Protected by mutex
    * @param callID the CallID to remove
    * @return true if association is removed
    */
-  bool removeCallAccount(CALLID callID);
-
-  /** Return a new random callid that is not present in the list
-   * @return a brand new callid
-   */
-  CALLID getNewCallID();
+  bool removeCallAccount(const CallID& callID);
 
   /** Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
   AccountMap _accountMap;

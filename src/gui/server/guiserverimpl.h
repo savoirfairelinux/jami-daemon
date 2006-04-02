@@ -23,14 +23,13 @@
 #include <string>
 #include <map>
 
-#include "subcall.h"
 #include "requestmanager.h"
 
 
 /** Session port for the daemon, default is DEFAULT_SESSION_PORT */
 #define DEFAULT_SESSION_PORT 3999
 
-typedef std::map<CALLID, SubCall> CallMap;
+typedef std::map<CallID, std::string> CallMap;
 
 class GUIServerImpl : public GuiFramework {
 public:
@@ -42,26 +41,26 @@ public:
   // exec loop
   int exec(void);
 
-  int incomingCall(CALLID id, const std::string& accountId, const std::string& from);
-  void incomingMessage(const std::string& message);
+  bool incomingCall(const AccountID& accountId, const CallID& id, const std::string& from);
+  void incomingMessage(const AccountID& accountId, const std::string& message);
 
-	void peerAnsweredCall (CALLID id);
-	void peerRingingCall (CALLID id);
-	void peerHungupCall (CALLID id);
+	void peerAnsweredCall (const CallID& id);
+	void peerRingingCall (const CallID& id);
+	void peerHungupCall (const CallID& id);
 	void displayStatus (const std::string& status);
   void displayConfigError(const std::string& error);
-	void displayTextMessage (CALLID id, const std::string& message);
-	void displayErrorText (CALLID id, const std::string& message);
+	void displayTextMessage (const CallID& id, const std::string& message);
+	void displayErrorText (const CallID& id, const std::string& message);
 	void displayError (const std::string& error);
-  void sendVoiceNbMessage(const std::string& nb_msg);
-  void sendRegistrationState(bool state);
+  void sendVoiceNbMessage(const AccountID& accountid, const std::string& nb_msg);
+  void sendRegistrationState(const AccountID& accountid, bool state);
   void setup();
 
   void sendMessage(const std::string& code, const std::string& seqId, 
     TokenList& arg);
   void sendCallMessage(const std::string& code, const std::string& sequenceId, 
-    CALLID id, TokenList arg);
-  void callFailure(CALLID id);
+    const CallID& id, TokenList arg);
+  void callFailure(const CallID& id);
 
   bool getEvents(const std::string& sequenceId);
   bool sendGetEventsEnd();
@@ -90,17 +89,13 @@ public:
   };
 
 private:
-  void insertSubCall(CALLID id, SubCall& subCall);
-  void removeSubCall(CALLID id);
-  std::string getSequenceIdFromId(CALLID id);
-  std::string getCallIdFromId(CALLID id);
-  CALLID getIdFromCallId(const std::string& callId);
-
+  void insertSubCall(const CallID& id, const std::string& seq);
+  void removeSubCall(const CallID& id);
+  std::string getSequenceIdFromId(const CallID& id);
 
   /**
    * This callMap is necessary because
-   * ManagerImpl use callid-int
-   * and the client use a  callid-string
+   * because we want to retreive the seq associate to a call id
    * and also a sequence number
    */
   CallMap _callMap;

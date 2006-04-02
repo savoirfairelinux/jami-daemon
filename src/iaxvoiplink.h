@@ -16,34 +16,44 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef SIPACCOUNT_H
-#define SIPACCOUNT_H
+#ifndef IAXVOIPLINK_H
+#define IAXVOIPLINK_H
 
-#include "account.h"
+#include "voIPLink.h"
+
+class AudioCodec;
 
 /**
 	@author Yan Morin <yan.morin@gmail.com>
-  A Sip Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
+  VoIPLink contains a thread that listen to external events and 
+  contains IAX Call related functions
 */
-class SIPAccount : public Account
+class IAXVoIPLink : public VoIPLink
 {
 public:
-  SIPAccount(const AccountID& accountID);
+    IAXVoIPLink(const AccountID& accountID);
 
-  virtual ~SIPAccount();
+    ~IAXVoIPLink();
 
-  /* virtual Account function implementation */
-  void initConfig(Conf::ConfigTree& config);
-  void loadConfig();
-  bool registerAccount();
-  bool unregisterAccount();
-  bool init();
-  bool terminate();
+  void getEvent (void) { }
+  bool init (void) { return false; }
+  bool checkNetwork (void) { return false; }
+  void terminate (void) { }
 
-private:
-  /* virtual Account function implementation */
-  bool createVoIPLink();
+  bool setRegister (void) { return false; }
+  bool setUnregister (void) { return false; }
 
+  Call* newOutgoingCall(const CallID& id, const std::string& toUrl) {return 0; }
+  bool answer(const CallID& id) {return false;}
+
+  bool hangup(const CallID& id) { return false; }
+  bool cancel(const CallID& id) { return false; }
+  bool onhold(const CallID& id) { return false; }
+  bool offhold(const CallID& id) { return false; }
+  bool transfer(const CallID& id, const std::string& to) { return false; }
+  bool refuse (const CallID& id) { return false; }
+  bool carryingDTMFdigits(const CallID& id, char code) { return false; }
+  bool sendMessage(const std::string& to, const std::string& body) { return false; }
 };
 
 #endif

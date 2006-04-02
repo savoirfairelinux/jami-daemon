@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -23,16 +23,23 @@
 
 #include <cc++/thread.h>
 
-
-class SipVoIPLink;
+class VoIPLink;
+/**
+ * General thread to listen events continuously
+ */
 class EventThread : public ost::Thread {
 public:
-	EventThread (SipVoIPLink*);
+  /**
+   * Build a thread that call getEvents 
+   */
+	EventThread (VoIPLink*);
 	~EventThread (void);
 	
 	virtual void 	 run ();
+
 private:
-	SipVoIPLink*	_sipthread;
+  /** VoIPLink is the object being called by getEvents() method  */
+	VoIPLink*	_linkthread;
 };
 
 #endif // __EVENT_THREAD_H__

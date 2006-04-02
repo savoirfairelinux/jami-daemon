@@ -29,21 +29,21 @@
 #define RTP_FRAMES2SEND 160
 
 class AudioLayer;
-class SipCall;
+class SIPCall;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Two pair of sockets
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
 public:
-	AudioRtpRTX (SipCall *, AudioLayer*, bool);
+	AudioRtpRTX (SIPCall *, AudioLayer*, bool);
 	~AudioRtpRTX();
 
 	ost::Time *time; 	// For incoming call notification 
 	virtual void run ();
 
 private:
-	SipCall* _ca;
+	SIPCall* _ca;
 	AudioLayer* _audioDevice;
 	ost::RTPSession *_sessionSend;
 	ost::RTPSession *_sessionRecv;
@@ -72,7 +72,7 @@ public:
   AudioRtp();
   ~AudioRtp();
 
-  int 			createNewSession (SipCall *);
+  int 			createNewSession (SIPCall *);
   void			closeRtpSession	 ();
 
 private:

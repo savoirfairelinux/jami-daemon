@@ -22,7 +22,7 @@
 #include <cstring>
 #include <iostream>
 
-#include "config.h"
+//#include "config.h"
 #include "global.h"
 
 #include "user_cfg.h"

@@ -242,20 +242,42 @@ RequestVolumeMic::execute()
   }
 }
 
+RequestRegister::RequestRegister(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
+{
+  TokenList::iterator iter = _argList.begin();
+  if (iter != _argList.end()) {
+    _accountId = *iter;
+    _argList.pop_front();
+  } else {
+    throw RequestConstructorException();
+  }
+}
+
 ResponseMessage
 RequestRegister::execute()
 {
-  if (GUIServer::instance().registerVoIPLink()) {
+  if (GUIServer::instance().registerVoIPLink(_accountId)) {
     return message("200", _("OK"));
   } else {
     return message("500",_("Registration sending failed"));
   }
 }
 
+RequestUnregister::RequestUnregister(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList)
+{
+  TokenList::iterator iter = _argList.begin();
+  if (iter != _argList.end()) {
+    _accountId = *iter;
+    _argList.pop_front();
+  } else {
+    throw RequestConstructorException();
+  }
+}
+
 ResponseMessage
 RequestUnregister::execute()
 {
-  if (GUIServer::instance().unregisterVoIPLink()) {
+  if (GUIServer::instance().unregisterVoIPLink(_accountId)) {
     return message("200", _("OK"));
   } else {
     return message("500",_("Unregistration sending failed"));

@@ -48,12 +48,13 @@ GUIServerImpl::exec() {
  *  remove
  */
 void 
-GUIServerImpl::insertSubCall(CALLID id, SubCall& subCall) {
-  _callMap[id] = subCall;
+GUIServerImpl::insertSubCall(const CallID& id, const CallID& seq) {
+  
+  _callMap[id] = seq;
 }
 
 void
-GUIServerImpl::removeSubCall(CALLID id) {
+GUIServerImpl::removeSubCall(const CallID& id) {
   _callMap.erase(id);
 }
 
@@ -61,51 +62,27 @@ GUIServerImpl::removeSubCall(CALLID id) {
  * Retreive the sequenceId or send default sequenceId
  */
 std::string 
-GUIServerImpl::getSequenceIdFromId(CALLID id) {
+GUIServerImpl::getSequenceIdFromId(const CallID& id) {
   CallMap::iterator iter = _callMap.find(id);
   if (iter != _callMap.end()) {
-    return iter->second.sequenceId();
+    return iter->second;
   }
   return _getEventsSequenceId;
-}
-/**
- * Retreive the string callid from the id
- */
-std::string 
-GUIServerImpl::getCallIdFromId(CALLID id) {
-  CallMap::iterator iter = _callMap.find(id);
-  if (iter != _callMap.end()) {
-    return iter->second.callId();
-  }
-  throw std::runtime_error(_("No match for this id"));
 }
 
 bool
 GUIServerImpl::getCurrentCallId(std::string& callId) {
   bool returnValue = false;
   try {
-    CALLID id = GuiFramework::getCurrentId();
-    if (id!=0) {
-      callId = getCallIdFromId(id);
+    CallID id = GuiFramework::getCurrentId();
+    if (id != "") {
+      callId = id;
       returnValue = true;
     }
   } catch(...) {
     // nothing, it's false
   }
   return returnValue;
-}
-
-CALLID
-GUIServerImpl::getIdFromCallId(const std::string& callId) 
-{
-  CallMap::iterator iter = _callMap.begin();
-  while (iter != _callMap.end()) {
-    if (iter->second.callId()==callId) {
-      return iter->first;
-    }
-    iter++;
-  }
-  throw std::runtime_error(_("No match for this CallId"));
 }
 
 bool 
@@ -165,96 +142,45 @@ GUIServerImpl::outgoingCall(const std::string& seq,
  const std::string& callid, 
  const std::string& to) 
 {
-  CALLID serverCallId = GuiFramework::outgoingCall(account, to);
-  if ( serverCallId ) {
-    SubCall subcall(seq, callid);
-    insertSubCall(serverCallId, subcall);
-    return true;
-  } else {
-    return false;
-  }
+  insertSubCall(callid, seq);
+  return GuiFramework::outgoingCall(account, callid, to);
 }
 
 bool 
 GUIServerImpl::answerCall(const std::string& callId) 
 {
-  try {
-    CALLID id = getIdFromCallId(callId);
-    if (GuiFramework::answerCall(id)) {
-      return true;
-    }
-  } catch(...) {
-    return false;
-  }
-  return false;
+  return GuiFramework::answerCall(callId);
 }
 
 bool
 GUIServerImpl::refuseCall(const std::string& callId) 
 {
-  try {
-    CALLID id = getIdFromCallId(callId);
-    if (GuiFramework::refuseCall(id)) {
-      return true;
-    }
-  } catch(...) {
-    return false;
-  }
-  return false;
+  return GuiFramework::refuseCall(callId);
 }
 bool 
 GUIServerImpl::transferCall(const std::string& callId, const std::string& to)
 {
-  try {
-    CALLID id = getIdFromCallId(callId);
-    if (GuiFramework::transferCall(id, to)) {
-      return true;
-    }
-  } catch(...) {
-    return false;
-  }
-  return false;
+  return GuiFramework::transferCall(callId, to);
 }
 
 bool
 GUIServerImpl::holdCall(const std::string& callId) 
 {
-  try {
-    CALLID id = getIdFromCallId(callId);
-    if (GuiFramework::onHoldCall(id)) {
-      return true;
-    }
-  } catch(...) {
-    return false;
-  }
-  return false;
+  return GuiFramework::onHoldCall(callId);
 }
 
 bool
 GUIServerImpl::unholdCall(const std::string& callId) 
 {
-  try {
-    CALLID id = getIdFromCallId(callId);
-    if (GuiFramework::offHoldCall(id)) {
-      return true;
-    }
-  } catch(...) {
-    return false;
-  }
-  return false;
+  return GuiFramework::offHoldCall(callId);
 }
 
 bool
 GUIServerImpl::hangupCall(const std::string& callId) 
 {
-  try {
-    CALLID id = getIdFromCallId(callId);
-    if (GuiFramework::hangupCall(id)) {
-      _callMap.erase(id);
-      return true;
-    }
-  } catch(...) {
-    return false;
+  if ( GuiFramework::hangupCall(callId) ) {
+    removeSubCall(callId);
+    return true;
   }
   return false;
 }
@@ -267,12 +193,10 @@ bool
 GUIServerImpl::hangupAll()
 {
   bool result = true;
-  CALLID id;
   CallMap::iterator iter = _callMap.begin();
   // try to hangup every call, even if one fail
   while(iter!=_callMap.end()) {
-    id = iter->first;
-    if (!GuiFramework::hangupCall(id)) {
+    if (!GuiFramework::hangupCall(iter->first)) {
       result = false;
     }
     iter++;
@@ -284,14 +208,7 @@ GUIServerImpl::hangupAll()
 bool 
 GUIServerImpl::dtmfCall(const std::string& callId, const std::string& dtmfKey) 
 {
-  try {
-    CALLID id = getIdFromCallId(callId);
-    char code = dtmfKey[0];
-    return GuiFramework::sendDtmf(id, code);
-  } catch(...) {
-    return false;
-  }
-  return false;
+  return GuiFramework::sendDtmf(callId, dtmfKey[0]);
 }
 
 /**
@@ -307,62 +224,60 @@ GUIServerImpl::version()
 }
 
 
-int 
-GUIServerImpl::incomingCall (CALLID id, const std::string& accountId, const std::string& from) 
+bool
+GUIServerImpl::incomingCall(const AccountID& accountId, const CallID& id, const std::string& from) 
 {
   TokenList arg;
-  std::ostringstream callId;
-  callId << "s" << id;
-  arg.push_back(callId.str());
+  arg.push_back(id);
   arg.push_back(accountId);
   arg.push_back(from);
   arg.push_back("call");
 
-  SubCall subcall(_getEventsSequenceId, callId.str());
-
-  insertSubCall(id, subcall);
-
-  _requestManager.sendResponse(ResponseMessage("001", _getEventsSequenceId,arg));
+  insertSubCall(id, _getEventsSequenceId);
+  _requestManager.sendResponse(ResponseMessage("001", _getEventsSequenceId, arg));
 
   return 0;
 }
 
 void
-GUIServerImpl::incomingMessage(const std::string& message) {
-  _requestManager.sendResponse(ResponseMessage("030", _getEventsSequenceId, message));
+GUIServerImpl::incomingMessage(const std::string& account, const std::string& message) {
+  TokenList arg;
+  arg.push_back(account);
+  arg.push_back(message);
+  _requestManager.sendResponse(ResponseMessage("030", _getEventsSequenceId, arg));
 }
 
 void  
-GUIServerImpl::peerAnsweredCall (CALLID id) 
+GUIServerImpl::peerAnsweredCall (const CallID& id) 
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
-    _requestManager.sendResponse(ResponseMessage("200", iter->second.sequenceId(), _("Established")));
+    _requestManager.sendResponse(ResponseMessage("200", iter->second, _("Established")));
   }
 }
 
 void
-GUIServerImpl::peerRingingCall (CALLID id) 
+GUIServerImpl::peerRingingCall (const CallID& id) 
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
-    _requestManager.sendResponse(ResponseMessage("151", iter->second.sequenceId(), _("Ringing")));
+    _requestManager.sendResponse(ResponseMessage("151", iter->second, _("Ringing")));
   } 
 }
 
 void
-GUIServerImpl::peerHungupCall (CALLID id) 
+GUIServerImpl::peerHungupCall (const CallID& id) 
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
     TokenList tk;
-    tk.push_back(iter->second.callId());
+    tk.push_back(id);
     tk.push_back("hangup");
 
     _requestManager.sendResponse(ResponseMessage("002", _getEventsSequenceId,tk));
     
     // remove this call...
-    _callMap.erase(id);
+    removeSubCall(id);
   }
 }
 
@@ -385,36 +300,23 @@ GUIServerImpl::displayConfigError (const std::string& error)
 }
 
 void  
-GUIServerImpl::displayTextMessage (CALLID id, const std::string& message) 
+GUIServerImpl::displayTextMessage (const CallID& id, const std::string& message) 
 {
-  try {
-    std::string callId = getCallIdFromId(id);
-    TokenList tk;
-    tk.push_back(callId);
-    tk.push_back(message);
-    tk.push_back("Text message");
-    _requestManager.sendResponse(ResponseMessage("102", _getEventsSequenceId, tk));
-  } catch(...) {
-    TokenList tk;
-    tk.push_back(message);
-    tk.push_back("Text message");
-    _requestManager.sendResponse(ResponseMessage("103", _getEventsSequenceId, tk));
-  }
+  TokenList tk;
+  tk.push_back(id);
+  tk.push_back(message);
+  tk.push_back("Text message");
+  _requestManager.sendResponse(ResponseMessage("102", _getEventsSequenceId, tk));
 }
 
 void  
-GUIServerImpl::displayErrorText (CALLID id, const std::string& message) 
+GUIServerImpl::displayErrorText (const CallID& id, const std::string& message) 
 {
-  try {
-    std::string callId = getCallIdFromId(id);
-    TokenList tk;
-    tk.push_back(callId);
-    tk.push_back(message);
-    tk.push_back("Error");
-    _requestManager.sendResponse(ResponseMessage("104", _getEventsSequenceId, tk));
-  } catch(...) {
-    displayError(message);
-  }
+  TokenList tk;
+  tk.push_back(id);
+  tk.push_back(message);
+  tk.push_back("Error");
+  _requestManager.sendResponse(ResponseMessage("104", _getEventsSequenceId, tk));
 }
 
 void  
@@ -427,18 +329,25 @@ GUIServerImpl::displayError (const std::string& error)
 }
 
 void
-GUIServerImpl::sendVoiceNbMessage(const std::string& nb_msg)
+GUIServerImpl::sendVoiceNbMessage(const AccountID& accountId, const std::string& nb_msg)
 {
-  _requestManager.sendResponse(ResponseMessage("020", _getEventsSequenceId, nb_msg));
+  TokenList tk;
+  tk.push_back(accountId);
+  tk.push_back(nb_msg);
+  _requestManager.sendResponse(ResponseMessage("020", _getEventsSequenceId, tk));
 }
 
 void
-GUIServerImpl::sendRegistrationState(bool state) 
+GUIServerImpl::sendRegistrationState(const AccountID& accountid, bool state) 
 {
+  TokenList tk;
+  tk.push_back(accountid);
   if (state == true) {
-  _requestManager.sendResponse(ResponseMessage("003", _getEventsSequenceId, _("Registration succeed")));
+    tk.push_back(_("Registration succeed"));
+  _requestManager.sendResponse(ResponseMessage("003", _getEventsSequenceId, tk));
   } else {
-  _requestManager.sendResponse(ResponseMessage("004", _getEventsSequenceId, _("Registration failed")));
+    tk.push_back(_("Registration failed"));
+  _requestManager.sendResponse(ResponseMessage("004", _getEventsSequenceId, tk));
   }
 }
 void
@@ -455,12 +364,11 @@ GUIServerImpl::sendMessage(const std::string& code, const std::string& seqId, To
 void 
 GUIServerImpl::sendCallMessage(const std::string& code, 
   const std::string& sequenceId, 
-  CALLID id, 
+  const CallID& id, 
   TokenList arg) 
 {
   try {
-    std::string callid = getCallIdFromId(id);
-    arg.push_front(callid);
+    arg.push_front(id);
     _requestManager.sendResponse(ResponseMessage(code, sequenceId, arg));
   } catch(...) {
     // no callid found
@@ -474,14 +382,15 @@ GUIServerImpl::update()
 }
 
 void
-GUIServerImpl::callFailure(CALLID id)
+GUIServerImpl::callFailure(const CallID& id)
 {
   CallMap::iterator iter = _callMap.find(id);
   if ( iter != _callMap.end() ) {
     TokenList tk;
-    tk.push_back(iter->second.callId());
+    tk.push_back(id);
     tk.push_back("Wrong number");
 
-    _requestManager.sendResponse(ResponseMessage("504", iter->second.sequenceId(), tk));
+    _requestManager.sendResponse(ResponseMessage("504", iter->second, tk));
+    removeSubCall(id);
   }
 }

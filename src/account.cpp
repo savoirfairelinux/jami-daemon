@@ -24,6 +24,7 @@ Account::Account(const AccountID& accountID) : _accountID(accountID)
   _link = 0;
 
   _shouldInitOnStart = false;
+  _shouldRegisterOnStart = false;
   _enabled = false;
   _registered = false;
 }

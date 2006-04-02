@@ -112,14 +112,18 @@ private:
 
 class RequestRegister : public RequestGlobal {
 public:
-  RequestRegister(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId, argList) {}
+  RequestRegister(const std::string &sequenceId, const TokenList& argList);
   ResponseMessage execute();
+private:
+  std::string _accountId;
 };
 
 class RequestUnregister : public RequestGlobal {
 public:
-  RequestUnregister(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId, argList) {}
+  RequestUnregister(const std::string &sequenceId, const TokenList& argList);
   ResponseMessage execute();
+private:
+  std::string _accountId;
 };
 class RequestSwitch : public RequestGlobal {
 public:

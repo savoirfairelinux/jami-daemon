@@ -33,7 +33,7 @@ public:
    /**
     * Public account type
     */
-   enum AccountType {SIP_ACCOUNT, AIX_ACCOUNT };
+   enum AccountType {SIP_ACCOUNT, IAX_ACCOUNT };
 
   /**
    * Create a new account or null

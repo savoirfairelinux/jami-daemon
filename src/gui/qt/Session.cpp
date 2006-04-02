@@ -176,6 +176,6 @@ Session::getAccount(const QString &name) const
 Account
 Session::getDefaultAccount() const
 {
-  return Account(mId, QString("mydefaultaccount"));
+  return Account(mId, QString("SIP0"));
 }
 

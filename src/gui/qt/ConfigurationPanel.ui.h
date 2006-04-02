@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
@@ -133,43 +133,41 @@ ConfigurationPanel::generate()
 			      .get(AUDIO_SECTION,
 				   AUDIO_RINGTONE));
   
+  QString account = ACCOUNT_DEFAULT_NAME;
+  QString type    = ConfigurationManager::instance().get(account, ACCOUNT_TYPE);
+  QString active  = ConfigurationManager::instance().get(account, ACCOUNT_ENABLE);
+
   // For signalisations tab
-  fullName->setText(ConfigurationManager::instance()
-		    .get(SIGNALISATION_SECTION, 
-			 SIGNALISATION_FULL_NAME));
-  userPart->setText(ConfigurationManager::instance()
-		    .get(SIGNALISATION_SECTION,
-			 SIGNALISATION_USER_PART));
-  username->setText(ConfigurationManager::instance()
-		    .get(SIGNALISATION_SECTION,
-			 SIGNALISATION_AUTH_USER_NAME));
-  password->setText(ConfigurationManager::instance()
-		    .get(SIGNALISATION_SECTION, 
-			 SIGNALISATION_PASSWORD));
-  hostPart->setText(ConfigurationManager::instance()
-		    .get(SIGNALISATION_SECTION,
-			 SIGNALISATION_HOST_PART));
-  sipproxy->setText(ConfigurationManager::instance()
-		    .get(SIGNALISATION_SECTION, 
-			 SIGNALISATION_PROXY));
   autoregister->setChecked(ConfigurationManager::instance()
-			   .get(SIGNALISATION_SECTION,
-				SIGNALISATION_AUTO_REGISTER).toUInt());
+			   .get(account,ACCOUNT_AUTO_REGISTER).toUInt());
+
+  fullName->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_FULL_NAME));
+  userPart->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_USER_PART));
+  username->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_AUTH_USER_NAME));
+  password->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_PASSWORD));
+  hostPart->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_HOST_PART));
+  sipproxy->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_PROXY));
+  STUNserver->setText(ConfigurationManager::instance()
+		      .get(account,SIGNALISATION_STUN_SERVER));
+  ((QRadioButton*)stunButtonGroup->find(ConfigurationManager::instance()
+			.get(account,SIGNALISATION_USE_STUN).toUInt()))->setChecked(true); 
+
+  sendDTMFas->setCurrentItem(ConfigurationManager::instance()
+			     .get(SIGNALISATION_SECTION,
+				  SIGNALISATION_SEND_DTMF_AS).toUInt());
   playTones->setChecked(ConfigurationManager::instance()
 			.get(SIGNALISATION_SECTION, 
 			     SIGNALISATION_PLAY_TONES).toUInt());
   pulseLength->setValue(ConfigurationManager::instance()
 			.get(SIGNALISATION_SECTION, 
 			     SIGNALISATION_PULSE_LENGTH).toUInt());
-  sendDTMFas->setCurrentItem(ConfigurationManager::instance()
-			     .get(SIGNALISATION_SECTION,
-				  SIGNALISATION_SEND_DTMF_AS).toUInt());
-  STUNserver->setText(ConfigurationManager::instance()
-		      .get(SIGNALISATION_SECTION,
-			   SIGNALISATION_STUN_SERVER));
-  ((QRadioButton*)stunButtonGroup->find(ConfigurationManager::instance()
-					.get(SIGNALISATION_SECTION,
-					     SIGNALISATION_USE_STUN).toUInt()))->setChecked(true); 
+
   QRadioButton* device = 
     static_cast< QRadioButton * >(DriverChoice->find(ConfigurationManager::instance()
 						     .get(AUDIO_SECTION, 
@@ -185,27 +183,32 @@ ConfigurationPanel::generate()
 // For saving settings at application 'save'
 void ConfigurationPanel::saveSlot()
 {
-  ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
+  QString account = ACCOUNT_DEFAULT_NAME;
+  ConfigurationManager::instance().set(account, 
 				       SIGNALISATION_FULL_NAME,
 				       fullName->text());
-  ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
+  ConfigurationManager::instance().set(account, 
 				       SIGNALISATION_USER_PART,
 				       userPart->text());
-  ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
+  ConfigurationManager::instance().set(account, 
 				       SIGNALISATION_AUTH_USER_NAME,
 				       username->text());
-  ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
+  ConfigurationManager::instance().set(account, 
 				       SIGNALISATION_PASSWORD,
 				       password->text());
-  ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
+  ConfigurationManager::instance().set(account, 
 				       SIGNALISATION_HOST_PART,
 				       hostPart->text());
-  ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
+  ConfigurationManager::instance().set(account, 
 				       SIGNALISATION_PROXY,
 				       sipproxy->text());
-  ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
-				       SIGNALISATION_AUTO_REGISTER,
+  ConfigurationManager::instance().set(account, 
+				       ACCOUNT_AUTO_REGISTER,
 				       QString::number(autoregister->isChecked()));
+  ConfigurationManager::instance().set(account, 
+				       SIGNALISATION_STUN_SERVER,
+				       STUNserver->text());
+
   ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
 				       SIGNALISATION_PULSE_LENGTH,
 				       QString::number(pulseLength->value()));
@@ -215,9 +218,6 @@ void ConfigurationPanel::saveSlot()
   ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
 				       SIGNALISATION_SEND_DTMF_AS,
 				       QString::number(sendDTMFas->currentItem()));
-  ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
-				       SIGNALISATION_STUN_SERVER,
-				       STUNserver->text());
 
   if (codec1->currentText() != NULL) {
     ConfigurationManager::instance().set(AUDIO_SECTION, 
@@ -292,7 +292,8 @@ void ConfigurationPanel::changeTabSlot()
 
 void ConfigurationPanel::useStunSlot(int id)
 {
-  ConfigurationManager::instance().set(SIGNALISATION_SECTION,
+  QString account = ACCOUNT_DEFAULT_NAME;
+  ConfigurationManager::instance().set(account,
 				       SIGNALISATION_USE_STUN, 
 				       QString::number(id));
 }

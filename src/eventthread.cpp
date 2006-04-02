@@ -19,11 +19,11 @@
  */
 
 #include "eventthread.h"
-#include "sipvoiplink.h"
+#include "voIPLink.h"
 
-EventThread::EventThread (SipVoIPLink* sip) : Thread () 
+EventThread::EventThread (VoIPLink* link) : Thread () 
 {
-	_sipthread = sip;
+	_linkthread = link;
 	setCancel(cancelDeferred);
 }
 
@@ -39,7 +39,7 @@ void
 EventThread::run (void) 
 {
   while(!testCancel()) {
-    _sipthread->getEvent();
+    _linkthread->getEvent();
   }
 }
 

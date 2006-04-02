@@ -18,7 +18,7 @@
  */
 #include "accountcreator.h"
 #include "sipaccount.h"
-#include "aixaccount.h"
+#include "iaxaccount.h"
 
 AccountCreator::AccountCreator()
 {
@@ -37,8 +37,8 @@ AccountCreator::createAccount(AccountType type, AccountID accountID)
       return new SIPAccount(accountID);
     break;
 
-    case AIX_ACCOUNT:
-      return new AIXAccount(accountID);
+    case IAX_ACCOUNT:
+      return new IAXAccount(accountID);
     break;
   }
   return 0;

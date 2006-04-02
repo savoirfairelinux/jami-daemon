@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
@@ -26,7 +26,8 @@
 #include <string>
 #include "server/argtokenizer.h"
 #include "../observer.h"
-#include "../call.h"
+#include "../call.h"   // for callid2
+#include "../account.h" // for account
 
 class GuiFramework {
 public:
@@ -34,43 +35,45 @@ public:
 	virtual ~GuiFramework (void);
 
 	/* Parent class to child class */
-	virtual int incomingCall (CALLID id, const std::string& accountId, const std::string& from) = 0;
-	virtual void peerAnsweredCall (CALLID id) = 0;
-	virtual void peerRingingCall (CALLID id) = 0;
-	virtual void peerHungupCall (CALLID id) = 0;
-  virtual void incomingMessage(const std::string& message) = 0;
+  virtual bool incomingCall (const AccountID& accountId, const CallID& id, const std::string& from) = 0;
+
+	virtual void peerAnsweredCall (const CallID& id) = 0;
+	virtual void peerRingingCall (const CallID& id) = 0;
+	virtual void peerHungupCall (const CallID& id) = 0;
+  virtual void incomingMessage(const AccountID& accountId, const std::string& message) = 0;
 	virtual void displayStatus (const std::string& status) = 0;
 	virtual void displayConfigError (const std::string& error) = 0;
-	virtual void displayTextMessage (CALLID id, const std::string& message) = 0;
-	virtual void displayErrorText (CALLID id, const std::string& message) = 0;
+	virtual void displayTextMessage (const CallID& id, const std::string& message) = 0;
+	virtual void displayErrorText (const CallID& id, const std::string& message) = 0;
 	virtual void displayError (const std::string& error) = 0;
 	virtual void startVoiceMessageNotification (void) {}
 	virtual void stopVoiceMessageNotification (void) {}
-  virtual void sendVoiceNbMessage(const std::string& nb_msg) = 0;
+  virtual void sendVoiceNbMessage(const AccountID& accountId, const std::string& nb_msg) = 0;
 	virtual void setup() = 0;
   virtual void sendMessage(const std::string& code, const std::string& seqId, TokenList& arg) = 0;
   virtual void sendCallMessage(const std::string& code, 
-  const std::string& sequenceId, CALLID id, TokenList arg) = 0;
-  virtual void sendRegistrationState(bool state) = 0;
-  virtual void callFailure(CALLID id) = 0;
+  const std::string& sequenceId, const CallID& id, TokenList arg) = 0;
+  virtual void sendRegistrationState(const AccountID& accountid, bool state) = 0;
+  virtual void callFailure(const CallID& id) = 0;
 
 	/* Child class to parent class */
-	int outgoingCall(const std::string& account, const std::string& to);
-  bool sendTextMessage(const std::string& account, const std::string& to, const std::string& message);
-	int hangupCall (CALLID id);
-	int cancelCall (CALLID id);
-	int answerCall (CALLID id);
-	int onHoldCall (CALLID id);
-	int offHoldCall (CALLID id);
-	int transferCall (CALLID id, const std::string& to);
+  bool outgoingCall(const AccountID& account, const CallID& id, const std::string& to);
+  bool answerCall(const CallID& id);
+
+  bool sendTextMessage(const AccountID& accountId, const std::string& to, const std::string& message);
+	bool hangupCall (const CallID& id);
+	bool cancelCall (const CallID& id);
+	bool onHoldCall (const CallID& id);
+	bool offHoldCall (const CallID& id);
+	bool transferCall (const CallID& id, const std::string& to);
 	void mute ();
 	void unmute ();
-	int refuseCall (CALLID id);
+	bool refuseCall (const CallID& id);
 
   bool saveConfig(void);
-  bool registerVoIPLink(void);
-  bool unregisterVoIPLink(void);
-  bool sendDtmf (CALLID id, char code);
+  bool registerVoIPLink(const AccountID& accountId);
+  bool unregisterVoIPLink(const AccountID& accountId);
+  bool sendDtmf (const CallID& id, char code);
   bool playDtmf (char code);
   bool playTone ();
   bool stopTone ();
@@ -92,7 +95,7 @@ public:
   bool setSwitch(const std::string& switchName);
 
   bool hasLoadedSetup();
-  CALLID getCurrentId();
+  const CallID& getCurrentId();
   bool getRegistrationState(std::string& stateCode, std::string& stateMessage);
 
 protected:

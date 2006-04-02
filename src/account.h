@@ -28,6 +28,8 @@ typedef std::string AccountID;
 #define AccountNULL ""
 #define CONFIG_ACCOUNT_TYPE   "Account.type"
 #define CONFIG_ACCOUNT_ENABLE "Account.enable"
+#define CONFIG_ACCOUNT_AUTO_REGISTER  "Account.autoregister"
+
 
 /**
 	@author Yan Morin 
@@ -39,13 +41,13 @@ class Account{
 public:
     Account(const AccountID& accountID);
 
-    ~Account();
+    virtual ~Account();
 
   /**
    * Load the default properties for the account
    */
   virtual void initConfig(Conf::ConfigTree& config) = 0;
-
+  virtual void loadConfig() = 0;
 
   /**
    * Get the voiplink pointer
@@ -77,6 +79,18 @@ public:
    */
   virtual bool terminate() = 0;
 
+  /**
+   * Tell if we should init the account on start
+   * @return true if we must init the link
+   */
+  bool shouldInitOnStart() {return _shouldInitOnStart; }
+
+  /**
+   * Tell if we should init the account on start
+   * @return true if we must init the link
+   */
+  bool shouldRegisterOnStart() {return _shouldRegisterOnStart; }
+
 private:
   /**
    * Create a unique voIPLink() depending on the protocol
@@ -101,6 +115,12 @@ protected:
    * Modified by the configuration
    */
   bool _shouldInitOnStart;
+
+  /**
+   * Tells if we should register automatically on startup
+   * Modified by the configuration
+   */
+  bool _shouldRegisterOnStart;
 
   /**
    * Tells if the link is enabled or not

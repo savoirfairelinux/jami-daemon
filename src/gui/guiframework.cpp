@@ -1,5 +1,5 @@
-/** 
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
@@ -30,10 +30,10 @@ GuiFramework::GuiFramework ()
 
 GuiFramework::~GuiFramework (void) {}
 
-int 
-GuiFramework::outgoingCall(const std::string&, const std::string& to)
+bool
+GuiFramework::outgoingCall(const std::string& account, const CallID& id, const std::string& to)
 {
-  return Manager::instance().outgoingCall(to);
+  return Manager::instance().outgoingCall(account, id, to);
 }
 
 bool
@@ -42,64 +42,40 @@ GuiFramework::sendTextMessage(const std::string& account, const std::string& to,
   return Manager::instance().sendTextMessage(account, to, message);
 }
 
-int 
-GuiFramework::hangupCall (CALLID id)
+bool
+GuiFramework::hangupCall (const CallID& id)
 {
-	if (Manager::instance().hangupCall(id) == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+  return Manager::instance().hangupCall(id);
 }
 
-int 
-GuiFramework::cancelCall (CALLID id)
+bool
+GuiFramework::cancelCall (const CallID& id)
 {
-	if (Manager::instance().cancelCall(id) == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return Manager::instance().cancelCall(id);
 }
 
-int 
-GuiFramework::answerCall (CALLID id)
+bool
+GuiFramework::answerCall(const CallID& id)
 {
-  if (Manager::instance().answerCall(id) == 0) {
-    return 1;
-  } else {
-    return 0;
-  }
+  return Manager::instance().answerCall(id);
 }
 
-int 
-GuiFramework::onHoldCall (CALLID id)
+bool
+GuiFramework::onHoldCall(const CallID& id)
 {
-  if (Manager::instance().onHoldCall(id) == 0) {
-    return 1;
-  } else {
-    return 0;
-  }
+  return Manager::instance().onHoldCall(id);
 }
 
-int 
-GuiFramework::offHoldCall (CALLID id)
+bool
+GuiFramework::offHoldCall(const CallID& id)
 {
-  if (Manager::instance().offHoldCall(id) == 0) {
-    return 1;
-  } else {
-    return 0;
-  }
+  return Manager::instance().offHoldCall(id);
 }
 
-int 
-GuiFramework::transferCall (CALLID id, const std::string& to)
+bool
+GuiFramework::transferCall(const CallID& id, const std::string& to)
 {
-	if (Manager::instance().transferCall(id, to) == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return Manager::instance().transferCall(id, to);
 }
 
 void
@@ -107,20 +83,17 @@ GuiFramework::mute()
 {
   Manager::instance().mute();
 }
+
 void
 GuiFramework::unmute() 
 {
   Manager::instance().unmute();
 }
 
-int 
-GuiFramework::refuseCall (CALLID id)
+bool
+GuiFramework::refuseCall (const CallID& id)
 {
-	if (Manager::instance().refuseCall(id) == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return Manager::instance().refuseCall(id);
 }
 
 bool
@@ -130,19 +103,19 @@ GuiFramework::saveConfig (void)
 }
 
 bool 
-GuiFramework::registerVoIPLink (void)
+GuiFramework::registerVoIPLink(const AccountID& accountId)
 {
-  return Manager::instance().registerVoIPLink();
+  return Manager::instance().registerVoIPLink(accountId);
 }
 
 bool 
-GuiFramework::unregisterVoIPLink (void)
+GuiFramework::unregisterVoIPLink (const AccountID& accountId)
 {
-  return Manager::instance().unregisterVoIPLink();
+  return Manager::instance().unregisterVoIPLink(accountId);
 }
 
 bool 
-GuiFramework::sendDtmf (CALLID id, char code)
+GuiFramework::sendDtmf (const CallID& id, char code)
 {
 	return Manager::instance().sendDtmf(id, code);
 }
@@ -202,7 +175,7 @@ GuiFramework::getCallStatus(const std::string& sequenceId)
   return Manager::instance().getCallStatus(sequenceId);
 }
 
-CALLID
+const CallID&
 GuiFramework::getCurrentId() 
 {
   return Manager::instance().getCurrentCallId();

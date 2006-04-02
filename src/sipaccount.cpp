@@ -18,14 +18,14 @@
  */
 #include "sipaccount.h"
 #include "sipvoiplink.h"
+#include "manager.h"
 
 #define SIP_FULL_NAME      "SIP.fullName"
 #define SIP_USER_PART      "SIP.userPart"
-#define SIP_AUTH_USER_NAME "SIP.username"
+#define SIP_AUTH_NAME      "SIP.username"
 #define SIP_PASSWORD       "SIP.password"
 #define SIP_HOST_PART      "SIP.hostPart"
 #define SIP_PROXY          "SIP.proxy"
-#define SIP_AUTO_REGISTER  "SIP.autoregister"
 #define SIP_STUN_SERVER    "STUN.STUNserver"
 #define SIP_USE_STUN       "STUN.useStun"
 
@@ -46,7 +46,8 @@ bool
 SIPAccount::createVoIPLink()
 {
   if (!_link) {
-    _link = new SipVoIPLink();
+  //_link = new SipVoIPLink();
+    _link = new SIPVoIPLink(_accountID);
   }
   return (_link != 0 ? true : false);
 }
@@ -55,7 +56,14 @@ bool
 SIPAccount::registerAccount()
 {
   if (_link && !_registered) {
-    _registered = (_link->setRegister() >= 0) ? true : false;
+    SIPVoIPLink* tmplink = dynamic_cast<SIPVoIPLink*> (_link);
+    if (tmplink) {
+      tmplink->setProxy(Manager::instance().getConfigString(_accountID,SIP_PROXY));
+      tmplink->setUserPart(Manager::instance().getConfigString(_accountID,SIP_USER_PART));
+      tmplink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_AUTH_NAME));
+      tmplink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
+    }
+    _registered = _link->setRegister();
   }
   return _registered;
 }
@@ -64,7 +72,7 @@ bool
 SIPAccount::unregisterAccount()
 {
   if (_link && _registered) {
-    _registered = (_link->setUnregister() == 0) ? false : true;
+    _registered = _link->setUnregister();
   }
   return !_registered;
 }
@@ -73,6 +81,13 @@ bool
 SIPAccount::init()
 {
   if (_link && !_enabled) {
+    _link->setFullName(Manager::instance().getConfigString(_accountID,SIP_FULL_NAME));
+    _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST_PART));
+    int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
+    SIPVoIPLink* tmplink = dynamic_cast<SIPVoIPLink*> (_link);
+    if (tmplink) {
+      tmplink->setUseStun( useStun!=0 ? true : false);
+    }
     _link->init();
     _enabled = true;
     return true;
@@ -102,10 +117,18 @@ SIPAccount::initConfig(Conf::ConfigTree& config)
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ENABLE,"1", type_int));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_FULL_NAME, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_USER_PART, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_AUTH_USER_NAME, "", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_HOST_PART, "", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_AUTH_NAME, "", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_PASSWORD, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_PROXY, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_AUTO_REGISTER, "1", type_int));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_AUTO_REGISTER, "1", type_int));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_STUN_SERVER, "stun.fwdnet.net:3478", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_USE_STUN, "0", type_int));
 }
 
+void
+SIPAccount::loadConfig() 
+{
+  _shouldInitOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
+  _shouldRegisterOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_AUTO_REGISTER) ? true : false;
+}

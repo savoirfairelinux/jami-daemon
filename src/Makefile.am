@@ -13,10 +13,10 @@ endif
 
 SUBDIRS = audio config gui $(ZEROCONFDIR)
 
-sflphoned_SOURCES = call.cpp 	eventthread.cpp 	main.cpp 	sipvoiplink.cpp 	voIPLink.cpp \
-		sipcall.cpp 	managerimpl.cpp	\
-		observer.cpp \
-		account.cpp sipaccount.cpp aixaccount.cpp accountcreator.cpp aixvoiplink.cpp
+sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \
+		managerimpl.cpp	observer.cpp \
+		account.cpp sipaccount.cpp iaxaccount.cpp accountcreator.cpp iaxvoiplink.cpp \
+                sipvoiplink.cpp call.cpp sipcall.cpp
 
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS)
 
@@ -38,6 +38,8 @@ libsflphone_la_LIBADD = \
 libsflphone_la_SOURCES =
 
 noinst_LTLIBRARIES = libsflphone.la
-noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h sipvoiplink.h user_cfg.h \
-                 call.h voIPLink.h sipcall.h \
-		 account.h sipaccount.h aixaccount.h accountcreator.h aixvoiplink.h
+noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h user_cfg.h \
+                 voIPLink.h \
+		 account.h sipaccount.h iaxaccount.h accountcreator.h iaxvoiplink.h \
+                 sipvoiplink.h  call.h  sipcall.h
+

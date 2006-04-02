@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2005-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -22,48 +22,61 @@
 
 #include "user_cfg.h"
 #include "voIPLink.h"
-#include "manager.h"
 
-VoIPLink::VoIPLink ()
+VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0)
 {
+  
 }
 
 VoIPLink::~VoIPLink (void) 
 {
+  clearCallMap();
 }
 
-void 
-VoIPLink::setFullName (const std::string& fullname)
+bool
+VoIPLink::addCall(Call* call)
 {
-	_fullname = fullname;
+  if (call) {
+    if (getCall(call->getCallId()) == 0) {
+      ost::MutexLock m(_callMapMutex);
+      _callMap[call->getCallId()] = call;
+    }
+  }  
+  return false;
 }
 
-std::string
-VoIPLink::getFullName (void)
+bool
+VoIPLink::removeCall(const CallID& id)
 {
-	return _fullname;
+  ost::MutexLock m(_callMapMutex);
+  if (_callMap.erase(id)) {
+    return true;
+  }  
+  return false;
 }
 
-void 
-VoIPLink::setHostName (const std::string& hostname)
+Call*
+VoIPLink::getCall(const CallID& id)
 {
-	_hostname = hostname;
+  ost::MutexLock m(_callMapMutex);
+  CallMap::iterator iter = _callMap.find(id);
+  if ( iter != 0 && iter != _callMap.end() ) {
+    return iter->second;
+  }
+  return 0;
 }
 
-std::string
-VoIPLink::getHostName (void)
+bool
+VoIPLink::clearCallMap()
 {
-	return _hostname;
-} 
-
-void 
-VoIPLink::setLocalIpAddress (const std::string& ipAdress)
-{
-	_localIpAddress = ipAdress;
+  ost::MutexLock m(_callMapMutex);
+  CallMap::iterator iter = _callMap.begin();
+  while( iter != _callMap.end() ) {
+    // if (iter) ?
+    delete iter->second; iter->second = 0;
+    iter++;
+  }
+  _callMap.clear();
+  return true;
 }
 
-std::string 
-VoIPLink::getLocalIpAddress (void)
-{
-	return _localIpAddress;
-} 

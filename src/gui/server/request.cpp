@@ -32,19 +32,19 @@ RequestCall::execute()
 }
 
 ResponseMessage
-RequestTextMessage::execute()
+RequestAnswer::execute()
 {
-  if ( GUIServer::instance().sendTextMessage(_account, _destination, _message) ) {
-    return message("200", "Sending message");
+  if ( GUIServer::instance().answerCall(_callId) ) {
+    return message("200", _("OK"));
   }
   return message("500","Server Error");
 }
 
 ResponseMessage
-RequestAnswer::execute()
+RequestTextMessage::execute()
 {
-  if ( GUIServer::instance().answerCall(_callId) ) {
-    return message("200", _("OK"));
+  if ( GUIServer::instance().sendTextMessage(_account, _destination, _message) ) {
+    return message("200", "Sending message");
   }
   return message("500","Server Error");
 }
