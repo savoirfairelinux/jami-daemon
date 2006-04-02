@@ -926,13 +926,10 @@ ManagerImpl::getStunInfo (StunAddress4& stunSvrAddr, int port)
 }
 
 bool
-ManagerImpl::behindNat(int port)
+ManagerImpl::behindNat(const std::string& svr, int port)
 {
   StunAddress4 stunSvrAddr;
   stunSvrAddr.addr = 0;
-  
-  // Stun server
-  std::string svr = getConfigString(SIGNALISATION, STUN_SERVER);
   
   // Convert char* to StunAddress4 structure
   bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
@@ -986,19 +983,19 @@ ManagerImpl::initConfigFile (void)
   std::string section;
   section = SIGNALISATION;
   fill_config_int(SYMMETRIC, YES_STR);
-  fill_config_str(FULL_NAME, EMPTY_FIELD);
-  fill_config_str(USER_PART, EMPTY_FIELD);
-  fill_config_str(AUTH_USER_NAME, EMPTY_FIELD);
-  fill_config_str(PASSWORD, EMPTY_FIELD);
-  fill_config_str(HOST_PART, EMPTY_FIELD);
-  fill_config_str(PROXY, EMPTY_FIELD);
-  fill_config_int(AUTO_REGISTER, YES_STR);
+  //fill_config_str(FULL_NAME, EMPTY_FIELD);
+  //fill_config_str(USER_PART, EMPTY_FIELD);
+  //fill_config_str(AUTH_USER_NAME, EMPTY_FIELD);
+  //fill_config_str(PASSWORD, EMPTY_FIELD);
+  //fill_config_str(HOST_PART, EMPTY_FIELD);
+  //fill_config_str(PROXY, EMPTY_FIELD);
+  //fill_config_int(AUTO_REGISTER, YES_STR);
   fill_config_int(PLAY_DTMF, YES_STR);
   fill_config_int(PLAY_TONES, YES_STR);
   fill_config_int(PULSE_LENGTH, DFT_PULSE_LENGTH_STR);
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
-  fill_config_str(STUN_SERVER, DFT_STUN_SERVER);
-  fill_config_int(USE_STUN, NO_STR);
+  //fill_config_str(STUN_SERVER, DFT_STUN_SERVER);
+  //fill_config_int(USE_STUN, NO_STR);
 
   section = AUDIO;
   fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);

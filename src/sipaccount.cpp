@@ -84,8 +84,10 @@ SIPAccount::init()
     _link->setFullName(Manager::instance().getConfigString(_accountID,SIP_FULL_NAME));
     _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST_PART));
     int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
+    
     SIPVoIPLink* tmplink = dynamic_cast<SIPVoIPLink*> (_link);
     if (tmplink) {
+      tmplink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
       tmplink->setUseStun( useStun!=0 ? true : false);
     }
     _link->init();

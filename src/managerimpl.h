@@ -258,8 +258,8 @@ public:
    */
   bool getStunInfo(StunAddress4& stunSvrAddr, int port);
 
-  inline int getFirewallPort 		(void) 		{ return _firewallPort; }
-  inline void setFirewallPort 	(int port) 	{ _firewallPort = port; }
+  inline int getFirewallPort(void) 		{ return _firewallPort; }
+  inline void setFirewallPort(int port) 	{ _firewallPort = port; }
   inline std::string getFirewallAddress (void) 	{ return _firewallAddr; }
 
   /**
@@ -267,11 +267,12 @@ public:
    * STUN configuration(you can change this one by default) to give you an 
    * public IP address and assign a port number.
    * Note: Set firewall port/address retreive
-         * @param port : on which port we want to listen to
+   * @param svr  : serveur on which to send request
+   * @param port : on which port we want to listen to
    * 
    * Return true if we are behind a NAT (without error)
    */
-  bool behindNat(int port);
+  bool behindNat(const std::string& svr, int port);
 
 	/**
 	 * Init default values for the different fields

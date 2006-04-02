@@ -95,9 +95,9 @@ SIPVoIPLink::init()
     int iTry = 1;  // try number..
   
     do {
-      if (_useStun && !Manager::instance().behindNat(port)) { 
+      if (_useStun && !Manager::instance().behindNat(_stunServer, port)) { 
         port = RANDOM_SIP_PORT; 
-        if (!Manager::instance().behindNat(port)) {
+        if (!Manager::instance().behindNat(_stunServer, port)) {
          _debug("SIP FAILURE: Unable to check NAT setting\n");
           return false; // hoho we can't use the random sip port too...
         }
@@ -1061,7 +1061,7 @@ SIPVoIPLink::setCallAudioLocal(SIPCall* call)
   unsigned int callLocalExternAudioPort = callLocalAudioPort;
   if (_useStun) {
     // If use Stun server
-    if (Manager::instance().behindNat(callLocalAudioPort)) {
+    if (Manager::instance().behindNat(_stunServer, callLocalAudioPort)) {
       callLocalExternAudioPort = Manager::instance().getFirewallPort();
     }
   }

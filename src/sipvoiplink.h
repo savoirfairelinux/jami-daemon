@@ -66,6 +66,7 @@ public:
    * @param use true if we use STUN
    */
   void setUseStun(bool use) { _useStun = use; }
+  void setStunServer(const std::string& server) { _stunServer = server; }
   void setProxy(const std::string& proxy) { _proxy = proxy; }
   void setUserPart(const std::string& userpart) { _userpart = userpart; }
   void setAuthName(const std::string& authname) { _authname = authname; }
@@ -242,6 +243,8 @@ private:
 
   /** Do we use stun? */
   bool _useStun;
+  /** What is the stun server? */
+  std::string _stunServer;
 
   /** Local Extern Address is the IP address seens by peers for SIP listener */
   std::string _localExternAddress;
