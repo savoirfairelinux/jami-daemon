@@ -20,6 +20,7 @@
 #define IAXVOIPLINK_H
 
 #include "voIPLink.h"
+#include "iax-client.h"
 
 class AudioCodec;
 
@@ -36,9 +37,9 @@ public:
     ~IAXVoIPLink();
 
   void getEvent (void) { }
-  bool init (void) { return false; }
+  bool init (void);
   bool checkNetwork (void) { return false; }
-  void terminate (void) { }
+  void terminate (void);
 
   bool setRegister (void) { return false; }
   bool setUnregister (void) { return false; }
