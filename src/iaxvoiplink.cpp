@@ -38,7 +38,7 @@ IAXVoIPLink::init()
   bool returnValue = false;
   //_localAddress = "127.0.0.1";
   // port 0 is default
-  iax_enable_debug();
+  //  iax_enable_debug(); have to enable debug when compiling iax...
   int port = iax_init(IAX_DEFAULT_PORTNO);
   if (port == IAX_FAILURE) {
     _debug("IAX Failure: Error when initializing\n");
