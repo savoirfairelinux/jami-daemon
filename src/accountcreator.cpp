@@ -18,7 +18,9 @@
  */
 #include "accountcreator.h"
 #include "sipaccount.h"
+#ifdef USE_IAX
 #include "iaxaccount.h"
+#endif
 
 AccountCreator::AccountCreator()
 {
@@ -38,7 +40,9 @@ AccountCreator::createAccount(AccountType type, AccountID accountID)
     break;
 
     case IAX_ACCOUNT:
+#ifdef USE_IAX
       return new IAXAccount(accountID);
+#endif
     break;
   }
   return 0;

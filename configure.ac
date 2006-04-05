@@ -129,6 +129,15 @@ if test "x$with_speex" = "xyes" ; then
   )
 fi
 AM_CONDITIONAL(USE_SPEEX, test "x$with_speex" = "xyes" )
+AC_ARG_ENABLE(iax2,
+ AC_HELP_STRING(
+   [--enable-iax2],
+   [compile with iax2 library support @<:@default=no@:>@]
+ ),
+ [with_iax2=$enableval],
+ [with_iax2=no]
+)
+AM_CONDITIONAL(USE_IAX, test x$with_iax2 = xyes)
 
 GNUPG_CHECK_READLINE
 

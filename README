@@ -1,4 +1,4 @@
-This is SFLPhoned-0.6 release.
+This is SFLPhoned-0.7 release.
 
 You need 
 - commoncpp2 >= 1.3.20
@@ -79,7 +79,14 @@ Why does it not compile ?
   you have to export CXXFLAGS. 
   ( example: export CXXFLAGS="-I/opt/include" )
 
+How to enable iax support?
+--------------------------
+Go inside libs directory and execute ./libiax2.sh script.
+Run ./configure with --enable-iax2 option.
+
 Why does it not work ?
+----------------------
+
 - Portaudio don't detect your sound card because :
   * artsd is running
   * jackd is running 
@@ -93,7 +100,6 @@ Why does it not work ?
   or
    - killall sflphone
   
-
 Short description of content of source tree:
 -------------------------------------------
 
@@ -141,6 +147,10 @@ How is structured SFLphone (>=0.5)
 		|        ManagerImpl        |  
 		+---------------------------+
 		             |
+       		+---------------------------+
+		|          Account          |
+		+---------------------------+
+                             |
 		+---------------------------+
 		|         VoIPLink          |
 		+---------------------------+

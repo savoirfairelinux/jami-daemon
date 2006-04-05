@@ -11,17 +11,25 @@ ZEROCONFLIB =
 ZEROCONFFLAGS =  
 endif
 
+if USE_IAX
 IAX_LIBS = $(top_builddir)/libs/libiax2/src/libiax.la
 IAX_FLAGS = -DUSE_IAX
 IAX_CFLAGS = -I$(top_srcdir)/libs/libiax2/src/
-IAXSOURCES = iaxvoiplink.cpp
-IAXHEADERS = iaxvoiplink.h
+IAXSOURCES = iaxaccount.cpp iaxvoiplink.cpp
+IAXHEADERS = iaxaccount.h iaxvoiplink.h
+else
+IAX_LIBS = 
+IAX_FLAGS =
+IAX_CFLAGS =
+IAXSOURCES =
+IAXHEADERS =
+endif
 
 SUBDIRS = audio config gui $(ZEROCONFDIR)
 
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \
 		managerimpl.cpp	observer.cpp \
-		account.cpp sipaccount.cpp iaxaccount.cpp accountcreator.cpp \
+		account.cpp sipaccount.cpp accountcreator.cpp \
                 sipvoiplink.cpp call.cpp sipcall.cpp \
 		$(IAXSOURCES)
 
@@ -47,7 +55,7 @@ libsflphone_la_SOURCES =
 noinst_LTLIBRARIES = libsflphone.la
 noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h user_cfg.h \
                  voIPLink.h \
-		 account.h sipaccount.h iaxaccount.h accountcreator.h \
+		 account.h sipaccount.h accountcreator.h \
                  sipvoiplink.h  call.h  sipcall.h \
 		 $(IAXHEADERS)
 

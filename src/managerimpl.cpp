@@ -1582,8 +1582,12 @@ ManagerImpl::loadAccountMap()
   _accountMap[ACCOUNT_SIP0] = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, ACCOUNT_SIP0);
   nbAccount++;
 
-  _accountMap[ACCOUNT_IAX0] = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, ACCOUNT_IAX0);
-  nbAccount++;
+  Account* account = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, ACCOUNT_IAX0);
+  if (account != 0) {
+    _accountMap[ACCOUNT_IAX0] = account;
+    nbAccount++;
+  }
+  account = 0;
 
   return nbAccount;
 }

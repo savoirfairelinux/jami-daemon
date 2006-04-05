@@ -1,3 +1,12 @@
+SFLphoned (0.7.0) / 2005-..-..
+        * add iax support - in development
+        * add account support
+        * remove callid string/int
+        * add account SIP0 (default) in sflphone-cli
+        * add account SIP0 (default) in sflphone-qt
+        * fix nat handling (use the same port that it test)
+        * add register/unregister in qt
+
 SFLphoned (0.6.2) / 2005-11-29
         * integral mono support
         * libsamplerate added for macosx
