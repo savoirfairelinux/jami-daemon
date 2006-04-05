@@ -60,7 +60,7 @@ VoIPLink::getCall(const CallID& id)
 {
   ost::MutexLock m(_callMapMutex);
   CallMap::iterator iter = _callMap.find(id);
-  if ( iter != 0 && iter != _callMap.end() ) {
+  if ( iter != _callMap.end() ) {
     return iter->second;
   }
   return 0;

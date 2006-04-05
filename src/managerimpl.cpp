@@ -1542,7 +1542,7 @@ ManagerImpl::getAccountFromCall(const CallID& callID)
 {
   ost::MutexLock m(_callAccountMapMutex);
   CallAccountMap::iterator iter = _callAccountMap.find(callID);
-  if ( iter == 0 || iter == _callAccountMap.end()) {
+  if ( iter == _callAccountMap.end()) {
     return AccountNULL;
   } else {
     return iter->second;
@@ -1613,7 +1613,7 @@ Account*
 ManagerImpl::getAccount(const AccountID& accountID)
 {
   AccountMap::iterator iter = _accountMap.find(accountID);
-  if ( iter == 0 || iter == _accountMap.end() ) {
+  if ( iter == _accountMap.end() ) {
     return 0;
   }
   return iter->second;
@@ -1633,7 +1633,7 @@ void
 ManagerImpl::initConfigAccount() {
   AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
-    if (iter!=0 && iter->second!=0) {
+    if (iter->second!=0) {
       iter->second->initConfig(_config);
     }
     iter++;
