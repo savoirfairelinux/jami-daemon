@@ -1607,7 +1607,7 @@ bool
 ManagerImpl::accountExists(const AccountID& accountID)
 {
   AccountMap::iterator iter = _accountMap.find(accountID);
-  if ( iter == 0 || iter == _accountMap.end() ) {
+  if ( iter == _accountMap.end() ) {
     return false;
   }
   return true;
