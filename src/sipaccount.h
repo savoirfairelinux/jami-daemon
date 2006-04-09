@@ -22,8 +22,8 @@
 #include "account.h"
 
 /**
-	@author Yan Morin <yan.morin@gmail.com>
-  A Sip Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
+ * A Sip Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
+ * @author Yan Morin <yan.morin@gmail.com>
 */
 class SIPAccount : public Account
 {

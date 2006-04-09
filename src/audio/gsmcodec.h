@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2005-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -26,6 +26,9 @@ extern "C" {
 #include "gsm/gsm.h"
 }
 
+/**
+ * GSM audio codec C++ class (over gsm/gsm.h)
+ */
 class Gsm : public AudioCodec {
 public:
   // _payload should be 3

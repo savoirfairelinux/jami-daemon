@@ -22,9 +22,9 @@
 #include "account.h"
 
 /**
-	@author Yan Morin <yan.morin@gmail.com>
-  An IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
-*/
+ * An IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
+ * @author Yan Morin <yan.morin@gmail.com>
+ */
 class IAXAccount : public Account
 {
 public:

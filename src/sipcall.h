@@ -27,9 +27,9 @@
 class AudioCodec;
 
 /**
-	@author Yan Morin <yan.morin@gmail.com>
-  SIPCall are SIP implementation of a normal Call 
-*/
+ * SIPCall are SIP implementation of a normal Call 
+ * @author Yan Morin <yan.morin@gmail.com>
+ */
 class SIPCall : public Call
 {
 public:

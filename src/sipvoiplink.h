@@ -29,8 +29,9 @@ class EventThread;
 class SIPCall;
 
 /**
-	@author Yan Morin <yan.morin@gmail.com>
-*/
+ * Specific VoIPLink for SIP (SIP core for incoming and outcoming events)
+ * @author Yan Morin <yan.morin@gmail.com>
+ */
 class SIPVoIPLink : public VoIPLink
 {
 public:

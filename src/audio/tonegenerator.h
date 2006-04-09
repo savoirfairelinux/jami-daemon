@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *                                                                              
@@ -26,9 +26,9 @@
 
 #include "../global.h"
 
-///////////////////////////////////////////////////////////////////////////////
-// ToneGenerator
-///////////////////////////////////////////////////////////////////////////////
+/**
+ * Sine generator to create tone with string definition
+ */
 class ToneGenerator {
 public:
 	ToneGenerator (unsigned int sampleRate);

@@ -23,13 +23,12 @@
 #include <string>
 #include <cc++/thread.h> // for mutex
 
-//TODO: remove this, it's only for call ID
 typedef std::string CallID;
 
 /**
-	@author Yan Morin <yan.morin@gmail.com>
-  A call is the base classes for protocol-based calls
-*/
+ * A call is the base classes for protocol-based calls
+ * @author Yan Morin <yan.morin@gmail.com>
+ */
 class Call{
 public:
     enum CallType {Incoming, Outgoing};

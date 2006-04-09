@@ -82,12 +82,15 @@ typedef std::set<CallID> CallIDSet;
  */
 typedef std::list<std::string> TokenList;
 
+/**
+ * Manager (controller) of sflphone daemon
+ */
 class ManagerImpl {
 public:
   ManagerImpl (void);
   ~ManagerImpl (void);
 
-	// Init a new VoIPLink, audio codec and audio driver
+  // Init a new VoIPLink, audio codec and audio driver
   /**
    * Initialisation of thread (sound) and map
    */

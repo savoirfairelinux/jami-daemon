@@ -31,6 +31,9 @@ class AudioCodec;
 
 typedef std::map<CallID, Call*> CallMap;
 
+/**
+ * Listener and manager interface for each VoIP protocol
+ */
 class VoIPLink {
 public:
 	VoIPLink(const AccountID& accountID);

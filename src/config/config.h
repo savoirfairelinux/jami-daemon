@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2005-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,9 @@
 #include <string>
 #include <list>
 
+/**
+ * Configuration namespace for ConfigTree object (like .ini files)
+ */
 namespace Conf {
 
 class ConfigTreeItem;

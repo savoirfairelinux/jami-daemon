@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2005-2006 Savoir-Faire Linux inc.
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
  *
  * 	Portions Copyright (c) 2000 Billy Biggs <bbiggs@div8.net>
@@ -26,6 +26,9 @@
 #include "../global.h"
 #include "dtmfgenerator.h"
 
+/**
+ * DMTF library to generate a dtmf sample
+ */
 class DTMF {
 public:
   /**

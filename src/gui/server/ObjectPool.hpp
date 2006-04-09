@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com> (cc++ mutex)
  *  Author: Jean-Philippe Barrette-LaPierre
@@ -26,6 +26,9 @@
 #include <string>
 #include <cc++/thread.h>
 
+/**
+ * Pool Interface (multithread)
+ */
 template< typename T >
 class ObjectPool
 {

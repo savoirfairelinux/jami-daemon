@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2005-2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of 
@@ -29,6 +29,7 @@
 #define TONE_NBCOUNTRY 7
 
 /**
+ * Tone sample (dial, busy, ring, congestion)
  * @author Yan Morin <yan.morin@savoirfairelinux.com>
  */
 class Tone : public AudioLoop {

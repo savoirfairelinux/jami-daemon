@@ -32,11 +32,11 @@ typedef std::string AccountID;
 
 
 /**
-	@author Yan Morin 
-  Class account is an interface to protocol account (sipaccount, aixaccount)
-  It can be enable on loading or activate after.
-  It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
-*/
+ * Class account is an interface to protocol account (sipaccount, aixaccount)
+ * It can be enable on loading or activate after.
+ * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
+ * @author Yan Morin 
+ */
 class Account{
 public:
     Account(const AccountID& accountID);

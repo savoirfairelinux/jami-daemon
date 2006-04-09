@@ -24,9 +24,9 @@
 class Account;
 
 /**
-	@author Yan Morin <yan.morin@gmail.com>
-  AccountCreator create Protocol-specific Account
-*/
+ * AccountCreator create Protocol-specific Account
+ * @author Yan Morin <yan.morin@gmail.com>
+ */
 class AccountCreator{
 public:
     ~AccountCreator();

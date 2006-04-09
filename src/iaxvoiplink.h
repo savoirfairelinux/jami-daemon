@@ -25,10 +25,10 @@
 class AudioCodec;
 
 /**
-	@author Yan Morin <yan.morin@gmail.com>
-  VoIPLink contains a thread that listen to external events and 
-  contains IAX Call related functions
-*/
+ * VoIPLink contains a thread that listen to external events 
+ * and contains IAX Call related functions
+ * @author Yan Morin <yan.morin@gmail.com>
+ */
 class IAXVoIPLink : public VoIPLink
 {
 public:
