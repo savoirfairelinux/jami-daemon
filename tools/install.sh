@@ -43,11 +43,11 @@ cmmi() {
 }
 
 
-cmmi $SFL_FILE_CCPP2 '' '--without-libxml2'
-echo "Settings CPPFLAGS to $CPPFLAGS"
-export CPPFLAGS="-I$SFL_PREFIX/include/cc++2"
+#cmmi $SFL_FILE_CCPP2 '' '--without-libxml2'
+#echo "Settings CPPFLAGS to $CPPFLAGS"
+#export CPPFLAGS="-I$SFL_PREFIX/include/cc++2"
 cmmi $SFL_FILE_CCRTP ''
-cmmi $SFL_FILE_LIBOSIP2 ''
+#cmmi $SFL_FILE_LIBOSIP2 ''
 #cmmi $SFL_FILE_LIBEXOSIP2 '' --disable-josua
 export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$SFL_PREFIX/lib/pkgconfig
 #cmmi $SFL_FILE_PA_V19 $SFL_DIR_PA
