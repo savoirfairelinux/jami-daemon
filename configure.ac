@@ -42,9 +42,6 @@ if test "x$kde_use_debug_code" != "xno"; then
  CXXFLAGS="$CXXFLAGS -DDEBUG"
 fi
 
-# Setting QT Path
-AC_PATH_QT
-AC_SUBST(LIBQT)
 
 
 AC_CANONICAL_SYSTEM
@@ -58,8 +55,11 @@ PORTAUDIO_SETUP
 dnl check for osip2
 LP_CHECK_OSIP2
 
+dnl check for exosip2
+LP_CHECK_EXOSIP2
+
 dnl setup flags for embedded exosip library
-LP_SETUP_EXOSIP
+dnl LP_SETUP_EXOSIP
 
 dnl check for if no is undefined
 dnl check also for samplerate for $host ~= *darwin* (mac) only
@@ -129,6 +129,7 @@ if test "x$with_speex" = "xyes" ; then
   )
 fi
 AM_CONDITIONAL(USE_SPEEX, test "x$with_speex" = "xyes" )
+
 AC_ARG_ENABLE(iax2,
  AC_HELP_STRING(
    [--enable-iax2],
@@ -200,7 +201,7 @@ AC_ARG_ENABLE(maintener,
   [with_maintener=$enableval], 
   [with_maintener=no]
 )
-AM_CONDITIONAL(MAINTENER_CODE, test x$maintener = xyes)
+AM_CONDITIONAL(MAINTENER_CODE, test "x$with_maintener" = "xyes")
 if test "x$maintener" = "xyes"; then
   AC_MSG_RESULT(yes)
   CXXFLAGS="$CXXFLAGS -DENABLE_MAINTENER"
@@ -208,8 +209,27 @@ else
   AC_MSG_RESULT(no)
 fi
 
+AC_MSG_CHECKING([whether to enable sflphoneqt])
+AC_ARG_ENABLE(sflphoneqt,
+   AC_HELP_STRING(
+     [--disable-sflphoneqt],
+     [disable sflphone-qt compilation @<:@default=no@:>@]
+   ),
+   [with_sflphoneqt=$enableval],
+   [with_sflphoneqt=yes]
+)
+
+AM_CONDITIONAL(WITH_QT, test "x$with_sflphoneqt" = "xyes")
+AM_CONDITIONAL(include_x11, test x$with_sflphoneqt = "xyes")
+if test "x$with_sflphoneqt" = "xno"; then
+  AC_MSG_RESULT(no)
+else
+  AC_MSG_RESULT(yes)
+dnl Setting QT Path
+  AC_PATH_QT
 dnl QT substitution?
-AC_SUBST(LIB_QT)
+  AC_SUBST(LIB_QT)
+fi
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
@@ -219,7 +239,6 @@ Makefile \
 m4/Makefile \
 libs/taxidermy/Makefile \
 libs/Makefile \
-libs/eXosip2/Makefile \
 libs/portaudio/Makefile \
 libs/stund/Makefile \
 libs/utilspp/Makefile \

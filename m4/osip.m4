@@ -1,7 +1,7 @@
 AC_DEFUN([LP_CHECK_OSIP2],[
 
 AC_ARG_WITH( osip,
-      [  --with-osip      Set prefix where osip can be found (ex:/usr or /usr/local)[default=/usr/local] ],
+      [  --with-osip      Set prefix where osip can be found (ex:/usr or /usr/local)@<:@default=/usr@:>@ ],
       [ osip_prefix=${withval}],[ osip_prefix=/usr ])
 AC_SUBST(osip_prefix)
 

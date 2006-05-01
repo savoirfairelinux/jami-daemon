@@ -1,4 +1,6 @@
-SFLphoned (0.7.0) / 2005-..-..
+SFLphoned (0.7.0) / 2006-..-..
+	* add --disable-sflphoneqt (to be tested without) 2006-05-01
+	* remove libexosip2 internally, it's in debian unstable 2005-01-01
         * add iax support - in development
         * add account support
         * remove callid string/int
