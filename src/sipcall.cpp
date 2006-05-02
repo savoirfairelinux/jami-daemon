@@ -55,7 +55,7 @@ SIPCall::getCodecMap()
 bool 
 SIPCall::SIPCallInvite(eXosip_event_t *event)
 {
-  if (_did < 1 && _cid < 1) {
+  if (event->cid < 1 && event->did < 1) {
     _debug("SIP Failure: Invalid cid and did\n");
     return false;
   }
@@ -144,7 +144,7 @@ SIPCall::SIPCallInvite(eXosip_event_t *event)
 bool 
 SIPCall::SIPCallReinvite(eXosip_event_t *event)
 {
-  if (_did < 1 && _cid < 1) {
+  if (event->cid < 1 && event->did < 1) {
     _debug("SIP Failure: Invalid cid and did\n");
     return false;
   }
@@ -230,7 +230,7 @@ SIPCall::SIPCallReinvite(eXosip_event_t *event)
 bool 
 SIPCall::SIPCallAnswered(eXosip_event_t *event)
 {
-  if (_did < 1 && _cid < 1) {
+  if (event->cid < 1 && event->did < 1) {
     _debug("SIP Failure: Invalid cid and did\n");
     return false;
   }

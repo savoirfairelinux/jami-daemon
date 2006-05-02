@@ -759,6 +759,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
   int exosipErr = eXosip_call_build_refer(call->getDid(), (char*)tmp_to.data(), &refer);
   if (exosipErr == 0) {
     // Send transfer request
+    _debug("SIPCall: < send transfer request to %s\n", tmp_to.data());
     exosipErr = eXosip_call_send_request(call->getDid(), refer);
   }
   eXosip_unlock();
@@ -1274,13 +1275,13 @@ SIPVoIPLink::SIPCallMessageNew(eXosip_event_t *event)
 {
   if (0 == event->request) return;
 
-  _debug("Receive a call message\n");
+  _debug("SIP: Receive a call message\n");
 
   if (MSG_IS_INFO(event->request)) {
-    _debug("It's a Request Info\n");
+    _debug("SIP: It's a Request Info\n");
     osip_content_type_t* c_t = event->request->content_type;
     if (c_t != 0 && c_t->type != 0 && c_t->subtype != 0 ) {
-      _debug("  Content Type of the message: %s/%s\n", c_t->type, c_t->subtype);
+      _debug("SIP: Content Type of the message: %s/%s\n", c_t->type, c_t->subtype);
       // application/dtmf-relay
       if (strcmp(c_t->type, "application") == 0 && strcmp(c_t->subtype, "dtmf-relay") == 0) {
          handleDtmfRelay(event);
