@@ -213,6 +213,7 @@ PhoneLine::unselect(bool hardselect)
   
   if(mCall) {
     if(!hardselect) {
+      DebugOutput::instance() << tr("PhoneLine: Forcing to Hold last call.\n");
       mCall->hold();
     }
     emit backgrounded();

@@ -216,6 +216,10 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
     _debug("Outgoing Call: call id already exists\n");
     return false;
   }
+  if (hasCurrentCall()) {
+    _debug("There is currently a call, try to hold it\n");
+    onHoldCall(getCurrentCallId());
+  }
   _debug("Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
   if ( getAccountLink(accountid)->newOutgoingCall(id, to) ) {
     associateCallToAccount( id, accountid );
@@ -638,6 +642,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
   }
   removeWaitingCall(id);
   removeCallAccount(id);
+  if (_gui) _gui->peerHungupCall(id);
 }
 
 //THREAD=VoIP
@@ -650,6 +655,7 @@ ManagerImpl::callBusy(const CallID& id) {
   }
   removeCallAccount(id);
   removeWaitingCall(id);
+  if(_gui) _gui->displayErrorText( id, "Call is busy");
 }
 
 //THREAD=VoIP

@@ -544,7 +544,7 @@ SIPVoIPLink::answer(const CallID& id)
 
   if(i==0) {
     // Incoming call is answered, start the sound channel.
-    _debug("          Starting AudioRTP\n");
+    _debug("SIP: Starting AudioRTP when answering\n");
     if (_audiortp.createNewSession(call) >= 0) {
       call->setAudioStart(true);
       call->setConnectionState(Call::Connected);
@@ -584,6 +584,7 @@ SIPVoIPLink::hangup(const CallID& id)
 
   // Release RTP channels
   if (Manager::instance().isCurrentCall(id)) {
+    _debug("SIP: Stopping AudioRTP for hangup\n");
     _audiortp.closeRtpSession();
   }
   removeCall(id);
@@ -662,6 +663,7 @@ SIPVoIPLink::onhold(const CallID& id)
   
   // Stop sound
   call->setAudioStart(false);
+  _debug("SIP: Stopping AudioRTP when onhold\n");
   _audiortp.closeRtpSession();
 
   // send request
@@ -731,7 +733,7 @@ SIPVoIPLink::offhold(const CallID& id)
   eXosip_unlock ();
 
   // Enable audio
-  _debug("          Starting AudioRTP\n");
+  _debug("SIP: Starting AudioRTP when offhold\n");
   // it's sure that this is the current call id...
   if (_audiortp.createNewSession(call) < 0) {
     _debug("SIP Failure: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
@@ -1118,6 +1120,7 @@ SIPVoIPLink::SIPCallReinvite(eXosip_event_t *event)
     // STOP tone
     Manager::instance().stopTone();
     // STOP old rtp session
+    _debug("SIP: Stopping AudioRTP when reinvite\n");
     _audiortp.closeRtpSession();
     call->setAudioStart(false);
   }
@@ -1127,7 +1130,7 @@ SIPVoIPLink::SIPCallReinvite(eXosip_event_t *event)
 void
 SIPVoIPLink::SIPCallRinging(eXosip_event_t *event)
 {
-  SIPCall* call = findSIPCallWithCidDid(event->cid, event->did);
+  SIPCall* call = findSIPCallWithCid(event->cid);
   if (!call) {
     _debug("SIP Failure: unknown call\n");
     return;
@@ -1135,6 +1138,7 @@ SIPVoIPLink::SIPCallRinging(eXosip_event_t *event)
   // we could set the cid/did/tid and get the FROM here...
   // but we found the call with the cid/did already, why setting it again?
   // call->ringingCall(event);
+  call->setDid(event->did);
   call->setConnectionState(Call::Ringing);
   Manager::instance().peerRingingCall(call->getCallId());
 }
@@ -1158,7 +1162,7 @@ SIPVoIPLink::SIPCallAnswered(eXosip_event_t *event)
 
     Manager::instance().peerAnsweredCall(call->getCallId());
     if (Manager::instance().isCurrentCall(call->getCallId())) {
-      _debug("SIP: Starting AudioRTP\n");
+      _debug("SIP: Starting AudioRTP when answering\n");
       if ( _audiortp.createNewSession(call) < 0) {
         _debug("RTP Failure: unable to create new session\n");
       } else {
@@ -1257,7 +1261,7 @@ SIPVoIPLink::SIPCallAck(eXosip_event_t *event)
   if (!call) { return; }
   if (!call->isAudioStarted()) {
     if (Manager::instance().isCurrentCall(call->getCallId())) {
-      _debug("            Starting AudioRTP\n");
+      _debug("SIP: Starting AudioRTP when ack\n");
       if ( _audiortp.createNewSession(call) ) {
         call->setAudioStart(true);
       }
@@ -1307,8 +1311,9 @@ SIPVoIPLink::SIPCallClosed(eXosip_event_t *event)
   call->setDid(event->did);
   if (Manager::instance().isCurrentCall(id)) {
     call->setAudioStart(false);
+    _debug("SIP: Stopping AudioRTP when closing\n");
     _audiortp.closeRtpSession();
-  }  
+  }
   Manager::instance().peerHungupCall(id);
   removeCall(id);
 }

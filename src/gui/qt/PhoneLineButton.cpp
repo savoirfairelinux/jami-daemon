@@ -72,6 +72,7 @@ void
 PhoneLineButton::sendClicked()
 {
   if(isOn()) {
+    mTimer->stop();
     emit selected(mLine);
   }
   else {
