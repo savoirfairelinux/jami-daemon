@@ -65,6 +65,11 @@ public:
     void setPeerName(const std::string& name) {  _peerName = name; }
     const std::string& getPeerName() {  return _peerName; }
 
+    /**
+     * Tell if the call is incoming
+     */
+    bool isIncoming() { return (_type == Incoming) ? true : false; }
+
     /** 
      * Set the connection state of the call (protected by mutex)
      */

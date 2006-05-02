@@ -773,7 +773,15 @@ bool
 SIPVoIPLink::refuse (const CallID& id)
 {
   SIPCall* call = getSIPCall(id);
+
   if (call==0) { _debug("Call doesn't exist\n"); return false; }  
+
+  // can't refuse outgoing call or connected
+  if (!call->isIncoming() || call->getConnectionState() == Call::Connected) { 
+    _debug("It's not an incoming call, or it's already answered\n");
+    return false; 
+  }
+
 
   osip_message_t *answerMessage = NULL;
   eXosip_lock();

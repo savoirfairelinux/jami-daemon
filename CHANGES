@@ -1,5 +1,5 @@
 SFLphoned (0.7.0) / 2006-..-..
-	* partially fix: click on a flashing button (only if the button is not red)
+	* fix: click on flashing buttons
 	* fix: send ringing, hangup, busy message
 	* fix for using call command two times in a row
 	* add --disable-sflphoneqt 2006-05-01

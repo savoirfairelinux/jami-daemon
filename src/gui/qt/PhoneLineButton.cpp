@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -41,6 +42,7 @@ PhoneLineButton::PhoneLineButton(unsigned int line,
 	  this, SLOT(swap()));
   connect(this, SIGNAL(clicked()),
 	  this, SLOT(sendClicked()));
+  mIsFlashing = false;
 }
 
 void
@@ -65,6 +67,7 @@ void
 PhoneLineButton::suspend()
 {
   setDown(false);
+  mIsFlashing = true;
   mTimer->start(500);
 }
 
@@ -72,11 +75,18 @@ void
 PhoneLineButton::sendClicked()
 {
   if(isOn()) {
+    mIsFlashing = false;
     mTimer->stop();
     emit selected(mLine);
   }
   else {
-    emit unselected(mLine);
+    if (mIsFlashing) {
+      mIsFlashing = false;
+      mTimer->stop();
+      emit selected(mLine);
+    } else {
+      emit unselected(mLine);
+    }
   }
 }
 

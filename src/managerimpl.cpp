@@ -389,9 +389,13 @@ ManagerImpl::refuseCall (const CallID& id)
     return false;
   }
   bool returnValue = getAccountLink(accountid)->refuse(id);
-  removeWaitingCall(id);
-  removeCallAccount(id);
-  switchCall("");
+  // if the call was outgoing or established, we didn't refuse it
+  // so the method did nothing
+  if (returnValue) {
+    removeWaitingCall(id);
+    removeCallAccount(id);
+    switchCall("");
+  }
   return returnValue;
 }
 

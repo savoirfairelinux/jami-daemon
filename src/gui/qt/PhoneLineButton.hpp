@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -59,7 +60,12 @@ private:
   unsigned int mLine;
   QTimer *mTimer;
   unsigned int mFace;
-  
+
+  /**
+   * If the line is flashing, we want to retreive it
+   * on or off
+   */
+  bool mIsFlashing;
 };
 
 #endif	// defined(__J_PUSH_BUTTON_H__)
