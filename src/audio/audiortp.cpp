@@ -97,7 +97,8 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, AudioLayer* driver, bool sym) {
   _sym = sym;
   _audioDevice = driver;
   if (_audioDevice!=0) {
-    _nbFrames = 20 * _audioDevice->getSampleRate()/1000; // 20 ms
+//    _nbFrames = 20 * _audioDevice->getSampleRate()/1000; // 20 ms
+    _nbFrames = _audioDevice->getSampleRate()/50; // 20 ms / 1000
   } else {
     _nbFrames = RTP_FRAMES2SEND;
   }

@@ -1237,7 +1237,7 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
   std::string destination;  
   std::string number;
 
-  while (iter != _callAccountMap.begin())
+  while (iter != _callAccountMap.end())
   {
     Call* call = getAccountLink(iter->second)->getCall(iter->first);
     Call::ConnectionState state = call->getConnectionState();

@@ -663,6 +663,7 @@ SIPVoIPLink::onhold(const CallID& id)
   
   // Stop sound
   call->setAudioStart(false);
+  call->setState(Call::Hold);
   _debug("SIP: Stopping AudioRTP when onhold\n");
   _audiortp.closeRtpSession();
 

@@ -116,7 +116,8 @@ Tone::genSin(int16 *buffer, int frequency1, int frequency2, int nb)
   double var1 = (double)2 * (double)M_PI * (double)frequency1 / (double)_sampleRate; 
   double var2 = (double)2 * (double)M_PI * (double)frequency2 / (double)_sampleRate;
 
-  double amp = (double)(INT16_AMPLITUDE >> 2);
+  // softer
+  double amp = (double)(INT16_AMPLITUDE >> 3);
   if (_nbChannel == 2) { // stereo
     int k = 0;
     for(int t = 0; t < nb; t++) {
