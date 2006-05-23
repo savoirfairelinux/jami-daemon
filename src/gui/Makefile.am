@@ -13,7 +13,7 @@ endif
 #	cd qt && make
 
 
-SUBDIRS = $(serverdir) $(qtdir) cli qt
+SUBDIRS = $(serverdir) $(qtdir) cli
 
 noinst_LTLIBRARIES = libguiframework.la
 
