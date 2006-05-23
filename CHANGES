@@ -11,6 +11,7 @@ SFLphoned (0.7.0) / 2006-..-..
         * add account SIP0 (default) in sflphone-qt
         * fix nat handling (use the same port that it test)
         * add register/unregister in qt
+        * add test audio driver button
 
 SFLphoned (0.6.2) / 2005-11-29
         * integral mono support

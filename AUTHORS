@@ -1,24 +1,33 @@
-Jean-Philippe Barrette-LaPierre 
-(jean-philippe dot barrette-lapierre at savoirfairelinux dot com)
-	- Autotools support and portions of code
+Current authors:
 
-Laurielle LEA (laurielle dot lea at savoirfairelinux dot com)
-	_ Implementation of SFLphone
-
-Jerome Oufella (jerome dot oufella at savoirfairelinux dot com)
-	- Many portions of code and bug fixes
-
-Sherry Yang (syangs04 at yahoo dot com)
-Imran Akbar (imr at stanford dot edu)
-	- Working on Win32 port
-
-Yan Morin
-(yan dot morin at savoifairelinux dot com)
+Yan Morin <yan dot morin at savoirfairelinux dot com>
 	- zeroconf integration
 	- sflphoned deamon
 	- add and improve sip core feature
 	- tests and debugging
 
+Jerome Oufella <jerome dot oufella at savoirfairelinux dot com>
+	- Many portions of code and bug fixes
+
+Julien Plissonneau Duquene <... at savoirfairelinux dot com>
+	- autotools cleanups
+
+
+
+Former authors:
+
+Jean-Philippe Barrette-LaPierre 
+	- Autotools support and portions of code
+
+Laurielle Lea
+	- Implementation of SFLphone
+
+Sherry Yang <syangs04 at yahoo dot com>
+Imran Akbar <imr at stanford dot edu>
+	- Working on Win32 port
+
+
 
 Contributors:
+
 Mikael Magnusson
