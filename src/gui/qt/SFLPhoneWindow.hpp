@@ -62,11 +62,15 @@ signals:
   void needToCloseDaemon();
   void ringtonesUpdated();
   void audioDevicesUpdated();
+  void audioDevicesInUpdated();
+  void audioDevicesOutUpdated();
   void codecsUpdated();
-  void needRegister();
-  void registerFailed(QString);
-  void registerSucceed(QString);
 
+  void needRegister();
+  void registerReturn(bool, QString);
+
+  void soundDriverChanged();
+  void testSoundDriverReturn(bool, QString);
 
 public slots:
   void delayedMove(const QPoint &point);

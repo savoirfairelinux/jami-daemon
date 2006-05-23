@@ -82,9 +82,8 @@ signals:
   void lineStatusSet(QString);
   void talkingStarted(QTime);
   void talkingStopped();
-  void registerFailed(QString);
-  void registerSucceed(QString);
-
+  void registerReturn(bool, QString);
+  void testSoundDriverReturn(bool, QString);
   void stopped();
 
   void volumeUpdated(int);
@@ -97,9 +96,12 @@ public slots:
 
   void hasDisconnected();
 
-  void registerToServer();
+  void slotRegisterToServer();
   void slotRegisterFailed(QString, QString);
   void slotRegisterSucceed(QString, QString);
+  void slotReloadSoundDriver();
+  void slotSoundDriverFailed(QString, QString);
+  void slotSoundDriverSucceed(QString, QString);
 
   /**
    * You need to call this function once. It must be

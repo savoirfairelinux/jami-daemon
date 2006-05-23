@@ -296,10 +296,11 @@ RequestSwitch::RequestSwitch(const std::string &sequenceId, const TokenList& arg
 ResponseMessage
 RequestSwitch::execute()
 {
-  if (GUIServer::instance().setSwitch(_switchName)) {
-    return message("200", _("OK"));
+  std::string switchMessage;
+  if (GUIServer::instance().setSwitch(_switchName, switchMessage)) {
+    return message("200", switchMessage);
   } else {
-    return message("500",_("Server Error"));
+    return message("500", switchMessage);
   }
 }
 

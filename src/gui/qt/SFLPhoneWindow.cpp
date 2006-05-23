@@ -58,18 +58,20 @@ SFLPhoneWindow::SFLPhoneWindow()
 {
   mLastWindowPos = pos();
   mSetupPanel = new ConfigurationPanel(this, "ConfigurationPanel");
-  connect(this, SIGNAL(ringtonesUpdated()),
-	  mSetupPanel, SLOT(updateRingtones()));
-  connect(this, SIGNAL(audioDevicesUpdated()),
-	  mSetupPanel, SLOT(updateAudioDevices()));
-  connect(this, SIGNAL(codecsUpdated()),
-	  mSetupPanel, SLOT(updateCodecs()));
-  connect(mSetupPanel, SIGNAL(needRegister()), 
-          this, SIGNAL(needRegister()));
-  connect(this, SIGNAL(registerFailed(QString)),
-	  mSetupPanel, SLOT(slotRegisterFailed(QString)));
-  connect(this, SIGNAL(registerSucceed(QString)),
-	  mSetupPanel, SLOT(slotRegisterSucceed(QString)));
+  connect(this, SIGNAL(ringtonesUpdated()),      mSetupPanel, SLOT(updateRingtones()));
+  connect(this, SIGNAL(audioDevicesUpdated()),   mSetupPanel, SLOT(updateAudioDevices()));
+  connect(this, SIGNAL(audioDevicesInUpdated()), mSetupPanel, SLOT(updateAudioDevicesIn()));
+  connect(this, SIGNAL(audioDevicesOutUpdated()),mSetupPanel, SLOT(updateAudioDevicesOut()));
+  connect(this, SIGNAL(codecsUpdated()),         mSetupPanel, SLOT(updateCodecs()));
+
+  connect(mSetupPanel, SIGNAL(needRegister()), this, SIGNAL(needRegister()));
+  connect(this, SIGNAL(registerReturn(bool, QString)),  mSetupPanel, SLOT(slotRegisterReturn(bool, QString)));
+  
+  // when we receive a signal from mSetupPanel, we should resend one to...
+  connect(mSetupPanel, SIGNAL(soundDriverChanged()), this, SIGNAL(soundDriverChanged()));
+
+  // we are an intermediate... 
+  connect(this, SIGNAL(testSoundDriverReturn(bool, QString)),  mSetupPanel, SLOT(slotSoundDriverReturn(bool, QString)));
 
   // Initialize the background image
   setName("main");

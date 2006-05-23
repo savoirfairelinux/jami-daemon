@@ -68,14 +68,10 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   EventFactory::instance().registerEvent< BusyStatus >("114");
   EventFactory::instance().registerEvent< CongestionStatus >("115");
   EventFactory::instance().registerEvent< WrongNumberStatus >("116");
-  QObject::connect(this, SIGNAL(disconnected()),
-		   this, SLOT(closeSession()));
-  QObject::connect(this, SIGNAL(readyToHandleEvents()),
-		   this, SLOT(handleEvents()));
-  QObject::connect(this, SIGNAL(connected()),
-		   this, SIGNAL(readyToSendStatus()));
-  QObject::connect(this, SIGNAL(readyToSendStatus()),
-		   this, SLOT(startSession()));
+  QObject::connect(this, SIGNAL(disconnected()),        this, SLOT(closeSession()));
+  QObject::connect(this, SIGNAL(readyToHandleEvents()), this, SLOT(handleEvents()));
+  QObject::connect(this, SIGNAL(connected()),           this, SIGNAL(readyToSendStatus()));
+  QObject::connect(this, SIGNAL(readyToSendStatus()),   this, SLOT(startSession()));
   
 }
 
@@ -129,10 +125,10 @@ PhoneLineManagerImpl::connect()
 }
 
 void
-PhoneLineManagerImpl::registerToServer()
+PhoneLineManagerImpl::slotRegisterToServer()
 {
   isInitialized();
-  
+
   Request *r = mSession->registerToServer();
   QObject::connect(r, SIGNAL(success(QString, QString)),
 		   this, SLOT(slotRegisterSucceed(QString, QString)));
@@ -141,16 +137,41 @@ PhoneLineManagerImpl::registerToServer()
 }
 
 void 
-PhoneLineManagerImpl::slotRegisterSucceed(QString /*code*/, QString message) 
+PhoneLineManagerImpl::slotRegisterSucceed(QString message, QString /* code */) 
 {
-  emit registerSucceed(message);
+  emit registerReturn(false, message);
 }
 
 void 
-PhoneLineManagerImpl::slotRegisterFailed(QString /*code*/, QString message) 
+PhoneLineManagerImpl::slotRegisterFailed(QString message, QString /* code */) 
 {
-  emit registerFailed(message);
+  // it's true, we have error
+  emit registerReturn(true, message);
 }
+
+void
+PhoneLineManagerImpl::slotReloadSoundDriver()
+{
+  Request *r = mSession->switchAudioDriver();
+  QObject::connect(r, SIGNAL(success(QString, QString)),
+		   this, SLOT(slotSoundDriverSucceed(QString, QString)));
+  QObject::connect(r, SIGNAL(error(QString, QString)),
+		   this, SLOT(slotSoundDriverFailed(QString,QString)));
+}
+
+void 
+PhoneLineManagerImpl::slotSoundDriverSucceed(QString message, QString /* code */) 
+{
+  emit testSoundDriverReturn(false, message);
+}
+
+void 
+PhoneLineManagerImpl::slotSoundDriverFailed(QString message, QString /* code */) 
+{
+  // it's true, we have error
+  emit testSoundDriverReturn(true, message);
+}
+
 
 void
 PhoneLineManagerImpl::stop()
@@ -194,6 +215,7 @@ PhoneLineManagerImpl::handleEvents()
   QObject::connect(r, SIGNAL(success(QString, QString)),
 		   &ConfigurationManager::instance(), SIGNAL(ringtonesUpdated()));
   
+/*
   r = mSession->list("audiodevice");
   QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
 		   &ConfigurationManager::instance(), SLOT(addAudioDevice(QString, 
@@ -201,6 +223,22 @@ PhoneLineManagerImpl::handleEvents()
 									  QString)));
   QObject::connect(r, SIGNAL(success(QString, QString)),
 		   &ConfigurationManager::instance(), SIGNAL(audioDevicesUpdated()));
+*/
+  r = mSession->list("audiodevicein");
+  QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
+		   &ConfigurationManager::instance(), SLOT(addAudioDeviceIn(QString, 
+									  QString,
+									  QString)));
+  QObject::connect(r, SIGNAL(success(QString, QString)),
+		   &ConfigurationManager::instance(), SIGNAL(audioDevicesInUpdated()));
+
+  r = mSession->list("audiodeviceout");
+  QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
+		   &ConfigurationManager::instance(), SLOT(addAudioDeviceOut(QString, 
+									  QString,
+									  QString)));
+  QObject::connect(r, SIGNAL(success(QString, QString)),
+		   &ConfigurationManager::instance(), SIGNAL(audioDevicesOutUpdated()));
 
   r = mSession->list("codecdescriptor");
   QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),

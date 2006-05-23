@@ -92,7 +92,7 @@ public:
   bool setMicVolume(int volume);
   int getSpkrVolume();
   int getMicVolume();
-  bool setSwitch(const std::string& switchName);
+  bool setSwitch(const std::string& switchName, std::string& returnMessage);
 
   bool hasLoadedSetup();
   const CallID& getCurrentId();

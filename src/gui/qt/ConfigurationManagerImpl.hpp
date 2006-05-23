@@ -1,5 +1,6 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
               <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -88,6 +89,8 @@ class ConfigurationManagerImpl : public QObject
 
 signals:
   void audioDevicesUpdated();
+  void audioDevicesInUpdated();
+  void audioDevicesOutUpdated();
   void ringtonesUpdated();
   void codecsUpdated();
   void updated();
@@ -126,9 +129,17 @@ public:
 	   
   void clearAudioDevices()
   {mAudioDevices.clear();}
+  void clearAudioDevicesIn()
+  {mAudioDevices.clear();}
+  void clearAudioDevicesOut()
+  {mAudioDevices.clear();}
   
   std::list< AudioDevice > getAudioDevices()
   {return mAudioDevices;}
+  std::list< AudioDevice > getAudioDevicesIn()
+  {return mAudioDevicesIn;}
+  std::list< AudioDevice > getAudioDevicesOut()
+  {return mAudioDevicesOut;}
   
   std::list< Ringtone > getRingtones()
   {return mRingtones;}
@@ -143,6 +154,7 @@ public:
   {emit updated();}
 
   void save();
+  void save(const QString& section, const QString& name);
 
   void finishSave();
 
@@ -151,6 +163,12 @@ public slots:
 
   void addAudioDevice(QString index, QString hostApiName, QString deviceName);
   void add(const AudioDevice &entry);
+
+  void addAudioDeviceIn(QString index, QString hostApiName, QString deviceName);
+  void addIn(const AudioDevice &entry);
+
+  void addAudioDeviceOut(QString index, QString hostApiName, QString deviceName);
+  void addOut(const AudioDevice &entry);
 
   void addRingtone(QString index, QString filename);
   void add(const Ringtone &entry);
@@ -165,6 +183,8 @@ private:
   SectionMap mEntries;
 
   std::list< AudioDevice > mAudioDevices;
+  std::list< AudioDevice > mAudioDevicesIn;
+  std::list< AudioDevice > mAudioDevicesOut;
   std::list< Ringtone > mRingtones;
   std::list< Codec > mCodecs;
 

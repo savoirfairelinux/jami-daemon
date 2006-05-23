@@ -1,5 +1,6 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
               <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -56,9 +57,9 @@ ConfigurationManagerImpl::save()
     while(pos != mEntries.end()) {
       VariableMap::iterator vpos = pos->second.begin();
       while(vpos != pos->second.end()) {
-	ConfigEntry entry(vpos->second);
-	mSession->configSet(entry.section, entry.name, entry.value);
-	vpos++;
+        ConfigEntry entry(vpos->second);
+        mSession->configSet(entry.section, entry.name, entry.value);
+        vpos++;
       }
 
       pos++;
@@ -100,7 +101,45 @@ void
 ConfigurationManagerImpl::add(const AudioDevice &entry)
 {
   mAudioDevices.push_back(entry);
-  emit audioDevicesUpdated();
+  // emit audioDevicesUpdated(); // <-- wrong call with success
+}
+
+void
+ConfigurationManagerImpl::addAudioDeviceIn(QString index, 
+					 QString hostApiName, 
+					 QString deviceName)
+{
+  AudioDevice device;
+  device.index = index;
+  device.hostApiName = hostApiName;
+  device.deviceName = deviceName;
+  addIn(device);
+}
+
+void
+ConfigurationManagerImpl::addIn(const AudioDevice &entry)
+{
+  mAudioDevicesIn.push_back(entry);
+  //emit audioDevicesInUpdated(); // <-- wrong call with success()
+}
+
+void
+ConfigurationManagerImpl::addAudioDeviceOut(QString index, 
+					 QString hostApiName, 
+					 QString deviceName)
+{
+  AudioDevice device;
+  device.index = index;
+  device.hostApiName = hostApiName;
+  device.deviceName = deviceName;
+  addOut(device);
+}
+
+void
+ConfigurationManagerImpl::addOut(const AudioDevice &entry)
+{
+  mAudioDevicesOut.push_back(entry);
+  //emit audioDevicesOutUpdated(); // <-- wrong call with success()
 }
 
 void
@@ -136,6 +175,7 @@ ConfigurationManagerImpl::add(const Codec &entry)
   mCodecs.push_back(entry);
   emit codecsUpdated();
 }
+
 void
 ConfigurationManagerImpl::set(const QString &section,
 			      const QString &name,
@@ -148,6 +188,13 @@ ConfigurationManagerImpl::set(const QString &section,
       vpos->second.value = value;
     }
   }
+}
+
+void
+ConfigurationManagerImpl::save(const QString &section, const QString &name)
+{
+  QString value = get(section, name);
+  mSession->configSet(section, name, value);
 }
 
 QString

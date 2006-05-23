@@ -1,5 +1,6 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -78,13 +79,16 @@ class Session
   Request *registerToServer() const;
 
   /**
+   * This function try to switch audio (sound) driver
+   */
+  Request *switchAudioDriver() const;
+
+  /**
    * This function will stop sflphoned.
    */
   Request *stop() const;
 
-  Request *configSet(const QString &section, 
-		    const QString &name,
-		    const QString &value) const;
+  Request *configSet(const QString &section, const QString &name, const QString &value) const;
   Request *configSave() const;
   Request *configGetAll() const;
 

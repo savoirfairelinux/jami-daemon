@@ -58,6 +58,7 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< Request >(QString("playdtmf"));
 
   Requester::instance().registerObject< Request >(QString("register"));
+  Requester::instance().registerObject< Request >(QString("switch"));
   Requester::instance().registerObject< ConfigGetAllRequest >(QString("configgetall"));
   Requester::instance().registerObject< ConfigSaveRequest >(QString("configsave"));
   Requester::instance().registerObject< StopRequest >(QString("stop"));
@@ -126,9 +127,15 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 
 
   QObject::connect(w, SIGNAL(needRegister()),
-		   &PhoneLineManager::instance(), SLOT(registerToServer()));
-  QObject::connect(&PhoneLineManager::instance(), SIGNAL(registerFailed(QString)), w, SIGNAL(registerFailed(QString)));
-  QObject::connect(&PhoneLineManager::instance(), SIGNAL(registerSucceed(QString)), w, SIGNAL(registerSucceed(QString)));
+                   &PhoneLineManager::instance(), SLOT(slotRegisterToServer()));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(registerReturn(bool, QString)), 
+                   w, SIGNAL(registerReturn(bool, QString)));
+
+  QObject::connect(w, SIGNAL(soundDriverChanged()),
+                   &PhoneLineManager::instance(), SLOT(slotReloadSoundDriver()));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(testSoundDriverReturn(bool, QString)), 
+                   w, SIGNAL(testSoundDriverReturn(bool, QString)));
+
 
   //QObject::connect(&PhoneLineManager::instance(), SIGNAL(registered()),
   //		   w, SIGNAL(registered()));
@@ -231,6 +238,10 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   w, SIGNAL(ringtonesUpdated()));
   QObject::connect(&ConfigurationManager::instance(), SIGNAL(audioDevicesUpdated()),
 		   w, SIGNAL(audioDevicesUpdated()));
+  QObject::connect(&ConfigurationManager::instance(), SIGNAL(audioDevicesInUpdated()),
+		   w, SIGNAL(audioDevicesInUpdated()));
+  QObject::connect(&ConfigurationManager::instance(), SIGNAL(audioDevicesOutUpdated()),
+		   w, SIGNAL(audioDevicesOutUpdated()));
   QObject::connect(&ConfigurationManager::instance(), SIGNAL(codecsUpdated()),
 		   w, SIGNAL(codecsUpdated()));
   //QObject::connect(&ConfigurationManager::instance(), SIGNAL(saved()),

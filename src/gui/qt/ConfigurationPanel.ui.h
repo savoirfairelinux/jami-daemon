@@ -34,6 +34,7 @@
 #include <qmessagebox.h>
 #include <qstringlist.h>
 #include <qcolor.h>
+#include <qvbuttongroup.h>
 
 #include "globals.h"
 #include "ConfigurationManager.hpp"
@@ -109,12 +110,6 @@ void ConfigurationPanel::init()
 			 TransparentWidget::retreive(ABOUT_IMAGE),
 			 "About", 
 			 Menu);
-    
-    // we save the configuration, then we try to register
-    QObject::connect(buttonRegister, SIGNAL(clicked()), this, SLOT(saveSlot()));
-    QObject::connect(buttonRegister, SIGNAL(clicked()),
-		     this, SIGNAL(needRegister()));
-
 }
 
 void 
@@ -129,8 +124,7 @@ ConfigurationPanel::generate()
 			 .get(AUDIO_SECTION, AUDIO_CODEC3));
 
 
-  ringsChoice->setCurrentText(ConfigurationManager::instance()
-			      .get(AUDIO_SECTION,
+  ringsChoice->setCurrentText(ConfigurationManager::instance().get(AUDIO_SECTION,
 				   AUDIO_RINGTONE));
   
   QString account = ACCOUNT_DEFAULT_NAME;
@@ -171,8 +165,14 @@ ConfigurationPanel::generate()
   QRadioButton* device = 
     static_cast< QRadioButton * >(DriverChoice->find(ConfigurationManager::instance()
 						     .get(AUDIO_SECTION, 
-							  AUDIO_DEFAULT_DEVICE).toUInt()));
+							  AUDIO_DEFAULT_DEVICEOUT).toUInt()));
   if(device) {
+    device->setChecked(true);
+  }
+
+  device = static_cast< QRadioButton * >(DriverChoiceIn->find(ConfigurationManager::instance()
+	.get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN).toUInt()));
+  if (device) {
     device->setChecked(true);
   }
 
@@ -220,33 +220,25 @@ void ConfigurationPanel::saveSlot()
 				       QString::number(sendDTMFas->currentItem()));
 
   if (codec1->currentText() != NULL) {
-    ConfigurationManager::instance().set(AUDIO_SECTION, 
-				       AUDIO_CODEC1,
-				       codec1->currentText());
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_CODEC1, codec1->currentText());
   }
   if (codec2->currentText() != NULL) {
-    ConfigurationManager::instance().set(AUDIO_SECTION,
-				       AUDIO_CODEC2,
-				       codec2->currentText());
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_CODEC2, codec2->currentText());
   }
   if (codec3->currentText() != NULL) {
-    ConfigurationManager::instance().set(AUDIO_SECTION,
-				       AUDIO_CODEC3,
-				       codec3->currentText());
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_CODEC3, codec3->currentText());
   }
   
   if (ringsChoice->currentText() != NULL) {
-    ConfigurationManager::instance().set(AUDIO_SECTION,
-					 AUDIO_RINGTONE,
-					 ringsChoice->currentText());
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_RINGTONE, ringsChoice->currentText());
   }
 
   SkinManager::instance().load(SkinChoice->currentText());
   SkinManager::instance().save();
 
 #if 0 
-  QMessageBox::information(this, "Save settings",
-			   "You must restart SFLPhone",
+  QMessageBox::information(this, tr("Save settings"),
+			   tr("You must restart SFLPhone"),
 			   QMessageBox::Yes);
 #endif
 
@@ -258,14 +250,14 @@ void ConfigurationPanel::changeTabSlot()
 {
   switch (Menu->currentItem()) {
   case 0:
-    TitleTab->setText("Setup signalisation");
+    TitleTab->setText(tr("Setup signalisation"));
     Tab_Signalisations->show();
     Tab_Audio->hide();
     Tab_Preferences->hide();
     Tab_About->hide();
     break;
   case 1:
-    TitleTab->setText("Setup audio");
+    TitleTab->setText(tr("Setup audio"));
     Tab_Signalisations->hide();
     Tab_Audio->show();
     Tab_Preferences->hide();
@@ -273,14 +265,14 @@ void ConfigurationPanel::changeTabSlot()
     break;
   case 2:
     updateSkins();
-    TitleTab->setText("Setup preferences");
+    TitleTab->setText(tr("Setup preferences"));
     Tab_Signalisations->hide();
     Tab_Audio->hide();
     Tab_Preferences->show();
     Tab_About->hide();
     break; 
   case 3:
-    TitleTab->setText("About");
+    TitleTab->setText(tr("About"));
     Tab_Signalisations->hide();
     Tab_Audio->hide();
     Tab_Preferences->hide();
@@ -308,8 +300,19 @@ void ConfigurationPanel::applySkinSlot()
 void ConfigurationPanel::driverSlot(int id)
 {
   ConfigurationManager::instance().set(AUDIO_SECTION, 
-				       AUDIO_DEFAULT_DEVICE, 
+				       AUDIO_DEFAULT_DEVICEOUT, 
 				       QString::number(id));
+  lblSoundDriver->setPaletteForegroundColor(black);
+  lblSoundDriver->setText(tr("Not tested"));
+}
+
+void ConfigurationPanel::driverSlotIn(int id)
+{
+  ConfigurationManager::instance().set(AUDIO_SECTION, 
+				       AUDIO_DEFAULT_DEVICEIN, 
+				       QString::number(id));
+  lblSoundDriver->setPaletteForegroundColor(black);
+  lblSoundDriver->setText(tr("Not tested"));
 }
 
 void ConfigurationPanel::updateSkins()
@@ -346,8 +349,55 @@ void ConfigurationPanel::updateCodecs()
     codec3->insertItem(pos->codecName);
   } 
 }
-  
 
+void ConfigurationPanel::updateAudioDevicesIn() 
+{
+  static std::list< QRadioButton * > buttonsIn;
+  while(buttonsIn.begin() != buttonsIn.end()) {
+    DriverChoiceIn->remove(*buttonsIn.begin());
+    buttonsIn.pop_front();
+  }
+  int top = 0;
+
+  //In
+  std::list< AudioDevice > audio = ConfigurationManager::instance().getAudioDevicesIn();
+  std::list< AudioDevice >::iterator pos;
+
+  for (pos = audio.begin(); pos != audio.end(); pos++) {
+    QString hostApiName = pos->hostApiName;
+    QString deviceName = pos->deviceName;
+    
+    QString name = hostApiName + 
+      QObject::tr(" (device #%1)").arg(pos->index);
+    
+    // New radio button with found device name
+    QRadioButton* device = new QRadioButton(DriverChoiceIn);
+    buttonsIn.push_back(device);
+    DriverChoiceIn->insert(device, pos->index.toUInt());
+    //device->setGeometry( QRect( 10, 30 + top, 360, 21 ) );
+    // Set label of radio button
+    //device->setText(deviceName);
+    // Add tooltip for each one
+    QString text = deviceName + " " + name;
+    
+    if(text.length() > 50) {
+      device->setText(text.left(50) + "...");
+    }
+    else {
+      device->setText(text);
+    }
+    
+    QToolTip::add(device, text);
+    top += 30;
+  }
+  // Set position of the button group, with appropriate length
+  //DriverChoiceIn->setGeometry( QRect( 10, 200, 410, top + 30 ) );
+}
+
+void ConfigurationPanel::updateAudioDevicesOut() 
+{
+  updateAudioDevices();
+}
 
 void ConfigurationPanel::updateAudioDevices()
 {
@@ -359,7 +409,7 @@ void ConfigurationPanel::updateAudioDevices()
   }
 
   int top = 0;
-  std::list< AudioDevice > audio = ConfigurationManager::instance().getAudioDevices();
+  std::list< AudioDevice > audio = ConfigurationManager::instance().getAudioDevicesOut();
   std::list< AudioDevice >::iterator pos;
   
   for (pos = audio.begin(); pos != audio.end(); pos++) {
@@ -373,7 +423,7 @@ void ConfigurationPanel::updateAudioDevices()
     QRadioButton* device = new QRadioButton(DriverChoice); 
     buttons.push_back(device);
     DriverChoice->insert(device, pos->index.toUInt());
-    device->setGeometry( QRect( 10, 30 + top, 390, 21 ) );
+    //device->setGeometry( QRect( 10, 30 + top, 360, 21 ) );
     // Set label of radio button
     //device->setText(deviceName);
     // Add tooltip for each one
@@ -391,8 +441,10 @@ void ConfigurationPanel::updateAudioDevices()
     
     top += 30;
   }
+  
   // Set position of the button group, with appropriate length
-  DriverChoice->setGeometry( QRect( 10, 10, 410, top + 30 ) );
+  //DriverChoice->setGeometry( QRect( 10, 10, 410, top + 30 ) );
+
 }
 
 
@@ -402,19 +454,42 @@ ConfigurationPanel::SkinChoice_selected( const QString & )
 
 }
 
-void 
-ConfigurationPanel::slotRegisterFailed( QString message ) 
+void
+ConfigurationPanel::slotRegister()
 {
-	lblError->setPaletteForegroundColor(QColor(255,0,0)); // red
-	lblError->setText("Register failed");
-	lblError->show();
+  saveSlot();
+  emit needRegister();
 }
 
 void 
-ConfigurationPanel::slotRegisterSucceed( QString message ) 
+ConfigurationPanel::slotRegisterReturn( bool hasError, QString ) 
 {
-	lblError->setPaletteForegroundColor(QColor(0,0,0)); // black
-	lblError->setText("Register Succeed");
-	lblError->show(); 
+  if (hasError) {
+    lblError->setPaletteForegroundColor(red); // red
+    lblError->setText("Register failed");
+  } else {
+    lblError->setPaletteForegroundColor(black); // black
+    lblError->setText("Register Succeed");
+  }
+  lblError->show();
+}
+
+void ConfigurationPanel::slotTestSoundDriver()
+{
+  ConfigurationManager::instance().save(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT);
+  ConfigurationManager::instance().save(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN);
+  emit soundDriverChanged();
+}
+
+void 
+ConfigurationPanel::slotSoundDriverReturn( bool hasError, QString message ) 
+{
+  if (hasError) { // no error
+    lblSoundDriver->setPaletteForegroundColor(red); // error in red
+  } else {
+    lblSoundDriver->setPaletteForegroundColor(black);
+  }
+  lblSoundDriver->setText(message);
+  lblSoundDriver->show();
 }
 

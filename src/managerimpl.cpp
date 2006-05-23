@@ -892,15 +892,15 @@ ManagerImpl::notificationIncomingCall(void) {
 
   AudioLayer* audiolayer = getAudioDriver();
   if (audiolayer != 0) {
-    unsigned int sampleRate = audiolayer->getSampleRate();
+    unsigned int samplerate = audiolayer->getSampleRate();
     std::ostringstream frequency;
     frequency << "440/" << FRAME_PER_BUFFER;
 
-    Tone tone(frequency.str(), sampleRate, audiolayer->getOutChannel());
-    unsigned int nbInt16 = tone.getSize();
-    int16 buf[nbInt16];
+    Tone tone(frequency.str(), samplerate, audiolayer->getOutChannel());
+    unsigned int nbint16 = tone.getSize();
+    int16 buf[nbint16];
     tone.getNext(buf, tone.getSize());
-    audiolayer->putUrgent(buf, sizeof(int16)*nbInt16);
+    audiolayer->putUrgent(buf, sizeof(int16)*nbint16);
   }
 }
 
@@ -1093,6 +1093,7 @@ ManagerImpl::selectAudioDriver (void)
         noDeviceOut = 0;
       }
     }
+    _debug(" Setting audiolayer to device in=%d and out=%d\n", noDeviceIn, noDeviceOut);
     _debugInit(" AudioLayer Opening Device");
     _audiodriverPA->openDevice(noDeviceIn, noDeviceOut);
   } catch(...) {
@@ -1433,6 +1434,7 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
   } catch (...) {
     returnValue = false;
   }
+
   return returnValue;
 }
 
@@ -1495,34 +1497,44 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
  * Experimental...
  */
 bool
-ManagerImpl::setSwitch(const std::string& switchName) {
+ManagerImpl::setSwitch(const std::string& switchName, std::string& message) {
   if (switchName == "audiodriver" ) {
     try 
       {
         selectAudioDriver();
+        message = _("Change with success");
+        playDtmf('9');
+        getAudioDriver()->sleep(300); // in milliseconds
+        playDtmf('1');
+        getAudioDriver()->sleep(300); // in milliseconds
+        playDtmf('1');
         return true;
       }
     catch (const portaudio::PaException &e) 
       {
         getAudioDriver()->setErrorMessage(e.paErrorText());
         _debug("Portaudio exception: %s\n", e.paErrorText());
+        message = e.paErrorText();
         return false;
       }
     catch (const portaudio::PaCppException &e) 
       {
         getAudioDriver()->setErrorMessage(e.what());
         _debug("Portaudio exception: %s\n", e.what());
+        message = e.what();
         return false;
       }
     catch (const std::runtime_error &e) 
       {
         getAudioDriver()->setErrorMessage(e.what());
         _debug("Portaudio exception: %s\n", e.what());
+        message = e.what();
         return false;
       } 
     catch(...) 
       {
         _debug("Portaudio exception: <unknown>\n");
+        message = _("Sound error, please use another configuration");
         return false;
       }
   } else {

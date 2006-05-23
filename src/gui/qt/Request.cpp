@@ -60,8 +60,10 @@ Request::onError(const QString &code, const QString &message)
     .arg(code)
     .arg(mSequenceId)
     .arg(message);
+  QString messageDecoded = message;
+  Url::decode(messageDecoded);
 
-  emit error(message, code);
+  emit error(messageDecoded, code);
 }
 
 void
@@ -111,8 +113,10 @@ Request::onSuccess(const QString &code, const QString &message)
     .arg(code)
     .arg(mSequenceId)
     .arg(message);
+  QString messageDecoded = message;
+  Url::decode(messageDecoded);
 
-  emit success(message, code);
+  emit success(messageDecoded, code);
 }
 
 QString

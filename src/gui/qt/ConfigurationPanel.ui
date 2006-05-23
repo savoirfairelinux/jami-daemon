@@ -741,22 +741,37 @@
                     <attribute name="title">
                         <string>Drivers</string>
                     </attribute>
-                    <widget class="QButtonGroup">
-                        <property name="name">
-                            <cstring>DriverChoice</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>10</y>
-                                <width>410</width>
-                                <height>180</height>
-                            </rect>
-                        </property>
-                        <property name="title">
-                            <string>Drivers list</string>
-                        </property>
-                    </widget>
+<widget class="QLayoutWidget">
+ <property name="geometry">
+    <rect><x>0</x><y>0</y><width>410</width><height>360</height></rect>
+ </property>
+ <vbox>
+   <widget class="QVButtonGroup">
+    <property name="name"><cstring>DriverChoice</cstring></property>
+    <property name="title"><string>Driver for Speaker</string></property>
+   </widget>
+   <widget class="QVButtonGroup">
+    <property name="name"><cstring>DriverChoiceIn</cstring></property>
+    <property name="title"><string>Driver for Microphone</string></property>
+   </widget>
+  <widget class="QLayoutWidget">
+   <property name="name"><cstring>layoutforsounddriver</cstring></property>
+   <hbox>
+    <property name="name"><cstring>unnamed</cstring></property>
+    <widget class="QPushButton">
+     <property name="name"><cstring>buttonTestSoundDriver</cstring></property>
+     <property name="enabled"><bool>true</bool></property>
+     <property name="text"><string>Test</string></property>
+    </widget>
+    <widget class="QLabel">
+     <property name="name"><cstring>lblSoundDriver</cstring></property>
+     <property name="text"><string></string></property>
+     <property name="paletteForegroundColor"><color><red>255</red><green>0</green><blue>0</blue></color></property>
+    </widget>
+   </hbox>
+  </widget>
+ </vbox>
+</widget>
                 </widget>
                 <widget class="QWidget">
                     <property name="name">
@@ -766,7 +781,7 @@
                         <string>Codecs</string>
                     </attribute>
                     <widget class="QButtonGroup">
-                        <property name="name">
+                       <property name="name">
                             <cstring>CodecsChoice</cstring>
                         </property>
                         <property name="geometry">
@@ -1406,10 +1421,28 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
         <slot>changeTabSlot()</slot>
     </connection>
     <connection>
+        <sender>buttonRegister</sender>
+        <signal>clicked()</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>slotRegister()</slot>
+    </connection>
+    <connection>
         <sender>DriverChoice</sender>
         <signal>clicked(int)</signal>
         <receiver>ConfigurationPanel</receiver>
         <slot>driverSlot(int)</slot>
+    </connection>
+    <connection>
+        <sender>DriverChoiceIn</sender>
+        <signal>clicked(int)</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>driverSlotIn(int)</slot>
+    </connection>
+    <connection>
+        <sender>buttonTestSoundDriver</sender>
+        <signal>clicked()</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>slotTestSoundDriver()</slot>
     </connection>
     <connection>
         <sender>buttonCancel</sender>
@@ -1462,6 +1495,7 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
     <tabstop>sendDTMFas</tabstop>
     <tabstop>Menu</tabstop>
     <tabstop>Tab_Audio</tabstop>
+    <tabstop>buttonTestSoundDriver</tabstop>
     <tabstop>codec1</tabstop>
     <tabstop>codec2</tabstop>
     <tabstop>codec3</tabstop>
@@ -1474,20 +1508,26 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
 </includes>
 <signals>
     <signal>needRegister()</signal>
+    <signal>soundDriverChanged()</signal>
 </signals>
 <slots>
     <slot>generate()</slot>
-    <slot>slotRegisterFailed( QString )</slot>
-    <slot>slotRegisterSucceed( QString )</slot>
+    <slot>slotRegister()</slot>
+    <slot>slotRegisterReturn( bool, QString )</slot>
+    <slot>slotTestSoundDriver()</slot>
+    <slot>slotSoundDriverReturn( bool, QString )</slot>
     <slot>saveSlot()</slot>
     <slot>changeTabSlot()</slot>
     <slot>useStunSlot( int id )</slot>
     <slot>applySkinSlot()</slot>
     <slot>driverSlot( int id )</slot>
+    <slot>driverSlotIn( int id )</slot>
     <slot>updateSkins()</slot>
     <slot>updateRingtones()</slot>
     <slot>updateCodecs()</slot>
     <slot>updateAudioDevices()</slot>
+    <slot>updateAudioDevicesIn()</slot>
+    <slot>updateAudioDevicesOut()</slot>
     <slot>SkinChoice_selected( const QString &amp; )</slot>
 </slots>
 <functions>

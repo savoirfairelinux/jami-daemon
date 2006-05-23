@@ -264,7 +264,7 @@ GuiFramework::getRegistrationState(std::string& stateCode, std::string& stateMes
 }
 
 bool 
-GuiFramework::setSwitch(const std::string& switchName)
+GuiFramework::setSwitch(const std::string& switchName, std::string& returnMessage)
 {
-  return Manager::instance().setSwitch(switchName);
+  return Manager::instance().setSwitch(switchName, returnMessage);
 }

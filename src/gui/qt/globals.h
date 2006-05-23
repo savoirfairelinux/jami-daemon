@@ -27,6 +27,9 @@
 
 #define AUDIO_SECTION "Audio"
 #define AUDIO_DEFAULT_DEVICE "Drivers.driverName"
+#define AUDIO_DEFAULT_DEVICEIN "Drivers.driverNameIn"
+#define AUDIO_DEFAULT_DEVICEOUT "Drivers.driverNameOut"
+
 #define AUDIO_CODEC1 "Codecs.codec1"
 #define AUDIO_CODEC2 "Codecs.codec2"
 #define AUDIO_CODEC3 "Codecs.codec3"

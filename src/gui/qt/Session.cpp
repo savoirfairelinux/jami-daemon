@@ -1,5 +1,6 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -81,7 +82,6 @@ Session::configSet(const QString &section,
   args.push_back(value);
   return Requester::instance().send(mId, "configset", args);
 }
-
 
 Request * 
 Session::configGetAll() const
@@ -165,6 +165,14 @@ Session::registerToServer() const
   std::list< QString > args;
   args.push_back(getDefaultAccount().id());
   return Requester::instance().send(mId, "register", args);
+}
+
+Request *
+Session::switchAudioDriver() const
+{
+  std::list< QString > args; 
+  args.push_back("audiodriver");
+  return Requester::instance().send(mId, "switch", args);
 }
 
 Account
