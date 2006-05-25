@@ -50,12 +50,15 @@ AM_INIT_AUTOMAKE(sflphone, $VERSION)
 AC_PROG_LIBTOOL
 
 dnl check for portaudio
+AC_MSG_NOTICE([********** Checking for portaudio **********])
 PORTAUDIO_SETUP
 
 dnl check for osip2
+AC_MSG_NOTICE([********** Checking for libosip2 **********])
 LP_CHECK_OSIP2
 
 dnl check for exosip2
+AC_MSG_NOTICE([********** Checking for libeXosip2 **********])
 LP_CHECK_EXOSIP2
 
 dnl setup flags for embedded exosip library
@@ -93,6 +96,7 @@ ostream \
 CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS"
 SFLPHONE_LIBS=""
 
+AC_MSG_NOTICE([********** Checking for commoncpp2 **********])
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION})
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccgnu2_LIBS"
@@ -101,6 +105,7 @@ LIBCCEXT2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(libccext2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccext2_LIBS"
 
+AC_MSG_NOTICE([********** Checking for ccrtp **********])
 LIBCCRT_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
@@ -108,6 +113,7 @@ SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $OSIP_LIBS $EXOSIP_LIBS "
 AC_SUBST(SFLPHONE_LIBS)
 
+AC_MSG_NOTICE([********** Checking for speex **********])
 dnl check for speex...
 AC_ARG_ENABLE(speex, 
   AC_HELP_STRING(
@@ -130,6 +136,7 @@ if test "x$with_speex" = "xyes" ; then
 fi
 AM_CONDITIONAL(USE_SPEEX, test "x$with_speex" = "xyes" )
 
+AC_MSG_NOTICE([********** Checking for iax2 **********])
 AC_ARG_ENABLE(iax2,
  AC_HELP_STRING(
    [--enable-iax2],
@@ -142,6 +149,7 @@ AM_CONDITIONAL(USE_IAX, test x$with_iax2 = xyes)
 
 GNUPG_CHECK_READLINE
 
+AC_MSG_NOTICE([********** Checking for zeroconf **********])
 dnl check for zeroconf (from apple)
 AC_ARG_ENABLE(zeroconf, 
   AC_HELP_STRING(
