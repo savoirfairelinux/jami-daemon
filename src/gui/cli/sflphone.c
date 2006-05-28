@@ -131,7 +131,7 @@ sflphone_call (char *dest) {
 	callobj	*calldesc;
 
 	// dest is the destination like "5143456789"
-	// output pattern is like "call seq0 acc1 c1 5143456789"
+	// output pattern is like "call seq0 SIP0 c1 5143456789"
 	if (dest == NULL) {
 		return;
 	}
@@ -156,6 +156,50 @@ sflphone_call (char *dest) {
 	// Send the command
 	fprintf (fdsocket, "call %s %s %s %s\n", seq_id, DEFAULT_ACCOUNT, call_id, dest);
 	fflush (fdsocket);
+}
+
+void
+sflphone_hangup (char *call_id)
+{
+	if (!call_id) return;
+	int seq;
+	char seq_id[CIDMAX];
+	bzero (seq_id, CIDMAX);
+	seq = get_next_seq ();
+	snprintf (seq_id, CIDMAX - 1, "seq%d", seq);
+	fprintf (fdsocket, "hangup %s %s\n", seq_id, call_id);
+	fflush (fdsocket);
+
+	// Remove call descriptor
+	call_pop (call_id);
+}
+
+void
+sflphone_hold (char *call_id)
+{
+	if (!call_id) return;
+	// sequence number
+	int seq; char seq_id[CIDMAX]; bzero (seq_id, CIDMAX); seq = get_next_seq ();
+	snprintf (seq_id, CIDMAX - 1, "seq%d", seq);
+
+	fprintf (fdsocket, "hold %s %s\n", seq_id, call_id);
+	fflush (fdsocket);
+
+	call_change_state(call_id, ON_HOLD);
+}
+
+void
+sflphone_unhold (char *call_id)
+{
+	if (!call_id) return;
+	// sequence number
+	int seq; char seq_id[CIDMAX]; bzero (seq_id, CIDMAX); seq = get_next_seq ();
+	snprintf (seq_id, CIDMAX - 1, "seq%d", seq);
+
+	fprintf (fdsocket, "unhold %s %s\n", seq_id, call_id);
+	fflush (fdsocket);
+
+	call_change_state(call_id, TALKING);
 }
 
 // 100 type messages are for lists

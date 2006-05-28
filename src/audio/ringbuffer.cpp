@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004, 2005, 2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
  *
@@ -23,7 +23,7 @@
 #include <assert.h>
 #include <stdlib.h> 
 #include <string.h>  
- 
+
 #include "ringbuffer.h"
 #include "../global.h"
  
@@ -52,6 +52,11 @@ RingBuffer::flush (void) {
 int 
 RingBuffer::Len() const { 
    return (mEnd + mBufferSize - mStart) % mBufferSize;
+}
+
+void 
+RingBuffer::debug() {
+   _debug("Start=%d; End=%d; BufferSize=%d\n", mStart, mEnd, mBufferSize);
 }
  
 //

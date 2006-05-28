@@ -244,12 +244,13 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   (void) timeInfo;
   (void) statusFlags;
 	
-	int16 *in  = (int16 *) inputBuffer;
-	int16 *out = (int16 *) outputBuffer;
-	int toGet, toPut;
-  int urgentAvail, // number of int16 right and int16 left
-      normalAvail, // number of int16 right and int16 left
-      micAvailPut;
+  int16 *in  = (int16 *) inputBuffer;
+  int16 *out = (int16 *) outputBuffer;
+  int toGet; 
+  int toPut;
+  int urgentAvail; // number of int16 right and int16 left
+  int normalAvail; // number of int16 right and int16 left
+  int micAvailPut;
   unsigned short spkrVolume = Manager::instance().getSpkrVolume();
   unsigned short micVolume  = Manager::instance().getMicVolume();
 
@@ -258,7 +259,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   urgentAvail = _urgentRingBuffer.AvailForGet();
   if (urgentAvail > 0) {
   // Urgent data (dtmf, incoming call signal) come first.		
-    toGet = (urgentAvail < (int)framesPerBuffer * sizeof(int16) * _outChannel) ? urgentAvail : framesPerBuffer * sizeof(int16) * _outChannel;
+    toGet = (urgentAvail < (int)(framesPerBuffer * sizeof(int16) * _outChannel)) ? urgentAvail : framesPerBuffer * sizeof(int16) * _outChannel;
     _urgentRingBuffer.Get(out, toGet, spkrVolume);
     
     // Consume the regular one as well (same amount of bytes)
@@ -272,19 +273,21 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
     } else {
       // If nothing urgent, play the regular sound samples
       normalAvail = _mainSndRingBuffer.AvailForGet();
-      toGet = (normalAvail < (int)framesPerBuffer * sizeof(int16) * _outChannel) ? normalAvail : framesPerBuffer * sizeof(int16) * _outChannel;
+      toGet = (normalAvail < (int)(framesPerBuffer * sizeof(int16) * _outChannel)) ? normalAvail : framesPerBuffer * sizeof(int16) * (int)_outChannel;
 
       if (toGet) {
         _mainSndRingBuffer.Get(out, toGet, spkrVolume);
       } else {
+	//_debug("padding %d...\n", (int)(framesPerBuffer * sizeof(int16)*_outChannel));
+	//_mainSndRingBuffer.debug();
         bzero(out, framesPerBuffer * sizeof(int16) * _outChannel);
       }
     }
-	}
+  }
 
-	// Additionally handle the mic's audio stream 
+  // Additionally handle the mic's audio stream 
   micAvailPut = _micRingBuffer.AvailForPut();
-  toPut = (micAvailPut <= (int)framesPerBuffer * sizeof(int16) * _inChannel) ? micAvailPut : framesPerBuffer * sizeof(int16) * _inChannel;
+  toPut = (micAvailPut <= (int)(framesPerBuffer * sizeof(int16) * _inChannel)) ? micAvailPut : framesPerBuffer * sizeof(int16) * _inChannel;
   _micRingBuffer.Put(in, toPut, micVolume );
 
   return paContinue;
@@ -299,13 +302,13 @@ AudioLayer::convert(int16* fromBuffer, int fromChannel, unsigned int fromSize, i
     return fromSize;
   } else if (fromChannel > toChannel ) { // 2 => 1
     unsigned int toSize = fromSize>>1; // divise by 2
-    for(int m=0, s=0; m<toSize; m++) {
+    for(unsigned int m=0, s=0; m<toSize; m++) {
       s = m<<1;
       (*toBuffer)[m] = (int16)(0.5f*(fromBuffer[s] + fromBuffer[s+1]));
     }
     return toSize;
   } else { // (fromChannel > toChannel ) { // 1 => 2
-    for(int m=0, s=0; m<fromSize; m++) {
+    for(unsigned int m=0, s=0; m<fromSize; m++) {
       s = m<<1;
       (*toBuffer)[s] = (*toBuffer)[s+1] = fromBuffer[m];
     }

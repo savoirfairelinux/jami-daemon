@@ -47,6 +47,10 @@ class RingBuffer {
    int Discard(int);
 
    int Len() const;
+   /**
+    * Debug function print mEnd, mStart, mBufferSize
+    */
+   void debug();
    
  private:
 

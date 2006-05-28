@@ -12,6 +12,7 @@
 #define IBUFSIZE 512
 
 static char ibuf[IBUFSIZE];
+extern char *current_cid;
 
 int
 handle_input (void) {
@@ -108,18 +109,34 @@ handle_input (void) {
 	/* Hangup specific call */
 	IF_GOT("hangup ") {
 		printf ("Hangup specific call.\n");
+		sflphone_hangup (token (ibuf));
 		return 0;
 	}
 
 	/* Hangup current call */
 	IF_GOT("hangup") {
-		printf ("Hangup current call.\n");
+		if (current_cid) {
+			printf ("Hangup current call.\n");
+			sflphone_hangup (current_cid);
+		}
 		return 0;
 	}
 
 	/* Hold current call */
 	IF_GOT("hold") {
-		printf ("Hold current call.\n");
+		if (current_cid) {
+			printf ("Hold current call.\n");
+			sflphone_hold (current_cid);
+		}
+		return 0;
+	}
+
+	/* Unhold current call */
+	IF_GOT("unhold") {
+		if (current_cid) {
+			printf ("Unhold current call.\n");
+			sflphone_unhold (current_cid);
+		}
 		return 0;
 	}
 
@@ -128,7 +145,7 @@ handle_input (void) {
 
 void
 help_display (void) {
-  printf ("General call: call <number>, hangup <number>, answer\n");
+  printf ("General call: call <number>, hangup <call-id>, answer\n");
   printf ("Current call: calls, hangup, hold\n");
   printf ("Configuration: setup\n");
   printf ("Register: register {fullname|sipuser|siphost|password|sipproxy|stun} <information>\n");

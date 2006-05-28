@@ -11,6 +11,9 @@ void sflphone_set_password		(char *);
 void sflphone_set_proxy			(char *);
 void sflphone_set_stun			(char *);
 void sflphone_call			(char *);
+void sflphone_hangup			(char *);
+void sflphone_hold			(char *);
+void sflphone_unhold			(char *);
 
 void sflphone_handle_100		(char *);
 void sflphone_handle_101		(char *);

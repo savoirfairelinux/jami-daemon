@@ -22,9 +22,10 @@ event_loop (int socket) {
 
 	/* Ask SFLphone's core version */
 	sflphone_ask_version ();
-  sflphone_get_events();
+	sflphone_get_events();
 
 	/* Main event loop */
+	display_prompt ();
 	FOREVER {
 		FD_ZERO (&rfds);
 		FD_ZERO (&wfds);
@@ -32,7 +33,6 @@ event_loop (int socket) {
 		FD_SET (0, &rfds);		// Watch stdin
 
 		/* Wait for input, forever */
-		display_prompt ();
 		select (socket+1, &rfds, NULL, NULL, NULL);
 
 		/* React to socket input */
@@ -58,6 +58,7 @@ event_loop (int socket) {
 				display_info ("Got EOF. Bye bye !\n");
 				break;
 			}
+			display_prompt ();
 		}
 	}
 
