@@ -162,19 +162,8 @@ ConfigurationPanel::generate()
 			.get(SIGNALISATION_SECTION, 
 			     SIGNALISATION_PULSE_LENGTH).toUInt());
 
-  QRadioButton* device = 
-    static_cast< QRadioButton * >(DriverChoice->find(ConfigurationManager::instance()
-						     .get(AUDIO_SECTION, 
-							  AUDIO_DEFAULT_DEVICEOUT).toUInt()));
-  if(device) {
-    device->setChecked(true);
-  }
-
-  device = static_cast< QRadioButton * >(DriverChoiceIn->find(ConfigurationManager::instance()
-	.get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN).toUInt()));
-  if (device) {
-    device->setChecked(true);
-  }
+  cboDriverChoiceOut->setCurrentItem(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT).toUInt());
+  cboDriverChoiceIn->setCurrentItem(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN).toUInt());
 
   //preference tab
   updateSkins();
@@ -228,9 +217,14 @@ void ConfigurationPanel::saveSlot()
   if (codec3->currentText() != NULL) {
     ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_CODEC3, codec3->currentText());
   }
-  
   if (ringsChoice->currentText() != NULL) {
     ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_RINGTONE, ringsChoice->currentText());
+  }
+  if (cboDriverChoiceOut->currentText() != NULL) {
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT, QString::number(cboDriverChoiceOut->currentItem()));
+  }
+  if (cboDriverChoiceIn->currentText() != NULL) {
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN, QString::number(cboDriverChoiceIn->currentItem()));
   }
 
   SkinManager::instance().load(SkinChoice->currentText());
@@ -297,24 +291,6 @@ void ConfigurationPanel::applySkinSlot()
 }
 
 
-void ConfigurationPanel::driverSlot(int id)
-{
-  ConfigurationManager::instance().set(AUDIO_SECTION, 
-				       AUDIO_DEFAULT_DEVICEOUT, 
-				       QString::number(id));
-  lblSoundDriver->setPaletteForegroundColor(black);
-  lblSoundDriver->setText(tr("Not tested"));
-}
-
-void ConfigurationPanel::driverSlotIn(int id)
-{
-  ConfigurationManager::instance().set(AUDIO_SECTION, 
-				       AUDIO_DEFAULT_DEVICEIN, 
-				       QString::number(id));
-  lblSoundDriver->setPaletteForegroundColor(black);
-  lblSoundDriver->setText(tr("Not tested"));
-}
-
 void ConfigurationPanel::updateSkins()
 {
   SkinChoice->clear();
@@ -352,46 +328,21 @@ void ConfigurationPanel::updateCodecs()
 
 void ConfigurationPanel::updateAudioDevicesIn() 
 {
-  static std::list< QRadioButton * > buttonsIn;
-  while(buttonsIn.begin() != buttonsIn.end()) {
-    DriverChoiceIn->remove(*buttonsIn.begin());
-    buttonsIn.pop_front();
-  }
-  int top = 0;
-
-  //In
+  QComboBox* cbo = cboDriverChoiceIn;
   std::list< AudioDevice > audio = ConfigurationManager::instance().getAudioDevicesIn();
   std::list< AudioDevice >::iterator pos;
-
+  cbo->clear();
+  
   for (pos = audio.begin(); pos != audio.end(); pos++) {
     QString hostApiName = pos->hostApiName;
     QString deviceName = pos->deviceName;
     
-    QString name = hostApiName + 
-      QObject::tr(" (device #%1)").arg(pos->index);
-    
-    // New radio button with found device name
-    QRadioButton* device = new QRadioButton(DriverChoiceIn);
-    buttonsIn.push_back(device);
-    DriverChoiceIn->insert(device, pos->index.toUInt());
-    //device->setGeometry( QRect( 10, 30 + top, 360, 21 ) );
-    // Set label of radio button
-    //device->setText(deviceName);
-    // Add tooltip for each one
-    QString text = deviceName + " " + name;
-    
-    if(text.length() > 50) {
-      device->setText(text.left(50) + "...");
+    QString name = hostApiName + QObject::tr(" (device #%1)").arg(pos->index);
+    if (name.length() > 50) {
+	    name = name.left(50) + "...";
     }
-    else {
-      device->setText(text);
-    }
-    
-    QToolTip::add(device, text);
-    top += 30;
+    cbo->insertItem(name);
   }
-  // Set position of the button group, with appropriate length
-  //DriverChoiceIn->setGeometry( QRect( 10, 200, 410, top + 30 ) );
 }
 
 void ConfigurationPanel::updateAudioDevicesOut() 
@@ -401,50 +352,21 @@ void ConfigurationPanel::updateAudioDevicesOut()
 
 void ConfigurationPanel::updateAudioDevices()
 {
-  static std::list< QRadioButton * > buttons;
-
-  while(buttons.begin() != buttons.end()) {
-    DriverChoice->remove(*buttons.begin());
-    buttons.pop_front();
-  }
-
-  int top = 0;
+  QComboBox* cbo = cboDriverChoiceOut;
   std::list< AudioDevice > audio = ConfigurationManager::instance().getAudioDevicesOut();
   std::list< AudioDevice >::iterator pos;
-  
+  cbo->clear();
+ 
   for (pos = audio.begin(); pos != audio.end(); pos++) {
     QString hostApiName = pos->hostApiName;
     QString deviceName = pos->deviceName;
     
-    QString name = hostApiName + 
-      QObject::tr(" (device #%1)").arg(pos->index);
-    
-    // New radio button with found device name
-    QRadioButton* device = new QRadioButton(DriverChoice); 
-    buttons.push_back(device);
-    DriverChoice->insert(device, pos->index.toUInt());
-    //device->setGeometry( QRect( 10, 30 + top, 360, 21 ) );
-    // Set label of radio button
-    //device->setText(deviceName);
-    // Add tooltip for each one
-    QString text = deviceName + " " + name;
-    
-    if(text.length() > 50) {
-      device->setText(text.left(50) + "...");
+    QString name = hostApiName + QObject::tr(" (device #%1)").arg(pos->index);
+    if (name.length() > 50) {
+	    name = name.left(50) + "...";
     }
-    else {
-      device->setText(text);
-    }
-    
-    QToolTip::add(device, text);
-    
-    
-    top += 30;
+    cbo->insertItem(name);
   }
-  
-  // Set position of the button group, with appropriate length
-  //DriverChoice->setGeometry( QRect( 10, 10, 410, top + 30 ) );
-
 }
 
 
@@ -476,6 +398,15 @@ ConfigurationPanel::slotRegisterReturn( bool hasError, QString )
 
 void ConfigurationPanel::slotTestSoundDriver()
 {
+  // save driver in configuration manager
+  if (cboDriverChoiceOut->currentText() != NULL) {
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT, QString::number(cboDriverChoiceOut->currentItem()));
+  }
+  if (cboDriverChoiceIn->currentText() != NULL) {
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN, QString::number(cboDriverChoiceIn->currentItem()));
+  }
+
+  // save driver on portaudio
   ConfigurationManager::instance().save(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT);
   ConfigurationManager::instance().save(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN);
   emit soundDriverChanged();

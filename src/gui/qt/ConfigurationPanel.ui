@@ -749,11 +749,18 @@
    <widget class="QVButtonGroup">
     <property name="name"><cstring>DriverChoice</cstring></property>
     <property name="title"><string>Driver for Speaker</string></property>
+    <widget class="QComboBox">
+     <property name="name"><cstring>cboDriverChoiceOut</cstring></property>
+    </widget>
    </widget>
    <widget class="QVButtonGroup">
     <property name="name"><cstring>DriverChoiceIn</cstring></property>
     <property name="title"><string>Driver for Microphone</string></property>
-   </widget>
+    <widget class="QComboBox">
+     <property name="name"><cstring>cboDriverChoiceIn</cstring></property>
+    </widget>
+    </widget>
+ 
   <widget class="QLayoutWidget">
    <property name="name"><cstring>layoutforsounddriver</cstring></property>
    <hbox>
@@ -1427,18 +1434,6 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
         <slot>slotRegister()</slot>
     </connection>
     <connection>
-        <sender>DriverChoice</sender>
-        <signal>clicked(int)</signal>
-        <receiver>ConfigurationPanel</receiver>
-        <slot>driverSlot(int)</slot>
-    </connection>
-    <connection>
-        <sender>DriverChoiceIn</sender>
-        <signal>clicked(int)</signal>
-        <receiver>ConfigurationPanel</receiver>
-        <slot>driverSlotIn(int)</slot>
-    </connection>
-    <connection>
         <sender>buttonTestSoundDriver</sender>
         <signal>clicked()</signal>
         <receiver>ConfigurationPanel</receiver>
@@ -1495,6 +1490,8 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
     <tabstop>sendDTMFas</tabstop>
     <tabstop>Menu</tabstop>
     <tabstop>Tab_Audio</tabstop>
+    <tabstop>cboDriverChoiceOut</tabstop>
+    <tabstop>cboDriverChoiceIn</tabstop>
     <tabstop>buttonTestSoundDriver</tabstop>
     <tabstop>codec1</tabstop>
     <tabstop>codec2</tabstop>
@@ -1520,8 +1517,6 @@ Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
     <slot>changeTabSlot()</slot>
     <slot>useStunSlot( int id )</slot>
     <slot>applySkinSlot()</slot>
-    <slot>driverSlot( int id )</slot>
-    <slot>driverSlotIn( int id )</slot>
     <slot>updateSkins()</slot>
     <slot>updateRingtones()</slot>
     <slot>updateCodecs()</slot>
