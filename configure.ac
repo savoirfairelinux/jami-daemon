@@ -266,9 +266,7 @@ fi
 
 dnl AC_CONFIG_FILES(
 AC_OUTPUT(
-debian/changelog \
-sflphone.spec \
-Makefile \
+Makefile
 m4/Makefile \
 libs/taxidermy/Makefile \
 libs/Makefile \
@@ -299,4 +297,6 @@ src/gui/server/Makefile \
 src/zeroconf/Makefile \
 ringtones/Makefile \
 platform/fedora/sflphoned.spec \
+platform/debian/changelog \
+platform/rpm/sflphone.spec \
 )
