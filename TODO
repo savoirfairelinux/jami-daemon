@@ -12,4 +12,10 @@ For project dependencies:
 ------------------------
 Improve the autotools scripts of PortAudioCpp
 
+From FIXME:
+- sflphoned don't return any result at the second time getcallstatus is called.
+- sflphoned don't return a 206 on getcallstatus when one call is ringing.
+- unhold should not return an error if it's not holded
+
+
 

@@ -1,85 +1,177 @@
-Jean-Philippe Barette-LaPierre (30 April 2005) version 0.4.1-pre1
-- Changed the order of initialization of modules, in order to
-  removed a race condition.
-- We can build in different build directories.
-  (thanks to Mikael Magnusson)
-- We actualy check if portaudio and eXosip2 libs
-  are installed. (thanks to Mikael Magnusson)
-- zeroconf integration start
+2006-05-21  Julien Plissonneau Duquene
 
-Jean-Philippe Barette-LaPierre (30 April 2005) version 0.4.1-pre1
-- Now, we send a final response to reINVITEs
-  (thanks to Mikael Magnusson)
+	* Removed checks for osip from configure.ac (this is needed and
+	checked by eXosip anyway), fixed the check for libs in exosip.m4
 
-Jean-Philippe Barette-LaPierre (29 April 2005) version 0.4.1-pre1
-- Bug fix when trying to use more than 6 lines.
+	* Fixed Makefiles and autoqt for building on Debian sarge
 
-Jean-Philippe Barette-LaPierre (20 August 2005) version 0.4.1-pre1
-- Manager has now a LifetimeLibrary policy.
-- Utilspp has been rearranged.
-	
-Laurielle LEA (10 August 2005) version 0.4
-- Add blink notification for voice-message
-- Cleanup code
+2006-05-20  Julien Plissonneau Duquene
 
-Laurielle LEA (1st August 2005) version 0.4
-- Add comments in header files
+	* Fixed autotools setup, replaced kde m4 files by autoqt,
+	added tools/autotoolize.sh and tools/bleach.sh
 
-Laurielle LEA (29 July 2005) version 0.4
-- Add scrolling message
+	* Cleaned up the mess in the top directory, merged some files,
+	rewrote the ChangeLog using GNU format, updated the README
 
-Laurielle LEA (27 July 2005) version 0.4
-- Migrate from libeXoSIP 0.9.0 to libeXosip2-1.9.1-pre15 
-  (http://www.antisip.com/download/)
+	* Removed eXosip2 headers
 
-Laurielle LEA (21 July 2005) version 0.4
-- Change README.
+2005-11-26  The SFLPhone Team
 
-Laurielle LEA (20 July 2005) version 0.4
-- Fix mute feature.
-- Fix many bugs about line management.
-- Add "Compose" item in trayicon menu.
+	* Version 0.6.1
 
-Jean-Philippe Barette-LaPierre (18 July 2005) version 0.4
-- Bug fix if error was raised before setGUI.
+2005-11-21  The SFLPhone Team
 
-Laurielle LEA (18 July 2005) version 0.4
-- Fix incoming call sound notification.
-- Fix transfer if no busy line.
+	* Version 0.6
 
-Laurielle LEA (15 July 2005) version 0.4
-- Fix configuration init.
+2005-11-11  The SFLPhone Team
 
-Jerome OUFELLA (13 July 2005) version 0.4
-- Fix tone.
+	* Version 0.6 RC3
 
-Jean-Philippe Barette-LaPierre (13 July 2005) version 0.4
-- Change "Manager" to a singleton.
+2005-10-17  The SFLPhone Team
 
-Laurielle LEA (13 July 2005) version 0.4
-- Fix bug if network is not available.
-- Fix apply skin feature.
+	* Version 0.5
 
-Laurielle LEA (11 July 2005) version 0.4
-- Check functions return.
-- Remove unused mute functions.
+2005-08-30  Jean-Philippe Barette-LaPierre
 
-Laurielle LEA (8 July 2005) version 0.4
-- Stop program when error opening skin file.
-- Divide toggle() of qtguimainwindow.cpp in small functions.
-- Add return test.
+	* Changed the order of initialization of modules, in order to
+	remove a race condition.
 
-Laurielle LEA (7 July 2005) version 0.4
-- Cleanup audiortp.cpp.
-- Replace #define by global variable in codecDescriptor.cpp.
-- Set mutex of ringbuffer in the functions of RingBuffer object.
-- Divide run() of audiortp.cpp in 3 small functions.
-- Changed device static function in Manager for configurationpanel.ui.h.
-- Updated README.
+	* We can build in different build directories.
+	(thanks to Mikael Magnusson)
 
-Jean-Philippe Barrette-LaPierre (6 July 2005) version 0.4
-- Fixed all autotools problems.
-- Updated all autotools scripts to use PortAudioCpp.
+	* We actualy check if portaudio and eXosip2 libs
+	are installed. (thanks to Mikael Magnusson)
 
-Jean-Philippe Barrette-LaPierre (9 June 2005) version 0.4
-- Added the autotools support.
+	* zeroconf integration start
+
+2005-08-30  Jean-Philippe Barette-LaPierre
+
+	* Now, we send a final response to reINVITEs
+	(thanks to Mikael Magnusson)
+
+2005-08-29  Jean-Philippe Barette-LaPierre
+
+	* Bug fix when trying to use more than 6 lines.
+
+2005-08-20  Jean-Philippe Barette-LaPierre
+
+	* Manager has now a LifetimeLibrary policy.
+
+	* Utilspp has been rearranged.
+
+2005-08-11  The SFLPhone Team
+
+	* Version 0.4.1-pre1
+
+2005-08-10  Laurielle Lea
+
+	* Add blink notification for voice-message
+
+	* Cleanup code
+
+2005-08-01  Laurielle Lea
+
+	* Add comments in header files
+
+2005-07-29  Laurielle Lea
+
+	* Add scrolling message
+
+2005-07-25  Laurielle Lea
+
+	* Migrate from libeXoSIP 0.9.0 to libeXosip2-1.9.1-pre15 
+	(http://www.antisip.com/download/)
+
+2005-07-21  Laurielle Lea
+
+	* Change README.
+
+2005-07-20  Laurielle Lea
+
+	* Fix mute feature.
+
+	* Fix many bugs about line management.
+
+	* Add "Compose" item in trayicon menu.
+
+2005-07-18  Jean-Philippe Barette-LaPierre
+
+	* Bug fix if error was raised before setGUI.
+
+2005-07-18  Laurielle Lea
+
+	* Fix incoming call sound notification.
+
+	* Fix transfer if no busy line.
+
+2005-07-15  Laurielle Lea
+
+	* Fix configuration init.
+
+2005-07-13  Jerome Oufella
+
+	* Fix tone.
+
+2005-07-13  Jean-Philippe Barette-LaPierre
+
+	* Change "Manager" to a singleton.
+
+2005-07-13  Laurielle Lea
+
+	* Fix bug if network is not available.
+
+	* Fix apply skin feature.
+
+2005-07-11  Laurielle Lea
+
+	* Check functions return.
+
+	* Remove unused mute functions.
+
+2005-07-08  The SFLPhone Team
+
+	* Version 0.4
+
+2005-07-08  Laurielle Lea
+
+	* Stop program when error opening skin file.
+
+	* Divide toggle() of qtguimainwindow.cpp in small functions.
+
+	* Add return test.
+
+2005-07-07  Laurielle Lea
+
+	* Cleanup audiortp.cpp.
+
+	* Replace #define by global variable in codecDescriptor.cpp.
+
+	* Set mutex of ringbuffer in the functions of RingBuffer object.
+
+	* Divide run() of audiortp.cpp in 3 small functions.
+
+	* Changed device static function in Manager for configurationpanel.ui.h.
+
+	* Updated README.
+
+2005-07-06  Jean-Philippe Barrette-LaPierre
+
+	* Fixed all autotools problems.
+
+	* Updated all autotools scripts to use PortAudioCpp.
+
+2005-06-09  Jean-Philippe Barrette-LaPierre
+
+	* Added the autotools support.
+
+2005-04-07  The SFLPhone Team
+
+	* Version 0.3
+
+2005-01-18  The SFLPhone Team
+
+	* Version 0.2
+
+2004-12-21  The SFLPhone Team
+
+	* Version 0.1 (initial release)

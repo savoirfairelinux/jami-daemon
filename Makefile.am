@@ -1,5 +1,8 @@
-SUBDIRS = include libs src ringtones skins m4
-EXTRA_DIST = tools/*.sh debian/* README.cvs CHANGES images/*
+# Makefile.am
 
-ACLOCAL_FLAGS=-I$(top_srcdir)/m4
+ACLOCAL_FLAGS = -I m4
+
+SUBDIRS = libs src ringtones skins
+EXTRA_DIST = m4/*.m4 tools/*.sh platform/* images/*
+
 
