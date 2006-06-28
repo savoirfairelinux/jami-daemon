@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -155,6 +156,8 @@ signals:
   void talkingStarted(QTime);
   void talkingStopped();
   void transfered();
+  /** when the call is hangup */
+  void hanguped();
 
 private:
   void setCall(Call *call);

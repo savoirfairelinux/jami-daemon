@@ -54,7 +54,8 @@ SIPAccount::createVoIPLink()
 bool
 SIPAccount::registerAccount()
 {
-  if (_link && !_registered) {
+  if (_link) {
+    unregisterAccount();
     SIPVoIPLink* tmplink = dynamic_cast<SIPVoIPLink*> (_link);
     if (tmplink) {
       tmplink->setProxy(Manager::instance().getConfigString(_accountID,SIP_PROXY));

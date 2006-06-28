@@ -75,14 +75,12 @@ void
 PhoneLineButton::sendClicked()
 {
   if(isOn()) {
-    mIsFlashing = false;
-    mTimer->stop();
+    stopFlashing();
     emit selected(mLine);
   }
   else {
     if (mIsFlashing) {
-      mIsFlashing = false;
-      mTimer->stop();
+      stopFlashing();
       emit selected(mLine);
     } else {
       emit unselected(mLine);
@@ -90,3 +88,8 @@ PhoneLineButton::sendClicked()
   }
 }
 
+void
+PhoneLineButton::stopFlashing() {
+	mIsFlashing = false;
+	mTimer->stop();
+}

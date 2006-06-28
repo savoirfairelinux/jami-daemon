@@ -430,7 +430,7 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
         iPayload++;
       }
       if (listCodec.str().empty()) {
-        media << "m=" << remote_med->m_media << " 0 << " << remote_med->m_proto << " \r\n";
+        media << "m=" << remote_med->m_media << " 0 " << remote_med->m_proto << " \r\n";
       } else {
         // we add the media line + a=rtpmap list
         media << "m=" << remote_med->m_media << " " << getLocalExternAudioPort() << " RTP/AVP " << listCodec.str() << "\r\n";

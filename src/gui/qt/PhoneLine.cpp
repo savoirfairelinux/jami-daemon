@@ -417,6 +417,7 @@ PhoneLine::hangup(bool sendrequest)
     }
     clearCall();
   }
+  emit hanguped();
 
   clear();
   clearPeer();

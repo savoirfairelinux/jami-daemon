@@ -55,6 +55,10 @@ public slots:
   virtual void clearToolTip();
   virtual void swap();
   virtual void sendClicked();
+  /**
+   * Stop the timer and the flashing
+   */
+  void stopFlashing();
   
 private:
   unsigned int mLine;
