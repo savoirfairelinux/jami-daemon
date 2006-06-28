@@ -995,7 +995,7 @@
                         <cstring>DriversPage</cstring>
                     </property>
                     <attribute name="title">
-                        <string>About SFLPhone</string>
+                        <string>About SFLphone</string>
                     </attribute>
                     <grid>
                         <property name="name">
@@ -1121,14 +1121,12 @@
                                     </property>
                                     <property name="text">
                                         <string>&lt;p align="center"&gt;
-Copyright (C) 2004-2005 Savoir-faire Linux inc.&lt;br /&gt;
-Jean-Philippe Barrette-LaPierre &lt;br&gt;
-&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;lt;jean-philippe.barrette-lapierre@savoirfairelinux.com&amp;gt;&lt;br /&gt;
-Laurielle LEA &lt;br/&gt; &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;lt;laurielle.lea@savoirfairelinux.com&amp;gt;&lt;br /&gt;
+Copyright (C) 2004-2006 Savoir-faire Linux inc.&lt;br /&gt;
 Yan Morin &lt;br/&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;lt;yan.morin@savoirfairelinux.com&amp;gt;&lt;br /&gt;
 Jérome Oufella &lt;br/&gt; &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;lt;jerome.oufella@savoirfairelinux.com&amp;gt;&lt;br /&gt;
+Julien Plissonneau Duquène &lt;br/&gt; &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;lt;julien.plissonneau.duquene@savoirfairelinux.com&amp;gt;&lt;br /&gt;
 
-&lt;br /&gt;SFLPhone 0.6.3 is released under the General Public License. For more information, see http://www.sflphone.org&lt;/p&gt;</string>
+&lt;br /&gt;SFLphone 0.7.0pre0 is released under the General Public License. For more information, see &lt;a href="http://www.sflphone.org/"&gt;http://www.sflphone.org/&lt;/a&gt;&lt;/p&gt;</string>
                                     </property>
                                 </widget>
                                 <widget class="QLabel" row="0" column="1">
@@ -1214,9 +1212,9 @@ Jérome Oufella &lt;br/&gt; &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;lt;jerome.oufella
                                         </sizepolicy>
                                     </property>
                                     <property name="text">
-                                        <string>&lt;p align="center"&gt;Website: http://www.savoirfairelinux.com&lt;br&gt;&lt;br&gt;
+                                        <string>&lt;p align="center"&gt;Website: &lt;a href="http://www.savoirfairelinux.com/"&gt;http://www.savoirfairelinux.com/&lt;/a&gt;&lt;br&gt;&lt;br&gt;
 5505, Saint-Laurent - bureau 3030&lt;br&gt;
-Montreal, Quebec H2T 1S6&lt;/p&gt;</string>
+Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
                                     </property>
                                 </widget>
                                 <spacer row="1" column="1">
