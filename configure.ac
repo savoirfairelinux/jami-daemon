@@ -1,137 +1,172 @@
-dnl AC_INIT(aclocal.m4)
-AC_INIT(sflphone,0.7,sflphoneteam@savoirfairelinux.com,SFLphone)
+dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
+dnl
+dnl Process this file with autoconf to produce a configure script.
+AC_PREREQ(2.59)
+AC_INIT(SFLPhone, 0.7, sflphoneteam@savoirfairelinux.com, sflphone)
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2006]])
+AC_REVISION([$Revision$])
 
-# Initializing config.h header...
-AM_CONFIG_HEADER(config.h)
+dnl Compute canonical system name
+AC_CANONICAL_TARGET
 
-# Getting project version
+dnl Rewrite name of programs to be installed
+AC_ARG_PROGRAM
+
+dnl Automake options
+AM_INIT_AUTOMAKE([-Wall -Wno-portability])
+
+dnl Improve make variable MAKE
+AC_PROG_MAKE_SET
+
+dnl Where to find configure files
+AC_CONFIG_SRCDIR([config.h.in])
+AC_CONFIG_MACRO_DIR([m4])
+
+dnl What to generate
+AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
+AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([libs/Makefile \
+  libs/taxidermy/Makefile \
+  libs/portaudio/Makefile \
+  libs/stund/Makefile \
+  libs/utilspp/Makefile \
+  libs/utilspp/functor/Makefile \
+  libs/utilspp/singleton/Makefile])
+AC_CONFIG_FILES([src/Makefile \
+  src/sflphone \
+  src/audio/Makefile \
+  src/audio/gsm/Makefile \
+  src/audio/pacpp/Makefile \
+  src/audio/pacpp/include/Makefile \
+  src/audio/pacpp/include/portaudiocpp/Makefile \
+  src/audio/pacpp/source/Makefile \
+  src/audio/pacpp/source/portaudiocpp/Makefile \
+  src/config/Makefile \
+  src/gui/Makefile \
+  src/gui/qt/Makefile \
+  src/gui/cli/Makefile \
+  src/gui/server/Makefile \
+  src/zeroconf/Makefile])
+AC_CONFIG_FILES([skins/Makefile \
+  skins/metal/Makefile \
+  skins/gmetal/Makefile \
+  ringtones/Makefile])
+AC_CONFIG_FILES([platform/debian/changelog platform/rpm/sflphone.spec \
+  platform/fedora/sflphoned.spec])
+AC_CONFIG_HEADERS(config.h)
+
+dnl Get project version
 VERSION=`sed -ne 's/^#define SFLPHONED_VERSION "\(.*\)"/\1/p' ${srcdir}/src/global.h`
 
-dnl get rid of release number
+dnl Get rid of release number
 RPM_VERSION=`echo $VERSION | cut -d- -f1`
- AC_SUBST(RPM_VERSION)
+AC_SUBST(RPM_VERSION)
 RPM_RELEASE=`echo $VERSION | sed -ne 's/.*-\(.*\)/\1/p' `
- AC_SUBST(RPM_RELEASE)
+AC_SUBST(RPM_RELEASE)
 VERSION=`echo $VERSION | cut -d- -f1`
- AC_SUBST(VERSION)
+AC_SUBST(VERSION)
 
-# Setting needs Standard C++ Library
+dnl Settings need Standard C++ Library
 LIBS="$LIBS -lstdc++"
 
-dnl
 dnl Solaris pkgadd support definitions
-PKGADD_PKG="SFLPhoned"
+PKGADD_PKG="SFLPhone"
 PKGADD_NAME="SFLPhone - a SIP client and daemon"
 PKGADD_VENDOR="http://www.sflphone.org/"
 AC_SUBST(PKGADD_PKG)
 AC_SUBST(PKGADD_NAME)
 AC_SUBST(PKGADD_VENDOR)
 
-# Defining C++ as default language
-AC_LANG_CPLUSPLUS
-
-dnl These functions are call inside AC_CHECK_COMPILERS
-dnl AC_PROG_CXX
-dnl AC_PROG_CC
-
-# Checking compilers capacities
-AC_CHECK_COMPILERS
-
-# Declaring a debug constant
-if test "x$kde_use_debug_code" != "xno"; then
- CXXFLAGS="$CXXFLAGS -DDEBUG"
-fi
-
-
-
-AC_CANONICAL_SYSTEM
-AC_ARG_PROGRAM
-AM_INIT_AUTOMAKE(sflphone, $VERSION)
+dnl Check for programs
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
 AC_PROG_LIBTOOL
 
-dnl check for portaudio
-AC_MSG_NOTICE([
+dnl Define C++ as default language
+AC_LANG(C++)
 
-********** Checking for portaudio **********])
+dnl Setup C++ compiler flags
+CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS $USER_INCLUDES"
+
+dnl Check for header files
+AC_FUNC_ALLOCA
+AC_HEADER_STDC
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h malloc.h \
+  memory.h netdb.h netinet/in.h stdlib.h string.h strings.h \
+  sys/ioctl.h sys/socket.h sys/time.h unistd.h utime.h ostream])
+
+dnl Check for typedefs, structures, and compiler characteristics
+AC_HEADER_STAT
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_C_VOLATILE
+AC_CHECK_TYPES([ptrdiff_t])
+
+dnl Check for library functions
+AC_FUNC_CHOWN
+AC_FUNC_ERROR_AT_LINE
+AC_FUNC_FORK
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MALLOC
+AC_FUNC_MEMCMP
+AC_FUNC_REALLOC
+AC_FUNC_SELECT_ARGTYPES
+AC_TYPE_SIGNAL
+AC_FUNC_STAT
+AC_FUNC_UTIME_NULL
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
+  inet_ntoa memset mkdir pathconf pow regcomp select setlocale socket \
+  strchr strdup strerror strrchr strstr strtol utime])
+
+dnl Check for portaudio
 PORTAUDIO_SETUP
 
-dnl check for osip2
-AC_MSG_NOTICE([
-
-********** Checking for libosip2 **********])
-LP_CHECK_OSIP2
-
-dnl check for exosip2
-AC_MSG_NOTICE([
-
-********** Checking for libeXosip2 **********])
+dnl Check for exosip2
 LP_CHECK_EXOSIP2
+SFLPHONE_LIBS="$SFLPHONE_LIBS $EXOSIP_LIBS"
 
-dnl setup flags for embedded exosip library
-dnl LP_SETUP_EXOSIP
-
-dnl check for if no is undefined
-dnl check also for samplerate for $host ~= *darwin* (mac) only
+dnl Check for samplerate on darwin
 with_samplerate=no
 case $host in
   *darwin*)
-    need_no_undefined=no
     AC_CHECK_HEADER([libsamplerate.h], [
       AC_CHECK_LIB(samplerate, src_simple, [with_samplerate=yes], [with_samplerate=no]) 
      ], [ with_samplerate=no ]
     )
     ;;
-
-  *-*-cygwin | *-*-mingw* | *-*-pw32*)
-    need_no_undefined=yes
-    ;;
-  *)
-    need_no_undefined=no
-    ;;
 esac
-
-AM_CONDITIONAL(NO_UNDEFINED, test x$need_no_undefined = xyes)
 AM_CONDITIONAL(USE_SAMPLERATE, test x$with_samplerate = xyes)
 
-AC_MSG_NOTICE([
+dnl Check for GNU ccRTP
+PKG_PROG_PKG_CONFIG
 
-********** Checking for STD C AND ostream **********])
-dnl Checks for header files.
-AC_HEADER_STDC
-AC_CHECK_HEADERS( \
-ostream \
-)
-
-CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS"
-SFLPHONE_LIBS=""
-
-AC_MSG_NOTICE([
-
-********** Checking for commoncpp2 **********])
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION})
+SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libccgnu2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccgnu2_LIBS"
 
 LIBCCEXT2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(libccext2, libccext2 >= ${LIBCCEXT2_MIN_VERSION})
+SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libccext2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccext2_LIBS"
 
-AC_MSG_NOTICE([
-
-********** Checking for ccrtp **********])
 LIBCCRT_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
+SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
 
-SFLPHONE_LIBS="$SFLPHONE_LIBS $OSIP_LIBS $EXOSIP_LIBS "
-AC_SUBST(SFLPHONE_LIBS)
-
-AC_MSG_NOTICE([
-
-********** Checking for speex **********])
-dnl check for speex...
+dnl Check for speex
 AC_ARG_ENABLE(speex, 
-  AC_HELP_STRING(
+  AS_HELP_STRING(
     [--enable-speex],
     [compile with speex codec @<:@default=no@:>@]
   ), 
@@ -151,11 +186,9 @@ if test "x$with_speex" = "xyes" ; then
 fi
 AM_CONDITIONAL(USE_SPEEX, test "x$with_speex" = "xyes" )
 
-AC_MSG_NOTICE([
-
-********** Checking for iax2 **********])
+dnl Check for IAX
 AC_ARG_ENABLE(iax2,
- AC_HELP_STRING(
+ AS_HELP_STRING(
    [--enable-iax2],
    [compile with iax2 library support @<:@default=no@:>@]
  ),
@@ -164,17 +197,12 @@ AC_ARG_ENABLE(iax2,
 )
 AM_CONDITIONAL(USE_IAX, test x$with_iax2 = xyes)
 
-AC_MSG_NOTICE([
-
-********** Checking for readline (sflphone-cli) **********])
+dnl Check for readline
 GNUPG_CHECK_READLINE
 
-AC_MSG_NOTICE([
-
-********** Checking for zeroconf **********])
-dnl check for zeroconf (from apple)
+dnl Check for zeroconf (from apple)
 AC_ARG_ENABLE(zeroconf, 
-  AC_HELP_STRING(
+  AS_HELP_STRING(
     [--disable-zeroconf],
     [disables libdns_sd (browsing and publishing DNS-SD services will not be possible) @<:@default=no@:>@]
   ),  
@@ -193,23 +221,25 @@ if test "x$without_zeroconf" = "xno"; then
     *) LIBS="-ldns_sd" ;;
   esac
   have_libdns_sd="no"
-  AC_TRY_LINK(	[
-			#include <dns_sd.h>
-		],[
-			DNSServiceRefDeallocate( (DNSServiceRef) 0);
-			TXTRecordDeallocate( (TXTRecordRef*) 0);
-		],[
-			AC_DEFINE(HAVE_DNSSD,1,[Define if dns-sd is available])
-			case $host_os in
-				darwin*) LIB_DNSSD="" ;;
-				*) LIB_DNSSD="-ldns_sd" ;;
-			esac
-			have_libdns_sd="yes"
-			AC_MSG_RESULT(yes)
-		],[
-			AC_MSG_RESULT(no)
-                        LIB_DNSSD=""
-  ])
+  AC_LINK_IFELSE(
+    [AC_LANG_SOURCE([[
+        #include <dns_sd.h>
+      ]], [[
+        DNSServiceRefDeallocate( (DNSServiceRef) 0);
+        TXTRecordDeallocate( (TXTRecordRef*) 0);
+      ]])
+    ],[
+      AC_DEFINE(HAVE_DNSSD, 1, [Define if dns-sd is available])
+      case $host_os in
+        darwin*) LIB_DNSSD="" ;;
+        *) LIB_DNSSD="-ldns_sd" ;;
+      esac
+      have_libdns_sd="yes"
+      AC_MSG_RESULT(yes)
+    ],[
+      AC_MSG_RESULT(no)
+      LIB_DNSSD=""
+    ])
   CPPFLAGS=$save_dnssdtest_CPPFLAGS
   LDFLAGS=$save_dnssdtest_LDFLAGS
   LIBS=$save_dnssdtest_LIBS
@@ -217,86 +247,31 @@ fi
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
 
-dnl datadir directory
+dnl Datadir directory
 sflphone_datadir=$datadir/sflphone
 AC_SUBST(sflphone_datadir)
 
-dnl maintener code
-AC_MSG_CHECKING([whether to enable the maintener code])
-AC_ARG_ENABLE(maintener, 
-  AC_HELP_STRING(
-    [--enable-maintener],
-    [enables maintener code @<:@default=no@:>@]
-  ),  
-  [with_maintener=$enableval], 
-  [with_maintener=no]
-)
-AM_CONDITIONAL(MAINTENER_CODE, test "x$with_maintener" = "xyes")
-if test "x$maintener" = "xyes"; then
-  AC_MSG_RESULT(yes)
-  CXXFLAGS="$CXXFLAGS -DENABLE_MAINTENER"
-else
-  AC_MSG_RESULT(no)
-fi
-
+dnl QT interface
 AC_MSG_CHECKING([whether to enable sflphoneqt])
 AC_ARG_ENABLE(sflphoneqt,
-   AC_HELP_STRING(
+   AS_HELP_STRING(
      [--disable-sflphoneqt],
      [disable sflphone-qt compilation @<:@default=no@:>@]
    ),
    [with_sflphoneqt=$enableval],
    [with_sflphoneqt=yes]
 )
-
 AM_CONDITIONAL(WITH_QT, test "x$with_sflphoneqt" = "xyes")
 AM_CONDITIONAL(include_x11, test x$with_sflphoneqt = "xyes")
 if test "x$with_sflphoneqt" = "xno"; then
   AC_MSG_RESULT(no)
 else
   AC_MSG_RESULT(yes)
-  AC_MSG_NOTICE([
-
-********** Checking for QT **********])
-dnl Setting QT Path
-  AC_PATH_QT
-dnl QT substitution?
-  AC_SUBST(LIB_QT)
+  gw_CHECK_QT
 fi
 
-dnl AC_CONFIG_FILES(
-AC_OUTPUT(
-Makefile
-m4/Makefile \
-libs/taxidermy/Makefile \
-libs/Makefile \
-libs/portaudio/Makefile \
-libs/stund/Makefile \
-libs/utilspp/Makefile \
-libs/utilspp/functor/Makefile \
-libs/utilspp/singleton/Makefile \
-include/Makefile \
-include/eXosip2/Makefile \
-skins/Makefile \
-skins/metal/Makefile \
-skins/gmetal/Makefile \
-src/Makefile \
-src/sflphone \
-src/audio/Makefile \
-src/audio/gsm/Makefile \
-src/audio/pacpp/Makefile \
-src/audio/pacpp/include/Makefile \
-src/audio/pacpp/include/portaudiocpp/Makefile \
-src/audio/pacpp/source/Makefile \
-src/audio/pacpp/source/portaudiocpp/Makefile \
-src/config/Makefile \
-src/gui/Makefile \
-src/gui/qt/Makefile \
-src/gui/cli/Makefile \
-src/gui/server/Makefile \
-src/zeroconf/Makefile \
-ringtones/Makefile \
-platform/fedora/sflphoned.spec \
-platform/debian/changelog \
-platform/rpm/sflphone.spec \
-)
+# Go!
+AC_SUBST(SFLPHONE_CFLAGS)
+AC_SUBST(SFLPHONE_LIBS)
+AC_OUTPUT
+AC_MSG_NOTICE([[Configuration done! Run `make' to build the software.]])

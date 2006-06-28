@@ -1,3 +1,0 @@
-
-SUBDIRS = eXosip2
-
