@@ -4,7 +4,6 @@ libportaudio_la_LIBADD = $(PORTAUDIO) $(PORTAUDIO_LIBS)
 libportaudio_la_CXXFLAGS = $(PORTAUDIO_CFLAGS)
 libportaudio_la_CPPFLAGS = $(PORTAUDIO_CPPFLAGS)
 
-
 if ENABLE_OSS
 OSS=pa_unix_oss/pa_unix_oss.c
 else 

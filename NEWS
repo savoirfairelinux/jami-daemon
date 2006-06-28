@@ -4,23 +4,25 @@ SFLphoned (0.7.0) / 2006-..-..
 	* fix for using call command two times in a row
 	* add --disable-sflphoneqt 2006-05-01
 	* remove libexosip2 internally, it's in debian unstable 2005-01-01
-        * add iax support - in development
-        * add account support
-        * remove callid string/int
-        * add account SIP0 (default) in sflphone-cli
-        * add account SIP0 (default) in sflphone-qt
-        * fix nat handling (use the same port that it test)
-        * add register/unregister in qt
+	* add iax support - in development
+	* add account support
+	* remove callid string/int
+	* add account SIP0 (default) in sflphone-cli
+	* add account SIP0 (default) in sflphone-qt
+	* fix nat handling (use the same port that it test)
+	* add register/unregister in qt
+	* add test audio driver button
+	* add hold/unhold/hangup to sflphone-cli
 
 SFLphoned (0.6.2) / 2005-11-29
-        * integral mono support
-        * libsamplerate added for macosx
+	* integral mono support
+	* libsamplerate added for macosx
 
 SFLphoned (0.6.1) / 2005-11-26
 	* add speex codec (experimental)
 	* fix for codec handling in sdp and audiortp
 	* new codec class
-        * add portaudio missing file 
+	* add portaudio missing file 
 	  (thanks to Pierre POMES)
 	* add samplerate and inChannel/outChannel in AudioLayer
 	  we could use microphone in mono and speaker in stereo
@@ -31,7 +33,7 @@ SFLphoned/SFLphone (0.6) / 2005-11-04
 	* accept reinvite call
 	* cleaning headers
 	* improving bash launcher script
-        * select audio input and output device
+	* select audio input and output device
 	* installation review
 
 SFLphoned/SFLphone (0.5a) / 2005-10-17
@@ -42,13 +44,13 @@ SFLphoned/SFLphone (0.5a) / 2005-10-17
 
 SFLphone (0.4.1-pre2) / 2005-09-30
 	* rearranged utilspp use
-        * Bug fix when trying to use more than 6 lines.
+	* Bug fix when trying to use more than 6 lines.
 	* Now, we send a final response to reINVITEs 
 	  (thanks to Mikael Magnusson)
-        * We can build in different build directories.
-          (thanks to Mikael Magnusson)
+	* We can build in different build directories.
+	  (thanks to Mikael Magnusson)
 	* We actualy check if portaudio and eXosip2 libs
-          are installed
+	  are installed
 	* zeroconf integration start
 
 SFLphone (0.4.1-pre1) / 2005-08-11

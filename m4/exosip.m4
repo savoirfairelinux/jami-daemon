@@ -7,8 +7,8 @@ AC_ARG_WITH( exosip,
 AC_SUBST(exosip_prefix)
 
 
-EXOSIP_CFLAGS="-I$exosip_prefix/include"
-EXOSIP_LIBS="-L$exosip_prefix/lib"
+EXOSIP_CFLAGS="-I$exosip_prefix/include $OSIP_CFLAGS"
+EXOSIP_LIBS="-L$exosip_prefix/lib $OSIP_LIBS"
  
 dnl support for linux-thread or posix thread (pthread.h)
 AC_ARG_ENABLE(pthread,
@@ -31,7 +31,7 @@ CPPFLAGS=$CPPFLAGS_save
 
 dnl check for exosip2 libs
 LDFLAGS_save=$LDFLAGS
-LDFLAGS=$OSIP_LIBS
+LDFLAGS=$EXOSIP_LIBS
 LIBS_save=$LIBS
 AC_CHECK_LIB(eXosip2,eXosip_init, , AC_MSG_ERROR([Could not find osip2 libraries !]))
 LDFLAGS=$LDFLAGS_save

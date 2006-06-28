@@ -1,7 +1,7 @@
 Source: sflphoned
 Section: unknown
 Priority: optional
-Maintainer: Jean-Philippe Barrette-LaPierre <jean-philippe.barrette-lapierre@savoirfairelinux.com>
+Maintainer: Yan Morin <yan.morin@savoirfairelinux.com>
 Build-Depends: debhelper (>= 4.0.0), libcommoncpp2-dev (>= 1.3.14), libosip2-dev (>= 2.2.0), libccrtp-dev (>= 1.3.1), g++-4.0
 Standards-Version: 3.6.1
 
@@ -10,5 +10,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, libcommoncpp2-1.3c2, libosip2-3 (>= 2.2.0), libccrtp1-1.3c2 (>= 1.3.1)
 Recommends: sflphone-qt
 Description: SFLPhoned is a VoIP daeamon with SIP protocol
- SFLPhoned is a VoIP daeamon with SIP protocol. It's developed by Savoir-faire
- Linux inc. in Montreal, Canada.
+ SFLPhoned is a VoIP daemon with SIP and IAX protocols. It is controlled
+ by either a graphical user interface (sflphone-qt) or an interactive
+ command-line interface (sflphone-cli).
+ It is developped by Savoir-faire Linux Inc, Montreal, Quebec, Canada.

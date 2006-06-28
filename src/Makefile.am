@@ -33,11 +33,11 @@ sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \
                 sipvoiplink.cpp call.cpp sipcall.cpp \
 		$(IAXSOURCES)
 
-sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS)
+sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS) $(SFLPHONE_CFLAGS)
 
 #sflphoned_LDFLAGS = -static
-sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS)
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs -I$(srcdir)/audio/pacpp/include  $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(portaudio_CFLAGS) -I$(top_srcdir)/libs/portaudio/pa_common $(IAX_CFLAGS)
+sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs -I$(srcdir)/audio/pacpp/include  $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(portaudio_CFLAGS) -I$(top_srcdir)/libs/portaudio/pa_common $(IAX_CFLAGS) $(USER_INCLUDES)
 
 #libsflphone_la_LDFLAGS= -version-info 0:1:0
 libsflphone_la_LIBADD = \
@@ -47,7 +47,7 @@ libsflphone_la_LIBADD = \
 	./audio/libaudio.la \
 	./gui/libguiframework.la \
 	./config/libconfig.la \
-        $(IAX_LIBS)
+	$(IAX_LIBS)
 
 libsflphone_la_SOURCES =
 

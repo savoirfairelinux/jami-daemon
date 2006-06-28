@@ -13,7 +13,7 @@ dnl found, and sets @LIBREADLINE@ to the necessary libraries.
 AC_DEFUN([GNUPG_CHECK_READLINE],
 [
   AC_ARG_WITH(readline,
-     AC_HELP_STRING([--with-readline=DIR],
+     AS_HELP_STRING([--with-readline=DIR],
 	[look for the readline library in DIR]),
      [_do_readline=$withval],[_do_readline=yes])
 
@@ -28,7 +28,7 @@ AC_DEFUN([GNUPG_CHECK_READLINE],
         _combo="-lreadline${_termcap:+ $_termcap}"
         LIBS="$LIBS $_combo"
 
-        AC_MSG_CHECKING([whether readline via \"$_combo\" is present and sane])
+        AC_MSG_CHECKING([whether readline via "$_combo" is present and sane])
 
         AC_LINK_IFELSE(AC_LANG_PROGRAM([
 #include <stdio.h>

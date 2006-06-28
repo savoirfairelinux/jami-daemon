@@ -1,4 +1,4 @@
-This is SFLPhoned, release 0.7pre0cvs.
+This is SFLphone, release 0.7pre0cvs.
 
 Copyright (c) Savoir-faire Linux, Inc 2004-2006
   <sflphoneteam@savoirfairelinux.com>
@@ -16,6 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
 
 Introduction
 ------------
@@ -38,6 +40,7 @@ More information is available on the project homepage:
   http://www.sflphone.org/
 
 
+
 Getting the dependencies
 ------------------------
 
@@ -57,26 +60,27 @@ Optional libraries:
     http://developer.apple.com/darwin/projects/bonjour/
 - QT: required for the graphical user interface
     usually available in distribution repositories
-- speex : codec for sound
+- speex: codec for sound
 
 Some of the required libraries may be downloaded from
   http://www.sflphone.org/#downloads
   or
   http://www.sflphone.org/dev/
+
 See tools/config.sh for details
 
-Dependencies build instructions:
---------------------------------
-If you don't use development files of your distribution and you don't want 
-to go on dependencies web site, you can use a custom dependencies building 
-script in tools/ directory.
 
-1. Go to tools/ (cd tools)
-2. Change the default configuration in config.sh (~/sflphone) is the prefix
+
+Building the dependencies
+-------------------------
+
+If you do not use either the development packages of your distribution or the source packages made by the upstream authors of dependencies, you may want to try our custom dependencies building script in tools/ directory:
+1. cd tools/
+2. edit config.sh to change the default prefix (/usr/local)
 3. ./download.sh
 4. ./install.sh
  
-You can also compile each dependencies, one by one:
+You can also compile each dependency, one by one:
 
 1/	For commoncpp2
 	./configure [option]
@@ -94,6 +98,7 @@ You can also compile each dependencies, one by one:
 	make install
 
 
+
 Preparing a CVS checkout of SFLPhone to be built
 ------------------------------------------------
 
@@ -104,20 +109,25 @@ of SFLPhone has been tested with Automake 1.9 and Autoconf 2.59.
 To do so, you may run the following script from the top directory:
   ./tools/autotoolize.sh
 
+
+
 Building SFLPhone
 -----------------
 
-./configure [option]
+./configure
 make
 make install (as root) 
+
 
 
 Using SFLPhone
 --------------
 
-If you have the sflphone 0.3 or 0.4 release, copy the file sflphonerc to sflphonedrc
+If you have the sflphone 0.3 or 0.4 release, copy the file sflphonerc
+to sflphonedrc:
   cp ~/.sflphone/sflphonerc ~/.sflphone/sflphonedrc
-If you have an older version, remove your sflphonerc file located in $HOME/.sflphone
+If you have an older version, remove your sflphonerc file located in
+$HOME/.sflphone
 
 1. Install a GUI like sflphone-qt
 
@@ -132,8 +142,10 @@ A user's guide will be available on:
 http://www.sflphone.org/doc/
 
 
+
 What if it does not build?
--------------------------
+--------------------------
+
 - Try using the same versions of the libraries as we do.
   See http://www.sflphone.org in section Downloads.
 
@@ -179,27 +191,27 @@ Run-time troubleshooting
 
 
   
-Short description of content of source tree:
+Short description of content of source tree
 -------------------------------------------
 
 - ringtones/ contains the different ringtones.
 - stund/ is an implementation of the protocol STUN used when there is a NAT.
 - utilspp/ allows to implement a singleton.
-- src/ is the core of SFLphone. It contains the main.cpp, managerimpl.cpp files, 
-  audio and gui directories, and files about signalisation SIP. 
-  Later, it should be better, when IAX will be implemented, that a directory 
-  groups these protocols. 
+- src/ is the core of SFLphone. It contains the main.cpp, managerimpl.cpp
+  files, audio and gui directories, and files about signalisation SIP. Later,
+  it should be better, when IAX will be implemented, that a directory groups
+  these protocols. 
   The ManagerImpl class is the intermediaire between all the layer in the tree.
-
-- src/audio/ is the audio layer. It contains all about tones, dtmf, audiodriver,  
-  rtp layer, audio codec ulaw, alaw and gsm.
+- src/audio/ is the audio layer. It contains all about tones, dtmf,
+  audiodriver, rtp layer, audio codec ulaw, alaw and gsm.
 - src/audio/gsm/ contains the implementation of gsm audiocodec library.
 - src/audio/pacpp/ implements PortAudioCpp, a native C++ binding of 
   PortAudio V19.
-
-- src/gui/ is the old directory that contains all about different user interface.
-- src/gui/server is the directory that talk (tcp socket on port 3999) 
-  to sflphone client. The slfphone client can be a console program or a graphical interface
+- src/gui/ is the old directory that contains all about different user
+  interface.
+- src/gui/server is the directory that talk (tcp socket on port 3999) to
+  sflphone client. The slfphone client can be a console program or a graphical
+  interface.
 
 
 
@@ -250,6 +262,8 @@ About Savoir-Faire Linux
 ------------------------
 
 Savoir-Faire Linux is a consulting company based in Montreal, Quebec.
+For more information, please check out our website:
+http://www.savoirfairelinux.com/
 
 
 

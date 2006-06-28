@@ -120,11 +120,16 @@ AC_DEFUN([PORTAUDIO_CHECK_CONFIG],
            _portaudio_save_libs=$LIBS
            LIBS="$LIBS $PORTAUDIO"
 
-           AC_LINK_IFELSE(AC_LANG_PROGRAM([#include <portaudio.h>],[
-/* Try and use a few common options to force a failure if we are
-   missing symbols or can't link. */
+           AC_LINK_IFELSE(
+             [AC_LANG_PROGRAM(
+               [#include <portaudio.h>],
+               [[
+/* Try and use a few common options to force a failure
+   if we are missing symbols or can't link. */
 Pa_Initialize();
-]),portaudio_cv_lib_portaudio_usable=yes,portaudio_cv_lib_portaudio_usable=no)
+               ]])],
+             [portaudio_cv_lib_portaudio_usable=yes],
+             [portaudio_cv_lib_portaudio_usable=no])
 
            CPPFLAGS=$_portaudio_save_cppflags
            LIBS=$_portaudio_save_libs
