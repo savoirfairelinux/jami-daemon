@@ -396,7 +396,11 @@ ConfigurationPanel::slotRegisterReturn( bool hasError, QString )
   lblError->show();
 }
 
-void ConfigurationPanel::slotTestSoundDriver()
+/**
+ * Test sound driver (save them before)
+ */
+void 
+ConfigurationPanel::slotTestSoundDriver()
 {
   // save driver in configuration manager
   if (cboDriverChoiceOut->currentText() != NULL) {
@@ -411,6 +415,13 @@ void ConfigurationPanel::slotTestSoundDriver()
   ConfigurationManager::instance().save(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN);
   emit soundDriverChanged();
 }
+
+void 
+ConfigurationPanel::slotReloadSoundDriver()
+{
+  ConfigurationManager::instance().reloadSoundDriver();
+}
+
 
 void 
 ConfigurationPanel::slotSoundDriverReturn( bool hasError, QString message ) 

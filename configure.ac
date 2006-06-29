@@ -1,8 +1,8 @@
 dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.59)
-AC_INIT(SFLPhone, 0.7, sflphoneteam@savoirfairelinux.com, sflphone)
+AC_PREREQ(2.59e)
+AC_INIT([SFLPhone],[0.7],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2006]])
 AC_REVISION([$Revision$])
 

@@ -1,4 +1,7 @@
 SFLphoned (0.7.0) / 2006-..-..
+	* adding reload (sound driver) button
+	* fix: peer hangup remove flashing buttons
+	* removing old packaging stuff like FIXME or sflphone.spec.in
 	* fix: click on flashing buttons
 	* fix: send ringing, hangup, busy message
 	* fix for using call command two times in a row

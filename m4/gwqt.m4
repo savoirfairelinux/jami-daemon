@@ -47,7 +47,7 @@ if test x"$QTDIR" = x ; then
 	QT_SEARCH2="/usr/share/$i /usr/lib/$i /usr/local/$i"
 	for j in $QT_SEARCH2; do
             if test -f $j/include/qglobal.h -a x$QTDIR = x; then
-                QTDIR=$i
+                QTDIR=$j
                 break 2
             fi
         done

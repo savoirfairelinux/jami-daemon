@@ -23,6 +23,7 @@
 #include "DebugOutput.hpp"
 #include "Session.hpp"
 #include "taxidermy/Hunter.hpp"
+#include "Request.hpp" // don't know if it's a good idea for this class to know request...
 
 ConfigurationManagerImpl::ConfigurationManagerImpl()
   : mSession(NULL)
@@ -213,3 +214,23 @@ ConfigurationManagerImpl::get(const QString &section,
   return value;
 }
 
+void 
+ConfigurationManagerImpl::reloadSoundDriver() {
+
+  mAudioDevicesOut.clear();
+  mAudioDevicesIn.clear();
+
+  Request *r;
+  r = mSession->list("audiodevicein");
+  QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
+		   this, SLOT(addAudioDeviceIn(QString, QString, QString)));
+  QObject::connect(r, SIGNAL(success(QString, QString)),
+		   this, SIGNAL(audioDevicesInUpdated()));
+
+  r = mSession->list("audiodeviceout");
+  QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
+		   this, SLOT(addAudioDeviceOut(QString, QString, QString)));
+  QObject::connect(r, SIGNAL(success(QString, QString)),
+		   this, SIGNAL(audioDevicesOutUpdated()));
+
+} 

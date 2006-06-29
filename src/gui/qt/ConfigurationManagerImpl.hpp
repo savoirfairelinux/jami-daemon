@@ -158,6 +158,11 @@ public:
 
   void finishSave();
 
+  /**
+   * Reload sound driver from audiodevice in/audiodevice out
+   */
+  void reloadSoundDriver();
+  
 public slots:
   void add(const ConfigEntry &entry);
 
