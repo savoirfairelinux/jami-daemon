@@ -39,7 +39,7 @@ private:
 
   void initSpeex();
   void terminateSpeex();
-  SpeexMode* _speexModePtr;
+  const SpeexMode* _speexModePtr;
   SpeexBits  _speex_dec_bits;
   SpeexBits  _speex_enc_bits;
   void *_speex_dec_state;
