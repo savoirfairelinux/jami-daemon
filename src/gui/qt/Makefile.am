@@ -20,7 +20,8 @@ BUILT_SOURCES = \
     ./SessionIOmoc.cpp \
     ./TCPSessionIOmoc.cpp \
     ./TransparentWidgetmoc.cpp \
-    ./VolumeControlmoc.cpp 
+    ./VolumeControlmoc.cpp \
+    ./qmake_image_collection.cpp
 
 IMAGES = $(top_srcdir)/images/*.png
 
@@ -106,8 +107,7 @@ sflphone_qt_SOURCES = \
     ./VolumeControl.cpp \
     ./VolumeControl.hpp \
     ./globals.h \
-    ./main.cpp \
-    ./qmake_image_collection.cpp
+    ./main.cpp
 
 CLEANFILES = \
 	$(BUILT_SOURCES)
