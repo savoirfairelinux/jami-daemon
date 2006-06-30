@@ -76,7 +76,7 @@ class Session
   /**
    * This function will register with the default account.
    */
-  Request *registerToServer() const;
+  Request *registerToServer(const QString&) const;
 
   /**
    * This function try to switch audio (sound) driver

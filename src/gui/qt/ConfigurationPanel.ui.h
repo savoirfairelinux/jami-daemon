@@ -127,30 +127,19 @@ ConfigurationPanel::generate()
   ringsChoice->setCurrentText(ConfigurationManager::instance().get(AUDIO_SECTION,
 				   AUDIO_RINGTONE));
   
-  QString account = ACCOUNT_DEFAULT_NAME;
-  QString type    = ConfigurationManager::instance().get(account, ACCOUNT_TYPE);
-  QString active  = ConfigurationManager::instance().get(account, ACCOUNT_ENABLE);
 
   // For signalisations tab
-  autoregister->setChecked(ConfigurationManager::instance()
-			   .get(account,ACCOUNT_AUTO_REGISTER).toUInt());
 
-  fullName->setText(ConfigurationManager::instance()
-		    .get(account,SIGNALISATION_FULL_NAME));
-  userPart->setText(ConfigurationManager::instance()
-		    .get(account,SIGNALISATION_USER_PART));
-  username->setText(ConfigurationManager::instance()
-		    .get(account,SIGNALISATION_AUTH_USER_NAME));
-  password->setText(ConfigurationManager::instance()
-		    .get(account,SIGNALISATION_PASSWORD));
-  hostPart->setText(ConfigurationManager::instance()
-		    .get(account,SIGNALISATION_HOST_PART));
-  sipproxy->setText(ConfigurationManager::instance()
-		    .get(account,SIGNALISATION_PROXY));
-  STUNserver->setText(ConfigurationManager::instance()
-		      .get(account,SIGNALISATION_STUN_SERVER));
-  ((QRadioButton*)stunButtonGroup->find(ConfigurationManager::instance()
-			.get(account,SIGNALISATION_USE_STUN).toUInt()))->setChecked(true); 
+  // Load account
+  QComboBox* cbo = cboSIPAccount;
+  cbo->clear();
+  int nbItem = 4;
+  QString accountName;
+  for (int iItem = 0; iItem < nbItem; iItem++) {
+    accountName = "SIP" + QString::number(iItem);
+    cbo->insertItem(accountName,iItem);
+  }
+  loadSIPAccount(0);
 
   sendDTMFas->setCurrentItem(ConfigurationManager::instance()
 			     .get(SIGNALISATION_SECTION,
@@ -172,31 +161,7 @@ ConfigurationPanel::generate()
 // For saving settings at application 'save'
 void ConfigurationPanel::saveSlot()
 {
-  QString account = ACCOUNT_DEFAULT_NAME;
-  ConfigurationManager::instance().set(account, 
-				       SIGNALISATION_FULL_NAME,
-				       fullName->text());
-  ConfigurationManager::instance().set(account, 
-				       SIGNALISATION_USER_PART,
-				       userPart->text());
-  ConfigurationManager::instance().set(account, 
-				       SIGNALISATION_AUTH_USER_NAME,
-				       username->text());
-  ConfigurationManager::instance().set(account, 
-				       SIGNALISATION_PASSWORD,
-				       password->text());
-  ConfigurationManager::instance().set(account, 
-				       SIGNALISATION_HOST_PART,
-				       hostPart->text());
-  ConfigurationManager::instance().set(account, 
-				       SIGNALISATION_PROXY,
-				       sipproxy->text());
-  ConfigurationManager::instance().set(account, 
-				       ACCOUNT_AUTO_REGISTER,
-				       QString::number(autoregister->isChecked()));
-  ConfigurationManager::instance().set(account, 
-				       SIGNALISATION_STUN_SERVER,
-				       STUNserver->text());
+  saveSIPAccount(cboSIPAccount->currentItem());
 
   ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
 				       SIGNALISATION_PULSE_LENGTH,
@@ -379,8 +344,8 @@ ConfigurationPanel::SkinChoice_selected( const QString & )
 void
 ConfigurationPanel::slotRegister()
 {
-  saveSlot();
-  emit needRegister();
+  saveSIPAccount(cboSIPAccount->currentItem());
+  emit needRegister("SIP" + QString::number(cboSIPAccount->currentItem()));
 }
 
 void 
@@ -435,3 +400,79 @@ ConfigurationPanel::slotSoundDriverReturn( bool hasError, QString message )
   lblSoundDriver->show();
 }
 
+void 
+ConfigurationPanel::slotSIPAccountChange(int index) 
+{
+  if (lastSIPAccount!=index) {
+    QString account = "SIP" + QString::number(index);
+    DebugOutput::instance() << "Selecting SIP account " << account << "\n";
+
+    saveSIPAccount(lastSIPAccount);
+    loadSIPAccount(index);  
+    lblError->setText("");
+  }
+}
+
+void
+ConfigurationPanel::loadSIPAccount(int number) 
+{
+  QString account = "SIP" + QString::number(number);
+  QString type    = ConfigurationManager::instance().get(account, ACCOUNT_TYPE);
+
+  chkAutoregister->setChecked(ConfigurationManager::instance()
+			   .get(account,ACCOUNT_AUTO_REGISTER).toUInt());
+
+  chkEnable->setChecked(ConfigurationManager::instance()
+			   .get(account,ACCOUNT_ENABLE).toUInt());
+
+  fullName->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_FULL_NAME));
+  userPart->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_USER_PART));
+  username->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_AUTH_USER_NAME));
+  password->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_PASSWORD));
+  hostPart->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_HOST_PART));
+  sipproxy->setText(ConfigurationManager::instance()
+		    .get(account,SIGNALISATION_PROXY));
+  STUNserver->setText(ConfigurationManager::instance()
+		      .get(account,SIGNALISATION_STUN_SERVER));
+  ((QRadioButton*)stunButtonGroup->find(ConfigurationManager::instance()
+			.get(account,SIGNALISATION_USE_STUN).toUInt()))->setChecked(true); 
+  lastSIPAccount = number;
+}
+
+void
+ConfigurationPanel::saveSIPAccount(int number)
+{
+  QString account = "SIP" + QString::number(number);
+  ConfigurationManager::instance().set(account, 
+				       SIGNALISATION_FULL_NAME,
+				       fullName->text());
+  ConfigurationManager::instance().set(account, 
+				       SIGNALISATION_USER_PART,
+				       userPart->text());
+  ConfigurationManager::instance().set(account, 
+				       SIGNALISATION_AUTH_USER_NAME,
+				       username->text());
+  ConfigurationManager::instance().set(account, 
+				       SIGNALISATION_PASSWORD,
+				       password->text());
+  ConfigurationManager::instance().set(account, 
+				       SIGNALISATION_HOST_PART,
+				       hostPart->text());
+  ConfigurationManager::instance().set(account, 
+				       SIGNALISATION_PROXY,
+				       sipproxy->text());
+  ConfigurationManager::instance().set(account, 
+				       ACCOUNT_AUTO_REGISTER,
+				       QString::number(chkAutoregister->isChecked()));
+  ConfigurationManager::instance().set(account, 
+				       ACCOUNT_ENABLE,
+				       QString::number(chkEnable->isChecked()));
+  ConfigurationManager::instance().set(account, 
+				       SIGNALISATION_STUN_SERVER,
+				       STUNserver->text());
+}

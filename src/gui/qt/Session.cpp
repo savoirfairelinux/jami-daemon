@@ -160,10 +160,10 @@ Session::list(const QString &category) const
 }
 
 Request *
-Session::registerToServer() const
+Session::registerToServer(const QString& account) const
 {
   std::list< QString > args;
-  args.push_back(getDefaultAccount().id());
+  args.push_back(account);
   return Requester::instance().send(mId, "register", args);
 }
 

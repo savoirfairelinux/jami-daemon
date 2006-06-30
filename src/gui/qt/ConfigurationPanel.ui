@@ -143,6 +143,10 @@
                             <property name="margin">
                                 <number>0</number>
                             </property>
+                                    <widget class="QComboBox">
+                                     <property name="name"><cstring>cboSIPAccount</cstring></property>
+                                     <property name="currentItem"><number>0</number></property>
+                                    </widget>
                             <widget class="QGroupBox">
                                 <property name="name">
                                     <cstring>groupBox1</cstring>
@@ -282,10 +286,21 @@
                                             </property>
                                             <widget class="QCheckBox">
                                                 <property name="name">
-                                                    <cstring>autoregister</cstring>
+                                                    <cstring>chkAutoregister</cstring>
                                                 </property>
                                                 <property name="text">
                                                     <string>Auto-register</string>
+                                                </property>
+                                                <property name="checked">
+                                                    <bool>true</bool>
+                                                </property>
+                                            </widget>
+                                            <widget class="QCheckBox">
+                                                <property name="name">
+                                                    <cstring>chkEnable</cstring>
+                                                </property>
+                                                <property name="text">
+                                                    <string>Enable</string>
                                                 </property>
                                                 <property name="checked">
                                                     <bool>true</bool>
@@ -1421,6 +1436,12 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
 </images>
 <connections>
     <connection>
+        <sender>cboSIPAccount</sender>
+        <signal>activated(int)</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>slotSIPAccountChange(int)</slot>
+    </connection>
+    <connection>
         <sender>buttonOk</sender>
         <signal>clicked()</signal>
         <receiver>ConfigurationPanel</receiver>
@@ -1482,13 +1503,15 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
     </connection>
 </connections>
 <tabstops>
+    <tabstop>cboSIPAccount</tabstop>
     <tabstop>fullName</tabstop>
     <tabstop>userPart</tabstop>
     <tabstop>hostPart</tabstop>
     <tabstop>username</tabstop>
     <tabstop>password</tabstop>
     <tabstop>sipproxy</tabstop>
-    <tabstop>autoregister</tabstop>
+    <tabstop>chkAutoregister</tabstop>
+    <tabstop>chkEnable</tabstop>
     <tabstop>buttonRegister</tabstop>
     <tabstop>buttonOk</tabstop>
     <tabstop>buttonCancel</tabstop>
@@ -1516,11 +1539,12 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
     <include location="local" impldecl="in implementation">ConfigurationPanel.ui.h</include>
 </includes>
 <signals>
-    <signal>needRegister()</signal>
+    <signal>needRegister(const QString&amp;)</signal>
     <signal>soundDriverChanged()</signal>
 </signals>
 <slots>
     <slot>generate()</slot>
+    <slot>slotSIPAccountChange(int)</slot>
     <slot>slotRegister()</slot>
     <slot>slotRegisterReturn( bool, QString )</slot>
     <slot>slotTestSoundDriver()</slot>
@@ -1540,6 +1564,13 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
+    <function access="private" specifier="non virtual">loadSIPAccount(int number)</function>
+    <function access="private" specifier="non virtual">saveSIPAccount(int number)</function>
 </functions>
+<variables>
+    <variable access="private">int lastSIPAccount;</variable>
+</variables>
+
+
 <layoutdefaults spacing="6" margin="11"/>
 </UI>

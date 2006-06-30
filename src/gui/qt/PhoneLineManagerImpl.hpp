@@ -96,7 +96,7 @@ public slots:
 
   void hasDisconnected();
 
-  void slotRegisterToServer();
+  void slotRegisterToServer(const QString&);
   void slotRegisterFailed(QString, QString);
   void slotRegisterSucceed(QString, QString);
   void slotReloadSoundDriver();

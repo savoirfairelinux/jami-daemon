@@ -128,8 +128,8 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
   }
 
 
-  QObject::connect(w, SIGNAL(needRegister()),
-                   &PhoneLineManager::instance(), SLOT(slotRegisterToServer()));
+  QObject::connect(w, SIGNAL(needRegister(const QString&)),
+                   &PhoneLineManager::instance(), SLOT(slotRegisterToServer(const QString&)));
   QObject::connect(&PhoneLineManager::instance(), SIGNAL(registerReturn(bool, QString)), 
                    w, SIGNAL(registerReturn(bool, QString)));
 

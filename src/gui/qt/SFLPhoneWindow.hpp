@@ -66,7 +66,7 @@ signals:
   void audioDevicesOutUpdated();
   void codecsUpdated();
 
-  void needRegister();
+  void needRegister(const QString&);
   void registerReturn(bool, QString);
 
   void soundDriverChanged();

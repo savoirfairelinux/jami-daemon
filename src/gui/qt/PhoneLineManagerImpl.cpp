@@ -125,11 +125,11 @@ PhoneLineManagerImpl::connect()
 }
 
 void
-PhoneLineManagerImpl::slotRegisterToServer()
+PhoneLineManagerImpl::slotRegisterToServer(const QString& account)
 {
   isInitialized();
 
-  Request *r = mSession->registerToServer();
+  Request *r = mSession->registerToServer(account);
   QObject::connect(r, SIGNAL(success(QString, QString)),
 		   this, SLOT(slotRegisterSucceed(QString, QString)));
   QObject::connect(r, SIGNAL(error(QString, QString)),

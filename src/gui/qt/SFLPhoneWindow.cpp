@@ -64,7 +64,7 @@ SFLPhoneWindow::SFLPhoneWindow()
   connect(this, SIGNAL(audioDevicesOutUpdated()),mSetupPanel, SLOT(updateAudioDevicesOut()));
   connect(this, SIGNAL(codecsUpdated()),         mSetupPanel, SLOT(updateCodecs()));
 
-  connect(mSetupPanel, SIGNAL(needRegister()), this, SIGNAL(needRegister()));
+  connect(mSetupPanel, SIGNAL(needRegister(const QString&)), this, SIGNAL(needRegister(const QString&)));
   connect(this, SIGNAL(registerReturn(bool, QString)),  mSetupPanel, SLOT(slotRegisterReturn(bool, QString)));
   
   // when we receive a signal from mSetupPanel, we should resend one to...

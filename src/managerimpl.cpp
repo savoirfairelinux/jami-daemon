@@ -425,6 +425,8 @@ ManagerImpl::initRegisterVoIPLink()
         if (iter->second->shouldRegisterOnStart()) {
           iter->second->registerAccount();
         }
+	// init only the first account
+	break;
       }
     }
     iter++;
@@ -1588,6 +1590,7 @@ ManagerImpl::getNewCallID()
   random_id << (unsigned)rand();
   
   // when it's not found, it return ""
+  // generate, something like s10000s20000s4394040
   while (getAccountFromCall(random_id.str()) != AccountNULL) {
     random_id.clear();
     random_id << "s";
@@ -1601,8 +1604,15 @@ ManagerImpl::loadAccountMap()
 {
   short nbAccount = 0;
 
-  _accountMap[ACCOUNT_SIP0] = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, ACCOUNT_SIP0);
-  nbAccount++;
+  // SIP Loading 4 account...
+  short nbAccountSIP = 4;
+  for (short iAccountSIP = 0; iAccountSIP<nbAccountSIP; iAccountSIP++) {
+     std::ostringstream accountName;
+     accountName << "SIP" << iAccountSIP;
+    _accountMap[accountName.str()] = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountName.str());
+     nbAccount++;
+  }
+
 
   Account* account = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, ACCOUNT_IAX0);
   if (account != 0) {
