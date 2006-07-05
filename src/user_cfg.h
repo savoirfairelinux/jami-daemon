@@ -66,7 +66,8 @@
 #define CODEC2			"Codecs.codec2"
 #define CODEC3			"Codecs.codec3"
 #define RING_CHOICE		"Rings.ringChoice"
-
+#define ACCOUNT_SIP_COUNT_DEFAULT 4
+#define ACCOUNT_IAX_COUNT_DEFAULT 1
 
 // speakers and volume 0 to 100
 #define VOLUME_SPKR	"Volume.speakers"

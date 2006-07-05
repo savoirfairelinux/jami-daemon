@@ -995,19 +995,10 @@ ManagerImpl::initConfigFile (void)
   std::string section;
   section = SIGNALISATION;
   fill_config_int(SYMMETRIC, YES_STR);
-  //fill_config_str(FULL_NAME, EMPTY_FIELD);
-  //fill_config_str(USER_PART, EMPTY_FIELD);
-  //fill_config_str(AUTH_USER_NAME, EMPTY_FIELD);
-  //fill_config_str(PASSWORD, EMPTY_FIELD);
-  //fill_config_str(HOST_PART, EMPTY_FIELD);
-  //fill_config_str(PROXY, EMPTY_FIELD);
-  //fill_config_int(AUTO_REGISTER, YES_STR);
   fill_config_int(PLAY_DTMF, YES_STR);
   fill_config_int(PLAY_TONES, YES_STR);
   fill_config_int(PULSE_LENGTH, DFT_PULSE_LENGTH_STR);
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
-  //fill_config_str(STUN_SERVER, DFT_STUN_SERVER);
-  //fill_config_int(USE_STUN, NO_STR);
 
   section = AUDIO;
   fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);
@@ -1604,8 +1595,8 @@ ManagerImpl::loadAccountMap()
 {
   short nbAccount = 0;
 
-  // SIP Loading 4 account...
-  short nbAccountSIP = 4;
+  // SIP Loading X account...
+  short nbAccountSIP = ACCOUNT_SIP_COUNT_DEFAULT;
   for (short iAccountSIP = 0; iAccountSIP<nbAccountSIP; iAccountSIP++) {
      std::ostringstream accountName;
      accountName << "SIP" << iAccountSIP;
@@ -1613,13 +1604,14 @@ ManagerImpl::loadAccountMap()
      nbAccount++;
   }
 
-
-  Account* account = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, ACCOUNT_IAX0);
-  if (account != 0) {
-    _accountMap[ACCOUNT_IAX0] = account;
-    nbAccount++;
+  // IAX Loading X account...
+  short nbAccountIAX = ACCOUNT_IAX_COUNT_DEFAULT;
+  for (short iAccountIAX = 0; iAccountIAX<nbAccountIAX; iAccountIAX++) {
+     std::ostringstream accountName;
+     accountName << "IAX" << iAccountIAX;
+    _accountMap[accountName.str()] = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountName.str());
+     nbAccount++;
   }
-  account = 0;
 
   return nbAccount;
 }

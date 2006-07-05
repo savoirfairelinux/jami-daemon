@@ -27,7 +27,6 @@ AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libs/Makefile \
   libs/taxidermy/Makefile \
-  libs/portaudio/Makefile \
   libs/stund/Makefile \
   libs/utilspp/Makefile \
   libs/utilspp/functor/Makefile \
@@ -36,11 +35,6 @@ AC_CONFIG_FILES([src/Makefile \
   src/sflphone \
   src/audio/Makefile \
   src/audio/gsm/Makefile \
-  src/audio/pacpp/Makefile \
-  src/audio/pacpp/include/Makefile \
-  src/audio/pacpp/include/portaudiocpp/Makefile \
-  src/audio/pacpp/source/Makefile \
-  src/audio/pacpp/source/portaudiocpp/Makefile \
   src/config/Makefile \
   src/gui/Makefile \
   src/gui/qt/Makefile \
@@ -128,7 +122,7 @@ AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
   strchr strdup strerror strrchr strstr strtol utime])
 
 dnl Check for portaudio
-PORTAUDIO_SETUP
+dnl PORTAUDIO_SETUP
 
 dnl Check for exosip2
 LP_CHECK_EXOSIP2
@@ -163,6 +157,16 @@ LIBCCRT_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
+
+LIBPORTAUDIO_MIN_VERSION=19
+PKG_CHECK_MODULES(libportaudio, portaudio-2.0 >= ${LIBPORTAUDIO_MIN_VERSION})
+SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libportaudio_CFLAGS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS $libportaudio_LIBS"
+
+LIBPORTAUDIOCPP_MIN_VERSION=12
+PKG_CHECK_MODULES(libportaudiocpp, portaudiocpp >= ${LIBPORTAUDIOCPP_MIN_VERSION})
+SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libportaudiocpp_CFLAGS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS $libportaudiocpp_LIBS"
 
 dnl Check for speex
 AC_ARG_ENABLE(speex, 
