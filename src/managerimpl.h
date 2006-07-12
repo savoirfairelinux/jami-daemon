@@ -196,6 +196,11 @@ public:
   bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
   bool detachZeroconfEvents(Pattern::Observer& observer);
   bool getCallStatus(const std::string& sequenceId);
+  /** 
+   * Get account list and status
+   * @param return true if there is atleast one active
+   */
+  bool getAccountList(const std::string& sequenceId);
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);
   bool setConfig(const std::string& section, const std::string& name, const std::string& value);
@@ -363,6 +368,8 @@ private:
   Conf::ConfigTree _config;
   bool getCountryTones(const std::string& sequenceId);
   void sendCountryTone(const std::string& sequenceId, int index, const std::string& name);
+  
+
 
   /**
    * Tell if there is a current call processed

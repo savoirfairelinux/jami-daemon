@@ -123,6 +123,7 @@ RequestFactory::registerAll() {
   registerRequest<RequestZeroconf>    ("getzeroconf");
   registerRequest<RequestZeroconfEvent>("getzeroconfevents");
   registerRequest<RequestCallStatus>  ("getcallstatus");
+  registerRequest<RequestAccountList> ("getaccount");
   registerRequest<RequestConfigGetAll>("configgetall");
   registerRequest<RequestConfigGet>   ("configget");
   registerRequest<RequestConfigSet>   ("configset");

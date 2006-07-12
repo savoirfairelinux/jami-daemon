@@ -84,6 +84,7 @@ public:
   bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
   bool detachZeroconfEvents(Pattern::Observer& observer);
   bool getCallStatus(const std::string& sequenceId);
+  bool getAccountList(const std::string& sequenceId);
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section,  const std::string& name, TokenList& arg);
   bool setConfig(const std::string& section, const std::string& name, const std::string& value);

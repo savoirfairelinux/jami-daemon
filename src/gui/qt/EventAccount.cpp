@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
@@ -15,52 +15,36 @@
  *                                                                              
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __EVENT_HPP__
-#define __EVENT_HPP__
+#include "globals.h"
 
-#include <list>
-#include <qstring.h>
+#include "EventAccount.hpp"
+#include "PhoneLineManager.hpp"
 
-class Event
+AccountItemEvent::AccountItemEvent(const QString &code,
+		       const std::list< QString > &args)
+  : Event(code, args)
 {
-public:
-  Event(const QString &code,
-	const std::list< QString > &args);    
-  virtual ~Event(){}
-  
-  virtual void execute();
+  std::list< QString > l = getUnusedArgs();
+  if(l.size() >= 3) {
+    mAccountId = *l.begin();
+    l.pop_front();
+    mStatus = *l.begin();
+    l.pop_front();
+    setUnusedArgs(l);
+  }
+}
 
-  virtual QString toString();
-
-  std::list< QString > getUnusedArgs()
-  {return mUnusedArgs;}
-
-  void setUnusedArgs(const std::list< QString > &args)
-  {mUnusedArgs = args;}
-
-protected:
-  QString& getCode() { return mCode; }
-
-private:
-  QString mCode;
-  std::list< QString > mUnusedArgs;
-  std::list< QString > mArgs;
-};
-
-class CallRelatedEvent : public Event
+void
+AccountItemEvent::execute()
 {
-public:
-  CallRelatedEvent(const QString &code,
-		   const std::list< QString > &args);
-
-  QString getCallId();
+  bool isEnabled = false;
+  if (getCode() == "130") {
+    isEnabled = true;
+  }
+  // PhoneLineManager::instance().addAccount(mAccountId, isEnabled);
   
-private:
-  QString mCallId;
-};
+}
 
-
-#endif

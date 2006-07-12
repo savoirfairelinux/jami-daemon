@@ -35,7 +35,6 @@ class PhoneLine : public QObject
   
 public:
   PhoneLine(const Session &session, 
-	    const Account &account, 
 	    unsigned int line);
   ~PhoneLine();
 
@@ -163,10 +162,8 @@ private:
   void setCall(Call *call);
   void setCall(const Call &call);
   void clearCall();
-  
 
   Session mSession;
-  Account mAccount;
   Call *mCall;
   unsigned int mLine;
 

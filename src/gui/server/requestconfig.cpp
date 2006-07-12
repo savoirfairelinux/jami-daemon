@@ -79,6 +79,21 @@ RequestCallStatus::execute()
 }
 
 ResponseMessage
+RequestAccountList::execute()
+{
+  std::string code;
+  std::string response;
+  if ( GUIServer::instance().getAccountList(_sequenceId) ) {
+    code = "200";
+    response = "OK";
+  } else {
+    code = "400";
+    response = "No active account";
+  }
+  return message(code, _(response));
+}
+
+ResponseMessage
 RequestConfigGetAll::execute()
 {
   if (GUIServer::instance().getConfigAll(_sequenceId)) {

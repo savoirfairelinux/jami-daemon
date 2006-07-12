@@ -27,10 +27,8 @@
 #include "Request.hpp"
 
 PhoneLine::PhoneLine(const Session &session,
-		     const Account &account,
 		     unsigned int line)
   : mSession(session)
-  , mAccount(account)
   , mCall(NULL)
   , mLine(line)
   , mSelected(false)
@@ -298,19 +296,22 @@ PhoneLine::call(const QString &to)
   if(!mCall) {
     setLineStatus(tr("Calling %1...").arg(to));
     Call *call;
-    Request *r = mAccount.createCall(call, to);
-    // entry
-    connect(r, SIGNAL(entry(QString, QString)),
+    const Account* account = mSession.getSelectedAccount();
+    if (account) {
+      Request *r = account->createCall(call, to);
+      // entry
+      connect(r, SIGNAL(entry(QString, QString)),
 	    this, SLOT(setLineStatus(QString)));
 
-    connect(r, SIGNAL(error(QString, QString)),
+      connect(r, SIGNAL(error(QString, QString)),
 	    this, SLOT(error(QString)));
 
-    connect(r, SIGNAL(success(QString, QString)),
+      connect(r, SIGNAL(success(QString, QString)),
 	    this, SLOT(setTalkingState()));
 
-    setCall(call);
-    clear();
+      setCall(call);
+      clear();
+    }
   }
 }
 

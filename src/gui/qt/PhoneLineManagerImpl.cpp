@@ -28,6 +28,7 @@
 #include "ConfigurationManager.hpp"
 #include "SFLEvents.hpp"
 #include "SFLCallStatus.hpp"
+#include "EventAccount.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineLocker.hpp"
 #include "PhoneLineManager.hpp"
@@ -37,7 +38,6 @@
 
 PhoneLineManagerImpl::PhoneLineManagerImpl()
   : mSession(NULL)
-  , mAccount(NULL)
   , mCurrentLine(NULL)
   , mIsInitialized(false)
   , mVolume(-1)
@@ -68,6 +68,10 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   EventFactory::instance().registerEvent< BusyStatus >("114");
   EventFactory::instance().registerEvent< CongestionStatus >("115");
   EventFactory::instance().registerEvent< WrongNumberStatus >("116");
+
+  EventFactory::instance().registerEvent< AccountItemEvent >("130");
+  EventFactory::instance().registerEvent< AccountItemEvent >("131");
+
   QObject::connect(this, SIGNAL(disconnected()),        this, SLOT(closeSession()));
   QObject::connect(this, SIGNAL(readyToHandleEvents()), this, SLOT(handleEvents()));
   QObject::connect(this, SIGNAL(connected()),           this, SIGNAL(readyToSendStatus()));
@@ -78,7 +82,6 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
 PhoneLineManagerImpl::~PhoneLineManagerImpl()
 {
   delete mSession;
-  delete mAccount;
   for(std::vector< PhoneLine * >::iterator pos = mPhoneLines.begin();
       pos != mPhoneLines.end();
       pos++) {
@@ -104,7 +107,6 @@ PhoneLineManagerImpl::initialize(const Session &session)
   if(!mIsInitialized) {
     mIsInitialized = true;
     mSession = new Session(session);
-    mAccount = new Account(mSession->getDefaultAccount());
   }
 }
 
@@ -286,7 +288,7 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
 
   mPhoneLines.clear();
   for(unsigned int i = 0; i < nb; i++) {
-    PhoneLine *p = new PhoneLine(*mSession, *mAccount, i + 1);
+    PhoneLine *p = new PhoneLine(*mSession, i + 1);
     QObject::connect(p, SIGNAL(lineStatusChanged(QString)),
 		     this, SIGNAL(unselectedLineStatusSet(QString)));
     mPhoneLines.push_back(p);

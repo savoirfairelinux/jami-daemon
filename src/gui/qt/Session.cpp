@@ -26,17 +26,31 @@
 #include "Session.hpp"
 #include "Requester.hpp"
 #include "SessionIOFactory.hpp"
+#include "globals.h"
 
 
 Session::Session(const QString &id)
-  : mId(id)
-{}
+  : mId(id), mSelectedAccountId(ACCOUNT_DEFAULT_NAME)
+{
+  mAccountMap[mSelectedAccountId] = new Account(mId, mSelectedAccountId);
+}
 
 Session::Session()
 {
   mId = Requester::instance().generateSessionId();
   SessionIO *s = SessionIOFactory::instance().create();
   Requester::instance().registerSession(mId, s);
+}
+
+Session::~Session()
+{
+  // remove account
+  std::map<QString, Account*>::iterator iter = mAccountMap.begin();
+  while ( iter != mAccountMap.end() ) {
+    delete iter->second; iter->second = 0;
+    iter++;
+  }
+  mAccountMap.clear();
 }
 
 QString
@@ -141,6 +155,12 @@ Session::getCallStatus() const
   return Requester::instance().send(mId, "getcallstatus", std::list< QString >());
 }
 
+Request* 
+Session::getAccountList() const
+{
+  return Requester::instance().send(mId, "getaccount", std::list< QString >());
+}
+
 Request *
 Session::playDtmf(char c) const
 {
@@ -184,6 +204,15 @@ Session::getAccount(const QString &name) const
 Account
 Session::getDefaultAccount() const
 {
-  return Account(mId, QString("SIP0"));
+  return Account(mId, QString(ACCOUNT_DEFAULT_NAME));
 }
 
+Account*
+Session::getSelectedAccount()
+{
+  std::map< QString, Account* >::iterator iter = mAccountMap.find(mSelectedAccountId);
+  if (iter!=mAccountMap.end()) {
+    return iter->second;
+  }
+  return 0;
+}

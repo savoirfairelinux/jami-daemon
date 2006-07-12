@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
@@ -18,49 +18,23 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __EVENT_HPP__
-#define __EVENT_HPP__
+#ifndef __REQUESTACCOUNT_HPP__
+#define __REQUESTACCOUNT_HPP__
 
-#include <list>
-#include <qstring.h>
+#include "Event.hpp"
 
-class Event
+class AccountItemEvent : public Event
 {
 public:
-  Event(const QString &code,
-	const std::list< QString > &args);    
-  virtual ~Event(){}
+  AccountItemEvent(const QString &code,
+	     const std::list< QString > &args);
   
-  virtual void execute();
-
-  virtual QString toString();
-
-  std::list< QString > getUnusedArgs()
-  {return mUnusedArgs;}
-
-  void setUnusedArgs(const std::list< QString > &args)
-  {mUnusedArgs = args;}
+  void execute();
 
 protected:
-  QString& getCode() { return mCode; }
-
-private:
-  QString mCode;
-  std::list< QString > mUnusedArgs;
-  std::list< QString > mArgs;
+  QString mAccountId;
+  QString mStatus;
 };
-
-class CallRelatedEvent : public Event
-{
-public:
-  CallRelatedEvent(const QString &code,
-		   const std::list< QString > &args);
-
-  QString getCallId();
-  
-private:
-  QString mCallId;
-};
-
 
 #endif
+

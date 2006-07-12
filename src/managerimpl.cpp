@@ -1485,6 +1485,30 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
   }
 }
 
+bool 
+ManagerImpl::getAccountList(const std::string& sequenceId) 
+{
+  bool oneActive = false;
+  TokenList tk;
+
+  AccountMap::iterator iter = _accountMap.begin();
+  while ( iter != _accountMap.end() ) {
+    tk.push_back(iter->first);
+    if ( iter->second->isEnabled() ) {
+      tk.push_back("Active");
+      _gui->sendMessage("130", sequenceId, tk);
+      oneActive = true;
+    } else {
+      tk.push_back("Inactive");
+      _gui->sendMessage("131", sequenceId, tk);
+    }
+    tk.clear();
+    iter++;
+  }
+
+  return oneActive;
+}
+
 //THREAD=Main
 /*
  * Experimental...

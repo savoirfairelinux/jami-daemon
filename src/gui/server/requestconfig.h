@@ -51,6 +51,11 @@ public:
   ResponseMessage execute();
 };
 
+class RequestAccountList : public RequestGlobal {
+public:
+  RequestAccountList(const std::string &sequenceId, const TokenList& argList) : RequestGlobal(sequenceId,argList) {}
+  ResponseMessage execute();
+};
 
 class RequestConfigGetAll : public RequestGlobal {
 public:

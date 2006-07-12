@@ -36,6 +36,8 @@ sflphone_qt_SOURCES = \
     ./CallManagerImpl.hpp \
     ./CallStatus.cpp \
     ./CallStatus.hpp \
+    ./EventAccount.cpp \
+    ./EventAccount.hpp \
     ./CallStatusFactory.hpp \
     ./ConfigurationManager.hpp \
     ./ConfigurationManagerImpl.cpp \

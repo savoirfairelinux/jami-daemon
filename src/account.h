@@ -50,6 +50,12 @@ public:
   virtual void loadConfig() = 0;
 
   /**
+   * Get the account ID
+   * @return constant account id
+   */
+  inline const AccountID& getAccountID() { return _accountID; }
+
+  /**
    * Get the voiplink pointer
    * @return the pointer or 0
    */
@@ -90,6 +96,11 @@ public:
    * @return true if we must init the link
    */
   bool shouldRegisterOnStart() {return _shouldRegisterOnStart; }
+
+  /**
+   * Tell if the account is enable or not
+   */
+  bool isEnabled() { return _enabled; }
 
 private:
   /**

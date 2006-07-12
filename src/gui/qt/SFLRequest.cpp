@@ -28,11 +28,13 @@
 #include "CallManager.hpp"
 #include "CallStatus.hpp"
 #include "CallStatusFactory.hpp"
+#include "RequestAccount.hpp"
 #include "ConfigurationManager.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineLocker.hpp"
 #include "PhoneLineManager.hpp"
 #include "SFLRequest.hpp"
+#include "EventAccount.hpp"
 
 EventRequest::EventRequest(const QString &sequenceId,
 			   const QString &command,
@@ -73,7 +75,6 @@ CallStatusRequest::CallStatusRequest(const QString &sequenceId,
   : Request(sequenceId, command, args)
 {}
 
-
 void
 CallStatusRequest::onError(const QString &code, const QString &message)
 {
@@ -107,6 +108,36 @@ CallStatusRequest::onSuccess(const QString &code, const QString &message)
     }
   }
   PhoneLineManager::instance().handleEvents();
+}
+
+AccountStatusRequest::AccountStatusRequest(const QString &sequenceId,
+				     const QString &command,
+				     const std::list< QString > &args)
+  : Request(sequenceId, command, args)
+{}
+
+void
+AccountStatusRequest::onError(const QString &code, const QString &message)
+{
+  DebugOutput::instance() << QObject::tr("CallStatusRequest error: (%1) %1\n")
+    .arg(code)
+    .arg(message);
+  //PhoneLineManager::instance().errorOnCallStatus(message);
+}
+
+void
+AccountStatusRequest::onEntry(const QString &code, const QString &message)
+{
+  std::auto_ptr< Event > 
+    e(EventFactory::instance().create(code, Request::parseArgs(message)));
+  e->execute();
+}
+
+void
+AccountStatusRequest::onSuccess(const QString &code, const QString &message)
+{
+  DebugOutput::instance() << QObject::tr("AccountStatusRequest success: (%1) %1\n").arg(code).arg(message);
+  //PhoneLineManager::instance().handleEvents();
 }
 
 

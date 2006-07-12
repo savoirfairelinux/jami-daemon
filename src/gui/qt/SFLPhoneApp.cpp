@@ -66,6 +66,7 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
 
   Requester::instance().registerObject< EventRequest >(QString("getevents"));
   Requester::instance().registerObject< CallStatusRequest >(QString("getcallstatus"));
+  Requester::instance().registerObject< AccountStatusRequest >(QString("getaccount"));
   Requester::instance().registerObject< PermanentRequest >(QString("answer"));
   Requester::instance().registerObject< PermanentRequest >(QString("notavailable"));
   Requester::instance().registerObject< PermanentRequest >(QString("refuse"));

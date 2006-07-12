@@ -336,7 +336,6 @@ private:
 
 private:
   Session *mSession;
-  Account *mAccount;
 
   std::vector< PhoneLine * > mPhoneLines;
   PhoneLine *mCurrentLine;

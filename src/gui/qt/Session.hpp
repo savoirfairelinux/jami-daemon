@@ -23,6 +23,7 @@
 #define SFLPHONEGUI_SESSION_H
 
 #include <qstring.h>
+#include <map>
 
 #include "Account.hpp"
 
@@ -31,6 +32,7 @@ class Session
  public:
   Session();
   Session(const QString &id);
+  ~Session();
   
   /**
    * retreive the account identified by name.
@@ -38,6 +40,25 @@ class Session
   Account getAccount(const QString &name) const;
 
   Account getDefaultAccount() const;
+
+  /**
+   * Return the first or selected account object
+   * or 0 if not found
+   */
+  Account* getSelectedAccount();
+
+  /**
+   * Set Selected Account ID
+   * @param accountID account id
+   */
+  void setSelectedAccountID(const QString &accountID) {
+    mSelectedAccountId = accountID;
+  }
+
+  /**
+   * retreive account 
+   */
+  Request* getAccountList() const;
 
   /**
    * This function will play a tone. This is
@@ -121,6 +142,8 @@ class Session
 
  private:
   QString mId;
+  QString mSelectedAccountId;
+  std::map<QString, Account*> mAccountMap;
 };
 
 #endif
