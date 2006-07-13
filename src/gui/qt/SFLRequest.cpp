@@ -28,7 +28,7 @@
 #include "CallManager.hpp"
 #include "CallStatus.hpp"
 #include "CallStatusFactory.hpp"
-#include "RequestAccount.hpp"
+#include "EventAccount.hpp"
 #include "ConfigurationManager.hpp"
 #include "PhoneLine.hpp"
 #include "PhoneLineLocker.hpp"
@@ -107,7 +107,7 @@ CallStatusRequest::onSuccess(const QString &code, const QString &message)
       DebugOutput::instance() << QObject::tr("CallStatusRequest Error: cannot get current line.\n");
     }
   }
-  PhoneLineManager::instance().handleEvents();
+  PhoneLineManager::instance().emitReadyToShow();
 }
 
 AccountStatusRequest::AccountStatusRequest(const QString &sequenceId,
@@ -119,15 +119,16 @@ AccountStatusRequest::AccountStatusRequest(const QString &sequenceId,
 void
 AccountStatusRequest::onError(const QString &code, const QString &message)
 {
-  DebugOutput::instance() << QObject::tr("CallStatusRequest error: (%1) %1\n")
+  DebugOutput::instance() << QObject::tr("AccountStatusRequest error: (%1) %1\n")
     .arg(code)
     .arg(message);
-  //PhoneLineManager::instance().errorOnCallStatus(message);
+  PhoneLineManager::instance().slotHasEnabledAccount(false);
 }
 
 void
 AccountStatusRequest::onEntry(const QString &code, const QString &message)
 {
+  DebugOutput::instance() << "AccountStatusRequest: " << code << " : " << message << "\n";
   std::auto_ptr< Event > 
     e(EventFactory::instance().create(code, Request::parseArgs(message)));
   e->execute();
@@ -137,7 +138,7 @@ void
 AccountStatusRequest::onSuccess(const QString &code, const QString &message)
 {
   DebugOutput::instance() << QObject::tr("AccountStatusRequest success: (%1) %1\n").arg(code).arg(message);
-  //PhoneLineManager::instance().handleEvents();
+  PhoneLineManager::instance().slotHasEnabledAccount(true);
 }
 
 

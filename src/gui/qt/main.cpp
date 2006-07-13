@@ -60,11 +60,10 @@ int main(int argc, char **argv)
   PhoneLineManager::instance().connect();
   //splash->finish(sfl);
   //sfl->show();
-  QObject::connect(&PhoneLineManager::instance(), SIGNAL(connected()),
-		   splash, SLOT(hide()));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(readyToShow()), splash, SLOT(hide()));
 
   // we connect this app to connected() signal, to handle argument
-  QObject::connect(&PhoneLineManager::instance(), SIGNAL(handleEventsSent()), &app, SLOT(handleArg()));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(readyToShow()), &app, SLOT(handleArg()));
 
 
 

@@ -37,16 +37,15 @@ class Session
   /**
    * retreive the account identified by name.
    */
-  Account getAccount(const QString &name) const;
-
-  Account getDefaultAccount() const;
+  Account* getAccount(const QString &name);
 
   /**
    * Return the first or selected account object
    * or 0 if not found
    */
   Account* getSelectedAccount();
-
+  void addAccount(const QString& name, bool isEnabled);
+  
   /**
    * Set Selected Account ID
    * @param accountID account id

@@ -24,17 +24,14 @@
 #include <qtimer.h>
 #include <qdatetime.h>
 
-#include "Account.hpp"
-#include "Session.hpp"
-
 class Call;
-
+class Session;
 class PhoneLine : public QObject
 {
   Q_OBJECT
   
 public:
-  PhoneLine(const Session &session, 
+  PhoneLine(Session *session, 
 	    unsigned int line);
   ~PhoneLine();
 
@@ -163,7 +160,7 @@ private:
   void setCall(const Call &call);
   void clearCall();
 
-  Session mSession;
+  Session *mSession;
   Call *mCall;
   unsigned int mLine;
 

@@ -63,7 +63,7 @@ RequestZeroconfEvent::update()
 ResponseMessage
 RequestCallStatus::execute()
 {
-  GUIServer::instance().sendGetEventsEnd();
+  //GUIServer::instance().sendGetEventsEnd();
   TokenList tk;
   tk.push_back(_("OK"));
   std::string code = "206";

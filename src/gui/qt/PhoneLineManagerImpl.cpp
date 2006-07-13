@@ -47,8 +47,7 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   , mLastNumber("")
 {
   EventFactory::instance().registerDefaultEvent< DefaultEvent >();
-  // TODO: 000
-  EventFactory::instance().registerEvent< CallRelatedEvent >("000");
+  EventFactory::instance().registerEvent< GetEventEvent >("000");
   EventFactory::instance().registerEvent< IncommingEvent >("001");
   EventFactory::instance().registerEvent< HangupEvent >("002");
 
@@ -72,11 +71,15 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   EventFactory::instance().registerEvent< AccountItemEvent >("130");
   EventFactory::instance().registerEvent< AccountItemEvent >("131");
 
+  // if TCPSessionIO::!connected! -> this::!connected! -> handleEvents (getEvents)
+  // if this::!getEventReady! -> this->readyToGetAccount -> startSession() -> getAccountList
+  // if this::!readyToGetStatus! -> getCallStatus()
+  // if this::!readyToShow! -> ...
   QObject::connect(this, SIGNAL(disconnected()),        this, SLOT(closeSession()));
-  QObject::connect(this, SIGNAL(readyToHandleEvents()), this, SLOT(handleEvents()));
-  QObject::connect(this, SIGNAL(connected()),           this, SIGNAL(readyToSendStatus()));
-  QObject::connect(this, SIGNAL(readyToSendStatus()),   this, SLOT(startSession()));
-  
+  QObject::connect(this, SIGNAL(connected()),           this, SLOT(handleEvents()));
+  QObject::connect(this, SIGNAL(readyToGetAccount()),   this, SLOT(startSession()));
+  QObject::connect(this, SIGNAL(readyToGetCallStatus()),this, SLOT(getCallStatus()));
+  QObject::connect(this, SIGNAL(readyToShow()), this, SLOT(slotPreShow())); 
 }
 
 PhoneLineManagerImpl::~PhoneLineManagerImpl()
@@ -174,6 +177,11 @@ PhoneLineManagerImpl::slotSoundDriverFailed(QString message, QString /* code */)
   emit testSoundDriverReturn(true, message);
 }
 
+void
+PhoneLineManagerImpl::slotHasEnabledAccount(bool /* enable */) 
+{
+  emit readyToGetCallStatus(); 
+}
 
 void
 PhoneLineManagerImpl::stop()
@@ -198,8 +206,21 @@ PhoneLineManagerImpl::startSession()
   closeSession();
 
   mIsConnected = true;
+  emit globalStatusSet(QString(tr("Trying to get account status....")));
+  mSession->getAccountList();
+}
+
+void
+PhoneLineManagerImpl::getCallStatus() 
+{
   emit globalStatusSet(QString(tr("Trying to get line status...")));
   mSession->getCallStatus();
+}
+
+void 
+PhoneLineManagerImpl::slotPreShow()
+{
+  emit globalStatusSet(QString(tr("Welcome to SFLPhone")));
 }
 
 void 
@@ -207,7 +228,6 @@ PhoneLineManagerImpl::handleEvents()
 {
   isInitialized();
 
-  emit globalStatusSet(QString(tr("Welcome to SFLPhone")));
   mSession->getEvents();
 
   Request *r;
@@ -288,7 +308,7 @@ PhoneLineManagerImpl::setNbLines(unsigned int nb)
 
   mPhoneLines.clear();
   for(unsigned int i = 0; i < nb; i++) {
-    PhoneLine *p = new PhoneLine(*mSession, i + 1);
+    PhoneLine *p = new PhoneLine(mSession, i + 1);
     QObject::connect(p, SIGNAL(lineStatusChanged(QString)),
 		     this, SIGNAL(unselectedLineStatusSet(QString)));
     mPhoneLines.push_back(p);
@@ -795,7 +815,7 @@ PhoneLineManagerImpl::setMicVolume(int volume)
     mSession->micVolume(volume);
     updateMicVolume(volume);
   }
-}
+ }
 
 void
 PhoneLineManagerImpl::incomingMessageText(const QString& message) 
@@ -805,4 +825,11 @@ PhoneLineManagerImpl::incomingMessageText(const QString& message)
   messageBox.exec();
 }
 
+void
+PhoneLineManagerImpl::addAccount(const QString& name, bool isEnabled) 
+{
+  if (mSession!=0) {
+    mSession->addAccount(name, isEnabled);
+  }
+}
 

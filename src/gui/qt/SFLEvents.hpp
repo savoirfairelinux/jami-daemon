@@ -34,6 +34,15 @@ public:
   virtual void execute();
 };
 
+class GetEventEvent : public Event
+{
+public:
+  GetEventEvent(const QString &code,
+	      const std::list< QString > &args) : Event(code, args) {} 
+  
+  virtual void execute();
+};
+
 class HangupEvent : public CallRelatedEvent
 {
 public:

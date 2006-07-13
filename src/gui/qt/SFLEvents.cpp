@@ -36,6 +36,10 @@ DefaultEvent::execute()
   DebugOutput::instance() << QObject::tr("DefaultEvent: We don't handle: %1\n").arg(toString());
 }
 
+void GetEventEvent::execute() 
+{
+  PhoneLineManager::instance().emitReadyAccount();
+}
 
 HangupEvent::HangupEvent(const QString &code,
 			 const std::list< QString > &args)

@@ -27,12 +27,11 @@
 #include "Requester.hpp"
 #include "SessionIOFactory.hpp"
 #include "globals.h"
-
+#include "DebugOutput.hpp"
 
 Session::Session(const QString &id)
-  : mId(id), mSelectedAccountId(ACCOUNT_DEFAULT_NAME)
+  : mId(id), mSelectedAccountId("")
 {
-  mAccountMap[mSelectedAccountId] = new Account(mId, mSelectedAccountId);
 }
 
 Session::Session()
@@ -195,18 +194,6 @@ Session::switchAudioDriver() const
   return Requester::instance().send(mId, "switch", args);
 }
 
-Account
-Session::getAccount(const QString &name) const
-{
-  return Account(mId, name);
-}
-
-Account
-Session::getDefaultAccount() const
-{
-  return Account(mId, QString(ACCOUNT_DEFAULT_NAME));
-}
-
 Account*
 Session::getSelectedAccount()
 {
@@ -215,4 +202,28 @@ Session::getSelectedAccount()
     return iter->second;
   }
   return 0;
+}
+
+Account*
+Session::getAccount(const QString& name)  
+{
+  std::map< QString, Account* >::iterator iter = mAccountMap.find(mSelectedAccountId);
+  if (iter!=mAccountMap.end()) {
+    return iter->second;
+  }
+  return 0;
+}
+
+void
+Session::addAccount(const QString& name, bool isEnabled) 
+{
+  std::map<QString, Account* >::iterator iter = mAccountMap.find(name);
+  if (iter == mAccountMap.end()) {
+    mAccountMap[name] = new Account(mId, name);
+    // select account is the first enabled
+    if (mSelectedAccountId.isEmpty() && isEnabled) {
+      DebugOutput::instance() << "Default account is " << name << "\n";  
+      mSelectedAccountId = name;
+    }
+  }
 }

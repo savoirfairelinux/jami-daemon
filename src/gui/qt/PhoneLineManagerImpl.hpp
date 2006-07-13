@@ -64,14 +64,17 @@ public:
   void setNbLines(unsigned int line);
 
   bool isConnected() { return mIsConnected; }
-
+  void emitReadyAccount() { emit readyToGetAccount(); }
+  void emitReadyToShow() { emit readyToShow(); }
+  void addAccount(const QString& name, bool isEnabled);   
 signals:
   void unselected(unsigned int);
   void selected(unsigned int);
   void connected();
   void disconnected();
-  void readyToSendStatus();
-  void readyToHandleEvents();
+  void readyToGetAccount();
+  void readyToGetCallStatus();
+  void readyToShow();
   void handleEventsSent();
   void gotErrorOnGetEvents(QString);
   void gotErrorOnCallStatus(QString);
@@ -102,6 +105,9 @@ public slots:
   void slotReloadSoundDriver();
   void slotSoundDriverFailed(QString, QString);
   void slotSoundDriverSucceed(QString, QString);
+  void slotHasEnabledAccount(bool);
+  void getCallStatus();
+  void slotPreShow();
 
   /**
    * You need to call this function once. It must be
@@ -333,7 +339,7 @@ private:
    */
   void isInitialized();
   void select(PhoneLine *line, bool hardselect = false);
-
+  
 private:
   Session *mSession;
 

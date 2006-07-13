@@ -25,8 +25,9 @@
 #include "DebugOutput.hpp"
 #include "PhoneLine.hpp"
 #include "Request.hpp"
+#include "Session.hpp"
 
-PhoneLine::PhoneLine(const Session &session,
+PhoneLine::PhoneLine(Session *session,
 		     unsigned int line)
   : mSession(session)
   , mCall(NULL)
@@ -47,6 +48,7 @@ PhoneLine::PhoneLine(const Session &session,
 PhoneLine::~PhoneLine()
 {
   clearCall();
+  mSession = 0;
 }
 
 void 
@@ -272,7 +274,7 @@ PhoneLine::sendKey(Qt::Key c)
 
     if (QChar(c).isDigit() || c == Qt::Key_Asterisk || c == Qt::Key_NumberSign) {
       if(!mCall) {
-	mSession.playDtmf(c);
+	mSession->playDtmf(c);
       }
       else {
 	mCall->sendDtmf(c);
@@ -296,8 +298,8 @@ PhoneLine::call(const QString &to)
   if(!mCall) {
     setLineStatus(tr("Calling %1...").arg(to));
     Call *call;
-    const Account* account = mSession.getSelectedAccount();
-    if (account) {
+    const Account* account = mSession->getSelectedAccount();
+    if (account!=0) {
       Request *r = account->createCall(call, to);
       // entry
       connect(r, SIGNAL(entry(QString, QString)),
@@ -311,6 +313,8 @@ PhoneLine::call(const QString &to)
 
       setCall(call);
       clear();
+    } else {
+      DebugOutput::instance() << tr("Phone Line has no active account to make a call\n");
     }
   }
 }

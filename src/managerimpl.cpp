@@ -1399,6 +1399,10 @@ bool
 ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask) 
 {
   bool returnValue = false;
+  AudioLayer* audiolayer = getAudioDriver();
+  if (audiolayer == 0) {
+    return false;
+  }
   try {
     // TODO: test when there is an error on initializing...
     TokenList tk;
@@ -1406,13 +1410,37 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
 
     const char *hostApiName;
     const char *deviceName;
+    int deviceIsSupported = false;
+    int deviceRate = audiolayer->getSampleRate();
 
     for (int index = 0; index < sys.deviceCount(); index++ ) {
       portaudio::Device& device = sys.deviceByIndex(index);
-
-      if ((ioDeviceMask == AudioLayer::InputDevice  && !device.isOutputOnlyDevice()) ||
-          (ioDeviceMask == AudioLayer::OutputDevice && !device.isInputOnlyDevice() ) ||
-           device.isFullDuplexDevice()) {
+      deviceIsSupported = false;
+      // TODO, put this code into AudioDriver()
+      if (ioDeviceMask == AudioLayer::InputDevice && !device.isOutputOnlyDevice()) {
+	//portaudio::DirectionSpecificStreamParameters inputParameters(device, device.maxInputChannels(), portaudio::INT16, true, 0.0, NULL);
+	//portaudio::DirectionSpecificStreamParameters outputParameters = portaudio::DirectionSpecificStreamParameters::null();
+	//portaudio::StreamParameters tmp = portaudio::StreamParameters(inputParameters, outputParameters, deviceRate, 0, paNoFlag);
+	//if (tmp.isSupported()) {
+	  deviceIsSupported = true;
+	//}
+	
+      } else if (ioDeviceMask == AudioLayer::OutputDevice && !device.isInputOnlyDevice()) {
+     	//portaudio::DirectionSpecificStreamParameters inputParameters = portaudio::DirectionSpecificStreamParameters::null();
+	//portaudio::DirectionSpecificStreamParameters outputParameters(device, device.maxOutputChannels(), portaudio::INT16, true, 0.0, NULL);
+	//portaudio::StreamParameters tmp = portaudio::StreamParameters(inputParameters, outputParameters, deviceRate, 0, paNoFlag);
+	//if (tmp.isSupported()) {
+	  deviceIsSupported = true;
+	//}	   
+      } else if (device.isFullDuplexDevice()) {
+	//portaudio::DirectionSpecificStreamParameters inputParameters(device, device.maxInputChannels(), portaudio::INT16, true, 0.0, NULL);
+	//portaudio::DirectionSpecificStreamParameters outputParameters(device, device.maxOutputChannels(), portaudio::INT16, true, 0.0, NULL);
+	//portaudio::StreamParameters tmp = portaudio::StreamParameters(inputParameters, outputParameters, deviceRate, 0, paNoFlag);
+	//if (tmp.isSupported()) {
+	  deviceIsSupported = true;
+	//}		        
+      }
+      if (deviceIsSupported) {
         hostApiName = device.hostApi().name();
         deviceName  = device.name();
 
@@ -1427,6 +1455,8 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
   } catch (...) {
     returnValue = false;
   }
+
+  audiolayer->startStream();
 
   return returnValue;
 }
@@ -1493,16 +1523,19 @@ ManagerImpl::getAccountList(const std::string& sequenceId)
 
   AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
-    tk.push_back(iter->first);
-    if ( iter->second->isEnabled() ) {
-      tk.push_back("Active");
-      _gui->sendMessage("130", sequenceId, tk);
-      oneActive = true;
-    } else {
-      tk.push_back("Inactive");
-      _gui->sendMessage("131", sequenceId, tk);
+    if ( iter->second != 0 ) {
+      _debug("Account List: %s\n", iter->first.data()); 
+      tk.push_back(iter->first);
+      if ( iter->second->isEnabled() ) {
+        tk.push_back("Active");
+        _gui->sendMessage("130", sequenceId, tk);
+        oneActive = true;
+      } else {
+        tk.push_back("Inactive");
+        _gui->sendMessage("131", sequenceId, tk);
+      }
+      tk.clear();
     }
-    tk.clear();
     iter++;
   }
 
@@ -1618,23 +1651,33 @@ short
 ManagerImpl::loadAccountMap()
 {
   short nbAccount = 0;
-
+  Account* tmpAccount;
+  
   // SIP Loading X account...
   short nbAccountSIP = ACCOUNT_SIP_COUNT_DEFAULT;
   for (short iAccountSIP = 0; iAccountSIP<nbAccountSIP; iAccountSIP++) {
-     std::ostringstream accountName;
-     accountName << "SIP" << iAccountSIP;
-    _accountMap[accountName.str()] = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountName.str());
-     nbAccount++;
+    std::ostringstream accountName;
+    accountName << "SIP" << iAccountSIP;
+    
+    tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountName.str());
+     if (tmpAccount!=0) {
+       _debug("Adding Account: %s\n", accountName.str().data());
+       _accountMap[accountName.str()] = tmpAccount;
+      nbAccount++;
+    }
   }
 
   // IAX Loading X account...
   short nbAccountIAX = ACCOUNT_IAX_COUNT_DEFAULT;
   for (short iAccountIAX = 0; iAccountIAX<nbAccountIAX; iAccountIAX++) {
-     std::ostringstream accountName;
-     accountName << "IAX" << iAccountIAX;
-    _accountMap[accountName.str()] = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountName.str());
-     nbAccount++;
+    std::ostringstream accountName;
+    accountName << "IAX" << iAccountIAX;
+    tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountName.str());
+    if (tmpAccount!=0) {
+       _debug("Adding Account: %s\n", accountName.str().data());
+       _accountMap[accountName.str()] = tmpAccount;
+      nbAccount++;
+    }
   }
 
   return nbAccount;
