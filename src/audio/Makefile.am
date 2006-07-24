@@ -1,4 +1,4 @@
-SUBDIRS = gsm pacpp 
+SUBDIRS = gsm 
 
 noinst_LTLIBRARIES = libaudio.la
 
