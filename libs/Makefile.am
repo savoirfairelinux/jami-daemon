@@ -4,4 +4,4 @@ else
 qtdir = 
 endif
 
-SUBDIRS = portaudio stund $(qtdir) utilspp
+SUBDIRS = stund $(qtdir) utilspp
