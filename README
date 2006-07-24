@@ -54,7 +54,12 @@ Required libraries and tools:
     http://savannah.gnu.org/projects/osip/
 - libxml2, libxml2-devel, pkgconfig
     usually available in distribution repositories
-
+- portaudio v19,  
+    available on http://www.portaudio.com/
+    http://portaudio.com/archives/pa_snapshot_v19.tar.gz
+    or
+    svn co https://www.portaudio.com/repos/portaudio/branches/v19-devel portaudio
+    
 Optional libraries:
 - zeroconf: (tested with mDNSResponder87)
     http://developer.apple.com/darwin/projects/bonjour/
@@ -79,6 +84,7 @@ If you do not use either the development packages of your distribution or the so
 2. edit config.sh to change the default prefix (/usr/local)
 3. ./download.sh
 4. ./install.sh
+5. ./portaudio.sh <-- compile portaudio
  
 You can also compile each dependency, one by one:
 
@@ -97,6 +103,13 @@ You can also compile each dependency, one by one:
 	make
 	make install
 
+4/	For portaudio v19
+	./configure --enable-cxx [option]
+	make
+	make install
+
+	Note: if you install portaudio in /usr/local, don't forget to set pkg-config path with:
+	export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
 
 
 Preparing a CVS checkout of SFLPhone to be built
