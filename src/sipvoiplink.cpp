@@ -224,7 +224,7 @@ SIPVoIPLink::getEvent()
        _debug("EXOSIP_REGISTRATION_REFRESHED event is not implemented\n");
        break;
      case EXOSIP_REGISTRATION_TERMINATED:  /** 04 < UA is not registred any more.    */
-       _debug("EXOSIP_REGISTRATION_TERMINATED event is not implmeneted\n");
+       _debug("EXOSIP_REGISTRATION_TERMINATED event is not implemented\n");
        break;
       
       /* INVITE related events within calls */

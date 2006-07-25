@@ -102,6 +102,11 @@ public:
    */
   bool isEnabled() { return _enabled; }
 
+  /**
+   * Tell if the latest registration succeed or failed 
+   */
+  bool setState(bool state) { _state = state; }
+
 private:
   /**
    * Create a unique voIPLink() depending on the protocol
@@ -144,6 +149,11 @@ protected:
    * Modified by unregister/register
    */
   bool _registered;
+
+  /**
+   * The latest registration was a success or not
+   */
+  bool _state;
 
 };
 

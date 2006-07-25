@@ -27,6 +27,7 @@ Account::Account(const AccountID& accountID) : _accountID(accountID)
   _shouldRegisterOnStart = false;
   _enabled = false;
   _registered = false;
+  _state = false;
 }
 
 

@@ -440,8 +440,19 @@ ManagerImpl::registerVoIPLink(const AccountID& accountId)
 {
   _debug("Register VoIP Link\n");
   int returnValue = false;
-  if (accountExists( accountId ) ) {
-    returnValue = getAccount(accountId)->registerAccount();
+  // right now, we don't support two SIP account
+  // so we close everything before registring a new account
+  Account* account = getAccount(accountId);
+  if (account != 0) {
+    AccountMap::iterator iter = _accountMap.begin();
+    while ( iter != _accountMap.end() ) {
+      if ( iter->second ) {
+        iter->second->unregisterAccount();
+        iter->second->terminate();
+      }
+      iter++;
+    }
+    returnValue = account->registerAccount();
   }
   return returnValue;
 }
@@ -453,7 +464,7 @@ ManagerImpl::unregisterVoIPLink(const AccountID& accountId)
   _debug("Unregister VoIP Link\n");
   int returnValue = false;
   if (accountExists( accountId ) ) {
-    returnValue = getAccount(accountId)->registerAccount();
+    returnValue = getAccount(accountId)->unregisterAccount();
   }
   return returnValue;
 }
@@ -739,20 +750,28 @@ void
 ManagerImpl::stopVoiceMessageNotification(const AccountID& accountId)
 {
   if (_gui) _gui->sendVoiceNbMessage(accountId, std::string("0"));
-}
+} 
 
 //THREAD=VoIP
 void 
 ManagerImpl::registrationSucceed(const AccountID& accountid)
 {
-  if (_gui) _gui->sendRegistrationState(accountid, true);
+  Account* acc = getAccount(accountid);
+  if ( acc ) { 
+    acc->setState(true); 
+    if (_gui) _gui->sendRegistrationState(accountid, true);
+  }
 }
 
 //THREAD=VoIP
 void 
 ManagerImpl::registrationFailed(const AccountID& accountid)
 {
-  if (_gui) _gui->sendRegistrationState(accountid, false);
+  Account* acc = getAccount(accountid);
+  if ( acc ) { 
+    acc->setState(false);
+    if (_gui) _gui->sendRegistrationState(accountid, false);
+  }
 }
 
 /**

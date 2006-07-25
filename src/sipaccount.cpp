@@ -55,6 +55,7 @@ bool
 SIPAccount::registerAccount()
 {
   if (_link) {
+    init(); // init if not enable
     unregisterAccount();
     SIPVoIPLink* tmplink = dynamic_cast<SIPVoIPLink*> (_link);
     if (tmplink) {
