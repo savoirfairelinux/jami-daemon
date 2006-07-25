@@ -134,9 +134,8 @@ ConfigurationPanel::generate()
   QComboBox* cbo = cboSIPAccount;
   cbo->clear();
   int nbItem = 4;
-  QString accountName;
   for (int iItem = 0; iItem < nbItem; iItem++) {
-    accountName = "SIP" + QString::number(iItem);
+    QString accountName = QObject::tr("SIP Account #%1").arg(iItem+1);
     cbo->insertItem(accountName,iItem);
   }
   loadSIPAccount(0);
@@ -353,10 +352,10 @@ ConfigurationPanel::slotRegisterReturn( bool hasError, QString )
 {
   if (hasError) {
     lblError->setPaletteForegroundColor(red); // red
-    lblError->setText("Register failed");
+    lblError->setText(QObject::tr("Register failed"));
   } else {
     lblError->setPaletteForegroundColor(black); // black
-    lblError->setText("Register Succeed");
+    lblError->setText(QObject::tr("Register Succeed"));
   }
   lblError->show();
 }
@@ -404,11 +403,12 @@ void
 ConfigurationPanel::slotSIPAccountChange(int index) 
 {
   if (lastSIPAccount!=index) {
+    
     QString account = "SIP" + QString::number(index);
     DebugOutput::instance() << "Selecting SIP account " << account << "\n";
 
     saveSIPAccount(lastSIPAccount);
-    loadSIPAccount(index);  
+    loadSIPAccount(index);
     lblError->setText("");
   }
 }
