@@ -20,6 +20,10 @@
 #include "iaxvoiplink.h"
 #include "manager.h"
 
+#define IAX_HOST "IAX.host"
+#define IAX_USER "IAX.user"
+#define IAX_PASS "IAX.pass"
+
 IAXAccount::IAXAccount(const AccountID& accountID)
  : Account(accountID)
 {
@@ -45,6 +49,14 @@ bool
 IAXAccount::registerAccount()
 {
   if (_link && !_registered) {
+    init();
+    unregisterAccount();
+    IAXVoIPLink* tmplink = dynamic_cast<IAXVoIPLink*> (_link);
+    if (tmplink) {
+      tmplink->setHost(Manager::instance().getConfigString(_accountID,IAX_HOST));
+      tmplink->setUser(Manager::instance().getConfigString(_accountID,IAX_USER));
+      tmplink->setPass(Manager::instance().getConfigString(_accountID,IAX_PASS));
+    }
     _registered = _link->setRegister();
   }
   return _registered;
@@ -91,6 +103,10 @@ IAXAccount::initConfig(Conf::ConfigTree& config)
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_TYPE, "IAX", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ENABLE,"1", type_int));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_AUTO_REGISTER, "1", type_int));
+
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_HOST, "", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_USER, "", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_PASS, "", type_str));
 }
 
 void

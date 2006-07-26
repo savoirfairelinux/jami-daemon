@@ -57,6 +57,11 @@ public:
   bool carryingDTMFdigits(const CallID& id, char code) { return false; }
   bool sendMessage(const std::string& to, const std::string& body) { return false; }
 
+public: // iaxvoiplink only
+  void setHost(const std::string& host) { _host = host; }
+  void setUser(const std::string& user) { _user = user; }
+  void setPass(const std::string& pass) { _pass = pass; }
+
 private:
   /**
    * Find a iaxcall by iax session number
@@ -79,7 +84,16 @@ private:
   void iaxHandleRegReply(iax_event* event);
 
   EventThread* _evThread;
+  /** registration session : 0 if not register */
   struct iax_session* _regSession;
+
+  /** IAX Host */
+  std::string _host;
+  /** IAX User */
+  std::string _user;
+  /** IAX Password */
+  std::string _pass;
+  
 };
 
 #endif

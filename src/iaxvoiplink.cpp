@@ -21,6 +21,8 @@
 #include "iaxcall.h"
 #include "eventthread.h"
 
+#include "manager.h"
+
 #define IAX_SUCCESS  0
 #define IAX_FAILURE -1
 
@@ -76,6 +78,7 @@ IAXVoIPLink::getEvent()
   iax_event* event = 0;
   IAXCall* call = 0;
   while ( (event = iax_get_event(0)) != 0 ) {
+    _debug ("Receive IAX Event: %d\n", event->etype);
     call = iaxFindCallBySession(event->session);
     if (call!=0) {
 	iaxHandleCallEvent(event, call);
@@ -83,7 +86,7 @@ IAXVoIPLink::getEvent()
     	// in iaxclient, there is many session handling, here, only one
 	iaxHandleRegReply(event);
     } else {
-    	switch(e->etype) {
+    	switch(event->etype) {
 		case IAX_EVENT_REGACK:
 		case IAX_EVENT_REGREJ:
 			_debug("Unknown IAX Registration Event\n");
@@ -101,7 +104,7 @@ IAXVoIPLink::getEvent()
 		break;
 
 		default: 
-			_debug("Unknown event type: %d\n", event->type);
+			_debug("Unknown event type: %d\n", event->etype);
 	}
     }
     iax_event_free(event);
@@ -117,7 +120,16 @@ IAXVoIPLink::getEvent()
 bool
 IAXVoIPLink::setRegister() 
 {
+  bool result = false;
   if (_regSession==0) {
+    if (_host.empty()) {
+      Manager::instance().displayConfigError("Fill host field for IAX Account");
+      return false;
+    }
+    if (_user.empty()) {
+      Manager::instance().displayConfigError("Fill user field for IAX Account");
+      return false;
+    }
     // lock
 
     _regSession = iax_session_new();
@@ -127,11 +139,22 @@ IAXVoIPLink::setRegister()
     } else {
       // refresh
       // last reg
+      char host[_host.length()+1]; 
+      strcpy(host, _host.c_str());
+      char user[_user.length()+1];
+      strcpy(user, _user.c_str());
+      char pass[_pass.length()+1]; 
+      strcpy(pass, _pass.c_str());
+      //iax_register don't use const char*
+
+      _debug("Sending registration to %s with user %s\n", host, user);
+      iax_register(_regSession, host, user, pass, 300);
+      result = true;
     }
 
-	// unlock
+   // unlock
   }
-  return false;
+  return result;
 }
 
 bool
@@ -164,7 +187,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
   // call should not be 0
   // note activity?
   //
-  switch(event->type) {
+  switch(event->etype) {
     case IAX_EVENT_HANGUP:
     break;
 
@@ -195,8 +218,8 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     case IAX_EVENT_URL:
     break;
     
-    case IAX_EVENT_CNG:
-    break;
+//    case IAX_EVENT_CNG: ??
+//    break;
     
     case IAX_EVENT_TIMEOUT:
     break;
@@ -205,7 +228,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
     default:
-      _debug("Unknown event type: %d\n", event->type);
+      _debug("Unknown event type: %d\n", event->etype);
     
   }
 }
