@@ -16,17 +16,34 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#ifndef IAXCALL_H
+#define IAXCALL_H
 
-#include "iaxcall.h"
-#include "global.h" // for _debug
+#include "call.h"
+#include <iax-client.h>
 
-IAXCall::IAXCall(const CallID& id, Call::CallType type) : Call(id, type), _session(0) 
+/**
+ * IAXCall are IAX implementation of a normal Call 
+ * @author Yan Morin <yan.morin@gmail.com>
+ */
+class IAXCall : public Call
 {
-	
-}
+public:
+    IAXCall(const CallID& id, Call::CallType type);
 
-IAXCall::~IAXCall() 
-{
-  _session = 0; // just to be sure to don't have unknown pointer, do not delete it!
-}
+    ~IAXCall();
 
+    /** Get the session pointer or 0 */
+    struct iax_session* getSession() { return _session; }
+
+    /** Set the session pointer 
+     * @param session the session pointer to assign
+     */
+    void setSession(struct iax_session* session) { _session = session; }
+
+private:
+    // each call is associate to a session
+    struct iax_session* _session;
+};
+
+#endif

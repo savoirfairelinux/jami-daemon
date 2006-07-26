@@ -18,6 +18,8 @@
  */
 #include "iaxvoiplink.h"
 #include "global.h" // for _debug
+#include "iaxcall.h"
+#include "eventthread.h"
 
 #define IAX_SUCCESS  0
 #define IAX_FAILURE -1
@@ -25,11 +27,14 @@
 IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
  : VoIPLink(accountID)
 {
+  _evThread = new EventThread(this);
 }
 
 
 IAXVoIPLink::~IAXVoIPLink()
 {
+  delete _evThread; _evThread = 0;
+  terminate();
 }
 
 bool
@@ -58,4 +63,58 @@ IAXVoIPLink::terminate()
 //  iaxc_shutdown();  
 //  hangup all call
 //  iax_hangup(calls[callNo].session,"Dumped Call");
+}
+
+void
+IAXVoIPLink::getEvent() 
+{
+  // mutex here
+  iax_event* event = 0;
+  IAXCall* call = 0;
+  while ( (event = iax_get_event(0)) != 0 ) {
+    call = iaxFindCallBySession(event->session);
+    if (call!=0) {
+	iaxHandleCallEvent(event, call);
+    }
+    return;
+  }
+  iax_event_free(event);
+  // thread wait 5 second
+  // unlock mutex
+}
+
+bool
+IAXVoIPLink::setRegister() 
+{
+  return false;
+}
+
+bool
+IAXVoIPLink::setUnregister()
+{
+  return false;
+}
+
+IAXCall* 
+IAXVoIPLink::iaxFindCallBySession(struct iax_session* session) 
+{
+  // access to callMap shoud use that
+  // the code below is like findSIPCallWithCid() 
+  ost::MutexLock m(_callMapMutex);	
+  IAXCall* call = 0;
+  CallMap::iterator iter = _callMap.begin();
+  while(iter != _callMap.end()) {
+    call = dynamic_cast<IAXCall*>(iter->second);
+    if (call && call->getSession() == session) {
+      return call;
+    }
+    iter++;
+  }
+  return 0; // not found
+}
+
+void
+IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call) 
+{
+  
 }

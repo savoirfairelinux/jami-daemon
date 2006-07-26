@@ -15,8 +15,8 @@ if USE_IAX
 IAX_LIBS = $(top_builddir)/libs/libiax2/src/libiax.la
 IAX_FLAGS = -DUSE_IAX
 IAX_CFLAGS = -I$(top_srcdir)/libs/libiax2/src/
-IAXSOURCES = iaxaccount.cpp iaxvoiplink.cpp
-IAXHEADERS = iaxaccount.h iaxvoiplink.h
+IAXSOURCES = iaxaccount.cpp iaxvoiplink.cpp iaxcall.cpp
+IAXHEADERS = iaxaccount.h iaxvoiplink.h iaxcall.h
 else
 IAX_LIBS = 
 IAX_FLAGS =

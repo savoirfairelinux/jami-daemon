@@ -20,9 +20,10 @@
 #define IAXVOIPLINK_H
 
 #include "voIPLink.h"
-#include "iax-client.h"
+#include <iax-client.h>
 
-class AudioCodec;
+class EventThread;
+class IAXCall;
 
 /**
  * VoIPLink contains a thread that listen to external events 
@@ -36,13 +37,13 @@ public:
 
     ~IAXVoIPLink();
 
-  void getEvent (void) { }
+  void getEvent(void);
   bool init (void);
   bool checkNetwork (void) { return false; }
   void terminate (void);
 
-  bool setRegister (void) { return false; }
-  bool setUnregister (void) { return false; }
+  bool setRegister (void);
+  bool setUnregister (void);
 
   Call* newOutgoingCall(const CallID& id, const std::string& toUrl) {return 0; }
   bool answer(const CallID& id) {return false;}
@@ -55,6 +56,24 @@ public:
   bool refuse (const CallID& id) { return false; }
   bool carryingDTMFdigits(const CallID& id, char code) { return false; }
   bool sendMessage(const std::string& to, const std::string& body) { return false; }
+
+private:
+  /**
+   * Find a iaxcall by iax session number
+   * @param session an iax_session valid pointer
+   * @return iaxcall or 0 if not found
+   */
+  IAXCall* iaxFindCallBySession(struct iax_session *session);
+
+  /**
+   * Handle IAX Event for a call
+   * @param event An iax_event pointer
+   * @param call  An IAXCall pointer 
+   */
+  void iaxHandleCallEvent(iax_event* event, IAXCall* call);
+
+
+  EventThread* _evThread;
 };
 
 #endif
