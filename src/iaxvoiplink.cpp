@@ -28,12 +28,14 @@ IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
  : VoIPLink(accountID)
 {
   _evThread = new EventThread(this);
+  _regSession = 0;
 }
 
 
 IAXVoIPLink::~IAXVoIPLink()
 {
   delete _evThread; _evThread = 0;
+  _regSession = 0; // shall not delete it
   terminate();
 }
 
@@ -53,6 +55,8 @@ IAXVoIPLink::init()
     _debug("IAX Info: listening on port %d\n", port);
     _localPort = port;
     returnValue = true;
+
+    _evThread->start();
   }
   return returnValue;
 }
@@ -75,17 +79,58 @@ IAXVoIPLink::getEvent()
     call = iaxFindCallBySession(event->session);
     if (call!=0) {
 	iaxHandleCallEvent(event, call);
+    } else if (event->session != 0 && event->session == _regSession) {
+    	// in iaxclient, there is many session handling, here, only one
+	iaxHandleRegReply(event);
+    } else {
+    	switch(e->etype) {
+		case IAX_EVENT_REGACK:
+		case IAX_EVENT_REGREJ:
+			_debug("Unknown IAX Registration Event\n");
+		break;
+
+		case IAX_EVENT_REGREQ:
+			_debug("Registration by a peer, don't allow it\n");
+		break;
+		case IAX_EVENT_CONNECT: // new call
+			// New incoming call!	
+		break;
+
+		case IAX_EVENT_TIMEOUT: // timeout for an unknown session
+			
+		break;
+
+		default: 
+			_debug("Unknown event type: %d\n", event->type);
+	}
     }
-    return;
+    iax_event_free(event);
   }
-  iax_event_free(event);
-  // thread wait 5 second
-  // unlock mutex
+  // unlock mutex here
+
+  //iaxRefreshRegistrations();
+
+  // thread wait 5 millisecond
+  _evThread->sleep(5);
 }
 
 bool
 IAXVoIPLink::setRegister() 
 {
+  if (_regSession==0) {
+    // lock
+
+    _regSession = iax_session_new();
+
+    if (!_regSession) {
+      _debug("error when generating new session for register");
+    } else {
+      // refresh
+      // last reg
+    }
+
+	// unlock
+  }
   return false;
 }
 
@@ -116,5 +161,57 @@ IAXVoIPLink::iaxFindCallBySession(struct iax_session* session)
 void
 IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call) 
 {
-  
+  // call should not be 0
+  // note activity?
+  //
+  switch(event->type) {
+    case IAX_EVENT_HANGUP:
+    break;
+
+    case IAX_EVENT_REJECT:
+    break;
+
+    case IAX_EVENT_ACCEPT:
+    break;
+    
+    case IAX_EVENT_ANSWER:
+    break;
+    
+    case IAX_EVENT_BUSY:
+    break;
+    
+    case IAX_EVENT_VOICE:
+    break;
+    
+    case IAX_EVENT_TEXT:
+    break;
+    
+    case IAX_EVENT_RINGA:
+    break;
+    
+    case IAX_EVENT_PONG:
+    break;
+    
+    case IAX_EVENT_URL:
+    break;
+    
+    case IAX_EVENT_CNG:
+    break;
+    
+    case IAX_EVENT_TIMEOUT:
+    break;
+    
+    case IAX_EVENT_TRANSFER:
+    break;
+    
+    default:
+      _debug("Unknown event type: %d\n", event->type);
+    
+  }
+}
+
+void
+IAXVoIPLink::iaxHandleRegReply(iax_event* event) 
+{
+  // use _regSession here, should be equal to event->session;
 }

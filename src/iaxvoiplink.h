@@ -63,7 +63,7 @@ private:
    * @param session an iax_session valid pointer
    * @return iaxcall or 0 if not found
    */
-  IAXCall* iaxFindCallBySession(struct iax_session *session);
+  IAXCall* iaxFindCallBySession(struct iax_session* session);
 
   /**
    * Handle IAX Event for a call
@@ -72,8 +72,14 @@ private:
    */
   void iaxHandleCallEvent(iax_event* event, IAXCall* call);
 
+  /**
+   * Handle IAX Registration Reply event
+   * @param event An iax_event pointer
+   */
+  void iaxHandleRegReply(iax_event* event);
 
   EventThread* _evThread;
+  struct iax_session* _regSession;
 };
 
 #endif
