@@ -12,6 +12,14 @@ For project dependencies:
 ------------------------
 Improve the autotools scripts of PortAudioCpp
 
+
+For sflphone-qt:
+---------------
+Add samplerate combobox if sample rate is compiled
+Save account status if modified in configuration
+
+
+
 From FIXME:
 - sflphoned don't return any result at the second time getcallstatus is called.
 - sflphoned don't return a 206 on getcallstatus when one call is ringing.

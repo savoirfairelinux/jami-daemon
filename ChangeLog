@@ -1,3 +1,9 @@
+2006-07-27  Yan Morin
+
+	* Add IAX registration and outgoing call
+	
+	* Add Device.sampleRate=8000 and can use samplerate in linux
+
 2006-05-21  Julien Plissonneau Duquene
 
 	* Removed checks for osip from configure.ac (this is needed and
