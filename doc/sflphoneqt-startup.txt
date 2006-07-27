@@ -1,0 +1,61 @@
+main.cpp: main()
+-> app = new SFLPhoneApp
+   -> new SessionIO, 3999
+   -> new session
+      -> new SessionId
+      -> new SessionIO (create)
+      -> Requester::registerSession()
+   -> envoie session a ConfigurationManager
+   -> envoie session a PhoneLineManager(initialize)
+      -> new Session(session)
+      -> new Account <-- supprimé
+   -> configure le nombre de ligne de PhoneLineManager::setNbLines
+      -> new PhoneLine
+      
+   -> new Request Object (commande)
+   -> new NumericKeypad 
+-> new and show splash
+-> sfl = new SFLPhoneWindow
+   -> positionne fenêtre
+   -> new ConfigurationPanel
+      -> connection updates au panel
+      -> connection bouton panel a la fenetre
+   -> peinture apres 50 milli-seconde
+   -> initialisation graphique
+
+-> initConnections(sfl)
+   -> associe les PhoneLineButton au PhoneLine
+   -> associe needRegister
+   -> associe soundDriverChanged
+   -> connecte les boutons de la fenetre au phonelinemanager
+   -> associe phonelinemanager au lcd (messages texet)
+   -> associe evenement daemon
+   -> associe lauching (daemon)
+   -> associe status - phone line
+   -> associe evenement update, setup
+-> launch
+   -> Launcher->start()
+-> PhoneLineManager::connect et attend "connected"
+-> loadSkin
+-> exec
+
+Evenement:
+-Lorsque le PhoneLineManager est connectée (connected)
+ le splash disparait splash.hide()
+-Lorsque le PhoneLineManager gère le getEvents
+ app.handleArg()
+
+TCPSessionIOCreator::create
+-> TCPSessionIO::connected|
+   PhoneLineManagerImpl::connected|
+   -> PhoneLineManagerImpl::readyToSendStatus|
+      -> PhoneLineManagerImpl::startSession()
+         -> mSession::getCallStatus()
+   -> SFLPhoneWindow::show
+   -> splash::hide
+
+CallStatusRequest
+ -> onSuccess -> PhoneLineManager::selectLine()
+              -> PhoneLineManager::handleEvents()
+ -> onEntry   -> CallStatus::execute() -> PhoneLineManager::addCall()
+ -> onError   -> PhoneLineManager::errorOnCallStatus()

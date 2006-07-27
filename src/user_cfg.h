@@ -61,6 +61,8 @@
 #define DRIVER_NAME		"Drivers.driverName"
 #define DRIVER_NAME_IN		"Drivers.driverNameIn"
 #define DRIVER_NAME_OUT		"Drivers.driverNameOut"
+#define DRIVER_SAMPLE_RATE      "Drivers.sampleRate"
+#define DRIVER_SAMPLE_RATE_DEFAULT "8000"
 #define NB_CODEC		"Codecs.nbCodec"
 #define CODEC1			"Codecs.codec1"
 #define CODEC2			"Codecs.codec2"

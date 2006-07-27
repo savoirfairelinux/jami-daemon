@@ -36,8 +36,13 @@ class AudioLayer {
 public:
   AudioLayer();
   ~AudioLayer(void);
-
-  void openDevice(int, int);
+ 
+  /*
+   * @param indexIn
+   * @param indexOut
+   * @param sampleRate
+   */
+  void openDevice(int, int, int);
   void startStream(void);
   void stopStream(void);
   void sleep(int);

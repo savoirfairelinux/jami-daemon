@@ -1022,6 +1022,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);
   fill_config_int(DRIVER_NAME_IN, DFT_DRIVER_STR);
   fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
+  fill_config_int(DRIVER_SAMPLE_RATE, DRIVER_SAMPLE_RATE_DEFAULT);
   fill_config_str(CODEC1, DFT_CODEC);
   fill_config_str(CODEC2, DFT_CODEC);
   fill_config_str(CODEC3, DFT_CODEC);
@@ -1081,6 +1082,14 @@ ManagerImpl::selectAudioDriver (void)
     int noDevice    = getConfigInt(AUDIO, DRIVER_NAME);
     int noDeviceIn  = getConfigInt(AUDIO, DRIVER_NAME_IN);
     int noDeviceOut = getConfigInt(AUDIO, DRIVER_NAME_OUT);
+    int sampleRate  = getConfigInt(AUDIO, DRIVER_SAMPLE_RATE);
+    #ifdef USE_SAMPLERATE
+    sampleRate = 8000;
+    #else
+    if (sampleRate <=0 ) {
+    	sampleRate = 8000;
+    }
+    #endif
 
     // this is when no audio device in/out are set
     // or the audio device in/out are set to 0
@@ -1106,7 +1115,7 @@ ManagerImpl::selectAudioDriver (void)
     }
     _debug(" Setting audiolayer to device in=%d and out=%d\n", noDeviceIn, noDeviceOut);
     _debugInit(" AudioLayer Opening Device");
-    _audiodriverPA->openDevice(noDeviceIn, noDeviceOut);
+    _audiodriverPA->openDevice(noDeviceIn, noDeviceOut,sampleRate);
   } catch(...) {
     throw;
   }

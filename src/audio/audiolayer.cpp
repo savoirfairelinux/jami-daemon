@@ -32,11 +32,8 @@ AudioLayer::AudioLayer()
   , _stream(NULL)
   , _errorMessage("")
 {
-#ifdef USE_SAMPLERATE
-  _sampleRate = 44100;
-#else
   _sampleRate = 8000;
-#endif
+  
   _inChannel  = 1;
   _outChannel = 1;
   portaudio::System::initialize();
@@ -71,7 +68,7 @@ AudioLayer::hasStream(void) {
 
 
 void
-AudioLayer::openDevice (int indexIn, int indexOut) 
+AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate) 
 {
   closeStream();
 
@@ -89,6 +86,12 @@ AudioLayer::openDevice (int indexIn, int indexOut)
 	     portaudio::System::instance().deviceByIndex(indexIn).defaultLowInputLatency(), 
 	     NULL);
 	
+  #ifdef USE_SAMPLERATE
+  _sampleRate = sampleRate;
+  #else
+  _sampleRate = 8000;
+  #endif
+  
   // we could put paFramesPerBufferUnspecified instead of FRAME_PER_BUFFER to be variable
   portaudio::StreamParameters const params(inParams, outParams, 
 					   _sampleRate, FRAME_PER_BUFFER /*paFramesPerBufferUnspecified*/, paNoFlag /*paPrimeOutputBuffersUsingStreamCallback | paNeverDropInput*/);
