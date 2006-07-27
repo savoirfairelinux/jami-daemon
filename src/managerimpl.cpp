@@ -421,12 +421,11 @@ ManagerImpl::initRegisterVoIPLink()
     if ( iter->second) {
       iter->second->loadConfig();
       if ( iter->second->shouldInitOnStart() ) {
-        iter->second->init();
-        if (iter->second->shouldRegisterOnStart()) {
-          iter->second->registerAccount();
+        if ( iter->second->init() && iter->second->shouldRegisterOnStart()) {
+            iter->second->registerAccount();
         }
-	// init only the first account
-	break;
+        // init only the first account
+        break;
       }
     }
     iter++;

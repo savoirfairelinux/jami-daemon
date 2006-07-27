@@ -45,7 +45,7 @@ public:
   bool setRegister (void);
   bool setUnregister (void);
 
-  Call* newOutgoingCall(const CallID& id, const std::string& toUrl) {return 0; }
+  Call* newOutgoingCall(const CallID& id, const std::string& toUrl);
   bool answer(const CallID& id) {return false;}
 
   bool hangup(const CallID& id) { return false; }
@@ -83,6 +83,11 @@ private:
    */
   void iaxHandleRegReply(iax_event* event);
 
+  /**
+   * Send an outgoing call invite to iax
+   */
+  bool iaxOutgoingInvite(IAXCall* Call);
+
   EventThread* _evThread;
   /** registration session : 0 if not register */
   struct iax_session* _regSession;
@@ -93,7 +98,8 @@ private:
   std::string _user;
   /** IAX Password */
   std::string _pass;
-  
+
+  ost::Mutex _mutexIAX;
 };
 
 #endif
