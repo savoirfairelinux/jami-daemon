@@ -22,9 +22,14 @@
 #include "voIPLink.h"
 #include <iax-client.h>
 
+
 class EventThread;
 class IAXCall;
 
+class AudioCodec;
+class AudioLayer;
+
+ 
 /**
  * VoIPLink contains a thread that listen to external events 
  * and contains IAX Call related functions
@@ -107,6 +112,13 @@ private:
   std::string _pass;
 
   ost::Mutex _mutexIAX;
+
+ // extra pointer / not dynamic yet
+  AudioCodec* audiocodec;
+  AudioLayer* audiolayer;
+  int16* data_for_speakers_recv;
+  int16* data_for_speakers_output;
+  int _nbFrames;
 };
 
 #endif

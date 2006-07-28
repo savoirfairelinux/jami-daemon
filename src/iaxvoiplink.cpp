@@ -22,6 +22,8 @@
 #include "eventthread.h"
 
 #include "manager.h"
+#include "audio/audiocodec.h"
+#include "audio/audiolayer.h"
 
 #define IAX_SUCCESS  0
 #define IAX_FAILURE -1
@@ -62,6 +64,12 @@ IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
 
   // to get random number for RANDOM_PORT
   srand (time(NULL));
+
+  audiocodec = 0;
+  audiolayer = 0;
+ _nbFrames = 160;
+  data_for_speakers_recv = new int16[_nbFrames*2];
+  data_for_speakers_output = new int16[_nbFrames*2];
 }
 
 
@@ -70,6 +78,11 @@ IAXVoIPLink::~IAXVoIPLink()
   delete _evThread; _evThread = 0;
   _regSession = 0; // shall not delete it
   terminate();
+
+  audiocodec = 0;
+  audiolayer = 0;
+  delete [] data_for_speakers_recv; data_for_speakers_recv = 0;
+  delete [] data_for_speakers_output; data_for_speakers_output = 0;
 }
 
 bool
@@ -98,6 +111,10 @@ IAXVoIPLink::init()
       returnValue = true;
 
       _evThread->start();
+
+      // audio stuff, not dynamic yet
+      audiocodec = Manager::instance().getCodecDescriptorMap().getCodec((CodecType)0);
+      audiolayer = Manager::instance().getAudioDriver();
       break;
     }
     nbTry--;
@@ -249,7 +266,7 @@ IAXVoIPLink::hangup(const CallID& id)
 	_mutexIAX.enterMutex();
 	iax_hangup(call->getSession(),"Dumped Call");
 	_mutexIAX.leaveMutex();
-
+	call->setSession(0);
 	if (Manager::instance().isCurrentCall(id)) {
 	   // stop audio
 	}
@@ -273,7 +290,7 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
   /* reset activity and ping "timers" */
   // iaxc_note_activity(callNo);
   
-  std::string strNum = _host + ":" + _pass + "@" + _user + "/" + call->getPeerNumber();  
+  std::string strNum = _user + ":" + _pass + "@" + _host + "/" + call->getPeerNumber();  
 
   char user[_user.length()+1];
   strcpy(user, _user.c_str());
@@ -283,9 +300,10 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
 
   char* lang = NULL;
   int wait = 0;
-  int audio_format_preferred =  IAX__FORMAT_SPEEX;
+  int audio_format_preferred =  IAX__FORMAT_ULAW;
   int audio_format_capability = IAX__FORMAT_ULAW | IAX__FORMAT_ALAW | IAX__FORMAT_GSM | IAX__FORMAT_SPEEX;
 
+  _debug("IAX New call: %s\n", num);
   iax_call(newsession, user, user, num, lang, wait, audio_format_preferred, audio_format_capability);
 
   // unlock here
@@ -323,6 +341,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     case IAX_EVENT_HANGUP:
       Manager::instance().peerHungupCall(id); 
       if (Manager::instance().isCurrentCall(id)) {
+	audiolayer->stopStream();
         // stop audio
       }
       removeCall(id);
@@ -332,6 +351,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
       Manager::instance().peerHungupCall(id); 
       if (Manager::instance().isCurrentCall(id)) {
         // stop audio
+	audiolayer->stopStream();
       }
       removeCall(id);
      break;
@@ -339,6 +359,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     case IAX_EVENT_ACCEPT:
       // accept
       // 
+      call->setFormat(event->ies.format);
     break;
 
     case IAX_EVENT_ANSWER:
@@ -346,7 +367,10 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 		call->setConnectionState(Call::Connected);
 		call->setState(Call::Active);
 
+		call->setFormat(event->ies.format);
+		
 		Manager::instance().peerAnsweredCall(id);
+		audiolayer->startStream();
 		// start audio here?
 	} else {
 		// deja connecté
@@ -363,6 +387,20 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
     case IAX_EVENT_VOICE:
+     if (audiocodec != 0 && audiolayer!=0) {
+	_debug("Receive: len=%d, format=%d, data_for_speakers_recv=%p\n", event->datalen, call->getFormat(), data_for_speakers_recv);
+	unsigned char* data = (unsigned char*)event->data;
+	unsigned int size   = event->datalen;
+        int expandedSize = audiocodec->codecDecode(data_for_speakers_recv, data, size);
+	int nbInt16      = expandedSize/sizeof(int16);
+	int toChannel = 1;
+	int fromChannel = 1;
+	int toPut;
+        toPut = audiolayer->convert(data_for_speakers_recv, fromChannel, nbInt16, &data_for_speakers_output, toChannel);
+        audiolayer->putMain(data_for_speakers_output, toPut * sizeof(int16));
+
+	_debug("sending %d int16 to speakers..\n", toPut);
+      }
     break;
     
     case IAX_EVENT_TEXT:

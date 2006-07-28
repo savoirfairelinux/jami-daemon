@@ -41,9 +41,13 @@ public:
      */
     void setSession(struct iax_session* session) { _session = session; }
 
+    void setFormat(int format) { _format = format; }
+    int getFormat() { return _format; }
+    
 private:
     // each call is associate to a session
     struct iax_session* _session;
+    int _format;
 };
 
 #endif
