@@ -26,12 +26,11 @@
 #include "Request.hpp" // don't know if it's a good idea for this class to know request...
 
 ConfigurationManagerImpl::ConfigurationManagerImpl()
-  : mSession(NULL)
+  : mSession(0)
 {}
 
 ConfigurationManagerImpl::~ConfigurationManagerImpl()
 {
-  delete mSession;
 }
 
 void 
@@ -45,9 +44,9 @@ ConfigurationManagerImpl::setCurrentMicrophoneVolume(unsigned int )
 }
 
 void
-ConfigurationManagerImpl::setSession(const Session &session)
+ConfigurationManagerImpl::setSession(Session* session)
 {
-  mSession = new Session(session);
+  mSession = session;
 }
 
 void

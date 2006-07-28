@@ -240,6 +240,22 @@ IAXVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
   return call;
 }
 
+bool 
+IAXVoIPLink::hangup(const CallID& id)
+{
+	IAXCall* call = getIAXCall(id);
+	if (call==0) { _debug("Call doesn't exists\n"); return false; }
+
+	_mutexIAX.enterMutex();
+	iax_hangup(call->getSession(),"Dumped Call");
+	_mutexIAX.leaveMutex();
+
+	if (Manager::instance().isCurrentCall(id)) {
+	   // stop audio
+	}
+	removeCall(id);
+	return true;	
+}
 bool
 IAXVoIPLink::iaxOutgoingInvite(IAXCall* call) 
 {
@@ -256,15 +272,21 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
   call->setSession(newsession);
   /* reset activity and ping "timers" */
   // iaxc_note_activity(callNo);
-  char num[call->getPeerNumber().length()+1];
-  strcpy(num, call->getPeerNumber().c_str());
+  
+  std::string strNum = _host + ":" + _pass + "@" + _user + "/" + call->getPeerNumber();  
+
+  char user[_user.length()+1];
+  strcpy(user, _user.c_str());
+  
+  char num[strNum.length()+1];
+  strcpy(num, strNum.c_str());
 
   char* lang = NULL;
   int wait = 0;
   int audio_format_preferred =  IAX__FORMAT_SPEEX;
   int audio_format_capability = IAX__FORMAT_ULAW | IAX__FORMAT_ALAW | IAX__FORMAT_GSM | IAX__FORMAT_SPEEX;
 
-  iax_call(newsession, num, num, num, lang, wait, audio_format_preferred, audio_format_capability);
+  iax_call(newsession, user, user, num, lang, wait, audio_format_preferred, audio_format_capability);
 
   // unlock here
   _mutexIAX.leaveMutex();
@@ -296,20 +318,48 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
   // call should not be 0
   // note activity?
   //
+  CallID id = call->getCallId();
   switch(event->etype) {
     case IAX_EVENT_HANGUP:
+      Manager::instance().peerHungupCall(id); 
+      if (Manager::instance().isCurrentCall(id)) {
+        // stop audio
+      }
+      removeCall(id);
     break;
 
     case IAX_EVENT_REJECT:
-    break;
+      Manager::instance().peerHungupCall(id); 
+      if (Manager::instance().isCurrentCall(id)) {
+        // stop audio
+      }
+      removeCall(id);
+     break;
 
     case IAX_EVENT_ACCEPT:
+      // accept
+      // 
     break;
 
     case IAX_EVENT_ANSWER:
+    	if (call->getConnectionState() != Call::Connected){
+		call->setConnectionState(Call::Connected);
+		call->setState(Call::Active);
+
+		Manager::instance().peerAnsweredCall(id);
+		// start audio here?
+	} else {
+		// deja connecté
+		// ?
+	}
     break;
     
     case IAX_EVENT_BUSY:
+      call->setConnectionState(Call::Connected);
+      call->setState(Call::Busy);
+      Manager::instance().displayErrorText(id, "Busy");
+      Manager::instance().callBusy(id);
+      removeCall(id);
     break;
     
     case IAX_EVENT_VOICE:
@@ -355,4 +405,14 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
   } else if (event->etype == IAX_EVENT_REGACK) {
     Manager::instance().registrationSucceed(getAccountID());
   }
+}
+
+IAXCall* 
+IAXVoIPLink::getIAXCall(const CallID& id) 
+{
+  Call* call = getCall(id);
+  if (call) {
+    return dynamic_cast<IAXCall*>(call);
+  }
+  return 0;
 }

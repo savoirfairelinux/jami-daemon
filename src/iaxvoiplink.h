@@ -48,7 +48,7 @@ public:
   Call* newOutgoingCall(const CallID& id, const std::string& toUrl);
   bool answer(const CallID& id) {return false;}
 
-  bool hangup(const CallID& id) { return false; }
+  bool hangup(const CallID& id);
   bool cancel(const CallID& id) { return false; }
   bool onhold(const CallID& id) { return false; }
   bool offhold(const CallID& id) { return false; }
@@ -64,6 +64,13 @@ public: // iaxvoiplink only
 
 private:
   /**
+   * Get IAX Call from an id
+   * @param id CallId
+   * @return IAXCall pointer or 0
+   */
+  IAXCall* getIAXCall(const CallID& id);
+
+  /*
    * Find a iaxcall by iax session number
    * @param session an iax_session valid pointer
    * @return iaxcall or 0 if not found

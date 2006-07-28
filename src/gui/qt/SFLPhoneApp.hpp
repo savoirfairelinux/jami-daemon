@@ -33,6 +33,7 @@
 class SFLPhoneWindow;
 class Launcher;
 class NumericKeypad;
+class Session;
 
 class SFLPhoneApp : public QApplication
 {
@@ -67,6 +68,7 @@ private:
 
   Launcher *mLauncher;
   NumericKeypad *mKeypad;
+  Session *mSession;
 };
 
 #endif 

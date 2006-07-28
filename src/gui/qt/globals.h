@@ -52,6 +52,7 @@
 #define ACCOUNT_TYPE "Account.type"
 #define ACCOUNT_ENABLE "Account.enable"
 #define ACCOUNT_AUTO_REGISTER "Account.autoregister"
+#define ACCOUNT_ALIAS  "Account.alias"
 
 #define PREFERENCES_SECTION "Preferences"
 #define PREFERENCES_THEME "Themes.skinChoice"

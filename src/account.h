@@ -29,7 +29,7 @@ typedef std::string AccountID;
 #define CONFIG_ACCOUNT_TYPE   "Account.type"
 #define CONFIG_ACCOUNT_ENABLE "Account.enable"
 #define CONFIG_ACCOUNT_AUTO_REGISTER  "Account.autoregister"
-
+#define CONFIG_ACCOUNT_ALIAS  "Account.alias"
 
 /**
  * Class account is an interface to protocol account (sipaccount, aixaccount)

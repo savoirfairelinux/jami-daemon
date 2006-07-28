@@ -28,10 +28,12 @@ AccountItemEvent::AccountItemEvent(const QString &code,
   : Event(code, args)
 {
   std::list< QString > l = getUnusedArgs();
-  if(l.size() >= 2) {
+  if(l.size() >= 3) {
     mAccountId = *l.begin();
     l.pop_front();
     mStatus = *l.begin();
+    l.pop_front();
+    mAlias = *l.begin();
     l.pop_front();
     setUnusedArgs(l);
   }
@@ -44,7 +46,7 @@ AccountItemEvent::execute()
   if (getCode() == "130") {
     isEnabled = true;
   }
-  PhoneLineManager::instance().addAccount(mAccountId, isEnabled);
+  PhoneLineManager::instance().addAccount(mAccountId, isEnabled, mAlias);
   
 }
 

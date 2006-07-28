@@ -84,7 +84,7 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
 
 PhoneLineManagerImpl::~PhoneLineManagerImpl()
 {
-  delete mSession;
+  //delete mSession;
   for(std::vector< PhoneLine * >::iterator pos = mPhoneLines.begin();
       pos != mPhoneLines.end();
       pos++) {
@@ -105,11 +105,11 @@ PhoneLineManagerImpl::hasDisconnected()
 }
 
 void
-PhoneLineManagerImpl::initialize(const Session &session)
+PhoneLineManagerImpl::initialize(Session* session)
 {
   if(!mIsInitialized) {
     mIsInitialized = true;
-    mSession = new Session(session);
+    mSession = session;
   }
 }
 
@@ -826,10 +826,10 @@ PhoneLineManagerImpl::incomingMessageText(const QString& message)
 }
 
 void
-PhoneLineManagerImpl::addAccount(const QString& name, bool isEnabled) 
+PhoneLineManagerImpl::addAccount(const QString& name, bool isEnabled, const QString& alias) 
 {
   if (mSession!=0) {
-    mSession->addAccount(name, isEnabled);
+    mSession->addAccount(name, isEnabled, alias);
   }
 }
 

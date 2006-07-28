@@ -294,13 +294,13 @@ PhoneLine::call()
 void 
 PhoneLine::call(const QString &to) 
 {
-  DebugOutput::instance() << tr("PhoneLine %1: Calling %2.\n").arg(mLine).arg(to);
-  if(!mCall) {
-    setLineStatus(tr("Calling %1...").arg(to));
-    Call *call;
+ if(!mCall) {
+   Call *call;
     const Account* account = mSession->getSelectedAccount();
     if (account!=0) {
-      Request *r = account->createCall(call, to);
+       setLineStatus(tr("Calling %1...").arg(to));
+       DebugOutput::instance() << tr("PhoneLine %1: Calling %2 on Account %3.\n").arg(mLine).arg(to).arg(account->id());
+       Request *r = account->createCall(call, to);
       // entry
       connect(r, SIGNAL(entry(QString, QString)),
 	    this, SLOT(setLineStatus(QString)));

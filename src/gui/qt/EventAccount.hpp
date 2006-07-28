@@ -34,6 +34,7 @@ public:
 protected:
   QString mAccountId;
   QString mStatus;
+  QString mAlias;
 };
 
 #endif

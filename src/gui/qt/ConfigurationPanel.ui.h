@@ -135,7 +135,17 @@ ConfigurationPanel::generate()
   cbo->clear();
   int nbItem = 4;
   for (int iItem = 0; iItem < nbItem; iItem++) {
-    QString accountName = QObject::tr("SIP Account #%1").arg(iItem+1);
+    QString accountId = "SIP" + QString::number(iItem);	  
+    QString aliasName = ConfigurationManager::instance().get(accountId, ACCOUNT_ALIAS);
+    QString accountName;
+    if (aliasName.isEmpty()) {
+      accountName = QObject::tr("SIP Account #%1").arg(iItem+1);
+    } else {
+      if (aliasName.length() > 30) {
+        aliasName = aliasName.left(30) + "...";
+      }
+      accountName = aliasName + " (" + QObject::tr("SIP Account #%1").arg(iItem+1) + ")";
+    }
     cbo->insertItem(accountName,iItem);
   }
   loadSIPAccount(0);
@@ -425,6 +435,11 @@ ConfigurationPanel::loadSIPAccount(int number)
   chkEnable->setChecked(ConfigurationManager::instance()
 			   .get(account,ACCOUNT_ENABLE).toUInt());
 
+  QString aliasName = ConfigurationManager::instance().get(account, ACCOUNT_ALIAS);
+  alias->setText(aliasName);
+  // void QComboBox::changeItem ( const QString & t, int index);
+  // 
+	  
   fullName->setText(ConfigurationManager::instance()
 		    .get(account,SIGNALISATION_FULL_NAME));
   userPart->setText(ConfigurationManager::instance()
@@ -448,6 +463,18 @@ void
 ConfigurationPanel::saveSIPAccount(int number)
 {
   QString account = "SIP" + QString::number(number);
+  QString aliasName = alias->text();
+  ConfigurationManager::instance().set(account, ACCOUNT_ALIAS, aliasName);
+  QString accountName;
+  if (aliasName.isEmpty()) {
+    accountName = QObject::tr("SIP Account #%1").arg(number+1);
+  } else {
+    if (aliasName.length() > 30) {
+	    aliasName = aliasName.left(30) + "...";
+    }
+     accountName = aliasName + " (" + QObject::tr("SIP Account #%1").arg(number+1) + ")";
+  }
+  cboSIPAccount->changeItem(accountName, number); 
   ConfigurationManager::instance().set(account, 
 				       SIGNALISATION_FULL_NAME,
 				       fullName->text());

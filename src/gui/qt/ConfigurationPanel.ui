@@ -143,11 +143,7 @@
                             <property name="margin">
                                 <number>0</number>
                             </property>
-                                    <widget class="QComboBox">
-                                     <property name="name"><cstring>cboSIPAccount</cstring></property>
-                                     <property name="currentItem"><number>0</number></property>
-                                    </widget>
-                            <widget class="QGroupBox">
+                           <widget class="QGroupBox">
                                 <property name="name">
                                     <cstring>groupBox1</cstring>
                                 </property>
@@ -161,7 +157,16 @@
                                     <property name="name">
                                         <cstring>unnamed</cstring>
                                     </property>
-                                    <widget class="QLabel" row="0" column="0" rowspan="1" colspan="3">
+                                    <widget class="QComboBox" rows="0" column="0" rowspan="1" colspan="2">
+                                     <property name="name"><cstring>cboSIPAccount</cstring></property>
+                                     <property name="currentItem"><number>0</number></property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="0" column="2" rowspan="1" colspan="1">
+                                        <property name="name">
+                                            <cstring>alias</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="1" column="0" rowspan="1" colspan="3">
                                         <property name="name">
                                             <cstring>lblFullName</cstring>
                                         </property>
@@ -169,7 +174,7 @@
                                             <string>Full name</string>
                                         </property>
                                     </widget>
-                                    <widget class="QLineEdit" row="1" column="0" rowspan="1" colspan="3">
+                                    <widget class="QLineEdit" row="2" column="0" rowspan="1" colspan="3">
                                         <property name="name">
                                             <cstring>fullName</cstring>
                                         </property>
@@ -182,7 +187,7 @@
                                             </sizepolicy>
                                         </property>
                                     </widget>
-                                    <widget class="QLabel" row="2" column="0" rowspan="1" colspan="3">
+                                    <widget class="QLabel" row="3" column="0" rowspan="1" colspan="3">
                                         <property name="name">
                                             <cstring>lblUserHostPart</cstring>
                                         </property>
@@ -190,12 +195,12 @@
                                             <string>User address (ie: user@domain.com)</string>
                                         </property>
                                     </widget>
-                                    <widget class="QLineEdit" row="3" column="0">
+                                    <widget class="QLineEdit" row="4" column="0">
                                         <property name="name">
                                             <cstring>userPart</cstring>
                                         </property>
                                     </widget>
-                                    <widget class="QLabel" row="3" column="1">
+                                    <widget class="QLabel" row="4" column="1">
                                         <property name="name">
                                             <cstring>lblArobase</cstring>
                                         </property>
@@ -203,7 +208,7 @@
                                             <string>@</string>
                                         </property>
                                     </widget>
-                                    <widget class="QLineEdit" row="3" column="2">
+                                    <widget class="QLineEdit" row="4" column="2">
                                         <property name="name">
                                             <cstring>hostPart</cstring>
                                         </property>
@@ -1504,6 +1509,7 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
 </connections>
 <tabstops>
     <tabstop>cboSIPAccount</tabstop>
+    <tabstop>alias</tabstop>
     <tabstop>fullName</tabstop>
     <tabstop>userPart</tabstop>
     <tabstop>hostPart</tabstop>

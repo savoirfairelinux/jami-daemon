@@ -44,7 +44,7 @@ class Session
    * or 0 if not found
    */
   Account* getSelectedAccount();
-  void addAccount(const QString& name, bool isEnabled);
+  void addAccount(const QString& name, bool isEnabled, const QString& alias);
   
   /**
    * Set Selected Account ID

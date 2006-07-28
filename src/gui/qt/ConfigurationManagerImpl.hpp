@@ -103,7 +103,7 @@ public:
   /**
    * will set the session to use.
    */
-  void setSession(const Session &session);
+  void setSession(Session* session);
 
   /**
    * This function will set the current speaker volume 

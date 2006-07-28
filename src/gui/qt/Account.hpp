@@ -1,5 +1,6 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
  *                                                                              
@@ -49,6 +50,9 @@ class Account {
   QString id() const
   {return mId;}
 
+  const QString& getAlias() { return mAlias; }
+  void setAlias(const QString& alias) { mAlias = alias; }
+  
 private:  
   Account();
 
@@ -61,6 +65,11 @@ private:
    * This is the account id that we are related to.
    */
   QString mId;
+
+  /**
+   * This is the alias of the account, a name choose by the user
+   */
+  QString mAlias;
 };
 
 

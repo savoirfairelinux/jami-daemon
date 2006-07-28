@@ -103,7 +103,8 @@ IAXAccount::initConfig(Conf::ConfigTree& config)
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_TYPE, "IAX", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ENABLE,"1", type_int));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_AUTO_REGISTER, "1", type_int));
-
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ALIAS, _("My account"), type_str));
+ 
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_HOST, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_USER, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_PASS, "", type_str));

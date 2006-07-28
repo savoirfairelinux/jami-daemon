@@ -215,11 +215,13 @@ Session::getAccount(const QString& name)
 }
 
 void
-Session::addAccount(const QString& name, bool isEnabled) 
+Session::addAccount(const QString& name, bool isEnabled, const QString& alias) 
 {
+  DebugOutput::instance() << "Adding account..." << name << "\n";
   std::map<QString, Account* >::iterator iter = mAccountMap.find(name);
   if (iter == mAccountMap.end()) {
     mAccountMap[name] = new Account(mId, name);
+    mAccountMap[name]->setAlias(alias);
     // select account is the first enabled
     if (mSelectedAccountId.isEmpty() && isEnabled) {
       DebugOutput::instance() << "Default account is " << name << "\n";  

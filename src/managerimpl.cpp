@@ -1553,15 +1553,20 @@ ManagerImpl::getAccountList(const std::string& sequenceId)
     if ( iter->second != 0 ) {
       _debug("Account List: %s\n", iter->first.data()); 
       tk.push_back(iter->first);
-      if ( iter->second->isEnabled() ) {
+      // we try to send one active account for default account on start
+      // this is not the way it should be... 
+      if ( iter->second->isEnabled() || iter->second->shouldInitOnStart()) {
         tk.push_back("Active");
-        _gui->sendMessage("130", sequenceId, tk);
+        tk.push_back(getConfigString(iter->first,CONFIG_ACCOUNT_ALIAS));
+         _gui->sendMessage("130", sequenceId, tk);
         oneActive = true;
       } else {
         tk.push_back("Inactive");
-        _gui->sendMessage("131", sequenceId, tk);
+        tk.push_back(getConfigString(iter->first,CONFIG_ACCOUNT_ALIAS));
+         _gui->sendMessage("131", sequenceId, tk);
       }
-      tk.clear();
+
+     tk.clear();
     }
     iter++;
   }

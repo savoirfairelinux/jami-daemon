@@ -66,7 +66,7 @@ public:
   bool isConnected() { return mIsConnected; }
   void emitReadyAccount() { emit readyToGetAccount(); }
   void emitReadyToShow() { emit readyToShow(); }
-  void addAccount(const QString& name, bool isEnabled);   
+  void addAccount(const QString& name, bool isEnabled, const QString& alias);   
 signals:
   void unselected(unsigned int);
   void selected(unsigned int);
@@ -113,7 +113,7 @@ public slots:
    * You need to call this function once. It must be
    * call before doing anything in this class.
    */
-  void initialize(const Session &session);
+  void initialize(Session* session);
 
   /**
    * This function will make the process to start.

@@ -46,11 +46,11 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
 {
   SessionIOFactory::instance().setCreator(new TCPSessionIOCreator(QString("localhost"), 3999));
 
-  Session session;
+  mSession = new Session();
 
-  ConfigurationManager::instance().setSession(session);
+  ConfigurationManager::instance().setSession(mSession);
 
-  PhoneLineManager::instance().initialize(session);
+  PhoneLineManager::instance().initialize(mSession);
   PhoneLineManager::instance().setNbLines(NB_PHONELINES);
   Requester::instance().registerDefaultObject< Request >();
   Requester::instance().registerObject< Request >(QString("playtone"));
@@ -83,7 +83,9 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
 }
 
 SFLPhoneApp::~SFLPhoneApp()
-{}
+{
+  delete mSession; mSession = 0;
+}
 
 void 
 SFLPhoneApp::handleArg()
