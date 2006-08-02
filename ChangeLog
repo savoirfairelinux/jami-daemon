@@ -1,3 +1,9 @@
+2006-08-02  Yan Morin
+
+	* Add IAX quelch/unquelch
+
+	* Add SAMPLERATE for incoming voice data
+
 2006-07-27  Yan Morin
 
 	* Add IAX registration and outgoing call

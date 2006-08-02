@@ -1718,8 +1718,10 @@ ManagerImpl::loadAccountMap()
 void
 ManagerImpl::unloadAccountMap()
 {
+  _debug("Unloading account map...\n");
   AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
+    _debug("-> Deleting account %s\n", iter->first.c_str());
     delete iter->second; iter->second = 0;
     iter++;
   }

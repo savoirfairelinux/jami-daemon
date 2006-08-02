@@ -25,6 +25,10 @@
 #include "audio/audiocodec.h"
 #include "audio/audiolayer.h"
 
+#ifdef USE_SAMPLERATE
+ #include <samplerate.h>
+#endif
+
 #define IAX_SUCCESS  0
 #define IAX_FAILURE -1
 
@@ -67,9 +71,14 @@ IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
 
   audiocodec = 0;
   audiolayer = 0;
- _nbFrames = 160;
+  _nbFrames = 160;
   data_for_speakers_recv = new int16[_nbFrames*2];
   data_for_speakers_output = new int16[_nbFrames*2];
+
+#ifdef USE_SAMPLERATE
+  _floatBufferIn  = new float[_nbFrames*2];
+  _floatBufferOut = new float[_nbFrames*2];
+#endif
 }
 
 
@@ -83,6 +92,11 @@ IAXVoIPLink::~IAXVoIPLink()
   audiolayer = 0;
   delete [] data_for_speakers_recv; data_for_speakers_recv = 0;
   delete [] data_for_speakers_output; data_for_speakers_output = 0;
+
+#ifdef USE_SAMPLERATE
+  delete [] _floatBufferIn;
+  delete [] _floatBufferOut;
+#endif
 }
 
 bool
@@ -130,7 +144,28 @@ IAXVoIPLink::terminate()
 {
 //  iaxc_shutdown();  
 //  hangup all call
+    terminateIAXCall();
 //  iax_hangup(calls[callNo].session,"Dumped Call");
+}
+
+void
+IAXVoIPLink::terminateIAXCall()
+{
+  ost::MutexLock m(_callMapMutex);
+  CallMap::iterator iter = _callMap.begin();
+  IAXCall *call;
+  while( iter != _callMap.end() ) {
+    call = dynamic_cast<IAXCall*>(iter->second);
+    if (call) {
+      _mutexIAX.enterMutex();
+      iax_hangup(call->getSession(),"Dumped Call");
+      _mutexIAX.leaveMutex();
+      call->setSession(0);
+      delete call; call = 0;
+    }
+    iter++;
+  }
+  _callMap.clear();
 }
 
 void
@@ -273,6 +308,33 @@ IAXVoIPLink::hangup(const CallID& id)
 	removeCall(id);
 	return true;	
 }
+
+bool 
+IAXVoIPLink::onhold(const CallID& id) 
+{
+  IAXCall* call = getIAXCall(id);
+  if (call==0) { _debug("Call doesn't exists\n"); return false; }
+  //if (call->getState() == Call::Hold) { _debug("Call is already on hold\n"); return false; }
+  _mutexIAX.enterMutex();
+  iax_quelch(call->getSession());
+  _mutexIAX.leaveMutex();
+  call->setState(Call::Hold);
+  return true;
+}
+
+bool 
+IAXVoIPLink::offhold(const CallID& id)
+{
+  IAXCall* call = getIAXCall(id);
+  if (call==0) { _debug("Call doesn't exists\n"); return false; }
+  //if (call->getState() == Call::Active) { _debug("Call is already active\n"); return false; }
+  _mutexIAX.enterMutex();
+  iax_unquelch(call->getSession());
+  _mutexIAX.leaveMutex();
+  call->setState(Call::Active);
+  return true;
+}
+
 bool
 IAXVoIPLink::iaxOutgoingInvite(IAXCall* call) 
 {
@@ -337,11 +399,13 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
   // note activity?
   //
   CallID id = call->getCallId();
+  int16* output = 0; // for audio output
+
   switch(event->etype) {
     case IAX_EVENT_HANGUP:
       Manager::instance().peerHungupCall(id); 
       if (Manager::instance().isCurrentCall(id)) {
-	audiolayer->stopStream();
+        audiolayer->stopStream();
         // stop audio
       }
       removeCall(id);
@@ -351,7 +415,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
       Manager::instance().peerHungupCall(id); 
       if (Manager::instance().isCurrentCall(id)) {
         // stop audio
-	audiolayer->stopStream();
+        audiolayer->stopStream();
       }
       removeCall(id);
      break;
@@ -387,28 +451,48 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
     case IAX_EVENT_VOICE:
-     if (audiocodec != 0 && audiolayer!=0) {
-	_debug("Receive: len=%d, format=%d, data_for_speakers_recv=%p\n", event->datalen, call->getFormat(), data_for_speakers_recv);
-	unsigned char* data = (unsigned char*)event->data;
-	unsigned int size   = event->datalen;
-        int expandedSize = audiocodec->codecDecode(data_for_speakers_recv, data, size);
-	int nbInt16      = expandedSize/sizeof(int16);
-	int toChannel = 1;
-	int fromChannel = 1;
-	int toPut;
-        toPut = audiolayer->convert(data_for_speakers_recv, fromChannel, nbInt16, &data_for_speakers_output, toChannel);
-        audiolayer->putMain(data_for_speakers_output, toPut * sizeof(int16));
+     output = data_for_speakers_output; // don't use data directly, use a pointer instead!!!
+     // since convert return doesn't copy anything if it doesn't have to.
 
-	_debug("sending %d int16 to speakers..\n", toPut);
+     if (audiocodec != 0 && audiolayer!=0) {
+        //_debug("Receive: len=%d, format=%d, data_for_speakers_recv=%p\n", event->datalen, call->getFormat(), data_for_speakers_recv);
+        unsigned char* data = (unsigned char*)event->data;
+        unsigned int size   = event->datalen;
+        int expandedSize = audiocodec->codecDecode(data_for_speakers_recv, data, size);
+        int nbInt16      = expandedSize/sizeof(int16);
+        int toChannel = 1;
+        int fromChannel = 1;
+        int toPut;
+
+#ifdef USE_SAMPLERATE
+      if ( audiolayer->getSampleRate() != audiocodec->getClockRate() ) {
+        // convert here
+        double         factord = (double)audiolayer->getSampleRate()/ audiocodec->getClockRate();
+
+        SRC_DATA src_data;
+        src_data.data_in = _floatBufferIn;
+        src_data.data_out = _floatBufferOut;
+        src_data.input_frames = nbInt16/fromChannel;
+        src_data.output_frames = _nbFrames;
+        src_data.src_ratio = factord;
+        src_short_to_float_array(data_for_speakers_recv, _floatBufferIn, nbInt16);
+        src_simple (&src_data, SRC_SINC_MEDIUM_QUALITY, fromChannel);
+        src_float_to_short_array(_floatBufferOut, data_for_speakers_recv, src_data.output_frames_gen*fromChannel);
+        nbInt16 = src_data.output_frames_gen*fromChannel;
+      }
+#endif
+        toPut = audiolayer->convert(data_for_speakers_recv, fromChannel, nbInt16, &output, toChannel);
+        audiolayer->putMain(output, toPut * sizeof(int16));
+        //_debug("sending %d int16 to speakers..\n", toPut);
       }
     break;
-    
+
     case IAX_EVENT_TEXT:
     break;
-    
+
     case IAX_EVENT_RINGA:
     break;
-    
+
     case IAX_EVENT_PONG:
     break;
     

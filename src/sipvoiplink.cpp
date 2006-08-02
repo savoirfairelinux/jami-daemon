@@ -735,6 +735,7 @@ SIPVoIPLink::offhold(const CallID& id)
 
   // Enable audio
   _debug("SIP: Starting AudioRTP when offhold\n");
+  call->setState(Call::Active);
   // it's sure that this is the current call id...
   if (_audiortp.createNewSession(call) < 0) {
     _debug("SIP Failure: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);

@@ -350,32 +350,8 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
         src_data.output_frames = _nbFrames;
         src_data.src_ratio = factord;
         src_short_to_float_array(data_for_speakers_recv, _floatBufferIn, nbInt16);
-#if 0
-        for(int i=0; i<20; i++) {
-          printf("%3d ", data_for_speakers_recv[i]);
-        }
-        printf("\n");
-        for(int i=0; i<20; i++) {
-          printf("%7.6f ", _floatBufferIn[i]);
-        }
-        printf("\n");
-#endif
         src_simple (&src_data, SRC_SINC_MEDIUM_QUALITY, fromChannel);
         src_float_to_short_array(_floatBufferOut, data_for_speakers_recv, src_data.output_frames_gen*fromChannel);
-
-#if 0
-        for(int i=0; i<100; i++) {
-          printf("%7.6f ", _floatBufferOut[i]);
-        }
-        printf("\n");
-        for(int i=0; i<100; i++) {
-          printf("%3d ", data_for_speakers_recv[i]);
-        }
-        printf("\n");
-
-        printf("receive get %d and convert to %d\n", nbInt16, src_data.output_frames_gen);
-#endif
-
         nbInt16 = src_data.output_frames_gen*fromChannel;
       }
 #endif

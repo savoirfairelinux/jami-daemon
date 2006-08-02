@@ -25,6 +25,14 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
+if USE_SAMPLERATE
+SAMPLERATE_FLAG=-DUSE_SAMPLERATE
+SAMPLERATE_LIB =-lsamplerate
+else
+SAMPLERATE_FLAG=
+SAMPLERATE_LIB=
+endif
+
 SUBDIRS = audio config gui $(ZEROCONFDIR)
 
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \
@@ -37,7 +45,7 @@ sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone
 
 #sflphoned_LDFLAGS = -static
 sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS)
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES)
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES) $(SAMPLERATE_FLAG)
 
 #libsflphone_la_LDFLAGS= -version-info 0:1:0
 libsflphone_la_LIBADD = \
@@ -46,7 +54,7 @@ libsflphone_la_LIBADD = \
 	./audio/libaudio.la \
 	./gui/libguiframework.la \
 	./config/libconfig.la \
-	$(IAX_LIBS)
+	$(IAX_LIBS) $(SAMPLERATE_LIB)
 
 libsflphone_la_SOURCES =
 

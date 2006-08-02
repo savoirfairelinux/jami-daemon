@@ -55,8 +55,8 @@ public:
 
   bool hangup(const CallID& id);
   bool cancel(const CallID& id) { return false; }
-  bool onhold(const CallID& id) { return false; }
-  bool offhold(const CallID& id) { return false; }
+  bool onhold(const CallID& id);
+  bool offhold(const CallID& id);
   bool transfer(const CallID& id, const std::string& to) { return false; }
   bool refuse (const CallID& id) { return false; }
   bool carryingDTMFdigits(const CallID& id, char code) { return false; }
@@ -75,7 +75,12 @@ private:
    */
   IAXCall* getIAXCall(const CallID& id);
 
-  /*
+  /**
+   * Delete every call 
+   */
+  void terminateIAXCall();
+
+  /**
    * Find a iaxcall by iax session number
    * @param session an iax_session valid pointer
    * @return iaxcall or 0 if not found
@@ -119,6 +124,10 @@ private:
   int16* data_for_speakers_recv;
   int16* data_for_speakers_output;
   int _nbFrames;
+#ifdef USE_SAMPLERATE
+  float *_floatBufferIn;
+  float *_floatBufferOut;
+#endif
 };
 
 #endif

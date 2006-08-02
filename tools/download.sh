@@ -57,7 +57,7 @@ prepare()
     fi
 }
 
-#prepare $SFL_FILE_CCPP2 ''
+prepare $SFL_FILE_CCPP2 ''
 prepare $SFL_FILE_CCRTP ''
 #prepare $SFL_FILE_LIBOSIP2 ''
 #prepare $SFL_FILE_LIBEXOSIP2 ''
