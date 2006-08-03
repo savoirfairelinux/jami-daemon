@@ -17,7 +17,7 @@ For sflphone-qt:
 ---------------
 Add samplerate combobox if sample rate is compiled
 Save account status if modified in configuration
-
+Bug when moving sflphone and clicking inside the lcd
 
 
 From FIXME:

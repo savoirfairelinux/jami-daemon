@@ -293,6 +293,19 @@ IAXVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 }
 
 bool 
+IAXVoIPLink::answer(const CallID& id) 
+{
+  IAXCall* call = getIAXCall(id);
+  if (call==0) { _debug("Call doesn't exists\n"); return false; }
+  _mutexIAX.enterMutex();
+  iax_answer(call->getSession());
+  _mutexIAX.leaveMutex();
+  call->setState(Call::Active);
+  call->setConnectionState(Call::Connected);
+  return true;
+}
+
+bool 
 IAXVoIPLink::hangup(const CallID& id)
 {
 	IAXCall* call = getIAXCall(id);
@@ -333,6 +346,44 @@ IAXVoIPLink::offhold(const CallID& id)
   _mutexIAX.leaveMutex();
   call->setState(Call::Active);
   return true;
+}
+
+bool 
+IAXVoIPLink::transfer(const CallID& id, const std::string& to)
+{
+  IAXCall* call = getIAXCall(id);
+  if (call==0) { _debug("Call doesn't exists\n"); return false; }
+
+  char callto[to.length()+1];
+  strcpy(callto, to.c_str());
+  
+  _mutexIAX.enterMutex();
+  iax_transfer(call->getSession(), callto); 
+  _mutexIAX.leaveMutex();
+
+  // should we remove it?
+  // removeCall(id);
+}
+
+bool 
+IAXVoIPLink::refuse(const CallID& id)
+{
+  IAXCall* call = getIAXCall(id);
+  if (call==0) { _debug("Call doesn't exists\n"); return false; }
+  _mutexIAX.enterMutex();
+  iax_reject(call->getSession(), "Call rejected manually.");
+  _mutexIAX.leaveMutex();
+  removeCall(id);
+}
+
+bool
+IAXVoIPLink::carryingDTMFdigits(const CallID& id, char code)
+{
+  IAXCall* call = getIAXCall(id);
+  if (call==0) { _debug("Call doesn't exists\n"); return false; }
+  _mutexIAX.enterMutex();
+  iax_send_dtmf(call->getSession(), code);
+  _mutexIAX.leaveMutex();
 }
 
 bool

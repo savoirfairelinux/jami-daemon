@@ -51,15 +51,15 @@ public:
   bool setUnregister (void);
 
   Call* newOutgoingCall(const CallID& id, const std::string& toUrl);
-  bool answer(const CallID& id) {return false;}
+  bool answer(const CallID& id);
 
   bool hangup(const CallID& id);
   bool cancel(const CallID& id) { return false; }
   bool onhold(const CallID& id);
   bool offhold(const CallID& id);
-  bool transfer(const CallID& id, const std::string& to) { return false; }
-  bool refuse (const CallID& id) { return false; }
-  bool carryingDTMFdigits(const CallID& id, char code) { return false; }
+  bool transfer(const CallID& id, const std::string& to);
+  bool refuse (const CallID& id);
+  bool carryingDTMFdigits(const CallID& id, char code);
   bool sendMessage(const std::string& to, const std::string& body) { return false; }
 
 public: // iaxvoiplink only

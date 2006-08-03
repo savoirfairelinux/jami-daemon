@@ -613,6 +613,13 @@ SIPVoIPLink::onhold(const CallID& id)
   SIPCall* call = getSIPCall(id);
   if (call==0) { _debug("Call doesn't exist\n"); return false; }  
 
+  // Stop sound
+  call->setAudioStart(false);
+  call->setState(Call::Hold);
+  _debug("SIP: Stopping AudioRTP when onhold\n");
+  _audiortp.closeRtpSession();
+
+
   int did = call->getDid();
 
   eXosip_lock ();
@@ -661,12 +668,6 @@ SIPVoIPLink::onhold(const CallID& id)
     osip_message_set_content_type (invite, "application/sdp");
   }
   
-  // Stop sound
-  call->setAudioStart(false);
-  call->setState(Call::Hold);
-  _debug("SIP: Stopping AudioRTP when onhold\n");
-  _audiortp.closeRtpSession();
-
   // send request
   _debug("< Send on hold request\n");
   eXosip_lock ();

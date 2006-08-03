@@ -54,8 +54,9 @@ AudioRtp::createNewSession (SIPCall *ca) {
 
   // something should stop the thread before...
   if ( _RTXThread != 0 ) { 
-    _debug("Try to create a new audio rtp thread...\n");
-    return -1; 
+    _debug("AudioRTP Failure: Thread already exists..., stopping it\n");
+    delete _RTXThread; _RTXThread = 0;
+    //return -1; 
   }
 
   // Start RTP Send/Receive threads
@@ -64,6 +65,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
 
   try {
     if (_RTXThread->start() != 0) {
+      _debug("AudioRTP Failure: unable to start RTX Thread\n");
       return -1;
     }
   } catch(...) {

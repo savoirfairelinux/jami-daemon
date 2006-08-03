@@ -30,7 +30,7 @@ if [ -z `$pidof 'sflphoned'` ]; then
   echo -en "\n";
 fi
 
-callstring="call someone with $callid $telephonenumber\n"
+callstring="call someone SIP0 $callid $telephonenumber\n"
 echo "Calling $telephonenumber..."
 
 echo -en $callstring | $netcat
