@@ -35,6 +35,7 @@ public:
   QString index;
   QString hostApiName;
   QString deviceName;
+  QString defaultRate;
 };
 
 struct Ringtone
@@ -166,13 +167,16 @@ public:
 public slots:
   void add(const ConfigEntry &entry);
 
-  void addAudioDevice(QString index, QString hostApiName, QString deviceName);
+  void addAudioDevice(QString index, QString hostApiName, QString deviceName, QString defaultRate);
   void add(const AudioDevice &entry);
 
-  void addAudioDeviceIn(QString index, QString hostApiName, QString deviceName);
+  void addAudioDeviceIn(QString index, QString hostApiName, QString deviceName, QString defaultRate);
+  void setRateMode(const QString& rateMode) { mRateMode = rateMode; }
+  const QString& getRateMode() { return mRateMode; }
+
   void addIn(const AudioDevice &entry);
 
-  void addAudioDeviceOut(QString index, QString hostApiName, QString deviceName);
+  void addAudioDeviceOut(QString index, QString hostApiName, QString deviceName, QString defaultRate);
   void addOut(const AudioDevice &entry);
 
   void addRingtone(QString index, QString filename);
@@ -194,6 +198,7 @@ private:
   std::list< Codec > mCodecs;
 
   Session *mSession;
+  QString mRateMode; // VARIANT or number
 };
 
 #endif

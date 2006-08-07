@@ -515,16 +515,21 @@ ManagerImpl::playDtmf(char code)
   // fast return, no sound, so no dtmf
   if (audiolayer==0 || _dtmfKey == 0) { return false; }
   int outChannel = audiolayer->getOutChannel();
-  int size = pulselen * (audiolayer->getSampleRate()/1000);
+  // number of int16 sampling in one pulselen depends on samplerate
+  /** size (n sampling) = time_ms * sampling/s 
+                          ---------------------
+			         ms/s
+   */
+  int size = (int)(pulselen * ((float)audiolayer->getSampleRate()/1000));
 
-  // this buffer is for mono
-  int16* _buf = new int16[size];
+  // this buffer is for mono or stereo
+  int16* _buf = new int16[size*outChannel];
   bool returnValue = false;
 
   // Handle dtmf
   _dtmfKey->startTone(code);
 
-  // copy the sound...
+  // copy the sound
   if ( _dtmfKey->generateDTMF(_buf, size * outChannel) ) {
 
     // Put buffer to urgentRingBuffer 
@@ -1039,7 +1044,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
 
   initConfigAccount();
-
+  
   _exist = createSettingsPath();
   _setupLoaded = (_exist == 2 ) ? false : true;
 }
@@ -1083,7 +1088,7 @@ ManagerImpl::selectAudioDriver (void)
     int noDeviceIn  = getConfigInt(AUDIO, DRIVER_NAME_IN);
     int noDeviceOut = getConfigInt(AUDIO, DRIVER_NAME_OUT);
     int sampleRate  = getConfigInt(AUDIO, DRIVER_SAMPLE_RATE);
-    #ifdef USE_SAMPLERATE
+    #ifndef USE_SAMPLERATE
     sampleRate = 8000;
     #else
     if (sampleRate <=0 ) {
@@ -1438,52 +1443,47 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
     const char *hostApiName;
     const char *deviceName;
     int deviceIsSupported = false;
-    int deviceRate = audiolayer->getSampleRate();
+    double deviceRate;
 
     for (int index = 0; index < sys.deviceCount(); index++ ) {
       portaudio::Device& device = sys.deviceByIndex(index);
       deviceIsSupported = false;
       // TODO, put this code into AudioDriver()
       if (ioDeviceMask == AudioLayer::InputDevice && !device.isOutputOnlyDevice()) {
-	//portaudio::DirectionSpecificStreamParameters inputParameters(device, device.maxInputChannels(), portaudio::INT16, true, 0.0, NULL);
-	//portaudio::DirectionSpecificStreamParameters outputParameters = portaudio::DirectionSpecificStreamParameters::null();
-	//portaudio::StreamParameters tmp = portaudio::StreamParameters(inputParameters, outputParameters, deviceRate, 0, paNoFlag);
-	//if (tmp.isSupported()) {
 	  deviceIsSupported = true;
-	//}
 	
       } else if (ioDeviceMask == AudioLayer::OutputDevice && !device.isInputOnlyDevice()) {
-     	//portaudio::DirectionSpecificStreamParameters inputParameters = portaudio::DirectionSpecificStreamParameters::null();
-	//portaudio::DirectionSpecificStreamParameters outputParameters(device, device.maxOutputChannels(), portaudio::INT16, true, 0.0, NULL);
-	//portaudio::StreamParameters tmp = portaudio::StreamParameters(inputParameters, outputParameters, deviceRate, 0, paNoFlag);
-	//if (tmp.isSupported()) {
 	  deviceIsSupported = true;
-	//}	   
       } else if (device.isFullDuplexDevice()) {
-	//portaudio::DirectionSpecificStreamParameters inputParameters(device, device.maxInputChannels(), portaudio::INT16, true, 0.0, NULL);
-	//portaudio::DirectionSpecificStreamParameters outputParameters(device, device.maxOutputChannels(), portaudio::INT16, true, 0.0, NULL);
-	//portaudio::StreamParameters tmp = portaudio::StreamParameters(inputParameters, outputParameters, deviceRate, 0, paNoFlag);
-	//if (tmp.isSupported()) {
 	  deviceIsSupported = true;
-	//}		        
       }
       if (deviceIsSupported) {
         hostApiName = device.hostApi().name();
         deviceName  = device.name();
+	deviceRate  = device.defaultSampleRate();
 
         tk.clear();
         std::ostringstream str; str << index; tk.push_back(str.str());
         tk.push_back(deviceName);
         tk.push_back(std::string(hostApiName));
+	std::ostringstream rate; rate << (int)deviceRate; tk.push_back(rate.str());
         _gui->sendMessage("100", sequenceId, tk);
       }
     }
     returnValue = true;
+    std::ostringstream rate; 
+    #ifdef USE_SAMPLERATE
+    rate << "VARIABLE";
+    #else
+    rate << "8000";
+    #endif
+    tk.clear();
+    tk.push_back(rate.str());
+    _gui->sendMessage("101", sequenceId, tk);
   } catch (...) {
     returnValue = false;
   }
-
-  audiolayer->startStream();
+  //audiolayer->startStream();
 
   return returnValue;
 }

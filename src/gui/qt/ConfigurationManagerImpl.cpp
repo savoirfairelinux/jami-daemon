@@ -26,7 +26,7 @@
 #include "Request.hpp" // don't know if it's a good idea for this class to know request...
 
 ConfigurationManagerImpl::ConfigurationManagerImpl()
-  : mSession(0)
+  : mSession(0), mRateMode("8000")
 {}
 
 ConfigurationManagerImpl::~ConfigurationManagerImpl()
@@ -88,12 +88,14 @@ ConfigurationManagerImpl::add(const ConfigEntry &entry)
 void
 ConfigurationManagerImpl::addAudioDevice(QString index, 
 					 QString hostApiName, 
-					 QString deviceName)
+					 QString deviceName,
+					 QString defaultRate)
 {
   AudioDevice device;
   device.index = index;
   device.hostApiName = hostApiName;
   device.deviceName = deviceName;
+  device.defaultRate = defaultRate;
   add(device);
 }
 
@@ -107,12 +109,14 @@ ConfigurationManagerImpl::add(const AudioDevice &entry)
 void
 ConfigurationManagerImpl::addAudioDeviceIn(QString index, 
 					 QString hostApiName, 
-					 QString deviceName)
+					 QString deviceName,
+					 QString defaultRate)
 {
   AudioDevice device;
   device.index = index;
   device.hostApiName = hostApiName;
   device.deviceName = deviceName;
+  device.defaultRate = defaultRate;
   addIn(device);
 }
 
@@ -126,12 +130,14 @@ ConfigurationManagerImpl::addIn(const AudioDevice &entry)
 void
 ConfigurationManagerImpl::addAudioDeviceOut(QString index, 
 					 QString hostApiName, 
-					 QString deviceName)
+					 QString deviceName,
+					 QString defaultRate)
 {
   AudioDevice device;
   device.index = index;
   device.hostApiName = hostApiName;
   device.deviceName = deviceName;
+  device.defaultRate = defaultRate;
   addOut(device);
 }
 
@@ -222,13 +228,15 @@ ConfigurationManagerImpl::reloadSoundDriver() {
   Request *r;
   r = mSession->list("audiodevicein");
   QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
-		   this, SLOT(addAudioDeviceIn(QString, QString, QString)));
+		   this, SLOT(addAudioDeviceIn(QString, QString, QString, QString)));
+  QObject::connect(r, SIGNAL(parsedEntry(const QString& )), 
+                   this, SLOT(setRateMode(const QString& )));
   QObject::connect(r, SIGNAL(success(QString, QString)),
 		   this, SIGNAL(audioDevicesInUpdated()));
 
   r = mSession->list("audiodeviceout");
   QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
-		   this, SLOT(addAudioDeviceOut(QString, QString, QString)));
+		   this, SLOT(addAudioDeviceOut(QString, QString, QString, QString)));
   QObject::connect(r, SIGNAL(success(QString, QString)),
 		   this, SIGNAL(audioDevicesOutUpdated()));
 

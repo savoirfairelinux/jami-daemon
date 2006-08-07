@@ -163,6 +163,7 @@ ConfigurationPanel::generate()
   cboDriverChoiceOut->setCurrentItem(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT).toUInt());
   cboDriverChoiceIn->setCurrentItem(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN).toUInt());
 
+
   //preference tab
   updateSkins();
 }

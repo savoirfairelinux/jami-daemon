@@ -233,7 +233,7 @@ SFLPhoneWindow::askResendStatus(QString message)
 void 
 SFLPhoneWindow::mousePressEvent(QMouseEvent *e)
 {
-  mLastPos = e->pos();
+  mLastPos = e->pos(); // this is relative to the widget
 }
 
 void 

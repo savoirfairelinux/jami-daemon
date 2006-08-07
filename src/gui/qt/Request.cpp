@@ -84,10 +84,13 @@ Request::onEntry(const QString &code, const QString &message)
   if(args.size() >= 1) {
     arg1 = *args.begin();
     args.pop_front();
-  }
+  } 
   if(args.size() >= 1) {
     arg2 = *args.begin();
     args.pop_front();
+  } else { // if we have only one argument, we send a signal with one parameter
+    emit parsedEntry(arg1);
+    return;
   }
   if(args.size() >= 1) {
     arg3 = *args.begin();

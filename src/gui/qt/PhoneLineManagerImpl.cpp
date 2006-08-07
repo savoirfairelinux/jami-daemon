@@ -242,7 +242,7 @@ PhoneLineManagerImpl::handleEvents()
   QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
 		   &ConfigurationManager::instance(), SLOT(addAudioDevice(QString, 
 									  QString,
-									  QString)));
+									  QString, QString)));
   QObject::connect(r, SIGNAL(success(QString, QString)),
 		   &ConfigurationManager::instance(), SIGNAL(audioDevicesUpdated()));
 */
@@ -250,7 +250,10 @@ PhoneLineManagerImpl::handleEvents()
   QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
 		   &ConfigurationManager::instance(), SLOT(addAudioDeviceIn(QString, 
 									  QString,
-									  QString)));
+									  QString, QString)));
+  QObject::connect(r, SIGNAL(parsedEntry(const QString& )), 
+                   &ConfigurationManager::instance(), SLOT(setRateMode(const QString& )));
+		   
   QObject::connect(r, SIGNAL(success(QString, QString)),
 		   &ConfigurationManager::instance(), SIGNAL(audioDevicesInUpdated()));
 
@@ -258,7 +261,7 @@ PhoneLineManagerImpl::handleEvents()
   QObject::connect(r, SIGNAL(parsedEntry(QString, QString, QString, QString, QString)),
 		   &ConfigurationManager::instance(), SLOT(addAudioDeviceOut(QString, 
 									  QString,
-									  QString)));
+									  QString, QString)));
   QObject::connect(r, SIGNAL(success(QString, QString)),
 		   &ConfigurationManager::instance(), SIGNAL(audioDevicesOutUpdated()));
 

@@ -43,6 +43,7 @@ signals:
   void error(QString, QString);
   void success(QString, QString);
   void entry(QString, QString);
+  void parsedEntry(const QString& );
   void parsedEntry(QString, QString, QString, QString, QString);
 
 public:

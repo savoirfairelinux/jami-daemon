@@ -315,4 +315,6 @@ SFLLcd::mousePressEvent( QMouseEvent *e)
   if (e && e->button() == Qt::MidButton) {
     emit midClicked();
   }
+  // pass the event to the widget
+  QWidget::mousePressEvent( e );
 }
