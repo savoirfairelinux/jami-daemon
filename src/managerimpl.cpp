@@ -56,8 +56,6 @@
 ManagerImpl::ManagerImpl (void)
 {
   // Init private variables 
-  //_error = new Error();
-
   _hasZeroconf = false;
 #ifdef USE_ZEROCONF
   _hasZeroconf = true;
@@ -73,13 +71,12 @@ ManagerImpl::ManagerImpl (void)
   // sound
   _audiodriverPA = NULL;
   _dtmfKey = 0;
-  _spkr_volume = 0; // Initialize after by init() -> initVolume()
+  _spkr_volume = 0;  // Initialize after by init() -> initVolume()
   _mic_volume  = 0;  // Initialize after by init() -> initVolume()
   _mic_volume_before_mute = 0; 
 
   // Call
   _nbIncomingWaitingCall=0;
-  _registerState = UNREGISTERED;
   _hasTriedToRegister = false;
 
   // initialize random generator for call id
@@ -209,24 +206,24 @@ bool
 ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
   if (!accountExists(accountid)) {
-    _debug("Outgoing Call: account doesn't exist\n");
+    _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
     return false;
   }
   if (getAccountFromCall(id) != AccountNULL) {
-    _debug("Outgoing Call: call id already exists\n");
+    _debug("! Manager Error: Outgoing Call: call id already exists\n");
     return false;
   }
   if (hasCurrentCall()) {
-    _debug("There is currently a call, try to hold it\n");
+    _debug("* Manager Info: there is currently a call, try to hold it\n");
     onHoldCall(getCurrentCallId());
   }
-  _debug("Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
+  _debug("- Manager Action: Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
   if ( getAccountLink(accountid)->newOutgoingCall(id, to) ) {
     associateCallToAccount( id, accountid );
     switchCall(id);
     return true;
   } else {
-    _debug("An error occur, the call was not created\n");
+    _debug("! Manager Error: An error occur, the call was not created\n");
   }
   return false;
 }
@@ -273,7 +270,7 @@ ManagerImpl::hangupCall(const CallID& id)
 
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
-    _debug("Hangup Call: Call doesn't exists\n");
+    _debug("! Manager Hangup Call: Call doesn't exists\n");
     return false;
   }
 
@@ -291,7 +288,7 @@ ManagerImpl::cancelCall (const CallID& id)
   stopTone();
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
-    _debug("Cancel Call: Call doesn't exists\n");
+    _debug("! Manager Cancel Call: Call doesn't exists\n");
     return false;
   }
 
@@ -311,7 +308,7 @@ ManagerImpl::onHoldCall(const CallID& id)
   stopTone();
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
-    _debug("On Hold Call: Call doesn't exists\n");
+    _debug("5 Manager On Hold Call: Account ID %s or callid %s desn't exists\n", accountid.c_str(), id.c_str());
     return false;
   }
 
@@ -329,7 +326,7 @@ ManagerImpl::offHoldCall(const CallID& id)
   stopTone();
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
-    _debug("OffHold Call: Call doesn't exists\n");
+    _debug("5 Manager OffHold Call: Call doesn't exists\n");
     return false;
   }
   bool returnValue = getAccountLink(accountid)->offhold(id);
@@ -339,7 +336,7 @@ ManagerImpl::offHoldCall(const CallID& id)
     try {
       getAudioDriver()->startStream();
     } catch(...) {
-      _debugException("Off hold could not start audio stream");
+      _debugException("! Manager Off hold could not start audio stream");
     }
   }
   return returnValue;
@@ -352,7 +349,7 @@ ManagerImpl::transferCall(const CallID& id, const std::string& to)
   stopTone();
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
-    _debug("Transfer Call: Call doesn't exists\n");
+    _debug("! Manager Transfer Call: Call doesn't exists\n");
     return false;
   }
   bool returnValue = getAccountLink(accountid)->transfer(id, to);
@@ -385,7 +382,7 @@ ManagerImpl::refuseCall (const CallID& id)
   stopTone();
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
-    _debug("OffHold Call: Call doesn't exists\n");
+    _debug("! Manager OffHold Call: Call doesn't exists\n");
     return false;
   }
   bool returnValue = getAccountLink(accountid)->refuse(id);
@@ -415,7 +412,7 @@ ManagerImpl::saveConfig (void)
 bool
 ManagerImpl::initRegisterVoIPLink() 
 {
-  _debugInit("Initiate VoIP Links Registration\n");
+  _debugInit("Initiate VoIP Links Registration");
   AccountMap::iterator iter = _accountMap.begin();
   while( iter != _accountMap.end() ) {
     if ( iter->second) {
@@ -1682,6 +1679,7 @@ ManagerImpl::getNewCallID()
 short
 ManagerImpl::loadAccountMap()
 {
+  _debugStart("Load account:");
   short nbAccount = 0;
   Account* tmpAccount;
   
@@ -1693,7 +1691,7 @@ ManagerImpl::loadAccountMap()
     
     tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountName.str());
      if (tmpAccount!=0) {
-       _debug("Adding Account: %s\n", accountName.str().data());
+       _debugMid(" %s", accountName.str().data());
        _accountMap[accountName.str()] = tmpAccount;
       nbAccount++;
     }
@@ -1706,11 +1704,12 @@ ManagerImpl::loadAccountMap()
     accountName << "IAX" << iAccountIAX;
     tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountName.str());
     if (tmpAccount!=0) {
-       _debug("Adding Account: %s\n", accountName.str().data());
+       _debugMid(" %s", accountName.str().data());
        _accountMap[accountName.str()] = tmpAccount;
       nbAccount++;
     }
   }
+  _debugEnd("\n");
 
   return nbAccount;
 }

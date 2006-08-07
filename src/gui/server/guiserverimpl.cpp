@@ -112,17 +112,8 @@ GUIServerImpl::getEvents(const std::string& sequenceId)
   tk.push_back(_("Microphone volume changed"));
   _requestManager.sendResponse(ResponseMessage("022", sequenceId, tk));
 
-  std::string stateCode;
-  std::string stateMessage;
-
   // try to register, if not done yet...
   GuiFramework::getEvents();
-
-  if (GuiFramework::getRegistrationState(stateCode,stateMessage)) {
-    _requestManager.sendResponse(ResponseMessage(stateCode, sequenceId, stateMessage));
-  }
-
-
   return true;
 }
 

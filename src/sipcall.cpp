@@ -420,7 +420,7 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
           AudioCodec* audiocodec = _codecMap.getCodec((CodecType)payload);
           if (audiocodec!=0 && audiocodec->isActive()) {
             listCodec << payload << " ";
-            listRtpMap << "a=rtpmap: " << payload << " " << audiocodec->getCodecName() << "/" << audiocodec->getClockRate();
+            listRtpMap << "a=rtpmap:" << payload << " " << audiocodec->getCodecName() << "/" << audiocodec->getClockRate();
             if ( audiocodec->getChannel() != 1) {
               listRtpMap << "/" << audiocodec->getChannel();
             }

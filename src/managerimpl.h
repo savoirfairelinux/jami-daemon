@@ -51,17 +51,6 @@ class VoIPLink;
 class DNSService;
 #endif
 
-// Status
-//#define CONNECTED_STATUS	"Connected"
-//#define LOGGED_IN_STATUS	"Logged in"
-//#define RINGING_STATUS		"Ringing"
-//#define TRYING_STATUS		"Trying ..."
-//#define HANGUP_STATUS       "Hang up"
-//#define ONHOLD_STATUS       "On hold ..."
-//#define TRANSFER_STATUS     "Transfer to:"
-//#define MUTE_ON_STATUS		"Mute on"
-//#define ENTER_NUMBER_STATUS "Enter Phone Number:"
-
 /**
  * Define a type for a AccountMap container
  */
@@ -298,14 +287,6 @@ public:
    */
   bool hasLoadedSetup() { return _setupLoaded; }
 	
-  enum REGISTRATION_STATE {
-    UNREGISTERED,
-    REGISTERED,
-    FAILED
-  };
-
-  REGISTRATION_STATE getRegistrationState() { return _registerState; }
-
   /** Return a new random callid that is not present in the list
    * @return a brand new callid
    */
@@ -475,8 +456,6 @@ private:
   bool initRegisterVoIPLink();
   // true if we tried to register Once
   bool _hasTriedToRegister;
-  // Register state
-  REGISTRATION_STATE _registerState;
 
   // tell if we have zeroconf is enabled
   int _hasZeroconf;

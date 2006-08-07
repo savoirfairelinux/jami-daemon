@@ -97,7 +97,6 @@ public:
 
   bool hasLoadedSetup();
   const CallID& getCurrentId();
-  bool getRegistrationState(std::string& stateCode, std::string& stateMessage);
 
 protected:
   std::string _message;

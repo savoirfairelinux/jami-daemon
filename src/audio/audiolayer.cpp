@@ -45,7 +45,7 @@ AudioLayer::~AudioLayer (void)
   try {
     portaudio::System::terminate();
   } catch (const portaudio::PaException &e) {
-    _debug("Catch an exception when portaudio tried to terminate\n");
+    _debug("! AL: Catch an exception when portaudio tried to terminate\n");
   }
   closeStream();
 }
@@ -112,15 +112,16 @@ AudioLayer::startStream(void)
   try {
     ost::MutexLock guard(_mutex);
     if (_stream && !_stream->isActive()) {
-        _debug("Starting sound stream\n");
+        _debug("- AL Action: Starting sound stream\n");
         _stream->start();
-    } 
-    else { _debug ("stream doesn't exist or is already active\n");    }
+    } else { 
+      _debug ("* AL Info: Stream doesn't exist or is already active\n");    
+    }
   } catch (const portaudio::PaException &e) {
-    _debugException("Portaudio error: error on starting audiolayer stream");
+    _debugException("! AL: Portaudio error: error on starting audiolayer stream");
     throw;
   } catch(...) {
-    _debugException("stream start error");
+    _debugException("! AL: Stream start error");
     throw;
   }
 }
@@ -137,10 +138,10 @@ AudioLayer::stopStream(void)
       _micRingBuffer.flush();
     }
   } catch (const portaudio::PaException &e) {
-    _debugException("Portaudio error: stoping audiolayer stream failed");
+    _debugException("! AL: Portaudio error: stoping audiolayer stream failed");
     throw;
   } catch(...) {
-    _debugException("stream stop error");
+    _debugException("! AL: Stream stop error");
     throw;
   }
 }
@@ -162,7 +163,7 @@ AudioLayer::isStreamActive (void)
       return true;
     }
   } catch (const portaudio::PaException &e) {
-      _debugException("Portaudio error: isActive returned an error");
+      _debugException("! AL: Portaudio error: isActive returned an error");
   }
   return false;
 }
@@ -239,7 +240,7 @@ AudioLayer::isStreamStopped (void)
       return true;
     }
   } catch (const portaudio::PaException &e) {
-      _debugException("Portaudio error: isStopped returned an exception");
+      _debugException("! AL: Portaudio error: isStopped returned an exception");
   }
   return false;
 }

@@ -243,32 +243,6 @@ GuiFramework::hasLoadedSetup()
 }
 
 bool 
-GuiFramework::getRegistrationState(std::string& stateCode, std::string& stateMessage) {
-  ManagerImpl::REGISTRATION_STATE state = Manager::instance().getRegistrationState();
-  bool returnValue = false;
-  switch( state ) {
-    case ManagerImpl::REGISTERED:
-      returnValue = true;
-      stateCode    = "103";
-      stateMessage = _("Registration succeed");
-    break;
-
-    case ManagerImpl::FAILED:
-      returnValue = true;
-      stateCode    = "104";
-      stateMessage = _("Registration failed");
-    break;
-
-    case ManagerImpl::UNREGISTERED:
-      returnValue = false;
-      stateCode    = "";
-      stateMessage = "";
-    break;
-  }
-  return returnValue;
-}
-
-bool 
 GuiFramework::setSwitch(const std::string& switchName, std::string& returnMessage)
 {
   return Manager::instance().setSwitch(switchName, returnMessage);

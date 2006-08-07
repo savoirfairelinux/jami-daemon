@@ -54,7 +54,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
 
   // something should stop the thread before...
   if ( _RTXThread != 0 ) { 
-    _debug("AudioRTP Failure: Thread already exists..., stopping it\n");
+    _debug("! ARTP Failure: Thread already exists..., stopping it\n");
     delete _RTXThread; _RTXThread = 0;
     //return -1; 
   }
@@ -65,11 +65,11 @@ AudioRtp::createNewSession (SIPCall *ca) {
 
   try {
     if (_RTXThread->start() != 0) {
-      _debug("AudioRTP Failure: unable to start RTX Thread\n");
+      _debug("! ARTP Failure: unable to start RTX Thread\n");
       return -1;
     }
   } catch(...) {
-    _debugException("AudioRTP try to start a thread");
+    _debugException("! ARTP Failure: when trying to start a thread");
     throw;
   }
   return 0;
@@ -84,7 +84,7 @@ AudioRtp::closeRtpSession () {
   try {
     delete _RTXThread; _RTXThread = 0;
   } catch(...) {
-    _debugException("Exception when stopping audiortp\n");
+    _debugException("! ARTP Exception: when stopping audiortp\n");
     throw;
   }
 }
@@ -133,7 +133,7 @@ AudioRtpRTX::~AudioRtpRTX () {
   try {
     this->terminate();
   } catch(...) {
-    _debugException("AudioRTP Thread destructor didn't terminate correctly");
+    _debugException("! ARTP: Thread destructor didn't terminate correctly");
     throw;
   }
   //_debug("terminate audiortprtx ended...\n");
@@ -164,7 +164,7 @@ AudioRtpRTX::initAudioRtpSession (void)
     //_debug("Init audio RTP session\n");
     ost::InetHostAddress remote_ip(_ca->getRemoteIp().c_str());
     if (!remote_ip) {
-      _debug("AudioRTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getRemoteIp().data());
+      _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getRemoteIp().data());
       return;
     }
 
@@ -186,7 +186,7 @@ AudioRtpRTX::initAudioRtpSession (void)
         return;
       }
       if (!_sessionSend->addDestination (remote_ip, (unsigned short) _ca->getRemoteAudioPort())) {
-        _debug("AudioRTP Thread Error: could not connect to port %d\n",  _ca->getRemoteAudioPort());
+        _debug("! ARTP Thread Error: could not connect to port %d\n",  _ca->getRemoteAudioPort());
         return;
       }
 
@@ -220,7 +220,7 @@ AudioRtpRTX::initAudioRtpSession (void)
       }
     }
   } catch(...) {
-    _debugException("AudioRTP initialisation failed");
+    _debugException("! ARTP Failure: initialisation failed");
     throw;
   }
 }
@@ -291,7 +291,7 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
       int compSize = audiocodec->codecEncode(data_to_send, data_from_mic_to_codec, toSize*sizeOfData);
       // encode divise by two
       // Send encoded audio sample over the network
-      if (compSize > RTP_FRAMES2SEND) { _debug("%d should be %d\n", compSize, _nbFrames);}
+      if (compSize > RTP_FRAMES2SEND) { _debug("! ARTP: %d should be %d\n", compSize, _nbFrames);}
       //fprintf(stderr, "S");
       if (!_sym) {
         _sessionSend->putData(timestamp, data_to_send, compSize);
@@ -300,7 +300,7 @@ AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_m
       }
     }
   } catch(...) {
-    _debugException("AudioRTP sending failed");
+    _debugException("! ARTP: sending failed");
     throw;
   }
 }
@@ -382,7 +382,7 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
 
     delete adu; adu = NULL;
   } catch(...) {
-    _debugException("AudioRTP receiving failed");
+    _debugException("! ARTP: receiving failed");
     throw;
   }
 }
@@ -430,7 +430,7 @@ AudioRtpRTX::run () {
     audiolayer->flushMic();
     audiolayer->startStream();
     _start.post();
-    _debug("AudioRTP Start\n");
+    _debug("- ARTP Action: Start\n");
     while (!testCancel()) {
       ////////////////////////////
       // Send session
@@ -451,11 +451,11 @@ AudioRtpRTX::run () {
     audiolayer->stopStream();
   } catch(std::exception &e) {
     _start.post();
-    _debug("AudioRTP Stop: %s\n", e.what());
+    _debug("! ARTP: Stop %s\n", e.what());
     throw;
   } catch(...) {
     _start.post();
-    _debugException("AudioRTP Stop");
+    _debugException("* ARTP Action: Stop");
     throw;
   }
   delete [] data_for_speakers_stereo; data_for_speakers_stereo = 0;
