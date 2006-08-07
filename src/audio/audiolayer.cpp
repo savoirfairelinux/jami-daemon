@@ -270,7 +270,6 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
     // Urgent data (dtmf, incoming call signal) come first.		
     toGet = (urgentAvail < (int)(framesPerBuffer * sizeof(int16) * _outChannel)) ? urgentAvail : framesPerBuffer * sizeof(int16) * _outChannel;
     _urgentRingBuffer.Get(out, toGet, spkrVolume);
-    _debug("out: %p, toGet: %d, spkrVolume: %d\n", out, toGet, spkrVolume);
     
     // Consume the regular one as well (same amount of bytes)
     _mainSndRingBuffer.Discard(toGet);
@@ -288,11 +287,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
       if (toGet) {
         _mainSndRingBuffer.Get(out, toGet, spkrVolume);
       } else {
-	//_debug("padding %d...\n", (int)(framesPerBuffer * sizeof(int16)*_outChannel));
-	//_mainSndRingBuffer.debug();
-        //portaudio::System::instance().sleep(framesPerBuffer*sizeof(int16));
        bzero(out, framesPerBuffer * sizeof(int16) * _outChannel);
-        	
       }
     }
   }
@@ -301,8 +296,6 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   micAvailPut = _micRingBuffer.AvailForPut();
   toPut = (micAvailPut <= (int)(framesPerBuffer * sizeof(int16) * _inChannel)) ? micAvailPut : framesPerBuffer * sizeof(int16) * _inChannel;
   _micRingBuffer.Put(in, toPut, micVolume );
-
-  if (toPut==0 && toGet==0) { return 1; }
 
   return paContinue;
 }

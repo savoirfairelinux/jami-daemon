@@ -115,7 +115,8 @@ CLEANFILES = \
 	$(BUILT_SOURCES)
 
 sflphone_qt_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DDATADIR=\"$(sflphone_datadir)\"
-sflphone_qt_LDADD = $(top_srcdir)/libs/taxidermy/libtaxidermy.la
+# add QT_LIBS because LIBS conflicts in sflphone.la and was set to "" in m4/gwqt.m4
+sflphone_qt_LDADD = $(top_srcdir)/libs/taxidermy/libtaxidermy.la $(QT_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/libs/ $(QT_CXXFLAGS) $(X_INCLUDES) $(all_includes)
 AM_LDFLAGS = $(QT_LDADD) $(X_LDFLAGS) $(all_libraries)

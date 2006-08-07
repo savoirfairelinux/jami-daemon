@@ -241,7 +241,8 @@ if test x$QT_IS_STATIC = xyes ; then
     OLDLIBS="$LIBS"
     LIBS="$QT_LDADD"
     AC_CHECK_LIB(Xft, XftFontOpen, QT_LDADD="$QT_LDADD -lXft")
-    LIBS="$LIBS"
+dnl    LIBS="$LIBS"
+    LIBS=""
 fi
 
 AC_MSG_CHECKING([QT_CXXFLAGS])
