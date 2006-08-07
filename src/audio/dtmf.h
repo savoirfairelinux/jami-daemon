@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2004-2005-2006 Savoir-Faire Linux inc.
+ *  Author : Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
  *
  * 	Portions Copyright (c) 2000 Billy Biggs <bbiggs@div8.net>
@@ -31,20 +32,25 @@
  */
 class DTMF {
 public:
-  /**
-   * Create a new DTMF.
-   * @param samplingRate frequency of the sample (ex: 8000 hz)
-   */
+       /**
+        * Create a new DTMF.
+        * @param samplingRate frequency of the sample (ex: 8000 hz)
+        */
 	DTMF (unsigned int sampleRate, unsigned int nbChannel);
 	~DTMF (void);
 	
 	void startTone		(char);
-	bool generateDTMF	(int16*, size_t);
+	/**
+	 * Copy the sound inside the int16* buffer 
+	 * @param buffer : a int16* buffer
+	 * @param n      : 
+	 */
+	bool generateDTMF	(int16* buffer, size_t n);
 
 	char currentTone;
 	char newTone;
 
-	DTMFGenerator dtmf;
+	DTMFGenerator dtmfgenerator;
 };
 
 #endif // __KEY_DTMF_H_

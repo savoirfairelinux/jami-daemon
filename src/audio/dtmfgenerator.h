@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ * Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  * Author: Yan Morin <yan.morin@savoirfairelinux.com>
  * Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
  *
@@ -90,12 +90,17 @@ public:
 
 /*
  * Get n samples of the signal of code code
+ * @param buffer a int16 pointer to an allocated buffer
+ * @param n      number of int16 to get, should be lower or equal to buffer size
+ * @parma code   dtmf code to get sound
  */
 	void getSamples(int16* buffer, size_t n, unsigned char code) throw (DTMFException);
 
 /*
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
+ * @param buffer a int16 pointer to an allocated buffer 
+ * @param n      number of int16 to get, should be lower or equal to buffer size
  */
 	void getNextSamples(int16* buffer, size_t n) throw (DTMFException);
 

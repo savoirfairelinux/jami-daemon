@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
  *  Author : Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com> 
  *
@@ -23,33 +23,38 @@
 
 #include "dtmf.h"
 
-DTMF::DTMF (unsigned int sampleRate, unsigned int nbChannel) : dtmf(sampleRate, nbChannel) {
+DTMF::DTMF (unsigned int sampleRate, unsigned int nbChannel) 
+: dtmfgenerator(sampleRate, nbChannel) 
+{
   currentTone = 0;
   newTone = 0;
 }
 
-DTMF::~DTMF (void) {
+DTMF::~DTMF (void) 
+{
 }
 
 void 
-DTMF::startTone (char code) {
+DTMF::startTone (char code) 
+{
   newTone = code;
 }
 
 bool 
-DTMF::generateDTMF (int16* buffer, size_t n) {
-	if (!buffer) return false;
+DTMF::generateDTMF (int16* buffer, size_t n) 
+{
+  if (!buffer) return false;
 
   try {
     if (currentTone != 0) {
       // Currently generating a DTMF tone
       if (currentTone == newTone) {
         // Continue generating the same tone
-        dtmf.getNextSamples(buffer, n);
+        dtmfgenerator.getNextSamples(buffer, n);
         return true;
       } else if (newTone != 0) {
         // New tone requested
-        dtmf.getSamples(buffer, n, newTone);
+        dtmfgenerator.getSamples(buffer, n, newTone);
         currentTone = newTone;
         return true;
       } else {
@@ -61,7 +66,7 @@ DTMF::generateDTMF (int16* buffer, size_t n) {
       // Not generating any DTMF tone
       if (newTone) {
         // Requested to generate a DTMF tone
-        dtmf.getSamples(buffer, n, newTone);
+        dtmfgenerator.getSamples(buffer, n, newTone);
         currentTone = newTone;
         return true;
       }

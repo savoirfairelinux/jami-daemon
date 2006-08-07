@@ -112,9 +112,10 @@ AudioLayer::startStream(void)
   try {
     ost::MutexLock guard(_mutex);
     if (_stream && !_stream->isActive()) {
-      //_debug("Starting sound stream\n");
+        _debug("Starting sound stream\n");
         _stream->start();
-    }
+    } 
+    else { _debug ("stream doesn't exist or is already active\n");    }
   } catch (const portaudio::PaException &e) {
     _debugException("Portaudio error: error on starting audiolayer stream");
     throw;
@@ -136,7 +137,7 @@ AudioLayer::stopStream(void)
       _micRingBuffer.flush();
     }
   } catch (const portaudio::PaException &e) {
-    _debugException("Portaudio error: error on stoping audiolayer stream");
+    _debugException("Portaudio error: stoping audiolayer stream failed");
     throw;
   } catch(...) {
     _debugException("stream stop error");
@@ -156,12 +157,14 @@ bool
 AudioLayer::isStreamActive (void) 
 {
   ost::MutexLock guard(_mutex);
-  if(_stream && _stream->isActive()) {
-    return true;
+  try {
+    if(_stream && _stream->isActive()) {
+      return true;
+    }
+  } catch (const portaudio::PaException &e) {
+      _debugException("Portaudio error: isActive returned an error");
   }
-  else {
-    return false;
-  }
+  return false;
 }
 
 int 
@@ -189,6 +192,7 @@ AudioLayer::flushMain()
 int
 AudioLayer::putUrgent(void* buffer, int toCopy)
 {
+  ost::MutexLock guard(_mutex);
   if (_stream) {
     int a = _urgentRingBuffer.AvailForPut();
     if ( a >= toCopy ) {
@@ -230,12 +234,14 @@ bool
 AudioLayer::isStreamStopped (void) 
 {
   ost::MutexLock guard(_mutex);
-  if(_stream && _stream->isStopped()) {
-    return true;
+  try {
+    if(_stream && _stream->isStopped()) {
+      return true;
+    }
+  } catch (const portaudio::PaException &e) {
+      _debugException("Portaudio error: isStopped returned an exception");
   }
-  else {
-    return false;
-  }
+  return false;
 }
 
 int 
@@ -261,9 +267,10 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   // framePerBuffer are the number of int16 for one channel (left)
   urgentAvail = _urgentRingBuffer.AvailForGet();
   if (urgentAvail > 0) {
-  // Urgent data (dtmf, incoming call signal) come first.		
+    // Urgent data (dtmf, incoming call signal) come first.		
     toGet = (urgentAvail < (int)(framesPerBuffer * sizeof(int16) * _outChannel)) ? urgentAvail : framesPerBuffer * sizeof(int16) * _outChannel;
     _urgentRingBuffer.Get(out, toGet, spkrVolume);
+    _debug("out: %p, toGet: %d, spkrVolume: %d\n", out, toGet, spkrVolume);
     
     // Consume the regular one as well (same amount of bytes)
     _mainSndRingBuffer.Discard(toGet);
@@ -283,7 +290,9 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
       } else {
 	//_debug("padding %d...\n", (int)(framesPerBuffer * sizeof(int16)*_outChannel));
 	//_mainSndRingBuffer.debug();
-        bzero(out, framesPerBuffer * sizeof(int16) * _outChannel);
+        //portaudio::System::instance().sleep(framesPerBuffer*sizeof(int16));
+       bzero(out, framesPerBuffer * sizeof(int16) * _outChannel);
+        	
       }
     }
   }
@@ -292,6 +301,8 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   micAvailPut = _micRingBuffer.AvailForPut();
   toPut = (micAvailPut <= (int)(framesPerBuffer * sizeof(int16) * _inChannel)) ? micAvailPut : framesPerBuffer * sizeof(int16) * _inChannel;
   _micRingBuffer.Put(in, toPut, micVolume );
+
+  if (toPut==0 && toGet==0) { return 1; }
 
   return paContinue;
 }
