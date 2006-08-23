@@ -21,7 +21,7 @@ SAMPLERATE_LIB=
 endif
 
 libaudio_la_SOURCES = alaw.cpp        audiofile.cpp	g711.cpp tonelist.cpp     \
-audiortp.cpp         dtmf.cpp   tone.cpp audiocodec.cpp  audiolayer.cpp  dtmfgenerator.cpp  gsmcodec.cpp \
+audiortp.cpp         dtmf.cpp   tone.cpp audiocodec.cpp  audiolayer.cpp audiodevice.cpp  dtmfgenerator.cpp  gsmcodec.cpp \
 tonegenerator.cpp  ulaw.cpp codecDescriptor.cpp \
 audioloop.cpp ringbuffer.cpp $(SPEEX_SOURCES)
 
@@ -31,7 +31,7 @@ libaudio_la_CPPFLAGS = $(SPEEX_FLAG) $(SAMPLERATE_FLAG)
 
 
 noinst_HEADERS = audioloop.h       common.h ringbuffer.h alaw.h          audiofile.h g711.h \
- tonelist.h         audiortp.h audiocodec.h    audiolayer.h \
+ tonelist.h         audiortp.h audiocodec.h    audiolayer.h audiodevice.h \
  dtmfgenerator.h    gsmcodec.h      tonegenerator.h    ulaw.h \
  codecDescriptor.h    dtmf.h tone.h \
  CodecSpeex.h
