@@ -66,10 +66,10 @@ ManagerImpl::ManagerImpl (void)
   _path = ""; 
   _exist = 0;
   _setupLoaded = false;
-  _gui = NULL;
+  _gui = 0;
 
   // sound
-  _audiodriverPA = NULL;
+  _audiodriver = 0;
   _dtmfKey = 0;
   _spkr_volume = 0;  // Initialize after by init() -> initVolume()
   _mic_volume  = 0;  // Initialize after by init() -> initVolume()
@@ -99,7 +99,7 @@ ManagerImpl::~ManagerImpl (void)
   terminate();
 
 #ifdef USE_ZEROCONF
-  delete _DNSService; _DNSService = NULL;
+  delete _DNSService; _DNSService = 0;
 #endif
 
   _debug("%s stop correctly.\n", PROGNAME);
@@ -114,26 +114,10 @@ ManagerImpl::init()
     _debug("Cannot create config file in your home directory\n");
   }
 
-  try {
-    initAudioDriver();
-    selectAudioDriver();
-  }
-  catch (const portaudio::PaException &e) {
-      getAudioDriver()->setErrorMessage(e.paErrorText());
-      _debug("Portaudio exception: %s\n", e.paErrorText());
-  }
-  catch (const portaudio::PaCppException &e) {
-      getAudioDriver()->setErrorMessage(e.what());
-      _debug("Portaudio exception: %s\n", e.what());
-  }
-  catch (const std::runtime_error &e) {
-      getAudioDriver()->setErrorMessage(e.what());
-      _debug("Portaudio exception: %s\n", e.what());
-  }
-  catch (...) {
-      displayError("An unknown exception occured while selecting audio driver.");
-      throw;
-  }
+  initAudioDriver();
+  selectAudioDriver();
+
+  
   initAudioCodec();
 
   AudioLayer *audiolayer = getAudioDriver();
@@ -164,7 +148,7 @@ void ManagerImpl::terminate()
   delete _dtmfKey;
 
   _debug("Unload Audio Driver\n");
-  delete _audiodriverPA; _audiodriverPA = NULL;
+  delete _audiodriver; _audiodriver = 0;
 
   _debug("Unload Telephone Tone\n");
   delete _telephoneTone; _telephoneTone = 0;
@@ -789,9 +773,11 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
     _toneMutex.leaveMutex();
 
     try {
-      getAudioDriver()->startStream();
+      AudioLayer* audiolayer = getAudioDriver();
+      if (audiolayer) { audiolayer->startStream(); }
     } catch(...) {
       _debugException("Off hold could not start audio stream");
+      return false;
     }
   }
   return true;
@@ -806,7 +792,8 @@ ManagerImpl::stopTone() {
   if (!hasToPlayTone) return;
 
   try {
-    getAudioDriver()->stopStream();
+    AudioLayer* audiolayer = getAudioDriver();
+    if (audiolayer) { audiolayer->stopStream(); }
   } catch(...) {
     _debugException("Stop tone and stop stream");
   }
@@ -1066,12 +1053,16 @@ ManagerImpl::initAudioCodec (void)
 void
 ManagerImpl::initAudioDriver(void) 
 {
-  try {
-    _debugInit("AudioLayer Creation");
-    _audiodriverPA = new AudioLayer();
-  } catch(...) {
-    throw;
-  }
+  _debugInit("AudioLayer Creation");
+  _audiodriver = new AudioLayer();
+  if (_audiodriver == 0) {
+    _debug("Init audio driver error\n");
+  } else {
+    std::string error = getAudioDriver()->getErrorMessage();
+    if (!error.empty()) {
+      _debug("Init audio driver: %s\n", error.c_str());
+    }
+  } 
 }
 
 /**
@@ -1080,47 +1071,27 @@ ManagerImpl::initAudioDriver(void)
 void
 ManagerImpl::selectAudioDriver (void)
 {
-  try {
-    int noDevice    = getConfigInt(AUDIO, DRIVER_NAME);
-    int noDeviceIn  = getConfigInt(AUDIO, DRIVER_NAME_IN);
-    int noDeviceOut = getConfigInt(AUDIO, DRIVER_NAME_OUT);
-    int sampleRate  = getConfigInt(AUDIO, DRIVER_SAMPLE_RATE);
-    #ifndef USE_SAMPLERATE
-    sampleRate = 8000;
-    #else
-    if (sampleRate <=0 ) {
-    	sampleRate = 8000;
-    }
-    #endif
-
-    // this is when no audio device in/out are set
-    // or the audio device in/out are set to 0
-    // we take the nodevice instead
-    if (noDeviceIn == 0 && noDeviceOut == 0) {
-      noDeviceIn = noDeviceOut = noDevice;
-    }
-    _debugInit(" AudioLayer Device Count");
-    int nbDevice = portaudio::System::instance().deviceCount();
-    if (nbDevice == 0) {
-      throw std::runtime_error("Portaudio detect no sound card.");
-    } else {
-      if (noDeviceIn >= nbDevice) {
-        _debug(" Portaudio auto-select device #0 for input because device #%d is not found\n", noDeviceIn);
-        _setupLoaded = false;
-        noDeviceIn = 0;
-      }
-      if (noDeviceOut >= nbDevice) {
-        _debug(" Portaudio auto-select device #0 for output because device #%d is not found\n", noDeviceOut);
-        _setupLoaded = false;
-        noDeviceOut = 0;
-      }
-    }
-    _debug(" Setting audiolayer to device in=%d and out=%d\n", noDeviceIn, noDeviceOut);
-    _debugInit(" AudioLayer Opening Device");
-    _audiodriverPA->openDevice(noDeviceIn, noDeviceOut,sampleRate);
-  } catch(...) {
-    throw;
+  int noDevice  = getConfigInt(AUDIO, DRIVER_NAME);
+  int noDeviceIn  = getConfigInt(AUDIO, DRIVER_NAME_IN);
+  int noDeviceOut = getConfigInt(AUDIO, DRIVER_NAME_OUT);
+  int sampleRate  = getConfigInt(AUDIO, DRIVER_SAMPLE_RATE);
+  #ifndef USE_SAMPLERATE
+  sampleRate = 8000;
+  #else
+  if (sampleRate <=0 ) {
+      sampleRate = 8000;
   }
+  #endif
+
+  // this is when no audio device in/out are set
+  // or the audio device in/out are set to 0
+  // we take the nodevice instead
+  if (noDeviceIn == 0 && noDeviceOut == 0) {
+    noDeviceIn = noDeviceOut = noDevice;
+  }
+  _debugInit(" AudioLayer Opening Device");
+  _audiodriver->setErrorMessage("");
+  _audiodriver->openDevice(noDeviceIn, noDeviceOut, sampleRate);
 }
 
 /**
@@ -1427,60 +1398,41 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
 bool 
 ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask) 
 {
-  bool returnValue = false;
   AudioLayer* audiolayer = getAudioDriver();
-  if (audiolayer == 0) {
-    return false;
-  }
-  try {
-    // TODO: test when there is an error on initializing...
-    TokenList tk;
-    portaudio::System& sys = portaudio::System::instance();
+  if (audiolayer == 0) { return false; }
 
-    const char *hostApiName;
-    const char *deviceName;
-    int deviceIsSupported = false;
-    double deviceRate;
+  bool returnValue = false;
+  
+  // TODO: test when there is an error on initializing...
+  TokenList tk;
+  AudioDevice* device = 0;
+  int nbDevice = audiolayer->getDeviceCount();
+  
+  for (int index = 0; index < nbDevice; index++ ) {
+    device = audiolayer->getAudioDeviceInfo(index, ioDeviceMask);
+    if (device != 0) {
+      tk.clear();
+      std::ostringstream str; str << index; tk.push_back(str.str());
+      tk.push_back(device->getName());
+      tk.push_back(device->getApiName());
+      std::ostringstream rate; rate << (int)(device->getRate()); tk.push_back(rate.str());
+      _gui->sendMessage("100", sequenceId, tk);
 
-    for (int index = 0; index < sys.deviceCount(); index++ ) {
-      portaudio::Device& device = sys.deviceByIndex(index);
-      deviceIsSupported = false;
-      // TODO, put this code into AudioDriver()
-      if (ioDeviceMask == AudioLayer::InputDevice && !device.isOutputOnlyDevice()) {
-	  deviceIsSupported = true;
-	
-      } else if (ioDeviceMask == AudioLayer::OutputDevice && !device.isInputOnlyDevice()) {
-	  deviceIsSupported = true;
-      } else if (device.isFullDuplexDevice()) {
-	  deviceIsSupported = true;
-      }
-      if (deviceIsSupported) {
-        hostApiName = device.hostApi().name();
-        deviceName  = device.name();
-	deviceRate  = device.defaultSampleRate();
-
-        tk.clear();
-        std::ostringstream str; str << index; tk.push_back(str.str());
-        tk.push_back(deviceName);
-        tk.push_back(std::string(hostApiName));
-	std::ostringstream rate; rate << (int)deviceRate; tk.push_back(rate.str());
-        _gui->sendMessage("100", sequenceId, tk);
-      }
+      // don't forget to delete it after
+      delete device; device = 0;
     }
-    returnValue = true;
-    std::ostringstream rate; 
-    #ifdef USE_SAMPLERATE
-    rate << "VARIABLE";
-    #else
-    rate << "8000";
-    #endif
-    tk.clear();
-    tk.push_back(rate.str());
-    _gui->sendMessage("101", sequenceId, tk);
-  } catch (...) {
-    returnValue = false;
   }
-  //audiolayer->startStream();
+  returnValue = true;
+  
+  std::ostringstream rate; 
+  #ifdef USE_SAMPLERATE
+  rate << "VARIABLE";
+  #else
+  rate << "8000";
+  #endif
+  tk.clear();
+  tk.push_back(rate.str());
+  _gui->sendMessage("101", sequenceId, tk);
 
   return returnValue;
 }
@@ -1516,10 +1468,10 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
   TokenList tk;
   try {
     ost::Dir dir(path.c_str());
-    const char *cFileName = NULL;
+    const char *cFileName = 0;
     std::string fileName;
     std::string filePathName;
-    while ( (cFileName=dir++) != NULL ) {
+    while ( (cFileName=dir++) != 0 ) {
       fileName = cFileName;
       filePathName = path + DIR_SEPARATOR_STR + cFileName;
       if (fileName.length() && fileName[0]!='.' && !ost::isDir(filePathName.c_str())) {
@@ -1578,47 +1530,23 @@ ManagerImpl::getAccountList(const std::string& sequenceId)
 bool
 ManagerImpl::setSwitch(const std::string& switchName, std::string& message) {
   if (switchName == "audiodriver" ) {
-    try 
-      {
-        selectAudioDriver();
-        message = _("Change with success");
-        playDtmf('9');
-        getAudioDriver()->sleep(300); // in milliseconds
-        playDtmf('1');
-        getAudioDriver()->sleep(300); // in milliseconds
-        playDtmf('1');
-        return true;
-      }
-    catch (const portaudio::PaException &e) 
-      {
-        getAudioDriver()->setErrorMessage(e.paErrorText());
-        _debug("Portaudio exception: %s\n", e.paErrorText());
-        message = e.paErrorText();
-        return false;
-      }
-    catch (const portaudio::PaCppException &e) 
-      {
-        getAudioDriver()->setErrorMessage(e.what());
-        _debug("Portaudio exception: %s\n", e.what());
-        message = e.what();
-        return false;
-      }
-    catch (const std::runtime_error &e) 
-      {
-        getAudioDriver()->setErrorMessage(e.what());
-        _debug("Portaudio exception: %s\n", e.what());
-        message = e.what();
-        return false;
-      } 
-    catch(...) 
-      {
-        _debug("Portaudio exception: <unknown>\n");
-        message = _("Sound error, please use another configuration");
-        return false;
-      }
-  } else {
-    return false;
+    selectAudioDriver();
+    std::string error = getAudioDriver()->getErrorMessage();
+    if (!error.empty()) {
+      message = error;
+      return false;
+    }
+    message = _("Change with success");
+    playDtmf('9');
+    getAudioDriver()->sleep(300); // in milliseconds
+    playDtmf('1');
+    getAudioDriver()->sleep(300); // in milliseconds
+    playDtmf('1');
+    return true;
   }
+
+
+  return false;
 }
 
 // ACCOUNT handling

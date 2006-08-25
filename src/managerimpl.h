@@ -98,7 +98,7 @@ public:
 
 	// Accessor to audiodriver
   // it's multi-thread and use mutex internally
-  AudioLayer* getAudioDriver(void) const { return _audiodriverPA ;}
+  AudioLayer* getAudioDriver(void) const { return _audiodriver; }
 
   /**
    * Get a descriptor map of codec available
@@ -196,13 +196,13 @@ public:
   bool setConfig(const std::string& section, const std::string& name, int value);
   bool getConfigList(const std::string& sequenceId, const std::string& name);
   void selectAudioDriver(void);
+
   /** 
    * Set Audio Driver with switchName == audiodriver 
    * @param sflphoned internal parameter to change
    * @param message to return to the user
    * @return true if everything is ok
    */
-  
   bool setSwitch(const std::string& switchName, std::string& message);
 
   // configuration function for extern
@@ -386,7 +386,7 @@ private:
   //
   // Sound variable
   //
-  AudioLayer* _audiodriverPA;
+  AudioLayer* _audiodriver;
 
   // Main thread
   DTMF* _dtmfKey;
