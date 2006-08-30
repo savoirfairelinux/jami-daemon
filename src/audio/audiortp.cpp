@@ -234,12 +234,12 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
   //   3. encode it
   //   4. send it
   try {
-    if (_ca==0) { return; } // no call, so we do nothing
+    if (_ca==0) { _debug(" !ARTP: No call associated (mic)\n"); return; } // no call, so we do nothing
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-    if (!audiolayer) { return; }
+    if (!audiolayer) { _debug(" !ARTP: No audiolayer available for mic\n"); return; }
 
     AudioCodec* audiocodec = _ca->getAudioCodec();
-    if (!audiocodec) { return; }
+    if (!audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
 
     // we have to get 20ms of data from the mic *20/1000 = /50
     // rate/50 shall be lower than RTP_20S_48KHZ_MAX
@@ -250,6 +250,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     // take the lower
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+    //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
 
     // Get bytes from micRingBuffer to data_from_mic
     int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
@@ -289,8 +290,9 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
       //_debug("begin: %p, nbSample: %d\n", toSIP, nbSample);
       //_debug("has to fill: %d chars at %p\n", (RTP_20S_8KHZ_MAX-nbSample)*sizeof(int16), toSIP + nbSample);
       memset(toSIP + nbSample, 0, (RTP_20S_8KHZ_MAX-nbSample)*sizeof(int16));
-      //nbSample = RTP_20S_8KHZ_MAX;
+      nbSample = RTP_20S_8KHZ_MAX;
     }
+    //_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toSIP[0], toSIP[1], toSIP[2]);
 
     // for the mono: range = 0 to RTP_FRAME2SEND * sizeof(int16)
     // codecEncode(char *dest, int16* src, size in bytes of the src)

@@ -411,6 +411,7 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   // Additionally handle the mic's audio stream 
   micAvailPut = _micRingBuffer.AvailForPut();
   toPut = (micAvailPut <= (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? micAvailPut : framesPerBuffer * sizeof(SFLDataFormat);
+  //_debug("AL: Nb sample: %d char, [0]=%f [1]=%f [2]=%f\n", toPut, in[0], in[1], in[2]);
   _micRingBuffer.Put(in, toPut, micVolume);
 
   return paContinue;
