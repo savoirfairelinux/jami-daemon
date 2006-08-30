@@ -25,9 +25,7 @@
 #include "audio/audiocodec.h"
 #include "audio/audiolayer.h"
 
-#ifdef USE_SAMPLERATE
- #include <samplerate.h>
-#endif
+#include <samplerate.h>
 
 #define IAX_SUCCESS  0
 #define IAX_FAILURE -1
@@ -60,6 +58,9 @@
 #define IAX__FORMAT_H264         (1 << 23)       /* H264 Video */
 #define IAX__FORMAT_THEORA       (1 << 24)       /* Theora Video */
 
+#define IAX__20S_8KHZ_MAX   320 // 320 samples
+#define IAX__20S_48KHZ_MAX  1920 // 320*6 samples, 6 = 48000/8000
+
 IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
  : VoIPLink(accountID)
 {
@@ -71,14 +72,15 @@ IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
 
   audiocodec = 0;
   audiolayer = 0;
-  _nbFrames = 160;
-  data_for_speakers_recv = new int16[_nbFrames*2];
-  data_for_speakers_output = new int16[_nbFrames*2];
 
-#ifdef USE_SAMPLERATE
-  _floatBufferIn  = new float[_nbFrames*2];
-  _floatBufferOut = new float[_nbFrames*2];
-#endif
+  _receiveDataDecoded = new int16[IAX__20S_48KHZ_MAX];
+  _sendDataEncoded   =  new unsigned char[IAX__20S_8KHZ_MAX];
+
+  // we estimate that the number of format after a conversion 8000->48000 is expanded to 6 times
+  _dataAudioLayer = new SFLDataFormat[IAX__20S_48KHZ_MAX];
+  _floatBuffer8000  = new float32[IAX__20S_8KHZ_MAX];
+  _floatBuffer48000 = new float32[IAX__20S_48KHZ_MAX];
+  _intBuffer8000  = new int16[IAX__20S_8KHZ_MAX];
 }
 
 
@@ -90,13 +92,13 @@ IAXVoIPLink::~IAXVoIPLink()
 
   audiocodec = 0;
   audiolayer = 0;
-  delete [] data_for_speakers_recv; data_for_speakers_recv = 0;
-  delete [] data_for_speakers_output; data_for_speakers_output = 0;
+  delete [] _intBuffer8000; _intBuffer8000 = 0;
+  delete [] _floatBuffer48000; _floatBuffer48000 = 0;
+  delete [] _floatBuffer8000; _floatBuffer8000 = 0;
+  delete [] _dataAudioLayer; _dataAudioLayer = 0;
 
-#ifdef USE_SAMPLERATE
-  delete [] _floatBufferIn;
-  delete [] _floatBufferOut;
-#endif
+  delete [] _sendDataEncoded; _sendDataEncoded = 0;
+  delete [] _receiveDataDecoded; _receiveDataDecoded = 0;
 }
 
 bool
@@ -177,7 +179,7 @@ IAXVoIPLink::getEvent()
   iax_event* event = 0;
   IAXCall* call = 0;
   while ( (event = iax_get_event(0)) != 0 ) {
-    _debug ("Receive IAX Event: %d\n", event->etype);
+    //_debug ("Receive IAX Event: %d\n", event->etype);
     call = iaxFindCallBySession(event->session);
     if (call!=0) {
       iaxHandleCallEvent(event, call);
@@ -414,7 +416,7 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
   char* lang = NULL;
   int wait = 0;
   int audio_format_preferred =  IAX__FORMAT_ULAW;
-  int audio_format_capability = IAX__FORMAT_ULAW | IAX__FORMAT_ALAW | IAX__FORMAT_GSM | IAX__FORMAT_SPEEX;
+  int audio_format_capability = IAX__FORMAT_ULAW; // | IAX__FORMAT_ALAW | IAX__FORMAT_GSM | IAX__FORMAT_SPEEX;
 
   _debug("IAX New call: %s\n", num);
   iax_call(newsession, user, user, num, lang, wait, audio_format_preferred, audio_format_capability);
@@ -502,39 +504,57 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
     case IAX_EVENT_VOICE:
-     output = data_for_speakers_output; // don't use data directly, use a pointer instead!!!
-     // since convert return doesn't copy anything if it doesn't have to.
-
      if (audiocodec != 0 && audiolayer!=0) {
-        //_debug("Receive: len=%d, format=%d, data_for_speakers_recv=%p\n", event->datalen, call->getFormat(), data_for_speakers_recv);
+        //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
         unsigned char* data = (unsigned char*)event->data;
         unsigned int size   = event->datalen;
-        int expandedSize = audiocodec->codecDecode(data_for_speakers_recv, data, size);
+        if (size > IAX__20S_8KHZ_MAX) {
+          _debug("the size %d is bigger than expected %d. crop\n", size, IAX__20S_8KHZ_MAX);
+          size = IAX__20S_8KHZ_MAX;
+        }
+        int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
         int nbInt16      = expandedSize/sizeof(int16);
-        int toChannel = 1;
-        int fromChannel = 1;
-        int toPut;
+        if (nbInt16 > IAX__20S_8KHZ_MAX) {
+          _debug("We have decoded a IAX packet larger than expected: %s VS %s. crop\n", nbInt16, IAX__20S_8KHZ_MAX);
+          nbInt16=IAX__20S_8KHZ_MAX;
+        }
 
-#ifdef USE_SAMPLERATE
-      if ( audiolayer->getSampleRate() != audiocodec->getClockRate() ) {
-        // convert here
-        double         factord = (double)audiolayer->getSampleRate()/ audiocodec->getClockRate();
+        SFLDataFormat* toAudioLayer;
+        int nbSample = nbInt16;
+        int nbSampleMaxRate = nbInt16 * 6;
 
-        SRC_DATA src_data;
-        src_data.data_in = _floatBufferIn;
-        src_data.data_out = _floatBufferOut;
-        src_data.input_frames = nbInt16/fromChannel;
-        src_data.output_frames = _nbFrames;
-        src_data.src_ratio = factord;
-        src_short_to_float_array(data_for_speakers_recv, _floatBufferIn, nbInt16);
-        src_simple (&src_data, SRC_SINC_MEDIUM_QUALITY, fromChannel);
-        src_float_to_short_array(_floatBufferOut, data_for_speakers_recv, src_data.output_frames_gen*fromChannel);
-        nbInt16 = src_data.output_frames_gen*fromChannel;
-      }
-#endif
-        toPut = audiolayer->convert(data_for_speakers_recv, fromChannel, nbInt16, &output, toChannel);
-        audiolayer->putMain(output, toPut * sizeof(int16));
-        //_debug("sending %d int16 to speakers..\n", toPut);
+        if ( audiolayer->getSampleRate() != audiocodec->getClockRate() ) {
+          // convert here
+          double         factord = (double)audiolayer->getSampleRate()/ audiocodec->getClockRate();
+
+          SRC_DATA src_data;
+          src_data.data_in = _floatBuffer8000;
+          src_data.data_out = _floatBuffer48000;
+          src_data.input_frames = nbSample;
+          src_data.output_frames = nbSampleMaxRate;
+          src_data.src_ratio = factord;
+          src_short_to_float_array(_receiveDataDecoded, _floatBuffer8000, nbSample);
+          src_simple (&src_data, SRC_SINC_BEST_QUALITY/*SRC_SINC_MEDIUM_QUALITY*/, 1); // 1=mono channel
+         
+          nbSample = ( src_data.output_frames_gen > IAX__20S_48KHZ_MAX) ? IAX__20S_48KHZ_MAX : src_data.output_frames_gen;
+          #ifdef DATAFORMAT_IS_FLOAT
+            toAudioLayer = _floatBuffer48000;
+  	#else
+            src_float_to_short_array(_floatBuffer48000, _dataAudioLayer, nbSample);
+  	  toAudioLayer = _dataAudioLayer;
+  	#endif
+  	
+        } else {
+          nbSample = nbInt16;
+          #ifdef DATAFORMAT_IS_FLOAT
+        	  // convert _receiveDataDecoded to float inside _receiveData
+            src_short_to_float_array(_receiveDataDecoded, _floatBuffer8000, nbSample);
+  	  toAudioLayer = _floatBuffer8000;
+          #else
+  	  toAudioLayer = _receiveDataDecoded; // int to int
+          #endif
+        }
+        audiolayer->putMain(toAudioLayer, nbSample * sizeof(SFLDataFormat));
       }
     break;
 

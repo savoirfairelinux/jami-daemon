@@ -26,9 +26,12 @@
 #include <ccrtp/rtp.h>
 #include <cc++/numbers.h>
 
-#define RTP_FRAMES2SEND 160
-
-class AudioLayer;
+#include "../global.h"
+/** maximum of byte inside an incoming packet 
+ *  8000 sampling/s * 20s/1000 = 160
+ */
+#define RTP_20S_8KHZ_MAX 160
+#define RTP_20S_48KHZ_MAX 960
 class SIPCall;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -36,32 +39,40 @@ class SIPCall;
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
 public:
-	AudioRtpRTX (SIPCall *, AudioLayer*, bool);
+	AudioRtpRTX (SIPCall *, bool);
 	~AudioRtpRTX();
 
 	ost::Time *time; 	// For incoming call notification 
 	virtual void run ();
 
 private:
-	SIPCall* _ca;
-	AudioLayer* _audioDevice;
-	ost::RTPSession *_sessionSend;
-	ost::RTPSession *_sessionRecv;
-	ost::SymmetricRTPSession *_session;
+  SIPCall* _ca;
+  ost::RTPSession *_sessionSend;
+  ost::RTPSession *_sessionRecv;
+  ost::SymmetricRTPSession *_session;
   ost::Semaphore _start;
-	bool _sym;
+  bool _sym;
 
-  int _nbFrames;
-#ifdef USE_SAMPLERATE
-  float *_floatBufferIn;
-  float *_floatBufferOut;
-#endif
+  /** When we receive data, we decode it inside this buffer */
+  int16* _receiveDataDecoded;
+  /** When we send data, we encode it inside this buffer*/
+  unsigned char* _sendDataEncoded;
 
-	void initAudioRtpSession (void);
-//  void sendSessionFromMic (unsigned char*, int16*, int16*, int, int);
-  void sendSessionFromMic (unsigned char*, int16*, int16*, int);
-//	void receiveSessionForSpkr (int16*, int16*, int, int&);
-  void receiveSessionForSpkr (int16*, int16*, int&);
+  /** After that we send the data inside this buffer if there is a format conversion or rate conversion */
+  /** Also use for getting mic-ringbuffer data */
+  SFLDataFormat* _dataAudioLayer;
+
+  /** Buffer for 8000hz samples in conversion */
+  float32* _floatBuffer8000;
+  /** Buffer for 48000hz samples in conversion */ 
+  float32* _floatBuffer48000;
+
+  /** Buffer for 8000hz samples for mic conversion */
+  int16* _intBuffer8000;
+
+  void initAudioRtpSession(void);
+  void sendSessionFromMic(int);
+  void receiveSessionForSpkr(int&);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

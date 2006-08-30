@@ -64,19 +64,18 @@ private:
  */
 	struct DTMFState {
 		unsigned int offset;   // Offset in the sample currently being played
-		int16* sample;         // Currently generated code
+		SFLDataFormat* sample;         // Currently generated code
 	};
 
 	DTMFState state;
 	static const DTMFTone tones[NUM_TONES];
 
-	int16* samples[NUM_TONES];        // Generated samples
+	SFLDataFormat* samples[NUM_TONES];        // Generated samples
 
   /**
    * Sampling rate of generated dtmf
    */
   int _sampleRate;
-  int _nbChannel;
   Tone tone;
 
 public:
@@ -85,27 +84,27 @@ public:
    * and can build one DTMF.
    * @param sampleRate frequency of the sample (ex: 8000 hz)
    */
-	DTMFGenerator(unsigned int sampleRate, unsigned int nbChannel);
+	DTMFGenerator(unsigned int sampleRate);
 	~DTMFGenerator();
 
 /*
  * Get n samples of the signal of code code
- * @param buffer a int16 pointer to an allocated buffer
- * @param n      number of int16 to get, should be lower or equal to buffer size
+ * @param buffer a SFLDataFormat pointer to an allocated buffer
+ * @param n      number of sampling to get, should be lower or equal to buffer size
  * @parma code   dtmf code to get sound
  */
-	void getSamples(int16* buffer, size_t n, unsigned char code) throw (DTMFException);
+	void getSamples(SFLDataFormat* buffer, size_t n, unsigned char code) throw (DTMFException);
 
 /*
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
- * @param buffer a int16 pointer to an allocated buffer 
- * @param n      number of int16 to get, should be lower or equal to buffer size
+ * @param buffer a SFLDataFormat pointer to an allocated buffer 
+ * @param n      number of sampling to get, should be lower or equal to buffer size
  */
-	void getNextSamples(int16* buffer, size_t n) throw (DTMFException);
+	void getNextSamples(SFLDataFormat* buffer, size_t n) throw (DTMFException);
 
 private:
-	int16* generateSample(unsigned char code) throw (DTMFException);
+	SFLDataFormat* generateSample(unsigned char code) throw (DTMFException);
 
 };
 

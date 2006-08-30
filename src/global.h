@@ -27,6 +27,21 @@
 typedef float float32;
 typedef short int16;
 
+#define DATAFORMAT_IS_FLOAT
+#ifdef DATAFORMAT_IS_FLOAT
+#define SFLDataFormat float32
+#define SFLPortaudioFormat portaudio::FLOAT32
+#define SFLPortaudioFormatString "Float32"
+#define SFLDataAmplitude 0.05
+#define SFLConvertInt16(s) ((float)(s)-16384.0)/16384.0
+#else
+#define SFLDataFormat int16
+#define SFLPortaudioFormat portaudio::INT16
+#define SFLPortaudioFormatString "Int16"
+#define SFLDataAmplitude (32767 >> 4)
+#define SFLConvertInt16(s) (s)
+#endif
+
 #ifdef DEBUG
   #define _debug(...)          fprintf(stderr, "[sfl-debug] " __VA_ARGS__)
   #define _debugStart(...)         fprintf(stderr, "[sfl-debug] " __VA_ARGS__)

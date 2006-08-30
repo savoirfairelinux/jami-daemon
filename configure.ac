@@ -129,15 +129,21 @@ dnl Check for exosip2
 LP_CHECK_EXOSIP2
 SFLPHONE_LIBS="$SFLPHONE_LIBS $EXOSIP_LIBS"
 
+
 dnl Check for samplerate
-AC_CHECK_HEADER([samplerate.h], [
-  AC_CHECK_LIB(samplerate, src_simple, [with_samplerate=yes], [with_samplerate=no]) 
-  ], [ with_samplerate=no ]
-)
-AM_CONDITIONAL(USE_SAMPLERATE, test x$with_samplerate = xyes)
+dnl AC_CHECK_HEADER([samplerate.h], [
+dnl  AC_CHECK_LIB(samplerate, src_simple, [with_samplerate=yes], [with_samplerate=no]) 
+dnl  ], [ with_samplerate=no ]
+dnl )
+dnl AM_CONDITIONAL(USE_SAMPLERATE, test x$with_samplerate = xyes)
 
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
+
+LIBSAMPLERATE_MIN_VERSION=0.1.2
+PKG_CHECK_MODULES(samplerate, samplerate >= ${LIBSAMPLERATE_MIN_VERSION})
+SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $samplerate_CFLAGS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS $samplerate_LIBS"
 
 LIBCCGNU2_MIN_VERSION=1.3.1
 PKG_CHECK_MODULES(libccgnu2, libccgnu2 >= ${LIBCCGNU2_MIN_VERSION})

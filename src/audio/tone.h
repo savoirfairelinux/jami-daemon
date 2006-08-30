@@ -38,7 +38,7 @@ public:
    * @param definition String that contain frequency/time of the tone
    * @param sampleRate SampleRating of audio tone
    */
-  Tone(const std::string& definition, unsigned int sampleRate, unsigned int nbChannel);
+  Tone(const std::string& definition, unsigned int sampleRate);
   ~Tone();
   enum TONEID {
     TONE_DIALTONE = 0,
@@ -52,7 +52,7 @@ public:
    * @param nb are the number of int16 (mono) to generate
    * by example nb=5 generate 10 int16, 5 for the left, 5 for the right
    */
-  void genSin(int16 *buffer, int frequency1, int frequency2, int nb);
+  void genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb);
 
 private:
 

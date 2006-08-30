@@ -72,9 +72,8 @@ const char* DTMFException::what() const throw()
 /*
  * Initialize the generator
  */
-DTMFGenerator::DTMFGenerator(unsigned int sampleRate, unsigned int nbChannel) : tone("", sampleRate, nbChannel) 
+DTMFGenerator::DTMFGenerator(unsigned int sampleRate) : tone("", sampleRate) 
 {
-  _nbChannel  = nbChannel;
   _sampleRate = sampleRate;
   state.offset = 0;
   state.sample = 0;
@@ -95,7 +94,7 @@ DTMFGenerator::~DTMFGenerator() {
 /*
  * Get n samples of the signal of code code
  */
-void DTMFGenerator::getSamples(int16* buffer, size_t n, unsigned char code) throw(DTMFException) {
+void DTMFGenerator::getSamples(SFLDataFormat* buffer, size_t n, unsigned char code) throw(DTMFException) {
 	size_t i;
 	if (!buffer) {
 	  throw DTMFException("Invalid parameter value");
@@ -140,7 +139,7 @@ void DTMFGenerator::getSamples(int16* buffer, size_t n, unsigned char code) thro
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void DTMFGenerator::getNextSamples(int16* buffer, size_t n) throw(DTMFException)
+void DTMFGenerator::getNextSamples(SFLDataFormat* buffer, size_t n) throw(DTMFException)
 {
 	size_t i;
 
@@ -163,11 +162,11 @@ void DTMFGenerator::getNextSamples(int16* buffer, size_t n) throw(DTMFException)
 /*
  * Generate a tone sample
  */
-int16* DTMFGenerator::generateSample(unsigned char code) throw (DTMFException) {
-	int16* ptr;
+SFLDataFormat* DTMFGenerator::generateSample(unsigned char code) throw (DTMFException) {
+	SFLDataFormat* ptr;
 
 	try {
-		ptr = new int16[_sampleRate*_nbChannel]; 
+		ptr = new SFLDataFormat[_sampleRate]; 
 		if (!ptr) {
 			  throw new DTMFException("No memory left");
 			return 0;

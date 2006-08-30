@@ -28,16 +28,16 @@ AudioLoop::AudioLoop()
   _buffer = 0;
   _pos    = 0;
   _size   = 0;
-  _nbChannel = 1;
+  _sampleRate = 0;
 }
 
 AudioLoop::~AudioLoop()
 {
-  delete _buffer; _buffer = 0;
+  delete [] _buffer; _buffer = 0;
 }
 
 int
-AudioLoop::getNext(int16* output, int nb, short volume)
+AudioLoop::getNext(SFLDataFormat* output, int nb, short volume)
 {
   int copied = 0;
   int block;
@@ -48,7 +48,7 @@ AudioLoop::getNext(int16* output, int nb, short volume)
       block = _size-pos;
     }
     // src, dest, len
-    bcopy(_buffer+pos, output, block<<1); // short>char conversion
+    bcopy(_buffer+pos, output, block*sizeof(SFLDataFormat)); // short>char conversion
     if (volume!=100) {
       for (int i=0;i<block;i++) {
         *output = (*output * volume)/100;

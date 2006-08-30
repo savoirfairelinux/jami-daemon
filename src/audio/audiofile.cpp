@@ -23,6 +23,9 @@
 #include "audiofile.h"
 #include "codecDescriptor.h"
 #include <fstream>
+#include <math.h>
+#include <samplerate.h>
+
 
 AudioFile::AudioFile()
  : AudioLoop()
@@ -38,12 +41,13 @@ AudioFile::~AudioFile()
   delete _ulaw;
 }
 
+// load file in mono format
 bool
-AudioFile::loadFile(const std::string& filename, unsigned int nbChannel=2) 
+AudioFile::loadFile(const std::string& filename, unsigned int sampleRate=8000) 
 {
-  _nbChannel = (nbChannel==2) ? 2 : 1;
-
-  if (_filename == filename) {
+  // if the filename was already load, with the same samplerate 
+  // we do nothing
+  if (_filename == filename && _sampleRate == sampleRate) {
     return true;
   } else {
     // reset to 0
@@ -54,6 +58,7 @@ AudioFile::loadFile(const std::string& filename, unsigned int nbChannel=2)
 
   // no filename to load
   if (filename.empty()) {
+    _debug("Unable to open audio file: filename is empty\n");
     return false;
   }
 
@@ -61,6 +66,7 @@ AudioFile::loadFile(const std::string& filename, unsigned int nbChannel=2)
   file.open(filename.c_str(), std::fstream::in);
   if (!file.is_open()) {
     // unable to load the file
+    _debug("Unable to open audio file %s\n", filename.c_str());
     return false;
   }
 
@@ -71,6 +77,7 @@ AudioFile::loadFile(const std::string& filename, unsigned int nbChannel=2)
 
   // allocate memory:
   char fileBuffer[length];
+
   // read data as a block:
   file.read (fileBuffer,length);
   file.close();
@@ -80,29 +87,61 @@ AudioFile::loadFile(const std::string& filename, unsigned int nbChannel=2)
   // expandedsize should be exactly two time more, else failed
   int16 monoBuffer[length];
   unsigned int expandedsize = _ulaw->codecDecode (monoBuffer, (unsigned char *) fileBuffer, length);
-
-  if (expandedsize != length*sizeof(int16)) {
+  if (expandedsize != length*2) {
     _debug("Audio file error on loading audio file!");
     return false;
   }
+  unsigned int nbSampling = expandedsize/sizeof(int16);
 
-  unsigned int int16size = expandedsize/sizeof(int16);
-
-  if (_nbChannel == 2) {
-    _size = int16size<<1; // multiply by two
-    _buffer = new int16[_size];
-
-    for(unsigned int i=0, k=0; i<int16size; i++) {
-      _buffer[k] = _buffer[k+1] = monoBuffer[i];
-      k+=2;
-    }
+  // we need to change the sample rating here:
+  // case 1: we don't have to resample : only do splitting and convert
+  if ( sampleRate == 8000 ) {
+     // just s
+     _size   = nbSampling;
+     _buffer = new SFLDataFormat[_size];
+     // src to dest
+     for(unsigned int i=0; i<nbSampling; i++) {
+       _buffer[i] = SFLConvertInt16(monoBuffer[i]);
+     }
   } else {
-    // copy the mono buffer to a mono buffer
-    _size = int16size;
-    _buffer = new int16[_size];
-    // src to dest
-    bcopy(monoBuffer, _buffer, expandedsize);
+    // case 2: we need to convert it and split it
+    // convert here
+    double factord = (double)sampleRate / 8000;
+    float* floatBufferIn = new float[nbSampling];
+    int    sizeOut  = (int)(ceil(factord*nbSampling));
+    src_short_to_float_array(monoBuffer, floatBufferIn, nbSampling);
+    SFLDataFormat* bufferTmp = new SFLDataFormat[sizeOut];
+
+    SRC_DATA src_data;
+    src_data.data_in = floatBufferIn;
+    src_data.input_frames = nbSampling;
+    src_data.output_frames = sizeOut;
+    src_data.src_ratio = factord;
+
+#ifdef DATAFORMAT_IS_FLOAT
+    // case number 2.1: the output is float32 : convert directly in _bufferTmp
+    src_data.data_out = bufferTmp;
+    src_simple (&src_data, SRC_SINC_BEST_QUALITY, 1);
+#else
+   // case number 2.2: the output is int16 : convert and change to int16
+   float* floatBufferOut = new float[sizeOut];
+   src_data.data_out = floatBufferOut;
+
+   src_simple (&src_data, SRC_SINC_BEST_QUALITY, 1);
+   src_float_to_short_array(floatBufferOut, bufferTmp, src_data.output_frames_gen);
+
+   delete [] floatBufferOut;
+#endif
+   delete [] floatBufferIn;
+   nbSampling = src_data.output_frames_gen; 
+
+   // if we are in mono, we send the bufferTmp location and don't delete it
+   // else we split the audio in 2 and put it into buffer
+   _size = nbSampling;
+   _buffer = bufferTmp;  // just send the buffer pointer;
+   bufferTmp = 0;
   }
+
   return true;
 }
 

@@ -23,6 +23,7 @@
 #include <ccrtp/rtp.h>
 #include <assert.h>
 #include <string>
+#include <cstring>
 
 #include "../global.h"
 #include "../manager.h"
@@ -32,9 +33,7 @@
 #include "ringbuffer.h"
 #include "../user_cfg.h"
 #include "../sipcall.h"
-#ifdef USE_SAMPLERATE
- #include <samplerate.h>
-#endif
+#include <samplerate.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp                                                          
@@ -61,7 +60,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
 
   // Start RTP Send/Receive threads
   _symmetric = Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC) ? true : false;
-  _RTXThread = new AudioRtpRTX (ca, Manager::instance().getAudioDriver(), _symmetric);
+  _RTXThread = new AudioRtpRTX (ca, _symmetric);
 
   try {
     if (_RTXThread->start() != 0) {
@@ -92,29 +91,26 @@ AudioRtp::closeRtpSession () {
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, AudioLayer* driver, bool sym) {
+AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) {
   setCancel(cancelDeferred);
   time = new ost::Time();
   _ca = sipcall;
   _sym = sym;
-  _audioDevice = driver;
-  if (_audioDevice!=0) {
-//    _nbFrames = 20 * _audioDevice->getSampleRate()/1000; // 20 ms
-    _nbFrames = _audioDevice->getSampleRate()/50; // 20 ms / 1000
-  } else {
-    _nbFrames = RTP_FRAMES2SEND;
-  }
-#ifdef USE_SAMPLERATE
-  _floatBufferIn  = new float[_nbFrames*2];
-  _floatBufferOut = new float[_nbFrames*2];
-#endif
+  // AudioRtpRTX should be close if we change sample rate
+
+  _receiveDataDecoded = new int16[RTP_20S_48KHZ_MAX];
+  _sendDataEncoded   =  new unsigned char[RTP_20S_8KHZ_MAX];
+
+  // we estimate that the number of format after a conversion 8000->48000 is expanded to 6 times
+  _dataAudioLayer = new SFLDataFormat[RTP_20S_48KHZ_MAX];
+  _floatBuffer8000  = new float32[RTP_20S_8KHZ_MAX];
+  _floatBuffer48000 = new float32[RTP_20S_48KHZ_MAX];
+  _intBuffer8000  = new int16[RTP_20S_8KHZ_MAX];
 
   // TODO: Change bind address according to user settings.
   // TODO: this should be the local ip not the external (router) IP
   std::string localipConfig = _ca->getLocalIp(); // _ca->getLocalIp();
   ost::InetHostAddress local_ip(localipConfig.c_str());
-
-  //_debug("AudioRtpRTX ctor : Local IP:port %s:%d\tsymmetric:%d\n", local_ip.getHostname(), _ca->getLocalAudioPort(), _sym);
 
   if (!_sym) {
     _sessionRecv = new ost::RTPSession(local_ip, _ca->getLocalAudioPort());
@@ -125,6 +121,7 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, AudioLayer* driver, bool sym) {
     _sessionRecv = NULL;
     _sessionSend = NULL;
   }
+
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
@@ -137,22 +134,25 @@ AudioRtpRTX::~AudioRtpRTX () {
     throw;
   }
   //_debug("terminate audiortprtx ended...\n");
-  _ca = NULL;
+  _ca = 0;
 
   if (!_sym) {
-    delete _sessionRecv; _sessionRecv = NULL;
-    delete _sessionSend; _sessionSend = NULL;
+    delete _sessionRecv; _sessionRecv = 0;
+    delete _sessionSend; _sessionSend = 0;
   } else {
-    delete _session;     _session = NULL;
+    delete _session;     _session = 0;
   }
 
+  delete [] _intBuffer8000; _intBuffer8000 = 0;
+  delete [] _floatBuffer48000; _floatBuffer48000 = 0;
+  delete [] _floatBuffer8000; _floatBuffer8000 = 0;
+  delete [] _dataAudioLayer; _dataAudioLayer = 0;
+
+  delete [] _sendDataEncoded; _sendDataEncoded = 0;
+  delete [] _receiveDataDecoded; _receiveDataDecoded = 0;
+
+
   delete time; time = NULL;
-
-
-#ifdef USE_SAMPLERATE
-  delete [] _floatBufferIn;  _floatBufferIn = 0;
-  delete [] _floatBufferOut; _floatBufferOut = 0;
-#endif
 }
 
 void
@@ -226,91 +226,100 @@ AudioRtpRTX::initAudioRtpSession (void)
 }
 
 void
-AudioRtpRTX::sendSessionFromMic (unsigned char* data_to_send, int16* data_from_mic, int16* data_from_mic_to_codec, int timestamp)
+AudioRtpRTX::sendSessionFromMic(int timestamp)
 {
+  // STEP:
+  //   1. get data from mic
+  //   2. convert it to int16 - good sample, good rate
+  //   3. encode it
+  //   4. send it
   try {
     if (_ca==0) { return; } // no call, so we do nothing
-    short sizeOfData = sizeof(int16);
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-
-    int availBytesFromMic = audiolayer->canGetMic();
-    int fromChannel = audiolayer->getInChannel();
-    int toChannel   = fromChannel;
+    if (!audiolayer) { return; }
 
     AudioCodec* audiocodec = _ca->getAudioCodec();
-    if (audiocodec!=0) {
-      toChannel = audiocodec->getChannel();
-    }
+    if (!audiocodec) { return; }
 
-    int maxBytesToGet = _nbFrames * fromChannel * sizeOfData; // * channels * int16/byte
+    // we have to get 20ms of data from the mic *20/1000 = /50
+    // rate/50 shall be lower than RTP_20S_48KHZ_MAX
+    int maxBytesToGet = audiolayer->getSampleRate()/50*sizeof(SFLDataFormat);
+
+    // available bytes inside ringbuffer
+    int availBytesFromMic = audiolayer->canGetMic();
 
     // take the lower
-    int bytesAvail;
-    if (availBytesFromMic < maxBytesToGet) {
-      bytesAvail = availBytesFromMic;
-    } else {
-      bytesAvail = maxBytesToGet;
-    }
+    int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
 
     // Get bytes from micRingBuffer to data_from_mic
-    audiolayer->getMic(data_from_mic, bytesAvail);
+    int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
 
-    int nbInt16 = bytesAvail/sizeof(int16);
-
-#ifdef USE_SAMPLERATE
-    // sample rate conversion here
-    if (audiocodec && audiolayer->getSampleRate() != audiocodec->getClockRate()) {
-      double         factord = (double)audiocodec->getClockRate()/audiolayer->getSampleRate();
-
-      SRC_DATA src_data;
-      src_data.data_in = _floatBufferIn;
-      src_data.data_out = _floatBufferOut;
-      src_data.input_frames = nbInt16/fromChannel;
-      src_data.output_frames = _nbFrames;
-      src_data.src_ratio = factord;
-      src_short_to_float_array(data_from_mic, _floatBufferIn, nbInt16);
-      src_simple (&src_data, SRC_SINC_MEDIUM_QUALITY, fromChannel);
-      src_float_to_short_array (_floatBufferOut, data_from_mic, src_data.output_frames_gen*fromChannel);
-
-      nbInt16 = src_data.output_frames_gen * fromChannel;
+    int16* toSIP = 0;
+    if (audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
+       SRC_DATA src_data;
+       #ifdef DATAFORMAT_IS_FLOAT   
+          src_data.data_in = _dataAudioLayer;
+       #else
+          src_short_to_float_array(_dataAudioLayer, _floatBuffer48000, nbSample);
+          src_data.data_in = _floatBuffer48000; 
+       #endif
+       double factord = (double)audiocodec->getClockRate()/audiolayer->getSampleRate();
+       src_data.src_ratio = factord;
+       src_data.input_frames = nbSample;
+       src_data.output_frames = RTP_20S_8KHZ_MAX;
+       src_data.data_out = _floatBuffer8000;
+       src_simple (&src_data, SRC_SINC_BEST_QUALITY/*SRC_SINC_MEDIUM_QUALITY*/, 1); // 1 = channel
+       nbSample = src_data.output_frames_gen;
+       //if (nbSample > RTP_20S_8KHZ_MAX) { _debug("Alert from mic, nbSample %d is bigger than expected %d\n", nbSample, RTP_20S_8KHZ_MAX); }
+       src_float_to_short_array (_floatBuffer8000, _intBuffer8000, nbSample);
+       toSIP = _intBuffer8000;
+    } else {
+      #ifdef DATAFORMAT_IS_FLOAT
+        // convert _receiveDataDecoded to float inside _receiveData
+        src_float_to_short_array(_dataAudioLayer, _intBuffer8000, nbSample);
+        toSIP = _intBuffer8000;
+       //if (nbSample > RTP_20S_8KHZ_MAX) { _debug("Alert from mic, nbSample %d is bigger than expected %d\n", nbSample, RTP_20S_8KHZ_MAX); }
+      #else
+        toSIP = _dataAudioLayer; // int to int
+      #endif
     }
-#endif
 
-    unsigned int toSize = audiolayer->convert(data_from_mic, fromChannel, nbInt16, &data_from_mic_to_codec, toChannel);
-
-    if ( toSize != (RTP_FRAMES2SEND * toChannel) ) {
+    if ( nbSample < RTP_20S_8KHZ_MAX ) {
       // fill end with 0...
-      bzero(data_from_mic_to_codec + toSize*sizeOfData, (RTP_FRAMES2SEND*toChannel-toSize)*sizeOfData);
-      toSize = RTP_FRAMES2SEND * toChannel;
+      //_debug("begin: %p, nbSample: %d\n", toSIP, nbSample);
+      //_debug("has to fill: %d chars at %p\n", (RTP_20S_8KHZ_MAX-nbSample)*sizeof(int16), toSIP + nbSample);
+      memset(toSIP + nbSample, 0, (RTP_20S_8KHZ_MAX-nbSample)*sizeof(int16));
+      //nbSample = RTP_20S_8KHZ_MAX;
     }
 
-    // Encode acquired audio sample
-    if ( audiocodec != NULL ) {
-      // for the mono: range = 0 to RTP_FRAME2SEND * sizeof(int16)
-      // codecEncode(char *dest, int16* src, size in bytes of the src)
-      int compSize = audiocodec->codecEncode(data_to_send, data_from_mic_to_codec, toSize*sizeOfData);
-      // encode divise by two
-      // Send encoded audio sample over the network
-      if (compSize > RTP_FRAMES2SEND) { _debug("! ARTP: %d should be %d\n", compSize, _nbFrames);}
-      //fprintf(stderr, "S");
-      if (!_sym) {
-        _sessionSend->putData(timestamp, data_to_send, compSize);
-      } else {
-        _session->putData(timestamp, data_to_send, compSize);
-      }
+    // for the mono: range = 0 to RTP_FRAME2SEND * sizeof(int16)
+    // codecEncode(char *dest, int16* src, size in bytes of the src)
+    int compSize = audiocodec->codecEncode(_sendDataEncoded, toSIP, nbSample*sizeof(int16));
+
+    // encode divise by two
+    // Send encoded audio sample over the network
+    if (compSize > RTP_20S_8KHZ_MAX) { _debug("! ARTP: %d should be %d\n", compSize, RTP_20S_8KHZ_MAX);}
+    if (!_sym) {
+      _sessionSend->putData(timestamp, _sendDataEncoded, compSize);
+    } else {
+      _session->putData(timestamp, _sendDataEncoded, compSize);
     }
+    toSIP = 0;
   } catch(...) {
     _debugException("! ARTP: sending failed");
     throw;
   }
+
 }
 
 void
-AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data_for_speakers_recv, int& countTime)
+AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 {
   if (_ca == 0) { return; }
   try {
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
+    if (!audiolayer) { return; }
+
     const ost::AppDataUnit* adu = NULL;
     // Get audio data stream
 
@@ -323,50 +332,67 @@ AudioRtpRTX::receiveSessionForSpkr (int16* data_for_speakers_stereo, int16* data
       return;
     }
 
-    int payload = adu->getType();
-    unsigned char* data  = (unsigned char*)adu->getData();
-    unsigned int size    = adu->getSize();
+    int payload = adu->getType(); // codec type
+    unsigned char* data  = (unsigned char*)adu->getData(); // data in char
+    unsigned int size    = adu->getSize(); // size in char
+
+    if ( size > RTP_20S_8KHZ_MAX ) {
+      _debug("We have received from RTP a packet larger than expected: %s VS %s\n", size, RTP_20S_8KHZ_MAX);
+      _debug("The packet size has been cropped\n");
+      size=RTP_20S_8KHZ_MAX;
+    }
 
     // Decode data with relevant codec
-    int toPut = 0;
     AudioCodec* audiocodec = _ca->getCodecMap().getCodec((CodecType)payload);
     if (audiocodec != 0) {
       // codecDecode(int16 *dest, char* src, size in bytes of the src)
-      // decode multiply by two
+      // decode multiply by two, so the number of byte should be double
       // size shall be RTP_FRAME2SEND or lower
-      int expandedSize = audiocodec->codecDecode(data_for_speakers_recv, data, size);
+      int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
       int nbInt16      = expandedSize/sizeof(int16);
+      if (nbInt16 > RTP_20S_8KHZ_MAX) {
+        _debug("We have decoded a RTP packet larger than expected: %s VS %s. crop\n", nbInt16, RTP_20S_8KHZ_MAX);
+        nbInt16=RTP_20S_8KHZ_MAX;
+      }
 
-      int toChannel = audiolayer->getOutChannel();
-      int fromChannel = audiocodec->getChannel();
+      SFLDataFormat* toAudioLayer;
+      int nbSample = nbInt16;
+      int nbSampleMaxRate = nbInt16 * 6; // TODO: change it
 
-#ifdef USE_SAMPLERATE
-      if ( audiolayer->getSampleRate() != audiocodec->getClockRate() ) {
+      if ( audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
         // convert here
-        double         factord = (double)audiolayer->getSampleRate()/ audiocodec->getClockRate();
+        double         factord = (double)audiolayer->getSampleRate()/audiocodec->getClockRate();
 
         SRC_DATA src_data;
-        src_data.data_in = _floatBufferIn;
-        src_data.data_out = _floatBufferOut;
-        src_data.input_frames = nbInt16/fromChannel;
-        src_data.output_frames = _nbFrames;
+        src_data.data_in = _floatBuffer8000;
+        src_data.data_out = _floatBuffer48000;
+        src_data.input_frames = nbSample;
+        src_data.output_frames = nbSampleMaxRate;
         src_data.src_ratio = factord;
-        src_short_to_float_array(data_for_speakers_recv, _floatBufferIn, nbInt16);
-        src_simple (&src_data, SRC_SINC_MEDIUM_QUALITY, fromChannel);
-        src_float_to_short_array(_floatBufferOut, data_for_speakers_recv, src_data.output_frames_gen*fromChannel);
-        nbInt16 = src_data.output_frames_gen*fromChannel;
+        src_short_to_float_array(_receiveDataDecoded, _floatBuffer8000, nbSample);
+        src_simple (&src_data, SRC_SINC_BEST_QUALITY/*SRC_SINC_MEDIUM_QUALITY*/, 1); // 1=mono channel
+       
+        nbSample = ( src_data.output_frames_gen > RTP_20S_48KHZ_MAX) ? RTP_20S_48KHZ_MAX : src_data.output_frames_gen;
+        #ifdef DATAFORMAT_IS_FLOAT
+          toAudioLayer = _floatBuffer48000;
+	#else
+          src_float_to_short_array(_floatBuffer48000, _dataAudioLayer, nbSample);
+	  toAudioLayer = _dataAudioLayer;
+	#endif
+	
+      } else {
+        nbSample = nbInt16;
+        #ifdef DATAFORMAT_IS_FLOAT
+      	  // convert _receiveDataDecoded to float inside _receiveData
+          src_short_to_float_array(_receiveDataDecoded, _floatBuffer8000, nbSample);
+	  toAudioLayer = _floatBuffer8000;
+        #else
+	  toAudioLayer = _receiveDataDecoded; // int to int
+        #endif
       }
-#endif
+      audiolayer->putMain(toAudioLayer, nbSample * sizeof(SFLDataFormat));
+      //_debug("ARTP: %d\n", nbSample * sizeof(SFLDataFormat));
 
-      toPut = audiolayer->convert(data_for_speakers_recv, fromChannel, nbInt16, &data_for_speakers_stereo, toChannel);
-
-      // If the current call is the call which is answered
-      // Set decoded data to sound device
-      // expandedSize is in mono/bytes, since we double in stereo, we send two time more
-      //fprintf(stderr, "R");
-      audiolayer->putMain(data_for_speakers_stereo, toPut * sizeof(int16));
-      //Manager::instance().getAudioDriver()->startStream();
-  
       // Notify (with a beep) an incoming call when there is already a call 
       countTime += time->getSecond();
       if (Manager::instance().incomingCallWaiting() > 0) {
@@ -393,23 +419,9 @@ AudioRtpRTX::run () {
   //encoding before sending
   AudioLayer *audiolayer = Manager::instance().getAudioDriver();
 
-  int16 *data_from_mic = new int16[_nbFrames*audiolayer->getInChannel()];
-  int16 *data_from_mic_to_codec = new int16[_nbFrames*2]; // 2 = max channel
-  unsigned char *char_to_send = new unsigned char[_nbFrames]; // two time more for codec
-
-  //spkr, we receive from rtp in mono and we send in stereo
-  //decoding after receiving
-  // we could receive in stereo too...
-  int16 *data_for_speakers_recv = new int16[_nbFrames*2];
-  int16 *data_for_speakers_stereo = new int16[_nbFrames*2];
-
   try {
-    //_debug("AudioRTP Thread is running\n");
-
     // Init the session
     initAudioRtpSession();
-
-    // flush stream:
 
     // start running the packet queue scheduler.
     //_debug("AudioRTP Thread started\n");
@@ -435,13 +447,13 @@ AudioRtpRTX::run () {
       ////////////////////////////
       // Send session
       ////////////////////////////
-      sendSessionFromMic(char_to_send, data_from_mic, data_from_mic_to_codec, timestamp);
-      timestamp += RTP_FRAMES2SEND;
+      sendSessionFromMic(timestamp);
+      timestamp += RTP_20S_8KHZ_MAX;
 
       ////////////////////////////
       // Recv session
       ////////////////////////////
-      receiveSessionForSpkr(data_for_speakers_stereo, data_for_speakers_recv, countTime);
+      receiveSessionForSpkr(countTime);
 
       // Let's wait for the next transmit cycle
       Thread::sleep(TimerPort::getTimer());
@@ -458,11 +470,6 @@ AudioRtpRTX::run () {
     _debugException("* ARTP Action: Stop");
     throw;
   }
-  delete [] data_for_speakers_stereo; data_for_speakers_stereo = 0;
-  delete [] data_for_speakers_recv;   data_for_speakers_recv   = 0;
-  delete [] char_to_send;          char_to_send          = 0;
-  delete [] data_from_mic_to_codec;   data_from_mic_to_codec   = 0;
-  delete [] data_from_mic;  data_from_mic = 0;
 }
 
 

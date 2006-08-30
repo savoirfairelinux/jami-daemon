@@ -80,11 +80,14 @@ Building the dependencies
 -------------------------
 
 If you do not use either the development packages of your distribution or the source packages made by the upstream authors of dependencies, you may want to try our custom dependencies building script in tools/ directory:
+Note that commoncpp, ccrtp, libosip and libexosip, samplerate are in debian and fedora.
+
 1. cd tools/
-2. edit config.sh to change the default prefix (/usr/local)
-3. ./download.sh
-4. ./install.sh
-5. ./portaudio.sh <-- compile portaudio
+2. ./portaudio.sh <-- compile portaudio
+3. if you want to install other software, check inside the file config.sh
+   edit config.sh to change the default prefix (/usr/local)
+   ./download.sh
+   ./install.sh
  
 You can also compile each dependency, one by one:
 
@@ -108,7 +111,7 @@ You can also compile each dependency, one by one:
 	make
 	make install
 
-	Note: if you install portaudio in /usr/local, don't forget to set pkg-config path with:
+	Note: if you install any package in /usr/local, don't forget to set pkg-config path with:
 	export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
 
 
@@ -175,8 +178,16 @@ How to enable IAX support?
 --------------------------
 
 Go inside libs directory and execute ./libiax2.sh script.
-Run ./configure with --enable-iax2 option.
+Then, run ./configure with --enable-iax2 option.
 
+
+Debugging SFLPhone
+------------------
+You can use the --with-debug option with configure
+./configure --with-debug
+make
+cd src
+PATH=. ./gui/qt/sflphone-qt
 
 
 Run-time troubleshooting
@@ -219,7 +230,7 @@ Short description of content of source tree
   audiodriver, rtp layer, audio codec ulaw, alaw and gsm.
 - src/audio/gsm/ contains the implementation of gsm audiocodec library.
 - src/audio/pacpp/ implements PortAudioCpp, a native C++ binding of 
-  PortAudio V19.
+  PortAudio V19. (remove in sflphone 0.7)
 - src/gui/ is the old directory that contains all about different user
   interface.
 - src/gui/server is the directory that talk (tcp socket on port 3999) to

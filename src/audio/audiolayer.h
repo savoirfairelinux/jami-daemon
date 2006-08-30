@@ -27,14 +27,16 @@
 
 #include "../global.h"
 #include "ringbuffer.h"
+#include "audiodevice.h"
 
 #define FRAME_PER_BUFFER	160
 
 class RingBuffer;
+class ManagerImpl;
 
 class AudioLayer {
 public:
-  AudioLayer();
+  AudioLayer(ManagerImpl* manager);
   ~AudioLayer(void);
  
   /*
@@ -57,14 +59,9 @@ public:
   int getMic(void *, int);
   void flushMic();
 
-/**
- * Try to convert a int16 fromBuffer into a int16 to Buffer
- * If the channel are the same, it only pass the address and the size of the from Buffer
- * Else, it double or reduce by 2 the fromBuffer with a 0.5 conversion
- */
-  unsigned int convert(int16* fromBuffer, int fromChannel, unsigned int fromSize, int16** toBuffer, int toChannel);
-
   int audioCallback (const void *, void *, unsigned long,
+        const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
+  int miniAudioCallback (const void *, void *, unsigned long,
         const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
 
   void setErrorMessage(const std::string& error) { _errorMessage = error; }
@@ -75,8 +72,9 @@ public:
    * accessor only
    */
   unsigned int getSampleRate() { return _sampleRate; }
-  unsigned int getInChannel()  { return _inChannel; }
-  unsigned int getOutChannel() { return _outChannel; }
+
+  int getDeviceCount();
+  AudioDevice* getAudioDeviceInfo(int index, int ioDeviceMask);
 
   enum IODEVICE {InputDevice=0x01, OutputDevice=0x02 };
 
@@ -85,8 +83,11 @@ private:
   RingBuffer _urgentRingBuffer;
   RingBuffer _mainSndRingBuffer;
   RingBuffer _micRingBuffer;
+  ManagerImpl* _manager; // augment coupling, reduce indirect access
+                        // a audiolayer can't live without manager
 
   portaudio::MemFunCallbackStream<AudioLayer> *_stream;
+
   /**
    * Sample Rate of SFLphone : should be 8000 for 8khz
    * Added because we could change it in the futur
@@ -94,18 +95,21 @@ private:
   unsigned int _sampleRate;
 
   /**
-   * Input channel (mic) should be 2 stereo or 1 mono
+   * Input channel (mic) should be 1 mono
    */
   unsigned int _inChannel; // mic
 
   /**
-   * Output channel (stereo) should be 2 stereo or 1 mono
+   * Output channel (stereo) should be 1 mono
    */
   unsigned int _outChannel; // speaker
 
   std::string _errorMessage;
-//	portaudio::AutoSystem autoSys;
   ost::Mutex _mutex;
+
+  float *table_;
+  int tableSize_;
+  int leftPhase_;
 };
 
 #endif // _AUDIO_LAYER_H_

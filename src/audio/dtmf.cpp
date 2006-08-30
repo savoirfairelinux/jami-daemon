@@ -23,8 +23,8 @@
 
 #include "dtmf.h"
 
-DTMF::DTMF (unsigned int sampleRate, unsigned int nbChannel) 
-: dtmfgenerator(sampleRate, nbChannel) 
+DTMF::DTMF (unsigned int sampleRate) 
+: dtmfgenerator(sampleRate) 
 {
   currentTone = 0;
   newTone = 0;
@@ -41,7 +41,7 @@ DTMF::startTone (char code)
 }
 
 bool 
-DTMF::generateDTMF (int16* buffer, size_t n) 
+DTMF::generateDTMF (SFLDataFormat* buffer, size_t n) 
 {
   if (!buffer) return false;
 

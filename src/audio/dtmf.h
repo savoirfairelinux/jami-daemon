@@ -36,16 +36,16 @@ public:
         * Create a new DTMF.
         * @param samplingRate frequency of the sample (ex: 8000 hz)
         */
-	DTMF (unsigned int sampleRate, unsigned int nbChannel);
+	DTMF (unsigned int sampleRate);
 	~DTMF (void);
 	
 	void startTone		(char);
 	/**
-	 * Copy the sound inside the int16* buffer 
-	 * @param buffer : a int16* buffer
+	 * Copy the sound inside the sampling* buffer 
+	 * @param buffer : a SFLDataFormat* buffer
 	 * @param n      : 
 	 */
-	bool generateDTMF	(int16* buffer, size_t n);
+	bool generateDTMF	(SFLDataFormat* buffer, size_t n);
 
 	char currentTone;
 	char newTone;

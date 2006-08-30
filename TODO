@@ -7,6 +7,7 @@ Management of account (add, remove, ...)
 Management of exceptions
 Remove all warnings in compilation
 Better handling for an reINVITE request. (done?)
+Mono channel, float for portaudio
 
 For project dependencies:
 ------------------------

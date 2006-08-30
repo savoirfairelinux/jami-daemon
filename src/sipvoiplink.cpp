@@ -542,7 +542,7 @@ SIPVoIPLink::answer(const CallID& id)
   eXosip_unlock();
 
   if(i==0) {
-    // Incoming call is answered, start the sound channel.
+    // Incoming call is answered, start the sound thread.
     _debug("* SIP Info: Starting AudioRTP when answering\n");
     if (_audiortp.createNewSession(call) >= 0) {
       call->setAudioStart(true);
@@ -581,7 +581,7 @@ SIPVoIPLink::hangup(const CallID& id)
   eXosip_call_terminate(call->getCid(), call->getDid());
   eXosip_unlock();
 
-  // Release RTP channels
+  // Release RTP thread
   if (Manager::instance().isCurrentCall(id)) {
     _debug("* SIP Info: Stopping AudioRTP for hangup\n");
     _audiortp.closeRtpSession();

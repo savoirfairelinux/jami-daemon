@@ -21,6 +21,7 @@
 
 #include "voIPLink.h"
 #include <iax-client.h>
+#include "global.h"
 
 
 class EventThread;
@@ -121,13 +122,23 @@ private:
  // extra pointer / not dynamic yet
   AudioCodec* audiocodec;
   AudioLayer* audiolayer;
-  int16* data_for_speakers_recv;
-  int16* data_for_speakers_output;
-  int _nbFrames;
-#ifdef USE_SAMPLERATE
-  float *_floatBufferIn;
-  float *_floatBufferOut;
-#endif
+
+  /** When we receive data, we decode it inside this buffer */
+  int16* _receiveDataDecoded;
+  /** When we send data, we encode it inside this buffer*/
+  unsigned char* _sendDataEncoded;
+
+  /** After that we send the data inside this buffer if there is a format conversion or rate conversion */
+  /** Also use for getting mic-ringbuffer data */
+  SFLDataFormat* _dataAudioLayer;
+
+  /** Buffer for 8000hz samples in conversion */
+  float32* _floatBuffer8000;
+  /** Buffer for 48000hz samples in conversion */ 
+  float32* _floatBuffer48000;
+
+  /** Buffer for 8000hz samples for mic conversion */
+  int16* _intBuffer8000;
 };
 
 #endif

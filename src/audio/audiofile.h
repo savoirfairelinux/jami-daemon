@@ -35,7 +35,7 @@ public:
   AudioFile();
   ~AudioFile();
 
-  bool loadFile(const std::string& filename, unsigned int nbChannel/*=2*/);
+  bool loadFile(const std::string& filename, unsigned int sampleRate/*=8000*/);
   void start() { _start = true; }
   void stop()  { _start = false; }
   bool isStarted() { return _start; }

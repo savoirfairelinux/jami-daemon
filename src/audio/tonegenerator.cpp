@@ -22,17 +22,10 @@
 #include <math.h> 
 #include <stdlib.h>
  
-#include "audiolayer.h"
-#include "codecDescriptor.h"
-#include "ringbuffer.h"
 #include "tonegenerator.h"
 #include "../global.h"
-#include "../manager.h"
-#include "../user_cfg.h"
 
 int AMPLITUDE = 32767;
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // ToneGenerator implementation
@@ -54,15 +47,15 @@ ToneGenerator::~ToneGenerator (void) {
  */
 void
 ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr, int len) const {
-	double var1, var2;
+  double var1, var2;
 													
-	var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)_sampleRate; 
-	var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)_sampleRate;
+  var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)_sampleRate; 
+  var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)_sampleRate;
 
   double amp = (double)(AMPLITUDE >> 2);
-	
-	for(int t = 0; t < len; t++) {
-		ptr[t] = (int16)(amp * ((sin(var1 * t) + sin(var2 * t))));
-	}
+ 	
+  for(int t = 0; t < len; t++) {
+    ptr[t] = (int16)(amp * ((sin(var1 * t) + sin(var2 * t))));
+  }
 }
 

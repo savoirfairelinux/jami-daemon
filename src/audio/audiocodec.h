@@ -33,6 +33,9 @@ public:
   AudioCodec(int payload, const std::string &codecName);
   virtual ~AudioCodec(void);	
 
+  /**
+   * @return the number of bytes decoded
+   */
   virtual int codecDecode(short *, unsigned char *, unsigned int) = 0;
   virtual int codecEncode(unsigned char *, short *, unsigned int) = 0;
 

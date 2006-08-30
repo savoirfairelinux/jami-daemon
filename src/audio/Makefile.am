@@ -12,14 +12,6 @@ SPEEX_FLAG=
 SPEEX_LIB=
 endif
 
-if USE_SAMPLERATE
-SAMPLERATE_FLAG=-DUSE_SAMPLERATE
-SAMPLERATE_LIB =-lsamplerate
-else
-SAMPLERATE_FLAG=
-SAMPLERATE_LIB=
-endif
-
 libaudio_la_SOURCES = alaw.cpp        audiofile.cpp	g711.cpp tonelist.cpp     \
 audiortp.cpp         dtmf.cpp   tone.cpp audiocodec.cpp  audiolayer.cpp audiodevice.cpp  dtmfgenerator.cpp  gsmcodec.cpp \
 tonegenerator.cpp  ulaw.cpp codecDescriptor.cpp \

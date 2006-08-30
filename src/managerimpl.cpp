@@ -123,14 +123,13 @@ ManagerImpl::init()
   AudioLayer *audiolayer = getAudioDriver();
   if (audiolayer!=0) {
     unsigned int sampleRate = audiolayer->getSampleRate();
-    unsigned int outChannel = audiolayer->getOutChannel();
 
     _debugInit("Load Telephone Tone");
     std::string country = getConfigString(PREFERENCES, ZONE_TONE);
-    _telephoneTone = new TelephoneTone(country, sampleRate, outChannel);
+    _telephoneTone = new TelephoneTone(country, sampleRate);
 
     _debugInit("Loading DTMF key");
-    _dtmfKey = new DTMF(sampleRate, outChannel);
+    _dtmfKey = new DTMF(sampleRate);
   }
 
   // initRegisterVoIP was here, but we doing it after the gui loaded... 
@@ -481,6 +480,10 @@ ManagerImpl::sendDtmf(const CallID& id, char code)
 bool
 ManagerImpl::playDtmf(char code)
 {
+  // HERE are the variable:
+  // - boolean variable to play or not (config)
+  // - length in milliseconds to play
+  // - sample of audiolayer
   stopTone();
   int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_DTMF);
   if (!hasToPlayTone) return false;
@@ -495,28 +498,27 @@ ManagerImpl::playDtmf(char code)
 
   // fast return, no sound, so no dtmf
   if (audiolayer==0 || _dtmfKey == 0) { return false; }
-  int outChannel = audiolayer->getOutChannel();
-  // number of int16 sampling in one pulselen depends on samplerate
-  /** size (n sampling) = time_ms * sampling/s 
-                          ---------------------
-			         ms/s
-   */
+  // number of data sampling in one pulselen depends on samplerate
+  // size (n sampling) = time_ms * sampling/s 
+  //                     ---------------------
+  //                            ms/s
   int size = (int)(pulselen * ((float)audiolayer->getSampleRate()/1000));
 
-  // this buffer is for mono or stereo
-  int16* _buf = new int16[size*outChannel];
+  // this buffer is for mono
+  // TODO <-- this should be global and hide if same size
+  SFLDataFormat* _buf = new SFLDataFormat[size];
   bool returnValue = false;
 
   // Handle dtmf
   _dtmfKey->startTone(code);
 
   // copy the sound
-  if ( _dtmfKey->generateDTMF(_buf, size * outChannel) ) {
+  if ( _dtmfKey->generateDTMF(_buf, size) ) {
 
     // Put buffer to urgentRingBuffer 
     // put the size in bytes...
-    // so size * CHANNELS * 2 (bytes for the int16)
-    audiolayer->putUrgent(_buf, size * outChannel * sizeof(int16));
+    // so size * 1 channel (mono) * sizeof (bytes for the data)
+    audiolayer->putUrgent(_buf, size * sizeof(SFLDataFormat));
 
     try {
       // We activate the stream if it's not active yet.
@@ -530,6 +532,8 @@ ManagerImpl::playDtmf(char code)
     }
     returnValue = true;
   }
+
+  // TODO: add caching
   delete[] _buf; _buf = 0;
   return returnValue;
 }
@@ -816,7 +820,8 @@ ManagerImpl::stopTone() {
 bool
 ManagerImpl::playTone()
 {
-  return playATone(Tone::TONE_DIALTONE);
+  //return playATone(Tone::TONE_DIALTONE);
+  playATone(Tone::TONE_DIALTONE);
 }
 
 /**
@@ -842,7 +847,7 @@ void
 ManagerImpl::ringtone() 
 {
   int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
-  if (!hasToPlayTone) return;
+  if (!hasToPlayTone) { return; }
 
   std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
   //if there is no / inside the path
@@ -850,16 +855,20 @@ ManagerImpl::ringtone()
     // check inside global share directory
     ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
   }
-  unsigned int outChannel = getAudioDriver()->getOutChannel();
+
+  AudioLayer* audiolayer = getAudioDriver();
+  if (audiolayer==0) { return; }
+  int sampleRate  = audiolayer->getSampleRate();
+
   _toneMutex.enterMutex(); 
-  bool loadFile = _audiofile.loadFile(ringchoice, outChannel);
+  bool loadFile = _audiofile.loadFile(ringchoice, sampleRate);
   _toneMutex.leaveMutex(); 
   if (loadFile) {
     _toneMutex.enterMutex(); 
     _audiofile.start();
     _toneMutex.leaveMutex(); 
     try {
-      getAudioDriver()->startStream();
+      audiolayer->startStream();
     } catch(...) {
       _debugException("Audio file couldn't start audio stream");
     }
@@ -905,11 +914,11 @@ ManagerImpl::notificationIncomingCall(void) {
     std::ostringstream frequency;
     frequency << "440/" << FRAME_PER_BUFFER;
 
-    Tone tone(frequency.str(), samplerate, audiolayer->getOutChannel());
-    unsigned int nbint16 = tone.getSize();
-    int16 buf[nbint16];
+    Tone tone(frequency.str(), samplerate);
+    unsigned int nbSampling = tone.getSize();
+    SFLDataFormat buf[nbSampling];
     tone.getNext(buf, tone.getSize());
-    audiolayer->putUrgent(buf, sizeof(int16)*nbint16);
+    audiolayer->putUrgent(buf, sizeof(SFLDataFormat)*nbSampling);
   }
 }
 
@@ -1054,7 +1063,7 @@ void
 ManagerImpl::initAudioDriver(void) 
 {
   _debugInit("AudioLayer Creation");
-  _audiodriver = new AudioLayer();
+  _audiodriver = new AudioLayer(this);
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
   } else {
@@ -1075,13 +1084,9 @@ ManagerImpl::selectAudioDriver (void)
   int noDeviceIn  = getConfigInt(AUDIO, DRIVER_NAME_IN);
   int noDeviceOut = getConfigInt(AUDIO, DRIVER_NAME_OUT);
   int sampleRate  = getConfigInt(AUDIO, DRIVER_SAMPLE_RATE);
-  #ifndef USE_SAMPLERATE
-  sampleRate = 8000;
-  #else
-  if (sampleRate <=0 ) {
+  if (sampleRate <=0 || sampleRate > 48000) {
       sampleRate = 8000;
   }
-  #endif
 
   // this is when no audio device in/out are set
   // or the audio device in/out are set to 0
@@ -1425,11 +1430,7 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
   returnValue = true;
   
   std::ostringstream rate; 
-  #ifdef USE_SAMPLERATE
   rate << "VARIABLE";
-  #else
-  rate << "8000";
-  #endif
   tk.clear();
   tk.push_back(rate.str());
   _gui->sendMessage("101", sequenceId, tk);
@@ -1530,6 +1531,7 @@ ManagerImpl::getAccountList(const std::string& sequenceId)
 bool
 ManagerImpl::setSwitch(const std::string& switchName, std::string& message) {
   if (switchName == "audiodriver" ) {
+    // hangup all call here 
     selectAudioDriver();
     std::string error = getAudioDriver()->getErrorMessage();
     if (!error.empty()) {

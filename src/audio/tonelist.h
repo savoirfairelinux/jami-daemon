@@ -73,7 +73,7 @@ private:
 class TelephoneTone {
 public:
   /** Initialize the toneList and set the current tone to null */
-  TelephoneTone(const std::string& countryName, unsigned int sampleRate, unsigned int nbChannel);
+  TelephoneTone(const std::string& countryName, unsigned int sampleRate);
   ~TelephoneTone();
 
   /** send TONE::ZT_TONE_NULL to stop the playing */

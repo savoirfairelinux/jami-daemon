@@ -25,14 +25,6 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
-if USE_SAMPLERATE
-SAMPLERATE_FLAG=-DUSE_SAMPLERATE
-SAMPLERATE_LIB =-lsamplerate
-else
-SAMPLERATE_FLAG=
-SAMPLERATE_LIB=
-endif
-
 SUBDIRS = audio config gui $(ZEROCONFDIR)
 
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \

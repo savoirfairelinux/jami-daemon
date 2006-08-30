@@ -1,3 +1,9 @@
+2006-08-30  Yan Morin
+
+	* Set libsamplerate as a dependency
+
+	* Refactoring samplerate conversion, -DDATAFORMAT_IS_FLOAT allow the user to use float instead of int
+
 2006-08-02  Yan Morin
 
 	* Add IAX quelch/unquelch

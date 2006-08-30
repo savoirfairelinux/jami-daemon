@@ -23,11 +23,8 @@
 #include "tone.h"
 #include <math.h>
 
-int INT16_AMPLITUDE = 32767;
-
-Tone::Tone(const std::string& definition, unsigned int sampleRate, unsigned int nbChannel) : AudioLoop()
+Tone::Tone(const std::string& definition, unsigned int sampleRate) : AudioLoop()
 {
-  _nbChannel  = nbChannel;
   _sampleRate = sampleRate;
   genBuffer(definition); // allocate memory with definition parameter
 }
@@ -42,8 +39,8 @@ Tone::genBuffer(const std::string& definition)
   if (definition.empty()) { return; }
   _size = 0;
 
-  int16 *buffer = new int16[SIZEBUF]; //1kb
-  int16 *bufferPos = buffer;
+  SFLDataFormat* buffer = new SFLDataFormat[SIZEBUF]; //1kb
+  SFLDataFormat* bufferPos = buffer;
 
   // Number of format sections 
   unsigned int posStart = 0; // position of precedent comma
@@ -97,37 +94,31 @@ Tone::genBuffer(const std::string& definition)
       genSin(bufferPos, freq1, freq2, count);
 
       // To concatenate the different buffers for each section.
-      _size += (count * _nbChannel); 
-      bufferPos += (count * _nbChannel);
+      _size += (count); 
+      bufferPos += (count);
     }
 
     posStart = posEnd+1;
   } while (posStart < deflen);
 
-  _buffer = new int16[_size];
+  _buffer = new SFLDataFormat[_size];
   // src, dest, tocopy
-  bcopy(buffer, _buffer, _size<<1); // copy char, not int16..
+  bcopy(buffer, _buffer, _size*sizeof(SFLDataFormat)); // copy char, not SFLDataFormat.
   delete[] buffer; buffer=0; bufferPos=0;
 }
 
 void
-Tone::genSin(int16 *buffer, int frequency1, int frequency2, int nb) 
+Tone::genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb) 
 {
-  double var1 = (double)2 * (double)M_PI * (double)frequency1 / (double)_sampleRate; 
-  double var2 = (double)2 * (double)M_PI * (double)frequency2 / (double)_sampleRate;
+  double pi2 = 6.28318520; 
+  double var1 = pi2 * (double)frequency1 / (double)_sampleRate;
+  double var2 = pi2 * (double)frequency2 / (double)_sampleRate;
 
   // softer
-  double amp = (double)(INT16_AMPLITUDE >> 4);
-  if (_nbChannel == 2) { // stereo
-    int k = 0;
-    for(int t = 0; t < nb; t++) {
-      k = t << 1; // double channel : left/right
-      buffer[k] = buffer[k+1] = (int16)(amp * ((sin(var1 * t) + sin(var2 * t))));
-    }
-  } else {
-    for(int t = 0; t < nb; t++) {
-      buffer[t] = (int16)(amp * ((sin(var1 * t) + sin(var2 * t))));
-    }
+  double amp = (double)SFLDataAmplitude;
+  for(int t = 0; t < nb; t++) {
+    buffer[t] = (SFLDataFormat)(amp * ((sin(var1 * t) + sin(var2 * t))));
   }
+
 }
 

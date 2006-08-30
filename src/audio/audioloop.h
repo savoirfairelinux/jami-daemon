@@ -39,17 +39,18 @@ public:
    * @param nb of int16 to send
    * @return the number of int16 sent (nb*2)
    */
-  int getNext(int16* output, int nb, short volume=100);
+  int getNext(SFLDataFormat* output, int nb, short volume=100);
   void reset() { _pos = 0; }
-  unsigned int getMonoSize() { return _size*_nbChannel; }
+  unsigned int getMonoSize() { return _size; }
   unsigned int getSize() { return _size; }
 
 protected:
-  int16* _buffer;
+  SFLDataFormat* _buffer;
   int _size; // number of int16 inside the buffer, not the delay
   int _pos; // current position, set to 0, when initialize
-  int _nbChannel;
+  int _sampleRate; // last samplerate
 };
+
 
 #endif // __AUDIOLOOP_H__
 

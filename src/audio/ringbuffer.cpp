@@ -92,7 +92,7 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
 
       // put the data inside the buffer.
       if (volume!=100) {
-        int16* src16 = (int16*)src;
+        SFLDataFormat* src16 = (SFLDataFormat*)src;
         int int16len = (block >> 1);
         for (int i=0; i < int16len; i++) { src16[i] = src16[i] * volume / 100; }
       }
@@ -142,7 +142,7 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
          block = mBufferSize - mStart;
 
       if(volume!=100) {
-        int16* start = (int16*)(mBuffer + mStart);
+        SFLDataFormat* start = (SFLDataFormat*)(mBuffer + mStart);
         int int16len = (block >> 1);
         for (int i=0; i<int16len; i++) { start[i] = start[i] * volume / 100; }
       }

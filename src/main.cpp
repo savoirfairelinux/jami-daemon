@@ -30,6 +30,8 @@
 #include "gui/guiframework.h"
 #include "manager.h"
 
+#include "audio/audiolayer.h"
+
 int
 main (int argc, char **argv) {
   int exit_code = 0;
