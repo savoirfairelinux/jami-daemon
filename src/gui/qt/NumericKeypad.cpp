@@ -54,12 +54,12 @@
 #define DTMF_CLOSE_RELEASED_IMAGE QString("dtmf_close_off.png")
 #define DTMF_CLOSE_PRESSED_IMAGE QString("dtmf_close_on.png")
 
-NumericKeypad::NumericKeypad()
+NumericKeypad::NumericKeypad(QWidget* parent = 0, bool showAtStart=false)
 //: TransparentWidget(PIXMAP_KEYPAD_IMAGE, NULL)
-  : QDialog(NULL, 
+  : QDialog(parent, 
 	    "DTMF Keypad", 
 	    false,
-	    Qt::WStyle_Customize)
+	    Qt::WStyle_Customize), mWinRef(0)
 {
   TransparentWidget::setPaletteBackgroundPixmap(this, PIXMAP_KEYPAD_IMAGE);
   resize(TransparentWidget::retreive(PIXMAP_KEYPAD_IMAGE).size());
@@ -163,6 +163,13 @@ NumericKeypad::NumericKeypad()
 	  this, SLOT(hide()));
   connect(mKeyClose, SIGNAL(clicked()),
 	  this, SLOT(slotHidden()));
+
+  mAlreadySet = false;
+  if (showAtStart) {
+    mAlreadySet = true;
+    show();
+    emit isShown(true);
+  }
 }
 
 NumericKeypad::~NumericKeypad() 
@@ -212,7 +219,36 @@ NumericKeypad::mouseMoveEvent(QMouseEvent *e)
   // Note that moving the windows is very slow
   // 'cause it redraw the screen each time.
   // Usually it doesn't. We could do it by a timer.
-  move(e->globalPos() - mLastPos);
+  QPoint pt = e->globalPos() - mLastPos;
+  if (mWinRef) {
+    int range = 5;
+    int px0 = pt.x();
+    int py0 = pt.y();
+    int px1 = px0 + width();
+    int py1 = py0 + height();
+
+//  DebugOutput::instance() << "Pt      (x0,y0): " << px0 << " " << py0 << "\n";  
+//  DebugOutput::instance() << "Pt      (x1,y1): " << px1 << " " << py1 << "\n";  
+    int wx0 = mWinRef->pos().x();
+    int wy0 = mWinRef->pos().y();
+    int wx1 = wx0 + mWinRef->width();
+    int wy1 = wy0 + mWinRef->height();
+//  DebugOutput::instance() << "mWinRef (x0,y0): " << wx0 << " " << wy0 << "\n";  
+//  DebugOutput::instance() << "mWinRef (x1,y1): " << wx1 << " " << wy1 << "\n";  
+
+    // x and y
+    if      (abs(px0-wx1) <= range) { pt.setX(wx1); }
+    else if (abs(px1-wx0) <= range) { pt.setX(wx0-width()); }
+
+    // top and down
+    if      (abs(py0-wy0) <= range)  { pt.setY(wy0); }
+    // the numeric under the telephone
+    else if (abs(py0-wy1) <= range) { pt.setY(wy1); }
+    // the numeric over the telephone
+    else if (abs(py1-wy0) <= range) { pt.setY(wy0-height()); }
+  }
+
+  move(pt);
 }
 
 void
@@ -269,4 +305,12 @@ void
 NumericKeypad::slotHidden() 
 {
   emit isShown(false);
+}
+
+void
+NumericKeypad::setDefaultPosition(const QPoint& point) {
+  if (mWinRef && !mAlreadySet) {
+    move(point);
+    mAlreadySet = true;
+  }
 }

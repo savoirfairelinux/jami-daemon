@@ -100,9 +100,7 @@ AudioFile::loadFile(const std::string& filename, unsigned int sampleRate=8000)
      _size   = nbSampling;
      _buffer = new SFLDataFormat[_size];
      // src to dest
-     for(unsigned int i=0; i<nbSampling; i++) {
-       _buffer[i] = SFLConvertInt16(monoBuffer[i]);
-     }
+     src_short_to_float_array(monoBuffer, _buffer, nbSampling);
   } else {
     // case 2: we need to convert it and split it
     // convert here

@@ -78,8 +78,6 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   Requester::instance().registerObject< Request >(QString("setspkrvolume"));
   Requester::instance().registerObject< Request >(QString("setmicvolume"));
   Requester::instance().registerObject< Request >(QString("mute"));
-
-  mKeypad = new NumericKeypad();
 }
 
 SFLPhoneApp::~SFLPhoneApp()
@@ -148,12 +146,6 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		   &PhoneLineManager::instance(), SLOT(call()));
   QObject::connect(w->mMute, SIGNAL(toggled(bool)),
 		   &PhoneLineManager::instance(), SLOT(mute(bool)));
-  QObject::connect(w->mDtmf, SIGNAL(toggled(bool)),
-		   mKeypad, SLOT(setShown(bool)));
-  //QObject::connect(mKeypad, SIGNAL(hidden()),
-  //		   w->mDtmf, SLOT(release()));
-  QObject::connect(mKeypad, SIGNAL(isShown(bool)),
-		   w->mDtmf, SLOT(setOn(bool)));
   QObject::connect(w->mSetup, SIGNAL(clicked()),
 		   &PhoneLineManager::instance(), SLOT(setup()));
   QObject::connect(w->mHangup, SIGNAL(clicked()),
@@ -175,7 +167,7 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 
 
   // Keypad connections
-  QObject::connect(mKeypad, SIGNAL(keyPressed(Qt::Key)),
+  QObject::connect(w->mKeypad, SIGNAL(keyPressed(Qt::Key)),
 		   &PhoneLineManager::instance(), SLOT(sendKey(Qt::Key)));
   
   // LCD Connections.

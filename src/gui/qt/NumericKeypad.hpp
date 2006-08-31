@@ -33,7 +33,7 @@ class NumericKeypad : public QDialog
   Q_OBJECT
 public:
   // Default Constructor and destructor
-  NumericKeypad();
+  NumericKeypad(QWidget* parent/*=0*/, bool showAtStart/*=false*/);
   ~NumericKeypad();
   
   JPushButton *mKey0;
@@ -49,6 +49,10 @@ public:
   JPushButton *mKeyStar;
   JPushButton *mKeyHash;
   JPushButton *mKeyClose;
+
+  /** Set default position of the window */
+  void setDefaultPosition(const QPoint&);
+  void setWindowReference(QWidget* widget) { mWinRef = widget; }
 
 public slots:
   void mousePressEvent(QMouseEvent *e);
@@ -77,6 +81,9 @@ signals:
 private:
   QPoint mLastPos;
   std::map< Qt::Key, JPushButton * > mKeys;
+  /** Window reference when moving the window (magnetic style) */
+  QWidget* mWinRef;
+  bool mAlreadySet; // already set the default position or not?
 };
 
 #endif // __NUMERIC_KEYPAD_H__

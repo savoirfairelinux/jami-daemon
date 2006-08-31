@@ -135,7 +135,7 @@ GuiFramework::playTone ()
 bool 
 GuiFramework::stopTone ()
 {
-  Manager::instance().stopTone();
+  Manager::instance().stopTone(true);
   return true;
 }
 

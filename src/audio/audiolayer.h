@@ -78,6 +78,11 @@ public:
 
   enum IODEVICE {InputDevice=0x01, OutputDevice=0x02 };
 
+  /**
+   * Toggle echo testing on/off
+   */
+  void toggleEchoTesting();
+
 private:
   void closeStream (void);
   RingBuffer _urgentRingBuffer;
@@ -103,6 +108,12 @@ private:
    * Output channel (stereo) should be 1 mono
    */
   unsigned int _outChannel; // speaker
+
+
+  /**
+   * Echo testing or not
+   */
+  bool _echoTesting;
 
   std::string _errorMessage;
   ost::Mutex _mutex;

@@ -40,6 +40,7 @@
 #include "PhoneLineButton.hpp"
 #include "SFLLcd.hpp"
 #include "VolumeControl.hpp"
+#include "NumericKeypad.hpp"
 
 #define LOGO_IMAGE "logo_ico.png"
 #define BACKGROUND_IMAGE "main.png"
@@ -58,6 +59,10 @@ SFLPhoneWindow::SFLPhoneWindow()
 {
   mLastWindowPos = pos();
   mSetupPanel = new ConfigurationPanel(this, "ConfigurationPanel");
+  mKeypad = new NumericKeypad(NULL, false);
+  mKeypad->setWindowReference(this);
+  
+
   connect(this, SIGNAL(ringtonesUpdated()),      mSetupPanel, SLOT(updateRingtones()));
   connect(this, SIGNAL(audioDevicesUpdated()),   mSetupPanel, SLOT(updateAudioDevices()));
   connect(this, SIGNAL(audioDevicesInUpdated()), mSetupPanel, SLOT(updateAudioDevicesIn()));
@@ -119,6 +124,9 @@ SFLPhoneWindow::initGUIButtons()
   mMute->setToggleButton(true);
   mDtmf = new QPushButton(QObject::tr("DTMF"), this, "dtmf");
   mDtmf->setToggleButton(true);
+  connect(mKeypad, SIGNAL(isShown(bool)), mDtmf, SLOT(setOn(bool)));
+  connect(mDtmf,   SIGNAL(toggled(bool)), this, SLOT(toggleDtmf(bool)));
+
   mSetup = new QPushButton(QObject::tr("Setup"), this, "setup");
   mTransfer = new QPushButton(QObject::tr("Transfer"), this, "transfer");
   mRedial = new QPushButton(QObject::tr("Redial"), this, "redial");
@@ -256,5 +264,16 @@ SFLPhoneWindow::delayedPaint()
 {
   if(pos() != mLastWindowPos) {
     move(mLastWindowPos);
+  }
+}
+
+void
+SFLPhoneWindow::toggleDtmf(bool toggle) 
+{
+  if (mKeypad) {
+    if (toggle) {
+      mKeypad->setDefaultPosition(QPoint(pos().x()+width(), pos().y())); 
+    }
+    mKeypad->setShown(toggle);
   }
 }

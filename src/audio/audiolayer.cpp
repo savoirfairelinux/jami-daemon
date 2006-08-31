@@ -44,6 +44,7 @@ AudioLayer::AudioLayer(ManagerImpl* manager)
   
   _inChannel  = 1; // don't put in stereo
   _outChannel = 1; // don't put in stereo
+  _echoTesting = false;
 
   try {
      portaudio::AutoSystem autoSys;
@@ -361,6 +362,12 @@ AudioLayer::isStreamStopped (void)
   return false;
 }
 
+void
+AudioLayer::toggleEchoTesting() {
+  ost::MutexLock guard(_mutex);
+  _echoTesting = (_echoTesting == true) ? false : true;
+}
+
 int 
 AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer, 
 			   unsigned long framesPerBuffer, 
@@ -372,6 +379,12 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
 	
   SFLDataFormat *in  = (SFLDataFormat *) inputBuffer;
   SFLDataFormat *out = (SFLDataFormat *) outputBuffer;
+
+  if (_echoTesting) {
+    memcpy(out, in, framesPerBuffer*sizeof(SFLDataFormat));
+    return paContinue;
+  }
+
   int toGet; 
   int toPut;
   int urgentAvail; // number of data right and data left

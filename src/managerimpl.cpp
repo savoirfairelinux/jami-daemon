@@ -117,7 +117,6 @@ ManagerImpl::init()
   initAudioDriver();
   selectAudioDriver();
 
-  
   initAudioCodec();
 
   AudioLayer *audiolayer = getAudioDriver();
@@ -215,7 +214,7 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
 bool
 ManagerImpl::answerCall(const CallID& id)
 {
-  stopTone(); 
+  stopTone(false); 
 
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
@@ -249,7 +248,7 @@ ManagerImpl::sendTextMessage(const AccountID& accountId, const std::string& to, 
 bool
 ManagerImpl::hangupCall(const CallID& id)
 {
-  stopTone();
+  stopTone(true);
 
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
@@ -268,7 +267,7 @@ ManagerImpl::hangupCall(const CallID& id)
 bool
 ManagerImpl::cancelCall (const CallID& id)
 {
-  stopTone();
+  stopTone(true);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("! Manager Cancel Call: Call doesn't exists\n");
@@ -288,7 +287,7 @@ ManagerImpl::cancelCall (const CallID& id)
 bool
 ManagerImpl::onHoldCall(const CallID& id)
 {
-  stopTone();
+  stopTone(true);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("5 Manager On Hold Call: Account ID %s or callid %s desn't exists\n", accountid.c_str(), id.c_str());
@@ -306,7 +305,7 @@ ManagerImpl::onHoldCall(const CallID& id)
 bool
 ManagerImpl::offHoldCall(const CallID& id)
 {
-  stopTone();
+  stopTone(false);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("5 Manager OffHold Call: Call doesn't exists\n");
@@ -329,7 +328,7 @@ ManagerImpl::offHoldCall(const CallID& id)
 bool
 ManagerImpl::transferCall(const CallID& id, const std::string& to)
 {
-  stopTone();
+  stopTone(true);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("! Manager Transfer Call: Call doesn't exists\n");
@@ -362,7 +361,7 @@ ManagerImpl::unmute() {
 bool
 ManagerImpl::refuseCall (const CallID& id)
 {
-  stopTone();
+  stopTone(true);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("! Manager OffHold Call: Call doesn't exists\n");
@@ -484,7 +483,7 @@ ManagerImpl::playDtmf(char code)
   // - boolean variable to play or not (config)
   // - length in milliseconds to play
   // - sample of audiolayer
-  stopTone();
+  stopTone(false);
   int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_DTMF);
   if (!hasToPlayTone) return false;
 
@@ -618,7 +617,7 @@ void
 ManagerImpl::peerAnsweredCall(const CallID& id)
 {
   if (isCurrentCall(id)) {
-    stopTone();
+    stopTone(false);
   }
   if (_gui) _gui->peerAnsweredCall(id);
 }
@@ -643,7 +642,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
     return;
   }
   if (isCurrentCall(id)) {
-    stopTone();
+    stopTone(true);
     switchCall("");
   }
   removeWaitingCall(id);
@@ -791,15 +790,17 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
  * Multi Thread
  */
 void 
-ManagerImpl::stopTone() {
+ManagerImpl::stopTone(bool stopAudio=true) {
   int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
   if (!hasToPlayTone) return;
 
-  try {
-    AudioLayer* audiolayer = getAudioDriver();
-    if (audiolayer) { audiolayer->stopStream(); }
-  } catch(...) {
-    _debugException("Stop tone and stop stream");
+  if (stopAudio) {
+    try {
+      AudioLayer* audiolayer = getAudioDriver();
+      if (audiolayer) { audiolayer->stopStream(); }
+    } catch(...) {
+      _debugException("Stop tone and stop stream");
+    }
   }
 
   _toneMutex.enterMutex();
@@ -1530,21 +1531,58 @@ ManagerImpl::getAccountList(const std::string& sequenceId)
  */
 bool
 ManagerImpl::setSwitch(const std::string& switchName, std::string& message) {
+  AudioLayer* audiolayer = 0;
   if (switchName == "audiodriver" ) {
     // hangup all call here 
+    audiolayer = getAudioDriver();
+
+    int oldSampleRate = 0;
+    if (audiolayer) { oldSampleRate = audiolayer->getSampleRate(); }
+
     selectAudioDriver();
-    std::string error = getAudioDriver()->getErrorMessage();
-    if (!error.empty()) {
-      message = error;
-      return false;
+    audiolayer = getAudioDriver();
+
+    if (audiolayer) {
+      std::string error = audiolayer->getErrorMessage();
+      int newSampleRate = audiolayer->getSampleRate();
+
+      if (!error.empty()) {
+        message = error;
+        return false;
+      }
+
+      if (newSampleRate != oldSampleRate) {
+        _toneMutex.enterMutex();
+
+        _debug("Unload Telephone Tone\n");
+        delete _telephoneTone; _telephoneTone = 0;
+        _debug("Unload DTMF Key\n");
+        delete _dtmfKey; _dtmfKey = 0;
+
+        _debug("Load Telephone Tone\n");
+        std::string country = getConfigString(PREFERENCES, ZONE_TONE);
+        _telephoneTone = new TelephoneTone(country, newSampleRate);
+
+        _debugInit("Loading DTMF key");
+        _dtmfKey = new DTMF(newSampleRate);
+
+        _toneMutex.leaveMutex();
+      }
+
+      message = _("Change with success");
+      playDtmf('9');
+      getAudioDriver()->sleep(300); // in milliseconds
+      playDtmf('1');
+      getAudioDriver()->sleep(300); // in milliseconds
+      playDtmf('1');
+      return true;
     }
-    message = _("Change with success");
-    playDtmf('9');
-    getAudioDriver()->sleep(300); // in milliseconds
-    playDtmf('1');
-    getAudioDriver()->sleep(300); // in milliseconds
-    playDtmf('1');
-    return true;
+  } else if ( switchName == "echo" ) {
+    audiolayer = getAudioDriver();
+    if (audiolayer) {
+      audiolayer->toggleEchoTesting();
+      return true;
+    }
   }
 
 

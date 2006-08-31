@@ -67,7 +67,6 @@ signals:
 private:
 
   Launcher *mLauncher;
-  NumericKeypad *mKeypad;
   Session *mSession;
 };
 

@@ -141,6 +141,11 @@ public:
   {return mAudioDevicesIn;}
   std::list< AudioDevice > getAudioDevicesOut()
   {return mAudioDevicesOut;}
+
+  /** Get Audio Device In pointer, or null if not found */
+  const QString getAudioDevicesInRate(int index);
+  /** Get Audio Device Out pointer, or null if not found */
+  const QString getAudioDevicesOutRate(int index);
   
   std::list< Ringtone > getRingtones()
   {return mRingtones;}

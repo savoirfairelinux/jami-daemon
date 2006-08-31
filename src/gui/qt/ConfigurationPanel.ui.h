@@ -51,12 +51,13 @@
 
 void ConfigurationPanel::init()
 {
+  _cutStringCombo = 30;
   DebugOutput::instance() << "ConfigurationPanel::init()\n"; 
-    lblError->hide();
-    Tab_Signalisations->show();
-    Tab_Audio->hide();
-    Tab_Preferences->hide();
-    Tab_About->hide();
+  lblError->hide();
+  Tab_Signalisations->show();
+  Tab_Audio->hide();
+  Tab_Preferences->hide();
+  Tab_About->hide();
 
   /*
     // For reading settings at application startup
@@ -116,17 +117,11 @@ void
 ConfigurationPanel::generate()
 {
    // For audio tab
-  codec1->setCurrentText(ConfigurationManager::instance()
-			 .get(AUDIO_SECTION, AUDIO_CODEC1));
-  codec2->setCurrentText(ConfigurationManager::instance()
-			 .get(AUDIO_SECTION, AUDIO_CODEC2));
-  codec3->setCurrentText(ConfigurationManager::instance()
-			 .get(AUDIO_SECTION, AUDIO_CODEC3));
+  codec1->setCurrentText(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_CODEC1));
+  codec2->setCurrentText(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_CODEC2));
+  codec3->setCurrentText(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_CODEC3));
 
-
-  ringsChoice->setCurrentText(ConfigurationManager::instance().get(AUDIO_SECTION,
-				   AUDIO_RINGTONE));
-  
+  ringsChoice->setCurrentText(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_RINGTONE));
 
   // For signalisations tab
 
@@ -150,19 +145,24 @@ ConfigurationPanel::generate()
   }
   loadSIPAccount(0);
 
-  sendDTMFas->setCurrentItem(ConfigurationManager::instance()
-			     .get(SIGNALISATION_SECTION,
-				  SIGNALISATION_SEND_DTMF_AS).toUInt());
-  playTones->setChecked(ConfigurationManager::instance()
-			.get(SIGNALISATION_SECTION, 
-			     SIGNALISATION_PLAY_TONES).toUInt());
-  pulseLength->setValue(ConfigurationManager::instance()
-			.get(SIGNALISATION_SECTION, 
-			     SIGNALISATION_PULSE_LENGTH).toUInt());
+  sendDTMFas->setCurrentItem(ConfigurationManager::instance().get(SIGNALISATION_SECTION,
+	 SIGNALISATION_SEND_DTMF_AS).toUInt());
+  playTones->setChecked(ConfigurationManager::instance().get(SIGNALISATION_SECTION, 
+	SIGNALISATION_PLAY_TONES).toUInt());
+  pulseLength->setValue(ConfigurationManager::instance().get(SIGNALISATION_SECTION, 
+	SIGNALISATION_PULSE_LENGTH).toUInt());
 
   cboDriverChoiceOut->setCurrentItem(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT).toUInt());
   cboDriverChoiceIn->setCurrentItem(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN).toUInt());
 
+  // fill cboDriverRate here
+  int nbRate = 5;
+  int allowedRate[5] = {8000,16000,32000,44100,48000};
+  cboDriverRate->clear();
+  for(int iRate = 0; iRate < nbRate; iRate++) {
+    cboDriverRate->insertItem(QString::number(allowedRate[iRate]));
+  }
+  cboDriverRate->setCurrentText(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_SAMPLERATE));
 
   //preference tab
   updateSkins();
@@ -312,10 +312,10 @@ void ConfigurationPanel::updateAudioDevicesIn()
     QString hostApiName = pos->hostApiName;
     QString deviceName = pos->deviceName;
     
-    QString name = hostApiName + QObject::tr(" (device #%1)").arg(pos->index);
-    if (name.length() > 50) {
-	    name = name.left(50) + "...";
+    if (hostApiName.length() > _cutStringCombo) {
+	    hostApiName = hostApiName.left(_cutStringCombo) + "...";
     }
+    QString name = hostApiName + QObject::tr(" (device #%1-%2Hz)").arg(pos->index).arg(pos->defaultRate);
     cbo->insertItem(name);
   }
 }
@@ -336,10 +336,11 @@ void ConfigurationPanel::updateAudioDevices()
     QString hostApiName = pos->hostApiName;
     QString deviceName = pos->deviceName;
     
-    QString name = hostApiName + QObject::tr(" (device #%1)").arg(pos->index);
-    if (name.length() > 50) {
-	    name = name.left(50) + "...";
+    if (hostApiName.length() > _cutStringCombo) {
+	    hostApiName = hostApiName.left(_cutStringCombo) + "...";
     }
+    DebugOutput::instance() << hostApiName << pos->defaultRate;
+    QString name = hostApiName + QObject::tr(" (device #%1-%2Hz)").arg(pos->index).arg(pos->defaultRate);
     cbo->insertItem(name);
   }
 }
@@ -384,10 +385,14 @@ ConfigurationPanel::slotTestSoundDriver()
   if (cboDriverChoiceIn->currentText() != NULL) {
     ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN, QString::number(cboDriverChoiceIn->currentItem()));
   }
+  if (cboDriverRate->currentText() != NULL) {
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_SAMPLERATE, cboDriverRate->currentText());
+  }
 
   // save driver on portaudio
   ConfigurationManager::instance().save(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT);
   ConfigurationManager::instance().save(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN);
+  ConfigurationManager::instance().save(AUDIO_SECTION, AUDIO_SAMPLERATE);
   emit soundDriverChanged();
 }
 

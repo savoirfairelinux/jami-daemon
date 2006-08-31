@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
@@ -23,12 +23,13 @@
 
 #define NB_PHONELINES 6
 #define PROGNAME "SFLPhone"
-#define VERSION "0.4.2"
+#define VERSION "0.7.0"
 
 #define AUDIO_SECTION "Audio"
 #define AUDIO_DEFAULT_DEVICE "Drivers.driverName"
 #define AUDIO_DEFAULT_DEVICEIN "Drivers.driverNameIn"
 #define AUDIO_DEFAULT_DEVICEOUT "Drivers.driverNameOut"
+#define AUDIO_SAMPLERATE "Drivers.sampleRate"
 
 #define AUDIO_CODEC1 "Codecs.codec1"
 #define AUDIO_CODEC2 "Codecs.codec2"

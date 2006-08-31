@@ -241,3 +241,27 @@ ConfigurationManagerImpl::reloadSoundDriver() {
 		   this, SIGNAL(audioDevicesOutUpdated()));
 
 } 
+
+const QString
+ConfigurationManagerImpl::getAudioDevicesInRate(int index) {
+  std::list< AudioDevice >::iterator pos;
+  int i=0;
+  for (pos = mAudioDevicesIn.begin(); pos!=mAudioDevicesIn.end(); pos++, i++) {
+    if (index == i) {
+      return pos->defaultRate;
+    }
+  } 
+  return QString("");
+}
+
+const QString 
+ConfigurationManagerImpl::getAudioDevicesOutRate(int index) {
+  std::list< AudioDevice >::iterator pos;
+  int i=0;
+  for (pos = mAudioDevicesOut.begin(); pos!=mAudioDevicesOut.end(); pos++, i++) {
+    if (index == i) {
+      return pos->defaultRate;
+    }
+  } 
+  return QString("");
+}

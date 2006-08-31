@@ -34,6 +34,7 @@ class JPushButton;
 class PhoneLineButton;
 class SFLLcd;
 class VolumeControl;
+class NumericKeypad;
 
 class SFLPhoneWindow : public QMainWindow
 {
@@ -106,6 +107,11 @@ public slots:
   void showSetup();
   void hideSetup();
 
+  /**
+   * toggle the dtmf window
+   */
+  void toggleDtmf(bool);
+
 protected:
   void keyPressEvent(QKeyEvent *e);
 
@@ -135,5 +141,6 @@ private:
   QPoint mLastWindowPos;
   QTimer *mPaintTimer;
 
+  NumericKeypad *mKeypad;
   ConfigurationPanel *mSetupPanel;
 };

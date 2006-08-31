@@ -1,3 +1,13 @@
+2006-08-31  Yan Morin
+
+	* Add samplerate combobox if sample rate is compiled
+
+	* Fix Bug when moving sflphone and clicking inside the lcd
+
+	* Adding magnetism to Dtmf window
+
+	* Moving Dtmf window to the left of sflphone
+
 2006-08-30  Yan Morin
 
 	* Set libsamplerate as a dependency

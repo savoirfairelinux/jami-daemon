@@ -145,7 +145,7 @@ public:
   bool sendDtmf(const CallID& id, char code);
   bool playDtmf(char code);
   bool playTone ();
-  void stopTone();
+  void stopTone(bool stopAudio/*=true*/);
 
   // From links
   /**

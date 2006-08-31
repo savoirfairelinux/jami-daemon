@@ -1,13 +1,13 @@
 For project core:
 ----------------
 Management Config like about:config in Mozilla
-Improvement of STUN
 Add IAX support
-Management of account (add, remove, ...)
 Management of exceptions
 Remove all warnings in compilation
+
+Improvement of STUN (done?)
 Better handling for an reINVITE request. (done?)
-Mono channel, float for portaudio
+Management of account (add, remove, ...) (done?)
 
 For project dependencies:
 ------------------------
@@ -16,9 +16,7 @@ Improve the autotools scripts of PortAudioCpp
 
 For sflphone-qt:
 ---------------
-Add samplerate combobox if sample rate is compiled
 Save account status if modified in configuration
-Bug when moving sflphone and clicking inside the lcd
 
 
 From FIXME:

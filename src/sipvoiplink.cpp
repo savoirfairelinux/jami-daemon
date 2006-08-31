@@ -1130,7 +1130,7 @@ SIPVoIPLink::SIPCallReinvite(eXosip_event_t *event)
   }
   if ( call->getCallId() == Manager::instance().getCurrentCallId()) {
     // STOP tone
-    Manager::instance().stopTone();
+    Manager::instance().stopTone(true);
     // STOP old rtp session
     _debug("* SIP Info: Stopping AudioRTP when reinvite\n");
     _audiortp.closeRtpSession();

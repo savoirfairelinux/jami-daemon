@@ -780,6 +780,13 @@
      <property name="name"><cstring>cboDriverChoiceIn</cstring></property>
     </widget>
     </widget>
+   <widget class="QVButtonGroup">
+    <property name="name"><cstring>DriverRate</cstring></property>
+    <property name="title"><string>Sample rate</string></property>
+    <widget class="QComboBox">
+     <property name="name"><cstring>cboDriverRate</cstring></property>
+    </widget>
+    </widget>
  
   <widget class="QLayoutWidget">
    <property name="name"><cstring>layoutforsounddriver</cstring></property>
@@ -1532,6 +1539,7 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
     <tabstop>Tab_Audio</tabstop>
     <tabstop>cboDriverChoiceOut</tabstop>
     <tabstop>cboDriverChoiceIn</tabstop>
+    <tabstop>cboDriverRate</tabstop>
     <tabstop>buttonTestSoundDriver</tabstop>
     <tabstop>buttonReloadSoundDriver</tabstop>
     <tabstop>codec1</tabstop>
@@ -1575,6 +1583,7 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
 </functions>
 <variables>
     <variable access="private">int lastSIPAccount;</variable>
+    <variable access="private">int _cutStringCombo;</variable>
 </variables>
 
 
