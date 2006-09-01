@@ -14,6 +14,18 @@
 
 	* Refactoring samplerate conversion, -DDATAFORMAT_IS_FLOAT allow the user to use float instead of int
 
+2006-08-25  Yan Morin
+
+	* Add support for <esc> key to hangup a call
+
+	* Remove handling of Key_Meta and Key_Alt, need to be able to send @ with alt+char or shift
+
+2006-08-23  Yan Morin
+
+	* Add AudioDevice, a container to get audiodevice listing
+
+	* Add --with-debug to ./configure
+
 2006-08-02  Yan Morin
 
 	* Add IAX quelch/unquelch
