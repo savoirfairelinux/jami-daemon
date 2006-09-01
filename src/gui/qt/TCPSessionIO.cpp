@@ -64,7 +64,7 @@ TCPSessionIO::error(int err)
 {
   if (mNbConnectTriesTotal == 0) {
     emit firstConnectionFailed();
-    mReconnectTimer->start(4000, true);
+    mReconnectTimer->start(1000, true);
     mNbConnectTriesTotal++;
   } else {
     mNbConnectTriesTotal++;
