@@ -167,11 +167,16 @@ void SFLPhoneWindow::initWindowButtons()
 
 void
 SFLPhoneWindow::keyPressEvent(QKeyEvent *e) {
-  // Misc. key	  
-  if (e->state() & Qt::ControlButton || e->key() == Qt::Key_Control) {
+  // Misc. key
+  int key = e->key();
+  if (e->state() & Qt::ControlButton || key == Qt::Key_Control) {
     emit shortcutPressed(e);
-  } else if (e->key() != Qt::Key_Shift) {
-    emit keyPressed(Qt::Key(e->key()));
+  } else if (key != Qt::Key_Shift && 
+      key != Qt::Key_Meta && 
+      key != Qt::Key_Alt &&
+      key != Qt::Key_Mode_switch
+    ) {
+    emit keyPressed(Qt::Key(key));
   }
 }
 

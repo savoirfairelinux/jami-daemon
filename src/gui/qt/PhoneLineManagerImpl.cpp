@@ -511,6 +511,11 @@ PhoneLineManagerImpl::sendKey(Qt::Key c)
   case Qt::Key_F6:
     selectLine(c - Qt::Key_F1);
     break;
+
+  case Qt::Key_Escape:
+    if (selectedLine) {
+      selectedLine->hangup(true);
+    }
     
   default:
     if (!selectedLine) {
