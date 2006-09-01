@@ -92,9 +92,9 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
 
       // put the data inside the buffer.
       if (volume!=100) {
-        SFLDataFormat* src16 = (SFLDataFormat*)src;
-        int int16len = (block >> 1);
-        for (int i=0; i < int16len; i++) { src16[i] = src16[i] * volume / 100; }
+        SFLDataFormat* start = (SFLDataFormat*)src;
+        int nbSample = block / sizeof(SFLDataFormat);
+        for (int i=0; i<nbSample; i++) { start[i] = start[i] * volume / 100; }
       }
       // bcopy(src, dest, len)
       //fprintf(stderr, "has %d put %d\t", len, block);
@@ -143,8 +143,8 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
 
       if(volume!=100) {
         SFLDataFormat* start = (SFLDataFormat*)(mBuffer + mStart);
-        int int16len = (block >> 1);
-        for (int i=0; i<int16len; i++) { start[i] = start[i] * volume / 100; }
+        int nbSample = block / sizeof(SFLDataFormat);
+        for (int i=0; i<nbSample; i++) { start[i] = start[i] * volume / 100; }
       }
       // bcopy(src, dest, len)
       bcopy (mBuffer + mStart, dest, block);
