@@ -1,5 +1,11 @@
 2006-08-31  Yan Morin
 
+	* Improve launcher (only start if needed). If the daemon is started, qt won't stop it.
+
+	* Fix buf with microphone (if the mic wasn't at 100, it causes a segfault before)
+
+2006-08-31  Yan Morin
+
 	* Add samplerate combobox if sample rate is compiled
 
 	* Fix Bug when moving sflphone and clicking inside the lcd

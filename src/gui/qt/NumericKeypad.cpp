@@ -237,15 +237,16 @@ NumericKeypad::mouseMoveEvent(QMouseEvent *e)
 //  DebugOutput::instance() << "mWinRef (x1,y1): " << wx1 << " " << wy1 << "\n";  
 
     // x and y
-    if      (abs(px0-wx1) <= range) { pt.setX(wx1); }
-    else if (abs(px1-wx0) <= range) { pt.setX(wx0-width()); }
+    mIsDock = false;
+    if      (abs(px0-wx1) <= range) { pt.setX(wx1); mIsDock = true; }
+    else if (abs(px1-wx0) <= range) { pt.setX(wx0-width()); mIsDock = true; }
 
     // top and down
     if      (abs(py0-wy0) <= range)  { pt.setY(wy0); }
     // the numeric under the telephone
-    else if (abs(py0-wy1) <= range) { pt.setY(wy1); }
+    else if (abs(py0-wy1) <= range) { pt.setY(wy1); mIsDock = true;}
     // the numeric over the telephone
-    else if (abs(py1-wy0) <= range) { pt.setY(wy0-height()); }
+    else if (abs(py1-wy0) <= range) { pt.setY(wy0-height()); mIsDock = true;}
   }
 
   move(pt);
@@ -311,6 +312,7 @@ void
 NumericKeypad::setDefaultPosition(const QPoint& point) {
   if (mWinRef && !mAlreadySet) {
     move(point);
+    mIsDock = true;
     mAlreadySet = true;
   }
 }

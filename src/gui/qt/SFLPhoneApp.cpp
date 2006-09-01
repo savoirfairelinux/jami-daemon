@@ -47,11 +47,14 @@ SFLPhoneApp::SFLPhoneApp(int argc, char **argv)
   SessionIOFactory::instance().setCreator(new TCPSessionIOCreator(QString("localhost"), 3999));
 
   mSession = new Session();
+  connect(mSession, SIGNAL(firstSessionIOConnectionFailed()), this, SLOT(launch()));
 
   ConfigurationManager::instance().setSession(mSession);
 
   PhoneLineManager::instance().initialize(mSession);
   PhoneLineManager::instance().setNbLines(NB_PHONELINES);
+  PhoneLineManager::instance().shouldStopDaemon(false);
+
   Requester::instance().registerDefaultObject< Request >();
   Requester::instance().registerObject< Request >(QString("playtone"));
   Requester::instance().registerObject< Request >(QString("stoptone"));
@@ -97,6 +100,7 @@ void
 SFLPhoneApp::launch()
 {
    if(mLauncher) {
+     PhoneLineManager::instance().shouldStopDaemon(true);
      mLauncher->start();
    }
 }
@@ -206,8 +210,7 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
   QObject::connect(&PhoneLineManager::instance(), SIGNAL(readyToShow()), w, SLOT(show()));
   QObject::connect(w, SIGNAL(reconnectAsked()),
 		   &PhoneLineManager::instance(), SLOT(connect()));
-  QObject::connect(&PhoneLineManager::instance(), SIGNAL(stopped()),
-		   w, SLOT(close()));
+  QObject::connect(&PhoneLineManager::instance(), SIGNAL(stopped()), w, SLOT(close()));
   QObject::connect(w, SIGNAL(needToCloseDaemon()),
 		   &PhoneLineManager::instance(), SLOT(stop()));
 

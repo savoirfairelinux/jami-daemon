@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
@@ -80,7 +80,7 @@ public slots:
 
   void resetConnectionTries();
 
- private slots:
+private slots:
   /**
    * This function is called when we have an error
    * on the socket.
@@ -94,6 +94,7 @@ private:
 
   std::list< QString > mStack;
 
+  unsigned int mNbConnectTriesTotal;
   unsigned int mNbConnectTries;
   QTimer *mReconnectTimer;
 };

@@ -56,7 +56,6 @@ int main(int argc, char **argv)
   app.setMainWidget(sfl);
 #endif
 
-  app.launch();
   PhoneLineManager::instance().connect();
   //splash->finish(sfl);
   //sfl->show();

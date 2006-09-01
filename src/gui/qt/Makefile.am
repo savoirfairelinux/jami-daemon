@@ -17,6 +17,7 @@ BUILT_SOURCES = \
     ./SFLPhoneWindowmoc.cpp \
     ./SFLRequestmoc.cpp \
     ./Requestmoc.cpp \
+    ./Sessionmoc.cpp \
     ./SessionIOmoc.cpp \
     ./TCPSessionIOmoc.cpp \
     ./TransparentWidgetmoc.cpp \

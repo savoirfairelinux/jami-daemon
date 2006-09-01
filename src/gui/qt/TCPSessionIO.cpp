@@ -30,6 +30,7 @@ TCPSessionIO::TCPSessionIO(const QString &hostname, Q_UINT16 port)
   , mHostname(hostname)
   , mPort(port)
   , mNbConnectTries(0)
+  , mNbConnectTriesTotal(0)
 {
   mReconnectTimer = new QTimer(this);
   QObject::connect(mReconnectTimer, SIGNAL(timeout()), 
@@ -61,15 +62,20 @@ TCPSessionIO::resetConnectionTries()
 void 
 TCPSessionIO::error(int err)
 {
-  mNbConnectTries++;
-  if(mNbConnectTries >= NB_MAX_TRIES) {
-    DebugOutput::instance() << QObject::tr("TCPSessionIO: Connection failed: %1\n")
-      .arg(err);
-    mNbConnectTries = 0;
-    emit disconnected();
-  }
-  else {
-    mReconnectTimer->start(2000, true);
+  if (mNbConnectTriesTotal == 0) {
+    emit firstConnectionFailed();
+    mReconnectTimer->start(4000, true);
+    mNbConnectTriesTotal++;
+  } else {
+    mNbConnectTriesTotal++;
+    mNbConnectTries++;
+    if(mNbConnectTries >= NB_MAX_TRIES) {
+      DebugOutput::instance() << QObject::tr("TCPSessionIO: Connection failed: %1\n").arg(err);
+      mNbConnectTries = 0;
+      emit disconnected();
+    } else {
+     mReconnectTimer->start(2000, true);
+    }
   }
   //mSocket->close();
 }

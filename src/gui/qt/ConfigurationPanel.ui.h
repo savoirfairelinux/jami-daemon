@@ -52,7 +52,7 @@
 void ConfigurationPanel::init()
 {
   _cutStringCombo = 30;
-  DebugOutput::instance() << "ConfigurationPanel::init()\n"; 
+  //DebugOutput::instance() << "ConfigurationPanel::init()\n"; 
   lblError->hide();
   Tab_Signalisations->show();
   Tab_Audio->hide();
@@ -339,7 +339,7 @@ void ConfigurationPanel::updateAudioDevices()
     if (hostApiName.length() > _cutStringCombo) {
 	    hostApiName = hostApiName.left(_cutStringCombo) + "...";
     }
-    DebugOutput::instance() << hostApiName << pos->defaultRate;
+    //DebugOutput::instance() << hostApiName << pos->defaultRate;
     QString name = hostApiName + QObject::tr(" (device #%1-%2Hz)").arg(pos->index).arg(pos->defaultRate);
     cbo->insertItem(name);
   }
@@ -421,7 +421,7 @@ ConfigurationPanel::slotSIPAccountChange(int index)
   if (lastSIPAccount!=index) {
     
     QString account = "SIP" + QString::number(index);
-    DebugOutput::instance() << "Selecting SIP account " << account << "\n";
+    //DebugOutput::instance() << "Selecting SIP account " << account << "\n";
 
     saveSIPAccount(lastSIPAccount);
     loadSIPAccount(index);

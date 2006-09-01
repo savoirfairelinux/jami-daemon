@@ -22,17 +22,20 @@
 #ifndef SFLPHONEGUI_SESSION_H
 #define SFLPHONEGUI_SESSION_H
 
+#include <qobject.h>
 #include <qstring.h>
 #include <map>
 
 #include "Account.hpp"
 
-class Session
+class Session : public QObject
 {
+  Q_OBJECT
+
  public:
   Session();
   Session(const QString &id);
-  ~Session();
+  virtual ~Session();
   
   /**
    * retreive the account identified by name.
@@ -91,7 +94,7 @@ class Session
    * the session. This will only close the session,
    * so sflphoned will still be running after.
    */
-  Request *close() const;
+  Request *quit() const;
 
   /**
    * This function will register with the default account.
@@ -138,6 +141,10 @@ class Session
   QString id() const;
   Request *stopTone() const;
   Request *playTone() const;
+
+ signals:
+  void firstSessionIOConnectionFailed(); 
+
 
  private:
   QString mId;

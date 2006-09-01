@@ -62,11 +62,13 @@ public:
   PhoneLine *getCurrentLine();
 
   void setNbLines(unsigned int line);
+  void shouldStopDaemon(bool shouldStop) { mShouldStopDaemon  = shouldStop; }
 
   bool isConnected() { return mIsConnected; }
   void emitReadyAccount() { emit readyToGetAccount(); }
   void emitReadyToShow() { emit readyToShow(); }
   void addAccount(const QString& name, bool isEnabled, const QString& alias);   
+
 signals:
   void unselected(unsigned int);
   void selected(unsigned int);
@@ -352,6 +354,7 @@ private:
 
   bool mIsConnected;
   bool mIsStopping;
+  bool mShouldStopDaemon;
 
   QString mLastNumber;
 };

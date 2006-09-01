@@ -38,6 +38,7 @@ Session::Session()
 {
   mId = Requester::instance().generateSessionId();
   SessionIO *s = SessionIOFactory::instance().create();
+  QObject::connect(s, SIGNAL(firstConnectionFailed()), this, SIGNAL(firstSessionIOConnectionFailed()));
   Requester::instance().registerSession(mId, s);
 }
 
@@ -109,9 +110,9 @@ Session::configSave() const
 }
 
 Request *
-Session::close() const
+Session::quit() const
 {
-  return Requester::instance().send(mId, "close", std::list< QString >());
+  return Requester::instance().send(mId, "quit", std::list< QString >());
 }
 
 Request *

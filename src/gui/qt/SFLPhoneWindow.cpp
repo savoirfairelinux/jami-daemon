@@ -268,7 +268,13 @@ void
 SFLPhoneWindow::delayedPaint()
 {
   if(pos() != mLastWindowPos) {
+    if (mLastWindowPos.x() < 0) { mLastWindowPos.setX(0); }
+    QPoint diff = mLastWindowPos - pos();
     move(mLastWindowPos);
+    if (mKeypad && mKeypad->isDock()) {
+      // Use (mKeypad->pos() - diff) for a cool effects
+      mKeypad->move(mKeypad->pos() + diff);
+    }
   }
 }
 

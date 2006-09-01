@@ -53,6 +53,7 @@ public:
   /** Set default position of the window */
   void setDefaultPosition(const QPoint&);
   void setWindowReference(QWidget* widget) { mWinRef = widget; }
+  bool isDock() { return mIsDock; }
 
 public slots:
   void mousePressEvent(QMouseEvent *e);
@@ -84,6 +85,7 @@ private:
   /** Window reference when moving the window (magnetic style) */
   QWidget* mWinRef;
   bool mAlreadySet; // already set the default position or not?
+  bool mIsDock; // beside the ref window or not?
 };
 
 #endif // __NUMERIC_KEYPAD_H__

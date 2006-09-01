@@ -44,6 +44,7 @@ PhoneLineManagerImpl::PhoneLineManagerImpl()
   , mMicVolume(-1)
   , mIsConnected(false)
   , mIsStopping(false)
+  , mShouldStopDaemon(false)
   , mLastNumber("")
 {
   EventFactory::instance().registerDefaultEvent< DefaultEvent >();
@@ -191,7 +192,12 @@ PhoneLineManagerImpl::stop()
   emit globalStatusSet(QString(tr("Stopping sflphone server..")));
   mIsStopping = true;
   if(mIsConnected) {
-    mSession->stop();
+    if (mShouldStopDaemon) {
+      mSession->stop();
+      emit stopped();
+    } else {
+      mSession->quit();
+    }
   }
   else {
     emit stopped();

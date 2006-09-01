@@ -50,7 +50,6 @@ public:
   void initConnections(SFLPhoneWindow *w);
   void loadSkin();
 
-  void launch();
 
 public slots:
   /**
@@ -59,6 +58,9 @@ public slots:
   void handleArg();
   void paste();
   void shortcutPressed(QKeyEvent* e);
+
+private slots:
+  void launch();
 
 signals:
   void registerFailed(const QString);
