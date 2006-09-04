@@ -260,6 +260,23 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
        SRC_DATA src_data;
        #ifdef DATAFORMAT_IS_FLOAT   
           src_data.data_in = _dataAudioLayer;
+/*        _debug("inb: %d %f %f %f %f %f %f %f %f %f %f %f %f\n", nbSample, _dataAudioLayer[0], 
+_dataAudioLayer[1 ],
+_dataAudioLayer[2 ],
+_dataAudioLayer[3 ],
+_dataAudioLayer[4 ],
+_dataAudioLayer[5 ],
+_dataAudioLayer[6 ],
+_dataAudioLayer[7 ],
+_dataAudioLayer[8 ],
+_dataAudioLayer[9 ],
+_dataAudioLayer[10],
+_dataAudioLayer[11],
+_dataAudioLayer[12],
+_dataAudioLayer[13],
+_dataAudioLayer[14],
+_dataAudioLayer[15]
+);*/
        #else
           src_short_to_float_array(_dataAudioLayer, _floatBuffer48000, nbSample);
           src_data.data_in = _floatBuffer48000; 
@@ -272,6 +289,9 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
        src_simple (&src_data, SRC_SINC_BEST_QUALITY/*SRC_SINC_MEDIUM_QUALITY*/, 1); // 1 = channel
        nbSample = src_data.output_frames_gen;
        //if (nbSample > RTP_20S_8KHZ_MAX) { _debug("Alert from mic, nbSample %d is bigger than expected %d\n", nbSample, RTP_20S_8KHZ_MAX); }
+       /*_debug("ina: %d %f %f\n", nbSample, _floatBuffer8000[0], 
+_floatBuffer8000[1 ]
+);*/
        src_float_to_short_array (_floatBuffer8000, _intBuffer8000, nbSample);
        toSIP = _intBuffer8000;
     } else {
@@ -285,7 +305,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
       #endif
     }
 
-    if ( nbSample < RTP_20S_8KHZ_MAX ) {
+    if ( nbSample < (RTP_20S_8KHZ_MAX - 10) ) { // if only 10 is missing, it's ok
       // fill end with 0...
       //_debug("begin: %p, nbSample: %d\n", toSIP, nbSample);
       //_debug("has to fill: %d chars at %p\n", (RTP_20S_8KHZ_MAX-nbSample)*sizeof(int16), toSIP + nbSample);
@@ -301,6 +321,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     // encode divise by two
     // Send encoded audio sample over the network
     if (compSize > RTP_20S_8KHZ_MAX) { _debug("! ARTP: %d should be %d\n", compSize, RTP_20S_8KHZ_MAX);}
+    timestamp += time->getSecond();
     if (!_sym) {
       _sessionSend->putData(timestamp, _sendDataEncoded, compSize);
     } else {

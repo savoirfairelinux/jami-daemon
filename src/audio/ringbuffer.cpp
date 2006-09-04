@@ -87,8 +87,9 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
    //fprintf(stderr, "P");
    while(toCopy) {
       block = toCopy;
-      if (block > (mBufferSize - pos)) // from current pos. to end of buffer
+      if (block > (mBufferSize - pos)) { // from current pos. to end of buffer
          block = mBufferSize - pos;
+      }
 
       // put the data inside the buffer.
       if (volume!=100) {
@@ -138,8 +139,9 @@ RingBuffer::Get(void *buffer, int toCopy, unsigned short volume) {
    //fprintf(stderr, "G");
    while(toCopy) {
       block = toCopy;
-      if (block > (mBufferSize - mStart))
+      if (block > (mBufferSize - mStart)) {
          block = mBufferSize - mStart;
+      }
 
       if(volume!=100) {
         SFLDataFormat* start = (SFLDataFormat*)(mBuffer + mStart);
