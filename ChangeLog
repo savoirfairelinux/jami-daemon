@@ -1,3 +1,13 @@
+2006-09-06  Yan Morin
+
+	* Fix packaging problem for 0.7.0 release (fedora.spec)
+
+	* Use portaudio with PA_ALSA_PLUGHW (enable alsa resampling)
+
+	* Use SFLDEBUG instead of DEBUG. DEBUG is use by QT
+
+	* Desactivate line flashing when a call is transfered
+
 2006-08-31  Yan Morin
 
 	* Improve launcher (only start if needed). If the daemon is started, qt won't stop it.

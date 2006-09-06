@@ -334,10 +334,10 @@ PhoneLine::transfer()
 {
   if(mCall) {
     if(mBuffer.length() == 0) {
-      DebugOutput::instance() << tr("PhoneLine %1: We're now in transfer mode.\n");
+      DebugOutput::instance() << tr("PhoneLine %1: We're now in transfer mode.\n").arg(mLine);
       setAction(tr("Transfer to:"));
       clear();
-      unselect();
+      unselect(true);
       mIsTransfering = true;
     }
     else {
@@ -357,6 +357,7 @@ void
 PhoneLine::finishTransfer()
 {
   clearCall();
+  unselect(true);  
   stopTalking();
 
   if(mIsTransfering) {

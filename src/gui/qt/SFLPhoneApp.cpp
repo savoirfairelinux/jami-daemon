@@ -122,6 +122,8 @@ SFLPhoneApp::initConnections(SFLPhoneWindow *w)
 		     *pos, SLOT(setOn(bool)));
     QObject::connect(line, SIGNAL(backgrounded()),
 		     *pos, SLOT(suspend()));
+    QObject::connect(line, SIGNAL(transfered()),
+		     *pos, SLOT(stopFlashing()));
     QObject::connect(line, SIGNAL(hanguped()),
 		     *pos, SLOT(stopFlashing()));
     QObject::connect(line, SIGNAL(peerUpdated(QString)),
