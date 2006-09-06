@@ -1,6 +1,5 @@
 %define name sflphone
 %define version @RPM_VERSION@
-%define alphatag @RPM_RELEASE@
 Autoreq: 0
 
 Name:		%name
@@ -36,9 +35,10 @@ rm -rf %{buildroot}
 %defattr(-, root, root)
 %{_bindir}/sflphone
 %{_libexecdir}/sflphoned
-%{_libexecdir}/sflphoned-qt
-%{_libexecdir}/sflphoned-cli
+%{_libexecdir}/sflphone-qt
+%{_libexecdir}/sflphone-cli
 %{_datadir}/sflphone/ringtones/*
+%{_datadir}/sflphone/skins/*
 
 %changelog
 * Wed Sep  6 2006 Yan Morin <yan.morin@savoirfairelinux.com>
