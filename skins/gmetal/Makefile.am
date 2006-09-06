@@ -1,2 +1,2 @@
 datadir = $(sflphone_datadir)/skins/gmetal
-data_DATA = *.png
+dist_data_DATA = *.png

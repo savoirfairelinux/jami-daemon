@@ -18,13 +18,13 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
 #include "globals.h"
 #include <qfile.h>
+
 #include "DebugOutputImpl.hpp"
 
 DebugOutputImpl::DebugOutputImpl()
-#ifdef DEBUG
+#ifdef SFLDEBUG
   : QTextStream(stdout, IO_WriteOnly)
 #else
     : QTextStream(&mOutputString, IO_WriteOnly)

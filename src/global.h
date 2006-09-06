@@ -42,7 +42,7 @@ typedef short int16;
 #define SFLConvertInt16(s) (s)
 #endif
 
-#ifdef DEBUG
+#ifdef SFLDEBUG
   #define _debug(...)          fprintf(stderr, "[sfl-debug] " __VA_ARGS__)
   #define _debugStart(...)         fprintf(stderr, "[sfl-debug] " __VA_ARGS__)
   #define _debugMid(...)       fprintf(stderr, __VA_ARGS__)

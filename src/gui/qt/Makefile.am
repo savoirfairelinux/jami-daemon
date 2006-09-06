@@ -110,7 +110,8 @@ sflphone_qt_SOURCES = \
     ./VolumeControl.cpp \
     ./VolumeControl.hpp \
     ./globals.h \
-    ./main.cpp
+    ./main.cpp \
+    ./ConfigurationPanel.ui.h
 
 CLEANFILES = \
 	$(BUILT_SOURCES)

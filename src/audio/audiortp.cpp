@@ -234,6 +234,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
   //   3. encode it
   //   4. send it
   try {
+    timestamp += time->getSecond();
     if (_ca==0) { _debug(" !ARTP: No call associated (mic)\n"); return; } // no call, so we do nothing
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     if (!audiolayer) { _debug(" !ARTP: No audiolayer available for mic\n"); return; }
@@ -260,23 +261,6 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
        SRC_DATA src_data;
        #ifdef DATAFORMAT_IS_FLOAT   
           src_data.data_in = _dataAudioLayer;
-/*        _debug("inb: %d %f %f %f %f %f %f %f %f %f %f %f %f\n", nbSample, _dataAudioLayer[0], 
-_dataAudioLayer[1 ],
-_dataAudioLayer[2 ],
-_dataAudioLayer[3 ],
-_dataAudioLayer[4 ],
-_dataAudioLayer[5 ],
-_dataAudioLayer[6 ],
-_dataAudioLayer[7 ],
-_dataAudioLayer[8 ],
-_dataAudioLayer[9 ],
-_dataAudioLayer[10],
-_dataAudioLayer[11],
-_dataAudioLayer[12],
-_dataAudioLayer[13],
-_dataAudioLayer[14],
-_dataAudioLayer[15]
-);*/
        #else
           src_short_to_float_array(_dataAudioLayer, _floatBuffer48000, nbSample);
           src_data.data_in = _floatBuffer48000; 
@@ -289,9 +273,6 @@ _dataAudioLayer[15]
        src_simple (&src_data, SRC_SINC_BEST_QUALITY/*SRC_SINC_MEDIUM_QUALITY*/, 1); // 1 = channel
        nbSample = src_data.output_frames_gen;
        //if (nbSample > RTP_20S_8KHZ_MAX) { _debug("Alert from mic, nbSample %d is bigger than expected %d\n", nbSample, RTP_20S_8KHZ_MAX); }
-       /*_debug("ina: %d %f %f\n", nbSample, _floatBuffer8000[0], 
-_floatBuffer8000[1 ]
-);*/
        src_float_to_short_array (_floatBuffer8000, _intBuffer8000, nbSample);
        toSIP = _intBuffer8000;
     } else {
@@ -321,7 +302,6 @@ _floatBuffer8000[1 ]
     // encode divise by two
     // Send encoded audio sample over the network
     if (compSize > RTP_20S_8KHZ_MAX) { _debug("! ARTP: %d should be %d\n", compSize, RTP_20S_8KHZ_MAX);}
-    timestamp += time->getSecond();
     if (!_sym) {
       _sessionSend->putData(timestamp, _sendDataEncoded, compSize);
     } else {

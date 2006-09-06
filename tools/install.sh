@@ -36,7 +36,7 @@ cmmi() {
 		if [ "$SFL_INSTALL_USER" = "$USER" ]; then
 			make install || exit
 		else
-			su $SFL_INSTALL_USER -c 'make install' || exit;
+			PATH=$PATH:/sbin su $SFL_INSTALL_USER -c 'make install' || exit;
 		fi
 	fi
 	cd ..

@@ -1,3 +1,3 @@
 SUBDIRS = metal gmetal
 datadir = $(sflphone_datadir)/skins/
-data_DATA = *.ini
+dist_data_DATA = *.ini

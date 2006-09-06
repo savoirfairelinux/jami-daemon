@@ -20,7 +20,6 @@
 
 #ifndef __DEBUGOUTPUTIMPL_HPP__
 #define __DEBUGOUTPUTIMPL_HPP__
-
 #include <qtextstream.h>
 
 class DebugOutputImpl : public QTextStream
@@ -29,7 +28,7 @@ public:
   DebugOutputImpl();
 
 private:
-#ifdef DEBUG
+#ifndef SFLDEBUG
   QString mOutputString;
 #endif
 };

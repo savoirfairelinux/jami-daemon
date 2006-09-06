@@ -10,6 +10,6 @@ AC_DEFUN([SFL_CXX_WITH_DEBUG],[
 	)
 	if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
 		CXXFLAGS="$CXXFLAGS -g"
-		CPPFLAGS="$CPPFLAGS -DDEBUG"
+		CPPFLAGS="$CPPFLAGS -DSFLDEBUG"
 	fi
 ])

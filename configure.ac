@@ -46,7 +46,7 @@ AC_CONFIG_FILES([skins/Makefile \
   skins/gmetal/Makefile \
   ringtones/Makefile])
 AC_CONFIG_FILES([platform/debian/changelog platform/rpm/sflphone.spec \
-  platform/fedora/sflphoned.spec])
+  platform/fedora/sflphone.spec])
 AC_CONFIG_HEADERS(config.h)
 
 dnl Get project version
