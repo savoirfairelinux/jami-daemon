@@ -27,7 +27,7 @@
 typedef float float32;
 typedef short int16;
 
-#define DATAFORMAT_IS_FLOAT
+//#define DATAFORMAT_IS_FLOAT
 #ifdef DATAFORMAT_IS_FLOAT
 #define SFLDataFormat float32
 #define SFLPortaudioFormat portaudio::FLOAT32
