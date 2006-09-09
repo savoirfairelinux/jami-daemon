@@ -47,7 +47,8 @@ AC_CONFIG_FILES([skins/Makefile \
   ringtones/Makefile])
 AC_CONFIG_FILES([platform/debian/changelog platform/rpm/sflphone.spec \
   platform/fedora/sflphone.spec])
-AC_CONFIG_HEADERS(config.h)
+dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
+AM_CONFIG_HEADER(config.h)
 
 dnl Get project version
 VERSION=`sed -ne 's/^#define SFLPHONED_VERSION "\(.*\)"/\1/p' ${srcdir}/src/global.h`

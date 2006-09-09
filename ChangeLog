@@ -1,3 +1,9 @@
+2006-09-09  Yan Morin
+
+	* Fixing gentoo problem (qtdir for moc/uic/qembed, Key_Mode_switch)
+
+	* Adding README.gentoo for gentoo instructions on how to build
+
 2006-09-06  Yan Morin
 
 	* Fix packaging problem for 0.7.0 release (fedora.spec)
