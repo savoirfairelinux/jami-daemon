@@ -81,13 +81,13 @@ esac
 AC_MSG_RESULT([$QT_VER ($QT_MAJOR)])
 
 dnl Check that moc is in path
-AC_CHECK_PROG(MOC, moc, moc)
+AC_PATH_PROG(MOC, moc, [], [$QTDIR/bin:$PATH])
 if test x$MOC = x ; then
         AC_MSG_ERROR([*** moc must be in path])
 fi
 
 dnl uic is the Qt user interface compiler
-AC_CHECK_PROG(UIC, uic, uic)
+AC_PATH_PROG(UIC, uic, [], [$QTDIR/bin:$PATH])
 if test x$UIC = x ; then
         AC_MSG_ERROR([*** uic must be in path])
 fi
@@ -95,7 +95,7 @@ fi
 dnl qembed is the Qt data embedding utility.
 dnl It is located in $QTDIR/tools/qembed, and must be compiled and installed
 dnl manually, we'll let it slide if it isn't present
-AC_CHECK_PROG(QEMBED, qembed, qembed)
+AC_PATH_PROG(QEMBED, qembed, [], [$QTDIR/bin:$PATH])
 
 
 dnl Calculate Qt include path

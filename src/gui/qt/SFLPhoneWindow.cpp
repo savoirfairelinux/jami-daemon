@@ -173,8 +173,9 @@ SFLPhoneWindow::keyPressEvent(QKeyEvent *e) {
     emit shortcutPressed(e);
   } else if (key != Qt::Key_Shift && 
       key != Qt::Key_Meta && 
-      key != Qt::Key_Alt &&
-      key != Qt::Key_Mode_switch
+      key != Qt::Key_Alt /* &&
+      key != Qt::Key_Mode_switch // this is not in gentoo (same qt version)
+      */
     ) {
     emit keyPressed(Qt::Key(key));
   }
