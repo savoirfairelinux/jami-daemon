@@ -1,5 +1,14 @@
+/*
+ * Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com>
+ * Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ */
+/*
+ * 2006-11-15: add <string.h> declaration, thanks to Pierre Pomes (AMD64 compilation)
+ */
+
 #include "config.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include "display.h"
 #include "setup.h"

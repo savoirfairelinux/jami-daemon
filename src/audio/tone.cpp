@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2005, 2006 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of 
@@ -19,6 +19,9 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+/*
+ * YM: 2006-11-15: changes unsigned int to std::string::size_type, thanks to Pierre Pomes (AMD64 compilation)
  */
 #include "tone.h"
 #include <math.h>
@@ -43,13 +46,13 @@ Tone::genBuffer(const std::string& definition)
   SFLDataFormat* bufferPos = buffer;
 
   // Number of format sections 
-  unsigned int posStart = 0; // position of precedent comma
-  unsigned int posEnd = 0; // position of the next comma
+  std::string::size_type posStart = 0; // position of precedent comma
+  std::string::size_type posEnd = 0; // position of the next comma
 
   std::string s; // portion of frequency
   int count; // number of int for one sequence
 
-  unsigned int deflen = definition.length();
+  std::string::size_type deflen = definition.length();
   do {
     posEnd = definition.find(',', posStart);
     if (posEnd == std::string::npos) {
@@ -62,10 +65,10 @@ Tone::genBuffer(const std::string& definition)
       s = definition.substr(posStart, posEnd-posStart);
 
       // The 1st frequency is before the first + or the /
-      unsigned int pos_plus = s.find('+');
-      unsigned int pos_slash = s.find('/');
-      unsigned int len = s.length();
-      unsigned int endfrequency = 0;
+      std::string::size_type pos_plus = s.find('+');
+      std::string::size_type pos_slash = s.find('/');
+      std::string::size_type len = s.length();
+      std::string::size_type endfrequency = 0;
 
       if ( pos_slash == std::string::npos ) {
         time = 0;

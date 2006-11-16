@@ -17,6 +17,9 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+/*
+ * YM: 2006-11-15: changes unsigned int to std::string::size_type, thanks to Pierre Pomes (AMD64 compilation)
+ */
 #include "sipvoiplink.h"
 #include "eventthread.h"
 #include "sipcall.h"
@@ -1359,9 +1362,6 @@ SIPVoIPLink::SIPMessageNew(eXosip_event_t *event)
   else if (MSG_IS_NOTIFY(event->request)){
     _debug("  > NOTIFY Voice message\n");
     int ii;
-    unsigned int pos;
-    unsigned int pos_slash;
-
     osip_body_t *body = NULL;
     // Get the message body
     ii = osip_message_get_body(event->request, 0, &body);
@@ -1375,6 +1375,8 @@ SIPVoIPLink::SIPMessageNew(eXosip_event_t *event)
        return;
     }
     std::string str(body->body);
+    std::string::size_type pos;
+    std::string::size_type pos_slash;
     pos = str.find(VOICE_MSG);
 
     if (pos == std::string::npos) {
@@ -1496,8 +1498,8 @@ SIPVoIPLink::handleDtmfRelay(eXosip_event_t* event) {
   if (0 == osip_message_get_body(event->request, 0, &body) && body->body != 0 )   {
     _debug("* SIP Info: Text body: %s\n", body->body);
     std::string dtmfBody(body->body);
-    unsigned int posStart = 0;
-    unsigned int posEnd = 0;
+    std::string::size_type posStart = 0;
+    std::string::size_type posEnd = 0;
     std::string signal;
     std::string duration;
     // search for signal=and duration=

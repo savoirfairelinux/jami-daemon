@@ -1,8 +1,9 @@
-/**
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+/*
+ *  Copyright (C) 2004, 2005, 2006 Savoir-Faire Linux inc.
  *  Author: Jean-Philippe Barrette-LaPierre
  *             <jean-philippe.barrette-lapierre@savoirfairelinux.com>
- *                                                                              
+ *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *                                                                               
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -17,7 +18,10 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
+/*
+ * YM: 2006-11-15: fix type for QString.length(), return a uint
+ * YM: 2006-11-15: commentunused variable
+ */
 #include <string>
 #include <qurl.h>
 
@@ -36,15 +40,14 @@ static uchar hex_to_int( uchar c )
 
 void Url::decode( QString& url )
 {
-    int oldlen = url.length();
+    uint oldlen = url.length();
     if ( !oldlen )
         return;
 
-    int newlen = 0;
-
+//    uint newlen = 0;
     std::string newUrl;
 
-    int i = 0;
+    uint i = 0;
     while ( i < oldlen ) {
         ushort c = url[ i++ ].unicode();
         if ( c == '%' ) {
@@ -55,7 +58,7 @@ void Url::decode( QString& url )
 	  c = ' ';
 	}
         newUrl += c;
-	newlen++;
+//	newlen++;
     }
 
     url = QString::fromUtf8(newUrl.c_str());

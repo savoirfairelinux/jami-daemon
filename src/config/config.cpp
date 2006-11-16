@@ -219,7 +219,7 @@ ConfigTree::populateFromFile(const std::string& fileName) {
   std::string section("");
   std::string key("");
   std::string val("");
-  int pos;
+  std::string::size_type pos;
 
   while (!file.eof()) {
     // Read the file line by line
