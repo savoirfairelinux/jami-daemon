@@ -1,7 +1,8 @@
 libexec_PROGRAMS = sflphone-cli
 
 #-lncurses
-AM_LDFLAGS = $(LIBREADLINE)
+sflphone_cli_LDADD = $(LIBREADLINE)
+#AM_LDFLAGS = $(LIBREADLINE)
 sflphone_cli_SOURCES = \
 	calls.c calls.h \
 	commons.h \

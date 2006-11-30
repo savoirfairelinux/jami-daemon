@@ -23,7 +23,7 @@ AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
 
 dnl What to generate
-AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
+dnl AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libs/Makefile \
   libs/taxidermy/Makefile \
@@ -46,7 +46,7 @@ AC_CONFIG_FILES([skins/Makefile \
   skins/gmetal/Makefile \
   ringtones/Makefile])
 AC_CONFIG_FILES([platform/debian/changelog platform/rpm/sflphone.spec \
-  platform/fedora/sflphone.spec])
+  platform/fedora/sflphone.spec platform/fedora/sflphone-fc6.spec])
 dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
 AM_CONFIG_HEADER(config.h)
 
@@ -80,6 +80,7 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+dnl will have to remove this
 AC_PROG_LIBTOOL
 
 dnl Define C++ as default language

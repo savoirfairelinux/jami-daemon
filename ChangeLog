@@ -1,3 +1,11 @@
+2006-11-30  Yan Morin
+
+	* Fix .spec problem on fedora core 6
+
+	* Fix "selecting #0" device in sflphoned
+
+	* Fix using #8 when there is only 2 out devices)
+
 2006-09-09  Yan Morin
 
 	* Fixing gentoo problem (qtdir for moc/uic/qembed, Key_Mode_switch)

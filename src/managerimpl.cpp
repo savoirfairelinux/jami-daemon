@@ -1018,7 +1018,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
 
   section = AUDIO;
-  fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);
+  //fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);
   fill_config_int(DRIVER_NAME_IN, DFT_DRIVER_STR);
   fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
   fill_config_int(DRIVER_SAMPLE_RATE, DRIVER_SAMPLE_RATE_DEFAULT);
@@ -1081,7 +1081,7 @@ ManagerImpl::initAudioDriver(void)
 void
 ManagerImpl::selectAudioDriver (void)
 {
-  int noDevice  = getConfigInt(AUDIO, DRIVER_NAME);
+  //int noDevice  = getConfigInt(AUDIO, DRIVER_NAME);
   int noDeviceIn  = getConfigInt(AUDIO, DRIVER_NAME_IN);
   int noDeviceOut = getConfigInt(AUDIO, DRIVER_NAME_OUT);
   int sampleRate  = getConfigInt(AUDIO, DRIVER_SAMPLE_RATE);
@@ -1092,9 +1092,10 @@ ManagerImpl::selectAudioDriver (void)
   // this is when no audio device in/out are set
   // or the audio device in/out are set to 0
   // we take the nodevice instead
-  if (noDeviceIn == 0 && noDeviceOut == 0) {
-    noDeviceIn = noDeviceOut = noDevice;
-  }
+  // remove this hack, how can we change the device to 0, if the noDevice is 1?
+  //if (noDeviceIn == 0 && noDeviceOut == 0) {
+  //  noDeviceIn = noDeviceOut = noDevice;
+  //}
   _debugInit(" AudioLayer Opening Device");
   _audiodriver->setErrorMessage("");
   _audiodriver->openDevice(noDeviceIn, noDeviceOut, sampleRate);

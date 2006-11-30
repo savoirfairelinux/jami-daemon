@@ -37,7 +37,7 @@ sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone
 
 #sflphoned_LDFLAGS = -static
 sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS)
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES) $(SAMPLERATE_FLAG)
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES)
 
 #libsflphone_la_LDFLAGS= -version-info 0:1:0
 libsflphone_la_LIBADD = \
@@ -46,7 +46,7 @@ libsflphone_la_LIBADD = \
 	./audio/libaudio.la \
 	./gui/libguiframework.la \
 	./config/libconfig.la \
-	$(IAX_LIBS) $(SAMPLERATE_LIB)
+	$(IAX_LIBS)
 
 libsflphone_la_SOURCES =
 

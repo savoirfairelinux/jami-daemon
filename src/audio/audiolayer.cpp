@@ -120,14 +120,15 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate)
     _debug("Portaudio detect no sound card.");
     return;
   } else {
-    if (indexIn >= nbDevice) {
-      _debug(" Portaudio auto-select device #0 for input because device #%02d is not found\n", indexIn);
-      indexIn = 0;
-    }
-    if (indexOut >= nbDevice) {
-      _debug(" Portaudio auto-select device #0 for output because device #%02d is not found\n", indexOut);
-      indexOut = 0;
-    }
+//    not good, 
+//    if (indexIn >= nbDevice) {
+//      _debug(" Portaudio auto-select device #0 for input because device #%02d is not found\n", indexIn);
+//      indexIn = 0;
+//    }
+//    if (indexOut >= nbDevice) {
+//      _debug(" Portaudio auto-select device #0 for output because device #%02d is not found\n", indexOut);
+//      indexOut = 0;
+//    }
 
     _debug(" Setting audiolayer: device     in=%2d, out=%2d\n", indexIn, indexOut);
     _debug("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);

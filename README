@@ -59,7 +59,10 @@ Required libraries and tools:
     http://portaudio.com/archives/pa_snapshot_v19.tar.gz
     or
     svn co https://www.portaudio.com/repos/portaudio/branches/v19-devel portaudio
-    
+	or 
+	cd tools/ ./portaudio.sh
+- autoconf
+
 Optional libraries:
 - zeroconf: (tested with mDNSResponder87)
     http://developer.apple.com/darwin/projects/bonjour/
@@ -74,6 +77,8 @@ Some of the required libraries may be downloaded from
 
 See tools/config.sh for details
 
+So in debian, you need:
+apt-get install autoconf automake1.9 libtool libosip2-dev libexosip2-dev libccrtp-dev libcommoncpp2-dev pkg-config libqt3-mt-dev libsamplerate-dev libasound2-dev
 
 
 Building the dependencies

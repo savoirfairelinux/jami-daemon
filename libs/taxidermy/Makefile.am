@@ -43,12 +43,9 @@ libtaxidermy_la_SOURCES = \
 CLEANFILES = \
 	$(BUILT_SOURCES)
 
-
 AM_CPPFLAGS = -I$(top_srcdir)/libs/ $(QT_CXXFLAGS) $(X_INCLUDES) 
-AM_LDFLAGS = $(QT_LDADD) $(X_LDFLAGS) 
+#AM_LDFLAGS = $(QT_LDADD) $(X_LDFLAGS) 
 libtaxidermy_la_LIBADD = $(QT_LDADD)
-
-
 
 %.h: %.ui
 	$(UIC) -o $@ $<

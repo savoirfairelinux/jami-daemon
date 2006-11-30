@@ -1584,6 +1584,8 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
 <variables>
     <variable access="private">int lastSIPAccount;</variable>
     <variable access="private">int _cutStringCombo;</variable>
+    <variable access="private">std::map &lt; int, int &gt; _deviceInMap</variable>
+    <variable access="private">std::map &lt; int, int &gt; _deviceOutMap</variable>
 </variables>
 
 

@@ -43,6 +43,8 @@
 #include "SkinManager.hpp"
 #include "TransparentWidget.hpp"
 
+#include <map>
+
 #define SIGNALISATIONS_IMAGE "signalisations.png"
 #define AUDIO_IMAGE "audio.png"
 #define PREFERENCES_IMAGE "preferences.png"
@@ -152,8 +154,35 @@ ConfigurationPanel::generate()
   pulseLength->setValue(ConfigurationManager::instance().get(SIGNALISATION_SECTION, 
 	SIGNALISATION_PULSE_LENGTH).toUInt());
 
-  cboDriverChoiceOut->setCurrentItem(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT).toUInt());
-  cboDriverChoiceIn->setCurrentItem(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN).toUInt());
+
+  // select the position index (combobox of the device index)
+  // deviceIndexOut can be 8, but be at position 0 in the combo box
+  int deviceIndexOut = ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT).toInt();
+  int deviceIndexIn  = ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN).toInt();
+  int positionIndexIn  = 0;
+  int positionIndexOut = 0;
+
+  // search for deviceIndexIn, and get the positionIndex (key)
+  std::map< int, int >::iterator it = _deviceInMap.begin();
+  while (it != _deviceInMap.end()) {
+    if ( it->second == deviceIndexIn) {
+	  // we found the deviceIndex
+	  positionIndexIn = it->first;
+      break;
+	}
+	it++;
+  }
+  it = _deviceOutMap.begin();
+  while (it != _deviceOutMap.end()) {
+    if ( it->second == deviceIndexOut) {
+	  // we found the deviceIndex
+	  positionIndexOut = it->first;
+      break;
+	}
+	it++;
+  }
+  cboDriverChoiceIn->setCurrentItem(positionIndexIn);
+  cboDriverChoiceOut->setCurrentItem(positionIndexOut);
 
   // fill cboDriverRate here
   int nbRate = 5;
@@ -195,11 +224,17 @@ void ConfigurationPanel::saveSlot()
   if (ringsChoice->currentText() != NULL) {
     ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_RINGTONE, ringsChoice->currentText());
   }
+  int cboPosition = 0;
+  int deviceIndex = 0;
   if (cboDriverChoiceOut->currentText() != NULL) {
-    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT, QString::number(cboDriverChoiceOut->currentItem()));
+    cboPosition = cboDriverChoiceOut->currentItem();
+    deviceIndex = _deviceOutMap[cboPosition]; // return 0 if not found and create it, by STL
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT, QString::number(deviceIndex));
   }
   if (cboDriverChoiceIn->currentText() != NULL) {
-    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN, QString::number(cboDriverChoiceIn->currentItem()));
+    cboPosition = cboDriverChoiceIn->currentItem();
+    deviceIndex = _deviceInMap[cboPosition]; // return 0 if not found and create it, by STL
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN, QString::number(deviceIndex));
   }
 
   SkinManager::instance().load(SkinChoice->currentText());
@@ -307,7 +342,9 @@ void ConfigurationPanel::updateAudioDevicesIn()
   std::list< AudioDevice > audio = ConfigurationManager::instance().getAudioDevicesIn();
   std::list< AudioDevice >::iterator pos;
   cbo->clear();
-  
+  _deviceInMap.clear();
+
+  int iPos = 0;
   for (pos = audio.begin(); pos != audio.end(); pos++) {
     QString hostApiName = pos->hostApiName;
     QString deviceName = pos->deviceName;
@@ -317,6 +354,8 @@ void ConfigurationPanel::updateAudioDevicesIn()
     }
     QString name = hostApiName + QObject::tr(" (device #%1-%2Hz)").arg(pos->index).arg(pos->defaultRate);
     cbo->insertItem(name);
+    _deviceInMap[iPos] = pos->index.toInt();
+	iPos++;
   }
 }
 
@@ -331,7 +370,9 @@ void ConfigurationPanel::updateAudioDevices()
   std::list< AudioDevice > audio = ConfigurationManager::instance().getAudioDevicesOut();
   std::list< AudioDevice >::iterator pos;
   cbo->clear();
+  _deviceOutMap.clear();
  
+  int iPos = 0;
   for (pos = audio.begin(); pos != audio.end(); pos++) {
     QString hostApiName = pos->hostApiName;
     QString deviceName = pos->deviceName;
@@ -342,6 +383,8 @@ void ConfigurationPanel::updateAudioDevices()
     //DebugOutput::instance() << hostApiName << pos->defaultRate;
     QString name = hostApiName + QObject::tr(" (device #%1-%2Hz)").arg(pos->index).arg(pos->defaultRate);
     cbo->insertItem(name);
+    _deviceOutMap[iPos] = pos->index.toInt();
+	iPos++;
   }
 }
 
@@ -379,11 +422,17 @@ void
 ConfigurationPanel::slotTestSoundDriver()
 {
   // save driver in configuration manager
+  int cboPosition = 0;
+  int deviceIndex = 0;
   if (cboDriverChoiceOut->currentText() != NULL) {
-    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT, QString::number(cboDriverChoiceOut->currentItem()));
+    cboPosition = cboDriverChoiceOut->currentItem();
+    deviceIndex = _deviceOutMap[cboPosition]; // return 0 if not found and create it, by STL
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEOUT, QString::number(deviceIndex));
   }
   if (cboDriverChoiceIn->currentText() != NULL) {
-    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN, QString::number(cboDriverChoiceIn->currentItem()));
+    cboPosition = cboDriverChoiceIn->currentItem();
+    deviceIndex = _deviceInMap[cboPosition]; // return 0 if not found and create it, by STL
+    ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_DEFAULT_DEVICEIN, QString::number(deviceIndex));
   }
   if (cboDriverRate->currentText() != NULL) {
     ConfigurationManager::instance().set(AUDIO_SECTION, AUDIO_SAMPLERATE, cboDriverRate->currentText());
