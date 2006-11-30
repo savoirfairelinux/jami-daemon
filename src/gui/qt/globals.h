@@ -23,7 +23,7 @@
 
 #define NB_PHONELINES 6
 #define PROGNAME "SFLPhone"
-#define VERSION "0.7.0"
+#define VERSION "0.7.2"
 
 #define AUDIO_SECTION "Audio"
 #define AUDIO_DEFAULT_DEVICE "Drivers.driverName"
