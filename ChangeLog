@@ -6,6 +6,10 @@
 
 	* Fix using #8 when there is only 2 out devices)
 
+2006-11-16  Yan Morin
+
+	* Fix amd64 issue (std::string::size_type return). Thanks to Pierre Pomes
+
 2006-09-09  Yan Morin
 
 	* Fixing gentoo problem (qtdir for moc/uic/qembed, Key_Mode_switch)
