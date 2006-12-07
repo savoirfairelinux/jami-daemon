@@ -230,11 +230,9 @@
                                         <cstring>unnamed</cstring>
                                     </property>
                                     <widget class="QLabel" row="0" column="0">
-                                        <property name="name">
-                                            <cstring>lblAuthorizationUsre</cstring>
-                                        </property>
+                                        <property name="name"><cstring>lblAuthorizationUser</cstring></property>
                                         <property name="text">
-                                            <string>Authorization user</string>
+												<string>Authorization user</string>
                                         </property>
                                     </widget>
                                     <widget class="QLineEdit" row="1" column="0">
@@ -330,7 +328,7 @@
                                             </spacer>
                                             <widget class="QPushButton">
                                                 <property name="name">
-                                                    <cstring>buttonRegister</cstring>
+                                                    <cstring>buttonSIPRegister</cstring>
                                                 </property>
                                                 <property name="enabled">
                                                     <bool>true</bool>
@@ -474,6 +472,126 @@
                                 <property name="checked">
                                     <bool>false</bool>
                                 </property>
+                            </widget>
+                        </vbox>
+                    </widget>
+                </widget>
+                <widget class="QWidget">
+                    <property name="name"><cstring>IAXPage</cstring></property>
+                    <attribute name="title"><string>IAX Authentication</string></attribute>
+                    <widget class="QLayoutWidget">
+                        <property name="name"><cstring>IAXLayoutMain</cstring></property>
+                        <property name="geometry">
+                            <rect>
+                                <x>10</x>
+                                <y>10</y>
+                                <width>410</width>
+                                <height>393</height>
+                            </rect>
+                        </property>
+                        <vbox>
+                            <property name="name"><cstring>IAXvboxName</cstring></property>
+                            <property name="margin"><number>0</number></property>
+                            <widget class="QGroupBox">
+                                <property name="name"><cstring>IAXgroupBoxName</cstring></property>
+								<property name="margin"><number>0</number></property>
+                                <property name="title"><string></string></property>
+                                <grid>
+                                    <property name="name"><cstring>unnamed</cstring></property>
+                                    <widget class="QComboBox" rows="0" column="0" rowspan="1" colspan="2">
+                                     <property name="name"><cstring>cboIAXAccount</cstring></property>
+                                     <property name="currentItem"><number>0</number></property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="0" column="2" rowspan="1" colspan="1">
+                                        <property name="name"><cstring>IAXalias</cstring></property>
+                                    </widget>
+                                </grid>
+                            </widget>
+                            <widget class="QGroupBox">
+                                <property name="name"><cstring>IAXgroupBoxAuth</cstring></property>
+                                <property name="margin"><number>0</number></property>
+                                <property name="title"><string></string></property>
+                                <grid>
+                                    <property name="name"><cstring>unnamed</cstring></property>
+                                    <widget class="QLabel" row="0" column="0">
+                                        <property name="name"><cstring>lblIAXhost</cstring></property>
+                                        <property name="text"><string>Host (ie: asterisk.domain.com)</string></property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="1" column="0">
+                                        <property name="name"><cstring>IAXhost</cstring></property>
+                                    </widget>
+                                    <widget class="QLabel" row="2" column="0">
+                                        <property name="name"><cstring>lblIAXuser</cstring></property>
+                                        <property name="text"><string>Authorization user</string></property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="3" column="0">
+                                        <property name="name"><cstring>IAXuser</cstring></property>
+                                    </widget>
+                                    <widget class="QLabel" row="4" column="0">
+                                        <property name="name"><cstring>lblIAXPass</cstring></property>
+                                        <property name="text"><string>Password</string></property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="5" column="0">
+                                        <property name="name"><cstring>IAXpass</cstring></property>
+                                        <property name="echoMode"><enum>Password</enum></property>
+                                    </widget>
+                                </grid>
+                            </widget>
+                            <widget class="QLayoutWidget">
+                                <property name="name"><cstring>IAXLayoutChk</cstring></property>
+                                <vbox>
+                                    <property name="name"><cstring>IAXvboxChk</cstring></property>
+                                    <widget class="QLayoutWidget">
+                                        <property name="name"><cstring>IAXLayoutChk2</cstring></property>
+                                        <hbox>
+                                            <property name="name"><cstring>IAXhboxChk</cstring></property>
+                                            <widget class="QCheckBox">
+                                                <property name="name"><cstring>chkIAXAutoregister</cstring></property>
+                                                <property name="text"><string>Auto-register</string></property>
+                                                <property name="checked"><bool>true</bool></property>
+                                            </widget>
+                                            <widget class="QCheckBox">
+                                                <property name="name"><cstring>chkIAXEnable</cstring></property>
+                                                <property name="text"><string>Enable</string></property>
+                                                <property name="checked"><bool>true</bool></property>
+                                            </widget>
+                                            <spacer>
+                                                <property name="name"><cstring>unnamed</cstring></property>
+                                                <property name="orientation"><enum>Horizontal</enum></property>
+                                                <property name="sizeType"><enum>Expanding</enum></property>
+                                                <property name="sizeHint">
+                                                    <size>
+                                                        <width>201</width>
+                                                        <height>21</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                            <widget class="QPushButton">
+                                                <property name="name"><cstring>buttonIAXRegister</cstring></property>
+                                                <property name="enabled"><bool>true</bool></property>
+                                                <property name="text"><string>IAXRegister</string></property>
+                                            </widget>
+                                        </hbox>
+                                    </widget>
+				    <widget class="QLabel">
+					    <property name="name"><cstring>lblIAXError</cstring></property>
+					    <property name="text"><string></string></property>
+					    <property name="paletteForegroundColor">
+						    <color><red>255</red><green>0</green><blue>0</blue></color>
+					    </property>
+				    </widget>
+                                    <spacer>
+                                        <property name="name"><cstring>unnamed</cstring></property>
+                                        <property name="orientation"><enum>Vertical</enum></property>
+                                        <property name="sizeType"><enum>Expanding</enum></property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>20</width>
+                                                <height>21</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </vbox>
                             </widget>
                         </vbox>
                     </widget>
@@ -1454,6 +1572,12 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
         <slot>slotSIPAccountChange(int)</slot>
     </connection>
     <connection>
+        <sender>cboIAXAccount</sender>
+        <signal>activated(int)</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>slotIAXAccountChange(int)</slot>
+    </connection>
+    <connection>
         <sender>buttonOk</sender>
         <signal>clicked()</signal>
         <receiver>ConfigurationPanel</receiver>
@@ -1466,10 +1590,16 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
         <slot>changeTabSlot()</slot>
     </connection>
     <connection>
-        <sender>buttonRegister</sender>
+        <sender>buttonSIPRegister</sender>
         <signal>clicked()</signal>
         <receiver>ConfigurationPanel</receiver>
-        <slot>slotRegister()</slot>
+        <slot>slotSIPRegister()</slot>
+    </connection>
+    <connection>
+        <sender>buttonIAXRegister</sender>
+        <signal>clicked()</signal>
+        <receiver>ConfigurationPanel</receiver>
+        <slot>slotIAXRegister()</slot>
     </connection>
     <connection>
         <sender>buttonTestSoundDriver</sender>
@@ -1525,7 +1655,15 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
     <tabstop>sipproxy</tabstop>
     <tabstop>chkAutoregister</tabstop>
     <tabstop>chkEnable</tabstop>
-    <tabstop>buttonRegister</tabstop>
+    <tabstop>buttonSIPRegister</tabstop>
+	<tabstop>cboIAXAccount</tabstop>
+   	<tabstop>IAXalias</tabstop>
+   	<tabstop>IAXhost</tabstop>
+   	<tabstop>IAXuser</tabstop>
+   	<tabstop>IAXpass</tabstop>
+   	<tabstop>chkIAXAutoregister</tabstop>
+   	<tabstop>chkIAXEnable</tabstop>
+   	<tabstop>buttonIAXRegister</tabstop>
     <tabstop>buttonOk</tabstop>
     <tabstop>buttonCancel</tabstop>
     <tabstop>Tab_Signalisations</tabstop>
@@ -1559,7 +1697,9 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
 <slots>
     <slot>generate()</slot>
     <slot>slotSIPAccountChange(int)</slot>
-    <slot>slotRegister()</slot>
+    <slot>slotIAXAccountChange(int)</slot>
+    <slot>slotSIPRegister()</slot>
+    <slot>slotIAXRegister()</slot>
     <slot>slotRegisterReturn( bool, QString )</slot>
     <slot>slotTestSoundDriver()</slot>
     <slot>slotReloadSoundDriver()</slot>
@@ -1580,9 +1720,12 @@ Montreal, Quebec H2T 1S6, Canada&lt;/p&gt;</string>
     <function access="private" specifier="non virtual">init()</function>
     <function access="private" specifier="non virtual">loadSIPAccount(int number)</function>
     <function access="private" specifier="non virtual">saveSIPAccount(int number)</function>
+    <function access="private" specifier="non virtual">loadIAXAccount(int number)</function>
+    <function access="private" specifier="non virtual">saveIAXAccount(int number)</function>
 </functions>
 <variables>
     <variable access="private">int lastSIPAccount;</variable>
+    <variable access="private">int lastIAXAccount;</variable>
     <variable access="private">int _cutStringCombo;</variable>
     <variable access="private">std::map &lt; int, int &gt; _deviceInMap</variable>
     <variable access="private">std::map &lt; int, int &gt; _deviceOutMap</variable>

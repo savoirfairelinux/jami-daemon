@@ -139,6 +139,9 @@ private:
 
   /** Buffer for 8000hz samples for mic conversion */
   int16* _intBuffer8000;
+
+  /** Current IAX call pointer, used for sending, change when starting audio, switching */
+  IAXCall* _currentCall; 
 };
 
 #endif

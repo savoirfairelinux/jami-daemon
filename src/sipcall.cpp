@@ -283,12 +283,12 @@ SIPCall::SIPCallAnswered(eXosip_event_t *event)
    * @return true if ok (change / no change) or false on error
    */
 bool 
-SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t *event)
+SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t* event)
 {
   if (event->response == NULL || event->request  == NULL) { return false; }
   
   eXosip_lock();
-  sdp_message_t *remote_sdp = eXosip_get_sdp_info (event->response);
+  sdp_message_t* remote_sdp = eXosip_get_sdp_info (event->response);
   eXosip_unlock();
   if (remote_sdp == NULL) {
     _debug("SIP Failure: no remote sdp\n");
@@ -296,7 +296,7 @@ SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t *event)
     return false;
   }
 
-  sdp_media_t *remote_med = getRemoteMedia(event->tid, remote_sdp);
+  sdp_media_t* remote_med = getRemoteMedia(event->tid, remote_sdp);
   if (remote_med==NULL) {
     sdp_message_free(remote_sdp);
     return false;
@@ -306,8 +306,11 @@ SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t *event)
     return false;
   }
 
-  char *tmp = (char *) osip_list_get (remote_med->m_payloads, 0);
-
+#ifdef LIBOSIP2_WITHPOINTER
+  char *tmp = (char*) osip_list_get (remote_med->m_payloads, 0);
+#else
+  char *tmp = (char*) osip_list_get (&(remote_med->m_payloads), 0);
+#endif
   setAudioCodec(0);
   if (tmp != NULL) {
     int payload = atoi (tmp);
@@ -400,8 +403,15 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
   // for each medias
   int iMedia = 0;
   char *tmp = NULL;
-  while (!osip_list_eol(remote_sdp->m_medias, iMedia)) {
-    sdp_media_t *remote_med = (sdp_media_t *)osip_list_get(remote_sdp->m_medias, iMedia);
+  #ifdef LIBOSIP2_WITHPOINTER 
+  const osip_list_t* remote_sdp_m_medias = remote_sdp->m_medias; // old abi
+  #else
+  const osip_list_t* remote_sdp_m_medias = &(remote_sdp->m_medias);
+  #endif
+  osip_list_t* remote_med_m_payloads = 0;
+
+  while (!osip_list_eol(remote_sdp_m_medias, iMedia)) {
+    sdp_media_t *remote_med = (sdp_media_t *)osip_list_get(remote_sdp_m_medias, iMedia);
     if (remote_med == 0) { continue; }
 
     if (0 != osip_strcasecmp (remote_med->m_media, "audio")) {
@@ -413,8 +423,14 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
 
       // search for compatible codec: foreach payload
       int iPayload = 0;
-      while (!osip_list_eol(remote_med->m_payloads, iPayload)) {
-        tmp = (char *)osip_list_get(remote_med->m_payloads, iPayload);
+      #ifdef LIBOSIP2_WITHPOINTER 
+      remote_med_m_payloads = remote_med->m_payloads; // old abi
+      #else
+      remote_med_m_payloads = &(remote_med->m_payloads);
+      #endif
+
+      while (!osip_list_eol(remote_med_m_payloads, iPayload)) {
+        tmp = (char *)osip_list_get(remote_med_m_payloads, iPayload);
         if (tmp!=NULL) {
           int payload = atoi(tmp);
           AudioCodec* audiocodec = _codecMap.getCodec((CodecType)payload);
@@ -464,10 +480,15 @@ SIPCall::sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med)
 
   /* test media attributes */
   pos = 0;
-  while (!osip_list_eol (med->a_attributes, pos)) {
+  #ifdef LIBOSIP2_WITHPOINTER 
+  const osip_list_t* med_a_attributes = med->a_attributes; // old abi
+  #else
+  const osip_list_t* med_a_attributes = &(med->a_attributes);
+  #endif
+  while (!osip_list_eol (med_a_attributes, pos)) {
       sdp_attribute_t *at;
 
-      at = (sdp_attribute_t *) osip_list_get (med->a_attributes, pos);
+      at = (sdp_attribute_t *) osip_list_get (med_a_attributes, pos);
       if (at->a_att_field != NULL && 
       0 == strcmp (at->a_att_field, "sendonly")) {
       return _SENDONLY;
@@ -484,10 +505,15 @@ SIPCall::sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med)
   /* test global attributes */
   pos_media = -1;
   pos = 0;
-  while (!osip_list_eol (sdp->a_attributes, pos)) {
+  #ifdef LIBOSIP2_WITHPOINTER 
+  const osip_list_t* sdp_a_attributes = sdp->a_attributes; // old abi
+  #else
+  const osip_list_t* sdp_a_attributes = &(sdp->a_attributes);
+  #endif
+  while (!osip_list_eol (sdp_a_attributes, pos)) {
       sdp_attribute_t *at;
 
-      at = (sdp_attribute_t *) osip_list_get (sdp->a_attributes, pos);
+      at = (sdp_attribute_t *) osip_list_get (sdp_a_attributes, pos);
       if (at->a_att_field != NULL && 
       0 == strcmp (at->a_att_field, "sendonly")) {
           return _SENDONLY;
@@ -622,8 +648,13 @@ SIPCall::setAudioCodecFromSDP(sdp_media_t* remote_med, int tid)
   // Remote Payload
   char *tmp = NULL;
   int pos = 0;
-  while (!osip_list_eol (remote_med->m_payloads, pos)) {
-    tmp = (char *) osip_list_get (remote_med->m_payloads, pos);
+  #ifdef LIBOSIP2_WITHPOINTER 
+  const osip_list_t* remote_med_m_payloads = remote_med->m_payloads; // old abi
+  #else
+  const osip_list_t* remote_med_m_payloads = &(remote_med->m_payloads);
+  #endif
+  while (!osip_list_eol (remote_med_m_payloads, pos)) {
+    tmp = (char *) osip_list_get (remote_med_m_payloads, pos);
     if (tmp != NULL ) {
       int payload = atoi(tmp);
       // stop if we find a correct codec

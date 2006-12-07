@@ -210,6 +210,19 @@ IAXVoIPLink::getEvent()
     }
     iax_event_free(event);
   }
+
+  // send sound here
+  if(_currentCall != 0 && audiolayer != 0) {
+    int samples = audiolayer->canGetMic(); 
+    if (samples != 0) {
+      int  datalen = audiolayer->getMic(_sendDataEncoded, samples);
+      _debug("iax_send_voice(%p, %d, ,%d, %d)\n", _currentCall->getSession(), _currentCall->getFormat(), datalen, samples);
+      //if ( iax_send_voice(_currentCall->getSession(), _currentCall->getFormat(), (char*)_sendDataEncoded, datalen, samples) == -1) {
+      //	   // error sending voice
+      //}
+    }
+  }
+
   // unlock mutex here
   _mutexIAX.leaveMutex();
   //iaxRefreshRegistrations();
@@ -458,6 +471,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     case IAX_EVENT_HANGUP:
       Manager::instance().peerHungupCall(id); 
       if (Manager::instance().isCurrentCall(id)) {
+	    _currentCall = 0;
         audiolayer->stopStream();
         // stop audio
       }
@@ -468,6 +482,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
       Manager::instance().peerHungupCall(id); 
       if (Manager::instance().isCurrentCall(id)) {
         // stop audio
+		_currentCall = 0;
         audiolayer->stopStream();
       }
       removeCall(id);
@@ -487,6 +502,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 		call->setFormat(event->ies.format);
 		
 		Manager::instance().peerAnsweredCall(id);
+		_currentCall = call;
 		audiolayer->startStream();
 		// start audio here?
 	} else {
@@ -539,19 +555,19 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
           nbSample = ( src_data.output_frames_gen > IAX__20S_48KHZ_MAX) ? IAX__20S_48KHZ_MAX : src_data.output_frames_gen;
           #ifdef DATAFORMAT_IS_FLOAT
             toAudioLayer = _floatBuffer48000;
-  	#else
+          #else
             src_float_to_short_array(_floatBuffer48000, _dataAudioLayer, nbSample);
-  	  toAudioLayer = _dataAudioLayer;
-  	#endif
+            toAudioLayer = _dataAudioLayer;
+          #endif
   	
         } else {
           nbSample = nbInt16;
           #ifdef DATAFORMAT_IS_FLOAT
-        	  // convert _receiveDataDecoded to float inside _receiveData
+            // convert _receiveDataDecoded to float inside _receiveData
             src_short_to_float_array(_receiveDataDecoded, _floatBuffer8000, nbSample);
-  	  toAudioLayer = _floatBuffer8000;
+  	        toAudioLayer = _floatBuffer8000;
           #else
-  	  toAudioLayer = _receiveDataDecoded; // int to int
+  	        toAudioLayer = _receiveDataDecoded; // int to int
           #endif
         }
         audiolayer->putMain(toAudioLayer, nbSample * sizeof(SFLDataFormat));

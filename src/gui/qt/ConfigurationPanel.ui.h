@@ -56,6 +56,7 @@ void ConfigurationPanel::init()
   _cutStringCombo = 30;
   //DebugOutput::instance() << "ConfigurationPanel::init()\n"; 
   lblError->hide();
+  lblIAXError->hide();
   Tab_Signalisations->show();
   Tab_Audio->hide();
   Tab_Preferences->hide();
@@ -126,11 +127,15 @@ ConfigurationPanel::generate()
   ringsChoice->setCurrentText(ConfigurationManager::instance().get(AUDIO_SECTION, AUDIO_RINGTONE));
 
   // For signalisations tab
+  
+  // Account
+  QComboBox* cbo = 0;
+  int nbItem = 0;
 
   // Load account
-  QComboBox* cbo = cboSIPAccount;
+  cbo = cboSIPAccount;
   cbo->clear();
-  int nbItem = 4;
+  nbItem = 4;
   for (int iItem = 0; iItem < nbItem; iItem++) {
     QString accountId = "SIP" + QString::number(iItem);	  
     QString aliasName = ConfigurationManager::instance().get(accountId, ACCOUNT_ALIAS);
@@ -146,6 +151,28 @@ ConfigurationPanel::generate()
     cbo->insertItem(accountName,iItem);
   }
   loadSIPAccount(0);
+
+  // Load IAX Account
+  cbo = cboIAXAccount;
+  cbo->clear();
+  nbItem = 1;
+  for (int iItem = 0; iItem < nbItem; iItem++) {
+    QString accountId = "IAX" + QString::number(iItem);	  
+    QString aliasName = ConfigurationManager::instance().get(accountId, ACCOUNT_ALIAS);
+	if (aliasName != "") {
+      QString accountName;
+      if (aliasName.isEmpty()) {
+        accountName = QObject::tr("IAX Account #%1").arg(iItem+1);
+      } else {
+        if (aliasName.length() > 30) {
+          aliasName = aliasName.left(30) + "...";
+        }
+        accountName = aliasName + " (" + QObject::tr("IAX Account #%1").arg(iItem+1) + ")";
+      }
+      cbo->insertItem(accountName,iItem);
+	}
+  }
+  loadIAXAccount(0);
 
   sendDTMFas->setCurrentItem(ConfigurationManager::instance().get(SIGNALISATION_SECTION,
 	 SIGNALISATION_SEND_DTMF_AS).toUInt());
@@ -201,6 +228,7 @@ ConfigurationPanel::generate()
 void ConfigurationPanel::saveSlot()
 {
   saveSIPAccount(cboSIPAccount->currentItem());
+  saveIAXAccount(cboIAXAccount->currentItem());
 
   ConfigurationManager::instance().set(SIGNALISATION_SECTION, 
 				       SIGNALISATION_PULSE_LENGTH,
@@ -396,23 +424,36 @@ ConfigurationPanel::SkinChoice_selected( const QString & )
 }
 
 void
-ConfigurationPanel::slotRegister()
+ConfigurationPanel::slotSIPRegister()
 {
   saveSIPAccount(cboSIPAccount->currentItem());
   emit needRegister("SIP" + QString::number(cboSIPAccount->currentItem()));
 }
 
+void
+ConfigurationPanel::slotIAXRegister()
+{
+  saveIAXAccount(cboIAXAccount->currentItem());
+  emit needRegister("IAX" + QString::number(cboIAXAccount->currentItem()));
+}
+
 void 
 ConfigurationPanel::slotRegisterReturn( bool hasError, QString ) 
 {
+  // here we check the current page...
   if (hasError) {
     lblError->setPaletteForegroundColor(red); // red
     lblError->setText(QObject::tr("Register failed"));
+    lblIAXError->setPaletteForegroundColor(red); // red
+    lblIAXError->setText(QObject::tr("Register failed"));
   } else {
     lblError->setPaletteForegroundColor(black); // black
     lblError->setText(QObject::tr("Register Succeed"));
+    lblIAXError->setPaletteForegroundColor(black); // black
+    lblIAXError->setText(QObject::tr("Register Succeed"));
   }
   lblError->show();
+  lblIAXError->show();
 }
 
 /**
@@ -557,4 +598,65 @@ ConfigurationPanel::saveSIPAccount(int number)
   ConfigurationManager::instance().set(account, 
 				       SIGNALISATION_STUN_SERVER,
 				       STUNserver->text());
+}
+
+void 
+ConfigurationPanel::slotIAXAccountChange(int index) 
+{
+  if (lastIAXAccount!=index) {
+    
+    QString account = "IAX" + QString::number(index);
+
+    saveIAXAccount(lastIAXAccount);
+    loadIAXAccount(index);
+    lblIAXError->setText("");
+  }
+}
+
+void
+ConfigurationPanel::loadIAXAccount(int number) 
+{
+  QString account = "IAX" + QString::number(number);
+  QString type    = ConfigurationManager::instance().get(account, ACCOUNT_TYPE);
+
+  chkIAXAutoregister->setChecked(ConfigurationManager::instance()
+			   .get(account,ACCOUNT_AUTO_REGISTER).toUInt());
+
+  chkIAXEnable->setChecked(ConfigurationManager::instance()
+			   .get(account,ACCOUNT_ENABLE).toUInt());
+
+  QString aliasName = ConfigurationManager::instance().get(account, ACCOUNT_ALIAS);
+  IAXalias->setText(aliasName);
+	  
+  IAXuser->setText(ConfigurationManager::instance().get(account,SIGNALISATION_IAXUSER));
+  IAXpass->setText(ConfigurationManager::instance().get(account,SIGNALISATION_IAXPASS));
+  IAXhost->setText(ConfigurationManager::instance().get(account,SIGNALISATION_IAXHOST));
+  lastIAXAccount = number;
+}
+
+void
+ConfigurationPanel::saveIAXAccount(int number)
+{
+  QString account = "IAX" + QString::number(number);
+  QString aliasName = IAXalias->text();
+  ConfigurationManager::instance().set(account, ACCOUNT_ALIAS, aliasName);
+  QString accountName;
+  if (aliasName.isEmpty()) {
+    accountName = QObject::tr("IAX Account #%1").arg(number+1);
+  } else {
+    if (aliasName.length() > 30) {
+	    aliasName = aliasName.left(30) + "...";
+    }
+     accountName = aliasName + " (" + QObject::tr("IAX Account #%1").arg(number+1) + ")";
+  }
+  cboIAXAccount->changeItem(accountName, number); 
+  ConfigurationManager::instance().set(account, SIGNALISATION_IAXUSER, IAXuser->text());
+  ConfigurationManager::instance().set(account, SIGNALISATION_IAXPASS, IAXpass->text());
+  ConfigurationManager::instance().set(account, SIGNALISATION_IAXHOST, IAXhost->text());
+  ConfigurationManager::instance().set(account, 
+				       ACCOUNT_AUTO_REGISTER,
+				       QString::number(chkAutoregister->isChecked()));
+  ConfigurationManager::instance().set(account, 
+				       ACCOUNT_ENABLE,
+				       QString::number(chkEnable->isChecked()));
 }
