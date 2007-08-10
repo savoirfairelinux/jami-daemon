@@ -80,6 +80,7 @@ See tools/config.sh for details
 So in debian, you need:
 apt-get install autoconf automake1.9 libtool libosip2-dev libexosip2-dev libccrtp-dev libcommoncpp2-dev pkg-config libqt3-mt-dev libsamplerate-dev libasound2-dev
 
+For portaudio: libportaudio2 libportaudiocpp0 portaudio19-dev jackd
 
 Building the dependencies
 -------------------------
