@@ -49,7 +49,7 @@ CodecDescriptorMap::getCodec(CodecType payload)
   if (iter!=_codecMap.end()) {
     return (iter->second);
   }
-  return 0;
+  return NULL;
 }
 
 void 

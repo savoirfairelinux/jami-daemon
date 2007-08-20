@@ -137,19 +137,19 @@ AudioRtpRTX::~AudioRtpRTX () {
   _ca = 0;
 
   if (!_sym) {
-    delete _sessionRecv; _sessionRecv = 0;
-    delete _sessionSend; _sessionSend = 0;
+    delete _sessionRecv; _sessionRecv = NULL;
+    delete _sessionSend; _sessionSend = NULL;
   } else {
-    delete _session;     _session = 0;
+    delete _session;     _session = NULL;
   }
 
-  delete [] _intBuffer8000; _intBuffer8000 = 0;
-  delete [] _floatBuffer48000; _floatBuffer48000 = 0;
-  delete [] _floatBuffer8000; _floatBuffer8000 = 0;
-  delete [] _dataAudioLayer; _dataAudioLayer = 0;
+  delete [] _intBuffer8000; _intBuffer8000 = NULL;
+  delete [] _floatBuffer48000; _floatBuffer48000 = NULL;
+  delete [] _floatBuffer8000; _floatBuffer8000 = NULL;
+  delete [] _dataAudioLayer; _dataAudioLayer = NULL;
 
-  delete [] _sendDataEncoded; _sendDataEncoded = 0;
-  delete [] _receiveDataDecoded; _receiveDataDecoded = 0;
+  delete [] _sendDataEncoded; _sendDataEncoded = NULL;
+  delete [] _receiveDataDecoded; _receiveDataDecoded = NULL;
 
 
   delete time; time = NULL;
@@ -339,6 +339,8 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     unsigned char* data  = (unsigned char*)adu->getData(); // data in char
     unsigned int size    = adu->getSize(); // size in char
 
+    //_debug("PACKET SIZE: %d bytes\n", size);
+
     if ( size > RTP_20S_8KHZ_MAX ) {
       _debug("We have received from RTP a packet larger than expected: %s VS %s\n", size, RTP_20S_8KHZ_MAX);
       _debug("The packet size has been cropped\n");
@@ -347,7 +349,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 
     // Decode data with relevant codec
     AudioCodec* audiocodec = _ca->getCodecMap().getCodec((CodecType)payload);
-    if (audiocodec != 0) {
+    if (audiocodec != NULL) {
       // codecDecode(int16 *dest, char* src, size in bytes of the src)
       // decode multiply by two, so the number of byte should be double
       // size shall be RTP_FRAME2SEND or lower
@@ -363,9 +365,11 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       int nbSampleMaxRate = nbInt16 * 6; // TODO: change it
 
       if ( audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
-        // convert here
-        double         factord = (double)audiolayer->getSampleRate()/audiocodec->getClockRate();
+        // Do sample rate conversion
 
+        double factord = (double)audiolayer->getSampleRate()/audiocodec->getClockRate();
+
+	// SRC_DATA from samplerate.h
         SRC_DATA src_data;
         src_data.data_in = _floatBuffer8000;
         src_data.data_out = _floatBuffer48000;
