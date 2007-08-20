@@ -22,11 +22,13 @@
 
 #include <string>
 #include <cc++/thread.h> // for mutex
+#include "audio/codecDescriptor.h"
 
 typedef std::string CallID;
 
 /**
- * A call is the base classes for protocol-based calls
+ * A call is the base class for protocol-based calls
+ *
  * @author Yan Morin <yan.morin@gmail.com>
  */
 class Call{
@@ -88,9 +90,90 @@ public:
      */
     CallState getState();
 
+    /**
+     * Set the audio start boolean (protected by mutex)
+     * @param start true if we start the audio
+     */
+    void setAudioStart(bool start);
+
+    /**
+     * Tell if the audio is started (protected by mutex)
+     * @return true if it's already started
+     */
+    bool isAudioStarted();
+
+    // AUDIO
+    /** Set internal codec Map: initialization only, not protected */
+    void setCodecMap(const CodecDescriptorMap& map) { _codecMap = map; } 
+    CodecDescriptorMap& getCodecMap();
+
+    /** Set my IP [not protected] */
+    void setLocalIp(const std::string& ip)     { _localIPAddress = ip; }
+
+    /** Set local audio port, as seen by me [not protected] */
+    void setLocalAudioPort(unsigned int port)  { _localAudioPort = port;}
+
+    /** Set the audio port that remote will see. */
+    void setLocalExternAudioPort(unsigned int port) { _localExternalAudioPort = port; }
+
+    /** Return the audio port seen by the remote side. */
+    unsigned int getLocalExternAudioPort() { return _localExternalAudioPort; }
+
+    /** Return my IP [mutex protected] */
+    const std::string& getLocalIp();
+    
+    /** Return port used locally (for my machine) [mutex protected] */
+    unsigned int getLocalAudioPort();
+    
+    /** Return audio port at destination [mutex protected] */
+    unsigned int getRemoteAudioPort();
+
+    /** Return IP of destination [mutex protected] */
+    const std::string& getRemoteIp();
+
+    /** Return audio codec [mutex protected] */
+    AudioCodec* getAudioCodec();
+
+
+
 protected:
     /** Protect every attribute that can be changed by two threads */
     ost::Mutex _callMutex;
+
+    /** Set remote's IP addr. [not protected] */
+    void setRemoteIP(const std::string& ip)    { _remoteIPAddress = ip; }
+
+    /** Set remote's audio port. [not protected] */
+    void setRemoteAudioPort(unsigned int port) { _remoteAudioPort = port; }
+
+    /** Set the audio codec used.  [not protected] */
+    void setAudioCodec(AudioCodec* audioCodec) { _audioCodec = audioCodec; }
+
+    /** Codec Map */
+    CodecDescriptorMap _codecMap;
+
+    /** Codec pointer */
+    AudioCodec* _audioCodec;
+
+    bool _audioStarted;
+
+    // Informations about call socket / audio
+
+    /** My IP address */
+    std::string  _localIPAddress;
+
+    /** Local audio port, as seen by me. */
+    unsigned int _localAudioPort;
+
+    /** Port assigned to my machine by the NAT, as seen by remote peer (he connects there) */
+    unsigned int _localExternalAudioPort;
+
+    /** Remote's IP address */
+    std::string  _remoteIPAddress;
+
+    /** Remote's audio port */
+    unsigned int _remoteAudioPort;
+
 
 private:  
     /** Unique ID of the call */
@@ -108,6 +191,7 @@ private:
 
     /** Number of the peer */
     std::string _peerNumber;
+
 };
 
 #endif

@@ -19,10 +19,16 @@
  */
 #include "call.h"
 
-Call::Call(const CallID& id, Call::CallType type) : _id(id), _type(type)
+Call::Call(const CallID& id, Call::CallType type) : _id(id), _type(type), 
+						    _localIPAddress(""),
+						    _remoteIPAddress("")  
 {
   _connectionState = Call::Disconnected;
   _callState = Call::Inactive;
+  _audioCodec = 0;
+  _localAudioPort = 0;
+  _localExternalAudioPort = 0;
+  _remoteAudioPort = 0;
 }
 
 
@@ -57,5 +63,60 @@ Call::getState()
 {
   ost::MutexLock m(_callMutex);
   return _callState;
+}
+
+CodecDescriptorMap& 
+Call::getCodecMap()
+{
+  return _codecMap;
+}
+
+const std::string& 
+Call::getLocalIp()
+{
+  ost::MutexLock m(_callMutex);  
+  return _localIPAddress;
+}
+
+unsigned int 
+Call::getLocalAudioPort()
+{
+  ost::MutexLock m(_callMutex);  
+  return _localAudioPort;
+}
+
+unsigned int 
+Call::getRemoteAudioPort()
+{
+  ost::MutexLock m(_callMutex);  
+  return _remoteAudioPort;
+}
+
+const std::string& 
+Call::getRemoteIp()
+{
+  ost::MutexLock m(_callMutex);  
+  return _remoteIPAddress;
+}
+
+AudioCodec* 
+Call::getAudioCodec()
+{
+  ost::MutexLock m(_callMutex);  
+  return _audioCodec;  
+}
+
+void 
+Call::setAudioStart(bool start)
+{
+  ost::MutexLock m(_callMutex);  
+  _audioStarted = start;  
+}
+
+bool 
+Call::isAudioStarted()
+{
+  ost::MutexLock m(_callMutex);  
+  return _audioStarted;
 }
 

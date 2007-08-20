@@ -50,17 +50,6 @@ public:
   /** @param did SIP transaction id : protected by eXosip lock */
   void setTid(int tid) { _tid = tid; } 
 
-  // AUDIO
-  /** Set internal codec Map: initialization only, not protected */
-  void setCodecMap(const CodecDescriptorMap& map) { _codecMap = map; } 
-  CodecDescriptorMap& getCodecMap();
-
-  /** set internal, not protected */
-  void setLocalIp(const std::string& ip)     { _localIPAddress = ip; }
-  void setLocalAudioPort(unsigned int port)  { _localAudioPort = port;}
-  void setLocalExternAudioPort(unsigned int port) { _localExternalAudioPort = port; }
-  unsigned int getLocalExternAudioPort() { return _localExternalAudioPort; }
-
   /**
    * Answer incoming call correclty before telling the user
    * @param event eXosip Event
@@ -89,33 +78,11 @@ public:
    */
   bool SIPCallAnsweredWithoutHold(eXosip_event_t *event);
 
-  /** protected */
-  const std::string& getLocalIp();
-  unsigned int getLocalAudioPort();
-  unsigned int getRemoteAudioPort();
-  const std::string& getRemoteIp();
-  AudioCodec* getAudioCodec();
-
-  /**
-   * Set the audio start boolean (protected by mutex)
-   * @param start true if we start the audio
-   */
-  void setAudioStart(bool start);
-  /**
-   * Tell if the audio is started (protected by mutex)
-   * @return true if it's already started
-   */
-  bool isAudioStarted();
-
   //TODO: humm?
   int sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg);
 
 
 private:
-  /** set internal, not protected */
-  void setRemoteIP(const std::string& ip)    { _remoteIPAddress = ip; }
-  void setRemoteAudioPort(unsigned int port) { _remoteAudioPort = port; }
-  void setAudioCodec(AudioCodec* audioCodec) { _audioCodec = audioCodec; }
 
   // TODO: hum???
   int sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med);
@@ -124,9 +91,11 @@ private:
    * @param event eXosip event
    * @return false the event is invalid
    */
+
   bool setPeerInfoFromRequest(eXosip_event_t *event);
   /**
    * Get a valid remote SDP or return a 400 bad request response if invalid
+   *
    * @param event eXosip event
    * @return valid remote_sdp or 0
    */
@@ -134,6 +103,7 @@ private:
 
   /**
    * Get a valid remote media or return a 415 unsupported media type
+   *
    * @param tid transaction id
    * @param remote_sdp Remote SDP pointer
    * @return valid sdp_media_t or 0
@@ -163,19 +133,6 @@ private:
   /** SIP transaction id */
   int _tid;
 
-  /** Codec Map */
-  CodecDescriptorMap _codecMap;
-  /** codec pointer */
-  AudioCodec* _audioCodec;
-  bool _audioStarted;
-
-  // Informations about call socket / audio
-  std::string _localIPAddress;
-  unsigned int _localAudioPort;
-  unsigned int _localExternalAudioPort; // what peer (NAT) should connect to
-
-  std::string _remoteIPAddress;
-  unsigned int _remoteAudioPort;
 };
 
 #endif

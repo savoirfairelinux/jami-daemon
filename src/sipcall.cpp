@@ -26,26 +26,15 @@
 #define _SENDONLY 1
 #define _RECVONLY 2
 
-SIPCall::SIPCall(const CallID& id, Call::CallType type) : Call(id, type), 
- _localIPAddress(""), _remoteIPAddress("")  
+SIPCall::SIPCall(const CallID& id, Call::CallType type) : Call(id, type)
 {
   _cid = 0;
   _did = 0;
   _tid = 0;
-  _audioCodec = 0;
-  _localAudioPort = 0;
-  _localExternalAudioPort = 0;
-  _remoteAudioPort = 0;
 }
 
 SIPCall::~SIPCall() 
 {
-}
-
-CodecDescriptorMap& 
-SIPCall::getCodecMap()
-{
-  return _codecMap;
 }
 
 /**
@@ -333,55 +322,6 @@ SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t* event)
 */
   sdp_message_free (remote_sdp);
   return true;
-}
-
-const std::string& 
-SIPCall::getLocalIp()
-{
-  ost::MutexLock m(_callMutex);  
-  return _localIPAddress;
-}
-
-unsigned int 
-SIPCall::getLocalAudioPort()
-{
-  ost::MutexLock m(_callMutex);  
-  return _localAudioPort;
-}
-
-unsigned int 
-SIPCall::getRemoteAudioPort()
-{
-  ost::MutexLock m(_callMutex);  
-  return _remoteAudioPort;
-}
-
-const std::string& 
-SIPCall::getRemoteIp()
-{
-  ost::MutexLock m(_callMutex);  
-  return _remoteIPAddress;
-}
-
-AudioCodec* 
-SIPCall::getAudioCodec()
-{
-  ost::MutexLock m(_callMutex);  
-  return _audioCodec;  
-}
-
-void 
-SIPCall::setAudioStart(bool start)
-{
-  ost::MutexLock m(_callMutex);  
-  _audioStarted = start;  
-}
-
-bool 
-SIPCall::isAudioStarted()
-{
-  ost::MutexLock m(_callMutex);  
-  return _audioStarted;
 }
 
   //TODO: humm?
