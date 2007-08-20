@@ -362,6 +362,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 
       SFLDataFormat* toAudioLayer;
       int nbSample = nbInt16;
+      // 48000 / 8000 = 6 .. Samplerate will convert to 48000 ?!
       int nbSampleMaxRate = nbInt16 * 6; // TODO: change it
 
       if ( audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
@@ -374,7 +375,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
         src_data.data_in = _floatBuffer8000;
         src_data.data_out = _floatBuffer48000;
         src_data.input_frames = nbSample;
-        src_data.output_frames = nbSampleMaxRate;
+        src_data.output_frames = nbSample * audiolayer->getSample() / audiocodec->getClockRate();
         src_data.src_ratio = factord;
         src_short_to_float_array(_receiveDataDecoded, _floatBuffer8000, nbSample);
         src_simple (&src_data, SRC_SINC_BEST_QUALITY/*SRC_SINC_MEDIUM_QUALITY*/, 1); // 1=mono channel

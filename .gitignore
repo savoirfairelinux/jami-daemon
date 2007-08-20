@@ -1,0 +1,21 @@
+# Ignore unused objects
+*.lo
+*.o
+*.a
+*.la
+*.Po
+*.Plo
+
+# Ignore rendered docs
+doc/html
+
+# Ignore buildsys stuff
+autom4te.cache
+
+# Ignore temp portaudio stuff
+tools/portaudio
+
+# Ignore temp files
+*~
+
+
