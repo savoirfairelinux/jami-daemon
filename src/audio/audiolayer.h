@@ -109,6 +109,10 @@ private:
    */
   unsigned int _outChannel; // speaker
 
+  /**
+   * Default volume for incoming RTP and Urgent sounds.
+   */
+  unsigned short _defaultVolume; // 100
 
   /**
    * Echo testing or not

@@ -36,6 +36,7 @@ AudioLayer::AudioLayer(ManagerImpl* manager)
   : _urgentRingBuffer(SIZEBUF)
   , _mainSndRingBuffer(SIZEBUF)
   , _micRingBuffer(SIZEBUF)
+  , _defaultVolume(100)
   , _stream(NULL)
   , _errorMessage("")
   , _manager(manager)
@@ -293,9 +294,10 @@ AudioLayer::putMain(void* buffer, int toCopy)
   if (_stream) {
     int a = _mainSndRingBuffer.AvailForPut();
     if ( a >= toCopy ) {
-      return _mainSndRingBuffer.Put(buffer, toCopy);
+      return _mainSndRingBuffer.Put(buffer, toCopy, _defaultVolume);
     } else {
-      return _mainSndRingBuffer.Put(buffer, a);
+      _debug("Chopping sound, Ouch! RingBuffer full ?\n");
+      return _mainSndRingBuffer.Put(buffer, a, _defaultVolume);
     }
   }
   return 0;
@@ -315,9 +317,9 @@ AudioLayer::putUrgent(void* buffer, int toCopy)
   if (_stream) {
     int a = _urgentRingBuffer.AvailForPut();
     if ( a >= toCopy ) {
-      return _urgentRingBuffer.Put(buffer, toCopy);
+      return _urgentRingBuffer.Put(buffer, toCopy, _defaultVolume);
     } else {
-      return _urgentRingBuffer.Put(buffer, a);
+      return _urgentRingBuffer.Put(buffer, a, _defaultVolume);
     }
   }
   return 0;
