@@ -44,7 +44,7 @@ typedef short int16;
 
 #ifdef SFLDEBUG
   #define _debug(...)          fprintf(stderr, "[sfl-debug] " __VA_ARGS__)
-  #define _debugStart(...)         fprintf(stderr, "[sfl-debug] " __VA_ARGS__)
+  #define _debugStart(...)     fprintf(stderr, "[sfl-debug] " __VA_ARGS__)
   #define _debugMid(...)       fprintf(stderr, __VA_ARGS__)
   #define _debugEnd(...)       fprintf(stderr, __VA_ARGS__)
   #define _debugException(...) fprintf(stderr, "[sfl-excep] " __VA_ARGS__ "\n")

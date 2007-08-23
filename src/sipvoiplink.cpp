@@ -339,7 +339,7 @@ SIPVoIPLink::getEvent()
      case EXOSIP_SUBSCRIPTION_GLOBALFAILURE:   /** 43 < announce a global failure       */
      case EXOSIP_SUBSCRIPTION_NOTIFY:          /** 44 < announce new NOTIFY request     */
      case EXOSIP_SUBSCRIPTION_RELEASED:        /** 45 < call context is cleared.        */
-       Manager::instance().displayError(" !EXOSIP Subscription resposne not implemented yet");
+       Manager::instance().displayError(" !EXOSIP Subscription response not implemented yet.");
        break;
       
      case EXOSIP_IN_SUBSCRIPTION_NEW:          /** 46 < announce new incoming SUBSCRIBE.*/
@@ -521,7 +521,7 @@ SIPVoIPLink::answer(const CallID& id)
   eXosip_lock();
   int i = eXosip_call_build_answer(call->getTid(), SIP_OK, &answerMessage);
   if (i != 0) {
-   _debug("< SIP Building Error: send 400 Bad Request\n");
+    _debug("< SIP Building Error: send 400 Bad Request\n");
     eXosip_call_send_answer (call->getTid(), SIP_BAD_REQUEST, NULL);
   } else {
     // use exosip, bug locked

@@ -29,15 +29,16 @@ class EventThread;
 class SIPCall;
 
 /**
- * Specific VoIPLink for SIP (SIP core for incoming and outcoming events)
+ * Specific VoIPLink for SIP (SIP core for incoming and outgoing events)
  * @author Yan Morin <yan.morin@gmail.com>
  */
+
 class SIPVoIPLink : public VoIPLink
 {
 public:
-    SIPVoIPLink(const AccountID& accountID);
+  SIPVoIPLink(const AccountID& accountID);
 
-    ~SIPVoIPLink();
+  ~SIPVoIPLink();
 
   /** try to initiate the eXosip engine/thread and set config */
   bool init(void);
@@ -63,11 +64,20 @@ public:
 
 
   // SIP Specific
+
   /** If set to true, we check for a firewall
    * @param use true if we use STUN
    */
   void setUseStun(bool use) { _useStun = use; }
+
+  /** The name of the STUN server
+   * @param server Server FQDN/IP
+   */
   void setStunServer(const std::string& server) { _stunServer = server; }
+
+  /** Set the SIP proxy
+   * @param proxy Proxy FQDN/IP
+   */
   void setProxy(const std::string& proxy) { _proxy = proxy; }
   void setUserPart(const std::string& userpart) { _userpart = userpart; }
   void setAuthName(const std::string& authname) { _authname = authname; }
@@ -234,8 +244,10 @@ private:
   EventThread* _evThread;
   /** Tell if eXosip was stared (eXosip_init) */
   bool _eXosipStarted;
+
   /** Registration identifier, needed by unregister to build message */
   int _eXosipRegID;
+
   /** Number of voicemail */
   int _nMsgVoicemail;
 
@@ -244,17 +256,19 @@ private:
 
   /** Do we use stun? */
   bool _useStun;
+
   /** What is the stun server? */
   std::string _stunServer;
 
-  /** Local Extern Address is the IP address seens by peers for SIP listener */
+  /** Local Extern Address is the IP address seen by peers for SIP listener */
   std::string _localExternAddress;
 
-  /** Local Extern Port is the port seens by peers for SIP listener */
+  /** Local Extern Port is the port seen by peers for SIP listener */
   unsigned int _localExternPort;  
 
   /** SIP Proxy URL */
   std::string _proxy;
+
   /** SIP UserPart */
   std::string _userpart;
 

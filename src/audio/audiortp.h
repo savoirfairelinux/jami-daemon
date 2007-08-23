@@ -67,7 +67,7 @@ private:
   /** Buffer for 48000hz samples in conversion */ 
   float32* _floatBuffer48000;
 
-  /** Buffer for 8000hz samples for mic conversion */
+  /** Buffer for 8000Hz samples for mic conversion */
   int16* _intBuffer8000;
 
   void initAudioRtpSession(void);
@@ -87,9 +87,9 @@ public:
   void			closeRtpSession	 ();
 
 private:
-  AudioRtpRTX*	_RTXThread;
+  AudioRtpRTX*	        _RTXThread;
   bool			_symmetric;
-  ost::Mutex _threadMutex;
+  ost::Mutex            _threadMutex;
 };
 
 #endif // __AUDIO_RTP_H__

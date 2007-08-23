@@ -64,6 +64,7 @@ RingBuffer::debug() {
 //
 int 
 RingBuffer::AvailForPut() const {
+   // Always keep 4 bytes safe (?)
    return (mBufferSize-4) - Len();
 } 
 
@@ -84,19 +85,23 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
 
    copied = 0;
    pos = mEnd;
-   //fprintf(stderr, "P");
+
    while(toCopy) {
       block = toCopy;
-      if (block > (mBufferSize - pos)) { // from current pos. to end of buffer
+
+      // Wrap block around ring ?
+      if (block > (mBufferSize - pos)) {
+         // Fill in to the end of the buffer
          block = mBufferSize - pos;
       }
 
-      // put the data inside the buffer.
-      if (volume!=100) {
-        SFLDataFormat* start = (SFLDataFormat*)src;
+      // Gain adjustment (when Mic vol. is changed)
+      if (volume != 100) {
+        SFLDataFormat* start = (SFLDataFormat*) src;
         int nbSample = block / sizeof(SFLDataFormat);
         for (int i=0; i<nbSample; i++) { start[i] = start[i] * volume / 100; }
       }
+
       // bcopy(src, dest, len)
       //fprintf(stderr, "has %d put %d\t", len, block);
       bcopy (src, mBuffer + pos, block);
