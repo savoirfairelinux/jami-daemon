@@ -24,6 +24,8 @@
 #include <assert.h>
 #include <string>
 #include <cstring>
+#include <fstream> // fstream + iostream pour fstream debugging..
+#include <iostream> // removeable...
 
 #include "../global.h"
 #include "../manager.h"
@@ -91,7 +93,9 @@ AudioRtp::closeRtpSession () {
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) {
+AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
+  : _fstream("/tmp/audio.dat", std::ofstream::binary)
+ {
   setCancel(cancelDeferred);
   time = new ost::Time();
   _ca = sipcall;
@@ -354,39 +358,50 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       // decode multiply by two, so the number of byte should be double
       // size shall be RTP_FRAME2SEND or lower
       int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
-      int nbInt16      = expandedSize/sizeof(int16);
+      int nbInt16      = expandedSize / sizeof(int16);
       if (nbInt16 > RTP_20S_8KHZ_MAX) {
         _debug("We have decoded a RTP packet larger than expected: %s VS %s. crop\n", nbInt16, RTP_20S_8KHZ_MAX);
         nbInt16=RTP_20S_8KHZ_MAX;
       }
 
+      /* WRITE IN A FILE FOR DEBUG */
+      // crache _receiveDataDecoded sur le disque pour analyse avec autre chose.
+      _fstream.write((char *) _receiveDataDecoded, size);
+      _fstream.flush();
+
+
+
       SFLDataFormat* toAudioLayer;
       int nbSample = nbInt16;
-      // 48000 / 8000 = 6 .. Samplerate will convert to 48000 ?!
+      // 48000 / 8000 = 6, the number of samples for the maximum rate conversion.
       int nbSampleMaxRate = nbInt16 * 6; // TODO: change it
 
       if ( audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
         // Do sample rate conversion
 
-        double factord = (double)audiolayer->getSampleRate()/audiocodec->getClockRate();
+        double factord = (double) audiolayer->getSampleRate() / audiocodec->getClockRate();
 
 	// SRC_DATA from samplerate.h
         SRC_DATA src_data;
         src_data.data_in = _floatBuffer8000;
         src_data.data_out = _floatBuffer48000;
-        src_data.input_frames = nbSample;
-        src_data.output_frames = nbSample * audiolayer->getSample() / audiocodec->getClockRate();
+        src_data.input_frames = RTP_20S_8KHZ_MAX;
+        src_data.output_frames = RTP_20S_48KHZ_MAX;
         src_data.src_ratio = factord;
         src_short_to_float_array(_receiveDataDecoded, _floatBuffer8000, nbSample);
-        src_simple (&src_data, SRC_SINC_BEST_QUALITY/*SRC_SINC_MEDIUM_QUALITY*/, 1); // 1=mono channel
-       
+
+        int err = src_simple (&src_data, SRC_SINC_BEST_QUALITY /* SRC_SINC_MEDIUM_QUALITY*/, 1); // 1=mono channel
+
+	// Truncate number of samples if too high (ouch!)
         nbSample = ( src_data.output_frames_gen > RTP_20S_48KHZ_MAX) ? RTP_20S_48KHZ_MAX : src_data.output_frames_gen;
+
         #ifdef DATAFORMAT_IS_FLOAT
           toAudioLayer = _floatBuffer48000;
 	#else
           src_float_to_short_array(_floatBuffer48000, _dataAudioLayer, nbSample);
 	  toAudioLayer = _dataAudioLayer;
 	#endif
+
 	
       } else {
         nbSample = nbInt16;
@@ -398,6 +413,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 	  toAudioLayer = _receiveDataDecoded; // int to int
         #endif
       }
+
       audiolayer->putMain(toAudioLayer, nbSample * sizeof(SFLDataFormat));
       //_debug("ARTP: %d\n", nbSample * sizeof(SFLDataFormat));
 

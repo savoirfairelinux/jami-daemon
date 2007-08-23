@@ -22,6 +22,8 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <fstream> // fstream + iostream for _fstream debugging...
+#include <iostream>
 
 #include <ccrtp/rtp.h>
 #include <cc++/numbers.h>
@@ -69,6 +71,9 @@ private:
 
   /** Buffer for 8000Hz samples for mic conversion */
   int16* _intBuffer8000;
+
+  /** Debugging output file */
+  std::ofstream _fstream;
 
   void initAudioRtpSession(void);
   void sendSessionFromMic(int);
