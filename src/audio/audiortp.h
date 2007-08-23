@@ -28,6 +28,8 @@
 #include <ccrtp/rtp.h>
 #include <cc++/numbers.h>
 
+#include <samplerate.h>
+
 #include "../global.h"
 /** maximum of byte inside an incoming packet 
  *  8000 sampling/s * 20s/1000 = 160
@@ -73,7 +75,12 @@ private:
   int16* _intBuffer8000;
 
   /** Debugging output file */
-  std::ofstream _fstream;
+  //std::ofstream _fstream;
+
+  /** libsamplerate-related */
+  SRC_STATE*    _src_state_spkr;
+  SRC_STATE*    _src_state_mic;
+  int           _src_err;
 
   void initAudioRtpSession(void);
   void sendSessionFromMic(int);
