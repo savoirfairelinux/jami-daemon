@@ -18,6 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "src/user_cfg.h"
 #include "globals.h"
 #include "DebugOutput.hpp"
 #include "SkinManagerImpl.hpp"
@@ -41,9 +42,9 @@ void
 SkinManagerImpl::load()
 {
   bool ok;
-  load(mSettings.readEntry("Skin", "metal", &ok));
+  load(mSettings.readEntry("Skin", DFT_SKIN, &ok));
   if(!ok) {
-    mSettings.writeEntry("Skin", "metal");
+    mSettings.writeEntry("Skin", DFT_SKIN);
   }
 }
 
@@ -57,7 +58,14 @@ SkinManagerImpl::save()
 void
 SkinManagerImpl::load(const QString &skin)
 {
-  mSkin = skin;
+  if(skin.isNull())
+  {
+    mSkin = QString(DFT_SKIN);
+  } 
+  else 
+  {
+    mSkin = skin;
+  }
   if(mApp) {
     taxidermy::Taxidermist taxidermist = mHunter.getTaxidermist(skin);
     taxidermist.update(mApp);
