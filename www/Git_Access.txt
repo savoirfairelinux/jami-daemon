@@ -1,0 +1,35 @@
+// AsciiDoc file
+
+
+Git anonymous access
+--------------------
+
+
+
+To access SFLphone's git repository (read-only):
+
+---------------------------------------------
+git clone git://sflphone.org/git/sflphone.git
+---------------------------------------------
+
+
+
+
+
+Git developer's access
+----------------------
+
+Run:
+
+--------------------------------------------------------------
+ssh-kengen -C sflphone_org@sflphone.org
+cat ~/.ssh/id_rsa.pub
+--------------------------------------------------------------
+
+and transmit us the content of the `id_rsa.pub` file, for shared-key
+authentication. Then:
+
+--------------------------------------------------------------
+git clone git+ssh://sflphone_org@sflphone.org/git/sflphone.git
+--------------------------------------------------------------
+

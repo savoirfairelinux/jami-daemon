@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * SFLphone website configuration file
+ */
+
+
+/** Git repository */
+$GIT_REPOS = '../.git';
+
+/** Use the branch for fetching latest revs. of pages */
+$USE_BRANCH = 'master';
+
+/** Cache path */
+$CACHE_PATH = 'cache';
+
+/** File prefix (inside the git trees) */
+$PREFIX = 'www';
+
+?>
