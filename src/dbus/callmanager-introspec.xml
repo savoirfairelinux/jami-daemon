@@ -1,0 +1,91 @@
+<?xml version="1.0" ?>
+<node name="/org/sflphone/CallManager">
+  <interface name="org.sflphone.CallManager">
+  
+    <method name="call">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="s" name="to" direction="in"/>
+    </method>
+    
+    <method name="refuse">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="accept">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="hangUp">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="hold">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="unhold">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
+    
+    <method name="transfert">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="s" name="to" direction="in"/>
+    </method>
+    
+    <method name="setVolume">
+      <arg type="s" name="device" direction="in"/>
+      <arg type="f" name="value" direction="in"/>
+    </method>
+    
+    <method name="getVolume">
+      <arg type="s" name="device" direction="in"/>
+      <arg type="f" name="value" direction="out"/>
+    </method>
+    
+    <method name="getVoiceMailCount">
+      <arg type="i" name="count" direction="out"/>
+    </method>
+    
+    <method name="getCallDetails">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="a{ss}" name="infos" direction="out"/>
+    </method>
+    
+    <method name="getCurrentCallID">
+      <arg type="s" name="callID" direction="out"/>
+    </method>
+    
+    <signal name="incommingCall">
+      <arg type="s" name="accountID" />
+      <arg type="s" name="callID" />
+      <arg type="s" name="from" />
+    </signal>
+    
+    <signal name="incommingMessage">
+      <arg type="s" name="accountID" />
+      <arg type="s" name="from" />
+    </signal>
+    
+    <signal name="ring">
+      <arg type="s" name="callID" />
+    </signal>
+    
+    <signal name="pickedUp">
+      <arg type="s" name="callID" />
+    </signal>
+    
+    <signal name="hungUp">
+      <arg type="s" name="callID" />
+    </signal>
+    
+    <signal name="volumeChanged">
+      <arg type="s" name="device" />
+      <arg type="f" name="value" />
+    </signal>
+    
+    <signal name="error">
+      <arg type="a{ss}" name="details" />
+    </signal>
+  </interface>
+</node>
