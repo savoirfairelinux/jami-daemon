@@ -18,11 +18,12 @@ require_once('config.inc.php');
 
 
 /**
- * Show page, compile it if new, cache it.
+ * Retrieve page, compile it if new, cache it.
  *
+ * @param string File name (without the .txt) in the $PREFIX dir.
  * @return HTML content
  */
-function show_page($page) {
+function get_page($page) {
   // Compile it
   
   // Get the latest HASH for that page.
@@ -41,6 +42,18 @@ function show_page($page) {
   return $cnt;
   
 }
+
+
+/**
+ * Show page
+ *
+ * @param string File name (without the .txt) in the $PREFIX dir.
+ */
+function show_page($page) {
+  print get_page($page);
+
+}
+
 
 
 /**
@@ -77,7 +90,7 @@ function get_cache_hash($hash) {
  * Write content to cache (identified by $hash)
  */
 function put_cache_hash($hash, $content) {
-  global $CACHE_PÂTH;
+  global $CACHE_PATH;
   
   $fn = $CACHE_PATH.'/'.$hash.'.cache';
 
@@ -97,14 +110,14 @@ function compile_page($hash, $page) {
 
   $output = '';
 
-  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -", 'r');
+  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc --no-header-footer -", 'r');
 
   if (!$p) {
     return "Unable to compile file: $page ($hash)\n";
   }
 
   while (!feof($p)) {
-    $output .= fread($p);
+    $output .= fread($p, 1024);
   }
   pclose($p);
 
@@ -134,7 +147,8 @@ function get_git_file_content($file) {
 function get_git_hash_content($hash) {
   global $GIT_REPOS;
 
-  $content = exec("GIT_DIR=".$GIT_REPOS." git-show $hash");
+  $output = array();
+  $content = exec("GIT_DIR=".$GIT_REPOS." git-show $hash", $output);
 
   return $content;
 }
@@ -151,14 +165,17 @@ function get_git_hash($file) {
 
   $output = array();
 
-  $string = exec("GIT_DIR=".$GIT_REPOS." git-ls-tree $USE_BRANCH \"".git_filename($file)."\"", $output);
+  $cmd = "cd $GIT_REPOS; git-ls-tree $USE_BRANCH \"".git_filename($file).".txt\"";
+
+  $string = exec($cmd, $output);
 
   if (count($output)) {
     $fields = explode(' ', $output[0]);
 
     if ($fields[1] == 'blob') {
       // Return the HASH
-      return $fields[2];
+      $subfields = explode("\t", $fields[2]);
+      return $subfields[0];
     }
   }
 

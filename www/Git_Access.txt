@@ -31,5 +31,7 @@ authentication. Then:
 
 --------------------------------------------------------------
 git clone git+ssh://sflphone_org@sflphone.org/git/sflphone.git
+cd sflphone
+autoreconf --install
 --------------------------------------------------------------
 
