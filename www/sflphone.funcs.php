@@ -29,6 +29,10 @@ function get_page($page) {
   // Get the latest HASH for that page.
   $hash = get_git_hash($page);
 
+  if (!$hash) {
+    return "Page '$page' not found.<br />\n";
+  }
+
   $cnt = get_cache_hash($hash);
 
   if (!$cnt) {

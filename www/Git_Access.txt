@@ -10,6 +10,8 @@ To access SFLphone's git repository (read-only):
 
 ---------------------------------------------
 git clone git://sflphone.org/git/sflphone.git
+cd sflphone
+autoreconf --install
 ---------------------------------------------
 
 

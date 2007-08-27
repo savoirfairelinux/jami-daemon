@@ -18,4 +18,5 @@ tools/portaudio
 # Ignore temp files
 *~
 
-
+# Ignore website cache
+www/cache
