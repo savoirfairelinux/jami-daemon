@@ -21,6 +21,7 @@
 #define CALLMANAGER_H
 
 #include "callmanager-glue.h"
+#include "../gui/guiframework.h"
 #include <dbus-c++/dbus.h>
 
     

@@ -58,7 +58,6 @@ main (int argc, char **argv) {
          sessionPort = atoi(ptrPort+7);
       }
     }
-    GuiFramework *GUI;
     bool initOK = false;
     try {
       Manager::instance().initConfigFile();
@@ -74,12 +73,8 @@ main (int argc, char **argv) {
       exit_code = -1;
     }
     if (initOK) {
-      //GUI = &(GUIServer::instance());
-      //GUIServer::instance().setSessionPort(sessionPort);
-      //Manager::instance().setGui(GUI);
       Manager::instance().setDBusManager(&DBusManager::instance());
-      exit_code = DBusManager::instance().exec();
-      
+      exit_code = DBusManager::instance().exec();  // UI Loop
     }
   }
 

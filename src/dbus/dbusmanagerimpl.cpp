@@ -18,13 +18,12 @@
  */
  
 #include <dbusmanagerimpl.h>
-
+#include "manager.h"
 
 const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLPhone";
 
 int 
 DBusManagerImpl::exec(){
-
 
 	DBus::default_dispatcher = &_dispatcher;
 
@@ -33,6 +32,9 @@ DBusManagerImpl::exec(){
 
 	_callManager = new CallManager(conn);
     //_callManager = new CallManager(conn);
+    
+    Manager::instance().getEvents();  // Register accounts
+    
 	_dispatcher.enter();
 
 	return 1;

@@ -745,21 +745,21 @@ void
 ManagerImpl::registrationSucceed(const AccountID& accountid)
 {
   Account* acc = getAccount(accountid);
-  /*if ( acc ) { 
+ if ( acc ) { 
     acc->setState(true); 
-    if (_gui) _gui->sendRegistrationState(accountid, true);
-  }*/
+    //if (_gui) _gui->sendRegistrationState(accountid, true);
+  }
 }
 
 //THREAD=VoIP
 void 
 ManagerImpl::registrationFailed(const AccountID& accountid)
 {
-  /*Account* acc = getAccount(accountid);
+  Account* acc = getAccount(accountid);
   if ( acc ) { 
     acc->setState(false);
-    if (_gui) _gui->sendRegistrationState(accountid, false);
-  }*/
+    //if (_gui) _gui->sendRegistrationState(accountid, false);
+  }
 }
 
 /**
