@@ -16,11 +16,11 @@ body {
 }
 
 a {
-  color: blue;
+  color: #423130;
   text-decoration: underline;
 }
 a:visited {
-  color: fuchsia;
+  color: #826260;
 }
 
 em {
@@ -36,7 +36,7 @@ tt {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: #86B1B5;
+  color: #4D4F3A;
   font-family: sans-serif;
   margin-top: 1.2em;
   margin-bottom: 0.5em;

@@ -1,8 +1,7 @@
 // AsciiDoc file
 
 
-About SFLphone
---------------
+About
+=====
 
-
-
+SFLphone is a mega phone. We like it.

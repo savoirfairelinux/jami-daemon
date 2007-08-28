@@ -1,0 +1,7 @@
+// AsciiDoc file
+
+News
+====
+
+* News 1
+* News 2
