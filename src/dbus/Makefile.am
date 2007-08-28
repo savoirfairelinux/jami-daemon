@@ -4,13 +4,15 @@ EXTRA_DIST = *.xml README
 
 noinst_LTLIBRARIES = libdbus.la
 
-libdbus_la_SOURCES = \
-	callmanager-glue.h \
-	configurationmanager-glue.h \ 
-	callmanager.h callmanager.cpp \
-	dbusmanager.h dbusmanagerimpl.h dbusmanagerimp.cpp \
-	configurationmanager.h
+libdbus_la_SOURCES = callmanager.cpp \
+	 dbusmanagerimpl.cpp
 
-AM_CXXFLAGS =
+libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
+libdbus_la_CPPFLAGS = -I$(top_srcdir)/libs -I$(top_srcdir)/src $(libccext2_CFLAGS) $(libdbuscpp_CFLAGS)
 libdbus_la_LIBADD = 
 
+noinst_HEADERS = \
+	callmanager-glue.h \
+	callmanager.h  \
+	dbusmanager.h \
+	dbusmanagerimpl.h

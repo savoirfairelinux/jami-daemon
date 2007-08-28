@@ -34,7 +34,6 @@ class CallManager
 public:
 
     CallManager(DBus::Connection& connection);
-    static int exec();
 
 
 public:

@@ -17,16 +17,18 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef DBUSMANAGERIMPL_H
-#define DBUSMANAGERIMPL_H
+#ifndef __DBUSMANAGERIMPL_H__
+#define __DBUSMANAGERIMPL_H__
 
-class DBusManager {
+#include "callmanager.h"
+
+class DBusManagerImpl {
     public:
         void connect();
         int exec();
         
     private:
         CallManager * _callManager;
-}
+};
 
 #endif

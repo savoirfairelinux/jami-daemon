@@ -28,6 +28,7 @@
 #include "user_cfg.h"
 #include "gui/server/guiserver.h"
 #include "gui/guiframework.h"
+#include "dbus/dbusmanager.h"
 #include "manager.h"
 
 #include "audio/audiolayer.h"
@@ -73,10 +74,11 @@ main (int argc, char **argv) {
       exit_code = -1;
     }
     if (initOK) {
-      GUI = &(GUIServer::instance());
-      GUIServer::instance().setSessionPort(sessionPort);
-      Manager::instance().setGui(GUI);
-      exit_code = GUIServer::instance().exec();
+      //GUI = &(GUIServer::instance());
+      //GUIServer::instance().setSessionPort(sessionPort);
+      //Manager::instance().setGui(GUI);
+      exit_code = DBusManager::instance().toto();
+      
     }
   }
 

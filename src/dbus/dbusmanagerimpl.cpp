@@ -18,3 +18,16 @@
  */
  
 #include <dbusmanagerimpl.h>
+
+
+void 
+DBusManagerImpl::connect(){
+
+}
+
+int 
+DBusManagerImpl::exec(){
+ return 1;
+}
+        
+    

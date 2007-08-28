@@ -25,7 +25,7 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
-SUBDIRS = audio config gui $(ZEROCONFDIR)
+SUBDIRS = audio config gui dbus $(ZEROCONFDIR)
 
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \
 		managerimpl.cpp	observer.cpp \
