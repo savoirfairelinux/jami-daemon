@@ -10,6 +10,7 @@
 
 namespace org {
 namespace sflphone {
+namespace SFLPhone {
 
 class CallManager
 : public ::DBus::InterfaceAdaptor
@@ -17,7 +18,7 @@ class CallManager
 public:
 
     CallManager()
-    : ::DBus::InterfaceAdaptor("org.sflphone.CallManager")
+    : ::DBus::InterfaceAdaptor("org.sflphone.SFLPhone.CallManager")
     {
         register_method(CallManager, placeCall, _placeCall_stub);
         register_method(CallManager, refuse, _refuse_stub);
@@ -101,14 +102,14 @@ public:
             { "callID", "s", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument incommingCall_args[] = 
+        static ::DBus::IntrospectedArgument incomingCall_args[] = 
         {
             { "accountID", "s", false },
             { "callID", "s", false },
             { "from", "s", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument incommingMessage_args[] = 
+        static ::DBus::IntrospectedArgument incomingMessage_args[] = 
         {
             { "accountID", "s", false },
             { "from", "s", false },
@@ -158,8 +159,8 @@ public:
         };
         static ::DBus::IntrospectedMethod CallManager_signals[] = 
         {
-            { "incommingCall", incommingCall_args },
-            { "incommingMessage", incommingMessage_args },
+            { "incomingCall", incomingCall_args },
+            { "incomingMessage", incomingMessage_args },
             { "ring", ring_args },
             { "pickedUp", pickedUp_args },
             { "hungUp", hungUp_args },
@@ -173,7 +174,7 @@ public:
         };
         static ::DBus::IntrospectedInterface CallManager_interface = 
         {
-            "org.sflphone.CallManager",
+            "org.sflphone.SFLPhone.CallManager",
             CallManager_methods,
             CallManager_signals,
             CallManager_properties
@@ -209,18 +210,18 @@ public:
 
     /* signal emitters for this interface
      */
-    void incommingCall( const ::DBus::String& arg1, const ::DBus::String& arg2, const ::DBus::String& arg3 )
+    void incomingCall( const ::DBus::String& arg1, const ::DBus::String& arg2, const ::DBus::String& arg3 )
     {
-        ::DBus::SignalMessage sig("incommingCall");
+        ::DBus::SignalMessage sig("incomingCall");
         ::DBus::MessageIter wi = sig.writer();
         wi << arg1;
         wi << arg2;
         wi << arg3;
         emit_signal(sig);
     }
-    void incommingMessage( const ::DBus::String& arg1, const ::DBus::String& arg2 )
+    void incomingMessage( const ::DBus::String& arg1, const ::DBus::String& arg2 )
     {
-        ::DBus::SignalMessage sig("incommingMessage");
+        ::DBus::SignalMessage sig("incomingMessage");
         ::DBus::MessageIter wi = sig.writer();
         wi << arg1;
         wi << arg2;
@@ -387,5 +388,5 @@ private:
     }
 };
 
-} } 
+} } } 
 #endif//__dbusxx__callmanager_glue_h__ADAPTOR_MARSHAL_H

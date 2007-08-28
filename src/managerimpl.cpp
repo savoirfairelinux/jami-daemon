@@ -66,7 +66,7 @@ ManagerImpl::ManagerImpl (void)
   _path = ""; 
   _exist = 0;
   _setupLoaded = false;
-  _gui = 0;
+  _dbus = NULL;
 
   // sound
   _audiodriver = 0;
@@ -599,7 +599,7 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     from.append(number);
     from.append(">");
   }
-  _gui->incomingCall(accountId, call->getCallId(), from);
+  _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
 
   return true;
 }
@@ -607,8 +607,8 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
 //THREAD=VoIP
 void
 ManagerImpl::incomingMessage(const AccountID& accountId, const std::string& message) {
-  if (_gui) {
-    _gui->incomingMessage(accountId, message);
+  if (_dbus) {
+    _dbus->getCallManager()->incomingMessage(accountId, message);
   }
 }
 
@@ -619,7 +619,7 @@ ManagerImpl::peerAnsweredCall(const CallID& id)
   if (isCurrentCall(id)) {
     stopTone(false);
   }
-  if (_gui) _gui->peerAnsweredCall(id);
+  if (_dbus) _dbus->getCallManager()->pickedUp(id);
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -629,7 +629,7 @@ ManagerImpl::peerRingingCall(const CallID& id)
   if (isCurrentCall(id)) {
     ringback();
   }
-  if (_gui) _gui->peerRingingCall(id);
+  if (_dbus) _dbus->getCallManager()->ring(id);
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
@@ -647,7 +647,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
   }
   removeWaitingCall(id);
   removeCallAccount(id);
-  if (_gui) _gui->peerHungupCall(id);
+  if (_dbus) _dbus->getCallManager()->hungUp(id);
 }
 
 //THREAD=VoIP
@@ -660,7 +660,7 @@ ManagerImpl::callBusy(const CallID& id) {
   }
   removeCallAccount(id);
   removeWaitingCall(id);
-  if(_gui) _gui->displayErrorText( id, "Call is busy");
+  //if(_gui) _gui->displayErrorText( id, "Call is busy");
 }
 
 //THREAD=VoIP
@@ -672,9 +672,9 @@ ManagerImpl::callFailure(const CallID& id)
     playATone(Tone::TONE_BUSY);
     switchCall("");
   }
-  if (_gui) {
+  /*if (_gui) {
     _gui->callFailure(id);
-  }
+  }*/
   removeCallAccount(id);
   removeWaitingCall(id);
 }
@@ -683,61 +683,61 @@ ManagerImpl::callFailure(const CallID& id)
 void 
 ManagerImpl::displayTextMessage(const CallID& id, const std::string& message)
 {
-  if(_gui) {
+  /*if(_gui) {
    _gui->displayTextMessage(id, message);
-  }
+  }*/
 }
 
 //THREAD=VoIP
 void 
 ManagerImpl::displayErrorText(const CallID& id, const std::string& message)
 {
-  if(_gui) {
+  /*if(_gui) {
     _gui->displayErrorText(id, message);
   } else {
     std::cerr << message << std::endl;
-  }
+  }*/
 }
 
 //THREAD=VoIP
 void 
 ManagerImpl::displayError (const std::string& error)
 {
-  if(_gui) {
+  /*if(_gui) {
     _gui->displayError(error);
-  }
+  }*/
 }
 
 //THREAD=VoIP
 void 
 ManagerImpl::displayStatus(const std::string& status)
 {
-  if(_gui) {
+  /*if(_gui) {
     _gui->displayStatus(status);
-  }
+  }*/
 }
 
 //THREAD=VoIP
 void 
 ManagerImpl::displayConfigError (const std::string& message)
 {
-  if(_gui) {
+  /*if(_gui) {
     _gui->displayConfigError(message);
-  }
+  }*/
 }
 
 //THREAD=VoIP
 void
 ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, const std::string& nb_msg)
 {
-  if (_gui) _gui->sendVoiceNbMessage(accountId, nb_msg);
+  //if (_gui) _gui->sendVoiceNbMessage(accountId, nb_msg);
 }
 
 //THREAD=VoIP
 void
 ManagerImpl::stopVoiceMessageNotification(const AccountID& accountId)
 {
-  if (_gui) _gui->sendVoiceNbMessage(accountId, std::string("0"));
+  //if (_gui) _gui->sendVoiceNbMessage(accountId, std::string("0"));
 } 
 
 //THREAD=VoIP
@@ -745,21 +745,21 @@ void
 ManagerImpl::registrationSucceed(const AccountID& accountid)
 {
   Account* acc = getAccount(accountid);
-  if ( acc ) { 
+  /*if ( acc ) { 
     acc->setState(true); 
     if (_gui) _gui->sendRegistrationState(accountid, true);
-  }
+  }*/
 }
 
 //THREAD=VoIP
 void 
 ManagerImpl::registrationFailed(const AccountID& accountid)
 {
-  Account* acc = getAccount(accountid);
+  /*Account* acc = getAccount(accountid);
   if ( acc ) { 
     acc->setState(false);
     if (_gui) _gui->sendRegistrationState(accountid, false);
-  }
+  }*/
 }
 
 /**
@@ -1141,7 +1141,7 @@ ManagerImpl::getZeroconf(const std::string& sequenceId)
   bool returnValue = false;
 #ifdef USE_ZEROCONF
   int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
-  if (useZeroconf && _gui != NULL) {
+  if (useZeroconf && _dbus != NULL) {
     TokenList arg;
     TokenList argTXT;
     std::string newService = "new service";
@@ -1152,7 +1152,7 @@ ManagerImpl::getZeroconf(const std::string& sequenceId)
     arg.push_back(newService);
     while(iter!=services.end()) {
       arg.push_front(iter->first);
-      _gui->sendMessage("100",sequenceId,arg);
+      //_gui->sendMessage("100",sequenceId,arg);
       arg.pop_front(); // remove the first, the name
 
       TXTRecordMap record = iter->second.getTXTRecords();
@@ -1163,7 +1163,7 @@ ManagerImpl::getZeroconf(const std::string& sequenceId)
         argTXT.push_back(iterTXT->first);
         argTXT.push_back(iterTXT->second);
         argTXT.push_back(newTXT);
-        _gui->sendMessage("101",sequenceId,argTXT);
+       // _gui->sendMessage("101",sequenceId,argTXT);
         iterTXT++;
       }
       iter++;
@@ -1229,7 +1229,7 @@ ManagerImpl::getEvents() {
 bool 
 ManagerImpl::getCallStatus(const std::string& sequenceId)
 {
-  if (!_gui) { return false; }
+  if (!_dbus) { return false; }
   ost::MutexLock m(_callAccountMapMutex);
   CallAccountMap::iterator iter = _callAccountMap.begin();
   TokenList tk;
@@ -1274,7 +1274,7 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
     tk.push_back(iter->second);
     tk.push_back(destination);
     tk.push_back(status);
-    _gui->sendCallMessage(code, sequenceId, iter->first, tk);
+    //_gui->sendCallMessage(code, sequenceId, iter->first, tk);
     tk.clear();
 
     iter++;
@@ -1294,7 +1294,7 @@ ManagerImpl::getConfigAll(const std::string& sequenceId)
     returnValue = true;
   }
   while (tk.size()) {
-    _gui->sendMessage("100", sequenceId, tk);
+    //_gui->sendMessage("100", sequenceId, tk);
     tk = iter.next();
   }
   return returnValue;
@@ -1369,7 +1369,7 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
       } else {
         tk.push_back(strType.str());
       }
-      _gui->sendMessage("100", sequenceId, tk);
+     // _gui->sendMessage("100", sequenceId, tk);
       iter++;
     }
     returnValue = true;
@@ -1379,7 +1379,7 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
     str << 1;
     tk.push_back(str.str());
     tk.push_back(""); // filepath
-    _gui->sendMessage("100", sequenceId, tk);
+    //_gui->sendMessage("100", sequenceId, tk);
 
     // share directory
     std::string path = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR;
@@ -1423,7 +1423,7 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
       tk.push_back(device->getName());
       tk.push_back(device->getApiName());
       std::ostringstream rate; rate << (int)(device->getRate()); tk.push_back(rate.str());
-      _gui->sendMessage("100", sequenceId, tk);
+      //_gui->sendMessage("100", sequenceId, tk);
 
       // don't forget to delete it after
       delete device; device = 0;
@@ -1435,7 +1435,7 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
   rate << "VARIABLE";
   tk.clear();
   tk.push_back(rate.str());
-  _gui->sendMessage("101", sequenceId, tk);
+  //_gui->sendMessage("101", sequenceId, tk);
 
   return returnValue;
 }
@@ -1462,7 +1462,7 @@ ManagerImpl::sendCountryTone(const std::string& sequenceId, int index, const std
   TokenList tk;
   std::ostringstream str; str << index; tk.push_back(str.str());
   tk.push_back(name);
-  _gui->sendMessage("100", sequenceId, tk);
+  //_gui->sendMessage("100", sequenceId, tk);
 }
 
 //THREAD=Main
@@ -1483,7 +1483,7 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
         str << (*nbFile);
         tk.push_back(str.str());
         tk.push_back(filePathName);
-        _gui->sendMessage("100", sequenceId, tk);
+        //_gui->sendMessage("100", sequenceId, tk);
         (*nbFile)++;
       }
     }
@@ -1510,12 +1510,12 @@ ManagerImpl::getAccountList(const std::string& sequenceId)
       if ( iter->second->isEnabled() || iter->second->shouldInitOnStart()) {
         tk.push_back("Active");
         tk.push_back(getConfigString(iter->first,CONFIG_ACCOUNT_ALIAS));
-         _gui->sendMessage("130", sequenceId, tk);
+         //_gui->sendMessage("130", sequenceId, tk);
         oneActive = true;
       } else {
         tk.push_back("Inactive");
         tk.push_back(getConfigString(iter->first,CONFIG_ACCOUNT_ALIAS));
-         _gui->sendMessage("131", sequenceId, tk);
+         //_gui->sendMessage("131", sequenceId, tk);
       }
 
      tk.clear();

@@ -22,11 +22,6 @@
 
 const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLPhone";
 
-void 
-DBusManagerImpl::connect(){
-
-}
-
 int 
 DBusManagerImpl::exec(){
 

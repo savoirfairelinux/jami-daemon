@@ -28,6 +28,7 @@
 #include <set>
 #include <map>
 #include <cc++/thread.h>
+#include "dbus/dbusmanager.h"
 
 #include "stund/stun.h"
 #include "observer.h"
@@ -40,6 +41,7 @@
 #include "audio/audiofile.h"
 #include "audio/dtmf.h"
 #include "audio/codecDescriptor.h"
+
 
 class AudioLayer;
 class CodecDescriptor;
@@ -94,7 +96,7 @@ public:
    * Set the graphic user interface : only GuiServer right now
    * @param gui A GuiFramework gui implmentation
    */
-  void setGui (GuiFramework* gui) { _gui = gui; }
+  void setDBusManager (DBusManagerImpl* man) { _dbus = man; }
 
 	// Accessor to audiodriver
   // it's multi-thread and use mutex internally
@@ -416,7 +418,7 @@ private:
   //
   // Multithread variable (non protected)
   //
-  GuiFramework* _gui;
+  DBusManagerImpl * _dbus;
 
   /** Waiting Call Vectors */
   CallIDSet _waitingCall;

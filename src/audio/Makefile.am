@@ -17,7 +17,7 @@ audiortp.cpp         dtmf.cpp   tone.cpp audiocodec.cpp  audiolayer.cpp audiodev
 tonegenerator.cpp  ulaw.cpp codecDescriptor.cpp \
 audioloop.cpp ringbuffer.cpp $(SPEEX_SOURCES_CPP)
 
-AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccrtp1_CFLAGS) $(USER_INCLUDES)
+AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libdbuscpp_CFLAGS) $(libccrtp1_CFLAGS) $(USER_INCLUDES)
 libaudio_la_LIBADD = gsm/libgsm.la $(SPEEX_LIB)
 libaudio_la_CPPFLAGS = $(SPEEX_FLAG)
 

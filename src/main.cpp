@@ -77,6 +77,7 @@ main (int argc, char **argv) {
       //GUI = &(GUIServer::instance());
       //GUIServer::instance().setSessionPort(sessionPort);
       //Manager::instance().setGui(GUI);
+      Manager::instance().setDBusManager(&DBusManager::instance());
       exit_code = DBusManager::instance().exec();
       
     }

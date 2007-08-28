@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
-<node name="/org/sflphone/CallManager">
-  <interface name="org.sflphone.CallManager">
+<node name="/org/sflphone/SFLPhone">
+  <interface name="org.sflphone.SFLPhone.CallManager">
   
     <method name="placeCall">
       <arg type="s" name="accountID" direction="in"/>
@@ -56,13 +56,13 @@
       <arg type="s" name="callID" direction="out"/>
     </method>
     
-    <signal name="incommingCall">
+    <signal name="incomingCall">
       <arg type="s" name="accountID" />
       <arg type="s" name="callID" />
       <arg type="s" name="from" />
     </signal>
     
-    <signal name="incommingMessage">
+    <signal name="incomingMessage">
       <arg type="s" name="accountID" />
       <arg type="s" name="from" />
     </signal>

@@ -24,7 +24,7 @@
 
 class DBusManagerImpl {
     public:
-        void connect();
+        CallManager * getCallManager(){ return _callManager; };
         int exec();
         static const char* SERVER_NAME;
         
