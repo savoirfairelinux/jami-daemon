@@ -31,6 +31,7 @@ AC_CONFIG_FILES([libs/Makefile \
   libs/utilspp/Makefile \
   libs/utilspp/functor/Makefile \
   libs/utilspp/singleton/Makefile])
+  
 AC_CONFIG_FILES([src/Makefile \
   src/sflphone \
   src/audio/Makefile \
@@ -40,13 +41,19 @@ AC_CONFIG_FILES([src/Makefile \
   src/gui/qt/Makefile \
   src/gui/cli/Makefile \
   src/gui/server/Makefile \
+  src/dbus/Makefile \
   src/zeroconf/Makefile])
+  
 AC_CONFIG_FILES([skins/Makefile \
   skins/metal/Makefile \
   skins/gmetal/Makefile \
   ringtones/Makefile])
-AC_CONFIG_FILES([platform/debian/changelog platform/rpm/sflphone.spec \
-  platform/fedora/sflphone.spec platform/fedora/sflphone-fc6.spec])
+  
+AC_CONFIG_FILES([platform/debian/changelog \
+  platform/rpm/sflphone.spec \
+  platform/fedora/sflphone.spec \
+  platform/fedora/sflphone-fc6.spec])
+  
 dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
 AM_CONFIG_HEADER(config.h)
 
