@@ -2,7 +2,7 @@
 <node name="/org/sflphone/CallManager">
   <interface name="org.sflphone.CallManager">
   
-    <method name="call">
+    <method name="placeCall">
       <arg type="s" name="accountID" direction="in"/>
       <arg type="s" name="callID" direction="in"/>
       <arg type="s" name="to" direction="in"/>
@@ -35,12 +35,12 @@
     
     <method name="setVolume">
       <arg type="s" name="device" direction="in"/>
-      <arg type="f" name="value" direction="in"/>
+      <arg type="d" name="value" direction="in"/>
     </method>
     
     <method name="getVolume">
       <arg type="s" name="device" direction="in"/>
-      <arg type="f" name="value" direction="out"/>
+      <arg type="d" name="value" direction="out"/>
     </method>
     
     <method name="getVoiceMailCount">
@@ -81,7 +81,7 @@
     
     <signal name="volumeChanged">
       <arg type="s" name="device" />
-      <arg type="f" name="value" />
+      <arg type="d" name="value" />
     </signal>
     
     <signal name="error">

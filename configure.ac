@@ -3,7 +3,7 @@ dnl
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
 AC_INIT([SFLPhone],[0.7],[sflphoneteam@savoirfairelinux.com],[sflphone])
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2006]])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2007]])
 AC_REVISION([$Revision$])
 
 dnl Compute canonical system name
@@ -184,6 +184,11 @@ LIBPORTAUDIOCPP_MIN_VERSION=12
 PKG_CHECK_MODULES(libportaudiocpp, portaudiocpp >= ${LIBPORTAUDIOCPP_MIN_VERSION})
 SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libportaudiocpp_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libportaudiocpp_LIBS"
+
+LIBDBUSCPP_MIN_VERSION=0.5
+PKG_CHECK_MODULES(libdbuscpp, dbus-c++-1 >= ${LIBDBUSCPP_MIN_VERSION})
+SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libdbuscpp_CFLAGS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS $libdbuscpp_LIBS"
 
 dnl Check for speex
 AC_ARG_ENABLE(speex, 

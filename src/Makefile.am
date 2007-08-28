@@ -36,7 +36,7 @@ sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS) $(SFLPHONE_CFLAGS) $(SIP_CFLAGS)
 
 #sflphoned_LDFLAGS = -static
-sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS)
+sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) 
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES)
 
 #libsflphone_la_LDFLAGS= -version-info 0:1:0
@@ -45,6 +45,7 @@ libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/utilspp/libutilspp.la \
 	./audio/libaudio.la \
 	./gui/libguiframework.la \
+	./dbus/libdbus.la \
 	./config/libconfig.la \
 	$(IAX_LIBS)
 

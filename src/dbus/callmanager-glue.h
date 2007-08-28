@@ -19,7 +19,7 @@ public:
     CallManager()
     : ::DBus::InterfaceAdaptor("org.sflphone.CallManager")
     {
-        register_method(CallManager, call, _call_stub);
+        register_method(CallManager, placeCall, _placeCall_stub);
         register_method(CallManager, refuse, _refuse_stub);
         register_method(CallManager, accept, _accept_stub);
         register_method(CallManager, hangUp, _hangUp_stub);
@@ -35,7 +35,7 @@ public:
 
     ::DBus::IntrospectedInterface* const introspect() const 
     {
-        static ::DBus::IntrospectedArgument call_args[] = 
+        static ::DBus::IntrospectedArgument placeCall_args[] = 
         {
             { "accountID", "s", true },
             { "callID", "s", true },
@@ -76,13 +76,13 @@ public:
         static ::DBus::IntrospectedArgument setVolume_args[] = 
         {
             { "device", "s", true },
-            { "value", "f", true },
+            { "value", "d", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getVolume_args[] = 
         {
             { "device", "s", true },
-            { "value", "f", false },
+            { "value", "d", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getVoiceMailCount_args[] = 
@@ -132,7 +132,7 @@ public:
         static ::DBus::IntrospectedArgument volumeChanged_args[] = 
         {
             { "device", "s", false },
-            { "value", "f", false },
+            { "value", "d", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument error_args[] = 
@@ -142,7 +142,7 @@ public:
         };
         static ::DBus::IntrospectedMethod CallManager_methods[] = 
         {
-            { "call", call_args },
+            { "placeCall", placeCall_args },
             { "refuse", refuse_args },
             { "accept", accept_args },
             { "hangUp", hangUp_args },
@@ -192,15 +192,15 @@ public:
     /* methods exported by this interface,
      * you will have to implement them in your ObjectAdaptor
      */
-    virtual void call( const ::DBus::String& accountID, const ::DBus::String& callID, const ::DBus::String& to ) = 0;
+    virtual void placeCall( const ::DBus::String& accountID, const ::DBus::String& callID, const ::DBus::String& to ) = 0;
     virtual void refuse( const ::DBus::String& callID ) = 0;
     virtual void accept( const ::DBus::String& callID ) = 0;
     virtual void hangUp( const ::DBus::String& callID ) = 0;
     virtual void hold( const ::DBus::String& callID ) = 0;
     virtual void unhold( const ::DBus::String& callID ) = 0;
     virtual void transfert( const ::DBus::String& callID, const ::DBus::String& to ) = 0;
-    virtual void setVolume( const ::DBus::String& device, const & value ) = 0;
-    virtual  getVolume( const ::DBus::String& device ) = 0;
+    virtual void setVolume( const ::DBus::String& device, const ::DBus::Double& value ) = 0;
+    virtual ::DBus::Double getVolume( const ::DBus::String& device ) = 0;
     virtual ::DBus::Int32 getVoiceMailCount(  ) = 0;
     virtual std::map< ::DBus::String, ::DBus::String > getCallDetails( const ::DBus::String& callID ) = 0;
     virtual ::DBus::String getCurrentCallID(  ) = 0;
@@ -247,7 +247,7 @@ public:
         wi << arg1;
         emit_signal(sig);
     }
-    void volumeChanged( const ::DBus::String& arg1, const & arg2 )
+    void volumeChanged( const ::DBus::String& arg1, const ::DBus::Double& arg2 )
     {
         ::DBus::SignalMessage sig("volumeChanged");
         ::DBus::MessageIter wi = sig.writer();
@@ -267,14 +267,14 @@ private:
 
     /* unmarshalers (to unpack the DBus message before calling the actual interface method)
      */
-    ::DBus::Message _call_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _placeCall_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
         ::DBus::String argin1; ri >> argin1;
         ::DBus::String argin2; ri >> argin2;
         ::DBus::String argin3; ri >> argin3;
-        call(argin1, argin2, argin3);
+        placeCall(argin1, argin2, argin3);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
@@ -338,7 +338,7 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         ::DBus::String argin1; ri >> argin1;
-         argin2; ri >> argin2;
+        ::DBus::Double argin2; ri >> argin2;
         setVolume(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
@@ -348,7 +348,7 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         ::DBus::String argin1; ri >> argin1;
-         argout1 = getVolume(argin1);
+        ::DBus::Double argout1 = getVolume(argin1);
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
