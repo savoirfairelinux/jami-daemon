@@ -5,6 +5,12 @@
 *.la
 *.Po
 *.Plo
+*.loT
+Makefile
+*.m4
+Makefile.in
+*.spec
+*moc*.*
 
 # Ignore rendered docs
 doc/html
