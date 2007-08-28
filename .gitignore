@@ -11,6 +11,7 @@ Makefile
 Makefile.in
 *.spec
 *moc*.*
+/config.*
 
 # Ignore rendered docs
 doc/html

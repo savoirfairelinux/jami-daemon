@@ -20,6 +20,8 @@
 #include <dbusmanagerimpl.h>
 
 
+const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLPhone";
+
 void 
 DBusManagerImpl::connect(){
 
@@ -27,7 +29,18 @@ DBusManagerImpl::connect(){
 
 int 
 DBusManagerImpl::exec(){
- return 1;
+
+
+	DBus::default_dispatcher = &_dispatcher;
+
+	DBus::Connection conn = DBus::Connection::SessionBus();
+	conn.request_name(SERVER_NAME);
+
+	_callManager = new CallManager(conn);
+    //_callManager = new CallManager(conn);
+	_dispatcher.enter();
+
+	return 1;
 }
         
     

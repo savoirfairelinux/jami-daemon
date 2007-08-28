@@ -26,9 +26,11 @@ class DBusManagerImpl {
     public:
         void connect();
         int exec();
+        static const char* SERVER_NAME;
         
     private:
         CallManager * _callManager;
+        DBus::BusDispatcher _dispatcher;
 };
 
 #endif
