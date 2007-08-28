@@ -1,3 +1,3 @@
-<h1>Git access</h1>
+<h1>Source code</h1>
 
 <?php show_page('Git_Access'); ?>

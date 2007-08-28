@@ -1,10 +1,18 @@
 /* Based on the output of asciidoc */
 
+/* COLOR THEME: 
+ * #86B1B5
+ * #B58A86
+ * #8A86B5
+ * #B1B586
+ */
+
+
 
 body {
   margin: 0 auto 0 auto;
   width: 750px;
-  background-color: #666666;
+  background: #EBEBDF url(images/bg-grad.png) repeat-x top;
 }
 
 a {
