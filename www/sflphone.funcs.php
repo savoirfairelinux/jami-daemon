@@ -114,7 +114,8 @@ function compile_page($hash, $page) {
 
   $output = '';
 
-  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc --no-header-footer -", 'r');
+  // -d book so we can render H1s
+  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -d book --no-header-footer -", 'r');
 
   if (!$p) {
     return "Unable to compile file: $page ($hash)\n";
