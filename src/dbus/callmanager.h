@@ -23,8 +23,6 @@
 #include "callmanager-glue.h"
 #include <dbus-c++/dbus.h>
 
-static const char* SERVER_NAME = "org.sflphone.CallManager";
-static const char* SERVER_PATH = "/org/sflphone/CallManager";
     
 class CallManager
 : public org::sflphone::CallManager,
@@ -34,7 +32,7 @@ class CallManager
 public:
 
     CallManager(DBus::Connection& connection);
-
+    static const char* SERVER_PATH;
 
 public:
 
@@ -55,5 +53,6 @@ public:
     ::DBus::String getCurrentCallID(  );
 
 };
+
 
 #endif//CALLMANAGER_H
