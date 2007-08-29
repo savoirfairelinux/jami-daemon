@@ -13,8 +13,8 @@ endif
 
 if USE_IAX
 # Use the global instead of locally built
-#IAX_LIBS = $(top_builddir)/libs/libiax2/src/libiax.la
-IAX_LIBS =
+IAX_LIBS = $(top_builddir)/libs/libiax2/src/libiax.la
+#IAX_LIBS =
 IAX_FLAGS = -DUSE_IAX
 #IAX_CFLAGS = -I$(top_srcdir)/libs/libiax2/src/
 IAX_CFLAGS =
@@ -38,11 +38,11 @@ sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \
 
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS) $(SFLPHONE_CFLAGS) $(SIP_CFLAGS)
 
-#sflphoned_LDFLAGS = -static
+# sflphoned_LDFLAGS = -static
 sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS)
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES)
 
-#libsflphone_la_LDFLAGS= -version-info 0:1:0
+# libsflphone_la_LDFLAGS= -version-info 0:1:0
 libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/stund/libstun.la \
 	$(top_builddir)/libs/utilspp/libutilspp.la \
