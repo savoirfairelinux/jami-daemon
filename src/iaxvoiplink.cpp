@@ -65,13 +65,13 @@ IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
  : VoIPLink(accountID)
 {
   _evThread = new EventThread(this);
-  _regSession = 0;
+  _regSession = NULL;
 
   // to get random number for RANDOM_PORT
   srand (time(NULL));
 
-  audiocodec = 0;
-  audiolayer = 0;
+  audiocodec = NULL;
+  audiolayer = NULL;
 
   _receiveDataDecoded = new int16[IAX__20S_48KHZ_MAX];
   _sendDataEncoded   =  new unsigned char[IAX__20S_8KHZ_MAX];
@@ -86,19 +86,19 @@ IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
 
 IAXVoIPLink::~IAXVoIPLink()
 {
-  delete _evThread; _evThread = 0;
-  _regSession = 0; // shall not delete it
+  delete _evThread; _evThread = NULL;
+  _regSession = NULL; // shall not delete it
   terminate();
 
-  audiocodec = 0;
-  audiolayer = 0;
-  delete [] _intBuffer8000; _intBuffer8000 = 0;
-  delete [] _floatBuffer48000; _floatBuffer48000 = 0;
-  delete [] _floatBuffer8000; _floatBuffer8000 = 0;
-  delete [] _dataAudioLayer; _dataAudioLayer = 0;
+  audiocodec = NULL;
+  audiolayer = NULL;
+  delete [] _intBuffer8000; _intBuffer8000 = NULL;
+  delete [] _floatBuffer48000; _floatBuffer48000 = NULL;
+  delete [] _floatBuffer8000; _floatBuffer8000 = NULL;
+  delete [] _dataAudioLayer; _dataAudioLayer = NULL;
 
-  delete [] _sendDataEncoded; _sendDataEncoded = 0;
-  delete [] _receiveDataDecoded; _receiveDataDecoded = 0;
+  delete [] _sendDataEncoded; _sendDataEncoded = NULL;
+  delete [] _receiveDataDecoded; _receiveDataDecoded = NULL;
 }
 
 bool
@@ -176,12 +176,12 @@ IAXVoIPLink::getEvent()
   // mutex here
   _mutexIAX.enterMutex();
 
-  iax_event* event = 0;
-  IAXCall* call = 0;
-  while ( (event = iax_get_event(0)) != 0 ) {
+  iax_event* event = NULL;
+  IAXCall* call = NULL;
+  while ( (event = iax_get_event(TRUE)) != NULL ) {
     //_debug ("Receive IAX Event: %d\n", event->etype);
     call = iaxFindCallBySession(event->session);
-    if (call!=0) {
+    if (call != 0) {
       iaxHandleCallEvent(event, call);
     } else if (event->session != 0 && event->session == _regSession) {
       // in iaxclient, there is many session handling, here, only one
@@ -235,7 +235,7 @@ bool
 IAXVoIPLink::setRegister() 
 {
   bool result = false;
-  if (_regSession==0) {
+  if (_regSession == NULL) {
     if (_host.empty()) {
       Manager::instance().displayConfigError("Fill host field for IAX Account");
       return false;
@@ -276,11 +276,11 @@ IAXVoIPLink::setRegister()
 bool
 IAXVoIPLink::setUnregister()
 {
-  if (_regSession==0) {
+  if (_regSession == NULL) {
     // lock here
     _mutexIAX.enterMutex();
     iax_destroy(_regSession);
-    _regSession = 0;
+    _regSession = NULL;
     // unlock here
     _mutexIAX.leaveMutex();
     return false;
@@ -520,7 +520,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
     case IAX_EVENT_VOICE:
-     if (audiocodec != 0 && audiolayer!=0) {
+     if (audiocodec != NULL && audiolayer != NULL) {
         //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
         unsigned char* data = (unsigned char*)event->data;
         unsigned int size   = event->datalen;
@@ -609,7 +609,7 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
   //unregister
   if (event->etype == IAX_EVENT_REGREJ) {
     iax_destroy(_regSession);
-    _regSession = 0;
+    _regSession = NULL;
     Manager::instance().registrationFailed(getAccountID());
   } else if (event->etype == IAX_EVENT_REGACK) {
     Manager::instance().registrationSucceed(getAccountID());

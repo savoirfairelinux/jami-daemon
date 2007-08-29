@@ -75,7 +75,7 @@ public:
 
   /**
    * Init the voiplink to run (event listener)
-   * @return false is an error occurs
+   * @return false if an error occurs
    */
   virtual bool init() = 0;
 
@@ -92,8 +92,8 @@ public:
   bool shouldInitOnStart() {return _shouldInitOnStart; }
 
   /**
-   * Tell if we should init the account on start
-   * @return true if we must init the link
+   * Tell if we should register the account on start
+   * @return true if we must register the account
    */
   bool shouldRegisterOnStart() {return _shouldRegisterOnStart; }
 
