@@ -36,8 +36,9 @@ dox/*.html
 /src/sflphone
 
 
-# Ignore temp portaudio stuff
+# Ignore temp libs stuff
 tools/portaudio
+libs/libiax2
 
 # Ignore temp files
 *~
