@@ -1,0 +1,22 @@
+// AsciiDoc file
+
+
+Build notes
+-----------
+
+
+
+
+libiax2
+~~~~~~~
+
+If you don't have `libiax2` installed (check version in
+sflink:Dependencies[the dependencies]), go to the `libs` directory, and run:
+
+-------------------------
+./libiax2.sh
+cd libiax2
+./configure --prefix=/usr
+make
+sudo make install
+-------------------------
