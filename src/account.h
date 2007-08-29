@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -32,13 +32,13 @@ typedef std::string AccountID;
 #define CONFIG_ACCOUNT_ALIAS  "Account.alias"
 
 /**
- * Class account is an interface to protocol account (sipaccount, aixaccount)
+ * Class account is an interface to protocol account (SIPAccount, IAXAccount)
  * It can be enable on loading or activate after.
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  * @author Yan Morin 
  */
 class Account{
-public:
+ public:
     Account(const AccountID& accountID);
 
     virtual ~Account();
@@ -46,8 +46,12 @@ public:
   /**
    * Load the default properties for the account
    */
-  virtual void initConfig(Conf::ConfigTree& config) = 0;
-  virtual void loadConfig() = 0;
+  virtual void initConfig(Conf::ConfigTree& config);
+
+  /**
+   * Load the settings for this account.
+   */
+  virtual void loadConfig();
 
   /**
    * Get the account ID
@@ -128,13 +132,13 @@ protected:
 
   /**
    * Tells if the link should be start on loading or not
-   * Modified by the configuration
+   * Modified by the configuration (key: ENABLED)
    */
   bool _shouldInitOnStart;
 
   /**
    * Tells if we should register automatically on startup
-   * Modified by the configuration
+   * Modified by the configuration (key: AUTO-REGISTER)
    */
   bool _shouldRegisterOnStart;
 

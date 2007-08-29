@@ -17,6 +17,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "iaxaccount.h"
+#include "account.h"
 #include "iaxvoiplink.h"
 #include "manager.h"
 
@@ -99,12 +100,12 @@ IAXAccount::initConfig(Conf::ConfigTree& config)
   std::string section(_accountID);
   std::string type_str("string");
   std::string type_int("int");
-  
+
+  // Account generic
+  Account::initConfig(config);
+
+  // IAX specific
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_TYPE, "IAX", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ENABLE,"1", type_int));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_AUTO_REGISTER, "1", type_int));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ALIAS, _("My account"), type_str));
- 
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_HOST, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_USER, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_PASS, "", type_str));
@@ -113,6 +114,9 @@ IAXAccount::initConfig(Conf::ConfigTree& config)
 void
 IAXAccount::loadConfig() 
 {
-  _shouldInitOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
-  _shouldRegisterOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_AUTO_REGISTER) ? true : false;
+  // Account generic
+  Account::loadConfig();
+
+  // IAX specific
+  //none
 }

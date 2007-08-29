@@ -115,11 +115,12 @@ SIPAccount::initConfig(Conf::ConfigTree& config)
   std::string section(_accountID);
   std::string type_str("string");
   std::string type_int("int");
-  
+
+  // Account generic
+  Account::initConfig(config);
+
+  // SIP specific
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_TYPE, "SIP", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ENABLE,"1", type_int));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_AUTO_REGISTER, "1", type_int));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ALIAS, _("My account"), type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_FULL_NAME, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_USER_PART, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_HOST_PART, "", type_str));
@@ -133,6 +134,9 @@ SIPAccount::initConfig(Conf::ConfigTree& config)
 void
 SIPAccount::loadConfig() 
 {
-  _shouldInitOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
-  _shouldRegisterOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_AUTO_REGISTER) ? true : false;
+  // Account generic
+  Account::loadConfig();
+
+  // SIP specific
+  //none
 }
