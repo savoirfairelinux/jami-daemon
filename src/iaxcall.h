@@ -20,7 +20,7 @@
 #define IAXCALL_H
 
 #include "call.h"
-#include <iax-client.h>
+#include <iax/iax-client.h>
 
 /**
  * IAXCall are IAX implementation of a normal Call 

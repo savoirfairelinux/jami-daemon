@@ -26,6 +26,11 @@
 #include "audio/audiolayer.h"
 
 #include <samplerate.h>
+#include <iax/iax-client.h>
+
+
+#define IAX_BLOCKING    1
+#define IAX_NONBLOCKING 0
 
 #define IAX_SUCCESS  0
 #define IAX_FAILURE -1
@@ -178,7 +183,7 @@ IAXVoIPLink::getEvent()
 
   iax_event* event = NULL;
   IAXCall* call = NULL;
-  while ( (event = iax_get_event(TRUE)) != NULL ) {
+  while ( (event = iax_get_event(IAX_BLOCKING)) != NULL ) {
     //_debug ("Receive IAX Event: %d\n", event->etype);
     call = iaxFindCallBySession(event->session);
     if (call != 0) {
