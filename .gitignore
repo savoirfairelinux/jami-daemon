@@ -5,9 +5,18 @@
 *.la
 *.Po
 *.Plo
+*.loT
+Makefile
+*.m4
+Makefile.in
+*.spec
+*moc*.*
+/config.*
 
 # Ignore rendered docs
-doc/html
+doc/doxygen/html-everything
+doc/doxygen/html-sflphoned
+doc/doxygen/html-gui-qt
 
 # Ignore buildsys stuff
 autom4te.cache
@@ -20,3 +29,4 @@ tools/portaudio
 
 # Ignore website cache
 www/cache
+
