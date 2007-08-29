@@ -17,9 +17,24 @@ Makefile.in
 doc/doxygen/html-everything
 doc/doxygen/html-sflphoned
 doc/doxygen/html-gui-qt
+dox/*.html
 
 # Ignore buildsys stuff
-autom4te.cache
+/autom4te.cache
+/configure
+/depcomp
+/missing
+/ltmain.sh
+/libtool
+/install-sh
+/stamp-h1
+
+
+# Ignore built stuff
+/src/gui/cli/sflphone-cli
+/src/gui/qt/sflphone-qt
+/src/sflphone
+
 
 # Ignore temp portaudio stuff
 tools/portaudio
@@ -27,6 +42,8 @@ tools/portaudio
 # Ignore temp files
 *~
 
-# Ignore website cache
-www/cache
+# Ignore website stuff
+/www/cache
+/www/config.inc.php
+/www/lighttpd.*
 
