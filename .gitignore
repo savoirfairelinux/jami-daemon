@@ -17,7 +17,7 @@ Makefile.in
 doc/doxygen/html-everything
 doc/doxygen/html-sflphoned
 doc/doxygen/html-gui-qt
-dox/*.html
+doc/*.html
 
 # Ignore buildsys stuff
 /autom4te.cache
