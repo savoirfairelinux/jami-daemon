@@ -19,7 +19,7 @@
 #ifndef IAXVOIPLINK_H
 #define IAXVOIPLINK_H
 
-#include "voIPLink.h"
+#include "voiplink.h"
 #include <iax/iax-client.h>
 #include "global.h"
 

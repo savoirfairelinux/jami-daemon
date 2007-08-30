@@ -30,7 +30,7 @@ endif
 
 SUBDIRS = audio config gui $(ZEROCONFDIR)
 
-sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \
+sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 		managerimpl.cpp	observer.cpp \
 		account.cpp sipaccount.cpp accountcreator.cpp \
                 sipvoiplink.cpp call.cpp sipcall.cpp \
@@ -55,7 +55,7 @@ libsflphone_la_SOURCES =
 
 noinst_LTLIBRARIES = libsflphone.la
 noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h user_cfg.h \
-                 voIPLink.h \
+                 voiplink.h \
 		 account.h sipaccount.h accountcreator.h \
                  sipvoiplink.h  call.h  sipcall.h \
 		 $(IAXHEADERS)

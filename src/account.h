@@ -113,7 +113,7 @@ class Account{
 
 private:
   /**
-   * Create a unique voIPLink() depending on the protocol
+   * Create a unique VoIPLink() depending on the protocol
    * Multiple call to this function do nothing (if the voiplink pointer is 0)
    * @return false if an error occurs
    */
@@ -143,13 +143,13 @@ protected:
   bool _shouldRegisterOnStart;
 
   /**
-   * Tells if the link is enabled or not
+   * Tells if the link is enabled or not.
    * Modified by init/terminate
    */
   bool _enabled;
 
   /**
-   * Tells if the link is registered or not
+   * Tells if the link is registered or not.
    * Modified by unregister/register
    */
   bool _registered;

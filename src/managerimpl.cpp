@@ -38,7 +38,7 @@
 #include "audio/tonelist.h"
 
 #include "accountcreator.h" // create new account
-#include "voIPLink.h"
+#include "voiplink.h"
 
 #include "user_cfg.h"
 #include "gui/guiframework.h"

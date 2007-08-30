@@ -21,7 +21,7 @@
 #include <string>
 
 #include "user_cfg.h"
-#include "voIPLink.h"
+#include "voiplink.h"
 
 VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0)
 {

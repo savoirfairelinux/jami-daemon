@@ -17,7 +17,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "account.h"
-#include "voIPLink.h"
+#include "voiplink.h"
 #include "manager.h"
 
 Account::Account(const AccountID& accountID) : _accountID(accountID)
