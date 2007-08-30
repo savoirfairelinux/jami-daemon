@@ -88,17 +88,23 @@ extern "C" {
 #define AST_FORMAT_MAX_VIDEO    (1 << 24)
 
 /* Control frame types */
-#define AST_CONTROL_HANGUP		1			/* Other end has hungup */
-#define AST_CONTROL_RING		2			/* Local ring */
-#define AST_CONTROL_RINGING 	3			/* Remote end is ringing */
-#define AST_CONTROL_ANSWER		4			/* Remote end has answered */
-#define AST_CONTROL_BUSY		5			/* Remote end is busy */
-#define AST_CONTROL_TAKEOFFHOOK 6			/* Make it go off hook */
-#define AST_CONTROL_OFFHOOK		7			/* Line is off hook */
-#define AST_CONTROL_CONGESTION	8			/* Congestion (circuits busy) */
-#define AST_CONTROL_FLASH		9			/* Flash hook */
-#define AST_CONTROL_WINK		10			/* Wink */
-#define AST_CONTROL_OPTION		11			/* Set an option */
+#define AST_CONTROL_HANGUP          1       /* Other end has hungup */
+#define AST_CONTROL_RING            2       /* Local ring */
+#define AST_CONTROL_RINGING         3       /* Remote end is ringing */
+#define AST_CONTROL_ANSWER          4       /* Remote end has answered */
+#define AST_CONTROL_BUSY            5       /* Remote end is busy */
+#define AST_CONTROL_TAKEOFFHOOK     6       /* Make it go off hook */
+#define AST_CONTROL_OFFHOOK         7       /* Line is off hook */
+#define AST_CONTROL_CONGESTION      8       /* Congestion (circuits busy) */
+#define AST_CONTROL_FLASH           9       /* Flash hook */
+#define AST_CONTROL_WINK            10      /* Wink */
+#define AST_CONTROL_OPTION          11      /* Set an option */
+#define AST_CONTROL_KEY_RADIO       12      /* Key Radio */
+#define AST_CONTROL_UNKEY_RADIO     13      /* Unkey Radio */
+#define AST_CONTROL_CALL_PROGRESS   14      /* Call is in progress */
+#define AST_CONTROL_CALL_PROCEEDING 15      /* Call is proceeding */
+#define AST_CONTROL_HOLD            16      /* Call is placed on hold */
+#define AST_CONTROL_UNHOLD          17      /* Call is taken off hold */
 
 #define AST_FRIENDLY_OFFSET		64			/* Reserved header space */
 
