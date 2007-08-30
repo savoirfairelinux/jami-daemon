@@ -1,7 +1,8 @@
 AM_CFLAGS = -Wall -O2
 AM_CFLAGS += -g -Wall -Wstrict-prototypes -I .
-AM_CFLAGS += -DDEBUG_SUPPORT -DLIBIAX
+AM_CFLAGS += -DLIBIAX
 AM_CFLAGS += -fsigned-char
+# -DDEBUG_SUPPORT (doesn't compile with it)
 # -DDEBUG_DEFAULT 
 AM_CFLAGS += $(UCFLAGS)
 
