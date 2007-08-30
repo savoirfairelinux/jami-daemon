@@ -38,7 +38,6 @@ doc/*.html
 
 # Ignore temp libs stuff
 tools/portaudio
-libs/libiax2
 
 # Ignore temp files
 *~
