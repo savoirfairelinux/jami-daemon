@@ -39,6 +39,18 @@ doc/*.html
 # Ignore temp libs stuff
 tools/portaudio
 
+
+# Ignore sub-modules stuff
+/libs/libiax2/doc/html
+/libs/libiax2/config.*
+/libs/libiax2/autom4te.cache
+/libs/libiax2/src/.libs
+/libs/libiax2/libtool
+/libs/libiax2/ltmain.sh
+/libs/libiax2/iax-config
+/libs/libiax2/configure
+
+
 # Ignore temp files
 *~
 
