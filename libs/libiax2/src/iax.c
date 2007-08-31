@@ -146,83 +146,83 @@ static int ping_time = 10;
 static void send_ping(void *session);
 
 struct iax_session {
-	/* Private data */
+	/** Private data */
 	void *pvt;
-	/* session-local Sendto function */
+	/** session-local Sendto function */
 	iax_sendto_t sendto;
-	/* Is voice quelched (e.g. hold) */
+	/** Is voice quelched (e.g. hold) */
 	int quelch;
-	/* Codec Pref Order */
+	/** Codec Pref Order */
 	char codec_order[32];
-	/* Codec Pref Order Index*/
+	/** Codec Pref Order Index*/
 	int codec_order_len;
-	/* Last received voice format */
+	/** Last received voice format */
 	int voiceformat;
-	/* Last transmitted voice format */
+	/** Last transmitted voice format */
 	int svoiceformat;
-	/* Last received video format */
+	/** Last received video format */
 	int videoformat;
-	/* Last transmitted video format */
+	/** Last transmitted video format */
 	int svideoformat;
-	/* Per session capability */
+	/** Per session capability */
 	int capability;
-	/* Last received timestamp */
+	/** Last received timestamp */
 	unsigned int last_ts;
-	/* Last transmitted timestamp */
+	/** Last transmitted timestamp */
 	unsigned int lastsent;
 #ifdef USE_VOICE_TS_PREDICTION
-	/* Next predicted voice ts */
+	/** Next predicted voice ts */
 	unsigned int nextpred;
-	/* True if the last voice we transmitted was not silence/CNG */
+	/** True if the last voice we transmitted was not silence/CNG */
 	int notsilenttx;
 #endif
-	/* Our last measured ping time */
+	/** Our last measured ping time */
 	unsigned int pingtime;
-	/* Address of peer */
+	/** Address of peer */
 	struct sockaddr_in peeraddr;
-	/* Our call number */
+	/** Our call number */
 	int callno;
-	/* Peer's call number */
+	/** Peer's call number */
 	int peercallno;
-	/* Our next outgoing sequence number */
+	/** Our next outgoing sequence number */
 	unsigned char oseqno;
-	/* Next sequence number they have not yet acknowledged */
+	/** Next sequence number they have not yet acknowledged */
 	unsigned char rseqno;
-	/* Our last received incoming sequence number */
+	/** Our last received incoming sequence number */
 	unsigned char iseqno;
-	/* Last acknowledged sequence number */
+	/** Last acknowledged sequence number */
 	unsigned char aseqno;
-	/* Last sequence number we VNAKd */
+	/** Last sequence number we VNAKd */
 	unsigned char lastvnak;
-	/* Time value that we base our transmission on */
+	/** Time value that we base our transmission on */
 	struct timeval offset;
-	/* Time value we base our delivery on */
+	/** Time value we base our delivery on */
 	struct timeval rxcore;
-	/* Current link state */
+	/** Current link state */
 	int state;
-	/* Expected Username */
+	/** Expected Username */
 	char username[MAXSTRLEN];
-	/* Expected Secret */
+	/** Expected Secret */
 	char secret[MAXSTRLEN];
-	/* Refresh if applicable */
+	/** Refresh if applicable */
 	int refresh;
 
-	/* ping scheduler id */
+	/** ping scheduler id */
 	int pingid;
 
-	/* Transfer stuff */
+	/** Transfer stuff */
 	struct sockaddr_in transfer;
 	int transferring;
 	int transfercallno;
 	int transferid;
-	int transferpeer;	/* for attended transfer */
-	int transfer_moh;	/* for music on hold while performing attended transfer */
+	int transferpeer;	/** for attended transfer */
+	int transfer_moh;	/** for music on hold while performing attended transfer */
 
 	jitterbuf *jb;
 
 	struct iax_netstat remote_netstats;
 
-	/* For linking if there are multiple connections */
+	/** For linking if there are multiple connections */
 	struct iax_session *next;
 };
 
@@ -312,24 +312,24 @@ static int __debug(char *file, int lineno, char *func, char *fmt, ...)
 typedef void (*sched_func)(void *);
 
 struct iax_sched {
-	/* These are scheduled things to be delivered */
+	/** These are scheduled things to be delivered */
 	struct timeval when;
-	/* If event is non-NULL then we're delivering an event */
+	/** If event is non-NULL then we're delivering an event */
 	struct iax_event *event;
-	/* If frame is non-NULL then we're transmitting a frame */
+	/** If frame is non-NULL then we're transmitting a frame */
 	struct iax_frame *frame;
-	/* If func is non-NULL then we should call it */
+	/** If func is non-NULL then we should call it */
 	sched_func func;
-	/* and pass it this argument */
+	/** and pass it this argument */
 	void *arg;
-	/* Easy linking */
+	/** Easy linking */
 	struct iax_sched *next;
 };
 
 static struct iax_sched *schedq = NULL;
 static struct iax_session *sessions = NULL;
 static int callnums = 1;
-static int transfer_id = 1;		/* for attended transfer */
+static int transfer_id = 1;		/** for attended transfer */
 
 
 void iax_set_private(struct iax_session *s, void *ptr)
@@ -1790,6 +1790,11 @@ int iax_accept(struct iax_session *session, int format)
 int iax_answer(struct iax_session *session)
 {
 	return send_command(session, AST_FRAME_CONTROL, AST_CONTROL_ANSWER, 0, NULL, 0, -1);
+}
+
+int iax_vnak(struct iax_session *session)
+{
+	return send_command(session, AST_FRAME_IAX, IAX_COMMAND_VNAK, 0, NULL, 0, -1);
 }
 
 int iax_load_complete(struct iax_session *session)

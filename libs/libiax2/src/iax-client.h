@@ -178,6 +178,7 @@ extern int iax_hangup(struct iax_session *session, char *byemsg);
 extern int iax_call(struct iax_session *session, const char *cidnum, const char *cidname, const char *ich, const char *lang, int wait, int format, int capability);
 extern int iax_accept(struct iax_session *session, int format);
 extern int iax_answer(struct iax_session *session);
+extern int iax_vnak(struct iax_session *sesesion);
 extern int iax_sendurl(struct iax_session *session, char *url);
 extern int iax_send_unlink(struct iax_session *session);
 extern int iax_send_link_reject(struct iax_session *session);
