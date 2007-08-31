@@ -21,9 +21,10 @@
 #include "iaxvoiplink.h"
 #include "manager.h"
 
-#define IAX_HOST "IAX.host"
-#define IAX_USER "IAX.user"
-#define IAX_PASS "IAX.pass"
+#define IAX_FULL_NAME  "IAX.fullName"
+#define IAX_HOST       "IAX.host"
+#define IAX_USER       "IAX.user"
+#define IAX_PASS       "IAX.pass"
 
 IAXAccount::IAXAccount(const AccountID& accountID)
  : Account(accountID)
@@ -54,6 +55,7 @@ IAXAccount::registerAccount()
     unregisterAccount();
     IAXVoIPLink* tmplink = dynamic_cast<IAXVoIPLink*> (_link);
     if (tmplink) {
+      // Stuff needed for IAX registration
       tmplink->setHost(Manager::instance().getConfigString(_accountID,IAX_HOST));
       tmplink->setUser(Manager::instance().getConfigString(_accountID,IAX_USER));
       tmplink->setPass(Manager::instance().getConfigString(_accountID,IAX_PASS));
@@ -106,6 +108,7 @@ IAXAccount::initConfig(Conf::ConfigTree& config)
 
   // IAX specific
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_TYPE, "IAX", type_str));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_FULL_NAME, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_HOST, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_USER, "", type_str));
   config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_PASS, "", type_str));

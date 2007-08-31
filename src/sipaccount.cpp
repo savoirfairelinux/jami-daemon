@@ -59,7 +59,8 @@ SIPAccount::registerAccount()
     unregisterAccount();
     SIPVoIPLink* tmplink = dynamic_cast<SIPVoIPLink*> (_link);
     if (tmplink) {
-      tmplink->setProxy(Manager::instance().getConfigString(_accountID,SIP_PROXY));
+      // Stuff needed for SIP registration.
+      tmplink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
       tmplink->setUserPart(Manager::instance().getConfigString(_accountID,SIP_USER_PART));
       tmplink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_AUTH_NAME));
       tmplink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
