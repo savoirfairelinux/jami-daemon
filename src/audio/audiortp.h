@@ -77,9 +77,13 @@ private:
   /** Debugging output file */
   //std::ofstream _fstream;
 
-  /** libsamplerate-related */
+   /** libsamplerate converter for incoming voice */
   SRC_STATE*    _src_state_spkr;
+
+  /** libsamplerate converter for outgoing voice */
   SRC_STATE*    _src_state_mic;
+
+  /** libsamplerate error */
   int           _src_err;
 
   void initAudioRtpSession(void);

@@ -380,7 +380,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
       int nbInt16      = expandedSize / sizeof(int16);
       if (nbInt16 > RTP_20S_8KHZ_MAX) {
-        _debug("We have decoded a RTP packet larger than expected: %s VS %s. crop\n", nbInt16, RTP_20S_8KHZ_MAX);
+        _debug("We have decoded an RTP packet larger than expected: %s VS %s. Cropping.\n", nbInt16, RTP_20S_8KHZ_MAX);
         nbInt16=RTP_20S_8KHZ_MAX;
       }
 

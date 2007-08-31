@@ -224,6 +224,7 @@ ManagerImpl::answerCall(const CallID& id)
 
   if (!getAccountLink(accountid)->answer(id)) {
     // error when receiving...
+    
     removeCallAccount(id);
     return false;
   }
@@ -582,7 +583,9 @@ bool
 ManagerImpl::incomingCall(Call* call, const AccountID& accountId) 
 {
   _debug("Incoming call\n");
+
   associateCallToAccount(call->getCallId(), accountId);
+
   if ( !hasCurrentCall() ) {
     call->setConnectionState(Call::Ringing);
     ringtone();
@@ -594,11 +597,17 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
   std::string from = call->getPeerName();
   std::string number = call->getPeerNumber();
 
-  if ( !number.empty() ) {
+  if (from != "" && number != "") {
     from.append(" <");
     from.append(number);
     from.append(">");
+  } else if ( from.empty() ) {
+    from.append("<");
+    from.append(number);
+    from.append(">");
   }
+  // otherwise, leave 'from' as is.
+
   _gui->incomingCall(accountId, call->getCallId(), from);
 
   return true;
