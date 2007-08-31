@@ -23,9 +23,8 @@
 
 // 0 PCMU A 8000 1 [RFC3551]
 Ulaw::Ulaw(int payload)
- : AudioCodec(payload, "PCMU")
+ : AudioCodec(payload, "G711u")
 {
-  _officialName = "G711u";
   _clockRate = 8000;
   _channel   = 1;
 }
