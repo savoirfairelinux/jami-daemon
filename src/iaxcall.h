@@ -51,7 +51,9 @@ public:
     void setFormat(int format);
 
     /**
-     * Get format
+     * Get format for the voice codec used
+     *
+     * Bitmask for codecs defined in iax/frame.h
      */
     int getFormat() { return _format; }
 

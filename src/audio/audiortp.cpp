@@ -261,14 +261,14 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
 
-    // take the lower
+    // take the lowest
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
     //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
 
     // Get bytes from micRingBuffer to data_from_mic
     int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
 
-    int16* toSIP = 0;
+    int16* toSIP = NULL;
     if (audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
        SRC_DATA src_data;
        #ifdef DATAFORMAT_IS_FLOAT   
@@ -331,7 +331,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     } else {
       _session->putData(timestamp, _sendDataEncoded, compSize);
     }
-    toSIP = 0;
+    toSIP = NULL;
   } catch(...) {
     _debugException("! ARTP: sending failed");
     throw;
