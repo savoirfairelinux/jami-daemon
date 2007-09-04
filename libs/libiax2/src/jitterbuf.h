@@ -55,43 +55,43 @@ enum jb_frame_type {
 
 typedef struct jb_conf {
 	/* settings */
-	long max_jitterbuf;     /* defines a hard clamp to use in setting the jitter buffer delay */
-	long resync_threshold;  /* the jb will resync when delay increases to (2 * jitter) + this param */
-	long max_contig_interp; /* the max interp frames to return in a row */
-	long target_extra;      /* amount of additional jitterbuffer adjustment, overrides JB_TARGET_EXTRA */
+	long max_jitterbuf;     /**< defines a hard clamp to use in setting the jitter buffer delay */
+	long resync_threshold;  /**< the jb will resync when delay increases to (2 * jitter) + this param */
+	long max_contig_interp; /**< the max interp frames to return in a row */
+	long target_extra;      /**< amount of additional jitterbuffer adjustment, overrides JB_TARGET_EXTRA */
 } jb_conf;
 
 typedef struct jb_info {
 	jb_conf conf;
 
 	/* statistics */
-	long frames_in;		/* number of frames input to the jitterbuffer.*/
-	long frames_out;	/* number of frames output from the jitterbuffer.*/
-	long frames_late;	/* number of frames which were too late, and dropped.*/
-	long frames_lost;	/* number of missing frames.*/
-	long frames_dropped;	/* number of frames dropped (shrinkage) */
-	long frames_ooo;	/* number of frames received out-of-order */
-	long frames_cur;	/* number of frames presently in jb, awaiting delivery.*/
-	long jitter;		/* jitter measured within current history interval*/
-	long min;		/* minimum lateness within current history interval */
-	long current;		/* the present jitterbuffer adjustment */
-	long target;		/* the target jitterbuffer adjustment */
-	long losspct;		/* recent lost frame percentage (* 1000) */
-	long next_voice_ts;	/* the ts of the next frame to be read from the jb - in receiver's time */
-	long last_voice_ms;	/* the duration of the last voice frame */
-	long silence_begin_ts;	/* the time of the last CNG frame, when in silence */
-	long last_adjustment;	/* the time of the last adjustment */
-	long last_delay;	/* the last now added to history */
-	long cnt_delay_discont;	/* the count of discontinuous delays */
-	long resync_offset;	/* the amount to offset ts to support resyncs */
-	long cnt_contig_interp;	/* the number of contiguous interp frames returned */
+	long frames_in;		/**< number of frames input to the jitterbuffer.*/
+	long frames_out;	/**< number of frames output from the jitterbuffer.*/
+	long frames_late;	/**< number of frames which were too late, and dropped.*/
+	long frames_lost;	/**< number of missing frames.*/
+	long frames_dropped;	/**< number of frames dropped (shrinkage) */
+	long frames_ooo;	/**< number of frames received out-of-order */
+	long frames_cur;	/**< number of frames presently in jb, awaiting delivery.*/
+	long jitter;		/**< jitter measured within current history interval*/
+	long min;		/**< minimum lateness within current history interval */
+	long current;		/**< the present jitterbuffer adjustment */
+	long target;		/**< the target jitterbuffer adjustment */
+	long losspct;		/**< recent lost frame percentage (* 1000) */
+	long next_voice_ts;	/**< the ts of the next frame to be read from the jb - in receiver's time */
+	long last_voice_ms;	/**< the duration of the last voice frame */
+	long silence_begin_ts;	/**< the time of the last CNG frame, when in silence */
+	long last_adjustment;	/**< the time of the last adjustment */
+	long last_delay;	/**< the last now added to history */
+	long cnt_delay_discont;	/**< the count of discontinuous delays */
+	long resync_offset;	/**< the amount to offset ts to support resyncs */
+	long cnt_contig_interp;	/**< the number of contiguous interp frames returned */
 } jb_info;
 
 typedef struct jb_frame {
-	void *data;               /* the frame data */
-	long ts;                  /* the relative delivery time expected */
-	long ms;                  /* the time covered by this frame, in sec/8000 */
-	enum jb_frame_type type;  /* the type of frame */
+	void *data;               /**< the frame data */
+	long ts;                  /**< the relative delivery time expected */
+	long ms;                  /**< the time covered by this frame, in sec/8000 */
+	enum jb_frame_type type;  /**< the type of frame */
 	struct jb_frame *next, *prev;
 } jb_frame;
 
@@ -99,29 +99,30 @@ typedef struct jitterbuf {
 	jb_info info;
 
 	/* history */
-	long history[JB_HISTORY_SZ];		/* history */
-	int  hist_ptr;				/* points to index in history for next entry */
-	long hist_maxbuf[JB_HISTORY_MAXBUF_SZ];	/* a sorted buffer of the max delays (highest first) */
-	long hist_minbuf[JB_HISTORY_MAXBUF_SZ];	/* a sorted buffer of the min delays (lowest first) */
-	int  hist_maxbuf_valid;			/* are the "maxbuf"/minbuf valid? */
+	long history[JB_HISTORY_SZ];		/**< history */
+	int  hist_ptr;				/**< points to index in history for next entry */
+	long hist_maxbuf[JB_HISTORY_MAXBUF_SZ];	/**< a sorted buffer of the max delays (highest first) */
+	long hist_minbuf[JB_HISTORY_MAXBUF_SZ];	/**< a sorted buffer of the min delays (lowest first) */
+	int  hist_maxbuf_valid;			/**< are the "maxbuf"/minbuf valid? */
 
-	jb_frame *frames;		/* queued frames */
-	jb_frame *free;			/* free frames (avoid malloc?) */
+	jb_frame *frames;		/**< queued frames */
+	jb_frame *free;			/**< free frames (avoid malloc?) */
 } jitterbuf;
 
 
-/* new jitterbuf */
+/** new jitterbuf */
 jitterbuf *		jb_new(void);
 
-/* destroy jitterbuf */
+/** destroy jitterbuf */
 void			jb_destroy(jitterbuf *jb);
 
-/* reset jitterbuf */
+/** reset jitterbuf */
 /* NOTE:  The jitterbuffer should be empty before you call this, otherwise
  * you will leak queued frames, and some internal structures */
 void			jb_reset(jitterbuf *jb);
 
-/* queue a frame data=frame data, timings (in ms): ms=length of frame (for voice), ts=ts (sender's time)
+/** queue a frame data=frame data, timings (in ms): ms=length of frame (for voice), ts=ts (sender's time)
+ *
  * now=now (in receiver's time) return value is one of
  * JB_OK: Frame added. Last call to jb_next() still valid
  * JB_DROP: Drop this frame immediately
@@ -129,7 +130,8 @@ void			jb_reset(jitterbuf *jb);
  */
 enum jb_return_code jb_put(jitterbuf *jb, void *data, const enum jb_frame_type type, long ms, long ts, long now);
 
-/* get a frame for time now (receiver's time)  return value is one of
+/** get a frame for time now (receiver's time)  return value is one of
+ *
  * JB_OK:  You've got frame!
  * JB_DROP: Here's an audio frame you should just drop.  Ask me again for this time..
  * JB_NOFRAME: There's no frame scheduled for this time.
@@ -138,7 +140,7 @@ enum jb_return_code jb_put(jitterbuf *jb, void *data, const enum jb_frame_type t
  */
 enum jb_return_code jb_get(jitterbuf *jb, jb_frame *frame, long now, long interpl);
 
-/* unconditionally get frames from jitterbuf until empty */
+/** unconditionally get frames from jitterbuf until empty */
 enum jb_return_code jb_getall(jitterbuf *jb, jb_frame *frameout);
 
 /* when is the next frame due out, in receiver's time (0=EMPTY)

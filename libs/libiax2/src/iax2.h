@@ -158,57 +158,57 @@
 
 /* Full frames are always delivered reliably */
 struct ast_iax2_full_hdr {
-	unsigned short scallno;	/** Source call number -- high bit must be 1 */
-	unsigned short dcallno;	/** Destination call number -- high bit is 1 if retransmission */
-	unsigned int ts;		/** 32-bit timestamp in milliseconds (from 1st transmission) */
-	unsigned char oseqno;	/** Packet number (outgoing) */
-	unsigned char iseqno;	/** Packet number (next incoming expected) */
-	char type;				/** Frame type */
-	unsigned char csub;		/** Compressed subclass */
+	unsigned short scallno;	/**< Source call number -- high bit must be 1 */
+	unsigned short dcallno;	/**< Destination call number -- high bit is 1 if retransmission */
+	unsigned int ts;	/**< 32-bit timestamp in milliseconds (from 1st transmission) */
+	unsigned char oseqno;	/**< Packet number (outgoing) */
+	unsigned char iseqno;	/**< Packet number (next incoming expected) */
+	char type;		/**< Frame type */
+	unsigned char csub;	/**< Compressed subclass */
 	unsigned char iedata[0];
 } __PACKED;
 
 /* Mini header is used only for voice frames -- delivered unreliably */
 struct ast_iax2_mini_hdr {
-	unsigned short callno;	/** Source call number -- high bit must be 0, rest must be non-zero */
-	unsigned short ts;	/** 16-bit Timestamp (high 16 bits from last ast_iax2_full_hdr) */
-				/** Frametype implicitly VOICE_FRAME */
-				/** subclass implicit from last ast_iax2_full_hdr */
+	unsigned short callno;	/**< Source call number -- high bit must be 0, rest must be non-zero */
+	unsigned short ts;	/**< 16-bit Timestamp (high 16 bits from last ast_iax2_full_hdr) */
+				/**< Frametype implicitly VOICE_FRAME */
+				/**< subclass implicit from last ast_iax2_full_hdr */
 	unsigned char data[0];
 } __PACKED;
 
 struct ast_iax2_meta_hdr {
-	unsigned short zeros;			/** Zeros field -- must be zero */
-	unsigned char metacmd;			/** Meta command */
-	unsigned char cmddata;			/** Command Data */
+	unsigned short zeros;			/**< Zeros field -- must be zero */
+	unsigned char metacmd;			/**< Meta command */
+	unsigned char cmddata;			/**< Command Data */
 	unsigned char data[0];
 } __PACKED;
 
 struct ast_iax2_video_hdr {
-	unsigned short zeros;			/** Zeros field -- must be zero */
-	unsigned short callno;			/** Video call number */
-	unsigned short ts;			/** Timestamp and mark if present */
+	unsigned short zeros;			/**< Zeros field -- must be zero */
+	unsigned short callno;			/**< Video call number */
+	unsigned short ts;			/**< Timestamp and mark if present */
 	unsigned char data[0];
 } __PACKED;
 
 struct ast_iax2_meta_trunk_hdr {
-	unsigned int ts;			/** 32-bit timestamp for all messages */
+	unsigned int ts;			/**< 32-bit timestamp for all messages */
 	unsigned char data[0];
 } __PACKED;
 
 struct ast_iax2_meta_trunk_entry {
-	unsigned short callno;			/** Call number */
-	unsigned short len;			/** Length of data for this callno */
+	unsigned short callno;			/**< Call number */
+	unsigned short len;			/**< Length of data for this callno */
 } __PACKED;
 
 #define IAX_FIRMWARE_MAGIC 0x69617879
 
 struct ast_iax2_firmware_header {
-       unsigned int magic;             /** Magic number */
-       unsigned short version;         /** Software version */
-       unsigned char devname[16];      /** Device */
-       unsigned int datalen;           /** Data length of file beyond header */
-       unsigned char chksum[16];       /** Checksum of all data */
+       unsigned int magic;             /**< Magic number */
+       unsigned short version;         /**< Software version */
+       unsigned char devname[16];      /**< Device */
+       unsigned int datalen;           /**< Data length of file beyond header */
+       unsigned char chksum[16];       /**< Checksum of all data */
        unsigned char data[0];
 } __PACKED;
 
