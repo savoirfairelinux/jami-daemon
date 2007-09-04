@@ -37,10 +37,7 @@ SIPCall::~SIPCall()
 {
 }
 
-/**
- * Answer incoming call correclty before telling the user
- * @param event eXosip Event
- */
+
 bool 
 SIPCall::SIPCallInvite(eXosip_event_t *event)
 {
@@ -123,13 +120,6 @@ SIPCall::SIPCallInvite(eXosip_event_t *event)
   return true;
 }
 
-/**
-  * newReinviteCall is called when the IP-Phone user receives a change in the call
-  * it's almost an newIncomingCall but we send a 200 OK
-  * See: 3.7.  Session with re-INVITE (IP Address Change)
-  * @param event eXosip Event
-  * @return true if ok
-  */
 bool 
 SIPCall::SIPCallReinvite(eXosip_event_t *event)
 {
@@ -211,11 +201,6 @@ SIPCall::SIPCallReinvite(eXosip_event_t *event)
   return true;
 }
 
-  /**
-   * Peer answered to a call (on hold or not)
-   * @param event eXosip Event
-   * @return true if ok
-   */
 bool 
 SIPCall::SIPCallAnswered(eXosip_event_t *event)
 {
@@ -266,11 +251,8 @@ SIPCall::SIPCallAnswered(eXosip_event_t *event)
   eXosip_unlock ();
   return true;  
 }
-  /**
-   * We retreive final SDP info if they changed
-   * @param event eXosip Event
-   * @return true if ok (change / no change) or false on error
-   */
+
+
 bool 
 SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t* event)
 {
@@ -324,7 +306,7 @@ SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t* event)
   return true;
 }
 
-  //TODO: humm?
+
 int 
 SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
 {
@@ -411,7 +393,7 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
 }
 
 
-  // TODO: hum???
+
 int 
 SIPCall::sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med)
 {
