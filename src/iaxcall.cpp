@@ -20,13 +20,93 @@
 #include "iaxcall.h"
 #include "global.h" // for _debug
 
-IAXCall::IAXCall(const CallID& id, Call::CallType type) : Call(id, type), _session(0) 
+IAXCall::IAXCall(const CallID& id, Call::CallType type) : Call(id, type), _session(NULL) 
 {
-	
 }
 
 IAXCall::~IAXCall() 
 {
-  _session = 0; // just to be sure to don't have unknown pointer, do not delete it!
+  _session = NULL; // just to be sure to don't have unknown pointer, do not delete it!
 }
 
+void
+IAXCall::setFormat(int format)
+{
+  _format = format;
+
+  switch(format) {
+  case AST_FORMAT_ULAW:
+    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_ULAW)); break;
+  case AST_FORMAT_GSM:
+    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_GSM)); break;
+  case AST_FORMAT_ALAW:
+    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_ALAW)); break;
+  case AST_FORMAT_ILBC:
+    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_ILBC)); break;
+  case AST_FORMAT_SPEEX:
+    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_SPEEX)); break;
+  default:
+    setAudioCodec(NULL);
+    break;
+  }
+}
+
+
+int
+IAXCall::getSupportedFormat()
+{
+  CodecMap map = getCodecMap().getMap();
+  int format   = 0;
+
+  CodecMap::iterator iter = map.begin();
+  while(iter != map.end()) {
+    switch(iter->first) {
+    case PAYLOAD_CODEC_ULAW:
+      format |= AST_FORMAT_ULAW;  break;
+    case PAYLOAD_CODEC_GSM:
+      format |= AST_FORMAT_GSM;   break;
+    case PAYLOAD_CODEC_ALAW:
+      format |= AST_FORMAT_ALAW;  break;
+    case PAYLOAD_CODEC_ILBC:
+      format |= AST_FORMAT_ILBC;  break;
+    case PAYLOAD_CODEC_SPEEX:
+      format |= AST_FORMAT_SPEEX; break;
+    default:
+      break;
+    }
+    iter++;
+  }
+  return format;
+
+}
+
+int
+IAXCall::getFirstMatchingFormat(int needles)
+{
+  CodecMap map = getCodecMap().getMap();
+  int format   = 0;
+
+  CodecMap::iterator iter = map.begin();
+  while(iter != map.end()) {
+    switch(iter->first) {
+    case PAYLOAD_CODEC_ULAW:
+      format = AST_FORMAT_ULAW;  break;
+    case PAYLOAD_CODEC_GSM:
+      format = AST_FORMAT_GSM;   break;
+    case PAYLOAD_CODEC_ALAW:
+      format = AST_FORMAT_ALAW;  break;
+    case PAYLOAD_CODEC_ILBC:
+      format = AST_FORMAT_ILBC;  break;
+    case PAYLOAD_CODEC_SPEEX:
+      format = AST_FORMAT_SPEEX; break;
+    default:
+      break;
+    }
+
+    // Return the first that matches
+    if (format & needles)
+      return format;
+    iter++;
+  }
+  return 0;
+}

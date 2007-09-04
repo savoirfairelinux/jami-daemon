@@ -22,6 +22,7 @@
 #include "voiplink.h"
 #include <iax/iax-client.h>
 #include "global.h"
+#include <samplerate.h>
 
 
 class EventThread;
@@ -49,6 +50,15 @@ public:
   void terminate (void);
 
   bool setRegister (void);
+
+  /**
+   * Destroy registration session
+   *
+   * @todo Send an IAX_COMMAND_REGREL to force unregistration upstream.
+   *       Urgency: low
+   *
+   * @return bool If we're registered upstream
+   */
   bool setUnregister (void);
 
   Call* newOutgoingCall(const CallID& id, const std::string& toUrl);
@@ -102,25 +112,44 @@ private:
   void iaxHandleRegReply(iax_event* event);
 
   /**
-   * Send an outgoing call invite to iax
+   * Handle IAX pre-call setup-related events
+   * @param event An iax_event pointer
    */
-  bool iaxOutgoingInvite(IAXCall* Call);
+  void iaxHandlePrecallEvent(iax_event* event);
 
+  /**
+   * Send an outgoing call invite to iax
+   * @param call An IAXCall pointer
+   */
+  bool iaxOutgoingInvite(IAXCall* call);
+
+
+  /**
+   * Convert CodecMap to IAX format using IAX constants
+   * @return `format` ready to go into iax_* calls
+   */
+  int iaxCodecMapToFormat(IAXCall* call);
+
+  /** Threading object */
   EventThread* _evThread;
+
   /** registration session : 0 if not register */
   struct iax_session* _regSession;
 
   /** IAX Host */
   std::string _host;
+
   /** IAX User */
   std::string _user;
+
   /** IAX Password */
   std::string _pass;
 
+  /** IAX full name */
+  std::string _fullName;
+
   ost::Mutex _mutexIAX;
 
- // extra pointer / not dynamic yet
-  AudioCodec* audiocodec;
   AudioLayer* audiolayer;
 
   /** When we receive data, we decode it inside this buffer */
@@ -139,6 +168,15 @@ private:
 
   /** Buffer for 8000hz samples for mic conversion */
   int16* _intBuffer8000;
+
+  /** libsamplerate converter for incoming voice */
+  SRC_STATE*    _src_state_spkr;
+
+  /** libsamplerate converter for outgoing voice */
+  SRC_STATE*    _src_state_mic;
+
+  /** libsamplerate error */
+  int           _src_err;
 
   /** Current IAX call pointer, used for sending, change when starting audio, switching */
   IAXCall* _currentCall; 
