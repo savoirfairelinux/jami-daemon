@@ -177,46 +177,108 @@ IAXVoIPLink::getEvent()
       continue;
     }
 
-    _debug ("Receive IAX Event: %d (0x%x)\n", event->etype, event->etype);
+    //_debug ("Receive IAX Event: %d (0x%x)\n", event->etype, event->etype);
 
     call = iaxFindCallBySession(event->session);
 
     if (call) {
 
-      _debug("  - We've got an associated call, handle call event\n");
+      //_debug("  - We've got an associated call, handle call event\n");
       iaxHandleCallEvent(event, call);
 
     } else if (event->session && event->session == _regSession) {
-
-      _debug("  - We've got an associated REGISTRATION session, handle registration process\n");
+      
+      //_debug("  - We've got an associated REGISTRATION session, handle registration process\n");
       // in iaxclient, there is many session handling, here, only one
       iaxHandleRegReply(event);
-
+      
     } else {
-
-      _debug ("  - We've got some other event, deal with them alone.\n");
+      
+      //_debug ("  - We've got some other event, deal with them alone.\n");
       iaxHandlePrecallEvent(event);
-
+      
     }
-
+    
     iax_event_free(event);
   }
 
-  // Woah, we should do that in another thread, which will always send out stuff..
-  // send sound here
-  if(_currentCall && audiolayer) {
-    int samples = audiolayer->canGetMic(); 
-    if (samples != 0) {
-      //int  datalen = audiolayer->getMic(_sendDataEncoded, samples);
-      //_debug("iax_send_voice(%p, %d, ,%d, %d)\n", _currentCall->getSession(), _currentCall->getFormat(), datalen, samples);
-      //if ( iax_send_voice(_currentCall->getSession(), _currentCall->getFormat(), (char*)_sendDataEncoded, datalen, samples) == -1) {
-      //	   // error sending voice
-      //}
+  _mutexIAX.leaveMutex();
+
+  // Send sound here
+  if (_currentCall && audiolayer) {
+    AudioCodec* audiocodec = _currentCall->getAudioCodec();
+
+    // we have to get 20ms of data from the mic *20/1000 = /50
+    // rate/50 shall be lower than IAX__20S_48KHZ_MAX
+    int maxBytesToGet = audiolayer->getSampleRate()/50*sizeof(SFLDataFormat);
+    
+    // available bytes inside ringbuffer
+    int availBytesFromMic = audiolayer->canGetMic();
+    
+    // take the lowest
+    int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+    //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
+    
+    // Get bytes from micRingBuffer to data_from_mic
+    int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
+    int16* toIAX = NULL;
+    if (audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
+      SRC_DATA src_data;
+#ifdef DATAFORMAT_IS_FLOAT   
+      src_data.data_in = _dataAudioLayer;
+#else
+      src_short_to_float_array(_dataAudioLayer, _floatBuffer48000, nbSample);
+      src_data.data_in = _floatBuffer48000; 
+#endif
+      
+      double factord = (double) audiocodec->getClockRate() / audiolayer->getSampleRate();
+      
+      src_data.src_ratio = factord;
+      src_data.input_frames = nbSample;
+      src_data.output_frames = (int) floor(factord * nbSample);
+      src_data.data_out = _floatBuffer8000;
+      src_data.end_of_input = 0; /* More data to come */
+      
+      src_process(_src_state_mic, &src_data);
+      
+      nbSample = src_data.output_frames_gen;
+      
+      src_float_to_short_array (_floatBuffer8000, _intBuffer8000, nbSample);
+      toIAX = _intBuffer8000;
+    } else {
+#ifdef DATAFORMAT_IS_FLOAT
+      // convert _receiveDataDecoded to float inside _receiveData
+      src_float_to_short_array(_dataAudioLayer, _intBuffer8000, nbSample);
+      toIAX = _intBuffer8000;
+      //if (nbSample > IAX__20S_8KHZ_MAX) { _debug("Alert from mic, nbSample %d is bigger than expected %d\n", nbSample, IAX__20S_8KHZ_MAX); }
+#else
+      toIAX = _dataAudioLayer; // int to int
+#endif
     }
+
+    if ( nbSample < (IAX__20S_8KHZ_MAX - 10) ) { // if only 10 is missing, it's ok
+      // fill end with 0...
+      //_debug("begin: %p, nbSample: %d\n", toIAX, nbSample);
+      //_debug("has to fill: %d chars at %p\n", (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16), toIAX + nbSample);
+      memset(toIAX + nbSample, 0, (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16));
+      nbSample = IAX__20S_8KHZ_MAX;
+    }
+    //_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toIAX[0], toIAX[1], toIAX[2]);
+    
+    // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
+    int compSize = audiocodec->codecEncode(_sendDataEncoded, toIAX, nbSample*sizeof(int16));
+
+    // Send it out!
+    _mutexIAX.enterMutex();
+    // Make sure the session and the call still exists.
+    if (_currentCall->getSession()) {
+      if ( iax_send_voice(_currentCall->getSession(), _currentCall->getFormat(), (unsigned char*)_sendDataEncoded, compSize, nbSample) == -1) {
+	_debug("IAX: Error sending voice data.\n");
+      }
+    }
+    _mutexIAX.leaveMutex();
   }
 
-  // unlock mutex here
-  _mutexIAX.leaveMutex();
   //iaxRefreshRegistrations();
 
   // thread wait 5 millisecond
@@ -498,7 +560,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
   case IAX_EVENT_HANGUP:
     Manager::instance().peerHungupCall(id); 
     if (Manager::instance().isCurrentCall(id)) {
-      _currentCall = 0;
+      _currentCall = NULL;
       audiolayer->stopStream();
       // stop audio
     }
@@ -509,16 +571,14 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     Manager::instance().peerHungupCall(id); 
     if (Manager::instance().isCurrentCall(id)) {
       // stop audio
-      _currentCall = 0;
+      _currentCall = NULL;
       audiolayer->stopStream();
     }
     removeCall(id);
     break;
 
   case IAX_EVENT_ACCEPT:
-    // accept
-    // 
-
+    // Call accepted over there by the computer, not the user yet.
     if (event->ies.format) {
       call->setFormat(event->ies.format);
     }
@@ -540,8 +600,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
       audiolayer->startStream();
       // start audio here?
     } else {
-      // deja connecté
-      // ?
+      // deja connecté ?
     }
     break;
     
@@ -554,26 +613,62 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
   case IAX_EVENT_VOICE:
+    iaxHandleVoiceEvent(event, call);
+    break;
+    
+  case IAX_EVENT_TEXT:
+    break;
+    
+  case IAX_EVENT_RINGA:
+    break;
+    
+  case IAX_EVENT_PONG:
+    break;
+    
+  case IAX_EVENT_URL:
+    break;
+    
+    //    case IAX_EVENT_CNG: ??
+    //    break;
+    
+  case IAX_EVENT_TIMEOUT:
+    break;
+    
+  case IAX_EVENT_TRANSFER:
+    break;
+    
+  default:
+    _debug("Unknown event type: %d\n", event->etype);
+    
+  }
+}
+
+
+/* Handle audio event, VOICE packet received */
+void
+IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
+{
+    // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
+    // were triggered
+    if (!event->datalen) {
+      // Skip this empty packet.
+      //_debug("IAX: Skipping empty jitter-buffer interpolated packet\n");
+      return;
+    }
+
     if (audiolayer) {
       AudioCodec* audiocodec = call->getAudioCodec();
       
-      if (!audiocodec) {
-	// libiax2 stores the voiceformat in the 'subclass' element.
-	if (event->subclass) {
-	  // Set the format, with the first voice packet
-	  call->setFormat(event->subclass);
-	  audiocodec = call->getAudioCodec();
-	}  else {
-	  // Send a VNAK, because they sent a Mini packet before
-	  // a full VOICE packet (with the format inside)
-	  _debug("IAX: sending VNAK, received mini packet before full VOICE packet.");
-	  iax_vnak(event->session);
-	  break;
-	}
+      // On-the-fly codec changing (normally, when we receive a full packet)
+      // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
+      // - subclass holds the voiceformat property.
+      if (event->subclass && event->subclass != call->getFormat()) {
+	call->setFormat(event->subclass);
+	audiocodec = call->getAudioCodec();
       }
-	
 
       _debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
+     
       unsigned char* data = (unsigned char*)event->data;
       unsigned int size   = event->datalen;
 
@@ -582,14 +677,11 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 	size = IAX__20S_8KHZ_MAX;
       }
 
-      // On pourrait ajuster le codec dynamiquement ici, comme c'est fait dans SIP.
-      // à moins que IAX ne permette pas de changer le codec à chaque paquet.
-
       int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
       int nbInt16      = expandedSize/sizeof(int16);
 
       if (nbInt16 > IAX__20S_8KHZ_MAX) {
-	_debug("We have decoded a IAX VOICE packet larger than expected: %s VS %s. Cropping.\n", nbInt16, IAX__20S_8KHZ_MAX);
+	_debug("We have decoded an IAX VOICE packet larger than expected: %s VS %s. Cropping.\n", nbInt16, IAX__20S_8KHZ_MAX);
 	nbInt16 = IAX__20S_8KHZ_MAX;
       }
       
@@ -635,33 +727,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     } else {
       _debug("IAX: incoming audio, but no sound card open");
     }
-    break;
-    
-  case IAX_EVENT_TEXT:
-    break;
-    
-  case IAX_EVENT_RINGA:
-    break;
-    
-  case IAX_EVENT_PONG:
-    break;
-    
-  case IAX_EVENT_URL:
-    break;
-    
-    //    case IAX_EVENT_CNG: ??
-    //    break;
-    
-  case IAX_EVENT_TIMEOUT:
-    break;
-    
-  case IAX_EVENT_TRANSFER:
-    break;
-    
-  default:
-    _debug("Unknown event type: %d\n", event->etype);
-    
-  }
 }
 
 

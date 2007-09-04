@@ -106,6 +106,13 @@ private:
   void iaxHandleCallEvent(iax_event* event, IAXCall* call);
 
   /**
+   * Handle the VOICE events specifically
+   * @param event The iax_event containing the IAX_EVENT_VOICE
+   * @param call  The associated IAXCall
+   */
+  void iaxHandleVoiceEvent(iax_event* event, IAXCall* call);
+
+  /**
    * Handle IAX Registration Reply event
    * @param event An iax_event pointer
    */
