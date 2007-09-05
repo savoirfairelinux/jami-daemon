@@ -31,7 +31,8 @@
 #include <samplerate.h>
 
 #include "../global.h"
-/** maximum of byte inside an incoming packet 
+
+/** maximum bytes inside an incoming packet 
  *  8000 sampling/s * 20s/1000 = 160
  */
 #define RTP_20S_8KHZ_MAX 160

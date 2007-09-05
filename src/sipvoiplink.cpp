@@ -1436,7 +1436,7 @@ SIPVoIPLink::findSIPCallWithCid(int cid)
 {
   if (cid < 1) {
     _debug("! SIP Error: Not enough information for this event\n");
-    return 0;
+    return NULL;
   }
   ost::MutexLock m(_callMapMutex);
   SIPCall* call = 0;
@@ -1448,7 +1448,7 @@ SIPVoIPLink::findSIPCallWithCid(int cid)
     }
     iter++;
   }
-  return 0;
+  return NULL;
 }
 
 SIPCall* 
@@ -1456,7 +1456,7 @@ SIPVoIPLink::findSIPCallWithCidDid(int cid, int did)
 {
   if (cid < 1 && did < -1) {
     _debug("! SIP Error: Not enough information for this event\n");
-    return 0;
+    return NULL;
   }
   ost::MutexLock m(_callMapMutex);
   SIPCall* call = 0;
@@ -1468,7 +1468,7 @@ SIPVoIPLink::findSIPCallWithCidDid(int cid, int did)
     }
     iter++;
   }
-  return 0;
+  return NULL;
 }
 
 SIPCall*
@@ -1478,7 +1478,7 @@ SIPVoIPLink::getSIPCall(const CallID& id)
   if (call) {
     return dynamic_cast<SIPCall*>(call);
   }
-  return 0;
+  return NULL;
 }
 
 /**
