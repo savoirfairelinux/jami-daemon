@@ -49,6 +49,11 @@ public:
   bool checkNetwork (void) { return false; }
   void terminate (void);
 
+  /**
+   * Send out registration
+   *
+   * @return The new registration state (are we registered ?)
+   */
   bool setRegister (void);
 
   /**
@@ -155,8 +160,16 @@ private:
   /** IAX full name */
   std::string _fullName;
 
+  /** Timestamp of when we should refresh the registration up with
+   * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1
+   * to force a registration. */
+  int _nextRefreshStamp;
+
+  /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
+   * iax_stuff inside this class. */
   ost::Mutex _mutexIAX;
 
+  /** Connection to audio card/device */
   AudioLayer* audiolayer;
 
   /** When we receive data, we decode it inside this buffer */
@@ -164,8 +177,8 @@ private:
   /** When we send data, we encode it inside this buffer*/
   unsigned char* _sendDataEncoded;
 
-  /** After that we send the data inside this buffer if there is a format conversion or rate conversion */
-  /** Also use for getting mic-ringbuffer data */
+  /** After that we send the data inside this buffer if there is a format conversion or rate conversion. */
+  /* Also use for getting mic-ringbuffer data */
   SFLDataFormat* _dataAudioLayer;
 
   /** Buffer for 8000hz samples in conversion */

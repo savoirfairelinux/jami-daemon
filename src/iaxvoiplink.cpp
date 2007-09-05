@@ -53,6 +53,7 @@ IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
 {
   _evThread = new EventThread(this);
   _regSession = NULL;
+  _nextRefreshStamp = 0;
 
   // to get random number for RANDOM_PORT
   srand (time(NULL));
@@ -279,7 +280,10 @@ IAXVoIPLink::getEvent()
     _mutexIAX.leaveMutex();
   }
 
-  //iaxRefreshRegistrations();
+  // Refresh registration.
+  if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
+    setRegister();
+  }
 
   // thread wait 5 millisecond
   _evThread->sleep(5);
@@ -305,41 +309,48 @@ bool
 IAXVoIPLink::setRegister() 
 {
   bool result = false;
-  if (_regSession == NULL) {
-    if (_host.empty()) {
-      Manager::instance().displayConfigError("Fill host field for IAX Account");
-      return false;
-    }
-    if (_user.empty()) {
-      Manager::instance().displayConfigError("Fill user field for IAX Account");
-      return false;
-    }
 
-    // lock
-    _mutexIAX.enterMutex();
-    _regSession = iax_session_new();
-
-    if (!_regSession) {
-      _debug("error when generating new session for register");
-    } else {
-      // refresh
-      // last reg
-      char host[_host.length()+1]; 
-      strcpy(host, _host.c_str());
-      char user[_user.length()+1];
-      strcpy(user, _user.c_str());
-      char pass[_pass.length()+1]; 
-      strcpy(pass, _pass.c_str());
-      //iax_register don't use const char*
-
-      _debug("IAX Sending registration to %s with user %s\n", host, user);
-      int val = iax_register(_regSession, host, user, pass, 300);
-      _debug ("Return value: %d\n", val);
-      result = true;
-    }
-
-    _mutexIAX.leaveMutex();
+  if (_host.empty()) {
+    Manager::instance().displayConfigError("Fill host field for IAX Account");
+    return false;
   }
+  if (_user.empty()) {
+    Manager::instance().displayConfigError("Fill user field for IAX Account");
+    return false;
+  }
+
+  // lock
+  _mutexIAX.enterMutex();
+
+  if (_regSession == NULL) {
+    _regSession = iax_session_new();
+  }
+  if (!_regSession) {
+    _debug("Error when generating new session for register");
+
+  } else {
+    // refresh
+    // last reg
+    char host[_host.length()+1]; 
+    strcpy(host, _host.c_str());
+    char user[_user.length()+1];
+    strcpy(user, _user.c_str());
+    char pass[_pass.length()+1]; 
+    strcpy(pass, _pass.c_str());
+    // iax_register doesn't use const char*
+
+    _debug("IAX Sending registration to %s with user %s\n", host, user);
+    int val = iax_register(_regSession, host, user, pass, 120);
+    _debug ("Return value: %d\n", val);
+    // set the time-out to 15 seconds, after that, resend a registration request.
+    // until we unregister.
+    _nextRefreshStamp = time(NULL) + 10;
+    result = true;
+  }
+
+  // unlock
+  _mutexIAX.leaveMutex();
+
   return result;
 }
 
@@ -350,14 +361,16 @@ bool
 IAXVoIPLink::setUnregister()
 {
   if (_regSession) {
-    // lock here
+    /** @todo Should send a REGREL in setUnregister()... */
+
     _mutexIAX.enterMutex();
+    //iax_send_regrel(); doesn't exist yet :)
     iax_destroy(_regSession);
-    _regSession = NULL;
-    // unlock here
     _mutexIAX.leaveMutex();
-    return false;
+
+    _regSession = NULL;
   }
+  _nextRefreshStamp = 0;
   return false;
 }
 
@@ -738,13 +751,24 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 {
   if (event->etype == IAX_EVENT_REGREJ) {
     /* Authentication failed! */
+    _mutexIAX.enterMutex();
     iax_destroy(_regSession);
+    _mutexIAX.leaveMutex();
     _regSession = NULL;
-    Manager::instance().registrationFailed(getAccountID());
 
+    Manager::instance().registrationFailed(getAccountID());
   }
   else if (event->etype == IAX_EVENT_REGACK) {
     /* Authentication succeeded */
+    _mutexIAX.enterMutex();
+    iax_destroy(_regSession);
+    _mutexIAX.leaveMutex();
+    _regSession = NULL;
+
+    // I mean, save the timestamp, so that we re-register again in the REFRESH time.
+    // Defaults to 60, as per draft-guy-iax-03.
+    _nextRefreshStamp = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);
+
     Manager::instance().registrationSucceed(getAccountID());
   }
 }

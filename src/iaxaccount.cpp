@@ -52,7 +52,7 @@ IAXAccount::registerAccount()
 {
   if (_link && !_registered) {
     init();
-    unregisterAccount();
+    //unregisterAccount(); No need to unregister first.
     IAXVoIPLink* tmplink = dynamic_cast<IAXVoIPLink*> (_link);
     if (tmplink) {
       // Stuff needed for IAX registration
