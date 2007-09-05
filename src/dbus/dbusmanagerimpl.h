@@ -21,6 +21,7 @@
 #define __DBUSMANAGERIMPL_H__
 
 #include "callmanager.h"
+#include "configurationmanager.h"
 
 class DBusManagerImpl {
     public:
@@ -30,6 +31,7 @@ class DBusManagerImpl {
         
     private:
         CallManager * _callManager;
+        ConfigurationManager * _configurationManager;
         DBus::BusDispatcher _dispatcher;
 };
 

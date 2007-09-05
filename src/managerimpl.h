@@ -188,10 +188,10 @@ public:
   bool detachZeroconfEvents(Pattern::Observer& observer);
   bool getCallStatus(const std::string& sequenceId);
   /** 
-   * Get account list and status
-   * @param return true if there is atleast one active
+   * Get account list 
+   * @return A list of accoundIDs
    */
-  bool getAccountList(const std::string& sequenceId);
+  std::vector< std::string >  getAccountList();
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);
   bool setConfig(const std::string& section, const std::string& name, const std::string& value);

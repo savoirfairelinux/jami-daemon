@@ -1494,36 +1494,22 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
   }
 }
 
-bool 
-ManagerImpl::getAccountList(const std::string& sequenceId) 
+std::vector< std::string > 
+ManagerImpl::getAccountList() 
 {
-  bool oneActive = false;
-  TokenList tk;
-
+  std::vector< std::string > v; 
+  
   AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
     if ( iter->second != 0 ) {
       _debug("Account List: %s\n", iter->first.data()); 
-      tk.push_back(iter->first);
-      // we try to send one active account for default account on start
-      // this is not the way it should be... 
-      if ( iter->second->isEnabled() || iter->second->shouldInitOnStart()) {
-        tk.push_back("Active");
-        tk.push_back(getConfigString(iter->first,CONFIG_ACCOUNT_ALIAS));
-         //_gui->sendMessage("130", sequenceId, tk);
-        oneActive = true;
-      } else {
-        tk.push_back("Inactive");
-        tk.push_back(getConfigString(iter->first,CONFIG_ACCOUNT_ALIAS));
-         //_gui->sendMessage("131", sequenceId, tk);
-      }
-
-     tk.clear();
+      v.push_back(iter->first.data());
+      
     }
     iter++;
   }
-
-  return oneActive;
+  _debug("Size: %d\n", v.size());
+  return v;
 }
 
 //THREAD=Main

@@ -16,8 +16,9 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+#include <global.h>
 #include <callmanager.h>
+#include "../manager.h"
 
 const char* CallManager::SERVER_PATH = "/org/sflphone/SFLPhone/CallManager";
 
@@ -32,27 +33,28 @@ CallManager::placeCall( const ::DBus::String& accountID,
                         const ::DBus::String& to )
 {
     _debug("CallManager::placeCall received\n");
-
+    Manager::instance().outgoingCall(accountID, callID, to);
 }
 
 void
 CallManager::refuse( const ::DBus::String& callID )
 {
     _debug("CallManager::refuse received\n");
-
+    Manager::instance().refuseCall(callID);
 }
 
 void
 CallManager::accept( const ::DBus::String& callID )
 {
     _debug("CallManager::accept received\n");
-
+    Manager::instance().answerCall(callID);
 }
 
 void
 CallManager::hangUp( const ::DBus::String& callID )
 {
     _debug("CallManager::hangUp received\n");
+    Manager::instance().hangupCall(callID);
 
 }
 
@@ -60,34 +62,39 @@ void
 CallManager::hold( const ::DBus::String& callID )
 {
     _debug("CallManager::hold received\n");
-
+    Manager::instance().onHoldCall(callID);
 }
 
 void
 CallManager::unhold( const ::DBus::String& callID )
 {
     _debug("CallManager::unhold received\n");
-
+    Manager::instance().offHoldCall(callID);
 }
 
 void
 CallManager::transfert( const ::DBus::String& callID, const ::DBus::String& to )
 {
     _debug("CallManager::transfert received\n");
-
+    Manager::instance().transferCall(callID, to);
 }
 
 void
 CallManager::setVolume( const ::DBus::String& device, const ::DBus::Double & value )
 {
     _debug("CallManager::setVolume received\n");
-
+    //TODO
+    Manager::instance().setSpkrVolume(value);
+    Manager::instance().setMicVolume(value);
 }
 
 ::DBus::Double 
 CallManager::getVolume( const ::DBus::String& device )
 {
     _debug("CallManager::getVolume received\n");
+    //TODO
+    Manager::instance().getSpkrVolume();
+    Manager::instance().getMicVolume();
     return 0;
 }
 

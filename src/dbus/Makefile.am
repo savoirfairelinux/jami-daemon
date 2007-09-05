@@ -6,6 +6,7 @@ noinst_LTLIBRARIES = libdbus.la
 
 libdbus_la_SOURCES = \
     callmanager.cpp \
+	configurationmanager.cpp  \
 	dbusmanagerimpl.cpp
 
 libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
@@ -15,5 +16,6 @@ libdbus_la_LIBADD =
 noinst_HEADERS = \
 	callmanager-glue.h \
 	callmanager.h  \
+	configurationmanager.h  \
 	dbusmanager.h \
 	dbusmanagerimpl.h

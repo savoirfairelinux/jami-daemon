@@ -178,7 +178,8 @@ GuiFramework::getCallStatus(const std::string& sequenceId)
 bool 
 GuiFramework::getAccountList(const std::string& sequenceId)
 {
-  return Manager::instance().getAccountList(sequenceId);
+   Manager::instance().getAccountList(  );
+   return true;
 }
 const CallID&
 GuiFramework::getCurrentId() 
