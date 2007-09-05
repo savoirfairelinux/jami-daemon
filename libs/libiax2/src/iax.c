@@ -1792,11 +1792,6 @@ int iax_answer(struct iax_session *session)
 	return send_command(session, AST_FRAME_CONTROL, AST_CONTROL_ANSWER, 0, NULL, 0, -1);
 }
 
-int iax_vnak(struct iax_session *session)
-{
-	return send_command(session, AST_FRAME_IAX, IAX_COMMAND_VNAK, 0, NULL, 0, -1);
-}
-
 int iax_load_complete(struct iax_session *session)
 {
 	return send_command(session, AST_FRAME_HTML, AST_HTML_LDCOMPLETE, 0, NULL, 0, -1);
