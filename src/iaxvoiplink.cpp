@@ -30,6 +30,11 @@
 #include <math.h>
 
 
+/** @todo Remove the fstream and iostream stuff */
+#include <fstream>  // fstream + iostream pour fstream debugging..
+#include <iostream> // removeable...
+
+
 #define IAX_BLOCKING    1
 #define IAX_NONBLOCKING 0
 
@@ -49,7 +54,8 @@
 
 
 IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
- : VoIPLink(accountID)
+  : VoIPLink(accountID)
+  , _fstream("/tmp/audio.dat", std::ofstream::binary) /** @todo Remove this */
 {
   _evThread = new EventThread(this);
   _regSession = NULL;
@@ -216,7 +222,7 @@ IAXVoIPLink::getEvent()
 void
 IAXVoIPLink::sendAudioFromMic(void)
 {
-  IAXCall* currentCall = dynamic_cast<IAXCall*>(getCall(Manager::instance().getCurrentCallId()));
+  IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
   AudioCodec* audiocodec = NULL;
   
   if (!currentCall) {
@@ -225,7 +231,12 @@ IAXVoIPLink::sendAudioFromMic(void)
   }
 
   // Just make sure the currentCall is in state to receive audio right now.
-  if (currentCall->getConnectionState() != Call::Connected) {
+  //_debug("Here we get: connectionState: %d   state: %d \n",
+  // currentCall->getConnectionState(),
+  // currentCall->getState());
+
+  if (currentCall->getConnectionState() != Call::Connected ||
+      currentCall->getState() != Call::Active) {
     return;
   }
 
@@ -246,16 +257,22 @@ IAXVoIPLink::sendAudioFromMic(void)
     // we have to get 20ms of data from the mic *20/1000 = /50
     // rate/50 shall be lower than IAX__20S_48KHZ_MAX
     int maxBytesToGet = audiolayer->getSampleRate()/50*sizeof(SFLDataFormat);
+
+    // We want at least 70% of a packet, because we want 20ms chunks
+    //int minBytesToGet = maxBytesToGet * 70 / 100;
     
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
-    
+
     // take the lowest
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-    //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
+    _debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
     
     // Get bytes from micRingBuffer to data_from_mic
     int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
+
+    // Audio ici est PARFAIT
+
     int16* toIAX = NULL;
     if (audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
       SRC_DATA src_data;
@@ -266,6 +283,8 @@ IAXVoIPLink::sendAudioFromMic(void)
       src_data.data_in = _floatBuffer48000; 
 #endif
       
+      // Audio parfait à ce point.
+
       double factord = (double) audiocodec->getClockRate() / audiolayer->getSampleRate();
       
       src_data.src_ratio = factord;
@@ -277,9 +296,14 @@ IAXVoIPLink::sendAudioFromMic(void)
       src_process(_src_state_mic, &src_data);
       
       nbSample = src_data.output_frames_gen;
-      
+
+      // Bon, l'audio en float 8000 est laid mais yé consistant.
+
       src_float_to_short_array (_floatBuffer8000, _intBuffer8000, nbSample);
       toIAX = _intBuffer8000;
+
+      // Audio bon ici aussi..
+
     } else {
 #ifdef DATAFORMAT_IS_FLOAT
       // convert _receiveDataDecoded to float inside _receiveData
@@ -291,17 +315,31 @@ IAXVoIPLink::sendAudioFromMic(void)
 #endif
     }
 
+    // DEBUG
+    _fstream.write((char *) toIAX, nbSample*sizeof(int16));
+    _fstream.flush();
+
+
+    // NOTE: L'audio ici est bon.
+
+    // LE PROBLÈME est dans cette snippet de fonction:
     if ( nbSample < (IAX__20S_8KHZ_MAX - 10) ) { // if only 10 is missing, it's ok
       // fill end with 0...
-      //_debug("begin: %p, nbSample: %d\n", toIAX, nbSample);
-      //_debug("has to fill: %d chars at %p\n", (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16), toIAX + nbSample);
+      _debug("begin: %p, nbSample: %d\n", toIAX, nbSample);
+      _debug("has to fill: %d chars at %p\n", (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16), toIAX + nbSample);
       memset(toIAX + nbSample, 0, (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16));
       nbSample = IAX__20S_8KHZ_MAX;
     }
+
     //_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toIAX[0], toIAX[1], toIAX[2]);
     
+    // NOTE: Le son dans toIAX (nbSamle*sizeof(int16)) est mauvais.
+
     // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
     int compSize = audiocodec->codecEncode(_sendDataEncoded, toIAX, nbSample*sizeof(int16));
+
+      
+
 
     // Send it out!
     _mutexIAX.enterMutex();
@@ -331,7 +369,7 @@ IAXVoIPLink::getIAXCall(const CallID& id)
   if (call) {
     return dynamic_cast<IAXCall*>(call);
   }
-  return 0;
+  return NULL;
 }
 
 

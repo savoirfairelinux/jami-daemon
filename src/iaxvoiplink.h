@@ -24,6 +24,10 @@
 #include "global.h"
 #include <samplerate.h>
 
+/** @todo Remove this fstream/iostream stuff */
+#include <fstream> // fstream + iostream for _fstream debugging...
+#include <iostream>
+
 
 class EventThread;
 class IAXCall;
@@ -203,8 +207,10 @@ private:
   /** libsamplerate error */
   int           _src_err;
 
-  /** Current IAX call pointer, used for sending, change when starting audio, switching */
-  //IAXCall* _currentCall; 
+  /** Debugging output file 
+   * @todo Remove this */
+  std::ofstream _fstream;
+
 };
 
 #endif
