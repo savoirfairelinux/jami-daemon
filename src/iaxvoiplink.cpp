@@ -166,13 +166,12 @@ IAXVoIPLink::terminateIAXCall()
 void
 IAXVoIPLink::getEvent() 
 {
-  // mutex here
-  _mutexIAX.enterMutex();
-
-  iax_event* event = NULL;
   IAXCall* call = NULL;
-  while ( (event = iax_get_event(IAX_NONBLOCKING)) != NULL ) {
 
+  // lock iax_ stuff..
+  _mutexIAX.enterMutex();
+  iax_event* event = NULL;
+  while ( (event = iax_get_event(IAX_NONBLOCKING)) != NULL ) {
     // If we received an 'ACK', libiax2 tells apps to ignore them.
     if (event->etype == IAX_EVENT_NULL) {
       continue;
@@ -183,31 +182,66 @@ IAXVoIPLink::getEvent()
     call = iaxFindCallBySession(event->session);
 
     if (call) {
-
-      //_debug("  - We've got an associated call, handle call event\n");
+      // We know that call, deal with it
       iaxHandleCallEvent(event, call);
-
-    } else if (event->session && event->session == _regSession) {
-      
-      //_debug("  - We've got an associated REGISTRATION session, handle registration process\n");
-      // in iaxclient, there is many session handling, here, only one
+    }
+    else if (event->session && event->session == _regSession) {
+      // This is a registration session, deal with it
       iaxHandleRegReply(event);
-      
-    } else {
-      
-      //_debug ("  - We've got some other event, deal with them alone.\n");
+    }
+    else {
+      // We've got an event before it's associated with any call
       iaxHandlePrecallEvent(event);
-      
     }
     
     iax_event_free(event);
   }
-
   _mutexIAX.leaveMutex();
 
+
+  // Do the doodle-moodle to send audio from the microphone to the IAX channel.
+  sendAudioFromMic();
+
+
+  // Refresh registration.
+  if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
+    setRegister();
+  }
+
+  // thread wait 5 millisecond
+  _evThread->sleep(5);
+}
+
+
+void
+IAXVoIPLink::sendAudioFromMic(void)
+{
+  IAXCall* currentCall = dynamic_cast<IAXCall*>(getCall(Manager::instance().getCurrentCallId()));
+  AudioCodec* audiocodec = NULL;
+  
+  if (!currentCall) {
+    // Let's mind our own business.
+    return;
+  }
+
+  // Just make sure the currentCall is in state to receive audio right now.
+  if (currentCall->getConnectionState() != Call::Connected) {
+    return;
+  }
+
+  audiocodec = currentCall->getAudioCodec();
+
+  if (!audiocodec) {
+    // Audio codec still not determined.
+    if (audiolayer) {
+      // To keep latency low..
+      audiolayer->flushMic();
+    }
+    return;
+  }
+
   // Send sound here
-  if (_currentCall && audiolayer) {
-    AudioCodec* audiocodec = _currentCall->getAudioCodec();
+  if (audiolayer) {
 
     // we have to get 20ms of data from the mic *20/1000 = /50
     // rate/50 shall be lower than IAX__20S_48KHZ_MAX
@@ -272,24 +306,21 @@ IAXVoIPLink::getEvent()
     // Send it out!
     _mutexIAX.enterMutex();
     // Make sure the session and the call still exists.
-    if (_currentCall->getSession()) {
-      if ( iax_send_voice(_currentCall->getSession(), _currentCall->getFormat(), (unsigned char*)_sendDataEncoded, compSize, nbSample) == -1) {
+    if (currentCall->getSession()) {
+      if ( iax_send_voice(currentCall->getSession(), currentCall->getFormat(), (unsigned char*)_sendDataEncoded, compSize, nbSample) == -1) {
 	_debug("IAX: Error sending voice data.\n");
       }
     }
     _mutexIAX.leaveMutex();
   }
-
-  // Refresh registration.
-  if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
-    setRegister();
-  }
-
-  // thread wait 5 millisecond
-  _evThread->sleep(5);
 }
 
 
+/*
+void IAXVoIPLink::recvAudioForSpkr(void) 
+{
+}
+*/
 
 
 
@@ -573,7 +604,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
   case IAX_EVENT_HANGUP:
     Manager::instance().peerHungupCall(id); 
     if (Manager::instance().isCurrentCall(id)) {
-      _currentCall = NULL;
       audiolayer->stopStream();
       // stop audio
     }
@@ -584,7 +614,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     Manager::instance().peerHungupCall(id); 
     if (Manager::instance().isCurrentCall(id)) {
       // stop audio
-      _currentCall = NULL;
       audiolayer->stopStream();
     }
     removeCall(id);
@@ -609,7 +638,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
       }
       
       Manager::instance().peerAnsweredCall(id);
-      _currentCall = call;
       audiolayer->startStream();
       // start audio here?
     } else {

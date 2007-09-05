@@ -130,6 +130,11 @@ private:
   void iaxHandlePrecallEvent(iax_event* event);
 
   /**
+   * Work out the audio data from Microphone to IAX2 channel
+   */
+  void sendAudioFromMic(void);
+
+  /**
    * Send an outgoing call invite to iax
    * @param call An IAXCall pointer
    */
@@ -199,7 +204,7 @@ private:
   int           _src_err;
 
   /** Current IAX call pointer, used for sending, change when starting audio, switching */
-  IAXCall* _currentCall; 
+  //IAXCall* _currentCall; 
 };
 
 #endif
