@@ -439,6 +439,10 @@ IAXVoIPLink::answer(const CallID& id)
   call->setState(Call::Active);
   call->setConnectionState(Call::Connected);
 
+  // Start audio
+  audiolayer->startStream();
+  audiolayer->flushMic();
+
   return true;
 }
 
@@ -638,6 +642,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
       }
       
       Manager::instance().peerAnsweredCall(id);
+      audiolayer->flushMic();
       audiolayer->startStream();
       // start audio here?
     } else {
