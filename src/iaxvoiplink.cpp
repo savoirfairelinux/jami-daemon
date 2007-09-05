@@ -31,8 +31,8 @@
 
 
 /** @todo Remove the fstream and iostream stuff */
-#include <fstream>  // fstream + iostream pour fstream debugging..
-#include <iostream> // removeable...
+//#include <fstream>  // fstream + iostream pour fstream debugging..
+//#include <iostream> // removeable...
 
 
 #define IAX_BLOCKING    1
@@ -45,8 +45,8 @@
 
 // from IAXC : iaxclient.h
 
-#define IAX__20S_8KHZ_MAX   320 // 320 samples
-#define IAX__20S_48KHZ_MAX  1920 // 320*6 samples, 6 = 48000/8000
+#define IAX__20S_8KHZ_MAX   160 // 320 //320 samples
+#define IAX__20S_48KHZ_MAX  960 // 1920 // 320*6 samples = 1920, 6 = 48000/8000 
 
 #define CHK_VALID_CALL   if (call == NULL) { _debug("IAX: Call doesn't exists\n"); \
                                              return false; }
@@ -55,7 +55,7 @@
 
 IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
   : VoIPLink(accountID)
-  , _fstream("/tmp/audio.dat", std::ofstream::binary) /** @todo Remove this */
+//  , _fstream("/tmp/audio.dat", std::ofstream::binary) /** @todo Remove this */
 {
   _evThread = new EventThread(this);
   _regSession = NULL;
@@ -215,7 +215,7 @@ IAXVoIPLink::getEvent()
   }
 
   // thread wait 5 millisecond
-  _evThread->sleep(5);
+  _evThread->sleep(3);
 }
 
 
@@ -258,11 +258,13 @@ IAXVoIPLink::sendAudioFromMic(void)
     // rate/50 shall be lower than IAX__20S_48KHZ_MAX
     int maxBytesToGet = audiolayer->getSampleRate()/50*sizeof(SFLDataFormat);
 
-    // We want at least 70% of a packet, because we want 20ms chunks
-    //int minBytesToGet = maxBytesToGet * 70 / 100;
-    
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
+
+    if (availBytesFromMic < maxBytesToGet) {
+      // We need packets full!
+      return;
+    }
 
     // take the lowest
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
@@ -315,14 +317,11 @@ IAXVoIPLink::sendAudioFromMic(void)
 #endif
     }
 
-    // DEBUG
-    _fstream.write((char *) toIAX, nbSample*sizeof(int16));
-    _fstream.flush();
-
-
     // NOTE: L'audio ici est bon.
 
+    /*
     // LE PROBLÈME est dans cette snippet de fonction:
+    // C'est une fonction destructrice ! On n'en veut pas!
     if ( nbSample < (IAX__20S_8KHZ_MAX - 10) ) { // if only 10 is missing, it's ok
       // fill end with 0...
       _debug("begin: %p, nbSample: %d\n", toIAX, nbSample);
@@ -330,10 +329,16 @@ IAXVoIPLink::sendAudioFromMic(void)
       memset(toIAX + nbSample, 0, (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16));
       nbSample = IAX__20S_8KHZ_MAX;
     }
-
+    */
     //_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toIAX[0], toIAX[1], toIAX[2]);
-    
-    // NOTE: Le son dans toIAX (nbSamle*sizeof(int16)) est mauvais.
+    // NOTE: Le son dans toIAX (nbSamle*sizeof(int16)) est mauvais,
+    // s'il passe par le snippet précédent.
+
+
+    // DEBUG
+    //_fstream.write((char *) toIAX, nbSample*sizeof(int16));
+    //_fstream.flush();
+
 
     // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
     int compSize = audiocodec->codecEncode(_sendDataEncoded, toIAX, nbSample*sizeof(int16));
@@ -751,7 +756,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 	audiocodec = call->getAudioCodec();
       }
 
-      _debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
+      //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
      
       unsigned char* data = (unsigned char*)event->data;
       unsigned int size   = event->datalen;

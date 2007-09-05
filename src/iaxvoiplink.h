@@ -209,7 +209,7 @@ private:
 
   /** Debugging output file 
    * @todo Remove this */
-  std::ofstream _fstream;
+  //std::ofstream _fstream;
 
 };
 
