@@ -37,10 +37,6 @@ AC_CONFIG_FILES([src/Makefile \
   src/audio/Makefile \
   src/audio/gsm/Makefile \
   src/config/Makefile \
-  src/gui/Makefile \
-  src/gui/qt/Makefile \
-  src/gui/cli/Makefile \
-  src/gui/server/Makefile \
   src/dbus/Makefile \
   src/zeroconf/Makefile])
   
