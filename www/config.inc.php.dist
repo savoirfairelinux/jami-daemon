@@ -15,6 +15,6 @@ $USE_BRANCH = 'master';
 $CACHE_PATH = 'cache';
 
 /** File prefix (inside the git trees) */
-$PREFIX = 'www';
+$PREFIX = 'doc';
 
 ?>

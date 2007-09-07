@@ -20,7 +20,7 @@
 #ifndef SIPVOIPLINK_H
 #define SIPVOIPLINK_H
 
-#include "voIPLink.h"
+#include "voiplink.h"
 #include <string>
 #include <eXosip2/eXosip.h>
 #include "audio/audiortp.h"

@@ -19,9 +19,14 @@
 #ifndef IAXVOIPLINK_H
 #define IAXVOIPLINK_H
 
-#include "voIPLink.h"
-#include <iax-client.h>
+#include "voiplink.h"
+#include <iax/iax-client.h>
 #include "global.h"
+#include <samplerate.h>
+
+/** @todo Remove this fstream/iostream stuff */
+#include <fstream> // fstream + iostream for _fstream debugging...
+#include <iostream>
 
 
 class EventThread;
@@ -48,7 +53,21 @@ public:
   bool checkNetwork (void) { return false; }
   void terminate (void);
 
+  /**
+   * Send out registration
+   *
+   * @return The new registration state (are we registered ?)
+   */
   bool setRegister (void);
+
+  /**
+   * Destroy registration session
+   *
+   * @todo Send an IAX_COMMAND_REGREL to force unregistration upstream.
+   *       Urgency: low
+   *
+   * @return bool If we're registered upstream
+   */
   bool setUnregister (void);
 
   Call* newOutgoingCall(const CallID& id, const std::string& toUrl);
@@ -96,31 +115,70 @@ private:
   void iaxHandleCallEvent(iax_event* event, IAXCall* call);
 
   /**
+   * Handle the VOICE events specifically
+   * @param event The iax_event containing the IAX_EVENT_VOICE
+   * @param call  The associated IAXCall
+   */
+  void iaxHandleVoiceEvent(iax_event* event, IAXCall* call);
+
+  /**
    * Handle IAX Registration Reply event
    * @param event An iax_event pointer
    */
   void iaxHandleRegReply(iax_event* event);
 
   /**
-   * Send an outgoing call invite to iax
+   * Handle IAX pre-call setup-related events
+   * @param event An iax_event pointer
    */
-  bool iaxOutgoingInvite(IAXCall* Call);
+  void iaxHandlePrecallEvent(iax_event* event);
 
+  /**
+   * Work out the audio data from Microphone to IAX2 channel
+   */
+  void sendAudioFromMic(void);
+
+  /**
+   * Send an outgoing call invite to iax
+   * @param call An IAXCall pointer
+   */
+  bool iaxOutgoingInvite(IAXCall* call);
+
+
+  /**
+   * Convert CodecMap to IAX format using IAX constants
+   * @return `format` ready to go into iax_* calls
+   */
+  int iaxCodecMapToFormat(IAXCall* call);
+
+  /** Threading object */
   EventThread* _evThread;
+
   /** registration session : 0 if not register */
   struct iax_session* _regSession;
 
   /** IAX Host */
   std::string _host;
+
   /** IAX User */
   std::string _user;
+
   /** IAX Password */
   std::string _pass;
 
+  /** IAX full name */
+  std::string _fullName;
+
+  /** Timestamp of when we should refresh the registration up with
+   * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1
+   * to force a registration. */
+  int _nextRefreshStamp;
+
+  /** Mutex for iax_ calls, since we're the only one dealing with the incorporated
+   * iax_stuff inside this class. */
   ost::Mutex _mutexIAX;
 
- // extra pointer / not dynamic yet
-  AudioCodec* audiocodec;
+  /** Connection to audio card/device */
   AudioLayer* audiolayer;
 
   /** When we receive data, we decode it inside this buffer */
@@ -128,8 +186,8 @@ private:
   /** When we send data, we encode it inside this buffer*/
   unsigned char* _sendDataEncoded;
 
-  /** After that we send the data inside this buffer if there is a format conversion or rate conversion */
-  /** Also use for getting mic-ringbuffer data */
+  /** After that we send the data inside this buffer if there is a format conversion or rate conversion. */
+  /* Also use for getting mic-ringbuffer data */
   SFLDataFormat* _dataAudioLayer;
 
   /** Buffer for 8000hz samples in conversion */
@@ -140,8 +198,19 @@ private:
   /** Buffer for 8000hz samples for mic conversion */
   int16* _intBuffer8000;
 
-  /** Current IAX call pointer, used for sending, change when starting audio, switching */
-  IAXCall* _currentCall; 
+  /** libsamplerate converter for incoming voice */
+  SRC_STATE*    _src_state_spkr;
+
+  /** libsamplerate converter for outgoing voice */
+  SRC_STATE*    _src_state_mic;
+
+  /** libsamplerate error */
+  int           _src_err;
+
+  /** Debugging output file 
+   * @todo Remove this */
+  //std::ofstream _fstream;
+
 };
 
 #endif

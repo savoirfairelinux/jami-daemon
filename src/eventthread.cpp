@@ -19,7 +19,7 @@
  */
 
 #include "eventthread.h"
-#include "voIPLink.h"
+#include "voiplink.h"
 
 EventThread::EventThread (VoIPLink* link) : Thread () 
 {

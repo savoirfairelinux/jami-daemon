@@ -39,7 +39,7 @@
 #include "audio/tonelist.h"
 
 #include "accountcreator.h" // create new account
-#include "voIPLink.h"
+#include "voiplink.h"
 
 #include "user_cfg.h"
 #include "gui/guiframework.h"
@@ -225,6 +225,7 @@ ManagerImpl::answerCall(const CallID& id)
 
   if (!getAccountLink(accountid)->answer(id)) {
     // error when receiving...
+    
     removeCallAccount(id);
     return false;
   }
@@ -583,7 +584,9 @@ bool
 ManagerImpl::incomingCall(Call* call, const AccountID& accountId) 
 {
   _debug("Incoming call\n");
+
   associateCallToAccount(call->getCallId(), accountId);
+
   if ( !hasCurrentCall() ) {
     call->setConnectionState(Call::Ringing);
     ringtone();
@@ -595,13 +598,16 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
   std::string from = call->getPeerName();
   std::string number = call->getPeerNumber();
 
-  if ( !number.empty() ) {
+  if (from != "" && number != "") {
     from.append(" <");
+    from.append(number);
+    from.append(">");
+  } else if ( from.empty() ) {
+    from.append("<");
     from.append(number);
     from.append(">");
   }
   _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
-
   return true;
 }
 

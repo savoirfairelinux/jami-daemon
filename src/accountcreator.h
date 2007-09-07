@@ -29,12 +29,12 @@ class Account;
  */
 class AccountCreator{
 public:
-    ~AccountCreator();
-   /**
-    * Public account type
-    */
-   enum AccountType {SIP_ACCOUNT, IAX_ACCOUNT };
-
+  ~AccountCreator();
+  /**
+   * Public account type
+   */
+  enum AccountType {SIP_ACCOUNT, IAX_ACCOUNT };
+  
   /**
    * Create a new account or null
    * @param type type of the account
@@ -43,8 +43,8 @@ public:
   static Account* createAccount(AccountType type, AccountID accountID);
 
 private:
-   /** Hidden creator */
-    AccountCreator();
+  /** Hidden creator */
+  AccountCreator();
 };
 
 #endif

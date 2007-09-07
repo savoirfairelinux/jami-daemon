@@ -17,11 +17,12 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "account.h"
-#include "voIPLink.h"
+#include "voiplink.h"
+#include "manager.h"
 
 Account::Account(const AccountID& accountID) : _accountID(accountID)
 {
-  _link = 0;
+  _link = NULL;
 
   _shouldInitOnStart = false;
   _shouldRegisterOnStart = false;
@@ -33,5 +34,27 @@ Account::Account(const AccountID& accountID) : _accountID(accountID)
 
 Account::~Account()
 {
-  delete _link; _link = 0;
+  delete _link; _link = NULL;
 }
+
+
+void
+Account::initConfig(Conf::ConfigTree& config) {
+  std::string section(_accountID);
+  std::string type_str("string");
+  std::string type_int("int");
+
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ENABLE,"1", type_int));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_AUTO_REGISTER, "1", type_int));
+  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ALIAS, _("My account"), type_str));
+}
+
+
+
+void
+Account::loadConfig() 
+{
+  _shouldInitOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
+  _shouldRegisterOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_AUTO_REGISTER) ? true : false;
+}
+

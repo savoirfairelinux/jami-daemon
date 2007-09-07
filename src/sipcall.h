@@ -51,7 +51,7 @@ public:
   void setTid(int tid) { _tid = tid; } 
 
   /**
-   * Answer incoming call correclty before telling the user
+   * Setup incoming call, and verify for errors, before ringing the user.
    * @param event eXosip Event
    */
   bool SIPCallInvite(eXosip_event_t *event);
@@ -71,6 +71,7 @@ public:
    * @return true if ok
    */
   bool SIPCallAnswered(eXosip_event_t *event);
+
   /**
    * We retreive final SDP info if they changed
    * @param event eXosip Event

@@ -10,19 +10,66 @@ Makefile
 *.m4
 Makefile.in
 *.spec
-*moc*.*
 /config.*
 
 # Ignore rendered docs
-doc/html
+doc/doxygen/html-everything
+doc/doxygen/html-sflphoned
+doc/doxygen/html-gui-qt
+doc/*.html
 
 # Ignore buildsys stuff
-autom4te.cache
+/autom4te.cache
+/configure
+/depcomp
+/missing
+/ltmain.sh
+/libtool
+/install-sh
+/stamp-h1
 
-# Ignore temp portaudio stuff
+# Ignore QT automatically-rendered stuff
+/src/gui/qt/*moc*.*
+/src/gui/qt/ConfigurationPanel.h
+/src/gui/qt/ConfigurationPanelui.cpp
+/src/gui/qt/qmake_image_collection.cpp
+
+# Ignore built stuff
+/src/gui/cli/sflphone-cli
+/src/gui/qt/sflphone-qt
+/src/sflphoned
+/src/sflphone
+/src/.libs
+
+
+# Ignore temp libs stuff
 tools/portaudio
+
+
+# Ignore sub-modules stuff
+## libiax2
+/libs/libiax2/doc/html
+/libs/libiax2/config.*
+/libs/libiax2/autom4te.cache
+/libs/libiax2/src/.libs
+/libs/libiax2/libtool
+/libs/libiax2/ltmain.sh
+/libs/libiax2/iax-config
+/libs/libiax2/configure
+
+## taxidermy
+/libs/taxidermy/*moc*.*
+
+
 
 # Ignore temp files
 *~
 
+# Ignore website stuff
+/www/cache
+/www/config.inc.php
+/www/lighttpd.*
 
+
+# Ignore platform packaging temp files
+/platform/debian/changelog

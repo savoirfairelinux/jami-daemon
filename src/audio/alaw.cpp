@@ -23,9 +23,8 @@
 
 // 8 PCMA A 8000 1 [RFC3551]
 Alaw::Alaw(int payload)
- : AudioCodec(payload, "PCMA")
+ : AudioCodec(payload, "G711a")
 {
-  _officialName = "G711a";
   _clockRate = 8000;
   _channel   = 1;
 }

@@ -1,0 +1,11 @@
+// AsciiDoc file
+
+Screenshots
+-----------
+
+.Screenshot de 2007
+sflimage::images/SflphonePOuetpoUEt.png[SFLphone qt3]
+
+.Screenshot de SFLphone 0.7
+sflimage::images/sflphone0.7.png[SFLphone 0.7]
+

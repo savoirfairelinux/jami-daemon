@@ -12,9 +12,12 @@ ZEROCONFFLAGS =
 endif
 
 if USE_IAX
+# Use the global instead of locally built
 IAX_LIBS = $(top_builddir)/libs/libiax2/src/libiax.la
+#IAX_LIBS =
 IAX_FLAGS = -DUSE_IAX
-IAX_CFLAGS = -I$(top_srcdir)/libs/libiax2/src/
+#IAX_CFLAGS = -I$(top_srcdir)/libs/libiax2/src/
+IAX_CFLAGS =
 IAXSOURCES = iaxaccount.cpp iaxvoiplink.cpp iaxcall.cpp
 IAXHEADERS = iaxaccount.h iaxvoiplink.h iaxcall.h
 else
@@ -27,7 +30,7 @@ endif
 
 SUBDIRS = audio config gui dbus $(ZEROCONFDIR)
 
-sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voIPLink.cpp \
+sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 		managerimpl.cpp	observer.cpp \
 		account.cpp sipaccount.cpp accountcreator.cpp \
                 sipvoiplink.cpp call.cpp sipcall.cpp \
@@ -39,7 +42,8 @@ sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone
 sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) 
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES) $(libdbuscpp_CFLAGS)
 
-#libsflphone_la_LDFLAGS= -version-info 0:1:0
+
+# libsflphone_la_LDFLAGS= -version-info 0:1:0
 libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/stund/libstun.la \
 	$(top_builddir)/libs/utilspp/libutilspp.la \
@@ -53,7 +57,7 @@ libsflphone_la_SOURCES =
 
 noinst_LTLIBRARIES = libsflphone.la
 noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h user_cfg.h \
-                 voIPLink.h \
+                 voiplink.h \
 		 account.h sipaccount.h accountcreator.h \
                  sipvoiplink.h  call.h  sipcall.h \
 		 $(IAXHEADERS)

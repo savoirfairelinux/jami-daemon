@@ -33,9 +33,26 @@ typedef std::string CallID;
  */
 class Call{
 public:
-    enum CallType {Incoming, Outgoing};
-    enum ConnectionState {Disconnected, Trying, Progressing, Ringing, Connected };
-    enum CallState {Inactive, Active, Hold, Busy, Refused, Error};
+  /**
+   * This determines if the call originated from the local user (Outgoing)
+   * or from some remote peer (Incoming).
+   */
+  enum CallType {Incoming, Outgoing};
+  
+  /**
+   * Tell where we're at with the call. The call gets Connected when we know
+   * from the other end what happened with out call. A call can be 'Connected'
+   * even if the call state is Busy, Refused, or Error.
+   *
+   * Audio should be transmitted when ConnectionState = Connected AND
+   * CallState = Active.
+   */
+  enum ConnectionState {Disconnected, Trying, Progressing, Ringing, Connected};
+
+  /**
+   * The Call State.
+   */
+  enum CallState {Inactive, Active, Hold, Busy, Refused, Error};
 
     /**
      * Constructor of a call

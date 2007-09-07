@@ -31,7 +31,8 @@
 #include <samplerate.h>
 
 #include "../global.h"
-/** maximum of byte inside an incoming packet 
+
+/** maximum bytes inside an incoming packet 
  *  8000 sampling/s * 20s/1000 = 160
  */
 #define RTP_20S_8KHZ_MAX 160
@@ -77,9 +78,13 @@ private:
   /** Debugging output file */
   //std::ofstream _fstream;
 
-  /** libsamplerate-related */
+   /** libsamplerate converter for incoming voice */
   SRC_STATE*    _src_state_spkr;
+
+  /** libsamplerate converter for outgoing voice */
   SRC_STATE*    _src_state_mic;
+
+  /** libsamplerate error */
   int           _src_err;
 
   void initAudioRtpSession(void);

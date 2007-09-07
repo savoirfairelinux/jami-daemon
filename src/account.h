@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -32,13 +32,13 @@ typedef std::string AccountID;
 #define CONFIG_ACCOUNT_ALIAS  "Account.alias"
 
 /**
- * Class account is an interface to protocol account (sipaccount, aixaccount)
+ * Class account is an interface to protocol account (SIPAccount, IAXAccount)
  * It can be enable on loading or activate after.
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  * @author Yan Morin 
  */
 class Account{
-public:
+ public:
     Account(const AccountID& accountID);
 
     virtual ~Account();
@@ -46,8 +46,12 @@ public:
   /**
    * Load the default properties for the account
    */
-  virtual void initConfig(Conf::ConfigTree& config) = 0;
-  virtual void loadConfig() = 0;
+  virtual void initConfig(Conf::ConfigTree& config);
+
+  /**
+   * Load the settings for this account.
+   */
+  virtual void loadConfig();
 
   /**
    * Get the account ID
@@ -75,7 +79,7 @@ public:
 
   /**
    * Init the voiplink to run (event listener)
-   * @return false is an error occurs
+   * @return false if an error occurs
    */
   virtual bool init() = 0;
 
@@ -92,8 +96,8 @@ public:
   bool shouldInitOnStart() {return _shouldInitOnStart; }
 
   /**
-   * Tell if we should init the account on start
-   * @return true if we must init the link
+   * Tell if we should register the account on start
+   * @return true if we must register the account
    */
   bool shouldRegisterOnStart() {return _shouldRegisterOnStart; }
 
@@ -110,7 +114,7 @@ public:
 
 private:
   /**
-   * Create a unique voIPLink() depending on the protocol
+   * Create a unique VoIPLink() depending on the protocol
    * Multiple call to this function do nothing (if the voiplink pointer is 0)
    * @return false if an error occurs
    */
@@ -129,24 +133,24 @@ protected:
 
   /**
    * Tells if the link should be start on loading or not
-   * Modified by the configuration
+   * Modified by the configuration (key: ENABLED)
    */
   bool _shouldInitOnStart;
 
   /**
    * Tells if we should register automatically on startup
-   * Modified by the configuration
+   * Modified by the configuration (key: AUTO-REGISTER)
    */
   bool _shouldRegisterOnStart;
 
   /**
-   * Tells if the link is enabled or not
+   * Tells if the link is enabled or not.
    * Modified by init/terminate
    */
   bool _enabled;
 
   /**
-   * Tells if the link is registered or not
+   * Tells if the link is registered or not.
    * Modified by unregister/register
    */
   bool _registered;

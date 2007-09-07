@@ -20,7 +20,8 @@
 #define IAXCALL_H
 
 #include "call.h"
-#include <iax-client.h>
+#include <iax/iax-client.h>
+#include <iax/frame.h>
 
 /**
  * IAXCall are IAX implementation of a normal Call 
@@ -33,7 +34,7 @@ public:
 
     ~IAXCall();
 
-    /** Get the session pointer or 0 */
+    /** Get the session pointer or NULL */
     struct iax_session* getSession() { return _session; }
 
     /** Set the session pointer 
@@ -41,12 +42,51 @@ public:
      */
     void setSession(struct iax_session* session) { _session = session; }
 
-    void setFormat(int format) { _format = format; }
+    /**
+     * Set format (one single bit
+     *
+     * This function sets the _audioCodec variable with the correct
+     * codec.
+     */
+    void setFormat(int format);
+
+    /**
+     * Get format for the voice codec used
+     *
+     * Bitmask for codecs defined in iax/frame.h
+     */
     int getFormat() { return _format; }
-    
+
+
+    /**
+     * Get the bitwise list of supported formats
+     */
+    int getSupportedFormat();
+
+    /**
+     * Return a format (int) with the first matching codec selected.
+     * 
+     * This considers the order of the appearance in the CodecMap,
+     * thus, the order of preference.
+     *
+     * NOTE: Everything returned is bound to the content of the local
+     *       CodecMap, so it won't return format values that aren't valid
+     *       in this call context.
+     *
+     * @param needles  The format(s) (bitwise) you are looking for to match
+     * @return The matching format, thus 0 if none matches
+     */
+    int getFirstMatchingFormat(int needles);
+
+
 private:
-    // each call is associate to a session
+    /** Each call is associated with an iax_session */
     struct iax_session* _session;
+
+    /**
+     * Format currently in use in the conversation,
+     * sent in each outgoing voice packet.
+     */
     int _format;
 };
 
