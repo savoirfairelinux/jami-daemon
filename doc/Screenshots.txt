@@ -8,6 +8,8 @@ Upcoming releases
 
 Screenshot of the new SFLphone-GTK client will be here soon.
 
+.New SFLphone-GTK client (ver. 0.8)
+sflimage::images/screenshots/sflphone_gtk_0.8.png[New SFLphone GTK client]
 
 
 Historical
