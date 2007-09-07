@@ -87,17 +87,31 @@ function check_cache_path() {
  * @return mixed NULL or the content of the cache
  */
 function get_cache_hash($hash) {
+  $fn = get_cache_hash_filename($hash);
+
+  if ($fn) {
+    return file_get_contents($fn);
+  }
+  return NULL;
+}
+
+
+/**
+ * Return the local filename (.cache) in the cache path if it exists
+ *
+ * @return string/null Filename of the locally cached file.
+ */
+function get_cache_hash_filename($hash) {
   global $CACHE_PATH;
   
   $fn = $CACHE_PATH.'/'.$hash.'.cache';
 
   if (file_exists($fn)) {
-    return file_get_contents($fn);
+    return $fn;
   }
 
   return NULL;
 }
-
 
 /**
  * Write content to cache (identified by $hash)
@@ -119,12 +133,16 @@ function put_cache_hash($hash, $content) {
  * @return string Content of the compiled page.
  */
 function compile_page($hash, $page) {
-  global $GIT_REPOS;
+  global $GIT_REPOS, $CACHE_PATH;
 
   $output = '';
 
+  // Grab the asciidoc.conf file, and put it into cache.
+  // keep return the hash
+  $fnconf = bring_local_file('asciidoc.conf');
+
   // -d book so we can render H1s
-  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -d book --no-header-footer -", 'r');
+  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -f \"".$fnconf."\"-d book --no-header-footer -", 'r');
 
   if (!$p) {
     return "Unable to compile file: $page ($hash)\n";
@@ -140,34 +158,32 @@ function compile_page($hash, $page) {
 
 
 /**
- * Retrieve the page (without compilation)
+ * Bring a file in the .git repository into a local .cache file
+ * and return the filename (as $CACHE_PATH/hash.cache)
  *
- * This function is just like compile_page(), but it doesn't call asciidoc on it.
- * @param hash The hash for the required content
- * @param file The filename (only for error reporting)
- * @return string Original content of the file.
+ * This function will prepend the PREFIX to the given git filename ($gitfile)
+ *
+ * @param string Gitfile is a filename in the repository (without the PREFIX)
+ * @return string Filename of the local copy of that file (cache/lsakdjflakdj.cache)
  */
-/*
-//DUPLICATES get_git_file_content()
-function retr_file($hash, $file) {
-  global $GIT_REPOS;
-  
-  $output = '';
+function bring_local_file($gitfile) {
 
-  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash", 'r');
+  $hash = get_git_hash($gitfile);
 
-  if (!$p) {
-    return "Unable to retrieve: $file ($hash)\n";
+  $fn = get_cache_hash_filename($hash);
+
+  if (!$fn) {
+    $cnt = get_git_hash_content($hash);
+      
+    put_cache_hash($hash, $cnt);
+
+    // Might return an error, but that's all we can do.
+    return get_cache_hash_filename($hash);
   }
 
-  while (!feof($p)) {
-    $output .= fread($p, 1024);
-  }
-  pclose($p);
-
-  return $output;
+  return $fn;
 }
-*/
+
 
 /**
  * Retrieve file from git's object-ocean
