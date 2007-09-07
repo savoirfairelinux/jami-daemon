@@ -4,7 +4,7 @@
  * Copyright (C) 2007 - Savoir-Faire Linux Inc.
  * Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *
- * LICENCE: GPL
+ * LICENCE: GPLv3
  */
 
 
@@ -23,9 +23,7 @@ require_once('config.inc.php');
  * @param string File name (including the extension) in the $PREFIX dir.
  * @return HTML content
  */
-function get_page($page) {
-  // Compile it
-  
+function get_page($page, $compile = TRUE) {
   // Get the latest HASH for that page.
   $hash = get_git_hash($page);
 
@@ -36,11 +34,22 @@ function get_page($page) {
   $cnt = get_cache_hash($hash);
 
   if (!$cnt) {
-    $cnt = compile_page($hash, $page /* for ref only */);
+    if ($compile) {
+      // Compile it
+      $cnt = compile_page($hash, $page /* for ref only */);
 
-    put_cache_hash($hash, $cnt);
+      put_cache_hash($hash, $cnt);
 
-    return $cnt;
+      return $cnt;
+    }
+    else {
+      // Grab it as is.
+      $cnt = get_git_hash_content($hash);
+      
+      put_cache_hash($hash, $cnt);
+
+      return $cnt;
+    }
   }
 
   return $cnt;
@@ -53,8 +62,8 @@ function get_page($page) {
  *
  * @param string File name (including the ext.) in the $PREFIX dir.
  */
-function show_page($page) {
-  print get_page($page);
+function show_page($page, $compile = TRUE) {
+  print get_page($page, $compile);
 
 }
 
@@ -131,9 +140,37 @@ function compile_page($hash, $page) {
 
 
 /**
- * Retrieve file from git's object-ocean
+ * Retrieve the page (without compilation)
  *
- * UNUSED
+ * This function is just like compile_page(), but it doesn't call asciidoc on it.
+ * @param hash The hash for the required content
+ * @param file The filename (only for error reporting)
+ * @return string Original content of the file.
+ */
+/*
+//DUPLICATES get_git_file_content()
+function retr_file($hash, $file) {
+  global $GIT_REPOS;
+  
+  $output = '';
+
+  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash", 'r');
+
+  if (!$p) {
+    return "Unable to retrieve: $file ($hash)\n";
+  }
+
+  while (!feof($p)) {
+    $output .= fread($p, 1024);
+  }
+  pclose($p);
+
+  return $output;
+}
+*/
+
+/**
+ * Retrieve file from git's object-ocean
  */
 function get_git_file_content($file) {
   $hash = get_git_hash($file);
@@ -146,8 +183,6 @@ function get_git_file_content($file) {
 
 /**
  * Retrieve hash's content from git's object-ocean
- *
- * UNUSED
  */
 function get_git_hash_content($hash) {
   global $GIT_REPOS;
@@ -163,6 +198,7 @@ function get_git_hash_content($hash) {
  *
  * Used for comparison of cached/to cache/cache filename.
  *
+ * @param string Filename without the $PREFIX (ex: Features.txt, images/pouet.png)
  * @return string SHA-1 hash
  */
 function get_git_hash($file) {
@@ -190,7 +226,8 @@ function get_git_hash($file) {
 /**
  * Get file name (parsed and clear for git-ls-tree)
  *
- * @return string Parsed file name
+ * @param string Filename without the $PREFIX (ex: Features.txt, images/pouet.png)
+ * @return string Parsed file name, with $PREFIX prepended, and slashes cleaned up.
  */
 function git_filename($file) {
   global $PREFIX;

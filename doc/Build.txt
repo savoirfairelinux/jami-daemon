@@ -5,18 +5,42 @@ Build notes
 -----------
 
 
+sflphoned
+~~~~~~~~~
 
+Instructions to build `sflphoned`:
 
 libiax2
-~~~~~~~
+^^^^^^^
 
-If you don't have `libiax2` installed (check version in
-sflink:Dependencies[the dependencies]), go to the `libs` directory, and run:
+Go to `libs/libiax2` and run:
 
 -------------------------
-./libiax2.sh
-cd libiax2
 ./configure --prefix=/usr
 make
 sudo make install
 -------------------------
+
+the daemon
+^^^^^^^^^^
+
+Then, go to the root of the repository, and run:
+
+---------------------------------------------------
+./configure --prefix=/usr (or whatever your prefix)
+make
+sudo make install
+---------------------------------------------------
+
+
+sflphone-qt
+~~~~~~~~~~~
+
+`sflphone-qt` gets built with sflphoned, for now.
+
+
+sflphone-gtk
+~~~~~~~~~~~~
+
+Merging of `sflphone-gtk` to come.
+
