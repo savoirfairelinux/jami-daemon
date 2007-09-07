@@ -7,51 +7,21 @@
       <arg type="a{ss}" name="details" direction="out"/>
     </method>
     
+    <method name="setAccountDetails">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="a{ss}" name="details" direction="in"/>
+    </method>
+    
     <method name="addAccount">
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
     
+    <method name="removeAccount">
+      <arg type="s" name="accoundID" direction="in"/>
+    </method>
+    
     <method name="getAccountList">
       <arg type="as" name="list" direction="out"/>
-    </method>
-    
-    
-    
-    <method name="setSTUN">
-      <arg type="a{ss}" name="details" direction="in"/>
-    </method>
-    
-    <method name="getSTUN">
-      <arg type="a{ss}" name="details" direction="out"/>
-    </method>
-    
-    
-    <method name="setPlayTonesLocally">
-      <arg type="b" name="flag" direction="in"/>
-    </method>
-    
-    <method name="getPlayTonesLocally">
-      <arg type="b" name="flag" direction="out"/>
-    </method>
-    
-    <method name="setTonePulseLenght">
-      <arg type="i" name="milliseconds" direction="in"/>
-    </method>
-    
-    <method name="getTonePulseLenght">
-      <arg type="i" name="milliseconds" direction="out"/>
-    </method>
-    
-    <method name="getToneLocaleList">
-      <arg type="as" name="list" direction="in"/>
-    </method>
-    
-    <method name="setToneLocale">
-      <arg type="s" name="locale" direction="in"/>
-    </method>
-    
-    <method name="getToneLocale">
-      <arg type="s" name="locale" direction="out"/>
     </method>
     
     <method name="getVersion">
@@ -62,15 +32,11 @@
       <arg type="as" name="list" direction="out"/>
     </method>
     
-    <method name="setRingtone">
-      <arg type="s" name="ringtone" direction="in"/>
-    </method>
-    
-    <method name="getRingtone">
-      <arg type="s" name="ringtone" direction="out"/>
-    </method>
-    
     <method name="getCodecList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    
+    <method name="getToneLocaleList">
       <arg type="as" name="list" direction="out"/>
     </method>
     
@@ -82,49 +48,31 @@
       <arg type="as" name="ringtone" direction="out"/>
     </method>
     
-    
     <method name="getPlaybackDeviceList">
       <arg type="as" name="list" direction="out"/>
     </method>
-    
-    <method name="setPlaybackDevice">
-      <arg type="s" name="device" direction="in"/>
-    </method>
-    
-    <method name="getPlaybackDevice">
-      <arg type="s" name="device" direction="out"/>
-    </method>
-    
     
     <method name="getRecordDeviceList">
       <arg type="as" name="list" direction="out"/>
     </method>
     
-    <method name="setRecordDevice">
-      <arg type="s" name="device" direction="in"/>
-    </method>
-    
-    <method name="getRecordDevice">
-      <arg type="s" name="device" direction="out"/>
-    </method>
-    
-    
     <method name="getSampleRateList">
       <arg type="as" name="list" direction="out"/>
     </method>
     
-    <method name="setSampleRate">
-      <arg type="s" name="sampleRate" direction="in"/>
+    <method name="getParameters">
+      <arg type="a{ss}" name="parameters" direction="out"/>
     </method>
     
-    <method name="getSampleRate">
-      <arg type="s" name="sampleRate" direction="out"/>
+    <method name="setParameters">
+      <arg type="a{ss}" name="parameters" direction="in"/>
     </method>
     
+    <signal name="parametersChanged">
+      <arg type="a{ss}" name="list" direction="out"/>
+    </signal>
     
-    
-    
-    <signal name="updated">
+    <signal name="accountsChanged">
     </signal>
   </interface>
 </node>

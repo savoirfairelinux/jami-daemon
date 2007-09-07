@@ -192,6 +192,10 @@ public:
    * @return A list of accoundIDs
    */
   std::vector< std::string >  getAccountList();
+  std::map< std::string, std::string > getAccountDetails(const AccountID& accountID);
+  void setAccountDetails( const ::DBus::String& accountID, 
+                   const std::map< ::DBus::String, ::DBus::String >& details );
+  void removeAccount(const AccountID& accountID);
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);
   bool setConfig(const std::string& section, const std::string& name, const std::string& value);

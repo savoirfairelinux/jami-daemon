@@ -16,24 +16,34 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+ 
+#include <config.h>
+#include <calllist.h>
+#include <dbus.h>
+#include <mainwindow.h>
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+#include <gtk/gtk.h>
 
-#include "callmanager.h"
-#include "configurationmanager.h"
 
-class DBusManagerImpl {
-    public:
-        CallManager * getCallManager(){ return _callManager; };
-        ConfigurationManager * getConfigurationManager(){ return _configurationManager; };
-        int exec();
-        static const char* SERVER_NAME;
-        
-    private:
-        CallManager * _callManager;
-        ConfigurationManager * _configurationManager;
-        DBus::BusDispatcher _dispatcher;
-};
 
-#endif
+int
+main (int argc, char *argv[])
+{
+  gtk_init (&argc, &argv);
+  
+  g_print("%s\n", PACKAGE_STRING);
+  g_print("Copyright (c) 2007 Savoir-faire Linux Inc.\n");
+  g_print("This is free software.  You may redistribute copies of it under the terms of\n\
+the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n\
+There is NO WARRANTY, to the extent permitted by law.\n\n");
+  
+  if(sflphone_init())
+  {
+    create_main_window ();
+    
+    /* start the main loop */
+    gtk_main ();
+  }
+  return 0;
+}
+

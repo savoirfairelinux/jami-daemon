@@ -16,24 +16,46 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+ 
+#ifndef __CALLLIST_H__
+#define __CALLLIST_H__
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+#include <gtk/gtk.h>
 
-#include "callmanager.h"
-#include "configurationmanager.h"
+typedef enum
+{
+   CALL_STATE_INVALID = 0,
+   CALL_STATE_INCOMING,
+   CALL_STATE_CURRENT,
+   CALL_STATE_DIALING,
+   CALL_STATE_HOLD   
+} call_state_t;
 
-class DBusManagerImpl {
-    public:
-        CallManager * getCallManager(){ return _callManager; };
-        ConfigurationManager * getConfigurationManager(){ return _configurationManager; };
-        int exec();
-        static const char* SERVER_NAME;
-        
-    private:
-        CallManager * _callManager;
-        ConfigurationManager * _configurationManager;
-        DBus::BusDispatcher _dispatcher;
-};
+typedef struct  {
+  gchar * callID;
+  gchar * accountID;
+  gchar * from;
+  gchar * to;
+  call_state_t state;
+} call_t;
 
-#endif
+void call_list_init ();
+
+void call_list_clean ();
+
+void call_list_add (call_t * c);
+
+void call_list_remove (const gchar * callID);
+
+call_t * call_list_get_by_state ( call_state_t state);
+
+guint call_list_get_size ( );
+
+call_t * call_list_get_nth ( guint n );
+call_t * call_list_get ( const gchar * callID );
+
+gchar * call_get_name (const call_t * c);
+
+gchar * call_get_number (const call_t * c);
+
+#endif 

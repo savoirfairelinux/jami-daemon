@@ -48,7 +48,6 @@ public:
     void transfert( const ::DBus::String& callID, const ::DBus::String& to );
     void setVolume( const ::DBus::String& device, const ::DBus::Double& value );
     ::DBus::Double getVolume( const ::DBus::String& device );
-    ::DBus::Int32 getVoiceMailCount(  );
     std::map< ::DBus::String, ::DBus::String > getCallDetails( const ::DBus::String& callID );
     ::DBus::String getCurrentCallID(  );
 

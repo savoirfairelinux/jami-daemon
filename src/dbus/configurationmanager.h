@@ -37,33 +37,21 @@ public:
 public:
 
     std::map< ::DBus::String, ::DBus::String > getAccountDetails( const ::DBus::String& accountID );
+    void setAccountDetails( const ::DBus::String& accountID, const std::map< ::DBus::String, ::DBus::String >& details );
     void addAccount( const std::map< ::DBus::String, ::DBus::String >& details );
+    void removeAccount( const ::DBus::String& accoundID );
     std::vector< ::DBus::String > getAccountList(  );
-    void setSTUN( const std::map< ::DBus::String, ::DBus::String >& details );
-    std::map< ::DBus::String, ::DBus::String > getSTUN(  );
-    void setPlayTonesLocally( const ::DBus::Bool& flag );
-    ::DBus::Bool getPlayTonesLocally(  );
-    void setTonePulseLenght( const ::DBus::Int32& milliseconds );
-    ::DBus::Int32 getTonePulseLenght(  );
-    void getToneLocaleList( const std::vector< ::DBus::String >& list );
-    void setToneLocale( const ::DBus::String& locale );
-    ::DBus::String getToneLocale(  );
     ::DBus::String getVersion(  );
     std::vector< ::DBus::String > getRingtoneList(  );
-    void setRingtone( const ::DBus::String& ringtone );
-    ::DBus::String getRingtone(  );
     std::vector< ::DBus::String > getCodecList(  );
+    std::vector< ::DBus::String > getToneLocaleList(  );
     void setCodecPreferedOrder( const std::vector< ::DBus::String >& ringtone );
     std::vector< ::DBus::String > getCodecPreferedOrder(  );
     std::vector< ::DBus::String > getPlaybackDeviceList(  );
-    void setPlaybackDevice( const ::DBus::String& device );
-    ::DBus::String getPlaybackDevice(  );
     std::vector< ::DBus::String > getRecordDeviceList(  );
-    void setRecordDevice( const ::DBus::String& device );
-    ::DBus::String getRecordDevice(  );
     std::vector< ::DBus::String > getSampleRateList(  );
-    void setSampleRate( const ::DBus::String& sampleRate );
-    ::DBus::String getSampleRate(  );
+    std::map< ::DBus::String, ::DBus::String > getParameters(  );
+    void setParameters( const std::map< ::DBus::String, ::DBus::String >& parameters );
 
 };
 

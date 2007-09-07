@@ -34,9 +34,16 @@ std::map< ::DBus::String, ::DBus::String >
 ConfigurationManager::getAccountDetails( const ::DBus::String& accountID )
 {
     _debug("ConfigurationManager::getAccountDetails received\n");
-
+    return Manager::instance().getAccountDetails(accountID);
 }
 
+void 
+ConfigurationManager::setAccountDetails( const ::DBus::String& accountID, 
+                   const std::map< ::DBus::String, ::DBus::String >& details )
+{
+    _debug("ConfigurationManager::setAccountDetails received\n");
+    Manager::instance().setAccountDetails(accountID, details);
+}
 
 void 
 ConfigurationManager::addAccount( const std::map< ::DBus::String, ::DBus::String >& details )
@@ -45,6 +52,13 @@ ConfigurationManager::addAccount( const std::map< ::DBus::String, ::DBus::String
 
 }
 
+
+void 
+ConfigurationManager::removeAccount( const ::DBus::String& accoundID )
+{
+    _debug("ConfigurationManager::removeAccount received\n");
+    return Manager::instance().removeAccount(accoundID);
+}
 
 std::vector< ::DBus::String > 
 ConfigurationManager::getAccountList(  )
@@ -55,76 +69,13 @@ ConfigurationManager::getAccountList(  )
 }
 
 
-void 
-ConfigurationManager::setSTUN( const std::map< ::DBus::String, ::DBus::String >& details )
-{
-    _debug("ConfigurationManager::setSTUN received\n");
-
-}
-
-
-std::map< ::DBus::String, ::DBus::String > 
-ConfigurationManager::getSTUN(  )
-{
-    _debug("ConfigurationManager::getSTUN received\n");
-
-}
-
-
-void 
-ConfigurationManager::setPlayTonesLocally( const ::DBus::Bool& flag )
-{
-    _debug("ConfigurationManager::setPlayTonesLocally received\n");
-
-}
-
-
-::DBus::Bool 
-ConfigurationManager::getPlayTonesLocally(  )
-{
-    _debug("ConfigurationManager::getPlayTonesLocally received\n");
-
-}
-
-
-void 
-ConfigurationManager::setTonePulseLenght( const ::DBus::Int32& milliseconds )
-{
-    _debug("ConfigurationManager::setTonePulseLenght received\n");
-
-}
-
-
-::DBus::Int32 
-ConfigurationManager::getTonePulseLenght(  )
-{
-    _debug("ConfigurationManager::getTonePulseLenght received\n");
-
-}
-
-
-void 
-ConfigurationManager::getToneLocaleList( const std::vector< ::DBus::String >& list )
+std::vector< ::DBus::String > 
+ConfigurationManager::getToneLocaleList(  )
 {
     _debug("ConfigurationManager::getToneLocaleList received\n");
 
 }
 
-
-void 
-ConfigurationManager::setToneLocale( const ::DBus::String& locale )
-{
-    _debug("ConfigurationManager::setToneLocale received\n");
-
-}
-
-
-::DBus::String 
-ConfigurationManager::getToneLocale(  )
-{
-    _debug("ConfigurationManager::getToneLocale received\n");
-
-}
 
 
 ::DBus::String 
@@ -142,21 +93,6 @@ ConfigurationManager::getRingtoneList(  )
 
 }
 
-
-void 
-ConfigurationManager::setRingtone( const ::DBus::String& ringtone )
-{
-    _debug("ConfigurationManager::setRingtone received\n");
-
-}
-
-
-::DBus::String 
-ConfigurationManager::getRingtone(  )
-{
-    _debug("ConfigurationManager::getRingtone received\n");
-
-}
 
 
 std::vector< ::DBus::String > 
@@ -190,46 +126,12 @@ ConfigurationManager::getPlaybackDeviceList(  )
 
 }
 
-
-void 
-ConfigurationManager::setPlaybackDevice( const ::DBus::String& device )
-{
-    _debug("ConfigurationManager::setPlaybackDevice received\n");
-
-}
-
-
-::DBus::String 
-ConfigurationManager::getPlaybackDevice(  )
-{
-    _debug("ConfigurationManager::getPlaybackDevice received\n");
-
-}
-
-
 std::vector< ::DBus::String > 
 ConfigurationManager::getRecordDeviceList(  )
 {
     _debug("ConfigurationManager::getRecordDeviceList received\n");
 
 }
-
-
-void 
-ConfigurationManager::setRecordDevice( const ::DBus::String& device )
-{
-    _debug("ConfigurationManager::setRecordDevice received\n");
-
-}
-
-
-::DBus::String 
-ConfigurationManager::getRecordDevice(  )
-{
-    _debug("ConfigurationManager::getRecordDevice received\n");
-
-}
-
 
 std::vector< ::DBus::String > 
 ConfigurationManager::getSampleRateList(  )
@@ -238,20 +140,14 @@ ConfigurationManager::getSampleRateList(  )
 
 }
 
+std::map< ::DBus::String, ::DBus::String > 
+ConfigurationManager::getParameters(  )
+{
+
+}
 
 void 
-ConfigurationManager::setSampleRate( const ::DBus::String& sampleRate )
+ConfigurationManager::setParameters( const std::map< ::DBus::String, ::DBus::String >& parameters )
 {
-    _debug("ConfigurationManager::setSampleRate received\n");
 
 }
-
-
-::DBus::String 
-ConfigurationManager::getSampleRate(  )
-{
-    _debug("ConfigurationManager::getSampleRate received\n");
-
-}
-
-

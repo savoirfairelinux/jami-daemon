@@ -106,6 +106,7 @@ public:
    * Tell if the latest registration succeed or failed 
    */
   bool setState(bool state) { _state = state; }
+  bool getState() { return _state; }
 
 private:
   /**

@@ -16,24 +16,50 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+ 
+#ifndef __ACTIONS_H__
+#define __ACTIONS_H__
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+#include <calllist.h>
 
-#include "callmanager.h"
-#include "configurationmanager.h"
+/**
+ * Initialize lists and configurations 
+ * @return TRUE if succeeded, FALSE otherwise
+ */
+gboolean sflphone_init ( ) ;
 
-class DBusManagerImpl {
-    public:
-        CallManager * getCallManager(){ return _callManager; };
-        ConfigurationManager * getConfigurationManager(){ return _configurationManager; };
-        int exec();
-        static const char* SERVER_NAME;
-        
-    private:
-        CallManager * _callManager;
-        ConfigurationManager * _configurationManager;
-        DBus::BusDispatcher _dispatcher;
-};
+/**
+ * Steps when closing the application.  Will ask for confirmation if a call is in progress.
+ * @return TRUE if the user wants to quit, FALSE otherwise.
+ */
+gboolean sflphone_quit ( ) ;
 
-#endif
+void sflphone_hang_up ( call_t * c);
+
+void sflphone_transfert ( call_t * c, gchar * to );
+
+void sflphone_hold ( call_t * c);
+
+void sflphone_unhold ( call_t * c);
+
+/* signals */
+void sflphone_hung_up( call_t * c);
+
+/* void sflphone_ring */
+void sflphone_incoming_call ( call_t * c);
+
+/**
+ * Dial the number
+ * If the call is in DIALING state, the char will be append to the number
+ * TODO If the call is in CURRENT state, the char will be also sent to the server 
+ * @param c A call in CALL_STATE_DIALING state
+ */
+void sflphone_keypad ( guint keyval, gchar * key);
+
+/**
+ * Place a call
+ * @param c A call in CALL_STATE_DIALING state
+ */
+void sflphone_place_call ( call_t * c );
+
+#endif 

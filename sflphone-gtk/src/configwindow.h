@@ -16,24 +16,14 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+ 
+#ifndef __CONFIGWINDOW_H__
+#define __CONFIGWINDOW_H__
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+#include <calllist.h>
 
-#include "callmanager.h"
-#include "configurationmanager.h"
 
-class DBusManagerImpl {
-    public:
-        CallManager * getCallManager(){ return _callManager; };
-        ConfigurationManager * getConfigurationManager(){ return _configurationManager; };
-        int exec();
-        static const char* SERVER_NAME;
-        
-    private:
-        CallManager * _callManager;
-        ConfigurationManager * _configurationManager;
-        DBus::BusDispatcher _dispatcher;
-};
+void show_config_window ( );
 
-#endif
+
+#endif 

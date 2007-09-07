@@ -16,24 +16,14 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+ 
+#ifndef __CALLTREE_H__
+#define __CALLTREE_H__
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+#include <gtk/gtk.h>
 
-#include "callmanager.h"
-#include "configurationmanager.h"
+GtkWidget * create_call_tree();
 
-class DBusManagerImpl {
-    public:
-        CallManager * getCallManager(){ return _callManager; };
-        ConfigurationManager * getConfigurationManager(){ return _configurationManager; };
-        int exec();
-        static const char* SERVER_NAME;
-        
-    private:
-        CallManager * _callManager;
-        ConfigurationManager * _configurationManager;
-        DBus::BusDispatcher _dispatcher;
-};
+void update_call_tree ();
 
-#endif
+#endif 

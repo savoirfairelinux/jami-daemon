@@ -43,10 +43,6 @@
       <arg type="d" name="value" direction="out"/>
     </method>
     
-    <method name="getVoiceMailCount">
-      <arg type="i" name="count" direction="out"/>
-    </method>
-    
     <method name="getCallDetails">
       <arg type="s" name="callID" direction="in"/>
       <arg type="a{ss}" name="infos" direction="out"/>
@@ -63,29 +59,28 @@
     </signal>
     
     <signal name="incomingMessage">
-      <arg type="s" name="accountID" />
-      <arg type="s" name="from" />
+      <arg type="s" name="accountID"  direction="out" />
+      <arg type="s" name="message"  direction="out"/>
     </signal>
     
-    <signal name="ring">
-      <arg type="s" name="callID" />
+    <signal name="callStateChanged">
+      <arg type="s" name="callID"  direction="out"/>
+      <arg type="s" name="state"  direction="out"/>
     </signal>
     
-    <signal name="pickedUp">
-      <arg type="s" name="callID" />
+    <signal name="voiceMailNotify">
+      <arg type="s" name="accountID"  direction="out"/>
+      <arg type="i" name="count"  direction="out"/>
     </signal>
     
-    <signal name="hungUp">
-      <arg type="s" name="callID" />
-    </signal>
     
     <signal name="volumeChanged">
-      <arg type="s" name="device" />
-      <arg type="d" name="value" />
+      <arg type="s" name="device"  direction="out"/>
+      <arg type="d" name="value"  direction="out"/>
     </signal>
     
     <signal name="error">
-      <arg type="a{ss}" name="details" />
+      <arg type="a{ss}" name="details"  direction="out"/>
     </signal>
   </interface>
 </node>

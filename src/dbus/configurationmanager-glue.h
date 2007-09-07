@@ -21,33 +21,21 @@ public:
     : ::DBus::InterfaceAdaptor("org.sflphone.SFLPhone.ConfigurationManager")
     {
         register_method(ConfigurationManager, getAccountDetails, _getAccountDetails_stub);
+        register_method(ConfigurationManager, setAccountDetails, _setAccountDetails_stub);
         register_method(ConfigurationManager, addAccount, _addAccount_stub);
+        register_method(ConfigurationManager, removeAccount, _removeAccount_stub);
         register_method(ConfigurationManager, getAccountList, _getAccountList_stub);
-        register_method(ConfigurationManager, setSTUN, _setSTUN_stub);
-        register_method(ConfigurationManager, getSTUN, _getSTUN_stub);
-        register_method(ConfigurationManager, setPlayTonesLocally, _setPlayTonesLocally_stub);
-        register_method(ConfigurationManager, getPlayTonesLocally, _getPlayTonesLocally_stub);
-        register_method(ConfigurationManager, setTonePulseLenght, _setTonePulseLenght_stub);
-        register_method(ConfigurationManager, getTonePulseLenght, _getTonePulseLenght_stub);
-        register_method(ConfigurationManager, getToneLocaleList, _getToneLocaleList_stub);
-        register_method(ConfigurationManager, setToneLocale, _setToneLocale_stub);
-        register_method(ConfigurationManager, getToneLocale, _getToneLocale_stub);
         register_method(ConfigurationManager, getVersion, _getVersion_stub);
         register_method(ConfigurationManager, getRingtoneList, _getRingtoneList_stub);
-        register_method(ConfigurationManager, setRingtone, _setRingtone_stub);
-        register_method(ConfigurationManager, getRingtone, _getRingtone_stub);
         register_method(ConfigurationManager, getCodecList, _getCodecList_stub);
+        register_method(ConfigurationManager, getToneLocaleList, _getToneLocaleList_stub);
         register_method(ConfigurationManager, setCodecPreferedOrder, _setCodecPreferedOrder_stub);
         register_method(ConfigurationManager, getCodecPreferedOrder, _getCodecPreferedOrder_stub);
         register_method(ConfigurationManager, getPlaybackDeviceList, _getPlaybackDeviceList_stub);
-        register_method(ConfigurationManager, setPlaybackDevice, _setPlaybackDevice_stub);
-        register_method(ConfigurationManager, getPlaybackDevice, _getPlaybackDevice_stub);
         register_method(ConfigurationManager, getRecordDeviceList, _getRecordDeviceList_stub);
-        register_method(ConfigurationManager, setRecordDevice, _setRecordDevice_stub);
-        register_method(ConfigurationManager, getRecordDevice, _getRecordDevice_stub);
         register_method(ConfigurationManager, getSampleRateList, _getSampleRateList_stub);
-        register_method(ConfigurationManager, setSampleRate, _setSampleRate_stub);
-        register_method(ConfigurationManager, getSampleRate, _getSampleRate_stub);
+        register_method(ConfigurationManager, getParameters, _getParameters_stub);
+        register_method(ConfigurationManager, setParameters, _setParameters_stub);
     }
 
     ::DBus::IntrospectedInterface* const introspect() const 
@@ -58,59 +46,25 @@ public:
             { "details", "a{ss}", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument setAccountDetails_args[] = 
+        {
+            { "accountID", "s", true },
+            { "details", "a{ss}", true },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument addAccount_args[] = 
         {
             { "details", "a{ss}", true },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument removeAccount_args[] = 
+        {
+            { "accoundID", "s", true },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument getAccountList_args[] = 
         {
             { "list", "as", false },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument setSTUN_args[] = 
-        {
-            { "details", "a{ss}", true },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getSTUN_args[] = 
-        {
-            { "details", "a{ss}", false },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument setPlayTonesLocally_args[] = 
-        {
-            { "flag", "b", true },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getPlayTonesLocally_args[] = 
-        {
-            { "flag", "b", false },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument setTonePulseLenght_args[] = 
-        {
-            { "milliseconds", "i", true },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getTonePulseLenght_args[] = 
-        {
-            { "milliseconds", "i", false },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getToneLocaleList_args[] = 
-        {
-            { "list", "as", true },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument setToneLocale_args[] = 
-        {
-            { "locale", "s", true },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getToneLocale_args[] = 
-        {
-            { "locale", "s", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getVersion_args[] = 
@@ -123,17 +77,12 @@ public:
             { "list", "as", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument setRingtone_args[] = 
-        {
-            { "ringtone", "s", true },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getRingtone_args[] = 
-        {
-            { "ringtone", "s", false },
-            { 0, 0, 0 }
-        };
         static ::DBus::IntrospectedArgument getCodecList_args[] = 
+        {
+            { "list", "as", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getToneLocaleList_args[] = 
         {
             { "list", "as", false },
             { 0, 0, 0 }
@@ -153,29 +102,9 @@ public:
             { "list", "as", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument setPlaybackDevice_args[] = 
-        {
-            { "device", "s", true },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getPlaybackDevice_args[] = 
-        {
-            { "device", "s", false },
-            { 0, 0, 0 }
-        };
         static ::DBus::IntrospectedArgument getRecordDeviceList_args[] = 
         {
             { "list", "as", false },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument setRecordDevice_args[] = 
-        {
-            { "device", "s", true },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getRecordDevice_args[] = 
-        {
-            { "device", "s", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getSampleRateList_args[] = 
@@ -183,55 +112,49 @@ public:
             { "list", "as", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument setSampleRate_args[] = 
+        static ::DBus::IntrospectedArgument getParameters_args[] = 
         {
-            { "sampleRate", "s", true },
+            { "parameters", "a{ss}", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument getSampleRate_args[] = 
+        static ::DBus::IntrospectedArgument setParameters_args[] = 
         {
-            { "sampleRate", "s", false },
+            { "parameters", "a{ss}", true },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument updated_args[] = 
+        static ::DBus::IntrospectedArgument parametersChanged_args[] = 
+        {
+            { "list", "a{ss}", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument accountsChanged_args[] = 
         {
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_methods[] = 
         {
             { "getAccountDetails", getAccountDetails_args },
+            { "setAccountDetails", setAccountDetails_args },
             { "addAccount", addAccount_args },
+            { "removeAccount", removeAccount_args },
             { "getAccountList", getAccountList_args },
-            { "setSTUN", setSTUN_args },
-            { "getSTUN", getSTUN_args },
-            { "setPlayTonesLocally", setPlayTonesLocally_args },
-            { "getPlayTonesLocally", getPlayTonesLocally_args },
-            { "setTonePulseLenght", setTonePulseLenght_args },
-            { "getTonePulseLenght", getTonePulseLenght_args },
-            { "getToneLocaleList", getToneLocaleList_args },
-            { "setToneLocale", setToneLocale_args },
-            { "getToneLocale", getToneLocale_args },
             { "getVersion", getVersion_args },
             { "getRingtoneList", getRingtoneList_args },
-            { "setRingtone", setRingtone_args },
-            { "getRingtone", getRingtone_args },
             { "getCodecList", getCodecList_args },
+            { "getToneLocaleList", getToneLocaleList_args },
             { "setCodecPreferedOrder", setCodecPreferedOrder_args },
             { "getCodecPreferedOrder", getCodecPreferedOrder_args },
             { "getPlaybackDeviceList", getPlaybackDeviceList_args },
-            { "setPlaybackDevice", setPlaybackDevice_args },
-            { "getPlaybackDevice", getPlaybackDevice_args },
             { "getRecordDeviceList", getRecordDeviceList_args },
-            { "setRecordDevice", setRecordDevice_args },
-            { "getRecordDevice", getRecordDevice_args },
             { "getSampleRateList", getSampleRateList_args },
-            { "setSampleRate", setSampleRate_args },
-            { "getSampleRate", getSampleRate_args },
+            { "getParameters", getParameters_args },
+            { "setParameters", setParameters_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_signals[] = 
         {
-            { "updated", updated_args },
+            { "parametersChanged", parametersChanged_args },
+            { "accountsChanged", accountsChanged_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedProperty ConfigurationManager_properties[] = 
@@ -260,41 +183,36 @@ public:
      * you will have to implement them in your ObjectAdaptor
      */
     virtual std::map< ::DBus::String, ::DBus::String > getAccountDetails( const ::DBus::String& accountID ) = 0;
+    virtual void setAccountDetails( const ::DBus::String& accountID, const std::map< ::DBus::String, ::DBus::String >& details ) = 0;
     virtual void addAccount( const std::map< ::DBus::String, ::DBus::String >& details ) = 0;
+    virtual void removeAccount( const ::DBus::String& accoundID ) = 0;
     virtual std::vector< ::DBus::String > getAccountList(  ) = 0;
-    virtual void setSTUN( const std::map< ::DBus::String, ::DBus::String >& details ) = 0;
-    virtual std::map< ::DBus::String, ::DBus::String > getSTUN(  ) = 0;
-    virtual void setPlayTonesLocally( const ::DBus::Bool& flag ) = 0;
-    virtual ::DBus::Bool getPlayTonesLocally(  ) = 0;
-    virtual void setTonePulseLenght( const ::DBus::Int32& milliseconds ) = 0;
-    virtual ::DBus::Int32 getTonePulseLenght(  ) = 0;
-    virtual void getToneLocaleList( const std::vector< ::DBus::String >& list ) = 0;
-    virtual void setToneLocale( const ::DBus::String& locale ) = 0;
-    virtual ::DBus::String getToneLocale(  ) = 0;
     virtual ::DBus::String getVersion(  ) = 0;
     virtual std::vector< ::DBus::String > getRingtoneList(  ) = 0;
-    virtual void setRingtone( const ::DBus::String& ringtone ) = 0;
-    virtual ::DBus::String getRingtone(  ) = 0;
     virtual std::vector< ::DBus::String > getCodecList(  ) = 0;
+    virtual std::vector< ::DBus::String > getToneLocaleList(  ) = 0;
     virtual void setCodecPreferedOrder( const std::vector< ::DBus::String >& ringtone ) = 0;
     virtual std::vector< ::DBus::String > getCodecPreferedOrder(  ) = 0;
     virtual std::vector< ::DBus::String > getPlaybackDeviceList(  ) = 0;
-    virtual void setPlaybackDevice( const ::DBus::String& device ) = 0;
-    virtual ::DBus::String getPlaybackDevice(  ) = 0;
     virtual std::vector< ::DBus::String > getRecordDeviceList(  ) = 0;
-    virtual void setRecordDevice( const ::DBus::String& device ) = 0;
-    virtual ::DBus::String getRecordDevice(  ) = 0;
     virtual std::vector< ::DBus::String > getSampleRateList(  ) = 0;
-    virtual void setSampleRate( const ::DBus::String& sampleRate ) = 0;
-    virtual ::DBus::String getSampleRate(  ) = 0;
+    virtual std::map< ::DBus::String, ::DBus::String > getParameters(  ) = 0;
+    virtual void setParameters( const std::map< ::DBus::String, ::DBus::String >& parameters ) = 0;
 
 public:
 
     /* signal emitters for this interface
      */
-    void updated(  )
+    void parametersChanged( const std::map< ::DBus::String, ::DBus::String >& arg1 )
     {
-        ::DBus::SignalMessage sig("updated");
+        ::DBus::SignalMessage sig("parametersChanged");
+        ::DBus::MessageIter wi = sig.writer();
+        wi << arg1;
+        emit_signal(sig);
+    }
+    void accountsChanged(  )
+    {
+        ::DBus::SignalMessage sig("accountsChanged");
         emit_signal(sig);
     }
 
@@ -313,6 +231,16 @@ private:
         wi << argout1;
         return reply;
     }
+    ::DBus::Message _setAccountDetails_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::String argin1; ri >> argin1;
+        std::map< ::DBus::String, ::DBus::String > argin2; ri >> argin2;
+        setAccountDetails(argin1, argin2);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
     ::DBus::Message _addAccount_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
@@ -322,96 +250,20 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
+    ::DBus::Message _removeAccount_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::String argin1; ri >> argin1;
+        removeAccount(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
     ::DBus::Message _getAccountList_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
         std::vector< ::DBus::String > argout1 = getAccountList();
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
-    ::DBus::Message _setSTUN_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        std::map< ::DBus::String, ::DBus::String > argin1; ri >> argin1;
-        setSTUN(argin1);
-        ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _getSTUN_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        std::map< ::DBus::String, ::DBus::String > argout1 = getSTUN();
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
-    ::DBus::Message _setPlayTonesLocally_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::Bool argin1; ri >> argin1;
-        setPlayTonesLocally(argin1);
-        ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _getPlayTonesLocally_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::Bool argout1 = getPlayTonesLocally();
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
-    ::DBus::Message _setTonePulseLenght_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::Int32 argin1; ri >> argin1;
-        setTonePulseLenght(argin1);
-        ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _getTonePulseLenght_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::Int32 argout1 = getTonePulseLenght();
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
-    ::DBus::Message _getToneLocaleList_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        std::vector< ::DBus::String > argin1; ri >> argin1;
-        getToneLocaleList(argin1);
-        ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _setToneLocale_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argin1; ri >> argin1;
-        setToneLocale(argin1);
-        ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _getToneLocale_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argout1 = getToneLocale();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
@@ -437,30 +289,21 @@ private:
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setRingtone_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argin1; ri >> argin1;
-        setRingtone(argin1);
-        ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _getRingtone_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argout1 = getRingtone();
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
     ::DBus::Message _getCodecList_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
         std::vector< ::DBus::String > argout1 = getCodecList();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _getToneLocaleList_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::vector< ::DBus::String > argout1 = getToneLocaleList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
@@ -495,49 +338,11 @@ private:
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setPlaybackDevice_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argin1; ri >> argin1;
-        setPlaybackDevice(argin1);
-        ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _getPlaybackDevice_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argout1 = getPlaybackDevice();
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
     ::DBus::Message _getRecordDeviceList_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
         std::vector< ::DBus::String > argout1 = getRecordDeviceList();
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
-    ::DBus::Message _setRecordDevice_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argin1; ri >> argin1;
-        setRecordDevice(argin1);
-        ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _getRecordDevice_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argout1 = getRecordDevice();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
@@ -553,23 +358,23 @@ private:
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setSampleRate_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getParameters_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        setSampleRate(argin1);
-        ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _getSampleRate_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argout1 = getSampleRate();
+        std::map< ::DBus::String, ::DBus::String > argout1 = getParameters();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setParameters_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::map< ::DBus::String, ::DBus::String > argin1; ri >> argin1;
+        setParameters(argin1);
+        ::DBus::ReturnMessage reply(call);
         return reply;
     }
 };

@@ -33,6 +33,7 @@
 #include <cc++/file.h>
 
 #include "manager.h"
+#include "sipaccount.h"
 #include "audio/audiolayer.h"
 #include "audio/audiocodec.h"
 #include "audio/tonelist.h"
@@ -619,7 +620,7 @@ ManagerImpl::peerAnsweredCall(const CallID& id)
   if (isCurrentCall(id)) {
     stopTone(false);
   }
-  if (_dbus) _dbus->getCallManager()->pickedUp(id);
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -629,7 +630,7 @@ ManagerImpl::peerRingingCall(const CallID& id)
   if (isCurrentCall(id)) {
     ringback();
   }
-  if (_dbus) _dbus->getCallManager()->ring(id);
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "RINGING");
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
@@ -647,7 +648,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
   }
   removeWaitingCall(id);
   removeCallAccount(id);
-  if (_dbus) _dbus->getCallManager()->hungUp(id);
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
 }
 
 //THREAD=VoIP
@@ -660,7 +661,7 @@ ManagerImpl::callBusy(const CallID& id) {
   }
   removeCallAccount(id);
   removeWaitingCall(id);
-  //if(_gui) _gui->displayErrorText( id, "Call is busy");
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "BUSY");
 }
 
 //THREAD=VoIP
@@ -672,11 +673,10 @@ ManagerImpl::callFailure(const CallID& id)
     playATone(Tone::TONE_BUSY);
     switchCall("");
   }
-  /*if (_gui) {
-    _gui->callFailure(id);
-  }*/
   removeCallAccount(id);
   removeWaitingCall(id);
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "FAILURE");
+  
 }
 
 //THREAD=VoIP
@@ -730,14 +730,14 @@ ManagerImpl::displayConfigError (const std::string& message)
 void
 ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, const std::string& nb_msg)
 {
-  //if (_gui) _gui->sendVoiceNbMessage(accountId, nb_msg);
+  if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, atoi(nb_msg.c_str()) );
 }
 
 //THREAD=VoIP
 void
 ManagerImpl::stopVoiceMessageNotification(const AccountID& accountId)
 {
-  //if (_gui) _gui->sendVoiceNbMessage(accountId, std::string("0"));
+  if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, 0 );
 } 
 
 //THREAD=VoIP
@@ -747,7 +747,7 @@ ManagerImpl::registrationSucceed(const AccountID& accountid)
   Account* acc = getAccount(accountid);
  if ( acc ) { 
     acc->setState(true); 
-    //if (_gui) _gui->sendRegistrationState(accountid, true);
+    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
   }
 }
 
@@ -758,7 +758,7 @@ ManagerImpl::registrationFailed(const AccountID& accountid)
   Account* acc = getAccount(accountid);
   if ( acc ) { 
     acc->setState(false);
-    //if (_gui) _gui->sendRegistrationState(accountid, false);
+    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
   }
 }
 
@@ -1497,19 +1497,125 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
 std::vector< std::string > 
 ManagerImpl::getAccountList() 
 {
-  std::vector< std::string > v; 
-  
-  AccountMap::iterator iter = _accountMap.begin();
+    std::vector< std::string > v; 
+    
+    AccountMap::iterator iter = _accountMap.begin();
+    while ( iter != _accountMap.end() ) {
+      if ( iter->second != 0 ) {
+        _debug("Account List: %s\n", iter->first.data()); 
+        v.push_back(iter->first.data());
+        
+      }
+      iter++;
+    }
+    _debug("Size: %d\n", v.size());
+    return v;
+}
+
+
+
+std::map< std::string, std::string > 
+ManagerImpl::getAccountDetails(const AccountID& accountID) 
+{
+    std::map<std::string, std::string> a;
+    
+    
+    a.insert(
+      std::pair<std::string, std::string>(
+        CONFIG_ACCOUNT_ALIAS, 
+        getConfigString(accountID, CONFIG_ACCOUNT_ALIAS)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        CONFIG_ACCOUNT_AUTO_REGISTER, 
+        getConfigString(accountID, CONFIG_ACCOUNT_AUTO_REGISTER)== "1" ? "TRUE": "FALSE"
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        CONFIG_ACCOUNT_ENABLE, 
+        getConfigString(accountID, CONFIG_ACCOUNT_ENABLE) == "1" ? "TRUE": "FALSE"
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        "Status", 
+        _accountMap[accountID]->getState() ? "REGISTERED": "UNREGISTERED"
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        CONFIG_ACCOUNT_TYPE, 
+        getConfigString(accountID, CONFIG_ACCOUNT_TYPE)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        SIP_FULL_NAME, 
+        getConfigString(accountID, SIP_FULL_NAME)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        SIP_USER_PART, 
+        getConfigString(accountID, SIP_USER_PART)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        SIP_AUTH_NAME, 
+        getConfigString(accountID, SIP_AUTH_NAME)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        SIP_PASSWORD, 
+        getConfigString(accountID, SIP_PASSWORD)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        SIP_HOST_PART, 
+        getConfigString(accountID, SIP_HOST_PART)
+        )
+      );
+     
+    return a;
+}
+
+void 
+ManagerImpl::setAccountDetails( const ::DBus::String& accountID, 
+                   const std::map< ::DBus::String, ::DBus::String >& details )
+{
+    
+    setConfig(accountID, CONFIG_ACCOUNT_ALIAS, (*details.find(CONFIG_ACCOUNT_ALIAS)).second);
+    setConfig(accountID, CONFIG_ACCOUNT_AUTO_REGISTER, 
+      (*details.find(CONFIG_ACCOUNT_AUTO_REGISTER)).second == "TRUE" ? "1": "0" );
+    setConfig(accountID, CONFIG_ACCOUNT_ENABLE, 
+      (*details.find(CONFIG_ACCOUNT_ENABLE)).second == "TRUE" ? "1": "0" );
+    setConfig(accountID, CONFIG_ACCOUNT_TYPE, (*details.find(CONFIG_ACCOUNT_TYPE)).second);
+    setConfig(accountID, SIP_FULL_NAME, (*details.find(SIP_FULL_NAME)).second);
+    setConfig(accountID, SIP_USER_PART, (*details.find(SIP_USER_PART)).second);
+    setConfig(accountID, SIP_AUTH_NAME, (*details.find(SIP_AUTH_NAME)).second);
+    setConfig(accountID, SIP_PASSWORD,  (*details.find(SIP_PASSWORD)).second);
+    setConfig(accountID, SIP_HOST_PART, (*details.find(SIP_HOST_PART)).second);
+    
+}                   
+
+void 
+ManagerImpl::removeAccount(const AccountID& accountID) 
+{
+  _debug("Not implemented\n");
+  //TODO
+  /*AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
-    if ( iter->second != 0 ) {
-      _debug("Account List: %s\n", iter->first.data()); 
-      v.push_back(iter->first.data());
-      
+    _debug("Account %s == %s ", iter->first, accountID);
+    if ( iter->first == accountID ) {
+      _accountMap.erase(iter);      
     }
     iter++;
-  }
-  _debug("Size: %d\n", v.size());
-  return v;
+  }*/
 }
 
 //THREAD=Main

@@ -29,7 +29,6 @@ public:
         register_method(CallManager, transfert, _transfert_stub);
         register_method(CallManager, setVolume, _setVolume_stub);
         register_method(CallManager, getVolume, _getVolume_stub);
-        register_method(CallManager, getVoiceMailCount, _getVoiceMailCount_stub);
         register_method(CallManager, getCallDetails, _getCallDetails_stub);
         register_method(CallManager, getCurrentCallID, _getCurrentCallID_stub);
     }
@@ -86,11 +85,6 @@ public:
             { "value", "d", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument getVoiceMailCount_args[] = 
-        {
-            { "count", "i", false },
-            { 0, 0, 0 }
-        };
         static ::DBus::IntrospectedArgument getCallDetails_args[] = 
         {
             { "callID", "s", true },
@@ -112,22 +106,19 @@ public:
         static ::DBus::IntrospectedArgument incomingMessage_args[] = 
         {
             { "accountID", "s", false },
-            { "from", "s", false },
+            { "message", "s", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument ring_args[] = 
+        static ::DBus::IntrospectedArgument callStateChanged_args[] = 
         {
             { "callID", "s", false },
+            { "state", "s", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument pickedUp_args[] = 
+        static ::DBus::IntrospectedArgument voiceMailNotify_args[] = 
         {
-            { "callID", "s", false },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument hungUp_args[] = 
-        {
-            { "callID", "s", false },
+            { "accountID", "s", false },
+            { "count", "i", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument volumeChanged_args[] = 
@@ -152,7 +143,6 @@ public:
             { "transfert", transfert_args },
             { "setVolume", setVolume_args },
             { "getVolume", getVolume_args },
-            { "getVoiceMailCount", getVoiceMailCount_args },
             { "getCallDetails", getCallDetails_args },
             { "getCurrentCallID", getCurrentCallID_args },
             { 0, 0 }
@@ -161,9 +151,8 @@ public:
         {
             { "incomingCall", incomingCall_args },
             { "incomingMessage", incomingMessage_args },
-            { "ring", ring_args },
-            { "pickedUp", pickedUp_args },
-            { "hungUp", hungUp_args },
+            { "callStateChanged", callStateChanged_args },
+            { "voiceMailNotify", voiceMailNotify_args },
             { "volumeChanged", volumeChanged_args },
             { "error", error_args },
             { 0, 0 }
@@ -202,7 +191,6 @@ public:
     virtual void transfert( const ::DBus::String& callID, const ::DBus::String& to ) = 0;
     virtual void setVolume( const ::DBus::String& device, const ::DBus::Double& value ) = 0;
     virtual ::DBus::Double getVolume( const ::DBus::String& device ) = 0;
-    virtual ::DBus::Int32 getVoiceMailCount(  ) = 0;
     virtual std::map< ::DBus::String, ::DBus::String > getCallDetails( const ::DBus::String& callID ) = 0;
     virtual ::DBus::String getCurrentCallID(  ) = 0;
 
@@ -227,25 +215,20 @@ public:
         wi << arg2;
         emit_signal(sig);
     }
-    void ring( const ::DBus::String& arg1 )
+    void callStateChanged( const ::DBus::String& arg1, const ::DBus::String& arg2 )
     {
-        ::DBus::SignalMessage sig("ring");
+        ::DBus::SignalMessage sig("callStateChanged");
         ::DBus::MessageIter wi = sig.writer();
         wi << arg1;
+        wi << arg2;
         emit_signal(sig);
     }
-    void pickedUp( const ::DBus::String& arg1 )
+    void voiceMailNotify( const ::DBus::String& arg1, const ::DBus::Int32& arg2 )
     {
-        ::DBus::SignalMessage sig("pickedUp");
+        ::DBus::SignalMessage sig("voiceMailNotify");
         ::DBus::MessageIter wi = sig.writer();
         wi << arg1;
-        emit_signal(sig);
-    }
-    void hungUp( const ::DBus::String& arg1 )
-    {
-        ::DBus::SignalMessage sig("hungUp");
-        ::DBus::MessageIter wi = sig.writer();
-        wi << arg1;
+        wi << arg2;
         emit_signal(sig);
     }
     void volumeChanged( const ::DBus::String& arg1, const ::DBus::Double& arg2 )
@@ -350,16 +333,6 @@ private:
 
         ::DBus::String argin1; ri >> argin1;
         ::DBus::Double argout1 = getVolume(argin1);
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
-    ::DBus::Message _getVoiceMailCount_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::Int32 argout1 = getVoiceMailCount();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
