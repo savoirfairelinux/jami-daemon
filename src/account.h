@@ -31,6 +31,23 @@ typedef std::string AccountID;
 #define CONFIG_ACCOUNT_AUTO_REGISTER  "Account.autoregister"
 #define CONFIG_ACCOUNT_ALIAS  "Account.alias"
 
+#define IAX_FULL_NAME         "IAX.fullName"
+#define IAX_HOST              "IAX.host"
+#define IAX_USER              "IAX.user"
+#define IAX_PASS              "IAX.pass"
+
+#define SIP_FULL_NAME         "SIP.fullName"
+#define SIP_USER_PART         "SIP.userPart"
+#define SIP_AUTH_NAME         "SIP.username"
+#define SIP_PASSWORD          "SIP.password"
+#define SIP_HOST_PART         "SIP.hostPart"
+#define SIP_PROXY             "SIP.proxy"
+#define SIP_STUN_SERVER       "STUN.STUNserver"
+#define SIP_USE_STUN          "STUN.useStun"
+
+
+
+
 /**
  * Class account is an interface to protocol account (SIPAccount, IAXAccount)
  * It can be enable on loading or activate after.

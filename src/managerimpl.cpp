@@ -33,7 +33,7 @@
 #include <cc++/file.h>
 
 #include "manager.h"
-#include "sipaccount.h"
+#include "account.h"
 #include "audio/audiolayer.h"
 #include "audio/audiocodec.h"
 #include "audio/tonelist.h"
@@ -1502,19 +1502,19 @@ ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& pat
 std::vector< std::string > 
 ManagerImpl::getAccountList() 
 {
-    std::vector< std::string > v; 
+  std::vector< std::string > v; 
     
-    AccountMap::iterator iter = _accountMap.begin();
-    while ( iter != _accountMap.end() ) {
-      if ( iter->second != 0 ) {
-        _debug("Account List: %s\n", iter->first.data()); 
-        v.push_back(iter->first.data());
+  AccountMap::iterator iter = _accountMap.begin();
+  while ( iter != _accountMap.end() ) {
+    if ( iter->second != 0 ) {
+      _debug("Account List: %s\n", iter->first.data()); 
+      v.push_back(iter->first.data());
         
-      }
-      iter++;
     }
-    _debug("Size: %d\n", v.size());
-    return v;
+    iter++;
+  }
+  _debug("Size: %d\n", v.size());
+  return v;
 }
 
 
@@ -1522,39 +1522,42 @@ ManagerImpl::getAccountList()
 std::map< std::string, std::string > 
 ManagerImpl::getAccountDetails(const AccountID& accountID) 
 {
-    std::map<std::string, std::string> a;
+  std::map<std::string, std::string> a;
+  std::string accountType;
     
-    
-    a.insert(
-      std::pair<std::string, std::string>(
-        CONFIG_ACCOUNT_ALIAS, 
-        getConfigString(accountID, CONFIG_ACCOUNT_ALIAS)
-        )
-      );
-    a.insert(
-      std::pair<std::string, std::string>(
-        CONFIG_ACCOUNT_AUTO_REGISTER, 
-        getConfigString(accountID, CONFIG_ACCOUNT_AUTO_REGISTER)== "1" ? "TRUE": "FALSE"
-        )
-      );
-    a.insert(
-      std::pair<std::string, std::string>(
-        CONFIG_ACCOUNT_ENABLE, 
-        getConfigString(accountID, CONFIG_ACCOUNT_ENABLE) == "1" ? "TRUE": "FALSE"
-        )
-      );
-    a.insert(
-      std::pair<std::string, std::string>(
-        "Status", 
-        _accountMap[accountID]->getState() ? "REGISTERED": "UNREGISTERED"
-        )
-      );
-    a.insert(
-      std::pair<std::string, std::string>(
-        CONFIG_ACCOUNT_TYPE, 
-        getConfigString(accountID, CONFIG_ACCOUNT_TYPE)
-        )
-      );
+  accountType = getConfigString(accountID, CONFIG_ACCOUNT_TYPE);
+
+  a.insert(
+    std::pair<std::string, std::string>(
+      CONFIG_ACCOUNT_ALIAS, 
+      getConfigString(accountID, CONFIG_ACCOUNT_ALIAS)
+      )
+    );
+  a.insert(
+    std::pair<std::string, std::string>(
+      CONFIG_ACCOUNT_AUTO_REGISTER, 
+      getConfigString(accountID, CONFIG_ACCOUNT_AUTO_REGISTER)== "1" ? "TRUE": "FALSE"
+      )
+    );
+  a.insert(
+    std::pair<std::string, std::string>(
+      CONFIG_ACCOUNT_ENABLE, 
+      getConfigString(accountID, CONFIG_ACCOUNT_ENABLE) == "1" ? "TRUE": "FALSE"
+      )
+    );
+  a.insert(
+    std::pair<std::string, std::string>(
+      "Status", 
+      _accountMap[accountID]->getState() ? "REGISTERED": "UNREGISTERED"
+      )
+    );
+  a.insert(
+    std::pair<std::string, std::string>(
+      CONFIG_ACCOUNT_TYPE, accountType
+      )
+    );
+
+  if (accountType == "SIP") {
     a.insert(
       std::pair<std::string, std::string>(
         SIP_FULL_NAME, 
@@ -1585,26 +1588,91 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
         getConfigString(accountID, SIP_HOST_PART)
         )
       );
+    a.insert(
+      std::pair<std::string, std::string>(
+        SIP_PROXY, 
+        getConfigString(accountID, SIP_PROXY)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        SIP_STUN_SERVER, 
+        getConfigString(accountID, SIP_STUN_SERVER)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        SIP_USE_STUN, 
+        getConfigString(accountID, SIP_USE_STUN) == "1" ? "TRUE": "FALSE"
+        )
+      );
+  }
+  else if (accountType == "IAX") {
+    a.insert(
+      std::pair<std::string, std::string>(
+        IAX_FULL_NAME, 
+        getConfigString(accountID, IAX_FULL_NAME)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        IAX_HOST, 
+        getConfigString(accountID, IAX_HOST)
+        )
+      );    
+    a.insert(
+      std::pair<std::string, std::string>(
+        IAX_USER, 
+        getConfigString(accountID, IAX_USER)
+        )
+      );
+    a.insert(
+      std::pair<std::string, std::string>(
+        IAX_PASS, 
+        getConfigString(accountID, IAX_PASS)
+        )
+      );
+  }
+  else {
+    // Unknown type
+    _debug("Unknown account type in getAccountDetails(): %s", accountType.c_str());
+  }
      
-    return a;
+  return a;
 }
 
 void 
 ManagerImpl::setAccountDetails( const ::DBus::String& accountID, 
-                   const std::map< ::DBus::String, ::DBus::String >& details )
+				const std::map< ::DBus::String, ::DBus::String >& details )
 {
+  std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
     
-    setConfig(accountID, CONFIG_ACCOUNT_ALIAS, (*details.find(CONFIG_ACCOUNT_ALIAS)).second);
-    setConfig(accountID, CONFIG_ACCOUNT_AUTO_REGISTER, 
-      (*details.find(CONFIG_ACCOUNT_AUTO_REGISTER)).second == "TRUE" ? "1": "0" );
-    setConfig(accountID, CONFIG_ACCOUNT_ENABLE, 
-      (*details.find(CONFIG_ACCOUNT_ENABLE)).second == "TRUE" ? "1": "0" );
-    setConfig(accountID, CONFIG_ACCOUNT_TYPE, (*details.find(CONFIG_ACCOUNT_TYPE)).second);
+  setConfig(accountID, CONFIG_ACCOUNT_ALIAS, (*details.find(CONFIG_ACCOUNT_ALIAS)).second);
+  setConfig(accountID, CONFIG_ACCOUNT_AUTO_REGISTER, 
+	    (*details.find(CONFIG_ACCOUNT_AUTO_REGISTER)).second == "TRUE" ? "1": "0" );
+  setConfig(accountID, CONFIG_ACCOUNT_ENABLE, 
+	    (*details.find(CONFIG_ACCOUNT_ENABLE)).second == "TRUE" ? "1": "0" );
+  setConfig(accountID, CONFIG_ACCOUNT_TYPE, accountType);
+
+  if (accountType == "SIP") {
     setConfig(accountID, SIP_FULL_NAME, (*details.find(SIP_FULL_NAME)).second);
     setConfig(accountID, SIP_USER_PART, (*details.find(SIP_USER_PART)).second);
     setConfig(accountID, SIP_AUTH_NAME, (*details.find(SIP_AUTH_NAME)).second);
     setConfig(accountID, SIP_PASSWORD,  (*details.find(SIP_PASSWORD)).second);
     setConfig(accountID, SIP_HOST_PART, (*details.find(SIP_HOST_PART)).second);
+    setConfig(accountID, SIP_PROXY,     (*details.find(SIP_PROXY)).second);
+    setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
+    setConfig(accountID, SIP_USE_STUN,
+	      (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
+  }
+  else if (accountType == "IAX") {
+    setConfig(accountID, IAX_FULL_NAME, (*details.find(IAX_FULL_NAME)).second);
+    setConfig(accountID, IAX_HOST,      (*details.find(IAX_HOST)).second);
+    setConfig(accountID, IAX_USER,      (*details.find(IAX_USER)).second);
+    setConfig(accountID, IAX_PASS,      (*details.find(IAX_PASS)).second);    
+  } else {
+    _debug("Unknown account type in setAccountDetails(): %s", accountType.c_str());
+  }
     
 }                   
 
