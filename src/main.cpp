@@ -26,8 +26,6 @@
 #include "global.h"
 
 #include "user_cfg.h"
-#include "gui/server/guiserver.h"
-#include "gui/guiframework.h"
 #include "dbus/dbusmanager.h"
 #include "manager.h"
 

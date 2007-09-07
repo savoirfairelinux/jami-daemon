@@ -42,7 +42,6 @@
 #include "voiplink.h"
 
 #include "user_cfg.h"
-#include "gui/guiframework.h"
 
 #ifdef USE_ZEROCONF
 #include "zeroconf/DNSService.h"

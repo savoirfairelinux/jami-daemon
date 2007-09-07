@@ -28,7 +28,7 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
-SUBDIRS = audio config gui dbus $(ZEROCONFDIR)
+SUBDIRS = audio config dbus $(ZEROCONFDIR)
 
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 		managerimpl.cpp	observer.cpp \
@@ -48,7 +48,6 @@ libsflphone_la_LIBADD = \
 	$(top_builddir)/libs/stund/libstun.la \
 	$(top_builddir)/libs/utilspp/libutilspp.la \
 	./audio/libaudio.la \
-	./gui/libguiframework.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	$(IAX_LIBS)
