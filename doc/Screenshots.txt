@@ -3,9 +3,19 @@
 Screenshots
 -----------
 
-.Screenshot de 2007
-sflimage::images/SflphonePOuetpoUEt.png[SFLphone qt3]
+Upcoming releases
+~~~~~~~~~~~~~~~~~
 
-.Screenshot de SFLphone 0.7
-sflimage::images/sflphone0.7.png[SFLphone 0.7]
+Screenshot of the new SFLphone-GTK client will be here soon.
+
+
+
+Historical
+~~~~~~~~~~
+
+.SFLphone 0.6.2 - Brushed metal skin
+sflimage::images/screenshots/sflphone_qt3_0.6.2.png[SFLphone 0.6.2]
+
+.SFLphone 0.6 - Alternate skin
+sflimage::images/screenshots/sflphone_metal.png[SFLphone 0.6]
 

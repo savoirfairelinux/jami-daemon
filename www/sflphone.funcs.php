@@ -64,7 +64,6 @@ function get_page($page, $compile = TRUE) {
  */
 function show_page($page, $compile = TRUE) {
   print get_page($page, $compile);
-
 }
 
 
@@ -142,7 +141,7 @@ function compile_page($hash, $page) {
   $fnconf = bring_local_file('asciidoc.conf');
 
   // -d book so we can render H1s
-  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -f \"".$fnconf."\"-d book --no-header-footer -", 'r');
+  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -f \"".$fnconf."\" -d book --no-header-footer - 2>&1", 'r');
 
   if (!$p) {
     return "Unable to compile file: $page ($hash)\n";
@@ -203,10 +202,20 @@ function get_git_file_content($file) {
 function get_git_hash_content($hash) {
   global $GIT_REPOS;
 
-  $output = array();
-  $content = exec("GIT_DIR=".$GIT_REPOS." git-show $hash", $output);
+  $output = '';
 
-  return $content;
+  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash", 'r');
+
+  if (!$p) {
+    return "Unable to run git-show for hash: $hash\n";
+  }
+
+  while (!feof($p)) {
+    $output .= fread($p, 1024);
+  }
+  pclose($p);
+
+  return $output;
 }
 
 /**
