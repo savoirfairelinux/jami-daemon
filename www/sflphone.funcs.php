@@ -20,7 +20,7 @@ require_once('config.inc.php');
 /**
  * Retrieve page, compile it if new, cache it.
  *
- * @param string File name (without the .txt) in the $PREFIX dir.
+ * @param string File name (including the extension) in the $PREFIX dir.
  * @return HTML content
  */
 function get_page($page) {
@@ -51,7 +51,7 @@ function get_page($page) {
 /**
  * Show page
  *
- * @param string File name (without the .txt) in the $PREFIX dir.
+ * @param string File name (including the ext.) in the $PREFIX dir.
  */
 function show_page($page) {
   print get_page($page);
@@ -170,7 +170,7 @@ function get_git_hash($file) {
 
   $output = array();
 
-  $cmd = "cd $GIT_REPOS; git-ls-tree $USE_BRANCH \"".git_filename($file).".txt\"";
+  $cmd = "cd $GIT_REPOS; git-ls-tree $USE_BRANCH \"".git_filename($file)."\"";
 
   $string = exec($cmd, $output);
 

@@ -1,3 +1,3 @@
-<h1>Download</h2>
+<h1>Download</h1>
 
-<?php show_page('Download'); ?>
+<?php show_page('Download.txt'); ?>

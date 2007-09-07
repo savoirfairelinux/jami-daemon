@@ -9,14 +9,34 @@
 require_once('sflphone.funcs.php');
 
 
+// We've requested an image, fetch it, and send it.
+if (defined($_REQUEST['i'])) {
+  $img = $_REQUEST['i'];
+  switch(strtolower(substr($img, -3))) {
+  case 'jpg':
+    header("Content-Type: image/jpeg");
+    break;
+  case 'png':
+    header("Content-Type: image/png");
+    break;
+  case 'gif':
+    header("Content-Type: image/gif");
+    break;
+  default:
+    break;
+  }
+
+  show_page($img);
+}
+
+
 
 $module = '';
-
 // Default module: home
-if (!$_REQUEST['l']) {
+if (!$_REQUEST['mod']) {
   $module = 'home';
 } else {
-  $module = $_REQUEST['l'];
+  $module = $_REQUEST['mod'];
 }
 
 

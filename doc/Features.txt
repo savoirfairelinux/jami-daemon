@@ -3,70 +3,70 @@
 SFLphone feature map
 --------------------
 
-  * SIP features
-    - transfer: [done] and tested
-    - reinvite: [done] and tested
-    - play DTMF sipinfo: [done] and tested
-    - receive text message: [done] and tested with sipsak
-    - SFLphone to snom (asterisk): [done] and tested
-    - SFLphone to SFLphone (IP and no proxy): [done] and tested
-    - conference: [not done] yet
-    - send text message: [not done] yet
-  * IAX support: [not done] yet
-  * Audio devices:
-    - OSS: [done] and tested (portaudio)
-    - ALSA: [done] and tested (portaudio)
-    - ALSA with dmix: [not tested]
-    - JACK: [partial], portaudio has problems to open it
-    - ASIO on windows: in portaudio, [not tested]
-    - on MacOSX: we can't use portaudio in 8kHz. libsamplerate was added to convert from 44,1kHz to 8kHz.
-  * Codecs:
-    - G711a/PCM: [done] and tested
-    - G711u: [done] and tested
-    - GSM: [done] and tested
-    - Speex codec 8khz: [not tested] but integrated
-    - ILBc: [notdone]
-  * Video support:
-    - video integration in SIP: [not done]
-    - video integration in IAX: [not done]
-    - integration in QT: not done
-  * Zeroconf:
-    - sflphone-d: partially
-    - sflphone-qt: not done
-  * SFLphone Client:
-    - QT3: done and tested on linux
-    - QT4: not tested
-    - GTK: not done
-    - Command Line Interface (in C): partially done
-    - Command Line Interface (in python): not done
-  * MacOSX port:
-    - compilation: done
-    - 44,1khz to 8khz conversion (with libsamplerate): not tested
-  * Windows port:
-    - compilation of sflphoned: not done
-    - compilation of sflphone-qt (qt3): not done
-    - compilation of sflphone-qt (qt4): not done
-  * Desktop Integration:
-    - firefox sip: handling: open sflphone, not integrated in install process
-    - konqueror sip: handling: open sflphone, not integrated in install process
-    - addressbook: open sflphone and call, not integrated in install process
-    - inter-process communication: [not done]
-    - tray icon: [not done]
-    - menu icon (.desktop): only in fedora rpm
-    - LDAP enterprise directory support: [not done]
-  * Packaging:
-    - Remove libeXosip2 from package: [not done]
-    - Remove portaudio final from package: [not done]
-    - Fedora Core 4 packages: [done]
-    - Suse 9.3 packages: [done]
-    - .tar.gz publication: [done]
-    - Debian packages: [not done]
-    - Suse 10 packages: [not done]
+ * SIP features
+   - transfer: [done] and tested
+   - reinvite: [done] and tested
+   - play DTMF sipinfo: [done] and tested
+   - receive text message: [done] and tested with sipsak
+   - SFLphone to snom (asterisk): [done] and tested
+   - SFLphone to SFLphone (IP and no proxy): [done] and tested
+   - conference: [not done] yet
+   - send text message: [not done] yet
+ * IAX support: [not done] yet
+ * Audio devices:
+   - OSS: [done] and tested (portaudio)
+   - ALSA: [done] and tested (portaudio)
+   - ALSA with dmix: [not tested]
+   - JACK: [partial], portaudio has problems to open it
+   - ASIO on windows: in portaudio, [not tested]
+   - on MacOSX: we can't use portaudio in 8kHz. libsamplerate was added to convert from 44,1kHz to 8kHz.
+ * Codecs:
+   - G711a/PCM: [done] and tested
+   - G711u: [done] and tested
+   - GSM: [done] and tested
+   - Speex codec 8khz: [not tested] but integrated
+   - ILBc: [notdone]
+ * Video support:
+   - video integration in SIP: [not done]
+   - video integration in IAX: [not done]
+   - integration in QT: not done
+ * Zeroconf:
+   - sflphone-d: partially
+   - sflphone-qt: not done
+ * SFLphone Client:
+   - QT3: done and tested on linux
+   - QT4: not tested
+   - GTK: not done
+   - Command Line Interface (in C): partially done
+   - Command Line Interface (in python): not done
+ * MacOSX port:
+   - compilation: done
+   - 44,1khz to 8khz conversion (with libsamplerate): not tested
+ * Windows port:
+   - compilation of sflphoned: not done
+   - compilation of sflphone-qt (qt3): not done
+   - compilation of sflphone-qt (qt4): not done
+ * Desktop Integration:
+   - firefox sip: handling: open sflphone, not integrated in install process
+   - konqueror sip: handling: open sflphone, not integrated in install process
+   - addressbook: open sflphone and call, not integrated in install process
+   - inter-process communication: [not done]
+   - tray icon: [not done]
+   - menu icon (.desktop): only in fedora rpm
+   - LDAP enterprise directory support: [not done]
+ * Packaging:
+   - Remove libeXosip2 from package: [not done]
+   - Remove portaudio final from package: [not done]
+   - Fedora Core 4 packages: [done]
+   - Suse 9.3 packages: [done]
+   - .tar.gz publication: [done]
+   - Debian packages: [not done]
+   - Suse 10 packages: [not done]
 
 SFLphone-qt (linux)
 
-  * audiodevice input/output selector: [not done]
-  * drag'n'drop over lcd screen: [done]
-  * paste with ctrl+v: [done]
-  * keyboard mapping: [partial], not completed
-  * keyboard shortcut: [partial], not completed
+ * audiodevice input/output selector: [not done]
+ * drag'n'drop over lcd screen: [done]
+ * paste with ctrl+v: [done]
+ * keyboard mapping: [partial], not completed
+ * keyboard shortcut: [partial], not completed
