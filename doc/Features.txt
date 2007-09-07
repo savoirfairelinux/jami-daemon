@@ -1,5 +1,10 @@
 // [done], [not done], [not tested], etc.. are defined in asciidoc.conf
 
+
+Features
+========
+
+
 SFLphone feature map
 --------------------
 
@@ -64,6 +69,7 @@ SFLphone feature map
    - Suse 10 packages: [not done]
 
 SFLphone-qt (linux)
+-------------------
 
  * audiodevice input/output selector: [not done]
  * drag'n'drop over lcd screen: [done]
