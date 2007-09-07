@@ -30,7 +30,6 @@ if (defined($_REQUEST['i'])) {
 }
 
 
-
 $module = '';
 // Default module: home
 if (!$_REQUEST['mod']) {

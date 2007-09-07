@@ -69,7 +69,7 @@ ManagerImpl::ManagerImpl (void)
   _dbus = NULL;
 
   // sound
-  _audiodriver = 0;
+  _audiodriver = NULL;
   _dtmfKey = 0;
   _spkr_volume = 0;  // Initialize after by init() -> initVolume()
   _mic_volume  = 0;  // Initialize after by init() -> initVolume()
