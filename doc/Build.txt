@@ -9,6 +9,12 @@ sflphoned
 
 Instructions to build `sflphoned`:
 
+---------------------------------
+autoreconf --install
+make
+sudo make install
+---------------------------------
+
 
 dbus-c++-bindings
 ^^^^^^^^^^^^^^^^^
