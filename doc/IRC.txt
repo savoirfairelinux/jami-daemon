@@ -1,0 +1,7 @@
+// AsciiDoc file
+
+IRC
+===
+
+Server:: `irc.freenode.org`
+Channel:: `#sflphone`
