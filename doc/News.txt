@@ -3,5 +3,5 @@
 News
 ====
 
-* News 1
-* News 2
+* Pierre-Luc Beaudoin and Alexandre Bourget have taken the lead of maintenance and development of SFLphone.
+
