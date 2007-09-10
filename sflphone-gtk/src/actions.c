@@ -210,11 +210,10 @@ sflphone_keypad( guint keyval, gchar * key)
         g_free(c->from);
         c->from = g_strconcat("\"\" <", c->to, ">", NULL);
         screen_set_call(c);
+        update_call_tree();
       }
       break;
     }
-    
-
   }
   else 
   {
@@ -240,7 +239,7 @@ sflphone_keypad( guint keyval, gchar * key)
         c->to = g_strdup(key);
         call_list_add(c);
         screen_set_call(c);
-             
+        update_call_tree();
       }
     }
   }

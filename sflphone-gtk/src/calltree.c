@@ -25,8 +25,68 @@ GtkListStore * store;
 GtkWidget * acceptButton;
 GtkWidget * refuseButton;
 GtkWidget * unholdButton;
+GtkWidget * holdButton;
+GtkWidget * callButton;
+GtkWidget * hangupButton;
+GtkWidget * transfertButton;
 
 call_t * selectedCall;
+
+
+/**
+ * Hold the line
+ */
+static void 
+hold( GtkWidget *widget, gpointer   data )
+{
+  call_t * c = (call_t*) call_list_get_by_state (CALL_STATE_CURRENT);
+  if(c)
+  {
+    dbus_hold (c);
+  }
+  
+  
+}
+
+/**
+ * Make a call
+ */
+static void 
+place_call( GtkWidget *widget, gpointer   data )
+{
+  call_t * c = (call_t*) call_list_get_by_state (CALL_STATE_DIALING);
+  if(c)
+  {
+    sflphone_place_call(c);
+  }
+}
+
+/**
+ * Hang up the line
+ */
+static void 
+hang_up( GtkWidget *widget, gpointer   data )
+{
+  call_t * c = (call_t*) call_list_get_by_state (CALL_STATE_CURRENT);
+  if(c)
+  {
+    dbus_hang_up(c);
+  }
+}
+
+
+/**
+ * Transfert the line
+ */
+static void 
+transfert( GtkWidget *widget, gpointer   data )
+{
+  call_t * c = (call_t*) call_list_get_by_state (CALL_STATE_CURRENT);
+  if(c)
+  {
+    dbus_transfert(c,"124");
+  }
+}
 
 /* Call back when the user click on a call in the list */
 static void 
@@ -58,6 +118,28 @@ selected(GtkTreeSelection *sel, GtkTreeModel *model)
 	    gtk_widget_set_sensitive( GTK_WIDGET(acceptButton),  FALSE);
       gtk_widget_set_sensitive( GTK_WIDGET(refuseButton),  FALSE);
       gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),  TRUE);
+    }
+    else if(selectedCall->state == CALL_STATE_DIALING)
+    {
+      /*gtk_widget_hide( hangupButton );
+      gtk_widget_show( callButton );
+      gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+      gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     FALSE);
+      gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       FALSE);
+      gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  FALSE);*/
+    }
+    else if (selectedCall->state == CALL_STATE_CURRENT)
+    {
+      //gtk_widget_hide( callButton  );
+      /* Hack : if hangupButton is put on the window in create_screen()
+       * the hbox will request space for 4 buttons making the window larger than needed */
+      //gtk_box_pack_start (GTK_BOX (hbox), hangupButton, TRUE /*expand*/, TRUE /*fill*/, 10 /*padding*/);
+      //gtk_box_reorder_child(GTK_BOX (hbox), hangupButton, 0);
+      gtk_widget_show( hangupButton );
+      gtk_widget_set_sensitive( GTK_WIDGET(callButton),       FALSE);
+      gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+      gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
+      gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
     }
 	  
 	}
@@ -117,7 +199,7 @@ create_call_tree (){
 	gtk_container_set_border_width (GTK_CONTAINER (ret), 0);
 
 	sw = gtk_scrolled_window_new( NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
 
 	gtk_box_pack_start(GTK_BOX(ret), sw, TRUE, TRUE, 0);
@@ -129,7 +211,7 @@ create_call_tree (){
 
 
 	view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
-
+  gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(view), FALSE);
 	
 	/*g_signal_connect(G_OBJECT(rend), "toggled",
 							 G_CALLBACK(module_toggled), module_store);*/
@@ -184,7 +266,50 @@ create_call_tree (){
   gtk_box_pack_start (GTK_BOX (hbox), unholdButton, TRUE /*expand*/, TRUE /*fill*/, 10 /*padding*/);
   g_signal_connect (G_OBJECT (unholdButton), "clicked",
                     G_CALLBACK (unhold), NULL);
+                    
+  gtk_box_pack_start (GTK_BOX (ret), hbox, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  
+  /* 2nd row */     
+  hbox = gtk_hbutton_box_new ();       
+  gtk_button_box_set_spacing ( GTK_BUTTON_BOX(hbox), 10);
+  gtk_button_box_set_layout ( GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_START); 
 
+  callButton = gtk_button_new_with_label ("Call");
+  gtk_widget_set_state( GTK_WIDGET(callButton), GTK_STATE_INSENSITIVE);
+  image = gtk_image_new_from_file( PIXMAPS_DIR "/call.svg");
+  gtk_button_set_image(GTK_BUTTON(callButton), image);
+  //gtk_button_set_image_position( button, GTK_POS_TOP);
+  gtk_box_pack_start (GTK_BOX (hbox), callButton, TRUE /*expand*/, TRUE /*fill*/, 10 /*padding*/);
+  g_signal_connect (G_OBJECT (callButton), "clicked",
+                    G_CALLBACK (place_call), NULL);
+
+  hangupButton = gtk_button_new_with_label ("Hang up");
+  gtk_widget_hide( hangupButton );
+  gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
+  gtk_box_pack_end (GTK_BOX (hbox), hangupButton, TRUE /*expand*/, TRUE /*fill*/, 10 /*padding*/);
+  image = gtk_image_new_from_file( PIXMAPS_DIR "/hang_up.svg");
+  gtk_button_set_image(GTK_BUTTON(hangupButton), image);
+  //gtk_button_set_image_position( button, GTK_POS_TOP);
+  g_signal_connect (G_OBJECT (hangupButton), "clicked",
+                    G_CALLBACK (hang_up), NULL);
+
+  holdButton = gtk_button_new_with_label ("Hold");
+  gtk_widget_set_state( GTK_WIDGET(holdButton), GTK_STATE_INSENSITIVE);
+  image = gtk_image_new_from_file( PIXMAPS_DIR "/hold.svg");
+  gtk_box_pack_end (GTK_BOX (hbox), holdButton, TRUE /*expand*/, TRUE /*fill*/, 10 /*padding*/);
+  gtk_button_set_image(GTK_BUTTON(holdButton), image);
+  g_signal_connect (G_OBJECT (holdButton), "clicked",
+                    G_CALLBACK (hold), NULL);
+
+  transfertButton = gtk_button_new_with_label ("Transfert");
+  gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
+  image = gtk_image_new_from_file( PIXMAPS_DIR "/transfert.svg");
+  gtk_button_set_image(GTK_BUTTON(transfertButton), image);
+  gtk_box_pack_end (GTK_BOX (hbox), transfertButton, TRUE /*expand*/, TRUE /*fill*/, 10 /*padding*/);
+  g_signal_connect (G_OBJECT (transfertButton), "clicked",
+                    G_CALLBACK (transfert), NULL);
+
+  
   
   gtk_box_pack_start (GTK_BOX (ret), hbox, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
  
@@ -205,12 +330,24 @@ update_call_tree ()
 	for( i = 0; i < call_list_get_size(); i++)
 	{
     call_t  * c = call_list_get_nth (i);
-    if (c && c->state != CALL_STATE_CURRENT && c->state != CALL_STATE_DIALING )
+    if (c)
     {
-      gchar * markup = g_markup_printf_escaped("<b>%s</b>\n"
+      gchar * markup;
+      if (c->state == CALL_STATE_CURRENT)
+  		{
+  		  markup = g_markup_printf_escaped("<big><b>%s</b></big>\n"
   						    "%s", 
   						    call_get_name(c), 
   						    call_get_number(c));
+  		}
+  		else 
+  		{
+  		  markup = g_markup_printf_escaped("<b>%s</b>\n"
+  						    "%s", 
+  						    call_get_name(c), 
+  						    call_get_number(c));
+  		}
+  		
   		gtk_list_store_append (store, &iter);
   		
   		if (c->state == CALL_STATE_HOLD)
@@ -220,6 +357,14 @@ update_call_tree ()
   		else if (c->state == CALL_STATE_INCOMING)
   		{
   		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
+  		}
+  	  else if (c->state == CALL_STATE_CURRENT)
+  		{
+  		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/current.svg", NULL);
+  		}
+  	  else if (c->state == CALL_STATE_DIALING)
+  		{
+  		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/dial.svg", NULL);
   		}
   	  //Resize it
       if(pixbuf)
@@ -244,8 +389,12 @@ update_call_tree ()
     
   } 
   
-  gtk_widget_set_sensitive( GTK_WIDGET(acceptButton),  FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(refuseButton),  FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),  FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(acceptButton),     FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(refuseButton),     FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(callButton),       FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       FALSE);
+  //gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  FALSE);
 	//return row_ref;
 }
