@@ -1,0 +1,4 @@
+Fetched from (7 sept. 2007):
+
+svn --username guest --password guest --non-interactive co http://dev.openwengo.org/svn/openwengo/wengophone-ng/branches/wengophone-dbus-api/libs/dbus/
+

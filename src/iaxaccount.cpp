@@ -21,11 +21,6 @@
 #include "iaxvoiplink.h"
 #include "manager.h"
 
-#define IAX_FULL_NAME  "IAX.fullName"
-#define IAX_HOST       "IAX.host"
-#define IAX_USER       "IAX.user"
-#define IAX_PASS       "IAX.pass"
-
 IAXAccount::IAXAccount(const AccountID& accountID)
  : Account(accountID)
 {

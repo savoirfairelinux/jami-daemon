@@ -41,6 +41,31 @@ doc/*.html
 /src/sflphone
 /src/.libs
 
+# Ignore built DBUS stuff
+/libs/dbus/examples/*
+/libs/dbus/include
+/libs/dbus/*/*.libs*
+/libs/dbus/libtool
+/libs/dbus/autom4te*
+/libs/dbus/config.log
+/libs/dbus/config.status
+/libs/dbus/configure
+/libs/dbus/tools/dbusxx-*
+/libs/dbus/dbus-c++-1.pc
+/libs/dbus/doc
+
+# Ignore sflphone-gtk stuff
+/sflphone-gtk/config.*
+/sflphone-gtk/configure
+/sflphone-gtk/depcomp
+/sflphone-gtk/install-sh
+/sflphone-gtk/missing
+/sflphone-gtk/mkinstalldirs
+/sflphone-gtk/src/sflphone-gtk
+/sflphone-gtk/autom4te*
+
+
+
 
 # Ignore temp libs stuff
 tools/portaudio
@@ -73,3 +98,7 @@ tools/portaudio
 
 # Ignore platform packaging temp files
 /platform/debian/changelog
+
+
+# Les foutus .svn
+*.svn*
