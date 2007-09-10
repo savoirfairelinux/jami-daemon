@@ -3,5 +3,7 @@
 News
 ====
 
+September 2007:: A new Gtk+ client is being written, to play with the new D-BUS client/server interface. See sflsite:screenshots[]. Upcoming release 0.8.0.
+
 July 2007:: *Pierre-Luc Beaudoin* and *Alexandre Bourget* have taken the lead of maintenance and development of SFLphone.
 
