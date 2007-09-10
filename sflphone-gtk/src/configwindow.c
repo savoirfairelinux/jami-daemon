@@ -160,7 +160,7 @@ create_accounts_tab()
 	view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(account_store));
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (view));
-  g_signal_connect (G_OBJECT (sel), "changed",
+	g_signal_connect (G_OBJECT (sel), "changed",
 			  G_CALLBACK (select_account),
 			  account_store);
 	

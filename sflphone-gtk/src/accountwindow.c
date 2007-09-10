@@ -25,6 +25,21 @@
 /** Local variables */
 account_t * currentAccount;
 
+GtkDialog * dialog;
+GtkWidget * table;
+GtkWidget * label;
+GtkWidget * entryID;
+GtkWidget * entryName;
+GtkWidget * entryProtocol;
+GtkWidget * entryEnabled;
+GtkWidget * entryRegister;
+GtkWidget * entryFullName;
+GtkWidget * entryUserPart;
+GtkWidget * entryHostPart;
+GtkWidget * entryUsername;
+GtkWidget * entryPassword;
+
+
 /**
  * Delete an account
  */
@@ -35,23 +50,30 @@ delete_account( GtkWidget *widget, gpointer   data )
 }*/
 
 
+/* Signal to entryProtocol 'changed' */
+void
+change_protocol (account_t * currentAccount)
+{
+  gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
+  //g_print("Protocol changed\n");
+
+  // toggle sensitivity for: entryUserPart 
+  if (strcmp(proto, "SIP") == 0) {
+    gtk_widget_set_sensitive( GTK_WIDGET(entryUserPart),   TRUE);
+  }
+  else if (strcmp(proto, "IAX") == 0) {
+    gtk_widget_set_sensitive( GTK_WIDGET(entryUserPart),   FALSE);
+  }
+  else {
+    // Should not get here.
+    g_print("Unknown protocol: %s\n", proto);
+  }
+}
+
+
 void
 show_account_window (account_t * a)
 {
-  
-  GtkDialog * dialog;
-  GtkWidget * table;
-  GtkWidget * label;
-  GtkWidget * entryID;
-  GtkWidget * entryName;
-  GtkWidget * entryProtocol;
-  GtkWidget * entryEnabled;
-  GtkWidget * entryRegister;
-  GtkWidget * entryFullName;
-  GtkWidget * entryUserPart;
-  GtkWidget * entryHostPart;
-  GtkWidget * entryUsername;
-  GtkWidget * entryPassword;
   guint response;
   
   currentAccount = a;
@@ -137,7 +159,7 @@ show_account_window (account_t * a)
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryProtocol = gtk_combo_box_new_text();
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryProtocol);
-  gtk_widget_set_sensitive( GTK_WIDGET(entryProtocol), TRUE); /* TODO When IAX is ok */
+  //gtk_widget_set_sensitive( GTK_WIDGET(entryProtocol), TRUE);
   gtk_combo_box_append_text(GTK_COMBO_BOX(entryProtocol), "SIP");
   gtk_combo_box_append_text(GTK_COMBO_BOX(entryProtocol), "IAX");
   if(strcmp(curAccountType, "SIP") == 0)
@@ -155,16 +177,18 @@ show_account_window (account_t * a)
     gtk_combo_box_set_active(GTK_COMBO_BOX(entryProtocol),2);  
   }
   gtk_table_attach ( GTK_TABLE( table ), entryProtocol, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+  /* Link signal 'changed' */
+  g_signal_connect (G_OBJECT (GTK_COMBO_BOX(entryProtocol)), "changed",
+		    G_CALLBACK (change_protocol),
+		    currentAccount);
   
   label = gtk_label_new_with_mnemonic ("_Full Name:");
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryFullName = gtk_entry_new();
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryFullName);
-
-  // Load fullName
   gtk_entry_set_text(GTK_ENTRY(entryFullName), curFullName);
-
   gtk_table_attach ( GTK_TABLE( table ), entryFullName, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
   label = gtk_label_new_with_mnemonic ("_User part:");
@@ -172,10 +196,7 @@ show_account_window (account_t * a)
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryUserPart = gtk_entry_new();
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUserPart);
-
-  // Load userPart
   gtk_entry_set_text(GTK_ENTRY(entryUserPart), curUserPart);
-
   gtk_table_attach ( GTK_TABLE( table ), entryUserPart, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
   label = gtk_label_new_with_mnemonic ("_Host part:");
@@ -183,10 +204,7 @@ show_account_window (account_t * a)
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryHostPart = gtk_entry_new();
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryHostPart);
-
-  // Load hostPart
   gtk_entry_set_text(GTK_ENTRY(entryHostPart), curHostPart);
-
   gtk_table_attach ( GTK_TABLE( table ), entryHostPart, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
   label = gtk_label_new_with_mnemonic ("U_sername:");
@@ -194,10 +212,7 @@ show_account_window (account_t * a)
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryUsername = gtk_entry_new();
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUsername);
-
-  // Load Username
   gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
-
   gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
   label = gtk_label_new_with_mnemonic ("_Password:");
@@ -206,12 +221,21 @@ show_account_window (account_t * a)
   entryPassword = gtk_entry_new();
   gtk_entry_set_visibility(GTK_ENTRY(entryPassword), FALSE);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPassword);
-
-  // Load password
   gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
-
   gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 9, 10, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
+
+  // Toggle enabled/disabled widgets
+  if (strcmp(curAccountType, "SIP") == 0) {
+    //gtk_widget_set_sensitive( GTK_WIDGET(entryUserPart), TRUE);<    
+  }
+  else if (strcmp(curAccountType, "IAX") == 0) {
+    gtk_widget_set_sensitive( GTK_WIDGET(entryUserPart), FALSE);
+  }
+  else {
+    // Disable everything ! ouch!
+    // Shouldn't get there.
+  }
   
   
   gtk_box_pack_start (GTK_BOX (dialog->vbox), table, TRUE, TRUE, 0);
