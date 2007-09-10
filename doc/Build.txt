@@ -4,7 +4,6 @@
 Build notes
 -----------
 
-
 sflphoned
 ~~~~~~~~~
 
@@ -23,7 +22,7 @@ make
 sudo make install
 -------------------------
 
-NOTE: If you have `colorgcc`, configure will fail on `libeXpat`. Issue a `unset CC` and `unset CXX` to build the dbus bindings.
+NOTE: If you have `colorgcc`, configure will *fail* on `libeXpat`. Issue an `unset CC` and `unset CXX` to build the dbus bindings.
 
 
 libiax2

@@ -9,5 +9,5 @@
 <body>
 <div id="page_wrapper">
 <div id="header">
-  <a href="."><img src="images/logoSFLphone<?= ($module == 'page_home' ? '512x149' : '312x91') ?>.png" /></a>
+  <a href="."><img src="images/logoSFLphone<?= ($module == 'home' ? '512x149' : '312x91') ?>.png" /></a>
 </div>
