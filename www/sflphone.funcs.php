@@ -140,8 +140,9 @@ function compile_page($hash, $page) {
   // keep return the hash
   $fnconf = bring_local_file('asciidoc.conf');
 
-  // -d book so we can render H1s
-  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -f \"".$fnconf."\" -d book --no-header-footer - 2>&1", 'r');
+  // -d book, so we can render H1s
+  // -a icons, enables the display of graphic icons in admonition blocks.
+  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -a icons -f \"".$fnconf."\" -d book --no-header-footer - 2>&1", 'r');
 
   if (!$p) {
     return "Unable to compile file: $page ($hash)\n";
