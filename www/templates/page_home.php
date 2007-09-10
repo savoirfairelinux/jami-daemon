@@ -30,3 +30,9 @@ The project is ongoing well, but your help and contribution is needed to make th
 <a href="index.php?mod=discuss">Discuss</a> - Subscribe to a mailing list or contact us <br/>
 <a href="index.php?mod=devel">Develop</a> - Submit patches, work on the code, contribute
 </p>
+
+
+
+<div id="downtown">
+  Any help is appreciated, <a href="index.php?mod=donate">donate</a>.
+</div>
