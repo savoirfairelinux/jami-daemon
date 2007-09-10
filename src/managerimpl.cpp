@@ -1605,7 +1605,7 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
     setConfig(accountID, SIP_AUTH_NAME, (*details.find(SIP_AUTH_NAME)).second);
     setConfig(accountID, SIP_PASSWORD,  (*details.find(SIP_PASSWORD)).second);
     setConfig(accountID, SIP_HOST_PART, (*details.find(SIP_HOST_PART)).second);
-    
+    saveConfig();
 }                   
 
 void 
