@@ -28,15 +28,16 @@
 #define ACCOUNT_REGISTER           "Account.autoregister"
 
 #define ACCOUNT_SIP_FULL_NAME      "SIP.fullName"
+#define ACCOUNT_SIP_HOST_PART      "SIP.hostPart"
 #define ACCOUNT_SIP_USER_PART      "SIP.userPart"
 #define ACCOUNT_SIP_AUTH_NAME      "SIP.username"
 #define ACCOUNT_SIP_PASSWORD       "SIP.password"
-#define ACCOUNT_SIP_HOST_PART      "SIP.hostPart"
 #define ACCOUNT_SIP_PROXY          "SIP.proxy"
 
-#define ACCOUNT_IAX_HOST "IAX.host"
-#define ACCOUNT_IAX_USER "IAX.user"
-#define ACCOUNT_IAX_PASS "IAX.pass"
+#define ACCOUNT_IAX_FULL_NAME      "IAX.fullName"
+#define ACCOUNT_IAX_HOST           "IAX.host"
+#define ACCOUNT_IAX_USER           "IAX.user"
+#define ACCOUNT_IAX_PASS           "IAX.pass"
 
 typedef enum
 {
