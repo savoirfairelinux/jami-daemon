@@ -241,7 +241,7 @@ function get_git_hash($file) {
 
   $output = array();
 
-  $cmd = "cd $GIT_REPOS; git-ls-tree $branch \"".git_filename($file)."\"";
+  $cmd = "cd $GIT_REPOS; git-ls-tree $branch \"".git_filename($split[0])."\"";
 
   $string = exec($cmd, $output);
 

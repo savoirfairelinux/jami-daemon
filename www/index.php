@@ -30,6 +30,13 @@ if (isset($_REQUEST['img'])) {
   exit();
 }
 
+if (isset($_REQUEST['file'])) {
+  include("header.php");
+  show_page($_REQUEST['file']);
+  include("footer.php");
+  exit();
+}
+
 
 $module = '';
 // Default module: home
