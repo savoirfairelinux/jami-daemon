@@ -57,15 +57,18 @@ sudo make install
 sflphone-qt
 ~~~~~~~~~~~
 
-`sflphone-qt` gets built with sflphoned, for now.
+`sflphone-qt` is *deprecated* and should not be built anymore.
 
 
 sflphone-gtk
 ~~~~~~~~~~~~
 
-Merging of `sflphone-gtk` to come.
+Compile `sflphone-gtk` by running:
 
 -------------------------
+cd sflphone-gtk
 gnome-autogen.sh
 ./configure --prefix=/usr
+make
+sudo make install
 -------------------------

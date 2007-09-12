@@ -224,15 +224,24 @@ function get_git_hash_content($hash) {
  *
  * Used for comparison of cached/to cache/cache filename.
  *
- * @param string Filename without the $PREFIX (ex: Features.txt, images/pouet.png)
+ * @param string Filename without the $PREFIX (ex: Features.txt,
+ *    images/pouet.png) and optionally, a ":" separator, followed by
+ *    a git tree-ish (commit, branch, tag), ex: Build.txt:tags/0.7.2
  * @return string SHA-1 hash
  */
 function get_git_hash($file) {
   global $USE_BRANCH, $GIT_REPOS;
 
+  $branch = $USE_BRANCH;
+
+  $split = explode(":", $file);
+  if (count($split) > 1) {
+    $branch = $split[1];
+  }
+
   $output = array();
 
-  $cmd = "cd $GIT_REPOS; git-ls-tree $USE_BRANCH \"".git_filename($file)."\"";
+  $cmd = "cd $GIT_REPOS; git-ls-tree $branch \"".git_filename($file)."\"";
 
   $string = exec($cmd, $output);
 
