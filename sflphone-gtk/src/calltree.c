@@ -65,6 +65,7 @@ hang_up( GtkWidget *widget, gpointer   data )
       case CALL_STATE_CURRENT:
       case CALL_STATE_HOLD:
       case CALL_STATE_DIALING:
+      case CALL_STATE_RINGING:
         dbus_hang_up (selectedCall);
         break;
       case CALL_STATE_INCOMING:  
