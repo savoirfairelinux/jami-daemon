@@ -383,21 +383,11 @@ update_call_tree (call_t * c)
       {
         // Existing call in the list
         gchar * markup;
-        if (c->state == CALL_STATE_CURRENT)
-    		{
-    		  markup = g_markup_printf_escaped("<big><b>%s</b></big>\n"
+        markup = g_markup_printf_escaped("<b>%s</b>\n"
     						    "%s", 
     						    call_get_name(c), 
     						    call_get_number(c));
-    		}
-    		else 
-    		{
-    		  markup = g_markup_printf_escaped("<b>%s</b>\n"
-    						    "%s", 
-    						    call_get_name(c), 
-    						    call_get_number(c));
-    		}
-    		
+    		    		
     		gtk_list_store_set (store, &iter);
     		
     		if (c->state == CALL_STATE_HOLD)
@@ -450,21 +440,11 @@ update_call_tree_add (call_t * c)
 
   // New call in the list
   gchar * markup;
-  if (c->state == CALL_STATE_CURRENT)
-  {
-    markup = g_markup_printf_escaped("<big><b>%s</b></big>\n"
+  markup = g_markup_printf_escaped("<b>%s</b>\n"
   				    "%s", 
   				    call_get_name(c), 
   				    call_get_number(c));
-  }
-  else 
-  {
-    markup = g_markup_printf_escaped("<b>%s</b>\n"
-  				    "%s", 
-  				    call_get_name(c), 
-  				    call_get_number(c));
-  }
-
+  
   gtk_list_store_append (store, &iter);
 
   if (c->state == CALL_STATE_HOLD)
