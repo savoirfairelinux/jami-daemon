@@ -166,6 +166,14 @@ create_debug_menu()
   return root_menu;
 }
 /* ----------------------------------------------------------------- */
+
+void 
+view_dial_pad  (GtkCheckMenuItem *checkmenuitem,
+                void* foo)
+{
+  main_window_dialpad(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
+}
+
 GtkWidget * 
 create_view_menu()
 {
@@ -175,19 +183,12 @@ create_view_menu()
   
   menu      = gtk_menu_new ();
 
-  menu_items = gtk_menu_item_new_with_label ("Show Dialpad");
+  menu_items = gtk_check_menu_item_new_with_mnemonic ("Show _Dialpad");
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
-                  G_CALLBACK (debug_hang_up), 
+  g_signal_connect(G_OBJECT (menu_items), "toggled",
+                  G_CALLBACK (view_dial_pad), 
                   NULL);
   gtk_widget_show (menu_items);
-    
-  /*menu_items = gtk_menu_item_new_with_label ("Transfert current call");
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
-                  G_CALLBACK (debug_transfert), 
-                  NULL);
-  gtk_widget_show (menu_items);*/
   
   root_menu = gtk_menu_item_new_with_mnemonic ("_View");
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);

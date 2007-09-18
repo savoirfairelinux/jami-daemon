@@ -51,15 +51,12 @@ get_numpad_button (const gchar* number, gboolean twolines, const gchar * letters
 GtkWidget * 
 create_dialpad()
 {
-  GtkWidget * ext;
   GtkWidget * button;
   GtkWidget * table;
   
-  ext = gtk_expander_new ("Dialpad");
-  gtk_expander_set_spacing ( GTK_EXPANDER(ext), 10 );
   table = gtk_table_new ( 4, 3, TRUE /* homogeneous */);
-  gtk_table_set_row_spacings( GTK_TABLE(table), 10);
-  gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+  gtk_table_set_row_spacings( GTK_TABLE(table), 5);
+  gtk_table_set_col_spacings( GTK_TABLE(table), 5);
   
   button = get_numpad_button("1", TRUE, "");
   gtk_table_attach ( GTK_TABLE( table ), button, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -100,7 +97,6 @@ create_dialpad()
   button = get_numpad_button("*", FALSE, "");
   gtk_table_attach ( GTK_TABLE( table ), button, 2, 3, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
-  gtk_container_add (GTK_CONTAINER (ext), table);
-  return ext;
+  return table;
   
 }

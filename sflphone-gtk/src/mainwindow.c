@@ -28,8 +28,11 @@
 #include <gtk/gtk.h>
 
 /** Local variables */
-GtkAccelGroup * accelGroup;
-GtkWidget * window;
+GtkAccelGroup * accelGroup = NULL;
+GtkWidget * window = NULL;
+GtkWidget *subvbox = NULL;
+GtkWidget * dialpad = NULL;
+gboolean showDialpad = FALSE; // true if the dialpad have been showned
 
 /**
  * Terminate the main loop.
@@ -101,7 +104,6 @@ create_main_window ()
   GtkWidget *button;
   GtkWidget *hbox;
   GtkWidget *vbox;
-  GtkWidget *subvbox;
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 0);
@@ -138,7 +140,6 @@ create_main_window ()
   button = create_screen();
   gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
-  //gtk_box_pack_start (GTK_BOX (subvbox), create_dialpad(), FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (subvbox), create_call_tree(), TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
   /* Status bar */
@@ -189,6 +190,23 @@ main_window_warning_message(gchar * markup){
 void
 main_window_info_message(gchar * markup){
   main_window_message(GTK_MESSAGE_INFO, markup);
+}
+
+void
+main_window_dialpad(gboolean show){
+  if(show && !showDialpad)
+  {
+    dialpad = create_dialpad();
+    gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_reorder_child(GTK_BOX (subvbox), dialpad, 1);
+    gtk_widget_show_all (dialpad);
+  }
+  else if (!show && showDialpad)
+  {
+    gtk_container_remove(GTK_BOX (subvbox), dialpad);
+  }
+  showDialpad = show;
+    
 }
 
 

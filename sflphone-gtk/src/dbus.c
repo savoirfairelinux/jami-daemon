@@ -231,7 +231,6 @@ dbus_unhold (const call_t * c)
     g_print ("DBus called unhold() on CallManager\n");
   
   }
-
 }
 
 void
