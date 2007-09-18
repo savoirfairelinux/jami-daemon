@@ -40,6 +40,8 @@ void sflphone_transfert ( call_t * c, gchar * to );
 
 void sflphone_hold ( call_t * c);
 
+void sflphone_ringing(call_t * c );
+
 void sflphone_unhold ( call_t * c);
 
 /* signals */

@@ -91,7 +91,7 @@ call_state_cb (DBusGProxy *proxy,
     }
     else if ( strcmp(state, "RINGING") == 0 )
     {
-      //sflphone_hung_up (c);
+      sflphone_ringing (c);
     }
     else if ( strcmp(state, "CURRENT") == 0 )
     {

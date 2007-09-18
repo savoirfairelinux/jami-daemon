@@ -16,10 +16,12 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
+#include <gtk/gtk.h>
+#include <string.h>
+
 #include <actions.h>
 #include <accountlist.h>
-#include <gtk/gtk.h>
 
 /**
  * Terminate the gtk program
@@ -52,10 +54,19 @@ void
 sflphone_hold(call_t * c )
 {
   c->state = CALL_STATE_HOLD;
-  update_call_tree();
+  update_call_tree(c);
   screen_clear();
 }
 
+/**
+ * Put the call in Ringing state
+ */
+void 
+sflphone_ringing(call_t * c )
+{
+  c->state = CALL_STATE_RINGING;
+  update_call_tree(c);
+}
 
 
 /* Fill account list */
@@ -121,7 +132,7 @@ void
 sflphone_unhold(call_t * c )
 {
   c->state = CALL_STATE_CURRENT;
-  update_call_tree();
+  update_call_tree(c);
   screen_set_call(c);
 }
 
@@ -132,7 +143,7 @@ void
 sflphone_hang_up( call_t  * c )
 {
   call_list_remove(c->callID);
-  update_call_tree();
+  update_call_tree_remove(c);
   screen_clear();
 }
 
@@ -143,7 +154,7 @@ void
 sflphone_current( call_t * c )
 {
   c->state = CALL_STATE_CURRENT;
-  update_call_tree();
+  update_call_tree(c);
   screen_set_call(c);
 }
 
@@ -154,7 +165,7 @@ void
 sflphone_transfert( call_t * c, gchar * to )
 {
   screen_clear();
-  update_call_tree();
+  update_call_tree_remove(c);
 }
 
 /**
@@ -164,7 +175,7 @@ void
 sflphone_incoming_call (call_t * c) 
 {
   call_list_add ( c );
-  update_call_tree();
+  update_call_tree_add(c);
 }
 /**
  * Signal Hung up
@@ -173,7 +184,7 @@ void
 sflphone_hung_up (call_t * c )
 {
   call_list_remove(c->callID);
-  update_call_tree();
+  update_call_tree_remove(c);
   screen_clear();
 }
 
@@ -186,12 +197,32 @@ sflphone_keypad( guint keyval, gchar * key)
     switch (keyval)
     {
     case 65293: /* ENTER */
+    case 65421: /* ENTER numpad */
       sflphone_place_call(c);
       break;
     case 65307: /* ESCAPE */
       sflphone_hang_up(c);
       break;
     case 65288: /* BACKSPACE */
+      {  /* Brackets mandatory because of local vars */
+        gchar * before = c->to;
+        if(strlen(c->to) > 1){
+          c->to = g_strndup(c->to, strlen(c->to) -1);
+          g_free(before);
+          g_print("TO: %s\n", c->to);
+        
+          g_free(c->from);
+          c->from = g_strconcat("\"\" <", c->to, ">", NULL);
+          screen_set_call(c);
+          update_call_tree();
+        } 
+        else if(strlen(c->to) == 1)
+        {
+          sflphone_hang_up(c);
+        }
+        
+      }
+      break;
     case 65289: /* TAB */
     case 65513: /* ALT */
     case 65507: /* CTRL */

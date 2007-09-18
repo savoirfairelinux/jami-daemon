@@ -167,6 +167,35 @@ create_debug_menu()
 }
 /* ----------------------------------------------------------------- */
 GtkWidget * 
+create_view_menu()
+{
+  GtkWidget * menu;
+  GtkWidget * root_menu;
+  GtkWidget * menu_items;
+  
+  menu      = gtk_menu_new ();
+
+  menu_items = gtk_menu_item_new_with_label ("Show Dialpad");
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
+                  G_CALLBACK (debug_hang_up), 
+                  NULL);
+  gtk_widget_show (menu_items);
+    
+  /*menu_items = gtk_menu_item_new_with_label ("Transfert current call");
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
+                  G_CALLBACK (debug_transfert), 
+                  NULL);
+  gtk_widget_show (menu_items);*/
+  
+  root_menu = gtk_menu_item_new_with_mnemonic ("_View");
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);
+
+  return root_menu;
+}
+/* ----------------------------------------------------------------- */
+GtkWidget * 
 create_menus ( )
 {
 
@@ -177,6 +206,9 @@ create_menus ( )
   menu_bar  = gtk_menu_bar_new ();
   
   root_menu = create_call_menu();
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), root_menu);
+  
+  root_menu = create_view_menu();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), root_menu);
 
 #ifdef DEBUG  

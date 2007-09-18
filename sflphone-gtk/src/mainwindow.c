@@ -106,7 +106,7 @@ create_main_window ()
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 0);
   gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
-  gtk_window_set_default_size (GTK_WINDOW (window), 200, 50);
+  gtk_window_set_default_size (GTK_WINDOW (window), 250, 250);
   gtk_window_set_default_icon_from_file (PIXMAPS_DIR "/sflphone.png", 
                                           NULL);
 
@@ -128,8 +128,8 @@ create_main_window ()
     * and spacing settings */
 
   vbox = gtk_vbox_new ( FALSE /*homogeneous*/, 0 /*spacing*/);
-  subvbox = gtk_vbox_new ( FALSE /*homogeneous*/, 10 /*spacing*/);
-  gtk_container_set_border_width (GTK_CONTAINER(subvbox), 10);
+  subvbox = gtk_vbox_new ( FALSE /*homogeneous*/, 5 /*spacing*/);
+  gtk_container_set_border_width (GTK_CONTAINER(subvbox), 5);
   
   button = create_menus();
   gtk_box_pack_start (GTK_BOX (vbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
@@ -138,8 +138,11 @@ create_main_window ()
   button = create_screen();
   gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
-  gtk_box_pack_start (GTK_BOX (subvbox), create_dialpad(), FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  //gtk_box_pack_start (GTK_BOX (subvbox), create_dialpad(), FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (subvbox), create_call_tree(), TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+  
+  /* Status bar */
+  gtk_box_pack_start (GTK_BOX (vbox), gtk_statusbar_new(), FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
   gtk_container_add (GTK_CONTAINER (window), vbox);
 

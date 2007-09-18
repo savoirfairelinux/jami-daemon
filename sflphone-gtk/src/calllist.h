@@ -25,7 +25,8 @@
 typedef enum
 {
    CALL_STATE_INVALID = 0,
-   CALL_STATE_INCOMING,
+   CALL_STATE_INCOMING, /* Ringing incoming call */
+   CALL_STATE_RINGING,  /* Ringing outgoing call */
    CALL_STATE_CURRENT,
    CALL_STATE_DIALING,
    CALL_STATE_HOLD   
