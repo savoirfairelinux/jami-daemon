@@ -201,7 +201,7 @@ sflphone_keypad( guint keyval, gchar * key)
       sflphone_place_call(c);
       break;
     case 65307: /* ESCAPE */
-      sflphone_hang_up(c);
+      dbus_hang_up(c);
       break;
     case 65288: /* BACKSPACE */
       {  /* Brackets mandatory because of local vars */
@@ -214,11 +214,11 @@ sflphone_keypad( guint keyval, gchar * key)
           g_free(c->from);
           c->from = g_strconcat("\"\" <", c->to, ">", NULL);
           screen_set_call(c);
-          update_call_tree();
+          update_call_tree(c);
         } 
         else if(strlen(c->to) == 1)
         {
-          sflphone_hang_up(c);
+          dbus_hang_up(c);
         }
         
       }
@@ -241,7 +241,7 @@ sflphone_keypad( guint keyval, gchar * key)
         g_free(c->from);
         c->from = g_strconcat("\"\" <", c->to, ">", NULL);
         screen_set_call(c);
-        update_call_tree();
+        update_call_tree(c);
       }
       break;
     }
@@ -254,23 +254,36 @@ sflphone_keypad( guint keyval, gchar * key)
       switch (keyval)
       {
       case 65307: /* ESCAPE */
-        sflphone_hang_up(c);
+        dbus_hang_up(c);
         break;
       }
     } 
-    else // Not in a call, not dialing, create a new call 
+    else 
     {
-      if (keyval < 255 || (keyval >65453 && keyval < 65466))
-      { 
-        /* Brackets mandatory because of local vars */
-        call_t * c = g_new0 (call_t, 1);
-        c->state = CALL_STATE_DIALING;
-        c->from = g_strconcat("\"\" <", key, ">", NULL);
-        c->callID = "asdf"; // TODO generate a unique number
-        c->to = g_strdup(key);
-        call_list_add(c);
-        screen_set_call(c);
-        update_call_tree();
+      call_t * c = (call_t*) call_list_get_by_state (CALL_STATE_RINGING);
+      if(c) // Currently ring => edit number
+      {
+        switch (keyval)
+        {
+        case 65307: /* ESCAPE */
+          dbus_hang_up(c);
+          break;
+        }
+      }
+      else
+      { // Not in a call, not dialing, create a new call 
+        if (keyval < 255 || (keyval >65453 && keyval < 65466))
+        { 
+          /* Brackets mandatory because of local vars */
+          call_t * c = g_new0 (call_t, 1);
+          c->state = CALL_STATE_DIALING;
+          c->from = g_strconcat("\"\" <", key, ">", NULL);
+          c->callID = "asdf"; // TODO generate a unique number
+          c->to = g_strdup(key);
+          call_list_add(c);
+          screen_set_call(c);
+          update_call_tree_add(c);
+        }
       }
     }
   }

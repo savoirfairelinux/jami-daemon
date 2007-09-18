@@ -404,13 +404,17 @@ update_call_tree (call_t * c)
     		{
     		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/hold.svg", NULL);
     		}
-    		else if (c->state == CALL_STATE_RINGING)
+    		else if (c->state == CALL_STATE_INCOMING || c->state == CALL_STATE_RINGING)
     		{
     		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
     		}
     	  else if (c->state == CALL_STATE_CURRENT)
     		{
     		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/current.svg", NULL);
+    		}
+    	  else if (c->state == CALL_STATE_DIALING)
+    		{
+    		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/dial.svg", NULL);
     		}
     	  //Resize it
         if(pixbuf)
@@ -446,16 +450,34 @@ update_call_tree_add (call_t * c)
 
   // New call in the list
   gchar * markup;
-  markup = g_markup_printf_escaped("<b>%s</b>\n"
+  if (c->state == CALL_STATE_CURRENT)
+  {
+    markup = g_markup_printf_escaped("<big><b>%s</b></big>\n"
   				    "%s", 
   				    call_get_name(c), 
   				    call_get_number(c));
-  
+  }
+  else 
+  {
+    markup = g_markup_printf_escaped("<b>%s</b>\n"
+  				    "%s", 
+  				    call_get_name(c), 
+  				    call_get_number(c));
+  }
+
   gtk_list_store_append (store, &iter);
 
-  if (c->state == CALL_STATE_INCOMING)
+  if (c->state == CALL_STATE_HOLD)
+  {
+    pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/hold.svg", NULL);
+  }
+  else if (c->state == CALL_STATE_INCOMING || c->state == CALL_STATE_RINGING)
   {
     pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
+  }
+  else if (c->state == CALL_STATE_CURRENT)
+  {
+    pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/current.svg", NULL);
   }
   else if (c->state == CALL_STATE_DIALING)
   {
@@ -479,6 +501,8 @@ update_call_tree_add (call_t * c)
   	g_object_unref(G_OBJECT(pixbuf));
 
   //g_free(markup);
+ 
   
   update_buttons();
+	//return row_ref;
 }
