@@ -96,7 +96,8 @@ on_key_released (GtkWidget   *widget,
      event->state & GDK_SHIFT_MASK   || 
      event->state & GDK_MOD1_MASK    ||
      event->keyval == 65361          || // left arrow
-     event->keyval == 65363             // right arrow
+     event->keyval == 65363          || // right arrow
+     event->keyval == 32                // space
      )
     return FALSE;
   sflphone_keypad(event->keyval, event->string);
@@ -106,7 +107,7 @@ on_key_released (GtkWidget   *widget,
 void
 create_main_window ()
 {
-  GtkWidget *button;
+  GtkWidget *widget;
   GtkWidget *vbox;
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -119,7 +120,6 @@ create_main_window ()
   /* Connect the destroy event of the window with our on_destroy function
     * When the window is about to be destroyed we get a notificaiton and
     * stop the main GTK loop
-    * TODO: Disconnect from dbus
     */
   g_signal_connect (G_OBJECT (window), "delete-event",
                     G_CALLBACK (on_delete), NULL);
@@ -129,33 +129,28 @@ create_main_window ()
   /* Create an accel group for window's shortcuts */
   accelGroup = gtk_accel_group_new ();
   gtk_window_add_accel_group(GTK_WINDOW(window), accelGroup);
-                      
-  /* Create a new hbox with the appropriate homogeneous
-    * and spacing settings */
 
   vbox = gtk_vbox_new ( FALSE /*homogeneous*/, 0 /*spacing*/);
   subvbox = gtk_vbox_new ( FALSE /*homogeneous*/, 5 /*spacing*/);
   gtk_container_set_border_width (GTK_CONTAINER(subvbox), 5);
   
-  button = create_menus();
-  gtk_box_pack_start (GTK_BOX (vbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  widget = create_menus();
+  gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, TRUE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-  /* Call label */
-  button = create_screen();
-  gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-  
-  
+ 
+  widget = create_screen();
+  gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
   gtk_box_pack_start (GTK_BOX (subvbox), create_call_tree(), TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
-  button = create_slider("speaker");
-  gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-  button = create_slider("mic");
-  gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  widget = create_slider("speaker");
+  gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  widget = create_slider("mic");
+  gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
   /* Status bar */
+  widget = gtk_statusbar_new();
   gtk_box_pack_start (GTK_BOX (vbox), gtk_statusbar_new(), FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
-  
   gtk_container_add (GTK_CONTAINER (window), vbox);
 
   /* make sure that everything, window and label, are visible */

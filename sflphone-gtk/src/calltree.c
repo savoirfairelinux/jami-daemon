@@ -249,8 +249,6 @@ create_call_tree (){
   
   /* Action button */     
   hbox = gtk_hbox_new (FALSE, 5);       
-  gtk_button_box_set_spacing ( hbox, 5);
-  gtk_button_box_set_layout ( GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_START);
   
   callButton = gtk_button_new ();
   gtk_widget_set_state( GTK_WIDGET(callButton), GTK_STATE_INSENSITIVE);
