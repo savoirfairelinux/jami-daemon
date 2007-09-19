@@ -5,16 +5,14 @@ Git anonymous access
 --------------------
 
 
-
-To access SFLphone's git repository (read-only):
+To grab source code form SFLphone's git repository:
 
 ---------------------------------------------
 git clone git://sflphone.org/git/sflphone.git
 cd sflphone
-autoreconf --install
 ---------------------------------------------
 
-
+View sflsite:build[build notes] for more details.
 
 
 

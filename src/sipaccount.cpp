@@ -21,27 +21,15 @@
 #include "manager.h"
 
 
-
-
 SIPAccount::SIPAccount(const AccountID& accountID)
  : Account(accountID)
 {
-  createVoIPLink();
+  _link = new SIPVoIPLink(accountID);
 }
 
 
 SIPAccount::~SIPAccount()
 {
-}
-
-/* virtual Account function implementation */
-bool
-SIPAccount::createVoIPLink()
-{
-  if (!_link) {
-    _link = new SIPVoIPLink(_accountID);
-  }
-  return (_link != 0 ? true : false);
 }
 
 bool

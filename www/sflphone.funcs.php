@@ -64,7 +64,6 @@ function get_page($page, $compile = TRUE) {
  */
 function show_page($page, $compile = TRUE) {
   print get_page($page, $compile);
-
 }
 
 
@@ -141,8 +140,9 @@ function compile_page($hash, $page) {
   // keep return the hash
   $fnconf = bring_local_file('asciidoc.conf');
 
-  // -d book so we can render H1s
-  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -f \"".$fnconf."\"-d book --no-header-footer -", 'r');
+  // -d book, so we can render H1s
+  // -a icons, enables the display of graphic icons in admonition blocks.
+  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash | asciidoc -a icons -f \"".$fnconf."\" -d book --no-header-footer - 2>&1", 'r');
 
   if (!$p) {
     return "Unable to compile file: $page ($hash)\n";
@@ -203,10 +203,20 @@ function get_git_file_content($file) {
 function get_git_hash_content($hash) {
   global $GIT_REPOS;
 
-  $output = array();
-  $content = exec("GIT_DIR=".$GIT_REPOS." git-show $hash", $output);
+  $output = '';
 
-  return $content;
+  $p = popen("GIT_DIR=".$GIT_REPOS." git-show $hash", 'r');
+
+  if (!$p) {
+    return "Unable to run git-show for hash: $hash\n";
+  }
+
+  while (!feof($p)) {
+    $output .= fread($p, 1024);
+  }
+  pclose($p);
+
+  return $output;
 }
 
 /**
@@ -214,15 +224,24 @@ function get_git_hash_content($hash) {
  *
  * Used for comparison of cached/to cache/cache filename.
  *
- * @param string Filename without the $PREFIX (ex: Features.txt, images/pouet.png)
+ * @param string Filename without the $PREFIX (ex: Features.txt,
+ *    images/pouet.png) and optionally, a ":" separator, followed by
+ *    a git tree-ish (commit, branch, tag), ex: Build.txt:tags/0.7.2
  * @return string SHA-1 hash
  */
 function get_git_hash($file) {
   global $USE_BRANCH, $GIT_REPOS;
 
+  $branch = $USE_BRANCH;
+
+  $split = explode(":", $file);
+  if (count($split) > 1) {
+    $branch = $split[1];
+  }
+
   $output = array();
 
-  $cmd = "cd $GIT_REPOS; git-ls-tree $USE_BRANCH \"".git_filename($file)."\"";
+  $cmd = "cd $GIT_REPOS; git-ls-tree $branch \"".git_filename($split[0])."\"";
 
   $string = exec($cmd, $output);
 

@@ -2,16 +2,30 @@
 
 
 Build notes
------------
-
+===========
 
 sflphoned
-~~~~~~~~~
+---------
 
 Instructions to build `sflphoned`:
 
+dbus-c++-bindings
+~~~~~~~~~~~~~~~~~
+
+Go to `libs/dbus` and run:
+
+-------------------------
+./autogen.sh
+./configure --prefix=/usr
+make
+sudo make install
+-------------------------
+
+NOTE: If you have `colorgcc`, configure will *fail* on `libeXpat`. Issue an `unset CC` and `unset CXX` to build the dbus bindings.
+
+
 libiax2
-^^^^^^^
+~~~~~~~
 
 Go to `libs/libiax2` and run:
 
@@ -22,11 +36,12 @@ sudo make install
 -------------------------
 
 the daemon
-^^^^^^^^^^
+~~~~~~~~~~
 
 Then, go to the root of the repository, and run:
 
 ---------------------------------------------------
+autoreconf --install
 ./configure --prefix=/usr (or whatever your prefix)
 make
 sudo make install
@@ -34,13 +49,20 @@ sudo make install
 
 
 sflphone-qt
-~~~~~~~~~~~
+-----------
 
-`sflphone-qt` gets built with sflphoned, for now.
+`sflphone-qt` is *deprecated* and should not be built anymore.
 
 
 sflphone-gtk
-~~~~~~~~~~~~
+------------
 
-Merging of `sflphone-gtk` to come.
+Compile `sflphone-gtk` by running:
 
+-------------------------
+cd sflphone-gtk
+gnome-autogen.sh
+./configure --prefix=/usr
+make
+sudo make install
+-------------------------

@@ -130,12 +130,6 @@ class Account{
   bool getState() { return _state; }
 
 private:
-  /**
-   * Create a unique VoIPLink() depending on the protocol
-   * Multiple call to this function do nothing (if the voiplink pointer is 0)
-   * @return false if an error occurs
-   */
-  virtual bool createVoIPLink() = 0;
 
 protected:
   /**

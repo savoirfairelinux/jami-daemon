@@ -267,6 +267,7 @@ div.exampleblock-content {
 /** SFLphone specific */
 #header {
   text-align: center;
+  position: relative;
 }
 #header img {
   border: 0px;
@@ -278,4 +279,41 @@ div.exampleblock-content {
   padding: 1em 2em 2em 2em;
   border-left: 1px #aaaaaa solid;
   border-right: 1px #aaaaaa solid;
+}
+
+#downtown {
+  margin-top: 40px;
+  border-top: 1px solid #bbbbbb;
+  font-size: smaller;
+  padding: 1em 0pt 0pt 0pt;
+  clear: both;
+  color: #777777;
+  text-align: center;
+}
+
+.donate {
+  margin: auto
+}
+
+#homebutton {
+  position: absolute;
+  right: 0px;
+  top: 10px;
+}
+#homebutton img {
+  border: none;
+}
+
+.image {
+  text-align: center;
+  padding-bottom: 20px;
+}
+
+.image .image-title {
+  background: transparent url(images/see-above.png) no-repeat left;
+  padding-left: 20px;
+  color: #4D4F3A;
+  font-weight: normal;
+  font-style: italic;
+  display: inline;
 }

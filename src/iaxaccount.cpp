@@ -24,22 +24,12 @@
 IAXAccount::IAXAccount(const AccountID& accountID)
  : Account(accountID)
 {
-  createVoIPLink();
+  _link = new IAXVoIPLink(accountID);
 }
 
 
 IAXAccount::~IAXAccount()
 {
-}
-
-/* virtual Account function implementation */
-bool
-IAXAccount::createVoIPLink()
-{
-  if (!_link) {
-    _link = new IAXVoIPLink(_accountID);
-  }
-  return (_link != 0 ? true : false);
 }
 
 bool

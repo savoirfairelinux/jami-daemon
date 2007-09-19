@@ -426,13 +426,13 @@ dbus_set_account_details(account_t *a)
     &error);
   if (error) 
   {
-    g_printerr ("Failed to call get_account_details() on ConfigurationManager: %s\n",
+    g_printerr ("Failed to call set_account_details() on ConfigurationManager: %s\n",
                 error->message);
     g_error_free (error);
   } 
   else 
   {
-    g_print ("DBus called get_account_details() on ConfigurationManager\n");
+    g_print ("DBus called set_account_details() on ConfigurationManager\n");
 
   }
 }

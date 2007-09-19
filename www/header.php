@@ -9,5 +9,14 @@
 <body>
 <div id="page_wrapper">
 <div id="header">
-  <a href="."><img src="images/logoSFLphone<?= ($module == 'page_home' ? '512x149' : '312x91') ?>.png" /></a>
+  <a href="."><img src="images/logoSFLphone<?= ($module == 'home' ? '512x149' : '312x91') ?>.png" /></a>
+
+
+<?php if ($module != 'home') { ?>
+<div id="homebutton">
+  <a href="index.php"><img src="images/home.png" alt="Home" /></a>
+</div>
+<?php } ?>
+
+
 </div>

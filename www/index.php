@@ -10,8 +10,8 @@ require_once('sflphone.funcs.php');
 
 
 // We've requested an image, fetch it, and send it.
-if (defined($_REQUEST['i'])) {
-  $img = $_REQUEST['i'];
+if (isset($_REQUEST['img'])) {
+  $img = $_REQUEST['img'];
   switch(strtolower(substr($img, -3))) {
   case 'jpg':
     header("Content-Type: image/jpeg");
@@ -26,9 +26,16 @@ if (defined($_REQUEST['i'])) {
     break;
   }
 
-  show_page($img);
+  show_page($img, FALSE);
+  exit();
 }
 
+if (isset($_REQUEST['file'])) {
+  include("header.php");
+  show_page($_REQUEST['file']);
+  include("footer.php");
+  exit();
+}
 
 
 $module = '';

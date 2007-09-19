@@ -268,7 +268,7 @@ IAXVoIPLink::sendAudioFromMic(void)
 
     // take the lowest
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-    _debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
+    //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
     
     // Get bytes from micRingBuffer to data_from_mic
     int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);

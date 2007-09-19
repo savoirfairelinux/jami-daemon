@@ -1,11 +1,20 @@
 // AsciiDoc file
 
-Screenshots
------------
+Screenshots of upcoming releases
+--------------------------------
 
-.Screenshot de 2007
-sflimage::images/SflphonePOuetpoUEt.png[SFLphone qt3]
+This is an upcoming client, to be released with version 0.8.
 
-.Screenshot de SFLphone 0.7
-sflimage::images/sflphone0.7.png[SFLphone 0.7]
+.New SFLphone-GTK client (ver. 0.8)
+sflimage::images/screenshots/sflphone_gtk_0.8.png[New SFLphone GTK client]
+
+
+Historical screenshots
+----------------------
+
+.SFLphone 0.6.2 - Brushed metal skin
+sflimage::images/screenshots/sflphone_qt3_0.6.2.png[SFLphone 0.6.2]
+
+.SFLphone 0.6 - Alternate skin
+sflimage::images/screenshots/sflphone_metal.png[SFLphone 0.6]
 

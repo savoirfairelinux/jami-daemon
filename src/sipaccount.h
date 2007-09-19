@@ -35,6 +35,7 @@ public:
 
   /* virtual Account function implementation */
   void initConfig(Conf::ConfigTree& config);
+  /** Actually unuseful, since config loading is done in init() */
   void loadConfig();
   bool registerAccount();
   bool unregisterAccount();
@@ -42,8 +43,6 @@ public:
   bool terminate();
 
 private:
-  /* virtual Account function implementation */
-  bool createVoIPLink();
 
 };
 
