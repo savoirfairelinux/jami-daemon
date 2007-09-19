@@ -82,7 +82,6 @@ show_account_window (account_t * a)
 
   // Current settings
   gchar * curAccountType = NULL;
-  gchar * curProtocol = NULL;
   gchar * curUserPart = NULL;
   gchar * curHostPart = NULL;
   gchar * curPassword = NULL;
