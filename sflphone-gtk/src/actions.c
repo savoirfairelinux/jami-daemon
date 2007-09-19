@@ -19,6 +19,8 @@
 
 #include <gtk/gtk.h>
 #include <string.h>
+#include <glib/gprintf.h>
+#include <stdlib.h>
 
 #include <actions.h>
 #include <mainwindow.h>
@@ -282,7 +284,10 @@ sflphone_keypad( guint keyval, gchar * key)
           call_t * c = g_new0 (call_t, 1);
           c->state = CALL_STATE_DIALING;
           c->from = g_strconcat("\"\" <", key, ">", NULL);
-          c->callID = "asdf"; // TODO generate a unique number
+          
+          c->callID = g_new0(gchar, 100);
+          g_sprintf(c->callID, "%d", rand()); 
+          
           c->to = g_strdup(key);
           call_list_add(c);
           screen_set_call(c);
