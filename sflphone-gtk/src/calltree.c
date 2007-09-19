@@ -422,6 +422,7 @@ update_call_tree_add (call_t * c)
 {
   GdkPixbuf *pixbuf;
 	GtkTreeIter iter;
+	GtkTreeSelection* sel;
 
   // New call in the list
   gchar * markup;
@@ -466,8 +467,8 @@ update_call_tree_add (call_t * c)
   	g_object_unref(G_OBJECT(pixbuf));
 
   //g_free(markup);
- 
-  
+  sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+  gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
   update_buttons();
 	//return row_ref;
 }
