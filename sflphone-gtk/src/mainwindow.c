@@ -140,6 +140,13 @@ create_main_window ()
   button = create_screen();
   gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
+  button = gtk_hscale_new_with_range(0, 100, 2);
+  gtk_scale_set_draw_value(button, FALSE);
+  gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  button = gtk_hscale_new_with_range(0, 100, 2);
+  gtk_scale_set_draw_value(button, FALSE);
+  gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  
   gtk_box_pack_start (GTK_BOX (subvbox), create_call_tree(), TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
   /* Status bar */
@@ -203,7 +210,7 @@ main_window_dialpad(gboolean show){
   }
   else if (!show && showDialpad)
   {
-    gtk_container_remove(GTK_BOX (subvbox), dialpad);
+    gtk_container_remove(GTK_CONTAINER (subvbox), dialpad);
   }
   showDialpad = show;
     
