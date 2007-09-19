@@ -21,6 +21,10 @@
 #include <string.h>
 
 #include <actions.h>
+#include <mainwindow.h>
+#include <calltree.h>
+#include <screen.h>
+#include <dbus.h>
 #include <accountlist.h>
 
 /**
@@ -311,7 +315,7 @@ sflphone_place_call ( call_t * c )
 void 
 sflphone_remove_account ( account_t * a )
 {
-  dbus_remove_account (a);
+  dbus_remove_account (a->accountID);
 }
 
 

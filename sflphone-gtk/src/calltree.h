@@ -21,9 +21,12 @@
 #define __CALLTREE_H__
 
 #include <gtk/gtk.h>
+#include <calllist.h>
 
 GtkWidget * create_call_tree();
 
-void update_call_tree ();
+void update_call_tree_add (call_t * c);
+void update_call_tree (call_t * c);
+void update_call_tree_remove (call_t * c);
 
 #endif 

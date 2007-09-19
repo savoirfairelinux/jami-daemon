@@ -90,18 +90,31 @@ void
 CallManager::setVolume( const ::DBus::String& device, const ::DBus::Double & value )
 {
     _debug("CallManager::setVolume received\n");
-    //TODO
-    Manager::instance().setSpkrVolume(value);
-    Manager::instance().setMicVolume(value);
+    if(device == "speaker")
+    {
+      Manager::instance().setSpkrVolume((int)(value*100.0));
+    }
+    else if (device == "mic")
+    {
+      Manager::instance().setMicVolume((int)(value*100.0));
+    }
+    volumeChanged(device, value);
 }
 
 ::DBus::Double 
 CallManager::getVolume( const ::DBus::String& device )
 {
     _debug("CallManager::getVolume received\n");
-    //TODO
-    Manager::instance().getSpkrVolume();
-    Manager::instance().getMicVolume();
+    if(device == "speaker")
+    {
+      _debug("Current speaker = %d\n", Manager::instance().getSpkrVolume());
+      return Manager::instance().getSpkrVolume()/100.0;
+    }
+    else if (device == "mic")
+    {
+      _debug("Current mic = %d\n", Manager::instance().getMicVolume());
+      return Manager::instance().getMicVolume()/100.0;
+    }
     return 0;
 }
 
@@ -117,7 +130,7 @@ CallManager::getCallDetails( const ::DBus::String& callID )
 CallManager::getCurrentCallID(  )
 {
     _debug("CallManager::getCurrentCallID received\n");
-    return "test";
+    return getCurrentCallId();
 }
 
 

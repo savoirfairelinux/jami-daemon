@@ -19,6 +19,8 @@
  
 #include <calllist.h>
 
+#include <string.h>
+
 GQueue * callQueue;
 
 /* GCompareFunc to compare a callID (gchar* and a call_t) */

@@ -21,6 +21,7 @@
 #include <calllist.h>
 #include <dbus.h>
 #include <mainwindow.h>
+#include <actions.h>
 
 #include <gtk/gtk.h>
 

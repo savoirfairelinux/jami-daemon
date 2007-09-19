@@ -32,7 +32,6 @@ create_screen()
   GtkWidget * event;
   GtkWidget * sw;
   GtkWidget *subvbox;
-  GtkWidget *image;
   
   GdkColor color;
   gdk_color_parse ("white", &color);    

@@ -20,6 +20,9 @@
 #include <config.h>
 #include <mainwindow.h>
 #include <accountlist.h>
+#include <accountwindow.h>
+#include <actions.h>
+
 #include <gtk/gtk.h>
 
 /** Local variables */
@@ -110,7 +113,7 @@ select_account(GtkTreeSelection *sel, GtkTreeModel *model)
     /*TODO Set to TRUE when removeAccount is implemented */
     gtk_widget_set_sensitive( GTK_WIDGET(deleteButton), FALSE); 
   }
-  g_printf("select");
+  g_print("select");
   
 }
 
@@ -123,13 +126,10 @@ create_accounts_tab()
 	GtkWidget *sw;
 	GtkWidget *view;
 	GtkWidget *bbox;
-	GtkWidget *button;
 	GtkCellRenderer *rend;
 	GtkTreeViewColumn *col;
 	GtkTreeSelection *sel;
-	GtkTreeRowReference *rowref;
 	GtkWidget *label;
-	GtkTargetEntry te[3] = {{"text/plain", 0, 0},{"text/plain", 0, 1},{"text/plain", 0, 2}};
 	
 	selectedAccount = NULL;
 

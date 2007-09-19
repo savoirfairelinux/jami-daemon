@@ -21,6 +21,7 @@
 #define __ACTIONS_H__
 
 #include <calllist.h>
+#include <accountlist.h>
 
 /**
  * Initialize lists and configurations 
@@ -41,6 +42,10 @@ void sflphone_transfert ( call_t * c, gchar * to );
 void sflphone_hold ( call_t * c);
 
 void sflphone_ringing(call_t * c );
+
+void sflphone_current ( call_t * c);
+
+void sflphone_remove_account ( account_t * a );
 
 void sflphone_unhold ( call_t * c);
 

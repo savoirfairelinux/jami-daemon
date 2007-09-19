@@ -20,6 +20,7 @@
 #include <gtk/gtk.h>
 #include <calltree.h>
 #include <calllist.h>
+#include <dbus.h>
 
 GtkListStore * store;
 GtkWidget *view;
@@ -48,6 +49,9 @@ call_button( GtkWidget *widget, gpointer   data )
       case CALL_STATE_INCOMING:
         dbus_accept (selectedCall);
         break;
+      default:
+        g_error("Should not happen!");
+        break;
     }
   }
 }
@@ -71,6 +75,9 @@ hang_up( GtkWidget *widget, gpointer   data )
       case CALL_STATE_INCOMING:  
         dbus_refuse (selectedCall);
         break;
+      default:
+        g_error("Should not happen!");
+        break;
     }
   }
 }
@@ -87,6 +94,9 @@ hold( GtkWidget *widget, gpointer   data )
     {
       case CALL_STATE_CURRENT:
         dbus_hold (selectedCall);
+        break;
+      default:
+        g_error("Should not happen!");
         break;
     }
   }
@@ -106,18 +116,6 @@ transfert( GtkWidget *widget, gpointer   data )
 }
 
 /**
- * Refuse incoming call
- */
-static void 
-refuse( GtkWidget *widget, gpointer   data )
-{
-  if(selectedCall)
-  {
-    dbus_refuse(selectedCall);
-  }
-}
-
-/**
  * Unhold call
  */
 static void 
@@ -129,6 +127,9 @@ unhold( GtkWidget *widget, gpointer   data )
     {
       case CALL_STATE_HOLD:
         dbus_unhold (selectedCall);
+        break;
+      default:
+        g_error("Should not happen!");
         break;
       }
   }
@@ -197,19 +198,6 @@ selected(GtkTreeSelection *sel, GtkTreeModel *model)
   update_buttons();
 }
 
-/**
- * Accept incoming call
- */
-static void 
-accept( GtkWidget *widget, gpointer   data )
-{
-  if(selectedCall)
-  {
-    dbus_accept(selectedCall);
-  }
-}
-
-
 
 GtkWidget * 
 create_call_tree (){
@@ -217,17 +205,15 @@ create_call_tree (){
 	GtkWidget *sw;
   GtkWidget *hbox;
 	GtkWidget *image;
-	GtkWidget *bbox;
 	GtkCellRenderer *rend;
 	GtkTreeViewColumn *col;
 	GtkTreeSelection *sel;
-	GtkTargetEntry te[2] = {{"text/uri-list", 0, 1},{"STRING", 0, 2}};
-
+	
 	ret = gtk_vbox_new(FALSE, 10); 
 	gtk_container_set_border_width (GTK_CONTAINER (ret), 0);
 
 	sw = gtk_scrolled_window_new( NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
 
 	store = gtk_list_store_new (3, 

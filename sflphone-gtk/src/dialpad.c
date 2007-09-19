@@ -18,6 +18,7 @@
  */
  
 #include <dialpad.h>
+#include <actions.h>
 
 /**
  * button pressed event

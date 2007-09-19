@@ -20,6 +20,8 @@
 #include <config.h>
 #include <mainwindow.h>
 #include <accountlist.h>
+#include <string.h>
+#include <dbus.h>
 #include <gtk/gtk.h>
 
 /** Local variables */

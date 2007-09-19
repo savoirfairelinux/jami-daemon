@@ -27,7 +27,7 @@ GtkWidget * get_main_window();
 
 void create_main_window ( );
 
-void main_window_ask_quit() ;
+gboolean main_window_ask_quit() ;
 /**
   * Shows the dialpad on the mainwindow 
   * @param show TRUE if you want to show the dialpad, FALSE to hide it

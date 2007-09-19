@@ -18,6 +18,7 @@
  */
  
 #include <accountlist.h>
+#include <string.h>
 
 GQueue * accountQueue;
 

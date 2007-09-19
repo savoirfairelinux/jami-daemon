@@ -20,6 +20,7 @@
 #include <menus.h>
 #include <config.h>
 #include <calllist.h>
+#include <actions.h>
 #include <mainwindow.h>
 #include <configwindow.h>
 /* ----------------------------------------------------------------- */
@@ -183,7 +184,7 @@ create_view_menu()
   
   menu      = gtk_menu_new ();
 
-  menu_items = gtk_check_menu_item_new_with_mnemonic ("Show _Dialpad");
+  menu_items = gtk_check_menu_item_new_with_mnemonic ("_Dialpad");
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect(G_OBJECT (menu_items), "toggled",
                   G_CALLBACK (view_dial_pad), 

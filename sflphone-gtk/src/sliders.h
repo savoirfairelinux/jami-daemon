@@ -16,33 +16,16 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+ 
+#ifndef __SLIDERS_H__
+#define __SLIDERS_H__
 
+#include <gtk/gtk.h>
 
-#ifndef __DBUS_H__
-#define __DBUS_H__
+GtkWidget * create_mic_slider();
 
-#include <accountlist.h>
-#include <calllist.h>
+GtkWidget * create_slider(const gchar * device);
 
-/** @return TRUE if connection succeeded, FALSE otherwise */
-gboolean dbus_connect ();
-void dbus_clean ();
+void set_slider(const gchar * device, gdouble value);
 
-/* CallManager */
-void dbus_hold (const call_t * c );
-void dbus_unhold (const call_t * c );
-void dbus_hang_up (const call_t * c );
-void dbus_transfert (const call_t * c, gchar * to );
-void dbus_accept (const call_t * c);
-void dbus_refuse (const call_t * c);
-void dbus_place_call (const call_t * c);
-
-/* ConfigurationManager */
-gchar ** dbus_account_list();
-GHashTable * dbus_account_details(gchar * accountID);
-void dbus_set_account_details(account_t *a);
-void dbus_remove_account(gchar * accountID);
-void dbus_set_volume(const gchar * device, gdouble value);
-gdouble dbus_get_volume(const gchar * device);
-
-#endif
+#endif 

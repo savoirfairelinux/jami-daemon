@@ -23,7 +23,11 @@
 #include <accountlist.h>
 #include <marshaller.h>
 #include <mainwindow.h>
+#include <sliders.h>
 
+#include <dbus.h>
+#include <actions.h>
+#include <string.h>
 #include <dbus/dbus-glib.h>
 
 DBusGConnection * connection;
@@ -45,6 +49,17 @@ incoming_call_cb (DBusGProxy *proxy,
   c->state = CALL_STATE_INCOMING;
   
   sflphone_incoming_call (c);
+}
+
+
+static void  
+volume_changed_cb (DBusGProxy *proxy,
+                  const gchar* device,
+                  const gdouble value,
+                  void * foo  )
+{
+  g_print ("Volume of %s changed to %f. \n",device, value);
+  set_slider(device, value);
 }
 
 static void  
@@ -152,8 +167,8 @@ dbus_connect ()
   /* Register a marshaller for STRING,STRING */
   dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING, 
     G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
-  dbus_g_proxy_add_signal (callManagerProxy, "callStateChanged", 
-    G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+  dbus_g_proxy_add_signal (callManagerProxy, 
+    "callStateChanged", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
   dbus_g_proxy_connect_signal (callManagerProxy,
     "callStateChanged", G_CALLBACK(call_state_cb), NULL, NULL);
 
@@ -169,6 +184,12 @@ dbus_connect ()
   dbus_g_proxy_connect_signal (callManagerProxy,
     "incomingMessage", G_CALLBACK(incoming_message_cb), NULL, NULL);
     
+  dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_DOUBLE, 
+    G_TYPE_NONE, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_INVALID);
+  dbus_g_proxy_add_signal (callManagerProxy, 
+    "volumeChanged", G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_INVALID);
+  dbus_g_proxy_connect_signal (callManagerProxy,
+    "volumeChanged", G_CALLBACK(volume_changed_cb), NULL, NULL);
     
   configurationManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
                                   "org.sflphone.SFLPhone",
@@ -377,7 +398,6 @@ void
 dbus_remove_account(gchar * accountID)
 {
   GError *error = NULL;
-  char ** array;
   org_sflphone_SFLPhone_ConfigurationManager_remove_account (
     configurationManagerProxy, 
     accountID, 
@@ -415,4 +435,54 @@ dbus_set_account_details(account_t *a)
     g_print ("DBus called get_account_details() on ConfigurationManager\n");
 
   }
+}
+
+void
+dbus_set_volume(const gchar * device, gdouble value)
+{
+  GError *error = NULL;
+  org_sflphone_SFLPhone_CallManager_set_volume(
+    callManagerProxy, 
+    device, 
+    value, 
+    &error);
+
+  if (error) 
+  {
+    g_printerr ("Failed to call set_volume() on callManagerProxy: %s\n",
+                error->message);
+    g_error_free (error);
+  } 
+  else 
+  {
+    g_print ("DBus called set_volume() on callManagerProxy\n");
+
+  }
+}
+
+
+gdouble
+dbus_get_volume(const gchar * device)
+{
+  gdouble  value;
+  GError *error = NULL;
+  
+  org_sflphone_SFLPhone_CallManager_get_volume(
+    callManagerProxy, 
+    device, 
+    &value, 
+    &error);
+
+  if (error) 
+  {
+    g_printerr ("Failed to call get_volume() on callManagerProxy: %s\n",
+                error->message);
+    g_error_free (error);
+  } 
+  else 
+  {
+    g_print ("DBus called get_volume(%s) on callManagerProxy, got %f\n", device, value);
+
+  }
+  return value;
 }

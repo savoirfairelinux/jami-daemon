@@ -13,11 +13,12 @@ sflphone_gtk_SOURCES = \
   configwindow.c \
   accountlist.c \
   accountwindow.c \
-  marshaller.c
+  marshaller.c \
+  sliders.c
   
 noinst_HEADERS =  actions.h dbus.h mainwindow.h calllist.h dialpad.h \
                   callmanager-glue.h menus.h calltree.h screen.h configwindow.h \
-                  accountlist.h accountwindow.h marshaller.h 
+                  accountlist.h accountwindow.h marshaller.h sliders.h
 EXTRA_DIST   = marshaller.list
 sflphone_gtk_LDADD = $(DEPS_LIBS)
 

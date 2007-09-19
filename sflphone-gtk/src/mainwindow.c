@@ -20,19 +20,21 @@
 #include <config.h>
 #include <actions.h>
 #include <calllist.h> 
+#include <calltree.h>
 #include <dialpad.h>
 #include <menus.h>
 #include <screen.h>
-#include <calltree.h>
+#include <sliders.h>
 
 #include <gtk/gtk.h>
 
 /** Local variables */
 GtkAccelGroup * accelGroup = NULL;
-GtkWidget * window = NULL;
-GtkWidget *subvbox = NULL;
-GtkWidget * dialpad = NULL;
+GtkWidget * window   = NULL;
+GtkWidget * subvbox  = NULL;
+GtkWidget * dialpad  = NULL;
 gboolean showDialpad = FALSE; // true if the dialpad have been showned
+
 
 /**
  * Terminate the main loop.
@@ -92,7 +94,10 @@ on_key_released (GtkWidget   *widget,
   // If a modifier key is pressed, it's a shortcut, pass along
   if(event->state & GDK_CONTROL_MASK || 
      event->state & GDK_SHIFT_MASK   || 
-     event->state & GDK_MOD1_MASK )
+     event->state & GDK_MOD1_MASK    ||
+     event->keyval == 65361          || // left arrow
+     event->keyval == 65363             // right arrow
+     )
     return FALSE;
   sflphone_keypad(event->keyval, event->string);
   return TRUE;
@@ -102,13 +107,12 @@ void
 create_main_window ()
 {
   GtkWidget *button;
-  GtkWidget *hbox;
   GtkWidget *vbox;
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 0);
   gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
-  gtk_window_set_default_size (GTK_WINDOW (window), 250, 250);
+  //gtk_window_set_default_size (GTK_WINDOW (window), 250, 250);
   gtk_window_set_default_icon_from_file (PIXMAPS_DIR "/sflphone.png", 
                                           NULL);
 
@@ -140,14 +144,14 @@ create_main_window ()
   button = create_screen();
   gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
-  button = gtk_hscale_new_with_range(0, 100, 2);
-  gtk_scale_set_draw_value(button, FALSE);
-  gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-  button = gtk_hscale_new_with_range(0, 100, 2);
-  gtk_scale_set_draw_value(button, FALSE);
-  gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  
   
   gtk_box_pack_start (GTK_BOX (subvbox), create_call_tree(), TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+  
+  button = create_slider("speaker");
+  gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  button = create_slider("mic");
+  gtk_box_pack_start (GTK_BOX (subvbox), button, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
   /* Status bar */
   gtk_box_pack_start (GTK_BOX (vbox), gtk_statusbar_new(), FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
@@ -215,9 +219,4 @@ main_window_dialpad(gboolean show){
   showDialpad = show;
     
 }
-
-
-
-
-
 
