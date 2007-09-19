@@ -310,8 +310,8 @@
        gradientUnits="userSpaceOnUse"
        x1="8.2358475"
        y1="15.55225"
-       x2="4.424221"
-       y2="3.4272494" />
+       x2="4.2843809"
+       y2="2.2386067" />
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient3370"
@@ -330,9 +330,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2"
-     inkscape:cx="34.606991"
-     inkscape:cy="-23.98573"
+     inkscape:zoom="16"
+     inkscape:cx="2.7222828"
+     inkscape:cy="3.2854021"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      width="16px"
@@ -414,5 +414,10 @@
            style="opacity:1;color:#000000;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:2.56729817;stroke-linecap:round;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
       </g>
     </g>
+    <path
+       style="fill:#f5f5f5;fill-opacity:1;stroke:none;stroke-width:0.62258136;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 4.0668759,5.5560217 L 6.1678675,3.589381 L 6.1678675,6.1765082 L 4.0447788,7.2813625 L 4.0668759,5.5560217 z "
+       id="rect2217"
+       sodipodi:nodetypes="ccccc" />
   </g>
 </svg>
