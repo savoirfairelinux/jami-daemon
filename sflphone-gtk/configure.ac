@@ -36,6 +36,7 @@ AC_OUTPUT([
 Makefile 
 src/Makefile 
 pixmaps/Makefile
+sflphone.desktop
 ])
 
 

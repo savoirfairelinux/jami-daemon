@@ -23,4 +23,4 @@ EXTRA_DIST   = marshaller.list
 sflphone_gtk_LDADD = $(DEPS_LIBS)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS) \
-              -DPIXMAPS_DIR=\""$(datadir)/pixmaps"\"
+              -DICONS_DIR=\""$(datadir)/sflphone"\"
