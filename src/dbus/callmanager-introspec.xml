@@ -33,6 +33,10 @@
       <arg type="s" name="to" direction="in"/>
     </method>
     
+    <method name="playDTMF">
+      <arg type="s" name="key" direction="in"/>
+    </method>
+    
     <method name="setVolume">
       <arg type="s" name="device" direction="in"/>
       <arg type="d" name="value" direction="in"/>

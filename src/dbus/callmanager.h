@@ -50,7 +50,8 @@ public:
     ::DBus::Double getVolume( const ::DBus::String& device );
     std::map< ::DBus::String, ::DBus::String > getCallDetails( const ::DBus::String& callID );
     ::DBus::String getCurrentCallID(  );
-
+    void playDTMF( const ::DBus::String& key );
+    
 };
 
 

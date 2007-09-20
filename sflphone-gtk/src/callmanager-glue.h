@@ -273,6 +273,43 @@ static
 inline
 #endif
 gboolean
+org_sflphone_SFLphone_CallManager_play_dt_mf (DBusGProxy *proxy, const char * IN_key, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "playDTMF", error, G_TYPE_STRING, IN_key, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_CallManager_play_dt_mf_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_CallManager_play_dt_mf_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_CallManager_play_dt_mf_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_CallManager_play_dt_mf_async (DBusGProxy *proxy, const char * IN_key, org_sflphone_SFLphone_CallManager_play_dt_mf_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "playDTMF", org_sflphone_SFLphone_CallManager_play_dt_mf_async_callback, stuff, g_free, G_TYPE_STRING, IN_key, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
 org_sflphone_SFLphone_CallManager_set_volume (DBusGProxy *proxy, const char * IN_device, const gdouble IN_value, GError **error)
 
 {

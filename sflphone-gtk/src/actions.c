@@ -254,7 +254,7 @@ sflphone_keypad( guint keyval, gchar * key)
           dbus_hang_up(c);
           break;
         default:
-          //TODO send DTMF, 
+          dbus_play_dtmf(key);
           if (keyval < 255 || (keyval >65453 && keyval < 65466))
           { 
             gchar * temp = g_strconcat(call_get_number(c), key, NULL);

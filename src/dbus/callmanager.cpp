@@ -133,4 +133,10 @@ CallManager::getCurrentCallID(  )
     return Manager::instance().getCurrentCallId();
 }
 
+void 
+CallManager::playDTMF( const ::DBus::String& key )
+{
+  Manager::instance().sendDtmf(Manager::instance().getCurrentCallId(), key.c_str()[0]);
+}
+
 

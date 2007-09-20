@@ -487,3 +487,27 @@ dbus_get_volume(const gchar * device)
   }
   return value;
 }
+
+
+void
+dbus_play_dtmf(const gchar * key)
+{
+  GError *error = NULL;
+  
+  org_sflphone_SFLphone_CallManager_play_dt_mf(
+    callManagerProxy, 
+    key, 
+    &error);
+
+  if (error) 
+  {
+    g_printerr ("Failed to call playDTMF() on callManagerProxy: %s\n",
+                error->message);
+    g_error_free (error);
+  } 
+  else 
+  {
+    g_print ("DBus called playDTMF() on callManagerProxy\n");
+
+  }
+}
