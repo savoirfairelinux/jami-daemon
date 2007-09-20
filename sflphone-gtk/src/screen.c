@@ -24,8 +24,6 @@
 GtkWidget * label;
 GtkWidget * hbox;
 
-
-
 GtkWidget * 
 create_screen()
 {
@@ -54,25 +52,15 @@ create_screen()
   
   gtk_box_pack_start (GTK_BOX (subvbox), sw, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     
-  
-
   screen_clear();
   
   return subvbox;
-  
 }
 
 void 
 screen_clear()
 {
-  gtk_label_set_markup(GTK_LABEL(label), "<big><b>Welcome to SFLPhone</b></big>\n");
-  
-  /*gtk_widget_hide( hangupButton );
-  gtk_widget_show( callButton );
-  gtk_widget_set_sensitive( GTK_WIDGET(callButton),       FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  FALSE);*/
+  gtk_label_set_markup(GTK_LABEL(label), "<big><b>Welcome to SFLphone</b></big>\n");
 }
 
 void 
@@ -81,28 +69,4 @@ screen_set_call(const call_t * c)
   gchar * markup = g_strconcat("<big><b>", call_get_name(c), "</b></big>\n", call_get_number(c), NULL);
   gtk_label_set_markup(GTK_LABEL(label), markup);
   g_free(markup);
-  
-  if(c->state == CALL_STATE_DIALING)
-  {
-    /*gtk_widget_hide( hangupButton );
-    gtk_widget_show( callButton );
-    gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-    gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     FALSE);
-    gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       FALSE);
-    gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  FALSE);*/
-  }
-  else if (c->state == CALL_STATE_CURRENT)
-  {
-    //gtk_widget_hide( callButton  );
-    /* Hack : if hangupButton is put on the window in create_screen()
-     * the hbox will request space for 4 buttons making the window larger than needed */
-    //gtk_box_pack_start (GTK_BOX (hbox), hangupButton, TRUE /*expand*/, TRUE /*fill*/, 10 /*padding*/);
-    /*gtk_box_reorder_child(GTK_BOX (hbox), hangupButton, 0);
-    gtk_widget_show( hangupButton );
-    gtk_widget_set_sensitive( GTK_WIDGET(callButton),       FALSE);
-    gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-    gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
-    gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);*/
-  }
-  
 }

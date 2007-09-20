@@ -20,7 +20,7 @@
 #include <callmanager.h>
 #include "../manager.h"
 
-const char* CallManager::SERVER_PATH = "/org/sflphone/SFLPhone/CallManager";
+const char* CallManager::SERVER_PATH = "/org/sflphone/SFLphone/CallManager";
 
 CallManager::CallManager( DBus::Connection& connection )
 : DBus::ObjectAdaptor(connection, SERVER_PATH)
@@ -130,7 +130,7 @@ CallManager::getCallDetails( const ::DBus::String& callID )
 CallManager::getCurrentCallID(  )
 {
     _debug("CallManager::getCurrentCallID received\n");
-    return getCurrentCallId();
+    return Manager::instance().getCurrentCallId();
 }
 
 

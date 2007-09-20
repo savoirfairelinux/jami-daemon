@@ -96,6 +96,10 @@ call_state_cb (DBusGProxy *proxy,
     {
       sflphone_hung_up (c);
     }
+    else if ( strcmp(state, "UNHOLD") == 0 )
+    {
+      sflphone_current (c);
+    }
     else if ( strcmp(state, "HOLD") == 0 )
     {
       sflphone_hold (c);
@@ -139,9 +143,9 @@ dbus_connect ()
   /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
   
   callManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
-                                     "org.sflphone.SFLPhone",
-                                     "/org/sflphone/SFLPhone/CallManager",
-                                     "org.sflphone.SFLPhone.CallManager",
+                                     "org.sflphone.SFLphone",
+                                     "/org/sflphone/SFLphone/CallManager",
+                                     "org.sflphone.SFLphone.CallManager",
                                      &error);
   if (error) 
   {
@@ -188,9 +192,9 @@ dbus_connect ()
     "volumeChanged", G_CALLBACK(volume_changed_cb), NULL, NULL);
     
   configurationManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
-                                  "org.sflphone.SFLPhone",
-                                  "/org/sflphone/SFLPhone/ConfigurationManager",
-                                  "org.sflphone.SFLPhone.ConfigurationManager",
+                                  "org.sflphone.SFLphone",
+                                  "/org/sflphone/SFLphone/ConfigurationManager",
+                                  "org.sflphone.SFLphone.ConfigurationManager",
                                   &error);
   if (error) 
   {
@@ -212,13 +216,14 @@ void
 dbus_clean ()
 {
     g_object_unref (callManagerProxy);
+    g_object_unref (configurationManagerProxy);
 }
 
 void
 dbus_hold (const call_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_CallManager_hold ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_hold ( callManagerProxy, c->callID, &error);
   if (error) 
   {
     g_printerr ("Failed to call hold() on CallManager: %s\n",
@@ -236,7 +241,7 @@ void
 dbus_unhold (const call_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_CallManager_unhold ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_unhold ( callManagerProxy, c->callID, &error);
   if (error) 
   {
     g_printerr ("Failed to call unhold() on CallManager: %s\n",
@@ -254,7 +259,7 @@ void
 dbus_hang_up (const call_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_CallManager_hang_up ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_hang_up ( callManagerProxy, c->callID, &error);
   if (error) 
   {
     g_printerr ("Failed to call hang_up() on CallManager: %s\n",
@@ -272,7 +277,7 @@ void
 dbus_transfert (const call_t * c, gchar * to )
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_CallManager_transfert ( callManagerProxy, c->callID, to, &error);
+  org_sflphone_SFLphone_CallManager_transfert ( callManagerProxy, c->callID, to, &error);
   if (error) 
   {
     g_printerr ("Failed to call transfert() on CallManager: %s\n",
@@ -290,7 +295,7 @@ void
 dbus_accept (const call_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_CallManager_accept ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_accept ( callManagerProxy, c->callID, &error);
   if (error) 
   {
     g_printerr ("Failed to call accept(%s) on CallManager: %s\n", c->callID,
@@ -308,7 +313,7 @@ void
 dbus_refuse (const call_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_CallManager_refuse ( callManagerProxy, c->callID, &error);
+  org_sflphone_SFLphone_CallManager_refuse ( callManagerProxy, c->callID, &error);
   if (error) 
   {
     g_printerr ("Failed to call refuse() on CallManager: %s\n",
@@ -328,7 +333,7 @@ void
 dbus_place_call (const call_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_CallManager_place_call ( callManagerProxy, c->accountID, c->callID, c->to, &error);
+  org_sflphone_SFLphone_CallManager_place_call ( callManagerProxy, c->accountID, c->callID, c->to, &error);
   if (error) 
   {
     g_printerr ("Failed to call placeCall() on CallManager: %s\n",
@@ -348,7 +353,7 @@ dbus_account_list()
 {
   GError *error = NULL;
   char ** array;
-  org_sflphone_SFLPhone_ConfigurationManager_get_account_list (
+  org_sflphone_SFLphone_ConfigurationManager_get_account_list (
     configurationManagerProxy, 
     &array, 
     &error);
@@ -371,7 +376,7 @@ dbus_account_details(gchar * accountID)
 {
   GError *error = NULL;
   GHashTable * details;
-  org_sflphone_SFLPhone_ConfigurationManager_get_account_details (
+  org_sflphone_SFLphone_ConfigurationManager_get_account_details (
     configurationManagerProxy, 
     accountID, 
     &details, 
@@ -394,7 +399,7 @@ void
 dbus_remove_account(gchar * accountID)
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_ConfigurationManager_remove_account (
+  org_sflphone_SFLphone_ConfigurationManager_remove_account (
     configurationManagerProxy, 
     accountID, 
     &error);
@@ -415,7 +420,7 @@ void
 dbus_set_account_details(account_t *a)
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_ConfigurationManager_set_account_details (
+  org_sflphone_SFLphone_ConfigurationManager_set_account_details (
     configurationManagerProxy, 
     a->accountID, 
     a->properties, 
@@ -437,7 +442,7 @@ void
 dbus_set_volume(const gchar * device, gdouble value)
 {
   GError *error = NULL;
-  org_sflphone_SFLPhone_CallManager_set_volume(
+  org_sflphone_SFLphone_CallManager_set_volume(
     callManagerProxy, 
     device, 
     value, 
@@ -463,7 +468,7 @@ dbus_get_volume(const gchar * device)
   gdouble  value;
   GError *error = NULL;
   
-  org_sflphone_SFLPhone_CallManager_get_volume(
+  org_sflphone_SFLphone_CallManager_get_volume(
     callManagerProxy, 
     device, 
     &value, 

@@ -45,12 +45,12 @@ help_about ( void * foo)
   
   gtk_show_about_dialog( GTK_WINDOW(get_main_window()),
     "name", PACKAGE,
-    "title", "About SFLPhone",
+    "title", "About SFLphone",
     "version", VERSION,
     "website", "http://www.sflphone.org",
     "copyright", "Copyright © 2004-2007 Savoir-faire Linux Inc.",
     "translator-credits", "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.net>", 
-    "comments", "SFLPhone is a VOIP client compatible with SIP and IAX protocols.",
+    "comments", "SFLphone is a VOIP client compatible with SIP and IAX protocols.",
     "artists", artists,
     "authors", authors,
     NULL);

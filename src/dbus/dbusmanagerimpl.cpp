@@ -20,7 +20,7 @@
 #include <dbusmanagerimpl.h>
 #include "manager.h"
 
-const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLPhone";
+const char* DBusManagerImpl::SERVER_NAME = "org.sflphone.SFLphone";
 
 int 
 DBusManagerImpl::exec(){

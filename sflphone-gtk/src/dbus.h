@@ -41,6 +41,7 @@ void dbus_refuse (const call_t * c);
 void dbus_place_call (const call_t * c);
 
 /* ConfigurationManager */
+/** Returns a NULL terminated array of gchar pointers */
 gchar ** dbus_account_list();
 GHashTable * dbus_account_details(gchar * accountID);
 void dbus_set_account_details(account_t *a);

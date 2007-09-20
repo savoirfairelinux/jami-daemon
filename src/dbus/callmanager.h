@@ -25,7 +25,7 @@
 
     
 class CallManager
-: public org::sflphone::SFLPhone::CallManager,
+: public org::sflphone::SFLphone::CallManager,
   public DBus::IntrospectableAdaptor,
   public DBus::ObjectAdaptor
 {

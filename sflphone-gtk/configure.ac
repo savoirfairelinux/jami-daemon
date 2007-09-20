@@ -1,7 +1,7 @@
-AC_INIT([SFLPhone],[0.8],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_INIT([SFLphone],[0.8],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AM_CONFIG_HEADER(config.h)
 
-PACKAGE=SFLPhone
+PACKAGE=SFLphone
 VERSION=0.8
 
 AM_INIT_AUTOMAKE($PACKAGE,$VERSION)

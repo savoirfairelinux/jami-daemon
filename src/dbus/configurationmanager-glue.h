@@ -10,7 +10,7 @@
 
 namespace org {
 namespace sflphone {
-namespace SFLPhone {
+namespace SFLphone {
 
 class ConfigurationManager
 : public ::DBus::InterfaceAdaptor
@@ -18,7 +18,7 @@ class ConfigurationManager
 public:
 
     ConfigurationManager()
-    : ::DBus::InterfaceAdaptor("org.sflphone.SFLPhone.ConfigurationManager")
+    : ::DBus::InterfaceAdaptor("org.sflphone.SFLphone.ConfigurationManager")
     {
         register_method(ConfigurationManager, getAccountDetails, _getAccountDetails_stub);
         register_method(ConfigurationManager, setAccountDetails, _setAccountDetails_stub);
@@ -163,7 +163,7 @@ public:
         };
         static ::DBus::IntrospectedInterface ConfigurationManager_interface = 
         {
-            "org.sflphone.SFLPhone.ConfigurationManager",
+            "org.sflphone.SFLphone.ConfigurationManager",
             ConfigurationManager_methods,
             ConfigurationManager_signals,
             ConfigurationManager_properties

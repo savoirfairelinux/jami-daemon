@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
-<node name="/org/sflphone/SFLPhone">
-  <interface name="org.sflphone.SFLPhone.ConfigurationManager">
+<node name="/org/sflphone/SFLphone">
+  <interface name="org.sflphone.SFLphone.ConfigurationManager">
   
     <method name="getAccountDetails">
       <arg type="s" name="accountID" direction="in"/>

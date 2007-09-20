@@ -10,7 +10,7 @@
 
 namespace org {
 namespace sflphone {
-namespace SFLPhone {
+namespace SFLphone {
 
 class CallManager
 : public ::DBus::InterfaceAdaptor
@@ -18,7 +18,7 @@ class CallManager
 public:
 
     CallManager()
-    : ::DBus::InterfaceAdaptor("org.sflphone.SFLPhone.CallManager")
+    : ::DBus::InterfaceAdaptor("org.sflphone.SFLphone.CallManager")
     {
         register_method(CallManager, placeCall, _placeCall_stub);
         register_method(CallManager, refuse, _refuse_stub);
@@ -163,7 +163,7 @@ public:
         };
         static ::DBus::IntrospectedInterface CallManager_interface = 
         {
-            "org.sflphone.SFLPhone.CallManager",
+            "org.sflphone.SFLphone.CallManager",
             CallManager_methods,
             CallManager_signals,
             CallManager_properties

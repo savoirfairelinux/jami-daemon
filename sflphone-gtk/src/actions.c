@@ -114,7 +114,7 @@ sflphone_init()
   account_list_init ();
   if(!dbus_connect ())
   {
-    main_window_error_message("Unable to connect to the SFLPhone server.\nMake sure the daemon is running.");
+    main_window_error_message("Unable to connect to the SFLphone server.\nMake sure the daemon is running.");
     return FALSE;
   }
   else 

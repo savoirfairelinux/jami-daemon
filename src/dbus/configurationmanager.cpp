@@ -21,7 +21,7 @@
 #include <configurationmanager.h>
 #include "../manager.h"
 
-const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLPhone/ConfigurationManager";
+const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
 
 
 

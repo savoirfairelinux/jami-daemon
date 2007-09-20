@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
-<node name="/org/sflphone/SFLPhone">
-  <interface name="org.sflphone.SFLPhone.CallManager">
+<node name="/org/sflphone/SFLphone">
+  <interface name="org.sflphone.SFLphone.CallManager">
   
     <method name="placeCall">
       <arg type="s" name="accountID" direction="in"/>
