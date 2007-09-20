@@ -116,7 +116,7 @@ create_main_window ()
   gtk_container_set_border_width (GTK_CONTAINER (window), 0);
   gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
   gtk_window_set_default_size (GTK_WINDOW (window), 200, 300);
-  gtk_window_set_default_icon_from_file (PIXMAPS_DIR "/sflphone.png", 
+  gtk_window_set_default_icon_from_file (ICONS_DIR "/sflphone.png", 
                                           NULL);
 
   /* Connect the destroy event of the window with our on_destroy function
