@@ -115,7 +115,7 @@ create_main_window ()
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 0);
   gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
-  //gtk_window_set_default_size (GTK_WINDOW (window), 250, 250);
+  gtk_window_set_default_size (GTK_WINDOW (window), 200, 300);
   gtk_window_set_default_icon_from_file (PIXMAPS_DIR "/sflphone.png", 
                                           NULL);
 
@@ -141,7 +141,8 @@ create_main_window ()
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, TRUE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
  
   widget = create_screen();
-  gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  // TODO Add the screen when we are decided
+  //gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
   gtk_box_pack_start (GTK_BOX (subvbox), create_call_tree(), TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
