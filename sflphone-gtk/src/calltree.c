@@ -255,7 +255,7 @@ create_call_tree (){
   
   callButton = gtk_button_new ();
   gtk_widget_set_state( GTK_WIDGET(callButton), GTK_STATE_INSENSITIVE);
-  image = gtk_image_new_from_file( PIXMAPS_DIR "/call.svg");
+  image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
   gtk_button_set_image(GTK_BUTTON(callButton), image);
   //gtk_button_set_image_position( button, GTK_POS_TOP);
   gtk_box_pack_start (GTK_BOX (hbox), callButton, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
@@ -266,14 +266,14 @@ create_call_tree (){
   gtk_widget_hide( hangupButton );
   gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
   gtk_box_pack_start (GTK_BOX (hbox), hangupButton, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
-  image = gtk_image_new_from_file( PIXMAPS_DIR "/hang_up.svg");
+  image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
   gtk_button_set_image(GTK_BUTTON(hangupButton), image);
   //gtk_button_set_image_position( button, GTK_POS_TOP);
   g_signal_connect (G_OBJECT (hangupButton), "clicked",
                     G_CALLBACK (hang_up), NULL);
                       
   unholdButton = gtk_button_new ();
-  image = gtk_image_new_from_file( PIXMAPS_DIR "/unhold.svg");
+  image = gtk_image_new_from_file( ICONS_DIR "/unhold.svg");
   gtk_button_set_image(GTK_BUTTON(unholdButton), image);
   gtk_widget_set_state( GTK_WIDGET(unholdButton), GTK_STATE_INSENSITIVE);
   gtk_box_pack_end (GTK_BOX (hbox), unholdButton, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
@@ -281,7 +281,7 @@ create_call_tree (){
                     G_CALLBACK (unhold), NULL);
              
   holdButton = gtk_button_new ();
-  image = gtk_image_new_from_file( PIXMAPS_DIR "/hold.svg");
+  image = gtk_image_new_from_file( ICONS_DIR "/hold.svg");
   gtk_button_set_image(GTK_BUTTON(holdButton), image);
   gtk_widget_set_state( GTK_WIDGET(holdButton), GTK_STATE_INSENSITIVE);
   gtk_box_pack_end (GTK_BOX (hbox), holdButton, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
@@ -289,7 +289,7 @@ create_call_tree (){
                     G_CALLBACK (hold), NULL);
 
   transfertButton = gtk_button_new ();
-  image = gtk_image_new_from_file( PIXMAPS_DIR "/transfert.svg");
+  image = gtk_image_new_from_file( ICONS_DIR "/transfert.svg");
   gtk_button_set_image(GTK_BUTTON(transfertButton), image);
   gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
   gtk_box_pack_end (GTK_BOX (hbox), transfertButton, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
@@ -367,22 +367,22 @@ update_call_tree (call_t * c)
     		switch(c->state)
     		{
       		case CALL_STATE_HOLD:
-      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/hold.svg", NULL);
+      		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
       		  break;
       		case CALL_STATE_RINGING:
-      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
+      		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
       		  break;
       		case CALL_STATE_CURRENT:
-      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/current.svg", NULL);
+      		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
       		  break;
       		case CALL_STATE_DIALING:
-      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/dial.svg", NULL);
+      		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
       		  break;
       		case CALL_STATE_FAILURE:
-      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/fail.svg", NULL);
+      		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
       		  break;
       		case CALL_STATE_BUSY:
-      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/busy.svg", NULL);
+      		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
       		  break;
       		default:
       		  g_error("Should not happen!");
@@ -431,13 +431,13 @@ update_call_tree_add (call_t * c)
   switch(c->state)
 	{
 		case CALL_STATE_INCOMING:
-		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
+		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
 		  break;
 		case CALL_STATE_DIALING:
-		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/dial.svg", NULL);
+		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
 		  break;
 		case CALL_STATE_RINGING:
-		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
+		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
 		  break;
 		default:
 		  g_error("Should not happen!");

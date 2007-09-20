@@ -127,7 +127,7 @@ create_slider(const gchar * device)
   {
     movedConnId = &speakerMovedConnId;
     toggledConnId = &speakerToggledConnId;
-    image = gtk_image_new_from_file( PIXMAPS_DIR "/speaker.svg");
+    image = gtk_image_new_from_file( ICONS_DIR "/speaker.svg");
     //icon_theme = gtk_icon_theme_get_default ();
     //pixbuf = gtk_icon_theme_load_icon (icon_theme,
     //                               "audio-volume-muted", /* icon name */
@@ -140,7 +140,7 @@ create_slider(const gchar * device)
   {
     movedConnId = &micMovedConnId;
     toggledConnId = &micToggledConnId;
-    image = gtk_image_new_from_file( PIXMAPS_DIR "/mic.svg");
+    image = gtk_image_new_from_file( ICONS_DIR "/mic.svg");
   }
   
   
