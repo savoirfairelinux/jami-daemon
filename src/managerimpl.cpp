@@ -215,7 +215,10 @@ bool
 ManagerImpl::answerCall(const CallID& id)
 {
   stopTone(false); 
-
+  if (hasCurrentCall()) 
+  { 
+    onHoldCall(getCurrentCallId());
+  }
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Answering Call: Call doesn't exists\n");
@@ -224,12 +227,15 @@ ManagerImpl::answerCall(const CallID& id)
 
   if (!getAccountLink(accountid)->answer(id)) {
     // error when receiving...
-    
     removeCallAccount(id);
     return false;
   }
 
+  //Place current call on hold if it isn't
+  
+  
   // if it was waiting, it's waiting no more
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
   removeWaitingCall(id);
   switchCall(id);
   return true;
@@ -250,7 +256,7 @@ bool
 ManagerImpl::hangupCall(const CallID& id)
 {
   stopTone(true);
-
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("! Manager Hangup Call: Call doesn't exists\n");
@@ -260,7 +266,8 @@ ManagerImpl::hangupCall(const CallID& id)
   bool returnValue = getAccountLink(accountid)->hangup(id);
   removeCallAccount(id);
   switchCall("");
-
+  
+  
   return returnValue;
 }
 
@@ -296,7 +303,9 @@ ManagerImpl::onHoldCall(const CallID& id)
   }
 
   bool returnValue = getAccountLink(accountid)->onhold(id);
+  
   removeWaitingCall(id);
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HOLD");
   switchCall("");
   
   return returnValue;
@@ -312,9 +321,16 @@ ManagerImpl::offHoldCall(const CallID& id)
     _debug("5 Manager OffHold Call: Call doesn't exists\n");
     return false;
   }
+  
+  //Place current call on hold if it isn't
+  if (hasCurrentCall()) 
+  { 
+    onHoldCall(getCurrentCallId());
+  }
+  
   bool returnValue = getAccountLink(accountid)->offhold(id);
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "UNHOLD");
   switchCall(id);
-
   if (returnValue) {
     try {
       getAudioDriver()->startStream();
@@ -338,6 +354,7 @@ ManagerImpl::transferCall(const CallID& id, const std::string& to)
   bool returnValue = getAccountLink(accountid)->transfer(id, to);
   removeWaitingCall(id);
   removeCallAccount(id);
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   switchCall("");
 
   return returnValue;
@@ -374,6 +391,7 @@ ManagerImpl::refuseCall (const CallID& id)
   if (returnValue) {
     removeWaitingCall(id);
     removeCallAccount(id);
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
     switchCall("");
   }
   return returnValue;
@@ -538,8 +556,6 @@ ManagerImpl::playDtmf(char code)
   return returnValue;
 }
 
-
-
 // Multi-thread 
 bool
 ManagerImpl::incomingCallWaiting() {
@@ -647,26 +663,28 @@ ManagerImpl::peerHungupCall(const CallID& id)
     _debug("peerHungupCall: Call doesn't exists\n");
     return;
   }
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   if (isCurrentCall(id)) {
     stopTone(true);
     switchCall("");
   }
   removeWaitingCall(id);
   removeCallAccount(id);
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+  
 }
 
 //THREAD=VoIP
 void
 ManagerImpl::callBusy(const CallID& id) {
   _debug("Call busy\n");
+  
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "BUSY");
   if (isCurrentCall(id) ) {
     playATone(Tone::TONE_BUSY);
     switchCall("");
   }
   removeCallAccount(id);
   removeWaitingCall(id);
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "BUSY");
 }
 
 //THREAD=VoIP
@@ -674,13 +692,13 @@ void
 ManagerImpl::callFailure(const CallID& id) 
 {
   _debug("Call failed\n");
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "FAILURE");
   if (isCurrentCall(id) ) {
     playATone(Tone::TONE_BUSY);
     switchCall("");
   }
   removeCallAccount(id);
   removeWaitingCall(id);
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "FAILURE");
   
 }
 

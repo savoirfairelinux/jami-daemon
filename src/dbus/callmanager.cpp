@@ -41,7 +41,6 @@ CallManager::refuse( const ::DBus::String& callID )
 {
     _debug("CallManager::refuse received\n");
     Manager::instance().refuseCall(callID);
-    callStateChanged(callID, "HUNGUP");
 }
 
 void
@@ -49,7 +48,6 @@ CallManager::accept( const ::DBus::String& callID )
 {
     _debug("CallManager::accept received\n");
     Manager::instance().answerCall(callID);
-    callStateChanged(callID, "CURRENT");
 }
 
 void
@@ -57,7 +55,6 @@ CallManager::hangUp( const ::DBus::String& callID )
 {
     _debug("CallManager::hangUp received\n");
     Manager::instance().hangupCall(callID);
-    callStateChanged(callID, "HUNGUP");
 
 }
 
@@ -66,7 +63,6 @@ CallManager::hold( const ::DBus::String& callID )
 {
     _debug("CallManager::hold received\n");
     Manager::instance().onHoldCall(callID);
-    callStateChanged(callID, "HOLD");
     
 }
 
@@ -75,7 +71,6 @@ CallManager::unhold( const ::DBus::String& callID )
 {
     _debug("CallManager::unhold received\n");
     Manager::instance().offHoldCall(callID);
-    callStateChanged(callID, "UNHOLD");
 }
 
 void
@@ -83,7 +78,6 @@ CallManager::transfert( const ::DBus::String& callID, const ::DBus::String& to )
 {
     _debug("CallManager::transfert received\n");
     Manager::instance().transferCall(callID, to);
-    callStateChanged(callID, "HUNGUP");
 }
 
 void
