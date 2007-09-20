@@ -15,8 +15,9 @@ libosip2             2.2.2      http://www.gnu.org/software/osip/[website]
 portaudio            v19        http://www.portaudio.com/[website]
 portaudio C++ binds.            http://www.portaudio.com/archives/pa_snapshot_v19.tar.gz[archive]
 libsamplerate        0.1.2      http://www.mega-nerd.com/SRC/[website]
+libdbus-glib         0.73       Packaged with your favorite distribution.
 dbus-c++-1           0.5        See Build notes.
-libexpat1            1.95.8     Packaged with your favorite distribution
+libexpat1            1.95.8     Packaged with your favorite distribution.
 --------------------------------------------------------------------------------------
 
 
