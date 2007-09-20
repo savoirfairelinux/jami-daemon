@@ -30,6 +30,7 @@ libiax2
 Go to `libs/libiax2` and run:
 
 -------------------------
+./gen.sh
 ./configure --prefix=/usr
 make
 sudo make install
