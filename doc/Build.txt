@@ -24,6 +24,7 @@ sudo make install
 NOTE: If you have `colorgcc`, configure will *fail* on `libeXpat`. Issue an `unset CC` and `unset CXX` to build the dbus bindings.
 
 
+
 libiax2
 ~~~~~~~
 
@@ -35,6 +36,27 @@ Go to `libs/libiax2` and run:
 make
 sudo make install
 -------------------------
+
+
+
+portaudio
+~~~~~~~~~
+
+Go to `tools/` and run:
+
+-------------------------
+./portaudio.sh
+su -c "cd portaudio && make install"
+cd bindings/cpp
+./configure --prefix=/usr
+make clean
+make
+sudo make install
+-------------------------
+
+The `make clean` is required. We might investigate (or could you ?)
+the reason for that sometime.
+
 
 the daemon
 ~~~~~~~~~~
@@ -67,3 +89,6 @@ gnome-autogen.sh
 make
 sudo make install
 -------------------------
+
+You'll find `gnome-autogen.sh` in some `gnome-common`-like package of
+your distribution.
