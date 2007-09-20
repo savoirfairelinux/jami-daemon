@@ -21,7 +21,8 @@
 
 #include <string.h>
 
-GQueue * callQueue;
+GQueue * callQueue = NULL;
+call_t * selectedCall = NULL;
 
 /* GCompareFunc to compare a callID (gchar* and a call_t) */
 gint 
@@ -141,4 +142,17 @@ call_list_get ( const gchar * callID )
   {
     return NULL;
   }
+}
+
+void
+call_select ( call_t * c )
+{
+  selectedCall = c;
+}
+
+
+call_t *
+call_get_selected ()
+{
+  return selectedCall;
 }

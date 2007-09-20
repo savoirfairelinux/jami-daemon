@@ -18,6 +18,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <actions.h>
 #include <calltree.h>
 #include <calllist.h>
 #include <dbus.h>
@@ -31,20 +32,19 @@ GtkWidget * holdButton;
 GtkWidget * transfertButton;
 GtkWidget * unholdButton;
 
-call_t * selectedCall;
-
 /**
  * Make a call
  */
 static void 
 call_button( GtkWidget *widget, gpointer   data )
 {
+  call_t * selectedCall = call_get_selected();
   if(selectedCall)
   {
     switch(selectedCall->state)
     {
       case CALL_STATE_DIALING:
-        dbus_place_call (selectedCall);
+        sflphone_place_call (selectedCall);
         break;
       case CALL_STATE_INCOMING:
         dbus_accept (selectedCall);
@@ -62,6 +62,7 @@ call_button( GtkWidget *widget, gpointer   data )
 static void 
 hang_up( GtkWidget *widget, gpointer   data )
 {
+  call_t * selectedCall = call_get_selected();
   if(selectedCall)
   {
     switch(selectedCall->state)
@@ -88,6 +89,7 @@ hang_up( GtkWidget *widget, gpointer   data )
 static void 
 hold( GtkWidget *widget, gpointer   data )
 {
+  call_t * selectedCall = call_get_selected();
   if(selectedCall)
   {
     switch(selectedCall->state)
@@ -121,6 +123,7 @@ transfert( GtkWidget *widget, gpointer   data )
 static void 
 unhold( GtkWidget *widget, gpointer   data )
 {
+  call_t * selectedCall = call_get_selected();
   if(selectedCall)
   {
     switch(selectedCall->state)
@@ -143,7 +146,8 @@ update_buttons ()
   gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
 	
-	if(selectedCall)  // TODO Make this a switch
+	call_t * selectedCall = call_get_selected();
+  if(selectedCall)  // TODO Make this a switch
 	{
 	  if( selectedCall->state == CALL_STATE_INCOMING)
 	  {
@@ -192,7 +196,7 @@ selected(GtkTreeSelection *sel, GtkTreeModel *model)
 	val.g_type = 0;
 	gtk_tree_model_get_value (model, &iter, 2, &val);
 	
-	selectedCall = (call_t*) g_value_get_pointer(&val);
+	call_select((call_t*) g_value_get_pointer(&val));
   g_value_unset(&val);
   
   update_buttons();
@@ -326,8 +330,9 @@ update_call_tree_remove (call_t * c)
       }
 	  }
 	}
+	call_t * selectedCall = call_get_selected();
 	if(selectedCall == c)
-	  selectedCall = NULL;
+	  call_select(NULL);
 	update_buttons();
 }
 

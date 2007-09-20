@@ -93,8 +93,10 @@ on_key_released (GtkWidget   *widget,
 #endif 
   // If a modifier key is pressed, it's a shortcut, pass along
   if(event->state & GDK_CONTROL_MASK || 
-     event->state & GDK_SHIFT_MASK   || 
      event->state & GDK_MOD1_MASK    ||
+     event->keyval == 60             || // <
+     event->keyval == 62             || // >
+     event->keyval == 34             || // "
      event->keyval == 65361          || // left arrow
      event->keyval == 65363          || // right arrow
      event->keyval == 32                // space

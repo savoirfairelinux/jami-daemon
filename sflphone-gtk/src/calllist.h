@@ -107,4 +107,12 @@ gchar * call_get_name (const call_t * c);
   * @return The number of the caller */
 gchar * call_get_number (const call_t * c);
 
+/** Mark a call as selected.  There can be only one selected call.  This call
+  * is the currently highlighted one in the list.
+  * @param c The call */
+void call_select ( call_t * c );
+
+/** Return the selected call.
+  * @return The number of the caller */
+call_t * call_get_selected ();
 #endif 
