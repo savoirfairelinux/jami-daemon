@@ -17,11 +17,12 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#include <config.h>
+#include <actions.h>
 #include <calllist.h>
+#include <config.h>
 #include <dbus.h>
 #include <mainwindow.h>
-#include <actions.h>
+#include <statusicon.h>
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
@@ -41,6 +42,7 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
   
   if(sflphone_init())
   {
+    show_status_icon();
     create_main_window ();
     
     /* start the main loop */

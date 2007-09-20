@@ -14,13 +14,15 @@ sflphone_gtk_SOURCES = \
   accountlist.c \
   accountwindow.c \
   marshaller.c \
-  sliders.c
+  sliders.c \
+  statusicon.c
   
 noinst_HEADERS =  actions.h dbus.h mainwindow.h calllist.h dialpad.h \
                   callmanager-glue.h menus.h calltree.h screen.h configwindow.h \
-                  accountlist.h accountwindow.h marshaller.h sliders.h
+                  accountlist.h accountwindow.h marshaller.h sliders.h statusicon.h
 EXTRA_DIST   = marshaller.list
 sflphone_gtk_LDADD = $(DEPS_LIBS)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS) \
-              -DICONS_DIR=\""$(datadir)/sflphone"\"
+              -DICONS_DIR=\""$(datadir)/sflphone"\" \
+              -DICON_DIR=\""$(datadir)/pixmaps"\"
