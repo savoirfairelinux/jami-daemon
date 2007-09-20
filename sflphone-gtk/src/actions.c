@@ -29,9 +29,7 @@
 #include <dbus.h>
 #include <accountlist.h>
 
-/**
- * Terminate the gtk program
- */
+
 gboolean
 sflphone_quit ()
 {
@@ -53,9 +51,7 @@ sflphone_quit ()
   return quit;
 }
 
-/**
- * Put the line on hold
- */
+
 void 
 sflphone_hold(call_t * c )
 {
@@ -64,9 +60,6 @@ sflphone_hold(call_t * c )
   screen_clear();
 }
 
-/**
- * Put the call in Ringing state
- */
 void 
 sflphone_ringing(call_t * c )
 {
@@ -75,7 +68,7 @@ sflphone_ringing(call_t * c )
 }
 
 
-/* Fill account list */
+/** Internal to actions: Fill account list */
 void
 sflphone_fill_account_list()
 {
@@ -131,20 +124,6 @@ sflphone_init()
   }
 }
 
-/**
- * Put the line on hold
- */
-void 
-sflphone_unhold(call_t * c )
-{
-  c->state = CALL_STATE_CURRENT;
-  update_call_tree(c);
-  screen_set_call(c);
-}
-
-/**
- * Hang up the line
- */
 void 
 sflphone_hang_up( call_t  * c )
 {
@@ -153,9 +132,6 @@ sflphone_hang_up( call_t  * c )
   screen_clear();
 }
 
-/**
- * Incoming call
- */
 void 
 sflphone_current( call_t * c )
 {
@@ -164,9 +140,6 @@ sflphone_current( call_t * c )
   screen_set_call(c);
 }
 
-/**
- * Transfert the line
- */
 void 
 sflphone_transfert( call_t * c, gchar * to )
 {
@@ -174,18 +147,13 @@ sflphone_transfert( call_t * c, gchar * to )
   update_call_tree_remove(c);
 }
 
-/**
- * Signal Incoming Call
- */
 void
 sflphone_incoming_call (call_t * c) 
 {
   call_list_add ( c );
   update_call_tree_add(c);
 }
-/**
- * Signal Hung up
- */
+
 void 
 sflphone_hung_up (call_t * c )
 {
@@ -315,12 +283,6 @@ sflphone_place_call ( call_t * c )
     }
     
   }
-}
-
-void 
-sflphone_remove_account ( account_t * a )
-{
-  dbus_remove_account (a->accountID);
 }
 
 

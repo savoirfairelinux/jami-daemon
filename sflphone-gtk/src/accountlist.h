@@ -21,6 +21,9 @@
 #define __ACCOUNTLIST_H__
 
 #include <gtk/gtk.h>
+/** @file accountlist.h
+  * @brief A list to hold accounts.
+  */
 
 #define ACCOUNT_TYPE               "Account.type"
 #define ACCOUNT_ALIAS              "Account.alias"
@@ -39,6 +42,9 @@
 #define ACCOUNT_IAX_USER           "IAX.user"
 #define ACCOUNT_IAX_PASS           "IAX.pass"
 
+/** @enum account_state_t 
+  * This enum have all the states an account can take.
+  */
 typedef enum
 {
    ACCOUNT_STATE_INVALID = 0,
@@ -46,27 +52,50 @@ typedef enum
    ACCOUNT_STATE_UNREGISTERED   
 } account_state_t;
 
-
+/** @struct account_t
+  * @brief Account information.
+  * This struct holds information about an account.  All values are stored in the 
+  * properties GHashTable except the accountID and state.  This match how the 
+  * server internally works and the dbus API to save and retrieve the accounts details.
+  * 
+  * To retrieve the Alias for example, use g_hash_table_lookup(a->properties, ACCOUNT_ALIAS).  
+  */
 typedef struct  {
   gchar * accountID;
-  account_state_t state;
-  GHashTable * properties;
+  account_state_t state;  GHashTable * properties;
 } account_t;
 
+/** This function initialize the account list. */
 void account_list_init ();
 
+/** This function empty and free the account list. */
 void account_list_clean ();
 
+/** This function append an account to list. 
+  * @param a The account you want to add */
 void account_list_add (account_t * a);
 
+/** This function remove an account from list. 
+  * @param accountID The accountID of the account you want to remove
+  */
 void account_list_remove (const gchar * accountID);
 
-/** Return the first account that corresponds to the state */
+/** Return the first account that corresponds to the state 
+  * @param s The state
+  * @return An account or NULL */
 account_t * account_list_get_by_state ( account_state_t state);
 
+/** Return the number of accounts in the list
+  * @return The number of accounts in the list */
 guint account_list_get_size ( );
 
+/** Return the account at the nth position in the list
+  * @param n The position of the account you want
+  * @return An account or NULL */
 account_t * account_list_get_nth ( guint n );
 
+/** This function maps account_state_t enums to a description.
+  * @param s The state
+  * @return The full text description of the state */
 const gchar * account_state_name(account_state_t s);
 #endif 

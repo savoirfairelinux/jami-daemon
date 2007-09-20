@@ -23,6 +23,13 @@
 #include <calllist.h>
 #include <accountlist.h>
 
+/** @file actions.h
+  * @brief General functions that change the state of the application.
+  * All of these functions are called when dbus signals are triggered.  Exceptions
+  * are sflphone_init() sflphone_quit(), sflphone_keypad() and sflphone_place_call().
+  */
+
+
 /**
  * Initialize lists and configurations 
  * @return TRUE if succeeded, FALSE otherwise
@@ -35,36 +42,52 @@ gboolean sflphone_init ( ) ;
  */
 gboolean sflphone_quit ( ) ;
 
+/**
+ * Hang up the call
+ */
 void sflphone_hang_up ( call_t * c);
 
+/**
+ * Transfert the call
+ */
 void sflphone_transfert ( call_t * c, gchar * to );
 
+/**
+ * Put the call on hold
+ */
 void sflphone_hold ( call_t * c);
 
+/**
+ * Put the call in Ringing state
+ */
 void sflphone_ringing(call_t * c );
 
+/**
+ * Put the call in Current state
+ */
 void sflphone_current ( call_t * c);
 
-void sflphone_remove_account ( account_t * a );
-
-void sflphone_unhold ( call_t * c);
-
-/* signals */
+/**
+ * The callee has hung up
+ */
 void sflphone_hung_up( call_t * c);
 
-/* void sflphone_ring */
+/**
+ * Incoming call
+ */
 void sflphone_incoming_call ( call_t * c);
 
 /**
  * Dial the number
  * If the call is in DIALING state, the char will be append to the number
- * TODO If the call is in CURRENT state, the char will be also sent to the server 
- * @param c A call in CALL_STATE_DIALING state
+ * @TODO If the call is in CURRENT state, the char will be also sent to the server 
+ * @param keyval The unique int representing the key
+ * @param keyval The char value of the key
  */
 void sflphone_keypad ( guint keyval, gchar * key);
 
 /**
- * Place a call
+ * Place a call with a filled call_t.to 
  * @param c A call in CALL_STATE_DIALING state
  */
 void sflphone_place_call ( call_t * c );

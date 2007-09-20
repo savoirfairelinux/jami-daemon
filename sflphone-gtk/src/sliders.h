@@ -21,7 +21,9 @@
 #define __SLIDERS_H__
 
 #include <gtk/gtk.h>
-
+/** @file sliders.h
+  * @brief Volume sliders at the bottom of the main window.
+  */
 GtkWidget * create_mic_slider();
 
 GtkWidget * create_slider(const gchar * device);

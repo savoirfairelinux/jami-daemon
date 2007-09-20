@@ -22,6 +22,9 @@
 
 #include <calllist.h>
 
+/** @file mainwindow.h
+  * @brief The main window of the client.
+  */
 GtkAccelGroup * get_accel_group();
 GtkWidget * get_main_window();
 

@@ -17,11 +17,12 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#include <config.h>
-#include <mainwindow.h>
 #include <accountlist.h>
 #include <accountwindow.h>
 #include <actions.h>
+#include <config.h>
+#include <dbus.h>
+#include <mainwindow.h>
 
 #include <gtk/gtk.h>
 
@@ -49,14 +50,13 @@ fill_account_list ()
       gtk_list_store_append (account_store, &iter);
   		      
   		gtk_list_store_set(account_store, &iter,
-  				   0, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),               // Name
+  				   0, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
   				   1, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
   				   2, account_state_name(a->state),      // Status
-  				   3, a,                          // Pointer
+  				   3, a,                                 // Pointer
   				   -1);
 
   	}
-    
   } 
   
   gtk_widget_set_sensitive( GTK_WIDGET(editButton),   FALSE);
@@ -70,7 +70,7 @@ delete_account( GtkWidget *widget, gpointer   data )
 {
   if(selectedAccount)
   {
-    sflphone_remove_account(selectedAccount);
+    dbus_remove_account(selectedAccount->accountID);
     fill_account_list ();
   }
 }
@@ -146,7 +146,7 @@ create_accounts_tab()
 	gtk_widget_show(label);
 
 	sw = gtk_scrolled_window_new(NULL,NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
 
 	gtk_box_pack_start(GTK_BOX(ret), sw, TRUE, TRUE, 0);

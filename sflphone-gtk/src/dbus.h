@@ -24,6 +24,9 @@
 #include <accountlist.h>
 #include <calllist.h>
 
+/** @file dbus.h
+  * @brief General DBus functions wrappers.
+  */
 /** @return TRUE if connection succeeded, FALSE otherwise */
 gboolean dbus_connect ();
 void dbus_clean ();

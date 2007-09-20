@@ -23,6 +23,9 @@
 #include <gtk/gtk.h>
 #include <calllist.h>
 
+/** @file screen.h
+  * @brief The screen at the top of the main window.
+  */
 GtkWidget * create_screen();
 
 void screen_clear();

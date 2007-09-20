@@ -21,7 +21,9 @@
 #define __DIALPAD_H__
 
 #include <gtk/gtk.h>
-
+/** @file dialpad.h
+  * @brief The dialpad widgets.
+  */
 GtkWidget * create_dialpad();
 
 #endif 

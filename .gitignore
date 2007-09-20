@@ -15,8 +15,8 @@ Makefile.in
 # Ignore rendered docs
 doc/doxygen/html-everything
 doc/doxygen/html-sflphoned
-doc/doxygen/html-gui-qt
 doc/*.html
+sflphone-gtk/doc/html/*
 
 # Ignore buildsys stuff
 /autom4te.cache

@@ -21,42 +21,90 @@
 #define __CALLLIST_H__
 
 #include <gtk/gtk.h>
-
+/** @file calllist.h
+  * @brief A list to hold calls.
+  */
+  
+/** @enum call_state_t 
+  * This enum have all the states a call can take.
+  */
 typedef enum
-{
-   CALL_STATE_INVALID = 0,
-   CALL_STATE_INCOMING, /* Ringing incoming call */
-   CALL_STATE_RINGING,  /* Ringing outgoing call */
-   CALL_STATE_CURRENT,
-   CALL_STATE_DIALING,
-   CALL_STATE_HOLD   
+{  /** Invalid state */
+   CALL_STATE_INVALID = 0, 
+   /** Ringing incoming call */
+   CALL_STATE_INCOMING, 
+   /** Ringing outgoing call */
+   CALL_STATE_RINGING,  
+   /** Call to which the user can speak and hear */
+   CALL_STATE_CURRENT,  
+   /** Call which numbers are being added by the user */
+   CALL_STATE_DIALING,  
+   /** Call is on hold */
+   CALL_STATE_HOLD      
 } call_state_t;
 
+
+/** @struct call_t
+  * @brief Call information.
+  * This struct holds information about a call.    
+  */
 typedef struct  {
+  /** Unique identifier of the call */
   gchar * callID;
+  /** The account used to place/receive the call */
   gchar * accountID;
+  /** The information about the calling person.  See call_get_name() and call_get_number()
+    * on how to get the name and number separately. */
   gchar * from;
+  /** The number we are calling.  Only used when dialing out */
   gchar * to;
+  /* The current state of the call */
   call_state_t state;
 } call_t;
 
+/** This function initialize the call list. */
 void call_list_init ();
 
+/** This function empty and free the call list. */
 void call_list_clean ();
 
+/** This function append a call to list. 
+  * @param c The call you want to add */
 void call_list_add (call_t * c);
 
+/** This function remove a call from list. 
+  * @param callID The callID of the call you want to remove
+  */
 void call_list_remove (const gchar * callID);
 
+/** Return the first call that corresponds to the state.  
+  * This is usefull for unique states as DIALING and CURRENT.
+  * @param state The state
+  * @return A call or NULL */
 call_t * call_list_get_by_state ( call_state_t state);
 
+/** Return the number of calls in the list
+  * @return The number of calls in the list */
 guint call_list_get_size ( );
 
+/** Return the call at the nth position in the list
+  * @param n The position of the call you want
+  * @return A call or NULL */
 call_t * call_list_get_nth ( guint n );
+
+/** Return the call corresponding to the callID
+  * @param n The callID of the call you want
+  * @return A call or NULL */
 call_t * call_list_get ( const gchar * callID );
 
+/** This function parse the call_t.from field to return the name
+  * @param c The call
+  * @return The full name of the caller or an empty string */
 gchar * call_get_name (const call_t * c);
 
+/** This function parse the call_t.from field to return the number
+  * @param c The call
+  * @return The number of the caller */
 gchar * call_get_number (const call_t * c);
 
 #endif 

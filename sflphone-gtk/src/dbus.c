@@ -100,10 +100,6 @@ call_state_cb (DBusGProxy *proxy,
     {
       sflphone_hold (c);
     }
-    else if ( strcmp(state, "UNHOLD") == 0 )
-    {
-      sflphone_unhold (c);
-    }
     else if ( strcmp(state, "RINGING") == 0 )
     {
       sflphone_ringing (c);

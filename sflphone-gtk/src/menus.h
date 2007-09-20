@@ -21,7 +21,9 @@
 #define __MENUS_H__
 
 #include <gtk/gtk.h>
-
+/** @file menus.h
+  * @brief The menus of the main window.
+  */
 GtkWidget * create_menus();
 
 #endif 

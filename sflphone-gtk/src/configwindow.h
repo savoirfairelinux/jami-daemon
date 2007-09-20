@@ -22,7 +22,9 @@
 
 #include <calllist.h>
 
-
+/** @file configwindow.h
+  * @brief The Preferences window.
+  */
 void show_config_window ( );
 
 

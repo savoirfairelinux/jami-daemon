@@ -23,6 +23,9 @@
 #include <gtk/gtk.h>
 #include <calllist.h>
 
+/** @file calltree.h
+  * @brief The GtkTreeView that list calls in the main window.
+  */
 GtkWidget * create_call_tree();
 
 void update_call_tree_add (call_t * c);

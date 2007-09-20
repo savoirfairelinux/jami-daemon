@@ -19,8 +19,10 @@
  
 #ifndef __ACCOUNTWINDOW_H__
 #define __ACCOUNTWINDOW_H__
-
+/** @file accountwindow.h
+  * @brief The window to edit account details.
+  */
+  
 void show_account_window ( account_t * a );
-
 
 #endif 
