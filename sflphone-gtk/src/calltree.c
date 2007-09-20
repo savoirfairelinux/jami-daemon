@@ -147,41 +147,40 @@ update_buttons ()
   gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
 	
 	call_t * selectedCall = call_get_selected();
-  if(selectedCall)  // TODO Make this a switch
+	if (selectedCall)
 	{
-	  if( selectedCall->state == CALL_STATE_INCOMING)
-	  {
-      gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-      gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-    }
-    else if( selectedCall->state == CALL_STATE_HOLD)
-	  {
-      gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-      gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     TRUE);
-    }
-    else if( selectedCall->state == CALL_STATE_RINGING)
-	  {
-      gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-    }
-    else if(selectedCall->state == CALL_STATE_DIALING)
-    {
-      gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-      gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-    }
-    else if (selectedCall->state == CALL_STATE_CURRENT)
-    {
-      //gtk_widget_hide( callButton  );
-      /* Hack : if hangupButton is put on the window in create_screen()
-       * the hbox will request space for 4 buttons making the window larger than needed */
-      //gtk_box_pack_start (GTK_BOX (hbox), hangupButton, TRUE /*expand*/, TRUE /*fill*/, 10 /*padding*/);
-      //gtk_box_reorder_child(GTK_BOX (hbox), hangupButton, 0);
-      gtk_widget_show( hangupButton );
-      gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-      gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
-      gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
-    }
-	  
-	}
+    switch(selectedCall->state)  // TODO Make this a switch
+  	{
+  	  case CALL_STATE_INCOMING:
+        gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+        break;
+      case CALL_STATE_HOLD:
+    	  gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     TRUE);
+        break;
+      case CALL_STATE_RINGING:
+    	  gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+        break;
+      case CALL_STATE_DIALING:
+        gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+        break;
+      case CALL_STATE_CURRENT:
+        gtk_widget_show( hangupButton );
+        gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
+        break;
+      case CALL_STATE_BUSY:
+      case CALL_STATE_FAILURE:
+        gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+        break; 
+  	  default:
+  	    g_error("Should not happen!");
+  	    break;
+  	}
+  }
 }
 /* Call back when the user click on a call in the list */
 static void 
@@ -365,21 +364,28 @@ update_call_tree (call_t * c)
     						    call_get_name(c), 
     						    call_get_number(c));
     		    		
-    		if (c->state == CALL_STATE_HOLD)
+    		switch(c->state)
     		{
-    		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/hold.svg", NULL);
-    		}
-    		else if (c->state == CALL_STATE_RINGING)
-    		{
-    		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
-    		}
-    	  else if (c->state == CALL_STATE_CURRENT)
-    		{
-    		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/current.svg", NULL);
-    		}
-    	  else if (c->state == CALL_STATE_DIALING)
-    		{
-    		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/dial.svg", NULL);
+      		case CALL_STATE_HOLD:
+      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/hold.svg", NULL);
+      		  break;
+      		case CALL_STATE_RINGING:
+      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
+      		  break;
+      		case CALL_STATE_CURRENT:
+      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/current.svg", NULL);
+      		  break;
+      		case CALL_STATE_DIALING:
+      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/dial.svg", NULL);
+      		  break;
+      		case CALL_STATE_FAILURE:
+      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/fail.svg", NULL);
+      		  break;
+      		case CALL_STATE_BUSY:
+      		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/busy.svg", NULL);
+      		  break;
+      		default:
+      		  g_error("Should not happen!");
     		}
     	  //Resize it
         if(pixbuf)
@@ -422,14 +428,21 @@ update_call_tree_add (call_t * c)
   
   gtk_list_store_append (store, &iter);
 
-  if (c->state == CALL_STATE_INCOMING)
-  {
-    pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
-  }
-  else if (c->state == CALL_STATE_DIALING)
-  {
-    pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/dial.svg", NULL);
-  }
+  switch(c->state)
+	{
+		case CALL_STATE_INCOMING:
+		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
+		  break;
+		case CALL_STATE_DIALING:
+		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/dial.svg", NULL);
+		  break;
+		case CALL_STATE_RINGING:
+		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
+		  break;
+		default:
+		  g_error("Should not happen!");
+	}
+	
   //Resize it
   if(pixbuf)
   {

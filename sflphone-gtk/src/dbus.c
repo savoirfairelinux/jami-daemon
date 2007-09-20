@@ -112,6 +112,27 @@ call_state_cb (DBusGProxy *proxy,
     {
       sflphone_current (c);
     }
+    else if ( strcmp(state, "FAILURE") == 0 )
+    {
+      sflphone_fail (c);
+    }
+    else if ( strcmp(state, "BUSY") == 0 )
+    {
+      sflphone_busy (c);
+    }
+  } 
+  else 
+  { //The callID is unknow, threat it like a new call
+    if ( strcmp(state, "RINGING") == 0 )
+    {
+      g_print ("New ringing call! %s\n",callID);
+      call_t * c = g_new0 (call_t, 1);
+      c->accountID = g_strdup("1");
+      c->callID = g_strdup(callID);
+      c->from = g_strdup("\"\" <>");
+      c->state = CALL_STATE_RINGING;
+      sflphone_incoming_call (c);
+    }
   }
 }
 

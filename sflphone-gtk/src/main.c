@@ -24,6 +24,7 @@
 #include <actions.h>
 
 #include <gtk/gtk.h>
+#include <stdlib.h>
 
 int
 main (int argc, char *argv[])
@@ -35,6 +36,8 @@ main (int argc, char *argv[])
   g_print("This is free software.  You may redistribute copies of it under the terms of\n\
 the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n\
 There is NO WARRANTY, to the extent permitted by law.\n\n");
+  
+  srand ( time(NULL) );
   
   if(sflphone_init())
   {

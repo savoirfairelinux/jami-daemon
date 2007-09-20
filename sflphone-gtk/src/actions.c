@@ -133,6 +133,22 @@ sflphone_hang_up( call_t  * c )
 }
 
 void 
+sflphone_fail( call_t * c )
+{
+  c->state = CALL_STATE_FAILURE;
+  update_call_tree(c);
+  screen_set_call(c);
+}
+
+void 
+sflphone_busy( call_t * c )
+{
+  c->state = CALL_STATE_BUSY;
+  update_call_tree(c);
+  screen_set_call(c);
+}
+
+void 
 sflphone_current( call_t * c )
 {
   c->state = CALL_STATE_CURRENT;
@@ -248,6 +264,8 @@ sflphone_keypad( guint keyval, gchar * key)
         break;
       case CALL_STATE_CURRENT:
       case CALL_STATE_RINGING:
+      case CALL_STATE_BUSY:
+      case CALL_STATE_FAILURE:
         switch (keyval)
         {
         case 65307: /* ESCAPE */

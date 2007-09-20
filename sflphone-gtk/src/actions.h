@@ -62,6 +62,9 @@ void sflphone_hold ( call_t * c);
  */
 void sflphone_ringing(call_t * c );
 
+void sflphone_busy( call_t * c );
+void sflphone_fail( call_t * c );
+
 /**
  * Put the call in Current state
  */

@@ -40,7 +40,11 @@ typedef enum
    /** Call which numbers are being added by the user */
    CALL_STATE_DIALING,  
    /** Call is on hold */
-   CALL_STATE_HOLD      
+   CALL_STATE_HOLD,      
+   /** Call has failed */
+   CALL_STATE_FAILURE,      
+   /** Call is busy */
+   CALL_STATE_BUSY       
 } call_state_t;
 
 
