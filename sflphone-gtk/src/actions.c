@@ -263,7 +263,6 @@ sflphone_keypad( guint keyval, gchar * key)
         process_dialing(c, keyval, key);
         break;
       case CALL_STATE_CURRENT:
-      case CALL_STATE_RINGING:
       case CALL_STATE_BUSY:
       case CALL_STATE_FAILURE:
         switch (keyval)
@@ -310,6 +309,14 @@ sflphone_keypad( guint keyval, gchar * key)
           break;
         default: // When a call is on hold, typing new numbers will create a new call
           process_new_call(keyval, key);
+          break;
+        }
+        break;
+      case CALL_STATE_RINGING:
+        switch (keyval)
+        {
+        case 65307: /* ESCAPE */
+          dbus_hang_up(c);
           break;
         }
         break;
