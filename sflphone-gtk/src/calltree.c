@@ -143,7 +143,7 @@ update_buttons ()
   gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
 	
-	if(selectedCall)
+	if(selectedCall)  // TODO Make this a switch
 	{
 	  if( selectedCall->state == CALL_STATE_INCOMING)
 	  {
@@ -153,7 +153,7 @@ update_buttons ()
     else if( selectedCall->state == CALL_STATE_HOLD)
 	  {
       gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-      gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),       TRUE);
+      gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     TRUE);
     }
     else if( selectedCall->state == CALL_STATE_RINGING)
 	  {
@@ -189,7 +189,7 @@ selected(GtkTreeSelection *sel, GtkTreeModel *model)
 	if (! gtk_tree_selection_get_selected (sel, &model, &iter))
 		return;
   
-	val.g_type = G_TYPE_POINTER;
+	val.g_type = 0;
 	gtk_tree_model_get_value (model, &iter, 2, &val);
 	
 	selectedCall = (call_t*) g_value_get_pointer(&val);
@@ -304,24 +304,17 @@ create_call_tree (){
 void 
 update_call_tree_remove (call_t * c)
 {
-  
 	GtkTreeIter iter;
 	GValue val;
 	call_t * iterCall;
-	
-	val.g_type = G_TYPE_POINTER;
-	gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
-	
-	iterCall = (call_t*) g_value_get_pointer(&val);
-  g_value_unset(&val);
-    
+ 
 	int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
   int i;
 	for( i = 0; i < nbChild; i++)
 	{
 	  if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
 	  {
-	    val.g_type = G_TYPE_POINTER;
+	    val.g_type = 0;
     	gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
     	
     	iterCall = (call_t*) g_value_get_pointer(&val);
@@ -346,19 +339,13 @@ update_call_tree (call_t * c)
 	GValue val;
 	call_t * iterCall;
 	
-	val.g_type = G_TYPE_POINTER;
-	gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
-	
-	iterCall = (call_t*) g_value_get_pointer(&val);
-  g_value_unset(&val);
-    
 	int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
   int i;
 	for( i = 0; i < nbChild; i++)
 	{
 	  if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
 	  {
-	    val.g_type = G_TYPE_POINTER;
+	    val.g_type = 0;
     	gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
     	
     	iterCall = (call_t*) g_value_get_pointer(&val);
@@ -373,13 +360,11 @@ update_call_tree (call_t * c)
     						    call_get_name(c), 
     						    call_get_number(c));
     		    		
-    		gtk_list_store_set (store, &iter);
-    		
     		if (c->state == CALL_STATE_HOLD)
     		{
     		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/hold.svg", NULL);
     		}
-    		else if (c->state == CALL_STATE_INCOMING || c->state == CALL_STATE_RINGING)
+    		else if (c->state == CALL_STATE_RINGING)
     		{
     		  pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
     		}
@@ -400,10 +385,9 @@ update_call_tree (call_t * c)
           }
         }
     		gtk_list_store_set(store, &iter,
-    				   0, pixbuf, // Icon
-    				   1, markup, // Description
-    				   2, c,      // Pointer
-    				   -1);
+    				  0, pixbuf, // Icon
+  		        1, markup, // Description
+  		        -1);
     				   
     		if (pixbuf != NULL)
     			g_object_unref(G_OBJECT(pixbuf));
@@ -433,17 +417,9 @@ update_call_tree_add (call_t * c)
   
   gtk_list_store_append (store, &iter);
 
-  if (c->state == CALL_STATE_HOLD)
-  {
-    pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/hold.svg", NULL);
-  }
-  else if (c->state == CALL_STATE_INCOMING || c->state == CALL_STATE_RINGING)
+  if (c->state == CALL_STATE_INCOMING)
   {
     pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/ring.svg", NULL);
-  }
-  else if (c->state == CALL_STATE_CURRENT)
-  {
-    pixbuf = gdk_pixbuf_new_from_file(PIXMAPS_DIR "/current.svg", NULL);
   }
   else if (c->state == CALL_STATE_DIALING)
   {
