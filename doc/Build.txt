@@ -84,11 +84,13 @@ Compile `sflphone-gtk` by running:
 
 -------------------------
 cd sflphone-gtk
-gnome-autogen.sh
+gnome-autogen.sh || autoreconf --install
 ./configure --prefix=/usr
 make
 sudo make install
 -------------------------
 
 You'll find `gnome-autogen.sh` in some `gnome-common`-like package of
-your distribution.
+your distribution. You can also replace it by a call to: `autoreconf
+--install`.
+
