@@ -257,11 +257,17 @@ sflphone_current( call_t * c )
 }
 
 void 
-sflphone_transfert( call_t * c, gchar * to )
+sflphone_set_transfert()
 {
-  screen_clear();
-  update_call_tree_remove(c);
-  update_menus();
+  call_t * c = call_get_selected();
+  if(c)
+  {
+    c->state = CALL_STATE_TRANSFERT;
+    c->to = g_strdup("");
+    screen_set_call(c);
+    update_call_tree(c);
+    update_menus();
+  }
 }
 
 void
@@ -301,8 +307,11 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
         g_free(before);
         g_print("TO: %s\n", c->to);
       
-        g_free(c->from);
-        c->from = g_strconcat("\"\" <", c->to, ">", NULL);
+        if(c->state == CALL_STATE_DIALING)
+        {
+          g_free(c->from);
+          c->from = g_strconcat("\"\" <", c->to, ">", NULL);
+        }
         screen_set_call(c);
         update_call_tree(c);
       } 
@@ -326,8 +335,11 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
       g_free(before);
       g_print("TO: %s\n", c->to);
       
-      g_free(c->from);
-      c->from = g_strconcat("\"\" <", c->to, ">", NULL);
+      if(c->state == CALL_STATE_DIALING)
+      {
+        g_free(c->from);
+        c->from = g_strconcat("\"\" <", c->to, ">", NULL);
+      }
       screen_set_call(c);
       update_call_tree(c);
     }
@@ -398,6 +410,21 @@ sflphone_keypad( guint keyval, gchar * key)
           break;
         case 65307: /* ESCAPE */
           dbus_refuse(c);
+          break;
+        }
+        break;
+      case CALL_STATE_TRANSFERT:
+        switch (keyval)
+        {
+        case 65293: /* ENTER */
+        case 65421: /* ENTER numpad */
+          dbus_transfert(c);
+          break;
+        case 65307: /* ESCAPE */
+          sflphone_current(c); // Quit transfert
+          break;
+        default: // When a call is on transfert, typing new numbers will add it to c->to
+          process_dialing(c, keyval, key);
           break;
         }
         break;

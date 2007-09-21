@@ -75,7 +75,7 @@ void update_menus()
         gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
         break; 
   	  default:
-  	    g_error("Should not happen!");
+  	    g_warning("Should not happen!");
   	    break;
   	}
   } 

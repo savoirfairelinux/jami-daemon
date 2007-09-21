@@ -51,16 +51,11 @@ void sflphone_on_hold ();
 void sflphone_off_hold ();
 call_t * sflphone_new_call();
 void sflphone_notify_voice_mail (guint count);
-
+void sflphone_set_transfert();
 /**
  * Accept / dial the current call
  */
 void sflphone_pick_up ();
-
-/**
- * Transfert the call
- */
-void sflphone_transfert ( call_t * c, gchar * to );
 
 /**
  * Put the call on hold state

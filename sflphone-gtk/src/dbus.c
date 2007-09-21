@@ -295,10 +295,10 @@ dbus_hang_up (const call_t * c)
 }
 
 void
-dbus_transfert (const call_t * c, gchar * to )
+dbus_transfert (const call_t * c)
 {
   GError *error = NULL;
-  org_sflphone_SFLphone_CallManager_transfert ( callManagerProxy, c->callID, to, &error);
+  org_sflphone_SFLphone_CallManager_transfert ( callManagerProxy, c->callID, c->to, &error);
   if (error) 
   {
     g_printerr ("Failed to call transfert() on CallManager: %s\n",

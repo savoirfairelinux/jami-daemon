@@ -75,11 +75,7 @@ hold( GtkWidget *widget, gpointer   data )
 static void 
 transfert( GtkWidget *widget, gpointer   data )
 {
-  call_t * c = (call_t*) call_list_get_by_state (CALL_STATE_CURRENT);
-  if(c)
-  {
-    dbus_transfert(c,"124");
-  }
+  sflphone_set_transfert();
 }
 
 /**
@@ -135,7 +131,7 @@ update_buttons ()
         gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
         break; 
   	  default:
-  	    g_error("Should not happen!");
+  	    g_warning("Should not happen!");
   	    break;
   	}
   }
@@ -189,7 +185,7 @@ void  row_activated(GtkTreeView       *tree_view,
         sflphone_place_call (selectedCall);
         break;
   	  default:
-  	    g_error("Should not happen!");
+  	    g_warning("Should not happen!");
   	    break;
   	}
   }
@@ -363,10 +359,22 @@ update_call_tree (call_t * c)
       {
         // Existing call in the list
         gchar * markup;
-        markup = g_markup_printf_escaped("<b>%s</b>\n"
+        if(c->state == CALL_STATE_TRANSFERT)
+        {
+          markup = g_markup_printf_escaped("<b>%s</b>\n"
+    						    "%s\n<i>Transfert to:</i> %s",  
+    						    call_get_name(c), 
+    						    call_get_number(c), 
+    						    c->to);
+        }
+        else
+        {
+          markup = g_markup_printf_escaped("<b>%s</b>\n"
     						    "%s", 
     						    call_get_name(c), 
     						    call_get_number(c));
+        }
+        
     		    		
     		switch(c->state)
     		{
@@ -388,8 +396,11 @@ update_call_tree (call_t * c)
       		case CALL_STATE_BUSY:
       		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
       		  break;
+      		case CALL_STATE_TRANSFERT:
+      		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfert.svg", NULL);
+      		  break;
       		default:
-      		  g_error("Should not happen!");
+      		  g_warning("Should not happen!");
     		}
     	  //Resize it
         if(pixbuf)
@@ -444,7 +455,7 @@ update_call_tree_add (call_t * c)
 		  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
 		  break;
 		default:
-		  g_error("Should not happen!");
+		  g_warning("Should not happen!");
 	}
 	
   //Resize it

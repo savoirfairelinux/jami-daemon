@@ -35,7 +35,7 @@ void dbus_clean ();
 void dbus_hold (const call_t * c );
 void dbus_unhold (const call_t * c );
 void dbus_hang_up (const call_t * c );
-void dbus_transfert (const call_t * c, gchar * to );
+void dbus_transfert (const call_t * c);
 void dbus_accept (const call_t * c);
 void dbus_refuse (const call_t * c);
 void dbus_place_call (const call_t * c);
