@@ -17,18 +17,18 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <accountlist.h>
+#include <actions.h>
+#include <calltree.h>
+#include <dbus.h>
+#include <mainwindow.h>
+#include <screen.h>
+#include <statusicon.h>
+
 #include <gtk/gtk.h>
 #include <string.h>
 #include <glib/gprintf.h>
 #include <stdlib.h>
-
-#include <actions.h>
-#include <mainwindow.h>
-#include <calltree.h>
-#include <screen.h>
-#include <dbus.h>
-#include <accountlist.h>
-
 
 gboolean
 sflphone_quit ()
@@ -167,6 +167,7 @@ void
 sflphone_incoming_call (call_t * c) 
 {
   call_list_add ( c );
+  status_icon_unminimize();
   update_call_tree_add(c);
 }
 

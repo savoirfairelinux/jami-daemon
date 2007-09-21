@@ -25,5 +25,7 @@
   * @brief The status icon.
   */
 void show_status_icon();
+void status_icon_unminimize();
+
 
 #endif
