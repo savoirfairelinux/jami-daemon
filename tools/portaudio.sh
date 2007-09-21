@@ -2,7 +2,7 @@
 PORTAUDIO_SOURCE=http://portaudio.com/archives/pa_snapshot_v19.tar.gz
 PORTAUDIO_FILE=$(basename $PORTAUDIO_SOURCE)
 PORTAUDIO_DIR=portaudio
-PORTAUDIO_CONFIGURE_ARG=
+PORTAUDIO_CONFIGURE_ARG=$@
 
 if [ ! -f $PORTAUDIO_FILE ]; then
  wget $PORTAUDIO_SOURCE
