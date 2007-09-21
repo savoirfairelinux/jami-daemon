@@ -93,11 +93,11 @@ IAXAccount::initConfig(Conf::ConfigTree& config)
   Account::initConfig(config);
 
   // IAX specific
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_TYPE, "IAX", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_FULL_NAME, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_HOST, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_USER, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_PASS, "", type_str));
+  config.verifyConfigTreeItem(section, CONFIG_ACCOUNT_TYPE, "IAX", type_str);
+  config.verifyConfigTreeItem(section, IAX_FULL_NAME, "", type_str);
+  config.verifyConfigTreeItem(section, IAX_HOST, "", type_str);
+  config.verifyConfigTreeItem(section, IAX_USER, "", type_str);
+  config.verifyConfigTreeItem(section, IAX_PASS, "", type_str);
 }
 
 void

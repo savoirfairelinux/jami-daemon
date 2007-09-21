@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "../global.h"
 #include <fstream>
 
 namespace Conf {
@@ -50,6 +51,22 @@ ConfigTree::createSection(const std::string& section) {
   }
 }
 
+/** Retrieve the sections as an array */
+TokenList
+ConfigTree::getSections()
+{
+  TokenList sections;
+
+  SectionMap::iterator iter = _sections.begin();
+  while(iter != _sections.end()) {
+    // add to token list the: iter->second; 
+    sections.push_back(iter->first);
+    iter++;
+  }
+  return sections;
+}
+
+
 /**
  * Add the config item only if it exists..
  * If the section doesn't exists, create it
@@ -73,15 +90,41 @@ ConfigTree::addConfigTreeItem(const std::string& section, const ConfigTreeItem i
   }
 }
 
+/**
+ * Add the config item only if it doesn't exist. Set the default value.
+ */
+void
+ConfigTree::verifyConfigTreeItem(const std::string& section,
+				 const std::string& itemName,
+				 const std::string& defaultValue,
+				 const std::string& type)
+
+{
+  // Create section if it doesn't exist.
+  SectionMap::iterator iter = _sections.find(section);
+  if ( iter == _sections.end()) {
+    _sections[section] = new ItemMap;
+    iter = _sections.find(section);
+  }
+
+  // Check for the item, and add it if necessary (with default value).
+  ItemMap::iterator iterItem = iter->second->find(itemName);
+  if ( iterItem == iter->second->end()) {
+    // It's not there, create it.
+    addConfigTreeItem(section, ConfigTreeItem(itemName, defaultValue, type));
+  }
+}
+
 // throw a ConfigTreeItemException if not found
 std::string 
 ConfigTree::getConfigTreeItemValue(const std::string& section, const std::string& itemName) 
 {
   ConfigTreeItem* item = getConfigTreeItem(section, itemName);
-  if (item!=NULL) {
+  if (item != NULL) {
     return item->getValue();
   } else {
-    throw ConfigTreeItemException();
+    _debug("Unknown config option: [%s] %s\n", section.c_str(), itemName.c_str());
+    //throw ConfigTreeItemException();
   }
   return "";
 }
@@ -91,10 +134,11 @@ int
 ConfigTree::getConfigTreeItemIntValue(const std::string& section, const std::string& itemName) 
 {
   ConfigTreeItem* item = getConfigTreeItem(section, itemName);
-  if (item!=NULL && item->getType() == "int") {
+  if (item != NULL && item->getType() == "int") {
     return atoi(item->getValue().data());
   } else {
-    throw ConfigTreeItemException();
+    _debug("Unknown config (int) option: [%s] %s\n", section.c_str(), itemName.c_str());
+    //throw ConfigTreeItemException();
   }
   return 0;
 }
@@ -133,17 +177,28 @@ ConfigTree::getConfigTreeItem(const std::string& section, const std::string& ite
 }
 
 /**
- * Set the configItem if found, else do nothing
+ * Set the configItem if found, if not, *CREATE IT*
+ *
+ * @todo Faudra démêler tout ça, le verifyConfigTreeItem et setConfigTree qui font
+ * la même chose, et qui, inutilement, y'a plein de restrictions.
+ * @todo Élimier les 45,000 classes qui servent à rien pour Conf.
  */
 bool 
-ConfigTree::setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value) {
+ConfigTree::setConfigTreeItem(const std::string& section,
+			      const std::string& itemName,
+			      const std::string& value) {
   SectionMap::iterator iter = _sections.find(section);
   if ( iter == _sections.end()) {
-    return false;
+    // Not found, create section
+    _sections[section] = new ItemMap;
+    iter = _sections.find(section);
   }
+
   ItemMap::iterator iterItem = iter->second->find(itemName);
   if ( iterItem == iter->second->end()) {
-    return false;
+    // Item not found, create it, defaults to type "string"
+    addConfigTreeItem(section, ConfigTreeItem(itemName, value, "string"));
+    return true;
   }
   iterItem->second.setValue(value);
   return true;
@@ -230,7 +285,6 @@ ConfigTree::populateFromFile(const std::string& fileName) {
         // If the line is a section
         pos = line.find(']');
         section = line.substr(1, pos - 1);
-
       } else if (line[0] != '#') {
         // If the line is "key=value" and doesn't begin with '#'(comments)
 

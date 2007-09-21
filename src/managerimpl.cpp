@@ -91,7 +91,7 @@ ManagerImpl::ManagerImpl (void)
 #endif
 
   // should be call before initConfigFile
-  loadAccountMap();
+  // loadAccountMap();, called in init() now.
 }
 
 // never call if we use only the singleton...
@@ -109,6 +109,9 @@ ManagerImpl::~ManagerImpl (void)
 void 
 ManagerImpl::init() 
 {
+  // Load accounts, init map
+  loadAccountMap();
+
   initVolume();
 
   if (_exist == 0) {
@@ -147,10 +150,10 @@ void ManagerImpl::terminate()
   delete _dtmfKey;
 
   _debug("Unload Audio Driver\n");
-  delete _audiodriver; _audiodriver = 0;
+  delete _audiodriver; _audiodriver = NULL;
 
   _debug("Unload Telephone Tone\n");
-  delete _telephoneTone; _telephoneTone = 0;
+  delete _telephoneTone; _telephoneTone = NULL;
 }
 
 bool
@@ -1004,8 +1007,6 @@ ManagerImpl::behindNat(const std::string& svr, int port)
  * Initialization: Main Thread
  * @return 1: ok
           -1: error directory
-           0: unable to load the setting
-           2: file doesn't exist yet
  */
 int
 ManagerImpl::createSettingsPath (void) {
@@ -1021,7 +1022,7 @@ ManagerImpl::createSettingsPath (void) {
 
   // Load user's configuration
   _path = _path + DIR_SEPARATOR_STR + PROGNAME + "rc";
-  return _config.populateFromFile(_path);
+  return 1;
 }
 
 /**
@@ -1063,7 +1064,10 @@ ManagerImpl::initConfigFile (void)
 
   initConfigAccount();
   
-  _exist = createSettingsPath();
+  if (createSettingsPath() == 1) {
+    _exist = _config.populateFromFile(_path);
+  }
+
   _setupLoaded = (_exist == 2 ) ? false : true;
 }
 
@@ -1308,6 +1312,7 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
 }
 
 //THREAD=Main
+/* Unused, Deprecated */
 bool 
 ManagerImpl::getConfigAll(const std::string& sequenceId)
 {
@@ -1379,7 +1384,7 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
 {
   bool returnValue = false;
   TokenList tk;
-  if (name=="codecdescriptor") {
+  if (name == "codecdescriptor") {
 
     CodecMap map = _codecDescriptorMap.getMap();
     CodecMap::iterator iter = map.begin();
@@ -1397,7 +1402,7 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
       iter++;
     }
     returnValue = true;
-  } else if (name=="ringtones") {
+  } else if (name == "ringtones") {
     // add empty line
     std::ostringstream str;
     str << 1;
@@ -1413,13 +1418,13 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
     // home directory
     path = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR + DIR_SEPARATOR_STR + RINGDIR;
     getDirListing(sequenceId, path, &nbFile);
-  } else if (name=="audiodevice") {
+  } else if (name == "audiodevice") {
     returnValue = getAudioDeviceList(sequenceId, AudioLayer::InputDevice | AudioLayer::OutputDevice);
-  } else if (name=="audiodevicein") {
+  } else if (name == "audiodevicein") {
     returnValue = getAudioDeviceList(sequenceId, AudioLayer::InputDevice);
-  } else if (name=="audiodeviceout") {
+  } else if (name == "audiodeviceout") {
     returnValue = getAudioDeviceList(sequenceId, AudioLayer::OutputDevice);
-  } else if (name=="countrytones") {
+  } else if (name == "countrytones") {
     returnValue = getCountryTones(sequenceId);
   }
   return returnValue;
@@ -1694,7 +1699,8 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
   }
   
   saveConfig();
-    
+  
+  /** @todo Then, reset the VoIP link with the new information */
 }                   
 
 void 
@@ -1742,9 +1748,9 @@ ManagerImpl::setSwitch(const std::string& switchName, std::string& message) {
         _toneMutex.enterMutex();
 
         _debug("Unload Telephone Tone\n");
-        delete _telephoneTone; _telephoneTone = 0;
+        delete _telephoneTone; _telephoneTone = NULL;
         _debug("Unload DTMF Key\n");
-        delete _dtmfKey; _dtmfKey = 0;
+        delete _dtmfKey; _dtmfKey = NULL;
 
         _debug("Load Telephone Tone\n");
         std::string country = getConfigString(PREFERENCES, ZONE_TONE);
@@ -1836,8 +1842,43 @@ ManagerImpl::loadAccountMap()
 {
   _debugStart("Load account:");
   short nbAccount = 0;
+  TokenList sections = _config.getSections();
+  std::string accountType;
   Account* tmpAccount;
-  
+
+  // iter = std::string
+  TokenList::iterator iter = sections.begin();
+  while(iter != sections.end()) {
+    // Check if it starts with "Account:" (SIP and IAX pour le moment)
+    if (iter->find("Account:") == -1) {
+      iter++;
+      continue;
+    }
+
+    accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
+    if (accountType == "SIP") {
+      tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
+    }
+    else if (accountType == "IAX") {
+      tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);
+    }
+    else {
+      _debug("Unknown %s param in config file (%s)\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
+    }
+
+    if (tmpAccount != NULL) {
+      _debugMid(" %s ", iter->c_str());
+      _accountMap[iter->c_str()] = tmpAccount;
+      nbAccount++;
+    }
+
+    _debugEnd("\n");
+
+    iter++;
+  }
+
+
+  /*
   // SIP Loading X account...
   short nbAccountSIP = ACCOUNT_SIP_COUNT_DEFAULT;
   for (short iAccountSIP = 0; iAccountSIP<nbAccountSIP; iAccountSIP++) {
@@ -1865,6 +1906,7 @@ ManagerImpl::loadAccountMap()
     }
   }
   _debugEnd("\n");
+  */
 
   return nbAccount;
 }
