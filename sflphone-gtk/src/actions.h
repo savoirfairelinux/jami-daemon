@@ -43,9 +43,18 @@ gboolean sflphone_init ( ) ;
 gboolean sflphone_quit ( ) ;
 
 /**
- * Hang up the call
+ * Hang up / refuse the current call
  */
-void sflphone_hang_up ( call_t * c);
+void sflphone_hang_up ();
+
+void sflphone_on_hold ();
+void sflphone_off_hold ();
+
+
+/**
+ * Accept / dial the current call
+ */
+void sflphone_pick_up ();
 
 /**
  * Transfert the call
@@ -53,7 +62,7 @@ void sflphone_hang_up ( call_t * c);
 void sflphone_transfert ( call_t * c, gchar * to );
 
 /**
- * Put the call on hold
+ * Put the call on hold state
  */
 void sflphone_hold ( call_t * c);
 
@@ -71,7 +80,7 @@ void sflphone_fail( call_t * c );
 void sflphone_current ( call_t * c);
 
 /**
- * The callee has hung up
+ * The callee has hung up 
  */
 void sflphone_hung_up( call_t * c);
 

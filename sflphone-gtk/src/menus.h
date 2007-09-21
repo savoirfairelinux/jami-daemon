@@ -25,5 +25,6 @@
   * @brief The menus of the main window.
   */
 GtkWidget * create_menus();
+void update_menus();
 
 #endif 

@@ -35,15 +35,13 @@ status_quit ( void * foo)
 void 
 status_icon_unminimize()
 {
-  gtk_widget_show(GTK_WIDGET(get_main_window()));
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), FALSE);
-  minimized = FALSE;
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), TRUE);
 }
 
 void 
-show_hide (GtkStatusIcon *status_icon, void * foo)
+show_hide (GtkWidget *menu, void * foo)
 {
-  if(minimized)
+  if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)))
   {
     gtk_widget_show(GTK_WIDGET(get_main_window()));
   }   
@@ -51,7 +49,14 @@ show_hide (GtkStatusIcon *status_icon, void * foo)
   {
     gtk_widget_hide(GTK_WIDGET(get_main_window()));
   }
-  minimized = !minimized;
+}
+
+
+void 
+status_click (GtkStatusIcon *status_icon, void * foo)
+{
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), 
+    !gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)));
 }
 
 void menu (GtkStatusIcon *status_icon,
@@ -97,7 +102,7 @@ show_status_icon()
 {
   status = gtk_status_icon_new_from_file(ICON_DIR "/sflphone.png");
   g_signal_connect (G_OBJECT (status), "activate",
-			  G_CALLBACK (show_hide),
+			  G_CALLBACK (status_click),
 			  NULL);
   g_signal_connect (G_OBJECT (status), "popup-menu",
 			  G_CALLBACK (menu),

@@ -38,22 +38,7 @@ GtkWidget * unholdButton;
 static void 
 call_button( GtkWidget *widget, gpointer   data )
 {
-  call_t * selectedCall = call_get_selected();
-  if(selectedCall)
-  {
-    switch(selectedCall->state)
-    {
-      case CALL_STATE_DIALING:
-        sflphone_place_call (selectedCall);
-        break;
-      case CALL_STATE_INCOMING:
-        dbus_accept (selectedCall);
-        break;
-      default:
-        g_error("Should not happen!");
-        break;
-    }
-  }
+  sflphone_pick_up();
 }
 
 /**
@@ -62,25 +47,7 @@ call_button( GtkWidget *widget, gpointer   data )
 static void 
 hang_up( GtkWidget *widget, gpointer   data )
 {
-  call_t * selectedCall = call_get_selected();
-  if(selectedCall)
-  {
-    switch(selectedCall->state)
-    {
-      case CALL_STATE_CURRENT:
-      case CALL_STATE_HOLD:
-      case CALL_STATE_DIALING:
-      case CALL_STATE_RINGING:
-        dbus_hang_up (selectedCall);
-        break;
-      case CALL_STATE_INCOMING:  
-        dbus_refuse (selectedCall);
-        break;
-      default:
-        g_error("Should not happen!");
-        break;
-    }
-  }
+  sflphone_hang_up();
 }
 
 /**
@@ -89,19 +56,7 @@ hang_up( GtkWidget *widget, gpointer   data )
 static void 
 hold( GtkWidget *widget, gpointer   data )
 {
-  call_t * selectedCall = call_get_selected();
-  if(selectedCall)
-  {
-    switch(selectedCall->state)
-    {
-      case CALL_STATE_CURRENT:
-        dbus_hold (selectedCall);
-        break;
-      default:
-        g_error("Should not happen!");
-        break;
-    }
-  }
+  sflphone_on_hold();
 }
 
 /**
@@ -123,20 +78,9 @@ transfert( GtkWidget *widget, gpointer   data )
 static void 
 unhold( GtkWidget *widget, gpointer   data )
 {
-  call_t * selectedCall = call_get_selected();
-  if(selectedCall)
-  {
-    switch(selectedCall->state)
-    {
-      case CALL_STATE_HOLD:
-        dbus_unhold (selectedCall);
-        break;
-      default:
-        g_error("Should not happen!");
-        break;
-      }
-  }
+  sflphone_off_hold();
 }
+
 void 
 update_buttons ()
 {

@@ -22,6 +22,7 @@
 #include <calltree.h>
 #include <dbus.h>
 #include <mainwindow.h>
+#include <menus.h>
 #include <screen.h>
 #include <statusicon.h>
 
@@ -57,6 +58,7 @@ sflphone_hold(call_t * c )
 {
   c->state = CALL_STATE_HOLD;
   update_call_tree(c);
+  update_menus();
   screen_clear();
 }
 
@@ -65,6 +67,7 @@ sflphone_ringing(call_t * c )
 {
   c->state = CALL_STATE_RINGING;
   update_call_tree(c);
+  update_menus();
 }
 
 
@@ -125,18 +128,99 @@ sflphone_init()
 }
 
 void 
-sflphone_hang_up( call_t  * c )
+sflphone_hang_up()
 {
-  call_list_remove(c->callID);
-  update_call_tree_remove(c);
-  screen_clear();
+  call_t * selectedCall = call_get_selected();
+  if(selectedCall)
+  {
+    switch(selectedCall->state)
+    {
+      case CALL_STATE_CURRENT:
+      case CALL_STATE_HOLD:
+      case CALL_STATE_DIALING:
+      case CALL_STATE_RINGING:
+      case CALL_STATE_BUSY:
+      case CALL_STATE_FAILURE:
+        dbus_hang_up (selectedCall);
+        break;
+      case CALL_STATE_INCOMING:  
+        dbus_refuse (selectedCall);
+        break;
+      default:
+        g_warning("Should not happen!");
+        break;
+    }
+  }
 }
+
+
+void 
+sflphone_pick_up()
+{
+  call_t * selectedCall = call_get_selected();
+  if(selectedCall)
+  {
+    switch(selectedCall->state)
+    {
+      case CALL_STATE_DIALING:
+        sflphone_place_call (selectedCall);
+        break;
+      case CALL_STATE_INCOMING:
+        dbus_accept (selectedCall);
+        break;
+      case CALL_STATE_HOLD:
+        dbus_unhold (selectedCall);
+        break;
+      default:
+        g_warning("Should not happen!");
+        break;
+    }
+  }
+}
+
+void 
+sflphone_on_hold ()
+{
+  call_t * selectedCall = call_get_selected();
+  if(selectedCall)
+  {
+    switch(selectedCall->state)
+    {
+      case CALL_STATE_CURRENT:
+        dbus_hold (selectedCall);
+        break;
+      default:
+        g_error("Should not happen!");
+        break;
+    }
+  }
+}
+
+void 
+sflphone_off_hold ()
+{
+  call_t * selectedCall = call_get_selected();
+  if(selectedCall)
+  {
+    switch(selectedCall->state)
+    {
+      case CALL_STATE_HOLD:
+        dbus_unhold (selectedCall);
+        break;
+      default:
+        g_error("Should not happen!");
+        break;
+      }
+  }
+}
+
 
 void 
 sflphone_fail( call_t * c )
 {
   c->state = CALL_STATE_FAILURE;
   update_call_tree(c);
+  update_menus();
   screen_set_call(c);
 }
 
@@ -145,6 +229,7 @@ sflphone_busy( call_t * c )
 {
   c->state = CALL_STATE_BUSY;
   update_call_tree(c);
+  update_menus();
   screen_set_call(c);
 }
 
@@ -153,6 +238,7 @@ sflphone_current( call_t * c )
 {
   c->state = CALL_STATE_CURRENT;
   update_call_tree(c);
+  update_menus();
   screen_set_call(c);
 }
 
@@ -161,6 +247,7 @@ sflphone_transfert( call_t * c, gchar * to )
 {
   screen_clear();
   update_call_tree_remove(c);
+  update_menus();
 }
 
 void
@@ -169,6 +256,7 @@ sflphone_incoming_call (call_t * c)
   call_list_add ( c );
   status_icon_unminimize();
   update_call_tree_add(c);
+  update_menus();
 }
 
 void 
@@ -176,6 +264,7 @@ sflphone_hung_up (call_t * c )
 {
   call_list_remove(c->callID);
   update_call_tree_remove(c);
+  update_menus();
   screen_clear();
 }
 
