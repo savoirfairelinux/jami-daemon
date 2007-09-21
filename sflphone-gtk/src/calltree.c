@@ -149,7 +149,7 @@ update_buttons ()
 	call_t * selectedCall = call_get_selected();
 	if (selectedCall)
 	{
-    switch(selectedCall->state)  // TODO Make this a switch
+    switch(selectedCall->state) 
   	{
   	  case CALL_STATE_INCOMING:
         gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
@@ -201,6 +201,37 @@ selected(GtkTreeSelection *sel, GtkTreeModel *model)
   update_buttons();
 }
 
+/* A row is activated when it is double clicked */
+void  row_activated(GtkTreeView       *tree_view,
+                    GtkTreePath       *path,
+                    GtkTreeViewColumn *column,
+                    void * foo) 
+{
+  call_t * selectedCall = call_get_selected();
+	if (selectedCall)
+	{
+    switch(selectedCall->state)  
+  	{
+  	  case CALL_STATE_INCOMING:
+        dbus_accept(selectedCall);
+        break;
+      case CALL_STATE_HOLD:
+        dbus_unhold(selectedCall);
+        break;
+      case CALL_STATE_RINGING:
+      case CALL_STATE_CURRENT:
+      case CALL_STATE_BUSY:
+      case CALL_STATE_FAILURE:
+        break;
+      case CALL_STATE_DIALING:
+        sflphone_place_call (selectedCall);
+        break;
+  	  default:
+  	    g_error("Should not happen!");
+  	    break;
+  	}
+  }
+}                    
 
 GtkWidget * 
 create_call_tree (){
@@ -228,6 +259,9 @@ create_call_tree (){
 
 	view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
   gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(view), FALSE);
+  g_signal_connect (G_OBJECT (view), "row-activated",
+			  G_CALLBACK (row_activated),
+			  NULL);
 	
   rend = gtk_cell_renderer_pixbuf_new();
   col = gtk_tree_view_column_new_with_attributes ("Icon",
