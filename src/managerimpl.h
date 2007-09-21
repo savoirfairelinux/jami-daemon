@@ -81,25 +81,29 @@ public:
   ManagerImpl (void);
   ~ManagerImpl (void);
 
-  // Init a new VoIPLink, audio codec and audio driver
   /**
-   * Initialisation of thread (sound) and map
+   * Initialisation of thread (sound) and map.
+   *
+   * Init a new VoIPLink, audio codec and audio driver
    */
   void init (void);
 
   /**
-   * Terminate all thread (sound, link) and clear map
+   * Terminate all thread (sound, link) and unload AccountMap
    */
   void terminate (void);
 
   /**
-   * Set the graphic user interface : only GuiServer right now
-   * @param gui A GuiFramework gui implmentation
+   * Set user interface manaager.
+   * @param man The DBUS interface implementation
    */
   void setDBusManager (DBusManagerImpl* man) { _dbus = man; }
 
-	// Accessor to audiodriver
-  // it's multi-thread and use mutex internally
+  /**
+   * Accessor to audiodriver.
+   *
+   * it's multi-thread and use mutex internally
+   */
   AudioLayer* getAudioDriver(void) const { return _audiodriver; }
 
   /**
@@ -121,21 +125,29 @@ public:
   void unmute();
   bool refuseCall(const CallID& id);
 
-  /** Save config on file */
+  /** Save config to file */
   bool saveConfig (void);
+
   /**
-  * Initialize action (main thread)
+  * Send registration information (shake hands) for a specific AccountID
+  *
   * @param accountId Account to register
   * @return true if setRegister is call without failure, else return false
   */
   bool registerVoIPLink(const AccountID& accountId);
   /**
-  * Unregister an account
+  * Send unregistration for a specific account. If the protocol
+  * doesn't need to send anything, then the state of the account
+  * will be set to 'Unregistered', and related objects destroyed.
+  *
   * @param accountId Account to unregister
   * @return true if the unregister method is send correctly
   */
   bool unregisterVoIPLink(const AccountID& accountId);
 
+  /**
+   * Undocumented
+   */
   bool sendTextMessage(const AccountID& accountId, const std::string& to, const std::string& message);
 	
   /*
@@ -178,8 +190,15 @@ public:
   void registrationFailed(const AccountID& accountId);
 
   // configuration function requests
-  /** Start events thread*/
-  // TODO: receive account name
+
+  /**
+   * Start events thread. This function actually only calls the private
+   * initRegisterVoIPLink().
+   *
+   * This function should definitively be renamed!
+   *
+   * @todo Receive account name (???)
+   */
   bool getEvents();
 
   //
@@ -283,9 +302,12 @@ public:
    */
   bool behindNat(const std::string& svr, int port);
 
-	/**
-	 * Init default values for the different fields
-	 */
+  /**
+   * Init default values for the different fields in the config file.
+   * Fills the local _config (Conf::ConfigTree) with the default contents.
+   *
+   * Called in main.cpp, just before Manager::init().
+   */
   void initConfigFile (void);
 
   /**

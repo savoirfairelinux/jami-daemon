@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2005-2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2005-2007 Savoir-Faire Linux inc.
+ *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -64,7 +65,27 @@ public:
   ~ConfigTree();
 
   void createSection(const std::string& section);
+
+  /**
+   * Return an array of strings, listing the sections of the config file
+   *
+   * This will be mainly used to filter which sections are an
+   * "Account" definition.
+   *
+   * @return array Strings of the sections
+   */
+  TokenList getSections();
+
   void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
+  /**
+   * Verify an item is there. If it's not, add it with the provided
+   * default value
+   *
+   * @param section Section
+   * @param 
+   */
+  void verifyConfigTreeItem(const std::string& section, const std::string& itemName,
+			    const std::string& defaultValue, const std::string& type);
   bool setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
 
   // throw a ConfigTreeItemException if not found

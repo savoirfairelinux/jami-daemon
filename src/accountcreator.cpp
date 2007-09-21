@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
+ *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -18,9 +19,7 @@
  */
 #include "accountcreator.h"
 #include "sipaccount.h"
-#ifdef USE_IAX
 #include "iaxaccount.h"
-#endif
 
 AccountCreator::AccountCreator()
 {
@@ -40,9 +39,7 @@ AccountCreator::createAccount(AccountType type, AccountID accountID)
     break;
 
     case IAX_ACCOUNT:
-#ifdef USE_IAX
       return new IAXAccount(accountID);
-#endif
     break;
   }
   return 0;
