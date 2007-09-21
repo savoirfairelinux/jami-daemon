@@ -42,4 +42,7 @@ void main_window_error_message(gchar * markup);
 void main_window_warning_message(gchar * markup);
 
 void main_window_warning_message(gchar * markup);
+
+void status_bar_message(const gchar * message);
+
 #endif 

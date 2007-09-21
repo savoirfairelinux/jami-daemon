@@ -63,6 +63,7 @@ void update_menus()
       case CALL_STATE_DIALING:
         gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
         gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
         break;
       case CALL_STATE_CURRENT:
         gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);

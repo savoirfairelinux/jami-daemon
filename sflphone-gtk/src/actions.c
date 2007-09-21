@@ -31,6 +31,22 @@
 #include <glib/gprintf.h>
 #include <stdlib.h>
 
+void
+sflphone_notify_voice_mail (guint count)
+{
+  if(count > 0)
+  {
+    gchar * message = g_new0(gchar, 50);
+    g_sprintf(message, "%d new voice mail%s", count, (count > 1? "s" : "")); 
+    status_bar_message(message);
+    g_free(message);
+  }
+  else
+  {
+    status_bar_message("");
+  }
+}
+
 gboolean
 sflphone_quit ()
 {
@@ -52,7 +68,6 @@ sflphone_quit ()
   return quit;
 }
 
-
 void 
 sflphone_hold(call_t * c )
 {
@@ -69,7 +84,6 @@ sflphone_ringing(call_t * c )
   update_call_tree(c);
   update_menus();
 }
-
 
 /** Internal to actions: Fill account list */
 void

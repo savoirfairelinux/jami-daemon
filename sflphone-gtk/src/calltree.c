@@ -121,6 +121,7 @@ update_buttons ()
       case CALL_STATE_DIALING:
         gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
         gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
         break;
       case CALL_STATE_CURRENT:
         gtk_widget_show( hangupButton );

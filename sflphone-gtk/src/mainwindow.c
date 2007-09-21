@@ -22,6 +22,7 @@
 #include <calllist.h> 
 #include <calltree.h>
 #include <dialpad.h>
+#include <mainwindow.h>
 #include <menus.h>
 #include <screen.h>
 #include <sliders.h>
@@ -30,10 +31,11 @@
 
 /** Local variables */
 GtkAccelGroup * accelGroup = NULL;
-GtkWidget * window   = NULL;
-GtkWidget * subvbox  = NULL;
-GtkWidget * dialpad  = NULL;
-gboolean showDialpad = FALSE; // true if the dialpad have been showned
+GtkWidget * window    = NULL;
+GtkWidget * subvbox   = NULL;
+GtkWidget * dialpad   = NULL;
+GtkWidget * statusBar = NULL;
+gboolean showDialpad  = FALSE; // true if the dialpad have been showned
 
 
 /**
@@ -153,8 +155,8 @@ create_main_window ()
   gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
   /* Status bar */
-  widget = gtk_statusbar_new();
-  gtk_box_pack_start (GTK_BOX (vbox), gtk_statusbar_new(), FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+  statusBar = gtk_statusbar_new();
+  gtk_box_pack_start (GTK_BOX (vbox), statusBar, FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   gtk_container_add (GTK_CONTAINER (window), vbox);
 
   /* make sure that everything, window and label, are visible */
@@ -216,6 +218,12 @@ main_window_dialpad(gboolean show){
     gtk_container_remove(GTK_CONTAINER (subvbox), dialpad);
   }
   showDialpad = show;
-    
+}
+
+
+void 
+status_bar_message(const gchar * message)
+{ 
+  gtk_statusbar_push(GTK_STATUSBAR(statusBar), 0, message);
 }
 

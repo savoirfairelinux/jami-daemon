@@ -69,7 +69,7 @@ voice_mail_cb (DBusGProxy *proxy,
                   void * foo  )
 {
   g_print ("%d Voice mail waiting! \n",nb);
-  
+  sflphone_notify_voice_mail (nb);
 }
 
 static void  
