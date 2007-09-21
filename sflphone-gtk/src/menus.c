@@ -26,13 +26,20 @@
 
 GtkWidget * pickUpMenu;
 GtkWidget * hangUpMenu;
+GtkWidget * newCallMenu;
 GtkWidget * holdMenu;
+guint holdConnId;     //The hold_menu signal connection ID
 
 void update_menus()
-{
+{ 
+  //Block signals for holdMenu
+  gtk_signal_handler_block(GTK_OBJECT(holdMenu), holdConnId);
+  
   gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   FALSE);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), FALSE);
 	
 	call_t * selectedCall = call_get_selected();
 	if (selectedCall)
@@ -46,6 +53,8 @@ void update_menus()
       case CALL_STATE_HOLD:
         gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
         gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
+        gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), TRUE);
         break;
       case CALL_STATE_RINGING:
         gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
@@ -58,6 +67,7 @@ void update_menus()
       case CALL_STATE_CURRENT:
         gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
         gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
         break;
       case CALL_STATE_BUSY:
       case CALL_STATE_FAILURE:
@@ -67,7 +77,13 @@ void update_menus()
   	    g_error("Should not happen!");
   	    break;
   	}
+  } 
+  else
+  {
+    gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu), TRUE);
   }
+  gtk_signal_handler_unblock(holdMenu, holdConnId);
+  
 }
 /* ----------------------------------------------------------------- */
 void 
@@ -122,7 +138,6 @@ create_help_menu()
                   NULL);
   gtk_widget_show (menu_items);
     
-  
   root_menu = gtk_menu_item_new_with_mnemonic ("_Help");
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);
 
@@ -130,15 +145,15 @@ create_help_menu()
 }
 /* ----------------------------------------------------------------- */
 void 
-call_quit ( void * foo)
+call_new_call ( void * foo)
 {
-  sflphone_quit();
+  sflphone_new_call();
 }
 
 void 
-call_preferences ( void * foo)
+call_quit ( void * foo)
 {
-  show_config_window();
+  sflphone_quit();
 }
 
 void 
@@ -174,7 +189,17 @@ create_call_menu()
   GtkWidget * menu_items;
   
   menu      = gtk_menu_new ();
-
+ 
+  newCallMenu = gtk_image_menu_item_new_with_mnemonic("_New call...");
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), newCallMenu);
+  g_signal_connect_swapped (G_OBJECT (newCallMenu), "activate",
+                  G_CALLBACK (call_new_call), 
+                  NULL);
+  gtk_widget_show (newCallMenu);
+  
+  menu_items = gtk_separator_menu_item_new ();
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  
   pickUpMenu = gtk_image_menu_item_new_with_mnemonic("_Pick up");
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), pickUpMenu);
   gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), FALSE);
@@ -191,19 +216,15 @@ create_call_menu()
                   NULL);
   gtk_widget_show (hangUpMenu);
   
-  menu_items = gtk_separator_menu_item_new ();
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  
   holdMenu = gtk_check_menu_item_new_with_mnemonic ("On _Hold");
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), holdMenu);
   gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   FALSE);
   //Here we connect only to activate
   //The toggled state is managed from update_menus()
-  g_signal_connect(G_OBJECT (holdMenu), "activate",
+  holdConnId = g_signal_connect(G_OBJECT (holdMenu), "activate",
                   G_CALLBACK (call_hold), 
                   NULL);
   gtk_widget_show (menu_items);
-  
   
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
@@ -223,6 +244,48 @@ create_call_menu()
 }
 /* ----------------------------------------------------------------- */
 
+void 
+edit_preferences ( void * foo)
+{
+  show_config_window();
+}
+
+GtkWidget * 
+create_edit_menu()
+{
+  GtkWidget * menu;
+  GtkWidget * root_menu;
+  GtkWidget * menu_items;
+  
+  menu      = gtk_menu_new ();
+
+  menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_COPY, get_accel_group());
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  gtk_widget_set_sensitive( GTK_WIDGET(menu_items),   FALSE);
+  gtk_widget_show (menu_items);
+  
+  menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PASTE, get_accel_group());
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  gtk_widget_set_sensitive( GTK_WIDGET(menu_items),   FALSE);
+  gtk_widget_show (menu_items);
+  
+  menu_items = gtk_separator_menu_item_new ();
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  
+  menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PREFERENCES, get_accel_group());
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
+                  G_CALLBACK (edit_preferences), 
+                  NULL);
+  gtk_widget_show (menu_items);  
+    
+  
+  root_menu = gtk_menu_item_new_with_mnemonic ("_Edit");
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);
+
+  return root_menu;
+}
+/* ----------------------------------------------------------------- */
 void 
 view_dial_pad  (GtkCheckMenuItem *checkmenuitem,
                 void* foo)
@@ -246,13 +309,19 @@ create_view_menu()
                   NULL);
   gtk_widget_show (menu_items);
   
-  menu_items = gtk_separator_menu_item_new ();
+  menu_items = gtk_check_menu_item_new_with_mnemonic ("_Volume controls");
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  gtk_widget_set_sensitive( GTK_WIDGET(menu_items),   FALSE);
+  g_signal_connect(G_OBJECT (menu_items), "toggled",
+                  G_CALLBACK (view_dial_pad), 
+                  NULL);
+  gtk_widget_show (menu_items);
   
-  menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PREFERENCES, get_accel_group());
+  menu_items = gtk_check_menu_item_new_with_mnemonic ("_Toolbar");
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
-                  G_CALLBACK (call_preferences), 
+  gtk_widget_set_sensitive( GTK_WIDGET(menu_items),   FALSE);
+  g_signal_connect(G_OBJECT (menu_items), "toggled",
+                  G_CALLBACK (view_dial_pad), 
                   NULL);
   gtk_widget_show (menu_items);
   
@@ -268,11 +337,13 @@ create_menus ( )
 
   GtkWidget * menu_bar;
   GtkWidget * root_menu;
-  
 
   menu_bar  = gtk_menu_bar_new ();
   
   root_menu = create_call_menu();
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), root_menu);
+  
+  root_menu = create_edit_menu();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), root_menu);
   
   root_menu = create_view_menu();
@@ -281,8 +352,6 @@ create_menus ( )
   root_menu = create_help_menu();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), root_menu);
 
-  
-  
   gtk_widget_show (menu_bar);
   
   

@@ -190,7 +190,7 @@ sflphone_on_hold ()
         dbus_hold (selectedCall);
         break;
       default:
-        g_error("Should not happen!");
+        g_warning("Should not happen!");
         break;
     }
   }
@@ -208,7 +208,7 @@ sflphone_off_hold ()
         dbus_unhold (selectedCall);
         break;
       default:
-        g_error("Should not happen!");
+        g_warning("Should not happen!");
         break;
       }
   }
@@ -322,22 +322,24 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
   
 }
 
-void process_new_call(guint keyval, gchar * key){
-  if (keyval < 255 || (keyval >65453 && keyval < 65466))
-    { 
-      /* Brackets mandatory because of local vars */
-      call_t * c = g_new0 (call_t, 1);
-      c->state = CALL_STATE_DIALING;
-      c->from = g_strconcat("\"\" <", key, ">", NULL);
-      
-      c->callID = g_new0(gchar, 100);
-      g_sprintf(c->callID, "%d", rand()); 
-      
-      c->to = g_strdup(key);
-      call_list_add(c);
-      screen_set_call(c);
-      update_call_tree_add(c);
-    }
+
+call_t * sflphone_new_call()
+{
+  call_t * c = g_new0 (call_t, 1);
+  c->state = CALL_STATE_DIALING;
+  c->from = g_strconcat("\"\" <>", NULL);
+  
+  c->callID = g_new0(gchar, 30);
+  g_sprintf(c->callID, "%d", rand()); 
+  
+  c->to = g_strdup("");
+  
+  call_list_add(c);
+  screen_set_call(c);
+  update_call_tree_add(c);  
+  update_menus();
+  
+  return c;
 }
 
 void 
@@ -347,20 +349,18 @@ sflphone_keypad( guint keyval, gchar * key)
   if(c)
   {
   
-    switch(c->state) // Currently dialing => edit number
+    switch(c->state) 
     {
-      case CALL_STATE_DIALING:
+      case CALL_STATE_DIALING: // Currently dialing => edit number
         process_dialing(c, keyval, key);
         break;
       case CALL_STATE_CURRENT:
-      case CALL_STATE_BUSY:
-      case CALL_STATE_FAILURE:
         switch (keyval)
         {
         case 65307: /* ESCAPE */
           dbus_hang_up(c);
           break;
-        default:
+        default:  // TODO should this be here?
           dbus_play_dtmf(key);
           if (keyval < 255 || (keyval >65453 && keyval < 65466))
           { 
@@ -398,11 +398,13 @@ sflphone_keypad( guint keyval, gchar * key)
           dbus_hang_up(c);
           break;
         default: // When a call is on hold, typing new numbers will create a new call
-          process_new_call(keyval, key);
+          process_dialing(sflphone_new_call(), keyval, key);
           break;
         }
         break;
       case CALL_STATE_RINGING:
+      case CALL_STATE_BUSY:
+      case CALL_STATE_FAILURE:
         switch (keyval)
         {
         case 65307: /* ESCAPE */
@@ -416,7 +418,18 @@ sflphone_keypad( guint keyval, gchar * key)
   }
   else 
   { // Not in a call, not dialing, create a new call 
-    process_new_call(keyval, key);
+    switch (keyval)
+    {
+    case 65293: /* ENTER */
+    case 65421: /* ENTER numpad */
+    case 65307: /* ESCAPE */
+      break;
+    default:
+      process_dialing(sflphone_new_call(), keyval, key);
+      break;
+    }
+        
+     
   }
 } 
 

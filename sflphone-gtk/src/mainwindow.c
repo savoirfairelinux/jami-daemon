@@ -99,6 +99,7 @@ on_key_released (GtkWidget   *widget,
      event->keyval == 34             || // "
      event->keyval == 65361          || // left arrow
      event->keyval == 65363          || // right arrow
+     event->keyval >= 65470          || // F-keys
      event->keyval == 32                // space
      )
     return FALSE;

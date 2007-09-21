@@ -49,6 +49,7 @@ void sflphone_hang_up ();
 
 void sflphone_on_hold ();
 void sflphone_off_hold ();
+call_t * sflphone_new_call();
 
 
 /**

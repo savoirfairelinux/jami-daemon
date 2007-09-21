@@ -27,6 +27,7 @@ GtkListStore * store;
 GtkWidget *view;
 
 GtkWidget * callButton;
+GtkWidget * pickupButton;
 GtkWidget * hangupButton;
 GtkWidget * holdButton;
 GtkWidget * transfertButton;
@@ -37,6 +38,15 @@ GtkWidget * unholdButton;
  */
 static void 
 call_button( GtkWidget *widget, gpointer   data )
+{
+  sflphone_new_call();
+}
+
+/**
+ * Pick up
+ */
+static void 
+pick_up( GtkWidget *widget, gpointer   data )
 {
   sflphone_pick_up();
 }
@@ -85,6 +95,7 @@ void
 update_buttons ()
 {
   gtk_widget_set_sensitive( GTK_WIDGET(callButton),       FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  FALSE);
@@ -96,18 +107,19 @@ update_buttons ()
     switch(selectedCall->state) 
   	{
   	  case CALL_STATE_INCOMING:
-        gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
         gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
         break;
       case CALL_STATE_HOLD:
     	  gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
         gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
         break;
       case CALL_STATE_RINGING:
     	  gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
         break;
       case CALL_STATE_DIALING:
-        gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
         gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
         break;
       case CALL_STATE_CURRENT:
@@ -115,6 +127,7 @@ update_buttons ()
         gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
         gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
         gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
         break;
       case CALL_STATE_BUSY:
       case CALL_STATE_FAILURE:
@@ -124,6 +137,10 @@ update_buttons ()
   	    g_error("Should not happen!");
   	    break;
   	}
+  }
+  else 
+  {
+    gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
   }
 }
 /* Call back when the user click on a call in the list */
@@ -232,7 +249,6 @@ create_call_tree (){
   hbox = gtk_hbox_new (FALSE, 5);       
   
   callButton = gtk_button_new ();
-  gtk_widget_set_state( GTK_WIDGET(callButton), GTK_STATE_INSENSITIVE);
   image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
   gtk_button_set_image(GTK_BUTTON(callButton), image);
   //gtk_button_set_image_position( button, GTK_POS_TOP);
@@ -240,6 +256,15 @@ create_call_tree (){
   g_signal_connect (G_OBJECT (callButton), "clicked",
                     G_CALLBACK (call_button), NULL);
 
+  pickupButton = gtk_button_new ();
+  gtk_widget_set_state( GTK_WIDGET(pickupButton), GTK_STATE_INSENSITIVE);
+  image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
+  gtk_button_set_image(GTK_BUTTON(pickupButton), image);
+  //gtk_button_set_image_position( button, GTK_POS_TOP);
+  gtk_box_pack_start (GTK_BOX (hbox), pickupButton, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
+  g_signal_connect (G_OBJECT (pickupButton), "clicked",
+                    G_CALLBACK (pick_up), NULL);
+  
   hangupButton = gtk_button_new ();
   gtk_widget_hide( hangupButton );
   gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
