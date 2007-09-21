@@ -211,11 +211,11 @@ AM_CONDITIONAL(USE_SPEEX, test "x$with_speex" = "xyes" )
 dnl Check for IAX
 AC_ARG_ENABLE(iax2,
  AS_HELP_STRING(
-   [--enable-iax2],
-   [compile with iax2 library support @<:@default=no@:>@]
+   [--disable-iax2],
+   [disable iax2 library support @<:@default=no@:>@]
  ),
  [with_iax2=$enableval],
- [with_iax2=no]
+ [with_iax2=yes]
 )
 AM_CONDITIONAL(USE_IAX, test x$with_iax2 = xyes)
 
