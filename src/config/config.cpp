@@ -90,31 +90,6 @@ ConfigTree::addConfigTreeItem(const std::string& section, const ConfigTreeItem i
   }
 }
 
-/**
- * Add the config item only if it doesn't exist. Set the default value.
- */
-void
-ConfigTree::verifyConfigTreeItem(const std::string& section,
-				 const std::string& itemName,
-				 const std::string& defaultValue,
-				 const std::string& type)
-
-{
-  // Create section if it doesn't exist.
-  SectionMap::iterator iter = _sections.find(section);
-  if ( iter == _sections.end()) {
-    _sections[section] = new ItemMap;
-    iter = _sections.find(section);
-  }
-
-  // Check for the item, and add it if necessary (with default value).
-  ItemMap::iterator iterItem = iter->second->find(itemName);
-  if ( iterItem == iter->second->end()) {
-    // It's not there, create it.
-    addConfigTreeItem(section, ConfigTreeItem(itemName, defaultValue, type));
-  }
-}
-
 // throw a ConfigTreeItemException if not found
 std::string 
 ConfigTree::getConfigTreeItemValue(const std::string& section, const std::string& itemName) 
@@ -123,7 +98,7 @@ ConfigTree::getConfigTreeItemValue(const std::string& section, const std::string
   if (item != NULL) {
     return item->getValue();
   } else {
-    _debug("Unknown config option: [%s] %s\n", section.c_str(), itemName.c_str());
+    _debug("Option doesn't exist: [%s] %s\n", section.c_str(), itemName.c_str());
     //throw ConfigTreeItemException();
   }
   return "";
@@ -133,14 +108,7 @@ ConfigTree::getConfigTreeItemValue(const std::string& section, const std::string
 int 
 ConfigTree::getConfigTreeItemIntValue(const std::string& section, const std::string& itemName) 
 {
-  ConfigTreeItem* item = getConfigTreeItem(section, itemName);
-  if (item != NULL && item->getType() == "int") {
-    return atoi(item->getValue().data());
-  } else {
-    _debug("Unknown config (int) option: [%s] %s\n", section.c_str(), itemName.c_str());
-    //throw ConfigTreeItemException();
-  }
-  return 0;
+  return atoi(getConfigTreeItemValue(section, itemName).data());
 }
 
 bool
@@ -179,8 +147,6 @@ ConfigTree::getConfigTreeItem(const std::string& section, const std::string& ite
 /**
  * Set the configItem if found, if not, *CREATE IT*
  *
- * @todo Faudra démêler tout ça, le verifyConfigTreeItem et setConfigTree qui font
- * la même chose, et qui, inutilement, y'a plein de restrictions.
  * @todo Élimier les 45,000 classes qui servent à rien pour Conf.
  */
 bool 

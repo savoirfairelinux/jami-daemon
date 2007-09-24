@@ -95,6 +95,7 @@ SIPAccount::terminate()
 void 
 SIPAccount::initConfig(Conf::ConfigTree& config)
 {
+  /*
   std::string section(_accountID);
   std::string type_str("string");
   std::string type_int("int");
@@ -112,6 +113,7 @@ SIPAccount::initConfig(Conf::ConfigTree& config)
   config.verifyConfigTreeItem(section, SIP_PROXY, "", type_str);
   config.verifyConfigTreeItem(section, SIP_STUN_SERVER, "stun.fwdnet.net:3478", type_str);
   config.verifyConfigTreeItem(section, SIP_USE_STUN, "0", type_int);
+  */
 }
 
 void
