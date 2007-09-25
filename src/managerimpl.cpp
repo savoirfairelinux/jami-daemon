@@ -426,8 +426,8 @@ ManagerImpl::initRegisterVoIPLink()
         if ( iter->second->init() && iter->second->shouldRegisterOnStart()) {
             iter->second->registerAccount();
         }
-        // init only the first account
-        break;
+        // init only the first account -- naahh..
+        //break;
       }
     }
     iter++;
