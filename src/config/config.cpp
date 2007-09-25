@@ -99,7 +99,14 @@ ConfigTree::getConfigTreeItemValue(const std::string& section, const std::string
     return item->getValue();
   } else {
     _debug("Option doesn't exist: [%s] %s\n", section.c_str(), itemName.c_str());
-    //throw ConfigTreeItemException();
+    /** @todo If item doesn't exist, we should check against the default values for those
+     * types of information, and return the default value.
+     * ...
+     * Maybe this should be implemented when called ? When we need a bit of configuration,
+     * we call the getConfig with a defaultValue as parameter, in that context we know best
+     * what would be the default value, rather than inside this generic configuration
+     * management class.
+     */
   }
   return "";
 }
@@ -108,7 +115,10 @@ ConfigTree::getConfigTreeItemValue(const std::string& section, const std::string
 int 
 ConfigTree::getConfigTreeItemIntValue(const std::string& section, const std::string& itemName) 
 {
-  return atoi(getConfigTreeItemValue(section, itemName).data());
+  std::string configItem = getConfigTreeItemValue(section, itemName);
+  int retval = atoi(configItem.data());
+
+  return retval;
 }
 
 bool

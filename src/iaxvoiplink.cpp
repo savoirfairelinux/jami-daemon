@@ -31,11 +31,6 @@
 #include <math.h>
 
 
-/** @todo Remove the fstream and iostream stuff */
-//#include <fstream>  // fstream + iostream pour fstream debugging..
-//#include <iostream> // removeable...
-
-
 #define IAX_BLOCKING    1
 #define IAX_NONBLOCKING 0
 
@@ -46,8 +41,8 @@
 
 // from IAXC : iaxclient.h
 
-#define IAX__20S_8KHZ_MAX   160 // 320 //320 samples
-#define IAX__20S_48KHZ_MAX  960 // 1920 // 320*6 samples = 1920, 6 = 48000/8000 
+#define IAX__20S_8KHZ_MAX   320 //320 samples, IAX packets can have more than 20ms.
+#define IAX__20S_48KHZ_MAX  1920 // 320*6 samples = 1920, 6 = 48000/8000 
 
 #define CHK_VALID_CALL   if (call == NULL) { _debug("IAX: Call doesn't exists\n"); \
                                              return false; }
@@ -56,7 +51,6 @@
 
 IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
   : VoIPLink(accountID)
-//  , _fstream("/tmp/audio.dat", std::ofstream::binary) /** @todo Remove this */
 {
   _evThread = new EventThread(this);
   _regSession = NULL;
