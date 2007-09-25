@@ -1,6 +1,6 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=SFLphone VOIP client
+Name=SFLphone VoIP client
 GenericName=Telephone
 Comment=Call and receive calls with SIP or IAX protocols
 Exec=sflphone-gtk

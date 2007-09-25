@@ -113,7 +113,7 @@ help_about ( void * foo)
     "website", "http://www.sflphone.org",
     "copyright", "Copyright © 2004-2007 Savoir-faire Linux Inc.",
     "translator-credits", "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.net>", 
-    "comments", "SFLphone is a VOIP client compatible with SIP and IAX protocols.",
+    "comments", "SFLphone is a VoIP client compatible with SIP and IAX protocols.",
     "artists", artists,
     "authors", authors,
     NULL);
