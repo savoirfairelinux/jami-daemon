@@ -59,7 +59,7 @@ public:
    *
    * @return The new registration state (are we registered ?)
    */
-  bool setRegister (void);
+  bool sendRegister (void);
 
   /**
    * Destroy registration session
@@ -69,7 +69,7 @@ public:
    *
    * @return bool If we're registered upstream
    */
-  bool setUnregister (void);
+  bool sendUnregister (void);
 
   Call* newOutgoingCall(const CallID& id, const std::string& toUrl);
   bool answer(const CallID& id);

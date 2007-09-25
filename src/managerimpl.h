@@ -129,21 +129,35 @@ public:
   bool saveConfig (void);
 
   /**
-  * Send registration information (shake hands) for a specific AccountID
-  *
-  * @param accountId Account to register
-  * @return true if setRegister is call without failure, else return false
-  */
-  bool registerVoIPLink(const AccountID& accountId);
+   * Send registration information (shake hands) for a specific AccountID
+   *
+   * @param accountId Account to register
+   * @return true if sendRegister was called without failure, else return false
+   */
+  bool registerAccount(const AccountID& accountId);
+
   /**
-  * Send unregistration for a specific account. If the protocol
-  * doesn't need to send anything, then the state of the account
-  * will be set to 'Unregistered', and related objects destroyed.
-  *
-  * @param accountId Account to unregister
-  * @return true if the unregister method is send correctly
-  */
-  bool unregisterVoIPLink(const AccountID& accountId);
+   * Send unregistration for a specific account. If the protocol
+   * doesn't need to send anything, then the state of the account
+   * will be set to 'Unregistered', and related objects destroyed.
+   *
+   * @param accountId Account to unregister
+   * @return true if the unregister method is send correctly
+   */
+  bool unregisterAccount(const AccountID& accountId);
+
+  /**
+   * Send registration to all enabled accounts
+   * 
+   * @return false if exosip or the network checking fails
+   */
+  bool initRegisterAccounts();
+
+  /**
+   * True if we tried to register Once
+   */
+  bool _hasTriedToRegister;
+
 
   /**
    * Undocumented
@@ -479,11 +493,6 @@ private:
 	// To handle firewall
   int _firewallPort;
   std::string _firewallAddr;
-
-  // return false if exosip or the network checking failed
-  bool initRegisterVoIPLink();
-  // true if we tried to register Once
-  bool _hasTriedToRegister;
 
   // tell if we have zeroconf is enabled
   int _hasZeroconf;

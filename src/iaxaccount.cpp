@@ -31,10 +31,11 @@ IAXAccount::IAXAccount(const AccountID& accountID)
 
 IAXAccount::~IAXAccount()
 {
+  delete _link;
 }
 
 bool
-IAXAccount::registerAccount()
+IAXAccount::registerVoIPLink()
 {
   if (_link && !_registered) {
     init();
@@ -46,16 +47,16 @@ IAXAccount::registerAccount()
       tmplink->setUser(Manager::instance().getConfigString(_accountID, IAX_USER));
       tmplink->setPass(Manager::instance().getConfigString(_accountID, IAX_PASS));
     }
-    _registered = _link->setRegister();
+    _registered = _link->sendRegister();
   }
   return _registered;
 }
 
 bool
-IAXAccount::unregisterAccount()
+IAXAccount::unregisterVoIPLink()
 {
   if (_link && _registered) {
-    _registered = _link->setUnregister();
+    _registered = _link->sendUnregister();
   }
   return !_registered;
 }

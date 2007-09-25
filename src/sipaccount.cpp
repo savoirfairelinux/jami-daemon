@@ -31,14 +31,15 @@ SIPAccount::SIPAccount(const AccountID& accountID)
 
 SIPAccount::~SIPAccount()
 {
+  delete _link;
 }
 
 bool
-SIPAccount::registerAccount()
+SIPAccount::registerVoIPLink()
 {
   if (_link) {
     init(); // init if not enable
-    unregisterAccount();
+    unregisterVoIPLink();
     SIPVoIPLink* tmplink = dynamic_cast<SIPVoIPLink*> (_link);
     if (tmplink) {
       // Stuff needed for SIP registration.
@@ -47,16 +48,16 @@ SIPAccount::registerAccount()
       tmplink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_AUTH_NAME));
       tmplink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
     }
-    _registered = _link->setRegister();
+    _registered = _link->sendRegister();
   }
   return _registered;
 }
 
 bool
-SIPAccount::unregisterAccount()
+SIPAccount::unregisterVoIPLink()
 {
   if (_link && _registered) {
-    _registered = _link->setUnregister();
+    _registered = _link->sendUnregister();
   }
   return !_registered;
 }

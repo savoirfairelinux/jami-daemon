@@ -38,8 +38,8 @@ public:
   void initConfig(Conf::ConfigTree& config);
   /** Actually unuseful, since config loading is done in init() */
   void loadConfig();
-  bool registerAccount();
-  bool unregisterAccount();
+  bool registerVoIPLink();
+  bool unregisterVoIPLink();
   bool init();
   bool terminate();
 

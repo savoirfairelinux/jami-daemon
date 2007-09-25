@@ -23,10 +23,10 @@
 
 #include "user_cfg.h"
 #include "voiplink.h"
+#include "manager.h"
 
-VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0)
+VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0), _registrationError("")
 {
-  
 }
 
 VoIPLink::~VoIPLink (void) 
@@ -81,3 +81,30 @@ VoIPLink::clearCallMap()
   return true;
 }
 
+void
+VoIPLink::setRegistrationState(const enum RegistrationState state, const std::string& errorMessage)
+{
+  /** @todo Push to the GUI when state changes */
+  _registrationState = state;
+  _registrationError = errorMessage;
+
+  switch (state) {
+  case Registered:
+    Manager::instance().registrationSucceed(getAccountID());
+    break;
+  case Trying:
+    //Manager::instance(). some function to say that
+    break;
+  case Error:
+    Manager::instance().registrationFailed(getAccountID());
+    break;
+  case Unregistered:
+    break;
+  }
+}
+
+void
+VoIPLink::setRegistrationState(const enum RegistrationState state)
+{
+  setRegistrationState(state, "");
+}

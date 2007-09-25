@@ -46,8 +46,8 @@ public:
   bool checkNetwork(void);
   void getEvent(void);
 
-  bool setRegister(void);
-  bool setUnregister(void);
+  bool sendRegister(void);
+  bool sendUnregister(void);
 
   Call* newOutgoingCall(const CallID& id, const std::string& toUrl);
   bool answer(const CallID& id);

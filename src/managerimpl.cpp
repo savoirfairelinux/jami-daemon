@@ -135,7 +135,7 @@ ManagerImpl::init()
     _dtmfKey = new DTMF(sampleRate);
   }
 
-  // initRegisterVoIP was here, but we doing it after the gui loaded... 
+  // initRegisterAccounts was here, but we doing it after the gui loaded... 
   // the stun detection is long, so it's a better idea to do it after getEvents
   initZeroconf();
 }
@@ -263,6 +263,8 @@ ManagerImpl::hangupCall(const CallID& id)
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
+    /** @todo We should tell the GUI that the call doesn't exist, so
+     * it clears up. This can happen. */
     _debug("! Manager Hangup Call: Call doesn't exists\n");
     return false;
   }
@@ -306,6 +308,8 @@ ManagerImpl::onHoldCall(const CallID& id)
     return false;
   }
 
+  _debug("Setting ONHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
+
   bool returnValue = getAccountLink(accountid)->onhold(id);
   
   removeWaitingCall(id);
@@ -332,6 +336,8 @@ ManagerImpl::offHoldCall(const CallID& id)
     onHoldCall(getCurrentCallId());
   }
   
+  _debug("Setting OFFHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
+
   bool returnValue = getAccountLink(accountid)->offhold(id);
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "UNHOLD");
   switchCall(id);
@@ -415,7 +421,7 @@ ManagerImpl::saveConfig (void)
 
 //THREAD=Main
 bool
-ManagerImpl::initRegisterVoIPLink() 
+ManagerImpl::initRegisterAccounts() 
 {
   _debugInit("Initiate VoIP Links Registration");
   AccountMap::iterator iter = _accountMap.begin();
@@ -424,7 +430,7 @@ ManagerImpl::initRegisterVoIPLink()
       iter->second->loadConfig();
       if ( iter->second->shouldInitOnStart() ) {
         if ( iter->second->init() && iter->second->shouldRegisterOnStart()) {
-            iter->second->registerAccount();
+            iter->second->registerVoIPLink();
         }
         // init only the first account -- naahh..
         //break;
@@ -437,7 +443,7 @@ ManagerImpl::initRegisterVoIPLink()
 
 //THREAD=Main
 bool
-ManagerImpl::registerVoIPLink(const AccountID& accountId)
+ManagerImpl::registerAccount(const AccountID& accountId)
 {
   _debug("Register VoIP Link\n");
   int returnValue = false;
@@ -448,24 +454,24 @@ ManagerImpl::registerVoIPLink(const AccountID& accountId)
     AccountMap::iterator iter = _accountMap.begin();
     while ( iter != _accountMap.end() ) {
       if ( iter->second ) {
-        iter->second->unregisterAccount();
+        iter->second->unregisterVoIPLink();
         iter->second->terminate();
       }
       iter++;
     }
-    returnValue = account->registerAccount();
+    returnValue = account->registerVoIPLink();
   }
   return returnValue;
 }
 
 //THREAD=Main
 bool 
-ManagerImpl::unregisterVoIPLink(const AccountID& accountId)
+ManagerImpl::unregisterAccount(const AccountID& accountId)
 {
   _debug("Unregister VoIP Link\n");
   int returnValue = false;
   if (accountExists( accountId ) ) {
-    returnValue = getAccount(accountId)->unregisterAccount();
+    returnValue = getAccount(accountId)->unregisterVoIPLink();
   }
   return returnValue;
 }
@@ -1243,10 +1249,12 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
 
 /**
  * Main Thread
+ *
+ * @todo When is this called ? Why this name 'getEvents' ?
  */
 bool
 ManagerImpl::getEvents() {
-  initRegisterVoIPLink();
+  initRegisterAccounts();
   return true;
 }
 

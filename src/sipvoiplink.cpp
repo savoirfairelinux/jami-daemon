@@ -218,15 +218,18 @@ SIPVoIPLink::getEvent()
        _debug(" !EXOSIP_REGISTRATION_NEW event is not implemented\n");
        break;
      case EXOSIP_REGISTRATION_SUCCESS:     /** 01 < user is successfully registred.  */
-       Manager::instance().registrationSucceed(getAccountID());
+       setRegistrationState(Registered);
+       //Manager::instance().registrationSucceed(getAccountID());
        break;
      case EXOSIP_REGISTRATION_FAILURE:     /** 02 < user is not registred.           */
-       Manager::instance().registrationFailed(getAccountID());
+       setRegistrationState(Error, "SIP registration failure.");
+       //Manager::instance().registrationFailed(getAccountID());
        break;
      case EXOSIP_REGISTRATION_REFRESHED:   /** 03 < registration has been refreshed. */
        _debug(" !EXOSIP_REGISTRATION_REFRESHED event is not implemented\n");
        break;
      case EXOSIP_REGISTRATION_TERMINATED:  /** 04 < UA is not registred any more.    */
+       setRegistrationState(Unregistered, "Registration terminated by remote host");
        _debug(" !EXOSIP_REGISTRATION_TERMINATED event is not implemented\n");
        break;
       
@@ -354,7 +357,7 @@ SIPVoIPLink::getEvent()
 }
 
 bool
-SIPVoIPLink::setRegister()
+SIPVoIPLink::sendRegister()
 {
   if (_eXosipRegID != EXOSIP_ERROR_STD) {
     Manager::instance().displayError("! SIP Error: Registration already sent. Try to unregister");
@@ -415,6 +418,8 @@ SIPVoIPLink::setRegister()
   }
   eXosip_unlock();
 
+  setRegistrationState(Trying);
+
   return true;
 }
 
@@ -432,10 +437,12 @@ SIPVoIPLink::sendSIPAuthentification()
     login = _userpart;
   }
   if (login.empty()) {
+    /** @todo Ajouter ici un call à setRegistrationState(Error, "Fill balh") ? */
     Manager::instance().displayConfigError("Fill authentification name");
     return false;
   }
   if (_password.empty()) {
+    /** @todo Même chose ici  ? */
     Manager::instance().displayConfigError("Fill password field");
     return false;
   }
@@ -447,7 +454,7 @@ SIPVoIPLink::sendSIPAuthentification()
 }
 
 bool
-SIPVoIPLink::setUnregister()
+SIPVoIPLink::sendUnregister()
 {
   if ( _eXosipRegID == EXOSIP_ERROR_STD) return false;
   int eXosipErr = EXOSIP_ERROR_NO;
@@ -458,7 +465,7 @@ SIPVoIPLink::setUnregister()
   eXosip_unlock();
 
   if (eXosipErr != EXOSIP_ERROR_NO) {
-    _debug("! SIP Failure: Unable to build registration for setUnregister");
+    _debug("! SIP Failure: Unable to build registration for sendUnregister");
     return false;
   }
 

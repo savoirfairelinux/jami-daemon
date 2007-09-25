@@ -206,7 +206,7 @@ IAXVoIPLink::getEvent()
 
   // Refresh registration.
   if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
-    setRegister();
+    sendRegister();
   }
 
   // thread wait 5 millisecond
@@ -354,14 +354,6 @@ IAXVoIPLink::sendAudioFromMic(void)
 }
 
 
-/*
-void IAXVoIPLink::recvAudioForSpkr(void) 
-{
-}
-*/
-
-
-
 IAXCall* 
 IAXVoIPLink::getIAXCall(const CallID& id) 
 {
@@ -375,7 +367,7 @@ IAXVoIPLink::getIAXCall(const CallID& id)
 
 
 bool
-IAXVoIPLink::setRegister() 
+IAXVoIPLink::sendRegister() 
 {
   bool result = false;
 
@@ -427,10 +419,10 @@ IAXVoIPLink::setRegister()
 
 
 bool
-IAXVoIPLink::setUnregister()
+IAXVoIPLink::sendUnregister()
 {
   if (_regSession) {
-    /** @todo Should send a REGREL in setUnregister()... */
+    /** @todo Should send a REGREL in sendUnregister()... */
 
     _mutexIAX.enterMutex();
     //iax_send_regrel(); doesn't exist yet :)
@@ -827,7 +819,9 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
     _mutexIAX.leaveMutex();
     _regSession = NULL;
 
-    Manager::instance().registrationFailed(getAccountID());
+    setRegistrationState(Error, "Registration failed");
+    //Manager::instance().registrationFailed(getAccountID());
+
   }
   else if (event->etype == IAX_EVENT_REGACK) {
     /* Authentication succeeded */
@@ -840,7 +834,8 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
     // Defaults to 60, as per draft-guy-iax-03.
     _nextRefreshStamp = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);
 
-    Manager::instance().registrationSucceed(getAccountID());
+    setRegistrationState(Registered);
+    //Manager::instance().registrationSucceed(getAccountID());
   }
 }
 

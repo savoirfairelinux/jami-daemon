@@ -37,35 +37,69 @@ typedef std::map<CallID, Call*> CallMap;
  */
 class VoIPLink {
 public:
-	VoIPLink(const AccountID& accountID);
-	virtual ~VoIPLink (void);
+  VoIPLink(const AccountID& accountID);
+  virtual ~VoIPLink (void);
 
-	// Pure virtual functions
-	virtual void getEvent (void) = 0;
-	virtual bool init (void) = 0;
-	virtual bool checkNetwork (void) = 0;
-	virtual void terminate (void) = 0;
-  virtual bool setRegister (void) = 0;
-  virtual bool setUnregister (void) = 0;
+  enum RegistrationState {Unregistered, Trying, Registered, Error};
+
+  // Pure virtual functions
+  virtual void getEvent (void) = 0;
+  virtual bool init (void) = 0;
+  virtual bool checkNetwork (void) = 0;
+  virtual void terminate (void) = 0;
+  virtual bool sendRegister (void) = 0;
+  virtual bool sendUnregister (void) = 0;
 
   /** Add a new outgoing call and return the call pointer or 0 if and error occurs */
   virtual Call* newOutgoingCall(const CallID& id, const std::string& toUrl) = 0;
   virtual bool answer(const CallID& id) = 0;
 
-	virtual bool hangup(const CallID& id) = 0;
-	virtual bool cancel(const CallID& id) = 0;
-	virtual bool onhold(const CallID& id) = 0;
-	virtual bool offhold(const CallID& id) = 0;
-	virtual bool transfer(const CallID& id, const std::string& to) = 0;
-	virtual bool refuse(const CallID& id) = 0;
-	virtual bool carryingDTMFdigits(const CallID& id, char code) = 0;
+  /**
+   * Hang up a call
+   */
+  virtual bool hangup(const CallID& id) = 0;
+
+  /**
+   * Cancel the call dialing
+   */
+  virtual bool cancel(const CallID& id) = 0;
+
+  /**
+   * Put a call on hold
+   */
+  virtual bool onhold(const CallID& id) = 0;
+
+  /**
+   * Resume a call from hold state
+   */
+  virtual bool offhold(const CallID& id) = 0;
+
+  /**
+   * Transfer a call to specified URI
+   */
+  virtual bool transfer(const CallID& id, const std::string& to) = 0;
+
+  /**
+   * Refuse incoming call
+   */
+  virtual bool refuse(const CallID& id) = 0;
+
+  virtual bool carryingDTMFdigits(const CallID& id, char code) = 0;
+
+  /**
+   * Send text message
+   */
   virtual bool sendMessage(const std::string& to, const std::string& body) = 0;
 
   // these method are set only with 'Account init'  and can be get by everyone
   void setFullName (const std::string& fullname) { _fullname = fullname; }
   std::string& getFullName (void) { return _fullname; }
   void setHostName (const std::string& hostname) {  _hostname = hostname; }
-  std::string& getHostName (void) { return _hostname; } 
+  std::string& getHostName (void) { return _hostname; }
+
+  /**
+   * Return parent Account's ID
+   */
   AccountID& getAccountID(void) { return _accountID; }
 
   /** Get the call pointer from the call map (protected by mutex)
@@ -74,11 +108,56 @@ public:
    */
   Call* getCall(const CallID& id);
 
+  /**
+   * Get registration state
+   */
+  enum RegistrationState getRegistrationState() { return _registrationState; }
+
+  /**
+   * Get registration error message, if set.
+   */
+  std::string getRegistrationError() { return _registrationError; }
+
+  /**
+   * Set new registration state
+   *
+   * We use this function, in case the server needs to PUSH to the
+   * GUI when the state changes.
+   */
+  void setRegistrationState(const enum RegistrationState state,
+			    const std::string& errorMessage);
+
+  /**
+   * Same, but with default error value to ""
+   */
+  void setRegistrationState(const enum RegistrationState state);
+
 
 private:
+  /**
+   * Full name used as outgoing Caller ID
+   */
   std::string _fullname;
+
+  /**
+   * Host name used for authentication
+   */
   std::string _hostname;
+
+  /**
+   * ID of parent's Account
+   */
   AccountID _accountID;
+
+  /**
+   * State of registration
+   */
+  enum RegistrationState _registrationState;
+
+  /**
+   * Registration error message
+   */
+  std::string _registrationError;
 
 protected:
   /** Add a call to the call map (protected by mutex)
@@ -87,7 +166,7 @@ protected:
    */
   bool addCall(Call* call);
 
-  /** remove a call from the call map (protected by mutex)
+  /** Remove a call from the call map (protected by mutex)
    * @param id A Call ID
    * @return true if the call was correctly removed
    */

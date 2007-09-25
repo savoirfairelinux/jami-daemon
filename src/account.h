@@ -83,16 +83,18 @@ class Account{
   inline VoIPLink* getVoIPLink() { return _link; }
 
   /**
-   * Register the account
+   * Register the underlying VoIPLink
+   *
    * @return false is an error occurs
    */
-  virtual bool registerAccount() = 0;
+  virtual bool registerVoIPLink() = 0;
 
   /**
-   * Unregister the account
+   * Unregister the underlying VoIPLink
+   *
    * @return false is an error occurs
    */
-  virtual bool unregisterAccount() = 0;
+  virtual bool unregisterVoIPLink() = 0;
 
   /**
    * Init the voiplink to run (event listener)
