@@ -78,20 +78,36 @@ public:
 
   void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
   /**
-   * Verify an item is there. If it's not, add it with the provided
-   * default value
+   * Set a configuration value.
    *
-   * @param section Section
-   * @param 
+   * @param section Write to this [section] of the .ini file
+   * @param itemName The itemName= in the .ini file
+   * @param value The value to assign to that itemName
    */
-  void verifyConfigTreeItem(const std::string& section, const std::string& itemName,
-			    const std::string& defaultValue, const std::string& type);
   bool setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
 
-  // throw a ConfigTreeItemException if not found
+  /**
+   * Get a value.
+   *
+   * This function does all the validity tests, so none are needed throughout
+   * the program.
+   *
+   * @param section The name of the [section] in the .ini file.
+   * @param itemName The name of the item= in the .ini file.
+   * @return The value of the corresponding item. The default value if the section exists
+   *         but the item doesn't.
+   */
   std::string getConfigTreeItemValue(const std::string& section, const std::string& itemName);
   int getConfigTreeItemIntValue(const std::string& section, const std::string& itemName);
+
+  /**
+   * Flush data to .ini file
+   */
   bool saveConfigTree(const std::string& fileName);
+
+  /**
+   * Load data (and fill ConfigTree) from disk
+   */
   int  populateFromFile(const std::string& fileName);
 
   bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, TokenList& arg);
@@ -99,6 +115,9 @@ public:
 private:
   ConfigTreeItem* getConfigTreeItem(const std::string& section, const std::string& itemName);
 
+  /**
+   * List of sections. Each sections has an ItemList as child
+   */
   SectionMap _sections;
   friend class ConfigTreeIterator;
 

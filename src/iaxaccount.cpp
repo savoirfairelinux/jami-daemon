@@ -42,9 +42,9 @@ IAXAccount::registerAccount()
     IAXVoIPLink* tmplink = dynamic_cast<IAXVoIPLink*> (_link);
     if (tmplink) {
       // Stuff needed for IAX registration
-      tmplink->setHost(Manager::instance().getConfigString(_accountID,IAX_HOST));
-      tmplink->setUser(Manager::instance().getConfigString(_accountID,IAX_USER));
-      tmplink->setPass(Manager::instance().getConfigString(_accountID,IAX_PASS));
+      tmplink->setHost(Manager::instance().getConfigString(_accountID, IAX_HOST));
+      tmplink->setUser(Manager::instance().getConfigString(_accountID, IAX_USER));
+      tmplink->setPass(Manager::instance().getConfigString(_accountID, IAX_PASS));
     }
     _registered = _link->setRegister();
   }
@@ -85,6 +85,7 @@ IAXAccount::terminate()
 void 
 IAXAccount::initConfig(Conf::ConfigTree& config)
 {
+  /*
   std::string section(_accountID);
   std::string type_str("string");
   std::string type_int("int");
@@ -93,11 +94,12 @@ IAXAccount::initConfig(Conf::ConfigTree& config)
   Account::initConfig(config);
 
   // IAX specific
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_TYPE, "IAX", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_FULL_NAME, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_HOST, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_USER, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(IAX_PASS, "", type_str));
+  config.verifyConfigTreeItem(section, CONFIG_ACCOUNT_TYPE, "IAX", type_str);
+  config.verifyConfigTreeItem(section, IAX_FULL_NAME, "", type_str);
+  config.verifyConfigTreeItem(section, IAX_HOST, "", type_str);
+  config.verifyConfigTreeItem(section, IAX_USER, "", type_str);
+  config.verifyConfigTreeItem(section, IAX_PASS, "", type_str);
+  */
 }
 
 void

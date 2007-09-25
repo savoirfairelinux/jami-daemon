@@ -95,6 +95,7 @@ SIPAccount::terminate()
 void 
 SIPAccount::initConfig(Conf::ConfigTree& config)
 {
+  /*
   std::string section(_accountID);
   std::string type_str("string");
   std::string type_int("int");
@@ -103,15 +104,16 @@ SIPAccount::initConfig(Conf::ConfigTree& config)
   Account::initConfig(config);
 
   // SIP specific
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_TYPE, "SIP", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_FULL_NAME, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_USER_PART, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_HOST_PART, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_AUTH_NAME, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_PASSWORD, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_PROXY, "", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_STUN_SERVER, "stun.fwdnet.net:3478", type_str));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(SIP_USE_STUN, "0", type_int));
+  config.verifyConfigTreeItem(section, CONFIG_ACCOUNT_TYPE, "SIP", type_str);
+  config.verifyConfigTreeItem(section, SIP_FULL_NAME, "", type_str);
+  config.verifyConfigTreeItem(section, SIP_USER_PART, "", type_str);
+  config.verifyConfigTreeItem(section, SIP_HOST_PART, "", type_str);
+  config.verifyConfigTreeItem(section, SIP_AUTH_NAME, "", type_str);
+  config.verifyConfigTreeItem(section, SIP_PASSWORD, "", type_str);
+  config.verifyConfigTreeItem(section, SIP_PROXY, "", type_str);
+  config.verifyConfigTreeItem(section, SIP_STUN_SERVER, "stun.fwdnet.net:3478", type_str);
+  config.verifyConfigTreeItem(section, SIP_USE_STUN, "0", type_int);
+  */
 }
 
 void

@@ -9,6 +9,9 @@ sflphoned
 
 Instructions to build `sflphoned`:
 
+TIP: Check out to fullfill the sflfile:Dependencies.txt[dependencies] first.
+
+
 dbus-c++-bindings
 ~~~~~~~~~~~~~~~~~
 
@@ -20,6 +23,9 @@ Go to `libs/dbus` and run:
 make
 sudo make install
 -------------------------
+
+You can replace `--prefix=/usr` by whatever prefix you like. Make sure to
+also change this value in the next steps.
 
 NOTE: If you have `colorgcc`, configure will *fail* on `libeXpat`. Issue an `unset CC` and `unset CXX` to build the dbus bindings.
 
@@ -44,10 +50,11 @@ portaudio
 
 Go to `tools/` and run:
 
--------------------------
+----------------------------
 ./portaudio.sh --prefix=/usr
-su -c "cd portaudio && make install"
--------------------------
+cd portaudio
+sudo make install
+----------------------------
 
 
 
@@ -58,7 +65,7 @@ Then, go to the root of the repository, and run:
 
 ---------------------------------------------------
 autoreconf --install
-./configure --prefix=/usr (or whatever your prefix)
+./configure --prefix=/usr
 make
 sudo make install
 ---------------------------------------------------
