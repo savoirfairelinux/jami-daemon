@@ -115,9 +115,12 @@ gchar *
 call_get_name (const call_t * c)
 {
   gchar * end = g_strrstr(c->from, "\"");
-  gchar * name = c->from +1;
-  name = g_strndup(name, end - name  );
-  return name;
+  if (!end) {
+    return g_strndup(c->from, 0);
+  } else {
+    gchar * name = c->from +1;
+    return g_strndup(name, end - name);
+  }
 }
 
 gchar * 
