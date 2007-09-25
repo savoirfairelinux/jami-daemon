@@ -34,53 +34,40 @@ IAXAccount::~IAXAccount()
   delete _link;
 }
 
-bool
+void
 IAXAccount::registerVoIPLink()
 {
-  if (_link && !_registered) {
-    init();
-    //unregisterAccount(); No need to unregister first.
-    IAXVoIPLink* tmplink = dynamic_cast<IAXVoIPLink*> (_link);
-    if (tmplink) {
-      // Stuff needed for IAX registration
-      tmplink->setHost(Manager::instance().getConfigString(_accountID, IAX_HOST));
-      tmplink->setUser(Manager::instance().getConfigString(_accountID, IAX_USER));
-      tmplink->setPass(Manager::instance().getConfigString(_accountID, IAX_PASS));
-    }
-    _registered = _link->sendRegister();
+  init();
+  //unregisterAccount(); No need to unregister first.
+  IAXVoIPLink* thislink = dynamic_cast<IAXVoIPLink*> (_link);
+  if (thislink) {
+    // Stuff needed for IAX registration
+    thislink->setHost(Manager::instance().getConfigString(_accountID, IAX_HOST));
+    thislink->setUser(Manager::instance().getConfigString(_accountID, IAX_USER));
+    thislink->setPass(Manager::instance().getConfigString(_accountID, IAX_PASS));
   }
-  return _registered;
+
+  _link->sendRegister();
 }
 
-bool
+void
 IAXAccount::unregisterVoIPLink()
 {
-  if (_link && _registered) {
-    _registered = _link->sendUnregister();
-  }
-  return !_registered;
+  _link->sendUnregister();
 }
 
 bool
 IAXAccount::init()
 {
-  if (_link && !_enabled) {
-    _link->init();
-    _enabled = true;
-    return true;
-  }
-  return false;
+  _link->init();
+  return true;
 }
 
 bool
 IAXAccount::terminate()
 {
-  if (_link && _enabled) {
-    _link->terminate();
-    _enabled = false;
-    return true;
-  }
-  return false;
+  _link->terminate();
+  return true;
 }
 
 void 

@@ -25,11 +25,7 @@ Account::Account(const AccountID& accountID) : _accountID(accountID)
 {
   _link = NULL;
 
-  _shouldInitOnStart = false;
-  _shouldRegisterOnStart = false;
   _enabled = false;
-  _registered = false;
-  _state = false;
 }
 
 
@@ -57,7 +53,6 @@ Account::initConfig(Conf::ConfigTree& config) {
 void
 Account::loadConfig() 
 {
-  _shouldInitOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
-  _shouldRegisterOnStart = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_AUTO_REGISTER) ? true : false;
+  _enabled = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
 }
 

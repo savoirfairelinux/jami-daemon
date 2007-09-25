@@ -34,7 +34,7 @@ GtkWidget * entryID;
 GtkWidget * entryName;
 GtkWidget * entryProtocol;
 GtkWidget * entryEnabled;
-GtkWidget * entryRegister;
+//GtkWidget * entryRegister;
 GtkWidget * entryFullName;
 GtkWidget * entryUserPart;
 GtkWidget * entryHostPart;
@@ -142,10 +142,10 @@ show_account_window (account_t * a)
     strcmp(g_hash_table_lookup(currentAccount->properties, ACCOUNT_ENABLED),"TRUE") == 0 ? TRUE: FALSE); 
   gtk_table_attach ( GTK_TABLE( table ), entryEnabled, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
-  entryRegister = gtk_check_button_new_with_mnemonic("_Register on startup ");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryRegister), 
-    strcmp(g_hash_table_lookup(currentAccount->properties, ACCOUNT_REGISTER),"TRUE") == 0 ? TRUE: FALSE); 
-  gtk_table_attach ( GTK_TABLE( table ), entryRegister, 0, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+  //entryRegister = gtk_check_button_new_with_mnemonic("_Register on startup ");
+  //gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryRegister), 
+  //  strcmp(g_hash_table_lookup(currentAccount->properties, ACCOUNT_REGISTER),"TRUE") == 0 ? TRUE: FALSE); 
+  //gtk_table_attach ( GTK_TABLE( table ), entryRegister, 0, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
   label = gtk_label_new_with_mnemonic ("_Alias:");
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -252,9 +252,9 @@ show_account_window (account_t * a)
     g_hash_table_replace(currentAccount->properties, 
       g_strdup(ACCOUNT_ENABLED), 
       g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "TRUE": "FALSE"));
-    g_hash_table_replace(currentAccount->properties, 
-      g_strdup(ACCOUNT_REGISTER), 
-      g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryRegister)) ? "TRUE": "FALSE"));
+    // g_hash_table_replace(currentAccount->properties, 
+    //  g_strdup(ACCOUNT_REGISTER), 
+    //  g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryRegister)) ? "TRUE": "FALSE"));
     /* TODO Add SIP/IAX when IAX is ok */  
     g_hash_table_replace(currentAccount->properties, 
       g_strdup(ACCOUNT_ALIAS), 

@@ -100,6 +100,10 @@ IAXVoIPLink::~IAXVoIPLink()
 bool
 IAXVoIPLink::init()
 {
+  // If it was done, don't do it again, until we call terminate()
+  if (_initDone)
+    return false;
+
   bool returnValue = false;
   //_localAddress = "127.0.0.1";
   // port 0 is default
@@ -128,9 +132,13 @@ IAXVoIPLink::init()
       break;
     }
     nbTry--;
+
+    _initDone = true;
   }
   if (port == IAX_FAILURE || nbTry==0) {
     _debug("Fail to initialize iax\n");
+    
+    _initDone = false;
   }
   return returnValue;
 }
@@ -138,10 +146,16 @@ IAXVoIPLink::init()
 void
 IAXVoIPLink::terminate()
 {
-//  iaxc_shutdown();  
-//  hangup all call
-    terminateIAXCall();
-//  iax_hangup(calls[callNo].session,"Dumped Call");
+  // If it was done, don't do it again, until we call init()
+  if (!_initDone)
+    return;
+
+  // iaxc_shutdown();  
+
+  // Hangup all calls
+  terminateIAXCall();
+
+  _initDone = false;
 }
 
 void
@@ -154,7 +168,7 @@ IAXVoIPLink::terminateIAXCall()
     call = dynamic_cast<IAXCall*>(iter->second);
     if (call) {
       _mutexIAX.enterMutex();
-      iax_hangup(call->getSession(),"Dumped Call");
+      iax_hangup(call->getSession(), "Dumped Call");
       _mutexIAX.leaveMutex();
       call->setSession(NULL);
       delete call; call = NULL;
@@ -407,6 +421,8 @@ IAXVoIPLink::sendRegister()
     // until we unregister.
     _nextRefreshStamp = time(NULL) + 10;
     result = true;
+
+    setRegistrationState(Trying);
   }
 
   // unlock
@@ -432,6 +448,9 @@ IAXVoIPLink::sendUnregister()
     _regSession = NULL;
   }
   _nextRefreshStamp = 0;
+
+  setRegistrationState(Unregistered);
+
   return false;
 }
 

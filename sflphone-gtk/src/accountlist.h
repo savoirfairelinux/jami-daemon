@@ -28,7 +28,7 @@
 #define ACCOUNT_TYPE               "Account.type"
 #define ACCOUNT_ALIAS              "Account.alias"
 #define ACCOUNT_ENABLED            "Account.enable"
-#define ACCOUNT_REGISTER           "Account.autoregister"
+//#define ACCOUNT_REGISTER           "Account.autoregister"
 
 #define ACCOUNT_SIP_FULL_NAME      "SIP.fullName"
 #define ACCOUNT_SIP_HOST_PART      "SIP.hostPart"

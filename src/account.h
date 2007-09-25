@@ -21,6 +21,7 @@
 
 #include <string>
 #include "config/config.h"
+#include "voiplink.h"
 
 class VoIPLink;
 
@@ -28,7 +29,7 @@ typedef std::string AccountID;
 #define AccountNULL ""
 #define CONFIG_ACCOUNT_TYPE   "Account.type"
 #define CONFIG_ACCOUNT_ENABLE "Account.enable"
-#define CONFIG_ACCOUNT_AUTO_REGISTER  "Account.autoregister"
+//#define CONFIG_ACCOUNT_AUTO_REGISTER  "Account.autoregister"
 #define CONFIG_ACCOUNT_ALIAS  "Account.alias"
 
 #define IAX_FULL_NAME         "IAX.fullName"
@@ -85,16 +86,20 @@ class Account{
   /**
    * Register the underlying VoIPLink
    *
+   * This should update the getRegistrationState() return value.
+   *
    * @return false is an error occurs
    */
-  virtual bool registerVoIPLink() = 0;
+  virtual void registerVoIPLink() = 0;
 
   /**
    * Unregister the underlying VoIPLink
    *
+   * This should update the getRegistrationState() return value.
+   *
    * @return false is an error occurs
    */
-  virtual bool unregisterVoIPLink() = 0;
+  virtual void unregisterVoIPLink() = 0;
 
   /**
    * Init the voiplink to run (event listener)
@@ -109,27 +114,14 @@ class Account{
   virtual bool terminate() = 0;
 
   /**
-   * Tell if we should init the account on start
-   * @return true if we must init the link
-   */
-  bool shouldInitOnStart() {return _shouldInitOnStart; }
-
-  /**
-   * Tell if we should register the account on start
-   * @return true if we must register the account
-   */
-  bool shouldRegisterOnStart() {return _shouldRegisterOnStart; }
-
-  /**
-   * Tell if the account is enable or not
+   * Tell if the account is enable or not. See doc for _enabled.
    */
   bool isEnabled() { return _enabled; }
 
   /**
-   * Tell if the latest registration succeed or failed 
+   * Return registration state of underlying VoIPLink
    */
-  bool setState(bool state) { _state = state; }
-  bool getState() { return _state; }
+  VoIPLink::RegistrationState getRegistrationState() { return _link->getRegistrationState(); }
 
 private:
 
@@ -145,33 +137,13 @@ protected:
   VoIPLink* _link;
 
   /**
-   * Tells if the link should be start on loading or not
+   * Tells if the link is enabled, active.
+   *
+   * This implies the link will be initialized on startup.
+   *
    * Modified by the configuration (key: ENABLED)
    */
-  bool _shouldInitOnStart;
-
-  /**
-   * Tells if we should register automatically on startup
-   * Modified by the configuration (key: AUTO-REGISTER)
-   */
-  bool _shouldRegisterOnStart;
-
-  /**
-   * Tells if the link is enabled or not.
-   * Modified by init/terminate
-   */
   bool _enabled;
-
-  /**
-   * Tells if the link is registered or not.
-   * Modified by unregister/register
-   */
-  bool _registered;
-
-  /**
-   * The latest registration was a success or not
-   */
-  bool _state;
 
 };
 

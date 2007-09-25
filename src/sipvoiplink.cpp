@@ -59,7 +59,6 @@ SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
 
   _nMsgVoicemail = 0;
   _eXosipRegID = EXOSIP_ERROR_STD;
-  _eXosipStarted = false;
 
   _nbTryListenAddr = 2; // number of times to try to start SIP listener
   _localExternPort = 0;
@@ -77,12 +76,15 @@ SIPVoIPLink::~SIPVoIPLink()
 bool 
 SIPVoIPLink::init()
 {
-  if (!_eXosipStarted) {
+  if (!_initDone) {
     if (0 != eXosip_init()) {
       _debug("! SIP Failure: Could not initialize eXosip\n");
       return false;
     }
-    _eXosipStarted = true;
+
+    // Pour éviter qu'on refasse l'init sans avoir considéré l'erreur,
+    // s'il y en a une ?
+    _initDone = true;
   
     // check networking capabilities
     if ( !checkNetwork() ) {
@@ -140,7 +142,11 @@ SIPVoIPLink::init()
     _debug("  SIP Init: starting loop thread (SIP events)\n");
     _evThread->start();
   }
-  return _eXosipStarted;
+
+  _initDone = true;
+
+  // Useless
+  return true;
 }
 
 
@@ -149,9 +155,9 @@ void
 SIPVoIPLink::terminate()
 {
   terminateSIPCall(); 
-  if (_eXosipStarted) {
+  if (_initDone) {
     eXosip_quit();
-    _eXosipStarted = false;
+    _initDone = false;
   }
 }
 

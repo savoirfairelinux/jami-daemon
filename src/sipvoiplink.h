@@ -243,7 +243,7 @@ private:
   /** EventThread get every incoming events */
   EventThread* _evThread;
   /** Tell if eXosip was stared (eXosip_init) */
-  bool _eXosipStarted;
+  bool _initDone;
 
   /** Registration identifier, needed by unregister to build message */
   int _eXosipRegID;

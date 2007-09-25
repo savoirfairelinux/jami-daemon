@@ -34,63 +34,50 @@ SIPAccount::~SIPAccount()
   delete _link;
 }
 
-bool
+void
 SIPAccount::registerVoIPLink()
 {
-  if (_link) {
-    init(); // init if not enable
-    unregisterVoIPLink();
-    SIPVoIPLink* tmplink = dynamic_cast<SIPVoIPLink*> (_link);
-    if (tmplink) {
-      // Stuff needed for SIP registration.
-      tmplink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
-      tmplink->setUserPart(Manager::instance().getConfigString(_accountID,SIP_USER_PART));
-      tmplink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_AUTH_NAME));
-      tmplink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
-    }
-    _registered = _link->sendRegister();
+  init(); // init if not enable
+  unregisterVoIPLink();
+  SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
+  if (thislink) {
+    // Stuff needed for SIP registration.
+    thislink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
+    thislink->setUserPart(Manager::instance().getConfigString(_accountID,SIP_USER_PART));
+    thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_AUTH_NAME));
+    thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
   }
-  return _registered;
+
+  _link->sendRegister();
 }
 
-bool
+void
 SIPAccount::unregisterVoIPLink()
 {
-  if (_link && _registered) {
-    _registered = _link->sendUnregister();
-  }
-  return !_registered;
+  _link->sendUnregister();
 }
 
 bool
 SIPAccount::init()
 {
-  if (_link && !_enabled) {
-    _link->setFullName(Manager::instance().getConfigString(_accountID,SIP_FULL_NAME));
-    _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST_PART));
-    int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
-    
-    SIPVoIPLink* tmplink = dynamic_cast<SIPVoIPLink*> (_link);
-    if (tmplink) {
-      tmplink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
-      tmplink->setUseStun( useStun!=0 ? true : false);
-    }
-    _link->init();
-    _enabled = true;
-    return true;
+  _link->setFullName(Manager::instance().getConfigString(_accountID,SIP_FULL_NAME));
+  _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST_PART));
+  int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
+  
+  SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
+  if (thislink) {
+    thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
+    thislink->setUseStun( useStun!=0 ? true : false);
   }
-  return false;
+  _link->init();
+  return true;
 }
 
 bool
 SIPAccount::terminate()
 {
-  if (_link && _enabled) {
-    _link->terminate();
-    _enabled = false;
+  _link->terminate();
     return true;
-  }
-  return false;
 }
 
 void 

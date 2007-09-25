@@ -23,12 +23,15 @@
 #define __VOIP_LINK_H__
 
 #include <string>
-#include "account.h" // for AccountID
 #include "call.h"
 #include <map>
 #include <cc++/thread.h> // for mutex
 
 class AudioCodec;
+
+//#include "account.h" // for AccountID
+// replaced by:
+typedef std::string AccountID;
 
 typedef std::map<CallID, Call*> CallMap;
 
@@ -179,6 +182,7 @@ protected:
 
   /** Contains all the calls for this Link, protected by mutex */
   CallMap _callMap;
+
   /** Mutex to protect call map */
   ost::Mutex _callMapMutex;
 
@@ -186,6 +190,14 @@ protected:
   std::string _localIPAddress;
   /** Get local listening port (5060 for SIP, ...) */
   unsigned int _localPort;
+
+
+  /** Whether init() was called already or not
+   *
+   * This should be used in [IAX|SIP]VoIPLink::init() and terminate(), to
+   * indicate that init() was called, or reset by terminate().
+   */
+  bool _initDone;
 };
 
 #endif // __VOIP_LINK_H__

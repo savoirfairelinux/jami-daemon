@@ -428,8 +428,8 @@ ManagerImpl::initRegisterAccounts()
   while( iter != _accountMap.end() ) {
     if ( iter->second) {
       iter->second->loadConfig();
-      if ( iter->second->shouldInitOnStart() ) {
-        if ( iter->second->init() && iter->second->shouldRegisterOnStart()) {
+      if ( iter->second->isEnabled() ) {
+        if ( iter->second->init() ) {
             iter->second->registerVoIPLink();
         }
         // init only the first account -- naahh..
@@ -442,11 +442,12 @@ ManagerImpl::initRegisterAccounts()
 }
 
 //THREAD=Main
+// Currently unused
 bool
 ManagerImpl::registerAccount(const AccountID& accountId)
 {
-  _debug("Register VoIP Link\n");
-  int returnValue = false;
+  _debug("Register one VoIP Link\n");
+
   // right now, we don't support two SIP account
   // so we close everything before registring a new account
   Account* account = getAccount(accountId);
@@ -459,21 +460,22 @@ ManagerImpl::registerAccount(const AccountID& accountId)
       }
       iter++;
     }
-    returnValue = account->registerVoIPLink();
+    account->registerVoIPLink();
   }
-  return returnValue;
+  return true;
 }
 
 //THREAD=Main
+// Currently unused
 bool 
 ManagerImpl::unregisterAccount(const AccountID& accountId)
 {
-  _debug("Unregister VoIP Link\n");
-  int returnValue = false;
+  _debug("Unregister one VoIP Link\n");
+
   if (accountExists( accountId ) ) {
-    returnValue = getAccount(accountId)->unregisterVoIPLink();
+    getAccount(accountId)->unregisterVoIPLink();
   }
-  return returnValue;
+  return true;
 }
 
 //THREAD=Main
@@ -779,7 +781,7 @@ ManagerImpl::registrationSucceed(const AccountID& accountid)
 {
   Account* acc = getAccount(accountid);
  if ( acc ) { 
-    acc->setState(true); 
+    //acc->setState(true); 
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
   }
 }
@@ -790,7 +792,7 @@ ManagerImpl::registrationFailed(const AccountID& accountid)
 {
   Account* acc = getAccount(accountid);
   if ( acc ) { 
-    acc->setState(false);
+    //acc->setState(false);
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
   }
 }
@@ -1556,6 +1558,7 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 {
   std::map<std::string, std::string> a;
   std::string accountType;
+  enum VoIPLink::RegistrationState state = _accountMap[accountID]->getRegistrationState();
     
   accountType = getConfigString(accountID, CONFIG_ACCOUNT_TYPE);
 
@@ -1565,12 +1568,12 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
       getConfigString(accountID, CONFIG_ACCOUNT_ALIAS)
       )
     );
-  a.insert(
+  /*a.insert(
     std::pair<std::string, std::string>(
       CONFIG_ACCOUNT_AUTO_REGISTER, 
       getConfigString(accountID, CONFIG_ACCOUNT_AUTO_REGISTER)== "1" ? "TRUE": "FALSE"
       )
-    );
+    );*/
   a.insert(
     std::pair<std::string, std::string>(
       CONFIG_ACCOUNT_ENABLE, 
@@ -1580,7 +1583,10 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
   a.insert(
     std::pair<std::string, std::string>(
       "Status", 
-      _accountMap[accountID]->getState() ? "REGISTERED": "UNREGISTERED"
+      (state == VoIPLink::Registered ? "REGISTERED":
+       (state == VoIPLink::Unregistered ? "UNREGISTERED":
+	(state == VoIPLink::Trying ? "TRYING":
+	 (state == VoIPLink::Error ? "ERROR": "UNKNOWN"))))
       )
     );
   a.insert(
@@ -1680,8 +1686,8 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
   std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
     
   setConfig(accountID, CONFIG_ACCOUNT_ALIAS, (*details.find(CONFIG_ACCOUNT_ALIAS)).second);
-  setConfig(accountID, CONFIG_ACCOUNT_AUTO_REGISTER, 
-	    (*details.find(CONFIG_ACCOUNT_AUTO_REGISTER)).second == "TRUE" ? "1": "0" );
+  //setConfig(accountID, CONFIG_ACCOUNT_AUTO_REGISTER, 
+  // (*details.find(CONFIG_ACCOUNT_AUTO_REGISTER)).second == "TRUE" ? "1": "0" );
   setConfig(accountID, CONFIG_ACCOUNT_ENABLE, 
 	    (*details.find(CONFIG_ACCOUNT_ENABLE)).second == "TRUE" ? "1": "0" );
   setConfig(accountID, CONFIG_ACCOUNT_TYPE, accountType);
