@@ -277,11 +277,11 @@ dnl QT interface
 AC_MSG_CHECKING([whether to enable sflphoneqt])
 AC_ARG_ENABLE(sflphoneqt,
    AS_HELP_STRING(
-     [--disable-sflphoneqt],
-     [disable sflphone-qt compilation @<:@default=no@:>@]
+     [--enable-sflphoneqt],
+     [enable sflphone-qt compilation @<:@default=no@:>@]
    ),
    [with_sflphoneqt=$enableval],
-   [with_sflphoneqt=yes]
+   [with_sflphoneqt=no]
 )
 AM_CONDITIONAL(WITH_QT, test "x$with_sflphoneqt" = "xyes")
 AM_CONDITIONAL(include_x11, test x$with_sflphoneqt = "xyes")
