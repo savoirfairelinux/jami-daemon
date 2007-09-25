@@ -5,19 +5,30 @@ Git anonymous access
 --------------------
 
 
-To grab source code form SFLphone's git repository:
+To grab source code form SFLphone's git repository, run:
 
 ---------------------------------------------
 git clone git://sflphone.org/git/sflphone.git
-cd sflphone
 ---------------------------------------------
+
+which requires pass-through of *tcp port 9418*, or
+
+----------------------------------------------
+git clone http://sflphone.org/git/sflphone.git
+----------------------------------------------
+
+then
+
+----------------------------------------------
+cd sflphone
+----------------------------------------------
 
 View sflsite:build[build notes] for more details.
 
 
 
-Git developer's access
-----------------------
+Git developer access
+--------------------
 
 Run:
 
