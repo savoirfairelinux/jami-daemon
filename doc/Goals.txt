@@ -3,4 +3,9 @@
 Goals
 -----
 
-[insert goals]
+ - Functioning IAX transport
+ - New Gtk GUI
+ - Perfect audio
+ - Multiple-client connectivity
+
+
