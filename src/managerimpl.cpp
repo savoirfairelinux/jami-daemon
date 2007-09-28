@@ -1709,11 +1709,12 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
     setConfig(accountID, IAX_USER,      (*details.find(IAX_USER)).second);
     setConfig(accountID, IAX_PASS,      (*details.find(IAX_PASS)).second);    
   } else {
-    _debug("Unknown account type in setAccountDetails(): %s", accountType.c_str());
+    _debug("Unknown account type in setAccountDetails(): %s\n", accountType.c_str());
   }
   
   saveConfig();
-  
+  unloadAccountMap();
+  loadAccountMap();
   /** @todo Then, reset the VoIP link with the new information */
 }                   
 

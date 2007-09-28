@@ -62,7 +62,8 @@ typedef enum
   */
 typedef struct  {
   gchar * accountID;
-  account_state_t state;  GHashTable * properties;
+  account_state_t state;  
+  GHashTable * properties;
 } account_t;
 
 /** This function initialize the account list. */
