@@ -45,6 +45,7 @@ void dbus_place_call (const call_t * c);
 gchar ** dbus_account_list();
 GHashTable * dbus_account_details(gchar * accountID);
 void dbus_set_account_details(account_t *a);
+void dbus_add_account(account_t *a);
 void dbus_remove_account(gchar * accountID);
 void dbus_set_volume(const gchar * device, gdouble value);
 gdouble dbus_get_volume(const gchar * device);
