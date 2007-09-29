@@ -1,11 +1,53 @@
 //AsciiDoc file
 
-Goals
------
+Vision
+------
+SFLphone aims to provide an easy to use, feature full, standard compliant, VoIP software client.
 
- - Functioning IAX transport
- - New Gtk GUI
- - Perfect audio
- - Multiple-client connectivity
+Goals for next release (0.8)
+----------------------------
+ - Server side:
+   * Functioning IAX transport
+   * Neer perfect audio
+   * Multiple-client (UI or other) connectivity to server
+ - New Gtk+ GUI with following functionnality (altough the server can do more):
+   * User can place a call
+   * User can answer a call
+   * User can transfert a call
+   * User can have an unlimited number of calls
+   * User can put a call on hold and off hold
+   * User is informed of waiting voice mail
+   * User can set up new SIP/IAX accounts
+   * User can edit current accounts
+   * User can delete accounts
+   * User can adjust speaker and microphone volume
+   * All instances of the UI must stay in sink
+   
+Goals for release 0.8.5
+----------------------------
+ - Server side:
+   * Perfect audio
+   * Better error handling of failed account register
+   * Actual working multiple account functionnality 
+ - Gtk+ GUI updates
+   * User can set up audio parameters
+   * User can set up STUN and proxy settings for SIP accounts
+   * User can choose a ringtone theme
+   * User can set up locale settings
+   * Desktop notification of events
+   * User can choose an account to place a call
 
-
+Goals for release 0.9
+----------------------------
+ - Server side:
+   * Contacts management (LDAP)
+   * Call history
+   * SMS sending
+   * Status (DND, Available, ...)
+ - Gtk+ GUI updates
+   * User can receive and send SMS messages
+   * User is informed of call duration
+   * User can set up speel call buttons
+   * User can consult/clear call history
+   * User can set a status
+   
