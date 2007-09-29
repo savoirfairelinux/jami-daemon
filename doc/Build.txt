@@ -56,7 +56,7 @@ cd portaudio
 sudo make install
 ----------------------------
 
-
+NOTE: If you have `colorgcc`, building might *fail*.  Use `unset CC` and `unset CXX` to disable it before building `portaudio`.
 
 the daemon
 ~~~~~~~~~~
@@ -74,7 +74,7 @@ sudo make install
 sflphone-qt
 -----------
 
-`sflphone-qt` is *deprecated* and should not be built anymore.
+`sflphone-qt` is *deprecated* and can't be built anymore.
 
 
 sflphone-gtk
@@ -84,11 +84,13 @@ Compile `sflphone-gtk` by running:
 
 -------------------------
 cd sflphone-gtk
-gnome-autogen.sh || autoreconf --install
+gnome-autogen.sh
 ./configure --prefix=/usr
 make
 sudo make install
 -------------------------
+
+NOTE: Some persons needed to run `autoreconf --install` before the `configure` script.
 
 You'll find `gnome-autogen.sh` in some `gnome-common`-like package of
 your distribution. You can also replace it by a call to:
