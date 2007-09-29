@@ -51,4 +51,3 @@ Goals for release 0.9
    * User can consult/clear call history
    * User can set a status
    
-   
