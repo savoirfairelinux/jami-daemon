@@ -259,10 +259,6 @@ show_account_window (account_t * a)
     gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
 
     g_hash_table_replace(currentAccount->properties, 
-      g_strdup("AccountID"), 
-      g_strdup(curAccountID));
-
-    g_hash_table_replace(currentAccount->properties, 
       g_strdup(ACCOUNT_ENABLED), 
       g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "TRUE": "FALSE"));
     // g_hash_table_replace(currentAccount->properties, 
