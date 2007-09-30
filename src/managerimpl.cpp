@@ -1584,9 +1584,9 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
     std::pair<std::string, std::string>(
       "Status", 
       (state == VoIPLink::Registered ? "REGISTERED":
-       (state == VoIPLink::Unregistered ? "UNREGISTERED":
-	(state == VoIPLink::Trying ? "TRYING":
-	 (state == VoIPLink::Error ? "ERROR": "UNKNOWN"))))
+        (state == VoIPLink::Unregistered ? "UNREGISTERED":
+          (state == VoIPLink::Trying ? "TRYING":
+            (state == VoIPLink::Error ? "ERROR": "UNKNOWN"))))
       )
     );
   a.insert(
@@ -1721,15 +1721,6 @@ void
 ManagerImpl::removeAccount(const AccountID& accountID) 
 {
   _config.removeSection(accountID);
-  //TODO
-  /*AccountMap::iterator iter = _accountMap.begin();
-  while ( iter != _accountMap.end() ) {
-    _debug("Account %s == %s ", iter->first, accountID);
-    if ( iter->first == accountID ) {
-      _accountMap.erase(iter);      
-    }
-    iter++;
-  }*/
   saveConfig();
 }
 

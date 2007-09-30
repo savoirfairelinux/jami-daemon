@@ -141,6 +141,7 @@ accounts_changed_cb (DBusGProxy *proxy,
                   void * foo  )
 {
   g_print ("Accounts changed\n");
+  sflphone_fill_account_list();
   // TODO reload list
 }
 

@@ -68,7 +68,6 @@ ConfigurationManager::getAccountList(  )
 {
     _debug("ConfigurationManager::getAccountList received\n");
     return Manager::instance().getAccountList();
-    
 }
 
 

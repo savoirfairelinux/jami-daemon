@@ -100,4 +100,5 @@ void sflphone_keypad ( guint keyval, gchar * key);
  */
 void sflphone_place_call ( call_t * c );
 
+void sflphone_fill_account_list();
 #endif 
