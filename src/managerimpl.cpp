@@ -1713,15 +1713,14 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
   }
   
   saveConfig();
-  unloadAccountMap();
-  loadAccountMap();
+  /** @todo Make the daemon use the new settings */
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }                   
 
 void 
 ManagerImpl::removeAccount(const AccountID& accountID) 
 {
-  _debug("Not implemented\n");
+  _config.removeSection(accountID);
   //TODO
   /*AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
@@ -1731,6 +1730,7 @@ ManagerImpl::removeAccount(const AccountID& accountID)
     }
     iter++;
   }*/
+  saveConfig();
 }
 
 //THREAD=Main
