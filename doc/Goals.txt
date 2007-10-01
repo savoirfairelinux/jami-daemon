@@ -2,14 +2,15 @@
 
 Vision
 ------
-SFLphone aims to provide an easy to use, feature full, standard compliant, VoIP software client.
+
+SFLphone aims to provide an easy to use, feature full, standard compliant, VoIP software phone.
 
 Goals for next release (0.8)
 ----------------------------
  - Server side:
-   * Functioning IAX transport
-   * Neer perfect audio
-   * Multiple-client (UI or other) connectivity to server
+   * Functional IAX transport
+   * Near perfect audio
+   * Multiple-client (GUI or other) connectivity to server
  - New Gtk+ GUI with following functionnality (altough the server can do more):
    * User can place a call
    * User can answer a call
@@ -21,21 +22,28 @@ Goals for next release (0.8)
    * User can edit current accounts
    * User can delete accounts
    * User can adjust speaker and microphone volume
-   * All instances of the UI must stay in sink
+   * All instances of the UI must stay in sync.
    
 Goals for release 0.8.5
 -----------------------
  - Server side:
    * Perfect audio
-   * Better error handling of failed account register
-   * Actual working multiple account functionnality 
+   * Better error handling of failed account registrations
+   * Fully working multiple account functionnality 
  - Gtk+ GUI updates
    * User can set up audio parameters
    * User can set up STUN and proxy settings for SIP accounts
    * User can choose a ringtone theme
    * User can set up locale settings
    * Desktop notification of events
-   * User can choose an account to place a call
+   * User can choose an account to place a call with
+ - Basic Python command-line client
+   * User can place a call
+   * User can answer calls
+   * User can send DTMF
+   * User can transfert a call
+
+
 
 Goals for release 0.9
 ---------------------
@@ -50,4 +58,12 @@ Goals for release 0.9
    * User can set up speel call buttons
    * User can consult/clear call history
    * User can set a status
-   
+ - Python CLI client
+   * Stable and mature code
+   * Extensible and configurable client
+   * User can put a call on hold and off hold
+   * User can adjust speaker and microphone volume
+   * User can script the client and integrate into other components
+   * CLI stays in sync with any other number of GUI/CLI/clients
+
+
