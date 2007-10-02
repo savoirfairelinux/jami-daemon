@@ -38,7 +38,8 @@ IAXAccount::~IAXAccount()
 void
 IAXAccount::registerVoIPLink()
 {
-  init();
+  _link->init();
+
   //unregisterAccount(); No need to unregister first.
   IAXVoIPLink* thislink = dynamic_cast<IAXVoIPLink*> (_link);
   if (thislink) {
@@ -55,20 +56,7 @@ void
 IAXAccount::unregisterVoIPLink()
 {
   _link->sendUnregister();
-}
-
-bool
-IAXAccount::init()
-{
-  _link->init();
-  return true;
-}
-
-bool
-IAXAccount::terminate()
-{
   _link->terminate();
-  return true;
 }
 
 void

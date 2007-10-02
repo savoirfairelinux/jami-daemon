@@ -456,7 +456,6 @@ ManagerImpl::registerAccount(const AccountID& accountId)
     while ( iter != _accountMap.end() ) {
       if ( iter->second ) {
         iter->second->unregisterVoIPLink();
-        iter->second->terminate();
       }
       iter++;
     }

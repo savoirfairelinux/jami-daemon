@@ -24,7 +24,7 @@
 
 
 /**
- * A Sip Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
+ * A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
  * @author Yan Morin <yan.morin@gmail.com>
 */
 class SIPAccount : public Account
@@ -38,11 +38,8 @@ public:
   void loadConfig();
   void registerVoIPLink();
   void unregisterVoIPLink();
-  bool init();
-  bool terminate();
 
 private:
-
 };
 
 #endif

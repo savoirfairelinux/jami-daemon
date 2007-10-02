@@ -30,16 +30,14 @@
 class IAXAccount : public Account
 {
 public:
-    IAXAccount(const AccountID& accountID);
+  IAXAccount(const AccountID& accountID);
 
-    ~IAXAccount();
+  ~IAXAccount();
 
   /** Actually unuseful, since config loading is done in init() */
   void loadConfig();
   void registerVoIPLink();
   void unregisterVoIPLink();
-  bool init();
-  bool terminate();
 
 private:
 };
