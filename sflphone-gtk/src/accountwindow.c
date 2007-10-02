@@ -308,7 +308,13 @@ show_account_window (account_t * a)
       
     }
       
-    dbus_add_account(currentAccount);
+    /** @todo Verify if it's the best condition to check */
+    if (currentAccount->accountID == NULL) {
+      dbus_add_account(currentAccount);
+    }
+    else {
+      dbus_set_account_details(currentAccount);
+    }
   }
   gtk_widget_destroy (GTK_WIDGET(dialog));
   
