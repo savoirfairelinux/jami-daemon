@@ -31,7 +31,9 @@ Account::Account(const AccountID& accountID) : _accountID(accountID)
 
 Account::~Account()
 {
-  delete _link; _link = NULL;
+  // _link should be destroyed WHERE IT'S CREATED
+  //delete _link;
+  //_link = NULL;
 }
 
 

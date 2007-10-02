@@ -32,6 +32,7 @@ SIPAccount::SIPAccount(const AccountID& accountID)
 SIPAccount::~SIPAccount()
 {
   delete _link;
+  _link = NULL;
 }
 
 void

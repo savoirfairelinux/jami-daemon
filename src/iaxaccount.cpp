@@ -32,6 +32,7 @@ IAXAccount::IAXAccount(const AccountID& accountID)
 IAXAccount::~IAXAccount()
 {
   delete _link;
+  _link = NULL;
 }
 
 void
