@@ -31,23 +31,10 @@ Account::Account(const AccountID& accountID) : _accountID(accountID)
 
 Account::~Account()
 {
-  delete _link; _link = NULL;
+  // _link should be destroyed WHERE IT'S CREATED
+  //delete _link;
+  //_link = NULL;
 }
-
-
-void
-Account::initConfig(Conf::ConfigTree& config) {
-  /*
-  std::string section(_accountID);
-  std::string type_str("string");
-  std::string type_int("int");
-
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ENABLE,"1", type_int));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_AUTO_REGISTER, "1", type_int));
-  config.addConfigTreeItem(section, Conf::ConfigTreeItem(CONFIG_ACCOUNT_ALIAS, _("My account"), type_str));
-  */
-}
-
 
 
 void

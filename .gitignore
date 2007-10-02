@@ -63,6 +63,7 @@ sflphone-gtk/doc/html/*
 /sflphone-gtk/mkinstalldirs
 /sflphone-gtk/src/sflphone-gtk
 /sflphone-gtk/autom4te*
+/sflphone-gtk/sflphone.desktop
 
 
 
@@ -94,7 +95,7 @@ tools/portaudio
 /www/cache
 /www/config.inc.php
 /www/lighttpd.*
-
+/doc/images/graphics/*
 
 # Ignore platform packaging temp files
 /platform/debian/changelog

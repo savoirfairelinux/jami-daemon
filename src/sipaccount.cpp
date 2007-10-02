@@ -32,21 +32,28 @@ SIPAccount::SIPAccount(const AccountID& accountID)
 SIPAccount::~SIPAccount()
 {
   delete _link;
+  _link = NULL;
 }
 
 void
 SIPAccount::registerVoIPLink()
 {
-  init(); // init if not enable
-  unregisterVoIPLink();
+  _link->setFullName(Manager::instance().getConfigString(_accountID,SIP_FULL_NAME));
+  _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST_PART));
+  int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
+  
   SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
-  if (thislink) {
-    // Stuff needed for SIP registration.
-    thislink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
-    thislink->setUserPart(Manager::instance().getConfigString(_accountID,SIP_USER_PART));
-    thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_AUTH_NAME));
-    thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
-  }
+
+  thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
+  thislink->setUseStun( useStun!=0 ? true : false);
+
+  _link->init();
+
+  // Stuff needed for SIP registration.
+  thislink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
+  thislink->setUserPart(Manager::instance().getConfigString(_accountID,SIP_USER_PART));
+  thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_AUTH_NAME));
+  thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
 
   _link->sendRegister();
 }
@@ -55,53 +62,7 @@ void
 SIPAccount::unregisterVoIPLink()
 {
   _link->sendUnregister();
-}
-
-bool
-SIPAccount::init()
-{
-  _link->setFullName(Manager::instance().getConfigString(_accountID,SIP_FULL_NAME));
-  _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST_PART));
-  int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
-  
-  SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
-  if (thislink) {
-    thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
-    thislink->setUseStun( useStun!=0 ? true : false);
-  }
-  _link->init();
-  return true;
-}
-
-bool
-SIPAccount::terminate()
-{
   _link->terminate();
-    return true;
-}
-
-void 
-SIPAccount::initConfig(Conf::ConfigTree& config)
-{
-  /*
-  std::string section(_accountID);
-  std::string type_str("string");
-  std::string type_int("int");
-
-  // Account generic
-  Account::initConfig(config);
-
-  // SIP specific
-  config.verifyConfigTreeItem(section, CONFIG_ACCOUNT_TYPE, "SIP", type_str);
-  config.verifyConfigTreeItem(section, SIP_FULL_NAME, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_USER_PART, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_HOST_PART, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_AUTH_NAME, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_PASSWORD, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_PROXY, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_STUN_SERVER, "stun.fwdnet.net:3478", type_str);
-  config.verifyConfigTreeItem(section, SIP_USE_STUN, "0", type_int);
-  */
 }
 
 void

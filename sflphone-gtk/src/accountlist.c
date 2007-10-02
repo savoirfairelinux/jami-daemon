@@ -115,15 +115,24 @@ const gchar * account_state_name(account_state_t s)
 	switch(s)
   {
   case ACCOUNT_STATE_REGISTERED:
-  state = "Registered";
-  break;
+    state = "Registered";
+    break;
   case ACCOUNT_STATE_UNREGISTERED:
-  state = "Not Registered";
-  break;
+    state = "Not Registered";
+    break;
+  case ACCOUNT_STATE_TRYING:
+    state = "Trying...";
+    break;
   default:
-  state = "Invalid";
-  break;
+    state = "Invalid";
+    break;
   }
   return state;
 }
 
+void
+account_list_clear ( )
+{
+  g_queue_free (accountQueue);
+  accountQueue = g_queue_new ();
+}

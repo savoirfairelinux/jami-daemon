@@ -24,7 +24,7 @@
 
 
 /**
- * A Sip Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
+ * A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
  * @author Yan Morin <yan.morin@gmail.com>
 */
 class SIPAccount : public Account
@@ -34,17 +34,12 @@ public:
 
   virtual ~SIPAccount();
 
-  /* virtual Account function implementation */
-  void initConfig(Conf::ConfigTree& config);
   /** Actually unuseful, since config loading is done in init() */
   void loadConfig();
   void registerVoIPLink();
   void unregisterVoIPLink();
-  bool init();
-  bool terminate();
 
 private:
-
 };
 
 #endif

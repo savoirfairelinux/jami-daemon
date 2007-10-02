@@ -212,23 +212,48 @@ public:
    * This function should definitively be renamed!
    *
    * @todo Receive account name (???)
+   *
+   * DEPRECATED
    */
-  bool getEvents();
+  //bool getEvents();
 
   //
   bool getZeroconf(const std::string& sequenceId);
   bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
   bool detachZeroconfEvents(Pattern::Observer& observer);
   bool getCallStatus(const std::string& sequenceId);
+
   /** 
    * Get account list 
    * @return A list of accoundIDs
    */
   std::vector< std::string >  getAccountList();
+
+  /**
+   * Retrieve details about a given account
+   */
   std::map< std::string, std::string > getAccountDetails(const AccountID& accountID);
+
+  /**
+   * Save the details of an existing account, given the account ID
+   *
+   * This will load the configuration map with the given data.
+   * It will also register/unregister links where the 'Enabled' switched.
+   */
   void setAccountDetails( const ::DBus::String& accountID, 
                    const std::map< ::DBus::String, ::DBus::String >& details );
+
+  /**
+   * Add a new account, and give it a new account ID automatically
+   */
+  void addAccount(const std::map< ::DBus::String, ::DBus::String >& details);
+
+  /**
+   * Delete an existing account, unregister VoIPLink associated, and
+   * purge from configuration.
+   */
   void removeAccount(const AccountID& accountID);
+
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);
   bool setConfig(const std::string& section, const std::string& name, const std::string& value);
@@ -564,11 +589,6 @@ private:
    */
   VoIPLink* getAccountLink(const AccountID& accountID);
 
-  /**
-   * load default account variable for each protocol
-   */
-  void initConfigAccount();
-  
 
   #ifdef TEST
   bool testCallAccountMap();

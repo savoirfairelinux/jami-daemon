@@ -89,6 +89,8 @@ sflphone_ringing(call_t * c )
 void
 sflphone_fill_account_list()
 {
+  account_list_clear ( );
+  
   gchar ** array = (gchar **)dbus_account_list();
   gchar ** accountID;
   for (accountID = array; *accountID; accountID++)
@@ -114,6 +116,10 @@ sflphone_fill_account_list()
     else if(strcmp(status, "UNREGISTERED") == 0)
     {
       a->state = ACCOUNT_STATE_UNREGISTERED;
+    }
+    else if(strcmp(status, "TRYING") == 0)
+    {
+      a->state = ACCOUNT_STATE_TRYING;
     }
     else
     {

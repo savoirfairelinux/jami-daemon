@@ -141,6 +141,8 @@ accounts_changed_cb (DBusGProxy *proxy,
                   void * foo  )
 {
   g_print ("Accounts changed\n");
+  sflphone_fill_account_list();
+  // TODO reload list
 }
 
 gboolean 
@@ -455,6 +457,27 @@ dbus_set_account_details(account_t *a)
   else 
   {
     g_print ("DBus called set_account_details() on ConfigurationManager\n");
+
+  }
+}
+
+void
+dbus_add_account(account_t *a)
+{
+  GError *error = NULL;
+  org_sflphone_SFLphone_ConfigurationManager_add_account (
+    configurationManagerProxy, 
+    a->properties, 
+    &error);
+  if (error) 
+  {
+    g_printerr ("Failed to call add_account() on ConfigurationManager: %s\n",
+                error->message);
+    g_error_free (error);
+  } 
+  else 
+  {
+    g_print ("DBus called add_account() on ConfigurationManager\n");
 
   }
 }

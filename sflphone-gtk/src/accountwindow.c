@@ -77,39 +77,48 @@ void
 show_account_window (account_t * a)
 {
   guint response;
-  
+ 
   currentAccount = a;
 
-  // Current settings
-  gchar * curAccountType = NULL;
-  gchar * curUserPart = NULL;
-  gchar * curHostPart = NULL;
-  gchar * curPassword = NULL;
-  gchar * curUsername = NULL;
-  gchar * curFullName = NULL;
+  // Default settings
+  gchar * curAccountID = "";
+  gchar * curAccountEnabled = "TRUE";
+  gchar * curAccountType = "SIP";
+  gchar * curUserPart = "";
+  gchar * curHostPart = "";
+  gchar * curPassword = "";
+  gchar * curUsername = "";
+  gchar * curFullName = "";
   /* TODO: add curProxy, and add boxes for Proxy support */
 
   // Load from SIP/IAX/Unknown ?
-  curAccountType = g_hash_table_lookup(currentAccount->properties, ACCOUNT_TYPE);
+  if(a)
+  {
+    curAccountID = a->accountID;
+    curAccountType = g_hash_table_lookup(currentAccount->properties, ACCOUNT_TYPE);
+    curAccountEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ENABLED);
 
-  if (strcmp(curAccountType, "IAX") == 0) {
-    curHostPart = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_HOST);
-    curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_PASS);
-    curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_USER);
-    curFullName = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_FULL_NAME);
+    if (strcmp(curAccountType, "IAX") == 0) {
+      curHostPart = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_HOST);
+      curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_PASS);
+      curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_USER);
+      curFullName = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_FULL_NAME);
+    }
+    else if (strcmp(curAccountType, "SIP") == 0) {
+      curHostPart = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_HOST_PART);
+      curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_PASSWORD);
+      curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_AUTH_NAME);
+      curFullName = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_FULL_NAME);
+      curUserPart = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_USER_PART);
+    }
   }
-  else if (strcmp(curAccountType, "SIP") == 0) {
-    curHostPart = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_HOST_PART);
-    curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_PASSWORD);
-    curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_AUTH_NAME);
-    curFullName = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_FULL_NAME);
-    curUserPart = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_USER_PART);
+  else
+  {
+    currentAccount = g_new0(account_t, 1);
+    currentAccount->properties = g_hash_table_new(NULL, g_str_equal);
+    curAccountID = "test";
   }
-  else {
-    // Default values...
-    curAccountType = "SIP";
-  }
-  
+
   dialog = GTK_DIALOG(gtk_dialog_new_with_buttons ("Account settings",
                                         GTK_WINDOW(get_main_window()),
                                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -132,14 +141,14 @@ show_account_window (account_t * a)
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryID = gtk_entry_new();
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryID);
-  gtk_entry_set_text(GTK_ENTRY(entryID), a->accountID);
+  gtk_entry_set_text(GTK_ENTRY(entryID), curAccountID);
   gtk_widget_set_sensitive( GTK_WIDGET(entryID), FALSE);
   gtk_table_attach ( GTK_TABLE( table ), entryID, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 #endif 
   
   entryEnabled = gtk_check_button_new_with_mnemonic("_Enabled");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryEnabled), 
-    strcmp(g_hash_table_lookup(currentAccount->properties, ACCOUNT_ENABLED),"TRUE") == 0 ? TRUE: FALSE); 
+    strcmp(curAccountEnabled,"TRUE") == 0 ? TRUE: FALSE); 
   gtk_table_attach ( GTK_TABLE( table ), entryEnabled, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
   //entryRegister = gtk_check_button_new_with_mnemonic("_Register on startup ");
@@ -259,7 +268,11 @@ show_account_window (account_t * a)
     g_hash_table_replace(currentAccount->properties, 
       g_strdup(ACCOUNT_ALIAS), 
       g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryName))));
+    g_hash_table_replace(currentAccount->properties, 
+      g_strdup(ACCOUNT_TYPE), 
+      g_strdup(proto));
 
+    
     if (strcmp(proto, "SIP") == 0) { /* Protocol = SIP */
       g_hash_table_replace(currentAccount->properties, 
         g_strdup(ACCOUNT_SIP_FULL_NAME), 
@@ -295,7 +308,13 @@ show_account_window (account_t * a)
       
     }
       
-    dbus_set_account_details(currentAccount);
+    /** @todo Verify if it's the best condition to check */
+    if (currentAccount->accountID == NULL) {
+      dbus_add_account(currentAccount);
+    }
+    else {
+      dbus_set_account_details(currentAccount);
+    }
   }
   gtk_widget_destroy (GTK_WIDGET(dialog));
   

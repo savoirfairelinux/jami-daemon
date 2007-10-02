@@ -19,6 +19,7 @@
  
 #include <global.h>
 #include <configurationmanager.h>
+#include <sstream>
 #include "../manager.h"
 
 const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/ConfigurationManager";
@@ -49,7 +50,7 @@ void
 ConfigurationManager::addAccount( const std::map< ::DBus::String, ::DBus::String >& details )
 {
     _debug("ConfigurationManager::addAccount received\n");
-
+    Manager::instance().addAccount(details);
 }
 
 
@@ -65,7 +66,6 @@ ConfigurationManager::getAccountList(  )
 {
     _debug("ConfigurationManager::getAccountList received\n");
     return Manager::instance().getAccountList();
-    
 }
 
 

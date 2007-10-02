@@ -429,11 +429,7 @@ ManagerImpl::initRegisterAccounts()
     if ( iter->second) {
       iter->second->loadConfig();
       if ( iter->second->isEnabled() ) {
-        if ( iter->second->init() ) {
-            iter->second->registerVoIPLink();
-        }
-        // init only the first account -- naahh..
-        //break;
+	iter->second->registerVoIPLink();
       }
     }
     iter++;
@@ -456,7 +452,6 @@ ManagerImpl::registerAccount(const AccountID& accountId)
     while ( iter != _accountMap.end() ) {
       if ( iter->second ) {
         iter->second->unregisterVoIPLink();
-        iter->second->terminate();
       }
       iter++;
     }
@@ -1070,8 +1065,6 @@ ManagerImpl::initConfigFile (void)
   fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
 
-  initConfigAccount();
-  
   if (createSettingsPath() == 1) {
     _exist = _config.populateFromFile(_path);
   }
@@ -1254,11 +1247,14 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
  *
  * @todo When is this called ? Why this name 'getEvents' ?
  */
+/**
+ * DEPRECATED
 bool
 ManagerImpl::getEvents() {
   initRegisterAccounts();
   return true;
 }
+*/
 
 // TODO: rewrite this
 /**
@@ -1584,9 +1580,9 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
     std::pair<std::string, std::string>(
       "Status", 
       (state == VoIPLink::Registered ? "REGISTERED":
-       (state == VoIPLink::Unregistered ? "UNREGISTERED":
-	(state == VoIPLink::Trying ? "TRYING":
-	 (state == VoIPLink::Error ? "ERROR": "UNKNOWN"))))
+        (state == VoIPLink::Unregistered ? "UNREGISTERED":
+          (state == VoIPLink::Trying ? "TRYING":
+            (state == VoIPLink::Error ? "ERROR": "UNKNOWN"))))
       )
     );
   a.insert(
@@ -1684,7 +1680,7 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
 				const std::map< ::DBus::String, ::DBus::String >& details )
 {
   std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
-    
+
   setConfig(accountID, CONFIG_ACCOUNT_ALIAS, (*details.find(CONFIG_ACCOUNT_ALIAS)).second);
   //setConfig(accountID, CONFIG_ACCOUNT_AUTO_REGISTER, 
   // (*details.find(CONFIG_ACCOUNT_AUTO_REGISTER)).second == "TRUE" ? "1": "0" );
@@ -1698,10 +1694,10 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
     setConfig(accountID, SIP_AUTH_NAME, (*details.find(SIP_AUTH_NAME)).second);
     setConfig(accountID, SIP_PASSWORD,  (*details.find(SIP_PASSWORD)).second);
     setConfig(accountID, SIP_HOST_PART, (*details.find(SIP_HOST_PART)).second);
-    setConfig(accountID, SIP_PROXY,     (*details.find(SIP_PROXY)).second);
-    setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
-    setConfig(accountID, SIP_USE_STUN,
-	      (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
+    //setConfig(accountID, SIP_PROXY,     (*details.find(SIP_PROXY)).second);
+    //setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
+    //setConfig(accountID, SIP_USE_STUN,
+	  //    (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
   }
   else if (accountType == "IAX") {
     setConfig(accountID, IAX_FULL_NAME, (*details.find(IAX_FULL_NAME)).second);
@@ -1709,27 +1705,76 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
     setConfig(accountID, IAX_USER,      (*details.find(IAX_USER)).second);
     setConfig(accountID, IAX_PASS,      (*details.find(IAX_PASS)).second);    
   } else {
-    _debug("Unknown account type in setAccountDetails(): %s", accountType.c_str());
+    _debug("Unknown account type in setAccountDetails(): %s\n", accountType.c_str());
   }
   
   saveConfig();
-  
-  /** @todo Then, reset the VoIP link with the new information */
+
+  /*
+   * register if it was just enabled, and we hadn't registered
+   * unregister if it was enabled/registered, and we want it closed
+   */
+  Account* acc = getAccount(accountID);
+
+  acc->loadConfig();
+  if (acc->isEnabled()) {
+    // Verify we aren't already registered, then register
+    if (acc->getRegistrationState() == VoIPLink::Unregistered) {
+      acc->registerVoIPLink();
+    }
+  } else {
+    // Verify we are already registered, then unregister
+    if (acc->getRegistrationState() == VoIPLink::Registered) {
+      acc->unregisterVoIPLink();
+    }
+  }
+
+  /** @todo Make the daemon use the new settings */
+  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }                   
+
+
+void
+ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& details)
+{
+  /** @todo Deal with both the _accountMap and the Configuration */
+  std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
+  Account* newAccount;
+  std::stringstream accountID;
+  accountID << "Account:" << time(NULL);
+  AccountID newAccountID = accountID.str();
+  /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
+
+  if (accountType == "SIP") {
+    newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
+  }
+  else if (accountType == "IAX") {
+    newAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, newAccountID);
+  }
+  else {
+    _debug("Unknown %s param when calling addAccount(): %s\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
+    return;
+  }
+  _accountMap[newAccountID] = newAccount;
+
+  setAccountDetails(accountID.str(), details);
+}
 
 void 
 ManagerImpl::removeAccount(const AccountID& accountID) 
 {
-  _debug("Not implemented\n");
-  //TODO
-  /*AccountMap::iterator iter = _accountMap.begin();
-  while ( iter != _accountMap.end() ) {
-    _debug("Account %s == %s ", iter->first, accountID);
-    if ( iter->first == accountID ) {
-      _accountMap.erase(iter);      
-    }
-    iter++;
-  }*/
+  // Get it down and dying
+  Account* remAccount = getAccount(accountID);
+
+  if (remAccount) {
+    remAccount->unregisterVoIPLink();
+    _accountMap.erase(accountID);
+    delete remAccount;
+  }
+
+  _config.removeSection(accountID);
+
+  saveConfig();
 }
 
 //THREAD=Main
@@ -1968,16 +2013,6 @@ ManagerImpl::getAccountLink(const AccountID& accountID)
   return 0;
 }
 
-void
-ManagerImpl::initConfigAccount() {
-  AccountMap::iterator iter = _accountMap.begin();
-  while ( iter != _accountMap.end() ) {
-    if (iter->second!=0) {
-      iter->second->initConfig(_config);
-    }
-    iter++;
-  }
-}
 
 #ifdef TEST
 /** 

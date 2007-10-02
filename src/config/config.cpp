@@ -51,6 +51,18 @@ ConfigTree::createSection(const std::string& section) {
   }
 }
 
+/**
+ * Remove the section only if it exists
+ */
+void
+ConfigTree::removeSection(const std::string& section) {
+  // if we doesn't find the item, create it
+  SectionMap::iterator iter = _sections.find(section);
+  if (iter != _sections.end()) {
+    _sections.erase(iter);
+  }
+}
+
 /** Retrieve the sections as an array */
 TokenList
 ConfigTree::getSections()

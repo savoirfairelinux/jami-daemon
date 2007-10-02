@@ -71,12 +71,11 @@ delete_account( GtkWidget *widget, gpointer   data )
   if(selectedAccount)
   {
     dbus_remove_account(selectedAccount->accountID);
-    fill_account_list ();
   }
 }
 
 /**
- * Delete an account
+ * Edit an account
  */
 static void 
 edit_account( GtkWidget *widget, gpointer   data )
@@ -84,8 +83,17 @@ edit_account( GtkWidget *widget, gpointer   data )
   if(selectedAccount)
   {
     show_account_window(selectedAccount);
-    fill_account_list ();
   }
+}
+
+
+/**
+ * Add an account
+ */
+static void 
+add_account( GtkWidget *widget, gpointer   data )
+{
+  show_account_window(NULL);
 }
 
 /* Call back when the user click on an account in the list */
@@ -110,8 +118,7 @@ select_account(GtkTreeSelection *sel, GtkTreeModel *model)
 	if(selectedAccount)
 	{
     gtk_widget_set_sensitive( GTK_WIDGET(editButton),   TRUE);
-    /*TODO Set to TRUE when removeAccount is implemented */
-    gtk_widget_set_sensitive( GTK_WIDGET(deleteButton), FALSE); 
+    gtk_widget_set_sensitive( GTK_WIDGET(deleteButton), TRUE); 
   }
   g_print("select");
   
@@ -195,15 +202,13 @@ create_accounts_tab()
 	gtk_box_set_spacing(GTK_BOX(bbox), 10); //GAIM_HIG_BOX_SPACE
 	gtk_button_box_set_layout(GTK_BUTTON_BOX(bbox), GTK_BUTTONBOX_START);
 	gtk_box_pack_start(GTK_BOX(ret), bbox, FALSE, FALSE, 0);
-	gtk_widget_show (bbox);
+	gtk_widget_show (bbox); 
 	
 	addButton = gtk_button_new_from_stock (GTK_STOCK_ADD);
-	/*g_signal_connect_swapped(G_OBJECT(addButton), "clicked",
-							 G_CALLBACK(config_module), _gtkWindow);*/
+	g_signal_connect_swapped(G_OBJECT(addButton), "clicked",
+							 G_CALLBACK(add_account), NULL);
 	gtk_box_pack_start(GTK_BOX(bbox), addButton, FALSE, FALSE, 0);
 	gtk_widget_show(addButton);
-	/* TODO Set to TRUE when AddAccount is implemented */
-	gtk_widget_set_sensitive( GTK_WIDGET(addButton), FALSE); 
 	
 	editButton = gtk_button_new_from_stock (GTK_STOCK_EDIT);
 	g_signal_connect_swapped(G_OBJECT(editButton), "clicked",

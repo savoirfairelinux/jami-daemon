@@ -57,14 +57,9 @@ typedef std::string AccountID;
  */
 class Account{
  public:
-    Account(const AccountID& accountID);
+  Account(const AccountID& accountID);
 
-    virtual ~Account();
-
-  /**
-   * Load the default properties for the account
-   */
-  virtual void initConfig(Conf::ConfigTree& config);
+  virtual ~Account();
 
   /**
    * Load the settings for this account.
@@ -84,7 +79,7 @@ class Account{
   inline VoIPLink* getVoIPLink() { return _link; }
 
   /**
-   * Register the underlying VoIPLink
+   * Register the underlying VoIPLink. Launch the event listener.
    *
    * This should update the getRegistrationState() return value.
    *
@@ -93,25 +88,13 @@ class Account{
   virtual void registerVoIPLink() = 0;
 
   /**
-   * Unregister the underlying VoIPLink
+   * Unregister the underlying VoIPLink. Stop the event listener.
    *
    * This should update the getRegistrationState() return value.
    *
    * @return false is an error occurs
    */
   virtual void unregisterVoIPLink() = 0;
-
-  /**
-   * Init the voiplink to run (event listener)
-   * @return false if an error occurs
-   */
-  virtual bool init() = 0;
-
-  /**
-   * Stop the voiplink to run (event listener)
-   * @return false is an error occurs
-   */
-  virtual bool terminate() = 0;
 
   /**
    * Tell if the account is enable or not. See doc for _enabled.

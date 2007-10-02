@@ -65,7 +65,7 @@ public:
   ~ConfigTree();
 
   void createSection(const std::string& section);
-
+  void removeSection(const std::string& section);
   /**
    * Return an array of strings, listing the sections of the config file
    *

@@ -49,7 +49,8 @@ typedef enum
 {
    ACCOUNT_STATE_INVALID = 0,
    ACCOUNT_STATE_REGISTERED,   
-   ACCOUNT_STATE_UNREGISTERED   
+   ACCOUNT_STATE_UNREGISTERED,   
+   ACCOUNT_STATE_TRYING 
 } account_state_t;
 
 /** @struct account_t
@@ -62,7 +63,8 @@ typedef enum
   */
 typedef struct  {
   gchar * accountID;
-  account_state_t state;  GHashTable * properties;
+  account_state_t state;  
+  GHashTable * properties;
 } account_t;
 
 /** This function initialize the account list. */
@@ -98,4 +100,6 @@ account_t * account_list_get_nth ( guint n );
   * @param s The state
   * @return The full text description of the state */
 const gchar * account_state_name(account_state_t s);
+
+void account_list_clear ( );
 #endif 

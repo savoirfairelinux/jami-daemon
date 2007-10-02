@@ -32,12 +32,14 @@ IAXAccount::IAXAccount(const AccountID& accountID)
 IAXAccount::~IAXAccount()
 {
   delete _link;
+  _link = NULL;
 }
 
 void
 IAXAccount::registerVoIPLink()
 {
-  init();
+  _link->init();
+
   //unregisterAccount(); No need to unregister first.
   IAXVoIPLink* thislink = dynamic_cast<IAXVoIPLink*> (_link);
   if (thislink) {
@@ -54,40 +56,7 @@ void
 IAXAccount::unregisterVoIPLink()
 {
   _link->sendUnregister();
-}
-
-bool
-IAXAccount::init()
-{
-  _link->init();
-  return true;
-}
-
-bool
-IAXAccount::terminate()
-{
   _link->terminate();
-  return true;
-}
-
-void 
-IAXAccount::initConfig(Conf::ConfigTree& config)
-{
-  /*
-  std::string section(_accountID);
-  std::string type_str("string");
-  std::string type_int("int");
-
-  // Account generic
-  Account::initConfig(config);
-
-  // IAX specific
-  config.verifyConfigTreeItem(section, CONFIG_ACCOUNT_TYPE, "IAX", type_str);
-  config.verifyConfigTreeItem(section, IAX_FULL_NAME, "", type_str);
-  config.verifyConfigTreeItem(section, IAX_HOST, "", type_str);
-  config.verifyConfigTreeItem(section, IAX_USER, "", type_str);
-  config.verifyConfigTreeItem(section, IAX_PASS, "", type_str);
-  */
 }
 
 void
