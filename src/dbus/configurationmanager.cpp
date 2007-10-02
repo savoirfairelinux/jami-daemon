@@ -50,9 +50,7 @@ void
 ConfigurationManager::addAccount( const std::map< ::DBus::String, ::DBus::String >& details )
 {
     _debug("ConfigurationManager::addAccount received\n");
-    std::stringstream accountID;
-    accountID << "Account:" << time(NULL);
-    Manager::instance().setAccountDetails(accountID.str(), details);
+    Manager::instance().addAccount(details);
 }
 
 

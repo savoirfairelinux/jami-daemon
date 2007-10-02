@@ -1684,7 +1684,7 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
 				const std::map< ::DBus::String, ::DBus::String >& details )
 {
   std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
-    
+
   setConfig(accountID, CONFIG_ACCOUNT_ALIAS, (*details.find(CONFIG_ACCOUNT_ALIAS)).second);
   //setConfig(accountID, CONFIG_ACCOUNT_AUTO_REGISTER, 
   // (*details.find(CONFIG_ACCOUNT_AUTO_REGISTER)).second == "TRUE" ? "1": "0" );
@@ -1717,10 +1717,57 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }                   
 
+
+void
+ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& details)
+{
+  /** @todo Deal with both the _accountMap and the Configuration */
+  std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
+  Account* newAccount;
+  std::stringstream accountID;
+  accountID << "Account:" << time(NULL);
+  AccountID newAccountID = accountID.str();
+  /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
+
+  setAccountDetails(accountID.str(), details);
+
+  saveConfig();
+
+  if (accountType == "SIP") {
+    newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
+  }
+  else if (accountType == "IAX") {
+    newAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, newAccountID);
+  }
+  else {
+    _debug("Unknown %s param when calling addAccount(): %s\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
+    return;
+  }
+  _accountMap[newAccountID] = newAccount;
+
+  // Get it up and running...
+  newAccount->loadConfig();
+  if (newAccount->isEnabled()) {
+    if (newAccount->init()) {
+      newAccount->registerVoIPLink();
+    }
+  }
+}
+
 void 
 ManagerImpl::removeAccount(const AccountID& accountID) 
 {
+  // Get it down and dying
+  Account* remAccount = getAccount(accountID);
+
+  if (remAccount) {
+    remAccount->unregisterVoIPLink();
+    _accountMap.erase(accountID);
+    delete remAccount;
+  }
+
   _config.removeSection(accountID);
+
   saveConfig();
 }
 
