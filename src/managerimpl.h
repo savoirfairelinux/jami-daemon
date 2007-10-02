@@ -236,6 +236,9 @@ public:
 
   /**
    * Save the details of an existing account, given the account ID
+   *
+   * This will load the configuration map with the given data.
+   * It will also register/unregister links where the 'Enabled' switched.
    */
   void setAccountDetails( const ::DBus::String& accountID, 
                    const std::map< ::DBus::String, ::DBus::String >& details );

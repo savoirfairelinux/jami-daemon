@@ -429,11 +429,7 @@ ManagerImpl::initRegisterAccounts()
     if ( iter->second) {
       iter->second->loadConfig();
       if ( iter->second->isEnabled() ) {
-        if ( iter->second->init() ) {
-            iter->second->registerVoIPLink();
-        }
-        // init only the first account -- naahh..
-        //break;
+	iter->second->registerVoIPLink();
       }
     }
     iter++;
@@ -1713,6 +1709,26 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
   }
   
   saveConfig();
+
+  /*
+   * register if it was just enabled, and we hadn't registered
+   * unregister if it was enabled/registered, and we want it closed
+   */
+  Account* acc = getAccount(accountID);
+
+  acc->loadConfig();
+  if (acc->isEnabled()) {
+    // Verify we aren't already registered, then register
+    if (acc->getRegistrationState() == VoIPLink::Unregistered) {
+      acc->registerVoIPLink();
+    }
+  } else {
+    // Verify we are already registered, then unregister
+    if (acc->getRegistrationState() == VoIPLink::Registered) {
+      acc->unregisterVoIPLink();
+    }
+  }
+
   /** @todo Make the daemon use the new settings */
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }                   
@@ -1729,10 +1745,6 @@ ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& detail
   AccountID newAccountID = accountID.str();
   /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
-  setAccountDetails(accountID.str(), details);
-
-  saveConfig();
-
   if (accountType == "SIP") {
     newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
   }
@@ -1745,13 +1757,7 @@ ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& detail
   }
   _accountMap[newAccountID] = newAccount;
 
-  // Get it up and running...
-  newAccount->loadConfig();
-  if (newAccount->isEnabled()) {
-    if (newAccount->init()) {
-      newAccount->registerVoIPLink();
-    }
-  }
+  setAccountDetails(accountID.str(), details);
 }
 
 void 
