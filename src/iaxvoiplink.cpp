@@ -397,12 +397,15 @@ IAXVoIPLink::sendRegister()
   // lock
   _mutexIAX.enterMutex();
 
-  if (_regSession == NULL) {
-    _regSession = iax_session_new();
+  // Always use a brand new session
+  if (_regSession) {
+    iax_destroy(_regSession);
   }
+
+  _regSession = iax_session_new();
+
   if (!_regSession) {
     _debug("Error when generating new session for register");
-
   } else {
     // refresh
     // last reg
