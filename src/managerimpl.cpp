@@ -1252,11 +1252,14 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
  *
  * @todo When is this called ? Why this name 'getEvents' ?
  */
+/**
+ * DEPRECATED
 bool
 ManagerImpl::getEvents() {
   initRegisterAccounts();
   return true;
 }
+*/
 
 // TODO: rewrite this
 /**

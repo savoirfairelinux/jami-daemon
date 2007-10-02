@@ -33,7 +33,8 @@ DBusManagerImpl::exec(){
     _callManager = new CallManager(conn);
     _configurationManager = new ConfigurationManager(conn);
 
-    Manager::instance().getEvents();  // Register accounts
+    // Register accounts
+    Manager::instance().initRegisterAccounts(); //getEvents();
 
     _debug("Starting DBus event loop\n");
     _dispatcher.enter();

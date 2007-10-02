@@ -212,8 +212,10 @@ public:
    * This function should definitively be renamed!
    *
    * @todo Receive account name (???)
+   *
+   * DEPRECATED
    */
-  bool getEvents();
+  //bool getEvents();
 
   //
   bool getZeroconf(const std::string& sequenceId);
