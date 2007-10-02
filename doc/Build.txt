@@ -90,7 +90,7 @@ make
 sudo make install
 -------------------------
 
-NOTE: Some persons needed to run `autoreconf --install` before the `configure` script.
+NOTE: You may need to run `autoreconf --install` before the `configure` script.
 
 You'll find `gnome-autogen.sh` in some `gnome-common`-like package of
 your distribution. You can also replace it by a call to:
