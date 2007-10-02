@@ -81,30 +81,6 @@ SIPAccount::terminate()
     return true;
 }
 
-void 
-SIPAccount::initConfig(Conf::ConfigTree& config)
-{
-  /*
-  std::string section(_accountID);
-  std::string type_str("string");
-  std::string type_int("int");
-
-  // Account generic
-  Account::initConfig(config);
-
-  // SIP specific
-  config.verifyConfigTreeItem(section, CONFIG_ACCOUNT_TYPE, "SIP", type_str);
-  config.verifyConfigTreeItem(section, SIP_FULL_NAME, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_USER_PART, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_HOST_PART, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_AUTH_NAME, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_PASSWORD, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_PROXY, "", type_str);
-  config.verifyConfigTreeItem(section, SIP_STUN_SERVER, "stun.fwdnet.net:3478", type_str);
-  config.verifyConfigTreeItem(section, SIP_USE_STUN, "0", type_int);
-  */
-}
-
 void
 SIPAccount::loadConfig() 
 {

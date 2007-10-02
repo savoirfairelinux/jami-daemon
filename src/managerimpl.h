@@ -584,11 +584,6 @@ private:
    */
   VoIPLink* getAccountLink(const AccountID& accountID);
 
-  /**
-   * load default account variable for each protocol
-   */
-  void initConfigAccount();
-  
 
   #ifdef TEST
   bool testCallAccountMap();

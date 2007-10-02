@@ -57,14 +57,9 @@ typedef std::string AccountID;
  */
 class Account{
  public:
-    Account(const AccountID& accountID);
+  Account(const AccountID& accountID);
 
-    virtual ~Account();
-
-  /**
-   * Load the default properties for the account
-   */
-  virtual void initConfig(Conf::ConfigTree& config);
+  virtual ~Account();
 
   /**
    * Load the settings for this account.

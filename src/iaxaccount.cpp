@@ -71,26 +71,6 @@ IAXAccount::terminate()
   return true;
 }
 
-void 
-IAXAccount::initConfig(Conf::ConfigTree& config)
-{
-  /*
-  std::string section(_accountID);
-  std::string type_str("string");
-  std::string type_int("int");
-
-  // Account generic
-  Account::initConfig(config);
-
-  // IAX specific
-  config.verifyConfigTreeItem(section, CONFIG_ACCOUNT_TYPE, "IAX", type_str);
-  config.verifyConfigTreeItem(section, IAX_FULL_NAME, "", type_str);
-  config.verifyConfigTreeItem(section, IAX_HOST, "", type_str);
-  config.verifyConfigTreeItem(section, IAX_USER, "", type_str);
-  config.verifyConfigTreeItem(section, IAX_PASS, "", type_str);
-  */
-}
-
 void
 IAXAccount::loadConfig() 
 {

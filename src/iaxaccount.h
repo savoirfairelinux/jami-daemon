@@ -34,8 +34,6 @@ public:
 
     ~IAXAccount();
 
-  /* virtual Account function implementation */
-  void initConfig(Conf::ConfigTree& config);
   /** Actually unuseful, since config loading is done in init() */
   void loadConfig();
   void registerVoIPLink();

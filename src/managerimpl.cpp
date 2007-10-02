@@ -1070,8 +1070,6 @@ ManagerImpl::initConfigFile (void)
   fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
 
-  initConfigAccount();
-  
   if (createSettingsPath() == 1) {
     _exist = _config.populateFromFile(_path);
   }
@@ -2007,16 +2005,6 @@ ManagerImpl::getAccountLink(const AccountID& accountID)
   return 0;
 }
 
-void
-ManagerImpl::initConfigAccount() {
-  AccountMap::iterator iter = _accountMap.begin();
-  while ( iter != _accountMap.end() ) {
-    if (iter->second!=0) {
-      iter->second->initConfig(_config);
-    }
-    iter++;
-  }
-}
 
 #ifdef TEST
 /** 
