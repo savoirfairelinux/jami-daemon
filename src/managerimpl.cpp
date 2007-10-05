@@ -1582,7 +1582,7 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
       (state == VoIPLink::Registered ? "REGISTERED":
         (state == VoIPLink::Unregistered ? "UNREGISTERED":
           (state == VoIPLink::Trying ? "TRYING":
-            (state == VoIPLink::Error ? "ERROR": "UNKNOWN"))))
+            (state == VoIPLink::Error ? "ERROR": "ERROR"))))
       )
     );
   a.insert(

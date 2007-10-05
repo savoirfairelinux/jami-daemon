@@ -123,6 +123,9 @@ const gchar * account_state_name(account_state_t s)
   case ACCOUNT_STATE_TRYING:
     state = "Trying...";
     break;
+  case ACCOUNT_STATE_ERROR:
+    state = "Error";
+    break;
   default:
     state = "Invalid";
     break;

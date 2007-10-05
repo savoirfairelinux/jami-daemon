@@ -121,6 +121,10 @@ sflphone_fill_account_list()
     {
       a->state = ACCOUNT_STATE_TRYING;
     }
+    else if(strcmp(status, "ERROR") == 0)
+    {
+      a->state = ACCOUNT_STATE_ERROR;
+    }
     else
     {
       a->state = ACCOUNT_STATE_INVALID;

@@ -50,7 +50,8 @@ typedef enum
    ACCOUNT_STATE_INVALID = 0,
    ACCOUNT_STATE_REGISTERED,   
    ACCOUNT_STATE_UNREGISTERED,   
-   ACCOUNT_STATE_TRYING 
+   ACCOUNT_STATE_TRYING, 
+   ACCOUNT_STATE_ERROR
 } account_state_t;
 
 /** @struct account_t
