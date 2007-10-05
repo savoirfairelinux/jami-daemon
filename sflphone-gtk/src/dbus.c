@@ -17,12 +17,13 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
+#include <accountlist.h>
+#include <calllist.h>
 #include <callmanager-glue.h>
 #include <configurationmanager-glue.h>
-#include <calllist.h>
-#include <accountlist.h>
-#include <marshaller.h>
+#include <configwindow.h>
 #include <mainwindow.h>
+#include <marshaller.h>
 #include <sliders.h>
 
 #include <dbus.h>
@@ -142,7 +143,7 @@ accounts_changed_cb (DBusGProxy *proxy,
 {
   g_print ("Accounts changed\n");
   sflphone_fill_account_list();
-  // TODO reload list
+  config_window_fill_account_list();
 }
 
 gboolean 

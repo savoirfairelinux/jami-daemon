@@ -26,6 +26,6 @@
   * @brief The Preferences window.
   */
 void show_config_window ( );
-
+void config_window_fill_account_list ( );
 
 #endif 

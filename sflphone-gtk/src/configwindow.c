@@ -27,6 +27,7 @@
 #include <gtk/gtk.h>
 
 /** Local variables */
+gboolean  dialogOpen = FALSE;
 GtkListStore *account_store;
 GtkWidget * addButton;
 GtkWidget * editButton;
@@ -36,31 +37,34 @@ account_t * selectedAccount;
 
 /** Fills the treelist with accounts */
 void 
-fill_account_list ()
+config_window_fill_account_list ()
 {
-	GtkTreeIter iter;
+  if(dialogOpen)
+  {
+  	GtkTreeIter iter;
 
-	gtk_list_store_clear(account_store);
-  int i;
-	for( i = 0; i < account_list_get_size(); i++)
-	{
-    account_t  * a = account_list_get_nth (i);
-    if (a)
-    {
-      gtk_list_store_append (account_store, &iter);
-  		      
-  		gtk_list_store_set(account_store, &iter,
-  				   0, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
-  				   1, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
-  				   2, account_state_name(a->state),      // Status
-  				   3, a,                                 // Pointer
-  				   -1);
+  	gtk_list_store_clear(account_store);
+    int i;
+  	for( i = 0; i < account_list_get_size(); i++)
+  	{
+      account_t  * a = account_list_get_nth (i);
+      if (a)
+      {
+        gtk_list_store_append (account_store, &iter);
+    		      
+    		gtk_list_store_set(account_store, &iter,
+    				   0, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
+    				   1, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
+    				   2, account_state_name(a->state),      // Status
+    				   3, a,                                 // Pointer
+    				   -1);
 
-  	}
-  } 
-  
-  gtk_widget_set_sensitive( GTK_WIDGET(editButton),   FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(deleteButton), FALSE);
+    	}
+    } 
+    
+    gtk_widget_set_sensitive( GTK_WIDGET(editButton),   FALSE);
+    gtk_widget_set_sensitive( GTK_WIDGET(deleteButton), FALSE);
+  }
 }
 /**
  * Delete an account
@@ -224,7 +228,7 @@ create_accounts_tab()
 	
 	gtk_widget_show_all(ret);
 	
-	fill_account_list();
+	config_window_fill_account_list();
 
 	return ret;
 }
@@ -235,6 +239,8 @@ show_config_window ()
   GtkDialog * dialog;
   GtkWidget * notebook;
   GtkWidget * tab;
+ 
+  dialogOpen = TRUE;
   
   dialog = GTK_DIALOG(gtk_dialog_new_with_buttons ("Preferences",
                                         GTK_WINDOW(get_main_window()),
@@ -258,6 +264,8 @@ show_config_window ()
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
   
   gtk_dialog_run (dialog);
+
+  dialogOpen = FALSE;
   
   gtk_widget_destroy (GTK_WIDGET(dialog));
 }
