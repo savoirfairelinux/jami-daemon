@@ -21,6 +21,7 @@
 #include <actions.h>
 #include <calllist.h> 
 #include <calltree.h>
+#include <configwindow.h>
 #include <dialpad.h>
 #include <mainwindow.h>
 #include <menus.h>
@@ -163,6 +164,26 @@ create_main_window ()
   gtk_widget_show_all (window);
   
   screen_clear();
+
+  // Welcome screen
+  if (account_list_get_size() == 0)
+  {
+    GtkWidget * dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(window),
+                                  GTK_DIALOG_DESTROY_WITH_PARENT,
+                                  GTK_MESSAGE_INFO,
+                                  GTK_BUTTONS_YES_NO,
+                                  "<b><big>Welcome to SFLphone!</big></b>\n\nThere are no VoIP accounts configured, would you like to edit the preferences now?");
+
+    int response = gtk_dialog_run (GTK_DIALOG(dialog));
+    
+    gtk_widget_destroy (GTK_WIDGET(dialog));
+
+    if (response == GTK_RESPONSE_YES)
+    {
+      show_config_window();
+    }
+   
+  }
 }
 
 GtkAccelGroup * 
