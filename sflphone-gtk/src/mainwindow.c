@@ -142,13 +142,16 @@ create_main_window ()
   
   widget = create_menus();
   gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-  gtk_box_pack_start (GTK_BOX (vbox), subvbox, TRUE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  
+  widget = create_toolbar();
+  gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  gtk_box_pack_start (GTK_BOX (vbox), create_call_tree(), TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+  
+  gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
  
   widget = create_screen();
   // TODO Add the screen when we are decided
   //gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-  
-  gtk_box_pack_start (GTK_BOX (subvbox), create_call_tree(), TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
   widget = create_slider("speaker");
   gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
