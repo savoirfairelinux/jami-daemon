@@ -171,6 +171,9 @@ sflphone_hang_up()
       case CALL_STATE_INCOMING:  
         dbus_refuse (selectedCall);
         break;
+      case CALL_STATE_TRANSFERT:  
+        dbus_hang_up (selectedCall);
+        break;
       default:
         g_warning("Should not happen!");
         break;
@@ -195,6 +198,9 @@ sflphone_pick_up()
         break;
       case CALL_STATE_HOLD:
         dbus_unhold (selectedCall);
+        break;
+      case CALL_STATE_TRANSFERT:
+        dbus_transfert (selectedCall);
         break;
       default:
         g_warning("Should not happen!");
@@ -279,8 +285,23 @@ sflphone_set_transfert()
     update_call_tree(c);
     update_menus();
   }
+  toolbar_update_buttons();
 }
 
+void 
+sflphone_unset_transfert()
+{
+  call_t * c = call_get_selected();
+  if(c)
+  {
+    c->state = CALL_STATE_CURRENT;
+    c->to = g_strdup("");
+    screen_set_call(c);
+    update_call_tree(c);
+    update_menus();
+  }
+  toolbar_update_buttons();
+}
 void
 sflphone_incoming_call (call_t * c) 
 {
@@ -432,7 +453,7 @@ sflphone_keypad( guint keyval, gchar * key)
           dbus_transfert(c);
           break;
         case 65307: /* ESCAPE */
-          sflphone_current(c); // Quit transfert
+          sflphone_hang_up(c); 
           break;
         default: // When a call is on transfert, typing new numbers will add it to c->to
           process_dialing(c, keyval, key);
