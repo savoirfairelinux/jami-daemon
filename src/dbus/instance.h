@@ -16,27 +16,31 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+ 
+#ifndef INSTANCE_H
+#define INSTANCE_H
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+#include "instance-glue.h"
+#include <dbus-c++/dbus.h>
 
-#include "callmanager.h"
-#include "configurationmanager.h"
-#include "instance.h"
+    
+class Instance
+: public org::sflphone::SFLphone::Instance,
+  public DBus::IntrospectableAdaptor,
+  public DBus::ObjectAdaptor
+{
+private:
+  int count;
 
-class DBusManagerImpl {
-    public:
-        CallManager * getCallManager(){ return _callManager; };
-        ConfigurationManager * getConfigurationManager(){ return _configurationManager; };
-        int exec();
-        void exit();
-        static const char* SERVER_NAME;
-        
-    private:
-        CallManager*          _callManager;
-        ConfigurationManager* _configurationManager;
-        Instance*             _instanceManager;
-        DBus::BusDispatcher   _dispatcher;
+public:
+  Instance(DBus::Connection& connection);
+  static const char* SERVER_PATH;
+  
+  void Register( const ::DBus::Int32& pid, const ::DBus::String& name ); 
+  void Unregister( const ::DBus::Int32& pid );
+    
+    
 };
 
-#endif
+
+#endif//INSTANCE_H

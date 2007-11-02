@@ -21,6 +21,7 @@
 #include <calllist.h>
 #include <callmanager-glue.h>
 #include <configurationmanager-glue.h>
+#include <instance-glue.h>
 #include <configwindow.h>
 #include <mainwindow.h>
 #include <marshaller.h>
@@ -34,6 +35,7 @@
 DBusGConnection * connection;
 DBusGProxy * callManagerProxy;
 DBusGProxy * configurationManagerProxy;
+DBusGProxy * instanceProxy;
 
 static void  
 incoming_call_cb (DBusGProxy *proxy,
@@ -165,6 +167,19 @@ dbus_connect ()
   }
 
   /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
+  
+  instanceProxy = dbus_g_proxy_new_for_name (connection,
+                                     "org.sflphone.SFLphone",
+                                     "/org/sflphone/SFLphone/Instance",
+                                     "org.sflphone.SFLphone.Instance");
+  if (!instanceProxy) 
+  {
+    g_printerr ("Failed to get proxy to Instance\n");
+    return FALSE;
+  }
+  
+  g_print ("DBus connected to Instance\n");
+  
   
   callManagerProxy = dbus_g_proxy_new_for_name (connection,
                                      "org.sflphone.SFLphone",
@@ -552,5 +567,51 @@ dbus_play_dtmf(const gchar * key)
   {
     g_print ("DBus called playDTMF() on callManagerProxy\n");
 
+  }
+}
+
+void
+dbus_register(int pid, gchar * name)
+{
+  GError *error = NULL;
+  
+  org_sflphone_SFLphone_Instance_register(
+    instanceProxy, 
+    pid, 
+    name, 
+    &error);
+
+  if (error) 
+  {
+    g_printerr ("Failed to call register() on instanceProxy: %s\n",
+                error->message);
+    g_error_free (error);
+  } 
+  else 
+  {
+    g_print ("DBus called register() on instanceProxy\n");
+
+  }
+}
+
+void 
+dbus_unregister(int pid)
+{
+  GError *error = NULL;
+  
+  org_sflphone_SFLphone_Instance_unregister(
+    instanceProxy, 
+    pid, 
+    &error);
+
+  if (error) 
+  {
+    g_printerr ("Failed to call unregister() on instanceProxy: %s\n",
+                error->message);
+    g_error_free (error);
+  } 
+  else 
+  {
+    g_print ("DBus called unregister() on instanceProxy\n");
   }
 }

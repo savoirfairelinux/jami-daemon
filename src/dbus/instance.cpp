@@ -16,27 +16,37 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <global.h>
+#include <instance.h>
+#include "../manager.h"
 
-#ifndef __DBUSMANAGERIMPL_H__
-#define __DBUSMANAGERIMPL_H__
+const char* Instance::SERVER_PATH = "/org/sflphone/SFLphone/Instance";
 
-#include "callmanager.h"
-#include "configurationmanager.h"
-#include "instance.h"
+Instance::Instance( DBus::Connection& connection )
+: DBus::ObjectAdaptor(connection, SERVER_PATH)
+{
+  count = 0;
+}
 
-class DBusManagerImpl {
-    public:
-        CallManager * getCallManager(){ return _callManager; };
-        ConfigurationManager * getConfigurationManager(){ return _configurationManager; };
-        int exec();
-        void exit();
-        static const char* SERVER_NAME;
-        
-    private:
-        CallManager*          _callManager;
-        ConfigurationManager* _configurationManager;
-        Instance*             _instanceManager;
-        DBus::BusDispatcher   _dispatcher;
-};
+void
+Instance::Register( const ::DBus::Int32& pid, 
+                     const ::DBus::String& name )
+{
+    _debug("Instance::register received\n");
+    count++;
+}
 
-#endif
+
+void
+Instance::Unregister( const ::DBus::Int32& pid )
+{
+    _debug("Instance::unregister received\n");
+    count --;
+    if(count <= 0)
+    {
+      _debug("0 client running, quitting...");
+      DBusManager::instance().exit();
+    }
+}
+
+

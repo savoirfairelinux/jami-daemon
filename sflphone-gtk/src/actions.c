@@ -30,6 +30,9 @@
 #include <string.h>
 #include <glib/gprintf.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 void
 sflphone_notify_voice_mail (guint count)
@@ -61,8 +64,10 @@ sflphone_quit ()
   
   if (quit)
   {
+    dbus_unregister(getpid());
     dbus_clean ();
     //call_list_clean(); TODO
+    //account_list_clean()
     gtk_main_quit ();
   }
   return quit;
@@ -147,6 +152,7 @@ sflphone_init()
   }
   else 
   {
+    dbus_register(getpid(), "Gtk+ Client");
     sflphone_fill_account_list();
     return TRUE;
   }
