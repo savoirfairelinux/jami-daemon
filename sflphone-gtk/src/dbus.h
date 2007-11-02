@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,5 +50,11 @@ void dbus_remove_account(gchar * accountID);
 void dbus_set_volume(const gchar * device, gdouble value);
 gdouble dbus_get_volume(const gchar * device);
 void dbus_play_dtmf(const gchar * key);
+
+/* Instance */
+void dbus_register( int pid, gchar * name);
+void dbus_unregister(int pid);
+
+
 
 #endif

@@ -69,8 +69,8 @@ SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-  delete _evThread; _evThread = 0;
   terminate();
+  delete _evThread; _evThread = 0;
 }
 
 bool 

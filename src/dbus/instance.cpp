@@ -16,13 +16,37 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
-#ifndef __ACCOUNTWINDOW_H__
-#define __ACCOUNTWINDOW_H__
-/** @file accountwindow.h
-  * @brief The window to edit account details.
-  */
-  
-void show_account_window ( account_t * a );
+#include <global.h>
+#include <instance.h>
+#include "../manager.h"
 
-#endif 
+const char* Instance::SERVER_PATH = "/org/sflphone/SFLphone/Instance";
+
+Instance::Instance( DBus::Connection& connection )
+: DBus::ObjectAdaptor(connection, SERVER_PATH)
+{
+  count = 0;
+}
+
+void
+Instance::Register( const ::DBus::Int32& pid, 
+                     const ::DBus::String& name )
+{
+    _debug("Instance::register received\n");
+    count++;
+}
+
+
+void
+Instance::Unregister( const ::DBus::Int32& pid )
+{
+    _debug("Instance::unregister received\n");
+    count --;
+    if(count <= 0)
+    {
+      _debug("0 client running, quitting...");
+      DBusManager::instance().exit();
+    }
+}
+
+

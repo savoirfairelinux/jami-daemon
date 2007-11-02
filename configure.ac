@@ -273,6 +273,12 @@ dnl Datadir directory
 sflphone_datadir=$datadir/sflphone
 AC_SUBST(sflphone_datadir)
 
+dnl Dbus Service activation part
+DBUS_SERVICES_DIR="$datadir/dbus-1/services"
+AC_SUBST(DBUS_SERVICES_DIR)
+AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir for DBUS is])
+
+
 dnl QT interface
 AC_MSG_CHECKING([whether to enable sflphoneqt])
 AC_ARG_ENABLE(sflphoneqt,

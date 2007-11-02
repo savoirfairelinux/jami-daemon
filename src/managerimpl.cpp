@@ -1758,6 +1758,10 @@ ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& detail
   _accountMap[newAccountID] = newAccount;
 
   setAccountDetails(accountID.str(), details);
+
+  saveConfig();
+  
+  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }
 
 void 
@@ -1775,6 +1779,8 @@ ManagerImpl::removeAccount(const AccountID& accountID)
   _config.removeSection(accountID);
 
   saveConfig();
+  
+  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }
 
 //THREAD=Main

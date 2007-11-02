@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,18 +22,21 @@
 
 #include "callmanager.h"
 #include "configurationmanager.h"
+#include "instance.h"
 
 class DBusManagerImpl {
     public:
         CallManager * getCallManager(){ return _callManager; };
         ConfigurationManager * getConfigurationManager(){ return _configurationManager; };
         int exec();
+        void exit();
         static const char* SERVER_NAME;
         
     private:
-        CallManager * _callManager;
-        ConfigurationManager * _configurationManager;
-        DBus::BusDispatcher _dispatcher;
+        CallManager*          _callManager;
+        ConfigurationManager* _configurationManager;
+        Instance*             _instanceManager;
+        DBus::BusDispatcher   _dispatcher;
 };
 
 #endif

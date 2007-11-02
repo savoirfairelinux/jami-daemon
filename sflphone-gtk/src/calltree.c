@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ GtkToolItem * hangupButton;
 GtkToolItem * holdButton;
 GtkToolItem * transfertButton;
 GtkToolItem * unholdButton;
+guint transfertButtonConnId; //The button toggled signal connection ID
 
 /**
  * Make a call
@@ -74,9 +75,18 @@ hold( GtkWidget *widget, gpointer   data )
  * Transfert the line
  */
 static void 
-transfert( GtkWidget *widget, gpointer   data )
+transfert  (GtkToggleToolButton *toggle_tool_button,
+            gpointer             user_data)
 {
-  sflphone_set_transfert();
+  gboolean up = gtk_toggle_tool_button_get_active(toggle_tool_button);
+  if(up)
+  {
+    sflphone_set_transfert();
+  }
+  else
+  {
+    sflphone_unset_transfert();
+  }
 }
 
 /**
@@ -89,7 +99,7 @@ unhold( GtkWidget *widget, gpointer   data )
 }
 
 void 
-update_buttons ()
+toolbar_update_buttons ()
 {
   gtk_widget_set_sensitive( GTK_WIDGET(callButton),       FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     FALSE);
@@ -102,6 +112,10 @@ update_buttons ()
   gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
   gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), holdButton, 3);
+	
+	gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
+  gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), FALSE);
+  gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
 	
 	call_t * selectedCall = call_get_selected();
 	if (selectedCall)
@@ -138,6 +152,16 @@ update_buttons ()
       case CALL_STATE_FAILURE:
         gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
         break; 
+      case CALL_STATE_TRANSFERT:
+        gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
+        gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), TRUE);
+        gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
+        gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
+        break;
   	  default:
   	    g_warning("Should not happen!");
   	    break;
@@ -145,7 +169,14 @@ update_buttons ()
   }
   else 
   {
-    gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+    if( account_list_get_size() > 0 )
+    {
+      gtk_widget_set_sensitive( GTK_WIDGET(callButton), TRUE);
+    }
+    else
+    {
+      gtk_widget_set_sensitive( GTK_WIDGET(callButton), FALSE);
+    }
   }
 }
 /* Call back when the user click on a call in the list */
@@ -164,7 +195,7 @@ selected(GtkTreeSelection *sel, GtkTreeModel *model)
 	call_select((call_t*) g_value_get_pointer(&val));
   g_value_unset(&val);
   
-  update_buttons();
+  toolbar_update_buttons();
 }
 
 /* A row is activated when it is double clicked */
@@ -245,9 +276,11 @@ create_toolbar (){
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(holdButton), -1);  
   
   image = gtk_image_new_from_file( ICONS_DIR "/transfert.svg");
-  transfertButton = gtk_tool_button_new (image, "Transfert");
+  transfertButton = gtk_toggle_tool_button_new ();
+  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(transfertButton), image);
+  gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), "Transfert");
   gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
-  g_signal_connect (G_OBJECT (transfertButton), "clicked",
+  transfertButtonConnId = g_signal_connect (G_OBJECT (transfertButton), "toggled",
                     G_CALLBACK (transfert), NULL);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
   
@@ -309,6 +342,8 @@ create_call_tree (){
 	
 	gtk_widget_show(ret); 
 	
+	toolbar_update_buttons();
+	
 	return ret;
 	
 }
@@ -340,7 +375,7 @@ update_call_tree_remove (call_t * c)
 	call_t * selectedCall = call_get_selected();
 	if(selectedCall == c)
 	  call_select(NULL);
-	update_buttons();
+	toolbar_update_buttons();
 }
 
 void 
@@ -430,7 +465,7 @@ update_call_tree (call_t * c)
     }
     
   } 
-  update_buttons();
+  toolbar_update_buttons();
 	//return row_ref;
 
 }
@@ -486,6 +521,6 @@ update_call_tree_add (call_t * c)
   //g_free(markup);
   sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
   gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
-  update_buttons();
+  toolbar_update_buttons();
 	//return row_ref;
 }

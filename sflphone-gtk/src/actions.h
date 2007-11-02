@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@ void sflphone_off_hold ();
 call_t * sflphone_new_call();
 void sflphone_notify_voice_mail (guint count);
 void sflphone_set_transfert();
+void sflphone_unset_transfert();
 /**
  * Accept / dial the current call
  */

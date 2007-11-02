@@ -17,12 +17,30 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#ifndef __ACCOUNTWINDOW_H__
-#define __ACCOUNTWINDOW_H__
-/** @file accountwindow.h
-  * @brief The window to edit account details.
-  */
-  
-void show_account_window ( account_t * a );
+#ifndef INSTANCE_H
+#define INSTANCE_H
 
-#endif 
+#include "instance-glue.h"
+#include <dbus-c++/dbus.h>
+
+    
+class Instance
+: public org::sflphone::SFLphone::Instance,
+  public DBus::IntrospectableAdaptor,
+  public DBus::ObjectAdaptor
+{
+private:
+  int count;
+
+public:
+  Instance(DBus::Connection& connection);
+  static const char* SERVER_PATH;
+  
+  void Register( const ::DBus::Int32& pid, const ::DBus::String& name ); 
+  void Unregister( const ::DBus::Int32& pid );
+    
+    
+};
+
+
+#endif//INSTANCE_H

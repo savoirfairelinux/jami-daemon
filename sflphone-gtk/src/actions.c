@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,9 @@
 #include <string.h>
 #include <glib/gprintf.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 void
 sflphone_notify_voice_mail (guint count)
@@ -61,8 +64,10 @@ sflphone_quit ()
   
   if (quit)
   {
+    dbus_unregister(getpid());
     dbus_clean ();
     //call_list_clean(); TODO
+    //account_list_clean()
     gtk_main_quit ();
   }
   return quit;
@@ -132,6 +137,7 @@ sflphone_fill_account_list()
     
   }
   
+	toolbar_update_buttons();
 }
 
 gboolean
@@ -146,6 +152,7 @@ sflphone_init()
   }
   else 
   {
+    dbus_register(getpid(), "Gtk+ Client");
     sflphone_fill_account_list();
     return TRUE;
   }
@@ -169,6 +176,9 @@ sflphone_hang_up()
         break;
       case CALL_STATE_INCOMING:  
         dbus_refuse (selectedCall);
+        break;
+      case CALL_STATE_TRANSFERT:  
+        dbus_hang_up (selectedCall);
         break;
       default:
         g_warning("Should not happen!");
@@ -194,6 +204,9 @@ sflphone_pick_up()
         break;
       case CALL_STATE_HOLD:
         dbus_unhold (selectedCall);
+        break;
+      case CALL_STATE_TRANSFERT:
+        dbus_transfert (selectedCall);
         break;
       default:
         g_warning("Should not happen!");
@@ -278,8 +291,23 @@ sflphone_set_transfert()
     update_call_tree(c);
     update_menus();
   }
+  toolbar_update_buttons();
 }
 
+void 
+sflphone_unset_transfert()
+{
+  call_t * c = call_get_selected();
+  if(c)
+  {
+    c->state = CALL_STATE_CURRENT;
+    c->to = g_strdup("");
+    screen_set_call(c);
+    update_call_tree(c);
+    update_menus();
+  }
+  toolbar_update_buttons();
+}
 void
 sflphone_incoming_call (call_t * c) 
 {
@@ -431,7 +459,7 @@ sflphone_keypad( guint keyval, gchar * key)
           dbus_transfert(c);
           break;
         case 65307: /* ESCAPE */
-          sflphone_current(c); // Quit transfert
+          sflphone_hang_up(c); 
           break;
         default: // When a call is on transfert, typing new numbers will add it to c->to
           process_dialing(c, keyval, key);
