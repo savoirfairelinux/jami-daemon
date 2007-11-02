@@ -17,7 +17,9 @@ SFLphone feature map
    - SFLphone to SFLphone (IP and no proxy): [done] and tested
    - conference: [not done] yet
    - send text message: [not done] yet
- * IAX support: [not done] yet
+ * IAX support: almost [done]
+   - place call: [done]
+   - transfer call: [done]
  * Audio devices:
    - OSS: [done] and tested (portaudio)
    - ALSA: [done] and tested (portaudio)
