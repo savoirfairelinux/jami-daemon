@@ -38,11 +38,18 @@ cat ~/.ssh/id_rsa.pub
 --------------------------------------------------------------
 
 and transmit us the content of the `id_rsa.pub` file, for shared-key
-authentication. Then:
+authentication. Then, if you already have a cloned repository, run:
+
+--------------------------------------------------------------
+git-config remote.origin.url git+ssh://sflphone_org@sflphone.org/git/sflphone.git
+--------------------------------------------------------------
+
+Otherwise, grab a new copy:
 
 --------------------------------------------------------------
 git clone git+ssh://sflphone_org@sflphone.org/git/sflphone.git
 cd sflphone
 autoreconf --install
 --------------------------------------------------------------
+
 
