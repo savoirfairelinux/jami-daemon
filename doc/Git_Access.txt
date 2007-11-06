@@ -33,7 +33,7 @@ Git developer access
 Run:
 
 --------------------------------------------------------------
-ssh-kengen -C sflphone_org@sflphone.org
+ssh-keygen -C sflphone_org@sflphone.org
 cat ~/.ssh/id_rsa.pub
 --------------------------------------------------------------
 
