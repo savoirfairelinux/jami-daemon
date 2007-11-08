@@ -24,10 +24,14 @@
 #include <mainwindow.h>
 #include <configwindow.h>
 
+#include <string.h> // for strlen
+
 GtkWidget * pickUpMenu;
 GtkWidget * hangUpMenu;
 GtkWidget * newCallMenu;
 GtkWidget * holdMenu;
+GtkWidget * copyMenu;
+GtkWidget * pasteMenu;
 guint holdConnId;     //The hold_menu signal connection ID
 
 void update_menus()
@@ -39,11 +43,13 @@ void update_menus()
   gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), FALSE);
 	
 	call_t * selectedCall = call_get_selected();
 	if (selectedCall)
 	{
+    gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   TRUE);
     switch(selectedCall->state) 
   	{
   	  case CALL_STATE_INCOMING:
@@ -95,7 +101,7 @@ help_about ( void * foo)
     "Jérôme Oufella <jerome.oufella@savoirfairelinux.com>",
     "Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
     "Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
-    "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.net>", 
+    "Pierre-Luc Beaudoin <pierre-luc@squidy.info>", 
     "Imran Akbar", 
     "Jean-Philippe Barrette-LaPierre",
     "Laurielle Lea",
@@ -103,7 +109,7 @@ help_about ( void * foo)
     "Sherry Yang", 
     NULL};
   gchar *artists[] = {
-    "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.net>", 
+    "Pierre-Luc Beaudoin <pierre-luc@squidy.info>", 
     NULL};
   
   gtk_show_about_dialog( GTK_WINDOW(get_main_window()),
@@ -112,7 +118,7 @@ help_about ( void * foo)
     "version", VERSION,
     "website", "http://www.sflphone.org",
     "copyright", "Copyright © 2004-2007 Savoir-faire Linux Inc.",
-    "translator-credits", "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.net>", 
+    "translator-credits", "", 
     "comments", "SFLphone is a VoIP client compatible with SIP and IAX protocols.",
     "artists", artists,
     "authors", authors,
@@ -251,6 +257,130 @@ edit_preferences ( void * foo)
   show_config_window();
 }
 
+// The menu Edit/Copy should copy the current selected call's number
+void 
+edit_copy ( void * foo)
+{
+  GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+  call_t * selectedCall = call_get_selected();
+  gchar * no = NULL;
+  
+  if(selectedCall)
+  {
+    switch(selectedCall->state)
+    {
+      case CALL_STATE_TRANSFERT:  
+      case CALL_STATE_DIALING:
+      case CALL_STATE_RINGING:
+        no = selectedCall->to;
+        break;
+      case CALL_STATE_CURRENT:
+      case CALL_STATE_HOLD:
+      case CALL_STATE_BUSY:
+      case CALL_STATE_FAILURE:
+      case CALL_STATE_INCOMING:
+      default:
+        no = call_get_number(selectedCall);
+        break;
+    }
+    
+    gtk_clipboard_set_text (clip, no, strlen(no) );
+  }
+  
+}
+
+// The menu Edit/Paste should paste the clipboard into the current selected call
+void 
+edit_paste ( void * foo)
+{
+  GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+  call_t * selectedCall = call_get_selected();
+  gchar * no = gtk_clipboard_wait_for_text (clip);
+  
+  if(no && selectedCall)
+  {
+    switch(selectedCall->state)
+    {
+      case CALL_STATE_TRANSFERT:  
+      case CALL_STATE_DIALING:
+        // Add the text to the number
+        { 
+          gchar * before = selectedCall->to;
+          selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
+          g_free(before);
+          g_print("TO: %s\n", selectedCall->to);
+          
+          if(selectedCall->state == CALL_STATE_DIALING)
+          {
+            g_free(selectedCall->from);
+            selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
+          }
+          screen_set_call(selectedCall);
+          update_call_tree(selectedCall);
+        }
+        break;
+      case CALL_STATE_RINGING:  
+      case CALL_STATE_INCOMING:
+      case CALL_STATE_BUSY:
+      case CALL_STATE_FAILURE:
+      case CALL_STATE_HOLD:
+        { // Create a new call to hold the new text
+          selectedCall = sflphone_new_call();
+          
+          gchar * before = selectedCall->to;
+          selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
+          g_free(before);
+          g_print("TO: %s\n", selectedCall->to);
+          
+          g_free(selectedCall->from);
+          selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
+          
+          screen_set_call(selectedCall);
+          update_call_tree(selectedCall);
+        }
+        break;
+      case CALL_STATE_CURRENT:
+      default:
+        {
+          int i;
+          for(i = 0; i < strlen(no); i++)
+          {
+            gchar * oneNo = g_strndup(&no[i], 1);
+            g_print("<%s>\n", oneNo);
+            dbus_play_dtmf(oneNo);
+             
+            gchar * temp = g_strconcat(call_get_number(selectedCall), oneNo, NULL);
+            gchar * before = selectedCall->from;
+            selectedCall->from = g_strconcat("\"",call_get_name(selectedCall) ,"\" <", temp, ">", NULL);
+            g_free(before);
+            g_free(temp);
+            screen_set_call(selectedCall);
+            update_call_tree(selectedCall);
+          
+          }
+        }
+        break;
+    }
+    
+  }
+  else // There is no current call, create one
+  {
+    selectedCall = sflphone_new_call();
+    
+    gchar * before = selectedCall->to;
+    selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
+    g_free(before);
+    g_print("TO: %s\n", selectedCall->to);
+    
+    g_free(selectedCall->from);
+    selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
+    
+    screen_set_call(selectedCall);
+    update_call_tree(selectedCall);
+  }
+  
+}
+
 GtkWidget * 
 create_edit_menu()
 {
@@ -260,15 +390,19 @@ create_edit_menu()
   
   menu      = gtk_menu_new ();
 
-  menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_COPY, get_accel_group());
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  gtk_widget_set_sensitive( GTK_WIDGET(menu_items),   FALSE);
-  gtk_widget_show (menu_items);
+  copyMenu = gtk_image_menu_item_new_from_stock( GTK_STOCK_COPY, get_accel_group());
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), copyMenu);
+  g_signal_connect_swapped (G_OBJECT (copyMenu), "activate",
+                  G_CALLBACK (edit_copy), 
+                  NULL);
+  gtk_widget_show (copyMenu);
   
-  menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PASTE, get_accel_group());
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  gtk_widget_set_sensitive( GTK_WIDGET(menu_items),   FALSE);
-  gtk_widget_show (menu_items);
+  pasteMenu = gtk_image_menu_item_new_from_stock( GTK_STOCK_PASTE, get_accel_group());
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), pasteMenu);
+  g_signal_connect_swapped (G_OBJECT (pasteMenu), "activate",
+                  G_CALLBACK (edit_paste), 
+                  NULL);
+  gtk_widget_show (pasteMenu);
   
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
