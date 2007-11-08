@@ -542,22 +542,22 @@ static
 inline
 #endif
 gboolean
-org_sflphone_SFLphone_ConfigurationManager_get_parameters (DBusGProxy *proxy, GHashTable** OUT_parameters, GError **error)
+org_sflphone_SFLphone_ConfigurationManager_get_default_account (DBusGProxy *proxy, GHashTable** OUT_parameters, GError **error)
 
 {
-  return dbus_g_proxy_call (proxy, "getParameters", error, G_TYPE_INVALID, dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_STRING), OUT_parameters, G_TYPE_INVALID);
+  return dbus_g_proxy_call (proxy, "getDefaultAccount", error, G_TYPE_INVALID, dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_STRING), OUT_parameters, G_TYPE_INVALID);
 }
 
-typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_parameters_reply) (DBusGProxy *proxy, GHashTable *OUT_parameters, GError *error, gpointer userdata);
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_default_account_reply) (DBusGProxy *proxy, GHashTable *OUT_parameters, GError *error, gpointer userdata);
 
 static void
-org_sflphone_SFLphone_ConfigurationManager_get_parameters_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+org_sflphone_SFLphone_ConfigurationManager_get_default_account_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
 {
   DBusGAsyncData *data = (DBusGAsyncData*) user_data;
   GError *error = NULL;
   GHashTable* OUT_parameters;
   dbus_g_proxy_end_call (proxy, call, &error, dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_STRING), &OUT_parameters, G_TYPE_INVALID);
-  (*(org_sflphone_SFLphone_ConfigurationManager_get_parameters_reply)data->cb) (proxy, OUT_parameters, error, data->userdata);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_default_account_reply)data->cb) (proxy, OUT_parameters, error, data->userdata);
   return;
 }
 
@@ -566,35 +566,35 @@ static
 inline
 #endif
 DBusGProxyCall*
-org_sflphone_SFLphone_ConfigurationManager_get_parameters_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_parameters_reply callback, gpointer userdata)
+org_sflphone_SFLphone_ConfigurationManager_get_default_account_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_default_account_reply callback, gpointer userdata)
 
 {
   DBusGAsyncData *stuff;
   stuff = g_new (DBusGAsyncData, 1);
   stuff->cb = G_CALLBACK (callback);
   stuff->userdata = userdata;
-  return dbus_g_proxy_begin_call (proxy, "getParameters", org_sflphone_SFLphone_ConfigurationManager_get_parameters_async_callback, stuff, g_free, G_TYPE_INVALID);
+  return dbus_g_proxy_begin_call (proxy, "getDefaultAccount", org_sflphone_SFLphone_ConfigurationManager_get_default_account_async_callback, stuff, g_free, G_TYPE_INVALID);
 }
 static
 #ifdef G_HAVE_INLINE
 inline
 #endif
 gboolean
-org_sflphone_SFLphone_ConfigurationManager_set_parameters (DBusGProxy *proxy, const GHashTable* IN_parameters, GError **error)
+org_sflphone_SFLphone_ConfigurationManager_set_default_account (DBusGProxy *proxy, const char * IN_accountID, GError **error)
 
 {
-  return dbus_g_proxy_call (proxy, "setParameters", error, dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_STRING), IN_parameters, G_TYPE_INVALID, G_TYPE_INVALID);
+  return dbus_g_proxy_call (proxy, "setDefaultAccount", error, G_TYPE_STRING, IN_accountID, G_TYPE_INVALID, G_TYPE_INVALID);
 }
 
-typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_parameters_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_default_account_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
 
 static void
-org_sflphone_SFLphone_ConfigurationManager_set_parameters_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+org_sflphone_SFLphone_ConfigurationManager_set_default_account_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
 {
   DBusGAsyncData *data = (DBusGAsyncData*) user_data;
   GError *error = NULL;
   dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
-  (*(org_sflphone_SFLphone_ConfigurationManager_set_parameters_reply)data->cb) (proxy, error, data->userdata);
+  (*(org_sflphone_SFLphone_ConfigurationManager_set_default_account_reply)data->cb) (proxy, error, data->userdata);
   return;
 }
 
@@ -603,14 +603,14 @@ static
 inline
 #endif
 DBusGProxyCall*
-org_sflphone_SFLphone_ConfigurationManager_set_parameters_async (DBusGProxy *proxy, const GHashTable* IN_parameters, org_sflphone_SFLphone_ConfigurationManager_set_parameters_reply callback, gpointer userdata)
+org_sflphone_SFLphone_ConfigurationManager_set_default_account_async (DBusGProxy *proxy, const char * IN_accountID, org_sflphone_SFLphone_ConfigurationManager_set_default_account_reply callback, gpointer userdata)
 
 {
   DBusGAsyncData *stuff;
   stuff = g_new (DBusGAsyncData, 1);
   stuff->cb = G_CALLBACK (callback);
   stuff->userdata = userdata;
-  return dbus_g_proxy_begin_call (proxy, "setParameters", org_sflphone_SFLphone_ConfigurationManager_set_parameters_async_callback, stuff, g_free, dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_STRING), IN_parameters, G_TYPE_INVALID);
+  return dbus_g_proxy_begin_call (proxy, "setDefaultAccount", org_sflphone_SFLphone_ConfigurationManager_set_default_account_async_callback, stuff, g_free, G_TYPE_STRING, IN_accountID, G_TYPE_INVALID);
 }
 #endif /* defined DBUS_GLIB_CLIENT_WRAPPERS_org_sflphone_SFLphone_ConfigurationManager */
 

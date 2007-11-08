@@ -433,6 +433,25 @@ dbus_account_details(gchar * accountID)
 }
 
 void
+dbus_set_default_account(gchar * accountID)
+{
+	GError *error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_default_account (
+		configurationManagerProxy,
+		accountID,
+		&error);
+	if (error)
+	{
+		g_printerr("Failed to call set_default_account() on ConfigurationManager: %s\n",error->message);
+		g_error_free (error);
+	}
+	else
+	{
+		g_print ("DBus called set_default_account() on ConfigurationManager\n");
+	}
+
+}
+void
 dbus_remove_account(gchar * accountID)
 {
   GError *error = NULL;

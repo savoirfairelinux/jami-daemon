@@ -51,8 +51,8 @@ public:
     std::vector< ::DBus::String > getPlaybackDeviceList(  );
     std::vector< ::DBus::String > getRecordDeviceList(  );
     std::vector< ::DBus::String > getSampleRateList(  );
-    std::map< ::DBus::String, ::DBus::String > getParameters(  );
-    void setParameters( const std::map< ::DBus::String, ::DBus::String >& parameters );
+    std::map< ::DBus::String, ::DBus::String > getDefaultAccount(  );
+    void setDefaultAccount( const ::DBus::String& accountID  );
 
 };
 

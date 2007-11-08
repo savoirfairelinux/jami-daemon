@@ -1783,6 +1783,16 @@ ManagerImpl::removeAccount(const AccountID& accountID)
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }
 
+void
+ManagerImpl::setDefaultAccount(const AccountID& accountID)
+{
+	// we write into the Preferences section the field Default
+	setConfig("Preferences", "DefaultAccount", accountID);
+}
+
+
+
+
 //THREAD=Main
 /*
  * Experimental...
