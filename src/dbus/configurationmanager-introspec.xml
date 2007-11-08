@@ -60,12 +60,12 @@
       <arg type="as" name="list" direction="out"/>
     </method>
     
-    <method name="getParameters">
+    <method name="getDefaultAccount">
       <arg type="a{ss}" name="parameters" direction="out"/>
     </method>
     
-    <method name="setParameters">
-      <arg type="a{ss}" name="parameters" direction="in"/>
+    <method name="setDefaultAccount">
+      <arg type="s" name="accountID" direction="in"/>
     </method>
     
     <signal name="parametersChanged">

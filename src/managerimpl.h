@@ -253,6 +253,12 @@ public:
    * purge from configuration.
    */
   void removeAccount(const AccountID& accountID);
+	
+ /*
+  * Set an account as default
+  */
+  void setDefaultAccount(const AccountID& accountID);
+
 
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);

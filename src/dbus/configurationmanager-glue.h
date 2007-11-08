@@ -34,8 +34,8 @@ public:
         register_method(ConfigurationManager, getPlaybackDeviceList, _getPlaybackDeviceList_stub);
         register_method(ConfigurationManager, getRecordDeviceList, _getRecordDeviceList_stub);
         register_method(ConfigurationManager, getSampleRateList, _getSampleRateList_stub);
-        register_method(ConfigurationManager, getParameters, _getParameters_stub);
-        register_method(ConfigurationManager, setParameters, _setParameters_stub);
+        register_method(ConfigurationManager, getDefaultAccount, _getDefaultAccount_stub);
+        register_method(ConfigurationManager, setDefaultAccount, _setDefaultAccount_stub);
     }
 
     ::DBus::IntrospectedInterface* const introspect() const 
@@ -112,14 +112,14 @@ public:
             { "list", "as", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument getParameters_args[] = 
+        static ::DBus::IntrospectedArgument getDefaultAccount_args[] = 
         {
             { "parameters", "a{ss}", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument setParameters_args[] = 
+        static ::DBus::IntrospectedArgument setDefaultAccount_args[] = 
         {
-            { "parameters", "a{ss}", true },
+            { "accountID", "s", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
@@ -147,8 +147,8 @@ public:
             { "getPlaybackDeviceList", getPlaybackDeviceList_args },
             { "getRecordDeviceList", getRecordDeviceList_args },
             { "getSampleRateList", getSampleRateList_args },
-            { "getParameters", getParameters_args },
-            { "setParameters", setParameters_args },
+            { "getDefaultAccount", getDefaultAccount_args },
+            { "setDefaultAccount", setDefaultAccount_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_signals[] = 
@@ -196,8 +196,8 @@ public:
     virtual std::vector< ::DBus::String > getPlaybackDeviceList(  ) = 0;
     virtual std::vector< ::DBus::String > getRecordDeviceList(  ) = 0;
     virtual std::vector< ::DBus::String > getSampleRateList(  ) = 0;
-    virtual std::map< ::DBus::String, ::DBus::String > getParameters(  ) = 0;
-    virtual void setParameters( const std::map< ::DBus::String, ::DBus::String >& parameters ) = 0;
+    virtual std::map< ::DBus::String, ::DBus::String > getDefaultAccount(  ) = 0;
+    virtual void setDefaultAccount( const ::DBus::String& accountID ) = 0;
 
 public:
 
@@ -358,22 +358,22 @@ private:
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getParameters_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getDefaultAccount_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::map< ::DBus::String, ::DBus::String > argout1 = getParameters();
+        std::map< ::DBus::String, ::DBus::String > argout1 = getDefaultAccount();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setParameters_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setDefaultAccount_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::map< ::DBus::String, ::DBus::String > argin1; ri >> argin1;
-        setParameters(argin1);
+        ::DBus::String argin1; ri >> argin1;
+        setDefaultAccount(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #include <global.h>
 #include <configurationmanager.h>
 #include <sstream>
@@ -26,128 +26,133 @@ const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/Configur
 
 
 
-ConfigurationManager::ConfigurationManager( DBus::Connection& connection )
+	ConfigurationManager::ConfigurationManager( DBus::Connection& connection )
 : DBus::ObjectAdaptor(connection, SERVER_PATH)
 {
 }
 
-std::map< ::DBus::String, ::DBus::String > 
+	std::map< ::DBus::String, ::DBus::String > 
 ConfigurationManager::getAccountDetails( const ::DBus::String& accountID )
 {
-    _debug("ConfigurationManager::getAccountDetails received\n");
-    return Manager::instance().getAccountDetails(accountID);
+	_debug("ConfigurationManager::getAccountDetails received\n");
+	return Manager::instance().getAccountDetails(accountID);
 }
 
-void 
+	void 
 ConfigurationManager::setAccountDetails( const ::DBus::String& accountID, 
-                   const std::map< ::DBus::String, ::DBus::String >& details )
+		const std::map< ::DBus::String, ::DBus::String >& details )
 {
-    _debug("ConfigurationManager::setAccountDetails received\n");
-    Manager::instance().setAccountDetails(accountID, details);
+	_debug("ConfigurationManager::setAccountDetails received\n");
+	Manager::instance().setAccountDetails(accountID, details);
 }
 
-void 
+	void 
 ConfigurationManager::addAccount( const std::map< ::DBus::String, ::DBus::String >& details )
 {
-    _debug("ConfigurationManager::addAccount received\n");
-    Manager::instance().addAccount(details);
+	_debug("ConfigurationManager::addAccount received\n");
+	Manager::instance().addAccount(details);
 }
 
 
-void 
+	void 
 ConfigurationManager::removeAccount( const ::DBus::String& accoundID )
 {
-    _debug("ConfigurationManager::removeAccount received\n");
-    return Manager::instance().removeAccount(accoundID);
+	_debug("ConfigurationManager::removeAccount received\n");
+	return Manager::instance().removeAccount(accoundID);
 }
 
-std::vector< ::DBus::String > 
+	std::vector< ::DBus::String > 
 ConfigurationManager::getAccountList(  )
 {
-    _debug("ConfigurationManager::getAccountList received\n");
-    return Manager::instance().getAccountList();
+	_debug("ConfigurationManager::getAccountList received\n");
+	return Manager::instance().getAccountList();
 }
 
 
-std::vector< ::DBus::String > 
+	std::vector< ::DBus::String > 
 ConfigurationManager::getToneLocaleList(  )
 {
-    _debug("ConfigurationManager::getToneLocaleList received\n");
+	_debug("ConfigurationManager::getToneLocaleList received\n");
 
 }
 
 
 
-::DBus::String 
+	::DBus::String 
 ConfigurationManager::getVersion(  )
 {
-    _debug("ConfigurationManager::getVersion received\n");
+	_debug("ConfigurationManager::getVersion received\n");
 
 }
 
 
-std::vector< ::DBus::String > 
+	std::vector< ::DBus::String > 
 ConfigurationManager::getRingtoneList(  )
 {
-    _debug("ConfigurationManager::getRingtoneList received\n");
+	_debug("ConfigurationManager::getRingtoneList received\n");
 
 }
 
 
 
-std::vector< ::DBus::String > 
+	std::vector< ::DBus::String > 
 ConfigurationManager::getCodecList(  )
 {
-    _debug("ConfigurationManager::getCodecList received\n");
+	_debug("ConfigurationManager::getCodecList received\n");
 
 }
 
 
-void 
+	void 
 ConfigurationManager::setCodecPreferedOrder( const std::vector< ::DBus::String >& ringtone )
 {
-    _debug("ConfigurationManager::setCodecPreferedOrder received\n");
+	_debug("ConfigurationManager::setCodecPreferedOrder received\n");
 
 }
 
 
-std::vector< ::DBus::String > 
+	std::vector< ::DBus::String > 
 ConfigurationManager::getCodecPreferedOrder(  )
 {
-    _debug("ConfigurationManager::getCodecPreferedOrder received\n");
+	_debug("ConfigurationManager::getCodecPreferedOrder received\n");
 
 }
 
 
-std::vector< ::DBus::String > 
+	std::vector< ::DBus::String > 
 ConfigurationManager::getPlaybackDeviceList(  )
 {
-    _debug("ConfigurationManager::getPlaybackDeviceList received\n");
+	_debug("ConfigurationManager::getPlaybackDeviceList received\n");
 
 }
 
-std::vector< ::DBus::String > 
+	std::vector< ::DBus::String > 
 ConfigurationManager::getRecordDeviceList(  )
 {
-    _debug("ConfigurationManager::getRecordDeviceList received\n");
+	_debug("ConfigurationManager::getRecordDeviceList received\n");
 
 }
 
-std::vector< ::DBus::String > 
+	std::vector< ::DBus::String > 
 ConfigurationManager::getSampleRateList(  )
 {
-    _debug("ConfigurationManager::getSampleRateList received\n");
+	_debug("ConfigurationManager::getSampleRateList received\n");
 
 }
 
-std::map< ::DBus::String, ::DBus::String > 
-ConfigurationManager::getParameters(  )
+	std::map< ::DBus::String, ::DBus::String > 
+ConfigurationManager::getDefaultAccount(  )
 {
 
 }
 
-void 
-ConfigurationManager::setParameters( const std::map< ::DBus::String, ::DBus::String >& parameters )
+/*
+ * used to set a default account
+ */ 
+	void 
+ConfigurationManager::setDefaultAccount( const ::DBus::String& accountID )
 {
+	 _debug("ConfigurationManager::setDefaultAccount received\n");
+	Manager::instance().setDefaultAccount(accountID);
 
 }

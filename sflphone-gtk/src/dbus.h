@@ -50,6 +50,7 @@ void dbus_remove_account(gchar * accountID);
 void dbus_set_volume(const gchar * device, gdouble value);
 gdouble dbus_get_volume(const gchar * device);
 void dbus_play_dtmf(const gchar * key);
+void dbus_set_default_account(gchar * accountID);
 
 /* Instance */
 void dbus_register( int pid, gchar * name);
