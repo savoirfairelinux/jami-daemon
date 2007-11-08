@@ -156,7 +156,11 @@ SIPVoIPLink::terminate()
 {
   terminateSIPCall(); 
   if (_initDone) {
-    eXosip_quit();
+    // TODO The next line makes the daemon crash on 
+    // account delete if at least one account is registered.
+    // It should called only when the last account 
+    // is deleted/unregistered.
+    //eXosip_quit();
     _initDone = false;
   }
 }
