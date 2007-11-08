@@ -53,6 +53,14 @@ sflphone-gtk/doc/html/*
 /libs/dbus/tools/dbusxx-*
 /libs/dbus/dbus-c++-1.pc
 /libs/dbus/doc
+/libs/dbus/INSTALL
+/libs/dbus/config.guess
+/libs/dbus/config.sub
+/libs/dbus/depcomp
+/libs/dbus/install-sh
+/libs/dbus/ltmain.sh
+/libs/dbus/missing
+
 
 # Ignore sflphone-gtk stuff
 /sflphone-gtk/config.*
@@ -70,7 +78,6 @@ sflphone-gtk/doc/html/*
 
 # Ignore temp libs stuff
 tools/portaudio
-
 
 # Ignore sub-modules stuff
 ## libiax2
