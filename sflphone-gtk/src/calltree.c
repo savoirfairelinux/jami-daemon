@@ -21,6 +21,7 @@
 #include <actions.h>
 #include <calltree.h>
 #include <calllist.h>
+#include <menus.h>
 #include <dbus.h>
 
 GtkListStore * store;
@@ -38,6 +39,19 @@ guint transfertButtonConnId; //The button toggled signal connection ID
 // list of the accounts to be displayed when the arrow beside the call button is pressed
 // should be used to set a default account to make output calls
 GtkWidget *accounts_list;
+
+/**
+ * Show popup menu
+ */
+gboolean            
+popup_menu (GtkWidget *widget,
+            gpointer   user_data)
+{
+  g_print("POPIP");
+  show_popup_menu(widget, NULL);
+  return TRUE;
+}            
+            
 
 /**
  * Make a call
@@ -260,7 +274,7 @@ create_toolbar (){
 
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
 	callButton = gtk_menu_tool_button_new (image, "Place a Call");
-	gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(callButton), GTK_MENU(accounts_list));
+	gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(callButton), GTK_WIDGET(accounts_list));
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);  
@@ -304,7 +318,6 @@ create_toolbar (){
 			G_CALLBACK (transfert), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
 
-
 	return ret;
 
 }  
@@ -335,6 +348,11 @@ create_call_tree (){
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(view), FALSE);
 	g_signal_connect (G_OBJECT (view), "row-activated",
 			G_CALLBACK (row_activated),
+			NULL);
+
+  // Connect the popup menu
+	g_signal_connect (G_OBJECT (view), "popup-menu",
+			G_CALLBACK (popup_menu), 
 			NULL);
 
 	rend = gtk_cell_renderer_pixbuf_new();

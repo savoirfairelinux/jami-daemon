@@ -16,7 +16,7 @@
    inkscape:version="0.45.1"
    version="1.0"
    sodipodi:docbase="/home-local/plbeaudoin/SFLPhone/sflphone/sflphone-gtk/pixmaps"
-   sodipodi:docname="mic_25 (copy).svg"
+   sodipodi:docname="mic_50.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
   <defs
      id="defs4">
@@ -369,38 +369,15 @@
          style="opacity:0.36908515;fill:url(#radialGradient5440);fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
          sodipodi:type="arc" />
     </g>
-    <g
-       id="g3398"
-       transform="matrix(1.0416412,0,0,1.0416412,-0.3443542,-0.5656934)">
-      <rect
-         ry="0.82081318"
-         rx="0.82081318"
-         inkscape:r_cy="true"
-         inkscape:r_cx="true"
-         y="8.6409912"
-         x="8.1562767"
-         height="7.0576959"
-         width="7.4291534"
-         id="rect1686"
-         style="color:#000000;fill:#a40000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.37145764;stroke-linecap:square;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
-      <g
-         inkscape:r_cy="true"
-         inkscape:r_cx="true"
-         transform="matrix(0.4225522,0,0,0.4225522,6.497738,-3.4645944)"
-         id="g2254">
-        <path
-           style="opacity:1;color:#000000;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:2.56729817;stroke-linecap:round;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
-           d="M 8,32 L 18,42"
-           id="path1377"
-           inkscape:r_cx="true"
-           inkscape:r_cy="true" />
-        <path
-           inkscape:r_cy="true"
-           inkscape:r_cx="true"
-           id="path2252"
-           d="M 18,32 L 8,42"
-           style="opacity:1;color:#000000;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:2.56729817;stroke-linecap:round;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
-      </g>
-    </g>
+    <path
+       sodipodi:nodetypes="csc"
+       id="path3488"
+       d="M 10.542589,12.383445 C 11.004591,11.293108 11.288527,9.7854478 11.288527,8.1334412 C 11.288527,6.4814347 11.004591,4.9737749 10.542589,3.8834374"
+       style="opacity:1;color:#000000;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#3c77cb;stroke-width:0.50367486;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
+    <path
+       style="opacity:1;color:#000000;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#3c77cb;stroke-width:0.50367486;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       d="M 12.431882,13.812413 C 13.049223,12.355474 13.428625,10.340896 13.428625,8.1334387 C 13.428625,5.9259814 13.049223,3.911404 12.431882,2.4544647"
+       id="path3494"
+       sodipodi:nodetypes="csc" />
   </g>
 </svg>

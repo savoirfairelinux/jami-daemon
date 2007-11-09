@@ -26,5 +26,6 @@
   */
 GtkWidget * create_menus();
 void update_menus();
+void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event);
 
 #endif 

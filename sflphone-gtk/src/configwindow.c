@@ -105,6 +105,7 @@ add_account( GtkWidget *widget, gpointer   data )
 /*
  * Should mark the account as default
  */
+void
 default_account(GtkWidget *widget, gpointer data)
 {
 	// set account as default	
@@ -115,7 +116,7 @@ default_account(GtkWidget *widget, gpointer data)
 }
 
 /* Call back when the user click on an account in the list */
-	static void 
+static void 
 select_account(GtkTreeSelection *sel, GtkTreeModel *model) 
 {
 	GtkTreeIter  iter;
