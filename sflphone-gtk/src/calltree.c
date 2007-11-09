@@ -43,16 +43,24 @@ GtkWidget *accounts_list;
 /**
  * Show popup menu
  */
-gboolean            
+static gboolean            
 popup_menu (GtkWidget *widget,
             gpointer   user_data)
 {
-  g_print("POPIP");
   show_popup_menu(widget, NULL);
   return TRUE;
 }            
             
-
+static gboolean
+button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
+{
+  if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
+  {
+    show_popup_menu(widget,  event);
+    return TRUE;
+  }
+  return FALSE;
+}
 /**
  * Make a call
  */
@@ -343,7 +351,6 @@ create_call_tree (){
 			G_TYPE_POINTER  // Pointer to the Object
 			);
 
-
 	view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(view), FALSE);
 	g_signal_connect (G_OBJECT (view), "row-activated",
@@ -353,6 +360,9 @@ create_call_tree (){
   // Connect the popup menu
 	g_signal_connect (G_OBJECT (view), "popup-menu",
 			G_CALLBACK (popup_menu), 
+			NULL);
+	g_signal_connect (G_OBJECT (view), "button-press-event",
+			G_CALLBACK (button_pressed), 
 			NULL);
 
 	rend = gtk_cell_renderer_pixbuf_new();
@@ -385,7 +395,8 @@ create_call_tree (){
 	return ret;
 
 }
-	void 
+
+void 
 update_call_tree_remove (call_t * c)
 {
 	GtkTreeIter iter;
@@ -416,7 +427,7 @@ update_call_tree_remove (call_t * c)
 	toolbar_update_buttons();
 }
 
-	void 
+void 
 update_call_tree (call_t * c)
 {
 	GdkPixbuf *pixbuf;
@@ -508,7 +519,7 @@ update_call_tree (call_t * c)
 
 }
 
-	void 
+void 
 update_call_tree_add (call_t * c)
 {
 	GdkPixbuf *pixbuf;
