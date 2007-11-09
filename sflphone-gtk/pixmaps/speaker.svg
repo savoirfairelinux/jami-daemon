@@ -13,12 +13,11 @@
    height="16"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.45"
+   inkscape:version="0.45.1"
    version="1.0"
-   sodipodi:docbase="/home/plbeaudoin/SFLPhone/sflphone/sflphone-gtk/pixmaps"
+   sodipodi:docbase="/home-local/plbeaudoin/SFLPhone/sflphone/sflphone-gtk/pixmaps"
    sodipodi:docname="speaker.svg"
-   inkscape:output_extension="org.inkscape.output.svg.inkscape"
-   sodipodi:modified="true">
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
   <defs
      id="defs4">
     <linearGradient
@@ -342,7 +341,7 @@
      inkscape:window-width="1014"
      inkscape:window-height="691"
      inkscape:window-x="336"
-     inkscape:window-y="282">
+     inkscape:window-y="209">
     <sodipodi:guide
        orientation="vertical"
        position="24.821428"
@@ -363,24 +362,6 @@
      inkscape:label="Calque 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <g
-       id="g3425"
-       transform="matrix(0.8938767,0,0,0.8938767,-0.7849478,0.2391309)"
-       style="stroke:#3a3a3a;stroke-opacity:1">
-      <path
-         id="path3406"
-         d="M 8.2992212,14.492981 C 6.403097,12.241903 4.5069721,9.9908266 2.6108471,7.7397495 C 4.5069721,5.4886726 6.4030966,3.2375952 8.2992208,0.98651768 C 8.2992208,5.4886717 8.2992212,9.9908266 8.2992212,14.492981 z "
-         style="opacity:1;fill:url(#linearGradient3429);fill-opacity:1;stroke:#3a3a3a;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
-      <rect
-         ry="0.23693162"
-         rx="0.23693162"
-         y="4.8959994"
-         x="1.9375"
-         height="5.6875"
-         width="3"
-         id="rect3404"
-         style="opacity:1;fill:url(#linearGradient3431);fill-opacity:1;stroke:#3a3a3a;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
-    </g>
     <g
        id="g3398"
        transform="matrix(1.0416412,0,0,1.0416412,-0.3396375,-0.3598217)">
@@ -414,10 +395,32 @@
            style="opacity:1;color:#000000;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:2.56729817;stroke-linecap:round;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
       </g>
     </g>
-    <path
-       style="fill:#f5f5f5;fill-opacity:1;stroke:none;stroke-width:0.62258136;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
-       d="M 4.0668759,5.5560217 L 6.1678675,3.589381 L 6.1678675,6.1765082 L 4.0447788,7.2813625 L 4.0668759,5.5560217 z "
-       id="rect2217"
-       sodipodi:nodetypes="ccccc" />
+    <g
+       id="g4455"
+       transform="translate(0,0.8424875)">
+      <g
+         style="stroke:#3a3a3a;stroke-opacity:1"
+         transform="matrix(0.8938767,0,0,0.8938767,-0.7849478,0.2391309)"
+         id="g3425">
+        <path
+           style="opacity:1;fill:url(#linearGradient3429);fill-opacity:1;stroke:#3a3a3a;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 8.2992212,14.492981 C 6.403097,12.241903 4.5069721,9.9908266 2.6108471,7.7397495 C 4.5069721,5.4886726 6.4030966,3.2375952 8.2992208,0.98651768 C 8.2992208,5.4886717 8.2992212,9.9908266 8.2992212,14.492981 z "
+           id="path3406" />
+        <rect
+           style="opacity:1;fill:url(#linearGradient3431);fill-opacity:1;stroke:#3a3a3a;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           id="rect3404"
+           width="3"
+           height="5.6875"
+           x="1.9375"
+           y="4.8959994"
+           rx="0.23693162"
+           ry="0.23693162" />
+      </g>
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="rect2217"
+         d="M 4.0668759,5.5560217 L 6.1678675,3.589381 L 6.1678675,6.1765082 L 4.0447788,7.2813625 L 4.0668759,5.5560217 z "
+         style="fill:#f5f5f5;fill-opacity:1;stroke:none;stroke-width:0.62258136;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1" />
+    </g>
   </g>
 </svg>
