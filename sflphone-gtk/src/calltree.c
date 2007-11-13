@@ -21,6 +21,7 @@
 #include <actions.h>
 #include <calltree.h>
 #include <calllist.h>
+#include <menus.h>
 #include <dbus.h>
 
 GtkListStore * store;
@@ -39,6 +40,27 @@ guint transfertButtonConnId; //The button toggled signal connection ID
 // should be used to set a default account to make output calls
 GtkWidget *accounts_list;
 
+/**
+ * Show popup menu
+ */
+static gboolean            
+popup_menu (GtkWidget *widget,
+            gpointer   user_data)
+{
+  show_popup_menu(widget, NULL);
+  return TRUE;
+}            
+            
+static gboolean
+button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
+{
+  if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
+  {
+    show_popup_menu(widget,  event);
+    return TRUE;
+  }
+  return FALSE;
+}
 /**
  * Make a call
  */
@@ -260,7 +282,7 @@ create_toolbar (){
 
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
 	callButton = gtk_menu_tool_button_new (image, "Place a Call");
-	gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(callButton), GTK_MENU(accounts_list));
+	gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(callButton), GTK_WIDGET(accounts_list));
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);  
@@ -304,7 +326,6 @@ create_toolbar (){
 			G_CALLBACK (transfert), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
 
-
 	return ret;
 
 }  
@@ -330,11 +351,18 @@ create_call_tree (){
 			G_TYPE_POINTER  // Pointer to the Object
 			);
 
-
 	view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(view), FALSE);
 	g_signal_connect (G_OBJECT (view), "row-activated",
 			G_CALLBACK (row_activated),
+			NULL);
+
+  // Connect the popup menu
+	g_signal_connect (G_OBJECT (view), "popup-menu",
+			G_CALLBACK (popup_menu), 
+			NULL);
+	g_signal_connect (G_OBJECT (view), "button-press-event",
+			G_CALLBACK (button_pressed), 
 			NULL);
 
 	rend = gtk_cell_renderer_pixbuf_new();
@@ -367,7 +395,8 @@ create_call_tree (){
 	return ret;
 
 }
-	void 
+
+void 
 update_call_tree_remove (call_t * c)
 {
 	GtkTreeIter iter;
@@ -398,7 +427,7 @@ update_call_tree_remove (call_t * c)
 	toolbar_update_buttons();
 }
 
-	void 
+void 
 update_call_tree (call_t * c)
 {
 	GdkPixbuf *pixbuf;
@@ -490,7 +519,7 @@ update_call_tree (call_t * c)
 
 }
 
-	void 
+void 
 update_call_tree_add (call_t * c)
 {
 	GdkPixbuf *pixbuf;

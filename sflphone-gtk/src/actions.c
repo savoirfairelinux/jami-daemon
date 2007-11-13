@@ -181,7 +181,7 @@ sflphone_hang_up()
         dbus_hang_up (selectedCall);
         break;
       default:
-        g_warning("Should not happen!");
+        g_warning("Should not happen in sflphone_hang_up()!");
         break;
     }
   }
@@ -209,7 +209,7 @@ sflphone_pick_up()
         dbus_transfert (selectedCall);
         break;
       default:
-        g_warning("Should not happen!");
+        g_warning("Should not happen in sflphone_pick_up()!");
         break;
     }
   }
@@ -227,7 +227,7 @@ sflphone_on_hold ()
         dbus_hold (selectedCall);
         break;
       default:
-        g_warning("Should not happen!");
+        g_warning("Should not happen in sflphone_on_hold!");
         break;
     }
   }
@@ -245,7 +245,7 @@ sflphone_off_hold ()
         dbus_unhold (selectedCall);
         break;
       default:
-        g_warning("Should not happen!");
+        g_warning("Should not happen in sflphone_off_hold ()!");
         break;
       }
   }

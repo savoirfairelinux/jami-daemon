@@ -18,11 +18,15 @@
  */
  
 #include <menus.h>
-#include <config.h>
-#include <calllist.h>
 #include <actions.h>
-#include <mainwindow.h>
+#include <calllist.h>
+#include <calltree.h>
+#include <config.h>
 #include <configwindow.h>
+#include <dbus.h>
+#include <mainwindow.h>
+#include <screen.h>
+#include <gtk/gtk.h>
 
 #include <string.h> // for strlen
 
@@ -81,7 +85,7 @@ void update_menus()
         gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
         break; 
   	  default:
-  	    g_warning("Should not happen!");
+  	    g_warning("Should not happen in update_menus()!");
   	    break;
   	}
   } 
@@ -93,7 +97,7 @@ void update_menus()
   
 }
 /* ----------------------------------------------------------------- */
-void 
+static void 
 help_about ( void * foo)
 {
   gchar *authors[] = {
@@ -151,38 +155,43 @@ create_help_menu()
   return root_menu;
 }
 /* ----------------------------------------------------------------- */
-void 
+static void 
 call_new_call ( void * foo)
 {
   sflphone_new_call();
 }
 
-void 
+static void 
 call_quit ( void * foo)
 {
   sflphone_quit();
 }
 
-void 
+static void 
 call_hold  (void* foo)
 {
-  if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(holdMenu)))
+  call_t * selectedCall = call_get_selected();
+  
+  if(selectedCall)
   {
-    sflphone_on_hold();
-  }
-  else
-  {
-    sflphone_off_hold();
+    if(selectedCall->state == CALL_STATE_HOLD)
+    {
+      sflphone_off_hold();
+    }
+    else
+    {
+      sflphone_on_hold();
+    } 
   } 
 }
 
-void 
+static void 
 call_pick_up ( void * foo)
 {
   sflphone_pick_up();
 }
 
-void 
+static void 
 call_hang_up ( void * foo)
 {
   sflphone_hang_up();
@@ -251,14 +260,14 @@ create_call_menu()
 }
 /* ----------------------------------------------------------------- */
 
-void 
+static void 
 edit_preferences ( void * foo)
 {
   show_config_window();
 }
 
 // The menu Edit/Copy should copy the current selected call's number
-void 
+static void 
 edit_copy ( void * foo)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
@@ -290,7 +299,7 @@ edit_copy ( void * foo)
 }
 
 // The menu Edit/Paste should paste the clipboard into the current selected call
-void 
+static void 
 edit_paste ( void * foo)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
@@ -421,7 +430,7 @@ create_edit_menu()
   return root_menu;
 }
 /* ----------------------------------------------------------------- */
-void 
+static void 
 view_dial_pad  (GtkCheckMenuItem *checkmenuitem,
                 void* foo)
 {
@@ -491,5 +500,135 @@ create_menus ( )
   
   
   return menu_bar;
+}
+
+/* ----------------------------------------------------------------- */
+
+void
+show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
+{
+  // TODO update the selection to make sure the call under the mouse is the call selected
+  
+  gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE;
+  
+	call_t * selectedCall = call_get_selected();
+	if (selectedCall)
+	{
+    copy = TRUE;
+    switch(selectedCall->state) 
+  	{
+  	  case CALL_STATE_INCOMING:
+        pickup = TRUE;
+        hangup = TRUE;
+        break;
+      case CALL_STATE_HOLD:
+        hangup = TRUE;
+        hold   = TRUE;
+        break;
+      case CALL_STATE_RINGING:
+        hangup = TRUE;
+        break;
+      case CALL_STATE_DIALING:
+        pickup = TRUE;
+        hangup = TRUE;
+        break;
+      case CALL_STATE_CURRENT:
+        hangup = TRUE;
+        hold   = TRUE;
+        break;
+      case CALL_STATE_BUSY:
+      case CALL_STATE_FAILURE:
+        hangup = TRUE;
+        break; 
+  	  default:
+  	    g_warning("Should not happen in show_popup_menu!");
+  	    break;
+  	}
+  } 
+  
+  GtkWidget *menu;
+  //GtkWidget *image;
+  int button, event_time;
+  GtkWidget * menu_items;
+
+  menu = gtk_menu_new ();
+  //g_signal_connect (menu, "deactivate", 
+  //       G_CALLBACK (gtk_widget_destroy), NULL);
+
+  if(copy)
+  {
+    menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_COPY, get_accel_group());
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    g_signal_connect (G_OBJECT (menu_items), "activate",
+                    G_CALLBACK (edit_copy), 
+                    NULL);
+    gtk_widget_show (menu_items);
+  }
+  
+  menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PASTE, get_accel_group());
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  g_signal_connect (G_OBJECT (menu_items), "activate",
+                  G_CALLBACK (edit_paste), 
+                  NULL);
+  gtk_widget_show (menu_items);
+  
+  if(pickup || hangup || hold)
+  {
+    menu_items = gtk_separator_menu_item_new ();
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    gtk_widget_show (menu_items);
+  }
+  
+  if(pickup)
+  {
+    
+    menu_items = gtk_image_menu_item_new_with_mnemonic("_Pick up");
+	  //image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
+    //gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    g_signal_connect (G_OBJECT (menu_items), "activate",
+                    G_CALLBACK (call_pick_up), 
+                    NULL);
+    gtk_widget_show (menu_items);
+  }
+  
+  if(hangup)
+  {
+    menu_items = gtk_image_menu_item_new_with_mnemonic("_Hang up");
+	  //image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
+    //gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    g_signal_connect (G_OBJECT (menu_items), "activate",
+                    G_CALLBACK (call_hang_up), 
+                    NULL);
+    gtk_widget_show (menu_items);
+  }
+  
+  if(hold)
+  {
+    menu_items = gtk_check_menu_item_new_with_mnemonic ("On _Hold");
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items), 
+      (selectedCall->state == CALL_STATE_HOLD ? TRUE : FALSE));
+    g_signal_connect(G_OBJECT (menu_items), "activate",
+                    G_CALLBACK (call_hold), 
+                    NULL);
+    gtk_widget_show (menu_items);
+  }  
+  
+  if (event)
+  {
+    button = event->button;
+    event_time = event->time;
+  }
+  else
+  {
+    button = 0;
+    event_time = gtk_get_current_event_time ();
+  }
+
+  gtk_menu_attach_to_widget (GTK_MENU (menu), my_widget, NULL);
+  gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, 
+                  button, event_time);
 }
 
