@@ -114,7 +114,7 @@ public:
         };
         static ::DBus::IntrospectedArgument getDefaultAccount_args[] = 
         {
-            { "parameters", "a{ss}", false },
+            { "accountID", "s", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument setDefaultAccount_args[] = 
@@ -196,7 +196,7 @@ public:
     virtual std::vector< ::DBus::String > getPlaybackDeviceList(  ) = 0;
     virtual std::vector< ::DBus::String > getRecordDeviceList(  ) = 0;
     virtual std::vector< ::DBus::String > getSampleRateList(  ) = 0;
-    virtual std::map< ::DBus::String, ::DBus::String > getDefaultAccount(  ) = 0;
+    virtual ::DBus::String getDefaultAccount(  ) = 0;
     virtual void setDefaultAccount( const ::DBus::String& accountID ) = 0;
 
 public:
@@ -362,7 +362,7 @@ private:
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::map< ::DBus::String, ::DBus::String > argout1 = getDefaultAccount();
+        ::DBus::String argout1 = getDefaultAccount();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

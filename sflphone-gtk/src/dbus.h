@@ -1,10 +1,11 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *                                                                                
  *  This program is distributed in the hope that it will be useful,
@@ -50,6 +51,7 @@ void dbus_remove_account(gchar * accountID);
 void dbus_set_volume(const gchar * device, gdouble value);
 gdouble dbus_get_volume(const gchar * device);
 void dbus_play_dtmf(const gchar * key);
+gchar* dbus_get_default_account();
 void dbus_set_default_account(gchar * accountID);
 
 /* Instance */

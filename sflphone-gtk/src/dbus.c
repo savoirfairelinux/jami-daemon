@@ -1,10 +1,11 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *                                                                                
  *  This program is distributed in the hope that it will be useful,
@@ -431,6 +432,28 @@ dbus_account_details(gchar * accountID)
   }
   return details;
 }
+
+gchar * 
+dbus_get_default_account( )
+{
+	GError *error = NULL;
+	gchar * accountID;
+        org_sflphone_SFLphone_ConfigurationManager_get_default_account (
+                configurationManagerProxy,
+                &accountID,
+                &error);
+        if (error)
+        {
+                g_printerr("Failed to call get_default_account() on ConfigurationManager: %s\n",error->message);
+                g_error_free (error);
+        }
+        else
+        {
+                g_print ("DBus called get_default_account() on ConfigurationManager\n");
+        }
+
+}
+
 
 void
 dbus_set_default_account(gchar * accountID)

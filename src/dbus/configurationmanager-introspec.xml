@@ -61,7 +61,7 @@
     </method>
     
     <method name="getDefaultAccount">
-      <arg type="a{ss}" name="parameters" direction="out"/>
+      <arg type="s" name="accountID" direction="out"/>
     </method>
     
     <method name="setDefaultAccount">

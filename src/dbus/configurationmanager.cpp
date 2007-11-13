@@ -1,10 +1,11 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *                                                                                
  *  This program is distributed in the hope that it will be useful,
@@ -140,10 +141,11 @@ ConfigurationManager::getSampleRateList(  )
 
 }
 
-	std::map< ::DBus::String, ::DBus::String > 
+	::DBus::String
 ConfigurationManager::getDefaultAccount(  )
 {
-
+	_debug("ConfigurationManager::getDefaultAccount received\n");
+	return Manager::instance().getDefaultAccount();
 }
 
 /*

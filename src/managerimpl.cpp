@@ -3,10 +3,11 @@
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
@@ -1781,6 +1782,15 @@ ManagerImpl::removeAccount(const AccountID& accountID)
   saveConfig();
   
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+}
+
+std::string  
+ManagerImpl::getDefaultAccount()
+{
+	std::string id;
+	id = getConfigString(PREFERENCES, "DefaultAccount");
+	_debug("Default Account = %s\n",id.c_str());	
+	return id; 
 }
 
 void
