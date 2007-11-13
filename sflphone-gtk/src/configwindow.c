@@ -1,10 +1,11 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *                                                                                
  *  This program is distributed in the hope that it will be useful,
@@ -35,6 +36,7 @@ GtkWidget * deleteButton;
 GtkWidget * defaultButton;
 
 account_t * selectedAccount;
+account_t * defaultAccount;
 
 /** Fills the treelist with accounts */
 	void 
@@ -158,6 +160,10 @@ create_accounts_tab()
 	GtkTreeSelection *sel;
 	GtkWidget *label;
 
+	 GtkTreeIter iter;
+        GValue val;
+        val.g_type = G_TYPE_POINTER;
+
 	selectedAccount = NULL;
 
 	ret = gtk_vbox_new(FALSE, 10); 
@@ -191,6 +197,9 @@ create_accounts_tab()
 			G_CALLBACK (select_account),
 			account_store);
 
+	gtk_tree_model_get_value(GTK_TREE_MODEL(account_store), &iter, 3, &val);
+
+
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(account_store),
 			2, GTK_SORT_ASCENDING);
 
@@ -199,6 +208,7 @@ create_accounts_tab()
 			rend,
 			"markup", 0,
 			NULL);
+	g_object_set(G_OBJECT(rend), "weight", "bold", NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(view), col);
 
 	rend = gtk_cell_renderer_text_new();
@@ -285,11 +295,6 @@ show_config_window ()
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new("Accounts"));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 	
-	/*
-	GtkWidget* blob;//create_blob_tab();
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), blob, gtk_label_new("Audio"));
-	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), blob);
-	*/
 	gtk_dialog_run (dialog);
 
 	dialogOpen = FALSE;

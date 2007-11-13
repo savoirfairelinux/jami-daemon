@@ -1,10 +1,11 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *                                                                                
  *  This program is distributed in the hope that it will be useful,
@@ -68,6 +69,9 @@ typedef struct  {
   GHashTable * properties;
 } account_t;
 
+
+gchar * DEFAULT_ACCOUNT;
+
 /** This function initialize the account list. */
 void account_list_init ();
 
@@ -96,6 +100,15 @@ guint account_list_get_size ( );
   * @param n The position of the account you want
   * @return An account or NULL */
 account_t * account_list_get_nth ( guint n );
+
+/** Return the account's id chosen as default
+ *  @return The default account */
+gchar * account_list_get_default( );
+
+/** This function sets an account as default
+ * @param n The position of the account you want to select
+ */
+void account_list_set_default(const gchar * accountID);
 
 /** This function maps account_state_t enums to a description.
   * @param s The state

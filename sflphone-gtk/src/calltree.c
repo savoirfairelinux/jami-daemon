@@ -27,6 +27,9 @@
 GtkListStore * store;
 GtkWidget *view;
 
+GtkWidget * account_store;
+GtkWidget *item;
+
 GtkWidget   * toolbar;
 GtkToolItem * callButton;
 GtkToolItem * pickupButton;
@@ -36,9 +39,6 @@ GtkToolItem * transfertButton;
 GtkToolItem * unholdButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
 
-// list of the accounts to be displayed when the arrow beside the call button is pressed
-// should be used to set a default account to make output calls
-GtkWidget *accounts_list;
 
 /**
  * Show popup menu
@@ -256,33 +256,40 @@ void  row_activated(GtkTreeView       *tree_view,
 	}
 }                  
 
+void
+fast_fill_account_list()
+{
+        int i;
+        for( i = 0; i < account_list_get_size(); i++)
+        {
+                account_t  * a = account_list_get_nth (i);
+                if (a)
+                {
+                        item = gtk_check_menu_item_new_with_label(g_hash_table_lookup(a->properties, ACCOUNT_ALIAS));
+                        gtk_menu_shell_append (GTK_MENU_SHELL (account_store), item);
+                        gtk_widget_show(item);
+                }
+        }
+
+}
+
+
 
 GtkWidget * 
 create_toolbar (){
 	GtkWidget *ret;
 	GtkWidget *image;
 
-	GtkWidget *item1;
-	GtkWidget *item2;
-	GtkWidget *item3;
-
 	ret = gtk_toolbar_new();
 
 	toolbar = ret;
 
-	accounts_list = gtk_menu_new();
-	item1 = gtk_menu_item_new_with_label("Compte A");
-	gtk_container_add(GTK_CONTAINER(accounts_list), item1);
-	gtk_widget_show(item1);
-	item2 = gtk_menu_item_new();
-        gtk_container_add(GTK_CONTAINER(accounts_list), item2);
-	item3 = gtk_menu_item_new();
-        gtk_container_add(GTK_CONTAINER(accounts_list), item3);
-
+	account_store = gtk_menu_new();
+	fast_fill_account_list();
 
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
 	callButton = gtk_menu_tool_button_new (image, "Place a Call");
-	gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(callButton), GTK_WIDGET(accounts_list));
+	gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(callButton), GTK_WIDGET(account_store));
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);  
