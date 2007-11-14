@@ -154,6 +154,7 @@ sflphone_init()
   {
     dbus_register(getpid(), "Gtk+ Client");
     sflphone_fill_account_list();
+    sflphone_set_default_account();
     return TRUE;
   }
 }
@@ -532,4 +533,12 @@ sflphone_place_call ( call_t * c )
   }
 }
 
+/* Internal to action - set the DEFAULT_ACCOUNT variable */
+void
+sflphone_set_default_account( )
+{
+	gchar* default_id = strdup(dbus_get_default_account());
+	g_print("Default Account = %s\n", default_id);
+	account_list_set_default(default_id);	
+}
 

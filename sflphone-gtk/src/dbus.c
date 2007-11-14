@@ -147,6 +147,7 @@ accounts_changed_cb (DBusGProxy *proxy,
   g_print ("Accounts changed\n");
   sflphone_fill_account_list();
   config_window_fill_account_list();
+  fast_fill_account_list();
 }
 
 gboolean 
@@ -437,7 +438,7 @@ gchar *
 dbus_get_default_account( )
 {
 	GError *error = NULL;
-	gchar * accountID;
+	char * accountID;
         org_sflphone_SFLphone_ConfigurationManager_get_default_account (
                 configurationManagerProxy,
                 &accountID,
@@ -451,6 +452,8 @@ dbus_get_default_account( )
         {
                 g_print ("DBus called get_default_account() on ConfigurationManager\n");
         }
+	
+	return accountID;
 
 }
 
