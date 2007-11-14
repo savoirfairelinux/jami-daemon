@@ -22,6 +22,7 @@
 #include <string.h>
 
 GQueue * accountQueue;
+gchar * DEFAULT_ACCOUNT=NULL;
 
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 gint 
@@ -98,6 +99,20 @@ account_list_get_by_state (account_state_t state )
   
 }
 
+account_t *
+account_list_get_by_id(gchar * accountID)
+{
+	GList * c = g_queue_find_custom (accountQueue, accountID, is_accountID_struct);
+	if(c)
+	{
+		return (account_t *)c->data;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
 guint
 account_list_get_size ( )
 {
@@ -120,6 +135,7 @@ void
 account_list_set_default(const gchar * accountID)
 {
   DEFAULT_ACCOUNT = g_strdup(accountID);
+  g_print("DEFAULT_ACCOUNT =  %s\n", DEFAULT_ACCOUNT);
 }
 
 const gchar * account_state_name(account_state_t s)

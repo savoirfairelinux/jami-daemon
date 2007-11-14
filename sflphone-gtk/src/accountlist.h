@@ -70,7 +70,6 @@ typedef struct  {
 } account_t;
 
 
-gchar * DEFAULT_ACCOUNT;
 
 /** This function initialize the account list. */
 void account_list_init ();
@@ -116,4 +115,10 @@ void account_list_set_default(const gchar * accountID);
 const gchar * account_state_name(account_state_t s);
 
 void account_list_clear ( );
+
+/** Return the account associated with an ID
+ * @param accountID The ID of the account
+ * @return An account or NULL */
+account_t * account_list_get_by_id(gchar * accountID); 
+
 #endif 

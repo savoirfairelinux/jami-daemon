@@ -113,6 +113,7 @@ default_account(GtkWidget *widget, gpointer data)
 	// set account as default	
 	if(selectedAccount)
 	{
+		account_list_set_default(selectedAccount->accountID);
 		dbus_set_default_account(selectedAccount->accountID);
 	}	
 }
@@ -160,9 +161,12 @@ create_accounts_tab()
 	GtkTreeSelection *sel;
 	GtkWidget *label;
 
-	 GtkTreeIter iter;
+	GtkTreeIter iter;
         GValue val;
         val.g_type = G_TYPE_POINTER;
+	account_t* current;
+	//GValue id;
+	//val.g_type = G_TYPE;
 
 	selectedAccount = NULL;
 
@@ -198,7 +202,7 @@ create_accounts_tab()
 			account_store);
 
 	gtk_tree_model_get_value(GTK_TREE_MODEL(account_store), &iter, 3, &val);
-
+	//current = (account_t*) g_value_get_pointer(&val);
 
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(account_store),
 			2, GTK_SORT_ASCENDING);
@@ -208,6 +212,7 @@ create_accounts_tab()
 			rend,
 			"markup", 0,
 			NULL);
+	//if(current->accountID == account_list_get_default())
 	g_object_set(G_OBJECT(rend), "weight", "bold", NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(view), col);
 
