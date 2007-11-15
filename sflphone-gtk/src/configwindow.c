@@ -36,7 +36,6 @@ GtkWidget * deleteButton;
 GtkWidget * defaultButton;
 
 account_t * selectedAccount;
-account_t * defaultAccount;
 
 /** Fills the treelist with accounts */
 	void 
@@ -147,6 +146,24 @@ select_account(GtkTreeSelection *sel, GtkTreeModel *model)
 
 }
 
+void
+bold_if_default_account(GtkTreeViewColumn *col, 
+			GtkCellRenderer *rend, 
+			GtkTreeModel *tree_model, 
+			GtkTreeIter *iter,
+			gpointer data)
+{
+	GValue val;
+	val.g_type = G_TYPE_POINTER;
+	gtk_tree_model_get_value(tree_model, iter, 3, &val);
+	account_t* current = (account_t*) g_value_get_pointer(&val);
+	g_value_unset(&val);
+	if(g_strcasecmp(current->accountID,account_list_get_default())==0)
+		g_object_set (G_OBJECT(rend),"weight",800 ,NULL);
+	else
+		g_object_set(G_OBJECT(rend), "weight", 400, NULL);
+
+}
 
 
 	GtkWidget *
@@ -164,9 +181,6 @@ create_accounts_tab()
 	GtkTreeIter iter;
         GValue val;
         val.g_type = G_TYPE_POINTER;
-	account_t* current;
-	//GValue id;
-	//val.g_type = G_TYPE;
 
 	selectedAccount = NULL;
 
@@ -201,9 +215,6 @@ create_accounts_tab()
 			G_CALLBACK (select_account),
 			account_store);
 
-	gtk_tree_model_get_value(GTK_TREE_MODEL(account_store), &iter, 3, &val);
-	//current = (account_t*) g_value_get_pointer(&val);
-
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(account_store),
 			2, GTK_SORT_ASCENDING);
 
@@ -212,9 +223,8 @@ create_accounts_tab()
 			rend,
 			"markup", 0,
 			NULL);
-	//if(current->accountID == account_list_get_default())
-	g_object_set(G_OBJECT(rend), "weight", "bold", NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(view), col);
+	gtk_tree_view_column_set_cell_data_func(col, rend, bold_if_default_account, NULL,NULL);
 
 	rend = gtk_cell_renderer_text_new();
 	col = gtk_tree_view_column_new_with_attributes ("Protocol",
@@ -222,6 +232,7 @@ create_accounts_tab()
 			"markup", 1,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(view), col);
+	gtk_tree_view_column_set_cell_data_func(col, rend, bold_if_default_account, NULL,NULL);
 
 	rend = gtk_cell_renderer_text_new();
 	col = gtk_tree_view_column_new_with_attributes ("Status",
@@ -229,6 +240,7 @@ create_accounts_tab()
 			"markup", 2,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(view), col);
+	gtk_tree_view_column_set_cell_data_func(col, rend, bold_if_default_account, NULL,NULL);
 	g_object_unref(G_OBJECT(account_store));
 	gtk_container_add(GTK_CONTAINER(sw), view);
 
