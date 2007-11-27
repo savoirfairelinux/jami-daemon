@@ -1,12 +1,13 @@
 /*
  *  Copyright (C) 2004-2007 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,81 +34,108 @@
 
 #include "../global.h"
 
-/** maximum bytes inside an incoming packet 
- *  8000 sampling/s * 20s/1000 = 160
- */
-#define RTP_20S_8KHZ_MAX 160
-#define RTP_20S_48KHZ_MAX 960
+#define UP_SAMPLING 0
+#define DOWN_SAMPLING 1
+
+
 class SIPCall;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Two pair of sockets
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
-public:
-	AudioRtpRTX (SIPCall *, bool);
-	~AudioRtpRTX();
+	public:
+		AudioRtpRTX (SIPCall *, bool);
+		~AudioRtpRTX();
 
-	ost::Time *time; 	// For incoming call notification 
-	virtual void run ();
+		ost::Time *time; 	// For incoming call notification 
+		virtual void run ();
 
-private:
-  SIPCall* _ca;
-  ost::RTPSession *_sessionSend;
-  ost::RTPSession *_sessionRecv;
-  ost::SymmetricRTPSession *_session;
-  ost::Semaphore _start;
-  bool _sym;
+	private:
+		SIPCall* _ca;
+		ost::RTPSession *_sessionSend;
+		ost::RTPSession *_sessionRecv;
+		ost::SymmetricRTPSession *_session;
+		ost::Semaphore _start;
+		bool _sym;
 
-  /** When we receive data, we decode it inside this buffer */
-  int16* _receiveDataDecoded;
-  /** When we send data, we encode it inside this buffer*/
-  unsigned char* _sendDataEncoded;
+		/** When we receive data, we decode it inside this buffer */
+		int16* _receiveDataDecoded;
+		/** Buffers used for send data from the mic */
+		unsigned char* _sendDataEncoded;
+		int16* _intBufferDown;
 
-  /** After that we send the data inside this buffer if there is a format conversion or rate conversion */
-  /** Also use for getting mic-ringbuffer data */
-  SFLDataFormat* _dataAudioLayer;
+		/** After that we send the data inside this buffer if there is a format conversion or rate conversion */
+		/** Also use for getting mic-ringbuffer data */
+		SFLDataFormat* _dataAudioLayer;
 
-  /** Buffer for 8000hz samples in conversion */
-  float32* _floatBuffer8000;
-  /** Buffer for 48000hz samples in conversion */ 
-  float32* _floatBuffer48000;
+		/** Buffers used for sample rate conversion */
+		float32* _floatBufferDown;
+		float32* _floatBufferUp;
 
-  /** Buffer for 8000Hz samples for mic conversion */
-  int16* _intBuffer8000;
+		/** Debugging output file */
+		//std::ofstream _fstream;
 
-  /** Debugging output file */
-  //std::ofstream _fstream;
+		/** libsamplerate converter for incoming voice */
+		SRC_STATE*    _src_state_spkr;
+		/** libsamplerate converter for outgoing voice */
+		SRC_STATE*    _src_state_mic;
+		/** libsamplerate error */
+		int           _src_err;
 
-   /** libsamplerate converter for incoming voice */
-  SRC_STATE*    _src_state_spkr;
+		// Variables to process audio stream
+		int _layerSampleRate;  // sample rate for playing sound (typically 44100HZ)
+		int _codecSampleRate; // sample rate of the codec we use to encode and decode (most of time 8000HZ)
+		int _layerFrameSize; // length of the sound frame we capture in ms(typically 20ms)
 
-  /** libsamplerate converter for outgoing voice */
-  SRC_STATE*    _src_state_mic;
-
-  /** libsamplerate error */
-  int           _src_err;
-
-  void initAudioRtpSession(void);
-  void sendSessionFromMic(int);
-  void receiveSessionForSpkr(int&);
+		void initAudioRtpSession(void);
+		/**
+ 		 * Get the data from the mic, encode it and send it through the RTP session
+ 		 */ 		 	
+		void sendSessionFromMic(int);
+		/**
+ 		 * Get the data from the RTP packets, decode it and send it to the sound card
+ 		 */		 	
+		void receiveSessionForSpkr(int&);
+		/**
+ 		 * Init the buffers used for processing sound data
+ 		 */ 
+		void initBuffers(void);
+		/**
+ 		 * Call the appropriate function, up or downsampling
+ 		 */ 
+		int reSampleData(int, int ,int);
+		/**
+ 		 * Upsample the data from the clock rate of the codec to the sample rate of the layer
+ 		 * @param int The clock rate of the codec
+ 		 * @param int The number of samples we have in the buffer
+ 		 * @return int The number of samples after the operation
+ 		 */
+		int upSampleData(int, int);
+		/**
+ 		 * Downsample the data from the sample rate of the layer to the clock rate of the codec
+ 		 *  @param int The clock rate of the codec
+ 		 *  @param int The number of samples we have in the buffer 
+ 		 *  @return int The number of samples after the operation
+ 		 */
+		int downSampleData(int, int);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Main class rtp
 ///////////////////////////////////////////////////////////////////////////////
 class AudioRtp {
-public:
-  AudioRtp();
-  ~AudioRtp();
+	public:
+		AudioRtp();
+		~AudioRtp();
 
-  int 			createNewSession (SIPCall *);
-  void			closeRtpSession	 ();
+		int 			createNewSession (SIPCall *);
+		void			closeRtpSession	 ();
 
-private:
-  AudioRtpRTX*	        _RTXThread;
-  bool			_symmetric;
-  ost::Mutex            _threadMutex;
+	private:
+		AudioRtpRTX*	        _RTXThread;
+		bool			_symmetric;
+		ost::Mutex            _threadMutex;
 };
 
 #endif // __AUDIO_RTP_H__

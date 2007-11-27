@@ -2,10 +2,11 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *                                                                              
  *  This program is distributed in the hope that it will be useful,
@@ -35,96 +36,103 @@ class RingBuffer;
 class ManagerImpl;
 
 class AudioLayer {
-public:
-  AudioLayer(ManagerImpl* manager);
-  ~AudioLayer(void);
- 
-  /*
-   * @param indexIn
-   * @param indexOut
-   * @param sampleRate
-   */
-  void openDevice(int, int, int);
-  void startStream(void);
-  void stopStream(void);
-  void sleep(int);
-  bool hasStream(void);
-  bool isStreamActive(void);
-  bool isStreamStopped(void);
+	public:
+		AudioLayer(ManagerImpl* manager);
+		~AudioLayer(void);
 
-  void flushMain();
-  int putMain(void* buffer, int toCopy);
-  int putUrgent(void* buffer, int toCopy);
-  int canGetMic();
-  int getMic(void *, int);
-  void flushMic();
+		/*
+		 * @param indexIn
+		 * @param indexOut
+		 * @param sampleRate
+		 * @param frameSize
+		 */
+		void openDevice(int, int, int, int);
+		void startStream(void);
+		void stopStream(void);
+		void sleep(int);
+		bool hasStream(void);
+		bool isStreamActive(void);
+		bool isStreamStopped(void);
 
-  int audioCallback (const void *, void *, unsigned long,
-        const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
-  int miniAudioCallback (const void *, void *, unsigned long,
-        const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
+		void flushMain();
+		int putMain(void* buffer, int toCopy);
+		int putUrgent(void* buffer, int toCopy);
+		int canGetMic();
+		int getMic(void *, int);
+		void flushMic();
 
-  void setErrorMessage(const std::string& error) { _errorMessage = error; }
-  std::string getErrorMessage() { return _errorMessage; }
+		int audioCallback (const void *, void *, unsigned long,
+				const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
+		int miniAudioCallback (const void *, void *, unsigned long,
+				const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
 
-  /**
-   * Get the sample rate of audiolayer
-   * accessor only
-   */
-  unsigned int getSampleRate() { return _sampleRate; }
+		void setErrorMessage(const std::string& error) { _errorMessage = error; }
+		std::string getErrorMessage() { return _errorMessage; }
 
-  int getDeviceCount();
-  AudioDevice* getAudioDeviceInfo(int index, int ioDeviceMask);
+		/**
+		 * Get the sample rate of audiolayer
+		 * accessor only
+		 */
+		unsigned int getSampleRate() { return _sampleRate; }
+		unsigned int getFrameSize() { return _frameSize; }
+		int getDeviceCount();
+		AudioDevice* getAudioDeviceInfo(int index, int ioDeviceMask);
 
-  enum IODEVICE {InputDevice=0x01, OutputDevice=0x02 };
+		enum IODEVICE {InputDevice=0x01, OutputDevice=0x02 };
 
-  /**
-   * Toggle echo testing on/off
-   */
-  void toggleEchoTesting();
+		/**
+		 * Toggle echo testing on/off
+		 */
+		void toggleEchoTesting();
 
-private:
-  void closeStream (void);
-  RingBuffer _urgentRingBuffer;
-  RingBuffer _mainSndRingBuffer;
-  RingBuffer _micRingBuffer;
-  ManagerImpl* _manager; // augment coupling, reduce indirect access
-                        // a audiolayer can't live without manager
+	private:
+		void closeStream (void);
+		RingBuffer _urgentRingBuffer;
+		RingBuffer _mainSndRingBuffer;
+		RingBuffer _micRingBuffer;
+		ManagerImpl* _manager; // augment coupling, reduce indirect access
+		// a audiolayer can't live without manager
 
-  portaudio::MemFunCallbackStream<AudioLayer> *_stream;
+		portaudio::MemFunCallbackStream<AudioLayer> *_stream;
 
-  /**
-   * Sample Rate of SFLphone : should be 8000 for 8khz
-   * Added because we could change it in the futur
-   */
-  unsigned int _sampleRate;
+		/**
+		 * Sample Rate SFLphone should send sound data to the sound card 
+		 * The value can be set in the user config file- now: 44100HZ
+		 */
+		unsigned int _sampleRate;
+		
+		/**
+ 		 * Length of the sound frame we capture or read in ms
+ 		 * The value can be set in the user config file - now: 20ms
+ 		 */	 		
+		unsigned int _frameSize;
+		
+		/**
+		 * Input channel (mic) should be 1 mono
+		 */
+		unsigned int _inChannel; // mic
 
-  /**
-   * Input channel (mic) should be 1 mono
-   */
-  unsigned int _inChannel; // mic
+		/**
+		 * Output channel (stereo) should be 1 mono
+		 */
+		unsigned int _outChannel; // speaker
 
-  /**
-   * Output channel (stereo) should be 1 mono
-   */
-  unsigned int _outChannel; // speaker
+		/**
+		 * Default volume for incoming RTP and Urgent sounds.
+		 */
+		unsigned short _defaultVolume; // 100
 
-  /**
-   * Default volume for incoming RTP and Urgent sounds.
-   */
-  unsigned short _defaultVolume; // 100
+		/**
+		 * Echo testing or not
+		 */
+		bool _echoTesting;
 
-  /**
-   * Echo testing or not
-   */
-  bool _echoTesting;
+		std::string _errorMessage;
+		ost::Mutex _mutex;
 
-  std::string _errorMessage;
-  ost::Mutex _mutex;
-
-  float *table_;
-  int tableSize_;
-  int leftPhase_;
+		float *table_;
+		int tableSize_;
+		int leftPhase_;
 };
 
 #endif // _AUDIO_LAYER_H_

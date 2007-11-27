@@ -62,7 +62,7 @@
 #define DRIVER_NAME_IN		"Drivers.driverNameIn"
 #define DRIVER_NAME_OUT		"Drivers.driverNameOut"
 #define DRIVER_SAMPLE_RATE      "Drivers.sampleRate"
-#define DRIVER_SAMPLE_RATE_DEFAULT "8000"
+#define DRIVER_FRAME_SIZE	"Drivers.framesize"
 #define NB_CODEC		"Codecs.nbCodec"
 #define CODEC1			"Codecs.codec1"
 #define CODEC2			"Codecs.codec2"
@@ -102,6 +102,8 @@
 #define DFT_SKIN 			"metal"
 #define DFT_ZONE			"North America"
 #define DFT_VOICEMAIL 		"888"
+#define DFT_FRAME_SIZE		"20"
+#define DFT_SAMPLE_RATE		"44100"
 // zeroconfig default value
 #ifdef USE_ZEROCONF
 #define CONFIG_ZEROCONF_DEFAULT_STR "1"

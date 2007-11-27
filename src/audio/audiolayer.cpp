@@ -2,10 +2,11 @@
  *  Copyright (C) 2005 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
@@ -108,13 +109,15 @@ AudioLayer::hasStream(void) {
 
 
 void
-AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate) 
+AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize) 
 {
   closeStream();
 
   _sampleRate = sampleRate;
-
+  _frameSize = frameSize;	
   int portaudioFramePerBuffer = FRAME_PER_BUFFER; //=FRAME_PER_BUFFER; //= paFramesPerBufferUnspecified;
+  //int portaudioFramePerBuffer = (int) (8000 * frameSize / 1000); 
+//= paFramesPerBufferUnspecified;
 
   int nbDevice = getDeviceCount();
   if (nbDevice == 0) {

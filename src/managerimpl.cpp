@@ -1050,7 +1050,8 @@ ManagerImpl::initConfigFile (void)
   //fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);
   fill_config_int(DRIVER_NAME_IN, DFT_DRIVER_STR);
   fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
-  fill_config_int(DRIVER_SAMPLE_RATE, DRIVER_SAMPLE_RATE_DEFAULT);
+  fill_config_int(DRIVER_SAMPLE_RATE, DFT_SAMPLE_RATE);
+  fill_config_int(DRIVER_FRAME_SIZE, DFT_FRAME_SIZE);
   fill_config_str(CODEC1, DFT_CODEC);
   fill_config_str(CODEC2, DFT_CODEC);
   fill_config_str(CODEC3, DFT_CODEC);
@@ -1118,6 +1119,7 @@ ManagerImpl::selectAudioDriver (void)
   if (sampleRate <=0 || sampleRate > 48000) {
       sampleRate = 8000;
   }
+	int frameSize = getConfigInt(AUDIO, DRIVER_FRAME_SIZE);
 
   // this is when no audio device in/out are set
   // or the audio device in/out are set to 0
@@ -1128,7 +1130,7 @@ ManagerImpl::selectAudioDriver (void)
   //}
   _debugInit(" AudioLayer Opening Device");
   _audiodriver->setErrorMessage("");
-  _audiodriver->openDevice(noDeviceIn, noDeviceOut, sampleRate);
+  _audiodriver->openDevice(noDeviceIn, noDeviceOut, sampleRate, frameSize);
 }
 
 /**
@@ -1787,10 +1789,11 @@ ManagerImpl::removeAccount(const AccountID& accountID)
 std::string  
 ManagerImpl::getDefaultAccount()
 {
+	
 	std::string id;
 	id = getConfigString(PREFERENCES, "DefaultAccount");
 	_debug("Default Account = %s\n",id.c_str());	
-	return id; 
+	return id;
 }
 
 void
