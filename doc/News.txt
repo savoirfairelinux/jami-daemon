@@ -3,7 +3,7 @@
 News
 ====
 
-December 2007:: Upcoming release 0.8.0. See the last sflsite::screenshots[]. 
+December 2007:: Upcoming release 0.8.0. See the last sflsite:screenshots[]. 
 
 September 2007:: A new Gtk+ client is being written, to play with the new D-BUS client/server interface. 
 
