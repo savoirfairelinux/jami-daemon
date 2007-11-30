@@ -8,6 +8,8 @@ This is an upcoming client, to be released with version 0.8.
 .New SFLphone-GTK client (ver. 0.8)
 sflimage::images/screenshots/sflphone_gtk_0.8.png[New SFLphone GTK client]
 
+.New SFLphone-GTK client with the dialpad (ver. 0.8)
+sflimage::images/screenshots/sflphoneDialpad_gtk_0.8.png[New SFLphone GTK client]
 
 Historical screenshots
 ----------------------
