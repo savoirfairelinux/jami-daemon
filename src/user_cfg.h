@@ -97,10 +97,12 @@
 #define DFT_VOL_MICRO_STR    "100"
 
 
-#define DFT_CODEC			"G711u"
+#define DFT_CODEC1		"G711u"
+#define DFT_CODEC2		"G711a"
+#define DFT_CODEC3		"GSM"
 #define DFT_RINGTONE 		"konga.ul"
-#define DFT_SKIN 			"metal"
-#define DFT_ZONE			"North America"
+#define DFT_SKIN 		"metal"
+#define DFT_ZONE		"North America"
 #define DFT_VOICEMAIL 		"888"
 #define DFT_FRAME_SIZE		"20"
 #define DFT_SAMPLE_RATE		"44100"
