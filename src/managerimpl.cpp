@@ -1052,9 +1052,9 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
   fill_config_int(DRIVER_SAMPLE_RATE, DFT_SAMPLE_RATE);
   fill_config_int(DRIVER_FRAME_SIZE, DFT_FRAME_SIZE);
-  fill_config_str(CODEC1, DFT_CODEC);
-  fill_config_str(CODEC2, DFT_CODEC);
-  fill_config_str(CODEC3, DFT_CODEC);
+  fill_config_str(CODEC1, DFT_CODEC1);
+  fill_config_str(CODEC2, DFT_CODEC2);
+  fill_config_str(CODEC3, DFT_CODEC3);
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
