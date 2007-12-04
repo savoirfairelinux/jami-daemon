@@ -254,15 +254,24 @@ public:
    * purge from configuration.
    */
   void removeAccount(const AccountID& accountID);
-	
-/*
- * get the default account
- */
-std::string getDefaultAccount();
+  
+  /*
+   * get the default account
+   */
+  std::string getDefaultAccount();
 
- /*
-  * Set an account as default
-  */
+  /**
+   * Set the prefered order for codecs.
+   * Called by D-Bus command: "setCodecPreferedOrder"
+   *
+   * @param codecs A list of strings ("codecName"s) of the codecs.
+   */
+  void setCodecsOrder(const std::vector< ::DBus::String >& codecs);
+  
+
+  /*
+   * Set an account as default
+   */
   void setDefaultAccount(const AccountID& accountID);
 
 
@@ -400,15 +409,6 @@ private:
    */
   void initAudioCodec(void);
 
-
-  /**
-   * Set the prefered order for codecs.
-   * Called by D-Bus command: "setCodecPreferedOrder"
-   *
-   * @param codecs A list of strings ("codecName"s) of the codecs.
-   */
-  void setCodecsOrder(const std::vector< ::DBus::String >& codecs);
-  
   /*
    * Initialize audiodriver
    */

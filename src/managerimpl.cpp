@@ -1040,6 +1040,9 @@ ManagerImpl::initConfigFile (void)
 
   std::string section;
   section = SIGNALISATION;
+
+  // Default values, that will be overwritten by the call to
+  // 'populateFromFile' below.
   fill_config_int(SYMMETRIC, YES_STR);
   fill_config_int(PLAY_DTMF, YES_STR);
   fill_config_int(PLAY_TONES, YES_STR);
@@ -1067,6 +1070,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
 
+  // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
     _exist = _config.populateFromFile(_path);
   }
@@ -1094,6 +1098,11 @@ void
 ManagerImpl::setCodecsOrder(const std::vector< ::DBus::String >& codecs)
 {
   // TODO: set codecs using the list.
+
+  /* S'assurer ici de sauvegarderl es codecs aussi dans la configuration
+   * (appeler saveConfig ?), et de sauver pour les Codecs, le _codecName
+   * de chaque codec, et non pas la _description. Faut s'assurer de ça
+   * auprès de D-Bus aussi.*/
   _debug("Set codecs preferred order: UNIMPLEMENTED YET :)\n");
 }
 
