@@ -399,7 +399,16 @@ private:
    * Initialize audiocodec with config setting
    */
   void initAudioCodec(void);
-	
+
+
+  /**
+   * Set the prefered order for codecs.
+   * Called by D-Bus command: "setCodecPreferedOrder"
+   *
+   * @param codecs A list of strings ("codecName"s) of the codecs.
+   */
+  void setCodecsOrder(const std::vector< ::DBus::String >& codecs);
+  
   /*
    * Initialize audiodriver
    */

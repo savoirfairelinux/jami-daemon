@@ -23,6 +23,8 @@
 CodecSpeex::CodecSpeex(int payload)
  : AudioCodec(payload, "speex")
 {
+  _description = "Speex";
+
   _clockRate = 8000;
   _channel = 1;
   initSpeex();

@@ -24,7 +24,7 @@
 #include "audiocodec.h"
 
 AudioCodec::AudioCodec (int payload, const std::string &codecName)
- : _codecName(codecName), _officialName(codecName) 
+ : _codecName(codecName)
 {
   _payload = payload;
   _clockRate = 8000; // default

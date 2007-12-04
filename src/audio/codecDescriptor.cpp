@@ -53,12 +53,12 @@ CodecDescriptorMap::getCodec(CodecType payload)
 }
 
 void 
-CodecDescriptorMap::setActive(const std::string& officialName) 
+CodecDescriptorMap::setActive(const std::string& codecDescription) 
 {
   CodecMap::iterator iter = _codecMap.begin();
   while(iter!=_codecMap.end()) {
     if (iter->second!=0) {
-      if (iter->second->getOfficialName() == officialName) {
+      if (iter->second->getDescription() == codecDescription) {
         iter->second->setActive(true);
         break;
       }

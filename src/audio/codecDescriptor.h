@@ -66,11 +66,11 @@ public:
 
   /**
    * Get codec with is associated payload
-   * Put a codec active, with is codecName
+   * Put a codec active, with it's codec's _description
    * O(n) if not found where n is the number of element
-   * @param codecName the same that getCodec(number)->getCodecName()
+   * @param codecDescription is the same as with getCodec(number)->getDescription()
    */
-  void setActive(const std::string& officialName);
+  void setActive(const std::string& codecDescription);
 private:
   CodecMap _codecMap;
 };

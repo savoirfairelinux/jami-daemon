@@ -39,7 +39,10 @@ public:
   virtual int codecDecode(short *, unsigned char *, unsigned int) = 0;
   virtual int codecEncode(unsigned char *, short *, unsigned int) = 0;
 
-  std::string getOfficialName() { return _officialName; }
+  /** Returns description for GUI usage */
+  std::string getDescription() { return _description; }
+
+  /** Value used for SDP negotiation */
   std::string getCodecName() { return _codecName; }
   int getPayload() { return _payload; }
   bool hasDynamicPayload() { return _hasDynamicPayload; }
@@ -49,8 +52,10 @@ public:
   void setActive(bool active) { _active = active; }
 
 protected:
+  /** Holds SDP-compliant codec name */
   std::string _codecName; // what we put inside sdp
-  std::string _officialName; // what we display to the user
+  /** Holds the GUI-style codec description */
+  std::string _description; // what we display to the user
 
   /**
    * Clock rate or sample rate of the codec, in Hz

@@ -62,7 +62,7 @@ ConfigurationManager::removeAccount( const ::DBus::String& accoundID )
 	return Manager::instance().removeAccount(accoundID);
 }
 
-	std::vector< ::DBus::String > 
+std::vector< ::DBus::String > 
 ConfigurationManager::getAccountList(  )
 {
 	_debug("ConfigurationManager::getAccountList received\n");
@@ -70,7 +70,7 @@ ConfigurationManager::getAccountList(  )
 }
 
 
-	std::vector< ::DBus::String > 
+std::vector< ::DBus::String > 
 ConfigurationManager::getToneLocaleList(  )
 {
 	_debug("ConfigurationManager::getToneLocaleList received\n");
@@ -104,11 +104,12 @@ ConfigurationManager::getCodecList(  )
 }
 
 
-	void 
-ConfigurationManager::setCodecPreferedOrder( const std::vector< ::DBus::String >& ringtone )
+void 
+ConfigurationManager::setCodecPreferedOrder( const std::vector< ::DBus::String >& codecList )
 {
-	_debug("ConfigurationManager::setCodecPreferedOrder received\n");
 
+	_debug("ConfigurationManager::setCodecPreferedOrder received\n");
+	return Manager::instance().setCodecsOrder(codecList);
 }
 
 

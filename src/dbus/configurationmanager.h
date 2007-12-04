@@ -47,7 +47,7 @@ public:
     std::vector< ::DBus::String > getRingtoneList(  );
     std::vector< ::DBus::String > getCodecList(  );
     std::vector< ::DBus::String > getToneLocaleList(  );
-    void setCodecPreferedOrder( const std::vector< ::DBus::String >& ringtone );
+    void setCodecPreferedOrder( const std::vector< ::DBus::String >& codecList );
     std::vector< ::DBus::String > getCodecPreferedOrder(  );
     std::vector< ::DBus::String > getPlaybackDeviceList(  );
     std::vector< ::DBus::String > getRecordDeviceList(  );

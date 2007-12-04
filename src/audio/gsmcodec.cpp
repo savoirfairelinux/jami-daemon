@@ -25,6 +25,8 @@
 // 3 GSM A 8000 1 [RFC3551]
 Gsm::Gsm(int payload) : AudioCodec(payload, "GSM")
 {
+  _description = "GSM";
+
   _clockRate = 8000;
   _channel   = 1;
   if (!(_decode_gsmhandle = gsm_create() )) 

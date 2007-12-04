@@ -1087,6 +1087,16 @@ ManagerImpl::initAudioCodec (void)
   _codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC3));
 }
 
+/**
+ * Set prefered codec order
+ */
+void
+ManagerImpl::setCodecsOrder(const std::vector< ::DBus::String >& codecs)
+{
+  // TODO: set codecs using the list.
+  _debug("Set codecs preferred order: UNIMPLEMENTED YET :)\n");
+}
+
 
 /**
  * Initialization: Main Thread
@@ -1403,7 +1413,7 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
       strType << iter->first;
       tk.push_back(strType.str());
       if (iter->second) {
-        tk.push_back(iter->second->getOfficialName());
+        tk.push_back(iter->second->getDescription());
       } else {
         tk.push_back(strType.str());
       }
