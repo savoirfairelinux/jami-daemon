@@ -1,5 +1,5 @@
-libexec_PROGRAMS = sflphoned
-bin_SCRIPTS = sflphone
+bin_PROGRAMS = sflphoned
+#bin_SCRIPTS = sflphone
 
 if USE_ZEROCONF
 ZEROCONFDIR = zeroconf
