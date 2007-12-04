@@ -27,7 +27,7 @@
 GtkListStore * store;
 GtkWidget *view;
 
-GtkWidget * account_store;
+//GtkWidget * account_store;
 GtkWidget *item;
 
 GtkWidget   * toolbar;
@@ -255,7 +255,7 @@ void  row_activated(GtkTreeView       *tree_view,
 		}
 	}
 }                  
-
+/*
 void
 fast_fill_account_list()
 {
@@ -272,7 +272,7 @@ fast_fill_account_list()
         }
 
 }
-
+*/
 
 
 GtkWidget * 
@@ -284,12 +284,12 @@ create_toolbar (){
 
 	toolbar = ret;
 
-	account_store = gtk_menu_new();
-	fast_fill_account_list();
+	//account_store = gtk_menu_new();
+	//fast_fill_account_list();
 
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
 	callButton = gtk_menu_tool_button_new (image, "Place a Call");
-	gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(callButton), GTK_WIDGET(account_store));
+	//gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(callButton), GTK_WIDGET(account_store));
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);  
