@@ -205,10 +205,14 @@ sflphone_pick_up()
 				dbus_accept (selectedCall);
 				break;
 			case CALL_STATE_HOLD:
-				dbus_unhold (selectedCall);
+				//dbus_unhold (selectedCall);
+				sflphone_new_call();
 				break;
 			case CALL_STATE_TRANSFERT:
 				dbus_transfert (selectedCall);
+				break;
+			case CALL_STATE_CURRENT:
+				sflphone_new_call();
 				break;
 			default:
 				g_warning("Should not happen in sflphone_pick_up()!");

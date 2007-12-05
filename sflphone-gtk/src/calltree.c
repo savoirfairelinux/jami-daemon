@@ -1,10 +1,11 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *                                                                                
  *  This program is distributed in the hope that it will be useful,
@@ -27,12 +28,11 @@
 GtkListStore * store;
 GtkWidget *view;
 
-//GtkWidget * account_store;
-GtkWidget *item;
+//GtkWidget *item;
 
 GtkWidget   * toolbar;
 GtkToolItem * callButton;
-GtkToolItem * pickupButton;
+//GtkToolItem * pickupButton;
 GtkToolItem * hangupButton;
 GtkToolItem * holdButton;
 GtkToolItem * transfertButton;
@@ -67,12 +67,13 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 	static void 
 call_button( GtkWidget *widget, gpointer   data )
 {
-	sflphone_new_call();
+	sflphone_pick_up();
+	//sflphone_new_call();
 }
 
 /**
  * Pick up
- */
+*/
 	static void 
 pick_up( GtkWidget *widget, gpointer   data )
 {
@@ -127,17 +128,21 @@ unhold( GtkWidget *widget, gpointer   data )
 	void 
 toolbar_update_buttons ()
 {
+
 	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       FALSE);
-	gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     FALSE);
 	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     FALSE);
 	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       FALSE);
 	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  FALSE);
 	gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
 	g_object_ref(holdButton);
 	g_object_ref(unholdButton);
+	//g_object_ref(callButton);
 	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
 	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
+	//gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), holdButton, 3);
+//	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), callButton, 0);
+	
 
 	gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
 	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), FALSE);
@@ -149,8 +154,8 @@ toolbar_update_buttons ()
 		switch(selectedCall->state) 
 		{
 			case CALL_STATE_INCOMING:
-				gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
-				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(callButton),	TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),	TRUE);
 				break;
 			case CALL_STATE_HOLD:
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
@@ -162,9 +167,9 @@ toolbar_update_buttons ()
 				break;
 			case CALL_STATE_RINGING:
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(callButton),     TRUE);
 				break;
 			case CALL_STATE_DIALING:
-				gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
 				gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
 				break;
@@ -183,7 +188,6 @@ toolbar_update_buttons ()
 				gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), TRUE);
 				gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
 				gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-				gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
 				gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
 				gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
@@ -255,24 +259,6 @@ void  row_activated(GtkTreeView       *tree_view,
 		}
 	}
 }                  
-/*
-void
-fast_fill_account_list()
-{
-        int i;
-        for( i = 0; i < account_list_get_size(); i++)
-        {
-                account_t  * a = account_list_get_nth (i);
-                if (a)
-                {
-                        item = gtk_check_menu_item_new_with_label(g_hash_table_lookup(a->properties, ACCOUNT_ALIAS));
-                        gtk_menu_shell_append (GTK_MENU_SHELL (account_store), item);
-                        gtk_widget_show(item);
-                }
-        }
-
-}
-*/
 
 
 GtkWidget * 
@@ -284,23 +270,14 @@ create_toolbar (){
 
 	toolbar = ret;
 
-	//account_store = gtk_menu_new();
-	//fast_fill_account_list();
-
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
 	callButton = gtk_menu_tool_button_new (image, "Place a Call");
-	//gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(callButton), GTK_WIDGET(account_store));
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);  
 
 
 	image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
-	pickupButton = gtk_tool_button_new (image, "Pick Up");
-	gtk_widget_set_state( GTK_WIDGET(pickupButton), GTK_STATE_INSENSITIVE);
-	g_signal_connect (G_OBJECT (pickupButton), "clicked",
-			G_CALLBACK (pick_up), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(pickupButton), -1);  
 
 	image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
 	hangupButton = gtk_tool_button_new (image, "Hang up");
