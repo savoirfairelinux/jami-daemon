@@ -28,11 +28,10 @@
 GtkListStore * store;
 GtkWidget *view;
 
-//GtkWidget *item;
 
 GtkWidget   * toolbar;
+GtkToolItem * pickupButton;
 GtkToolItem * callButton;
-//GtkToolItem * pickupButton;
 GtkToolItem * hangupButton;
 GtkToolItem * holdButton;
 GtkToolItem * transfertButton;
@@ -67,8 +66,10 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 	static void 
 call_button( GtkWidget *widget, gpointer   data )
 {
-	sflphone_pick_up();
-	//sflphone_new_call();
+	if(call_list_get_size()>0)
+		sflphone_pick_up();
+	else
+		sflphone_new_call();
 }
 
 /**
@@ -136,12 +137,14 @@ toolbar_update_buttons ()
 	gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
 	g_object_ref(holdButton);
 	g_object_ref(unholdButton);
-	//g_object_ref(callButton);
 	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
 	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
-	//gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), holdButton, 3);
-//	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), callButton, 0);
+	g_object_ref(callButton);
+	g_object_ref(pickupButton);
+	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
+        gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(pickupButton));
+        gtk_toolbar_insert(GTK_TOOLBAR(toolbar), callButton, 0);
 	
 
 	gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
@@ -154,8 +157,11 @@ toolbar_update_buttons ()
 		switch(selectedCall->state) 
 		{
 			case CALL_STATE_INCOMING:
-				gtk_widget_set_sensitive( GTK_WIDGET(callButton),	TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),	TRUE);
+				g_object_ref(callButton);	
+				gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
+				gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
 				break;
 			case CALL_STATE_HOLD:
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
@@ -171,7 +177,11 @@ toolbar_update_buttons ()
 				break;
 			case CALL_STATE_DIALING:
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-				gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+				//gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),       TRUE);
+				g_object_ref(callButton);
+				gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
+				gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
 				break;
 			case CALL_STATE_CURRENT:
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
@@ -267,21 +277,26 @@ create_toolbar (){
 	GtkWidget *image;
 
 	ret = gtk_toolbar_new();
-
 	toolbar = ret;
+	
+	gtk_toolbar_set_orientation(GTK_TOOLBAR(ret), GTK_ORIENTATION_HORIZONTAL);
+	//gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_BOTH);
 
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
-	callButton = gtk_menu_tool_button_new (image, "Place a Call");
+	callButton = gtk_tool_button_new (image, "Place a Call");
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);  
 
-
 	image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
+	pickupButton = gtk_tool_button_new(image, "Pick up");
+	gtk_widget_set_state( GTK_WIDGET(pickupButton), GTK_STATE_INSENSITIVE);
+	g_signal_connect(G_OBJECT (pickupButton), "clicked", 
+			G_CALLBACK (call_button), NULL);
+	gtk_widget_show_all(GTK_WIDGET(pickupButton));
 
 	image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
 	hangupButton = gtk_tool_button_new (image, "Hang up");
-	//gtk_widget_hide( hangupButton );
 	gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
 	g_signal_connect (G_OBJECT (hangupButton), "clicked",
 			G_CALLBACK (hang_up), NULL);

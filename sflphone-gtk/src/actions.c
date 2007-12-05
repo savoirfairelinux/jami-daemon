@@ -205,7 +205,6 @@ sflphone_pick_up()
 				dbus_accept (selectedCall);
 				break;
 			case CALL_STATE_HOLD:
-				//dbus_unhold (selectedCall);
 				sflphone_new_call();
 				break;
 			case CALL_STATE_TRANSFERT:
