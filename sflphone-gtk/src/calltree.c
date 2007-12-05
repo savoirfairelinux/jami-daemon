@@ -160,7 +160,7 @@ toolbar_update_buttons ()
 				gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),	TRUE);
 				g_object_ref(callButton);	
-				gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
+				gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
 				gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
 				break;
 			case CALL_STATE_HOLD:
