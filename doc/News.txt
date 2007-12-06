@@ -4,7 +4,8 @@ News
 ====
 
 December 2007:: Upcoming release 0.8.0. See the last sflsite:screenshots[]. 
-		Partnership with Ecole Polytechique of Montreal to implement video calls and video conference.
+
+		Partnership with *Ecole Polytechique* of Montreal to implement video calls and video conference.
 
 September 2007:: A new Gtk+ client is being written, to play with the new D-BUS client/server interface. 
 
