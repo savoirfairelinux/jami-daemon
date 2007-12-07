@@ -100,6 +100,7 @@ ConfigurationManager::getRingtoneList(  )
 ConfigurationManager::getCodecList(  )
 {
 	_debug("ConfigurationManager::getCodecList received\n");
+	return Manager::instance().getCodecList();
 
 }
 

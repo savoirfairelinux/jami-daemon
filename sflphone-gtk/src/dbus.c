@@ -147,7 +147,6 @@ accounts_changed_cb (DBusGProxy *proxy,
   g_print ("Accounts changed\n");
   sflphone_fill_account_list();
   config_window_fill_account_list();
-  //fast_fill_account_list();
 }
 
 gboolean 
@@ -659,4 +658,59 @@ dbus_unregister(int pid)
   {
     g_print ("DBus called unregister() on instanceProxy\n");
   }
+}
+
+
+gchar **
+dbus_codec_list()
+{
+  g_print("Before");
+
+  GError *error = NULL;
+  char ** array;
+  org_sflphone_SFLphone_ConfigurationManager_get_codec_list (
+    configurationManagerProxy,
+    &array,
+    &error);
+
+  g_print("After");
+  if (error)
+  {
+  g_printerr ("Failed to call get_codec_list() on ConfigurationManager: %s\n",
+              error->message);
+  g_error_free (error);
+  }
+  else
+  {
+  g_print ("DBus called get_codec_list() on ConfigurationManager\n");
+
+  }
+  return array;
+}
+
+void
+dbus_set_prefered_codec(const gchar** codecList)
+{
+  g_print("Before");
+
+  GError *error = NULL;
+  org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order (
+    configurationManagerProxy,
+    codecList,
+    &error);
+
+  g_print("After");
+  if (error)
+  {
+  g_printerr ("Failed to call set_prefered_codec() on ConfigurationManager: %s\n",
+              error->message);
+  g_error_free (error);
+  }
+  else
+  {
+  g_print ("DBus called set_prefered_codec() on ConfigurationManager\n");
+
+  }
+  
+
 }

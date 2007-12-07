@@ -268,6 +268,13 @@ public:
    */
   void setCodecsOrder(const std::vector< ::DBus::String >& codecs);
   
+  /**
+   * Get the list of codecs we supports
+   * @ return The list of the codecs
+   */  
+  std::vector< ::DBus::String > getCodecList( void ); 
+
+
 
   /*
    * Set an account as default
@@ -437,7 +444,7 @@ private:
   Conf::ConfigTree _config;
   bool getCountryTones(const std::string& sequenceId);
   void sendCountryTone(const std::string& sequenceId, int index, const std::string& name);
-  
+   
 
 
   /**

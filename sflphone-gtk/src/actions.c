@@ -156,6 +156,7 @@ sflphone_init()
 		dbus_register(getpid(), "Gtk+ Client");
 		sflphone_fill_account_list();
 		sflphone_set_default_account();
+		sflphone_get_codec_list();
 		return TRUE;
 	}
 }
@@ -567,5 +568,18 @@ sflphone_set_default_account( )
 {
 	gchar* default_id = strdup(dbus_get_default_account());
 	account_list_set_default(default_id);	
+}
+
+
+/* Internal to action - get the codec list */
+	gchar**
+sflphone_get_codec_list()
+{
+	int i=0;
+	gchar** codecs = (gchar**)dbus_codec_list();
+	while(codecs[i]!=NULL){
+		printf("%s\n", codecs[i]);	
+		i++;
+	}
 }
 

@@ -1086,9 +1086,14 @@ ManagerImpl::initAudioCodec (void)
 {
   _debugInit("Active Codecs");
   // TODO: need to be more dynamic...
-  _codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC1));
-  _codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC2));
-  _codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC3));
+  //_codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC1));
+  //_codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC2));
+  //_codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC3));
+	_codecDescriptorMap.setActive(getConfigString("Audio", "Codecs.codec1"));
+	//_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec2"));
+	//_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec3"));
+	
+
 }
 
 /**
@@ -1103,9 +1108,34 @@ ManagerImpl::setCodecsOrder(const std::vector< ::DBus::String >& codecs)
    * (appeler saveConfig ?), et de sauver pour les Codecs, le _codecName
    * de chaque codec, et non pas la _description. Faut s'assurer de ça
    * auprès de D-Bus aussi.*/
-  _debug("Set codecs preferred order: UNIMPLEMENTED YET :)\n");
+	std::vector<std::string> list = codecs;
+	_codecDescriptorMap.setActive(list[0]);
+	_codecDescriptorMap.setInactive(list[1]);
+	_codecDescriptorMap.setInactive(list[2]);
+        setConfig("Audio", "Codecs.codec1", list[0]);	
+	setConfig("Audio", "Codecs.codec2", list[1]);
+	setConfig("Audio", "Codecs.codec3", list[2]);
+
 }
 
+/**
+ * Get the list of codecs
+ */
+std::vector< std::string >
+ManagerImpl::getCodecList( void )
+{
+	std::vector< std::string > v;
+	std::string codec;
+	
+	codec = getConfigString(AUDIO, "Codecs.codec1");
+	v.push_back(codec);
+	codec = getConfigString(AUDIO, "Codecs.codec2");
+	v.push_back(codec);
+	codec = getConfigString(AUDIO, "Codecs.codec3");
+	v.push_back(codec);
+	
+	return v;
+}
 
 /**
  * Initialization: Main Thread

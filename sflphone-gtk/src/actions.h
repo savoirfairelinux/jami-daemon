@@ -104,4 +104,6 @@ void sflphone_place_call ( call_t * c );
 
 void sflphone_fill_account_list();
 void sflphone_set_default_account();
+
+gchar** sflphone_get_codec_list();
 #endif 

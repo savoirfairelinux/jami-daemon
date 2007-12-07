@@ -280,7 +280,7 @@ create_toolbar (){
 	toolbar = ret;
 	
 	gtk_toolbar_set_orientation(GTK_TOOLBAR(ret), GTK_ORIENTATION_HORIZONTAL);
-	//gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_BOTH);
+	gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_ICONS);
 
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
 	callButton = gtk_tool_button_new (image, "Place a Call");
@@ -319,7 +319,7 @@ create_toolbar (){
 	image = gtk_image_new_from_file( ICONS_DIR "/transfert.svg");
 	transfertButton = gtk_toggle_tool_button_new ();
 	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(transfertButton), image);
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), "Transfert");
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), "Transfer");
 	gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
 	transfertButtonConnId = g_signal_connect (G_OBJECT (transfertButton), "toggled",
 			G_CALLBACK (transfert), NULL);

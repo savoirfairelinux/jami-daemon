@@ -53,6 +53,8 @@ gdouble dbus_get_volume(const gchar * device);
 void dbus_play_dtmf(const gchar * key);
 gchar* dbus_get_default_account();
 void dbus_set_default_account(gchar * accountID);
+gchar** dbus_codec_list();
+
 
 /* Instance */
 void dbus_register( int pid, gchar * name);

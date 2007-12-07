@@ -30,6 +30,7 @@
 /** Local variables */
 gboolean  dialogOpen = FALSE;
 GtkListStore *account_store;
+GtkListStore *codec_store;
 GtkWidget * addButton;
 GtkWidget * editButton;
 GtkWidget * deleteButton;
@@ -69,6 +70,28 @@ config_window_fill_account_list ()
 		gtk_widget_set_sensitive( GTK_WIDGET(defaultButton), FALSE);
 	}
 }
+
+
+config_window_fill_codec_list()
+{
+	if(dialogOpen)
+        {
+                GtkTreeIter iter;
+
+                gtk_list_store_clear(codec_store);
+                int i=0;
+		gchar** codecs = (gchar**)dbus_codec_list();
+                while(codecs[i]!=NULL)
+		{
+                	gtk_list_store_append (codec_store, &iter);
+			gtk_list_store_set(codec_store, &iter,0,codecs[i],-1);
+			i++;
+                }
+
+        }
+
+}
+
 /**
  * Delete an account
  */
@@ -144,6 +167,20 @@ select_account(GtkTreeSelection *sel, GtkTreeModel *model)
 	}
 	g_print("select");
 
+}
+
+static void
+select_codec( GtkComboBox* wid)
+{
+	guint item = gtk_combo_box_get_active(wid);
+	/* now we want this selected codec to be used as the preferred codec */
+	/* ie first in the list in the user config */
+	gchar** codecs = (gchar**)dbus_codec_list();
+	gchar* tmp;
+	tmp = codecs[0];
+	codecs[0] = codecs[item];
+	codecs[item]=tmp;
+	dbus_set_prefered_codec(codecs);  
 }
 
 void
@@ -282,6 +319,56 @@ create_accounts_tab()
 	return ret;
 }
 
+GtkWidget*
+create_audio_tab ()
+{
+	GtkWidget* ret;
+	GtkWidget* label;
+	GtkWidget* combo_box;
+	GtkWidget* hbox1;
+	GtkTreeIter iter;
+	GtkCellRenderer *renderer;
+	
+
+	ret = gtk_vbox_new(FALSE, 10);
+        gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
+	
+	label = gtk_label_new("Set your audio preferences.");
+        gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
+        gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+        gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
+        gtk_box_pack_start(GTK_BOX(ret), label, FALSE, TRUE, 0);
+        gtk_widget_show(label);
+	
+	hbox1 = gtk_label_new("Available Codecs");
+        gtk_misc_set_alignment(GTK_MISC(hbox1), 0, 0.5);
+	gtk_box_pack_start(GTK_BOX(ret), hbox1, FALSE, TRUE, 0);
+	gtk_widget_show(hbox1);
+	codec_store = gtk_list_store_new(1, G_TYPE_STRING);
+	
+  	combo_box = gtk_combo_box_new_with_model(GTK_TREE_MODEL (codec_store));
+	gtk_label_set_mnemonic_widget(GTK_LABEL(hbox1), combo_box);
+	renderer = gtk_cell_renderer_text_new();
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo_box), renderer, TRUE);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo_box), renderer, "text",0,NULL);
+	gtk_box_pack_start(GTK_BOX(ret), combo_box, FALSE, TRUE,0);
+	gtk_combo_box_set_active(combo_box, 0);
+
+	
+	g_signal_connect (G_OBJECT (combo_box), "changed",
+                        G_CALLBACK (select_codec),
+                        NULL);
+	gtk_widget_show(combo_box);
+	
+	gtk_widget_show_all(ret);
+	config_window_fill_codec_list();
+	
+
+	return ret;
+	
+}
+
+
 	void
 show_config_window ()
 {
@@ -308,10 +395,16 @@ show_config_window ()
 	gtk_widget_show(notebook);
 
 	/* Create tabs */ 
+	// Accounts tab
 	tab = create_accounts_tab();
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new("Accounts"));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 	
+	// Audio tab
+	tab = create_audio_tab();	
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new("Audio Settings"));
+	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);	
+
 	gtk_dialog_run (dialog);
 
 	dialogOpen = FALSE;

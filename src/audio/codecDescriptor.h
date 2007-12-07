@@ -71,6 +71,7 @@ public:
    * @param codecDescription is the same as with getCodec(number)->getDescription()
    */
   void setActive(const std::string& codecDescription);
+  void setInactive(const std::string& codecDescription);
 private:
   CodecMap _codecMap;
 };
