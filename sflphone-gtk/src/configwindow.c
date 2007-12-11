@@ -79,6 +79,9 @@ config_window_fill_codec_list()
                 GtkTreeIter iter;
 
                 gtk_list_store_clear(codec_store);
+		//gchar * description = "Select a codec:";
+		//gtk_list_store_append(codec_store, &iter);
+		//gtk_list_store_set(codec_store, &iter, 0, description, -1);
                 int i=0;
 		gchar** codecs = (gchar**)dbus_codec_list();
                 while(codecs[i]!=NULL)
@@ -352,7 +355,6 @@ create_audio_tab ()
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo_box), renderer, TRUE);
 	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo_box), renderer, "text",0,NULL);
 	gtk_box_pack_start(GTK_BOX(ret), combo_box, FALSE, TRUE,0);
-	gtk_combo_box_set_active(combo_box, 0);
 
 	
 	g_signal_connect (G_OBJECT (combo_box), "changed",
@@ -362,6 +364,7 @@ create_audio_tab ()
 	
 	gtk_widget_show_all(ret);
 	config_window_fill_codec_list();
+	gtk_combo_box_set_active(combo_box, 0);
 	
 
 	return ret;
