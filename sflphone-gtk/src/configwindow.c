@@ -74,25 +74,25 @@ config_window_fill_account_list ()
 
 config_window_fill_codec_list()
 {
-	if(dialogOpen)
-        {
-                GtkTreeIter iter;
-
-                gtk_list_store_clear(codec_store);
-		//gchar * description = "Select a codec:";
-		//gtk_list_store_append(codec_store, &iter);
-		//gtk_list_store_set(codec_store, &iter, 0, description, -1);
-                int i=0;
-		gchar** codecs = (gchar**)dbus_codec_list();
-                while(codecs[i]!=NULL)
-		{
-                	gtk_list_store_append (codec_store, &iter);
-			gtk_list_store_set(codec_store, &iter,0,codecs[i],-1);
-			i++;
-                }
-
-        }
-
+  if(dialogOpen)
+  {
+    GtkTreeIter iter;
+    int i;
+    gtk_list_store_clear(codec_store);
+    gchar * description = "Select a codec:";
+    //gtk_list_store_append(codec_store, &iter);
+    //gtk_list_store_set(codec_store, &iter, 0, description, -1);
+    for(i=0; i<codec_list_get_size(); i++)
+    {
+      codec_t* c = codec_list_get_nth(i); 
+      printf("%s\n",c->name);
+      if(c)
+      {
+        gtk_list_store_append (codec_store, &iter);
+        gtk_list_store_set(codec_store, &iter,0,c->name,-1);
+      }
+    }
+  }
 }
 
 /**
@@ -178,12 +178,8 @@ select_codec( GtkComboBox* wid)
 	guint item = gtk_combo_box_get_active(wid);
 	/* now we want this selected codec to be used as the preferred codec */
 	/* ie first in the list in the user config */
-	gchar** codecs = (gchar**)dbus_codec_list();
-	gchar* tmp;
-	tmp = codecs[0];
-	codecs[0] = codecs[item];
-	codecs[item]=tmp;
-	dbus_set_prefered_codec(codecs);  
+	codec_set_prefered_order(item);
+	dbus_set_prefered_codec(codec_list_get_nth(0)->name);  
 }
 
 void

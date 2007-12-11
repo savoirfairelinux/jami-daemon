@@ -89,12 +89,12 @@ public:
         };
         static ::DBus::IntrospectedArgument setCodecPreferedOrder_args[] = 
         {
-            { "ringtone", "as", true },
+            { "codec_name", "s", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getCodecPreferedOrder_args[] = 
         {
-            { "ringtone", "as", false },
+            { "codec_name", "s", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getPlaybackDeviceList_args[] = 
@@ -191,8 +191,8 @@ public:
     virtual std::vector< ::DBus::String > getRingtoneList(  ) = 0;
     virtual std::vector< ::DBus::String > getCodecList(  ) = 0;
     virtual std::vector< ::DBus::String > getToneLocaleList(  ) = 0;
-    virtual void setCodecPreferedOrder( const std::vector< ::DBus::String >& ringtone ) = 0;
-    virtual std::vector< ::DBus::String > getCodecPreferedOrder(  ) = 0;
+    virtual void setCodecPreferedOrder( const ::DBus::String& codec_name ) = 0;
+    virtual ::DBus::String getCodecPreferedOrder(  ) = 0;
     virtual std::vector< ::DBus::String > getPlaybackDeviceList(  ) = 0;
     virtual std::vector< ::DBus::String > getRecordDeviceList(  ) = 0;
     virtual std::vector< ::DBus::String > getSampleRateList(  ) = 0;
@@ -313,7 +313,7 @@ private:
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argin1; ri >> argin1;
+        ::DBus::String argin1; ri >> argin1;
         setCodecPreferedOrder(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
@@ -322,7 +322,7 @@ private:
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getCodecPreferedOrder();
+        ::DBus::String argout1 = getCodecPreferedOrder();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

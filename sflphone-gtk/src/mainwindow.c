@@ -36,8 +36,9 @@ GtkWidget * window    = NULL;
 GtkWidget * subvbox   = NULL;
 GtkWidget * dialpad   = NULL;
 GtkWidget * statusBar = NULL;
-gboolean showDialpad  = FALSE; // true if the dialpad have been showned
-
+GtkWidget * infoScreen = NULL;
+gboolean showDialpad  = FALSE; // true if the dialpad have been shown
+gboolean showInfoScreen = FALSE; // true if the info screen have been shown
 
 /**
  * Terminate the main loop.
@@ -149,9 +150,10 @@ create_main_window ()
   
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
  
-  widget = create_screen();
+  //widget = create_screen();
   // TODO Add the screen when we are decided
   //gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+
   
   widget = create_slider("speaker");
   gtk_box_pack_start (GTK_BOX (subvbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
@@ -166,8 +168,7 @@ create_main_window ()
   /* make sure that everything, window and label, are visible */
   gtk_widget_show_all (window);
   
-  screen_clear();
-
+  //screen_clear();
   // Welcome screen
   if (account_list_get_size() == 0)
   {
@@ -244,6 +245,22 @@ main_window_dialpad(gboolean show){
   showDialpad = show;
 }
 
+void
+main_window_callinfo(gboolean show, call_t* current)
+{
+  if(show && !showInfoScreen)
+  {
+    infoScreen = create_screen();
+    gtk_box_pack_start (GTK_BOX (subvbox), infoScreen, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_widget_show_all(infoScreen);
+    screen_set_call(current);
+  }
+  else if(!show && showInfoScreen)
+  {
+    gtk_container_remove(GTK_CONTAINER (subvbox), infoScreen);
+  }
+  showInfoScreen = show;
+}
 
 void 
 status_bar_message(const gchar * message)

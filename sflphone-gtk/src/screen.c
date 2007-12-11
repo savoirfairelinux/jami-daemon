@@ -19,7 +19,7 @@
  
 #include <dialpad.h>
 #include <screen.h>
-
+#include <codeclist.h>
 
 GtkWidget * label;
 GtkWidget * hbox;
@@ -43,7 +43,8 @@ create_screen()
 	event = gtk_event_box_new ();
 	gtk_widget_modify_bg (event, GTK_STATE_NORMAL, &color);
 	
-  label = gtk_label_new ("test");
+  //label = gtk_label_new ("test");
+  label = gtk_label_new("");
   gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
   gtk_misc_set_padding(GTK_MISC(label), 5, 5);
   gtk_misc_set_alignment(GTK_MISC(label), 0,0);
@@ -60,13 +61,16 @@ create_screen()
 void 
 screen_clear()
 {
-  gtk_label_set_markup(GTK_LABEL(label), "<big><b>Welcome to SFLphone</b></big>\n");
+  gtk_label_set_markup(GTK_LABEL(label), "<b>CALL INFOS</b>\n");
 }
 
 void 
 screen_set_call(const call_t * c)
 {
-  gchar * markup = g_strconcat("<big><b>", call_get_name(c), "</b></big>\n", call_get_number(c), NULL);
+  //printf("accountID = %s\ncall to = %s\n", c->accountID, c->to);
+  //gchar * markup = g_strconcat("<big><b>", call_get_name(c), "</b></big>\n", call_get_number(c), NULL);
+  gchar * markup = g_strconcat("<b><i>Calling to:</i></b>", "\t", call_get_number(c), 
+			       "\n<b><i>Codec:</i></b>", "\t", codec_list_get_nth(0)->name, NULL);
   gtk_label_set_markup(GTK_LABEL(label), markup);
   g_free(markup);
 }

@@ -23,6 +23,7 @@
 
 #include <calllist.h>
 #include <accountlist.h>
+#include <codeclist.h>
 
 /** @file actions.h
   * @brief General functions that change the state of the application.
@@ -105,5 +106,5 @@ void sflphone_place_call ( call_t * c );
 void sflphone_fill_account_list();
 void sflphone_set_default_account();
 
-gchar** sflphone_get_codec_list();
+void sflphone_fill_codec_list();
 #endif 

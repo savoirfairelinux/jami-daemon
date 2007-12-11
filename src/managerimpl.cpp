@@ -1100,40 +1100,52 @@ ManagerImpl::initAudioCodec (void)
  * Set prefered codec order
  */
 void
-ManagerImpl::setCodecsOrder(const std::vector< ::DBus::String >& codecs)
+ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
 {
-  // TODO: set codecs using the list.
-
-  /* S'assurer ici de sauvegarderl es codecs aussi dans la configuration
-   * (appeler saveConfig ?), et de sauver pour les Codecs, le _codecName
-   * de chaque codec, et non pas la _description. Faut s'assurer de ça
-   * auprès de D-Bus aussi.*/
-	std::vector<std::string> list = codecs;
+	std::vector<std::string> list = getCodecList();
+        std::string tmp;
+	int i=0;
+        while(list[i] != codec_name)
+	  i++;
+	tmp = list[0];
+	list[0] = list[i];
+	list[i] = tmp; 
 	_codecDescriptorMap.setActive(list[0]);
 	_codecDescriptorMap.setInactive(list[1]);
 	_codecDescriptorMap.setInactive(list[2]);
         setConfig("Audio", "Codecs.codec1", list[0]);	
 	setConfig("Audio", "Codecs.codec2", list[1]);
 	setConfig("Audio", "Codecs.codec3", list[2]);
-
 }
 
+std::string
+ManagerImpl::getPreferedCodec()
+{
+  return getConfigString(AUDIO, "Codecs.codec1");
+}
+
+std::vector <std::string>
+ManagerImpl::getDefaultCodecList( void )
+{
+	std::vector< std::string > v;
+	v.push_back(DFT_CODEC1); // G711u 
+	v.push_back(DFT_CODEC2); // G711a
+	v.push_back(DFT_CODEC3); // GSM
+	return v;
+}
+
+
 /**
- * Get the list of codecs
+ * Get the list of codecs.
+ * Contains all the codecs supported, with order set by the user.
  */
 std::vector< std::string >
 ManagerImpl::getCodecList( void )
 {
 	std::vector< std::string > v;
-	std::string codec;
-	
-	codec = getConfigString(AUDIO, "Codecs.codec1");
-	v.push_back(codec);
-	codec = getConfigString(AUDIO, "Codecs.codec2");
-	v.push_back(codec);
-	codec = getConfigString(AUDIO, "Codecs.codec3");
-	v.push_back(codec);
-	
+	v.push_back(getConfigString(AUDIO, "Codecs.codec1")); 
+	v.push_back( getConfigString(AUDIO, "Codecs.codec2")); 
+	v.push_back( getConfigString(AUDIO, "Codecs.codec3")); 
 	return v;
 }
 

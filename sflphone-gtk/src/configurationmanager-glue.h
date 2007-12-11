@@ -353,10 +353,10 @@ static
 inline
 #endif
 gboolean
-org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order (DBusGProxy *proxy, const char ** IN_ringtone, GError **error)
+org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order (DBusGProxy *proxy, const char * IN_codec_name, GError **error)
 
 {
-  return dbus_g_proxy_call (proxy, "setCodecPreferedOrder", error, G_TYPE_STRV, IN_ringtone, G_TYPE_INVALID, G_TYPE_INVALID);
+  return dbus_g_proxy_call (proxy, "setCodecPreferedOrder", error, G_TYPE_STRING, IN_codec_name, G_TYPE_INVALID, G_TYPE_INVALID);
 }
 
 typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
@@ -376,36 +376,36 @@ static
 inline
 #endif
 DBusGProxyCall*
-org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order_async (DBusGProxy *proxy, const char ** IN_ringtone, org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order_reply callback, gpointer userdata)
+org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order_async (DBusGProxy *proxy, const char * IN_codec_name, org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order_reply callback, gpointer userdata)
 
 {
   DBusGAsyncData *stuff;
   stuff = g_new (DBusGAsyncData, 1);
   stuff->cb = G_CALLBACK (callback);
   stuff->userdata = userdata;
-  return dbus_g_proxy_begin_call (proxy, "setCodecPreferedOrder", org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order_async_callback, stuff, g_free, G_TYPE_STRV, IN_ringtone, G_TYPE_INVALID);
+  return dbus_g_proxy_begin_call (proxy, "setCodecPreferedOrder", org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order_async_callback, stuff, g_free, G_TYPE_STRING, IN_codec_name, G_TYPE_INVALID);
 }
 static
 #ifdef G_HAVE_INLINE
 inline
 #endif
 gboolean
-org_sflphone_SFLphone_ConfigurationManager_get_codec_prefered_order (DBusGProxy *proxy, char *** OUT_ringtone, GError **error)
+org_sflphone_SFLphone_ConfigurationManager_get_codec_prefered_order (DBusGProxy *proxy, char ** OUT_codec_name, GError **error)
 
 {
-  return dbus_g_proxy_call (proxy, "getCodecPreferedOrder", error, G_TYPE_INVALID, G_TYPE_STRV, OUT_ringtone, G_TYPE_INVALID);
+  return dbus_g_proxy_call (proxy, "getCodecPreferedOrder", error, G_TYPE_INVALID, G_TYPE_STRING, OUT_codec_name, G_TYPE_INVALID);
 }
 
-typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_codec_prefered_order_reply) (DBusGProxy *proxy, char * *OUT_ringtone, GError *error, gpointer userdata);
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_codec_prefered_order_reply) (DBusGProxy *proxy, char * OUT_codec_name, GError *error, gpointer userdata);
 
 static void
 org_sflphone_SFLphone_ConfigurationManager_get_codec_prefered_order_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
 {
   DBusGAsyncData *data = (DBusGAsyncData*) user_data;
   GError *error = NULL;
-  char ** OUT_ringtone;
-  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_STRV, &OUT_ringtone, G_TYPE_INVALID);
-  (*(org_sflphone_SFLphone_ConfigurationManager_get_codec_prefered_order_reply)data->cb) (proxy, OUT_ringtone, error, data->userdata);
+  char * OUT_codec_name;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_STRING, &OUT_codec_name, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_codec_prefered_order_reply)data->cb) (proxy, OUT_codec_name, error, data->userdata);
   return;
 }
 

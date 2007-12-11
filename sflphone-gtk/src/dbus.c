@@ -689,14 +689,14 @@ dbus_codec_list()
 }
 
 void
-dbus_set_prefered_codec(const gchar** codecList)
+dbus_set_prefered_codec(const gchar* codec)
 {
   g_print("Before");
 
   GError *error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_set_codec_prefered_order (
     configurationManagerProxy,
-    codecList,
+    codec,
     &error);
 
   g_print("After");

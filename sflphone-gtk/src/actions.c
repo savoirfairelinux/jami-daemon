@@ -18,7 +18,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <accountlist.h>
 #include <actions.h>
 #include <calltree.h>
 #include <dbus.h>
@@ -80,7 +79,7 @@ sflphone_hold(call_t * c )
 	c->state = CALL_STATE_HOLD;
 	update_call_tree(c);
 	update_menus();
-	screen_clear();
+	//screen_clear();
 }
 
 	void 
@@ -146,6 +145,7 @@ sflphone_init()
 {
 	call_list_init ();
 	account_list_init ();
+        codec_list_init();
 	if(!dbus_connect ())
 	{
 		main_window_error_message("Unable to connect to the SFLphone server.\nMake sure the daemon is running.");
@@ -156,7 +156,7 @@ sflphone_init()
 		dbus_register(getpid(), "Gtk+ Client");
 		sflphone_fill_account_list();
 		sflphone_set_default_account();
-		sflphone_get_codec_list();
+		sflphone_fill_codec_list();
 		return TRUE;
 	}
 }
@@ -165,6 +165,7 @@ sflphone_init()
 sflphone_hang_up()
 {
 	call_t * selectedCall = call_get_selected();
+	main_window_callinfo(FALSE, selectedCall);
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
@@ -195,6 +196,8 @@ sflphone_hang_up()
 sflphone_pick_up()
 {
 	call_t * selectedCall = call_get_selected();
+	//screen_set_call(selectedCall);
+	main_window_callinfo(TRUE, selectedCall);
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
@@ -264,7 +267,7 @@ sflphone_fail( call_t * c )
 	c->state = CALL_STATE_FAILURE;
 	update_call_tree(c);
 	update_menus();
-	screen_set_call(c);
+	main_window_callinfo(FALSE, c);
 }
 
 	void 
@@ -273,7 +276,7 @@ sflphone_busy( call_t * c )
 	c->state = CALL_STATE_BUSY;
 	update_call_tree(c);
 	update_menus();
-	screen_set_call(c);
+	//screen_set_call(c);
 }
 
 	void 
@@ -282,7 +285,7 @@ sflphone_current( call_t * c )
 	c->state = CALL_STATE_CURRENT;
 	update_call_tree(c);
 	update_menus();
-	screen_set_call(c);
+	//screen_set_call(c);
 }
 
 	void 
@@ -293,7 +296,7 @@ sflphone_set_transfert()
 	{
 		c->state = CALL_STATE_TRANSFERT;
 		c->to = g_strdup("");
-		screen_set_call(c);
+		//screen_set_call(c);
 		update_call_tree(c);
 		update_menus();
 	}
@@ -308,7 +311,7 @@ sflphone_unset_transfert()
 	{
 		c->state = CALL_STATE_CURRENT;
 		c->to = g_strdup("");
-		screen_set_call(c);
+		//screen_set_call(c);
 		update_call_tree(c);
 		update_menus();
 	}
@@ -329,7 +332,7 @@ sflphone_hung_up (call_t * c )
 	call_list_remove(c->callID);
 	update_call_tree_remove(c);
 	update_menus();
-	screen_clear();
+	main_window_callinfo(FALSE, c);
 }
 
 void process_dialing(call_t * c, guint keyval, gchar * key)
@@ -356,7 +359,7 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 						g_free(c->from);
 						c->from = g_strconcat("\"\" <", c->to, ">", NULL);
 					}
-					screen_set_call(c);
+					//screen_set_call(c);
 					update_call_tree(c);
 				} 
 				else if(strlen(c->to) == 1)
@@ -384,7 +387,7 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 					g_free(c->from);
 					c->from = g_strconcat("\"\" <", c->to, ">", NULL);
 				}
-				screen_set_call(c);
+				//screen_set_call(c);
 				update_call_tree(c);
 			}
 			break;
@@ -405,7 +408,7 @@ call_t * sflphone_new_call()
 	c->to = g_strdup("");
 
 	call_list_add(c);
-	screen_set_call(c);
+	//screen_set_call(c);
 	update_call_tree_add(c);  
 	update_menus();
 
@@ -439,7 +442,7 @@ sflphone_keypad( guint keyval, gchar * key)
 							c->from = g_strconcat("\"",call_get_name(c) ,"\" <", temp, ">", NULL);
 							g_free(before);
 							g_free(temp);
-							screen_set_call(c);
+							//screen_set_call(c);
 							update_call_tree(c);
 						}
 						break;
@@ -572,14 +575,29 @@ sflphone_set_default_account( )
 
 
 /* Internal to action - get the codec list */
-	gchar**
-sflphone_get_codec_list()
+void	
+sflphone_fill_codec_list()
 {
-	int i=0;
-	gchar** codecs = (gchar**)dbus_codec_list();
-	while(codecs[i]!=NULL){
-		printf("%s\n", codecs[i]);	
-		i++;
-	}
+  
+  int i=0;
+  gchar** codecs = (gchar**)dbus_codec_list();
+  while(codecs[i]!=NULL)
+  {
+    printf("%s\n", codecs[i]);	
+    codec_t * c = g_new0(codec_t, 1);
+    c->name = codecs[i];
+    codec_set_active(codecs[i]); // active by default
+    codec_list_add(c);
+    i++;
+  }
 }
+
+
+
+
+
+
+  
+      
+
 

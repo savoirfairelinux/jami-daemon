@@ -264,16 +264,27 @@ public:
    * Set the prefered order for codecs.
    * Called by D-Bus command: "setCodecPreferedOrder"
    *
-   * @param codecs A list of strings ("codecName"s) of the codecs.
+   * @param codec_name The name of the prefered codec.
    */
-  void setCodecsOrder(const std::vector< ::DBus::String >& codecs);
+  void setPreferedCodec(const ::DBus::String& codec_name);
   
+/**
+ * Get the prefered codec
+ * @return The name of the prefered codec
+ */
+  std::string getPreferedCodec(  );
+
   /**
-   * Get the list of codecs we supports
+   * Get the list of codecs we supports, ordered by the user
    * @ return The list of the codecs
    */  
   std::vector< ::DBus::String > getCodecList( void ); 
 
+  /**
+   * Get the default list of codecs we supports
+   * @ return The list of the codecs
+   */  
+  std::vector< ::DBus::String > getDefaultCodecList( void ); 
 
 
   /*

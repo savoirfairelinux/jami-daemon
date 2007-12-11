@@ -15,9 +15,10 @@ sflphone_gtk_SOURCES = \
   accountwindow.c \
   marshaller.c \
   sliders.c \
-  statusicon.c
+  statusicon.c \
+  codeclist.c
   
-noinst_HEADERS =  actions.h dbus.h mainwindow.h calllist.h dialpad.h \
+noinst_HEADERS =  actions.h dbus.h mainwindow.h calllist.h dialpad.h codeclist.h\
                   callmanager-glue.h configurationmanager-glue.h instance-glue.h menus.h calltree.h screen.h configwindow.h \
                   accountlist.h accountwindow.h marshaller.h sliders.h statusicon.h
 EXTRA_DIST   = marshaller.list  

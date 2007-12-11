@@ -47,8 +47,8 @@ public:
     std::vector< ::DBus::String > getRingtoneList(  );
     std::vector< ::DBus::String > getCodecList(  );
     std::vector< ::DBus::String > getToneLocaleList(  );
-    void setCodecPreferedOrder( const std::vector< ::DBus::String >& codecList );
-    std::vector< ::DBus::String > getCodecPreferedOrder(  );
+    void setCodecPreferedOrder( const ::DBus::String& codec_name );
+    ::DBus::String getCodecPreferedOrder(  );
     std::vector< ::DBus::String > getPlaybackDeviceList(  );
     std::vector< ::DBus::String > getRecordDeviceList(  );
     std::vector< ::DBus::String > getSampleRateList(  );

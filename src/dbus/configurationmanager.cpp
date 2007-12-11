@@ -106,19 +106,19 @@ ConfigurationManager::getCodecList(  )
 
 
 void 
-ConfigurationManager::setCodecPreferedOrder( const std::vector< ::DBus::String >& codecList )
+ConfigurationManager::setCodecPreferedOrder( const ::DBus::String& codec_name )
 {
 
 	_debug("ConfigurationManager::setCodecPreferedOrder received\n");
-	return Manager::instance().setCodecsOrder(codecList);
+	Manager::instance().setPreferedCodec(codec_name);
 }
 
 
-	std::vector< ::DBus::String > 
+	::DBus::String 
 ConfigurationManager::getCodecPreferedOrder(  )
 {
 	_debug("ConfigurationManager::getCodecPreferedOrder received\n");
-
+	return Manager::instance().getPreferedCodec();
 }
 
 

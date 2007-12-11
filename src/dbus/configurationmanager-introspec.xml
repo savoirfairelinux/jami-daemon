@@ -41,11 +41,11 @@
     </method>
     
     <method name="setCodecPreferedOrder">
-      <arg type="as" name="ringtone" direction="in"/>
+      <arg type="s" name="codec_name" direction="in"/>
     </method>
     
     <method name="getCodecPreferedOrder">
-      <arg type="as" name="ringtone" direction="out"/>
+      <arg type="s" name="codec_name" direction="out"/>
     </method>
     
     <method name="getPlaybackDeviceList">
