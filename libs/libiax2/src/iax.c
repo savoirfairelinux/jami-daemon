@@ -249,21 +249,6 @@ void iax_disable_debug(void)
 	debug = 0;
 }
 
-void iax_set_private(struct iax_session *s, void *ptr)
-{
-	s->pvt = ptr;
-}
-
-void *iax_get_private(struct iax_session *s)
-{
-	return s->pvt;
-}
-
-void iax_set_sendto(struct iax_session *s, iax_sendto_t ptr)
-{
-	s->sendto = ptr;
-}
-
 
 /* This is a little strange, but to debug you call DEBU(G "Hello World!\n"); */
 #if defined(WIN32)  ||  defined(_WIN32_WCE)
