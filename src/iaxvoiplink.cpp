@@ -223,7 +223,7 @@ IAXVoIPLink::getEvent()
     sendRegister();
   }
 
-  // thread wait 5 millisecond
+  // thread wait 3 millisecond
   _evThread->sleep(3);
 }
 
@@ -440,16 +440,17 @@ IAXVoIPLink::sendRegister()
 bool
 IAXVoIPLink::sendUnregister()
 {
+  _mutexIAX.enterMutex();
   if (_regSession) {
     /** @todo Should send a REGREL in sendUnregister()... */
 
-    _mutexIAX.enterMutex();
     //iax_send_regrel(); doesn't exist yet :)
     iax_destroy(_regSession);
-    _mutexIAX.leaveMutex();
 
     _regSession = NULL;
   }
+  _mutexIAX.leaveMutex();
+
   _nextRefreshStamp = 0;
 
   setRegistrationState(Unregistered);
@@ -736,7 +737,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
   default:
-    _debug("Unknown event type: %d\n", event->etype);
+    _debug("Unknown event type (in call event): %d\n", event->etype);
     
   }
 }
@@ -948,7 +949,7 @@ IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
     break;
     
   default:
-    _debug("Unknown event type: %d\n", event->etype);
+    _debug("Unknown event type (in precall): %d\n", event->etype);
   }
   
 }
