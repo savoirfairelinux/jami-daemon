@@ -3,7 +3,7 @@
 News
 ====
 
-January 2008:: Partnership with *Polytechnic School* of Montreal to implement video calls and video conference. Read sflsite:SFLvideo[here].
+January 2008:: Partnership with *Polytechnic School* of Montreal to implement video calls and video conference. 
 
 December 2007:: Upcoming release 0.8.0. See the last sflsite:screenshots[]. 
 
