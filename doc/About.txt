@@ -4,8 +4,7 @@
 About
 =====
 
-SFLphone is meant to be a robust enterprise-class desktop phone. It is design
-with a hundred-calls-a-day receptionist in mind. It can work for you, too.
+SFLphone is meant to be a robust enterprise-class desktop phone. It is designed with a hundred-calls-a-day receptionist in mind. It can work for you, too.
 
 SFLphone is released under the *GNU General Public License*.
 
