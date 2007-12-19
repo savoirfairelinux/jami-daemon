@@ -1149,6 +1149,17 @@ ManagerImpl::getCodecList( void )
 	return v;
 }
 
+
+std::vector< std::string >
+ManagerImpl::getSampleRateList( void )
+{
+	std::vector< std::string > v;
+	v.push_back(SAMPLE_RATE1);
+	v.push_back(SAMPLE_RATE2);
+	v.push_back(SAMPLE_RATE3);
+	return v;
+}
+
 /**
  * Initialization: Main Thread
  */

@@ -315,6 +315,44 @@ static
 inline
 #endif
 gboolean
+org_sflphone_SFLphone_ConfigurationManager_get_default_codec_list (DBusGProxy *proxy, char *** OUT_list, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getDefaultCodecList", error, G_TYPE_INVALID, G_TYPE_STRV, OUT_list, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_default_codec_list_reply) (DBusGProxy *proxy, char * *OUT_list, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_get_default_codec_list_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  char ** OUT_list;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_STRV, &OUT_list, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_default_codec_list_reply)data->cb) (proxy, OUT_list, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_get_default_codec_list_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_default_codec_list_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getDefaultCodecList", org_sflphone_SFLphone_ConfigurationManager_get_default_codec_list_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
 org_sflphone_SFLphone_ConfigurationManager_get_tone_locale_list (DBusGProxy *proxy, char *** OUT_list, GError **error)
 
 {

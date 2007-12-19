@@ -54,6 +54,8 @@ void dbus_play_dtmf(const gchar * key);
 gchar* dbus_get_default_account();
 void dbus_set_default_account(gchar * accountID);
 gchar** dbus_codec_list();
+gchar** dbus_default_codec_list();
+gchar** dbus_get_sample_rate_list();
 
 
 /* Instance */

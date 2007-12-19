@@ -36,6 +36,10 @@
       <arg type="as" name="list" direction="out"/>
     </method>
     
+    <method name="getDefaultCodecList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+
     <method name="getToneLocaleList">
       <arg type="as" name="list" direction="out"/>
     </method>

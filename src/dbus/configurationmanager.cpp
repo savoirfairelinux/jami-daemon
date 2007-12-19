@@ -101,9 +101,14 @@ ConfigurationManager::getCodecList(  )
 {
 	_debug("ConfigurationManager::getCodecList received\n");
 	return Manager::instance().getCodecList();
-
 }
 
+	std::vector< ::DBus::String > 
+ConfigurationManager::getDefaultCodecList(  )
+{
+	_debug("ConfigurationManager::getDefaultCodecList received\n");
+	return Manager::instance().getDefaultCodecList();
+}
 
 void 
 ConfigurationManager::setCodecPreferedOrder( const ::DBus::String& codec_name )
@@ -140,6 +145,7 @@ ConfigurationManager::getRecordDeviceList(  )
 ConfigurationManager::getSampleRateList(  )
 {
 	_debug("ConfigurationManager::getSampleRateList received\n");
+	return Manager::instance().getSampleRateList();
 
 }
 

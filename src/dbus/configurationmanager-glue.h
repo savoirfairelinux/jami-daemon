@@ -28,6 +28,7 @@ public:
         register_method(ConfigurationManager, getVersion, _getVersion_stub);
         register_method(ConfigurationManager, getRingtoneList, _getRingtoneList_stub);
         register_method(ConfigurationManager, getCodecList, _getCodecList_stub);
+        register_method(ConfigurationManager, getDefaultCodecList, _getDefaultCodecList_stub);
         register_method(ConfigurationManager, getToneLocaleList, _getToneLocaleList_stub);
         register_method(ConfigurationManager, setCodecPreferedOrder, _setCodecPreferedOrder_stub);
         register_method(ConfigurationManager, getCodecPreferedOrder, _getCodecPreferedOrder_stub);
@@ -78,6 +79,11 @@ public:
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getCodecList_args[] = 
+        {
+            { "list", "as", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getDefaultCodecList_args[] = 
         {
             { "list", "as", false },
             { 0, 0, 0 }
@@ -141,6 +147,7 @@ public:
             { "getVersion", getVersion_args },
             { "getRingtoneList", getRingtoneList_args },
             { "getCodecList", getCodecList_args },
+            { "getDefaultCodecList", getDefaultCodecList_args },
             { "getToneLocaleList", getToneLocaleList_args },
             { "setCodecPreferedOrder", setCodecPreferedOrder_args },
             { "getCodecPreferedOrder", getCodecPreferedOrder_args },
@@ -190,6 +197,7 @@ public:
     virtual ::DBus::String getVersion(  ) = 0;
     virtual std::vector< ::DBus::String > getRingtoneList(  ) = 0;
     virtual std::vector< ::DBus::String > getCodecList(  ) = 0;
+    virtual std::vector< ::DBus::String > getDefaultCodecList(  ) = 0;
     virtual std::vector< ::DBus::String > getToneLocaleList(  ) = 0;
     virtual void setCodecPreferedOrder( const ::DBus::String& codec_name ) = 0;
     virtual ::DBus::String getCodecPreferedOrder(  ) = 0;
@@ -294,6 +302,16 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         std::vector< ::DBus::String > argout1 = getCodecList();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _getDefaultCodecList_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::vector< ::DBus::String > argout1 = getDefaultCodecList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

@@ -286,6 +286,7 @@ public:
    */  
   std::vector< ::DBus::String > getDefaultCodecList( void ); 
 
+  std::vector< ::DBus::String> getSampleRateList( void );
 
   /*
    * Set an account as default

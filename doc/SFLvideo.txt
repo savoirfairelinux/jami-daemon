@@ -3,9 +3,9 @@
 Partnership
 -----------
 
-A working partnership between SavoirFaire-Linux and Polytechnic school of Montreal will begin in January 2008.  
+A partnership between Savoir-Faire Linux and the Polytechnic school of Montreal will begin in January 2008.  
 
-5 students of Polytechnic school will work part-time on the project.
+Five students from Polytechnic school will be working part-time on the project for four months.
 
 Goals
 -----

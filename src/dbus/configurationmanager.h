@@ -46,6 +46,7 @@ public:
     ::DBus::String getVersion(  );
     std::vector< ::DBus::String > getRingtoneList(  );
     std::vector< ::DBus::String > getCodecList(  );
+    std::vector< ::DBus::String > getDefaultCodecList(  );
     std::vector< ::DBus::String > getToneLocaleList(  );
     void setCodecPreferedOrder( const ::DBus::String& codec_name );
     ::DBus::String getCodecPreferedOrder(  );
