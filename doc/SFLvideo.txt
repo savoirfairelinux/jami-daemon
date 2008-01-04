@@ -3,7 +3,7 @@
 Partnership
 -----------
 
-A partnership between Savoir-Faire Linux and *the Polytechnic school* of Montreal will begin in January 2008.  
+A partnership between Savoir-Faire Linux and the *Polytechnic school* of Montreal will begin in January 2008.  
 
 Five students from Polytechnic school will be working part-time on the project for a period of four months.
 
@@ -15,6 +15,6 @@ Goals
   * The user opens a multimedia session with an other client (SIP protocol)
   * Local video capture (video4linux2 driver) is compressed and shipped through RTP packets.
   * In the same time, the incoming video stream (in RTP packets also) is decompressed and displayed.
-  * The visualization framework should be flexible ans should allow user parametrization. 3D API OpenGL should be used.    
+  * The visualization framework should be flexible and should allow user parametrization. 3D API OpenGL should be used.    
 
 
