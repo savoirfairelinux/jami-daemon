@@ -651,4 +651,4 @@ private:
 
 };
 
-t#endif // __MANAGER_H__
+#endif // __MANAGER_H__

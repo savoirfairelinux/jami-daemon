@@ -1154,8 +1154,8 @@ ManagerImpl::getCodecList( void )
 {
 	std::vector< std::string > v;
   	std::string desc=getConfigString(AUDIO, "Codecs.codec1");
-  	std::string rate=clockRate(desc).strstream();
-	printf("%s\n",rate.c_str());
+  	//std::string rate=clockRate(desc).strstream();
+	//printf("%s\n",rate.c_str());
 	v.push_back(getConfigString(AUDIO, "Codecs.codec1")); 
 	v.push_back( getConfigString(AUDIO, "Codecs.codec2")); 
 	v.push_back( getConfigString(AUDIO, "Codecs.codec3")); 

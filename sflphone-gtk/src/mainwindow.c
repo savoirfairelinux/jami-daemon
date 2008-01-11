@@ -248,10 +248,11 @@ main_window_dialpad(gboolean show){
 void
 main_window_callinfo(gboolean show, call_t* current)
 {
+  /*
   if(show && !showInfoScreen)
   {
     infoScreen = create_screen();
-    gtk_box_pack_start (GTK_BOX (subvbox), infoScreen, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_start (GTK_BOX (subvbox), infoScreen, FALSE , TRUE , 0 );
     gtk_widget_show_all(infoScreen);
     screen_set_call(current);
   }
@@ -260,6 +261,7 @@ main_window_callinfo(gboolean show, call_t* current)
     gtk_container_remove(GTK_CONTAINER (subvbox), infoScreen);
   }
   showInfoScreen = show;
+*/
 }
 
 void 

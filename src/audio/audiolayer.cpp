@@ -120,6 +120,7 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
 //= paFramesPerBufferUnspecified;
 
   int nbDevice = getDeviceCount();
+	_debug("Nb of audio devices: %i\n",nbDevice);
   if (nbDevice == 0) {
     _debug("Portaudio detect no sound card.");
     return;
