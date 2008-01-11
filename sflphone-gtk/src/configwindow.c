@@ -29,12 +29,15 @@
 
 /** Local variables */
 gboolean  dialogOpen = FALSE;
-GtkListStore *account_store;
-GtkListStore *codec_store;
+GtkListStore * account_store;
+GtkListStore * codec_store;
+GtkListStore * rate_store;
 GtkWidget * addButton;
 GtkWidget * editButton;
 GtkWidget * deleteButton;
 GtkWidget * defaultButton;
+GtkWidget * restoreButton;
+GtkWidget * combo_box;
 
 account_t * selectedAccount;
 
@@ -71,7 +74,7 @@ config_window_fill_account_list ()
 	}
 }
 
-
+void
 config_window_fill_codec_list()
 {
   if(dialogOpen)
@@ -91,6 +94,25 @@ config_window_fill_codec_list()
         gtk_list_store_append (codec_store, &iter);
         gtk_list_store_set(codec_store, &iter,0,c->name,-1);
       }
+    }
+  }
+	gtk_combo_box_set_active(combo_box, 0);
+}
+
+void
+config_window_fill_rate_list()
+{
+  if(dialogOpen)
+  {
+    GtkTreeIter iter;
+    int i=0;
+    gchar** ratelist = (gchar**)dbus_get_sample_rate_list();
+    while(ratelist[i]!=NULL)
+    {
+	printf("%s\n", ratelist[i]);
+        gtk_list_store_append (rate_store, &iter);
+        gtk_list_store_set(rate_store, &iter,0,ratelist[i],-1);
+        i++;
     }
   }
 }
@@ -118,7 +140,6 @@ edit_account( GtkWidget *widget, gpointer   data )
 		show_account_window(selectedAccount);
 	}
 }
-
 
 /**
  * Add an account
@@ -201,6 +222,34 @@ bold_if_default_account(GtkTreeViewColumn *col,
 
 }
 
+void
+default_codecs(GtkWidget* widget, gpointer data)
+{
+  int i=0;
+  int j=0;
+  gint * new_order;
+  gchar ** default_list = (gchar**)dbus_default_codec_list();
+  while(default_list[i] != NULL)
+    {printf("%s\n", default_list[i]);
+     i++;}
+  i=0;
+  while(default_list[i] != NULL)
+  {
+    if(g_strcasecmp(codec_list_get_nth(0)->name ,default_list[i])==0){
+      printf("%s %s\n",codec_list_get_nth(0)->name, default_list[i]);
+      new_order[i]=0;
+   }
+    else if(g_strcasecmp(codec_list_get_nth(1)->name ,default_list[i])==0){
+      printf("%s %s\n",codec_list_get_nth(0)->name, default_list[0]);
+      new_order[i] = 1;}	
+    else{
+      printf("%s %s\n",codec_list_get_nth(0)->name, default_list[0]);
+      new_order[i] = 2;}
+    printf("new_order[%i]=%i\n", i,j);
+   i++;
+  } 
+  gtk_list_store_reorder(codec_store, new_order);  
+}
 
 	GtkWidget *
 create_accounts_tab()
@@ -321,10 +370,12 @@ create_accounts_tab()
 GtkWidget*
 create_audio_tab ()
 {
-	GtkWidget* ret;
-	GtkWidget* label;
-	GtkWidget* combo_box;
-	GtkWidget* hbox1;
+	GtkWidget * ret;
+	GtkWidget * label;
+	GtkWidget * codecBox;
+	GtkWidget * rate_box;
+	GtkWidget * image; 
+	GtkWidget * hbox1;
 	GtkTreeIter iter;
 	GtkCellRenderer *renderer;
 	
@@ -336,12 +387,18 @@ create_audio_tab ()
         gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
         gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
         gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
-        gtk_box_pack_start(GTK_BOX(ret), label, FALSE, TRUE, 0);
+        gtk_box_pack_start(GTK_BOX(ret), label, FALSE, FALSE, 0);
         gtk_widget_show(label);
 	
-	hbox1 = gtk_label_new("Available Codecs");
+	codecBox = gtk_hbutton_box_new();
+	gtk_box_set_spacing(GTK_BOX(codecBox), 10); //GAIM_HIG_BOX_SPACE
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(codecBox), GTK_BUTTONBOX_SPREAD);
+	gtk_box_pack_start(GTK_BOX(ret), codecBox, FALSE, FALSE, 0);
+	gtk_widget_show (codecBox);
+ 
+	hbox1 = gtk_label_new("Codec:");
         gtk_misc_set_alignment(GTK_MISC(hbox1), 0, 0.5);
-	gtk_box_pack_start(GTK_BOX(ret), hbox1, FALSE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(codecBox), hbox1, FALSE, FALSE, 0);
 	gtk_widget_show(hbox1);
 	codec_store = gtk_list_store_new(1, G_TYPE_STRING);
 	
@@ -350,18 +407,53 @@ create_audio_tab ()
 	renderer = gtk_cell_renderer_text_new();
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo_box), renderer, TRUE);
 	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo_box), renderer, "text",0,NULL);
-	gtk_box_pack_start(GTK_BOX(ret), combo_box, FALSE, TRUE,0);
+	gtk_box_pack_start(GTK_BOX(codecBox), combo_box, FALSE, FALSE,0);
 
 	
 	g_signal_connect (G_OBJECT (combo_box), "changed",
                         G_CALLBACK (select_codec),
                         NULL);
 	gtk_widget_show(combo_box);
+
+	restoreButton = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
+	gtk_box_pack_start(GTK_BOX(codecBox), restoreButton, FALSE, FALSE,10);
+	//g_signal_connect(G_OBJECT(restoreButton), "clicked", G_CALLBACK(default_codecs), NULL);
+	gtk_widget_show(restoreButton);
+ 		
+	codecBox = gtk_hbutton_box_new();
+	gtk_box_set_spacing(GTK_BOX(codecBox), 10); //GAIM_HIG_BOX_SPACE
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(codecBox), GTK_BUTTONBOX_SPREAD);
+	gtk_box_pack_start(GTK_BOX(ret), codecBox, FALSE, FALSE, 0);
+	gtk_widget_show (codecBox);
+ 
+	hbox1 = gtk_label_new("Sample Rate:");
+        gtk_misc_set_alignment(GTK_MISC(hbox1), 0, 0.5);
+	gtk_box_pack_start(GTK_BOX(codecBox), hbox1, FALSE, FALSE, 0);
+	gtk_widget_show(hbox1);
+	rate_store = gtk_list_store_new(1, G_TYPE_STRING);
+	
+  	rate_box = gtk_combo_box_new_with_model(GTK_TREE_MODEL(rate_store));
+	gtk_label_set_mnemonic_widget(GTK_LABEL(hbox1), rate_box);
+	renderer = gtk_cell_renderer_text_new();
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(rate_box), renderer, TRUE);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(rate_box), renderer, "text",0,NULL);
+	gtk_box_pack_start(GTK_BOX(codecBox), rate_box, FALSE, FALSE,0);
+
+	
+	//g_signal_connect (G_OBJECT (combo_box), "changed",
+          //              G_CALLBACK (select_codec),
+            //            NULL);
+	gtk_widget_show(rate_box);
+	restoreButton = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
+	gtk_box_pack_start(GTK_BOX(codecBox), restoreButton, FALSE, FALSE,0);
+	//g_signal_connect(G_OBJECT(restoreButton), "clicked", G_CALLBACK(default_codecs), NULL);
+	gtk_widget_show(restoreButton);
+		
 	
 	gtk_widget_show_all(ret);
 	config_window_fill_codec_list();
-	gtk_combo_box_set_active(combo_box, 0);
-	
+	config_window_fill_rate_list();
+	gtk_combo_box_set_active(rate_box, 0);
 
 	return ret;
 	

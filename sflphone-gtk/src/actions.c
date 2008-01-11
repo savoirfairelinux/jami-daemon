@@ -196,7 +196,7 @@ sflphone_hang_up()
 sflphone_pick_up()
 {
 	call_t * selectedCall = call_get_selected();
-	//screen_set_call(selectedCall);
+        //printf("full name: %s\n",g_hash_table_lookup(selectedCall->properties, ACCOUNT_IAX_FULL_NAME));
 	main_window_callinfo(TRUE, selectedCall);
 	if(selectedCall)
 	{
@@ -204,6 +204,7 @@ sflphone_pick_up()
 		{
 			case CALL_STATE_DIALING:
 				sflphone_place_call (selectedCall);
+        			printf("accountID=%s\n",selectedCall->accountID);
 				break;
 			case CALL_STATE_INCOMING:
 				dbus_accept (selectedCall);

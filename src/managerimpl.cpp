@@ -1085,20 +1085,11 @@ void
 ManagerImpl::initAudioCodec (void)
 {
   _debugInit("Active Codecs");
-  // TODO: need to be more dynamic...
-  //_codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC1));
-  //_codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC2));
-  //_codecDescriptorMap.setActive(getConfigString(AUDIO, CODEC3));
-	_codecDescriptorMap.setActive(getConfigString("Audio", "Codecs.codec1"));
-	//_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec2"));
-	//_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec3"));
-	
-
+  _codecDescriptorMap.setActive(getConfigString("Audio", "Codecs.codec1"));
+  //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec2"));
+  //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec3"));
 }
 
-/**
- * Set prefered codec order
- */
 void
 ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
 {
@@ -1127,13 +1118,32 @@ ManagerImpl::getPreferedCodec()
 std::vector <std::string>
 ManagerImpl::getDefaultCodecList( void )
 {
-	std::vector< std::string > v;
-	v.push_back(DFT_CODEC1); // G711u 
-	v.push_back(DFT_CODEC2); // G711a
-	v.push_back(DFT_CODEC3); // GSM
-	return v;
+  std::vector< std::string > v;
+  std::string desc=DFT_CODEC1;
+  std::string rate=""+clockRate(desc);
+  printf("%s\n",rate.c_str());
+  v.push_back(DFT_CODEC1); // G711u
+  v.push_back(DFT_CODEC2); // G711a
+  v.push_back(DFT_CODEC3); // GSM
+  return v;
 }
 
+unsigned int
+ManagerImpl::clockRate(std::string& name)
+{
+  CodecMap codecs = _codecDescriptorMap.getMap();
+  CodecMap::iterator iter = codecs.begin();  
+  while(iter!=codecs.end())
+  {
+    if(iter->second!=NULL)
+    {
+      if(iter->second->getDescription() == name)
+        return iter->second->getClockRate();
+    }
+    iter++;
+  }
+  return -1;
+}
 
 /**
  * Get the list of codecs.
@@ -1143,6 +1153,9 @@ std::vector< std::string >
 ManagerImpl::getCodecList( void )
 {
 	std::vector< std::string > v;
+  	std::string desc=getConfigString(AUDIO, "Codecs.codec1");
+  	std::string rate=clockRate(desc).strstream();
+	printf("%s\n",rate.c_str());
 	v.push_back(getConfigString(AUDIO, "Codecs.codec1")); 
 	v.push_back( getConfigString(AUDIO, "Codecs.codec2")); 
 	v.push_back( getConfigString(AUDIO, "Codecs.codec3")); 

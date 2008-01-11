@@ -256,7 +256,8 @@ public:
   void removeAccount(const AccountID& accountID);
   
   /*
-   * get the default account
+   * Get the default account
+   * @return The default account
    */
   std::string getDefaultAccount();
 
@@ -270,13 +271,13 @@ public:
   
 /**
  * Get the prefered codec
- * @return The name of the prefered codec
+ * @return The description of the prefered codec
  */
   std::string getPreferedCodec(  );
 
   /**
    * Get the list of codecs we supports, ordered by the user
-   * @ return The list of the codecs
+   * @return The list of the codecs
    */  
   std::vector< ::DBus::String > getCodecList( void ); 
 
@@ -286,10 +287,23 @@ public:
    */  
   std::vector< ::DBus::String > getDefaultCodecList( void ); 
 
+/**
+ * Get the sample rate of a codec
+ * @param name: The description of the codec
+ * @return The sample rate of the specified codec
+ */	
+  unsigned int clockRate(std::string& name); 
+
+/**
+ * Get the list of the standart sound sample rates
+ * Values: { 44100 , 44000 , 96000 }
+ * @return The list of the sample rates
+ */     
   std::vector< ::DBus::String> getSampleRateList( void );
 
   /*
    * Set an account as default
+   * @param The ID of the account we want to set as default
    */
   void setDefaultAccount(const AccountID& accountID);
 
@@ -637,4 +651,4 @@ private:
 
 };
 
-#endif // __MANAGER_H__
+t#endif // __MANAGER_H__

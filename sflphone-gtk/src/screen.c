@@ -1,10 +1,11 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *                                                                                
  *  This program is distributed in the hope that it will be useful,
@@ -37,7 +38,7 @@ create_screen()
   subvbox = gtk_vbox_new ( FALSE /*homogeneous*/, 10 /*spacing*/);
   
   sw = gtk_scrolled_window_new( NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_NONE);
 	
 	event = gtk_event_box_new ();
@@ -53,7 +54,7 @@ create_screen()
   
   gtk_box_pack_start (GTK_BOX (subvbox), sw, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     
-  screen_clear();
+  //screen_clear();
   
   return subvbox;
 }
@@ -67,8 +68,7 @@ screen_clear()
 void 
 screen_set_call(const call_t * c)
 {
-  //printf("accountID = %s\ncall to = %s\n", c->accountID, c->to);
-  //gchar * markup = g_strconcat("<big><b>", call_get_name(c), "</b></big>\n", call_get_number(c), NULL);
+  printf("accountID = %s\ncall to = %s\n", c->from, c->to);
   gchar * markup = g_strconcat("<b><i>Calling to:</i></b>", "\t", call_get_number(c), 
 			       "\n<b><i>Codec:</i></b>", "\t", codec_list_get_nth(0)->name, NULL);
   gtk_label_set_markup(GTK_LABEL(label), markup);
