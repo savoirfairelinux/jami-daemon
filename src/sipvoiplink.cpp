@@ -951,7 +951,9 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject)
   CodecMap::iterator iter = map.begin();
 
   while(iter != map.end()) {
+    printf("codec = %s\n",iter->second->getCodecName().data());
     if (iter->second!=0 && iter->second->isActive()) {
+    printf("codec = %s\n",iter->second->getCodecName().data());
       payload = iter->first;
       // add each payload in the list of payload
       media_audio << payload << " ";

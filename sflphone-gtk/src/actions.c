@@ -207,6 +207,7 @@ sflphone_pick_up()
         			printf("accountID=%s\n",selectedCall->accountID);
 				break;
 			case CALL_STATE_INCOMING:
+				printf("CALL ID = %s\n", selectedCall->callID);
 				dbus_accept (selectedCall);
 				break;
 			case CALL_STATE_HOLD:

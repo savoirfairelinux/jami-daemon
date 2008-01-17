@@ -66,7 +66,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
 	// Start RTP Send/Receive threads
 	_symmetric = Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC) ? true : false;
 	_RTXThread = new AudioRtpRTX (ca, _symmetric);
-
+	printf("_sym=%i\n\n", _symmetric);
 	try {
 		if (_RTXThread->start() != 0) {
 			_debug("! ARTP Failure: unable to start RTX Thread\n");
@@ -111,7 +111,6 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
 	// TODO: this should be the local ip not the external (router) IP
 	std::string localipConfig = _ca->getLocalIp(); // _ca->getLocalIp();
 	ost::InetHostAddress local_ip(localipConfig.c_str());
-
 	if (!_sym) {
 		_sessionRecv = new ost::RTPSession(local_ip, _ca->getLocalAudioPort());
 		_sessionSend = new ost::RTPSession(local_ip, _ca->getLocalAudioPort());
@@ -182,7 +181,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 	try {
 		if (_ca == 0) { return; }
 
-		//_debug("Init audio RTP session\n");
+		_debug("Init audio RTP session\n");
 		ost::InetHostAddress remote_ip(_ca->getRemoteIp().c_str());
 		if (!remote_ip) {
 			_debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getRemoteIp().data());
@@ -224,7 +223,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 			_sessionSend->setMark(true);
 		} else {
 
-			//_debug("AudioRTP Thread: Added session destination %s:%d\n", remote_ip.getHostname(), (unsigned short) _ca->getRemoteSdpAudioPort());
+			//_debug("AudioRTP Thread: Added session destination %s\n", remote_ip.getHostname() );
 
 			if (!_session->addDestination (remote_ip, (unsigned short) _ca->getRemoteAudioPort())) {
 				return;
@@ -330,13 +329,14 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 			adu = _session->getData(_session->getFirstTimestamp());
 		}
 		if (adu == NULL) {
+			//_debug("No RTP audio stream\n");
 			return;
 		}
 
 		int payload = adu->getType(); // codec type
 		unsigned char* data  = (unsigned char*)adu->getData(); // data in char
 		unsigned int size    = adu->getSize(); // size in char
-		  
+
 
 		// Decode data with relevant codec
 		AudioCodec* audiocodec = _ca->getCodecMap().getCodec((CodecType)payload);
@@ -359,7 +359,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 				_debug("We have decoded an RTP packet larger than expected: %s VS %s. Cropping.\n", nbInt16, max);
 				nbInt16=max;
 			}
-
+		
 			SFLDataFormat* toAudioLayer;
 			int nbSample = nbInt16;
 
@@ -501,7 +501,6 @@ AudioRtpRTX::run () {
 			// Recv session
 			////////////////////////////
 			receiveSessionForSpkr(countTime);
-
 			// Let's wait for the next transmit cycle
 			Thread::sleep(TimerPort::getTimer());
 			TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms

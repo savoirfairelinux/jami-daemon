@@ -166,6 +166,7 @@ ManagerImpl::isCurrentCall(const CallID& callId) {
 bool
 ManagerImpl::hasCurrentCall() {
   ost::MutexLock m(_currentCallMutex);
+  _debug("Current call ID = %s\n", _currentCallId2.c_str());
   if ( _currentCallId2 != "") {
     return true;
   }
@@ -220,10 +221,10 @@ bool
 ManagerImpl::answerCall(const CallID& id)
 {
   stopTone(false); 
-  if (hasCurrentCall()) 
+  /*if (hasCurrentCall()) 
   { 
     onHoldCall(getCurrentCallId());
-  }
+  }*/
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Answering Call: Call doesn't exists\n");
@@ -611,6 +612,7 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
   associateCallToAccount(call->getCallId(), accountId);
 
   if ( !hasCurrentCall() ) {
+    _debug("INCOMING CALL!!!!!!\n");
     call->setConnectionState(Call::Ringing);
     ringtone();
     switchCall(call->getCallId());
@@ -990,7 +992,7 @@ ManagerImpl::behindNat(const std::string& svr, int port)
 {
   StunAddress4 stunSvrAddr;
   stunSvrAddr.addr = 0;
-  
+   
   // Convert char* to StunAddress4 structure
   bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
   if (!ret) {
@@ -1085,9 +1087,12 @@ void
 ManagerImpl::initAudioCodec (void)
 {
   _debugInit("Active Codecs");
-  _codecDescriptorMap.setActive(getConfigString("Audio", "Codecs.codec1"));
+  //_codecDescriptorMap.setActive(getConfigString("Audio", "Codecs.codec1"));
   //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec2"));
   //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec3"));
+  _codecDescriptorMap.setActive("G711a");
+  _codecDescriptorMap.setActive("G711u");
+  _codecDescriptorMap.setActive("GSM");
 }
 
 void
@@ -1102,8 +1107,10 @@ ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
 	list[0] = list[i];
 	list[i] = tmp; 
 	_codecDescriptorMap.setActive(list[0]);
-	_codecDescriptorMap.setInactive(list[1]);
-	_codecDescriptorMap.setInactive(list[2]);
+	//_codecDescriptorMap.setInactive(list[1]);
+	//_codecDescriptorMap.setInactive(list[2]);
+	_codecDescriptorMap.setActive(list[1]);
+	_codecDescriptorMap.setActive(list[2]);
         setConfig("Audio", "Codecs.codec1", list[0]);	
 	setConfig("Audio", "Codecs.codec2", list[1]);
 	setConfig("Audio", "Codecs.codec3", list[2]);

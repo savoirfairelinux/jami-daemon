@@ -199,8 +199,8 @@ select_codec( GtkComboBox* wid)
 	guint item = gtk_combo_box_get_active(wid);
 	/* now we want this selected codec to be used as the preferred codec */
 	/* ie first in the list in the user config */
-	codec_set_prefered_order(item);
-	dbus_set_prefered_codec(codec_list_get_nth(0)->name);  
+	//codec_set_prefered_order(item);
+	//dbus_set_prefered_codec(codec_list_get_nth(0)->name);  
 }
 
 void
