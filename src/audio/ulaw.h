@@ -34,6 +34,7 @@ public:
 
   int codecDecode(short *, unsigned char *, unsigned int);
   int codecEncode(unsigned char *, short *, unsigned int);
+  void test();
 };
 
 #endif // __ULAW_H__

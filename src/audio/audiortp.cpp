@@ -29,6 +29,8 @@
 //#include <fstream>  // fstream + iostream pour fstream debugging..
 //#include <iostream> // removeable...
 #include <math.h>
+#include <dlfcn.h>
+#include <iostream>
 
 #include "../global.h"
 #include "../manager.h"
@@ -248,6 +250,32 @@ AudioRtpRTX::initAudioRtpSession (void)
 void
 AudioRtpRTX::sendSessionFromMic(int timestamp)
 {
+	using std::cout;
+	using std::cerr;
+	void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
+	if(!codec){
+		cerr<<"cannot load library: "<< dlerror() <<'\n';
+	}
+
+	//reset errors
+	dlerror();
+
+	//load the symbols
+	create_t* create_codec = (create_t*)dlsym(codec, "create_alaw");
+	const char* dlsym_error = dlerror();
+	if(dlsym_error){
+		cerr << "Cannot load symbol create: " << dlsym_error << '\n';
+	}
+	destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy_alaw");
+	dlsym_error = dlerror();
+	if(dlsym_error){
+		cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
+	}
+	
+	int pl = 0;	
+	AudioCodec* audiocodec = create_codec();        
+        //audiocodec1->test();		
+	
 	// STEP:
 	//   1. get data from mic
 	//   2. convert it to int16 - good sample, good rate
@@ -261,7 +289,8 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 		AudioLayer* audiolayer = Manager::instance().getAudioDriver();
 		if (!audiolayer) { _debug(" !ARTP: No audiolayer available for mic\n"); return; }
 
-		AudioCodec* audiocodec = _ca->getAudioCodec();
+		//AudioCodec* audiocodec = _ca->getAudioCodec();
+		//AudioCodec* audiocodec = _ca->getAudioCodec();
 		if (!audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
 
 		// we have to get 20ms of data from the mic *20/1000 = /50
@@ -308,6 +337,9 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 		throw;
 	}
 
+
+	destroy_codec(audiocodec);
+	dlclose(codec);
 }
 
 
@@ -336,10 +368,35 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 		int payload = adu->getType(); // codec type
 		unsigned char* data  = (unsigned char*)adu->getData(); // data in char
 		unsigned int size    = adu->getSize(); // size in char
+		
+	using std::cout;
+	using std::cerr;
+	void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
+	if(!codec){
+		cerr<<"cannot load library: "<< dlerror() <<'\n';
+	}
 
+	//reset errors
+	dlerror();
+
+	//load the symbols
+	create_t* create_codec = (create_t*)dlsym(codec, "create_alaw");
+	const char* dlsym_error = dlerror();
+	if(dlsym_error){
+		cerr << "Cannot load symbol create: " << dlsym_error << '\n';
+	}
+	destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy_alaw");
+	dlsym_error = dlerror();
+	if(dlsym_error){
+		cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
+	}
+	
+	int pl = 0;	
+	AudioCodec* audiocodec = create_codec();        
+        //audiocodec1->test();		
 
 		// Decode data with relevant codec
-		AudioCodec* audiocodec = _ca->getCodecMap().getCodec((CodecType)payload);
+		//AudioCodec* audiocodec = _ca->getCodecMap().getCodec((CodecType)payload);
 		_codecSampleRate = audiocodec->getClockRate();
 		int max = (int)(_codecSampleRate * _layerFrameSize);
 
@@ -389,10 +446,15 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 		}
 
 		delete adu; adu = NULL;
+	destroy_codec(audiocodec);
+	dlclose(codec);
 	} catch(...) {
 		_debugException("! ARTP: receiving failed");
 		throw;
 	}
+
+
+
 }
 
 int 

@@ -13,7 +13,7 @@ SPEEX_LIB=
 endif
 
 libaudio_la_SOURCES = alaw.cpp        audiofile.cpp	g711.cpp tonelist.cpp     \
-audiortp.cpp         dtmf.cpp   tone.cpp audiocodec.cpp  audiolayer.cpp audiodevice.cpp  dtmfgenerator.cpp  gsmcodec.cpp \
+audiortp.cpp         dtmf.cpp   tone.cpp  audiolayer.cpp audiodevice.cpp  dtmfgenerator.cpp  gsmcodec.cpp \
 tonegenerator.cpp  ulaw.cpp codecDescriptor.cpp \
 audioloop.cpp ringbuffer.cpp $(SPEEX_SOURCES_CPP)
 

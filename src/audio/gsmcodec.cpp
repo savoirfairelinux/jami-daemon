@@ -59,4 +59,10 @@ Gsm::codecEncode (unsigned char *dst, short *src, unsigned int size)
   return 33;
 }
 
+void 
+Gsm::test()
+{
+ printf("MOn OSTIE GSM!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+}
+
 

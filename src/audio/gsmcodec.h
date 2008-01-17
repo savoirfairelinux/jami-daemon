@@ -37,6 +37,7 @@ public:
 
   int	codecDecode	(short *, unsigned char *, unsigned int);
   int	codecEncode	(unsigned char *, short *, unsigned int);
+  void test();
 
 private:
   gsm _decode_gsmhandle;
