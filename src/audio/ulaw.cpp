@@ -13,7 +13,7 @@ public:
 	}
 
 	virtual void test(){
-		printf("MON OSTIE !!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+		printf("MON OSTIE !!!!!!!!!!!!!!!!!!!!!!!!!! ULAW\n");
 	}
 
 	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
@@ -24,7 +24,6 @@ public:
 	}
 
 	virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
-  	//return G711::ULawEncode (dst, src, size);
   		size >>= 1;
         	uint8* end = dst+size;
         	while(dst<end)

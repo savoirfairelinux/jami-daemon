@@ -23,7 +23,7 @@
 
 #include "audiocodec.h"
 #include "gsmcodec.h"
-#include "alaw.h"
+//#include "alaw.h"
 #include "ulaw.h"
 #include "codecDescriptor.h"
 #ifdef HAVE_SPEEX
@@ -32,7 +32,8 @@
 
 CodecDescriptorMap::CodecDescriptorMap() 
 {
-  _codecMap[PAYLOAD_CODEC_ALAW] = new Alaw();
+  //_codecMap[PAYLOAD_CODEC_ALAW] = new Alaw();
+  _codecMap[PAYLOAD_CODEC_ALAW] = new Ulaw();
   _codecMap[PAYLOAD_CODEC_ULAW] = new Ulaw();
   _codecMap[PAYLOAD_CODEC_GSM] = new Gsm();
 #ifdef HAVE_SPEEX

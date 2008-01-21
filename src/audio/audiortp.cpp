@@ -252,206 +252,206 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 {
 	using std::cout;
 	using std::cerr;
-	void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
-	if(!codec){
-		cerr<<"cannot load library: "<< dlerror() <<'\n';
-	}
+void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
+if(!codec){
+	cerr<<"cannot load library: "<< dlerror() <<'\n';
+}
 
-	//reset errors
-	dlerror();
+//reset errors
+dlerror();
 
-	//load the symbols
-	create_t* create_codec = (create_t*)dlsym(codec, "create_alaw");
-	const char* dlsym_error = dlerror();
-	if(dlsym_error){
-		cerr << "Cannot load symbol create: " << dlsym_error << '\n';
-	}
-	destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy_alaw");
-	dlsym_error = dlerror();
-	if(dlsym_error){
-		cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
-	}
+//load the symbols
+create_t* create_codec = (create_t*)dlsym(codec, "create_alaw");
+const char* dlsym_error = dlerror();
+if(dlsym_error){
+	cerr << "Cannot load symbol create: " << dlsym_error << '\n';
+}
+destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy_alaw");
+dlsym_error = dlerror();
+if(dlsym_error){
+	cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
+}
+
+int pl = 0;	
+AudioCodec* audiocodec = create_codec();        
+audiocodec->test();		
+
+// STEP:
+//   1. get data from mic
+//   2. convert it to int16 - good sample, good rate
+//   3. encode it
+//   4. send it
+try {
+	int16* toSIP = NULL;
+
+	timestamp += time->getSecond();
+	if (_ca==0) { _debug(" !ARTP: No call associated (mic)\n"); return; } // no call, so we do nothing
+	AudioLayer* audiolayer = Manager::instance().getAudioDriver();
+	if (!audiolayer) { _debug(" !ARTP: No audiolayer available for mic\n"); return; }
+
+	//AudioCodec* audiocodec = _ca->getAudioCodec();
+	//AudioCodec* audiocodec = _ca->getAudioCodec();
+	if (!audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
+
+	// we have to get 20ms of data from the mic *20/1000 = /50
+	int maxBytesToGet = _layerSampleRate * _layerFrameSize * sizeof(SFLDataFormat) / 1000;
+
+	// available bytes inside ringbuffer
+	int availBytesFromMic = audiolayer->canGetMic();
+
+	// take the lowest
+	int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+
+	// Get bytes from micRingBuffer to data_from_mic
+	int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
+	int nb_sample_up = nbSample;
+	int nbSamplesMax = _layerFrameSize * audiocodec->getClockRate() / 1000;
 	
-	int pl = 0;	
-	AudioCodec* audiocodec = create_codec();        
-        //audiocodec1->test();		
+	nbSample = reSampleData(audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
 	
-	// STEP:
-	//   1. get data from mic
-	//   2. convert it to int16 - good sample, good rate
-	//   3. encode it
-	//   4. send it
-	try {
-		int16* toSIP = NULL;
-
-		timestamp += time->getSecond();
-		if (_ca==0) { _debug(" !ARTP: No call associated (mic)\n"); return; } // no call, so we do nothing
-		AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-		if (!audiolayer) { _debug(" !ARTP: No audiolayer available for mic\n"); return; }
-
-		//AudioCodec* audiocodec = _ca->getAudioCodec();
-		//AudioCodec* audiocodec = _ca->getAudioCodec();
-		if (!audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
-
-		// we have to get 20ms of data from the mic *20/1000 = /50
-		int maxBytesToGet = _layerSampleRate * _layerFrameSize * sizeof(SFLDataFormat) / 1000;
-
-		// available bytes inside ringbuffer
-		int availBytesFromMic = audiolayer->canGetMic();
-
-		// take the lowest
-		int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-
-		// Get bytes from micRingBuffer to data_from_mic
-		int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
-		int nb_sample_up = nbSample;
-		int nbSamplesMax = _layerFrameSize * audiocodec->getClockRate() / 1000;
-		
-		nbSample = reSampleData(audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
-		
-		toSIP = _intBufferDown;
-		
-		if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
-			// fill end with 0...
-			//_debug("begin: %p, nbSample: %d\n", toSIP, nbSample);
-			memset(toSIP + nbSample, 0, (nbSamplesMax-nbSample)*sizeof(int16));
-			nbSample = nbSamplesMax;
-		}
-		//_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toSIP[0], toSIP[1], toSIP[2]);
-
-		// for the mono: range = 0 to RTP_FRAME2SEND * sizeof(int16)
-		// codecEncode(char *dest, int16* src, size in bytes of the src)
-		int compSize = audiocodec->codecEncode(_sendDataEncoded, toSIP, nbSample*sizeof(int16));
-
-		// encode divise by two
-		// Send encoded audio sample over the network
-		if (compSize > nbSamplesMax) { _debug("! ARTP: %d should be %d\n", compSize, nbSamplesMax);}
-		if (!_sym) {
-			_sessionSend->putData(timestamp, _sendDataEncoded, compSize);
-		} else {
-			_session->putData(timestamp, _sendDataEncoded, compSize);
-		}
-		toSIP = NULL;
-	} catch(...) {
-		_debugException("! ARTP: sending failed");
-		throw;
+	toSIP = _intBufferDown;
+	
+	if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
+		// fill end with 0...
+		//_debug("begin: %p, nbSample: %d\n", toSIP, nbSample);
+		memset(toSIP + nbSample, 0, (nbSamplesMax-nbSample)*sizeof(int16));
+		nbSample = nbSamplesMax;
 	}
+	//_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toSIP[0], toSIP[1], toSIP[2]);
+
+	// for the mono: range = 0 to RTP_FRAME2SEND * sizeof(int16)
+	// codecEncode(char *dest, int16* src, size in bytes of the src)
+	int compSize = audiocodec->codecEncode(_sendDataEncoded, toSIP, nbSample*sizeof(int16));
+
+	// encode divise by two
+	// Send encoded audio sample over the network
+	if (compSize > nbSamplesMax) { _debug("! ARTP: %d should be %d\n", compSize, nbSamplesMax);}
+	if (!_sym) {
+		_sessionSend->putData(timestamp, _sendDataEncoded, compSize);
+	} else {
+		_session->putData(timestamp, _sendDataEncoded, compSize);
+	}
+	toSIP = NULL;
+} catch(...) {
+	_debugException("! ARTP: sending failed");
+	throw;
+}
 
 
-	destroy_codec(audiocodec);
-	dlclose(codec);
+destroy_codec(audiocodec);
+dlclose(codec);
 }
 
 
 
-	void
+void
 AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 {
-	if (_ca == 0) { return; }
-	try {
-		AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-		if (!audiolayer) { return; }
+if (_ca == 0) { return; }
+try {
+	AudioLayer* audiolayer = Manager::instance().getAudioDriver();
+	if (!audiolayer) { return; }
 
-		const ost::AppDataUnit* adu = NULL;
-		// Get audio data stream
+	const ost::AppDataUnit* adu = NULL;
+	// Get audio data stream
 
-		if (!_sym) {
-			adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
-		} else {
-			adu = _session->getData(_session->getFirstTimestamp());
-		}
-		if (adu == NULL) {
-			//_debug("No RTP audio stream\n");
-			return;
-		}
-
-		int payload = adu->getType(); // codec type
-		unsigned char* data  = (unsigned char*)adu->getData(); // data in char
-		unsigned int size    = adu->getSize(); // size in char
-		
-	using std::cout;
-	using std::cerr;
-	void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
-	if(!codec){
-		cerr<<"cannot load library: "<< dlerror() <<'\n';
+	if (!_sym) {
+		adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
+	} else {
+		adu = _session->getData(_session->getFirstTimestamp());
+	}
+	if (adu == NULL) {
+		//_debug("No RTP audio stream\n");
+		return;
 	}
 
-	//reset errors
-	dlerror();
-
-	//load the symbols
-	create_t* create_codec = (create_t*)dlsym(codec, "create_alaw");
-	const char* dlsym_error = dlerror();
-	if(dlsym_error){
-		cerr << "Cannot load symbol create: " << dlsym_error << '\n';
-	}
-	destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy_alaw");
-	dlsym_error = dlerror();
-	if(dlsym_error){
-		cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
-	}
+	int payload = adu->getType(); // codec type
+	unsigned char* data  = (unsigned char*)adu->getData(); // data in char
+	unsigned int size    = adu->getSize(); // size in char
 	
-	int pl = 0;	
-	AudioCodec* audiocodec = create_codec();        
-        //audiocodec1->test();		
+using std::cout;
+using std::cerr;
+void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
+if(!codec){
+	cerr<<"cannot load library: "<< dlerror() <<'\n';
+}
 
-		// Decode data with relevant codec
-		//AudioCodec* audiocodec = _ca->getCodecMap().getCodec((CodecType)payload);
-		_codecSampleRate = audiocodec->getClockRate();
-		int max = (int)(_codecSampleRate * _layerFrameSize);
+//reset errors
+dlerror();
 
-		if ( size > max ) {
-                        _debug("We have received from RTP a packet larger than expected: %s VS %s\n", size, max);
-                        _debug("The packet size has been cropped\n");
-                        size=max;
-                }
+//load the symbols
+create_t* create_codec = (create_t*)dlsym(codec, "create_alaw");
+const char* dlsym_error = dlerror();
+if(dlsym_error){
+	cerr << "Cannot load symbol create: " << dlsym_error << '\n';
+}
+destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy_alaw");
+dlsym_error = dlerror();
+if(dlsym_error){
+	cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
+}
+
+int pl = 0;	
+AudioCodec* audiocodec = create_codec();        
+//audiocodec1->test();		
+
+	// Decode data with relevant codec
+	//AudioCodec* audiocodec = _ca->getCodecMap().getCodec((CodecType)payload);
+	_codecSampleRate = audiocodec->getClockRate();
+	int max = (int)(_codecSampleRate * _layerFrameSize);
+
+	if ( size > max ) {
+		_debug("We have received from RTP a packet larger than expected: %s VS %s\n", size, max);
+		_debug("The packet size has been cropped\n");
+		size=max;
+	}
 
 
-		if (audiocodec != NULL) {
-			int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
-			//buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
-			int nbInt16 = expandedSize / sizeof(int16);
-			//nbInt16 represents the number of samples we just decoded
-			if (nbInt16 > max) {
-				_debug("We have decoded an RTP packet larger than expected: %s VS %s. Cropping.\n", nbInt16, max);
-				nbInt16=max;
-			}
-		
-			SFLDataFormat* toAudioLayer;
-			int nbSample = nbInt16;
+	if (audiocodec != NULL) {
+		int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
+		//buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
+		int nbInt16 = expandedSize / sizeof(int16);
+		//nbInt16 represents the number of samples we just decoded
+		if (nbInt16 > max) {
+			_debug("We have decoded an RTP packet larger than expected: %s VS %s. Cropping.\n", nbInt16, max);
+			nbInt16=max;
+		}
+	
+		SFLDataFormat* toAudioLayer;
+		int nbSample = nbInt16;
 
-			// Do sample rate conversion
-			int nb_sample_down = nbSample;
-			nbSample = reSampleData(_codecSampleRate , nb_sample_down, UP_SAMPLING);
+		// Do sample rate conversion
+		int nb_sample_down = nbSample;
+		nbSample = reSampleData(_codecSampleRate , nb_sample_down, UP_SAMPLING);
 #ifdef DATAFORMAT_IS_FLOAT
-			toAudioLayer = _floatBufferUp;
+		toAudioLayer = _floatBufferUp;
 #else
-			toAudioLayer = _dataAudioLayer;
+		toAudioLayer = _dataAudioLayer;
 #endif
 
 
-			audiolayer->putMain(toAudioLayer, nbSample * sizeof(SFLDataFormat));
+		audiolayer->putMain(toAudioLayer, nbSample * sizeof(SFLDataFormat));
 
-			// Notify (with a beep) an incoming call when there is already a call 
-			countTime += time->getSecond();
-			if (Manager::instance().incomingCallWaiting() > 0) {
-				countTime = countTime % 500; // more often...
-				if (countTime == 0) {
-					Manager::instance().notificationIncomingCall();
-				}
+		// Notify (with a beep) an incoming call when there is already a call 
+		countTime += time->getSecond();
+		if (Manager::instance().incomingCallWaiting() > 0) {
+			countTime = countTime % 500; // more often...
+			if (countTime == 0) {
+				Manager::instance().notificationIncomingCall();
 			}
-
-		} else {
-			countTime += time->getSecond();
 		}
 
-		delete adu; adu = NULL;
-	destroy_codec(audiocodec);
-	dlclose(codec);
-	} catch(...) {
-		_debugException("! ARTP: receiving failed");
-		throw;
+	} else {
+		countTime += time->getSecond();
 	}
+
+	delete adu; adu = NULL;
+destroy_codec(audiocodec);
+dlclose(codec);
+} catch(...) {
+	_debugException("! ARTP: receiving failed");
+	throw;
+}
 
 
 
@@ -460,61 +460,61 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 int 
 AudioRtpRTX::reSampleData(int sampleRate_codec, int nbSamples, int status)
 {
-	if(status==UP_SAMPLING)
-		return upSampleData(sampleRate_codec, nbSamples);
-	else if(status==DOWN_SAMPLING)
-		return downSampleData(sampleRate_codec, nbSamples);
-	else
-		return 0;
+if(status==UP_SAMPLING)
+	return upSampleData(sampleRate_codec, nbSamples);
+else if(status==DOWN_SAMPLING)
+	return downSampleData(sampleRate_codec, nbSamples);
+else
+	return 0;
 }
 
 ////////////////////////////////////////////////////////////////////
 //////////// RESAMPLING FUNCTIONS /////////////////////////////////
 //////////////////////////////////////////////////////////////////
 
-	int
+int
 AudioRtpRTX::upSampleData(int sampleRate_codec, int nbSamples)
 {
-	double upsampleFactor = (double) _layerSampleRate / sampleRate_codec;
-	int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
-	if( upsampleFactor != 1 )
-	{
-		SRC_DATA src_data;
-		src_data.data_in = _floatBufferDown;
-		src_data.data_out = _floatBufferUp;
-		src_data.input_frames = nbSamples;
-		src_data.output_frames = (int) floor(upsampleFactor * nbSamples);
-		src_data.src_ratio = upsampleFactor;
-		src_data.end_of_input = 0; // More data will come
-		src_short_to_float_array(_receiveDataDecoded, _floatBufferDown, nbSamples);
-		src_process(_src_state_spkr, &src_data);
-		nbSamples  = ( src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;		
-		src_float_to_short_array(_floatBufferUp, _dataAudioLayer, nbSamples);
-	}
+double upsampleFactor = (double) _layerSampleRate / sampleRate_codec;
+int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
+if( upsampleFactor != 1 )
+{
+	SRC_DATA src_data;
+	src_data.data_in = _floatBufferDown;
+	src_data.data_out = _floatBufferUp;
+	src_data.input_frames = nbSamples;
+	src_data.output_frames = (int) floor(upsampleFactor * nbSamples);
+	src_data.src_ratio = upsampleFactor;
+	src_data.end_of_input = 0; // More data will come
+	src_short_to_float_array(_receiveDataDecoded, _floatBufferDown, nbSamples);
+	src_process(_src_state_spkr, &src_data);
+	nbSamples  = ( src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;		
+	src_float_to_short_array(_floatBufferUp, _dataAudioLayer, nbSamples);
+}
 
-	return nbSamples;
+return nbSamples;
 }	
 
-	int
+int
 AudioRtpRTX::downSampleData(int sampleRate_codec, int nbSamples)
 {
-	double downsampleFactor = (double) sampleRate_codec / _layerSampleRate;
-	int nbSamplesMax = (int) (sampleRate_codec * _layerFrameSize / 1000);
-	if ( downsampleFactor != 1)
-	{
-		SRC_DATA src_data;	
-		src_data.data_in = _floatBufferUp;
-		src_data.data_out = _floatBufferDown;
-		src_data.input_frames = nbSamples;
-		src_data.output_frames = (int) floor(downsampleFactor * nbSamples);
-		src_data.src_ratio = downsampleFactor;
-		src_data.end_of_input = 0; // More data will come
-		src_short_to_float_array(_dataAudioLayer, _floatBufferUp, nbSamples);
-		src_process(_src_state_mic, &src_data);
-		nbSamples  = ( src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;
-		src_float_to_short_array(_floatBufferDown, _intBufferDown, nbSamples);
-	}
-	return nbSamples;
+double downsampleFactor = (double) sampleRate_codec / _layerSampleRate;
+int nbSamplesMax = (int) (sampleRate_codec * _layerFrameSize / 1000);
+if ( downsampleFactor != 1)
+{
+	SRC_DATA src_data;	
+	src_data.data_in = _floatBufferUp;
+	src_data.data_out = _floatBufferDown;
+	src_data.input_frames = nbSamples;
+	src_data.output_frames = (int) floor(downsampleFactor * nbSamples);
+	src_data.src_ratio = downsampleFactor;
+	src_data.end_of_input = 0; // More data will come
+	src_short_to_float_array(_dataAudioLayer, _floatBufferUp, nbSamples);
+	src_process(_src_state_mic, &src_data);
+	nbSamples  = ( src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;
+	src_float_to_short_array(_floatBufferDown, _intBufferDown, nbSamples);
+}
+return nbSamples;
 
 }
 
@@ -522,62 +522,62 @@ AudioRtpRTX::downSampleData(int sampleRate_codec, int nbSamples)
 
 void
 AudioRtpRTX::run () {
-	//mic, we receive from soundcard in stereo, and we send encoded
-	//encoding before sending
-	AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+//mic, we receive from soundcard in stereo, and we send encoded
+//encoding before sending
+AudioLayer *audiolayer = Manager::instance().getAudioDriver();
 
-	_layerFrameSize = audiolayer->getFrameSize(); // en ms
-	_layerSampleRate = audiolayer->getSampleRate();	
-	initBuffers();
-	int step = (int)(_layerFrameSize * _codecSampleRate / 1000);
+_layerFrameSize = audiolayer->getFrameSize(); // en ms
+_layerSampleRate = audiolayer->getSampleRate();	
+initBuffers();
+int step = (int)(_layerFrameSize * _codecSampleRate / 1000);
 
-	try {
-		// Init the session
-		initAudioRtpSession();
+try {
+	// Init the session
+	initAudioRtpSession();
 
-		// start running the packet queue scheduler.
-		//_debug("AudioRTP Thread started\n");
-		if (!_sym) {
-			_sessionRecv->startRunning();
-			_sessionSend->startRunning();
-		} else {
-			_session->startRunning();
-			//_debug("Session is now: %d active\n", _session->isActive());
-		}
-
-		int timestamp = 0; // for mic
-		int countTime = 0; // for receive
-		TimerPort::setTimer(_layerFrameSize);
-
-		audiolayer->flushMic();
-		audiolayer->startStream();
-		_start.post();
-		_debug("- ARTP Action: Start\n");
-		while (!testCancel()) {
-			////////////////////////////
-			// Send session
-			////////////////////////////
-			sendSessionFromMic(timestamp);
-			timestamp += step;
-			////////////////////////////
-			// Recv session
-			////////////////////////////
-			receiveSessionForSpkr(countTime);
-			// Let's wait for the next transmit cycle
-			Thread::sleep(TimerPort::getTimer());
-			TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
-		}
-		//_debug("stop stream for audiortp loop\n");
-		audiolayer->stopStream();
-	} catch(std::exception &e) {
-		_start.post();
-		_debug("! ARTP: Stop %s\n", e.what());
-		throw;
-	} catch(...) {
-		_start.post();
-		_debugException("* ARTP Action: Stop");
-		throw;
+	// start running the packet queue scheduler.
+	//_debug("AudioRTP Thread started\n");
+	if (!_sym) {
+		_sessionRecv->startRunning();
+		_sessionSend->startRunning();
+	} else {
+		_session->startRunning();
+		//_debug("Session is now: %d active\n", _session->isActive());
 	}
+
+	int timestamp = 0; // for mic
+	int countTime = 0; // for receive
+	TimerPort::setTimer(_layerFrameSize);
+
+	audiolayer->flushMic();
+	audiolayer->startStream();
+	_start.post();
+	_debug("- ARTP Action: Start\n");
+	while (!testCancel()) {
+		////////////////////////////
+		// Send session
+		////////////////////////////
+		sendSessionFromMic(timestamp);
+		timestamp += step;
+		////////////////////////////
+		// Recv session
+		////////////////////////////
+		receiveSessionForSpkr(countTime);
+		// Let's wait for the next transmit cycle
+		Thread::sleep(TimerPort::getTimer());
+		TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
+	}
+	//_debug("stop stream for audiortp loop\n");
+	audiolayer->stopStream();
+} catch(std::exception &e) {
+	_start.post();
+	_debug("! ARTP: Stop %s\n", e.what());
+	throw;
+} catch(...) {
+	_start.post();
+	_debugException("* ARTP Action: Stop");
+	throw;
+}
 }
 
 

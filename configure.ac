@@ -35,7 +35,6 @@ AC_CONFIG_FILES([libs/Makefile \
 AC_CONFIG_FILES([src/Makefile \
   src/sflphone \
   src/audio/Makefile \
-  src/audio/gsm/Makefile \
   src/config/Makefile \
   src/dbus/Makefile \
   src/zeroconf/Makefile])
@@ -65,7 +64,7 @@ VERSION=`echo $VERSION | cut -d- -f1`
 AC_SUBST(VERSION)
 
 dnl Settings need Standard C++ Library
-LIBS="$LIBS -lstdc++"
+LIBS="$LIBS -lstdc++ -lgsm"
 
 dnl Solaris pkgadd support definitions
 PKGADD_PKG="SFLPhone"
