@@ -3,6 +3,7 @@
 
 #include <string> 
 #include <iostream>
+#include <dlfcn.h>
 
 class AudioCodec {
 protected:
@@ -41,7 +42,6 @@ public:
      */
     virtual int codecDecode(short *, unsigned char *, unsigned int) = 0;
     virtual int codecEncode(unsigned char *, short *, unsigned int) = 0;   
-    virtual void test()=0;
     /** Returns description for GUI usage */
   std::string getDescription() { return _description; }
 
@@ -53,6 +53,7 @@ public:
   unsigned int getChannel() { return _channel; }
   bool isActive() { return _active; }
   void setActive(bool active) { _active = active; }
+  
 
 };
 

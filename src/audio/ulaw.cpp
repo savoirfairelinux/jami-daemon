@@ -12,9 +12,6 @@ public:
   		_channel   = 1;
 	}
 
-	virtual void test(){
-		printf("MON OSTIE !!!!!!!!!!!!!!!!!!!!!!!!!! ULAW\n");
-	}
 
 	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
 		int16* end = dst+size;
@@ -91,10 +88,10 @@ public:
 };
 
 // the class factories
-extern "C" AudioCodec* create_ulaw() {
+extern "C" AudioCodec* create() {
     return new Ulaw();
 }
 
-extern "C" void destroy_ulaw(AudioCodec* a) {
+extern "C" void destroy(AudioCodec* a) {
     delete a;
 }

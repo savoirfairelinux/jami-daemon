@@ -25,20 +25,40 @@
 #include <fstream>
 #include <math.h>
 #include <samplerate.h>
-
+#include <dlfcn.h>
 
 AudioFile::AudioFile()
  : AudioLoop()
 {
   // could vary later...
-  _ulaw = new Ulaw(PAYLOAD_CODEC_ULAW);
+  //_ulaw = new Ulaw(PAYLOAD_CODEC_ULAW);
   _start = false;
+
+   using std::cout;
+   using std::cerr;
+   void* codec = dlopen("codec_ulaw.so", RTLD_LAZY);
+   if(!codec){
+        cerr<<"cannot load library: "<< dlerror() <<'\n';
+   }
+   dlerror();
+    create_t* create_codec = (create_t*)dlsym(codec, "create");
+  const char* dlsym_error = dlerror();
+  if(dlsym_error){
+        cerr << "Cannot load symbol create: " << dlsym_error << '\n';
+  }
+  destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
+  dlsym_error = dlerror();
+  if(dlsym_error){
+       cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
+  }
+
+  _ulaw = create_codec();
 }
 
 
 AudioFile::~AudioFile()
 {
-  delete _ulaw;
+   delete  _ulaw;
 }
 
 // load file in mono format
@@ -81,6 +101,7 @@ AudioFile::loadFile(const std::string& filename, unsigned int sampleRate=8000)
   // read data as a block:
   file.read (fileBuffer,length);
   file.close();
+
 
   // Decode file.ul
   // expandedsize is the number of bytes, not the number of int
@@ -145,7 +166,7 @@ AudioFile::loadFile(const std::string& filename, unsigned int sampleRate=8000)
    _buffer = bufferTmp;  // just send the buffer pointer;
    bufferTmp = 0;
   }
-
+  
   return true;
 }
 

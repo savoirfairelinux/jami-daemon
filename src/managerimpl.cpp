@@ -1090,9 +1090,9 @@ ManagerImpl::initAudioCodec (void)
   //_codecDescriptorMap.setActive(getConfigString("Audio", "Codecs.codec1"));
   //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec2"));
   //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec3"));
-  _codecDescriptorMap.setActive("G711a");
-  _codecDescriptorMap.setActive("G711u");
-  _codecDescriptorMap.setActive("GSM");
+  //_codecDescriptorMap.setActive("G711a");
+  //_codecDescriptorMap.setActive("G711u");
+  //_codecDescriptorMap.setActive("GSM");
 }
 
 void
@@ -1106,11 +1106,11 @@ ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
 	tmp = list[0];
 	list[0] = list[i];
 	list[i] = tmp; 
-	_codecDescriptorMap.setActive(list[0]);
+	//_codecDescriptorMap.setActive(list[0]);
 	//_codecDescriptorMap.setInactive(list[1]);
 	//_codecDescriptorMap.setInactive(list[2]);
-	_codecDescriptorMap.setActive(list[1]);
-	_codecDescriptorMap.setActive(list[2]);
+	//_codecDescriptorMap.setActive(list[1]);
+	//_codecDescriptorMap.setActive(list[2]);
         setConfig("Audio", "Codecs.codec1", list[0]);	
 	setConfig("Audio", "Codecs.codec2", list[1]);
 	setConfig("Audio", "Codecs.codec3", list[2]);
@@ -1127,8 +1127,8 @@ ManagerImpl::getDefaultCodecList( void )
 {
   std::vector< std::string > v;
   std::string desc=DFT_CODEC1;
-  std::string rate=""+clockRate(desc);
-  printf("%s\n",rate.c_str());
+  //std::string rate=""+clockRate(desc);
+  //printf("%s\n",rate.c_str());
   v.push_back(DFT_CODEC1); // G711u
   v.push_back(DFT_CODEC2); // G711a
   v.push_back(DFT_CODEC3); // GSM
@@ -1137,18 +1137,19 @@ ManagerImpl::getDefaultCodecList( void )
 
 unsigned int
 ManagerImpl::clockRate(std::string& name)
-{
-  CodecMap codecs = _codecDescriptorMap.getMap();
+{/*
+  CodecMap codecs = _codecDescriptorMap.getCodecMap();
   CodecMap::iterator iter = codecs.begin();  
   while(iter!=codecs.end())
   {
     if(iter->second!=NULL)
     {
-      if(iter->second->getDescription() == name)
-        return iter->second->getClockRate();
-    }
-    iter++;
+      if(iter->second == name)
+        //return iter->second->getClockRate();
+  	return 1;  
   }
+    iter++;
+  }*/
   return -1;
 }
 
@@ -1483,19 +1484,20 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, int 
 bool 
 ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& name)
 {
+  /*
   bool returnValue = false;
   TokenList tk;
   if (name == "codecdescriptor") {
 
-    CodecMap map = _codecDescriptorMap.getMap();
+    CodecMap map = _codecDescriptorMap.getCodecMap();
     CodecMap::iterator iter = map.begin();
     while( iter != map.end() ) {
       tk.clear();
       std::ostringstream strType;
       strType << iter->first;
       tk.push_back(strType.str());
-      if (iter->second) {
-        tk.push_back(iter->second->getDescription());
+      if (iter->second != -1) {
+        tk.push_back(iter->second);
       } else {
         tk.push_back(strType.str());
       }
@@ -1528,7 +1530,8 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
   } else if (name == "countrytones") {
     returnValue = getCountryTones(sequenceId);
   }
-  return returnValue;
+  return returnValue;*/
+  return true;
 }
 
 //THREAD=Main

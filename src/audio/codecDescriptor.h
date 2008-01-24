@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 #include <string>
 #include <map>
 
+#include "../global.h"
 typedef enum {
 // http://www.iana.org/assignments/rtp-parameters
 // http://www.gnu.org/software/ccrtp/doc/refman/html/formats_8h.html#a0
@@ -45,33 +47,36 @@ typedef enum {
 } CodecType;
 
 #include "audiocodec.h"
-typedef std::map<CodecType, AudioCodec*> CodecMap;
 
-class CodecDescriptorMap {
+/* A codec is identified by its payload. A payload is associated with a name. */ 
+typedef std::map<CodecType, std::string> CodecMap;
+
+class CodecDescriptor {
 public:
   /**
    * Initialize all codec 
    */
-  CodecDescriptorMap();
-  ~CodecDescriptorMap() {};
-  CodecMap getMap() { return _codecMap; }
+  CodecDescriptor();
+  ~CodecDescriptor() {};
+  CodecMap& getCodecMap() { return _codecMap; }
 
   /**
    * Get codec with is associated payload
    * @param payload the payload associated with the payload
    *                same as getPayload()
-   * @return the address of the codec or 0
+   * @return the name of the codec
    */
-  AudioCodec* getCodec(CodecType payload);
+  std::string& getCodecName(CodecType payload);
 
   /**
-   * Get codec with is associated payload
-   * Put a codec active, with it's codec's _description
+   * Put a codec active, with its codec's _description
    * O(n) if not found where n is the number of element
    * @param codecDescription is the same as with getCodec(number)->getDescription()
    */
-  void setActive(const std::string& codecDescription);
-  void setInactive(const std::string& codecDescription);
+  //void setActive(const std::string& codecName);
+  bool setActive(CodecType payload);
+  //void setInactive(const std::string& codecName);
+  void setInactive(CodecType payload);
 private:
   CodecMap _codecMap;
 };

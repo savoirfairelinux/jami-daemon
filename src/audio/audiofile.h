@@ -24,7 +24,7 @@
 #define __AUDIOFILE_H__
 
 #include "audioloop.h"
-#include "ulaw.h"
+#include "audiocodec.h"
 
 /**
 	@author Yan Morin <yan.morin@savoirfairelinux.com>
@@ -42,7 +42,7 @@ public:
 
 private:
   std::string _filename;
-  Ulaw* _ulaw;
+  AudioCodec* _ulaw;
   bool _start;
 };
 

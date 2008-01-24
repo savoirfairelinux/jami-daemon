@@ -29,6 +29,7 @@
 #include <samplerate.h>
 #include <iax/iax-client.h>
 #include <math.h>
+#include <dlfcn.h>
 
 
 #define IAX_BLOCKING    1
@@ -231,9 +232,36 @@ IAXVoIPLink::getEvent()
 void
 IAXVoIPLink::sendAudioFromMic(void)
 {
-  IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
-  AudioCodec* audiocodec = NULL;
   
+  IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
+  //CodecType audiocodec = (CodecType) -1;
+  
+   using std::cout;
+   using std::cerr;
+   void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
+   if(!codec){
+        cerr<<"cannot load library: "<< dlerror() <<'\n';
+   }
+
+//reset errors
+  dlerror();
+
+//load the symbols
+  create_t* create_codec = (create_t*)dlsym(codec, "create");
+  const char* dlsym_error = dlerror();
+  if(dlsym_error){
+        cerr << "Cannot load symbol create: " << dlsym_error << '\n';        
+  }
+  destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
+  dlsym_error = dlerror();
+  if(dlsym_error){
+       cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
+  }
+
+
+  AudioCodec* audiocodec = create_codec();
+
+
   if (!currentCall) {
     // Let's mind our own business.
     return;
@@ -249,7 +277,7 @@ IAXVoIPLink::sendAudioFromMic(void)
     return;
   }
 
-  audiocodec = currentCall->getAudioCodec();
+  //audiocodec = currentCall->getAudioCodec();
 
   if (!audiocodec) {
     // Audio codec still not determined.
@@ -285,6 +313,7 @@ IAXVoIPLink::sendAudioFromMic(void)
     // Audio ici est PARFAIT
 
     int16* toIAX = NULL;
+    //if (audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
     if (audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
       SRC_DATA src_data;
 #ifdef DATAFORMAT_IS_FLOAT   
@@ -302,7 +331,7 @@ IAXVoIPLink::sendAudioFromMic(void)
       src_data.input_frames = nbSample;
       src_data.output_frames = (int) floor(factord * nbSample);
       src_data.data_out = _floatBuffer8000;
-      src_data.end_of_input = 0; /* More data to come */
+      src_data.end_of_input = 0; 
       
       src_process(_src_state_mic, &src_data);
       
@@ -328,17 +357,17 @@ IAXVoIPLink::sendAudioFromMic(void)
 
     // NOTE: L'audio ici est bon.
 
-    /*
+    //
     // LE PROBLÈME est dans cette snippet de fonction:
     // C'est une fonction destructrice ! On n'en veut pas!
-    if ( nbSample < (IAX__20S_8KHZ_MAX - 10) ) { // if only 10 is missing, it's ok
+    //if ( nbSample < (IAX__20S_8KHZ_MAX - 10) ) { // if only 10 is missing, it's ok
       // fill end with 0...
-      _debug("begin: %p, nbSample: %d\n", toIAX, nbSample);
-      _debug("has to fill: %d chars at %p\n", (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16), toIAX + nbSample);
-      memset(toIAX + nbSample, 0, (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16));
-      nbSample = IAX__20S_8KHZ_MAX;
-    }
-    */
+      //_debug("begin: %p, nbSample: %d\n", toIAX, nbSample);
+      //_debug("has to fill: %d chars at %p\n", (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16), toIAX + nbSample);
+      //memset(toIAX + nbSample, 0, (IAX__20S_8KHZ_MAX-nbSample)*sizeof(int16));
+      //nbSample = IAX__20S_8KHZ_MAX;
+    //}
+    
     //_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toIAX[0], toIAX[1], toIAX[2]);
     // NOTE: Le son dans toIAX (nbSamle*sizeof(int16)) est mauvais,
     // s'il passe par le snippet précédent.
@@ -365,6 +394,9 @@ IAXVoIPLink::sendAudioFromMic(void)
     }
     _mutexIAX.leaveMutex();
   }
+
+  destroy_codec(audiocodec);
+  dlclose(codec);
 }
 
 
@@ -746,7 +778,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 /* Handle audio event, VOICE packet received */
 void
 IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
-{
+{ 
     // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
     // were triggered
     if (!event->datalen) {
@@ -755,15 +787,37 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
       return;
     }
 
+   using std::cout;
+using std::cerr;
+void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
+if(!codec){
+        cerr<<"cannot load library: "<< dlerror() <<'\n';
+}
+
+//reset errors
+dlerror();
+create_t* create_codec = (create_t*)dlsym(codec, "create");
+const char* dlsym_error = dlerror();
+if(dlsym_error){
+        cerr << "Cannot load symbol create: " << dlsym_error << '\n';
+}
+destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
+dlsym_error = dlerror();
+if(dlsym_error){
+        cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
+}
+AudioCodec* audiocodec;
+
     if (audiolayer) {
-      AudioCodec* audiocodec = call->getAudioCodec();
+      //AudioCodec* audiocodec = call->getAudioCodec();
+      audiocodec = create_codec();
       
       // On-the-fly codec changing (normally, when we receive a full packet)
       // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
       // - subclass holds the voiceformat property.
       if (event->subclass && event->subclass != call->getFormat()) {
 	call->setFormat(event->subclass);
-	audiocodec = call->getAudioCodec();
+	//audiocodec = call->getAudioCodec();
       }
 
       //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
@@ -798,7 +852,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 	src_data.input_frames = nbSample;
 	src_data.output_frames = (int) floor(factord * nbSample);
 	src_data.src_ratio = factord;
-	src_data.end_of_input = 0; /* More data will come */
+	src_data.end_of_input = 0;
 	src_short_to_float_array(_receiveDataDecoded, _floatBuffer8000, nbSample);
 
 	// samplerate convert, go!
@@ -826,6 +880,10 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
     } else {
       _debug("IAX: incoming audio, but no sound card open");
     }
+destroy_codec(audiocodec);
+dlclose(codec);
+
+
 }
 
 

@@ -72,4 +72,14 @@ typedef short int16;
 #define CHANNELS				2
 #define SIZEBUF 				1024*1024
 
+// Codecs payloads, as defined in RFC3551
+// http://www.iana.org/assignments/rtp-parameters
+// http://www.gnu.org/software/ccrtp/doc/refman/html/formats_8h.html#a0
+/*#define PAYLOAD_CODEC_ULAW	0  // PCMU 8000
+#define PAYLOAD_CODEC_ALAW	8  // PCMA 8000
+#define PAYLOAD_CODEC_GSM	3  // GSM 8000
+// http://www.ietf.org/rfc/rfc3952.txt
+#define PAYLOAD_CODEC_ILBC	97*/
+
+
 #endif	// __GLOBAL_H__

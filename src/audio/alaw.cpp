@@ -76,10 +76,6 @@ virtual int codecEncode (unsigned char *dst, short *src, unsigned int size)
         return size;
 }
 
-virtual void test()
-{
-printf("MON OSTIE ALAW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-}
 
 uint8 ALawEncode (int16 pcm16)
 {
@@ -124,11 +120,11 @@ uint8 ALawEncode (int16 pcm16)
 };
 
 // the class factories
-extern "C" AudioCodec* create_alaw() {
+extern "C" AudioCodec* create() {
     return new Alaw();
 }
 
-extern "C" void destroy_alaw(AudioCodec* a) {
+extern "C" void destroy(AudioCodec* a) {
     delete a;
 }
 

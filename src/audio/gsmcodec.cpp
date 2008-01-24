@@ -63,10 +63,6 @@ virtual int codecEncode (unsigned char *dst, short *src, unsigned int size)
   return 33;
 }
 
-virtual void test()
-{
- printf("MOn OSTIE GSM!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-}
 
 private:
 	gsm _decode_gsmhandle;
@@ -75,10 +71,10 @@ private:
 };
 
 // the class factories
-extern "C" AudioCodec* create_gsm() {
+extern "C" AudioCodec* create() {
     return new Gsm();
 }
 
-extern "C" void destroy_gsm(AudioCodec* a) {
+extern "C" void destroy(AudioCodec* a) {
     delete a;
 }

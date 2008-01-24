@@ -23,63 +23,63 @@
 
 #include "audiocodec.h"
 #include "gsmcodec.h"
-//#include "alaw.h"
-#include "ulaw.h"
 #include "codecDescriptor.h"
-#ifdef HAVE_SPEEX
+/*#ifdef HAVE_SPEEX
  #include "CodecSpeex.h"
-#endif
+#endif*/
 
-CodecDescriptorMap::CodecDescriptorMap() 
+CodecDescriptor::CodecDescriptor() 
 {
-  //_codecMap[PAYLOAD_CODEC_ALAW] = new Alaw();
-  _codecMap[PAYLOAD_CODEC_ALAW] = new Ulaw();
-  _codecMap[PAYLOAD_CODEC_ULAW] = new Ulaw();
-  _codecMap[PAYLOAD_CODEC_GSM] = new Gsm();
+  // Default codecs
+  _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
+  _codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
+  _codecMap[PAYLOAD_CODEC_GSM] = "GSM";
 #ifdef HAVE_SPEEX
-  _codecMap[PAYLOAD_CODEC_SPEEX] = new CodecSpeex(PAYLOAD_CODEC_SPEEX); // TODO: this is a variable payload!
+  //_codecMap[PAYLOAD_CODEC_SPEEX] = new CodecSpeex(PAYLOAD_CODEC_SPEEX); // TODO: this is a variable payload!
 #endif
 // theses one are not implemented yet..
 //  _codecMap[PAYLOAD_CODEC_ILBC] = Ilbc();
 //  _codecMap[PAYLOAD_CODEC_SPEEX] = Speex();
 }
 
-AudioCodec*
-CodecDescriptorMap::getCodec(CodecType payload)
+std::string&
+CodecDescriptor::getCodecName(CodecType payload)
 {
   CodecMap::iterator iter = _codecMap.find(payload);
   if (iter!=_codecMap.end()) {
     return (iter->second);
   }
-  return NULL;
+  //return ;
 }
 
-void 
-CodecDescriptorMap::setActive(const std::string& codecDescription) 
+bool 
+CodecDescriptor::setActive(CodecType payload) 
 {
   CodecMap::iterator iter = _codecMap.begin();
   while(iter!=_codecMap.end()) {
-    if (iter->second!=0) {
-      if (iter->second->getDescription() == codecDescription) {
-        iter->second->setActive(true);
-        break;
+      if (iter->first == payload) {
+	// codec is already in the map --> nothing to do
+	_debug("Codec with payload %i already in the map\n", payload);
+        //break;
+        return true;
       }
-    }
     iter++;
   }
+
+  ///TODO: add the codec in the activ codecs list
+   return false;
 }
 
 void 
-CodecDescriptorMap::setInactive(const std::string& codecDescription)
+CodecDescriptor::setInactive(CodecType payload)
 {
   CodecMap::iterator iter = _codecMap.begin();
   while(iter!=_codecMap.end()) {
-    if (iter->second!=0) {
-      if (iter->second->getDescription() == codecDescription) {
-        iter->second->setActive(false);
+      if (iter->first == payload) {
+	///TODO : erase the codec from the list ()
+        //iter->second->setActive(false);
         break;
       }
-    }
     iter++;
   }
 	

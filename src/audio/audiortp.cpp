@@ -107,8 +107,10 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
 	_sym = sym;
 	// AudioRtpRTX should be close if we change sample rate
 
-	_codecSampleRate = _ca->getAudioCodec()->getClockRate();
-	
+	//_codecSampleRate = _ca->getAudioCodec()->getClockRate();
+	_codecSampleRate = 8000;	
+
+
 	// TODO: Change bind address according to user settings.
 	// TODO: this should be the local ip not the external (router) IP
 	std::string localipConfig = _ca->getLocalIp(); // _ca->getLocalIp();
@@ -212,15 +214,19 @@ AudioRtpRTX::initAudioRtpSession (void)
 				return;
 			}
 
-			AudioCodec* audiocodec = _ca->getAudioCodec();
+			//AudioCodec* audiocodec = _ca->getAudioCodec();
+			CodecType audiocodec = _ca->getAudioCodec();	
 			bool payloadIsSet = false;
 			if (audiocodec) {
-				if (audiocodec->hasDynamicPayload()) {
-					payloadIsSet = _sessionRecv->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec->getPayload(), audiocodec->getClockRate()));
-				} else {
-					payloadIsSet= _sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
-					payloadIsSet = _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
-				}
+				/*if (audiocodec->hasDynamicPayload()) {
+					//payloadIsSet = _sessionRecv->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec->getPayload(), audiocodec->getClockRate()));
+					payloadIsSet = _sessionRecv->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec, 8000));
+				} else {*/
+					//payloadIsSet= _sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
+					//payloadIsSet = _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
+					payloadIsSet= _sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec));
+					payloadIsSet = _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec));
+				//}
 			}
 			_sessionSend->setMark(true);
 		} else {
@@ -231,14 +237,16 @@ AudioRtpRTX::initAudioRtpSession (void)
 				return;
 			}
 
-			AudioCodec* audiocodec = _ca->getAudioCodec();
+			//AudioCodec* audiocodec = _ca->getAudioCodec();
+			CodecType audiocodec = _ca->getAudioCodec();
 			bool payloadIsSet = false;
 			if (audiocodec) {
-				if (audiocodec->hasDynamicPayload()) {
+				/*if (audiocodec->hasDynamicPayload()) {
 					payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec->getPayload(), audiocodec->getClockRate()));
-				} else {
-					payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
-				}
+				} else {*/
+					//payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
+					payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec));
+				//}
 			}
 		}
 	} catch(...) {
@@ -246,35 +254,51 @@ AudioRtpRTX::initAudioRtpSession (void)
 		throw;
 	}
 }
+
+AudioCodec*
+AudioRtpRTX::loadCodec(int payload)
+{
+	using std::cout;
+        using std::cerr;
+	void* codec;
+	
+
+	switch(payload){
+	  case 0:
+            codec = dlopen("codec_ulaw.so", RTLD_LAZY);
+	    break;
+	  case 3:
+	    codec = dlopen("codec_gsm.so", RTLD_LAZY);
+	    break;
+	  case 8:
+	    codec = dlopen("codec_alaw.so", RTLD_LAZY);
+	    break;
+	}
+
+        if(!codec){
+                cerr<<"cannot load library: "<< dlerror() <<'\n';
+        }
+        dlerror();
+        create_t* create_codec = (create_t*)dlsym(codec, "create");
+        const char* dlsym_error = dlerror();
+        if(dlsym_error){
+                cerr << "Cannot load symbol create: " << dlsym_error << '\n';
+        }
+        destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
+        dlsym_error = dlerror();
+        if(dlsym_error){
+                cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
+        }
+        return create_codec();
+
+}
+
 	
 void
 AudioRtpRTX::sendSessionFromMic(int timestamp)
 {
-	using std::cout;
-	using std::cerr;
-void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
-if(!codec){
-	cerr<<"cannot load library: "<< dlerror() <<'\n';
-}
 
-//reset errors
-dlerror();
-
-//load the symbols
-create_t* create_codec = (create_t*)dlsym(codec, "create_alaw");
-const char* dlsym_error = dlerror();
-if(dlsym_error){
-	cerr << "Cannot load symbol create: " << dlsym_error << '\n';
-}
-destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy_alaw");
-dlsym_error = dlerror();
-if(dlsym_error){
-	cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
-}
-
-int pl = 0;	
-AudioCodec* audiocodec = create_codec();        
-audiocodec->test();		
+	AudioCodec* audiocodec = loadCodec(_ca->getAudioCodec());
 
 // STEP:
 //   1. get data from mic
@@ -289,7 +313,6 @@ try {
 	AudioLayer* audiolayer = Manager::instance().getAudioDriver();
 	if (!audiolayer) { _debug(" !ARTP: No audiolayer available for mic\n"); return; }
 
-	//AudioCodec* audiocodec = _ca->getAudioCodec();
 	//AudioCodec* audiocodec = _ca->getAudioCodec();
 	if (!audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
 
@@ -338,8 +361,8 @@ try {
 }
 
 
-destroy_codec(audiocodec);
-dlclose(codec);
+//destroy_codec(audiocodec);
+//dlclose(codec);
 }
 
 
@@ -369,7 +392,7 @@ try {
 	unsigned char* data  = (unsigned char*)adu->getData(); // data in char
 	unsigned int size    = adu->getSize(); // size in char
 	
-using std::cout;
+/*using std::cout;
 using std::cerr;
 void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
 if(!codec){
@@ -380,21 +403,20 @@ if(!codec){
 dlerror();
 
 //load the symbols
-create_t* create_codec = (create_t*)dlsym(codec, "create_alaw");
+create_t* create_codec = (create_t*)dlsym(codec, "create");
 const char* dlsym_error = dlerror();
 if(dlsym_error){
 	cerr << "Cannot load symbol create: " << dlsym_error << '\n';
 }
-destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy_alaw");
+destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
 dlsym_error = dlerror();
 if(dlsym_error){
 	cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
 }
 
-int pl = 0;	
 AudioCodec* audiocodec = create_codec();        
-//audiocodec1->test();		
-
+*/
+AudioCodec* audiocodec = loadCodec(payload);
 	// Decode data with relevant codec
 	//AudioCodec* audiocodec = _ca->getCodecMap().getCodec((CodecType)payload);
 	_codecSampleRate = audiocodec->getClockRate();
@@ -446,8 +468,8 @@ AudioCodec* audiocodec = create_codec();
 	}
 
 	delete adu; adu = NULL;
-destroy_codec(audiocodec);
-dlclose(codec);
+//destroy_codec(audiocodec);
+//dlclose(codec);
 } catch(...) {
 	_debugException("! ARTP: receiving failed");
 	throw;

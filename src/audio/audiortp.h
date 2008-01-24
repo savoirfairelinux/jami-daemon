@@ -119,6 +119,9 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
  		 *  @return int The number of samples after the operation
  		 */
 		int downSampleData(int, int);
+
+
+		AudioCodec* loadCodec(int payload);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
