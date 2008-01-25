@@ -599,7 +599,6 @@ SIPCall::setAudioCodecFromSDP(sdp_media_t* remote_med, int tid)
     int payload = atoi (tmp);
     _debug("            Payload: %d\n", payload);
     setAudioCodec((CodecType)payload); // codec builder for the mic
-	_debug("SetAUDIOcodec!!\n");
   }
   if (getAudioCodec() == (CodecType) -1) {
     _debug("SIPCall Failure: Unable to set codec\n");

@@ -231,9 +231,7 @@ IAXVoIPLink::getEvent()
 AudioCodec* 
 IAXVoIPLink::loadCodec(int payload)
 {
-   using std::cout;
    using std::cerr;
-   void* handle_codec;
 
    switch(payload)
    {
@@ -259,12 +257,21 @@ IAXVoIPLink::loadCodec(int payload)
   if(dlsym_error){
         cerr << "Cannot load symbol create: " << dlsym_error << '\n';
   }
+  return create_codec();
+}
+
+void
+IAXVoIPLink::unloadCodec(AudioCodec* audiocodec)
+{
+  using std::cerr;
+
   destroy_t* destroy_codec = (destroy_t*) dlsym(handle_codec, "destroy");
-  dlsym_error = dlerror();
+  const char* dlsym_error = dlerror();
   if(dlsym_error){
        cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
   }
-  return create_codec();
+  destroy_codec(audiocodec);
+  dlclose(handle_codec);
 }
 
 void
@@ -404,9 +411,7 @@ IAXVoIPLink::sendAudioFromMic(void)
     }
     _mutexIAX.leaveMutex();
   }
-
-  //destroy_codec(audiocodec);
-  //dlclose(codec);
+  unloadCodec(audiocodec);
 }
 
 
@@ -867,9 +872,7 @@ AudioCodec* audiocodec;
     } else {
       _debug("IAX: incoming audio, but no sound card open");
     }
-//destroy_codec(audiocodec);
-//dlclose(codec);
-
+  unloadCodec(audiocodec);
 
 }
 

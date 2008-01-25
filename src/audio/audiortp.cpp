@@ -258,45 +258,49 @@ AudioRtpRTX::initAudioRtpSession (void)
 AudioCodec*
 AudioRtpRTX::loadCodec(int payload)
 {
-	using std::cout;
         using std::cerr;
-    	void* codec;	
 
 	switch(payload){
 	  case 0:
-            codec = dlopen("codec_ulaw.so", RTLD_LAZY);
+            handle_codec = dlopen("codec_ulaw.so", RTLD_LAZY);
 	    break;
 	  case 3:
-	    codec = dlopen("codec_gsm.so", RTLD_LAZY);
+	    handle_codec = dlopen("codec_gsm.so", RTLD_LAZY);
 	    break;
 	  case 8:
-	    codec = dlopen("codec_alaw.so", RTLD_LAZY);
+	    handle_codec = dlopen("codec_alaw.so", RTLD_LAZY);
 	    break;
 	}
 
-        if(!codec){
+        if(!handle_codec){
                 cerr<<"cannot load library: "<< dlerror() <<'\n';
         }
         dlerror();
-        create_t* create_codec = (create_t*)dlsym(codec, "create");
+        create_t* create_codec = (create_t*)dlsym(handle_codec, "create");
         const char* dlsym_error = dlerror();
         if(dlsym_error){
                 cerr << "Cannot load symbol create: " << dlsym_error << '\n';
         }
-        destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
-        dlsym_error = dlerror();
-        if(dlsym_error){
+        return create_codec();
+}
+
+void
+AudioRtpRTX::unloadCodec(AudioCodec* audiocodec)
+{
+	using std::cerr;
+        destroy_t* destroy_codec = (destroy_t*)dlsym(handle_codec, "destroy");
+	const char* dlsym_error = dlerror();
+	if(dlsym_error){
                 cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
         }
-        return create_codec();
-
+	destroy_codec(audiocodec);
+	dlclose(handle_codec);
 }
 
 	
 void
 AudioRtpRTX::sendSessionFromMic(int timestamp)
 {
-
 	AudioCodec* audiocodec = loadCodec(_ca->getAudioCodec());
 
 // STEP:
@@ -358,10 +362,7 @@ try {
 	_debugException("! ARTP: sending failed");
 	throw;
 }
-
-
-//destroy_codec(audiocodec);
-//dlclose(codec);
+	unloadCodec(audiocodec);
 }
 
 
@@ -369,6 +370,9 @@ try {
 void
 AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 {
+
+AudioCodec* audiocodec;
+
 if (_ca == 0) { return; }
 try {
 	AudioLayer* audiolayer = Manager::instance().getAudioDriver();
@@ -391,33 +395,8 @@ try {
 	unsigned char* data  = (unsigned char*)adu->getData(); // data in char
 	unsigned int size    = adu->getSize(); // size in char
 	
-/*using std::cout;
-using std::cerr;
-void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
-if(!codec){
-	cerr<<"cannot load library: "<< dlerror() <<'\n';
-}
-
-//reset errors
-dlerror();
-
-//load the symbols
-create_t* create_codec = (create_t*)dlsym(codec, "create");
-const char* dlsym_error = dlerror();
-if(dlsym_error){
-	cerr << "Cannot load symbol create: " << dlsym_error << '\n';
-}
-destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
-dlsym_error = dlerror();
-if(dlsym_error){
-	cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
-}
-
-AudioCodec* audiocodec = create_codec();        
-*/
-AudioCodec* audiocodec = loadCodec(payload);
+	audiocodec = loadCodec(payload);
 	// Decode data with relevant codec
-	//AudioCodec* audiocodec = _ca->getCodecMap().getCodec((CodecType)payload);
 	_codecSampleRate = audiocodec->getClockRate();
 	int max = (int)(_codecSampleRate * _layerFrameSize);
 
@@ -467,14 +446,12 @@ AudioCodec* audiocodec = loadCodec(payload);
 	}
 
 	delete adu; adu = NULL;
-//destroy_codec(audiocodec);
-//dlclose(codec);
 } catch(...) {
 	_debugException("! ARTP: receiving failed");
 	throw;
 }
 
-
+  unloadCodec(audiocodec);
 
 }
 
