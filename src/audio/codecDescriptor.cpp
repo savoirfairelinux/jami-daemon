@@ -31,15 +31,24 @@
 CodecDescriptor::CodecDescriptor() 
 {
   // Default codecs
-  _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
   _codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
   _codecMap[PAYLOAD_CODEC_GSM] = "GSM";
+  //_codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
 #ifdef HAVE_SPEEX
-  //_codecMap[PAYLOAD_CODEC_SPEEX] = new CodecSpeex(PAYLOAD_CODEC_SPEEX); // TODO: this is a variable payload!
+  _codecMap[PAYLOAD_CODEC_SPEEX] = new CodecSpeex(PAYLOAD_CODEC_SPEEX); // TODO: this is a variable payload!
 #endif
 // theses one are not implemented yet..
-//  _codecMap[PAYLOAD_CODEC_ILBC] = Ilbc();
+  _codecMap[PAYLOAD_CODEC_ILBC] = "iLBC";
 //  _codecMap[PAYLOAD_CODEC_SPEEX] = Speex();
+}
+
+void
+CodecDescriptor::init()
+{
+	_codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
+	_codecMap[PAYLOAD_CODEC_GSM] = "GSM";
+	_codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
+	_codecMap[PAYLOAD_CODEC_ILBC] = "iLBC";
 }
 
 std::string&

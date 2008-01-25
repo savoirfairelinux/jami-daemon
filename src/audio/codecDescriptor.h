@@ -68,6 +68,8 @@ public:
    */
   std::string& getCodecName(CodecType payload);
 
+  void init();
+
   /**
    * Check in the map codec if the specified codec is supported 
    * @param payload unique identifier of a codec (RFC)

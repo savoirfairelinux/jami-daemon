@@ -1057,9 +1057,9 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
   fill_config_int(DRIVER_SAMPLE_RATE, DFT_SAMPLE_RATE);
   fill_config_int(DRIVER_FRAME_SIZE, DFT_FRAME_SIZE);
-  fill_config_str(CODEC1, DFT_CODEC1);
-  fill_config_str(CODEC2, DFT_CODEC2);
-  fill_config_str(CODEC3, DFT_CODEC3);
+  //fill_config_str(CODEC1, DFT_CODEC1);
+  //fill_config_str(CODEC2, DFT_CODEC2);
+  //fill_config_str(CODEC3, DFT_CODEC3);
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
@@ -1087,11 +1087,13 @@ void
 ManagerImpl::initAudioCodec (void)
 {
   _debugInit("Active Codecs");
+  _codecDescriptorMap.init();
 }
 
 void
 ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
-{
+{ 	_debug("Set Prefered Order\n");
+	/*
 	std::vector<std::string> list = getCodecList();
         std::string tmp;
 	int i=0;
@@ -1103,6 +1105,7 @@ ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
         setConfig("Audio", "Codecs.codec1", list[0]);	
 	setConfig("Audio", "Codecs.codec2", list[1]);
 	setConfig("Audio", "Codecs.codec3", list[2]);
+*/
 }
 
 std::string
@@ -1149,13 +1152,19 @@ ManagerImpl::clockRate(std::string& name)
 std::vector< std::string >
 ManagerImpl::getCodecList( void )
 {
+	
 	std::vector< std::string > v;
-  	std::string desc=getConfigString(AUDIO, "Codecs.codec1");
-  	//std::string rate=clockRate(desc).strstream();
-	//printf("%s\n",rate.c_str());
-	v.push_back(getConfigString(AUDIO, "Codecs.codec1")); 
-	v.push_back( getConfigString(AUDIO, "Codecs.codec2")); 
-	v.push_back( getConfigString(AUDIO, "Codecs.codec3")); 
+	CodecMap codecs = _codecDescriptorMap.getCodecMap();
+  	CodecMap::iterator iter = codecs.begin();  
+  	while(iter!=codecs.end())
+  	{
+    	  if(iter->first!=-1)
+   	  {
+		printf("codec: %s\n", iter->second.data());
+		v.push_back(iter->second.data());
+	  }
+	iter++;
+	}
 	return v;
 }
 
