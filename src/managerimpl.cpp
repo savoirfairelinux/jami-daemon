@@ -1087,12 +1087,6 @@ void
 ManagerImpl::initAudioCodec (void)
 {
   _debugInit("Active Codecs");
-  //_codecDescriptorMap.setActive(getConfigString("Audio", "Codecs.codec1"));
-  //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec2"));
-  //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec3"));
-  //_codecDescriptorMap.setActive("G711a");
-  //_codecDescriptorMap.setActive("G711u");
-  //_codecDescriptorMap.setActive("GSM");
 }
 
 void
@@ -1106,11 +1100,6 @@ ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
 	tmp = list[0];
 	list[0] = list[i];
 	list[i] = tmp; 
-	//_codecDescriptorMap.setActive(list[0]);
-	//_codecDescriptorMap.setInactive(list[1]);
-	//_codecDescriptorMap.setInactive(list[2]);
-	//_codecDescriptorMap.setActive(list[1]);
-	//_codecDescriptorMap.setActive(list[2]);
         setConfig("Audio", "Codecs.codec1", list[0]);	
 	setConfig("Audio", "Codecs.codec2", list[1]);
 	setConfig("Audio", "Codecs.codec3", list[2]);

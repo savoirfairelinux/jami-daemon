@@ -260,8 +260,7 @@ AudioRtpRTX::loadCodec(int payload)
 {
 	using std::cout;
         using std::cerr;
-	void* codec;
-	
+    	void* codec;	
 
 	switch(payload){
 	  case 0:

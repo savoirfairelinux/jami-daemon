@@ -360,7 +360,7 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
 	  _debug("remote payload = %s\n", tmp);
           CodecType audiocodec = (CodecType)payload;
           //if (audiocodec != NULL && audiocodec->isActive()) {
-          if (audiocodec != (CodecType)-1 && _codecMap.setActive(audiocodec))  { //TODO: check if the remote payload matches with one of the codec map
+          if (audiocodec != (CodecType)-1 && _codecMap.isSupported(audiocodec))  { 
             listCodec << payload << " ";
             //listRtpMap << "a=rtpmap:" << payload << " " << audiocodec->getCodecName() << "/" << audiocodec->getClockRate();
             listRtpMap << "a=rtpmap:" << payload << " " << _codecMap.getCodecName(audiocodec) << "/" << 8000;
@@ -586,7 +586,7 @@ SIPCall::setAudioCodecFromSDP(sdp_media_t* remote_med, int tid)
     if (tmp != NULL ) {
       int payload = atoi(tmp);
       // stop if we find a correct codec
-      if (_codecMap.setActive((CodecType)payload)){
+      if (_codecMap.isSupported((CodecType)payload)){
           break;
       }
     }

@@ -69,14 +69,25 @@ public:
   std::string& getCodecName(CodecType payload);
 
   /**
-   * Put a codec active, with its codec's _description
-   * O(n) if not found where n is the number of element
-   * @param codecDescription is the same as with getCodec(number)->getDescription()
+   * Check in the map codec if the specified codec is supported 
+   * @param payload unique identifier of a codec (RFC)
+   * @return true if the codec specified is supported
+   * 	     false otherwise
    */
-  //void setActive(const std::string& codecName);
-  bool setActive(CodecType payload);
-  //void setInactive(const std::string& codecName);
-  void setInactive(CodecType payload);
+  bool isSupported(CodecType payload);
+
+ /**
+  * Remove the codec with payload payload from the list
+  * @param payload the codec to erase
+  */ 
+  void removeCodec(CodecType payload);
+
+ /**
+  * Add a codec in the list
+  * @param payload the codec to add
+  */
+  void addCodec(CodecType payload);
+
 private:
   CodecMap _codecMap;
 };

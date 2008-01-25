@@ -53,7 +53,7 @@ CodecDescriptor::getCodecName(CodecType payload)
 }
 
 bool 
-CodecDescriptor::setActive(CodecType payload) 
+CodecDescriptor::isSupported(CodecType payload) 
 {
   CodecMap::iterator iter = _codecMap.begin();
   while(iter!=_codecMap.end()) {
@@ -65,23 +65,27 @@ CodecDescriptor::setActive(CodecType payload)
       }
     iter++;
   }
-
-  ///TODO: add the codec in the activ codecs list
    return false;
 }
 
 void 
-CodecDescriptor::setInactive(CodecType payload)
+CodecDescriptor::removeCodec(CodecType payload)
 {
   CodecMap::iterator iter = _codecMap.begin();
   while(iter!=_codecMap.end()) {
       if (iter->first == payload) {
-	///TODO : erase the codec from the list ()
-        //iter->second->setActive(false);
+	_debug("Codec %s removed from the list", getCodecName(payload).data());
+	_codecMap.erase(iter);
         break;
       }
     iter++;
   }
 	
 }
+
+void
+CodecDescriptor::addCodec(CodecType payload)
+{
+}
+
 

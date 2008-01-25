@@ -228,39 +228,50 @@ IAXVoIPLink::getEvent()
   _evThread->sleep(3);
 }
 
+AudioCodec* 
+IAXVoIPLink::loadCodec(int payload)
+{
+   using std::cout;
+   using std::cerr;
+   void* handle_codec;
+
+   switch(payload)
+   {
+     case 0:
+       handle_codec = dlopen("codec_ulaw.so", RTLD_LAZY);
+       break;
+     case 3:
+       handle_codec = dlopen("codec_gsm.so", RTLD_LAZY);
+       break;
+     case 8:
+       handle_codec = dlopen("codec_alaw.so", RTLD_LAZY);
+       break;
+   }
+   if(!handle_codec){
+        cerr<<"cannot load library: "<< dlerror() <<'\n';
+   }
+   // reset errors
+   dlerror();   
+
+   // load the symbols
+  create_t* create_codec = (create_t*)dlsym(handle_codec, "create");
+  const char* dlsym_error = dlerror();
+  if(dlsym_error){
+        cerr << "Cannot load symbol create: " << dlsym_error << '\n';
+  }
+  destroy_t* destroy_codec = (destroy_t*) dlsym(handle_codec, "destroy");
+  dlsym_error = dlerror();
+  if(dlsym_error){
+       cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
+  }
+  return create_codec();
+}
 
 void
 IAXVoIPLink::sendAudioFromMic(void)
 {
   
   IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
-  //CodecType audiocodec = (CodecType) -1;
-  
-   using std::cout;
-   using std::cerr;
-   void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
-   if(!codec){
-        cerr<<"cannot load library: "<< dlerror() <<'\n';
-   }
-
-//reset errors
-  dlerror();
-
-//load the symbols
-  create_t* create_codec = (create_t*)dlsym(codec, "create");
-  const char* dlsym_error = dlerror();
-  if(dlsym_error){
-        cerr << "Cannot load symbol create: " << dlsym_error << '\n';        
-  }
-  destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
-  dlsym_error = dlerror();
-  if(dlsym_error){
-       cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
-  }
-
-
-  AudioCodec* audiocodec = create_codec();
-
 
   if (!currentCall) {
     // Let's mind our own business.
@@ -277,8 +288,7 @@ IAXVoIPLink::sendAudioFromMic(void)
     return;
   }
 
-  //audiocodec = currentCall->getAudioCodec();
-
+  AudioCodec* audiocodec = loadCodec(currentCall->getAudioCodec());
   if (!audiocodec) {
     // Audio codec still not determined.
     if (audiolayer) {
@@ -395,8 +405,8 @@ IAXVoIPLink::sendAudioFromMic(void)
     _mutexIAX.leaveMutex();
   }
 
-  destroy_codec(audiocodec);
-  dlclose(codec);
+  //destroy_codec(audiocodec);
+  //dlclose(codec);
 }
 
 
@@ -786,40 +796,17 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
       //_debug("IAX: Skipping empty jitter-buffer interpolated packet\n");
       return;
     }
-
-   using std::cout;
-using std::cerr;
-void* codec = dlopen("codec_alaw.so", RTLD_LAZY);
-if(!codec){
-        cerr<<"cannot load library: "<< dlerror() <<'\n';
-}
-
-//reset errors
-dlerror();
-create_t* create_codec = (create_t*)dlsym(codec, "create");
-const char* dlsym_error = dlerror();
-if(dlsym_error){
-        cerr << "Cannot load symbol create: " << dlsym_error << '\n';
-}
-destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
-dlsym_error = dlerror();
-if(dlsym_error){
-        cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
-}
 AudioCodec* audiocodec;
 
     if (audiolayer) {
-      //AudioCodec* audiocodec = call->getAudioCodec();
-      audiocodec = create_codec();
       
       // On-the-fly codec changing (normally, when we receive a full packet)
       // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
       // - subclass holds the voiceformat property.
       if (event->subclass && event->subclass != call->getFormat()) {
 	call->setFormat(event->subclass);
-	//audiocodec = call->getAudioCodec();
       }
-
+      audiocodec = loadCodec(call->getAudioCodec());
       //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
      
       unsigned char* data = (unsigned char*)event->data;
@@ -880,8 +867,8 @@ AudioCodec* audiocodec;
     } else {
       _debug("IAX: incoming audio, but no sound card open");
     }
-destroy_codec(audiocodec);
-dlclose(codec);
+//destroy_codec(audiocodec);
+//dlclose(codec);
 
 
 }

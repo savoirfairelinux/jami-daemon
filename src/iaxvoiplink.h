@@ -152,6 +152,12 @@ private:
    */
   int iaxCodecMapToFormat(IAXCall* call);
 
+ /**
+  * Dynamically load an audio codec
+  * @return audiocodec a pointer on an audiocodec object
+  */ 
+  AudioCodec* loadCodec(int payload);
+
   /** Threading object */
   EventThread* _evThread;
 

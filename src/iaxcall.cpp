@@ -34,7 +34,6 @@ void
 IAXCall::setFormat(int format)
 {
   _format = format;
-
   switch(format) {
   /*case AST_FORMAT_ULAW:
     setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_ULAW)); break;
