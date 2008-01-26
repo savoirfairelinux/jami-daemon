@@ -22,7 +22,6 @@
 #include <iostream>
 
 #include "audiocodec.h"
-#include "gsmcodec.h"
 #include "codecDescriptor.h"
 /*#ifdef HAVE_SPEEX
  #include "CodecSpeex.h"

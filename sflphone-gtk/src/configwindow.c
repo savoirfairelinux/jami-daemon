@@ -82,7 +82,7 @@ config_window_fill_codec_list()
     GtkTreeIter iter;
     int i;
     gtk_list_store_clear(codec_store);
-    gchar * description = "Select a codec:";
+    //gchar * description = "Select a codec:";
     //gtk_list_store_append(codec_store, &iter);
     //gtk_list_store_set(codec_store, &iter, 0, description, -1);
     for(i=0; i<codec_list_get_size(); i++)
@@ -96,7 +96,7 @@ config_window_fill_codec_list()
       }
     }
   }
-	gtk_combo_box_set_active(combo_box, 0);
+	//gtk_combo_box_set_active(combo_box, 0);
 }
 
 void
@@ -196,7 +196,7 @@ select_account(GtkTreeSelection *sel, GtkTreeModel *model)
 static void
 select_codec( GtkComboBox* wid)
 {
-	guint item = gtk_combo_box_get_active(wid);
+	//guint item = gtk_combo_box_get_active(wid);
 	/* now we want this selected codec to be used as the preferred codec */
 	/* ie first in the list in the user config */
 	//codec_set_prefered_order(item);
@@ -263,7 +263,7 @@ create_accounts_tab()
 	GtkTreeSelection *sel;
 	GtkWidget *label;
 
-	GtkTreeIter iter;
+	//GtkTreeIter iter;
         GValue val;
         val.g_type = G_TYPE_POINTER;
 
@@ -374,9 +374,9 @@ create_audio_tab ()
 	GtkWidget * label;
 	GtkWidget * codecBox;
 	GtkWidget * rate_box;
-	GtkWidget * image; 
+	//GtkWidget * image; 
 	GtkWidget * hbox1;
-	GtkTreeIter iter;
+	//GtkTreeIter iter;
 	GtkCellRenderer *renderer;
 	
 
@@ -453,7 +453,7 @@ create_audio_tab ()
 	gtk_widget_show_all(ret);
 	config_window_fill_codec_list();
 	config_window_fill_rate_list();
-	gtk_combo_box_set_active(rate_box, 0);
+	//gtk_combo_box_set_active(rate_box, 0);
 
 	return ret;
 	
