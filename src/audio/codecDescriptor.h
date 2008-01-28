@@ -38,7 +38,8 @@ typedef enum {
   PAYLOAD_CODEC_ALAW = 8,
 // http://www.ietf.org/rfc/rfc3952.txt
 // 97 iLBC/8000
-  PAYLOAD_CODEC_ILBC = 97,
+  PAYLOAD_CODEC_ILBC_20 = 97,
+  PAYLOAD_CODEC_ILBC_30 = 98,
 // http://www.speex.org/drafts/draft-herlein-speex-rtp-profile-00.txt
 //  97 speex/8000
 // http://support.xten.com/viewtopic.php?p=8684&sid=3367a83d01fdcad16c7459a79859b08e
@@ -85,11 +86,34 @@ public:
   void removeCodec(CodecType payload);
 
  /**
-  * Add a codec in the list
+  * Add a codec in the list.
   * @param payload the codec to add
   */
   void addCodec(CodecType payload);
 
+ /**
+  * Get the bit rate of the specified codec.
+  * @param payload The payload of the codec
+  * @return double The bit rate 
+  */  
+  double getBitRate(CodecType payload);
+
+ /**
+  * Get the bandwidth for one call with the specified codec.
+  * The value has been calculated with the further information:
+  * RTp communication, SIP protocol (the value with IAX2 is very close), no RTCP, one simultaneous call, for one channel (the incoming one).
+  * @param payload The payload of the codec 
+  * @return double The bandwidth
+  */
+  double getBandwidthPerCall(CodecType payload);
+
+
+ /**
+  * Get the clock rate of the specified codec
+  * @param payload The payload of the codec
+  * @return int The clock rate of the specified codec
+  */
+  int getSampleRate(CodecType payload);
 private:
   CodecMap _codecMap;
 };
