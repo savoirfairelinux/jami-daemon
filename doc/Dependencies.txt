@@ -18,6 +18,7 @@ libsamplerate        0.1.2      http://www.mega-nerd.com/SRC/[website]
 libdbus-glib         0.73       Packaged with your favorite distribution.
 dbus-c++-1           0.5        See Build notes.
 libexpat1            1.95.8     Packaged with your favorite distribution.
+libgsm1		     1.0.10     Ubuntu package - Necessary to use GSM codec.
 --------------------------------------------------------------------------------------
 
 

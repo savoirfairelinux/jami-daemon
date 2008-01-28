@@ -30,7 +30,7 @@ public:
 Gsm(int payload = 0) 
 : AudioCodec(payload, "GSM")
 {
-  _description = "GSM";
+  //_description = "GSM";
   _clockRate = 8000;
   _channel   = 1;
   
@@ -72,7 +72,7 @@ private:
 
 // the class factories
 extern "C" AudioCodec* create() {
-    return new Gsm();
+    return new Gsm(3);
 }
 
 extern "C" void destroy(AudioCodec* a) {
