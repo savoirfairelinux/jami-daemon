@@ -122,6 +122,7 @@ ManagerImpl::init()
   initAudioDriver();
   selectAudioDriver();
 
+  // Initialize the list of supported audio codecs
   initAudioCodec();
 
   AudioLayer *audiolayer = getAudioDriver();
@@ -1086,7 +1087,7 @@ ManagerImpl::initConfigFile (void)
 void
 ManagerImpl::initAudioCodec (void)
 {
-  _debugInit("Active Codecs");
+  _debugInit("Active Codecs List");
   _codecDescriptorMap.init();
 }
 
@@ -1146,8 +1147,7 @@ ManagerImpl::clockRate(std::string& name)
 }
 
 /**
- * Get the list of codecs.
- * Contains all the codecs supported, with order set by the user.
+ * Send the list of codecs to the client through DBus.
  */
 std::vector< std::string >
 ManagerImpl::getCodecList( void )

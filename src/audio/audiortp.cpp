@@ -68,7 +68,6 @@ AudioRtp::createNewSession (SIPCall *ca) {
 	// Start RTP Send/Receive threads
 	_symmetric = Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC) ? true : false;
 	_RTXThread = new AudioRtpRTX (ca, _symmetric);
-	printf("_sym=%i\n\n", _symmetric);
 	try {
 		if (_RTXThread->start() != 0) {
 			_debug("! ARTP Failure: unable to start RTX Thread\n");
@@ -108,7 +107,6 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
 	// AudioRtpRTX should be close if we change sample rate
 
 	//_codecSampleRate = _ca->getAudioCodec()->getClockRate();
-	_codecSampleRate = 8000;	
 
 
 	// TODO: Change bind address according to user settings.
@@ -182,9 +180,15 @@ AudioRtpRTX::initBuffers()
 	void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
+
+
+
 	try {
 		if (_ca == 0) { return; }
-
+		_debug("AUDIOCODEC=%i\n", _ca->getAudioCodec());
+		AudioCodec* audiocodec = loadCodec(_ca->getAudioCodec());
+		_codecSampleRate = audiocodec->getClockRate();	
+	
 		_debug("Init audio RTP session\n");
 		ost::InetHostAddress remote_ip(_ca->getRemoteIp().c_str());
 		if (!remote_ip) {
@@ -214,19 +218,14 @@ AudioRtpRTX::initAudioRtpSession (void)
 				return;
 			}
 
-			//AudioCodec* audiocodec = _ca->getAudioCodec();
-			CodecType audiocodec = _ca->getAudioCodec();	
 			bool payloadIsSet = false;
 			if (audiocodec) {
-				/*if (audiocodec->hasDynamicPayload()) {
-					//payloadIsSet = _sessionRecv->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec->getPayload(), audiocodec->getClockRate()));
-					payloadIsSet = _sessionRecv->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec, 8000));
-				} else {*/
-					//payloadIsSet= _sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
-					//payloadIsSet = _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
-					payloadIsSet= _sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec));
-					payloadIsSet = _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec));
-				//}
+				if (audiocodec->hasDynamicPayload()) {
+					payloadIsSet = _sessionRecv->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec->getPayload(), audiocodec->getClockRate()));
+				} else {
+					payloadIsSet= _sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
+					payloadIsSet = _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
+				}
 			}
 			_sessionSend->setMark(true);
 		} else {
@@ -237,18 +236,16 @@ AudioRtpRTX::initAudioRtpSession (void)
 				return;
 			}
 
-			//AudioCodec* audiocodec = _ca->getAudioCodec();
-			CodecType audiocodec = _ca->getAudioCodec();
 			bool payloadIsSet = false;
 			if (audiocodec) {
-				/*if (audiocodec->hasDynamicPayload()) {
+				if (audiocodec->hasDynamicPayload()) {
 					payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec->getPayload(), audiocodec->getClockRate()));
-				} else {*/
-					//payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
-					payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec));
-				//}
+				} else {
+					payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
+				}
 			}
 		}
+		unloadCodec(audiocodec);
 	} catch(...) {
 		_debugException("! ARTP Failure: initialisation failed");
 		throw;
@@ -269,6 +266,9 @@ AudioRtpRTX::loadCodec(int payload)
 	    break;
 	  case 8:
 	    handle_codec = dlopen("codec_alaw.so", RTLD_LAZY);
+	    break;
+	  case 97:
+            handle_codec = dlopen("codec_ilbc.so", RTLD_LAZY);
 	    break;
 	}
 
@@ -527,12 +527,12 @@ AudioLayer *audiolayer = Manager::instance().getAudioDriver();
 _layerFrameSize = audiolayer->getFrameSize(); // en ms
 _layerSampleRate = audiolayer->getSampleRate();	
 initBuffers();
-int step = (int)(_layerFrameSize * _codecSampleRate / 1000);
+int step; 
 
 try {
 	// Init the session
 	initAudioRtpSession();
-
+	step = (int) (_layerFrameSize * _codecSampleRate / 1000);
 	// start running the packet queue scheduler.
 	//_debug("AudioRTP Thread started\n");
 	if (!_sym) {

@@ -10,9 +10,6 @@ protected:
   /** Holds SDP-compliant codec name */
   std::string _codecName; // what we put inside sdp
   
-  /** Holds the GUI-style codec description */
-  std::string _description; // what we display to the user
-
   /** Clock rate or sample rate of the codec, in Hz */
   unsigned int _clockRate;
 
@@ -20,7 +17,7 @@ protected:
   unsigned int _channel;
 
 private:
-  bool _active;
+  //bool _active;
   int _payload;
   bool _hasDynamicPayload;
 
@@ -30,7 +27,7 @@ public:
 	_payload = payload;
   	_clockRate = 8000; // default
   	_channel   = 1; // default
-  	_active = false;
+  //	_active = false;
 
   	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
 }
@@ -42,8 +39,6 @@ public:
      */
     virtual int codecDecode(short *, unsigned char *, unsigned int) = 0;
     virtual int codecEncode(unsigned char *, short *, unsigned int) = 0;   
-    /** Returns description for GUI usage */
-  std::string getDescription() { return _description; }
 
   /** Value used for SDP negotiation */
   std::string getCodecName() { return _codecName; }
@@ -51,8 +46,8 @@ public:
   bool hasDynamicPayload() { return _hasDynamicPayload; }
   unsigned int getClockRate() { return _clockRate; }
   unsigned int getChannel() { return _channel; }
-  bool isActive() { return _active; }
-  void setActive(bool active) { _active = active; }
+  //bool isActive() { return _active; }
+  //void setActive(bool active) { _active = active; }
   
 
 };

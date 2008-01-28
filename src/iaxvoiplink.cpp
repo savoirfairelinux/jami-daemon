@@ -244,6 +244,9 @@ IAXVoIPLink::loadCodec(int payload)
      case 8:
        handle_codec = dlopen("codec_alaw.so", RTLD_LAZY);
        break;
+     case 97:
+       handle_codec = dlopen("codec_ilbc.so", RTLD_LAZY);
+       break;
    }
    if(!handle_codec){
         cerr<<"cannot load library: "<< dlerror() <<'\n';

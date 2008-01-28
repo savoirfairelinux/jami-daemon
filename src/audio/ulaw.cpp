@@ -7,7 +7,6 @@ public:
 	Ulaw(int payload=0)
  	: AudioCodec(payload, "PCMU")
 	{
-  		_description = "G711u";
   		_clockRate = 8000;
   		_channel   = 1;
 	}
@@ -89,7 +88,7 @@ public:
 
 // the class factories
 extern "C" AudioCodec* create() {
-    return new Ulaw();
+    return new Ulaw(0);
 }
 
 extern "C" void destroy(AudioCodec* a) {

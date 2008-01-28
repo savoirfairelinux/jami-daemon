@@ -28,7 +28,7 @@ public:
    Alaw(int payload=0)
  : AudioCodec(payload, "PCMA")
 {
-  _description = "G711a";
+  //_description = "G711a";
 
   _clockRate = 8000;
   _channel   = 1;
@@ -121,7 +121,7 @@ uint8 ALawEncode (int16 pcm16)
 
 // the class factories
 extern "C" AudioCodec* create() {
-    return new Alaw();
+    return new Alaw(8);
 }
 
 extern "C" void destroy(AudioCodec* a) {
