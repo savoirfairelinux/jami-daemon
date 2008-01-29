@@ -25,7 +25,7 @@ Call::Call(const CallID& id, Call::CallType type) : _id(id), _type(type),
 {
   _connectionState = Call::Disconnected;
   _callState = Call::Inactive;
-  _audioCodec = 0;
+  //_audioCodec = 0;
   _localAudioPort = 0;
   _localExternalAudioPort = 0;
   _remoteAudioPort = 0;
@@ -65,7 +65,7 @@ Call::getState()
   return _callState;
 }
 
-CodecDescriptorMap& 
+CodecDescriptor& 
 Call::getCodecMap()
 {
   return _codecMap;
@@ -99,7 +99,7 @@ Call::getRemoteIp()
   return _remoteIPAddress;
 }
 
-AudioCodec* 
+CodecType 
 Call::getAudioCodec()
 {
   ost::MutexLock m(_callMutex);  

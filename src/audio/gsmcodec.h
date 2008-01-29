@@ -21,10 +21,12 @@
 #ifndef __GSM_H__
 #define __GSM_H__
 
+#include <gsm.h>
+
 #include "audiocodec.h"
-extern "C" {
+/*extern "C" {
 #include "gsm/gsm.h"
-}
+}*/
 
 /**
  * GSM audio codec C++ class (over gsm/gsm.h)

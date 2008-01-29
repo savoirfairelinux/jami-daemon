@@ -249,7 +249,6 @@ select_codec(GtkTreeSelection * selection, GtkTreeModel * model)
 	{
 		return;
 	}
-	
 	//guint item = gtk_combo_box_get_active(wid);
 	/* now we want this selected codec to be used as the preferred codec */
 	/* ie first in the list in the user config */
@@ -453,10 +452,8 @@ create_accounts_tab()
 	GtkTreeSelection *treeSelection;
 	GtkWidget *label;
 
-	GtkTreeIter iter;
-	GValue val;
-	
-	val.g_type = G_TYPE_POINTER;
+    GValue val;
+    val.g_type = G_TYPE_POINTER;
 
 	selectedAccount = NULL;
 
@@ -711,7 +708,9 @@ create_video_tab ()
 	GtkWidget * label;
 	GtkWidget * codecBox;
 	GtkWidget * rate_box;
+	//GtkWidget * image; 
 	GtkWidget * hbox1;
+	//GtkTreeIter iter;
 	GtkCellRenderer *renderer;
 
 	ret = gtk_vbox_new(FALSE, 10);
@@ -788,6 +787,7 @@ create_video_tab ()
 	config_window_fill_codec_list();
 	config_window_fill_rate_list();
 	gtk_combo_box_set_active(GTK_COMBO_BOX(rate_box), 0);
+	//gtk_combo_box_set_active(rate_box, 0);
 
 	return ret;
 }*/

@@ -7,14 +7,10 @@ public:
 	Ulaw(int payload=0)
  	: AudioCodec(payload, "PCMU")
 	{
-  		_description = "G711u";
   		_clockRate = 8000;
   		_channel   = 1;
 	}
 
-	virtual void test(){
-		printf("MON OSTIE !!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-	}
 
 	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {
 		int16* end = dst+size;
@@ -24,7 +20,6 @@ public:
 	}
 
 	virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) {
-  	//return G711::ULawEncode (dst, src, size);
   		size >>= 1;
         	uint8* end = dst+size;
         	while(dst<end)
@@ -92,10 +87,10 @@ public:
 };
 
 // the class factories
-extern "C" AudioCodec* create_ulaw() {
-    return new Ulaw();
+extern "C" AudioCodec* create() {
+    return new Ulaw(0);
 }
 
-extern "C" void destroy_ulaw(AudioCodec* a) {
+extern "C" void destroy(AudioCodec* a) {
     delete a;
 }

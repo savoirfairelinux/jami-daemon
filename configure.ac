@@ -35,7 +35,6 @@ AC_CONFIG_FILES([libs/Makefile \
 AC_CONFIG_FILES([src/Makefile \
   src/sflphone \
   src/audio/Makefile \
-  src/audio/gsm/Makefile \
   src/config/Makefile \
   src/dbus/Makefile \
   src/zeroconf/Makefile])
@@ -150,6 +149,11 @@ PKG_CHECK_MODULES([libosip2], [libosip2 >= ${LIBOSIP2_OSIPLISTNOPOINTER_MIN_VERS
 	[LIBOSIP2_CFLAGS=""], [LIBOSIP2_CFLAGS="-DLIBOSIP2_WITHPOINTER"])
 SIP_CFLAGS="$SIP_CFLAGS $LIBOSIP2_CFLAGS";
 AC_SUBST(SIP_CFLAGS)
+
+dnl LIBGSM1_MIN_VERSION=1.10
+dnl PKG_CHECK_MODULES(gsm, gsm >= ${LIBGSM1_MIN_VERSION})
+dnl SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libgsm1_CFLAGS"
+dnl SFLPHONE_LIBS="$SFLPHONE_LIBS $libgsm1_LIBS"
 
 LIBSAMPLERATE_MIN_VERSION=0.1.1
 PKG_CHECK_MODULES(samplerate, samplerate >= ${LIBSAMPLERATE_MIN_VERSION})
