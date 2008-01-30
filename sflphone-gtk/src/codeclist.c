@@ -40,6 +40,13 @@ codec_list_init()
 }
 
 void
+codec_list_clear ()
+{
+  g_queue_free (codecQueue);
+  codecQueue = g_queue_new();
+}
+
+void
 codec_list_add(codec_t * c)
 {
   g_queue_push_tail (codecQueue, (gpointer *) c);

@@ -96,7 +96,7 @@ ConfigurationManager::getRingtoneList(  )
 
 
 
-	std::vector< ::DBus::String > 
+	std::vector< ::DBus::String  > 
 ConfigurationManager::getCodecList(  )
 {
 	_debug("ConfigurationManager::getCodecList received\n");
@@ -104,10 +104,39 @@ ConfigurationManager::getCodecList(  )
 }
 
 	std::vector< ::DBus::String > 
+ConfigurationManager::getCodecDetails( const ::DBus::Int32& payload )
+{
+	_debug("ConfigurationManager::getCodecList received\n");
+	return Manager::instance().getCodecDetails( payload );
+}
+
+	std::vector< ::DBus::String > 
 ConfigurationManager::getDefaultCodecList(  )
 {
 	_debug("ConfigurationManager::getDefaultCodecList received\n");
 	return Manager::instance().getDefaultCodecList();
+}
+
+
+::DBus::String 
+ConfigurationManager::getCodecBitRate( const ::DBus::String& codec_name)
+{
+  _debug("ConfigurationManager::getCodecBitRate received\n");
+  //return Manager::instance().getCodecBitRate(codec_name);
+}
+
+::DBus::String 
+ConfigurationManager::getCodecBandwidth( const ::DBus::String& codec_name)
+{
+  _debug("ConfigurationManager::getCodecBandwidth received\n");
+  //return Manager::instance().getCodecBandwidth(codec_name);
+}
+
+::DBus::String 
+ConfigurationManager::getCodecClockRate( const ::DBus::String& codec_name)
+{
+  _debug("ConfigurationManager::getCodecClockRate received\n");
+  //return Manager::instance().getCodecClockRate(codec_name);
 }
 
 void 

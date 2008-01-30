@@ -580,21 +580,89 @@ sflphone_set_default_account( )
 void	
 sflphone_fill_codec_list()
 {
-  
-  int i=0;
+
+  codec_list_clear();
+    
   gchar** codecs = (gchar**)dbus_codec_list();
-  while(codecs[i]!=NULL)
+  gchar** details;
+  gchar** pl;
+  for(pl=codecs; *codecs; codecs++)
   {
-    printf("%s\n", codecs[i]);	
     codec_t * c = g_new0(codec_t, 1);
-    c->name = codecs[i];
-    codec_set_active(codecs[i]); // active by default
+    c->_payload = atoi(*codecs);
+    //codec_set_active(*codecs); // active by default
     codec_list_add(c);
-    i++;
+    details = (gchar **)dbus_codec_details(c->_payload);
+    printf("Codec details: %s / %s / %s / %s\n",details[0],details[1],details[2],details[3]);
+    c->name = details[0];
+    c->sample_rate = atoi(details[1]);
+    printf("sample rate = %i\n", atoi(details[1]));
+    c->_bitrate = (gdouble)(atoi(details[2]));
+    printf("bitrate = %d\n", (double)atoi(details[2]));
+    c->_bandwidth = (gdouble)(atoi(details[3]));
+    printf("bandwidth = %d\n", (double)atoi(details[3]));
   }
+  //g_strfreev(codecs);
+/*
+  int i;
+  gchar ** details;
+  for( i = 0 ; i < codec_list_get_size() ; i++)
+  {
+    codec_t * c = codec_list_get_nth(i);
+    details = (gchar **)dbus_codec_details(c->_payload);
+    printf("%s\n", details[0]);
+    c->name = details[0];
+    c->sample_rate = (guint)details[1];
+    //c->_bitrate = (gdouble)details[2];
+    //c->_bandwidth = (gdouble)details[3];
+    
+  }*/
+
+
+}
+  
+/*
+   account_list_clear ( );
+
+        gchar ** array = (gchar **)dbus_account_list();
+        gchar ** accountID;
+        for (accountID = array; *accountID; accountID++)
+        {
+                account_t * a = g_new0(account_t,1);
+                a->accountID = g_strdup(*accountID);
+                account_list_add(a);
+        }
+        g_strfreev (array);
+
+        int i;
+        for( i = 0; i < account_list_get_size(); i++)
+        {
+                account_t  * a = account_list_get_nth (i);
+                GHashTable * details = (GHashTable *) dbus_account_details(a->accountID);
+                a->properties = details;
+
+                gchar * status = g_hash_table_lookup(details, "Status");
+                if(strcmp(status, "REGISTERED") == 0)
+                {
+                        a->state = ACCOUNT_STATE_REGISTERED;
+                }
+                else if(strcmp(status, "UNREGISTERED") == 0)
+                {
+                        a->state = ACCOUNT_STATE_UNREGISTERED;
+                }
+                else if(strcmp(status, "TRYING") == 0)
+                {
+                        a->state = ACCOUNT_STATE_TRYING;
+                }
+                else if(strcmp(status, "ERROR") == 0)
+                {
+                        a->state = ACCOUNT_STATE_ERROR;
+
+
+
 }
 
-
+*/
 
 
 

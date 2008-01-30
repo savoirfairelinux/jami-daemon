@@ -261,6 +261,10 @@ public:
    */
   std::string getDefaultAccount();
 
+  std::string getCodecBitRate(const ::DBus::String& codec_name);
+  std::string getCodecBandwidth(const ::DBus::String& codec_name);
+  std::string getCodecClockRate(const ::DBus::String& codec_name);
+  
   /**
    * Set the prefered order for codecs.
    * Called by D-Bus command: "setCodecPreferedOrder"
@@ -279,7 +283,9 @@ public:
    * Get the list of codecs we supports, ordered by the user
    * @return The list of the codecs
    */  
-  std::vector< ::DBus::String > getCodecList( void ); 
+   
+  std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload);
+  std::vector< ::DBus::String > getCodecList( void );
 
   /**
    * Get the default list of codecs we supports

@@ -26,12 +26,16 @@
   */
 
 typedef struct {
-  gchar * name;
-  guint sample_rate;
+  int _payload;
   gboolean is_active;
+  gchar * name;
+  int sample_rate;
+  gdouble _bitrate;
+  gdouble _bandwidth;
 }codec_t;
 
 void codec_list_init();
+void codec_list_clear();
 void codec_list_add(codec_t * c);
 void codec_set_active(gchar * codec_name);
 void codec_set_inactive(gchar * codec_name);
