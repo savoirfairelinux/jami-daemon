@@ -1,46 +1,44 @@
-/*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
- *  Author:  Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author:  Laurielle Lea <laurielle.lea@savoirfairelinux.com>
- *                                                                              
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *                                                                              
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+#ifndef _CODEC_AUDIO_H
+#define _CODEC_AUDIO_H
 
-#ifndef __CODEC_AUDIO_H__
-#define __CODEC_AUDIO_H__
+#include <string> 
+#include <iostream>
+#include <dlfcn.h>
 
-#include <string>
-
-/**
- * Abstract audio codec class.
- * A codec can be decode, encode
- * Each codec have a payload, clock rate and a codec name
- */
 class AudioCodec {
+protected:
+  /** Holds SDP-compliant codec name */
+  std::string _codecName; // what we put inside sdp
+  
+  /** Clock rate or sample rate of the codec, in Hz */
+  unsigned int _clockRate;
+
+  /** Number of channel 1 = mono, 2 = stereo */
+  unsigned int _channel;
+
+private:
+  //bool _active;
+  int _payload;
+  bool _hasDynamicPayload;
+
 public:
-  AudioCodec(int payload, const std::string &codecName);
-  virtual ~AudioCodec(void);	
+    AudioCodec(int payload, const std::string &codecName)
+        : _codecName(codecName) {
+	_payload = payload;
+  	_clockRate = 8000; // default
+  	_channel   = 1; // default
+  //	_active = false;
 
-  /**
-   * @return the number of bytes decoded
-   */
-  virtual int codecDecode(short *, unsigned char *, unsigned int) = 0;
-  virtual int codecEncode(unsigned char *, short *, unsigned int) = 0;
+  	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
+}
 
-  /** Returns description for GUI usage */
-  std::string getDescription() { return _description; }
+    virtual ~AudioCodec() {}
+
+    /**
+     * @return the number of bytes decoded
+     */
+    virtual int codecDecode(short *, unsigned char *, unsigned int) = 0;
+    virtual int codecEncode(unsigned char *, short *, unsigned int) = 0;   
 
   /** Value used for SDP negotiation */
   std::string getCodecName() { return _codecName; }
@@ -48,29 +46,14 @@ public:
   bool hasDynamicPayload() { return _hasDynamicPayload; }
   unsigned int getClockRate() { return _clockRate; }
   unsigned int getChannel() { return _channel; }
-  bool isActive() { return _active; }
-  void setActive(bool active) { _active = active; }
+  //bool isActive() { return _active; }
+  //void setActive(bool active) { _active = active; }
+  
 
-protected:
-  /** Holds SDP-compliant codec name */
-  std::string _codecName; // what we put inside sdp
-  /** Holds the GUI-style codec description */
-  std::string _description; // what we display to the user
-
-  /**
-   * Clock rate or sample rate of the codec, in Hz
-   */
-  unsigned int _clockRate;
-
-  /**
-   * Number of channel 1 = mono, 2 = stereo
-   */
-  unsigned int _channel;
-
-private:
-  bool _active;
-  int _payload;
-  bool _hasDynamicPayload;
 };
 
-#endif // __CODEC_AUDIO_H__
+// the types of the class factories
+typedef AudioCodec* create_t();
+typedef void destroy_t(AudioCodec*);
+
+#endif

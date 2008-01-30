@@ -19,30 +19,35 @@
  */
 
 #include <iostream>
-#include "gsmcodec.h"
+#include <gsm/gsm.h>
+#include "audiocodec.h"
 #include "../global.h"
 
-// 3 GSM A 8000 1 [RFC3551]
-Gsm::Gsm(int payload) : AudioCodec(payload, "GSM")
-{
-  _description = "GSM";
 
+class Gsm : public AudioCodec {
+public:
+// 3 GSM A 8000 1 [RFC3551]
+Gsm(int payload = 0) 
+: AudioCodec(payload, "GSM")
+{
+  //_description = "GSM";
   _clockRate = 8000;
   _channel   = 1;
+  
   if (!(_decode_gsmhandle = gsm_create() )) 
     _debug("ERROR: decode_gsm_create\n");
   if (!(_encode_gsmhandle = gsm_create() )) 
     _debug("AudioCodec: ERROR: encode_gsm_create\n");
+  
 }
 
-Gsm::~Gsm (void)
+~Gsm (void)
 {
   gsm_destroy(_decode_gsmhandle);
   gsm_destroy(_encode_gsmhandle);
 }
 
-int
-Gsm::codecDecode (short *dst, unsigned char *src, unsigned int size) 
+virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
 {
   (void)size;
   if (gsm_decode(_decode_gsmhandle, (gsm_byte*)src, (gsm_signal*)dst) < 0) {
@@ -51,12 +56,25 @@ Gsm::codecDecode (short *dst, unsigned char *src, unsigned int size)
   return 320;
 }
 
-int
-Gsm::codecEncode (unsigned char *dst, short *src, unsigned int size) 
+virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
 {
   (void)size;
-  gsm_encode(_encode_gsmhandle, (gsm_signal*)src, (gsm_byte*)dst);
+  gsm_encode(_encode_gsmhandle, (gsm_signal*)src, (gsm_byte*)dst);  
   return 33;
 }
 
 
+private:
+	gsm _decode_gsmhandle;
+ 	gsm _encode_gsmhandle;
+
+};
+
+// the class factories
+extern "C" AudioCodec* create() {
+    return new Gsm(3);
+}
+
+extern "C" void destroy(AudioCodec* a) {
+    delete a;
+}

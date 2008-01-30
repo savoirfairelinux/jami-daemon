@@ -22,65 +22,125 @@
 #include <iostream>
 
 #include "audiocodec.h"
-#include "gsmcodec.h"
-#include "alaw.h"
-#include "ulaw.h"
 #include "codecDescriptor.h"
-#ifdef HAVE_SPEEX
+/*#ifdef HAVE_SPEEX
  #include "CodecSpeex.h"
-#endif
+#endif*/
 
-CodecDescriptorMap::CodecDescriptorMap() 
+CodecDescriptor::CodecDescriptor() 
 {
-  _codecMap[PAYLOAD_CODEC_ALAW] = new Alaw();
-  _codecMap[PAYLOAD_CODEC_ULAW] = new Ulaw();
-  _codecMap[PAYLOAD_CODEC_GSM] = new Gsm();
+  // Default codecs
+  _codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
+  _codecMap[PAYLOAD_CODEC_GSM] = "GSM";
+  _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
 #ifdef HAVE_SPEEX
   _codecMap[PAYLOAD_CODEC_SPEEX] = new CodecSpeex(PAYLOAD_CODEC_SPEEX); // TODO: this is a variable payload!
 #endif
 // theses one are not implemented yet..
-//  _codecMap[PAYLOAD_CODEC_ILBC] = Ilbc();
+//  _codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
 //  _codecMap[PAYLOAD_CODEC_SPEEX] = Speex();
 }
 
-AudioCodec*
-CodecDescriptorMap::getCodec(CodecType payload)
+void
+CodecDescriptor::init()
+{
+	_codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
+	_codecMap[PAYLOAD_CODEC_GSM] = "GSM";
+	_codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
+//	_codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
+}
+
+std::string&
+CodecDescriptor::getCodecName(CodecType payload)
 {
   CodecMap::iterator iter = _codecMap.find(payload);
   if (iter!=_codecMap.end()) {
     return (iter->second);
   }
-  return NULL;
+  //return ;
 }
 
-void 
-CodecDescriptorMap::setActive(const std::string& codecDescription) 
+bool 
+CodecDescriptor::isSupported(CodecType payload) 
 {
   CodecMap::iterator iter = _codecMap.begin();
   while(iter!=_codecMap.end()) {
-    if (iter->second!=0) {
-      if (iter->second->getDescription() == codecDescription) {
-        iter->second->setActive(true);
-        break;
+      if (iter->first == payload) {
+	// codec is already in the map --> nothing to do
+	_debug("Codec with payload %i already in the map\n", payload);
+        //break;
+        return true;
       }
-    }
     iter++;
   }
+   return false;
 }
 
 void 
-CodecDescriptorMap::setInactive(const std::string& codecDescription)
+CodecDescriptor::removeCodec(CodecType payload)
 {
   CodecMap::iterator iter = _codecMap.begin();
   while(iter!=_codecMap.end()) {
-    if (iter->second!=0) {
-      if (iter->second->getDescription() == codecDescription) {
-        iter->second->setActive(false);
+      if (iter->first == payload) {
+	_debug("Codec %s removed from the list", getCodecName(payload).data());
+	_codecMap.erase(iter);
         break;
       }
-    }
     iter++;
   }
 	
 }
+
+void
+CodecDescriptor::addCodec(CodecType payload)
+{
+}
+
+double 
+CodecDescriptor::getBitRate(CodecType payload)
+{
+  switch(payload){
+    case PAYLOAD_CODEC_ULAW | PAYLOAD_CODEC_ALAW:
+      return 64;
+    case PAYLOAD_CODEC_GSM:
+      return 13.3;
+    case PAYLOAD_CODEC_ILBC_20:
+      return 15.2;
+    case PAYLOAD_CODEC_ILBC_30:
+      return 15.2;
+
+  }
+  return -1;
+}
+
+double 
+CodecDescriptor::getBandwidthPerCall(CodecType payload)
+{
+  switch(payload){
+    case PAYLOAD_CODEC_ULAW | PAYLOAD_CODEC_ALAW:
+      return 80;
+    case PAYLOAD_CODEC_GSM:
+      return 28.6;
+    case PAYLOAD_CODEC_ILBC_20:
+      return 30.8;
+  }
+  return -1;
+
+}
+
+int
+CodecDescriptor::getSampleRate(CodecType payload)
+{
+  switch(payload){
+    case PAYLOAD_CODEC_ULAW | PAYLOAD_CODEC_ALAW | PAYLOAD_CODEC_GSM | PAYLOAD_CODEC_ILBC_20:
+      return 8000;
+  }
+  return -1;
+}
+
+
+
+
+
+
 

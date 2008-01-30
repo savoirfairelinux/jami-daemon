@@ -165,7 +165,7 @@ sflphone_init()
 sflphone_hang_up()
 {
 	call_t * selectedCall = call_get_selected();
-	main_window_callinfo(FALSE, selectedCall);
+	//main_window_callinfo(FALSE, selectedCall);
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
@@ -197,7 +197,7 @@ sflphone_pick_up()
 {
 	call_t * selectedCall = call_get_selected();
         //printf("full name: %s\n",g_hash_table_lookup(selectedCall->properties, ACCOUNT_IAX_FULL_NAME));
-	main_window_callinfo(TRUE, selectedCall);
+	//main_window_callinfo(TRUE, selectedCall);
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
@@ -207,6 +207,7 @@ sflphone_pick_up()
         			printf("accountID=%s\n",selectedCall->accountID);
 				break;
 			case CALL_STATE_INCOMING:
+				printf("CALL ID = %s\n", selectedCall->callID);
 				dbus_accept (selectedCall);
 				break;
 			case CALL_STATE_HOLD:
@@ -268,7 +269,7 @@ sflphone_fail( call_t * c )
 	c->state = CALL_STATE_FAILURE;
 	update_call_tree(c);
 	update_menus();
-	main_window_callinfo(FALSE, c);
+	//main_window_callinfo(FALSE, c);
 }
 
 	void 
@@ -333,7 +334,7 @@ sflphone_hung_up (call_t * c )
 	call_list_remove(c->callID);
 	update_call_tree_remove(c);
 	update_menus();
-	main_window_callinfo(FALSE, c);
+	//main_window_callinfo(FALSE, c);
 }
 
 void process_dialing(call_t * c, guint keyval, gchar * key)

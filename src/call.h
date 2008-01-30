@@ -121,8 +121,8 @@ public:
 
     // AUDIO
     /** Set internal codec Map: initialization only, not protected */
-    void setCodecMap(const CodecDescriptorMap& map) { _codecMap = map; } 
-    CodecDescriptorMap& getCodecMap();
+    void setCodecMap(const CodecDescriptor& map) { _codecMap = map; } 
+    CodecDescriptor& getCodecMap();
 
     /** Set my IP [not protected] */
     void setLocalIp(const std::string& ip)     { _localIPAddress = ip; }
@@ -149,7 +149,7 @@ public:
     const std::string& getRemoteIp();
 
     /** Return audio codec [mutex protected] */
-    AudioCodec* getAudioCodec();
+    CodecType getAudioCodec();
 
 
 
@@ -164,13 +164,14 @@ protected:
     void setRemoteAudioPort(unsigned int port) { _remoteAudioPort = port; }
 
     /** Set the audio codec used.  [not protected] */
-    void setAudioCodec(AudioCodec* audioCodec) { _audioCodec = audioCodec; }
+    void setAudioCodec(CodecType audioCodec) { _audioCodec = audioCodec; }
 
     /** Codec Map */
-    CodecDescriptorMap _codecMap;
+    CodecDescriptor _codecMap;
 
     /** Codec pointer */
-    AudioCodec* _audioCodec;
+    //AudioCodec* _audioCodec;
+    CodecType _audioCodec;
 
     bool _audioStarted;
 

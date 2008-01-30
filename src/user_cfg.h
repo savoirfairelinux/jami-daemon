@@ -56,8 +56,8 @@
 #define PLAY_TONES      "DTMF.playTones" 
 #define PULSE_LENGTH	"DTMF.pulseLength"
 #define SEND_DTMF_AS	"DTMF.sendDTMFas"
-//#define STUN_SERVER		"STUN.STUNserver"
-//#define USE_STUN		"STUN.useStun"
+#define STUN_SERVER		"STUN.STUNserver"
+#define USE_STUN		"STUN.useStun"
 #define DRIVER_NAME		"Drivers.driverName"
 #define DRIVER_NAME_IN		"Drivers.driverNameIn"
 #define DRIVER_NAME_OUT		"Drivers.driverNameOut"
@@ -67,6 +67,7 @@
 #define CODEC1			"Codecs.codec1"
 #define CODEC2			"Codecs.codec2"
 #define CODEC3			"Codecs.codec3"
+#define CODEC4			"Codecs.codec4"
 #define RING_CHOICE		"Rings.ringChoice"
 #define ACCOUNT_SIP_COUNT_DEFAULT 4
 #define ACCOUNT_IAX_COUNT_DEFAULT 4
@@ -100,6 +101,7 @@
 #define DFT_CODEC1		"G711u"
 #define DFT_CODEC2		"G711a"
 #define DFT_CODEC3		"GSM"
+#define DFT_CODEC4		"iLBC"
 #define DFT_RINGTONE 		"konga.ul"
 #define DFT_SKIN 		"metal"
 #define DFT_ZONE		"North America"

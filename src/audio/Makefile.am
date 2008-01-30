@@ -1,4 +1,4 @@
-SUBDIRS = gsm 
+#SUBDIRS = gsm 
 
 noinst_LTLIBRARIES = libaudio.la
 
@@ -12,18 +12,18 @@ SPEEX_FLAG=
 SPEEX_LIB=
 endif
 
-libaudio_la_SOURCES = alaw.cpp        audiofile.cpp	g711.cpp tonelist.cpp     \
-audiortp.cpp         dtmf.cpp   tone.cpp audiocodec.cpp  audiolayer.cpp audiodevice.cpp  dtmfgenerator.cpp  gsmcodec.cpp \
-tonegenerator.cpp  ulaw.cpp codecDescriptor.cpp \
+libaudio_la_SOURCES =      audiofile.cpp	 tonelist.cpp     \
+audiortp.cpp         dtmf.cpp   tone.cpp  audiolayer.cpp audiodevice.cpp  dtmfgenerator.cpp   \
+tonegenerator.cpp   codecDescriptor.cpp \
 audioloop.cpp ringbuffer.cpp $(SPEEX_SOURCES_CPP)
 
-AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libdbuscpp_CFLAGS) $(libccrtp1_CFLAGS) $(USER_INCLUDES)
-libaudio_la_LIBADD = gsm/libgsm.la $(SPEEX_LIB)
+AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libdbuscpp_CFLAGS) $(libccrtp1_CFLAGS) $(USER_INCLUDES) 
+#libaudio_la_LIBADD = gsm/libgsm.la $(SPEEX_LIB)
 libaudio_la_CPPFLAGS = $(SPEEX_FLAG)
 
 
-noinst_HEADERS = audioloop.h       common.h ringbuffer.h alaw.h          audiofile.h g711.h \
+noinst_HEADERS = audioloop.h       common.h ringbuffer.h           audiofile.h  \
  tonelist.h         audiortp.h audiocodec.h    audiolayer.h audiodevice.h \
- dtmfgenerator.h    gsmcodec.h      tonegenerator.h    ulaw.h \
+ dtmfgenerator.h         tonegenerator.h     \
  codecDescriptor.h    dtmf.h tone.h \
  CodecSpeex.h

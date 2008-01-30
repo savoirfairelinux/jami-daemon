@@ -122,6 +122,7 @@ ManagerImpl::init()
   initAudioDriver();
   selectAudioDriver();
 
+  // Initialize the list of supported audio codecs
   initAudioCodec();
 
   AudioLayer *audiolayer = getAudioDriver();
@@ -166,6 +167,7 @@ ManagerImpl::isCurrentCall(const CallID& callId) {
 bool
 ManagerImpl::hasCurrentCall() {
   ost::MutexLock m(_currentCallMutex);
+  _debug("Current call ID = %s\n", _currentCallId2.c_str());
   if ( _currentCallId2 != "") {
     return true;
   }
@@ -220,10 +222,10 @@ bool
 ManagerImpl::answerCall(const CallID& id)
 {
   stopTone(false); 
-  if (hasCurrentCall()) 
+  /*if (hasCurrentCall()) 
   { 
     onHoldCall(getCurrentCallId());
-  }
+  }*/
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Answering Call: Call doesn't exists\n");
@@ -611,6 +613,7 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
   associateCallToAccount(call->getCallId(), accountId);
 
   if ( !hasCurrentCall() ) {
+    _debug("INCOMING CALL!!!!!!\n");
     call->setConnectionState(Call::Ringing);
     ringtone();
     switchCall(call->getCallId());
@@ -990,7 +993,7 @@ ManagerImpl::behindNat(const std::string& svr, int port)
 {
   StunAddress4 stunSvrAddr;
   stunSvrAddr.addr = 0;
-  
+   
   // Convert char* to StunAddress4 structure
   bool ret = stunParseServerName ((char*)svr.data(), stunSvrAddr);
   if (!ret) {
@@ -1055,9 +1058,9 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
   fill_config_int(DRIVER_SAMPLE_RATE, DFT_SAMPLE_RATE);
   fill_config_int(DRIVER_FRAME_SIZE, DFT_FRAME_SIZE);
-  fill_config_str(CODEC1, DFT_CODEC1);
-  fill_config_str(CODEC2, DFT_CODEC2);
-  fill_config_str(CODEC3, DFT_CODEC3);
+  //fill_config_str(CODEC1, DFT_CODEC1);
+  //fill_config_str(CODEC2, DFT_CODEC2);
+  //fill_config_str(CODEC3, DFT_CODEC3);
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
@@ -1084,15 +1087,14 @@ ManagerImpl::initConfigFile (void)
 void
 ManagerImpl::initAudioCodec (void)
 {
-  _debugInit("Active Codecs");
-  _codecDescriptorMap.setActive(getConfigString("Audio", "Codecs.codec1"));
-  //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec2"));
-  //_codecDescriptorMap.setActive(getConfigString("Audio", "Codec.codec3"));
+  _debugInit("Active Codecs List");
+  _codecDescriptorMap.init();
 }
 
 void
 ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
-{
+{ 	_debug("Set Prefered Order\n");
+	/*
 	std::vector<std::string> list = getCodecList();
         std::string tmp;
 	int i=0;
@@ -1101,12 +1103,10 @@ ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
 	tmp = list[0];
 	list[0] = list[i];
 	list[i] = tmp; 
-	_codecDescriptorMap.setActive(list[0]);
-	_codecDescriptorMap.setInactive(list[1]);
-	_codecDescriptorMap.setInactive(list[2]);
         setConfig("Audio", "Codecs.codec1", list[0]);	
 	setConfig("Audio", "Codecs.codec2", list[1]);
 	setConfig("Audio", "Codecs.codec3", list[2]);
+*/
 }
 
 std::string
@@ -1120,8 +1120,8 @@ ManagerImpl::getDefaultCodecList( void )
 {
   std::vector< std::string > v;
   std::string desc=DFT_CODEC1;
-  std::string rate=""+clockRate(desc);
-  printf("%s\n",rate.c_str());
+  //std::string rate=""+clockRate(desc);
+  //printf("%s\n",rate.c_str());
   v.push_back(DFT_CODEC1); // G711u
   v.push_back(DFT_CODEC2); // G711a
   v.push_back(DFT_CODEC3); // GSM
@@ -1130,35 +1130,41 @@ ManagerImpl::getDefaultCodecList( void )
 
 unsigned int
 ManagerImpl::clockRate(std::string& name)
-{
-  CodecMap codecs = _codecDescriptorMap.getMap();
+{/*
+  CodecMap codecs = _codecDescriptorMap.getCodecMap();
   CodecMap::iterator iter = codecs.begin();  
   while(iter!=codecs.end())
   {
     if(iter->second!=NULL)
     {
-      if(iter->second->getDescription() == name)
-        return iter->second->getClockRate();
-    }
-    iter++;
+      if(iter->second == name)
+        //return iter->second->getClockRate();
+  	return 1;  
   }
+    iter++;
+  }*/
   return -1;
 }
 
 /**
- * Get the list of codecs.
- * Contains all the codecs supported, with order set by the user.
+ * Send the list of codecs to the client through DBus.
  */
 std::vector< std::string >
 ManagerImpl::getCodecList( void )
 {
+	
 	std::vector< std::string > v;
-  	std::string desc=getConfigString(AUDIO, "Codecs.codec1");
-  	//std::string rate=clockRate(desc).strstream();
-	//printf("%s\n",rate.c_str());
-	v.push_back(getConfigString(AUDIO, "Codecs.codec1")); 
-	v.push_back( getConfigString(AUDIO, "Codecs.codec2")); 
-	v.push_back( getConfigString(AUDIO, "Codecs.codec3")); 
+	CodecMap codecs = _codecDescriptorMap.getCodecMap();
+  	CodecMap::iterator iter = codecs.begin();  
+  	while(iter!=codecs.end())
+  	{
+    	  if(iter->first!=-1)
+   	  {
+		printf("codec: %s\n", iter->second.data());
+		v.push_back(iter->second.data());
+	  }
+	iter++;
+	}
 	return v;
 }
 
@@ -1476,19 +1482,20 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, int 
 bool 
 ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& name)
 {
+  /*
   bool returnValue = false;
   TokenList tk;
   if (name == "codecdescriptor") {
 
-    CodecMap map = _codecDescriptorMap.getMap();
+    CodecMap map = _codecDescriptorMap.getCodecMap();
     CodecMap::iterator iter = map.begin();
     while( iter != map.end() ) {
       tk.clear();
       std::ostringstream strType;
       strType << iter->first;
       tk.push_back(strType.str());
-      if (iter->second) {
-        tk.push_back(iter->second->getDescription());
+      if (iter->second != -1) {
+        tk.push_back(iter->second);
       } else {
         tk.push_back(strType.str());
       }
@@ -1521,7 +1528,8 @@ ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& nam
   } else if (name == "countrytones") {
     returnValue = getCountryTones(sequenceId);
   }
-  return returnValue;
+  return returnValue;*/
+  return true;
 }
 
 //THREAD=Main

@@ -119,6 +119,22 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
  		 *  @return int The number of samples after the operation
  		 */
 		int downSampleData(int, int);
+
+		/** Pointer on function to handle codecs **/
+		void* handle_codec;
+		
+		/**
+ 		 * Load dynamically a codec (.so library) 
+ 		 * @param payload The payload of the codec you want to load
+ 		 * @return AudioCodec* A pointer on a audio codec object
+ 		 */
+		AudioCodec* loadCodec(int payload);
+		
+		/**
+ 		 * Destroy and close dynamically a codec (.so library) 
+ 		 * @param audiocodec The audio codec you want to unload
+ 		 */
+		void unloadCodec(AudioCodec* audiocodec);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

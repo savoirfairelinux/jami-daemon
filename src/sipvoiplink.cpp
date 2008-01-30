@@ -947,22 +947,24 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject)
   int nbChannel;
 
   // Set rtpmap according to the supported codec order
-  CodecMap map = call->getCodecMap().getMap();
+  CodecMap map = call->getCodecMap().getCodecMap();
+  //CodecMap map = Manager::instance().getCodecDescriptorMap();	
   CodecMap::iterator iter = map.begin();
 
   while(iter != map.end()) {
-    if (iter->second!=0 && iter->second->isActive()) {
-      payload = iter->first;
+    //if (iter->second!=0 && iter->second->isActive()) {
+      if(iter->first != -1){
+	payload = iter->first;
       // add each payload in the list of payload
       media_audio << payload << " ";
 
       rtpmap_attr << "a=rtpmap:" << payload << " " << 
-      iter->second->getCodecName().data() << "/" << iter->second->getClockRate();
+      iter->second.data() << "/" << 8000; //iter->second->getClockRate();
 
-      nbChannel = iter->second->getChannel();
+      /*nbChannel = iter->second->getChannel();
       if (nbChannel!=1) {
         rtpmap_attr << "/" << nbChannel;
-      }
+      }*/
       rtpmap_attr << "\r\n";
     }
     // go to next codec

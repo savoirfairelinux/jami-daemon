@@ -110,7 +110,7 @@ public:
   /**
    * Get a descriptor map of codec available
    */
-  CodecDescriptorMap& getCodecDescriptorMap(void) {return _codecDescriptorMap;}
+  CodecDescriptor& getCodecDescriptorMap(void) {return _codecDescriptorMap;}
 
   /**
    * Functions which occur with a user's action
@@ -513,7 +513,7 @@ private:
   DTMF* _dtmfKey;
 
   // map of codec (for configlist request)
-  CodecDescriptorMap _codecDescriptorMap;
+  CodecDescriptor _codecDescriptorMap;
 
   /////////////////////
   // Protected by Mutex
