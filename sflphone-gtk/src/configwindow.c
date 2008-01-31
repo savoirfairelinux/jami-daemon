@@ -456,6 +456,7 @@ create_codec_table()
 	// Active column
 	renderer = gtk_cell_renderer_toggle_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes("", renderer, "active", 0, NULL);
+	gtk_tree_view_column_add_attribute(treeViewColumn, renderer, "activatable", 0);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 	g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(codec_active_toggled), codecTreeView);
 	
