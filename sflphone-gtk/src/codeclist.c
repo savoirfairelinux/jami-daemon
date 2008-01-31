@@ -20,6 +20,7 @@
 #include <codeclist.h>
 
 #include <string.h>
+#include <stdlib.h>
 
 GQueue * codecQueue = NULL;
 
@@ -33,9 +34,26 @@ is_name_codecstruct (gconstpointer a, gconstpointer b)
     return 1;
 }
 
+gint
+is_payload_codecstruct (gconstpointer a, gconstpointer b)
+{
+  codec_t * c = (codec_t *)a;
+  if(c->_payload == (int)b)
+    return 0;
+  else
+    return 1;
+}
+
 void
 codec_list_init()
 {
+  codecQueue = g_queue_new();
+}
+
+void
+codec_list_clear ()
+{
+  g_queue_free (codecQueue);
   codecQueue = g_queue_new();
 }
 
@@ -47,17 +65,21 @@ codec_list_add(codec_t * c)
 
 
 void 
-codec_set_active(gchar * codec_name)
+codec_set_active(gchar* name)
 {
-  codec_t * c = codec_list_get(codec_name);
-  if(c)
+  printf("entry point set active");
+  codec_t * c = codec_list_get(name);
+  if(c){
+    printf("blablabla");
     c->is_active = TRUE;
+  }
+  printf("exit point set active");
 }
 
 void
-codec_set_inactive(gchar * codec_name)
+codec_set_inactive(gchar* name)
 {
-  codec_t * c = codec_list_get(codec_name);
+  codec_t * c = codec_list_get(name);
   if(c)
     c->is_active = FALSE;
 }
@@ -67,9 +89,19 @@ codec_list_get_size()
 {
   return g_queue_get_length(codecQueue);
 }
-
+/*
 codec_t*
 codec_list_get( const gchar * name)
+{
+  GList * c = g_queue_find_custom(codecQueue, name, is_name_codecstruct);
+  if(c)
+    return (codec_t *)c->data;
+  else
+    return NULL;
+}
+*/
+codec_t*
+codec_list_get( const gchar* name)
 {
   GList * c = g_queue_find_custom(codecQueue, name, is_name_codecstruct);
   if(c)

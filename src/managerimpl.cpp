@@ -1152,21 +1152,57 @@ ManagerImpl::clockRate(std::string& name)
 std::vector< std::string >
 ManagerImpl::getCodecList( void )
 {
+  std::vector<std::string> list;
+  CodecMap codecs = _codecDescriptorMap.getCodecMap();
+  CodecMap::iterator iter = codecs.begin();  
+  while(iter!=codecs.end())
+  {
+    std::stringstream ss;
+    if(iter->first!=-1)
+    {
+      ss << iter->first;
+      list.push_back((ss.str()).data());
+    }
+    iter++;
+  }
+  return list;
+}
+
+std::vector<std::string>
+ManagerImpl::getCodecDetails( const ::DBus::Int32& payload )
+{
+
+  std::vector<std::string> v;
+  std::stringstream ss;
+   
+  v.push_back(_codecDescriptorMap.getCodecName((CodecType)payload));
+  ss << _codecDescriptorMap.getSampleRate((CodecType)payload);
+  v.push_back((ss.str()).data()); 
+  printf("samplerate = %s\n", (ss.str()).data());
+  ss.str("");
+  ss << _codecDescriptorMap.getBitRate((CodecType)payload);
+  v.push_back((ss.str()).data());
+  printf("bitrate = %s\n", (ss.str()).data());
+  ss.str("");
+  ss << _codecDescriptorMap.getBandwidthPerCall((CodecType)payload);
+  v.push_back((ss.str()).data());
+  printf("bandwidth = %s\n", (ss.str()).data());
+  ss.str("");
+
+  return v;
+}
+
+/*std::string 
+ManagerImpl::getCodecBitRate(const ::DBus:String& codec_name)
+{
 	
-	std::vector< std::string > v;
 	CodecMap codecs = _codecDescriptorMap.getCodecMap();
   	CodecMap::iterator iter = codecs.begin();  
   	while(iter!=codecs.end())
-  	{
-    	  if(iter->first!=-1)
-   	  {
-		printf("codec: %s\n", iter->second.data());
-		v.push_back(iter->second.data());
-	  }
-	iter++;
-	}
-	return v;
-}
+  	{}
+	  
+  
+}*/
 
 
 std::vector< std::string >

@@ -43,18 +43,24 @@ public:
     void addAccount( const std::map< ::DBus::String, ::DBus::String >& details );
     void removeAccount( const ::DBus::String& accoundID );
     std::vector< ::DBus::String > getAccountList(  );
-    ::DBus::String getVersion(  );
-    std::vector< ::DBus::String > getRingtoneList(  );
-    std::vector< ::DBus::String > getCodecList(  );
+    ::DBus::String getDefaultAccount(  );
+    void setDefaultAccount( const ::DBus::String& accountID  );
+    
+    std::vector< ::DBus::String  > getCodecList(  );
+    std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload );
     std::vector< ::DBus::String > getDefaultCodecList(  );
-    std::vector< ::DBus::String > getToneLocaleList(  );
     void setCodecPreferedOrder( const ::DBus::String& codec_name );
     ::DBus::String getCodecPreferedOrder(  );
+    ::DBus::String getCodecBitRate( const ::DBus::String& codec_name );
+    ::DBus::String getCodecBandwidth( const ::DBus::String& codec_name );   
+    ::DBus::String getCodecClockRate( const ::DBus::String& codec_name );   
+ 
+    std::vector< ::DBus::String > getToneLocaleList(  );
     std::vector< ::DBus::String > getPlaybackDeviceList(  );
     std::vector< ::DBus::String > getRecordDeviceList(  );
     std::vector< ::DBus::String > getSampleRateList(  );
-    ::DBus::String getDefaultAccount(  );
-    void setDefaultAccount( const ::DBus::String& accountID  );
+    ::DBus::String getVersion(  );
+    std::vector< ::DBus::String > getRingtoneList(  );
 
 };
 

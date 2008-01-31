@@ -109,9 +109,9 @@ config_window_fill_codec_list()
 			{
 				gtk_list_store_append(codecStore, &iter);
 				gtk_list_store_set(codecStore, &iter,
-						0, c->is_active,		// Active
+						0, TRUE,//c->is_active,		// Active
 						1, c->name,				// Name
-						2, c->sample_rate,		// Frequency
+						2, "sample rate",//c->sample_rate,		// Frequency
 						3, "bit rate",			// Bit rate
 						4, "bandwith",			// Bandwith
 						-1);

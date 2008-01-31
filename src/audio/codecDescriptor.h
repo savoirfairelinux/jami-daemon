@@ -25,6 +25,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 #include "../global.h"
 typedef enum {
@@ -51,6 +52,7 @@ typedef enum {
 
 /* A codec is identified by its payload. A payload is associated with a name. */ 
 typedef std::map<CodecType, std::string> CodecMap;
+typedef std::vector<CodecType> CodecOrder;
 
 class CodecDescriptor {
 public:
@@ -60,6 +62,7 @@ public:
   CodecDescriptor();
   ~CodecDescriptor() {};
   CodecMap& getCodecMap() { return _codecMap; }
+  CodecOrder& getCodecOrder() { return _codecOrder; }
 
   /**
    * Get codec with is associated payload
@@ -116,6 +119,7 @@ public:
   int getSampleRate(CodecType payload);
 private:
   CodecMap _codecMap;
+  CodecOrder _codecOrder;
 };
 
 #endif // __CODEC_DESCRIPTOR_H__

@@ -580,21 +580,28 @@ sflphone_set_default_account( )
 void	
 sflphone_fill_codec_list()
 {
-  
-  int i=0;
+
+  codec_list_clear();
+    
   gchar** codecs = (gchar**)dbus_codec_list();
-  while(codecs[i]!=NULL)
+  gchar** details;
+  gchar** pl;
+  for(pl=codecs; *codecs; codecs++)
   {
-    printf("%s\n", codecs[i]);	
     codec_t * c = g_new0(codec_t, 1);
-    c->name = codecs[i];
-    codec_set_active(codecs[i]); // active by default
+    c->_payload = atoi(*codecs);
+    details = (gchar **)dbus_codec_details(c->_payload);
+    printf("Codec details: %s / %s / %s / %s\n",details[0],details[1],details[2],details[3]);
+    c->name = details[0];
+    codec_set_active(details[0]);
+    c->sample_rate = atoi(details[1]);
+    c->_bitrate = atof(details[2]);
+    c->_bandwidth = atof(details[3]);
     codec_list_add(c);
-    i++;
   }
+
 }
-
-
+  
 
 
 
