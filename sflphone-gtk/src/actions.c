@@ -593,7 +593,7 @@ sflphone_fill_codec_list()
     details = (gchar **)dbus_codec_details(c->_payload);
     printf("Codec details: %s / %s / %s / %s\n",details[0],details[1],details[2],details[3]);
     c->name = details[0];
-    codec_set_active(details[0]);
+    //codec_set_active(details[0]);
     c->sample_rate = atoi(details[1]);
     c->_bitrate = atof(details[2]);
     c->_bandwidth = atof(details[3]);

@@ -75,11 +75,11 @@ call_button( GtkWidget *widget, gpointer   data )
 /**
  * Pick up
 */
-	static void 
+/*	static void 
 pick_up( GtkWidget *widget, gpointer   data )
 {
 	sflphone_pick_up();
-}
+}*/
 
 /**
  * Hang up the line
