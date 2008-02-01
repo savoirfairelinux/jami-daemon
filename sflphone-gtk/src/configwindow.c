@@ -124,7 +124,7 @@ config_window_fill_codec_list()
 						COLUMN_CODEC_ACTIVE,	c->is_active,									// Active
 						COLUMN_CODEC_NAME,		c->name,										// Name
 						COLUMN_CODEC_FREQUENCY,	g_strdup_printf("%d kHz", c->sample_rate/1000),	// Frequency (kHz)
-						COLUMN_CODEC_BITRATE,	g_strdup_printf("%.1f kbps", c->_bitrate),		// Bitrate (?)
+						COLUMN_CODEC_BITRATE,	g_strdup_printf("%.1f kbps", c->_bitrate),		// Bitrate (kbps)
 						COLUMN_CODEC_BANDWIDTH,	g_strdup_printf("%.1f kbps", c->_bandwidth),	// Bandwidth (kpbs)
 						-1);
 			}
@@ -257,7 +257,8 @@ select_codec(GtkTreeSelection *selection, GtkTreeModel *model)
 }
 
 /**
- * TOSEE not working
+ * Toggle active value of codec on click and update changes to the deamon
+ * and in configuration files
  */
 static void
 codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer *data)
@@ -278,11 +279,9 @@ codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer *dat
 			COLUMN_CODEC_ACTIVE, &active,
 			-1);
 	
-	active = !active;
-	
 	// Toggle active value
 	gtk_list_store_set(GTK_LIST_STORE(model), &iter,
-			COLUMN_CODEC_ACTIVE, active,
+			COLUMN_CODEC_ACTIVE, !active,
 			-1);
 
 	gtk_tree_path_free(treePath);
@@ -291,7 +290,8 @@ codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer *dat
 }
 
 /**
- * Move codec in list depending on direction and selected codec
+ * Move codec in list depending on direction and selected codec and
+ * update changes in the deamon list and the configuration files
  */
 static void
 moveCodec(gboolean moveUp, gpointer data)
@@ -378,7 +378,7 @@ bold_if_default_account(GtkTreeViewColumn *col,
 	GValue val;
 	val.g_type = G_TYPE_POINTER;
 	gtk_tree_model_get_value(tree_model, iter, 3, &val);
-	account_t* current = (account_t*) g_value_get_pointer(&val);
+	account_t *current = (account_t*) g_value_get_pointer(&val);
 	g_value_unset(&val);
 	if(g_strcasecmp(current->accountID, account_list_get_default()) == 0)
 		g_object_set(G_OBJECT(rend), "weight", 800, NULL);
@@ -534,13 +534,10 @@ create_accounts_tab()
 	GtkTreeSelection *treeSelection;
 	GtkWidget *label;
 
-    GValue val;
-    val.g_type = G_TYPE_POINTER;
-
 	selectedAccount = NULL;
 
 	ret = gtk_vbox_new(FALSE, 10); 
-	gtk_container_set_border_width (GTK_CONTAINER (ret), 10);
+	gtk_container_set_border_width(GTK_CONTAINER (ret), 10);
 
 	label = gtk_label_new("This is the list of accounts previously setup.");
 
@@ -643,36 +640,37 @@ create_accounts_tab()
 GtkWidget*
 create_audio_tab ()
 {
-	GtkWidget * ret;
+	GtkWidget *ret;
 	
-	GtkWidget * deviceLabel;
-	GtkWidget * deviceBox;
-	GtkWidget * deviceTable;
-	GtkWidget * codecLabel;
-	GtkWidget * codecBox;
+	GtkWidget *deviceLabel;
+	GtkWidget *deviceBox;
+	GtkWidget *deviceTable;
+	GtkWidget *codecLabel;
+	GtkWidget *codecBox;
 	
-	GtkWidget * titleLabel;
-	GtkWidget * comboBox;
-	GtkWidget * refreshButton;
-	GtkCellRenderer * renderer;
+	GtkWidget *titleLabel;
+	GtkWidget *comboBox;
+	GtkWidget *refreshButton;
+	GtkCellRenderer *renderer;
 	GtkTreeIter iter;
+	
+	GtkWidget *codecTable;
 	
 	// Main widget
 	ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
     
     // Device section label
-    deviceLabel = gtk_label_new("Devices");
+    deviceLabel = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(deviceLabel), "<b>Devices</b>");
 	gtk_label_set_line_wrap(GTK_LABEL(deviceLabel), TRUE);
 	gtk_misc_set_alignment(GTK_MISC(deviceLabel), 0, 0.5);
 	gtk_label_set_justify(GTK_LABEL(deviceLabel), GTK_JUSTIFY_LEFT);
 	gtk_box_pack_start(GTK_BOX(ret), deviceLabel, FALSE, FALSE, 0);
-	gtk_widget_show(deviceLabel);
 	
     // Main device widget
 	deviceBox = gtk_hbox_new(FALSE, 10);
 	gtk_box_pack_start(GTK_BOX(ret), deviceBox, FALSE, FALSE, 0);
-	gtk_widget_show(codecBox);
     
     // Main device widget
 	deviceTable = gtk_table_new(4, 3, FALSE);
@@ -683,7 +681,7 @@ create_audio_tab ()
 	
 	// Device : Audio manager
 	// Create title label
-	titleLabel = gtk_label_new("Audio manager:");
+	titleLabel = gtk_label_new("Audio manager");
     gtk_misc_set_alignment(GTK_MISC(titleLabel), 0, 0.5);
 	gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 	gtk_widget_show(titleLabel);	
@@ -743,10 +741,12 @@ create_audio_tab ()
 	
 	// Create detect button
 	refreshButton = gtk_button_new_with_label("Detect all");
+	gtk_button_set_image(GTK_BUTTON(refreshButton), gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_BUTTON));
 	gtk_table_attach(GTK_TABLE(deviceTable), refreshButton, 3, 4, 0, 3, GTK_EXPAND, GTK_EXPAND, 0, 0);
 	
     // Codec section label
-    codecLabel = gtk_label_new("Codecs");
+    codecLabel = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(codecLabel), "<b>Codecs</b>");
     gtk_label_set_line_wrap(GTK_LABEL(codecLabel), TRUE);
     gtk_misc_set_alignment(GTK_MISC(codecLabel), 0, 0.5);
     gtk_label_set_justify(GTK_LABEL(codecLabel), GTK_JUSTIFY_LEFT);
@@ -759,8 +759,8 @@ create_audio_tab ()
 	gtk_widget_show(codecBox);
 	
 	// Codec : List
-	GtkWidget * codecTable;
 	codecTable = create_codec_table();
+	gtk_widget_set_size_request(GTK_WIDGET(codecTable), -1, 150);
 	gtk_box_pack_start(GTK_BOX(codecBox), codecTable, TRUE, TRUE, 0);
 	gtk_widget_show(codecTable);
 
