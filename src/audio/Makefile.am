@@ -44,6 +44,7 @@ install-exec-local:	install-libcodec_ulaw_so install-libcodec_alaw_so install-li
 uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_gsm_so
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
+	mkdir -p $(sflcodecdir)
 	$(INSTALL_PROGRAM)  libcodec_ulaw.so $(sflcodecdir)
 install-libcodec_alaw_so: libcodec_alaw.so
 	$(INSTALL_PROGRAM)  libcodec_alaw.so $(sflcodecdir)
@@ -55,4 +56,5 @@ uninstall-libcodec_ulaw_so:
 uninstall-libcodec_alaw_so:
 	rm -f $(sflcodecdir)/libcodec_alaw.so
 uninstall-libcodec_gsm_so:
-	rm -f $(sflcodecdir)/libcodec_gsm.so
+	rm -f $(sflcodecdir)/libcodec_gsm.so  
+	rm -rf $(sflcodecdir) 
