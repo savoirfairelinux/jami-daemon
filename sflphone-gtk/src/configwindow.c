@@ -261,7 +261,7 @@ select_codec(GtkTreeSelection *selection, GtkTreeModel *model)
  * and in configuration files
  */
 static void
-codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer *data)
+codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer data)
 {
 	GtkTreeIter iter;
 	GtkTreePath *treePath;
@@ -270,7 +270,6 @@ codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer *dat
 	
 	// Get path of clicked codec active toggle box
 	treePath = gtk_tree_path_new_from_string(path);
-	printf(path);
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(data));
 	gtk_tree_model_get_iter(model, &iter, treePath);
 
@@ -375,10 +374,9 @@ bold_if_default_account(GtkTreeViewColumn *col,
 			GtkTreeIter *iter,
 			gpointer data)
 {
-	GValue val;
-	val.g_type = G_TYPE_POINTER;
+	GValue val = { 0, };
 	gtk_tree_model_get_value(tree_model, iter, 3, &val);
-	account_t *current = (account_t*) g_value_get_pointer(&val);
+	account_t *current = (account_t*)g_value_get_pointer(&val);
 	g_value_unset(&val);
 	if(g_strcasecmp(current->accountID, account_list_get_default()) == 0)
 		g_object_set(G_OBJECT(rend), "weight", 800, NULL);
