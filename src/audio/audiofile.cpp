@@ -35,7 +35,7 @@ AudioFile::AudioFile()
 
    using std::cout;
    using std::cerr;
-   void* codec = dlopen("libcodec_ulaw.so", RTLD_LAZY);
+   void* codec = dlopen( CODECS_DIR "/libcodec_ulaw.so", RTLD_LAZY);
    if(!codec){
         cerr<<"cannot load library: "<< dlerror() <<'\n';
    }
