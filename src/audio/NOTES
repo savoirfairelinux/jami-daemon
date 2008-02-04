@@ -1,0 +1,24 @@
+How to build the codec shared libraries
+---------------------------------------
+
+CODEC_ALAW:
+  gcc -fPIC -g -c -Wall ulaw.cpp         
+-------> gives you the object file ulaw.o. 
+-------> option -g to include debug information
+-------> option -Wall to generate warnings
+-------> option -fPIC to enable position independant code generation
+
+  gcc -shared -o libcodec_ulaw.so ulaw.o -lc
+-------> creates the shared library
+
+CODEC ALAW: 
+  idem
+
+CODEC_GSM:
+  gcc -fPIC -g -c -Wall gsmcodec.cpp
+  gcc -shared -o -libcodec_gsm.so gsmcodec.o -lc -lgsm
+-------> You need the standard library libgsm1 installed (with dev package).
+
+REFERENCES: http://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html
+
+The shared library should be installed in $(libdir)/sflphone/codecs where libdir=$(PREFIX)/lib.

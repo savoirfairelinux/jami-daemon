@@ -1,5 +1,6 @@
+sflcodecdir = ($libdir)/sflphone/codecs
 bin_PROGRAMS = sflphoned
-#bin_SCRIPTS = sflphone
+
 
 if USE_ZEROCONF
 ZEROCONFDIR = zeroconf
@@ -40,7 +41,8 @@ sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone
 
 #sflphoned_LDFLAGS = -static
 sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES) $(libdbuscpp_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES) $(libdbuscpp_CFLAGS) \
+	      -DCODECS_DIR=\""$(sflcodecdir)"\" 
 
 
 # libsflphone_la_LDFLAGS= -version-info 0:1:0
