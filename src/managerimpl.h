@@ -263,20 +263,35 @@ public:
 
 
   /**
-   * Get the list of codecs we supports, ordered by the user
+   * Get the list of codecs we supports, not ordered
    * @return The list of the codecs
    */  
-   
-  std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload);
   std::vector< ::DBus::String > getCodecList( void );
+  /**
+   * Get the info about one codec
+   * Name / CLock rate / bitrate / bandwidth
+   * @param payload The payload of the codec
+   * @return The information
+   */
+  std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload);
 
   /**
-   * Get the list of the active codecs
-   * @ return The list of the active codecs (their payload actually)
+   * Convert a list of payload in a special format, readable by the server.
+   * Required format: payloads separated with one slash.
+   * @return std::string The serializabled string
+   */
+  std::string serialize(std::vector<std::string> v);
+
+  /**
+   * Inverse of serialize
+   */
+  std::vector<std::string> retrieveActiveCodecs( void );
+  
+  /**
+   * Get and set the list of the active codecs
    */  
   std::vector< ::DBus::String > getActiveCodecList( void ); 
   void setActiveCodecList( const std::vector< ::DBus::String >& list);
-  std::vector<std::string> retrieveActiveCodecs( void );
 
   /*
    * Set an account as default

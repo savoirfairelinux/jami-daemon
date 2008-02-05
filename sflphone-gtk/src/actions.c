@@ -604,10 +604,7 @@ sflphone_fill_codec_list()
   
   for(pl=codecs; *codecs; codecs++)
   {
-    //codec_t * c = g_new0(codec_t, 1);
-    //c->_payload = atoi(*codecs);
     details = (gchar **)dbus_codec_details(atoi(*codecs));
-    //c->name = details[0];
     if(codec_list_get(details[0])!=NULL){
       // does nothing - the codec is already in the list, so is active.
     }
@@ -624,11 +621,3 @@ sflphone_fill_codec_list()
   }
 }
   
-
-
-
-
-  
-      
-
-

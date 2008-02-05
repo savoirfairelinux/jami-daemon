@@ -52,6 +52,7 @@ typedef enum {
 
 /* A codec is identified by its payload. A payload is associated with a name. */ 
 typedef std::map<CodecType, std::string> CodecMap;
+/* The struct to reflect the order the user wants to use the codecs */
 typedef std::vector<CodecType> CodecOrder;
 
 class CodecDescriptor {
@@ -72,8 +73,16 @@ public:
    */
   std::string& getCodecName(CodecType payload);
 
+  /**
+   * Initialiaze the map with all the supported codecs, even those inactive
+   */  
   void init();
 
+  /**
+   * Set the default codecs order
+   */   
+  void setDefaultOrder();
+  
   /**
    * Check in the map codec if the specified codec is supported 
    * @param payload unique identifier of a codec (RFC)

@@ -1060,7 +1060,6 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
   fill_config_int(DRIVER_SAMPLE_RATE, DFT_SAMPLE_RATE);
   fill_config_int(DRIVER_FRAME_SIZE, DFT_FRAME_SIZE);
-  fill_config_str(CODECS, DFT_CODECS);
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
@@ -1090,8 +1089,15 @@ ManagerImpl::initAudioCodec (void)
   _debugInit("Active Codecs List");
   // init list of all supported codecs
   _codecDescriptorMap.init();
-  std::vector<std::string> active_list = retrieveActiveCodecs(); 
-  setActiveCodecList(active_list);
+  // if the user never set the codec list, use the default one
+  if(getConfigString(AUDIO, "Activecodecs") == ""){
+    _codecDescriptorMap.setDefaultOrder();
+  }
+  // else retrieve the one he set in the config file
+  else{
+    std::vector<std::string> active_list = retrieveActiveCodecs(); 
+    setActiveCodecList(active_list);
+  }
 }
 
 std::vector<std::string>
@@ -1116,8 +1122,24 @@ ManagerImpl::setActiveCodecList(const std::vector<std::string>& list)
 {
   _debug("Set active codecs list");
   _codecDescriptorMap.saveActiveCodecs(list);
-  //TODO setConfig
+  // setConfig
+  std::string s = serialize(list);
+  printf("%s\n", s.c_str());
+  setConfig("Audio", "ActiveCodecs", s);
 }
+
+std::string
+ManagerImpl::serialize(std::vector<std::string> v)
+{
+  int i;
+  std::string res;
+  for(i=0;i<v.size();i++)
+  {
+    res += v[i] + "/";
+  }
+  return res;
+}
+
 
 std::vector <std::string>
 ManagerImpl::getActiveCodecList( void )
@@ -1172,15 +1194,12 @@ ManagerImpl::getCodecDetails( const ::DBus::Int32& payload )
   v.push_back(_codecDescriptorMap.getCodecName((CodecType)payload));
   ss << _codecDescriptorMap.getSampleRate((CodecType)payload);
   v.push_back((ss.str()).data()); 
-  printf("samplerate = %s\n", (ss.str()).data());
   ss.str("");
   ss << _codecDescriptorMap.getBitRate((CodecType)payload);
   v.push_back((ss.str()).data());
-  printf("bitrate = %s\n", (ss.str()).data());
   ss.str("");
   ss << _codecDescriptorMap.getBandwidthPerCall((CodecType)payload);
   v.push_back((ss.str()).data());
-  printf("bandwidth = %s\n", (ss.str()).data());
   ss.str("");
 
   return v;

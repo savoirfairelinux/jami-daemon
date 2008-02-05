@@ -45,9 +45,16 @@ CodecDescriptor::init()
   _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
   _codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
 
-
 }
 
+void
+CodecDescriptor::setDefaultOrder()
+{
+  _codecOrder.clear();
+  _codecOrder.push_back(PAYLOAD_CODEC_ULAW);
+  _codecOrder.push_back(PAYLOAD_CODEC_ALAW);
+  _codecOrder.push_back(PAYLOAD_CODEC_GSM);
+}
 
 std::string&
 CodecDescriptor::getCodecName(CodecType payload)
