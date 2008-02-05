@@ -388,7 +388,7 @@ bold_if_default_account(GtkTreeViewColumn *col,
 
 /**
  * TODO Action when restore default codecs is done
- */
+ 
 void
 default_codecs(GtkWidget* widget, gpointer data)
 {
@@ -427,7 +427,7 @@ default_codecs(GtkWidget* widget, gpointer data)
 	codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
 	gtk_list_store_reorder(codecStore, new_order);
 }
-
+*/
 /**
  * Create table widget for codecs
  */

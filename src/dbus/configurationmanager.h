@@ -48,17 +48,12 @@ public:
     
     std::vector< ::DBus::String  > getCodecList(  );
     std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload );
-    std::vector< ::DBus::String > getDefaultCodecList(  );
-    void setCodecPreferedOrder( const ::DBus::String& codec_name );
-    ::DBus::String getCodecPreferedOrder(  );
-    ::DBus::String getCodecBitRate( const ::DBus::String& codec_name );
-    ::DBus::String getCodecBandwidth( const ::DBus::String& codec_name );   
-    ::DBus::String getCodecClockRate( const ::DBus::String& codec_name );   
+    std::vector< ::DBus::String > getActiveCodecList(  );
+    void setActiveCodecList( const std::vector< ::DBus::String >& list );
  
     std::vector< ::DBus::String > getToneLocaleList(  );
     std::vector< ::DBus::String > getPlaybackDeviceList(  );
     std::vector< ::DBus::String > getRecordDeviceList(  );
-    std::vector< ::DBus::String > getSampleRateList(  );
     ::DBus::String getVersion(  );
     std::vector< ::DBus::String > getRingtoneList(  );
 

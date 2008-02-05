@@ -49,10 +49,6 @@
       <arg type="as" name="list" direction="out"/>
     </method>
    
-    <method name="getSampleRateList">
-      <arg type="as" name="list" direction="out"/>
-    </method>
-    
    <method name="getPlaybackDeviceList">
       <arg type="as" name="list" direction="out"/>
     </method>
@@ -74,33 +70,14 @@
      <arg type="as" name="details" direction="out"/>
    </method>
  
-    <method name="getDefaultCodecList">
+    <method name="getActiveCodecList">
       <arg type="as" name="list" direction="out"/>
     </method>
 
-    <method name="setCodecPreferedOrder">
-      <arg type="s" name="codec_name" direction="in"/>
+    <method name="setActiveCodecList">
+      <arg type="as" name="list" direction="in"/>
     </method>
     
-    <method name="getCodecPreferedOrder">
-      <arg type="s" name="codec_name" direction="out"/>
-    </method>
-   
-   <method name="getCodecBitRate">
-     <arg type="s" name="codec_name" direction="in"/>
-     <arg type="s" name="bitrate" direction="out"/>
-   </method>
-
-   <method name="getCodecBandwidth">
-     <arg type="s" name="codec_name" direction="in"/>
-     <arg type="s" name="bandwidth" direction="out"/>
-   </method>
-
-   <method name="getCodecClockRate">
-     <arg type="s" name="codec_name" direction="in"/>
-     <arg type="s" name="clockrate" direction="out"/>
-   </method>
-  
 
   <!--        /////////////////////////////       -->
  

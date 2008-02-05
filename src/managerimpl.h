@@ -261,23 +261,6 @@ public:
    */
   std::string getDefaultAccount();
 
-  std::string getCodecBitRate(const ::DBus::String& codec_name);
-  std::string getCodecBandwidth(const ::DBus::String& codec_name);
-  std::string getCodecClockRate(const ::DBus::String& codec_name);
-  
-  /**
-   * Set the prefered order for codecs.
-   * Called by D-Bus command: "setCodecPreferedOrder"
-   *
-   * @param codec_name The name of the prefered codec.
-   */
-  void setPreferedCodec(const ::DBus::String& codec_name);
-  
-/**
- * Get the prefered codec
- * @return The description of the prefered codec
- */
-  std::string getPreferedCodec(  );
 
   /**
    * Get the list of codecs we supports, ordered by the user
@@ -288,24 +271,12 @@ public:
   std::vector< ::DBus::String > getCodecList( void );
 
   /**
-   * Get the default list of codecs we supports
-   * @ return The list of the codecs
+   * Get the list of the active codecs
+   * @ return The list of the active codecs (their payload actually)
    */  
-  std::vector< ::DBus::String > getDefaultCodecList( void ); 
-
-/**
- * Get the sample rate of a codec
- * @param name: The description of the codec
- * @return The sample rate of the specified codec
- */	
-  unsigned int clockRate(std::string& name); 
-
-/**
- * Get the list of the standart sound sample rates
- * Values: { 44100 , 44000 , 96000 }
- * @return The list of the sample rates
- */     
-  std::vector< ::DBus::String> getSampleRateList( void );
+  std::vector< ::DBus::String > getActiveCodecList( void ); 
+  void setActiveCodecList( const std::vector< ::DBus::String >& list);
+  std::vector<std::string> retrieveActiveCodecs( void );
 
   /*
    * Set an account as default
