@@ -37,8 +37,8 @@ typedef struct {
 void codec_list_init();
 void codec_list_clear();
 void codec_list_add(codec_t * c);
-//void codec_set_active(gchar* name);
-//void codec_set_inactive(gchar* name);
+void codec_set_active(gchar* name);
+void codec_set_inactive(gchar* name);
 guint codec_list_get_size();
 codec_t * codec_list_get(const gchar * name);
 //codec_t * codec_list_get(const int payload);
@@ -51,5 +51,8 @@ codec_t* codec_list_get_nth(guint index);
 void codec_set_prefered_order(guint index);
 //gchar * codec_get_name(codec_t * c);
 //guint codec_get_rate(gchar * codec_name);
+
+void codec_list_move_codec_up(guint index);
+void codec_list_move_codec_down(guint index);
 
 #endif

@@ -67,13 +67,11 @@ codec_list_add(codec_t * c)
 void 
 codec_set_active(gchar* name)
 {
-  printf("entry point set active");
   codec_t * c = codec_list_get(name);
   if(c){
-    printf("blablabla");
+    printf("%s set active/n", c->name);
     c->is_active = TRUE;
   }
-  printf("exit point set active");
 }
 
 void
@@ -89,17 +87,7 @@ codec_list_get_size()
 {
   return g_queue_get_length(codecQueue);
 }
-/*
-codec_t*
-codec_list_get( const gchar * name)
-{
-  GList * c = g_queue_find_custom(codecQueue, name, is_name_codecstruct);
-  if(c)
-    return (codec_t *)c->data;
-  else
-    return NULL;
-}
-*/
+
 codec_t*
 codec_list_get( const gchar* name)
 {
@@ -124,3 +112,34 @@ codec_set_prefered_order(guint index)
   g_queue_push_head(codecQueue, prefered);
 }
 
+void
+codec_list_move_codec_up(guint index)
+{
+	if(index != 0)
+	{
+		gpointer codec = g_queue_pop_nth(codecQueue, index);
+		g_queue_push_nth(codecQueue, codec, index-1);
+	}
+	
+	// TEMP
+	int i;
+	printf("\nCodec list\n");
+	for(i=0; i < codecQueue->length; i++)
+		printf("%s\n", codec_list_get_nth(i)->name);
+}
+
+void
+codec_list_move_codec_down(guint index)
+{
+	if(index != codecQueue->length)
+	{
+		gpointer codec = g_queue_pop_nth(codecQueue, index);
+		g_queue_push_nth(codecQueue, codec, index+1);
+	}
+
+	// TEMP
+	int i;
+	printf("\nCodec list\n");
+	for(i=0; i < codecQueue->length; i++)
+		printf("%s\n", codec_list_get_nth(i)->name);
+}

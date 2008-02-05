@@ -16,16 +16,28 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #ifndef __CONFIGWINDOW_H__
 #define __CONFIGWINDOW_H__
 
 #include <calllist.h>
 
-/** @file configwindow.h
-  * @brief The Preferences window.
-  */
-void show_config_window ( );
-void config_window_fill_account_list ( );
+/**
+ * @file configwindow.h
+ * @brief The Preferences window.
+ */
+void config_window_fill_account_list();
+void config_window_fill_codec_list();
+void show_config_window();
+void config_window_fill_audio_manager_list();
+void config_window_fill_output_audio_device_list();
+void config_window_fill_input_audio_device_list();
+void default_account(GtkWidget *widget, gpointer data);
+void bold_if_default_account(GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data);
+void default_codecs(GtkWidget* widget, gpointer data);
+GtkWidget * create_codec_table();
+GtkWidget * create_accounts_tab();
+GtkWidget * create_audio_tab();
+void show_config_window();
 
 #endif 
