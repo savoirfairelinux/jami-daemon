@@ -56,8 +56,8 @@ void dbus_set_default_account(gchar * accountID);
 gchar** dbus_codec_list();
 gchar** dbus_codec_details(int payload);
 gchar** dbus_default_codec_list();
-void set_active_codec_list( const gchar** list );
-gchar** get_active_codec_list( void );
+void dbus_set_active_codec_list( const gchar** list );
+gchar** dbus_get_active_codec_list( void );
 
 /* Instance */
 void dbus_register( int pid, gchar * name);
