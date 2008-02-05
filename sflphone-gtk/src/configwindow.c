@@ -16,7 +16,7 @@
  *  
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 #include <accountlist.h>
@@ -261,30 +261,42 @@ select_codec(GtkTreeSelection *selection, GtkTreeModel *model)
  * and in configuration files
  */
 static void
-codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer *data)
+codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer data)
 {
 	GtkTreeIter iter;
 	GtkTreePath *treePath;
 	GtkTreeModel *model;
 	gboolean active;
+	char* name;
 	
 	// Get path of clicked codec active toggle box
 	treePath = gtk_tree_path_new_from_string(path);
-	printf(path);
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(data));
 	gtk_tree_model_get_iter(model, &iter, treePath);
 
-	// Get value at iteration
+	// Get active value and name at iteration
 	gtk_tree_model_get(model, &iter,
 			COLUMN_CODEC_ACTIVE, &active,
+			COLUMN_CODEC_NAME, &name,
 			-1);
 	
+	printf("%s\n", name);
+
 	// Toggle active value
+	active = !active;
+	
+	// Store value
 	gtk_list_store_set(GTK_LIST_STORE(model), &iter,
-			COLUMN_CODEC_ACTIVE, !active,
+			COLUMN_CODEC_ACTIVE, active,
 			-1);
 
 	gtk_tree_path_free(treePath);
+
+	// Modify codec queue to represent change	
+	if(active)
+		codec_set_active(name);
+	else
+		codec_set_inactive(name);
 	
 	// TODO Perpetuate changes to the deamon
 }
@@ -294,7 +306,7 @@ codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer *dat
  * update changes in the deamon list and the configuration files
  */
 static void
-moveCodec(gboolean moveUp, gpointer data)
+codec_move(gboolean moveUp, gpointer data)
 {
 	GtkTreeIter iter;
 	GtkTreeIter *iter2;
@@ -316,7 +328,9 @@ moveCodec(gboolean moveUp, gpointer data)
 	// Find path of iteration
 	path = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(model), &iter);
 	treePath = gtk_tree_path_new_from_string(path);
-
+	gint *indices = gtk_tree_path_get_indices(treePath);
+	gint indice = indices[0];
+	
 	// Depending on button direction get new path
 	if(moveUp)
 		gtk_tree_path_prev(treePath);
@@ -336,33 +350,33 @@ moveCodec(gboolean moveUp, gpointer data)
 	gtk_tree_iter_free(iter2);
 	g_free(path);
 	
+	// Perpetuate changes in codec queue
+	if(moveUp)
+		codec_list_move_codec_up(indice);
+	else
+		codec_list_move_codec_down(indice);
+	
 	// TODO Perpetuate changes to the deamon
-	/* Update the gconf key
-	codecs_data = gm_codecs_list_to_gm_conf_list (GTK_WIDGET (data));
-
-	gm_conf_set_string_list (AUDIO_CODECS_KEY "list", codecs_data);
-
-	g_slist_foreach (codecs_data, (GFunc) g_free, NULL);
-	g_slist_free (codecs_data);
-	*/
 }
 
 /**
  * Called from move up codec button signal
  */
-void
-moveCodecUp(GtkButton *button, gpointer data)
+static void
+codec_move_up(GtkButton *button, gpointer data)
 {
-	moveCodec(TRUE, data);
+	// Change tree view ordering and get indice changed
+	codec_move(TRUE, data);
 }
 
 /**
  * Called from move down codec button signal
  */
 static void
-moveCodecDown(GtkButton *button, gpointer data)
+codec_move_down(GtkButton *button, gpointer data)
 {
-	moveCodec(FALSE, data);
+	// Change tree view ordering and get indice changed
+	codec_move(FALSE, data);
 }
 
 /**
@@ -375,10 +389,9 @@ bold_if_default_account(GtkTreeViewColumn *col,
 			GtkTreeIter *iter,
 			gpointer data)
 {
-	GValue val;
-	val.g_type = G_TYPE_POINTER;
+	GValue val = { 0, };
 	gtk_tree_model_get_value(tree_model, iter, 3, &val);
-	account_t *current = (account_t*) g_value_get_pointer(&val);
+	account_t *current = (account_t*)g_value_get_pointer(&val);
 	g_value_unset(&val);
 	if(g_strcasecmp(current->accountID, account_list_get_default()) == 0)
 		g_object_set(G_OBJECT(rend), "weight", 800, NULL);
@@ -507,12 +520,12 @@ create_codec_table()
 	moveUpButton = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
 	gtk_widget_set_sensitive(GTK_WIDGET(moveUpButton), FALSE);
 	gtk_box_pack_start(GTK_BOX(buttonBox), moveUpButton, FALSE, FALSE, 0);
-	g_signal_connect(G_OBJECT(moveUpButton), "clicked", G_CALLBACK(moveCodecUp), codecTreeView);
+	g_signal_connect(G_OBJECT(moveUpButton), "clicked", G_CALLBACK(codec_move_up), codecTreeView);
 	
 	moveDownButton = gtk_button_new_from_stock(GTK_STOCK_GO_DOWN);
 	gtk_widget_set_sensitive(GTK_WIDGET(moveDownButton), FALSE);
 	gtk_box_pack_start(GTK_BOX(buttonBox), moveDownButton, FALSE, FALSE, 0);
-	g_signal_connect(G_OBJECT(moveDownButton), "clicked", G_CALLBACK(moveCodecDown), codecTreeView);
+	g_signal_connect(G_OBJECT(moveDownButton), "clicked", G_CALLBACK(codec_move_down), codecTreeView);
 	
 	config_window_fill_codec_list();
 
