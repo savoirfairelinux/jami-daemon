@@ -62,7 +62,7 @@ public:
   CodecDescriptor();
   ~CodecDescriptor() {};
   CodecMap& getCodecMap() { return _codecMap; }
-  CodecOrder& getCodecOrder() { return _codecOrder; }
+  CodecOrder& getActiveCodecs() { return _codecOrder; }
 
   /**
    * Get codec with is associated payload
@@ -117,6 +117,13 @@ public:
   * @return int The clock rate of the specified codec
   */
   int getSampleRate(CodecType payload);
+
+/**
+ * Set the order of codecs by their payload
+ * @param list The ordered list sent by DBus
+ */
+ void saveActiveCodecs(const std::vector<std::string>& list);
+ 
 private:
   CodecMap _codecMap;
   CodecOrder _codecOrder;

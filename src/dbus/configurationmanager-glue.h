@@ -30,17 +30,12 @@ public:
         register_method(ConfigurationManager, getToneLocaleList, _getToneLocaleList_stub);
         register_method(ConfigurationManager, getVersion, _getVersion_stub);
         register_method(ConfigurationManager, getRingtoneList, _getRingtoneList_stub);
-        register_method(ConfigurationManager, getSampleRateList, _getSampleRateList_stub);
         register_method(ConfigurationManager, getPlaybackDeviceList, _getPlaybackDeviceList_stub);
         register_method(ConfigurationManager, getRecordDeviceList, _getRecordDeviceList_stub);
         register_method(ConfigurationManager, getCodecList, _getCodecList_stub);
         register_method(ConfigurationManager, getCodecDetails, _getCodecDetails_stub);
-        register_method(ConfigurationManager, getDefaultCodecList, _getDefaultCodecList_stub);
-        register_method(ConfigurationManager, setCodecPreferedOrder, _setCodecPreferedOrder_stub);
-        register_method(ConfigurationManager, getCodecPreferedOrder, _getCodecPreferedOrder_stub);
-        register_method(ConfigurationManager, getCodecBitRate, _getCodecBitRate_stub);
-        register_method(ConfigurationManager, getCodecBandwidth, _getCodecBandwidth_stub);
-        register_method(ConfigurationManager, getCodecClockRate, _getCodecClockRate_stub);
+        register_method(ConfigurationManager, getActiveCodecList, _getActiveCodecList_stub);
+        register_method(ConfigurationManager, setActiveCodecList, _setActiveCodecList_stub);
     }
 
     ::DBus::IntrospectedInterface* const introspect() const 
@@ -97,11 +92,6 @@ public:
             { "list", "as", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument getSampleRateList_args[] = 
-        {
-            { "list", "as", false },
-            { 0, 0, 0 }
-        };
         static ::DBus::IntrospectedArgument getPlaybackDeviceList_args[] = 
         {
             { "list", "as", false },
@@ -123,37 +113,14 @@ public:
             { "details", "as", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument getDefaultCodecList_args[] = 
+        static ::DBus::IntrospectedArgument getActiveCodecList_args[] = 
         {
             { "list", "as", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument setCodecPreferedOrder_args[] = 
+        static ::DBus::IntrospectedArgument setActiveCodecList_args[] = 
         {
-            { "codec_name", "s", true },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getCodecPreferedOrder_args[] = 
-        {
-            { "codec_name", "s", false },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getCodecBitRate_args[] = 
-        {
-            { "codec_name", "s", true },
-            { "bitrate", "s", false },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getCodecBandwidth_args[] = 
-        {
-            { "codec_name", "s", true },
-            { "bandwidth", "s", false },
-            { 0, 0, 0 }
-        };
-        static ::DBus::IntrospectedArgument getCodecClockRate_args[] = 
-        {
-            { "codec_name", "s", true },
-            { "clockrate", "s", false },
+            { "list", "as", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
@@ -177,17 +144,12 @@ public:
             { "getToneLocaleList", getToneLocaleList_args },
             { "getVersion", getVersion_args },
             { "getRingtoneList", getRingtoneList_args },
-            { "getSampleRateList", getSampleRateList_args },
             { "getPlaybackDeviceList", getPlaybackDeviceList_args },
             { "getRecordDeviceList", getRecordDeviceList_args },
             { "getCodecList", getCodecList_args },
             { "getCodecDetails", getCodecDetails_args },
-            { "getDefaultCodecList", getDefaultCodecList_args },
-            { "setCodecPreferedOrder", setCodecPreferedOrder_args },
-            { "getCodecPreferedOrder", getCodecPreferedOrder_args },
-            { "getCodecBitRate", getCodecBitRate_args },
-            { "getCodecBandwidth", getCodecBandwidth_args },
-            { "getCodecClockRate", getCodecClockRate_args },
+            { "getActiveCodecList", getActiveCodecList_args },
+            { "setActiveCodecList", setActiveCodecList_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_signals[] = 
@@ -231,17 +193,12 @@ public:
     virtual std::vector< ::DBus::String > getToneLocaleList(  ) = 0;
     virtual ::DBus::String getVersion(  ) = 0;
     virtual std::vector< ::DBus::String > getRingtoneList(  ) = 0;
-    virtual std::vector< ::DBus::String > getSampleRateList(  ) = 0;
     virtual std::vector< ::DBus::String > getPlaybackDeviceList(  ) = 0;
     virtual std::vector< ::DBus::String > getRecordDeviceList(  ) = 0;
     virtual std::vector< ::DBus::String > getCodecList(  ) = 0;
     virtual std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload ) = 0;
-    virtual std::vector< ::DBus::String > getDefaultCodecList(  ) = 0;
-    virtual void setCodecPreferedOrder( const ::DBus::String& codec_name ) = 0;
-    virtual ::DBus::String getCodecPreferedOrder(  ) = 0;
-    virtual ::DBus::String getCodecBitRate( const ::DBus::String& codec_name ) = 0;
-    virtual ::DBus::String getCodecBandwidth( const ::DBus::String& codec_name ) = 0;
-    virtual ::DBus::String getCodecClockRate( const ::DBus::String& codec_name ) = 0;
+    virtual std::vector< ::DBus::String > getActiveCodecList(  ) = 0;
+    virtual void setActiveCodecList( const std::vector< ::DBus::String >& list ) = 0;
 
 public:
 
@@ -362,16 +319,6 @@ private:
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getSampleRateList_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        std::vector< ::DBus::String > argout1 = getSampleRateList();
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
     ::DBus::Message _getPlaybackDeviceList_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
@@ -413,66 +360,23 @@ private:
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getDefaultCodecList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getActiveCodecList_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getDefaultCodecList();
+        std::vector< ::DBus::String > argout1 = getActiveCodecList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setCodecPreferedOrder_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setActiveCodecList_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        setCodecPreferedOrder(argin1);
+        std::vector< ::DBus::String > argin1; ri >> argin1;
+        setActiveCodecList(argin1);
         ::DBus::ReturnMessage reply(call);
-        return reply;
-    }
-    ::DBus::Message _getCodecPreferedOrder_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argout1 = getCodecPreferedOrder();
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
-    ::DBus::Message _getCodecBitRate_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::String argout1 = getCodecBitRate(argin1);
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
-    ::DBus::Message _getCodecBandwidth_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::String argout1 = getCodecBandwidth(argin1);
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
-        return reply;
-    }
-    ::DBus::Message _getCodecClockRate_stub( const ::DBus::CallMessage& call )
-    {
-        ::DBus::MessageIter ri = call.reader();
-
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::String argout1 = getCodecClockRate(argin1);
-        ::DBus::ReturnMessage reply(call);
-        ::DBus::MessageIter wi = reply.writer();
-        wi << argout1;
         return reply;
     }
 };

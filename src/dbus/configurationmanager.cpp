@@ -111,50 +111,18 @@ ConfigurationManager::getCodecDetails( const ::DBus::Int32& payload )
 }
 
 	std::vector< ::DBus::String > 
-ConfigurationManager::getDefaultCodecList(  )
+ConfigurationManager::getActiveCodecList(  )
 {
-	_debug("ConfigurationManager::getDefaultCodecList received\n");
-	return Manager::instance().getDefaultCodecList();
+	_debug("ConfigurationManager::getActiveCodecList received\n");
+	return Manager::instance().getActiveCodecList();
 }
 
-
-::DBus::String 
-ConfigurationManager::getCodecBitRate( const ::DBus::String& codec_name)
+	void 
+ConfigurationManager::setActiveCodecList( const std::vector< ::DBus::String >& list )
 {
-  _debug("ConfigurationManager::getCodecBitRate received\n");
-  //return Manager::instance().getCodecBitRate(codec_name);
+	_debug("ConfigurationManager::setActiveCodecList received\n");
+	 Manager::instance().setActiveCodecList(list);
 }
-
-::DBus::String 
-ConfigurationManager::getCodecBandwidth( const ::DBus::String& codec_name)
-{
-  _debug("ConfigurationManager::getCodecBandwidth received\n");
-  //return Manager::instance().getCodecBandwidth(codec_name);
-}
-
-::DBus::String 
-ConfigurationManager::getCodecClockRate( const ::DBus::String& codec_name)
-{
-  _debug("ConfigurationManager::getCodecClockRate received\n");
-  //return Manager::instance().getCodecClockRate(codec_name);
-}
-
-void 
-ConfigurationManager::setCodecPreferedOrder( const ::DBus::String& codec_name )
-{
-
-	_debug("ConfigurationManager::setCodecPreferedOrder received\n");
-	Manager::instance().setPreferedCodec(codec_name);
-}
-
-
-	::DBus::String 
-ConfigurationManager::getCodecPreferedOrder(  )
-{
-	_debug("ConfigurationManager::getCodecPreferedOrder received\n");
-	return Manager::instance().getPreferedCodec();
-}
-
 
 	std::vector< ::DBus::String > 
 ConfigurationManager::getPlaybackDeviceList(  )
@@ -167,14 +135,6 @@ ConfigurationManager::getPlaybackDeviceList(  )
 ConfigurationManager::getRecordDeviceList(  )
 {
 	_debug("ConfigurationManager::getRecordDeviceList received\n");
-
-}
-
-	std::vector< ::DBus::String > 
-ConfigurationManager::getSampleRateList(  )
-{
-	_debug("ConfigurationManager::getSampleRateList received\n");
-	return Manager::instance().getSampleRateList();
 
 }
 
