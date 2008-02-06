@@ -63,11 +63,7 @@
 #define DRIVER_NAME_OUT		"Drivers.driverNameOut"
 #define DRIVER_SAMPLE_RATE      "Drivers.sampleRate"
 #define DRIVER_FRAME_SIZE	"Drivers.framesize"
-#define NB_CODEC		"Codecs.nbCodec"
-#define CODEC1			"Codecs.codec1"
-#define CODEC2			"Codecs.codec2"
-#define CODEC3			"Codecs.codec3"
-#define CODEC4			"Codecs.codec4"
+#define CODECS			"ActiveCodecs"
 #define RING_CHOICE		"Rings.ringChoice"
 #define ACCOUNT_SIP_COUNT_DEFAULT 4
 #define ACCOUNT_IAX_COUNT_DEFAULT 4
@@ -97,11 +93,7 @@
 #define DFT_VOL_SPKR_STR     "100"
 #define DFT_VOL_MICRO_STR    "100"
 
-
-#define DFT_CODEC1		"G711u"
-#define DFT_CODEC2		"G711a"
-#define DFT_CODEC3		"GSM"
-#define DFT_CODEC4		"iLBC"
+#define DFT_CODECS		"0/8/3"  // liste ordonnée de payload
 #define DFT_RINGTONE 		"konga.ul"
 #define DFT_SKIN 		"metal"
 #define DFT_ZONE		"North America"

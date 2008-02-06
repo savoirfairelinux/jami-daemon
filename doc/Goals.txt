@@ -11,10 +11,10 @@ Goals for next release (0.8)
    * Functional IAX transport
    * Near perfect audio
    * Multiple-client (GUI or other) connectivity to server
- - New Gtk+ GUI with following functionnality (altough the server can do more):
+ - New Gtk+ GUI with following functionality (although the server can do more):
    * User can place a call
    * User can answer a call
-   * User can transfert a call
+   * User can transfer a call
    * User can have an unlimited number of calls
    * User can put a call on hold and off hold
    * User is informed of waiting voice mail
@@ -29,7 +29,7 @@ Goals for release 0.8.5
  - Server side:
    * Perfect audio
    * Better error handling of failed account registrations
-   * Fully working multiple account functionnality 
+   * Fully working multiple account functionality
  - Gtk+ GUI updates
    * User can set up audio parameters
    * User can set up STUN and proxy settings for SIP accounts
@@ -41,7 +41,7 @@ Goals for release 0.8.5
    * User can place a call
    * User can answer calls
    * User can send DTMF
-   * User can transfert a call
+   * User can transfer a call
 
 
 
@@ -55,7 +55,7 @@ Goals for release 0.9
  - Gtk+ GUI updates
    * User can receive and send SMS messages
    * User is informed of call duration
-   * User can set up speel call buttons
+   * User can set up speed call buttons
    * User can consult/clear call history
    * User can set a status
  - Python CLI client

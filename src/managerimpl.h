@@ -261,45 +261,37 @@ public:
    */
   std::string getDefaultAccount();
 
-  /**
-   * Set the prefered order for codecs.
-   * Called by D-Bus command: "setCodecPreferedOrder"
-   *
-   * @param codec_name The name of the prefered codec.
-   */
-  void setPreferedCodec(const ::DBus::String& codec_name);
-  
-/**
- * Get the prefered codec
- * @return The description of the prefered codec
- */
-  std::string getPreferedCodec(  );
 
   /**
-   * Get the list of codecs we supports, ordered by the user
+   * Get the list of codecs we supports, not ordered
    * @return The list of the codecs
    */  
-  std::vector< ::DBus::String > getCodecList( void ); 
+  std::vector< ::DBus::String > getCodecList( void );
+  /**
+   * Get the info about one codec
+   * Name / CLock rate / bitrate / bandwidth
+   * @param payload The payload of the codec
+   * @return The information
+   */
+  std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload);
 
   /**
-   * Get the default list of codecs we supports
-   * @ return The list of the codecs
+   * Convert a list of payload in a special format, readable by the server.
+   * Required format: payloads separated with one slash.
+   * @return std::string The serializabled string
+   */
+  std::string serialize(std::vector<std::string> v);
+
+  /**
+   * Inverse of serialize
+   */
+  std::vector<std::string> retrieveActiveCodecs( void );
+  
+  /**
+   * Get and set the list of the active codecs
    */  
-  std::vector< ::DBus::String > getDefaultCodecList( void ); 
-
-/**
- * Get the sample rate of a codec
- * @param name: The description of the codec
- * @return The sample rate of the specified codec
- */	
-  unsigned int clockRate(std::string& name); 
-
-/**
- * Get the list of the standart sound sample rates
- * Values: { 44100 , 44000 , 96000 }
- * @return The list of the sample rates
- */     
-  std::vector< ::DBus::String> getSampleRateList( void );
+  std::vector< ::DBus::String > getActiveCodecList( void ); 
+  void setActiveCodecList( const std::vector< ::DBus::String >& list);
 
   /*
    * Set an account as default

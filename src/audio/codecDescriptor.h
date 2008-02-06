@@ -25,6 +25,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 #include "../global.h"
 typedef enum {
@@ -51,6 +52,8 @@ typedef enum {
 
 /* A codec is identified by its payload. A payload is associated with a name. */ 
 typedef std::map<CodecType, std::string> CodecMap;
+/* The struct to reflect the order the user wants to use the codecs */
+typedef std::vector<CodecType> CodecOrder;
 
 class CodecDescriptor {
 public:
@@ -60,6 +63,7 @@ public:
   CodecDescriptor();
   ~CodecDescriptor() {};
   CodecMap& getCodecMap() { return _codecMap; }
+  CodecOrder& getActiveCodecs() { return _codecOrder; }
 
   /**
    * Get codec with is associated payload
@@ -69,8 +73,16 @@ public:
    */
   std::string& getCodecName(CodecType payload);
 
+  /**
+   * Initialiaze the map with all the supported codecs, even those inactive
+   */  
   void init();
 
+  /**
+   * Set the default codecs order
+   */   
+  void setDefaultOrder();
+  
   /**
    * Check in the map codec if the specified codec is supported 
    * @param payload unique identifier of a codec (RFC)
@@ -114,8 +126,16 @@ public:
   * @return int The clock rate of the specified codec
   */
   int getSampleRate(CodecType payload);
+
+/**
+ * Set the order of codecs by their payload
+ * @param list The ordered list sent by DBus
+ */
+ void saveActiveCodecs(const std::vector<std::string>& list);
+ 
 private:
   CodecMap _codecMap;
+  CodecOrder _codecOrder;
 };
 
 #endif // __CODEC_DESCRIPTOR_H__

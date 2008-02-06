@@ -20,6 +20,7 @@
  */
 
 #include <iostream>
+#include <cstdlib>
 
 #include "audiocodec.h"
 #include "codecDescriptor.h"
@@ -29,25 +30,30 @@
 
 CodecDescriptor::CodecDescriptor() 
 {
-  // Default codecs
-  _codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
-  _codecMap[PAYLOAD_CODEC_GSM] = "GSM";
-  _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
-#ifdef HAVE_SPEEX
-  _codecMap[PAYLOAD_CODEC_SPEEX] = new CodecSpeex(PAYLOAD_CODEC_SPEEX); // TODO: this is a variable payload!
-#endif
-// theses one are not implemented yet..
-//  _codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
-//  _codecMap[PAYLOAD_CODEC_SPEEX] = Speex();
+  init();
+//#ifdef HAVE_SPEEX
+  //_codecMap[PAYLOAD_CODEC_SPEEX] = new CodecSpeex(PAYLOAD_CODEC_SPEEX); // TODO: this is a variable payload!
+//#endif
 }
 
 void
 CodecDescriptor::init()
 {
-	_codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
-	_codecMap[PAYLOAD_CODEC_GSM] = "GSM";
-	_codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
-//	_codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
+  // init list of all codecs supported codecs
+  _codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
+  _codecMap[PAYLOAD_CODEC_GSM] = "GSM";
+  _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
+  _codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
+
+}
+
+void
+CodecDescriptor::setDefaultOrder()
+{
+  _codecOrder.clear();
+  _codecOrder.push_back(PAYLOAD_CODEC_ULAW);
+  _codecOrder.push_back(PAYLOAD_CODEC_ALAW);
+  _codecOrder.push_back(PAYLOAD_CODEC_GSM);
 }
 
 std::string&
@@ -57,7 +63,7 @@ CodecDescriptor::getCodecName(CodecType payload)
   if (iter!=_codecMap.end()) {
     return (iter->second);
   }
-  //return ;
+  //return std::string("");
 }
 
 bool 
@@ -100,7 +106,9 @@ double
 CodecDescriptor::getBitRate(CodecType payload)
 {
   switch(payload){
-    case PAYLOAD_CODEC_ULAW | PAYLOAD_CODEC_ALAW:
+    case PAYLOAD_CODEC_ULAW: 
+      return 64;
+    case PAYLOAD_CODEC_ALAW: 
       return 64;
     case PAYLOAD_CODEC_GSM:
       return 13.3;
@@ -117,7 +125,9 @@ double
 CodecDescriptor::getBandwidthPerCall(CodecType payload)
 {
   switch(payload){
-    case PAYLOAD_CODEC_ULAW | PAYLOAD_CODEC_ALAW:
+    case PAYLOAD_CODEC_ULAW:
+      return 80;
+    case PAYLOAD_CODEC_ALAW:
       return 80;
     case PAYLOAD_CODEC_GSM:
       return 28.6;
@@ -132,15 +142,39 @@ int
 CodecDescriptor::getSampleRate(CodecType payload)
 {
   switch(payload){
-    case PAYLOAD_CODEC_ULAW | PAYLOAD_CODEC_ALAW | PAYLOAD_CODEC_GSM | PAYLOAD_CODEC_ILBC_20:
+    case PAYLOAD_CODEC_ULAW:
+      printf("PAYLOAD = %i\n", payload);
       return 8000;
+    case PAYLOAD_CODEC_ALAW:
+      printf("PAYLOAD = %i\n", payload);
+      return 8000;
+    case PAYLOAD_CODEC_GSM:
+      printf("PAYLOAD = %i\n", payload);
+      return 8000;
+    case PAYLOAD_CODEC_ILBC_20:
+      printf("PAYLOAD = %i\n", payload);
+      return 8000;
+    default:
+      return -1;
   }
-  return -1;
+ return -1;
 }
 
-
-
-
-
+void
+CodecDescriptor::saveActiveCodecs(const std::vector<std::string>& list)
+{
+  _codecOrder.clear();
+  // list contains the ordered payload of active codecs picked by the user
+  // we used the CodecOrder vector to save the order.
+  int i=0;
+  int payload;
+  size_t size = list.size();
+  while(i<size)
+  {
+    payload = std::atoi(list[i].data());
+    _codecOrder.push_back((CodecType)payload);
+    i++;
+  }
+}
 
 

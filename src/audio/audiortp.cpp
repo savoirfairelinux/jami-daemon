@@ -259,16 +259,16 @@ AudioRtpRTX::loadCodec(int payload)
 
 	switch(payload){
 	  case 0:
-            handle_codec = dlopen("codec_ulaw.so", RTLD_LAZY);
+            handle_codec = dlopen( CODECS_DIR "/libcodec_ulaw.so", RTLD_LAZY);
 	    break;
 	  case 3:
-	    handle_codec = dlopen("codec_gsm.so", RTLD_LAZY);
+	    handle_codec = dlopen(CODECS_DIR "/libcodec_gsm.so", RTLD_LAZY);
 	    break;
 	  case 8:
-	    handle_codec = dlopen("codec_alaw.so", RTLD_LAZY);
+	    handle_codec = dlopen(CODECS_DIR "/libcodec_alaw.so", RTLD_LAZY);
 	    break;
 	  case 97:
-            handle_codec = dlopen("codec_ilbc.so", RTLD_LAZY);
+            handle_codec = dlopen(CODECS_DIR "/libcodec_ilbc.so", RTLD_LAZY);
 	    break;
 	}
 

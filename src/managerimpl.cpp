@@ -34,6 +34,8 @@
 #include <ccrtp/rtp.h>     // why do I need this here?
 #include <cc++/file.h>
 
+#include <boost/tokenizer.hpp>
+
 #include "manager.h"
 #include "account.h"
 #include "audio/audiolayer.h"
@@ -1058,9 +1060,6 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
   fill_config_int(DRIVER_SAMPLE_RATE, DFT_SAMPLE_RATE);
   fill_config_int(DRIVER_FRAME_SIZE, DFT_FRAME_SIZE);
-  //fill_config_str(CODEC1, DFT_CODEC1);
-  //fill_config_str(CODEC2, DFT_CODEC2);
-  //fill_config_str(CODEC3, DFT_CODEC3);
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
@@ -1088,63 +1087,78 @@ void
 ManagerImpl::initAudioCodec (void)
 {
   _debugInit("Active Codecs List");
+  // init list of all supported codecs
   _codecDescriptorMap.init();
+  // if the user never set the codec list, use the default one
+  if(getConfigString(AUDIO, "Activecodecs") == ""){
+    _codecDescriptorMap.setDefaultOrder();
+  }
+  // else retrieve the one he set in the config file
+  else{
+    std::vector<std::string> active_list = retrieveActiveCodecs(); 
+    setActiveCodecList(active_list);
+  }
+}
+
+std::vector<std::string>
+ManagerImpl::retrieveActiveCodecs()
+{
+  std::vector<std::string> order; 
+  std::string list;
+  std::string s = getConfigString(AUDIO, "ActiveCodecs");
+  typedef boost::tokenizer<boost::char_separator<char> > tokenizer; 
+  boost::char_separator<char> slash("/");
+  tokenizer tokens(s, slash); 
+  for(tokenizer::iterator tok_iter = tokens.begin(); tok_iter!= tokens.end(); ++tok_iter)
+  {
+    printf("%s\n", (*tok_iter).c_str());
+    order.push_back(*tok_iter);
+  }
+  return order;
 }
 
 void
-ManagerImpl::setPreferedCodec(const ::DBus::String& codec_name)
-{ 	_debug("Set Prefered Order\n");
-	/*
-	std::vector<std::string> list = getCodecList();
-        std::string tmp;
-	int i=0;
-        while(list[i] != codec_name)
-	  i++;
-	tmp = list[0];
-	list[0] = list[i];
-	list[i] = tmp; 
-        setConfig("Audio", "Codecs.codec1", list[0]);	
-	setConfig("Audio", "Codecs.codec2", list[1]);
-	setConfig("Audio", "Codecs.codec3", list[2]);
-*/
+ManagerImpl::setActiveCodecList(const std::vector<std::string>& list)
+{
+  _debug("Set active codecs list");
+  _codecDescriptorMap.saveActiveCodecs(list);
+  // setConfig
+  std::string s = serialize(list);
+  printf("%s\n", s.c_str());
+  setConfig("Audio", "ActiveCodecs", s);
 }
 
 std::string
-ManagerImpl::getPreferedCodec()
+ManagerImpl::serialize(std::vector<std::string> v)
 {
-  return getConfigString(AUDIO, "Codecs.codec1");
+  int i;
+  std::string res;
+  for(i=0;i<v.size();i++)
+  {
+    res += v[i] + "/";
+  }
+  return res;
 }
 
+
 std::vector <std::string>
-ManagerImpl::getDefaultCodecList( void )
+ManagerImpl::getActiveCodecList( void )
 {
+  _debug("Get Active codecs list");
   std::vector< std::string > v;
-  std::string desc=DFT_CODEC1;
-  //std::string rate=""+clockRate(desc);
-  //printf("%s\n",rate.c_str());
-  v.push_back(DFT_CODEC1); // G711u
-  v.push_back(DFT_CODEC2); // G711a
-  v.push_back(DFT_CODEC3); // GSM
+  CodecOrder active = _codecDescriptorMap.getActiveCodecs();
+  int i=0;
+  size_t size = active.size();
+  while(i<size)
+  {
+    std::stringstream ss;
+    ss << active[i];
+    v.push_back((ss.str()).data());
+    i++;
+  }
   return v;
 }
 
-unsigned int
-ManagerImpl::clockRate(std::string& name)
-{/*
-  CodecMap codecs = _codecDescriptorMap.getCodecMap();
-  CodecMap::iterator iter = codecs.begin();  
-  while(iter!=codecs.end())
-  {
-    if(iter->second!=NULL)
-    {
-      if(iter->second == name)
-        //return iter->second->getClockRate();
-  	return 1;  
-  }
-    iter++;
-  }*/
-  return -1;
-}
 
 /**
  * Send the list of codecs to the client through DBus.
@@ -1152,32 +1166,45 @@ ManagerImpl::clockRate(std::string& name)
 std::vector< std::string >
 ManagerImpl::getCodecList( void )
 {
-	
-	std::vector< std::string > v;
-	CodecMap codecs = _codecDescriptorMap.getCodecMap();
-  	CodecMap::iterator iter = codecs.begin();  
-  	while(iter!=codecs.end())
-  	{
-    	  if(iter->first!=-1)
-   	  {
-		printf("codec: %s\n", iter->second.data());
-		v.push_back(iter->second.data());
-	  }
-	iter++;
-	}
-	return v;
+  std::vector<std::string> list;
+  CodecMap codecs = _codecDescriptorMap.getCodecMap();
+  CodecOrder order = _codecDescriptorMap.getActiveCodecs();
+  CodecMap::iterator iter = codecs.begin();  
+  
+  while(iter!=codecs.end())
+  {
+    std::stringstream ss;
+    if(iter->first!=-1)
+    {
+      ss << iter->first;
+      list.push_back((ss.str()).data());
+    }
+    iter++;
+  }
+  return list;
 }
 
-
-std::vector< std::string >
-ManagerImpl::getSampleRateList( void )
+std::vector<std::string>
+ManagerImpl::getCodecDetails( const ::DBus::Int32& payload )
 {
-	std::vector< std::string > v;
-	v.push_back(SAMPLE_RATE1);
-	v.push_back(SAMPLE_RATE2);
-	v.push_back(SAMPLE_RATE3);
-	return v;
+
+  std::vector<std::string> v;
+  std::stringstream ss;
+   
+  v.push_back(_codecDescriptorMap.getCodecName((CodecType)payload));
+  ss << _codecDescriptorMap.getSampleRate((CodecType)payload);
+  v.push_back((ss.str()).data()); 
+  ss.str("");
+  ss << _codecDescriptorMap.getBitRate((CodecType)payload);
+  v.push_back((ss.str()).data());
+  ss.str("");
+  ss << _codecDescriptorMap.getBandwidthPerCall((CodecType)payload);
+  v.push_back((ss.str()).data());
+  ss.str("");
+
+  return v;
 }
+
 
 /**
  * Initialization: Main Thread

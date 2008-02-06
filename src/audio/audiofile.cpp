@@ -31,12 +31,11 @@ AudioFile::AudioFile()
  : AudioLoop()
 {
   // could vary later...
-  //_ulaw = new Ulaw(PAYLOAD_CODEC_ULAW);
   _start = false;
 
    using std::cout;
    using std::cerr;
-   void* codec = dlopen("codec_ulaw.so", RTLD_LAZY);
+   void* codec = dlopen( CODECS_DIR "/libcodec_ulaw.so", RTLD_LAZY);
    if(!codec){
         cerr<<"cannot load library: "<< dlerror() <<'\n';
    }

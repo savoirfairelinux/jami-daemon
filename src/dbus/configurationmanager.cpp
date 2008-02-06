@@ -96,7 +96,7 @@ ConfigurationManager::getRingtoneList(  )
 
 
 
-	std::vector< ::DBus::String > 
+	std::vector< ::DBus::String  > 
 ConfigurationManager::getCodecList(  )
 {
 	_debug("ConfigurationManager::getCodecList received\n");
@@ -104,28 +104,25 @@ ConfigurationManager::getCodecList(  )
 }
 
 	std::vector< ::DBus::String > 
-ConfigurationManager::getDefaultCodecList(  )
+ConfigurationManager::getCodecDetails( const ::DBus::Int32& payload )
 {
-	_debug("ConfigurationManager::getDefaultCodecList received\n");
-	return Manager::instance().getDefaultCodecList();
+	_debug("ConfigurationManager::getCodecList received\n");
+	return Manager::instance().getCodecDetails( payload );
 }
 
-void 
-ConfigurationManager::setCodecPreferedOrder( const ::DBus::String& codec_name )
+	std::vector< ::DBus::String > 
+ConfigurationManager::getActiveCodecList(  )
 {
-
-	_debug("ConfigurationManager::setCodecPreferedOrder received\n");
-	Manager::instance().setPreferedCodec(codec_name);
+	_debug("ConfigurationManager::getActiveCodecList received\n");
+	return Manager::instance().getActiveCodecList();
 }
 
-
-	::DBus::String 
-ConfigurationManager::getCodecPreferedOrder(  )
+	void 
+ConfigurationManager::setActiveCodecList( const std::vector< ::DBus::String >& list )
 {
-	_debug("ConfigurationManager::getCodecPreferedOrder received\n");
-	return Manager::instance().getPreferedCodec();
+	_debug("ConfigurationManager::setActiveCodecList received\n");
+	 Manager::instance().setActiveCodecList(list);
 }
-
 
 	std::vector< ::DBus::String > 
 ConfigurationManager::getPlaybackDeviceList(  )
@@ -138,14 +135,6 @@ ConfigurationManager::getPlaybackDeviceList(  )
 ConfigurationManager::getRecordDeviceList(  )
 {
 	_debug("ConfigurationManager::getRecordDeviceList received\n");
-
-}
-
-	std::vector< ::DBus::String > 
-ConfigurationManager::getSampleRateList(  )
-{
-	_debug("ConfigurationManager::getSampleRateList received\n");
-	return Manager::instance().getSampleRateList();
 
 }
 

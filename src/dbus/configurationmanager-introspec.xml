@@ -1,7 +1,8 @@
 <?xml version="1.0" ?>
 <node name="/org/sflphone/SFLphone">
   <interface name="org.sflphone.SFLphone.ConfigurationManager">
-  
+    
+  <!-- Accounts-related methods -->  
     <method name="getAccountDetails">
       <arg type="s" name="accountID" direction="in"/>
       <arg type="a{ss}" name="details" direction="out"/>
@@ -23,47 +24,7 @@
     <method name="getAccountList">
       <arg type="as" name="list" direction="out"/>
     </method>
-    
-    <method name="getVersion">
-      <arg type="s" name="version" direction="out"/>
-    </method>
-    
-    <method name="getRingtoneList">
-      <arg type="as" name="list" direction="out"/>
-    </method>
-    
-    <method name="getCodecList">
-      <arg type="as" name="list" direction="out"/>
-    </method>
-    
-    <method name="getDefaultCodecList">
-      <arg type="as" name="list" direction="out"/>
-    </method>
-
-    <method name="getToneLocaleList">
-      <arg type="as" name="list" direction="out"/>
-    </method>
-    
-    <method name="setCodecPreferedOrder">
-      <arg type="s" name="codec_name" direction="in"/>
-    </method>
-    
-    <method name="getCodecPreferedOrder">
-      <arg type="s" name="codec_name" direction="out"/>
-    </method>
-    
-    <method name="getPlaybackDeviceList">
-      <arg type="as" name="list" direction="out"/>
-    </method>
-    
-    <method name="getRecordDeviceList">
-      <arg type="as" name="list" direction="out"/>
-    </method>
-    
-    <method name="getSampleRateList">
-      <arg type="as" name="list" direction="out"/>
-    </method>
-    
+   
     <method name="getDefaultAccount">
       <arg type="s" name="accountID" direction="out"/>
     </method>
@@ -71,7 +32,55 @@
     <method name="setDefaultAccount">
       <arg type="s" name="accountID" direction="in"/>
     </method>
+   
+   <!--      ///////////////////////               -->
+
+  <!-- Various audio-related methods   -->
+ 
+    <method name="getToneLocaleList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+  
+    <method name="getVersion">
+      <arg type="s" name="version" direction="out"/>
+    </method>
     
+    <method name="getRingtoneList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+   
+   <method name="getPlaybackDeviceList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    
+    <method name="getRecordDeviceList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    
+   <!--      ///////////////////////               -->
+   
+   <!-- Codecs-related methods -->
+ 
+    <method name="getCodecList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+   
+   <method name="getCodecDetails">
+     <arg type="i" name="payload" direction="in"/>
+     <arg type="as" name="details" direction="out"/>
+   </method>
+ 
+    <method name="getActiveCodecList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+
+    <method name="setActiveCodecList">
+      <arg type="as" name="list" direction="in"/>
+    </method>
+    
+
+  <!--        /////////////////////////////       -->
+ 
     <signal name="parametersChanged">
       <arg type="a{ss}" name="list" direction="out"/>
     </signal>

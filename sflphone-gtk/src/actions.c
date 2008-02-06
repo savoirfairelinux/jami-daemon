@@ -580,26 +580,44 @@ sflphone_set_default_account( )
 void	
 sflphone_fill_codec_list()
 {
-  
-  int i=0;
+
+  codec_list_clear();
+    
   gchar** codecs = (gchar**)dbus_codec_list();
-  while(codecs[i]!=NULL)
+  gchar** order = (gchar**)dbus_get_active_codec_list();
+  gchar** details;
+  gchar** pl;
+  
+  for(pl=order; *order; order++)
   {
-    printf("%s\n", codecs[i]);	
     codec_t * c = g_new0(codec_t, 1);
-    c->name = codecs[i];
-    codec_set_active(codecs[i]); // active by default
+    c->_payload = atoi(*order);
+    details = (gchar **)dbus_codec_details(c->_payload);
+    //printf("Codec details: %s / %s / %s / %s\n",details[0],details[1],details[2],details[3]);
+    c->name = details[0];
+    c->is_active = TRUE;
+    c->sample_rate = atoi(details[1]);
+    c->_bitrate = atof(details[2]);
+    c->_bandwidth = atof(details[3]);
     codec_list_add(c);
-    i++;
+  }
+  
+  for(pl=codecs; *codecs; codecs++)
+  {
+    details = (gchar **)dbus_codec_details(atoi(*codecs));
+    if(codec_list_get(details[0])!=NULL){
+      // does nothing - the codec is already in the list, so is active.
+    }
+    else{
+      codec_t* c = g_new0(codec_t, 1);
+      c->_payload = atoi(*codecs);
+      c->name = details[0];
+      c->is_active = FALSE;
+      c->sample_rate = atoi(details[1]);
+      c->_bitrate = atof(details[2]);
+      c->_bandwidth = atof(details[3]);
+      codec_list_add(c);
+    }
   }
 }
-
-
-
-
-
-
   
-      
-
-
