@@ -515,6 +515,8 @@ Call*
 IAXVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 {
   IAXCall* call = new IAXCall(id, Call::Outgoing);
+  call->setCodecMap(Manager::instance().getCodecDescriptorMap());
+
 
   if (call) {
     call->setPeerNumber(toUrl);
@@ -957,6 +959,7 @@ IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
     call->setCodecMap(Manager::instance().getCodecDescriptorMap());
     call->setConnectionState(Call::Progressing);
 
+
     if (event->ies.calling_number)
       call->setPeerNumber(std::string(event->ies.calling_number));
     if (event->ies.calling_name)
@@ -1007,4 +1010,13 @@ IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
   }
   
 }
+
+int 
+IAXVoIPLink::iaxCodecMapToFormat(IAXCall* call)
+{
+  CodecOrder map = call->getCodecMap().getActiveCodecs();
+  printf("taytciatcia = %i\n", map.size());
+  return 0;
+}
+
 
