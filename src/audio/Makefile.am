@@ -29,7 +29,7 @@ SPEEX_FLAG=
 SPEEX_LIB=
 endif
 
-SUBDIRS = ilbc
+#SUBDIRS = ilbc
  
 libaudio_la_SOURCES =      audiofile.cpp	 tonelist.cpp     \
 audiortp.cpp         dtmf.cpp   tone.cpp  audiolayer.cpp audiodevice.cpp  dtmfgenerator.cpp   \
