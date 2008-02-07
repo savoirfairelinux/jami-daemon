@@ -247,6 +247,9 @@ IAXVoIPLink::loadCodec(int payload)
      case 97:
        handle_codec = dlopen(CODECS_DIR "/libcodec_ilbc.so", RTLD_LAZY);
        break;
+     case 110:
+       handle_codec = dlopen(CODECS_DIR "/libcodec_speex.so", RTLD_LAZY);
+       break;
    }
    if(!handle_codec){
         cerr<<"cannot load library: "<< dlerror() <<'\n';

@@ -44,7 +44,7 @@ IAXCall::setFormat(int format)
   case AST_FORMAT_ILBC:
     setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_ILBC_20)); break;
   case AST_FORMAT_SPEEX:
-    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_SPEEX)); break;*/
+    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_SPEEX_8000)); break;*/
   case AST_FORMAT_ULAW:
     setAudioCodec(PAYLOAD_CODEC_ULAW); break;
   case AST_FORMAT_GSM:
@@ -54,7 +54,7 @@ IAXCall::setFormat(int format)
   case AST_FORMAT_ILBC:
     setAudioCodec(PAYLOAD_CODEC_ILBC_20); break;
   case AST_FORMAT_SPEEX:
-    setAudioCodec(PAYLOAD_CODEC_SPEEX); break;
+    setAudioCodec(PAYLOAD_CODEC_SPEEX_8000); break;
   default:
     setAudioCodec((CodecType) -1);
     break;
@@ -79,7 +79,7 @@ IAXCall::getSupportedFormat()
       format |= AST_FORMAT_ALAW;  break;
     case PAYLOAD_CODEC_ILBC_20:
       format |= AST_FORMAT_ILBC;  break;
-    case PAYLOAD_CODEC_SPEEX:
+    case PAYLOAD_CODEC_SPEEX_8000:
       format |= AST_FORMAT_SPEEX; break;
     default:
       break;
@@ -107,7 +107,7 @@ IAXCall::getFirstMatchingFormat(int needles)
       format = AST_FORMAT_ALAW;  break;
     case PAYLOAD_CODEC_ILBC_20:
       format = AST_FORMAT_ILBC;  break;
-    case PAYLOAD_CODEC_SPEEX:
+    case PAYLOAD_CODEC_SPEEX_8000:
       format = AST_FORMAT_SPEEX; break;
     default:
       break;

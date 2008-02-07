@@ -45,7 +45,9 @@ typedef enum {
 //  97 speex/8000
 // http://support.xten.com/viewtopic.php?p=8684&sid=3367a83d01fdcad16c7459a79859b08e
 // 100 speex/16000
-  PAYLOAD_CODEC_SPEEX = 110
+  PAYLOAD_CODEC_SPEEX_8000 = 110,
+  PAYLOAD_CODEC_SPEEX_16000 = 111,
+  PAYLOAD_CODEC_SPEEX_32000 = 112
 } CodecType;
 
 #include "audiocodec.h"

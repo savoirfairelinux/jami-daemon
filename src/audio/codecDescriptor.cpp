@@ -52,11 +52,9 @@ void
 CodecDescriptor::setDefaultOrder()
 {
   _codecOrder.clear();
-  //_codecOrder.push_back(PAYLOAD_CODEC_ILBC_20);
   _codecOrder.push_back(PAYLOAD_CODEC_ULAW);
   _codecOrder.push_back(PAYLOAD_CODEC_ALAW);
   _codecOrder.push_back(PAYLOAD_CODEC_GSM);
-  //_codecOrder.push_back(PAYLOAD_CODEC_SPEEX_8000);
 }
 
 std::string&
@@ -121,7 +119,7 @@ CodecDescriptor::getBitRate(CodecType payload)
       return 15.2;
 
   }
-  return -1;
+  return 0.0;
 }
 
 double 
@@ -137,7 +135,7 @@ CodecDescriptor::getBandwidthPerCall(CodecType payload)
     case PAYLOAD_CODEC_ILBC_20:
       return 30.8;
   }
-  return -1;
+  return 0.0;
 
 }
 
