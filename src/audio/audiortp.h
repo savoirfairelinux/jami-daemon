@@ -74,7 +74,8 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
 		float32* _floatBufferUp;
 
 		/** Debugging output file */
-		//std::ofstream _fstream;
+		std::ofstream _fstream;
+		FILE* fd;
 
 		/** libsamplerate converter for incoming voice */
 		SRC_STATE*    _src_state_spkr;

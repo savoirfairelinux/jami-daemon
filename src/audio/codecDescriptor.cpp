@@ -52,11 +52,9 @@ void
 CodecDescriptor::setDefaultOrder()
 {
   _codecOrder.clear();
-  //_codecOrder.push_back(PAYLOAD_CODEC_ILBC_20);
   _codecOrder.push_back(PAYLOAD_CODEC_ULAW);
   _codecOrder.push_back(PAYLOAD_CODEC_ALAW);
   _codecOrder.push_back(PAYLOAD_CODEC_GSM);
-  //_codecOrder.push_back(PAYLOAD_CODEC_SPEEX_8000);
 }
 
 std::string&
@@ -70,19 +68,15 @@ CodecDescriptor::getCodecName(CodecType payload)
 }
 
 bool 
-CodecDescriptor::isSupported(CodecType payload) 
+CodecDescriptor::isActive(CodecType payload) 
 {
-  CodecMap::iterator iter = _codecMap.begin();
-  while(iter!=_codecMap.end()) {
-      if (iter->first == payload) {
-	// codec is already in the map --> nothing to do
-	_debug("Codec with payload %i already in the map\n", payload);
-        //break;
-        return true;
-      }
-    iter++;
+  int i;
+  for(i=0 ; i < _codecOrder.size() ; i++)
+  {
+    if(_codecOrder[i] == payload)
+      return true;
   }
-   return false;
+  return false;
 }
 
 void 
@@ -121,7 +115,7 @@ CodecDescriptor::getBitRate(CodecType payload)
       return 15.2;
 
   }
-  return -1;
+  return 0.0;
 }
 
 double 
@@ -137,7 +131,7 @@ CodecDescriptor::getBandwidthPerCall(CodecType payload)
     case PAYLOAD_CODEC_ILBC_20:
       return 30.8;
   }
-  return -1;
+  return 0.0;
 
 }
 

@@ -1,4 +1,4 @@
-sflcodecdir = ($libdir)/sflphone/codecs
+sflcodecdir = $(libdir)/sflphone/codecs
 bin_PROGRAMS = sflphoned
 
 

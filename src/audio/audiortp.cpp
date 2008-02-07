@@ -1,4 +1,5 @@
 /*
+ *
  *  Copyright (C) 2004-2007 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -26,8 +27,6 @@
 #include <assert.h>
 #include <string>
 #include <cstring>
-//#include <fstream>  // fstream + iostream pour fstream debugging..
-//#include <iostream> // removeable...
 #include <math.h>
 #include <dlfcn.h>
 #include <iostream>
@@ -98,16 +97,16 @@ AudioRtp::closeRtpSession () {
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
-	// : _fstream("/tmp/audio.dat", std::ofstream::binary)
+	 : _fstream("/tmp/audio.dat", std::ofstream::binary|std::ios::out|std::ios::app)
 {
 	setCancel(cancelDeferred);
 	time = new ost::Time();
 	_ca = sipcall;
 	_sym = sym;
+	//std::string s = "snd.dat";
 	// AudioRtpRTX should be close if we change sample rate
 
 	//_codecSampleRate = _ca->getAudioCodec()->getClockRate();
-
 
 	// TODO: Change bind address according to user settings.
 	// TODO: this should be the local ip not the external (router) IP
@@ -142,7 +141,7 @@ AudioRtpRTX::~AudioRtpRTX () {
 	}
 	//_debug("terminate audiortprtx ended...\n");
 	_ca = 0;
-
+	//fd = fopen("snd_data", "wa");
 	if (!_sym) {
 		delete _sessionRecv; _sessionRecv = NULL;
 		delete _sessionSend; _sessionSend = NULL;
@@ -185,7 +184,6 @@ AudioRtpRTX::initAudioRtpSession (void)
 
 	try {
 		if (_ca == 0) { return; }
-		_debug("AUDIOCODEC=%i\n", _ca->getAudioCodec());
 		AudioCodec* audiocodec = loadCodec(_ca->getAudioCodec());
 		_codecSampleRate = audiocodec->getClockRate();	
 	
@@ -270,6 +268,9 @@ AudioRtpRTX::loadCodec(int payload)
 	  case 97:
             handle_codec = dlopen(CODECS_DIR "/libcodec_ilbc.so", RTLD_LAZY);
 	    break;
+	  case 110:
+	    handle_codec = dlopen(CODECS_DIR "/libcodec_speex.so", RTLD_LAZY);
+	    break;
 	}
 
         if(!handle_codec){
@@ -302,7 +303,6 @@ void
 AudioRtpRTX::sendSessionFromMic(int timestamp)
 {
 	AudioCodec* audiocodec = loadCodec(_ca->getAudioCodec());
-
 // STEP:
 //   1. get data from mic
 //   2. convert it to int16 - good sample, good rate
@@ -327,11 +327,12 @@ try {
 
 	// take the lowest
 	int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-
+        //printf("clock rate = %i\n", audiocodec->getClockRate());
 	// Get bytes from micRingBuffer to data_from_mic
 	int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
 	int nb_sample_up = nbSample;
 	int nbSamplesMax = _layerFrameSize * audiocodec->getClockRate() / 1000;
+	//_fstream.write((char*) _dataAudioLayer, nbSample);
 	
 	nbSample = reSampleData(audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
 	
@@ -343,11 +344,12 @@ try {
 		memset(toSIP + nbSample, 0, (nbSamplesMax-nbSample)*sizeof(int16));
 		nbSample = nbSamplesMax;
 	}
-	//_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toSIP[0], toSIP[1], toSIP[2]);
-
+	// debug - dump sound in a file
+//_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toSIP[0], toSIP[1], toSIP[2]);
 	// for the mono: range = 0 to RTP_FRAME2SEND * sizeof(int16)
 	// codecEncode(char *dest, int16* src, size in bytes of the src)
 	int compSize = audiocodec->codecEncode(_sendDataEncoded, toSIP, nbSample*sizeof(int16));
+	//printf("jusqu'ici tout vas bien\n");
 
 	// encode divise by two
 	// Send encoded audio sample over the network
@@ -393,8 +395,9 @@ try {
 
 	int payload = adu->getType(); // codec type
 	unsigned char* data  = (unsigned char*)adu->getData(); // data in char
-	unsigned int size    = adu->getSize(); // size in char
+	unsigned int size = adu->getSize(); // size in char
 	
+	//_fstream.write((char*) data, size);
 	audiocodec = loadCodec(payload);
 	// Decode data with relevant codec
 	_codecSampleRate = audiocodec->getClockRate();
@@ -405,7 +408,8 @@ try {
 		_debug("The packet size has been cropped\n");
 		size=max;
 	}
-
+	
+	//printf("size = %i\n", size);
 
 	if (audiocodec != NULL) {
 		int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
@@ -565,6 +569,7 @@ try {
 		Thread::sleep(TimerPort::getTimer());
 		TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
 	}
+	//_fstream.close();
 	//_debug("stop stream for audiortp loop\n");
 	audiolayer->stopStream();
 } catch(std::exception &e) {

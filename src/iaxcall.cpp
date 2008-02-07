@@ -35,16 +35,6 @@ IAXCall::setFormat(int format)
 {
   _format = format;
   switch(format) {
-  /*case AST_FORMAT_ULAW:
-    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_ULAW)); break;
-  case AST_FORMAT_GSM:
-    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_GSM)); break;
-  case AST_FORMAT_ALAW:
-    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_ALAW)); break;
-  case AST_FORMAT_ILBC:
-    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_ILBC_20)); break;
-  case AST_FORMAT_SPEEX:
-    setAudioCodec(_codecMap.getCodec(PAYLOAD_CODEC_SPEEX)); break;*/
   case AST_FORMAT_ULAW:
     setAudioCodec(PAYLOAD_CODEC_ULAW); break;
   case AST_FORMAT_GSM:
@@ -54,7 +44,7 @@ IAXCall::setFormat(int format)
   case AST_FORMAT_ILBC:
     setAudioCodec(PAYLOAD_CODEC_ILBC_20); break;
   case AST_FORMAT_SPEEX:
-    setAudioCodec(PAYLOAD_CODEC_SPEEX); break;
+    setAudioCodec(PAYLOAD_CODEC_SPEEX_8000); break;
   default:
     setAudioCodec((CodecType) -1);
     break;
@@ -65,12 +55,12 @@ IAXCall::setFormat(int format)
 int
 IAXCall::getSupportedFormat()
 {
-  CodecMap map = getCodecMap().getCodecMap();
-  int format   = 0;
+  CodecOrder map = getCodecMap().getActiveCodecs();
+  int format = 0;
+  int iter;
 
-  CodecMap::iterator iter = map.begin();
-  while(iter != map.end()) {
-    switch(iter->first) {
+  for(iter=0 ; iter < map.size() ; iter++){
+    switch(map[iter]) {
     case PAYLOAD_CODEC_ULAW:
       format |= AST_FORMAT_ULAW;  break;
     case PAYLOAD_CODEC_GSM:
@@ -79,12 +69,12 @@ IAXCall::getSupportedFormat()
       format |= AST_FORMAT_ALAW;  break;
     case PAYLOAD_CODEC_ILBC_20:
       format |= AST_FORMAT_ILBC;  break;
-    case PAYLOAD_CODEC_SPEEX:
-      format |= AST_FORMAT_SPEEX; break;
+    case PAYLOAD_CODEC_SPEEX_8000:
+      format |= AST_FORMAT_SPEEX; 
+      break;
     default:
       break;
     }
-    iter++;
   }
   return format;
 
@@ -93,30 +83,30 @@ IAXCall::getSupportedFormat()
 int
 IAXCall::getFirstMatchingFormat(int needles)
 {
-  CodecMap map = getCodecMap().getCodecMap();
-  int format   = 0;
+  CodecOrder map = getCodecMap().getActiveCodecs();
+  int format = 0;
+  int iter;
 
-  CodecMap::iterator iter = map.begin();
-  while(iter != map.end()) {
-    switch(iter->first) {
+  for(iter=0 ; iter < map.size() ; iter++) { 
+  switch(map[iter]) {
     case PAYLOAD_CODEC_ULAW:
       format = AST_FORMAT_ULAW;  break;
     case PAYLOAD_CODEC_GSM:
       format = AST_FORMAT_GSM;   break;
     case PAYLOAD_CODEC_ALAW:
-      format = AST_FORMAT_ALAW;  break;
+      format = AST_FORMAT_ALAW;  
+      break;
     case PAYLOAD_CODEC_ILBC_20:
       format = AST_FORMAT_ILBC;  break;
-    case PAYLOAD_CODEC_SPEEX:
+    case PAYLOAD_CODEC_SPEEX_8000:
       format = AST_FORMAT_SPEEX; break;
     default:
       break;
     }
-
     // Return the first that matches
     if (format & needles)
       return format;
-    iter++;
+    
   }
   return 0;
 }

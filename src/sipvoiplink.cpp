@@ -943,32 +943,32 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject)
 
   std::ostringstream media_audio;
   std::ostringstream rtpmap_attr;
-  int payload;
+  CodecType payload;
   int nbChannel;
+  int iter;
 
   // Set rtpmap according to the supported codec order
-  CodecMap map = call->getCodecMap().getCodecMap();
-  //CodecMap map = Manager::instance().getCodecDescriptorMap();	
-  CodecMap::iterator iter = map.begin();
+  //CodecMap map = call->getCodecMap().getCodecMap();
+  CodecOrder map = call->getCodecMap().getActiveCodecs();
+ 
+  for(iter=0 ; iter < map.size() ; iter++){
+      if(map[iter] != -1){
+	payload = map[iter];
+        // add each payload in the list of payload
+        media_audio << payload << " ";
 
-  while(iter != map.end()) {
-    //if (iter->second!=0 && iter->second->isActive()) {
-      if(iter->first != -1){
-	payload = iter->first;
-      // add each payload in the list of payload
-      media_audio << payload << " ";
+        rtpmap_attr << "a=rtpmap:" << payload << " " << 
+        call->getCodecMap().getCodecName(payload) << "/" << call->getCodecMap().getSampleRate(payload);
 
-      rtpmap_attr << "a=rtpmap:" << payload << " " << 
-      iter->second.data() << "/" << 8000; //iter->second->getClockRate();
-
-      /*nbChannel = iter->second->getChannel();
-      if (nbChannel!=1) {
-        rtpmap_attr << "/" << nbChannel;
-      }*/
-      rtpmap_attr << "\r\n";
-    }
+    	//TODO add channel infos
+        /*nbChannel = iter->second->getChannel();
+        if (nbChannel!=1) {
+          rtpmap_attr << "/" << nbChannel;
+        }*/
+        rtpmap_attr << "\r\n";
+      }
     // go to next codec
-    iter++;
+    //*iter++;
   }
 
   // http://www.antisip.com/documentation/eXosip2/group__howto1__initialize.html
