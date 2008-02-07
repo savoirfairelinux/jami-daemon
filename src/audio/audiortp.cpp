@@ -97,7 +97,7 @@ AudioRtp::closeRtpSession () {
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
-	 : //_fstream("/tmp/audio.dat", std::ofstream::binary|std::ios::out|std::ios::app)
+	 : _fstream("/tmp/audio.dat", std::ofstream::binary|std::ios::out|std::ios::app)
 {
 	setCancel(cancelDeferred);
 	time = new ost::Time();
