@@ -91,7 +91,7 @@ public:
    * @return true if the codec specified is supported
    * 	     false otherwise
    */
-  bool isSupported(CodecType payload);
+  bool isActive(CodecType payload);
 
  /**
   * Remove the codec with payload payload from the list

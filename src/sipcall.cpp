@@ -353,17 +353,18 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
       remote_med_m_payloads = &(remote_med->m_payloads);
       #endif
 
-      while (!osip_list_eol(remote_med_m_payloads, iPayload) && iPayload < 2) {
+      //while (!osip_list_eol(remote_med_m_payloads, iPayload) && iPayload < 2) {
+      while (!osip_list_eol(remote_med_m_payloads, iPayload)) {
         tmp = (char *)osip_list_get(remote_med_m_payloads, iPayload);
         if (tmp!=NULL) {
           int payload = atoi(tmp);
 	  _debug("remote payload = %s\n", tmp);
           CodecType audiocodec = (CodecType)payload;
-          //if (audiocodec != NULL && audiocodec->isActive()) {
-          if (audiocodec != (CodecType)-1 && _codecMap.isSupported(audiocodec))  { 
+          if (audiocodec != (CodecType)-1 && _codecMap.isActive(audiocodec))  { 
+	    _debug("PAYLOAD = %i", payload);
             listCodec << payload << " ";
             //listRtpMap << "a=rtpmap:" << payload << " " << audiocodec->getCodecName() << "/" << audiocodec->getClockRate();
-            listRtpMap << "a=rtpmap:" << payload << " " << _codecMap.getCodecName(audiocodec) << "/" << 8000;
+            listRtpMap << "a=rtpmap:" << payload << " " << _codecMap.getCodecName(audiocodec) << "/" << _codecMap.getSampleRate(audiocodec);
         // TODO: manage a way to get the channel infos    
 	/*if ( audiocodec->getChannel() != 1) {
               listRtpMap << "/" << audiocodec->getChannel();
@@ -586,7 +587,7 @@ SIPCall::setAudioCodecFromSDP(sdp_media_t* remote_med, int tid)
     if (tmp != NULL ) {
       int payload = atoi(tmp);
       // stop if we find a correct codec
-      if (_codecMap.isSupported((CodecType)payload)){
+      if (_codecMap.isActive((CodecType)payload)){
           break;
       }
     }

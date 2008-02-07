@@ -68,19 +68,15 @@ CodecDescriptor::getCodecName(CodecType payload)
 }
 
 bool 
-CodecDescriptor::isSupported(CodecType payload) 
+CodecDescriptor::isActive(CodecType payload) 
 {
-  CodecMap::iterator iter = _codecMap.begin();
-  while(iter!=_codecMap.end()) {
-      if (iter->first == payload) {
-	// codec is already in the map --> nothing to do
-	_debug("Codec with payload %i already in the map\n", payload);
-        //break;
-        return true;
-      }
-    iter++;
+  int i;
+  for(i=0 ; i < _codecOrder.size() ; i++)
+  {
+    if(_codecOrder[i] == payload)
+      return true;
   }
-   return false;
+  return false;
 }
 
 void 
