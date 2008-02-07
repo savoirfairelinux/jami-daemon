@@ -298,7 +298,8 @@ codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer data
 	else
 		codec_set_inactive(name);
 	
-	// TODO Perpetuate changes to the deamon
+	// Perpetuate changes to the deamon
+	codec_list_update_to_daemon();
 }
 
 /**
@@ -356,7 +357,8 @@ codec_move(gboolean moveUp, gpointer data)
 	else
 		codec_list_move_codec_down(indice);
 	
-	// TODO Perpetuate changes to the deamon
+	// Perpetuate changes to the deamon
+	codec_list_update_to_daemon();
 }
 
 /**
