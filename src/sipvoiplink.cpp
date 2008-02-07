@@ -959,7 +959,7 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject)
       media_audio << payload << " ";
 
       rtpmap_attr << "a=rtpmap:" << payload << " " << 
-      iter->second.data() << "/" << 8000; //iter->second->getClockRate();
+      iter->second.data() << "/" << call->getCodecMap().getSampleRate(iter->first);
 
       /*nbChannel = iter->second->getChannel();
       if (nbChannel!=1) {
