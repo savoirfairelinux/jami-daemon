@@ -23,100 +23,98 @@
 
 class Alaw : public AudioCodec {
 public:
-
-// 8 PCMA A 8000 1 [RFC3551]
-   Alaw(int payload=0)
- : AudioCodec(payload, "PCMA")
-{
-  //_description = "G711a";
-
-  _clockRate = 8000;
-  _channel   = 1;
-}
+    // 8 PCMA A 8000 1 [RFC3551]
+   	Alaw(int payload=0)
+ 	: AudioCodec(payload, "PCMA")
+	{
+  		_clockRate = 8000;
+  		_channel   = 1;
+	}
 
 
-virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
-{
-	int16* end = dst+size;
-        while(dst<end)
-                *dst++ = ALawDecode(*src++);
-        return size<<1;
-}
+	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
+	{
+		int16* end = dst+size;
+        	while(dst<end)
+                	*dst++ = ALawDecode(*src++);
+        	return size<<1;
+	}
 
-int ALawDecode(uint8 alaw)
-{
-	alaw ^= 0x55;  // A-law has alternate bits inverted for transmission
-
-        uint sign = alaw&0x80;
-
-        int linear = alaw&0x1f;
-        linear <<= 4;
-	linear += 8;  // Add a 'half' bit (0x08) to place PCM value in middle of range
-
-        alaw &= 0x7f;
-        if(alaw>=0x20)
-        {
-        	linear |= 0x100;  // Put in MSB
-		uint shift = (alaw>>4)-1;
-                linear <<= shift;
-        }
-
-        if(!sign)
-                return -linear;
-        else
-                return linear;
-}
-
-virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
-{	
-	size >>= 1;
-        uint8* end = dst+size;
-        while(dst<end)
-                *dst++ = ALawEncode(*src++);
-        return size;
-}
+	virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
+	{	
+		size >>= 1;
+        	uint8* end = dst+size;
+        	while(dst<end)
+                	*dst++ = ALawEncode(*src++);
+        	return size;
+	}
 
 
-uint8 ALawEncode (int16 pcm16)
-{
-	int p = pcm16;
-        uint u;  // u-law value we are forming
 
-        if(p<0)
-        {
-	p = ~p;
-                u = 0x80^0x10^0xff;  // Sign bit = 1 (^0x10 because this will get inverted later) ^0xff ^0xff to invert final u-Law code
-                }
-        else
+	int ALawDecode(uint8 alaw)
+	{
+		alaw ^= 0x55;  // A-law has alternate bits inverted for transmission
+        	uint sign = alaw&0x80;
+        	int linear = alaw&0x1f;
+        	linear <<= 4;
+		linear += 8;  // Add a 'half' bit (0x08) to place PCM value in middle of range
+
+        	alaw &= 0x7f;
+        	if(alaw>=0x20)
+        	{
+        		linear |= 0x100;  // Put in MSB
+			uint shift = (alaw>>4)-1;
+                	linear <<= shift;
+        	}
+
+       	 	if(!sign)
+                	return -linear;
+        	else
+                	return linear;
+	}
+
+
+	uint8 ALawEncode (int16 pcm16)
+	{
+		int p = pcm16;
+        	uint a;  // u-law value we are forming
+
+        	if(p<0)
+        	{
+			p = ~p;
+			 a = 0x00; // sign = 0
+		}
+		else
+		{
+			//+ve value
+			a = 0x80; //sign = 1
+		}
+		//calculate segment and interval numbers
+		 p >>= 4;
+        	if(p>=0x20)
                 {
-	//+ve value
-	u = 0x00^0x10^0xff;	
- }
-
-        p += 0x84; // Add uLaw bias
-
-        if(p>0x7f00)
-                p = 0x7f00;  // Clip to 15 bits
-	p >>= 3;        // Shift down to 13bit
-        if(p>=0x100)
-                {
-                p >>= 4;
-                u ^= 0x40;
+                	if(p>=0x100)
+                        {
+                        	p >>= 4;
+                        	a += 0x40;
+                        }
+                	if(p>=0x40)
+                        {
+                        	p >>= 2;
+                        	a += 0x20;
+                        }
+                	if(p>=0x20)
+                        {
+                        	p >>= 1;
+                        	a += 0x10;
+                        }
                 }
-        if(p>=0x40)
-                {
-                p >>= 2;
-                u ^= 0x20;
-                }
-        if(p>=0x20)
-                {
-                p >>= 1;
-                u ^= 0x10;
-                }
-	u ^= p; // u now equal to encoded u-law value (with all bits inverted)
+	// a&0x70 now holds segment value and 'p' the interval number
+	a += p; // a now equal to encoded A-law value
 
-        return u;
-}
+	return a^0x55; // A-law has alternate bits inverted for transmission
+	}
+
 };
 
 // the class factories
