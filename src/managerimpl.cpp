@@ -1090,7 +1090,7 @@ ManagerImpl::initAudioCodec (void)
   // init list of all supported codecs
   _codecDescriptorMap.init();
   // if the user never set the codec list, use the default one
-  if(getConfigString(AUDIO, "Activecodecs") == ""){
+  if(getConfigString(AUDIO, "ActiveCodecs") == ""){
     _codecDescriptorMap.setDefaultOrder();
   }
   // else retrieve the one he set in the config file

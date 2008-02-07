@@ -43,7 +43,8 @@ CodecDescriptor::init()
   _codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
   _codecMap[PAYLOAD_CODEC_GSM] = "GSM";
   _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
-  _codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
+  //_codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
+  _codecMap[PAYLOAD_CODEC_SPEEX_8000] = "speex";;
 
 }
 
@@ -51,9 +52,11 @@ void
 CodecDescriptor::setDefaultOrder()
 {
   _codecOrder.clear();
+  //_codecOrder.push_back(PAYLOAD_CODEC_ILBC_20);
   _codecOrder.push_back(PAYLOAD_CODEC_ULAW);
   _codecOrder.push_back(PAYLOAD_CODEC_ALAW);
   _codecOrder.push_back(PAYLOAD_CODEC_GSM);
+  //_codecOrder.push_back(PAYLOAD_CODEC_SPEEX_8000);
 }
 
 std::string&
@@ -154,6 +157,15 @@ CodecDescriptor::getSampleRate(CodecType payload)
     case PAYLOAD_CODEC_ILBC_20:
       printf("PAYLOAD = %i\n", payload);
       return 8000;
+    case PAYLOAD_CODEC_SPEEX_8000:
+      printf("PAYLOAD = %i\n", payload);
+      return 8000;
+    case PAYLOAD_CODEC_SPEEX_16000:
+      printf("PAYLOAD = %i\n", payload);
+      return 16000;
+    case PAYLOAD_CODEC_SPEEX_32000:
+      printf("PAYLOAD = %i\n", payload);
+      return 32000;
     default:
       return -1;
   }

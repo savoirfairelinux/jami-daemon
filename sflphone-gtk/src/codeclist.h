@@ -54,5 +54,6 @@ void codec_set_prefered_order(guint index);
 
 void codec_list_move_codec_up(guint index);
 void codec_list_move_codec_down(guint index);
+void codec_list_update_to_daemon();
 
 #endif
