@@ -30,15 +30,17 @@ public:
   //	_active = false;
 
   	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
+
+
 }
 
     virtual ~AudioCodec() {}
-
     /**
      * @return the number of bytes decoded
      */
     virtual int codecDecode(short *, unsigned char *, unsigned int) = 0;
     virtual int codecEncode(unsigned char *, short *, unsigned int) = 0;   
+
 
   /** Value used for SDP negotiation */
   std::string getCodecName() { return _codecName; }
