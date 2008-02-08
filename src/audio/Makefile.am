@@ -29,9 +29,9 @@ SPEEX_FLAG=
 SPEEX_LIB=
 endif
 
-#SUBDIRS = ilbc
+#SUBDIRS = gsm 
  
-libaudio_la_SOURCES =      audiofile.cpp	 tonelist.cpp     \
+libaudio_la_SOURCES =    audiofile.cpp	 tonelist.cpp     \
 audiortp.cpp         dtmf.cpp   tone.cpp  audiolayer.cpp audiodevice.cpp  dtmfgenerator.cpp   \
 tonegenerator.cpp   codecDescriptor.cpp \
 audioloop.cpp ringbuffer.cpp $(SPEEX_SOURCES_CPP)
@@ -40,7 +40,7 @@ AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $
  	      -DCODECS_DIR=\""$(sflcodecdir)"\"	
 libaudio_la_CPPFLAGS = $(SPEEX_FLAG)
 
-noinst_HEADERS = audioloop.h       common.h ringbuffer.h           audiofile.h  \
+noinst_HEADERS = audioloop.h    common.h ringbuffer.h           audiofile.h  \
  tonelist.h         audiortp.h audiocodec.h    audiolayer.h audiodevice.h \
  dtmfgenerator.h         tonegenerator.h     \
  codecDescriptor.h    dtmf.h tone.h \
@@ -63,8 +63,8 @@ uninstall-libcodec_ulaw_so:
 	rm -f $(sflcodecdir)/libcodec_ulaw.so
 uninstall-libcodec_alaw_so:
 	rm -f $(sflcodecdir)/libcodec_alaw.so
-uninstall-libcodec_gsm_so:
-	rm -f $(sflcodecdir)/libcodec_gsm.so  
+#uninstall-libcodec_gsm_so:
+#	rm -f $(sflcodecdir)/libcodec_gsm.so  
 uninstall-libcodec_speex_so:
 	rm -f $(sflcodecdir)/libcodec_speex.so  
 	rm -rf $(sflcodecdir) 

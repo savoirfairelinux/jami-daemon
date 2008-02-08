@@ -31,7 +31,7 @@ public:
   		_channel   = 1;
 	}
 
-
+        virtual ~Alaw(){}
 	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
 	{
 		int16* end = dst+size;

@@ -97,13 +97,12 @@ AudioRtp::closeRtpSession () {
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
-	 : _fstream("/tmp/audio.dat", std::ofstream::binary|std::ios::out|std::ios::app)
+	 : _fstream("/tmp/audio.gsm", std::ofstream::binary|std::ios::out|std::ios::app)
 {
 	setCancel(cancelDeferred);
 	time = new ost::Time();
 	_ca = sipcall;
 	_sym = sym;
-	//std::string s = "snd.dat";
 	// AudioRtpRTX should be close if we change sample rate
 
 	//_codecSampleRate = _ca->getAudioCodec()->getClockRate();
@@ -141,7 +140,6 @@ AudioRtpRTX::~AudioRtpRTX () {
 	}
 	//_debug("terminate audiortprtx ended...\n");
 	_ca = 0;
-	//fd = fopen("snd_data", "wa");
 	if (!_sym) {
 		delete _sessionRecv; _sessionRecv = NULL;
 		delete _sessionSend; _sessionSend = NULL;
@@ -321,7 +319,6 @@ try {
 
 	// we have to get 20ms of data from the mic *20/1000 = /50
 	int maxBytesToGet = _layerSampleRate * _layerFrameSize * sizeof(SFLDataFormat) / 1000;
-
 	// available bytes inside ringbuffer
 	int availBytesFromMic = audiolayer->canGetMic();
 
@@ -332,7 +329,6 @@ try {
 	int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
 	int nb_sample_up = nbSample;
 	int nbSamplesMax = _layerFrameSize * audiocodec->getClockRate() / 1000;
-	//_fstream.write((char*) _dataAudioLayer, nbSample);
 	
 	nbSample = reSampleData(audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
 	
@@ -348,6 +344,7 @@ try {
 //_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toSIP[0], toSIP[1], toSIP[2]);
 	// for the mono: range = 0 to RTP_FRAME2SEND * sizeof(int16)
 	// codecEncode(char *dest, int16* src, size in bytes of the src)
+	//int compSize = audiocodec->codecEncode(_sendDataEncoded, toSIP, nbSample*sizeof(int16));
 	int compSize = audiocodec->codecEncode(_sendDataEncoded, toSIP, nbSample*sizeof(int16));
 	//printf("jusqu'ici tout vas bien\n");
 
@@ -401,7 +398,7 @@ try {
 	audiocodec = loadCodec(payload);
 	// Decode data with relevant codec
 	_codecSampleRate = audiocodec->getClockRate();
-	int max = (int)(_codecSampleRate * _layerFrameSize);
+	int max = (int)(_codecSampleRate * _layerFrameSize / 1000);
 
 	if ( size > max ) {
 		_debug("We have received from RTP a packet larger than expected: %s VS %s\n", size, max);
@@ -413,6 +410,7 @@ try {
 
 	if (audiocodec != NULL) {
 		int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
+	        _fstream.write((char*) _receiveDataDecoded, 160);
 		//buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
 		int nbInt16 = expandedSize / sizeof(int16);
 		//nbInt16 represents the number of samples we just decoded
@@ -569,7 +567,7 @@ try {
 		Thread::sleep(TimerPort::getTimer());
 		TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
 	}
-	//_fstream.close();
+	_fstream.close();
 	//_debug("stop stream for audiortp loop\n");
 	audiolayer->stopStream();
 } catch(std::exception &e) {
