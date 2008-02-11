@@ -15,12 +15,12 @@ libcodec_gsm_so_SOURCES = gsmcodec.cpp
 libcodec_gsm_so_CFLAGS = -fPIC -g -Wall 
 libcodec_gsm_so_LDFLAGS = -shared -lc -lgsm
 
-libcodec_speex_so_SOURCES = CodecSpeex.cpp
+libcodec_speex_so_SOURCES = speexcodec.cpp
 libcodec_speex_so_CFLAGS = -fPIC -g -Wall 
 libcodec_speex_so_LDFLAGS = -shared -lc -lspeex
 
 if USE_SPEEX
-SPEEX_SOURCES_CPP=CodecSpeex.cpp
+SPEEX_SOURCES_CPP=speexcodec.cpp
 SPEEX_FLAG=-DHAVE_SPEEX
 SPEEX_LIB=-lspeex
 else
@@ -43,8 +43,7 @@ libaudio_la_CPPFLAGS = $(SPEEX_FLAG)
 noinst_HEADERS = audioloop.h    common.h ringbuffer.h    audiofile.h  \
  tonelist.h         audiortp.h audiocodec.h    audiolayer.h audiodevice.h \
  dtmfgenerator.h         tonegenerator.h     \
- codecDescriptor.h    dtmf.h tone.h \
- CodecSpeex.h
+ codecDescriptor.h    dtmf.h tone.h 
 
 install-exec-local:	install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_gsm_so install-libcodec_speex_so
 uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_so

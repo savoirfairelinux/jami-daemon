@@ -390,7 +390,6 @@ try {
 	
 	//_fstream.write((char*) data, size);
 	// Decode data with relevant codec
-	_codecSampleRate = _audiocodec->getClockRate();
 	int max = (int)(_codecSampleRate * _layerFrameSize / 1000);
 
 	if ( size > max ) {
@@ -404,6 +403,7 @@ try {
 	if (_audiocodec != NULL) {
 		
 		int expandedSize = _audiocodec->codecDecode(_receiveDataDecoded, data, size);
+	//	printf("%i\n", expandedSize);
 	        //_fstream.write((char*) _receiveDataDecoded, );
 		//buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
 		int nbInt16 = expandedSize / sizeof(int16);
@@ -518,12 +518,12 @@ AudioRtpRTX::run () {
 //mic, we receive from soundcard in stereo, and we send encoded
 //encoding before sending
 AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+loadCodec(_ca->getAudioCodec());
 
 _layerFrameSize = audiolayer->getFrameSize(); // en ms
 _layerSampleRate = audiolayer->getSampleRate();	
 initBuffers();
 int step; 
-loadCodec(_ca->getAudioCodec());
 
 try {
 	// Init the session
