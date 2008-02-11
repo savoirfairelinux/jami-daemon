@@ -17,7 +17,6 @@ protected:
   unsigned int _channel;
 
 private:
-  //bool _active;
   int _payload;
   bool _hasDynamicPayload;
 
@@ -27,14 +26,13 @@ public:
 	_payload = payload;
   	_clockRate = 8000; // default
   	_channel   = 1; // default
-  //	_active = false;
 
   	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
 
-
 }
 
-    virtual ~AudioCodec() {}
+    virtual ~AudioCodec() {
+	}
     /**
      * @return the number of bytes decoded
      */
@@ -48,8 +46,6 @@ public:
   bool hasDynamicPayload() { return _hasDynamicPayload; }
   unsigned int getClockRate() { return _clockRate; }
   unsigned int getChannel() { return _channel; }
-  //bool isActive() { return _active; }
-  //void setActive(bool active) { _active = active; }
   
 
 };
