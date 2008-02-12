@@ -22,11 +22,7 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "audiocodec.h"
 #include "codecDescriptor.h"
-/*#ifdef HAVE_SPEEX
- #include "CodecSpeex.h"
-#endif*/
 
 CodecDescriptor::CodecDescriptor() 
 {
@@ -43,7 +39,7 @@ CodecDescriptor::init()
   _codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
   _codecMap[PAYLOAD_CODEC_GSM] = "GSM";
   _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
-  //_codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
+  _codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
   _codecMap[PAYLOAD_CODEC_SPEEX_8000] = "speex";;
 
 }
@@ -112,7 +108,7 @@ CodecDescriptor::getBitRate(CodecType payload)
     case PAYLOAD_CODEC_ILBC_20:
       return 15.2;
     case PAYLOAD_CODEC_ILBC_30:
-      return 15.2;
+      return 13.3;
 
   }
   return 0.0;

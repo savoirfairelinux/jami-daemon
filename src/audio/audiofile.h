@@ -24,7 +24,7 @@
 #define __AUDIOFILE_H__
 
 #include "audioloop.h"
-#include "audiocodec.h"
+#include "codecs/audiocodec.h"
 
 /**
 	@author Yan Morin <yan.morin@savoirfairelinux.com>

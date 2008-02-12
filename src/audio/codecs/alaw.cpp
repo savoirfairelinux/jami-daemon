@@ -18,7 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "common.h"
+#include "../common.h"
 #include "audiocodec.h"
 
 class Alaw : public AudioCodec {
