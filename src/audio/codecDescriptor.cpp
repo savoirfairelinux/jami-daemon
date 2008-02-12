@@ -39,7 +39,7 @@ CodecDescriptor::init()
   _codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
   _codecMap[PAYLOAD_CODEC_GSM] = "GSM";
   _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
-  _codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
+  //_codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
   _codecMap[PAYLOAD_CODEC_SPEEX_8000] = "speex";;
 
 }
