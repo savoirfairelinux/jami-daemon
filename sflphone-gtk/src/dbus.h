@@ -2,6 +2,7 @@
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,8 +57,20 @@ void dbus_set_default_account(gchar * accountID);
 gchar** dbus_codec_list();
 gchar** dbus_codec_details(int payload);
 gchar** dbus_default_codec_list();
-void dbus_set_active_codec_list( const gchar** list );
 gchar** dbus_get_active_codec_list( void );
+void dbus_set_active_codec_list( const gchar** list );
+
+// Audio devices related methods
+gchar** dbus_get_audio_manager_list();
+void dbus_set_audio_manager(gchar* audioManager);
+gchar** dbus_get_audio_output_device_list();
+void dbus_set_audio_output_device(const int index);
+gchar** dbus_get_audio_input_device_list();
+void dbus_set_audio_input_device(const int index);
+// Output and input current devices
+gchar** dbus_get_current_audio_devices_index();
+// Name, Max Input Channels, Max Output Channels, Sample rate
+gchar** dbus_get_audio_device_details(const int index);
 
 /* Instance */
 void dbus_register( int pid, gchar * name);

@@ -138,7 +138,23 @@ config_window_fill_codec_list()
 void
 config_window_fill_audio_manager_list()
 {
+	GtkTreeIter iter;
+	gchar** list;
+	gchar* managerName;
+
+	gtk_list_store_clear(audioManagerStore);
 	
+	// Call dbus to retreive list
+	list = dbus_get_audio_manager_list();
+	
+	// For each API name included in list
+	int c = 0;
+	for(managerName = list[c]; managerName != NULL; managerName = list[c])
+	{
+		c++;
+		gtk_list_store_append(audioManagerStore, &iter);
+		gtk_list_store_set(audioManagerStore, &iter, 0 , managerName, -1);
+	}
 }
 
 /**
@@ -147,7 +163,23 @@ config_window_fill_audio_manager_list()
 void
 config_window_fill_output_audio_device_list()
 {
+	GtkTreeIter iter;
+	gchar** list;
+	gchar* audioDevice;
+
+	gtk_list_store_clear(outputAudioDeviceManagerStore);
 	
+	// Call dbus to retreive list
+	list = dbus_get_audio_output_device_list();
+	
+	// For each device name included in list
+	int c = 0;
+	for(audioDevice = list[c]; audioDevice != NULL; audioDevice = list[c])
+	{
+		c++;
+		gtk_list_store_append(outputAudioDeviceManagerStore, &iter);
+		gtk_list_store_set(outputAudioDeviceManagerStore, &iter, 0 , audioDevice, -1);
+	}
 }
 
 /**
@@ -156,7 +188,66 @@ config_window_fill_output_audio_device_list()
 void
 config_window_fill_input_audio_device_list()
 {
+	GtkTreeIter iter;
+	gchar** list;
+	gchar* audioDevice;
+
+	gtk_list_store_clear(inputAudioDeviceManagerStore);
 	
+	// Call dbus to retreive list
+	list = dbus_get_audio_input_device_list();
+	
+	// For each device name included in list
+	int c = 0;
+	for(audioDevice = list[c]; audioDevice != NULL; audioDevice = list[c])
+	{
+		c++;
+		gtk_list_store_append(inputAudioDeviceManagerStore, &iter);
+		gtk_list_store_set(inputAudioDeviceManagerStore, &iter, 0 , audioDevice, -1);
+	}
+}
+
+/**
+ * TODO
+ */
+static void
+select_audio_manager(GtkWidget* widget, gpointer data)
+{
+	dbus_set_audio_manager("ALSA");
+}
+
+/**
+ * 
+ */
+static void
+select_audio_output_device(GtkWidget* widget, gpointer data)
+{
+	dbus_set_audio_output_device(8);
+}
+
+/**
+ * 
+ */
+static void
+select_audio_input_device(GtkWidget* widget, gpointer data)
+{
+	dbus_set_audio_input_device(11);
+}
+
+/**
+ * Refresh all audio settings
+ */
+static void
+detect_all_audio_settings()
+{
+	// TODO Remember selected entry for each list
+	
+	// Update lists
+	config_window_fill_audio_manager_list();
+	config_window_fill_output_audio_device_list();
+	config_window_fill_input_audio_device_list();
+	
+	// Reselect entries or set to default
 }
 
 /**
@@ -403,7 +494,7 @@ bold_if_default_account(GtkTreeViewColumn *col,
 
 /**
  * TODO Action when restore default codecs is done
- 
+ *
 void
 default_codecs(GtkWidget* widget, gpointer data)
 {
@@ -667,7 +758,6 @@ create_audio_tab ()
 	GtkWidget *comboBox;
 	GtkWidget *refreshButton;
 	GtkCellRenderer *renderer;
-	GtkTreeIter iter;
 	
 	GtkWidget *codecTable;
 	
@@ -696,17 +786,18 @@ create_audio_tab ()
 	
 	// Device : Audio manager
 	// Create title label
-	titleLabel = gtk_label_new("Audio manager");
+	titleLabel = gtk_label_new("Audio manager:");
     gtk_misc_set_alignment(GTK_MISC(titleLabel), 0, 0.5);
 	gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(titleLabel);	
+	gtk_widget_show(titleLabel);
 	// Set choices of audio managers
 	audioManagerStore = gtk_list_store_new(1, G_TYPE_STRING);
-	gtk_list_store_append(audioManagerStore, &iter);
-	gtk_list_store_set(audioManagerStore, &iter, 0 , "ALSA", -1);
+	config_window_fill_audio_manager_list();
 	comboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(audioManagerStore));
 	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 0);
 	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), comboBox);
+	g_signal_connect(G_OBJECT(comboBox), "changed", G_CALLBACK(select_audio_manager), comboBox);
+	
   	// Set rendering
 	renderer = gtk_cell_renderer_text_new();
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(comboBox), renderer, TRUE);
@@ -722,12 +813,13 @@ create_audio_tab ()
     gtk_widget_show(titleLabel);
 	// Set choices of output devices
 	outputAudioDeviceManagerStore = gtk_list_store_new(1, G_TYPE_STRING);
-	gtk_list_store_append(outputAudioDeviceManagerStore, &iter);
-	gtk_list_store_set(outputAudioDeviceManagerStore, &iter, 0 , "Default", -1);
+	config_window_fill_output_audio_device_list();
 	comboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioDeviceManagerStore));
 	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 0);
   	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), comboBox);
-  	// Set rendering
+	g_signal_connect(G_OBJECT(comboBox), "changed", G_CALLBACK(select_audio_output_device), comboBox);
+
+	// Set rendering
 	renderer = gtk_cell_renderer_text_new();
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(comboBox), renderer, TRUE);
 	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(comboBox), renderer, "text", 0, NULL);
@@ -742,12 +834,13 @@ create_audio_tab ()
 	gtk_widget_show(titleLabel);
 	// Set choices of output devices
 	inputAudioDeviceManagerStore = gtk_list_store_new(1, G_TYPE_STRING);
-	gtk_list_store_append(inputAudioDeviceManagerStore, &iter);
-	gtk_list_store_set(inputAudioDeviceManagerStore, &iter, 0 , "Default", -1);
+	config_window_fill_input_audio_device_list();
 	comboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputAudioDeviceManagerStore));
 	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 0);
   	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), comboBox);
-  	// Set rendering
+	g_signal_connect(G_OBJECT(comboBox), "changed", G_CALLBACK(select_audio_input_device), comboBox);
+
+	// Set rendering
 	renderer = gtk_cell_renderer_text_new();
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(comboBox), renderer, TRUE);
 	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(comboBox), renderer, "text", 0, NULL);
@@ -758,6 +851,8 @@ create_audio_tab ()
 	refreshButton = gtk_button_new_with_label("Detect all");
 	gtk_button_set_image(GTK_BUTTON(refreshButton), gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_BUTTON));
 	gtk_table_attach(GTK_TABLE(deviceTable), refreshButton, 3, 4, 0, 3, GTK_EXPAND, GTK_EXPAND, 0, 0);
+	// Set event on selection
+	g_signal_connect(G_OBJECT(refreshButton), "clicked", G_CALLBACK(detect_all_audio_settings), NULL);
 	
     // Codec section label
     codecLabel = gtk_label_new(NULL);

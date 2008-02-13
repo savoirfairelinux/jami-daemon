@@ -4,6 +4,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1204,6 +1205,106 @@ ManagerImpl::getCodecDetails( const ::DBus::Int32& payload )
 
   return v;
 }
+
+/**
+ * Get list of supported audio manager
+ */
+std::vector<std::string>
+ManagerImpl::getAudioManagerList(void)
+{
+	std::vector<std::string> v;
+	_debug("Get audio manager list");
+	
+	// Return only ALSA for now, pulseAudio maybe later
+	v.push_back("ALSA");
+	return v;
+}
+
+/**
+ * Set audio manager (always put ALSA)
+ */
+void
+ManagerImpl::setAudioManager(const std::string& audioManager)
+{
+	_debug("Set audio manager");
+	// Do nothing for now
+}
+
+/**
+ * Get list of supported audio output device
+ */
+std::vector<std::string>
+ManagerImpl::getAudioOutputDeviceList(void)
+{
+	_debug("Get audio output device list");
+	return _audiodriver->getAudioDeviceList(paALSA, _audiodriver->OutputDevice);
+}
+
+/**
+ * Set audio output device
+ */
+void
+ManagerImpl::setAudioOutputDevice(const int index)
+{
+	_debug("Set audio output device");
+	printf("%l audio output set\n", index);
+}
+
+/**
+ * Get list of supported audio input device
+ */
+std::vector<std::string>
+ManagerImpl::getAudioInputDeviceList(void)
+{
+	_debug("Get audio input device list");
+	return _audiodriver->getAudioDeviceList(paALSA, _audiodriver->InputDevice);
+}
+
+/**
+ * Set audio input device
+ */
+void
+ManagerImpl::setAudioInputDevice(const int index)
+{
+	// TODO
+	_debug("Set audio input device");
+	printf("%l audio input set\n", index);
+}
+
+/**
+ * Get string array representing integer indexes of output and input device
+ */
+std::vector<std::string>
+ManagerImpl::getCurrentAudioDevicesIndex()
+{
+	// TODO
+	_debug("Get current audio devices index");
+	std::vector<std::string> v;
+	
+	v.push_back("6");
+	v.push_back("12");
+	
+	return v;
+}
+
+/**
+ * Get name, max input channels, max output channels, sample rate of audio device
+ */
+std::vector<std::string>
+ManagerImpl::getAudioDeviceDetails(const int index)
+{
+	// TODO
+	_debug("Get audio input device list");
+	std::vector<std::string> v;
+	
+	v.push_back("default");
+	v.push_back("128");
+	v.push_back("128");
+	v.push_back("44100");
+	
+	return v;
+}
+
 
 
 /**

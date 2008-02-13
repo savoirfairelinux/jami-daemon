@@ -3,6 +3,7 @@
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,11 +47,20 @@ public:
     ::DBus::String getDefaultAccount(  );
     void setDefaultAccount( const ::DBus::String& accountID  );
     
-    std::vector< ::DBus::String  > getCodecList(  );
+    std::vector< ::DBus::String > getCodecList(  );
     std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload );
     std::vector< ::DBus::String > getActiveCodecList(  );
     void setActiveCodecList( const std::vector< ::DBus::String >& list );
- 
+    
+    std::vector< ::DBus::String > getAudioManagerList();
+    void setAudioManager(const ::DBus::String& audioManager);
+    std::vector< ::DBus::String > getAudioOutputDeviceList();
+    void setAudioOutputDevice(const ::DBus::Int32& index);
+    std::vector< ::DBus::String > getAudioInputDeviceList();
+    void setAudioInputDevice(const ::DBus::Int32& index);
+    std::vector< ::DBus::String > getCurrentAudioDevicesIndex();
+    std::vector< ::DBus::String > getAudioDeviceDetails(const ::DBus::Int32& index);
+   
     std::vector< ::DBus::String > getToneLocaleList(  );
     std::vector< ::DBus::String > getPlaybackDeviceList(  );
     std::vector< ::DBus::String > getRecordDeviceList(  );
