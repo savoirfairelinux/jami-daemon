@@ -23,7 +23,6 @@
 #include "eventthread.h"
 
 #include "manager.h"
-#include "audio/audiocodec.h"
 #include "audio/audiolayer.h"
 
 #include <samplerate.h>

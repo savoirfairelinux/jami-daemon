@@ -22,11 +22,7 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "audiocodec.h"
 #include "codecDescriptor.h"
-/*#ifdef HAVE_SPEEX
- #include "CodecSpeex.h"
-#endif*/
 
 CodecDescriptor::CodecDescriptor() 
 {
@@ -112,7 +108,7 @@ CodecDescriptor::getBitRate(CodecType payload)
     case PAYLOAD_CODEC_ILBC_20:
       return 15.2;
     case PAYLOAD_CODEC_ILBC_30:
-      return 15.2;
+      return 13.3;
 
   }
   return 0.0;

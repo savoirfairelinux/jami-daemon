@@ -50,7 +50,7 @@ typedef enum {
   PAYLOAD_CODEC_SPEEX_32000 = 112
 } CodecType;
 
-#include "audiocodec.h"
+#include "codecs/audiocodec.h"
 
 /* A codec is identified by its payload. A payload is associated with a name. */ 
 typedef std::map<CodecType, std::string> CodecMap;

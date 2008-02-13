@@ -18,7 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "common.h"
+#include "../common.h"
 #include "audiocodec.h"
 
 class Alaw : public AudioCodec {
@@ -31,7 +31,7 @@ public:
   		_channel   = 1;
 	}
 
-
+        virtual ~Alaw(){}
 	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
 	{
 		int16* end = dst+size;

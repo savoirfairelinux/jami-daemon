@@ -40,7 +40,6 @@
 #include "manager.h"
 #include "account.h"
 #include "audio/audiolayer.h"
-#include "audio/audiocodec.h"
 #include "audio/tonelist.h"
 
 #include "accountcreator.h" // create new account

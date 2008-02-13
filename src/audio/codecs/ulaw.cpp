@@ -20,7 +20,7 @@
 
 
 
-#include "common.h"
+#include "../common.h"
 #include "audiocodec.h"
 
 class Ulaw : public AudioCodec {
