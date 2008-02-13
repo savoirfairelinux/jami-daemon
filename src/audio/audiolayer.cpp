@@ -115,13 +115,15 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
 {
   closeStream();
 
+  _indexIn = indexIn;
+  _indexOut = indexOut;
   _sampleRate = sampleRate;
   _frameSize = frameSize;	
   int portaudioFramePerBuffer = FRAME_PER_BUFFER; //=FRAME_PER_BUFFER; //= paFramesPerBufferUnspecified;
   //int portaudioFramePerBuffer = (int) (8000 * frameSize / 1000); 	//= paFramesPerBufferUnspecified;
   
   // Select default audio API
-  selectPreferedApi(paALSA, indexIn, indexOut);
+//  selectPreferedApi(paALSA, _indexIn, _indexOut);
   
   int nbDevice = getDeviceCount();
 	_debug("Nb of audio devices: %i\n",nbDevice);
@@ -129,17 +131,7 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
     _debug("Portaudio detect no sound card.");
     return;
   } else {
-//    not good, 
-//    if (indexIn >= nbDevice) {
-//      _debug(" Portaudio auto-select device #0 for input because device #%02d is not found\n", indexIn);
-//      indexIn = 0;
-//    }
-//    if (indexOut >= nbDevice) {
-//      _debug(" Portaudio auto-select device #0 for output because device #%02d is not found\n", indexOut);
-//      indexOut = 0;
-//    }
-
-    _debug(" Setting audiolayer: device     in=%2d, out=%2d\n", indexIn, indexOut);
+    _debug(" Setting audiolayer: device     in=%2d, out=%2d\n", _indexIn, _indexOut);
     _debug("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
     _debug("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLPortaudioFormatString);
     _debug("                   : frame per buffer=%d\n", portaudioFramePerBuffer);
@@ -148,15 +140,15 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
   try {
     // Set up the parameters required to open a (Callback)Stream:
     portaudio::DirectionSpecificStreamParameters 
-      inParams(portaudio::System::instance().deviceByIndex(indexIn), 
+      inParams(portaudio::System::instance().deviceByIndex(_indexIn), 
 	     _inChannel, SFLPortaudioFormat, true, 
-	     portaudio::System::instance().deviceByIndex(indexIn).defaultLowInputLatency(), 
+	     portaudio::System::instance().deviceByIndex(_indexIn).defaultLowInputLatency(), 
 	     NULL);
 
      portaudio::DirectionSpecificStreamParameters outParams(
-                portaudio::System::instance().deviceByIndex(indexOut), 
+                portaudio::System::instance().deviceByIndex(_indexOut), 
 	        _outChannel, SFLPortaudioFormat, true, 
-	        portaudio::System::instance().deviceByIndex(indexOut).defaultLowOutputLatency(), 
+	        portaudio::System::instance().deviceByIndex(_indexOut).defaultLowOutputLatency(), 
 	        NULL);
 
     // like audacity

@@ -117,6 +117,12 @@ class AudioLayer {
 		portaudio::MemFunCallbackStream<AudioLayer> *_stream;
 
 		/**
+		 * Portaudio indexes of audio devices on which stream has been opened 
+		 */
+		int _indexIn;
+		int _indexOut;
+		
+		/**
 		 * Sample Rate SFLphone should send sound data to the sound card 
 		 * The value can be set in the user config file- now: 44100HZ
 		 */
