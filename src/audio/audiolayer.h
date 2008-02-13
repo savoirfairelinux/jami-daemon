@@ -30,7 +30,6 @@
 #include "../global.h"
 #include "ringbuffer.h"
 #include "audiodevice.h"
-#include "../user_cfg.h"
 
 #include <vector.h>
 

@@ -26,6 +26,7 @@
 #include "audiolayer.h"
 #include "../global.h"
 #include "../manager.h"
+#include "../user_cfg.h"
 
 //#define SFL_TEST
 //#define SFL_TEST_SINE
