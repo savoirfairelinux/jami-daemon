@@ -31,7 +31,7 @@
 #include "ringbuffer.h"
 #include "audiodevice.h"
 
-#include <vector.h>
+#include <vector>
 
 #define FRAME_PER_BUFFER	160
 
