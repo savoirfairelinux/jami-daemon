@@ -3,6 +3,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +30,8 @@
 #include "../global.h"
 #include "ringbuffer.h"
 #include "audiodevice.h"
+
+#include <vector>
 
 #define FRAME_PER_BUFFER	160
 
@@ -76,6 +79,24 @@ class AudioLayer {
 		unsigned int getSampleRate() { return _sampleRate; }
 		unsigned int getFrameSize() { return _frameSize; }
 		int getDeviceCount();
+		
+		
+		
+		
+		
+		
+		
+		
+		// NOW
+		void selectPreferedApi(PaHostApiTypeId apiTypeID, int& outputDeviceIndex, int& inputDeviceIndex);
+		
+		std::vector<std::string> getAudioDeviceList(PaHostApiTypeId apiTypeID, int ioDeviceMask);
+//		void setOutputAudioDevice(int index);
+//		std::vector<std::string> getInputAudioDeviceList();
+//		void setInputAudioDevice(int index);
+//		std::vector<AudioDevice*> getAudioDevicesInfo();
+		
+		
 		AudioDevice* getAudioDeviceInfo(int index, int ioDeviceMask);
 
 		enum IODEVICE {InputDevice=0x01, OutputDevice=0x02 };
@@ -95,6 +116,12 @@ class AudioLayer {
 
 		portaudio::MemFunCallbackStream<AudioLayer> *_stream;
 
+		/**
+		 * Portaudio indexes of audio devices on which stream has been opened 
+		 */
+		int _indexIn;
+		int _indexOut;
+		
 		/**
 		 * Sample Rate SFLphone should send sound data to the sound card 
 		 * The value can be set in the user config file- now: 44100HZ

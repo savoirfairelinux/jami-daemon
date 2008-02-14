@@ -3,6 +3,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 #include "audiolayer.h"
 #include "../global.h"
 #include "../manager.h"
+#include "../user_cfg.h"
 
 //#define SFL_TEST
 //#define SFL_TEST_SINE
@@ -113,29 +115,23 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
 {
   closeStream();
 
+  _indexIn = indexIn;
+  _indexOut = indexOut;
   _sampleRate = sampleRate;
   _frameSize = frameSize;	
   int portaudioFramePerBuffer = FRAME_PER_BUFFER; //=FRAME_PER_BUFFER; //= paFramesPerBufferUnspecified;
-  //int portaudioFramePerBuffer = (int) (8000 * frameSize / 1000); 
-//= paFramesPerBufferUnspecified;
-
+  //int portaudioFramePerBuffer = (int) (8000 * frameSize / 1000); 	//= paFramesPerBufferUnspecified;
+  
+  // Select default audio API
+//  selectPreferedApi(paALSA, _indexIn, _indexOut);
+  
   int nbDevice = getDeviceCount();
 	_debug("Nb of audio devices: %i\n",nbDevice);
   if (nbDevice == 0) {
     _debug("Portaudio detect no sound card.");
     return;
   } else {
-//    not good, 
-//    if (indexIn >= nbDevice) {
-//      _debug(" Portaudio auto-select device #0 for input because device #%02d is not found\n", indexIn);
-//      indexIn = 0;
-//    }
-//    if (indexOut >= nbDevice) {
-//      _debug(" Portaudio auto-select device #0 for output because device #%02d is not found\n", indexOut);
-//      indexOut = 0;
-//    }
-
-    _debug(" Setting audiolayer: device     in=%2d, out=%2d\n", indexIn, indexOut);
+    _debug(" Setting audiolayer: device     in=%2d, out=%2d\n", _indexIn, _indexOut);
     _debug("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
     _debug("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLPortaudioFormatString);
     _debug("                   : frame per buffer=%d\n", portaudioFramePerBuffer);
@@ -144,15 +140,15 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
   try {
     // Set up the parameters required to open a (Callback)Stream:
     portaudio::DirectionSpecificStreamParameters 
-      inParams(portaudio::System::instance().deviceByIndex(indexIn), 
+      inParams(portaudio::System::instance().deviceByIndex(_indexIn), 
 	     _inChannel, SFLPortaudioFormat, true, 
-	     portaudio::System::instance().deviceByIndex(indexIn).defaultLowInputLatency(), 
+	     portaudio::System::instance().deviceByIndex(_indexIn).defaultLowInputLatency(), 
 	     NULL);
 
      portaudio::DirectionSpecificStreamParameters outParams(
-                portaudio::System::instance().deviceByIndex(indexOut), 
+                portaudio::System::instance().deviceByIndex(_indexOut), 
 	        _outChannel, SFLPortaudioFormat, true, 
-	        portaudio::System::instance().deviceByIndex(indexOut).defaultLowOutputLatency(), 
+	        portaudio::System::instance().deviceByIndex(_indexOut).defaultLowOutputLatency(), 
 	        NULL);
 
     // like audacity
@@ -196,6 +192,108 @@ AudioLayer::getDeviceCount()
   return portaudio::System::instance().deviceCount();
 }
 
+/**
+ * Checks if ALSA is supported and selects compatible devices
+ * Write changes to configuration file if necessary
+ */
+void
+AudioLayer::selectPreferedApi(PaHostApiTypeId apiTypeID, int& outputDeviceIndex, int& inputDeviceIndex)
+{
+	// Create iterators
+	portaudio::System::HostApiIterator hostApiIter, hostApiIterEnd;
+	hostApiIter = portaudio::System::instance().hostApisBegin();
+	hostApiIterEnd = portaudio::System::instance().hostApisEnd();
+	
+	// Loop all Api
+	for(; hostApiIter != hostApiIterEnd; hostApiIter++)
+	{
+		// If prefered Api is found, see if devices are compatible
+		if(hostApiIter->typeId() == apiTypeID)
+		{
+			bool compatibleInputDevice = false;
+			bool compatibleOutputDevice = false;
+			
+			// Create device iterators
+			portaudio::System::DeviceIterator deviceIter, deviceIterEnd;
+			deviceIter = hostApiIter->devicesBegin();
+			deviceIterEnd = hostApiIter->devicesEnd();
+			
+			// Loop all devices
+			for(; deviceIter != deviceIterEnd; deviceIter++)
+			{
+				// If we found our input device and it is not only an output device
+				if(deviceIter->index() == inputDeviceIndex && !deviceIter->isOutputOnlyDevice())
+					compatibleInputDevice = true;
+				// If we found our output device and it is not only an input device
+				if(deviceIter->index() == outputDeviceIndex && !deviceIter->isInputOnlyDevice())
+					compatibleOutputDevice = true;
+			}
+			
+			// Select default device of prefered API if compatible device was not found
+			// and write changes to configuration file
+			if(!compatibleOutputDevice)
+			{
+				outputDeviceIndex = hostApiIter->defaultOutputDevice().index();
+				_manager->setConfig(AUDIO, DRIVER_NAME_OUT, outputDeviceIndex);
+			}
+			if(!compatibleInputDevice)
+			{
+				inputDeviceIndex = hostApiIter->defaultInputDevice().index();
+				_manager->setConfig(AUDIO, DRIVER_NAME_IN, inputDeviceIndex);
+			}
+		}
+	}
+}
+
+/**
+ * Get list of audio devices index supported by api
+ * and corresponding to IO device type
+ */
+std::vector<std::string>
+AudioLayer::getAudioDeviceList(PaHostApiTypeId apiTypeID, int ioDeviceMask)
+{
+	std::vector<std::string> v;
+	
+	// Create api iterators
+	portaudio::System::HostApiIterator hostApiIter, hostApiIterEnd;
+	hostApiIter = portaudio::System::instance().hostApisBegin();
+	hostApiIterEnd = portaudio::System::instance().hostApisEnd();
+	
+	// Loop all Api
+	for(; hostApiIter != hostApiIterEnd; hostApiIter++)
+	{
+		// If prefered Api is found, use this one
+		if(hostApiIter->typeId() == apiTypeID)
+			break;
+	}
+	// If none was found, use first api
+	if(hostApiIter == hostApiIterEnd)
+		hostApiIter = portaudio::System::instance().hostApisBegin();
+
+	// Create device iterators
+	portaudio::System::DeviceIterator deviceIter, deviceIterEnd;
+	deviceIter = hostApiIter->devicesBegin();
+	deviceIterEnd = hostApiIter->devicesEnd();
+	
+	// For each device supported by api
+	for(; deviceIter != deviceIterEnd; deviceIter++)
+	{
+		// Check for input or output capabality
+		if (	(ioDeviceMask == InputDevice && !deviceIter->isOutputOnlyDevice()) ||
+				(ioDeviceMask == OutputDevice && !deviceIter->isInputOnlyDevice()) ||
+				deviceIter->isFullDuplexDevice())
+		{
+			char id[10];
+			sprintf(id, "%d", deviceIter->index());
+			v.push_back(id);
+		}
+	}
+	return v;
+}
+
+/**
+ * Get audio device by index if it supports input output device mask
+ */
 AudioDevice*
 AudioLayer::getAudioDeviceInfo(int index, int ioDeviceMask)
 {

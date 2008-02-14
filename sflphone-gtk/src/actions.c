@@ -587,7 +587,7 @@ sflphone_fill_codec_list()
   gchar** order = (gchar**)dbus_get_active_codec_list();
   gchar** details;
   gchar** pl;
-  
+
   for(pl=order; *order; order++)
   {
     codec_t * c = g_new0(codec_t, 1);
@@ -601,7 +601,7 @@ sflphone_fill_codec_list()
     c->_bandwidth = atof(details[3]);
     codec_list_add(c);
   }
-  
+ 
   for(pl=codecs; *codecs; codecs++)
   {
     details = (gchar **)dbus_codec_details(atoi(*codecs));

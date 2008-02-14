@@ -2,6 +2,7 @@
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -768,4 +769,191 @@ dbus_set_active_codec_list(const gchar** list)
   g_print ("DBus called set_active_codec_list() on ConfigurationManager\n");
 
   }
+}
+
+/**
+ * Get a list of all supported audio managers
+ */
+gchar**
+dbus_get_audio_manager_list()
+{
+	g_print("Before get audio manager list");
+	gchar** array;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_audio_manager_list(
+			configurationManagerProxy,
+			&array,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_printerr("Failed to call get_audio_manager_list() on ConfigurationManager: %s\n", error->message);
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_audio_manager_list() on ConfigurationManager\n");
+	return array;
+}
+
+/**
+ * Sets the audio manager from its name
+ * Still not used because ALSA is used by default
+ */
+void
+dbus_set_audio_manager(gchar* audioManager)
+{
+	g_print("Before set audio manager");
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_audio_manager(
+			configurationManagerProxy,
+			audioManager,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_printerr("Failed to call set_audio_manager() on ConfigurationManager: %s\n", error->message);
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_audio_manager() on ConfigurationManager\n");
+}
+
+/**
+ * Get all output devices index supported by current audio manager
+ */
+gchar** dbus_get_audio_output_device_list()
+{
+	g_print("Before get audio output device list");
+	gchar** array;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_audio_output_device_list(
+			configurationManagerProxy,
+			&array,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_printerr("Failed to call get_audio_output_device_list() on ConfigurationManager: %s\n", error->message);
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_audio_output_device_list() on ConfigurationManager\n");
+	return array;
+}
+
+/**
+ * Set audio output device from its index
+ */
+void
+dbus_set_audio_output_device(const int index)
+{
+	g_print("Before set audio output device");
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_audio_output_device(
+			configurationManagerProxy,
+			index,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_printerr("Failed to call set_audio_output_device() on ConfigurationManager: %s\n", error->message);
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_audio_output_device() on ConfigurationManager\n");
+}
+
+/**
+ * Get all input devices index supported by current audio manager
+ */
+gchar**
+dbus_get_audio_input_device_list()
+{
+	g_print("Before get audio input device list");
+	gchar** array;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_audio_input_device_list(
+			configurationManagerProxy,
+			&array,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_printerr("Failed to call get_audio_input_device_list() on ConfigurationManager: %s\n", error->message);
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_audio_input_device_list() on ConfigurationManager\n");
+	return array;
+}
+
+/**
+ * Set audio input device from its index
+ */
+void
+dbus_set_audio_input_device(const int index)
+{
+	g_print("Before set audio input device");
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_audio_input_device(
+			configurationManagerProxy,
+			index,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_printerr("Failed to call set_audio_input_device() on ConfigurationManager: %s\n", error->message);
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_audio_input_device() on ConfigurationManager\n");
+}
+
+/**
+ * Get output device index and input device index
+ */
+gchar**
+dbus_get_current_audio_devices_index()
+{
+	g_print("Before get current audio devices index");
+	gchar** array;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_current_audio_devices_index(
+			configurationManagerProxy,
+			&array,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_printerr("Failed to call get_current_audio_devices_index() on ConfigurationManager: %s\n", error->message);
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_current_audio_devices_index() on ConfigurationManager\n");
+	return array;
+}
+
+/**
+ * Get name, max input channels, max output channels and sample rate for a device
+ */
+gchar**
+dbus_get_audio_device_details(const int index)
+{
+	g_print("Before get audio device details");
+	gchar** array;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_audio_device_details(
+			configurationManagerProxy,
+			index,
+			&array,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_printerr("Failed to call get_audio_device_details() on ConfigurationManager: %s\n", error->message);
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_audio_device_details() on ConfigurationManager\n");
+	return array;
 }

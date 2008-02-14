@@ -97,13 +97,12 @@ AudioRtp::closeRtpSession () {
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
-	 : _fstream("/tmp/audio.dat", std::ofstream::binary|std::ios::out|std::ios::app)
+	 : _fstream("/tmp/audio.gsm", std::ofstream::binary|std::ios::out|std::ios::app)
 {
 	setCancel(cancelDeferred);
 	time = new ost::Time();
 	_ca = sipcall;
 	_sym = sym;
-	//std::string s = "snd.dat";
 	// AudioRtpRTX should be close if we change sample rate
 
 	//_codecSampleRate = _ca->getAudioCodec()->getClockRate();
@@ -141,7 +140,6 @@ AudioRtpRTX::~AudioRtpRTX () {
 	}
 	//_debug("terminate audiortprtx ended...\n");
 	_ca = 0;
-	//fd = fopen("snd_data", "wa");
 	if (!_sym) {
 		delete _sessionRecv; _sessionRecv = NULL;
 		delete _sessionSend; _sessionSend = NULL;
@@ -184,8 +182,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 
 	try {
 		if (_ca == 0) { return; }
-		AudioCodec* audiocodec = loadCodec(_ca->getAudioCodec());
-		_codecSampleRate = audiocodec->getClockRate();	
+		_codecSampleRate = _audiocodec->getClockRate();	
 	
 		_debug("Init audio RTP session\n");
 		ost::InetHostAddress remote_ip(_ca->getRemoteIp().c_str());
@@ -217,12 +214,12 @@ AudioRtpRTX::initAudioRtpSession (void)
 			}
 
 			bool payloadIsSet = false;
-			if (audiocodec) {
-				if (audiocodec->hasDynamicPayload()) {
-					payloadIsSet = _sessionRecv->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec->getPayload(), audiocodec->getClockRate()));
+			if (_audiocodec) {
+				if (_audiocodec->hasDynamicPayload()) {
+					payloadIsSet = _sessionRecv->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
 				} else {
-					payloadIsSet= _sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
-					payloadIsSet = _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
+					payloadIsSet= _sessionRecv->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
+					payloadIsSet = _sessionSend->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
 				}
 			}
 			_sessionSend->setMark(true);
@@ -235,22 +232,21 @@ AudioRtpRTX::initAudioRtpSession (void)
 			}
 
 			bool payloadIsSet = false;
-			if (audiocodec) {
-				if (audiocodec->hasDynamicPayload()) {
-					payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) audiocodec->getPayload(), audiocodec->getClockRate()));
+			if (_audiocodec) {
+				if (_audiocodec->hasDynamicPayload()) {
+					payloadIsSet = _session->setPayloadFormat(ost::DynamicPayloadFormat((ost::PayloadType) _audiocodec->getPayload(), _audiocodec->getClockRate()));
 				} else {
-					payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) audiocodec->getPayload()));
+					payloadIsSet = _session->setPayloadFormat(ost::StaticPayloadFormat((ost::StaticPayloadType) _audiocodec->getPayload()));
 				}
 			}
 		}
-		unloadCodec(audiocodec);
 	} catch(...) {
 		_debugException("! ARTP Failure: initialisation failed");
 		throw;
 	}
 }
 
-AudioCodec*
+void
 AudioRtpRTX::loadCodec(int payload)
 {
         using std::cerr;
@@ -282,11 +278,12 @@ AudioRtpRTX::loadCodec(int payload)
         if(dlsym_error){
                 cerr << "Cannot load symbol create: " << dlsym_error << '\n';
         }
-        return create_codec();
+
+        _audiocodec = create_codec();
 }
 
 void
-AudioRtpRTX::unloadCodec(AudioCodec* audiocodec)
+AudioRtpRTX::unloadCodec()
 {
 	using std::cerr;
         destroy_t* destroy_codec = (destroy_t*)dlsym(handle_codec, "destroy");
@@ -294,7 +291,7 @@ AudioRtpRTX::unloadCodec(AudioCodec* audiocodec)
 	if(dlsym_error){
                 cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
         }
-	destroy_codec(audiocodec);
+	destroy_codec(_audiocodec);
 	dlclose(handle_codec);
 }
 
@@ -302,7 +299,6 @@ AudioRtpRTX::unloadCodec(AudioCodec* audiocodec)
 void
 AudioRtpRTX::sendSessionFromMic(int timestamp)
 {
-	AudioCodec* audiocodec = loadCodec(_ca->getAudioCodec());
 // STEP:
 //   1. get data from mic
 //   2. convert it to int16 - good sample, good rate
@@ -316,25 +312,21 @@ try {
 	AudioLayer* audiolayer = Manager::instance().getAudioDriver();
 	if (!audiolayer) { _debug(" !ARTP: No audiolayer available for mic\n"); return; }
 
-	//AudioCodec* audiocodec = _ca->getAudioCodec();
-	if (!audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
+	if (!_audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
 
 	// we have to get 20ms of data from the mic *20/1000 = /50
 	int maxBytesToGet = _layerSampleRate * _layerFrameSize * sizeof(SFLDataFormat) / 1000;
-
 	// available bytes inside ringbuffer
 	int availBytesFromMic = audiolayer->canGetMic();
 
 	// take the lowest
 	int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-        //printf("clock rate = %i\n", audiocodec->getClockRate());
 	// Get bytes from micRingBuffer to data_from_mic
 	int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
 	int nb_sample_up = nbSample;
-	int nbSamplesMax = _layerFrameSize * audiocodec->getClockRate() / 1000;
-	//_fstream.write((char*) _dataAudioLayer, nbSample);
+	int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
 	
-	nbSample = reSampleData(audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
+	nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
 	
 	toSIP = _intBufferDown;
 	
@@ -348,7 +340,7 @@ try {
 //_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toSIP[0], toSIP[1], toSIP[2]);
 	// for the mono: range = 0 to RTP_FRAME2SEND * sizeof(int16)
 	// codecEncode(char *dest, int16* src, size in bytes of the src)
-	int compSize = audiocodec->codecEncode(_sendDataEncoded, toSIP, nbSample*sizeof(int16));
+	int compSize = _audiocodec->codecEncode(_sendDataEncoded, toSIP, nbSample*sizeof(int16));
 	//printf("jusqu'ici tout vas bien\n");
 
 	// encode divise by two
@@ -364,7 +356,6 @@ try {
 	_debugException("! ARTP: sending failed");
 	throw;
 }
-	unloadCodec(audiocodec);
 }
 
 
@@ -373,7 +364,6 @@ void
 AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 {
 
-AudioCodec* audiocodec;
 
 if (_ca == 0) { return; }
 try {
@@ -396,12 +386,11 @@ try {
 	int payload = adu->getType(); // codec type
 	unsigned char* data  = (unsigned char*)adu->getData(); // data in char
 	unsigned int size = adu->getSize(); // size in char
+
 	
 	//_fstream.write((char*) data, size);
-	audiocodec = loadCodec(payload);
 	// Decode data with relevant codec
-	_codecSampleRate = audiocodec->getClockRate();
-	int max = (int)(_codecSampleRate * _layerFrameSize);
+	int max = (int)(_codecSampleRate * _layerFrameSize / 1000);
 
 	if ( size > max ) {
 		_debug("We have received from RTP a packet larger than expected: %s VS %s\n", size, max);
@@ -411,8 +400,11 @@ try {
 	
 	//printf("size = %i\n", size);
 
-	if (audiocodec != NULL) {
-		int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
+	if (_audiocodec != NULL) {
+		
+		int expandedSize = _audiocodec->codecDecode(_receiveDataDecoded, data, size);
+	//	printf("%i\n", expandedSize);
+	        //_fstream.write((char*) _receiveDataDecoded, );
 		//buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
 		int nbInt16 = expandedSize / sizeof(int16);
 		//nbInt16 represents the number of samples we just decoded
@@ -455,7 +447,6 @@ try {
 	throw;
 }
 
-  unloadCodec(audiocodec);
 
 }
 
@@ -527,6 +518,7 @@ AudioRtpRTX::run () {
 //mic, we receive from soundcard in stereo, and we send encoded
 //encoding before sending
 AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+loadCodec(_ca->getAudioCodec());
 
 _layerFrameSize = audiolayer->getFrameSize(); // en ms
 _layerSampleRate = audiolayer->getSampleRate();	
@@ -569,7 +561,8 @@ try {
 		Thread::sleep(TimerPort::getTimer());
 		TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
 	}
-	//_fstream.close();
+	_fstream.close();
+ 	unloadCodec();
 	//_debug("stop stream for audiortp loop\n");
 	audiolayer->stopStream();
 } catch(std::exception &e) {

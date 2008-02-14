@@ -53,7 +53,7 @@ SIPAccount::registerVoIPLink()
   thislink->setUserPart(Manager::instance().getConfigString(_accountID,SIP_USER_PART));
   thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_AUTH_NAME));
   thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
-
+   _debug("sipaccount --> sendRegister\n");
   _link->sendRegister();
 }
 

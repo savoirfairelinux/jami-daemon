@@ -77,7 +77,38 @@
     <method name="setActiveCodecList">
       <arg type="as" name="list" direction="in"/>
     </method>
+
+
+	<!-- Audio devices methods -->
+	
+    <method name="getAudioManagerList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    <method name="setAudioManager">
+      <arg type="s" name="audioManager" direction="in"/>
+    </method>
     
+    <method name="getAudioOutputDeviceList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    <method name="setAudioOutputDevice">
+      <arg type="i" name="index" direction="in"/>
+    </method>
+    <method name="getAudioInputDeviceList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    <method name="setAudioInputDevice">
+      <arg type="i" name="index" direction="in"/>
+    </method>
+    
+    <method name="getCurrentAudioDevicesIndex">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+
+    <method name="getAudioDeviceDetails">
+      <arg type="i" name="index" direction="in"/>
+      <arg type="as" name="details" direction="out"/>
+    </method>
 
   <!--        /////////////////////////////       -->
  

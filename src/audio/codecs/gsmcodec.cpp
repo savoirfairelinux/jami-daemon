@@ -18,15 +18,11 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __GSM_H__
-#define __GSM_H__
-
-#include <gsm.h>
 
 #include "audiocodec.h"
-/*extern "C" {
-#include "gsm/gsm.h"
-}*/
+extern "C"{
+#include <gsm.h>
+}
 
 /**
  * GSM audio codec C++ class (over gsm/gsm.h)
@@ -34,16 +30,43 @@
 class Gsm : public AudioCodec {
 public:
   // _payload should be 3
-  Gsm (int payload=3);
-  ~Gsm (void);
+  Gsm (int payload=3): AudioCodec(payload, "GSM"){
+    _clockRate = 8000;
+    _channel = 1;
+    
+    if (!(_decode_gsmhandle = gsm_create() ))
+    printf("ERROR: decode_gsm_create\n");
+    if (!(_encode_gsmhandle = gsm_create() ))
+    printf("AudioCodec: ERROR: encode_gsm_create\n");
+  }
+  
+  virtual ~Gsm (void){
+    gsm_destroy(_decode_gsmhandle);
+    gsm_destroy(_encode_gsmhandle);
+  }
 
-  int	codecDecode	(short *, unsigned char *, unsigned int);
-  int	codecEncode	(unsigned char *, short *, unsigned int);
-  void test();
+  virtual int	codecDecode	(short * dst, unsigned char * src, unsigned int size){
+    (void)size;
+    if(gsm_decode(_decode_gsmhandle, (gsm_byte*)src, (gsm_signal*)dst) < 0)
+      printf("ERROR: gsm_decode\n");
+    return 320;
+  }
+  
+  virtual int	codecEncode	(unsigned char * dst, short * src, unsigned int size){
+	(void)size;
+	gsm_encode(_encode_gsmhandle, (gsm_signal*)src, (gsm_byte*) dst);
+    	return 33;
+  }
 
 private:
   gsm _decode_gsmhandle;
   gsm _encode_gsmhandle;
 };
 
-#endif // __ULAW_H__
+extern "C" AudioCodec* create(){
+  return new Gsm(3);
+}
+
+extern "C" void destroy(AudioCodec* a){
+  delete a;
+}
