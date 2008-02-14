@@ -1205,6 +1205,7 @@ ManagerImpl::getCodecDetails( const ::DBus::Int32& payload )
   return v;
 }
 
+
 /**
  * Get list of supported audio manager
  */
@@ -1246,6 +1247,7 @@ void
 ManagerImpl::setAudioOutputDevice(const int index)
 {
 	_debug("Set audio output device");
+	_audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getSampleRate(), _audiodriver->getFrameSize());
 	printf("%l audio output set\n", index);
 }
 
@@ -1267,6 +1269,7 @@ ManagerImpl::setAudioInputDevice(const int index)
 {
 	// TODO
 	_debug("Set audio input device");
+	_audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getSampleRate(), _audiodriver->getFrameSize());
 	printf("%l audio input set\n", index);
 }
 
@@ -1280,8 +1283,11 @@ ManagerImpl::getCurrentAudioDevicesIndex()
 	_debug("Get current audio devices index");
 	std::vector<std::string> v;
 	
-	v.push_back("6");
-	v.push_back("12");
+	char index[10];
+	sprintf(index, "%d", _audiodriver->getIndexOut());
+	v.push_back(index);
+	sprintf(index, "%d", _audiodriver->getIndexIn());
+	v.push_back(index);
 	
 	return v;
 }
@@ -1292,15 +1298,24 @@ ManagerImpl::getCurrentAudioDevicesIndex()
 std::vector<std::string>
 ManagerImpl::getAudioDeviceDetails(const int index)
 {
-	// TODO
 	_debug("Get audio input device list");
 	std::vector<std::string> v;
-	
-	v.push_back("default");
-	v.push_back("128");
-	v.push_back("128");
-	v.push_back("44100");
-	
+
+	try
+	{
+		portaudio::System& sys = portaudio::System::instance();
+		portaudio::Device& device = sys.deviceByIndex(index);
+		
+		char answer[10];
+		v.push_back(device.name());
+		sprintf(answer, "%d", device.maxInputChannels());
+		v.push_back(answer);		
+		sprintf(answer, "%d", device.maxOutputChannels());
+		v.push_back(answer);
+		sprintf(answer, "%d", device.defaultSampleRate());
+		v.push_back(answer);
+	}
+	catch (...) {}
 	return v;
 }
 

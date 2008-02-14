@@ -27,6 +27,7 @@
 #include <mainwindow.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <gtk/gtk.h>
 
@@ -165,6 +166,7 @@ config_window_fill_output_audio_device_list()
 {
 	GtkTreeIter iter;
 	gchar** list;
+	gchar** details;
 	gchar* audioDevice;
 
 	gtk_list_store_clear(outputAudioDeviceManagerStore);
@@ -177,8 +179,10 @@ config_window_fill_output_audio_device_list()
 	for(audioDevice = list[c]; audioDevice != NULL; audioDevice = list[c])
 	{
 		c++;
+		int index = atoi(audioDevice);
+		details = dbus_get_audio_device_details(index);
 		gtk_list_store_append(outputAudioDeviceManagerStore, &iter);
-		gtk_list_store_set(outputAudioDeviceManagerStore, &iter, 0 , audioDevice, -1);
+		gtk_list_store_set(outputAudioDeviceManagerStore, &iter, 0, details[0], 1, index, -1);
 	}
 }
 
@@ -190,6 +194,7 @@ config_window_fill_input_audio_device_list()
 {
 	GtkTreeIter iter;
 	gchar** list;
+	gchar** details;
 	gchar* audioDevice;
 
 	gtk_list_store_clear(inputAudioDeviceManagerStore);
@@ -202,8 +207,10 @@ config_window_fill_input_audio_device_list()
 	for(audioDevice = list[c]; audioDevice != NULL; audioDevice = list[c])
 	{
 		c++;
+		int index = atoi(audioDevice);
+		details = dbus_get_audio_device_details(index);
 		gtk_list_store_append(inputAudioDeviceManagerStore, &iter);
-		gtk_list_store_set(inputAudioDeviceManagerStore, &iter, 0 , audioDevice, -1);
+		gtk_list_store_set(inputAudioDeviceManagerStore, &iter, 0, details[0], 1, index, -1);
 	}
 }
 
@@ -213,7 +220,7 @@ config_window_fill_input_audio_device_list()
 static void
 select_audio_manager(GtkWidget* widget, gpointer data)
 {
-	dbus_set_audio_manager("ALSA");
+	dbus_set_audio_manager("");
 }
 
 /**
@@ -240,14 +247,14 @@ select_audio_input_device(GtkWidget* widget, gpointer data)
 static void
 detect_all_audio_settings()
 {
-	// TODO Remember selected entry for each list
+	// NOW Remember selected entry for each list
 	
 	// Update lists
 	config_window_fill_audio_manager_list();
 	config_window_fill_output_audio_device_list();
 	config_window_fill_input_audio_device_list();
 	
-	// Reselect entries or set to default
+	// TODO Reselect entries or set to default
 }
 
 /**
@@ -812,10 +819,10 @@ create_audio_tab ()
     gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show(titleLabel);
 	// Set choices of output devices
-	outputAudioDeviceManagerStore = gtk_list_store_new(1, G_TYPE_STRING);
+	outputAudioDeviceManagerStore = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
 	config_window_fill_output_audio_device_list();
 	comboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioDeviceManagerStore));
-	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 0);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 1);
   	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), comboBox);
 	g_signal_connect(G_OBJECT(comboBox), "changed", G_CALLBACK(select_audio_output_device), comboBox);
 
@@ -833,7 +840,7 @@ create_audio_tab ()
     gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 	gtk_widget_show(titleLabel);
 	// Set choices of output devices
-	inputAudioDeviceManagerStore = gtk_list_store_new(1, G_TYPE_STRING);
+	inputAudioDeviceManagerStore = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
 	config_window_fill_input_audio_device_list();
 	comboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputAudioDeviceManagerStore));
 	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 0);

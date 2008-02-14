@@ -76,27 +76,19 @@ class AudioLayer {
 		 * Get the sample rate of audiolayer
 		 * accessor only
 		 */
+		int getIndexIn() { return _indexIn; }
+		int getIndexOut() { return _indexOut; }
 		unsigned int getSampleRate() { return _sampleRate; }
 		unsigned int getFrameSize() { return _frameSize; }
 		int getDeviceCount();
-		
-		
-		
-		
-		
-		
 		
 		
 		// NOW
 		void selectPreferedApi(PaHostApiTypeId apiTypeID, int& outputDeviceIndex, int& inputDeviceIndex);
 		
 		std::vector<std::string> getAudioDeviceList(PaHostApiTypeId apiTypeID, int ioDeviceMask);
-//		void setOutputAudioDevice(int index);
-//		std::vector<std::string> getInputAudioDeviceList();
-//		void setInputAudioDevice(int index);
-//		std::vector<AudioDevice*> getAudioDevicesInfo();
-		
-		
+
+
 		AudioDevice* getAudioDeviceInfo(int index, int ioDeviceMask);
 
 		enum IODEVICE {InputDevice=0x01, OutputDevice=0x02 };
