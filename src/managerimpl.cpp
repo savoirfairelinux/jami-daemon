@@ -1205,7 +1205,6 @@ ManagerImpl::getCodecDetails( const ::DBus::Int32& payload )
   return v;
 }
 
-
 /**
  * Get list of supported audio manager
  */
@@ -1215,7 +1214,7 @@ ManagerImpl::getAudioManagerList(void)
 	std::vector<std::string> v;
 	_debug("Get audio manager list");
 	
-	// Return only ALSA for now, pulseAudio maybe later
+	// Return only ALSA for now
 	v.push_back("ALSA");
 	return v;
 }
@@ -1248,7 +1247,7 @@ ManagerImpl::setAudioOutputDevice(const int index)
 {
 	_debug("Set audio output device");
 	_audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getSampleRate(), _audiodriver->getFrameSize());
-	printf("%l audio output set\n", index);
+	printf("%d audio output set\n", index);
 }
 
 /**
@@ -1267,10 +1266,9 @@ ManagerImpl::getAudioInputDeviceList(void)
 void
 ManagerImpl::setAudioInputDevice(const int index)
 {
-	// TODO
 	_debug("Set audio input device");
 	_audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getSampleRate(), _audiodriver->getFrameSize());
-	printf("%l audio input set\n", index);
+	printf("%d audio input set\n", index);
 }
 
 /**
@@ -1279,7 +1277,6 @@ ManagerImpl::setAudioInputDevice(const int index)
 std::vector<std::string>
 ManagerImpl::getCurrentAudioDevicesIndex()
 {
-	// TODO
 	_debug("Get current audio devices index");
 	std::vector<std::string> v;
 	

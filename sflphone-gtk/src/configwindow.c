@@ -49,6 +49,9 @@ GtkWidget *deleteButton;
 GtkWidget *defaultButton;
 GtkWidget *restoreButton;
 
+GtkWidget *outputDeviceComboBox;
+GtkWidget *inputDeviceComboBox;
+
 GtkWidget *moveUpButton;
 GtkWidget *moveDownButton;
 
@@ -134,7 +137,7 @@ config_window_fill_codec_list()
 }
 
 /**
- * TODO
+ * Fill store with audio managers
  */
 void
 config_window_fill_audio_manager_list()
@@ -159,7 +162,7 @@ config_window_fill_audio_manager_list()
 }
 
 /**
- * TODO
+ * Fill output audio device store
  */
 void
 config_window_fill_output_audio_device_list()
@@ -187,7 +190,41 @@ config_window_fill_output_audio_device_list()
 }
 
 /**
- * TODO
+ * Select active output audio device
+ */
+void
+select_active_output_audio_device()
+{
+	GtkTreeModel* model;
+	GtkTreeIter iter;
+	gchar** devices;
+	int currentDeviceIndex;
+	int deviceIndex;
+
+	// Select active output device on server
+	devices = dbus_get_current_audio_devices_index();
+	currentDeviceIndex = atoi(devices[0]);
+	model = gtk_combo_box_get_model(GTK_COMBO_BOX(outputDeviceComboBox));
+	
+	// Find the currently set output device
+	gtk_tree_model_get_iter_first(model, &iter);
+	do {
+		gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+		if(deviceIndex == currentDeviceIndex)
+		{
+			// Set current iteration the active one
+			gtk_combo_box_set_active_iter(GTK_COMBO_BOX(outputDeviceComboBox), &iter);
+			return;
+		}
+	} while(gtk_tree_model_iter_next(model, &iter));
+
+	// No index was found, select first one
+	g_print("Warning : No active output device found");
+	gtk_combo_box_set_active(GTK_COMBO_BOX(outputDeviceComboBox), 0);
+}
+
+/**
+ * Fill input audio device store
  */
 void
 config_window_fill_input_audio_device_list()
@@ -215,30 +252,93 @@ config_window_fill_input_audio_device_list()
 }
 
 /**
- * TODO
+ * Select active input audio device
+ */
+void
+select_active_input_audio_device()
+{
+	GtkTreeModel* model;
+	GtkTreeIter iter;
+	gchar** devices;
+	int currentDeviceIndex;
+	int deviceIndex;
+
+	// Select active input device on server
+	devices = dbus_get_current_audio_devices_index();
+	currentDeviceIndex = atoi(devices[1]);
+	model = gtk_combo_box_get_model(GTK_COMBO_BOX(inputDeviceComboBox));
+	
+	// Find the currently set input device
+	gtk_tree_model_get_iter_first(model, &iter);
+	do {
+		gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+		if(deviceIndex == currentDeviceIndex)
+		{
+			// Set current iteration the active one
+			gtk_combo_box_set_active_iter(GTK_COMBO_BOX(inputDeviceComboBox), &iter);
+			return;
+		}
+	} while(gtk_tree_model_iter_next(model, &iter));
+
+	// No index was found, select first one
+	g_print("Warning : No active input device found");
+	gtk_combo_box_set_active(GTK_COMBO_BOX(inputDeviceComboBox), 0);
+}
+
+/**
+ * Select the audio manager by calling the server
+ * Not yet used because audio manager is by default ALSA
  */
 static void
 select_audio_manager(GtkWidget* widget, gpointer data)
 {
-	dbus_set_audio_manager("");
+	//dbus_set_audio_manager("");
 }
 
 /**
- * 
+ * Set the audio output device on the server with its index
  */
 static void
-select_audio_output_device(GtkWidget* widget, gpointer data)
+select_audio_output_device(GtkComboBox* comboBox, gpointer data)
 {
-	dbus_set_audio_output_device(8);
+	GtkTreeModel* model;
+	GtkTreeIter iter;
+	int comboBoxIndex;
+	int deviceIndex;
+	
+	comboBoxIndex = gtk_combo_box_get_active(comboBox);
+	
+	if(comboBoxIndex >= 0)
+	{
+		model = gtk_combo_box_get_model(comboBox);
+		gtk_combo_box_get_active_iter(comboBox, &iter);
+		gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+		
+		dbus_set_audio_output_device(deviceIndex);
+	}
 }
 
 /**
- * 
+ * Set the audio input device on the server with its index
  */
 static void
-select_audio_input_device(GtkWidget* widget, gpointer data)
+select_audio_input_device(GtkComboBox* comboBox, gpointer data)
 {
-	dbus_set_audio_input_device(11);
+	GtkTreeModel* model;
+	GtkTreeIter iter;
+	int comboBoxIndex;
+	int deviceIndex;
+	
+	comboBoxIndex = gtk_combo_box_get_active(comboBox);
+	
+	if(comboBoxIndex >= 0)
+	{
+		model = gtk_combo_box_get_model(comboBox);
+		gtk_combo_box_get_active_iter(comboBox, &iter);
+		gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+		
+		dbus_set_audio_input_device(deviceIndex);
+	}
 }
 
 /**
@@ -247,14 +347,13 @@ select_audio_input_device(GtkWidget* widget, gpointer data)
 static void
 detect_all_audio_settings()
 {
-	// NOW Remember selected entry for each list
-	
 	// Update lists
-	config_window_fill_audio_manager_list();
 	config_window_fill_output_audio_device_list();
 	config_window_fill_input_audio_device_list();
 	
-	// TODO Reselect entries or set to default
+	// Select active device in combo box
+	select_active_output_audio_device();
+	select_active_input_audio_device();
 }
 
 /**
@@ -821,17 +920,17 @@ create_audio_tab ()
 	// Set choices of output devices
 	outputAudioDeviceManagerStore = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
 	config_window_fill_output_audio_device_list();
-	comboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioDeviceManagerStore));
-	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 1);
-  	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), comboBox);
-	g_signal_connect(G_OBJECT(comboBox), "changed", G_CALLBACK(select_audio_output_device), comboBox);
+	outputDeviceComboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioDeviceManagerStore));
+	select_active_output_audio_device();
+  	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), outputDeviceComboBox);
+	g_signal_connect(G_OBJECT(outputDeviceComboBox), "changed", G_CALLBACK(select_audio_output_device), outputDeviceComboBox);
 
 	// Set rendering
 	renderer = gtk_cell_renderer_text_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(comboBox), renderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(comboBox), renderer, "text", 0, NULL);
-	gtk_table_attach(GTK_TABLE(deviceTable), comboBox, 2, 3, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(comboBox);
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(outputDeviceComboBox), renderer, TRUE);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(outputDeviceComboBox), renderer, "text", 0, NULL);
+	gtk_table_attach(GTK_TABLE(deviceTable), outputDeviceComboBox, 2, 3, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+	gtk_widget_show(outputDeviceComboBox);
 	
 	// Device : Input device
 	// Create title label
@@ -842,17 +941,17 @@ create_audio_tab ()
 	// Set choices of output devices
 	inputAudioDeviceManagerStore = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
 	config_window_fill_input_audio_device_list();
-	comboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputAudioDeviceManagerStore));
-	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 0);
-  	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), comboBox);
-	g_signal_connect(G_OBJECT(comboBox), "changed", G_CALLBACK(select_audio_input_device), comboBox);
+	inputDeviceComboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputAudioDeviceManagerStore));
+	select_active_input_audio_device();
+	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), inputDeviceComboBox);
+	g_signal_connect(G_OBJECT(inputDeviceComboBox), "changed", G_CALLBACK(select_audio_input_device), inputDeviceComboBox);
 
 	// Set rendering
 	renderer = gtk_cell_renderer_text_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(comboBox), renderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(comboBox), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(deviceTable), comboBox, 2, 3, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(comboBox);
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(inputDeviceComboBox), renderer, TRUE);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(inputDeviceComboBox), renderer, "text", 0, NULL);
+    gtk_table_attach(GTK_TABLE(deviceTable), inputDeviceComboBox, 2, 3, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+	gtk_widget_show(inputDeviceComboBox);
 	
 	// Create detect button
 	refreshButton = gtk_button_new_with_label("Detect all");
