@@ -1236,7 +1236,7 @@ std::vector<std::string>
 ManagerImpl::getAudioOutputDeviceList(void)
 {
 	_debug("Get audio output device list");
-	return _audiodriver->getAudioDeviceList(paALSA, _audiodriver->OutputDevice);
+	//return _audiodriver->getAudioDeviceList(paALSA, _audiodriver->OutputDevice);
 }
 
 /**
@@ -1257,7 +1257,7 @@ std::vector<std::string>
 ManagerImpl::getAudioInputDeviceList(void)
 {
 	_debug("Get audio input device list");
-	return _audiodriver->getAudioDeviceList(paALSA, _audiodriver->InputDevice);
+	//return _audiodriver->getAudioDeviceList(paALSA, _audiodriver->InputDevice);
 }
 
 /**
@@ -1296,7 +1296,7 @@ std::vector<std::string>
 ManagerImpl::getAudioDeviceDetails(const int index)
 {
 	_debug("Get audio input device list");
-	std::vector<std::string> v;
+	/*std::vector<std::string> v;
 
 	try
 	{
@@ -1313,7 +1313,7 @@ ManagerImpl::getAudioDeviceDetails(const int index)
 		v.push_back(answer);
 	}
 	catch (...) {}
-	return v;
+	return v;*/
 }
 
 
@@ -1684,7 +1684,7 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
   TokenList tk;
   AudioDevice* device = 0;
   int nbDevice = audiolayer->getDeviceCount();
-  
+ /* 
   for (int index = 0; index < nbDevice; index++ ) {
     device = audiolayer->getAudioDeviceInfo(index, ioDeviceMask);
     if (device != 0) {
@@ -1698,7 +1698,7 @@ ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask)
       // don't forget to delete it after
       delete device; device = 0;
     }
-  }
+  }*/
   returnValue = true;
   
   std::ostringstream rate; 

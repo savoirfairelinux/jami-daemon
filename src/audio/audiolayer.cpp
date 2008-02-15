@@ -20,49 +20,34 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
 
 #include "audiolayer.h"
 #include "../global.h"
 #include "../manager.h"
 #include "../user_cfg.h"
 
-//#define SFL_TEST
-//#define SFL_TEST_SINE
+#define PCM_NAME_DEFAULT  "plughw:0,0"
 
 #ifdef SFL_TEST_SINE
 #include <cmath>
 #endif
 
-AudioLayer::AudioLayer(ManagerImpl* manager)
+  AudioLayer::AudioLayer(ManagerImpl* manager)
   : _urgentRingBuffer(SIZEBUF)
   , _mainSndRingBuffer(SIZEBUF)
   , _micRingBuffer(SIZEBUF)
-  , _defaultVolume(100)
-  , _stream(NULL)
+    , _defaultVolume(100)
   , _errorMessage("")
-  , _manager(manager)
+    , _manager(manager)
 {
   _sampleRate = 8000;
-  
+
   _inChannel  = 1; // don't put in stereo
   _outChannel = 1; // don't put in stereo
   _echoTesting = false;
-
-  try {
-     portaudio::AutoSystem autoSys;
-     portaudio::System::initialize();
-  }
-  catch (const portaudio::PaException &e) {
-    setErrorMessage(e.paErrorText());
-  }
-  catch (const portaudio::PaCppException &e) {
-    setErrorMessage(e.what());
-  } // std::runtime_error &e     (e.what())
-  catch (...) {
-    setErrorMessage("Unknown type error in portaudio initialization");
-  }
 
 #ifdef SFL_TEST_SINE
   leftPhase_ = 0;
@@ -80,343 +65,247 @@ AudioLayer::AudioLayer(ManagerImpl* manager)
 // Destructor
 AudioLayer::~AudioLayer (void) 
 { 
-  stopStream();
-  closeStream();
-
-  try {
-    portaudio::System::terminate();
-  } catch (const portaudio::PaException &e) {
-    _debug("! AL: Catch an exception when portaudio tried to terminate\n");
+  if(_playback_handle != NULL) {
+    close_alsa();
+    _playback_handle = NULL ;
   }
 #ifdef SFL_TEST_SINE
   delete [] table_;
 #endif
 }
 
-void
-AudioLayer::closeStream (void) 
+  void
+AudioLayer::close_alsa (void) 
 {
-  ost::MutexLock guard(_mutex);
-  if(_stream) {
-    _stream->close();
-    delete _stream; _stream = NULL;
-  }
+  _debug(" Alsa close stream \n");
+  //ost::MutexLock guard(_mutex);
+  snd_pcm_close(_playback_handle);
 }
 
 bool
 AudioLayer::hasStream(void) {
   ost::MutexLock guard(_mutex);
-  return (_stream!=0 ? true : false); 
+  return (_playback_handle!=0 ? true : false); 
 }
 
-
-void
+  void
 AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize) 
 {
-  closeStream();
 
   _indexIn = indexIn;
   _indexOut = indexOut;
   _sampleRate = sampleRate;
   _frameSize = frameSize;	
-  int portaudioFramePerBuffer = FRAME_PER_BUFFER; //=FRAME_PER_BUFFER; //= paFramesPerBufferUnspecified;
-  //int portaudioFramePerBuffer = (int) (8000 * frameSize / 1000); 	//= paFramesPerBufferUnspecified;
-  
-  // Select default audio API
-//  selectPreferedApi(paALSA, _indexIn, _indexOut);
-  
-  int nbDevice = getDeviceCount();
-	_debug("Nb of audio devices: %i\n",nbDevice);
-  if (nbDevice == 0) {
-    _debug("Portaudio detect no sound card.");
-    return;
-  } else {
-    _debug(" Setting audiolayer: device     in=%2d, out=%2d\n", _indexIn, _indexOut);
-    _debug("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
-    _debug("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLPortaudioFormatString);
-    _debug("                   : frame per buffer=%d\n", portaudioFramePerBuffer);
-  }
 
-  try {
-    // Set up the parameters required to open a (Callback)Stream:
-    portaudio::DirectionSpecificStreamParameters 
-      inParams(portaudio::System::instance().deviceByIndex(_indexIn), 
-	     _inChannel, SFLPortaudioFormat, true, 
-	     portaudio::System::instance().deviceByIndex(_indexIn).defaultLowInputLatency(), 
-	     NULL);
+  _debug(" Setting audiolayer: device     in=%2d, out=%2d\n", _indexIn, _indexOut);
+  _debug("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
+  _debug("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLPortaudioFormatString);
+  _debug("                   : frame per buffer=%d\n", FRAME_PER_BUFFER);
 
-     portaudio::DirectionSpecificStreamParameters outParams(
-                portaudio::System::instance().deviceByIndex(_indexOut), 
-	        _outChannel, SFLPortaudioFormat, true, 
-	        portaudio::System::instance().deviceByIndex(_indexOut).defaultLowOutputLatency(), 
-	        NULL);
+  // Name of the PCM device
+  // TODO: Must be dynamic
 
-    // like audacity
-    // DON'T USE paFramesPerBufferUnspecified, it's 32, instead of 160 for FRAME_PER_BUFFER
-    // DON'T USE paDitherOff or paClipOff, 
-    // FRAME_PER_BUFFER | paFramesPerBufferUnspecified
-    // paNoFlag | paClipOff || paDitherOff | paPrimeOutputBuffersUsingStreamCallback | paNeverDropInput
-     
-    portaudio::StreamParameters const params(
-		inParams,
-		outParams, 
-		_sampleRate, portaudioFramePerBuffer, paClipOff);
-		
-    // Create (and open) a new Stream, using the AudioLayer::audioCallback
-    ost::MutexLock guard(_mutex);
-#ifdef SFL_TEST
-    _stream = new portaudio::MemFunCallbackStream<AudioLayer>(params, *this, &AudioLayer::miniAudioCallback);
-#else
-    _stream = new portaudio::MemFunCallbackStream<AudioLayer>(params,*this, &AudioLayer::audioCallback);
-#endif
- 
+  // TODO: capture
+  // Capture stream
+  snd_pcm_stream_t capture_stream = SND_PCM_STREAM_CAPTURE;
+
+  // Open the playback device
+  open_playback_device(PCM_NAME_DEFAULT);
+
+  // Set up the parameters required to open a device:
+  init_hw_parameters();
+
+  device_info();
+
+  //ost::MutexLock guard(_mutex);
+}
+
+void 
+AudioLayer::open_playback_device(std::string pcm_name)
+{
+  // Playback stream
+  snd_pcm_stream_t playback_stream = SND_PCM_STREAM_PLAYBACK;
+
+  if(snd_pcm_open(&_playback_handle, pcm_name.c_str(),  playback_stream, SND_PCM_NONBLOCK) < 0){
+    _debug(" Error while opening PCM device %s\n", pcm_name.c_str());
   }
-  catch (const portaudio::PaException &e) {
-    setErrorMessage(e.paErrorText());
-    _debug("Portaudio openDevice error: %s\n", e.paErrorText());
+  else
+    _debug(" Device %s successfully opened. \n", pcm_name.c_str());
+}
+
+void
+AudioLayer::init_hw_parameters(  )
+{
+  int periods = 2;
+  snd_pcm_uframes_t periodSize = 8192;
+  unsigned int sr = 44100; //(unsigned int)sampleRate;
+
+  // Information about the hardware
+  snd_pcm_hw_params_t *hwparams;
+  // Allocate the struct on the stack
+  snd_pcm_hw_params_alloca( &hwparams );
+  // Allocate memory space
+  if(snd_pcm_hw_params_malloc( &hwparams) < 0)
+    _debug(" can not allocate hardware paramater structure. \n");
+  // Init hwparams with full configuration space
+  if(snd_pcm_hw_params_any(_playback_handle, hwparams) < 0){
+    _debug(" Can not configure this PCM device .\n");  
   }
-  catch (const portaudio::PaCppException &e) {
-    setErrorMessage(e.what());
-    _debug("Portaudio openDevice error: %s\n", e.what());
-  } // std::runtime_error &e     (e.what())
-  catch (...) {
-    setErrorMessage("Unknown type error in portaudio openDevice");
-    _debug("Portaudio openDevice: unknown error\n");
+  // Set access type
+  if(snd_pcm_hw_params_set_access( _playback_handle , hwparams , SND_PCM_ACCESS_RW_INTERLEAVED ) <0){
+    _debug(" Error setting access. \n");
   }
+  // Set sample format 
+  if(snd_pcm_hw_params_set_format( _playback_handle, hwparams , SND_PCM_FORMAT_S16_LE) < 0 ){
+    _debug(" Error setting format. \n");
+  }
+  // Set sample rate
+  if(snd_pcm_hw_params_set_rate_near( _playback_handle, hwparams, &sr, 0 ) <0 ) {
+    _debug(" Error setting sample rate. \n");
+  }
+  if(_sampleRate != sr)
+    _debug(" The rate %i Hz is not supported by your hardware.\n ==> Using %i Hz instead. \n", _sampleRate, sr);
+  // Set number of channels
+  if (snd_pcm_hw_params_set_channels( _playback_handle, hwparams, _inChannel) < 0) 
+    _debug(" Error setting channels. \n");
+  // Set number of periods
+  if (snd_pcm_hw_params_set_periods( _playback_handle, hwparams, periods, 0) < 0)
+    _debug(" Error setting periods. \n ");
+  // Set buffer size
+  if(snd_pcm_hw_params_set_buffer_size( _playback_handle, hwparams,  (periodSize * periods) >>2) < 0 )
+    _debug(" Error setting buffer size. \n ");
+  // Apply hardware parameters to the device
+  if(snd_pcm_hw_params( _playback_handle, hwparams) < 0 )
+    _debug(" Error setting HW params. \n ");
 
 }
 
 int
-AudioLayer::getDeviceCount()
+AudioLayer::device_info( void )
 {
-  return portaudio::System::instance().deviceCount();
-}
-
-/**
- * Checks if ALSA is supported and selects compatible devices
- * Write changes to configuration file if necessary
- */
-void
-AudioLayer::selectPreferedApi(PaHostApiTypeId apiTypeID, int& outputDeviceIndex, int& inputDeviceIndex)
-{
-	// Create iterators
-	portaudio::System::HostApiIterator hostApiIter, hostApiIterEnd;
-	hostApiIter = portaudio::System::instance().hostApisBegin();
-	hostApiIterEnd = portaudio::System::instance().hostApisEnd();
-	
-	// Loop all Api
-	for(; hostApiIter != hostApiIterEnd; hostApiIter++)
-	{
-		// If prefered Api is found, see if devices are compatible
-		if(hostApiIter->typeId() == apiTypeID)
-		{
-			bool compatibleInputDevice = false;
-			bool compatibleOutputDevice = false;
-			
-			// Create device iterators
-			portaudio::System::DeviceIterator deviceIter, deviceIterEnd;
-			deviceIter = hostApiIter->devicesBegin();
-			deviceIterEnd = hostApiIter->devicesEnd();
-			
-			// Loop all devices
-			for(; deviceIter != deviceIterEnd; deviceIter++)
-			{
-				// If we found our input device and it is not only an output device
-				if(deviceIter->index() == inputDeviceIndex && !deviceIter->isOutputOnlyDevice())
-					compatibleInputDevice = true;
-				// If we found our output device and it is not only an input device
-				if(deviceIter->index() == outputDeviceIndex && !deviceIter->isInputOnlyDevice())
-					compatibleOutputDevice = true;
-			}
-			
-			// Select default device of prefered API if compatible device was not found
-			// and write changes to configuration file
-			if(!compatibleOutputDevice)
-			{
-				outputDeviceIndex = hostApiIter->defaultOutputDevice().index();
-				_manager->setConfig(AUDIO, DRIVER_NAME_OUT, outputDeviceIndex);
-			}
-			if(!compatibleInputDevice)
-			{
-				inputDeviceIndex = hostApiIter->defaultInputDevice().index();
-				_manager->setConfig(AUDIO, DRIVER_NAME_IN, inputDeviceIndex);
-			}
-		}
-	}
-}
-
-/**
- * Get list of audio devices index supported by api
- * and corresponding to IO device type
- */
-std::vector<std::string>
-AudioLayer::getAudioDeviceList(PaHostApiTypeId apiTypeID, int ioDeviceMask)
-{
-	std::vector<std::string> v;
-	
-	// Create api iterators
-	portaudio::System::HostApiIterator hostApiIter, hostApiIterEnd;
-	hostApiIter = portaudio::System::instance().hostApisBegin();
-	hostApiIterEnd = portaudio::System::instance().hostApisEnd();
-	
-	// Loop all Api
-	for(; hostApiIter != hostApiIterEnd; hostApiIter++)
-	{
-		// If prefered Api is found, use this one
-		if(hostApiIter->typeId() == apiTypeID)
-			break;
-	}
-	// If none was found, use first api
-	if(hostApiIter == hostApiIterEnd)
-		hostApiIter = portaudio::System::instance().hostApisBegin();
-
-	// Create device iterators
-	portaudio::System::DeviceIterator deviceIter, deviceIterEnd;
-	deviceIter = hostApiIter->devicesBegin();
-	deviceIterEnd = hostApiIter->devicesEnd();
-	
-	// For each device supported by api
-	for(; deviceIter != deviceIterEnd; deviceIter++)
-	{
-		// Check for input or output capabality
-		if (	(ioDeviceMask == InputDevice && !deviceIter->isOutputOnlyDevice()) ||
-				(ioDeviceMask == OutputDevice && !deviceIter->isInputOnlyDevice()) ||
-				deviceIter->isFullDuplexDevice())
-		{
-			char id[10];
-			sprintf(id, "%d", deviceIter->index());
-			v.push_back(id);
-		}
-	}
-	return v;
-}
-
-/**
- * Get audio device by index if it supports input output device mask
- */
-AudioDevice*
-AudioLayer::getAudioDeviceInfo(int index, int ioDeviceMask)
-{
-
-  try {
-    portaudio::System& sys = portaudio::System::instance();
-    portaudio::Device& device = sys.deviceByIndex(index);
-    int deviceIsSupported = false;
-
-    if (ioDeviceMask == InputDevice && !device.isOutputOnlyDevice()) {
-      deviceIsSupported = true;
-    } else if (ioDeviceMask == OutputDevice && !device.isInputOnlyDevice()) {
-      deviceIsSupported = true;
-    } else if (device.isFullDuplexDevice()) {
-      deviceIsSupported = true;
-    }
-
-    if (deviceIsSupported) {
-      AudioDevice* audiodevice = new AudioDevice(index, device.hostApi().name(), device.name());
-      if (audiodevice) {
-        audiodevice->setRate(device.defaultSampleRate());
-      }
-      return audiodevice;
-    }
-  } catch (...) {
+  /*snd_pcm_info_t *info;
+  if(snd_pcm_info( _playback_handle , info) <0 ) {
+    _debug(" Can not gather infos on opened device. \n");  
     return 0;
   }
-  return 0;
+  else{*/
+      return 1;
+ // }    
 }
 
 
+  int
+AudioLayer::getDeviceCount()
+{
+  // TODO: everything
+  return 1;
+}
 
-void
+  void
 AudioLayer::startStream(void) 
 {
-  try {
-    ost::MutexLock guard(_mutex);
-    if (_stream && !_stream->isActive()) {
-        _debug("- AL Action: Starting sound stream\n");
-        _stream->start();
-    } else { 
-      _debug ("* AL Info: Stream doesn't exist or is already active\n");
-    }
-  } catch (const portaudio::PaException &e) {
-    _debugException("! AL: Portaudio error: error on starting audiolayer stream");
-    throw;
-  } catch(...) {
-    _debugException("! AL: Stream start error");
-    throw;
-  }
+
+  snd_pcm_prepare( _playback_handle );
+  _debug(" ALSA start stream. \n");
+  if( snd_pcm_state( _playback_handle ) == SND_PCM_STATE_PREPARED )
+    snd_pcm_start( _playback_handle );
+  else
+    _debug(" Device not ready to start. \n");
+  //playSinusWave();
 }
-	
-void
+
+
+  void
 AudioLayer::stopStream(void) 
 {
-  _debug("- AL Action: Stopping sound stream\n");
-  try {
-    ost::MutexLock guard(_mutex);
-    if (_stream && !_stream->isStopped()) {
-      _stream->stop();
-      _mainSndRingBuffer.flush();
-      _urgentRingBuffer.flush();
-      _micRingBuffer.flush();
+  _debug(" Alsa stop stream. \n");
+  ost::MutexLock guard(_mutex);
+  if( isStreamActive() ){
+    // tells the device to stop reading 
+    snd_pcm_drop(_playback_handle);
+    _mainSndRingBuffer.flush();
+    _urgentRingBuffer.flush();
+    _micRingBuffer.flush();
+  }
+  else
+    _debug(" Device not running. \n" );
+}
+
+  void
+AudioLayer::playSinusWave( void )
+{
+  unsigned char* data;
+  int pcmreturn, l1, l2;
+  short s1, s2;
+  int frames;
+
+  data = (unsigned char*)malloc(8192);
+  frames = 8192 >> 2;
+  for(l1 = 0; l1 < 100; l1++) {
+    for(l2 = 0; l2 < frames; l2++) {
+      s1 = (l2 % 128) * 100 - 5000;
+      s2 = (l2 % 256) * 100 - 5000;
+      data[4*l2] = (unsigned char)s1;
+      data[4*l2+1] = s1 >> 8;
+      data[4*l2+2] = (unsigned char)s2;
+      data[4*l2+3] = s2 >> 8;
     }
-  } catch (const portaudio::PaException &e) {
-    _debugException("! AL: Portaudio error: stoping audiolayer stream failed");
-    throw;
-  } catch(...) {
-    _debugException("! AL: Stream stop error");
-    throw;
+    /* Write num_frames frames from buffer data to the PCM device pointed to by pcm_handle */
+    /* writei for interleaved */
+    /* writen for non-interleaved */
+    while ((pcmreturn = snd_pcm_writei(_playback_handle, data, frames)) < 0) {
+      snd_pcm_prepare(_playback_handle);
+      _debug("<<<<<<<<<<<<<<< Buffer Underrun >>>>>>>>>>>>>>>\n");
+    }
   }
 }
 
-void
+
+
+//TODO
+  void
 AudioLayer::sleep(int msec) 
 {
-  if (_stream) {
-    portaudio::System::instance().sleep(msec);
-  }
 }
 
-bool
+//TODO
+  bool
 AudioLayer::isStreamActive (void) 
 {
   ost::MutexLock guard(_mutex);
-  try {
-    if(_stream && _stream->isActive()) {
-      return true;
-    }
-  } catch (const portaudio::PaException &e) {
-      _debugException("! AL: Portaudio error: isActive returned an error");
-  }
-  return false;
+  if(snd_pcm_state(_playback_handle) == SND_PCM_STATE_RUNNING)
+    return true;
+  else
+    return false;
 }
 
-int 
+  int 
 AudioLayer::putMain(void* buffer, int toCopy)
 {
-  ost::MutexLock guard(_mutex);
-  if (_stream) {
-    int a = _mainSndRingBuffer.AvailForPut();
-    if ( a >= toCopy ) {
-      return _mainSndRingBuffer.Put(buffer, toCopy, _defaultVolume);
-    } else {
-      _debug("Chopping sound, Ouch! RingBuffer full ?\n");
-      return _mainSndRingBuffer.Put(buffer, a, _defaultVolume);
-    }
-  }
+  play_alsa(buffer, toCopy);
+  //ost::MutexLock guard(_mutex);
+  /*int a = _mainSndRingBuffer.AvailForPut();
+  if ( a >= toCopy ) {
+    return _mainSndRingBuffer.Put(buffer, toCopy, _defaultVolume);
+  } else {
+    _debug("Chopping sound, Ouch! RingBuffer full ?\n");
+    return _mainSndRingBuffer.Put(buffer, a, _defaultVolume);
+  }*/
   return 0;
 }
 
-void
+  void
 AudioLayer::flushMain()
 {
   ost::MutexLock guard(_mutex);
   _mainSndRingBuffer.flush();
 }
 
-int
+  int
 AudioLayer::putUrgent(void* buffer, int toCopy)
 {
   ost::MutexLock guard(_mutex);
-  if (_stream) {
+  if ( hasStream() ) {
     int a = _urgentRingBuffer.AvailForPut();
     if ( a >= toCopy ) {
       return _urgentRingBuffer.Put(buffer, toCopy, _defaultVolume);
@@ -427,44 +316,40 @@ AudioLayer::putUrgent(void* buffer, int toCopy)
   return 0;
 }
 
-int
+  int
 AudioLayer::canGetMic()
 {
-  if (_stream) {
+  if ( hasStream() ) {
     return _micRingBuffer.AvailForGet();
   } else {
     return 0;
   }
 }
 
-int 
+  int 
 AudioLayer::getMic(void *buffer, int toCopy)
 {
-  if(_stream) {
+  if( hasStream() ) {
     return _micRingBuffer.Get(buffer, toCopy, 100);
   } else {
     return 0;
   }
 }
 
-void
+  void
 AudioLayer::flushMic()
 {
   _micRingBuffer.flush();
 }
 
-bool
+  bool
 AudioLayer::isStreamStopped (void) 
 {
   ost::MutexLock guard(_mutex);
-  try {
-    if(_stream && _stream->isStopped()) {
-      return true;
-    }
-  } catch (const portaudio::PaException &e) {
-      _debugException("! AL: Portaudio error: isStopped returned an exception");
-  }
-  return false;
+  if(snd_pcm_state( _playback_handle ) == SND_PCM_STATE_XRUN)
+    return true;
+  else
+    return false;
 }
 
 void
@@ -475,19 +360,14 @@ AudioLayer::toggleEchoTesting() {
 
 int 
 AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer, 
-			   unsigned long framesPerBuffer, 
-			   const PaStreamCallbackTimeInfo *timeInfo, 
-			   PaStreamCallbackFlags statusFlags) {
+    unsigned long framesPerBuffer){ 
 
-  (void) timeInfo;
-  (void) statusFlags;
-	
   SFLDataFormat *in  = (SFLDataFormat *) inputBuffer;
   SFLDataFormat *out = (SFLDataFormat *) outputBuffer;
 
   if (_echoTesting) {
     memcpy(out, in, framesPerBuffer*sizeof(SFLDataFormat));
-    return paContinue;
+    return framesPerBuffer*sizeof(SFLDataFormat);
   }
 
   int toGet; 
@@ -519,9 +399,9 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
       toGet = (normalAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof(SFLDataFormat);
 
       if (toGet) {
-        _mainSndRingBuffer.Get(out, toGet, spkrVolume);
+	_mainSndRingBuffer.Get(out, toGet, spkrVolume);
       } else {
-        bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
+	bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
       }
     }
   }
@@ -532,37 +412,24 @@ AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer,
   //_debug("AL: Nb sample: %d char, [0]=%f [1]=%f [2]=%f\n", toPut, in[0], in[1], in[2]);
   _micRingBuffer.Put(in, toPut, micVolume);
 
-  return paContinue;
+  return toPut;
 }
 
-int 
-AudioLayer::miniAudioCallback (const void *inputBuffer, void *outputBuffer, 
-			   unsigned long framesPerBuffer, 
-			   const PaStreamCallbackTimeInfo *timeInfo, 
-			   PaStreamCallbackFlags statusFlags) {
-  (void) timeInfo;
-  (void) statusFlags;
-	
- _debug("mini audio callback!!\n");
-#ifdef SFL_TEST_SINE
-  assert(outputBuffer != NULL);
 
-  float *out = static_cast<float *>(outputBuffer);
-  for (unsigned int i = 0; i < framesPerBuffer; ++i) {
-    out[i] = table_[leftPhase_];
-    leftPhase_ += 1;
-    if (leftPhase_ >= tableSize_) {
-      leftPhase_ -= tableSize_;
-    }
-  }
-#else
-  SFLDataFormat *out = (SFLDataFormat *) outputBuffer;
-  AudioLoop* tone = _manager->getTelephoneTone();
-  if ( tone != 0) {
-    //_debug("Frames Per Buffer: %d\n", framesPerBuffer);
-    tone->getNext(out, framesPerBuffer, 100);
-  }
-#endif
 
-  return paContinue;
+  int
+AudioLayer::play_alsa(void* buffer, int length)
+{
+  if(_playback_handle == NULL)
+    return 0;
+
+  snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _playback_handle, length);
+  snd_pcm_prepare( _playback_handle );
+  if( snd_pcm_writei( _playback_handle, buffer, frames) < 0){
+    snd_pcm_prepare( _playback_handle );
+    _debug(" Buffer underrun!!!\n");
+    return 0;
+  }
+  return 1;
 }
+
