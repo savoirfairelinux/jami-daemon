@@ -3,7 +3,7 @@ dnl
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
 AC_INIT([SFLPhone],[0.7],[sflphoneteam@savoirfairelinux.com],[sflphone])
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2007]])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2008]])
 AC_REVISION([$Revision$])
 
 dnl Compute canonical system name
@@ -192,27 +192,52 @@ PKG_CHECK_MODULES(libdbuscpp, dbus-c++-1 >= ${LIBDBUSCPP_MIN_VERSION})
 SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libdbuscpp_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libdbuscpp_LIBS"
 
-dnl Check for speex
-AC_ARG_ENABLE(speex, 
-  AS_HELP_STRING(
-    [--enable-speex],
-    [compile with speex codec @<:@default=no@:>@]
-  ), 
-  [with_speex=$enableval], 
-  [with_speex=no]
-)
+# check for libboost (doesn't use pkg-config)
+AC_CHECK_HEADER(boost/tokenizer.hpp, , AC_MSG_ERROR("Unable to find the libboost tokenizer headers; you may need to install the libboost-dev package" ) )
 
-if test "x$with_speex" = "xyes" ; then
-  AC_CHECK_HEADER([speex/speex.h], [
-    AC_CHECK_LIB(speex, speex_decode_int, 
-     [
-      with_speex=yes
-     ], [ with_speex=no ]
-    ) 
-   ], [ with_speex=no ]
-  )
-fi
-AM_CONDITIONAL(USE_SPEEX, test "x$with_speex" = "xyes" )
+# check for libgsm1 (doesn't use pkg-config)
+dnl Check for libspeex
+AC_ARG_WITH([gsm],
+  [AS_HELP_STRING([--without-gsm],
+    [disable support for gsm codec])],
+  [],
+  [with_gsm=yes])
+
+LIBGSM=
+AS_IF([test "x$with_gsm" != xno],
+  [AC_CHECK_HEADER([gsm.h], , AC_MSG_FAILURE([Unable to find the libgsm1 headers (you may need to install the dev package).  You may use --without-gsm to compile without gsm codec support.]))]
+  [AC_CHECK_LIB([gsm], [gsm_decode],
+    [],
+    [AC_MSG_FAILURE(
+       [libgsm link test failed.   You may use --without-gsm to compile without gsm codec support.])]
+       )
+   ]
+   )
+    
+AC_DEFINE([HAVE_GSM], test "x$with_gsm" = "xyes", [Define if you have libgsm])
+AM_CONDITIONAL(BUILD_GSM, test "x$with_gsm" = "xyes" )
+
+dnl Check for libspeex
+AC_ARG_WITH([speex],
+  [AS_HELP_STRING([--without-speex],
+    [disable support for speex codec])],
+  [],
+  [with_speex=yes])
+
+LIBSPEEX=
+AS_IF([test "x$with_speex" != xno],
+  [AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Unable to find the libspeex headers (you may need to install the dev package).  You may use --without-speex to compile without speex codec support.]))]
+  [AC_CHECK_LIB([speex], [speex_decode_int],
+    [],
+    [AC_MSG_FAILURE(
+       [libspeex link test failed.   You may use --without-speex to compile without speex codec support.])]
+       )
+   ]
+   )
+    
+AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspeex])
+AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
+
 
 dnl Check for IAX
 AC_ARG_ENABLE(iax2,
