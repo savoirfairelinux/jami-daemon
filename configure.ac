@@ -240,15 +240,25 @@ AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 
 
 dnl Check for IAX
-AC_ARG_ENABLE(iax2,
- AS_HELP_STRING(
-   [--disable-iax2],
-   [disable iax2 library support @<:@default=no@:>@]
- ),
- [with_iax2=$enableval],
- [with_iax2=yes]
-)
-AM_CONDITIONAL(USE_IAX, test x$with_iax2 = xyes)
+AC_ARG_WITH([iax2],
+  [AS_HELP_STRING([--without-iax2],
+    [disable support for the iax2 protocol])],
+  [],
+  [with_iax2=yes])
+
+LIBIAX2=
+AS_IF([test "x$with_iax2" != xno],
+  [AC_CHECK_HEADER([iax2.h], , AC_MSG_FAILURE([Unable to find the libiax2 headers (you may need to install the dev package).    You may use --without-iax2 to compile without iax2 protocol support.]))]
+  [AC_CHECK_LIB([iax2], [speex_decode_int],
+    [],
+    [AC_MSG_FAILURE(
+       [libiax2 link test failed.   You may use --without-iax2 to compile without iax2 protocol support.])]
+       )
+   ]
+   )
+    
+AC_DEFINE([HAVE_IAX2], test "x$with_iax2" = "xyes", [Define if you have libiax2])
+AM_CONDITIONAL(USE_IAX2, test "x$with_iax2" = "xyes" )
 
 dnl Check for readline
 GNUPG_CHECK_READLINE
