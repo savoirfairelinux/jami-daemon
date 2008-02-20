@@ -248,8 +248,8 @@ AC_ARG_WITH([iax2],
 
 LIBIAX2=
 AS_IF([test "x$with_iax2" != xno],
-  [AC_CHECK_HEADER([iax2.h], , AC_MSG_FAILURE([Unable to find the libiax2 headers (you may need to install the dev package).    You may use --without-iax2 to compile without iax2 protocol support.]))]
-  [AC_CHECK_LIB([iax2], [speex_decode_int],
+  [AC_CHECK_HEADER([iax/iax.h], , AC_MSG_FAILURE([Unable to find the libiax2 headers (you may need to install the dev package).    You may use --without-iax2 to compile without iax2 protocol support.]))]
+  [AC_CHECK_LIB([iax], [iax_init],
     [],
     [AC_MSG_FAILURE(
        [libiax2 link test failed.   You may use --without-iax2 to compile without iax2 protocol support.])]
@@ -257,8 +257,8 @@ AS_IF([test "x$with_iax2" != xno],
    ]
    )
     
-AC_DEFINE([HAVE_IAX2], test "x$with_iax2" = "xyes", [Define if you have libiax2])
-AM_CONDITIONAL(USE_IAX2, test "x$with_iax2" = "xyes" )
+AC_DEFINE([HAVE_IAX], test "x$with_iax2" = "xyes", [Define if you have libiax2])
+AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
 dnl Check for readline
 GNUPG_CHECK_READLINE
