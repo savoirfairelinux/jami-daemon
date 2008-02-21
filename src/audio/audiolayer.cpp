@@ -29,7 +29,9 @@
 #include "../manager.h"
 #include "../user_cfg.h"
 
-#define PCM_NAME_DEFAULT  "plughw:0,0"
+#define PCM_NAME_DEFAULT  "default"
+#define PCM_PAUSE 1
+#define PCM_RESUME  0
 
 #ifdef SFL_TEST_SINE
 #include <cmath>
@@ -41,9 +43,12 @@
   , _micRingBuffer(SIZEBUF)
     , _defaultVolume(100)
   , _errorMessage("")
-    , _manager(manager)
+  , _manager(manager)
+  , _playback_handle( NULL )
+  , _capture_handle( NULL )
+    , device_closed( true )
 {
-  _sampleRate = 8000;
+  //_sampleRate = 8000;
 
   _inChannel  = 1; // don't put in stereo
   _outChannel = 1; // don't put in stereo
@@ -65,33 +70,26 @@
 // Destructor
 AudioLayer::~AudioLayer (void) 
 { 
-  if(_playback_handle != NULL) {
-    close_alsa();
-    _playback_handle = NULL ;
+  device_closed = true;
+  if(_capture_handle){
+    snd_pcm_drop( _capture_handle );
+    snd_pcm_close( _capture_handle );
+    _capture_handle = 0;
+  }
+  if(_playback_handle){
+    snd_pcm_drop( _playback_handle );
+    snd_pcm_close( _playback_handle );
+    _playback_handle = 0;
   }
 #ifdef SFL_TEST_SINE
   delete [] table_;
 #endif
 }
 
-  void
-AudioLayer::close_alsa (void) 
-{
-  _debug(" Alsa close stream \n");
-  //ost::MutexLock guard(_mutex);
-  snd_pcm_close(_playback_handle);
-}
 
-bool
-AudioLayer::hasStream(void) {
-  ost::MutexLock guard(_mutex);
-  return (_playback_handle!=0 ? true : false); 
-}
-
-  void
+  bool 
 AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize) 
 {
-
   _indexIn = indexIn;
   _indexOut = indexOut;
   _sampleRate = sampleRate;
@@ -102,97 +100,10 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
   _debug("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLPortaudioFormatString);
   _debug("                   : frame per buffer=%d\n", FRAME_PER_BUFFER);
 
-  // Name of the PCM device
+  ost::MutexLock guard( _mutex );
   // TODO: Must be dynamic
-
-  // TODO: capture
-  // Capture stream
-  snd_pcm_stream_t capture_stream = SND_PCM_STREAM_CAPTURE;
-
-  // Open the playback device
-  open_playback_device(PCM_NAME_DEFAULT);
-
-  // Set up the parameters required to open a device:
-  init_hw_parameters();
-
-  device_info();
-
-  //ost::MutexLock guard(_mutex);
+  return open_device( PCM_NAME_DEFAULT );
 }
-
-void 
-AudioLayer::open_playback_device(std::string pcm_name)
-{
-  // Playback stream
-  snd_pcm_stream_t playback_stream = SND_PCM_STREAM_PLAYBACK;
-
-  if(snd_pcm_open(&_playback_handle, pcm_name.c_str(),  playback_stream, SND_PCM_NONBLOCK) < 0){
-    _debug(" Error while opening PCM device %s\n", pcm_name.c_str());
-  }
-  else
-    _debug(" Device %s successfully opened. \n", pcm_name.c_str());
-}
-
-void
-AudioLayer::init_hw_parameters(  )
-{
-  int periods = 2;
-  snd_pcm_uframes_t periodSize = 8192;
-  unsigned int sr = 44100; //(unsigned int)sampleRate;
-
-  // Information about the hardware
-  snd_pcm_hw_params_t *hwparams;
-  // Allocate the struct on the stack
-  snd_pcm_hw_params_alloca( &hwparams );
-  // Allocate memory space
-  if(snd_pcm_hw_params_malloc( &hwparams) < 0)
-    _debug(" can not allocate hardware paramater structure. \n");
-  // Init hwparams with full configuration space
-  if(snd_pcm_hw_params_any(_playback_handle, hwparams) < 0){
-    _debug(" Can not configure this PCM device .\n");  
-  }
-  // Set access type
-  if(snd_pcm_hw_params_set_access( _playback_handle , hwparams , SND_PCM_ACCESS_RW_INTERLEAVED ) <0){
-    _debug(" Error setting access. \n");
-  }
-  // Set sample format 
-  if(snd_pcm_hw_params_set_format( _playback_handle, hwparams , SND_PCM_FORMAT_S16_LE) < 0 ){
-    _debug(" Error setting format. \n");
-  }
-  // Set sample rate
-  if(snd_pcm_hw_params_set_rate_near( _playback_handle, hwparams, &sr, 0 ) <0 ) {
-    _debug(" Error setting sample rate. \n");
-  }
-  if(_sampleRate != sr)
-    _debug(" The rate %i Hz is not supported by your hardware.\n ==> Using %i Hz instead. \n", _sampleRate, sr);
-  // Set number of channels
-  if (snd_pcm_hw_params_set_channels( _playback_handle, hwparams, _inChannel) < 0) 
-    _debug(" Error setting channels. \n");
-  // Set number of periods
-  if (snd_pcm_hw_params_set_periods( _playback_handle, hwparams, periods, 0) < 0)
-    _debug(" Error setting periods. \n ");
-  // Set buffer size
-  if(snd_pcm_hw_params_set_buffer_size( _playback_handle, hwparams,  (periodSize * periods) >>2) < 0 )
-    _debug(" Error setting buffer size. \n ");
-  // Apply hardware parameters to the device
-  if(snd_pcm_hw_params( _playback_handle, hwparams) < 0 )
-    _debug(" Error setting HW params. \n ");
-
-}
-
-int
-AudioLayer::device_info( void )
-{
-  /*snd_pcm_info_t *info;
-  if(snd_pcm_info( _playback_handle , info) <0 ) {
-    _debug(" Can not gather infos on opened device. \n");  
-    return 0;
-  }
-  else{*/
-      return 1;
- // }    
-}
-
 
   int
 AudioLayer::getDeviceCount()
@@ -204,232 +115,292 @@ AudioLayer::getDeviceCount()
   void
 AudioLayer::startStream(void) 
 {
-
-  snd_pcm_prepare( _playback_handle );
-  _debug(" ALSA start stream. \n");
-  if( snd_pcm_state( _playback_handle ) == SND_PCM_STATE_PREPARED )
-    snd_pcm_start( _playback_handle );
-  else
-    _debug(" Device not ready to start. \n");
-  //playSinusWave();
+  // STATE PREPARED
+  ost::MutexLock guard( _mutex );
+  _debug(" entry startStream() - c => %d - p => %d\n", snd_pcm_state(_capture_handle), snd_pcm_state( _playback_handle));
+  snd_pcm_start( _capture_handle ) ;
+  snd_pcm_start( _playback_handle ) ;
+  // STATE RUNNING
+  _debug(" exit startStream() - c => %d - p => %d\n", snd_pcm_state(_capture_handle), snd_pcm_state( _playback_handle));
 }
 
 
   void
 AudioLayer::stopStream(void) 
 {
-  _debug(" Alsa stop stream. \n");
-  ost::MutexLock guard(_mutex);
-  if( isStreamActive() ){
-    // tells the device to stop reading 
-    snd_pcm_drop(_playback_handle);
-    _mainSndRingBuffer.flush();
-    _urgentRingBuffer.flush();
-    _micRingBuffer.flush();
-  }
-  else
-    _debug(" Device not running. \n" );
-}
-
-  void
-AudioLayer::playSinusWave( void )
-{
-  unsigned char* data;
-  int pcmreturn, l1, l2;
-  short s1, s2;
-  int frames;
-
-  data = (unsigned char*)malloc(8192);
-  frames = 8192 >> 2;
-  for(l1 = 0; l1 < 100; l1++) {
-    for(l2 = 0; l2 < frames; l2++) {
-      s1 = (l2 % 128) * 100 - 5000;
-      s2 = (l2 % 256) * 100 - 5000;
-      data[4*l2] = (unsigned char)s1;
-      data[4*l2+1] = s1 >> 8;
-      data[4*l2+2] = (unsigned char)s2;
-      data[4*l2+3] = s2 >> 8;
-    }
-    /* Write num_frames frames from buffer data to the PCM device pointed to by pcm_handle */
-    /* writei for interleaved */
-    /* writen for non-interleaved */
-    while ((pcmreturn = snd_pcm_writei(_playback_handle, data, frames)) < 0) {
-      snd_pcm_prepare(_playback_handle);
-      _debug("<<<<<<<<<<<<<<< Buffer Underrun >>>>>>>>>>>>>>>\n");
-    }
-  }
+  ost::MutexLock guard( _mutex );
+  _debug(" entry stopStream() - c => %d - p => %d\n", snd_pcm_state(_capture_handle), snd_pcm_state( _playback_handle));
+  snd_pcm_drop( _capture_handle );
+  snd_pcm_prepare( _capture_handle );
+  snd_pcm_drop( _playback_handle );
+  snd_pcm_prepare( _playback_handle );
+  _debug(" exit stopStream() - c => %d - p => %d\n", snd_pcm_state(_capture_handle), snd_pcm_state( _playback_handle));
 }
 
 
-
-//TODO
   void
 AudioLayer::sleep(int msec) 
 {
+  //snd_pcm_wait(_playback_handle, msec);
 }
 
-//TODO
   bool
 AudioLayer::isStreamActive (void) 
 {
-  ost::MutexLock guard(_mutex);
-  if(snd_pcm_state(_playback_handle) == SND_PCM_STATE_RUNNING)
+  ost::MutexLock guard( _mutex );
+  if(!device_closed)
     return true;
   else
     return false;
 }
 
+
   int 
 AudioLayer::putMain(void* buffer, int toCopy)
 {
-  play_alsa(buffer, toCopy);
-  //ost::MutexLock guard(_mutex);
-  /*int a = _mainSndRingBuffer.AvailForPut();
-  if ( a >= toCopy ) {
-    return _mainSndRingBuffer.Put(buffer, toCopy, _defaultVolume);
-  } else {
-    _debug("Chopping sound, Ouch! RingBuffer full ?\n");
-    return _mainSndRingBuffer.Put(buffer, a, _defaultVolume);
-  }*/
+  ost::MutexLock guard( _mutex );
+  if ( _playback_handle ) 
+    write(buffer, toCopy);
   return 0;
 }
 
   void
 AudioLayer::flushMain()
 {
-  ost::MutexLock guard(_mutex);
-  _mainSndRingBuffer.flush();
 }
 
   int
 AudioLayer::putUrgent(void* buffer, int toCopy)
 {
-  ost::MutexLock guard(_mutex);
-  if ( hasStream() ) {
-    int a = _urgentRingBuffer.AvailForPut();
-    if ( a >= toCopy ) {
-      return _urgentRingBuffer.Put(buffer, toCopy, _defaultVolume);
-    } else {
-      return _urgentRingBuffer.Put(buffer, a, _defaultVolume);
-    }
-  }
+  ost::MutexLock guard( _mutex );
+  if ( _playback_handle ) 
+    //write(buffer, toCopy);
   return 0;
 }
 
   int
 AudioLayer::canGetMic()
 {
-  if ( hasStream() ) {
-    return _micRingBuffer.AvailForGet();
-  } else {
-    return 0;
+  int avail;
+  if ( _capture_handle ) {
+    avail = snd_pcm_avail_update( _capture_handle );
+    //printf("%d\n", avail ); 
+    if(avail > 0)
+      return avail;
+    else 
+      return 0;  
   }
+  else
+    return 0;
 }
 
   int 
 AudioLayer::getMic(void *buffer, int toCopy)
 {
-  if( hasStream() ) {
-    return _micRingBuffer.Get(buffer, toCopy, 100);
-  } else {
+
+  if( _capture_handle ) 
+    return read(buffer, toCopy);
+  else
     return 0;
-  }
 }
 
   void
 AudioLayer::flushMic()
 {
-  _micRingBuffer.flush();
 }
 
   bool
 AudioLayer::isStreamStopped (void) 
 {
-  ost::MutexLock guard(_mutex);
-  if(snd_pcm_state( _playback_handle ) == SND_PCM_STATE_XRUN)
+  ost::MutexLock guard( _mutex );
+  return !(is_playback_active() & is_capture_active());
+}
+
+void
+AudioLayer::toggleEchoTesting() {
+  ost::MutexLock guard( _mutex );
+  _echoTesting = (_echoTesting == true) ? false : true;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+
+bool
+AudioLayer::isPlaybackActive(void) {
+  ost::MutexLock guard( _mutex );
+  if( _playback_handle )
+    return (snd_pcm_state(_playback_handle) == SND_PCM_STATE_RUNNING ? true : false); 
+  else
+    return false;
+}
+
+bool
+AudioLayer::isCaptureActive(void) {
+  ost::MutexLock guard( _mutex );
+  if( _capture_handle )
+    return (snd_pcm_state( _capture_handle) == SND_PCM_STATE_RUNNING ? true : false); 
+  else
+    return false;
+}
+
+
+  bool 
+AudioLayer::open_device(std::string pcm_name)
+{
+  int err;
+  snd_pcm_hw_params_t *hwparams = NULL;
+  unsigned int rate_in = _sampleRate;
+  unsigned int rate_out = _sampleRate;
+  int direction = 0;
+  snd_pcm_uframes_t period_size_in = 1024;
+  snd_pcm_uframes_t buffer_size_in = 2048;
+  snd_pcm_uframes_t period_size_out = 2048;
+  snd_pcm_uframes_t buffer_size_out = 4096;
+  snd_pcm_sw_params_t *swparams = NULL;
+
+  _debug(" Opening capture device %s\n", pcm_name.c_str());
+  if(err = snd_pcm_open(&_capture_handle, pcm_name.c_str(),  SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK) < 0){
+    _debug(" Error while opening capture device %s (%s)\n", pcm_name.c_str(), snd_strerror(err));
+    return false;
+  }
+  if( err = snd_pcm_hw_params_malloc( &hwparams ) < 0 ) {
+    _debug(" Cannot allocate hardware parameter structure (%s)\n", snd_strerror(err));
+    return false;
+  }
+  if( err = snd_pcm_hw_params_any(_capture_handle, hwparams) < 0) _debug(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_access( _capture_handle, hwparams, SND_PCM_ACCESS_RW_INTERLEAVED) < 0) _debug(" Cannot set access type (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_format( _capture_handle, hwparams, SND_PCM_FORMAT_S16_LE) < 0) _debug(" Cannot set sample format (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_rate_near( _capture_handle, hwparams, &rate_in, &direction) < 0) _debug(" Cannot set sample rate (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_channels( _capture_handle, hwparams, 1) < 0) _debug(" Cannot set channel count (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_period_size_near( _capture_handle, hwparams, &period_size_out , &direction) < 0) _debug(" Cannot set period size (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_buffer_size_near( _capture_handle, hwparams, &buffer_size_out ) < 0) _debug(" Cannot set buffer size (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params( _capture_handle, hwparams ) < 0) _debug(" Cannot set hw parameters (%s)\n", snd_strerror(err));
+  snd_pcm_hw_params_free( hwparams );
+
+
+  _debug(" Opening playback device %s\n", pcm_name.c_str());
+  if(err = snd_pcm_open(&_playback_handle, pcm_name.c_str(),  SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK) < 0){
+    _debug(" Error while opening playback device %s (%s)\n", pcm_name.c_str(), snd_strerror(err));
+    return false;
+  }
+  if( err = snd_pcm_hw_params_malloc( &hwparams ) < 0 ) {
+    _debug(" Cannot allocate hardware parameter structure (%s)\n", snd_strerror(err));
+    return false;
+  }
+  if( err = snd_pcm_hw_params_any( _playback_handle, hwparams) < 0) _debug(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_access( _playback_handle, hwparams, SND_PCM_ACCESS_RW_INTERLEAVED) < 0) _debug(" Cannot set access type (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_format( _playback_handle, hwparams, SND_PCM_FORMAT_S16_LE) < 0) _debug(" Cannot set sample format (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_rate_near( _playback_handle, hwparams, &rate_out, &direction) < 0) _debug(" Cannot set sample rate (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_channels( _playback_handle, hwparams, 1) < 0) _debug(" Cannot set channel count (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_period_size_near( _playback_handle, hwparams, &period_size_out , &direction) < 0) _debug(" Cannot set period size (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params_set_buffer_size_near( _playback_handle, hwparams, &buffer_size_out ) < 0) _debug(" Cannot set buffer size (%s)\n", snd_strerror(err));
+  if( err = snd_pcm_hw_params( _playback_handle, hwparams ) < 0) _debug(" Cannot set hw parameters (%s)\n", snd_strerror(err));
+  snd_pcm_hw_params_free( hwparams );
+
+  snd_pcm_uframes_t val;
+  snd_pcm_sw_params_alloca( &swparams );
+  snd_pcm_sw_params_current( _playback_handle, swparams );
+
+  if( err = snd_pcm_sw_params_get_start_threshold( swparams, &val ) < 0 ) _debug(" Cannot get start threshold (%s)\n", snd_strerror(err)); 
+  if( err = snd_pcm_sw_params_get_stop_threshold( swparams, &val ) < 0 ) _debug(" Cannot get stop threshold (%s)\n", snd_strerror(err)); 
+  if( err = snd_pcm_sw_params_get_boundary( swparams, &val ) < 0 ) _debug(" Cannot get boundary (%s)\n", snd_strerror(err)); 
+  if( err = snd_pcm_sw_params_set_silence_threshold( _playback_handle, swparams, 0 ) < 0 ) _debug(" Cannot set silence threshold (%s)\n", snd_strerror(err)); 
+  if( err = snd_pcm_sw_params_set_silence_size( _playback_handle, swparams, 0 ) < 0 ) _debug(" Cannot set silence size (%s)\n", snd_strerror(err)); 
+  if( err = snd_pcm_sw_params( _playback_handle, swparams ) < 0 ) _debug(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
+
+  device_closed = false;
+
+  return true;
+}
+
+  bool 
+AudioLayer::is_playback_active( void )
+{
+  if(snd_pcm_state(_playback_handle) == SND_PCM_STATE_RUNNING)
     return true;
   else
     return false;
 }
 
-void
-AudioLayer::toggleEchoTesting() {
-  ost::MutexLock guard(_mutex);
-  _echoTesting = (_echoTesting == true) ? false : true;
+  bool
+AudioLayer::is_capture_active( void )
+{
+  if(snd_pcm_state(_capture_handle) == SND_PCM_STATE_RUNNING)
+    return true;
+  else
+    return false;
 }
-
-int 
-AudioLayer::audioCallback (const void *inputBuffer, void *outputBuffer, 
-    unsigned long framesPerBuffer){ 
-
-  SFLDataFormat *in  = (SFLDataFormat *) inputBuffer;
-  SFLDataFormat *out = (SFLDataFormat *) outputBuffer;
-
-  if (_echoTesting) {
-    memcpy(out, in, framesPerBuffer*sizeof(SFLDataFormat));
-    return framesPerBuffer*sizeof(SFLDataFormat);
-  }
-
-  int toGet; 
-  int toPut;
-  int urgentAvail; // number of data right and data left
-  int normalAvail; // number of data right and data left
-  int micAvailPut;
-  unsigned short spkrVolume = _manager->getSpkrVolume();
-  unsigned short micVolume  = _manager->getMicVolume();
-
-  // AvailForGet tell the number of chars inside the buffer
-  // framePerBuffer are the number of data for one channel (left)
-  urgentAvail = _urgentRingBuffer.AvailForGet();
-  if (urgentAvail > 0) {
-    // Urgent data (dtmf, incoming call signal) come first.		
-    toGet = (urgentAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof(SFLDataFormat);
-    _urgentRingBuffer.Get(out, toGet, spkrVolume);
-    // Consume the regular one as well (same amount of bytes)
-    _mainSndRingBuffer.Discard(toGet);
-  } else {
-    AudioLoop* tone = _manager->getTelephoneTone();
-    if ( tone != 0) {
-      tone->getNext(out, framesPerBuffer, spkrVolume);
-    } else if ( (tone=_manager->getTelephoneFile()) != 0 ) {
-      tone->getNext(out, framesPerBuffer, spkrVolume);
-    } else {
-      // If nothing urgent, play the regular sound samples
-      normalAvail = _mainSndRingBuffer.AvailForGet();
-      toGet = (normalAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof(SFLDataFormat);
-
-      if (toGet) {
-	_mainSndRingBuffer.Get(out, toGet, spkrVolume);
-      } else {
-	bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
-      }
-    }
-  }
-
-  // Additionally handle the mic's audio stream 
-  micAvailPut = _micRingBuffer.AvailForPut();
-  toPut = (micAvailPut <= (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? micAvailPut : framesPerBuffer * sizeof(SFLDataFormat);
-  //_debug("AL: Nb sample: %d char, [0]=%f [1]=%f [2]=%f\n", toPut, in[0], in[1], in[2]);
-  _micRingBuffer.Put(in, toPut, micVolume);
-
-  return toPut;
-}
-
 
 
   int
-AudioLayer::play_alsa(void* buffer, int length)
+AudioLayer::write(void* buffer, int length)
 {
-  if(_playback_handle == NULL)
+  if(device_closed || _playback_handle == NULL)
     return 0;
 
+  int bytes;
+
   snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _playback_handle, length);
-  snd_pcm_prepare( _playback_handle );
-  if( snd_pcm_writei( _playback_handle, buffer, frames) < 0){
+  if( bytes = snd_pcm_writei( _playback_handle, buffer, frames) < 0 ) {
     snd_pcm_prepare( _playback_handle );
-    _debug(" Buffer underrun!!!\n");
+    _debug(" Playback error (%s)\n", snd_strerror(bytes));
     return 0;
   }
   return 1;
 }
 
+  int
+AudioLayer::read( void* target_buffer, int toCopy)
+{
+  if(device_closed || _capture_handle == NULL)
+    return 0;
+
+  int bytes;
+  snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _capture_handle, toCopy);
+  if( bytes = snd_pcm_readi( _capture_handle, target_buffer, frames) < 0 ) {
+    int err = bytes;
+    switch(err){
+      case EPERM:
+	_debug(" Capture EPERM (%s)\n", snd_strerror(bytes));
+	handle_xrun_state();
+	break;
+      case -ESTRPIPE:
+	_debug(" Capture ESTRPIPE (%s)\n", snd_strerror(bytes));
+	snd_pcm_resume( _capture_handle);
+	break;
+      case -EAGAIN:
+	_debug(" Capture EAGAIN (%s)\n", snd_strerror(bytes));
+	break;
+      case -EBADFD:
+	_debug(" Capture EBADFD (%s)\n", snd_strerror(bytes));
+	break;
+      case -EPIPE:
+	_debug(" Capture EPIPE (%s)\n", snd_strerror(bytes));
+	handle_xrun_state();
+	break;
+    }
+    return 0;
+  }
+  return toCopy;
+}
+
+
+  void
+AudioLayer::handle_xrun_state( void )
+{
+  snd_pcm_status_t* status;
+  snd_pcm_status_alloca( &status );
+
+  int res = snd_pcm_status( _capture_handle, status );
+  if( res <= 0){
+    if(snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN ){
+      snd_pcm_drop( _capture_handle );
+      snd_pcm_prepare( _capture_handle );
+      snd_pcm_start( _capture_handle ); 
+    }
+  }
+  else
+    _debug(" Get status failed\n");
+}

@@ -48,13 +48,15 @@ class AudioLayer {
      * @param sampleRate
      * @param frameSize
      */
-    void openDevice(int, int, int, int);
+    bool openDevice(int, int, int, int);
     void startStream(void);
     void stopStream(void);
     void sleep(int);
-    bool hasStream(void);
+    bool isPlaybackActive( void );
+    bool isCaptureActive( void );
     bool isStreamActive(void);
     bool isStreamStopped(void);
+    void closeStream();
 
     void flushMain();
     int putMain(void* buffer, int toCopy);
@@ -99,24 +101,22 @@ class AudioLayer {
     void toggleEchoTesting();
 
   private:
-    void close_alsa (void);
-    int play_alsa( void* , int );
-    int device_info( void );
-    void init_hw_parameters( void );
-    void open_playback_device( std::string ); 
+    bool open_device( std::string ); 
+    int write( void* , int );
+    int read( void*, int );
+    bool is_playback_active( void );
+    bool is_capture_active( void );
+    void handle_xrun_state( void );
     RingBuffer _urgentRingBuffer;
     RingBuffer _mainSndRingBuffer;
     RingBuffer _micRingBuffer;
     ManagerImpl* _manager; // augment coupling, reduce indirect access
     // a audiolayer can't live without manager
 
-    //portaudio::MemFunCallbackStream<AudioLayer> *_stream;
-
     snd_pcm_t* _playback_handle;
-    snd_pcm_state_t* playback_state;
     snd_pcm_t* _capture_handle;
+    bool device_closed;
 
-    int playback_callback(snd_pcm_sframes_t nframes);
     /**
      * Portaudio indexes of audio devices on which stream has been opened 
      */
