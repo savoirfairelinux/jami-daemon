@@ -24,17 +24,19 @@
 #define _AUDIO_LAYER_H
 
 #include <cc++/thread.h> // for ost::Mutex
+#include <boost/tokenizer.hpp>
 
 #include "../global.h"
-#include "ringbuffer.h"
 #include "audiodevice.h"
 
 #include <vector>
 #include <alsa/asoundlib.h>
-
+#include <iostream>
+#include <fstream>
+#include <istream>
+#include <sstream>
 #define FRAME_PER_BUFFER	160
 
-class RingBuffer;
 class ManagerImpl;
 
 class AudioLayer {
@@ -47,8 +49,9 @@ class AudioLayer {
      * @param indexOut
      * @param sampleRate
      * @param frameSize
+     * @param flag - 0 --> open playback and capture ; 1 --> open playback only ; 2 --> open capture only
      */
-    bool openDevice(int, int, int, int);
+    bool openDevice(int, int, int, int, int);
     void startStream(void);
     void stopStream(void);
     void sleep(int);
@@ -58,16 +61,15 @@ class AudioLayer {
     bool isStreamStopped(void);
     void closeStream();
 
-    void flushMain();
-    int putMain(void* buffer, int toCopy);
+    int playSamples(void* buffer, int toCopy);
+    int playRingTone( void* buffer, int toCopy);
     int putUrgent(void* buffer, int toCopy);
     int canGetMic();
     int getMic(void *, int);
-    void flushMic();
+    std::vector<std::string> get_sound_cards( void );
+    std::string buildDeviceTopo( std::string prefixe, int suffixe);
 
     int audioCallback (const void *, void *, unsigned long);
-    //int miniAudioCallback (const void *, void *, unsigned long,
-    //const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags);
 
     void setErrorMessage(const std::string& error) { _errorMessage = error; }
     std::string getErrorMessage() { return _errorMessage; }
@@ -101,15 +103,15 @@ class AudioLayer {
     void toggleEchoTesting();
 
   private:
-    bool open_device( std::string ); 
+    bool open_device( std::string , std::string , int); 
     int write( void* , int );
     int read( void*, int );
     bool is_playback_active( void );
     bool is_capture_active( void );
     void handle_xrun_state( void );
-    RingBuffer _urgentRingBuffer;
-    RingBuffer _mainSndRingBuffer;
-    RingBuffer _micRingBuffer;
+    void get_devices_info( void );
+    std::string get_alsa_version( void );
+    std::vector<std::string> parse_sound_cards( std::string& );
     ManagerImpl* _manager; // augment coupling, reduce indirect access
     // a audiolayer can't live without manager
 

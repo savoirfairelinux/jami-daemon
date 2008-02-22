@@ -428,7 +428,7 @@ try {
 #endif
 
 
-		audiolayer->putMain(toAudioLayer, nbSample * sizeof(SFLDataFormat));
+		audiolayer->playSamples(toAudioLayer, nbSample * sizeof(SFLDataFormat));
 		// Notify (with a beep) an incoming call when there is already a call 
 		countTime += time->getSecond();
 		if (Manager::instance().incomingCallWaiting() > 0) {

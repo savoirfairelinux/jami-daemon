@@ -48,7 +48,8 @@ typedef short int16;
   #define _debugMid(...)       fprintf(stderr, __VA_ARGS__)
   #define _debugEnd(...)       fprintf(stderr, __VA_ARGS__)
   #define _debugException(...) fprintf(stderr, "[sfl-excep] " __VA_ARGS__ "\n")
-  #define _debugInit(...)      fprintf(stderr, "[sfl-init.] " __VA_ARGS__ "\n")
+  #define _debugInit(...)      fprintf(stderr, "[sfl-init] " __VA_ARGS__ "\n")
+  #define _debugAlsa(...)      fprintf(stderr, "[alsa-debug] " __VA_ARGS__ )
 #else
   #define _debug(...)
   #define _debugStart(...)
@@ -56,6 +57,7 @@ typedef short int16;
   #define _debugEnd(...)
   #define _debugException(...)
   #define _debugInit(...)
+  #define _debugAlsa(...)
 #endif
 
 #define SFLPHONED_VERSION "0.7.2"
@@ -72,14 +74,7 @@ typedef short int16;
 #define CHANNELS				2
 #define SIZEBUF 				1024*1024
 
-// Codecs payloads, as defined in RFC3551
-// http://www.iana.org/assignments/rtp-parameters
-// http://www.gnu.org/software/ccrtp/doc/refman/html/formats_8h.html#a0
-/*#define PAYLOAD_CODEC_ULAW	0  // PCMU 8000
-#define PAYLOAD_CODEC_ALAW	8  // PCMA 8000
-#define PAYLOAD_CODEC_GSM	3  // GSM 8000
-// http://www.ietf.org/rfc/rfc3952.txt
-#define PAYLOAD_CODEC_ILBC	97*/
-
+#define PCM_FRONT	"plug:front"
+#define PCM_DEFAULT	"default"
 
 #endif	// __GLOBAL_H__
