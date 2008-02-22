@@ -49,6 +49,7 @@
   _outChannel = 1; // don't put in stereo
   _echoTesting = false;
   get_alsa_version();
+  getHardware(2);
 
 #ifdef SFL_TEST_SINE
   leftPhase_ = 0;
@@ -114,7 +115,7 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
 
   ost::MutexLock guard( _mutex );
 
-  std::string pcmp = buildDeviceTopo(PCM_FRONT, indexOut );
+  std::string pcmp = buildDeviceTopo(PCM_DMIX, indexOut );
   std::string pcmc = buildDeviceTopo(PCM_FRONT, indexIn );
   return open_device( pcmp , pcmc, flag);
 }
@@ -278,7 +279,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   if(flag == 0 || flag == 2)
   {
     _debug(" Opening capture device %s\n", pcm_c.c_str());
-    if(err = snd_pcm_open(&_capture_handle, pcm_c.c_str() ,  SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK) < 0){
+    if(err = snd_pcm_open(&_capture_handle,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK) < 0){
       _debug(" Error while opening capture device %s (%s)\n", pcm_c.c_str(), snd_strerror(err));
       return false;
     }
@@ -493,4 +494,59 @@ AudioLayer::buildDeviceTopo( std::string prefixe, int suffixe)
   return pcm;
 }
 
+  std::vector<std::string>
+AudioLayer::getHardware( int flag )
+{
+  std::vector<std::string> cards_id;
+  
+  snd_ctl_t* handle;
+  snd_ctl_card_info_t *info;
+  snd_pcm_info_t* pcminfo;
+  snd_ctl_card_info_alloca( &info );
+  snd_pcm_info_alloca( &pcminfo );
+  
+  int numCard = -1 ;
+  int err;
+  int dev = -1;
+  std::stringstream ss;
+  
+  if(snd_card_next( &numCard ) < 0 || numCard < 0)
+    return cards_id;
 
+  while(numCard >= 0){
+  ss << numCard;
+  std::string name= "hw:";
+  name.append(ss.str());
+
+  if( snd_ctl_open( &handle, name.c_str(), 0) == 0 ){
+    if( snd_ctl_card_info( handle, info) == 0){ 
+	snd_pcm_info_set_device( pcminfo , dev);
+	snd_pcm_info_set_subdevice( pcminfo, 0 );
+	
+	if(flag == 2)
+	  snd_pcm_info_set_stream( pcminfo, SND_PCM_STREAM_CAPTURE );
+	else
+	  snd_pcm_info_set_stream( pcminfo, SND_PCM_STREAM_PLAYBACK );
+
+	if( snd_ctl_pcm_info ( handle ,pcminfo ) < 0) _debug(" Cannot get info\n");
+	_debug("card %i : %s [%s]- device %i : %s [%s]\n - driver %s - dir %i\n", 
+	    numCard, 
+	    snd_ctl_card_info_get_id(info),
+	    snd_ctl_card_info_get_name( info ),
+	    numCard, 
+	    snd_pcm_info_get_id(pcminfo),
+	    snd_pcm_info_get_name( pcminfo),
+	    snd_ctl_card_info_get_driver( info ),
+	    snd_pcm_info_get_stream( pcminfo )      );
+	if(snd_pcm_info_get_name( pcminfo ) != NULL)
+	  cards_id.push_back(snd_ctl_card_info_get_name( info ));
+    }
+      snd_ctl_close( handle );
+  }
+    if ( snd_card_next( &numCard ) < 0 ) {
+      break;
+    }
+    
+  }
+    return cards_id;
+}

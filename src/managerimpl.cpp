@@ -1251,7 +1251,8 @@ ManagerImpl::setAudioManager(const std::string& audioManager)
 ManagerImpl::getAudioOutputDeviceList(void)
 {
   _debug("Get audio output device list");
-  return _audiodriver -> get_sound_cards();
+  //return _audiodriver -> get_sound_cards();
+  return _audiodriver -> getHardware(1);
 }
 
 /**
@@ -1271,7 +1272,8 @@ ManagerImpl::setAudioOutputDevice(const int index)
 ManagerImpl::getAudioInputDeviceList(void)
 {
   _debug("Get audio input device list\n");
-  return _audiodriver -> get_sound_cards(); 
+  //return _audiodriver -> get_sound_cards(); 
+  return _audiodriver->getHardware(2);
 }
 
 /**

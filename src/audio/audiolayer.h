@@ -68,6 +68,7 @@ class AudioLayer {
     int getMic(void *, int);
     std::vector<std::string> get_sound_cards( void );
     std::string buildDeviceTopo( std::string prefixe, int suffixe);
+    std::vector<std::string> getHardware( int flag );
 
     int audioCallback (const void *, void *, unsigned long);
 

@@ -239,9 +239,6 @@ config_window_fill_input_audio_device_list()
 	int c = 0;
 	for(audioDevice = list; *list; list++)
 	{
-		
-		//int index = atoi(audioDevice);
-		//details = dbus_get_audio_device_details(index);
 		gtk_list_store_append(inputAudioDeviceManagerStore, &iter);
 		gtk_list_store_set(inputAudioDeviceManagerStore, &iter, 0, *list, 1, c, -1);
 		c++;

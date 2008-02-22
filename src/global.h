@@ -76,5 +76,6 @@ typedef short int16;
 
 #define PCM_FRONT	"plug:front"
 #define PCM_DEFAULT	"default"
+#define PCM_DMIX	"plug:dmix"
 
 #endif	// __GLOBAL_H__
