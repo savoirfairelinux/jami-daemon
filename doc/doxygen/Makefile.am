@@ -2,12 +2,22 @@ SUBDIRS =
 
 docdir = ${prefix}/share/doc/wifidog-@VERSION@
 html_parent_dir = .
+HTML_HEADER = 
+HTML_FOOTER = 
 
 all:
 
-doc: core-doc gtk-gui-doc
+.PHONY: doxygen-trac
+
+doxygen-trac: clean core-doc-trac gtk-gui-doc-trac
+
+%-doc-trac : %-doc
+	ln -s ${html_parent_dir}/$< ${html_parent_dir}/$</html
+
+doc: clean core-doc gtk-gui-doc
+
 %-doc : %-doc.cfg
-	rm -rf $@-html/ refman.pdf
+	rm -rf $@/ refman.pdf
 	$(DOXYGEN) $<
 #	$(MAKE) -C latex/ 
 #	mv latex/refman.pdf ./refman.pdf
@@ -16,7 +26,7 @@ doc: core-doc gtk-gui-doc
 clean-local:
 	echo "clean-local: " && pwd
 	rm -rf latex/
-	rm -rf ${html_parent_dir}/*-html/
+	rm -rf ${html_parent_dir}/*-doc/
 	rm -f *~
 	rm -f doxygen.log
 	rm -f doxygen.cfg
@@ -34,6 +44,12 @@ maintainer-clean-local: clean-local
 	sed < $< > $@.tmp \
             -e 's:@-top_srcdir-@:${top_srcdir}:g'
 	sed < $@.tmp > $@.tmp2 \
-            -e 's:@-htmldir-@:${html_parent_dir}/$*-html:g'
+            -e 's:@-html_dir-@:${html_parent_dir}/$*:g'
 	rm $@.tmp
-	mv $@.tmp2 $@
+	sed < $@.tmp2 > $@.tmp3 \
+            -e 's:@-html_header-@:${HTML_HEADER}:g'
+	rm $@.tmp2
+	sed < $@.tmp3 > $@.tmp4 \
+            -e 's:@-html_footer-@:${HTML_FOOTER}:g'
+	rm $@.tmp3
+	mv $@.tmp4 $@
