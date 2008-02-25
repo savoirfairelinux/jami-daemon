@@ -78,4 +78,8 @@ typedef short int16;
 #define PCM_DEFAULT	"default"
 #define PCM_DMIX	"plug:dmix"
 
+#define SFL_PCM_BOTH		0x0021
+#define SFL_PCM_PLAYBACK	0x0022
+#define SFL_PCM_CAPTURE		0x0023
+
 #endif	// __GLOBAL_H__

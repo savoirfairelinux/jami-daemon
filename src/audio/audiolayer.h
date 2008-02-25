@@ -66,11 +66,8 @@ class AudioLayer {
     int putUrgent(void* buffer, int toCopy);
     int canGetMic();
     int getMic(void *, int);
-    std::vector<std::string> get_sound_cards( void );
     std::string buildDeviceTopo( std::string prefixe, int suffixe);
-    std::vector<std::string> getHardware( int flag );
-
-    int audioCallback (const void *, void *, unsigned long);
+    std::vector<std::string> getSoundCardsInfo( int flag );
 
     void setErrorMessage(const std::string& error) { _errorMessage = error; }
     std::string getErrorMessage() { return _errorMessage; }
@@ -110,9 +107,8 @@ class AudioLayer {
     bool is_playback_active( void );
     bool is_capture_active( void );
     void handle_xrun_state( void );
-    void get_devices_info( void );
     std::string get_alsa_version( void );
-    std::vector<std::string> parse_sound_cards( std::string& );
+
     ManagerImpl* _manager; // augment coupling, reduce indirect access
     // a audiolayer can't live without manager
 

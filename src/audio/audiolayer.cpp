@@ -49,7 +49,7 @@
   _outChannel = 1; // don't put in stereo
   _echoTesting = false;
   get_alsa_version();
-  getHardware(2);
+  //getHardware(2);
 
 #ifdef SFL_TEST_SINE
   leftPhase_ = 0;
@@ -88,19 +88,23 @@ AudioLayer::~AudioLayer (void)
 AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize, int flag) 
 {
 
-  if(device_closed = false)
+  if(device_closed == false)
   {
-    _debugAlsa(" CLose the current devices\n");
-    if(_capture_handle && (flag == 0 || flag == 2)){
-      snd_pcm_drop( _capture_handle );
-      snd_pcm_close( _capture_handle );
-      _capture_handle = 0;
-    }
-    if(_playback_handle && ( flag == 0 || flag == 1)){
-      snd_pcm_drop( _playback_handle );
-      snd_pcm_close( _playback_handle );
-      _playback_handle = 0;
-    }
+    if( flag == SFL_PCM_CAPTURE)
+      if(_capture_handle)
+      {
+	_debugAlsa(" Close the current capture device\n");
+	snd_pcm_drop( _capture_handle );
+	snd_pcm_close( _capture_handle );
+	_capture_handle = 0;
+      }
+      else if( flag == SFL_PCM_PLAYBACK)
+	if(_playback_handle){
+	  _debugAlsa(" Close the current playback device\n");
+	  snd_pcm_drop( _playback_handle );
+	  snd_pcm_close( _playback_handle );
+	  _playback_handle = 0;
+	}
   }
 
   _indexIn = indexIn;
@@ -132,6 +136,8 @@ AudioLayer::startStream(void)
 {
   _debug(" Start stream\n");
   ost::MutexLock guard( _mutex );
+  //snd_pcm_wait( _capture_handle , 40); 
+  //snd_pcm_prepare( _capture_handle );
   snd_pcm_start( _capture_handle ) ;
   //snd_pcm_start( _playback_handle ) ;
 }
@@ -215,7 +221,6 @@ AudioLayer::canGetMic()
   int 
 AudioLayer::getMic(void *buffer, int toCopy)
 {
-
   if( _capture_handle ) 
     return read(buffer, toCopy);
   else
@@ -265,21 +270,24 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
 {
   int err;
   snd_pcm_hw_params_t *hwparams = NULL;
-  unsigned int rate_in = _sampleRate;
-  unsigned int rate_out = _sampleRate;
+  unsigned int rate_in = getSampleRate();
+  unsigned int rate_out = getSampleRate();
   int dir = 0;
   unsigned int period_count_in = 2;
-  snd_pcm_uframes_t period_size_in = 2048; //rate_in * _frameSize / 1000 ;
+  //snd_pcm_uframes_t period_size_in = 2048; //rate_in * _frameSize / 1000 ;
+  snd_pcm_uframes_t period_size_in =  getFrameSize() * getSampleRate() / 1000 ;
   snd_pcm_uframes_t buffer_size_in = 4096;
+  snd_pcm_uframes_t threshold = getFrameSize() * getSampleRate() / 1000 ;
+  _debugAlsa("Start threshold for mic  =%i\n", threshold);
   unsigned int period_count_out = 2;
   snd_pcm_uframes_t period_size_out = 2048 ;
   snd_pcm_uframes_t buffer_size_out = 4096 ;
   snd_pcm_sw_params_t *swparams = NULL;
 
-  if(flag == 0 || flag == 2)
+  if(flag == SFL_PCM_BOTH || flag == SFL_PCM_CAPTURE)
   {
     _debug(" Opening capture device %s\n", pcm_c.c_str());
-    if(err = snd_pcm_open(&_capture_handle,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK) < 0){
+    if(err = snd_pcm_open(&_capture_handle,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, 0) < 0){
       _debug(" Error while opening capture device %s (%s)\n", pcm_c.c_str(), snd_strerror(err));
       return false;
     }
@@ -292,18 +300,25 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     if( err = snd_pcm_hw_params_set_format( _capture_handle, hwparams, SND_PCM_FORMAT_S16_LE) < 0) _debug(" Cannot set sample format (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_rate_near( _capture_handle, hwparams, &rate_in, &dir) < 0) _debug(" Cannot set sample rate (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_channels( _capture_handle, hwparams, 1) < 0) _debug(" Cannot set channel count (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_period_size_near( _capture_handle, hwparams, &period_size_out , &dir) < 0) _debug(" Cannot set period size (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_buffer_size_near( _capture_handle, hwparams, &buffer_size_out ) < 0) _debug(" Cannot set buffer size (%s)\n", snd_strerror(err));
+    if( err = snd_pcm_hw_params_set_period_size_near( _capture_handle, hwparams, &period_size_in , &dir) < 0) _debug(" Cannot set period size (%s)\n", snd_strerror(err));
+    if( err = snd_pcm_hw_params_set_buffer_size_near( _capture_handle, hwparams, &buffer_size_in ) < 0) _debug(" Cannot set buffer size (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params( _capture_handle, hwparams ) < 0) _debug(" Cannot set hw parameters (%s)\n", snd_strerror(err));
     snd_pcm_hw_params_free( hwparams );
+
+    snd_pcm_sw_params_alloca( &swparams );
+    snd_pcm_sw_params_current( _capture_handle, swparams );
+
+    if( err = snd_pcm_sw_params_set_start_threshold( _capture_handle, swparams, 1 ) < 0 ) _debug(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_stop_threshold( _capture_handle, swparams, buffer_size_in ) < 0 ) _debug(" Cannot get stop threshold (%s)\n", snd_strerror(err)); 
+    if( err = snd_pcm_sw_params( _capture_handle, swparams ) < 0 ) _debug(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
     device_closed = false;
   }
 
-  if(flag == 0 || flag == 1)
+  if(flag == SFL_PCM_BOTH || flag == SFL_PCM_PLAYBACK)
   {
 
     _debug(" Opening playback device %s\n", pcm_p.c_str());
-    if(err = snd_pcm_open(&_playback_handle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0) < 0){
+    if(err = snd_pcm_open(&_playback_handle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK) < 0){
       _debug(" Error while opening playback device %s (%s)\n", pcm_p.c_str(), snd_strerror(err));
       return false;
     }
@@ -326,7 +341,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     snd_pcm_sw_params_current( _playback_handle, swparams );
 
     if( err = snd_pcm_sw_params_set_start_threshold( _playback_handle, swparams, val ) < 0 ) _debug(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_stop_threshold( _playback_handle, swparams, val*4 ) < 0 ) _debug(" Cannot get stop threshold (%s)\n", snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_stop_threshold( _playback_handle, swparams, val * 4 ) < 0 ) _debug(" Cannot get stop threshold (%s)\n", snd_strerror(err)); 
     if( err = snd_pcm_sw_params( _playback_handle, swparams ) < 0 ) _debug(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
     device_closed = false;
   }
@@ -375,27 +390,29 @@ AudioLayer::read( void* target_buffer, int toCopy)
 {
   if(device_closed || _capture_handle == NULL)
     return 0;
-  int bytes;
+  int err;
+  if(snd_pcm_state( _capture_handle ) == SND_PCM_STATE_XRUN)
+    snd_pcm_prepare( _capture_handle );
   snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _capture_handle, toCopy);
-  if( bytes = snd_pcm_readi( _capture_handle, target_buffer, frames) < 0 ) {
-    int err = bytes;
+  if( err = snd_pcm_readi( _capture_handle, target_buffer, frames) < 0 ) {
     switch(err){
       case EPERM:
-	_debug(" Capture EPERM (%s)\n", snd_strerror(bytes));
-	handle_xrun_state();
+	_debug(" Capture EPERM (%s)\n", snd_strerror(err));
+	//handle_xrun_state();
+	snd_pcm_prepare( _capture_handle);
 	break;
       case -ESTRPIPE:
-	_debug(" Capture ESTRPIPE (%s)\n", snd_strerror(bytes));
+	_debug(" Capture ESTRPIPE (%s)\n", snd_strerror(err));
 	snd_pcm_resume( _capture_handle);
 	break;
       case -EAGAIN:
-	_debug(" Capture EAGAIN (%s)\n", snd_strerror(bytes));
+	_debug(" Capture EAGAIN (%s)\n", snd_strerror(err));
 	break;
       case -EBADFD:
-	_debug(" Capture EBADFD (%s)\n", snd_strerror(bytes));
+	_debug(" Capture EBADFD (%s)\n", snd_strerror(err));
 	break;
       case -EPIPE:
-	_debug(" Capture EPIPE (%s)\n", snd_strerror(bytes));
+	_debug(" Capture EPIPE (%s)\n", snd_strerror(err));
 	handle_xrun_state();
 	break;
     }
@@ -403,7 +420,6 @@ AudioLayer::read( void* target_buffer, int toCopy)
   }
   return toCopy;
 }
-
 
   void
 AudioLayer::handle_xrun_state( void )
@@ -423,15 +439,6 @@ AudioLayer::handle_xrun_state( void )
     _debug(" Get status failed\n");
 }
 
-
-void
-AudioLayer::get_devices_info( void ){
-  snd_pcm_info_t *info;
-  snd_pcm_info_alloca( &info );
-  //int card = snd_pcm_info_get_card( info );
-  _debug("device %d - subdevice %d - card %d\n", snd_pcm_info_get_device(info), snd_pcm_info_get_subdevice( info ), snd_pcm_info_get_card( info ));
-}
-
   std::string 
 AudioLayer::get_alsa_version( void )
 {
@@ -440,46 +447,9 @@ AudioLayer::get_alsa_version( void )
   std::ifstream file( "/proc/asound/version" );
   out << file.rdbuf();
   version = out.str();
-  //version << std::cout << system("cat /proc/asound/version");
   _debugAlsa("%s\n", version.c_str());
   return version;
 }
-
-  std::vector<std::string> 
-AudioLayer::get_sound_cards( void )
-{
-  std::stringstream out;
-  std::string sound_cards;
-  std::ifstream file( "/proc/asound/cards" );
-  out << file.rdbuf();
-  sound_cards = out.str();
-  //_debugAlsa("%s\n", sound_cards.c_str());
-  return parse_sound_cards(sound_cards);
-}
-
-  std::vector< std::string >
-AudioLayer::parse_sound_cards( std::string& list)
-{
-  std::vector<std::string> lines;
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-  boost::char_separator<char> ret("\n");
-  tokenizer tokens( list , ret );
-  for(tokenizer::iterator tok_iter = tokens.begin() ; tok_iter != tokens.end() ; ++tok_iter)
-  {
-    lines.push_back(*tok_iter);
-  }
-  // We keep only the fisrt line of each device description --> the interesting one
-  int size = lines.size();
-  // 2 lines of description per sound card
-  int nb_cards = size / 2 ;
-  for(size = 0 ; size < nb_cards ; size++)
-  {
-    // for each card, we keep the first one
-    lines.erase(lines.begin() + 2*size + 1);
-  }
-  lines.resize(nb_cards);
-  return lines;
-} 
 
   std::string
 AudioLayer::buildDeviceTopo( std::string prefixe, int suffixe)
@@ -495,58 +465,57 @@ AudioLayer::buildDeviceTopo( std::string prefixe, int suffixe)
 }
 
   std::vector<std::string>
-AudioLayer::getHardware( int flag )
+AudioLayer::getSoundCardsInfo( int flag )
 {
   std::vector<std::string> cards_id;
-  
+
   snd_ctl_t* handle;
   snd_ctl_card_info_t *info;
   snd_pcm_info_t* pcminfo;
   snd_ctl_card_info_alloca( &info );
   snd_pcm_info_alloca( &pcminfo );
-  
+
   int numCard = -1 ;
   int err;
   int dev = -1;
-  std::stringstream ss;
-  
+
   if(snd_card_next( &numCard ) < 0 || numCard < 0)
     return cards_id;
 
   while(numCard >= 0){
-  ss << numCard;
-  std::string name= "hw:";
-  name.append(ss.str());
+    std::stringstream ss;
+    ss << numCard;
+    std::string name= "hw:";
+    name.append(ss.str());
 
-  if( snd_ctl_open( &handle, name.c_str(), 0) == 0 ){
-    if( snd_ctl_card_info( handle, info) == 0){ 
-	snd_pcm_info_set_device( pcminfo , dev);
-	snd_pcm_info_set_subdevice( pcminfo, 0 );
-	
-	if(flag == 2)
+    if( snd_ctl_open( &handle, name.c_str(), 0) == 0 ){
+      if( snd_ctl_card_info( handle, info) == 0){
+	snd_pcm_info_set_device( pcminfo , 0);
+	if(flag == SFL_PCM_CAPTURE)
 	  snd_pcm_info_set_stream( pcminfo, SND_PCM_STREAM_CAPTURE );
 	else
 	  snd_pcm_info_set_stream( pcminfo, SND_PCM_STREAM_PLAYBACK );
 
 	if( snd_ctl_pcm_info ( handle ,pcminfo ) < 0) _debug(" Cannot get info\n");
-	_debug("card %i : %s [%s]- device %i : %s [%s]\n - driver %s - dir %i\n", 
-	    numCard, 
-	    snd_ctl_card_info_get_id(info),
-	    snd_ctl_card_info_get_name( info ),
-	    numCard, 
-	    snd_pcm_info_get_id(pcminfo),
-	    snd_pcm_info_get_name( pcminfo),
-	    snd_ctl_card_info_get_driver( info ),
-	    snd_pcm_info_get_stream( pcminfo )      );
-	if(snd_pcm_info_get_name( pcminfo ) != NULL)
+	else{
+	  _debug("card %i : %s [%s]- device %i : %s [%s]\n - driver %s - dir %i\n", 
+	      numCard, 
+	      snd_ctl_card_info_get_id(info),
+	      snd_ctl_card_info_get_name( info ),
+	      numCard, 
+	      snd_pcm_info_get_id(pcminfo),
+	      snd_pcm_info_get_name( pcminfo),
+	      snd_ctl_card_info_get_driver( info ),
+	      snd_pcm_info_get_stream( pcminfo )      );
 	  cards_id.push_back(snd_ctl_card_info_get_name( info ));
-    }
+	}
+      }
       snd_ctl_close( handle );
-  }
+    }
     if ( snd_card_next( &numCard ) < 0 ) {
       break;
     }
-    
+
   }
-    return cards_id;
+  return cards_id;
 }

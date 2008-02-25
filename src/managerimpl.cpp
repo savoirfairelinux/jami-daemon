@@ -1252,7 +1252,7 @@ ManagerImpl::getAudioOutputDeviceList(void)
 {
   _debug("Get audio output device list");
   //return _audiodriver -> get_sound_cards();
-  return _audiodriver -> getHardware(1);
+  return _audiodriver -> getSoundCardsInfo(SFL_PCM_PLAYBACK);
 }
 
 /**
@@ -1262,7 +1262,7 @@ ManagerImpl::getAudioOutputDeviceList(void)
 ManagerImpl::setAudioOutputDevice(const int index)
 {
   _debug("Set audio output device");
-  _audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), 1);
+  _audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_PLAYBACK);
 }
 
 /**
@@ -1273,7 +1273,7 @@ ManagerImpl::getAudioInputDeviceList(void)
 {
   _debug("Get audio input device list\n");
   //return _audiodriver -> get_sound_cards(); 
-  return _audiodriver->getHardware(2);
+  return _audiodriver->getSoundCardsInfo(SFL_PCM_CAPTURE);
 }
 
 /**
@@ -1283,7 +1283,7 @@ ManagerImpl::getAudioInputDeviceList(void)
 ManagerImpl::setAudioInputDevice(const int index)
 {
   _debug("Set audio input device");
-  _audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), 2);
+  _audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_CAPTURE);
 }
 
 /**
@@ -1356,7 +1356,7 @@ ManagerImpl::selectAudioDriver (void)
   //}
   _debugInit(" AudioLayer Opening Device");
   _audiodriver->setErrorMessage("");
-  _audiodriver->openDevice(noDeviceIn, noDeviceOut, sampleRate, frameSize, 0);
+  _audiodriver->openDevice(noDeviceIn, noDeviceOut, sampleRate, frameSize, SFL_PCM_BOTH);
 }
 
 /**
