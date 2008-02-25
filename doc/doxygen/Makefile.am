@@ -1,6 +1,7 @@
 SUBDIRS =
 
 docdir = ${prefix}/share/doc/wifidog-@VERSION@
+html_parent_dir = .
 
 all:
 
@@ -15,7 +16,7 @@ doc: core-doc gtk-gui-doc
 clean-local:
 	echo "clean-local: " && pwd
 	rm -rf latex/
-	rm -rf *-html/
+	rm -rf ${html_parent_dir}/*-html/
 	rm -f *~
 	rm -f doxygen.log
 	rm -f doxygen.cfg
@@ -33,6 +34,6 @@ maintainer-clean-local: clean-local
 	sed < $< > $@.tmp \
             -e 's:@-top_srcdir-@:${top_srcdir}:g'
 	sed < $@.tmp > $@.tmp2 \
-            -e 's:@-htmldir-@:./$*-html:g'
+            -e 's:@-htmldir-@:${html_parent_dir}/$*-html:g'
 	rm $@.tmp
 	mv $@.tmp2 $@
