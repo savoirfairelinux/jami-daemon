@@ -555,7 +555,7 @@ ManagerImpl::playDtmf(char code)
     try {
       // We activate the stream if it's not active yet.
       if (!audiolayer->isStreamActive()) {
-	audiolayer->startStream();
+	//audiolayer->startStream();
       } else {
 	audiolayer->sleep(pulselen); // in milliseconds
       }
@@ -814,26 +814,21 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
     _telephoneTone->setCurrentTone(toneId);
     _toneMutex.leaveMutex();
 
-    /*AudioLoop* audioloop = getTelephoneTone();
-      unsigned int nbSampling = audioloop->getSize();
-      _debug("Telephone tone size = %d\n", nbSampling);
-      SFLDataFormat buf[nbSampling];*/
-    //audioloop->getNext(buf, audioloop->getSize());
-    //audiolayer->putUrgent(buf, sizeof(SFLDataFormat)*nbSampling);
-    try {
-      AudioLayer* audiolayer = getAudioDriver();
-      if (audiolayer) { 
-	_debug("Should ring back\n");
-	//audiolayer->playRingTone( buf, sizeof(SFLDataFormat)*nbSampling);
-	audiolayer->startStream();
-      }
-    } catch(...) {
-      _debugException("Off hold could not start audio stream");
-      return false;
+    AudioLoop* audioloop = getTelephoneTone();
+    unsigned int nbSampling = audioloop->getSize();
+    _debug("Telephone tone size = %d\n", nbSampling);
+    AudioLayer* audiolayer = getAudioDriver();
+    //int chunks = 2000;
+    SFLDataFormat buf[nbSampling];
+    audioloop->getNext(buf, audioloop->getSize());
+    if (audiolayer) { 
+      audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling);
+      ///buf += chunks;
     }
+    else 
+      return false;
   }
-  //}
-return true;
+  return true;
 }
 
 /**
@@ -897,6 +892,8 @@ ManagerImpl::ringback () {
   void
 ManagerImpl::ringtone() 
 {
+
+
   int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
   if (!hasToPlayTone) { return; }
 
@@ -918,9 +915,13 @@ ManagerImpl::ringtone()
     _toneMutex.enterMutex(); 
     _audiofile.start();
     _toneMutex.leaveMutex(); 
+    int size = _audiofile.getSize();
+    SFLDataFormat output[ size ];
+    //_debugAlsa("Size = %i\n", size);
+    //_audiofile.getNext(output, size , 100);
     try {
+      //audiolayer->putUrgent( output, size);
       _debug(" Ringtone if everything would have worked fine\n");
-      audiolayer->startStream();
     } catch(...) {
       _debugException("Audio file couldn't start audio stream");
     }
@@ -1240,7 +1241,7 @@ ManagerImpl::getAudioManagerList(void)
   void
 ManagerImpl::setAudioManager(const std::string& audioManager)
 {
-  _debug("Set audio manager");
+  _debug("Set audio manager\n");
   // Do nothing for now
 }
 
@@ -1250,8 +1251,7 @@ ManagerImpl::setAudioManager(const std::string& audioManager)
   std::vector<std::string>
 ManagerImpl::getAudioOutputDeviceList(void)
 {
-  _debug("Get audio output device list");
-  //return _audiodriver -> get_sound_cards();
+  _debug("Get audio output device list\n");
   return _audiodriver -> getSoundCardsInfo(SFL_PCM_PLAYBACK);
 }
 
@@ -1261,8 +1261,12 @@ ManagerImpl::getAudioOutputDeviceList(void)
   void
 ManagerImpl::setAudioOutputDevice(const int index)
 {
-  _debug("Set audio output device");
-  _audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_PLAYBACK);
+  _debug("Set audio output device: %i\n", index);
+  _audiodriver->openDevice(_audiodriver->getIndexIn(), 
+      index, 
+      _audiodriver->getSampleRate(), 
+      _audiodriver->getFrameSize(), 
+      SFL_PCM_PLAYBACK);
 }
 
 /**
@@ -1272,7 +1276,6 @@ ManagerImpl::setAudioOutputDevice(const int index)
 ManagerImpl::getAudioInputDeviceList(void)
 {
   _debug("Get audio input device list\n");
-  //return _audiodriver -> get_sound_cards(); 
   return _audiodriver->getSoundCardsInfo(SFL_PCM_CAPTURE);
 }
 
@@ -1282,8 +1285,12 @@ ManagerImpl::getAudioInputDeviceList(void)
   void
 ManagerImpl::setAudioInputDevice(const int index)
 {
-  _debug("Set audio input device");
-  _audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_CAPTURE);
+  _debug("Set audio input device %i\n", index);
+  _audiodriver->openDevice(index, 
+      _audiodriver->getIndexOut(), 
+      _audiodriver->getSampleRate(), 
+      _audiodriver->getFrameSize(), 
+      SFL_PCM_CAPTURE);
 }
 
 /**
@@ -1292,7 +1299,7 @@ ManagerImpl::setAudioInputDevice(const int index)
   std::vector<std::string>
 ManagerImpl::getCurrentAudioDevicesIndex()
 {
-  _debug("Get current audio devices index");
+  _debug("Get current audio devices index\n");
   std::vector<std::string> v;
   std::stringstream ss;
   ss << _audiodriver->getIndexOut();
@@ -1308,7 +1315,7 @@ ManagerImpl::getCurrentAudioDevicesIndex()
   std::vector<std::string>
 ManagerImpl::getAudioDeviceDetails(const int index)
 {
-  _debug("Get audio input device list");
+  _debug("Get audio input device list\n");
 
 }
 
@@ -1343,7 +1350,7 @@ ManagerImpl::selectAudioDriver (void)
   int noDeviceOut = getConfigInt(AUDIO, DRIVER_NAME_OUT);
   int sampleRate  = getConfigInt(AUDIO, DRIVER_SAMPLE_RATE);
   if (sampleRate <=0 || sampleRate > 48000) {
-    sampleRate = 8000;
+    sampleRate = 44100;
   }
   int frameSize = getConfigInt(AUDIO, DRIVER_FRAME_SIZE);
 
@@ -1611,60 +1618,6 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, int 
   std::ostringstream valueStream;
   valueStream << value;
   return _config.setConfigTreeItem(section, name, valueStream.str());
-}
-
-//THREAD=Main
-  bool 
-ManagerImpl::getConfigList(const std::string& sequenceId, const std::string& name)
-{
-  /*
-     bool returnValue = false;
-     TokenList tk;
-     if (name == "codecdescriptor") {
-
-     CodecMap map = _codecDescriptorMap.getCodecMap();
-     CodecMap::iterator iter = map.begin();
-     while( iter != map.end() ) {
-     tk.clear();
-     std::ostringstream strType;
-     strType << iter->first;
-     tk.push_back(strType.str());
-     if (iter->second != -1) {
-     tk.push_back(iter->second);
-     } else {
-     tk.push_back(strType.str());
-     }
-  // _gui->sendMessage("100", sequenceId, tk);
-  iter++;
-  }
-  returnValue = true;
-  } else if (name == "ringtones") {
-  // add empty line
-  std::ostringstream str;
-  str << 1;
-  tk.push_back(str.str());
-  tk.push_back(""); // filepath
-  //_gui->sendMessage("100", sequenceId, tk);
-
-  // share directory
-  std::string path = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR;
-  int nbFile = 1;
-  returnValue = getDirListing(sequenceId, path, &nbFile);
-
-  // home directory
-  path = std::string(HOMEDIR) + DIR_SEPARATOR_STR + "." + PROGDIR + DIR_SEPARATOR_STR + RINGDIR;
-  getDirListing(sequenceId, path, &nbFile);
-  } else if (name == "audiodevice") {
-  returnValue = getAudioDeviceList(sequenceId, AudioLayer::InputDevice | AudioLayer::OutputDevice);
-  } else if (name == "audiodevicein") {
-  returnValue = getAudioDeviceList(sequenceId, AudioLayer::InputDevice);
-  } else if (name == "audiodeviceout") {
-  returnValue = getAudioDeviceList(sequenceId, AudioLayer::OutputDevice);
-  } else if (name == "countrytones") {
-  returnValue = getCountryTones(sequenceId);
-  }
-  return returnValue;*/
-  return true;
 }
 
 //THREAD=Main

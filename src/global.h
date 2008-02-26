@@ -74,9 +74,16 @@ typedef short int16;
 #define CHANNELS				2
 #define SIZEBUF 				1024*1024
 
+#define PCM_PLUGHW	"plughw"
 #define PCM_FRONT	"plug:front"
 #define PCM_DEFAULT	"default"
 #define PCM_DMIX	"plug:dmix"
+#define PCM_SURROUND40	"plug:surround40"
+#define PCM_SURROUND41	"plug:surround41"
+#define PCM_SURROUND50	"plug:surround50"
+#define PCM_SURROUND51	"plug:surround51"
+#define PCM_SURROUND71	"plug:surround71"
+#define PCM_IEC958	"plug:iec958"
 
 #define SFL_PCM_BOTH		0x0021
 #define SFL_PCM_PLAYBACK	0x0022
