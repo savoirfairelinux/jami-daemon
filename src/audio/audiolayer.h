@@ -28,6 +28,7 @@
 
 #include "../global.h"
 #include "audiodevice.h"
+#include "ringbuffer.h"
 
 #include <vector>
 #include <alsa/asoundlib.h>
@@ -37,6 +38,7 @@
 #include <sstream>
 #define FRAME_PER_BUFFER	160
 
+class RingBuffer;
 class ManagerImpl;
 
 class AudioLayer {
@@ -56,7 +58,7 @@ class AudioLayer {
      *			  SFL_PCM_PLAYBACK
      *			  SFL_PCM_BOTH
      */
-    bool openDevice(int, int, int, int, int);
+    bool openDevice(int, int, int, int, int, std::string);
 
     /*
      * Start the capture stream. The playback starts according th its threshold
@@ -70,6 +72,8 @@ class AudioLayer {
      * ALSA Library API
      */
     void stopStream(void);
+    
+    void fillHWBuffer( void) ;
 
     void sleep(int);
     
@@ -108,8 +112,9 @@ class AudioLayer {
      * @return int The number of bytes played
      */
     int playSamples(void* buffer, int toCopy);
-    int playRingTone( void* buffer, int toCopy);
     int putUrgent(void* buffer, int toCopy);
+
+    void stopPlaybackStream( void );
 
     /*
      * Query the audio devices for number of bytes available in the hardware ring buffer
@@ -177,6 +182,8 @@ class AudioLayer {
      */
     unsigned int getFrameSize() { return _frameSize; }
 
+    std::string getAudioPlugin( void ) { return _audioPlugin; }
+
     int getDeviceCount();
 
     /**
@@ -184,7 +191,16 @@ class AudioLayer {
      */
     void toggleEchoTesting();
 
+
   private:
+
+    static void AlsaCallBack( snd_async_handler_t* );
+    snd_async_handler_t *_AsyncHandler;
+    snd_pcm_t* _playback_handle;
+    snd_pcm_t* _capture_handle;
+    RingBuffer _urgentBuffer;
+    RingBuffer _mainBuffer;
+    void updateBuffers( void );
 
     /*
      * Open the specified device.
@@ -231,15 +247,14 @@ class AudioLayer {
      * Handle to manipulate capture and playback streams
      * ALSA Library API
      */
-    snd_pcm_t* _playback_handle;
-    snd_pcm_t* _capture_handle;
-    
+
+
     /*
      * Enable to determine if the devices are opened or not
      *		  true if the devices are closed
      *		  false otherwise
      */
-    bool device_closed;
+    bool deviceClosed;
 
     /**
      * Number of audio cards on which stream has been opened 
@@ -258,6 +273,8 @@ class AudioLayer {
      * The value can be set in the user config file - now: 20ms
      */	 		
     unsigned int _frameSize;
+
+    std::string _audioPlugin;
 
     /**
      * Input channel (mic) should be 1 mono

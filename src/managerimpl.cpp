@@ -350,7 +350,7 @@ ManagerImpl::offHoldCall(const CallID& id)
   switchCall(id);
   if (returnValue) {
     try {
-      getAudioDriver()->startStream();
+      //getAudioDriver()->startStream();
     } catch(...) {
       _debugException("! Manager Off hold could not start audio stream");
     }
@@ -550,24 +550,22 @@ ManagerImpl::playDtmf(char code)
     // Put buffer to urgentRingBuffer 
     // put the size in bytes...
     // so size * 1 channel (mono) * sizeof (bytes for the data)
-    audiolayer->putUrgent(_buf, size * sizeof(SFLDataFormat));
+    audiolayer->playSamples(_buf, size * sizeof(SFLDataFormat));
+    //audiolayer->putUrgent(_buf, size * sizeof(SFLDataFormat));
 
-    try {
-      // We activate the stream if it's not active yet.
-      if (!audiolayer->isStreamActive()) {
-	//audiolayer->startStream();
-      } else {
-	audiolayer->sleep(pulselen); // in milliseconds
-      }
-    } catch(...) {
-      _debugException("Portaudio exception when playing a dtmf");
+    // We activate the stream if it's not active yet.
+    if (!audiolayer->isStreamActive()) {
+      //audiolayer->startStream();
+    } else {
+      _debugAlsa("send dtmf - sleep\n");
+      audiolayer->sleep(pulselen); // in milliseconds
     }
-    returnValue = true;
   }
+  returnValue = true;
 
-  // TODO: add caching
-  delete[] _buf; _buf = 0;
-  return returnValue;
+// TODO: add caching
+delete[] _buf; _buf = 0;
+return returnValue;
 }
 
 // Multi-thread 
@@ -617,8 +615,8 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
   associateCallToAccount(call->getCallId(), accountId);
 
   if ( !hasCurrentCall() ) {
-    _debug("INCOMING CALL!!!!!!\n");
     call->setConnectionState(Call::Ringing);
+    _debugAlsa(" call ringtone() method\n ");
     ringtone();
     switchCall(call->getCallId());
   } else {
@@ -806,7 +804,6 @@ ManagerImpl::registrationFailed(const AccountID& accountid)
 bool 
 ManagerImpl::playATone(Tone::TONEID toneId) {
   int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
-
   if (!hasToPlayTone) return false;
 
   if (_telephoneTone != 0) {
@@ -816,14 +813,11 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
 
     AudioLoop* audioloop = getTelephoneTone();
     unsigned int nbSampling = audioloop->getSize();
-    _debug("Telephone tone size = %d\n", nbSampling);
     AudioLayer* audiolayer = getAudioDriver();
-    //int chunks = 2000;
     SFLDataFormat buf[nbSampling];
-    audioloop->getNext(buf, audioloop->getSize());
-    if (audiolayer) { 
-      audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling);
-      ///buf += chunks;
+    audioloop->getNext(buf, (int) nbSampling);
+    if ( audiolayer ) { 
+      //audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
     }
     else 
       return false;
@@ -840,12 +834,8 @@ ManagerImpl::stopTone(bool stopAudio=true) {
   if (!hasToPlayTone) return;
 
   if (stopAudio) {
-    try {
-      AudioLayer* audiolayer = getAudioDriver();
-      if (audiolayer) { audiolayer->stopStream(); }
-    } catch(...) {
-      _debugException("Stop tone and stop stream");
-    }
+    AudioLayer* audiolayer = getAudioDriver();
+    if (audiolayer) { audiolayer->stopStream(); }
   }
 
   _toneMutex.enterMutex();
@@ -892,8 +882,6 @@ ManagerImpl::ringback () {
   void
 ManagerImpl::ringtone() 
 {
-
-
   int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
   if (!hasToPlayTone) { return; }
 
@@ -917,14 +905,9 @@ ManagerImpl::ringtone()
     _toneMutex.leaveMutex(); 
     int size = _audiofile.getSize();
     SFLDataFormat output[ size ];
-    //_debugAlsa("Size = %i\n", size);
-    //_audiofile.getNext(output, size , 100);
-    try {
-      //audiolayer->putUrgent( output, size);
-      _debug(" Ringtone if everything would have worked fine\n");
-    } catch(...) {
-      _debugException("Audio file couldn't start audio stream");
-    }
+    _debugAlsa("Size = %i\n", size);
+    _audiofile.getNext(output, size , 100);
+    audiolayer->playSamples( output , size );
   } else {
     ringback();
   }
@@ -971,7 +954,7 @@ ManagerImpl::notificationIncomingCall(void) {
     unsigned int nbSampling = tone.getSize();
     SFLDataFormat buf[nbSampling];
     tone.getNext(buf, tone.getSize());
-    audiolayer->putUrgent(buf, sizeof(SFLDataFormat)*nbSampling);
+    audiolayer->playSamples(buf, sizeof(SFLDataFormat)*nbSampling);
   }
 }
 
@@ -1222,27 +1205,66 @@ ManagerImpl::getCodecDetails( const ::DBus::Int32& payload )
 }
 
 /**
- * Get list of supported audio manager
+ * Get list of supported input audio plugin
  */
   std::vector<std::string>
-ManagerImpl::getAudioManagerList(void)
+ManagerImpl::getInputAudioPluginList(void)
 {
   std::vector<std::string> v;
-  _debug("Get audio manager list");
+  _debug("Get input audio plugin list");
 
-  // Return only ALSA for now
-  v.push_back("ALSA");
+  v.push_back("default");
+  v.push_back("surround40");
+  v.push_back("plug:hw");
+
   return v;
 }
 
 /**
- * Set audio manager (always put ALSA)
+ * Get list of supported output audio plugin
+ */
+  std::vector<std::string>
+ManagerImpl::getOutputAudioPluginList(void)
+{
+  std::vector<std::string> v;
+  _debug("Get output audio plugin list");
+
+  v.push_back("default");
+  v.push_back("plug:hw");
+  v.push_back("plug:dmix");
+  v.push_back("plug:surround40");
+
+  return v;
+}
+
+/**
+ * Set input audio plugin
  */
   void
-ManagerImpl::setAudioManager(const std::string& audioManager)
+ManagerImpl::setInputAudioPlugin(const std::string& audioPlugin)
 {
-  _debug("Set audio manager\n");
-  // Do nothing for now
+  _debug("Set input audio plugin\n");
+  _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
+			      _audiodriver -> getIndexOut(),
+			      _audiodriver -> getSampleRate(),
+			      _audiodriver -> getFrameSize(),
+			      SFL_PCM_CAPTURE,
+			      audioPlugin);
+}
+
+/**
+ * Set output audio plugin
+ */
+  void
+ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
+{
+  _debug("Set output audio plugin\n");
+  _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
+			      _audiodriver -> getIndexOut(),
+			      _audiodriver -> getSampleRate(),
+			      _audiodriver -> getFrameSize(),
+			      SFL_PCM_PLAYBACK,
+			      audioPlugin);
 }
 
 /**
@@ -1266,7 +1288,8 @@ ManagerImpl::setAudioOutputDevice(const int index)
       index, 
       _audiodriver->getSampleRate(), 
       _audiodriver->getFrameSize(), 
-      SFL_PCM_PLAYBACK);
+      SFL_PCM_PLAYBACK,
+      _audiodriver->getAudioPlugin());
 }
 
 /**
@@ -1290,7 +1313,8 @@ ManagerImpl::setAudioInputDevice(const int index)
       _audiodriver->getIndexOut(), 
       _audiodriver->getSampleRate(), 
       _audiodriver->getFrameSize(), 
-      SFL_PCM_CAPTURE);
+      SFL_PCM_CAPTURE,
+      _audiodriver->getAudioPlugin());
 }
 
 /**
@@ -1363,7 +1387,7 @@ ManagerImpl::selectAudioDriver (void)
   //}
   _debugInit(" AudioLayer Opening Device");
   _audiodriver->setErrorMessage("");
-  _audiodriver->openDevice(noDeviceIn, noDeviceOut, sampleRate, frameSize, SFL_PCM_BOTH);
+  _audiodriver->openDevice(noDeviceIn, noDeviceOut, sampleRate, frameSize, SFL_PCM_BOTH, PCM_PLUGHW);
 }
 
 /**

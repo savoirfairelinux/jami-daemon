@@ -41,7 +41,9 @@
   , _manager(manager)
   , _playback_handle( NULL )
   , _capture_handle( NULL )
-    , device_closed( true )
+  , deviceClosed( true )
+  , _mainBuffer( SIZEBUF )
+    , _urgentBuffer( SIZEBUF )
 {
 
   _inChannel  = 1; // don't put in stereo
@@ -53,7 +55,7 @@
 // Destructor
 AudioLayer::~AudioLayer (void) 
 { 
-  device_closed = true;
+  deviceClosed = true;
   if(_capture_handle){
     snd_pcm_drop( _capture_handle );
     snd_pcm_close( _capture_handle );
@@ -68,12 +70,12 @@ AudioLayer::~AudioLayer (void)
 
 
   bool 
-AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize, int flag) 
+AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize, int stream , std::string plugin) 
 {
 
-  if(device_closed == false)
+  if(deviceClosed == false)
   {
-    if( flag == SFL_PCM_CAPTURE)
+    if( stream == SFL_PCM_CAPTURE ){
       if(_capture_handle)
       {
 	_debugAlsa(" Close the current capture device\n");
@@ -81,30 +83,35 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
 	snd_pcm_close( _capture_handle );
 	_capture_handle = 0;
       }
-      else if( flag == SFL_PCM_PLAYBACK)
-	if(_playback_handle){
-	  _debugAlsa(" Close the current playback device\n");
-	  snd_pcm_drop( _playback_handle );
-	  snd_pcm_close( _playback_handle );
-	  _playback_handle = 0;
-	}
+    }
+    else if( stream == SFL_PCM_PLAYBACK){
+      if(_playback_handle){
+	_debugAlsa(" Close the current playback device\n");
+	snd_pcm_drop( _playback_handle );
+	snd_pcm_close( _playback_handle );
+	_playback_handle = 0;
+      }
+    }
   }
 
   _indexIn = indexIn;
   _indexOut = indexOut;
   _sampleRate = sampleRate;
   _frameSize = frameSize;	
+  _audioPlugin = plugin;
 
   _debug(" Setting audiolayer: device     in=%2d, out=%2d\n", _indexIn, _indexOut);
   _debug("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
-  _debug("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLPortaudioFormatString);
+  _debug("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLDataFormatString);
   _debug("                   : frame per buffer=%d\n", FRAME_PER_BUFFER);
 
   ost::MutexLock guard( _mutex );
 
-  std::string pcmp = buildDeviceTopo(PCM_DMIX, indexOut , 0);
-  std::string pcmc = buildDeviceTopo(PCM_SURROUND40, indexIn , 0);
-  return open_device( pcmp , pcmc , flag);
+  //std::string plugin = PCM_DEFAULT;
+  //std::string plugout = PCM_DEFAULT;
+  std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
+  std::string pcmc = buildDeviceTopo(PCM_SURROUND40 , indexIn , 0);
+  return open_device( pcmp , pcmc , stream);
 }
 
   int
@@ -114,14 +121,54 @@ AudioLayer::getDeviceCount()
   return 1;
 }
 
+void AudioLayer::AlsaCallBack( snd_async_handler_t* pcm_callback )
+{ 
+  ( ( AudioLayer *)snd_async_handler_get_callback_private( pcm_callback )) -> updateBuffers();
+}
+
+  void 
+AudioLayer::fillHWBuffer( void)
+{
+  unsigned char* data;
+  int pcmreturn, l1, l2;
+  short s1, s2;
+  int frames;
+  int periodSize = 1024 * 2;
+
+  data = (unsigned char*)malloc(periodSize);
+  frames = periodSize >> 2;
+  for(l1 = 0; l1 < 100; l1++) {
+    for(l2 = 0; l2 < frames; l2++) {
+      s1 = 0;
+      s2 = 0;
+      data[4*l2] = (unsigned char)s1;
+      data[4*l2+1] = s1 >> 8;
+      data[4*l2+2] = (unsigned char)s2;
+      data[4*l2+3] = s2 >> 8;
+    }
+    /* Write num_frames frames from buffer data to the PCM device pointed to by pcm_handle */
+    /* writei for interleaved */
+    /* writen for non-interleaved */
+    while ((pcmreturn = snd_pcm_writei(_playback_handle, data, frames)) < 0) {
+      snd_pcm_prepare(_playback_handle);
+      fprintf(stderr, "<<<<<<<<<<<<<<< Buffer Underrun >>>>>>>>>>>>>>>\n");
+    }
+  }
+
+}
+
   void
 AudioLayer::startStream(void) 
 {
   _debug(" Start stream\n");
+  int err;
   ost::MutexLock guard( _mutex );
   snd_pcm_prepare( _capture_handle );
   snd_pcm_start( _capture_handle ) ;
-  //snd_pcm_start( _playback_handle ) ;
+
+  snd_pcm_prepare( _playback_handle );
+
+  //if( err = snd_pcm_start( _playback_handle) < 0 )  _debugAlsa(" Cannot start (%s)\n", snd_strerror(err));
 }
 
 
@@ -131,13 +178,15 @@ AudioLayer::stopStream(void)
   ost::MutexLock guard( _mutex );
   snd_pcm_drop( _capture_handle );
   snd_pcm_prepare( _capture_handle );
+  snd_pcm_drop( _playback_handle );
+  snd_pcm_prepare( _playback_handle );
 }
 
 
   void
 AudioLayer::sleep(int msec) 
 {
-  snd_pcm_wait(_playback_handle, msec);
+  //snd_pcm_wait(_playback_handle, msec);
 }
 
   bool
@@ -151,33 +200,46 @@ AudioLayer::isStreamActive (void)
   int 
 AudioLayer::playSamples(void* buffer, int toCopy)
 {
+  //_debug(" Write %d bytes in the main buffer \n ", toCopy);
   ost::MutexLock guard( _mutex );
   if ( _playback_handle ){ 
-    //_debug("Play samples\n");
     write(buffer, toCopy);
   }
-  return 0;
-}
-
-
-  int
-AudioLayer::playRingTone( void* buffer, int toCopy)
-{
-  _debug(" %d\n", toCopy);
-  ost::MutexLock guard( _mutex );
-  if( _playback_handle )
-    snd_pcm_start( _playback_handle );
-  write(buffer, toCopy);
+   /* int a = _mainBuffer.AvailForPut();
+    if( a >= toCopy ){
+      return _mainBuffer.Put( buffer , toCopy , _defaultVolume );
+    } else {
+      return _mainBuffer.Put( buffer , a , _defaultVolume ) ;
+    }*/
   return 0;
 }
 
   int
 AudioLayer::putUrgent(void* buffer, int toCopy)
 {
+  fillHWBuffer();
   ost::MutexLock guard( _mutex );
   if ( _playback_handle ) 
-    write(buffer, toCopy);
+  {
+    int a = _urgentBuffer.AvailForPut();
+    if( a >= toCopy ){
+      return _urgentBuffer.Put( buffer , toCopy , _defaultVolume );
+    } else {
+      return _urgentBuffer.Put( buffer , a , _defaultVolume ) ;
+    }
+  }
   return 0;
+}
+
+  void 
+AudioLayer::stopPlaybackStream( void )
+{
+  ost::MutexLock guard( _mutex );
+  if( _playback_handle )
+  {
+    snd_pcm_drop( _playback_handle );
+    snd_pcm_prepare( _playback_handle );
+  }
 }
 
   int
@@ -224,6 +286,29 @@ AudioLayer::toggleEchoTesting() {
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+
+
+  void
+AudioLayer::updateBuffers( void )
+{
+
+  int toGet;
+  int urgentAvail;
+  int bytes = 882 * sizeof(SFLDataFormat);
+  SFLDataFormat* toWrite[bytes];
+  snd_pcm_uframes_t avail = 0;
+  avail = snd_pcm_avail_update( _playback_handle );
+  if( avail ) {
+    //_debug("%i\n", avail);
+    urgentAvail = _urgentBuffer.AvailForGet();
+    if( urgentAvail > 0 ){
+      toGet = ( urgentAvail < bytes ) ? urgentAvail : bytes;
+      _urgentBuffer.Get( toWrite , toGet , 100 );
+      //write( toWrite , toGet );
+    }
+  }
+}
+
 bool
 AudioLayer::isPlaybackActive(void) {
   ost::MutexLock guard( _mutex );
@@ -254,7 +339,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   snd_pcm_uframes_t period_size_in =  getFrameSize() * getSampleRate() / 1000 ;
   snd_pcm_uframes_t buffer_size_in = 4096;
   snd_pcm_uframes_t threshold = getFrameSize() * getSampleRate() / 1000 ;
-  snd_pcm_uframes_t period_size_out = 2048 ;
+  snd_pcm_uframes_t period_size_out = 1024 ;
   snd_pcm_uframes_t buffer_size_out = 4096 ;
   snd_pcm_sw_params_t *swparams = NULL;
 
@@ -280,20 +365,21 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     if( err = snd_pcm_hw_params( _capture_handle, hwparams ) < 0) _debug(" Cannot set hw parameters (%s)\n", snd_strerror(err));
     snd_pcm_hw_params_free( hwparams );
 
-    snd_pcm_sw_params_alloca( &swparams );
-    snd_pcm_sw_params_current( _capture_handle, swparams );
+    //snd_pcm_sw_params_malloc( &swparams );
+    //snd_pcm_sw_params_current( _capture_handle, swparams );
 
-    if( err = snd_pcm_sw_params_set_start_threshold( _capture_handle, swparams, 1 ) < 0 ) _debug(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_stop_threshold( _capture_handle, swparams, buffer_size_in ) < 0 ) _debug(" Cannot get stop threshold (%s)\n", snd_strerror(err)); 
-    if( err = snd_pcm_sw_params( _capture_handle, swparams ) < 0 ) _debug(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
-    device_closed = false;
+    //if( err = snd_pcm_sw_params_set_start_threshold( _capture_handle, swparams, 1 ) < 0 ) _debug(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
+    //if( err = snd_pcm_sw_params_set_stop_threshold( _capture_handle, swparams, buffer_size_in ) < 0 ) _debug(" Cannot get stop threshold (%s)\n", snd_strerror(err)); 
+    //if( err = snd_pcm_sw_params( _capture_handle, swparams ) < 0 ) _debug(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
+    deviceClosed = false;
+    //snd_pcm_sw_params_free( swparams );
   }
 
   if(flag == SFL_PCM_BOTH || flag == SFL_PCM_PLAYBACK)
   {
 
     _debug(" Opening playback device %s\n", pcm_p.c_str());
-    if(err = snd_pcm_open(&_playback_handle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK) < 0){
+    if(err = snd_pcm_open(&_playback_handle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 ) < 0){
       _debug(" Error while opening playback device %s (%s)\n", pcm_p.c_str(), snd_strerror(err));
       return false;
     }
@@ -312,71 +398,91 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     snd_pcm_hw_params_free( hwparams );
 
     snd_pcm_uframes_t val = 1024 ;
-    snd_pcm_sw_params_alloca( &swparams );
+    snd_pcm_sw_params_malloc( &swparams );
     snd_pcm_sw_params_current( _playback_handle, swparams );
 
-    if( err = snd_pcm_sw_params_set_start_threshold( _playback_handle, swparams, val ) < 0 ) _debug(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_stop_threshold( _playback_handle, swparams, buffer_size_out ) < 0 ) _debug(" Cannot set stop threshold (%s)\n", snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_start_threshold( _playback_handle, swparams, period_size_out ) < 0 ) _debug(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
+    //if( err = snd_pcm_sw_params_set_stop_threshold( _playback_handle, swparams, buffer_size_out ) < 0 ) _debug(" Cannot set stop threshold (%s)\n", snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_avail_min( _playback_handle, swparams, period_size_out) < 0) _debug(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_xfer_align( _playback_handle , swparams , 1 ) < 0)  _debug( "Cannot align transfer (%s)\n", snd_strerror(err));
     if( err = snd_pcm_sw_params( _playback_handle, swparams ) < 0 ) _debug(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
-    device_closed = false;
+    snd_pcm_sw_params_free( swparams );
+
+    if ( err = snd_async_add_pcm_handler( &_AsyncHandler, _playback_handle , AlsaCallBack, this ) < 0)	_debugAlsa(" Unable to install the async callback handler (%s)\n", snd_strerror(err));
+    deviceClosed = false;
+
+    //fillHWBuffer();
+    
+    //if( err = snd_pcm_start(_playback_handle ) < 0 )  _debug(" Cannot start\n");
+
   }
   return true;
 }
 
+//TODO	EAGAIN error case
+//TODO	first frame causes broken pipe (underrun) because not enough data are send --> make the handle wait to be ready
   int
 AudioLayer::write(void* buffer, int length)
 {
-  
-  if(device_closed || _playback_handle == NULL)
-    return 0;
-  
   int bytes;
-  short* buff = (short*) buffer;
-  int result = 0 ;
+  /* if(deviceClosed || _playback_handle == NULL)
+     return 0;
+     int framesPerBuffer = 882;
+     bool playUrgent = false;
+     SFLDataFormat ringtone[ framesPerBuffer ];
+     AudioLoop* tone = _manager->getTelephoneTone();
+     if( tone != 0){
+     _debug("Play tone \n");
+     tone->getNext(ringtone, framesPerBuffer , _manager->getSpkrVolume());
+     playUrgent = true;
+     }
+     else if( (tone=_manager->getTelephoneFile()) != 0 ){
+     _debug("Play tone also \n");
+     tone->getNext(ringtone, framesPerBuffer , _manager->getSpkrVolume());
+     playUrgent = true;
+     }
 
-
+     int bytes;*/
   snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _playback_handle, length);
-  
-  while( frames > 0 )
-  {
-  bytes = snd_pcm_writei( _playback_handle, buff, frames);
 
-  if( bytes == -EAGAIN || (bytes >=0 && bytes < frames))
+  bytes = snd_pcm_writei( _playback_handle, buffer, frames);
+
+  if( bytes == -EAGAIN) 
   {
-    //snd_pcm_wait( _playback_handle, 20 );
-    break;
+    _debugAlsa(" (%s)\n", snd_strerror( bytes ));
+    snd_pcm_resume( _playback_handle );
   } 
+  else if(bytes >=0 && bytes < frames)
+  {
+    _debugAlsa("Short write - Frames remaining = %d\n", frames);
+  }
   else if( bytes == -EPIPE )
   {  
-      _debugAlsa(" %d Alsa error from writei (%s)\n", bytes, snd_strerror(bytes));
-      snd_pcm_prepare( _playback_handle );
-      snd_pcm_writei( _playback_handle , buff , frames );
-      break;
+    _debugAlsa(" %d Alsa error from writei (%s)\n", bytes, snd_strerror(bytes));
+    snd_pcm_prepare( _playback_handle );
+    snd_pcm_writei( _playback_handle , buffer , frames );
   }
   else if( bytes == -ESTRPIPE )
   {
-    _debug(" Playback suspend \n");
+    _debugAlsa(" Playback suspend (%s)\n", snd_strerror(bytes));
     snd_pcm_resume( _playback_handle );
-    break;
   }
-  if( bytes != frames)
-  {	
-    _debug(" Short write\n");
-    frames -= bytes;
-    buff += bytes;
+  else if( bytes == -EBADFD)
+  {
+    _debugAlsa(" PCM is not in the right state (%s)\n", snd_strerror( bytes ));
   }
-  
-  }
+  snd_pcm_sframes_t  delay; 
+  //snd_pcm_delay( _playback_handle,  &delay);
+  //snd_pcm_avail_update( _playback_handle );
 
   return 0;
-
 }
 
   int
 AudioLayer::read( void* buffer, int toCopy)
 {
 
-  if(device_closed || _capture_handle == NULL)
+  if(deviceClosed || _capture_handle == NULL)
     return 0;
   int err;
   if(snd_pcm_state( _capture_handle ) == SND_PCM_STATE_XRUN)

@@ -52,8 +52,10 @@ public:
     std::vector< ::DBus::String > getActiveCodecList(  );
     void setActiveCodecList( const std::vector< ::DBus::String >& list );
     
-    std::vector< ::DBus::String > getAudioManagerList();
-    void setAudioManager(const ::DBus::String& audioManager);
+    std::vector< ::DBus::String > getInputAudioPluginList();
+    std::vector< ::DBus::String > getOutputAudioPluginList();
+    void setInputAudioPlugin(const ::DBus::String& audioPlugin);
+    void setOutputAudioPlugin(const ::DBus::String& audioPlugin);
     std::vector< ::DBus::String > getAudioOutputDeviceList();
     void setAudioOutputDevice(const ::DBus::Int32& index);
     std::vector< ::DBus::String > getAudioInputDeviceList();

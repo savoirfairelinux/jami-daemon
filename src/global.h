@@ -27,17 +27,14 @@
 typedef float float32;
 typedef short int16;
 
-//#define DATAFORMAT_IS_FLOAT
 #ifdef DATAFORMAT_IS_FLOAT
 #define SFLDataFormat float32
-#define SFLPortaudioFormat portaudio::FLOAT32
-#define SFLPortaudioFormatString "Float32"
+#define SFLDataFormatString "Float32"
 #define SFLDataAmplitude 0.05
 #define SFLConvertInt16(s) ((float)(s)-16384.0)/16384.0
 #else
 #define SFLDataFormat int16
-#define SFLPortaudioFormat portaudio::INT16
-#define SFLPortaudioFormatString "Int16"
+#define SFLDataFormatString "Int16"
 #define SFLDataAmplitude (32767 >> 4)
 #define SFLConvertInt16(s) (s)
 #endif
@@ -74,6 +71,7 @@ typedef short int16;
 #define CHANNELS				2
 #define SIZEBUF 				1024*1024
 
+#define PCM_HW		"hw"
 #define PCM_PLUGHW	"plughw"
 #define PCM_FRONT	"plug:front"
 #define PCM_DEFAULT	"default"

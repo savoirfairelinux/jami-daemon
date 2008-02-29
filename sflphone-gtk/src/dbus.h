@@ -61,8 +61,10 @@ gchar** dbus_get_active_codec_list( void );
 void dbus_set_active_codec_list( const gchar** list );
 
 // Audio devices related methods
-gchar** dbus_get_audio_manager_list();
-void dbus_set_audio_manager(gchar* audioManager);
+gchar** dbus_get_input_audio_plugin_list();
+gchar** dbus_get_output_audio_plugin_list();
+void dbus_set_input_audio_plugin(gchar* audioPlugin);
+void dbus_set_output_audio_plugin(gchar* audioPlugin);
 gchar** dbus_get_audio_output_device_list();
 void dbus_set_audio_output_device(const int index);
 gchar** dbus_get_audio_input_device_list();

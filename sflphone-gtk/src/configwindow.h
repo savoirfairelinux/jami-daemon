@@ -28,7 +28,8 @@
  */
 void config_window_fill_account_list();
 void config_window_fill_codec_list();
-void config_window_fill_audio_manager_list();
+void config_window_fill_input_audio_plugin_list();
+void config_window_fill_output_audio_plugin_list();
 void config_window_fill_output_audio_device_list();
 void select_active_output_audio_device();
 void config_window_fill_input_audio_device_list();
