@@ -554,12 +554,12 @@ ManagerImpl::playDtmf(char code)
     //audiolayer->putUrgent(_buf, size * sizeof(SFLDataFormat));
 
     // We activate the stream if it's not active yet.
-    if (!audiolayer->isStreamActive()) {
+    //if (!audiolayer->isStreamActive()) {
       //audiolayer->startStream();
-    } else {
-      _debugAlsa("send dtmf - sleep\n");
-      audiolayer->sleep(pulselen); // in milliseconds
-    }
+    //} else {
+      //_debugAlsa("send dtmf - sleep\n");
+      //audiolayer->sleep(pulselen); // in milliseconds
+    //}
   }
   returnValue = true;
 
@@ -817,7 +817,7 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
     SFLDataFormat buf[nbSampling];
     audioloop->getNext(buf, (int) nbSampling);
     if ( audiolayer ) { 
-      //audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
+      audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
     }
     else 
       return false;
@@ -905,9 +905,8 @@ ManagerImpl::ringtone()
     _toneMutex.leaveMutex(); 
     int size = _audiofile.getSize();
     SFLDataFormat output[ size ];
-    _debugAlsa("Size = %i\n", size);
     _audiofile.getNext(output, size , 100);
-    audiolayer->playSamples( output , size );
+    audiolayer->putUrgent( output , size );
   } else {
     ringback();
   }
@@ -2057,9 +2056,9 @@ ManagerImpl::setSwitch(const std::string& switchName, std::string& message) {
 
       message = _("Change with success");
       playDtmf('9');
-      getAudioDriver()->sleep(300); // in milliseconds
+      //getAudioDriver()->sleep(300); // in milliseconds
       playDtmf('1');
-      getAudioDriver()->sleep(300); // in milliseconds
+      //getAudioDriver()->sleep(300); // in milliseconds
       playDtmf('1');
       return true;
     }

@@ -53,29 +53,27 @@ class AudioLayer {
      * @param indexOut	The number of the card choosen for playback
      * @param sampleRate  The sample rate 
      * @param frameSize	  The frame size
-     * @param flag	  To indicate which kind of stream you want to open
+     * @param stream	  To indicate which kind of stream you want to open
      *			  SFL_PCM_CAPTURE
      *			  SFL_PCM_PLAYBACK
      *			  SFL_PCM_BOTH
+     * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
     bool openDevice(int, int, int, int, int, std::string);
 
     /*
-     * Start the capture stream. The playback starts according th its threshold
+     * Start the capture stream and prepare the playback stream. 
+     * The playback starts accordingly to its threshold
      * ALSA Library API
      */
     void startStream(void);
 
     /*
-     * Stop the capture stream. The playback stops according to its threshold
-     * Drops the pending frames and put the capture handle to PREPARED state
+     * Stop the playback and capture streams. 
+     * Drops the pending frames and put the capture and playback handles to PREPARED state
      * ALSA Library API
      */
     void stopStream(void);
-    
-    void fillHWBuffer( void) ;
-
-    void sleep(int);
     
     /*
      * Check if the playback is running
@@ -106,18 +104,24 @@ class AudioLayer {
     bool isStreamStopped(void);
 
     /*
-     * Send samples to the audio device
-     * @params buffer The buffer containing the data to be played
+     * Send samples to the audio device. 
+     * @params buffer The buffer containing the data to be played ( voice and DTMF )
      * @params toCopy The number of samples, in bytes
      * @return int The number of bytes played
      */
     int playSamples(void* buffer, int toCopy);
-    int putUrgent(void* buffer, int toCopy);
-
-    void stopPlaybackStream( void );
 
     /*
-     * Query the audio devices for number of bytes available in the hardware ring buffer
+     * Send a chunk of data to the hardware buffer to start the playback
+     * Copy data in the urgent buffer. 
+     * @params buffer The buffer containing the data to be played ( ringtones )
+     * @params toCopy The size of the buffer
+     * @return int  The number of bytes copied in the urgent buffer
+     */
+    int putUrgent(void* buffer, int toCopy);
+
+    /*
+     * Query the capture device for number of bytes available in the hardware ring buffer
      * @return int The number of bytes available
      */
     int canGetMic();
@@ -149,10 +153,8 @@ class AudioLayer {
      */
     std::vector<std::string> getSoundCardsInfo( int flag );
 
-
     void setErrorMessage(const std::string& error) { _errorMessage = error; }
     std::string getErrorMessage() { return _errorMessage; }
-
 
     /*
      * Get the index of the audio card for capture
@@ -182,7 +184,18 @@ class AudioLayer {
      */
     unsigned int getFrameSize() { return _frameSize; }
 
+    /*
+     * Get the current audio plugin.
+     * @return std::string  The name of the audio plugin
+     */
     std::string getAudioPlugin( void ) { return _audioPlugin; }
+
+    /*
+     * Get the current state. Conversation or not
+     * @return bool true if playSamples has been called  
+     *		    false otherwise
+     */
+    bool getCurrentState( void ) { return _talk; }
 
     int getDeviceCount();
 
@@ -194,13 +207,34 @@ class AudioLayer {
 
   private:
 
+    /*
+     * Drop the pending frames and close the capture device
+     * ALSA Library API
+     */
+    void closeCaptureStream( void );
+
+    /*
+     * Drop the pending frames and close the playback device
+     * ALSA Library API
+     */
+    void closePlaybackStream( void );
+
+    /*
+     * Fill the alsa internal ring buffer with chunks of data
+     */
+    void fillHWBuffer( void) ;
+
+    /*
+     * Callback used for asynchronous playback.
+     * Called when a certain amount of data is written ot the device
+     */
     static void AlsaCallBack( snd_async_handler_t* );
-    snd_async_handler_t *_AsyncHandler;
-    snd_pcm_t* _playback_handle;
-    snd_pcm_t* _capture_handle;
-    RingBuffer _urgentBuffer;
-    RingBuffer _mainBuffer;
-    void updateBuffers( void );
+
+    /*
+     * Callback used for asynchronous playback.
+     * Write the urgent buffer to the alsa internal ring buffer
+     */
+    void playUrgent( void );
 
     /*
      * Open the specified device.
@@ -241,14 +275,31 @@ class AudioLayer {
     void handle_xrun_state( void );
 
     ManagerImpl* _manager; // augment coupling, reduce indirect access
-    // a audiolayer can't live without manager
 
     /*
      * Handle to manipulate capture and playback streams
      * ALSA Library API
      */
+    snd_pcm_t* _PlaybackHandle;
+    snd_pcm_t* _CaptureHandle;
 
-
+    /*
+     * Handle on asynchronous event
+     */
+    snd_async_handler_t *_AsyncHandler;
+    
+    /*
+     * Urgent ring buffer used for ringtones
+     */
+    RingBuffer _urgentBuffer;
+    
+    /*
+     * Determine if both endpoints hang up.
+     *	true if conversation is running
+     *	false otherwise
+     */
+    bool _talk;
+    
     /*
      * Enable to determine if the devices are opened or not
      *		  true if the devices are closed
@@ -274,6 +325,9 @@ class AudioLayer {
      */	 		
     unsigned int _frameSize;
 
+    /*
+     * name of the alsa audio plugin used
+     */
     std::string _audioPlugin;
 
     /**
