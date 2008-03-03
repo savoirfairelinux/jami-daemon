@@ -54,13 +54,6 @@ Required libraries and tools:
     http://savannah.gnu.org/projects/osip/
 - libxml2, libxml2-devel, pkgconfig
     usually available in distribution repositories
-- portaudio v19,  
-    available on http://www.portaudio.com/
-    http://portaudio.com/archives/pa_snapshot_v19.tar.gz
-    or
-    svn co https://www.portaudio.com/repos/portaudio/branches/v19-devel portaudio
-	or 
-	cd tools/ ./portaudio.sh
 - autoconf
 
 Optional libraries:

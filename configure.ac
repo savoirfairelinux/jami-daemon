@@ -136,9 +136,6 @@ AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
   inet_ntoa memset mkdir pathconf pow regcomp select setlocale socket \
   strchr strdup strerror strrchr strstr strtol utime])
 
-dnl Check for portaudio
-dnl PORTAUDIO_SETUP
-
 dnl Check for exosip2
 LP_CHECK_EXOSIP2
 SFLPHONE_LIBS="$SFLPHONE_LIBS $EXOSIP_LIBS"
@@ -184,16 +181,6 @@ LIBCCRT_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
-
-LIBPORTAUDIO_MIN_VERSION=19
-PKG_CHECK_MODULES(libportaudio, portaudio-2.0 >= ${LIBPORTAUDIO_MIN_VERSION})
-SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libportaudio_CFLAGS"
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libportaudio_LIBS"
-
-LIBPORTAUDIOCPP_MIN_VERSION=12
-PKG_CHECK_MODULES(libportaudiocpp, portaudiocpp >= ${LIBPORTAUDIOCPP_MIN_VERSION})
-SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libportaudiocpp_CFLAGS"
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libportaudiocpp_LIBS"
 
 LIBDBUSCPP_MIN_VERSION=0.5
 PKG_CHECK_MODULES(libdbuscpp, dbus-c++-1 >= ${LIBDBUSCPP_MIN_VERSION})
