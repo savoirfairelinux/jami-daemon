@@ -36,8 +36,10 @@ public:
         register_method(ConfigurationManager, getCodecDetails, _getCodecDetails_stub);
         register_method(ConfigurationManager, getActiveCodecList, _getActiveCodecList_stub);
         register_method(ConfigurationManager, setActiveCodecList, _setActiveCodecList_stub);
-        register_method(ConfigurationManager, getAudioManagerList, _getAudioManagerList_stub);
-        register_method(ConfigurationManager, setAudioManager, _setAudioManager_stub);
+        register_method(ConfigurationManager, getInputAudioPluginList, _getInputAudioPluginList_stub);
+        register_method(ConfigurationManager, getOutputAudioPluginList, _getOutputAudioPluginList_stub);
+        register_method(ConfigurationManager, setInputAudioPlugin, _setInputAudioPlugin_stub);
+        register_method(ConfigurationManager, setOutputAudioPlugin, _setOutputAudioPlugin_stub);
         register_method(ConfigurationManager, getAudioOutputDeviceList, _getAudioOutputDeviceList_stub);
         register_method(ConfigurationManager, setAudioOutputDevice, _setAudioOutputDevice_stub);
         register_method(ConfigurationManager, getAudioInputDeviceList, _getAudioInputDeviceList_stub);
@@ -131,14 +133,24 @@ public:
             { "list", "as", true },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument getAudioManagerList_args[] = 
+        static ::DBus::IntrospectedArgument getInputAudioPluginList_args[] = 
         {
             { "list", "as", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedArgument setAudioManager_args[] = 
+        static ::DBus::IntrospectedArgument getOutputAudioPluginList_args[] = 
         {
-            { "audioManager", "s", true },
+            { "list", "as", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setInputAudioPlugin_args[] = 
+        {
+            { "audioPlugin", "s", true },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setOutputAudioPlugin_args[] = 
+        {
+            { "audioPlugin", "s", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getAudioOutputDeviceList_args[] = 
@@ -199,8 +211,10 @@ public:
             { "getCodecDetails", getCodecDetails_args },
             { "getActiveCodecList", getActiveCodecList_args },
             { "setActiveCodecList", setActiveCodecList_args },
-            { "getAudioManagerList", getAudioManagerList_args },
-            { "setAudioManager", setAudioManager_args },
+            { "getInputAudioPluginList", getInputAudioPluginList_args },
+            { "getOutputAudioPluginList", getOutputAudioPluginList_args },
+            { "setInputAudioPlugin", setInputAudioPlugin_args },
+            { "setOutputAudioPlugin", setOutputAudioPlugin_args },
             { "getAudioOutputDeviceList", getAudioOutputDeviceList_args },
             { "setAudioOutputDevice", setAudioOutputDevice_args },
             { "getAudioInputDeviceList", getAudioInputDeviceList_args },
@@ -256,8 +270,10 @@ public:
     virtual std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload ) = 0;
     virtual std::vector< ::DBus::String > getActiveCodecList(  ) = 0;
     virtual void setActiveCodecList( const std::vector< ::DBus::String >& list ) = 0;
-    virtual std::vector< ::DBus::String > getAudioManagerList(  ) = 0;
-    virtual void setAudioManager( const ::DBus::String& audioManager ) = 0;
+    virtual std::vector< ::DBus::String > getInputAudioPluginList(  ) = 0;
+    virtual std::vector< ::DBus::String > getOutputAudioPluginList(  ) = 0;
+    virtual void setInputAudioPlugin( const ::DBus::String& audioPlugin ) = 0;
+    virtual void setOutputAudioPlugin( const ::DBus::String& audioPlugin ) = 0;
     virtual std::vector< ::DBus::String > getAudioOutputDeviceList(  ) = 0;
     virtual void setAudioOutputDevice( const ::DBus::Int32& index ) = 0;
     virtual std::vector< ::DBus::String > getAudioInputDeviceList(  ) = 0;
@@ -444,22 +460,41 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getAudioManagerList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getInputAudioPluginList_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getAudioManagerList();
+        std::vector< ::DBus::String > argout1 = getInputAudioPluginList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setAudioManager_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getOutputAudioPluginList_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::vector< ::DBus::String > argout1 = getOutputAudioPluginList();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setInputAudioPlugin_stub( const ::DBus::CallMessage& call )
     {
         ::DBus::MessageIter ri = call.reader();
 
         ::DBus::String argin1; ri >> argin1;
-        setAudioManager(argin1);
+        setInputAudioPlugin(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _setOutputAudioPlugin_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::String argin1; ri >> argin1;
+        setOutputAudioPlugin(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

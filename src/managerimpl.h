@@ -278,15 +278,26 @@ public:
   std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload);
 
   /**
-   * Get a list of supported audio managers
+   * Get a list of supported input audio plugin
    * @return List of names
    */
-  std::vector< std::string> getAudioManagerList(void);
+  std::vector< std::string> getInputAudioPluginList(void);
   
   /**
-   * Set audio manager (always put ALSA)
+   * Get a list of supported output audio plugin
+   * @return List of names
    */
-  void setAudioManager(const std::string& audioManager);
+  std::vector< std::string> getOutputAudioPluginList(void);
+  
+  /**
+   * Set input audio plugin 
+   */
+  void setInputAudioPlugin(const std::string& audioPlugin);
+  
+  /**
+   * Set output audio plugin 
+   */
+  void setOutputAudioPlugin(const std::string& audioPlugin);
   
   /**
    * Get list of supported audio output device

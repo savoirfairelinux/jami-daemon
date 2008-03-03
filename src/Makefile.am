@@ -28,7 +28,9 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
-SUBDIRS = audio config contact dbus $(ZEROCONFDIR)
+ALSAFLAG= -lasound
+
+SUBDIRS = audio config contact dbus memmanager video mixer $(ZEROCONFDIR)
 
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 		managerimpl.cpp	observer.cpp \
@@ -39,7 +41,7 @@ sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS) $(SFLPHONE_CFLAGS) $(SIP_CFLAGS)
 
 #sflphoned_LDFLAGS = -static
-sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) 
+sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) $(ALSAFLAG) 
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES) $(libdbuscpp_CFLAGS) \
 	      -DCODECS_DIR=\""$(sflcodecdir)"\" 
 
@@ -52,6 +54,9 @@ libsflphone_la_LIBADD = \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./contact/libcontact.la \
+	./memmanager/libmemmanager.la \
+	./mixer/libmixer.la \
+	./video/libvideo.la \
 	$(IAX_LIBS)
 
 libsflphone_la_SOURCES =

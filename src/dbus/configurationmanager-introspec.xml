@@ -81,11 +81,17 @@
 
 	<!-- Audio devices methods -->
 	
-    <method name="getAudioManagerList">
+    <method name="getInputAudioPluginList">
       <arg type="as" name="list" direction="out"/>
     </method>
-    <method name="setAudioManager">
-      <arg type="s" name="audioManager" direction="in"/>
+    <method name="getOutputAudioPluginList">
+      <arg type="as" name="list" direction="out"/>
+    </method>
+    <method name="setInputAudioPlugin">
+      <arg type="s" name="audioPlugin" direction="in"/>
+    </method>
+    <method name="setOutputAudioPlugin">
+      <arg type="s" name="audioPlugin" direction="in"/>
     </method>
     
     <method name="getAudioOutputDeviceList">

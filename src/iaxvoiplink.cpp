@@ -305,7 +305,7 @@ IAXVoIPLink::sendAudioFromMic(void)
     // Audio codec still not determined.
     if (audiolayer) {
       // To keep latency low..
-      audiolayer->flushMic();
+      //audiolayer->flushMic();
     }
     return;
   }
@@ -548,7 +548,7 @@ IAXVoIPLink::answer(const CallID& id)
 
   // Start audio
   audiolayer->startStream();
-  audiolayer->flushMic();
+  //audiolayer->flushMic();
 
   return true;
 }
@@ -749,7 +749,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
       }
       
       Manager::instance().peerAnsweredCall(id);
-      audiolayer->flushMic();
+      //audiolayer->flushMic();
       audiolayer->startStream();
       // start audio here?
     } else {
@@ -875,7 +875,7 @@ AudioCodec* audiocodec;
 	toAudioLayer = _receiveDataDecoded; // int to int
 #endif
       }
-      audiolayer->putMain(toAudioLayer, nbSample * sizeof(SFLDataFormat));
+      audiolayer->playSamples(toAudioLayer, nbSample * sizeof(SFLDataFormat));
     } else {
       _debug("IAX: incoming audio, but no sound card open");
     }

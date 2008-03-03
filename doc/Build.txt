@@ -45,19 +45,6 @@ sudo make install
 
 
 
-portaudio
-~~~~~~~~~
-
-Go to `tools/` and run:
-
-----------------------------
-./portaudio.sh --prefix=/usr
-cd portaudio
-sudo make install
-----------------------------
-
-NOTE: If you have `colorgcc`, building might *fail*.  Use `unset CC` and `unset CXX` to disable it before building `portaudio`.
-
 the daemon
 ~~~~~~~~~~
 

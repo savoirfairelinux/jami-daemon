@@ -40,12 +40,20 @@ AC_CONFIG_FILES([src/Makefile \
   src/config/Makefile \
   src/contact/Makefile \
   src/dbus/Makefile \
-  src/zeroconf/Makefile])
+  src/zeroconf/Makefile \
+  src/video/Makefile \
+  src/video/VideoCodec/Makefile \
+  src/video/V4L/Makefile \
+  src/memmanager/Makefile \
+  src/mixer/Makefile])
   
 AC_CONFIG_FILES([skins/Makefile \
   skins/metal/Makefile \
   skins/gmetal/Makefile \
   ringtones/Makefile])
+
+AC_CONFIG_FILES([doc/Makefile \
+  doc/doxygen/Makefile])
   
 AC_CONFIG_FILES([platform/debian/changelog \
   platform/rpm/sflphone.spec \
@@ -129,9 +137,6 @@ AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
   inet_ntoa memset mkdir pathconf pow regcomp select setlocale socket \
   strchr strdup strerror strrchr strstr strtol utime])
 
-dnl Check for portaudio
-dnl PORTAUDIO_SETUP
-
 dnl Check for exosip2
 LP_CHECK_EXOSIP2
 SFLPHONE_LIBS="$SFLPHONE_LIBS $EXOSIP_LIBS"
@@ -177,16 +182,6 @@ LIBCCRT_MIN_VERSION=1.3.0
 PKG_CHECK_MODULES(libccrtp1, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libccrtp1_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libccrtp1_LIBS"
-
-LIBPORTAUDIO_MIN_VERSION=19
-PKG_CHECK_MODULES(libportaudio, portaudio-2.0 >= ${LIBPORTAUDIO_MIN_VERSION})
-SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libportaudio_CFLAGS"
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libportaudio_LIBS"
-
-LIBPORTAUDIOCPP_MIN_VERSION=12
-PKG_CHECK_MODULES(libportaudiocpp, portaudiocpp >= ${LIBPORTAUDIOCPP_MIN_VERSION})
-SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libportaudiocpp_CFLAGS"
-SFLPHONE_LIBS="$SFLPHONE_LIBS $libportaudiocpp_LIBS"
 
 LIBDBUSCPP_MIN_VERSION=0.5
 PKG_CHECK_MODULES(libdbuscpp, dbus-c++-1 >= ${LIBDBUSCPP_MIN_VERSION})
@@ -310,6 +305,48 @@ if test "x$without_zeroconf" = "xno"; then
 fi
 AC_SUBST(LIB_DNSSD)
 AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
+
+
+ 
+# check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
+# ----------------------------------------------------------------------------
+AC_DEFUN([BB_ENABLE_DOXYGEN],
+[
+AC_ARG_ENABLE(doxygen, [  --enable-doxygen        enable documentation generation with doxygen (auto)])
+AC_ARG_ENABLE(dot, [  --enable-dot            use 'dot' to generate graphs in doxygen (auto)])              
+AC_ARG_ENABLE(html-docs, [  --enable-html-docs      enable HTML generation with doxygen (yes)], [], [ enable_html_docs=yes])              
+AC_ARG_ENABLE(latex-docs, [  --enable-latex-docs     enable LaTeX documentation generation with doxygen (no)], [], [ enable_latex_docs=no])              
+if test "x$enable_doxygen" = xno; then
+        enable_doc=no
+else 
+        AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
+        if test x$DOXYGEN = x; then
+                if test "x$enable_doxygen" = xyes; then
+                        AC_MSG_ERROR([could not find doxygen])
+                fi
+                enable_doc=no
+        else
+                enable_doc=yes
+                AC_PATH_PROG(DOT, dot, , $PATH)
+        fi
+fi
+AM_CONDITIONAL(DOC, test x$enable_doc = xyes)
+
+if test x$DOT = x; then
+        if test "x$enable_dot" = xyes; then
+                AC_MSG_ERROR([could not find dot])
+        fi
+        enable_dot=no
+else
+        enable_dot=yes
+fi
+AM_CONDITIONAL(ENABLE_DOXYGEN, test x$enable_doc = xtrue)
+AC_SUBST(enable_dot)
+AC_SUBST(enable_html_docs)
+AC_SUBST(enable_latex_docs)
+])
+# Acutally perform the doxygen check
+BB_ENABLE_DOXYGEN
 
 dnl Datadir directory
 sflphone_datadir=$datadir/sflphone

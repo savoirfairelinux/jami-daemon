@@ -361,7 +361,6 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
 	  _debug("remote payload = %s\n", tmp);
           CodecType audiocodec = (CodecType)payload;
           if (audiocodec != (CodecType)-1 && _codecMap.isActive(audiocodec))  { 
-	    _debug("PAYLOAD = %i", payload);
             listCodec << payload << " ";
             //listRtpMap << "a=rtpmap:" << payload << " " << audiocodec->getCodecName() << "/" << audiocodec->getClockRate();
             listRtpMap << "a=rtpmap:" << payload << " " << _codecMap.getCodecName(audiocodec) << "/" << _codecMap.getSampleRate(audiocodec);

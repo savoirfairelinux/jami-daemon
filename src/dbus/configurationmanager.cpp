@@ -126,19 +126,35 @@ ConfigurationManager::setActiveCodecList( const std::vector< ::DBus::String >& l
 }
 
 // Audio devices related methods
-std::vector< ::DBus::String >
-ConfigurationManager::getAudioManagerList()
+  std::vector< ::DBus::String >
+ConfigurationManager::getInputAudioPluginList()
 {
-	_debug("ConfigurationManager::getAudioManagerList received\n");
-	return Manager::instance().getAudioManagerList();
+	_debug("ConfigurationManager::getInputAudioPluginList received\n");
+	return Manager::instance().getInputAudioPluginList();
 }
-void
-ConfigurationManager::setAudioManager(const ::DBus::String& audioManager)
+
+  std::vector< ::DBus::String >
+ConfigurationManager::getOutputAudioPluginList()
 {
-	_debug("ConfigurationManager::setAudioManager received\n");
-	return Manager::instance().setAudioManager(audioManager);
+	_debug("ConfigurationManager::getOutputAudioPluginList received\n");
+	return Manager::instance().getOutputAudioPluginList();
 }
-std::vector< ::DBus::String >
+
+  void
+ConfigurationManager::setInputAudioPlugin(const ::DBus::String& audioPlugin)
+{
+	_debug("ConfigurationManager::setInputAudioPlugin received\n");
+	return Manager::instance().setInputAudioPlugin(audioPlugin);
+}
+
+  void
+ConfigurationManager::setOutputAudioPlugin(const ::DBus::String& audioPlugin)
+{
+	_debug("ConfigurationManager::setOutputAudioPlugin received\n");
+	return Manager::instance().setOutputAudioPlugin(audioPlugin);
+}
+
+  std::vector< ::DBus::String >
 ConfigurationManager::getAudioOutputDeviceList()
 {
 	_debug("ConfigurationManager::getAudioOutputDeviceList received\n");

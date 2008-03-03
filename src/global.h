@@ -27,17 +27,14 @@
 typedef float float32;
 typedef short int16;
 
-//#define DATAFORMAT_IS_FLOAT
 #ifdef DATAFORMAT_IS_FLOAT
 #define SFLDataFormat float32
-#define SFLPortaudioFormat portaudio::FLOAT32
-#define SFLPortaudioFormatString "Float32"
+#define SFLDataFormatString "Float32"
 #define SFLDataAmplitude 0.05
 #define SFLConvertInt16(s) ((float)(s)-16384.0)/16384.0
 #else
 #define SFLDataFormat int16
-#define SFLPortaudioFormat portaudio::INT16
-#define SFLPortaudioFormatString "Int16"
+#define SFLDataFormatString "Int16"
 #define SFLDataAmplitude (32767 >> 4)
 #define SFLConvertInt16(s) (s)
 #endif
@@ -48,7 +45,8 @@ typedef short int16;
   #define _debugMid(...)       fprintf(stderr, __VA_ARGS__)
   #define _debugEnd(...)       fprintf(stderr, __VA_ARGS__)
   #define _debugException(...) fprintf(stderr, "[sfl-excep] " __VA_ARGS__ "\n")
-  #define _debugInit(...)      fprintf(stderr, "[sfl-init.] " __VA_ARGS__ "\n")
+  #define _debugInit(...)      fprintf(stderr, "[sfl-init] " __VA_ARGS__ "\n")
+  #define _debugAlsa(...)      fprintf(stderr, "[alsa-debug] " __VA_ARGS__ )
 #else
   #define _debug(...)
   #define _debugStart(...)
@@ -56,6 +54,7 @@ typedef short int16;
   #define _debugEnd(...)
   #define _debugException(...)
   #define _debugInit(...)
+  #define _debugAlsa(...)
 #endif
 
 #define SFLPHONED_VERSION "0.7.2"
@@ -72,14 +71,20 @@ typedef short int16;
 #define CHANNELS				2
 #define SIZEBUF 				1024*1024
 
-// Codecs payloads, as defined in RFC3551
-// http://www.iana.org/assignments/rtp-parameters
-// http://www.gnu.org/software/ccrtp/doc/refman/html/formats_8h.html#a0
-/*#define PAYLOAD_CODEC_ULAW	0  // PCMU 8000
-#define PAYLOAD_CODEC_ALAW	8  // PCMA 8000
-#define PAYLOAD_CODEC_GSM	3  // GSM 8000
-// http://www.ietf.org/rfc/rfc3952.txt
-#define PAYLOAD_CODEC_ILBC	97*/
+#define PCM_HW		"hw"
+#define PCM_PLUGHW	"plughw"
+#define PCM_FRONT	"plug:front"
+#define PCM_DEFAULT	"default"
+#define PCM_DMIX	"plug:dmix"
+#define PCM_SURROUND40	"plug:surround40"
+#define PCM_SURROUND41	"plug:surround41"
+#define PCM_SURROUND50	"plug:surround50"
+#define PCM_SURROUND51	"plug:surround51"
+#define PCM_SURROUND71	"plug:surround71"
+#define PCM_IEC958	"plug:iec958"
 
+#define SFL_PCM_BOTH		0x0021
+#define SFL_PCM_PLAYBACK	0x0022
+#define SFL_PCM_CAPTURE		0x0023
 
 #endif	// __GLOBAL_H__

@@ -318,9 +318,11 @@ try {
 	int maxBytesToGet = _layerSampleRate * _layerFrameSize * sizeof(SFLDataFormat) / 1000;
 	// available bytes inside ringbuffer
 	int availBytesFromMic = audiolayer->canGetMic();
+	//printf("%i \n", availBytesFromMic);
 
 	// take the lowest
 	int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+	//printf("%i\n", bytesAvail);
 	// Get bytes from micRingBuffer to data_from_mic
 	int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
 	int nb_sample_up = nbSample;
@@ -426,8 +428,7 @@ try {
 #endif
 
 
-		audiolayer->putMain(toAudioLayer, nbSample * sizeof(SFLDataFormat));
-
+		audiolayer->playSamples(toAudioLayer, nbSample * sizeof(SFLDataFormat));
 		// Notify (with a beep) an incoming call when there is already a call 
 		countTime += time->getSecond();
 		if (Manager::instance().incomingCallWaiting() > 0) {
@@ -543,7 +544,7 @@ try {
 	int countTime = 0; // for receive
 	TimerPort::setTimer(_layerFrameSize);
 
-	audiolayer->flushMic();
+	//audiolayer->flushMic();
 	audiolayer->startStream();
 	_start.post();
 	_debug("- ARTP Action: Start\n");
