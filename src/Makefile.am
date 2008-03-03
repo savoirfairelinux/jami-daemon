@@ -28,7 +28,7 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
-SUBDIRS = audio config dbus memmanager mixer video $(ZEROCONFDIR)
+SUBDIRS = audio config dbus memmanager video mixer $(ZEROCONFDIR)
 
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 		managerimpl.cpp	observer.cpp \
