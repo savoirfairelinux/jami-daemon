@@ -82,6 +82,7 @@ public:
   bool refuse (const CallID& id);
   bool carryingDTMFdigits(const CallID& id, char code);
   bool sendMessage(const std::string& to, const std::string& body) { return false; }
+  bool isContactPresenceSupported() { return false; }
 
 public: // iaxvoiplink only
   void setHost(const std::string& host) { _host = host; }

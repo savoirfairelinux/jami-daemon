@@ -20,7 +20,9 @@
 #define ACCOUNT_H
 
 #include <string>
+#include <vector>
 #include "config/config.h"
+#include "contact/contact.h"
 #include "voiplink.h"
 
 class VoIPLink;
@@ -46,9 +48,6 @@ typedef std::string AccountID;
 #define SIP_STUN_SERVER       "STUN.STUNserver"
 #define SIP_USE_STUN          "STUN.useStun"
 
-
-
-
 /**
  * Class account is an interface to protocol account (SIPAccount, IAXAccount)
  * It can be enable on loading or activate after.
@@ -65,7 +64,7 @@ class Account{
    * Load the settings for this account.
    */
   virtual void loadConfig();
-
+  
   /**
    * Get the account ID
    * @return constant account id
@@ -106,6 +105,21 @@ class Account{
    */
   VoIPLink::RegistrationState getRegistrationState() { return _link->getRegistrationState(); }
 
+  /**
+   * Load all contacts
+   */
+  void loadContacts();
+  
+  /**
+   * Suscribe presence information for selected contacts if supported
+   */
+  void subscribeContactsPresence();
+  
+  /**
+   * Publish our presence information to the server
+   */
+  void publishPresence(std::string presenceStatus);
+
 private:
 
 protected:
@@ -127,7 +141,11 @@ protected:
    * Modified by the configuration (key: ENABLED)
    */
   bool _enabled;
-
+  
+  /**
+   * Contacts related to account that can have presence information
+   */
+  std::vector<Contact*> _contacts;
 };
 
 #endif
