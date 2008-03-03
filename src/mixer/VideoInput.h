@@ -4,7 +4,6 @@
 #define VIDEOINPUT_H
 
 #include <semaphore.h>
-
 #include "TimeInfo.h"
 
 //!  Video input buffer

@@ -3,7 +3,7 @@
 #ifndef INTERNALBUFFER_H
 #define INTERNALBUFFER_H
 
-#include "semaphore.h"
+#include <semaphore.h>
 
 //! Internal data sharing class
 /*!

@@ -4,9 +4,9 @@
 #define AUDIOMIXER_H
 #include <cc++/thread.h>
 #include <vector>
+
 #include "InternalBuffer.h"
 #include "OutputStream.h"
-#include <cc++/thread.h> 
 
 using namespace std;
 /** @interface */

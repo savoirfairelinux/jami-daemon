@@ -3,8 +3,6 @@
 #ifndef STRAIGHTTHROUGH_AT_H
 #define STRAIGHTTHROUGH_AT_H
 #include "AudioMixer.h"
-#include "InternalBuffer.h"
-#include "OutputStream.h"
 
 //! Straight Through audio mixer
 /*!

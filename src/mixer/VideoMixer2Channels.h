@@ -3,8 +3,6 @@
 #ifndef VIDEOMIXER2CHANNELS_H
 #define VIDEOMIXER2CHANNELS_H
 #include "VideoMixer.h"
-#include "VideoInput.h"
-#include "OutputStream.h"
 
 //! 2 Channel video mixer implementation
 /*!

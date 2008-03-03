@@ -3,8 +3,6 @@
 #ifndef STRAIGHTTHROUGH_VT_H
 #define STRAIGHTTHROUGH_VT_H
 #include "VideoMixer.h"
-#include "InternalBuffer.h"
-#include "OutputStream.h"
 
 //! Straight Through video mixer
 /*!

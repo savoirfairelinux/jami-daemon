@@ -8,17 +8,14 @@
 #include "OutputStream.h"
 #include "InputStreams.h"
 
-#include "SynchManager.h"
 #include "NoSynch.h"
 #include "AudioSynch.h"
 
 #include "InternalBuffer.h"
 
-#include "AudioMixer.h"
 #include "StraightThrough_AT.h"
 #include "AudioMixer2Channels.h"
 
-#include "VideoMixer.h"
 #include "StraightThrough_VT.h"
 #include "VideoMixer2Channels.h"
 
@@ -33,8 +30,8 @@ enum Tmixer {  NOSYNCH_AV_STRAIGHTTHROUGH= 0x0, /*!No Synchronization Manager an
                NOSYNCH_AV_MIXER2= 0x02,			/*!No Synchronization Manager and audio-video 2 channels mixer */
                SYNCH_AV_MIXER2= 0x03,			/*!Synchronization Manager and audio-video 2 channels mixer */
                NOSYNCH_AUTOSENSE= 0x04,			/*!No Synchronization Manager and auto-detect mixer state from input */
-               SYNCH_AUTOSENSE= 0x05,			/*!Synchronization Manager and auto-detect mixer stater from input */
-			};
+               SYNCH_AUTOSENSE= 0x05			/*!Synchronization Manager and auto-detect mixer stater from input */
+	    };
 
 
 //! Audio and video mixer

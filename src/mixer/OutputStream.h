@@ -5,7 +5,7 @@
 
 #include <semaphore.h>
 
-#define int16 short int
+#include "../global.h"
 
 /** @interface */
 //! Interface for the output buffers.

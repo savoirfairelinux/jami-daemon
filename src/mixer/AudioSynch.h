@@ -3,8 +3,6 @@
 #ifndef AUDIOSYNCH_H
 #define AUDIOSYNCH_H
 #include "SynchManager.h"
-#include "InputStreams.h"
-#include "InternalBuffer.h"
 
 //! Synchonization manager that uses Audio data as reference
 /*!

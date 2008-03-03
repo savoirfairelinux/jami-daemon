@@ -2,11 +2,10 @@
 
 #ifndef SYNCHMANAGER_H
 #define SYNCHMANAGER_H
-#include <cc++/thread.h>
 
-class InternalBuffer;
-class InputStreams;
 #include <cc++/thread.h> 
+#include "InternalBuffer.h"
+#include "InputStreams.h"
 
 /** @interface */
 //! Synchronization manager interface
