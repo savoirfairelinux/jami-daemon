@@ -5,7 +5,8 @@
 
 #include <semaphore.h>
 
-#include "../global.h"
+//#include "../global.h"
+#include <cc++/config.h>
 
 /** @interface */
 //! Interface for the output buffers.

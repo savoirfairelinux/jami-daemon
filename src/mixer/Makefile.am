@@ -22,7 +22,9 @@ libmixer_la_SOURCES =  	 AudioInput.cpp \
 			 Mixer.cpp
 
 
-AM_CXXFLAGS = -I$(top_srcdir)/include $(libccext2_CFLAGS) $(USER_INCLUDES)
+
+#AM_CXXFLAGS = -I$(top_srcdir)/include $(USER_INCLUDES)
+AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libdbuscpp_CFLAGS) $(libccrtp1_CFLAGS) $(USER_INCLUDES)
 
 noinst_HEADERS = AudioInput.h \
 		 AudioMixer2Channels.h \
