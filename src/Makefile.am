@@ -14,7 +14,6 @@ endif
 
 if USE_IAX
 # Use the global instead of locally built
-IAX_LIBS = $(top_builddir)/libs/libiax2/src/libiax.la
 #IAX_LIBS =
 IAX_FLAGS = -DUSE_IAX
 #IAX_CFLAGS = -I$(top_srcdir)/libs/libiax2/src/

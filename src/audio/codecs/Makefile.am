@@ -1,6 +1,21 @@
 sflcodecdir = $(libdir)/sflphone/codecs
+if BUILD_GSM
+GSM_LIB = libcodec_gsm.so
+libcodec_gsm_so_SOURCES = gsmcodec.cpp
+libcodec_gsm_so_CFLAGS = -fPIC -g -Wall
+libcodec_gsm_so_LDFLAGS = -shared -lc -lgsm
+INSTALL_GSM_RULE = install-libcodec_gsm_so
+endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so libcodec_gsm.so libcodec_speex.so libcodec_ilbc.so
+if BUILD_SPEEX
+SPEEX_LIB = libcodec_speex.so
+libcodec_speex_so_SOURCES = speexcodec.cpp
+libcodec_speex_so_CFLAGS = -fPIC -g -Wall
+libcodec_speex_so_LDFLAGS = -shared -lc -lspeex
+INSTALL_SPEEX_RULE = install-libcodec_speex_so
+endif
+
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so $(GSM_LIB) $(SPEEX_LIB) libcodec_ilbc.so
 
 noinst_HEADERS = audiocodec.h
 
@@ -12,21 +27,13 @@ libcodec_alaw_so_SOURCES = alaw.cpp
 libcodec_alaw_so_CFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_LDFLAGS = -shared -lc
 
-libcodec_gsm_so_SOURCES = gsmcodec.cpp
-libcodec_gsm_so_CFLAGS = -fPIC -g -Wall
-libcodec_gsm_so_LDFLAGS = -shared -lc -lgsm
-
-libcodec_speex_so_SOURCES = speexcodec.cpp
-libcodec_speex_so_CFLAGS = -fPIC -g -Wall
-libcodec_speex_so_LDFLAGS = -shared -lc -lspeex
-
 libcodec_ilbc_so_SOURCES = ilbc.cpp
 libcodec_ilbc_so_CFLAGS = -fPIC -g -Wall
 libcodec_ilbc_so_LDFLAGS = -shared ilbc/*.o -lc
 
 SUBDIRS = ilbc
 
-install-exec-local:     install-libcodec_ulaw_so install-libcodec_alaw_so install-libcodec_gsm_so install-libcodec_speex_so install-libcodec_ilbc_so
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_RULE) install-libcodec_ilbc_so
 uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_so uninstall-libcodec_ilbc_so
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
