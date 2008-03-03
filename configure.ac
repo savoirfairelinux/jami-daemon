@@ -39,7 +39,12 @@ AC_CONFIG_FILES([src/Makefile \
   src/audio/codecs/ilbc/Makefile \
   src/config/Makefile \
   src/dbus/Makefile \
-  src/zeroconf/Makefile])
+  src/zeroconf/Makefile \
+  src/video/Makefile \
+  src/video/VideoCodec/Makefile \
+  src/video/V4L/Makefile \
+  src/memmanager/Makefile \
+  src/mixer/Makefile])
   
 AC_CONFIG_FILES([skins/Makefile \
   skins/metal/Makefile \
