@@ -2,8 +2,13 @@
 
 #ifndef CAPTURE_H
 #define CAPTURE_H
+
+#include <vector>
+
+#include "CaptureMode.h"
 #include "Command.h"
 
+using namespace std;
 //! Capture
 /*!
  * This class is used to get a capture from the video device
@@ -79,7 +84,7 @@ private:
      * @supplierCardinality 1..* 
      */
     //! Vector of pointers to the CaptureModes to use
-    Vector<CaptureMode*> captureModesVector;
+    vector<CaptureMode*> captureModesVector;
 
 };
 #endif //CAPTURE_H

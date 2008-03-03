@@ -7,7 +7,7 @@
 
   Capture::~Capture(){}
 
-  void Capture::nextCaptureMode(){}
+  bool Capture::nextCaptureMode(){}
 
   bool Capture::forceCaptureMode(int captModePos){
 

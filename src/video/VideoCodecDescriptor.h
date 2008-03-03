@@ -13,7 +13,11 @@
 #define VIDEOCODECDESCRIPTOR_H
 #include <map>
 #include <vector>
-#include "/usr/include/ffmpeg/avcodec.h"
+#include <string>
+//#include "/usr/include/ffmpeg/avcodec.h"
+#include <ffmpeg/avcodec.h>
+
+using namespace std;
 /**
  * @author Jean-francois Blanchard-dionne 
  */
