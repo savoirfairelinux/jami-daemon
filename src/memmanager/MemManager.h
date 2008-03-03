@@ -10,7 +10,6 @@
 #include "MemData.h"
 #include "MemSpace.h"
 #include "MemKey.h"
-#include <vector.h>
 
 using namespace std;
 
