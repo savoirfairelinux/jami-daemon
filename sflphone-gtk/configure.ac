@@ -26,6 +26,7 @@ PKG_CHECK_MODULES(DEPS, \
     dbus-glib-1 >= 0.35 \
     gtk+-2.0 >= 2.2     \
     glib-2.0 >= 2.2     \
+    gtkglext-1.0 >= 1.0.0 \
 )
 
 
