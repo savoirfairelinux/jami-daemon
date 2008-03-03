@@ -43,7 +43,8 @@ AC_CONFIG_FILES([src/Makefile \
   src/video/Makefile \
   src/video/VideoCodec/Makefile \
   src/video/V4L/Makefile \
-  src/memmanager/Makefile])
+  src/memmanager/Makefile \
+  src/mixer/Makefile])
   
 AC_CONFIG_FILES([skins/Makefile \
   skins/metal/Makefile \
