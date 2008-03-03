@@ -817,7 +817,7 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
     SFLDataFormat buf[nbSampling];
     audioloop->getNext(buf, (int) nbSampling);
     if ( audiolayer ) { 
-      audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
+      //audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
     }
     else 
       return false;
@@ -906,7 +906,7 @@ ManagerImpl::ringtone()
     int size = _audiofile.getSize();
     SFLDataFormat output[ size ];
     _audiofile.getNext(output, size , 100);
-    audiolayer->putUrgent( output , size );
+    //audiolayer->putUrgent( output , size );
   } else {
     ringback();
   }
