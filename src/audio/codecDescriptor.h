@@ -202,6 +202,8 @@ private:
    */
   void unloadCodec( CodecHandlePointer );
 
+  bool seemsValid( std::string );
+
   /*
    * Map the payload of a codec and its name
    */

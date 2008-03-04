@@ -62,7 +62,6 @@ CodecDescriptor::init()
   int i;
   for( i = 0 ; i < _nbCodecs ; i++ ) {
     _CodecsMap[(CodecType)CodecDynamicList[i]->getPayload()] = CodecDynamicList[i];
-    _debug("Dynamic codec = %s\n" , CodecDynamicList[i]->getCodecName().c_str());
   }
 }
 
@@ -206,11 +205,14 @@ CodecDescriptor::scanCodecDirectory( void )
       tmp =  dirStruct -> d_name ;
       if( tmp == current || tmp == previous){}
       else{	
-	_debug("Codec : %s\n", tmp.c_str());
-	audioCodec = loadCodec( codecDir.append(tmp) );
-	codecs.push_back( audioCodec );
-	codecDir = CODECS_DIR;
-	codecDir.append("/");
+	if( seemsValid( tmp ) )
+	{
+	  _debug("Codec : %s\n", tmp.c_str());
+	  audioCodec = loadCodec( codecDir.append(tmp) );
+	  codecs.push_back( audioCodec );
+	  codecDir = CODECS_DIR;
+	  codecDir.append("/");
+	}
       }
     }
   }
@@ -218,16 +220,10 @@ CodecDescriptor::scanCodecDirectory( void )
   return codecs;
 }
 
-/*CodecDescriptor::getDescription( std::string fileName )
-{
-  int pos = fileName.length() - 12 ;
-  return fileName.substr(9, pos);
-}
-*/
   AudioCodec*
 CodecDescriptor::loadCodec( std::string path )
 {
-  _debug("Load path %s\n", path.c_str());
+  //_debug("Load path %s\n", path.c_str());
   CodecHandlePointer p;
   using std::cerr;
   void * codecHandle = dlopen( path.c_str() , RTLD_LAZY );
@@ -239,7 +235,6 @@ CodecDescriptor::loadCodec( std::string path )
     cerr << dlerror() << '\n';
   AudioCodec* a = createCodec();
   p = CodecHandlePointer( a, codecHandle );
-  //_debug("Add %s in the list.\n" , a->getCodecName().c_str());
   _CodecInMemory.push_back(p);
 
   return a;
@@ -268,4 +263,19 @@ CodecDescriptor::getFirstCodecAvailable( void )
     return NULL;
 }
     
-
+bool
+CodecDescriptor::seemsValid( std::string lib)
+{
+  // The name of the shared library seems valid  <==> it looks like libcodec_xxx.so
+  // We check this  
+  std::string begin = "libcodec_";
+  std::string end = ".so";
+  
+  if(lib.substr(0, begin.length()) == begin)
+    if(lib.substr(lib.length() - end.length() , end.length() ) == end)
+      return true;
+    else
+      return false;
+  else
+    return false;
+}
