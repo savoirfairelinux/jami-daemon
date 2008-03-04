@@ -10,7 +10,7 @@
 /** @interface */
 //! Synchronization manager interface
 /*!
- * Supplies all the methods and attributes needed for a sychmanager
+ * Supplies all the methods and attributes needed for a synchmanager
  */
 class SynchManager : public ost::Thread {
 public:
