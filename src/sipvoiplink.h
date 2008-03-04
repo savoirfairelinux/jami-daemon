@@ -60,8 +60,12 @@ public:
   bool refuse (const CallID& id);
   bool carryingDTMFdigits(const CallID& id, char code);
   bool sendMessage(const std::string& to, const std::string& body);
-
-
+  bool isContactPresenceSupported();
+  void subscribePresenceForContact(Contact* contact);
+  void publishPresenceStatus(std::string status);
+  
+  // TODO Not used yet
+  void sendMessageToContact(const CallID& id, const std::string& message);
 
   // SIP Specific
 

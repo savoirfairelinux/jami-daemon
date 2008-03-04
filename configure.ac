@@ -38,6 +38,7 @@ AC_CONFIG_FILES([src/Makefile \
   src/audio/codecs/Makefile
   src/audio/codecs/ilbc/Makefile \
   src/config/Makefile \
+  src/contact/Makefile \
   src/dbus/Makefile \
   src/zeroconf/Makefile \
   src/video/Makefile \

@@ -24,6 +24,7 @@
 
 #include <string>
 #include "call.h"
+#include "contact/contact.h"
 #include <map>
 #include <cc++/thread.h> // for mutex
 
@@ -94,6 +95,22 @@ public:
    */
   virtual bool sendMessage(const std::string& to, const std::string& body) = 0;
 
+  // NOW
+  /**
+   * Determine if link supports presence information
+   */
+  virtual bool isContactPresenceSupported() = 0;
+  
+  /**
+   * Register contacts for presence information if supported
+   */
+  virtual void subscribePresenceForContact(Contact* contact);
+  
+  /**
+   * Publish presence status to server
+   */
+  virtual void publishPresenceStatus(std::string status);
+  
   // these method are set only with 'Account init'  and can be get by everyone
   void setFullName (const std::string& fullname) { _fullname = fullname; }
   std::string& getFullName (void) { return _fullname; }
@@ -134,8 +151,7 @@ public:
    * Same, but with default error value to ""
    */
   void setRegistrationState(const enum RegistrationState state);
-
-
+  
 private:
   /**
    * Full name used as outgoing Caller ID

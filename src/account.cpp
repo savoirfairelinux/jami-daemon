@@ -21,25 +21,60 @@
 #include "voiplink.h"
 #include "manager.h"
 
+#include <string>
+
 Account::Account(const AccountID& accountID) : _accountID(accountID)
 {
-  _link = NULL;
-
-  _enabled = false;
+	_link = NULL;
+	_enabled = false;
 }
-
 
 Account::~Account()
 {
-  // _link should be destroyed WHERE IT'S CREATED
-  //delete _link;
-  //_link = NULL;
 }
-
 
 void
-Account::loadConfig() 
+Account::loadConfig()
 {
-  _enabled = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
+	_enabled = Manager::instance().getConfigInt(_accountID, CONFIG_ACCOUNT_ENABLE) ? true : false;
 }
 
+// NOW
+void
+Account::loadContacts()
+{
+	// TMP
+	Contact* contact1 = new Contact("1223345", "Guillaume140", "<sip:140@asterix.inside.savoirfairelinux.net>");
+	_contacts.push_back(contact1);
+	Contact* contact2 = new Contact("9876543", "SFLphone131", "<sip:131@asterix.inside.savoirfairelinux.net>");
+	_contacts.push_back(contact2);
+	Contact* contact3 = new Contact("6867823", "Guillaume201", "<sip:201@192.168.1.202:5066>");
+	_contacts.push_back(contact3);
+	Contact* contact4 = new Contact("3417928", "SFLphone203", "<sip:203@192.168.1.202:5066>");
+	_contacts.push_back(contact4);
+	
+	// TODO Load contact file containing list of contacts
+	// or a configuration for LDAP contacts
+}
+
+void
+Account::subscribeContactsPresence()
+{
+	if(_link->isContactPresenceSupported())
+	{
+		// Subscribe to presence for each contact that presence is enabled
+		std::vector<Contact*>::iterator iter;
+		
+		for(iter = _contacts.begin(); iter != _contacts.end(); iter++)
+		{
+			_link->subscribePresenceForContact(*iter);
+		}
+	}
+}
+
+void
+Account::publishPresence(std::string presenceStatus)
+{
+	if(_link->isContactPresenceSupported())
+		_link->publishPresenceStatus(presenceStatus);
+}
