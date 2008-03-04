@@ -43,6 +43,8 @@ public:
   void reset() { _pos = 0; }
   unsigned int getMonoSize() { return _size; }
   unsigned int getSize() { return _size; }
+  
+
 
 protected:
   SFLDataFormat* _buffer;
