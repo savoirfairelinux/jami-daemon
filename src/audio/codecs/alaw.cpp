@@ -29,6 +29,8 @@ public:
 	{
   		_clockRate = 8000;
   		_channel   = 1;
+		_bitrate = 64;
+		_bandwidth = 80;
 	}
 
         virtual ~Alaw(){}

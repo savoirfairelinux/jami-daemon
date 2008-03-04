@@ -31,6 +31,8 @@ public:
 	{
   		_clockRate = 8000;
   		_channel   = 1;
+		_bitrate =  64; 
+		_bandwidth = 80;
 	}
 
 	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) {

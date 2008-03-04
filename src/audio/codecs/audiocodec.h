@@ -16,12 +16,13 @@ protected:
   /** Number of channel 1 = mono, 2 = stereo */
   unsigned int _channel;
 
+  double _bitrate;
+  double _bandwidth;
+
 private:
   int _payload;
   bool _hasDynamicPayload;
   bool _state;
-  double _bitrate;
-  double _bandwidth;
 
 public:
     AudioCodec(int payload, const std::string &codecName)

@@ -12,6 +12,8 @@ public:
 	: AudioCodec(payload, "iLBC"){
 		_clockRate = 8000;
 		_channel = 1;
+		_bitrate = 13.3;
+		_bandwidth = 31.3;
 		
 		initILBC();
 
