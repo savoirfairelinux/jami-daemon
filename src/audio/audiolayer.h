@@ -272,7 +272,8 @@ class AudioLayer {
      * Recover from XRUN state for capture
      * ALSA Library API
      */
-    void handle_xrun_state( void );
+    void handle_xrun_capture( void );
+    void handle_xrun_playback( void );
 
     ManagerImpl* _manager; // augment coupling, reduce indirect access
 

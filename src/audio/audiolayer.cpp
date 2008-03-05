@@ -54,10 +54,10 @@
 // Destructor
 AudioLayer::~AudioLayer (void) 
 { 
+  _debugAlsa("Close ALSA streams\n");
   closeCaptureStream();
   closePlaybackStream();
   deviceClosed = true;
-  _urgentBuffer.flush();
 }
 
 
@@ -143,7 +143,7 @@ AudioLayer::fillHWBuffer( void)
   unsigned char* data;
   int pcmreturn, l1, l2;
   short s1, s2;
-  int periodSize = 128 ;
+  int periodSize = 1024 ;
   int frames = periodSize >> 2 ;
 
   data = (unsigned char*)malloc(periodSize);
@@ -158,7 +158,7 @@ AudioLayer::fillHWBuffer( void)
     }
     while ((pcmreturn = snd_pcm_writei(_PlaybackHandle, data, frames)) < 0) {
       snd_pcm_prepare(_PlaybackHandle);
-      fprintf(stderr, "<<<<<<<<<<<<<<< Buffer Underrun >>>>>>>>>>>>>>>\n");
+      _debugAlsa("< Buffer Underrun >\n");
     }
   }
 
@@ -186,7 +186,7 @@ AudioLayer::playSamples(void* buffer, int toCopy)
   int
 AudioLayer::putUrgent(void* buffer, int toCopy)
 {
-  snd_pcm_avail_update( _PlaybackHandle );
+  //snd_pcm_avail_update( _PlaybackHandle );
   fillHWBuffer();
   if ( _PlaybackHandle ) 
   {
@@ -345,7 +345,6 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     if( err = snd_pcm_hw_params_set_rate_near( _PlaybackHandle, hwparams, &rate_out, &dir) < 0) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_channels( _PlaybackHandle, hwparams, 1) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_period_size_near( _PlaybackHandle, hwparams, &period_size_out , &dir) < 0) _debugAlsa(" Cannot set period size (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_period_time_min( _PlaybackHandle, hwparams, &period_time , &dir) < 0) _debugAlsa(" Cannot set period time (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_buffer_size_near( _PlaybackHandle, hwparams, &buffer_size_out ) < 0) _debugAlsa(" Cannot set buffer size (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params( _PlaybackHandle, hwparams ) < 0) _debugAlsa(" Cannot set hw parameters (%s)\n", snd_strerror(err));
     snd_pcm_hw_params_free( hwparams );
@@ -354,16 +353,19 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     snd_pcm_sw_params_malloc( &swparams );
     snd_pcm_sw_params_current( _PlaybackHandle, swparams );
 
-    if( err = snd_pcm_sw_params_set_start_threshold( _PlaybackHandle, swparams, 1024 ) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_start_mode( _PlaybackHandle, swparams, SND_PCM_START_DATA ) < 0 ) _debugAlsa(" Cannot set start mode (%s)\n", snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_avail_min( _PlaybackHandle, swparams, 1) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_xfer_align( _PlaybackHandle , swparams , 1 ) < 0)  _debugAlsa( "Cannot align transfer (%s)\n", snd_strerror(err));
+    if( err = snd_pcm_sw_params_set_start_threshold( _PlaybackHandle, swparams, val ) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_stop_threshold( _PlaybackHandle, swparams, buffer_size_out ) < 0 ) _debugAlsa(" Cannot set stop threshold (%s)\n", snd_strerror(err)); 
+    //if( err = snd_pcm_sw_params_set_start_mode( _PlaybackHandle, swparams, SND_PCM_START_DATA ) < 0 ) _debugAlsa(" Cannot set start mode (%s)\n", snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_avail_min( _PlaybackHandle, swparams, val) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_silence_threshold( _PlaybackHandle, swparams, val) < 0) _debugAlsa(" Cannot set silence threshold (%s)\n" , snd_strerror(err)); 
     if( err = snd_pcm_sw_params( _PlaybackHandle, swparams ) < 0 ) _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
     snd_pcm_sw_params_free( swparams );
 
     if ( err = snd_async_add_pcm_handler( &_AsyncHandler, _PlaybackHandle , AlsaCallBack, this ) < 0)	_debugAlsa(" Unable to install the async callback handler (%s)\n", snd_strerror(err));
     deviceClosed = false;
   }
+
+  fillHWBuffer();
   _talk = false;
   return true;
 }
@@ -389,8 +391,8 @@ AudioLayer::write(void* buffer, int length)
   }
   else if( bytes == -EPIPE )
   {  
-    //_debugAlsa(" %d Alsa error from writei (%s)\n", bytes, snd_strerror(bytes));
-    snd_pcm_prepare( _PlaybackHandle );
+    _debugAlsa(" %d Alsa error from writei (%s)\n", bytes, snd_strerror(bytes));
+    handle_xrun_playback();
     snd_pcm_writei( _PlaybackHandle , buffer , frames );
   }
   else if( bytes == -ESTRPIPE )
@@ -420,7 +422,7 @@ AudioLayer::read( void* buffer, int toCopy)
     switch(err){
       case EPERM:
 	_debugAlsa(" Capture EPERM (%s)\n", snd_strerror(err));
-	//handle_xrun_state();
+	//handle_xrun_capture();
 	snd_pcm_prepare( _CaptureHandle);
 	break;
       case -ESTRPIPE:
@@ -435,7 +437,7 @@ AudioLayer::read( void* buffer, int toCopy)
 	break;
       case -EPIPE:
 	_debugAlsa(" Capture EPIPE (%s)\n", snd_strerror(err));
-	handle_xrun_state();
+	handle_xrun_capture();
 	break;
     }
     return 0;
@@ -446,7 +448,7 @@ AudioLayer::read( void* buffer, int toCopy)
 }
 
   void
-AudioLayer::handle_xrun_state( void )
+AudioLayer::handle_xrun_capture( void )
 {
   snd_pcm_status_t* status;
   snd_pcm_status_alloca( &status );
@@ -457,6 +459,24 @@ AudioLayer::handle_xrun_state( void )
       snd_pcm_drop( _CaptureHandle );
       snd_pcm_prepare( _CaptureHandle );
       snd_pcm_start( _CaptureHandle ); 
+    }
+  }
+  else
+    _debugAlsa(" Get status failed\n");
+}
+
+  void
+AudioLayer::handle_xrun_playback( void )
+{
+  snd_pcm_status_t* status;
+  snd_pcm_status_alloca( &status );
+
+  int res = snd_pcm_status( _PlaybackHandle, status );
+  if( res <= 0){
+    if(snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN ){
+      snd_pcm_drop( _PlaybackHandle );
+      snd_pcm_prepare( _PlaybackHandle );
+      snd_pcm_start( _PlaybackHandle ); 
     }
   }
   else
@@ -542,7 +562,7 @@ void
 AudioLayer::closeCaptureStream( void)
 {
   if(_CaptureHandle){
-    _debugAlsa(" Close the current capture device\n");
+    //_debugAlsa(" Close the current capture device\n");
     snd_pcm_drop( _CaptureHandle );
     snd_pcm_close( _CaptureHandle );
     _CaptureHandle = 0;
@@ -553,7 +573,7 @@ void
 AudioLayer::closePlaybackStream( void)
 {
   if(_PlaybackHandle){
-    _debugAlsa(" Close the current playback device\n");
+    //_debugAlsa(" Close the current playback device\n");
     snd_pcm_drop( _PlaybackHandle );
     snd_pcm_close( _PlaybackHandle );
     _PlaybackHandle = 0;
