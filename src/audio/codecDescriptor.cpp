@@ -182,8 +182,10 @@ CodecDescriptor::saveActiveCodecs(const std::vector<std::string>& list)
   while( i < size )
   {
     payload = std::atoi(list[i].data());
-    _codecOrder.push_back((CodecType)payload);
-    _CodecsMap.find((CodecType)payload)->second->setState( true );
+    if( isCodecLoaded( payload ) ) {
+      _codecOrder.push_back((CodecType)payload);
+      _CodecsMap.find((CodecType)payload)->second->setState( true );
+    }
     i++;
   }
 }
@@ -300,3 +302,21 @@ CodecDescriptor::alreadyInCache( std::string lib )
   }
   return false;
 }
+
+bool
+CodecDescriptor::isCodecLoaded( int payload )
+{
+  int i;
+  CodecsMap::iterator iter = _CodecsMap.begin();
+  while( iter != _CodecsMap.end())
+  {
+    if( iter -> first == payload)
+      return true;
+    iter++;
+  }
+  return false;
+}
+
+
+
+

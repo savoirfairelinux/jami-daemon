@@ -205,6 +205,7 @@ private:
 
   bool seemsValid( std::string );
   bool alreadyInCache( std::string );
+  bool isCodecLoaded( int payload );
   /*
    * Map the payload of a codec and its name
    */
