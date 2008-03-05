@@ -985,7 +985,7 @@ create_audio_tab ()
 	outputAudioDeviceManagerStore = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
 	config_window_fill_output_audio_device_list();
 	outputDeviceComboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioDeviceManagerStore));
-	//select_active_output_audio_device();
+	select_active_output_audio_device();
   	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), outputDeviceComboBox);
 	g_signal_connect(G_OBJECT(outputDeviceComboBox), "changed", G_CALLBACK(select_audio_output_device), outputDeviceComboBox);
 
@@ -1006,7 +1006,7 @@ create_audio_tab ()
 	inputAudioDeviceManagerStore = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
 	config_window_fill_input_audio_device_list();
 	inputDeviceComboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputAudioDeviceManagerStore));
-	//select_active_input_audio_device();
+	select_active_input_audio_device();
 	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), inputDeviceComboBox);
 	g_signal_connect(G_OBJECT(inputDeviceComboBox), "changed", G_CALLBACK(select_audio_input_device), inputDeviceComboBox);
 

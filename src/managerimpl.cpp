@@ -1132,7 +1132,7 @@ ManagerImpl::retrieveActiveCodecs()
   void
 ManagerImpl::setActiveCodecList(const std::vector<std::string>& list)
 {
-  _debug("Set active codecs list");
+  _debug("Set active codecs list\n");
   _codecDescriptorMap.saveActiveCodecs(list);
   // setConfig
   std::string s = serialize(list);
@@ -1304,6 +1304,8 @@ ManagerImpl::setAudioOutputDevice(const int index)
       _audiodriver->getFrameSize(), 
       SFL_PCM_PLAYBACK,
       _audiodriver->getAudioPlugin());
+  // set config
+  setConfig( AUDIO , DRIVER_NAME_OUT , index );
 }
 
 /**
@@ -1329,6 +1331,8 @@ ManagerImpl::setAudioInputDevice(const int index)
       _audiodriver->getFrameSize(), 
       SFL_PCM_CAPTURE,
       _audiodriver->getAudioPlugin());
+  // set config
+  setConfig( AUDIO , DRIVER_NAME_IN , index );
 }
 
 /**
@@ -1339,11 +1343,11 @@ ManagerImpl::getCurrentAudioDevicesIndex()
 {
   _debug("Get current audio devices index\n");
   std::vector<std::string> v;
-  std::stringstream ss;
-  ss << _audiodriver->getIndexOut();
-  v.push_back( ss.str() );
-  ss << _audiodriver->getIndexIn();
-  v.push_back( ss.str() );
+  std::stringstream ssi , sso;
+  sso << _audiodriver->getIndexOut();
+  v.push_back( sso.str() );
+  ssi << _audiodriver->getIndexIn();
+  v.push_back( ssi.str() );
   return v;
 }
 

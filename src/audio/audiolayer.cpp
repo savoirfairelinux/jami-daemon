@@ -533,15 +533,10 @@ AudioLayer::getSoundCardsInfo( int flag )
 
 	if( snd_ctl_pcm_info ( handle ,pcminfo ) < 0) _debugAlsa(" Cannot get info\n");
 	else{
-	  _debugAlsa("card %i : %s [%s]- device %i : %s [%s] \n - driver %s - dir %i\n", 
+	  _debugAlsa("card %i : %s [%s]\n", 
 	      numCard, 
 	      snd_ctl_card_info_get_id(info),
-	      snd_ctl_card_info_get_name( info ),
-	      snd_pcm_info_get_device( pcminfo ), 
-	      snd_pcm_info_get_id(pcminfo),
-	      snd_pcm_info_get_name( pcminfo),
-	      snd_ctl_card_info_get_driver( info ),
-	      snd_pcm_info_get_stream( pcminfo ));
+	      snd_ctl_card_info_get_name( info ));
 	  description = snd_ctl_card_info_get_name( info );
 	  description.append(" - ");
 	  description.append(snd_pcm_info_get_name( pcminfo ));
