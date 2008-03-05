@@ -205,7 +205,7 @@ CodecDescriptor::scanCodecDirectory( void )
       tmp =  dirStruct -> d_name ;
       if( tmp == current || tmp == previous){}
       else{	
-	if( seemsValid( tmp ) )
+	if( seemsValid( tmp ) && strcmp(tmp.c_str(), "libcodec_ilbc.so") != 0)  // TMP second condition to bypass ilbc codec
 	{
 	  _debug("Codec : %s\n", tmp.c_str());
 	  audioCodec = loadCodec( codecDir.append(tmp) );
