@@ -83,6 +83,9 @@ typedef short int16;
 #define PCM_SURROUND71	"plug:surround71"
 #define PCM_IEC958	"plug:iec958"
 
+#define SFL_CODEC_VALID_PREFIX	"libcodec_"
+#define SFL_CODEC_VALID_EXTEN	".so"
+
 #define SFL_PCM_BOTH		0x0021
 #define SFL_PCM_PLAYBACK	0x0022
 #define SFL_PCM_CAPTURE		0x0023

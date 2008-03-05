@@ -39,7 +39,7 @@ CodecDescriptor::~CodecDescriptor()
   void
 CodecDescriptor::deleteHandlePointer( void )
 {
-  _debug("Destroy codecs handles\n");
+  //_debug("Destroy codecs handles\n");
   int i;
   for( i = 0 ; i < _CodecInMemory.size() ; i++)
   {
@@ -62,6 +62,7 @@ CodecDescriptor::init()
   int i;
   for( i = 0 ; i < _nbCodecs ; i++ ) {
     _CodecsMap[(CodecType)CodecDynamicList[i]->getPayload()] = CodecDynamicList[i];
+    _debug("%s\n" , CodecDynamicList[i]->getCodecName().c_str());
   }
 }
 
@@ -207,7 +208,7 @@ CodecDescriptor::scanCodecDirectory( void )
       else{	
 	if( seemsValid( tmp ) )
 	{
-	  _debug("Codec : %s\n", tmp.c_str());
+	  //_debug("Codec : %s\n", tmp.c_str());
 	  audioCodec = loadCodec( codecDir.append(tmp) );
 	  codecs.push_back( audioCodec );
 	  codecDir = CODECS_DIR;
@@ -253,7 +254,7 @@ CodecDescriptor::unloadCodec( CodecHandlePointer p )
   dlclose(p.second);
 }
 
-AudioCodec*
+  AudioCodec*
 CodecDescriptor::getFirstCodecAvailable( void )
 {
   CodecsMap::iterator iter = _CodecsMap.begin();
@@ -262,15 +263,15 @@ CodecDescriptor::getFirstCodecAvailable( void )
   else
     return NULL;
 }
-    
-bool
+
+  bool
 CodecDescriptor::seemsValid( std::string lib)
 {
   // The name of the shared library seems valid  <==> it looks like libcodec_xxx.so
   // We check this  
-  std::string begin = "libcodec_";
-  std::string end = ".so";
-  
+  std::string begin = SFL_CODEC_VALID_PREFIX;
+  std::string end = SFL_CODEC_VALID_EXTEN;
+
   if(lib.substr(0, begin.length()) == begin)
     if(lib.substr(lib.length() - end.length() , end.length() ) == end)
       return true;
