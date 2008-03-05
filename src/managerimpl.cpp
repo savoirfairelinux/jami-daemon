@@ -162,6 +162,9 @@ void ManagerImpl::terminate()
 
   _debug("Unload Telephone Tone\n");
   delete _telephoneTone; _telephoneTone = NULL;
+
+  _debug("Unload Audio Codecs\n");
+  _codecDescriptorMap.deleteHandlePointer();
 }
 
 bool
@@ -905,9 +908,10 @@ ManagerImpl::ringtone()
   AudioLayer* audiolayer = getAudioDriver();
   if (audiolayer==0) { return; }
   int sampleRate  = audiolayer->getSampleRate();
+  AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
   _toneMutex.enterMutex(); 
-  bool loadFile = _audiofile.loadFile(ringchoice, sampleRate);
+  bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
   _toneMutex.leaveMutex(); 
   if (loadFile) {
     _toneMutex.enterMutex(); 
@@ -1097,11 +1101,11 @@ ManagerImpl::initAudioCodec (void)
   _debugInit("Active Codecs List");
   // init list of all supported codecs
   _codecDescriptorMap.init();
-  // if the user never set the codec list, use the default one
+  // if the user never set the codec list, use the default configuration
   if(getConfigString(AUDIO, "ActiveCodecs") == ""){
     _codecDescriptorMap.setDefaultOrder();
   }
-  // else retrieve the one he set in the config file
+  // else retrieve the one set in the user config file
   else{
     std::vector<std::string> active_list = retrieveActiveCodecs(); 
     setActiveCodecList(active_list);
@@ -1152,7 +1156,7 @@ ManagerImpl::serialize(std::vector<std::string> v)
   std::vector <std::string>
 ManagerImpl::getActiveCodecList( void )
 {
-  _debug("Get Active codecs list");
+  _debug("Get Active codecs list\n");
   std::vector< std::string > v;
   CodecOrder active = _codecDescriptorMap.getActiveCodecs();
   int i=0;
@@ -1175,14 +1179,15 @@ ManagerImpl::getActiveCodecList( void )
 ManagerImpl::getCodecList( void )
 {
   std::vector<std::string> list;
-  CodecMap codecs = _codecDescriptorMap.getCodecMap();
+  //CodecMap codecs = _codecDescriptorMap.getCodecMap();
+  CodecsMap codecs = _codecDescriptorMap.getCodecsMap();
   CodecOrder order = _codecDescriptorMap.getActiveCodecs();
-  CodecMap::iterator iter = codecs.begin();  
+  CodecsMap::iterator iter = codecs.begin();  
 
   while(iter!=codecs.end())
   {
     std::stringstream ss;
-    if(iter->first!=-1)
+    if( iter->second != NULL )
     {
       ss << iter->first;
       list.push_back((ss.str()).data());

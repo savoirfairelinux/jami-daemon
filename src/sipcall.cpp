@@ -364,10 +364,9 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
             listCodec << payload << " ";
             //listRtpMap << "a=rtpmap:" << payload << " " << audiocodec->getCodecName() << "/" << audiocodec->getClockRate();
             listRtpMap << "a=rtpmap:" << payload << " " << _codecMap.getCodecName(audiocodec) << "/" << _codecMap.getSampleRate(audiocodec);
-        // TODO: manage a way to get the channel infos    
-	/*if ( audiocodec->getChannel() != 1) {
-              listRtpMap << "/" << audiocodec->getChannel();
-            }*/
+	if (_codecMap.getChannel(audiocodec) != 1) {
+              listRtpMap << "/" << _codecMap.getChannel(audiocodec);
+            }
             listRtpMap << "\r\n";
           }
         }

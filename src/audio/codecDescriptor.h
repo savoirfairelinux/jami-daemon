@@ -26,8 +26,12 @@
 #include <string>
 #include <map>
 #include <vector>
+// To read directories content
+#include <dirent.h>
 
 #include "../global.h"
+#include "codecs/audiocodec.h"
+
 typedef enum {
 // http://www.iana.org/assignments/rtp-parameters
 // http://www.gnu.org/software/ccrtp/doc/refman/html/formats_8h.html#a0
@@ -57,23 +61,38 @@ typedef std::map<CodecType, std::string> CodecMap;
 /* The struct to reflect the order the user wants to use the codecs */
 typedef std::vector<CodecType> CodecOrder;
 
+typedef std::pair<AudioCodec* , void*> CodecHandlePointer;
+typedef std::map<CodecType , AudioCodec*> CodecsMap;
+
 class CodecDescriptor {
 public:
   /**
    * Initialize all codec 
    */
   CodecDescriptor();
-  ~CodecDescriptor() {};
+  ~CodecDescriptor(); 
+
+  /*
+   * Accessor to data structures
+   */
   CodecMap& getCodecMap() { return _codecMap; }
+  CodecsMap& getCodecsMap() { return _CodecsMap; }
   CodecOrder& getActiveCodecs() { return _codecOrder; }
 
   /**
-   * Get codec with is associated payload
-   * @param payload the payload associated with the payload
+   * Get codec name by its payload
+   * @param payload the payload looked for
    *                same as getPayload()
    * @return the name of the codec
    */
-  std::string& getCodecName(CodecType payload);
+  std::string getCodecName(CodecType payload);
+  
+  /*
+   * Get the codec object associated with the payload
+   * @param payload The payload looked for
+   * @return AudioCodec* A pointer on a AudioCodec object
+   */
+  AudioCodec* getCodec( CodecType payload );
 
   /**
    * Initialiaze the map with all the supported codecs, even those inactive
@@ -129,15 +148,87 @@ public:
   */
   int getSampleRate(CodecType payload);
 
+  /*
+   * Get the number of channels
+   * @param payload The payload of the codec
+   * @return int  Number of channels
+   */
+  int getChannel(CodecType payload);
+
 /**
  * Set the order of codecs by their payload
  * @param list The ordered list sent by DBus
  */
- void saveActiveCodecs(const std::vector<std::string>& list);
+  void saveActiveCodecs(const std::vector<std::string>& list);
  
+
+  std::string getDescription( std::string );
+  /*
+   * Get the number of codecs loaded in dynamic memory
+   */
+  int getCodecsNumber( void ) { return _nbCodecs; }
+  
+  /*
+   * Unreferences the codecs loaded in memory
+   */
+  void deleteHandlePointer( void );
+  
+  /*
+   * Get the first element of the CodecsMap struct. 
+   * i.e the one with the lowest payload
+   * @return AudioCodec	The pointer on the codec object
+   */
+  AudioCodec* getFirstCodecAvailable( void );
+
 private:
+
+  /*
+   * Scan the installation directory ( --prefix configure option )
+   * And load the dynamic library 
+   * @return std::vector<AudioCodec*> The list of the codec object successfully loaded in memory
+   */
+  std::vector<AudioCodec *> scanCodecDirectory( void ); 
+  
+  /*
+   * Load a codec
+   * @param std::string	The path of the shared ( dynamic ) library.
+   * @return AudioCodec*  the pointer of the object loaded.
+   */
+  AudioCodec* loadCodec( std::string );
+  
+  /*
+   * Unload a codec
+   * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
+   */
+  void unloadCodec( CodecHandlePointer );
+
+  bool seemsValid( std::string );
+
+  /*
+   * Map the payload of a codec and its name
+   */
   CodecMap _codecMap;
+  
+  /*
+   * Map the payload of a codec and the object associated
+   */
+  CodecsMap _CodecsMap;
+  
+  /*
+   * Vector containing the order of the codecs
+   */
   CodecOrder _codecOrder;
+  
+  /*
+   * Number of codecs loaded
+   */
+  int _nbCodecs;
+  
+  /*
+   * Vector containing pairs
+   * Pair between pointer on function handle and pointer on audiocodec object
+   */
+  std::vector< CodecHandlePointer > _CodecInMemory;
 };
 
 #endif // __CODEC_DESCRIPTOR_H__

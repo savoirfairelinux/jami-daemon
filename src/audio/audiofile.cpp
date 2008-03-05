@@ -30,40 +30,21 @@
 AudioFile::AudioFile()
  : AudioLoop()
 {
-  // could vary later...
+  // could vary later ...
   _start = false;
-
-   using std::cout;
-   using std::cerr;
-   void* codec = dlopen( CODECS_DIR "/libcodec_ulaw.so", RTLD_LAZY);
-   if(!codec){
-        cerr<<"cannot load library: "<< dlerror() <<'\n';
-   }
-   dlerror();
-    create_t* create_codec = (create_t*)dlsym(codec, "create");
-  const char* dlsym_error = dlerror();
-  if(dlsym_error){
-        cerr << "Cannot load symbol create: " << dlsym_error << '\n';
-  }
-  destroy_t* destroy_codec = (destroy_t*) dlsym(codec, "destroy");
-  dlsym_error = dlerror();
-  if(dlsym_error){
-       cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
-  }
-
-  _ulaw = create_codec();
 }
-
 
 AudioFile::~AudioFile()
 {
-   delete  _ulaw;
+   delete  _codec;
 }
 
 // load file in mono format
 bool
-AudioFile::loadFile(const std::string& filename, unsigned int sampleRate=8000) 
+AudioFile::loadFile(const std::string& filename, AudioCodec* codec , unsigned int sampleRate=8000) 
 {
+  _codec = codec;
+
   // if the filename was already load, with the same samplerate 
   // we do nothing
   if (_filename == filename && _sampleRate == sampleRate) {
@@ -106,7 +87,7 @@ AudioFile::loadFile(const std::string& filename, unsigned int sampleRate=8000)
   // expandedsize is the number of bytes, not the number of int
   // expandedsize should be exactly two time more, else failed
   int16 monoBuffer[length];
-  unsigned int expandedsize = _ulaw->codecDecode (monoBuffer, (unsigned char *) fileBuffer, length);
+  unsigned int expandedsize = _codec->codecDecode (monoBuffer, (unsigned char *) fileBuffer, length);
   if (expandedsize != length*2) {
     _debug("Audio file error on loading audio file!");
     return false;

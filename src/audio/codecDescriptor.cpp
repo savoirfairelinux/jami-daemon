@@ -26,44 +26,79 @@
 
 CodecDescriptor::CodecDescriptor() 
 {
-  init();
-//#ifdef HAVE_SPEEX
+  //init();
+  //#ifdef HAVE_SPEEX
   //_codecMap[PAYLOAD_CODEC_SPEEX] = new CodecSpeex(PAYLOAD_CODEC_SPEEX); // TODO: this is a variable payload!
-//#endif
+  //#endif
 }
 
-void
+CodecDescriptor::~CodecDescriptor()
+{
+}
+
+  void
+CodecDescriptor::deleteHandlePointer( void )
+{
+  _debug("Destroy codecs handles\n");
+  int i;
+  for( i = 0 ; i < _CodecInMemory.size() ; i++)
+  {
+    unloadCodec( _CodecInMemory[i] );
+  }
+
+}
+
+  void
 CodecDescriptor::init()
 {
-  // init list of all codecs supported codecs
-  _codecMap[PAYLOAD_CODEC_ULAW] = "PCMU";
-  _codecMap[PAYLOAD_CODEC_GSM] = "GSM";
-  _codecMap[PAYLOAD_CODEC_ALAW] = "PCMA";
-  //_codecMap[PAYLOAD_CODEC_ILBC_20] = "iLBC";
-  _codecMap[PAYLOAD_CODEC_SPEEX_8000] = "speex";;
+  _debug("Scanning %s to find audio codecs....\n",  CODECS_DIR);
+  std::vector<AudioCodec*> CodecDynamicList = scanCodecDirectory();
+  _nbCodecs = CodecDynamicList.size();
+  if( _nbCodecs <= 0 ){
+    _debug("Error - No codecs available in directory %s\n", CODECS_DIR);
+    exit(0);
+  }
 
+  int i;
+  for( i = 0 ; i < _nbCodecs ; i++ ) {
+    _CodecsMap[(CodecType)CodecDynamicList[i]->getPayload()] = CodecDynamicList[i];
+  }
 }
 
-void
+  void
 CodecDescriptor::setDefaultOrder()
 {
   _codecOrder.clear();
-  _codecOrder.push_back(PAYLOAD_CODEC_ULAW);
-  _codecOrder.push_back(PAYLOAD_CODEC_ALAW);
-  _codecOrder.push_back(PAYLOAD_CODEC_GSM);
+  CodecsMap::iterator iter = _CodecsMap.begin();
+  while( iter != _CodecsMap.end())
+  {
+    _codecOrder.push_back(iter->first);
+    iter->second->setState( true );
+  }
 }
 
-std::string&
+  std::string
 CodecDescriptor::getCodecName(CodecType payload)
 {
-  CodecMap::iterator iter = _codecMap.find(payload);
-  if (iter!=_codecMap.end()) {
-    return (iter->second);
+  std::string resNull = "";
+  CodecsMap::iterator iter = _CodecsMap.find(payload);
+  if (iter!=_CodecsMap.end()) {
+    return (iter->second->getCodecName());
   }
-  //return std::string("");
+  return resNull;
 }
 
-bool 
+  AudioCodec* 
+CodecDescriptor::getCodec(CodecType payload)
+{
+  CodecsMap::iterator iter = _CodecsMap.find(payload);
+  if (iter!=_CodecsMap.end()) {
+    return (iter->second);
+  }
+  return NULL;
+}
+
+  bool 
 CodecDescriptor::isActive(CodecType payload) 
 {
   int i;
@@ -75,94 +110,67 @@ CodecDescriptor::isActive(CodecType payload)
   return false;
 }
 
-void 
+  void 
 CodecDescriptor::removeCodec(CodecType payload)
 {
   CodecMap::iterator iter = _codecMap.begin();
   while(iter!=_codecMap.end()) {
-      if (iter->first == payload) {
-	_debug("Codec %s removed from the list", getCodecName(payload).data());
-	_codecMap.erase(iter);
-        break;
-      }
+    if (iter->first == payload) {
+      _debug("Codec %s removed from the list", getCodecName(payload).data());
+      _codecMap.erase(iter);
+      break;
+    }
     iter++;
   }
-	
+
 }
 
-void
+  void
 CodecDescriptor::addCodec(CodecType payload)
 {
 }
 
-double 
+  double 
 CodecDescriptor::getBitRate(CodecType payload)
 {
-  switch(payload){
-    case PAYLOAD_CODEC_ULAW: 
-      return 64;
-    case PAYLOAD_CODEC_ALAW: 
-      return 64;
-    case PAYLOAD_CODEC_GSM:
-      return 13.3;
-    case PAYLOAD_CODEC_ILBC_20:
-      return 15.2;
-    case PAYLOAD_CODEC_ILBC_30:
-      return 13.3;
-
-  }
-  return 0.0;
+  CodecsMap::iterator iter = _CodecsMap.find(payload);
+  if (iter!=_CodecsMap.end()) 
+    return (iter->second->getBitRate());
+  else
+    return 0.0;
 }
 
-double 
+  double 
 CodecDescriptor::getBandwidthPerCall(CodecType payload)
 {
-  switch(payload){
-    case PAYLOAD_CODEC_ULAW:
-      return 80;
-    case PAYLOAD_CODEC_ALAW:
-      return 80;
-    case PAYLOAD_CODEC_GSM:
-      return 28.6;
-    case PAYLOAD_CODEC_ILBC_20:
-      return 30.8;
-  }
-  return 0.0;
-
+  CodecsMap::iterator iter = _CodecsMap.find(payload);
+  if (iter!=_CodecsMap.end()) 
+    return (iter->second->getBandwidth());
+  else
+    return 0.0;
 }
 
-int
+  int
 CodecDescriptor::getSampleRate(CodecType payload)
 {
-  switch(payload){
-    case PAYLOAD_CODEC_ULAW:
-      printf("PAYLOAD = %i\n", payload);
-      return 8000;
-    case PAYLOAD_CODEC_ALAW:
-      printf("PAYLOAD = %i\n", payload);
-      return 8000;
-    case PAYLOAD_CODEC_GSM:
-      printf("PAYLOAD = %i\n", payload);
-      return 8000;
-    case PAYLOAD_CODEC_ILBC_20:
-      printf("PAYLOAD = %i\n", payload);
-      return 8000;
-    case PAYLOAD_CODEC_SPEEX_8000:
-      printf("PAYLOAD = %i\n", payload);
-      return 8000;
-    case PAYLOAD_CODEC_SPEEX_16000:
-      printf("PAYLOAD = %i\n", payload);
-      return 16000;
-    case PAYLOAD_CODEC_SPEEX_32000:
-      printf("PAYLOAD = %i\n", payload);
-      return 32000;
-    default:
-      return -1;
-  }
- return -1;
+  CodecsMap::iterator iter = _CodecsMap.find(payload);
+  if (iter!=_CodecsMap.end()) 
+    return (iter->second->getClockRate());
+  else
+    return 0;
 }
 
-void
+  int
+CodecDescriptor::getChannel(CodecType payload)
+{
+  CodecsMap::iterator iter = _CodecsMap.find(payload);
+  if (iter!=_CodecsMap.end()) 
+    return (iter->second->getChannel());
+  else
+    return 0;
+}
+
+  void
 CodecDescriptor::saveActiveCodecs(const std::vector<std::string>& list)
 {
   _codecOrder.clear();
@@ -171,12 +179,103 @@ CodecDescriptor::saveActiveCodecs(const std::vector<std::string>& list)
   int i=0;
   int payload;
   size_t size = list.size();
-  while(i<size)
+  while( i < size )
   {
     payload = std::atoi(list[i].data());
     _codecOrder.push_back((CodecType)payload);
+    _CodecsMap.find((CodecType)payload)->second->setState( true );
     i++;
   }
 }
 
+  std::vector<AudioCodec*>
+CodecDescriptor::scanCodecDirectory( void )
+{
+  std::vector<AudioCodec*> codecs;
+  std::string tmp;
+  std::string codecDir = CODECS_DIR;
+  codecDir.append("/");
+  std::string current = ".";
+  std::string previous = "..";
+  DIR *dir = opendir( codecDir.c_str() );
+  AudioCodec* audioCodec;
+  if( dir ){
+    dirent *dirStruct;
+    while( dirStruct = readdir( dir )) {
+      tmp =  dirStruct -> d_name ;
+      if( tmp == current || tmp == previous){}
+      else{	
+	if( seemsValid( tmp ) )
+	{
+	  _debug("Codec : %s\n", tmp.c_str());
+	  audioCodec = loadCodec( codecDir.append(tmp) );
+	  codecs.push_back( audioCodec );
+	  codecDir = CODECS_DIR;
+	  codecDir.append("/");
+	}
+      }
+    }
+  }
+  closedir( dir );
+  return codecs;
+}
 
+  AudioCodec*
+CodecDescriptor::loadCodec( std::string path )
+{
+  //_debug("Load path %s\n", path.c_str());
+  CodecHandlePointer p;
+  using std::cerr;
+  void * codecHandle = dlopen( path.c_str() , RTLD_LAZY );
+  if( !codecHandle )
+    cerr << dlerror() << '\n';
+  dlerror();
+  create_t* createCodec = (create_t*)dlsym( codecHandle , "create" );
+  if( dlerror() )
+    cerr << dlerror() << '\n';
+  AudioCodec* a = createCodec();
+  p = CodecHandlePointer( a, codecHandle );
+  _CodecInMemory.push_back(p);
+
+  return a;
+}
+
+  void
+CodecDescriptor::unloadCodec( CodecHandlePointer p )
+{
+  // _debug("Unload codec %s\n", p.first->getCodecName().c_str());
+  using std::cerr;
+  int i;
+  destroy_t* destroyCodec = (destroy_t*)dlsym( p.second , "destroy");
+  if(dlerror())
+    cerr << dlerror() << '\n';
+  destroyCodec(p.first);
+  dlclose(p.second);
+}
+
+AudioCodec*
+CodecDescriptor::getFirstCodecAvailable( void )
+{
+  CodecsMap::iterator iter = _CodecsMap.begin();
+  if( iter != _CodecsMap.end())
+    return iter->second;
+  else
+    return NULL;
+}
+    
+bool
+CodecDescriptor::seemsValid( std::string lib)
+{
+  // The name of the shared library seems valid  <==> it looks like libcodec_xxx.so
+  // We check this  
+  std::string begin = "libcodec_";
+  std::string end = ".so";
+  
+  if(lib.substr(0, begin.length()) == begin)
+    if(lib.substr(lib.length() - end.length() , end.length() ) == end)
+      return true;
+    else
+      return false;
+  else
+    return false;
+}

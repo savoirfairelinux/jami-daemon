@@ -1119,10 +1119,10 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject)
         call->getCodecMap().getCodecName(payload) << "/" << call->getCodecMap().getSampleRate(payload);
 
     	//TODO add channel infos
-        /*nbChannel = iter->second->getChannel();
+        nbChannel = call->getCodecMap().getChannel(payload);
         if (nbChannel!=1) {
           rtpmap_attr << "/" << nbChannel;
-        }*/
+        }
         rtpmap_attr << "\r\n";
       }
     // go to next codec

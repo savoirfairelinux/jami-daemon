@@ -33,8 +33,8 @@ libcodec_ilbc_so_LDFLAGS = -shared ilbc/*.o -lc
 
 SUBDIRS = ilbc
 
-install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_RULE) install-libcodec_ilbc_so
-uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_so uninstall-libcodec_ilbc_so
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_RULE) 
+uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_so 
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
 	mkdir -p $(sflcodecdir)
@@ -45,8 +45,8 @@ install-libcodec_gsm_so: libcodec_gsm.so
 	$(INSTALL_PROGRAM)  libcodec_gsm.so $(sflcodecdir)
 install-libcodec_speex_so: libcodec_speex.so
 	$(INSTALL_PROGRAM)  libcodec_speex.so $(sflcodecdir)
-install-libcodec_ilbc_so: libcodec_ilbc.so
-	$(INSTALL_PROGRAM)  libcodec_ilbc.so $(sflcodecdir)
+#install-libcodec_ilbc_so: libcodec_ilbc.so
+#	$(INSTALL_PROGRAM)  libcodec_ilbc.so $(sflcodecdir)
 
 
 uninstall-libcodec_ulaw_so:
@@ -57,7 +57,7 @@ uninstall-libcodec_gsm_so:
 	rm -f $(sflcodecdir)/libcodec_gsm.so
 uninstall-libcodec_speex_so:
 	rm -f $(sflcodecdir)/libcodec_speex.so
-uninstall-libcodec_ilbc_so:
-	rm -f $(sflcodecdir)/libcodec_ilbc.so
 	rm -rf $(sflcodecdir)
+#uninstall-libcodec_ilbc_so:
+#	rm -f $(sflcodecdir)/libcodec_ilbc.so
 

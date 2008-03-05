@@ -140,6 +140,10 @@ IAXVoIPLink::init()
     
     _initDone = false;
   }
+  
+   IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
+   _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( currentCall -> getAudioCodec() );
+
   return returnValue;
 }
 
@@ -176,6 +180,7 @@ IAXVoIPLink::terminateIAXCall()
     iter++;
   }
   _callMap.clear();
+  delete _audiocodec;
 }
 
 void
@@ -227,58 +232,6 @@ IAXVoIPLink::getEvent()
   _evThread->sleep(3);
 }
 
-AudioCodec* 
-IAXVoIPLink::loadCodec(int payload)
-{
-   using std::cerr;
-
-   switch(payload)
-   {
-     case 0:
-       handle_codec = dlopen(CODECS_DIR "/libcodec_ulaw.so", RTLD_LAZY);
-       break;
-     case 3:
-       handle_codec = dlopen(CODECS_DIR "/libcodec_gsm.so", RTLD_LAZY);
-       break;
-     case 8:
-       handle_codec = dlopen(CODECS_DIR "/libcodec_alaw.so", RTLD_LAZY);
-       break;
-     case 97:
-       handle_codec = dlopen(CODECS_DIR "/libcodec_ilbc.so", RTLD_LAZY);
-       break;
-     case 110:
-       handle_codec = dlopen(CODECS_DIR "/libcodec_speex.so", RTLD_LAZY);
-       break;
-   }
-   if(!handle_codec){
-        cerr<<"cannot load library: "<< dlerror() <<'\n';
-   }
-   // reset errors
-   dlerror();   
-
-   // load the symbols
-  create_t* create_codec = (create_t*)dlsym(handle_codec, "create");
-  const char* dlsym_error = dlerror();
-  if(dlsym_error){
-        cerr << "Cannot load symbol create: " << dlsym_error << '\n';
-  }
-  return create_codec();
-}
-
-void
-IAXVoIPLink::unloadCodec(AudioCodec* audiocodec)
-{
-  using std::cerr;
-
-  destroy_t* destroy_codec = (destroy_t*) dlsym(handle_codec, "destroy");
-  const char* dlsym_error = dlerror();
-  if(dlsym_error){
-       cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
-  }
-  destroy_codec(audiocodec);
-  dlclose(handle_codec);
-}
-
 void
 IAXVoIPLink::sendAudioFromMic(void)
 {
@@ -300,8 +253,8 @@ IAXVoIPLink::sendAudioFromMic(void)
     return;
   }
 
-  AudioCodec* audiocodec = loadCodec(currentCall->getAudioCodec());
-  if (!audiocodec) {
+  //AudioCodec* audiocodec = loadCodec(currentCall->getAudioCodec());
+  if (!_audiocodec) {
     // Audio codec still not determined.
     if (audiolayer) {
       // To keep latency low..
@@ -336,7 +289,7 @@ IAXVoIPLink::sendAudioFromMic(void)
 
     int16* toIAX = NULL;
     //if (audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
-    if (audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample) {
+    if (audiolayer->getSampleRate() != _audiocodec->getClockRate() && nbSample) {
       SRC_DATA src_data;
 #ifdef DATAFORMAT_IS_FLOAT   
       src_data.data_in = _dataAudioLayer;
@@ -347,7 +300,7 @@ IAXVoIPLink::sendAudioFromMic(void)
       
       // Audio parfait à ce point.
 
-      double factord = (double) audiocodec->getClockRate() / audiolayer->getSampleRate();
+      double factord = (double) _audiocodec->getClockRate() / audiolayer->getSampleRate();
       
       src_data.src_ratio = factord;
       src_data.input_frames = nbSample;
@@ -401,7 +354,7 @@ IAXVoIPLink::sendAudioFromMic(void)
 
 
     // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-    int compSize = audiocodec->codecEncode(_sendDataEncoded, toIAX, nbSample*sizeof(int16));
+    int compSize = _audiocodec->codecEncode(_sendDataEncoded, toIAX, nbSample*sizeof(int16));
 
       
 
@@ -416,7 +369,7 @@ IAXVoIPLink::sendAudioFromMic(void)
     }
     _mutexIAX.leaveMutex();
   }
-  unloadCodec(audiocodec);
+  //unloadCodec(audiocodec);
 }
 
 
@@ -808,7 +761,6 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
       //_debug("IAX: Skipping empty jitter-buffer interpolated packet\n");
       return;
     }
-AudioCodec* audiocodec;
 
     if (audiolayer) {
       
@@ -818,7 +770,7 @@ AudioCodec* audiocodec;
       if (event->subclass && event->subclass != call->getFormat()) {
 	call->setFormat(event->subclass);
       }
-      audiocodec = loadCodec(call->getAudioCodec());
+      //audiocodec = loadCodec(call->getAudioCodec());
       //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
      
       unsigned char* data = (unsigned char*)event->data;
@@ -829,7 +781,7 @@ AudioCodec* audiocodec;
 	size = IAX__20S_8KHZ_MAX;
       }
 
-      int expandedSize = audiocodec->codecDecode(_receiveDataDecoded, data, size);
+      int expandedSize = _audiocodec->codecDecode(_receiveDataDecoded, data, size);
       int nbInt16      = expandedSize/sizeof(int16);
 
       if (nbInt16 > IAX__20S_8KHZ_MAX) {
@@ -841,9 +793,9 @@ AudioCodec* audiocodec;
       int nbSample = nbInt16;
       int nbSampleMaxRate = nbInt16 * 6;
       
-      if ( audiolayer->getSampleRate() != audiocodec->getClockRate() && nbSample ) {
+      if ( audiolayer->getSampleRate() != _audiocodec->getClockRate() && nbSample ) {
 	// Do sample rate conversion
-	double factord = (double) audiolayer->getSampleRate() / audiocodec->getClockRate();
+	double factord = (double) audiolayer->getSampleRate() / _audiocodec->getClockRate();
 	// SRC_DATA from samplerate.h
 	SRC_DATA src_data;
 	src_data.data_in = _floatBuffer8000;
@@ -879,7 +831,7 @@ AudioCodec* audiocodec;
     } else {
       _debug("IAX: incoming audio, but no sound card open");
     }
-  unloadCodec(audiocodec);
+  //unloadCodec(audiocodec);
 
 }
 

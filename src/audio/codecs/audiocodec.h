@@ -16,9 +16,13 @@ protected:
   /** Number of channel 1 = mono, 2 = stereo */
   unsigned int _channel;
 
+  double _bitrate;
+  double _bandwidth;
+
 private:
   int _payload;
   bool _hasDynamicPayload;
+  bool _state;
 
 public:
     AudioCodec(int payload, const std::string &codecName)
@@ -28,7 +32,7 @@ public:
   	_channel   = 1; // default
 
   	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
-
+	_state = true;
 }
 
     virtual ~AudioCodec() {
@@ -41,12 +45,15 @@ public:
 
 
   /** Value used for SDP negotiation */
-  std::string getCodecName() { return _codecName; }
-  int getPayload() { return _payload; }
-  bool hasDynamicPayload() { return _hasDynamicPayload; }
-  unsigned int getClockRate() { return _clockRate; }
-  unsigned int getChannel() { return _channel; }
-  
+  std::string getCodecName( void ) { return _codecName; }
+  int getPayload( void ) { return _payload; }
+  bool hasDynamicPayload( void ) { return _hasDynamicPayload; }
+  unsigned int getClockRate( void ) { return _clockRate; }
+  unsigned int getChannel( void ) { return _channel; }
+  bool getState( void ) { return _state; }
+  void setState(bool b) { _state = b; }
+  double getBitRate( void ) { return _bitrate; }
+  double getBandwidth( void ) { return _bandwidth; }
 
 };
 

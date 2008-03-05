@@ -33,6 +33,8 @@ public:
   Gsm (int payload=3): AudioCodec(payload, "GSM"){
     _clockRate = 8000;
     _channel = 1;
+    _bitrate = 13.3;
+    _bandwidth = 29.2;
     
     if (!(_decode_gsmhandle = gsm_create() ))
     printf("ERROR: decode_gsm_create\n");

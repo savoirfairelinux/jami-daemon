@@ -29,6 +29,8 @@ public:
 	{
   	  _clockRate = 8000;
   	  _channel = 1;
+	  _bitrate = 0;
+	  _bandwidth = 0; 
   	  initSpeex();
 	}
 
