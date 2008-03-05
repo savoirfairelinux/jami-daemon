@@ -85,6 +85,8 @@ typedef short int16;
 
 #define SFL_CODEC_VALID_PREFIX	"libcodec_"
 #define SFL_CODEC_VALID_EXTEN	".so"
+#define CURRENT_DIR		"."
+#define PARENT_DIR		".."
 
 #define SFL_PCM_BOTH		0x0021
 #define SFL_PCM_PLAYBACK	0x0022

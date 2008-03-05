@@ -88,12 +88,10 @@
 #define DFT_PULSE_LENGTH_STR "250"
 #define SIP_INFO_STR         "0"
 #define DFT_DRIVER_STR       "0"
-#define DFT_NB_CODEC_STR     "3"
 // volume by default 100%
 #define DFT_VOL_SPKR_STR     "100"
 #define DFT_VOL_MICRO_STR    "100"
 
-#define DFT_CODECS		"0/8/3"  // liste ordonnée de payload
 #define DFT_RINGTONE 		"konga.ul"
 #define DFT_SKIN 		"metal"
 #define DFT_ZONE		"North America"
@@ -101,8 +99,6 @@
 #define DFT_FRAME_SIZE		"20"
 #define DFT_SAMPLE_RATE		"44100"
 #define SAMPLE_RATE1	"44100"
-#define SAMPLE_RATE2	"48000"
-#define SAMPLE_RATE3	"96000"
 // zeroconfig default value
 #ifdef USE_ZEROCONF
 #define CONFIG_ZEROCONF_DEFAULT_STR "1"

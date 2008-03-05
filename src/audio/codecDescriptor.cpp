@@ -51,7 +51,6 @@ CodecDescriptor::deleteHandlePointer( void )
   void
 CodecDescriptor::init()
 {
-  _debug("Scanning %s to find audio codecs....\n",  CODECS_DIR);
   std::vector<AudioCodec*> CodecDynamicList = scanCodecDirectory();
   _nbCodecs = CodecDynamicList.size();
   if( _nbCodecs <= 0 ){
@@ -194,30 +193,39 @@ CodecDescriptor::scanCodecDirectory( void )
 {
   std::vector<AudioCodec*> codecs;
   std::string tmp;
-  std::string codecDir = CODECS_DIR;
-  codecDir.append("/");
-  std::string current = ".";
-  std::string previous = "..";
-  DIR *dir = opendir( codecDir.c_str() );
-  AudioCodec* audioCodec;
-  if( dir ){
-    dirent *dirStruct;
-    while( dirStruct = readdir( dir )) {
-      tmp =  dirStruct -> d_name ;
-      if( tmp == current || tmp == previous){}
-      else{	
-	if( seemsValid( tmp ) )
-	{
-	  //_debug("Codec : %s\n", tmp.c_str());
-	  audioCodec = loadCodec( codecDir.append(tmp) );
-	  codecs.push_back( audioCodec );
-	  codecDir = CODECS_DIR;
-	  codecDir.append("/");
+  int i;
+
+  std::string libDir = std::string(CODECS_DIR).append("/");
+  std::string homeDir = std::string(HOMEDIR)  + DIR_SEPARATOR_STR + "." + PROGDIR + "/";
+  std::vector<std::string> dirToScan;
+  dirToScan.push_back(homeDir);
+  dirToScan.push_back(libDir);
+
+  for( i = 0 ; i < dirToScan.size() ; i++ )
+  {
+    std::string dirStr = dirToScan[i];
+    _debug("Scanning %s to find audio codecs....\n",  dirStr.c_str());
+    DIR *dir = opendir( dirStr.c_str() );
+    AudioCodec* audioCodec;
+    if( dir ){
+      dirent *dirStruct;
+      while( dirStruct = readdir( dir )) {
+	tmp =  dirStruct -> d_name ;
+	if( tmp == CURRENT_DIR || tmp == PARENT_DIR){}
+	else{	
+	  if( seemsValid( tmp ) && !alreadyInCache( tmp ))
+	  {
+	    //_debug("Codec : %s\n", tmp.c_str());
+	    _Cache.push_back( tmp );
+	    audioCodec = loadCodec( dirStr.append(tmp) );
+	    codecs.push_back( audioCodec );
+	    dirStr = dirToScan[i];
+	  }
 	}
       }
     }
+    closedir( dir );
   }
-  closedir( dir );
   return codecs;
 }
 
@@ -279,4 +287,16 @@ CodecDescriptor::seemsValid( std::string lib)
       return false;
   else
     return false;
+}
+
+  bool
+CodecDescriptor::alreadyInCache( std::string lib )
+{
+  int i;
+  for( i = 0 ; i < _Cache.size() ; i++ )
+  {
+    if( _Cache[i] == lib ){
+      return true;}
+  }
+  return false;
 }
