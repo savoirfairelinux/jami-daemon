@@ -11,6 +11,8 @@ Makefile
 Makefile.in
 *.spec
 /config.*
+*.swp
+*.so
 
 # Ignore rendered docs
 doc/doxygen/html-everything
