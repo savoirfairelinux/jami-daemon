@@ -38,8 +38,11 @@
 #include <sstream>
 #define FRAME_PER_BUFFER	160
 
+
 class RingBuffer;
 class ManagerImpl;
+
+typedef std::pair<int , std::string> HwIDPair;
 
 class AudioLayer {
   public:
@@ -152,6 +155,8 @@ class AudioLayer {
      * @return std::vector<std::string> The vector containing the string description of the card
      */
     std::vector<std::string> getSoundCardsInfo( int flag );
+    bool soundCardIndexExist( int card );
+    int soundCardGetIndex( std::string description );
 
     void setErrorMessage(const std::string& error) { _errorMessage = error; }
     std::string getErrorMessage() { return _errorMessage; }
@@ -351,12 +356,11 @@ class AudioLayer {
      */
     bool _echoTesting;
 
+    std::vector<HwIDPair> IDSoundCards;
+
     std::string _errorMessage;
     ost::Mutex _mutex;
 
-    float *table_;
-    int tableSize_;
-    int leftPhase_;
 };
 
 #endif // _AUDIO_LAYER_H_

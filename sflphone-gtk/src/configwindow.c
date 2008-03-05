@@ -195,6 +195,7 @@ config_window_fill_output_audio_device_list()
 	GtkTreeIter iter;
 	gchar** list;
 	gchar** audioDevice;
+	int index;
 
 	gtk_list_store_clear(outputAudioDeviceManagerStore);
 	
@@ -205,8 +206,9 @@ config_window_fill_output_audio_device_list()
 	int c = 0;
 	for(audioDevice = list; *list ; list++)
 	{
+		index = dbus_get_audio_device_index( *list );
 		gtk_list_store_append(outputAudioDeviceManagerStore, &iter);
-		gtk_list_store_set(outputAudioDeviceManagerStore, &iter, 0, *list, 1, c, -1);
+		gtk_list_store_set(outputAudioDeviceManagerStore, &iter, 0, *list, 1, index, -1);
 		c++;
 	}
 }
@@ -255,19 +257,20 @@ config_window_fill_input_audio_device_list()
 	GtkTreeIter iter;
 	gchar** list;
 	gchar** audioDevice;
-
+	int index ;
 	gtk_list_store_clear(inputAudioDeviceManagerStore);
 	
 	// Call dbus to retreive list
 	list = dbus_get_audio_input_device_list();
 	
 	// For each device name included in list
-	int c = 0;
+	//int c = 0;
 	for(audioDevice = list; *list; list++)
 	{
+		index = dbus_get_audio_device_index( *list );
 		gtk_list_store_append(inputAudioDeviceManagerStore, &iter);
-		gtk_list_store_set(inputAudioDeviceManagerStore, &iter, 0, *list, 1, c, -1);
-		c++;
+		gtk_list_store_set(inputAudioDeviceManagerStore, &iter, 0, *list, 1, index, -1);
+		//c++;
 	}
 }
 

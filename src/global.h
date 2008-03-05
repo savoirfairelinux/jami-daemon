@@ -71,6 +71,8 @@ typedef short int16;
 #define CHANNELS				2
 #define SIZEBUF 				1024*1024
 
+#define ALSA_DFT_HW_INDEX     0
+
 #define PCM_HW		"hw"
 #define PCM_PLUGHW	"plughw"
 #define PCM_FRONT	"plug:front"

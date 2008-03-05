@@ -111,9 +111,9 @@
       <arg type="as" name="list" direction="out"/>
     </method>
 
-    <method name="getAudioDeviceDetails">
-      <arg type="i" name="index" direction="in"/>
-      <arg type="as" name="details" direction="out"/>
+    <method name="getAudioDeviceIndex">
+      <arg type="s" name="name" direction="in"/>
+      <arg type="i" name="index" direction="out"/>
     </method>
 
   <!--        /////////////////////////////       -->

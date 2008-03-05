@@ -184,11 +184,11 @@ ConfigurationManager::getCurrentAudioDevicesIndex()
 	_debug("ConfigurationManager::getCurrentAudioDeviceIndex received\n");
 	return Manager::instance().getCurrentAudioDevicesIndex();
 }
-std::vector< ::DBus::String >
-ConfigurationManager::getAudioDeviceDetails(const ::DBus::Int32& index)
+ ::DBus::Int32
+ConfigurationManager::getAudioDeviceIndex(const ::DBus::String& name)
 {
-	_debug("ConfigurationManager::getAudioDeviceDetails received\n");
-	return Manager::instance().getAudioDeviceDetails(index);
+	_debug("ConfigurationManager::getAudioDeviceIndex received\n");
+	return Manager::instance().getAudioDeviceIndex(name);
 }
 
 

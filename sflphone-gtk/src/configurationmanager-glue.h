@@ -955,22 +955,22 @@ static
 inline
 #endif
 gboolean
-org_sflphone_SFLphone_ConfigurationManager_get_audio_device_details (DBusGProxy *proxy, const gint IN_index, char *** OUT_details, GError **error)
+org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index (DBusGProxy *proxy, const char * IN_name, gint* OUT_index, GError **error)
 
 {
-  return dbus_g_proxy_call (proxy, "getAudioDeviceDetails", error, G_TYPE_INT, IN_index, G_TYPE_INVALID, G_TYPE_STRV, OUT_details, G_TYPE_INVALID);
+  return dbus_g_proxy_call (proxy, "getAudioDeviceIndex", error, G_TYPE_STRING, IN_name, G_TYPE_INVALID, G_TYPE_INT, OUT_index, G_TYPE_INVALID);
 }
 
-typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_audio_device_details_reply) (DBusGProxy *proxy, char * *OUT_details, GError *error, gpointer userdata);
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index_reply) (DBusGProxy *proxy, gint OUT_index, GError *error, gpointer userdata);
 
 static void
-org_sflphone_SFLphone_ConfigurationManager_get_audio_device_details_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
 {
   DBusGAsyncData *data = (DBusGAsyncData*) user_data;
   GError *error = NULL;
-  char ** OUT_details;
-  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_STRV, &OUT_details, G_TYPE_INVALID);
-  (*(org_sflphone_SFLphone_ConfigurationManager_get_audio_device_details_reply)data->cb) (proxy, OUT_details, error, data->userdata);
+  gint OUT_index;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INT, &OUT_index, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index_reply)data->cb) (proxy, OUT_index, error, data->userdata);
   return;
 }
 
@@ -979,14 +979,14 @@ static
 inline
 #endif
 DBusGProxyCall*
-org_sflphone_SFLphone_ConfigurationManager_get_audio_device_details_async (DBusGProxy *proxy, const gint IN_index, org_sflphone_SFLphone_ConfigurationManager_get_audio_device_details_reply callback, gpointer userdata)
+org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index_async (DBusGProxy *proxy, const char * IN_name, org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index_reply callback, gpointer userdata)
 
 {
   DBusGAsyncData *stuff;
   stuff = g_new (DBusGAsyncData, 1);
   stuff->cb = G_CALLBACK (callback);
   stuff->userdata = userdata;
-  return dbus_g_proxy_begin_call (proxy, "getAudioDeviceDetails", org_sflphone_SFLphone_ConfigurationManager_get_audio_device_details_async_callback, stuff, g_free, G_TYPE_INT, IN_index, G_TYPE_INVALID);
+  return dbus_g_proxy_begin_call (proxy, "getAudioDeviceIndex", org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index_async_callback, stuff, g_free, G_TYPE_STRING, IN_name, G_TYPE_INVALID);
 }
 #endif /* defined DBUS_GLIB_CLIENT_WRAPPERS_org_sflphone_SFLphone_ConfigurationManager */
 

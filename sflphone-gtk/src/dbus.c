@@ -979,26 +979,26 @@ dbus_get_current_audio_devices_index()
 }
 
 /**
- * Get name, max input channels, max output channels and sample rate for a device
+ * Get index
  */
-gchar**
-dbus_get_audio_device_details(const int index)
+int
+dbus_get_audio_device_index(const gchar *name)
 {
-	g_print("Before get audio device details");
-	gchar** array;
+	g_print("Before get audio device index");
+	int index;
 	GError* error = NULL;
-	org_sflphone_SFLphone_ConfigurationManager_get_audio_device_details(
+	org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index(
 			configurationManagerProxy,
-			index,
-			&array,
+			name,
+			&index,
 			&error);
 	g_print("After");
 	if(error)
 	{
-		g_printerr("Failed to call get_audio_device_details() on ConfigurationManager: %s\n", error->message);
+		g_printerr("Failed to call get_audio_device_index() on ConfigurationManager: %s\n", error->message);
 		g_error_free(error);
 	}
 	else
-		g_print("DBus called get_audio_device_details() on ConfigurationManager\n");
-	return array;
+		g_print("DBus called get_audio_device_index() on ConfigurationManager\n");
+	return index;
 }

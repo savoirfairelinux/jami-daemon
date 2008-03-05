@@ -325,9 +325,9 @@ public:
   std::vector<std::string> getCurrentAudioDevicesIndex();
   
   /**
-   * Get name, max input channels, max output channels, sample rate of audio device
+   * Get index of an audio device
    */
-  std::vector<std::string> getAudioDeviceDetails(const int index);
+  int getAudioDeviceIndex( const std::string name );
   
   /**
    * Convert a list of payload in a special format, readable by the server.

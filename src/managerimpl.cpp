@@ -1351,14 +1351,14 @@ ManagerImpl::getCurrentAudioDevicesIndex()
   return v;
 }
 
-/**
- * Get name, max input channels, max output channels, sample rate of audio device
- */
-  std::vector<std::string>
-ManagerImpl::getAudioDeviceDetails(const int index)
+  int
+ManagerImpl::getAudioDeviceIndex(const std::string name)
 {
-  _debug("Get audio input device list\n");
-
+  _debug("Get audio device index\n");
+  int num = _audiodriver -> soundCardGetIndex( name );
+  _debug(" %s has number %i\n" , name.c_str() , num );
+  return num;
+  //return _audiodriver -> soundCardGetIndex( name );
 }
 
 
@@ -1396,16 +1396,20 @@ ManagerImpl::selectAudioDriver (void)
   }
   int frameSize = getConfigInt(AUDIO, DRIVER_FRAME_SIZE);
 
-  // this is when no audio device in/out are set
-  // or the audio device in/out are set to 0
-  // we take the nodevice instead
-  // remove this hack, how can we change the device to 0, if the noDevice is 1?
-  //if (noDeviceIn == 0 && noDeviceOut == 0) {
-  //  noDeviceIn = noDeviceOut = noDevice;
-  //}
+  if( !_audiodriver -> soundCardIndexExist( noDeviceIn ) )
+  {
+    _debug(" Index %i is not a valid card number. Switch to 0.\n", noDeviceIn);
+    noDeviceIn = ALSA_DFT_HW_INDEX ;
+  }
+  if( !_audiodriver -> soundCardIndexExist( noDeviceOut ) )
+  {  
+    _debug(" Index %i is not a valid card number. Switch to 0.\n", noDeviceIn);
+    noDeviceOut = ALSA_DFT_HW_INDEX ;
+  }
+
   _debugInit(" AudioLayer Opening Device");
   _audiodriver->setErrorMessage("");
-  _audiodriver->openDevice(noDeviceIn, noDeviceOut, sampleRate, frameSize, SFL_PCM_BOTH, PCM_PLUGHW);
+  _audiodriver->openDevice( noDeviceIn , noDeviceOut, sampleRate, frameSize, SFL_PCM_BOTH, PCM_PLUGHW ); 
 }
 
 /**

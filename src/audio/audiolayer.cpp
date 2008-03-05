@@ -503,6 +503,7 @@ AudioLayer::buildDeviceTopo( std::string plugin, int card, int subdevice )
 AudioLayer::getSoundCardsInfo( int flag )
 {
   std::vector<std::string> cards_id;
+  HwIDPair p;
 
   snd_ctl_t* handle;
   snd_ctl_card_info_t *info;
@@ -541,6 +542,9 @@ AudioLayer::getSoundCardsInfo( int flag )
 	  description.append(" - ");
 	  description.append(snd_pcm_info_get_name( pcminfo ));
 	  cards_id.push_back( description );
+	  // The number of the sound card is associated with a string description 
+	  p = HwIDPair( numCard , description );
+	  IDSoundCards.push_back( p );
 	}
       }
       snd_ctl_close( handle );
@@ -548,7 +552,6 @@ AudioLayer::getSoundCardsInfo( int flag )
     if ( snd_card_next( &numCard ) < 0 ) {
       break;
     }
-
   }
   return cards_id;
 }
@@ -564,7 +567,7 @@ AudioLayer::closeCaptureStream( void)
   }
 }
 
-void
+  void
 AudioLayer::closePlaybackStream( void)
 {
   if(_PlaybackHandle){
@@ -576,4 +579,31 @@ AudioLayer::closePlaybackStream( void)
 }
 
 
+  bool
+AudioLayer::soundCardIndexExist( int card )
+{
+  snd_ctl_t* handle;
+  std::string name = "hw:";
+  std::stringstream ss;
+  ss << card ;
+  name.append(ss.str());
+  if(snd_ctl_open( &handle, name.c_str(), 0) == 0 )
+    return true;
+  else
+    return false;
+}  
 
+  int
+AudioLayer::soundCardGetIndex( std::string description )
+{
+  int i;
+  for( i = 0 ; i < IDSoundCards.size() ; i++ )
+  {
+    HwIDPair p = IDSoundCards[i];
+    _debug("%i %s\n", p.first , p.second.c_str());
+    if( p.second == description )
+      return  p.first ;
+  }
+  // else return the default one
+  return 0;
+}
