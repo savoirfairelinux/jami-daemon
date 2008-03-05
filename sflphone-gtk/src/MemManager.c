@@ -18,4 +18,4 @@ int fetchData( MemKey *key, MemData *data )
 int putData( MemKey *key, MemData *data )
 {
 	return 0;
-}	
+}

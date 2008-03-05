@@ -308,11 +308,11 @@ select_active_input_audio_device()
 /**
  * Select the input audio plugin by calling the server
  */
-static void
-select_input_audio_plugin(GtkWidget* widget, gpointer data)
-{
+//static void
+//select_input_audio_plugin(GtkWidget* widget, gpointer data)
+//{
 	//dbus_set_audio_manager("");
-}
+//}
 
 /**
  * Select the output audio plugin by calling the server
