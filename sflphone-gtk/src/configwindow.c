@@ -335,11 +335,9 @@ select_output_audio_plugin(GtkComboBox* widget, gpointer data)
 	{
 		model = gtk_combo_box_get_model(widget);
 		gtk_combo_box_get_active_iter(widget, &iter);
-		gtk_tree_model_get(model, &iter, 0, &pluginName, -1);
-		
+		gtk_tree_model_get(model, &iter, 0, &pluginName, -1);	
 		dbus_set_output_audio_plugin(pluginName);
 	}
-	//dbus_set_output_audio_manager("");
 }
 
 /**
@@ -356,15 +354,14 @@ select_active_output_audio_plugin()
 
 	// Select active output device on server
 	plugin = dbus_get_current_audio_output_plugin();
-	printf("audio plugin for output = %s\n", plugin);
 	tmp = plugin;
 	model = gtk_combo_box_get_model(GTK_COMBO_BOX(pluginComboBox));
-	
+	  
 	// Find the currently set alsa plugin
 	gtk_tree_model_get_iter_first(model, &iter);
 	do {
 		gtk_tree_model_get(model, &iter, 0, &plugin , -1);
-		if(tmp == plugin)
+		if( g_strcasecmp( tmp , plugin ) == 0 )
 		{
 			// Set current iteration the active one
 			gtk_combo_box_set_active_iter(GTK_COMBO_BOX(pluginComboBox), &iter);
@@ -373,7 +370,7 @@ select_active_output_audio_plugin()
 	} while(gtk_tree_model_iter_next(model, &iter));
 
 	// No index was found, select first one
-	g_print("Warning : No active output device found");
+	g_print("Warning : No active output device found\n");
 	gtk_combo_box_set_active(GTK_COMBO_BOX(pluginComboBox), 0);
 }
 
