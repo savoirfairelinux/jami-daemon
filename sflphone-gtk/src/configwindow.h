@@ -34,6 +34,7 @@ void config_window_fill_output_audio_device_list();
 void select_active_output_audio_device();
 void config_window_fill_input_audio_device_list();
 void select_active_input_audio_device();
+void select_active_output_audio_plugin();
 void default_account(GtkWidget *widget, gpointer data);
 void bold_if_default_account(GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data);
 void default_codecs(GtkWidget* widget, gpointer data);

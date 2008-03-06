@@ -46,6 +46,7 @@ public:
         register_method(ConfigurationManager, setAudioInputDevice, _setAudioInputDevice_stub);
         register_method(ConfigurationManager, getCurrentAudioDevicesIndex, _getCurrentAudioDevicesIndex_stub);
         register_method(ConfigurationManager, getAudioDeviceIndex, _getAudioDeviceIndex_stub);
+        register_method(ConfigurationManager, getCurrentAudioOutputPlugin, _getCurrentAudioOutputPlugin_stub);
     }
 
     ::DBus::IntrospectedInterface* const introspect() const 
@@ -184,6 +185,11 @@ public:
             { "index", "i", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getCurrentAudioOutputPlugin_args[] = 
+        {
+            { "plugin", "s", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
         {
             { "list", "a{ss}", false },
@@ -221,6 +227,7 @@ public:
             { "setAudioInputDevice", setAudioInputDevice_args },
             { "getCurrentAudioDevicesIndex", getCurrentAudioDevicesIndex_args },
             { "getAudioDeviceIndex", getAudioDeviceIndex_args },
+            { "getCurrentAudioOutputPlugin", getCurrentAudioOutputPlugin_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_signals[] = 
@@ -280,6 +287,7 @@ public:
     virtual void setAudioInputDevice( const ::DBus::Int32& index ) = 0;
     virtual std::vector< ::DBus::String > getCurrentAudioDevicesIndex(  ) = 0;
     virtual ::DBus::Int32 getAudioDeviceIndex( const ::DBus::String& name ) = 0;
+    virtual ::DBus::String getCurrentAudioOutputPlugin(  ) = 0;
 
 public:
 
@@ -552,6 +560,16 @@ private:
 
         ::DBus::String argin1; ri >> argin1;
         ::DBus::Int32 argout1 = getAudioDeviceIndex(argin1);
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _getCurrentAudioOutputPlugin_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::String argout1 = getCurrentAudioOutputPlugin();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

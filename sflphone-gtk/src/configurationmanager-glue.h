@@ -988,6 +988,44 @@ org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index_async (DBusGPr
   stuff->userdata = userdata;
   return dbus_g_proxy_begin_call (proxy, "getAudioDeviceIndex", org_sflphone_SFLphone_ConfigurationManager_get_audio_device_index_async_callback, stuff, g_free, G_TYPE_STRING, IN_name, G_TYPE_INVALID);
 }
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin (DBusGProxy *proxy, char ** OUT_plugin, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getCurrentAudioOutputPlugin", error, G_TYPE_INVALID, G_TYPE_STRING, OUT_plugin, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin_reply) (DBusGProxy *proxy, char * OUT_plugin, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  char * OUT_plugin;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_STRING, &OUT_plugin, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin_reply)data->cb) (proxy, OUT_plugin, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getCurrentAudioOutputPlugin", org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
 #endif /* defined DBUS_GLIB_CLIENT_WRAPPERS_org_sflphone_SFLphone_ConfigurationManager */
 
 G_END_DECLS

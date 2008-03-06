@@ -63,6 +63,7 @@
 #define DRIVER_NAME_OUT		"Drivers.driverNameOut"
 #define DRIVER_SAMPLE_RATE      "Drivers.sampleRate"
 #define DRIVER_FRAME_SIZE	"Drivers.framesize"
+#define ALSA_PLUGIN		"Alsa.plugin"	
 #define CODECS			"ActiveCodecs"
 #define RING_CHOICE		"Rings.ringChoice"
 #define ACCOUNT_SIP_COUNT_DEFAULT 4

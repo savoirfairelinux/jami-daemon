@@ -116,6 +116,10 @@
       <arg type="i" name="index" direction="out"/>
     </method>
 
+    <method name="getCurrentAudioOutputPlugin">
+      <arg type="s" name="plugin" direction="out"/>
+    </method>
+
   <!--        /////////////////////////////       -->
  
     <signal name="parametersChanged">

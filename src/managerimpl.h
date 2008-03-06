@@ -328,6 +328,11 @@ public:
    * Get index of an audio device
    */
   int getAudioDeviceIndex( const std::string name );
+
+  /*
+   * Get current alsa plugin
+   */
+  std::string getCurrentAudioOutputPlugin( void ); 
   
   /**
    * Convert a list of payload in a special format, readable by the server.

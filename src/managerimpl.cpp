@@ -1067,11 +1067,11 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
 
   section = AUDIO;
-  //fill_config_int(DRIVER_NAME, DFT_DRIVER_STR);
   fill_config_int(DRIVER_NAME_IN, DFT_DRIVER_STR);
   fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
   fill_config_int(DRIVER_SAMPLE_RATE, DFT_SAMPLE_RATE);
   fill_config_int(DRIVER_FRAME_SIZE, DFT_FRAME_SIZE);
+  fill_config_str(ALSA_PLUGIN, PCM_DEFAULT); 
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
@@ -1279,6 +1279,8 @@ ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
 			      _audiodriver -> getFrameSize(),
 			      SFL_PCM_PLAYBACK,
 			      audioPlugin);
+  // set config
+  setConfig( AUDIO , ALSA_PLUGIN , audioPlugin );
 }
 
 /**
@@ -1361,6 +1363,12 @@ ManagerImpl::getAudioDeviceIndex(const std::string name)
   //return _audiodriver -> soundCardGetIndex( name );
 }
 
+std::string 
+ManagerImpl::getCurrentAudioOutputPlugin( void )
+{
+  _debug("Get alsa plugin \n");
+  return _audiodriver -> getAudioPlugin();
+}
 
 
 /**
@@ -1387,7 +1395,7 @@ ManagerImpl::initAudioDriver(void)
   void
 ManagerImpl::selectAudioDriver (void)
 {
-  //int noDevice  = getConfigInt(AUDIO, DRIVER_NAME);
+  std::string alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
   int noDeviceIn  = getConfigInt(AUDIO, DRIVER_NAME_IN);
   int noDeviceOut = getConfigInt(AUDIO, DRIVER_NAME_OUT);
   int sampleRate  = getConfigInt(AUDIO, DRIVER_SAMPLE_RATE);
@@ -1409,7 +1417,7 @@ ManagerImpl::selectAudioDriver (void)
 
   _debugInit(" AudioLayer Opening Device");
   _audiodriver->setErrorMessage("");
-  _audiodriver->openDevice( noDeviceIn , noDeviceOut, sampleRate, frameSize, SFL_PCM_BOTH, PCM_PLUGHW ); 
+  _audiodriver->openDevice( noDeviceIn , noDeviceOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
 }
 
 /**

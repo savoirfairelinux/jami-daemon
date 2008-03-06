@@ -52,6 +52,7 @@ GtkWidget *restoreButton;
 
 GtkWidget *outputDeviceComboBox;
 GtkWidget *inputDeviceComboBox;
+GtkWidget *pluginComboBox;
 
 GtkWidget *moveUpButton;
 GtkWidget *moveDownButton;
@@ -340,6 +341,42 @@ select_output_audio_plugin(GtkComboBox* widget, gpointer data)
 	}
 	//dbus_set_output_audio_manager("");
 }
+
+/**
+ * Select active output audio plugin
+ */
+void
+select_active_output_audio_plugin()
+{
+	GtkTreeModel* model;
+	GtkTreeIter iter;
+	gchar** devices;
+	gchar* plugin;
+	gchar* tmp;
+
+	// Select active output device on server
+	plugin = dbus_get_current_audio_output_plugin();
+	printf("audio plugin for output = %s\n", plugin);
+	tmp = plugin;
+	model = gtk_combo_box_get_model(GTK_COMBO_BOX(pluginComboBox));
+	
+	// Find the currently set alsa plugin
+	gtk_tree_model_get_iter_first(model, &iter);
+	do {
+		gtk_tree_model_get(model, &iter, 0, &plugin , -1);
+		if(tmp == plugin)
+		{
+			// Set current iteration the active one
+			gtk_combo_box_set_active_iter(GTK_COMBO_BOX(pluginComboBox), &iter);
+			return;
+		}
+	} while(gtk_tree_model_iter_next(model, &iter));
+
+	// No index was found, select first one
+	g_print("Warning : No active output device found");
+	gtk_combo_box_set_active(GTK_COMBO_BOX(pluginComboBox), 0);
+}
+
 /**
  * Set the audio output device on the server with its index
  */
@@ -966,17 +1003,17 @@ create_audio_tab ()
 	// Set choices of audio managers
 	outputAudioPluginStore = gtk_list_store_new(1, G_TYPE_STRING);
 	config_window_fill_output_audio_plugin_list();
-	comboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioPluginStore));
-	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 0);
-	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), comboBox);
-	g_signal_connect(G_OBJECT(comboBox), "changed", G_CALLBACK(select_output_audio_plugin), comboBox);
+	pluginComboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioPluginStore));
+	select_active_output_audio_plugin();
+	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), pluginComboBox);
+	g_signal_connect(G_OBJECT(pluginComboBox), "changed", G_CALLBACK(select_output_audio_plugin), pluginComboBox);
 	
   	// Set rendering
 	renderer = gtk_cell_renderer_text_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(comboBox), renderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(comboBox), renderer, "text", 0, NULL);
-	gtk_table_attach(GTK_TABLE(deviceTable), comboBox, 2, 3, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(comboBox);
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(pluginComboBox), renderer, TRUE);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(pluginComboBox), renderer, "text", 0, NULL);
+	gtk_table_attach(GTK_TABLE(deviceTable), pluginComboBox, 2, 3, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
+	gtk_widget_show(pluginComboBox);
 	
 	// Device : Output device
 	// Create title label

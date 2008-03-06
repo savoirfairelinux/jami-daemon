@@ -191,6 +191,13 @@ ConfigurationManager::getAudioDeviceIndex(const ::DBus::String& name)
 	return Manager::instance().getAudioDeviceIndex(name);
 }
 
+::DBus::String 
+ConfigurationManager::getCurrentAudioOutputPlugin( void )
+{
+   _debug("ConfigurationManager::getCurrentAudioOutputPlugin received\n");
+   return Manager::instance().getCurrentAudioOutputPlugin();
+}
+
 
 	std::vector< ::DBus::String > 
 ConfigurationManager::getPlaybackDeviceList(  )

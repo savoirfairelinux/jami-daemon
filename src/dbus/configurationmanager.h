@@ -62,6 +62,8 @@ public:
     void setAudioInputDevice(const ::DBus::Int32& index);
     std::vector< ::DBus::String > getCurrentAudioDevicesIndex();
     ::DBus::Int32 getAudioDeviceIndex(const ::DBus::String& name);
+    ::DBus::String getCurrentAudioOutputPlugin( void );
+
    
     std::vector< ::DBus::String > getToneLocaleList(  );
     std::vector< ::DBus::String > getPlaybackDeviceList(  );

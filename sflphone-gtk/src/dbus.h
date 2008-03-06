@@ -72,6 +72,7 @@ void dbus_set_audio_input_device(const int index);
 // Output and input current devices
 gchar** dbus_get_current_audio_devices_index();
 int dbus_get_audio_device_index(const gchar* name);
+gchar* dbus_get_current_audio_output_plugin();
 
 /* Instance */
 void dbus_register( int pid, gchar * name);
