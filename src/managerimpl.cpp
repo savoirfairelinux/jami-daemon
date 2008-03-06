@@ -1067,10 +1067,10 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
 
   section = AUDIO;
-  fill_config_int(DRIVER_NAME_IN, DFT_DRIVER_STR);
-  fill_config_int(DRIVER_NAME_OUT, DFT_DRIVER_STR);
-  fill_config_int(DRIVER_SAMPLE_RATE, DFT_SAMPLE_RATE);
-  fill_config_int(DRIVER_FRAME_SIZE, DFT_FRAME_SIZE);
+  fill_config_int(ALSA_CARD_ID_IN, ALSA_DFT_CARD);
+  fill_config_int(ALSA_CARD_ID_OUT, ALSA_DFT_CARD);
+  fill_config_int(ALSA_SAMPLE_RATE, DFT_SAMPLE_RATE);
+  fill_config_int(ALSA_FRAME_SIZE, DFT_FRAME_SIZE);
   fill_config_str(ALSA_PLUGIN, PCM_DEFAULT); 
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
@@ -1307,7 +1307,7 @@ ManagerImpl::setAudioOutputDevice(const int index)
       SFL_PCM_PLAYBACK,
       _audiodriver->getAudioPlugin());
   // set config
-  setConfig( AUDIO , DRIVER_NAME_OUT , index );
+  setConfig( AUDIO , ALSA_CARD_ID_OUT , index );
 }
 
 /**
@@ -1334,7 +1334,7 @@ ManagerImpl::setAudioInputDevice(const int index)
       SFL_PCM_CAPTURE,
       _audiodriver->getAudioPlugin());
   // set config
-  setConfig( AUDIO , DRIVER_NAME_IN , index );
+  setConfig( AUDIO , ALSA_CARD_ID_IN , index );
 }
 
 /**
@@ -1396,28 +1396,28 @@ ManagerImpl::initAudioDriver(void)
 ManagerImpl::selectAudioDriver (void)
 {
   std::string alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
-  int noDeviceIn  = getConfigInt(AUDIO, DRIVER_NAME_IN);
-  int noDeviceOut = getConfigInt(AUDIO, DRIVER_NAME_OUT);
-  int sampleRate  = getConfigInt(AUDIO, DRIVER_SAMPLE_RATE);
+  int numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
+  int numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
+  int sampleRate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
   if (sampleRate <=0 || sampleRate > 48000) {
     sampleRate = 44100;
   }
-  int frameSize = getConfigInt(AUDIO, DRIVER_FRAME_SIZE);
+  int frameSize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
 
-  if( !_audiodriver -> soundCardIndexExist( noDeviceIn ) )
+  if( !_audiodriver -> soundCardIndexExist( numCardIn ) )
   {
-    _debug(" Index %i is not a valid card number. Switch to 0.\n", noDeviceIn);
-    noDeviceIn = ALSA_DFT_HW_INDEX ;
+    _debug(" Index %i is not a valid card number. Switch to 0.\n", numCardIn);
+    numCardIn = ALSA_DFT_CARD_ID ;
   }
-  if( !_audiodriver -> soundCardIndexExist( noDeviceOut ) )
+  if( !_audiodriver -> soundCardIndexExist( numCardOut ) )
   {  
-    _debug(" Index %i is not a valid card number. Switch to 0.\n", noDeviceIn);
-    noDeviceOut = ALSA_DFT_HW_INDEX ;
+    _debug(" Index %i is not a valid card number. Switch to 0.\n", numCardOut);
+    numCardOut = ALSA_DFT_CARD_ID ;
   }
 
   _debugInit(" AudioLayer Opening Device");
   _audiodriver->setErrorMessage("");
-  _audiodriver->openDevice( noDeviceIn , noDeviceOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
+  _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
 }
 
 /**

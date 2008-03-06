@@ -58,11 +58,10 @@
 #define SEND_DTMF_AS	"DTMF.sendDTMFas"
 #define STUN_SERVER		"STUN.STUNserver"
 #define USE_STUN		"STUN.useStun"
-#define DRIVER_NAME		"Drivers.driverName"
-#define DRIVER_NAME_IN		"Drivers.driverNameIn"
-#define DRIVER_NAME_OUT		"Drivers.driverNameOut"
-#define DRIVER_SAMPLE_RATE      "Drivers.sampleRate"
-#define DRIVER_FRAME_SIZE	"Drivers.framesize"
+#define ALSA_CARD_ID_IN		"Alsa.cardID_In"
+#define ALSA_CARD_ID_OUT	"Alsa.cardID_Out"
+#define ALSA_SAMPLE_RATE	"Alsa.sampleRate"
+#define ALSA_FRAME_SIZE		"Alsa.framesize"
 #define ALSA_PLUGIN		"Alsa.plugin"	
 #define CODECS			"ActiveCodecs"
 #define RING_CHOICE		"Rings.ringChoice"
@@ -88,7 +87,7 @@
 #define	NO_STR               "0"
 #define DFT_PULSE_LENGTH_STR "250"
 #define SIP_INFO_STR         "0"
-#define DFT_DRIVER_STR       "0"
+#define ALSA_DFT_CARD	    "0"
 // volume by default 100%
 #define DFT_VOL_SPKR_STR     "100"
 #define DFT_VOL_MICRO_STR    "100"
@@ -99,7 +98,7 @@
 #define DFT_VOICEMAIL 		"888"
 #define DFT_FRAME_SIZE		"20"
 #define DFT_SAMPLE_RATE		"44100"
-#define SAMPLE_RATE1	"44100"
+
 // zeroconfig default value
 #ifdef USE_ZEROCONF
 #define CONFIG_ZEROCONF_DEFAULT_STR "1"
