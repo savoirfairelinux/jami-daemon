@@ -74,6 +74,7 @@ CodecDescriptor::setDefaultOrder()
   {
     _codecOrder.push_back(iter->first);
     iter->second->setState( true );
+    iter ++ ;
   }
 }
 
