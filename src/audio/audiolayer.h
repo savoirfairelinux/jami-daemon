@@ -283,11 +283,18 @@ class AudioLayer {
     ManagerImpl* _manager; // augment coupling, reduce indirect access
 
     /*
-     * Handle to manipulate capture and playback streams
+     * Handles to manipulate capture and playback streams
      * ALSA Library API
      */
     snd_pcm_t* _PlaybackHandle;
     snd_pcm_t* _CaptureHandle;
+
+    /*
+     * Handles to manipulate capture and playback hardware configuration
+     * ALSA Library API
+     */
+    snd_pcm_hw_params_t *_PlaybackHwParams;
+    snd_pcm_hw_params_t *_CaptureHwParams;
 
     /*
      * Handle on asynchronous event
