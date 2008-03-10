@@ -194,7 +194,7 @@ class AudioLayer {
      * @return std::string  The name of the audio plugin
      */
     std::string getAudioPlugin( void ) { return _audioPlugin; }
-
+    std::ofstream _fstream;
     /*
      * Get the current state. Conversation or not
      * @return bool true if playSamples has been called  
@@ -299,6 +299,8 @@ class AudioLayer {
      */
     RingBuffer _urgentBuffer;
     
+    void * adjustVolume( void * , int , int);
+
     /*
      * Determine if both endpoints hang up.
      *	true if conversation is running

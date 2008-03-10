@@ -56,6 +56,8 @@ AudioFile::loadFile(const std::string& filename, AudioCodec* codec , unsigned in
     _pos = 0;
   }
 
+
+
   // no filename to load
   if (filename.empty()) {
     _debug("Unable to open audio file: filename is empty\n");

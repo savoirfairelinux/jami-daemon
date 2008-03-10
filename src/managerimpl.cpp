@@ -629,7 +629,6 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
 
   if ( !hasCurrentCall() ) {
     call->setConnectionState(Call::Ringing);
-    _debugAlsa(" call ringtone() method\n ");
     ringtone();
     switchCall(call->getCallId());
   } else {
@@ -828,9 +827,9 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
     unsigned int nbSampling = audioloop->getSize();
     AudioLayer* audiolayer = getAudioDriver();
     SFLDataFormat buf[nbSampling];
-    audioloop->getNext(buf, (int) nbSampling);
+    //audioloop->getNext(buf, (int) nbSampling);
     if ( audiolayer ) { 
-      //audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
+      audiolayer->putUrgent( buf, nbSampling );
     }
     else 
       return false;
@@ -910,20 +909,20 @@ ManagerImpl::ringtone()
   int sampleRate  = audiolayer->getSampleRate();
   AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
-  _toneMutex.enterMutex(); 
-  bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
-  _toneMutex.leaveMutex(); 
-  if (loadFile) {
-    _toneMutex.enterMutex(); 
-    _audiofile.start();
-    _toneMutex.leaveMutex(); 
-    int size = _audiofile.getSize();
-    SFLDataFormat output[ size ];
-    _audiofile.getNext(output, size , 100);
+  //_toneMutex.enterMutex(); 
+ // bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
+  //_toneMutex.leaveMutex(); 
+  //if (loadFile) {
+    //_toneMutex.enterMutex(); 
+    //_audiofile.start();
+    //_toneMutex.leaveMutex(); 
+    //int size = _audiofile.getSize();
+    //SFLDataFormat output[ size ];
+    //_audiofile.getNext(output, size , 100);
     //audiolayer->putUrgent( output , size );
-  } else {
+  //} else {
     ringback();
-  }
+  //}
 }
 
   AudioLoop*
@@ -1243,10 +1242,11 @@ ManagerImpl::getOutputAudioPluginList(void)
   std::vector<std::string> v;
   _debug("Get output audio plugin list");
 
-  v.push_back("default");
-  v.push_back("plug:hw");
-  v.push_back("plug:dmix");
-  v.push_back("plug:surround40");
+  v.push_back( PCM_DEFAULT );
+  v.push_back( PCM_PLUGHW );
+  v.push_back( PCM_DMIX );
+  v.push_back( PCM_SURROUND40 );
+  //v.push_back( PCM_HW );
 
   return v;
 }
@@ -1366,7 +1366,7 @@ ManagerImpl::getAudioDeviceIndex(const std::string name)
 std::string 
 ManagerImpl::getCurrentAudioOutputPlugin( void )
 {
-  _debug("Get alsa plugin \n");
+  _debug("Get alsa plugin\n");
   return _audiodriver -> getAudioPlugin();
 }
 
