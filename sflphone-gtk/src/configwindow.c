@@ -1101,13 +1101,13 @@ show_config_window ()
 
 	dialog = GTK_DIALOG(gtk_dialog_new_with_buttons ("Preferences",
 				GTK_WINDOW(get_main_window()),
-				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+				GTK_DIALOG_DESTROY_WITH_PARENT,
 				GTK_STOCK_CLOSE,
 				GTK_RESPONSE_ACCEPT,
 				NULL));
 
 	// Set window properties
-	gtk_dialog_set_has_separator(dialog, FALSE);
+      	gtk_dialog_set_has_separator(dialog, FALSE);
 	gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 400);
 	gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
@@ -1127,9 +1127,11 @@ show_config_window ()
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new("Audio Settings"));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
-	gtk_dialog_run(dialog);
+	//gtk_dialog_run(dialog);
+	gtk_widget_show( dialog );
+	g_signal_connect_swapped( dialog , "response" , G_CALLBACK( gtk_widget_destroy ), dialog );
 
 	dialogOpen = FALSE;
 
-	gtk_widget_destroy(GTK_WIDGET(dialog));
+	//gtk_widget_destroy(GTK_WIDGET(dialog));
 }
