@@ -237,9 +237,9 @@ class AudioLayer {
 
     /*
      * Callback used for asynchronous playback.
-     * Write the urgent buffer to the alsa internal ring buffer
+     * Write tones buffer to the alsa internal ring buffer.
      */
-    void playUrgent( void );
+    void playTones( void );
 
     /*
      * Open the specified device.

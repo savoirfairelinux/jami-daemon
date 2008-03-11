@@ -100,7 +100,7 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
 
   std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
   std::string pcmc = buildDeviceTopo(PCM_SURROUND40 , indexIn , 0);
-  return open_device( pcmp , pcmc , stream);
+  return open_device( "default" , pcmc , stream);
 }
 
   void
@@ -138,7 +138,7 @@ AudioLayer::getDeviceCount()
 
 void AudioLayer::AlsaCallBack( snd_async_handler_t* pcm_callback )
 { 
-  ( ( AudioLayer *)snd_async_handler_get_callback_private( pcm_callback )) -> playUrgent();
+  ( ( AudioLayer *)snd_async_handler_get_callback_private( pcm_callback )) -> playTones();
 }
 
   void 
@@ -149,6 +149,7 @@ AudioLayer::fillHWBuffer( void)
   short s1, s2;
   int periodSize = 256 ;
   int frames = periodSize >> 2 ;
+  _debug("frames  = %d\n");
 
   data = (unsigned char*)malloc(periodSize);
   for(l1 = 0; l1 < 100; l1++) {
@@ -165,6 +166,17 @@ AudioLayer::fillHWBuffer( void)
       //_debugAlsa("< Buffer Underrun >\n");
     }
   }
+  /*
+  int n = 1024;
+  int frames = n >> 2;
+  _debug("frames = %d\n" , frames );
+  void * chunks = malloc( frames * sizeof(short*) );
+  memset( chunks , 0 , frames );
+
+  while( snd_pcm_writei( _PlaybackHandle , chunks , frames ) < 0 ){
+    snd_pcm_prepare( _PlaybackHandle );
+    //_debugAlsa("< Buffer Underrun >\n");
+  }*/
 }
 
   bool
@@ -251,7 +263,7 @@ AudioLayer::toggleEchoTesting() {
 
 
   void
-AudioLayer::playUrgent( void )
+AudioLayer::playTones( void )
 {
   int maxBytes = 1024 * sizeof(SFLDataFormat) ;
   int toGet;
@@ -344,21 +356,27 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     if( err = snd_pcm_hw_params_any( _PlaybackHandle, _PlaybackHwParams) < 0) _debugAlsa(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_access( _PlaybackHandle, _PlaybackHwParams, SND_PCM_ACCESS_RW_INTERLEAVED) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_format( _PlaybackHandle, _PlaybackHwParams, SND_PCM_FORMAT_S16_LE) < 0) _debugAlsa(" Cannot set sample format (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_rate_near( _PlaybackHandle, _PlaybackHwParams, &rate_out, &dir) < 0) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
+    if( err = snd_pcm_hw_params_set_rate( _PlaybackHandle, _PlaybackHwParams, rate_out, dir) < 0) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_channels( _PlaybackHandle, _PlaybackHwParams, 1) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_period_size_near( _PlaybackHandle, _PlaybackHwParams, &period_size_out , &dir) < 0) _debugAlsa(" Cannot set period size (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_buffer_size_near( _PlaybackHandle, _PlaybackHwParams, &buffer_size_out ) < 0) _debugAlsa(" Cannot set buffer size (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params( _PlaybackHandle, _PlaybackHwParams ) < 0) _debugAlsa(" Cannot set hw parameters (%s)\n", snd_strerror(err));
 
-    snd_pcm_uframes_t val = 1024 ;
+    snd_pcm_uframes_t val ;
     snd_pcm_sw_params_malloc( &swparams );
     snd_pcm_sw_params_current( _PlaybackHandle, swparams );
 
-    if( err = snd_pcm_sw_params_set_start_threshold( _PlaybackHandle, swparams, threshold ) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_stop_threshold( _PlaybackHandle, swparams, buffer_size_out ) < 0 ) _debugAlsa(" Cannot set stop threshold (%s)\n", snd_strerror(err)); 
+    snd_pcm_sw_params_get_start_threshold( swparams , &val);
+    _debug("Start threshold = %d\n" ,val);
+    //if( err = snd_pcm_sw_params_set_start_threshold( _PlaybackHandle, swparams, threshold ) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
+    snd_pcm_sw_params_get_stop_threshold( swparams , &val);
+    _debug("Stop threshold = %d\n" ,val);
+    //if( err = snd_pcm_sw_params_set_stop_threshold( _PlaybackHandle, swparams, buffer_size_out ) < 0 ) _debugAlsa(" Cannot set stop threshold (%s)\n", snd_strerror(err)); 
     //if( err = snd_pcm_sw_params_set_start_mode( _PlaybackHandle, swparams, SND_PCM_START_DATA ) < 0 ) _debugAlsa(" Cannot set start mode (%s)\n", snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_avail_min( _PlaybackHandle, swparams, threshold) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_silence_threshold( _PlaybackHandle, swparams, threshold) < 0) _debugAlsa(" Cannot set silence threshold (%s)\n" , snd_strerror(err)); 
+    //if( err = snd_pcm_sw_params_set_avail_min( _PlaybackHandle, swparams, threshold) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
+    snd_pcm_sw_params_get_avail_min( swparams , &val);
+    _debug("Min available = %d\n" ,val);
+    //if( err = snd_pcm_sw_params_set_silence_threshold( _PlaybackHandle, swparams, threshold) < 0) _debugAlsa(" Cannot set silence threshold (%s)\n" , snd_strerror(err)); 
     if( err = snd_pcm_sw_params( _PlaybackHandle, swparams ) < 0 ) _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
     snd_pcm_sw_params_free( swparams );
 
@@ -380,7 +398,7 @@ AudioLayer::write(void* buffer, int length)
   int bytes;
   snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _PlaybackHandle, length);
   snd_pcm_sframes_t delay;
-  snd_pcm_delay( _PlaybackHandle , &delay ) ;
+  //snd_pcm_delay( _PlaybackHandle , &delay ) ;
   //_debug("Write %d frames\n" , frames);
 
   if(snd_pcm_state( _PlaybackHandle ) == SND_PCM_STATE_XRUN)
@@ -399,7 +417,7 @@ AudioLayer::write(void* buffer, int length)
   } 
   else if(bytes >=0 && bytes < frames)
   {
-    //_debugAlsa("Short write - Frames remaining = %d\n", frames - bytes);
+    _debugAlsa("Short write - Frames remaining = %d\n", frames - bytes);
   }
   else if( bytes == -EPIPE )
   {  
