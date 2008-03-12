@@ -19,7 +19,7 @@
  */
 #include "accountcreator.h"
 #include "sipaccount.h"
-#ifdef HAVE_IAX2
+#ifdef USE_IAX
 #include "iaxaccount.h"
 #endif
 
@@ -39,7 +39,7 @@ AccountCreator::createAccount(AccountType type, AccountID accountID)
     case SIP_ACCOUNT:
       return new SIPAccount(accountID);
     break;
-#ifdef HAVE_IAX2
+#ifdef USE_IAX
     case IAX_ACCOUNT:
       return new IAXAccount(accountID);
     break;
