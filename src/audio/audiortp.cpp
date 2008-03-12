@@ -247,58 +247,6 @@ AudioRtpRTX::initAudioRtpSession (void)
   }
 }
 
-/*
-   void
-   AudioRtpRTX::loadCodec(int payload)
-   {
-   using std::cerr;
-
-   switch(payload){
-   case 0:
-   handle_codec = dlopen( CODECS_DIR "/libcodec_ulaw.so", RTLD_LAZY);
-   break;
-   case 3:
-   handle_codec = dlopen(CODECS_DIR "/libcodec_gsm.so", RTLD_LAZY);
-   break;
-   case 8:
-   handle_codec = dlopen(CODECS_DIR "/libcodec_alaw.so", RTLD_LAZY);
-   break;
-   case 97:
-   handle_codec = dlopen(CODECS_DIR "/libcodec_ilbc.so", RTLD_LAZY);
-   break;
-   case 110:
-   handle_codec = dlopen(CODECS_DIR "/libcodec_speex.so", RTLD_LAZY);
-   break;
-   }
-
-   if(!handle_codec){
-   cerr<<"cannot load library: "<< dlerror() <<'\n';
-   }
-   dlerror();
-   create_t* create_codec = (create_t*)dlsym(handle_codec, "create");
-   const char* dlsym_error = dlerror();
-   if(dlsym_error){
-   cerr << "Cannot load symbol create: " << dlsym_error << '\n';
-   }
-
-   _audiocodec = create_codec();
-   }
-
-
-   void
-   AudioRtpRTX::unloadCodec()
-   {
-   using std::cerr;
-   destroy_t* destroy_codec = (destroy_t*)dlsym(handle_codec, "destroy");
-   const char* dlsym_error = dlerror();
-   if(dlsym_error){
-   cerr << "Cannot load symbol destroy" << dlsym_error << '\n';
-   }
-   destroy_codec(_audiocodec);
-   dlclose(handle_codec);
-   }
-   */
-
   void
 AudioRtpRTX::sendSessionFromMic(int timestamp)
 {
