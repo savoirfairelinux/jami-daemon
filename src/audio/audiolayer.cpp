@@ -299,17 +299,16 @@ AudioLayer::isCaptureActive(void) {
 AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
 {
   int err;
-  snd_pcm_hw_params_t* hwParams;
+  snd_pcm_hw_params_t* hwParams = NULL;
+  snd_pcm_sw_params_t *swparams = NULL;
   unsigned int rate_in = getSampleRate();
   unsigned int rate_out = getSampleRate();
   int dir = 0;
   snd_pcm_uframes_t period_size_in =  getFrameSize() * getSampleRate() / 1000 ;
   snd_pcm_uframes_t buffer_size_in = 4096;
   snd_pcm_uframes_t threshold = getFrameSize() * getSampleRate() / 1000  * 2 ;
-  snd_pcm_uframes_t period_size_out = 1024; //getFrameSize() * getSampleRate() / 1000 * 2 ;// 1024 ;
-  unsigned int period_time = 20;
-  snd_pcm_uframes_t buffer_size_out = period_size_out * 4 ;
-  snd_pcm_sw_params_t *swparams = NULL;
+  snd_pcm_uframes_t period_size_out =  1024 ;
+  snd_pcm_uframes_t buffer_size_out = period_size_out * 8 ;
 
   if(flag == SFL_PCM_BOTH || flag == SFL_PCM_CAPTURE)
   {
@@ -388,9 +387,9 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   int
 AudioLayer::write(void* buffer, int length)
 {
-  if(snd_pcm_state( _PlaybackHandle ) == SND_PCM_STATE_XRUN)
-    handle_xrun_playback();  
-  _debugAlsa("avail = %d - toWrite = %d\n" , snd_pcm_avail_update( _PlaybackHandle ) , length / 2);
+  //if(snd_pcm_state( _PlaybackHandle ) == SND_PCM_STATE_XRUN)
+    //handle_xrun_playback();  
+  //_debugAlsa("avail = %d - toWrite = %d\n" , snd_pcm_avail_update( _PlaybackHandle ) , length / 2);
 
   snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _PlaybackHandle, length);
   int err = snd_pcm_writei( _PlaybackHandle , buffer , frames );
@@ -413,9 +412,9 @@ AudioLayer::write(void* buffer, int length)
       break;
   }
   
-  /*if( err >=0 && err < frames )
-    _debugAlsa("Short write - Frames remaining = %d\n", frames - err);
-  */
+  if( err >=0 && err < frames )
+    _debugAlsa("Short write : %d out of %d\n", err , frames);
+  
   return ( err > 0 )? err : 0 ;
 }
 
