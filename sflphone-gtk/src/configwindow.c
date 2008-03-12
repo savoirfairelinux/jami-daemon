@@ -1128,7 +1128,7 @@ show_config_window ()
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
 	//gtk_dialog_run(dialog);
-	gtk_widget_show( dialog );
+	gtk_widget_show( GTK_WIDGET(dialog) );
 	g_signal_connect_swapped( dialog , "response" , G_CALLBACK( gtk_widget_destroy ), dialog );
 
 	dialogOpen = FALSE;
