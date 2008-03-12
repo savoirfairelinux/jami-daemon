@@ -154,8 +154,8 @@ class AudioLayer {
      *		   SFL_PCM_BOTH
      * @return std::vector<std::string> The vector containing the string description of the card
      */
-    std::vector<std::string> getSoundCardsInfo( int flag );
-    bool soundCardIndexExist( int card );
+    std::vector<std::string> getSoundCardsInfo( int stream );
+    bool soundCardIndexExist( int card , int stream );
     int soundCardGetIndex( std::string description );
 
     void setErrorMessage(const std::string& error) { _errorMessage = error; }

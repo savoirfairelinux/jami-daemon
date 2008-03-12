@@ -99,7 +99,7 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
   ost::MutexLock lock( _mutex );
 
   std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
-  std::string pcmc = buildDeviceTopo(PCM_SURROUND40 , indexIn , 0);
+  std::string pcmc = buildDeviceTopo( plugin , indexIn , 0);
   return open_device( pcmp , pcmc , stream);
 }
 
@@ -306,7 +306,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   int dir = 0;
   snd_pcm_uframes_t period_size_in =  getFrameSize() * getSampleRate() / 1000 ;
   snd_pcm_uframes_t buffer_size_in = 4096;
-  snd_pcm_uframes_t threshold = getFrameSize() * getSampleRate() / 1000  * 2 ;
+  snd_pcm_uframes_t threshold = 1024 ;
   snd_pcm_uframes_t period_size_out =  1024 ;
   snd_pcm_uframes_t buffer_size_out = period_size_out * 8 ;
 
@@ -363,11 +363,11 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     snd_pcm_sw_params_get_start_threshold( swparams , &val);
     _debug("Start threshold = %d\n" ,val);
     //if( err = snd_pcm_sw_params_set_start_threshold( _PlaybackHandle, swparams, threshold ) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_stop_threshold( _PlaybackHandle, swparams, buffer_size_out ) < 0 ) _debugAlsa(" Cannot set stop threshold (%s)\n", snd_strerror(err)); 
     snd_pcm_sw_params_get_stop_threshold( swparams , &val);
     _debug("Stop threshold = %d\n" ,val);
-    //if( err = snd_pcm_sw_params_set_stop_threshold( _PlaybackHandle, swparams, buffer_size_out ) < 0 ) _debugAlsa(" Cannot set stop threshold (%s)\n", snd_strerror(err)); 
     //if( err = snd_pcm_sw_params_set_start_mode( _PlaybackHandle, swparams, SND_PCM_START_DATA ) < 0 ) _debugAlsa(" Cannot set start mode (%s)\n", snd_strerror(err)); 
-    //if( err = snd_pcm_sw_params_set_avail_min( _PlaybackHandle, swparams, threshold) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
+    if( err = snd_pcm_sw_params_set_avail_min( _PlaybackHandle, swparams, threshold) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
     snd_pcm_sw_params_get_avail_min( swparams , &val);
     _debug("Min available = %d\n" ,val);
     //if( err = snd_pcm_sw_params_set_silence_threshold( _PlaybackHandle, swparams, threshold) < 0) _debugAlsa(" Cannot set silence threshold (%s)\n" , snd_strerror(err)); 
@@ -499,6 +499,8 @@ AudioLayer::buildDeviceTopo( std::string plugin, int card, int subdevice )
 {
   std::string pcm = plugin;
   std::stringstream ss,ss1;
+  if( pcm == "default")
+    return pcm;
   ss << card;
   pcm.append(":");
   pcm.append(ss.str());
@@ -511,7 +513,7 @@ AudioLayer::buildDeviceTopo( std::string plugin, int card, int subdevice )
 }
 
   std::vector<std::string>
-AudioLayer::getSoundCardsInfo( int flag )
+AudioLayer::getSoundCardsInfo( int stream )
 {
   std::vector<std::string> cards_id;
   HwIDPair p;
@@ -538,11 +540,7 @@ AudioLayer::getSoundCardsInfo( int flag )
     if( snd_ctl_open( &handle, name.c_str(), 0) == 0 ){
       if( snd_ctl_card_info( handle, info) == 0){
 	snd_pcm_info_set_device( pcminfo , 0);
-	if(flag == SFL_PCM_CAPTURE)
-	  snd_pcm_info_set_stream( pcminfo, SND_PCM_STREAM_CAPTURE );
-	else
-	  snd_pcm_info_set_stream( pcminfo, SND_PCM_STREAM_PLAYBACK );
-
+	snd_pcm_info_set_stream( pcminfo, ( stream == SFL_PCM_CAPTURE )? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK );
 	if( snd_ctl_pcm_info ( handle ,pcminfo ) < 0) _debugAlsa(" Cannot get info\n");
 	else{
 	  _debugAlsa("card %i : %s [%s]\n", 
@@ -571,7 +569,6 @@ AudioLayer::getSoundCardsInfo( int flag )
 AudioLayer::closeCaptureStream( void)
 {
   if(_CaptureHandle){
-    //_debugAlsa(" Close the current capture device\n");
     snd_pcm_drop( _CaptureHandle );
     snd_pcm_close( _CaptureHandle );
     _CaptureHandle = 0;
@@ -582,7 +579,6 @@ AudioLayer::closeCaptureStream( void)
 AudioLayer::closePlaybackStream( void)
 {
   if(_PlaybackHandle){
-    //_debugAlsa(" Close the current playback device\n");
     snd_pcm_drop( _PlaybackHandle );
     snd_pcm_close( _PlaybackHandle );
     _PlaybackHandle = 0;
@@ -591,15 +587,21 @@ AudioLayer::closePlaybackStream( void)
 
 
   bool
-AudioLayer::soundCardIndexExist( int card )
+AudioLayer::soundCardIndexExist( int card , int stream )
 {
   snd_ctl_t* handle;
+  snd_pcm_info_t *pcminfo;
+  snd_pcm_info_alloca( &pcminfo );
   std::string name = "hw:";
   std::stringstream ss;
   ss << card ;
   name.append(ss.str());
-  if(snd_ctl_open( &handle, name.c_str(), 0) == 0 )
-    return true;
+  if(snd_ctl_open( &handle, name.c_str(), 0) == 0 ){
+   snd_pcm_info_set_stream( pcminfo , ( stream == SFL_PCM_PLAYBACK )? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE );
+    if( snd_ctl_pcm_info( handle , pcminfo ) < 0) return false;
+    else
+      return true;
+  }
   else
     return false;
 }  
@@ -611,7 +613,6 @@ AudioLayer::soundCardGetIndex( std::string description )
   for( i = 0 ; i < IDSoundCards.size() ; i++ )
   {
     HwIDPair p = IDSoundCards[i];
-    //_debug("%i %s\n", p.first , p.second.c_str());
     if( p.second == description )
       return  p.first ;
   }
