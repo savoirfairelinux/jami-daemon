@@ -286,8 +286,14 @@ CodecDescriptor::seemsValid( std::string lib)
 #ifdef BUILD_SPEEX
   // Nothing special
 #else
-  std::string speex = "speex";
-    if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == speex)
+    if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == SPEEX_STRING_DESCRIPTION)
+      return false;
+#endif
+
+#ifdef BUILD_GSM
+  // Nothing special
+#else
+    if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == GSM_STRING_DESCRIPTION )  
       return false;
 #endif
 

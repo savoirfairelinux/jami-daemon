@@ -100,4 +100,7 @@ typedef short int16;
 #define	IAX2_ENABLED  false
 #endif
 
+#define GSM_STRING_DESCRIPTION	  "gsm"
+#define SPEEX_STRING_DESCRIPTION  "speex"
+
 #endif	// __GLOBAL_H__
