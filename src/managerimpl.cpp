@@ -1352,7 +1352,12 @@ ManagerImpl::getCurrentAudioDevicesIndex()
 int 
 ManagerImpl::isIax2Enabled( void )
 {
-  return ( IAX2_ENABLED ) ? true : false;
+  //return ( IAX2_ENABLED ) ? true : false;
+#ifdef USE_IAX
+  return true;
+#else
+  return false;
+#endif
 }
 
   int
