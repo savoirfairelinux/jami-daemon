@@ -35,6 +35,7 @@
  * Local variables
  */
 gboolean dialogOpen = FALSE;
+gboolean ringtoneEnabled = TRUE;
 
 GtkListStore *accountStore;
 GtkWidget *codecTreeView;		// View used instead of store to get access to selection
@@ -482,6 +483,18 @@ default_account(GtkWidget *widget, gpointer data)
 	}
 }
 
+int 
+is_ringtone_enabled( void )
+{
+  int res =  dbus_is_ringtone_enabled();
+  return res;  
+}
+
+void 
+ringtone_enabled( void )
+{
+  dbus_ringtone_enabled();  
+}
 /**
  * Call back when the user click on an account in the list
  */
@@ -938,6 +951,7 @@ create_audio_tab ()
 	GtkWidget *deviceTable;
 	GtkWidget *codecLabel;
 	GtkWidget *codecBox;
+	GtkWidget *enableTone;
 	
 	GtkWidget *titleLabel;
 	GtkWidget *comboBox;
@@ -1080,6 +1094,14 @@ create_audio_tab ()
 	gtk_widget_set_size_request(GTK_WIDGET(codecTable), -1, 150);
 	gtk_box_pack_start(GTK_BOX(codecBox), codecTable, TRUE, TRUE, 0);
 	gtk_widget_show(codecTable);
+
+    // check button to enable ringtones
+	GtkWidget* box = gtk_hbox_new( TRUE , 1);
+	gtk_box_pack_start( GTK_BOX(ret) , box , TRUE , TRUE , 1);
+	enableTone = gtk_check_button_new_with_mnemonic( "_Enable ringtones");
+	gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
+	gtk_box_pack_start( GTK_BOX(box) , enableTone , TRUE , TRUE , 1);
+	g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
 
 	// Show all
 	gtk_widget_show_all(ret);

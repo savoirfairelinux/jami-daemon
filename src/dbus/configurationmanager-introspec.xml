@@ -57,6 +57,12 @@
       <arg type="as" name="list" direction="out"/>
     </method>
     
+    <method name="isRingtoneEnabled">
+      <arg type="i" name="bool" direction="out"/>
+    </method>
+
+    <method name="ringtoneEnabled">
+    </method>
    <!--      ///////////////////////               -->
    
    <!-- Codecs-related methods -->

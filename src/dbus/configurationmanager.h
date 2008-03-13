@@ -72,6 +72,8 @@ public:
     std::vector< ::DBus::String > getRingtoneList(  );
 
     ::DBus::Int32 isIax2Enabled( void );
+    ::DBus::Int32 isRingtoneEnabled( void );
+    void ringtoneEnabled( void );
 };
 
 

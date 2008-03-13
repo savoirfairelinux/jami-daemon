@@ -236,3 +236,15 @@ ConfigurationManager::isIax2Enabled( void )
 {
   return Manager::instance().isIax2Enabled(  ); 
 }
+
+void
+ConfigurationManager::ringtoneEnabled( void )
+{
+  Manager::instance().ringtoneEnabled(  ); 
+}
+
+::DBus::Int32
+ConfigurationManager::isRingtoneEnabled( void )
+{
+  return Manager::instance().isRingtoneEnabled(  ); 
+}

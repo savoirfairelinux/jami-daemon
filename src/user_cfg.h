@@ -77,12 +77,13 @@
 #define CHECKED_TRAY	"Options.checkedTray"
 #define VOICEMAIL_NUM	"Options.voicemailNumber"
 // zeroconfig module
-#define CONFIG_ZEROCONF "Zeroconf.enable"
+#define CONFIG_ZEROCONF	  "Zeroconf.enable"
+#define CONFIG_RINGTONE	  "Ringtones.enable"
 
 // Default values
 #define EMPTY_FIELD			""
 #define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"
-
+#define CONFIG_RINGTONE_DEFAULT	"1"
 #define	YES_STR              "1"
 #define	NO_STR               "0"
 #define DFT_PULSE_LENGTH_STR "250"

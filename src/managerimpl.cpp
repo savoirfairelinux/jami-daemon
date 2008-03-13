@@ -1082,6 +1082,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CHECKED_TRAY, NO_STR);
   fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
+  fill_config_int(CONFIG_RINGTONE, CONFIG_RINGTONE_DEFAULT);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1358,6 +1359,18 @@ ManagerImpl::isIax2Enabled( void )
 #else
   return false;
 #endif
+}
+
+int
+ManagerImpl::isRingtoneEnabled( void )
+{
+  return std::atoi( getConfigString( PREFERENCES , CONFIG_RINGTONE ).c_str());
+}
+
+void
+ManagerImpl::ringtoneEnabled( void )
+{
+  ( getConfigString( PREFERENCES , CONFIG_RINGTONE ) == RINGTONE_ENABLED )? setConfig(PREFERENCES , CONFIG_RINGTONE , "0") : setConfig( PREFERENCES , CONFIG_RINGTONE , "1");
 }
 
   int

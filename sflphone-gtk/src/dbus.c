@@ -1028,6 +1028,41 @@ dbus_get_current_audio_output_plugin()
 }
 
 int
+dbus_is_ringtone_enabled()
+{
+	int res;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_is_ringtone_enabled(
+			configurationManagerProxy,
+			&res,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called is_ringtone_enabled() on ConfigurationManager\n");
+	return res;
+}
+
+void
+dbus_ringtone_enabled()
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_ringtone_enabled(
+			configurationManagerProxy,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called ringtone_enabled() on ConfigurationManager\n");
+}
+
+int
 dbus_is_iax2_enabled()
 {
 	int res;

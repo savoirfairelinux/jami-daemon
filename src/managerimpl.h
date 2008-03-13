@@ -342,6 +342,8 @@ public:
   std::string serialize(std::vector<std::string> v);
 
   int isIax2Enabled( void ); 
+  int isRingtoneEnabled( void ); 
+  void ringtoneEnabled( void ); 
   /**
    * Inverse of serialize
    */
