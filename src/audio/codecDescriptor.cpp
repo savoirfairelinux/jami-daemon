@@ -283,6 +283,14 @@ CodecDescriptor::seemsValid( std::string lib)
   std::string begin = SFL_CODEC_VALID_PREFIX;
   std::string end = SFL_CODEC_VALID_EXTEN;
 
+#ifdef BUILD_SPEEX
+  // Nothing special
+#else
+  std::string speex = "speex";
+    if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == speex)
+      return false;
+#endif
+
   if(lib.substr(0, begin.length()) == begin)
     if(lib.substr(lib.length() - end.length() , end.length() ) == end)
       return true;

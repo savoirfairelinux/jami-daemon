@@ -1122,7 +1122,6 @@ ManagerImpl::retrieveActiveCodecs()
   tokenizer tokens(s, slash); 
   for(tokenizer::iterator tok_iter = tokens.begin(); tok_iter!= tokens.end(); ++tok_iter)
   {
-    printf("%s\n", (*tok_iter).c_str());
     order.push_back(*tok_iter);
   }
   return order;
