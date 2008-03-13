@@ -230,3 +230,9 @@ ConfigurationManager::setDefaultAccount( const ::DBus::String& accountID )
 	Manager::instance().setDefaultAccount(accountID);
 
 }
+
+::DBus::Int32
+ConfigurationManager::isIax2Enabled( void )
+{
+  return Manager::instance().isIax2Enabled(  ); 
+}

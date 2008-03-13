@@ -1350,6 +1350,12 @@ ManagerImpl::getCurrentAudioDevicesIndex()
   return v;
 }
 
+int 
+ManagerImpl::isIax2Enabled( void )
+{
+  return ( IAX2_ENABLED ) ? true : false;
+}
+
   int
 ManagerImpl::getAudioDeviceIndex(const std::string name)
 {
@@ -2334,4 +2340,6 @@ bool ManagerImpl::testAccountMap()
   }
   return true;
 }
+
+
 #endif

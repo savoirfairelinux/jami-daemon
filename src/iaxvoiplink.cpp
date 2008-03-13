@@ -125,7 +125,6 @@ IAXVoIPLink::init()
       _debug("IAX Info: listening on port %d\n", last_port);
       _localPort = last_port;
       returnValue = true;
-
       _evThread->start();
 
       audiolayer = Manager::instance().getAudioDriver();
@@ -141,8 +140,6 @@ IAXVoIPLink::init()
     _initDone = false;
   }
   
-   IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
-   _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( currentCall -> getAudioCodec() );
 
   return returnValue;
 }
@@ -235,8 +232,7 @@ IAXVoIPLink::getEvent()
 void
 IAXVoIPLink::sendAudioFromMic(void)
 {
-  
-  IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
+   IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
 
   if (!currentCall) {
     // Let's mind our own business.
@@ -253,7 +249,7 @@ IAXVoIPLink::sendAudioFromMic(void)
     return;
   }
 
-  //AudioCodec* audiocodec = loadCodec(currentCall->getAudioCodec());
+   _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( currentCall -> getAudioCodec() ); 
   if (!_audiocodec) {
     // Audio codec still not determined.
     if (audiolayer) {
@@ -262,7 +258,7 @@ IAXVoIPLink::sendAudioFromMic(void)
     }
     return;
   }
-
+  
   // Send sound here
   if (audiolayer) {
 
@@ -763,7 +759,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
     }
 
     if (audiolayer) {
-      
+      _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( call -> getAudioCodec() );
       // On-the-fly codec changing (normally, when we receive a full packet)
       // as per http://tools.ietf.org/id/draft-guy-iax-03.txt
       // - subclass holds the voiceformat property.

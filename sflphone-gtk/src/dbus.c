@@ -1026,3 +1026,22 @@ dbus_get_current_audio_output_plugin()
 		g_print("DBus called get_current_audio_output_plugin() on ConfigurationManager\n");
 	return plugin;
 }
+
+int
+dbus_is_iax2_enabled()
+{
+	int res;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_is_iax2_enabled(
+			configurationManagerProxy,
+			&res,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called is_iax2_enabled() on ConfigurationManager\n");
+	return res;
+}

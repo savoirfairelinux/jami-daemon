@@ -71,6 +71,7 @@ public:
     ::DBus::String getVersion(  );
     std::vector< ::DBus::String > getRingtoneList(  );
 
+    ::DBus::Int32 isIax2Enabled( void );
 };
 
 

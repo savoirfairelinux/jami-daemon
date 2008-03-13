@@ -47,6 +47,7 @@ public:
         register_method(ConfigurationManager, getCurrentAudioDevicesIndex, _getCurrentAudioDevicesIndex_stub);
         register_method(ConfigurationManager, getAudioDeviceIndex, _getAudioDeviceIndex_stub);
         register_method(ConfigurationManager, getCurrentAudioOutputPlugin, _getCurrentAudioOutputPlugin_stub);
+        register_method(ConfigurationManager, isIax2Enabled, _isIax2Enabled_stub);
     }
 
     ::DBus::IntrospectedInterface* const introspect() const 
@@ -190,6 +191,11 @@ public:
             { "plugin", "s", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument isIax2Enabled_args[] = 
+        {
+            { "res", "i", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
         {
             { "list", "a{ss}", false },
@@ -228,6 +234,7 @@ public:
             { "getCurrentAudioDevicesIndex", getCurrentAudioDevicesIndex_args },
             { "getAudioDeviceIndex", getAudioDeviceIndex_args },
             { "getCurrentAudioOutputPlugin", getCurrentAudioOutputPlugin_args },
+            { "isIax2Enabled", isIax2Enabled_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_signals[] = 
@@ -288,6 +295,7 @@ public:
     virtual std::vector< ::DBus::String > getCurrentAudioDevicesIndex(  ) = 0;
     virtual ::DBus::Int32 getAudioDeviceIndex( const ::DBus::String& name ) = 0;
     virtual ::DBus::String getCurrentAudioOutputPlugin(  ) = 0;
+    virtual ::DBus::Int32 isIax2Enabled(  ) = 0;
 
 public:
 
@@ -570,6 +578,16 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         ::DBus::String argout1 = getCurrentAudioOutputPlugin();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _isIax2Enabled_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argout1 = isIax2Enabled();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

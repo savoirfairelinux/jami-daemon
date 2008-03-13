@@ -94,4 +94,10 @@ typedef short int16;
 #define SFL_PCM_PLAYBACK	0x0022
 #define SFL_PCM_CAPTURE		0x0023
 
+#ifdef USE_IAX
+#define	IAX2_ENABLED  true
+#else
+#define	IAX2_ENABLED  false
+#endif
+
 #endif	// __GLOBAL_H__

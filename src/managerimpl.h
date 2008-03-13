@@ -341,6 +341,7 @@ public:
    */
   std::string serialize(std::vector<std::string> v);
 
+  int isIax2Enabled( void ); 
   /**
    * Inverse of serialize
    */
@@ -693,6 +694,7 @@ private:
    * @param the voip link from the account pointer or 0
    */
   VoIPLink* getAccountLink(const AccountID& accountID);
+
 
 
   #ifdef TEST

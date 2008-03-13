@@ -122,6 +122,11 @@
 
   <!--        /////////////////////////////       -->
  
+    <method name="isIax2Enabled">
+      <arg type="i" name="res" direction="out"/>
+    </method>
+
+  <!--        /////////////////////////////       -->
     <signal name="parametersChanged">
       <arg type="a{ss}" name="list" direction="out"/>
     </signal>

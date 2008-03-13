@@ -99,7 +99,7 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
   ost::MutexLock lock( _mutex );
 
   std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
-  std::string pcmc = buildDeviceTopo( plugin , indexIn , 0);
+  std::string pcmc = buildDeviceTopo( PCM_PLUGHW , indexIn , 0);
   return open_device( pcmp , pcmc , stream);
 }
 
@@ -304,8 +304,8 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   unsigned int rate_in = getSampleRate();
   unsigned int rate_out = getSampleRate();
   int dir = 0;
-  snd_pcm_uframes_t period_size_in =  getFrameSize() * getSampleRate() / 1000 ;
-  snd_pcm_uframes_t buffer_size_in = 4096;
+  snd_pcm_uframes_t period_size_in = getFrameSize() * getSampleRate() / 1000 *  2;
+  snd_pcm_uframes_t buffer_size_in = period_size_in * 4 ; 
   snd_pcm_uframes_t threshold = 1024 ;
   snd_pcm_uframes_t period_size_out =  1024 ;
   snd_pcm_uframes_t buffer_size_out = period_size_out * 8 ;
@@ -378,7 +378,6 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     deviceClosed = false;
   }
 
-  //fillHWBuffer();
   _talk = false;
   return true;
 }
