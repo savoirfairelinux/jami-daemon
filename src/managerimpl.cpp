@@ -909,20 +909,20 @@ ManagerImpl::ringtone()
   int sampleRate  = audiolayer->getSampleRate();
   AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
-  //_toneMutex.enterMutex(); 
- // bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
-  //_toneMutex.leaveMutex(); 
-  //if (loadFile) {
-    //_toneMutex.enterMutex(); 
-    //_audiofile.start();
-    //_toneMutex.leaveMutex(); 
-    //int size = _audiofile.getSize();
-    //SFLDataFormat output[ size ];
-    //_audiofile.getNext(output, size , 100);
-    //audiolayer->putUrgent( output , size );
-  //} else {
+  _toneMutex.enterMutex(); 
+  bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
+  _toneMutex.leaveMutex(); 
+  if (loadFile) {
+    _toneMutex.enterMutex(); 
+    _audiofile.start();
+    _toneMutex.leaveMutex(); 
+    int size = _audiofile.getSize();
+    SFLDataFormat output[ size ];
+    _audiofile.getNext(output, size , 100);
+    audiolayer->putUrgent( output , size );
+  } else {
     ringback();
-  //}
+  }
 }
 
   AudioLoop*
