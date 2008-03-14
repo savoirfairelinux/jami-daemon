@@ -894,9 +894,9 @@ ManagerImpl::ringback () {
   void
 ManagerImpl::ringtone() 
 {
-  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
-  if (!hasToPlayTone) { return; }
-
+ // int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
+  if( isRingtoneEnabled() )
+  {
   std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
   //if there is no / inside the path
   if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
@@ -923,6 +923,11 @@ ManagerImpl::ringtone()
   } else {
     ringback();
   }
+}
+else
+{
+  ringback();
+}
 }
 
   AudioLoop*
@@ -1364,13 +1369,13 @@ ManagerImpl::isIax2Enabled( void )
 int
 ManagerImpl::isRingtoneEnabled( void )
 {
-  return std::atoi( getConfigString( PREFERENCES , CONFIG_RINGTONE ).c_str());
+  return getConfigInt( PREFERENCES , CONFIG_RINGTONE );
 }
 
 void
 ManagerImpl::ringtoneEnabled( void )
 {
-  ( getConfigString( PREFERENCES , CONFIG_RINGTONE ) == RINGTONE_ENABLED )? setConfig(PREFERENCES , CONFIG_RINGTONE , "0") : setConfig( PREFERENCES , CONFIG_RINGTONE , "1");
+  ( getConfigInt( PREFERENCES , CONFIG_RINGTONE ) == RINGTONE_ENABLED )? setConfig(PREFERENCES , CONFIG_RINGTONE , 0) : setConfig( PREFERENCES , CONFIG_RINGTONE , 1);
 }
 
   int
