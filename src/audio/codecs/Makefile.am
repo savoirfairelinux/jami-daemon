@@ -15,7 +15,16 @@ libcodec_speex_so_LDFLAGS = -shared -lc -lspeex
 INSTALL_SPEEX_RULE = install-libcodec_speex_so
 endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so $(GSM_LIB) $(SPEEX_LIB) libcodec_ilbc.so
+if BUILD_ILBC
+ILBC_LIB = libcodec_ilbc.so
+libcodec_ilbc_so_SOURCES = ilbc.cpp
+libcodec_ilbc_so_CFLAGS = -fPIC -g -Wall
+libcodec_ilbc_so_LDFLAGS = -shared ilbc/*.o -lc
+INSTALL_ILBC_RULE = install-libcodec_ilbc_so
+SUBDIRS = ilbc
+endif
+
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so $(GSM_LIB) $(SPEEX_LIB) $(ILBC_LIB) 
 
 noinst_HEADERS = audiocodec.h
 
@@ -27,13 +36,9 @@ libcodec_alaw_so_SOURCES = alaw.cpp
 libcodec_alaw_so_CFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_LDFLAGS = -shared -lc
 
-libcodec_ilbc_so_SOURCES = ilbc.cpp
-libcodec_ilbc_so_CFLAGS = -fPIC -g -Wall
-libcodec_ilbc_so_LDFLAGS = -shared ilbc/*.o -lc
 
-SUBDIRS = ilbc
 
-install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_RULE) 
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_RULE) $(INSTALL_ILBC_RULE) 
 uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_so 
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
@@ -45,8 +50,8 @@ install-libcodec_gsm_so: libcodec_gsm.so
 	$(INSTALL_PROGRAM)  libcodec_gsm.so $(sflcodecdir)
 install-libcodec_speex_so: libcodec_speex.so
 	$(INSTALL_PROGRAM)  libcodec_speex.so $(sflcodecdir)
-#install-libcodec_ilbc_so: libcodec_ilbc.so
-#	$(INSTALL_PROGRAM)  libcodec_ilbc.so $(sflcodecdir)
+install-libcodec_ilbc_so: libcodec_ilbc.so
+	$(INSTALL_PROGRAM)  libcodec_ilbc.so $(sflcodecdir)
 
 
 uninstall-libcodec_ulaw_so:
@@ -58,6 +63,6 @@ uninstall-libcodec_gsm_so:
 uninstall-libcodec_speex_so:
 	rm -f $(sflcodecdir)/libcodec_speex.so
 	rm -rf $(sflcodecdir)
-#uninstall-libcodec_ilbc_so:
-#	rm -f $(sflcodecdir)/libcodec_ilbc.so
+uninstall-libcodec_ilbc_so:
+	rm -f $(sflcodecdir)/libcodec_ilbc.so
 

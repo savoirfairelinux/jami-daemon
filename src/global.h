@@ -103,6 +103,7 @@ typedef short int16;
 
 #define GSM_STRING_DESCRIPTION	  "gsm"
 #define SPEEX_STRING_DESCRIPTION  "speex"
+#define ILBC_STRING_DESCRIPTION  "ilbc"
 #define RINGTONE_ENABLED	  1
 
 #endif	// __GLOBAL_H__

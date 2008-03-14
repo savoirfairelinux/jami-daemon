@@ -297,6 +297,13 @@ CodecDescriptor::seemsValid( std::string lib)
       return false;
 #endif
 
+#ifdef BUILD_ILBC
+  // Nothing special
+#else
+    if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == ILBC_STRING_DESCRIPTION )  
+      return false;
+#endif
+
   if(lib.substr(0, begin.length()) == begin)
     if(lib.substr(lib.length() - end.length() , end.length() ) == end)
       return true;
