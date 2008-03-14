@@ -435,22 +435,22 @@ ManagerImpl::saveConfig (void)
   bool
 ManagerImpl::initRegisterAccounts() 
 {
-	_debugInit("Initiate VoIP Links Registration");
-	AccountMap::iterator iter = _accountMap.begin();
-	while( iter != _accountMap.end() ) {
-		if ( iter->second) {
-			iter->second->loadConfig();
-			if ( iter->second->isEnabled() ) {
-				// NOW
-				iter->second->registerVoIPLink();
-				iter->second->loadContacts();
-				iter->second->publishPresence(PRESENCE_ONLINE);
-				iter->second->subscribeContactsPresence();
-			}
-		}
-		iter++;
-	}
-	return true;
+  _debugInit("Initiate VoIP Links Registration");
+  AccountMap::iterator iter = _accountMap.begin();
+  while( iter != _accountMap.end() ) {
+    if ( iter->second) {
+      iter->second->loadConfig();
+      if ( iter->second->isEnabled() ) {
+	// NOW
+	iter->second->registerVoIPLink();
+	iter->second->loadContacts();
+	iter->second->publishPresence(PRESENCE_ONLINE);
+	iter->second->subscribeContactsPresence();
+      }
+    }
+    iter++;
+  }
+  return true;
 }
 
 //THREAD=Main
@@ -568,17 +568,17 @@ ManagerImpl::playDtmf(char code)
 
     // We activate the stream if it's not active yet.
     //if (!audiolayer->isStreamActive()) {
-      //audiolayer->startStream();
+    //audiolayer->startStream();
     //} else {
-      //_debugAlsa("send dtmf - sleep\n");
-      //audiolayer->sleep(pulselen); // in milliseconds
+    //_debugAlsa("send dtmf - sleep\n");
+    //audiolayer->sleep(pulselen); // in milliseconds
     //}
   }
   returnValue = true;
 
-// TODO: add caching
-delete[] _buf; _buf = 0;
-return returnValue;
+  // TODO: add caching
+  delete[] _buf; _buf = 0;
+  return returnValue;
 }
 
 // Multi-thread 
@@ -894,40 +894,40 @@ ManagerImpl::ringback () {
   void
 ManagerImpl::ringtone() 
 {
- // int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
+  // int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
   if( isRingtoneEnabled() )
   {
-  std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
-  //if there is no / inside the path
-  if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
-    // check inside global share directory
-    ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
-  }
+    std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
+    //if there is no / inside the path
+    if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
+      // check inside global share directory
+      ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
+    }
 
-  AudioLayer* audiolayer = getAudioDriver();
-  if (audiolayer==0) { return; }
-  int sampleRate  = audiolayer->getSampleRate();
-  AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
+    AudioLayer* audiolayer = getAudioDriver();
+    if (audiolayer==0) { return; }
+    int sampleRate  = audiolayer->getSampleRate();
+    AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
-  _toneMutex.enterMutex(); 
-  bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
-  _toneMutex.leaveMutex(); 
-  if (loadFile) {
     _toneMutex.enterMutex(); 
-    _audiofile.start();
+    bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
     _toneMutex.leaveMutex(); 
-    int size = _audiofile.getSize();
-    SFLDataFormat output[ size ];
-    _audiofile.getNext(output, size , 100);
-    audiolayer->putUrgent( output , size );
-  } else {
+    if (loadFile) {
+      _toneMutex.enterMutex(); 
+      _audiofile.start();
+      _toneMutex.leaveMutex(); 
+      int size = _audiofile.getSize();
+      SFLDataFormat output[ size ];
+      _audiofile.getNext(output, size , 100);
+      audiolayer->putUrgent( output , size );
+    } else {
+      ringback();
+    }
+  }
+  else
+  {
     ringback();
   }
-}
-else
-{
-  ringback();
-}
 }
 
   AudioLoop*
@@ -1261,11 +1261,11 @@ ManagerImpl::setInputAudioPlugin(const std::string& audioPlugin)
 {
   _debug("Set input audio plugin\n");
   _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
-			      _audiodriver -> getIndexOut(),
-			      _audiodriver -> getSampleRate(),
-			      _audiodriver -> getFrameSize(),
-			      SFL_PCM_CAPTURE,
-			      audioPlugin);
+      _audiodriver -> getIndexOut(),
+      _audiodriver -> getSampleRate(),
+      _audiodriver -> getFrameSize(),
+      SFL_PCM_CAPTURE,
+      audioPlugin);
 }
 
 /**
@@ -1276,11 +1276,11 @@ ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
 {
   _debug("Set output audio plugin\n");
   _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
-			      _audiodriver -> getIndexOut(),
-			      _audiodriver -> getSampleRate(),
-			      _audiodriver -> getFrameSize(),
-			      SFL_PCM_PLAYBACK,
-			      audioPlugin);
+      _audiodriver -> getIndexOut(),
+      _audiodriver -> getSampleRate(),
+      _audiodriver -> getFrameSize(),
+      SFL_PCM_PLAYBACK,
+      audioPlugin);
   // set config
   setConfig( AUDIO , ALSA_PLUGIN , audioPlugin );
 }
@@ -1355,7 +1355,7 @@ ManagerImpl::getCurrentAudioDevicesIndex()
   return v;
 }
 
-int 
+  int 
 ManagerImpl::isIax2Enabled( void )
 {
   //return ( IAX2_ENABLED ) ? true : false;
@@ -1366,13 +1366,13 @@ ManagerImpl::isIax2Enabled( void )
 #endif
 }
 
-int
+  int
 ManagerImpl::isRingtoneEnabled( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_RINGTONE );
 }
 
-void
+  void
 ManagerImpl::ringtoneEnabled( void )
 {
   ( getConfigInt( PREFERENCES , CONFIG_RINGTONE ) == RINGTONE_ENABLED )? setConfig(PREFERENCES , CONFIG_RINGTONE , 0) : setConfig( PREFERENCES , CONFIG_RINGTONE , 1);
@@ -1386,7 +1386,7 @@ ManagerImpl::getAudioDeviceIndex(const std::string name)
   return num;
 }
 
-std::string 
+  std::string 
 ManagerImpl::getCurrentAudioOutputPlugin( void )
 {
   _debug("Get alsa plugin\n");
