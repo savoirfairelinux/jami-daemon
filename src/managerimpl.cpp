@@ -1081,13 +1081,10 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
 
   section = PREFERENCES;
-  fill_config_str(SKIN_CHOICE, DFT_SKIN);
-  fill_config_int(CONFIRM_QUIT, YES_STR);
   fill_config_str(ZONE_TONE, DFT_ZONE);
-  fill_config_int(CHECKED_TRAY, NO_STR);
   fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
-  fill_config_int(CONFIG_RINGTONE, CONFIG_RINGTONE_DEFAULT);
+  fill_config_int(CONFIG_RINGTONE, YES_STR);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1375,7 +1372,7 @@ ManagerImpl::isRingtoneEnabled( void )
   void
 ManagerImpl::ringtoneEnabled( void )
 {
-  ( getConfigInt( PREFERENCES , CONFIG_RINGTONE ) == RINGTONE_ENABLED )? setConfig(PREFERENCES , CONFIG_RINGTONE , 0) : setConfig( PREFERENCES , CONFIG_RINGTONE , 1);
+  ( getConfigInt( PREFERENCES , CONFIG_RINGTONE ) == RINGTONE_ENABLED )? setConfig(PREFERENCES , CONFIG_RINGTONE , NO_STR ) : setConfig( PREFERENCES , CONFIG_RINGTONE , YES_STR );
 }
 
   int

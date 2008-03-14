@@ -31,7 +31,7 @@
 #define DIR_SEPARATOR_STR "/"
 
 // Main menu
-#define SIGNALISATION	"VoIPLink"
+#define SIGNALISATION		"VoIPLink"
 #define AUDIO			"Audio"
 #define VIDEO			"Video"
 #define NETWORK			"Network"
@@ -42,20 +42,12 @@
 
 
 // Fields to fill
-//#define VOIP_LINK_ID	"VoIPLink.index"
 #define SYMMETRIC     "VoIPLink.symmetric"
 
-//#define FULL_NAME		"SIP.fullName"
-//#define USER_PART		"SIP.userPart"
-//#define AUTH_USER_NAME	"SIP.username"
-//#define PASSWORD		"SIP.password"
-//#define HOST_PART		"SIP.hostPart"
-//#define PROXY			"SIP.proxy"
-//#define AUTO_REGISTER	"SIP.autoregister"
-#define PLAY_DTMF       "DTMF.playDtmf"
-#define PLAY_TONES      "DTMF.playTones" 
-#define PULSE_LENGTH	"DTMF.pulseLength"
-#define SEND_DTMF_AS	"DTMF.sendDTMFas"
+#define PLAY_DTMF		"DTMF.playDtmf"
+#define PLAY_TONES		"DTMF.playTones" 
+#define PULSE_LENGTH		"DTMF.pulseLength"
+#define SEND_DTMF_AS		"DTMF.sendDTMFas"
 #define STUN_SERVER		"STUN.STUNserver"
 #define USE_STUN		"STUN.useStun"
 #define ALSA_CARD_ID_IN		"Alsa.cardID_In"
@@ -69,32 +61,27 @@
 #define ACCOUNT_IAX_COUNT_DEFAULT 4
 
 // speakers and volume 0 to 100
-#define VOLUME_SPKR	"Volume.speakers"
-#define VOLUME_MICRO	"Volume.micro"
-#define SKIN_CHOICE		"Themes.skinChoice"
-#define CONFIRM_QUIT	"Options.confirmQuit"
-#define ZONE_TONE		"Options.zoneToneChoice"
-#define CHECKED_TRAY	"Options.checkedTray"
-#define VOICEMAIL_NUM	"Options.voicemailNumber"
+#define VOLUME_SPKR	  "Volume.speakers"
+#define VOLUME_MICRO	  "Volume.micro"
+#define ZONE_TONE	  "Options.zoneToneChoice"
+#define VOICEMAIL_NUM	  "Options.voicemailNumber"
 // zeroconfig module
 #define CONFIG_ZEROCONF	  "Zeroconf.enable"
 #define CONFIG_RINGTONE	  "Ringtones.enable"
 
 // Default values
-#define EMPTY_FIELD			""
+#define EMPTY_FIELD		""
 #define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"
-#define CONFIG_RINGTONE_DEFAULT	"1"
-#define	YES_STR              "1"
-#define	NO_STR               "0"
-#define DFT_PULSE_LENGTH_STR "250"
-#define SIP_INFO_STR         "0"
-#define ALSA_DFT_CARD	    "0"
+#define	YES_STR			"1"
+#define	NO_STR			"0"
+#define DFT_PULSE_LENGTH_STR	"250"
+#define SIP_INFO_STR		"0"
+#define ALSA_DFT_CARD		"0"
 // volume by default 100%
-#define DFT_VOL_SPKR_STR     "100"
-#define DFT_VOL_MICRO_STR    "100"
+#define DFT_VOL_SPKR_STR	"100"
+#define DFT_VOL_MICRO_STR	"100"
 
 #define DFT_RINGTONE 		"konga.ul"
-#define DFT_SKIN 		"metal"
 #define DFT_ZONE		"North America"
 #define DFT_VOICEMAIL 		"888"
 #define DFT_FRAME_SIZE		"20"
