@@ -99,7 +99,7 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
   ost::MutexLock lock( _mutex );
 
   std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
-  std::string pcmc = buildDeviceTopo( PCM_PLUGHW , indexIn , 0);
+  std::string pcmc = buildDeviceTopo( PCM_SURROUND40 , indexIn , 0);
   return open_device( pcmp , pcmc , stream);
 }
 
@@ -498,7 +498,7 @@ AudioLayer::buildDeviceTopo( std::string plugin, int card, int subdevice )
 {
   std::string pcm = plugin;
   std::stringstream ss,ss1;
-  if( pcm == "default")
+  if( pcm == "default" || pcm == "pulse")
     return pcm;
   ss << card;
   pcm.append(":");
