@@ -500,7 +500,6 @@ void
 ringtone_changed( GtkFileChooser *chooser , GtkLabel *label)
 {
   gchar* tone = gtk_file_chooser_get_filename( GTK_FILE_CHOOSER( chooser ));
-  g_print("tonepath = %s\n" , tone );
   dbus_set_ringtone_choice( tone );
 }
 
@@ -1123,6 +1122,12 @@ create_audio_tab ()
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());	
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , get_ringtone_choice());	
 	g_signal_connect( G_OBJECT( fileChooser ) , "selection_changed" , G_CALLBACK( ringtone_changed ) , NULL );
+	GtkFileFilter *filter = gtk_file_filter_new();
+	gtk_file_filter_set_name( filter , "Audio Files" );
+	gtk_file_filter_add_pattern(filter , "*.wav" );
+	gtk_file_filter_add_pattern(filter , "*.ul" );
+	gtk_file_filter_add_pattern(filter , "*.au" );
+	gtk_file_chooser_add_filter( GTK_FILE_CHOOSER( fileChooser ) , filter);
 	gtk_box_pack_start( GTK_BOX(box) , fileChooser , TRUE , TRUE , 1);
 
 	// Show all
