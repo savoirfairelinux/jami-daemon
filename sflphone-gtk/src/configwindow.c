@@ -1112,7 +1112,7 @@ create_audio_tab ()
 
     // check button to enable ringtones
 	GtkWidget* box = gtk_hbox_new( TRUE , 1);
-	gtk_box_pack_start( GTK_BOX(ret) , box , TRUE , TRUE , 1);
+	gtk_box_pack_start( GTK_BOX(ret) , box , FALSE , FALSE , 1);
 	enableTone = gtk_check_button_new_with_mnemonic( "_Enable ringtones");
 	gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
 	gtk_box_pack_start( GTK_BOX(box) , enableTone , TRUE , TRUE , 1);
