@@ -495,6 +495,21 @@ ringtone_enabled( void )
 {
   dbus_ringtone_enabled();  
 }
+
+void
+ringtone_changed( GtkFileChooser *chooser , GtkLabel *label)
+{
+  gchar* tone = gtk_file_chooser_get_filename( GTK_FILE_CHOOSER( chooser ));
+  g_print("tonepath = %s\n" , tone );
+  dbus_set_ringtone_choice( tone );
+}
+
+gchar*
+get_ringtone_choice( void )
+{
+  return dbus_get_ringtone_choice();
+}
+
 /**
  * Call back when the user click on an account in the list
  */
@@ -952,6 +967,7 @@ create_audio_tab ()
 	GtkWidget *codecLabel;
 	GtkWidget *codecBox;
 	GtkWidget *enableTone;
+	GtkWidget *fileChooser;
 	
 	GtkWidget *titleLabel;
 	GtkWidget *comboBox;
@@ -1102,6 +1118,12 @@ create_audio_tab ()
 	gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
 	gtk_box_pack_start( GTK_BOX(box) , enableTone , TRUE , TRUE , 1);
 	g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
+    // file chooser button
+	fileChooser = gtk_file_chooser_button_new("Choose a ringtone", GTK_FILE_CHOOSER_ACTION_OPEN);
+	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());	
+	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , get_ringtone_choice());	
+	g_signal_connect( G_OBJECT( fileChooser ) , "selection_changed" , G_CALLBACK( ringtone_changed ) , NULL );
+	gtk_box_pack_start( GTK_BOX(box) , fileChooser , TRUE , TRUE , 1);
 
 	// Show all
 	gtk_widget_show_all(ret);

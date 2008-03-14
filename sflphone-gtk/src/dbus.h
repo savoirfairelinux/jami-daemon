@@ -75,6 +75,8 @@ int dbus_get_audio_device_index(const gchar* name);
 gchar* dbus_get_current_audio_output_plugin();
 int dbus_is_iax2_enabled( void );
 int dbus_is_ringtone_enabled( void );
+gchar* dbus_get_ringtone_choice( void );
+void dbus_set_ringtone_choice( const gchar* tone );
 
 /* Instance */
 void dbus_register( int pid, gchar * name);

@@ -63,6 +63,15 @@
 
     <method name="ringtoneEnabled">
     </method>
+
+    <method name="getRingtoneChoice">
+      <arg type="s" name="tone" direction="out"/>
+    </method>
+
+    <method name="setRingtoneChoice">
+      <arg type="s" name="tone" direction="in"/>
+    </method>
+
    <!--      ///////////////////////               -->
    
    <!-- Codecs-related methods -->

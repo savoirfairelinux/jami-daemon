@@ -248,3 +248,16 @@ ConfigurationManager::isRingtoneEnabled( void )
 {
   return Manager::instance().isRingtoneEnabled(  ); 
 }
+
+::DBus::String
+ConfigurationManager::getRingtoneChoice( void )
+{
+  return Manager::instance().getRingtoneChoice(  ); 
+}
+
+void
+ConfigurationManager::setRingtoneChoice( const ::DBus::String& tone )
+{
+  Manager::instance().setRingtoneChoice( tone ); 
+}
+

@@ -1027,6 +1027,43 @@ dbus_get_current_audio_output_plugin()
 	return plugin;
 }
 
+
+gchar*
+dbus_get_ringtone_choice()
+{
+	gchar* tone;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_ringtone_choice(
+			configurationManagerProxy,
+			&tone,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_ringtone_choice() on ConfigurationManager\n");
+	return tone;
+}
+
+void
+dbus_set_ringtone_choice( const gchar* tone )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_ringtone_choice(
+			configurationManagerProxy,
+			tone,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_ringtone_choice() on ConfigurationManager\n");
+}
+
 int
 dbus_is_ringtone_enabled()
 {

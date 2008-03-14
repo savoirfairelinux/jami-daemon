@@ -34,6 +34,8 @@ public:
         register_method(ConfigurationManager, getRecordDeviceList, _getRecordDeviceList_stub);
         register_method(ConfigurationManager, isRingtoneEnabled, _isRingtoneEnabled_stub);
         register_method(ConfigurationManager, ringtoneEnabled, _ringtoneEnabled_stub);
+        register_method(ConfigurationManager, getRingtoneChoice, _getRingtoneChoice_stub);
+        register_method(ConfigurationManager, setRingtoneChoice, _setRingtoneChoice_stub);
         register_method(ConfigurationManager, getCodecList, _getCodecList_stub);
         register_method(ConfigurationManager, getCodecDetails, _getCodecDetails_stub);
         register_method(ConfigurationManager, getActiveCodecList, _getActiveCodecList_stub);
@@ -123,6 +125,16 @@ public:
         };
         static ::DBus::IntrospectedArgument ringtoneEnabled_args[] = 
         {
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getRingtoneChoice_args[] = 
+        {
+            { "tone", "s", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setRingtoneChoice_args[] = 
+        {
+            { "tone", "s", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getCodecList_args[] = 
@@ -232,6 +244,8 @@ public:
             { "getRecordDeviceList", getRecordDeviceList_args },
             { "isRingtoneEnabled", isRingtoneEnabled_args },
             { "ringtoneEnabled", ringtoneEnabled_args },
+            { "getRingtoneChoice", getRingtoneChoice_args },
+            { "setRingtoneChoice", setRingtoneChoice_args },
             { "getCodecList", getCodecList_args },
             { "getCodecDetails", getCodecDetails_args },
             { "getActiveCodecList", getActiveCodecList_args },
@@ -295,6 +309,8 @@ public:
     virtual std::vector< ::DBus::String > getRecordDeviceList(  ) = 0;
     virtual ::DBus::Int32 isRingtoneEnabled(  ) = 0;
     virtual void ringtoneEnabled(  ) = 0;
+    virtual ::DBus::String getRingtoneChoice(  ) = 0;
+    virtual void setRingtoneChoice( const ::DBus::String& tone ) = 0;
     virtual std::vector< ::DBus::String > getCodecList(  ) = 0;
     virtual std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload ) = 0;
     virtual std::vector< ::DBus::String > getActiveCodecList(  ) = 0;
@@ -466,6 +482,25 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         ringtoneEnabled();
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getRingtoneChoice_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::String argout1 = getRingtoneChoice();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setRingtoneChoice_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::String argin1; ri >> argin1;
+        setRingtoneChoice(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

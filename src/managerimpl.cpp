@@ -1375,6 +1375,33 @@ ManagerImpl::ringtoneEnabled( void )
   ( getConfigInt( PREFERENCES , CONFIG_RINGTONE ) == RINGTONE_ENABLED )? setConfig(PREFERENCES , CONFIG_RINGTONE , NO_STR ) : setConfig( PREFERENCES , CONFIG_RINGTONE , YES_STR );
 }
 
+std::string
+ManagerImpl::getRingtoneChoice( void )
+{
+  // we need the absolute path
+  std::string tone_name = getConfigString( AUDIO , RING_CHOICE );
+  std::string tone_path ;
+  if( tone_name.find( DIR_SEPARATOR_CH ) == std::string::npos )
+  {
+    // check in ringtone directory ($(PREFIX)/share/sflphone/ringtones)
+    tone_path = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + tone_name ; 
+  }
+  else
+  {
+    // the absolute has been saved; do nothing
+    tone_path = tone_name ;
+  }   
+  _debug("%s\n", tone_path.c_str());
+  return tone_path;
+}
+
+void
+ManagerImpl::setRingtoneChoice( const std::string& tone )
+{
+  // we save the absolute path 
+  setConfig( AUDIO , RING_CHOICE , tone ); 
+}
+
   int
 ManagerImpl::getAudioDeviceIndex(const std::string name)
 {
