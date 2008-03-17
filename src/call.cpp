@@ -99,7 +99,7 @@ Call::getRemoteIp()
   return _remoteIPAddress;
 }
 
-CodecType 
+AudioCodecType 
 Call::getAudioCodec()
 {
   ost::MutexLock m(_callMutex);  

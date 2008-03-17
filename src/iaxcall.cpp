@@ -46,7 +46,7 @@ IAXCall::setFormat(int format)
   case AST_FORMAT_SPEEX:
     setAudioCodec(PAYLOAD_CODEC_SPEEX_8000); break;
   default:
-    setAudioCodec((CodecType) -1);
+    setAudioCodec((AudioCodecType) -1);
     break;
   }
 }

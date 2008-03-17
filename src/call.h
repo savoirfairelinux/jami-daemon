@@ -149,7 +149,7 @@ public:
     const std::string& getRemoteIp();
 
     /** Return audio codec [mutex protected] */
-    CodecType getAudioCodec();
+    AudioCodecType getAudioCodec();
 
 
 
@@ -164,14 +164,14 @@ protected:
     void setRemoteAudioPort(unsigned int port) { _remoteAudioPort = port; }
 
     /** Set the audio codec used.  [not protected] */
-    void setAudioCodec(CodecType audioCodec) { _audioCodec = audioCodec; }
+    void setAudioCodec(AudioCodecType audioCodec) { _audioCodec = audioCodec; }
 
     /** Codec Map */
     CodecDescriptor _codecMap;
 
     /** Codec pointer */
     //AudioCodec* _audioCodec;
-    CodecType _audioCodec;
+    AudioCodecType _audioCodec;
 
     bool _audioStarted;
 

@@ -283,12 +283,12 @@ SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t* event)
 #else
   char *tmp = (char*) osip_list_get (&(remote_med->m_payloads), 0);
 #endif
-  setAudioCodec((CodecType)-1);
+  setAudioCodec((AudioCodecType)-1);
   if (tmp != NULL) {
     int payload = atoi (tmp);
     _debug("            Remote Payload: %d\n", payload);
-    //setAudioCodec(_codecMap.getCodecName((CodecType)payload)); // codec builder for the mic
-    setAudioCodec((CodecType)payload); // codec builder for the mic
+    //setAudioCodec(_codecMap.getCodecName((AudioCodecType)payload)); // codec builder for the mic
+    setAudioCodec((AudioCodecType)payload); // codec builder for the mic
   }
 
 /*
@@ -359,8 +359,8 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
         if (tmp!=NULL) {
           int payload = atoi(tmp);
 	  _debug("remote payload = %s\n", tmp);
-          CodecType audiocodec = (CodecType)payload;
-          if (audiocodec != (CodecType)-1 && _codecMap.isActive(audiocodec))  { 
+          AudioCodecType audiocodec = (AudioCodecType)payload;
+          if (audiocodec != (AudioCodecType)-1 && _codecMap.isActive(audiocodec))  { 
             listCodec << payload << " ";
             //listRtpMap << "a=rtpmap:" << payload << " " << audiocodec->getCodecName() << "/" << audiocodec->getClockRate();
             listRtpMap << "a=rtpmap:" << payload << " " << _codecMap.getCodecName(audiocodec) << "/" << _codecMap.getSampleRate(audiocodec);
@@ -585,7 +585,7 @@ SIPCall::setAudioCodecFromSDP(sdp_media_t* remote_med, int tid)
     if (tmp != NULL ) {
       int payload = atoi(tmp);
       // stop if we find a correct codec
-      if (_codecMap.isActive((CodecType)payload)){
+      if (_codecMap.isActive((AudioCodecType)payload)){
           break;
       }
     }
@@ -593,13 +593,13 @@ SIPCall::setAudioCodecFromSDP(sdp_media_t* remote_med, int tid)
     pos++;
   }
 
-  setAudioCodec((CodecType)-1);
+  setAudioCodec((AudioCodecType)-1);
   if (tmp != NULL) {
     int payload = atoi (tmp);
     _debug("            Payload: %d\n", payload);
-    setAudioCodec((CodecType)payload); // codec builder for the mic
+    setAudioCodec((AudioCodecType)payload); // codec builder for the mic
   }
-  if (getAudioCodec() == (CodecType) -1) {
+  if (getAudioCodec() == (AudioCodecType) -1) {
     _debug("SIPCall Failure: Unable to set codec\n");
     _debug("< Sending 415 Unsupported media type\n");
     eXosip_lock();

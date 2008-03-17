@@ -1205,14 +1205,14 @@ ManagerImpl::getCodecDetails( const ::DBus::Int32& payload )
   std::vector<std::string> v;
   std::stringstream ss;
 
-  v.push_back(_codecDescriptorMap.getCodecName((CodecType)payload));
-  ss << _codecDescriptorMap.getSampleRate((CodecType)payload);
+  v.push_back(_codecDescriptorMap.getCodecName((AudioCodecType)payload));
+  ss << _codecDescriptorMap.getSampleRate((AudioCodecType)payload);
   v.push_back((ss.str()).data()); 
   ss.str("");
-  ss << _codecDescriptorMap.getBitRate((CodecType)payload);
+  ss << _codecDescriptorMap.getBitRate((AudioCodecType)payload);
   v.push_back((ss.str()).data());
   ss.str("");
-  ss << _codecDescriptorMap.getBandwidthPerCall((CodecType)payload);
+  ss << _codecDescriptorMap.getBandwidthPerCall((AudioCodecType)payload);
   v.push_back((ss.str()).data());
   ss.str("");
 

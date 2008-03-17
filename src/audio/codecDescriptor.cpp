@@ -60,7 +60,7 @@ CodecDescriptor::init()
 
   int i;
   for( i = 0 ; i < _nbCodecs ; i++ ) {
-    _CodecsMap[(CodecType)CodecDynamicList[i]->getPayload()] = CodecDynamicList[i];
+    _CodecsMap[(AudioCodecType)CodecDynamicList[i]->getPayload()] = CodecDynamicList[i];
     _debug("%s\n" , CodecDynamicList[i]->getCodecName().c_str());
   }
 }
@@ -79,7 +79,7 @@ CodecDescriptor::setDefaultOrder()
 }
 
   std::string
-CodecDescriptor::getCodecName(CodecType payload)
+CodecDescriptor::getCodecName(AudioCodecType payload)
 {
   std::string resNull = "";
   CodecsMap::iterator iter = _CodecsMap.find(payload);
@@ -90,7 +90,7 @@ CodecDescriptor::getCodecName(CodecType payload)
 }
 
   AudioCodec* 
-CodecDescriptor::getCodec(CodecType payload)
+CodecDescriptor::getCodec(AudioCodecType payload)
 {
   CodecsMap::iterator iter = _CodecsMap.find(payload);
   if (iter!=_CodecsMap.end()) {
@@ -100,7 +100,7 @@ CodecDescriptor::getCodec(CodecType payload)
 }
 
   bool 
-CodecDescriptor::isActive(CodecType payload) 
+CodecDescriptor::isActive(AudioCodecType payload) 
 {
   int i;
   for(i=0 ; i < _codecOrder.size() ; i++)
@@ -112,7 +112,7 @@ CodecDescriptor::isActive(CodecType payload)
 }
 
   void 
-CodecDescriptor::removeCodec(CodecType payload)
+CodecDescriptor::removeCodec(AudioCodecType payload)
 {
   CodecMap::iterator iter = _codecMap.begin();
   while(iter!=_codecMap.end()) {
@@ -127,12 +127,12 @@ CodecDescriptor::removeCodec(CodecType payload)
 }
 
   void
-CodecDescriptor::addCodec(CodecType payload)
+CodecDescriptor::addCodec(AudioCodecType payload)
 {
 }
 
   double 
-CodecDescriptor::getBitRate(CodecType payload)
+CodecDescriptor::getBitRate(AudioCodecType payload)
 {
   CodecsMap::iterator iter = _CodecsMap.find(payload);
   if (iter!=_CodecsMap.end()) 
@@ -142,7 +142,7 @@ CodecDescriptor::getBitRate(CodecType payload)
 }
 
   double 
-CodecDescriptor::getBandwidthPerCall(CodecType payload)
+CodecDescriptor::getBandwidthPerCall(AudioCodecType payload)
 {
   CodecsMap::iterator iter = _CodecsMap.find(payload);
   if (iter!=_CodecsMap.end()) 
@@ -152,7 +152,7 @@ CodecDescriptor::getBandwidthPerCall(CodecType payload)
 }
 
   int
-CodecDescriptor::getSampleRate(CodecType payload)
+CodecDescriptor::getSampleRate(AudioCodecType payload)
 {
   CodecsMap::iterator iter = _CodecsMap.find(payload);
   if (iter!=_CodecsMap.end()) 
@@ -162,7 +162,7 @@ CodecDescriptor::getSampleRate(CodecType payload)
 }
 
   int
-CodecDescriptor::getChannel(CodecType payload)
+CodecDescriptor::getChannel(AudioCodecType payload)
 {
   CodecsMap::iterator iter = _CodecsMap.find(payload);
   if (iter!=_CodecsMap.end()) 
@@ -184,8 +184,8 @@ CodecDescriptor::saveActiveCodecs(const std::vector<std::string>& list)
   {
     payload = std::atoi(list[i].data());
     if( isCodecLoaded( payload ) ) {
-      _codecOrder.push_back((CodecType)payload);
-      _CodecsMap.find((CodecType)payload)->second->setState( true );
+      _codecOrder.push_back((AudioCodecType)payload);
+      _CodecsMap.find((AudioCodecType)payload)->second->setState( true );
     }
     i++;
   }

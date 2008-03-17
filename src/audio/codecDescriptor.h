@@ -53,17 +53,17 @@ typedef enum {
   PAYLOAD_CODEC_SPEEX_8000 = 110,
   PAYLOAD_CODEC_SPEEX_16000 = 111,
   PAYLOAD_CODEC_SPEEX_32000 = 112
-} CodecType;
+} AudioCodecType;
 
 #include "codecs/audiocodec.h"
 
 /* A codec is identified by its payload. A payload is associated with a name. */ 
-typedef std::map<CodecType, std::string> CodecMap;
+typedef std::map<AudioCodecType, std::string> CodecMap;
 /* The struct to reflect the order the user wants to use the codecs */
-typedef std::vector<CodecType> CodecOrder;
+typedef std::vector<AudioCodecType> CodecOrder;
 
 typedef std::pair<AudioCodec* , void*> CodecHandlePointer;
-typedef std::map<CodecType , AudioCodec*> CodecsMap;
+typedef std::map<AudioCodecType , AudioCodec*> CodecsMap;
 
 class CodecDescriptor {
 public:
@@ -86,14 +86,14 @@ public:
    *                same as getPayload()
    * @return the name of the codec
    */
-  std::string getCodecName(CodecType payload);
+  std::string getCodecName(AudioCodecType payload);
   
   /*
    * Get the codec object associated with the payload
    * @param payload The payload looked for
    * @return AudioCodec* A pointer on a AudioCodec object
    */
-  AudioCodec* getCodec( CodecType payload );
+  AudioCodec* getCodec( AudioCodecType payload );
 
   /**
    * Initialiaze the map with all the supported codecs, even those inactive
@@ -111,26 +111,26 @@ public:
    * @return true if the codec specified is supported
    * 	     false otherwise
    */
-  bool isActive(CodecType payload);
+  bool isActive(AudioCodecType payload);
 
  /**
   * Remove the codec with payload payload from the list
   * @param payload the codec to erase
   */ 
-  void removeCodec(CodecType payload);
+  void removeCodec(AudioCodecType payload);
 
  /**
   * Add a codec in the list.
   * @param payload the codec to add
   */
-  void addCodec(CodecType payload);
+  void addCodec(AudioCodecType payload);
 
  /**
   * Get the bit rate of the specified codec.
   * @param payload The payload of the codec
   * @return double The bit rate 
   */  
-  double getBitRate(CodecType payload);
+  double getBitRate(AudioCodecType payload);
 
  /**
   * Get the bandwidth for one call with the specified codec.
@@ -139,7 +139,7 @@ public:
   * @param payload The payload of the codec 
   * @return double The bandwidth
   */
-  double getBandwidthPerCall(CodecType payload);
+  double getBandwidthPerCall(AudioCodecType payload);
 
 
  /**
@@ -147,14 +147,14 @@ public:
   * @param payload The payload of the codec
   * @return int The clock rate of the specified codec
   */
-  int getSampleRate(CodecType payload);
+  int getSampleRate(AudioCodecType payload);
 
   /*
    * Get the number of channels
    * @param payload The payload of the codec
    * @return int  Number of channels
    */
-  int getChannel(CodecType payload);
+  int getChannel(AudioCodecType payload);
 
 /**
  * Set the order of codecs by their payload
