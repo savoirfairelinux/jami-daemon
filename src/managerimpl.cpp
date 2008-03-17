@@ -1246,6 +1246,7 @@ ManagerImpl::getOutputAudioPluginList(void)
 
   v.push_back( PCM_DEFAULT );
   v.push_back( PCM_PLUGHW );
+  v.push_back( PCM_DMIX );
 
   return v;
 }
