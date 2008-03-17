@@ -76,7 +76,6 @@ public:
   /*
    * Accessor to data structures
    */
-  CodecMap& getCodecMap() { return _codecMap; }
   CodecsMap& getCodecsMap() { return _CodecsMap; }
   CodecOrder& getActiveCodecs() { return _codecOrder; }
 
@@ -203,16 +202,33 @@ private:
    */
   void unloadCodec( CodecHandlePointer );
 
-  bool seemsValid( std::string );
-  bool alreadyInCache( std::string );
-  bool isCodecLoaded( int payload );
   /*
-   * Map the payload of a codec and its name
+   * Check if the files found in searched directories seems valid
+   * @param std::string	The name of the file
+   * @return true if the file name begins with libcodec_ and ends with .so
+   *	     false otherwise
    */
-  CodecMap _codecMap;
+  bool seemsValid( std::string );
+
+  /*
+   * Check if the codecs shared library has already been scanned during the session
+   * Useful not to load twice the same codec saved in the different directory
+   * @param std::string	The complete name of the shared directory ( without the path )
+   * @return true if the codecs has been scanned
+   *	    false otherwise
+   */
+  bool alreadyInCache( std::string );
   
   /*
-   * Map the payload of a codec and the object associated
+   *  Check if the audiocodec object has been successfully created
+   *  @param payload  The payload of the codec
+   *  @return true if the audiocodec has been created
+   *	      false otherwise
+   */
+  bool isCodecLoaded( int payload );
+  
+  /*
+   * Map the payload of a codec and the object associated ( AudioCodec * )
    */
   CodecsMap _CodecsMap;
   
@@ -221,6 +237,9 @@ private:
    */
   CodecOrder _codecOrder;
   
+  /*
+   * Vector containing the complete name of the codec shared library scanned
+   */
   std::vector<std::string> _Cache;
 
   /*
@@ -233,6 +252,9 @@ private:
    * Pair between pointer on function handle and pointer on audiocodec object
    */
   std::vector< CodecHandlePointer > _CodecInMemory;
+
+
 };
+
 
 #endif // __CODEC_DESCRIPTOR_H__

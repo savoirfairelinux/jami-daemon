@@ -39,7 +39,6 @@ CodecDescriptor::~CodecDescriptor()
   void
 CodecDescriptor::deleteHandlePointer( void )
 {
-  //_debug("Destroy codecs handles\n");
   int i;
   for( i = 0 ; i < _CodecInMemory.size() ; i++)
   {
@@ -51,11 +50,13 @@ CodecDescriptor::deleteHandlePointer( void )
   void
 CodecDescriptor::init()
 {
+  std::stringstream errMsg;
   std::vector<AudioCodec*> CodecDynamicList = scanCodecDirectory();
   _nbCodecs = CodecDynamicList.size();
   if( _nbCodecs <= 0 ){
-    _debug("Error - No codecs available in directory %s\n", CODECS_DIR);
-    exit(0);
+    errMsg << "Error - No codecs available in directory " << CODECS_DIR ;
+    _debug("%s\n" , errMsg.str().c_str());
+    //exit(0);
   }
 
   int i;
@@ -114,16 +115,6 @@ CodecDescriptor::isActive(AudioCodecType payload)
   void 
 CodecDescriptor::removeCodec(AudioCodecType payload)
 {
-  CodecMap::iterator iter = _codecMap.begin();
-  while(iter!=_codecMap.end()) {
-    if (iter->first == payload) {
-      _debug("Codec %s removed from the list", getCodecName(payload).data());
-      _codecMap.erase(iter);
-      break;
-    }
-    iter++;
-  }
-
 }
 
   void
