@@ -106,11 +106,8 @@ help_about ( void * foo)
     "Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
     "Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
     "Pierre-Luc Beaudoin <pierre-luc@squidy.info>", 
-    "Imran Akbar", 
     "Jean-Philippe Barrette-LaPierre",
     "Laurielle Lea",
-    "Mikael Magnusson",
-    "Sherry Yang", 
     NULL};
   gchar *artists[] = {
     "Pierre-Luc Beaudoin <pierre-luc@squidy.info>", 

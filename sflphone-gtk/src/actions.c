@@ -619,5 +619,12 @@ sflphone_fill_codec_list()
       codec_list_add(c);
     }
   }
+  if( codec_list_get_size() == 0) {
+    gchar* markup = malloc(1000);
+    sprintf(markup , "<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )", CODECS_DIR , g_get_home_dir());
+    main_window_error_message( markup );
+    g_free( markup );
+    dbus_unregister(getpid());
+    exit(0);
+  }
 }
-  

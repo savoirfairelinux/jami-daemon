@@ -28,4 +28,5 @@ sflphone_gtk_LDADD = $(DEPS_LIBS)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS) \
               -DICONS_DIR=\""$(datadir)/sflphone"\" \
-              -DICON_DIR=\""$(datadir)/pixmaps"\"
+              -DICON_DIR=\""$(datadir)/pixmaps"\" \
+	      -DCODECS_DIR=\""$(libdir)/sflphone/codecs"\"
