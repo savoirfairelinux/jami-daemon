@@ -228,6 +228,11 @@ public:
         {
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument errorAlert_args[] = 
+        {
+            { "errMsg", "s", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedMethod ConfigurationManager_methods[] = 
         {
             { "getAccountDetails", getAccountDetails_args },
@@ -268,6 +273,7 @@ public:
         {
             { "parametersChanged", parametersChanged_args },
             { "accountsChanged", accountsChanged_args },
+            { "errorAlert", errorAlert_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedProperty ConfigurationManager_properties[] = 
@@ -342,6 +348,13 @@ public:
     void accountsChanged(  )
     {
         ::DBus::SignalMessage sig("accountsChanged");
+        emit_signal(sig);
+    }
+    void errorAlert( const ::DBus::String& arg1 )
+    {
+        ::DBus::SignalMessage sig("errorAlert");
+        ::DBus::MessageIter wi = sig.writer();
+        wi << arg1;
         emit_signal(sig);
     }
 

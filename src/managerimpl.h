@@ -363,6 +363,11 @@ public:
    */
   void setDefaultAccount(const AccountID& accountID);
 
+  /*
+   * Notify the client that an error occured
+   * @param errMsg The error message that should popup on the client side
+   */
+  void notifyErrClient( const std::string& errMsg );
 
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);

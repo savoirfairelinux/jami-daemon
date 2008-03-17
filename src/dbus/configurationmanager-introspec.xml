@@ -148,5 +148,10 @@
     
     <signal name="accountsChanged">
     </signal>
+
+    <signal name="errorAlert">
+      <arg type="s" name="errMsg" direction="out"/>
+    </signal>
+
   </interface>
 </node>

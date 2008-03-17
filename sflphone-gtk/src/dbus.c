@@ -150,6 +150,13 @@ accounts_changed_cb (DBusGProxy *proxy,
   config_window_fill_account_list();
 }
 
+static void  
+error_alert(DBusGProxy *proxy,
+                  void * foo  )
+{
+  g_print ("Error notifying \n");
+}
+
 gboolean 
 dbus_connect ()
 {
@@ -244,6 +251,10 @@ dbus_connect ()
   dbus_g_proxy_connect_signal (configurationManagerProxy,
     "accountsChanged", G_CALLBACK(accounts_changed_cb), NULL, NULL);
    
+  dbus_g_proxy_add_signal (configurationManagerProxy, 
+    "errorAlert", G_TYPE_INVALID);
+  dbus_g_proxy_connect_signal (configurationManagerProxy,
+    "errorAlert", G_CALLBACK(error_alert), NULL, NULL);
   return TRUE;
 }
 
