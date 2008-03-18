@@ -451,6 +451,9 @@ ManagerImpl::initRegisterAccounts()
     }
     iter++;
   }
+  // calls the client notification here in case of errors at startup...
+  if( _audiodriver -> getErrorMessage() != "" )
+    notifyErrClient( _audiodriver -> getErrorMessage() );
   return true;
 }
 
@@ -1419,8 +1422,10 @@ ManagerImpl::setRingtoneChoice( const std::string& tone )
 void
 ManagerImpl::notifyErrClient( const std::string& errMsg )
 {
-  _debug("Call notifyErrClient: %s\n" , errMsg.c_str());
-  if( _dbus ) _dbus -> getConfigurationManager() -> errorAlert( errMsg , 0 );
+  if( _dbus ) {
+    _debug("Call notifyErrClient: %s\n" , errMsg.c_str());
+    _dbus -> getConfigurationManager() -> errorAlert( errMsg , 0 );
+  }
 }
 
   int
