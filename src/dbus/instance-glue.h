@@ -22,6 +22,7 @@ public:
     {
         register_method(Instance, Register, _Register_stub);
         register_method(Instance, Unregister, _Unregister_stub);
+        register_method(Instance, getRegistrationCount, _getRegistrationCount_stub);
     }
 
     ::DBus::IntrospectedInterface* const introspect() const 
@@ -37,10 +38,16 @@ public:
             { "pid", "i", true },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getRegistrationCount_args[] = 
+        {
+            { "count", "i", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedMethod Instance_methods[] = 
         {
             { "Register", Register_args },
             { "Unregister", Unregister_args },
+            { "getRegistrationCount", getRegistrationCount_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod Instance_signals[] = 
@@ -74,6 +81,7 @@ public:
      */
     virtual void Register( const ::DBus::Int32& pid, const ::DBus::String& name ) = 0;
     virtual void Unregister( const ::DBus::Int32& pid ) = 0;
+    virtual ::DBus::Int32 getRegistrationCount(  ) = 0;
 
 public:
 
@@ -101,6 +109,16 @@ private:
         ::DBus::Int32 argin1; ri >> argin1;
         Unregister(argin1);
         ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getRegistrationCount_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argout1 = getRegistrationCount();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
         return reply;
     }
 };

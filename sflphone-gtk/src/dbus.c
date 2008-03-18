@@ -152,9 +152,10 @@ accounts_changed_cb (DBusGProxy *proxy,
 
 static void  
 error_alert(DBusGProxy *proxy,
+		  gchar* errMsg,
                   void * foo  )
 {
-  g_print ("Error notifying \n");
+  g_print ("Error notifying : (%s)\n" , errMsg);
 }
 
 gboolean 
@@ -672,6 +673,29 @@ dbus_unregister(int pid)
   }
 }
 
+int
+dbus_get_registration_count( void )
+{
+  GError *error = NULL;
+  int n;
+
+  org_sflphone_SFLphone_Instance_get_registration_count(
+    instanceProxy, 
+    &n, 
+    &error);
+
+  if (error) 
+  {
+    g_printerr ("Failed to call get_registration_count() on instanceProxy: %s\n",
+                error->message);
+    g_error_free (error);
+  } 
+  else 
+  {
+    g_print ("DBus called get_registration_count() on instanceProxy\n");
+  }
+  return n;
+}
 
 gchar**
 dbus_codec_list()

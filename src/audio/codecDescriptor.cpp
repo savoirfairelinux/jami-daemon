@@ -50,12 +50,10 @@ CodecDescriptor::deleteHandlePointer( void )
   void
 CodecDescriptor::init()
 {
-  std::stringstream errMsg;
   std::vector<AudioCodec*> CodecDynamicList = scanCodecDirectory();
   _nbCodecs = CodecDynamicList.size();
   if( _nbCodecs <= 0 ){
-    errMsg << "Error - No codecs available in directory " << CODECS_DIR ;
-    _debug("%s\n" , errMsg.str().c_str());
+    _debug(" Error - No codecs available in directory %s\n" , CODECS_DIR);
     //exit(0);
   }
 

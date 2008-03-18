@@ -82,6 +82,7 @@ void dbus_set_ringtone_choice( const gchar* tone );
 /* Instance */
 void dbus_register( int pid, gchar * name);
 void dbus_unregister(int pid);
+int dbus_get_registration_count( void );
 
 
 

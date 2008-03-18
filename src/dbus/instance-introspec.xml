@@ -11,5 +11,8 @@
       <arg type="i" name="pid" direction="in"/>
     </method>
     
+    <method name="getRegistrationCount">
+      <arg type="i" name="count" direction="out"/>
+    </method>
   </interface>
 </node>

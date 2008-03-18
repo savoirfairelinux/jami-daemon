@@ -38,7 +38,7 @@ public:
   
   void Register( const ::DBus::Int32& pid, const ::DBus::String& name ); 
   void Unregister( const ::DBus::Int32& pid );
-    
+  DBus::Int32 getRegistrationCount( void );
     
 };
 

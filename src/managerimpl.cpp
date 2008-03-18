@@ -108,6 +108,7 @@ ManagerImpl::~ManagerImpl (void)
   delete _DNSService; _DNSService = 0;
 #endif
 
+  //notifyErrClient( " done " );
   _debug("%s stop correctly.\n", PROGNAME);
 }
 
