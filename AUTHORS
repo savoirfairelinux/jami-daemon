@@ -1,5 +1,35 @@
 Current authors:
 
+Emmanuel Milou <emmanuel dot milou at savoirfairelinux dot com>
+	- ALSA implementation ( replaces portaudio )
+	- Dynamic loading of audio codecs ( shared libraries )
+	- Debian packages
+	- GTK client error handling
+	- Plus many portions of code in sflphoned and sflphone-gtk 
+	- Test and debugging
+
+Alexandre Bourget <alexandre dot bourget at savoirfairelinux dot com>
+	- IAX implementation
+
+Guillaume Carmel-Archambault <guillaume.carmel-archambault at savoirfairelinux dot com>
+	- Presence 
+	- Contacts
+
+Polytechnic School of Montreal:
+  - Jean-Francois Blanchard-Dionne <jean-francois.blanchard-dionne at polymtl dot ca>
+  - Ala Eddine Limame <ala-eddine.limame at polymtl dot ca>
+  - Alexis S. Bourrelle <bourrelle at polymtl dot ca>
+  - Marilyne Mercier <marilyne.mercier at polymtl dot ca>
+  - Jean Tessier <jean.tessier at polymtl dot ca>
+	- Video layer implementation
+	- Video conference
+
+Pierre-Luc Beaudoin <pierre-luc.beaudoin at savoirfairelinux dot com>
+  - Many portions of code
+  - GTK client implementation
+
+Former authors:
+
 Yan Morin <yan dot morin at savoirfairelinux dot com>
 	- zeroconf integration
 	- sflphoned deamon
@@ -12,10 +42,6 @@ Jerome Oufella <jerome dot oufella at savoirfairelinux dot com>
 Julien Plissonneau Duquene <... at savoirfairelinux dot com>
 	- autotools cleanups
 
-
-
-Former authors:
-
 Jean-Philippe Barrette-LaPierre 
 	- Autotools support and portions of code
 
@@ -23,10 +49,9 @@ Laurielle Lea
 	- Implementation of SFLphone
 
 Sherry Yang <syangs04 at yahoo dot com>
+
 Imran Akbar <imr at stanford dot edu>
 	- Working on Win32 port
-
-
 
 Contributors:
 

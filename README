@@ -1,6 +1,6 @@
-This is SFLphone, release 0.7pre0cvs.
+This is SFLphone, release 0.8.
 
-Copyright (c) Savoir-faire Linux, Inc 2004-2006
+Copyright (c) Savoir-faire Linux, Inc 2004-2008
   <sflphoneteam@savoirfairelinux.com>
 
 This program is free software; you can redistribute it and/or modify
@@ -23,15 +23,14 @@ Introduction
 ------------
 
 SFLPhone is a Voice-over-IP software phone. We want it to be:
-- portable (it runs under GNU/Linux, Mac OS X, Win32)
 - user friendly (fast, sleek, easy to learn interface)
 - corporate grade (transfers, holds, perfect audio quality)
 - fully compatible with Asterisk (SIP and IAX protocols)
-- customizable (support for custom skins in the QT interface)
+- customizable 
 
 As the SIP/audio daemon and the user interface are separate processes,
-it is easy to provide different user interfaces. SFLPhone comes with
-a QT graphical user interface, an interactive command line interface,
+it is easy to provide different user interfaces. SFLPhone0.8 comes with
+a GTK graphical user interface, an interactive command line interface,
 and even scripts to control the daemon from the shell.
 
 SFLPhone is actually used by the support team of Savoir-Faire Linux Inc.
@@ -59,8 +58,6 @@ Required libraries and tools:
 Optional libraries:
 - zeroconf: (tested with mDNSResponder87)
     http://developer.apple.com/darwin/projects/bonjour/
-- QT: required for the graphical user interface
-    usually available in distribution repositories
 - speex: codec for sound
 
 Some of the required libraries may be downloaded from
@@ -71,9 +68,8 @@ Some of the required libraries may be downloaded from
 See tools/config.sh for details
 
 So in debian, you need:
-apt-get install autoconf automake1.9 libtool libosip2-dev libexosip2-dev libccrtp-dev libcommoncpp2-dev pkg-config libqt3-mt-dev libsamplerate-dev libasound2-dev
+apt-get install autoconf automake1.9 libtool libosip2-dev libexosip2-dev libccrtp-dev libcommoncpp2-dev pkg-config libsamplerate-dev libasound2-dev
 
-For portaudio: libportaudio2 libportaudiocpp0 portaudio19-dev jackd
 
 Building the dependencies
 -------------------------
@@ -81,13 +77,6 @@ Building the dependencies
 If you do not use either the development packages of your distribution or the source packages made by the upstream authors of dependencies, you may want to try our custom dependencies building script in tools/ directory:
 Note that commoncpp, ccrtp, libosip and libexosip, samplerate are in debian and fedora.
 
-1. cd tools/
-2. ./portaudio.sh <-- compile portaudio
-3. if you want to install other software, check inside the file config.sh
-   edit config.sh to change the default prefix (/usr/local)
-   ./download.sh
-   ./install.sh
- 
 You can also compile each dependency, one by one:
 
 1/	For commoncpp2
@@ -105,25 +94,8 @@ You can also compile each dependency, one by one:
 	make
 	make install
 
-4/	For portaudio v19
-	./configure --enable-cxx [option]
-	make
-	make install
-
 	Note: if you install any package in /usr/local, don't forget to set pkg-config path with:
 	export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
-
-
-Preparing a CVS checkout of SFLPhone to be built
-------------------------------------------------
-
-Before building from a CVS checkout, the GNU autotools suite must be used
-to generate the configure script and Makefiles. The current version
-of SFLPhone has been tested with Automake 1.9 and Autoconf 2.59.
-
-To do so, you may run the following script from the top directory:
-  ./tools/autotoolize.sh
-
 
 
 Building SFLPhone
@@ -144,7 +116,7 @@ to sflphonedrc:
 If you have an older version, remove your sflphonerc file located in
 $HOME/.sflphone
 
-1. Install a GUI like sflphone-qt
+1. Install the GTK GUI 
 
 2. Lauch sflphone interface, a setup window appears. 
 
@@ -185,8 +157,6 @@ Debugging SFLPhone
 You can use the --with-debug option with configure
 ./configure --with-debug
 make
-cd src
-PATH=. ./gui/qt/sflphone-qt
 
 
 Run-time troubleshooting
