@@ -1420,7 +1420,7 @@ void
 ManagerImpl::notifyErrClient( const std::string& errMsg )
 {
   _debug("Call notifyErrClient: %s\n" , errMsg.c_str());
-  if( _dbus ) _dbus -> getConfigurationManager() -> errorAlert( errMsg );
+  if( _dbus ) _dbus -> getConfigurationManager() -> errorAlert( errMsg , 0 );
 }
 
   int

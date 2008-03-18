@@ -153,9 +153,11 @@ accounts_changed_cb (DBusGProxy *proxy,
 static void  
 error_alert(DBusGProxy *proxy,
 		  gchar* errMsg,
+		  int err,
                   void * foo  )
 {
   g_print ("Error notifying : (%s)\n" , errMsg);
+  sflphone_throw_exception( errMsg , err );
 }
 
 gboolean 
@@ -252,8 +254,10 @@ dbus_connect ()
   dbus_g_proxy_connect_signal (configurationManagerProxy,
     "accountsChanged", G_CALLBACK(accounts_changed_cb), NULL, NULL);
    
+  dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_INT,
+          G_TYPE_NONE, G_TYPE_STRING, G_TYPE_INT , G_TYPE_INVALID);
   dbus_g_proxy_add_signal (configurationManagerProxy, 
-    "errorAlert", G_TYPE_INVALID);
+    "errorAlert", G_TYPE_STRING , G_TYPE_INT , G_TYPE_INVALID);
   dbus_g_proxy_connect_signal (configurationManagerProxy,
     "errorAlert", G_CALLBACK(error_alert), NULL, NULL);
   return TRUE;

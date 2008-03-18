@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define ALSA_ERROR  0
 
 	void
 sflphone_notify_voice_mail (guint count)
@@ -575,6 +576,20 @@ sflphone_set_default_account( )
 {
 	gchar* default_id = strdup(dbus_get_default_account());
 	account_list_set_default(default_id);	
+}
+
+void
+sflphone_throw_exception( gchar* msg , int err )
+{
+  gchar* markup = malloc(1000);
+  switch( err ){
+    case ALSA_ERROR:
+      sprintf( markup , "<b>ALSA notification</b>\n\n");
+      break;
+  }
+  sprintf( markup , "%s%s" , markup , msg );
+  main_window_error_message( markup );  
+  free( markup );
 }
 
 
