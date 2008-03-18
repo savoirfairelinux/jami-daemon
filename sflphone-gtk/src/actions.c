@@ -69,7 +69,7 @@ sflphone_quit ()
 		dbus_clean ();
 		//call_list_clean(); TODO
 		//account_list_clean()
-		create_progress_bar();
+		display_progress_bar();
 		gtk_main_quit ();
 	}
 	return quit;

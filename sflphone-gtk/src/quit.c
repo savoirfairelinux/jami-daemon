@@ -19,39 +19,45 @@
 
 #include "quit.h"
 
+#define ITERATIONS  1700
+
 void
 update_progress_bar( GtkWidget* bar )
 {
-  gdouble fraction;
   gint i;
-  gint total = 2000;
-  //gtk_progress_bar_set_fraction( GTK_PROGRESS_BAR (bar) , 0.0);
-  gtk_grab_add( bar );
+  //gtk_grab_add( bar );
 
-  for( i = 0 ; i < total ; i++)
+  for( i = 0 ; i < ITERATIONS ; i++)
   {
-    fraction = (gdouble)i / (gdouble)total ;
     usleep(5000);
-    if( i > 1000 )
+    if( i > 700 && i < 1000)
       gtk_progress_bar_set_text( (GtkProgressBar *)bar , "Saving configuration....");
-    //gtk_progress_bar_set_fraction( GTK_PROGRESS_BAR (bar) , fraction);
+    if( i > 1000 && i < 1300 )
+      gtk_progress_bar_set_text( (GtkProgressBar *)bar , "Unload DTMF key");
+    if( i > 1300 && i < 1500 )
+      gtk_progress_bar_set_text( (GtkProgressBar *)bar , "Unload audio driver");
+    if( i > 1500 )
+      gtk_progress_bar_set_text( (GtkProgressBar *)bar , "Unload audio codecs");
+
     gtk_progress_bar_set_pulse_step( (GtkProgressBar*) bar , 0.01 );
     gtk_progress_bar_pulse( (GtkProgressBar*)bar);
     gtk_main_iteration();
   }
-  gtk_grab_remove( bar );
+  //gtk_grab_remove( bar );
 }
 
 GtkWidget*
-create_progress_bar( void )
+display_progress_bar( void )
 {
-  g_print("Progress Bar \n");
   GtkWidget *top;
   GtkWidget *progressBar;
   GtkWidget *vbox;
 
   top = gtk_window_new( GTK_WINDOW_TOPLEVEL );
-  gtk_window_set_default_size( GTK_WINDOW( top ), 240, 20);
+  //gtk_window_set_default_size( GTK_WINDOW( top ), 260, 20);
+  gtk_widget_set_size_request( top , 250, 20);
+  gtk_window_set_policy (GTK_WINDOW ( top ), FALSE, FALSE, FALSE);
+  gtk_window_set_position( GTK_WINDOW( top ) , GTK_WIN_POS_CENTER_ALWAYS );
   gtk_container_set_border_width(GTK_CONTAINER( top ), 0);
 
   vbox = gtk_vbox_new(TRUE, 0);
@@ -65,12 +71,4 @@ create_progress_bar( void )
   update_progress_bar( progressBar );
 
 } 
-
-void
-destroy_progress_bar()
-{
-  //gtk_widget_destroy( progressBar );
-}
-
-
 

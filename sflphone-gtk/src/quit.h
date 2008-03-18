@@ -24,9 +24,7 @@
 /** @file quit.h
  * @brief Display a progress bar when quiting.
  */
-GtkWidget * create_progress_bar();
-
-//GtkWidget* progressBar;
+GtkWidget * display_progress_bar();
 
 #endif
 
