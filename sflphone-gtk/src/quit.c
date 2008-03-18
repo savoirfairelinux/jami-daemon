@@ -59,6 +59,7 @@ display_progress_bar( void )
   gtk_window_set_policy (GTK_WINDOW ( top ), FALSE, FALSE, FALSE);
   gtk_window_set_position( GTK_WINDOW( top ) , GTK_WIN_POS_CENTER_ALWAYS );
   gtk_container_set_border_width(GTK_CONTAINER( top ), 0);
+  gtk_window_set_deletable( GTK_WINDOW( top ) , FALSE );
 
   vbox = gtk_vbox_new(TRUE, 0);
   gtk_container_add(GTK_CONTAINER(top), vbox);
