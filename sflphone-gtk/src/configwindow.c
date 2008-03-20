@@ -895,6 +895,9 @@ create_accounts_tab()
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
 	gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
+	
+	// A double click on the account line opens the window to edit the account
+	g_signal_connect( G_OBJECT( treeView ) , "row-activated" , G_CALLBACK( edit_account ) , NULL );
 
 	renderer = gtk_cell_renderer_text_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes ("Protocol",
@@ -1176,11 +1179,11 @@ show_config_window ()
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new("Audio Settings"));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
-	//gtk_dialog_run(dialog);
-	gtk_widget_show( GTK_WIDGET(dialog) );
-	g_signal_connect_swapped( dialog , "response" , G_CALLBACK( gtk_widget_destroy ), dialog );
+	gtk_dialog_run(dialog);
+	//gtk_widget_show( GTK_WIDGET(dialog) );
+	//g_signal_connect_swapped( dialog , "response" , G_CALLBACK( gtk_widget_destroy ), dialog );
 
 	dialogOpen = FALSE;
 
-	//gtk_widget_destroy(GTK_WIDGET(dialog));
+	gtk_widget_destroy(GTK_WIDGET(dialog));
 }
