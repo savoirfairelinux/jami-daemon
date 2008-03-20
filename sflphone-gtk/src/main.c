@@ -40,6 +40,11 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
   
   srand ( time(NULL) );
   
+  // Internationalization
+  g_print("%s\n",setlocale( LC_ALL , "" ));
+  bindtextdomain( "sflphone" , "/usr/share/locale" );
+  textdomain( "sflphone" );
+
   if(sflphone_init())
   {
     show_status_icon();

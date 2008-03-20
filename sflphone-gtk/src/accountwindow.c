@@ -18,6 +18,7 @@
  */
 
 #include <config.h>
+#include <actions.h>
 #include <mainwindow.h>
 #include <accountlist.h>
 #include <string.h>
@@ -76,7 +77,6 @@ change_protocol (account_t * currentAccount)
 is_iax_enabled(void)
 {
   int res = dbus_is_iax2_enabled();
-  printf("%d\n" , res);
   if(res == 1)	
     return TRUE;
   else	
@@ -129,7 +129,7 @@ show_account_window (account_t * a)
     curAccountID = "test";
   }
 
-  dialog = GTK_DIALOG(gtk_dialog_new_with_buttons ("Account settings",
+  dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
 	GTK_WINDOW(get_main_window()),
 	GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
 	GTK_STOCK_OK,
@@ -154,7 +154,7 @@ show_account_window (account_t * a)
   gtk_table_attach ( GTK_TABLE( table ), entryID, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 #endif 
 
-  entryEnabled = gtk_check_button_new_with_mnemonic("_Enabled");
+  entryEnabled = gtk_check_button_new_with_mnemonic(_("_Enabled"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryEnabled), 
       strcmp(curAccountEnabled,"TRUE") == 0 ? TRUE: FALSE); 
   gtk_table_attach ( GTK_TABLE( table ), entryEnabled, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -164,7 +164,7 @@ show_account_window (account_t * a)
   //  strcmp(g_hash_table_lookup(currentAccount->properties, ACCOUNT_REGISTER),"TRUE") == 0 ? TRUE: FALSE); 
   //gtk_table_attach ( GTK_TABLE( table ), entryRegister, 0, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-  label = gtk_label_new_with_mnemonic ("_Alias:");
+  label = gtk_label_new_with_mnemonic (_("_Alias:"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryName = gtk_entry_new();
@@ -172,7 +172,7 @@ show_account_window (account_t * a)
   gtk_entry_set_text(GTK_ENTRY(entryName), g_hash_table_lookup(currentAccount->properties, ACCOUNT_ALIAS));
   gtk_table_attach ( GTK_TABLE( table ), entryName, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-  label = gtk_label_new_with_mnemonic ("_Protocol:");
+  label = gtk_label_new_with_mnemonic (_("_Protocol"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryProtocol = gtk_combo_box_new_text();
@@ -191,7 +191,7 @@ show_account_window (account_t * a)
   else
   {
     /* Should never come here, add debug message. */
-    gtk_combo_box_append_text(GTK_COMBO_BOX(entryProtocol), "Unknown");
+    gtk_combo_box_append_text(GTK_COMBO_BOX(entryProtocol), _("Unknown"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(entryProtocol),2);  
   }
   gtk_table_attach ( GTK_TABLE( table ), entryProtocol, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -201,7 +201,7 @@ show_account_window (account_t * a)
       G_CALLBACK (change_protocol),
       currentAccount);
 
-  label = gtk_label_new_with_mnemonic ("_Full Name:");
+  label = gtk_label_new_with_mnemonic (_("_Full Name"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryFullName = gtk_entry_new();
@@ -209,7 +209,7 @@ show_account_window (account_t * a)
   gtk_entry_set_text(GTK_ENTRY(entryFullName), curFullName);
   gtk_table_attach ( GTK_TABLE( table ), entryFullName, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-  label = gtk_label_new_with_mnemonic ("_User part:");
+  label = gtk_label_new_with_mnemonic (_("_User part"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryUserPart = gtk_entry_new();
@@ -217,7 +217,7 @@ show_account_window (account_t * a)
   gtk_entry_set_text(GTK_ENTRY(entryUserPart), curUserPart);
   gtk_table_attach ( GTK_TABLE( table ), entryUserPart, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-  label = gtk_label_new_with_mnemonic ("_Host part:");
+  label = gtk_label_new_with_mnemonic (_("_Host part"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryHostPart = gtk_entry_new();
@@ -225,7 +225,7 @@ show_account_window (account_t * a)
   gtk_entry_set_text(GTK_ENTRY(entryHostPart), curHostPart);
   gtk_table_attach ( GTK_TABLE( table ), entryHostPart, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-  label = gtk_label_new_with_mnemonic ("U_sername:");
+  label = gtk_label_new_with_mnemonic (_("U_sername"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryUsername = gtk_entry_new();
@@ -233,7 +233,7 @@ show_account_window (account_t * a)
   gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
   gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-  label = gtk_label_new_with_mnemonic ("_Password:");
+  label = gtk_label_new_with_mnemonic (_("_Password"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 9, 10, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryPassword = gtk_entry_new();

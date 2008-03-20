@@ -21,6 +21,11 @@
 #ifndef __ACTIONS_H__
 #define __ACTIONS_H__
 
+#define _(STRING)   gettext( STRING )   
+
+#include <libintl.h>
+#include <locale.h>
+
 #include <calllist.h>
 #include <accountlist.h>
 #include <codeclist.h>

@@ -222,6 +222,9 @@ sflphone_pick_up()
 			case CALL_STATE_CURRENT:
 				sflphone_new_call();
 				break;
+			case CALL_STATE_RINGING:
+				sflphone_new_call();
+				break;
 			default:
 				g_warning("Should not happen in sflphone_pick_up()!");
 				break;

@@ -230,7 +230,7 @@ select_active_output_audio_device()
 	// Select active output device on server
 	devices = dbus_get_current_audio_devices_index();
 	currentDeviceIndex = atoi(devices[0]);
-	printf("audio device index for output = %d\n", currentDeviceIndex);
+	printf(_("audio device index for output = %d\n"), currentDeviceIndex);
 	model = gtk_combo_box_get_model(GTK_COMBO_BOX(outputDeviceComboBox));
 	
 	// Find the currently set output device
@@ -796,22 +796,22 @@ create_codec_table()
 	
 	// Name column
 	renderer = gtk_cell_renderer_text_new();
-	treeViewColumn = gtk_tree_view_column_new_with_attributes("Name", renderer, "markup", COLUMN_CODEC_NAME, NULL);
+	treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Name"), renderer, "markup", COLUMN_CODEC_NAME, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 	
 	// Bit rate column
 	renderer = gtk_cell_renderer_text_new();
-	treeViewColumn = gtk_tree_view_column_new_with_attributes("Frequency", renderer, "text", COLUMN_CODEC_FREQUENCY, NULL);
+	treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Frequency"), renderer, "text", COLUMN_CODEC_FREQUENCY, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 	
 	// Bandwith column
 	renderer = gtk_cell_renderer_text_new();
-	treeViewColumn = gtk_tree_view_column_new_with_attributes("Bitrate", renderer, "text", COLUMN_CODEC_BITRATE, NULL);
+	treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Bitrate"), renderer, "text", COLUMN_CODEC_BITRATE, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 	
 	// Frequency column
 	renderer = gtk_cell_renderer_text_new();
-	treeViewColumn = gtk_tree_view_column_new_with_attributes("Bandwidth", renderer, "text", COLUMN_CODEC_BANDWIDTH, NULL);
+	treeViewColumn = gtk_tree_view_column_new_with_attributes(_("Bandwidth"), renderer, "text", COLUMN_CODEC_BANDWIDTH, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(codecTreeView), treeViewColumn);
 	
 	g_object_unref(G_OBJECT(codecStore));
@@ -857,7 +857,7 @@ create_accounts_tab()
 	ret = gtk_vbox_new(FALSE, 10); 
 	gtk_container_set_border_width(GTK_CONTAINER (ret), 10);
 
-	label = gtk_label_new("This is the list of accounts previously setup.");
+	label = gtk_label_new(_("Accounts previously setup."));
 
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
@@ -900,7 +900,7 @@ create_accounts_tab()
 	g_signal_connect( G_OBJECT( treeView ) , "row-activated" , G_CALLBACK( edit_account ) , NULL );
 
 	renderer = gtk_cell_renderer_text_new();
-	treeViewColumn = gtk_tree_view_column_new_with_attributes ("Protocol",
+	treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Protocol"),
 			renderer,
 			"markup", 1,
 			NULL);
@@ -908,7 +908,7 @@ create_accounts_tab()
 	gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
 
 	renderer = gtk_cell_renderer_text_new();
-	treeViewColumn = gtk_tree_view_column_new_with_attributes ("Status",
+	treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Status"),
 			renderer,
 			"markup", 2,
 			NULL);
@@ -942,7 +942,7 @@ create_accounts_tab()
 	gtk_box_pack_start(GTK_BOX(buttonBox), deleteButton, FALSE, FALSE, 0);
 	gtk_widget_show(deleteButton);
 	
-	defaultButton = gtk_button_new_with_mnemonic("Set as Default");
+	defaultButton = gtk_button_new_with_mnemonic(_("Set as Default"));
 	g_signal_connect_swapped(G_OBJECT(defaultButton), "clicked", 
 			G_CALLBACK(default_account), NULL);
 	gtk_box_pack_start(GTK_BOX(buttonBox), defaultButton, FALSE, FALSE, 0);
@@ -984,7 +984,7 @@ create_audio_tab ()
     
     // Device section label
     deviceLabel = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(deviceLabel), "<b>Devices</b>");
+    gtk_label_set_markup(GTK_LABEL(deviceLabel), _("<b>Devices</b>"));
 	gtk_label_set_line_wrap(GTK_LABEL(deviceLabel), TRUE);
 	gtk_misc_set_alignment(GTK_MISC(deviceLabel), 0, 0.5);
 	gtk_label_set_justify(GTK_LABEL(deviceLabel), GTK_JUSTIFY_LEFT);
@@ -1025,7 +1025,7 @@ create_audio_tab ()
 	gtk_widget_show(comboBox);
 	*/
 	// Create title label
-	titleLabel = gtk_label_new("Alsa plug-OUT:");
+	titleLabel = gtk_label_new(_("ALSA plugin"));
 	gtk_misc_set_alignment(GTK_MISC(titleLabel), 0, 0.5);
 	gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 	gtk_widget_show(titleLabel);
@@ -1046,7 +1046,7 @@ create_audio_tab ()
 	
 	// Device : Output device
 	// Create title label
-	titleLabel = gtk_label_new("Output peripheral:");
+	titleLabel = gtk_label_new(_("Output peripheral"));
     gtk_misc_set_alignment(GTK_MISC(titleLabel), 0, 0.5);
     gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     gtk_widget_show(titleLabel);
@@ -1067,7 +1067,7 @@ create_audio_tab ()
 	
 	// Device : Input device
 	// Create title label
-	titleLabel = gtk_label_new("Input peripheral:");
+	titleLabel = gtk_label_new(_("Input peripheral"));
     gtk_misc_set_alignment(GTK_MISC(titleLabel), 0, 0.5);
     gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
 	gtk_widget_show(titleLabel);
@@ -1087,7 +1087,7 @@ create_audio_tab ()
 	gtk_widget_show(inputDeviceComboBox);
 	
 	// Create detect button
-	refreshButton = gtk_button_new_with_label("Detect all");
+	refreshButton = gtk_button_new_with_label(_("Detect all"));
 	gtk_button_set_image(GTK_BUTTON(refreshButton), gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_BUTTON));
 	gtk_table_attach(GTK_TABLE(deviceTable), refreshButton, 3, 4, 3, 4, GTK_EXPAND, GTK_EXPAND, 0, 0);
 	// Set event on selection
@@ -1116,17 +1116,17 @@ create_audio_tab ()
     // check button to enable ringtones
 	GtkWidget* box = gtk_hbox_new( TRUE , 1);
 	gtk_box_pack_start( GTK_BOX(ret) , box , FALSE , FALSE , 1);
-	enableTone = gtk_check_button_new_with_mnemonic( "_Enable ringtones");
+	enableTone = gtk_check_button_new_with_mnemonic( _("_Enable ringtones"));
 	gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
 	gtk_box_pack_start( GTK_BOX(box) , enableTone , TRUE , TRUE , 1);
 	g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
     // file chooser button
-	fileChooser = gtk_file_chooser_button_new("Choose a ringtone", GTK_FILE_CHOOSER_ACTION_OPEN);
+	fileChooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());	
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , get_ringtone_choice());	
 	g_signal_connect( G_OBJECT( fileChooser ) , "selection_changed" , G_CALLBACK( ringtone_changed ) , NULL );
 	GtkFileFilter *filter = gtk_file_filter_new();
-	gtk_file_filter_set_name( filter , "Audio Files" );
+	gtk_file_filter_set_name( filter , _("Audio Files") );
 	gtk_file_filter_add_pattern(filter , "*.wav" );
 	gtk_file_filter_add_pattern(filter , "*.ul" );
 	gtk_file_filter_add_pattern(filter , "*.au" );
@@ -1151,7 +1151,7 @@ show_config_window ()
 
 	dialogOpen = TRUE;
 
-	dialog = GTK_DIALOG(gtk_dialog_new_with_buttons ("Preferences",
+	dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Preferences"),
 				GTK_WINDOW(get_main_window()),
 				GTK_DIALOG_DESTROY_WITH_PARENT,
 				GTK_STOCK_CLOSE,
@@ -1171,12 +1171,12 @@ show_config_window ()
 
 	// Accounts tab
 	tab = create_accounts_tab();
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new("Accounts"));
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Accounts")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 	
 	// Audio tab
 	tab = create_audio_tab();	
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new("Audio Settings"));
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio Settings")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
 	gtk_dialog_run(dialog);
