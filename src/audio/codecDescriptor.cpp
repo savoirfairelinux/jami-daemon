@@ -272,6 +272,16 @@ CodecDescriptor::seemsValid( std::string lib)
   std::string begin = SFL_CODEC_VALID_PREFIX;
   std::string end = SFL_CODEC_VALID_EXTEN;
 
+  // First : check the length of the file name. 
+  // If it is shorter than begin.length() + end.length() , not a SFL shared library
+  if( lib.length() <= begin.length() + end.length() )
+    return false;
+
+  // Second: check the extension of the file name.
+  // If it is different than SFL_CODEC_VALID_EXTEN , not a SFL shared library
+  if( lib.substr( lib.length() - end.length() , lib.length()) != end )
+    return false;
+
 #ifdef BUILD_SPEEX
   // Nothing special
 #else
