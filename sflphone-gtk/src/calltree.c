@@ -283,39 +283,39 @@ create_toolbar (){
 	gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_ICONS);
 
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
-	callButton = gtk_tool_button_new (image, "Place a Call");
-	gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), "Place a call");
+	callButton = gtk_tool_button_new (image, _("Place a Call"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("Place a call"));
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);
 
 	image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
-	pickupButton = gtk_tool_button_new(image, "Pick up");
-	gtk_widget_set_tooltip_text(GTK_WIDGET(pickupButton), "Pick up");
+	pickupButton = gtk_tool_button_new(image, _("Pick up"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(pickupButton), _("Pick up"));
 	gtk_widget_set_state( GTK_WIDGET(pickupButton), GTK_STATE_INSENSITIVE);
 	g_signal_connect(G_OBJECT (pickupButton), "clicked", 
 			G_CALLBACK (call_button), NULL);
 	gtk_widget_show_all(GTK_WIDGET(pickupButton));
 
 	image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
-	hangupButton = gtk_tool_button_new (image, "Hang up");
-	gtk_widget_set_tooltip_text(GTK_WIDGET(hangupButton), "Hang up");
+	hangupButton = gtk_tool_button_new (image, _("Hang up"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(hangupButton), _("Hang up"));
 	gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
 	g_signal_connect (G_OBJECT (hangupButton), "clicked",
 			G_CALLBACK (hang_up), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(hangupButton), -1);  
 
 	image = gtk_image_new_from_file( ICONS_DIR "/unhold.svg");
-	unholdButton = gtk_tool_button_new (image, "Off Hold");
-	gtk_widget_set_tooltip_text(GTK_WIDGET(unholdButton), "Off Hold");
+	unholdButton = gtk_tool_button_new (image, _("Off Hold"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(unholdButton), _("Off Hold"));
 	gtk_widget_set_state( GTK_WIDGET(unholdButton), GTK_STATE_INSENSITIVE);
 	g_signal_connect (G_OBJECT (unholdButton), "clicked",
 			G_CALLBACK (unhold), NULL);
 	gtk_widget_show_all(GTK_WIDGET(unholdButton));
 
 	image = gtk_image_new_from_file( ICONS_DIR "/hold.svg");
-	holdButton =  gtk_tool_button_new (image, "On Hold");
-	gtk_widget_set_tooltip_text(GTK_WIDGET(holdButton), "On Hold");
+	holdButton =  gtk_tool_button_new (image, _("On Hold"));
+	gtk_widget_set_tooltip_text(GTK_WIDGET(holdButton), _("On Hold"));
 	gtk_widget_set_state( GTK_WIDGET(holdButton), GTK_STATE_INSENSITIVE);
 	g_signal_connect (G_OBJECT (holdButton), "clicked",
 			G_CALLBACK (hold), NULL);
@@ -324,8 +324,8 @@ create_toolbar (){
 	image = gtk_image_new_from_file( ICONS_DIR "/transfert.svg");
 	transfertButton = gtk_toggle_tool_button_new ();
 	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(transfertButton), image);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(transfertButton), "Transfer");
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), "Transfer");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(transfertButton), _("Transfer"));
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), _("Transfer"));
 	gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
 	transfertButtonConnId = g_signal_connect (G_OBJECT (transfertButton), "toggled",
 			G_CALLBACK (transfert), NULL);
