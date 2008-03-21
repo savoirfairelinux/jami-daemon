@@ -21,7 +21,7 @@ msgid "Pick up"
 msgstr "Décrocher"
 
 msgid "Place a call"
-msgstr "Nouvel Appel"
+msgstr "Appeler"
 
 msgid "On _Hold" 
 msgstr "_Mettre en attente"
@@ -32,14 +32,14 @@ msgstr "Mettre en attente"
 msgid "Off Hold"
 msgstr "Reprendre"
 
-msgid "Tranfer"
+msgid "Transfer"
 msgstr "Transférer"
 
 msgid "_New call"
 msgstr "_Nouvel appel"
 
 msgid "_Call"
-msgstr "_Appeler"
+msgstr "_Actions"
 
 msgid "_Edit"
 msgstr "_Options"
@@ -70,14 +70,18 @@ msgstr "_Protocole"
 msgid "Status"
 msgstr "Statut"
 
-msgid "Set as Default"
-msgstr "Choisir par Défaut"
+msgid "Default"
+msgstr "Défaut"
 
 msgid "Account settings"
 msgstr "Configuration des comptes"
 
 msgid "_Enabled"
 msgstr "_Activé"
+
+msgid "_Alias"
+msgstr "A_lias"
+
 
 msgid "Unknown"
 msgstr "Inconnu"
@@ -92,10 +96,28 @@ msgid "_Host part"
 msgstr "_Serveur"
 
 msgid "U_sername"
-msgstr "U_sager"
+msgstr "Usa_ger"
 
 msgid "_Password"
 msgstr "_Mot de passe"
+
+msgid "<b>NAT Detection</b>"
+msgstr "<b>Détection NAT</b>"
+
+msgid "E_nable STUN"
+msgstr "A_ctiver STUN"
+
+msgid "S_TUN Server"
+msgstr "S_erveur STUN"
+
+msgid "Format: name.server:port"
+msgstr "Format: nom.serveur:port"
+
+msgid "Enable it if you are behind a firewall, then restart SFLphone"
+msgstr "À activer si vous êtes derrière un pare-feu, puis redémarrez SFLphone"
+
+msgid "Set the selected account as the default one to make calls"
+msgstr "Utiliser le compte sélectionné pour passer des appels par défaut"
 
 # audio settings
 msgid "Output peripheral"
@@ -161,3 +183,10 @@ msgstr "En cours..."
 
 msgid "Invalid"
 msgstr "Non valide"
+
+# Sliders
+msgid "Speakers volume"
+msgstr "Volume des hauts-parleurs"
+
+msgid "Mic volume"
+msgstr "Volume du micro"

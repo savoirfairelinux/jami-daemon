@@ -43,7 +43,7 @@ SIPAccount::registerVoIPLink()
   int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
   
   SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
-  thislink->setStunServer(Manager::instance().getConfigString(_accountID,DFT_STUN_SERVER));
+  thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
   thislink->setUseStun( useStun!=0 ? true : false);
 
   _link->init();

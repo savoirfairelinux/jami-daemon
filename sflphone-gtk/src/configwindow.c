@@ -879,7 +879,7 @@ create_accounts_tab()
 			);
 
 	treeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(accountStore));
-
+	//gtk_widget_set_tooltip_text( GTK_WIDGET( treeView ) , _("Double-click to edit the information on this account"));
 	treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW (treeView));
 	g_signal_connect(G_OBJECT (treeSelection), "changed",
 			G_CALLBACK (select_account),
@@ -942,7 +942,8 @@ create_accounts_tab()
 	gtk_box_pack_start(GTK_BOX(buttonBox), deleteButton, FALSE, FALSE, 0);
 	gtk_widget_show(deleteButton);
 	
-	defaultButton = gtk_button_new_with_mnemonic(_("Set as Default"));
+	defaultButton = gtk_button_new_with_mnemonic(_("Default"));
+	gtk_widget_set_tooltip_text( GTK_WIDGET( defaultButton ) , _("Set the selected account as the default one to make calls"));
 	g_signal_connect_swapped(G_OBJECT(defaultButton), "clicked", 
 			G_CALLBACK(default_account), NULL);
 	gtk_box_pack_start(GTK_BOX(buttonBox), defaultButton, FALSE, FALSE, 0);

@@ -48,8 +48,6 @@
 #define PLAY_TONES		"DTMF.playTones" 
 #define PULSE_LENGTH		"DTMF.pulseLength"
 #define SEND_DTMF_AS		"DTMF.sendDTMFas"
-#define STUN_SERVER		"STUN.STUNserver"
-#define USE_STUN		"STUN.useStun"
 #define ALSA_CARD_ID_IN		"Alsa.cardID_In"
 #define ALSA_CARD_ID_OUT	"Alsa.cardID_Out"
 #define ALSA_SAMPLE_RATE	"Alsa.sampleRate"

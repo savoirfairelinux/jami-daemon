@@ -283,7 +283,7 @@ create_toolbar (){
 	gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_ICONS);
 
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
-	callButton = gtk_tool_button_new (image, _("Place a Call"));
+	callButton = gtk_tool_button_new (image, _("Place a call"));
 	gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("Place a call"));
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);

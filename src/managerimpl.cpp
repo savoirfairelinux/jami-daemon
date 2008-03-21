@@ -2010,9 +2010,9 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
     setConfig(accountID, SIP_PASSWORD,  (*details.find(SIP_PASSWORD)).second);
     setConfig(accountID, SIP_HOST_PART, (*details.find(SIP_HOST_PART)).second);
     //setConfig(accountID, SIP_PROXY,     (*details.find(SIP_PROXY)).second);
-    //setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
-    //setConfig(accountID, SIP_USE_STUN,
-    //    (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
+    setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
+    setConfig(accountID, SIP_USE_STUN,
+        (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
   }
   else if (accountType == "IAX") {
     setConfig(accountID, IAX_FULL_NAME, (*details.find(IAX_FULL_NAME)).second);

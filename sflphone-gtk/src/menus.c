@@ -106,6 +106,7 @@ help_about ( void * foo)
     "Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
     "Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
     "Pierre-Luc Beaudoin <pierre-luc@squidy.info>", 
+    "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>"
     "Jean-Philippe Barrette-LaPierre",
     "Laurielle Lea",
     NULL};
@@ -440,10 +441,14 @@ create_view_menu()
   GtkWidget * menu;
   GtkWidget * root_menu;
   GtkWidget * menu_items;
-  
+  GtkWidget * submenu;
+  GtkWidget * submenu_items;
+
   menu      = gtk_menu_new ();
 
   menu_items = gtk_check_menu_item_new_with_mnemonic (_("_Dialpad"));
+  gtk_check_menu_item_set_active( GTK_CHECK_MENU_ITEM ( menu_items ), TRUE);
+  main_window_dialpad(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menu_items)));
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect(G_OBJECT (menu_items), "toggled",
                   G_CALLBACK (view_dial_pad), 
@@ -458,14 +463,19 @@ create_view_menu()
                   NULL);
   gtk_widget_show (menu_items);
   
-  menu_items = gtk_check_menu_item_new_with_mnemonic (_("_Toolbar"));
+  menu_items = gtk_menu_item_new_with_mnemonic(_("_Toolbar"));
+
+  // ICON / TEXT / BOTH
+  submenu_items = gtk_check_menu_item_new_with_mnemonic(_("Only Icons"));
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (submenu_items), menu_items);
+  submenu_items = gtk_check_menu_item_new_with_mnemonic(_("Only Text"));
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (submenu_items), menu_items);
+  submenu_items = gtk_check_menu_item_new_with_mnemonic(_("Icons & Text"));
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (submenu_items), menu_items);
+
+  gtk_widget_show( menu_items );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  gtk_widget_set_sensitive( GTK_WIDGET(menu_items),   FALSE);
-  g_signal_connect(G_OBJECT (menu_items), "toggled",
-                  G_CALLBACK (view_dial_pad), 
-                  NULL);
-  gtk_widget_show (menu_items);
-  
+
   root_menu = gtk_menu_item_new_with_mnemonic (_("_View"));
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);
 

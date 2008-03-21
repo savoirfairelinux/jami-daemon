@@ -37,6 +37,8 @@
 #define ACCOUNT_SIP_AUTH_NAME      "SIP.username"
 #define ACCOUNT_SIP_PASSWORD       "SIP.password"
 #define ACCOUNT_SIP_PROXY          "SIP.proxy"
+#define ACCOUNT_SIP_STUN_SERVER	   "STUN.server"
+#define ACCOUNT_SIP_STUN_ENABLED   "STUN.enable"
 
 #define ACCOUNT_IAX_FULL_NAME      "IAX.fullName"
 #define ACCOUNT_IAX_HOST           "IAX.host"
