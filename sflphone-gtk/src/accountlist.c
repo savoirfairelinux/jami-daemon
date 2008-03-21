@@ -19,6 +19,7 @@
  */
  
 #include <accountlist.h>
+#include <actions.h>
 #include <string.h>
 
 GQueue * accountQueue;
@@ -144,19 +145,19 @@ const gchar * account_state_name(account_state_t s)
 	switch(s)
   {
   case ACCOUNT_STATE_REGISTERED:
-    state = "Registered";
+    state = _("Registered");
     break;
   case ACCOUNT_STATE_UNREGISTERED:
-    state = "Not Registered";
+    state = _("Not Registered");
     break;
   case ACCOUNT_STATE_TRYING:
-    state = "Trying...";
+    state = _("Trying...");
     break;
   case ACCOUNT_STATE_ERROR:
-    state = "Error";
+    state = _("Error");
     break;
   default:
-    state = "Invalid";
+    state = _("Invalid");
     break;
   }
   return state;

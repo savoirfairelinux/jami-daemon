@@ -145,3 +145,19 @@ msgstr "Paramètres Audio"
 
 msgid "%d new voice mail%s"
 msgstr "%d nouveaux messages vocaux%s"
+
+# SIP registration state
+msgid "Registered"
+msgstr "Enregistré"
+
+msgid "Not Registered"
+msgstr "Non Enregistré"
+
+msgid "Error"
+msgstr "Erreur"
+
+msgid "Trying..."
+msgstr "En cours..."
+
+msgid "Invalid"
+msgstr "Non valide"
