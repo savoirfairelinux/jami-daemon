@@ -1,3 +1,5 @@
+SUBDIRS=po
+
 bin_PROGRAMS = sflphone-gtk
 
 sflphone_gtk_SOURCES = \
