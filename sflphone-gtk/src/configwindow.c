@@ -850,26 +850,24 @@ create_accounts_tab()
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *treeViewColumn;
 	GtkTreeSelection *treeSelection;
-	GtkWidget *label;
+	GtkWidget *accountsFrame;
 
 	selectedAccount = NULL;
 
 	ret = gtk_vbox_new(FALSE, 10); 
 	gtk_container_set_border_width(GTK_CONTAINER (ret), 10);
 
-	label = gtk_label_new(_("Accounts previously setup."));
+	accountsFrame = gtk_frame_new(_("Accounts previously setup."));
 
-	gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
-	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
-
-	gtk_box_pack_start(GTK_BOX(ret), label, FALSE, FALSE, 0);
-	gtk_widget_show(label);
+	gtk_box_pack_start(GTK_BOX(ret), accountsFrame, TRUE, TRUE, 0);
+	gtk_widget_show_all(accountsFrame);
 
 	scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_SHADOW_IN);
-	gtk_box_pack_start(GTK_BOX(ret), scrolledWindow, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(accountsFrame), scrolledWindow, TRUE, TRUE, 0);
+
+	gtk_container_add( GTK_CONTAINER( accountsFrame ) , scrolledWindow);
 
 	accountStore = gtk_list_store_new(4,
 			G_TYPE_STRING,  // Name
@@ -964,10 +962,10 @@ create_audio_tab ()
 {
 	GtkWidget *ret;
 	
-	GtkWidget *deviceLabel;
+	GtkWidget *deviceFrame;
 	GtkWidget *deviceBox;
 	GtkWidget *deviceTable;
-	GtkWidget *codecLabel;
+	GtkWidget *codecFrame;
 	GtkWidget *codecBox;
 	GtkWidget *enableTone;
 	GtkWidget *fileChooser;
@@ -984,18 +982,18 @@ create_audio_tab ()
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
     
     // Device section label
-    deviceLabel = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(deviceLabel), _("<b>Devices</b>"));
-	gtk_label_set_line_wrap(GTK_LABEL(deviceLabel), TRUE);
-	gtk_misc_set_alignment(GTK_MISC(deviceLabel), 0, 0.5);
-	gtk_label_set_justify(GTK_LABEL(deviceLabel), GTK_JUSTIFY_LEFT);
-	gtk_box_pack_start(GTK_BOX(ret), deviceLabel, FALSE, FALSE, 0);
+    deviceFrame = gtk_frame_new(_("Devices"));
+    gtk_box_pack_start(GTK_BOX(ret), deviceFrame, FALSE, FALSE, 0);
+    gtk_widget_show( deviceFrame );
 
 	
     // Main device widget
-	deviceBox = gtk_hbox_new(FALSE, 10);
-	gtk_box_pack_start(GTK_BOX(ret), deviceBox, FALSE, FALSE, 0);
-    
+    deviceBox = gtk_hbox_new(FALSE, 10);
+    gtk_box_pack_start(GTK_BOX(deviceFrame), deviceBox, FALSE, FALSE, 0);
+    gtk_widget_show( deviceBox );
+
+    gtk_container_add( GTK_CONTAINER(deviceFrame) , deviceBox);
+
     // Main device widget
 	deviceTable = gtk_table_new(4, 3, FALSE);
 	gtk_table_set_col_spacing(GTK_TABLE(deviceTable), 0, 40);
@@ -1090,24 +1088,22 @@ create_audio_tab ()
 	// Create detect button
 	refreshButton = gtk_button_new_with_label(_("Detect all"));
 	gtk_button_set_image(GTK_BUTTON(refreshButton), gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_BUTTON));
-	gtk_table_attach(GTK_TABLE(deviceTable), refreshButton, 3, 4, 3, 4, GTK_EXPAND, GTK_EXPAND, 0, 0);
+	gtk_table_attach(GTK_TABLE(deviceTable), refreshButton, 2, 3, 3, 4, GTK_EXPAND, GTK_EXPAND, 0, 0);
 	// Set event on selection
 	g_signal_connect(G_OBJECT(refreshButton), "clicked", G_CALLBACK(detect_all_audio_settings), NULL);
 	
     // Codec section label
-    codecLabel = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(codecLabel), "<b>Codecs</b>");
-    gtk_label_set_line_wrap(GTK_LABEL(codecLabel), TRUE);
-    gtk_misc_set_alignment(GTK_MISC(codecLabel), 0, 0.5);
-    gtk_label_set_justify(GTK_LABEL(codecLabel), GTK_JUSTIFY_LEFT);
-    gtk_box_pack_start(GTK_BOX(ret), codecLabel, FALSE, FALSE, 0);
-    gtk_widget_show(codecLabel);
+    codecFrame = gtk_frame_new(_("Codecs"));
+    gtk_misc_set_alignment(GTK_MISC(codecFrame), 0, 0.5);
+    gtk_box_pack_start(GTK_BOX(ret), codecFrame, FALSE, FALSE, 0);
+    gtk_widget_show(codecFrame);
 
     // Main codec widget
 	codecBox = gtk_hbox_new(FALSE, 10);
-	gtk_box_pack_start(GTK_BOX(ret), codecBox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(codecFrame), codecBox, FALSE, FALSE, 0);
 	gtk_widget_show(codecBox);
 	
+	gtk_container_add( GTK_CONTAINER( codecFrame ) , codecBox );
 	// Codec : List
 	codecTable = create_codec_table();
 	gtk_widget_set_size_request(GTK_WIDGET(codecTable), -1, 150);
