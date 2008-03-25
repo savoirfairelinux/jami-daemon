@@ -1,3 +1,24 @@
+# French translation of SFLphone.
+# Copyright (C) 2008 The Free Software Foundation, Inc.
+# This file is distributed under the GNU General Public License Version 3.
+#
+# Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>, 2008.
+#
+
+#POT-Creation-Date: 2007-01-13 01:39+0100\n
+
+msgid ""
+msgstr ""
+"Project-Id-Version: SFLphone 0.8.2\n"
+"Report-Msgid-Bugs-To: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com >\n"
+"PO-Revision-Date: 2008-03-25 12:15\n"
+"Last-Translator: Emmanuel Milou <emmnauel.milou@savoirfairelinux.com>\n"
+"Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n>1;\n"
+
 # Main menu items
 msgid "About SFLphone"
 msgstr "A propos de SFLphone"
@@ -138,8 +159,8 @@ msgstr "Bitrate"
 msgid "Bandwidth"
 msgstr "Bande passante"
 
-msgid "<b>Devices</b>"
-msgstr "<b>Matériel</b>"
+msgid "Devices"
+msgstr "Matériel"
 
 msgid "ALSA plugin"
 msgstr "Greffon ALSA"
@@ -165,8 +186,12 @@ msgstr "Comptes"
 msgid "Audio Settings"
 msgstr "Paramètres Audio"
 
+#: ../actions.c:45
+#, c-format
 msgid "%d new voice mail%s"
-msgstr "%d nouveaux messages vocaux%s"
+msgid_plural "%d new voice mail%s"
+msgstr[0] "%d nouveau message vocal%0s"
+msgstr[1] "%d nouveaux messages vocaux%0s"
 
 # SIP registration state
 msgid "Registered"
