@@ -79,8 +79,8 @@ msgstr "A_ffichage"
 
 # configwindow.c
 # account settings
-msgid "Accounts previously setup."
-msgstr "Liste des comptes existants."
+msgid "Accounts previously setup"
+msgstr "Liste des comptes existants"
 
 msgid "Protocol"
 msgstr "Protocole"
@@ -180,18 +180,19 @@ msgstr "Fichier Audio"
 msgid "Preferences"
 msgstr "Préférences"
 
-msgid "Accounts"
-msgstr "Comptes"
+msgid "_Accounts"
+msgstr "Co_mptes"
 
 msgid "Audio Settings"
 msgstr "Paramètres Audio"
 
 #: ../actions.c:45
 #, c-format
-msgid "%d new voice mail%s"
-msgid_plural "%d new voice mail%s"
-msgstr[0] "%d nouveau message vocal%0s"
-msgstr[1] "%d nouveaux messages vocaux%0s"
+msgid "%d new voice mail"
+msgstr "%d nouveau message vocal"
+
+msgid "%d new voice mails"
+msgstr "%d nouveaux messages vocaux"
 
 # SIP registration state
 msgid "Registered"

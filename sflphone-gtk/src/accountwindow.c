@@ -150,10 +150,10 @@ show_account_window (account_t * a)
   dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
 	GTK_WINDOW(get_main_window()),
 	GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-	GTK_STOCK_CANCEL,
-	GTK_RESPONSE_CANCEL,
 	GTK_STOCK_SAVE,
 	GTK_RESPONSE_ACCEPT,
+	GTK_STOCK_CANCEL,
+	GTK_RESPONSE_CANCEL,
 	NULL));
 
   gtk_dialog_set_has_separator(dialog, TRUE);

@@ -41,7 +41,10 @@ sflphone_notify_voice_mail (guint count)
 	if(count > 0)
 	{
 		gchar * message = g_new0(gchar, 50);
-		g_sprintf(message, _("%d new voice mail%s"), count, (count > 1? "s" : "")); 
+		if( count > 1)
+		  g_sprintf(message, _("%d new voice mails"), count);
+		else
+		  g_sprintf(message, _("%d new voice mail"), count);	  
 		status_bar_message(message);
 		g_free(message);
 	}
