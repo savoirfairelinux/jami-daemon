@@ -13,6 +13,8 @@ Makefile.in
 /config.*
 *.swp
 *.so
+# Binary translation files
+*.mo
 
 # Ignore rendered docs
 doc/doxygen/html-everything
