@@ -264,6 +264,12 @@ edit_preferences ( void * foo)
   show_config_window();
 }
 
+static void 
+edit_accounts ( void * foo)
+{
+  show_accounts_window();
+}
+
 // The menu Edit/Copy should copy the current selected call's number
 static void 
 edit_copy ( void * foo)
@@ -414,6 +420,13 @@ create_edit_menu()
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   
+  menu_items = gtk_menu_item_new_with_mnemonic( _("_Accounts") );
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
+                  G_CALLBACK (edit_accounts), 
+                  NULL);
+  gtk_widget_show (menu_items);  
+
   menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_PREFERENCES, get_accel_group());
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect_swapped (G_OBJECT (menu_items), "activate",

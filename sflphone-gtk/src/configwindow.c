@@ -850,24 +850,16 @@ create_accounts_tab()
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *treeViewColumn;
 	GtkTreeSelection *treeSelection;
-	GtkWidget *accountsFrame;
 
 	selectedAccount = NULL;
 
 	ret = gtk_vbox_new(FALSE, 10); 
 	gtk_container_set_border_width(GTK_CONTAINER (ret), 10);
 
-	accountsFrame = gtk_frame_new(_("Accounts previously setup."));
-
-	gtk_box_pack_start(GTK_BOX(ret), accountsFrame, TRUE, TRUE, 0);
-	gtk_widget_show_all(accountsFrame);
-
 	scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_SHADOW_IN);
-	gtk_box_pack_start(GTK_BOX(accountsFrame), scrolledWindow, TRUE, TRUE, 0);
-
-	gtk_container_add( GTK_CONTAINER( accountsFrame ) , scrolledWindow);
+	gtk_box_pack_start(GTK_BOX(ret), scrolledWindow, TRUE, TRUE, 0);
 
 	accountStore = gtk_list_store_new(4,
 			G_TYPE_STRING,  // Name
@@ -877,7 +869,6 @@ create_accounts_tab()
 			);
 
 	treeView = gtk_tree_view_new_with_model(GTK_TREE_MODEL(accountStore));
-	//gtk_widget_set_tooltip_text( GTK_WIDGET( treeView ) , _("Double-click to edit the information on this account"));
 	treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW (treeView));
 	g_signal_connect(G_OBJECT (treeSelection), "changed",
 			G_CALLBACK (select_account),
@@ -1167,9 +1158,9 @@ show_config_window ()
 	gtk_widget_show(notebook);
 
 	// Accounts tab
-	tab = create_accounts_tab();
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Accounts")));
-	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+	//tab = create_accounts_tab();
+	//gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Accounts")));
+	//gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 	
 	// Audio tab
 	tab = create_audio_tab();	
@@ -1183,4 +1174,42 @@ show_config_window ()
 	dialogOpen = FALSE;
 
 	gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
+/*
+ * Show accounts tab in a different window
+ */
+void
+show_accounts_window( void )
+{
+  GtkDialog * dialog;
+  GtkWidget * accountFrame;
+  GtkWidget * tab;
+
+  dialogOpen = TRUE;
+
+  dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Accounts"),
+                              GTK_WINDOW(get_main_window()),
+                              GTK_DIALOG_DESTROY_WITH_PARENT,
+                              GTK_STOCK_CLOSE,
+                              GTK_RESPONSE_ACCEPT,
+                              NULL));
+
+        // Set window properties
+        gtk_dialog_set_has_separator(dialog, FALSE);
+        gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 400);
+        gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
+
+	accountFrame = gtk_frame_new( _("Accounts previously setup"));
+	gtk_box_pack_start( GTK_BOX( dialog->vbox ), accountFrame , TRUE, TRUE, 0);
+        gtk_container_set_border_width(GTK_CONTAINER(accountFrame), 10);
+        gtk_widget_show(accountFrame);
+        // Accounts tab
+        tab = create_accounts_tab();
+
+	gtk_container_add(GTK_CONTAINER(accountFrame) , tab);
+
+      gtk_dialog_run( dialog );
+      dialogOpen=FALSE;
+      gtk_widget_destroy(GTK_WIDGET(dialog));
 }

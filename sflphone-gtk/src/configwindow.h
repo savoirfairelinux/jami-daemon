@@ -42,5 +42,6 @@ GtkWidget * create_codec_table();
 GtkWidget * create_accounts_tab();
 GtkWidget * create_audio_tab();
 void show_config_window();
+void show_accounts_window();
 
 #endif 
