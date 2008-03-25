@@ -24,7 +24,6 @@
 #define _AUDIO_LAYER_H
 
 #include <cc++/thread.h> // for ost::Mutex
-#include <boost/tokenizer.hpp>
 
 #include "../global.h"
 #include "audiodevice.h"

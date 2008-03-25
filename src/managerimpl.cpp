@@ -35,8 +35,6 @@
 #include <ccrtp/rtp.h>     // why do I need this here?
 #include <cc++/file.h>
 
-#include <boost/tokenizer.hpp>
-
 #include "manager.h"
 #include "account.h"
 #include "audio/audiolayer.h"
@@ -1118,19 +1116,21 @@ ManagerImpl::initAudioCodec (void)
   }
 }
 
-  std::vector<std::string>
+std::vector<std::string>
 ManagerImpl::retrieveActiveCodecs()
 {
-  std::vector<std::string> order; 
-  std::string list;
+  std::vector<std::string> order;
+  std::string  temp;
   std::string s = getConfigString(AUDIO, "ActiveCodecs");
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer; 
-  boost::char_separator<char> slash("/");
-  tokenizer tokens(s, slash); 
-  for(tokenizer::iterator tok_iter = tokens.begin(); tok_iter!= tokens.end(); ++tok_iter)
+
+  while (s.find("/", 0) != std::string::npos)
   {
-    order.push_back(*tok_iter);
+    size_t  pos = s.find("/", 0);
+    temp = s.substr(0, pos);
+    s.erase(0, pos + 1);
+    order.push_back(temp);
   }
+
   return order;
 }
 
