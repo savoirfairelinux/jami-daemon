@@ -25,7 +25,6 @@
 #include <menus.h>
 #include <screen.h>
 #include <statusicon.h>
-#include <quit.h>
 
 #include <gtk/gtk.h>
 #include <string.h>
