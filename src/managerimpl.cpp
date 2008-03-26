@@ -502,6 +502,7 @@ ManagerImpl::sendDtmf(const CallID& id, char code)
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Send DTMF: call doesn't exists\n");
+    //playDtmf(code);
     return false;
   }
 
@@ -1285,7 +1286,7 @@ ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
       _audiodriver -> getIndexOut(),
       _audiodriver -> getSampleRate(),
       _audiodriver -> getFrameSize(),
-      SFL_PCM_PLAYBACK,
+      SFL_PCM_BOTH,
       audioPlugin);
   if( _audiodriver -> getErrorMessage() != "")
     notifyErrClient( _audiodriver -> getErrorMessage() );
