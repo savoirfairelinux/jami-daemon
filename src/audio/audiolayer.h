@@ -111,7 +111,7 @@ class AudioLayer {
      * @params toCopy The number of samples, in bytes
      * @return int The number of bytes played
      */
-    int playSamples(void* buffer, int toCopy);
+    int playSamples(void* buffer, int toCopy, bool isTalking);
 
     /*
      * Send a chunk of data to the hardware buffer to start the playback
@@ -287,6 +287,7 @@ class AudioLayer {
      */
     snd_pcm_t* _PlaybackHandle;
     snd_pcm_t* _CaptureHandle;
+    snd_pcm_uframes_t _periodSize;
 
     /*
      * Handle on asynchronous event

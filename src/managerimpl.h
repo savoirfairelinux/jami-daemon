@@ -174,7 +174,7 @@ public:
    * @param   code: pressed key.
    */
   bool sendDtmf(const CallID& id, char code);
-  bool playDtmf(char code);
+  bool playDtmf(char code, bool isTalking);
   bool playTone ();
   void stopTone(bool stopAudio/*=true*/);
 

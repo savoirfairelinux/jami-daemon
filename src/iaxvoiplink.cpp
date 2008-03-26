@@ -823,7 +823,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 	toAudioLayer = _receiveDataDecoded; // int to int
 #endif
       }
-      audiolayer->playSamples(toAudioLayer, nbSample * sizeof(SFLDataFormat));
+      audiolayer->playSamples(toAudioLayer, nbSample * sizeof(SFLDataFormat), true);
     } else {
       _debug("IAX: incoming audio, but no sound card open");
     }

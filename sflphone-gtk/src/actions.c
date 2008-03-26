@@ -427,6 +427,7 @@ call_t * sflphone_new_call()
 	void 
 sflphone_keypad( guint keyval, gchar * key)
 {
+	dbus_play_dtmf(key);
 	call_t * c = call_get_selected();
 	if(c)
 	{
@@ -434,6 +435,7 @@ sflphone_keypad( guint keyval, gchar * key)
 		switch(c->state) 
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
+				//dbus_play_dtmf(key);
 				process_dialing(c, keyval, key);
 				break;
 			case CALL_STATE_CURRENT:

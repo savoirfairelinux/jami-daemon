@@ -177,10 +177,11 @@ AudioLayer::isStreamActive (void)
 
 
   int 
-AudioLayer::playSamples(void* buffer, int toCopy)
+AudioLayer::playSamples(void* buffer, int toCopy, bool isTalking)
 {
   //ost::MutexLock lock( _mutex );
-  _talk = true;
+  if( isTalking )
+    _talk = true;
   if ( _PlaybackHandle ){ 
     write( adjustVolume( buffer , toCopy , SFL_PCM_PLAYBACK ) , toCopy );
   }
@@ -254,7 +255,7 @@ AudioLayer::toggleEchoTesting() {
   void
 AudioLayer::playTones( void )
 {
-  int frames = 1024 ; 
+  int frames = _periodSize ; 
   int maxBytes = frames * sizeof(SFLDataFormat) ;
   SFLDataFormat* out = (SFLDataFormat*)malloc(maxBytes * sizeof(SFLDataFormat));
   if( _talk ) {}
@@ -364,13 +365,10 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     //if( err = snd_pcm_hw_params_set_buffer_size_near( _PlaybackHandle, hwParams, &buffer_size_out ) < 0) _debugAlsa(" Cannot set buffer size (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_buffer_time_near( _PlaybackHandle, hwParams, &buffer_time , &dir) < 0) _debugAlsa(" Cannot set buffer time (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_period_time_near( _PlaybackHandle, hwParams, &period_time , &dir) < 0) _debugAlsa(" Cannot set period time (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_get_period_size(  hwParams, &period_size_out , &dir) < 0) _debugAlsa(" Cannot get period size (%s)\n", snd_strerror(err));
+    if( err = snd_pcm_hw_params_get_period_size(  hwParams, &_periodSize , &dir) < 0) _debugAlsa(" Cannot get period size (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_get_buffer_size(  hwParams, &buffer_size_out ) < 0) _debugAlsa(" Cannot get buffer size (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params( _PlaybackHandle, hwParams ) < 0) _debugAlsa(" Cannot set hw parameters (%s)\n", snd_strerror(err));
 
-    unsigned int hz;
-    snd_pcm_hw_params_get_rate( hwParams , &hz , &dir );
-    _debugAlsa("Rate = %d\n" , hz);
 
     snd_pcm_hw_params_free( hwParams );
 
