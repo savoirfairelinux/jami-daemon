@@ -53,7 +53,7 @@ msgstr ""
 
 #: menus.c: 423
 msgid "_Accounts"
-msgstr ""
+msgstr "C_uentas"
 
 #: menus.c: 438
 msgid "_Edit"

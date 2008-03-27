@@ -46,7 +46,7 @@ public:
 	*/
  	  // 8000 HZ --> Narrow-band mode
  	  // TODO Manage the other modes
- 	  _speexModePtr = &speex_wb_mode; 
+ 	  _speexModePtr = &speex_nb_mode; 
 
 	// Init the decoder struct
   	  speex_bits_init(&_speex_dec_bits);

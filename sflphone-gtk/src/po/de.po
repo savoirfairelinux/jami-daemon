@@ -53,7 +53,7 @@ msgstr ""
 
 #: menus.c: 423
 msgid "_Accounts"
-msgstr ""
+msgstr "_Konten"
 
 #: menus.c: 438
 msgid "_Edit"
@@ -113,7 +113,7 @@ msgstr ""
 
 #: configwindow.c: 814
 msgid "Bandwidth"
-msgstr ""
+msgstr "Bandbreite"
 
 #: configwindow.c: 892
 msgid "Protocol"
@@ -173,7 +173,7 @@ msgstr ""
 
 #: configwindow.c: 1191
 msgid "Accounts"
-msgstr ""
+msgstr "Konten"
 
 #: configwindow.c: 1203
 msgid "Accounts previously setup"
