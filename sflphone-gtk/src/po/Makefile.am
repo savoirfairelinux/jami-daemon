@@ -2,31 +2,47 @@
 locale_installdir=$(datadir)/locale
 DOMAIN=sflphone
 
-# tells automake that toto.po makes toto.mo
-SUFFIXES=.po .mo
-
 POFILES=\
-	 fr.po
+	 fr.po \
+	 es.po \
+	 de.po
+
+MOFILES=\
+	 fr.mo \
+	 es.mo \
+	 de.mo
 
 MSGFMT=msgfmt
 
 # necessary files
 EXTRA_DIST= $(POFILES)
 
-#.po.mo:
-#	$(MSGFMT) -o $@ $<
+all:	$(MOFILES)	
 
-all:	fr.mo
+# tells automake that toto.po makes toto.mo
+SUFFIXES=.po .mo
 
-fr.mo:	fr.po
+.po.mo:
 	$(MSGFMT) -o $@ $<
 
 install:
-	$(mkinstalldirs) $(locale_installdir)/fr/LC_MESSAGES; \
-	$(INSTALL_DATA) fr.mo $(locale_installdir)/fr/LC_MESSAGES/$(DOMAIN).mo; 
+	@catalogs='$(MOFILES)'; \
+	for i in $$catalogs; do \
+		destdir=$(locale_installdir); \
+		lang=`echo $$i | sed 's/\.mo//'`; \
+		$(mkinstalldirs) $(locale_installdir)/$$lang/LC_MESSAGES; \
+		$(INSTALL_DATA) $$i $(locale_installdir)/$$lang/LC_MESSAGES/$(DOMAIN).mo; \
+		echo "installing $$i as $(locale_installdir)/$$lang/LC_MESSAGES/$(DOMAIN).mo"; \
+	done	
 
 uninstall:
-	rm -f $(locale_installdir)/fr/LC_MESSAGES/$(DOMAIN).mo; 
+	@catalogs='$(MOFILES)'; \
+	for i in $$catalogs; do \
+		destdir=$(locale_installdir); \
+		lang=`echo $$i | sed 's/\.mo//'`; \
+		rm -f $(locale_installdir)/$$lang/LC_MESSAGES/$(DOMAIN).mo; \
+		echo "removing $$i as $(locale_installdir)/$$lang/LC_MESSAGES/$(DOMAIN).mo"; \
+	done
 
 clean:
 	rm -rf *.mo
