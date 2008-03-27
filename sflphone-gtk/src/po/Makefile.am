@@ -11,7 +11,7 @@ POFILES=\
 MSGFMT=msgfmt
 
 # necessary files
-EXTRA_DIST= $(PO_FILES)
+EXTRA_DIST= $(POFILES)
 
 #.po.mo:
 #	$(MSGFMT) -o $@ $<
