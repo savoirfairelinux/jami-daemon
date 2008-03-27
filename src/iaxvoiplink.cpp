@@ -671,11 +671,15 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
   case IAX_EVENT_REJECT:
-    Manager::instance().peerHungupCall(id); 
+    //Manager::instance().peerHungupCall(id); 
     if (Manager::instance().isCurrentCall(id)) {
       // stop audio
       audiolayer->stopStream();
     }
+    call->setConnectionState(Call::Connected);
+    call->setState(Call::Error);
+    Manager::instance().displayErrorText(id, "Failure");
+    Manager::instance().callFailure(id);
     removeCall(id);
     break;
 
