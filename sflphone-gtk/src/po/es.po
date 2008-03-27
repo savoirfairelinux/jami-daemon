@@ -1,4 +1,4 @@
-# French translation of SFLphone.
+# Spanish translation of SFLphone.
 # Copyright (C) 2008 The Free Software Foundation, Inc.
 # This file is distributed under the GNU General Public License Version 3.
 #
@@ -57,7 +57,7 @@ msgstr "_Cuentas"
 
 #: menus.c: 438
 msgid "_Edit"
-msgstr "_Edicion"
+msgstr "_Edición"
 
 #: menus.c: 462
 msgid "_Dialpad"
