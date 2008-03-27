@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: SFLphone 0.8.2\n"
 "Report-Msgid-Bugs-To: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com >\n"
 "PO-Revision-Date: 2008-03-27 11:15\n"
-"Last-Translator: Emmanuel Milou <emmnauel.milou@savoirfairelinux.com>\n"
+"Last-Translator: Maxime Chambreuil <maxime.chambreuil@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -25,15 +25,15 @@ msgstr ""
 
 #: menus.c: 124
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "" 
+msgstr "SFLphone es un telefono por Internet compatible con los protocolos SIP y IAX2" 
 
 #: menus.c: 150
 msgid "_Help" 
-msgstr ""
+msgstr "_Apoyo"
 
 #: menus.c: 207
 msgid "_New call"
-msgstr ""
+msgstr "_Nueva llamada"
 
 #: menus.c: 217 menus.c: 605
 msgid "_Pick up" 
@@ -49,15 +49,15 @@ msgstr ""
 
 #: menus.c: 254
 msgid "_Call"
-msgstr ""
+msgstr "_Llamada"
 
 #: menus.c: 423
 msgid "_Accounts"
-msgstr "C_uentas"
+msgstr "_Cuentas"
 
 #: menus.c: 438
 msgid "_Edit"
-msgstr ""
+msgstr "_M"
 
 #: menus.c: 462
 msgid "_Dialpad"
@@ -73,11 +73,11 @@ msgstr ""
 
 #: menus.c: 492
 msgid "_View"
-msgstr ""
+msgstr "_"
 
 #: calltree.c: 286 calltree.c: 287
 msgid "Place a call"
-msgstr ""
+msgstr "Llamar"
 
 #: calltree.c: 293 calltree.c: 294
 msgid "Pick up" 
@@ -101,11 +101,11 @@ msgstr ""
 
 #: configwindow.c: 799
 msgid "Name"
-msgstr ""
+msgstr "Nombre"
 
 #: configwindow.c: 804
 msgid "Frequency"
-msgstr ""
+msgstr "Frequencia"
 
 #: configwindow.c: 809
 msgid "Bitrate"
@@ -117,11 +117,11 @@ msgstr ""
 
 #: configwindow.c: 892
 msgid "Protocol"
-msgstr ""
+msgstr "Protocolo"
 
 #: configwindow.c: 900
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 #: configwindow.c: 934
 msgid "Default"
@@ -141,11 +141,11 @@ msgstr ""
 
 #: configwindow.c: 1039
 msgid "Output peripheral"
-msgstr ""
+msgstr "Periferico de salida"
 
 #: configwindow.c: 1060
 msgid "Input peripheral"
-msgstr ""
+msgstr "Periferco de entrada"
 
 #: configwindow.c: 1080
 msgid "Detect all"
@@ -161,19 +161,19 @@ msgstr ""
 
 #: configwindow.c: 1117
 msgid "Audio Files"
-msgstr ""
+msgstr "Archivos Audio"
 
 #: configwindow.c: 1142
 msgid "Preferences"
-msgstr ""
+msgstr "Preferencias"
 
 #: configwindow.c: 1167
 msgid "Audio Settings"
-msgstr ""
+msgstr "Configuracion Audio"
 
 #: configwindow.c: 1191
 msgid "Accounts"
-msgstr ""
+msgstr "Cuentas"
 
 #: configwindow.c: 1203
 msgid "Accounts previously setup"
@@ -181,7 +181,7 @@ msgstr ""
 
 #: accountwindow.c: 150
 msgid "Account settings"
-msgstr ""
+msgstr "Configuracion de cuentas"
 
 #: accountwindow.c: 177
 msgid "_Enabled"
@@ -225,7 +225,7 @@ msgstr ""
 
 #: accountwindow.c: 270
 msgid "E_nable STUN"
-msgstr ""
+msgstr "A_ctivar STUN"
 
 #: accountwindow.c: 275
 msgid "Enable it if you are behind a firewall, then restart SFLphone"
@@ -233,7 +233,7 @@ msgstr ""
 
 #: accountwindow.c: 277
 msgid "S_TUN Server"
-msgstr ""
+msgstr "Servidor STUN"
 
 #: accountwindow.c: 283
 msgid "Format: name.server:port"
@@ -241,15 +241,15 @@ msgstr ""
 
 #: actions.c: 45
 msgid "%d new voice mails"
-msgstr ""
+msgstr "%d nuevos mensajes"
 
 #: actions.c: 47
 msgid "%d new voice mail"
-msgstr ""
+msgstr "%d nuevo mensaje"
 
 #: accountlist.c: 148 
 msgid "Registered"
-msgstr ""
+msgstr "Registrado"
 
 #: accountlist.c: 151
 msgid "Not Registered"
@@ -257,7 +257,7 @@ msgstr ""
 
 #: accountlist.c: 154
 msgid "Trying..."
-msgstr ""
+msgstr "Tratando..."
 
 #: accountlist.c: 157
 msgid "Error"
