@@ -726,6 +726,8 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
   case IAX_EVENT_RINGA:
+    call->setConnectionState(Call::Ringing);
+    Manager::instance().peerRingingCall(call->getCallId());
     break;
     
   case IAX_EVENT_PONG:
