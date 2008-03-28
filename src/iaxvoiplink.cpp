@@ -257,7 +257,6 @@ IAXVoIPLink::sendAudioFromMic(void)
   }
 
   AudioCodec* ac = currentCall -> getCodecMap().getCodec( currentCall -> getAudioCodec() );
-  _debug("Audiocodec name = %s\n" , ac->getCodecName().c_str());
   if (!ac) {
     // Audio codec still not determined.
     if (audiolayer) {
@@ -666,7 +665,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     if (event->ies.format) {
       call->setFormat(event->ies.format);
     }
-
     break;
     
   case IAX_EVENT_ANSWER:
@@ -697,6 +695,9 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     break;
     
   case IAX_EVENT_VOICE:
+    //_debug("Should have a decent value!!!!!! = %i\n" , call -> getAudioCodec());
+    if( !audiolayer -> isCaptureActive())
+      audiolayer->startStream();
     iaxHandleVoiceEvent(event, call);
     break;
     

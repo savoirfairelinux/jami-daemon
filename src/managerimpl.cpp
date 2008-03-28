@@ -245,7 +245,7 @@ ManagerImpl::answerCall(const CallID& id)
     removeCallAccount(id);
     return false;
   }
-
+  
   //Place current call on hold if it isn't
 
 
