@@ -548,6 +548,7 @@ IAXVoIPLink::offhold(const CallID& id)
   _mutexIAX.enterMutex();
   iax_unquelch(call->getSession());
   _mutexIAX.leaveMutex();
+  audiolayer->startStream();
   call->setState(Call::Active);
   return true;
 }
