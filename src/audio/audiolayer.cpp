@@ -43,7 +43,6 @@
   , _CaptureHandle( NULL )
   , deviceClosed( true )
     , _urgentBuffer( SIZEBUF )
-    , _fstream("/tmp/audio.dat")
 {
 
   _inChannel  = 1; // don't put in stereo
@@ -59,8 +58,6 @@ AudioLayer::~AudioLayer (void)
   closeCaptureStream();
   closePlaybackStream();
   deviceClosed = true;
-  _fstream.flush();
-  _fstream.close();
 }
 
 
@@ -264,7 +261,6 @@ AudioLayer::playTones( void )
     int spkrVol = _manager -> getSpkrVolume();
     if( tone != 0 ){
       tone -> getNext( out , frames , spkrVol );
-      //_fstream.write( (char*)out,  maxBytes );
       write( out , maxBytes );
     } 
     else if( ( tone=_manager->getTelephoneFile() ) != 0 ){
@@ -413,7 +409,6 @@ AudioLayer::write(void* buffer, int length)
     //handle_xrun_playback();  
   //_debugAlsa("avail = %d - toWrite = %d\n" , snd_pcm_avail_update( _PlaybackHandle ) , length / 2);
 
-  
   snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _PlaybackHandle, length);
   int err = snd_pcm_mmap_writei( _PlaybackHandle , buffer , frames );
   switch(err) {
@@ -444,7 +439,6 @@ AudioLayer::write(void* buffer, int length)
   int
 AudioLayer::read( void* buffer, int toCopy)
 {
-
   if(deviceClosed || _CaptureHandle == NULL)
     return 0;
   int err;

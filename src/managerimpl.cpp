@@ -719,8 +719,8 @@ ManagerImpl::callBusy(const CallID& id) {
   void
 ManagerImpl::callFailure(const CallID& id) 
 {
-  _debug("Call failed\n");
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "FAILURE");
+  _debug("CALL ID = %s\n" , id.c_str());
   if (isCurrentCall(id) ) {
     playATone(Tone::TONE_BUSY);
     switchCall("");

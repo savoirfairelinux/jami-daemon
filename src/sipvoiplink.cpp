@@ -860,7 +860,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
   eXosip_unlock();
 
   // shall we delete the call?
-  removeCall(id);
+  //removeCall(id);
   return true;
 }
 

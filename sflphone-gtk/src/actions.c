@@ -208,10 +208,10 @@ sflphone_pick_up()
 		{
 			case CALL_STATE_DIALING:
 				sflphone_place_call (selectedCall);
-        			printf("accountID=%s\n",selectedCall->accountID);
+        			//printf("accountID=%s\n",selectedCall->accountID);
 				break;
 			case CALL_STATE_INCOMING:
-				printf("CALL ID = %s\n", selectedCall->callID);
+				//printf("CALL ID = %s\n", selectedCall->callID);
 				dbus_accept (selectedCall);
 				break;
 			case CALL_STATE_HOLD:
@@ -435,7 +435,6 @@ sflphone_keypad( guint keyval, gchar * key)
 		switch(c->state) 
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
-				//dbus_play_dtmf(key);
 				process_dialing(c, keyval, key);
 				break;
 			case CALL_STATE_CURRENT:
@@ -454,7 +453,7 @@ sflphone_keypad( guint keyval, gchar * key)
 							g_free(before);
 							g_free(temp);
 							//screen_set_call(c);
-							update_call_tree(c);
+							//update_call_tree(c);
 						}
 						break;
 				}
@@ -507,7 +506,8 @@ sflphone_keypad( guint keyval, gchar * key)
 				switch (keyval)
 				{
 					case 65307: /* ESCAPE */
-						dbus_hang_up(c);
+						//dbus_hang_up(c);
+						sflphone_hang_up(c);
 						break;
 				}
 				break;

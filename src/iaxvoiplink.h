@@ -211,11 +211,6 @@ private:
   /** libsamplerate error */
   int           _src_err;
 
-  /** Debugging output file 
-   * @todo Remove this */
-  //std::ofstream _fstream;
-
-  AudioCodec* _audiocodec;
 };
 
 #endif
