@@ -1,4 +1,4 @@
-# French translation of SFLphone.
+# Spanish translation of SFLphone.
 # Copyright (C) 2008 The Free Software Foundation, Inc.
 # This file is distributed under the GNU General Public License Version 3.
 #
@@ -21,7 +21,7 @@ msgstr ""
 
 #: menus.c: 119
 msgid "About SFLphone"
-msgstr ""
+msgstr "Sobre SFLphone"
 
 #: menus.c: 124
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
@@ -29,7 +29,7 @@ msgstr "SFLphone es un telefono por Internet compatible con los protocolos SIP y
 
 #: menus.c: 150
 msgid "_Help" 
-msgstr "_Apoyo"
+msgstr "_Ayuda"
 
 #: menus.c: 207
 msgid "_New call"
@@ -37,19 +37,19 @@ msgstr "_Nueva llamada"
 
 #: menus.c: 217 menus.c: 605
 msgid "_Pick up" 
-msgstr ""
+msgstr "_Colgar"
 
 #: menus.c: 225 menus.c: 617
 msgid "_Hang up"
-msgstr ""
+msgstr "_Descolgar"
 
 #: menus.c: 233 menus.c: 629
 msgid "On _Hold" 
-msgstr ""
+msgstr "_Sostener"
 
 #: menus.c: 254
 msgid "_Call"
-msgstr "_Llamada"
+msgstr "_Llamar"
 
 #: menus.c: 423
 msgid "_Accounts"
@@ -57,23 +57,23 @@ msgstr "_Cuentas"
 
 #: menus.c: 438
 msgid "_Edit"
-msgstr "_M"
+msgstr "_Edición"
 
 #: menus.c: 462
 msgid "_Dialpad"
-msgstr ""
+msgstr "_Pantalla de numero"
 
 #: menus.c: 471
 msgid "_Volume controls"
-msgstr ""
+msgstr "_Controles de volumen"
 
 #: menus.c: 479
 msgid "_Toolbar"
-msgstr ""
+msgstr "_Herramientas"
 
 #: menus.c: 492
 msgid "_View"
-msgstr "_"
+msgstr "_Ver"
 
 #: calltree.c: 286 calltree.c: 287
 msgid "Place a call"
@@ -81,23 +81,23 @@ msgstr "Llamar"
 
 #: calltree.c: 293 calltree.c: 294
 msgid "Pick up" 
-msgstr ""
+msgstr "Colgar"
 
 #: calltree.c: 301 calltree.c: 302
 msgid "Hang up"
-msgstr ""
+msgstr "Descolgar"
 
 #: calltree.c: 309 calltree.c: 310
 msgid "Off Hold"
-msgstr ""
+msgstr "Seguir"
 
 #: calltree.c: 317 calltree.c: 318
 msgid "On Hold"
-msgstr ""
+msgstr "Sostener"
 
 #: calltree.c: 327 calltree.c: 328
 msgid "Transfer"
-msgstr ""
+msgstr "Transferir"
 
 #: configwindow.c: 799
 msgid "Name"
@@ -109,11 +109,11 @@ msgstr "Frequencia"
 
 #: configwindow.c: 809
 msgid "Bitrate"
-msgstr ""
+msgstr "Bitrato"
 
 #: configwindow.c: 814
 msgid "Bandwidth"
-msgstr ""
+msgstr "Ancho de banda"
 
 #: configwindow.c: 892
 msgid "Protocol"
@@ -125,39 +125,39 @@ msgstr "Estado"
 
 #: configwindow.c: 934
 msgid "Default"
-msgstr ""
+msgstr "Defecto"
 
 #: configwindow.c: 935
 msgid "Set the selected account as the default one to make calls"
-msgstr ""
+msgstr "Fije la cuenta seleccionada como el defecto para llamar"
 
 #: configwindow.c: 976
 msgid "Devices"
-msgstr ""
+msgstr "Dispositivos"
 
 #: configwindow.c: 1018
 msgid "ALSA plugin"
-msgstr ""
+msgstr "Plugin ALSA"
 
 #: configwindow.c: 1039
 msgid "Output peripheral"
-msgstr "Periferico de salida"
+msgstr "Periférico de salida"
 
 #: configwindow.c: 1060
 msgid "Input peripheral"
-msgstr "Periferco de entrada"
+msgstr "Periférico de entrada"
 
 #: configwindow.c: 1080
 msgid "Detect all"
-msgstr ""
+msgstr "Detecte todos"
 
 #: configwindow.c: 1107
 msgid "_Enable ringtones"
-msgstr ""
+msgstr "_Permitir los ringtones"
 
 #: configwindow.c: 1112
 msgid "Choose a ringtone"
-msgstr ""
+msgstr "Elija un ringtones"
 
 #: configwindow.c: 1117
 msgid "Audio Files"
@@ -169,7 +169,7 @@ msgstr "Preferencias"
 
 #: configwindow.c: 1167
 msgid "Audio Settings"
-msgstr "Configuracion Audio"
+msgstr "Configuración Audio"
 
 #: configwindow.c: 1191
 msgid "Accounts"
@@ -177,51 +177,51 @@ msgstr "Cuentas"
 
 #: configwindow.c: 1203
 msgid "Accounts previously setup"
-msgstr ""
+msgstr "Cuentas existentes"
 
 #: accountwindow.c: 150
 msgid "Account settings"
-msgstr "Configuracion de cuentas"
+msgstr "Configuración de cuentas"
 
 #: accountwindow.c: 177
 msgid "_Enabled"
-msgstr ""
+msgstr "_Activado"
 
 #: accountwindow.c: 187
 msgid "_Alias"
-msgstr ""
+msgstr "_Alias"
 
 #: accountwindow.c: 195
 msgid "_Protocol"
-msgstr ""
+msgstr "_Protocolo"
 
 #: accountwindow.c: 214
 msgid "Unknown"
-msgstr ""
+msgstr "Desconocido"
 
 #: accountwindow.c: 224
 msgid "_Full Name"
-msgstr ""
+msgstr "_Nombre completo"
 
 #: accountwindow.c: 232
 msgid "_User part"
-msgstr ""
+msgstr "_Parte del usuario"
 
 #: accountwindow.c: 240
 msgid "_Host part"
-msgstr ""
+msgstr "_Parte del servidor"
 
 #: accountwindow.c: 248
 msgid "U_sername"
-msgstr ""
+msgstr "_Usuario"
 
 #: accountwindow.c: 256
 msgid "_Password"
-msgstr ""
+msgstr "_Contraseña"
 
 #: accountwindow.c: 267
 msgid "<b>NAT Detection</b>"
-msgstr ""
+msgstr "<b>Detección del NAT</b>"
 
 #: accountwindow.c: 270
 msgid "E_nable STUN"
@@ -229,7 +229,7 @@ msgstr "A_ctivar STUN"
 
 #: accountwindow.c: 275
 msgid "Enable it if you are behind a firewall, then restart SFLphone"
-msgstr ""
+msgstr "Activar si esta atras un cortafuego, despues reiniciar SFLphone"
 
 #: accountwindow.c: 277
 msgid "S_TUN Server"
@@ -237,7 +237,7 @@ msgstr "Servidor STUN"
 
 #: accountwindow.c: 283
 msgid "Format: name.server:port"
-msgstr ""
+msgstr "Formato: nombre.servidor:puerto"
 
 #: actions.c: 45
 msgid "%d new voice mails"
@@ -253,7 +253,7 @@ msgstr "Registrado"
 
 #: accountlist.c: 151
 msgid "Not Registered"
-msgstr ""
+msgstr "No registrado"
 
 #: accountlist.c: 154
 msgid "Trying..."
@@ -261,16 +261,16 @@ msgstr "Tratando..."
 
 #: accountlist.c: 157
 msgid "Error"
-msgstr ""
+msgstr "Error"
 
 #: accountlist.c: 160
 msgid "Invalid"
-msgstr ""
+msgstr "Inválido"
 
 #: sliders.c: 166
 msgid "Speakers volume"
-msgstr ""
+msgstr "Volumen de altavoces"
 
 #: sliders.c: 168
 msgid "Mic volume"
-msgstr ""
+msgstr "Volumen del micrófono"
