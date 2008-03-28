@@ -39,6 +39,9 @@
 
 #define RANDOM_IAX_PORT   rand() % 64000 + 1024
 
+#define MUSIC_ONHOLD true
+#define NO_MUSIC_ONHOLD	false
+
 // from IAXC : iaxclient.h
 
 #define IAX__20S_8KHZ_MAX   320 //320 samples, IAX packets can have more than 20ms.
@@ -530,7 +533,7 @@ IAXVoIPLink::onhold(const CallID& id)
   //if (call->getState() == Call::Hold) { _debug("Call is already on hold\n"); return false; }
   
   _mutexIAX.enterMutex();
-  iax_quelch(call->getSession());
+  iax_quelch_moh(call->getSession() , MUSIC_ONHOLD);
   _mutexIAX.leaveMutex();
 
   call->setState(Call::Hold);
