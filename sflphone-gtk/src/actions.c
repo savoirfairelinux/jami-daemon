@@ -413,7 +413,6 @@ call_t * sflphone_new_call()
 	void 
 sflphone_keypad( guint keyval, gchar * key)
 {
-	dbus_play_dtmf(key);
 	call_t * c = call_get_selected();
 	if(c)
 	{
@@ -421,13 +420,14 @@ sflphone_keypad( guint keyval, gchar * key)
 		switch(c->state) 
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
+				dbus_play_dtmf(key);
 				process_dialing(c, keyval, key);
 				break;
 			case CALL_STATE_CURRENT:
 				switch (keyval)
 				{
 					case 65307: /* ESCAPE */
-						sflphone_hang_up(c);
+						dbus_hang_up(c);
 						break;
 					default:  // TODO should this be here?
 						dbus_play_dtmf(key);
@@ -463,7 +463,7 @@ sflphone_keypad( guint keyval, gchar * key)
 						dbus_transfert(c);
 						break;
 					case 65307: /* ESCAPE */
-						sflphone_hang_up(c); 
+						sflphone_unset_transfert(c); 
 						break;
 					default: // When a call is on transfert, typing new numbers will add it to c->to
 						process_dialing(c, keyval, key);
@@ -491,8 +491,7 @@ sflphone_keypad( guint keyval, gchar * key)
 				switch (keyval)
 				{
 					case 65307: /* ESCAPE */
-						//dbus_hang_up(c);
-						sflphone_hang_up(c);
+						dbus_hang_up(c);
 						break;
 				}
 				break;
@@ -502,6 +501,7 @@ sflphone_keypad( guint keyval, gchar * key)
 	}
 	else 
 	{ // Not in a call, not dialing, create a new call 
+		dbus_play_dtmf(key);
 		switch (keyval)
 		{
 			case 65293: /* ENTER */
