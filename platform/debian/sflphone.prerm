@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# DEBIAN/prerm - Preremoval script for SFLphone
+
+if [ "$1" = "remove" ]
+then
+  
+  killall sflphoned 
+  
+fi
+
+exit 0

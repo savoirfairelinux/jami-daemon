@@ -1,6 +1,10 @@
-sflphoned (@VERSION@-1) unstable; urgency=low
+sflphone (@VERSION@-1) unstable; urgency=low
 
-  * Initial Release.
+  * Internationalization of the GTK GUI 
+      * English / French
+  * STUN support
+  * Slight modifications of the graphical interface ( tooltips, dialpad, ...)
 
- -- Jean-Philippe Barrette-LaPierre <jean-philippe.barrette-lapierre@savoirfairelinux.com>  Thu, 10 Nov 2005 11:37:53 -0500
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 21 Mar 2008 11:37:53 -0500
 
