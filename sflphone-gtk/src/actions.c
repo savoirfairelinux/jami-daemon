@@ -334,6 +334,8 @@ sflphone_incoming_call (call_t * c)
 
 void process_dialing(call_t * c, guint keyval, gchar * key)
 {
+	// We stop the tone
+	dbus_start_tone( FALSE );
 	switch (keyval)
 	{
 		case 65293: /* ENTER */
@@ -394,6 +396,8 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 
 call_t * sflphone_new_call()
 {
+	if( call_list_get_size() == 0 )
+	  dbus_start_tone(TRUE);
 	call_t * c = g_new0 (call_t, 1);
 	c->state = CALL_STATE_DIALING;
 	c->from = g_strconcat("\"\" <>", NULL);

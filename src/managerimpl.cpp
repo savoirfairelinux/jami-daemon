@@ -830,7 +830,6 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
     unsigned int nbSampling = audioloop->getSize();
     AudioLayer* audiolayer = getAudioDriver();
     SFLDataFormat buf[nbSampling];
-    //audioloop->getNext(buf, (int) nbSampling);
     if ( audiolayer ) { 
       audiolayer->putUrgent( buf, nbSampling );
     }
@@ -871,7 +870,6 @@ ManagerImpl::stopTone(bool stopAudio=true) {
   bool
 ManagerImpl::playTone()
 {
-  //return playATone(Tone::TONE_DIALTONE);
   playATone(Tone::TONE_DIALTONE);
 }
 
@@ -1059,6 +1057,9 @@ ManagerImpl::createSettingsPath (void) {
   void
 ManagerImpl::initConfigFile (void) 
 {
+  std::string mes = gettext("Init config file\n");
+  _debug("%s",mes.c_str());
+
   std::string type_str("string");
   std::string type_int("int");
 

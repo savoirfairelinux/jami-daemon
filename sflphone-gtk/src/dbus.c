@@ -632,6 +632,29 @@ dbus_play_dtmf(const gchar * key)
 }
 
 void
+dbus_start_tone(const int start)
+{
+  GError *error = NULL;
+  
+  org_sflphone_SFLphone_CallManager_start_tone(
+    callManagerProxy, 
+    start, 
+    &error);
+
+  if (error) 
+  {
+    g_printerr ("Failed to call startTone() on callManagerProxy: %s\n",
+                error->message);
+    g_error_free (error);
+  } 
+  else 
+  {
+    g_print ("DBus called startTone() on callManagerProxy\n");
+
+  }
+}
+
+void
 dbus_register(int pid, gchar * name)
 {
   GError *error = NULL;

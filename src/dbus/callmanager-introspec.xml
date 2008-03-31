@@ -37,6 +37,10 @@
       <arg type="s" name="key" direction="in"/>
     </method>
     
+    <method name="startTone">
+      <arg type="i" name="start" direction="in"/>
+    </method>
+
     <method name="setVolume">
       <arg type="s" name="device" direction="in"/>
       <arg type="d" name="value" direction="in"/>

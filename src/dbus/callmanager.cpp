@@ -134,4 +134,12 @@ CallManager::playDTMF( const ::DBus::String& key )
   Manager::instance().sendDtmf(Manager::instance().getCurrentCallId(), key.c_str()[0]);
 }
 
+void 
+CallManager::startTone( const ::DBus::Int32& start )
+{
+  if( start == true )
+    Manager::instance().playTone();
+  else
+    Manager::instance().stopTone(true);
+}
 

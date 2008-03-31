@@ -28,6 +28,7 @@ public:
         register_method(CallManager, unhold, _unhold_stub);
         register_method(CallManager, transfert, _transfert_stub);
         register_method(CallManager, playDTMF, _playDTMF_stub);
+        register_method(CallManager, startTone, _startTone_stub);
         register_method(CallManager, setVolume, _setVolume_stub);
         register_method(CallManager, getVolume, _getVolume_stub);
         register_method(CallManager, getCallDetails, _getCallDetails_stub);
@@ -77,6 +78,11 @@ public:
         static ::DBus::IntrospectedArgument playDTMF_args[] = 
         {
             { "key", "s", true },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument startTone_args[] = 
+        {
+            { "start", "i", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument setVolume_args[] = 
@@ -148,6 +154,7 @@ public:
             { "unhold", unhold_args },
             { "transfert", transfert_args },
             { "playDTMF", playDTMF_args },
+            { "startTone", startTone_args },
             { "setVolume", setVolume_args },
             { "getVolume", getVolume_args },
             { "getCallDetails", getCallDetails_args },
@@ -197,6 +204,7 @@ public:
     virtual void unhold( const ::DBus::String& callID ) = 0;
     virtual void transfert( const ::DBus::String& callID, const ::DBus::String& to ) = 0;
     virtual void playDTMF( const ::DBus::String& key ) = 0;
+    virtual void startTone( const ::DBus::Int32& start ) = 0;
     virtual void setVolume( const ::DBus::String& device, const ::DBus::Double& value ) = 0;
     virtual ::DBus::Double getVolume( const ::DBus::String& device ) = 0;
     virtual std::map< ::DBus::String, ::DBus::String > getCallDetails( const ::DBus::String& callID ) = 0;
@@ -331,6 +339,15 @@ private:
 
         ::DBus::String argin1; ri >> argin1;
         playDTMF(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _startTone_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argin1; ri >> argin1;
+        startTone(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

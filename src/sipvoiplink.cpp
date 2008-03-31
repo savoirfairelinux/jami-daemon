@@ -641,25 +641,12 @@ SIPVoIPLink::answer(const CallID& id)
   }
   removeCall(call->getCallId());
   return false;
-
-/*  int i;
-  int port;
-  char tmpbuf[64];
-  bzero (tmpbuf, 64);
-  // Get  port   
-  snprintf (tmpbuf, 63, "%d", getSipCall(id)->getLocalAudioPort());
-
-  _debug("%10d: Answer call [cid = %d, did = %d]\n", id, getSipCall(id)->getCid(), getSipCall(id)->getDid());
-  port = getSipCall(id)->getLocalAudioPort();
-  _debug("            Local audio port: %d\n", port);
-*/
 }
 
 bool
 SIPVoIPLink::hangup(const CallID& id)
 {
   SIPCall* call = getSIPCall(id);
-  Manager::instance().peerHungupCall( id );
   if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
 
   _debug("- SIP Action: Hang up call %s [cd: %3d %3d]\n", id.data(), call->getCid(), call->getDid()); 
