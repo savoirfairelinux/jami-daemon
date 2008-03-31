@@ -358,7 +358,7 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 		case 65288: /* BACKSPACE */
 			{  /* Brackets mandatory because of local vars */
 				gchar * before = c->to;
-				if(strlen(c->to) > 1){
+				if(strlen(c->to) >= 1){
 					c->to = g_strndup(c->to, strlen(c->to) -1);
 					g_free(before);
 					g_print("TO: %s\n", c->to);
@@ -371,8 +371,9 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 					//screen_set_call(c);
 					update_call_tree(c);
 				} 
-				else if(strlen(c->to) == 1)
+				else if(strlen(c->to) == 0)
 				{
+				  if(c->state != CALL_STATE_TRANSFERT)
 					dbus_hang_up(c);
 				}
 			}
