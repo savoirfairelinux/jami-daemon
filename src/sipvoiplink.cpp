@@ -665,7 +665,9 @@ SIPVoIPLink::answer(const CallID& id)
 bool
 SIPVoIPLink::hangup(const CallID& id)
 {
+  _debug("nvlnljbnzjkdbnjzdfbnjzdflnbjlzdfnbjlzdfbnzdfjlnjlb\n");
   SIPCall* call = getSIPCall(id);
+  Manager::instance().peerHungupCall( id );
   if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
 
   _debug("- SIP Action: Hang up call %s [cd: %3d %3d]\n", id.data(), call->getCid(), call->getDid()); 
