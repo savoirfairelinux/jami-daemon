@@ -26,7 +26,6 @@ dnl What to generate
 dnl AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libs/Makefile \
-  libs/taxidermy/Makefile \
   libs/stund/Makefile \
   libs/utilspp/Makefile \
   libs/utilspp/functor/Makefile \

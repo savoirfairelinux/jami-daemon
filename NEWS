@@ -1,4 +1,4 @@
-SFLphoned (0.7.0) / 2006-..-..
+SFLphoned (0.7.0) / 2006-...
 	* adding reload (sound driver) button
 	* fix: peer hangup remove flashing buttons
 	* removing old packaging stuff like FIXME or sflphone.spec.in

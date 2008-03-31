@@ -1,26 +1,8 @@
 For project core:
 ----------------
 Management Config like about:config in Mozilla
-Add IAX support
 Management of exceptions
 Remove all warnings in compilation
 
 Improvement of STUN (done?)
 Better handling for an reINVITE request. (done?)
-Management of account (add, remove, ...) (done?)
-
-For project dependencies:
-------------------------
-Improve the autotools scripts of PortAudioCpp
-
-
-For sflphone-qt:
----------------
-Save account status if modified in configuration
-
-From FIXME:
-- sflphoned don't return any result at the second time getcallstatus is called.
-- sflphoned don't return a 206 on getcallstatus when one call is ringing.
-- unhold should not return an error if it's not holded
-
-- Check if the device as the same name (usb), not only the number
