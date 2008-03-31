@@ -47,9 +47,7 @@ AC_CONFIG_FILES([src/Makefile \
   src/memmanager/Makefile \
   src/mixer/Makefile])
   
-AC_CONFIG_FILES([skins/Makefile \
-  skins/metal/Makefile \
-  skins/gmetal/Makefile \
+AC_CONFIG_FILES([po/Makefile \
   ringtones/Makefile])
 
 AC_CONFIG_FILES([doc/Makefile \

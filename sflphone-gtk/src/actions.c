@@ -159,7 +159,7 @@ sflphone_init()
         codec_list_init();
 	if(!dbus_connect ())
 	{
-		main_window_error_message("Unable to connect to the SFLphone server.\nMake sure the daemon is running.");
+		main_window_error_message(_("Unable to connect to the SFLphone server.\nMake sure the daemon is running."));
 		return FALSE;
 	}
 	else 
@@ -541,7 +541,7 @@ sflphone_place_call ( call_t * c )
 			}
 			else
 			{
-				main_window_error_message("The account selected as default is not registered.");
+				main_window_error_message(_("The account selected as default is not registered."));
 			}
 			
 		}
@@ -554,7 +554,7 @@ sflphone_place_call ( call_t * c )
 			}
 			else
 			{
-				main_window_error_message("There are no registered accounts to make this call with.");
+				main_window_error_message(_("There is no registered account to make this call with."));
 			}
 
 		}
@@ -575,7 +575,7 @@ sflphone_throw_exception( gchar* msg , int err )
   gchar* markup = malloc(1000);
   switch( err ){
     case ALSA_ERROR:
-      sprintf( markup , "<b>ALSA notification</b>\n\n");
+      sprintf( markup , _("<b>ALSA notification</b>\n\n"));
       break;
   }
   sprintf( markup , "%s%s" , markup , msg );
@@ -629,7 +629,7 @@ sflphone_fill_codec_list()
   }
   if( codec_list_get_size() == 0) {
     gchar* markup = malloc(1000);
-    sprintf(markup , "<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )", CODECS_DIR , g_get_home_dir());
+    sprintf(markup , _("<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )"), CODECS_DIR , g_get_home_dir());
     main_window_error_message( markup );
     g_free( markup );
     dbus_unregister(getpid());

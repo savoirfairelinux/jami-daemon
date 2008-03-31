@@ -176,7 +176,7 @@ create_main_window ()
                                   GTK_DIALOG_DESTROY_WITH_PARENT,
                                   GTK_MESSAGE_INFO,
                                   GTK_BUTTONS_YES_NO,
-                                  "<b><big>Welcome to SFLphone!</big></b>\n\nThere are no VoIP accounts configured, would you like to edit the preferences now?");
+                                  _("<b><big>Welcome to SFLphone!</big></b>\n\nThere is no VoIP account configured.\n Would you like to create one now?"));
 
     int response = gtk_dialog_run (GTK_DIALOG(dialog));
     
@@ -184,7 +184,7 @@ create_main_window ()
 
     if (response == GTK_RESPONSE_YES)
     {
-      show_config_window();
+      show_accounts_window();
     }
    
   }
