@@ -64,6 +64,7 @@ cp $sharedir/sflphone/*.svg $sfldir$sharedir/sflphone
 #/usr/share/sflphone/ringtones
 cp $sharedir/sflphone/ringtones/* $sfldir$sharedir/sflphone/ringtones
 #/usr/share/locale/fr/LC_MESSAGES
+mkdir -p $sfldir$sharedir/locale/fr/LC_MESSAGES
 cp $sharedir/locale/fr/LC_MESSAGES/sflphone.mo	$sfldir$sharedir/locale/fr/LC_MESSAGES
 
 # DEBIAN files
