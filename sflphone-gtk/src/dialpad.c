@@ -89,13 +89,13 @@ create_dialpad()
   gtk_table_attach ( GTK_TABLE( table ), button, 2, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
   
-  button = get_numpad_button("#", FALSE, "");
+  button = get_numpad_button("*", FALSE, "");
   gtk_table_attach ( GTK_TABLE( table ), button, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
   button = get_numpad_button("0", FALSE, "");
   gtk_table_attach ( GTK_TABLE( table ), button, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
-  button = get_numpad_button("*", FALSE, "");
+  button = get_numpad_button("#", FALSE, "");
   gtk_table_attach ( GTK_TABLE( table ), button, 2, 3, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   
   return table;
