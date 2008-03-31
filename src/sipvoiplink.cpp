@@ -249,8 +249,8 @@ SIPVoIPLink::getEvent()
 
 	/* INVITE related events within calls */
 	case EXOSIP_CALL_INVITE:          /** 05 < announce a new call                   */
-		SIPCallInvite(event);
 		_debugMid(" !EXOSIP_CALL_INVITE\n");
+		SIPCallInvite(event);
 		break;
 	case EXOSIP_CALL_REINVITE:        /** 06 < announce a new INVITE within call     */
 		SIPCallReinvite(event);
@@ -599,13 +599,6 @@ SIPVoIPLink::answer(const CallID& id)
     return false;
   }
 
-  // Send 180 RINGING
-  _debug("< Send 180 Ringing\n");
-  eXosip_lock ();
-  eXosip_call_send_answer(call->getTid(), SIP_RINGING, NULL);
-  eXosip_unlock ();
-  call->setConnectionState(Call::Ringing);
-
   // Send 200 OK
   osip_message_t *answerMessage = NULL;
   eXosip_lock();
@@ -665,7 +658,6 @@ SIPVoIPLink::answer(const CallID& id)
 bool
 SIPVoIPLink::hangup(const CallID& id)
 {
-  _debug("nvlnljbnzjkdbnjzdfbnjzdflnbjlzdfnbjlzdfbnzdfjlnjlb\n");
   SIPCall* call = getSIPCall(id);
   Manager::instance().peerHungupCall( id );
   if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
@@ -1275,7 +1267,6 @@ void
 SIPVoIPLink::SIPCallInvite(eXosip_event_t *event)
 {
   _debug("> INVITE (receive)\n");
-
   CallID id = Manager::instance().getNewCallID();
 
   SIPCall* call = new SIPCall(id, Call::Incoming);
@@ -1283,6 +1274,7 @@ SIPVoIPLink::SIPCallInvite(eXosip_event_t *event)
     _debug("! SIP Failure: unable to create an incoming call");
     return;
   }
+
   setCallAudioLocal(call);
   call->setCodecMap(Manager::instance().getCodecDescriptorMap());
   call->setConnectionState(Call::Progressing);
@@ -1295,6 +1287,12 @@ SIPVoIPLink::SIPCallInvite(eXosip_event_t *event)
   } else {
     delete call; call = 0;
   }
+  // Send 180 RINGING
+  _debug("< Send 180 Ringing\n");
+  eXosip_lock ();
+  eXosip_call_send_answer(event->tid, 180, NULL);
+  eXosip_unlock ();
+  call->setConnectionState(Call::Ringing);
 }
 
 void
@@ -1324,6 +1322,7 @@ SIPVoIPLink::SIPCallReinvite(eXosip_event_t *event)
 void
 SIPVoIPLink::SIPCallRinging(eXosip_event_t *event)
 {
+  
   SIPCall* call = findSIPCallWithCid(event->cid);
   if (!call) {
     _debug("! SIP Failure: unknown call\n");

@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2004-2007 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -110,9 +111,9 @@ SIPCall::SIPCallInvite(eXosip_event_t *event)
         sdp_message_free (local_sdp);
       }
       _debug("< Sending answer 183\n");
-      if (0 != eXosip_call_send_answer (event->tid, 183, answer)) {
-        _debug("SipCall::newIncomingCall: cannot send 183 progress?\n");
-      }
+      //if (0 != eXosip_call_send_answer (event->tid, 183, answer)) {
+        //_debug("SipCall::newIncomingCall: cannot send 183 progress?\n");
+      //}
     }
   }
   eXosip_unlock ();
