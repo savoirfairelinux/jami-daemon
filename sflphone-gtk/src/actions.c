@@ -83,7 +83,6 @@ sflphone_hold(call_t * c )
 	c->state = CALL_STATE_HOLD;
 	update_call_tree(c);
 	update_menus();
-	//screen_clear();
 }
 
 	void 
@@ -92,6 +91,14 @@ sflphone_ringing(call_t * c )
 	c->state = CALL_STATE_RINGING;
 	update_call_tree(c);
 	update_menus();
+}
+
+  void
+sflphone_hung_up( call_t * c)
+{
+  call_list_remove( c->callID);
+  update_call_tree_remove(c);
+  update_menus();
 }
 
 /** Internal to actions: Fill account list */
@@ -169,7 +176,6 @@ sflphone_init()
 sflphone_hang_up()
 {
 	call_t * selectedCall = call_get_selected();
-	//main_window_callinfo(FALSE, selectedCall);
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
@@ -200,18 +206,14 @@ sflphone_hang_up()
 sflphone_pick_up()
 {
 	call_t * selectedCall = call_get_selected();
-        //printf("full name: %s\n",g_hash_table_lookup(selectedCall->properties, ACCOUNT_IAX_FULL_NAME));
-	//main_window_callinfo(TRUE, selectedCall);
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
 		{
 			case CALL_STATE_DIALING:
 				sflphone_place_call (selectedCall);
-        			//printf("accountID=%s\n",selectedCall->accountID);
 				break;
 			case CALL_STATE_INCOMING:
-				//printf("CALL ID = %s\n", selectedCall->callID);
 				dbus_accept (selectedCall);
 				break;
 			case CALL_STATE_HOLD:
@@ -276,7 +278,6 @@ sflphone_fail( call_t * c )
 	c->state = CALL_STATE_FAILURE;
 	update_call_tree(c);
 	update_menus();
-	//main_window_callinfo(FALSE, c);
 }
 
 	void 
@@ -285,7 +286,6 @@ sflphone_busy( call_t * c )
 	c->state = CALL_STATE_BUSY;
 	update_call_tree(c);
 	update_menus();
-	//screen_set_call(c);
 }
 
 	void 
@@ -294,7 +294,6 @@ sflphone_current( call_t * c )
 	c->state = CALL_STATE_CURRENT;
 	update_call_tree(c);
 	update_menus();
-	//screen_set_call(c);
 }
 
 	void 
@@ -305,7 +304,6 @@ sflphone_set_transfert()
 	{
 		c->state = CALL_STATE_TRANSFERT;
 		c->to = g_strdup("");
-		//screen_set_call(c);
 		update_call_tree(c);
 		update_menus();
 	}
@@ -320,7 +318,6 @@ sflphone_unset_transfert()
 	{
 		c->state = CALL_STATE_CURRENT;
 		c->to = g_strdup("");
-		//screen_set_call(c);
 		update_call_tree(c);
 		update_menus();
 	}
@@ -335,15 +332,6 @@ sflphone_incoming_call (call_t * c)
 	update_menus();
 }
 
-	void 
-sflphone_hung_up (call_t * c )
-{
-	call_list_remove(c->callID);
-	update_call_tree_remove(c);
-	update_menus();
-	//main_window_callinfo(FALSE, c);
-}
-
 void process_dialing(call_t * c, guint keyval, gchar * key)
 {
 	switch (keyval)
@@ -353,7 +341,7 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 			sflphone_place_call(c);
 			break;
 		case 65307: /* ESCAPE */
-			dbus_hang_up(c);
+			sflphone_hang_up(c);
 			break;
 		case 65288: /* BACKSPACE */
 			{  /* Brackets mandatory because of local vars */
@@ -368,7 +356,6 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 						g_free(c->from);
 						c->from = g_strconcat("\"\" <", c->to, ">", NULL);
 					}
-					//screen_set_call(c);
 					update_call_tree(c);
 				} 
 				else if(strlen(c->to) == 0)
@@ -397,7 +384,6 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 					g_free(c->from);
 					c->from = g_strconcat("\"\" <", c->to, ">", NULL);
 				}
-				//screen_set_call(c);
 				update_call_tree(c);
 			}
 			break;
@@ -418,7 +404,6 @@ call_t * sflphone_new_call()
 	c->to = g_strdup("");
 
 	call_list_add(c);
-	//screen_set_call(c);
 	update_call_tree_add(c);  
 	update_menus();
 
@@ -442,7 +427,7 @@ sflphone_keypad( guint keyval, gchar * key)
 				switch (keyval)
 				{
 					case 65307: /* ESCAPE */
-						dbus_hang_up(c);
+						sflphone_hang_up(c);
 						break;
 					default:  // TODO should this be here?
 						dbus_play_dtmf(key);
@@ -453,7 +438,6 @@ sflphone_keypad( guint keyval, gchar * key)
 							c->from = g_strconcat("\"",call_get_name(c) ,"\" <", temp, ">", NULL);
 							g_free(before);
 							g_free(temp);
-							//screen_set_call(c);
 							//update_call_tree(c);
 						}
 						break;
