@@ -1,23 +1,21 @@
-# German translation of SFLphone.
 # Copyright (C) 2008 The Free Software Foundation, Inc.
 # This file is distributed under the GNU General Public License Version 3.
 #
 # Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>, 2008.
 #
 
-#POT-Creation-Date: 2007-01-13 01:39+0100\n
 
 msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.8.2\n"
 "Report-Msgid-Bugs-To: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com >\n"
-"PO-Revision-Date: 2008-03-27 11:15\n"
-"Last-Translator: Emmanuel Milou <emmnauel.milou@savoirfairelinux.com>\n"
+"POT-Creation-Date: 2007-03-31 01:39+0600\n"
+"PO-Revision-Date: 2008-03-31 11:15+0600\n"
+"Last-Translator: Maxime Chambreuil <maxime.chambreuil@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n>1;\n"
 
 #: src/audio/audiolayer.cpp: 318
 msgid "Error while opening capture device "
@@ -33,10 +31,10 @@ msgstr ""
 
 #: sflphone-gtk/src/menus.c: 124
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr "" 
+msgstr ""
 
 #: sflphone-gtk/src/menus.c: 150
-msgid "_Help" 
+msgid "_Help"
 msgstr ""
 
 #: sflphone-gtk/src/menus.c: 207
@@ -44,7 +42,7 @@ msgid "_New call"
 msgstr ""
 
 #: sflphone-gtk/src/menus.c: 217 menus.c: 605
-msgid "_Pick up" 
+msgid "_Pick up"
 msgstr ""
 
 #: sflphone-gtk/src/menus.c: 225 menus.c: 617
@@ -52,7 +50,7 @@ msgid "_Hang up"
 msgstr ""
 
 #: sflphone-gtk/src/menus.c: 233 menus.c: 629
-msgid "On _Hold" 
+msgid "On _Hold"
 msgstr ""
 
 #: sflphone-gtk/src/menus.c: 254
@@ -88,7 +86,7 @@ msgid "Place a call"
 msgstr ""
 
 #: sflphone-gtk/src/calltree.c: 293 calltree.c: 294
-msgid "Pick up" 
+msgid "Pick up"
 msgstr ""
 
 #: sflphone-gtk/src/calltree.c: 301 calltree.c: 302
@@ -121,7 +119,7 @@ msgstr ""
 
 #: sflphone-gtk/src/configwindow.c: 814
 msgid "Bandwidth"
-msgstr "Bandbreite"
+msgstr ""
 
 #: sflphone-gtk/src/configwindow.c: 892
 msgid "Protocol"
@@ -316,3 +314,4 @@ msgid "<b><big>Welcome to SFLphone!</big></b>\n\n"
 msgstr ""
 ""
 ""
+
