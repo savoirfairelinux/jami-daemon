@@ -28,6 +28,7 @@
 #include <mainwindow.h>
 #include <marshaller.h>
 #include <sliders.h>
+#include <statusicon.h>
 
 #include <dbus.h>
 #include <actions.h>
@@ -53,6 +54,7 @@ incoming_call_cb (DBusGProxy *proxy,
   c->from = g_strdup(from);
   c->state = CALL_STATE_INCOMING;
   
+  status_tray_icon_blink();
   sflphone_incoming_call (c);
 }
 

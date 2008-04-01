@@ -20,6 +20,7 @@
 #include <gtk/gtk.h>
 #include <actions.h>
 #include <mainwindow.h>
+#include <accountlist.h>
 #include <statusicon.h>
 
 GtkStatusIcon* status;
@@ -107,5 +108,16 @@ show_status_icon()
   g_signal_connect (G_OBJECT (status), "popup-menu",
 			  G_CALLBACK (menu),
 			  create_menu());			  
+
+  // Add a tooltip to the system tray icon
+  gchar* tip = malloc(500);
+  sprintf( tip , "SFLphone - %i accounts registered" , account_list_get_size());
+  gtk_status_icon_set_tooltip( status , tip );
+  g_free(tip);
 }
 
+void
+status_tray_icon_blink(  )
+{
+  gtk_status_icon_set_blinking( status , !gtk_status_icon_get_blinking( status ) );
+}

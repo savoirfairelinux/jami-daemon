@@ -221,6 +221,7 @@ sflphone_pick_up()
 				sflphone_place_call (selectedCall);
 				break;
 			case CALL_STATE_INCOMING:
+				status_tray_icon_blink();
 				dbus_accept (selectedCall);
 				break;
 			case CALL_STATE_HOLD:

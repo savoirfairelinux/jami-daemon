@@ -26,6 +26,7 @@
   */
 void show_status_icon();
 void status_icon_unminimize();
+void status_tray_icon_blink();
 
 
 #endif
