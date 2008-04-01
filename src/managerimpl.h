@@ -368,7 +368,7 @@ public:
    * Notify the client that an error occured
    * @param errMsg The error message that should popup on the client side
    */
-  void notifyErrClient( const std::string& errMsg );
+  void notifyErrClient( const ::DBus::Int32& errCode );
 
   bool getConfigAll(const std::string& sequenceId);
   bool getConfig(const std::string& section, const std::string& name, TokenList& arg);

@@ -123,7 +123,9 @@ g_cclosure_user_marshal_VOID__STRING_STRING (GClosure     *closure,
             data2);
 }
 
-/* VOID:STRING,INT (marshaller.list:3) */
+/* VOID:INT (marshaller.list:3) */
+
+/* VOID:STRING,INT (marshaller.list:4) */
 void
 g_cclosure_user_marshal_VOID__STRING_INT (GClosure     *closure,
                                           GValue       *return_value,
@@ -160,7 +162,7 @@ g_cclosure_user_marshal_VOID__STRING_INT (GClosure     *closure,
             data2);
 }
 
-/* VOID:STRING,DOUBLE (marshaller.list:4) */
+/* VOID:STRING,DOUBLE (marshaller.list:5) */
 void
 g_cclosure_user_marshal_VOID__STRING_DOUBLE (GClosure     *closure,
                                              GValue       *return_value,

@@ -30,7 +30,6 @@
 typedef float float32;
 typedef short int16;
 
-#define _(string)   gettext (string)
 
 #ifdef DATAFORMAT_IS_FLOAT
 #define SFLDataFormat float32
@@ -71,7 +70,7 @@ typedef short int16;
 #define RINGDIR          "ringtones"
 #define CODECDIR         "codecs"
 
-//#define _(arg) arg
+#define _(arg) arg
 #define MONO					1
 #define CHANNELS				2
 #define SIZEBUF 				1024*1024
@@ -110,5 +109,11 @@ typedef short int16;
 #define SPEEX_STRING_DESCRIPTION  "speex"
 #define ILBC_STRING_DESCRIPTION  "ilbc"
 #define RINGTONE_ENABLED	  1
+
+#define ERROR_ALSA_CAPTURE_DEVICE	0
+#define ERROR_ALSA_PLAYBACK_DEVICE	1
+//#define ERROR_ALSA_OPENING_CAPTURE_DEVICE	0
+//#define ERROR_ALSA_OPENING_CAPTURE_DEVICE	0
+//#define ERROR_ALSA_OPENING_CAPTURE_DEVICE	0
 
 #endif	// __GLOBAL_H__

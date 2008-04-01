@@ -22,7 +22,10 @@ extern void g_cclosure_user_marshal_VOID__STRING_STRING (GClosure     *closure,
                                                          gpointer      invocation_hint,
                                                          gpointer      marshal_data);
 
-/* VOID:STRING,INT (marshaller.list:3) */
+/* VOID:INT (marshaller.list:3) */
+#define g_cclosure_user_marshal_VOID__INT	g_cclosure_marshal_VOID__INT
+
+/* VOID:STRING,INT (marshaller.list:4) */
 extern void g_cclosure_user_marshal_VOID__STRING_INT (GClosure     *closure,
                                                       GValue       *return_value,
                                                       guint         n_param_values,
@@ -30,7 +33,7 @@ extern void g_cclosure_user_marshal_VOID__STRING_INT (GClosure     *closure,
                                                       gpointer      invocation_hint,
                                                       gpointer      marshal_data);
 
-/* VOID:STRING,DOUBLE (marshaller.list:4) */
+/* VOID:STRING,DOUBLE (marshaller.list:5) */
 extern void g_cclosure_user_marshal_VOID__STRING_DOUBLE (GClosure     *closure,
                                                          GValue       *return_value,
                                                          guint         n_param_values,

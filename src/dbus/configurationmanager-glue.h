@@ -230,7 +230,6 @@ public:
         };
         static ::DBus::IntrospectedArgument errorAlert_args[] = 
         {
-            { "errMsg", "s", false },
             { "code", "i", false },
             { 0, 0, 0 }
         };
@@ -351,12 +350,11 @@ public:
         ::DBus::SignalMessage sig("accountsChanged");
         emit_signal(sig);
     }
-    void errorAlert( const ::DBus::String& arg1, const ::DBus::Int32& arg2 )
+    void errorAlert( const ::DBus::Int32& arg1 )
     {
         ::DBus::SignalMessage sig("errorAlert");
         ::DBus::MessageIter wi = sig.writer();
         wi << arg1;
-        wi << arg2;
         emit_signal(sig);
     }
 

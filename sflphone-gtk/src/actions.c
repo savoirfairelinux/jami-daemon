@@ -33,7 +33,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define ALSA_ERROR  0
+#define ALSA_ERROR_CAPTURE_DEVICE     0
+#define ALSA_ERROR_PLAYBACK_DEVICE    1
 
 #define TONE_WITHOUT_MESSAGE  0 
 #define TONE_WITH_MESSAGE     1
@@ -582,15 +583,17 @@ sflphone_set_default_account( )
 }
 
 void
-sflphone_throw_exception( gchar* msg , int err )
+sflphone_throw_exception( int errCode )
 {
   gchar* markup = malloc(1000);
-  switch( err ){
-    case ALSA_ERROR:
-      sprintf( markup , _("<b>ALSA notification</b>\n\n"));
+  switch( errCode ){
+    case ALSA_ERROR_PLAYBACK_DEVICE:
+      sprintf( markup , _("<b>ALSA notification</b>\n\nError while opening playback device"));
+      break;
+    case ALSA_ERROR_CAPTURE_DEVICE:
+      sprintf( markup , _("<b>ALSA notification</b>\n\nError while opening capture device"));
       break;
   }
-  sprintf( markup , "%s%s" , markup , msg );
   main_window_error_message( markup );  
   free( markup );
 }
