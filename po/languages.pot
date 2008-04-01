@@ -267,8 +267,14 @@ msgstr ""
 msgid "There is no registered account to make this call with."
 msgstr ""
 
-#: sflphone-gtk/src/actions.c: 578
+#: sflphone-gtk/src/actions.c: 591
 msgid "<b>ALSA notification</b>\n\n"
+"Error while opening playback device"
+msgstr ""
+
+#: sflphone-gtk/src/actions.c: 594
+msgid "<b>ALSA notification</b>\n\n"
+"Error while opening capture device"
 msgstr ""
 
 #: sflphone-gtk/src/actions.c: 632

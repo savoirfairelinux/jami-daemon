@@ -59,8 +59,6 @@ main (int argc, char **argv) {
     }
     bool initOK = false;
     try {
-      bindtextdomain( "sflphone" , "/usr/share/locale" );
-      textdomain( "sflphone" );
       Manager::instance().initConfigFile();
       Manager::instance().init();
       initOK = true;

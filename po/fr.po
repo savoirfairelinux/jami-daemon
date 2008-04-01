@@ -269,9 +269,17 @@ msgstr "Le compte sélectionné par défaut n'est pas enregistré."
 msgid "There is no registered account to make this call with."
 msgstr "Vous n'avez aucun compte enregistré pour passer cet appel."
 
-#: sflphone-gtk/src/actions.c: 578
+#: sflphone-gtk/src/actions.c: 591
 msgid "<b>ALSA notification</b>\n\n"
+"Error while opening playback device"
 msgstr "<b>Notification ALSA</b>\n\n"
+"Erreur lors de l'ouverture du périphérique de sortie"
+
+#: sflphone-gtk/src/actions.c: 594
+msgid "<b>ALSA notification</b>\n\n"
+"Error while opening capture device"
+msgstr "<b>Notification ALSA</b>\n\n"
+"Erreur lors de l'ouverture du périphérique d'entrée"
 
 #: sflphone-gtk/src/actions.c: 632
 msgid "<b>Error: No audio codecs found.\n\n</b>"
