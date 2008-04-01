@@ -56,7 +56,6 @@ incoming_call_cb (DBusGProxy *proxy,
   
   status_tray_icon_blink( TRUE );
   sflphone_incoming_call (c);
-  status_bar_message_add(_("Incoming Call ... ") , __MSG_INCOMING_CALL);
 }
 
 

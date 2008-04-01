@@ -109,7 +109,6 @@ sflphone_ringing(call_t * c )
 	c->state = CALL_STATE_RINGING;
 	update_call_tree(c);
 	update_menus();
-	status_bar_message_add(" Call Processing ..." , __MSG_CALLING);
 }
 
   void
@@ -316,8 +315,6 @@ sflphone_current( call_t * c )
 	c->state = CALL_STATE_CURRENT;
 	update_call_tree(c);
 	update_menus();
-	status_bar_message_remove(__MSG_CALLING);
-	status_bar_message_remove(__MSG_INCOMING_CALL);
 }
 
 	void 

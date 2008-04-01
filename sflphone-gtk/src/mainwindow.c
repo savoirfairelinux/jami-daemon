@@ -245,25 +245,6 @@ main_window_dialpad(gboolean show){
   showDialpad = show;
 }
 
-void
-main_window_callinfo(gboolean show, call_t* current)
-{
-  /*
-  if(show && !showInfoScreen)
-  {
-    infoScreen = create_screen();
-    gtk_box_pack_start (GTK_BOX (subvbox), infoScreen, FALSE , TRUE , 0 );
-    gtk_widget_show_all(infoScreen);
-    screen_set_call(current);
-  }
-  else if(!show && showInfoScreen)
-  {
-    gtk_container_remove(GTK_CONTAINER (subvbox), infoScreen);
-  }
-  showInfoScreen = show;
-*/
-}
-
 void 
 status_bar_message_add(const gchar * message, guint id)
 { 
