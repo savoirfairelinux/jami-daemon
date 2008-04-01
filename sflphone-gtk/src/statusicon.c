@@ -77,7 +77,7 @@ create_menu()
   
   menu      = gtk_menu_new ();
   
-  show_menu_item = gtk_check_menu_item_new_with_mnemonic ("_Show main window");
+  show_menu_item = gtk_check_menu_item_new_with_mnemonic (_("_Show main window"));
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), TRUE);
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), show_menu_item);
   g_signal_connect(G_OBJECT (show_menu_item), "toggled",
@@ -111,7 +111,7 @@ show_status_icon()
 
   // Add a tooltip to the system tray icon
   gchar* tip = malloc(500);
-  sprintf( tip , "SFLphone - %i accounts registered" , account_list_get_size());
+  sprintf( tip , _("SFLphone - %i accounts registered") , account_list_get_size());
   gtk_status_icon_set_tooltip( status , tip );
   g_free(tip);
 }
