@@ -310,15 +310,23 @@ select_active_input_audio_device()
 	gtk_combo_box_set_active(GTK_COMBO_BOX(inputDeviceComboBox), 0);
 }
 
-/**
- * Select the input audio plugin by calling the server
- */
-//static void
-//select_input_audio_plugin(GtkWidget* widget, gpointer data)
-//{
-	//dbus_set_audio_manager("");
-//}
-
+void
+update_combo_box( gchar* plugin )
+{
+	  g_print("INSENSITIVE THE ALL THING\n");
+	// set insensitive the devices widget if the selected plugin is default
+	if( g_strcasecmp( plugin , "default" ) == 0)
+	{
+	  g_print("INSENSITIVE THE ALL THING\n");
+	  gtk_widget_set_sensitive( GTK_WIDGET ( outputDeviceComboBox ) , FALSE );
+	  gtk_widget_set_sensitive( GTK_WIDGET ( inputDeviceComboBox ) , FALSE );
+	}
+	else
+	{
+	  gtk_widget_set_sensitive( GTK_WIDGET ( outputDeviceComboBox ) , TRUE );
+	  gtk_widget_set_sensitive( GTK_WIDGET ( inputDeviceComboBox ) , TRUE );
+	}
+}
 /**
  * Select the output audio plugin by calling the server
  */
@@ -338,6 +346,7 @@ select_output_audio_plugin(GtkComboBox* widget, gpointer data)
 		gtk_combo_box_get_active_iter(widget, &iter);
 		gtk_tree_model_get(model, &iter, 0, &pluginName, -1);	
 		dbus_set_output_audio_plugin(pluginName);
+		update_combo_box( pluginName);
 	}
 }
 
@@ -358,7 +367,7 @@ select_active_output_audio_plugin()
 	tmp = plugin;
 	model = gtk_combo_box_get_model(GTK_COMBO_BOX(pluginComboBox));
 	  
-	// Find the currently set alsa plugin
+	// Find the currently alsa plugin
 	gtk_tree_model_get_iter_first(model, &iter);
 	do {
 		gtk_tree_model_get(model, &iter, 0, &plugin , -1);
@@ -366,6 +375,7 @@ select_active_output_audio_plugin()
 		{
 			// Set current iteration the active one
 			gtk_combo_box_set_active_iter(GTK_COMBO_BOX(pluginComboBox), &iter);
+			update_combo_box( plugin );
 			return;
 		}
 	} while(gtk_tree_model_iter_next(model, &iter));
@@ -373,7 +383,9 @@ select_active_output_audio_plugin()
 	// No index was found, select first one
 	g_print("Warning : No active output device found\n");
 	gtk_combo_box_set_active(GTK_COMBO_BOX(pluginComboBox), 0);
+	update_combo_box("default");
 }
+
 
 /**
  * Set the audio output device on the server with its index
@@ -704,51 +716,6 @@ bold_if_default_account(GtkTreeViewColumn *col,
 		g_object_set(G_OBJECT(rend), "weight", 400, NULL);
 }
 
-/**
- * TODO Action when restore default codecs is done
- *
-void
-default_codecs(GtkWidget* widget, gpointer data)
-{
-	GtkListStore *codecStore;
-	int i = 0;
-	int j = 0;
-	gint * new_order;
-	gchar ** default_list = (gchar**)dbus_default_codec_list();
-	
-	while(default_list[i] != NULL)
-	{
-		printf("%s\n", default_list[i]);
-		i++;
-	}
-	i = 0;
-	while(default_list[i] != NULL)
-	{
-		if(g_strcasecmp(codec_list_get_nth(0)->name, default_list[i]) == 0)
-		{
-			printf("%s %s\n",codec_list_get_nth(0)->name, default_list[i]);
-			new_order[i] = 0;
-		}
-		else if(g_strcasecmp(codec_list_get_nth(1)->name, default_list[i]) == 0)
-		{
-			printf("%s %s\n",codec_list_get_nth(0)->name, default_list[0]);
-			new_order[i] = 1;
-		}	
-		else
-		{
-			printf("%s %s\n",codec_list_get_nth(0)->name, default_list[0]);
-			new_order[i] = 2;
-		}
-		printf("new_order[%i]=%i\n", i,j);
-		i++;
-	}
-	codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
-	gtk_list_store_reorder(codecStore, new_order);
-}
-*/
-/**
- * Create table widget for codecs
- */
 GtkWidget*
 create_codec_table()
 {
@@ -1023,7 +990,7 @@ create_audio_tab ()
 	outputAudioPluginStore = gtk_list_store_new(1, G_TYPE_STRING);
 	config_window_fill_output_audio_plugin_list();
 	pluginComboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioPluginStore));
-	select_active_output_audio_plugin();
+	//select_active_output_audio_plugin();
 	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), pluginComboBox);
 	g_signal_connect(G_OBJECT(pluginComboBox), "changed", G_CALLBACK(select_output_audio_plugin), pluginComboBox);
 	
@@ -1083,6 +1050,7 @@ create_audio_tab ()
 	// Set event on selection
 	g_signal_connect(G_OBJECT(refreshButton), "clicked", G_CALLBACK(detect_all_audio_settings), NULL);
 	
+	select_active_output_audio_plugin();
     // Codec section label
     codecFrame = gtk_frame_new(_("Codecs"));
     gtk_misc_set_alignment(GTK_MISC(codecFrame), 0, 0.5);
