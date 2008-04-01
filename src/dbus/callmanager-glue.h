@@ -83,6 +83,7 @@ public:
         static ::DBus::IntrospectedArgument startTone_args[] = 
         {
             { "start", "i", true },
+            { "type", "i", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument setVolume_args[] = 
@@ -204,7 +205,7 @@ public:
     virtual void unhold( const ::DBus::String& callID ) = 0;
     virtual void transfert( const ::DBus::String& callID, const ::DBus::String& to ) = 0;
     virtual void playDTMF( const ::DBus::String& key ) = 0;
-    virtual void startTone( const ::DBus::Int32& start ) = 0;
+    virtual void startTone( const ::DBus::Int32& start, const ::DBus::Int32& type ) = 0;
     virtual void setVolume( const ::DBus::String& device, const ::DBus::Double& value ) = 0;
     virtual ::DBus::Double getVolume( const ::DBus::String& device ) = 0;
     virtual std::map< ::DBus::String, ::DBus::String > getCallDetails( const ::DBus::String& callID ) = 0;
@@ -347,7 +348,8 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         ::DBus::Int32 argin1; ri >> argin1;
-        startTone(argin1);
+        ::DBus::Int32 argin2; ri >> argin2;
+        startTone(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

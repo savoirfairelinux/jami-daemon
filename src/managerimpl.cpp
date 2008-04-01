@@ -876,6 +876,15 @@ ManagerImpl::playTone()
 /**
  * Multi Thread
  */
+  bool
+ManagerImpl::playToneWithMessage()
+{
+  playATone(Tone::TONE_CONGESTION);
+}
+
+/**
+ * Multi Thread
+ */
 void
 ManagerImpl::congestion () {
   playATone(Tone::TONE_CONGESTION);

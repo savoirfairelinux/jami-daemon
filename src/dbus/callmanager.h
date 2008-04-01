@@ -51,7 +51,7 @@ public:
     std::map< ::DBus::String, ::DBus::String > getCallDetails( const ::DBus::String& callID );
     ::DBus::String getCurrentCallID(  );
     void playDTMF( const ::DBus::String& key );
-    void startTone( const ::DBus::Int32& start );
+    void startTone( const ::DBus::Int32& start, const ::DBus::Int32& type );
     
 };
 

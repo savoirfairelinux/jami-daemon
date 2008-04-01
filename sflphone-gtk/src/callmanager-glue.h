@@ -310,10 +310,10 @@ static
 inline
 #endif
 gboolean
-org_sflphone_SFLphone_CallManager_start_tone (DBusGProxy *proxy, const gint IN_start, GError **error)
+org_sflphone_SFLphone_CallManager_start_tone (DBusGProxy *proxy, const gint IN_start, const gint IN_type, GError **error)
 
 {
-  return dbus_g_proxy_call (proxy, "startTone", error, G_TYPE_INT, IN_start, G_TYPE_INVALID, G_TYPE_INVALID);
+  return dbus_g_proxy_call (proxy, "startTone", error, G_TYPE_INT, IN_start, G_TYPE_INT, IN_type, G_TYPE_INVALID, G_TYPE_INVALID);
 }
 
 typedef void (*org_sflphone_SFLphone_CallManager_start_tone_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
@@ -333,14 +333,14 @@ static
 inline
 #endif
 DBusGProxyCall*
-org_sflphone_SFLphone_CallManager_start_tone_async (DBusGProxy *proxy, const gint IN_start, org_sflphone_SFLphone_CallManager_start_tone_reply callback, gpointer userdata)
+org_sflphone_SFLphone_CallManager_start_tone_async (DBusGProxy *proxy, const gint IN_start, const gint IN_type, org_sflphone_SFLphone_CallManager_start_tone_reply callback, gpointer userdata)
 
 {
   DBusGAsyncData *stuff;
   stuff = g_new (DBusGAsyncData, 1);
   stuff->cb = G_CALLBACK (callback);
   stuff->userdata = userdata;
-  return dbus_g_proxy_begin_call (proxy, "startTone", org_sflphone_SFLphone_CallManager_start_tone_async_callback, stuff, g_free, G_TYPE_INT, IN_start, G_TYPE_INVALID);
+  return dbus_g_proxy_begin_call (proxy, "startTone", org_sflphone_SFLphone_CallManager_start_tone_async_callback, stuff, g_free, G_TYPE_INT, IN_start, G_TYPE_INT, IN_type, G_TYPE_INVALID);
 }
 static
 #ifdef G_HAVE_INLINE

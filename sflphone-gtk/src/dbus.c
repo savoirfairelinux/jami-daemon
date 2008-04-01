@@ -632,13 +632,14 @@ dbus_play_dtmf(const gchar * key)
 }
 
 void
-dbus_start_tone(const int start)
+dbus_start_tone(const int start , const guint type )
 {
   GError *error = NULL;
   
   org_sflphone_SFLphone_CallManager_start_tone(
     callManagerProxy, 
-    start, 
+    start,
+    type, 
     &error);
 
   if (error) 

@@ -39,6 +39,7 @@
     
     <method name="startTone">
       <arg type="i" name="start" direction="in"/>
+      <arg type="i" name="type" direction="in"/>
     </method>
 
     <method name="setVolume">

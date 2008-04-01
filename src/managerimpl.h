@@ -176,6 +176,7 @@ public:
   bool sendDtmf(const CallID& id, char code);
   bool playDtmf(char code, bool isTalking);
   bool playTone ();
+  bool playToneWithMessage ();
   void stopTone(bool stopAudio/*=true*/);
 
   // From links
