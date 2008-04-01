@@ -30,6 +30,12 @@
 #include <accountlist.h>
 #include <codeclist.h>
 
+#define __MSG_INCOMING_CALL  0 
+#define __MSG_CALLING	     1
+#define __MSG_VOICE_MAILS    2
+#define __MSG_ACCOUNT_DEFAULT  3
+
+
 /** @file actions.h
   * @brief General functions that change the state of the application.
   * All of these functions are called when dbus signals are triggered.  Exceptions

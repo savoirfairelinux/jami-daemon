@@ -117,7 +117,7 @@ show_status_icon()
 }
 
 void
-status_tray_icon_blink(  )
+status_tray_icon_blink( gboolean active )
 {
-  gtk_status_icon_set_blinking( status , !gtk_status_icon_get_blinking( status ) );
+  gtk_status_icon_set_blinking( status , active );
 }

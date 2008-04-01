@@ -265,8 +265,16 @@ main_window_callinfo(gboolean show, call_t* current)
 }
 
 void 
-status_bar_message(const gchar * message)
+status_bar_message_add(const gchar * message, guint id)
 { 
-  gtk_statusbar_push(GTK_STATUSBAR(statusBar), 0, message);
+  gtk_statusbar_push(GTK_STATUSBAR(statusBar), id, message);
 }
+
+void 
+status_bar_message_remove(guint id)
+{ 
+  gtk_statusbar_pop(GTK_STATUSBAR(statusBar), id);
+}
+
+
 

@@ -52,14 +52,25 @@ sflphone_notify_voice_mail (guint count)
 		  g_sprintf(message, _("%d new voice mails"), count);
 		else
 		  g_sprintf(message, _("%d new voice mail"), count);	  
-		status_bar_message(message);
+		status_bar_message_add(message,  __MSG_VOICE_MAILS);
 		g_free(message);
 	}
-	else
-	{
-		status_bar_message("");
-	}
 }
+
+void
+status_bar_display_account( call_t* c)
+{
+    gchar* msg = malloc(100);
+    account_t* acc;
+    if(c->accountID != NULL)
+      acc = account_list_get_by_id(c->accountID);
+    else
+      acc = account_list_get_by_id( account_list_get_default());
+    sprintf( msg , "%s account: %s" , g_hash_table_lookup( acc->properties , ACCOUNT_TYPE)  , g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
+    status_bar_message_add( msg , __MSG_ACCOUNT_DEFAULT);
+    g_free(msg);
+}
+  
 
 	gboolean
 sflphone_quit ()
@@ -98,6 +109,7 @@ sflphone_ringing(call_t * c )
 	c->state = CALL_STATE_RINGING;
 	update_call_tree(c);
 	update_menus();
+	status_bar_message_add(" Call Processing ..." , __MSG_CALLING);
 }
 
   void
@@ -156,6 +168,7 @@ sflphone_fill_account_list()
 	}
 
 	toolbar_update_buttons();
+	
 }
 
 	gboolean
@@ -196,7 +209,7 @@ sflphone_hang_up()
 				dbus_hang_up (selectedCall);
 				break;
 			case CALL_STATE_INCOMING:  
-				status_tray_icon_blink();
+				status_tray_icon_blink( FALSE );
 				dbus_refuse (selectedCall);
 				break;
 			case CALL_STATE_TRANSFERT:  
@@ -222,7 +235,7 @@ sflphone_pick_up()
 				sflphone_place_call (selectedCall);
 				break;
 			case CALL_STATE_INCOMING:
-				status_tray_icon_blink();
+				status_tray_icon_blink( FALSE );
 				dbus_accept (selectedCall);
 				break;
 			case CALL_STATE_HOLD:
@@ -303,6 +316,8 @@ sflphone_current( call_t * c )
 	c->state = CALL_STATE_CURRENT;
 	update_call_tree(c);
 	update_menus();
+	status_bar_message_remove(__MSG_CALLING);
+	status_bar_message_remove(__MSG_INCOMING_CALL);
 }
 
 	void 
@@ -463,10 +478,12 @@ sflphone_keypad( guint keyval, gchar * key)
 				{
 					case 65293: /* ENTER */
 					case 65421: /* ENTER numpad */
+						status_tray_icon_blink( FALSE );
+						status_bar_display_account(c);
 						dbus_accept(c);
 						break;
 					case 65307: /* ESCAPE */
-						status_tray_icon_blink();
+						status_tray_icon_blink( FALSE );
 						dbus_refuse(c);
 						break;
 				}
@@ -542,6 +559,7 @@ sflphone_keypad( guint keyval, gchar * key)
 void 
 sflphone_place_call ( call_t * c )
 {
+	status_bar_display_account(c);
 	if(c->state == CALL_STATE_DIALING)
 	{
 		account_t * account;
