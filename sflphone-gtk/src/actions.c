@@ -196,6 +196,7 @@ sflphone_hang_up()
 				dbus_hang_up (selectedCall);
 				break;
 			case CALL_STATE_INCOMING:  
+				status_tray_icon_blink();
 				dbus_refuse (selectedCall);
 				break;
 			case CALL_STATE_TRANSFERT:  
@@ -465,6 +466,7 @@ sflphone_keypad( guint keyval, gchar * key)
 						dbus_accept(c);
 						break;
 					case 65307: /* ESCAPE */
+						status_tray_icon_blink();
 						dbus_refuse(c);
 						break;
 				}

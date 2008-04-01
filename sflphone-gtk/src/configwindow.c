@@ -313,11 +313,9 @@ select_active_input_audio_device()
 void
 update_combo_box( gchar* plugin )
 {
-	  g_print("INSENSITIVE THE ALL THING\n");
 	// set insensitive the devices widget if the selected plugin is default
 	if( g_strcasecmp( plugin , "default" ) == 0)
 	{
-	  g_print("INSENSITIVE THE ALL THING\n");
 	  gtk_widget_set_sensitive( GTK_WIDGET ( outputDeviceComboBox ) , FALSE );
 	  gtk_widget_set_sensitive( GTK_WIDGET ( inputDeviceComboBox ) , FALSE );
 	}
