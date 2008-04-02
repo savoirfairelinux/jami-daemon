@@ -110,8 +110,7 @@ show_status_icon()
 			  create_menu());			  
 
   // Add a tooltip to the system tray icon
-  gchar* tip = malloc(500);
-  sprintf( tip , _("SFLphone - %i accounts registered") , account_list_get_size());
+  gchar *tip =  g_markup_printf_escaped (_("SFLphone - %i accounts registered") , account_list_get_size());
   gtk_status_icon_set_tooltip( status , tip );
   g_free(tip);
 }
@@ -120,4 +119,10 @@ void
 status_tray_icon_blink( gboolean active )
 {
   gtk_status_icon_set_blinking( status , active );
+}
+
+GtkStatusIcon* 
+get_status_icon( void )
+{
+  return status;
 }

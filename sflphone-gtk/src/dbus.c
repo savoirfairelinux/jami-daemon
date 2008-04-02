@@ -55,6 +55,7 @@ incoming_call_cb (DBusGProxy *proxy,
   c->state = CALL_STATE_INCOMING;
   
   status_tray_icon_blink( TRUE );
+  notify_incoming_call( c );
   sflphone_incoming_call (c);
 }
 
@@ -346,6 +347,7 @@ dbus_transfert (const call_t * c)
 void
 dbus_accept (const call_t * c)
 {
+  status_tray_icon_blink( FALSE );
   GError *error = NULL;
   org_sflphone_SFLphone_CallManager_accept ( callManagerProxy, c->callID, &error);
   if (error) 
@@ -366,6 +368,7 @@ dbus_refuse (const call_t * c)
 {
   // Remove the account message from the status bar stack
   status_bar_message_remove( __MSG_ACCOUNT_DEFAULT ); 
+  status_tray_icon_blink( FALSE );
   GError *error = NULL;
   org_sflphone_SFLphone_CallManager_refuse ( callManagerProxy, c->callID, &error);
   if (error) 
