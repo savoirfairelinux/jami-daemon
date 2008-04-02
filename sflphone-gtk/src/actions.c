@@ -357,7 +357,10 @@ sflphone_incoming_call (call_t * c)
 void process_dialing(call_t * c, guint keyval, gchar * key)
 {
 	// We stop the tone
-	dbus_start_tone( FALSE , 0 );
+	if(strlen(c->to) == 0){
+	  dbus_start_tone( FALSE , 0 );
+	  dbus_play_dtmf( key );
+	}
 	switch (keyval)
 	{
 		case 65293: /* ENTER */

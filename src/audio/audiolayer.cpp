@@ -36,13 +36,13 @@
 #endif
 
   AudioLayer::AudioLayer(ManagerImpl* manager)
-:   _defaultVolume(100)
+  :   _defaultVolume(100)
   , _errorMessage(-1)
   , _manager(manager)
   , _PlaybackHandle( NULL )
   , _CaptureHandle( NULL )
   , deviceClosed( true )
-    , _urgentBuffer( SIZEBUF )
+      , _urgentBuffer( SIZEBUF )
 {
 
   _inChannel  = 1; // don't put in stereo
@@ -68,13 +68,9 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
   if(deviceClosed == false)
   {
     if( stream == SFL_PCM_CAPTURE )
-    {
       closeCaptureStream();
-    }
     else if( stream == SFL_PCM_PLAYBACK)
-    {
       closePlaybackStream();
-    }
     else
     {
       closeCaptureStream();
@@ -118,6 +114,7 @@ AudioLayer::startStream(void)
 AudioLayer::stopStream(void) 
 {
   //ost::MutexLock lock( _mutex );
+  _debugAlsa(" Stop Stream\n ");
   _talk = false;
   snd_pcm_drop( _CaptureHandle );
   snd_pcm_prepare( _CaptureHandle );
@@ -386,7 +383,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     _debug("Min available = %d\n" ,val);
     //if( err = snd_pcm_sw_params_set_silence_threshold( _PlaybackHandle, swparams, period_size_out) < 0) _debugAlsa(" Cannot set silence threshold (%s)\n" , snd_strerror(err)); 
     //snd_pcm_sw_params_get_silence_threshold( swparams , &val);
-      //  _debug("Silence threshold = %d\n" ,val);
+    //  _debug("Silence threshold = %d\n" ,val);
     if( err = snd_pcm_sw_params( _PlaybackHandle, swparams ) < 0 ) _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
     snd_pcm_sw_params_free( swparams );
 
@@ -404,7 +401,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
 AudioLayer::write(void* buffer, int length)
 {
   //if(snd_pcm_state( _PlaybackHandle ) == SND_PCM_STATE_XRUN)
-    //handle_xrun_playback();  
+  //handle_xrun_playback();  
   //_debugAlsa("avail = %d - toWrite = %d\n" , snd_pcm_avail_update( _PlaybackHandle ) , length / 2);
 
   snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _PlaybackHandle, length);
@@ -427,10 +424,10 @@ AudioLayer::write(void* buffer, int length)
       _debugAlsa(" (%s)\n", snd_strerror( err ));
       break;
   }
-  
+
   if( err >=0 && err < frames )
     _debugAlsa("Short write : %d out of %d\n", err , frames);
-  
+
   return ( err > 0 )? err : 0 ;
 }
 
@@ -584,9 +581,9 @@ AudioLayer::getSoundCardsInfo( int stream )
 AudioLayer::closeCaptureStream( void)
 {
   if(_CaptureHandle){
-    snd_pcm_drop( _CaptureHandle );
-    snd_pcm_close( _CaptureHandle );
-    _CaptureHandle = 0;
+      snd_pcm_drop( _CaptureHandle );
+      snd_pcm_close( _CaptureHandle );
+      _CaptureHandle = 0;
   }
 }
 
@@ -594,12 +591,11 @@ AudioLayer::closeCaptureStream( void)
 AudioLayer::closePlaybackStream( void)
 {
   if(_PlaybackHandle){
-    snd_pcm_drop( _PlaybackHandle );
-    snd_pcm_close( _PlaybackHandle );
-    _PlaybackHandle = 0;
+      snd_pcm_drop( _PlaybackHandle );
+      snd_pcm_close( _PlaybackHandle );
+      _PlaybackHandle = 0;
   }
 }
-
 
   bool
 AudioLayer::soundCardIndexExist( int card , int stream )
@@ -612,7 +608,7 @@ AudioLayer::soundCardIndexExist( int card , int stream )
   ss << card ;
   name.append(ss.str());
   if(snd_ctl_open( &handle, name.c_str(), 0) == 0 ){
-   snd_pcm_info_set_stream( pcminfo , ( stream == SFL_PCM_PLAYBACK )? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE );
+    snd_pcm_info_set_stream( pcminfo , ( stream == SFL_PCM_PLAYBACK )? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE );
     if( snd_ctl_pcm_info( handle , pcminfo ) < 0) return false;
     else
       return true;
