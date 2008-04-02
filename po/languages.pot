@@ -246,11 +246,11 @@ msgid "Format: name.server:port"
 msgstr ""
 
 #: sflphone-gtk/src/actions.c: 45
-msgid "%d new voice mails"
+msgid "%d voice mails"
 msgstr ""
 
 #: sflphone-gtk/src/actions.c: 47
-msgid "%d new voice mail"
+msgid "%d voice mail"
 msgstr ""
 
 #: sflphone-gtk/src/actions.c: 162
@@ -320,4 +320,25 @@ msgid "<b><big>Welcome to SFLphone!</big></b>\n\n"
 msgstr ""
 ""
 ""
+
+#: sflphone-gtk/src/SFLnotify.c: 32
+msgid "%s account: %s"
+msgstr ""
+
+#: sflphone-gtk/src/SFLnotify.c: 35
+msgid "<i>From:</i> %s"
+msgstr ""
+
+#: sflphone-gtk/src/SFLnotify.c: 50
+msgid "Accept"
+msgstr ""
+
+#: sflphone-gtk/src/SFLnotify.c: 51
+msgid "Refuse"
+msgstr ""
+
+#: sflphone-gtk/src/SFLnotify.c: 52
+msgid "Ignore"
+msgstr ""
+
 
