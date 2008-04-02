@@ -345,6 +345,15 @@ msgstr "Refuser"
 msgid "Ignore"
 msgstr "Ignorer"
 
+#: sflphone-gtk/src/statusicon.c: 80 
+msgid "_Show main window"
+msgstr "_Afficher la fenêtre principale"
+
+#: sflphone-gtk/src/statusicon.c: 113
+msgid "SFLphone - %i account registered"
+msgid_plural "SFLphone - %i accounts registered"
+msgstr[0] "SFLphone - %i compte enregistré"
+msgstr[1] "SFLphone - %i comptes enregistrés"
 
 
 
