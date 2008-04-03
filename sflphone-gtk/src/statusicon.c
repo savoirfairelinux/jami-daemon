@@ -25,7 +25,7 @@
 
 GtkStatusIcon* status;
 GtkWidget * show_menu_item;
-gboolean minimized = FALSE;
+gboolean __minimized = MAIN_WINDOW_SHOW;
 
 void 
 status_quit ( void * foo)
@@ -39,16 +39,33 @@ status_icon_unminimize()
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), TRUE);
 }
 
-void 
-show_hide (GtkWidget *menu, void * foo)
+gboolean
+main_widget_minimized()
 {
-  if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)))
+  return __minimized;
+}
+
+void 
+show_hide (void)
+{
+  /*if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)))
   {
     gtk_widget_show(GTK_WIDGET(get_main_window()));
   }   
   else
   {
     gtk_widget_hide(GTK_WIDGET(get_main_window()));
+  }*/
+
+  if( main_widget_minimized() )
+  {
+    gtk_widget_show(GTK_WIDGET(get_main_window()));
+    set_minimized(MAIN_WINDOW_SHOW) ;
+  }
+  else
+  {
+    gtk_widget_hide(GTK_WIDGET(get_main_window()));
+    set_minimized(!MAIN_WINDOW_SHOW) ;
   }
 }
 
@@ -125,4 +142,10 @@ GtkStatusIcon*
 get_status_icon( void )
 {
   return status;
+}
+
+void
+set_minimized( gboolean state)
+{
+  __minimized = state ;
 }

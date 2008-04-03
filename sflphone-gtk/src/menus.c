@@ -166,6 +166,13 @@ call_quit ( void * foo)
 }
 
 static void 
+call_minimize ( void * foo)
+{
+  gtk_widget_hide(GTK_WIDGET( get_main_window() ));
+  set_minimized( !MAIN_WINDOW_SHOW );
+}
+
+static void 
 call_hold  (void* foo)
 {
   call_t * selectedCall = call_get_selected();
@@ -240,9 +247,23 @@ create_call_menu()
                   NULL);
   gtk_widget_show (menu_items);
   
+  // Separator
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   
+  // Close menu to minimize the main window to the system tray
+  menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_CLOSE, get_accel_group());
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
+                  G_CALLBACK (call_minimize), 
+                  NULL);
+  gtk_widget_show (menu_items);
+
+  // Separator
+  menu_items = gtk_separator_menu_item_new ();
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+
+  // Quit Menu - quit SFLphone
   menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_QUIT, get_accel_group());
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
