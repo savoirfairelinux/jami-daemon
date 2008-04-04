@@ -83,6 +83,8 @@ void dbus_set_dialpad(  );
 int dbus_get_dialpad( void );
 void dbus_start_hidden( void );
 int dbus_is_start_hidden( void );
+void dbus_switch_popup_mode( void );
+int dbus_popup_mode( void );
 
 /* Instance */
 void dbus_register( int pid, gchar * name);

@@ -31,8 +31,7 @@
 
 #define __TIMEOUT_MODE	"default"			
 #define __TIMEOUT_TIME	30000	    // 30 secondes			
-#define	__POPUP_WINDOW  true 	
-
+#define	__POPUP_WINDOW  ( dbus_popup_mode() ) 	
 
 /*
  * Notify an incoming call with the libnotify notification library
@@ -43,6 +42,7 @@ void notify_incoming_call( call_t* c);
 
 void notify_voice_mails( guint count , account_t* acc );
 
+void notify_registered_accounts();
 /*
  * Callback when answer button is pressed. 
  * Action: Pick up the incoming call 

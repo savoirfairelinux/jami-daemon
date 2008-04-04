@@ -155,6 +155,13 @@
       <arg type="i" name="state" direction="out"/>
     </method>
 
+    <method name="popupMode">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="switchPopupMode">
+    </method>
+
   <!--        /////////////////////////////       -->
     <signal name="parametersChanged">
       <arg type="a{ss}" name="list" direction="out"/>

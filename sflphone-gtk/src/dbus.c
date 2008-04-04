@@ -1257,3 +1257,35 @@ dbus_is_start_hidden( void )
 		g_print("DBus called start_hidden on ConfigurationManager\n");
 	return state;
 }
+
+int
+dbus_popup_mode( void )
+{
+	GError* error = NULL;
+	int state;
+	org_sflphone_SFLphone_ConfigurationManager_popup_mode(
+			configurationManagerProxy,
+			&state,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called popup_mode on ConfigurationManager\n");
+	return state;
+}
+
+void
+dbus_switch_popup_mode( void )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_switch_popup_mode(
+			configurationManagerProxy,
+			&error);
+	if(error)
+	{
+		g_error_free(error);
+	}
+}

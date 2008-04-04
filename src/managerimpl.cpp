@@ -1100,6 +1100,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_RINGTONE, YES_STR);
   fill_config_int(CONFIG_DIALPAD, YES_STR);
   fill_config_int(CONFIG_START, NO_STR);
+  fill_config_int(CONFIG_POPUP, YES_STR);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1455,6 +1456,19 @@ int
 ManagerImpl::isStartHidden( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_START );
+}
+
+void 
+ManagerImpl::switchPopupMode( void )
+{
+  _debug("Switch popup mode\n");
+  ( getConfigInt( PREFERENCES , CONFIG_POPUP ) ==  WINDOW_POPUP)? setConfig(PREFERENCES , CONFIG_POPUP , NO_STR ) : setConfig( PREFERENCES , CONFIG_POPUP , YES_STR );
+}
+
+int 
+ManagerImpl::popupMode( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_POPUP );
 }
 
 void

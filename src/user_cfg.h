@@ -68,6 +68,7 @@
 #define CONFIG_RINGTONE	  "Ringtones.enable"
 #define CONFIG_DIALPAD	  "Dialpad.display"
 #define CONFIG_START	  "Start.hidden"
+#define CONFIG_POPUP	  "Window.popup"
 
 // Default values
 #define EMPTY_FIELD		""

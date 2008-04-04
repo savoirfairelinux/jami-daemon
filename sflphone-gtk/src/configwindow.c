@@ -496,14 +496,19 @@ default_account(GtkWidget *widget, gpointer data)
 int 
 is_ringtone_enabled( void )
 {
-  int res =  dbus_is_ringtone_enabled();
-  return res;  
+  return dbus_is_ringtone_enabled();  
 }
 
 void
 start_hidden( void )
 {
   dbus_start_hidden();
+}
+
+void
+set_popup_mode( void )
+{
+  dbus_switch_popup_mode();
 }
 
 void 
@@ -1157,20 +1162,20 @@ create_general_settings ()
   gtk_widget_show( trayBox );
   gtk_container_add( GTK_CONTAINER(trayFrame) , trayBox);
   
+  GtkWidget* trayItem1 = gtk_radio_button_new_with_label(NULL,  _("Popup Main Window On Incoming Call"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem1), dbus_popup_mode() );
+  gtk_box_pack_start( GTK_BOX(trayBox) , trayItem1 , TRUE , TRUE , 1);
+  g_signal_connect(G_OBJECT( trayItem1 ) , "clicked" , G_CALLBACK( set_popup_mode ) , NULL);
+
+  trayItem = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(trayItem1), _("Never Popup Main Window"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), !dbus_popup_mode() );
+  gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
+  
   trayItem = gtk_check_button_new_with_label(_("Start Hidden"));
   gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), dbus_is_start_hidden() );
   gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( trayItem ) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
 
-  GtkWidget* trayItem1 = gtk_radio_button_new_with_label(NULL,  _("Popup Main Window On Incoming Call"));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem1), TRUE );
-  gtk_box_pack_start( GTK_BOX(trayBox) , trayItem1 , TRUE , TRUE , 1);
-  //TODO callback
-  trayItem = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(trayItem1), _("Never Popup Main Window"));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), TRUE );
-  gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
-  //TODO callback
-  
   gtk_widget_show_all(ret);
   return ret;
 }

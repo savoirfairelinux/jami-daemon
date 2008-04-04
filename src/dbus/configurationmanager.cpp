@@ -285,4 +285,17 @@ ConfigurationManager::isStartHidden( void )
   return Manager::instance().isStartHidden(  ); 
 }
 
+void
+ConfigurationManager::switchPopupMode( void )
+{
+  Manager::instance().switchPopupMode(  ); 
+}
+
+::DBus::Int32
+ConfigurationManager::popupMode( void )
+{
+  return Manager::instance().popupMode(  ); 
+}
+
+
 

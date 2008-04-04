@@ -80,6 +80,8 @@ public:
     void setDialpad( void );
     ::DBus::Int32 isStartHidden( void );
     void startHidden( void );
+    ::DBus::Int32 popupMode( void );
+    void switchPopupMode( void );
 
 };
 

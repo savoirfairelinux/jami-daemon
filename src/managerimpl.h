@@ -351,6 +351,8 @@ public:
   void setDialpad( void );
   int isStartHidden( void );
   void startHidden( void );
+  int popupMode( void );
+  void switchPopupMode( void );
 
 
   /**
