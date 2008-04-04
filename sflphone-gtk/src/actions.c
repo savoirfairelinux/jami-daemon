@@ -88,7 +88,7 @@ status_bar_display_account( call_t* c)
       acc = account_list_get_by_id(c->accountID);
     else
       acc = account_list_get_by_id( account_list_get_default());
-    msg = g_markup_printf_escaped("%s account: %s" , 
+    msg = g_markup_printf_escaped("Default: %s account- %s" , 
 				  g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
 				  g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
     status_bar_message_add( msg , __MSG_ACCOUNT_DEFAULT);
@@ -585,14 +585,20 @@ sflphone_place_call ( call_t * c )
 	if(c->state == CALL_STATE_DIALING)
 	{
 		account_t * account;
-		gchar * default_account =  account_list_get_default();
-		account = account_list_get_by_id(default_account);
-		
+		gchar* account_id = account_list_get_current();
+		if( account_id == NULL ){
+		  account_id = account_list_get_default();
+		  account = account_list_get_by_id(account_id);
+		}
+		else
+		  account = account_list_get_by_id( account_id );
+
+		// Here : account_id is either the default one, either the current one selected with a right-click
 		if(account)
 		{
 			if(strcmp(g_hash_table_lookup(account->properties, "Status"),"REGISTERED")==0)
 			{
-				c->accountID = default_account;
+				c->accountID = account_id;
 				dbus_place_call(c);
 			}
 			else

@@ -1461,7 +1461,6 @@ ManagerImpl::isStartHidden( void )
 void 
 ManagerImpl::switchPopupMode( void )
 {
-  _debug("Switch popup mode\n");
   ( getConfigInt( PREFERENCES , CONFIG_POPUP ) ==  WINDOW_POPUP)? setConfig(PREFERENCES , CONFIG_POPUP , NO_STR ) : setConfig( PREFERENCES , CONFIG_POPUP , YES_STR );
 }
 

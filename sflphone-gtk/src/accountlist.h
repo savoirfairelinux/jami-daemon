@@ -111,6 +111,16 @@ gchar * account_list_get_default( );
  */
 void account_list_set_default(const gchar * accountID);
 
+/** Return the current account id
+ *  @return The current account id
+ */
+gchar * account_list_get_current( );
+
+/** This function sets an account as the current one
+ * @param accountID The ID of the current account
+ */
+void account_list_set_current(const gchar * accountID);
+
 /** This function maps account_state_t enums to a description.
   * @param s The state
   * @return The full text description of the state */

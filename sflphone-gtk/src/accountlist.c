@@ -24,6 +24,7 @@
 
 GQueue * accountQueue;
 gchar * DEFAULT_ACCOUNT=NULL;
+gchar * CURRENT_ACCOUNT=NULL;
 
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 gint 
@@ -137,6 +138,18 @@ account_list_set_default(const gchar * accountID)
 {
   DEFAULT_ACCOUNT = g_strdup(accountID);
   g_print("DEFAULT_ACCOUNT =  %s\n", DEFAULT_ACCOUNT);
+}
+
+gchar *
+account_list_get_current( )
+{
+  return CURRENT_ACCOUNT;
+}
+
+void
+account_list_set_current(const gchar * accountID)
+{
+  CURRENT_ACCOUNT = g_strdup(accountID);
 }
 
 const gchar * account_state_name(account_state_t s)
