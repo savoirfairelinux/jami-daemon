@@ -377,6 +377,7 @@ ManagerImpl::transferCall(const CallID& id, const std::string& to)
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   switchCall("");
 
+
   return returnValue;
 }
 

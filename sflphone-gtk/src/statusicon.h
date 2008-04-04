@@ -20,7 +20,7 @@
 #ifndef __STATUSICON_H__
 #define __STATUSICON_H__
 
-#define MAIN_WINDOW_SHOW  TRUE
+#define MINIMIZED  TRUE
 
 #include <gtk/gtk.h>
 /** @file statusicon.h

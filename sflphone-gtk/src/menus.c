@@ -169,7 +169,8 @@ static void
 call_minimize ( void * foo)
 {
   gtk_widget_hide(GTK_WIDGET( get_main_window() ));
-  set_minimized( !MAIN_WINDOW_SHOW );
+
+  set_minimized( TRUE );
 }
 
 static void 

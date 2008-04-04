@@ -41,6 +41,8 @@
  */
 void notify_incoming_call( call_t* c);
 
+void notify_voice_mails( guint count , account_t* acc );
+
 /*
  * Callback when answer button is pressed. 
  * Action: Pick up the incoming call 
