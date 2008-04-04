@@ -261,3 +261,28 @@ ConfigurationManager::setRingtoneChoice( const ::DBus::String& tone )
   Manager::instance().setRingtoneChoice( tone ); 
 }
 
+::DBus::Int32
+ConfigurationManager::getDialpad( void )
+{
+  return Manager::instance().getDialpad(  ); 
+}
+
+void
+ConfigurationManager::setDialpad( void )
+{
+  Manager::instance().setDialpad( ); 
+}
+
+void
+ConfigurationManager::startHidden( void )
+{
+  Manager::instance().startHidden(  ); 
+}
+
+::DBus::Int32
+ConfigurationManager::isStartHidden( void )
+{
+  return Manager::instance().isStartHidden(  ); 
+}
+
+

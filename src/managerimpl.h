@@ -347,6 +347,12 @@ public:
   void ringtoneEnabled( void ); 
   std::string getRingtoneChoice( void );
   void setRingtoneChoice( const std::string& );
+  int getDialpad( void );
+  void setDialpad( void );
+  int isStartHidden( void );
+  void startHidden( void );
+
+
   /**
    * Inverse of serialize
    */

@@ -500,6 +500,12 @@ is_ringtone_enabled( void )
   return res;  
 }
 
+void
+start_hidden( void )
+{
+  dbus_start_hidden();
+}
+
 void 
 ringtone_enabled( void )
 {
@@ -1071,9 +1077,9 @@ create_audio_tab ()
 	GtkWidget* box = gtk_hbox_new( TRUE , 1);
 	gtk_box_pack_start( GTK_BOX(ret) , box , FALSE , FALSE , 1);
 	enableTone = gtk_check_button_new_with_mnemonic( _("_Enable ringtones"));
-	gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
-	gtk_box_pack_start( GTK_BOX(box) , enableTone , TRUE , TRUE , 1);
-	g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
+      gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
+      gtk_box_pack_start( GTK_BOX(box) , enableTone , TRUE , TRUE , 1);
+      g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
     // file chooser button
 	fileChooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());	
@@ -1092,6 +1098,83 @@ create_audio_tab ()
 
 	return ret;
 }
+
+GtkWidget*
+create_general_settings ()
+{
+  GtkWidget *ret;
+
+  GtkWidget *notifFrame;
+  GtkWidget *notifBox;
+  GtkWidget *notifAll;
+  GtkWidget *notifIncoming;
+  GtkWidget *notifMails;
+
+  GtkWidget *trayFrame;
+  GtkWidget *trayBox;
+  GtkWidget *trayItem;
+
+  GtkWidget *dialFrame;
+  GtkWidget *dialBox;
+  GtkWidget *dialItem;
+
+  // Main widget
+  ret = gtk_vbox_new(FALSE, 10);
+  gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
+
+  // Notifications Frame
+  notifFrame = gtk_frame_new(_("Notifications"));
+  gtk_box_pack_start(GTK_BOX(ret), notifFrame, FALSE, FALSE, 0);
+  gtk_widget_show( notifFrame );
+
+  notifBox = gtk_vbox_new(FALSE, 10);
+  gtk_box_pack_start(GTK_BOX(notifFrame), notifBox, FALSE, FALSE, 0);
+  gtk_widget_show( notifBox );
+  gtk_container_add( GTK_CONTAINER(notifFrame) , notifBox);
+  
+  notifAll = gtk_radio_button_new_with_label( NULL, _("Enable All"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), TRUE );
+  gtk_box_pack_start( GTK_BOX(notifBox) , notifAll , TRUE , TRUE , 1);
+  //TODO callback
+
+  notifIncoming = gtk_radio_button_new_with_label_from_widget( GTK_RADIO_BUTTON(notifAll) , _("Only Incoming Calls"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifIncoming), FALSE );
+  gtk_box_pack_start( GTK_BOX(notifBox) , notifIncoming , TRUE , TRUE , 1);
+  //TODO callback
+
+  notifMails = gtk_radio_button_new_with_label_from_widget( GTK_RADIO_BUTTON(notifAll) , _("Only Voice Mails"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifMails), FALSE );
+  gtk_box_pack_start( GTK_BOX(notifBox) , notifMails , TRUE , TRUE , 1);
+  //TODO callback
+
+  // System Tray option frame
+  trayFrame = gtk_frame_new(_("System Tray Icon"));
+  gtk_box_pack_start(GTK_BOX(ret), trayFrame, FALSE, FALSE, 0);
+  gtk_widget_show( trayFrame );
+
+  trayBox = gtk_vbox_new(FALSE, 10);
+  gtk_box_pack_start(GTK_BOX(trayFrame), trayBox, FALSE, FALSE, 0);
+  gtk_widget_show( trayBox );
+  gtk_container_add( GTK_CONTAINER(trayFrame) , trayBox);
+  
+  trayItem = gtk_check_button_new_with_label(_("Start Hidden"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), dbus_is_start_hidden() );
+  gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
+  g_signal_connect(G_OBJECT( trayItem ) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
+
+  GtkWidget* trayItem1 = gtk_radio_button_new_with_label(NULL,  _("Popup Main Window On Incoming Call"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem1), TRUE );
+  gtk_box_pack_start( GTK_BOX(trayBox) , trayItem1 , TRUE , TRUE , 1);
+  //TODO callback
+  trayItem = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(trayItem1), _("Never Popup Main Window"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), TRUE );
+  gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
+  //TODO callback
+  
+  gtk_widget_show_all(ret);
+  return ret;
+}
+
 
 /**
  * Show configuration window with tabs
@@ -1123,10 +1206,10 @@ show_config_window ()
 	gtk_container_set_border_width(GTK_CONTAINER(notebook), 10);
 	gtk_widget_show(notebook);
 
-	// Accounts tab
-	//tab = create_accounts_tab();
-	//gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Accounts")));
-	//gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+	// General settings tab
+	tab = create_general_settings();
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("General Settings")));
+	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 	
 	// Audio tab
 	tab = create_audio_tab();	

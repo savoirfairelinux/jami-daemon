@@ -169,7 +169,6 @@ static void
 call_minimize ( void * foo)
 {
   gtk_widget_hide(GTK_WIDGET( get_main_window() ));
-
   set_minimized( TRUE );
 }
 
@@ -464,10 +463,11 @@ create_edit_menu()
 }
 /* ----------------------------------------------------------------- */
 static void 
-view_dial_pad  (GtkCheckMenuItem *checkmenuitem,
+view_dialpad  (GtkCheckMenuItem *checkmenuitem,
                 void* foo)
 {
   main_window_dialpad(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
+  dbus_set_dialpad(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
 }
 
 GtkWidget * 
@@ -482,20 +482,17 @@ create_view_menu()
   menu      = gtk_menu_new ();
 
   menu_items = gtk_check_menu_item_new_with_mnemonic (_("_Dialpad"));
-  gtk_check_menu_item_set_active( GTK_CHECK_MENU_ITEM ( menu_items ), TRUE);
+  gtk_check_menu_item_set_active( GTK_CHECK_MENU_ITEM ( menu_items ), dbus_get_dialpad());
   main_window_dialpad(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menu_items)));
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect(G_OBJECT (menu_items), "toggled",
-                  G_CALLBACK (view_dial_pad), 
+                  G_CALLBACK (view_dialpad), 
                   NULL);
   gtk_widget_show (menu_items);
   
   menu_items = gtk_check_menu_item_new_with_mnemonic (_("_Volume controls"));
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   gtk_widget_set_sensitive( GTK_WIDGET(menu_items),   FALSE);
-  g_signal_connect(G_OBJECT (menu_items), "toggled",
-                  G_CALLBACK (view_dial_pad), 
-                  NULL);
   gtk_widget_show (menu_items);
   
   menu_items = gtk_menu_item_new_with_mnemonic(_("_Toolbar"));

@@ -76,6 +76,11 @@ public:
     void ringtoneEnabled( void );
     ::DBus::String getRingtoneChoice( void );
     void setRingtoneChoice( const ::DBus::String& tone );
+    ::DBus::Int32 getDialpad( void );
+    void setDialpad( void );
+    ::DBus::Int32 isStartHidden( void );
+    void startHidden( void );
+
 };
 
 

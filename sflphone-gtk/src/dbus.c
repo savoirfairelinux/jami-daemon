@@ -1186,3 +1186,74 @@ dbus_is_iax2_enabled()
 		g_print("DBus called is_iax2_enabled() on ConfigurationManager\n");
 	return res;
 }
+
+int
+dbus_get_dialpad()
+{
+	int state;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_dialpad(
+			configurationManagerProxy,
+			&state,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_dialpad on ConfigurationManager\n");
+	return state;
+}
+
+void
+dbus_set_dialpad(  )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_dialpad(
+			configurationManagerProxy,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_dialpad on ConfigurationManager\n");
+}
+
+void
+dbus_start_hidden( void )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_start_hidden(
+			configurationManagerProxy,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called start_hidden on ConfigurationManager\n");
+}
+
+
+int
+dbus_is_start_hidden( void )
+{
+	GError* error = NULL;
+	int state;
+	org_sflphone_SFLphone_ConfigurationManager_is_start_hidden(
+			configurationManagerProxy,
+			&state,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called start_hidden on ConfigurationManager\n");
+	return state;
+}

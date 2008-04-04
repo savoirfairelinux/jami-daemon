@@ -109,6 +109,8 @@ typedef short int16;
 #define SPEEX_STRING_DESCRIPTION  "speex"
 #define ILBC_STRING_DESCRIPTION  "ilbc"
 #define RINGTONE_ENABLED	  1
+#define DISPLAY_DIALPAD		  1
+#define START_HIDDEN		  1
 
 #define ERROR_ALSA_CAPTURE_DEVICE	0
 #define ERROR_ALSA_PLAYBACK_DEVICE	1

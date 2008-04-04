@@ -66,6 +66,8 @@
 // zeroconfig module
 #define CONFIG_ZEROCONF	  "Zeroconf.enable"
 #define CONFIG_RINGTONE	  "Ringtones.enable"
+#define CONFIG_DIALPAD	  "Dialpad.display"
+#define CONFIG_START	  "Start.hidden"
 
 // Default values
 #define EMPTY_FIELD		""

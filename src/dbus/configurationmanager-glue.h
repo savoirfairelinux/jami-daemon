@@ -52,6 +52,10 @@ public:
         register_method(ConfigurationManager, getAudioDeviceIndex, _getAudioDeviceIndex_stub);
         register_method(ConfigurationManager, getCurrentAudioOutputPlugin, _getCurrentAudioOutputPlugin_stub);
         register_method(ConfigurationManager, isIax2Enabled, _isIax2Enabled_stub);
+        register_method(ConfigurationManager, getDialpad, _getDialpad_stub);
+        register_method(ConfigurationManager, setDialpad, _setDialpad_stub);
+        register_method(ConfigurationManager, startHidden, _startHidden_stub);
+        register_method(ConfigurationManager, isStartHidden, _isStartHidden_stub);
     }
 
     ::DBus::IntrospectedInterface* const introspect() const 
@@ -219,6 +223,24 @@ public:
             { "res", "i", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getDialpad_args[] = 
+        {
+            { "state", "i", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setDialpad_args[] = 
+        {
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument startHidden_args[] = 
+        {
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument isStartHidden_args[] = 
+        {
+            { "state", "i", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
         {
             { "list", "a{ss}", false },
@@ -267,6 +289,10 @@ public:
             { "getAudioDeviceIndex", getAudioDeviceIndex_args },
             { "getCurrentAudioOutputPlugin", getCurrentAudioOutputPlugin_args },
             { "isIax2Enabled", isIax2Enabled_args },
+            { "getDialpad", getDialpad_args },
+            { "setDialpad", setDialpad_args },
+            { "startHidden", startHidden_args },
+            { "isStartHidden", isStartHidden_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_signals[] = 
@@ -333,6 +359,10 @@ public:
     virtual ::DBus::Int32 getAudioDeviceIndex( const ::DBus::String& name ) = 0;
     virtual ::DBus::String getCurrentAudioOutputPlugin(  ) = 0;
     virtual ::DBus::Int32 isIax2Enabled(  ) = 0;
+    virtual ::DBus::Int32 getDialpad(  ) = 0;
+    virtual void setDialpad(  ) = 0;
+    virtual void startHidden(  ) = 0;
+    virtual ::DBus::Int32 isStartHidden(  ) = 0;
 
 public:
 
@@ -669,6 +699,42 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         ::DBus::Int32 argout1 = isIax2Enabled();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _getDialpad_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argout1 = getDialpad();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setDialpad_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        setDialpad();
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _startHidden_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        startHidden();
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _isStartHidden_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argout1 = isStartHidden();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

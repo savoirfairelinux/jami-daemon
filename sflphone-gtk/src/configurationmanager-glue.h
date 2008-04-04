@@ -1214,6 +1214,156 @@ org_sflphone_SFLphone_ConfigurationManager_is_iax2_enabled_async (DBusGProxy *pr
   stuff->userdata = userdata;
   return dbus_g_proxy_begin_call (proxy, "isIax2Enabled", org_sflphone_SFLphone_ConfigurationManager_is_iax2_enabled_async_callback, stuff, g_free, G_TYPE_INVALID);
 }
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_get_dialpad (DBusGProxy *proxy, gint* OUT_state, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getDialpad", error, G_TYPE_INVALID, G_TYPE_INT, OUT_state, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_dialpad_reply) (DBusGProxy *proxy, gint OUT_state, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_get_dialpad_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  gint OUT_state;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INT, &OUT_state, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_dialpad_reply)data->cb) (proxy, OUT_state, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_get_dialpad_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_dialpad_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getDialpad", org_sflphone_SFLphone_ConfigurationManager_get_dialpad_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_set_dialpad (DBusGProxy *proxy, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "setDialpad", error, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_dialpad_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_set_dialpad_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_set_dialpad_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_set_dialpad_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_set_dialpad_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "setDialpad", org_sflphone_SFLphone_ConfigurationManager_set_dialpad_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_start_hidden (DBusGProxy *proxy, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "startHidden", error, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_start_hidden_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_start_hidden_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_start_hidden_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_start_hidden_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_start_hidden_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "startHidden", org_sflphone_SFLphone_ConfigurationManager_start_hidden_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_is_start_hidden (DBusGProxy *proxy, gint* OUT_state, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "isStartHidden", error, G_TYPE_INVALID, G_TYPE_INT, OUT_state, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_is_start_hidden_reply) (DBusGProxy *proxy, gint OUT_state, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_is_start_hidden_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  gint OUT_state;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INT, &OUT_state, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_is_start_hidden_reply)data->cb) (proxy, OUT_state, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_is_start_hidden_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_is_start_hidden_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "isStartHidden", org_sflphone_SFLphone_ConfigurationManager_is_start_hidden_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
 #endif /* defined DBUS_GLIB_CLIENT_WRAPPERS_org_sflphone_SFLphone_ConfigurationManager */
 
 G_END_DECLS

@@ -49,6 +49,12 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
     show_status_icon();
     create_main_window ();
     
+    if( dbus_is_start_hidden() )
+    {
+      gtk_widget_hide(GTK_WIDGET( get_main_window() ));
+      set_minimized( TRUE );
+    }
+
     /* start the main loop */
     gtk_main ();
   }
