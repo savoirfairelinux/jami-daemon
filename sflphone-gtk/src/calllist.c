@@ -21,8 +21,10 @@
 
 #include <string.h>
 
-GQueue * callQueue = NULL;
-call_t * selectedCall = NULL;
+/*
+ * GQueue * callQueue = NULL;
+ * call_t * selectedCall = NULL;
+ */
 
 /* GCompareFunc to compare a callID (gchar* and a call_t) */
 gint 
@@ -55,39 +57,40 @@ get_state_callstruct ( gconstpointer a, gconstpointer b)
 }
 
 void 
-call_list_init ()
+call_list_init (calltab_t* tab)
 {
-  callQueue = g_queue_new ();
+  tab->callQueue = g_queue_new ();
+  tab->selectedCall = NULL;
 }
 
 void 
-call_list_clean ()
+call_list_clean (calltab_t* tab)
 {
-  g_queue_free (callQueue);
+  g_queue_free (tab->callQueue);
 }
 
 void 
-call_list_add (call_t * c)
+call_list_add (calltab_t* tab, call_t * c)
 {
-  g_queue_push_tail (callQueue, (gpointer *) c);
+  g_queue_push_tail (tab->callQueue, (gpointer *) c);
 }
 
 
 void 
-call_list_remove (const gchar * callID)
+call_list_remove (calltab_t* tab, const gchar * callID)
 {
-  call_t * c = call_list_get(callID);
+  call_t * c = call_list_get(tab, callID);
   if (c)
   {
-    g_queue_remove(callQueue, c);
+    g_queue_remove(tab->callQueue, c);
   }
 }
 
 
 call_t * 
-call_list_get_by_state (call_state_t state )
+call_list_get_by_state (calltab_t* tab, call_state_t state )
 {
-  GList * c = g_queue_find_custom (callQueue, &state, get_state_callstruct);
+  GList * c = g_queue_find_custom (tab->callQueue, &state, get_state_callstruct);
   if (c)
   {
     return (call_t *)c->data;
@@ -100,15 +103,15 @@ call_list_get_by_state (call_state_t state )
 }
 
 guint
-call_list_get_size ( )
+call_list_get_size (calltab_t* tab)
 {
-  return g_queue_get_length (callQueue);
+  return g_queue_get_length (tab->callQueue);
 }
 
 call_t * 
-call_list_get_nth ( guint n )
+call_list_get_nth (calltab_t* tab, guint n )
 {
-  return g_queue_peek_nth (callQueue, n);
+  return g_queue_peek_nth (tab->callQueue, n);
 }
 
 gchar * 
@@ -134,9 +137,9 @@ call_get_number (const call_t * c)
 
 
 call_t * 
-call_list_get ( const gchar * callID )
+call_list_get (calltab_t* tab, const gchar * callID )
 {
-  GList * c = g_queue_find_custom (callQueue, callID, is_callID_callstruct);
+  GList * c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
   if (c)
   {
     return (call_t *)c->data;
@@ -148,14 +151,14 @@ call_list_get ( const gchar * callID )
 }
 
 void
-call_select ( call_t * c )
+call_select (calltab_t* tab, call_t * c )
 {
-  selectedCall = c;
+  tab->selectedCall = c;
 }
 
 
 call_t *
-call_get_selected ()
+call_get_selected (calltab_t* tab)
 {
-  return selectedCall;
+  return tab->selectedCall;
 }

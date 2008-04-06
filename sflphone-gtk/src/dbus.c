@@ -21,6 +21,7 @@
  
 #include <accountlist.h>
 #include <calllist.h>
+#include <notebook.h>
 #include <callmanager-glue.h>
 #include <configurationmanager-glue.h>
 #include <instance-glue.h>
@@ -97,7 +98,7 @@ call_state_cb (DBusGProxy *proxy,
                   void * foo  )
 {
   g_print ("Call %s state %s\n",callID, state);
-  call_t * c = call_list_get(callID);
+  call_t * c = call_list_get(tabs[TAB_CALL], callID);
   if(c)
   {
     if ( strcmp(state, "HUNGUP") == 0 )

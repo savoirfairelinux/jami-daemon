@@ -54,7 +54,7 @@ on_delete (GtkWidget * widget, gpointer data)
 /** Ask the user if he wants to hangup current calls */
 gboolean 
 main_window_ask_quit(){
-  guint count = call_list_get_size();
+  guint count = call_list_get_size(tabs[TAB_CALL]);
   GtkWidget * dialog;
   guint response;
   gchar * question;

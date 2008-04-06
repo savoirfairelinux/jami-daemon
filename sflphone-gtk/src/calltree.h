@@ -22,17 +22,19 @@
 
 #include <gtk/gtk.h>
 #include <calllist.h>
+#include <notebook.h>
+
 
 /** @file calltree.h
   * @brief The GtkTreeView that list calls in the main window.
   */
-GtkWidget * create_call_tree();
+void create_call_tree(calltab_t* tab);
 
 void toolbar_update_buttons();
 
-void update_call_tree_add (call_t * c);
-void update_call_tree (call_t * c);
-void update_call_tree_remove (call_t * c);
+void update_call_tree_add (calltab_t* ct, call_t * c);
+void update_call_tree (calltab_t* ct, call_t * c);
+void update_call_tree_remove (calltab_t* ct, call_t * c);
 
 GtkWidget * create_toolbar();
 

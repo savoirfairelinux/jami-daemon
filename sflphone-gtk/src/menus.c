@@ -26,6 +26,7 @@
 #include <dbus.h>
 #include <mainwindow.h>
 #include <screen.h>
+#include <notebook.h>
 #include <gtk/gtk.h>
 
 #include <string.h> // for strlen
@@ -50,7 +51,7 @@ void update_menus()
   gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), FALSE);
 	
-	call_t * selectedCall = call_get_selected();
+	call_t * selectedCall = call_get_selected(current_tab);
 	if (selectedCall)
 	{
     gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   TRUE);
@@ -176,7 +177,7 @@ call_minimize ( void * foo)
 static void 
 call_hold  (void* foo)
 {
-  call_t * selectedCall = call_get_selected();
+  call_t * selectedCall = call_get_selected(tabs[TAB_CALL]);
   
   if(selectedCall)
   {
@@ -297,7 +298,7 @@ static void
 edit_copy ( void * foo)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected();
+  call_t * selectedCall = call_get_selected(current_tab);
   gchar * no = NULL;
   
   if(selectedCall)
@@ -329,7 +330,7 @@ static void
 edit_paste ( void * foo)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected();
+  call_t * selectedCall = call_get_selected(current_tab);
   gchar * no = gtk_clipboard_wait_for_text (clip);
   
   if(no && selectedCall)
@@ -351,7 +352,7 @@ edit_paste ( void * foo)
             selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
           }
           screen_set_call(selectedCall);
-          update_call_tree(selectedCall);
+          update_call_tree(tabs[TAB_CALL], selectedCall);
         }
         break;
       case CALL_STATE_RINGING:  
@@ -371,7 +372,7 @@ edit_paste ( void * foo)
           selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
           
           screen_set_call(selectedCall);
-          update_call_tree(selectedCall);
+          update_call_tree(tabs[TAB_CALL], selectedCall);
         }
         break;
       case CALL_STATE_CURRENT:
@@ -390,7 +391,7 @@ edit_paste ( void * foo)
             g_free(before);
             g_free(temp);
             screen_set_call(selectedCall);
-            update_call_tree(selectedCall);
+            update_call_tree(tabs[TAB_CALL], selectedCall);
           
           }
         }
@@ -411,7 +412,7 @@ edit_paste ( void * foo)
     selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
     
     screen_set_call(selectedCall);
-    update_call_tree(selectedCall);
+    update_call_tree(tabs[TAB_CALL], selectedCall);
   }
   
 }
@@ -544,7 +545,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
   
   gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE;
   
-	call_t * selectedCall = call_get_selected();
+	call_t * selectedCall = call_get_selected(current_tab);
 	if (selectedCall)
 	{
     copy = TRUE;

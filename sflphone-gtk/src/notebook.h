@@ -20,7 +20,23 @@
 #ifndef __NOTEBOOK_H__
 #define __NOTEBOOK_H__
 
+#include <calllist.h>
 #include <gtk/gtk.h>
+
+
+enum {
+	TAB_CALL,
+	TAB_CALLED,
+	TAB_RCVD,
+	TAB_MISSED	
+};
+
+#define NR_TABS 4
+calltab_t* calltab_init();
 GtkWidget* create_call_notebook();
+
+calltab_t* tabs[NR_TABS];
+//calltab_t* call_tab, *called_tab, *rcvd_tab, *missed_tab;
+calltab_t* current_tab;
 
 #endif
