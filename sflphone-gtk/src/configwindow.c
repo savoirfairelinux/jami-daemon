@@ -76,6 +76,7 @@ enum {
 void
 config_window_fill_account_list()
 {
+	gchar* stock_id;
 	if(dialogOpen)
 	{
 		GtkTreeIter iter;
@@ -87,12 +88,20 @@ config_window_fill_account_list()
 			account_t * a = account_list_get_nth (i);
 			if (a)
 			{
+				if( g_hash_table_lookup(a->properties, ACCOUNT_ENABLED ) )
+				  stock_id = GTK_STOCK_CONNECT;
+				else
+				  stock_id = GTK_STOCK_DISCONNECT;
 				gtk_list_store_append (accountStore, &iter);
 				gtk_list_store_set(accountStore, &iter,
 						0, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
 						1, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
 						2, account_state_name(a->state),      // Status
-						3, a,                                 // Pointer
+						3, gtk_widget_render_icon(gtk_image_new_from_stock(stock_id , GTK_ICON_SIZE_BUTTON),
+									  stock_id,
+									  GTK_ICON_SIZE_BUTTON,
+									  NULL),
+						4, a,   // Pointer
 						-1);
 			}
 		}
@@ -546,7 +555,7 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
 	}
 
 	val.g_type = G_TYPE_POINTER;
-	gtk_tree_model_get_value(model, &iter, 3, &val);
+	gtk_tree_model_get_value(model, &iter, 4, &val);
 
 	selectedAccount = (account_t*)g_value_get_pointer(&val);
 	g_value_unset(&val);
@@ -716,7 +725,7 @@ bold_if_default_account(GtkTreeViewColumn *col,
 			gpointer data)
 {
 	GValue val = { 0, };
-	gtk_tree_model_get_value(tree_model, iter, 3, &val);
+	gtk_tree_model_get_value(tree_model, iter, 4, &val);
 	account_t *current = (account_t*)g_value_get_pointer(&val);
 	g_value_unset(&val);
 	if(g_strcasecmp(current->accountID, account_list_get_default()) == 0)
@@ -837,10 +846,11 @@ create_accounts_tab()
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_SHADOW_IN);
 	gtk_box_pack_start(GTK_BOX(ret), scrolledWindow, TRUE, TRUE, 0);
 
-	accountStore = gtk_list_store_new(4,
+	accountStore = gtk_list_store_new(5,
 			G_TYPE_STRING,  // Name
 			G_TYPE_STRING,  // Protocol
 			G_TYPE_STRING,  // Status
+			GDK_TYPE_PIXBUF, // Enabled / Disabled
 			G_TYPE_POINTER  // Pointer to the Object
 			);
 
@@ -851,8 +861,9 @@ create_accounts_tab()
 			accountStore);
 
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(accountStore),
-			2, GTK_SORT_ASCENDING);
+			3, GTK_SORT_ASCENDING);
 
+	//g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(codec_active_toggled), (gpointer)treeView);
 	renderer = gtk_cell_renderer_text_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes ("Alias",
 			renderer,
@@ -879,6 +890,13 @@ create_accounts_tab()
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
 	gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
+	
+	renderer = gtk_cell_renderer_pixbuf_new();
+	treeViewColumn = gtk_tree_view_column_new_with_attributes("", renderer, "pixbuf", 3 , NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), treeViewColumn);
+
+        // Toggle codec active property on clicked
+
 	g_object_unref(G_OBJECT(accountStore));
 	gtk_container_add(GTK_CONTAINER(scrolledWindow), treeView);
 
