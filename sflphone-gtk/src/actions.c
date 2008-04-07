@@ -382,7 +382,7 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 	// We stop the tone
 	if(strlen(c->to) == 0 && c->state != CALL_STATE_TRANSFERT){
 	  dbus_start_tone( FALSE , 0 );
-	  dbus_play_dtmf( key );
+	  //dbus_play_dtmf( key );
 	}
 	switch (keyval)
 	{
@@ -424,6 +424,8 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 		default:
 			if (keyval < 255 || (keyval >65453 && keyval < 65466))
 			{ 
+				if(c->state != CALL_STATE_TRANSFERT)
+				  dbus_play_dtmf( key );
 				gchar * before = c->to;
 				c->to = g_strconcat(c->to, key, NULL);
 				g_free(before);
@@ -474,7 +476,7 @@ sflphone_keypad( guint keyval, gchar * key)
 		switch(c->state) 
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
-				dbus_play_dtmf(key);
+				//dbus_play_dtmf(key);
 				process_dialing(c, keyval, key);
 				break;
 			case CALL_STATE_CURRENT:
@@ -484,7 +486,7 @@ sflphone_keypad( guint keyval, gchar * key)
 						dbus_hang_up(c);
 						break;
 					default:  // TODO should this be here?
-						dbus_play_dtmf(key);
+						//dbus_play_dtmf(key);
 						if (keyval < 255 || (keyval >65453 && keyval < 65466))
 						{ 
 							gchar * temp = g_strconcat(call_get_number(c), key, NULL);
@@ -556,7 +558,7 @@ sflphone_keypad( guint keyval, gchar * key)
 	}
 	else 
 	{ // Not in a call, not dialing, create a new call 
-		dbus_play_dtmf(key);
+		//dbus_play_dtmf(key);
 		switch (keyval)
 		{
 			case 65293: /* ENTER */
