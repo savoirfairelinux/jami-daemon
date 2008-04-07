@@ -88,19 +88,12 @@ config_window_fill_account_list()
 			account_t * a = account_list_get_nth (i);
 			if (a)
 			{
-				if( g_hash_table_lookup(a->properties, ACCOUNT_ENABLED ) )
-				  stock_id = GTK_STOCK_CONNECT;
-				else
-				  stock_id = GTK_STOCK_DISCONNECT;
 				gtk_list_store_append (accountStore, &iter);
 				gtk_list_store_set(accountStore, &iter,
 						0, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
 						1, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
 						2, account_state_name(a->state),      // Status
-						3, gtk_widget_render_icon(gtk_image_new_from_stock(stock_id , GTK_ICON_SIZE_BUTTON),
-									  stock_id,
-									  GTK_ICON_SIZE_BUTTON,
-									  NULL),
+						3, g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),  // Enable/Disable
 						4, a,   // Pointer
 						-1);
 			}
@@ -635,6 +628,42 @@ codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer data
 	codec_list_update_to_daemon();
 }
 
+static void
+enable_account(GtkCellRendererToggle *rend , gchar* path,  gpointer data )
+{
+  GtkTreeIter iter;
+  GtkTreePath *treePath;
+  GtkTreeModel *model;
+  gboolean enable;
+  account_t* acc ;
+
+  // Get path of clicked codec active toggle box
+  treePath = gtk_tree_path_new_from_string(path);
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(data));
+  gtk_tree_model_get_iter(model, &iter, treePath);
+
+  // Get pointer on object
+  gtk_tree_model_get(model, &iter,
+                      3, &enable,
+                      4, &acc,
+                      -1);
+
+  enable = !enable;
+
+  // Store value
+  gtk_list_store_set(GTK_LIST_STORE(model), &iter,
+                     3, enable,
+                    -1);
+
+  gtk_tree_path_free(treePath);
+
+  // Modify account state       
+  g_print("ENABLE = %s - %i\n" ,  g_hash_table_lookup( acc->properties , g_strdup(ACCOUNT_ENABLED)) , enable);
+  g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup(g_hash_table_lookup(acc->properties, ACCOUNT_ENABLED)? "FALSE" : "TRUE"));
+  g_print("ENABLE = %s - %i\n" ,  g_hash_table_lookup( acc->properties , g_strdup(ACCOUNT_ENABLED)) , enable);
+
+}
+
 /**
  * Move codec in list depending on direction and selected codec and
  * update changes in the deamon list and the configuration files
@@ -850,7 +879,7 @@ create_accounts_tab()
 			G_TYPE_STRING,  // Name
 			G_TYPE_STRING,  // Protocol
 			G_TYPE_STRING,  // Status
-			GDK_TYPE_PIXBUF, // Enabled / Disabled
+			G_TYPE_BOOLEAN, // Enabled / Disabled
 			G_TYPE_POINTER  // Pointer to the Object
 			);
 
@@ -861,9 +890,8 @@ create_accounts_tab()
 			accountStore);
 
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(accountStore),
-			3, GTK_SORT_ASCENDING);
+			2 , GTK_SORT_ASCENDING);
 
-	//g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(codec_active_toggled), (gpointer)treeView);
 	renderer = gtk_cell_renderer_text_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes ("Alias",
 			renderer,
@@ -891,11 +919,11 @@ create_accounts_tab()
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
 	gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
 	
-	renderer = gtk_cell_renderer_pixbuf_new();
-	treeViewColumn = gtk_tree_view_column_new_with_attributes("", renderer, "pixbuf", 3 , NULL);
+	renderer = gtk_cell_renderer_toggle_new();
+	treeViewColumn = gtk_tree_view_column_new_with_attributes("", renderer, "active", 3 , NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), treeViewColumn);
+	g_signal_connect( G_OBJECT(renderer) , "toggled" , G_CALLBACK(enable_account), (gpointer)treeView );
 
-        // Toggle codec active property on clicked
 
 	g_object_unref(G_OBJECT(accountStore));
 	gtk_container_add(GTK_CONTAINER(scrolledWindow), treeView);

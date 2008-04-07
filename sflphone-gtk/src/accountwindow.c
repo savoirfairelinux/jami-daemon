@@ -115,7 +115,7 @@ show_account_window (account_t * a)
   gchar * curFullName = "";
   /* TODO: add curProxy, and add boxes for Proxy support */
   gchar * stun_enabled = "FALSE";
-  gchar * stun_server= "";
+  gchar * stun_server= "stun.fwdnet.net:3478";
 
   // Load from SIP/IAX/Unknown ?
   if(a)
