@@ -76,7 +76,6 @@ enum {
 void
 config_window_fill_account_list()
 {
-	gchar* stock_id;
 	if(dialogOpen)
 	{
 		GtkTreeIter iter;
@@ -88,12 +87,13 @@ config_window_fill_account_list()
 			account_t * a = account_list_get_nth (i);
 			if (a)
 			{
+			  g_print("fill account list : %s\n" , g_hash_table_lookup(a->properties, ACCOUNT_ENABLED));
 				gtk_list_store_append (accountStore, &iter);
 				gtk_list_store_set(accountStore, &iter,
 						0, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
 						1, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
 						2, account_state_name(a->state),      // Status
-						3, g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),  // Enable/Disable
+						3, (g_strcasecmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"TRUE") == 0)? TRUE:FALSE,  // Enable/Disable
 						4, a,   // Pointer
 						-1);
 			}
@@ -107,7 +107,7 @@ config_window_fill_account_list()
 
 /**
  * Fills the tree list with supported codecs
- */
+*/
 void
 config_window_fill_codec_list()
 {
@@ -647,7 +647,6 @@ enable_account(GtkCellRendererToggle *rend , gchar* path,  gpointer data )
                       3, &enable,
                       4, &acc,
                       -1);
-
   enable = !enable;
 
   // Store value
@@ -658,15 +657,13 @@ enable_account(GtkCellRendererToggle *rend , gchar* path,  gpointer data )
   gtk_tree_path_free(treePath);
 
   // Modify account state       
-  g_print("ENABLE = %s - %i\n" ,  g_hash_table_lookup( acc->properties , g_strdup(ACCOUNT_ENABLED)) , enable);
-  g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup(g_hash_table_lookup(acc->properties, ACCOUNT_ENABLED)? "FALSE" : "TRUE"));
-  g_print("ENABLE = %s - %i\n" ,  g_hash_table_lookup( acc->properties , g_strdup(ACCOUNT_ENABLED)) , enable);
-
+  g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup((enable == 1)? "TRUE":"FALSE"));
+  dbus_set_account_details(acc);
 }
 
 /**
  * Move codec in list depending on direction and selected codec and
- * update changes in the deamon list and the configuration files
+ * update changes in the daemon list and the configuration files
  */
 static void
 codec_move(gboolean moveUp, gpointer data)

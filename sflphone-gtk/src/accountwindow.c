@@ -122,6 +122,7 @@ show_account_window (account_t * a)
   {
     curAccountID = a->accountID;
     curAccountType = g_hash_table_lookup(currentAccount->properties, ACCOUNT_TYPE);
+    g_print("account window = %s\n" , g_hash_table_lookup(currentAccount->properties, ACCOUNT_ENABLED));
     curAccountEnabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_ENABLED);
 
     if (strcmp(curAccountType, "IAX") == 0) {
@@ -150,7 +151,7 @@ show_account_window (account_t * a)
   dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
 	GTK_WINDOW(get_main_window()),
 	GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-	GTK_STOCK_SAVE,
+	GTK_STOCK_APPLY,
 	GTK_RESPONSE_ACCEPT,
 	GTK_STOCK_CANCEL,
 	GTK_RESPONSE_CANCEL,
@@ -176,8 +177,9 @@ show_account_window (account_t * a)
 
   entryEnabled = gtk_check_button_new_with_mnemonic(_("_Enabled"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryEnabled), 
-      strcmp(curAccountEnabled,"TRUE") == 0 ? TRUE: FALSE); 
+      g_strcasecmp(curAccountEnabled,"TRUE") == 0 ? TRUE: FALSE); 
   gtk_table_attach ( GTK_TABLE( table ), entryEnabled, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+  gtk_widget_set_sensitive( GTK_WIDGET( entryEnabled ) , TRUE );
 
   //entryRegister = gtk_check_button_new_with_mnemonic("_Register on startup ");
   //gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryRegister), 
@@ -311,8 +313,8 @@ show_account_window (account_t * a)
     gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
 
     g_hash_table_replace(currentAccount->properties, 
-	g_strdup(ACCOUNT_ENABLED), 
-	g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "TRUE": "FALSE"));
+    	g_strdup(ACCOUNT_ENABLED), 
+    	 g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "TRUE": "FALSE"));
     // g_hash_table_replace(currentAccount->properties, 
     //  g_strdup(ACCOUNT_REGISTER), 
     //  g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryRegister)) ? "TRUE": "FALSE"));
