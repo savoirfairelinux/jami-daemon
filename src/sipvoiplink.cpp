@@ -212,7 +212,6 @@ SIPVoIPLink::loadSIPLocalIP()
 void
 SIPVoIPLink::getEvent()
 {
-	osip_message_t *req;
 	char* tmp2;
 	eXosip_event_t* event = eXosip_event_wait(0, 50);
 	eXosip_lock();
@@ -225,16 +224,15 @@ SIPVoIPLink::getEvent()
 
 	_debugMid("> SIP Event: [cdt=%4d:%4d:%4d] type=#%03d %s  = ", event->cid, event->did, event->tid, event->type, event->textinfo);
 	switch (event->type) {
-	
+	  
 	/* REGISTER related events */
 	case EXOSIP_REGISTRATION_NEW:         /** 00 < announce new registration.       */
 		_debugMid(" !EXOSIP_REGISTRATION_NEW event is not implemented\n");
 		break;
 	case EXOSIP_REGISTRATION_SUCCESS:     /** 01 < user is successfully registred.  */
-		_debugMid(" !EXOSIP_REGISTRATION_SUCCESS : %i\n", getRegistrationState());
-		if(getRegistrationState() == VoIPLink::Registered){
+		_debugMid(" !EXOSIP_REGISTRATION_SUCCESS \n");
+		if(_eXosipRegID == EXOSIP_ERROR_STD)
 		  setRegistrationState(Unregistered);
-		}
 		else
 		  setRegistrationState(Registered);
 		//Manager::instance().registrationSucceed(getAccountID());
