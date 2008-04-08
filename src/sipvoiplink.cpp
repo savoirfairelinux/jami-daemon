@@ -232,10 +232,10 @@ SIPVoIPLink::getEvent()
 		break;
 	case EXOSIP_REGISTRATION_SUCCESS:     /** 01 < user is successfully registred.  */
 		_debugMid(" !EXOSIP_REGISTRATION_SUCCESS : %i\n", getRegistrationState());
-		//if(getRegistrationState() == Registered){
-		  //setRegistrationState(Unregistered);
-		//}
-		//else
+		if(getRegistrationState() == VoIPLink::Registered){
+		  setRegistrationState(Unregistered);
+		}
+		else
 		  setRegistrationState(Registered);
 		//Manager::instance().registrationSucceed(getAccountID());
 		break;
@@ -559,8 +559,6 @@ SIPVoIPLink::sendUnregister()
     _debug("! SIP Failure: Unable to build registration for sendUnregister");
     return false;
   }
-
-  _debug("osip_message_t = %s\n" , reg);
 
   eXosip_lock();
   _debug("< Sending REGISTER (expire=0)\n");
