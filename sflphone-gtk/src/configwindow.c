@@ -60,6 +60,16 @@ GtkWidget *moveDownButton;
 
 account_t *selectedAccount;
 
+// Account properties
+enum {
+	COLUMN_ACCOUNT_ALIAS,
+	COLUMN_ACCOUNT_TYPE,
+	COLUMN_ACCOUNT_STATUS,
+	COLUMN_ACCOUNT_ACTIVE,
+	COLUMN_ACCOUNT_DATA,
+	COLUMN_ACCOUNT_COUNT
+};
+
 // Codec properties ID
 enum {
 	COLUMN_CODEC_ACTIVE,
@@ -90,11 +100,11 @@ config_window_fill_account_list()
 			  g_print("fill account list : %s\n" , g_hash_table_lookup(a->properties, ACCOUNT_ENABLED));
 				gtk_list_store_append (accountStore, &iter);
 				gtk_list_store_set(accountStore, &iter,
-						0, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
-						1, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
-						2, account_state_name(a->state),      // Status
-						3, (g_strcasecmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"TRUE") == 0)? TRUE:FALSE,  // Enable/Disable
-						4, a,   // Pointer
+						COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
+						COLUMN_ACCOUNT_TYPE, g_hash_table_lookup(a->properties, ACCOUNT_TYPE),   // Protocol
+						COLUMN_ACCOUNT_STATUS, account_state_name(a->state),      // Status
+						COLUMN_ACCOUNT_ACTIVE, (g_strcasecmp(g_hash_table_lookup(a->properties, ACCOUNT_ENABLED),"TRUE") == 0)? TRUE:FALSE,  // Enable/Disable
+						COLUMN_ACCOUNT_DATA, a,   // Pointer
 						-1);
 			}
 		}
@@ -548,7 +558,7 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
 	}
 
 	val.g_type = G_TYPE_POINTER;
-	gtk_tree_model_get_value(model, &iter, 4, &val);
+	gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_DATA, &val);
 
 	selectedAccount = (account_t*)g_value_get_pointer(&val);
 	g_value_unset(&val);
@@ -644,14 +654,14 @@ enable_account(GtkCellRendererToggle *rend , gchar* path,  gpointer data )
 
   // Get pointer on object
   gtk_tree_model_get(model, &iter,
-                      3, &enable,
-                      4, &acc,
+                      COLUMN_ACCOUNT_ACTIVE, &enable,
+                      COLUMN_ACCOUNT_DATA, &acc,
                       -1);
   enable = !enable;
 
   // Store value
   gtk_list_store_set(GTK_LIST_STORE(model), &iter,
-                     3, enable,
+                     COLUMN_ACCOUNT_ACTIVE, enable,
                     -1);
 
   gtk_tree_path_free(treePath);
@@ -751,7 +761,7 @@ bold_if_default_account(GtkTreeViewColumn *col,
 			gpointer data)
 {
 	GValue val = { 0, };
-	gtk_tree_model_get_value(tree_model, iter, 4, &val);
+	gtk_tree_model_get_value(tree_model, iter, COLUMN_ACCOUNT_DATA, &val);
 	account_t *current = (account_t*)g_value_get_pointer(&val);
 	g_value_unset(&val);
 	if(g_strcasecmp(current->accountID, account_list_get_default()) == 0)
@@ -872,7 +882,7 @@ create_accounts_tab()
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolledWindow), GTK_SHADOW_IN);
 	gtk_box_pack_start(GTK_BOX(ret), scrolledWindow, TRUE, TRUE, 0);
 
-	accountStore = gtk_list_store_new(5,
+	accountStore = gtk_list_store_new(COLUMN_ACCOUNT_COUNT,
 			G_TYPE_STRING,  // Name
 			G_TYPE_STRING,  // Protocol
 			G_TYPE_STRING,  // Status
@@ -887,12 +897,12 @@ create_accounts_tab()
 			accountStore);
 
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(accountStore),
-			2 , GTK_SORT_ASCENDING);
+			2 , GTK_SORT_DESCENDING);
 
 	renderer = gtk_cell_renderer_text_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes ("Alias",
 			renderer,
-			"markup", 0,
+			"markup", COLUMN_ACCOUNT_ALIAS,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
 	gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
@@ -903,7 +913,7 @@ create_accounts_tab()
 	renderer = gtk_cell_renderer_text_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Protocol"),
 			renderer,
-			"markup", 1,
+			"markup", COLUMN_ACCOUNT_TYPE,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
 	gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
@@ -911,13 +921,13 @@ create_accounts_tab()
 	renderer = gtk_cell_renderer_text_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Status"),
 			renderer,
-			"markup", 2,
+			"markup", COLUMN_ACCOUNT_STATUS,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
 	gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
 	
 	renderer = gtk_cell_renderer_toggle_new();
-	treeViewColumn = gtk_tree_view_column_new_with_attributes("", renderer, "active", 3 , NULL);
+	treeViewColumn = gtk_tree_view_column_new_with_attributes("", renderer, "active", COLUMN_ACCOUNT_ACTIVE , NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), treeViewColumn);
 	g_signal_connect( G_OBJECT(renderer) , "toggled" , G_CALLBACK(enable_account), (gpointer)treeView );
 

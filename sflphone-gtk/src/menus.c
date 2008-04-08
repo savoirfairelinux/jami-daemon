@@ -672,6 +672,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 	menu_items = gtk_check_menu_item_new_with_mnemonic(alias);
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 	g_object_set_data( G_OBJECT( menu_items ) , "account" , acc );
+	g_free( alias );
 	if( account_list_get_current() == NULL ){
 	  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
 	      (g_strcasecmp( acc->accountID , account_list_get_default()) == 0)? TRUE : FALSE);
@@ -686,7 +687,6 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 	gtk_widget_show (menu_items);
       }
     }
-    g_free( alias );
   }
 
   if (event)

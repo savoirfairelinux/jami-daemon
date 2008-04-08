@@ -2136,7 +2136,6 @@ ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& detail
 
   saveConfig();
 
-  _debug("ADD ACCOUNT\n");
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }
 
