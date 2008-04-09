@@ -59,23 +59,8 @@ sflphone_notify_voice_mail (guint count)
 	if( account_list_get_size() > 0 )
 	{
 	  account_t* acc = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-	  if( acc == NULL )
-	  {
-	    // Notify that no account is registered
-	    //notify_no_account_registered();
-	  }
-	  else
-	  {
-	    if( account_list_get_default() == NULL ){
-	      // Notify that the first registered account has count voice mails
+	  if( acc != NULL )
 	      notify_voice_mails( count , acc );	
-	    }
-	    else
-	    {
-	      // Notify that the default registered account has count voice mails
-	      notify_voice_mails( count , account_list_get_by_id(account_list_get_default()) );
-	    } 
-	  }     
 	}
 }
 
@@ -84,15 +69,14 @@ status_bar_display_account( call_t* c)
 {
     gchar* msg;
     account_t* acc;
-    if(c->accountID != NULL)
+    if(c->accountID != NULL){
       acc = account_list_get_by_id(c->accountID);
-    else
-      acc = account_list_get_by_id( account_list_get_default());
-    msg = g_markup_printf_escaped("Default: %s account- %s" , 
+      msg = g_markup_printf_escaped("%s account- %s" , 
 				  g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
 				  g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
-    status_bar_message_add( msg , __MSG_ACCOUNT_DEFAULT);
-    g_free(msg);
+      status_bar_message_add( msg , __MSG_ACCOUNT_DEFAULT);
+      g_free(msg);
+  }
 }
   
 
@@ -210,7 +194,7 @@ sflphone_init()
 	{
 		dbus_register(getpid(), "Gtk+ Client");
 		sflphone_fill_account_list();
-		sflphone_set_default_account();
+		sflphone_set_current_account();
 		sflphone_fill_codec_list();
 		return TRUE;
 	}
@@ -486,7 +470,8 @@ sflphone_keypad( guint keyval, gchar * key)
 						dbus_hang_up(c);
 						break;
 					default:  // TODO should this be here?
-						//dbus_play_dtmf(key);
+						// To play the dtmf when calling mail box for instance
+						dbus_play_dtmf(key);
 						if (keyval < 255 || (keyval >65453 && keyval < 65466))
 						{ 
 							gchar * temp = g_strconcat(call_get_number(c), key, NULL);
@@ -504,7 +489,7 @@ sflphone_keypad( guint keyval, gchar * key)
 				{
 					case 65293: /* ENTER */
 					case 65421: /* ENTER numpad */
-						status_bar_display_account(c);
+						//status_bar_display_account(c);
 						dbus_accept(c);
 						break;
 					case 65307: /* ESCAPE */
@@ -583,54 +568,50 @@ sflphone_keypad( guint keyval, gchar * key)
 void 
 sflphone_place_call ( call_t * c )
 {
-	status_bar_display_account(c);
-	if(c->state == CALL_STATE_DIALING)
-	{
-		account_t * account;
-		gchar* account_id = account_list_get_current();
-		if( account_id == NULL ){
-		  account_id = account_list_get_default();
-		  account = account_list_get_by_id(account_id);
-		}
-		else
-		  account = account_list_get_by_id( account_id );
-
-		// Here : account_id is either the default one, either the current one selected with a right-click
-		if(account)
-		{
-			if(strcmp(g_hash_table_lookup(account->properties, "Status"),"REGISTERED")==0)
-			{
-				c->accountID = account_id;
-				dbus_place_call(c);
-			}
-			else
-			{
-				main_window_error_message(_("The account selected as default is not registered."));
-			}
-			
-		}
-		else{
-			account = account_list_get_by_state (ACCOUNT_STATE_REGISTERED);
-			if(account)
-			{
-				c->accountID = account->accountID;
-				dbus_place_call(c);
-			}
-			else
-			{
-				main_window_error_message(_("There is no registered account to make this call with."));
-			}
-
-		}
+  //status_bar_display_account(c);
+  if(c->state == CALL_STATE_DIALING)
+  {
+    account_t * current = account_list_get_current();
+    if( current )
+    {
+      if(strcmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
+      { 
+	// OK, everything alright - the call is made with the current account
+	c -> accountID = current -> accountID;
+	dbus_place_call(c);
+      }
+      else
+      {
+	// the current account (ie the first in the list) isn't registered
+	// So we try the next one. If it is registered, place a call with
+	int pos;
+	for( pos = 1 ; pos < account_list_get_size() ; pos++ ){
+	  current =  account_list_get_nth(pos);
+	  if( current ){
+	    if( strcmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0 ){
+	      // notify_switch_account();
+	      //main_warning_error_message(_("Switch account."));
+	      c -> accountID = current -> accountID;
+	      dbus_place_call(c);
+	      break;
+	    }
+	  }
 	}
+      }
+    }
+    else{
+      // notify_no_accounts();
+      main_window_error_message(_("There is no accounts to make this call with."));
+    }
+  }
 }
 
-/* Internal to action - set the DEFAULT_ACCOUNT variable */
+/* Internal to action - set the __CURRENT_ACCOUNT variable */
 	void
-sflphone_set_default_account( )
+sflphone_set_current_account()
 {
-	gchar* default_id = strdup(dbus_get_default_account());
-	account_list_set_default(default_id);	
+  if( account_list_get_size > 0 )
+    account_list_set_current_pos( 0 );	
 }
 
 void
