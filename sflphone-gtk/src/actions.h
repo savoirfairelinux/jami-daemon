@@ -115,7 +115,7 @@ void sflphone_keypad ( guint keyval, gchar * key);
 void sflphone_place_call ( call_t * c );
 
 void sflphone_fill_account_list();
-void sflphone_set_default_account();
+void sflphone_set_current_account();
 
 void sflphone_throw_exception( int errCode );
 void sflphone_fill_codec_list();

@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -102,24 +102,20 @@ guint account_list_get_size ( );
   * @return An account or NULL */
 account_t * account_list_get_nth ( guint n );
 
-/** Return the account's id chosen as default
- *  @return The default account */
-gchar * account_list_get_default( );
-
-/** This function sets an account as default
- * @param n The position of the account you want to select
+/** Return the current account struct
+ *  @return The current account struct
  */
-void account_list_set_default(const gchar * accountID);
-
-/** Return the current account id
- *  @return The current account id
- */
-gchar * account_list_get_current( );
+account_t * account_list_get_current( );
 
 /** This function sets an account as the current one
  * @param accountID The ID of the current account
  */
-void account_list_set_current(const gchar * accountID);
+void account_list_set_current_id(const gchar * accountID);
+
+/** This function sets an account as the current one
+ * @param n the position of the account you want to use
+ */
+void account_list_set_current_pos( guint n );
 
 /** This function maps account_state_t enums to a description.
   * @param s The state
@@ -132,5 +128,8 @@ void account_list_clear ( );
  * @param accountID The ID of the account
  * @return An account or NULL */
 account_t * account_list_get_by_id(gchar * accountID); 
+
+void account_list_move_up( guint index );
+void account_list_move_down( guint index );
 
 #endif 
