@@ -33,6 +33,11 @@
       <arg type="s" name="accountID" direction="in"/>
     </method>
    
+    <method name="sendRegister">
+      <arg type="s" name="accountID" direction="in"/>
+      <arg type="i" name="expire" direction="in"/>
+    </method>
+
    <!--      ///////////////////////               -->
 
   <!-- Various audio-related methods   -->

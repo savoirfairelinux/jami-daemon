@@ -231,11 +231,14 @@ SIPVoIPLink::getEvent()
 		break;
 	case EXOSIP_REGISTRATION_SUCCESS:     /** 01 < user is successfully registred.  */
 		_debugMid(" !EXOSIP_REGISTRATION_SUCCESS \n");
-		if(_eXosipRegID == EXOSIP_ERROR_STD)
+		if(_eXosipRegID == EXOSIP_ERROR_STD){
 		  setRegistrationState(Unregistered);
-		else
+		  Manager::instance().unregistrationSucceed(getAccountID());
+		}
+		else{
 		  setRegistrationState(Registered);
-		//Manager::instance().registrationSucceed(getAccountID());
+		  Manager::instance().registrationSucceed(getAccountID());
+		}
 		break;
 	case EXOSIP_REGISTRATION_FAILURE:     /** 02 < user is not registred.           */
 		setRegistrationState(Error, "SIP registration failure.");

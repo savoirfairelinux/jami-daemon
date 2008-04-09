@@ -276,6 +276,43 @@ static
 inline
 #endif
 gboolean
+org_sflphone_SFLphone_ConfigurationManager_send_register (DBusGProxy *proxy, const char * IN_accountID, const gint IN_expire, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "sendRegister", error, G_TYPE_STRING, IN_accountID, G_TYPE_INT, IN_expire, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_send_register_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_send_register_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_send_register_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_send_register_async (DBusGProxy *proxy, const char * IN_accountID, const gint IN_expire, org_sflphone_SFLphone_ConfigurationManager_send_register_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "sendRegister", org_sflphone_SFLphone_ConfigurationManager_send_register_async_callback, stuff, g_free, G_TYPE_STRING, IN_accountID, G_TYPE_INT, IN_expire, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
 org_sflphone_SFLphone_ConfigurationManager_get_tone_locale_list (DBusGProxy *proxy, char *** OUT_list, GError **error)
 
 {

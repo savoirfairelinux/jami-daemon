@@ -113,7 +113,6 @@ config_window_fill_account_list()
 
 		gtk_widget_set_sensitive( GTK_WIDGET(editButton),   FALSE);
 		gtk_widget_set_sensitive( GTK_WIDGET(deleteButton), FALSE);
-		//gtk_widget_set_sensitive( GTK_WIDGET(defaultButton), FALSE);
 	}
 }
 
@@ -557,7 +556,6 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
 	{
 		gtk_widget_set_sensitive(GTK_WIDGET(editButton), TRUE);
 		gtk_widget_set_sensitive(GTK_WIDGET(deleteButton), TRUE);
-		//gtk_widget_set_sensitive(GTK_WIDGET(defaultButton), TRUE);
 		gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), TRUE);
 		gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), TRUE);
 	}
@@ -660,7 +658,8 @@ enable_account(GtkCellRendererToggle *rend , gchar* path,  gpointer data )
 
   // Modify account state       
   g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup((enable == 1)? "TRUE":"FALSE"));
-  dbus_set_account_details(acc);
+  //dbus_set_account_details(acc);
+  dbus_send_register( acc->accountID , enable );
 }
 
 /**

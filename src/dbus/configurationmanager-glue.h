@@ -27,6 +27,7 @@ public:
         register_method(ConfigurationManager, getAccountList, _getAccountList_stub);
         register_method(ConfigurationManager, getDefaultAccount, _getDefaultAccount_stub);
         register_method(ConfigurationManager, setDefaultAccount, _setDefaultAccount_stub);
+        register_method(ConfigurationManager, sendRegister, _sendRegister_stub);
         register_method(ConfigurationManager, getToneLocaleList, _getToneLocaleList_stub);
         register_method(ConfigurationManager, getVersion, _getVersion_stub);
         register_method(ConfigurationManager, getRingtoneList, _getRingtoneList_stub);
@@ -97,6 +98,12 @@ public:
         static ::DBus::IntrospectedArgument setDefaultAccount_args[] = 
         {
             { "accountID", "s", true },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument sendRegister_args[] = 
+        {
+            { "accountID", "s", true },
+            { "expire", "i", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getToneLocaleList_args[] = 
@@ -275,6 +282,7 @@ public:
             { "getAccountList", getAccountList_args },
             { "getDefaultAccount", getDefaultAccount_args },
             { "setDefaultAccount", setDefaultAccount_args },
+            { "sendRegister", sendRegister_args },
             { "getToneLocaleList", getToneLocaleList_args },
             { "getVersion", getVersion_args },
             { "getRingtoneList", getRingtoneList_args },
@@ -347,6 +355,7 @@ public:
     virtual std::vector< ::DBus::String > getAccountList(  ) = 0;
     virtual ::DBus::String getDefaultAccount(  ) = 0;
     virtual void setDefaultAccount( const ::DBus::String& accountID ) = 0;
+    virtual void sendRegister( const ::DBus::String& accountID, const ::DBus::Int32& expire ) = 0;
     virtual std::vector< ::DBus::String > getToneLocaleList(  ) = 0;
     virtual ::DBus::String getVersion(  ) = 0;
     virtual std::vector< ::DBus::String > getRingtoneList(  ) = 0;
@@ -472,6 +481,16 @@ private:
 
         ::DBus::String argin1; ri >> argin1;
         setDefaultAccount(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _sendRegister_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::String argin1; ri >> argin1;
+        ::DBus::Int32 argin2; ri >> argin2;
+        sendRegister(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

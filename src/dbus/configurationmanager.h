@@ -46,6 +46,7 @@ public:
     std::vector< ::DBus::String > getAccountList(  );
     ::DBus::String getDefaultAccount(  );
     void setDefaultAccount( const ::DBus::String& accountID  );
+    void sendRegister(  const ::DBus::String& accoundID , const ::DBus::Int32& expire );
     
     std::vector< ::DBus::String > getCodecList(  );
     std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload );

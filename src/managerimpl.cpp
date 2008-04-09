@@ -806,6 +806,18 @@ ManagerImpl::registrationSucceed(const AccountID& accountid)
 
 //THREAD=VoIP
   void 
+ManagerImpl::unregistrationSucceed(const AccountID& accountid)
+{
+  Account* acc = getAccount(accountid);
+  if ( acc ) { 
+    //acc->setState(true); 
+    _debug("UNREGISTRATION SUCCEED\n");
+    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+  }
+}
+
+//THREAD=VoIP
+  void 
 ManagerImpl::registrationFailed(const AccountID& accountid)
 {
   Account* acc = getAccount(accountid);
@@ -2080,13 +2092,7 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
   }
 
   saveConfig();
-
-  /*
-   * register if it was just enabled, and we hadn't registered
-   * unregister if it was enabled/registered, and we want it closed
-   */
   Account* acc = getAccount(accountID);
-
   acc->loadConfig();
   if (acc->isEnabled()) {
     // Verify we aren't already registered, then register
@@ -2100,12 +2106,40 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
       _debug("SET ACCOUNTS DETAILS - registered - > non registered\n");
       acc->unregisterVoIPLink();
       //unregisterAccount(accountID);
-      
+    }
+  }    
+  // Update account details
+  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+}
+
+/*
+ * register if it was just enabled, and we hadn't registered
+ * unregister if it was enabled/registered, and we want it closed
+ * unregister <=> expire = 0 ( FALSE )
+ * register <=> expire = 1 ( TRUE )
+ */
+void
+ManagerImpl::sendRegister( const ::DBus::String& accountID , bool expire )
+{
+  // Update the active field
+  setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
+  
+  Account* acc = getAccount(accountID);
+  acc->loadConfig();
+  if (acc->isEnabled()) {
+    // Verify we aren't already registered, then register
+    if (acc->getRegistrationState() != VoIPLink::Registered) {
+      _debug("SET ACCOUNTS DETAILS - non registered - > registered\n");
+      acc->registerVoIPLink();
+    }
+  } else {
+    // Verify we are already registered, then unregister
+    if (acc->getRegistrationState() == VoIPLink::Registered) {
+      _debug("SET ACCOUNTS DETAILS - registered - > non registered\n");
+      acc->unregisterVoIPLink();
+      //unregisterAccount(accountID);
     }
   }
-
-  /** @todo Make the daemon use the new settings */
-  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }                   
 
 

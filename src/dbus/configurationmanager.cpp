@@ -49,6 +49,12 @@ ConfigurationManager::setAccountDetails( const ::DBus::String& accountID,
 }
 
 	void 
+ConfigurationManager::sendRegister( const ::DBus::String& accountID, const ::DBus::Int32& expire )
+{
+	Manager::instance().sendRegister(accountID, expire);
+}
+
+	void 
 ConfigurationManager::addAccount( const std::map< ::DBus::String, ::DBus::String >& details )
 {
 	_debug("ConfigurationManager::addAccount received\n");
