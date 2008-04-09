@@ -129,7 +129,10 @@ account_list_get_nth ( guint n )
 account_t*
 account_list_get_current( )
 {
-  return account_list_get_by_id( __CURRENT_ACCOUNT_ID );
+  if( __CURRENT_ACCOUNT_ID != NULL  )
+    return account_list_get_by_id( __CURRENT_ACCOUNT_ID );
+  else
+    return NULL;
 }
 
 void

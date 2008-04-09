@@ -42,7 +42,7 @@ void notify_incoming_call( call_t* c);
 
 void notify_voice_mails( guint count , account_t* acc );
 
-void notify_switch_account( account_t* acc );
+void notify_current_account( account_t* acc );
 void notify_no_accounts( );
 void notify_no_registered_accounts(  );
 /*

@@ -112,7 +112,7 @@ notify_voice_mails( guint count , account_t* acc )
 }
 
   void
-notify_switch_account( account_t* acc )
+notify_current_account( account_t* acc )
 {
   // the account is different from NULL
   GdkPixbuf *pixbuf;
@@ -124,7 +124,7 @@ notify_switch_account( account_t* acc )
 				  g_hash_table_lookup( acc->properties , ACCOUNT_TYPE) ,
 				  g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
 
-  title = g_markup_printf_escaped(_("Switching account"));
+  title = g_markup_printf_escaped(_("Current account"));
 
   pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
 
