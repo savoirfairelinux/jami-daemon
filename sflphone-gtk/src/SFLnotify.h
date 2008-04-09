@@ -42,7 +42,9 @@ void notify_incoming_call( call_t* c);
 
 void notify_voice_mails( guint count , account_t* acc );
 
-void notify_registered_accounts();
+void notify_switch_account( account_t* acc );
+void notify_no_accounts( );
+void notify_no_registered_accounts(  );
 /*
  * Callback when answer button is pressed. 
  * Action: Pick up the incoming call 
@@ -67,4 +69,5 @@ void refuse_call_cb( NotifyNotification *notification, gchar *action, gpointer d
  */
 void ignore_call_cb( NotifyNotification *notification, gchar *action, gpointer data );
 
+void setup_accounts_cb(NotifyNotification *notification, gchar *action, gpointer data);
 #endif

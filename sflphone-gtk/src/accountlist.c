@@ -23,7 +23,7 @@
 #include <string.h>
 
 GQueue * accountQueue;
-account_t * __CURRENT_ACCOUNT=NULL;
+gchar* __CURRENT_ACCOUNT_ID = NULL;
 
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 gint 
@@ -129,19 +129,19 @@ account_list_get_nth ( guint n )
 account_t*
 account_list_get_current( )
 {
-  return __CURRENT_ACCOUNT;
+  return account_list_get_by_id( __CURRENT_ACCOUNT_ID );
 }
 
 void
 account_list_set_current_id(const gchar * accountID)
 {
-  __CURRENT_ACCOUNT = account_list_get_by_id(g_strdup(accountID));
+  __CURRENT_ACCOUNT_ID = g_strdup(accountID);
 }
 
 void
 account_list_set_current_pos( guint n)
 {
-  __CURRENT_ACCOUNT = account_list_get_nth(n);
+  __CURRENT_ACCOUNT_ID = account_list_get_nth(n)->accountID;
 }
 
 const gchar * account_state_name(account_state_t s)

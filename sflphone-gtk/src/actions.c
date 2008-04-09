@@ -194,8 +194,8 @@ sflphone_init()
 	{
 		dbus_register(getpid(), "Gtk+ Client");
 		sflphone_fill_account_list();
-		sflphone_set_current_account();
 		sflphone_fill_codec_list();
+		sflphone_set_current_account();
 		return TRUE;
 	}
 }
@@ -568,16 +568,16 @@ sflphone_keypad( guint keyval, gchar * key)
 void 
 sflphone_place_call ( call_t * c )
 {
-  //status_bar_display_account(c);
   if(c->state == CALL_STATE_DIALING)
   {
     account_t * current = account_list_get_current();
     if( current )
     {
-      if(strcmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
+      if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
       { 
 	// OK, everything alright - the call is made with the current account
 	c -> accountID = current -> accountID;
+	status_bar_display_account(c);
 	dbus_place_call(c);
       }
       else
@@ -588,19 +588,21 @@ sflphone_place_call ( call_t * c )
 	for( pos = 1 ; pos < account_list_get_size() ; pos++ ){
 	  current =  account_list_get_nth(pos);
 	  if( current ){
-	    if( strcmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0 ){
-	      // notify_switch_account();
+	    if( g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0 ){
+	      notify_switch_account( current );
 	      //main_warning_error_message(_("Switch account."));
 	      c -> accountID = current -> accountID;
+	      status_bar_display_account(c);
 	      dbus_place_call(c);
 	      break;
 	    }
 	  }
 	}
+	notify_no_registered_accounts();
       }
     }
     else{
-      // notify_no_accounts();
+      notify_no_accounts();
       main_window_error_message(_("There is no accounts to make this call with."));
     }
   }

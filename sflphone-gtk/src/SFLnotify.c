@@ -42,7 +42,7 @@ notify_incoming_call( call_t* c  )
       callerid,
       NULL,
       NULL);
-  notify_notification_set_urgency( notification , NOTIFY_URGENCY_NORMAL );
+  notify_notification_set_urgency( notification , NOTIFY_URGENCY_CRITICAL );
   notify_notification_set_icon_from_pixbuf (notification, pixbuf);
   notify_notification_attach_to_status_icon( notification , get_status_icon() );
   notify_notification_set_timeout( notification , (( g_strcasecmp(__TIMEOUT_MODE, "default") == 0 )? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER ));
@@ -100,6 +100,38 @@ notify_voice_mails( guint count , account_t* acc )
       body,
       NULL,
       NULL);
+  notify_notification_set_urgency( notification , NOTIFY_URGENCY_LOW );
+  notify_notification_set_icon_from_pixbuf (notification, pixbuf);
+  notify_notification_attach_to_status_icon( notification , get_status_icon() );
+  notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
+  notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
+
+  if (!notify_notification_show (notification, NULL)) {
+    g_print("notify(), failed to send notification\n");
+  }
+}
+
+  void
+notify_switch_account( account_t* acc )
+{
+  // the account is different from NULL
+  GdkPixbuf *pixbuf;
+  gchar* title;
+  gchar* body="";
+  notify_init("sflphone");
+
+  body = g_markup_printf_escaped(_("Calling with %s account <i>%s</i>") ,
+				  g_hash_table_lookup( acc->properties , ACCOUNT_TYPE) ,
+				  g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
+
+  title = g_markup_printf_escaped(_("Switching account"));
+
+  pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+
+  notification = notify_notification_new( title,
+      body,
+      NULL,
+      NULL);
   notify_notification_set_urgency( notification , NOTIFY_URGENCY_NORMAL );
   notify_notification_set_icon_from_pixbuf (notification, pixbuf);
   notify_notification_attach_to_status_icon( notification , get_status_icon() );
@@ -112,43 +144,66 @@ notify_voice_mails( guint count , account_t* acc )
 }
 
   void
-notify_registered_accounts( void )
+notify_no_accounts(  )
 {
-  // the account is different from NULL
   GdkPixbuf *pixbuf;
   gchar* title;
   gchar* body="";
   notify_init("sflphone");
 
-  guint size =  account_list_get_size();
-  int i;
+  body = g_markup_printf_escaped(_("You haven't setup any accounts")); 
 
-  if( size > 0 ){
-    for( i = 0 ; i < size ; i++ ){
+  title = g_markup_printf_escaped(_("Error"));
 
-      body = g_markup_printf_escaped(_("%s%s (%s) - State:<i>%s</i>") ,
-	  body,
-	  g_hash_table_lookup( account_list_get_nth(i)->properties , ACCOUNT_ALIAS),
-	  g_hash_table_lookup( account_list_get_nth(i)->properties , ACCOUNT_TYPE) ,
-	  account_state_name( account_list_get_nth(i)->state)) ;
-    }
+  pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
 
-    title = g_markup_printf_escaped(_("Accounts"));
+  notification = notify_notification_new( title,
+      body,
+      NULL,
+      NULL);
+  notify_notification_set_urgency( notification , NOTIFY_URGENCY_CRITICAL );
+  notify_notification_set_icon_from_pixbuf (notification, pixbuf);
+  notify_notification_attach_to_status_icon( notification , get_status_icon() );
+  notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
+  notify_notification_add_action( notification , "setup" , _("Setup Accounts") , (NotifyActionCallback) setup_accounts_cb , NULL , NULL );
 
-    pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+  if (!notify_notification_show (notification, NULL)) {
+    g_print("notify(), failed to send notification\n");
+  }
+}
 
-    notification = notify_notification_new( title,
-	body,
-	NULL,
-	NULL);
-    notify_notification_set_urgency( notification , NOTIFY_URGENCY_NORMAL );
-    notify_notification_set_icon_from_pixbuf (notification, pixbuf);
-    notify_notification_attach_to_status_icon( notification , get_status_icon() );
-    notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
-    notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
+ void
+setup_accounts_cb( NotifyNotification *notification, gchar *action, gpointer data )
+{
+  show_accounts_window(0);
+  g_object_unref( notification );
+}
 
-    if (!notify_notification_show (notification, NULL)) {
-      g_print("notify(), failed to send notification\n");
-    }
+  void
+notify_no_registered_accounts(  )
+{
+  GdkPixbuf *pixbuf;
+  gchar* title;
+  gchar* body="";
+  notify_init("sflphone");
+
+  body = g_markup_printf_escaped(_("You have no registered accounts")); 
+
+  title = g_markup_printf_escaped(_("Error"));
+
+  pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+
+  notification = notify_notification_new( title,
+      body,
+      NULL,
+      NULL);
+  notify_notification_set_urgency( notification , NOTIFY_URGENCY_CRITICAL );
+  notify_notification_set_icon_from_pixbuf (notification, pixbuf);
+  notify_notification_attach_to_status_icon( notification , get_status_icon() );
+  notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
+  notify_notification_add_action( notification , "setup" , _("Setup Accounts") , (NotifyActionCallback) setup_accounts_cb , NULL , NULL );
+
+  if (!notify_notification_show (notification, NULL)) {
+    g_print("notify(), failed to send notification\n");
   }
 }
