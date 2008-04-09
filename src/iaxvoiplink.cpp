@@ -430,7 +430,9 @@ IAXVoIPLink::sendUnregister()
 
   _nextRefreshStamp = 0;
 
+  _debug("IAX2 send unregister\n");
   setRegistrationState(Unregistered);
+  Manager::instance().unregistrationSucceed("");
 
   return false;
 }

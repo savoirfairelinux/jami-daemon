@@ -798,7 +798,6 @@ ManagerImpl::registrationSucceed(const AccountID& accountid)
 {
   Account* acc = getAccount(accountid);
   if ( acc ) { 
-    //acc->setState(true); 
     _debug("REGISTRATION SUCCEED\n");
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
   }
@@ -808,12 +807,8 @@ ManagerImpl::registrationSucceed(const AccountID& accountid)
   void 
 ManagerImpl::unregistrationSucceed(const AccountID& accountid)
 {
-  Account* acc = getAccount(accountid);
-  if ( acc ) { 
-    //acc->setState(true); 
-    _debug("UNREGISTRATION SUCCEED\n");
-    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-  }
+  _debug("UNREGISTRATION SUCCEED\n");
+  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }
 
 //THREAD=VoIP
@@ -1751,7 +1746,6 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
 }
 
 //THREAD=Main
-/* Unused, Deprecated */
   bool 
 ManagerImpl::getConfigAll(const std::string& sequenceId)
 {
