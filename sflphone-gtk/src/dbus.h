@@ -86,6 +86,7 @@ void dbus_start_hidden( void );
 int dbus_is_start_hidden( void );
 void dbus_switch_popup_mode( void );
 int dbus_popup_mode( void );
+void dbus_start_tone(const int start , const guint type); 
 
 /* Instance */
 void dbus_register( int pid, gchar * name);

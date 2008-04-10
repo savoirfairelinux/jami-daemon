@@ -28,6 +28,7 @@
 #include <dbus.h>
 #include <actions.h>
 #include <statusicon.h>
+#include <configwindow.h>
 
 #define __TIMEOUT_MODE	"default"			
 #define __TIMEOUT_TIME	30000	    // 30 secondes			

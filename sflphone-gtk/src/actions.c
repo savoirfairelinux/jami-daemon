@@ -73,8 +73,8 @@ status_bar_display_account( call_t* c)
     if(c->accountID != NULL){
       acc = account_list_get_by_id(c->accountID);
       msg = g_markup_printf_escaped("%s account- %s" , 
-				  g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
-				  g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
+				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
+				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
       status_bar_message_add( msg , __MSG_ACCOUNT_DEFAULT);
       g_free(msg);
   }

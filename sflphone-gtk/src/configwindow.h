@@ -39,7 +39,6 @@ void update_combo_box( gchar* plugin );
 void default_account(GtkWidget *widget, gpointer data);
 void bold_if_default_account(GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data);
 void default_codecs(GtkWidget* widget, gpointer data);
-void enable_account( GtkWidget* widget, gpointer data );
 GtkWidget * create_codec_table();
 GtkWidget * create_accounts_tab();
 GtkWidget * create_audio_tab();

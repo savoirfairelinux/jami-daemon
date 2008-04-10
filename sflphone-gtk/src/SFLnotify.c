@@ -30,8 +30,8 @@ notify_incoming_call( call_t* c  )
   notify_init("sflphone");
 
   title = g_markup_printf_escaped(_("%s account: %s") , 
-      g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_TYPE) , 
-      g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_ALIAS) ) ;
+      (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_TYPE) , 
+      (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_ALIAS) ) ;
   callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , c->from);
 
 
@@ -90,8 +90,8 @@ notify_voice_mails( guint count , account_t* acc )
   notify_init("sflphone");
 
   title = g_markup_printf_escaped(_("%s account: %s") ,
-      g_hash_table_lookup(acc->properties , ACCOUNT_TYPE) ,
-      g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) ) ;
+      (gchar*)g_hash_table_lookup(acc->properties , ACCOUNT_TYPE) ,
+     (gchar*) g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) ) ;
   body = g_markup_printf_escaped(_("%d voice mails"), count);
 
   pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
@@ -121,8 +121,8 @@ notify_current_account( account_t* acc )
   notify_init("sflphone");
 
   body = g_markup_printf_escaped(_("Calling with %s account <i>%s</i>") ,
-				  g_hash_table_lookup( acc->properties , ACCOUNT_TYPE) ,
-				  g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
+				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE) ,
+				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
 
   title = g_markup_printf_escaped(_("Current account"));
 
