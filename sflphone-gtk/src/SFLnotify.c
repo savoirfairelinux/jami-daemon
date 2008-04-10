@@ -175,8 +175,8 @@ notify_no_accounts(  )
  void
 setup_accounts_cb( NotifyNotification *notification, gchar *action, gpointer data )
 {
-  show_accounts_window(0);
-  g_object_unref( notification );
+  show_accounts_window();
+  //g_object_unref( notification );
 }
 
   void
