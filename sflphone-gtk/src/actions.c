@@ -42,9 +42,10 @@
 guint voice_mails;
 
 	void
-sflphone_notify_voice_mail (guint count)
+sflphone_notify_voice_mail ( const gchar* accountID , guint count )
 {
 	voice_mails = count ;
+	gchar* id = g_strdup( accountID );
 	if(count > 0)
 	{
 		gchar * message = g_new0(gchar, 50);
@@ -58,7 +59,7 @@ sflphone_notify_voice_mail (guint count)
 	// TODO: add ifdef
 	if( account_list_get_size() > 0 )
 	{
-	  account_t* acc = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
+	  account_t* acc = account_list_get_by_id( id );
 	  if( acc != NULL )
 	      notify_voice_mails( count , acc );	
 	}

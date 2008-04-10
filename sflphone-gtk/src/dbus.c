@@ -73,11 +73,11 @@ volume_changed_cb (DBusGProxy *proxy,
 static void  
 voice_mail_cb (DBusGProxy *proxy,
                   const gchar* accountID,
-                  const gint nb,
+                  const guint nb,
                   void * foo  )
 {
   g_print ("%d Voice mail waiting! \n",nb);
-  sflphone_notify_voice_mail (nb);
+  sflphone_notify_voice_mail (accountID , nb);
 }
 
 static void  
