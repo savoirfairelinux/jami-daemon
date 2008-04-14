@@ -208,6 +208,8 @@ public:
   void unregistrationSucceed(const AccountID& accountId);
   /** Notify the user that registration failed  */
   void registrationFailed(const AccountID& accountId);
+  /** Notify the user that registration is trying  */
+  void registrationTrying(const AccountID& accountId);
   void sendRegister( const AccountID& accountId , bool expire );
   // configuration function requests
 
@@ -498,6 +500,10 @@ public:
    */
   bool isCurrentCall(const CallID& callId);
 
+  /**
+   * Map accounts parameters ( authname - hostname ) to an account ID
+   */
+ AccountID getAccountFromEvent( std::string authname );
 private:
  /**
   * Create .PROGNAME directory in home user and create 

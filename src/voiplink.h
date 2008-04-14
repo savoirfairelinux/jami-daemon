@@ -122,6 +122,11 @@ public:
    */
   AccountID& getAccountID(void) { return _accountID; }
 
+  /**
+   * Set parent Account's ID
+   */
+  void setAccountID( const AccountID& accountID) { _accountID = accountID; }
+
   /** Get the call pointer from the call map (protected by mutex)
    * @param id A Call ID
    * @return call pointer or 0

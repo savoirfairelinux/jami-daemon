@@ -24,13 +24,13 @@
 #include <string>
 #include <eXosip2/eXosip.h>
 #include "audio/audiortp.h"
+#include <osip2/osip_mt.h>
 
 class EventThread;
 class SIPCall;
 
 /**
  * Specific VoIPLink for SIP (SIP core for incoming and outgoing events)
- * @author Yan Morin <yan.morin@gmail.com>
  */
 
 class SIPVoIPLink : public VoIPLink
@@ -113,6 +113,7 @@ private:
    * @return SIP URI for from Header
    */
   std::string SIPFromHeader(const std::string& userpart, const std::string& hostpart);
+  std::string SIPFromHeaderAlternate(const std::string& userpart, const std::string& hostpart);
 
   /**
    * Build a sip address with the number that you want to call
@@ -241,8 +242,6 @@ private:
   int sdp_hold_call (sdp_message_t * sdp);
   /** To build sdp when call is off-hold */
   int sdp_off_hold_call (sdp_message_t * sdp);
-
-
 
   /** EventThread get every incoming events */
   EventThread* _evThread;

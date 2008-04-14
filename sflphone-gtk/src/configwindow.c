@@ -657,7 +657,6 @@ enable_account(GtkCellRendererToggle *rend , gchar* path,  gpointer data )
 
   // Modify account state       
   g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup((enable == 1)? "TRUE":"FALSE"));
-  //dbus_set_account_details(acc);
   dbus_send_register( acc->accountID , enable );
 }
 

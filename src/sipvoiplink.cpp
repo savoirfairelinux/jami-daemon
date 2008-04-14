@@ -24,6 +24,7 @@
 #include "eventthread.h"
 #include "sipcall.h"
 #include <sstream> // for ostringstream
+#include "sipaccount.h"
 
 #include "manager.h"
 #include "user_cfg.h" // SIGNALISATION / PULSE #define
@@ -56,6 +57,7 @@ SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
  : VoIPLink(accountID), _localExternAddress("")
 {
   _evThread = new EventThread(this);
+  _initDone = false;
 
   _nMsgVoicemail = 0;
   _eXosipRegID = EXOSIP_ERROR_STD;
@@ -76,6 +78,7 @@ SIPVoIPLink::~SIPVoIPLink()
 bool 
 SIPVoIPLink::init()
 {
+  _debug("INIT DONE : %d\n" , _initDone);
   if (!_initDone) {
     if (0 != eXosip_init()) {
       _debug("! SIP Failure: Could not initialize eXosip\n");
@@ -149,18 +152,18 @@ SIPVoIPLink::init()
   return true;
 }
 
-
-
 void 
 SIPVoIPLink::terminate()
 {
+  _debug("Terminate before\n");
   terminateSIPCall(); 
+  _debug("Terminate after\n");
   if (_initDone) {
     // TODO The next line makes the daemon crash on 
     // account delete if at least one account is registered.
     // It should called only when the last account 
     // is deleted/unregistered.
-    //eXosip_quit();
+    // eXosip_quit();
     _initDone = false;
   }
 }
@@ -168,6 +171,7 @@ SIPVoIPLink::terminate()
 void
 SIPVoIPLink::terminateSIPCall()
 {
+  
   ost::MutexLock m(_callMapMutex);
   CallMap::iterator iter = _callMap.begin();
   SIPCall *call;
@@ -213,18 +217,17 @@ void
 SIPVoIPLink::getEvent()
 {
 	char* tmp2;
+	const char* localport = ""+_localPort;
 	eXosip_event_t* event = eXosip_event_wait(0, 50);
 	eXosip_lock();
 	eXosip_automatic_action();
 	eXosip_unlock();
-	
-	if (event == NULL) {
+
+	if ( event == NULL ) {
 		return;
 	}
-
-	_debugMid("> SIP Event: [cdt=%4d:%4d:%4d] type=#%03d %s  = ", event->cid, event->did, event->tid, event->type, event->textinfo);
+      
 	switch (event->type) {
-	  
 	/* REGISTER related events */
 	case EXOSIP_REGISTRATION_NEW:         /** 00 < announce new registration.       */
 		_debugMid(" !EXOSIP_REGISTRATION_NEW event is not implemented\n");
@@ -232,18 +235,18 @@ SIPVoIPLink::getEvent()
 	case EXOSIP_REGISTRATION_SUCCESS:     /** 01 < user is successfully registred.  */
 		_debugMid(" !EXOSIP_REGISTRATION_SUCCESS \n");
 		if(_eXosipRegID == EXOSIP_ERROR_STD){
+		  _debug("Successfully Unregister account ID = %s\n" , getAccountID().c_str());
 		  setRegistrationState(Unregistered);
-		  Manager::instance().unregistrationSucceed(getAccountID());
+		  if( _evThread ) _evThread->stop();
 		}
 		else{
+		  _debug("Successfully Register account ID = %s\n" , getAccountID().c_str());
 		  setRegistrationState(Registered);
-		  Manager::instance().registrationSucceed(getAccountID());
 		}
 		break;
 	case EXOSIP_REGISTRATION_FAILURE:     /** 02 < user is not registred.           */
 		setRegistrationState(Error, "SIP registration failure.");
 		_debugMid(" !EXOSIP_REGISTRATION_FAILURE\n");
-		//Manager::instance().registrationFailed(getAccountID());
 		break;
 	case EXOSIP_REGISTRATION_REFRESHED:   /** 03 < registration has been refreshed. */
 		_debugMid(" !EXOSIP_REGISTRATION_REFRESHED event is not implemented\n");
@@ -448,7 +451,6 @@ SIPVoIPLink::getEvent()
 bool
 SIPVoIPLink::sendRegister()
 {
-  _debug("SEND REGISTER \n");
 
   if (_eXosipRegID != EXOSIP_ERROR_STD) {
     Manager::instance().displayError("! SIP Error: Registration already sent. Try to unregister");
@@ -507,9 +509,9 @@ SIPVoIPLink::sendRegister()
     eXosip_unlock();
     return false;
   }
-  eXosip_unlock();
 
   setRegistrationState(Trying);
+  eXosip_unlock();
 
   return true;
 }
@@ -518,6 +520,12 @@ std::string
 SIPVoIPLink::SIPFromHeader(const std::string& userpart, const std::string& hostpart) 
 {
   return ("\"" + getFullName() + "\"" + " <sip:" + userpart + "@" + hostpart + ">");
+}
+
+std::string
+SIPVoIPLink::SIPFromHeaderAlternate(const std::string& userpart, const std::string& hostpart) 
+{
+  return ("<sip:" + userpart + "@" + hostpart + ">");
 }
 
 bool
@@ -547,7 +555,7 @@ SIPVoIPLink::sendSIPAuthentification()
 bool
 SIPVoIPLink::sendUnregister()
 {
-  _debug("SEND UNREGISTER\n");
+  _debug("SEND UNREGISTER for account %s\n" , getAccountID().c_str());
   if ( _eXosipRegID == EXOSIP_ERROR_STD) return false;
   int eXosipErr = EXOSIP_ERROR_NO;
   osip_message_t *reg = NULL;
@@ -572,8 +580,8 @@ SIPVoIPLink::sendUnregister()
   if (eXosipErr == EXOSIP_ERROR_STD) {
     _debug("! SIP Failure: Unable to send registration (unregister)\n");
   }
-  eXosip_unlock();
   _eXosipRegID = EXOSIP_ERROR_STD;
+  eXosip_unlock();
 
   return true;
 }
@@ -1517,6 +1525,7 @@ SIPVoIPLink::SIPCallReleased(eXosip_event_t *event)
   if (!call) { return; }
 
   // if we are here.. something when wrong before...
+  _debug("SIP call release\n");
   CallID id = call->getCallId();
   Manager::instance().callFailure(id);
   removeCall(id);
@@ -1535,7 +1544,6 @@ SIPVoIPLink::SIPMessageNew(eXosip_event_t *event)
   }
   // Voice message 
   else if (MSG_IS_NOTIFY(event->request)){
-    _debug("  > NOTIFY Voice message\n");
     int ii;
     osip_body_t *body = NULL;
     // Get the message body
@@ -1565,6 +1573,7 @@ SIPVoIPLink::SIPMessageNew(eXosip_event_t *event)
 
     // Set the number of voice-message
     int msgVoicemail = atoi(nb_msg.data());
+    _debug("  > NOTIFY ->  %i voice message for account %s\n" , msgVoicemail , getAccountID().c_str());
 
     if (msgVoicemail != 0) {
       // If there is at least one voice-message, start notification

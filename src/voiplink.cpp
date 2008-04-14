@@ -88,17 +88,21 @@ VoIPLink::setRegistrationState(const enum RegistrationState state, const std::st
   _registrationState = state;
   _registrationError = errorMessage;
 
+  std::string acc_ID = getAccountID();
+  _debug("Set registration state for account %s\n" , acc_ID.c_str());
+
   switch (state) {
   case Registered:
-    Manager::instance().registrationSucceed(getAccountID());
+    Manager::instance().registrationSucceed(acc_ID);
     break;
   case Trying:
-    //Manager::instance(). some function to say that
+    Manager::instance().registrationTrying( acc_ID); 
     break;
   case Error:
-    Manager::instance().registrationFailed(getAccountID());
+    Manager::instance().registrationFailed(acc_ID);
     break;
   case Unregistered:
+    Manager::instance().unregistrationSucceed(acc_ID);
     break;
   }
 }
