@@ -84,13 +84,13 @@ VoIPLink::clearCallMap()
 void
 VoIPLink::setRegistrationState(const enum RegistrationState state, const std::string& errorMessage)
 {
-  /** @todo Push to the GUI when state changes */
   _registrationState = state;
   _registrationError = errorMessage;
 
   std::string acc_ID = getAccountID();
   _debug("Set registration state for account %s\n" , acc_ID.c_str());
 
+  /** Push to the GUI when state changes */
   switch (state) {
   case Registered:
     Manager::instance().registrationSucceed(acc_ID);

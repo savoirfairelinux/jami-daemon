@@ -39,8 +39,8 @@ EventThread::~EventThread (void)
 void
 EventThread::run (void) 
 {
-  stopIt = false;
-  while(!stopIt) {
+  //stopIt = false;
+  while(!testCancel()) {
     _linkthread->getEvent();
   }
 }

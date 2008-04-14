@@ -2134,18 +2134,18 @@ ManagerImpl::sendRegister( const ::DBus::String& accountID , bool expire )
   // Test on the value freshly updated
   if ( acc->isEnabled() ) {
     // As we don't support multiple SIP account, we have to unregister everything before
-    AccountMap::iterator iter = _accountMap.begin();
-    while ( iter != _accountMap.end() ) {
-      if ( iter->second ) {
-	setConfig( iter->first , CONFIG_ACCOUNT_ENABLE , false );
-        iter->second->unregisterVoIPLink();
-      }
-      iter++;
-    }
+    //AccountMap::iterator iter = _accountMap.begin();
+    //while ( iter != _accountMap.end() ) {
+      //if ( iter->second ) {
+	//setConfig( iter->first , CONFIG_ACCOUNT_ENABLE , false );
+        //iter->second->unregisterVoIPLink();
+      //}
+      //iter++;
+    //}
     // Verify we aren't already registered, then register
     //if (acc->getRegistrationState() != VoIPLink::Registered) {
       _debug("Send register for account %s\n" , accountID.c_str());
-      setConfig( accountID , CONFIG_ACCOUNT_ENABLE , true );
+      //setConfig( accountID , CONFIG_ACCOUNT_ENABLE , true );
       acc->registerVoIPLink();
     //}
   } else {

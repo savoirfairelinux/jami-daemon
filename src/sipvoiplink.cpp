@@ -217,7 +217,6 @@ void
 SIPVoIPLink::getEvent()
 {
 	char* tmp2;
-	const char* localport = ""+_localPort;
 	eXosip_event_t* event = eXosip_event_wait(0, 50);
 	eXosip_lock();
 	eXosip_automatic_action();
@@ -233,11 +232,11 @@ SIPVoIPLink::getEvent()
 		_debugMid(" !EXOSIP_REGISTRATION_NEW event is not implemented\n");
 		break;
 	case EXOSIP_REGISTRATION_SUCCESS:     /** 01 < user is successfully registred.  */
-		_debugMid(" !EXOSIP_REGISTRATION_SUCCESS \n");
+		_debugMid(" !EXOSIP_REGISTRATION_SUCCESS ---> %s\n" , getAccountID().c_str());
 		if(_eXosipRegID == EXOSIP_ERROR_STD){
 		  _debug("Successfully Unregister account ID = %s\n" , getAccountID().c_str());
 		  setRegistrationState(Unregistered);
-		  if( _evThread ) _evThread->stop();
+		  //if( _evThread ) _evThread->stop();
 		}
 		else{
 		  _debug("Successfully Register account ID = %s\n" , getAccountID().c_str());
@@ -1421,6 +1420,7 @@ SIPVoIPLink::SIPCallRequestFailure(eXosip_event_t *event)
   case SIP_NOT_ACCEPTABLE_HERE: // 488 */
     // Display error on the screen phone
     {
+      _debug("--------------------------------------------------------------error message: %s\n", event->response->reason_phrase);
       SIPCall* call = findSIPCallWithCid(event->cid);
       if (call!=0) {
         CallID& id = call->getCallId();
