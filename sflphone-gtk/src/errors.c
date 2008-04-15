@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> 
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,22 +16,27 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
-#ifndef __STATUSICON_H__
-#define __STATUSICON_H__
 
+#include <errors.h>
 
-#include <gtk/gtk.h>
-#include <sflphone_const.h>
-/** @file statusicon.h
-  * @brief The status icon.
-  */
-
-void show_status_icon();
-void status_icon_unminimize();
-gboolean main_widget_minimized();
-void set_minimized( gboolean state );
-void status_tray_icon_blink( gboolean active );
-GtkStatusIcon* get_status_icon( void );
-
-#endif
+  void
+sflphone_throw_exception( int err )
+{
+  gchar* markup; 
+  switch( err ){
+    case ALSA_PLAYBACK_DEVICE:
+      markup = g_markup_printf_escaped(_("<b>ALSA notification</b>\n\nError while opening playback device"));
+      break;
+    case ALSA_CAPTURE_DEVICE:
+      markup = g_markup_printf_escaped(_("<b>ALSA notification</b>\n\nError while opening capture device"));
+      break;
+    case REGISTRATION_FORBIDDEN:
+      markup = g_markup_printf_escaped(_("<b>Account Registration</b>\n\nBad authentification"));
+      break;
+    case REGISTRATION_UNAUTHORIZED:
+      markup = g_markup_printf_escaped(_("<b>Account Registration</b>\n\nBad authentification"));
+      break;
+  }
+  main_window_error_message( markup );  
+  free( markup );
+}

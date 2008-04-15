@@ -43,7 +43,7 @@ void main_window_warning_message(gchar * markup);
 
 void main_window_info_message(gchar * markup);
 
-void status_bar_message_add(const gchar * message , guint id);
-void status_bar_message_remove(guint id);
+void statusbar_push_message( const gchar* message , guint id );
+void statusbar_pop_message( guint id );
 
 #endif 

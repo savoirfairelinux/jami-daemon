@@ -33,12 +33,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define ALSA_ERROR_CAPTURE_DEVICE     0
-#define ALSA_ERROR_PLAYBACK_DEVICE    1
-
-#define TONE_WITHOUT_MESSAGE  0 
-#define TONE_WITH_MESSAGE     1
-
 guint voice_mails;
 
 	void
@@ -53,7 +47,7 @@ sflphone_notify_voice_mail ( const gchar* accountID , guint count )
 		  g_sprintf(message, _("%d voice mails"), count);
 		else
 		  g_sprintf(message, _("%d voice mail"), count);	  
-		status_bar_message_add(message,  __MSG_VOICE_MAILS);
+		statusbar_push_message(message,  __MSG_VOICE_MAILS);
 		g_free(message);
 	}
 	// TODO: add ifdef
@@ -75,7 +69,7 @@ status_bar_display_account( call_t* c)
       msg = g_markup_printf_escaped("%s account- %s" , 
 				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
 				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
-      status_bar_message_add( msg , __MSG_ACCOUNT_DEFAULT);
+      statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
       g_free(msg);
   }
 }
@@ -168,6 +162,10 @@ sflphone_fill_account_list()
 		else if(strcmp(status, "ERROR") == 0)
 		{
 			a->state = ACCOUNT_STATE_ERROR;
+		}
+		else if(strcmp( status , "ERROR_AUTH") == 0 )
+		{
+		  a->state = ACCOUNT_STATE_ERROR_AUTH;
 		}
 		else
 		{
@@ -622,22 +620,6 @@ sflphone_set_current_account()
 {
   if( account_list_get_size() > 0 )
     account_list_set_current_pos( 0 );	
-}
-
-void
-sflphone_throw_exception( int errCode )
-{
-  gchar* markup = malloc(1000);
-  switch( errCode ){
-    case ALSA_ERROR_PLAYBACK_DEVICE:
-      sprintf( markup , _("<b>ALSA notification</b>\n\nError while opening playback device"));
-      break;
-    case ALSA_ERROR_CAPTURE_DEVICE:
-      sprintf( markup , _("<b>ALSA notification</b>\n\nError while opening capture device"));
-      break;
-  }
-  main_window_error_message( markup );  
-  free( markup );
 }
 
 

@@ -246,13 +246,13 @@ main_window_dialpad(gboolean show){
 }
 
 void 
-status_bar_message_add(const gchar * message, guint id)
+statusbar_push_message(const gchar * message, guint id)
 { 
   gtk_statusbar_push(GTK_STATUSBAR(statusBar), id, message);
 }
 
 void 
-status_bar_message_remove(guint id)
+statusbar_pop_message(guint id)
 { 
   gtk_statusbar_pop(GTK_STATUSBAR(statusBar), id);
 }

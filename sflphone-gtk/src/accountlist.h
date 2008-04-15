@@ -26,25 +26,6 @@
   * @brief A list to hold accounts.
   */
 
-#define ACCOUNT_TYPE               "Account.type"
-#define ACCOUNT_ALIAS              "Account.alias"
-#define ACCOUNT_ENABLED            "Account.enable"
-//#define ACCOUNT_REGISTER           "Account.autoregister"
-
-#define ACCOUNT_SIP_FULL_NAME      "SIP.fullName"
-#define ACCOUNT_SIP_HOST_PART      "SIP.hostPart"
-#define ACCOUNT_SIP_USER_PART      "SIP.userPart"
-#define ACCOUNT_SIP_AUTH_NAME      "SIP.username"
-#define ACCOUNT_SIP_PASSWORD       "SIP.password"
-#define ACCOUNT_SIP_PROXY          "SIP.proxy"
-#define ACCOUNT_SIP_STUN_SERVER	   "STUN.server"
-#define ACCOUNT_SIP_STUN_ENABLED   "STUN.enable"
-
-#define ACCOUNT_IAX_FULL_NAME      "IAX.fullName"
-#define ACCOUNT_IAX_HOST           "IAX.host"
-#define ACCOUNT_IAX_USER           "IAX.user"
-#define ACCOUNT_IAX_PASS           "IAX.pass"
-
 /** @enum account_state_t 
   * This enum have all the states an account can take.
   */
@@ -54,7 +35,8 @@ typedef enum
    ACCOUNT_STATE_REGISTERED,   
    ACCOUNT_STATE_UNREGISTERED,   
    ACCOUNT_STATE_TRYING, 
-   ACCOUNT_STATE_ERROR
+   ACCOUNT_STATE_ERROR,
+   ACCOUNT_STATE_ERROR_AUTH
 } account_state_t;
 
 /** @struct account_t

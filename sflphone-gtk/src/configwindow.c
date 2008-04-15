@@ -60,6 +60,8 @@ GtkWidget *pluginComboBox;
 GtkWidget *codecMoveUpButton;
 GtkWidget *codecMoveDownButton;
 
+GtkWidget* status;
+
 account_t *selectedAccount;
 
 // Account properties
@@ -1362,7 +1364,8 @@ show_accounts_window( void )
 	gtk_box_pack_start( GTK_BOX( dialog->vbox ), accountFrame , TRUE, TRUE, 0);
         gtk_container_set_border_width(GTK_CONTAINER(accountFrame), 10);
         gtk_widget_show(accountFrame);
-        // Accounts tab
+
+	// Accounts tab
         tab = create_accounts_tab();
 
 	gtk_container_add(GTK_CONTAINER(accountFrame) , tab);
@@ -1371,3 +1374,4 @@ show_accounts_window( void )
       dialogOpen=FALSE;
       gtk_widget_destroy(GTK_WIDGET(dialog));
 }
+

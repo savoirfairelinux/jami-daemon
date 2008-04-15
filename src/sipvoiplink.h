@@ -189,6 +189,7 @@ private:
    */
   void SIPCallServerFailure(eXosip_event_t *event);
 
+  void SIPRegistrationFailure( eXosip_event_t *event );
   /**
    * Handling ack (restart audio if reinvite)
    * @param event eXosip Event

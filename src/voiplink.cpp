@@ -25,7 +25,7 @@
 #include "voiplink.h"
 #include "manager.h"
 
-VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0), _registrationError(""), _initDone(false) 
+VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0), _registrationError(NO_ERROR), _initDone(false) 
 {
 }
 
@@ -82,13 +82,12 @@ VoIPLink::clearCallMap()
 }
 
 void
-VoIPLink::setRegistrationState(const enum RegistrationState state, const std::string& errorMessage)
+VoIPLink::setRegistrationState(const enum RegistrationState state, const int& errorCode)
 {
   _registrationState = state;
-  _registrationError = errorMessage;
+  _registrationError = errorCode;
 
   std::string acc_ID = getAccountID();
-  _debug("Set registration state for account %s\n" , acc_ID.c_str());
 
   /** Push to the GUI when state changes */
   switch (state) {
@@ -100,6 +99,12 @@ VoIPLink::setRegistrationState(const enum RegistrationState state, const std::st
     break;
   case Error:
     Manager::instance().registrationFailed(acc_ID);
+    // Notify the error to the client
+    if( _registrationError != NO_ERROR )
+      Manager::instance().notifyErrClient( errorCode );
+    break;
+  case ErrorAuth:
+    Manager::instance().registrationFailed(acc_ID);
     break;
   case Unregistered:
     Manager::instance().unregistrationSucceed(acc_ID);
@@ -110,7 +115,7 @@ VoIPLink::setRegistrationState(const enum RegistrationState state, const std::st
 void
 VoIPLink::setRegistrationState(const enum RegistrationState state)
 {
-  setRegistrationState(state, "");
+  setRegistrationState(state, NO_ERROR);
 }
 
 // NOW

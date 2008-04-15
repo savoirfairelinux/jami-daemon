@@ -367,8 +367,6 @@ dbus_accept (const call_t * c)
 void
 dbus_refuse (const call_t * c)
 {
-  // Remove the account message from the status bar stack
-  status_bar_message_remove( __MSG_ACCOUNT_DEFAULT ); 
   status_tray_icon_blink( FALSE );
   GError *error = NULL;
   org_sflphone_SFLphone_CallManager_refuse ( callManagerProxy, c->callID, &error);

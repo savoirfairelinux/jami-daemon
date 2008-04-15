@@ -1966,9 +1966,10 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
       std::pair<std::string, std::string>(
 	"Status", 
 	(state == VoIPLink::Registered ? "REGISTERED":
-	 (state == VoIPLink::Unregistered ? "UNREGISTERED":
-	  (state == VoIPLink::Trying ? "TRYING":
-	   (state == VoIPLink::Error ? "ERROR": "ERROR"))))
+	(state == VoIPLink::Unregistered ? "UNREGISTERED":
+	(state == VoIPLink::Trying ? "TRYING":
+	(state == VoIPLink::ErrorAuth ? "ERROR_AUTH": 
+	(state == VoIPLink::Error ? "ERROR": "ERROR")))))
 	)
       );
   a.insert(

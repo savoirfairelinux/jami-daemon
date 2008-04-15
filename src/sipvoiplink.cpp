@@ -213,7 +213,7 @@ SIPVoIPLink::loadSIPLocalIP()
 void
 SIPVoIPLink::parseRequestUri( osip_uri_t* req )
 {
-  _debug("%d\n",req->url_header);
+ // _debug("%d\n",req->url_header);
 }
 
 void
@@ -229,10 +229,7 @@ SIPVoIPLink::getEvent()
 		return;
 	}
       
-	parseRequestUri( event->request->req_uri);
-
-	//if(event->request->line != 0)
-	_debug("%s\n\n" , event->request->req_uri);
+	_debug("> SIP Event: [cdt=%4d:%4d:%4d] type=#%03d %s \n", event->cid, event->did, event->tid, event->type, event->textinfo);
 	switch (event->type) {
 	/* REGISTER related events */
 	case EXOSIP_REGISTRATION_NEW:         /** 00 < announce new registration.       */
@@ -251,14 +248,15 @@ SIPVoIPLink::getEvent()
 		}
 		break;
 	case EXOSIP_REGISTRATION_FAILURE:     /** 02 < user is not registred.           */
-		setRegistrationState(Error, "SIP registration failure.");
+		SIPRegistrationFailure( event );
 		_debugMid(" !EXOSIP_REGISTRATION_FAILURE\n");
 		break;
 	case EXOSIP_REGISTRATION_REFRESHED:   /** 03 < registration has been refreshed. */
 		_debugMid(" !EXOSIP_REGISTRATION_REFRESHED event is not implemented\n");
 		break;
 	case EXOSIP_REGISTRATION_TERMINATED:  /** 04 < UA is not registred any more.    */
-		setRegistrationState(Unregistered, "Registration terminated by remote host");
+		//setRegistrationState(Unregistered, "Registration terminated by remote host");
+		setRegistrationState(Unregistered);
 		_debugMid(" !EXOSIP_REGISTRATION_TERMINATED event is not implemented\n");
 		break;
 
@@ -1456,6 +1454,24 @@ SIPVoIPLink::SIPCallServerFailure(eXosip_event_t *event)
       removeCall(id);
     }
   break;
+  }
+}
+
+void
+SIPVoIPLink::SIPRegistrationFailure( eXosip_event_t* event )
+{
+  if(!event->response)	{return ;}
+  switch(  event->response->status_code ) {
+    case SIP_FORBIDDEN:
+      _debug("SIP forbidden\n");
+      setRegistrationState(ErrorAuth, REGISTRATION_FORBIDDEN);
+      break;
+    case SIP_UNAUTHORIZED:
+      _debug("SIP unauthorized\n");
+      setRegistrationState(Error);
+      break;
+    default:
+      _debug("Unknown error: %s\n" , event->response->status_code);
   }
 }
 

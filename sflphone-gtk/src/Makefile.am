@@ -2,8 +2,9 @@ bin_PROGRAMS = sflphone-gtk
 
 sflphone_gtk_SOURCES = \
   main.c \
+  errors.c \
   dbus.c \
-  SFLnotify.c \
+  sflnotify.c \
   mainwindow.c \
   calllist.c \
   dialpad.c \
@@ -21,8 +22,8 @@ sflphone_gtk_SOURCES = \
   glwidget.c \
   MemManager.c
   
-noinst_HEADERS =  actions.h dbus.h SFLnotify.h mainwindow.h calllist.h dialpad.h codeclist.h\
-                  callmanager-glue.h configurationmanager-glue.h instance-glue.h menus.h calltree.h screen.h configwindow.h \
+noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h codeclist.h\
+                  callmanager-glue.h errors.h sflphone_const.h configurationmanager-glue.h instance-glue.h menus.h calltree.h screen.h configwindow.h \
                   accountlist.h accountwindow.h marshaller.h sliders.h statusicon.h
 EXTRA_DIST   = marshaller.list  
 sflphone_gtk_LDADD = $(DEPS_LIBS) -lnotify

@@ -313,7 +313,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     _debugAlsa("Opening capture device %s\n", pcm_c.c_str());
     if(err = snd_pcm_open(&_CaptureHandle,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, 0) < 0){
       _debugAlsa("Error while opening capture device %s\n",  pcm_c.c_str());
-      setErrorMessage( ERROR_ALSA_CAPTURE_DEVICE );
+      setErrorMessage( ALSA_CAPTURE_DEVICE );
       return false;
     }
 
@@ -343,7 +343,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     _debugAlsa(" Opening playback device %s\n", pcm_p.c_str());
     if(err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK ) < 0){
       _debugAlsa("Error while opening playback device %s\n",  pcm_c.c_str());
-      setErrorMessage( ERROR_ALSA_PLAYBACK_DEVICE );
+      setErrorMessage( ALSA_PLAYBACK_DEVICE );
       return false;
     }
     if( err = snd_pcm_hw_params_malloc( &hwParams ) < 0 ) {

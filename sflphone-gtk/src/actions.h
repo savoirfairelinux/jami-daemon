@@ -21,20 +21,14 @@
 #ifndef __ACTIONS_H__
 #define __ACTIONS_H__
 
-#define _(STRING)   gettext( STRING )   
-
 #include <libintl.h>
 #include <locale.h>
 
 #include <calllist.h>
 #include <accountlist.h>
 #include <codeclist.h>
-
-#define __MSG_INCOMING_CALL  0 
-#define __MSG_CALLING	     1
-#define __MSG_VOICE_MAILS    2
-#define __MSG_ACCOUNT_DEFAULT  3
-
+#include <sflphone_const.h>
+#include <errors.h>
 
 /** @file actions.h
   * @brief General functions that change the state of the application.
@@ -117,6 +111,5 @@ void sflphone_place_call ( call_t * c );
 void sflphone_fill_account_list();
 void sflphone_set_current_account();
 
-void sflphone_throw_exception( int errCode );
 void sflphone_fill_codec_list();
 #endif 
