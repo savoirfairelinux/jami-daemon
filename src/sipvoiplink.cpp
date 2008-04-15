@@ -87,7 +87,6 @@ SIPVoIPLink::init()
     // Pour éviter qu'on refasse l'init sans avoir considéré l'erreur,
     // s'il y en a une ?
     _initDone = true;
-
     // check networking capabilities
     if ( !checkNetwork() ) {
       _debug("! SIP FAILURE: Unable to determine network capabilities\n");
@@ -155,7 +154,6 @@ void
 SIPVoIPLink::terminate()
 {
   terminateSIPCall(); 
-  if (_initDone) {
     // TODO The next line makes the daemon crash on 
     // account delete if at least one account is registered.
     // It should called only when the last account 
@@ -242,7 +240,6 @@ SIPVoIPLink::getEvent()
 		if(_eXosipRegID == EXOSIP_ERROR_STD){
 		  _debug("Successfully Unregister account ID = %s\n" , getAccountID().c_str());
 		  setRegistrationState(Unregistered);
-		  //if( _evThread ) _evThread->stop();
 		}
 		else{
 		  _debug("Successfully Register account ID = %s\n" , getAccountID().c_str());
@@ -1463,7 +1460,11 @@ SIPVoIPLink::SIPCallServerFailure(eXosip_event_t *event)
 void
 SIPVoIPLink::SIPRegistrationFailure( eXosip_event_t* event )
 {
-  if(!event->response)	{return ;}
+  if(!event->response){
+    setRegistrationState(ErrorHost);
+    return ;
+  }
+
   switch(  event->response->status_code ) {
     case SIP_FORBIDDEN:
       _debug("SIP forbidden\n");

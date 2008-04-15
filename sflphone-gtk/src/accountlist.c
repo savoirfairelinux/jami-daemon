@@ -170,6 +170,9 @@ const gchar * account_state_name(account_state_t s)
   case ACCOUNT_STATE_ERROR_NETWORK:
     state = _("Network unreachable");
     break;
+  case ACCOUNT_STATE_ERROR_HOST:
+    state = _("Host unreachable");
+    break;
   default:
     state = _("Invalid");
     break;

@@ -1970,7 +1970,8 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 	(state == VoIPLink::Trying ? "TRYING":
 	(state == VoIPLink::ErrorAuth ? "ERROR_AUTH": 
 	(state == VoIPLink::ErrorNetwork ? "ERROR_NETWORK": 
-	(state == VoIPLink::Error ? "ERROR": "ERROR"))))))
+	(state == VoIPLink::ErrorHost ? "ERROR_HOST": 
+	(state == VoIPLink::Error ? "ERROR": "ERROR")))))))
 	)
       );
   a.insert(
@@ -2098,21 +2099,15 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
   }
 
   saveConfig();
+  
   Account* acc = getAccount(accountID);
   acc->loadConfig();
-  if (acc->isEnabled()) {
-    // Verify we aren't already registered, then register
-    if (acc->getRegistrationState() != VoIPLink::Registered) {
-      _debug("SET ACCOUNTS DETAILS - non registered - > registered\n");
-      acc->registerVoIPLink();
-    }
-  } else {
-    // Verify we are already registered, then unregister
-    //if (acc->getRegistrationState() == VoIPLink::Registered) {
-      _debug("SET ACCOUNTS DETAILS - registered - > non registered\n");
-      acc->unregisterVoIPLink();
-    //}
-  }    
+  if (acc->isEnabled()){ 
+    acc->unregisterVoIPLink();
+    acc->registerVoIPLink();}
+  else 
+    acc->unregisterVoIPLink();
+
   // Update account details
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }
@@ -2129,6 +2124,7 @@ ManagerImpl::sendRegister( const ::DBus::String& accountID , bool expire )
   // Update the active field
   setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
   
+ 
   Account* acc = getAccount(accountID);
   acc->loadConfig();
   // Test on the value freshly updated
