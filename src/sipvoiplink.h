@@ -89,6 +89,7 @@ public:
 
 
 private:
+  void parseRequestUri( osip_uri_t* );
   /** Terminate every call not hangup | brutal | Protected by mutex */
   void terminateSIPCall(); 
 

@@ -42,7 +42,6 @@ SIPAccount::registerVoIPLink()
   _link->setFullName(Manager::instance().getConfigString(_accountID,SIP_FULL_NAME));
   _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST_PART));
   int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
-  //_link->setAccountID( getAccountID() );
   
   SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
   thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));

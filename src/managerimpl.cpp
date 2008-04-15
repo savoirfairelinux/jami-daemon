@@ -789,7 +789,7 @@ ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, const std
 ManagerImpl::stopVoiceMessageNotification(const AccountID& accountId)
 {
   // TODO : do not notify when no messages
-  if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, 0 );
+  //if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, 0 );
 } 
 
 //THREAD=VoIP

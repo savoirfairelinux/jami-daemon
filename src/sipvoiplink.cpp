@@ -57,7 +57,7 @@ SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
  : VoIPLink(accountID), _localExternAddress("")
 {
   _evThread = new EventThread(this);
-  _initDone = false;
+
 
   _nMsgVoicemail = 0;
   _eXosipRegID = EXOSIP_ERROR_STD;
@@ -78,7 +78,6 @@ SIPVoIPLink::~SIPVoIPLink()
 bool 
 SIPVoIPLink::init()
 {
-  _debug("INIT DONE : %d\n" , _initDone);
   if (!_initDone) {
     if (0 != eXosip_init()) {
       _debug("! SIP Failure: Could not initialize eXosip\n");
@@ -88,7 +87,7 @@ SIPVoIPLink::init()
     // Pour éviter qu'on refasse l'init sans avoir considéré l'erreur,
     // s'il y en a une ?
     _initDone = true;
-  
+
     // check networking capabilities
     if ( !checkNetwork() ) {
       _debug("! SIP FAILURE: Unable to determine network capabilities\n");
@@ -155,9 +154,7 @@ SIPVoIPLink::init()
 void 
 SIPVoIPLink::terminate()
 {
-  _debug("Terminate before\n");
   terminateSIPCall(); 
-  _debug("Terminate after\n");
   if (_initDone) {
     // TODO The next line makes the daemon crash on 
     // account delete if at least one account is registered.
@@ -214,6 +211,12 @@ SIPVoIPLink::loadSIPLocalIP()
 }
 
 void
+SIPVoIPLink::parseRequestUri( osip_uri_t* req )
+{
+  _debug("%d\n",req->url_header);
+}
+
+void
 SIPVoIPLink::getEvent()
 {
 	char* tmp2;
@@ -226,6 +229,10 @@ SIPVoIPLink::getEvent()
 		return;
 	}
       
+	parseRequestUri( event->request->req_uri);
+
+	//if(event->request->line != 0)
+	_debug("%s\n\n" , event->request->req_uri);
 	switch (event->type) {
 	/* REGISTER related events */
 	case EXOSIP_REGISTRATION_NEW:         /** 00 < announce new registration.       */
