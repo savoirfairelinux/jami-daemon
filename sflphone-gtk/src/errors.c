@@ -30,12 +30,6 @@ sflphone_throw_exception( int err )
     case ALSA_CAPTURE_DEVICE:
       markup = g_markup_printf_escaped(_("<b>ALSA notification</b>\n\nError while opening capture device"));
       break;
-    case REGISTRATION_FORBIDDEN:
-      markup = g_markup_printf_escaped(_("<b>Account Registration</b>\n\nBad authentification"));
-      break;
-    case REGISTRATION_UNAUTHORIZED:
-      markup = g_markup_printf_escaped(_("<b>Account Registration</b>\n\nBad authentification"));
-      break;
   }
   main_window_error_message( markup );  
   free( markup );

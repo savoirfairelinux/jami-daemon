@@ -167,6 +167,10 @@ sflphone_fill_account_list()
 		{
 		  a->state = ACCOUNT_STATE_ERROR_AUTH;
 		}
+		else if(strcmp( status , "ERROR_NETWORK") == 0 )
+		{
+		  a->state = ACCOUNT_STATE_ERROR_NETWORK;
+		}
 		else
 		{
 			a->state = ACCOUNT_STATE_INVALID;

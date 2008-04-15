@@ -833,7 +833,7 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
     _mutexIAX.leaveMutex();
     _regSession = NULL;
 
-    setRegistrationState(Error, REGISTRATION_FORBIDDEN);
+    setRegistrationState(Error);
     //Manager::instance().registrationFailed(getAccountID());
 
   }

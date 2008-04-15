@@ -200,6 +200,8 @@ SIPVoIPLink::loadSIPLocalIP()
   if (_localIPAddress == "127.0.0.1") {
     char* myIPAddress = new char[65];
     if (eXosip_guess_localip(AF_INET, myIPAddress, 64) == EXOSIP_ERROR_STD) {
+      // Update the registration state if no network capabilities found
+      setRegistrationState( ErrorNetwork );
       returnValue = false;
     } else {
       _localIPAddress = std::string(myIPAddress);
@@ -457,6 +459,7 @@ SIPVoIPLink::sendRegister()
 {
 
   if (_eXosipRegID != EXOSIP_ERROR_STD) {
+  _debug("nlvnslvnlsnvaljsdnvjlasnvlsfvbnnns  sjvlsvn\n");
     Manager::instance().displayError("! SIP Error: Registration already sent. Try to unregister");
     return false;
   }
@@ -1464,7 +1467,7 @@ SIPVoIPLink::SIPRegistrationFailure( eXosip_event_t* event )
   switch(  event->response->status_code ) {
     case SIP_FORBIDDEN:
       _debug("SIP forbidden\n");
-      setRegistrationState(ErrorAuth, REGISTRATION_FORBIDDEN);
+      setRegistrationState(ErrorAuth);
       break;
     case SIP_UNAUTHORIZED:
       _debug("SIP unauthorized\n");

@@ -44,7 +44,7 @@ public:
   VoIPLink(const AccountID& accountID);
   virtual ~VoIPLink (void);
 
-  enum RegistrationState {Unregistered, Trying, Registered, Error, ErrorAuth};
+  enum RegistrationState {Unregistered, Trying, Registered, Error, ErrorAuth , ErrorNetwork};
 
   // Pure virtual functions
   virtual void getEvent (void) = 0;

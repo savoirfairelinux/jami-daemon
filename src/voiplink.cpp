@@ -106,6 +106,9 @@ VoIPLink::setRegistrationState(const enum RegistrationState state, const int& er
   case ErrorAuth:
     Manager::instance().registrationFailed(acc_ID);
     break;
+  case ErrorNetwork:
+    Manager::instance().registrationFailed(acc_ID);
+    break;
   case Unregistered:
     Manager::instance().unregistrationSucceed(acc_ID);
     break;

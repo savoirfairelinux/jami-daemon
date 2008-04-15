@@ -1969,7 +1969,8 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 	(state == VoIPLink::Unregistered ? "UNREGISTERED":
 	(state == VoIPLink::Trying ? "TRYING":
 	(state == VoIPLink::ErrorAuth ? "ERROR_AUTH": 
-	(state == VoIPLink::Error ? "ERROR": "ERROR")))))
+	(state == VoIPLink::ErrorNetwork ? "ERROR_NETWORK": 
+	(state == VoIPLink::Error ? "ERROR": "ERROR"))))))
 	)
       );
   a.insert(
@@ -2107,11 +2108,10 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
     }
   } else {
     // Verify we are already registered, then unregister
-    if (acc->getRegistrationState() == VoIPLink::Registered) {
+    //if (acc->getRegistrationState() == VoIPLink::Registered) {
       _debug("SET ACCOUNTS DETAILS - registered - > non registered\n");
       acc->unregisterVoIPLink();
-      //unregisterAccount(accountID);
-    }
+    //}
   }    
   // Update account details
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
@@ -2128,33 +2128,18 @@ ManagerImpl::sendRegister( const ::DBus::String& accountID , bool expire )
 {
   // Update the active field
   setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
-
   
   Account* acc = getAccount(accountID);
   acc->loadConfig();
   // Test on the value freshly updated
   if ( acc->isEnabled() ) {
-    // As we don't support multiple SIP account, we have to unregister everything before
-    //AccountMap::iterator iter = _accountMap.begin();
-    //while ( iter != _accountMap.end() ) {
-      //if ( iter->second ) {
-	//setConfig( iter->first , CONFIG_ACCOUNT_ENABLE , false );
-        //iter->second->unregisterVoIPLink();
-      //}
-      //iter++;
-    //}
     // Verify we aren't already registered, then register
-    //if (acc->getRegistrationState() != VoIPLink::Registered) {
       _debug("Send register for account %s\n" , accountID.c_str());
-      //setConfig( accountID , CONFIG_ACCOUNT_ENABLE , true );
       acc->registerVoIPLink();
-    //}
   } else {
     // Verify we are already registered, then unregister
-    if (acc->getRegistrationState() == VoIPLink::Registered) {
       _debug("Send unregister for account %s\n" , accountID.c_str());
       acc->unregisterVoIPLink();
-    }
   }
 }                   
 

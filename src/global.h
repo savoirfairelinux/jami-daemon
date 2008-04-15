@@ -117,9 +117,6 @@ typedef short int16;
 #define NO_ERROR		      0x0000
 #define ALSA_CAPTURE_DEVICE           0x0001
 #define ALSA_PLAYBACK_DEVICE          0x0010
-#define REGISTRATION_FORBIDDEN        0x0011
-#define REGISTRATION_UNAUTHORIZED     0x0100
-#define REGISTRATION_UNREACHABLE      0x0101
-#define NETWORK_UNREACHABLE           0x0110
+#define NETWORK_UNREACHABLE           0x0011
 
 #endif	// __GLOBAL_H__
