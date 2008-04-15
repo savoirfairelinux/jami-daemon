@@ -29,10 +29,7 @@
 #include <actions.h>
 #include <statusicon.h>
 #include <configwindow.h>
-
-#define __TIMEOUT_MODE	"default"			
-#define __TIMEOUT_TIME	30000	    // 30 secondes			
-#define	__POPUP_WINDOW  ( dbus_popup_mode() ) 	
+#include <sflphone_const.h>
 
 /*
  * Notify an incoming call with the libnotify notification library
