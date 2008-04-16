@@ -54,7 +54,7 @@
 
 
 SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
- : VoIPLink(accountID), _localExternAddress("")
+ : VoIPLink(accountID), _localExternAddress("") , eXosip_running( false )
 {
   _evThread = new EventThread(this);
 
@@ -78,6 +78,13 @@ SIPVoIPLink::~SIPVoIPLink()
 bool 
 SIPVoIPLink::init()
 {
+  if( eXosip_running ){
+    delete _evThread; 
+    _evThread=0;
+    _evThread=  new EventThread( this );
+    eXosip_quit();
+  }
+
   if (!_initDone) {
     if (0 != eXosip_init()) {
       _debug("! SIP Failure: Could not initialize eXosip\n");
@@ -145,7 +152,7 @@ SIPVoIPLink::init()
   }
 
   _initDone = true;
-
+  eXosip_running = true;
   // Useless
   return true;
 }
@@ -158,9 +165,7 @@ SIPVoIPLink::terminate()
     // account delete if at least one account is registered.
     // It should called only when the last account 
     // is deleted/unregistered.
-    // eXosip_quit();
     _initDone = false;
-  }
 }
 
 void

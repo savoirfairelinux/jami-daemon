@@ -40,6 +40,8 @@ public:
 
   ~SIPVoIPLink();
 
+  int eXosip_running;
+
   /** try to initiate the eXosip engine/thread and set config */
   bool init(void);
   void terminate(void);
