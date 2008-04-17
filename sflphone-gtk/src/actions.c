@@ -23,7 +23,6 @@
 #include <dbus.h>
 #include <mainwindow.h>
 #include <menus.h>
-#include <screen.h>
 #include <statusicon.h>
 
 #include <gtk/gtk.h>
