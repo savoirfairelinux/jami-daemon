@@ -95,43 +95,43 @@ void sflphone_pick_up ();
 
 /**
  * Put the call on hold state
- * @param call_t* The current call
+ * @param c The current call
  */
 void sflphone_hold ( call_t * c);
 
 /**
  * Put the call in Ringing state
- * @param call_t* The current call
+ * @param c* The current call
  */
 void sflphone_ringing(call_t * c );
 
 /**
  * Put the call in Busy state
- * @param call_t* The current call
+ * @param c* The current call
  */
 void sflphone_busy( call_t * c );
 
 /**
  * Put the call in Failure state
- * @param call_t* The current call
+ * @param c* The current call
  */
 void sflphone_fail( call_t * c );
 
 /**
  * Put the call in Current state
- * @param call_t* The current call
+ * @param c The current call
  */
 void sflphone_current ( call_t * c);
 
 /**
  * The callee has hung up 
- * @param call_t* The current call
+ * @param c The current call
  */
 void sflphone_hung_up( call_t * c);
 
 /**
  * Incoming call
- * @param call_t* The incoming call
+ * @param c The incoming call
  */
 void sflphone_incoming_call ( call_t * c);
 
@@ -139,7 +139,7 @@ void sflphone_incoming_call ( call_t * c);
  * Dial the number
  * If the call is in DIALING state, the char will be append to the number
  * @param keyval The unique int representing the key
- * @param keyval The char value of the key
+ * @param key The char value of the key
  */
 void sflphone_keypad ( guint keyval, gchar * key);
 

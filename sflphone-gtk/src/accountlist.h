@@ -89,7 +89,7 @@ void account_list_remove (const gchar * accountID);
 
 /** 
  * Return the first account that corresponds to the state 
- * @param s The state
+ * @param state The state
  * @return account_t* An account or NULL 
  */
 account_t * account_list_get_by_state ( account_state_t state);

@@ -113,8 +113,8 @@ call_t * call_list_get_nth ( guint n );
 
 /** 
  * Return the call corresponding to the callID
- * @param n The callID of the call you want
- * @return A call or NULL 
+ * @param callID The callID of the call you want
+ * @return call_t*  A call or NULL 
  */
 call_t * call_list_get ( const gchar * callID );
 

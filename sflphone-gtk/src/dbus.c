@@ -837,9 +837,6 @@ dbus_get_output_audio_plugin_list()
 	return array;
 }
 
-/**
- * Sets the input audio plugin from its name
- */
 void
 dbus_set_input_audio_plugin(gchar* audioPlugin)
 {
@@ -859,9 +856,6 @@ dbus_set_input_audio_plugin(gchar* audioPlugin)
 		g_print("DBus called set_input_audio_plugin() on ConfigurationManager\n");
 }
 
-/**
- * Sets the output audio plugin from its name
- */
 void
 dbus_set_output_audio_plugin(gchar* audioPlugin)
 {

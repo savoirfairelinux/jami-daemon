@@ -190,13 +190,13 @@ gchar** dbus_get_output_audio_plugin_list();
 
 /**
  * ConfigurationManager - Select an input audio plugin
- * @param gchar* The string description of the plugin
+ * @param audioPlugin The string description of the plugin
  */
 void dbus_set_input_audio_plugin(gchar* audioPlugin);
 
 /**
  * ConfigurationManager - Select an output audio plugin
- * @param gchar* The string description of the plugin
+ * @param audioPlugin The string description of the plugin
  */
 void dbus_set_output_audio_plugin(gchar* audioPlugin);
 

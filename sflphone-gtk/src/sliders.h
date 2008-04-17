@@ -32,10 +32,13 @@
  */
 GtkWidget * create_slider(const gchar * device);
 
-/**
- * Change the value of the specified device
- * @param device Mic or speaker
- * @param value	The new value
+
+/** 
+ * This function updates the sliders without sending the value to the server.
+ * This behavior prevents an infinite loop when receiving an updated volume from
+ * the server.
+ * @param device The device slider to update {speaker, mic}
+ * @param value The value to set [0, 1.0]
  */
 void set_slider(const gchar * device, gdouble value);
 

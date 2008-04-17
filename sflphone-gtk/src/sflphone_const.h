@@ -20,11 +20,12 @@
 #ifndef __SFLPHONE_CONST_H
 #define __SFLPHONE_CONST_H
 
+#include <libintl.h>
+#include "dbus.h"
+
 /* @file sflphone_const.h
  * @brief Contains the global variables for the client code
  */
-#include <libintl.h>
-#include "dbus.h"
 
 /** Locale */
 #define _(STRING)   gettext( STRING )   

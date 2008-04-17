@@ -38,7 +38,7 @@ void update_menus();
 
 /**
  * Create a menu on right-click
- * @param mywidget The widget you click on
+ * @param my_widget The widget you click on
  * @param event The mouse event
  */
 void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event);

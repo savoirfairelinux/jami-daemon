@@ -58,7 +58,7 @@ void codec_list_clear();
 
 /** 
  * This function append an codec to list. 
- * @param a The codec you want to add 
+ * @param c The codec you want to add 
  */
 void codec_list_add(codec_t * c);
 
