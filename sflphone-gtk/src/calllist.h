@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,57 +68,81 @@ typedef struct  {
   call_state_t state;
 } call_t;
 
-/** This function initialize the call list. */
+/** 
+ * This function initialize the call list. 
+ */
 void call_list_init ();
 
-/** This function empty and free the call list. */
+/** 
+ * This function empty and free the call list. 
+ */
 void call_list_clean ();
 
-/** This function append a call to list. 
-  * @param c The call you want to add */
+/** 
+ * This function append a call to list. 
+ * @param c The call you want to add 
+ */
 void call_list_add (call_t * c);
 
-/** This function remove a call from list. 
-  * @param callID The callID of the call you want to remove
-  */
+/** 
+ * This function remove a call from list. 
+ * @param callID The callID of the call you want to remove
+ */
 void call_list_remove (const gchar * callID);
 
-/** Return the first call that corresponds to the state.  
-  * This is usefull for unique states as DIALING and CURRENT.
-  * @param state The state
-  * @return A call or NULL */
+/** 
+ * Return the first call that corresponds to the state.  
+ * This is usefull for unique states as DIALING and CURRENT.
+ * @param state The state
+ * @return A call or NULL 
+ */
 call_t * call_list_get_by_state ( call_state_t state);
 
-/** Return the number of calls in the list
-  * @return The number of calls in the list */
+/** 
+ * Return the number of calls in the list
+ * @return The number of calls in the list 
+ */
 guint call_list_get_size ( );
 
-/** Return the call at the nth position in the list
-  * @param n The position of the call you want
-  * @return A call or NULL */
+/** 
+ * Return the call at the nth position in the list
+ * @param n The position of the call you want
+ * @return A call or NULL 
+ */
 call_t * call_list_get_nth ( guint n );
 
-/** Return the call corresponding to the callID
-  * @param n The callID of the call you want
-  * @return A call or NULL */
+/** 
+ * Return the call corresponding to the callID
+ * @param n The callID of the call you want
+ * @return A call or NULL 
+ */
 call_t * call_list_get ( const gchar * callID );
 
-/** This function parse the call_t.from field to return the name
-  * @param c The call
-  * @return The full name of the caller or an empty string */
+/** 
+ * This function parse the call_t.from field to return the name
+ * @param c The call
+ * @return The full name of the caller or an empty string 
+ */
 gchar * call_get_name (const call_t * c);
 
-/** This function parse the call_t.from field to return the number
-  * @param c The call
-  * @return The number of the caller */
+/** 
+ * This function parse the call_t.from field to return the number
+ * @param c The call
+ * @return The number of the caller 
+ */
 gchar * call_get_number (const call_t * c);
 
-/** Mark a call as selected.  There can be only one selected call.  This call
-  * is the currently highlighted one in the list.
-  * @param c The call */
+/** 
+ * Mark a call as selected.  There can be only one selected call.  This call
+ * is the currently highlighted one in the list.
+ * @param c The call 
+ */
 void call_select ( call_t * c );
 
-/** Return the selected call.
-  * @return The number of the caller */
+/** 
+ * Return the selected call.
+ * @return The number of the caller 
+ */
 call_t * call_get_selected ();
+
 #endif 

@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,10 +24,19 @@
 /** @file sliders.h
   * @brief Volume sliders at the bottom of the main window.
   */
-GtkWidget * create_mic_slider();
 
+/**
+ * Build the sliders widget
+ * @param device  Mic or speaker
+ * @return GtkWidget* The slider
+ */
 GtkWidget * create_slider(const gchar * device);
 
+/**
+ * Change the value of the specified device
+ * @param device Mic or speaker
+ * @param value	The new value
+ */
 void set_slider(const gchar * device, gdouble value);
 
 #endif 

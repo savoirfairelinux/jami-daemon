@@ -57,9 +57,9 @@ typedef enum {
 
 #include "codecs/audiocodec.h"
 
-/* A codec is identified by its payload. A payload is associated with a name. */ 
+/** A codec is identified by its payload. A payload is associated with a name. */ 
 typedef std::map<AudioCodecType, std::string> CodecMap;
-/* The struct to reflect the order the user wants to use the codecs */
+/** The struct to reflect the order the user wants to use the codecs */
 typedef std::vector<AudioCodecType> CodecOrder;
 
 typedef std::pair<AudioCodec* , void*> CodecHandlePointer;
@@ -73,7 +73,7 @@ public:
   CodecDescriptor();
   ~CodecDescriptor(); 
 
-  /*
+  /**
    * Accessor to data structures
    */
   CodecsMap& getCodecsMap() { return _CodecsMap; }
@@ -87,7 +87,7 @@ public:
    */
   std::string getCodecName(AudioCodecType payload);
   
-  /*
+  /**
    * Get the codec object associated with the payload
    * @param payload The payload looked for
    * @return AudioCodec* A pointer on a AudioCodec object
@@ -148,7 +148,7 @@ public:
   */
   int getSampleRate(AudioCodecType payload);
 
-  /*
+  /**
    * Get the number of channels
    * @param payload The payload of the codec
    * @return int  Number of channels
@@ -163,17 +163,17 @@ public:
  
 
   std::string getDescription( std::string );
-  /*
+  /**
    * Get the number of codecs loaded in dynamic memory
    */
   int getCodecsNumber( void ) { return _nbCodecs; }
   
-  /*
+  /**
    * Unreferences the codecs loaded in memory
    */
   void deleteHandlePointer( void );
   
-  /*
+  /**
    * Get the first element of the CodecsMap struct. 
    * i.e the one with the lowest payload
    * @return AudioCodec	The pointer on the codec object
@@ -182,27 +182,27 @@ public:
 
 private:
 
-  /*
+  /**
    * Scan the installation directory ( --prefix configure option )
    * And load the dynamic library 
    * @return std::vector<AudioCodec*> The list of the codec object successfully loaded in memory
    */
   std::vector<AudioCodec *> scanCodecDirectory( void ); 
   
-  /*
+  /**
    * Load a codec
    * @param std::string	The path of the shared ( dynamic ) library.
    * @return AudioCodec*  the pointer of the object loaded.
    */
   AudioCodec* loadCodec( std::string );
   
-  /*
+  /**
    * Unload a codec
    * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
    */
   void unloadCodec( CodecHandlePointer );
 
-  /*
+  /**
    * Check if the files found in searched directories seems valid
    * @param std::string	The name of the file
    * @return true if the file name begins with libcodec_ and ends with .so
@@ -210,7 +210,7 @@ private:
    */
   bool seemsValid( std::string );
 
-  /*
+  /**
    * Check if the codecs shared library has already been scanned during the session
    * Useful not to load twice the same codec saved in the different directory
    * @param std::string	The complete name of the shared directory ( without the path )
@@ -219,7 +219,7 @@ private:
    */
   bool alreadyInCache( std::string );
   
-  /*
+  /**
    *  Check if the audiocodec object has been successfully created
    *  @param payload  The payload of the codec
    *  @return true if the audiocodec has been created
@@ -227,27 +227,27 @@ private:
    */
   bool isCodecLoaded( int payload );
   
-  /*
+  /**
    * Map the payload of a codec and the object associated ( AudioCodec * )
    */
   CodecsMap _CodecsMap;
   
-  /*
+  /**
    * Vector containing the order of the codecs
    */
   CodecOrder _codecOrder;
   
-  /*
+  /**
    * Vector containing the complete name of the codec shared library scanned
    */
   std::vector<std::string> _Cache;
 
-  /*
+  /**
    * Number of codecs loaded
    */
   int _nbCodecs;
   
-  /*
+  /**
    * Vector containing pairs
    * Pair between pointer on function handle and pointer on audiocodec object
    */

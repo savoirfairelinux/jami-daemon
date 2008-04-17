@@ -57,7 +57,7 @@ notify_incoming_call( call_t* c  )
 }
 
   void
-answer_call_cb( NotifyNotification *notification, gchar *action, gpointer data  )
+answer_call_cb( NotifyNotification *notification, gpointer data  )
 {
   call_t* c = (call_t*)g_object_get_data( G_OBJECT( notification ) , "call" );
   dbus_accept(c);
@@ -67,7 +67,7 @@ answer_call_cb( NotifyNotification *notification, gchar *action, gpointer data  
 }
 
   void
-refuse_call_cb( NotifyNotification *notification, gchar *action, gpointer data )
+refuse_call_cb( NotifyNotification *notification, gpointer data )
 {
   call_t* c = (call_t*)g_object_get_data( G_OBJECT( notification ) , "call" );
   dbus_refuse(c);
@@ -75,7 +75,7 @@ refuse_call_cb( NotifyNotification *notification, gchar *action, gpointer data )
 }
 
   void
-ignore_call_cb( NotifyNotification *notification, gchar *action, gpointer data )
+ignore_call_cb( NotifyNotification *notification, gpointer data )
 {
   g_object_unref( notification );
 }
@@ -173,7 +173,7 @@ notify_no_accounts(  )
 }
 
  void
-setup_accounts_cb( NotifyNotification *notification, gchar *action, gpointer data )
+setup_accounts_cb( NotifyNotification *notification, gpointer data )
 {
   show_accounts_window();
   //g_object_unref( notification );

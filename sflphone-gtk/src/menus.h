@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +24,23 @@
 /** @file menus.h
   * @brief The menus of the main window.
   */
+
+/**
+ * Build the menus bar
+ * @return GtkWidget* The menu bar
+ */
 GtkWidget * create_menus();
+
+/**
+ * Update the menu state
+ */
 void update_menus();
+
+/**
+ * Create a menu on right-click
+ * @param mywidget The widget you click on
+ * @param event The mouse event
+ */
 void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event);
 
 #endif 

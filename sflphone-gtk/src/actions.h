@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -54,12 +54,40 @@ gboolean sflphone_quit ( ) ;
  */
 void sflphone_hang_up ();
 
+/**
+ * Put the selected call on hold 
+ */
 void sflphone_on_hold ();
+
+/**
+ * Put the selected call off hold
+ */
 void sflphone_off_hold ();
+
+/**
+ * Open a new call
+ * @return call_t* A pointer on the call structure
+ */
 call_t * sflphone_new_call();
+
+/**
+ * Notify voice mails to the application
+ * @param accountID The account the voice mails are for
+ * @param count The number of voice mails
+ */
 void sflphone_notify_voice_mail ( const gchar* accountID , guint count );
+
+/**
+ * Prepare SFLphone to transfer a call and wait for the user to dial the number to transfer to
+ * Put the selected call in Transfer state
+ */
 void sflphone_set_transfert();
+
+/**
+ * Cancel the transfer and puts back the selected call to Current state
+ */
 void sflphone_unset_transfert();
+
 /**
  * Accept / dial the current call
  */
@@ -67,36 +95,49 @@ void sflphone_pick_up ();
 
 /**
  * Put the call on hold state
+ * @param call_t* The current call
  */
 void sflphone_hold ( call_t * c);
 
 /**
  * Put the call in Ringing state
+ * @param call_t* The current call
  */
 void sflphone_ringing(call_t * c );
 
+/**
+ * Put the call in Busy state
+ * @param call_t* The current call
+ */
 void sflphone_busy( call_t * c );
+
+/**
+ * Put the call in Failure state
+ * @param call_t* The current call
+ */
 void sflphone_fail( call_t * c );
 
 /**
  * Put the call in Current state
+ * @param call_t* The current call
  */
 void sflphone_current ( call_t * c);
 
 /**
  * The callee has hung up 
+ * @param call_t* The current call
  */
 void sflphone_hung_up( call_t * c);
 
 /**
  * Incoming call
+ * @param call_t* The incoming call
  */
 void sflphone_incoming_call ( call_t * c);
 
 /**
  * Dial the number
  * If the call is in DIALING state, the char will be append to the number
- * @TODO If the call is in CURRENT state, the char will be also sent to the server 
  * @param keyval The unique int representing the key
  * @param keyval The char value of the key
  */
@@ -108,8 +149,20 @@ void sflphone_keypad ( guint keyval, gchar * key);
  */
 void sflphone_place_call ( call_t * c );
 
+/**
+ * Initialize the accounts data structure
+ */
 void sflphone_fill_account_list();
+
+/**
+ * Set an account as current. The current account is to one used to place calls with by default
+ * The current account is the first in the account list ( index 0 )
+ */ 
 void sflphone_set_current_account();
 
+/**
+ * Initialialize the codecs data structure
+ */
 void sflphone_fill_codec_list();
+
 #endif 

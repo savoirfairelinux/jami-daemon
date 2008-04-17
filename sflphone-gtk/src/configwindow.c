@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *  
@@ -948,7 +948,6 @@ create_accounts_tab()
 			"markup", COLUMN_ACCOUNT_ALIAS,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
-	//gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
 	
 	// A double click on the account line opens the window to edit the account
 	g_signal_connect( G_OBJECT( treeView ) , "row-activated" , G_CALLBACK( edit_account ) , NULL );
@@ -959,7 +958,6 @@ create_accounts_tab()
 			"markup", COLUMN_ACCOUNT_TYPE,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
-	//gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
 
 	renderer = gtk_cell_renderer_text_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes (_("Status"),
@@ -967,7 +965,6 @@ create_accounts_tab()
 			"markup", COLUMN_ACCOUNT_STATUS,
 			NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeView), treeViewColumn);
-	//gtk_tree_view_column_set_cell_data_func(treeViewColumn, renderer, bold_if_default_account, NULL,NULL);
 	
 	renderer = gtk_cell_renderer_toggle_new();
 	treeViewColumn = gtk_tree_view_column_new_with_attributes("", renderer, "active", COLUMN_ACCOUNT_ACTIVE , NULL);
@@ -1017,14 +1014,6 @@ create_accounts_tab()
 	gtk_box_pack_start(GTK_BOX(buttonBox), deleteButton, FALSE, FALSE, 0);
 	gtk_widget_show(deleteButton);
 	
-	/*defaultButton = gtk_button_new_with_mnemonic(_("Default"));
-	gtk_widget_set_tooltip_text( GTK_WIDGET( defaultButton ) , _("Set the selected account as the default one to make calls"));
-	g_signal_connect_swapped(G_OBJECT(defaultButton), "clicked", 
-			G_CALLBACK(default_account), NULL);
-	gtk_box_pack_start(GTK_BOX(buttonBox), defaultButton, FALSE, FALSE, 0);
-	gtk_widget_show(defaultButton);
-	*/
-
 	gtk_widget_show_all(ret);
 
 	config_window_fill_account_list();

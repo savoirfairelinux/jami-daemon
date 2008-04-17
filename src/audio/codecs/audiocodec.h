@@ -16,7 +16,9 @@ protected:
   /** Number of channel 1 = mono, 2 = stereo */
   unsigned int _channel;
 
+  /** Bitrate */
   double _bitrate;
+  /** Bandwidth */
   double _bandwidth;
 
 private:
@@ -38,9 +40,15 @@ public:
     virtual ~AudioCodec() {
 	}
     /**
+     * Decode an input buffer and fill the output buffer with the decoded data 
      * @return the number of bytes decoded
      */
     virtual int codecDecode(short *, unsigned char *, unsigned int) = 0;
+
+    /**
+     * Encode an input buffer and fill the output buffer with the encoded data 
+     * @return the number of bytes encoded
+     */
     virtual int codecEncode(unsigned char *, short *, unsigned int) = 0;   
 
 

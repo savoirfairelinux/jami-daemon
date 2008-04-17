@@ -20,17 +20,15 @@
 #ifndef CALL_H
 #define CALL_H
 
+/* @file call.h 
+ * @brief A call is the base class for protocol-based calls
+ */
 #include <string>
 #include <cc++/thread.h> // for mutex
 #include "audio/codecDescriptor.h"
 
 typedef std::string CallID;
 
-/**
- * A call is the base class for protocol-based calls
- *
- * @author Yan Morin <yan.morin@gmail.com>
- */
 class Call{
 public:
   /**
@@ -170,7 +168,6 @@ protected:
     CodecDescriptor _codecMap;
 
     /** Codec pointer */
-    //AudioCodec* _audioCodec;
     AudioCodecType _audioCodec;
 
     bool _audioStarted;

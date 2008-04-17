@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -147,6 +147,7 @@ account_list_set_current_pos( guint n)
   __CURRENT_ACCOUNT_ID = account_list_get_nth(n)->accountID;
 }
 
+
 const gchar * account_state_name(account_state_t s)
 {
   gchar * state;
@@ -169,8 +170,7 @@ const gchar * account_state_name(account_state_t s)
     break;
   case ACCOUNT_STATE_ERROR_NETWORK:
     state = _("Network unreachable");
-    break;
-  case ACCOUNT_STATE_ERROR_HOST:
+
     state = _("Host unreachable");
     break;
   default:

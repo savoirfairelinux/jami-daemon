@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -476,7 +476,7 @@ sflphone_keypad( guint keyval, gchar * key)
 					case 65307: /* ESCAPE */
 						dbus_hang_up(c);
 						break;
-					default:  // TODO should this be here?
+					default:  
 						// To play the dtmf when calling mail box for instance
 						dbus_play_dtmf(key);
 						if (keyval < 255 || (keyval >65453 && keyval < 65466))

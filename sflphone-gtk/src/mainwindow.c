@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@
 #include <dialpad.h>
 #include <mainwindow.h>
 #include <menus.h>
-#include <screen.h>
 #include <sliders.h>
 
 #include <gtk/gtk.h>
@@ -38,7 +37,6 @@ GtkWidget * dialpad   = NULL;
 GtkWidget * statusBar = NULL;
 GtkWidget * infoScreen = NULL;
 gboolean showDialpad  = FALSE; // true if the dialpad have been shown
-gboolean showInfoScreen = FALSE; // true if the info screen have been shown
 
 /**
  * Terminate the main loop.

@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,24 +26,61 @@
   * @brief The main window of the client.
   */
 GtkAccelGroup * get_accel_group();
+
+/**
+ * Display the main window
+ * @return GtkWidget* The main window
+ */
 GtkWidget * get_main_window();
 
+/**
+ * Build the main window
+ */
 void create_main_window ( );
 
+/**
+ * Display a dialog window 
+ * Ask the user if he wants to hangup current calls before quiting
+ * @return gboolean TRUE if the user wants to hang up
+ *		    FALSE otherwise
+ */ 
 gboolean main_window_ask_quit() ;
+
 /**
   * Shows the dialpad on the mainwindow 
   * @param show TRUE if you want to show the dialpad, FALSE to hide it
   */
 void main_window_dialpad(gboolean show);
 
+/**
+ * Display an error message
+ * @param markup  The error message
+ */
 void main_window_error_message(gchar * markup);
 
+/**
+ * Display a warning message
+ * @param markup  The warning message
+ */
 void main_window_warning_message(gchar * markup);
 
+/**
+ * Display an info message
+ * @param markup  The info message
+ */
 void main_window_info_message(gchar * markup);
 
+/**
+ * Push a message on the statusbar stack
+ * @param message The message to display
+ * @param id  The identifier of the message
+ */
 void statusbar_push_message( const gchar* message , guint id );
+
+/**
+ * Pop a message from the statusbar stack
+ * @param id  The identifier of the message
+ */
 void statusbar_pop_message( guint id );
 
 #endif 

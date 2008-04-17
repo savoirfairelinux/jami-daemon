@@ -20,8 +20,18 @@
 #ifndef __ERRORS_H
 #define __ERRORS_H
 
+/** @file errors.h
+  * @brief Implements internal errors notifications to the client.
+  */
+
 #include <sflphone_const.h>
 
+/**
+ * Display an internal error.
+ * @param err The error code
+ *	  ALSA_PLAYBACK_ERROR
+ *	  ALSA_CAPTURE_ERROR
+ */
 void sflphone_throw_exception( int err );
 
 #endif
