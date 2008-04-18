@@ -24,19 +24,37 @@
 
 
 /**
- * A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
- * @author Yan Morin <yan.morin@gmail.com>
+ * @file sipaccount.h
+ * @brief A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
 */
+
 class SIPAccount : public Account
 {
 public:
+  /**
+   * Constructor
+   * @param accountID The account identifier
+   */
   SIPAccount(const AccountID& accountID);
 
+  /**
+   * Virtual destructor
+   */
   virtual ~SIPAccount();
 
-  /** Actually unuseful, since config loading is done in init() */
+  /** 
+   * Actually unuseful, since config loading is done in init() 
+   */
   void loadConfig();
+
+  /**
+   * Initialize the SIP voip link with the account parameters and send registration
+   */ 
   void registerVoIPLink();
+
+  /**
+   * Send unregistration and clean all related stuff ( calls , thread )
+   */
   void unregisterVoIPLink();
 
 private:

@@ -86,7 +86,7 @@ incoming_message_cb (DBusGProxy *proxy,
                   const gchar* msg,
                   void * foo  )
 {
-  g_print ("Messge %s! \n",msg);
+  g_print ("Message %s! \n",msg);
   
 }
 

@@ -24,8 +24,8 @@
 
 
 /**
- * An IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
- * @author Yan Morin <yan.morin@gmail.com>
+ * @file: iaxaccount.h
+ * @brief: an IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
  */
 class IAXAccount : public Account
 {
@@ -34,9 +34,19 @@ public:
 
   ~IAXAccount();
 
-  /** Actually unuseful, since config loading is done in init() */
+  /** 
+   * Actually unuseful, since config loading is done in init() 
+   */
   void loadConfig();
+
+  /**
+   * Register an account
+   */
   void registerVoIPLink();
+
+  /**
+   * Unregister an account
+   */
   void unregisterVoIPLink();
 
 private:

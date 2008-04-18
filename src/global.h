@@ -61,62 +61,61 @@ typedef short int16;
   #define _debugAlsa(...)
 #endif
 
-#define SFLPHONED_VERSION "0.8.2"
+#define SFLPHONED_VERSION "0.8.2"		/** Version number */
 #define SFLPHONED_VERSIONNUM 0x000802
 
-#define PROGNAME         "sflphoned"
-#define PROGNAME_GLOBAL  "sflphone"
-#define PROGDIR          "sflphone"
-#define RINGDIR          "ringtones"
-#define CODECDIR         "codecs"
+#define PROGNAME         "sflphoned"		/** Binary name */
+#define PROGNAME_GLOBAL  "sflphone"		/** Program name */
+#define PROGDIR          "sflphone"		/** Program directory */
+#define RINGDIR          "ringtones"		/** Ringtones directory */
+#define CODECDIR         "codecs"		/** Codecs directory */
 
 #define _(arg) arg
 #define MONO					1
 #define CHANNELS				2
 #define SIZEBUF 				1024*1024
 
-#define ALSA_DFT_CARD_ID     0
+#define ALSA_DFT_CARD_ID     0			/** Index of the default soundcard */
 
-#define PCM_HW		"hw"
-#define PCM_PLUGHW	"plughw"
-#define PCM_PULSE	"pulse"
-#define PCM_FRONT	"plug:front"
-#define PCM_DEFAULT	"default"
-#define PCM_DMIX	"plug:dmix"
-#define PCM_SURROUND40	"plug:surround40"
-#define PCM_SURROUND41	"plug:surround41"
-#define PCM_SURROUND50	"plug:surround50"
-#define PCM_SURROUND51	"plug:surround51"
-#define PCM_SURROUND71	"plug:surround71"
-#define PCM_IEC958	"plug:iec958"
+#define PCM_HW		"hw"			/** Alsa plugin hardware */
+#define PCM_PLUGHW	"plughw"		/** Alsa plugin */ 
+#define PCM_PULSE	"pulse"			/** Alsa plugin for pulse audio */
+#define PCM_FRONT	"plug:front"		/** Alsa plugin: front PCM */	
+#define PCM_DEFAULT	"default"		/** Default ALSA plugin */
+#define PCM_DMIX	"plug:dmix"		/** Alsa plugin for software mixing */
+#define PCM_SURROUND40	"plug:surround40"	/** Alsa plugin: surround40 */
+#define PCM_SURROUND41	"plug:surround41"	/** Alsa plugin: surround41 */
+#define PCM_SURROUND50	"plug:surround50"	/** Alsa plugin: surround50 */
+#define PCM_SURROUND51	"plug:surround51"	/** Alsa plugin: surround51 */
+#define PCM_SURROUND71	"plug:surround71"	/** Alsa plugin: surround71 */
 
-#define SFL_CODEC_VALID_PREFIX	"libcodec_"
-#define SFL_CODEC_VALID_EXTEN	".so"
-#define CURRENT_DIR		"."
-#define PARENT_DIR		".."
+#define SFL_CODEC_VALID_PREFIX	"libcodec_"	/** Valid prefix for codecs shared library */ 
+#define SFL_CODEC_VALID_EXTEN	".so"		/** Valid extension for codecs shared library */
+#define CURRENT_DIR		"."		/** Current directory */
+#define PARENT_DIR		".."		/** Parent directory */
 
-#define SFL_PCM_BOTH		0x0021
-#define SFL_PCM_PLAYBACK	0x0022
-#define SFL_PCM_CAPTURE		0x0023
+#define SFL_PCM_BOTH		0x0021		/** To open both playback and capture devices */ 
+#define SFL_PCM_PLAYBACK	0x0022		/** To open playback device only */
+#define SFL_PCM_CAPTURE		0x0023		/** To open capture device only */
 
 #ifdef USE_IAX
-#define	IAX2_ENABLED  true
+#define	IAX2_ENABLED  true			/** IAX2 support */
 #else
-#define	IAX2_ENABLED  false
+#define	IAX2_ENABLED  false			/** IAX2 support */
 #endif
 
-#define GSM_STRING_DESCRIPTION	  "gsm"
-#define SPEEX_STRING_DESCRIPTION  "speex"
-#define ILBC_STRING_DESCRIPTION  "ilbc"
-#define RINGTONE_ENABLED	  1
-#define DISPLAY_DIALPAD		  1
-#define START_HIDDEN		  1
-#define WINDOW_POPUP		  1
+#define GSM_STRING_DESCRIPTION	  "gsm"		/** GSM codec string description */
+#define SPEEX_STRING_DESCRIPTION  "speex"	/** SPEEX codec string description */
+#define ILBC_STRING_DESCRIPTION  "ilbc"		/** Ilbc codec string description */
+#define RINGTONE_ENABLED	  1		/** Custom ringtone enable or not */
+#define DISPLAY_DIALPAD		  1		/** Display dialpad or not */
+#define START_HIDDEN		  1		/** SFlphone starts hidden at start-up or not */
+#define WINDOW_POPUP		  1		/** Popup mode */
 
 // Error codes for error handling
-#define NO_ERROR		      0x0000
-#define ALSA_CAPTURE_DEVICE           0x0001
-#define ALSA_PLAYBACK_DEVICE          0x0010
-#define NETWORK_UNREACHABLE           0x0011
+#define NO_ERROR		      0x0000	/** No error - Everything alright */
+#define ALSA_CAPTURE_DEVICE           0x0001	/** Error while opening capture device */
+#define ALSA_PLAYBACK_DEVICE          0x0010	/** Error while opening playback device */
+#define NETWORK_UNREACHABLE           0x0011	/** Network unreachable */
 
 #endif	// __GLOBAL_H__

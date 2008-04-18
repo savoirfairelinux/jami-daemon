@@ -25,42 +25,53 @@
 #include <iax/frame.h>
 
 /**
- * IAXCall are IAX implementation of a normal Call 
- * @author Yan Morin <yan.morin@gmail.com>
+ * @file: iaxcall.h
+ * @brief:  IAXCall are IAX implementation of a normal Call 
  */
+
 class IAXCall : public Call
 {
 public:
+    /**
+     * Constructor
+     * @param id  The unique ID of the call
+     * @param type  The type of the call
+     */
     IAXCall(const CallID& id, Call::CallType type);
 
+    /**
+     * Destructor
+     */
     ~IAXCall();
 
-    /** Get the session pointer or NULL */
+    /** 
+     * @return iax_session* The session pointer or NULL
+     */
     struct iax_session* getSession() { return _session; }
 
-    /** Set the session pointer 
+    /** 
+     * Set the session pointer 
      * @param session the session pointer to assign
      */
     void setSession(struct iax_session* session) { _session = session; }
 
     /**
-     * Set format (one single bit
-     *
+     * Set format (one single bit)
      * This function sets the _audioCodec variable with the correct
      * codec.
+     * @param format  The format representing the codec
      */
     void setFormat(int format);
 
     /**
      * Get format for the voice codec used
-     *
-     * Bitmask for codecs defined in iax/frame.h
+     * @return int  Bitmask for codecs defined in iax/frame.h
      */
     int getFormat() { return _format; }
 
 
     /**
-     * Get the bitwise list of supported formats
+     * @return int  The bitwise list of supported formats
      */
     int getSupportedFormat();
 
@@ -75,7 +86,7 @@ public:
      *       in this call context.
      *
      * @param needles  The format(s) (bitwise) you are looking for to match
-     * @return The matching format, thus 0 if none matches
+     * @return int  The matching format, thus 0 if none matches
      */
     int getFirstMatchingFormat(int needles);
 

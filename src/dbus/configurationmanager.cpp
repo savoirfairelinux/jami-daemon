@@ -219,24 +219,6 @@ ConfigurationManager::getRecordDeviceList(  )
 
 }
 
-	::DBus::String
-ConfigurationManager::getDefaultAccount(  )
-{
-	_debug("ConfigurationManager::getDefaultAccount received\n");
-	return Manager::instance().getDefaultAccount();
-}
-
-/*
- * used to set a default account
- */ 
-	void 
-ConfigurationManager::setDefaultAccount( const ::DBus::String& accountID )
-{
-	 _debug("ConfigurationManager::setDefaultAccount received\n");
-	Manager::instance().setDefaultAccount(accountID);
-
-}
-
 ::DBus::Int32
 ConfigurationManager::isIax2Enabled( void )
 {

@@ -25,14 +25,6 @@
       <arg type="as" name="list" direction="out"/>
     </method>
    
-    <method name="getDefaultAccount">
-      <arg type="s" name="accountID" direction="out"/>
-    </method>
-    
-    <method name="setDefaultAccount">
-      <arg type="s" name="accountID" direction="in"/>
-    </method>
-   
     <method name="sendRegister">
       <arg type="s" name="accountID" direction="in"/>
       <arg type="i" name="expire" direction="in"/>

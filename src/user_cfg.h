@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2008 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Authoe: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,76 +24,63 @@
 
 #include <stdlib.h>
 
-// Home directory
-#define HOMEDIR	(getenv ("HOME"))
+#define HOMEDIR	(getenv ("HOME"))		      /** Home directory */
 
-// TODO: change for a \ in Windows Environment
-#define DIR_SEPARATOR_CH '/'
-#define DIR_SEPARATOR_STR "/"
+#define DIR_SEPARATOR_CH '/'			      /** Directory separator string */
+#define DIR_SEPARATOR_STR "/"			      /** Directory separator char */
 
-// Main menu
-#define SIGNALISATION		"VoIPLink"
-#define AUDIO			"Audio"
-#define VIDEO			"Video"
-#define NETWORK			"Network"
-#define PREFERENCES		"Preferences"
+#define ACCOUNT_SIP0  "SIP0"			      /** Account type SIP */
+#define ACCOUNT_IAX0  "IAX0"			      /** Account type IAX */
 
-#define ACCOUNT_SIP0  "SIP0"
-#define ACCOUNT_IAX0  "IAX0"
+/** User configuration file fields */
+#define AUDIO			"Audio"		      /** Section Audio */
+#define CODECS			"ActiveCodecs"	      /** List of active codecs */
+#define ALSA_CARD_ID_IN		"Alsa.cardID_In"      /** Soundcard index to use for capture */
+#define ALSA_CARD_ID_OUT	"Alsa.cardID_Out"     /** Soundcard index to use for playback */
+#define ALSA_FRAME_SIZE		"Alsa.framesize"      /** Audio layer frame size */
+#define ALSA_PLUGIN		"Alsa.plugin"	      /** Alsa plugin */
+#define ALSA_SAMPLE_RATE	"Alsa.sampleRate"     /** Audio layer sample rate */
+#define RING_CHOICE		"Rings.ringChoice"    /** Ringtone */
+#define VOLUME_SPKR		"Volume.speakers"     /** Speaker volume */
+#define VOLUME_MICRO		"Volume.micro"	      /** Mic volume */
 
+#define VIDEO			"Video"		      /** Section Video */
 
-// Fields to fill
-#define SYMMETRIC     "VoIPLink.symmetric"
+#define PREFERENCES		"Preferences"		  /** Section Preferences */
+#define CONFIG_DIALPAD		"Dialpad.display"	  /** Display dialpad preferences */
+#define ZONE_TONE		"Options.zoneToneChoice"  /** Country tone */
+#define VOICEMAIL_NUM		"Options.voicemailNumber" /** Voicemail number */
+#define CONFIG_RINGTONE		"Ringtones.enable"	  /** Ringtones preferences */
+#define CONFIG_START		"Start.hidden"		  /** SFLphone starts in the systm tray or not */
+#define CONFIG_POPUP		"Window.popup"		  /** SFLphone pops up on incoming calls or not */
+#define CONFIG_ZEROCONF		"Zeroconf.enable"	  /** Zero configuration networking module */
 
-#define PLAY_DTMF		"DTMF.playDtmf"
-#define PLAY_TONES		"DTMF.playTones" 
-#define PULSE_LENGTH		"DTMF.pulseLength"
-#define SEND_DTMF_AS		"DTMF.sendDTMFas"
-#define ALSA_CARD_ID_IN		"Alsa.cardID_In"
-#define ALSA_CARD_ID_OUT	"Alsa.cardID_Out"
-#define ALSA_SAMPLE_RATE	"Alsa.sampleRate"
-#define ALSA_FRAME_SIZE		"Alsa.framesize"
-#define ALSA_PLUGIN		"Alsa.plugin"	
-#define CODECS			"ActiveCodecs"
-#define RING_CHOICE		"Rings.ringChoice"
-#define ACCOUNT_SIP_COUNT_DEFAULT 4
-#define ACCOUNT_IAX_COUNT_DEFAULT 4
+#define SIGNALISATION		"VoIPLink"	      /** Section Signalisation */
+#define PLAY_DTMF		"DTMF.playDtmf"	      /** Whether or not should play dtmf */
+#define PLAY_TONES		"DTMF.playTones"      /** Whether or not should play tones */
+#define PULSE_LENGTH		"DTMF.pulseLength"    /** Length of the DTMF in millisecond */
+#define SEND_DTMF_AS		"DTMF.sendDTMFas"     /** DTMF send mode */
+#define SYMMETRIC		"VoIPLink.symmetric"  /** VoIP link type */
 
-// speakers and volume 0 to 100
-#define VOLUME_SPKR	  "Volume.speakers"
-#define VOLUME_MICRO	  "Volume.micro"
-#define ZONE_TONE	  "Options.zoneToneChoice"
-#define VOICEMAIL_NUM	  "Options.voicemailNumber"
-// zeroconfig module
-#define CONFIG_ZEROCONF	  "Zeroconf.enable"
-#define CONFIG_RINGTONE	  "Ringtones.enable"
-#define CONFIG_DIALPAD	  "Dialpad.display"
-#define CONFIG_START	  "Start.hidden"
-#define CONFIG_POPUP	  "Window.popup"
+#define EMPTY_FIELD		""			/** Default value for empty field */
+#define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"	/** Default STUN server address */
+#define	YES_STR			"1"			/** Default YES value */   
+#define	NO_STR			"0"			/** Default NO value */
+#define DFT_PULSE_LENGTH_STR	"250"			/** Default DTMF lenght */
+#define SIP_INFO_STR		"0"			/** Default DTMF transport mode */	
+#define ALSA_DFT_CARD		"0"			/** Default sound card index */
+#define DFT_VOL_SPKR_STR	"100"			/** Default speaker volume */
+#define DFT_VOL_MICRO_STR	"100"			/** Default mic volume */
+#define DFT_RINGTONE 		"konga.ul"		/** Default ringtone */
+#define DFT_ZONE		"North America"		/** Default geographical zone */
+#define DFT_VOICEMAIL 		"888"			/** Default voicemail number */
+#define DFT_FRAME_SIZE		"20"			/** Default frame size in millisecond */
+#define DFT_SAMPLE_RATE		"44100"			/** Default sample rate in HZ */
 
-// Default values
-#define EMPTY_FIELD		""
-#define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"
-#define	YES_STR			"1"
-#define	NO_STR			"0"
-#define DFT_PULSE_LENGTH_STR	"250"
-#define SIP_INFO_STR		"0"
-#define ALSA_DFT_CARD		"0"
-// volume by default 100%
-#define DFT_VOL_SPKR_STR	"100"
-#define DFT_VOL_MICRO_STR	"100"
-
-#define DFT_RINGTONE 		"konga.ul"
-#define DFT_ZONE		"North America"
-#define DFT_VOICEMAIL 		"888"
-#define DFT_FRAME_SIZE		"20"
-#define DFT_SAMPLE_RATE		"44100"
-
-// zeroconfig default value
 #ifdef USE_ZEROCONF
-#define CONFIG_ZEROCONF_DEFAULT_STR "1"
+#define CONFIG_ZEROCONF_DEFAULT_STR "1"			/** Default Zero configuration networking module value */
 #else
-#define CONFIG_ZEROCONF_DEFAULT_STR "0"
+#define CONFIG_ZEROCONF_DEFAULT_STR "0"			/** Default Zero configuration networking module value */
 #endif
 
 #endif // __USER_CFG_H__

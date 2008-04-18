@@ -363,11 +363,9 @@ IAXVoIPLink::sendRegister()
   bool result = false;
 
   if (_host.empty()) {
-    Manager::instance().displayConfigError("Fill host field for IAX Account");
     return false;
   }
   if (_user.empty()) {
-    Manager::instance().displayConfigError("Fill user field for IAX Account");
     return false;
   }
 
@@ -656,7 +654,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     }
     call->setConnectionState(Call::Connected);
     call->setState(Call::Error);
-    Manager::instance().displayErrorText(id, "Failure");
     Manager::instance().callFailure(id);
     removeCall(id);
     break;
@@ -690,7 +687,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
   case IAX_EVENT_BUSY:
     call->setConnectionState(Call::Connected);
     call->setState(Call::Busy);
-    Manager::instance().displayErrorText(id, "Busy");
     Manager::instance().callBusy(id);
     removeCall(id);
     break;
