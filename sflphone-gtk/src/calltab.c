@@ -16,27 +16,27 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
-#ifndef __NOTEBOOK_H__
-#define __NOTEBOOK_H__
 
-#include <calllist.h>
 #include <gtk/gtk.h>
+#include <stdlib.h>
+#include <calltree.h>
+#include <calllist.h>
+#include <calltab.h>
 
+calltab_t*
+calltab_init()
+{
+	calltab_t* ret;
+	ret = malloc(sizeof(calltab_t));
 
-enum {
-	TAB_CALL,
-	TAB_CALLED,
-	TAB_RCVD,
-	TAB_MISSED	
-};
+	ret->store = NULL;
+	ret->view = NULL;
+	ret->tree = NULL;
+	ret->callQueue = NULL;
+	ret->selectedCall = NULL;
 
-#define NR_TABS 4
-calltab_t* calltab_init();
-GtkWidget* create_call_notebook();
-
-calltab_t* tabs[NR_TABS];
-//calltab_t* call_tab, *called_tab, *rcvd_tab, *missed_tab;
-calltab_t* current_tab;
-
-#endif
+	create_call_tree(ret);
+	call_list_init(ret);
+	
+	return ret;
+}

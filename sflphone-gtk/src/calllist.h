@@ -78,6 +78,9 @@ typedef struct {
 	call_t* selectedCall;
 } calltab_t;
 
+calltab_t* current_calls;
+calltab_t* history;
+
 /** This function initialize a call list. */
 void call_list_init (calltab_t* tab);
 

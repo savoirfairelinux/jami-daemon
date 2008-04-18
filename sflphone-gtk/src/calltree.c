@@ -35,7 +35,9 @@ GtkToolItem * hangupButton;
 GtkToolItem * holdButton;
 GtkToolItem * transfertButton;
 GtkToolItem * unholdButton;
+GtkToolItem * historyButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
+gboolean history_shown;
 
 
 /**
@@ -65,9 +67,23 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 	static void 
 call_button( GtkWidget *widget, gpointer   data )
 {
-	if(call_list_get_size(current_tab)>0)
+	call_t * selectedCall;
+	printf("Call button pressed\n");
+	if(call_list_get_size(current_calls)>0)
 		sflphone_pick_up();
-	else
+	else if(call_list_get_size(active_calltree) > 0){
+		printf("Calling a called num\n");
+		selectedCall = call_get_selected(active_calltree);
+		if(!selectedCall->to){
+			selectedCall->to = call_get_number(selectedCall);
+			selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">",NULL);
+		}
+		gtk_toggle_tool_button_set_active(historyButton, FALSE);
+		printf("call : from : %s to %s\n", selectedCall->from, selectedCall->to);
+		call_list_add(current_calls, selectedCall);
+		update_call_tree_add(current_calls, selectedCall);
+		sflphone_place_call(selectedCall);
+	}else
 		sflphone_new_call();
 }
 
@@ -116,6 +132,26 @@ unhold( GtkWidget *widget, gpointer   data )
 	sflphone_off_hold();
 }
 
+static void
+toggle_history(GtkToggleToolButton *toggle_tool_button,
+		gpointer	user_data)
+{
+	GtkTreeSelection *sel;
+	if(history_shown){
+		active_calltree = current_calls;
+		gtk_widget_hide(history->tree);
+		gtk_widget_show(current_calls->tree);
+		history_shown = FALSE;
+	}else{
+		active_calltree = history;
+		gtk_widget_hide(current_calls->tree);
+		gtk_widget_show(history->tree);
+		history_shown = TRUE;
+	}
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
+	g_signal_emit_by_name(sel, "changed");
+	toolbar_update_buttons();
+}
 	void 
 toolbar_update_buttons ()
 {
@@ -141,7 +177,7 @@ toolbar_update_buttons ()
 	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), FALSE);
 	gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
 
-	call_t * selectedCall = call_get_selected(current_tab);
+	call_t * selectedCall = call_get_selected(active_calltree);
 	if (selectedCall)
 	{
 		switch(selectedCall->state) 
@@ -209,12 +245,13 @@ toolbar_update_buttons ()
 	}
 }
 /* Call back when the user click on a call in the list */
-	static void 
+static void 
 selected(GtkTreeSelection *sel, void* data) 
 {
 	GtkTreeIter  iter;
 	GValue val;
-	GtkTreeModel *model = (GtkTreeModel*)current_tab->store;
+	GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
+	printf("Select !\n");
 
 	if (! gtk_tree_selection_get_selected (sel, &model, &iter))
 		return;
@@ -222,7 +259,7 @@ selected(GtkTreeSelection *sel, void* data)
 	val.g_type = 0;
 	gtk_tree_model_get_value (model, &iter, 2, &val);
 
-	call_select(current_tab, (call_t*) g_value_get_pointer(&val));
+	call_select(active_calltree, (call_t*) g_value_get_pointer(&val));
 	g_value_unset(&val);
 
 	toolbar_update_buttons();
@@ -234,7 +271,7 @@ void  row_activated(GtkTreeView       *tree_view,
 		GtkTreeViewColumn *column,
 		void * data) 
 {
-	call_t * selectedCall = call_get_selected(current_tab);
+	call_t * selectedCall = call_get_selected(current_calls);
 	if (selectedCall)
 	{
 		switch(selectedCall->state)  
@@ -320,6 +357,15 @@ create_toolbar (){
 	transfertButtonConnId = g_signal_connect (G_OBJECT (transfertButton), "toggled",
 			G_CALLBACK (transfert), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
+
+	historyButton = gtk_toggle_tool_button_new_from_stock (GTK_STOCK_INDEX);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
+	g_signal_connect (G_OBJECT (historyButton), "toggled",
+			G_CALLBACK (toggle_history), NULL);
+	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);  
+	history_shown = FALSE;
+	active_calltree = current_calls;
 
 	return ret;
 

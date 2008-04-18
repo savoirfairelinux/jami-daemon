@@ -26,7 +26,7 @@
 #include <dbus.h>
 #include <mainwindow.h>
 #include <screen.h>
-#include <notebook.h>
+#include <calltab.h>
 #include <gtk/gtk.h>
 
 #include <string.h> // for strlen
@@ -41,61 +41,61 @@ guint holdConnId;     //The hold_menu signal connection ID
 
 void update_menus()
 { 
-  //Block signals for holdMenu
-  gtk_signal_handler_block(GTK_OBJECT(holdMenu), holdConnId);
-  
-  gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   FALSE);
-  gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), FALSE);
-	
-	call_t * selectedCall = call_get_selected(current_tab);
+	//Block signals for holdMenu
+	gtk_signal_handler_block(GTK_OBJECT(holdMenu), holdConnId);
+
+	gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), FALSE);
+	gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), FALSE);
+	gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),FALSE);
+	gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   FALSE);
+	gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), FALSE);
+
+	call_t * selectedCall = call_get_selected(active_calltree);
 	if (selectedCall)
 	{
-    gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   TRUE);
-    switch(selectedCall->state) 
-  	{
-  	  case CALL_STATE_INCOMING:
-        gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
-        break;
-      case CALL_STATE_HOLD:
-        gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
-        gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), TRUE);
-        break;
-      case CALL_STATE_RINGING:
-        gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
-        break;
-      case CALL_STATE_DIALING:
-        gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
-        break;
-      case CALL_STATE_CURRENT:
-        gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
-        break;
-      case CALL_STATE_BUSY:
-      case CALL_STATE_FAILURE:
-        gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
-        break; 
-  	  default:
-  	    g_warning("Should not happen in update_menus()!");
-  	    break;
-  	}
-  } 
-  else
-  {
-    gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu), TRUE);
-  }
-  gtk_signal_handler_unblock(holdMenu, holdConnId);
-  
+		gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   TRUE);
+		switch(selectedCall->state) 
+		{
+			case CALL_STATE_INCOMING:
+				gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
+				break;
+			case CALL_STATE_HOLD:
+				gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
+				gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), TRUE);
+				break;
+			case CALL_STATE_RINGING:
+				gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
+				break;
+			case CALL_STATE_DIALING:
+				gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
+				break;
+			case CALL_STATE_CURRENT:
+				gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
+				gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
+				break;
+			case CALL_STATE_BUSY:
+			case CALL_STATE_FAILURE:
+				gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
+				break; 
+			default:
+				g_warning("Should not happen in update_menus()!");
+				break;
+		}
+	} 
+	else
+	{
+		gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu), TRUE);
+	}
+	gtk_signal_handler_unblock(holdMenu, holdConnId);
+
 }
 /* ----------------------------------------------------------------- */
 static void 
@@ -177,7 +177,7 @@ call_minimize ( void * foo)
 static void 
 call_hold  (void* foo)
 {
-  call_t * selectedCall = call_get_selected(tabs[TAB_CALL]);
+  call_t * selectedCall = call_get_selected(current_calls);
   
   if(selectedCall)
   {
@@ -298,7 +298,7 @@ static void
 edit_copy ( void * foo)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected(current_tab);
+  call_t * selectedCall = call_get_selected(current_calls);
   gchar * no = NULL;
   
   if(selectedCall)
@@ -330,7 +330,7 @@ static void
 edit_paste ( void * foo)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected(current_tab);
+  call_t * selectedCall = call_get_selected(current_calls);
   gchar * no = gtk_clipboard_wait_for_text (clip);
   
   if(no && selectedCall)
@@ -352,7 +352,7 @@ edit_paste ( void * foo)
             selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
           }
           screen_set_call(selectedCall);
-          update_call_tree(tabs[TAB_CALL], selectedCall);
+          update_call_tree(current_calls, selectedCall);
         }
         break;
       case CALL_STATE_RINGING:  
@@ -372,7 +372,7 @@ edit_paste ( void * foo)
           selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
           
           screen_set_call(selectedCall);
-          update_call_tree(tabs[TAB_CALL], selectedCall);
+          update_call_tree(current_calls, selectedCall);
         }
         break;
       case CALL_STATE_CURRENT:
@@ -391,7 +391,7 @@ edit_paste ( void * foo)
             g_free(before);
             g_free(temp);
             screen_set_call(selectedCall);
-            update_call_tree(tabs[TAB_CALL], selectedCall);
+            update_call_tree(current_calls, selectedCall);
           
           }
         }
@@ -412,7 +412,7 @@ edit_paste ( void * foo)
     selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
     
     screen_set_call(selectedCall);
-    update_call_tree(tabs[TAB_CALL], selectedCall);
+    update_call_tree(current_calls, selectedCall);
   }
   
 }
@@ -545,7 +545,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
   
   gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE;
   
-	call_t * selectedCall = call_get_selected(current_tab);
+	call_t * selectedCall = call_get_selected(current_calls);
 	if (selectedCall)
 	{
     copy = TRUE;

@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Antoine Reversat <antoine.reversat@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,28 +17,13 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#ifndef __CALLTREE_H__
-#define __CALLTREE_H__
+#ifndef __NOTEBOOK_H__
+#define __NOTEBOOK_H__
 
-#include <gtk/gtk.h>
 #include <calllist.h>
-#include <calltab.h>
+#include <gtk/gtk.h>
 
 
-/** @file calltree.h
-  * @brief The GtkTreeView that list calls in the main window.
-  */
+calltab_t* calltab_init();
 
-calltab_t* active_calltree;
-void create_call_tree(calltab_t* tab);
-
-void toolbar_update_buttons();
-static void toggle_history(GtkToggleToolButton *toggle_tool_button, gpointer user_data);
-
-void update_call_tree_add (calltab_t* ct, call_t * c);
-void update_call_tree (calltab_t* ct, call_t * c);
-void update_call_tree_remove (calltab_t* ct, call_t * c);
-
-GtkWidget * create_toolbar();
-
-#endif 
+#endif
