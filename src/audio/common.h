@@ -41,11 +41,9 @@ typedef signed short   int16;	/**< An 16 bit signed integer (2s complement) */
 typedef signed int     int32;	/**< An 32 bit signed integer (2s complement) */
 typedef unsigned int   uint;	/**< An unsigned integer or at least 32 bits */
 
-
 #ifndef NULL
 #define NULL 0		/**< Used to represent a null pointer type */
 #endif
-
 
 #ifdef _MSC_VER		// Compiling for Microsoft Visual C++
 
@@ -59,10 +57,8 @@ typedef unsigned int   uint;	/**< An unsigned integer or at least 32 bits */
 #define DEBUGGER							/**< Invoke debugger */
 #define IMPORT								/**< Mark a function which is to be imported from a DLL */
 #define EXPORT								/**< Mark a function to be exported from a DLL */
-//#define ASSERT(c)							/**< Assert that expression 'c' is true */
 
 #endif
-
 
 #ifdef DEBUG
 #define ASSERT_DEBUG(c) ASSERT(c)	/**< Assert that expression 'c' is true (when compiled for debugging)*/
@@ -70,6 +66,4 @@ typedef unsigned int   uint;	/**< An unsigned integer or at least 32 bits */
 #define ASSERT_DEBUG(c)
 #endif
 
-
 #endif
-

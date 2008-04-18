@@ -22,8 +22,8 @@
 
 const double AudioDevice::DEFAULT_RATE = 8000.0;
 
-AudioDevice::AudioDevice(int id, const std::string& apiName, const std::string& name) : 
-  _id(id), _apiName(apiName), _name(name)
+AudioDevice::AudioDevice(int id, const std::string& name) : 
+  _id(id), _name(name)
 {
   _rate = DEFAULT_RATE;
 }

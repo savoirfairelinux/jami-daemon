@@ -29,17 +29,24 @@
 #define TONE_NBCOUNTRY 7
 
 /**
- * Tone sample (dial, busy, ring, congestion)
- * @author Yan Morin <yan.morin@savoirfairelinux.com>
+ * @file tone.h
+ * @brief Tone sample (dial, busy, ring, congestion)
  */
 class Tone : public AudioLoop {
 public:
   /**
+   * Constructor
    * @param definition String that contain frequency/time of the tone
    * @param sampleRate SampleRating of audio tone
    */
   Tone(const std::string& definition, unsigned int sampleRate);
+  
+  /**
+   * Destructor 
+   */
   ~Tone();
+
+  /** The different kind of tones */
   enum TONEID {
     TONE_DIALTONE = 0,
     TONE_BUSY,
@@ -47,8 +54,12 @@ public:
     TONE_CONGESTION,
     TONE_NULL
   };
+
   /**
-   * add a simple or double sin to the buffer, it double the sin in stereo 
+   * Add a simple or double sin to the buffer, it double the sin in stereo 
+   * @param buffer  The data
+   * @param frequency1 The first frequency
+   * @param frequency2	The second frequency
    * @param nb are the number of int16 (mono) to generate
    * by example nb=5 generate 10 int16, 5 for the left, 5 for the right
    */
@@ -58,9 +69,11 @@ private:
 
   /**
    * allocate the memory with the definition
+   * @param definition String that contain frequency/time of the tone.
    */
   void genBuffer(const std::string& definition);
 
+  /** Sample rate */
   unsigned int _sampleRate;
 };
 

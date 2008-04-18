@@ -28,29 +28,39 @@
 #include "dtmfgenerator.h"
 
 /**
- * DMTF library to generate a dtmf sample
+ * @file dtmf.h
+ * @brief DMTF library to generate a dtmf sample
  */
 class DTMF {
-public:
-       /**
-        * Create a new DTMF.
-        * @param samplingRate frequency of the sample (ex: 8000 hz)
-        */
-	DTMF (unsigned int sampleRate);
-	~DTMF (void);
-	
-	void startTone		(char);
-	/**
-	 * Copy the sound inside the sampling* buffer 
-	 * @param buffer : a SFLDataFormat* buffer
-	 * @param n      : 
-	 */
-	bool generateDTMF	(SFLDataFormat* buffer, size_t n);
+  public:
+    /**
+     * Create a new DTMF.
+     * @param samplingRate frequency of the sample (ex: 8000 hz)
+     */
+    DTMF (unsigned int sampleRate);
+    
+   /**
+    * Destructor
+    */ 
+    ~DTMF (void);
 
-	char currentTone;
-	char newTone;
+    /**
+     * Start the done for th given dtmf
+     * @param code  The DTMF code
+     */
+    void startTone(char code);
+    
+    /**
+     * Copy the sound inside the sampling* buffer 
+     * @param buffer : a SFLDataFormat* buffer
+     * @param n      : The size to generate
+     */
+    bool generateDTMF	(SFLDataFormat* buffer, size_t n);
 
-	DTMFGenerator dtmfgenerator;
+    char currentTone;
+    char newTone;
+
+    DTMFGenerator dtmfgenerator;
 };
 
 #endif // __KEY_DTMF_H_

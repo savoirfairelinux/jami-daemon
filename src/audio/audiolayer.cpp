@@ -1,9 +1,8 @@
 /*
- *  Copyright (C) 2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2008 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +36,6 @@
 
   AudioLayer::AudioLayer(ManagerImpl* manager)
   :   _defaultVolume(100)
-  , _errorMessage(-1)
   , _manager(manager)
   , _PlaybackHandle( NULL )
   , _CaptureHandle( NULL )
@@ -121,13 +119,6 @@ AudioLayer::stopStream(void)
   snd_pcm_drop( _PlaybackHandle );
   snd_pcm_prepare( _PlaybackHandle );
   _urgentBuffer.flush();
-}
-
-  int
-AudioLayer::getDeviceCount()
-{
-  // TODO: everything
-  return 1;
 }
 
 void AudioLayer::AlsaCallBack( snd_async_handler_t* pcm_callback )
@@ -326,8 +317,6 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     if( err = snd_pcm_hw_params_set_format( _CaptureHandle, hwParams, SND_PCM_FORMAT_S16_LE) < 0) _debugAlsa(" Cannot set sample format (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_rate_near( _CaptureHandle, hwParams, &rate_in, &dir) < 0) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_channels( _CaptureHandle, hwParams, 1) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
-    //if( err = snd_pcm_hw_params_set_period_size_near( _CaptureHandle, hwParams, &period_size_in , &dir) < 0) _debugAlsa(" Cannot set period size (%s)\n", snd_strerror(err));
-    //if( err = snd_pcm_hw_params_set_buffer_size_near( _CaptureHandle, hwParams, &buffer_size_in ) < 0) _debugAlsa(" Cannot set buffer size (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_period_time_near( _CaptureHandle, hwParams, &period_time , &dir) < 0) _debugAlsa(" Cannot set period time (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_buffer_time_near( _CaptureHandle, hwParams, &buffer_time , &dir) < 0) _debugAlsa(" Cannot set buffer time (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_get_period_size( hwParams, &period_size_in , &dir) < 0) _debugAlsa(" Cannot get period size (%s)\n", snd_strerror(err));

@@ -26,33 +26,58 @@
 #include "../global.h" // for int16 declaration
 
 /**
- * @author Yan Morin <yan.morin@savoirfairelinux.com>
+ * @file audioloop.h
+ * @brief Loop on a sound file
  */
+
 class AudioLoop {
 public:
+  /**
+   * Constructor
+   */
   AudioLoop();
+  
+  /**
+   * Virtual destructor
+   */
   virtual ~AudioLoop();
 
   /**
-   * get the next fragment of the tone
+   * Get the next fragment of the tone
    * the function change the intern position, and will loop
+   * @param output  The data buffer
    * @param nb of int16 to send
+   * @param volume  The volume
    * @return the number of int16 sent (nb*2)
    */
   int getNext(SFLDataFormat* output, int nb, short volume=100);
+  
+  /**
+   * Reset the pointer position
+   */ 
   void reset() { _pos = 0; }
-  unsigned int getMonoSize() { return _size; }
+
+  /**
+   * Accessor to the size of the buffer
+   * @return unsigned int The size
+   */
   unsigned int getSize() { return _size; }
   
 
 
 protected:
+  /** The data buffer */
   SFLDataFormat* _buffer;
-  int _size; // number of int16 inside the buffer, not the delay
-  int _pos; // current position, set to 0, when initialize
-  int _sampleRate; // last samplerate
-};
 
+  /** Number of int16 inside the buffer, not the delay */
+  int _size;  
+
+  /** current position, set to 0, when initialize */
+  int _pos;  
+
+  /** Sample rate */
+  int _sampleRate; 
+};
 
 #endif // __AUDIOLOOP_H__
 

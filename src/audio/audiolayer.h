@@ -1,9 +1,8 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2008 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author:  Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,29 +22,40 @@
 #ifndef _AUDIO_LAYER_H
 #define _AUDIO_LAYER_H
 
-#include <cc++/thread.h> // for ost::Mutex
-
 #include "../global.h"
 #include "audiodevice.h"
 #include "ringbuffer.h"
 
+#include <cc++/thread.h> // for ost::Mutex
 #include <vector>
 #include <alsa/asoundlib.h>
 #include <iostream>
-#include <fstream>
 #include <istream>
 #include <sstream>
 #define FRAME_PER_BUFFER	160
 
-
 class RingBuffer;
 class ManagerImpl;
 
+/** Associate a sound card index to its string description */
 typedef std::pair<int , std::string> HwIDPair;
+
+/**
+ * @file  audiolayer.h
+ * @brief Main sound class. Manages the data transfers between the application and the hardware. 
+ */
 
 class AudioLayer {
   public:
+    /**
+     * Constructor
+     * @param manager An instance of managerimpl
+     */
     AudioLayer(ManagerImpl* manager);
+    
+    /**
+     * Destructor
+     */
     ~AudioLayer(void);
 
     /**
@@ -61,7 +71,7 @@ class AudioLayer {
      *			  SFL_PCM_BOTH
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
-    bool openDevice(int, int, int, int, int, std::string);
+    bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize, int stream, std::string plugin);
 
     /**
      * Start the capture stream and prepare the playback stream. 
@@ -107,8 +117,9 @@ class AudioLayer {
 
     /**
      * Send samples to the audio device. 
-     * @params buffer The buffer containing the data to be played ( voice and DTMF )
-     * @params toCopy The number of samples, in bytes
+     * @param buffer The buffer containing the data to be played ( voice and DTMF )
+     * @param toCopy The number of samples, in bytes
+     * @param isTalking	If whether or not the conversation is running
      * @return int The number of bytes played
      */
     int playSamples(void* buffer, int toCopy, bool isTalking);
@@ -154,22 +165,50 @@ class AudioLayer {
      * @return std::vector<std::string> The vector containing the string description of the card
      */
     std::vector<std::string> getSoundCardsInfo( int stream );
+
+    /**
+     * Check if the given index corresponds to an existing sound card and supports the specified streaming mode
+     * @param card   An index
+     * @param stream  The stream mode
+     *		  SFL_PCM_CAPTURE
+     *		  SFL_PCM_PLAYBACK
+     *		  SFL_PCM_BOTH
+     * @return bool True if it exists and supports the mode
+     *		    false otherwise
+     */
     bool soundCardIndexExist( int card , int stream );
+    
+    /**
+     * An index is associated with its string description
+     * @param description The string description
+     * @return	int	  Its index
+     */
     int soundCardGetIndex( std::string description );
 
+    /**
+     * Write accessor to the error state
+     * @param error The error code
+     *		    Could be: ALSA_PLAYBACK_DEVICE
+     *			      ALSA_CAPTURE_DEVICE
+     */  
     void setErrorMessage(const int& error) { _errorMessage = error; }
+    
+    /**
+     * Read accessor to the error state
+     * @return int  The error code
+     */
     int getErrorMessage() { return _errorMessage; }
 
     /**
      * Get the index of the audio card for capture
-     * @return _indexIn The index of the card used for capture
+     * @return int The index of the card used for capture
      *			0 for the first available card on the system, 1 ...
      */
     int getIndexIn() { return _indexIn; }
 
     /**
      * Get the index of the audio card for playback
-     * @return _indexOut The index of the card used for playback
+     * @return int The index of the card used for playback
      *			0 for the first available card on the system, 1 ...
      */
     int getIndexOut() { return _indexOut; }
@@ -193,7 +232,6 @@ class AudioLayer {
      * @return std::string  The name of the audio plugin
      */
     std::string getAudioPlugin( void ) { return _audioPlugin; }
-    std::ofstream _fstream;
     /**
      * Get the current state. Conversation or not
      * @return bool true if playSamples has been called  
@@ -201,13 +239,10 @@ class AudioLayer {
      */
     bool getCurrentState( void ) { return _talk; }
 
-    int getDeviceCount();
-
     /**
      * Toggle echo testing on/off
      */
     void toggleEchoTesting();
-
 
   private:
 
@@ -231,8 +266,9 @@ class AudioLayer {
     /**
      * Callback used for asynchronous playback.
      * Called when a certain amount of data is written ot the device
+     * @param pcm_callback  The callback pointer
      */
-    static void AlsaCallBack( snd_async_handler_t* );
+    static void AlsaCallBack( snd_async_handler_t* pcm_callback);
 
     /**
      * Callback used for asynchronous playback.
@@ -244,8 +280,8 @@ class AudioLayer {
      * Open the specified device.
      * ALSA Library API
      * @param pcm_p The string name for the playback device
-     *	      pcm_c The string name for the capture device
-     *	      flag  To indicate which kind of stream you want to open
+     * @param pcm_c The string name for the capture device
+     * @param flag  To indicate which kind of stream you want to open
      *		    SFL_PCM_CAPTURE
      *		    SFL_PCM_PLAYBACK
      *		    SFL_PCM_BOTH
@@ -258,7 +294,7 @@ class AudioLayer {
      * Copy a data buffer in the internal ring buffer
      * ALSA Library API
      * @param buffer The data to be copied
-     *	      length The size of the buffer
+     * @param length The size of the buffer
      * @return int The number of frames actually copied
      */
     int write( void* buffer, int length);
@@ -267,7 +303,7 @@ class AudioLayer {
      * Read data from the internal ring buffer
      * ALSA Library API
      * @param buffer  The buffer to stock the read data
-     *	      toCopy  The number of bytes to get
+     * @param toCopy  The number of bytes to get
      * @return int The number of frames actually read
      */
     int read( void* buffer, int toCopy);
@@ -277,16 +313,31 @@ class AudioLayer {
      * ALSA Library API
      */
     void handle_xrun_capture( void );
-    void handle_xrun_playback( void );
-
-    ManagerImpl* _manager; // augment coupling, reduce indirect access
 
     /**
-     * Handles to manipulate capture and playback streams
+     * Recover from XRUN state for playback
+     * ALSA Library API
+     */
+    void handle_xrun_playback( void );
+    
+    /** Augment coupling, reduce indirect access */
+    ManagerImpl* _manager; 
+
+    /**
+     * Handles to manipulate playback stream
      * ALSA Library API
      */
     snd_pcm_t* _PlaybackHandle;
+
+    /**
+     * Handles to manipulate capture stream
+     * ALSA Library API
+     */
     snd_pcm_t* _CaptureHandle;
+    
+    /**
+     * Alsa parameter - Size of a period in the hardware ring buffer
+     */
     snd_pcm_uframes_t _periodSize;
 
     /**
@@ -299,6 +350,12 @@ class AudioLayer {
      */
     RingBuffer _urgentBuffer;
     
+    /**
+     * Volume is controlled by the application. Data buffer are modified here to adjust to the right volume selected by the user on the main interface
+     * @param buffer  The buffer to adjust
+     * @param len The number of bytes
+     * @param stream  The stream mode ( PLAYBACK - CAPTURE )
+     */
     void * adjustVolume( void * , int , int);
 
     /**
@@ -316,9 +373,13 @@ class AudioLayer {
     bool deviceClosed;
 
     /**
-     * Number of audio cards on which stream has been opened 
+     * Number of audio cards on which capture stream has been opened 
      */
     int _indexIn;
+
+    /**
+     * Number of audio cards on which playback stream has been opened 
+     */
     int _indexOut;
 
     /**
@@ -341,12 +402,12 @@ class AudioLayer {
     /**
      * Input channel (mic) should be 1 mono
      */
-    unsigned int _inChannel; // mic
+    unsigned int _inChannel; 
 
     /**
      * Output channel (stereo) should be 1 mono
      */
-    unsigned int _outChannel; // speaker
+    unsigned int _outChannel; 
 
     /**
      * Default volume for incoming RTP and Urgent sounds.
@@ -358,12 +419,13 @@ class AudioLayer {
      */
     bool _echoTesting;
 
+    /** Vector to manage all soundcard index - description association of the system */
     std::vector<HwIDPair> IDSoundCards;
 
+    /** Contains the current error code */
     int _errorMessage;
-    ost::Mutex _mutex;
 
+    ost::Mutex _mutex;
 };
 
 #endif // _AUDIO_LAYER_H_
-
