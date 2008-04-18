@@ -25,8 +25,8 @@
 class Account;
 
 /**
- * AccountCreator create Protocol-specific Account
- * @author Yan Morin <yan.morin@gmail.com>
+ * @file accountcreator.h
+ * @brief Create protocol-specific account
  */
 class AccountCreator{
 public:

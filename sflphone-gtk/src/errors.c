@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> 
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,20 +16,21 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
-#ifndef __SCREEN_H__
-#define __SCREEN_H__
 
-#include <gtk/gtk.h>
-#include <calllist.h>
+#include <errors.h>
 
-/** @file screen.h
-  * @brief The screen at the top of the main window.
-  */
-GtkWidget * create_screen();
-
-void screen_clear();
-
-void screen_set_call(const call_t * c);
-
-#endif 
+  void
+sflphone_throw_exception( int err )
+{
+  gchar* markup; 
+  switch( err ){
+    case ALSA_PLAYBACK_DEVICE:
+      markup = g_markup_printf_escaped(_("<b>ALSA notification</b>\n\nError while opening playback device"));
+      break;
+    case ALSA_CAPTURE_DEVICE:
+      markup = g_markup_printf_escaped(_("<b>ALSA notification</b>\n\nError while opening capture device"));
+      break;
+  }
+  main_window_error_message( markup );  
+  free( markup );
+}

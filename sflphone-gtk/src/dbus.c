@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *                                                                              
@@ -74,11 +74,11 @@ volume_changed_cb (DBusGProxy *proxy,
 static void  
 voice_mail_cb (DBusGProxy *proxy,
                   const gchar* accountID,
-                  const gint nb,
+                  const guint nb,
                   void * foo  )
 {
   g_print ("%d Voice mail waiting! \n",nb);
-  sflphone_notify_voice_mail (nb);
+  sflphone_notify_voice_mail (accountID , nb);
 }
 
 static void  
@@ -87,7 +87,7 @@ incoming_message_cb (DBusGProxy *proxy,
                   const gchar* msg,
                   void * foo  )
 {
-  g_print ("Messge %s! \n",msg);
+  g_print ("Message %s! \n",msg);
   
 }
 
@@ -273,6 +273,7 @@ dbus_clean ()
     g_object_unref (configurationManagerProxy);
 }
 
+
 void
 dbus_hold (const call_t * c)
 {
@@ -367,8 +368,6 @@ dbus_accept (const call_t * c)
 void
 dbus_refuse (const call_t * c)
 {
-  // Remove the account message from the status bar stack
-  status_bar_message_remove( __MSG_ACCOUNT_DEFAULT ); 
   status_tray_icon_blink( FALSE );
   GError *error = NULL;
   org_sflphone_SFLphone_CallManager_refuse ( callManagerProxy, c->callID, &error);
@@ -457,49 +456,23 @@ dbus_account_details(gchar * accountID)
   return details;
 }
 
-gchar * 
-dbus_get_default_account( )
-{
-	GError *error = NULL;
-	char * accountID;
-        org_sflphone_SFLphone_ConfigurationManager_get_default_account (
-                configurationManagerProxy,
-                &accountID,
-                &error);
-        if (error)
-        {
-                g_printerr("Failed to call get_default_account() on ConfigurationManager: %s\n",error->message);
-                g_error_free (error);
-        }
-        else
-        {
-                g_print ("DBus called get_default_account() on ConfigurationManager\n");
-        }
-	
-	return accountID;
-
-}
-
-
 void
-dbus_set_default_account(gchar * accountID)
+dbus_send_register ( gchar* accountID , int expire)
 {
-	GError *error = NULL;
-	org_sflphone_SFLphone_ConfigurationManager_set_default_account (
-		configurationManagerProxy,
-		accountID,
-		&error);
-	if (error)
-	{
-		g_printerr("Failed to call set_default_account() on ConfigurationManager: %s\n",error->message);
-		g_error_free (error);
-	}
-	else
-	{
-		g_print ("DBus called set_default_account() on ConfigurationManager\n");
-	}
-
+  GError *error = NULL;
+  org_sflphone_SFLphone_ConfigurationManager_send_register ( configurationManagerProxy, accountID, expire ,&error);
+  if (error) 
+  {
+    g_printerr ("Failed to call send_register() on ConfigurationManager: %s\n",
+                error->message);
+    g_error_free (error);
+  } 
+  else 
+  {
+    g_print ("DBus called send_register() on ConfigurationManager\n");
+  }
 }
+
 void
 dbus_remove_account(gchar * accountID)
 {
@@ -708,30 +681,6 @@ dbus_unregister(int pid)
   }
 }
 
-int
-dbus_get_registration_count( void )
-{
-  GError *error = NULL;
-  int n;
-
-  org_sflphone_SFLphone_Instance_get_registration_count(
-    instanceProxy, 
-    &n, 
-    &error);
-
-  if (error) 
-  {
-    g_printerr ("Failed to call get_registration_count() on instanceProxy: %s\n",
-                error->message);
-    g_error_free (error);
-  } 
-  else 
-  {
-    g_print ("DBus called get_registration_count() on instanceProxy\n");
-  }
-  return n;
-}
-
 gchar**
 dbus_codec_list()
 {
@@ -889,9 +838,6 @@ dbus_get_output_audio_plugin_list()
 	return array;
 }
 
-/**
- * Sets the input audio plugin from its name
- */
 void
 dbus_set_input_audio_plugin(gchar* audioPlugin)
 {
@@ -911,9 +857,6 @@ dbus_set_input_audio_plugin(gchar* audioPlugin)
 		g_print("DBus called set_input_audio_plugin() on ConfigurationManager\n");
 }
 
-/**
- * Sets the output audio plugin from its name
- */
 void
 dbus_set_output_audio_plugin(gchar* audioPlugin)
 {
@@ -1186,4 +1129,107 @@ dbus_is_iax2_enabled()
 	else
 		g_print("DBus called is_iax2_enabled() on ConfigurationManager\n");
 	return res;
+}
+
+int
+dbus_get_dialpad()
+{
+	int state;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_dialpad(
+			configurationManagerProxy,
+			&state,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_dialpad on ConfigurationManager\n");
+	return state;
+}
+
+void
+dbus_set_dialpad(  )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_dialpad(
+			configurationManagerProxy,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_dialpad on ConfigurationManager\n");
+}
+
+void
+dbus_start_hidden( void )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_start_hidden(
+			configurationManagerProxy,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called start_hidden on ConfigurationManager\n");
+}
+
+
+int
+dbus_is_start_hidden( void )
+{
+	GError* error = NULL;
+	int state;
+	org_sflphone_SFLphone_ConfigurationManager_is_start_hidden(
+			configurationManagerProxy,
+			&state,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called start_hidden on ConfigurationManager\n");
+	return state;
+}
+
+int
+dbus_popup_mode( void )
+{
+	GError* error = NULL;
+	int state;
+	org_sflphone_SFLphone_ConfigurationManager_popup_mode(
+			configurationManagerProxy,
+			&state,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called popup_mode on ConfigurationManager\n");
+	return state;
+}
+
+void
+dbus_switch_popup_mode( void )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_switch_popup_mode(
+			configurationManagerProxy,
+			&error);
+	if(error)
+	{
+		g_error_free(error);
+	}
 }

@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@
 #include <dbus.h>
 #include <mainwindow.h>
 #include <menus.h>
-#include <screen.h>
 #include <statusicon.h>
 #include <calltab.h>
 
@@ -34,18 +33,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define ALSA_ERROR_CAPTURE_DEVICE     0
-#define ALSA_ERROR_PLAYBACK_DEVICE    1
-
-#define TONE_WITHOUT_MESSAGE  0 
-#define TONE_WITH_MESSAGE     1
-
 guint voice_mails;
 
 	void
-sflphone_notify_voice_mail (guint count)
+sflphone_notify_voice_mail ( const gchar* accountID , guint count )
 {
 	voice_mails = count ;
+	gchar* id = g_strdup( accountID );
 	if(count > 0)
 	{
 		gchar * message = g_new0(gchar, 50);
@@ -53,30 +47,15 @@ sflphone_notify_voice_mail (guint count)
 		  g_sprintf(message, _("%d voice mails"), count);
 		else
 		  g_sprintf(message, _("%d voice mail"), count);	  
-		status_bar_message_add(message,  __MSG_VOICE_MAILS);
+		statusbar_push_message(message,  __MSG_VOICE_MAILS);
 		g_free(message);
 	}
 	// TODO: add ifdef
 	if( account_list_get_size() > 0 )
 	{
-	  account_t* acc = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-	  if( acc == NULL )
-	  {
-	    // Notify that no account is registered
-	    //notify_no_account_registered();
-	  }
-	  else
-	  {
-	    if( account_list_get_default() == NULL ){
-	      // Notify that the first registered account has count voice mails
+	  account_t* acc = account_list_get_by_id( id );
+	  if( acc != NULL )
 	      notify_voice_mails( count , acc );	
-	    }
-	    else
-	    {
-	      // Notify that the default registered account has count voice mails
-	      notify_voice_mails( count , account_list_get_by_id(account_list_get_default()) );
-	    } 
-	  }     
 	}
 }
 
@@ -85,15 +64,14 @@ status_bar_display_account( call_t* c)
 {
     gchar* msg;
     account_t* acc;
-    if(c->accountID != NULL)
+    if(c->accountID != NULL){
       acc = account_list_get_by_id(c->accountID);
-    else
-      acc = account_list_get_by_id( account_list_get_default());
-    msg = g_markup_printf_escaped("%s account: %s" , 
-				  g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
-				  g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
-    status_bar_message_add( msg , __MSG_ACCOUNT_DEFAULT);
-    g_free(msg);
+      msg = g_markup_printf_escaped("%s account- %s" , 
+				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
+				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
+      statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+      g_free(msg);
+  }
 }
   
 
@@ -185,6 +163,18 @@ sflphone_fill_account_list()
 		{
 			a->state = ACCOUNT_STATE_ERROR;
 		}
+		else if(strcmp( status , "ERROR_AUTH") == 0 )
+		{
+		  a->state = ACCOUNT_STATE_ERROR_AUTH;
+		}
+		else if(strcmp( status , "ERROR_NETWORK") == 0 )
+		{
+		  a->state = ACCOUNT_STATE_ERROR_NETWORK;
+		}
+		else if(strcmp( status , "ERROR_HOST") == 0 )
+		{
+		  a->state = ACCOUNT_STATE_ERROR_HOST;
+		}
 		else
 		{
 			a->state = ACCOUNT_STATE_INVALID;
@@ -213,8 +203,8 @@ sflphone_init()
 	{
 		dbus_register(getpid(), "Gtk+ Client");
 		sflphone_fill_account_list();
-		sflphone_set_default_account();
 		sflphone_fill_codec_list();
+		sflphone_set_current_account();
 		return TRUE;
 	}
 }
@@ -393,7 +383,7 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 	// We stop the tone
 	if(strlen(c->to) == 0 && c->state != CALL_STATE_TRANSFERT){
 	  dbus_start_tone( FALSE , 0 );
-	  dbus_play_dtmf( key );
+	  //dbus_play_dtmf( key );
 	}
 	switch (keyval)
 	{
@@ -435,6 +425,8 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 		default:
 			if (keyval < 255 || (keyval >65453 && keyval < 65466))
 			{ 
+				if(c->state != CALL_STATE_TRANSFERT)
+				  dbus_play_dtmf( key );
 				gchar * before = c->to;
 				c->to = g_strconcat(c->to, key, NULL);
 				g_free(before);
@@ -487,7 +479,7 @@ sflphone_keypad( guint keyval, gchar * key){
 		switch(c->state) 
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
-				dbus_play_dtmf(key);
+				//dbus_play_dtmf(key);
 				process_dialing(c, keyval, key);
 				break;
 			case CALL_STATE_CURRENT:
@@ -496,7 +488,8 @@ sflphone_keypad( guint keyval, gchar * key){
 					case 65307: /* ESCAPE */
 						dbus_hang_up(c);
 						break;
-					default:  // TODO should this be here?
+					default:  
+						// To play the dtmf when calling mail box for instance
 						dbus_play_dtmf(key);
 						if (keyval < 255 || (keyval >65453 && keyval < 65466))
 						{ 
@@ -515,7 +508,7 @@ sflphone_keypad( guint keyval, gchar * key){
 				{
 					case 65293: /* ENTER */
 					case 65421: /* ENTER numpad */
-						status_bar_display_account(c);
+						//status_bar_display_account(c);
 						dbus_accept(c);
 						break;
 					case 65307: /* ESCAPE */
@@ -569,7 +562,7 @@ sflphone_keypad( guint keyval, gchar * key){
 	}
 	else 
 	{ // Not in a call, not dialing, create a new call 
-		dbus_play_dtmf(key);
+		//dbus_play_dtmf(key);
 		switch (keyval)
 		{
 			case 65293: /* ENTER */
@@ -594,64 +587,59 @@ sflphone_keypad( guint keyval, gchar * key){
 void 
 sflphone_place_call ( call_t * c )
 {
-	status_bar_display_account(c);
-	if(c->state == CALL_STATE_DIALING)
-	{
-		account_t * account;
-		gchar * default_account =  account_list_get_default();
-		account = account_list_get_by_id(default_account);
-		
-		if(account)
-		{
-			if(strcmp(g_hash_table_lookup(account->properties, "Status"),"REGISTERED")==0)
-			{
-				c->accountID = default_account;
-				dbus_place_call(c);
-			}
-			else
-			{
-				main_window_error_message(_("The account selected as default is not registered."));
-			}
-			
-		}
-		else{
-			account = account_list_get_by_state (ACCOUNT_STATE_REGISTERED);
-			if(account)
-			{
-				c->accountID = account->accountID;
-				dbus_place_call(c);
-			}
-			else
-			{
-				main_window_error_message(_("There is no registered account to make this call with."));
-			}
-
-		}
+  if(c->state == CALL_STATE_DIALING)
+  {
+    if( account_list_get_size() == 0 )
+      notify_no_accounts();
+    else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
+      notify_no_registered_accounts();
+    else
+    {
+      account_t * current = account_list_get_current();
+      if( current )
+      {
+	if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
+	{ 
+	  // OK, everything alright - the call is made with the current account
+	  c -> accountID = current -> accountID;
+	  status_bar_display_account(c);
+	  dbus_place_call(c);
 	}
-}
-
-/* Internal to action - set the DEFAULT_ACCOUNT variable */
-	void
-sflphone_set_default_account( )
-{
-	gchar* default_id = strdup(dbus_get_default_account());
-	account_list_set_default(default_id);	
-}
-
-void
-sflphone_throw_exception( int errCode )
-{
-  gchar* markup = malloc(1000);
-  switch( errCode ){
-    case ALSA_ERROR_PLAYBACK_DEVICE:
-      sprintf( markup , _("<b>ALSA notification</b>\n\nError while opening playback device"));
-      break;
-    case ALSA_ERROR_CAPTURE_DEVICE:
-      sprintf( markup , _("<b>ALSA notification</b>\n\nError while opening capture device"));
-      break;
+	else
+	{
+	  // No current accounts have been setup. 
+	  // So we place a call with the first registered account
+	  // And we change the current account
+	  current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
+	  c -> accountID = current -> accountID;
+	  dbus_place_call(c);
+	  notify_current_account( current );
+	  status_bar_display_account(c);
+	  account_list_set_current_id( c-> accountID );
+	}
+      }
+      else
+      {
+	// No current accounts have been setup. 
+	// So we place a call with the first registered account
+	// and we change the current account
+	current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
+	c -> accountID = current -> accountID;
+	dbus_place_call(c);
+	notify_current_account( current );
+	status_bar_display_account(c);
+	account_list_set_current_id( c-> accountID );
+      }
+    }
   }
-  main_window_error_message( markup );  
-  free( markup );
+}
+
+/* Internal to action - set the __CURRENT_ACCOUNT variable */
+	void
+sflphone_set_current_account()
+{
+  if( account_list_get_size() > 0 )
+    account_list_set_current_pos( 0 );	
 }
 
 

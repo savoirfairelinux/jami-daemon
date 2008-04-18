@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 #include <string.h>
 
 GQueue * accountQueue;
-gchar * DEFAULT_ACCOUNT=NULL;
+gchar* __CURRENT_ACCOUNT_ID = NULL;
 
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 gint 
@@ -126,23 +126,32 @@ account_list_get_nth ( guint n )
   return g_queue_peek_nth (accountQueue, n);
 }
 
-gchar *
-account_list_get_default( )
+account_t*
+account_list_get_current( )
 {
-  return DEFAULT_ACCOUNT;
+  if( __CURRENT_ACCOUNT_ID != NULL  )
+    return account_list_get_by_id( __CURRENT_ACCOUNT_ID );
+  else
+    return NULL;
 }
 
 void
-account_list_set_default(const gchar * accountID)
+account_list_set_current_id(const gchar * accountID)
 {
-  DEFAULT_ACCOUNT = g_strdup(accountID);
-  g_print("DEFAULT_ACCOUNT =  %s\n", DEFAULT_ACCOUNT);
+  __CURRENT_ACCOUNT_ID = g_strdup(accountID);
 }
+
+void
+account_list_set_current_pos( guint n)
+{
+  __CURRENT_ACCOUNT_ID = account_list_get_nth(n)->accountID;
+}
+
 
 const gchar * account_state_name(account_state_t s)
 {
   gchar * state;
-	switch(s)
+  switch(s)
   {
   case ACCOUNT_STATE_REGISTERED:
     state = _("Registered");
@@ -156,6 +165,14 @@ const gchar * account_state_name(account_state_t s)
   case ACCOUNT_STATE_ERROR:
     state = _("Error");
     break;
+  case ACCOUNT_STATE_ERROR_AUTH:
+    state = _("Bad authentification");
+    break;
+  case ACCOUNT_STATE_ERROR_NETWORK:
+    state = _("Network unreachable");
+
+    state = _("Host unreachable");
+    break;
   default:
     state = _("Invalid");
     break;
@@ -168,4 +185,26 @@ account_list_clear ( )
 {
   g_queue_free (accountQueue);
   accountQueue = g_queue_new ();
+}
+
+void
+account_list_move_up(guint index)
+{
+	if(index != 0)
+	{
+		gpointer acc = g_queue_pop_nth(accountQueue, index);
+		g_queue_push_nth(accountQueue, acc, index-1);
+	}
+	account_list_set_current_pos( 0 );
+}
+
+void
+account_list_move_down(guint index)
+{
+	if(index != accountQueue->length)
+	{
+		gpointer acc = g_queue_pop_nth(accountQueue, index);
+		g_queue_push_nth(accountQueue, acc, index+1);
+	}
+	account_list_set_current_pos( 0 );
 }

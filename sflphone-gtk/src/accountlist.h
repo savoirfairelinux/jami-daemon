@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -26,35 +26,27 @@
   * @brief A list to hold accounts.
   */
 
-#define ACCOUNT_TYPE               "Account.type"
-#define ACCOUNT_ALIAS              "Account.alias"
-#define ACCOUNT_ENABLED            "Account.enable"
-//#define ACCOUNT_REGISTER           "Account.autoregister"
-
-#define ACCOUNT_SIP_FULL_NAME      "SIP.fullName"
-#define ACCOUNT_SIP_HOST_PART      "SIP.hostPart"
-#define ACCOUNT_SIP_USER_PART      "SIP.userPart"
-#define ACCOUNT_SIP_AUTH_NAME      "SIP.username"
-#define ACCOUNT_SIP_PASSWORD       "SIP.password"
-#define ACCOUNT_SIP_PROXY          "SIP.proxy"
-#define ACCOUNT_SIP_STUN_SERVER	   "STUN.server"
-#define ACCOUNT_SIP_STUN_ENABLED   "STUN.enable"
-
-#define ACCOUNT_IAX_FULL_NAME      "IAX.fullName"
-#define ACCOUNT_IAX_HOST           "IAX.host"
-#define ACCOUNT_IAX_USER           "IAX.user"
-#define ACCOUNT_IAX_PASS           "IAX.pass"
-
 /** @enum account_state_t 
   * This enum have all the states an account can take.
   */
 typedef enum
 {
+  /** Invalid state */
    ACCOUNT_STATE_INVALID = 0,
+   /** The account is registered  */
    ACCOUNT_STATE_REGISTERED,   
+   /** The account is not registered */
    ACCOUNT_STATE_UNREGISTERED,   
+   /** The account is trying to register */
    ACCOUNT_STATE_TRYING, 
-   ACCOUNT_STATE_ERROR
+   /** Error state. The account is not registered */
+   ACCOUNT_STATE_ERROR,
+   /** An authentification error occured. Wrong password or wrong username. The account is not registered */
+   ACCOUNT_STATE_ERROR_AUTH,
+   /** The network is unreachable. The account is not registered */
+   ACCOUNT_STATE_ERROR_NETWORK,
+   /** Host is unreachable. The account is not registered */
+   ACCOUNT_STATE_ERROR_HOST
 } account_state_t;
 
 /** @struct account_t
@@ -73,54 +65,95 @@ typedef struct  {
 
 
 
-/** This function initialize the account list. */
+/** 
+ * This function initialize the account list. 
+ */
 void account_list_init ();
 
-/** This function empty and free the account list. */
+/** 
+ * This function empty and free the account list. 
+ */
 void account_list_clean ();
 
-/** This function append an account to list. 
-  * @param a The account you want to add */
+/** 
+ * This function append an account to list. 
+ * @param a The account you want to add 
+ */
 void account_list_add (account_t * a);
 
-/** This function remove an account from list. 
-  * @param accountID The accountID of the account you want to remove
-  */
+/** 
+ * This function remove an account from list. 
+ * @param accountID The accountID of the account you want to remove
+ */
 void account_list_remove (const gchar * accountID);
 
-/** Return the first account that corresponds to the state 
-  * @param s The state
-  * @return An account or NULL */
+/** 
+ * Return the first account that corresponds to the state 
+ * @param state The state
+ * @return account_t* An account or NULL 
+ */
 account_t * account_list_get_by_state ( account_state_t state);
 
-/** Return the number of accounts in the list
-  * @return The number of accounts in the list */
+/** 
+ * Return the number of accounts in the list
+ * @return guint The number of accounts in the list 
+ */
 guint account_list_get_size ( );
 
-/** Return the account at the nth position in the list
-  * @param n The position of the account you want
-  * @return An account or NULL */
+/** 
+ * Return the account at the nth position in the list
+ * @param n The position of the account you want
+ * @return An account or NULL 
+ */
 account_t * account_list_get_nth ( guint n );
 
-/** Return the account's id chosen as default
- *  @return The default account */
-gchar * account_list_get_default( );
-
-/** This function sets an account as default
- * @param n The position of the account you want to select
+/** 
+ * Return the current account struct
+ *  @return The current account struct
  */
-void account_list_set_default(const gchar * accountID);
+account_t * account_list_get_current( );
 
-/** This function maps account_state_t enums to a description.
-  * @param s The state
-  * @return The full text description of the state */
+/** 
+ * This function sets an account as the current one
+ * @param accountID The ID of the current account
+ */
+void account_list_set_current_id(const gchar * accountID);
+
+/** 
+ * This function sets an account as the current one
+ * @param n the position of the account you want to use
+ */
+void account_list_set_current_pos( guint n );
+
+/** 
+ * This function maps account_state_t enums to a description.
+ * @param s The state
+ * @return The full text description of the state 
+ */
 const gchar * account_state_name(account_state_t s);
 
+/** 
+ * This function clear the list
+ */
 void account_list_clear ( );
 
-/** Return the account associated with an ID
+/** 
+ * Return the account associated with an ID
  * @param accountID The ID of the account
- * @return An account or NULL */
+ * @return An account or NULL 
+ */
 account_t * account_list_get_by_id(gchar * accountID); 
+
+/** 
+ * Move the account from an unit up in the account_list
+ * @param index The current index in the list
+ */
+void account_list_move_up( guint index );
+
+/** 
+ * Move the account from an unit down in the account_list
+ * @param index The current index in the list
+ */
+void account_list_move_down( guint index );
 
 #endif 

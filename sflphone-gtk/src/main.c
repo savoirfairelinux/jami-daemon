@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,6 +49,12 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
     show_status_icon();
     create_main_window ();
     
+    if( dbus_is_start_hidden() )
+    {
+      gtk_widget_hide(GTK_WIDGET( get_main_window() ));
+      set_minimized( TRUE );
+    }
+
     /* start the main loop */
     gtk_main ();
   }

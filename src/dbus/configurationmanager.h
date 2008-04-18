@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -44,8 +44,7 @@ public:
     void addAccount( const std::map< ::DBus::String, ::DBus::String >& details );
     void removeAccount( const ::DBus::String& accoundID );
     std::vector< ::DBus::String > getAccountList(  );
-    ::DBus::String getDefaultAccount(  );
-    void setDefaultAccount( const ::DBus::String& accountID  );
+    void sendRegister(  const ::DBus::String& accoundID , const ::DBus::Int32& expire );
     
     std::vector< ::DBus::String > getCodecList(  );
     std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload );
@@ -76,6 +75,13 @@ public:
     void ringtoneEnabled( void );
     ::DBus::String getRingtoneChoice( void );
     void setRingtoneChoice( const ::DBus::String& tone );
+    ::DBus::Int32 getDialpad( void );
+    void setDialpad( void );
+    ::DBus::Int32 isStartHidden( void );
+    void startHidden( void );
+    ::DBus::Int32 popupMode( void );
+    void switchPopupMode( void );
+
 };
 
 

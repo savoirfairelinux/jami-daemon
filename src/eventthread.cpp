@@ -25,6 +25,7 @@ EventThread::EventThread (VoIPLink* link) : Thread ()
 {
 	_linkthread = link;
 	setCancel(cancelDeferred);
+	stopIt = false;
 }
 
 EventThread::~EventThread (void) 
@@ -38,9 +39,27 @@ EventThread::~EventThread (void)
 void
 EventThread::run (void) 
 {
+  //stopIt = false;
   while(!testCancel()) {
     _linkthread->getEvent();
   }
 }
 
+void
+EventThread::stop( void )
+{
+  stopIt = true; 
+}
 
+void
+EventThread::startLoop( void )
+{
+  stopIt = false;
+  //start();
+}
+
+bool
+EventThread::isStopped( void )
+{
+  return stopIt;
+}

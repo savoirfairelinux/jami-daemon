@@ -26,22 +26,72 @@
   */
 
 typedef struct {
+  /** Payload of the codec */
   int _payload;
+  /** Tells if the codec has been activated */
   gboolean is_active;
+  /** String description */
   gchar * name;
+  /** Sample rate */
   int sample_rate;
+  /** Bitrate */
   gdouble _bitrate;
+  /** Bandwidth */
   gdouble _bandwidth;
 }codec_t;
 
+/** @struct codec_t
+  * @brief Codec information.
+  * This struct holds information about a codec.
+  * This match how the server internally works and the dbus API to save and retrieve the codecs details.
+  */
+
+/** 
+ * This function initialize the codec list. 
+ */
 void codec_list_init();
+
+/** 
+ * This function empty and free the codec list. 
+ */
 void codec_list_clear();
+
+/** 
+ * This function append an codec to list. 
+ * @param c The codec you want to add 
+ */
 void codec_list_add(codec_t * c);
+
+/**
+ * Set a codec active. An active codec will be used for codec negociation
+ * @param name The string description of the codec
+ */
 void codec_set_active(gchar* name);
+
+/**
+ * Set a codec inactive. An active codec won't be used for codec negociation
+ * @param name The string description of the codec
+ */
 void codec_set_inactive(gchar* name);
+
+/** 
+ * Return the number of codecs in the list
+ * @return guint The number of codecs in the list 
+ */
 guint codec_list_get_size();
+
+/** 
+ * Return the codec structure that corresponds to the string description 
+ * @param name The string description of the codec
+ * @return codec_t* A codec or NULL 
+ */
 codec_t * codec_list_get(const gchar * name);
-//codec_t * codec_list_get(const int payload);
+
+/** 
+ * Return the codec at the nth position in the list
+ * @param index The position of the codec you want
+ * @return codec_t* A codec or NULL 
+ */
 codec_t* codec_list_get_nth(guint index);
 
 /**
@@ -49,11 +99,22 @@ codec_t* codec_list_get_nth(guint index);
  * @param index The position in the list of the prefered codec
  */ 
 void codec_set_prefered_order(guint index);
-//gchar * codec_get_name(codec_t * c);
-//guint codec_get_rate(gchar * codec_name);
 
+/** 
+ * Move the codec from an unit up in the codec_list
+ * @param index The current index in the list
+ */
 void codec_list_move_codec_up(guint index);
+
+/** 
+ * Move the codec from an unit down in the codec_list
+ * @param index The current index in the list
+ */
 void codec_list_move_codec_down(guint index);
+
+/**
+ * Notify modifications on codecs to the server
+ */
 void codec_list_update_to_daemon();
 
 #endif

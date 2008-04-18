@@ -38,6 +38,7 @@ SIPAccount::~SIPAccount()
 void
 SIPAccount::registerVoIPLink()
 {
+  _debug("SIPAccount: register account %s\n" , getAccountID().c_str());
   _link->setFullName(Manager::instance().getConfigString(_accountID,SIP_FULL_NAME));
   _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST_PART));
   int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
@@ -47,20 +48,20 @@ SIPAccount::registerVoIPLink()
   thislink->setUseStun( useStun!=0 ? true : false);
 
   _link->init();
-
   // Stuff needed for SIP registration.
   thislink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
   thislink->setUserPart(Manager::instance().getConfigString(_accountID,SIP_USER_PART));
   thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_AUTH_NAME));
   thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
-   _debug("sipaccount --> sendRegister\n");
   _link->sendRegister();
 }
 
 void
 SIPAccount::unregisterVoIPLink()
 {
+  _debug("SIPAccount: unregister account %s\n" , getAccountID().c_str());
   _link->sendUnregister();
+  _debug("Terminate SIP account\n");
   _link->terminate();
 }
 

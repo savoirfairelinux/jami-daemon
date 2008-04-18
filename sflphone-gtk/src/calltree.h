@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,15 +30,38 @@
   */
 
 calltab_t* active_calltree;
+/**
+ * Create a new widget calltree
+ * @return GtkWidget* A new widget
+ */
 void create_call_tree(calltab_t* tab);
 
+/**
+ * Update the toolbar's buttons state, according to the call state
+ */
 void toolbar_update_buttons();
 static void toggle_history(GtkToggleToolButton *toggle_tool_button, gpointer user_data);
 
+/**
+ * Add a call in the calltree
+ * @param c The call to add
+ */
 void update_call_tree_add (calltab_t* ct, call_t * c);
+/**
+ * Update the call tree if the call state changes
+ * @param c The call to update
+ */ 
 void update_call_tree (calltab_t* ct, call_t * c);
+/**
+ * Remove a call from the call tree
+ * @param c The call to remove
+ */
 void update_call_tree_remove (calltab_t* ct, call_t * c);
 
+/**
+ * Build the toolbar
+ * @return GtkWidget* The toolbar
+ */
 GtkWidget * create_toolbar();
 
 #endif 

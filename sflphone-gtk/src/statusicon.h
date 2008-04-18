@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,18 +21,49 @@
 #ifndef __STATUSICON_H__
 #define __STATUSICON_H__
 
-#define MINIMIZED  TRUE
 
 #include <gtk/gtk.h>
-/** @file statusicon.h
-  * @brief The status icon.
-  */
+#include <sflphone_const.h>
+/** 
+ * @file statusicon.h
+ * @brief The status icon in the system tray.
+ */
 
+/**
+ * Create the status icon 
+ */
 void show_status_icon();
+
+/**
+ * Set the menu active 
+ */  
 void status_icon_unminimize();
+
+/**
+ * Tells if the main window if minimized or not
+ * @return gboolean TRUE if the main window is minimized
+ *		    FALSE otherwise
+ */
 gboolean main_widget_minimized();
+
+/**
+ * Change the menu status
+ * @param state	TRUE if the  main window is minimized
+ *               FALSE otherwise
+ */
 void set_minimized( gboolean state );
+
+/**
+ * Make the system tray icon blink on incoming call
+ * @return active TRUE to make it blink
+ *		  FALSE to make it stop
+ */
 void status_tray_icon_blink( gboolean active );
+
+/**
+ * Accessor
+ * @return GtkStatusIcon* The status icon
+ */
 GtkStatusIcon* get_status_icon( void );
 
 #endif

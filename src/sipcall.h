@@ -28,112 +28,147 @@
 class AudioCodec;
 
 /**
- * SIPCall are SIP implementation of a normal Call 
- * @author Yan Morin <yan.morin@gmail.com>
+ * @file sipcall.h
+ * @brief SIPCall are SIP implementation of a normal Call 
  */
 class SIPCall : public Call
 {
-public:
+  public:
+
+    /**
+     * Constructor
+     * @param id	The call identifier
+     * @param type  The type of the call. Could be Incoming
+     *						 Outgoing
+     */
     SIPCall(const CallID& id, Call::CallType type);
 
+    /**
+     * Destructor
+     */
     ~SIPCall();
 
-  /** @return SIP call id : protected by eXosip lock */
-  int  getCid() { return _cid; }
-  /** @param cid SIP call id : protected by eXosip lock */
-  void setCid(int cid) { _cid = cid ; } 
-  /** @return SIP domain id : protected by eXosip lock  */
-  int  getDid() { return _did; }
-  /** @param did SIP domain id : protected by eXosip lock */
-  void setDid(int did) { _did = did; } 
-  /** @return SIP transaction id : protected by eXosip lock  */
-  int  getTid() { return _tid; }
-  /** @param did SIP transaction id : protected by eXosip lock */
-  void setTid(int tid) { _tid = tid; } 
+    /** 
+     * Call Identifier
+     * @return int  SIP call id : protected by eXosip lock 
+     */
+    int  getCid() { return _cid; }
+    
+    /** 
+     * Call Identifier
+     * @param cid SIP call id : protected by eXosip lock 
+     */
+    void setCid(int cid) { _cid = cid ; } 
+    
+    /** 
+     * Domain identifier
+     * @return int  SIP domain id : protected by eXosip lock  
+     */
+    int  getDid() { return _did; }
+    
+    /** 
+     * Domain identifier
+     * @param did SIP domain id : protected by eXosip lock 
+     */
+    void setDid(int did) { _did = did; } 
+    
+    /** 
+     * Transaction identifier
+     * @return int  SIP transaction id : protected by eXosip lock  
+     */
+    int  getTid() { return _tid; }
+    
+    /** 
+     * Transaction identifier
+     * @param tid SIP transaction id : protected by eXosip lock 
+     */
+    void setTid(int tid) { _tid = tid; } 
 
-  /**
-   * Setup incoming call, and verify for errors, before ringing the user.
-   * @param event eXosip Event
-   */
-  bool SIPCallInvite(eXosip_event_t *event);
+    /**
+     * Setup incoming call, and verify for errors, before ringing the user.
+     * @param event eXosip Event
+     * @return bool True on success
+     *		    false otherwise
+     */
+    bool SIPCallInvite(eXosip_event_t *event);
 
-  /**
-   * newReinviteCall is called when the IP-Phone user receives a change in the call
-   * it's almost an newIncomingCall but we send a 200 OK
-   * See: 3.7.  Session with re-INVITE (IP Address Change)
-   * @param event eXosip Event
-   * @return true if ok
-   */
-  bool SIPCallReinvite(eXosip_event_t *event);
+    /**
+     * newReinviteCall is called when the IP-Phone user receives a change in the call
+     * it's almost an newIncomingCall but we send a 200 OK
+     * See: 3.7.  Session with re-INVITE (IP Address Change)
+     * @param event eXosip Event
+     * @return bool True if ok
+     */
+    bool SIPCallReinvite(eXosip_event_t *event);
 
-  /**
-   * Peer answered to a call (on hold or not)
-   * @param event eXosip Event
-   * @return true if ok
-   */
-  bool SIPCallAnswered(eXosip_event_t *event);
+    /**
+     * Peer answered to a call (on hold or not)
+     * @param event eXosip Event
+     * @return bool True if ok
+     */
+    bool SIPCallAnswered(eXosip_event_t *event);
 
-  /**
-   * We retreive final SDP info if they changed
-   * @param event eXosip Event
-   * @return true if ok (change / no change) or false on error
-   */
-  bool SIPCallAnsweredWithoutHold(eXosip_event_t *event);
+    /**
+     * We retreive final SDP info if they changed
+     * @param event eXosip Event
+     * @return bool True if ok (change / no change) or false on error
+     */
+    bool SIPCallAnsweredWithoutHold(eXosip_event_t *event);
 
-  //TODO: humm?
-  int sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg);
+    //TODO: humm?
+    int sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg);
 
 
-private:
+  private:
 
-  // TODO: hum???
-  int sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med);
-  /**
-   * Set peer name and number with event->request->from
-   * @param event eXosip event
-   * @return false the event is invalid
-   */
+    // TODO: hum???
+    int sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med);
+    
+    /**
+     * Set peer name and number with event->request->from
+     * @param event eXosip event
+     * @return bool False if the event is invalid
+     */
+    bool setPeerInfoFromRequest(eXosip_event_t *event);
 
-  bool setPeerInfoFromRequest(eXosip_event_t *event);
-  /**
-   * Get a valid remote SDP or return a 400 bad request response if invalid
-   *
-   * @param event eXosip event
-   * @return valid remote_sdp or 0
-   */
-  sdp_message_t* getRemoteSDPFromRequest(eXosip_event_t *event);
+    /**
+     * Get a valid remote SDP or return a 400 bad request response if invalid
+     * @param event eXosip event
+     * @return sdp_message_t* A valid remote_sdp or 0
+     */
+    sdp_message_t* getRemoteSDPFromRequest(eXosip_event_t *event);
 
-  /**
-   * Get a valid remote media or return a 415 unsupported media type
-   *
-   * @param tid transaction id
-   * @param remote_sdp Remote SDP pointer
-   * @return valid sdp_media_t or 0
-   */
-  sdp_media_t* getRemoteMedia(int tid, sdp_message_t* remote_sdp);
+    /**
+     * Get a valid remote media or return a 415 unsupported media type
+     * @param tid transaction id
+     * @param remote_sdp Remote SDP pointer
+     * @return sdp_media_t* A valid sdp_media_t or 0
+     */
+    sdp_media_t* getRemoteMedia(int tid, sdp_message_t* remote_sdp);
 
-  /**
-   * Set Audio Port and Audio IP from Remote SDP Info
-   * @param remote_med Remote Media info
-   * @param remote_sdp Remote SDP pointer
-   * @return true if everything is set correctly
-   */
-  bool setRemoteAudioFromSDP(sdp_media_t* remote_med, sdp_message_t* remote_sdp);
+    /**
+     * Set Audio Port and Audio IP from Remote SDP Info
+     * @param remote_med Remote Media info
+     * @param remote_sdp Remote SDP pointer
+     * @return bool True if everything is set correctly
+     */
+    bool setRemoteAudioFromSDP(sdp_media_t* remote_med, sdp_message_t* remote_sdp);
 
-  /**
-   * Set Audio Codec with the remote choice
-   * @param remote_med Remote Media info
-   * @return true if everything is set correctly
-   */
-  bool setAudioCodecFromSDP(sdp_media_t* remote_med, int tid);
+    /**
+     * Set Audio Codec with the remote choice
+     * @param remote_med Remote Media info
+     * @return bool True if everything is set correctly
+     */
+    bool setAudioCodecFromSDP(sdp_media_t* remote_med, int tid);
 
- 
-  /** SIP call id */
-  int _cid;
-  /** SIP domain id */
-  int _did;
-  /** SIP transaction id */
-  int _tid;
+    /** SIP call id */
+    int _cid;
+
+    /** SIP domain id */
+    int _did;
+    
+    /** SIP transaction id */
+    int _tid;
 
 };
 

@@ -25,7 +25,7 @@
 #include "voiplink.h"
 #include "manager.h"
 
-VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0), _registrationError(""), _initDone(false)
+VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0), _registrationError(NO_ERROR), _initDone(false) 
 {
 }
 
@@ -82,23 +82,38 @@ VoIPLink::clearCallMap()
 }
 
 void
-VoIPLink::setRegistrationState(const enum RegistrationState state, const std::string& errorMessage)
+VoIPLink::setRegistrationState(const enum RegistrationState state, const int& errorCode)
 {
-  /** @todo Push to the GUI when state changes */
   _registrationState = state;
-  _registrationError = errorMessage;
+  _registrationError = errorCode;
 
+  std::string acc_ID = getAccountID();
+
+  /** Push to the GUI when state changes */
   switch (state) {
   case Registered:
-    Manager::instance().registrationSucceed(getAccountID());
+    Manager::instance().registrationSucceed(acc_ID);
     break;
   case Trying:
-    //Manager::instance(). some function to say that
+    Manager::instance().registrationTrying( acc_ID); 
     break;
   case Error:
-    Manager::instance().registrationFailed(getAccountID());
+    Manager::instance().registrationFailed(acc_ID);
+    // Notify the error to the client
+    if( _registrationError != NO_ERROR )
+      Manager::instance().notifyErrClient( errorCode );
+    break;
+  case ErrorAuth:
+    Manager::instance().registrationFailed(acc_ID);
+    break;
+  case ErrorNetwork:
+    Manager::instance().registrationFailed(acc_ID);
     break;
   case Unregistered:
+    Manager::instance().unregistrationSucceed(acc_ID);
+    break;
+  case ErrorHost:
+    Manager::instance().registrationFailed(acc_ID);
     break;
   }
 }
@@ -106,7 +121,7 @@ VoIPLink::setRegistrationState(const enum RegistrationState state, const std::st
 void
 VoIPLink::setRegistrationState(const enum RegistrationState state)
 {
-  setRegistrationState(state, "");
+  setRegistrationState(state, NO_ERROR);
 }
 
 // NOW

@@ -24,9 +24,12 @@
 #include <cc++/thread.h>
 
 class VoIPLink;
+
 /**
- * General thread to listen events continuously
+ * @file eventthread.h
+ * @brief General thread to listen events continuously
  */
+
 class EventThread : public ost::Thread {
 public:
   /**
@@ -36,10 +39,14 @@ public:
 	~EventThread (void);
 	
 	virtual void 	 run ();
+	virtual void	 stop();
+	virtual void	 startLoop();
+	bool		 isStopped();
 
 private:
   /** VoIPLink is the object being called by getEvents() method  */
 	VoIPLink*	_linkthread;
+	bool		stopIt;
 };
 
 #endif // __EVENT_THREAD_H__

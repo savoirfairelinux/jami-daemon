@@ -363,11 +363,9 @@ IAXVoIPLink::sendRegister()
   bool result = false;
 
   if (_host.empty()) {
-    Manager::instance().displayConfigError("Fill host field for IAX Account");
     return false;
   }
   if (_user.empty()) {
-    Manager::instance().displayConfigError("Fill user field for IAX Account");
     return false;
   }
 
@@ -430,6 +428,7 @@ IAXVoIPLink::sendUnregister()
 
   _nextRefreshStamp = 0;
 
+  _debug("IAX2 send unregister\n");
   setRegistrationState(Unregistered);
 
   return false;
@@ -655,7 +654,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     }
     call->setConnectionState(Call::Connected);
     call->setState(Call::Error);
-    Manager::instance().displayErrorText(id, "Failure");
     Manager::instance().callFailure(id);
     removeCall(id);
     break;
@@ -689,7 +687,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
   case IAX_EVENT_BUSY:
     call->setConnectionState(Call::Connected);
     call->setState(Call::Busy);
-    Manager::instance().displayErrorText(id, "Busy");
     Manager::instance().callBusy(id);
     removeCall(id);
     break;
@@ -817,7 +814,6 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 
 }
 
-
 /**
  * Handle the registration process
  */
@@ -830,10 +826,7 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
     iax_destroy(_regSession);
     _mutexIAX.leaveMutex();
     _regSession = NULL;
-
-    setRegistrationState(Error, "Registration failed");
-    //Manager::instance().registrationFailed(getAccountID());
-
+    setRegistrationState(ErrorAuth);
   }
   else if (event->etype == IAX_EVENT_REGACK) {
     /* Authentication succeeded */
@@ -845,13 +838,9 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
     // I mean, save the timestamp, so that we re-register again in the REFRESH time.
     // Defaults to 60, as per draft-guy-iax-03.
     _nextRefreshStamp = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);
-
     setRegistrationState(Registered);
-    //Manager::instance().registrationSucceed(getAccountID());
   }
 }
-
-
 
 void
 IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)

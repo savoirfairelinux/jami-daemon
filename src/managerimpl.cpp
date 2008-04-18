@@ -77,7 +77,6 @@ ManagerImpl::ManagerImpl (void)
   _dtmfKey = 0;
   _spkr_volume = 0;  // Initialize after by init() -> initVolume()
   _mic_volume  = 0;  // Initialize after by init() -> initVolume()
-  _mic_volume_before_mute = 0; 
 
   // Call
   _nbIncomingWaitingCall=0;
@@ -229,10 +228,6 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
 ManagerImpl::answerCall(const CallID& id)
 {
   stopTone(false); 
-  /*if (hasCurrentCall()) 
-    { 
-    onHoldCall(getCurrentCallId());
-    }*/
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Answering Call: Call doesn't exists\n");
@@ -245,9 +240,6 @@ ManagerImpl::answerCall(const CallID& id)
     return false;
   }
   
-  //Place current call on hold if it isn't
-
-
   // if it was waiting, it's waiting no more
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
   removeWaitingCall(id);
@@ -282,7 +274,6 @@ ManagerImpl::hangupCall(const CallID& id)
   bool returnValue = getAccountLink(accountid)->hangup(id);
   removeCallAccount(id);
   switchCall("");
-
 
   return returnValue;
 }
@@ -351,13 +342,7 @@ ManagerImpl::offHoldCall(const CallID& id)
   bool returnValue = getAccountLink(accountid)->offhold(id);
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "UNHOLD");
   switchCall(id);
-  if (returnValue) {
-    try {
-      //getAudioDriver()->startStream();
-    } catch(...) {
-      _debugException("! Manager Off hold could not start audio stream");
-    }
-  }
+
   return returnValue;
 }
 
@@ -376,24 +361,7 @@ ManagerImpl::transferCall(const CallID& id, const std::string& to)
   removeCallAccount(id);
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   switchCall("");
-
-
   return returnValue;
-}
-
-//THREAD=Main
-void
-ManagerImpl::mute() {
-  _mic_volume_before_mute = _mic_volume;
-  setMicVolume(0);
-}
-
-//THREAD=Main
-void
-ManagerImpl::unmute() {
-  if ( _mic_volume == 0 ) {
-    setMicVolume(_mic_volume_before_mute);
-  }
 }
 
 //THREAD=Main : Call:Incoming
@@ -452,46 +420,6 @@ ManagerImpl::initRegisterAccounts()
   // calls the client notification here in case of errors at startup...
   if( _audiodriver -> getErrorMessage() != -1 )
     notifyErrClient( _audiodriver -> getErrorMessage() );
-  return true;
-}
-
-//THREAD=Main
-// Currently unused
-  bool
-ManagerImpl::registerAccount(const AccountID& accountId)
-{
-  _debug("Register one VoIP Link\n");
-
-  // right now, we don't support two SIP account
-  // so we close everything before registring a new account
-  Account* account = getAccount(accountId);
-  if (account != 0) {
-    AccountMap::iterator iter = _accountMap.begin();
-    while ( iter != _accountMap.end() ) {
-      if ( iter->second ) {
-	iter->second->unregisterVoIPLink();
-      }
-      iter++;
-    }
-    // NOW
-    account->registerVoIPLink();
-    account->loadContacts();
-    account->publishPresence(PRESENCE_ONLINE);
-    account->subscribeContactsPresence();
-  }
-  return true;
-}
-
-//THREAD=Main
-// Currently unused
-  bool 
-ManagerImpl::unregisterAccount(const AccountID& accountId)
-{
-  _debug("Unregister one VoIP Link\n");
-
-  if (accountExists( accountId ) ) {
-    getAccount(accountId)->unregisterVoIPLink();
-  }
   return true;
 }
 
@@ -567,15 +495,6 @@ ManagerImpl::playDtmf(char code, bool isTalking)
     // put the size in bytes...
     // so size * 1 channel (mono) * sizeof (bytes for the data)
     audiolayer->playSamples(_buf, size * sizeof(SFLDataFormat), isTalking);
-    //audiolayer->putUrgent(_buf, size * sizeof(SFLDataFormat));
-
-    // We activate the stream if it's not active yet.
-    //if (!audiolayer->isStreamActive()) {
-    //audiolayer->startStream();
-    //} else {
-    //_debugAlsa("send dtmf - sleep\n");
-    //audiolayer->sleep(pulselen); // in milliseconds
-    //}
   }
   returnValue = true;
 
@@ -616,8 +535,6 @@ ManagerImpl::isWaitingCall(const CallID& id) {
   }
   return true;
 }
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Management of event peer IP-phone 
@@ -731,53 +648,6 @@ ManagerImpl::callFailure(const CallID& id)
 }
 
 //THREAD=VoIP
-  void 
-ManagerImpl::displayTextMessage(const CallID& id, const std::string& message)
-{
-  /*if(_gui) {
-    _gui->displayTextMessage(id, message);
-    }*/
-}
-
-//THREAD=VoIP
-  void 
-ManagerImpl::displayErrorText(const CallID& id, const std::string& message)
-{
-  /*if(_gui) {
-    _gui->displayErrorText(id, message);
-    } else {
-    std::cerr << message << std::endl;
-    }*/
-}
-
-//THREAD=VoIP
-  void 
-ManagerImpl::displayError (const std::string& error)
-{
-  /*if(_gui) {
-    _gui->displayError(error);
-    }*/
-}
-
-//THREAD=VoIP
-  void 
-ManagerImpl::displayStatus(const std::string& status)
-{
-  /*if(_gui) {
-    _gui->displayStatus(status);
-    }*/
-}
-
-//THREAD=VoIP
-  void 
-ManagerImpl::displayConfigError (const std::string& message)
-{
-  /*if(_gui) {
-    _gui->displayConfigError(message);
-    }*/
-}
-
-//THREAD=VoIP
   void
 ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, const std::string& nb_msg)
 {
@@ -785,21 +655,22 @@ ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, const std
 }
 
 //THREAD=VoIP
-  void
-ManagerImpl::stopVoiceMessageNotification(const AccountID& accountId)
-{
-  if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, 0 );
-} 
-
-//THREAD=VoIP
   void 
 ManagerImpl::registrationSucceed(const AccountID& accountid)
 {
   Account* acc = getAccount(accountid);
   if ( acc ) { 
-    //acc->setState(true); 
+    _debug("REGISTRATION SUCCEED\n");
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
   }
+}
+
+//THREAD=VoIP
+  void 
+ManagerImpl::unregistrationSucceed(const AccountID& accountid)
+{
+  _debug("UNREGISTRATION SUCCEED\n");
+  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }
 
 //THREAD=VoIP
@@ -808,7 +679,18 @@ ManagerImpl::registrationFailed(const AccountID& accountid)
 {
   Account* acc = getAccount(accountid);
   if ( acc ) { 
-    //acc->setState(false);
+    _debug("REGISTRATION FAILED\n");
+    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+  }
+}
+
+//THREAD=VoIP
+  void 
+ManagerImpl::registrationTrying(const AccountID& accountid)
+{
+  Account* acc = getAccount(accountid);
+  if ( acc ) { 
+    _debug("REGISTRATION TRYING\n");
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
   }
 }
@@ -904,7 +786,6 @@ ManagerImpl::ringback () {
   void
 ManagerImpl::ringtone() 
 {
-  // int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
   if( isRingtoneEnabled() )
   {
     std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
@@ -963,11 +844,6 @@ ManagerImpl::getTelephoneFile()
   }
 }
 
-
-/**
- * Use Urgent Buffer
- * By AudioRTP thread
- */
 void
 ManagerImpl::notificationIncomingCall(void) {
 
@@ -1098,6 +974,9 @@ ManagerImpl::initConfigFile (void)
   fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
   fill_config_int(CONFIG_RINGTONE, YES_STR);
+  fill_config_int(CONFIG_DIALPAD, YES_STR);
+  fill_config_int(CONFIG_START, NO_STR);
+  fill_config_int(CONFIG_POPUP, YES_STR);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1146,7 +1025,7 @@ ManagerImpl::retrieveActiveCodecs()
 }
 
   void
-ManagerImpl::setActiveCodecList(const std::vector<std::string>& list)
+ManagerImpl::setActiveCodecList(const std::vector<  ::DBus::String >& list)
 {
   _debug("Set active codecs list\n");
   _codecDescriptorMap.saveActiveCodecs(list);
@@ -1430,8 +1309,45 @@ ManagerImpl::setRingtoneChoice( const std::string& tone )
   setConfig( AUDIO , RING_CHOICE , tone ); 
 }
 
+int
+ManagerImpl::getDialpad( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_DIALPAD );
+}
+
 void
-ManagerImpl::notifyErrClient( const int& errCode )
+ManagerImpl::setDialpad( void )
+{
+  ( getConfigInt( PREFERENCES , CONFIG_DIALPAD ) == DISPLAY_DIALPAD )? setConfig(PREFERENCES , CONFIG_DIALPAD , NO_STR ) : setConfig( PREFERENCES , CONFIG_DIALPAD , YES_STR );
+
+}
+
+void 
+ManagerImpl::startHidden( void )
+{
+  ( getConfigInt( PREFERENCES , CONFIG_START ) ==  START_HIDDEN)? setConfig(PREFERENCES , CONFIG_START , NO_STR ) : setConfig( PREFERENCES , CONFIG_START , YES_STR );
+}
+
+int 
+ManagerImpl::isStartHidden( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_START );
+}
+
+void 
+ManagerImpl::switchPopupMode( void )
+{
+  ( getConfigInt( PREFERENCES , CONFIG_POPUP ) ==  WINDOW_POPUP)? setConfig(PREFERENCES , CONFIG_POPUP , NO_STR ) : setConfig( PREFERENCES , CONFIG_POPUP , YES_STR );
+}
+
+int 
+ManagerImpl::popupMode( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_POPUP );
+}
+
+void
+ManagerImpl::notifyErrClient( const ::DBus::Int32& errCode )
 {
   if( _dbus ){
     _debug("NOTIFY ERR NUMBER %i\n" , errCode); 
@@ -1620,20 +1536,6 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
   return returnValue;
 }
 
-/**
- * Main Thread
- *
- * @todo When is this called ? Why this name 'getEvents' ?
- */
-/**
- * DEPRECATED
- bool
- ManagerImpl::getEvents() {
- initRegisterAccounts();
- return true;
- }
- */
-
 // TODO: rewrite this
 /**
  * Main Thread
@@ -1686,31 +1588,12 @@ ManagerImpl::getCallStatus(const std::string& sequenceId)
     tk.push_back(iter->second);
     tk.push_back(destination);
     tk.push_back(status);
-    //_gui->sendCallMessage(code, sequenceId, iter->first, tk);
     tk.clear();
 
     iter++;
   }
 
   return true;
-}
-
-//THREAD=Main
-/* Unused, Deprecated */
-  bool 
-ManagerImpl::getConfigAll(const std::string& sequenceId)
-{
-  bool returnValue = false;
-  Conf::ConfigTreeIterator iter = _config.createIterator();
-  TokenList tk = iter.begin();
-  if (tk.size()) {
-    returnValue = true;
-  }
-  while (tk.size()) {
-    //_gui->sendMessage("100", sequenceId, tk);
-    tk = iter.next();
-  }
-  return returnValue;
 }
 
 //THREAD=Main
@@ -1762,99 +1645,6 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, int 
   return _config.setConfigTreeItem(section, name, valueStream.str());
 }
 
-//THREAD=Main
-  bool 
-ManagerImpl::getAudioDeviceList(const std::string& sequenceId, int ioDeviceMask) 
-{
-  AudioLayer* audiolayer = getAudioDriver();
-  if (audiolayer == 0) { return false; }
-
-  bool returnValue = false;
-
-  // TODO: test when there is an error on initializing...
-  TokenList tk;
-  AudioDevice* device = 0;
-  int nbDevice = audiolayer->getDeviceCount();
-  /* 
-     for (int index = 0; index < nbDevice; index++ ) {
-     device = audiolayer->getAudioDeviceInfo(index, ioDeviceMask);
-     if (device != 0) {
-     tk.clear();
-     std::ostringstream str; str << index; tk.push_back(str.str());
-     tk.push_back(device->getName());
-     tk.push_back(device->getApiName());
-     std::ostringstream rate; rate << (int)(device->getRate()); tk.push_back(rate.str());
-  //_gui->sendMessage("100", sequenceId, tk);
-
-  // don't forget to delete it after
-  delete device; device = 0;
-  }
-  }*/
-  returnValue = true;
-
-  std::ostringstream rate; 
-  rate << "VARIABLE";
-  tk.clear();
-  tk.push_back(rate.str());
-  //_gui->sendMessage("101", sequenceId, tk);
-
-  return returnValue;
-}
-
-//THREAD=Main
-  bool
-ManagerImpl::getCountryTones(const std::string& sequenceId)
-{
-  // see ToneGenerator for the list...
-  sendCountryTone(sequenceId, 1, "North America");
-  sendCountryTone(sequenceId, 2, "France");
-  sendCountryTone(sequenceId, 3, "Australia");
-  sendCountryTone(sequenceId, 4, "United Kingdom");
-  sendCountryTone(sequenceId, 5, "Spain");
-  sendCountryTone(sequenceId, 6, "Italy");
-  sendCountryTone(sequenceId, 7, "Japan");
-
-  return true;
-}
-
-//THREAD=Main
-void 
-ManagerImpl::sendCountryTone(const std::string& sequenceId, int index, const std::string& name) {
-  TokenList tk;
-  std::ostringstream str; str << index; tk.push_back(str.str());
-  tk.push_back(name);
-  //_gui->sendMessage("100", sequenceId, tk);
-}
-
-//THREAD=Main
-bool
-ManagerImpl::getDirListing(const std::string& sequenceId, const std::string& path, int *nbFile) {
-  TokenList tk;
-  try {
-    ost::Dir dir(path.c_str());
-    const char *cFileName = 0;
-    std::string fileName;
-    std::string filePathName;
-    while ( (cFileName=dir++) != 0 ) {
-      fileName = cFileName;
-      filePathName = path + DIR_SEPARATOR_STR + cFileName;
-      if (fileName.length() && fileName[0]!='.' && !ost::isDir(filePathName.c_str())) {
-	tk.clear();
-	std::ostringstream str;
-	str << (*nbFile);
-	tk.push_back(str.str());
-	tk.push_back(filePathName);
-	//_gui->sendMessage("100", sequenceId, tk);
-	(*nbFile)++;
-      }
-    }
-    return true;
-  } catch (...) {
-    // error to open file dir
-    return false;
-  }
-}
-
   std::vector< std::string > 
 ManagerImpl::getAccountList() 
 {
@@ -1873,8 +1663,6 @@ ManagerImpl::getAccountList()
   return v;
 }
 
-
-
   std::map< std::string, std::string > 
 ManagerImpl::getAccountDetails(const AccountID& accountID) 
 {
@@ -1890,12 +1678,6 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 	getConfigString(accountID, CONFIG_ACCOUNT_ALIAS)
 	)
       );
-  /*a.insert(
-    std::pair<std::string, std::string>(
-    CONFIG_ACCOUNT_AUTO_REGISTER, 
-    getConfigString(accountID, CONFIG_ACCOUNT_AUTO_REGISTER)== "1" ? "TRUE": "FALSE"
-    )
-    );*/
   a.insert(
       std::pair<std::string, std::string>(
 	CONFIG_ACCOUNT_ENABLE, 
@@ -1906,9 +1688,12 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
       std::pair<std::string, std::string>(
 	"Status", 
 	(state == VoIPLink::Registered ? "REGISTERED":
-	 (state == VoIPLink::Unregistered ? "UNREGISTERED":
-	  (state == VoIPLink::Trying ? "TRYING":
-	   (state == VoIPLink::Error ? "ERROR": "ERROR"))))
+	(state == VoIPLink::Unregistered ? "UNREGISTERED":
+	(state == VoIPLink::Trying ? "TRYING":
+	(state == VoIPLink::ErrorAuth ? "ERROR_AUTH": 
+	(state == VoIPLink::ErrorNetwork ? "ERROR_NETWORK": 
+	(state == VoIPLink::ErrorHost ? "ERROR_HOST": 
+	(state == VoIPLink::Error ? "ERROR": "ERROR")))))))
 	)
       );
   a.insert(
@@ -2005,6 +1790,7 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 ManagerImpl::setAccountDetails( const ::DBus::String& accountID, 
     const std::map< ::DBus::String, ::DBus::String >& details )
 {
+
   std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
 
   setConfig(accountID, CONFIG_ACCOUNT_ALIAS, (*details.find(CONFIG_ACCOUNT_ALIAS)).second);
@@ -2035,30 +1821,38 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
   }
 
   saveConfig();
-
-  /*
-   * register if it was just enabled, and we hadn't registered
-   * unregister if it was enabled/registered, and we want it closed
-   */
+  
   Account* acc = getAccount(accountID);
-
   acc->loadConfig();
-  if (acc->isEnabled()) {
+  if (acc->isEnabled()){ 
+    acc->unregisterVoIPLink();
+    acc->registerVoIPLink();}
+  else 
+    acc->unregisterVoIPLink();
+
+  // Update account details
+  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+}
+
+void
+ManagerImpl::sendRegister( const ::DBus::String& accountID , bool expire )
+{
+  // Update the active field
+  setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
+ 
+  Account* acc = getAccount(accountID);
+  acc->loadConfig();
+  // Test on the value freshly updated
+  if ( acc->isEnabled() ) {
     // Verify we aren't already registered, then register
-    if (acc->getRegistrationState() == VoIPLink::Unregistered) {
+      _debug("Send register for account %s\n" , accountID.c_str());
       acc->registerVoIPLink();
-    }
   } else {
     // Verify we are already registered, then unregister
-    if (acc->getRegistrationState() == VoIPLink::Registered) {
+      _debug("Send unregister for account %s\n" , accountID.c_str());
       acc->unregisterVoIPLink();
-    }
   }
-
-  /** @todo Make the daemon use the new settings */
-  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }                   
-
 
   void
 ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& details)
@@ -2106,91 +1900,8 @@ ManagerImpl::removeAccount(const AccountID& accountID)
 
   saveConfig();
 
+  _debug("REMOVE ACCOUNT\n");
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-}
-
-  std::string  
-ManagerImpl::getDefaultAccount()
-{
-
-  std::string id;
-  id = getConfigString(PREFERENCES, "DefaultAccount");
-  _debug("Default Account = %s\n",id.c_str());	
-  return id;
-}
-
-  void
-ManagerImpl::setDefaultAccount(const AccountID& accountID)
-{
-  // we write into the Preferences section the field Default
-  setConfig("Preferences", "DefaultAccount", accountID);
-}
-
-
-
-
-//THREAD=Main
-/*
- * Experimental...
- */
-bool
-ManagerImpl::setSwitch(const std::string& switchName, std::string& message) {
-  AudioLayer* audiolayer = 0;
-  if (switchName == "audiodriver" ) {
-    // hangup all call here 
-    audiolayer = getAudioDriver();
-
-    int oldSampleRate = 0;
-    if (audiolayer) { oldSampleRate = audiolayer->getSampleRate(); }
-
-    selectAudioDriver();
-    audiolayer = getAudioDriver();
-
-    if (audiolayer) {
-      int error = audiolayer->getErrorMessage();
-      int newSampleRate = audiolayer->getSampleRate();
-
-      if (error == -1) {
-	message = error;
-	return false;
-      }
-
-      if (newSampleRate != oldSampleRate) {
-	_toneMutex.enterMutex();
-
-	_debug("Unload Telephone Tone\n");
-	delete _telephoneTone; _telephoneTone = NULL;
-	_debug("Unload DTMF Key\n");
-	delete _dtmfKey; _dtmfKey = NULL;
-
-	_debug("Load Telephone Tone\n");
-	std::string country = getConfigString(PREFERENCES, ZONE_TONE);
-	_telephoneTone = new TelephoneTone(country, newSampleRate);
-
-	_debugInit("Loading DTMF key");
-	_dtmfKey = new DTMF(newSampleRate);
-
-	_toneMutex.leaveMutex();
-      }
-
-      message = _("Change with success");
-      playDtmf('9', true);
-      //getAudioDriver()->sleep(300); // in milliseconds
-      playDtmf('1', true);
-      //getAudioDriver()->sleep(300); // in milliseconds
-      playDtmf('1', true);
-      return true;
-    }
-  } else if ( switchName == "echo" ) {
-    audiolayer = getAudioDriver();
-    if (audiolayer) {
-      audiolayer->toggleEchoTesting();
-      return true;
-    }
-  }
-
-
-  return false;
 }
 
 // ACCOUNT handling
@@ -2257,7 +1968,6 @@ ManagerImpl::loadAccountMap()
   std::string accountType;
   Account* tmpAccount;
 
-  // iter = std::string
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
     // Check if it starts with "Account:" (SIP and IAX pour le moment)
@@ -2287,37 +1997,6 @@ ManagerImpl::loadAccountMap()
 
     iter++;
   }
-
-
-  /*
-  // SIP Loading X account...
-  short nbAccountSIP = ACCOUNT_SIP_COUNT_DEFAULT;
-  for (short iAccountSIP = 0; iAccountSIP<nbAccountSIP; iAccountSIP++) {
-  std::ostringstream accountName;
-  accountName << "SIP" << iAccountSIP;
-
-  tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, accountName.str());
-  if (tmpAccount!=0) {
-  _debugMid(" %s", accountName.str().data());
-  _accountMap[accountName.str()] = tmpAccount;
-  nbAccount++;
-  }
-  }
-
-  // IAX Loading X account...
-  short nbAccountIAX = ACCOUNT_IAX_COUNT_DEFAULT;
-  for (short iAccountIAX = 0; iAccountIAX<nbAccountIAX; iAccountIAX++) {
-  std::ostringstream accountName;
-  accountName << "IAX" << iAccountIAX;
-  tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, accountName.str());
-  if (tmpAccount!=0) {
-  _debugMid(" %s", accountName.str().data());
-  _accountMap[accountName.str()] = tmpAccount;
-  nbAccount++;
-  }
-  }
-  _debugEnd("\n");
-  */
 
   return nbAccount;
 }

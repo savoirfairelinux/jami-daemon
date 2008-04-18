@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -88,7 +88,8 @@ void call_list_init (calltab_t* tab);
 void call_list_clean (calltab_t* tab);
 
 /** This function append a call to list. 
-  * @param c The call you want to add */
+  * @param c The call you want to add 
+  * */
 void call_list_add (calltab_t* tab, call_t * c);
 
 /** This function remove a call from list. 
@@ -121,9 +122,11 @@ call_t * call_list_get (calltab_t* tab, const gchar * callID );
   * @return The full name of the caller or an empty string */
 gchar * call_get_name ( const call_t * c);
 
-/** This function parse the call_t.from field to return the number
-  * @param c The call
-  * @return The number of the caller */
+/** 
+ * This function parse the call_t.from field to return the number
+ * @param c The call
+ * @return The number of the caller 
+ */
 gchar * call_get_number (const call_t * c);
 
 /** Mark a call as selected.  There can be only one selected call.  This call

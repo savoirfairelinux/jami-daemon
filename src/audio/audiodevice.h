@@ -26,7 +26,8 @@
 #define AUDIODEVICERATE 8000
 
 /**
- * Container device for attribute storage
+ * @file audiodevice.c
+ * @brief Container device for attribute storage
  * Have almost only get/set method
  */
 class AudioDevice {

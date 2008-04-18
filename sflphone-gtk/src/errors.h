@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> 
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,29 +17,21 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#ifndef __SLIDERS_H__
-#define __SLIDERS_H__
+#ifndef __ERRORS_H
+#define __ERRORS_H
 
-#include <gtk/gtk.h>
-/** @file sliders.h
-  * @brief Volume sliders at the bottom of the main window.
+/** @file errors.h
+  * @brief Implements internal errors notifications to the client.
   */
 
+#include <sflphone_const.h>
+
 /**
- * Build the sliders widget
- * @param device  Mic or speaker
- * @return GtkWidget* The slider
+ * Display an internal error.
+ * @param err The error code
+ *	  ALSA_PLAYBACK_ERROR
+ *	  ALSA_CAPTURE_ERROR
  */
-GtkWidget * create_slider(const gchar * device);
+void sflphone_throw_exception( int err );
 
-
-/** 
- * This function updates the sliders without sending the value to the server.
- * This behavior prevents an infinite loop when receiving an updated volume from
- * the server.
- * @param device The device slider to update {speaker, mic}
- * @param value The value to set [0, 1.0]
- */
-void set_slider(const gchar * device, gdouble value);
-
-#endif 
+#endif

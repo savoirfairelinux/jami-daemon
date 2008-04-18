@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,23 +26,87 @@
  * @file configwindow.h
  * @brief The Preferences window.
  */
+
+/**
+ * Fill the account list widget with the data the server send
+ */
 void config_window_fill_account_list();
+
+/**
+ * Fill the codec list widget with the data the server send
+ */
 void config_window_fill_codec_list();
+
+/**
+ * Fill the input audio plugin list widget with the data the server send
+ * Currently not used
+ */
 void config_window_fill_input_audio_plugin_list();
+
+/**
+ * Fill the output audio plugin list widget with the data the server send
+ */
 void config_window_fill_output_audio_plugin_list();
+
+/**
+ * Fill the output audio device list widget with the data the server send
+ */
 void config_window_fill_output_audio_device_list();
+
+/**
+ * Select an output audio device
+ */
 void select_active_output_audio_device();
+
+/**
+ * Fill the input audio device list widget with the data the server send
+ */
 void config_window_fill_input_audio_device_list();
+
+/**
+ * Select an input audio device
+ */
 void select_active_input_audio_device();
+
+/**
+ * Select an output audio plugin
+ */
 void select_active_output_audio_plugin();
+
+/**
+ * Update the combo box state.
+ * If the default plugin has been selected, the audio devices have to been unsensitive
+ * because the default plugin always use default audio device
+ * @param plugin The description of the selected plugin
+ */
 void update_combo_box( gchar* plugin );
-void default_account(GtkWidget *widget, gpointer data);
-void bold_if_default_account(GtkTreeViewColumn *col, GtkCellRenderer *rend, GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data);
-void default_codecs(GtkWidget* widget, gpointer data);
+
+/**
+ * Build the widget to display codec list
+ * @return GtkWidget* The widget created
+ */
 GtkWidget * create_codec_table();
+
+/**
+ * Create the main account window in a new window
+ * @return GtkWidget* The widget created
+ */
 GtkWidget * create_accounts_tab();
+
+/**
+ * Create the audio configuration tab and add it to the main configuration window
+ * @return GtkWidget* The widget created
+ */
 GtkWidget * create_audio_tab();
+
+/**
+ * Display the main configuration window
+ */
 void show_config_window();
+
+/**
+ * Display the main account window
+ */
 void show_accounts_window();
 
 #endif 

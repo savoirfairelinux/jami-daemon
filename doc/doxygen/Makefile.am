@@ -5,8 +5,8 @@ html_parent_dir = .
 HTML_HEADER = 
 HTML_FOOTER = 
 
-all:
-
+all: doxygen-trac
+	
 .PHONY: doxygen-trac
 
 doxygen-trac: clean core-doc-trac gtk-gui-doc-trac

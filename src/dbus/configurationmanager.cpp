@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc@squidy.info>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *                                                                              
@@ -46,6 +46,12 @@ ConfigurationManager::setAccountDetails( const ::DBus::String& accountID,
 {
 	_debug("ConfigurationManager::setAccountDetails received\n");
 	Manager::instance().setAccountDetails(accountID, details);
+}
+
+	void 
+ConfigurationManager::sendRegister( const ::DBus::String& accountID, const ::DBus::Int32& expire )
+{
+	Manager::instance().sendRegister(accountID, expire);
 }
 
 	void 
@@ -213,24 +219,6 @@ ConfigurationManager::getRecordDeviceList(  )
 
 }
 
-	::DBus::String
-ConfigurationManager::getDefaultAccount(  )
-{
-	_debug("ConfigurationManager::getDefaultAccount received\n");
-	return Manager::instance().getDefaultAccount();
-}
-
-/*
- * used to set a default account
- */ 
-	void 
-ConfigurationManager::setDefaultAccount( const ::DBus::String& accountID )
-{
-	 _debug("ConfigurationManager::setDefaultAccount received\n");
-	Manager::instance().setDefaultAccount(accountID);
-
-}
-
 ::DBus::Int32
 ConfigurationManager::isIax2Enabled( void )
 {
@@ -260,4 +248,42 @@ ConfigurationManager::setRingtoneChoice( const ::DBus::String& tone )
 {
   Manager::instance().setRingtoneChoice( tone ); 
 }
+
+::DBus::Int32
+ConfigurationManager::getDialpad( void )
+{
+  return Manager::instance().getDialpad(  ); 
+}
+
+void
+ConfigurationManager::setDialpad( void )
+{
+  Manager::instance().setDialpad( ); 
+}
+
+void
+ConfigurationManager::startHidden( void )
+{
+  Manager::instance().startHidden(  ); 
+}
+
+::DBus::Int32
+ConfigurationManager::isStartHidden( void )
+{
+  return Manager::instance().isStartHidden(  ); 
+}
+
+void
+ConfigurationManager::switchPopupMode( void )
+{
+  Manager::instance().switchPopupMode(  ); 
+}
+
+::DBus::Int32
+ConfigurationManager::popupMode( void )
+{
+  return Manager::instance().popupMode(  ); 
+}
+
+
 

@@ -25,14 +25,11 @@
       <arg type="as" name="list" direction="out"/>
     </method>
    
-    <method name="getDefaultAccount">
-      <arg type="s" name="accountID" direction="out"/>
-    </method>
-    
-    <method name="setDefaultAccount">
+    <method name="sendRegister">
       <arg type="s" name="accountID" direction="in"/>
+      <arg type="i" name="expire" direction="in"/>
     </method>
-   
+
    <!--      ///////////////////////               -->
 
   <!-- Various audio-related methods   -->
@@ -139,6 +136,27 @@
  
     <method name="isIax2Enabled">
       <arg type="i" name="res" direction="out"/>
+    </method>
+
+    <method name="getDialpad">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="setDialpad">
+    </method>
+
+    <method name="startHidden">
+    </method>
+
+    <method name="isStartHidden">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="popupMode">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="switchPopupMode">
     </method>
 
   <!--        /////////////////////////////       -->

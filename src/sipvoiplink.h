@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2008 Savoir-Faire Linux inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,266 +25,419 @@
 #include <string>
 #include <eXosip2/eXosip.h>
 #include "audio/audiortp.h"
+#include <osip2/osip_mt.h>
 
 class EventThread;
 class SIPCall;
 
 /**
- * Specific VoIPLink for SIP (SIP core for incoming and outgoing events)
- * @author Yan Morin <yan.morin@gmail.com>
+ * @file sipvoiplink.h
+ * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events)
  */
 
 class SIPVoIPLink : public VoIPLink
 {
-public:
-  SIPVoIPLink(const AccountID& accountID);
+  public:
 
-  ~SIPVoIPLink();
+    /**
+     * Constructor
+     * @param accountID The account identifier
+     */
+    SIPVoIPLink(const AccountID& accountID);
 
-  /** try to initiate the eXosip engine/thread and set config */
-  bool init(void);
-  void terminate(void);
-  bool checkNetwork(void);
-  void getEvent(void);
+    /**
+     * Destructor
+     */
+    ~SIPVoIPLink();
 
-  bool sendRegister(void);
-  bool sendUnregister(void);
+    int eXosip_running;
 
-  Call* newOutgoingCall(const CallID& id, const std::string& toUrl);
-  bool answer(const CallID& id);
+    /** 
+     * Try to initiate the eXosip engine/thread and set config 
+     * @return bool True if OK
+     */
+    bool init(void);
 
-  bool hangup(const CallID& id);
-  bool cancel(const CallID& id);
-  bool onhold(const CallID& id);
-  bool offhold(const CallID& id);
-  bool transfer(const CallID& id, const std::string& to);
-  bool refuse (const CallID& id);
-  bool carryingDTMFdigits(const CallID& id, char code);
-  bool sendMessage(const std::string& to, const std::string& body);
-  bool isContactPresenceSupported();
-  void subscribePresenceForContact(Contact* contact);
-  void publishPresenceStatus(std::string status);
-  
-  // TODO Not used yet
-  void sendMessageToContact(const CallID& id, const std::string& message);
+    /**
+     * Delete link-related stuuf like calls
+     */
+    void terminate(void);
 
-  // SIP Specific
+    /**
+     * Check if a local IP can be found
+     * @return bool True if network is reachable
+     */
+    bool checkNetwork(void);
 
-  /** If set to true, we check for a firewall
-   * @param use true if we use STUN
-   */
-  void setUseStun(bool use) { _useStun = use; }
+    /**
+     * Event listener. Each event send by the call manager is received and handled from here
+     */
+    void getEvent(void);
 
-  /** The name of the STUN server
-   * @param server Server FQDN/IP
-   */
-  void setStunServer(const std::string& server) { _stunServer = server; }
+    /**
+     * Build and send SIP registration request
+     * @return bool True on success
+     *		  false otherwise
+     */
+    bool sendRegister(void);
 
-  /** Set the SIP proxy
-   * @param proxy Proxy FQDN/IP
-   */
-  void setProxy(const std::string& proxy) { _proxy = proxy; }
-  void setUserPart(const std::string& userpart) { _userpart = userpart; }
-  void setAuthName(const std::string& authname) { _authname = authname; }
-  void setPassword(const std::string& password) { _password = password; }
+    /**
+     * Build and send SIP unregistration request
+     * @return bool True on success
+     *		  false otherwise
+     */
+    bool sendUnregister(void);
 
+    /**
+     * Place a new call
+     * @param id  The call identifier
+     * @param toUrl  The Sip address of the recipient of the call
+     * @return Call* The current call
+     */
+    Call* newOutgoingCall(const CallID& id, const std::string& toUrl);
 
-private:
-  /** Terminate every call not hangup | brutal | Protected by mutex */
-  void terminateSIPCall(); 
+    /**
+     * Answer the call
+     * @param id The call identifier
+     * @return bool True on success
+     */
+    bool answer(const CallID& id);
 
-  /**
-  * Get the local Ip by eXosip 
-  * only if the local ip address is to his default value: 127.0.0.1
-  * setLocalIpAdress
-  * @return false if not found
-  */
-  bool loadSIPLocalIP();
+    /**
+     * Hang up the call
+     * @param id The call identifier
+     * @return bool True on success
+     */
+    bool hangup(const CallID& id);
 
-  /**
-   * send SIP authentification
-   * @return true if sending succeed
-   */
-  bool sendSIPAuthentification();
+    /**
+     * Cancel the call
+     * @param id The call identifier
+     * @return bool True on success
+     */
+    bool cancel(const CallID& id);
 
-  /**
-   * Get a SIP From header ("fullname" <sip:userpart@hostpart>)
-   * @param userpart
-   * @param hostpart
-   * @return SIP URI for from Header
-   */
-  std::string SIPFromHeader(const std::string& userpart, const std::string& hostpart);
+    /**
+     * Put the call on hold
+     * @param id The call identifier
+     * @return bool True on success
+     */
+    bool onhold(const CallID& id);
 
-  /**
-   * Build a sip address with the number that you want to call
-   * Example: sip:124@domain.com
-   * @return result as a string
-   */
-  std::string SIPToHeader(const std::string& to);
+    /**
+     * Put the call off hold
+     * @param id The call identifier
+     * @return bool True on success
+     */
+    bool offhold(const CallID& id);
 
-  /**
-   * Check if an url is sip-valid
-   * @return true if osip tell that is valid
-   */
-  bool SIPCheckUrl(const std::string& url);
+    /**
+     * Transfer the call
+     * @param id The call identifier
+     * @param to The recipient of the transfer
+     * @return bool True on success
+     */
+    bool transfer(const CallID& id, const std::string& to);
 
+    /**
+     * Refuse the call
+     * @param id The call identifier
+     * @return bool True on success
+     */
+    bool refuse (const CallID& id);
 
-  /**
-   * SIPOutgoingInvite do SIPStartCall
-   * @return true if all is correct
-   */
-  bool SIPOutgoingInvite(SIPCall* call);
+    /**
+     * Send DTMF
+     * @param id The call identifier
+     * @param code  The char code
+     * @return bool True on success
+     */
+    bool carryingDTMFdigits(const CallID& id, char code);
 
-  /**
-   * Start a SIP Call
-   * @return true if all is correct
-   */
-  bool SIPStartCall(SIPCall* call, const std::string& subject);
-  std::string getSipFrom();
-  std::string getSipRoute();
-  std::string getSipTo(const std::string& to_url);
+    bool sendMessage(const std::string& to, const std::string& body);
 
-  /**
-   * Set audio (SDP) configuration for a call
-   * localport, localip, localexternalport
-   * @param call a SIPCall valid pointer
-   * @return true
-   */
-  bool setCallAudioLocal(SIPCall* call);
+    bool isContactPresenceSupported();
 
-  /**
-   * Create a new call and send a incoming call notification to the user
-   * @param event eXosip Event
-   */
-  void SIPCallInvite(eXosip_event_t *event);
+    void subscribePresenceForContact(Contact* contact);
 
-  /**
-   * Use a exisiting call to restart the audio
-   * @param event eXosip Event
-   */
-  void SIPCallReinvite(eXosip_event_t *event);
+    void publishPresenceStatus(std::string status);
 
-  /**
-   * Tell the user that the call is ringing
-   * @param event eXosip Event
-   */
-  void SIPCallRinging(eXosip_event_t *event);
+    // TODO Not used yet
+    void sendMessageToContact(const CallID& id, const std::string& message);
 
-  /**
-   * Tell the user that the call was answered
-   * @param event eXosip Event
-   */
-  void SIPCallAnswered(eXosip_event_t *event);
+    /** 
+     * If set to true, we check for a firewall
+     * @param use true if we use STUN
+     */
+    void setUseStun(bool use) { _useStun = use; }
 
-  /**
-   * Handling 4XX error
-   * @param event eXosip Event
-   */
-  void SIPCallRequestFailure(eXosip_event_t *event);
+    /** 
+     * The name of the STUN server
+     * @param server Server FQDN/IP
+     */
+    void setStunServer(const std::string& server) { _stunServer = server; }
 
-  /**
-   * Handling 5XX/6XX error
-   * @param event eXosip Event
-   */
-  void SIPCallServerFailure(eXosip_event_t *event);
+    /** 
+     * Set the SIP proxy
+     * @param proxy Proxy FQDN/IP
+     */
+    void setProxy(const std::string& proxy) { _proxy = proxy; }
 
-  /**
-   * Handling ack (restart audio if reinvite)
-   * @param event eXosip Event
-   */
-  void SIPCallAck(eXosip_event_t *event);
+    /**
+     * Set the user part
+     * @param userpart	User part
+     */
+    void setUserPart(const std::string& userpart) { _userpart = userpart; }
 
-  /**
-   * Handling message inside a call (like dtmf)
-   * @param event eXosip Event
-   */
-  void SIPCallMessageNew(eXosip_event_t *event);
-  bool handleDtmfRelay(eXosip_event_t *event);
+    /**
+     * Set the authentification name
+     * @param authname The authentification name
+     */
+    void setAuthName(const std::string& authname) { _authname = authname; }
 
-  /**
-   * Peer close the connection
-   * @param event eXosip Event
-   */
-  void SIPCallClosed(eXosip_event_t *event);
+    /**
+     * Set the password
+     * @param password	Password
+     */
+    void setPassword(const std::string& password) { _password = password; }
 
-  /**
-   * The call pointer was released
-   * If the call was not cleared before, report an error
-   * @param event eXosip Event
-   */
-  void SIPCallReleased(eXosip_event_t *event);
+  private:
 
-  /**
-   * Receive a new Message request
-   * Option/Notify/Message
-   * @param event eXosip Event
-   */
-  void SIPMessageNew(eXosip_event_t *event);
+    /** 
+     * Terminate every call not hangup | brutal | Protected by mutex 
+     */
+    void terminateSIPCall(); 
 
-  /**
-  * Find a SIPCall with cid from eXosip Event
-  * Explication there is no DID when the dialog is not establish...
-  * @param cid call ID
-  * @return 0 or SIPCall pointer
-  */
-  SIPCall* findSIPCallWithCid(int cid);
+    /**
+     * Get the local Ip by eXosip 
+     * only if the local ip address is to his default value: 127.0.0.1
+     * setLocalIpAdress
+     * @return bool false if not found
+     */
+    bool loadSIPLocalIP();
 
-  /**
-  * Find a SIPCall with cid and did from eXosip Event
-  * @param cid call ID
-  * @param did domain ID
-  * @return 0 or SIPCall pointer
-  */
-  SIPCall* findSIPCallWithCidDid(int cid, int did);
-  SIPCall* getSIPCall(const CallID& id);
+    /**
+     * send SIP authentification
+     * @return bool true if sending succeed
+     */
+    bool sendSIPAuthentification();
 
-  /** To build sdp when call is on-hold */
-  int sdp_hold_call (sdp_message_t * sdp);
-  /** To build sdp when call is off-hold */
-  int sdp_off_hold_call (sdp_message_t * sdp);
+    /**
+     * Get a SIP From header ("fullname" <sip:userpart@hostpart>)
+     * @param userpart User part
+     * @param hostpart Host name
+     * @return std::string  SIP URI for from Header
+     */
+    std::string SIPFromHeader(const std::string& userpart, const std::string& hostpart);
+
+    /**
+     * Build a sip address with the number that you want to call
+     * Example: sip:124@domain.com
+     * @param to  The header of the recipient
+     * @return std::string  Result as a string
+     */
+    std::string SIPToHeader(const std::string& to);
+
+    /**
+     * Check if an url is sip-valid
+     * @param url The url to check
+     * @return bool True if osip tell that is valid
+     */
+    bool SIPCheckUrl(const std::string& url);
 
 
+    /**
+     * Send an outgoing call invite
+     * @param call  The current call
+     * @return bool True if all is correct
+     */
+    bool SIPOutgoingInvite(SIPCall* call);
 
-  /** EventThread get every incoming events */
-  EventThread* _evThread;
-  /** Tell if eXosip was stared (eXosip_init) */
-  bool _initDone;
+    /**
+     * Start a SIP Call
+     * @param call  The current call
+     * @param subject Undocumented
+     * @return true if all is correct
+     */
+    bool SIPStartCall(SIPCall* call, const std::string& subject);
 
-  /** Registration identifier, needed by unregister to build message */
-  int _eXosipRegID;
+    /**
+     * Get the Sip FROM url (add sip:, add @host, etc...)
+     * @return std::string  The From url
+     */
+    std::string getSipFrom();
 
-  /** Number of voicemail */
-  int _nMsgVoicemail;
+    /**
+     * Get the sip proxy (add sip: if there is one) 
+     * @return std::string  Empty string or <sip:proxy;lr> url
+     */
+    std::string getSipRoute();
 
-  /** when we init the listener, how many times we try to bind a port? */
-  int _nbTryListenAddr;
+    /**
+     * Get the Sip TO url (add sip:, add @host, etc...)
+     * @param to_url  The To url
+     * @return std::string  The SIP to address
+     */
+    std::string getSipTo(const std::string& to_url);
 
-  /** Do we use stun? */
-  bool _useStun;
+    /**
+     * Set audio (SDP) configuration for a call
+     * localport, localip, localexternalport
+     * @param call a SIPCall valid pointer
+     * @return bool True
+     */
+    bool setCallAudioLocal(SIPCall* call);
 
-  /** What is the stun server? */
-  std::string _stunServer;
+    /**
+     * Create a new call and send a incoming call notification to the user
+     * @param event eXosip Event
+     */
+    void SIPCallInvite(eXosip_event_t *event);
 
-  /** Local Extern Address is the IP address seen by peers for SIP listener */
-  std::string _localExternAddress;
+    /**
+     * Use a exisiting call to restart the audio
+     * @param event eXosip Event
+     */
+    void SIPCallReinvite(eXosip_event_t *event);
 
-  /** Local Extern Port is the port seen by peers for SIP listener */
-  unsigned int _localExternPort;  
+    /**
+     * Tell the user that the call is ringing
+     * @param event eXosip Event
+     */
+    void SIPCallRinging(eXosip_event_t *event);
 
-  /** SIP Proxy URL */
-  std::string _proxy;
+    /**
+     * Tell the user that the call was answered
+     * @param event eXosip Event
+     */
+    void SIPCallAnswered(eXosip_event_t *event);
 
-  /** SIP UserPart */
-  std::string _userpart;
+    /**
+     * Handling 4XX error
+     * @param event eXosip Event
+     */
+    void SIPCallRequestFailure(eXosip_event_t *event);
 
-  /** SIP Authenfication name */
-  std::string _authname;
+    /**
+     * Handling 5XX/6XX error
+     * @param event eXosip Event
+     */
+    void SIPCallServerFailure(eXosip_event_t *event);
 
-  /** SIP Authenfication password */
-  std::string _password; 
+    /**
+     * Handle registration failure cases ( SIP_FORBIDDEN , SIP_UNAUTHORIZED )
+     * @param event eXosip event
+     */
+    void SIPRegistrationFailure( eXosip_event_t *event );
 
-  /** Starting sound */
-  AudioRtp _audiortp;
+    /**
+     * Handling ack (restart audio if reinvite)
+     * @param event eXosip Event
+     */
+    void SIPCallAck(eXosip_event_t *event);
+
+    /**
+     * Handling message inside a call (like dtmf)
+     * @param event eXosip Event
+     */
+    void SIPCallMessageNew(eXosip_event_t *event);
+
+    /**
+     * Handle an INFO with application/dtmf-relay content-type
+     * @param event eXosip Event
+     */
+    bool handleDtmfRelay(eXosip_event_t *event);
+
+    /**
+     * Peer close the connection
+     * @param event eXosip Event
+     */
+    void SIPCallClosed(eXosip_event_t *event);
+
+    /**
+     * The call pointer was released
+     * If the call was not cleared before, report an error
+     * @param event eXosip Event
+     */
+    void SIPCallReleased(eXosip_event_t *event);
+
+    /**
+     * Receive a new Message request
+     * Option/Notify/Message
+     * @param event eXosip Event
+     */
+    void SIPMessageNew(eXosip_event_t *event);
+
+    /**
+     * Find a SIPCall with cid from eXosip Event
+     * Explication there is no DID when the dialog is not establish...
+     * @param cid call ID
+     * @return SIPCall*	SIPCall pointer or 0
+     */
+    SIPCall* findSIPCallWithCid(int cid);
+
+    /**
+     * Find a SIPCall with cid and did from eXosip Event
+     * @param cid call ID
+     * @param did domain ID
+     * @return SIPCall*	SIPCall pointer or 0
+     */
+    SIPCall* findSIPCallWithCidDid(int cid, int did);
+
+    /**
+     * SIPCall accessor
+     * @param id  The call identifier
+     * @return SIPCall*	  A pointer on SIPCall object
+     */
+    SIPCall* getSIPCall(const CallID& id);
+
+    /** To build sdp when call is on-hold */
+    int sdp_hold_call (sdp_message_t * sdp);
+
+    /** To build sdp when call is off-hold */
+    int sdp_off_hold_call (sdp_message_t * sdp);
+
+    /** EventThread get every incoming events */
+    EventThread* _evThread;
+
+    /** Tell if eXosip was stared (eXosip_init) */
+    bool _initDone;
+
+    /** Registration identifier, needed by unregister to build message */
+    int _eXosipRegID;
+
+    /** Number of voicemail */
+    int _nMsgVoicemail;
+
+    /** when we init the listener, how many times we try to bind a port? */
+    int _nbTryListenAddr;
+
+    /** Do we use stun? */
+    bool _useStun;
+
+    /** What is the stun server? */
+    std::string _stunServer;
+
+    /** Local Extern Address is the IP address seen by peers for SIP listener */
+    std::string _localExternAddress;
+
+    /** Local Extern Port is the port seen by peers for SIP listener */
+    unsigned int _localExternPort;  
+
+    /** SIP Proxy URL */
+    std::string _proxy;
+
+    /** SIP UserPart */
+    std::string _userpart;
+
+    /** SIP Authenfication name */
+    std::string _authname;
+
+    /** SIP Authenfication password */
+    std::string _password; 
+
+    /** Starting sound */
+    AudioRtp _audiortp;
 };
 
 #endif
