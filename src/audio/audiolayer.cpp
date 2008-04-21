@@ -132,7 +132,7 @@ AudioLayer::fillHWBuffer( void)
   unsigned char* data;
   int pcmreturn, l1, l2;
   short s1, s2;
-  int periodSize = 256 ;
+  int periodSize = 128 ;
   int frames = periodSize >> 2 ;
   _debug("frames  = %d\n");
 
@@ -570,9 +570,9 @@ AudioLayer::getSoundCardsInfo( int stream )
 AudioLayer::closeCaptureStream( void)
 {
   if(_CaptureHandle){
-      snd_pcm_drop( _CaptureHandle );
-      snd_pcm_close( _CaptureHandle );
-      _CaptureHandle = 0;
+    snd_pcm_drop( _CaptureHandle );
+    snd_pcm_close( _CaptureHandle );
+    _CaptureHandle = 0;
   }
 }
 
@@ -580,9 +580,9 @@ AudioLayer::closeCaptureStream( void)
 AudioLayer::closePlaybackStream( void)
 {
   if(_PlaybackHandle){
-      snd_pcm_drop( _PlaybackHandle );
-      snd_pcm_close( _PlaybackHandle );
-      _PlaybackHandle = 0;
+    snd_pcm_drop( _PlaybackHandle );
+    snd_pcm_close( _PlaybackHandle );
+    _PlaybackHandle = 0;
   }
 }
 
