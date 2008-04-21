@@ -25,6 +25,7 @@
 #include <configwindow.h>
 #include <dbus.h>
 #include <mainwindow.h>
+#include <calltab.h>
 #include <gtk/gtk.h>
 
 #include <string.h> // for strlen
@@ -49,7 +50,7 @@ void update_menus()
   gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), FALSE);
 
-  call_t * selectedCall = call_get_selected();
+  call_t * selectedCall = call_get_selected(active_calltree);
   if (selectedCall)
   {
     gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   TRUE);
@@ -182,8 +183,8 @@ switch_account(  GtkWidget* item , gpointer data )
   static void 
 call_hold  (void* foo)
 {
-  call_t * selectedCall = call_get_selected();
-
+  call_t * selectedCall = call_get_selected(current_calls);
+  
   if(selectedCall)
   {
     if(selectedCall->state == CALL_STATE_HOLD)
@@ -303,7 +304,7 @@ edit_accounts ( void * foo)
 edit_copy ( void * foo)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected();
+  call_t * selectedCall = call_get_selected(current_calls);
   gchar * no = NULL;
 
   if(selectedCall)
@@ -335,7 +336,7 @@ edit_copy ( void * foo)
 edit_paste ( void * foo)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected();
+  call_t * selectedCall = call_get_selected(current_calls);
   gchar * no = gtk_clipboard_wait_for_text (clip);
 
   if(no && selectedCall)
@@ -356,7 +357,7 @@ edit_paste ( void * foo)
 	    g_free(selectedCall->from);
 	    selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
 	  }
-	  update_call_tree(selectedCall);
+	  update_call_tree(current_calls, selectedCall);
 	}
 	break;
       case CALL_STATE_RINGING:  
@@ -375,7 +376,7 @@ edit_paste ( void * foo)
 	  g_free(selectedCall->from);
 	  selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
 
-	  update_call_tree(selectedCall);
+	  update_call_tree(current_calls, selectedCall);
 	}
 	break;
       case CALL_STATE_CURRENT:
@@ -393,7 +394,7 @@ edit_paste ( void * foo)
 	    selectedCall->from = g_strconcat("\"",call_get_name(selectedCall) ,"\" <", temp, ">", NULL);
 	    g_free(before);
 	    g_free(temp);
-	    update_call_tree(selectedCall);
+	    update_call_tree(current_calls, selectedCall);
 
 	  }
 	}
@@ -412,8 +413,7 @@ edit_paste ( void * foo)
 
     g_free(selectedCall->from);
     selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
-
-    update_call_tree(selectedCall);
+    update_call_tree(current_calls,selectedCall);
   }
 
 }
@@ -543,7 +543,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
   gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE;
   gboolean accounts = FALSE;
 
-  call_t * selectedCall = call_get_selected();
+  call_t * selectedCall = call_get_selected(current_calls);
   if (selectedCall)
   {
     copy = TRUE;

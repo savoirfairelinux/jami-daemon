@@ -68,62 +68,59 @@ typedef struct  {
   call_state_t state;
 } call_t;
 
-/** 
- * This function initialize the call list. 
- */
-void call_list_init ();
+typedef struct {
+	GtkListStore* store;
+	GtkWidget* view;
+	GtkWidget* tree;
 
-/** 
- * This function empty and free the call list. 
- */
-void call_list_clean ();
+	// Calllist vars
+	GQueue* callQueue;
+	call_t* selectedCall;
+} calltab_t;
 
-/** 
- * This function append a call to list. 
- * @param c The call you want to add 
- */
-void call_list_add (call_t * c);
+calltab_t* current_calls;
+calltab_t* history;
 
-/** 
- * This function remove a call from list. 
- * @param callID The callID of the call you want to remove
- */
-void call_list_remove (const gchar * callID);
+/** This function initialize a call list. */
+void call_list_init (calltab_t* tab);
 
-/** 
- * Return the first call that corresponds to the state.  
- * This is usefull for unique states as DIALING and CURRENT.
- * @param state The state
- * @return A call or NULL 
- */
-call_t * call_list_get_by_state ( call_state_t state);
+/** This function empty and free the call list. */
+void call_list_clean (calltab_t* tab);
 
-/** 
- * Return the number of calls in the list
- * @return The number of calls in the list 
- */
-guint call_list_get_size ( );
+/** This function append a call to list. 
+  * @param c The call you want to add 
+  * */
+void call_list_add (calltab_t* tab, call_t * c);
 
-/** 
- * Return the call at the nth position in the list
- * @param n The position of the call you want
- * @return A call or NULL 
- */
-call_t * call_list_get_nth ( guint n );
+/** This function remove a call from list. 
+  * @param callID The callID of the call you want to remove
+  */
+void call_list_remove (calltab_t* tab, const gchar * callID);
 
-/** 
- * Return the call corresponding to the callID
- * @param callID The callID of the call you want
- * @return call_t*  A call or NULL 
- */
-call_t * call_list_get ( const gchar * callID );
+/** Return the first call that corresponds to the state.  
+  * This is usefull for unique states as DIALING and CURRENT.
+  * @param state The state
+  * @return A call or NULL */
+call_t * call_list_get_by_state (calltab_t* tab, call_state_t state);
 
-/** 
- * This function parse the call_t.from field to return the name
- * @param c The call
- * @return The full name of the caller or an empty string 
- */
-gchar * call_get_name (const call_t * c);
+/** Return the number of calls in the list
+  * @return The number of calls in the list */
+guint call_list_get_size (calltab_t* tab);
+
+/** Return the call at the nth position in the list
+  * @param n The position of the call you want
+  * @return A call or NULL */
+call_t * call_list_get_nth (calltab_t* tab, guint n );
+
+/** Return the call corresponding to the callID
+  * @param n The callID of the call you want
+  * @return A call or NULL */
+call_t * call_list_get (calltab_t* tab, const gchar * callID );
+
+/** This function parse the call_t.from field to return the name
+  * @param c The call
+  * @return The full name of the caller or an empty string */
+gchar * call_get_name ( const call_t * c);
 
 /** 
  * This function parse the call_t.from field to return the number
@@ -132,17 +129,12 @@ gchar * call_get_name (const call_t * c);
  */
 gchar * call_get_number (const call_t * c);
 
-/** 
- * Mark a call as selected.  There can be only one selected call.  This call
- * is the currently highlighted one in the list.
- * @param c The call 
- */
-void call_select ( call_t * c );
+/** Mark a call as selected.  There can be only one selected call.  This call
+  * is the currently highlighted one in the list.
+  * @param c The call */
+void call_select (calltab_t* tab, call_t * c );
 
-/** 
- * Return the selected call.
- * @return The number of the caller 
- */
-call_t * call_get_selected ();
-
+/** Return the selected call.
+  * @return The number of the caller */
+call_t * call_get_selected (calltab_t* tab);
 #endif 

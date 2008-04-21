@@ -18,6 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include <actions.h>
 #include <calltree.h>
@@ -25,8 +26,6 @@
 #include <menus.h>
 #include <dbus.h>
 
-GtkListStore * store;
-GtkWidget *view;
 
 
 GtkWidget   * toolbar;
@@ -36,7 +35,9 @@ GtkToolItem * hangupButton;
 GtkToolItem * holdButton;
 GtkToolItem * transfertButton;
 GtkToolItem * unholdButton;
+GtkToolItem * historyButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
+gboolean history_shown;
 
 
 /**
@@ -66,9 +67,23 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 	static void 
 call_button( GtkWidget *widget, gpointer   data )
 {
-	if(call_list_get_size()>0)
+	call_t * selectedCall;
+	printf("Call button pressed\n");
+	if(call_list_get_size(current_calls)>0)
 		sflphone_pick_up();
-	else
+	else if(call_list_get_size(active_calltree) > 0){
+		printf("Calling a called num\n");
+		selectedCall = call_get_selected(active_calltree);
+		if(!selectedCall->to){
+			selectedCall->to = call_get_number(selectedCall);
+			selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">",NULL);
+		}
+		gtk_toggle_tool_button_set_active(historyButton, FALSE);
+		printf("call : from : %s to %s\n", selectedCall->from, selectedCall->to);
+		call_list_add(current_calls, selectedCall);
+		update_call_tree_add(current_calls, selectedCall);
+		sflphone_place_call(selectedCall);
+	}else
 		sflphone_new_call();
 }
 
@@ -117,6 +132,26 @@ unhold( GtkWidget *widget, gpointer   data )
 	sflphone_off_hold();
 }
 
+static void
+toggle_history(GtkToggleToolButton *toggle_tool_button,
+		gpointer	user_data)
+{
+	GtkTreeSelection *sel;
+	if(history_shown){
+		active_calltree = current_calls;
+		gtk_widget_hide(history->tree);
+		gtk_widget_show(current_calls->tree);
+		history_shown = FALSE;
+	}else{
+		active_calltree = history;
+		gtk_widget_hide(current_calls->tree);
+		gtk_widget_show(history->tree);
+		history_shown = TRUE;
+	}
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
+	g_signal_emit_by_name(sel, "changed");
+	toolbar_update_buttons();
+}
 	void 
 toolbar_update_buttons ()
 {
@@ -142,7 +177,7 @@ toolbar_update_buttons ()
 	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), FALSE);
 	gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
 
-	call_t * selectedCall = call_get_selected();
+	call_t * selectedCall = call_get_selected(active_calltree);
 	if (selectedCall)
 	{
 		switch(selectedCall->state) 
@@ -210,11 +245,13 @@ toolbar_update_buttons ()
 	}
 }
 /* Call back when the user click on a call in the list */
-	static void 
-selected(GtkTreeSelection *sel, GtkTreeModel *model) 
+static void 
+selected(GtkTreeSelection *sel, void* data) 
 {
 	GtkTreeIter  iter;
 	GValue val;
+	GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
+	printf("Select !\n");
 
 	if (! gtk_tree_selection_get_selected (sel, &model, &iter))
 		return;
@@ -222,7 +259,7 @@ selected(GtkTreeSelection *sel, GtkTreeModel *model)
 	val.g_type = 0;
 	gtk_tree_model_get_value (model, &iter, 2, &val);
 
-	call_select((call_t*) g_value_get_pointer(&val));
+	call_select(active_calltree, (call_t*) g_value_get_pointer(&val));
 	g_value_unset(&val);
 
 	toolbar_update_buttons();
@@ -232,9 +269,9 @@ selected(GtkTreeSelection *sel, GtkTreeModel *model)
 void  row_activated(GtkTreeView       *tree_view,
 		GtkTreePath       *path,
 		GtkTreeViewColumn *column,
-		void * foo) 
+		void * data) 
 {
-	call_t * selectedCall = call_get_selected();
+	call_t * selectedCall = call_get_selected(current_calls);
 	if (selectedCall)
 	{
 		switch(selectedCall->state)  
@@ -321,42 +358,51 @@ create_toolbar (){
 			G_CALLBACK (transfert), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
 
+	historyButton = gtk_toggle_tool_button_new_from_stock (GTK_STOCK_INDEX);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
+	g_signal_connect (G_OBJECT (historyButton), "toggled",
+			G_CALLBACK (toggle_history), NULL);
+	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);  
+	history_shown = FALSE;
+	active_calltree = current_calls;
+
 	return ret;
 
 }  
 
-GtkWidget * 
-create_call_tree (){
-	GtkWidget *ret;
+void 
+create_call_tree (calltab_t* tab){
 	GtkWidget *sw;
 	GtkCellRenderer *rend;
 	GtkTreeViewColumn *col;
 	GtkTreeSelection *sel;
 
-	ret = gtk_vbox_new(FALSE, 10); 
-	gtk_container_set_border_width (GTK_CONTAINER (ret), 0);
+	tab->tree = gtk_vbox_new(FALSE, 10); 
+
+	gtk_container_set_border_width (GTK_CONTAINER (tab->tree), 0);
 
 	sw = gtk_scrolled_window_new( NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
 
-	store = gtk_list_store_new (3, 
+	tab->store = gtk_list_store_new (3, 
 			GDK_TYPE_PIXBUF,// Icon 
 			G_TYPE_STRING,  // Description
 			G_TYPE_POINTER  // Pointer to the Object
 			);
 
-	view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
-	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(view), FALSE);
-	g_signal_connect (G_OBJECT (view), "row-activated",
+	tab->view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(tab->store));
+	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(tab->view), FALSE);
+	g_signal_connect (G_OBJECT (tab->view), "row-activated",
 			G_CALLBACK (row_activated),
 			NULL);
 
   // Connect the popup menu
-	g_signal_connect (G_OBJECT (view), "popup-menu",
+	g_signal_connect (G_OBJECT (tab->view), "popup-menu",
 			G_CALLBACK (popup_menu), 
 			NULL);
-	g_signal_connect (G_OBJECT (view), "button-press-event",
+	g_signal_connect (G_OBJECT (tab->view), "button-press-event",
 			G_CALLBACK (button_pressed), 
 			NULL);
 
@@ -365,38 +411,38 @@ create_call_tree (){
 			rend,
 			"pixbuf", 0,
 			NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(view), col);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(tab->view), col);
 
 	rend = gtk_cell_renderer_text_new();
 	col = gtk_tree_view_column_new_with_attributes ("Description",
 			rend,
 			"markup", 1,
 			NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(view), col);
-	g_object_unref(G_OBJECT(store));
-	gtk_container_add(GTK_CONTAINER(sw), view);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(tab->view), col);
+	g_object_unref(G_OBJECT(tab->store));
+	gtk_container_add(GTK_CONTAINER(sw), tab->view);
 
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (view));
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (tab->view));
 	g_signal_connect (G_OBJECT (sel), "changed",
 			G_CALLBACK (selected),
-			store);
+			NULL);
 
-	gtk_box_pack_start(GTK_BOX(ret), sw, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(tab->tree), sw, TRUE, TRUE, 0);
 
-	gtk_widget_show(ret); 
-
-	toolbar_update_buttons();
-
-	return ret;
-
+	gtk_widget_show(tab->tree); 
+	
+	//toolbar_update_buttons();
+	
 }
 
 void 
-update_call_tree_remove (call_t * c)
+update_call_tree_remove (calltab_t* tab, call_t * c)
 {
 	GtkTreeIter iter;
 	GValue val;
 	call_t * iterCall;
+	GtkListStore* store = tab->store;
+	GtkWidget* view = tab->view;
 
 	int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
 	int i;
@@ -416,19 +462,21 @@ update_call_tree_remove (call_t * c)
 			}
 		}
 	}
-	call_t * selectedCall = call_get_selected();
+	call_t * selectedCall = call_get_selected(tab);
 	if(selectedCall == c)
-		call_select(NULL);
+		call_select(tab, NULL);
 	toolbar_update_buttons();
 }
 
 void 
-update_call_tree (call_t * c)
+update_call_tree (calltab_t* tab, call_t * c)
 {
 	GdkPixbuf *pixbuf;
 	GtkTreeIter iter;
 	GValue val;
 	call_t * iterCall;
+	GtkListStore* store = tab->store;
+	GtkWidget* view = tab->view;
 
 	int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
 	int i;
@@ -513,11 +561,13 @@ update_call_tree (call_t * c)
 }
 
 void 
-update_call_tree_add (call_t * c)
+update_call_tree_add (calltab_t* tab, call_t * c)
 {
 	GdkPixbuf *pixbuf;
 	GtkTreeIter iter;
 	GtkTreeSelection* sel;
+	//GtkListStore* store = tab->store;
+	//GtkWidget* view = tab->view;
 
 	// New call in the list
 	gchar * markup;
@@ -526,7 +576,7 @@ update_call_tree_add (call_t * c)
 			call_get_name(c), 
 			call_get_number(c));
 
-	gtk_list_store_append (store, &iter);
+	gtk_list_store_append (tab->store, &iter);
 
 	switch(c->state)
 	{
@@ -551,7 +601,7 @@ update_call_tree_add (call_t * c)
 			pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
 		}
 	}
-	gtk_list_store_set(store, &iter,
+	gtk_list_store_set(tab->store, &iter,
 			0, pixbuf, // Icon
 			1, markup, // Description
 			2, c,      // Pointer
@@ -560,7 +610,7 @@ update_call_tree_add (call_t * c)
 	if (pixbuf != NULL)
 		g_object_unref(G_OBJECT(pixbuf));
 
-	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
 	gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
 	toolbar_update_buttons();
 }
