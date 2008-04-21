@@ -35,7 +35,7 @@ class DTMF {
   public:
     /**
      * Create a new DTMF.
-     * @param samplingRate frequency of the sample (ex: 8000 hz)
+     * @param sampleRate frequency of the sample (ex: 8000 hz)
      */
     DTMF (unsigned int sampleRate);
     

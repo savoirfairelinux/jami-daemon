@@ -127,8 +127,8 @@ class AudioLayer {
     /**
      * Send a chunk of data to the hardware buffer to start the playback
      * Copy data in the urgent buffer. 
-     * @params buffer The buffer containing the data to be played ( ringtones )
-     * @params toCopy The size of the buffer
+     * @param buffer The buffer containing the data to be played ( ringtones )
+     * @param toCopy The size of the buffer
      * @return int  The number of bytes copied in the urgent buffer
      */
     int putUrgent(void* buffer, int toCopy);
@@ -158,7 +158,7 @@ class AudioLayer {
 
     /**
      * Scan the sound card available on the system
-     * @param flag To indicate whether we are looking for capture devices or playback devices
+     * @param stream To indicate whether we are looking for capture devices or playback devices
      *		   SFL_PCM_CAPTURE
      *		   SFL_PCM_PLAYBACK
      *		   SFL_PCM_BOTH

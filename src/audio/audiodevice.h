@@ -33,9 +33,8 @@ class AudioDevice {
 public:
   /**
    * Constructor
-   * @param id
-   * @param
-   * @param
+   * @param id Identifier
+   * @param name Name
    */
   AudioDevice(int id, const std::string& name);
   

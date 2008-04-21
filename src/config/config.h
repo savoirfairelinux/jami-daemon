@@ -26,131 +26,153 @@
 #include <list>
 
 /**
- * Configuration namespace for ConfigTree object (like .ini files)
+ * @file config.h
+ * @brief Configuration namespace for ConfigTree object (like .ini files)
  */
 namespace Conf {
 
-class ConfigTreeItem;
-typedef std::map<std::string, ConfigTreeItem> ItemMap;
-typedef std::map<std::string, ItemMap*> SectionMap;
-typedef std::list<std::string> TokenList;
+  class ConfigTreeItem;
+  typedef std::map<std::string, ConfigTreeItem> ItemMap;
+  typedef std::map<std::string, ItemMap*> SectionMap;
+  typedef std::list<std::string> TokenList;
 
-class ConfigTreeItemException {
-public:
-  ConfigTreeItemException() {}
-  ~ConfigTreeItemException() {}
-};
+  class ConfigTreeItemException {
+    public:
+      /**
+       * Constructor
+       * */
+      ConfigTreeItemException() {}
+      
+      /**
+       * Destructor
+       * */
+      ~ConfigTreeItemException() {}
+  };
 
-class ConfigTree;
-class ConfigTreeIterator 
-{
-public:
-  TokenList begin();
-  const TokenList& end() const { return _endToken; }
-  TokenList next();
-  
-private:
-  friend class ConfigTree;
-  ConfigTreeIterator(ConfigTree *configTree) : _tree(configTree) {}
+  class ConfigTree;
+  class ConfigTreeIterator 
+  {
+    public:
+      /**
+       * Parsing method
+       * @return TokenList
+       */
+      TokenList begin();
 
-  ConfigTree* _tree;
-  TokenList _endToken;
-  SectionMap::iterator _iter;
-  ItemMap::iterator _iterItem;
-};
+      /**
+       * Parsing method
+       * @return TokenList
+       */
+      const TokenList& end() const { return _endToken; }
 
-class ConfigTree {
-public:
-  ConfigTree();
-  ~ConfigTree();
+      /**
+       * Parsing method
+       * @return TokenList
+       */
+      TokenList next();
 
-  void createSection(const std::string& section);
-  void removeSection(const std::string& section);
-  /**
-   * Return an array of strings, listing the sections of the config file
-   *
-   * This will be mainly used to filter which sections are an
-   * "Account" definition.
-   *
-   * @return array Strings of the sections
-   */
-  TokenList getSections();
+    private:
+      friend class ConfigTree;
+      ConfigTreeIterator(ConfigTree *configTree) : _tree(configTree) {}
 
-  void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
-  /**
-   * Set a configuration value.
-   *
-   * @param section Write to this [section] of the .ini file
-   * @param itemName The itemName= in the .ini file
-   * @param value The value to assign to that itemName
-   */
-  bool setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
+      ConfigTree* _tree;
+      TokenList _endToken;
+      SectionMap::iterator _iter;
+      ItemMap::iterator _iterItem;
+  };
 
-  /**
-   * Get a value.
-   *
-   * This function does all the validity tests, so none are needed throughout
-   * the program.
-   *
-   * @param section The name of the [section] in the .ini file.
-   * @param itemName The name of the item= in the .ini file.
-   * @return The value of the corresponding item. The default value if the section exists
-   *         but the item doesn't.
-   */
-  std::string getConfigTreeItemValue(const std::string& section, const std::string& itemName);
-  int getConfigTreeItemIntValue(const std::string& section, const std::string& itemName);
+  class ConfigTree {
+    public:
+      ConfigTree();
+      ~ConfigTree();
 
-  /**
-   * Flush data to .ini file
-   */
-  bool saveConfigTree(const std::string& fileName);
+      void createSection(const std::string& section);
+      void removeSection(const std::string& section);
+      /**
+       * Return an array of strings, listing the sections of the config file
+       *
+       * This will be mainly used to filter which sections are an
+       * "Account" definition.
+       *
+       * @return array Strings of the sections
+       */
+      TokenList getSections();
 
-  /**
-   * Load data (and fill ConfigTree) from disk
-   */
-  int  populateFromFile(const std::string& fileName);
+      void addConfigTreeItem(const std::string& section, const ConfigTreeItem item);
+      /**
+       * Set a configuration value.
+       *
+       * @param section Write to this [section] of the .ini file
+       * @param itemName The itemName= in the .ini file
+       * @param value The value to assign to that itemName
+       */
+      bool setConfigTreeItem(const std::string& section, const std::string& itemName, const std::string& value);
 
-  bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, TokenList& arg);
+      /**
+       * Get a value.
+       *
+       * This function does all the validity tests, so none are needed throughout
+       * the program.
+       *
+       * @param section The name of the [section] in the .ini file.
+       * @param itemName The name of the item= in the .ini file.
+       * @return The value of the corresponding item. The default value if the section exists
+       *         but the item doesn't.
+       */
+      std::string getConfigTreeItemValue(const std::string& section, const std::string& itemName);
+      int getConfigTreeItemIntValue(const std::string& section, const std::string& itemName);
 
-private:
-  ConfigTreeItem* getConfigTreeItem(const std::string& section, const std::string& itemName);
+      /**
+       * Flush data to .ini file
+       */
+      bool saveConfigTree(const std::string& fileName);
 
-  /**
-   * List of sections. Each sections has an ItemList as child
-   */
-  SectionMap _sections;
-  friend class ConfigTreeIterator;
+      /**
+       * Load data (and fill ConfigTree) from disk
+       */
+      int  populateFromFile(const std::string& fileName);
 
-public:
-  ConfigTreeIterator createIterator() {
-    return ConfigTreeIterator(this);
-  }
-};
+      bool getConfigTreeItemToken(const std::string& section, const std::string& itemName, TokenList& arg);
 
-class ConfigTreeItem {
-public:
-  ConfigTreeItem() : _defaultValue(""), _type("string") {}
-  // defaultvalue = value
-  ConfigTreeItem(const std::string& name, const std::string& value, const std::string& type) : 
-    _name(name), _value(value), 
-    _defaultValue(value), _type(type) {}
-  ConfigTreeItem(const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) : 
-    _name(name), _value(value), 
-    _defaultValue(defaultValue), _type(type) {}
-  ~ConfigTreeItem() {}
+    private:
+      ConfigTreeItem* getConfigTreeItem(const std::string& section, const std::string& itemName);
 
-  void setValue(const std::string& value) { _value = value; }
-  const std::string getName() const { return _name; }
-  const std::string getValue() const  { return _value; }
-  const std::string getDefaultValue() const  { return _defaultValue; }
-  const std::string getType() const  { return _type; }
+      /**
+       * List of sections. Each sections has an ItemList as child
+       */
+      SectionMap _sections;
+      friend class ConfigTreeIterator;
 
-private:
-  std::string _name;
-  std::string _value;
-  std::string _defaultValue;
-  std::string _type;
-};
+    public:
+      ConfigTreeIterator createIterator() {
+	return ConfigTreeIterator(this);
+      }
+  };
+
+  class ConfigTreeItem {
+    public:
+      ConfigTreeItem() : _defaultValue(""), _type("string") {}
+      // defaultvalue = value
+      ConfigTreeItem(const std::string& name, const std::string& value, const std::string& type) : 
+	_name(name), _value(value), 
+	_defaultValue(value), _type(type) {}
+      ConfigTreeItem(const std::string& name, const std::string& value, const std::string& defaultValue, const std::string& type) : 
+	_name(name), _value(value), 
+	_defaultValue(defaultValue), _type(type) {}
+      ~ConfigTreeItem() {}
+
+      void setValue(const std::string& value) { _value = value; }
+      const std::string getName() const { return _name; }
+      const std::string getValue() const  { return _value; }
+      const std::string getDefaultValue() const  { return _defaultValue; }
+      const std::string getType() const  { return _type; }
+
+    private:
+      std::string _name;
+      std::string _value;
+      std::string _defaultValue;
+      std::string _type;
+  };
 
 } // end namespace ConfigTree
 
