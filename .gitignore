@@ -64,7 +64,7 @@ doc/*.html
 /libs/dbus/ltmain.sh
 /libs/dbus/missing
 /src/dbus/org.sflphone.SFLphone.service
-
+/libs/sipUpdate
 
 # Ignore sflphone-gtk stuff
 /sflphone-gtk/config.*

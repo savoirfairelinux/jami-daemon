@@ -2,7 +2,7 @@
 
 # @author: Emmanuel Milou - emmanuel.milou@savoirfairelinux.com
 # Build a binary debian package of sflphone
-# Pre: make install of the all repository
+# Pre requisite: make install of the all repository
 
 if [ $1 = "-h" ]
 then
@@ -24,7 +24,7 @@ essential="no"
 arch="$2"
 homepage="http://www.sflphone.org"
 maintainer="SavoirFaireLinux Inc <emmanuel.milou@savoirfairelinux.com>"
-desc="SFLphone - Answer the call\n SFLphone is meant to be a robust enterprise-class desktop phone. It is design with a hundred-calls-a-day receptionist in mind. It can work for you, too.\n .\n SFLphone is released under the GNU General Public License.\n .\n SFLphone is being developed by the global community, and maintained by Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company."
+desc="SFLphone - SIP and IAX2 compatible softphone\n SFLphone is meant to be a robust enterprise-class desktop phone. It is design with a hundred-calls-a-day receptionist in mind. It can work for you, too.\n .\n SFLphone is released under the GNU General Public License.\n .\n SFLphone is being developed by the global community, and maintained by Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company."
 
 # Get the needed stuff
 
@@ -66,6 +66,7 @@ cp $sharedir/sflphone/ringtones/* $sfldir$sharedir/sflphone/ringtones
 #/usr/share/locale/fr/LC_MESSAGES
 mkdir -p $sfldir$sharedir/locale/fr/LC_MESSAGES
 cp $sharedir/locale/fr/LC_MESSAGES/sflphone.mo	$sfldir$sharedir/locale/fr/LC_MESSAGES
+cp $sharedir/locale/es/LC_MESSAGES/sflphone.mo	$sfldir$sharedir/locale/es/LC_MESSAGES
 
 # DEBIAN files
 mkdir -p $debdir 
