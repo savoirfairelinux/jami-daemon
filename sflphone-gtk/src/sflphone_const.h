@@ -87,6 +87,6 @@
 /** Desktop notifications - Time before to close the notification*/
 #define __TIMEOUT_MODE      "default"
 /** Desktop notifications - Time before to close the notification*/
-#define __TIMEOUT_TIME      30000       // 30 secondes
+#define __TIMEOUT_TIME      18000       // 30 secondes
 
 #endif

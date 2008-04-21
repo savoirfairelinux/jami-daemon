@@ -590,9 +590,17 @@ sflphone_place_call ( call_t * c )
   if(c->state == CALL_STATE_DIALING)
   {
     if( account_list_get_size() == 0 )
+    {
       notify_no_accounts();
+      call_list_remove(current_calls , c->callID);
+      update_call_tree_remove(current_calls, c);
+    }
     else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
+    {
       notify_no_registered_accounts();
+      call_list_remove(current_calls , c->callID);
+      update_call_tree_remove(current_calls, c);
+    }
     else
     {
       account_t * current = account_list_get_current();
