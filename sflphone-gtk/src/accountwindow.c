@@ -388,9 +388,11 @@ show_account_window (account_t * a)
     /** @todo Verify if it's the best condition to check */
     if (currentAccount->accountID == NULL) {
       dbus_add_account(currentAccount);
+      account_list_set_current_id( currentAccount->accountID);
     }
     else {
       dbus_set_account_details(currentAccount);
+      account_list_set_current_id( currentAccount->accountID);
     }
   }
   gtk_widget_destroy (GTK_WIDGET(dialog));

@@ -138,6 +138,7 @@ account_list_get_current( )
 void
 account_list_set_current_id(const gchar * accountID)
 {
+  g_print("set current id = %d\n" , accountID);
   __CURRENT_ACCOUNT_ID = g_strdup(accountID);
 }
 
@@ -207,4 +208,18 @@ account_list_move_down(guint index)
 		g_queue_push_nth(accountQueue, acc, index+1);
 	}
 	account_list_set_current_pos( 0 );
+}
+
+guint
+account_list_get_registered_accounts( void )
+{
+  guint res = 0;
+  int i;
+  for(i=0;i<account_list_get_size();i++)
+  {
+    if( account_list_get_nth( i ) -> state == ( ACCOUNT_STATE_REGISTERED ))
+      res ++;
+  }
+  g_print(" %d registered accounts \n" , res );
+  return res;
 }

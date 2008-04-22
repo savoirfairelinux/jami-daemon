@@ -164,9 +164,8 @@ call_mailbox( GtkWidget* widget , gpointer data )
     mailboxCall->callID = g_new0(gchar, 30);
     g_sprintf(mailboxCall->callID, "%d", rand());
     //mailboxCall->to = g_strdup(current->mailbox_number);
-    mailboxCall->to = g_strdup("888");
+    mailboxCall->to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
     mailboxCall->accountID = g_strdup(current->accountID);
-    printf("call : from : %s to %s\n", mailboxCall->from, mailboxCall->to);
     call_list_add( current_calls , mailboxCall );
     update_call_tree_add( current_calls , mailboxCall );    
     update_menus();
@@ -181,6 +180,7 @@ toolbar_update_buttons ()
 	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     FALSE);
 	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       FALSE);
 	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  FALSE);
+	gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton) , TRUE );
 	gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
 	g_object_ref(holdButton);
 	g_object_ref(unholdButton);
@@ -262,6 +262,7 @@ toolbar_update_buttons ()
 		else
 		{
 			gtk_widget_set_sensitive( GTK_WIDGET(callButton), FALSE);
+			gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton), FALSE);
 		}
 	}
 }
@@ -388,11 +389,10 @@ create_toolbar (){
 	history_shown = FALSE;
 	active_calltree = current_calls;
 
-	//image = gtk_image_new_from_file( ICONS_DIR "/stock_mail-unread.svg");
 	mailboxButton = gtk_toggle_tool_button_new_from_stock( GTK_STOCK_HOME );
-	//gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mailboxButton), image);
+	if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
         gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Mail Box"));
-        gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), _("Mail Box"));
+        gtk_tool_button_set_label(GTK_TOOL_BUTTON(mailboxButton), _("Mail Box"));
         g_signal_connect (G_OBJECT (mailboxButton), "toggled",
                         G_CALLBACK (call_mailbox), NULL);
         gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);

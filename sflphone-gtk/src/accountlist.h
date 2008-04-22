@@ -94,6 +94,11 @@ void account_list_remove (const gchar * accountID);
  */
 account_t * account_list_get_by_state ( account_state_t state);
 
+/**
+ * @return guint The number of registered accounts in the list
+ */
+guint account_list_get_registered_accounts( );
+
 /** 
  * Return the number of accounts in the list
  * @return guint The number of accounts in the list 
