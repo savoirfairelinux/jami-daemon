@@ -2,7 +2,7 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
@@ -13,7 +13,7 @@
    height="24"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.45"
+   inkscape:version="0.46"
    version="1.0"
    sodipodi:docbase="/home/plbeaudoin/SFLPhone/sflphone/sflphone-gtk/pixmaps"
    sodipodi:docname="current.svg"
@@ -21,6 +21,13 @@
    sodipodi:modified="true">
   <defs
      id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 12 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="24 : 12 : 1"
+       inkscape:persp3d-origin="12 : 8 : 1"
+       id="perspective4757" />
     <linearGradient
        id="linearGradient4045">
       <stop
@@ -624,18 +631,19 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="7.919596"
-     inkscape:cx="5.8245719"
-     inkscape:cy="7.3250094"
+     inkscape:cx="15.568279"
+     inkscape:cy="13.617397"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      width="32px"
      height="32px"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1014"
-     inkscape:window-height="691"
-     inkscape:window-x="5"
-     inkscape:window-y="425">
+     inkscape:window-width="1600"
+     inkscape:window-height="926"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
+     showgrid="false">
     <sodipodi:guide
        orientation="vertical"
        position="11.237947"
@@ -705,5 +713,25 @@
         </g>
       </g>
     </g>
+    <path
+       sodipodi:nodetypes="csc"
+       id="path3488"
+       d="M 18.019888,12.625004 C 18.48189,11.534667 18.765826,10.027007 18.765826,8.3750001 C 18.765826,6.7229936 18.48189,5.2153338 18.019888,4.1249963"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#008000;stroke-width:0.50400000000000000;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0;visibility:visible;display:inline;overflow:visible" />
+    <path
+       sodipodi:nodetypes="csc"
+       id="path5545"
+       d="M 14.647708,13.095398 C 15.139397,12.256607 15.441578,11.096773 15.441578,9.8258928 C 15.441578,8.555013 15.139397,7.3951783 14.647708,6.5563874"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#3c8d54;stroke-width:0.45574296;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
+    <path
+       sodipodi:nodetypes="csc"
+       id="path6056"
+       d="M 17.127031,13.875004 C 17.589033,12.784667 17.872969,11.277007 17.872969,9.6250001 C 17.872969,7.9729936 17.589033,6.4653338 17.127031,5.3749963"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#3c8d54;stroke-width:0.50367486;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
+    <path
+       sodipodi:nodetypes="csc"
+       id="path6058"
+       d="M 19.694973,14.744562 C 20.280188,13.356696 20.639849,11.437627 20.639849,9.3348217 C 20.639849,7.2320171 20.280188,5.3129485 19.694973,3.9250808"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#3c8d54;stroke-width:0.63955802;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
   </g>
 </svg>
