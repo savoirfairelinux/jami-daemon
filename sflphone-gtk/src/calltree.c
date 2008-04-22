@@ -78,7 +78,7 @@ call_button( GtkWidget *widget, gpointer   data )
 			selectedCall->to = call_get_number(selectedCall);
 			selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">",NULL);
 		}
-		gtk_toggle_tool_button_set_active(historyButton, FALSE);
+		gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE);
 		printf("call : from : %s to %s\n", selectedCall->from, selectedCall->to);
 		call_list_add(current_calls, selectedCall);
 		update_call_tree_add(current_calls, selectedCall);
@@ -581,7 +581,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	switch(c->state)
 	{
 		case CALL_STATE_INCOMING:
-			pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
+			pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
 			break;
 		case CALL_STATE_DIALING:
 			pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
