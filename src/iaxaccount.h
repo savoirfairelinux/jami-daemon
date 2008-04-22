@@ -25,7 +25,7 @@
 
 /**
  * @file: iaxaccount.h
- * @brief: an IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
+ * @brief An IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
  */
 class IAXAccount : public Account
 {

@@ -113,14 +113,16 @@ help_about ( void * foo)
   gchar *artists[] = {
     "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>", 
     NULL};
+  gchar *translators[] = {
+    "<maxime.chambreuil@savoirfairelinux.com>",
+    NULL};
 
   gtk_show_about_dialog( GTK_WINDOW(get_main_window()),
       "name", PACKAGE,
       "title", _("About SFLphone"),
       "version", VERSION,
       "website", "http://www.sflphone.org",
-      "copyright", "Copyright © 2004-2007 Savoir-faire Linux Inc.",
-      "translator-credits", "", 
+      "copyright", "Copyright © 2004-2008 Savoir-faire Linux Inc.",
       "comments", _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
       "artists", artists,
       "authors", authors,

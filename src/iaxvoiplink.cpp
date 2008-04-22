@@ -706,6 +706,9 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     Manager::instance().peerRingingCall(call->getCallId());
     break;
     
+  case IAX_IE_MSGCOUNT:	
+   // _debug("messssssssssssssssssssssssssssssssssssssssssssssssages\n");
+    break;
   case IAX_EVENT_PONG:
     break;
     
@@ -928,6 +931,10 @@ IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
     
     break;
     
+  case IAX_IE_MSGCOUNT:	
+    //_debug("messssssssssssssssssssssssssssssssssssssssssssssssages\n");
+    break;
+
   default:
     _debug("Unknown event type (in precall): %d\n", event->etype);
   }

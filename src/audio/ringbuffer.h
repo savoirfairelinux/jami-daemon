@@ -26,40 +26,81 @@
 typedef unsigned char* samplePtr;
 
 class RingBuffer {
- public:
-   RingBuffer(int size);
-   ~RingBuffer();
+  public:
+    /**
+     * Constructor
+     * @param size  Size of the buffer to create
+     */
+    RingBuffer(int size);
 
-   // To set counters to 0
-   void flush (void);
-   
-   //
-   // For the writer only:
-   //
-   int AvailForPut (void) const;
-   int Put (void*, int, unsigned short volume = 100);
+    /**
+     * Destructor
+     */
+    ~RingBuffer();
 
-   //
-   // For the reader only:
-   //
-   int AvailForGet (void) const;
-   int Get (void *, int, unsigned short volume = 100);
-   int Discard(int);
+    /**
+     * Reset the counters to 0
+     */
+    void flush (void);
 
-   int Len() const;
-   /**
-    * Debug function print mEnd, mStart, mBufferSize
-    */
-   void debug();
-   
- private:
+    /**
+     * To get how much space is available in the buffer to write in
+     * @return int The available size
+     */
+    int AvailForPut (void) const;
 
-   int           mStart;
-   int           mEnd;
-   int           mBufferSize;
-   samplePtr     mBuffer;
+    /**
+     * Write data in the ring buffer
+     * @param buffer Data to copied
+     * @param toCopy Number of bytes to copy
+     * @param volume The volume
+     * @return int Number of bytes copied
+     */
+    int Put (void* buffer, int toCopy, unsigned short volume = 100);
+
+    /**
+     * To get how much space is available in the buffer to read in
+     * @return int The available size
+     */
+    int AvailForGet (void) const;
+
+    /**
+     * Get data in the ring buffer
+     * @param buffer Data to copied
+     * @param toCopy Number of bytes to copy
+     * @param volume The volume
+     * @return int Number of bytes copied
+     */
+    int Get (void* buffer, int toCopy, unsigned short volume = 100);
+
+    /**
+     * Discard data from the buffer
+     * @param toDiscard Number of bytes to discard
+     * @return int Number of bytes discarded 
+     */
+    int Discard(int toDiscard);
+
+    /**
+     * Total length of the ring buffer
+     * @return int  
+     */
+    int Len() const;
+    
+    /**
+     * Debug function print mEnd, mStart, mBufferSize
+     */
+    void debug();
+
+  private:
+
+    /** Pointer on the first data */
+    int           mStart;
+    /** Pointer on the last data */
+    int           mEnd;
+    /** Buffer size */
+    int           mBufferSize;
+    /** Data */
+    samplePtr     mBuffer;
 };
 
 #endif /*  __RING_BUFFER__ */
-
-

@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2004-2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
@@ -97,7 +97,6 @@ AudioRtp::closeRtpSession () {
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
 AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
-  : _fstream("/tmp/audio.gsm", std::ofstream::binary|std::ios::out|std::ios::app)
 {
   setCancel(cancelDeferred);
   time = new ost::Time();

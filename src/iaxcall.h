@@ -26,7 +26,7 @@
 
 /**
  * @file: iaxcall.h
- * @brief:  IAXCall are IAX implementation of a normal Call 
+ * @brief IAXCall are IAX implementation of a normal Call 
  */
 
 class IAXCall : public Call

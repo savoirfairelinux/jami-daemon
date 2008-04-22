@@ -25,13 +25,22 @@
 #include "tone.h"
 
 /**
- * @author Yan Morin <yan.morin@savoirfairelinux.com>
+ * @file tonelist.h
+ * @brief Manages the different kind of tones according to the country
  */
 class ToneList {
 public:
+  /**
+   * Constructor
+   */
   ToneList();
+
+  /**
+   * Destructor
+   */
   ~ToneList();
 
+  /** Countries */ 
   enum COUNTRYID {
     ZID_NORTH_AMERICA = 0,
     ZID_FRANCE,
@@ -43,22 +52,26 @@ public:
   };
 
   /**
-    * get the string definition of a tone
+    * Get the string definition of a tone
     * return the default country or default tone if id are invalid
-    * @param country the country Id, see ToneList constructor for the list
-    * @param toneId  toneId
-    * @return a string definition of the tone
+    * @param countryId	The country Id, see ToneList constructor for the list
+    * @param toneId  The toneId
+    * @return std::string A string definition of the tone
     */
   std::string getDefinition(COUNTRYID countryId, Tone::TONEID toneId);
+
   /**
-   * get the country id associate to a country name
+   * Get the country id associate to a country name
    * return the default country id if not found
    * The default tone/country are set inside the ToneList constructor
    * @param countryName countryName, see the ToneList constructor list
-   * @return Country Id or default Id
+   * @return COUNTRYID	Country Id or default Id
    */
   COUNTRYID getCountryId(const std::string& countryName);
+
+  /** @return int The number of tones */
   int getNbTone() { return _nbTone; }
+
 private:
   void initToneDefinition();
   std::string _toneZone[TONE_NBCOUNTRY][TONE_NBTONE];

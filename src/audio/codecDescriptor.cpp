@@ -26,10 +26,6 @@
 
 CodecDescriptor::CodecDescriptor() 
 {
-  //init();
-  //#ifdef HAVE_SPEEX
-  //_codecMap[PAYLOAD_CODEC_SPEEX] = new CodecSpeex(PAYLOAD_CODEC_SPEEX); // TODO: this is a variable payload!
-  //#endif
 }
 
 CodecDescriptor::~CodecDescriptor()
@@ -54,7 +50,6 @@ CodecDescriptor::init()
   _nbCodecs = CodecDynamicList.size();
   if( _nbCodecs <= 0 ){
     _debug(" Error - No codecs available in directory %s\n" , CODECS_DIR);
-    //exit(0);
   }
 
   int i;

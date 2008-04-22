@@ -27,35 +27,49 @@
 #include "../global.h"
 
 /**
- * Sine generator to create tone with string definition
+ * @file tonegenerator.h
+ * @brief Sine generator to create tone with string definition
  */
+
 class ToneGenerator {
-public:
-	ToneGenerator (unsigned int sampleRate);
-	~ToneGenerator (void);
-	
-	/**
-	 * Calculate sinus with superposition of 2 frequencies
-	 */
-	void generateSin	(int, int, int16 *, int len) const;
+  public:
+    /**
+     * Constructor
+     * @param sampleRate  The sample rate of the generated samples
+     */
+    ToneGenerator (unsigned int sampleRate);
+    
+    /**
+     * Destructor
+     */
+    ~ToneGenerator (void);
+
+    /**
+     * Calculate sinus with superposition of 2 frequencies
+     * @param lowerfreq	Lower frequency
+     * @param higherfreq  Higher frequency
+     * @param ptr For result buffer
+     * @param len The length of the data to be generated
+     */
+    void generateSin	(int, int, int16 *, int len) const;
 
 
-	///////////////////////////
-	// Public members variable
-	//////////////////////////
-	int16 *sample;
-	int freq1, freq2;
-	int time;
-	int totalbytes;
-	
-private:
-	/*
-	 * Initialisation of the supported tones according to the countries.
-	 */
-	void		initTone (void);
+    ///////////////////////////
+    // Public members variable
+    //////////////////////////
+    int16 *sample;
+    int freq1, freq2;
+    int time;
+    int totalbytes;
 
-	int16 _buf[SIZEBUF];
-  int _sampleRate;
+  private:
+    /*
+     * Initialisation of the supported tones according to the countries.
+     */
+    void		initTone (void);
+
+    int16 _buf[SIZEBUF];
+    int _sampleRate;
 };
 
 #endif // __TONE_GENRATOR_H__

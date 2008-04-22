@@ -34,8 +34,6 @@ notify_incoming_call( call_t* c  )
       (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_ALIAS) ) ;
   callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , c->from);
 
-
-  //pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
   pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
 
   notification = notify_notification_new( title, 
@@ -175,8 +173,9 @@ notify_no_accounts(  )
  void
 setup_accounts_cb( NotifyNotification *notification, gpointer data )
 {
+  //gtk_widget_set_parent( show_accounts_window() , GTK_WIDGET(get_main_window()));
   show_accounts_window();
-  //g_object_unref( notification );
+  g_object_unref( notification );
 }
 
   void

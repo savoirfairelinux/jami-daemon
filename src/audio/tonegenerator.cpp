@@ -41,9 +41,6 @@ ToneGenerator::~ToneGenerator (void) {
 /**
  * Calculate superposition of 2 sinus 
  *
- * @param	lower frequency
- * @param	higher frequency
- * @param	ptr for result buffer
  */
 void
 ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr, int len) const {

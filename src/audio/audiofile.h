@@ -28,22 +28,57 @@
 #include "codecDescriptor.h"
 
 /**
-	@author Yan Morin <yan.morin@savoirfairelinux.com>
-*/
+ * @file audiofile.h
+ * @brief A class to manage sound files
+ */
+
 class AudioFile : public AudioLoop
 {
 public:
+  /**
+   * Constructor
+   */
   AudioFile();
+  
+  /**
+   * Destructor
+   */
   ~AudioFile();
 
-  bool loadFile(const std::string& filename, AudioCodec *codec , unsigned int sampleRate/*=8000*/);
+  /**
+   * Load a sound file in memory
+   * @param filename  The absolute path to the file
+   * @param codec     The codec to decode and encode it
+   * @param sampleRate	The sample rate to read it
+   * @return bool   True on success
+   */
+  bool loadFile(const std::string& filename, AudioCodec *codec , unsigned int sampleRate);
+  
+  /**
+   * Start the sound file
+   */
   void start() { _start = true; }
+  
+  /**
+   * Stop the sound file
+   */
   void stop()  { _start = false; }
+  
+  /**
+   * Tells whether or not the file is playing
+   * @return bool True if yes
+   *		  false otherwise
+   */
   bool isStarted() { return _start; }
 
 private:
+  /** The absolute path to the sound file */
   std::string _filename;
+  
+  /** Your preferred codec */ 
   AudioCodec* _codec;
+  
+  /** Start or not */
   bool _start;
 };
 
