@@ -43,6 +43,8 @@ typedef std::string AccountID;
 #define CONFIG_ACCOUNT_ENABLE "Account.enable"
 /** Account alias */
 #define CONFIG_ACCOUNT_ALIAS  "Account.alias"
+/** Mail box number */
+#define CONFIG_ACCOUNT_MAILBOX	"Account.mailbox"
 /** IAX paramater : full name */
 #define IAX_FULL_NAME         "IAX.fullName"
 /** IAX paramater : host name */

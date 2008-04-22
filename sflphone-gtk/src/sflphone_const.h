@@ -36,6 +36,8 @@
 #define ACCOUNT_ALIAS		   "Account.alias"
 /** Tells if account is enabled or not */
 #define ACCOUNT_ENABLED		   "Account.enable"
+/** Mail box number */
+#define ACCOUNT_MAILBOX		   "Account.mailbox"
 /** SIP parameter: full name */
 #define ACCOUNT_SIP_FULL_NAME      "SIP.fullName"
 /** SIP parameter: host name */
@@ -74,6 +76,10 @@
 #define MINIMIZED	      TRUE
 /** Behaviour of the main window on incoming calls */
 #define __POPUP_WINDOW  ( dbus_popup_mode() )
+/** Notification levels */
+#define __NOTIF_LEVEL_MIN     0
+#define __NOTIF_LEVEL_MED     1
+#define __NOTIF_LEVEL_HIGH    2
 
 /** Messages ID for the status bar - Incoming calls */
 #define __MSG_INCOMING_CALL  0 

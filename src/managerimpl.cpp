@@ -971,7 +971,6 @@ ManagerImpl::initConfigFile (void)
 
   section = PREFERENCES;
   fill_config_str(ZONE_TONE, DFT_ZONE);
-  fill_config_str(VOICEMAIL_NUM, DFT_VOICEMAIL);
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
   fill_config_int(CONFIG_RINGTONE, YES_STR);
   fill_config_int(CONFIG_DIALPAD, YES_STR);
@@ -1777,6 +1776,12 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 	  getConfigString(accountID, SIP_USE_STUN) == "1" ? "TRUE": "FALSE"
 	  )
 	);
+    a.insert(
+	std::pair<std::string, std::string>(
+	  CONFIG_ACCOUNT_MAILBOX, 
+	  getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)
+	  )
+	);
   }
   else if (accountType == "IAX") {
     a.insert(
@@ -1801,6 +1806,12 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 	std::pair<std::string, std::string>(
 	  IAX_PASS, 
 	  getConfigString(accountID, IAX_PASS)
+	  )
+	);
+    a.insert(
+	std::pair<std::string, std::string>(
+	  CONFIG_ACCOUNT_MAILBOX, 
+	  getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)
 	  )
 	);
   }
@@ -1834,6 +1845,7 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
     setConfig(accountID, SIP_HOST_PART, (*details.find(SIP_HOST_PART)).second);
     //setConfig(accountID, SIP_PROXY,     (*details.find(SIP_PROXY)).second);
     setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
+    setConfig(accountID, CONFIG_ACCOUNT_MAILBOX,(*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
     setConfig(accountID, SIP_USE_STUN,
         (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
   }
@@ -1842,6 +1854,7 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
     setConfig(accountID, IAX_HOST,      (*details.find(IAX_HOST)).second);
     setConfig(accountID, IAX_USER,      (*details.find(IAX_USER)).second);
     setConfig(accountID, IAX_PASS,      (*details.find(IAX_PASS)).second);    
+    setConfig(accountID, CONFIG_ACCOUNT_MAILBOX,(*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
   } else {
     _debug("Unknown account type in setAccountDetails(): %s\n", accountType.c_str());
   }

@@ -43,6 +43,7 @@ GtkWidget * entryUsername;
 GtkWidget * entryPassword;
 GtkWidget * stunServer;
 GtkWidget * stunEnable;
+GtkWidget * entryMailbox;
 
 
 /**
@@ -116,6 +117,7 @@ show_account_window (account_t * a)
   /* TODO: add curProxy, and add boxes for Proxy support */
   gchar * stun_enabled = "FALSE";
   gchar * stun_server= "stun.fwdnet.net:3478";
+  gchar * curMailbox = "888";
 
   // Load from SIP/IAX/Unknown ?
   if(a)
@@ -129,6 +131,7 @@ show_account_window (account_t * a)
       curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_PASS);
       curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_USER);
       curFullName = g_hash_table_lookup(currentAccount->properties, ACCOUNT_IAX_FULL_NAME);
+      curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
     }
     else if (strcmp(curAccountType, "SIP") == 0) {
       curHostPart = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_HOST_PART);
@@ -138,6 +141,7 @@ show_account_window (account_t * a)
       curUserPart = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_USER_PART);
       stun_enabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_STUN_ENABLED);
       stun_server = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_STUN_SERVER);
+      curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
     }
   }
   else
@@ -263,6 +267,14 @@ show_account_window (account_t * a)
   gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
   gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 9, 10, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+  label = gtk_label_new_with_mnemonic (_("_Mailbox"));
+  gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 10, 11, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+  gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+  entryMailbox = gtk_entry_new();
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryMailbox);
+  gtk_entry_set_text(GTK_ENTRY(entryMailbox), curMailbox);
+  gtk_table_attach ( GTK_TABLE( table ), entryMailbox, 1, 2, 10, 11, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
   // NAT detection code section
   label = gtk_label_new("");
   gtk_label_set_markup(GTK_LABEL( label ),_("<b>NAT Detection</b>"));
@@ -348,6 +360,9 @@ show_account_window (account_t * a)
       g_hash_table_replace(currentAccount->properties, 
 	g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
 	g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stunEnable)) ? "TRUE": "FALSE"));
+      g_hash_table_replace(currentAccount->properties, 
+	g_strdup(ACCOUNT_MAILBOX), 
+	g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
     }
     else if (strcmp(proto, "IAX") == 0) { /* Protocol = IAX */
       g_hash_table_replace(currentAccount->properties, 
@@ -362,6 +377,9 @@ show_account_window (account_t * a)
       g_hash_table_replace(currentAccount->properties, 
 	  g_strdup(ACCOUNT_IAX_PASS), 
 	  g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryPassword))));
+      g_hash_table_replace(currentAccount->properties, 
+	g_strdup(ACCOUNT_MAILBOX), 
+	g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
     }
     else {
 

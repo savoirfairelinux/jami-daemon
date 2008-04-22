@@ -51,7 +51,6 @@
 #define CONFIG_NOTIFY		"Notify.all"		  /** Desktop notification level */
 #define CONFIG_MAIL_NOTIFY	"Notify.mails"		  /** Desktop mail notification level */
 #define ZONE_TONE		"Options.zoneToneChoice"  /** Country tone */
-#define VOICEMAIL_NUM		"Options.voicemailNumber" /** Voicemail number */
 #define CONFIG_RINGTONE		"Ringtones.enable"	  /** Ringtones preferences */
 #define CONFIG_START		"Start.hidden"		  /** SFLphone starts in the systm tray or not */
 #define CONFIG_POPUP		"Window.popup"		  /** SFLphone pops up on incoming calls or not */

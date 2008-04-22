@@ -1223,7 +1223,6 @@ create_general_settings ()
   GtkWidget *notifFrame;
   GtkWidget *notifBox;
   GtkWidget *notifAll;
-  GtkWidget *notifIncoming;
   GtkWidget *notifMails;
 
   GtkWidget *trayFrame;
