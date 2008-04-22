@@ -576,7 +576,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 			call_get_name(c), 
 			call_get_number(c));
 
-	gtk_list_store_append (tab->store, &iter);
+	gtk_list_store_prepend (tab->store, &iter);
 
 	switch(c->state)
 	{
