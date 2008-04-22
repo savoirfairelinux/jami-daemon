@@ -163,7 +163,6 @@ call_mailbox( GtkWidget* widget , gpointer data )
     mailboxCall->from = g_strconcat("\"\" <>", NULL);
     mailboxCall->callID = g_new0(gchar, 30);
     g_sprintf(mailboxCall->callID, "%d", rand());
-    //mailboxCall->to = g_strdup(current->mailbox_number);
     mailboxCall->to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
     mailboxCall->accountID = g_strdup(current->accountID);
     call_list_add( current_calls , mailboxCall );
@@ -389,11 +388,11 @@ create_toolbar (){
 	history_shown = FALSE;
 	active_calltree = current_calls;
 
-	mailboxButton = gtk_toggle_tool_button_new_from_stock( GTK_STOCK_HOME );
+	mailboxButton = gtk_tool_button_new_from_stock( GTK_STOCK_HOME );
 	if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
-        gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Mail Box"));
-        gtk_tool_button_set_label(GTK_TOOL_BUTTON(mailboxButton), _("Mail Box"));
-        g_signal_connect (G_OBJECT (mailboxButton), "toggled",
+        gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Mailbox"));
+        gtk_tool_button_set_label(GTK_TOOL_BUTTON(mailboxButton), _("Mailbox"));
+        g_signal_connect (G_OBJECT (mailboxButton), "clicked",
                         G_CALLBACK (call_mailbox), NULL);
         gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
 
