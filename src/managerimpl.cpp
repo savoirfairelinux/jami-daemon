@@ -977,6 +977,8 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_DIALPAD, YES_STR);
   fill_config_int(CONFIG_START, NO_STR);
   fill_config_int(CONFIG_POPUP, YES_STR);
+  fill_config_int(CONFIG_NOTIFY , YES_STR);
+  fill_config_int(CONFIG_MAIL_NOTIFY , NO_STR);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1344,6 +1346,30 @@ int
 ManagerImpl::popupMode( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_POPUP );
+}
+
+::DBus::Int32
+ManagerImpl::getNotify( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_NOTIFY );
+}
+
+void
+ManagerImpl::setNotify( void )
+{
+  ( getConfigInt( PREFERENCES , CONFIG_NOTIFY ) == NOTIFY_ALL )?  setConfig( PREFERENCES , CONFIG_NOTIFY , NO_STR ) : setConfig( PREFERENCES , CONFIG_NOTIFY , YES_STR ); 
+}
+
+::DBus::Int32
+ManagerImpl::getMailNotify( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_MAIL_NOTIFY );
+}
+
+void
+ManagerImpl::setMailNotify( void )
+{
+  ( getConfigInt( PREFERENCES , CONFIG_MAIL_NOTIFY ) == NOTIFY_ALL )?  setConfig( PREFERENCES , CONFIG_MAIL_NOTIFY , NO_STR ) : setConfig( PREFERENCES , CONFIG_MAIL_NOTIFY , YES_STR ); 
 }
 
 void

@@ -132,10 +132,24 @@
       <arg type="s" name="plugin" direction="out"/>
     </method>
 
-  <!--        /////////////////////////////       -->
+  <!--    General Settings Panel         -->
  
     <method name="isIax2Enabled">
       <arg type="i" name="res" direction="out"/>
+    </method>
+
+    <method name="setNotify">
+    </method>
+
+    <method name="getNotify">
+      <arg type="i" name="level" direction="out"/>
+    </method>
+
+    <method name="setMailNotify">
+    </method>
+
+    <method name="getMailNotify">
+      <arg type="i" name="level" direction="out"/>
     </method>
 
     <method name="getDialpad">

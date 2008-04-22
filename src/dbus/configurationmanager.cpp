@@ -285,5 +285,30 @@ ConfigurationManager::popupMode( void )
   return Manager::instance().popupMode(  ); 
 }
 
+void
+ConfigurationManager::setNotify( void )
+{
+  _debug("Manager received setNotify\n");
+  Manager::instance().setNotify( ); 
+}
 
+::DBus::Int32
+ConfigurationManager::getNotify( void )
+{
+  _debug("Manager received getNotify\n");
+  return Manager::instance().getNotify(  ); 
+}
 
+void
+ConfigurationManager::setMailNotify( void )
+{
+  _debug("Manager received setMailNotify\n");
+  Manager::instance().setMailNotify( ); 
+}
+
+::DBus::Int32
+ConfigurationManager::getMailNotify( void )
+{
+  _debug("Manager received getMailNotify\n");
+  return Manager::instance().getMailNotify(  ); 
+}

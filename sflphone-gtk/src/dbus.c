@@ -1233,3 +1233,75 @@ dbus_switch_popup_mode( void )
 		g_error_free(error);
 	}
 }
+
+void
+dbus_set_notify( void )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_notify(
+			configurationManagerProxy,
+			&error);
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+	  g_print("Called dbus_set_notif_level\n");
+}
+
+guint
+dbus_get_notify( void )
+{
+  g_print("Before dbus_get_notif_level()\n");
+	guint level;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_notify(
+			configurationManagerProxy,
+			&level,
+			&error);
+	if(error)
+	{
+	  g_print("Error calling dbus_get_notif_level\n");
+		g_error_free(error);
+	}
+	else
+	  g_print("Called dbus_get_notif_level\n");
+	
+	return level;
+}
+
+void
+dbus_set_mail_notify( void )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_mail_notify(
+			configurationManagerProxy,
+			&error);
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+	  g_print("Called dbus_set_mail_notif_level\n");
+}
+
+guint
+dbus_get_mail_notify( void )
+{
+  g_print("Before dbus_get_mail_notif_level()\n");
+	guint level;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_mail_notify(
+			configurationManagerProxy,
+			&level,
+			&error);
+	if(error)
+	{
+	  g_print("Error calling dbus_get_mail_notif_level\n");
+		g_error_free(error);
+	}
+	else
+	  g_print("Called dbus_get_mail_notif_level\n");
+	
+	return level;
+}

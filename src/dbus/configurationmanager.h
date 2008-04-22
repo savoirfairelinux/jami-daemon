@@ -81,6 +81,10 @@ public:
     void startHidden( void );
     ::DBus::Int32 popupMode( void );
     void switchPopupMode( void );
+    ::DBus::Int32 getNotify( void );
+    void setNotify( void );
+    ::DBus::Int32 getMailNotify( void );
+    void setMailNotify( void );
 
 };
 

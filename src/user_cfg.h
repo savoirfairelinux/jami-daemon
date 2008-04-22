@@ -48,6 +48,8 @@
 
 #define PREFERENCES		"Preferences"		  /** Section Preferences */
 #define CONFIG_DIALPAD		"Dialpad.display"	  /** Display dialpad preferences */
+#define CONFIG_NOTIFY		"Notify.all"		  /** Desktop notification level */
+#define CONFIG_MAIL_NOTIFY	"Notify.mails"		  /** Desktop mail notification level */
 #define ZONE_TONE		"Options.zoneToneChoice"  /** Country tone */
 #define VOICEMAIL_NUM		"Options.voicemailNumber" /** Voicemail number */
 #define CONFIG_RINGTONE		"Ringtones.enable"	  /** Ringtones preferences */
@@ -76,6 +78,7 @@
 #define DFT_VOICEMAIL 		"888"			/** Default voicemail number */
 #define DFT_FRAME_SIZE		"20"			/** Default frame size in millisecond */
 #define DFT_SAMPLE_RATE		"44100"			/** Default sample rate in HZ */
+#define DFT_NOTIF_LEVEL		"2"			/** Default desktop notification level : maximum */
 
 #ifdef USE_ZEROCONF
 #define CONFIG_ZEROCONF_DEFAULT_STR "1"			/** Default Zero configuration networking module value */

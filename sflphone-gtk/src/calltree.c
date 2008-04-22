@@ -358,7 +358,7 @@ create_toolbar (){
 			G_CALLBACK (transfert), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
 
-	historyButton = gtk_toggle_tool_button_new_from_stock (GTK_STOCK_INDEX);
+	historyButton = gtk_toggle_tool_button_new_from_stock(GTK_STOCK_INDEX);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
 	g_signal_connect (G_OBJECT (historyButton), "toggled",
@@ -581,7 +581,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	switch(c->state)
 	{
 		case CALL_STATE_INCOMING:
-			pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
+			pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
 			break;
 		case CALL_STATE_DIALING:
 			pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);

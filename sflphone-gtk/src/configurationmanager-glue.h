@@ -201,81 +201,6 @@ static
 inline
 #endif
 gboolean
-org_sflphone_SFLphone_ConfigurationManager_get_default_account (DBusGProxy *proxy, char ** OUT_accountID, GError **error)
-
-{
-  return dbus_g_proxy_call (proxy, "getDefaultAccount", error, G_TYPE_INVALID, G_TYPE_STRING, OUT_accountID, G_TYPE_INVALID);
-}
-
-typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_default_account_reply) (DBusGProxy *proxy, char * OUT_accountID, GError *error, gpointer userdata);
-
-static void
-org_sflphone_SFLphone_ConfigurationManager_get_default_account_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
-{
-  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
-  GError *error = NULL;
-  char * OUT_accountID;
-  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_STRING, &OUT_accountID, G_TYPE_INVALID);
-  (*(org_sflphone_SFLphone_ConfigurationManager_get_default_account_reply)data->cb) (proxy, OUT_accountID, error, data->userdata);
-  return;
-}
-
-static
-#ifdef G_HAVE_INLINE
-inline
-#endif
-DBusGProxyCall*
-org_sflphone_SFLphone_ConfigurationManager_get_default_account_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_default_account_reply callback, gpointer userdata)
-
-{
-  DBusGAsyncData *stuff;
-  stuff = g_new (DBusGAsyncData, 1);
-  stuff->cb = G_CALLBACK (callback);
-  stuff->userdata = userdata;
-  return dbus_g_proxy_begin_call (proxy, "getDefaultAccount", org_sflphone_SFLphone_ConfigurationManager_get_default_account_async_callback, stuff, g_free, G_TYPE_INVALID);
-}
-static
-#ifdef G_HAVE_INLINE
-inline
-#endif
-gboolean
-org_sflphone_SFLphone_ConfigurationManager_set_default_account (DBusGProxy *proxy, const char * IN_accountID, GError **error)
-
-{
-  return dbus_g_proxy_call (proxy, "setDefaultAccount", error, G_TYPE_STRING, IN_accountID, G_TYPE_INVALID, G_TYPE_INVALID);
-}
-
-typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_default_account_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
-
-static void
-org_sflphone_SFLphone_ConfigurationManager_set_default_account_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
-{
-  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
-  GError *error = NULL;
-  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
-  (*(org_sflphone_SFLphone_ConfigurationManager_set_default_account_reply)data->cb) (proxy, error, data->userdata);
-  return;
-}
-
-static
-#ifdef G_HAVE_INLINE
-inline
-#endif
-DBusGProxyCall*
-org_sflphone_SFLphone_ConfigurationManager_set_default_account_async (DBusGProxy *proxy, const char * IN_accountID, org_sflphone_SFLphone_ConfigurationManager_set_default_account_reply callback, gpointer userdata)
-
-{
-  DBusGAsyncData *stuff;
-  stuff = g_new (DBusGAsyncData, 1);
-  stuff->cb = G_CALLBACK (callback);
-  stuff->userdata = userdata;
-  return dbus_g_proxy_begin_call (proxy, "setDefaultAccount", org_sflphone_SFLphone_ConfigurationManager_set_default_account_async_callback, stuff, g_free, G_TYPE_STRING, IN_accountID, G_TYPE_INVALID);
-}
-static
-#ifdef G_HAVE_INLINE
-inline
-#endif
-gboolean
 org_sflphone_SFLphone_ConfigurationManager_send_register (DBusGProxy *proxy, const char * IN_accountID, const gint IN_expire, GError **error)
 
 {
@@ -1250,6 +1175,156 @@ org_sflphone_SFLphone_ConfigurationManager_is_iax2_enabled_async (DBusGProxy *pr
   stuff->cb = G_CALLBACK (callback);
   stuff->userdata = userdata;
   return dbus_g_proxy_begin_call (proxy, "isIax2Enabled", org_sflphone_SFLphone_ConfigurationManager_is_iax2_enabled_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_set_notify (DBusGProxy *proxy, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "setNotify", error, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_notify_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_set_notify_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_set_notify_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_set_notify_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_set_notify_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "setNotify", org_sflphone_SFLphone_ConfigurationManager_set_notify_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_get_notify (DBusGProxy *proxy, gint* OUT_level, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getNotify", error, G_TYPE_INVALID, G_TYPE_INT, OUT_level, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_notify_reply) (DBusGProxy *proxy, gint OUT_level, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_get_notify_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  gint OUT_level;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INT, &OUT_level, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_notify_reply)data->cb) (proxy, OUT_level, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_get_notify_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_notify_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getNotify", org_sflphone_SFLphone_ConfigurationManager_get_notify_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_set_mail_notify (DBusGProxy *proxy, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "setMailNotify", error, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_mail_notify_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_set_mail_notify_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_set_mail_notify_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_set_mail_notify_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_set_mail_notify_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "setMailNotify", org_sflphone_SFLphone_ConfigurationManager_set_mail_notify_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_get_mail_notify (DBusGProxy *proxy, gint* OUT_level, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getMailNotify", error, G_TYPE_INVALID, G_TYPE_INT, OUT_level, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_mail_notify_reply) (DBusGProxy *proxy, gint OUT_level, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_get_mail_notify_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  gint OUT_level;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INT, &OUT_level, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_mail_notify_reply)data->cb) (proxy, OUT_level, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_get_mail_notify_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_mail_notify_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getMailNotify", org_sflphone_SFLphone_ConfigurationManager_get_mail_notify_async_callback, stuff, g_free, G_TYPE_INVALID);
 }
 static
 #ifdef G_HAVE_INLINE

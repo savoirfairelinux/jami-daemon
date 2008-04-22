@@ -111,6 +111,8 @@ typedef short int16;
 #define DISPLAY_DIALPAD		  1		/** Display dialpad or not */
 #define START_HIDDEN		  1		/** SFlphone starts hidden at start-up or not */
 #define WINDOW_POPUP		  1		/** Popup mode */
+#define NOTIFY_ALL		  1		/** Desktop notification level 0: never notify */
+#define NOTIFY_MAILS		  1		/** Desktop mail notification level 0: never notify */
 
 // Error codes for error handling
 #define NO_ERROR		      0x0000	/** No error - Everything alright */

@@ -496,6 +496,28 @@ class ManagerImpl {
     void switchPopupMode( void );
 
     /**
+     * Set the desktop notification level
+     */
+    void setNotify( void );
+
+    /**
+     * Get the desktop notification level
+     * @return int The notification level
+     */
+    ::DBus::Int32 getNotify( void );
+
+    /**
+     * Set the desktop mail notification level
+     */
+    void setMailNotify( void );
+
+    /**
+     * Get the desktop mail notification level
+     * @return int The mail notification level
+     */
+    ::DBus::Int32 getMailNotify( void );
+
+    /**
      * Retrieve the formatted list of codecs payload in the user config file and
      * load in the active list of codecs
      * @return std::vector<std::string>	  The vector containing the active codecs

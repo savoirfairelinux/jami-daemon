@@ -24,36 +24,38 @@ static NotifyNotification *notification;
   void
 notify_incoming_call( call_t* c  )
 {
-  GdkPixbuf *pixbuf;
-  gchar* callerid;
-  gchar* title;
-  notify_init("sflphone");
+  if( dbus_get_notify()){ 
 
-  title = g_markup_printf_escaped(_("%s account: %s") , 
-      (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_TYPE) , 
-      (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_ALIAS) ) ;
-  callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , c->from);
+    GdkPixbuf *pixbuf;
+    gchar* callerid;
+    gchar* title;
+    notify_init("sflphone");
 
-  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
+    title = g_markup_printf_escaped(_("%s account: %s") , 
+	(gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_TYPE) , 
+	(gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_ALIAS) ) ;
+    callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , c->from);
 
-  notification = notify_notification_new( title, 
-      callerid,
-      NULL,
-      NULL);
-  notify_notification_set_urgency( notification , NOTIFY_URGENCY_CRITICAL );
-  notify_notification_set_icon_from_pixbuf (notification, pixbuf);
-  notify_notification_attach_to_status_icon( notification , get_status_icon() );
-  notify_notification_set_timeout( notification , (( g_strcasecmp(__TIMEOUT_MODE, "default") == 0 )? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER ));
-  g_object_set_data( G_OBJECT( notification ) , "call" , c );
-  notify_notification_add_action( notification , "accept" , _("Accept") , (NotifyActionCallback) answer_call_cb , NULL,  NULL );
-  notify_notification_add_action( notification , "refuse" , _("Refuse") , (NotifyActionCallback) refuse_call_cb , NULL , NULL );
-  notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
+    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
 
-  if (!notify_notification_show (notification, NULL)) {
-    g_print("notify(), failed to send notification\n");
+    notification = notify_notification_new( title, 
+	callerid,
+	NULL,
+	NULL);
+    notify_notification_set_urgency( notification , NOTIFY_URGENCY_CRITICAL );
+    notify_notification_set_icon_from_pixbuf (notification, pixbuf);
+    notify_notification_attach_to_status_icon( notification , get_status_icon() );
+    notify_notification_set_timeout( notification , (( g_strcasecmp(__TIMEOUT_MODE, "default") == 0 )? __TIMEOUT_TIME : NOTIFY_EXPIRES_NEVER ));
+    g_object_set_data( G_OBJECT( notification ) , "call" , c );
+    notify_notification_add_action( notification , "accept" , _("Accept") , (NotifyActionCallback) answer_call_cb , NULL,  NULL );
+    notify_notification_add_action( notification , "refuse" , _("Refuse") , (NotifyActionCallback) refuse_call_cb , NULL , NULL );
+    notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
+
+    if (!notify_notification_show (notification, NULL)) {
+      g_print("notify(), failed to send notification\n");
+    }
   }
 }
-
   void
 answer_call_cb( NotifyNotification *notification, gpointer data  )
 {
@@ -81,66 +83,71 @@ ignore_call_cb( NotifyNotification *notification, gpointer data )
   void
 notify_voice_mails( guint count , account_t* acc )
 {
-  // the account is different from NULL
-  GdkPixbuf *pixbuf;
-  gchar* title;
-  gchar* body;
-  notify_init("sflphone");
 
-  title = g_markup_printf_escaped(_("%s account: %s") ,
-      (gchar*)g_hash_table_lookup(acc->properties , ACCOUNT_TYPE) ,
-     (gchar*) g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) ) ;
-  body = g_markup_printf_escaped(_("%d voice mails"), count);
+  if( dbus_get_mail_notify()) { 
+    // the account is different from NULL
+    GdkPixbuf *pixbuf;
+    gchar* title;
+    gchar* body;
+    notify_init("sflphone");
 
-  pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+    title = g_markup_printf_escaped(_("%s account: %s") ,
+	(gchar*)g_hash_table_lookup(acc->properties , ACCOUNT_TYPE) ,
+	(gchar*) g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) ) ;
+    body = g_markup_printf_escaped(_("%d voice mails"), count);
 
-  notification = notify_notification_new( title,
-      body,
-      NULL,
-      NULL);
-  notify_notification_set_urgency( notification , NOTIFY_URGENCY_LOW );
-  notify_notification_set_icon_from_pixbuf (notification, pixbuf);
-  notify_notification_attach_to_status_icon( notification , get_status_icon() );
-  notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
-  notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
+    pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
 
-  if (!notify_notification_show (notification, NULL)) {
-    g_print("notify(), failed to send notification\n");
+    notification = notify_notification_new( title,
+	body,
+	NULL,
+	NULL);
+    notify_notification_set_urgency( notification , NOTIFY_URGENCY_LOW );
+    notify_notification_set_icon_from_pixbuf (notification, pixbuf);
+    notify_notification_attach_to_status_icon( notification , get_status_icon() );
+    notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
+    notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
+
+    if (!notify_notification_show (notification, NULL)) {
+      g_print("notify(), failed to send notification\n");
+    }
   }
 }
 
   void
 notify_current_account( account_t* acc )
 {
-  // the account is different from NULL
-  GdkPixbuf *pixbuf;
-  gchar* title;
-  gchar* body="";
-  notify_init("sflphone");
 
-  body = g_markup_printf_escaped(_("Calling with %s account <i>%s</i>") ,
-				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE) ,
-				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
+  if( dbus_get_notify()){
+    // the account is different from NULL
+    GdkPixbuf *pixbuf;
+    gchar* title;
+    gchar* body="";
+    notify_init("sflphone");
 
-  title = g_markup_printf_escaped(_("Current account"));
+    body = g_markup_printf_escaped(_("Calling with %s account <i>%s</i>") ,
+	(gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE) ,
+	(gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
 
-  pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+    title = g_markup_printf_escaped(_("Current account"));
 
-  notification = notify_notification_new( title,
-      body,
-      NULL,
-      NULL);
-  notify_notification_set_urgency( notification , NOTIFY_URGENCY_NORMAL );
-  notify_notification_set_icon_from_pixbuf (notification, pixbuf);
-  notify_notification_attach_to_status_icon( notification , get_status_icon() );
-  notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
-  notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
+    pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
 
-  if (!notify_notification_show (notification, NULL)) {
-    g_print("notify(), failed to send notification\n");
+    notification = notify_notification_new( title,
+	body,
+	NULL,
+	NULL);
+    notify_notification_set_urgency( notification , NOTIFY_URGENCY_NORMAL );
+    notify_notification_set_icon_from_pixbuf (notification, pixbuf);
+    notify_notification_attach_to_status_icon( notification , get_status_icon() );
+    notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
+    notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
+
+    if (!notify_notification_show (notification, NULL)) {
+      g_print("notify(), failed to send notification\n");
+    }
   }
 }
-
   void
 notify_no_accounts(  )
 {
@@ -170,7 +177,7 @@ notify_no_accounts(  )
   }
 }
 
- void
+  void
 setup_accounts_cb( NotifyNotification *notification, gpointer data )
 {
   //gtk_widget_set_parent( show_accounts_window() , GTK_WIDGET(get_main_window()));

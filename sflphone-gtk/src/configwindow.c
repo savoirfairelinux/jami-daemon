@@ -511,6 +511,18 @@ set_popup_mode( void )
   dbus_switch_popup_mode();
 }
 
+void
+set_notif_level(  )
+{
+  dbus_set_notify();
+}
+
+void
+set_mail_notif( )
+{
+  dbus_set_mail_notify( );
+}
+
 void 
 ringtone_enabled( void )
 {
@@ -1223,7 +1235,7 @@ create_general_settings ()
   gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
   // Notifications Frame
-  notifFrame = gtk_frame_new(_("Notifications"));
+  notifFrame = gtk_frame_new(_("Desktop Notification"));
   gtk_box_pack_start(GTK_BOX(ret), notifFrame, FALSE, FALSE, 0);
   gtk_widget_show( notifFrame );
 
@@ -1232,20 +1244,15 @@ create_general_settings ()
   gtk_widget_show( notifBox );
   gtk_container_add( GTK_CONTAINER(notifFrame) , notifBox);
   
-  notifAll = gtk_radio_button_new_with_label( NULL, _("Enable All"));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), TRUE );
+  notifAll = gtk_check_button_new_with_label( _("Enable"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify() );
   gtk_box_pack_start( GTK_BOX(notifBox) , notifAll , TRUE , TRUE , 1);
-  //TODO callback
+  g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
 
-  notifIncoming = gtk_radio_button_new_with_label_from_widget( GTK_RADIO_BUTTON(notifAll) , _("Only Incoming Calls"));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifIncoming), FALSE );
-  gtk_box_pack_start( GTK_BOX(notifBox) , notifIncoming , TRUE , TRUE , 1);
-  //TODO callback
-
-  notifMails = gtk_radio_button_new_with_label_from_widget( GTK_RADIO_BUTTON(notifAll) , _("Only Voice Mails"));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifMails), FALSE );
+  notifMails = gtk_check_button_new_with_label(  _("Notify Voice Mails"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifMails), dbus_get_mail_notify() );
   gtk_box_pack_start( GTK_BOX(notifBox) , notifMails , TRUE , TRUE , 1);
-  //TODO callback
+  g_signal_connect(G_OBJECT( notifMails ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
 
   // System Tray option frame
   trayFrame = gtk_frame_new(_("System Tray Icon"));
@@ -1315,6 +1322,8 @@ show_config_window ()
 	tab = create_audio_tab();	
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio Settings")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+
+	gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  1);
 
 	gtk_dialog_run(dialog);
 	//gtk_widget_show( GTK_WIDGET(dialog) );

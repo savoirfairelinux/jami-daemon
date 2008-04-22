@@ -51,6 +51,10 @@ public:
         register_method(ConfigurationManager, getAudioDeviceIndex, _getAudioDeviceIndex_stub);
         register_method(ConfigurationManager, getCurrentAudioOutputPlugin, _getCurrentAudioOutputPlugin_stub);
         register_method(ConfigurationManager, isIax2Enabled, _isIax2Enabled_stub);
+        register_method(ConfigurationManager, setNotify, _setNotify_stub);
+        register_method(ConfigurationManager, getNotify, _getNotify_stub);
+        register_method(ConfigurationManager, setMailNotify, _setMailNotify_stub);
+        register_method(ConfigurationManager, getMailNotify, _getMailNotify_stub);
         register_method(ConfigurationManager, getDialpad, _getDialpad_stub);
         register_method(ConfigurationManager, setDialpad, _setDialpad_stub);
         register_method(ConfigurationManager, startHidden, _startHidden_stub);
@@ -220,6 +224,24 @@ public:
             { "res", "i", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument setNotify_args[] = 
+        {
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getNotify_args[] = 
+        {
+            { "level", "i", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setMailNotify_args[] = 
+        {
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getMailNotify_args[] = 
+        {
+            { "level", "i", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument getDialpad_args[] = 
         {
             { "state", "i", false },
@@ -294,6 +316,10 @@ public:
             { "getAudioDeviceIndex", getAudioDeviceIndex_args },
             { "getCurrentAudioOutputPlugin", getCurrentAudioOutputPlugin_args },
             { "isIax2Enabled", isIax2Enabled_args },
+            { "setNotify", setNotify_args },
+            { "getNotify", getNotify_args },
+            { "setMailNotify", setMailNotify_args },
+            { "getMailNotify", getMailNotify_args },
             { "getDialpad", getDialpad_args },
             { "setDialpad", setDialpad_args },
             { "startHidden", startHidden_args },
@@ -365,6 +391,10 @@ public:
     virtual ::DBus::Int32 getAudioDeviceIndex( const ::DBus::String& name ) = 0;
     virtual ::DBus::String getCurrentAudioOutputPlugin(  ) = 0;
     virtual ::DBus::Int32 isIax2Enabled(  ) = 0;
+    virtual void setNotify(  ) = 0;
+    virtual ::DBus::Int32 getNotify(  ) = 0;
+    virtual void setMailNotify(  ) = 0;
+    virtual ::DBus::Int32 getMailNotify(  ) = 0;
     virtual ::DBus::Int32 getDialpad(  ) = 0;
     virtual void setDialpad(  ) = 0;
     virtual void startHidden(  ) = 0;
@@ -698,6 +728,42 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         ::DBus::Int32 argout1 = isIax2Enabled();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setNotify_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        setNotify();
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getNotify_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argout1 = getNotify();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setMailNotify_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        setMailNotify();
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getMailNotify_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argout1 = getMailNotify();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
