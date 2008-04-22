@@ -64,7 +64,7 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 /**
  * Make a call
  */
-	static void 
+static void 
 call_button( GtkWidget *widget, gpointer   data )
 {
 	call_t * selectedCall;
@@ -90,7 +90,7 @@ call_button( GtkWidget *widget, gpointer   data )
 /**
  * Hang up the line
  */
-	static void 
+static void 
 hang_up( GtkWidget *widget, gpointer   data )
 {
 	sflphone_hang_up();
@@ -99,7 +99,7 @@ hang_up( GtkWidget *widget, gpointer   data )
 /**
  * Hold the line
  */
-	static void 
+static void 
 hold( GtkWidget *widget, gpointer   data )
 {
 	sflphone_on_hold();
@@ -108,7 +108,7 @@ hold( GtkWidget *widget, gpointer   data )
 /**
  * Transfert the line
  */
-	static void 
+static void 
 transfert  (GtkToggleToolButton *toggle_tool_button,
 		gpointer             user_data)
 {
@@ -126,7 +126,7 @@ transfert  (GtkToggleToolButton *toggle_tool_button,
 /**
  * Unhold call
  */
-	static void 
+static void 
 unhold( GtkWidget *widget, gpointer   data )
 {
 	sflphone_off_hold();
@@ -152,7 +152,7 @@ toggle_history(GtkToggleToolButton *toggle_tool_button,
 	g_signal_emit_by_name(sel, "changed");
 	toolbar_update_buttons();
 }
-	void 
+void 
 toolbar_update_buttons ()
 {
 
@@ -299,7 +299,8 @@ void  row_activated(GtkTreeView       *tree_view,
 
 
 GtkWidget * 
-create_toolbar (){
+create_toolbar ()
+{
 	GtkWidget *ret;
 	GtkWidget *image;
 
@@ -372,7 +373,8 @@ create_toolbar (){
 }  
 
 void 
-create_call_tree (calltab_t* tab){
+create_call_tree (calltab_t* tab)
+{
 	GtkWidget *sw;
 	GtkCellRenderer *rend;
 	GtkTreeViewColumn *col;
