@@ -388,10 +388,11 @@ create_toolbar (){
 	history_shown = FALSE;
 	active_calltree = current_calls;
 
-	mailboxButton = gtk_tool_button_new_from_stock( GTK_STOCK_HOME );
+	image = gtk_image_new_from_file( ICONS_DIR "/mailbox.svg");
+	mailboxButton = gtk_tool_button_new( image , _("Mailbox"));
+	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mailboxButton), image);
 	if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
         gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Mailbox"));
-        gtk_tool_button_set_label(GTK_TOOL_BUTTON(mailboxButton), _("Mailbox"));
         g_signal_connect (G_OBJECT (mailboxButton), "clicked",
                         G_CALLBACK (call_mailbox), NULL);
         gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
