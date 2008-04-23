@@ -1192,7 +1192,6 @@ dbus_set_volume_controls(  )
 	org_sflphone_SFLphone_ConfigurationManager_set_volume_controls(
 			configurationManagerProxy,
 			&error);
-	g_print("After");
 	if(error)
 	{
 		g_error_free(error);
@@ -1202,13 +1201,46 @@ dbus_set_volume_controls(  )
 }
 
 void
+dbus_set_max_calls( const gdouble calls  )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_max_calls(
+			configurationManagerProxy,
+			calls,
+			&error);
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_max_calls on ConfigurationManager\n");
+}
+
+gdouble
+dbus_get_max_calls( void )
+{
+	GError* error = NULL;
+	gdouble calls;
+	org_sflphone_SFLphone_ConfigurationManager_get_max_calls(
+			configurationManagerProxy,
+			&calls,
+			&error);
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_max_calls on ConfigurationManager\n");
+	return calls;
+}
+
+void
 dbus_start_hidden( void )
 {
 	GError* error = NULL;
 	org_sflphone_SFLphone_ConfigurationManager_start_hidden(
 			configurationManagerProxy,
 			&error);
-	g_print("After");
 	if(error)
 	{
 		g_error_free(error);

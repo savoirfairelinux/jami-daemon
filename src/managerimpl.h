@@ -481,6 +481,18 @@ class ManagerImpl {
     void setVolumeControls( void );
 
     /**
+     * Set the maximum number of calls to keep in the history
+     * @param calls The number of calls
+     */
+    void setMaxCalls( const double& calls );
+
+    /**
+     * Get the maximum number of calls to keep in the history
+     * @return double The number of calls
+     */
+    double getMaxCalls( void );
+
+    /**
      * Configure the start-up option
      * @return int	1 if SFLphone should start in the system tray
      *	        0 otherwise

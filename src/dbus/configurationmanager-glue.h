@@ -59,6 +59,8 @@ public:
         register_method(ConfigurationManager, setDialpad, _setDialpad_stub);
         register_method(ConfigurationManager, getVolumeControls, _getVolumeControls_stub);
         register_method(ConfigurationManager, setVolumeControls, _setVolumeControls_stub);
+        register_method(ConfigurationManager, getMaxCalls, _getMaxCalls_stub);
+        register_method(ConfigurationManager, setMaxCalls, _setMaxCalls_stub);
         register_method(ConfigurationManager, startHidden, _startHidden_stub);
         register_method(ConfigurationManager, isStartHidden, _isStartHidden_stub);
         register_method(ConfigurationManager, popupMode, _popupMode_stub);
@@ -262,6 +264,16 @@ public:
         {
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getMaxCalls_args[] = 
+        {
+            { "calls", "d", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setMaxCalls_args[] = 
+        {
+            { "calls", "d", true },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument startHidden_args[] = 
         {
             { 0, 0, 0 }
@@ -335,6 +347,8 @@ public:
             { "setDialpad", setDialpad_args },
             { "getVolumeControls", getVolumeControls_args },
             { "setVolumeControls", setVolumeControls_args },
+            { "getMaxCalls", getMaxCalls_args },
+            { "setMaxCalls", setMaxCalls_args },
             { "startHidden", startHidden_args },
             { "isStartHidden", isStartHidden_args },
             { "popupMode", popupMode_args },
@@ -412,6 +426,8 @@ public:
     virtual void setDialpad(  ) = 0;
     virtual ::DBus::Int32 getVolumeControls(  ) = 0;
     virtual void setVolumeControls(  ) = 0;
+    virtual ::DBus::Double getMaxCalls(  ) = 0;
+    virtual void setMaxCalls( const ::DBus::Double& calls ) = 0;
     virtual void startHidden(  ) = 0;
     virtual ::DBus::Int32 isStartHidden(  ) = 0;
     virtual ::DBus::Int32 popupMode(  ) = 0;
@@ -817,6 +833,25 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         setVolumeControls();
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getMaxCalls_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Double argout1 = getMaxCalls();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setMaxCalls_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Double argin1; ri >> argin1;
+        setMaxCalls(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

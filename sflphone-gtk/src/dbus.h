@@ -310,6 +310,16 @@ int dbus_get_volume_controls( void );
 void dbus_start_hidden( void );
 
 /**
+ * ConfigurationManager - Gives the maximum number of calls the user wants to have in the history 
+ * @return double The maximum number of calls
+ */
+gdouble dbus_get_max_calls( void );
+
+/**
+ * ConfigurationManager - Gives the maximum number of calls the user wants to have in the history 
+ */
+void dbus_set_max_calls( const gdouble calls );
+/**
  * ConfigurationManager - Configure the start-up option
  * @return int	1 if SFLphone should start in the system tray
  *	        0 otherwise

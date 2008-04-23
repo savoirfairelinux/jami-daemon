@@ -26,6 +26,8 @@
  * call_t * selectedCall = NULL;
  */
 
+guint _HISTORY_MAX_CALLS;
+
 /* GCompareFunc to compare a callID (gchar* and a call_t) */
 gint 
 is_callID_callstruct ( gconstpointer a, gconstpointer b)
@@ -72,9 +74,30 @@ call_list_clean (calltab_t* tab)
 void 
 call_list_add (calltab_t* tab, call_t * c)
 {
-  g_queue_push_tail (tab->callQueue, (gpointer *) c);
+  if( tab == history )	
+  {
+    g_print("HO HJOH  OH HOSDVDBSGDNGNSFHNSGNBADFSVsv\n");
+    if( call_list_get_size(tab) < dbus_get_max_calls() )
+    {
+    g_print("SDVDBSGDNGNSFHNSGNBADFSVsv\n");
+      g_queue_push_tail (tab->callQueue, (gpointer *) c);
+    }
+  }
+  else
+    g_queue_push_tail (tab->callQueue, (gpointer *) c);
 }
 
+void
+call_history_set_max_calls( gdouble number )
+{
+  _HISTORY_MAX_CALLS = number;
+}
+
+gdouble 
+call_history_get_max_calls( void )
+{
+  return _HISTORY_MAX_CALLS;
+}
 
 void 
 call_list_remove (calltab_t* tab, const gchar * callID)

@@ -523,6 +523,12 @@ set_mail_notif( )
   dbus_set_mail_notify( );
 }
 
+void
+update_max_value( GtkRange* scale )
+{
+  dbus_set_max_calls(gtk_range_get_value( GTK_RANGE( scale )));
+}
+
 void 
 ringtone_enabled( void )
 {
@@ -1229,6 +1235,11 @@ create_general_settings ()
   GtkWidget *trayBox;
   GtkWidget *trayItem;
 
+  GtkWidget *historyFrame;
+  GtkWidget *historyBox;
+  GtkWidget *value;
+  GtkWidget *label;
+
   // Main widget
   ret = gtk_vbox_new(FALSE, 10);
   gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
@@ -1277,7 +1288,29 @@ create_general_settings ()
   gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( trayItem ) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
 
+  historyFrame = gtk_frame_new(_("Calls History"));
+  gtk_box_pack_start(GTK_BOX(ret), historyFrame, FALSE, FALSE, 0);
+  gtk_widget_show( historyFrame );
+
+  historyBox = gtk_vbox_new(FALSE, 10);
+  gtk_box_pack_start(GTK_BOX(historyFrame), historyBox, TRUE, TRUE, 0);
+  gtk_widget_show( historyBox );
+  gtk_container_add( GTK_CONTAINER(historyFrame) , historyBox);
+  
+  label = gtk_label_new_with_mnemonic(_("Maximum calls"));
+  gtk_box_pack_start( GTK_BOX(historyBox) , label , TRUE , TRUE , 0);
+  
+  value = gtk_hscale_new_with_range(0.0 , 50.0 , 1.0);
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
+  gtk_scale_set_digits( GTK_SCALE(value) , 0);
+  gtk_scale_set_value_pos( GTK_SCALE(value) , GTK_POS_RIGHT); 
+  gtk_range_set_value( GTK_RANGE( value ) , dbus_get_max_calls());
+  gtk_box_pack_start( GTK_BOX(historyBox) , value , TRUE , TRUE , 0);
+
+  g_signal_connect( G_OBJECT( value) , "value-changed" , G_CALLBACK( update_max_value ) , NULL);
+  
   gtk_widget_show_all(ret);
+  
   return ret;
 }
 

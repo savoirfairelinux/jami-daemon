@@ -619,6 +619,9 @@ update_call_tree (calltab_t* tab, call_t * c)
 void 
 update_call_tree_add (calltab_t* tab, call_t * c)
 {
+	if( tab == history && ( call_list_get_size( tab ) >= dbus_get_max_calls() ) )
+	  return;
+
 	GdkPixbuf *pixbuf;
 	GtkTreeIter iter;
 	GtkTreeSelection* sel;

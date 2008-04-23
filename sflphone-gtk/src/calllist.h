@@ -70,7 +70,7 @@ typedef struct  {
   gchar * callID;
   /** The account used to place/receive the call */
   gchar * accountID;
-  /** The information about the calling person.  See call_get_name() and call_get_number()
+/** The information about the calling person.  See call_get_name() and call_get_number()
     * on how to get the name and number separately. */
   gchar * from;
   /** The number we are calling.  Only used when dialing out */
@@ -99,6 +99,12 @@ void call_list_init (calltab_t* tab);
 
 /** This function empty and free the call list. */
 void call_list_clean (calltab_t* tab);
+
+/** Get the maximun number of calls in the history calltab */
+gdouble call_history_get_max_calls( void ); 
+
+/** Set the maximun number of calls in the history calltab */
+void call_history_set_max_calls( const gdouble number ); 
 
 /** This function append a call to list. 
   * @param c The call you want to add 

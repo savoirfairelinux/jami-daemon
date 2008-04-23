@@ -979,6 +979,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_NOTIFY , YES_STR);
   fill_config_int(CONFIG_MAIL_NOTIFY , NO_STR);
   fill_config_int(CONFIG_VOLUME , YES_STR);
+  fill_config_int(CONFIG_HISTORY , DFT_MAX_CALLS);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1351,6 +1352,19 @@ void
 ManagerImpl::switchPopupMode( void )
 {
   ( getConfigInt( PREFERENCES , CONFIG_POPUP ) ==  WINDOW_POPUP)? setConfig(PREFERENCES , CONFIG_POPUP , NO_STR ) : setConfig( PREFERENCES , CONFIG_POPUP , YES_STR );
+}
+
+void
+ManagerImpl::setMaxCalls( const double& calls )
+{
+  setConfig( PREFERENCES , CONFIG_HISTORY , (int)calls );
+}
+
+double
+ManagerImpl::getMaxCalls( void )
+{
+  _debug("a;kvnsnblsb %i\n" , getConfigInt( PREFERENCES , CONFIG_HISTORY ));
+  return getConfigInt( PREFERENCES , CONFIG_HISTORY );
 }
 
 int 

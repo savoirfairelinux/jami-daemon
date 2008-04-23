@@ -166,6 +166,14 @@
     <method name="setVolumeControls">
     </method>
 
+    <method name="getMaxCalls">
+      <arg type="d" name="calls" direction="out"/>
+    </method>
+
+    <method name="setMaxCalls">
+      <arg type="d" name="calls" direction="in"/>
+    </method>
+
     <method name="startHidden">
     </method>
 
