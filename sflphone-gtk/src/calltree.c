@@ -397,7 +397,6 @@ create_toolbar (){
                         G_CALLBACK (call_mailbox), NULL);
         gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
 
-
 	return ret;
 
 }  
