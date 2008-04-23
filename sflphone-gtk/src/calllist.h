@@ -49,6 +49,17 @@ typedef enum
    CALL_STATE_TRANSFERT       
 } call_state_t;
 
+/**
+ * @enum history_state
+ * This enum have all the state a call can take in the history
+ */
+typedef enum
+{
+  NONE,
+  INCOMING,
+  OUTGOING,
+  MISSED
+} history_state_t;
 
 /** @struct call_t
   * @brief Call information.
@@ -64,8 +75,10 @@ typedef struct  {
   gchar * from;
   /** The number we are calling.  Only used when dialing out */
   gchar * to;
-  /* The current state of the call */
+  /** The current state of the call */
   call_state_t state;
+  /** The history state */
+  history_state_t history_state;
 } call_t;
 
 typedef struct {
