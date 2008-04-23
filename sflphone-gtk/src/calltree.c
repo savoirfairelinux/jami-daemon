@@ -543,7 +543,8 @@ update_call_tree (calltab_t* tab, call_t * c)
 							call_get_number(c));
 				}
 
-
+				if( tab == current_calls )
+				{
 				switch(c->state)
 				{
 					case CALL_STATE_HOLD:
@@ -556,14 +557,7 @@ update_call_tree (calltab_t* tab, call_t * c)
 						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
 						break;
 					case CALL_STATE_DIALING:
-						if( c->history_state == INCOMING )
-						  pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/incoming.svg", NULL);
-						else if( c->history_state == OUTGOING )
-						  pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/outgoing.svg", NULL);
-						else if( c->history_state == MISSED )
-						  pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/missed.svg", NULL);
-						else
-						  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
+						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
 						break;
 					case CALL_STATE_FAILURE:
 						pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
@@ -577,8 +571,10 @@ update_call_tree (calltab_t* tab, call_t * c)
 					default:
 						g_warning("Should not happen!");
 				}
-
-				/*switch(c->history_state)
+				}
+				else
+				{
+				switch(c->history_state)
 				{
 				  case OUTGOING:
 				    g_print("Outgoing state\n");
@@ -588,10 +584,15 @@ update_call_tree (calltab_t* tab, call_t * c)
 				    g_print("Incoming state\n");
 				    pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/incoming.svg", NULL);
 				    break;
+				  case MISSED:
+				    g_print("Missed state\n");
+				    pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/missed.svg", NULL);
+				    break;
 				  default:
 				    g_print("No history state\n");  
 				    break;
-				}*/
+				}
+				}
 				//Resize it
 				if(pixbuf)
 				{
@@ -651,7 +652,6 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	}
 	}
 	else{
-	      //pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
 	  switch(c->history_state)
 	  {
 	    case INCOMING:

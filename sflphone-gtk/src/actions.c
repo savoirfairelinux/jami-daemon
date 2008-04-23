@@ -227,14 +227,10 @@ sflphone_hang_up()
 			case CALL_STATE_FAILURE:
 				dbus_hang_up (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
-				//call_list_add(history, selectedCall);
-				//update_call_tree_add(history, selectedCall);
 				break;
 			case CALL_STATE_INCOMING:  
 				dbus_refuse (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
-				//call_list_add(history, selectedCall);
-				//update_call_tree_add(history, selectedCall);
 				break;
 			case CALL_STATE_TRANSFERT:  
 				dbus_hang_up (selectedCall);
@@ -372,7 +368,7 @@ sflphone_unset_transfert()
 void
 sflphone_incoming_call (call_t * c) 
 {
-	c->history_state = INCOMING;
+	c->history_state = MISSED;
 	call_list_add ( current_calls, c );
 	call_list_add( history, c );
 	update_call_tree_add( current_calls , c );
@@ -464,7 +460,6 @@ sflphone_new_call()
 
 	c->to = g_strdup("");
 
-
 	call_list_add(current_calls,c);
 	update_call_tree_add(current_calls,c);  
 	update_menus();
@@ -512,7 +507,8 @@ sflphone_keypad( guint keyval, gchar * key)
 				{
 					case 65293: /* ENTER */
 					case 65421: /* ENTER numpad */
-						//status_bar_display_account(c);
+						c->history_state = INCOMING;
+						update_call_tree( history , c );
 						dbus_accept(c);
 						break;
 					case 65307: /* ESCAPE */
