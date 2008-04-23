@@ -475,6 +475,14 @@ view_dialpad  (GtkCheckMenuItem *checkmenuitem,
   dbus_set_dialpad(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
 }
 
+  static void 
+view_volume_controls  (GtkCheckMenuItem *checkmenuitem,
+    void* foo)
+{
+  main_window_volume_controls(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
+  dbus_set_volume_controls(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
+}
+
   GtkWidget * 
 create_view_menu()
 {
@@ -494,8 +502,12 @@ create_view_menu()
   gtk_widget_show (menu_items);
 
   menu_items = gtk_check_menu_item_new_with_mnemonic (_("_Volume controls"));
+  gtk_check_menu_item_set_active( GTK_CHECK_MENU_ITEM ( menu_items ), dbus_get_volume_controls());
+  main_window_volume_controls(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menu_items)));
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  gtk_widget_set_sensitive( GTK_WIDGET(menu_items),   FALSE);
+  g_signal_connect(G_OBJECT (menu_items), "toggled",
+      G_CALLBACK (view_volume_controls), 
+      NULL);
   gtk_widget_show (menu_items);
 
   menu_items = gtk_menu_item_new_with_mnemonic(_("_Toolbar"));

@@ -54,6 +54,7 @@
 #define CONFIG_RINGTONE		"Ringtones.enable"	  /** Ringtones preferences */
 #define CONFIG_START		"Start.hidden"		  /** SFLphone starts in the systm tray or not */
 #define CONFIG_POPUP		"Window.popup"		  /** SFLphone pops up on incoming calls or not */
+#define CONFIG_VOLUME		"Volume.display"	  /** Display the mic and speaker volume controls */
 #define CONFIG_ZEROCONF		"Zeroconf.enable"	  /** Zero configuration networking module */
 
 #define SIGNALISATION		"VoIPLink"	      /** Section Signalisation */

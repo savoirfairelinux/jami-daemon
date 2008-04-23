@@ -261,6 +261,18 @@ ConfigurationManager::setDialpad( void )
   Manager::instance().setDialpad( ); 
 }
 
+::DBus::Int32
+ConfigurationManager::getVolumeControls( void )
+{
+  return Manager::instance().getVolumeControls(  ); 
+}
+
+void
+ConfigurationManager::setVolumeControls( void )
+{
+  Manager::instance().setVolumeControls( ); 
+}
+
 void
 ConfigurationManager::startHidden( void )
 {

@@ -469,6 +469,18 @@ class ManagerImpl {
     void setDialpad( void );
 
     /**
+     * Tells if the user wants to display the volume controls or not 
+     * @return int 1 if the controls have to be displayed
+     *	       0 otherwise
+     */
+    int getVolumeControls( void );
+
+    /**
+     * Set the volume controls ( mic and speaker ) visible or not
+     */
+    void setVolumeControls( void );
+
+    /**
      * Configure the start-up option
      * @return int	1 if SFLphone should start in the system tray
      *	        0 otherwise

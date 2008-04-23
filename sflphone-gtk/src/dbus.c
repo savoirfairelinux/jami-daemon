@@ -1166,6 +1166,41 @@ dbus_set_dialpad(  )
 		g_print("DBus called set_dialpad on ConfigurationManager\n");
 }
 
+int
+dbus_get_volume_controls()
+{
+	int state;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_volume_controls(
+			configurationManagerProxy,
+			&state,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_volume_controls on ConfigurationManager\n");
+	return state;
+}
+
+void
+dbus_set_volume_controls(  )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_volume_controls(
+			configurationManagerProxy,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_volume_controls on ConfigurationManager\n");
+}
+
 void
 dbus_start_hidden( void )
 {

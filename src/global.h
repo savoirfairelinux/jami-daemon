@@ -109,6 +109,7 @@ typedef short int16;
 #define ILBC_STRING_DESCRIPTION  "ilbc"		/** Ilbc codec string description */
 #define RINGTONE_ENABLED	  1		/** Custom ringtone enable or not */
 #define DISPLAY_DIALPAD		  1		/** Display dialpad or not */
+#define DISPLAY_VOLUME_CONTROLS	  1		/** Display the volume controls or not */
 #define START_HIDDEN		  1		/** SFlphone starts hidden at start-up or not */
 #define WINDOW_POPUP		  1		/** Popup mode */
 #define NOTIFY_ALL		  1		/** Desktop notification level 0: never notify */

@@ -77,6 +77,8 @@ public:
     void setRingtoneChoice( const ::DBus::String& tone );
     ::DBus::Int32 getDialpad( void );
     void setDialpad( void );
+    ::DBus::Int32 getVolumeControls( void );
+    void setVolumeControls( void );
     ::DBus::Int32 isStartHidden( void );
     void startHidden( void );
     ::DBus::Int32 popupMode( void );
