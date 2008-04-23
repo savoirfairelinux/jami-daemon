@@ -35,7 +35,7 @@
 
 guint voice_mails;
 
-	void
+void
 sflphone_notify_voice_mail ( const gchar* accountID , guint count )
 {
 	voice_mails = count ;
@@ -75,7 +75,7 @@ status_bar_display_account( call_t* c)
 }
   
 
-	gboolean
+gboolean
 sflphone_quit ()
 {
 	gboolean quit = FALSE;
@@ -98,7 +98,7 @@ sflphone_quit ()
 	return quit;
 }
 
-	void 
+void 
 sflphone_hold(call_t * c )
 {
 	c->state = CALL_STATE_HOLD;
@@ -247,7 +247,7 @@ sflphone_hang_up()
 }
 
 
-	void 
+void 
 sflphone_pick_up()
 {
 	call_t * selectedCall = call_get_selected(active_calltree);
@@ -280,7 +280,7 @@ sflphone_pick_up()
 	}
 }
 
-	void 
+void 
 sflphone_on_hold ()
 {
 	call_t * selectedCall = call_get_selected(current_calls);
@@ -298,7 +298,7 @@ sflphone_on_hold ()
 	}
 }
 
-	void 
+void 
 sflphone_off_hold ()
 {
 	call_t * selectedCall = call_get_selected(current_calls);
@@ -317,7 +317,7 @@ sflphone_off_hold ()
 }
 
 
-	void 
+void 
 sflphone_fail( call_t * c )
 {
 	c->state = CALL_STATE_FAILURE;
@@ -325,7 +325,7 @@ sflphone_fail( call_t * c )
 	update_menus();
 }
 
-	void 
+void 
 sflphone_busy( call_t * c )
 {
 	c->state = CALL_STATE_BUSY;
@@ -333,7 +333,7 @@ sflphone_busy( call_t * c )
 	update_menus();
 }
 
-	void 
+void 
 sflphone_current( call_t * c )
 {
 	c->state = CALL_STATE_CURRENT;
@@ -341,7 +341,7 @@ sflphone_current( call_t * c )
 	update_menus();
 }
 
-	void 
+void 
 sflphone_set_transfert()
 {
 	call_t * c = call_get_selected(current_calls);
@@ -355,7 +355,7 @@ sflphone_set_transfert()
 	toolbar_update_buttons();
 }
 
-	void 
+void 
 sflphone_unset_transfert()
 {
 	call_t * c = call_get_selected(current_calls);
@@ -369,7 +369,7 @@ sflphone_unset_transfert()
 	toolbar_update_buttons();
 }
 
-	void
+void
 sflphone_incoming_call (call_t * c) 
 {
 	call_list_add ( current_calls,c );
@@ -378,7 +378,8 @@ sflphone_incoming_call (call_t * c)
 	update_menus();
 }
 
-void process_dialing(call_t * c, guint keyval, gchar * key)
+void
+process_dialing(call_t * c, guint keyval, gchar * key)
 {
 	// We stop the tone
 	if(strlen(c->to) == 0 && c->state != CALL_STATE_TRANSFERT){
@@ -445,7 +446,8 @@ void process_dialing(call_t * c, guint keyval, gchar * key)
 }
 
 
-call_t * sflphone_new_call()
+call_t * 
+sflphone_new_call()
 {
 	// Play a tone when creating a new call
 	if( call_list_get_size(current_calls) == 0 )
@@ -470,7 +472,8 @@ call_t * sflphone_new_call()
 
 
 void 
-sflphone_keypad( guint keyval, gchar * key){
+sflphone_keypad( guint keyval, gchar * key)
+{
 
 	call_t * c = call_get_selected(current_calls);
 	if(c)
@@ -576,7 +579,7 @@ sflphone_keypad( guint keyval, gchar * key){
 
 
 	}
-} 
+ } 
 
 /*
  * Place a call with the default account.
@@ -643,7 +646,7 @@ sflphone_place_call ( call_t * c )
 }
 
 /* Internal to action - set the __CURRENT_ACCOUNT variable */
-	void
+void
 sflphone_set_current_account()
 {
   if( account_list_get_size() > 0 )
