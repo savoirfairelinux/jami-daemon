@@ -377,7 +377,7 @@ sflphone_incoming_call (call_t * c)
 	call_list_add ( current_calls, c );
 	call_list_add( history, c );
 	update_call_tree_add( current_calls , c );
-	update_call_tree_add( history , c );
+	//update_call_tree_add( history , c );
 	update_menus();
 }
 
@@ -649,7 +649,7 @@ sflphone_place_call ( call_t * c )
 	// Update history
 	c->history_state = OUTGOING;
 	call_list_add(history, c);
-	update_call_tree_add(history, c);
+	//update_call_tree_add(history, c);
   }
 }
 

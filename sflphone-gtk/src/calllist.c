@@ -81,9 +81,20 @@ call_list_add (calltab_t* tab, call_t * c)
 {
   if( tab == history )	
   {
+      g_print("ADD THE  FUCKING CALL call list size = %i - max calls = %i\n", call_list_get_size(tab) , dbus_get_max_calls());
+    // First case: can still add calls to the list
     if( call_list_get_size(tab) < dbus_get_max_calls() )
     {
+      g_print("ADD THE  FUCKING CALL\n");
       g_queue_push_tail (tab->callQueue, (gpointer *) c);
+      update_call_tree_add( history , c );
+    }
+    // List full -> Remove the last call from history and preprend the new call to the list
+    else
+    {
+      update_call_tree_remove( history , (call_t*)g_queue_pop_head( tab -> callQueue ) );      
+      g_queue_push_tail (tab->callQueue, (gpointer *) c);
+      update_call_tree_add( history , c );
     }
   }
   else

@@ -619,7 +619,8 @@ update_call_tree (calltab_t* tab, call_t * c)
 void 
 update_call_tree_add (calltab_t* tab, call_t * c)
 {
-	if( tab == history && ( call_list_get_size( tab ) >= dbus_get_max_calls() ) )
+      g_print("ADD THE  FUCKING CALL call list size = %i - max calls = %i\n", call_list_get_size(tab) , dbus_get_max_calls());
+	if( tab == history && ( call_list_get_size( tab ) > dbus_get_max_calls() ) )
 	  return;
 
 	GdkPixbuf *pixbuf;
