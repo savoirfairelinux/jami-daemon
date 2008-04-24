@@ -97,4 +97,9 @@ void ignore_call_cb( NotifyNotification *notification, gpointer data );
  */
 void setup_accounts_cb(NotifyNotification *notification, gpointer data);
 
+/**
+ * Stop and close the current notification if an action occured before the timeout
+ */
+void stop_notification( void );
+
 #endif

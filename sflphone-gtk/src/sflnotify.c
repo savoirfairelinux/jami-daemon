@@ -60,6 +60,8 @@ notify_incoming_call( call_t* c  )
 answer_call_cb( NotifyNotification *notification, gpointer data  )
 {
   call_t* c = (call_t*)g_object_get_data( G_OBJECT( notification ) , "call" );
+  c->history_state = INCOMING;
+  update_call_tree( history , c );
   dbus_accept(c);
   if( __POPUP_WINDOW )
     status_icon_unminimize();
@@ -211,5 +213,15 @@ notify_no_registered_accounts(  )
 
   if (!notify_notification_show (notification, NULL)) {
     g_print("notify(), failed to send notification\n");
+  }
+}
+
+void  
+stop_notification( void )
+{
+  if(notify_notification_show( notification , NULL))  
+  {
+    notify_notification_close( notification , NULL);
+    g_object_unref( notification );
   }
 }

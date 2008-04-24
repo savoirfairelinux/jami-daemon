@@ -119,6 +119,7 @@ sflphone_hung_up( call_t * c)
 {
   call_list_remove( current_calls, c->callID);
   update_call_tree_remove(current_calls, c);
+  c->state = CALL_STATE_DIALING;
   update_menus();
   status_tray_icon_blink( FALSE );
 }
@@ -231,6 +232,7 @@ sflphone_hang_up()
 			case CALL_STATE_INCOMING:  
 				dbus_refuse (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
+				stop_notification();
 				break;
 			case CALL_STATE_TRANSFERT:  
 				dbus_hang_up (selectedCall);
@@ -255,7 +257,10 @@ sflphone_pick_up()
 				sflphone_place_call (selectedCall);
 				break;
 			case CALL_STATE_INCOMING:
+				selectedCall->history_state = INCOMING;
+				update_call_tree( history , selectedCall );
 				dbus_accept (selectedCall);
+				stop_notification();
 				break;
 			case CALL_STATE_HOLD:
 				sflphone_new_call();
@@ -510,9 +515,11 @@ sflphone_keypad( guint keyval, gchar * key)
 						c->history_state = INCOMING;
 						update_call_tree( history , c );
 						dbus_accept(c);
+						stop_notification();
 						break;
 					case 65307: /* ESCAPE */
 						dbus_refuse(c);
+						stop_notification();
 						break;
 				}
 				break;
