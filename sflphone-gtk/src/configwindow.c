@@ -48,7 +48,6 @@ GtkListStore *inputAudioDeviceManagerStore;
 GtkWidget *addButton;
 GtkWidget *editButton;
 GtkWidget *deleteButton;
-//GtkWidget *defaultButton;
 GtkWidget *restoreButton;
 GtkWidget *accountMoveDownButton;
 GtkWidget *accountMoveUpButton;
@@ -527,6 +526,12 @@ void
 update_max_value( GtkRange* scale )
 {
   dbus_set_max_calls(gtk_range_get_value( GTK_RANGE( scale )));
+}
+
+void
+clean_history( void )
+{
+  call_list_clean_history();
 }
 
 void 
@@ -1239,6 +1244,7 @@ create_general_settings ()
   GtkWidget *historyBox;
   GtkWidget *value;
   GtkWidget *label;
+  GtkWidget *cleanButton;
 
   // Main widget
   ret = gtk_vbox_new(FALSE, 10);
@@ -1297,17 +1303,20 @@ create_general_settings ()
   gtk_widget_show( historyBox );
   gtk_container_add( GTK_CONTAINER(historyFrame) , historyBox);
   
-  label = gtk_label_new_with_mnemonic(_("Maximum calls"));
+  label = gtk_label_new_with_mnemonic(_("Maximum number of calls"));
   gtk_box_pack_start( GTK_BOX(historyBox) , label , TRUE , TRUE , 0);
   
-  value = gtk_hscale_new_with_range(0.0 , 50.0 , 1.0);
+  value = gtk_hscale_new_with_range(0.0 , 50.0 , 5.0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
   gtk_scale_set_digits( GTK_SCALE(value) , 0);
   gtk_scale_set_value_pos( GTK_SCALE(value) , GTK_POS_RIGHT); 
   gtk_range_set_value( GTK_RANGE( value ) , dbus_get_max_calls());
   gtk_box_pack_start( GTK_BOX(historyBox) , value , TRUE , TRUE , 0);
-
   g_signal_connect( G_OBJECT( value) , "value-changed" , G_CALLBACK( update_max_value ) , NULL);
+
+  cleanButton = gtk_button_new_from_stock( GTK_STOCK_CLEAR );
+  gtk_box_pack_end( GTK_BOX(historyBox) , cleanButton , FALSE , TRUE , 0);
+  g_signal_connect( G_OBJECT( cleanButton ) , "clicked" , G_CALLBACK( clean_history ) , NULL);
   
   gtk_widget_show_all(ret);
   

@@ -266,12 +266,12 @@ public:
         };
         static ::DBus::IntrospectedArgument getMaxCalls_args[] = 
         {
-            { "calls", "d", false },
+            { "calls", "i", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument setMaxCalls_args[] = 
         {
-            { "calls", "d", true },
+            { "calls", "i", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument startHidden_args[] = 
@@ -426,8 +426,8 @@ public:
     virtual void setDialpad(  ) = 0;
     virtual ::DBus::Int32 getVolumeControls(  ) = 0;
     virtual void setVolumeControls(  ) = 0;
-    virtual ::DBus::Double getMaxCalls(  ) = 0;
-    virtual void setMaxCalls( const ::DBus::Double& calls ) = 0;
+    virtual ::DBus::Int32 getMaxCalls(  ) = 0;
+    virtual void setMaxCalls( const ::DBus::Int32& calls ) = 0;
     virtual void startHidden(  ) = 0;
     virtual ::DBus::Int32 isStartHidden(  ) = 0;
     virtual ::DBus::Int32 popupMode(  ) = 0;
@@ -840,7 +840,7 @@ private:
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Double argout1 = getMaxCalls();
+        ::DBus::Int32 argout1 = getMaxCalls();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
@@ -850,7 +850,7 @@ private:
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Double argin1; ri >> argin1;
+        ::DBus::Int32 argin1; ri >> argin1;
         setMaxCalls(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;

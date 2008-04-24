@@ -484,13 +484,13 @@ class ManagerImpl {
      * Set the maximum number of calls to keep in the history
      * @param calls The number of calls
      */
-    void setMaxCalls( const double& calls );
+    void setMaxCalls( const int& calls );
 
     /**
      * Get the maximum number of calls to keep in the history
      * @return double The number of calls
      */
-    double getMaxCalls( void );
+    int getMaxCalls( void );
 
     /**
      * Configure the start-up option
@@ -506,7 +506,7 @@ class ManagerImpl {
     void startHidden( void );
 
     /**
-     * Configure the popup behaviour
+      Configure the popup behaviour
      * @return int	1 if it should popup on incoming calls
      *		0 if it should never popups  
      */

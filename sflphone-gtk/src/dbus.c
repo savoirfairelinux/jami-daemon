@@ -1201,7 +1201,7 @@ dbus_set_volume_controls(  )
 }
 
 void
-dbus_set_max_calls( const gdouble calls  )
+dbus_set_max_calls( const guint calls  )
 {
 	GError* error = NULL;
 	org_sflphone_SFLphone_ConfigurationManager_set_max_calls(
@@ -1212,15 +1212,13 @@ dbus_set_max_calls( const gdouble calls  )
 	{
 		g_error_free(error);
 	}
-	else
-		g_print("DBus called set_max_calls on ConfigurationManager\n");
 }
 
-gdouble
+guint
 dbus_get_max_calls( void )
 {
 	GError* error = NULL;
-	gdouble calls;
+	guint calls;
 	org_sflphone_SFLphone_ConfigurationManager_get_max_calls(
 			configurationManagerProxy,
 			&calls,
@@ -1229,8 +1227,7 @@ dbus_get_max_calls( void )
 	{
 		g_error_free(error);
 	}
-	else
-		g_print("DBus called get_max_calls on ConfigurationManager\n");
+	g_print("GET MAX CALLS = %i\n" , calls);
 	return calls;
 }
 

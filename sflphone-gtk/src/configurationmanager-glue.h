@@ -1481,21 +1481,21 @@ static
 inline
 #endif
 gboolean
-org_sflphone_SFLphone_ConfigurationManager_get_max_calls (DBusGProxy *proxy, gdouble* OUT_calls, GError **error)
+org_sflphone_SFLphone_ConfigurationManager_get_max_calls (DBusGProxy *proxy, gint* OUT_calls, GError **error)
 
 {
-  return dbus_g_proxy_call (proxy, "getMaxCalls", error, G_TYPE_INVALID, G_TYPE_DOUBLE, OUT_calls, G_TYPE_INVALID);
+  return dbus_g_proxy_call (proxy, "getMaxCalls", error, G_TYPE_INVALID, G_TYPE_INT, OUT_calls, G_TYPE_INVALID);
 }
 
-typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_max_calls_reply) (DBusGProxy *proxy, gdouble OUT_calls, GError *error, gpointer userdata);
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_max_calls_reply) (DBusGProxy *proxy, gint OUT_calls, GError *error, gpointer userdata);
 
 static void
 org_sflphone_SFLphone_ConfigurationManager_get_max_calls_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
 {
   DBusGAsyncData *data = (DBusGAsyncData*) user_data;
   GError *error = NULL;
-  gdouble OUT_calls;
-  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_DOUBLE, &OUT_calls, G_TYPE_INVALID);
+  gint OUT_calls;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INT, &OUT_calls, G_TYPE_INVALID);
   (*(org_sflphone_SFLphone_ConfigurationManager_get_max_calls_reply)data->cb) (proxy, OUT_calls, error, data->userdata);
   return;
 }
@@ -1519,10 +1519,10 @@ static
 inline
 #endif
 gboolean
-org_sflphone_SFLphone_ConfigurationManager_set_max_calls (DBusGProxy *proxy, const gdouble IN_calls, GError **error)
+org_sflphone_SFLphone_ConfigurationManager_set_max_calls (DBusGProxy *proxy, const gint IN_calls, GError **error)
 
 {
-  return dbus_g_proxy_call (proxy, "setMaxCalls", error, G_TYPE_DOUBLE, IN_calls, G_TYPE_INVALID, G_TYPE_INVALID);
+  return dbus_g_proxy_call (proxy, "setMaxCalls", error, G_TYPE_INT, IN_calls, G_TYPE_INVALID, G_TYPE_INVALID);
 }
 
 typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_max_calls_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
@@ -1542,14 +1542,14 @@ static
 inline
 #endif
 DBusGProxyCall*
-org_sflphone_SFLphone_ConfigurationManager_set_max_calls_async (DBusGProxy *proxy, const gdouble IN_calls, org_sflphone_SFLphone_ConfigurationManager_set_max_calls_reply callback, gpointer userdata)
+org_sflphone_SFLphone_ConfigurationManager_set_max_calls_async (DBusGProxy *proxy, const gint IN_calls, org_sflphone_SFLphone_ConfigurationManager_set_max_calls_reply callback, gpointer userdata)
 
 {
   DBusGAsyncData *stuff;
   stuff = g_new (DBusGAsyncData, 1);
   stuff->cb = G_CALLBACK (callback);
   stuff->userdata = userdata;
-  return dbus_g_proxy_begin_call (proxy, "setMaxCalls", org_sflphone_SFLphone_ConfigurationManager_set_max_calls_async_callback, stuff, g_free, G_TYPE_DOUBLE, IN_calls, G_TYPE_INVALID);
+  return dbus_g_proxy_begin_call (proxy, "setMaxCalls", org_sflphone_SFLphone_ConfigurationManager_set_max_calls_async_callback, stuff, g_free, G_TYPE_INT, IN_calls, G_TYPE_INVALID);
 }
 static
 #ifdef G_HAVE_INLINE

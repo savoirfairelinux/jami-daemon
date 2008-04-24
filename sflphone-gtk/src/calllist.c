@@ -26,8 +26,6 @@
  * call_t * selectedCall = NULL;
  */
 
-guint _HISTORY_MAX_CALLS;
-
 /* GCompareFunc to compare a callID (gchar* and a call_t) */
 gint 
 is_callID_callstruct ( gconstpointer a, gconstpointer b)
@@ -72,14 +70,19 @@ call_list_clean (calltab_t* tab)
 }
 
 void 
+call_list_reset (calltab_t* tab)
+{
+  g_queue_free (tab->callQueue);
+  tab->callQueue = g_queue_new();
+}
+
+void 
 call_list_add (calltab_t* tab, call_t * c)
 {
   if( tab == history )	
   {
-    g_print("HO HJOH  OH HOSDVDBSGDNGNSFHNSGNBADFSVsv\n");
     if( call_list_get_size(tab) < dbus_get_max_calls() )
     {
-    g_print("SDVDBSGDNGNSFHNSGNBADFSVsv\n");
       g_queue_push_tail (tab->callQueue, (gpointer *) c);
     }
   }
@@ -88,15 +91,20 @@ call_list_add (calltab_t* tab, call_t * c)
 }
 
 void
-call_history_set_max_calls( gdouble number )
+call_list_clean_history( void )
 {
-  _HISTORY_MAX_CALLS = number;
-}
-
-gdouble 
-call_history_get_max_calls( void )
-{
-  return _HISTORY_MAX_CALLS;
+  int i;
+  guint size = call_list_get_size( history );
+  g_print("history list size = %i\n", call_list_get_size( history ));
+  for( i = 0 ; i < size ; i++ )
+  {
+    g_print("Delete calls");
+    call_t* c = call_list_get_nth( history , i );
+    // Delete the call from the call tree
+    g_print("Delete calls");
+    update_call_tree_remove(history , c);
+  }
+  call_list_reset( history );
 }
 
 void 

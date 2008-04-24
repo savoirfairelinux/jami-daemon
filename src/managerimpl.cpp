@@ -1355,15 +1355,15 @@ ManagerImpl::switchPopupMode( void )
 }
 
 void
-ManagerImpl::setMaxCalls( const double& calls )
+ManagerImpl::setMaxCalls( const int& calls )
 {
-  setConfig( PREFERENCES , CONFIG_HISTORY , (int)calls );
+  setConfig( PREFERENCES , CONFIG_HISTORY , calls );
 }
 
-double
+int
 ManagerImpl::getMaxCalls( void )
 {
-  _debug("a;kvnsnblsb %i\n" , getConfigInt( PREFERENCES , CONFIG_HISTORY ));
+  _debug("Max calls =  %i\n" , getConfigInt( PREFERENCES , CONFIG_HISTORY ));
   return getConfigInt( PREFERENCES , CONFIG_HISTORY );
 }
 

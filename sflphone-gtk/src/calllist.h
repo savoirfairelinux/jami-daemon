@@ -98,7 +98,10 @@ calltab_t* history;
 void call_list_init (calltab_t* tab);
 
 /** This function empty and free the call list. */
-void call_list_clean (calltab_t* tab);
+void call_list_clean(calltab_t* tab);
+
+/** This function empty, free the call list and allocate a new one. */
+void call_list_reset (calltab_t* tab);
 
 /** Get the maximun number of calls in the history calltab */
 gdouble call_history_get_max_calls( void ); 
@@ -156,4 +159,6 @@ void call_select (calltab_t* tab, call_t * c );
 /** Return the selected call.
   * @return The number of the caller */
 call_t * call_get_selected (calltab_t* tab);
+
+void call_list_clean_history();
 #endif 

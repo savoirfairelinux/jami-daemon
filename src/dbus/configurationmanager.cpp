@@ -273,14 +273,14 @@ ConfigurationManager::setVolumeControls( void )
   Manager::instance().setVolumeControls( ); 
 }
 
-::DBus::Double
+::DBus::Int32
 ConfigurationManager::getMaxCalls( void )
 {
   return Manager::instance().getMaxCalls(  ); 
 }
 
 void
-ConfigurationManager::setMaxCalls( const ::DBus::Double& calls )
+ConfigurationManager::setMaxCalls( const ::DBus::Int32& calls )
 {
   Manager::instance().setMaxCalls( calls ); 
 }
