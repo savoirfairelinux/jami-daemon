@@ -147,7 +147,7 @@ SIPVoIPLink::init()
     std::string tmp = std::string(PROGNAME_GLOBAL) + "/" + std::string(SFLPHONED_VERSION);
     eXosip_set_user_agent(tmp.data());
   
-    _debug("  SIP Init: starting loop thread (SIP events)\n");
+    _debug(" SIP Init: starting loop thread (SIP events)\n" );
     _evThread->start();
   }
 
@@ -452,14 +452,13 @@ SIPVoIPLink::sendRegister()
     return false;
   }
 
-  if (_userpart.empty()) {
+  if (_authname.empty()) {
     return false;
   }
 
-
   std::string proxy = "sip:" + _proxy;
   hostname = "sip:" + hostname;
-  std::string from = SIPFromHeader(_userpart, getHostName());
+  std::string from = SIPFromHeader(_authname, getHostName());
   
   osip_message_t *reg = NULL;
   eXosip_lock();
@@ -515,7 +514,7 @@ SIPVoIPLink::sendSIPAuthentification()
 {
   std::string login = _authname;
   if (login.empty()) {
-    login = _userpart;
+    return false;
   }
   if (login.empty()) {
     /** @todo Ajouter ici un call à setRegistrationState(Error, "Fill balh") ? */
@@ -963,7 +962,7 @@ SIPVoIPLink::subscribePresenceForContact(Contact* contact)
 	std::ostringstream from;
 	
 	// Build URL of sender
-	from << "sip:" << _userpart.data() << "@" << getHostName().data();
+	from << "sip:" << _authname.data() << "@" << getHostName().data();
 
 	// Subscribe for changes on server but also polls at every 5000 interval
 	i = eXosip_subscribe_build_initial_request(&subscription,
@@ -996,7 +995,7 @@ SIPVoIPLink::publishPresenceStatus(std::string status)
 	std::string note;
 	
 	// Build URL of sender
-	url << "sip:" << _userpart.data() << "@" << getHostName().data();
+	url << "sip:" << _authname.data() << "@" << getHostName().data();
 	
 	// TODO
 	// Call function to convert status in basic and note
@@ -1152,7 +1151,7 @@ SIPVoIPLink::getSipFrom() {
   if ( host.empty() ) {
     host = _localIPAddress;
   }
-  return SIPFromHeader(_userpart, host);
+  return SIPFromHeader(_authname, host);
 }
 
 std::string

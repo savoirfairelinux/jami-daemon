@@ -45,24 +45,18 @@ typedef std::string AccountID;
 #define CONFIG_ACCOUNT_ALIAS  "Account.alias"
 /** Mail box number */
 #define CONFIG_ACCOUNT_MAILBOX	"Account.mailbox"
-/** IAX paramater : full name */
-#define IAX_FULL_NAME         "IAX.fullName"
 /** IAX paramater : host name */
 #define IAX_HOST              "IAX.host"
 /** IAX paramater : user name */
 #define IAX_USER              "IAX.user"
 /** IAX paramater : password */
-#define IAX_PASS              "IAX.pass"
-/** SIP parameter : full name */
-#define SIP_FULL_NAME         "SIP.fullName"
-/** SIP parameter : user name */
-#define SIP_USER_PART         "SIP.userPart"
+#define IAX_PASSWORD          "IAX.password"
 /** SIP parameter : authorization name */
-#define SIP_AUTH_NAME         "SIP.username"
+#define SIP_USER	      "SIP.username"
 /** SIP parameter : password */
 #define SIP_PASSWORD          "SIP.password"
 /** SIP parameter : host name */
-#define SIP_HOST_PART         "SIP.hostPart"
+#define SIP_HOST	      "SIP.hostPart"
 /** SIP parameter : proxy address */
 #define SIP_PROXY             "SIP.proxy"
 /** SIP parameter : stun server address */

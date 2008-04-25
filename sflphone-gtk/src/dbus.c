@@ -30,6 +30,7 @@
 #include <marshaller.h>
 #include <sliders.h>
 #include <statusicon.h>
+#include <druid.h>
 
 #include <dbus.h>
 #include <actions.h>

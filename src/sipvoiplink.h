@@ -184,12 +184,6 @@ class SIPVoIPLink : public VoIPLink
     void setProxy(const std::string& proxy) { _proxy = proxy; }
 
     /**
-     * Set the user part
-     * @param userpart	User part
-     */
-    void setUserPart(const std::string& userpart) { _userpart = userpart; }
-
-    /**
      * Set the authentification name
      * @param authname The authentification name
      */

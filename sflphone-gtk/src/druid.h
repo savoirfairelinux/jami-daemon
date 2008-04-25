@@ -40,22 +40,26 @@ struct _wizard
   GtkWidget *iax;
   /** Page 2 - SIP account creation */
   GtkWidget *sip_account;
-  GtkWidget *table;
+  GtkWidget *sip_table;
   GtkWidget *label;
-  GtkWidget *alias;
-  GtkWidget *name;
-  GtkWidget *userpart;
-  GtkWidget *server;
-  GtkWidget *username;
-  GtkWidget *password;
+  GtkWidget *sip_alias;
+  GtkWidget *sip_server;
+  GtkWidget *sip_username;
+  GtkWidget *sip_password;
   GtkWidget *test;
   GtkWidget *state;
   GtkWidget *mailbox;
   /** Page 3 - IAX account creation */
   GtkWidget *iax_account;
+  GtkWidget *iax_table;
+  GtkWidget *iax_alias;
+  GtkWidget *iax_server;
+  GtkWidget *iax_username;
+  GtkWidget *iax_password;
   /** Page 4 - Nat detection */
   GtkWidget *nat;
   GtkWidget *enable;
+  GtkWidget *nat_table;
   GtkWidget *addr;
   /** Page 5 - Test registration */
   GtkWidget *page_end;
@@ -66,6 +70,8 @@ struct _wizard
  * @file druid.h
  * @brief Implement the configuration wizard
  */
+
+void set_account_state( account_state_t state );
 void set_account_type( GtkWidget* widget , gpointer data );
 void enable_stun( GtkWidget *widget );
 void goto_right_account( void );
@@ -76,7 +82,8 @@ void goto_sip_account_page( void );
 void quit_wizard( void );
 void update_account_parameters( int type );
 void build_nat_window( void );
-void build_configuration_account( int type );
+void build_sip_configuration_account( int type );
+void build_iax_configuration_account( int type );
 void build_wizard();
 
 

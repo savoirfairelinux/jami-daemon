@@ -361,7 +361,6 @@ bool
 IAXVoIPLink::sendRegister() 
 {
   bool result = false;
-
   if (_host.empty()) {
     return false;
   }
