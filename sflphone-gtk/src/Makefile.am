@@ -33,7 +33,7 @@ sflphone_gtk_LDADD = $(DEPS_LIBS) -lnotify
 AM_CPPFLAGS = $(DEPS_CFLAGS) \
               -DICONS_DIR=\""$(datadir)/sflphone"\" \
               -DICON_DIR=\""$(datadir)/pixmaps"\" \
-	      -DCODECS_DIR=\""$(libdir)/sflphone/codecs"
+	      -DCODECS_DIR=\""$(libdir)/sflphone/codecs"\"
 
 # add symbolic link	     
 install-exec-hook:
