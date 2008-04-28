@@ -17,10 +17,9 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __DRUID_H
-#define __DRUID_H
+#ifndef __ASSISTANT_H
+#define __ASSISTANT_H
 
-#include <libgnomeui/libgnomeui.h>
 #include <accountlist.h>
 #include <sflphone_const.h>
 
@@ -30,9 +29,9 @@
 struct _wizard
 {
   GtkWidget *window;
-  GtkWidget *druid;
+  GtkWidget *assistant;
   GdkPixbuf *logo;
-  GtkWidget *first_page;
+  GtkWidget *intro;
   /** Page 1  - Protocol selection */
   GtkWidget *account_type;
   GtkWidget *protocols;
@@ -40,8 +39,6 @@ struct _wizard
   GtkWidget *iax;
   /** Page 2 - SIP account creation */
   GtkWidget *sip_account;
-  GtkWidget *sip_table;
-  GtkWidget *label;
   GtkWidget *sip_alias;
   GtkWidget *sip_server;
   GtkWidget *sip_username;
@@ -51,7 +48,6 @@ struct _wizard
   GtkWidget *mailbox;
   /** Page 3 - IAX account creation */
   GtkWidget *iax_account;
-  GtkWidget *iax_table;
   GtkWidget *iax_alias;
   GtkWidget *iax_server;
   GtkWidget *iax_username;
@@ -59,10 +55,9 @@ struct _wizard
   /** Page 4 - Nat detection */
   GtkWidget *nat;
   GtkWidget *enable;
-  GtkWidget *nat_table;
   GtkWidget *addr;
   /** Page 5 - Test registration */
-  GtkWidget *page_end;
+  GtkWidget *summary;
   
 }; 
 
@@ -73,18 +68,26 @@ struct _wizard
 
 void set_account_state( account_state_t state );
 void set_account_type( GtkWidget* widget , gpointer data );
+static void cancel_callback(gpointer data);
+static void close_callback(gpointer data);
+static void apply_callback( gpointer data );
 void enable_stun( GtkWidget *widget );
-void goto_right_account( void );
-void goto_accounts_page( void );
-void goto_nat_page( void );
-void goto_end_page( void );
-void goto_sip_account_page( void );
-void quit_wizard( void );
-void update_account_parameters( int type );
-void build_nat_window( void );
-void build_sip_configuration_account( int type );
-void build_iax_configuration_account( int type );
+
+/**
+ * Related-pages function
+ */
 void build_wizard();
+GtkWidget* build_intro( void );
+GtkWidget* build_select_account( void );
+GtkWidget* build_sip_account_configuration( void );
+GtkWidget* build_nat_settings( void );
+GtkWidget* build_iax_account_configuration( void );
+GtkWidget* build_summary( void );
 
+/**
+ * Forward function
+ */
+static gint forward_page_func( gint current , gpointer data );
 
+static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
 #endif

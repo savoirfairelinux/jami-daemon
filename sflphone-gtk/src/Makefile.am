@@ -5,7 +5,7 @@ sflphone_gtk_SOURCES = \
   errors.c \
   dbus.c \
   sflnotify.c \
-  druid.c \
+  assistant.c \
   mainwindow.c \
   calllist.c \
   dialpad.c \
@@ -23,7 +23,7 @@ sflphone_gtk_SOURCES = \
   glwidget.c \
   MemManager.c
   
-noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h codeclist.h druid.h\
+noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h codeclist.h assistant.h\
                   callmanager-glue.h errors.h sflphone_const.h configurationmanager-glue.h instance-glue.h menus.h calltab.h calltree.h configwindow.h \
                   accountlist.h accountwindow.h marshaller.h sliders.h statusicon.h
 EXTRA_DIST   = marshaller.list  

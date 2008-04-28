@@ -19,7 +19,7 @@ dnl Improve make variable MAKE
 AC_PROG_MAKE_SET
 
 dnl Where to find configure files
-AC_CONFIG_SRCDIR([config.h.in])
+dnl AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
 
 dnl What to generate
