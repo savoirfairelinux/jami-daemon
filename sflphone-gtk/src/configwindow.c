@@ -1260,12 +1260,12 @@ create_general_settings ()
   gtk_widget_show( notifBox );
   gtk_container_add( GTK_CONTAINER(notifFrame) , notifBox);
   
-  notifAll = gtk_check_button_new_with_label( _("Enable"));
+  notifAll = gtk_check_button_new_with_mnemonic( _("_Enable"));
   gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify() );
   gtk_box_pack_start( GTK_BOX(notifBox) , notifAll , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
 
-  notifMails = gtk_check_button_new_with_label(  _("Notify Voice Mails"));
+  notifMails = gtk_check_button_new_with_mnemonic(  _("_Notify voice mails"));
   gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifMails), dbus_get_mail_notify() );
   gtk_box_pack_start( GTK_BOX(notifBox) , notifMails , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( notifMails ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
@@ -1280,16 +1280,16 @@ create_general_settings ()
   gtk_widget_show( trayBox );
   gtk_container_add( GTK_CONTAINER(trayFrame) , trayBox);
   
-  GtkWidget* trayItem1 = gtk_radio_button_new_with_label(NULL,  _("Popup Main Window On Incoming Call"));
+  GtkWidget* trayItem1 = gtk_radio_button_new_with_mnemonic(NULL,  _("_Popup main window on incoming call"));
   gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem1), dbus_popup_mode() );
   gtk_box_pack_start( GTK_BOX(trayBox) , trayItem1 , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( trayItem1 ) , "clicked" , G_CALLBACK( set_popup_mode ) , NULL);
 
-  trayItem = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(trayItem1), _("Never Popup Main Window"));
+  trayItem = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(trayItem1), _("Ne_ver popup main window"));
   gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), !dbus_popup_mode() );
   gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
   
-  trayItem = gtk_check_button_new_with_label(_("Start Hidden"));
+  trayItem = gtk_check_button_new_with_mnemonic(_("_Start hidden"));
   gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), dbus_is_start_hidden() );
   gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( trayItem ) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
@@ -1303,7 +1303,7 @@ create_general_settings ()
   gtk_widget_show( historyBox );
   gtk_container_add( GTK_CONTAINER(historyFrame) , historyBox);
   
-  label = gtk_label_new_with_mnemonic(_("Maximum number of calls"));
+  label = gtk_label_new_with_mnemonic(_("_Maximum number of calls"));
   gtk_box_pack_start( GTK_BOX(historyBox) , label , TRUE , TRUE , 0);
   
   value = gtk_hscale_new_with_range(0.0 , 50.0 , 5.0);

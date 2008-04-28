@@ -59,7 +59,7 @@ msgstr ""
 
 #: sflphone-gtk/src/menus.c: 423
 msgid "_Accounts"
-msgstr "_Konten"
+msgstr ""
 
 #: sflphone-gtk/src/menus.c: 438
 msgid "_Edit"
@@ -81,28 +81,36 @@ msgstr ""
 msgid "_View"
 msgstr ""
 
-#: sflphone-gtk/src/calltree.c: 286 calltree.c: 287
+#: sflphone-gtk/src/calltree.c: 336 sflphone-gtk/src/calltree.c: 337
 msgid "Place a call"
 msgstr ""
 
-#: sflphone-gtk/src/calltree.c: 293 calltree.c: 294
+#: sflphone-gtk/src/calltree.c: 344 sflphone-gtk/src/calltree.c: 345
 msgid "Pick up"
 msgstr ""
 
-#: sflphone-gtk/src/calltree.c: 301 calltree.c: 302
+#: sflphone-gtk/src/calltree.c: 351 sflphone-gtk/src/calltree.c: 352
 msgid "Hang up"
 msgstr ""
 
-#: sflphone-gtk/src/calltree.c: 309 calltree.c: 310
+#: sflphone-gtk/src/calltree.c: 359 sflphone-gtk/src/calltree.c: 360
 msgid "Off Hold"
 msgstr ""
 
-#: sflphone-gtk/src/calltree.c: 317 calltree.c: 318
+#: sflphone-gtk/src/calltree.c: 367 sflphone-gtk/src/calltree.c: 368
 msgid "On Hold"
 msgstr ""
 
-#: sflphone-gtk/src/calltree.c: 327 calltree.c: 328
+#: sflphone-gtk/src/calltree.c: 375 sflphone-gtk/src/calltree.c: 376
 msgid "Transfer"
+msgstr ""
+
+#: sflphone-gtk/src/calltree.c: 385 sflphone-gtk/src/calltree.c: 386
+msgid "History"
+msgstr ""
+
+#: sflphone-gtk/src/calltree.c: 394 sflphone-gtk/src/calltree.c: 397
+msgid "Voicemail box"
 msgstr ""
 
 #: sflphone-gtk/src/configwindow.c: 799
@@ -179,69 +187,105 @@ msgstr ""
 
 #: sflphone-gtk/src/configwindow.c: 1191
 msgid "Accounts"
-msgstr "Konten"
+msgstr ""
 
 #: sflphone-gtk/src/configwindow.c: 1203
 msgid "Accounts previously setup"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 150
+#: sflphone-gtk/src/accountwindow.c: 139
 msgid "Account settings"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 177
+#: sflphone-gtk/src/configwindow.c: 1254
+msgid "Desktop Notification"
+msgstr ""
+
+#: sflphone-gtk/src/configwindow.c: 1263
+msgid "_Enable"
+msgstr ""
+
+#: sflphone-gtk/src/configwindow.c: 1268
+msgid "_Notify voice mails"
+msgstr ""
+
+#: sflphone-gtk/src/configwindow.c: 1274
+msgid "System Tray Icon"
+msgstr ""
+
+#: sflphone-gtk/src/configwindow.c: 1283
+msgid "_Popup main window on incoming call"
+msgstr ""
+
+#: sflphone-gtk/src/configwindow.c: 1288
+msgid "Ne_ver popup main window"
+msgstr ""
+
+#: sflphone-gtk/src/configwindow.c: 1292
+msgid "_Start hidden"
+msgstr ""
+
+#: sflphone-gtk/src/configwindow.c: 1297
+msgid "Calls History"
+msgstr ""
+
+#: sflphone-gtk/src/configwindow.c: 1307
+msgid "_Maximum number of calls"
+msgstr ""
+
+#: sflphone-gtk/src/accountwindow.c: 151
+msgid "Account parameters"
+msgstr ""
+
+#: sflphone-gtk/src/accountwindow.c: 174
 msgid "_Enabled"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 187
+#: sflphone-gtk/src/accountwindow.c: 180 sflphone-gtk/src/assistant.c: 161  sflphone-gtk/src/assistant.c: 210
 msgid "_Alias"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 195
+#: sflphone-gtk/src/accountwindow.c: 188
 msgid "_Protocol"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 214
+#: sflphone-gtk/src/accountwindow.c: 206
 msgid "Unknown"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 224
-msgid "_Full Name"
+#: sflphone-gtk/src/accountwindow.c: 216 sflphone-gtk/src/assistant.c: 169 sflphone-gtk/src/assistant.c: 218
+msgid "_Host name"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 232
-msgid "_User part"
+#: sflphone-gtk/src/accountwindow.c: 224 sflphone-gtk/src/assistant.c: 177 sflphone-gtk/src/assistant.c: 226
+msgid "_User name"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 240
-msgid "_Host part"
-msgstr ""
-
-#: sflphone-gtk/src/accountwindow.c: 248
-msgid "U_sername"
-msgstr ""
-
-#: sflphone-gtk/src/accountwindow.c: 256
+#: sflphone-gtk/src/accountwindow.c: 232 sflphone-gtk/src/assistant.c: 185 sflphone-gtk/src/assistant.c: 234
 msgid "_Password"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 267
-msgid "<b>NAT Detection</b>"
+#: sflphone-gtk/src/accountwindow.c: 241
+msgid "_Voicemail box #"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 270
+#: sflphone-gtk/src/accountwindow.c: 252 sflphone-gtk/src/assistant.c: 256
+msgid "Network Address Translation"
+msgstr ""
+
+#: sflphone-gtk/src/accountwindow.c: 264 sflphone-gtk/src/assistant.c: 265
 msgid "E_nable STUN"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 275
+#: sflphone-gtk/src/accountwindow.c: 267
 msgid "Enable it if you are behind a firewall, then restart SFLphone"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 277
-msgid "S_TUN Server"
+#: sflphone-gtk/src/accountwindow.c: 270 sflphone-gtk/src/assistant.c: 272
+msgid "_STUN Server"
 msgstr ""
 
-#: sflphone-gtk/src/accountwindow.c: 283
+#: sflphone-gtk/src/accountwindow.c: 276
 msgid "Format: name.server:port"
 msgstr ""
 
@@ -350,3 +394,52 @@ msgid "SFLphone - %i account registered"
 msgid_plural "SFLphone - %i accounts registered"
 msgstr[0] ""
 msgstr[1] ""
+
+#: sflphone-gtk/src/assistant.c: 91
+msgid "SFLphone account configuration wizard"
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 122
+msgid "Welcome to SFLphone!"
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 119
+msgid "This installation wizard will help you configure an account."
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 134
+msgid "VoIP Protocols"
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 134
+msgid "Select an account type:"
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 153
+msgid "SIP account configuration"
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 153 sflphone-gtk/src/assistant.c: 202
+msgid "Please fill the following information:"
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 202
+msgid "IAX2 account configuration"
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 256
+msgid "You should probably enable this if you are behind a firewall."
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 289
+msgid "Account Registration"
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 289
+msgid "Congratulations!"
+msgstr ""
+
+#: sflphone-gtk/src/assistant.c: 291
+msgid "This assistant is now finished.\n\n You can at any time check your registration state or modify your accounts parameters in the Options/Accounts window."
+msgstr ""
+

@@ -148,7 +148,7 @@ show_account_window (account_t * a)
   gtk_dialog_set_has_separator(dialog, TRUE);
   gtk_container_set_border_width (GTK_CONTAINER(dialog), 0);
 
-  frame = gtk_frame_new( "Account parameters" );
+  frame = gtk_frame_new(_("Account parameters"));
   gtk_box_pack_start(GTK_BOX(dialog->vbox), frame, FALSE, FALSE, 0);
   gtk_widget_show(frame);
 
@@ -213,7 +213,7 @@ show_account_window (account_t * a)
       G_CALLBACK (change_protocol),
       currentAccount);
 
-  label = gtk_label_new_with_mnemonic (_("_Hostname "));
+  label = gtk_label_new_with_mnemonic (_("_Host name"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryHostname = gtk_entry_new();
@@ -221,7 +221,7 @@ show_account_window (account_t * a)
   gtk_entry_set_text(GTK_ENTRY(entryHostname), curHostname);
   gtk_table_attach ( GTK_TABLE( table ), entryHostname, 1, 2, 5, 6, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-  label = gtk_label_new_with_mnemonic (_("U_sername"));
+  label = gtk_label_new_with_mnemonic (_("_User name"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryUsername = gtk_entry_new();
@@ -238,7 +238,7 @@ show_account_window (account_t * a)
   gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
   gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-  label = gtk_label_new_with_mnemonic (_("_Mailbox"));
+  label = gtk_label_new_with_mnemonic (_("_Voicemail box #"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryMailbox = gtk_entry_new();
@@ -249,7 +249,7 @@ show_account_window (account_t * a)
   gtk_widget_show_all( table );
   gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 
-  frameNat = gtk_frame_new( _("NAT detection") );
+  frameNat = gtk_frame_new( _("Network Address Translation") );
   gtk_box_pack_start(GTK_BOX(dialog->vbox), frameNat, FALSE, FALSE, 0);
   gtk_widget_show(frameNat);
 
@@ -267,7 +267,7 @@ show_account_window (account_t * a)
   gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("Enable it if you are behind a firewall, then restart SFLphone"));
   gtk_table_attach ( GTK_TABLE( tableNat ), stunEnable, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-  label = gtk_label_new_with_mnemonic(_("S_TUN Server"));
+  label = gtk_label_new_with_mnemonic(_("_STUN Server"));
   gtk_table_attach( GTK_TABLE( tableNat ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   stunServer = gtk_entry_new();

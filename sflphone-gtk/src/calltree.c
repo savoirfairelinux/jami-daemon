@@ -391,10 +391,10 @@ create_toolbar ()
 	active_calltree = current_calls;
 
 	image = gtk_image_new_from_file( ICONS_DIR "/mailbox.svg");
-	mailboxButton = gtk_tool_button_new( image , _("Mailbox"));
+	mailboxButton = gtk_tool_button_new( image , _("Voicemail box"));
 	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mailboxButton), image);
 	if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
-        gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Mailbox"));
+        gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Voicemail box"));
         g_signal_connect (G_OBJECT (mailboxButton), "clicked",
                         G_CALLBACK (call_mailbox), NULL);
         gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
@@ -619,7 +619,6 @@ update_call_tree (calltab_t* tab, call_t * c)
 void 
 update_call_tree_add (calltab_t* tab, call_t * c)
 {
-      g_print("ADD THE  FUCKING CALL call list size = %i - max calls = %i\n", call_list_get_size(tab) , dbus_get_max_calls());
 	if( tab == history && ( call_list_get_size( tab ) > dbus_get_max_calls() ) )
 	  return;
 

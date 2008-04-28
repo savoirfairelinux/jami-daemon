@@ -165,28 +165,11 @@ create_main_window ()
   gtk_widget_hide(history->tree);
   //gtk_widget_show(current_calls->tree);
   
-  // Welcome screen
+  // Configuration wizard 
   if (account_list_get_size() == 0)
   {
-    /*GtkWidget * dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(window),
-                                  GTK_DIALOG_DESTROY_WITH_PARENT,
-                                  GTK_MESSAGE_INFO,
-                                  GTK_BUTTONS_YES_NO,
-                                  _("<b><big>Welcome to SFLphone!</big></b>\n\nThere is no VoIP account configured.\n Would you like to create one now?"));
-
-    int response = gtk_dialog_run (GTK_DIALOG(dialog));
-   
-    gtk_widget_destroy (GTK_WIDGET(dialog));
-
-    if (response == GTK_RESPONSE_YES)
-    {
-      show_accounts_window();
-    }*/
     build_wizard();
   }
-
-  
-
 }
 
 GtkAccelGroup * 
