@@ -39,9 +39,6 @@ GtkWidget * dialpad   = NULL;
 GtkWidget * speaker_control = NULL;
 GtkWidget * mic_control = NULL;
 GtkWidget * statusBar = NULL;
-GtkWidget * infoScreen = NULL;
-gboolean showDialpad  = FALSE; // true if the dialpad have been shown
-gboolean showControls  = FALSE; // true if the volume controls have been shown
 
 /**
  * Terminate the main loop.
@@ -154,7 +151,22 @@ create_main_window ()
   gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
- 
+
+  if( SHOW_VOLUME ){ 
+    speaker_control = create_slider("speaker");
+    gtk_box_pack_start (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_widget_show_all (speaker_control);
+    mic_control = create_slider("mic");
+    gtk_box_pack_start (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_widget_show_all (mic_control);
+  }
+  if( SHOW_DIALPAD ){ 
+    dialpad = create_dialpad();
+    gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_reorder_child(GTK_BOX (subvbox), dialpad, 1);
+    gtk_widget_show_all (dialpad);
+  }
+
   /* Status bar */
   statusBar = gtk_statusbar_new();
   gtk_box_pack_start (GTK_BOX (vbox), statusBar, FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
@@ -214,24 +226,25 @@ main_window_info_message(gchar * markup){
 }
 
 void
-main_window_dialpad(gboolean show){
-  if(show && !showDialpad)
+main_window_dialpad( gboolean *state ){
+  if( !SHOW_DIALPAD )
   {
     dialpad = create_dialpad();
     gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_box_reorder_child(GTK_BOX (subvbox), dialpad, 1);
     gtk_widget_show_all (dialpad);
+    *state = TRUE;
   }
-  else if (!show && showDialpad)
+  else
   {
     gtk_container_remove(GTK_CONTAINER (subvbox), dialpad);
+    *state = FALSE;
   }
-  showDialpad = show;
 }
 
 void
-main_window_volume_controls( gboolean show ){
-  if( show && !showControls)
+main_window_volume_controls( gboolean *state ){
+  if( !SHOW_VOLUME )
   {
     speaker_control = create_slider("speaker");
     gtk_box_pack_start (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
@@ -239,13 +252,14 @@ main_window_volume_controls( gboolean show ){
     mic_control = create_slider("mic");
     gtk_box_pack_start (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (mic_control);
+    *state = TRUE;
   }
-  else if(!show && showControls)
+  else
   {
     gtk_container_remove( GTK_CONTAINER(subvbox) , speaker_control );
     gtk_container_remove( GTK_CONTAINER(subvbox) , mic_control );
+    *state = FALSE;
   }
-  showControls = show;
 }
 
 void 
