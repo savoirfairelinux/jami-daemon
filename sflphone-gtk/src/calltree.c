@@ -381,7 +381,9 @@ create_toolbar ()
 			G_CALLBACK (transfert), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
 
-	historyButton = gtk_toggle_tool_button_new_from_stock(GTK_STOCK_INDEX);
+	image = gtk_image_new_from_file( ICONS_DIR "/history.svg");
+	historyButton = gtk_toggle_tool_button_new();
+	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(historyButton), image);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
 	g_signal_connect (G_OBJECT (historyButton), "toggled",
