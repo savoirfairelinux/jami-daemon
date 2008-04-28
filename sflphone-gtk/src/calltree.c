@@ -152,6 +152,7 @@ toggle_history(GtkToggleToolButton *toggle_tool_button,
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
 	g_signal_emit_by_name(sel, "changed");
 	toolbar_update_buttons();
+	gtk_tree_model_filter_refilter(histfilter);
 
 }
 

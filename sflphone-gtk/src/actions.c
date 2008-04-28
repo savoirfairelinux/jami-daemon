@@ -193,6 +193,8 @@ sflphone_init()
 	int i;
 	current_calls = calltab_init();
 	history = calltab_init();	
+	histfilter = create_filter(history->store);
+	gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
 	account_list_init ();
         codec_list_init();
 	if(!dbus_connect ()){
