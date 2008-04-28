@@ -282,9 +282,7 @@ create_call_menu()
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
-  //image = gtk_image_menu_item_new_from_stock( GTK_STOCK_EXECUTE, NULL );
   menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Account Assistant"));
-  //gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( menu_items ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect_swapped( G_OBJECT( menu_items ) , "activate" , G_CALLBACK( call_wizard  ) , NULL );
   gtk_widget_show (menu_items);
