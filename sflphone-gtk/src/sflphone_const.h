@@ -70,6 +70,10 @@
 #define MINIMIZED	      TRUE
 /** Behaviour of the main window on incoming calls */
 #define __POPUP_WINDOW  ( dbus_popup_mode() )
+/** Show/Hide the dialpad */
+#define SHOW_DIALPAD	( dbus_get_dialpad() ) 
+/** Show/Hide the volume controls */
+#define SHOW_VOLUME	( dbus_get_volume_controls() ) 
 /** Notification levels */
 #define __NOTIF_LEVEL_MIN     0
 #define __NOTIF_LEVEL_MED     1

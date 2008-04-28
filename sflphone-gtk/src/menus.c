@@ -38,6 +38,10 @@ GtkWidget * copyMenu;
 GtkWidget * pasteMenu;
 guint holdConnId;     //The hold_menu signal connection ID
 
+GtkWidget * dialpadMenu;
+GtkWidget * volumeMenu;
+
+
 void update_menus()
 { 
   //Block signals for holdMenu
@@ -191,10 +195,12 @@ call_hold  (void* foo)
   {
     if(selectedCall->state == CALL_STATE_HOLD)
     {
+      gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_unhold.svg"));
       sflphone_off_hold();
     }
     else
     {
+      gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_hold.svg"));
       sflphone_on_hold();
     } 
   } 
@@ -224,10 +230,13 @@ create_call_menu()
   GtkWidget * menu;
   GtkWidget * root_menu;
   GtkWidget * menu_items;
+  GtkWidget * image;
 
   menu      = gtk_menu_new ();
 
+  image = gtk_image_new_from_file( ICONS_DIR "/icon_call.svg");
   newCallMenu = gtk_image_menu_item_new_with_mnemonic(_("_New call"));
+  gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( newCallMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), newCallMenu);
   g_signal_connect_swapped (G_OBJECT (newCallMenu), "activate",
       G_CALLBACK (call_new_call), 
@@ -237,7 +246,9 @@ create_call_menu()
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
+  image = gtk_image_new_from_file( ICONS_DIR "/icon_accept.svg");
   pickUpMenu = gtk_image_menu_item_new_with_mnemonic(_("_Pick up"));
+  gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( pickUpMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), pickUpMenu);
   gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), FALSE);
   g_signal_connect_swapped (G_OBJECT (pickUpMenu), "activate",
@@ -245,7 +256,9 @@ create_call_menu()
       NULL);
   gtk_widget_show (pickUpMenu);
 
+  image = gtk_image_new_from_file( ICONS_DIR "/icon_hangup.svg");
   hangUpMenu = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
+  gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( hangUpMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), hangUpMenu);
   gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), FALSE);
   g_signal_connect_swapped (G_OBJECT (hangUpMenu), "activate",
@@ -253,7 +266,9 @@ create_call_menu()
       NULL);
   gtk_widget_show (hangUpMenu);
 
-  holdMenu = gtk_check_menu_item_new_with_mnemonic (_("On _Hold"));
+  image = gtk_image_new_from_file( ICONS_DIR "/icon_hold.svg");
+  holdMenu = gtk_image_menu_item_new_with_mnemonic (_("On _Hold"));
+  gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), holdMenu);
   gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   FALSE);
   //Here we connect only to activate
@@ -267,7 +282,9 @@ create_call_menu()
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
+  image = gtk_image_new_from_file( ICONS_DIR "/icon_call.svg");
   menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Account Assistant"));
+  //gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( menu_items ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect_swapped( G_OBJECT( menu_items ) , "activate" , G_CALLBACK( call_wizard  ) , NULL );
   gtk_widget_show (menu_items);
@@ -486,16 +503,33 @@ create_edit_menu()
 view_dialpad  (GtkCheckMenuItem *checkmenuitem,
     void* foo)
 {
-  main_window_dialpad(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
-  dbus_set_dialpad(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
+  gboolean state;
+  main_window_dialpad( &state );
+  g_print("State of the damn thing %i\n" , state);
+  if( state )
+    gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( dialpadMenu ),
+				  gtk_image_new_from_file( ICONS_DIR "/icon_dialpad_off.svg"));
+  else	
+    gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( dialpadMenu ), 
+				  gtk_image_new_from_file( ICONS_DIR "/icon_dialpad.svg"));
+  dbus_set_dialpad( state );
+  
+
 }
 
   static void 
 view_volume_controls  (GtkCheckMenuItem *checkmenuitem,
     void* foo)
 {
-  main_window_volume_controls(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
-  dbus_set_volume_controls(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem)));
+  gboolean state;
+  main_window_volume_controls( &state );
+  if( state )
+    gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( volumeMenu ),
+				  gtk_image_new_from_file( ICONS_DIR "/icon_volume_off.svg"));
+  else	
+    gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( volumeMenu ), 
+				  gtk_image_new_from_file( ICONS_DIR "/icon_volume.svg"));
+  dbus_set_volume_controls( state );
 }
 
   GtkWidget * 
@@ -503,31 +537,33 @@ create_view_menu()
 {
   GtkWidget * menu;
   GtkWidget * root_menu;
-  GtkWidget * menu_items;
+  GtkWidget * image;
 
   menu      = gtk_menu_new ();
 
-  menu_items = gtk_check_menu_item_new_with_mnemonic (_("_Dialpad"));
-  gtk_check_menu_item_set_active( GTK_CHECK_MENU_ITEM ( menu_items ), dbus_get_dialpad());
-  main_window_dialpad(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menu_items)));
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  g_signal_connect(G_OBJECT (menu_items), "toggled",
+  if( SHOW_DIALPAD )
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_dialpad_off.svg");
+  else
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_dialpad.svg");
+  dialpadMenu = gtk_image_menu_item_new_with_mnemonic (_("_Dialpad"));
+  gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( dialpadMenu ), image );
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), dialpadMenu);
+  g_signal_connect(G_OBJECT ( dialpadMenu ), "activate",
       G_CALLBACK (view_dialpad), 
       NULL);
-  gtk_widget_show (menu_items);
+  gtk_widget_show (dialpadMenu);
 
-  menu_items = gtk_check_menu_item_new_with_mnemonic (_("_Volume controls"));
-  gtk_check_menu_item_set_active( GTK_CHECK_MENU_ITEM ( menu_items ), dbus_get_volume_controls());
-  main_window_volume_controls(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menu_items)));
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  g_signal_connect(G_OBJECT (menu_items), "toggled",
+  if( SHOW_VOLUME )
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_volume.svg");
+  else
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_volume.svg");
+  volumeMenu = gtk_image_menu_item_new_with_mnemonic (_("_Volume controls"));
+  gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( volumeMenu ), image );
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), volumeMenu);
+  g_signal_connect(G_OBJECT (volumeMenu), "activate",
       G_CALLBACK (view_volume_controls), 
       NULL);
-  gtk_widget_show (menu_items);
-
-  menu_items = gtk_menu_item_new_with_mnemonic(_("_Toolbar"));
-  gtk_widget_set_sensitive( GTK_WIDGET(menu_items) , FALSE);
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  gtk_widget_show (volumeMenu);
 
   root_menu = gtk_menu_item_new_with_mnemonic (_("_View"));
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);

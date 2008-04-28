@@ -47,10 +47,14 @@ void create_main_window ( );
 gboolean main_window_ask_quit() ;
 
 /**
-  * Shows the dialpad on the mainwindow 
-  * @param show TRUE if you want to show the dialpad, FALSE to hide it
+  * Shows/Hides the dialpad on the mainwindow 
   */
-void main_window_dialpad(gboolean show);
+void main_window_dialpad( gboolean* state );
+
+/**
+  * Shows/Hides the dialpad on the mainwindow 
+  */
+void main_window_volume_controls( gboolean* state );
 
 /**
  * Display an error message
