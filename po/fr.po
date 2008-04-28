@@ -59,6 +59,10 @@ msgstr "_Mettre en attente"
 msgid "_Call"
 msgstr "_Actions"
 
+#: sflphone-gtk/src/menus.c: 270
+msgid "_Account Assistant"
+msgstr "_Assistant SFLphone"
+
 #: sflphone-gtk/src/menus.c: 423
 msgid "_Accounts"
 msgstr "Co_mptes"
@@ -401,7 +405,7 @@ msgstr[1] "SFLphone - %i comptes enregistrés"
 
 #: sflphone-gtk/src/assistant.c: 91
 msgid "SFLphone account configuration wizard"
-msgstr " Assistant de configuration de compte pour SFLphone"
+msgstr "Assistant de configuration de compte"
 
 #: sflphone-gtk/src/assistant.c: 122
 msgid "Welcome to SFLphone!"
@@ -433,7 +437,7 @@ msgstr "Configuration d'un compte IAX2"
 
 #: sflphone-gtk/src/assistant.c: 256
 msgid "You should probably enable this if you are behind a firewall."
-msgstr "Vous devriez probablement activer cette option si vous vous trouvez derrière un pare-feu."
+msgstr "Vous devriez probablement activer cette option si \nvous vous trouvez derrière un pare-feu."
 
 #: sflphone-gtk/src/assistant.c: 289
 msgid "Account Registration"

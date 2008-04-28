@@ -125,6 +125,7 @@ create_main_window ()
   gtk_window_set_default_size (GTK_WINDOW (window), 230, 320);
   gtk_window_set_default_icon_from_file (ICON_DIR "/sflphone.png", 
                                           NULL);
+  gtk_window_set_position( GTK_WINDOW( window ) , GTK_WIN_POS_MOUSE);
 
   /* Connect the destroy event of the window with our on_destroy function
     * When the window is about to be destroyed we get a notificaiton and

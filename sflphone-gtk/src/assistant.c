@@ -90,6 +90,7 @@ build_wizard( void )
   wiz->assistant = gtk_assistant_new( );
   gtk_window_set_title( GTK_WINDOW(wiz->assistant), _("SFLphone account configuration wizard") );
   gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
+  gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200 , 200);
   gtk_assistant_set_forward_page_func( GTK_ASSISTANT( wiz->assistant ), (GtkAssistantPageFunc) forward_page_func , NULL , NULL );
 
   build_intro();

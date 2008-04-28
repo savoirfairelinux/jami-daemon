@@ -57,6 +57,10 @@ msgstr ""
 msgid "_Call"
 msgstr ""
 
+#: sflphone-gtk/src/menus.c: 270
+msgid "_Account Assistant"
+msgstr ""
+
 #: sflphone-gtk/src/menus.c: 423
 msgid "_Accounts"
 msgstr ""

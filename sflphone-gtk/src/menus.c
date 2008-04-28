@@ -212,6 +212,12 @@ call_hang_up ( void * foo)
   sflphone_hang_up();
 }
 
+  static void 
+call_wizard ( void * foo)
+{
+  build_wizard();
+}
+
   GtkWidget * 
 create_call_menu()
 {
@@ -255,6 +261,15 @@ create_call_menu()
   holdConnId = g_signal_connect(G_OBJECT (holdMenu), "activate",
       G_CALLBACK (call_hold), 
       NULL);
+  gtk_widget_show (menu_items);
+
+  // Separator
+  menu_items = gtk_separator_menu_item_new ();
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+
+  menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Account Assistant"));
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  g_signal_connect_swapped( G_OBJECT( menu_items ) , "activate" , G_CALLBACK( call_wizard  ) , NULL );
   gtk_widget_show (menu_items);
 
   // Separator
