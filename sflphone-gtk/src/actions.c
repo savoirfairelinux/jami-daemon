@@ -706,9 +706,9 @@ sflphone_fill_codec_list()
     }
   }
   if( codec_list_get_size() == 0) {
-    /*
-    gchar* markup = g_markup_printf_escape(_("<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )") , CODECS_DIR , g_get_home_dir());
-    main_window_error_message( markup );*/
+    
+    gchar* markup = g_markup_printf_escaped(_("<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )") , CODECS_DIR , g_get_home_dir());
+    main_window_error_message( markup );
     dbus_unregister(getpid());
     exit(0);
   }
