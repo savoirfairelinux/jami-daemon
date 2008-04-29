@@ -40,13 +40,11 @@ GtkWidget * mic_control = NULL;
 GtkWidget * statusBar = NULL;
 
 /**
- * Terminate the main loop.
+ * Minimize the main window.
  */
 static gboolean
 on_delete (GtkWidget * widget, gpointer data)
 {
-  /* Must return FALSE to have the window destroyed */
-  //return !sflphone_quit();
   gtk_widget_hide(GTK_WIDGET( get_main_window() ));
   set_minimized( TRUE );
   return TRUE;

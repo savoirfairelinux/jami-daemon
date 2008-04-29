@@ -35,8 +35,8 @@ AM_CPPFLAGS = $(DEPS_CFLAGS) \
 	      -DCODECS_DIR=\""$(libdir)/sflphone/codecs"
 
 # add symbolic link	     
-install-exec-hook:
-	ln -s $(bindir)/sflphone-gtk $(bindir)/sflphone 
+install-exec-local:
+	ln -sf $(bindir)/sflphone-gtk $(bindir)/sflphone 
 
 uninstall-local:
 	-test -h $(bindir)/sflphone && rm $(bindir)/sflphone
