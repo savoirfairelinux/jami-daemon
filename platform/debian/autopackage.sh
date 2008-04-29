@@ -6,13 +6,13 @@
 
 if [ $1 = "-h" ]
 then
-  echo "Usage: ./sfl_debian.sh version arch"
-  echo "For instance: ./sfl_debian.sh 0.8.2 i386"
+  echo "Usage: ./autopackage.sh version arch"
+  echo "For instance: ./autopackage.sh 0.8.2 all"
   exit 0
 fi
 
 # Libraries dependencies
-dependencies="libgcc1 , libsamplerate0 (>=0.1.2) , libdbus-glib-1-2 (>= 0.73), libexpat1 , libgtk2.0-0 , gnome-common , libc6 (>= 2.3.6-6) , libglib2.0-0 (>= 2.12.0) , libosip2-3, libexosip2-5, libcommoncpp2-1.5.3-0 , libccrtp1-1.5-1 , libiax0 , libgtkglext1"
+dependencies="libgcc1 , libsamplerate0 (>=0.1.2) , libdbus-glib-1-2 (>= 0.73), libexpat1 , libgtk2.0-0 , gnome-common , libc6 (>= 2.3.6-6) , libglib2.0-0 (>= 2.12.0) , libosip2-2, libexosip2-4, libcommoncpp2-1.6-0 , libccrtp1-1.6-0  , libiax0 , libgtkglext1"
 
 # Package Infos
 package="sflphone"
@@ -40,6 +40,7 @@ debdir="$sfldir/DEBIAN"
 mkdir -p $sfldir$bindir
 cp $bindir/sflphoned $sfldir$bindir
 cp $bindir/sflphone-gtk $sfldir$bindir
+ln -sf $bindir/sflphone-gtk $sfldir$bindir/sflphone
 
 #/usr/lib
 mkdir -p $sfldir/usr/lib/sflphone/codecs
@@ -89,3 +90,6 @@ echo "Description: $desc" >> $control
 echo "Build the debian package ... "
 dpkg --build $sfldir ${sfldir}_$2.deb
 
+# Clean up the generated stuff
+echo "Clean up ... "
+rm -rf $sfldir 

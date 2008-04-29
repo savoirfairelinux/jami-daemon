@@ -71,6 +71,8 @@ apply_callback( void )
   }
 
   dbus_add_account( current );
+  account_list_set_current_id( current->accountID );
+
 }
 
   void

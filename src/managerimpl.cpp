@@ -607,7 +607,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
   if (accountid == AccountNULL) {
     _debug("peerHungupCall: Call doesn't exists\n");
     return;
-  }
+  
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   if (isCurrentCall(id)) {
     stopTone(true);
@@ -1883,7 +1883,7 @@ ManagerImpl::sendRegister( const ::DBus::String& accountID , bool expire )
  
   Account* acc = getAccount(accountID);
   acc->loadConfig();
-  // Test on the value freshly updated
+  // Test on the freshly updated value
   if ( acc->isEnabled() ) {
     // Verify we aren't already registered, then register
       _debug("Send register for account %s\n" , accountID.c_str());
