@@ -1433,7 +1433,8 @@ SIPVoIPLink::SIPRegistrationFailure( eXosip_event_t* event )
       setRegistrationState(Error);
       break;
     default:
-      _debug("Unknown error: %s\n" , event->response->status_code);
+      setRegistrationState(ErrorAuth);
+      //_debug("Unknown error: %s\n" , event->response->status_code);
   }
 }
 
