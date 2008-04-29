@@ -615,7 +615,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
   }
   removeWaitingCall(id);
   removeCallAccount(id);
-
+  }
 }
 
 //THREAD=VoIP
