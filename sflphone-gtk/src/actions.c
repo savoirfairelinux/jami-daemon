@@ -122,6 +122,7 @@ sflphone_hung_up( call_t * c)
   c->state = CALL_STATE_DIALING;
   update_menus();
   status_tray_icon_blink( FALSE );
+  stop_notification();
 }
 
 /** Internal to actions: Fill account list */
