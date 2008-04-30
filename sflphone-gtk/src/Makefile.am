@@ -20,7 +20,6 @@ sflphone_gtk_SOURCES = \
   sliders.c \
   statusicon.c \
   codeclist.c \
-  glwidget.c \
   MemManager.c
   
 noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h codeclist.h assistant.h\
