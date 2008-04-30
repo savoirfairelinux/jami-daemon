@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -52,7 +53,6 @@ void update_menus()
   gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), FALSE);
 
   call_t * selectedCall = call_get_selected(active_calltree);
   if (selectedCall)
@@ -68,7 +68,7 @@ void update_menus()
 	gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
 	gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
 	gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(holdMenu), TRUE);
+        gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_unhold.svg"));
 	break;
       case CALL_STATE_RINGING:
 	gtk_widget_set_sensitive( GTK_WIDGET(pickUpMenu), TRUE);
@@ -83,6 +83,7 @@ void update_menus()
 	gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
 	gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
 	gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
+        gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_hold.svg"));
 	break;
       case CALL_STATE_BUSY:
       case CALL_STATE_FAILURE:
@@ -143,9 +144,6 @@ create_help_menu()
 
   menu      = gtk_menu_new ();
 
-  /*menu_items = gtk_separator_menu_item_new ();
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-    */
   menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_ABOUT, get_accel_group());
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
@@ -498,7 +496,7 @@ create_edit_menu()
 }
 /* ----------------------------------------------------------------- */
   static void 
-view_dialpad  (GtkCheckMenuItem *checkmenuitem,
+view_dialpad  (GtkImageMenuItem *imagemenuitem,
     void* foo)
 {
   gboolean state;
@@ -516,7 +514,7 @@ view_dialpad  (GtkCheckMenuItem *checkmenuitem,
 }
 
   static void 
-view_volume_controls  (GtkCheckMenuItem *checkmenuitem,
+view_volume_controls  (GtkImageMenuItem *imagemenuitem,
     void* foo)
 {
   gboolean state;

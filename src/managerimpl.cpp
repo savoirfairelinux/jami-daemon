@@ -607,6 +607,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
   if (accountid == AccountNULL) {
     _debug("peerHungupCall: Call doesn't exists\n");
     return;
+  }
   
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   if (isCurrentCall(id)) {
@@ -615,7 +616,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
   }
   removeWaitingCall(id);
   removeCallAccount(id);
-  }
+  
 }
 
 //THREAD=VoIP
