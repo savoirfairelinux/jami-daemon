@@ -252,7 +252,7 @@ AC_ARG_WITH([iax2],
 LIBIAX2=
 AS_IF([test "x$with_iax2" != xno],
   [AC_CHECK_HEADER([iax/iax.h], , AC_MSG_FAILURE([Unable to find the libiax2 headers (you may need to install the dev package).    You may use --without-iax2 to compile without iax2 protocol support.]))]
-  [AC_CHECK_LIB([iax], [iax_init],
+  [AC_CHECK_LIB([iax2], [iax_init],
     [],
     [AC_MSG_FAILURE(
        [libiax2 link test failed.   You may use --without-iax2 to compile without iax2 protocol support.])]
