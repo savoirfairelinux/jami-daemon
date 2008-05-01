@@ -21,8 +21,8 @@
 #define IAXCALL_H
 
 #include "call.h"
-#include <iax/iax-client.h>
-#include <iax/frame.h>
+#include <iax2/iax-client.h>
+#include <iax2/frame.h>
 
 /**
  * @file: iaxcall.h
