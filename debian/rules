@@ -16,6 +16,8 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
+package=sflphone
+
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
@@ -33,8 +35,11 @@ endif
 config.status: configure
 	dh_testdir
 	# Add here commands to configure the package.
-	CFLAGS="$(CFLAGS)" CXX="$(CXX)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
-
+	autoreconf --install	
+	CFLAGS="$(CFLAGS)" CXX="$(CXX)" ./configure --prefix=/usr --with-debug
+	cd sflphone-gtk
+	gnome-autogen.sh --prefix=/usr
+	
 
 #Architecture 
 build: build-arch build-indep

@@ -51,8 +51,7 @@ AC_CONFIG_FILES([po/Makefile \
 AC_CONFIG_FILES([doc/Makefile \
   doc/doxygen/Makefile])
   
-AC_CONFIG_FILES([platform/debian/changelog \
-  platform/rpm/sflphone.spec \
+AC_CONFIG_FILES([platform/rpm/sflphone.spec \
   platform/fedora/sflphone.spec \
   platform/fedora/sflphone-fc6.spec])
   
