@@ -219,9 +219,12 @@ notify_no_registered_accounts(  )
 void  
 stop_notification( void )
 {
-  if(notify_notification_show( notification , NULL))  
+  if( notification != NULL  )
   {
-    notify_notification_close( notification , NULL);
-    g_object_unref( notification );
+    if(notify_notification_show( notification , NULL))  
+    {
+      notify_notification_close( notification , NULL);
+      g_object_unref( notification );
+    }
   }
 }
