@@ -97,28 +97,34 @@ AudioLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
   void
 AudioLayer::startStream(void) 
 {
-  _talk = true ;
-  _debugAlsa(" Start stream\n");
-  int err;
-  //ost::MutexLock lock( _mutex );
-  snd_pcm_prepare( _CaptureHandle );
-  snd_pcm_start( _CaptureHandle ) ;
+  if( _CaptureHandle && _PlaybackHandle )
+  {
+    _talk = true ;
+    _debugAlsa(" Start stream\n");
+    int err;
+    //ost::MutexLock lock( _mutex );
+    snd_pcm_prepare( _CaptureHandle );
+    snd_pcm_start( _CaptureHandle ) ;
 
-  snd_pcm_prepare( _PlaybackHandle );
-  if( err = snd_pcm_start( _PlaybackHandle) < 0 )  _debugAlsa(" Cannot start (%s)\n", snd_strerror(err));
-}
+    snd_pcm_prepare( _PlaybackHandle );
+    if( err = snd_pcm_start( _PlaybackHandle) < 0 )  _debugAlsa(" Cannot start (%s)\n", snd_strerror(err));
+  }
+} 
 
   void
 AudioLayer::stopStream(void) 
 {
-  //ost::MutexLock lock( _mutex );
-  _debugAlsa(" Stop Stream\n ");
-  _talk = false;
-  snd_pcm_drop( _CaptureHandle );
-  snd_pcm_prepare( _CaptureHandle );
-  snd_pcm_drop( _PlaybackHandle );
-  snd_pcm_prepare( _PlaybackHandle );
-  _urgentBuffer.flush();
+  if( _CaptureHandle && _PlaybackHandle )
+  {
+    //ost::MutexLock lock( _mutex );
+    _debugAlsa(" Stop Stream\n ");
+    _talk = false;
+    snd_pcm_drop( _CaptureHandle );
+    snd_pcm_prepare( _CaptureHandle );
+    snd_pcm_drop( _PlaybackHandle );
+    snd_pcm_prepare( _PlaybackHandle );
+    _urgentBuffer.flush();
+  }
 }
 
 void AudioLayer::AlsaCallBack( snd_async_handler_t* pcm_callback )
