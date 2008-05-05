@@ -166,6 +166,7 @@ call_mailbox( GtkWidget* widget , gpointer data )
     g_sprintf(mailboxCall->callID, "%d", rand());
     mailboxCall->to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
     mailboxCall->accountID = g_strdup(current->accountID);
+    g_print("TO : %s\n" , mailboxCall->to);
     call_list_add( current_calls , mailboxCall );
     update_call_tree_add( current_calls , mailboxCall );    
     update_menus();
@@ -603,6 +604,7 @@ update_call_tree (calltab_t* tab, call_t * c)
 						pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
 					}
 				}
+				g_print("MARKUP UPDATE = %s\n" , markup );
 				gtk_list_store_set(store, &iter,
 						0, pixbuf, // Icon
 						1, markup, // Description

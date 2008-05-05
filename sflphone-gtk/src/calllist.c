@@ -175,6 +175,12 @@ call_get_number (const call_t * c)
   return number;
 }
 
+gchar *
+call_get_recipient( const call_t * c )
+{
+  return c->to;
+}
+
 
 call_t * 
 call_list_get (calltab_t* tab, const gchar * callID )
