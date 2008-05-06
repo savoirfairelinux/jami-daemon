@@ -205,7 +205,6 @@ toolbar_update_buttons ()
 		{
 			case CALL_STATE_INCOMING:
 				gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
-				//gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton),     TRUE);
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),	TRUE);
 				g_object_ref(callButton);	
 				gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
@@ -218,7 +217,6 @@ toolbar_update_buttons ()
 				g_object_ref(holdButton);
 				gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
 				gtk_toolbar_insert(GTK_TOOLBAR(toolbar), unholdButton, 3);
-				//gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton),     TRUE);
 				break;
 			case CALL_STATE_RINGING:
 				gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);

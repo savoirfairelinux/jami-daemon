@@ -104,6 +104,7 @@ call_state_cb (DBusGProxy *proxy,
   {
     if ( strcmp(state, "HUNGUP") == 0 )
     {
+      g_print("from dbus: "); stop_notification();
       sflphone_hung_up (c);
     }
     else if ( strcmp(state, "UNHOLD") == 0 )

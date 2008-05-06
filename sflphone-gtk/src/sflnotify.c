@@ -225,6 +225,7 @@ stop_notification( void )
     {
       notify_notification_close( notification , NULL);
       g_object_unref( notification );
+      notification = NULL;
     }
   }
 }
