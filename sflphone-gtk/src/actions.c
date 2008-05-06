@@ -601,14 +601,12 @@ sflphone_place_call ( call_t * c )
     if( account_list_get_size() == 0 )
     {
       notify_no_accounts();
-      call_list_remove(current_calls , c->callID);
-      update_call_tree_remove(current_calls, c);
+      sflphone_fail(c);
     }
     else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
     {
       notify_no_registered_accounts();
-      call_list_remove(current_calls , c->callID);
-      update_call_tree_remove(current_calls, c);
+      sflphone_fail(c);
     }
     else
     {
@@ -651,7 +649,6 @@ sflphone_place_call ( call_t * c )
 	// Update history
 	c->history_state = OUTGOING;
 	call_list_add(history, c);
-	//update_call_tree_add(history, c);
   }
 }
 
