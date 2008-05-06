@@ -458,7 +458,7 @@ dbus_account_details(gchar * accountID)
 }
 
 void
-dbus_send_register ( gchar* accountID , int expire)
+dbus_send_register ( gchar* accountID , const guint expire)
 {
   GError *error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_send_register ( configurationManagerProxy, accountID, expire ,&error);

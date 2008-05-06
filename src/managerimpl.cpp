@@ -1877,7 +1877,7 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
 }
 
 void
-ManagerImpl::sendRegister( const ::DBus::String& accountID , bool expire )
+ManagerImpl::sendRegister( const ::DBus::String& accountID , const DBus::Int32& expire )
 {
   // Update the active field
   setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
