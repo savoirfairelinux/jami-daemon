@@ -421,9 +421,6 @@ class SIPVoIPLink : public VoIPLink
     /** SIP Proxy URL */
     std::string _proxy;
 
-    /** SIP UserPart */
-    std::string _userpart;
-
     /** SIP Authenfication name */
     std::string _authname;
 
