@@ -83,6 +83,7 @@ typedef short int16;
 #define PCM_FRONT	"plug:front"		/** Alsa plugin: front PCM */	
 #define PCM_DEFAULT	"default"		/** Default ALSA plugin */
 #define PCM_DMIX	"plug:dmix"		/** Alsa plugin for software mixing */
+#define PCM_DSNOOP	"plug:dsnoop"		/** Alsa plugin for software mixing */
 #define PCM_SURROUND40	"plug:surround40"	/** Alsa plugin: surround40 */
 #define PCM_SURROUND41	"plug:surround41"	/** Alsa plugin: surround41 */
 #define PCM_SURROUND50	"plug:surround50"	/** Alsa plugin: surround50 */

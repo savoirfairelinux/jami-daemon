@@ -361,7 +361,7 @@ create_toolbar ()
 	g_signal_connect (G_OBJECT (unholdButton), "clicked",
 			G_CALLBACK (unhold), NULL);
 	//gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(unholdButton), -1);
-	//gtk_widget_show_all(GTK_WIDGET(unholdButton));
+	gtk_widget_show_all(GTK_WIDGET(unholdButton));
 
 	image = gtk_image_new_from_file( ICONS_DIR "/hold.svg");
 	holdButton =  gtk_tool_button_new (image, _("On Hold"));

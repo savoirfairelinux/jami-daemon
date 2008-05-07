@@ -54,12 +54,12 @@ cp $sharedir/applications/sflphone.desktop $sfldir$sharedir/applications/
 #/usr/share/dbus-1/services
 mkdir -p $sfldir$sharedir/dbus-1/services
 cp $sharedir/dbus-1/services/org.sflphone.SFLphone.service $sfldir$sharedir/dbus-1/services/
-#/usr/share/pixmaps
+/usr/share/pixmaps
 mkdir -p $sfldir$sharedir/pixmaps
 cp $sharedir/pixmaps/sflphone.png $sfldir$sharedir/pixmaps
 #/usr/share/sflphone
 mkdir -p $sfldir$sharedir/sflphone/ringtones
-cp $sharedir/sflphone/*.svg $sfldir$sharedir/sflphone
+cp $sharedir/sflphone/* $sfldir$sharedir/sflphone
 #/usr/share/sflphone/ringtones
 cp $sharedir/sflphone/ringtones/* $sfldir$sharedir/sflphone/ringtones
 #/usr/share/locale/fr/LC_MESSAGES

@@ -302,7 +302,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   snd_pcm_uframes_t buffer_size_out = period_size_out * 4 ;
 
   unsigned int buffer_time = 80000; //80ms
-  unsigned int period_time = buffer_time / 4; //20ms
+  unsigned int period_time = buffer_time / 4 ; //20ms
 
   if(flag == SFL_PCM_BOTH || flag == SFL_PCM_CAPTURE)
   {
@@ -330,6 +330,19 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     _debug("buffer size = %d\n" , period_size_in);
     _debug("period size = %d\n" , buffer_size_in);
     snd_pcm_hw_params_free( hwParams );
+
+    snd_pcm_uframes_t val ;
+    snd_pcm_sw_params_malloc( &swparams );
+    snd_pcm_sw_params_current( _CaptureHandle, swparams );
+
+    if( err = snd_pcm_sw_params_set_start_threshold( _CaptureHandle, swparams, period_size_out) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
+    snd_pcm_sw_params_get_start_threshold( swparams , &val);
+    _debug("Start threshold = %d\n" ,val);
+    if( err = snd_pcm_sw_params_set_avail_min( _CaptureHandle, swparams, period_size_out) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
+    snd_pcm_sw_params_get_avail_min( swparams , &val);
+    _debug("Min available = %d\n" ,val);
+    if( err = snd_pcm_sw_params( _CaptureHandle, swparams ) < 0 ) _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
+    snd_pcm_sw_params_free( swparams );
     deviceClosed = false;
   }
 
@@ -348,6 +361,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     }
     if( err = snd_pcm_hw_params_any( _PlaybackHandle,hwParams) < 0) _debugAlsa(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_access( _PlaybackHandle, hwParams, SND_PCM_ACCESS_MMAP_INTERLEAVED) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
+    //if( err = snd_pcm_hw_params_set_access( _PlaybackHandle, hwParams, SND_PCM_ACCESS_RW_INTERLEAVED) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_format( _PlaybackHandle, hwParams, SND_PCM_FORMAT_S16_LE) < 0) _debugAlsa(" Cannot set sample format (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_rate( _PlaybackHandle, hwParams, rate_out, dir) < 0) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_channels( _PlaybackHandle, hwParams, 1) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
@@ -441,6 +455,7 @@ AudioLayer::read( void* buffer, int toCopy)
       case EPERM:
 	_debugAlsa(" Capture EPERM (%s)\n", snd_strerror(err));
 	snd_pcm_prepare( _CaptureHandle);
+	snd_pcm_start( _CaptureHandle );
 	break;
       case -ESTRPIPE:
 	_debugAlsa(" Capture ESTRPIPE (%s)\n", snd_strerror(err));
