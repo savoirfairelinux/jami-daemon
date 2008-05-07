@@ -12,7 +12,7 @@ then
 fi
 
 # Libraries dependencies
-dependencies="libgcc1 , libsamplerate0 (>=0.1.2) , libdbus-glib-1-2 (>= 0.73), libexpat1 , libgtk2.0-0 , gnome-common , libc6 (>= 2.3.6-6) , libglib2.0-0 (>= 2.12.0) , libosip2-2, libexosip2-4, libcommoncpp2-1.6-0 , libccrtp1-1.6-0  , sflphone-iax2 , libgsm1 (>=1.0.10) , libspeex1 (>=1.1.12) , dbus-c++-1 (>=0.5.0)"
+dependencies="libgcc1 , libsamplerate0 (>=0.1.2) , libdbus-glib-1-2 (>= 0.73), libexpat1 , libgtk2.0-0 , libc6 (>= 2.3.6-6) , libglib2.0-0 (>= 2.12.0) , libosip2-2, libexosip2-4, libcommoncpp2-1.6-0 , libccrtp1-1.6-0  , sflphone-iax2 , libgsm1 (>=1.0.10) , libspeex1 (>=1.1.12) , dbus-c++-1 (>=0.5.0)"
 
 # Package Infos
 package="sflphone"
@@ -44,15 +44,6 @@ ln -sf $bindir/sflphone-gtk $sfldir$bindir/sflphone
 
 #/usr/lib
 mkdir -p $sfldir/usr/lib/sflphone/codecs
-# dbus
-#cp $libdir/libdbus-c++-1.so $sfldir$libdir
-#cp $libdir/libdbus-c++-1.so.0 $sfldir$libdir
-#cp $libdir/libdbus-c++-1.so.0.0.0 $sfldir$libdir
-# iax2
-# cp $libdir/libiax2.so.0.0.0 $sfldir$libdir
-# ln -sf  $libdir/libiax2.so.0.0.0 $sfldir$libdir/libiax2.so.0
-# ln -sf  $libdir/libiax2.so.0.0.0 $sfldir$libdir/libiax2.so
-# chmod 755 $sfldir$libdir/libiax2.so.0.0.0
 
 #/usr/lib/sflphone/codecs
 cp $libdir/sflphone/codecs/libcodec_*	$sfldir$libdir/sflphone/codecs/
