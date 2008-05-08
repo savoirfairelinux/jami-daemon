@@ -159,6 +159,8 @@ toggle_history(GtkToggleToolButton *toggle_tool_button,
 call_mailbox( GtkWidget* widget , gpointer data )
 {
     account_t* current = account_list_get_current();
+    if( current == NULL ) // Should not happens
+     return; 
     call_t* mailboxCall = g_new0( call_t , 1);
     mailboxCall->state = CALL_STATE_DIALING;
     mailboxCall->from = g_strconcat("\"\" <>", NULL);

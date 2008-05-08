@@ -129,8 +129,13 @@ account_list_get_nth ( guint n )
 account_t*
 account_list_get_current( )
 {
+  account_t* tmp = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
   if( __CURRENT_ACCOUNT_ID != NULL  )
     return account_list_get_by_id( __CURRENT_ACCOUNT_ID );
+  else if( tmp != NULL )
+    return tmp;
+  else if( account_list_get_size() > 0 )
+    return account_list_get_nth(0);
   else
     return NULL;
 }

@@ -111,7 +111,7 @@ create_menu()
 void
 show_status_icon()
 {
-  status = gtk_status_icon_new_from_file(ICON_DIR "/sflphone.png");
+  status = gtk_status_icon_new_from_file(ICONS_DIR "/sflphone.png");
   g_signal_connect (G_OBJECT (status), "activate",
 			  G_CALLBACK (status_click),
 			  NULL);

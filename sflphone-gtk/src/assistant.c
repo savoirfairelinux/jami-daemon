@@ -61,7 +61,6 @@ sip_apply_callback( void )
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->addr))));
 
     dbus_add_account( current );
-    account_list_set_current_id( current->accountID );
     g_print( "ACCOUNT ID = %s\n" , current->accountID );
   }
 }
@@ -80,7 +79,6 @@ iax_apply_callback( void )
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_IAX_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
 
     dbus_add_account( current );
-    account_list_set_current_id( current->accountID );
     g_print( "ACCOUNT ID = %s\n" , current->accountID );
   }
 }
