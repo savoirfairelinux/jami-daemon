@@ -43,6 +43,10 @@ process_call_duration( call_t* c )
 {
   gchar * res;
   g_print("Call duration = %i\n", (int)c->_stop - c->_start);
+  
+  if( c->_start == 0 )
+    return "";
+
   int duration = c->_stop - c->_start;
 
   if( duration / 60 == 0 )

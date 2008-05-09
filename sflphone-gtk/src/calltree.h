@@ -51,7 +51,8 @@ static void toggle_history(GtkToggleToolButton *toggle_tool_button, gpointer use
  * @param c The call to add
  */
 void update_call_tree_add (calltab_t* ct, call_t * c);
-/**
+
+/*
  * Update the call tree if the call state changes
  * @param c The call to update
  */ 
