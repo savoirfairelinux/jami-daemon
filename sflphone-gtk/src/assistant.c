@@ -44,11 +44,12 @@ static void cancel_callback( void )
   gtk_widget_destroy(wiz->assistant);
 }
 
-  static void 
-apply_callback( void ) 
+  static void
+sip_apply_callback( void )
 {
   if( account_type == _SIP )
   {
+    g_print("SIP APPLY CALLBACK\n");
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias))));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("TRUE"));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup("888"));
@@ -56,11 +57,20 @@ apply_callback( void )
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_HOST), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_server))));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_password))));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_USER), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_username))));
-    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->enable))));
+    g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), g_strdup((gchar *)gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable))? "TRUE":"FALSE"));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->addr))));
+
+    dbus_add_account( current );
+    account_list_set_current_id( current->accountID );
+    g_print( "ACCOUNT ID = %s\n" , current->accountID );
   }
-  else
-  {  
+}
+  static void 
+iax_apply_callback( void ) 
+{
+  if( account_type == _IAX)
+  {
+    g_print("IAX APPLY CALLBACK\n");
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias))));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("TRUE"));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup("888"));
@@ -68,9 +78,11 @@ apply_callback( void )
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_IAX_USER), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_username))));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_IAX_HOST), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_server))));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_IAX_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
-  }
 
-  dbus_add_account( current );
+    dbus_add_account( current );
+    account_list_set_current_id( current->accountID );
+    g_print( "ACCOUNT ID = %s\n" , current->accountID );
+  }
 }
 
   void
@@ -85,7 +97,7 @@ build_wizard( void )
   wiz = ( struct _wizard* )g_malloc( sizeof( struct _wizard));
   current = g_new0(account_t, 1);
   current->properties = g_hash_table_new(NULL, g_str_equal);
-  current ->accountID = "test";
+  //current ->accountID = "test";
 
   wiz->assistant = gtk_assistant_new( );
   gtk_window_set_title( GTK_WINDOW(wiz->assistant), _("SFLphone account configuration wizard") );
@@ -243,7 +255,7 @@ build_iax_account_configuration( void )
 
   current -> state = ACCOUNT_STATE_UNREGISTERED;
 
-  g_signal_connect( G_OBJECT( wiz->assistant ) , "apply" , G_CALLBACK( apply_callback ), NULL);
+  g_signal_connect( G_OBJECT( wiz->assistant ) , "apply" , G_CALLBACK( iax_apply_callback ), NULL);
 
   return wiz->iax_account;
 }
@@ -278,7 +290,7 @@ build_nat_settings( void )
   gtk_table_attach ( GTK_TABLE( table ), wiz->addr, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_widget_set_sensitive( GTK_WIDGET( wiz->addr ), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)));
 
-  g_signal_connect( G_OBJECT( wiz->assistant ) , "apply" , G_CALLBACK( apply_callback ), NULL);
+  g_signal_connect( G_OBJECT( wiz->assistant ) , "apply" , G_CALLBACK( sip_apply_callback ), NULL);
 
   return wiz->nat;
 }
@@ -327,9 +339,9 @@ forward_page_func( gint current_page , gpointer data )
     case 2:  
       return 3;
     case 3:
-	return 6;
+      return 6;
     case 4:
-	return 6;
+      return 6;
     default:
       return -1;
   }
@@ -355,7 +367,7 @@ create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)
 
   gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), vbox, TRUE);
 
-  wiz->logo = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+  wiz->logo = gdk_pixbuf_new_from_file(ICONS_DIR "/sflphone.png", NULL);
   gtk_assistant_set_page_header_image(GTK_ASSISTANT(wiz->assistant),vbox, wiz->logo);
   g_object_unref(wiz->logo);
 

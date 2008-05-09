@@ -1,0 +1,28 @@
+This package was debianized by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+Wed, 30 Apr 2008 11:37:53 -0500.
+
+It was downloaded from the git repository of SFLphone: git://sflphone.org/git/sflphone.git
+
+Copyright:
+
+SavoirFaire Linux Inc. 
+
+License:
+
+This software is copyright (c) 2004-2008 Savoir-Faire Linux inc.
+
+You are free to distribute this software under the terms of
+the GNU General Public License version 3.
+On Debian systems, the complete text of the GNU General Public
+License can be found in the file `/usr/share/common-licenses/GPL'.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+

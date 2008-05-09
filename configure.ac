@@ -51,8 +51,7 @@ AC_CONFIG_FILES([po/Makefile \
 AC_CONFIG_FILES([doc/Makefile \
   doc/doxygen/Makefile])
   
-AC_CONFIG_FILES([platform/debian/changelog \
-  platform/rpm/sflphone.spec \
+AC_CONFIG_FILES([platform/rpm/sflphone.spec \
   platform/fedora/sflphone.spec \
   platform/fedora/sflphone-fc6.spec])
   
@@ -251,13 +250,13 @@ AC_ARG_WITH([iax2],
 
 LIBIAX2=
 AS_IF([test "x$with_iax2" != xno],
-  [AC_CHECK_HEADER([iax/iax.h], , AC_MSG_FAILURE([Unable to find the libiax2 headers (you may need to install the dev package).    You may use --without-iax2 to compile without iax2 protocol support.]))]
-  [AC_CHECK_LIB([iax], [iax_init],
+  [AC_CHECK_LIB([iax2], [iax_init],
     [],
     [AC_MSG_FAILURE(
-       [libiax2 link test failed.   You may use --without-iax2 to compile without iax2 protocol support.])]
+       [libiax2 link test failed. You need the sflphone-iax2 package.  You may use --without-iax2 to compile without iax2 protocol support.])]
        )
    ]
+  [AC_CHECK_HEADER([iax2/iax.h], , AC_MSG_FAILURE([Unable to find the libiax2 headers. You may need to install sflphone-iax2-dev package. You may use --without-iax2 to compile without iax2 protocol support.]))]
    )
     
 AC_DEFINE([HAVE_IAX], test "x$with_iax2" = "xyes", [Define if you have libiax2])

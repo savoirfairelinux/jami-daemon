@@ -1,7 +1,7 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Copyright (C) 2007 - 2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -123,11 +123,12 @@ sflphone_hung_up( call_t * c)
   c->state = CALL_STATE_DIALING;
   update_menus();
   status_tray_icon_blink( FALSE );
+  stop_notification();
 }
 
 /** Internal to actions: Fill account list */
-void
-sflphone_fill_account_list()
+	void
+sflphone_fill_account_list(gboolean toolbarInitialized)
 {
 	account_list_clear ( );
 
@@ -184,8 +185,9 @@ sflphone_fill_account_list()
 
 	}
 
-	//toolbar_update_buttons();
-	
+	// Prevent update being called when toolbar is not yet initialized
+	if(toolbarInitialized)
+		toolbar_update_buttons();
 }
 
 gboolean
@@ -205,7 +207,7 @@ sflphone_init()
 	else 
 	{
 		dbus_register(getpid(), "Gtk+ Client");
-		sflphone_fill_account_list();
+		sflphone_fill_account_list(FALSE);
 		sflphone_fill_codec_list();
 		sflphone_set_current_account();
 		return TRUE;
@@ -601,14 +603,12 @@ sflphone_place_call ( call_t * c )
     if( account_list_get_size() == 0 )
     {
       notify_no_accounts();
-      call_list_remove(current_calls , c->callID);
-      update_call_tree_remove(current_calls, c);
+      sflphone_fail(c);
     }
     else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
     {
       notify_no_registered_accounts();
-      call_list_remove(current_calls , c->callID);
-      update_call_tree_remove(current_calls, c);
+      sflphone_fail(c);
     }
     else
     {
@@ -651,7 +651,6 @@ sflphone_place_call ( call_t * c )
 	// Update history
 	c->history_state = OUTGOING;
 	call_list_add(history, c);
-	//update_call_tree_add(history, c);
   }
 }
 
@@ -708,10 +707,9 @@ sflphone_fill_codec_list()
     }
   }
   if( codec_list_get_size() == 0) {
-    gchar* markup = malloc(1000);
-    sprintf(markup , _("<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )"), CODECS_DIR , g_get_home_dir());
+    
+    gchar* markup = g_markup_printf_escaped(_("<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )") , CODECS_DIR , g_get_home_dir());
     main_window_error_message( markup );
-    g_free( markup );
     dbus_unregister(getpid());
     exit(0);
   }

@@ -111,7 +111,7 @@ void dbus_set_account_details(account_t *a);
  *		 0 for unregistration request
  *		 1 for registration request
  */
-void dbus_send_register( gchar* accountID , int expire );
+void dbus_send_register( gchar* accountID , const guint expire );
 
 /**
  * ConfigurationManager - Add an account to the list

@@ -98,7 +98,7 @@ notify_voice_mails( guint count , account_t* acc )
 	(gchar*) g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) ) ;
     body = g_markup_printf_escaped(_("%d voice mails"), count);
 
-    pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/sflphone.png", NULL);
 
     notification = notify_notification_new( title,
 	body,
@@ -133,7 +133,7 @@ notify_current_account( account_t* acc )
 
     title = g_markup_printf_escaped(_("Current account"));
 
-    pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/sflphone.png", NULL);
 
     notification = notify_notification_new( title,
 	body,
@@ -162,7 +162,7 @@ notify_no_accounts(  )
 
   title = g_markup_printf_escaped(_("Error"));
 
-  pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/sflphone.png", NULL);
 
   notification = notify_notification_new( title,
       body,
@@ -199,7 +199,7 @@ notify_no_registered_accounts(  )
 
   title = g_markup_printf_escaped(_("Error"));
 
-  pixbuf = gdk_pixbuf_new_from_file(ICON_DIR "/sflphone.png", NULL);
+  pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/sflphone.png", NULL);
 
   notification = notify_notification_new( title,
       body,
@@ -219,9 +219,12 @@ notify_no_registered_accounts(  )
 void  
 stop_notification( void )
 {
-  if(notify_notification_show( notification , NULL))  
+  if( notification != NULL  )
   {
-    notify_notification_close( notification , NULL);
-    g_object_unref( notification );
+    if(notify_notification_show( notification , NULL))  
+    {
+      notify_notification_close( notification , NULL);
+      g_object_unref( notification );
+    }
   }
 }

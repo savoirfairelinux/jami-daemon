@@ -27,8 +27,6 @@ PKG_CHECK_MODULES(DEPS, \
     libnotify >= 0.4 \
     gtk+-2.0 >= 2.2     \
     glib-2.0 >= 2.2     \
-    gtkglext-1.0 >= 1.0.0 \
-    libgnomeui-2.0 >= 2.20 \
 )
 
 

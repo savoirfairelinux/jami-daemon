@@ -330,13 +330,13 @@ update_combo_box( gchar* plugin )
 	// set insensitive the devices widget if the selected plugin is default
 	if( g_strcasecmp( plugin , "default" ) == 0)
 	{
-	  gtk_widget_set_sensitive( GTK_WIDGET ( outputDeviceComboBox ) , FALSE );
-	  gtk_widget_set_sensitive( GTK_WIDGET ( inputDeviceComboBox ) , FALSE );
+	  //gtk_widget_set_sensitive( GTK_WIDGET ( outputDeviceComboBox ) , FALSE );
+	  //gtk_widget_set_sensitive( GTK_WIDGET ( inputDeviceComboBox ) , FALSE );
 	}
 	else
 	{
-	  gtk_widget_set_sensitive( GTK_WIDGET ( outputDeviceComboBox ) , TRUE );
-	  gtk_widget_set_sensitive( GTK_WIDGET ( inputDeviceComboBox ) , TRUE );
+	  //gtk_widget_set_sensitive( GTK_WIDGET ( outputDeviceComboBox ) , TRUE );
+	  //gtk_widget_set_sensitive( GTK_WIDGET ( inputDeviceComboBox ) , TRUE );
 	}
 }
 /**
@@ -358,7 +358,7 @@ select_output_audio_plugin(GtkComboBox* widget, gpointer data)
 		gtk_combo_box_get_active_iter(widget, &iter);
 		gtk_tree_model_get(model, &iter, 0, &pluginName, -1);	
 		dbus_set_output_audio_plugin(pluginName);
-		update_combo_box( pluginName);
+		//update_combo_box( pluginName);
 	}
 }
 
@@ -386,7 +386,7 @@ select_active_output_audio_plugin()
 		{
 			// Set current iteration the active one
 			gtk_combo_box_set_active_iter(GTK_COMBO_BOX(pluginComboBox), &iter);
-			update_combo_box( plugin );
+			//update_combo_box( plugin );
 			return;
 		}
 	} while(gtk_tree_model_iter_next(model, &iter));
@@ -394,7 +394,7 @@ select_active_output_audio_plugin()
 	// No index was found, select first one
 	g_print("Warning : No active output device found\n");
 	gtk_combo_box_set_active(GTK_COMBO_BOX(pluginComboBox), 0);
-	update_combo_box("default");
+	//update_combo_box("default");
 }
 
 
@@ -1078,7 +1078,6 @@ create_audio_tab ()
 	
     // Main device widget
     deviceBox = gtk_hbox_new(FALSE, 10);
-    gtk_box_pack_start(GTK_BOX(deviceFrame), deviceBox, FALSE, FALSE, 0);
     gtk_widget_show( deviceBox );
 
     gtk_container_add( GTK_CONTAINER(deviceFrame) , deviceBox);
@@ -1086,7 +1085,6 @@ create_audio_tab ()
     // Main device widget
 	deviceTable = gtk_table_new(4, 3, FALSE);
 	gtk_table_set_col_spacing(GTK_TABLE(deviceTable), 0, 40);
-	gtk_box_set_spacing(GTK_BOX(deviceTable), 0);
 	gtk_box_pack_start(GTK_BOX(deviceBox), deviceTable, TRUE, TRUE, 0);
 	gtk_widget_show(deviceTable);
 	
@@ -1184,13 +1182,11 @@ create_audio_tab ()
 	//select_active_output_audio_plugin();
     // Codec section label
     codecFrame = gtk_frame_new(_("Codecs"));
-    gtk_misc_set_alignment(GTK_MISC(codecFrame), 0, 0.5);
     gtk_box_pack_start(GTK_BOX(ret), codecFrame, FALSE, FALSE, 0);
     gtk_widget_show(codecFrame);
 
     // Main codec widget
 	codecBox = gtk_hbox_new(FALSE, 10);
-	gtk_box_pack_start(GTK_BOX(codecFrame), codecBox, FALSE, FALSE, 0);
 	gtk_widget_show(codecBox);
 	
 	gtk_container_add( GTK_CONTAINER( codecFrame ) , codecBox );
@@ -1256,7 +1252,6 @@ create_general_settings ()
   gtk_widget_show( notifFrame );
 
   notifBox = gtk_vbox_new(FALSE, 10);
-  gtk_box_pack_start(GTK_BOX(notifFrame), notifBox, FALSE, FALSE, 0);
   gtk_widget_show( notifBox );
   gtk_container_add( GTK_CONTAINER(notifFrame) , notifBox);
   
@@ -1276,7 +1271,6 @@ create_general_settings ()
   gtk_widget_show( trayFrame );
 
   trayBox = gtk_vbox_new(FALSE, 10);
-  gtk_box_pack_start(GTK_BOX(trayFrame), trayBox, FALSE, FALSE, 0);
   gtk_widget_show( trayBox );
   gtk_container_add( GTK_CONTAINER(trayFrame) , trayBox);
   
@@ -1299,7 +1293,6 @@ create_general_settings ()
   gtk_widget_show( historyFrame );
 
   historyBox = gtk_vbox_new(FALSE, 10);
-  gtk_box_pack_start(GTK_BOX(historyFrame), historyBox, TRUE, TRUE, 0);
   gtk_widget_show( historyBox );
   gtk_container_add( GTK_CONTAINER(historyFrame) , historyBox);
   

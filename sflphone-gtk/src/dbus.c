@@ -151,7 +151,7 @@ accounts_changed_cb (DBusGProxy *proxy,
                   void * foo  )
 {
   g_print ("Accounts changed\n");
-  sflphone_fill_account_list();
+  sflphone_fill_account_list(TRUE);
   config_window_fill_account_list();
 }
 
@@ -458,7 +458,7 @@ dbus_account_details(gchar * accountID)
 }
 
 void
-dbus_send_register ( gchar* accountID , int expire)
+dbus_send_register ( gchar* accountID , const guint expire)
 {
   GError *error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_send_register ( configurationManagerProxy, accountID, expire ,&error);

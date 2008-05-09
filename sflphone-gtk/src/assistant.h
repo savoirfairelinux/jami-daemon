@@ -90,7 +90,8 @@ static void close_callback( void );
  * Callback when the button apply is clicked
  * Action : Set the account parameters with the entries values and called dbus_add_account
  */
-static void apply_callback( void );
+static void sip_apply_callback( void );
+static void iax_apply_callback( void );
 
 void enable_stun( GtkWidget *widget );
 

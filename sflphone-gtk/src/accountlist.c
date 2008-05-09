@@ -138,7 +138,7 @@ account_list_get_current( )
 void
 account_list_set_current_id(const gchar * accountID)
 {
-  g_print("set current id = %d\n" , accountID);
+  g_print("set current id = %s\n", accountID);
   __CURRENT_ACCOUNT_ID = g_strdup(accountID);
 }
 

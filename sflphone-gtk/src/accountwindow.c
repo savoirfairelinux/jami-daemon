@@ -155,7 +155,6 @@ show_account_window (account_t * a)
   table = gtk_table_new ( 8, 2  ,  FALSE/* homogeneous */);
   gtk_table_set_row_spacings( GTK_TABLE(table), 10);
   gtk_table_set_col_spacings( GTK_TABLE(table), 10);
-  gtk_box_pack_start(GTK_BOX (frame), table, TRUE, TRUE, 0);
   gtk_widget_show(table);
   gtk_container_add( GTK_CONTAINER( frame) , table );
 
@@ -256,7 +255,6 @@ show_account_window (account_t * a)
   tableNat = gtk_table_new ( 2, 2  ,  FALSE/* homogeneous */);
   gtk_table_set_row_spacings( GTK_TABLE(tableNat), 10);
   gtk_table_set_col_spacings( GTK_TABLE(tableNat), 10);
-  gtk_box_pack_end(GTK_BOX (frameNat), tableNat, TRUE, TRUE, 0);
   gtk_widget_show(tableNat);
   gtk_container_add( GTK_CONTAINER( frameNat) , tableNat );
 
@@ -353,7 +351,7 @@ show_account_window (account_t * a)
     /** @todo Verify if it's the best condition to check */
     if (currentAccount->accountID == NULL) {
       dbus_add_account(currentAccount);
-      account_list_set_current_id( currentAccount->accountID);
+      account_list_set_current_id( currentAccount->accountID );
     }
     else {
       dbus_set_account_details(currentAccount);

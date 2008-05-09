@@ -292,7 +292,7 @@ class ManagerImpl {
      *		 0 for unregistration request
      *		 1 for registration request
      */
-    void sendRegister( const ::DBus::String& accountId , bool expire );
+    void sendRegister( const ::DBus::String& accountId , const DBus::Int32& expire );
 
     bool getZeroconf(const std::string& sequenceId);
     bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);

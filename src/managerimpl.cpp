@@ -608,6 +608,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
     _debug("peerHungupCall: Call doesn't exists\n");
     return;
   }
+  
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   if (isCurrentCall(id)) {
     stopTone(true);
@@ -615,7 +616,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
   }
   removeWaitingCall(id);
   removeCallAccount(id);
-
+  
 }
 
 //THREAD=VoIP
@@ -1876,14 +1877,14 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
 }
 
 void
-ManagerImpl::sendRegister( const ::DBus::String& accountID , bool expire )
+ManagerImpl::sendRegister( const ::DBus::String& accountID , const DBus::Int32& expire )
 {
   // Update the active field
   setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
  
   Account* acc = getAccount(accountID);
   acc->loadConfig();
-  // Test on the value freshly updated
+  // Test on the freshly updated value
   if ( acc->isEnabled() ) {
     // Verify we aren't already registered, then register
       _debug("Send register for account %s\n" , accountID.c_str());

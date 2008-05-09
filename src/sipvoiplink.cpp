@@ -227,6 +227,7 @@ SIPVoIPLink::getEvent()
 	if ( event == NULL ) {
 		return;
 	}
+
       
 	_debug("> SIP Event: [cdt=%4d:%4d:%4d] type=#%03d %s \n", event->cid, event->did, event->tid, event->type, event->textinfo);
 	switch (event->type) {
@@ -514,9 +515,6 @@ SIPVoIPLink::sendSIPAuthentification()
 {
   std::string login = _authname;
   if (login.empty()) {
-    return false;
-  }
-  if (login.empty()) {
     /** @todo Ajouter ici un call à setRegistrationState(Error, "Fill balh") ? */
     return false;
   }
@@ -561,6 +559,7 @@ SIPVoIPLink::sendUnregister()
   }
   _eXosipRegID = EXOSIP_ERROR_STD;
   eXosip_unlock();
+
 
   return true;
 }
@@ -1433,7 +1432,8 @@ SIPVoIPLink::SIPRegistrationFailure( eXosip_event_t* event )
       setRegistrationState(Error);
       break;
     default:
-      _debug("Unknown error: %s\n" , event->response->status_code);
+      setRegistrationState(ErrorAuth);
+      //_debug("Unknown error: %s\n" , event->response->status_code);
   }
 }
 

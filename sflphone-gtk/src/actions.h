@@ -152,7 +152,7 @@ void sflphone_place_call ( call_t * c );
 /**
  * Initialize the accounts data structure
  */
-void sflphone_fill_account_list();
+void sflphone_fill_account_list(gboolean toolbarInitialized);
 
 /**
  * Set an account as current. The current account is to one used to place calls with by default
