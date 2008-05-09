@@ -21,8 +21,10 @@
 #define __CALLTREE_H__
 
 #include <gtk/gtk.h>
+
 #include <calllist.h>
 #include <calltab.h>
+#include <timestamp.h>
 
 
 /** @file calltree.h
