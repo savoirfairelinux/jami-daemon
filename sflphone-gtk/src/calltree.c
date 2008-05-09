@@ -163,10 +163,11 @@ call_mailbox( GtkWidget* widget , gpointer data )
     return; 
   call_t* mailboxCall = g_new0( call_t , 1);
   mailboxCall->state = CALL_STATE_DIALING;
-  mailboxCall->from = g_strconcat("\"\" <>", NULL);
+  mailboxCall->to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
+  mailboxCall->from = g_strconcat("\"Voicemail Box\" <>", NULL);
+  mailboxCall->from = g_markup_printf_escaped("\"Voicemail\" <%s>",  mailboxCall->to);
   mailboxCall->callID = g_new0(gchar, 30);
   g_sprintf(mailboxCall->callID, "%d", rand());
-  mailboxCall->to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
   mailboxCall->accountID = g_strdup(current->accountID);
   g_print("TO : %s\n" , mailboxCall->to);
   call_list_add( current_calls , mailboxCall );
@@ -280,7 +281,7 @@ selected(GtkTreeSelection *sel, void* data)
     return;
 
   val.g_type = 0;
-  gtk_tree_model_get_value (model, &iter, 3, &val);
+  gtk_tree_model_get_value (model, &iter, 2, &val);
 
   call_select(active_calltree, (call_t*) g_value_get_pointer(&val));
   g_value_unset(&val);
@@ -423,10 +424,9 @@ create_call_tree (calltab_t* tab)
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
 
-  tab->store = gtk_list_store_new (4, 
+  tab->store = gtk_list_store_new (3, 
       GDK_TYPE_PIXBUF,// Icon 
       G_TYPE_STRING,  // Description
-      G_TYPE_STRING,  // Length of the call 
       G_TYPE_POINTER  // Pointer to the Object
       );
 
@@ -455,13 +455,6 @@ create_call_tree (calltab_t* tab)
   col = gtk_tree_view_column_new_with_attributes ("Description",
       rend,
       "markup", 1,
-      NULL);
-  gtk_tree_view_append_column (GTK_TREE_VIEW(tab->view), col);
-
-  rend = gtk_cell_renderer_text_new();
-  col = gtk_tree_view_column_new_with_attributes ("Length",
-      rend,
-      "markup", 2,
       NULL);
   gtk_tree_view_append_column (GTK_TREE_VIEW(tab->view), col);
 
@@ -497,7 +490,7 @@ update_call_tree_remove (calltab_t* tab, call_t * c)
     if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
     {
       val.g_type = 0;
-      gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 3, &val);
+      gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
       iterCall = (call_t*) g_value_get_pointer(&val);
       g_value_unset(&val);
@@ -531,7 +524,7 @@ update_call_tree (calltab_t* tab, call_t * c)
     if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
     {
       val.g_type = 0;
-      gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 3, &val);
+      gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
       iterCall = (call_t*) g_value_get_pointer(&val);
       g_value_unset(&val);
@@ -545,16 +538,15 @@ update_call_tree (calltab_t* tab, call_t * c)
 	{
 	  description = g_markup_printf_escaped("<b>%s</b>\n"
 	      "%s\n<i>Transfert to:</i> %s",  
-	      call_get_name(c), 
 	      call_get_number(c), 
+	      call_get_name(c), 
 	      c->to);
 	}
 	else
 	{
-	  description = g_markup_printf_escaped("<b>%s</b>\n"
-	      "%s", 
-	      call_get_name(c), 
-	      call_get_number(c));
+	  description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>", 
+	      call_get_number(c),
+	      call_get_name(c)); 
 	}
 
 	if( tab == current_calls )
@@ -607,6 +599,7 @@ update_call_tree (calltab_t* tab, call_t * c)
 	      break;
 	  }
 	  length = timestamp_get_call_time(); 
+	  description = g_strconcat( length , description , NULL);
 	}
 	//Resize it
 	if(pixbuf)
@@ -619,7 +612,6 @@ update_call_tree (calltab_t* tab, call_t * c)
 	gtk_list_store_set(store, &iter,
 	    0, pixbuf, // Icon
 	    1, description, // Description
-	    2, length, // Length 
 	    -1);
 
 	if (pixbuf != NULL)
@@ -645,10 +637,9 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   // New call in the list
   gchar * markup;
   gchar * date="";
-  markup = g_markup_printf_escaped("<b>%s</b>\n"
-      "%s", 
-      call_get_name(c), 
-      call_get_number(c));
+  markup = g_markup_printf_escaped("<b>%s</b> <i>%s</i>", 
+      call_get_number(c),
+      call_get_name(c)); 
 
   
   gtk_list_store_prepend (tab->store, &iter);
@@ -686,6 +677,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	g_warning("Should not happen!");
     }
     date = timestamp_get_call_time(); 
+    markup = g_strconcat( date , markup , NULL);
   }
 
   //Resize it
@@ -699,8 +691,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   gtk_list_store_set(tab->store, &iter,
       0, pixbuf, // Icon
       1, markup, // Description
-      2, date, // Length
-      3, c,      // Pointer
+      2, c,      // Pointer
       -1);
 
   if (pixbuf != NULL)
