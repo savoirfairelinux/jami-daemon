@@ -164,5 +164,15 @@ void call_select (calltab_t* tab, call_t * c );
   * @return The number of the caller */
 call_t * call_get_selected (calltab_t* tab);
 
+/**
+ * Clean the history. Delete all calls
+ */
 void call_list_clean_history();
+
+/**
+ * Remove one specified call from the history list
+ * @param c The call to remove
+ */
+void call_list_remove_from_history( call_t* c);
+
 #endif 

@@ -40,6 +40,11 @@ GtkToolItem * mailboxButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
 gboolean history_shown;
 
+void
+switch_tab()
+{
+  (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(historyButton)))? gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE):gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), TRUE);
+}
 
 /**
  * Show popup menu
@@ -57,8 +62,16 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 {
   if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
   {
-    show_popup_menu(widget,  event);
-    return TRUE;
+    if( active_calltree == current_calls )
+    {
+      show_popup_menu(widget,  event);
+      return TRUE;
+    }
+    else
+    {
+      show_popup_menu_history(widget,  event);
+      return TRUE;
+    }
   }
   return FALSE;
 }
@@ -333,6 +346,9 @@ create_toolbar ()
   ret = gtk_toolbar_new();
   toolbar = ret;
 
+  gtk_toolbar_set_orientation(GTK_TOOLBAR(ret), GTK_ORIENTATION_HORIZONTAL);
+  gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_ICONS);
+
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
 	callButton = gtk_tool_button_new (image, _("Place a call"));
 #if GTK_CHECK_VERSION(2,12,0)
@@ -341,8 +357,6 @@ create_toolbar ()
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);
-  gtk_toolbar_set_orientation(GTK_TOOLBAR(ret), GTK_ORIENTATION_HORIZONTAL);
-  gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_ICONS);
 
 	image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
 	pickupButton = gtk_tool_button_new(image, _("Pick up"));
@@ -696,7 +710,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
 	break;
       default:
-	g_warning("Should not happen!");
+	g_warning("History - Should not happen!");
     }
     date = timestamp_get_call_date(); 
 

@@ -66,4 +66,6 @@ void update_call_tree_remove (calltab_t* ct, call_t * c);
  */
 GtkWidget * create_toolbar();
 
+void switch_tab( void );
+
 #endif 
