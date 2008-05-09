@@ -29,6 +29,8 @@
   * @brief The GtkTreeView that list calls in the main window.
   */
 
+GtkToolItem * historyButton;
+
 calltab_t* active_calltree;
 /**
  * Create a new widget calltree

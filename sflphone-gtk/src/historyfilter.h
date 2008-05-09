@@ -25,7 +25,10 @@
 
 
 
+GtkWidget * filter_entry;
+
 GtkTreeModel* create_filter(GtkTreeModel* child);
 
 gboolean is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data);
+GtkWidget* create_filter_entry();
 #endif

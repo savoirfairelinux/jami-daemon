@@ -131,8 +131,8 @@ create_main_window ()
     */
   g_signal_connect (G_OBJECT (window), "delete-event",
                     G_CALLBACK (on_delete), NULL);
-  g_signal_connect (G_OBJECT (window), "key-press-event",
-                    G_CALLBACK (on_key_released), NULL);
+  //g_signal_connect (G_OBJECT (window), "key-press-event",
+  //                  G_CALLBACK (on_key_released), NULL);
 
   /* Create an accel group for window's shortcuts */
   accelGroup = gtk_accel_group_new ();
@@ -146,7 +146,9 @@ create_main_window ()
   gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
   widget = create_toolbar();
+
   gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+  gtk_box_pack_start (GTK_BOX (vbox), create_filter_entry(), FALSE /*expand*/, FALSE /*fill*/,  0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (vbox), current_calls->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
@@ -179,6 +181,7 @@ create_main_window ()
   gtk_widget_hide(history->tree);
   //gtk_widget_show(current_calls->tree);
   
+  gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
   // Configuration wizard 
   if (account_list_get_size() == 0)
   {

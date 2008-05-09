@@ -19,6 +19,7 @@
 
 #include <gtk/gtk.h>
 #include <historyfilter.h>
+#include <calltree.h>
 
 GtkTreeModel*
 create_filter(GtkTreeModel* child)
@@ -26,23 +27,62 @@ create_filter(GtkTreeModel* child)
 	GtkTreeModel* ret = gtk_tree_model_filter_new(child, NULL);
 	gtk_tree_model_filter_set_visible_func(GTK_TREE_MODEL_FILTER(ret), is_visible, NULL, NULL);
 	return GTK_TREE_MODEL(ret);
-}
+} 
 
 gboolean
 is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data)
 {
 	GValue val = {0, };
 	gchar* text;
+	gchar* search = gtk_entry_get_text(GTK_ENTRY(filter_entry));
 	gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 1, &val);
 	if(G_VALUE_HOLDS_STRING(&val)){
 		text = (gchar *)g_value_get_string(&val);
-	}
-	if(text != NULL){
-		if(g_regex_match_simple("122", text, 0, 0)){
-			printf("match\n");
-			return FALSE;
-		}else{
-			return TRUE;
-		}
-	}
+ 	}
+	if(text != NULL && g_ascii_strncasecmp(search, "Search", 6) != 0){
+		return g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
+ 	}
+	return TRUE;
+} 
+
+void
+filter_entry_changed(GtkEntry* entry, gchar* arg1, gpointer data)
+{ 
+	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), TRUE);
+	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(histfilter));
+}
+
+void
+clear_filter_entry_if_default(GtkWidget* widget, gpointer user_data)
+{
+	if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry)), "Search", 6) == 0)
+		gtk_entry_set_text(GTK_ENTRY(filter_entry), "");
+	
+}
+
+void
+clear_filter_entry(GtkButton* button,
+		gpointer user_data)
+{
+	gtk_entry_set_text(GTK_ENTRY(filter_entry), "");
+}
+
+GtkWidget*
+create_filter_entry()
+{
+	GtkWidget* clear_button = gtk_button_new();
+	GtkWidget* ret = gtk_hbox_new(FALSE, 0);
+	GtkWidget* clear_img = gtk_image_new_from_stock(GTK_STOCK_CLEAR, GTK_ICON_SIZE_SMALL_TOOLBAR);
+
+	gtk_button_set_image(GTK_BUTTON(clear_button), clear_img);
+	g_signal_connect(GTK_BUTTON(clear_button), "clicked", G_CALLBACK(clear_filter_entry), NULL);
+
+	filter_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(filter_entry), "Search");	
+	g_signal_connect(GTK_ENTRY(filter_entry), "changed", G_CALLBACK(filter_entry_changed), NULL);
+	g_signal_connect(GTK_ENTRY(filter_entry), "grab-focus", G_CALLBACK(clear_filter_entry_if_default), NULL);
+
+	gtk_box_pack_start(GTK_BOX(ret), filter_entry, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(ret), clear_button, FALSE, FALSE, 0);
+	return ret;
 }
