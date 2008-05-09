@@ -48,16 +48,16 @@ process_call_duration( call_t* c )
   if( duration / 60 == 0 )
   {
     if( duration < 10 )
-      res = g_markup_printf_escaped("\t00:0%i", duration);
+      res = g_markup_printf_escaped("\n00:0%i", duration);
     else
-      res = g_markup_printf_escaped("\t00:%i", duration);
+      res = g_markup_printf_escaped("\n00:%i", duration);
   }
   else
   {
     if( duration%60 < 10 )
-      res = g_markup_printf_escaped("\t%i:0%i" , duration/60 , duration%60);
+      res = g_markup_printf_escaped("\n%i:0%i" , duration/60 , duration%60);
     else
-      res = g_markup_printf_escaped("\t%i:%i" , duration/60 , duration%60);
+      res = g_markup_printf_escaped("\n%i:%i" , duration/60 , duration%60);
   }
   return res;
 }

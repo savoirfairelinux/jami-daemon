@@ -164,7 +164,7 @@ call_mailbox( GtkWidget* widget , gpointer data )
   call_t* mailboxCall = g_new0( call_t , 1);
   mailboxCall->state = CALL_STATE_DIALING;
   mailboxCall->to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
-  mailboxCall->from = g_strconcat("\"Voicemail Box\" <>", NULL);
+  //mailboxCall->from = g_strconcat("\"Voicemail Box\" <>", NULL);
   mailboxCall->from = g_markup_printf_escaped("\"Voicemail\" <%s>",  mailboxCall->to);
   mailboxCall->callID = g_new0(gchar, 30);
   g_sprintf(mailboxCall->callID, "%d", rand());
