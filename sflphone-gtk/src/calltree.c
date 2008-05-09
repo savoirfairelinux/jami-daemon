@@ -533,7 +533,8 @@ update_call_tree (calltab_t* tab, call_t * c)
       {
 	// Existing call in the list
 	gchar * description;
-	gchar * length="";
+	gchar * date="";
+	gchar * duration="";
 	if(c->state == CALL_STATE_TRANSFERT)
 	{
 	  description = g_markup_printf_escaped("<b>%s</b>\n"
@@ -598,8 +599,10 @@ update_call_tree (calltab_t* tab, call_t * c)
 	      g_print("No history state\n");  
 	      break;
 	  }
-	  length = timestamp_get_call_time(); 
-	  description = g_strconcat( length , description , NULL);
+	  date = timestamp_get_call_date(); 
+	  duration = process_call_duration(c);
+	  description = g_strconcat( date , description , NULL);
+	  description = g_strconcat( description, duration, NULL);
 	}
 	//Resize it
 	if(pixbuf)
@@ -635,9 +638,10 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   GtkTreeSelection* sel;
 
   // New call in the list
-  gchar * markup;
+  gchar * description;
   gchar * date="";
-  markup = g_markup_printf_escaped("<b>%s</b> <i>%s</i>", 
+  gchar * duration="";
+  description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>", 
       call_get_number(c),
       call_get_name(c)); 
 
@@ -676,8 +680,11 @@ update_call_tree_add (calltab_t* tab, call_t * c)
       default:
 	g_warning("Should not happen!");
     }
-    date = timestamp_get_call_time(); 
-    markup = g_strconcat( date , markup , NULL);
+    date = timestamp_get_call_date(); 
+
+	  duration = process_call_duration(c);
+	  //g_print("call duration = %s\n" , duration);
+    description = g_strconcat( date , description , NULL);
   }
 
   //Resize it
@@ -690,7 +697,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   }
   gtk_list_store_set(tab->store, &iter,
       0, pixbuf, // Icon
-      1, markup, // Description
+      1, description, // Description
       2, c,      // Pointer
       -1);
 

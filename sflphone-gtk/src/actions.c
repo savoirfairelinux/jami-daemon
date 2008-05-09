@@ -215,6 +215,8 @@ void
 sflphone_hang_up()
 {
 	call_t * selectedCall = call_get_selected(current_calls);
+	(void) time(&selectedCall->_stop);
+	update_call_tree( history , selectedCall );
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
@@ -341,6 +343,7 @@ sflphone_current( call_t * c )
 	c->state = CALL_STATE_CURRENT;
 	update_call_tree(current_calls,c);
 	update_menus();
+	(void) time(&c->_start);
 }
 
 void 

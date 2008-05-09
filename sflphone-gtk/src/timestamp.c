@@ -20,7 +20,7 @@
 #include <timestamp.h>
 
   gchar* 
-timestamp_get_call_time( void )
+timestamp_get_call_date( void )
 {
   struct tm* ptr;
   time_t lt;
@@ -30,3 +30,48 @@ timestamp_get_call_time( void )
 
   return (gchar*) asctime( ptr ) ;
 }
+
+  struct tm*
+what_time_is_it( void )
+{
+  time_t lt = time(NULL);
+  return localtime(&lt);
+}
+
+  gchar*
+process_call_duration( call_t* c )
+{
+  gchar * res;
+  g_print("Call duration = %i\n", (int)c->_stop - c->_start);
+  int duration = c->_stop - c->_start;
+
+  if( duration / 60 == 0 )
+  {
+    res = g_markup_printf_escaped("\n00:%i", duration);
+  }
+  else
+  {
+    res = g_markup_printf_escaped("\n%i:%i" , duration/60 , duration%60);
+  }
+  return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

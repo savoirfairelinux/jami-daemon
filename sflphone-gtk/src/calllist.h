@@ -79,6 +79,10 @@ typedef struct  {
   call_state_t state;
   /** The history state */
   history_state_t history_state;
+
+  time_t _start;
+  time_t _stop;
+
 } call_t;
 
 typedef struct {

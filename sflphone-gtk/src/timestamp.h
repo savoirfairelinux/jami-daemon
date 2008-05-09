@@ -29,6 +29,12 @@
 #include <time.h>
 #include <gtk/gtk.h>
 
-gchar* timestamp_get_call_time( void );
+#include <calllist.h>
+
+gchar* timestamp_get_call_date( void );
+
+struct tm* what_time_is_it( void );
+
+gchar* process_call_duration( call_t* c );
 
 #endif
