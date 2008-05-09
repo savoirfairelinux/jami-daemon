@@ -21,6 +21,7 @@
 #ifndef __STATUSICON_H__
 #define __STATUSICON_H__
 
+#if GTK_CHECK_VERSION(2,10,0)
 
 #include <gtk/gtk.h>
 #include <sflphone_const.h>
@@ -65,5 +66,7 @@ void status_tray_icon_blink( gboolean active );
  * @return GtkStatusIcon* The status icon
  */
 GtkStatusIcon* get_status_icon( void );
+
+#endif // GTK_CHECK_VERSION
 
 #endif

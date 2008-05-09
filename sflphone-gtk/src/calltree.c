@@ -159,8 +159,6 @@ toggle_history(GtkToggleToolButton *toggle_tool_button,
 call_mailbox( GtkWidget* widget , gpointer data )
 {
     account_t* current = account_list_get_current();
-    if( current == NULL ) // Should not happens
-     return; 
     call_t* mailboxCall = g_new0( call_t , 1);
     mailboxCall->state = CALL_STATE_DIALING;
     mailboxCall->from = g_strconcat("\"\" <>", NULL);
@@ -335,14 +333,18 @@ create_toolbar ()
 
 	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
 	callButton = gtk_tool_button_new (image, _("Place a call"));
+#if GTK_CHECK_VERSION(2,12,0)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("Place a call"));
+#endif
 	g_signal_connect (G_OBJECT (callButton), "clicked",
 			G_CALLBACK (call_button), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);
 
 	image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
 	pickupButton = gtk_tool_button_new(image, _("Pick up"));
+#if GTK_CHECK_VERSION(2,12,0)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(pickupButton), _("Pick up"));
+#endif
 	gtk_widget_set_state( GTK_WIDGET(pickupButton), GTK_STATE_INSENSITIVE);
 	g_signal_connect(G_OBJECT (pickupButton), "clicked", 
 			G_CALLBACK (call_button), NULL);
@@ -350,7 +352,9 @@ create_toolbar ()
 
 	image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
 	hangupButton = gtk_tool_button_new (image, _("Hang up"));
+#if GTK_CHECK_VERSION(2,12,0)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(hangupButton), _("Hang up"));
+#endif
 	gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
 	g_signal_connect (G_OBJECT (hangupButton), "clicked",
 			G_CALLBACK (hang_up), NULL);
@@ -358,7 +362,9 @@ create_toolbar ()
 
 	image = gtk_image_new_from_file( ICONS_DIR "/unhold.svg");
 	unholdButton = gtk_tool_button_new (image, _("Off Hold"));
+#if GTK_CHECK_VERSION(2,12,0)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(unholdButton), _("Off Hold"));
+#endif
 	gtk_widget_set_state( GTK_WIDGET(unholdButton), GTK_STATE_INSENSITIVE);
 	g_signal_connect (G_OBJECT (unholdButton), "clicked",
 			G_CALLBACK (unhold), NULL);
@@ -367,7 +373,9 @@ create_toolbar ()
 
 	image = gtk_image_new_from_file( ICONS_DIR "/hold.svg");
 	holdButton =  gtk_tool_button_new (image, _("On Hold"));
+#if GTK_CHECK_VERSION(2,12,0)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(holdButton), _("On Hold"));
+#endif
 	gtk_widget_set_state( GTK_WIDGET(holdButton), GTK_STATE_INSENSITIVE);
 	g_signal_connect (G_OBJECT (holdButton), "clicked",
 			G_CALLBACK (hold), NULL);
@@ -376,7 +384,9 @@ create_toolbar ()
 	image = gtk_image_new_from_file( ICONS_DIR "/transfert.svg");
 	transfertButton = gtk_toggle_tool_button_new ();
 	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(transfertButton), image);
+#if GTK_CHECK_VERSION(2,12,0)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(transfertButton), _("Transfer"));
+#endif
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), _("Transfer"));
 	gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
 	transfertButtonConnId = g_signal_connect (G_OBJECT (transfertButton), "toggled",
@@ -386,7 +396,9 @@ create_toolbar ()
 	image = gtk_image_new_from_file( ICONS_DIR "/history2.svg");
 	historyButton = gtk_toggle_tool_button_new();
 	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(historyButton), image);
+#if GTK_CHECK_VERSION(2,12,0)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
+#endif
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
 	g_signal_connect (G_OBJECT (historyButton), "toggled",
 			G_CALLBACK (toggle_history), NULL);
@@ -398,7 +410,9 @@ create_toolbar ()
 	mailboxButton = gtk_tool_button_new( image , _("Voicemail box"));
 	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mailboxButton), image);
 	if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
+#if GTK_CHECK_VERSION(2,12,0)
         gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Voicemail box"));
+#endif
         g_signal_connect (G_OBJECT (mailboxButton), "clicked",
                         G_CALLBACK (call_mailbox), NULL);
         gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);

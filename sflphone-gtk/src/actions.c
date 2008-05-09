@@ -121,7 +121,9 @@ sflphone_hung_up( call_t * c)
   update_call_tree_remove(current_calls, c);
   c->state = CALL_STATE_DIALING;
   update_menus();
+#if GTK_CHECK_VERSION(2,10,0)
   status_tray_icon_blink( FALSE );
+#endif
 }
 
 /** Internal to actions: Fill account list */

@@ -262,7 +262,9 @@ show_account_window (account_t * a)
   stunEnable = gtk_check_button_new_with_mnemonic(_("E_nable STUN"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stunEnable), strcmp(stun_enabled,"TRUE") == 0 ? TRUE: FALSE);
   g_signal_connect( G_OBJECT (GTK_TOGGLE_BUTTON(stunEnable)) , "toggled" , G_CALLBACK( stun_state ), NULL);
+#if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("Enable it if you are behind a firewall, then restart SFLphone"));
+#endif
   gtk_table_attach ( GTK_TABLE( tableNat ), stunEnable, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
   label = gtk_label_new_with_mnemonic(_("_STUN Server"));
@@ -271,7 +273,9 @@ show_account_window (account_t * a)
   stunServer = gtk_entry_new();
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), stunServer);
   gtk_entry_set_text(GTK_ENTRY(stunServer), stun_server);
+#if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text( GTK_WIDGET( stunServer ) , _("Format: name.server:port"));
+#endif
   gtk_table_attach ( GTK_TABLE( tableNat ), stunServer, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_widget_set_sensitive( GTK_WIDGET( stunServer ), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stunEnable)));
 

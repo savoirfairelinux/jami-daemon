@@ -156,11 +156,13 @@ create_slider(const gchar * device)
   
   ret = gtk_hbox_new ( FALSE /*homogeneous*/, 5 /*spacing*/);
  
+#if GTK_CHECK_VERSION(2,12,0)
   if( strcmp( device , "speaker") == 0 ) 
     gtk_widget_set_tooltip_text( GTK_WIDGET( ret ), _("Speakers volume"));
   else
     gtk_widget_set_tooltip_text( GTK_WIDGET( ret ), _("Mic volume"));
-  
+#endif  
+
   button[dev] = gtk_toggle_button_new();
   gtk_box_pack_start (GTK_BOX (ret), button[dev], FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   toggledConnId[dev] = g_signal_connect (G_OBJECT (button[dev]), "toggled",

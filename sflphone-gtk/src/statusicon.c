@@ -24,6 +24,7 @@
 #include <accountlist.h>
 #include <statusicon.h>
 
+#if GTK_CHECK_VERSION(2,10,0)
 GtkStatusIcon* status;
 GtkWidget * show_menu_item;
 gboolean __minimized = MINIMIZED;
@@ -143,3 +144,5 @@ set_minimized( gboolean state)
   __minimized = state ;
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), !state);
 }
+
+#endif

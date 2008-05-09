@@ -172,8 +172,10 @@ call_quit ( void * foo)
   static void 
 call_minimize ( void * foo)
 {
+#if GTK_CHECK_VERSION(2,10,0)
   gtk_widget_hide(GTK_WIDGET( get_main_window() ));
   set_minimized( TRUE );
+#endif
 }
 
   static void
@@ -219,7 +221,9 @@ call_hang_up ( void * foo)
   static void 
 call_wizard ( void * foo)
 {
+#if GTK_CHECK_VERSION(2,10,0)
   build_wizard();
+#endif
 }
 
   GtkWidget * 
@@ -280,14 +284,15 @@ create_call_menu()
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
+#if GTK_CHECK_VERSION(2,10,0)
   menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Account Assistant"));
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect_swapped( G_OBJECT( menu_items ) , "activate" , G_CALLBACK( call_wizard  ) , NULL );
   gtk_widget_show (menu_items);
-
   // Separator
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+#endif
 
   // Close menu to minimize the main window to the system tray
   menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_CLOSE, get_accel_group());

@@ -1015,7 +1015,7 @@ create_accounts_tab()
 	/* The buttons to press! */
 	buttonBox = gtk_hbutton_box_new();
 	gtk_box_set_spacing(GTK_BOX(buttonBox), 10); //GAIM_HIG_BOX_SPACE
-	gtk_button_box_set_layout(GTK_BUTTON_BOX(buttonBox), GTK_BUTTONBOX_CENTER);
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(buttonBox), GTK_BUTTONBOX_SPREAD);
 	gtk_box_pack_start(GTK_BOX(ret), buttonBox, FALSE, FALSE, 0);
 	gtk_widget_show (buttonBox); 
 
