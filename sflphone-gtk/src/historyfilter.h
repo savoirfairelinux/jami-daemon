@@ -17,14 +17,18 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#ifndef __NOTEBOOK_H__
-#define __NOTEBOOK_H__
+#ifndef __HFILTER_H__
+#define __HFILTER_H__
 
 #include <calllist.h>
 #include <gtk/gtk.h>
 
-GtkTreeModel* histfilter;
 
-calltab_t* calltab_init();
 
+GtkWidget * filter_entry;
+
+GtkTreeModel* create_filter(GtkTreeModel* child);
+
+gboolean is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data);
+GtkWidget* create_filter_entry();
 #endif
