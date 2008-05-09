@@ -42,16 +42,22 @@ what_time_is_it( void )
 process_call_duration( call_t* c )
 {
   gchar * res;
-  g_print("Call duration = %i\n", (int)c->_stop - c->_start);
+  g_print("Start = %i - Stop = %i  - Call duration = %i\n", c->_start , c->_stop , (int)(c->_stop - c->_start));
   int duration = c->_stop - c->_start;
 
   if( duration / 60 == 0 )
   {
-    res = g_markup_printf_escaped("\n00:%i", duration);
+    if( duration < 10 )
+      res = g_markup_printf_escaped("\t00:0%i", duration);
+    else
+      res = g_markup_printf_escaped("\t00:%i", duration);
   }
   else
   {
-    res = g_markup_printf_escaped("\n%i:%i" , duration/60 , duration%60);
+    if( duration%60 < 10 )
+      res = g_markup_printf_escaped("\t%i:0%i" , duration/60 , duration%60);
+    else
+      res = g_markup_printf_escaped("\t%i:%i" , duration/60 , duration%60);
   }
   return res;
 }

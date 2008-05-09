@@ -169,6 +169,8 @@ call_mailbox( GtkWidget* widget , gpointer data )
   mailboxCall->callID = g_new0(gchar, 30);
   g_sprintf(mailboxCall->callID, "%d", rand());
   mailboxCall->accountID = g_strdup(current->accountID);
+  mailboxCall->_start = 0;
+  mailboxCall->_stop = 0;
   g_print("TO : %s\n" , mailboxCall->to);
   call_list_add( current_calls , mailboxCall );
   update_call_tree_add( current_calls , mailboxCall );    
@@ -426,6 +428,7 @@ create_call_tree (calltab_t* tab)
 
   tab->store = gtk_list_store_new (3, 
       GDK_TYPE_PIXBUF,// Icon 
+
       G_TYPE_STRING,  // Description
       G_TYPE_POINTER  // Pointer to the Object
       );

@@ -104,6 +104,12 @@ call_state_cb (DBusGProxy *proxy,
   {
     if ( strcmp(state, "HUNGUP") == 0 )
     {
+      if(c->state==CALL_STATE_CURRENT)
+      {
+	// peer hung up, the conversation was established, so _start has been initialized with the current time value
+	(void) time(&c->_stop);
+	update_call_tree( history, c );
+      }
       g_print("from dbus: "); stop_notification();
       sflphone_hung_up (c);
     }
