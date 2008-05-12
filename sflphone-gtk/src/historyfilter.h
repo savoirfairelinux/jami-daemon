@@ -22,6 +22,7 @@
 
 #include <calllist.h>
 #include <gtk/gtk.h>
+#include <libsexy/sexy-icon-entry.h>
 
 
 
