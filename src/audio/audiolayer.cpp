@@ -152,7 +152,7 @@ AudioLayer::fillHWBuffer( void)
       data[4*l2+2] = (unsigned char)s2;
       data[4*l2+3] = s2 >> 8;
     }
-    while ((pcmreturn = snd_pcm_mmap_writei(_PlaybackHandle, data, frames)) < 0) {
+    while ((pcmreturn = snd_pcm_writei(_PlaybackHandle, data, frames)) < 0) {
       snd_pcm_prepare(_PlaybackHandle);
       //_debugAlsa("< Buffer Underrun >\n");
     }
@@ -295,8 +295,8 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   unsigned int rate_in = getSampleRate();
   unsigned int rate_out = getSampleRate();
   int dir = 0;
-  snd_pcm_uframes_t period_size_in = getFrameSize() * getSampleRate() / 1000 *  2 ;
-  snd_pcm_uframes_t buffer_size_in = period_size_in * 4 ; 
+  snd_pcm_uframes_t period_size = 2048;
+  snd_pcm_uframes_t buffer_size = period_size * 4 ; 
   snd_pcm_uframes_t threshold = 1024 ;
   snd_pcm_uframes_t period_size_out =  getFrameSize() * getSampleRate() / 1000 *  2;//1024 ;
   snd_pcm_uframes_t buffer_size_out = period_size_out * 4 ;
@@ -324,11 +324,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     if( err = snd_pcm_hw_params_set_channels( _CaptureHandle, hwParams, 1) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_period_time_near( _CaptureHandle, hwParams, &period_time , &dir) < 0) _debugAlsa(" Cannot set period time (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_buffer_time_near( _CaptureHandle, hwParams, &buffer_time , &dir) < 0) _debugAlsa(" Cannot set buffer time (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_get_period_size( hwParams, &period_size_in , &dir) < 0) _debugAlsa(" Cannot get period size (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_get_buffer_size( hwParams, &buffer_size_in ) < 0) _debugAlsa(" Cannot get buffer size (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params( _CaptureHandle, hwParams ) < 0) _debugAlsa(" Cannot set hw parameters (%s)\n", snd_strerror(err));
-    _debug("buffer size = %d\n" , period_size_in);
-    _debug("period size = %d\n" , buffer_size_in);
     snd_pcm_hw_params_free( hwParams );
 
     snd_pcm_uframes_t val ;
@@ -350,8 +346,8 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   {
 
     _debugAlsa(" Opening playback device %s\n", pcm_p.c_str());
-    if(err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK ) < 0){
-      _debugAlsa("Error while opening playback device %s\n",  pcm_c.c_str());
+    if(err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 ) < 0){
+      _debugAlsa("Error while opening playback device %s\n",  pcm_p.c_str());
       setErrorMessage( ALSA_PLAYBACK_DEVICE );
       return false;
     }
@@ -360,15 +356,14 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
       return false;
     }
     if( err = snd_pcm_hw_params_any( _PlaybackHandle,hwParams) < 0) _debugAlsa(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_access( _PlaybackHandle, hwParams, SND_PCM_ACCESS_MMAP_INTERLEAVED) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
-    //if( err = snd_pcm_hw_params_set_access( _PlaybackHandle, hwParams, SND_PCM_ACCESS_RW_INTERLEAVED) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
+    if( err = snd_pcm_hw_params_set_access( _PlaybackHandle, hwParams, SND_PCM_ACCESS_RW_INTERLEAVED) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_format( _PlaybackHandle, hwParams, SND_PCM_FORMAT_S16_LE) < 0) _debugAlsa(" Cannot set sample format (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_rate( _PlaybackHandle, hwParams, rate_out, dir) < 0) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
     if( err = snd_pcm_hw_params_set_channels( _PlaybackHandle, hwParams, 1) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_buffer_time_near( _PlaybackHandle, hwParams, &buffer_time , &dir) < 0) _debugAlsa(" Cannot set buffer time (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_period_time_near( _PlaybackHandle, hwParams, &period_time , &dir) < 0) _debugAlsa(" Cannot set period time (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_get_period_size(  hwParams, &_periodSize , &dir) < 0) _debugAlsa(" Cannot get period size (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_get_buffer_size(  hwParams, &buffer_size_out ) < 0) _debugAlsa(" Cannot get buffer size (%s)\n", snd_strerror(err));
+
+    if( err = snd_pcm_hw_params_set_buffer_size( _PlaybackHandle, hwParams, buffer_size ) < 0) _debugAlsa(" Cannot set buffer size (%s)\n", snd_strerror(err));
+    if( err = snd_pcm_hw_params_set_period_size_near( _PlaybackHandle, hwParams, &period_size , &dir) < 0) _debugAlsa(" Cannot set period size (%s)\n", snd_strerror(err));
+
     if( err = snd_pcm_hw_params( _PlaybackHandle, hwParams ) < 0) _debugAlsa(" Cannot set hw parameters (%s)\n", snd_strerror(err));
 
 
@@ -394,7 +389,7 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     if( err = snd_pcm_sw_params( _PlaybackHandle, swparams ) < 0 ) _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
     snd_pcm_sw_params_free( swparams );
 
-    if ( err = snd_async_add_pcm_handler( &_AsyncHandler, _PlaybackHandle , AlsaCallBack, this ) < 0)	_debugAlsa(" Unable to install the async callback handler (%s)\n", snd_strerror(err));
+    //if ( err = snd_async_add_pcm_handler( &_AsyncHandler, _PlaybackHandle , AlsaCallBack, this ) < 0)	_debugAlsa(" Unable to install the async callback handler (%s)\n", snd_strerror(err));
     deviceClosed = false;
   }
   //fillHWBuffer();
@@ -407,28 +402,26 @@ AudioLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   int
 AudioLayer::write(void* buffer, int length)
 {
-  //if(snd_pcm_state( _PlaybackHandle ) == SND_PCM_STATE_XRUN)
-  //handle_xrun_playback();  
-  //_debugAlsa("avail = %d - toWrite = %d\n" , snd_pcm_avail_update( _PlaybackHandle ) , length / 2);
-
   snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _PlaybackHandle, length);
-  int err = snd_pcm_mmap_writei( _PlaybackHandle , buffer , frames );
+  //int err = snd_pcm_mmap_writei( _PlaybackHandle , buffer , frames );
+  int err = snd_pcm_writei( _PlaybackHandle , buffer , frames );
   switch(err) {
     case -EAGAIN: 
-      _debugAlsa(" (%s)\n", snd_strerror( err ));
-      snd_pcm_resume( _PlaybackHandle );
+      _debugAlsa("EAGAIN (%s)\n", snd_strerror( err ));
+      //snd_pcm_resume( _PlaybackHandle );
       break;
     case -EPIPE: 
       _debugAlsa(" UNDERRUN (%s)\n", snd_strerror(err));
       handle_xrun_playback();
-      snd_pcm_mmap_writei( _PlaybackHandle , buffer , frames );
+      //snd_pcm_mmap_writei( _PlaybackHandle , buffer , frames );
+      //snd_pcm_writei( _PlaybackHandle , buffer , frames );
       break;
     case -ESTRPIPE:
-      _debugAlsa(" (%s)\n", snd_strerror(err));
-      snd_pcm_resume( _PlaybackHandle );
+      _debugAlsa("ESTRPIPE (%s)\n", snd_strerror(err));
+      //snd_pcm_resume( _PlaybackHandle );
       break;
     case -EBADFD:
-      _debugAlsa(" (%s)\n", snd_strerror( err ));
+      _debugAlsa("EBADFD (%s)\n", snd_strerror( err ));
       break;
   }
 
@@ -510,7 +503,8 @@ AudioLayer::handle_xrun_playback( void )
     state = snd_pcm_status_get_state( status );
     if( state  == SND_PCM_STATE_XRUN )
     {
-      snd_pcm_drop( _PlaybackHandle );
+      //snd_pcm_drop( _PlaybackHandle );
+      _debug("Underrun\n");
       snd_pcm_prepare( _PlaybackHandle );
       //snd_pcm_start( _PlaybackHandle ); 
     }

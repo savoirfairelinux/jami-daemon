@@ -732,7 +732,7 @@ ManagerImpl::stopTone(bool stopAudio=true) {
 
   if (stopAudio) {
     AudioLayer* audiolayer = getAudioDriver();
-    if (audiolayer) { audiolayer->stopStream(); }
+    //if (audiolayer) { audiolayer->stopStream(); }
   }
 
   _toneMutex.enterMutex();
