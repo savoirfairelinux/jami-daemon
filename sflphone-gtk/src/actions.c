@@ -215,7 +215,6 @@ void
 sflphone_hang_up()
 {
 	call_t * selectedCall = call_get_selected(current_calls);
-	(void) time(&selectedCall->_stop);
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
@@ -234,10 +233,12 @@ sflphone_hang_up()
 			case CALL_STATE_FAILURE:
 				dbus_hang_up (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
+				(void) time(&selectedCall->_stop);
 				break;
 			case CALL_STATE_INCOMING:  
 				dbus_refuse (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
+				selectedCall->_stop = 0;
 				g_print("from sflphone_hang_up : "); stop_notification();
 				break;
 			case CALL_STATE_TRANSFERT:  

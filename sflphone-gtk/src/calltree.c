@@ -604,8 +604,8 @@ update_call_tree (calltab_t* tab, call_t * c)
 	  }
 	  date = timestamp_get_call_date(); 
 	  duration = process_call_duration(c);
-	  description = g_strconcat( date , description , NULL);
-	  description = g_strconcat( description, duration, NULL);
+	  duration = g_strconcat( date , duration , NULL);
+	  description = g_strconcat( description , duration, NULL);
 	}
 	//Resize it
 	if(pixbuf)
@@ -648,7 +648,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
       call_get_number(c),
       call_get_name(c)); 
 
-  
+
   gtk_list_store_prepend (tab->store, &iter);
 
   if( tab == current_calls )
@@ -684,9 +684,6 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	g_warning("Should not happen!");
     }
     date = timestamp_get_call_date(); 
-
-	  duration = process_call_duration(c);
-	  //g_print("call duration = %s\n" , duration);
     description = g_strconcat( date , description , NULL);
   }
 
