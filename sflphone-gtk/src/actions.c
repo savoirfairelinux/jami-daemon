@@ -498,6 +498,8 @@ sflphone_keypad( guint keyval, gchar * key)
 			case CALL_STATE_DIALING: // Currently dialing => edit number
 				//dbus_play_dtmf(key);
 				process_dialing(c, keyval, key);
+				if( active_calltree == history )
+				  switch_tab();
 				break;
 			case CALL_STATE_CURRENT:
 				switch (keyval)
@@ -594,6 +596,8 @@ sflphone_keypad( guint keyval, gchar * key)
 			case 65307: /* ESCAPE */
 				break;
 			default:
+				if( active_calltree == history )
+				  switch_tab();
 				process_dialing(sflphone_new_call(), keyval, key);
 				break;
 		}
