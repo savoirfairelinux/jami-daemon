@@ -71,8 +71,16 @@ format( struct tm* ptr )
   gchar *hour, *min;
   gchar *day_of_week, *month, *day_number;
 
-  hour = g_markup_printf_escaped("%i", ptr->tm_hour);
-  min = g_markup_printf_escaped("%i", ptr->tm_min);
+  if( ptr->tm_hour < 10 )
+    hour = g_markup_printf_escaped("0%i", ptr->tm_hour);
+  else
+    hour = g_markup_printf_escaped("%i", ptr->tm_hour);
+  
+  if( ptr->tm_min < 10 )
+    min = g_markup_printf_escaped("0%i", ptr->tm_min);
+  else
+    min = g_markup_printf_escaped("%i", ptr->tm_min);
+
   day_of_week = g_markup_printf_escaped( "%i", ptr->tm_mday );
 
   month = months[ptr->tm_mon];
