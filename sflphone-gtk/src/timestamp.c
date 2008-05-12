@@ -41,7 +41,7 @@ process_call_duration( call_t* c )
   gchar * res;
   g_print("Start = %i - Stop = %i  - Call duration = %i\n", c->_start , c->_stop , (int)(c->_stop - c->_start));
 
-  if( c->_stop == 0 )
+  if( c->history_state == MISSED && c->_stop == 0 )
     return g_markup_printf_escaped("<small>Missed call</small>");
 
   int duration = c->_stop - c->_start;

@@ -69,21 +69,27 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 call_button( GtkWidget *widget, gpointer   data )
 {
   call_t * selectedCall;
+  call_t* newCall =  g_new0 (call_t, 1);
   printf("Call button pressed\n");
   if(call_list_get_size(current_calls)>0)
     sflphone_pick_up();
   else if(call_list_get_size(active_calltree) > 0){
     printf("Calling a called num\n");
     selectedCall = call_get_selected(active_calltree);
-    if(!selectedCall->to){
-      selectedCall->to = call_get_number(selectedCall);
-      selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">",NULL);
-    }
+    
+    newCall->to = g_strdup(call_get_number(selectedCall));
+    newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
+    newCall->state = CALL_STATE_DIALING;
+    newCall->callID = g_new0(gchar, 30);
+    g_sprintf(newCall->callID, "%d", rand()); 
+    newCall->_start = 0;
+    newCall->_stop = 0;
+
     gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE);
-    printf("call : from : %s to %s\n", selectedCall->from, selectedCall->to);
-    call_list_add(current_calls, selectedCall);
-    update_call_tree_add(current_calls, selectedCall);
-    sflphone_place_call(selectedCall);
+    printf("call : from : %s to %s\n", newCall->from, newCall->to);
+    call_list_add(current_calls, newCall);
+    update_call_tree_add(current_calls, newCall);
+    sflphone_place_call(newCall);
   }else
     sflphone_new_call();
 }
