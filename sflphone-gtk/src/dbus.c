@@ -112,7 +112,7 @@ call_state_cb (DBusGProxy *proxy,
 	(void) time(&c->_stop);
 	update_call_tree( history, c );
       }
-      g_print("from dbus: "); stop_notification();
+      stop_notification();
       sflphone_hung_up (c);
       update_call_tree( history, c );
     }

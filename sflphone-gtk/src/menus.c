@@ -239,21 +239,24 @@ remove_from_history( void * foo )
 static void
 call_back( void * foo )
 {
-  call_t* c = call_get_selected( history );
-  if( c )
+  call_t* selectedCall = call_get_selected( history );
+  call_t* newCall =  g_new0 (call_t, 1);
+  if( selectedCall )
   {
-    if(!c->to){
-      c->to = call_get_number(c);
-      c->from = g_strconcat("\"\" <", c->to, ">",NULL);
-    }
+    newCall->to = g_strdup(call_get_number(selectedCall));
+    newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
+    newCall->state = CALL_STATE_DIALING;
+    newCall->callID = g_new0(gchar, 30);
+    g_sprintf(newCall->callID, "%d", rand()); 
+    newCall->_start = 0;
+    newCall->_stop = 0;
+    call_list_add(current_calls, newCall);
+    update_call_tree_add(current_calls, newCall);
+    sflphone_place_call(newCall);
     switch_tab();
-    printf("call : from : %s to %s\n", c->from, c->to);
-    call_list_add(current_calls, c);
-    update_call_tree_add(current_calls, c);
-    sflphone_place_call(c);
   } 
 }
-
+    
   GtkWidget * 
 create_call_menu()
 {
@@ -534,7 +537,6 @@ view_dialpad  (GtkImageMenuItem *imagemenuitem,
 {
   gboolean state;
   main_window_dialpad( &state );
-  g_print("State of the damn thing %i\n" , state);
   if( state )
     gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( dialpadMenu ),
 				  gtk_image_new_from_file( ICONS_DIR "/icon_dialpad_off.svg"));

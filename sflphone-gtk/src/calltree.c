@@ -58,6 +58,12 @@ popup_menu (GtkWidget *widget,
 }            
 
   static gboolean
+is_inserted( GtkWidget* button )
+{
+  return ( GTK_WIDGET(button)->parent == GTK_WIDGET( toolbar ) );
+}
+
+  static gboolean
 button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 {
   if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
@@ -81,30 +87,41 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
   static void 
 call_button( GtkWidget *widget, gpointer   data )
 {
-  call_t * selectedCall;
+  call_t * selectedCall = call_get_selected(active_calltree);
   call_t* newCall =  g_new0 (call_t, 1);
   printf("Call button pressed\n");
   if(call_list_get_size(current_calls)>0)
     sflphone_pick_up();
   else if(call_list_get_size(active_calltree) > 0){
-    printf("Calling a called num\n");
-    selectedCall = call_get_selected(active_calltree);
+    if( selectedCall)
+    {
+      printf("Calling a called num\n");
     
-    newCall->to = g_strdup(call_get_number(selectedCall));
-    newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
-    newCall->state = CALL_STATE_DIALING;
-    newCall->callID = g_new0(gchar, 30);
-    g_sprintf(newCall->callID, "%d", rand()); 
-    newCall->_start = 0;
-    newCall->_stop = 0;
+      newCall->to = g_strdup(call_get_number(selectedCall));
+      newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
+      newCall->state = CALL_STATE_DIALING;
+      newCall->callID = g_new0(gchar, 30);
+      g_sprintf(newCall->callID, "%d", rand()); 
+      newCall->_start = 0;
+      newCall->_stop = 0;
 
-    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE);
-    printf("call : from : %s to %s\n", newCall->from, newCall->to);
-    call_list_add(current_calls, newCall);
-    update_call_tree_add(current_calls, newCall);
-    sflphone_place_call(newCall);
-  }else
+      printf("call : from : %s to %s\n", newCall->from, newCall->to);
+      call_list_add(current_calls, newCall);
+      update_call_tree_add(current_calls, newCall);
+      sflphone_place_call(newCall);
+      if( active_calltree == history )  switch_tab();
+    }
+    else
+    {
+      sflphone_new_call();
+      if( active_calltree == history )  switch_tab();
+    }
+  }
+  else
+  {
     sflphone_new_call();
+    if( active_calltree == history )  switch_tab();
+  }
 }
 
 /**
@@ -196,6 +213,7 @@ call_mailbox( GtkWidget* widget , gpointer data )
   update_call_tree_add( current_calls , mailboxCall );    
   update_menus();
   sflphone_place_call( mailboxCall );
+  if( active_calltree == history )  switch_tab();
 }
 
   void 
@@ -209,13 +227,13 @@ toolbar_update_buttons ()
   gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
   g_object_ref(holdButton);
   g_object_ref(unholdButton);
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
+  if( is_inserted( GTK_WIDGET(holdButton) ) )   gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
+  if( is_inserted( GTK_WIDGET(unholdButton) ) )	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), holdButton, 3);
   g_object_ref(callButton);
   g_object_ref(pickupButton);
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(pickupButton));
+  if( is_inserted( GTK_WIDGET(callButton) ) )	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
+  if( is_inserted( GTK_WIDGET(pickupButton) ) )	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(pickupButton));
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), callButton, 0);
 
 

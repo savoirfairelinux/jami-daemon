@@ -247,6 +247,7 @@ sflphone_hang_up()
 				break;
 			case CALL_STATE_TRANSFERT:  
 				dbus_hang_up (selectedCall);
+				(void) time(&selectedCall->_stop);
 				break;
 			default:
 				g_warning("Should not happen in sflphone_hang_up()!");
@@ -279,6 +280,7 @@ sflphone_pick_up()
 				break;
 			case CALL_STATE_TRANSFERT:
 				dbus_transfert (selectedCall);
+				(void) time(&selectedCall->_stop);
 				break;
 			case CALL_STATE_CURRENT:
 				sflphone_new_call();
@@ -349,10 +351,11 @@ sflphone_busy( call_t * c )
 void 
 sflphone_current( call_t * c )
 {
-	c->state = CALL_STATE_CURRENT;
-	update_call_tree(current_calls,c);
-	update_menus();
+  if( c->state != CALL_STATE_HOLD )
 	(void) time(&c->_start);
+  c->state = CALL_STATE_CURRENT;
+  update_call_tree(current_calls,c);
+  update_menus();
 }
 
 void 
@@ -546,6 +549,7 @@ sflphone_keypad( guint keyval, gchar * key)
 					case 65293: /* ENTER */
 					case 65421: /* ENTER numpad */
 						dbus_transfert(c);
+						(void) time(&c->_stop);
 						break;
 					case 65307: /* ESCAPE */
 						sflphone_unset_transfert(c); 
