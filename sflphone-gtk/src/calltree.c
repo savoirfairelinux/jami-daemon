@@ -593,8 +593,7 @@ update_call_tree (calltab_t* tab, call_t * c)
 	gchar * duration="";
 	if(c->state == CALL_STATE_TRANSFERT)
 	{
-	  description = g_markup_printf_escaped("<b>%s</b>\n"
-	      "%s\n<i>Transfert to:</i> %s",  
+	  description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> %s",  
 	      call_get_number(c), 
 	      call_get_name(c), 
 	      c->to);
