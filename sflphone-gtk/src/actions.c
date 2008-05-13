@@ -347,10 +347,11 @@ sflphone_busy( call_t * c )
 void 
 sflphone_current( call_t * c )
 {
-	c->state = CALL_STATE_CURRENT;
-	update_call_tree(current_calls,c);
-	update_menus();
+  if( c->state != CALL_STATE_HOLD )
 	(void) time(&c->_start);
+  c->state = CALL_STATE_CURRENT;
+  update_call_tree(current_calls,c);
+  update_menus();
 }
 
 void 
