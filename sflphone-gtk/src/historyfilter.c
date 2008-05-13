@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2008 Savoir-Faire Linux inc.
  *  Author: Antoine Reversat <antoine.reversat@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify

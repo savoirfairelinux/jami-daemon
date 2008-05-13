@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -39,6 +40,7 @@ GtkWidget * dialpad   = NULL;
 GtkWidget * speaker_control = NULL;
 GtkWidget * mic_control = NULL;
 GtkWidget * statusBar = NULL;
+GtkWidget * filterEntry = NULL;
 
 /**
  * Minimize the main window.
@@ -149,9 +151,11 @@ create_main_window ()
   gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
   widget = create_toolbar();
+  
+  filterEntry = create_filter_entry();
 
   gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-  gtk_box_pack_start (GTK_BOX (vbox), create_filter_entry(), FALSE /*expand*/, FALSE /*fill*/,  0 /*padding*/);
+  gtk_box_pack_start (GTK_BOX (vbox), filterEntry, FALSE /*expand*/, FALSE /*fill*/,  0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (vbox), current_calls->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
