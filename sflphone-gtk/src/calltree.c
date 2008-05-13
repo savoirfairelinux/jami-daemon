@@ -40,7 +40,7 @@ GtkToolItem * mailboxButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
 gboolean history_shown;
 
-void
+  void
 switch_tab()
 {
   (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(historyButton)))? gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE):gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), TRUE);
@@ -96,7 +96,7 @@ call_button( GtkWidget *widget, gpointer   data )
     if( selectedCall)
     {
       printf("Calling a called num\n");
-    
+
       newCall->to = g_strdup(call_get_number(selectedCall));
       newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
       newCall->state = CALL_STATE_DIALING;
@@ -334,32 +334,56 @@ void  row_activated(GtkTreeView       *tree_view,
     GtkTreeViewColumn *column,
     void * data) 
 {
-  call_t * selectedCall = call_get_selected(current_calls);
+  g_print("double click action\n");
+  call_t* selectedCall;
+  call_t* newCall;
+  selectedCall = call_get_selected( active_calltree );
+
   if (selectedCall)
   {
-    switch(selectedCall->state)  
+    // Get the right event from the right calltree
+    if( active_calltree == current_calls )
     {
-      case CALL_STATE_INCOMING:
-	dbus_accept(selectedCall);
-	break;
-      case CALL_STATE_HOLD:
-	dbus_unhold(selectedCall);
-	break;
-      case CALL_STATE_RINGING:
-      case CALL_STATE_CURRENT:
-      case CALL_STATE_BUSY:
-      case CALL_STATE_FAILURE:
-	break;
-      case CALL_STATE_DIALING:
-	sflphone_place_call (selectedCall);
-	break;
-      default:
-	g_warning("Should not happen!");
-	break;
+      switch(selectedCall->state)  
+      {
+	case CALL_STATE_INCOMING:
+	  dbus_accept(selectedCall);
+	  break;
+	case CALL_STATE_HOLD:
+	  dbus_unhold(selectedCall);
+	  break;
+	case CALL_STATE_RINGING:
+	case CALL_STATE_CURRENT:
+	case CALL_STATE_BUSY:
+	case CALL_STATE_FAILURE:
+	  break;
+	case CALL_STATE_DIALING:
+	  sflphone_place_call (selectedCall);
+	  break;
+	default:
+	  g_warning("Should not happen!");
+	  break;
+      }
+    }
+    else
+    {
+      newCall = g_new0( call_t, 1 );
+      newCall->to = g_strdup(call_get_number(selectedCall));
+      newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
+      newCall->state = CALL_STATE_DIALING;
+      newCall->callID = g_new0(gchar, 30);
+      g_sprintf(newCall->callID, "%d", rand()); 
+      newCall->_start = 0;
+      newCall->_stop = 0;
+
+      printf("call : from : %s to %s\n", newCall->from, newCall->to);
+      call_list_add(current_calls, newCall);
+      update_call_tree_add(current_calls, newCall);
+      sflphone_place_call(newCall);
+      switch_tab();
     }
   }
-}                  
-
+}
 
   GtkWidget * 
 create_toolbar ()
@@ -373,93 +397,93 @@ create_toolbar ()
   gtk_toolbar_set_orientation(GTK_TOOLBAR(ret), GTK_ORIENTATION_HORIZONTAL);
   gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_ICONS);
 
-	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
-	callButton = gtk_tool_button_new (image, _("Place a call"));
+  image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
+  callButton = gtk_tool_button_new (image, _("Place a call"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("Place a call"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("Place a call"));
 #endif
-	g_signal_connect (G_OBJECT (callButton), "clicked",
-			G_CALLBACK (call_button), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);
+  g_signal_connect (G_OBJECT (callButton), "clicked",
+      G_CALLBACK (call_button), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);
 
-	image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
-	pickupButton = gtk_tool_button_new(image, _("Pick up"));
+  image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
+  pickupButton = gtk_tool_button_new(image, _("Pick up"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(pickupButton), _("Pick up"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(pickupButton), _("Pick up"));
 #endif
-	gtk_widget_set_state( GTK_WIDGET(pickupButton), GTK_STATE_INSENSITIVE);
-	g_signal_connect(G_OBJECT (pickupButton), "clicked", 
-			G_CALLBACK (call_button), NULL);
-	gtk_widget_show_all(GTK_WIDGET(pickupButton));
+  gtk_widget_set_state( GTK_WIDGET(pickupButton), GTK_STATE_INSENSITIVE);
+  g_signal_connect(G_OBJECT (pickupButton), "clicked", 
+      G_CALLBACK (call_button), NULL);
+  gtk_widget_show_all(GTK_WIDGET(pickupButton));
 
-	image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
-	hangupButton = gtk_tool_button_new (image, _("Hang up"));
+  image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
+  hangupButton = gtk_tool_button_new (image, _("Hang up"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(hangupButton), _("Hang up"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(hangupButton), _("Hang up"));
 #endif
-	gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
-	g_signal_connect (G_OBJECT (hangupButton), "clicked",
-			G_CALLBACK (hang_up), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(hangupButton), -1);  
+  gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
+  g_signal_connect (G_OBJECT (hangupButton), "clicked",
+      G_CALLBACK (hang_up), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(hangupButton), -1);  
 
-	image = gtk_image_new_from_file( ICONS_DIR "/unhold.svg");
-	unholdButton = gtk_tool_button_new (image, _("Off Hold"));
+  image = gtk_image_new_from_file( ICONS_DIR "/unhold.svg");
+  unholdButton = gtk_tool_button_new (image, _("Off Hold"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(unholdButton), _("Off Hold"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(unholdButton), _("Off Hold"));
 #endif
-	gtk_widget_set_state( GTK_WIDGET(unholdButton), GTK_STATE_INSENSITIVE);
-	g_signal_connect (G_OBJECT (unholdButton), "clicked",
-			G_CALLBACK (unhold), NULL);
-	//gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(unholdButton), -1);
-	gtk_widget_show_all(GTK_WIDGET(unholdButton));
+  gtk_widget_set_state( GTK_WIDGET(unholdButton), GTK_STATE_INSENSITIVE);
+  g_signal_connect (G_OBJECT (unholdButton), "clicked",
+      G_CALLBACK (unhold), NULL);
+  //gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(unholdButton), -1);
+  gtk_widget_show_all(GTK_WIDGET(unholdButton));
 
-	image = gtk_image_new_from_file( ICONS_DIR "/hold.svg");
-	holdButton =  gtk_tool_button_new (image, _("On Hold"));
+  image = gtk_image_new_from_file( ICONS_DIR "/hold.svg");
+  holdButton =  gtk_tool_button_new (image, _("On Hold"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(holdButton), _("On Hold"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(holdButton), _("On Hold"));
 #endif
-	gtk_widget_set_state( GTK_WIDGET(holdButton), GTK_STATE_INSENSITIVE);
-	g_signal_connect (G_OBJECT (holdButton), "clicked",
-			G_CALLBACK (hold), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(holdButton), -1);
+  gtk_widget_set_state( GTK_WIDGET(holdButton), GTK_STATE_INSENSITIVE);
+  g_signal_connect (G_OBJECT (holdButton), "clicked",
+      G_CALLBACK (hold), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(holdButton), -1);
 
-	image = gtk_image_new_from_file( ICONS_DIR "/transfert.svg");
-	transfertButton = gtk_toggle_tool_button_new ();
-	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(transfertButton), image);
+  image = gtk_image_new_from_file( ICONS_DIR "/transfert.svg");
+  transfertButton = gtk_toggle_tool_button_new ();
+  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(transfertButton), image);
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(transfertButton), _("Transfer"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(transfertButton), _("Transfer"));
 #endif
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), _("Transfer"));
-	gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
-	transfertButtonConnId = g_signal_connect (G_OBJECT (transfertButton), "toggled",
-			G_CALLBACK (transfert), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
+  gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), _("Transfer"));
+  gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
+  transfertButtonConnId = g_signal_connect (G_OBJECT (transfertButton), "toggled",
+      G_CALLBACK (transfert), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
 
-	image = gtk_image_new_from_file( ICONS_DIR "/history2.svg");
-	historyButton = gtk_toggle_tool_button_new();
-	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(historyButton), image);
+  image = gtk_image_new_from_file( ICONS_DIR "/history2.svg");
+  historyButton = gtk_toggle_tool_button_new();
+  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(historyButton), image);
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
 #endif
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
-	g_signal_connect (G_OBJECT (historyButton), "toggled",
-			G_CALLBACK (toggle_history), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);  
-	history_shown = FALSE;
-	active_calltree = current_calls;
+  gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
+  g_signal_connect (G_OBJECT (historyButton), "toggled",
+      G_CALLBACK (toggle_history), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);  
+  history_shown = FALSE;
+  active_calltree = current_calls;
 
-	image = gtk_image_new_from_file( ICONS_DIR "/mailbox.svg");
-	mailboxButton = gtk_tool_button_new( image , _("Voicemail box"));
-	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mailboxButton), image);
-	if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
+  image = gtk_image_new_from_file( ICONS_DIR "/mailbox.svg");
+  mailboxButton = gtk_tool_button_new( image , _("Voicemail box"));
+  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mailboxButton), image);
+  if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
 #if GTK_CHECK_VERSION(2,12,0)
-        gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Voicemail box"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Voicemail box"));
 #endif
-        g_signal_connect (G_OBJECT (mailboxButton), "clicked",
-                        G_CALLBACK (call_mailbox), NULL);
-        gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
+  g_signal_connect (G_OBJECT (mailboxButton), "clicked",
+      G_CALLBACK (call_mailbox), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
 
-	return ret;
+  return ret;
 
 }  
 
@@ -481,7 +505,6 @@ create_call_tree (calltab_t* tab)
 
   tab->store = gtk_list_store_new (3, 
       GDK_TYPE_PIXBUF,// Icon 
-
       G_TYPE_STRING,  // Description
       G_TYPE_POINTER  // Pointer to the Object
       );
