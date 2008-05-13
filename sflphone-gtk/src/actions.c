@@ -388,8 +388,8 @@ sflphone_incoming_call (call_t * c)
 	call_list_add ( current_calls, c );
 	call_list_add( history, c );
 	update_call_tree_add( current_calls , c );
-	//update_call_tree_add( history , c );
 	update_menus();
+	if( active_calltree == history )  switch_tab();
 }
 
 void
@@ -497,10 +497,7 @@ sflphone_keypad( guint keyval, gchar * key)
 		switch(c->state) 
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
-				//dbus_play_dtmf(key);
 				process_dialing(c, keyval, key);
-				if( active_calltree == history )
-				  switch_tab();
 				break;
 			case CALL_STATE_CURRENT:
 				switch (keyval)
