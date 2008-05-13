@@ -195,6 +195,7 @@ call_mailbox( GtkWidget* widget , gpointer data )
   update_call_tree_add( current_calls , mailboxCall );    
   update_menus();
   sflphone_place_call( mailboxCall );
+  if( active_calltree == history )  switch_tab();
 }
 
   void 
