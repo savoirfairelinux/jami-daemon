@@ -537,7 +537,6 @@ view_dialpad  (GtkImageMenuItem *imagemenuitem,
 {
   gboolean state;
   main_window_dialpad( &state );
-  g_print("State of the damn thing %i\n" , state);
   if( state )
     gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( dialpadMenu ),
 				  gtk_image_new_from_file( ICONS_DIR "/icon_dialpad_off.svg"));

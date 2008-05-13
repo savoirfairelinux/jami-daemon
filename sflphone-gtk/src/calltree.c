@@ -58,6 +58,12 @@ popup_menu (GtkWidget *widget,
 }            
 
   static gboolean
+is_inserted( GtkWidget* button )
+{
+  return ( GTK_WIDGET(button)->parent == GTK_WIDGET( toolbar ) );
+}
+
+  static gboolean
 button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 {
   if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
@@ -220,13 +226,13 @@ toolbar_update_buttons ()
   gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
   g_object_ref(holdButton);
   g_object_ref(unholdButton);
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
+  if( is_inserted( GTK_WIDGET(holdButton) ) )   gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
+  if( is_inserted( GTK_WIDGET(unholdButton) ) )	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), holdButton, 3);
   g_object_ref(callButton);
   g_object_ref(pickupButton);
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(pickupButton));
+  if( is_inserted( GTK_WIDGET(callButton) ) )	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
+  if( is_inserted( GTK_WIDGET(pickupButton) ) )	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(pickupButton));
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), callButton, 0);
 
 
