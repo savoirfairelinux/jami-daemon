@@ -116,6 +116,14 @@ call_list_clean_history( void )
   call_list_reset( history );
 }
 
+void
+call_list_remove_from_history( call_t* c )
+{
+  call_list_remove( history, c->callID );
+  update_call_tree_remove( history, c );
+  g_print("Size of history = %i\n" , call_list_get_size( history ));
+}
+
 void 
 call_list_remove (calltab_t* tab, const gchar * callID)
 {

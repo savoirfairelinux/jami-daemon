@@ -20,9 +20,12 @@
 #ifndef __ASSISTANT_H
 #define __ASSISTANT_H
 
+
 #include <accountlist.h>
 #include <actions.h>
 #include <sflphone_const.h>
+
+#if GTK_CHECK_VERSION(2,10,0)
 
 #define _SIP  0
 #define _IAX  1
@@ -116,5 +119,7 @@ static gint forward_page_func( gint current_page , gpointer data );
  * Page template
  */
 static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
+
+#endif // GTK_CHECK_VERSION
 
 #endif

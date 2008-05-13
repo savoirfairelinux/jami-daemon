@@ -172,8 +172,10 @@ call_quit ( void * foo)
   static void 
 call_minimize ( void * foo)
 {
+#if GTK_CHECK_VERSION(2,10,0)
   gtk_widget_hide(GTK_WIDGET( get_main_window() ));
   set_minimized( TRUE );
+#endif
 }
 
   static void
@@ -219,7 +221,37 @@ call_hang_up ( void * foo)
   static void 
 call_wizard ( void * foo)
 {
+#if GTK_CHECK_VERSION(2,10,0)
   build_wizard();
+#endif
+}
+
+static void
+remove_from_history( void * foo )
+{
+  call_t* c = call_get_selected( history );
+  if(c){
+    g_print("Remove the call from the history\n");
+    call_list_remove_from_history( c );
+  }
+}
+
+static void
+call_back( void * foo )
+{
+  call_t* c = call_get_selected( history );
+  if( c )
+  {
+    if(!c->to){
+      c->to = call_get_number(c);
+      c->from = g_strconcat("\"\" <", c->to, ">",NULL);
+    }
+    switch_tab();
+    printf("call : from : %s to %s\n", c->from, c->to);
+    call_list_add(current_calls, c);
+    update_call_tree_add(current_calls, c);
+    sflphone_place_call(c);
+  } 
 }
 
   GtkWidget * 
@@ -280,14 +312,15 @@ create_call_menu()
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
 
+#if GTK_CHECK_VERSION(2,10,0)
   menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Account Assistant"));
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   g_signal_connect_swapped( G_OBJECT( menu_items ) , "activate" , G_CALLBACK( call_wizard  ) , NULL );
   gtk_widget_show (menu_items);
-
   // Separator
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+#endif
 
   // Close menu to minimize the main window to the system tray
   menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_CLOSE, get_accel_group());
@@ -641,7 +674,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
   } 
 
   GtkWidget *menu;
-  //GtkWidget *image;
+  GtkWidget *image;
   int button, event_time;
   GtkWidget * menu_items;
 
@@ -677,8 +710,8 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
   {
 
     menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Pick up"));
-    //image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
-    //gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_accept.svg");
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect (G_OBJECT (menu_items), "activate",
 	G_CALLBACK (call_pick_up), 
@@ -689,8 +722,8 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
   if(hangup)
   {
     menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Hang up"));
-    //image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
-    //gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_hangup.svg");
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect (G_OBJECT (menu_items), "activate",
 	G_CALLBACK (call_hang_up), 
@@ -756,3 +789,65 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
       button, event_time);
 }
 
+
+void
+show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
+{
+
+  gboolean pickup = FALSE;
+  gboolean remove = FALSE;
+
+  call_t * selectedCall = call_get_selected( history );
+  if (selectedCall)
+  {
+    remove = TRUE;
+    pickup = TRUE;
+  } 
+
+  GtkWidget *menu;
+  GtkWidget *image;
+  int button, event_time;
+  GtkWidget * menu_items;
+
+  menu = gtk_menu_new ();
+  //g_signal_connect (menu, "deactivate", 
+  //       G_CALLBACK (gtk_widget_destroy), NULL);
+
+  if(pickup)
+  {
+
+    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Call back"));
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_accept.svg");
+    gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( menu_items ), image );
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (call_back), NULL);
+    gtk_widget_show (menu_items);
+  }
+
+  menu_items = gtk_separator_menu_item_new ();
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  gtk_widget_show (menu_items);
+
+  if(remove)
+  {
+    menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_DELETE, get_accel_group());
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    g_signal_connect (G_OBJECT (menu_items), "activate", G_CALLBACK (remove_from_history),  NULL);
+    gtk_widget_show (menu_items);
+  }
+
+  if (event)
+  {
+    button = event->button;
+    event_time = event->time;
+  }
+  else
+  {
+    button = 0;
+    event_time = gtk_get_current_event_time ();
+  }
+
+  gtk_menu_attach_to_widget (GTK_MENU (menu), my_widget, NULL);
+  gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, 
+      button, event_time);
+}

@@ -122,7 +122,9 @@ sflphone_hung_up( call_t * c)
   update_call_tree_remove(current_calls, c);
   c->state = CALL_STATE_DIALING;
   update_menus();
+#if GTK_CHECK_VERSION(2,10,0)
   status_tray_icon_blink( FALSE );
+#endif
 }
 
 /** Internal to actions: Fill account list */
@@ -217,8 +219,6 @@ void
 sflphone_hang_up()
 {
 	call_t * selectedCall = call_get_selected(current_calls);
-	(void) time(&selectedCall->_stop);
-	update_call_tree( history , selectedCall );
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
@@ -226,17 +226,23 @@ sflphone_hang_up()
 			case CALL_STATE_DIALING:
 				dbus_hang_up (selectedCall);
 				break;
+			case CALL_STATE_RINGING:
+				dbus_hang_up (selectedCall);
+				selectedCall->state = CALL_STATE_DIALING;
+				selectedCall->_stop = 0;
+				break;
 			case CALL_STATE_CURRENT:
 			case CALL_STATE_HOLD:
-			case CALL_STATE_RINGING:
 			case CALL_STATE_BUSY:
 			case CALL_STATE_FAILURE:
 				dbus_hang_up (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
+				(void) time(&selectedCall->_stop);
 				break;
 			case CALL_STATE_INCOMING:  
 				dbus_refuse (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
+				selectedCall->_stop = 0;
 				g_print("from sflphone_hang_up : "); stop_notification();
 				break;
 			case CALL_STATE_TRANSFERT:  
@@ -247,6 +253,7 @@ sflphone_hang_up()
 				break;
 		}
 	}
+	update_call_tree( history , selectedCall );
 }
 
 
@@ -383,8 +390,8 @@ sflphone_incoming_call (call_t * c)
 	call_list_add ( current_calls, c );
 	call_list_add( history, c );
 	update_call_tree_add( current_calls , c );
-	//update_call_tree_add( history , c );
 	update_menus();
+	if( active_calltree == history )  switch_tab();
 }
 
 void
@@ -471,6 +478,9 @@ sflphone_new_call()
 
 	c->to = g_strdup("");
 
+	c->_start = 0;
+	c->_stop = 0;
+
 	call_list_add(current_calls,c);
 	update_call_tree_add(current_calls,c);  
 	update_menus();
@@ -489,7 +499,6 @@ sflphone_keypad( guint keyval, gchar * key)
 		switch(c->state) 
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
-				//dbus_play_dtmf(key);
 				process_dialing(c, keyval, key);
 				break;
 			case CALL_STATE_CURRENT:
@@ -497,6 +506,8 @@ sflphone_keypad( guint keyval, gchar * key)
 				{
 					case 65307: /* ESCAPE */
 						dbus_hang_up(c);
+						(void) time(&c->_stop);
+						update_call_tree( history , c );
 						break;
 					default:  
 						// To play the dtmf when calling mail box for instance
@@ -565,8 +576,10 @@ sflphone_keypad( guint keyval, gchar * key)
 				switch (keyval)
 				{
 					case 65307: /* ESCAPE */
-						dbus_hang_up(c);
-						break;
+					  dbus_hang_up(c);
+					  c->_stop = 0;
+					  update_call_tree( history , c );
+					  break;
 				}
 				break;
 			default:
@@ -583,6 +596,8 @@ sflphone_keypad( guint keyval, gchar * key)
 			case 65307: /* ESCAPE */
 				break;
 			default:
+				if( active_calltree == history )
+				  switch_tab();
 				process_dialing(sflphone_new_call(), keyval, key);
 				break;
 		}
