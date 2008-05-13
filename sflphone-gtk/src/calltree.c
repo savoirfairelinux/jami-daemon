@@ -105,9 +105,17 @@ call_button( GtkWidget *widget, gpointer   data )
       sflphone_place_call(newCall);
       if( active_calltree == history )  switch_tab();
     }
-  }else
+    else
+    {
+      sflphone_new_call();
+      if( active_calltree == history )  switch_tab();
+    }
+  }
+  else
+  {
     sflphone_new_call();
     if( active_calltree == history )  switch_tab();
+  }
 }
 
 /**
