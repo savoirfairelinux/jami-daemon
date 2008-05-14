@@ -23,7 +23,7 @@ endif
 SUBDIRS = codecs
 
 libaudio_la_SOURCES =    audiofile.cpp	 tonelist.cpp    \
-audiortp.cpp         dtmf.cpp   tone.cpp  audiolayer.cpp audiolayer-pulse.cpp audiodevice.cpp  dtmfgenerator.cpp   \
+audiortp.cpp         dtmf.cpp   tone.cpp  alsalayer.cpp pulselayer.cpp audiodevice.cpp  dtmfgenerator.cpp   \
 tonegenerator.cpp   codecDescriptor.cpp \
 audioloop.cpp ringbuffer.cpp $(SPEEX_SOURCES_CPP)
 
@@ -31,7 +31,7 @@ AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $
  	      -DCODECS_DIR=\""$(sflcodecdir)"\" $(SPEEX_FLAG) $(GSM_FLAG) $(ILBC_FLAG)	
 
 noinst_HEADERS = audioloop.h    common.h ringbuffer.h    audiofile.h  \
- tonelist.h         audiortp.h   audiolayer.h audiolayer.h audiodevice.h \
+ tonelist.h         audiortp.h   audiolayer.h alsalayer.h  pulselayer.h audiodevice.h \
  dtmfgenerator.h         tonegenerator.h     \
  codecDescriptor.h    dtmf.h tone.h 
 

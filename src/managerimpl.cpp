@@ -38,6 +38,8 @@
 #include "manager.h"
 #include "account.h"
 #include "audio/audiolayer.h"
+#include "audio/alsalayer.h"
+#include "audio/pulselayer.h"
 #include "audio/tonelist.h"
 
 #include "accountcreator.h" // create new account
@@ -1431,7 +1433,8 @@ ManagerImpl::getCurrentAudioOutputPlugin( void )
 ManagerImpl::initAudioDriver(void) 
 {
   _debugInit("AudioLayer Creation");
-  _audiodriver = new AudioLayer(this);
+  //_audiodriver = new AudioLayer(this);
+  _audiodriver = new AlsaLayer( this );
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
   } else {

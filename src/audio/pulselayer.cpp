@@ -1,7 +1,5 @@
 /*
- *  Copyright (C) 2005 Savoir-Faire Linux inc.
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
+ *  Copyright (C) 2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,14 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 
-#include <pulse/pulseaudio.h>
-
-#include "audiolayer-pulse.h"
-#include "../global.h"
-#include "../manager.h"
+#include "pulselayer.h"
 
 static pa_context *context = NULL;
 static pa_mainloop_api *mainloop_api = NULL;
@@ -37,21 +29,11 @@ static std::string stream_p = NULL;
 static std::string stream_r = NULL;
 
 
-  PulseLayer::PulseLayer(ManagerImpl* manager)
-  : _urgentRingBuffer(SIZEBUF)
-  , _mainSndRingBuffer(SIZEBUF)
-  , _micRingBuffer(SIZEBUF)
-  , _defaultVolume(PA_VOLUME_NORM)
-  , playback(NULL)  
-    , record(NULL)  
-  , _errorMessage("")
-    , _manager(manager)
+PulseLayer::PulseLayer(ManagerImpl* manager)
+  : AudioLayer( manager )    
 {
-  _sampleRate = 8000;
-
-  _inChannel  = 1; // don't put in stereo
-  _outChannel = 1; // don't put in stereo
-  _echoTesting = false;
+  playback = NULL;   
+  record = NULL; 
 }
 
 // Destructor
@@ -61,6 +43,12 @@ PulseLayer::~PulseLayer (void)
   mainloop_api->quit( mainloop_api, 0 );
   // pa_stream_flush();
   // pa_stream_disconnect();
+}
+
+void 
+PulseLayer::stream_state_callback( pa_stream* s, void* user_data )
+{
+  _debug("The state of the stream changed\n");
 }
 
 
@@ -74,7 +62,7 @@ PulseLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
   sample_spec.format = PA_SAMPLE_S16LE; 
   sample_spec.channels = 1; 
   channel_map.channels = 1; 
-
+  pa_stream_flags_t flag = PA_STREAM_START_CORKED ;  
 
   _debug(" Setting PulseLayer: device     in=%2d, out=%2d\n", indexIn, indexOut);
   _debug("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
@@ -101,22 +89,17 @@ PulseLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize
       pa_stream_set_state_callback(playback, stream_state_callback, NULL);
       // Transferring Data - Asynchronous Mode
       pa_stream_set_write_callback(playback, audioCallback, NULL);
-      pa_stream_connect_playback( playback, NULL , NULL , 0 , NULL, NULL );
+      pa_stream_connect_playback( playback, NULL , NULL , flag , NULL, NULL );
 
       break;
     case PA_CONTEXT_TERMINATED:
-      quit(0);
+      _debug("Context terminated\n");
       break;
     case PA_CONTEXT_FAILED:
     default:
-      _debug(" Error : %s" , pa_strerror(pa_context_errno(c)));
-      quit(1);
+      _debug(" Error : %s" , pa_strerror(pa_context_errno(context)));
+      exit(1);
   }
-}
-
-PulseLayer::stream_state_callback( void )
-{
-  _debug("The state of the stream changed\n");
 }
 
   int 
@@ -154,12 +137,9 @@ PulseLayer::isStreamStopped (void)
 {
 }
 
-void
-PulseLayer::toggleEchoTesting() {
-}
 
-  int 
-PulseLayer::audioCallback ()
+  void 
+PulseLayer::audioCallback ( pa_stream* s, size_t bytes, void* user_data )
 { 
   _debug("Audio callback: New data may be written to the stream\n");
   // pa_stream_write

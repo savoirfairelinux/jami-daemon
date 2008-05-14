@@ -1,0 +1,110 @@
+/*
+ *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *                                                                              
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *                                                                              
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#ifndef _PULSE_LAYER_H
+#define _PULSE_LAYER_H
+
+#include "audiolayer.h"
+
+class RingBuffer;
+class ManagerImpl;
+
+class PulseLayer : public AudioLayer {
+  public:
+    PulseLayer(ManagerImpl* manager);
+    ~PulseLayer(void);
+
+    /*
+     * @param indexIn
+     * @param indexOut
+     * @param sampleRate
+     * @param frameSize
+     */
+    void openDevice(int, int, int, int);
+    void startStream(void);
+    void stopStream(void);
+    bool isStreamActive(void);
+    bool isStreamStopped(void);
+
+    /**
+     * Check if the capture is running
+     * @return true if the state of the capture handle equals SND_PCM_STATE_RUNNING
+     *	       false otherwise
+     */
+    bool isCaptureActive( void ) { return true; }
+
+    void flushMain();
+    int putMain(void* buffer, int toCopy);
+    int putUrgent(void* buffer, int toCopy);
+    int canGetMic();
+    int getMic(void *, int);
+    void flushMic();
+
+    static void audioCallback ( pa_stream* s, size_t bytes, void* user_data );
+
+    static void stream_state_callback( pa_stream* s, void* user_data );	
+
+    /**
+     * Scan the sound card available on the system
+     * @param stream To indicate whether we are looking for capture devices or playback devices
+     *		   SFL_PCM_CAPTURE
+     *		   SFL_PCM_PLAYBACK
+     *		   SFL_PCM_BOTH
+     * @return std::vector<std::string> The vector containing the string description of the card
+     */
+    std::vector<std::string> getSoundCardsInfo( int stream ) { 
+      std::vector<std::string> tmp;
+      return tmp; 
+    }
+
+    /**
+     * Check if the given index corresponds to an existing sound card and supports the specified streaming mode
+     * @param card   An index
+     * @param stream  The stream mode
+     *		  SFL_PCM_CAPTURE
+     *		  SFL_PCM_PLAYBACK
+     *		  SFL_PCM_BOTH
+     * @return bool True if it exists and supports the mode
+     *		    false otherwise
+     */
+    bool soundCardIndexExist( int card , int stream ) { return true; }
+    
+    /**
+     * An index is associated with its string description
+     * @param description The string description
+     * @return	int	  Its index
+     */
+    int soundCardGetIndex( std::string description ) { return 0;}
+
+    /**
+     * Get the current audio plugin.
+     * @return std::string  The name of the audio plugin
+     */
+    std::string getAudioPlugin( void ) { return ""; }
+
+  private:
+    void closeStream (void);
+
+    pa_stream* playback;
+    pa_stream* record;
+
+};
+
+#endif // _PULSE_LAYER_H_
+
