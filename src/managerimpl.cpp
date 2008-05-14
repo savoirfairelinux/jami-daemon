@@ -1433,8 +1433,8 @@ ManagerImpl::getCurrentAudioOutputPlugin( void )
 ManagerImpl::initAudioDriver(void) 
 {
   _debugInit("AudioLayer Creation");
-  //_audiodriver = new AudioLayer(this);
-  _audiodriver = new AlsaLayer( this );
+  //_audiodriver = new AlsaLayer( this );
+  _audiodriver = new PulseLayer( this );
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
   } else {
@@ -1451,6 +1451,10 @@ ManagerImpl::initAudioDriver(void)
   void
 ManagerImpl::selectAudioDriver (void)
 {
+  int layer = _audiodriver->getLayerType();
+  _debug("Audio layer type: %i\n" , layer);
+
+#if CHECK_INTERFACE( layer , ALSA )
   std::string alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
   int numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
   int numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
@@ -1478,6 +1482,15 @@ ManagerImpl::selectAudioDriver (void)
   _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
   if( _audiodriver -> getErrorMessage() != -1 )
     notifyErrClient( _audiodriver -> getErrorMessage());
+#else
+  
+  _debug(" Pulse audio driver \n");
+  _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
+  if( _audiodriver -> getErrorMessage() != -1 )
+    notifyErrClient( _audiodriver -> getErrorMessage());
+
+#endif
+
 }
 
 /**

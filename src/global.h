@@ -122,4 +122,9 @@ typedef short int16;
 #define ALSA_PLAYBACK_DEVICE          0x0010	/** Error while opening playback device */
 #define NETWORK_UNREACHABLE           0x0011	/** Network unreachable */
 
+#define ALSA			  0 
+#define PULSEAUDIO		  1
+//#define AUDIODRIVER		  ALSA
+#define CHECK_INTERFACE( layer , api )		  (layer == api) 
+
 #endif	// __GLOBAL_H__

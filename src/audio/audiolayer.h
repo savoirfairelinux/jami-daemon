@@ -51,9 +51,10 @@ class AudioLayer {
      * Constructor
      * @param manager An instance of managerimpl
      */
-    AudioLayer( ManagerImpl* manager )
+    AudioLayer( ManagerImpl* manager , int type )
       :	  _manager(manager)
 	, _urgentBuffer( SIZEBUF )
+	, _layerType( type )
     {
       _inChannel  = 1; // don't put in stereo
       _outChannel = 1; // don't put in stereo
@@ -80,7 +81,7 @@ class AudioLayer {
      *			  SFL_PCM_BOTH
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
-    virtual bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize, int stream, std::string plugin) = 0;
+    virtual bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize, int stream , std::string plugin) = 0;
 
     /**
      * Start the capture stream and prepare the playback stream. 
@@ -226,7 +227,11 @@ class AudioLayer {
      */
     bool getCurrentState( void ) { return _talk; }
 
+    int getLayerType( void ) { return _layerType; }
+
   protected:
+
+    int _layerType;
 
     /**
      * Drop the pending frames and close the capture device

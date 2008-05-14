@@ -30,13 +30,22 @@ class PulseLayer : public AudioLayer {
     PulseLayer(ManagerImpl* manager);
     ~PulseLayer(void);
 
-    /*
-     * @param indexIn
-     * @param indexOut
-     * @param sampleRate
-     * @param frameSize
+    /**
+     * Check if no devices are opened, otherwise close them.
+     * Then open the specified devices by calling the private functions open_device
+     * @param indexIn	The number of the card choosen for capture
+     * @param indexOut	The number of the card choosen for playback
+     * @param sampleRate  The sample rate 
+     * @param frameSize	  The frame size
+     * @param stream	  To indicate which kind of stream you want to open
+     *			  SFL_PCM_CAPTURE
+     *			  SFL_PCM_PLAYBACK
+     *			  SFL_PCM_BOTH
+     * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
-    void openDevice(int, int, int, int);
+    bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize , int stream, std::string plugin) ;
+
+
     void startStream(void);
     void stopStream(void);
     bool isStreamActive(void);
@@ -56,9 +65,19 @@ class PulseLayer : public AudioLayer {
     int getMic(void *, int);
     void flushMic();
 
+    /**
+     * Send samples to the audio device. 
+     * @param buffer The buffer containing the data to be played ( voice and DTMF )
+     * @param toCopy The number of samples, in bytes
+     * @param isTalking	If whether or not the conversation is running
+     * @return int The number of bytes played
+     */
+    int playSamples(void* buffer, int toCopy, bool isTalking) ;
+
     static void audioCallback ( pa_stream* s, size_t bytes, void* user_data );
 
     static void stream_state_callback( pa_stream* s, void* user_data );	
+    static void context_state_callback( pa_context* c, void* user_data );	
 
     /**
      * Scan the sound card available on the system
@@ -96,10 +115,20 @@ class PulseLayer : public AudioLayer {
      * Get the current audio plugin.
      * @return std::string  The name of the audio plugin
      */
-    std::string getAudioPlugin( void ) { return ""; }
+    std::string getAudioPlugin( void ) { return "default"; }
 
   private:
-    void closeStream (void);
+    /**
+     * Drop the pending frames and close the capture device
+     */
+    void closeCaptureStream( void );
+
+    /**
+     * Drop the pending frames and close the playback device
+     */
+    void closePlaybackStream( void );
+
+    void create_context( void );
 
     pa_stream* playback;
     pa_stream* record;

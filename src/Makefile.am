@@ -29,6 +29,7 @@ IAXHEADERS =
 endif
 
 ALSAFLAG= -lasound
+PULSEAUDIO_LIBS=-lpulse
 
 SUBDIRS = audio config dbus $(ZEROCONFDIR) contact memmanager video mixer
 
@@ -41,7 +42,7 @@ sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS) $(SFLPHONE_CFLAGS) $(SIP_CFLAGS)
 
 #sflphoned_LDFLAGS = -static
-sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) $(ALSAFLAG) 
+sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) $(ALSAFLAG) $(PULSEAUDIO_LIBS)
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES) $(libdbuscpp_CFLAGS) \
 	      -DCODECS_DIR=\""$(sflcodecdir)"\" 
 	      -DENABLE_TRACE
