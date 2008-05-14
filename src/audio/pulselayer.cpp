@@ -20,14 +20,14 @@
 #include "pulselayer.h"
 
 static pa_context *context = NULL;
+static pa_stream* playback = NULL;
+static pa_stream* record = NULL;
 static pa_mainloop_api *mainloop_api = NULL;
 static pa_sample_spec sample_spec;
 static pa_channel_map channel_map;
 
 PulseLayer::PulseLayer(ManagerImpl* manager)
   : AudioLayer( manager , PULSEAUDIO )    
-  , playback( NULL )
-  , record( NULL )
 {
   _debug("Pulse audio constructor: Create context\n");
   create_context();
@@ -79,6 +79,10 @@ void
 PulseLayer::context_state_callback( pa_context* c, void* user_data )
 {
   _debug("The state of the context changed\n");
+  sample_spec.format = PA_SAMPLE_S16LE; 
+  sample_spec.channels = 1; 
+  channel_map.channels = 1; 
+  pa_stream_flags_t flag = PA_STREAM_START_CORKED ;  
   assert(c);
   switch(pa_context_get_state(c)){
     case PA_CONTEXT_CONNECTING:
@@ -121,11 +125,11 @@ PulseLayer::openDevice(int indexIn, int indexOut, int sampleRate, int frameSize 
   _sampleRate = sampleRate;
   _frameSize = frameSize;	
 
-  sample_spec.rate = sampleRate;
-  sample_spec.format = PA_SAMPLE_S16LE; 
-  sample_spec.channels = 1; 
-  channel_map.channels = 1; 
-  pa_stream_flags_t flag = PA_STREAM_START_CORKED ;  
+  //sample_spec.rate = sampleRate;
+  //sample_spec.format = PA_SAMPLE_S16LE; 
+  //sample_spec.channels = 1; 
+  //channel_map.channels = 1; 
+  //pa_stream_flags_t flag = PA_STREAM_START_CORKED ;  
 
   _debug(" Setting PulseLayer: device     in=%2d, out=%2d\n", indexIn, indexOut);
   _debug("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);

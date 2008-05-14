@@ -130,8 +130,8 @@ class PulseLayer : public AudioLayer {
 
     void create_context( void );
 
-    pa_stream* playback;
-    pa_stream* record;
+    //pa_stream* playback;
+    //pa_stream* record;
 
 };
 
