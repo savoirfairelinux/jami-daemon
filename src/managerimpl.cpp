@@ -473,6 +473,7 @@ ManagerImpl::playDtmf(char code, bool isTalking)
   // numbers of int = length in milliseconds / 1000 (number of seconds)
   //                = number of seconds * SAMPLING_RATE by SECONDS
   AudioLayer* audiolayer = getAudioDriver();
+  int layer = audiolayer->getLayerType();
 
   // fast return, no sound, so no dtmf
   if (audiolayer==0 || _dtmfKey == 0) { return false; }
@@ -496,7 +497,13 @@ ManagerImpl::playDtmf(char code, bool isTalking)
     // Put buffer to urgentRingBuffer 
     // put the size in bytes...
     // so size * 1 channel (mono) * sizeof (bytes for the data)
+#if CHECK_INTERFACE( layer , ALSA )
+    _debug("%i No good\n", layer);
     audiolayer->playSamples(_buf, size * sizeof(SFLDataFormat), isTalking);
+#else
+    _debug("%i Good\n" , layer);
+    audiolayer->putUrgent( _buf, size * sizeof(SFLDataFormat) );
+#endif
   }
   returnValue = true;
 
@@ -822,13 +829,14 @@ ManagerImpl::ringtone()
       _audiofile.start();
       _toneMutex.leaveMutex(); 
 #if CHECK_INTERFACE( layer, ALSA )
+      _debug()
       int size = _audiofile.getSize();
       SFLDataFormat output[ size ];
       _audiofile.getNext(output, size , 100);
       audiolayer->putUrgent( output , size );
 #else
       // pulseaudio code
-      startStream();
+      audiolayer->startStream();
 #endif
     } else {
       ringback();
@@ -1491,7 +1499,6 @@ ManagerImpl::selectAudioDriver (void)
   int layer = _audiodriver->getLayerType();
   _debug("Audio layer type: %i\n" , layer);
 
-#if CHECK_INTERFACE( layer , ALSA )
   std::string alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
   int numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
   int numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
@@ -1514,13 +1521,15 @@ ManagerImpl::selectAudioDriver (void)
     setConfig( AUDIO , ALSA_CARD_ID_OUT , ALSA_DFT_CARD_ID );
   }
 
+#if CHECK_INTERFACE( layer , ALSA )
+  _debug("No good\n");
   _debugInit(" AudioLayer Opening Device");
   _audiodriver->setErrorMessage(-1);
   _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
   if( _audiodriver -> getErrorMessage() != -1 )
     notifyErrClient( _audiodriver -> getErrorMessage());
 #else
-  
+  _debug("Good\n");
   _debug(" Pulse audio driver \n");
   _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
   if( _audiodriver -> getErrorMessage() != -1 )

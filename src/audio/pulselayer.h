@@ -21,6 +21,7 @@
 #define _PULSE_LAYER_H
 
 #include "audiolayer.h"
+#include "audiostream.h"
 
 class RingBuffer;
 class ManagerImpl;
@@ -48,8 +49,6 @@ class PulseLayer : public AudioLayer {
 
     void startStream(void);
     void stopStream(void);
-    bool isStreamActive(void);
-    bool isStreamStopped(void);
 
     /**
      * Check if the capture is running
@@ -57,6 +56,7 @@ class PulseLayer : public AudioLayer {
      *	       false otherwise
      */
     bool isCaptureActive( void ) { return true; }
+    bool isStreamActive (void); 
 
     void flushMain();
     int putMain(void* buffer, int toCopy);
@@ -76,7 +76,6 @@ class PulseLayer : public AudioLayer {
 
     static void audioCallback ( pa_stream* s, size_t bytes, void* userdata );
 
-    static void stream_state_callback( pa_stream* s, void* user_data );	
     static void context_state_callback( pa_context* c, void* user_data );	
 
     /**
@@ -117,6 +116,8 @@ class PulseLayer : public AudioLayer {
      */
     std::string getAudioPlugin( void ) { return "default"; }
 
+    //pa_stream* getCacheStream( void ) { return caching; }
+
   private:
     /**
      * Drop the pending frames and close the capture device
@@ -132,10 +133,17 @@ class PulseLayer : public AudioLayer {
 
     void connectPulseServer( void );
 
+    /** Ringbuffers for data */
     RingBuffer _mainSndRingBuffer;
+    RingBuffer _urgentRingBuffer;
 
-    //pa_stream* playback;
-    //pa_stream* record;
+    /** PulseAudio streams and context */
+    pa_context* context;
+    pa_threaded_mainloop* m;
+
+    AudioStream* playback;
+    AudioStream* record;
+    AudioStream* cache;
 
 };
 
