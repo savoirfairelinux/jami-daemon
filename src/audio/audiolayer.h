@@ -130,6 +130,7 @@ class AudioLayer {
     virtual int putUrgent(void* buffer, int toCopy) = 0; 
 
     virtual int putMain( void* buffer, int toCopy) = 0;
+    virtual int putInCache(char code, void* buffer, int toCopy) = 0;
 
     /**
      * Query the capture device for number of bytes available in the hardware ring buffer

@@ -507,7 +507,11 @@ ManagerImpl::playDtmf(char code, bool isTalking)
   }
   returnValue = true;
 
-  // TODO: add caching
+#if CHECK_INTERFACE( layer , PULSEAUDIO )
+  // Cache the samples on the sound server
+  (PulseLayer*)audiolayer->putInCache( code, _buf , size * sizeof(SFLDataFormat) );
+#endif
+
   delete[] _buf; _buf = 0;
   return returnValue;
 }

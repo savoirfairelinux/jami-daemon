@@ -61,6 +61,7 @@ class PulseLayer : public AudioLayer {
     void flushMain();
     int putMain(void* buffer, int toCopy);
     int putUrgent(void* buffer, int toCopy);
+    int putInCache( char code, void* buffer , int toCopy );
     int canGetMic();
     int getMic(void *, int);
     void flushMic();
@@ -115,8 +116,7 @@ class PulseLayer : public AudioLayer {
      * @return std::string  The name of the audio plugin
      */
     std::string getAudioPlugin( void ) { return "default"; }
-
-    //pa_stream* getCacheStream( void ) { return caching; }
+    
 
   private:
     /**

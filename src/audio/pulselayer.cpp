@@ -20,7 +20,7 @@
 #include "pulselayer.h"
 
 
-int framesPerBuffer = 1024;
+int framesPerBuffer = 4096;
 
 PulseLayer::PulseLayer(ManagerImpl* manager)
   : AudioLayer( manager , PULSEAUDIO )    
@@ -98,7 +98,7 @@ PulseLayer::createStreams( pa_context* c )
   pa_stream_set_write_callback( playback->pulseStream() , audioCallback, this);
   record = new AudioStream(c, CAPTURE_STREAM, "SFLphone in");
   pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
-  //cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples");
+  cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples");
 
   pa_threaded_mainloop_signal(m , 0);
 }
@@ -263,3 +263,12 @@ PulseLayer::write( void )
   }
   pa_stream_write( playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
 }
+
+int
+PulseLayer::putInCache( char code, void *buffer, int toCopy )
+{
+  _debug("Put the DTMF in cache\n");
+  //pa_stream_write( cache->pulseStream() , buffer , toCopy  , pa_xfree, 0 , PA_SEEK_RELATIVE);
+  //pa_stream_finish_upload( cache->pulseStream() );
+}
+
