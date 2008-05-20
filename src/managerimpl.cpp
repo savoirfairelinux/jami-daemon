@@ -981,6 +981,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_MAIL_NOTIFY , NO_STR);
   fill_config_int(CONFIG_VOLUME , YES_STR);
   fill_config_int(CONFIG_HISTORY , DFT_MAX_CALLS);
+  fill_config_int(REGISTRATION_EXPIRE , DFT_EXPIRE_VALUE);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1391,6 +1392,12 @@ ManagerImpl::setNotify( void )
 ManagerImpl::getMailNotify( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_MAIL_NOTIFY );
+}
+
+int
+ManagerImpl::getRegistrationExpireValue( void)
+{
+  return getConfigInt( PREFERENCES , REGISTRATION_EXPIRE );
 }
 
 void
