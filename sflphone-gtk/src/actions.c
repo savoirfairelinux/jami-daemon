@@ -447,10 +447,10 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 			{ 
 				if(c->state != CALL_STATE_TRANSFERT)
 				  dbus_play_dtmf( key );
-				gchar * before = c->to;
-				c->to = g_strconcat(c->to, key, NULL);
-				g_free(before);
-				g_print("TO: %s\n", c->to);
+				  gchar * before = c->to;
+				  c->to = g_strconcat(c->to, key, NULL);
+				  g_free(before);
+				  g_print("TO: %s\n", c->to);
 
 				if(c->state == CALL_STATE_DIALING)
 				{
@@ -517,11 +517,11 @@ sflphone_keypad( guint keyval, gchar * key)
 						dbus_play_dtmf(key);
 						if (keyval < 255 || (keyval >65453 && keyval < 65466))
 						{ 
-							gchar * temp = g_strconcat(call_get_number(c), key, NULL);
-							gchar * before = c->from;
-							c->from = g_strconcat("\"",call_get_name(c) ,"\" <", temp, ">", NULL);
-							g_free(before);
-							g_free(temp);
+							//gchar * temp = g_strconcat(call_get_number(c), key, NULL);
+							//gchar * before = c->from;
+							//c->from = g_strconcat("\"",call_get_name(c) ,"\" <", temp, ">", NULL);
+							//g_free(before);
+							//g_free(temp);
 							//update_call_tree(current_calls,c);
 						}
 						break;
