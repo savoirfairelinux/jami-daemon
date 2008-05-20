@@ -31,6 +31,8 @@ create_filter(GtkTreeModel* child)
 gboolean
 is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data)
 {
+  if( SHOW_SEARCHBAR )
+  {
 	GValue val = {0, };
 	gchar* text;
 	gchar* search = (gchar*)gtk_entry_get_text(GTK_ENTRY(filter_entry));
@@ -42,6 +44,8 @@ is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data)
 		return g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
  	}
 	return TRUE;
+  }
+  return TRUE;
 } 
 
 void
@@ -56,7 +60,6 @@ clear_filter_entry_if_default(GtkWidget* widget, gpointer user_data)
 {
 	if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry)), "Search", 6) == 0)
 		gtk_entry_set_text(GTK_ENTRY(filter_entry), "");
-	
 }
 
 GtkWidget*

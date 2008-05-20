@@ -499,7 +499,7 @@ clear_history( void* foo )
     dialog = gtk_message_dialog_new_with_markup ( GTK_WINDOW(get_main_window()),
 							    GTK_DIALOG_DESTROY_WITH_PARENT,
 							    GTK_MESSAGE_INFO,
-							    GTK_BUTTONS_OK,
+							    GTK_BUTTONS_CLOSE,
 							    markup);
     response = gtk_dialog_run (GTK_DIALOG(dialog));
     gtk_widget_destroy (GTK_WIDGET(dialog));
