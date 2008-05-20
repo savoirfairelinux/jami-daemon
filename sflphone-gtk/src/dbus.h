@@ -292,6 +292,18 @@ void dbus_set_dialpad(  );
 int dbus_get_dialpad( void );
 
 /**
+ * ConfigurationManager - Set the searchbar visible or not
+ */
+void dbus_set_searchbar(  );
+
+/**
+ * ConfigurationManager - Tells if the user wants to display the search bar or not 
+ * @return int 1 if the search bar has to be displayed
+ *	       0 otherwise
+ */
+int dbus_get_searchbar( void );
+
+/**
  * ConfigurationManager - Set the volume controls visible or not
  */
 void dbus_set_volume_controls(  );

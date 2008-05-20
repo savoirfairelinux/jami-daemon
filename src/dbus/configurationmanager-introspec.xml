@@ -159,6 +159,13 @@
     <method name="setDialpad">
     </method>
 
+    <method name="getSearchbar">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <method name="setSearchbar">
+    </method>
+
     <method name="getVolumeControls">
       <arg type="i" name="state" direction="out"/>
     </method>

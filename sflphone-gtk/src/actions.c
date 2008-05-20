@@ -25,6 +25,7 @@
 #include <menus.h>
 #include <statusicon.h>
 #include <calltab.h>
+#include <historyfilter.h>
 
 #include <gtk/gtk.h>
 #include <string.h>
@@ -196,6 +197,7 @@ sflphone_init()
 	int i;
 	current_calls = calltab_init();
 	history = calltab_init();	
+	histfilter = create_filter(GTK_TREE_MODEL(history->store));
 	account_list_init ();
         codec_list_init();
 	if(!dbus_connect ()){

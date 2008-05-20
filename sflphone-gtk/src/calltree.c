@@ -43,7 +43,9 @@ gboolean history_shown;
   void
 switch_tab()
 {
-  (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(historyButton)))? gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE):gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), TRUE);
+  (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(historyButton)))? 
+    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE):
+    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), TRUE);
 }
 
 /**
@@ -173,21 +175,22 @@ unhold( GtkWidget *widget, gpointer   data )
 toggle_history(GtkToggleToolButton *toggle_tool_button,
     gpointer	user_data)
 {
-  GtkTreeSelection *sel;
-  if(history_shown){
-    active_calltree = current_calls;
-    gtk_widget_hide(history->tree);
-    gtk_widget_show(current_calls->tree);
-    history_shown = FALSE;
-  }else{
-    active_calltree = history;
-    gtk_widget_hide(current_calls->tree);
-    gtk_widget_show(history->tree);
-    history_shown = TRUE;
-  }
-  sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
-  g_signal_emit_by_name(sel, "changed");
-  toolbar_update_buttons();
+	GtkTreeSelection *sel;
+	if(history_shown){
+		active_calltree = current_calls;
+		gtk_widget_hide(history->tree);
+		gtk_widget_show(current_calls->tree);
+		history_shown = FALSE;
+	}else{
+		active_calltree = history;
+		gtk_widget_hide(current_calls->tree);
+		gtk_widget_show(history->tree);
+		history_shown = TRUE;
+	}
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
+	g_signal_emit_by_name(sel, "changed");
+	toolbar_update_buttons();
+	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(histfilter));
 
 }
 
