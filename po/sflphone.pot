@@ -65,6 +65,10 @@ msgstr ""
 msgid "_Accounts"
 msgstr ""
 
+#: sflphone-gtk/src/menus.c: 523
+msgid "_Clear history"
+msgstr ""
+
 #: sflphone-gtk/src/menus.c: 438
 msgid "_Edit"
 msgstr ""

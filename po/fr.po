@@ -67,6 +67,18 @@ msgstr "_Assistant SFLphone"
 msgid "_Accounts"
 msgstr "Co_mptes"
 
+#: sflphone-gtk/src/menus.c: 523
+msgid "_Clear history"
+msgstr "Effacer l'historique"
+
+#: sflphone-gtk/src/menus.c: 523
+msgid "History empty"
+msgstr "L'historique est vide"
+
+#: sflphone-gtk/src/menus.c: 523
+msgid "Clear the call history?"
+msgstr "Effacer l'historique des appels?"
+
 #: sflphone-gtk/src/menus.c: 438
 msgid "_Edit"
 msgstr "_Options"

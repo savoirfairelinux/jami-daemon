@@ -37,6 +37,8 @@ GtkWidget * newCallMenu;
 GtkWidget * holdMenu;
 GtkWidget * copyMenu;
 GtkWidget * pasteMenu;
+GtkWidget * clearhistoryMenu;
+
 guint holdConnId;     //The hold_menu signal connection ID
 
 GtkWidget * dialpadMenu;
@@ -484,10 +486,44 @@ edit_paste ( void * foo)
 
 }
 
+  static void
+clear_history( void* foo )
+{
+  gchar *markup;
+  GtkWidget *dialog;
+  int response;
+
+  if( call_list_get_size( history ) == 0 ){
+    markup = g_markup_printf_escaped(_("History empty"));
+    dialog = gtk_message_dialog_new_with_markup ( GTK_WINDOW(get_main_window()),
+							    GTK_DIALOG_DESTROY_WITH_PARENT,
+							    GTK_MESSAGE_INFO,
+							    GTK_BUTTONS_OK,
+							    markup);
+    response = gtk_dialog_run (GTK_DIALOG(dialog));
+    gtk_widget_destroy (GTK_WIDGET(dialog));
+  }
+  else{  
+    markup = g_markup_printf_escaped(_("Clear the call history?"));
+    dialog = gtk_message_dialog_new_with_markup ( GTK_WINDOW(get_main_window()),
+							    GTK_DIALOG_DESTROY_WITH_PARENT,
+							    GTK_MESSAGE_INFO,
+							    GTK_BUTTONS_YES_NO,
+							    markup);
+    response = gtk_dialog_run (GTK_DIALOG(dialog));
+    gtk_widget_destroy (GTK_WIDGET(dialog));
+    if (response == GTK_RESPONSE_YES)
+    {
+      call_list_clean_history();
+    }
+  }
+}
+
   GtkWidget * 
 create_edit_menu()
 {
   GtkWidget * menu;
+  GtkWidget * image;
   GtkWidget * root_menu;
   GtkWidget * menu_items;
 
@@ -506,6 +542,18 @@ create_edit_menu()
       G_CALLBACK (edit_paste), 
       NULL);
   gtk_widget_show (pasteMenu);
+
+  menu_items = gtk_separator_menu_item_new ();
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+
+  menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Clear history"));
+  image = gtk_image_new_from_stock( GTK_STOCK_CLEAR , GTK_ICON_SIZE_MENU );
+  gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( menu_items ), image );
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+  g_signal_connect_swapped (G_OBJECT (menu_items), "activate",
+      G_CALLBACK (clear_history), 
+      NULL);
+  gtk_widget_show (menu_items);  
 
   menu_items = gtk_separator_menu_item_new ();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
