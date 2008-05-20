@@ -262,6 +262,18 @@ ConfigurationManager::setDialpad( void )
 }
 
 ::DBus::Int32
+ConfigurationManager::getSearchbar( void )
+{
+  return Manager::instance().getSearchbar(  ); 
+}
+
+void
+ConfigurationManager::setSearchbar( void )
+{
+  Manager::instance().setSearchbar( ); 
+}
+
+::DBus::Int32
 ConfigurationManager::getVolumeControls( void )
 {
   return Manager::instance().getVolumeControls(  ); 

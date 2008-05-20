@@ -59,13 +59,6 @@ clear_filter_entry_if_default(GtkWidget* widget, gpointer user_data)
 	
 }
 
-void
-clear_filter_entry(GtkButton* button,
-		gpointer user_data)
-{
-	gtk_entry_set_text(GTK_ENTRY(filter_entry), "");
-}
-
 GtkWidget*
 create_filter_entry() 
 {

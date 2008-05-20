@@ -506,7 +506,7 @@ class ManagerImpl {
     void startHidden( void );
 
     /**
-      Configure the popup behaviour
+     * Configure the popup behaviour
      * @return int	1 if it should popup on incoming calls
      *		0 if it should never popups  
      */
@@ -518,6 +518,16 @@ class ManagerImpl {
      * Never or only on incoming calls
      */
     void switchPopupMode( void );
+
+    /**
+     * Determine whether or not the search bar (history) should be displayed
+     */
+    int getSearchbar( void );
+
+    /**
+     * Configure the search bar behaviour
+     */
+    void setSearchbar( void );
 
     /**
      * Set the desktop notification level

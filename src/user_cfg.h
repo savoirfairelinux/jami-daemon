@@ -48,6 +48,7 @@
 
 #define PREFERENCES		"Preferences"		  /** Section Preferences */
 #define CONFIG_DIALPAD		"Dialpad.display"	  /** Display dialpad preferences */
+#define CONFIG_SEARCHBAR	"Searchbar.display"	  /** Whether or nor display the search bar */
 #define CONFIG_HISTORY		"History.maxCalls"	  /** Set the maximum number of calls kept */
 #define CONFIG_NOTIFY		"Notify.all"		  /** Desktop notification level */
 #define CONFIG_MAIL_NOTIFY	"Notify.mails"		  /** Desktop mail notification level */

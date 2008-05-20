@@ -1182,6 +1182,41 @@ dbus_set_dialpad(  )
 }
 
 int
+dbus_get_searchbar()
+{
+	int state;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_searchbar(
+			configurationManagerProxy,
+			&state,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_searchbar on ConfigurationManager\n");
+	return state;
+}
+
+void
+dbus_set_searchbar(  )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_searchbar(
+			configurationManagerProxy,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_searchbar on ConfigurationManager\n");
+}
+
+int
 dbus_get_volume_controls()
 {
 	int state;

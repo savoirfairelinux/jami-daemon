@@ -77,6 +77,8 @@ public:
     void setRingtoneChoice( const ::DBus::String& tone );
     ::DBus::Int32 getDialpad( void );
     void setDialpad( void );
+    ::DBus::Int32 getSearchbar( void );
+    void setSearchbar( void );
     void setMaxCalls( const ::DBus::Int32& calls);
     ::DBus::Int32 getMaxCalls( void );
     ::DBus::Int32 getVolumeControls( void );

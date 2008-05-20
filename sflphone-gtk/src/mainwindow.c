@@ -36,6 +36,7 @@
 GtkAccelGroup * accelGroup = NULL;
 GtkWidget * window    = NULL;
 GtkWidget * subvbox   = NULL;
+GtkWidget * vbox   = NULL;
 GtkWidget * dialpad   = NULL;
 GtkWidget * speaker_control = NULL;
 GtkWidget * mic_control = NULL;
@@ -112,6 +113,7 @@ on_key_released (GtkWidget   *widget,
      event->keyval == 32                // space
      )
     return FALSE;
+  g_print("search bar active : %s\n", gtk_widget_is_focus(GTK_WIDGET( filterEntry )));
   sflphone_keypad(event->keyval, event->string);
   return TRUE;
 }                
@@ -120,7 +122,6 @@ void
 create_main_window ()
 {
   GtkWidget *widget;
-  GtkWidget *vbox;
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 0);
@@ -137,7 +138,7 @@ create_main_window ()
   g_signal_connect (G_OBJECT (window), "delete-event",
                     G_CALLBACK (on_delete), NULL);
   //g_signal_connect (G_OBJECT (window), "key-press-event",
-  //                  G_CALLBACK (on_key_released), NULL);
+    //                G_CALLBACK (on_key_released), NULL);
 
   /* Create an accel group for window's shortcuts */
   accelGroup = gtk_accel_group_new ();
@@ -151,28 +152,32 @@ create_main_window ()
   gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
   
   widget = create_toolbar();
-  
-  filterEntry = create_filter_entry();
-
   gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-  gtk_box_pack_start (GTK_BOX (vbox), filterEntry, FALSE /*expand*/, FALSE /*fill*/,  0 /*padding*/);
+
+
   gtk_box_pack_start (GTK_BOX (vbox), current_calls->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
+  
+  if( SHOW_SEARCHBAR ){
+    filterEntry = create_filter_entry();
+    gtk_box_pack_start (GTK_BOX (subvbox), filterEntry, FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+    gtk_widget_show_all ( filterEntry );
+  }
 
-  if( SHOW_VOLUME ){ 
+ if( SHOW_VOLUME ){ 
     speaker_control = create_slider("speaker");
-    gtk_box_pack_start (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (speaker_control);
     mic_control = create_slider("mic");
-    gtk_box_pack_start (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_end (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (mic_control);
   }
+
   if( SHOW_DIALPAD ){ 
     dialpad = create_dialpad();
     gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_box_reorder_child(GTK_BOX (subvbox), dialpad, 1);
     gtk_widget_show_all (dialpad);
   }
 
@@ -258,7 +263,6 @@ main_window_dialpad( gboolean *state ){
   {
     dialpad = create_dialpad();
     gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_box_reorder_child(GTK_BOX (subvbox), dialpad, 1);
     gtk_widget_show_all (dialpad);
     *state = TRUE;
   }
@@ -274,10 +278,10 @@ main_window_volume_controls( gboolean *state ){
   if( !SHOW_VOLUME )
   {
     speaker_control = create_slider("speaker");
-    gtk_box_pack_start (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (speaker_control);
     mic_control = create_slider("mic");
-    gtk_box_pack_start (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_end (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (mic_control);
     *state = TRUE;
   }
@@ -285,6 +289,22 @@ main_window_volume_controls( gboolean *state ){
   {
     gtk_container_remove( GTK_CONTAINER(subvbox) , speaker_control );
     gtk_container_remove( GTK_CONTAINER(subvbox) , mic_control );
+    *state = FALSE;
+  }
+}
+
+void
+main_window_searchbar( gboolean *state ){
+  if( !SHOW_SEARCHBAR )
+  {
+    filterEntry = create_filter_entry();
+    gtk_box_pack_start (GTK_BOX (subvbox), filterEntry, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_widget_show_all (filterEntry);
+    *state = TRUE;
+  }
+  else
+  {
+    gtk_container_remove( GTK_CONTAINER(subvbox) , filterEntry );
     *state = FALSE;
   }
 }

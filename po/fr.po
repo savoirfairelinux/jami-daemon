@@ -79,6 +79,10 @@ msgstr "_Clavier"
 msgid "_Volume controls"
 msgstr "_Contrôle du volume"
 
+#: sflphone-gtk/src/menus.c: 610
+msgid "_Search history"
+msgstr "Recherche dans l'historique"
+
 #: sflphone-gtk/src/menus.c: 479
 msgid "_Toolbar"
 msgstr "_Barre d'outils"

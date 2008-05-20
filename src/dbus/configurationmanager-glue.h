@@ -57,6 +57,8 @@ public:
         register_method(ConfigurationManager, getMailNotify, _getMailNotify_stub);
         register_method(ConfigurationManager, getDialpad, _getDialpad_stub);
         register_method(ConfigurationManager, setDialpad, _setDialpad_stub);
+        register_method(ConfigurationManager, getSearchbar, _getSearchbar_stub);
+        register_method(ConfigurationManager, setSearchbar, _setSearchbar_stub);
         register_method(ConfigurationManager, getVolumeControls, _getVolumeControls_stub);
         register_method(ConfigurationManager, setVolumeControls, _setVolumeControls_stub);
         register_method(ConfigurationManager, getMaxCalls, _getMaxCalls_stub);
@@ -255,6 +257,15 @@ public:
         {
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getSearchbar_args[] = 
+        {
+            { "state", "i", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setSearchbar_args[] = 
+        {
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument getVolumeControls_args[] = 
         {
             { "state", "i", false },
@@ -345,6 +356,8 @@ public:
             { "getMailNotify", getMailNotify_args },
             { "getDialpad", getDialpad_args },
             { "setDialpad", setDialpad_args },
+            { "getSearchbar", getSearchbar_args },
+            { "setSearchbar", setSearchbar_args },
             { "getVolumeControls", getVolumeControls_args },
             { "setVolumeControls", setVolumeControls_args },
             { "getMaxCalls", getMaxCalls_args },
@@ -424,6 +437,8 @@ public:
     virtual ::DBus::Int32 getMailNotify(  ) = 0;
     virtual ::DBus::Int32 getDialpad(  ) = 0;
     virtual void setDialpad(  ) = 0;
+    virtual ::DBus::Int32 getSearchbar(  ) = 0;
+    virtual void setSearchbar(  ) = 0;
     virtual ::DBus::Int32 getVolumeControls(  ) = 0;
     virtual void setVolumeControls(  ) = 0;
     virtual ::DBus::Int32 getMaxCalls(  ) = 0;
@@ -815,6 +830,24 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         setDialpad();
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getSearchbar_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argout1 = getSearchbar();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setSearchbar_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        setSearchbar();
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
