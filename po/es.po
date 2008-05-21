@@ -61,7 +61,7 @@ msgstr "_Llamar"
 
 #: sflphone-gtk/src/menus.c: 270
 msgid "_Account Assistant"
-msgstr ""
+msgstr "_Asistente de Cuenta"
 
 #: sflphone-gtk/src/menus.c: 423
 msgid "_Accounts"
@@ -193,39 +193,39 @@ msgstr "Cuentas existentes"
 
 #: sflphone-gtk/src/configwindow.c: 1254
 msgid "Desktop Notification"
-msgstr ""
+msgstr "Notificación de Escritorio"
 
 #: sflphone-gtk/src/configwindow.c: 1263
 msgid "_Enable"
-msgstr ""
+msgstr "_Activar"
 
 #: sflphone-gtk/src/configwindow.c: 1268
 msgid "_Notify Voice Mails"
-msgstr ""
+msgstr "_Notificar Mensajes Vocales"
 
 #: sflphone-gtk/src/configwindow.c: 1274
 msgid "System Tray Icon"
-msgstr ""
+msgstr "Icono de Bandeja del Sistema"
 
 #: sflphone-gtk/src/configwindow.c: 1283
 msgid "_Popup Main Window On Incoming Call"
-msgstr ""
+msgstr "_Popup Ventana Principal por las Llamadas Recibidas"
 
 #: sflphone-gtk/src/configwindow.c: 1288
 msgid "Ne_ver Popup Main Window"
-msgstr ""
+msgstr "_Jamas Popup Ventana Principal"
 
 #: sflphone-gtk/src/configwindow.c: 1292
 msgid "_Start Hidden"
-msgstr ""
+msgstr "_Iniciar Escondido"
 
 #: sflphone-gtk/src/configwindow.c: 1297
 msgid "Calls History"
-msgstr ""
+msgstr "Historia de Llamada"
 
 #: sflphone-gtk/src/configwindow.c: 1307
 msgid "_Maximum number of calls"
-msgstr ""
+msgstr "_Numero Maximo de Llamadas"
 
 #: sflphone-gtk/src/accountwindow.c: 139
 msgid "Account settings"
@@ -233,7 +233,7 @@ msgstr "Configuración de cuentas"
 
 #: sflphone-gtk/src/accountwindow.c: 151
 msgid "Account parameters"
-msgstr ""
+msgstr "Paràmetros de Cuenta"
 
 #: sflphone-gtk/src/accountwindow.c: 174
 msgid "_Enabled"
@@ -265,11 +265,11 @@ msgstr "_Contraseña"
 
 #: sflphone-gtk/src/accountwindow.c: 241
 msgid "_Voicemail box #"
-msgstr ""
+msgstr "_Numero de Caja de Voz"
 
 #: sflphone-gtk/src/accountwindow.c: 252 sflphone-gtk/src/assistant.c: 256
 msgid "Network Address Translation"
-msgstr ""
+msgstr "Conversión de Dirección de Red"
 
 #: sflphone-gtk/src/accountwindow.c: 264 sflphone-gtk/src/assistant.c: 265
 msgid "E_nable STUN"
@@ -367,79 +367,79 @@ msgstr "<b><big>Bienvenido en SFLphone!</big></b>\n\n"
 
 #: sflphone-gtk/src/SFLnotify.c: 32
 msgid "%s account: %s"
-msgstr ""
+msgstr "%s cuenta: %s"
 
 #: sflphone-gtk/src/SFLnotify.c: 35
 msgid "<i>From:</i> %s"
-msgstr ""
+msgstr "<i>De:</i> %s"
 
 #: sflphone-gtk/src/SFLnotify.c: 50
 msgid "Accept"
-msgstr ""
+msgstr "Aceptar"
 
 #: sflphone-gtk/src/SFLnotify.c: 51
 msgid "Refuse"
-msgstr ""
+msgstr "Renunciar"
 
 #: sflphone-gtk/src/SFLnotify.c: 52
 msgid "Ignore"
-msgstr ""
+msgstr "Ignorar"
 
 #: sflphone-gtk/src/statusicon.c: 80 
 msgid "Show main window"
-msgstr ""
+msgstr "Mostrar Ventana Principal"
 
 #: sflphone-gtk/src/statusicon.c: 113
 msgid "SFLphone - %i account registered"
 msgid_plural "SFLphone - %i accounts registered"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "SFLphone - %i cuenta registrada"
+msgstr[1] "SFLphone - %i cuentas registradas"
 
 #: sflphone-gtk/src/assistant.c: 91
 msgid "SFLphone account configuration wizard"
-msgstr ""
+msgstr "Asistante de Configuración de Cuenta SFLphone"
 
 #: sflphone-gtk/src/assistant.c: 122
 msgid "Welcome to SFLphone!"
-msgstr ""
+msgstr "Bienvenido en SFLphone!"
 
 #: sflphone-gtk/src/assistant.c: 119
 msgid "This installation wizard will help you configure an account."
-msgstr ""
+msgstr "Ese asistante de instalaciòn ayuda usted a configurar una cuenta."
 
 #: sflphone-gtk/src/assistant.c: 134
 msgid "VoIP Protocols"
-msgstr ""
+msgstr "Protocolos VoIP"
 
 #: sflphone-gtk/src/assistant.c: 134
 msgid "Select an account type:"
-msgstr ""
+msgstr "Escoje un tipo de cuenta:"
 
 #: sflphone-gtk/src/assistant.c: 153
 msgid "SIP account configuration"
-msgstr ""
+msgstr "Configuraciòn de cuenta SIP"
 
 #: sflphone-gtk/src/assistant.c: 153 sflphone-gtk/src/assistant.c: 202
 msgid "Please fill the following information:"
-msgstr ""
+msgstr "Por favor de llenar esas informaciones:"
 
 #: sflphone-gtk/src/assistant.c: 202
 msgid "IAX2 account configuration"
-msgstr ""
+msgstr "Configuraciòn de cuenta IAX2"
 
 #: sflphone-gtk/src/assistant.c: 256
 msgid "You should probably enable this if you are behind a firewall."
-msgstr ""
+msgstr "Probablemente, tiene que activar eso si usted esta atras de un cortafuego."
 
 #: sflphone-gtk/src/assistant.c: 289
 msgid "Account Registration"
-msgstr ""
+msgstr "Registraciòn de Cuenta"
 
 #: sflphone-gtk/src/assistant.c: 289
 msgid "Congratulations!"
-msgstr ""
+msgstr "Felicitaciones!"
 
 #: sflphone-gtk/src/assistant.c: 291
 msgid "This assistant is now finished.\n\n You can at any time check your registration state or modify your accounts parameters in the Options/Accounts window."
-msgstr ""
+msgstr "Ese asistante esta terminado.\n\n Usted puede checar su estado de registraciòn o cambiar sus parametros de cuentas en cualquier momento en la ventana de Opciones/Cuentas."
 
