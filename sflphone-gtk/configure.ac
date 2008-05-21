@@ -27,6 +27,7 @@ PKG_CHECK_MODULES(DEPS, \
     libnotify >= 0.4 \
     gtk+-2.0 >= 2.2     \
     glib-2.0 >= 2.2     \
+    libsexy >= 0.1    \
 )
 
 

@@ -975,6 +975,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
   fill_config_int(CONFIG_RINGTONE, YES_STR);
   fill_config_int(CONFIG_DIALPAD, YES_STR);
+  fill_config_int(CONFIG_SEARCHBAR, YES_STR);
   fill_config_int(CONFIG_START, NO_STR);
   fill_config_int(CONFIG_POPUP, YES_STR);
   fill_config_int(CONFIG_NOTIFY , YES_STR);
@@ -1367,6 +1368,18 @@ ManagerImpl::getMaxCalls( void )
 {
   _debug("Max calls =  %i\n" , getConfigInt( PREFERENCES , CONFIG_HISTORY ));
   return getConfigInt( PREFERENCES , CONFIG_HISTORY );
+}
+
+int
+ManagerImpl::getSearchbar( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_SEARCHBAR );
+}
+
+void
+ManagerImpl::setSearchbar( void )
+{
+  ( getConfigInt( PREFERENCES , CONFIG_SEARCHBAR ) ==  1)? setConfig(PREFERENCES , CONFIG_SEARCHBAR , NO_STR ) : setConfig( PREFERENCES , CONFIG_SEARCHBAR , YES_STR );
 }
 
 int 
