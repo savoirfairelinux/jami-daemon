@@ -93,31 +93,6 @@ main_window_ask_quit(){
   return TRUE;
 }
 
-static gboolean
-on_key_released (GtkWidget   *widget,
-                GdkEventKey *event,
-                gpointer     user_data)  
-{
-#ifdef DEBUG
-  g_print("KEY %s, %d\n", event->string, event->keyval);
-#endif 
-  // If a modifier key is pressed, it's a shortcut, pass along
-  if(event->state & GDK_CONTROL_MASK || 
-     event->state & GDK_MOD1_MASK    ||
-     event->keyval == 60             || // <
-     event->keyval == 62             || // >
-     event->keyval == 34             || // "
-     event->keyval == 65361          || // left arrow
-     event->keyval == 65363          || // right arrow
-     event->keyval >= 65470          || // F-keys
-     event->keyval == 32                // space
-     )
-    return FALSE;
-  g_print("search bar active : %s\n", gtk_widget_is_focus(GTK_WIDGET( filterEntry )));
-  sflphone_keypad(event->keyval, event->string);
-  return TRUE;
-}                
-
 void
 create_main_window ()
 {
@@ -137,8 +112,6 @@ create_main_window ()
     */
   g_signal_connect (G_OBJECT (window), "delete-event",
                     G_CALLBACK (on_delete), NULL);
-  //g_signal_connect (G_OBJECT (window), "key-press-event",
-    //                G_CALLBACK (on_key_released), NULL);
 
   /* Create an accel group for window's shortcuts */
   accelGroup = gtk_accel_group_new ();

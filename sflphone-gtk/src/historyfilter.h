@@ -24,10 +24,6 @@
 #include <gtk/gtk.h>
 #include <libsexy/sexy-icon-entry.h>
 
-
-
-GtkWidget * filter_entry;
-
 GtkTreeModel* create_filter(GtkTreeModel* child);
 
 gboolean is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data);

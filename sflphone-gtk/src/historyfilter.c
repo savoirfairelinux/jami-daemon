@@ -20,6 +20,8 @@
 #include <historyfilter.h>
 #include <calltree.h>
 
+GtkWidget * filter_entry;
+
 GtkTreeModel*
 create_filter(GtkTreeModel* child)
 {
@@ -69,6 +71,7 @@ create_filter_entry()
 	GtkWidget* ret = gtk_hbox_new(FALSE, 0);
       
 	filter_entry = sexy_icon_entry_new();
+	//filter_entry = gtk_entry_new();
 	image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
 	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(filter_entry), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
 	sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(filter_entry) );
