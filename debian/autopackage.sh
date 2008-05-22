@@ -19,12 +19,11 @@ package="sflphone"
 version="$1"
 section="gnome"
 priority="optional"
-essential="no"
 #size="1945"
 arch="$2"
 homepage="http://www.sflphone.org"
 maintainer="SavoirFaireLinux Inc <emmanuel.milou@savoirfairelinux.com>"
-desc="SFLphone - SIP and IAX2 compatible softphone\n SFLphone is meant to be a robust enterprise-class desktop phone. It is design with a hundred-calls-a-day receptionist in mind. It can work for you, too.\n .\n SFLphone is released under the GNU General Public License.\n .\n SFLphone is being developed by the global community, and maintained by Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company."
+desc="SIP and IAX2 compatible softphone\n SFLphone is meant to be a robust enterprise-class desktop phone.\n It is design with a hundred-calls-a-day receptionist in mind. It can work for you, too.\n .\n SFLphone is released under the GNU General Public License.\n .\n SFLphone is being developed by the global community, and maintained by Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company."
 
 # Get the needed stuff
 
@@ -40,7 +39,7 @@ debdir="$sfldir/DEBIAN"
 mkdir -p $sfldir$bindir
 cp $bindir/sflphoned $sfldir$bindir
 cp $bindir/sflphone-gtk $sfldir$bindir
-ln -sf $bindir/sflphone-gtk $sfldir$bindir/sflphone
+ln -sf $sfldir$bindir/sflphone-gtk $sfldir$bindir/sflphone
 
 #/usr/lib
 mkdir -p $sfldir/usr/lib/sflphone/codecs
