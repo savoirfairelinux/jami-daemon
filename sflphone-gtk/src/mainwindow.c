@@ -66,11 +66,11 @@ main_window_ask_quit(){
   
   if(count == 1)
   {
-    question = "<b>There is one call in progress.</b>\nDo you still want to quit?";
+    question = _("<b>There is one call in progress.</b>\nDo you still want to quit?");
   }
   else
   {
-    question = "<b>There are calls in progress.</b>\nDo you still want to quit?";
+    question = _("<b>There are calls in progress.</b>\nDo you still want to quit?");
   }
   
   dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(window) ,

@@ -12,7 +12,7 @@ then
 fi
 
 # Libraries dependencies
-dependencies="libgcc1 , libsamplerate0 (>=0.1.2) , libdbus-glib-1-2 (>= 0.73), libexpat1 , libgtk2.0-0 , libc6 (>= 2.3.6-6) , libglib2.0-0 (>= 2.12.0) , libosip2-2, libexosip2-4, libcommoncpp2-1.6-0 , libccrtp1-1.6-0  , sflphone-iax2 , libgsm1 (>=1.0.10) , libspeex1 (>=1.1.12) , dbus-c++-1 (>=0.5.0)"
+dependencies="libgcc1 , libsamplerate0 (>=0.1.2) , libdbus-glib-1-2 (>= 0.73), libexpat1 , libgtk2.0-0 , libc6 (>= 2.3.6-6) , libglib2.0-0 (>= 2.12.0) , libosip2-2, libexosip2-4, libcommoncpp2-1.6-0 , libccrtp1-1.6-0  , sflphone-iax2 , libgsm1 (>=1.0.10) , libspeex1 (>=1.1.12) , dbus-c++-1 (>=0.5.0) , libsexy2 (>=0.1.11)"
 
 # Package Infos
 package="sflphone"
@@ -54,7 +54,7 @@ cp $sharedir/applications/sflphone.desktop $sfldir$sharedir/applications/
 #/usr/share/dbus-1/services
 mkdir -p $sfldir$sharedir/dbus-1/services
 cp $sharedir/dbus-1/services/org.sflphone.SFLphone.service $sfldir$sharedir/dbus-1/services/
-/usr/share/pixmaps
+#/usr/share/pixmaps
 mkdir -p $sfldir$sharedir/pixmaps
 cp $sharedir/pixmaps/sflphone.png $sfldir$sharedir/pixmaps
 #/usr/share/sflphone
@@ -96,4 +96,4 @@ dpkg --build $sfldir ${sfldir}_$2.deb
 
 # Clean up the generated stuff
 echo "Clean up ... "
-rm -rf $sfldir 
+#rm -rf $sfldir 

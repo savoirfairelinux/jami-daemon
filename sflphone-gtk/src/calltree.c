@@ -203,8 +203,7 @@ call_mailbox( GtkWidget* widget , gpointer data )
   call_t* mailboxCall = g_new0( call_t , 1);
   mailboxCall->state = CALL_STATE_DIALING;
   mailboxCall->to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
-  //mailboxCall->from = g_strconcat("\"Voicemail Box\" <>", NULL);
-  mailboxCall->from = g_markup_printf_escaped("\"Voicemail\" <%s>",  mailboxCall->to);
+  mailboxCall->from = g_markup_printf_escaped(_("\"Voicemail\" <%s>"),  mailboxCall->to);
   mailboxCall->callID = g_new0(gchar, 30);
   g_sprintf(mailboxCall->callID, "%d", rand());
   mailboxCall->accountID = g_strdup(current->accountID);
@@ -476,11 +475,11 @@ create_toolbar ()
   active_calltree = current_calls;
 
   image = gtk_image_new_from_file( ICONS_DIR "/mailbox.svg");
-  mailboxButton = gtk_tool_button_new( image , _("Voicemail box"));
+  mailboxButton = gtk_tool_button_new( image , _("Voicemail"));
   gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mailboxButton), image);
   if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
 #if GTK_CHECK_VERSION(2,12,0)
-  gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Voicemail box"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Voicemail"));
 #endif
   g_signal_connect (G_OBJECT (mailboxButton), "clicked",
       G_CALLBACK (call_mailbox), NULL);

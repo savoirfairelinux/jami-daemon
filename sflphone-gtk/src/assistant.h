@@ -25,6 +25,7 @@
 #include <actions.h>
 #include <sflphone_const.h>
 
+
 #if GTK_CHECK_VERSION(2,10,0)
 
 #define _SIP  0

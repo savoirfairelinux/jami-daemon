@@ -67,7 +67,7 @@ status_bar_display_account( call_t* c)
     account_t* acc;
     if(c->accountID != NULL){
       acc = account_list_get_by_id(c->accountID);
-      msg = g_markup_printf_escaped("%s account- %s" , 
+      msg = g_markup_printf_escaped(_("%s account- %s") , 
 				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
 				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
       statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);

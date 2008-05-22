@@ -42,7 +42,7 @@ is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data)
 	if(G_VALUE_HOLDS_STRING(&val)){
 		text = (gchar *)g_value_get_string(&val);
  	}
-	if(text != NULL && g_ascii_strncasecmp(search, "Search", 6) != 0){
+	if(text != NULL && g_ascii_strncasecmp(search, _("Search"), 6) != 0){
 		return g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
  	}
 	return TRUE;
@@ -60,7 +60,7 @@ filter_entry_changed(GtkEntry* entry, gchar* arg1, gpointer data)
 void
 clear_filter_entry_if_default(GtkWidget* widget, gpointer user_data)
 {
-	if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry)), "Search", 6) == 0)
+	if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry)), _("Search"), 6) == 0)
 		gtk_entry_set_text(GTK_ENTRY(filter_entry), "");
 }
 
@@ -75,7 +75,7 @@ create_filter_entry()
 	image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
 	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(filter_entry), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
 	sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(filter_entry) );
-	gtk_entry_set_text(GTK_ENTRY(filter_entry), "Search");	
+	gtk_entry_set_text(GTK_ENTRY(filter_entry), _("Search"));	
 	g_signal_connect(GTK_ENTRY(filter_entry), "changed", G_CALLBACK(filter_entry_changed), NULL);
 	g_signal_connect(GTK_ENTRY(filter_entry), "grab-focus", G_CALLBACK(clear_filter_entry_if_default), NULL);
 

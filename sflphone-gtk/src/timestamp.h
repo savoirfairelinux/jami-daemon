@@ -32,7 +32,6 @@
 #include <calllist.h>
 #include <sflphone_const.h>
 
-
 gchar* timestamp_get_call_date( void );
 
 gchar* process_call_duration( call_t* c );

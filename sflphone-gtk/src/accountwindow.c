@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2007-2008 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -17,12 +18,14 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <config.h>
 #include <actions.h>
 #include <mainwindow.h>
 #include <accountlist.h>
+
+#include <libsexy/sexy-icon-entry.h>
 #include <string.h>
 #include <dbus.h>
+#include <config.h>
 #include <gtk/gtk.h>
 
 /** Local variables */
@@ -90,6 +93,7 @@ stun_state( void )
 show_account_window (account_t * a)
 {
   guint response;
+  GtkWidget *image;
 
   currentAccount = a;
 
@@ -223,7 +227,9 @@ show_account_window (account_t * a)
   label = gtk_label_new_with_mnemonic (_("_User name"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-  entryUsername = gtk_entry_new();
+  entryUsername = sexy_icon_entry_new();
+  image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
+  sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(entryUsername), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUsername);
   gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
   gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -231,7 +237,9 @@ show_account_window (account_t * a)
   label = gtk_label_new_with_mnemonic (_("_Password"));
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-  entryPassword = gtk_entry_new();
+  entryPassword = sexy_icon_entry_new();
+  image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
+  sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(entryPassword), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
   gtk_entry_set_visibility(GTK_ENTRY(entryPassword), FALSE);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPassword);
   gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);

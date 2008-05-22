@@ -19,8 +19,8 @@
 
 #include <timestamp.h>
 
-char* months[12] = {"january","february","march", "april", "may", "june", "july", "august", "september", "october", "november", "december"};
-char* week_days[7] = {"Sun", "Mon", "Tue","Wed","Thu","Fri","Sat"};
+gchar* months[12] = {"january","february","march", "april", "may", "june", "july", "august", "september", "october", "november", "december"};
+gchar* week_days[7] = {"Sun", "Mon", "Tue","Wed","Thu","Fri","Sat"};
 
   gchar* 
 timestamp_get_call_date( void )
@@ -42,7 +42,7 @@ process_call_duration( call_t* c )
   g_print("Start = %i - Stop = %i  - Call duration = %i\n", c->_start , c->_stop , (int)(c->_stop - c->_start));
 
   if( c->history_state == MISSED && c->_stop == 0 )
-    return g_markup_printf_escaped("<small>Missed call</small>");
+    return g_markup_printf_escaped(_("<small>Missed call</small>"));
 
   int duration = c->_stop - c->_start;
 
@@ -60,7 +60,7 @@ process_call_duration( call_t* c )
     else
       res = g_markup_printf_escaped("%i:%i" , duration/60 , duration%60);
   }
-  return g_markup_printf_escaped("<small>Duration:</small> %s", res);
+  return g_markup_printf_escaped(_("<small>Duration:</small> %s"), res);
 }
 
 gchar*
