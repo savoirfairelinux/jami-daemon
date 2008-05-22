@@ -39,7 +39,7 @@
 #define EXOSIP_ERROR_BUILDING -2
 
 // for registration
-#define EXPIRES_VALUE 180
+//#define EXPIRES_VALUE 180
 
 // 1XX responses
 #define DIALOG_ESTABLISHED 101
@@ -443,6 +443,8 @@ SIPVoIPLink::getEvent()
 bool
 SIPVoIPLink::sendRegister()
 {
+  int expire_value = Manager::instance().getRegistrationExpireValue();
+  _debug("SIP Registration Expire Value = %i\n" , expire_value);
 
   if (_eXosipRegID != EXOSIP_ERROR_STD) {
     return false;
@@ -466,11 +468,11 @@ SIPVoIPLink::sendRegister()
   if (!_proxy.empty()) {
     _debug("* SIP Info: Register from: %s to %s\n", from.data(), proxy.data());
     _eXosipRegID = eXosip_register_build_initial_register(from.data(), 
-                  proxy.data(), NULL, EXPIRES_VALUE, &reg);
+                  proxy.data(), NULL, expire_value, &reg);
   } else {
     _debug("* SIP Info: Register from: %s to %s\n", from.data(), hostname.data());
     _eXosipRegID = eXosip_register_build_initial_register(from.data(), 
-                  hostname.data(), NULL, EXPIRES_VALUE, &reg);
+                  hostname.data(), NULL, expire_value, &reg);
   }
   eXosip_unlock();
   if (_eXosipRegID < EXOSIP_ERROR_NO ) {
@@ -950,6 +952,7 @@ SIPVoIPLink::isContactPresenceSupported()
 	return true;
 }
 
+/*
 void
 SIPVoIPLink::subscribePresenceForContact(Contact* contact)
 {
@@ -980,6 +983,7 @@ SIPVoIPLink::subscribePresenceForContact(Contact* contact)
 	if(i!=0) _debug("Sending of subscription tp %s failed\n", to.data());
 	eXosip_unlock();
 }
+*/
 
 void
 SIPVoIPLink::publishPresenceStatus(std::string status)

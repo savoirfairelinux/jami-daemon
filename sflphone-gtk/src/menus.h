@@ -43,4 +43,10 @@ void update_menus();
  */
 void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event);
 
+/**
+ * Create a menu on right-click for the history
+ * @param my_widget The widget you click on
+ * @param event The mouse event
+ */
+void show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event);
 #endif 

@@ -47,7 +47,6 @@
 
 #include "user_cfg.h"
 
-#include "contact/presencestatus.h"
 
 #ifdef USE_ZEROCONF
 #include "zeroconf/DNSService.h"
@@ -412,9 +411,9 @@ ManagerImpl::initRegisterAccounts()
       if ( iter->second->isEnabled() ) {
 	// NOW
 	iter->second->registerVoIPLink();
-	iter->second->loadContacts();
-	iter->second->publishPresence(PRESENCE_ONLINE);
-	iter->second->subscribeContactsPresence();
+	//iter->second->loadContacts();
+	//iter->second->publishPresence(PRESENCE_ONLINE);
+	//iter->second->subscribeContactsPresence();
       }
     }
     iter++;
@@ -1010,12 +1009,14 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_ZEROCONF, CONFIG_ZEROCONF_DEFAULT_STR);
   fill_config_int(CONFIG_RINGTONE, YES_STR);
   fill_config_int(CONFIG_DIALPAD, YES_STR);
+  fill_config_int(CONFIG_SEARCHBAR, YES_STR);
   fill_config_int(CONFIG_START, NO_STR);
   fill_config_int(CONFIG_POPUP, YES_STR);
   fill_config_int(CONFIG_NOTIFY , YES_STR);
   fill_config_int(CONFIG_MAIL_NOTIFY , NO_STR);
   fill_config_int(CONFIG_VOLUME , YES_STR);
   fill_config_int(CONFIG_HISTORY , DFT_MAX_CALLS);
+  fill_config_int(REGISTRATION_EXPIRE , DFT_EXPIRE_VALUE);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1420,6 +1421,18 @@ ManagerImpl::getMaxCalls( void )
   return getConfigInt( PREFERENCES , CONFIG_HISTORY );
 }
 
+int
+ManagerImpl::getSearchbar( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_SEARCHBAR );
+}
+
+void
+ManagerImpl::setSearchbar( void )
+{
+  ( getConfigInt( PREFERENCES , CONFIG_SEARCHBAR ) ==  1)? setConfig(PREFERENCES , CONFIG_SEARCHBAR , NO_STR ) : setConfig( PREFERENCES , CONFIG_SEARCHBAR , YES_STR );
+}
+
 int 
 ManagerImpl::popupMode( void )
 {
@@ -1442,6 +1455,12 @@ ManagerImpl::setNotify( void )
 ManagerImpl::getMailNotify( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_MAIL_NOTIFY );
+}
+
+int
+ManagerImpl::getRegistrationExpireValue( void)
+{
+  return getConfigInt( PREFERENCES , REGISTRATION_EXPIRE );
 }
 
 void

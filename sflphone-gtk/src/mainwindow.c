@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
@@ -27,6 +28,7 @@
 #include <mainwindow.h>
 #include <menus.h>
 #include <sliders.h>
+#include <historyfilter.h>
 
 #include <gtk/gtk.h>
 
@@ -34,10 +36,12 @@
 GtkAccelGroup * accelGroup = NULL;
 GtkWidget * window    = NULL;
 GtkWidget * subvbox   = NULL;
+GtkWidget * vbox   = NULL;
 GtkWidget * dialpad   = NULL;
 GtkWidget * speaker_control = NULL;
 GtkWidget * mic_control = NULL;
 GtkWidget * statusBar = NULL;
+GtkWidget * filterEntry = NULL;
 
 /**
  * Minimize the main window.
@@ -62,11 +66,11 @@ main_window_ask_quit(){
   
   if(count == 1)
   {
-    question = "<b>There is one call in progress.</b>\nDo you still want to quit?";
+    question = _("<b>There is one call in progress.</b>\nDo you still want to quit?");
   }
   else
   {
-    question = "<b>There are calls in progress.</b>\nDo you still want to quit?";
+    question = _("<b>There are calls in progress.</b>\nDo you still want to quit?");
   }
   
   dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(window) ,
@@ -89,35 +93,10 @@ main_window_ask_quit(){
   return TRUE;
 }
 
-static gboolean
-on_key_released (GtkWidget   *widget,
-                GdkEventKey *event,
-                gpointer     user_data)  
-{
-#ifdef DEBUG
-  g_print("KEY %s, %d\n", event->string, event->keyval);
-#endif 
-  // If a modifier key is pressed, it's a shortcut, pass along
-  if(event->state & GDK_CONTROL_MASK || 
-     event->state & GDK_MOD1_MASK    ||
-     event->keyval == 60             || // <
-     event->keyval == 62             || // >
-     event->keyval == 34             || // "
-     event->keyval == 65361          || // left arrow
-     event->keyval == 65363          || // right arrow
-     event->keyval >= 65470          || // F-keys
-     event->keyval == 32                // space
-     )
-    return FALSE;
-  sflphone_keypad(event->keyval, event->string);
-  return TRUE;
-}                
-
 void
 create_main_window ()
 {
   GtkWidget *widget;
-  GtkWidget *vbox;
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 0);
@@ -133,8 +112,6 @@ create_main_window ()
     */
   g_signal_connect (G_OBJECT (window), "delete-event",
                     G_CALLBACK (on_delete), NULL);
-  g_signal_connect (G_OBJECT (window), "key-press-event",
-                    G_CALLBACK (on_key_released), NULL);
 
   /* Create an accel group for window's shortcuts */
   accelGroup = gtk_accel_group_new ();
@@ -149,23 +126,31 @@ create_main_window ()
   
   widget = create_toolbar();
   gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+
+
   gtk_box_pack_start (GTK_BOX (vbox), current_calls->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
+  
+  if( SHOW_SEARCHBAR ){
+    filterEntry = create_filter_entry();
+    gtk_box_pack_start (GTK_BOX (subvbox), filterEntry, FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+    gtk_widget_show_all ( filterEntry );
+  }
 
-  if( SHOW_VOLUME ){ 
+ if( SHOW_VOLUME ){ 
     speaker_control = create_slider("speaker");
-    gtk_box_pack_start (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (speaker_control);
     mic_control = create_slider("mic");
-    gtk_box_pack_start (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_end (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (mic_control);
   }
+
   if( SHOW_DIALPAD ){ 
     dialpad = create_dialpad();
     gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_box_reorder_child(GTK_BOX (subvbox), dialpad, 1);
     gtk_widget_show_all (dialpad);
   }
 
@@ -181,6 +166,7 @@ create_main_window ()
   gtk_widget_hide(history->tree);
   //gtk_widget_show(current_calls->tree);
   
+  gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
   // Configuration wizard 
   if (account_list_get_size() == 0)
   {
@@ -250,7 +236,6 @@ main_window_dialpad( gboolean *state ){
   {
     dialpad = create_dialpad();
     gtk_box_pack_end (GTK_BOX (subvbox), dialpad, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
-    gtk_box_reorder_child(GTK_BOX (subvbox), dialpad, 1);
     gtk_widget_show_all (dialpad);
     *state = TRUE;
   }
@@ -266,10 +251,10 @@ main_window_volume_controls( gboolean *state ){
   if( !SHOW_VOLUME )
   {
     speaker_control = create_slider("speaker");
-    gtk_box_pack_start (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_end (GTK_BOX (subvbox), speaker_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (speaker_control);
     mic_control = create_slider("mic");
-    gtk_box_pack_start (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_box_pack_end (GTK_BOX (subvbox), mic_control, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
     gtk_widget_show_all (mic_control);
     *state = TRUE;
   }
@@ -277,6 +262,22 @@ main_window_volume_controls( gboolean *state ){
   {
     gtk_container_remove( GTK_CONTAINER(subvbox) , speaker_control );
     gtk_container_remove( GTK_CONTAINER(subvbox) , mic_control );
+    *state = FALSE;
+  }
+}
+
+void
+main_window_searchbar( gboolean *state ){
+  if( !SHOW_SEARCHBAR )
+  {
+    filterEntry = create_filter_entry();
+    gtk_box_pack_start (GTK_BOX (subvbox), filterEntry, FALSE /*expand*/, TRUE /*fill*/, 0 /*padding*/);
+    gtk_widget_show_all (filterEntry);
+    *state = TRUE;
+  }
+  else
+  {
+    gtk_container_remove( GTK_CONTAINER(subvbox) , filterEntry );
     *state = FALSE;
   }
 }

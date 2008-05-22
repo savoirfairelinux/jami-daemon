@@ -24,6 +24,7 @@
   * @brief The window to edit account details.
   */
 
+
 /** 
  * Display the main account widget 
  * @param a The account you want to edit or null for a new account

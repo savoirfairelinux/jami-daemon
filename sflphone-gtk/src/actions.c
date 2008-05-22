@@ -25,6 +25,7 @@
 #include <menus.h>
 #include <statusicon.h>
 #include <calltab.h>
+#include <historyfilter.h>
 
 #include <gtk/gtk.h>
 #include <string.h>
@@ -66,7 +67,7 @@ status_bar_display_account( call_t* c)
     account_t* acc;
     if(c->accountID != NULL){
       acc = account_list_get_by_id(c->accountID);
-      msg = g_markup_printf_escaped("%s account- %s" , 
+      msg = g_markup_printf_escaped(_("%s account- %s") , 
 				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
 				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
       statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
@@ -196,6 +197,7 @@ sflphone_init()
 	int i;
 	current_calls = calltab_init();
 	history = calltab_init();	
+	if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
 	account_list_init ();
         codec_list_init();
 	if(!dbus_connect ()){
@@ -217,7 +219,6 @@ void
 sflphone_hang_up()
 {
 	call_t * selectedCall = call_get_selected(current_calls);
-	(void) time(&selectedCall->_stop);
 	if(selectedCall)
 	{
 		switch(selectedCall->state)
@@ -236,14 +237,17 @@ sflphone_hang_up()
 			case CALL_STATE_FAILURE:
 				dbus_hang_up (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
+				(void) time(&selectedCall->_stop);
 				break;
 			case CALL_STATE_INCOMING:  
 				dbus_refuse (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
+				selectedCall->_stop = 0;
 				g_print("from sflphone_hang_up : "); stop_notification();
 				break;
 			case CALL_STATE_TRANSFERT:  
 				dbus_hang_up (selectedCall);
+				(void) time(&selectedCall->_stop);
 				break;
 			default:
 				g_warning("Should not happen in sflphone_hang_up()!");
@@ -276,6 +280,7 @@ sflphone_pick_up()
 				break;
 			case CALL_STATE_TRANSFERT:
 				dbus_transfert (selectedCall);
+				(void) time(&selectedCall->_stop);
 				break;
 			case CALL_STATE_CURRENT:
 				sflphone_new_call();
@@ -346,10 +351,11 @@ sflphone_busy( call_t * c )
 void 
 sflphone_current( call_t * c )
 {
-	c->state = CALL_STATE_CURRENT;
-	update_call_tree(current_calls,c);
-	update_menus();
+  if( c->state != CALL_STATE_HOLD )
 	(void) time(&c->_start);
+  c->state = CALL_STATE_CURRENT;
+  update_call_tree(current_calls,c);
+  update_menus();
 }
 
 void 
@@ -387,8 +393,8 @@ sflphone_incoming_call (call_t * c)
 	call_list_add ( current_calls, c );
 	call_list_add( history, c );
 	update_call_tree_add( current_calls , c );
-	//update_call_tree_add( history , c );
 	update_menus();
+	if( active_calltree == history )  switch_tab();
 }
 
 void
@@ -441,10 +447,10 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 			{ 
 				if(c->state != CALL_STATE_TRANSFERT)
 				  dbus_play_dtmf( key );
-				gchar * before = c->to;
-				c->to = g_strconcat(c->to, key, NULL);
-				g_free(before);
-				g_print("TO: %s\n", c->to);
+				  gchar * before = c->to;
+				  c->to = g_strconcat(c->to, key, NULL);
+				  g_free(before);
+				  g_print("TO: %s\n", c->to);
 
 				if(c->state == CALL_STATE_DIALING)
 				{
@@ -496,7 +502,6 @@ sflphone_keypad( guint keyval, gchar * key)
 		switch(c->state) 
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
-				//dbus_play_dtmf(key);
 				process_dialing(c, keyval, key);
 				break;
 			case CALL_STATE_CURRENT:
@@ -512,11 +517,11 @@ sflphone_keypad( guint keyval, gchar * key)
 						dbus_play_dtmf(key);
 						if (keyval < 255 || (keyval >65453 && keyval < 65466))
 						{ 
-							gchar * temp = g_strconcat(call_get_number(c), key, NULL);
-							gchar * before = c->from;
-							c->from = g_strconcat("\"",call_get_name(c) ,"\" <", temp, ">", NULL);
-							g_free(before);
-							g_free(temp);
+							//gchar * temp = g_strconcat(call_get_number(c), key, NULL);
+							//gchar * before = c->from;
+							//c->from = g_strconcat("\"",call_get_name(c) ,"\" <", temp, ">", NULL);
+							//g_free(before);
+							//g_free(temp);
 							//update_call_tree(current_calls,c);
 						}
 						break;
@@ -544,6 +549,7 @@ sflphone_keypad( guint keyval, gchar * key)
 					case 65293: /* ENTER */
 					case 65421: /* ENTER numpad */
 						dbus_transfert(c);
+						(void) time(&c->_stop);
 						break;
 					case 65307: /* ESCAPE */
 						sflphone_unset_transfert(c); 
@@ -594,6 +600,8 @@ sflphone_keypad( guint keyval, gchar * key)
 			case 65307: /* ESCAPE */
 				break;
 			default:
+				if( active_calltree == history )
+				  switch_tab();
 				process_dialing(sflphone_new_call(), keyval, key);
 				break;
 		}

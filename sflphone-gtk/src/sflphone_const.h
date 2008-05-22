@@ -74,6 +74,9 @@
 #define SHOW_DIALPAD	( dbus_get_dialpad() ) 
 /** Show/Hide the volume controls */
 #define SHOW_VOLUME	( dbus_get_volume_controls() ) 
+/** Show/Hide the dialpad */
+#define SHOW_SEARCHBAR	( dbus_get_searchbar() ) 
+
 /** Notification levels */
 #define __NOTIF_LEVEL_MIN     0
 #define __NOTIF_LEVEL_MED     1

@@ -51,6 +51,7 @@ Account::loadConfig()
 void
 Account::loadContacts()
 {
+  /*
 	// TMP
 	Contact* contact1 = new Contact("1223345", "Guillaume140", "<sip:140@asterix.inside.savoirfairelinux.net>");
 	_contacts.push_back(contact1);
@@ -63,11 +64,13 @@ Account::loadContacts()
 	
 	// TODO Load contact file containing list of contacts
 	// or a configuration for LDAP contacts
+*/
 }
 
 void
 Account::subscribeContactsPresence()
 {
+  /*
 	if(_link->isContactPresenceSupported())
 	{
 		// Subscribe to presence for each contact that presence is enabled
@@ -78,11 +81,14 @@ Account::subscribeContactsPresence()
 			_link->subscribePresenceForContact(*iter);
 		}
 	}
+  */
 }
 
 void
 Account::publishPresence(std::string presenceStatus)
 {
+  /*
 	if(_link->isContactPresenceSupported())
 		_link->publishPresenceStatus(presenceStatus);
+  */
 }

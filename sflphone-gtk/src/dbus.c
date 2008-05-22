@@ -108,11 +108,13 @@ call_state_cb (DBusGProxy *proxy,
       if(c->state==CALL_STATE_CURRENT)
       {
 	// peer hung up, the conversation was established, so _start has been initialized with the current time value
+	g_print("call state current\n");
 	(void) time(&c->_stop);
 	update_call_tree( history, c );
       }
-      g_print("from dbus: "); stop_notification();
+      stop_notification();
       sflphone_hung_up (c);
+      update_call_tree( history, c );
     }
     else if ( strcmp(state, "UNHOLD") == 0 )
     {
@@ -1177,6 +1179,41 @@ dbus_set_dialpad(  )
 	}
 	else
 		g_print("DBus called set_dialpad on ConfigurationManager\n");
+}
+
+int
+dbus_get_searchbar()
+{
+	int state;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_searchbar(
+			configurationManagerProxy,
+			&state,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called get_searchbar on ConfigurationManager\n");
+	return state;
+}
+
+void
+dbus_set_searchbar(  )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_searchbar(
+			configurationManagerProxy,
+			&error);
+	g_print("After");
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+		g_print("DBus called set_searchbar on ConfigurationManager\n");
 }
 
 int

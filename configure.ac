@@ -36,14 +36,8 @@ AC_CONFIG_FILES([src/Makefile \
   src/audio/codecs/Makefile
   src/audio/codecs/ilbc/Makefile \
   src/config/Makefile \
-  src/contact/Makefile \
   src/dbus/Makefile \
-  src/zeroconf/Makefile \
-  src/video/Makefile \
-  src/video/VideoCodec/Makefile \
-  src/video/V4L/Makefile \
-  src/memmanager/Makefile \
-  src/mixer/Makefile])
+  src/zeroconf/Makefile]) 
   
 AC_CONFIG_FILES([po/Makefile \
   ringtones/Makefile])
@@ -136,14 +130,6 @@ dnl Check for exosip2
 LP_CHECK_EXOSIP2
 SFLPHONE_LIBS="$SFLPHONE_LIBS $EXOSIP_LIBS"
 
-
-dnl Check for samplerate
-dnl AC_CHECK_HEADER([samplerate.h], [
-dnl  AC_CHECK_LIB(samplerate, src_simple, [with_samplerate=yes], [with_samplerate=no]) 
-dnl  ], [ with_samplerate=no ]
-dnl )
-dnl AM_CONDITIONAL(USE_SAMPLERATE, test x$with_samplerate = xyes)
-
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
 
@@ -153,16 +139,10 @@ PKG_CHECK_MODULES([libosip2], [libosip2 >= ${LIBOSIP2_OSIPLISTNOPOINTER_MIN_VERS
 SIP_CFLAGS="$SIP_CFLAGS $LIBOSIP2_CFLAGS";
 AC_SUBST(SIP_CFLAGS)
 
-dnl LIBGSM1_MIN_VERSION=1.10
-dnl PKG_CHECK_MODULES(gsm, gsm >= ${LIBGSM1_MIN_VERSION})
-dnl SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libgsm1_CFLAGS"
-dnl SFLPHONE_LIBS="$SFLPHONE_LIBS $libgsm1_LIBS"
-
 LIBASOUND2_MIN_VERSION=1.0
 PKG_CHECK_MODULES(alsa, alsa >= ${LIBASOUND2_MIN_VERSION})
 SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libasound2_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libasound2_LIBS"
-
 
 LIBSAMPLERATE_MIN_VERSION=0.1.1
 PKG_CHECK_MODULES(samplerate, samplerate >= ${LIBSAMPLERATE_MIN_VERSION})

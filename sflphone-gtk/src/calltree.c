@@ -40,6 +40,13 @@ GtkToolItem * mailboxButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
 gboolean history_shown;
 
+  void
+switch_tab()
+{
+  (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(historyButton)))? 
+    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE):
+    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), TRUE);
+}
 
 /**
  * Show popup menu
@@ -53,12 +60,26 @@ popup_menu (GtkWidget *widget,
 }            
 
   static gboolean
+is_inserted( GtkWidget* button )
+{
+  return ( GTK_WIDGET(button)->parent == GTK_WIDGET( toolbar ) );
+}
+
+  static gboolean
 button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
 {
   if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
   {
-    show_popup_menu(widget,  event);
-    return TRUE;
+    if( active_calltree == current_calls )
+    {
+      show_popup_menu(widget,  event);
+      return TRUE;
+    }
+    else
+    {
+      show_popup_menu_history(widget,  event);
+      return TRUE;
+    }
   }
   return FALSE;
 }
@@ -68,24 +89,41 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
   static void 
 call_button( GtkWidget *widget, gpointer   data )
 {
-  call_t * selectedCall;
+  call_t * selectedCall = call_get_selected(active_calltree);
+  call_t* newCall =  g_new0 (call_t, 1);
   printf("Call button pressed\n");
   if(call_list_get_size(current_calls)>0)
     sflphone_pick_up();
   else if(call_list_get_size(active_calltree) > 0){
-    printf("Calling a called num\n");
-    selectedCall = call_get_selected(active_calltree);
-    if(!selectedCall->to){
-      selectedCall->to = call_get_number(selectedCall);
-      selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">",NULL);
+    if( selectedCall)
+    {
+      printf("Calling a called num\n");
+
+      newCall->to = g_strdup(call_get_number(selectedCall));
+      newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
+      newCall->state = CALL_STATE_DIALING;
+      newCall->callID = g_new0(gchar, 30);
+      g_sprintf(newCall->callID, "%d", rand()); 
+      newCall->_start = 0;
+      newCall->_stop = 0;
+
+      printf("call : from : %s to %s\n", newCall->from, newCall->to);
+      call_list_add(current_calls, newCall);
+      update_call_tree_add(current_calls, newCall);
+      sflphone_place_call(newCall);
+      if( active_calltree == history )  switch_tab();
     }
-    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE);
-    printf("call : from : %s to %s\n", selectedCall->from, selectedCall->to);
-    call_list_add(current_calls, selectedCall);
-    update_call_tree_add(current_calls, selectedCall);
-    sflphone_place_call(selectedCall);
-  }else
+    else
+    {
+      sflphone_new_call();
+      if( active_calltree == history )  switch_tab();
+    }
+  }
+  else
+  {
     sflphone_new_call();
+    if( active_calltree == history )  switch_tab();
+  }
 }
 
 /**
@@ -137,21 +175,22 @@ unhold( GtkWidget *widget, gpointer   data )
 toggle_history(GtkToggleToolButton *toggle_tool_button,
     gpointer	user_data)
 {
-  GtkTreeSelection *sel;
-  if(history_shown){
-    active_calltree = current_calls;
-    gtk_widget_hide(history->tree);
-    gtk_widget_show(current_calls->tree);
-    history_shown = FALSE;
-  }else{
-    active_calltree = history;
-    gtk_widget_hide(current_calls->tree);
-    gtk_widget_show(history->tree);
-    history_shown = TRUE;
-  }
-  sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
-  g_signal_emit_by_name(sel, "changed");
-  toolbar_update_buttons();
+	GtkTreeSelection *sel;
+	if(history_shown){
+		active_calltree = current_calls;
+		gtk_widget_hide(history->tree);
+		gtk_widget_show(current_calls->tree);
+		history_shown = FALSE;
+	}else{
+		active_calltree = history;
+		gtk_widget_hide(current_calls->tree);
+		gtk_widget_show(history->tree);
+		history_shown = TRUE;
+	}
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
+	g_signal_emit_by_name(sel, "changed");
+	toolbar_update_buttons();
+	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(histfilter));
 
 }
 
@@ -164,8 +203,7 @@ call_mailbox( GtkWidget* widget , gpointer data )
   call_t* mailboxCall = g_new0( call_t , 1);
   mailboxCall->state = CALL_STATE_DIALING;
   mailboxCall->to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
-  //mailboxCall->from = g_strconcat("\"Voicemail Box\" <>", NULL);
-  mailboxCall->from = g_markup_printf_escaped("\"Voicemail\" <%s>",  mailboxCall->to);
+  mailboxCall->from = g_markup_printf_escaped(_("\"Voicemail\" <%s>"),  mailboxCall->to);
   mailboxCall->callID = g_new0(gchar, 30);
   g_sprintf(mailboxCall->callID, "%d", rand());
   mailboxCall->accountID = g_strdup(current->accountID);
@@ -176,6 +214,7 @@ call_mailbox( GtkWidget* widget , gpointer data )
   update_call_tree_add( current_calls , mailboxCall );    
   update_menus();
   sflphone_place_call( mailboxCall );
+  if( active_calltree == history )  switch_tab();
 }
 
   void 
@@ -189,13 +228,13 @@ toolbar_update_buttons ()
   gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
   g_object_ref(holdButton);
   g_object_ref(unholdButton);
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
+  if( is_inserted( GTK_WIDGET(holdButton) ) )   gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
+  if( is_inserted( GTK_WIDGET(unholdButton) ) )	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(unholdButton));
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), holdButton, 3);
   g_object_ref(callButton);
   g_object_ref(pickupButton);
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
-  gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(pickupButton));
+  if( is_inserted( GTK_WIDGET(callButton) ) )	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
+  if( is_inserted( GTK_WIDGET(pickupButton) ) )	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(pickupButton));
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), callButton, 0);
 
 
@@ -297,32 +336,56 @@ void  row_activated(GtkTreeView       *tree_view,
     GtkTreeViewColumn *column,
     void * data) 
 {
-  call_t * selectedCall = call_get_selected(current_calls);
+  g_print("double click action\n");
+  call_t* selectedCall;
+  call_t* newCall;
+  selectedCall = call_get_selected( active_calltree );
+
   if (selectedCall)
   {
-    switch(selectedCall->state)  
+    // Get the right event from the right calltree
+    if( active_calltree == current_calls )
     {
-      case CALL_STATE_INCOMING:
-	dbus_accept(selectedCall);
-	break;
-      case CALL_STATE_HOLD:
-	dbus_unhold(selectedCall);
-	break;
-      case CALL_STATE_RINGING:
-      case CALL_STATE_CURRENT:
-      case CALL_STATE_BUSY:
-      case CALL_STATE_FAILURE:
-	break;
-      case CALL_STATE_DIALING:
-	sflphone_place_call (selectedCall);
-	break;
-      default:
-	g_warning("Should not happen!");
-	break;
+      switch(selectedCall->state)  
+      {
+	case CALL_STATE_INCOMING:
+	  dbus_accept(selectedCall);
+	  break;
+	case CALL_STATE_HOLD:
+	  dbus_unhold(selectedCall);
+	  break;
+	case CALL_STATE_RINGING:
+	case CALL_STATE_CURRENT:
+	case CALL_STATE_BUSY:
+	case CALL_STATE_FAILURE:
+	  break;
+	case CALL_STATE_DIALING:
+	  sflphone_place_call (selectedCall);
+	  break;
+	default:
+	  g_warning("Should not happen!");
+	  break;
+      }
+    }
+    else
+    {
+      newCall = g_new0( call_t, 1 );
+      newCall->to = g_strdup(call_get_number(selectedCall));
+      newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
+      newCall->state = CALL_STATE_DIALING;
+      newCall->callID = g_new0(gchar, 30);
+      g_sprintf(newCall->callID, "%d", rand()); 
+      newCall->_start = 0;
+      newCall->_stop = 0;
+
+      printf("call : from : %s to %s\n", newCall->from, newCall->to);
+      call_list_add(current_calls, newCall);
+      update_call_tree_add(current_calls, newCall);
+      sflphone_place_call(newCall);
+      switch_tab();
     }
   }
-}                  
-
+}
 
   GtkWidget * 
 create_toolbar ()
@@ -333,97 +396,119 @@ create_toolbar ()
   ret = gtk_toolbar_new();
   toolbar = ret;
 
-	image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
-	callButton = gtk_tool_button_new (image, _("Place a call"));
-#if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("Place a call"));
-#endif
-	g_signal_connect (G_OBJECT (callButton), "clicked",
-			G_CALLBACK (call_button), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);
   gtk_toolbar_set_orientation(GTK_TOOLBAR(ret), GTK_ORIENTATION_HORIZONTAL);
   gtk_toolbar_set_style(GTK_TOOLBAR(ret), GTK_TOOLBAR_ICONS);
 
-	image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
-	pickupButton = gtk_tool_button_new(image, _("Pick up"));
+  image = gtk_image_new_from_file( ICONS_DIR "/call.svg");
+  callButton = gtk_tool_button_new (image, _("Place a call"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(pickupButton), _("Pick up"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(callButton), _("Place a call"));
 #endif
-	gtk_widget_set_state( GTK_WIDGET(pickupButton), GTK_STATE_INSENSITIVE);
-	g_signal_connect(G_OBJECT (pickupButton), "clicked", 
-			G_CALLBACK (call_button), NULL);
-	gtk_widget_show_all(GTK_WIDGET(pickupButton));
+  g_signal_connect (G_OBJECT (callButton), "clicked",
+      G_CALLBACK (call_button), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(callButton), -1);
 
-	image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
-	hangupButton = gtk_tool_button_new (image, _("Hang up"));
+  image = gtk_image_new_from_file( ICONS_DIR "/accept.svg");
+  pickupButton = gtk_tool_button_new(image, _("Pick up"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(hangupButton), _("Hang up"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(pickupButton), _("Pick up"));
 #endif
-	gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
-	g_signal_connect (G_OBJECT (hangupButton), "clicked",
-			G_CALLBACK (hang_up), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(hangupButton), -1);  
+  gtk_widget_set_state( GTK_WIDGET(pickupButton), GTK_STATE_INSENSITIVE);
+  g_signal_connect(G_OBJECT (pickupButton), "clicked", 
+      G_CALLBACK (call_button), NULL);
+  gtk_widget_show_all(GTK_WIDGET(pickupButton));
 
-	image = gtk_image_new_from_file( ICONS_DIR "/unhold.svg");
-	unholdButton = gtk_tool_button_new (image, _("Off Hold"));
+  image = gtk_image_new_from_file( ICONS_DIR "/hang_up.svg");
+  hangupButton = gtk_tool_button_new (image, _("Hang up"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(unholdButton), _("Off Hold"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(hangupButton), _("Hang up"));
 #endif
-	gtk_widget_set_state( GTK_WIDGET(unholdButton), GTK_STATE_INSENSITIVE);
-	g_signal_connect (G_OBJECT (unholdButton), "clicked",
-			G_CALLBACK (unhold), NULL);
-	//gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(unholdButton), -1);
-	gtk_widget_show_all(GTK_WIDGET(unholdButton));
+  gtk_widget_set_state( GTK_WIDGET(hangupButton), GTK_STATE_INSENSITIVE);
+  g_signal_connect (G_OBJECT (hangupButton), "clicked",
+      G_CALLBACK (hang_up), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(hangupButton), -1);  
 
-	image = gtk_image_new_from_file( ICONS_DIR "/hold.svg");
-	holdButton =  gtk_tool_button_new (image, _("On Hold"));
+  image = gtk_image_new_from_file( ICONS_DIR "/unhold.svg");
+  unholdButton = gtk_tool_button_new (image, _("Off Hold"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(holdButton), _("On Hold"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(unholdButton), _("Off Hold"));
 #endif
-	gtk_widget_set_state( GTK_WIDGET(holdButton), GTK_STATE_INSENSITIVE);
-	g_signal_connect (G_OBJECT (holdButton), "clicked",
-			G_CALLBACK (hold), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(holdButton), -1);
+  gtk_widget_set_state( GTK_WIDGET(unholdButton), GTK_STATE_INSENSITIVE);
+  g_signal_connect (G_OBJECT (unholdButton), "clicked",
+      G_CALLBACK (unhold), NULL);
+  //gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(unholdButton), -1);
+  gtk_widget_show_all(GTK_WIDGET(unholdButton));
 
-	image = gtk_image_new_from_file( ICONS_DIR "/transfert.svg");
-	transfertButton = gtk_toggle_tool_button_new ();
-	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(transfertButton), image);
+  image = gtk_image_new_from_file( ICONS_DIR "/hold.svg");
+  holdButton =  gtk_tool_button_new (image, _("On Hold"));
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(transfertButton), _("Transfer"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(holdButton), _("On Hold"));
 #endif
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), _("Transfer"));
-	gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
-	transfertButtonConnId = g_signal_connect (G_OBJECT (transfertButton), "toggled",
-			G_CALLBACK (transfert), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
+  gtk_widget_set_state( GTK_WIDGET(holdButton), GTK_STATE_INSENSITIVE);
+  g_signal_connect (G_OBJECT (holdButton), "clicked",
+      G_CALLBACK (hold), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(holdButton), -1);
 
-	image = gtk_image_new_from_file( ICONS_DIR "/history2.svg");
-	historyButton = gtk_toggle_tool_button_new();
-	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(historyButton), image);
+  image = gtk_image_new_from_file( ICONS_DIR "/transfert.svg");
+  transfertButton = gtk_toggle_tool_button_new ();
+  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(transfertButton), image);
 #if GTK_CHECK_VERSION(2,12,0)
-	gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(transfertButton), _("Transfer"));
 #endif
-	gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
-	g_signal_connect (G_OBJECT (historyButton), "toggled",
-			G_CALLBACK (toggle_history), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);  
-	history_shown = FALSE;
-	active_calltree = current_calls;
+  gtk_tool_button_set_label(GTK_TOOL_BUTTON(transfertButton), _("Transfer"));
+  gtk_widget_set_state( GTK_WIDGET(transfertButton), GTK_STATE_INSENSITIVE);
+  transfertButtonConnId = g_signal_connect (G_OBJECT (transfertButton), "toggled",
+      G_CALLBACK (transfert), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);  
 
-	image = gtk_image_new_from_file( ICONS_DIR "/mailbox.svg");
-	mailboxButton = gtk_tool_button_new( image , _("Voicemail box"));
-	gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mailboxButton), image);
-	if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
+  image = gtk_image_new_from_file( ICONS_DIR "/history2.svg");
+  historyButton = gtk_toggle_tool_button_new();
+  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(historyButton), image);
 #if GTK_CHECK_VERSION(2,12,0)
-        gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Voicemail box"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
 #endif
-        g_signal_connect (G_OBJECT (mailboxButton), "clicked",
-                        G_CALLBACK (call_mailbox), NULL);
-        gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
+  gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
+  g_signal_connect (G_OBJECT (historyButton), "toggled",
+      G_CALLBACK (toggle_history), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);  
+  history_shown = FALSE;
+  active_calltree = current_calls;
 
-	return ret;
+  image = gtk_image_new_from_file( ICONS_DIR "/mailbox.svg");
+  mailboxButton = gtk_tool_button_new( image , _("Voicemail"));
+  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mailboxButton), image);
+  if( account_list_get_size() ==0 ) gtk_widget_set_state( GTK_WIDGET(mailboxButton), GTK_STATE_INSENSITIVE );
+#if GTK_CHECK_VERSION(2,12,0)
+  gtk_widget_set_tooltip_text(GTK_WIDGET(mailboxButton), _("Voicemail"));
+#endif
+  g_signal_connect (G_OBJECT (mailboxButton), "clicked",
+      G_CALLBACK (call_mailbox), NULL);
+  gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
+
+  return ret;
 
 }  
+static gboolean
+on_key_released (GtkWidget   *widget,
+                GdkEventKey *event,
+                gpointer     user_data)  
+{
+  // If a modifier key is pressed, it's a shortcut, pass along
+  if(event->state & GDK_CONTROL_MASK || 
+     event->state & GDK_MOD1_MASK    ||
+     event->keyval == 60             || // <
+     event->keyval == 62             || // >
+     event->keyval == 34             || // "
+     event->keyval == 65361          || // left arrow
+     event->keyval == 65363          || // right arrow
+     event->keyval >= 65470          || // F-keys
+     event->keyval == 32                // space
+     )
+    return FALSE;
+  else
+    sflphone_keypad(event->keyval, event->string);
+  return TRUE;
+}
 
   void 
 create_call_tree (calltab_t* tab)
@@ -440,15 +525,16 @@ create_call_tree (calltab_t* tab)
   sw = gtk_scrolled_window_new( NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
+  g_signal_connect (G_OBJECT ( sw ), "key-press-event",G_CALLBACK (on_key_released), NULL);
 
   tab->store = gtk_list_store_new (3, 
       GDK_TYPE_PIXBUF,// Icon 
-
       G_TYPE_STRING,  // Description
       G_TYPE_POINTER  // Pointer to the Object
       );
 
   tab->view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(tab->store));
+  gtk_tree_view_set_enable_search( GTK_TREE_VIEW(tab->view), FALSE);
   gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(tab->view), FALSE);
   g_signal_connect (G_OBJECT (tab->view), "row-activated",
       G_CALLBACK (row_activated),
@@ -461,6 +547,7 @@ create_call_tree (calltab_t* tab)
   g_signal_connect (G_OBJECT (tab->view), "button-press-event",
       G_CALLBACK (button_pressed), 
       NULL);
+
 
   rend = gtk_cell_renderer_pixbuf_new();
   col = gtk_tree_view_column_new_with_attributes ("Icon",
@@ -555,8 +642,7 @@ update_call_tree (calltab_t* tab, call_t * c)
 	gchar * duration="";
 	if(c->state == CALL_STATE_TRANSFERT)
 	{
-	  description = g_markup_printf_escaped("<b>%s</b>\n"
-	      "%s\n<i>Transfert to:</i> %s",  
+	  description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> %s",  
 	      call_get_number(c), 
 	      call_get_name(c), 
 	      c->to);
@@ -619,8 +705,8 @@ update_call_tree (calltab_t* tab, call_t * c)
 	  }
 	  date = timestamp_get_call_date(); 
 	  duration = process_call_duration(c);
-	  description = g_strconcat( date , description , NULL);
-	  description = g_strconcat( description, duration, NULL);
+	  duration = g_strconcat( date , duration , NULL);
+	  description = g_strconcat( description , duration, NULL);
 	}
 	//Resize it
 	if(pixbuf)
@@ -663,7 +749,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
       call_get_number(c),
       call_get_name(c)); 
 
-  
+
   gtk_list_store_prepend (tab->store, &iter);
 
   if( tab == current_calls )
@@ -696,12 +782,9 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
 	break;
       default:
-	g_warning("Should not happen!");
+	g_warning("History - Should not happen!");
     }
     date = timestamp_get_call_date(); 
-
-	  duration = process_call_duration(c);
-	  //g_print("call duration = %s\n" , duration);
     description = g_strconcat( date , description , NULL);
   }
 

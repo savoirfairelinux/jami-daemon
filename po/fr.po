@@ -67,6 +67,18 @@ msgstr "_Assistant SFLphone"
 msgid "_Accounts"
 msgstr "Co_mptes"
 
+#: sflphone-gtk/src/menus.c: 523
+msgid "_Clear history"
+msgstr "Effacer l'historique"
+
+#: sflphone-gtk/src/menus.c: 523
+msgid "History empty"
+msgstr "L'historique est vide"
+
+#: sflphone-gtk/src/menus.c: 523
+msgid "Clear the call history?"
+msgstr "Effacer l'historique des appels?"
+
 #: sflphone-gtk/src/menus.c: 438
 msgid "_Edit"
 msgstr "_Options"
@@ -79,6 +91,10 @@ msgstr "_Clavier"
 msgid "_Volume controls"
 msgstr "_Contrôle du volume"
 
+#: sflphone-gtk/src/menus.c: 610
+msgid "_Search history"
+msgstr "Recherche dans l'historique"
+
 #: sflphone-gtk/src/menus.c: 479
 msgid "_Toolbar"
 msgstr "_Barre d'outils"
@@ -86,6 +102,10 @@ msgstr "_Barre d'outils"
 #: sflphone-gtk/src/menus.c: 492
 msgid "_View"
 msgstr "A_ffichage"
+
+#: sflphone-gtk/src/calltree.c: 206
+msgid "\"Voicemail\" <%s>"
+msgstr "\"Boite vocale\" <%s>"
 
 #: sflphone-gtk/src/calltree.c: 336 sflphone-gtk/src/calltree.c: 337
 msgid "Place a call"
@@ -116,7 +136,7 @@ msgid "History"
 msgstr "Historique"
 
 #: sflphone-gtk/src/calltree.c: 394 sflphone-gtk/src/calltree.c: 397
-msgid "Voicemail box"
+msgid "Voicemail"
 msgstr "Boite vocale"
 
 #: sflphone-gtk/src/configwindow.c: 799
@@ -195,6 +215,10 @@ msgstr "Paramètres Audio"
 msgid "Accounts"
 msgstr "Comptes"
 
+#: sflphone-gtk/src/configwindow.c: 1203
+msgid "Accounts previously setup"
+msgstr "Liste des comptes existants"
+
 #: sflphone-gtk/src/configwindow.c: 1254
 msgid "Desktop Notification"
 msgstr "Notifications du bureau"
@@ -231,9 +255,9 @@ msgstr "Historique des appels"
 msgid "_Maximum number of calls"
 msgstr "N_ombre maximum d'appels"
 
-#: sflphone-gtk/src/configwindow.c: 1203
-msgid "Accounts previously setup"
-msgstr "Liste des comptes existants"
+#: sflphone-gtk/src/configwindow.c: 1352
+msgid "General Settings"
+msgstr "Préférences"
 
 #: sflphone-gtk/src/accountwindow.c: 139
 msgid "Account settings"
@@ -303,6 +327,10 @@ msgstr "%d messages vocaux"
 msgid "%d voice mail"
 msgstr "%d message vocal"
 
+#: sflphone-gtk/src/actions.c: 70
+msgid "%s account- %s"
+msgstr "compte %s- %s"
+
 #: sflphone-gtk/src/actions.c: 162
 msgid "Unable to connect to the SFLphone server.\n"
 " Make sure the daemon is running."
@@ -364,6 +392,14 @@ msgstr "Volume des hauts-parleurs"
 #: sflphone-gtk/src/sliders.c: 168
 msgid "Mic volume"
 msgstr "Volume du micro"
+
+#: sflphone-gtk/src/mainwindow.c: 69
+msgid "<b>There is one call in progress.</b>\nDo you still want to quit?"
+msgstr "<b>Vous avez un appel en cours.</b>\nVoulez-vous quitter?"
+
+#: sflphone-gtk/src/mainwindow.c: 69
+msgid "<b>There are calls in progress.</b>\nDo you still want to quit?"
+msgstr "<b>Vous avez des appels en cours.</b>\nVoulez-vous quitter?"
 
 #: sflphone-gtk/src/mainwindow.c: 179
 msgid "<b><big>Welcome to SFLphone!</big></b>\n\n"
@@ -450,4 +486,17 @@ msgstr "Félicitations!"
 #: sflphone-gtk/src/assistant.c: 291
 msgid "This assistant is now finished.\n\n You can at any time check your registration state or modify your accounts parameters in the Options/Accounts window."
 msgstr "Cet assistant est maintenant terminé.\n\n Vous pouvez à tout moment vérifier votre état d'enregistrement ou modifier les paramètres de vos comptes dans la fenêtre Options/Comptes."
+
+#: sflphone-gtk/src/timestamp.c: 45
+msgid "<small>Missed call</small>"
+msgstr "<small>Appel manqué</small>"
+
+#: sflphone-gtk/src/timestamp.c: 63
+msgid "<small>Duration:</small> %s"
+msgstr "<small>Durée:</small> %s"
+
+#: sflphone-gtk/src/historyfilter.c: 78
+msgid "Search"
+msgstr "Recherche"
+
 
