@@ -952,6 +952,7 @@ SIPVoIPLink::isContactPresenceSupported()
 	return true;
 }
 
+/*
 void
 SIPVoIPLink::subscribePresenceForContact(Contact* contact)
 {
@@ -982,6 +983,7 @@ SIPVoIPLink::subscribePresenceForContact(Contact* contact)
 	if(i!=0) _debug("Sending of subscription tp %s failed\n", to.data());
 	eXosip_unlock();
 }
+*/
 
 void
 SIPVoIPLink::publishPresenceStatus(std::string status)

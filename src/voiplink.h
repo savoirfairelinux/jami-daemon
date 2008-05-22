@@ -24,7 +24,6 @@
 
 #include <string>
 #include "call.h"
-#include "contact/contact.h"
 #include <map>
 #include <cc++/thread.h> // for mutex
 
@@ -178,7 +177,7 @@ class VoIPLink {
     /**
      * Register contacts for presence information if supported
      */
-    virtual void subscribePresenceForContact(Contact* contact);
+    //virtual void subscribePresenceForContact(Contact* contact);
 
     /**
      * Publish presence status to server

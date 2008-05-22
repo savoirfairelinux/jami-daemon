@@ -30,7 +30,7 @@ endif
 
 ALSAFLAG= -lasound
 
-SUBDIRS = audio config dbus $(ZEROCONFDIR) contact memmanager video mixer
+SUBDIRS = audio config dbus $(ZEROCONFDIR)# contact memmanager video mixer
 
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 		managerimpl.cpp	observer.cpp \
@@ -54,11 +54,7 @@ libsflphone_la_LIBADD = \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
-	./contact/libcontact.la \
-	./memmanager/libmemmanager.la \
-	./mixer/libmixer.la \
-	./video/libvideo.la \
-	$(IAX_LIBS)
+	$(IAX_LIBS) 
 
 libsflphone_la_SOURCES =
 
@@ -69,3 +65,7 @@ noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h user_
                  sipvoiplink.h  call.h  sipcall.h \
 		 $(IAXHEADERS)
 
+#./contact/libcontact.la \
+#	./memmanager/libmemmanager.la \
+#	./mixer/libmixer.la \
+#	./video/libvideo.la 

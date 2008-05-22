@@ -22,7 +22,6 @@
 #include <string>
 #include <vector>
 #include "config/config.h"
-#include "contact/contact.h"
 #include "voiplink.h"
 
 class VoIPLink;
@@ -155,7 +154,7 @@ protected:
   /**
    * Contacts related to account that can have presence information
    */
-  std::vector<Contact*> _contacts;
+  //std::vector<Contact*> _contacts;
 };
 
 #endif

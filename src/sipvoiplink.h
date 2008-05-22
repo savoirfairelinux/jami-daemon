@@ -158,7 +158,7 @@ class SIPVoIPLink : public VoIPLink
 
     bool isContactPresenceSupported();
 
-    void subscribePresenceForContact(Contact* contact);
+    //void subscribePresenceForContact(Contact* contact);
 
     void publishPresenceStatus(std::string status);
 

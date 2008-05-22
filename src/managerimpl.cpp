@@ -45,7 +45,6 @@
 
 #include "user_cfg.h"
 
-#include "contact/presencestatus.h"
 
 #ifdef USE_ZEROCONF
 #include "zeroconf/DNSService.h"
@@ -410,9 +409,9 @@ ManagerImpl::initRegisterAccounts()
       if ( iter->second->isEnabled() ) {
 	// NOW
 	iter->second->registerVoIPLink();
-	iter->second->loadContacts();
-	iter->second->publishPresence(PRESENCE_ONLINE);
-	iter->second->subscribeContactsPresence();
+	//iter->second->loadContacts();
+	//iter->second->publishPresence(PRESENCE_ONLINE);
+	//iter->second->subscribeContactsPresence();
       }
     }
     iter++;
