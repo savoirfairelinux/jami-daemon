@@ -92,7 +92,7 @@ echo "Description: $desc" >> $control
 
 # Create the debian package
 echo "Build the debian package ... "
-dpkg --build $sfldir ${sfldir}_$2.deb
+fakeroot dpkg --build $sfldir ${sfldir}_$2.deb
 
 # Clean up the generated stuff
 echo "Clean up ... "
