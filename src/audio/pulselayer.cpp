@@ -21,11 +21,13 @@
 
 
 int framesPerBuffer = 4096;
+const pa_buffer_attr *a;
 
-PulseLayer::PulseLayer(ManagerImpl* manager)
+  PulseLayer::PulseLayer(ManagerImpl* manager)
   : AudioLayer( manager , PULSEAUDIO )    
   , _urgentRingBuffer( SIZEBUF)
-    ,_mainSndRingBuffer( SIZEBUF )
+  ,_mainSndRingBuffer( SIZEBUF )
+    ,_micRingBuffer( SIZEBUF )
 {
   _debug("Pulse audio constructor: Create context\n");
 }
@@ -86,7 +88,7 @@ PulseLayer::context_state_callback( pa_context* c, void* user_data )
       break;
     case PA_CONTEXT_FAILED:
     default:
-      _debug(" Error : %s" , pa_strerror(pa_context_errno(c)));
+      _debug(" Error : %n" , pa_strerror(pa_context_errno(c)));
       exit(1);
   }
 }
@@ -96,11 +98,14 @@ PulseLayer::createStreams( pa_context* c )
 {
   playback = new AudioStream(c, PLAYBACK_STREAM, "SFLphone out");
   pa_stream_set_write_callback( playback->pulseStream() , audioCallback, this);
+  pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
   record = new AudioStream(c, CAPTURE_STREAM, "SFLphone in");
   pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
+  pa_stream_set_underflow_callback( playback->pulseStream() , underflow , this);
   cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples");
 
   pa_threaded_mainloop_signal(m , 0);
+
 }
 
   bool 
@@ -162,6 +167,7 @@ PulseLayer::putMain(void* buffer, int toCopy)
   void
 PulseLayer::flushMain()
 {
+  _mainSndRingBuffer.flush();
 }
 
   int
@@ -179,25 +185,37 @@ PulseLayer::putUrgent(void* buffer, int toCopy)
   int
 PulseLayer::canGetMic()
 {
-  return 882;
+  if( record )
+  {
+    int a = _micRingBuffer.AvailForGet();
+    _debug("available for get = %i\n" , a);
+    return a;
+  }
+  else
+    return 0;
 }
 
   int 
 PulseLayer::getMic(void *buffer, int toCopy)
 {
-  return 160;
+  if( record ){
+    return _micRingBuffer.Get(buffer, toCopy, 100);
+  }
+  else
+    return 0;
 }
 
   void
 PulseLayer::flushMic()
 {
+  _micRingBuffer.flush();
 }
 
 /*  bool
-PulseLayer::isStreamStopped (void) 
-{
-}
-*/
+    PulseLayer::isStreamStopped (void) 
+    {
+    }
+    */
   void 
 PulseLayer::startStream (void) 
 {
@@ -221,16 +239,35 @@ PulseLayer::audioCallback ( pa_stream* s, size_t bytes, void* userdata )
 { 
   PulseLayer* pulse = (PulseLayer*) userdata;
   assert( s && bytes );
+  assert( bytes > 0 );
   pulse->write();
+  pulse->read();
+}
+
+  void 
+PulseLayer::underflow ( pa_stream* s,  void* userdata )
+{ 
+  _debug("Buffer Underflow\n");
+}
+
+
+  void 
+PulseLayer::overflow ( pa_stream* s, void* userdata )
+{ 
+  _debug("Buffer Overflow\n");
 }
 
   void
 PulseLayer::write( void )
 {
+ // a =  pa_stream_get_buffer_attr(record->pulseStream());
+  //if (a)
+    //_debug("Buffer attributes: maxlength=%u , fragsize=%u\n" , a->maxlength, a->fragsize );
+  //_debug("Device name = %s ; device index = %i\n" , pa_stream_get_device_name( playback->pulseStream()) , pa_stream_get_device_index( playback->pulseStream()));
   int toGet; 
   int urgentAvail; // number of data right and data left  
   int normalAvail; // number of data right and data left
-  SFLDataFormat* out = (SFLDataFormat*)malloc(framesPerBuffer * sizeof(SFLDataFormat));
+  SFLDataFormat* out = (SFLDataFormat*)pa_xmalloc(framesPerBuffer * sizeof(SFLDataFormat));
   urgentAvail = _urgentRingBuffer.AvailForGet();
   if (urgentAvail > 0) {
     // Urgent data (dtmf, incoming call signal) come first.		
@@ -242,14 +279,14 @@ PulseLayer::write( void )
   }
   else
   {
-    AudioLoop* tone = _manager->getTelephoneTone();
+    AudioLoop* tone = 0;//_manager->getTelephoneTone();
     if ( tone != 0) {
+      //tone->getNext(out, framesPerBuffer, 100);
+      toGet = framesPerBuffer;
+    } /*else if ( (tone=_manager->getTelephoneFile()) != 0 ) {
       tone->getNext(out, framesPerBuffer, 100);
       toGet = framesPerBuffer;
-    } else if ( (tone=_manager->getTelephoneFile()) != 0 ) {
-      tone->getNext(out, framesPerBuffer, 100);
-      toGet = framesPerBuffer;
-    } else {
+    } */else {
       normalAvail = _mainSndRingBuffer.AvailForGet();
       toGet = (normalAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof(SFLDataFormat);
       if (toGet) {
@@ -264,7 +301,34 @@ PulseLayer::write( void )
   pa_stream_write( playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
 }
 
-int
+  void 
+PulseLayer::read( void )
+{
+  //assert( record->pulseStream() );
+  int micAvailPut;
+  size_t toPut;
+  const void* data; 
+  // Handle the mic's audio stream 
+  micAvailPut = _micRingBuffer.AvailForPut();
+  toPut = 2048;
+  //toPut = (micAvailPut <= (size_t)(framesPerBuffer * sizeof(SFLDataFormat))) ? micAvailPut : framesPerBuffer * sizeof(SFLDataFormat);
+  //_debug("micAvailPut: %i - - toPut : %i\n", micAvailPut, toPut);
+
+  if( pa_stream_peek( record->pulseStream() , &data , &toPut ) < 0 ){
+    _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+    return;
+  }
+
+  _debug("- toPut : %i\n", toPut);
+  if( data != NULL )
+    _micRingBuffer.Put( (void*)data , toPut, 100);
+
+  if( pa_stream_drop( record->pulseStream()) < 0 )
+    _debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+  
+}
+
+  int
 PulseLayer::putInCache( char code, void *buffer, int toCopy )
 {
   _debug("Put the DTMF in cache\n");

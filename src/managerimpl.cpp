@@ -497,11 +497,10 @@ ManagerImpl::playDtmf(char code, bool isTalking)
     // put the size in bytes...
     // so size * 1 channel (mono) * sizeof (bytes for the data)
 #if CHECK_INTERFACE( layer , ALSA )
-    _debug("%i No good\n", layer);
     audiolayer->playSamples(_buf, size * sizeof(SFLDataFormat), isTalking);
 #else
-    _debug("%i Good\n" , layer);
-    audiolayer->putUrgent( _buf, size * sizeof(SFLDataFormat) );
+    _debug("DTMF disabled\n");
+    //audiolayer->putUrgent( _buf, size * sizeof(SFLDataFormat) );
 #endif
   }
   returnValue = true;
@@ -832,14 +831,13 @@ ManagerImpl::ringtone()
       _audiofile.start();
       _toneMutex.leaveMutex(); 
 #if CHECK_INTERFACE( layer, ALSA )
-      _debug()
       int size = _audiofile.getSize();
       SFLDataFormat output[ size ];
       _audiofile.getNext(output, size , 100);
       audiolayer->putUrgent( output , size );
 #else
       // pulseaudio code
-      audiolayer->startStream();
+      //audiolayer->startStream();
 #endif
     } else {
       ringback();

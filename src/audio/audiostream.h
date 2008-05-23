@@ -59,6 +59,7 @@ class AudioStream {
     pa_stream_flags_t flag;
     pa_sample_spec sample_spec ;
     //pa_channel_map channel_map;
+    pa_volume_t volume;
 
 };
 

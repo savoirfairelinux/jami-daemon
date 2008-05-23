@@ -76,6 +76,8 @@ class PulseLayer : public AudioLayer {
     int playSamples(void* buffer, int toCopy, bool isTalking) ;
 
     static void audioCallback ( pa_stream* s, size_t bytes, void* userdata );
+    static void overflow ( pa_stream* s, void* userdata );
+    static void underflow ( pa_stream* s, void* userdata );
 
     static void context_state_callback( pa_context* c, void* user_data );	
 
@@ -125,6 +127,7 @@ class PulseLayer : public AudioLayer {
     void closeCaptureStream( void );
 
     void write( void );
+    void read( void );
     void createStreams( pa_context* c );
     /**
      * Drop the pending frames and close the playback device
@@ -136,6 +139,7 @@ class PulseLayer : public AudioLayer {
     /** Ringbuffers for data */
     RingBuffer _mainSndRingBuffer;
     RingBuffer _urgentRingBuffer;
+    RingBuffer _micRingBuffer;
 
     /** PulseAudio streams and context */
     pa_context* context;
