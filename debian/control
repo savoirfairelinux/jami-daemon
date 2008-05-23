@@ -2,6 +2,7 @@ Source: sflphone
 Maintainer: SavoirFaireLinux Inc <emmanuel.milou@savoirfairelinux.com>
 Section: gnome
 Priority: optional
+Build-Depends: debhelper (>> 3.0.0)
 Standards-Version: 0.9
 
 Package: sflphone
