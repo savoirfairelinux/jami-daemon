@@ -1,4 +1,4 @@
-sflphone (0.9.0-1) unstable; urgency=low
+sflphone (0.9.1) unstable; urgency=low
   * Add a search tool in the history
   * Migrate some gtk_entry_new to sexy_icon_entry_new
   * Bug fix (Ticket #78): The voicemail password isn't displayed anymore in
