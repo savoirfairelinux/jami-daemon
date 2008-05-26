@@ -30,7 +30,7 @@ endif
 
 ALSAFLAG= -lasound
 
-SUBDIRS = audio config dbus $(ZEROCONFDIR)# contact memmanager video mixer
+SUBDIRS = audio config dbus $(ZEROCONFDIR) #contact memmanager video mixer
 
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 		managerimpl.cpp	observer.cpp \

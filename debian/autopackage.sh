@@ -42,7 +42,7 @@ cp $bindir/sflphoned $sfldir$bindir
 strip $sfldir$bindir/sflphoned
 cp $bindir/sflphone-gtk $sfldir$bindir
 strip $sfldir$bindir/sflphone-gtk
-ln -sf $sfldir$bindir/sflphone-gtk $sfldir$bindir/sflphone
+ln -sf $bindir/sflphone-gtk $sfldir$bindir/sflphone
 
 #/usr/lib
 mkdir -p $sfldir/usr/lib/sflphone/codecs
