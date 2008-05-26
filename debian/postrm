@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# debian/postrm postremoval script for SFLphone
+
+if [ "$1" = "purge" ]
+then
+
+  # remove the user config file
+  rm -f $HOME/.sflphone/sflphonedrc
+
+fi
+
+exit 0
+
+## -------------------------------------------------

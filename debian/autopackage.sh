@@ -76,8 +76,10 @@ cp changelog.Debian.gz $sfldir$sharedir/doc/sflphone
 cp copyright $sfldir$sharedir/doc/sflphone
 cp TODO $sfldir$sharedir/doc/sflphone
 
-# DEBIAN files
 mkdir -p $debdir 
+cp debian-binary $sfldir
+cp postrm $debdir
+# DEBIAN files
 # Create control file
 control="$debdir/control"
 touch $control
@@ -99,4 +101,4 @@ fakeroot dpkg --build $sfldir ${sfldir}_$2.deb
 
 # Clean up the generated stuff
 echo "Clean up ... "
-#rm -rf $sfldir 
+rm -rf $sfldir 
