@@ -267,11 +267,11 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     int maxBytesToGet = _layerSampleRate * _layerFrameSize * sizeof(SFLDataFormat) / 1000;
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
-    //printf("%i \n", availBytesFromMic);
+    //printf("availBytesFromMic = %i \n", availBytesFromMic);
 
     // take the lowest
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-    //printf("%i\n", bytesAvail);
+    //printf("max bytes to get: %i\n", bytesAvail);
     // Get bytes from micRingBuffer to data_from_mic
     int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
     int nb_sample_up = nbSample;

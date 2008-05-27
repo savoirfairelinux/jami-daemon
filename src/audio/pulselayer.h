@@ -21,7 +21,7 @@
 #define _PULSE_LAYER_H
 
 #include "audiolayer.h"
-#include "audiostream.h"
+//#include "audiostream.h"
 
 class RingBuffer;
 class ManagerImpl;
@@ -45,7 +45,6 @@ class PulseLayer : public AudioLayer {
      * @param plugin	  The alsa plugin ( dmix , default , front , surround , ...)
      */
     bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize , int stream, std::string plugin) ;
-
 
     void startStream(void);
     void stopStream(void);
@@ -78,6 +77,7 @@ class PulseLayer : public AudioLayer {
     static void audioCallback ( pa_stream* s, size_t bytes, void* userdata );
     static void overflow ( pa_stream* s, void* userdata );
     static void underflow ( pa_stream* s, void* userdata );
+    static void stream_state_callback( pa_stream* s, void* user_data );	
 
     static void context_state_callback( pa_context* c, void* user_data );	
 
@@ -128,6 +128,7 @@ class PulseLayer : public AudioLayer {
 
     void write( void );
     void read( void );
+    int readbuffer( void* data, int bytes );
     void createStreams( pa_context* c );
     /**
      * Drop the pending frames and close the playback device
@@ -145,10 +146,12 @@ class PulseLayer : public AudioLayer {
     pa_context* context;
     pa_threaded_mainloop* m;
 
-    AudioStream* playback;
-    AudioStream* record;
-    AudioStream* cache;
+    //AudioStream* playback;
+    //AudioStream* record;
+    //AudioStream* cache;
 
+    pa_stream* playback;
+    pa_stream* record;
 };
 
 #endif // _PULSE_LAYER_H_

@@ -81,7 +81,7 @@ AudioStream::createStream( pa_context* c )
 				pa_cvolume_set(&cv, sample_spec.channels , volume) , NULL );
   }
   else if( _streamType == CAPTURE_STREAM ){
-    pa_stream_connect_record( s , NULL , NULL , flag );
+    pa_stream_connect_record( s , NULL , NULL , PA_STREAM_START_CORKED );
   }
   else if( _streamType == UPLOAD_STREAM ){
     pa_stream_connect_upload( s , 1024  );
