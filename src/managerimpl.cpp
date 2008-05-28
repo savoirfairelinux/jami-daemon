@@ -1160,9 +1160,13 @@ ManagerImpl::getInputAudioPluginList(void)
   std::vector<std::string> v;
   _debug("Get input audio plugin list");
 
-  v.push_back("default");
+  /*v.push_back("default");
   v.push_back("surround40");
   v.push_back("plug:hw");
+  */
+
+  v.push_back("alsa");
+  v.push_back("pulseaudio");
 
   return v;
 }
@@ -1176,10 +1180,12 @@ ManagerImpl::getOutputAudioPluginList(void)
   std::vector<std::string> v;
   _debug("Get output audio plugin list");
 
-  v.push_back( PCM_DEFAULT );
-  v.push_back( PCM_PLUGHW );
-  v.push_back( PCM_DMIX );
-  v.push_back( PCM_PULSE );
+  //v.push_back( PCM_DEFAULT );
+  //v.push_back( PCM_PLUGHW );
+  //v.push_back( PCM_DMIX );
+  //v.push_back( PCM_PULSE );
+  v.push_back("alsa");
+  v.push_back("pulseaudio");
 
   return v;
 }
@@ -1500,7 +1506,7 @@ ManagerImpl::initAudioDriver(void)
 {
   _debugInit("AudioLayer Creation");
   //_audiodriver = new AlsaLayer( this );
-  _audiodriver = new PulseLayer( this );
+  _audiodriver = new AlsaLayer( this );
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
   } else {
@@ -1543,15 +1549,16 @@ ManagerImpl::selectAudioDriver (void)
   }
 
 #if CHECK_INTERFACE( layer , ALSA )
-  _debug("No good\n");
-  _debugInit(" AudioLayer Opening Device");
+  _debugInit(" ALSA audio driver \n");
   _audiodriver->setErrorMessage(-1);
   _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
   if( _audiodriver -> getErrorMessage() != -1 )
     notifyErrClient( _audiodriver -> getErrorMessage());
 #else
-  _debug("Good\n");
+  delete _audiodriver;
+  _audiodriver = new PulseLayer( this );
   _debug(" Pulse audio driver \n");
+  _audiodriver->setErrorMessage(-1);
   _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
   if( _audiodriver -> getErrorMessage() != -1 )
     notifyErrClient( _audiodriver -> getErrorMessage());

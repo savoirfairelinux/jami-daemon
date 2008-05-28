@@ -146,10 +146,7 @@ class PulseLayer : public AudioLayer {
 
     AudioStream* playback;
     AudioStream* record;
-    //AudioStream* cache;
-
-    //pa_stream* playback;
-    //pa_stream* record;
+    AudioStream* cache;
 };
 
 #endif // _PULSE_LAYER_H_

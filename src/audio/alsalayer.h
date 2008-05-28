@@ -179,6 +179,9 @@ class AlsaLayer : public AudioLayer {
      */
     std::string getAudioPlugin( void ) { return _audioPlugin; }
 
+    int putInCache( char code, void *buffer, int toCopy );
+    int putMain(void* buffer, int toCopy);
+
   private:
 
     /**

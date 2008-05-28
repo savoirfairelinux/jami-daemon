@@ -25,7 +25,6 @@
   static pa_volume_t volume;
   */
 int framesPerBuffer = 2048;
-const pa_buffer_attr *a;
 
   PulseLayer::PulseLayer(ManagerImpl* manager)
   : AudioLayer( manager , PULSEAUDIO )    
@@ -104,7 +103,7 @@ PulseLayer::createStreams( pa_context* c )
   record = new AudioStream(c, CAPTURE_STREAM, "SFLphone in");
   pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
   //pa_stream_set_underflow_callback( record , underflow , this);
-  //cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples");
+  cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples");
 
   pa_threaded_mainloop_signal(m , 0);
 }

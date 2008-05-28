@@ -20,6 +20,7 @@ sflphone_gtk_SOURCES = \
   mainwindow.c \
   calllist.c \
   dialpad.c \
+  audioconf.c \
   menus.c \
   calltab.c \
   calltree.c \
@@ -34,7 +35,7 @@ sflphone_gtk_SOURCES = \
   codeclist.c \
   timestamp.c 
   
-noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h codeclist.h assistant.h\
+noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h audioconf.h codeclist.h assistant.h\
                   callmanager-glue.h errors.h sflphone_const.h configurationmanager-glue.h instance-glue.h menus.h calltab.h calltree.h configwindow.h \
                   accountlist.h accountwindow.h marshaller.h sliders.h $(STATUSICON_HEADER) timestamp.h historyfilter.c
 
