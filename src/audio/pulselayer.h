@@ -21,7 +21,7 @@
 #define _PULSE_LAYER_H
 
 #include "audiolayer.h"
-//#include "audiostream.h"
+#include "audiostream.h"
 
 class RingBuffer;
 class ManagerImpl;
@@ -126,9 +126,7 @@ class PulseLayer : public AudioLayer {
      */
     void closeCaptureStream( void );
 
-    void write( void );
-    void read( void );
-    int readbuffer( void* data, int bytes );
+    void processData( void );
     void createStreams( pa_context* c );
     /**
      * Drop the pending frames and close the playback device
@@ -146,12 +144,12 @@ class PulseLayer : public AudioLayer {
     pa_context* context;
     pa_threaded_mainloop* m;
 
-    //AudioStream* playback;
-    //AudioStream* record;
+    AudioStream* playback;
+    AudioStream* record;
     //AudioStream* cache;
 
-    pa_stream* playback;
-    pa_stream* record;
+    //pa_stream* playback;
+    //pa_stream* record;
 };
 
 #endif // _PULSE_LAYER_H_

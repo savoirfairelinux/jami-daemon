@@ -19,12 +19,12 @@
 
 #include "pulselayer.h"
 
-static pa_channel_map channel_map ;
-static pa_stream_flags_t flag;
-static pa_sample_spec sample_spec ;
-static pa_volume_t volume;
-
-int framesPerBuffer = 4096;
+/*static pa_channel_map channel_map ;
+  static pa_stream_flags_t flag;
+  static pa_sample_spec sample_spec ;
+  static pa_volume_t volume;
+  */
+int framesPerBuffer = 2048;
 const pa_buffer_attr *a;
 
   PulseLayer::PulseLayer(ManagerImpl* manager)
@@ -39,7 +39,8 @@ const pa_buffer_attr *a;
 // Destructor
 PulseLayer::~PulseLayer (void) 
 { 
-  ////delete cache;
+  delete playback;
+  delete record;
   pa_context_disconnect(context);
 }
 
@@ -94,67 +95,18 @@ void PulseLayer::context_state_callback( pa_context* c, void* user_data )
   }
 }
 
-  void 
-PulseLayer::stream_state_callback( pa_stream* s, void* user_data )
-{
-  _debug("The state of the stream changed\n");
-  assert(s);
-  switch(pa_stream_get_state(s)){
-    case PA_STREAM_CREATING:
-    case PA_STREAM_TERMINATED:
-      _debug("Stream is creating...\n");
-      break;
-    case PA_STREAM_READY:
-      _debug("Stream successfully created\n");
-      break;
-    case PA_STREAM_FAILED:
-    default:
-      _debug("Stream error: %s\n" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
-      break;
-  }
-}
-
   void
 PulseLayer::createStreams( pa_context* c )
 {
-  _debug("Creating streams...\n");
-  sample_spec.format = PA_SAMPLE_S16LE; 
-  sample_spec.rate = 44100; 
-  sample_spec.channels = 1; 
-  channel_map.channels = 1; 
-  flag = PA_STREAM_AUTO_TIMING_UPDATE ;
-  volume = PA_VOLUME_NORM;
-
-  pa_cvolume cv;
-
-  assert(pa_sample_spec_valid(&sample_spec));
-  assert(pa_channel_map_valid(&channel_map));
-
-  if( !( playback = pa_stream_new( c, "SFLphone OUT" , &sample_spec, &channel_map ) ) ) 
-    _debug("Playback: pa_stream_new() failed : %s\n" , pa_strerror( pa_context_errno( c)));
-  assert( playback );
-  pa_stream_set_write_callback( playback , audioCallback, this);
-  pa_stream_connect_playback( playback , NULL , NULL , 
-      PA_STREAM_INTERPOLATE_TIMING,
-      pa_cvolume_set(&cv, sample_spec.channels , volume) , NULL );
-
-  if( !( record = pa_stream_new( c, "SFLphone IN" , &sample_spec, &channel_map ) ) ) 
-    _debug("Record: pa_stream_new() failed : %s\n" , pa_strerror( pa_context_errno( c)));
-  assert( record );
-  pa_stream_connect_record( record , NULL , NULL , PA_STREAM_INTERPOLATE_TIMING );
-
-  pa_stream_set_state_callback( record , stream_state_callback, NULL);
-  pa_stream_set_state_callback( playback , stream_state_callback, NULL);
-
-  //playback = new AudioStream(c, PLAYBACK_STREAM, "SFLphone out");
-  pa_stream_set_overflow_callback( playback , overflow , this);
-  //record = new AudioStream(c, CAPTURE_STREAM, "SFLphone in");
-  pa_stream_set_read_callback( record , audioCallback, this);
-  pa_stream_set_underflow_callback( record , underflow , this);
+  playback = new AudioStream(c, PLAYBACK_STREAM, "SFLphone out");
+  pa_stream_set_write_callback( playback->pulseStream() , audioCallback, this);
+  //pa_stream_set_overflow_callback( playback , overflow , this);
+  record = new AudioStream(c, CAPTURE_STREAM, "SFLphone in");
+  pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
+  //pa_stream_set_underflow_callback( record , underflow , this);
   //cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples");
 
   pa_threaded_mainloop_signal(m , 0);
-
 }
 
   bool 
@@ -235,13 +187,7 @@ PulseLayer::putUrgent(void* buffer, int toCopy)
 PulseLayer::canGetMic()
 {
   if( record )
-  {
-    //int a = _micRingBuffer.AvailForGet();
-    //return a;
-    int a = pa_stream_readable_size( record );
-    _debug("available: %i\n" , a);
-    return 2048;
-  }
+    return  _micRingBuffer.AvailForGet();
   else
     return 0;
 }
@@ -250,8 +196,7 @@ PulseLayer::canGetMic()
 PulseLayer::getMic(void *buffer, int toCopy)
 {
   if( record ){
-    //return _micRingBuffer.Get(buffer, toCopy, 100);
-    return readbuffer( buffer, toCopy );
+    return _micRingBuffer.Get(buffer, toCopy, 100);
   }
   else
     return 0;
@@ -263,24 +208,23 @@ PulseLayer::flushMic()
   _micRingBuffer.flush();
 }
 
-/*  bool
-    PulseLayer::isStreamStopped (void) 
-    {
-    }
-    */
   void 
 PulseLayer::startStream (void) 
 {
+  _micRingBuffer.flush();
   _debug("Start stream\n");
-  //pa_stream_cork( record, NULL, NULL, NULL);
-  //pa_stream_cork( playback, NULL, NULL, NULL);
+  pa_threaded_mainloop_lock(m);
+  pa_stream_cork( record->pulseStream(), NULL, NULL, NULL);
+  pa_threaded_mainloop_unlock(m);
 }
 
   void 
 PulseLayer::stopStream (void) 
 {
   _debug("Stop stream\n");
-  //pa_stream_drop( playback );
+  pa_stream_flush( playback->pulseStream(), NULL, NULL );
+  pa_stream_flush( record->pulseStream(), NULL, NULL );
+  flushMic();
 }
 
   bool 
@@ -294,8 +238,7 @@ PulseLayer::audioCallback ( pa_stream* s, size_t bytes, void* userdata )
   PulseLayer* pulse = (PulseLayer*) userdata;
   assert( s && bytes );
   assert( bytes > 0 );
-  pulse->write();
-  //pulse->read();
+  pulse->processData();
 }
 
   void 
@@ -312,15 +255,32 @@ PulseLayer::overflow ( pa_stream* s, void* userdata )
 }
 
   void
-PulseLayer::write( void )
+PulseLayer::processData( void )
 {
-  // a =  pa_stream_get_buffer_attr(record->pulseStream());
-  //if (a)
-  //_debug("Buffer attributes: maxlength=%u , fragsize=%u\n" , a->maxlength, a->fragsize );
-  //_debug("Device name = %s ; device index = %i\n" , pa_stream_get_device_name( playback->pulseStream()) , pa_stream_get_device_index( playback->pulseStream()));
+  const char* data;
+  size_t r;
   int toGet; 
   int urgentAvail; // number of data right and data left  
   int normalAvail; // number of data right and data left
+
+  // Handle the mic also
+  if( (record->pulseStream()) && pa_stream_get_state( record->pulseStream()) == PA_STREAM_READY) {
+
+    if( pa_stream_peek( record->pulseStream() , (const void**)&data , &r ) < 0 || !data ){
+      _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+      return;
+    }
+
+    if( data != 0 ){
+      _micRingBuffer.Put( (void*)data , r, 100);
+    }
+
+    if( pa_stream_drop( record->pulseStream() ) < 0 ) {
+      _debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+      return;
+    }
+  } 
+
   SFLDataFormat* out = (SFLDataFormat*)pa_xmalloc(framesPerBuffer * sizeof(SFLDataFormat));
   urgentAvail = _urgentRingBuffer.AvailForGet();
   if (urgentAvail > 0) {
@@ -352,36 +312,7 @@ PulseLayer::write( void )
 	  }
 	}
   }
-  pa_stream_write( playback , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
-}
-
-  void 
-PulseLayer::read( void )
-{
-  if( (record) && pa_stream_get_state( record) == PA_STREAM_READY) {
-
-    size_t n = pa_stream_readable_size( record);
-
-    if( n == (size_t) -1 ){
-      _debug("pa_stream_readable_size(): %s\n" , pa_strerror( pa_context_errno( context )) );
-      return;
-    }
-
-    const char* data;
-    size_t r;
-
-    /*if( pa_stream_peek( record , (const void**)&data , &r ) < 0 || !data ){
-      _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
-      return;
-      }
-
-      _micRingBuffer.Put( (void*)data , r, 100);
-
-      if( pa_stream_drop( record ) < 0 ) {
-      _debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
-      return;
-      }*/
-  }
+  pa_stream_write( playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
 }
 
   int
@@ -392,20 +323,3 @@ PulseLayer::putInCache( char code, void *buffer, int toCopy )
   //pa_stream_finish_upload( cache->pulseStream() );
 }
 
-  int
-PulseLayer::readbuffer( void* data , int bytes )
-{
-  if( (record) && pa_stream_get_state( record) == PA_STREAM_READY) {
-    size_t r = (size_t) bytes;
-    if( pa_stream_peek( record , (const void**)&data , &r ) < 0 || !data ){
-      _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
-      return 0;
-
-      if( pa_stream_drop( record ) < 0 ) {
-	_debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
-	return 0;
-      }
-    }
-    return bytes;
-  }
-}
