@@ -38,9 +38,18 @@ int framesPerBuffer = 2048;
 // Destructor
 PulseLayer::~PulseLayer (void) 
 { 
+  _debug(" Destroy pulselayer\n");
   delete playback;
   delete record;
   pa_context_disconnect(context);
+}
+
+void
+PulseLayer::closeLayer( void )
+{
+  playback->disconnect(); 
+  record->disconnect();
+  pa_context_disconnect( context ); 
 }
 
   void

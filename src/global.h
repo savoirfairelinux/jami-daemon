@@ -124,6 +124,6 @@ typedef short int16;
 
 #define ALSA			  0 
 #define PULSEAUDIO		  1
-#define CHECK_INTERFACE( layer , api )		  (layer != api) 
+#define CHECK_INTERFACE( layer , api )		  (layer == api) 
 
 #endif	// __GLOBAL_H__

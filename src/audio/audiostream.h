@@ -42,6 +42,7 @@ class AudioStream {
     int putMain( void* buffer , int toCopy );
     int putUrgent( void* buffer , int toCopy );
 
+    void disconnect();
     pa_stream* pulseStream(){ return _audiostream; }
 
   private:

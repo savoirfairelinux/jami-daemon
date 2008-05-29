@@ -35,6 +35,8 @@ public:
         register_method(ConfigurationManager, ringtoneEnabled, _ringtoneEnabled_stub);
         register_method(ConfigurationManager, getRingtoneChoice, _getRingtoneChoice_stub);
         register_method(ConfigurationManager, setRingtoneChoice, _setRingtoneChoice_stub);
+        register_method(ConfigurationManager, getAudioManager, _getAudioManager_stub);
+        register_method(ConfigurationManager, setAudioManager, _setAudioManager_stub);
         register_method(ConfigurationManager, getCodecList, _getCodecList_stub);
         register_method(ConfigurationManager, getCodecDetails, _getCodecDetails_stub);
         register_method(ConfigurationManager, getActiveCodecList, _getActiveCodecList_stub);
@@ -146,6 +148,16 @@ public:
         static ::DBus::IntrospectedArgument setRingtoneChoice_args[] = 
         {
             { "tone", "s", true },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getAudioManager_args[] = 
+        {
+            { "api", "i", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setAudioManager_args[] = 
+        {
+            { "api", "i", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getCodecList_args[] = 
@@ -334,6 +346,8 @@ public:
             { "ringtoneEnabled", ringtoneEnabled_args },
             { "getRingtoneChoice", getRingtoneChoice_args },
             { "setRingtoneChoice", setRingtoneChoice_args },
+            { "getAudioManager", getAudioManager_args },
+            { "setAudioManager", setAudioManager_args },
             { "getCodecList", getCodecList_args },
             { "getCodecDetails", getCodecDetails_args },
             { "getActiveCodecList", getActiveCodecList_args },
@@ -415,6 +429,8 @@ public:
     virtual void ringtoneEnabled(  ) = 0;
     virtual ::DBus::String getRingtoneChoice(  ) = 0;
     virtual void setRingtoneChoice( const ::DBus::String& tone ) = 0;
+    virtual ::DBus::Int32 getAudioManager(  ) = 0;
+    virtual void setAudioManager( const ::DBus::Int32& api ) = 0;
     virtual std::vector< ::DBus::String > getCodecList(  ) = 0;
     virtual std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload ) = 0;
     virtual std::vector< ::DBus::String > getActiveCodecList(  ) = 0;
@@ -619,6 +635,25 @@ private:
 
         ::DBus::String argin1; ri >> argin1;
         setRingtoneChoice(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getAudioManager_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argout1 = getAudioManager();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setAudioManager_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argin1; ri >> argin1;
+        setAudioManager(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

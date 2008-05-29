@@ -37,6 +37,15 @@ AudioStream::AudioStream( pa_context* context, int type, std::string desc )
 
 AudioStream::~AudioStream()
 { 
+  _debug("Destroy audio streams\n");
+  pa_stream_disconnect( pulseStream() );
+} 
+
+void
+AudioStream::disconnect( void )
+{ 
+  _debug("Destroy audio streams\n");
+  pa_stream_disconnect( pulseStream() );
 } 
 
   void 

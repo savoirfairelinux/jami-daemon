@@ -69,6 +69,14 @@
       <arg type="s" name="tone" direction="in"/>
     </method>
 
+    <method name="getAudioManager">
+      <arg type="i" name="api" direction="out"/>
+    </method>
+
+    <method name="setAudioManager">
+      <arg type="i" name="api" direction="in"/>
+    </method>
+
    <!--      ///////////////////////               -->
    
    <!-- Codecs-related methods -->

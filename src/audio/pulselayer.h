@@ -31,6 +31,8 @@ class PulseLayer : public AudioLayer {
     PulseLayer(ManagerImpl* manager);
     ~PulseLayer(void);
 
+    void closeLayer( void );
+
     /**
      * Check if no devices are opened, otherwise close them.
      * Then open the specified devices by calling the private functions open_device

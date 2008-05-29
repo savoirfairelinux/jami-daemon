@@ -376,13 +376,12 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       toAudioLayer = _dataAudioLayer;
 #endif
 
-    //  int layer = audiolayer->getLayerType();
-  //    _debug(" interface %i\n" , layer);
-//#if CHECK_INTERFACE( layer , ALSA )
-  //    audiolayer->playSamples(toAudioLayer, nbSample * sizeof(SFLDataFormat), true);
-//#else
-      audiolayer->putMain( toAudioLayer, nbSample * sizeof(SFLDataFormat) );
-//#endif
+      int layer = audiolayer->getLayerType();
+      //_debug(" interface %i - ALSA = %i\n" , layer, ALSA);
+      if( CHECK_INTERFACE( layer, ALSA ) )
+	audiolayer->playSamples(toAudioLayer, nbSample * sizeof(SFLDataFormat), true);
+      else      
+	audiolayer->putMain( toAudioLayer, nbSample * sizeof(SFLDataFormat) );
       // Notify (with a beep) an incoming call when there is already a call 
       countTime += time->getSecond();
       if (Manager::instance().incomingCallWaiting() > 0) {

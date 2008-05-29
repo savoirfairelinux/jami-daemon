@@ -68,6 +68,8 @@ class AudioLayer {
      */
     ~AudioLayer(void){}
 
+    virtual void closeLayer( void ) = 0;
+
     /**
      * Check if no devices are opened, otherwise close them.
      * Then open the specified devices by calling the private functions open_device

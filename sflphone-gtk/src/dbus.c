@@ -1419,3 +1419,40 @@ dbus_get_mail_notify( void )
 	
 	return level;
 }
+
+void
+dbus_set_audio_manager( int api )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_audio_manager(
+			configurationManagerProxy,
+			api,
+			&error);
+	if(error)
+	{
+		g_error_free(error);
+	}
+	else
+	  g_print("Called dbus_set_audio_manager\n");
+}
+
+int
+dbus_get_audio_manager( void )
+{
+  g_print("Before dbus_get_mail_notif_level()\n");
+  int api;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_audio_manager(
+			configurationManagerProxy,
+			&api,
+			&error);
+	if(error)
+	{
+	  g_print("Error calling dbus_get_audio_manager\n");
+		g_error_free(error);
+	}
+	else
+	  g_print("Called dbus_get_audio_manager\n");
+	
+	return api;
+}

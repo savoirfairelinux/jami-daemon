@@ -336,6 +336,20 @@ ConfigurationManager::getNotify( void )
 }
 
 void
+ConfigurationManager::setAudioManager( const DBus::Int32& api )
+{
+  _debug("Manager received setAudioManager\n");
+  Manager::instance().setAudioManager( api ); 
+}
+
+::DBus::Int32
+ConfigurationManager::getAudioManager( void )
+{
+  _debug("Manager received getAudioManager\n");
+  return Manager::instance().getAudioManager(  ); 
+}
+
+void
 ConfigurationManager::setMailNotify( void )
 {
   _debug("Manager received setMailNotify\n");

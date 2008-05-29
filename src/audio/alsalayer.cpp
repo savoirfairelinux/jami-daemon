@@ -40,6 +40,14 @@ AlsaLayer::~AlsaLayer (void)
   deviceClosed = true;
 }
 
+void
+AlsaLayer::closeLayer()
+{
+  _debugAlsa("Close ALSA streams\n");
+  closeCaptureStream();
+  closePlaybackStream();
+  deviceClosed = true;
+}
 
   bool 
 AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize, int stream , std::string plugin) 

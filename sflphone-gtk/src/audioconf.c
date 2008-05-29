@@ -30,6 +30,9 @@ GtkWidget *plugin;
 GtkWidget *codecMoveUpButton;
 GtkWidget *codecMoveDownButton;
 GtkWidget *codecTreeView;		// View used instead of store to get access to selection
+GtkWidget *pulse;
+GtkWidget *alsabox;
+GtkWidget *alsa_conf;
 
 // Codec properties ID
 enum {
@@ -105,13 +108,13 @@ config_window_fill_output_audio_plugin_list()
   void
 config_window_fill_output_audio_device_list()
 {
-  /*
-     GtkTreeIter iter;
-     gchar** list;
-     gchar** audioDevice;
-     int index;
 
-     gtk_list_store_clear(outputlist);
+  GtkTreeIter iter;
+  gchar** list;
+  gchar** audioDevice;
+  int index;
+
+  gtk_list_store_clear(outputlist);
 
   // Call dbus to retreive list
   list = dbus_get_audio_output_device_list();
@@ -120,12 +123,12 @@ config_window_fill_output_audio_device_list()
   int c = 0;
   for(audioDevice = list; *list ; list++)
   {
-  index = dbus_get_audio_device_index( *list );
-  gtk_list_store_append(outputlist, &iter);
-  gtk_list_store_set(outputlist, &iter, 0, *list, 1, index, -1);
-  c++;
+    index = dbus_get_audio_device_index( *list );
+    gtk_list_store_append(outputlist, &iter);
+    gtk_list_store_set(outputlist, &iter, 0, *list, 1, index, -1);
+    c++;
   }
-  */
+
 }
 
 /**
@@ -134,35 +137,35 @@ config_window_fill_output_audio_device_list()
   void
 select_active_output_audio_device()
 {
-  /*
-     GtkTreeModel* model;
-     GtkTreeIter iter;
-     gchar** devices;
-     int currentDeviceIndex;
-     int deviceIndex;
+
+  GtkTreeModel* model;
+  GtkTreeIter iter;
+  gchar** devices;
+  int currentDeviceIndex;
+  int deviceIndex;
 
   // Select active output device on server
-  devices = dbus_get_current_audio_devices_index();
-  currentDeviceIndex = atoi(devices[0]);
+  //devices = dbus_get_current_audio_devices_index();
+  currentDeviceIndex = 0;//atoi(devices[0]);
   printf(_("audio device index for output = %d\n"), currentDeviceIndex);
   model = gtk_combo_box_get_model(GTK_COMBO_BOX(output));
 
   // Find the currently set output device
   gtk_tree_model_get_iter_first(model, &iter);
   do {
-  gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-  if(deviceIndex == currentDeviceIndex)
-  {
-  // Set current iteration the active one
-  gtk_combo_box_set_active_iter(GTK_COMBO_BOX(output), &iter);
-  return;
-  }
+    gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+    if(deviceIndex == currentDeviceIndex)
+    {
+      // Set current iteration the active one
+      gtk_combo_box_set_active_iter(GTK_COMBO_BOX(output), &iter);
+      return;
+    }
   } while(gtk_tree_model_iter_next(model, &iter));
 
   // No index was found, select first one
   g_print("Warning : No active output device found");
   gtk_combo_box_set_active(GTK_COMBO_BOX(output), 0);
-  */
+
 }
 
 /**
@@ -171,12 +174,12 @@ select_active_output_audio_device()
   void
 config_window_fill_input_audio_device_list()
 {
-  /*
-     GtkTreeIter iter;
-     gchar** list;
-     gchar** audioDevice;
-     int index ;
-     gtk_list_store_clear(inputAudioDeviceManagerStore);
+
+  GtkTreeIter iter;
+  gchar** list;
+  gchar** audioDevice;
+  int index ;
+  gtk_list_store_clear(inputlist);
 
   // Call dbus to retreive list
   list = dbus_get_audio_input_device_list();
@@ -185,12 +188,13 @@ config_window_fill_input_audio_device_list()
   //int c = 0;
   for(audioDevice = list; *list; list++)
   {
-  index = dbus_get_audio_device_index( *list );
-  gtk_list_store_append(inputAudioDeviceManagerStore, &iter);
-  gtk_list_store_set(inputAudioDeviceManagerStore, &iter, 0, *list, 1, index, -1);
-  //c++;
+    g_print("dbasbasdfbzfb\n");
+    index = dbus_get_audio_device_index( *list );
+    gtk_list_store_append(inputlist, &iter);
+    gtk_list_store_set(inputlist, &iter, 0, *list, 1, index, -1);
+    //c++;
   }
-  */
+
 }
 
 /**
@@ -199,12 +203,12 @@ config_window_fill_input_audio_device_list()
   void
 select_active_input_audio_device()
 {
-  /*
-     GtkTreeModel* model;
-     GtkTreeIter iter;
-     gchar** devices;
-     int currentDeviceIndex;
-     int deviceIndex;
+
+  GtkTreeModel* model;
+  GtkTreeIter iter;
+  gchar** devices;
+  int currentDeviceIndex;
+  int deviceIndex;
 
   // Select active input device on server
   devices = dbus_get_current_audio_devices_index();
@@ -214,19 +218,19 @@ select_active_input_audio_device()
   // Find the currently set input device
   gtk_tree_model_get_iter_first(model, &iter);
   do {
-  gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-  if(deviceIndex == currentDeviceIndex)
-  {
-  // Set current iteration the active one
-  gtk_combo_box_set_active_iter(GTK_COMBO_BOX(input), &iter);
-  return;
-  }
+    gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+    if(deviceIndex == currentDeviceIndex)
+    {
+      // Set current iteration the active one
+      gtk_combo_box_set_active_iter(GTK_COMBO_BOX(input), &iter);
+      return;
+    }
   } while(gtk_tree_model_iter_next(model, &iter));
 
   // No index was found, select first one
   g_print("Warning : No active input device found");
   gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
-  */
+
 }
 
 /**
@@ -593,21 +597,37 @@ GtkWidget* codecs_box()
   return ret;
 }
 
+  void
+select_audio_manager( void )
+{
+  if( !SHOW_ALSA_CONF && !gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ) )
+  {
+    alsabox = alsa_box();
+    gtk_container_add( GTK_CONTAINER(alsa_conf ) , alsabox);
+    gtk_widget_show( alsa_conf );    
+  }
+  else if( SHOW_ALSA_CONF && gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ))
+  {
+    gtk_container_remove( GTK_CONTAINER(alsa_conf) , alsabox );
+  }
+  gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) )? dbus_set_audio_manager( PULSEAUDIO ):dbus_set_audio_manager( ALSA );
+}
+
 GtkWidget* api_box()
 {
   GtkWidget *ret;
   GtkWidget *alsa;
-  GtkWidget *pulse;
 
   ret = gtk_hbox_new(FALSE, 10);
   gtk_widget_show( ret );
 
   pulse = gtk_radio_button_new_with_mnemonic( NULL , _("Pulseaudio"));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(pulse), TRUE  );
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(pulse), !SHOW_ALSA_CONF  );
   gtk_box_pack_start( GTK_BOX(ret) , pulse , TRUE , TRUE , 1);
   alsa = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(pulse),  _("ALSA"));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(alsa), FALSE );
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(alsa), SHOW_ALSA_CONF );
   gtk_box_pack_end( GTK_BOX(ret) , alsa , TRUE , TRUE , 1);
+  g_signal_connect(G_OBJECT(alsa), "clicked", G_CALLBACK(select_audio_manager), NULL);
 
   gtk_widget_show_all(ret);
 
@@ -639,7 +659,7 @@ GtkWidget* alsa_box()
   plugin = gtk_combo_box_new_with_model(GTK_TREE_MODEL(pluginlist));
   //select_active_output_audio_plugin();
   gtk_label_set_mnemonic_widget(GTK_LABEL(item), plugin);
-  //g_signal_connect(G_OBJECT(plugin), "changed", G_CALLBACK(select_output_audio_plugin), plugin);
+  g_signal_connect(G_OBJECT(plugin), "changed", G_CALLBACK(select_output_audio_plugin), plugin);
 
   // Set rendering
   renderer = gtk_cell_renderer_text_new();
@@ -660,7 +680,7 @@ GtkWidget* alsa_box()
   output = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputlist));
   //select_active_output_audio_device();
   gtk_label_set_mnemonic_widget(GTK_LABEL(item), output);
-  //g_signal_connect(G_OBJECT(output), "changed", G_CALLBACK(select_audio_output_device), output);
+  g_signal_connect(G_OBJECT(output), "changed", G_CALLBACK(select_audio_output_device), output);
 
   // Set rendering
   renderer = gtk_cell_renderer_text_new();
@@ -681,7 +701,7 @@ GtkWidget* alsa_box()
   input = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputlist));
   //select_active_input_audio_device();
   gtk_label_set_mnemonic_widget(GTK_LABEL(item), input);
-  //g_signal_connect(G_OBJECT(input), "changed", G_CALLBACK(select_audio_input_device), input);
+  g_signal_connect(G_OBJECT(input), "changed", G_CALLBACK(select_audio_input_device), input);
 
   // Set rendering
   renderer = gtk_cell_renderer_text_new();
@@ -730,7 +750,6 @@ GtkWidget* create_audio_configuration()
   GtkWidget *ret;
   // Main frames
   GtkWidget *sound_conf;
-  GtkWidget *alsa_conf;
   GtkWidget *codecs_conf;
   GtkWidget *ringtones_conf;
   // Sub boxes
@@ -750,8 +769,11 @@ GtkWidget* create_audio_configuration()
   alsa_conf = gtk_frame_new(_("ALSA configuration"));
   gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);
   gtk_widget_show( alsa_conf );
-  box = alsa_box();
-  gtk_container_add( GTK_CONTAINER(alsa_conf) , box );
+  if( SHOW_ALSA_CONF )
+  {
+    alsabox = alsa_box();
+    gtk_container_add( GTK_CONTAINER(alsa_conf) , alsabox );
+  }
 
   // Box for the codecs
   codecs_conf = gtk_frame_new(_("Codecs"));
@@ -771,9 +793,3 @@ GtkWidget* create_audio_configuration()
 
   return ret;
 }
-
-gboolean get_api()
-{
-  return gtk_widget_get_active()
-}
-

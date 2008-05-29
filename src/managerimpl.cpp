@@ -496,19 +496,20 @@ ManagerImpl::playDtmf(char code, bool isTalking)
     // Put buffer to urgentRingBuffer 
     // put the size in bytes...
     // so size * 1 channel (mono) * sizeof (bytes for the data)
-#if CHECK_INTERFACE( layer , ALSA )
-    audiolayer->playSamples(_buf, size * sizeof(SFLDataFormat), isTalking);
-#else
-    _debug("DTMF disabled\n");
+    if(CHECK_INTERFACE( layer , ALSA ))
+      audiolayer->playSamples(_buf, size * sizeof(SFLDataFormat), isTalking);
+    else
+      _debug("DTMF disabled\n");
     //audiolayer->putUrgent( _buf, size * sizeof(SFLDataFormat) );
-#endif
+
   }
   returnValue = true;
 
-#if CHECK_INTERFACE( layer , PULSEAUDIO )
+  if( CHECK_INTERFACE( layer , PULSEAUDIO ))
+  {
   // Cache the samples on the sound server
   (PulseLayer*)audiolayer->putInCache( code, _buf , size * sizeof(SFLDataFormat) );
-#endif
+  }
 
   delete[] _buf; _buf = 0;
   return returnValue;
@@ -726,12 +727,11 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
     SFLDataFormat buf[nbSampling];
     if ( audiolayer ) {
       int layer = audiolayer->getLayerType(); 
-#if CHECK_INTERFACE( layer , ALSA ) 
+    if(CHECK_INTERFACE( layer , ALSA ) )
       audiolayer->putUrgent( buf, nbSampling );
-#else
+    else{}
   // Pulseaudio code
-  // startStream()?;
-#endif
+  // startStream()?;}
     }
     else 
       return false;
@@ -750,10 +750,10 @@ ManagerImpl::stopTone(bool stopAudio=true) {
   if (stopAudio) {
     AudioLayer* audiolayer = getAudioDriver();
     int layer = audiolayer->getLayerType();
-#if  CHECK_INTERFACE( layer , ALSA ) 
-#else
+    if(CHECK_INTERFACE( layer , ALSA ) ){}
+    else{}
   //if (audiolayer) { audiolayer->stopStream(); }
-#endif  
+
   }
 
   _toneMutex.enterMutex();
@@ -830,15 +830,15 @@ ManagerImpl::ringtone()
       _toneMutex.enterMutex(); 
       _audiofile.start();
       _toneMutex.leaveMutex(); 
-#if CHECK_INTERFACE( layer, ALSA )
+    if(CHECK_INTERFACE( layer, ALSA )){
       int size = _audiofile.getSize();
       SFLDataFormat output[ size ];
       _audiofile.getNext(output, size , 100);
-      audiolayer->putUrgent( output , size );
-#else
+      audiolayer->putUrgent( output , size );}
+    else{
       // pulseaudio code
       //audiolayer->startStream();
-#endif
+    }
     } else {
       ringback();
     }
@@ -886,11 +886,11 @@ ManagerImpl::notificationIncomingCall(void) {
     unsigned int nbSampling = tone.getSize();
     SFLDataFormat buf[nbSampling];
     tone.getNext(buf, tone.getSize());
-#if CHECK_INTERFACE( layer , ALSA )
-    audiolayer->playSamples(buf, sizeof(SFLDataFormat)*nbSampling, true);
-#else
-    audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
-#endif  
+    if(CHECK_INTERFACE( layer , ALSA ))
+      audiolayer->playSamples(buf, sizeof(SFLDataFormat)*nbSampling, true);
+    else
+      audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
+  
   }
 }
 
@@ -1015,6 +1015,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_VOLUME , YES_STR);
   fill_config_int(CONFIG_HISTORY , DFT_MAX_CALLS);
   fill_config_int(REGISTRATION_EXPIRE , DFT_EXPIRE_VALUE);
+  fill_config_int(CONFIG_AUDIO , DFT_AUDIO_MANAGER);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1160,13 +1161,9 @@ ManagerImpl::getInputAudioPluginList(void)
   std::vector<std::string> v;
   _debug("Get input audio plugin list");
 
-  /*v.push_back("default");
+  v.push_back("default");
   v.push_back("surround40");
   v.push_back("plug:hw");
-  */
-
-  v.push_back("alsa");
-  v.push_back("pulseaudio");
 
   return v;
 }
@@ -1180,12 +1177,9 @@ ManagerImpl::getOutputAudioPluginList(void)
   std::vector<std::string> v;
   _debug("Get output audio plugin list");
 
-  //v.push_back( PCM_DEFAULT );
-  //v.push_back( PCM_PLUGHW );
-  //v.push_back( PCM_DMIX );
-  //v.push_back( PCM_PULSE );
-  v.push_back("alsa");
-  v.push_back("pulseaudio");
+  v.push_back( PCM_DEFAULT );
+  v.push_back( PCM_PLUGHW );
+  v.push_back( PCM_DMIX );
 
   return v;
 }
@@ -1197,7 +1191,8 @@ ManagerImpl::getOutputAudioPluginList(void)
 ManagerImpl::setInputAudioPlugin(const std::string& audioPlugin)
 {
   int layer = _audiodriver -> getLayerType();
-#if CHECK_INTERFACE( layer , ALSA )
+  if(CHECK_INTERFACE( layer , ALSA ))
+  {
   _debug("Set input audio plugin\n");
   _audiodriver -> setErrorMessage( -1 );
   _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
@@ -1208,8 +1203,8 @@ ManagerImpl::setInputAudioPlugin(const std::string& audioPlugin)
       audioPlugin);
   if( _audiodriver -> getErrorMessage() != -1)
     notifyErrClient( _audiodriver -> getErrorMessage() );
-#else
-#endif
+}else{}
+
 }
 
 /**
@@ -1219,10 +1214,9 @@ ManagerImpl::setInputAudioPlugin(const std::string& audioPlugin)
 ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
 {
   int layer = _audiodriver -> getLayerType();
-#if CHECK_INTERFACE( layer , ALSA )
-  _debug("Set output audio plugin\n");
-  _audiodriver -> setErrorMessage( -1 );
-  _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
+    _debug("Set output audio plugin\n");
+    _audiodriver -> setErrorMessage( -1 );
+    _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
       _audiodriver -> getIndexOut(),
       _audiodriver -> getSampleRate(),
       _audiodriver -> getFrameSize(),
@@ -1232,8 +1226,6 @@ ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
     notifyErrClient( _audiodriver -> getErrorMessage() );
   // set config
   setConfig( AUDIO , ALSA_PLUGIN , audioPlugin );
-#else
-#endif
 }
 
 /**
@@ -1253,7 +1245,6 @@ ManagerImpl::getAudioOutputDeviceList(void)
 ManagerImpl::setAudioOutputDevice(const int index)
 {
   int layer = _audiodriver -> getLayerType();
-#if CHECK_INTERFACE( layer , ALSA )
   _debug("Set audio output device: %i\n", index);
   _audiodriver -> setErrorMessage( -1 );
   _audiodriver->openDevice(_audiodriver->getIndexIn(), 
@@ -1266,8 +1257,6 @@ ManagerImpl::setAudioOutputDevice(const int index)
     notifyErrClient( _audiodriver -> getErrorMessage() );
   // set config
   setConfig( AUDIO , ALSA_CARD_ID_OUT , index );
-#else
-#endif
 }
 
 /**
@@ -1287,7 +1276,6 @@ ManagerImpl::getAudioInputDeviceList(void)
 ManagerImpl::setAudioInputDevice(const int index)
 {
   int layer = _audiodriver -> getLayerType();
-#if CHECK_INTERFACE( layer , ALSA )
   _debug("Set audio input device %i\n", index);
   _audiodriver -> setErrorMessage( -1 );
   _audiodriver->openDevice(index, 
@@ -1300,8 +1288,6 @@ ManagerImpl::setAudioInputDevice(const int index)
     notifyErrClient( _audiodriver -> getErrorMessage() );
   // set config
   setConfig( AUDIO , ALSA_CARD_ID_IN , index );
-#else
-#endif
 }
 
 /**
@@ -1461,6 +1447,19 @@ ManagerImpl::getMailNotify( void )
   return getConfigInt( PREFERENCES , CONFIG_MAIL_NOTIFY );
 }
 
+void
+ManagerImpl::setAudioManager( const DBus::Int32& api )
+{
+  setConfig( PREFERENCES , CONFIG_AUDIO , api) ;
+  switchAudioManager();
+}
+
+::DBus::Int32
+ManagerImpl::getAudioManager( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_AUDIO );
+}
+
 int
 ManagerImpl::getRegistrationExpireValue( void)
 {
@@ -1506,7 +1505,19 @@ ManagerImpl::initAudioDriver(void)
 {
   _debugInit("AudioLayer Creation");
   //_audiodriver = new AlsaLayer( this );
-  _audiodriver = new AlsaLayer( this );
+  
+  /*if( _audiodriver ){
+    _debug("delete audiodriver\n");
+    delete _audiodriver;  _audiodriver = NULL;
+  } */ 
+
+  if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == ALSA )
+    _audiodriver = new AlsaLayer( this );
+  else if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == PULSEAUDIO )
+    _audiodriver = new PulseLayer( this );
+  else
+    _debug("Error - Audio API unknown\n");
+
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
   } else {
@@ -1548,24 +1559,60 @@ ManagerImpl::selectAudioDriver (void)
     setConfig( AUDIO , ALSA_CARD_ID_OUT , ALSA_DFT_CARD_ID );
   }
 
-#if CHECK_INTERFACE( layer , ALSA )
+  if(CHECK_INTERFACE( layer , ALSA ))
+  {
+  delete _audiodriver;
+  _audiodriver = new AlsaLayer( this );
   _debugInit(" ALSA audio driver \n");
   _audiodriver->setErrorMessage(-1);
   _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
   if( _audiodriver -> getErrorMessage() != -1 )
     notifyErrClient( _audiodriver -> getErrorMessage());
-#else
-  delete _audiodriver;
-  _audiodriver = new PulseLayer( this );
+  }else{
+    delete _audiodriver;
+    _audiodriver = new PulseLayer( this );
   _debug(" Pulse audio driver \n");
   _audiodriver->setErrorMessage(-1);
   _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
   if( _audiodriver -> getErrorMessage() != -1 )
     notifyErrClient( _audiodriver -> getErrorMessage());
-
-#endif
+  }
 
 }
+
+void
+ManagerImpl::switchAudioManager( void ) 
+{
+  _debug( "Switching audio manager \n");
+
+  int type = _audiodriver->getLayerType();
+  int samplerate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
+  int framesize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
+  std::string alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
+  int numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
+  int numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
+
+  _debug("Deleting current layer...\n");
+  _audiodriver->closeLayer();
+  delete _audiodriver; _audiodriver = NULL;
+  
+  switch( type ){
+    case ALSA:
+      _debug("Creating Pulseaudio layer...\n");
+      _audiodriver = new PulseLayer( this );
+      break;
+    case PULSEAUDIO:
+      _debug("Creating ALSA layer...\n");
+      _audiodriver = new AlsaLayer( this );
+      break;
+    default:
+      _debug("Error: audio layer unknown\n");
+  }
+  _audiodriver->setErrorMessage(-1);
+  _audiodriver->openDevice( numCardIn , numCardOut, samplerate, framesize, SFL_PCM_BOTH, alsaPlugin ); 
+  if( _audiodriver -> getErrorMessage() != -1 )
+    notifyErrClient( _audiodriver -> getErrorMessage());
+} 
 
 /**
  * Initialize the Zeroconf scanning services loop

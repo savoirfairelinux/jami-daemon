@@ -76,6 +76,12 @@
 #define SHOW_VOLUME	( dbus_get_volume_controls() ) 
 /** Show/Hide the dialpad */
 #define SHOW_SEARCHBAR	( dbus_get_searchbar() ) 
+/** Show/Hide the alsa configuration panel */
+#define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
+
+/** Audio Managers */
+#define ALSA	      0
+#define PULSEAUDIO    1
 
 /** Notification levels */
 #define __NOTIF_LEVEL_MIN     0

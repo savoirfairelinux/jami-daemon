@@ -353,6 +353,20 @@ void dbus_switch_popup_mode( void );
 int dbus_popup_mode( void );
 
 /**
+ * ConfigurationManager - Returns the selected audio manager
+ * @return int	0	ALSA
+ *		1	PULSEAUDIO 
+ */
+int dbus_get_audio_manager( void );
+
+/**
+ * ConfigurationManager - Set the audio manager
+ * @param api	0	ALSA
+ *		1	PULSEAUDIO 
+ */
+void dbus_set_audio_manager( int api );
+
+/**
  * ConfigurationManager - Configure the notification level
  * @return int	0 disable 
  *		1 enable

@@ -546,6 +546,20 @@ class ManagerImpl {
     void setMailNotify( void );
 
     /**
+     * Get the audio manager
+     * @return int The audio manager
+     *		    0 ALSA
+     *		    1 PULSEAUDIO
+     */
+    ::DBus::Int32 getAudioManager( void );
+
+    /**
+     * Set the audio manager
+     */
+    void setAudioManager( const DBus::Int32& api );
+
+    void switchAudioManager( void );
+    /**
      * Get the desktop mail notification level
      * @return int The mail notification level
      */

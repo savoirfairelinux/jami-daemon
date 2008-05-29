@@ -69,6 +69,8 @@ public:
     std::vector< ::DBus::String > getRecordDeviceList(  );
     ::DBus::String getVersion(  );
     std::vector< ::DBus::String > getRingtoneList(  );
+    ::DBus::Int32 getAudioManager( void );
+    void setAudioManager( const ::DBus::Int32& api ); 
 
     ::DBus::Int32 isIax2Enabled( void );
     ::DBus::Int32 isRingtoneEnabled( void );
