@@ -27,6 +27,9 @@
 #include "ringbuffer.h"
 #include "audioloop.h"
 
+/**
+ * This data structure contains the different king of audio streams available
+ */
 enum STREAM_TYPE {
   PLAYBACK_STREAM,
   CAPTURE_STREAM,
@@ -36,30 +39,95 @@ enum STREAM_TYPE {
 
 class AudioStream {
   public:
+    /**
+     * Constructor
+     * @param context The pulseaudio context
+     * @param type    The type of audio stream
+     * @param desc    The stream name
+     */ 
     AudioStream(pa_context* context , int type, std::string desc);
+    
+    /**
+     * Destructor
+     */   
     ~AudioStream();
 
+    /**
+     * Write data to the main abstraction ring buffer. 
+     * @param buffer The buffer containing the data to be played
+     * @param toCopy The number of samples, in bytes
+     * @return int The number of bytes played
+     */
     int putMain( void* buffer , int toCopy );
+
+    /**
+     * Write data to the urgent abstraction ring buffer. ( dtmf , double calls )
+     * @param buffer The buffer containing the data to be played
+     * @param toCopy The number of samples, in bytes
+     * @return int The number of bytes played
+     */
     int putUrgent( void* buffer , int toCopy );
 
+    /**
+     * Disconnect the pulseaudio stream
+     */
     void disconnect();
+    
+    /**
+     * Accessor: Get the pulseaudio stream object
+     * @return pa_stream* The stream
+     */
     pa_stream* pulseStream(){ return _audiostream; }
 
+    /**
+     * Accessor
+     * @return std::string  The stream name
+     */
+    std::string getStreamName( void ) { return _streamDescription; }
+
   private:
+    /**
+     * Create the audio stream into the given context
+     * @param c	The pulseaudio context
+     * @return pa_stream* The newly created audio stream
+     */
     pa_stream* createStream( pa_context* c ); 
 
+    /**
+     * Mandatory asynchronous callback on the audio stream state
+     */
     static void stream_state_callback( pa_stream* s, void* user_data );	
+    
+    /**
+     * Asynchronous callback on data processing ( write and read )
+     */
     static void audioCallback ( pa_stream* s, size_t bytes, void* userdata );
+    
+    /**
+     * Write data to the sound device
+     */
     void write( void );
 
-    int _streamType;
-    std::string _streamDescription;
-
-
+    /**
+     * The pulse audio object
+     */
     pa_stream* _audiostream;
+    
+    /**
+     * The type of the stream
+     */
+    int _streamType;
+    
+    /**
+     * The name of the stream
+     */
+    std::string _streamDescription;
+    
+    /**
+     * Streams parameters
+     */
     pa_stream_flags_t flag;
     pa_sample_spec sample_spec ;
-    //pa_channel_map channel_map;
     pa_volume_t volume;
 
 };

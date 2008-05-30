@@ -183,7 +183,7 @@ class AlsaLayer : public AudioLayer {
 
     int putInCache( char code, void *buffer, int toCopy );
     int putMain(void* buffer, int toCopy);
-
+    void reducePulseAppsVolume( void );
   private:
 
     /**

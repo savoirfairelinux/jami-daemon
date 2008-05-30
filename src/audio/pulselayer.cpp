@@ -19,11 +19,6 @@
 
 #include "pulselayer.h"
 
-/*static pa_channel_map channel_map ;
-  static pa_stream_flags_t flag;
-  static pa_sample_spec sample_spec ;
-  static pa_volume_t volume;
-  */
 int framesPerBuffer = 2048;
 
   PulseLayer::PulseLayer(ManagerImpl* manager)
@@ -73,7 +68,8 @@ PulseLayer::connectPulseServer( void )
   }
 
   pa_threaded_mainloop_unlock( m );
-
+  serverinfo();
+  //muteAudioApps(99);
   _debug("Context creation done\n");
 }
 
@@ -330,4 +326,68 @@ PulseLayer::putInCache( char code, void *buffer, int toCopy )
   //pa_stream_write( cache->pulseStream() , buffer , toCopy  , pa_xfree, 0 , PA_SEEK_RELATIVE);
   //pa_stream_finish_upload( cache->pulseStream() );
 }
+
+static void retrieve_server_info(pa_context *c, const pa_server_info *i, void *userdata)
+{
+  _debug("Server Info: Process owner : %s\n" , i->user_name);  
+  _debug("\t\tServer name : %s - Server version = %s\n" , i->server_name, i->server_version);  
+  _debug("\t\tDefault sink name : %s\n" , i->default_sink_name);  
+  _debug("\t\tDefault source name : %s\n" , i->default_source_name);  
+}
+
+static void retrieve_client_list(pa_context *c, const pa_client_info *i, int eol, void *userdata)
+{
+  _debug("end of list = %i\n", eol);
+  _debug("Clients Info: index : %i\n" , i->index);  
+  _debug("\t\tClient name : %s\n" , i->name);  
+  _debug("\t\tOwner module : %i\n" , i->owner_module);  
+  _debug("\t\tDriver : %s\n" , i->driver);  
+}
+
+static void retrieve_sink_list(pa_context *c, const pa_sink_input_info *i, int eol, void *userdata)
+{
+  PulseLayer* pulse = (PulseLayer*) userdata;
+  AudioStream* s = pulse->getPlaybackStream();
+  //_debug("my app index = %d\n",pa_stream_get_index(pulse->getPlaybackStream()->pulseStream()));
+  if( !eol ){
+    _debug("Sink Info: index : %i\n" , i->index);  
+    _debug("\t\tSink name : -%s-\n" , i->name);  
+    _debug("\t\tClient : %i\n" , i->client); 
+    _debug("\t\tVolume : %i\n" , i->volume.values[0]); 
+    _debug("\t\tChannels : %i\n" , i->volume.channels); 
+    if( strcmp( i->name ,  s->getStreamName().c_str()) != 0)
+      pulse->reduceAppVolume( i->index , i->volume.channels);
+  }  
+}
+
+void
+PulseLayer::reducePulseAppsVolume( void )
+{
+  pa_context_get_sink_input_info_list( context , retrieve_sink_list , this );
+}
+
+void
+PulseLayer::serverinfo( void )
+{
+  pa_context_get_server_info( context , retrieve_server_info , NULL );
+}
+
+static void on_success(pa_context *c, int success, void *userdata)
+{
+  _debug("Operation successfull \n");
+}
+
+void
+PulseLayer::reduceAppVolume( int index , int channels )
+{
+  pa_cvolume volume;
+  pa_volume_t vol = PA_VOLUME_NORM;
+  vol /= 10; 
+  
+  pa_cvolume_set( &volume , channels , vol);
+  _debug("Mute Index %i\n" , index);
+  pa_context_set_sink_input_volume( context, index, &volume, on_success, this) ;
+  
+}
+
 

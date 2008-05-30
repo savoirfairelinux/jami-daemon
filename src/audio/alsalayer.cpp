@@ -220,6 +220,10 @@ AlsaLayer::isStreamStopped (void)
   return !(isStreamActive());
 }
 
+
+void 
+AlsaLayer::reducePulseAppsVolume( void ){}
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -334,7 +338,7 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
 
     _debugAlsa(" Opening playback device %s\n", pcm_p.c_str());
     if(err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK ) < 0){
-      _debugAlsa("Error while opening playback device %s\n",  pcm_c.c_str());
+      _debugAlsa("Error while opening playback device %s\n",  pcm_p.c_str());
       setErrorMessage( ALSA_PLAYBACK_DEVICE );
       return false;
     }

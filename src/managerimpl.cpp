@@ -580,6 +580,10 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     from.append(">");
   }
   _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+
+  // Reduce volume of the other pulseaudio-connected audio applications
+  _audiodriver->reducePulseAppsVolume();
+  
   return true;
 }
 
@@ -1592,7 +1596,7 @@ ManagerImpl::switchAudioManager( void )
   int numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
   int numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
 
-  _debug("Deleting current layer...\n");
+  _debug("Deleting current layer... \n" );
   _audiodriver->closeLayer();
   delete _audiodriver; _audiodriver = NULL;
   

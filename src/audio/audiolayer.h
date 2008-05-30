@@ -183,6 +183,8 @@ class AudioLayer {
      */
     virtual std::string getAudioPlugin( void ) = 0; 
 
+    virtual void reducePulseAppsVolume( void ) = 0;
+  
     /**
      * Write accessor to the error state
      * @param error The error code

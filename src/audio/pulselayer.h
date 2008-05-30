@@ -80,7 +80,6 @@ class PulseLayer : public AudioLayer {
     static void overflow ( pa_stream* s, void* userdata );
     static void underflow ( pa_stream* s, void* userdata );
     static void stream_state_callback( pa_stream* s, void* user_data );	
-
     static void context_state_callback( pa_context* c, void* user_data );	
 
     /**
@@ -121,6 +120,11 @@ class PulseLayer : public AudioLayer {
      */
     std::string getAudioPlugin( void ) { return "default"; }
     
+    void reducePulseAppsVolume( void );
+    void reduceAppVolume( int index , int channels ); 
+
+    AudioStream* getPlaybackStream(){ return playback;}
+    AudioStream* getRecordStream(){ return record;}
 
   private:
     /**
@@ -137,6 +141,8 @@ class PulseLayer : public AudioLayer {
 
     void connectPulseServer( void );
 
+    void serverinfo( void );
+
     /** Ringbuffers for data */
     RingBuffer _mainSndRingBuffer;
     RingBuffer _urgentRingBuffer;
@@ -145,7 +151,6 @@ class PulseLayer : public AudioLayer {
     /** PulseAudio streams and context */
     pa_context* context;
     pa_threaded_mainloop* m;
-
     AudioStream* playback;
     AudioStream* record;
     AudioStream* cache;
