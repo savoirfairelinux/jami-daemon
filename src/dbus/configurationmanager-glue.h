@@ -69,6 +69,8 @@ public:
         register_method(ConfigurationManager, isStartHidden, _isStartHidden_stub);
         register_method(ConfigurationManager, popupMode, _popupMode_stub);
         register_method(ConfigurationManager, switchPopupMode, _switchPopupMode_stub);
+        register_method(ConfigurationManager, setPulseAppVolumeControl, _setPulseAppVolumeControl_stub);
+        register_method(ConfigurationManager, getPulseAppVolumeControl, _getPulseAppVolumeControl_stub);
     }
 
     ::DBus::IntrospectedInterface* const introspect() const 
@@ -315,6 +317,15 @@ public:
         {
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument setPulseAppVolumeControl_args[] = 
+        {
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getPulseAppVolumeControl_args[] = 
+        {
+            { "state", "i", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
         {
             { "list", "a{ss}", false },
@@ -380,6 +391,8 @@ public:
             { "isStartHidden", isStartHidden_args },
             { "popupMode", popupMode_args },
             { "switchPopupMode", switchPopupMode_args },
+            { "setPulseAppVolumeControl", setPulseAppVolumeControl_args },
+            { "getPulseAppVolumeControl", getPulseAppVolumeControl_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_signals[] = 
@@ -463,6 +476,8 @@ public:
     virtual ::DBus::Int32 isStartHidden(  ) = 0;
     virtual ::DBus::Int32 popupMode(  ) = 0;
     virtual void switchPopupMode(  ) = 0;
+    virtual void setPulseAppVolumeControl(  ) = 0;
+    virtual ::DBus::Int32 getPulseAppVolumeControl(  ) = 0;
 
 public:
 
@@ -957,6 +972,24 @@ private:
 
         switchPopupMode();
         ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _setPulseAppVolumeControl_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        setPulseAppVolumeControl();
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getPulseAppVolumeControl_stub( const ::DBus::CallMessage& call )
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        ::DBus::Int32 argout1 = getPulseAppVolumeControl();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
         return reply;
     }
 };

@@ -559,6 +559,10 @@ class ManagerImpl {
     void setAudioManager( const DBus::Int32& api );
 
     void switchAudioManager( void );
+    
+    void setPulseAppVolumeControl( void ); 
+    ::DBus::Int32 getPulseAppVolumeControl( void ); 
+
     /**
      * Get the desktop mail notification level
      * @return int The mail notification level

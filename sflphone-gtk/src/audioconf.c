@@ -19,7 +19,6 @@
 
 #include <audioconf.h>
 
-
 GtkListStore *pluginlist;
 GtkListStore *outputlist;
 GtkListStore *inputlist;
@@ -128,7 +127,6 @@ config_window_fill_output_audio_device_list()
     gtk_list_store_set(outputlist, &iter, 0, *list, 1, index, -1);
     c++;
   }
-
 }
 
 /**
@@ -205,35 +203,35 @@ config_window_fill_input_audio_device_list()
 select_active_input_audio_device()
 {
   if( SHOW_ALSA_CONF)
-{
-  
-  GtkTreeModel* model;
-  GtkTreeIter iter;
-  gchar** devices;
-  int currentDeviceIndex;
-  int deviceIndex;
+  {
 
-  // Select active input device on server
-  devices = dbus_get_current_audio_devices_index();
-  currentDeviceIndex = atoi(devices[1]);
-  model = gtk_combo_box_get_model(GTK_COMBO_BOX(input));
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    gchar** devices;
+    int currentDeviceIndex;
+    int deviceIndex;
 
-  // Find the currently set input device
-  gtk_tree_model_get_iter_first(model, &iter);
-  do {
-    gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
-    if(deviceIndex == currentDeviceIndex)
-    {
-      // Set current iteration the active one
-      gtk_combo_box_set_active_iter(GTK_COMBO_BOX(input), &iter);
-      return;
-    }
-  } while(gtk_tree_model_iter_next(model, &iter));
+    // Select active input device on server
+    devices = dbus_get_current_audio_devices_index();
+    currentDeviceIndex = atoi(devices[1]);
+    model = gtk_combo_box_get_model(GTK_COMBO_BOX(input));
 
-  // No index was found, select first one
-  g_print("Warning : No active input device found");
-  gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
-}
+    // Find the currently set input device
+    gtk_tree_model_get_iter_first(model, &iter);
+    do {
+      gtk_tree_model_get(model, &iter, 1, &deviceIndex, -1);
+      if(deviceIndex == currentDeviceIndex)
+      {
+	// Set current iteration the active one
+	gtk_combo_box_set_active_iter(GTK_COMBO_BOX(input), &iter);
+	return;
+      }
+    } while(gtk_tree_model_iter_next(model, &iter));
+
+    // No index was found, select first one
+    g_print("Warning : No active input device found");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
+  }
 }
 
 /**
@@ -291,7 +289,6 @@ select_active_output_audio_plugin()
   // No index was found, select first one
   g_print("Warning : No active output device found\n");
   gtk_combo_box_set_active(GTK_COMBO_BOX(plugin), 0);
-  //update_combo_box("default");
 }
 
 
@@ -406,7 +403,6 @@ codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer data
   // Perpetuate changes to the deamon
   codec_list_update_to_daemon();
 }
-
 
 /**
  * Move codec in list depending on direction and selected codec and
@@ -756,7 +752,6 @@ GtkWidget* ringtones_box()
   return ret;
 }
 
-
 GtkWidget* create_audio_configuration()
 {
   // Main widget
@@ -787,10 +782,11 @@ GtkWidget* create_audio_configuration()
     alsabox = alsa_box();
     gtk_container_add( GTK_CONTAINER(alsa_conf) , alsabox );
   }
-
+  
   // Box for the codecs
   codecs_conf = gtk_frame_new(_("Codecs"));
   gtk_box_pack_start(GTK_BOX(ret), codecs_conf, FALSE, FALSE, 0);
+  gtk_widget_set_size_request(GTK_WIDGET(codecs_conf), -1, 200);
   gtk_widget_show( codecs_conf );
   box = codecs_box();
   gtk_container_add( GTK_CONTAINER(codecs_conf) , box );

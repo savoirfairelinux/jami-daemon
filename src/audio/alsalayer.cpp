@@ -221,8 +221,8 @@ AlsaLayer::isStreamStopped (void)
 }
 
 
-void 
-AlsaLayer::reducePulseAppsVolume( void ){}
+void AlsaLayer::reducePulseAppsVolume( void ){}
+void AlsaLayer::restorePulseAppsVolume( void ){}
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////

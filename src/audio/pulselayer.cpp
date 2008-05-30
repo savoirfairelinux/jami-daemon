@@ -102,13 +102,13 @@ void PulseLayer::context_state_callback( pa_context* c, void* user_data )
   void
 PulseLayer::createStreams( pa_context* c )
 {
-  playback = new AudioStream(c, PLAYBACK_STREAM, "SFLphone out");
+  playback = new AudioStream(c, PLAYBACK_STREAM, "SFLphone out", _manager->getSpkrVolume());
   pa_stream_set_write_callback( playback->pulseStream() , audioCallback, this);
   //pa_stream_set_overflow_callback( playback , overflow , this);
-  record = new AudioStream(c, CAPTURE_STREAM, "SFLphone in");
+  record = new AudioStream(c, CAPTURE_STREAM, "SFLphone in", _manager->getMicVolume());
   pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
   //pa_stream_set_underflow_callback( record , underflow , this);
-  cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples");
+  cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples", _manager->getSpkrVolume());
 
   pa_threaded_mainloop_signal(m , 0);
 }
@@ -118,10 +118,6 @@ PulseLayer::openDevice(int indexIn, int indexOut, int sampleRate, int frameSize 
 {
   _sampleRate = sampleRate;
   _frameSize = frameSize;	
-
-  _debug(" Setting PulseLayer: device     in=%2d, out=%2d\n", indexIn, indexOut);
-  _debug("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
-  _debug("                   : sample rate=%5d\n", _sampleRate );
 
   m = pa_threaded_mainloop_new();
   assert(m);
@@ -267,6 +263,8 @@ PulseLayer::processData( void )
   int urgentAvail; // number of data right and data left  
   int normalAvail; // number of data right and data left
 
+  
+
   // Handle the mic also
   if( (record->pulseStream()) && pa_stream_get_state( record->pulseStream()) == PA_STREAM_READY) {
 
@@ -344,7 +342,7 @@ static void retrieve_client_list(pa_context *c, const pa_client_info *i, int eol
   _debug("\t\tDriver : %s\n" , i->driver);  
 }
 
-static void retrieve_sink_list(pa_context *c, const pa_sink_input_info *i, int eol, void *userdata)
+static void reduce_sink_list(pa_context *c, const pa_sink_input_info *i, int eol, void *userdata)
 {
   PulseLayer* pulse = (PulseLayer*) userdata;
   AudioStream* s = pulse->getPlaybackStream();
@@ -360,10 +358,32 @@ static void retrieve_sink_list(pa_context *c, const pa_sink_input_info *i, int e
   }  
 }
 
+static void restore_sink_list(pa_context *c, const pa_sink_input_info *i, int eol, void *userdata)
+{
+  PulseLayer* pulse = (PulseLayer*) userdata;
+  AudioStream* s = pulse->getPlaybackStream();
+  //_debug("my app index = %d\n",pa_stream_get_index(pulse->getPlaybackStream()->pulseStream()));
+  if( !eol ){
+    _debug("Sink Info: index : %i\n" , i->index);  
+    _debug("\t\tSink name : -%s-\n" , i->name);  
+    _debug("\t\tClient : %i\n" , i->client); 
+    _debug("\t\tVolume : %i\n" , i->volume.values[0]); 
+    _debug("\t\tChannels : %i\n" , i->volume.channels); 
+    if( strcmp( i->name ,  s->getStreamName().c_str()) != 0)
+      pulse->restoreAppVolume( i->index , i->volume.channels);
+  }  
+}
+
 void
 PulseLayer::reducePulseAppsVolume( void )
 {
-  pa_context_get_sink_input_info_list( context , retrieve_sink_list , this );
+  pa_context_get_sink_input_info_list( context , reduce_sink_list , this );
+}
+
+void
+PulseLayer::restorePulseAppsVolume( void )
+{
+  pa_context_get_sink_input_info_list( context , restore_sink_list , this );
 }
 
 void
@@ -387,7 +407,17 @@ PulseLayer::reduceAppVolume( int index , int channels )
   pa_cvolume_set( &volume , channels , vol);
   _debug("Mute Index %i\n" , index);
   pa_context_set_sink_input_volume( context, index, &volume, on_success, this) ;
+}
+
+void
+PulseLayer::restoreAppVolume( int index, int channels )
+{
+  pa_cvolume volume;
+  pa_volume_t vol = PA_VOLUME_NORM;
   
+  pa_cvolume_set( &volume , channels , vol);
+  _debug("Restore Index %i\n" , index);
+  pa_context_set_sink_input_volume( context, index, &volume, on_success, this) ;
 }
 
 

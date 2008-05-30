@@ -45,7 +45,7 @@ class AudioStream {
      * @param type    The type of audio stream
      * @param desc    The stream name
      */ 
-    AudioStream(pa_context* context , int type, std::string desc);
+    AudioStream(pa_context* context , int type, std::string desc, double vol);
     
     /**
      * Destructor
@@ -84,6 +84,9 @@ class AudioStream {
      * @return std::string  The stream name
      */
     std::string getStreamName( void ) { return _streamDescription; }
+
+    void setVolume( double pc );
+    pa_volume_t getVolume( void ) { return _volume; }
 
   private:
     /**
@@ -128,7 +131,7 @@ class AudioStream {
      */
     pa_stream_flags_t flag;
     pa_sample_spec sample_spec ;
-    pa_volume_t volume;
+    pa_volume_t _volume;
 
 };
 

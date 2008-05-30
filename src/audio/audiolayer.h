@@ -184,6 +184,7 @@ class AudioLayer {
     virtual std::string getAudioPlugin( void ) = 0; 
 
     virtual void reducePulseAppsVolume( void ) = 0;
+    virtual void restorePulseAppsVolume( void ) = 0;
   
     /**
      * Write accessor to the error state

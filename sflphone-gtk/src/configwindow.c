@@ -323,7 +323,11 @@ account_move_down(GtkButton *button, gpointer data)
   account_move(FALSE, data);
 }
 
-
+static void
+set_pulse_app_volume_control( void )
+{
+  dbus_set_pulse_app_volume_control();
+}
 
 /**
  * Account settings tab
@@ -442,165 +446,6 @@ create_accounts_tab()
 	return ret;
 }
 
-/**
- * Audio settings tab
- */
-GtkWidget*
-create_audio_tab ()
-{
-/*	GtkWidget *ret;
-	
-	GtkWidget *deviceFrame;
-	GtkWidget *deviceBox;
-	GtkWidget *deviceTable;
-	GtkWidget *codecFrame;
-	GtkWidget *codecBox;
-	GtkWidget *enableTone;
-	GtkWidget *fileChooser;
-	
-	GtkWidget *titleLabel;
-	GtkWidget *refreshButton;
-	GtkCellRenderer *renderer;
-	
-	GtkWidget *codecTable;
-	
-	// Main widget
-	ret = gtk_vbox_new(FALSE, 10);
-    gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
-    
-    // Device section label
-    deviceFrame = gtk_frame_new(_("Devices"));
-    gtk_box_pack_start(GTK_BOX(ret), deviceFrame, FALSE, FALSE, 0);
-    gtk_widget_show( deviceFrame );
-
-	
-    // Main device widget
-    deviceBox = gtk_hbox_new(FALSE, 10);
-    gtk_widget_show( deviceBox );
-
-    gtk_container_add( GTK_CONTAINER(deviceFrame) , deviceBox);
-
-    // Main device widget
-	deviceTable = gtk_table_new(4, 3, FALSE);
-	gtk_table_set_col_spacing(GTK_TABLE(deviceTable), 0, 40);
-	gtk_box_pack_start(GTK_BOX(deviceBox), deviceTable, TRUE, TRUE, 0);
-	gtk_widget_show(deviceTable);
-	
-	// Device : Audio manager
-	// Create title label
-	
-	titleLabel = gtk_label_new("Alsa plug-IN:");
-	gtk_misc_set_alignment(GTK_MISC(titleLabel), 0, 0.5);
-	gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(titleLabel);
-	// Set choices of audio managers
-	inputAudioPluginStore = gtk_list_store_new(1, G_TYPE_STRING);
-	config_window_fill_input_audio_plugin_list();
-	comboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputAudioPluginStore));
-	gtk_combo_box_set_active(GTK_COMBO_BOX(comboBox), 0);
-	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), comboBox);
-	g_signal_connect(G_OBJECT(comboBox), "changed", G_CALLBACK(select_input_audio_plugin), comboBox);
-	
-  	// Set rendering
-	renderer = gtk_cell_renderer_text_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(comboBox), renderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(comboBox), renderer, "text", 0, NULL);
-	gtk_table_attach(GTK_TABLE(deviceTable), comboBox, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(comboBox);
-	
-	// Create title label
-	titleLabel = gtk_label_new(_("ALSA plugin"));
-	gtk_misc_set_alignment(GTK_MISC(titleLabel), 0, 0.5);
-	gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(titleLabel);
-	// Set choices of audio managers
-	outputAudioPluginStore = gtk_list_store_new(1, G_TYPE_STRING);
-	config_window_fill_output_audio_plugin_list();
-	pluginComboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioPluginStore));
-	select_active_output_audio_plugin();
-	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), pluginComboBox);
-	g_signal_connect(G_OBJECT(pluginComboBox), "changed", G_CALLBACK(select_output_audio_plugin), pluginComboBox);
-	
-  	// Set rendering
-	renderer = gtk_cell_renderer_text_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(pluginComboBox), renderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(pluginComboBox), renderer, "text", 0, NULL);
-	gtk_table_attach(GTK_TABLE(deviceTable), pluginComboBox, 2, 3, 0, 1, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(pluginComboBox);
-	
-	// Device : Output device
-	// Create title label
-	titleLabel = gtk_label_new(_("Output peripheral"));
-    gtk_misc_set_alignment(GTK_MISC(titleLabel), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-    gtk_widget_show(titleLabel);
-	// Set choices of output devices
-	outputAudioDeviceManagerStore = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
-	config_window_fill_output_audio_device_list();
-	outputDeviceComboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(outputAudioDeviceManagerStore));
-	select_active_output_audio_device();
-  	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), outputDeviceComboBox);
-	//g_signal_connect(G_OBJECT(outputDeviceComboBox), "changed", G_CALLBACK(select_audio_output_device), outputDeviceComboBox);
-
-	// Set rendering
-	renderer = gtk_cell_renderer_text_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(outputDeviceComboBox), renderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(outputDeviceComboBox), renderer, "text", 0, NULL);
-	gtk_table_attach(GTK_TABLE(deviceTable), outputDeviceComboBox, 2, 3, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(outputDeviceComboBox);
-	
-	// Device : Input device
-	// Create title label
-	titleLabel = gtk_label_new(_("Input peripheral"));
-    gtk_misc_set_alignment(GTK_MISC(titleLabel), 0, 0.5);
-    gtk_table_attach(GTK_TABLE(deviceTable), titleLabel, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(titleLabel);
-	// Set choices of output devices
-	inputAudioDeviceManagerStore = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
-	config_window_fill_input_audio_device_list();
-	inputDeviceComboBox = gtk_combo_box_new_with_model(GTK_TREE_MODEL(inputAudioDeviceManagerStore));
-	select_active_input_audio_device();
-	gtk_label_set_mnemonic_widget(GTK_LABEL(titleLabel), inputDeviceComboBox);
-	//g_signal_connect(G_OBJECT(inputDeviceComboBox), "changed", G_CALLBACK(select_audio_input_device), inputDeviceComboBox);
-
-	// Set rendering
-	renderer = gtk_cell_renderer_text_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(inputDeviceComboBox), renderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(inputDeviceComboBox), renderer, "text", 0, NULL);
-    gtk_table_attach(GTK_TABLE(deviceTable), inputDeviceComboBox, 2, 3, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
-	gtk_widget_show(inputDeviceComboBox);
-	
-	// Create detect button
-	refreshButton = gtk_button_new_with_label(_("Detect all"));
-	gtk_button_set_image(GTK_BUTTON(refreshButton), gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_BUTTON));
-	gtk_table_attach(GTK_TABLE(deviceTable), refreshButton, 2, 3, 3, 4, GTK_EXPAND, GTK_EXPAND, 0, 0);
-	// Set event on selection
-	g_signal_connect(G_OBJECT(refreshButton), "clicked", G_CALLBACK(detect_all_audio_settings), NULL);
-	
-	//select_active_output_audio_plugin();
-    // Codec section label
-    codecFrame = gtk_frame_new(_("Codecs"));
-    gtk_box_pack_start(GTK_BOX(ret), codecFrame, FALSE, FALSE, 0);
-    gtk_widget_show(codecFrame);
-
-    // Main codec widget
-	codecBox = gtk_hbox_new(FALSE, 10);
-	gtk_widget_show(codecBox);
-	
-	gtk_container_add( GTK_CONTAINER( codecFrame ) , codecBox );
-	// Codec : List
-	codecTable = create_codec_table();
-	gtk_widget_set_size_request(GTK_WIDGET(codecTable), -1, 150);
-	gtk_box_pack_start(GTK_BOX(codecBox), codecTable, TRUE, TRUE, 0);
-	gtk_widget_show(codecTable);
-*/
-
-    	// Show all
-	//gtk_widget_show_all(ret);
-
-	//return ret;
-}
-
 GtkWidget*
 create_general_settings ()
 {
@@ -609,14 +454,14 @@ create_general_settings ()
   GtkWidget *notifFrame;
   GtkWidget *notifBox;
   GtkWidget *notifAll;
-  GtkWidget *notifMails;
+  GtkWidget *widg;
 
   GtkWidget *trayFrame;
   GtkWidget *trayBox;
   GtkWidget *trayItem;
 
-  GtkWidget *historyFrame;
-  GtkWidget *historyBox;
+  GtkWidget *frame;
+  GtkWidget *vbox;
   GtkWidget *value;
   GtkWidget *label;
   GtkWidget *cleanButton;
@@ -639,10 +484,10 @@ create_general_settings ()
   gtk_box_pack_start( GTK_BOX(notifBox) , notifAll , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
 
-  notifMails = gtk_check_button_new_with_mnemonic(  _("_Notify voice mails"));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifMails), dbus_get_mail_notify() );
-  gtk_box_pack_start( GTK_BOX(notifBox) , notifMails , TRUE , TRUE , 1);
-  g_signal_connect(G_OBJECT( notifMails ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
+  widg = gtk_check_button_new_with_mnemonic(  _("_Notify voice mails"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_mail_notify() );
+  gtk_box_pack_start( GTK_BOX(notifBox) , widg , TRUE , TRUE , 1);
+  g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
 
   // System Tray option frame
   trayFrame = gtk_frame_new(_("System Tray Icon"));
@@ -667,29 +512,44 @@ create_general_settings ()
   gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( trayItem ) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
 
-  historyFrame = gtk_frame_new(_("Calls History"));
-  gtk_box_pack_start(GTK_BOX(ret), historyFrame, FALSE, FALSE, 0);
-  gtk_widget_show( historyFrame );
+  /** HISTORY CONFIGURATION */
+  frame = gtk_frame_new(_("Calls History"));
+  gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+  gtk_widget_show( frame );
 
-  historyBox = gtk_vbox_new(FALSE, 10);
-  gtk_widget_show( historyBox );
-  gtk_container_add( GTK_CONTAINER(historyFrame) , historyBox);
+  vbox = gtk_vbox_new(FALSE, 10);
+  gtk_widget_show( vbox );
+  gtk_container_add( GTK_CONTAINER(frame) , vbox);
   
   label = gtk_label_new_with_mnemonic(_("_Maximum number of calls"));
-  gtk_box_pack_start( GTK_BOX(historyBox) , label , TRUE , TRUE , 0);
+  gtk_box_pack_start( GTK_BOX(vbox) , label , TRUE , TRUE , 0);
   
   value = gtk_hscale_new_with_range(0.0 , 50.0 , 5.0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
   gtk_scale_set_digits( GTK_SCALE(value) , 0);
   gtk_scale_set_value_pos( GTK_SCALE(value) , GTK_POS_RIGHT); 
   gtk_range_set_value( GTK_RANGE( value ) , dbus_get_max_calls());
-  gtk_box_pack_start( GTK_BOX(historyBox) , value , TRUE , TRUE , 0);
+  gtk_box_pack_start( GTK_BOX(vbox) , value , TRUE , TRUE , 0);
   g_signal_connect( G_OBJECT( value) , "value-changed" , G_CALLBACK( update_max_value ) , NULL);
 
   cleanButton = gtk_button_new_from_stock( GTK_STOCK_CLEAR );
-  gtk_box_pack_end( GTK_BOX(historyBox) , cleanButton , FALSE , TRUE , 0);
+  gtk_box_pack_end( GTK_BOX(vbox) , cleanButton , FALSE , TRUE , 0);
   g_signal_connect( G_OBJECT( cleanButton ) , "clicked" , G_CALLBACK( clean_history ) , NULL);
   
+  /** PULSEAUDIO CONFIGURATION */
+  frame = gtk_frame_new( _("PulseAudio sound server"));
+  gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+  gtk_widget_show( frame );
+
+  vbox = gtk_vbox_new(FALSE, 10);
+  gtk_widget_show( vbox );
+  gtk_container_add( GTK_CONTAINER(frame) , vbox);
+
+  widg = gtk_check_button_new_with_mnemonic(  _("_Control running applications's volume"));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_pulse_app_volume_control() );
+  gtk_box_pack_start( GTK_BOX(vbox) , widg , TRUE , TRUE , 1);
+  g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
+
   gtk_widget_show_all(ret);
   
   return ret;
@@ -732,7 +592,6 @@ show_config_window ()
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 	
 	// Audio tab
-	//tab = create_audio_tab();	
 	tab = create_audio_configuration();	
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio Settings")));
 	gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
@@ -740,8 +599,6 @@ show_config_window ()
 	gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  1);
 
 	gtk_dialog_run(dialog);
-	//gtk_widget_show( GTK_WIDGET(dialog) );
-	//g_signal_connect_swapped( dialog , "response" , G_CALLBACK( gtk_widget_destroy ), dialog );
 
 	dialogOpen = FALSE;
 

@@ -93,6 +93,8 @@ public:
     void setNotify( void );
     ::DBus::Int32 getMailNotify( void );
     void setMailNotify( void );
+    ::DBus::Int32 getPulseAppVolumeControl( void );
+    void setPulseAppVolumeControl( void );
 
 };
 

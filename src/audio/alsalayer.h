@@ -181,9 +181,26 @@ class AlsaLayer : public AudioLayer {
      */
     std::string getAudioPlugin( void ) { return _audioPlugin; }
 
+    /**
+     * UNUSED in ALSA layer
+     */
     int putInCache( char code, void *buffer, int toCopy );
+
+    /**
+     * UNUSED in ALSA layer
+     */
     int putMain(void* buffer, int toCopy);
+
+    /**
+     * UNUSED in ALSA layer
+     */
     void reducePulseAppsVolume( void );
+
+    /**
+     * UNUSED in ALSA layer
+     */
+    void restorePulseAppsVolume( void ); 
+
   private:
 
     /**

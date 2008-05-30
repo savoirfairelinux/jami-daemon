@@ -362,3 +362,16 @@ ConfigurationManager::getMailNotify( void )
   _debug("Manager received getMailNotify\n");
   return Manager::instance().getMailNotify(  ); 
 }
+
+::DBus::Int32 
+ConfigurationManager::getPulseAppVolumeControl( void )
+{
+  return Manager::instance().getPulseAppVolumeControl();
+}
+    
+void 
+ConfigurationManager::setPulseAppVolumeControl( void )
+{
+  Manager::instance().setPulseAppVolumeControl();
+}
+

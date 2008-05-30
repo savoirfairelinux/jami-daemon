@@ -60,6 +60,7 @@
 #define CONFIG_ZEROCONF		"Zeroconf.enable"	  /** Zero configuration networking module */
 #define REGISTRATION_EXPIRE	"Registration.expire"	  /** Registration expire value */
 #define CONFIG_AUDIO		"Audio.api"		  /** Audio manager (ALSA or pulseaudio) */
+#define CONFIG_PA_VOLUME_CTRL	"Pulseaudio.volumeCtrl"	  /** Whether or not PA should modify volume of other applications on the same sink */
 
 #define SIGNALISATION		"VoIPLink"	      /** Section Signalisation */
 #define PLAY_DTMF		"DTMF.playDtmf"	      /** Whether or not should play dtmf */
@@ -86,6 +87,7 @@
 #define DFT_MAX_CALLS		"20"			/** Default maximum calls in history */
 #define DFT_EXPIRE_VALUE	"180"			/** Default expire value for registration */
 #define DFT_AUDIO_MANAGER	"1"			/** Default audio manager */
+
 
 #ifdef USE_ZEROCONF
 #define CONFIG_ZEROCONF_DEFAULT_STR "1"			/** Default Zero configuration networking module value */

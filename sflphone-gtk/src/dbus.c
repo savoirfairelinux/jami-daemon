@@ -1456,3 +1456,29 @@ dbus_get_audio_manager( void )
 	
 	return api;
 }
+
+void
+dbus_set_pulse_app_volume_control( void )
+{
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_set_pulse_app_volume_control(
+			configurationManagerProxy,
+			&error);
+	if(error)
+	{
+		g_error_free(error);
+	}
+}
+
+int
+dbus_get_pulse_app_volume_control( void )
+{
+  int state;
+	GError* error = NULL;
+	org_sflphone_SFLphone_ConfigurationManager_get_pulse_app_volume_control(
+			configurationManagerProxy,
+			&state,
+			&error);
+	return state;
+}
+

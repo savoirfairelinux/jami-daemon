@@ -203,6 +203,13 @@
     <method name="switchPopupMode">
     </method>
 
+    <method name="setPulseAppVolumeControl">
+    </method>
+
+    <method name="getPulseAppVolumeControl">
+      <arg type="i" name="state" direction="out"/>
+    </method>
+
   <!--        /////////////////////////////       -->
     <signal name="parametersChanged">
       <arg type="a{ss}" name="list" direction="out"/>

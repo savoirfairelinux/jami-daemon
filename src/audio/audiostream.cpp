@@ -21,7 +21,7 @@
 
 static pa_channel_map channel_map ;
 
-AudioStream::AudioStream( pa_context* context, int type, std::string desc )
+AudioStream::AudioStream( pa_context* context, int type, std::string desc, double vol )
 { 
   _streamType = type;
   _streamDescription = desc; 
@@ -30,8 +30,8 @@ AudioStream::AudioStream( pa_context* context, int type, std::string desc )
   sample_spec.channels = 1; 
   channel_map.channels = 1; 
   flag = PA_STREAM_AUTO_TIMING_UPDATE ;
-  volume = PA_VOLUME_NORM;
-
+  _volume = PA_VOLUME_NORM * vol / 100 ;
+  
   _audiostream =  createStream( context );
 } 
 
@@ -87,7 +87,7 @@ AudioStream::createStream( pa_context* c )
   if( _streamType == PLAYBACK_STREAM ){
     pa_stream_connect_playback( s , NULL , NULL , 
 				PA_STREAM_INTERPOLATE_TIMING,
-				pa_cvolume_set(&cv, sample_spec.channels , volume) , NULL );
+				pa_cvolume_set(&cv, sample_spec.channels , _volume) , NULL );
   }
   else if( _streamType == CAPTURE_STREAM ){
     pa_stream_connect_record( s , NULL , NULL , PA_STREAM_START_CORKED );

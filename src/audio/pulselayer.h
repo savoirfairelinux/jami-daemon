@@ -49,30 +49,54 @@ class PulseLayer : public AudioLayer {
     bool openDevice(int indexIn, int indexOut, int sampleRate, int frameSize , int stream, std::string plugin) ;
 
     void startStream(void);
+
     void stopStream(void);
 
     /**
-     * Check if the capture is running
-     * @return true if the state of the capture handle equals SND_PCM_STATE_RUNNING
-     *	       false otherwise
+     * UNUSED in pulseaudio layer
      */
     bool isCaptureActive( void ) { return true; }
+
+    /**
+     * UNUSED in pulseaudio layer
+     */
     bool isStreamActive (void); 
 
+    /**
+     * Flush the main ringbuffer, reserved for the voice
+     */
     void flushMain();
+    
     int putMain(void* buffer, int toCopy);
+    
     int putUrgent(void* buffer, int toCopy);
+
+    /**
+     * UNUSED in pulseaudio layer
+     */
     int putInCache( char code, void* buffer , int toCopy );
+
+    /**
+     * Query the capture device for number of bytes available in the hardware ring buffer
+     * @return int The number of bytes available
+     */
     int canGetMic();
+    
+    /**
+     * Get data from the capture device
+     * @param buffer The buffer for data
+     * @param toCopy The number of bytes to get
+     * @return int The number of bytes acquired ( 0 if an error occured)
+     */
     int getMic(void *, int);
+    
+    /**
+     * Flush the mic ringbuffer
+     */
     void flushMic();
 
     /**
-     * Send samples to the audio device. 
-     * @param buffer The buffer containing the data to be played ( voice and DTMF )
-     * @param toCopy The number of samples, in bytes
-     * @param isTalking	If whether or not the conversation is running
-     * @return int The number of bytes played
+     * UNUSED in pulseaudio layer
      */
     int playSamples(void* buffer, int toCopy, bool isTalking) ;
 
@@ -83,12 +107,7 @@ class PulseLayer : public AudioLayer {
     static void context_state_callback( pa_context* c, void* user_data );	
 
     /**
-     * Scan the sound card available on the system
-     * @param stream To indicate whether we are looking for capture devices or playback devices
-     *		   SFL_PCM_CAPTURE
-     *		   SFL_PCM_PLAYBACK
-     *		   SFL_PCM_BOTH
-     * @return std::vector<std::string> The vector containing the string description of the card
+     * UNUSED in pulseaudio layer
      */
     std::vector<std::string> getSoundCardsInfo( int stream ) { 
       std::vector<std::string> tmp;
@@ -96,34 +115,54 @@ class PulseLayer : public AudioLayer {
     }
 
     /**
-     * Check if the given index corresponds to an existing sound card and supports the specified streaming mode
-     * @param card   An index
-     * @param stream  The stream mode
-     *		  SFL_PCM_CAPTURE
-     *		  SFL_PCM_PLAYBACK
-     *		  SFL_PCM_BOTH
-     * @return bool True if it exists and supports the mode
-     *		    false otherwise
+     * UNUSED in pulseaudio layer
      */
     bool soundCardIndexExist( int card , int stream ) { return true; }
     
     /**
-     * An index is associated with its string description
-     * @param description The string description
-     * @return	int	  Its index
+     * UNUSED in pulseaudio layer
      */
     int soundCardGetIndex( std::string description ) { return 0;}
 
     /**
-     * Get the current audio plugin.
-     * @return std::string  The name of the audio plugin
+     * UNUSED in pulseaudio layer
      */
     std::string getAudioPlugin( void ) { return "default"; }
     
+    /**
+     * Reduce volume of every audio applications connected to the same sink
+     */
     void reducePulseAppsVolume( void );
+    
+    /**
+     * Restore the volume of every audio applications connected to the same sink to PA_VOLUME_NORM
+     */
+    void restorePulseAppsVolume( void );
+    
+    /**
+     * Reduce volume of one particular application
+     * @param index The index of the stream 
+     * @param channels	The stream's number of channels
+     */
     void reduceAppVolume( int index , int channels ); 
+  
+    /**
+     * Restore to PA_VOLUME_NORM the volume of one particular application
+     * @param index The index of the stream 
+     * @param channels	The stream's number of channels
+     */
+    void restoreAppVolume( int index , int channels ); 
 
+    /**
+     * Accessor
+     * @return AudioStream* The pointer on the playback AudioStream object
+     */
     AudioStream* getPlaybackStream(){ return playback;}
+
+    /**
+     * Accessor
+     * @return AudioStream* The pointer on the record AudioStream object
+     */
     AudioStream* getRecordStream(){ return record;}
 
   private:
@@ -132,27 +171,64 @@ class PulseLayer : public AudioLayer {
      */
     void closeCaptureStream( void );
 
+    /**
+     * Write data from the ring buffer to the harware and read data from the hardware
+     */
     void processData( void );
+    
+    /**
+     * Create the audio streams into the given context
+     * @param c	The pulseaudio context
+     */ 
     void createStreams( pa_context* c );
+
     /**
      * Drop the pending frames and close the playback device
      */
     void closePlaybackStream( void );
 
+    /**
+     * Establishes the connection with the local pulseaudio server
+     */
     void connectPulseServer( void );
 
+    /**
+     * Get some information about the pulseaudio server
+     */
     void serverinfo( void );
 
-    /** Ringbuffers for data */
+    /** 
+     * Ringbuffer for incoming voice data (playback)
+     */
     RingBuffer _mainSndRingBuffer;
+
+    /** 
+     * Ringbuffer for dtmf data
+     */
     RingBuffer _urgentRingBuffer;
+
+    /** 
+     * Ringbuffer for outgoing voice data (mic)
+     */
     RingBuffer _micRingBuffer;
 
-    /** PulseAudio streams and context */
+    /** PulseAudio context and asynchronous loop */
     pa_context* context;
     pa_threaded_mainloop* m;
+    
+    /**
+     * A stream object to handle the pulseaudio playback stream
+     */
     AudioStream* playback;
+
+    /**
+     * A stream object to handle the pulseaudio capture stream
+     */
     AudioStream* record;
+
+    /**
+     * A stream object to handle the pulseaudio upload stream
+     */
     AudioStream* cache;
 };
 

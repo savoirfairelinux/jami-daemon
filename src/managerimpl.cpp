@@ -276,6 +276,9 @@ ManagerImpl::hangupCall(const CallID& id)
   removeCallAccount(id);
   switchCall("");
 
+  if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
+    _audiodriver->restorePulseAppsVolume();
+
   return returnValue;
 }
 
@@ -582,7 +585,8 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
   _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
 
   // Reduce volume of the other pulseaudio-connected audio applications
-  _audiodriver->reducePulseAppsVolume();
+  if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
+    _audiodriver->reducePulseAppsVolume();
   
   return true;
 }
@@ -633,6 +637,8 @@ ManagerImpl::peerHungupCall(const CallID& id)
   removeWaitingCall(id);
   removeCallAccount(id);
   
+  if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
+    _audiodriver->restorePulseAppsVolume();
 }
 
 //THREAD=VoIP
@@ -1020,6 +1026,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_HISTORY , DFT_MAX_CALLS);
   fill_config_int(REGISTRATION_EXPIRE , DFT_EXPIRE_VALUE);
   fill_config_int(CONFIG_AUDIO , DFT_AUDIO_MANAGER);
+  fill_config_int(CONFIG_PA_VOLUME_CTRL , YES_STR);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1449,6 +1456,18 @@ ManagerImpl::setNotify( void )
 ManagerImpl::getMailNotify( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_MAIL_NOTIFY );
+}
+
+::DBus::Int32
+ManagerImpl::getPulseAppVolumeControl( void )
+{
+  return getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL );
+}
+
+void
+ManagerImpl::setPulseAppVolumeControl( void )
+{
+  (getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) == 1)? setConfig( PREFERENCES , CONFIG_PA_VOLUME_CTRL , NO_STR) : setConfig( PREFERENCES , CONFIG_PA_VOLUME_CTRL , YES_STR) ;
 }
 
 void
