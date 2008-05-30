@@ -41,11 +41,13 @@ set_account_type( GtkWidget* widget , gpointer data )
 static void close_callback( void )
 {
   gtk_widget_destroy(wiz->assistant);
+  g_free(wiz); wiz = NULL;
 }
 
 static void cancel_callback( void )
 {
   gtk_widget_destroy(wiz->assistant);
+  g_free(wiz); wiz = NULL;
 }
 
   static void
@@ -98,6 +100,7 @@ enable_stun( GtkWidget* widget )
   void
 build_wizard( void )
 {
+if(!wiz){
   wiz = ( struct _wizard* )g_malloc( sizeof( struct _wizard));
   current = g_new0(account_t, 1);
   current->properties = g_hash_table_new(NULL, g_str_equal);
@@ -116,14 +119,14 @@ build_wizard( void )
   build_iax_account_configuration();
   build_registration_error();
   build_summary();
-
+  
   g_signal_connect(G_OBJECT(wiz->assistant), "close" , G_CALLBACK(close_callback), NULL);
   g_signal_connect(G_OBJECT(wiz->assistant), "cancel" , G_CALLBACK(cancel_callback), NULL);
 
   gtk_widget_show_all(wiz->assistant);
 
   gtk_assistant_update_buttons_state(GTK_ASSISTANT(wiz->assistant));
-
+	}
 }
 
   GtkWidget*
