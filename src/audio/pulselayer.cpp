@@ -420,4 +420,13 @@ PulseLayer::restoreAppVolume( int index, int channels )
   pa_context_set_sink_input_volume( context, index, &volume, on_success, this) ;
 }
 
+void
+PulseLayer::setPlaybackVolume( double volume )
+{
+  //value between 0 and 100
+  AudioStream* s = getPlaybackStream();
+  s->setVolume( volume ); 
+}
+
+
 

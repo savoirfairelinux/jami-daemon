@@ -165,6 +165,12 @@ class PulseLayer : public AudioLayer {
      */
     AudioStream* getRecordStream(){ return record;}
 
+    /**
+     * Set the speaker volume to a new value ( between 0 and 100 )
+     * @param volume  The new value
+     */
+    void setPlaybackVolume( double volume );
+
   private:
     /**
      * Drop the pending frames and close the capture device

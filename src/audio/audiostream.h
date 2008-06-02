@@ -85,8 +85,8 @@ class AudioStream {
      */
     std::string getStreamName( void ) { return _streamDescription; }
 
-    void setVolume( double pc );
-    pa_volume_t getVolume( void ) { return _volume; }
+    void setVolume( double pc ) { _volume.values[0] *= pc/100; }
+    pa_cvolume getVolume( void ) { return _volume; }
 
   private:
     /**
@@ -131,7 +131,7 @@ class AudioStream {
      */
     pa_stream_flags_t flag;
     pa_sample_spec sample_spec ;
-    pa_volume_t _volume;
+    pa_cvolume _volume;
 
 };
 

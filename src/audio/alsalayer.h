@@ -201,6 +201,11 @@ class AlsaLayer : public AudioLayer {
      */
     void restorePulseAppsVolume( void ); 
 
+    /**
+     * UNUSED in ALSA layer
+     */
+    void setPlaybackVolume( double volume );
+
   private:
 
     /**
