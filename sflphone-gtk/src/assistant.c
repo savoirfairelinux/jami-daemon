@@ -196,7 +196,7 @@ build_sip_account_configuration( void )
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   wiz->sip_username = sexy_icon_entry_new();
-  image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
+  image = gtk_image_new_from_file( ICONS_DIR "/stock_person.svg" );
   sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->sip_username), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->sip_username);
   gtk_table_attach ( GTK_TABLE( table ), wiz->sip_username, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -206,6 +206,7 @@ build_sip_account_configuration( void )
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   wiz->sip_password = sexy_icon_entry_new();
+  image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
   sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->sip_password), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->sip_password);
   gtk_entry_set_visibility(GTK_ENTRY(wiz->sip_password), FALSE);

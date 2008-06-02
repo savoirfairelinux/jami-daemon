@@ -228,7 +228,8 @@ show_account_window (account_t * a)
   gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
   entryUsername = sexy_icon_entry_new();
-  image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
+  //image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
+  image = gtk_image_new_from_file( ICONS_DIR "/stock_person.svg" );
   sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(entryUsername), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUsername);
   gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
