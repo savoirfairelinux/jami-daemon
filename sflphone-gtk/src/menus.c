@@ -37,7 +37,6 @@ GtkWidget * newCallMenu;
 GtkWidget * holdMenu;
 GtkWidget * copyMenu;
 GtkWidget * pasteMenu;
-GtkWidget * clearhistoryMenu;
 
 guint holdConnId;     //The hold_menu signal connection ID
 
@@ -507,18 +506,7 @@ clear_history( void* foo )
     gtk_widget_destroy (GTK_WIDGET(dialog));
   }
   else{  
-    markup = g_markup_printf_escaped(_("Clear the call history?"));
-    dialog = gtk_message_dialog_new_with_markup ( GTK_WINDOW(get_main_window()),
-							    GTK_DIALOG_DESTROY_WITH_PARENT,
-							    GTK_MESSAGE_INFO,
-							    GTK_BUTTONS_YES_NO,
-							    markup);
-    response = gtk_dialog_run (GTK_DIALOG(dialog));
-    gtk_widget_destroy (GTK_WIDGET(dialog));
-    if (response == GTK_RESPONSE_YES)
-    {
       call_list_clean_history();
-    }
   }
 }
 
