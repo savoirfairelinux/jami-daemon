@@ -39,6 +39,7 @@ AudioStream::~AudioStream()
 { 
   _debug("Destroy audio streams\n");
   pa_stream_disconnect( pulseStream() );
+  pa_stream_unref( pulseStream() );
 } 
 
 void
@@ -63,7 +64,8 @@ AudioStream::stream_state_callback( pa_stream* s, void* user_data )
       break;
     case PA_STREAM_FAILED:
     default:
-      _debug("Stream error: %s\n" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+      _debug("Stream error - Sink/Source doesn't exists: %s\n" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+      exit(0);
       break;
   }
 }

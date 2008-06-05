@@ -739,9 +739,10 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
       int layer = audiolayer->getLayerType(); 
     if(CHECK_INTERFACE( layer , ALSA ) )
       audiolayer->putUrgent( buf, nbSampling );
-    else{}
+    else{
+      audiolayer->startStream();
+    }
   // Pulseaudio code
-  // startStream()?;}
     }
     else 
       return false;
@@ -846,8 +847,7 @@ ManagerImpl::ringtone()
       _audiofile.getNext(output, size , 100);
       audiolayer->putUrgent( output , size );}
     else{
-      // pulseaudio code
-      //audiolayer->startStream();
+      audiolayer->startStream();
     }
     } else {
       ringback();
@@ -1527,13 +1527,7 @@ ManagerImpl::getCurrentAudioOutputPlugin( void )
 ManagerImpl::initAudioDriver(void) 
 {
   _debugInit("AudioLayer Creation");
-  //_audiodriver = new AlsaLayer( this );
   
-  /*if( _audiodriver ){
-    _debug("delete audiodriver\n");
-    delete _audiodriver;  _audiodriver = NULL;
-  } */ 
-
   if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == ALSA )
     _audiodriver = new AlsaLayer( this );
   else if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == PULSEAUDIO )
@@ -1549,6 +1543,7 @@ ManagerImpl::initAudioDriver(void)
       _debug("Init audio driver: %i\n", error);
     }
   } 
+  
 }
 
 /**

@@ -196,7 +196,12 @@ class PulseLayer : public AudioLayer {
     /**
      * Establishes the connection with the local pulseaudio server
      */
-    void connectPulseServer( void );
+    void connectPulseAudioServer( void );
+
+    /**
+     * Close the connection with the local pulseaudio server
+     */
+    void disconnectPulseAudioServer( void );
 
     /**
      * Get some information about the pulseaudio server
