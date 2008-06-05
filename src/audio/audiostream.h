@@ -85,6 +85,12 @@ class AudioStream {
      */
     std::string getStreamName( void ) { return _streamDescription; }
 
+    /**
+     * Accessor
+     * @param name  The stream name
+     */
+    void setStreamName( std::string name ) {  _streamDescription = name; }
+
     void setVolume( double pc ) { _volume.values[0] *= pc/100; }
     pa_cvolume getVolume( void ) { return _volume; }
 

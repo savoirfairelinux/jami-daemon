@@ -68,7 +68,7 @@ PulseLayer::connectPulseAudioServer( void )
   }
 
   pa_threaded_mainloop_unlock( m );
-  //serverinfo();
+  serverinfo();
   //muteAudioApps(99);
   _debug("Context creation done\n");
 }
@@ -405,14 +405,13 @@ static void reduce_sink_list(pa_context *c, const pa_sink_input_info *i, int eol
 {
   PulseLayer* pulse = (PulseLayer*) userdata;
   AudioStream* s = pulse->getPlaybackStream();
-  //_debug("my app index = %d\n",pa_stream_get_index(pulse->getPlaybackStream()->pulseStream()));
   if( !eol ){
     _debug("Sink Info: index : %i\n" , i->index);  
-    _debug("\t\tSink name : -%s-\n" , i->name);  
+    _debug("\t\tSink name : -%s-%s-\n" , i->name,  s->getStreamName().c_str());  
     _debug("\t\tClient : %i\n" , i->client); 
     _debug("\t\tVolume : %i\n" , i->volume.values[0]); 
     _debug("\t\tChannels : %i\n" , i->volume.channels); 
-    if( strcmp( i->name ,  s->getStreamName().c_str()) != 0)
+    if( strcmp( i->name , "SFLphone out") != 0)
       pulse->reduceAppVolume( i->index , i->volume.channels);
   }  
 }
@@ -421,14 +420,13 @@ static void restore_sink_list(pa_context *c, const pa_sink_input_info *i, int eo
 {
   PulseLayer* pulse = (PulseLayer*) userdata;
   AudioStream* s = pulse->getPlaybackStream();
-  //_debug("my app index = %d\n",pa_stream_get_index(pulse->getPlaybackStream()->pulseStream()));
   if( !eol ){
     _debug("Sink Info: index : %i\n" , i->index);  
     _debug("\t\tSink name : -%s-\n" , i->name);  
     _debug("\t\tClient : %i\n" , i->client); 
     _debug("\t\tVolume : %i\n" , i->volume.values[0]); 
     _debug("\t\tChannels : %i\n" , i->volume.channels); 
-    if( strcmp( i->name ,  s->getStreamName().c_str()) != 0)
+    if( strcmp( i->name ,  "SFLphone out") != 0)
       pulse->restoreAppVolume( i->index , i->volume.channels);
   }  
 }
