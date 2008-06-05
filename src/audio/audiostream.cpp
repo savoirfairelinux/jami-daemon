@@ -87,7 +87,12 @@ AudioStream::createStream( pa_context* c )
   assert( s );
 
   if( _streamType == PLAYBACK_STREAM ){
-    pa_stream_connect_playback( s , NULL , NULL , 
+    pa_buffer_attr* attributes;
+    attributes->maxlength = 66500;
+    attributes->tlength = 44100;
+    attributes->prebuf = 10000;
+    attributes->minreq = 882;
+    pa_stream_connect_playback( s , NULL , attributes , 
 				PA_STREAM_INTERPOLATE_TIMING,
 				&_volume, NULL);
 				//pa_cvolume_set(&cv, sample_spec.channels , _volume) , NULL );

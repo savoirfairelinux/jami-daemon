@@ -503,7 +503,7 @@ ManagerImpl::playDtmf(char code, bool isTalking)
       audiolayer->playSamples(_buf, size * sizeof(SFLDataFormat), isTalking);
     else
       _debug("DTMF disabled\n");
-    //audiolayer->putUrgent( _buf, size * sizeof(SFLDataFormat) );
+      audiolayer->putUrgent( _buf, size * sizeof(SFLDataFormat) );
 
   }
   returnValue = true;
@@ -742,7 +742,6 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
     else{
       audiolayer->startStream();
     }
-  // Pulseaudio code
     }
     else 
       return false;

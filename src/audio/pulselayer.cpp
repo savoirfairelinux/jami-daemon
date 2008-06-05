@@ -115,10 +115,10 @@ PulseLayer::createStreams( pa_context* c )
 {
   playback = new AudioStream(c, PLAYBACK_STREAM, "SFLphone out", _manager->getSpkrVolume());
   pa_stream_set_write_callback( playback->pulseStream() , audioCallback, this);
-  pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
+  //pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
   record = new AudioStream(c, CAPTURE_STREAM, "SFLphone in", _manager->getMicVolume());
   pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
-  pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
+  //pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
   cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples", _manager->getSpkrVolume());
 
   pa_threaded_mainloop_signal(m , 0);
@@ -286,82 +286,94 @@ PulseLayer::overflow ( pa_stream* s, void* userdata )
   void
 PulseLayer::processData( void )
 {
-  const char* data;
-  size_t r;
-  int toGet; 
-  int urgentAvail; // number of data right and data left  
-  int normalAvail; // number of data right and data left
-  size_t maxsize;
+  // Handle the mic
+  // We check if the stream is ready
+  if( (record->pulseStream()) && pa_stream_get_state( record->pulseStream()) == PA_STREAM_READY) 
+    readFromMic();
+
+  // Handle the data for the speakers
+  if( (playback->pulseStream()) && pa_stream_get_state( playback->pulseStream()) == PA_STREAM_READY){
+
+    // If the playback buffer is full, we don't overflow it; wait for it to have free space
+    if( pa_stream_writable_size(playback->pulseStream()) == 0 )
+      return;
+
+    writeToSpeaker();
+  }
+}
+
+void PulseLayer::writeToSpeaker( void )
+{   
+  /** Bytes available in the urgent ringbuffer ( reserved for DTMF ) */
+  int urgentAvail; 
+  /** Bytes available in the regular ringbuffer ( reserved for voice ) */
+  int normalAvail; 
+  int toGet;
   int toPlay;
 
-  // Handle the mic
-  if( (record->pulseStream()) && pa_stream_get_state( record->pulseStream()) == PA_STREAM_READY) {
-
-    if( pa_stream_peek( record->pulseStream() , (const void**)&data , &r ) < 0 || !data ){
-      _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
-      //return;
-    }
-
-    if( data != 0 ){
-      _micRingBuffer.Put( (void*)data , r, 100);
-    }
-
-    if( pa_stream_drop( record->pulseStream() ) < 0 ) {
-      _debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
-      //return;
-    }
-  } 
-    _debug("writable size = %d\n" ,  pa_stream_writable_size(playback->pulseStream()));
-    if( pa_stream_writable_size(playback->pulseStream()) == 0 ){
-      _debug("flush it\n");
-      return;
-    }
-
-  if( (playback->pulseStream()) && pa_stream_get_state( playback->pulseStream()) == PA_STREAM_READY || !(maxsize=pa_stream_writable_size(playback->pulseStream()))) {
-    maxsize = 2048;
-    SFLDataFormat* out;
-    urgentAvail = _urgentRingBuffer.AvailForGet();
-    if (urgentAvail > 0) {
-      // Urgent data (dtmf, incoming call signal) come first.		
-      _debug("Play urgent!: %i\n" , urgentAvail);
-      toGet = (urgentAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof(SFLDataFormat);
-      out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) );
-      _urgentRingBuffer.Get(out, toGet, 100);
-      // Consume the regular one as well (same amount of bytes)
-      _mainSndRingBuffer.Discard(toGet);
+  SFLDataFormat* out;
+  urgentAvail = _urgentRingBuffer.AvailForGet();
+  if (urgentAvail > 0) {
+    // Urgent data (dtmf, incoming call signal) come first.		
+    _debug("Play urgent!: %i\n" , urgentAvail);
+    toGet = (urgentAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof(SFLDataFormat);
+    out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) );
+    _urgentRingBuffer.Get(out, toGet, 100);
+    pa_stream_write( playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
+    // Consume the regular one as well (same amount of bytes)
+    _mainSndRingBuffer.Discard(toGet);
+  }
+  else
+  {
+    AudioLoop* tone = _manager->getTelephoneTone();
+    if ( tone != 0) {
+      toGet = framesPerBuffer;
+      out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) * sizeof(SFLDataFormat));
+      tone->getNext(out, toGet * sizeof(SFLDataFormat) , 100);
+      pa_stream_write( playback->pulseStream() , out , toGet * sizeof(SFLDataFormat) * sizeof(SFLDataFormat)   , pa_xfree, 0 , PA_SEEK_RELATIVE);
+    } 
+    if ( (tone=_manager->getTelephoneFile()) != 0 ) {
+      toGet = framesPerBuffer;
+      toPlay = ( toGet  * sizeof(SFLDataFormat) * sizeof(SFLDataFormat)> framesPerBuffer )? framesPerBuffer : toGet* sizeof(SFLDataFormat)* sizeof(SFLDataFormat) ;
+      out =  (SFLDataFormat*)pa_xmalloc(toPlay);
+      tone->getNext(out, toPlay/2 , 100);
+      pa_stream_write( playback->pulseStream() , out , toPlay   , pa_xfree, 0 , PA_SEEK_RELATIVE) ; 
+      //out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat));
+      //tone->getNext(out, toGet , 100);
+      //pa_stream_write( playback->pulseStream() , out , toGet   , pa_xfree, 0 , PA_SEEK_RELATIVE) < 0; 
+    } 
+    else {
+      out =  (SFLDataFormat*)pa_xmalloc(framesPerBuffer * sizeof(SFLDataFormat));
+      normalAvail = _mainSndRingBuffer.AvailForGet();
+      toGet = (normalAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof(SFLDataFormat);
+      if (toGet) {
+	_mainSndRingBuffer.Get(out, toGet, 100);
+	_mainSndRingBuffer.Discard(toGet);
+      } 
+      else {
+	  bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
+      }
       pa_stream_write( playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
     }
-    else
-    {
-      AudioLoop* tone = _manager->getTelephoneTone();
-      if ( tone != 0) {
-	toGet = framesPerBuffer;
-	out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) * sizeof(SFLDataFormat));
-	tone->getNext(out, toGet * sizeof(SFLDataFormat) , 100);
-	pa_stream_write( playback->pulseStream() , out , toGet * sizeof(SFLDataFormat) * sizeof(SFLDataFormat)   , pa_xfree, 0 , PA_SEEK_RELATIVE);
-      } else if ( (tone=_manager->getTelephoneFile()) != 0 ) {
-	toGet = framesPerBuffer;
-	toPlay = ( toGet * sizeof(SFLDataFormat) * sizeof(SFLDataFormat) > maxsize )? maxsize : toGet* sizeof(SFLDataFormat) * sizeof(SFLDataFormat);
-	out =  (SFLDataFormat*)pa_xmalloc(toPlay);
-	tone->getNext(out, toPlay/2 , 100);
-	if( pa_stream_write( playback->pulseStream() , out , toPlay   , pa_xfree, 0 , PA_SEEK_RELATIVE) < 0 )
-	  _debug("aie aie aie\n");
-      } else {
-	out =  (SFLDataFormat*)pa_xmalloc(framesPerBuffer * sizeof(SFLDataFormat));
-	normalAvail = _mainSndRingBuffer.AvailForGet();
-	toGet = (normalAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof(SFLDataFormat);
-	if (toGet) {
-	  _mainSndRingBuffer.Get(out, toGet, 100);
-	  //_debug("Write %i bytes\n" , toGet);
-	  _mainSndRingBuffer.Discard(toGet);
-	} else {
-	  bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
-	}
-	pa_stream_write( playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
-      }
-    }
-    }
-    //}
+  }
+}
+ 
+void PulseLayer::readFromMic( void )
+{
+  const char* data;
+  size_t r;
+
+  if( pa_stream_peek( record->pulseStream() , (const void**)&data , &r ) < 0 || !data ){
+    _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+  }
+
+  if( data != 0 ){
+    _micRingBuffer.Put( (void*)data , r, 100);
+  }
+
+  if( pa_stream_drop( record->pulseStream() ) < 0 ) {
+    _debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+  }
 }
 
   int

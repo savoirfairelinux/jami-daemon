@@ -181,6 +181,8 @@ class PulseLayer : public AudioLayer {
      * Write data from the ring buffer to the harware and read data from the hardware
      */
     void processData( void );
+    void readFromMic( void );
+    void writeToSpeaker( void );
     
     /**
      * Create the audio streams into the given context
