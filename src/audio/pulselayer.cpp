@@ -312,9 +312,9 @@ void PulseLayer::writeToSpeaker( void )
     AudioLoop* tone = _manager->getTelephoneTone();
     if ( tone != 0) {
       toGet = framesPerBuffer;
-      out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) * sizeof(SFLDataFormat));
-      tone->getNext(out, toGet * sizeof(SFLDataFormat) , 100);
-      pa_stream_write( playback->pulseStream() , out , toGet * sizeof(SFLDataFormat) * sizeof(SFLDataFormat)   , pa_xfree, 0 , PA_SEEK_RELATIVE);
+      out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) );
+      tone->getNext(out, toGet , 100);
+      pa_stream_write( playback->pulseStream() , out , toGet  * sizeof(SFLDataFormat)   , pa_xfree, 0 , PA_SEEK_RELATIVE);
     } 
     if ( (tone=_manager->getTelephoneFile()) != 0 ) {
       toGet = framesPerBuffer;
