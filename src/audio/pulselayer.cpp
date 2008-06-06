@@ -113,10 +113,10 @@ void PulseLayer::disconnectPulseAudioServer( void )
   void
 PulseLayer::createStreams( pa_context* c )
 {
-  playback = new AudioStream(c, PLAYBACK_STREAM, "SFLphone out", _manager->getSpkrVolume());
+  playback = new AudioStream(c, PLAYBACK_STREAM, PLAYBACK_STREAM_NAME, _manager->getSpkrVolume());
   pa_stream_set_write_callback( playback->pulseStream() , audioCallback, this);
   //pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
-  record = new AudioStream(c, CAPTURE_STREAM, "SFLphone in", _manager->getMicVolume());
+  record = new AudioStream(c, CAPTURE_STREAM, CAPTURE_STREAM_NAME , _manager->getMicVolume());
   pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
   //pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
   cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples", _manager->getSpkrVolume());
@@ -265,22 +265,6 @@ PulseLayer::overflow ( pa_stream* s, void* userdata )
   PulseLayer* pulse = (PulseLayer*) userdata;
   pa_stream_drop( s );
   pa_stream_trigger( s, NULL, NULL);
-  /*
-     AudioLoop* tone=pulse->_manager->getTelephoneTone();
-     if( tone!= NULL ){
-     _debug("Buffer Overflow\n");
-     int toGet = 2048;
-     SFLDataFormat* out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) * sizeof(SFLDataFormat));
-     tone->getNext(out, toGet * sizeof(SFLDataFormat) , 100);
-     pa_stream_write( s , out , toGet * sizeof(SFLDataFormat) * sizeof(SFLDataFormat)   , pa_xfree, 0 , PA_SEEK_RELATIVE); 
-  //pa_threaded_mainloop_lock(pulse->m);
-  //pa_threaded_mainloop_unlock(pulse->m);
-
-  if (pa_stream_drain(pulse->getPlaybackStream()->pulseStream(), NULL, NULL) < 0) {
-  fprintf(stderr, "pa_stream_drop() failed: %s\n", pa_strerror(pa_context_errno(pulse->context)));
-  return;
-  }
-  }*/
 }
 
   void
@@ -411,7 +395,7 @@ static void reduce_sink_list(pa_context *c, const pa_sink_input_info *i, int eol
     _debug("\t\tClient : %i\n" , i->client); 
     _debug("\t\tVolume : %i\n" , i->volume.values[0]); 
     _debug("\t\tChannels : %i\n" , i->volume.channels); 
-    if( strcmp( i->name , "SFLphone out") != 0)
+    if( strcmp( i->name , PLAYBACK_STREAM_NAME ) != 0)
       pulse->reduceAppVolume( i->index , i->volume.channels);
   }  
 }
@@ -426,7 +410,7 @@ static void restore_sink_list(pa_context *c, const pa_sink_input_info *i, int eo
     _debug("\t\tClient : %i\n" , i->client); 
     _debug("\t\tVolume : %i\n" , i->volume.values[0]); 
     _debug("\t\tChannels : %i\n" , i->volume.channels); 
-    if( strcmp( i->name ,  "SFLphone out") != 0)
+    if( strcmp( i->name , PLAYBACK_STREAM_NAME ) != 0)
       pulse->restoreAppVolume( i->index , i->volume.channels);
   }  
 }
