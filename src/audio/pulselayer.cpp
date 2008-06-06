@@ -318,13 +318,10 @@ void PulseLayer::writeToSpeaker( void )
     } 
     if ( (tone=_manager->getTelephoneFile()) != 0 ) {
       toGet = framesPerBuffer;
-      toPlay = ( toGet  * sizeof(SFLDataFormat) * sizeof(SFLDataFormat)> framesPerBuffer )? framesPerBuffer : toGet* sizeof(SFLDataFormat)* sizeof(SFLDataFormat) ;
+      toPlay = ( toGet * sizeof(SFLDataFormat)> framesPerBuffer )? framesPerBuffer : toGet * sizeof(SFLDataFormat) ;
       out =  (SFLDataFormat*)pa_xmalloc(toPlay);
       tone->getNext(out, toPlay/2 , 100);
       pa_stream_write( playback->pulseStream() , out , toPlay   , pa_xfree, 0 , PA_SEEK_RELATIVE) ; 
-      //out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat));
-      //tone->getNext(out, toGet , 100);
-      //pa_stream_write( playback->pulseStream() , out , toGet   , pa_xfree, 0 , PA_SEEK_RELATIVE) < 0; 
     } 
     else {
       out =  (SFLDataFormat*)pa_xmalloc(framesPerBuffer * sizeof(SFLDataFormat));
