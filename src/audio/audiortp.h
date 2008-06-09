@@ -29,7 +29,9 @@
 #include <cc++/numbers.h>
 
 #include <samplerate.h>
+
 #include "../global.h"
+#include "../samplerateconverter.h"
 
 #define UP_SAMPLING 0
 #define DOWN_SAMPLING 1
@@ -110,6 +112,8 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
 
     /** libsamplerate error */
     int _src_err;
+
+    SamplerateConverter* converter;
 
     /** Variables to process audio stream: sample rate for playing sound (typically 44100HZ) */
     int _layerSampleRate;  

@@ -164,6 +164,8 @@ AudioRtpRTX::~AudioRtpRTX () {
   void
 AudioRtpRTX::initBuffers()
 {
+  converter = new SamplerateConverter();
+
   int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
   _dataAudioLayer = new SFLDataFormat[nbSamplesMax];
   _receiveDataDecoded = new int16[nbSamplesMax];
@@ -404,10 +406,14 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
   int 
 AudioRtpRTX::reSampleData(int sampleRate_codec, int nbSamples, int status)
 {
-  if(status==UP_SAMPLING)
-    return upSampleData(sampleRate_codec, nbSamples);
-  else if(status==DOWN_SAMPLING)
-    return downSampleData(sampleRate_codec, nbSamples);
+  if(status==UP_SAMPLING){
+    //return upSampleData(sampleRate_codec, nbSamples);
+    return converter->upsampleData( _receiveDataDecoded , _dataAudioLayer, sampleRate_codec , _layerSampleRate , nbSamples );
+  }
+  else if(status==DOWN_SAMPLING){
+    //return downSampleData(sampleRate_codec, nbSamples);
+    return converter->downsampleData( _dataAudioLayer , _intBufferDown, sampleRate_codec , _layerSampleRate , nbSamples );
+  }
   else
     return 0;
 }
