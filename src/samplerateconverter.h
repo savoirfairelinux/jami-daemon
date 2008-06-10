@@ -23,11 +23,13 @@
 #include <math.h>
 
 #include "global.h"
+#include "manager.h"
 
 class SamplerateConverter {
   public:
     /** Constructor */
     SamplerateConverter( void );
+    SamplerateConverter( int freq , int fs );
     /** Destructor */
     ~SamplerateConverter( void );
 
@@ -51,19 +53,28 @@ class SamplerateConverter {
      */
     int downsampleData( SFLDataFormat* dataIn , SFLDataFormat* dataOut , int samplerate1 , int samplerate2 , int nbSamples );
 
+    int getFrequence( void ) { return _frequence; }
+
+    int getFramesize( void ) { return _framesize; } 
+
   private:
-    /** Downsampled float buffer */
-    float32* _floatBufferDown;
+    void init( void );
 
-    /** Upsampled float buffer */
-    float32* _floatBufferUp;
+    /** Audio layer caracteristics */
+    int _frequence;
+    int _framesize;
 
-    /** libSamplerateConverter converter for incoming voice */
-    SRC_STATE*    _src_state_spkr;
-
+    /** Downsampled/Upsampled float buffers for the mic data processing */
+    float32* _floatBufferDownMic;
+    float32* _floatBufferUpMic;
     /** libSamplerateConverter converter for outgoing voice */
     SRC_STATE*    _src_state_mic;
 
+    /** Downsampled/Upsampled float buffers for the speaker data processing */
+    float32* _floatBufferDownSpkr;
+    float32* _floatBufferUpSpkr;
+    /** libSamplerateConverter converter for incoming voice */
+    SRC_STATE*    _src_state_spkr;
     /** libSamplerateConverter error */
     int _src_err;
 };

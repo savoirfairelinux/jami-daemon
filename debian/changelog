@@ -1,3 +1,8 @@
+sflphone (0.9.2) unstable; urgency=low
+  * Ticket #14: Sample rate conversion stands in one place now
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Thu, 22 May 2008 11:14:25 -0500
+
 sflphone (0.9.1) unstable; urgency=low
   * Add a search tool in the history
   * Migrate some gtk_entry_new to sexy_icon_entry_new

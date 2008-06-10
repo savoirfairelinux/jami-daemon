@@ -28,8 +28,6 @@
 #include <ccrtp/rtp.h>
 #include <cc++/numbers.h>
 
-#include <samplerate.h>
-
 #include "../global.h"
 #include "../samplerateconverter.h"
 
@@ -85,34 +83,16 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** Is the session symmetric or not */
     bool _sym;
 
-    /** When we receive data, we decode it inside this buffer */
-    int16* _receiveDataDecoded;
+    /** Mic-data related buffers */
+    SFLDataFormat* micData;
+    SFLDataFormat* micDataConverted;
+    unsigned char* micDataEncoded;
 
-    /** Buffers used for send data from the mic */
-    unsigned char* _sendDataEncoded;
-    
-    /** Downsampled int16 buffer */
-    int16* _intBufferDown;
+    /** Speaker-data related buffers */
+    SFLDataFormat* spkrDataDecoded;
+    SFLDataFormat* spkrDataConverted;
 
-    /** After that we send the data inside this buffer if there is a format conversion or rate conversion */
-    /** Also use for getting mic-ringbuffer data */
-    SFLDataFormat* _dataAudioLayer;
-
-    /** Downsampled float buffer */
-    float32* _floatBufferDown;
-
-    /** Upsampled float buffer */
-    float32* _floatBufferUp;
-
-    /** libsamplerate converter for incoming voice */
-    SRC_STATE*    _src_state_spkr;
-
-    /** libsamplerate converter for outgoing voice */
-    SRC_STATE*    _src_state_mic;
-
-    /** libsamplerate error */
-    int _src_err;
-
+    /** Sample rate converter object */
     SamplerateConverter* converter;
 
     /** Variables to process audio stream: sample rate for playing sound (typically 44100HZ) */
@@ -158,22 +138,6 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
      */ 
     int reSampleData(int sampleRate_codec, int nbSamples, int status);
     
-    /**
-     * Upsample the data from the clock rate of the codec to the sample rate of the layer
-     * @param sampleRate_codec	The sample rate of the codec selected to encode/decode the data
-     * @param nbSamples		Number of samples to process
-     * @return int The number of samples after process
-     */
-    int upSampleData(int sampleRate_codec, int nbSamples);
-    
-    /**
-     * Downsample the data from the sample rate of the layer to the clock rate of the codec
-     * @param sampleRate_codec	The sample rate of the codec selected to encode/decode the data
-     * @param nbSamples		Number of samples to process
-     * @return int The number of samples after process
-     */
-    int downSampleData(int sampleRate_codec, int nbSamples);
-
     /** The audio codec used during the session */
     AudioCodec* _audiocodec;	
 };

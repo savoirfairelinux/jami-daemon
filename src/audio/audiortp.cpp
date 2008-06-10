@@ -39,7 +39,6 @@
 #include "ringbuffer.h"
 #include "../user_cfg.h"
 #include "../sipcall.h"
-#include <samplerate.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp                                                          
@@ -103,9 +102,6 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
   _ca = sipcall;
   _sym = sym;
   // AudioRtpRTX should be close if we change sample rate
-  //int IDcodec= _ca->getAudioCodec();
-  //_codecSampleRate = _ca->getAudioCodec()->getClockRate();
-  //_codecDesc = Manager::instance().getCodecDescriptorMap(); 
   // TODO: Change bind address according to user settings.
   // TODO: this should be the local ip not the external (router) IP
   std::string localipConfig = _ca->getLocalIp(); // _ca->getLocalIp();
@@ -119,13 +115,6 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
     _sessionRecv = NULL;
     _sessionSend = NULL;
   }
-
-  // libsamplerate-related
-  // Set the converter type for the upsampling and the downsampling
-  // interpolator SRC_SINC_BEST_QUALITY
-  _src_state_mic  = src_new(SRC_SINC_BEST_QUALITY, 1, &_src_err);
-  _src_state_spkr = src_new(SRC_SINC_BEST_QUALITY, 1, &_src_err);
-
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
@@ -146,41 +135,34 @@ AudioRtpRTX::~AudioRtpRTX () {
     delete _session;     _session = NULL;
   }
 
-  delete [] _intBufferDown; _intBufferDown = NULL;
-  delete [] _floatBufferUp; _floatBufferUp = NULL;
-  delete [] _floatBufferDown; _floatBufferDown = NULL;
-  delete [] _dataAudioLayer; _dataAudioLayer = NULL;
+  delete [] micData;  micData = NULL;
+  delete [] micDataConverted;  micDataConverted = NULL;
+  delete [] micDataEncoded;  micDataEncoded = NULL;
 
-  delete [] _sendDataEncoded; _sendDataEncoded = NULL;
-  delete [] _receiveDataDecoded; _receiveDataDecoded = NULL;
+  delete [] spkrDataDecoded; spkrDataDecoded = NULL;
+  delete [] spkrDataConverted; spkrDataConverted = NULL;
 
   delete time; time = NULL;
-
-  // libsamplerate-related
-  _src_state_mic  = src_delete(_src_state_mic);
-  _src_state_spkr = src_delete(_src_state_spkr);
 }
 
   void
 AudioRtpRTX::initBuffers()
 {
-  converter = new SamplerateConverter();
+  converter = new SamplerateConverter( _layerSampleRate , _layerFrameSize );
 
   int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
-  _dataAudioLayer = new SFLDataFormat[nbSamplesMax];
-  _receiveDataDecoded = new int16[nbSamplesMax];
-  _floatBufferDown  = new float32[nbSamplesMax];
-  _floatBufferUp = new float32[nbSamplesMax];
-  _sendDataEncoded = new unsigned char[nbSamplesMax];
-  _intBufferDown = new int16[nbSamplesMax];
+
+  micData = new SFLDataFormat[nbSamplesMax];
+  micDataConverted = new SFLDataFormat[nbSamplesMax];
+  micDataEncoded = new unsigned char[nbSamplesMax];
+
+  spkrDataConverted = new SFLDataFormat[nbSamplesMax];
+  spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
 }
 
   void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
-
-
-
   try {
     if (_ca == 0) { return; }
     _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( _ca->getAudioCodec() );
@@ -257,7 +239,6 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
   //   3. encode it
   //   4. send it
   try {
-    int16* toSIP = NULL;
 
     timestamp += time->getSecond();
     if (_ca==0) { _debug(" !ARTP: No call associated (mic)\n"); return; } // no call, so we do nothing
@@ -270,49 +251,37 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     int maxBytesToGet = _layerSampleRate * _layerFrameSize * sizeof(SFLDataFormat) / 1000;
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
-    //printf("%i \n", availBytesFromMic);
 
     // take the lowest
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-    //printf("%i\n", bytesAvail);
     // Get bytes from micRingBuffer to data_from_mic
-    int nbSample = audiolayer->getMic(_dataAudioLayer, bytesAvail) / sizeof(SFLDataFormat);
+    //_debug("get data from mic\n");
+    int nbSample = audiolayer->getMic( micData , bytesAvail ) / sizeof(SFLDataFormat);
     int nb_sample_up = nbSample;
     int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
 
+    //_debug("resample data\n");
     nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
-
-    toSIP = _intBufferDown;
 
     if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
       // fill end with 0...
-      //_debug("begin: %p, nbSample: %d\n", toSIP, nbSample);
-      memset(toSIP + nbSample, 0, (nbSamplesMax-nbSample)*sizeof(int16));
+      memset( micDataConverted + nbSample, 0, (nbSamplesMax-nbSample)*sizeof(int16));
       nbSample = nbSamplesMax;
     }
-    // debug - dump sound in a file
-    //_debug("AR: Nb sample: %d int, [0]=%d [1]=%d [2]=%d\n", nbSample, toSIP[0], toSIP[1], toSIP[2]);
-    // for the mono: range = 0 to RTP_FRAME2SEND * sizeof(int16)
-    // codecEncode(char *dest, int16* src, size in bytes of the src)
-    int compSize = _audiocodec->codecEncode(_sendDataEncoded, toSIP, nbSample*sizeof(int16));
-    //printf("jusqu'ici tout vas bien\n");
-
+    int compSize = _audiocodec->codecEncode( micDataEncoded , micDataConverted , nbSample*sizeof(int16));
     // encode divise by two
     // Send encoded audio sample over the network
     if (compSize > nbSamplesMax) { _debug("! ARTP: %d should be %d\n", compSize, nbSamplesMax);}
     if (!_sym) {
-      _sessionSend->putData(timestamp, _sendDataEncoded, compSize);
+      _sessionSend->putData(timestamp, micDataEncoded, compSize);
     } else {
-      _session->putData(timestamp, _sendDataEncoded, compSize);
+      _session->putData(timestamp, micDataEncoded, compSize);
     }
-    toSIP = NULL;
   } catch(...) {
     _debugException("! ARTP: sending failed");
     throw;
   }
 }
-
-
 
   void
 AudioRtpRTX::receiveSessionForSpkr (int& countTime)
@@ -338,11 +307,9 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     }
 
     int payload = adu->getType(); // codec type
-    unsigned char* data  = (unsigned char*)adu->getData(); // data in char
+    unsigned char* spkrData  = (unsigned char*)adu->getData(); // data in char
     unsigned int size = adu->getSize(); // size in char
 
-
-    //_fstream.write((char*) data, size);
     // Decode data with relevant codec
     int max = (int)(_codecSampleRate * _layerFrameSize / 1000);
 
@@ -352,13 +319,9 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       size=max;
     }
 
-    //printf("size = %i\n", size);
-
     if (_audiocodec != NULL) {
 
-      int expandedSize = _audiocodec->codecDecode(_receiveDataDecoded, data, size);
-      //	printf("%i\n", expandedSize);
-      //_fstream.write((char*) _receiveDataDecoded, );
+      int expandedSize = _audiocodec->codecDecode( spkrDataDecoded , spkrData , size );
       //buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
       int nbInt16 = expandedSize / sizeof(int16);
       //nbInt16 represents the number of samples we just decoded
@@ -366,21 +329,16 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 	_debug("We have decoded an RTP packet larger than expected: %s VS %s. Cropping.\n", nbInt16, max);
 	nbInt16=max;
       }
-
-      SFLDataFormat* toAudioLayer;
       int nbSample = nbInt16;
 
       // Do sample rate conversion
       int nb_sample_down = nbSample;
       nbSample = reSampleData(_codecSampleRate , nb_sample_down, UP_SAMPLING);
 #ifdef DATAFORMAT_IS_FLOAT
-      toAudioLayer = _floatBufferUp;
 #else
-      toAudioLayer = _dataAudioLayer;
 #endif
 
-
-      audiolayer->playSamples(toAudioLayer, nbSample * sizeof(SFLDataFormat), true);
+      audiolayer->playSamples( spkrDataConverted , nbSample * sizeof(SFLDataFormat), true);
       // Notify (with a beep) an incoming call when there is already a call 
       countTime += time->getSecond();
       if (Manager::instance().incomingCallWaiting() > 0) {
@@ -393,7 +351,6 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     } else {
       countTime += time->getSecond();
     }
-
     delete adu; adu = NULL;
   } catch(...) {
     _debugException("! ARTP: receiving failed");
@@ -407,75 +364,20 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 AudioRtpRTX::reSampleData(int sampleRate_codec, int nbSamples, int status)
 {
   if(status==UP_SAMPLING){
-    //return upSampleData(sampleRate_codec, nbSamples);
-    return converter->upsampleData( _receiveDataDecoded , _dataAudioLayer, sampleRate_codec , _layerSampleRate , nbSamples );
+    return converter->upsampleData( spkrDataDecoded , spkrDataConverted , sampleRate_codec , _layerSampleRate , nbSamples );
   }
   else if(status==DOWN_SAMPLING){
-    //return downSampleData(sampleRate_codec, nbSamples);
-    return converter->downsampleData( _dataAudioLayer , _intBufferDown, sampleRate_codec , _layerSampleRate , nbSamples );
+    return converter->downsampleData( micData , micDataConverted , sampleRate_codec , _layerSampleRate , nbSamples );
   }
   else
     return 0;
 }
-
-////////////////////////////////////////////////////////////////////
-//////////// RESAMPLING FUNCTIONS /////////////////////////////////
-//////////////////////////////////////////////////////////////////
-
-  int
-AudioRtpRTX::upSampleData(int sampleRate_codec, int nbSamples)
-{
-  double upsampleFactor = (double) _layerSampleRate / sampleRate_codec;
-  int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
-  if( upsampleFactor != 1 )
-  {
-    SRC_DATA src_data;
-    src_data.data_in = _floatBufferDown;
-    src_data.data_out = _floatBufferUp;
-    src_data.input_frames = nbSamples;
-    src_data.output_frames = (int) floor(upsampleFactor * nbSamples);
-    src_data.src_ratio = upsampleFactor;
-    src_data.end_of_input = 0; // More data will come
-    src_short_to_float_array(_receiveDataDecoded, _floatBufferDown, nbSamples);
-    src_process(_src_state_spkr, &src_data);
-    nbSamples  = ( src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;		
-    src_float_to_short_array(_floatBufferUp, _dataAudioLayer, nbSamples);
-  }
-
-  return nbSamples;
-}	
-
-  int
-AudioRtpRTX::downSampleData(int sampleRate_codec, int nbSamples)
-{
-  double downsampleFactor = (double) sampleRate_codec / _layerSampleRate;
-  int nbSamplesMax = (int) (sampleRate_codec * _layerFrameSize / 1000);
-  if ( downsampleFactor != 1)
-  {
-    SRC_DATA src_data;	
-    src_data.data_in = _floatBufferUp;
-    src_data.data_out = _floatBufferDown;
-    src_data.input_frames = nbSamples;
-    src_data.output_frames = (int) floor(downsampleFactor * nbSamples);
-    src_data.src_ratio = downsampleFactor;
-    src_data.end_of_input = 0; // More data will come
-    src_short_to_float_array(_dataAudioLayer, _floatBufferUp, nbSamples);
-    src_process(_src_state_mic, &src_data);
-    nbSamples  = ( src_data.output_frames_gen > nbSamplesMax) ? nbSamplesMax : src_data.output_frames_gen;
-    src_float_to_short_array(_floatBufferDown, _intBufferDown, nbSamples);
-  }
-  return nbSamples;
-
-}
-
-//////////////////////// END RESAMPLING //////////////////////////////////////////////////////
 
 void
 AudioRtpRTX::run () {
   //mic, we receive from soundcard in stereo, and we send encoded
   //encoding before sending
   AudioLayer *audiolayer = Manager::instance().getAudioDriver();
-  //loadCodec(_ca->getAudioCodec());
   _layerFrameSize = audiolayer->getFrameSize(); // en ms
   _layerSampleRate = audiolayer->getSampleRate();	
   initBuffers();
@@ -499,7 +401,6 @@ AudioRtpRTX::run () {
     int countTime = 0; // for receive
     TimerPort::setTimer(_layerFrameSize);
 
-    //audiolayer->flushMic();
     audiolayer->startStream();
     _start.post();
     _debug("- ARTP Action: Start\n");
@@ -517,8 +418,6 @@ AudioRtpRTX::run () {
       Thread::sleep(TimerPort::getTimer());
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
     }
-    //_fstream.close();
-    //unloadCodec();
     //_debug("stop stream for audiortp loop\n");
     audiolayer->stopStream();
   } catch(std::exception &e) {
