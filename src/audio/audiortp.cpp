@@ -306,15 +306,15 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       return;
     }
 
-    int payload = adu->getType(); // codec type
+    //int payload = adu->getType(); // codec type
     unsigned char* spkrData  = (unsigned char*)adu->getData(); // data in char
     unsigned int size = adu->getSize(); // size in char
 
     // Decode data with relevant codec
-    int max = (int)(_codecSampleRate * _layerFrameSize / 1000);
+    unsigned int max = (unsigned int)(_codecSampleRate * _layerFrameSize / 1000);
 
     if ( size > max ) {
-      _debug("We have received from RTP a packet larger than expected: %s VS %s\n", size, max);
+      _debug("We have received from RTP a packet larger than expected: %d VS %d\n", size, max);
       _debug("The packet size has been cropped\n");
       size=max;
     }
@@ -326,7 +326,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       int nbInt16 = expandedSize / sizeof(int16);
       //nbInt16 represents the number of samples we just decoded
       if (nbInt16 > max) {
-	_debug("We have decoded an RTP packet larger than expected: %s VS %s. Cropping.\n", nbInt16, max);
+	_debug("We have decoded an RTP packet larger than expected: %d VS %d. Cropping.\n", nbInt16, max);
 	nbInt16=max;
       }
       int nbSample = nbInt16;
