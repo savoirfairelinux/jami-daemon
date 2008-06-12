@@ -1,8 +1,8 @@
 /*
- *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2006-2007-2008 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,9 +24,9 @@
 #include "voiplink.h"
 #include <iax2/iax-client.h>
 #include "global.h"
-#include <samplerate.h>
 
 #include "audio/codecDescriptor.h"
+#include "samplerateconverter.h"
 
 class EventThread;
 class IAXCall;
@@ -279,31 +279,17 @@ class IAXVoIPLink : public VoIPLink
     /** Connection to audio card/device */
     AudioLayer* audiolayer;
 
-    /** When we receive data, we decode it inside this buffer */
-    int16* _receiveDataDecoded;
-    /** When we send data, we encode it inside this buffer*/
-    unsigned char* _sendDataEncoded;
+    /** Mic-data related buffers */
+    SFLDataFormat* micData;
+    SFLDataFormat* micDataConverted;
+    unsigned char* micDataEncoded;
 
-    /** After that we send the data inside this buffer if there is a format conversion or rate conversion. */
-    /* Also use for getting mic-ringbuffer data */
-    SFLDataFormat* _dataAudioLayer;
+    /** Speaker-data related buffers */
+    SFLDataFormat* spkrDataDecoded;
+    SFLDataFormat* spkrDataConverted;
 
-    /** Buffer for 8000hz samples in conversion */
-    float32* _floatBuffer8000;
-    /** Buffer for 48000hz samples in conversion */ 
-    float32* _floatBuffer48000;
-
-    /** Buffer for 8000hz samples for mic conversion */
-    int16* _intBuffer8000;
-
-    /** libsamplerate converter for incoming voice */
-    SRC_STATE*    _src_state_spkr;
-
-    /** libsamplerate converter for outgoing voice */
-    SRC_STATE*    _src_state_mic;
-
-    /** libsamplerate error */
-    int           _src_err;
+    /** Sample rate converter object */
+    SamplerateConverter* converter;
 
 };
 

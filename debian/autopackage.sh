@@ -42,7 +42,7 @@ cp $bindir/sflphoned $sfldir$bindir
 strip $sfldir$bindir/sflphoned
 cp $bindir/sflphone-gtk $sfldir$bindir
 strip $sfldir$bindir/sflphone-gtk
-ln -sf $sfldir$bindir/sflphone-gtk $sfldir$bindir/sflphone
+ln -sf $bindir/sflphone-gtk $sfldir$bindir/sflphone
 
 #/usr/lib
 mkdir -p $sfldir/usr/lib/sflphone/codecs
@@ -76,8 +76,10 @@ cp changelog.Debian.gz $sfldir$sharedir/doc/sflphone
 cp copyright $sfldir$sharedir/doc/sflphone
 cp TODO $sfldir$sharedir/doc/sflphone
 
-# DEBIAN files
 mkdir -p $debdir 
+cp debian-binary $sfldir
+cp postrm $debdir
+# DEBIAN files
 # Create control file
 control="$debdir/control"
 touch $control
@@ -99,4 +101,4 @@ fakeroot dpkg --build $sfldir ${sfldir}_$2.deb
 
 # Clean up the generated stuff
 echo "Clean up ... "
-#rm -rf $sfldir 
+rm -rf $sfldir 

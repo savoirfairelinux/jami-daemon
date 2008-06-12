@@ -35,10 +35,12 @@ endif
 config.status: configure
 	dh_testdir
 	# Add here commands to configure the package.
-	autoreconf --install	
-	CFLAGS="$(CFLAGS)" CXX="$(CXX)" ./configure --prefix=/usr --with-debug
+#autoreconf --install	
+#CFLAGS="$(CFLAGS)" CXX="$(CXX)" ./configure --prefix=/usr --with-debu
+	./configure --prefix=/
+#gnome-autogen.sh --prefix=/usr --with-debug
 	cd sflphone-gtk
-	gnome-autogen.sh --prefix=/usr
+	./configure --prefix=/
 	
 
 #Architecture 
@@ -48,7 +50,8 @@ build-arch: build-arch-stamp
 build-arch-stamp:  config.status
 
 	# Add here commands to compile the arch part of the package.
-	#$(MAKE) 
+	$(MAKE) && (cd sflphone-gtk)
+	$(MAKE)
 	touch build-arch-stamp
 
 build-indep: build-indep-stamp
@@ -96,7 +99,7 @@ install-arch:
 
 	# Add here commands to install the arch part of the package into 
 	# debian/tmp.
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/sflphoned
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/sflphone/usr
 
 	dh_install -s
 # Must not depend on anything. This is to be called by

@@ -1,7 +1,7 @@
 Archive : unstable
-Version: 0.9
+Version: 0.9.1
 Component : universe
 Origin : SFLphone
 Label : sflphone
-Architecture : all
+Architecture : i386
 
