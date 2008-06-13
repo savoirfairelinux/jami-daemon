@@ -599,7 +599,9 @@ GtkWidget* codecs_box()
   void
 select_audio_manager( void )
 {
+
   g_print("audio manager selected\n");
+  
   if( !SHOW_ALSA_CONF && !gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ) )
   {
     g_print(" display alsa conf panel\n");

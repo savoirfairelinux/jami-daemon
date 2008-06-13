@@ -1224,14 +1224,14 @@ ManagerImpl::setInputAudioPlugin(const std::string& audioPlugin)
 ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
 {
   int layer = _audiodriver -> getLayerType();
-    _debug("Set output audio plugin\n");
-    _audiodriver -> setErrorMessage( -1 );
-    _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
-      _audiodriver -> getIndexOut(),
-      _audiodriver -> getSampleRate(),
-      _audiodriver -> getFrameSize(),
-      SFL_PCM_BOTH,
-      audioPlugin);
+  _debug("Set output audio plugin\n");
+  _audiodriver -> setErrorMessage( -1 );
+  _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
+			      _audiodriver -> getIndexOut(),
+			      _audiodriver -> getSampleRate(),
+			      _audiodriver -> getFrameSize(),
+			      SFL_PCM_BOTH,
+			      audioPlugin);
   if( _audiodriver -> getErrorMessage() != -1)
     notifyErrClient( _audiodriver -> getErrorMessage() );
   // set config

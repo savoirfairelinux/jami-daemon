@@ -336,13 +336,9 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 #ifdef DATAFORMAT_IS_FLOAT
 #else
 #endif
-
-      int layer = audiolayer->getLayerType();
-      //_debug(" interface %i - ALSA = %i\n" , layer, ALSA);
-      if( CHECK_INTERFACE( layer, ALSA ) )
-	audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
-      else      
-	audiolayer->putMain( spkrDataConverted, nbSample * sizeof(SFLDataFormat) );
+      
+      audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
+      
       // Notify (with a beep) an incoming call when there is already a call 
       countTime += time->getSecond();
       if (Manager::instance().incomingCallWaiting() > 0) {

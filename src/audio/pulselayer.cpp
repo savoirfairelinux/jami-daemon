@@ -37,6 +37,7 @@ PulseLayer::~PulseLayer (void)
   delete playback;
   delete record;
   pa_context_disconnect(context);
+  pa_context_unref( context );
 }
 
   void
@@ -45,6 +46,7 @@ PulseLayer::closeLayer( void )
   playback->disconnect(); 
   record->disconnect();
   pa_context_disconnect( context ); 
+  pa_context_unref( context );
 }
 
   void
@@ -161,11 +163,6 @@ PulseLayer::closePlaybackStream( void )
   int 
 PulseLayer::playSamples(void* buffer, int toCopy, bool isTalking)
 {
-}
-
-  int 
-PulseLayer::putMain(void* buffer, int toCopy)
-{
   int a = _mainSndRingBuffer.AvailForPut();
   if ( a >= toCopy ) {
     return _mainSndRingBuffer.Put(buffer, toCopy, 100);
@@ -236,11 +233,6 @@ PulseLayer::stopStream (void)
   pa_stream_flush( playback->pulseStream(), NULL, NULL );
   pa_stream_flush( record->pulseStream(), NULL, NULL );
   flushMic();
-}
-
-  bool 
-PulseLayer::isStreamActive (void) 
-{
 }
 
   void 

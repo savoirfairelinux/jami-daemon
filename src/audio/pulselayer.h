@@ -70,8 +70,6 @@ class PulseLayer : public AudioLayer {
      */
     void flushMain();
     
-    int putMain(void* buffer, int toCopy);
-    
     int putUrgent(void* buffer, int toCopy);
 
     /**

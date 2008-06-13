@@ -47,6 +47,7 @@ AudioStream::disconnect( void )
 { 
   _debug("Destroy audio streams\n");
   pa_stream_disconnect( pulseStream() );
+  pa_stream_unref( pulseStream() );
 } 
 
   void 
@@ -74,7 +75,6 @@ AudioStream::stream_state_callback( pa_stream* s, void* user_data )
   pa_stream*
 AudioStream::createStream( pa_context* c )
 {
-  _debug("Creating %s stream...\n" , _streamDescription.c_str());
   pa_stream* s;
   pa_cvolume cv;
 
@@ -88,14 +88,14 @@ AudioStream::createStream( pa_context* c )
 
   if( _streamType == PLAYBACK_STREAM ){
     pa_buffer_attr* attributes;
-    attributes->maxlength = 66500;
-    attributes->tlength = 44100;
-    attributes->prebuf = 10000;
-    attributes->minreq = 882;
-    pa_stream_connect_playback( s , NULL , attributes , 
+    //attributes->maxlength = 66500;
+    //attributes->tlength = 44100;
+    //attributes->prebuf = 10000;
+    //attributes->minreq = 882;
+    pa_stream_connect_playback( s , NULL , NULL , 
 				PA_STREAM_INTERPOLATE_TIMING,
 				&_volume, NULL);
-				//pa_cvolume_set(&cv, sample_spec.channels , _volume) , NULL );
+				//pa_cvolume_set(&cv, sample_spec.channels , PA_VOLUME_NORM) , NULL );
   }
   else if( _streamType == CAPTURE_STREAM ){
     pa_stream_connect_record( s , NULL , NULL , PA_STREAM_START_CORKED );

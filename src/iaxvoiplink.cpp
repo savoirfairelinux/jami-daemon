@@ -201,10 +201,8 @@ IAXVoIPLink::getEvent()
   }
   _mutexIAX.leaveMutex();
 
-
   // Do the doodle-moodle to send audio from the microphone to the IAX channel.
   sendAudioFromMic();
-
 
   // Refresh registration.
   if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
@@ -622,7 +620,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 
 	Manager::instance().peerAnsweredCall(id);
 	//audiolayer->flushMic();
-	audiolayer->startStream();
+	//audiolayer->startStream();
 	// start audio here?
       } else {
 	// deja connecté ?
@@ -639,7 +637,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
     case IAX_EVENT_VOICE:
       //_debug("Should have a decent value!!!!!! = %i\n" , call -> getAudioCodec());
       //if( !audiolayer -> isCaptureActive())
-      //audiolayer->startStream();
+	//audiolayer->startStream();
       iaxHandleVoiceEvent(event, call);
       break;
 

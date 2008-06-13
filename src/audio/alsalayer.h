@@ -186,10 +186,6 @@ class AlsaLayer : public AudioLayer {
      */
     int putInCache( char code, void *buffer, int toCopy );
 
-    /**
-     * UNUSED in ALSA layer
-     */
-    int putMain(void* buffer, int toCopy);
 
     /**
      * UNUSED in ALSA layer

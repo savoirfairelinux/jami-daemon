@@ -99,12 +99,6 @@ class AudioLayer {
      */
     virtual void stopStream(void) = 0;
     
-    /**
-     * Check if both capture and playback are running
-     * @return true if capture and playback are running
-     *	       false otherwise
-     */
-    virtual bool isStreamActive(void) = 0;
 
     /**
      * Check if the capture is running
@@ -131,7 +125,6 @@ class AudioLayer {
      */
     virtual int putUrgent(void* buffer, int toCopy) = 0; 
 
-    virtual int putMain( void* buffer, int toCopy) = 0;
     virtual int putInCache(char code, void* buffer, int toCopy) = 0;
 
     /**
