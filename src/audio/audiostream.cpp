@@ -81,18 +81,18 @@ AudioStream::createStream( pa_context* c )
   assert(pa_sample_spec_valid(&sample_spec));
   assert(pa_channel_map_valid(&channel_map));
 
+  pa_buffer_attr* attributes = (pa_buffer_attr*)malloc( sizeof(pa_buffer_attr) );
   if( !( s = pa_stream_new( c, _streamDescription.c_str() , &sample_spec, &channel_map ) ) ) 
     _debug("%s: pa_stream_new() failed : %s\n" , _streamDescription.c_str(), pa_strerror( pa_context_errno( c)));
 
   assert( s );
 
   if( _streamType == PLAYBACK_STREAM ){
-    pa_buffer_attr* attributes;
-    //attributes->maxlength = 66500;
-    //attributes->tlength = 44100;
-    //attributes->prebuf = 10000;
-    //attributes->minreq = 882;
-    pa_stream_connect_playback( s , NULL , NULL , 
+    attributes->maxlength = 66500;
+    attributes->tlength = 44100;
+    attributes->prebuf = 10000;
+    attributes->minreq = 882;
+    pa_stream_connect_playback( s , NULL , attributes, 
 				PA_STREAM_INTERPOLATE_TIMING,
 				&_volume, NULL);
 				//pa_cvolume_set(&cv, sample_spec.channels , PA_VOLUME_NORM) , NULL );
@@ -108,6 +108,8 @@ AudioStream::createStream( pa_context* c )
   }
 
   pa_stream_set_state_callback( s , stream_state_callback, NULL);
+  
+  free(attributes);
 
   return s;
 }
