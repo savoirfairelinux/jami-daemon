@@ -337,7 +337,7 @@ void PulseLayer::readFromMic( void )
   size_t r;
 
   if( pa_stream_peek( record->pulseStream() , (const void**)&data , &r ) < 0 || !data ){
-    _debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+    //_debug("pa_stream_peek() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
   }
 
   if( data != 0 ){
@@ -345,7 +345,7 @@ void PulseLayer::readFromMic( void )
   }
 
   if( pa_stream_drop( record->pulseStream() ) < 0 ) {
-    _debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
+    //_debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
   }
 }
 
