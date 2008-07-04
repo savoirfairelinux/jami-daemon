@@ -545,7 +545,7 @@ create_general_settings ()
   gtk_widget_show( vbox );
   gtk_container_add( GTK_CONTAINER(frame) , vbox);
 
-  widg = gtk_check_button_new_with_mnemonic(  _("_Control running applications's volume"));
+  widg = gtk_check_button_new_with_mnemonic(  _("_Control running applications volume"));
   gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_pulse_app_volume_control() );
   gtk_box_pack_start( GTK_BOX(vbox) , widg , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);

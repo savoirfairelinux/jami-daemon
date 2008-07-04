@@ -139,6 +139,10 @@ msgstr "Historique"
 msgid "Voicemail"
 msgstr "Boite vocale"
 
+#: sflphone-gtk/src/configwindow.c: 548
+msgid "_Control running applications volume"
+msgstr "_Autoriser à modifier le volume des autres applications"
+
 #: sflphone-gtk/src/configwindow.c: 799
 msgid "Name"
 msgstr "Nom"
