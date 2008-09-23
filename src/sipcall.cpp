@@ -23,6 +23,8 @@
 #include "sipcall.h"
 #include "global.h" // for _debug
 #include <sstream> // for media buffer
+#include "sipmanager.h"
+#include <string>
 
 #define _SENDRECV 0
 #define _SENDONLY 1
@@ -41,84 +43,60 @@ SIPCall::~SIPCall()
 
 
 bool 
-SIPCall::SIPCallInvite(eXosip_event_t *event)
+SIPCall::SIPCallInvite(pjsip_rx_data *rdata, pj_pool_t *pool)
 {
-  if (event->cid < 1 && event->did < 1) {
-    _debug("SIP Failure: Invalid cid and did\n");
-    return false;
-  }
-
-  if (event->request == NULL) {
-    _debug("SIP Failure: No request into the event\n");
-    return false;
-  }
-
-  setCid(event->cid);
-  setDid(event->did);
-  setTid(event->tid);
-
-  setPeerInfoFromRequest(event);
+  pj_status_t status;
   
-  sdp_message_t* remote_sdp = getRemoteSDPFromRequest(event);
+  pjmedia_sdp_session* remote_sdp = getRemoteSDPFromRequest(rdata);
   if (remote_sdp == 0) {
     return false;
   }
 
-  sdp_media_t* remote_med = getRemoteMedia(event->tid, remote_sdp);
+  // Have to do some stuff here with the SDP
+  // We retrieve the remote sdp offer in the rdata struct to begin the negociation
+  _localSDP = PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_session);
+  _localSDP->conn =  PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_conn);
+  
+  _localSDP->origin.version = 0;
+  sdpAddOrigin();
+  _localSDP->name = pj_str("sflphone");
+  sdpAddConnectionInfo();
+  _localSDP->time.start = _localSDP->time.stop = 0;
+  sdpAddMediaDescription(pool);
+  
+  _debug("Before validate SDP!\n");
+  status = pjmedia_sdp_validate( _localSDP );
+  if (status != PJ_SUCCESS) {
+    _debug("Can not generate valid local sdp\n");
+    return false;
+  }
+  
+  _debug("Before create negociator!\n");
+  status = pjmedia_sdp_neg_create_w_remote_offer(pool, _localSDP, remote_sdp, &_negociator);
+  if (status != PJ_SUCCESS) {
+      _debug("Can not create negociator\n");
+      return false;
+  }
+  _debug("After create negociator!\n");
+  
+  pjmedia_sdp_media* remote_med = getRemoteMedia(remote_sdp);
   if (remote_med == 0) {
-    sdp_message_free (remote_sdp);
+    _debug("SIP Failure: unable to get remote media\n");
     return false;
   }
 
-  if (!setRemoteAudioFromSDP(remote_med, remote_sdp)) {
+  _debug("Before set audio!\n");
+  if (!setRemoteAudioFromSDP(remote_sdp, remote_med)) {
     _debug("SIP Failure: unable to set IP address and port from SDP\n");
-    sdp_message_free (remote_sdp);
     return false;
   }
 
-  if (!setAudioCodecFromSDP(remote_med, event->tid)) {
+  _debug("Before set codec!\n");
+  if (!setAudioCodecFromSDP(remote_med)) {
     _debug("SIP Failure: unable to set audio codecs from the remote SDP\n");
-    sdp_message_free (remote_sdp);
     return false;
   }
 
-  osip_message_t *answer = 0;
-  eXosip_lock();
-  _debug("< Building Answer 183\n");
-  if (0 == eXosip_call_build_answer (event->tid, 183, &answer)) {
-    if ( 0 != sdp_complete_message(remote_sdp, answer)) {
-      osip_message_free(answer);
-      // Send 415 Unsupported media type
-      _debug("< Sending Answer 415 : unsupported media type\n");
-      eXosip_call_send_answer (event->tid, 415, NULL);
-    } else {
-      sdp_message_t *local_sdp = eXosip_get_sdp_info(answer);
-      sdp_media_t *local_med = NULL;
-      if (local_sdp != NULL) {
-         local_med = eXosip_get_audio_media(local_sdp);
-      }
-      if (local_sdp != NULL && local_med != NULL) {
-        /* search if stream is sendonly or recvonly */
-        int _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
-        int _local_sendrecv =  sdp_analyse_attribute (local_sdp, local_med);
-        _debug("            Remote SendRecv: %d\n", _remote_sendrecv);
-        _debug("            Local  SendRecv: %d\n", _local_sendrecv);
-        if (_local_sendrecv == _SENDRECV) {
-          if (_remote_sendrecv == _SENDONLY)      { _local_sendrecv = _RECVONLY; }
-          else if (_remote_sendrecv == _RECVONLY) { _local_sendrecv = _SENDONLY; }
-        }
-        _debug("            Final Local SendRecv: %d\n", _local_sendrecv);
-        sdp_message_free (local_sdp);
-      }
-      _debug("< Sending answer 183\n");
-      //if (0 != eXosip_call_send_answer (event->tid, 183, answer)) {
-        //_debug("SipCall::newIncomingCall: cannot send 183 progress?\n");
-      //}
-    }
-  }
-  eXosip_unlock ();
-
-  sdp_message_free (remote_sdp);
   return true;
 }
 
@@ -152,7 +130,7 @@ SIPCall::SIPCallReinvite(eXosip_event_t *event)
     return false;
   }
 
-  if (!setRemoteAudioFromSDP(remote_med, remote_sdp)) {
+  /*if (!setRemoteAudioFromSDP(remote_med, remote_sdp)) {
     _debug("SIP Failure: unable to set IP address and port from SDP\n");
     sdp_message_free (remote_sdp);
     return false;
@@ -161,7 +139,7 @@ SIPCall::SIPCallReinvite(eXosip_event_t *event)
   if (!setAudioCodecFromSDP(remote_med, event->tid)) {
     sdp_message_free (remote_sdp);
     return false;
-  }
+  }*/
 
   osip_message_t *answer = 0;
   eXosip_lock();
@@ -258,54 +236,35 @@ SIPCall::SIPCallAnswered(eXosip_event_t *event)
 bool 
 SIPCall::SIPCallAnsweredWithoutHold(eXosip_event_t* event)
 {
-  if (event->response == NULL || event->request  == NULL) { return false; }
-  
-  eXosip_lock();
-  sdp_message_t* remote_sdp = eXosip_get_sdp_info (event->response);
-  eXosip_unlock();
+    return true;
+}
+
+bool
+SIPCall::SIPCallAnsweredWithoutHold(pjsip_rx_data *rdata)
+{
+  pjmedia_sdp_session* remote_sdp = getRemoteSDPFromRequest(rdata);
   if (remote_sdp == NULL) {
     _debug("SIP Failure: no remote sdp\n");
-    sdp_message_free(remote_sdp);
     return false;
   }
 
-  sdp_media_t* remote_med = getRemoteMedia(event->tid, remote_sdp);
+  pjmedia_sdp_media* remote_med = getRemoteMedia(remote_sdp);
   if (remote_med==NULL) {
-    sdp_message_free(remote_sdp);
     return false;
   }
-  if ( ! setRemoteAudioFromSDP(remote_med, remote_sdp) ) {
-    sdp_message_free(remote_sdp);
+  
+  _debug("Before set audio!\n");
+  if (!setRemoteAudioFromSDP(remote_sdp, remote_med)) {
+    _debug("SIP Failure: unable to set IP address and port from SDP\n");
     return false;
   }
 
-#ifdef LIBOSIP2_WITHPOINTER
-  char *tmp = (char*) osip_list_get (remote_med->m_payloads, 0);
-#else
-  char *tmp = (char*) osip_list_get (&(remote_med->m_payloads), 0);
-#endif
-  setAudioCodec((AudioCodecType)-1);
-  if (tmp != NULL) {
-    int payload = atoi (tmp);
-    _debug("            Remote Payload: %d\n", payload);
-    //setAudioCodec(_codecMap.getCodecName((AudioCodecType)payload)); // codec builder for the mic
-    setAudioCodec((AudioCodecType)payload); // codec builder for the mic
+  _debug("Before set codec!\n");
+  if (!setAudioCodecFromSDP(remote_med)) {
+    _debug("SIP Failure: unable to set audio codecs from the remote SDP\n");
+    return false;
   }
 
-/*
-    // search if stream is sendonly or recvonly
-    _remote_sendrecv = sdp_analyse_attribute (remote_sdp, remote_med);
-    _local_sendrecv = sdp_analyse_attribute (local_sdp, local_med);
-    if (_local_sendrecv == _SENDRECV) {
-      if (_remote_sendrecv == _SENDONLY)
-          _local_sendrecv = _RECVONLY;
-      else if (_remote_sendrecv == _RECVONLY)
-          _local_sendrecv = _SENDONLY;
-    }
-  _debug("            Remote Sendrecv: %d\n", _remote_sendrecv);
-  _debug("            Local Sendrecv: %d\n", _local_sendrecv);
-*/
-  sdp_message_free (remote_sdp);
   return true;
 }
 
@@ -365,7 +324,7 @@ SIPCall::sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg)
             listCodec << payload << " ";
             //listRtpMap << "a=rtpmap:" << payload << " " << audiocodec->getCodecName() << "/" << audiocodec->getClockRate();
             listRtpMap << "a=rtpmap:" << payload << " " << _codecMap.getCodecName(audiocodec) << "/" << _codecMap.getSampleRate(audiocodec);
-	if (_codecMap.getChannel(audiocodec) != 1) {
+	    if (_codecMap.getChannel(audiocodec) != 1) {
               listRtpMap << "/" << _codecMap.getChannel(audiocodec);
             }
             listRtpMap << "\r\n";
@@ -497,26 +456,19 @@ SIPCall::setPeerInfoFromRequest(eXosip_event_t *event)
   return true;
 }
 
-sdp_message_t* 
-SIPCall::getRemoteSDPFromRequest(eXosip_event_t *event)
+pjmedia_sdp_session* 
+SIPCall::getRemoteSDPFromRequest(pjsip_rx_data *rdata)
 {
-  // event->request should not be null!
-  /* negotiate payloads */
-  sdp_message_t *remote_sdp = NULL;
-  if (event->request != NULL) {
-    eXosip_lock();
-    remote_sdp = eXosip_get_sdp_info (event->request);
-    eXosip_unlock();
-  }
-  if (remote_sdp == NULL) {
-    _debug("SIP Failure: No SDP into the request\n");
-    _debug("< Sending 400 Bad Request (no SDP)\n");
-    eXosip_lock();
-    eXosip_call_send_answer (event->tid, 400, NULL);
-    eXosip_unlock();
-    return 0;
-  }
-  return remote_sdp;
+    pjmedia_sdp_session *sdp;
+    pjsip_msg *msg;
+    pjsip_msg_body *body;
+
+    msg = rdata->msg_info.msg;
+    body = msg->body;
+
+    pjmedia_sdp_parse( rdata->tp_info.pool, (char*)body->data, body->len, &sdp );
+
+    return sdp;
 }
 
 sdp_media_t* 
@@ -541,72 +493,173 @@ SIPCall::getRemoteMedia(int tid, sdp_message_t* remote_sdp)
 }
 
 bool 
-SIPCall::setRemoteAudioFromSDP(sdp_media_t* remote_med, sdp_message_t* remote_sdp)
+SIPCall::setRemoteAudioFromSDP(pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media *remote_med)
 {
-  // Remote Media IP
-  eXosip_lock();
-  sdp_connection_t *conn = eXosip_get_audio_connection(remote_sdp);
-  eXosip_unlock();
-  if (conn != NULL && conn->c_addr != NULL) {
-    char _remote_sdp_audio_ip[50] = "";
-    snprintf (_remote_sdp_audio_ip, 49, "%s", conn->c_addr);
-    _remote_sdp_audio_ip[49] = '\0';
-    _debug("            Remote Audio IP: %s\n", _remote_sdp_audio_ip);
-    setRemoteIP(_remote_sdp_audio_ip);
-    if (_remote_sdp_audio_ip[0] == '\0') {
-      setRemoteAudioPort(0);
-      return false;
-    }
-  }
-
-  // Remote port
-  int _remote_sdp_audio_port = atoi(remote_med->m_port);
-  _debug("            Remote Audio Port: %d\n", _remote_sdp_audio_port);
-  setRemoteAudioPort(_remote_sdp_audio_port);
-
-  if (_remote_sdp_audio_port == 0) {
-    return false;
-  }
+  std::string remoteIP(remote_sdp->conn->addr.ptr, remote_sdp->conn->addr.slen);
+  _debug("            Remote Audio IP: %s\n", remoteIP.data());
+  setRemoteIP(remoteIP);
+  int remotePort = remote_med->desc.port; 
+  _debug("            Remote Audio Port: %d\n", remotePort);
+  setRemoteAudioPort(remotePort);
+  
   return true;
 }
 
 bool 
-SIPCall::setAudioCodecFromSDP(sdp_media_t* remote_med, int tid)
+SIPCall::setAudioCodecFromSDP(pjmedia_sdp_media* remote_med)
 {
   // Remote Payload
-  char *tmp = NULL;
-  int pos = 0;
-  #ifdef LIBOSIP2_WITHPOINTER 
-  const osip_list_t* remote_med_m_payloads = remote_med->m_payloads; // old abi
-  #else
-  const osip_list_t* remote_med_m_payloads = &(remote_med->m_payloads);
-  #endif
-  while (!osip_list_eol (remote_med_m_payloads, pos)) {
-    tmp = (char *) osip_list_get (remote_med_m_payloads, pos);
-    if (tmp != NULL ) {
-      int payload = atoi(tmp);
-      // stop if we find a correct codec
-      if (_codecMap.isActive((AudioCodecType)payload)){
+  int payLoad = -1;
+  int codecCount = remote_med->desc.fmt_count;
+  for(int i = 0; i < codecCount; i++) {
+      payLoad = atoi(remote_med->desc.fmt[i].ptr);
+      if (_codecMap.isActive((AudioCodecType)payLoad))
           break;
-      }
-    }
-    tmp = NULL;
-    pos++;
+          
+      payLoad = -1;
   }
+  
+  if(payLoad != -1) {
+    _debug("            Payload: %d\n", payLoad);
+    setAudioCodec((AudioCodecType)payLoad);
+  } else
+    return false;
+  
+  return true;
+}
 
-  setAudioCodec((AudioCodecType)-1);
-  if (tmp != NULL) {
-    int payload = atoi (tmp);
-    _debug("            Payload: %d\n", payload);
-    setAudioCodec((AudioCodecType)payload); // codec builder for the mic
-  }
-  if (getAudioCodec() == (AudioCodecType) -1) {
-    _debug("SIPCall Failure: Unable to set codec\n");
-    _debug("< Sending 415 Unsupported media type\n");
-    eXosip_lock();
-    eXosip_call_send_answer(tid, 415, NULL);
-    eXosip_unlock();
+void SIPCall::sdpAddOrigin( void )
+{
+    pj_time_val tv;
+    pj_gettimeofday(&tv);
+
+    _localSDP->origin.user = pj_str(pj_gethostname()->ptr);
+    // Use Network Time Protocol format timestamp to ensure uniqueness.
+    _localSDP->origin.id = tv.sec + 2208988800UL;
+    // The type of network ( IN for INternet )
+    _localSDP->origin.net_type = pj_str("IN"); //STR_IN;
+    // The type of address
+    _localSDP->origin.addr_type = pj_str("IP4"); //STR_IP4;
+    // The address of the machine from which the session was created
+    _localSDP->origin.addr = pj_str( (char*)_ipAddr.c_str() );    
+}
+
+void SIPCall::sdpAddConnectionInfo( void )
+{
+    _localSDP->conn->net_type = _localSDP->origin.net_type;
+    _localSDP->conn->addr_type = _localSDP->origin.addr_type;
+    _localSDP->conn->addr = _localSDP->origin.addr;
+}
+
+void SIPCall::sdpAddMediaDescription(pj_pool_t* pool)
+{
+    pjmedia_sdp_media* med;
+    pjmedia_sdp_attr *attr;
+    //int nbMedia, i;
+
+    med = PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_media);
+    //nbMedia = getSDPMediaList().size();
+    _localSDP->media_count = 1;
+    
+    med->desc.media = pj_str("audio");
+    med->desc.port_count = 1;
+    med->desc.port = getLocalExternAudioPort();
+    med->desc.transport = pj_str("RTP/AVP");
+    
+    CodecsMap::iterator itr;
+    itr = _codecMap.getCodecsMap().begin();
+    int count = _codecMap.getCodecsNumber();
+    med->desc.fmt_count = count;
+    
+    int i = 0;
+    while(itr != _codecMap.getCodecsMap().end()) {
+        std::ostringstream format;
+        format << (*itr).first;
+        pj_strdup2(pool, &med->desc.fmt[i], format.str().data());
+        
+        AudioCodec *codec = (*itr).second;
+        pjmedia_sdp_rtpmap rtpMap;
+        rtpMap.pt = med->desc.fmt[i];
+        rtpMap.enc_name = pj_str((char *)codec->getCodecName().data());
+        rtpMap.clock_rate = codec->getClockRate();
+        if(codec->getChannel() > 1) {
+            std::ostringstream channel;
+            channel << codec->getChannel();
+            rtpMap.param = pj_str((char *)channel.str().data());
+        } else
+            rtpMap.param.slen = 0;
+        
+        pjmedia_sdp_rtpmap_to_attr( pool, &rtpMap, &attr );
+        med->attr[i] = attr;
+        i++;
+        itr++;
+    }
+    
+    //FIXME! Add the direction stream
+    attr = (pjmedia_sdp_attr*)pj_pool_zalloc( pool, sizeof(pjmedia_sdp_attr) );
+    pj_strdup2( pool, &attr->name, "sendrecv");
+    med->attr[ i++] = attr;
+    med->attr_count = i;
+
+    _localSDP->media[0] = med;
+    /*for( i=0; i<nbMedia; i++ ){
+        getMediaDescriptorLine( getSDPMediaList()[i], pool, &med );
+        this->_local_offer->media[i] = med;
+    } */
+    
+}
+
+pjmedia_sdp_media* SIPCall::getRemoteMedia(pjmedia_sdp_session *remote_sdp)
+{
+    int count, i;
+    
+    count = remote_sdp->media_count;
+    for(i = 0; i < count; ++i) {
+        if(pj_stricmp2(&remote_sdp->media[i]->desc.media, "audio") == 0)
+            return remote_sdp->media[i];
+    }
+    
+    return NULL;
+}
+
+bool SIPCall::startNegociation(pj_pool_t *pool)
+{
+    pj_status_t status;
+    _debug("Before negotiate!\n");
+    status = pjmedia_sdp_neg_negotiate(pool, _negociator, 0);
+    
+    return (status == PJ_SUCCESS);
+}
+
+bool SIPCall::createInitialOffer(pj_pool_t *pool)
+{
+  pj_status_t status;
+
+  // Have to do some stuff here with the SDP
+  _localSDP = PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_session);
+  _localSDP->conn =  PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_conn);
+  
+  _localSDP->origin.version = 0;
+  sdpAddOrigin();
+  _localSDP->name = pj_str("sflphone");
+  sdpAddConnectionInfo();
+  _localSDP->time.start = _localSDP->time.stop = 0;
+  sdpAddMediaDescription(pool);
+  
+  _debug("Before validate SDP!\n");
+  status = pjmedia_sdp_validate( _localSDP );
+  if (status != PJ_SUCCESS) {
+    _debug("Can not generate valid local sdp %d\n", status);
     return false;
   }
+  
+  _debug("Before create negociator!\n");
+  // Create the SDP negociator instance with local offer
+  status = pjmedia_sdp_neg_create_w_local_offer( pool, _localSDP, &_negociator);
+  //state = pjmedia_sdp_neg_get_state( _negociator );
+
+  PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+
   return true;
+    
 }
