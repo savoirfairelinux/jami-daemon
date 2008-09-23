@@ -47,6 +47,7 @@ class CodecDescriptor;
 class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
+class SIPManager;
 
 #ifdef USE_ZEROCONF
 class DNSService;
@@ -810,6 +811,13 @@ class ManagerImpl {
      */
     bool isCurrentCall(const CallID& callId);
 
+    /**
+     * Get the _regc in each sip account
+     * @param AccountID Account ID
+     * @return pjsip_regc*  The regc in the account
+     */
+    //pjsip_regc *getSipRegcFromID(const AccountID& id); 
+
   private:
     /**
      * Create .PROGNAME directory in home user and create 
@@ -964,13 +972,6 @@ class ManagerImpl {
      */
     bool associateCallToAccount(const CallID& callID, const AccountID& accountID);
 
-    /** Return the AccountID from a CallID
-     * Protected by mutex
-     * @param callID the CallID in the list
-     * @return AccountID  The accountID associated or "" if the callID is not found
-     */
-    AccountID getAccountFromCall(const CallID& callID);
-
     /** Remove a CallID/AccountID association
      * Protected by mutex
      * @param callID the CallID to remove
@@ -1007,6 +1008,14 @@ class ManagerImpl {
      */
     Account* getAccount(const AccountID& accountID);
 
+public:
+    /** Return the AccountID from a CallID
+     * Protected by mutex
+     * @param callID the CallID in the list
+     * @return AccountID  The accountID associated or "" if the callID is not found
+     */
+    AccountID getAccountFromCall(const CallID& callID);
+
     /**
      * Get the voip link from the account pointer
      * @param accountID	  Account ID to get
@@ -1014,11 +1023,25 @@ class ManagerImpl {
      */
     VoIPLink* getAccountLink(const AccountID& accountID);
 
+private:
+    /**
+     * The SIPManager provides sip operation facilities for all sip accounts
+     */
+    SIPManager *_sipManager;
+
+    /** Whether the _SIPManager has been initialized */
+    bool _sipManagerInitlized;
+
 #ifdef TEST
     bool testCallAccountMap();
     bool testAccountMap();
 #endif
 
+public:
+    /**
+     * Retuun the instance of sip manager
+     */
+    SIPManager *getSipManager();
 };
 
 #endif // __MANAGER_H__

@@ -37,13 +37,16 @@
 
 #include "manager.h"
 #include "account.h"
+#include "sipaccount.h"
 #include "audio/audiolayer.h"
 #include "audio/alsalayer.h"
 #include "audio/pulselayer.h"
 #include "audio/tonelist.h"
 
 #include "accountcreator.h" // create new account
-#include "voiplink.h"
+#include "sipvoiplink.h"
+
+#include "sipmanager.h"
 
 #include "user_cfg.h"
 
@@ -83,6 +86,10 @@ ManagerImpl::ManagerImpl (void)
   _nbIncomingWaitingCall=0;
   _hasTriedToRegister = false;
 
+  // SIP Link
+  _sipManager = NULL;
+  _sipManagerInitlized = false;
+
   // initialize random generator for call id
   srand (time(NULL));
 
@@ -114,6 +121,12 @@ ManagerImpl::init()
 {
   // Load accounts, init map
   loadAccountMap();
+ 
+  //Initialize sip manager 
+  if(_sipManagerInitlized) {
+    _sipManager->sipCreate();
+    _sipManager->sipInit();
+  }
 
   initVolume();
 
@@ -144,6 +157,7 @@ ManagerImpl::init()
   // initRegisterAccounts was here, but we doing it after the gui loaded... 
   // the stun detection is long, so it's a better idea to do it after getEvents
   initZeroconf();
+  
 }
 
 void ManagerImpl::terminate()
@@ -229,6 +243,7 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
 ManagerImpl::answerCall(const CallID& id)
 {
   stopTone(false); 
+  _debug("Try to answer call: %s\n", id.data());
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Answering Call: Call doesn't exists\n");
@@ -558,7 +573,7 @@ ManagerImpl::isWaitingCall(const CallID& id) {
   bool 
 ManagerImpl::incomingCall(Call* call, const AccountID& accountId) 
 {
-  _debug("Incoming call\n");
+  _debug("Incoming call %s\n", call->getCallId().data());
 
   associateCallToAccount(call->getCallId(), accountId);
 
@@ -582,8 +597,9 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     from.append(number);
     from.append(">");
   }
+  
   _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
-
+  
   // Reduce volume of the other pulseaudio-connected audio applications
   if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
     _audiodriver->reducePulseAppsVolume();
@@ -948,7 +964,7 @@ ManagerImpl::behindNat(const std::string& svr, int port)
   }
 
   // Firewall address
-  //_debug("STUN server: %s\n", svr.data());
+  _debug("STUN server: %s\n", svr.data());
   return getStunInfo(stunSvrAddr, port);
 }
 
@@ -2109,6 +2125,7 @@ ManagerImpl::associateCallToAccount(const CallID& callID, const AccountID& accou
     if (  accountExists(accountID)  ) { // account id exist in AccountMap
       ost::MutexLock m(_callAccountMapMutex);
       _callAccountMap[callID] = accountID;
+      _debug("Associate Call %s with Account %s\n", callID.data(), accountID.data());
       return true;
     } else {
       return false; 
@@ -2175,7 +2192,22 @@ ManagerImpl::loadAccountMap()
 
     accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
     if (accountType == "SIP") {
+      if(!_sipManagerInitlized) {
+        // Initialize the SIP Link Manager
+        _sipManager = new SIPManager();
+        _sipManagerInitlized = true;
+      }
+
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
+     
+      // Determine whether to use stun for the current account or not 
+      int useStun = Manager::instance().getConfigInt(tmpAccount->getAccountID(),SIP_USE_STUN);
+  
+      if(useStun == 1) {
+        _sipManager->setStunServer(Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_STUN_SERVER).data());
+      }
+      
+      
     }
     else if (accountType == "IAX") {
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);
@@ -2241,6 +2273,24 @@ ManagerImpl::getAccountLink(const AccountID& accountID)
   return 0;
 }
 
+pjsip_regc 
+*getSipRegcFromID(const AccountID& id)
+{
+  /*SIPAccount *tmp = dynamic_cast<SIPAccount *>getAccount(id);
+  if(tmp != NULL)
+    return tmp->getSipRegc();
+  else*/
+    return NULL;
+}
+
+
+/** 
+ * Return the instance of sip manager
+ */
+SIPManager *ManagerImpl::getSipManager()
+{
+    return _sipManager;
+}
 
 #ifdef TEST
 /** 
