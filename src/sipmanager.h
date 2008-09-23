@@ -24,7 +24,8 @@
 #include <pjsip.h>
 #include <pjlib-util.h>
 #include <pjlib.h>
-#include <pjnath/stun_config.h>
+//#include <pjnath/stun_config.h>
+#include <pjnath.h>
 #include <pjsip_simple.h>
 #include <pjsip_ua.h>
 #include <pjmedia/sdp.h>
