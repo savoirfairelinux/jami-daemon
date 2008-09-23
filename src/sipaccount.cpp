@@ -1,3 +1,6 @@
+
+#include "voiplink.h"
+
 /*
  *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -44,12 +47,15 @@ SIPAccount::registerVoIPLink()
   SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
   thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
   thislink->setUseStun( useStun!=0 ? true : false);
-
+    
+  //SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
   _link->init();
+  
   // Stuff needed for SIP registration.
   thislink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
   thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_USER));
   thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
+  thislink->setSipServer(Manager::instance().getConfigString(_accountID,SIP_HOST));
   _link->sendRegister();
 }
 

@@ -22,6 +22,7 @@
 
 #include "account.h"
 
+class SIPVoIPLink;
 
 /**
  * @file sipaccount.h

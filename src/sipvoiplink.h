@@ -24,11 +24,15 @@
 #include "voiplink.h"
 #include <string>
 #include <eXosip2/eXosip.h>
-#include "audio/audiortp.h"
 #include <osip2/osip_mt.h>
+
+struct pjsip_regc;
+struct pj_str_t;
+struct pjmedia_sdp_session;
 
 class EventThread;
 class SIPCall;
+class AudioRtp;
 
 /**
  * @file sipvoiplink.h
@@ -139,6 +143,9 @@ class SIPVoIPLink : public VoIPLink
      */
     bool transfer(const CallID& id, const std::string& to);
 
+    /** Handle the incoming refer msg, not finished yet */
+    bool transferStep2();
+
     /**
      * Refuse the call
      * @param id The call identifier
@@ -187,15 +194,19 @@ class SIPVoIPLink : public VoIPLink
      * Set the authentification name
      * @param authname The authentification name
      */
-    void setAuthName(const std::string& authname) { _authname = authname; }
+    void setAuthName(const std::string& authname); //{ _authname = authname; }
 
     /**
      * Set the password
      * @param password	Password
      */
-    void setPassword(const std::string& password) { _password = password; }
+    void setPassword(const std::string& password); //{ _password = password; }
+    
+    void setSipServer(const std::string& sipServer);
+    
+    //void setS
 
-  private:
+  public:
 
     /** 
      * Terminate every call not hangup | brutal | Protected by mutex 
@@ -305,7 +316,8 @@ class SIPVoIPLink : public VoIPLink
      * @param event eXosip Event
      */
     void SIPCallAnswered(eXosip_event_t *event);
-
+    void SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata);
+    
     /**
      * Handling 4XX error
      * @param event eXosip Event
@@ -316,7 +328,7 @@ class SIPVoIPLink : public VoIPLink
      * Handling 5XX/6XX error
      * @param event eXosip Event
      */
-    void SIPCallServerFailure(eXosip_event_t *event);
+    void SIPCallServerFailure(SIPCall *call);
 
     /**
      * Handle registration failure cases ( SIP_FORBIDDEN , SIP_UNAUTHORIZED )
@@ -346,14 +358,14 @@ class SIPVoIPLink : public VoIPLink
      * Peer close the connection
      * @param event eXosip Event
      */
-    void SIPCallClosed(eXosip_event_t *event);
+    void SIPCallClosed(SIPCall *call);
 
     /**
      * The call pointer was released
      * If the call was not cleared before, report an error
      * @param event eXosip Event
      */
-    void SIPCallReleased(eXosip_event_t *event);
+    void SIPCallReleased(SIPCall *call);
 
     /**
      * Receive a new Message request
@@ -390,7 +402,7 @@ class SIPVoIPLink : public VoIPLink
 
     /** To build sdp when call is off-hold */
     int sdp_off_hold_call (sdp_message_t * sdp);
-
+    
     /** EventThread get every incoming events */
     EventThread* _evThread;
 
@@ -428,7 +440,12 @@ class SIPVoIPLink : public VoIPLink
     std::string _password; 
 
     /** Starting sound */
-    AudioRtp _audiortp;
+    AudioRtp* _audiortp;
+    
+    pj_str_t string2PJStr(const std::string &value);
+private:
+    pjsip_regc *_regc;
+    std::string _server;
 };
 
 #endif
