@@ -1,0 +1,152 @@
+/*
+ *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
+ *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
+ *                                                                              
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *                                                                              
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *                                                                              
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+
+#ifndef _SIPMANAGER_H
+#define	_SIPMANAGER_H
+
+#include <pjsip.h>
+#include <pjlib-util.h>
+#include <pjlib.h>
+#include <pjnath/stun_config.h>
+#include <pjsip_simple.h>
+#include <pjsip_ua.h>
+#include <pjmedia/sdp.h>
+#include <pjmedia/sdp_neg.h>
+
+#include <string>
+#include <vector>
+#define MSG_OK                      200
+#define MSG_METHOD_NOT_ALLOWED      405
+#define MSG_NOT_ACCEPTABLE_HERE     488
+#define MSG_SERVER_INTERNAL_ERROR   500
+
+typedef std::string AccountID;
+
+class SIPCall;
+
+class SIPManager
+{
+private:
+    /** PJSIP Endpoint */
+    pjsip_endpoint *_endpt;
+    pj_sock_t _sock;
+    //pjsip_module _appMod;
+    pj_caching_pool _cp;
+    pj_pool_t *_pool;    
+    pj_thread_t *_voip_listen_thread;
+    pj_mutex_t *_mutex;     /** Mutex protection for this data */
+    pjsip_module _mod;       /** PJSIP module. */
+    pjsip_module _options_handler;
+    bool _useStun;
+    pj_str_t _stunHost;
+    std::string _stunServer;
+
+    /** Local Extern Address is the IP address seen by peers for SIP listener */
+    std::string _localExternAddress;
+    std::string _localIPAddress;
+
+    /** Local Extern Port is the port seen by peers for SIP listener */
+    unsigned int _localExternPort;
+    unsigned int _localPort;
+    
+    pj_thread_t *_thread;
+    
+    static SIPManager *_current;
+    
+    static pjsip_inv_session* _invSession;
+
+    struct AccBaseInfo {
+        std::string userName;
+        std::string server;
+        AccountID id;
+        pjsip_cred_info cred;
+        pj_str_t contact;
+    };
+    
+    typedef std::vector<AccBaseInfo *> AccBaseInfoList;
+    AccBaseInfoList _accBaseInfoList;
+    
+public:
+    SIPManager();
+    ~SIPManager();
+    
+    pj_status_t sipCreate();
+    
+    /**
+     * This method is used to initialize the pjsip
+     */
+    pj_status_t sipInit();
+    
+    /** Create SIP UDP Listener */
+    int createUDPServer();
+
+    /** Set whether it will use stun server */
+    void setStunServer(const char *server); //{_stunHost = pj_str(server); _useStun = true;};
+    
+    pj_str_t getStunServer() {return _stunHost;}
+    
+    //bool addAccount(AccountID id, pjsip_regc *regc, const pj_str_t& registrar, pj_str_t& user, pjsip_cred_info& cred, int& timeout);
+    bool addAccount(AccountID id, pjsip_regc *regc, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout);
+    
+    pj_str_t buildContact(char *userName);
+    
+    bool loadSIPLocalIP();
+    
+    pj_status_t stunServerResolve();
+    
+    pjsip_endpoint* getEndPoint() {return _endpt;}
+    
+    std::string getLocalIP() {return _localExternAddress;}
+    
+    int getModId() {return _mod.id;}
+    
+    AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
+    AccBaseInfo* getAccountInfoFromId(AccountID id);
+    
+    bool setCallAudioLocal(SIPCall* call);
+    
+    int answer(SIPCall* call);
+    
+    bool hangup();
+    
+    bool refuse();
+    
+    bool onhold(SIPCall *call);
+    bool offhold(SIPCall *call);
+ 
+    bool transfer(SIPCall *call, const std::string& to);
+    
+    bool makeOutgoingCall(const std::string& to, SIPCall* call, const AccountID& id);
+    pj_pool_t *getAppPool() {return _pool;}
+    static pj_bool_t mod_on_rx_request(pjsip_rx_data *rdata);
+    static pj_bool_t mod_on_rx_response(pjsip_rx_data *rdata) {return PJ_SUCCESS;}
+    static pj_bool_t options_on_rx_request(pjsip_rx_data *rdata) {return PJ_SUCCESS;}
+    static void regc_cb(struct pjsip_regc_cbparam *param);
+    static void xfer_func_cb( pjsip_evsub *sub, pjsip_event *event);
+    static void call_on_media_update( pjsip_inv_session *inv, pj_status_t status) {}
+    static void call_on_state_changed( pjsip_inv_session *inv, pjsip_event *e);
+    static void call_on_forked(pjsip_inv_session *inv, pjsip_event *e);
+    static void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
+    static int worker_thread(void *arg);
+    static SIPManager* getInstance() {return _current;}
+};
+
+#endif	/* _SIPMANAGER_H */
+
