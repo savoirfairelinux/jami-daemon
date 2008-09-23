@@ -36,7 +36,7 @@ SUBDIRS = audio config dbus $(ZEROCONFDIR) #contact memmanager video mixer
 sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
 		managerimpl.cpp	observer.cpp  samplerateconverter.cpp \
 		account.cpp sipaccount.cpp accountcreator.cpp \
-                sipvoiplink.cpp call.cpp sipcall.cpp \
+                sipvoiplink.cpp call.cpp sipcall.cpp sipmanager.cpp \
 		$(IAXSOURCES)
 
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS) $(SFLPHONE_CFLAGS) $(SIP_CFLAGS)
@@ -63,7 +63,7 @@ noinst_LTLIBRARIES = libsflphone.la
 noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h user_cfg.h \
                  voiplink.h  samplerateconverter.h \
 		 account.h sipaccount.h accountcreator.h \
-                 sipvoiplink.h  call.h  sipcall.h \
+                 sipvoiplink.h  call.h  sipcall.h sipmanager.h \
 		 $(IAXHEADERS)
 
 #./contact/libcontact.la \
