@@ -80,7 +80,7 @@ noinst_HEADERS = \
 	observer.h \
 	eventthread.h \
 	user_cfg.h \
-        voiplink.h \ 
+        voiplink.h \
 	samplerateconverter.h \
 	account.h \
 	sipaccount.h \
