@@ -124,14 +124,16 @@ public:
     
     int answer(SIPCall* call);
     
-    bool hangup();
+    bool hangup(SIPCall* call);
     
-    bool refuse();
+    bool refuse(SIPCall* call);
     
     bool onhold(SIPCall *call);
     bool offhold(SIPCall *call);
  
     bool transfer(SIPCall *call, const std::string& to);
+    
+    void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
     
     bool makeOutgoingCall(const std::string& to, SIPCall* call, const AccountID& id);
     pj_pool_t *getAppPool() {return _pool;}
@@ -140,6 +142,7 @@ public:
     static pj_bool_t options_on_rx_request(pjsip_rx_data *rdata) {return PJ_SUCCESS;}
     static void regc_cb(struct pjsip_regc_cbparam *param);
     static void xfer_func_cb( pjsip_evsub *sub, pjsip_event *event);
+    static void xfer_svr_cb(pjsip_evsub *sub, pjsip_event *event);
     static void call_on_media_update( pjsip_inv_session *inv, pj_status_t status) {}
     static void call_on_state_changed( pjsip_inv_session *inv, pjsip_event *e);
     static void call_on_forked(pjsip_inv_session *inv, pjsip_event *e);
