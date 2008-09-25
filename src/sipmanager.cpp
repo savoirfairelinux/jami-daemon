@@ -41,33 +41,29 @@ SIPManager::~SIPManager() {
 }
 
 pj_status_t SIPManager::sipCreate() {
+
     pj_status_t status;
 
-    /* Init PJLIB: */
+    // Init PJLIB: must be called before any call to the pjsip library
     status = pj_init();
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Could not initialize PJSip\n");
-        return status;
-    }
+    // Use pjsip macros for sanity check
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-    /* Init PJLIB-UTIL: */
+    // Init PJLIB-UTIL library 
     status = pjlib_util_init();
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Could not initialize PJ Util\n");
-        return status;
-    }
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-    /* Init PJNATH */
+    // Set the pjsip log level
+    pj_log_set_level( PJ_LOG_LEVEL );
+
+    // Init PJNATH 
     status = pjnath_init();
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Could not initialize PJ Nath\n");
-        return status;
-    }
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+    
+    // Create a pool factory to allocate memory
+    pj_caching_pool_init(&_cp, &pj_pool_factory_default_policy, 0);
 
-    /* Init caching pool. */
-    pj_caching_pool_init(&_cp, NULL, 0);
-
-    /* Create memory pool for application. */
+    // Create memory pool for application. 
     _pool = pj_pool_create(&_cp.factory, "sflphone", 4000, 4000, NULL);
 
     if (!_pool) {
@@ -75,30 +71,21 @@ pj_status_t SIPManager::sipCreate() {
         return PJ_ENOMEM;
     }
 
-    /* Create mutex */
+    // Create a recursive mutex. Simple wrapper for pj_mutex_create 
     status = pj_mutex_create_recursive(_pool, "sflphone", &_mutex);
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to create mutex\n");
-        return status;
-    }
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-    /* Must create SIP endpoint to initialize SIP parser. The parser
-     * is needed for example when application needs to call pjsua_verify_url().
-     */
-    status = pjsip_endpt_create(&_cp.factory,
-            pj_gethostname()->ptr,
-            &_endpt);
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to create mutex\n");
-        return status;
-    }
+    // Create the SIP endpoint 
+    status = pjsip_endpt_create(&_cp.factory, pj_gethostname()->ptr, &_endpt);
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
     return PJ_SUCCESS;
 }
 
 pj_status_t SIPManager::sipInit() {
+    
     pj_status_t status;
-    const pj_str_t STR_OPTIONS = {"OPTIONS", 7};
+    const pj_str_t STR_OPTIONS = {(char*)"OPTIONS", 7};
 
     /* Init SIP UA: */
 
@@ -145,129 +132,97 @@ pj_status_t SIPManager::sipInit() {
     }
     _debug("SIPManager: SIP Init -- listening on port %d\n", _localExternPort);
 
-    /* Initialize transaction layer: */
+    // Initialize transaction layer
     status = pjsip_tsx_layer_init_module(_endpt);
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to initialize transaction layer.\n");
-        return status;
-    }
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-    /* Initialize UA layer module: */
+    // Initialize UA layer module
     status = pjsip_ua_init_module(_endpt, NULL);
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to initialize UA layer module.\n");
-        return status;
-    }
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-
-    /* Initialize Replaces support. */
+    // Initialize Replaces support. See the Replaces specification in RFC 3891
     status = pjsip_replaces_init_module(_endpt);
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to initialize Replaces support.\n");
-        return status;
-    }
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-    /* Initialize 100rel support */
+    // Initialize 100rel support 
     status = pjsip_100rel_init_module(_endpt);
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to initialize 100rel support.\n");
-        return status;
-    }
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-    /* Initialize and register sflphone module. */
+    // Initialize and register sflphone module
     {
         const pjsip_module mod_initializer ={
-            NULL, NULL, /* prev, next.			*/
-            { "mod-sflphone", 9
-            }, /* Name.				*/
-            -1, /* Id				*/
-            PJSIP_MOD_PRIORITY_APPLICATION, /* Priority			*/
-            NULL, /* load()				*/
-            NULL, /* start()				*/
-            NULL, /* stop()				*/
-            NULL, /* unload()				*/
-            &mod_on_rx_request, /* on_rx_request()			*/
-            &mod_on_rx_response, /* on_rx_response()			*/
-            NULL, /* on_tx_request.			*/
-            NULL, /* on_tx_response()			*/
-            NULL, /* on_tsx_state()			*/
+            NULL, NULL, 			// prev, next.			
+            { (char*)"mod-sflphone", 9}, 	// Name.				
+            -1,		 			// Id				
+            PJSIP_MOD_PRIORITY_APPLICATION, 	// Priority			
+            NULL, 				// load()				
+            NULL, 				// start()				
+            NULL, 				// stop()				
+            NULL, 				// unload()				
+            &mod_on_rx_request, 		// on_rx_request()			
+            &mod_on_rx_response, 		// on_rx_response()			
+            NULL, 				// on_tx_request.			
+            NULL, 				// on_tx_response()			
+            NULL, 				// on_tsx_state()			
         };
 
         _mod = mod_initializer;
 
         status = pjsip_endpt_register_module(_endpt, &_mod);
-        if (status != PJ_SUCCESS) {
-            _debug("SIPManager: Unable to register sflphone module.\n");
-            return status;
-        }
+    	PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+        
     }
 
-    /* Init core SIMPLE module : */
+    // Init the event subscription module.
+    // It extends PJSIP by supporting SUBSCRIBE and NOTIFY methods
     status = pjsip_evsub_init_module(_endpt);
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to initialize core SIMPLE module.\n");
-        return status;
-    }
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-
-    /* Init presence module: */
+    // Init presence module. 
+    // TODO We probably do not need that extension
     status = pjsip_pres_init_module(_endpt, pjsip_evsub_instance());
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to initialize presence module.\n");
-        return status;
-    }
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+    
+    // Init PUBLISH module 
+    // Provide an implementation of SIP Extension for Event State Publication (RFC 3903)
+    // TODO Check if it is necessary
+    status = pjsip_publishc_init_module(_endpt);
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-    /* Init PUBLISH module */
-    pjsip_publishc_init_module(_endpt);
-
-    /* Init xfer/REFER module */
+    // Init xfer/REFER module
     status = pjsip_xfer_init_module(_endpt);
-    if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to initialize xfer/PEFER module.\n");
-        return status;
-    }
-
-    /* Init pjsua presence handler: */
-    /*status = pjsua_pres_init();
-    if (status != PJ_SUCCESS) {
-        _debug("! SIP Failure: Unable to initialize ")
-        goto on_error;
-    }*/
-
-    /* Init out-of-dialog MESSAGE request handler. */
-    /*status = pjsua_im_init();
-    if (status != PJ_SUCCESS) {
-        _debug("! SIP Failure: Unable to initialize ")
-        goto on_error;
-    }*/
-
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+        
     {
-        const pjsip_module handler ={
-            NULL, NULL, /* prev, next.          */
-            { "mod-pjsua-options", 17
-            }, /* Name.                */
-            -1, /* Id                   */
-            PJSIP_MOD_PRIORITY_APPLICATION, /* Priority             */
-            NULL, /* load()               */
-            NULL, /* start()              */
-            NULL, /* stop()               */
-            NULL, /* unload()             */
-            &options_on_rx_request, /* on_rx_request()      */
-            NULL, /* on_rx_response()     */
-            NULL, /* on_tx_request.       */
-            NULL, /* on_tx_response()     */
-            NULL, /* on_tsx_state()       */
-
+ 	const pjsip_module handler ={
+            NULL, NULL, 			// prev, next.			
+            { (char*)"mod-pjsua-options", 9}, 	// Name.				
+            -1,		 			// Id				
+            PJSIP_MOD_PRIORITY_APPLICATION, 	// Priority			
+            NULL, 				// load()				
+            NULL, 				// start()				
+            NULL, 				// stop()				
+            NULL, 				// unload()				
+            &mod_on_rx_request, 		// on_rx_request()			
+            NULL, 				// on_tx_request.			
+            NULL, 				// on_tx_response()			
+            NULL, 				// on_tsx_state()			
         };
+
         _options_handler = handler;
     }
 
-    /* Register OPTIONS handler */
-    pjsip_endpt_register_module(_endpt, &_options_handler);
+    // Register the OPTIONS module
+    status = pjsip_endpt_register_module(_endpt, &_options_handler);
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-    /* Add OPTIONS in Allow header */
-    pjsip_endpt_add_capability(_endpt, NULL, PJSIP_H_ALLOW,
-            NULL, 1, &STR_OPTIONS);
+    // Add OPTIONS in Allow header
+    status = pjsip_endpt_add_capability(_endpt, 
+					NULL, 
+					PJSIP_H_ALLOW,
+            				NULL, 1, 
+					&STR_OPTIONS);
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
 
     // Initialize invite session module
@@ -294,12 +249,10 @@ pj_status_t SIPManager::sipInit() {
     // Add endpoint capabilities (INFO, OPTIONS, etc) for this UA
     {
         pj_str_t allowed[] = {
-            {"INFO", 4},
-            {"REGISTER", 8
-            }
-        }; //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6},  {"OPTIONS", 7}, 
-        pj_str_t accepted = {"application/sdp", 15
-        };
+            			{(char*)"INFO", 4},
+            			{(char*)"REGISTER", 8}
+			      }; //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6},  {"OPTIONS", 7}, 
+        pj_str_t accepted = {(char*)"application/sdp", 15};
 
         // Register supported methods
         pjsip_endpt_add_capability(_endpt, &_mod, PJSIP_H_ALLOW, NULL, PJ_ARRAY_SIZE(allowed), allowed);
@@ -311,15 +264,15 @@ pj_status_t SIPManager::sipInit() {
     _debug("SIPManager: sflphone version %s for %s initialized\n", pj_get_version(), PJ_OS_NAME);
 
     Manager::instance().setSipThreadStatus(false);
-    status = pj_thread_create(_pool, "sflphone", &worker_thread,
-            NULL, 0, 0, &_thread);
+    
+    // Create the secondary thread to poll sip events
+    status = pj_thread_create(_pool, "sflphone", &start_thread, NULL, PJ_THREAD_DEFAULT_STACK_SIZE, 0, 
+			    	&_thread);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
 
     /* Done! */
     return PJ_SUCCESS;
 
-on_error:
-    //sipDestroy();
-    return status;
 }
 
 void SIPManager::sipDestory() {
@@ -641,12 +594,13 @@ SIPManager::loadSIPLocalIP() {
     return returnValue;
 }
 
-/* Worker thread function. */
-int SIPManager::worker_thread(void *arg) {
+/* Thread entry point function. */
+int SIPManager::start_thread(void *arg) {
 
     PJ_UNUSED_ARG(arg);
 
     // FIXME! maybe we should add a flag for exiting!
+    // TODO Add the flag. We have to stop the thread when destroying the instance 
     while (!Manager::instance().getSipThreadStatus()) {
         pj_time_val timeout = {0, 10};
         pjsip_endpt_handle_events(getInstance()->getEndPoint(), &timeout);
@@ -691,7 +645,7 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     if (rdata->msg_info.msg->line.req.method.id != PJSIP_INVITE_METHOD) {
         if (rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) {
             pj_strdup2(getInstance()->getAppPool(), &reason, "user agent unable to handle this request ");
-            pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, MSG_METHOD_NOT_ALLOWED, &reason, NULL,
+            pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, PJSIP_SC_METHOD_NOT_ALLOWED, &reason, NULL,
                     NULL);
             return PJ_TRUE;
         }
@@ -701,7 +655,7 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     status = pjsip_inv_verify_request(rdata, &options, NULL, NULL, getInstance()->getEndPoint(), NULL);
     if (status != PJ_SUCCESS) {
         pj_strdup2(getInstance()->getAppPool(), &reason, "user agent unable to handle this INVITE ");
-        pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, MSG_METHOD_NOT_ALLOWED, &reason, NULL,
+        pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, PJSIP_SC_METHOD_NOT_ALLOWED, &reason, NULL,
                 NULL);
         return PJ_TRUE;
     }
@@ -764,7 +718,7 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     /* Create the local dialog (UAS) */
     status = pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, NULL, &dialog);
     if (status != PJ_SUCCESS) {
-        pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, MSG_SERVER_INTERNAL_ERROR, &reason, NULL,
+        pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, &reason, NULL,
                 NULL);
         return PJ_TRUE;
     }
@@ -1198,7 +1152,7 @@ bool SIPManager::transfer(SIPCall *call, const std::string& to)
     pjsip_tx_data *tdata;
     pjsip_dialog *dlg;
     pjsip_generic_string_hdr *gs_hdr;
-    const pj_str_t str_ref_by = { "Referred-By", 11 };
+    const pj_str_t str_ref_by = { (char*)"Referred-By", 11 };
     struct pjsip_evsub_user xfer_cb;
     pj_status_t status;
     pj_str_t dest;
@@ -1256,7 +1210,7 @@ void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
 
         pjsip_rx_data *rdata;
         pjsip_generic_string_hdr *refer_sub;
-        const pj_str_t REFER_SUB = { "Refer-Sub", 9 };
+        const pj_str_t REFER_SUB = {(char*)"Refer-Sub", 9 };
 
         SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data(sub,
                 getInstance()->getModId()));
@@ -1403,9 +1357,9 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     pj_status_t status;
     pjsip_tx_data *tdata;
     SIPCall *existing_call;
-    const pj_str_t str_refer_to = { "Refer-To", 8};
-    const pj_str_t str_refer_sub = { "Refer-Sub", 9 };
-    const pj_str_t str_ref_by = { "Referred-By", 11 };
+    const pj_str_t str_refer_to = { (char*)"Refer-To", 8};
+    const pj_str_t str_refer_sub = { (char*)"Refer-Sub", 9 };
+    const pj_str_t str_ref_by = { (char*)"Referred-By", 11 };
     pjsip_generic_string_hdr *refer_to;
     pjsip_generic_string_hdr *refer_sub;
     pjsip_hdr *ref_by_hdr;
@@ -1460,7 +1414,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
          * Always answer with 2xx.
          */
         pjsip_tx_data *tdata;
-        const pj_str_t str_false = { "false", 5};
+        const pj_str_t str_false = { (char*)"false", 5};
         pjsip_hdr *hdr;
 
         status = pjsip_dlg_create_response(inv->dlg, rdata, code, NULL,
@@ -1511,7 +1465,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
          * Refer-Sub in the response with value "true" too.
          */
         if (refer_sub) {
-            const pj_str_t str_true = { "true", 4 };
+            const pj_str_t str_true = { (char*)"true", 4 };
             pjsip_hdr *hdr;
 
             hdr = (pjsip_hdr*)
