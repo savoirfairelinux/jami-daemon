@@ -98,7 +98,7 @@ pj_status_t SIPManager::sipCreate() {
 
 pj_status_t SIPManager::sipInit() {
     pj_status_t status;
-    const pj_str_t STR_OPTIONS = {"OPTIONS", 7};
+    const pj_str_t STR_OPTIONS = {(char*)"OPTIONS", 7};
 
     /* Init SIP UA: */
 
@@ -177,20 +177,19 @@ pj_status_t SIPManager::sipInit() {
     /* Initialize and register sflphone module. */
     {
         const pjsip_module mod_initializer ={
-            NULL, NULL, /* prev, next.			*/
-            { "mod-sflphone", 9
-            }, /* Name.				*/
-            -1, /* Id				*/
-            PJSIP_MOD_PRIORITY_APPLICATION, /* Priority			*/
-            NULL, /* load()				*/
-            NULL, /* start()				*/
-            NULL, /* stop()				*/
-            NULL, /* unload()				*/
-            &mod_on_rx_request, /* on_rx_request()			*/
-            &mod_on_rx_response, /* on_rx_response()			*/
-            NULL, /* on_tx_request.			*/
-            NULL, /* on_tx_response()			*/
-            NULL, /* on_tsx_state()			*/
+            NULL, NULL, 			// prev, next.			
+            { (char*)"mod-sflphone", 9}, 	// Name.				
+            -1,		 			// Id				
+            PJSIP_MOD_PRIORITY_APPLICATION, 	// Priority			
+            NULL, 				// load()				
+            NULL, 				// start()				
+            NULL, 				// stop()				
+            NULL, 				// unload()				
+            &mod_on_rx_request, 		// on_rx_request()			
+            &mod_on_rx_response, 		// on_rx_response()			
+            NULL, 				// on_tx_request.			
+            NULL, 				// on_tx_response()			
+            NULL, 				// on_tsx_state()			
         };
 
         _mod = mod_initializer;
@@ -242,23 +241,23 @@ pj_status_t SIPManager::sipInit() {
     }*/
 
     {
-        const pjsip_module handler ={
-            NULL, NULL, /* prev, next.          */
-            { "mod-pjsua-options", 17
-            }, /* Name.                */
-            -1, /* Id                   */
-            PJSIP_MOD_PRIORITY_APPLICATION, /* Priority             */
-            NULL, /* load()               */
-            NULL, /* start()              */
-            NULL, /* stop()               */
-            NULL, /* unload()             */
-            &options_on_rx_request, /* on_rx_request()      */
-            NULL, /* on_rx_response()     */
-            NULL, /* on_tx_request.       */
-            NULL, /* on_tx_response()     */
-            NULL, /* on_tsx_state()       */
-
+        
+ 	const pjsip_module handler ={
+            NULL, NULL, 			// prev, next.			
+            { (char*)"mod-pjsua-options", 9}, 	// Name.				
+            -1,		 			// Id				
+            PJSIP_MOD_PRIORITY_APPLICATION, 	// Priority			
+            NULL, 				// load()				
+            NULL, 				// start()				
+            NULL, 				// stop()				
+            NULL, 				// unload()				
+            &mod_on_rx_request, 		// on_rx_request()			
+            NULL, 				// on_tx_request.			
+            NULL, 				// on_tx_response()			
+            NULL, 				// on_tsx_state()			
         };
+
+
         _options_handler = handler;
     }
 
@@ -294,11 +293,11 @@ pj_status_t SIPManager::sipInit() {
     // Add endpoint capabilities (INFO, OPTIONS, etc) for this UA
     {
         pj_str_t allowed[] = {
-            {"INFO", 4},
-            {"REGISTER", 8
+            {(char*)"INFO", 4},
+            {(char*)"REGISTER", 8
             }
         }; //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6},  {"OPTIONS", 7}, 
-        pj_str_t accepted = {"application/sdp", 15
+        pj_str_t accepted = {(char*)"application/sdp", 15
         };
 
         // Register supported methods
@@ -1186,7 +1185,7 @@ bool SIPManager::transfer(SIPCall *call, const std::string& to)
     pjsip_tx_data *tdata;
     pjsip_dialog *dlg;
     pjsip_generic_string_hdr *gs_hdr;
-    const pj_str_t str_ref_by = { "Referred-By", 11 };
+    const pj_str_t str_ref_by = { (char*)"Referred-By", 11 };
     struct pjsip_evsub_user xfer_cb;
     pj_status_t status;
     pj_str_t dest;
@@ -1244,7 +1243,7 @@ void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
 
         pjsip_rx_data *rdata;
         pjsip_generic_string_hdr *refer_sub;
-        const pj_str_t REFER_SUB = { "Refer-Sub", 9 };
+        const pj_str_t REFER_SUB = {(char*)"Refer-Sub", 9 };
 
         SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data(sub,
                 getInstance()->getModId()));
@@ -1391,9 +1390,9 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     pj_status_t status;
     pjsip_tx_data *tdata;
     SIPCall *existing_call;
-    const pj_str_t str_refer_to = { "Refer-To", 8};
-    const pj_str_t str_refer_sub = { "Refer-Sub", 9 };
-    const pj_str_t str_ref_by = { "Referred-By", 11 };
+    const pj_str_t str_refer_to = { (char*)"Refer-To", 8};
+    const pj_str_t str_refer_sub = { (char*)"Refer-Sub", 9 };
+    const pj_str_t str_ref_by = { (char*)"Referred-By", 11 };
     pjsip_generic_string_hdr *refer_to;
     pjsip_generic_string_hdr *refer_sub;
     pjsip_hdr *ref_by_hdr;
@@ -1448,7 +1447,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
          * Always answer with 2xx.
          */
         pjsip_tx_data *tdata;
-        const pj_str_t str_false = { "false", 5};
+        const pj_str_t str_false = { (char*)"false", 5};
         pjsip_hdr *hdr;
 
         status = pjsip_dlg_create_response(inv->dlg, rdata, code, NULL,
@@ -1499,7 +1498,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
          * Refer-Sub in the response with value "true" too.
          */
         if (refer_sub) {
-            const pj_str_t str_true = { "true", 4 };
+            const pj_str_t str_true = { (char*)"true", 4 };
             pjsip_hdr *hdr;
 
             hdr = (pjsip_hdr*)
