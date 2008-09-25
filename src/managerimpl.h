@@ -1031,6 +1031,8 @@ private:
 
     /** Whether the _SIPManager has been initialized */
     bool _sipManagerInitlized;
+    
+    bool _sipThreadStop;
 
 #ifdef TEST
     bool testCallAccountMap();
@@ -1042,6 +1044,10 @@ public:
      * Retuun the instance of sip manager
      */
     SIPManager *getSipManager();
+    
+    void setSipThreadStatus(bool status) {_sipThreadStop = status;}
+    
+    bool getSipThreadStatus() {return _sipThreadStop;}
 };
 
 #endif // __MANAGER_H__
