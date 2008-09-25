@@ -23,7 +23,7 @@
 #include "sipmanager.h"
 #include "sipvoiplink.h"
 
-#define DEFAULT_SIP_PORT  5068
+#define DEFAULT_SIP_PORT  5060
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 
