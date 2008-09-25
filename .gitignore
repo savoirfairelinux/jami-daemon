@@ -15,6 +15,7 @@ Makefile.in
 *.so
 # Binary translation files
 *.mo
+libtool
 
 # Ignore rendered docs
 doc/doxygen/core-doc
