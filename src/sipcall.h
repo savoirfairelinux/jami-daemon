@@ -30,6 +30,8 @@ struct pjmedia_sdp_session;
 struct pjmedia_sdp_media;
 struct pjmedia_sdp_neg;
 struct pj_pool_t;
+struct pjsip_inv_session;
+struct pjsip_evsub;
 
 class AudioCodec;
 
@@ -152,6 +154,12 @@ class SIPCall : public Call
      */
     bool createInitialOffer(pj_pool_t *pool);
     
+    void setXferSub(pjsip_evsub* sub) {_xferSub = sub;}
+    pjsip_evsub *getXferSub() {return _xferSub;}
+    
+    void setInvSession(pjsip_inv_session* inv) {_invSession = inv;}
+    pjsip_inv_session *getInvSession() {return _invSession;}
+    
   private:
 
     /** No longer being used */
@@ -232,6 +240,9 @@ class SIPCall : public Call
 
     /** IP address */
     std::string _ipAddr;
+    
+    pjsip_evsub *_xferSub;
+    pjsip_inv_session *_invSession;
 };
 
 #endif
