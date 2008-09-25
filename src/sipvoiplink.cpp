@@ -457,15 +457,14 @@ SIPVoIPLink::sendRegister()
       _regc = NULL;
   }
 
+  _bRegister = true;
+  
   int expire_value = Manager::instance().getRegistrationExpireValue();
   _debug("SIP Registration Expire Value = %i\n" , expire_value);
 
   setRegistrationState(Trying);
 
-  SIPManager *sipManager = Manager::instance().getSipManager();
-  _debug("Get manager of sip\n");
-
-  return sipManager->addAccount(id, _regc, _server, _authname, _password, expire_value);
+  return Manager::instance().getSipManager()->addAccount(id, &_regc, _server, _authname, _password, expire_value);
 }
 
 std::string
@@ -497,34 +496,11 @@ bool
 SIPVoIPLink::sendUnregister()
 {
   _debug("SEND UNREGISTER for account %s\n" , getAccountID().c_str());
-  if ( _eXosipRegID == EXOSIP_ERROR_STD) return false;
-  int eXosipErr = EXOSIP_ERROR_NO;
-  osip_message_t *reg = NULL;
 
-  eXosip_lock();
-  eXosipErr = eXosip_register_build_register (_eXosipRegID, 0, &reg);
-  eXosip_unlock();
-
-  if (eXosipErr != EXOSIP_ERROR_NO) {
-    _debug("! SIP Failure: Unable to build registration for sendUnregister");
-    return false;
-  }
-
-  eXosip_lock();
-  _debug("< Sending REGISTER (expire=0)\n");
-  eXosipErr = eXosip_register_send_register (_eXosipRegID, reg);
-  if (eXosipErr == EXOSIP_ERROR_BUILDING) {
-    _debug("! SIP Failure: Cannot build registration (unregister), check the setup\n"); 
-    eXosip_unlock();
-    return false;
-  }
-  if (eXosipErr == EXOSIP_ERROR_STD) {
-    _debug("! SIP Failure: Unable to send registration (unregister)\n");
-  }
-  _eXosipRegID = EXOSIP_ERROR_STD;
-  eXosip_unlock();
-
-
+  _bRegister = false;
+  
+  Manager::instance().getSipManager()->removeAccount(_regc);
+  
   return true;
 }
 
@@ -592,7 +568,7 @@ SIPVoIPLink::hangup(const CallID& id)
   //eXosip_lock();
   //eXosip_call_terminate(call->getCid(), call->getDid());
   //eXosip_unlock();
-  Manager::instance().getSipManager()->hangup();
+  Manager::instance().getSipManager()->hangup(call);
   
   // Release RTP thread
   if (Manager::instance().isCurrentCall(id)) {
@@ -816,7 +792,7 @@ SIPVoIPLink::refuse (const CallID& id)
     return false; 
   }
 
-  Manager::instance().getSipManager()->refuse();
+  Manager::instance().getSipManager()->refuse(call);
   /*osip_message_t *answerMessage = NULL;
   eXosip_lock();
   // not BUSY.. where decline the invitation!
@@ -1439,8 +1415,10 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
     _debug("* SIP Info: Stopping AudioRTP when closing\n");
     _audiortp->closeRtpSession();
   }
+  _debug("After close RTP\n");
   Manager::instance().peerHungupCall(id);
   removeCall(id);
+  _debug("After remove call ID\n");
 }
 
 void

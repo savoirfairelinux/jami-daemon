@@ -204,7 +204,7 @@ class SIPVoIPLink : public VoIPLink
     
     void setSipServer(const std::string& sipServer);
     
-    //void setS
+    bool isRegister() {return _bRegister;}
 
   public:
 
@@ -446,6 +446,7 @@ class SIPVoIPLink : public VoIPLink
 private:
     pjsip_regc *_regc;
     std::string _server;
+    bool _bRegister;
 };
 
 #endif

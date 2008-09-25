@@ -31,30 +31,18 @@ endif
 ALSAFLAG= -lasound
 PULSEAUDIO_LIBS=-lpulse
 
-PJSIP_LIBS = -L/usr/local/lib -lpjnath -lpjsua -lpjsip -lpjmedia -lpjsip-simple -lpjsip-ua -lpjmedia-codec -lpjlib-util -lpj 
-
 SUBDIRS = audio config dbus $(ZEROCONFDIR) #contact memmanager video mixer
 
-sflphoned_SOURCES = \
-	eventthread.cpp \
-	main.cpp \
-	voiplink.cpp \
-	managerimpl.cpp	\
-	observer.cpp \
-	samplerateconverter.cpp \
-	account.cpp \
-	sipaccount.cpp \
-	accountcreator.cpp \
-	sipvoiplink.cpp \
-	call.cpp \
-	sipcall.cpp \
-	$(IAXSOURCES) \
-	sipmanager.cpp
+sflphoned_SOURCES = eventthread.cpp 	main.cpp 	voiplink.cpp \
+		managerimpl.cpp	observer.cpp  samplerateconverter.cpp \
+		account.cpp sipaccount.cpp accountcreator.cpp \
+                sipvoiplink.cpp call.cpp sipcall.cpp sipmanager.cpp \
+		$(IAXSOURCES)
 
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS) $(SFLPHONE_CFLAGS) $(SIP_CFLAGS)
 
 #sflphoned_LDFLAGS = -static
-sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) $(ALSAFLAG) $(PULSEAUDIO_LIBS) $(PJSIP_LIBS)
+sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) $(ALSAFLAG) $(PULSEAUDIO_LIBS)
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES) $(libdbuscpp_CFLAGS) \
 	      -DCODECS_DIR=\""$(sflcodecdir)"\" 
 	      -DENABLE_TRACE
@@ -67,8 +55,7 @@ libsflphone_la_LIBADD = \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
-	$(IAX_LIBS)  \
-	$(PJSIP_LIBS)
+	$(IAX_LIBS) 
 
 libsflphone_la_SOURCES =
 
@@ -91,3 +78,7 @@ noinst_HEADERS = \
  	$(IAXHEADERS) \
 	sipmanager.h
 
+#./contact/libcontact.la \
+#	./memmanager/libmemmanager.la \
+#	./mixer/libmixer.la \
+#	./video/libvideo.la 

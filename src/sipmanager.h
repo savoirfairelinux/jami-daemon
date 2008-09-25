@@ -24,8 +24,7 @@
 #include <pjsip.h>
 #include <pjlib-util.h>
 #include <pjlib.h>
-//#include <pjnath/stun_config.h>
-#include <pjnath.h>
+#include <pjnath/stun_config.h>
 #include <pjsip_simple.h>
 #include <pjsip_ua.h>
 #include <pjmedia/sdp.h>
@@ -71,8 +70,6 @@ private:
     
     static SIPManager *_current;
     
-    static pjsip_inv_session* _invSession;
-
     struct AccBaseInfo {
         std::string userName;
         std::string server;
@@ -83,7 +80,9 @@ private:
     
     typedef std::vector<AccBaseInfo *> AccBaseInfoList;
     AccBaseInfoList _accBaseInfoList;
-    
+    /* Sleep with polling */
+    void busy_sleep(unsigned msec);
+    void sipDestory();
 public:
     SIPManager();
     ~SIPManager();
@@ -99,12 +98,12 @@ public:
     int createUDPServer();
 
     /** Set whether it will use stun server */
-    void setStunServer(const char *server); //{_stunHost = pj_str(server); _useStun = true;};
+    void setStunServer(const char *server); 
     
     pj_str_t getStunServer() {return _stunHost;}
     
-    //bool addAccount(AccountID id, pjsip_regc *regc, const pj_str_t& registrar, pj_str_t& user, pjsip_cred_info& cred, int& timeout);
-    bool addAccount(AccountID id, pjsip_regc *regc, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout);
+    bool addAccount(AccountID id, pjsip_regc **regc, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout);
+    bool removeAccount(pjsip_regc *regc);
     
     pj_str_t buildContact(char *userName);
     
@@ -125,14 +124,16 @@ public:
     
     int answer(SIPCall* call);
     
-    bool hangup();
+    bool hangup(SIPCall* call);
     
-    bool refuse();
+    bool refuse(SIPCall* call);
     
     bool onhold(SIPCall *call);
     bool offhold(SIPCall *call);
  
     bool transfer(SIPCall *call, const std::string& to);
+    
+    void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
     
     bool makeOutgoingCall(const std::string& to, SIPCall* call, const AccountID& id);
     pj_pool_t *getAppPool() {return _pool;}
@@ -141,6 +142,7 @@ public:
     static pj_bool_t options_on_rx_request(pjsip_rx_data *rdata) {return PJ_SUCCESS;}
     static void regc_cb(struct pjsip_regc_cbparam *param);
     static void xfer_func_cb( pjsip_evsub *sub, pjsip_event *event);
+    static void xfer_svr_cb(pjsip_evsub *sub, pjsip_event *event);
     static void call_on_media_update( pjsip_inv_session *inv, pj_status_t status) {}
     static void call_on_state_changed( pjsip_inv_session *inv, pjsip_event *e);
     static void call_on_forked(pjsip_inv_session *inv, pjsip_event *e);

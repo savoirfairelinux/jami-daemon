@@ -165,6 +165,12 @@ void ManagerImpl::terminate()
   saveConfig();
 
   unloadAccountMap();
+  
+  if(_sipManagerInitlized) {
+      delete _sipManager;
+      _sipManager = NULL;
+      _sipManagerInitlized = false;
+  }
 
   _debug("Unload DTMF Key\n");
   delete _dtmfKey;
@@ -288,12 +294,14 @@ ManagerImpl::hangupCall(const CallID& id)
   }
 
   bool returnValue = getAccountLink(accountid)->hangup(id);
+  _debug("After voip link hungup!\n");
   removeCallAccount(id);
   switchCall("");
 
   if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
     _audiodriver->restorePulseAppsVolume();
 
+  _debug("Before hungup return!\n");
   return returnValue;
 }
 
@@ -2080,7 +2088,20 @@ ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& detail
   /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
   if (accountType == "SIP") {
-    newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
+      if(!_sipManagerInitlized) {
+        // Initialize the SIP Manager
+        _sipManager = new SIPManager();
+        _sipManagerInitlized = true;
+      }
+
+      newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
+     
+      // Determine whether to use stun for the current account or not 
+      int useStun = Manager::instance().getConfigInt(newAccount->getAccountID(),SIP_USE_STUN);
+  
+      if(useStun == 1) {
+        _sipManager->setStunServer(Manager::instance().getConfigString(newAccount->getAccountID(), SIP_STUN_SERVER).data());
+      }
   }
   else if (accountType == "IAX") {
     newAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, newAccountID);
@@ -2193,7 +2214,7 @@ ManagerImpl::loadAccountMap()
     accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
     if (accountType == "SIP") {
       if(!_sipManagerInitlized) {
-        // Initialize the SIP Link Manager
+        // Initialize the SIP Manager
         _sipManager = new SIPManager();
         _sipManagerInitlized = true;
       }
