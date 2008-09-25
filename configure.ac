@@ -133,6 +133,12 @@ SFLPHONE_LIBS="$SFLPHONE_LIBS $EXOSIP_LIBS"
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
 
+#Trying to set PJSIP using pkg-config
+PKG_CHECK_MODULES(PJSIP, libpj, have_libpj=true, have_libpj=false)
+if test "x${have_libpj}" = "xfalse" ; then
+    AC_MSG_ERROR([PJSIP not found. http://www.pjsip.org/download.htm])
+fi
+
 LIBOSIP2_OSIPLISTNOPOINTER_MIN_VERSION=3.0.0
 PKG_CHECK_MODULES([libosip2], [libosip2 >= ${LIBOSIP2_OSIPLISTNOPOINTER_MIN_VERSION}],
 	[LIBOSIP2_CFLAGS=""], [LIBOSIP2_CFLAGS="-DLIBOSIP2_WITHPOINTER"])
