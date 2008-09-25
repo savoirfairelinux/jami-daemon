@@ -28,7 +28,6 @@
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 
 SIPManager *SIPManager::_current;
-pjsip_inv_session* SIPManager::_invSession;
 
 SIPManager::SIPManager() {
     _useStun = false;
@@ -38,17 +37,11 @@ SIPManager::SIPManager() {
 
 SIPManager::~SIPManager() {
     _debug("SIPManager: In dtor!\n");
+    sipDestory();
 }
 
 pj_status_t SIPManager::sipCreate() {
     pj_status_t status;
-    //_debug("stun host is %s\n", _stunHost.ptr);
-
-    /* Init pjsua data */
-    //init_data();
-
-    /* Set default logging settings */
-    //pjsua_logging_config_default(&pjsua_var.log_cfg);
 
     /* Init PJLIB: */
     status = pj_init();
@@ -56,9 +49,6 @@ pj_status_t SIPManager::sipCreate() {
         _debug("SIPManager: Could not initialize PJSip\n");
         return status;
     }
-
-    /* Init random seed */
-    //init_random_seed();
 
     /* Init PJLIB-UTIL: */
     status = pjlib_util_init();
@@ -332,12 +322,94 @@ on_error:
     return status;
 }
 
-bool SIPManager::addAccount(AccountID id, pjsip_regc *regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout) {
+void SIPManager::sipDestory() {
+    int i, size;
+
+    /* Signal threads to quit: */
+    Manager::instance().setSipThreadStatus(true);
+
+    /* Wait worker thread to quit: */
+    if (_thread) {
+        pj_thread_join(_thread);
+        pj_thread_destroy(_thread);
+        _thread = NULL;
+    }
+
+    // Clear the Account Basic Info List
+    size = _accBaseInfoList.size();
+    for (int i = 0; i < size; i++) {
+        delete _accBaseInfoList[i];    
+    }
+    _accBaseInfoList.clear();
+    
+    if (_endpt) {
+        /* Terminate all presence subscriptions. */
+        //pjsua_pres_shutdown();
+
+        /* Wait for some time to allow unregistration to complete: */
+        _debug("SIPManager: Shutting down...\n");
+        busy_sleep(1000);
+    }
+
+    /* Destroy endpoint. */
+    if (_endpt) {
+        pjsip_endpt_destroy(_endpt);
+        _endpt = NULL;
+    }
+
+    /* Destroy mutex */
+    if (_mutex) {
+        pj_mutex_destroy(_mutex);
+        _mutex = NULL;
+    }
+
+    /* Destroy pool and pool factory. */
+    if (_pool) {
+        pj_pool_release(_pool);
+        _pool = NULL;
+        pj_caching_pool_destroy(&_cp);
+
+        /* Shutdown PJLIB */
+        pj_shutdown();
+    }
+
+    /* Done. */    
+}
+
+void SIPManager::busy_sleep(unsigned msec)
+{
+#if defined(PJ_SYMBIAN) && PJ_SYMBIAN != 0
+    /* Ideally we shouldn't call pj_thread_sleep() and rather
+     * CActiveScheduler::WaitForAnyRequest() here, but that will
+     * drag in Symbian header and it doesn't look pretty.
+     */
+    pj_thread_sleep(msec);
+#else
+    pj_time_val timeout, now, tv;
+
+    pj_gettimeofday(&timeout);
+    timeout.msec += msec;
+    pj_time_val_normalize(&timeout);
+
+    tv.sec = 0;
+    tv.msec = 10;
+    pj_time_val_normalize(&tv);
+    
+    do {
+        pjsip_endpt_handle_events(_endpt, &tv);
+        pj_gettimeofday(&now);
+    } while (PJ_TIME_VAL_LT(now, timeout));
+#endif
+}
+
+bool SIPManager::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout) {
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
-    //pjsip_cred_info cred;
     char contactTmp[256];
     pjsip_regc *regc;
+    pj_str_t svr;
+    pj_str_t aor;
+    pj_str_t contact;
 
     pj_mutex_lock(_mutex);
     std::string tmp;

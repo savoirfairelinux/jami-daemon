@@ -70,8 +70,6 @@ private:
     
     static SIPManager *_current;
     
-    static pjsip_inv_session* _invSession;
-
     struct AccBaseInfo {
         std::string userName;
         std::string server;
@@ -82,7 +80,9 @@ private:
     
     typedef std::vector<AccBaseInfo *> AccBaseInfoList;
     AccBaseInfoList _accBaseInfoList;
-    
+    /* Sleep with polling */
+    void busy_sleep(unsigned msec);
+    void sipDestory();
 public:
     SIPManager();
     ~SIPManager();
@@ -98,12 +98,12 @@ public:
     int createUDPServer();
 
     /** Set whether it will use stun server */
-    void setStunServer(const char *server); //{_stunHost = pj_str(server); _useStun = true;};
+    void setStunServer(const char *server); 
     
     pj_str_t getStunServer() {return _stunHost;}
     
-    //bool addAccount(AccountID id, pjsip_regc *regc, const pj_str_t& registrar, pj_str_t& user, pjsip_cred_info& cred, int& timeout);
-    bool addAccount(AccountID id, pjsip_regc *regc, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout);
+    bool addAccount(AccountID id, pjsip_regc **regc, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout);
+    bool removeAccount(pjsip_regc *regc);
     
     pj_str_t buildContact(char *userName);
     
