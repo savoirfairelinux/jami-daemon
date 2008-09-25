@@ -23,7 +23,6 @@
 #include "sipcall.h"
 #include "global.h" // for _debug
 #include <sstream> // for media buffer
-#include "sipmanager.h"
 #include <string>
 
 #define _SENDRECV 0

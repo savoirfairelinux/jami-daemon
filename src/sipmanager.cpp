@@ -17,6 +17,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <iostream>
 
 #include "manager.h"
 #include "sipcall.h"
@@ -609,18 +610,58 @@ int SIPManager::start_thread(void *arg) {
     return 0;
 }
 
+void SIPManager::set_voicemail_info( AccountID account, pjsip_msg_body *body ){
+
+    int voicemail, pos_begin, pos_end;
+    std::string voice_str = "Voice-Message: ";
+    std::string delimiter = "/";
+    std::string msg_body, voicemail_str;
+
+    // The voicemail message is formated like that:
+    // Voice-Message: 1/0  . 1 is the number we want to retrieve in this case
+
+    // We get the notification body
+    msg_body = (char*)body->data;
+    std::cout << " body message " << msg_body.c_str() << std::endl;
+
+    // We need the position of the first character of the string voice_str
+    pos_begin = msg_body.find(voice_str); 
+    // We need the position of the delimiter
+    pos_end = msg_body.find(delimiter); 
+
+    // So our voicemail number between the both index
+    try {
+
+    	voicemail_str = msg_body.substr(pos_begin + voice_str.length(), pos_end - ( pos_begin + voice_str.length()));
+	std::cout << "voicemail number : " << voicemail_str << std::endl;
+	voicemail = atoi( voicemail_str.c_str() );
+    }
+    catch( std::out_of_range& e ){
+	std::cerr << e.what() << std::endl;
+    }
+
+    // We need now to notify the manager 
+    if( voicemail != 0 )
+	Manager::instance().startVoiceMessageNotification(account, voicemail);
+}
+
+
 pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
+
     pj_status_t status;
     pj_str_t reason;
     unsigned options = 0;
     pjsip_dialog* dialog;
     pjsip_tx_data *tdata;
     pjmedia_sdp_session *r_sdp;
+    AccountID account_id;
 
-    /* Handle the incoming call invite in this function */
+    // voicemail part
+    std::string method_name;
+    std::string request;
+
+    // Handle the incoming call invite in this function 
     _debug("SIPManager: Callback on_rx_request is involved!\n");
-
-    PJ_UNUSED_ARG(rdata);
 
     /* First, let's got the username and server name from the invite.
      * We will use them to detect which account is the callee.
@@ -631,7 +672,16 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     std::string userName = std::string(sip_uri->user.ptr, sip_uri->user.slen);
     std::string server = std::string(sip_uri->host.ptr, sip_uri->host.slen);
 
+    // Get the account id of callee from username and server
+    account_id = getInstance()->getAccountIdFromNameAndServer(userName, server);
+    if(account_id == AccountNULL) {
+            _debug("SIPManager: Username %s doesn't match any account!\n");
+            //delete call;
+            //call = NULL;
+            return PJ_FALSE;
+    }
     _debug("SIPManager: The receiver is : %s@%s\n", userName.data(), server.data());
+    _debug("SIPManager: The callee account id is %s\n", account_id.c_str());
 
     /* Now, it is the time to find the information of the caller */
     uri = rdata->msg_info.from->uri;
@@ -641,7 +691,24 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     std::string callerServer = std::string(sip_uri->host.ptr, sip_uri->host.slen);
     std::string peerNumber = caller + "@" + callerServer;
     
-    /* Respond statelessly any non-INVITE requests with 500 */
+    
+    // Get the server voicemail notification
+    // Catch the NOTIFY message
+    if( rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD )
+    {
+	method_name = "NOTIFY";
+	// Retrieve all the message. Should contains only the method name but ...
+	request =  rdata->msg_info.msg->line.req.method.name.ptr;
+	_debug("request = %s\n", request.c_str());
+	// Check if the message is a notification
+	if( request.find( method_name ) != -1 ) {
+    		set_voicemail_info( account_id, rdata->msg_info.msg->body );
+	}
+        pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, PJSIP_SC_OK, NULL, NULL, NULL);
+	return PJ_SUCCESS;
+    }
+
+    // Respond statelessly any non-INVITE requests with 500
     if (rdata->msg_info.msg->line.req.method.id != PJSIP_INVITE_METHOD) {
         if (rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) {
             pj_strdup2(getInstance()->getAppPool(), &reason, "user agent unable to handle this request ");
@@ -685,20 +752,11 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
      *     possilbe audio codec will be used in this call
      */
     if (call->SIPCallInvite(rdata, getInstance()->getAppPool())) {
-        // Get the account id of callee from username and server
-        AccountID id = getInstance()->getAccountIdFromNameAndServer(userName, server);
-        if(id == AccountNULL) {
-            _debug("SIPManager: Username %s doesn't match any account!\n");
-            delete call;
-            call = NULL;
-            return PJ_FALSE;
-        }
-        _debug("SIPManager: The callee account id is %s\n", id.c_str());
-        
+                
         // Notify UI there is an incoming call
-        if (Manager::instance().incomingCall(call, id)) {
+        if (Manager::instance().incomingCall(call, account_id)) {
             // Add this call to the callAccountMap in ManagerImpl
-            Manager::instance().getAccountLink(id)->addCall(call);
+            Manager::instance().getAccountLink(account_id)->addCall(call);
             _debug("SIPManager: Notify UI success!\n");
         } else {
             // Fail to notify UI

@@ -149,6 +149,8 @@ public:
     static void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
     static int start_thread(void *arg);
     static SIPManager* getInstance() {return _current;}
+
+    static void set_voicemail_info( AccountID account, pjsip_msg_body *body );
 };
 
 
