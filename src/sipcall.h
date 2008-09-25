@@ -23,15 +23,9 @@
 
 #include "call.h"
 #include "audio/codecDescriptor.h"
-#include <eXosip2/eXosip.h>
+#include "sipmanager.h"
 
-struct pjsip_rx_data;
-struct pjmedia_sdp_session;
-struct pjmedia_sdp_media;
-struct pjmedia_sdp_neg;
-struct pj_pool_t;
-struct pjsip_inv_session;
-struct pjsip_evsub;
+#include <eXosip2/eXosip.h>
 
 class AudioCodec;
 
