@@ -37,6 +37,8 @@
 #define MSG_NOT_ACCEPTABLE_HERE     488
 #define MSG_SERVER_INTERNAL_ERROR   500
 
+#define PJ_LOG_LEVEL	5
+
 typedef std::string AccountID;
 
 class SIPCall;
@@ -50,7 +52,6 @@ private:
     //pjsip_module _appMod;
     pj_caching_pool _cp;
     pj_pool_t *_pool;    
-    pj_thread_t *_voip_listen_thread;
     pj_mutex_t *_mutex;     /** Mutex protection for this data */
     pjsip_module _mod;       /** PJSIP module. */
     pjsip_module _options_handler;
@@ -147,9 +148,10 @@ public:
     static void call_on_state_changed( pjsip_inv_session *inv, pjsip_event *e);
     static void call_on_forked(pjsip_inv_session *inv, pjsip_event *e);
     static void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
-    static int worker_thread(void *arg);
+    static int start_thread(void *arg);
     static SIPManager* getInstance() {return _current;}
 };
 
-#endif	/* _SIPMANAGER_H */
+
+#endif /* _SIPMANAGER_H */
 
