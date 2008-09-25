@@ -25,17 +25,16 @@
 #include <pjlib-util.h>
 #include <pjlib.h>
 #include <pjnath/stun_config.h>
+
+//TODO Remove this include if we don't need anything from it
 #include <pjsip_simple.h>
+
 #include <pjsip_ua.h>
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
 
 #include <string>
 #include <vector>
-#define MSG_OK                      200
-#define MSG_METHOD_NOT_ALLOWED      405
-#define MSG_NOT_ACCEPTABLE_HERE     488
-#define MSG_SERVER_INTERNAL_ERROR   500
 
 #define PJ_LOG_LEVEL	5
 

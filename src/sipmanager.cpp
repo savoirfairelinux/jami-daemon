@@ -179,7 +179,7 @@ pj_status_t SIPManager::sipInit() {
     PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
     // Init presence module. 
-    // TODO We probably do need that extension
+    // TODO We probably do not need that extension
     status = pjsip_pres_init_module(_endpt, pjsip_evsub_instance());
     PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
     
@@ -645,7 +645,7 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     if (rdata->msg_info.msg->line.req.method.id != PJSIP_INVITE_METHOD) {
         if (rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) {
             pj_strdup2(getInstance()->getAppPool(), &reason, "user agent unable to handle this request ");
-            pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, MSG_METHOD_NOT_ALLOWED, &reason, NULL,
+            pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, PJSIP_SC_METHOD_NOT_ALLOWED, &reason, NULL,
                     NULL);
             return PJ_TRUE;
         }
@@ -655,7 +655,7 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     status = pjsip_inv_verify_request(rdata, &options, NULL, NULL, getInstance()->getEndPoint(), NULL);
     if (status != PJ_SUCCESS) {
         pj_strdup2(getInstance()->getAppPool(), &reason, "user agent unable to handle this INVITE ");
-        pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, MSG_METHOD_NOT_ALLOWED, &reason, NULL,
+        pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, PJSIP_SC_METHOD_NOT_ALLOWED, &reason, NULL,
                 NULL);
         return PJ_TRUE;
     }
@@ -718,7 +718,7 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     /* Create the local dialog (UAS) */
     status = pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, NULL, &dialog);
     if (status != PJ_SUCCESS) {
-        pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, MSG_SERVER_INTERNAL_ERROR, &reason, NULL,
+        pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, &reason, NULL,
                 NULL);
         return PJ_TRUE;
     }
