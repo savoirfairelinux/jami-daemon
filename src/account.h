@@ -56,6 +56,8 @@ typedef std::string AccountID;
 #define SIP_PASSWORD          "SIP.password"
 /** SIP parameter : host name */
 #define SIP_HOST	      "SIP.hostPart"
+// SIP port
+#define SIP_PORT	      "SIP.port"
 /** SIP parameter : proxy address */
 #define SIP_PROXY             "SIP.proxy"
 /** SIP parameter : stun server address */

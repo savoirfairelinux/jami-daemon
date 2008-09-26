@@ -40,9 +40,6 @@
 #define EXOSIP_ERROR_STD -1
 #define EXOSIP_ERROR_BUILDING -2
 
-// for registration
-//#define EXPIRES_VALUE 180
-
 // 1XX responses
 #define DIALOG_ESTABLISHED 101
 // see: osip_const.h
@@ -59,7 +56,6 @@ SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
  : VoIPLink(accountID), _localExternAddress("") , eXosip_running( false )
 {
   _evThread = NULL;//new EventThread(this);
-
 
   _nMsgVoicemail = 0;
   _eXosipRegID = EXOSIP_ERROR_STD;
@@ -793,14 +789,6 @@ SIPVoIPLink::refuse (const CallID& id)
   }
 
   Manager::instance().getSipManager()->refuse(call);
-  /*osip_message_t *answerMessage = NULL;
-  eXosip_lock();
-  // not BUSY.. where decline the invitation!
-  int exosipErr = eXosip_call_build_answer(call->getTid(), SIP_DECLINE, &answerMessage);
-  if (exosipErr == 0) {
-    exosipErr = eXosip_call_send_answer(call->getTid(), SIP_DECLINE, answerMessage);
-  }
-  eXosip_unlock();*/
   
   return true;
 }
@@ -1482,7 +1470,7 @@ SIPVoIPLink::SIPMessageNew(eXosip_event_t *event)
 
     if (msgVoicemail != 0) {
       // If there is at least one voice-message, start notification
-      Manager::instance().startVoiceMessageNotification(getAccountID(), nb_msg);
+      //Manager::instance().startVoiceMessageNotification(getAccountID(), nb_msg);
     }
   // http://www.jdrosen.net/papers/draft-ietf-simple-im-session-00.txt
   } else if (MSG_IS_MESSAGE(event->request)) {

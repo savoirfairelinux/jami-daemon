@@ -44,6 +44,8 @@
 #define ACCOUNT_SIP_USER      "SIP.username"
 /** SIP parameter: password */
 #define ACCOUNT_SIP_PASSWORD       "SIP.password"
+// SIP connection port
+#define ACCOUNT_SIP_PORT	   "SIP.port"
 /** SIP parameter: proxy address */
 #define ACCOUNT_SIP_PROXY          "SIP.proxy"
 /** SIP parameter: stun server address */

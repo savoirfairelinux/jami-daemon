@@ -260,7 +260,7 @@ class ManagerImpl {
      * @param accountId	  The account identifier
      * @param nb_msg The number of messages
      */
-    void startVoiceMessageNotification(const AccountID& accountId, const std::string& nb_msg);
+    void startVoiceMessageNotification(const AccountID& accountId, int nb_msg);
 
     /** 
      * Notify the user that registration succeeded  
