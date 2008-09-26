@@ -622,7 +622,6 @@ void SIPManager::set_voicemail_info( AccountID account, pjsip_msg_body *body ){
 
     // We get the notification body
     msg_body = (char*)body->data;
-    std::cout << " body message " << msg_body.c_str() << std::endl;
 
     // We need the position of the first character of the string voice_str
     pos_begin = msg_body.find(voice_str); 
@@ -699,7 +698,6 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
 	method_name = "NOTIFY";
 	// Retrieve all the message. Should contains only the method name but ...
 	request =  rdata->msg_info.msg->line.req.method.name.ptr;
-	_debug("request = %s\n", request.c_str());
 	// Check if the message is a notification
 	if( request.find( method_name ) != -1 ) {
     		set_voicemail_info( account_id, rdata->msg_info.msg->body );

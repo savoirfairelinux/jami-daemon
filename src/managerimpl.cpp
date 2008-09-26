@@ -698,7 +698,6 @@ ManagerImpl::callFailure(const CallID& id)
   void
 ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, int nb_msg)
 {
-    _debug("cccccccccccccccccc\n");
   if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, nb_msg) ;
 }
 
