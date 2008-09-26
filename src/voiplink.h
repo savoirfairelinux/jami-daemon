@@ -66,7 +66,7 @@ class VoIPLink {
 
     /** 
      * Virtual method
-     * Try to initiate the eXosip engine/thread and set config 
+     * Try to initiate the pjsip engine/thread and set config 
      * @return bool True if OK
      */
     virtual bool init (void) = 0;

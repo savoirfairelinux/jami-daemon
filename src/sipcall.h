@@ -25,8 +25,6 @@
 #include "audio/codecDescriptor.h"
 #include "sipmanager.h"
 
-#include <eXosip2/eXosip.h>
-
 class AudioCodec;
 
 /**
@@ -52,37 +50,37 @@ class SIPCall : public Call
 
     /** 
      * Call Identifier
-     * @return int  SIP call id : protected by eXosip lock 
+     * @return int  SIP call id
      */
     int  getCid() { return _cid; }
     
     /** 
      * Call Identifier
-     * @param cid SIP call id : protected by eXosip lock 
+     * @param cid SIP call id
      */
     void setCid(int cid) { _cid = cid ; } 
     
     /** 
      * Domain identifier
-     * @return int  SIP domain id : protected by eXosip lock  
+     * @return int  SIP domain id
      */
     int  getDid() { return _did; }
     
     /** 
      * Domain identifier
-     * @param did SIP domain id : protected by eXosip lock 
+     * @param did SIP domain id
      */
     void setDid(int did) { _did = did; } 
     
     /** 
      * Transaction identifier
-     * @return int  SIP transaction id : protected by eXosip lock  
+     * @return int  SIP transaction id
      */
     int  getTid() { return _tid; }
     
     /** 
      * Transaction identifier
-     * @param tid SIP transaction id : protected by eXosip lock 
+     * @param tid SIP transaction id
      */
     void setTid(int tid) { _tid = tid; } 
 
@@ -95,31 +93,8 @@ class SIPCall : public Call
      */
     bool SIPCallInvite(pjsip_rx_data *rdata, pj_pool_t *pool);
 
-    /**
-     * newReinviteCall is called when the IP-Phone user receives a change in the call
-     * it's almost an newIncomingCall but we send a 200 OK
-     * See: 3.7.  Session with re-INVITE (IP Address Change)
-     * @param event eXosip Event
-     * @return bool True if ok
-     */
-    bool SIPCallReinvite(eXosip_event_t *event);
-
-    /**
-     * Peer answered to a call (on hold or not)
-     * @param event eXosip Event
-     * @return bool True if ok
-     */
-    bool SIPCallAnswered(eXosip_event_t *event);
-
-    /** No longer being used */
-    bool SIPCallAnsweredWithoutHold(eXosip_event_t *event);
-
     bool SIPCallAnsweredWithoutHold(pjsip_rx_data *rdata);
  
-    /** No longer being used */
-    int sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg);
-
-
     /**
      * Save IP Address
      * @param ip std::string 
@@ -155,29 +130,12 @@ class SIPCall : public Call
     pjsip_inv_session *getInvSession() {return _invSession;}
     
   private:
-
-    /** No longer being used */
-    int sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med);
-    
-    /**
-     * Set peer name and number with event->request->from
-     * @param event eXosip event
-     * @return bool False if the event is invalid
-     */
-    bool setPeerInfoFromRequest(eXosip_event_t *event);
-
     /**
      * Get a valid remote SDP or return a 400 bad request response if invalid
-     * @param event eXosip event
-     * @return sdp_message_t* A valid remote_sdp or 0
+     * @param
+     * @return
      */
     pjmedia_sdp_session* getRemoteSDPFromRequest(pjsip_rx_data *rdata);
-
-    /** No longer being used */
-    sdp_message_t *getRemoteSDPFromRequest(eXosip_event_t*&){return NULL;}
-
-    /** No longer being used */
-    sdp_media_t* getRemoteMedia(int tid, sdp_message_t* remote_sdp);
 
     /**
      * Get a valid remote media

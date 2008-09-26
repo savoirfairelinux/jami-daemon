@@ -23,12 +23,18 @@
 
 #include "voiplink.h"
 #include <string>
-#include <eXosip2/eXosip.h>
-#include <osip2/osip_mt.h>
 
-struct pjsip_regc;
-struct pj_str_t;
-struct pjmedia_sdp_session;
+#include <pjsip.h>
+#include <pjlib-util.h>
+#include <pjlib.h>
+#include <pjnath/stun_config.h>
+
+//TODO Remove this include if we don't need anything from it
+#include <pjsip_simple.h>
+
+#include <pjsip_ua.h>
+#include <pjmedia/sdp.h>
+#include <pjmedia/sdp_neg.h>
 
 class EventThread;
 class SIPCall;
@@ -54,10 +60,8 @@ class SIPVoIPLink : public VoIPLink
      */
     ~SIPVoIPLink();
 
-    int eXosip_running;
-
     /** 
-     * Try to initiate the eXosip engine/thread and set config 
+     * Try to initiate the pjsip engine/thread and set config 
      * @return bool True if OK
      */
     bool init(void);
@@ -165,10 +169,6 @@ class SIPVoIPLink : public VoIPLink
 
     bool isContactPresenceSupported();
 
-    //void subscribePresenceForContact(Contact* contact);
-
-    void publishPresenceStatus(std::string status);
-
     // TODO Not used yet
     void sendMessageToContact(const CallID& id, const std::string& message);
 
@@ -214,7 +214,7 @@ class SIPVoIPLink : public VoIPLink
     void terminateSIPCall(); 
 
     /**
-     * Get the local Ip by eXosip 
+     * Get the local Ip  
      * only if the local ip address is to his default value: 127.0.0.1
      * setLocalIpAdress
      * @return bool false if not found
@@ -294,88 +294,32 @@ class SIPVoIPLink : public VoIPLink
     bool setCallAudioLocal(SIPCall* call);
 
     /**
-     * Create a new call and send a incoming call notification to the user
-     * @param event eXosip Event
-     */
-    void SIPCallInvite(eXosip_event_t *event);
-
-    /**
-     * Use a exisiting call to restart the audio
-     * @param event eXosip Event
-     */
-    void SIPCallReinvite(eXosip_event_t *event);
-
-    /**
-     * Tell the user that the call is ringing
-     * @param event eXosip Event
-     */
-    void SIPCallRinging(eXosip_event_t *event);
-
-    /**
      * Tell the user that the call was answered
-     * @param event eXosip Event
+     * @param
      */
-    void SIPCallAnswered(eXosip_event_t *event);
     void SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata);
     
     /**
-     * Handling 4XX error
-     * @param event eXosip Event
-     */
-    void SIPCallRequestFailure(eXosip_event_t *event);
-
-    /**
      * Handling 5XX/6XX error
-     * @param event eXosip Event
+     * @param 
      */
     void SIPCallServerFailure(SIPCall *call);
 
     /**
-     * Handle registration failure cases ( SIP_FORBIDDEN , SIP_UNAUTHORIZED )
-     * @param event eXosip event
-     */
-    void SIPRegistrationFailure( eXosip_event_t *event );
-
-    /**
-     * Handling ack (restart audio if reinvite)
-     * @param event eXosip Event
-     */
-    void SIPCallAck(eXosip_event_t *event);
-
-    /**
-     * Handling message inside a call (like dtmf)
-     * @param event eXosip Event
-     */
-    void SIPCallMessageNew(eXosip_event_t *event);
-
-    /**
-     * Handle an INFO with application/dtmf-relay content-type
-     * @param event eXosip Event
-     */
-    bool handleDtmfRelay(eXosip_event_t *event);
-
-    /**
      * Peer close the connection
-     * @param event eXosip Event
+     * @param
      */
     void SIPCallClosed(SIPCall *call);
 
     /**
      * The call pointer was released
      * If the call was not cleared before, report an error
-     * @param event eXosip Event
+     * @param
      */
     void SIPCallReleased(SIPCall *call);
 
     /**
-     * Receive a new Message request
-     * Option/Notify/Message
-     * @param event eXosip Event
-     */
-    void SIPMessageNew(eXosip_event_t *event);
-
-    /**
-     * Find a SIPCall with cid from eXosip Event
+     * Find a SIPCall with cid
      * Explication there is no DID when the dialog is not establish...
      * @param cid call ID
      * @return SIPCall*	SIPCall pointer or 0
@@ -383,7 +327,7 @@ class SIPVoIPLink : public VoIPLink
     SIPCall* findSIPCallWithCid(int cid);
 
     /**
-     * Find a SIPCall with cid and did from eXosip Event
+     * Find a SIPCall with cid and did
      * @param cid call ID
      * @param did domain ID
      * @return SIPCall*	SIPCall pointer or 0
@@ -397,23 +341,8 @@ class SIPVoIPLink : public VoIPLink
      */
     SIPCall* getSIPCall(const CallID& id);
 
-    /** To build sdp when call is on-hold */
-    int sdp_hold_call (sdp_message_t * sdp);
-
-    /** To build sdp when call is off-hold */
-    int sdp_off_hold_call (sdp_message_t * sdp);
-    
-    /** EventThread get every incoming events */
-    EventThread* _evThread;
-
-    /** Tell if eXosip was stared (eXosip_init) */
+    /** Tell if the initialisation was done */
     bool _initDone;
-
-    /** Registration identifier, needed by unregister to build message */
-    int _eXosipRegID;
-
-    /** Number of voicemail */
-    int _nMsgVoicemail;
 
     /** when we init the listener, how many times we try to bind a port? */
     int _nbTryListenAddr;
