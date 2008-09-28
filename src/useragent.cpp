@@ -21,27 +21,27 @@
 
 #include "manager.h"
 #include "sipcall.h"
-#include "sipmanager.h"
+#include "useragent.h"
 #include "sipvoiplink.h"
 
 #define DEFAULT_SIP_PORT  5060
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 
-SIPManager *SIPManager::_current;
+UserAgent *UserAgent::_current;
 
-SIPManager::SIPManager() {
+UserAgent::UserAgent() {
     _useStun = false;
     _localIPAddress = "127.0.0.1";
-    SIPManager::_current = this;
+    UserAgent::_current = this;
 }
 
-SIPManager::~SIPManager() {
-    _debug("SIPManager: In dtor!\n");
+UserAgent::~UserAgent() {
+    _debug("UserAgent: In dtor!\n");
     sipDestory();
 }
 
-pj_status_t SIPManager::sipCreate() {
+pj_status_t UserAgent::sipCreate() {
 
     pj_status_t status;
 
@@ -68,7 +68,7 @@ pj_status_t SIPManager::sipCreate() {
     _pool = pj_pool_create(&_cp.factory, "sflphone", 4000, 4000, NULL);
 
     if (!_pool) {
-        _debug("SIPManager: Could not initialize memory pool\n");
+        _debug("UserAgent: Could not initialize memory pool\n");
         return PJ_ENOMEM;
     }
 
@@ -83,7 +83,7 @@ pj_status_t SIPManager::sipCreate() {
     return PJ_SUCCESS;
 }
 
-pj_status_t SIPManager::sipInit() {
+pj_status_t UserAgent::sipInit() {
     
     pj_status_t status;
     const pj_str_t STR_OPTIONS = {(char*)"OPTIONS", 7};
@@ -96,7 +96,7 @@ pj_status_t SIPManager::sipInit() {
     // if we useStun and we failed to receive something on port 5060, we try a random port
     // If use STUN server, firewall address setup
     if (!loadSIPLocalIP()) {
-        _debug("SIPManager: Unable to determine network capabilities\n");
+        _debug("UserAgent: Unable to determine network capabilities\n");
         return false;
     }
     int errPjsip = 0;
@@ -106,7 +106,7 @@ pj_status_t SIPManager::sipInit() {
     if (_useStun && !Manager::instance().behindNat(_stunServer, port)) {
         port = RANDOM_SIP_PORT;
         if (!Manager::instance().behindNat(_stunServer, port)) {
-            _debug("SIPManager: Unable to check NAT setting\n");
+            _debug("UserAgent: Unable to check NAT setting\n");
             return false; // hoho we can't use the random sip port too...
         }
     } else {
@@ -126,12 +126,12 @@ pj_status_t SIPManager::sipInit() {
 
     errPjsip = createUDPServer();
     if (errPjsip != 0) {
-        _debug("SIPManager: Could not initialize SIP listener on port %d\n", port);
+        _debug("UserAgent: Could not initialize SIP listener on port %d\n", port);
         port = RANDOM_SIP_PORT;
-        _debug("SIPManager: SIP failed to listen on port %d\n", port);
+        _debug("UserAgent: SIP failed to listen on port %d\n", port);
         return errPjsip;
     }
-    _debug("SIPManager: SIP Init -- listening on port %d\n", _localExternPort);
+    _debug("UserAgent: SIP Init -- listening on port %d\n", _localExternPort);
 
     // Initialize transaction layer
     status = pjsip_tsx_layer_init_module(_endpt);
@@ -239,7 +239,7 @@ pj_status_t SIPManager::sipInit() {
         inv_cb.on_media_update = &call_on_media_update;
         inv_cb.on_tsx_state_changed = &call_on_tsx_changed;
 
-        _debug("SIPManager: VOIP callbacks initialized\n");
+        _debug("UserAgent: VOIP callbacks initialized\n");
 
         // Initialize session invite module 
         status = pjsip_inv_usage_init(_endpt, &inv_cb);
@@ -262,7 +262,7 @@ pj_status_t SIPManager::sipInit() {
         pjsip_endpt_add_capability(_endpt, &_mod, PJSIP_H_ACCEPT, NULL, 1, &accepted);
     }
 
-    _debug("SIPManager: sflphone version %s for %s initialized\n", pj_get_version(), PJ_OS_NAME);
+    _debug("UserAgent: sflphone version %s for %s initialized\n", pj_get_version(), PJ_OS_NAME);
 
     Manager::instance().setSipThreadStatus(false);
     
@@ -276,7 +276,7 @@ pj_status_t SIPManager::sipInit() {
 
 }
 
-void SIPManager::sipDestory() {
+void UserAgent::sipDestory() {
     int i, size;
 
     /* Signal threads to quit: */
@@ -301,7 +301,7 @@ void SIPManager::sipDestory() {
         //pjsua_pres_shutdown();
 
         /* Wait for some time to allow unregistration to complete: */
-        _debug("SIPManager: Shutting down...\n");
+        _debug("UserAgent: Shutting down...\n");
         busy_sleep(1000);
     }
 
@@ -330,7 +330,7 @@ void SIPManager::sipDestory() {
     /* Done. */    
 }
 
-void SIPManager::busy_sleep(unsigned msec)
+void UserAgent::busy_sleep(unsigned msec)
 {
 #if defined(PJ_SYMBIAN) && PJ_SYMBIAN != 0
     /* Ideally we shouldn't call pj_thread_sleep() and rather
@@ -356,7 +356,7 @@ void SIPManager::busy_sleep(unsigned msec)
 #endif
 }
 
-bool SIPManager::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout) {
+bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout) {
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
     char contactTmp[256];
@@ -370,7 +370,7 @@ bool SIPManager::addAccount(AccountID id, pjsip_regc **regc2, const std::string&
 
     status = pjsip_regc_create(_endpt, (void *) currentId, &regc_cb, &regc);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to create regc.\n");
+        _debug("UserAgent: Unable to create regc.\n");
         return status;
     }
 
@@ -383,11 +383,11 @@ bool SIPManager::addAccount(AccountID id, pjsip_regc **regc2, const std::string&
     sprintf(contactTmp, "<sip:%s@%s:%d>", user.data(), _localExternAddress.data(), _localExternPort);
     pj_strdup2(_pool, &contact, contactTmp);
 
-    //_debug("SIPManager: Get in %s %d %s\n", svr.ptr, svr.slen, aor.ptr);
-    _debug("SIPManager: Contact is %s\n", contact.ptr);
+    //_debug("UserAgent: Get in %s %d %s\n", svr.ptr, svr.slen, aor.ptr);
+    _debug("UserAgent: Contact is %s\n", contact.ptr);
     status = pjsip_regc_init(regc, &svr, &aor, &aor, 1, &contact, 600); //timeout);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to initialize regc. %d\n", status); //, regc->str_srv_url.ptr);
+        _debug("UserAgent: Unable to initialize regc. %d\n", status); //, regc->str_srv_url.ptr);
         return status;
     }
 
@@ -407,13 +407,13 @@ bool SIPManager::addAccount(AccountID id, pjsip_regc **regc2, const std::string&
     pjsip_tx_data *tdata;
     status = pjsip_regc_register(regc, PJ_TRUE, &tdata);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to register regc.\n");
+        _debug("UserAgent: Unable to register regc.\n");
         return status;
     }
 
     status = pjsip_regc_send(regc, tdata);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to send regc request.\n");
+        _debug("UserAgent: Unable to send regc request.\n");
         return status;
     }
 
@@ -430,7 +430,7 @@ bool SIPManager::addAccount(AccountID id, pjsip_regc **regc2, const std::string&
     return true;
 }
 
-bool SIPManager::removeAccount(pjsip_regc *regc)
+bool UserAgent::removeAccount(pjsip_regc *regc)
 {
     pj_status_t status = 0;
     pjsip_tx_data *tdata = NULL;
@@ -440,19 +440,19 @@ bool SIPManager::removeAccount(pjsip_regc *regc)
     if(regc) {
         status = pjsip_regc_unregister(regc, &tdata);
         if(status != PJ_SUCCESS) {
-            _debug("SIPManager: Unable to unregister regc.\n");
+            _debug("UserAgent: Unable to unregister regc.\n");
             pj_mutex_unlock(_mutex);
             return false;
         }
         
         status = pjsip_regc_send( regc, tdata );
         if(status != PJ_SUCCESS) {
-            _debug("SIPManager: Unable to send regc request.\n");
+            _debug("UserAgent: Unable to send regc request.\n");
             pj_mutex_unlock(_mutex);
             return false;
         }
     } else {
-        _debug("SIPManager: regc is null!\n");
+        _debug("UserAgent: regc is null!\n");
         pj_mutex_unlock(_mutex);
         return false;
     }
@@ -461,7 +461,7 @@ bool SIPManager::removeAccount(pjsip_regc *regc)
     return true;
 }
 
-pj_str_t SIPManager::buildContact(char *userName) {
+pj_str_t UserAgent::buildContact(char *userName) {
     pj_str_t contact;
     char tmp[256];
 
@@ -472,7 +472,7 @@ pj_str_t SIPManager::buildContact(char *userName) {
     return pj_str(tmp);
 }
 
-pj_status_t SIPManager::stunServerResolve() {
+pj_status_t UserAgent::stunServerResolve() {
     pj_str_t stun_adr;
     pj_hostent he;
     pj_stun_config stunCfg;
@@ -489,7 +489,7 @@ pj_status_t SIPManager::stunServerResolve() {
     stun_status = pj_sockaddr_in_init(&stun_srv.ipv4, &stun_adr, (pj_uint16_t) 3478);
 
     if (stun_status != PJ_SUCCESS) {
-        _debug("SIPManager: Unresolved stun server!\n");
+        _debug("UserAgent: Unresolved stun server!\n");
         stun_status = pj_gethostbyname(&stun_adr, &he);
 
         if (stun_status == PJ_SUCCESS) {
@@ -502,7 +502,7 @@ pj_status_t SIPManager::stunServerResolve() {
     return stun_status;
 }
 
-int SIPManager::createUDPServer() {
+int UserAgent::createUDPServer() {
     pj_status_t status;
     pj_str_t ipAddr;
     pj_sockaddr_in bound_addr;
@@ -516,18 +516,18 @@ int SIPManager::createUDPServer() {
     // Create UDP server socket
     status = pj_sock_socket(PJ_AF_INET, PJ_SOCK_DGRAM, 0, &_sock);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: (%d) UDP socket() error\n", status);
+        _debug("UserAgent: (%d) UDP socket() error\n", status);
         return status;
     }
 
     status = pj_sock_bind_in(_sock, pj_ntohl(bound_addr.sin_addr.s_addr), (pj_uint16_t) _localPort);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: (%d) UDP bind() error\n", status);
+        _debug("UserAgent: (%d) UDP bind() error\n", status);
         pj_sock_close(_sock);
         return status;
     }
 
-    _debug("SIPManager: Use IP: %s\n", _localExternAddress.data());
+    _debug("UserAgent: Use IP: %s\n", _localExternAddress.data());
 
     // Create UDP-Server (default port: 5060)
     strcpy(tmpIP, _localExternAddress.data());
@@ -536,26 +536,26 @@ int SIPManager::createUDPServer() {
 
     status = pjsip_udp_transport_attach(_endpt, _sock, &a_name, 1, NULL);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: (%d) Unable to start UDP transport!\n", status);
+        _debug("UserAgent: (%d) Unable to start UDP transport!\n", status);
         return -1;
     } else {
-        _debug("SIPManager: UDP server listening on port %d\n", _localExternPort);
+        _debug("UserAgent: UDP server listening on port %d\n", _localExternPort);
     }
 
     return 0;
 }
 
-void SIPManager::setStunServer(const char *server) {
+void UserAgent::setStunServer(const char *server) {
     _stunServer = std::string(server);
     _useStun = true;
 }
 
-void SIPManager::regc_cb(struct pjsip_regc_cbparam *param) {
+void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {
     
     AccountID *id = static_cast<AccountID *> (param->token);
     SIPVoIPLink *voipLink;
     
-    _debug("SIPManager: Account ID is %s, Register result: %d, Status: %d\n", id->data(), param->status, param->code);
+    _debug("UserAgent: Account ID is %s, Register result: %d, Status: %d\n", id->data(), param->status, param->code);
     
     if (param->status == PJ_SUCCESS) {
         if (param->code < 0 || param->code >= 300) {
@@ -579,24 +579,24 @@ void SIPManager::regc_cb(struct pjsip_regc_cbparam *param) {
 }
 
 bool
-SIPManager::loadSIPLocalIP() {
+UserAgent::loadSIPLocalIP() {
     bool returnValue = true;
     if (_localIPAddress == "127.0.0.1") {
         pj_sockaddr ip_addr;
         if (pj_gethostip(pj_AF_INET(), &ip_addr) != PJ_SUCCESS) {
             // Update the registration state if no network capabilities found
-            _debug("SIPManager: Get host ip failed!\n");
+            _debug("UserAgent: Get host ip failed!\n");
             returnValue = false;
         } else {
             _localIPAddress = std::string(pj_inet_ntoa(ip_addr.ipv4.sin_addr));
-            _debug("SIPManager: Checking network, setting local IP address to: %s\n", _localIPAddress.data());
+            _debug("UserAgent: Checking network, setting local IP address to: %s\n", _localIPAddress.data());
         }
     }
     return returnValue;
 }
 
 /* Thread entry point function. */
-int SIPManager::start_thread(void *arg) {
+int UserAgent::start_thread(void *arg) {
 
     PJ_UNUSED_ARG(arg);
 
@@ -610,7 +610,7 @@ int SIPManager::start_thread(void *arg) {
     return 0;
 }
 
-void SIPManager::set_voicemail_info( AccountID account, pjsip_msg_body *body ){
+void UserAgent::set_voicemail_info( AccountID account, pjsip_msg_body *body ){
 
     int voicemail, pos_begin, pos_end;
     std::string voice_str = "Voice-Message: ";
@@ -645,7 +645,7 @@ void SIPManager::set_voicemail_info( AccountID account, pjsip_msg_body *body ){
 }
 
 
-pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
+pj_bool_t UserAgent::mod_on_rx_request(pjsip_rx_data *rdata) {
 
     pj_status_t status;
     pj_str_t reason;
@@ -660,7 +660,7 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     std::string request;
 
     // Handle the incoming call invite in this function 
-    _debug("SIPManager: Callback on_rx_request is involved!\n");
+    _debug("UserAgent: Callback on_rx_request is involved!\n");
 
     /* First, let's got the username and server name from the invite.
      * We will use them to detect which account is the callee.
@@ -674,13 +674,13 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     // Get the account id of callee from username and server
     account_id = getInstance()->getAccountIdFromNameAndServer(userName, server);
     if(account_id == AccountNULL) {
-            _debug("SIPManager: Username %s doesn't match any account!\n");
+            _debug("UserAgent: Username %s doesn't match any account!\n");
             //delete call;
             //call = NULL;
             return PJ_FALSE;
     }
-    _debug("SIPManager: The receiver is : %s@%s\n", userName.data(), server.data());
-    _debug("SIPManager: The callee account id is %s\n", account_id.c_str());
+    _debug("UserAgent: The receiver is : %s@%s\n", userName.data(), server.data());
+    _debug("UserAgent: The callee account id is %s\n", account_id.c_str());
 
     /* Now, it is the time to find the information of the caller */
     uri = rdata->msg_info.from->uri;
@@ -728,10 +728,10 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     // Generate a new call ID for the incoming call!
     CallID id = Manager::instance().getNewCallID();
 
-    _debug("SIPManager: The call id of the incoming call is %s\n", id.c_str());
+    _debug("UserAgent: The call id of the incoming call is %s\n", id.c_str());
     SIPCall* call = new SIPCall(id, Call::Incoming);
     if (!call) {
-        _debug("SIPManager: unable to create an incoming call");
+        _debug("UserAgent: unable to create an incoming call");
         return PJ_FALSE;
     }
 
@@ -755,19 +755,19 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
         if (Manager::instance().incomingCall(call, account_id)) {
             // Add this call to the callAccountMap in ManagerImpl
             Manager::instance().getAccountLink(account_id)->addCall(call);
-            _debug("SIPManager: Notify UI success!\n");
+            _debug("UserAgent: Notify UI success!\n");
         } else {
             // Fail to notify UI
             delete call;
             call = NULL;
-            _debug("SIPManager: Fail to notify UI!\n");
+            _debug("UserAgent: Fail to notify UI!\n");
             return PJ_FALSE;
         }
     } else {
         // Fail to collect call information
         delete call;
         call = NULL;
-        _debug("SIPManager: Call SIPCallInvite failed!\n");
+        _debug("UserAgent: Call SIPCallInvite failed!\n");
         return PJ_FALSE;
     }
 
@@ -803,13 +803,13 @@ pj_bool_t SIPManager::mod_on_rx_request(pjsip_rx_data *rdata) {
     return PJ_SUCCESS;
 }
 
-AccountID SIPManager::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) {
+AccountID UserAgent::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) {
     int size = _accBaseInfoList.size();
     // Try to find the account id from username and server name by full match
     for (int i = 0; i < size; i++) {
         if (_accBaseInfoList[i]->userName == userName &&
                 _accBaseInfoList[i]->server == server) {
-            //_debug("SIPManager: Full match\n");
+            //_debug("UserAgent: Full match\n");
             return _accBaseInfoList[i]->id;
         }
     }
@@ -817,7 +817,7 @@ AccountID SIPManager::getAccountIdFromNameAndServer(const std::string& userName,
     // We failed! Then only match the username
     for (int i = 0; i < size; i++) {
         if (_accBaseInfoList[i]->userName == userName) {
-            //_debug("SIPManager: Username match\n");
+            //_debug("UserAgent: Username match\n");
             return _accBaseInfoList[i]->id;
         }
     }
@@ -826,7 +826,7 @@ AccountID SIPManager::getAccountIdFromNameAndServer(const std::string& userName,
     return AccountNULL;
 }
 
-SIPManager::AccBaseInfo* SIPManager::getAccountInfoFromId(AccountID id) {
+UserAgent::AccBaseInfo* UserAgent::getAccountInfoFromId(AccountID id) {
     int size = _accBaseInfoList.size();
     for (int i = 0; i < size; i++) {
         if (_accBaseInfoList[i]->id == id) {
@@ -837,7 +837,7 @@ SIPManager::AccBaseInfo* SIPManager::getAccountInfoFromId(AccountID id) {
     return NULL;
 }
 
-bool SIPManager::setCallAudioLocal(SIPCall* call) {
+bool UserAgent::setCallAudioLocal(SIPCall* call) {
     // Firstly, we use the local IP and port number
     unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
     unsigned int callLocalExternAudioPort = callLocalAudioPort;
@@ -848,8 +848,8 @@ bool SIPManager::setCallAudioLocal(SIPCall* call) {
             callLocalExternAudioPort = Manager::instance().getFirewallPort();
         }
     }
-    _debug("SIPManager: Setting local audio port to: %d\n", callLocalAudioPort);
-    _debug("SIPManager: Setting local audio port (external) to: %d\n", callLocalExternAudioPort);
+    _debug("UserAgent: Setting local audio port to: %d\n", callLocalAudioPort);
+    _debug("UserAgent: Setting local audio port (external) to: %d\n", callLocalExternAudioPort);
 
     // Set local audio port for SIPCall(id)
     call->setLocalIp(_localIPAddress);
@@ -859,14 +859,14 @@ bool SIPManager::setCallAudioLocal(SIPCall* call) {
     return true;
 }
 
-int SIPManager::answer(SIPCall *call) {
+int UserAgent::answer(SIPCall *call) {
     pj_status_t status;
     pjsip_tx_data *tdata;
 
     // User answered the incoming call, tell peer this news
     if (call->startNegociation(_pool)) {
         // Create and send a 200(OK) response
-        _debug("SIPManager: Negociation success!\n");
+        _debug("UserAgent: Negociation success!\n");
         status = pjsip_inv_answer(call->getInvSession(), PJSIP_SC_OK, NULL, NULL, &tdata);
         PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
         status = pjsip_inv_send_msg(call->getInvSession(), tdata);
@@ -878,7 +878,7 @@ int SIPManager::answer(SIPCall *call) {
     return 1;
 }
 
-bool SIPManager::makeOutgoingCall(const std::string& strTo, SIPCall* call, const AccountID& id) {
+bool UserAgent::makeOutgoingCall(const std::string& strTo, SIPCall* call, const AccountID& id) {
     pj_status_t status;
     pjsip_dialog *dialog;
     pjsip_tx_data *tdata;
@@ -890,7 +890,7 @@ bool SIPManager::makeOutgoingCall(const std::string& strTo, SIPCall* call, const
     // Generate the from URI
     std::string strFrom = "sip:" + accBase->userName + "@" + accBase->server;
 
-    _debug("SIPManager: Make a new call from:%s to %s. Contact is %s\n", 
+    _debug("UserAgent: Make a new call from:%s to %s. Contact is %s\n", 
             strFrom.data(), strTo.data(), accBase->contact.ptr);
 
     // pjsip need the from and to information in pj_str_t format
@@ -937,12 +937,12 @@ bool SIPManager::makeOutgoingCall(const std::string& strTo, SIPCall* call, const
     return true;
 }
 
-void SIPManager::call_on_forked(pjsip_inv_session *inv, pjsip_event *e) {
+void UserAgent::call_on_forked(pjsip_inv_session *inv, pjsip_event *e) {
     PJ_UNUSED_ARG(inv);
     PJ_UNUSED_ARG(e);
 }
 
-void SIPManager::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e) {
+void UserAgent::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e) {
 
     pjsip_rx_data *rdata;
     AccountID accId;
@@ -950,7 +950,7 @@ void SIPManager::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *
     SIPVoIPLink *link;
     pjsip_msg *msg;
 
-    _debug("SIPManager: TSX Changed! The tsx->state is %d; tsx->role is %d; code is %d; method id is %.*s.\n",
+    _debug("UserAgent: TSX Changed! The tsx->state is %d; tsx->role is %d; code is %d; method id is %.*s.\n",
             tsx->state, tsx->role, tsx->status_code, tsx->method.name.slen, tsx->method.name.ptr);
 
     //Retrieve the body message
@@ -962,19 +962,19 @@ void SIPManager::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *
                 if (tsx->status_code == 200 &&
                         pjsip_method_cmp(&tsx->method, pjsip_get_refer_method()) != 0) {
                     // Peer answered the outgoing call
-                    _debug("SIPManager: Peer answered the outgoing call!\n");
+                    _debug("UserAgent: Peer answered the outgoing call!\n");
                     call = reinterpret_cast<SIPCall *> (inv->mod_data[getInstance()->getModId()]);
                     if (call == NULL)
                         return;
 
-                    //_debug("SIPManager: The call id is %s\n", call->getCallId().data());
+                    //_debug("UserAgent: The call id is %s\n", call->getCallId().data());
 
                     accId = Manager::instance().getAccountFromCall(call->getCallId());
                     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
                     if (link)
                         link->SIPCallAnswered(call, rdata);
                 } else if (tsx->status_code / 100 == 5) {
-		    _debug("SIPManager: 5xx error message received\n");
+		    _debug("UserAgent: 5xx error message received\n");
                 }
                 break;
             case PJSIP_TSX_STATE_PROCEEDING:
@@ -986,7 +986,7 @@ void SIPManager::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *
                     return;
 
                 if (msg->line.status.code == 180) {
-                    _debug("SIPManager: Peer is ringing!\n");
+                    _debug("UserAgent: Peer is ringing!\n");
 
                     call->setConnectionState(Call::Ringing);
                     Manager::instance().peerRingingCall(call->getCallId());
@@ -995,10 +995,10 @@ void SIPManager::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *
             case PJSIP_TSX_STATE_COMPLETED:
                 if (tsx->status_code / 100 == 6 || tsx->status_code / 100 == 4) {
                     // We get error message of outgoing call from server
-                    _debug("SIPManager: Server error message is received!\n");
+                    _debug("UserAgent: Server error message is received!\n");
                     call = reinterpret_cast<SIPCall *> (inv->mod_data[getInstance()->getModId()]);
                     if (call == NULL) {
-                        _debug("SIPManager: Call has been removed!\n");
+                        _debug("UserAgent: Call has been removed!\n");
                         return;
                     }
                     accId = Manager::instance().getAccountFromCall(call->getCallId());
@@ -1017,17 +1017,17 @@ void SIPManager::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *
             case PJSIP_TSX_STATE_TRYING:
                 if (pjsip_method_cmp(&tsx->method, pjsip_get_refer_method()) == 0) {
                     // Peer ask me to transfer call to another number.
-                    _debug("SIPManager: Incoming REFER request!\n");
+                    _debug("UserAgent: Incoming REFER request!\n");
                     getInstance()->onCallTransfered(inv, e->body.tsx_state.src.rdata);
                 }
                 break;
             case PJSIP_TSX_STATE_COMPLETED:
                 if (tsx->status_code == 200 && tsx->method.id == PJSIP_BYE_METHOD) {
                     // Peer hangup the call
-                    _debug("SIPManager: Peer hangup(bye) message is received!\n");
+                    _debug("UserAgent: Peer hangup(bye) message is received!\n");
                     call = reinterpret_cast<SIPCall *> (inv->mod_data[getInstance()->getModId()]);
                     if (call == NULL) {
-                        _debug("SIPManager: Call has been removed!\n");
+                        _debug("UserAgent: Call has been removed!\n");
                         return;
                     }
                     accId = Manager::instance().getAccountFromCall(call->getCallId());
@@ -1037,10 +1037,10 @@ void SIPManager::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *
                     }
                 } else if (tsx->status_code == 200 && tsx->method.id == PJSIP_CANCEL_METHOD) {
                     // Peer refuse the call
-                    _debug("SIPManager: Cancel message is received!\n");
+                    _debug("UserAgent: Cancel message is received!\n");
                     call = reinterpret_cast<SIPCall *> (inv->mod_data[getInstance()->getModId()]);
                     if (call == NULL) {
-                        _debug("SIPManager: Call has been removed!\n");
+                        _debug("UserAgent: Call has been removed!\n");
                         return;
                     }
 
@@ -1058,7 +1058,7 @@ void SIPManager::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *
 
 }
 
-void SIPManager::call_on_state_changed(pjsip_inv_session *inv, pjsip_event *e) {
+void UserAgent::call_on_state_changed(pjsip_inv_session *inv, pjsip_event *e) {
 
     PJ_UNUSED_ARG(inv);
     
@@ -1114,11 +1114,11 @@ void SIPManager::call_on_state_changed(pjsip_inv_session *inv, pjsip_event *e) {
                                         ev_state, st_code,
                                         NULL, &tdata);
             if (status != PJ_SUCCESS) {
-                _debug("SIPManager: Unable to create NOTIFY -- %d\n", status);
+                _debug("UserAgent: Unable to create NOTIFY -- %d\n", status);
             } else {
                 status = pjsip_xfer_send_request(call->getXferSub(), tdata);
                 if (status != PJ_SUCCESS) {
-                    _debug("SIPManager: Unable to send NOTIFY -- %d\n", status);
+                    _debug("UserAgent: Unable to send NOTIFY -- %d\n", status);
                 }
             }
         }
@@ -1126,8 +1126,8 @@ void SIPManager::call_on_state_changed(pjsip_inv_session *inv, pjsip_event *e) {
 
 }
 
-bool SIPManager::onhold(SIPCall *call) {
-    _debug("SIPManager: Before onhold pjsip_inv_reinite begins!\n");
+bool UserAgent::onhold(SIPCall *call) {
+    _debug("UserAgent: Before onhold pjsip_inv_reinite begins!\n");
     pj_status_t status;
     pjsip_tx_data *tdata;
     pjmedia_sdp_attr *attr;
@@ -1142,11 +1142,11 @@ bool SIPManager::onhold(SIPCall *call) {
     /* Send the request */
     status = pjsip_inv_send_msg( call->getInvSession(), tdata);
  
-    _debug("SIPManager: After pjsip_inv_reinite begins!\n");
+    _debug("UserAgent: After pjsip_inv_reinite begins!\n");
 }
 
-bool SIPManager::offhold(SIPCall *call) {
-    _debug("SIPManager: Before offhold pjsip_inv_reinite begins!\n");
+bool UserAgent::offhold(SIPCall *call) {
+    _debug("UserAgent: Before offhold pjsip_inv_reinite begins!\n");
     pj_status_t status;
     pjsip_tx_data *tdata;
     pjmedia_sdp_attr *attr;
@@ -1161,10 +1161,10 @@ bool SIPManager::offhold(SIPCall *call) {
     /* Send the request */
     status = pjsip_inv_send_msg( call->getInvSession(), tdata);
  
-    _debug("SIPManager: After pjsip_inv_reinite begins!\n");
+    _debug("UserAgent: After pjsip_inv_reinite begins!\n");
 }
 
-bool SIPManager::hangup(SIPCall* call) {
+bool UserAgent::hangup(SIPCall* call) {
     pj_status_t status;
     pjsip_tx_data *tdata;
     
@@ -1179,7 +1179,7 @@ bool SIPManager::hangup(SIPCall* call) {
     return true;
 }
 
-bool SIPManager::refuse(SIPCall* call)
+bool UserAgent::refuse(SIPCall* call)
 {
     pj_status_t status;
     pjsip_tx_data *tdata;
@@ -1195,7 +1195,7 @@ bool SIPManager::refuse(SIPCall* call)
     return true;
 }
 
-bool SIPManager::transfer(SIPCall *call, const std::string& to)
+bool UserAgent::transfer(SIPCall *call, const std::string& to)
 {
     pjsip_evsub *sub;
     pjsip_tx_data *tdata;
@@ -1214,7 +1214,7 @@ bool SIPManager::transfer(SIPCall *call, const std::string& to)
     
     status = pjsip_xfer_create_uac(call->getInvSession()->dlg, &xfer_cb, &sub);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to create xfer -- %d\n", status);
+        _debug("UserAgent: Unable to create xfer -- %d\n", status);
         return false;
     }
     
@@ -1232,25 +1232,25 @@ bool SIPManager::transfer(SIPCall *call, const std::string& to)
      */
     status = pjsip_xfer_initiate(sub, &dest, &tdata);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to create REFER request -- %d\n", status);
+        _debug("UserAgent: Unable to create REFER request -- %d\n", status);
         return false;
     }
 
     /* Send. */
     status = pjsip_xfer_send_request(sub, tdata);
     if (status != PJ_SUCCESS) {
-        _debug("SIPManager: Unable to send REFER request -- %d\n", status);
+        _debug("UserAgent: Unable to send REFER request -- %d\n", status);
         return false;
     }
 
     return true;
 }
 
-void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
+void UserAgent::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
 {
     PJ_UNUSED_ARG(event);
 
-    _debug("SIPManager: Transfer callback is involved!\n");
+    _debug("UserAgent: Transfer callback is involved!\n");
     /*
      * When subscription is accepted (got 200/OK to REFER), check if 
      * subscription suppressed.
@@ -1287,14 +1287,14 @@ void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
             /* Yes, subscription is suppressed.
              * Terminate our subscription now.
              */
-            _debug("SIPManager: Xfer subscription suppressed, terminating event subcription...\n");
+            _debug("UserAgent: Xfer subscription suppressed, terminating event subcription...\n");
             pjsip_evsub_terminate(sub, PJ_TRUE);
 
         } else {
             /* Notify application about call transfer progress. 
              * Initially notify with 100/Accepted status.
              */
-            _debug("SIPManager: Xfer subscription 100/Accepted received...\n");
+            _debug("UserAgent: Xfer subscription 100/Accepted received...\n");
         }
     }
     /*
@@ -1318,20 +1318,20 @@ void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
          */
         if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
             pjsip_evsub_set_mod_data(sub, getInstance()->getModId(), NULL);
-            _debug("SIPManager: Xfer client subscription terminated\n");
+            _debug("UserAgent: Xfer client subscription terminated\n");
 
         }
 
         if (!link || !event) {
             /* Application is not interested with call progress status */
-            _debug("SIPManager: Either link or event is empty!\n");
+            _debug("UserAgent: Either link or event is empty!\n");
             return;
         }
 
         // Get current call
         SIPCall *call = dynamic_cast<SIPCall *>(link->getCall(Manager::instance().getCurrentCallId()));
         if(!call) {
-            _debug("SIPManager: Call doesn't exit!\n");
+            _debug("UserAgent: Call doesn't exit!\n");
             return;
         }
         
@@ -1347,7 +1347,7 @@ void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
             msg = rdata->msg_info.msg;
             body = msg->body;
             if (!body) {
-                _debug("SIPManager: Warning! Received NOTIFY without message body\n");
+                _debug("UserAgent: Warning! Received NOTIFY without message body\n");
                 return;
             }
 
@@ -1355,7 +1355,7 @@ void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
             if (pj_stricmp2(&body->content_type.type, "message") != 0 ||
                 pj_stricmp2(&body->content_type.subtype, "sipfrag") != 0)
             {
-                _debug("SIPManager: Warning! Received NOTIFY with non message/sipfrag content\n");
+                _debug("UserAgent: Warning! Received NOTIFY with non message/sipfrag content\n");
                 return;
             }
 
@@ -1363,12 +1363,12 @@ void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
             status = pjsip_parse_status_line((char*)body->data, body->len,
                                              &status_line);
             if (status != PJ_SUCCESS) {
-                _debug("SIPManager: Warning! Received NOTIFY with invalid message/sipfrag content\n");
+                _debug("UserAgent: Warning! Received NOTIFY with invalid message/sipfrag content\n");
                 return;
             }
 
         } else {
-            _debug("SIPManager: Set code to 500!\n");
+            _debug("UserAgent: Set code to 500!\n");
             status_line.code = 500;
             status_line.reason = *pjsip_get_status_text(500);
         }
@@ -1378,16 +1378,16 @@ void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
         cont = !is_last;
         
         if(status_line.code/100 == 2) {
-            _debug("SIPManager: Try to stop rtp!\n");
+            _debug("UserAgent: Try to stop rtp!\n");
             pjsip_tx_data *tdata;
             
             status = pjsip_inv_end_session(call->getInvSession(), PJSIP_SC_GONE, NULL, &tdata);
             if(status != PJ_SUCCESS) {
-                _debug("SIPManager: Fail to create end session msg!\n");
+                _debug("UserAgent: Fail to create end session msg!\n");
             } else {
                 status = pjsip_inv_send_msg(call->getInvSession(), tdata);
                 if(status != PJ_SUCCESS) 
-                    _debug("SIPManager: Fail to send end session msg!\n");
+                    _debug("UserAgent: Fail to send end session msg!\n");
             }
             
             link->transferStep2();
@@ -1401,7 +1401,7 @@ void SIPManager::xfer_func_cb( pjsip_evsub *sub, pjsip_event *event)
          
 }
 
-void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
+void UserAgent::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
 {
     pj_status_t status;
     pjsip_tx_data *tdata;
@@ -1428,7 +1428,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
         /* Invalid Request.
          * No Refer-To header!
          */
-        _debug("SIPManager: Received REFER without Refer-To header!\n");
+        _debug("UserAgent: Received REFER without Refer-To header!\n");
         pjsip_dlg_respond( inv->dlg, rdata, 400, NULL, NULL, NULL);
         return;
     }
@@ -1452,7 +1452,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     /* Notify callback */
     code = PJSIP_SC_ACCEPTED;
 
-    _debug("SIPManager: Call to %.*s is being transfered to %.*s\n",
+    _debug("UserAgent: Call to %.*s is being transfered to %.*s\n",
               (int)inv->dlg->remote.info_str.slen,
               inv->dlg->remote.info_str.ptr,
               (int)refer_to->hvalue.slen,
@@ -1469,7 +1469,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
         status = pjsip_dlg_create_response(inv->dlg, rdata, code, NULL,
                                            &tdata);
         if (status != PJ_SUCCESS) {
-            _debug("SIPManager: Unable to create 2xx response to REFER -- %d\n", status);
+            _debug("UserAgent: Unable to create 2xx response to REFER -- %d\n", status);
             return;
         }
 
@@ -1484,7 +1484,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
         status = pjsip_dlg_send_response(inv->dlg, pjsip_rdata_get_tsx(rdata),
                                          tdata);
         if (status != PJ_SUCCESS) {
-            _debug("SIPManager: Unable to create 2xx response to REFER -- %d\n", status);
+            _debug("UserAgent: Unable to create 2xx response to REFER -- %d\n", status);
             return;
         }
 
@@ -1505,7 +1505,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
         /* Create transferee event subscription */
         status = pjsip_xfer_create_uas( inv->dlg, &xfer_cb, rdata, &sub);
         if (status != PJ_SUCCESS) {
-            _debug("SIPManager: Unable to create xfer uas -- %d\n", status);
+            _debug("UserAgent: Unable to create xfer uas -- %d\n", status);
             pjsip_dlg_respond( inv->dlg, rdata, 500, NULL, NULL, NULL);
             return;
         }
@@ -1532,14 +1532,14 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
         status = pjsip_xfer_notify( sub, PJSIP_EVSUB_STATE_ACTIVE,
                                     100, NULL, &tdata);
         if (status != PJ_SUCCESS) {
-            _debug("SIPManager: Unable to create NOTIFY to REFER -- %d", status);
+            _debug("UserAgent: Unable to create NOTIFY to REFER -- %d", status);
             return;
         }
 
         /* Send initial NOTIFY request */
         status = pjsip_xfer_send_request( sub, tdata);
         if (status != PJ_SUCCESS) {
-            _debug("SIPManager: Unable to send NOTIFY to REFER -- %d\n", status);
+            _debug("UserAgent: Unable to send NOTIFY to REFER -- %d\n", status);
             return;
         }
     }
@@ -1556,7 +1556,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     tmp = std::string(uri);
 
     if(existing_call == NULL) {
-        _debug("SIPManager: Call doesn't exist!\n");
+        _debug("UserAgent: Call doesn't exist!\n");
         return;
     }
     
@@ -1570,12 +1570,12 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
             status = pjsip_xfer_notify(sub, PJSIP_EVSUB_STATE_TERMINATED,
                                        500, NULL, &tdata);
             if (status != PJ_SUCCESS) {
-                _debug("SIPManager: Unable to create NOTIFY to REFER -- %d\n", status);
+                _debug("UserAgent: Unable to create NOTIFY to REFER -- %d\n", status);
                 return;
             }
             status = pjsip_xfer_send_request(sub, tdata);
             if (status != PJ_SUCCESS) {
-                _debug("SIPManager: Unable to send NOTIFY to REFER -- %d\n", status);
+                _debug("UserAgent: Unable to send NOTIFY to REFER -- %d\n", status);
                 return;
             }
         }
@@ -1587,7 +1587,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     if(link) {
         newCall = dynamic_cast<SIPCall *>(link->getCall(newCallId));
         if(!newCall) {
-            _debug("SIPManager: can not find the call from sipvoiplink!\n");
+            _debug("UserAgent: can not find the call from sipvoiplink!\n");
             return;
         }
     }
@@ -1605,7 +1605,7 @@ void SIPManager::onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     }    
 }
 
-void SIPManager::xfer_svr_cb(pjsip_evsub *sub, pjsip_event *event)
+void UserAgent::xfer_svr_cb(pjsip_evsub *sub, pjsip_event *event)
 {
     PJ_UNUSED_ARG(event);
 
@@ -1623,6 +1623,6 @@ void SIPManager::xfer_svr_cb(pjsip_evsub *sub, pjsip_event *event)
         pjsip_evsub_set_mod_data(sub, getInstance()->getModId(), NULL);
         call->setXferSub(NULL);
 
-        _debug("SIPManager: Xfer server subscription terminated\n");
+        _debug("UserAgent: Xfer server subscription terminated\n");
     }    
 }

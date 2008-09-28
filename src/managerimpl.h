@@ -47,7 +47,7 @@ class CodecDescriptor;
 class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
-class SIPManager;
+class UserAgent;
 
 #ifdef USE_ZEROCONF
 class DNSService;
@@ -1025,12 +1025,12 @@ public:
 
 private:
     /**
-     * The SIPManager provides sip operation facilities for all sip accounts
+     * The UserAgent provides sip operation facilities for all sip accounts
      */
-    SIPManager *_sipManager;
+    UserAgent *_userAgent;
 
-    /** Whether the _SIPManager has been initialized */
-    bool _sipManagerInitlized;
+    /** Whether the _UserAgent has been initialized */
+    bool _userAgentInitlized;
     
     bool _sipThreadStop;
 
@@ -1043,7 +1043,7 @@ public:
     /**
      * Retuun the instance of sip manager
      */
-    SIPManager *getSipManager();
+    UserAgent *getUserAgent();
     
     void setSipThreadStatus(bool status) {_sipThreadStop = status;}
     

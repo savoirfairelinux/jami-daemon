@@ -42,7 +42,7 @@ typedef std::string AccountID;
 
 class SIPCall;
 
-class SIPManager
+class UserAgent
 {
 private:
     /** PJSIP Endpoint */
@@ -68,7 +68,7 @@ private:
     
     pj_thread_t *_thread;
     
-    static SIPManager *_current;
+    static UserAgent *_current;
     
     struct AccBaseInfo {
         std::string userName;
@@ -84,8 +84,8 @@ private:
     void busy_sleep(unsigned msec);
     void sipDestory();
 public:
-    SIPManager();
-    ~SIPManager();
+    UserAgent();
+    ~UserAgent();
     
     pj_status_t sipCreate();
     
@@ -148,7 +148,7 @@ public:
     static void call_on_forked(pjsip_inv_session *inv, pjsip_event *e);
     static void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
     static int start_thread(void *arg);
-    static SIPManager* getInstance() {return _current;}
+    static UserAgent* getInstance() {return _current;}
 
     static void set_voicemail_info( AccountID account, pjsip_msg_body *body );
 };

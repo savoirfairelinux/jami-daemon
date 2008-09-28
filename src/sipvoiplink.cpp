@@ -25,7 +25,7 @@
 #include "sipcall.h"
 #include <sstream> // for ostringstream
 #include "sipaccount.h"
-#include "sipmanager.h"
+#include "useragent.h"
 #include "audio/audiortp.h"
         
 #include "manager.h"
@@ -145,7 +145,7 @@ SIPVoIPLink::sendRegister()
 
   setRegistrationState(Trying);
 
-  return Manager::instance().getSipManager()->addAccount(id, &_regc, _server, _authname, _password, expire_value);
+  return Manager::instance().getUserAgent()->addAccount(id, &_regc, _server, _authname, _password, expire_value);
 }
 
 std::string
@@ -177,7 +177,7 @@ SIPVoIPLink::sendUnregister()
 
   _bRegister = false;
   
-  Manager::instance().getSipManager()->removeAccount(_regc);
+  Manager::instance().getUserAgent()->removeAccount(_regc);
   
   return true;
 }
@@ -213,7 +213,7 @@ SIPVoIPLink::answer(const CallID& id)
     return false;
   }
 
-  int i = Manager::instance().getSipManager()->answer(call);
+  int i = Manager::instance().getUserAgent()->answer(call);
   
   if (i != 0) {
     _debug("< SIP Building Error: send 400 Bad Request\n");
@@ -240,7 +240,7 @@ SIPVoIPLink::hangup(const CallID& id)
   SIPCall* call = getSIPCall(id);
   if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
 
-    Manager::instance().getSipManager()->hangup(call);
+    Manager::instance().getUserAgent()->hangup(call);
   
   // Release RTP thread
   if (Manager::instance().isCurrentCall(id)) {
@@ -277,7 +277,7 @@ SIPVoIPLink::onhold(const CallID& id)
   _debug("* SIP Info: Stopping AudioRTP for onhold action\n");
   _audiortp->closeRtpSession();
 
-  Manager::instance().getSipManager()->onhold(call);
+  Manager::instance().getUserAgent()->onhold(call);
 
   return true;
 }
@@ -288,7 +288,7 @@ SIPVoIPLink::offhold(const CallID& id)
   SIPCall* call = getSIPCall(id);
   if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }
 
-  Manager::instance().getSipManager()->offhold(call);
+  Manager::instance().getUserAgent()->offhold(call);
 
   // Enable audio
   _debug("* SIP Info: Starting AudioRTP when offhold\n");
@@ -314,7 +314,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 
   _debug("In transfer, tmp_to is %s\n", tmp_to.data());
 
-  Manager::instance().getSipManager()->transfer(call, tmp_to);
+  Manager::instance().getUserAgent()->transfer(call, tmp_to);
 
   //_audiortp->closeRtpSession();
   // shall we delete the call?
@@ -341,7 +341,7 @@ SIPVoIPLink::refuse (const CallID& id)
     return false; 
   }
 
-  Manager::instance().getSipManager()->refuse(call);
+  Manager::instance().getUserAgent()->refuse(call);
   
   return true;
 }
@@ -418,7 +418,7 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject)
   //setCallAudioLocal(call);
   AccountID accId = getAccountID();
 
-  return Manager::instance().getSipManager()->makeOutgoingCall(to, call, accId);
+  return Manager::instance().getUserAgent()->makeOutgoingCall(to, call, accId);
 }
 
 std::string

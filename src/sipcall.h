@@ -23,7 +23,7 @@
 
 #include "call.h"
 #include "audio/codecDescriptor.h"
-#include "sipmanager.h"
+#include "useragent.h"
 
 class AudioCodec;
 

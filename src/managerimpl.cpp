@@ -46,7 +46,7 @@
 #include "accountcreator.h" // create new account
 #include "sipvoiplink.h"
 
-#include "sipmanager.h"
+#include "useragent.h"
 
 #include "user_cfg.h"
 
@@ -87,8 +87,8 @@ ManagerImpl::ManagerImpl (void)
   _hasTriedToRegister = false;
 
   // SIP Link
-  _sipManager = NULL;
-  _sipManagerInitlized = false;
+  _userAgent = NULL;
+  _userAgentInitlized = false;
 
   // initialize random generator for call id
   srand (time(NULL));
@@ -123,9 +123,9 @@ ManagerImpl::init()
   loadAccountMap();
  
   //Initialize sip manager 
-  if(_sipManagerInitlized) {
-    _sipManager->sipCreate();
-    _sipManager->sipInit();
+  if(_userAgentInitlized) {
+    _userAgent->sipCreate();
+    _userAgent->sipInit();
   }
 
   initVolume();
@@ -166,10 +166,10 @@ void ManagerImpl::terminate()
 
   unloadAccountMap();
   
-  if(_sipManagerInitlized) {
-      delete _sipManager;
-      _sipManager = NULL;
-      _sipManagerInitlized = false;
+  if(_userAgentInitlized) {
+      delete _userAgent;
+      _userAgent = NULL;
+      _userAgentInitlized = false;
   }
 
   _debug("Unload DTMF Key\n");
@@ -2089,10 +2089,10 @@ ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& detail
   /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
   if (accountType == "SIP") {
-      if(!_sipManagerInitlized) {
+      if(!_userAgentInitlized) {
         // Initialize the SIP Manager
-        _sipManager = new SIPManager();
-        _sipManagerInitlized = true;
+        _userAgent = new UserAgent();
+        _userAgentInitlized = true;
       }
 
       newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
@@ -2101,7 +2101,7 @@ ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& detail
       int useStun = Manager::instance().getConfigInt(newAccount->getAccountID(),SIP_USE_STUN);
   
       if(useStun == 1) {
-        _sipManager->setStunServer(Manager::instance().getConfigString(newAccount->getAccountID(), SIP_STUN_SERVER).data());
+        _userAgent->setStunServer(Manager::instance().getConfigString(newAccount->getAccountID(), SIP_STUN_SERVER).data());
       }
   }
   else if (accountType == "IAX") {
@@ -2214,10 +2214,10 @@ ManagerImpl::loadAccountMap()
 
     accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
     if (accountType == "SIP") {
-      if(!_sipManagerInitlized) {
+      if(!_userAgentInitlized) {
         // Initialize the SIP Manager
-        _sipManager = new SIPManager();
-        _sipManagerInitlized = true;
+        _userAgent = new UserAgent();
+        _userAgentInitlized = true;
       }
 
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
@@ -2226,7 +2226,7 @@ ManagerImpl::loadAccountMap()
       int useStun = Manager::instance().getConfigInt(tmpAccount->getAccountID(),SIP_USE_STUN);
   
       if(useStun == 1) {
-        _sipManager->setStunServer(Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_STUN_SERVER).data());
+        _userAgent->setStunServer(Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_STUN_SERVER).data());
       }
       
       
@@ -2309,9 +2309,9 @@ pjsip_regc
 /** 
  * Return the instance of sip manager
  */
-SIPManager *ManagerImpl::getSipManager()
+UserAgent *ManagerImpl::getUserAgent()
 {
-    return _sipManager;
+    return _userAgent;
 }
 
 #ifdef TEST
