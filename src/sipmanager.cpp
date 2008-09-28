@@ -925,12 +925,15 @@ bool SIPManager::makeOutgoingCall(const std::string& strTo, SIPCall* call, const
     status = pjsip_inv_invite(inv, &tdata);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
 
-    status = pjsip_inv_send_msg(inv, tdata);
-    PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-
     // Associate current invite session in the call
     call->setInvSession(inv);
     
+    status = pjsip_inv_send_msg(inv, tdata);
+    //PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+    if(status != PJ_SUCCESS) {
+	return false;
+    }
+
     return true;
 }
 
@@ -972,16 +975,6 @@ void SIPManager::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *
                         link->SIPCallAnswered(call, rdata);
                 } else if (tsx->status_code / 100 == 5) {
 		    _debug("SIPManager: 5xx error message received\n");
-                    call = reinterpret_cast<SIPCall *> (inv->mod_data[getInstance()->getModId()]);
-                    if (call == NULL) {
-                        _debug("SIPManager: Call has been removed!\n");
-                        return;
-                    }
-                    accId = Manager::instance().getAccountFromCall(call->getCallId());
-                    link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
-                    if (link) {
-                        link->SIPCallServerFailure(call);
-                    }
                 }
                 break;
             case PJSIP_TSX_STATE_PROCEEDING:

@@ -418,9 +418,7 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject)
   //setCallAudioLocal(call);
   AccountID accId = getAccountID();
 
-  Manager::instance().getSipManager()->makeOutgoingCall(to, call, accId);
- 
-  return true;
+  return Manager::instance().getSipManager()->makeOutgoingCall(to, call, accId);
 }
 
 std::string
