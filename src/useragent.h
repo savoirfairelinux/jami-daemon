@@ -70,16 +70,6 @@ private:
     
     static UserAgent *_current;
     
-    struct AccBaseInfo {
-        std::string userName;
-        std::string server;
-        AccountID id;
-        pjsip_cred_info cred;
-        pj_str_t contact;
-    };
-    
-    typedef std::vector<AccBaseInfo *> AccBaseInfoList;
-    AccBaseInfoList _accBaseInfoList;
     /* Sleep with polling */
     void busy_sleep(unsigned msec);
     void sipDestory();
@@ -116,9 +106,6 @@ public:
     std::string getLocalIP() {return _localExternAddress;}
     
     int getModId() {return _mod.id;}
-    
-    AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
-    AccBaseInfo* getAccountInfoFromId(AccountID id);
     
     bool setCallAudioLocal(SIPCall* call);
     

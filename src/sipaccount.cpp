@@ -24,10 +24,12 @@
 #include "sipvoiplink.h"
 #include "manager.h"
 #include "user_cfg.h"
+#include "useragent.h"
 
 SIPAccount::SIPAccount(const AccountID& accountID)
  : Account(accountID)
 {
+  _cred = NULL;
   _link = new SIPVoIPLink(accountID);
 }
 
@@ -36,6 +38,8 @@ SIPAccount::~SIPAccount()
 {
   delete _link;
   _link = NULL;
+  delete _cred;
+  _cred = NULL;
 }
 
 void
@@ -77,3 +81,16 @@ SIPAccount::loadConfig()
   // SIP specific
   //none
 }
+
+bool 
+SIPAccount::fullMatch(const std::string& userName, const std::string& server)
+{
+  return (userName == _userName && server == _server);
+}
+
+bool 
+SIPAccount::userMatch(const std::string& userName)
+{
+  return (userName == _userName);
+}
+

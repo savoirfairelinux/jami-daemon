@@ -23,6 +23,7 @@
 #include "sipcall.h"
 #include "useragent.h"
 #include "sipvoiplink.h"
+#include "sipaccount.h"
 
 #define DEFAULT_SIP_PORT  5060
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
@@ -289,13 +290,6 @@ void UserAgent::sipDestory() {
         _thread = NULL;
     }
 
-    // Clear the Account Basic Info List
-    size = _accBaseInfoList.size();
-    for (int i = 0; i < size; i++) {
-        delete _accBaseInfoList[i];    
-    }
-    _accBaseInfoList.clear();
-    
     if (_endpt) {
         /* Terminate all presence subscriptions. */
         //pjsua_pres_shutdown();
@@ -368,6 +362,8 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     pj_mutex_lock(_mutex);
     std::string tmp;
 
+    SIPAccount *account;
+
     status = pjsip_regc_create(_endpt, (void *) currentId, &regc_cb, &regc);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to create regc.\n");
@@ -391,18 +387,21 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
         return status;
     }
 
-    AccBaseInfo *info = getAccountInfoFromId(id);
-    
-    if(info == NULL)
-        info = new AccBaseInfo();
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
+    pjsip_cred_info *cred = account->getCredInfo();
 
-    pj_bzero(&info->cred, sizeof (info->cred));
-    pj_strdup2(_pool, &info->cred.username, user.data());
-    info->cred.data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
-    pj_strdup2(_pool, &info->cred.data, passwd.data());
-    pj_strdup2(_pool, &info->cred.realm, "*");
-    pj_strdup2(_pool, &info->cred.scheme, "digest");
-    pjsip_regc_set_credentials(regc, 1, &info->cred);
+    if(!cred)
+        cred = new pjsip_cred_info();
+
+    pj_bzero(cred, sizeof (pjsip_cred_info));
+    pj_strdup2(_pool, &cred->username, user.data());
+    cred->data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
+    pj_strdup2(_pool, &cred->data, passwd.data());
+    pj_strdup2(_pool, &cred->realm, "*");
+    pj_strdup2(_pool, &cred->scheme, "digest");
+    pjsip_regc_set_credentials(regc, 1, cred);
+
+    account->setCredInfo(cred);
 
     pjsip_tx_data *tdata;
     status = pjsip_regc_register(regc, PJ_TRUE, &tdata);
@@ -417,11 +416,9 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
         return status;
     }
 
-    info->userName = user;
-    info->server = server;
-    info->id = id;
-    pj_strdup2(_pool, &info->contact, contact.ptr);
-    _accBaseInfoList.push_back(info);
+    account->setUserName(user);
+    account->setServer(server);
+    account->setContact(contactTmp);
 
     // associate regc with account
     *regc2 = regc;
@@ -617,6 +614,7 @@ void UserAgent::set_voicemail_info( AccountID account, pjsip_msg_body *body ){
     std::string delimiter = "/";
     std::string msg_body, voicemail_str;
 
+    _debug("UserAgent: checking the voice message!\n");
     // The voicemail message is formated like that:
     // Voice-Message: 1/0  . 1 is the number we want to retrieve in this case
 
@@ -672,11 +670,9 @@ pj_bool_t UserAgent::mod_on_rx_request(pjsip_rx_data *rdata) {
     std::string server = std::string(sip_uri->host.ptr, sip_uri->host.slen);
 
     // Get the account id of callee from username and server
-    account_id = getInstance()->getAccountIdFromNameAndServer(userName, server);
+    account_id = Manager::instance().getAccountIdFromNameAndServer(userName, server);
     if(account_id == AccountNULL) {
             _debug("UserAgent: Username %s doesn't match any account!\n");
-            //delete call;
-            //call = NULL;
             return PJ_FALSE;
     }
     _debug("UserAgent: The receiver is : %s@%s\n", userName.data(), server.data());
@@ -803,40 +799,6 @@ pj_bool_t UserAgent::mod_on_rx_request(pjsip_rx_data *rdata) {
     return PJ_SUCCESS;
 }
 
-AccountID UserAgent::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server) {
-    int size = _accBaseInfoList.size();
-    // Try to find the account id from username and server name by full match
-    for (int i = 0; i < size; i++) {
-        if (_accBaseInfoList[i]->userName == userName &&
-                _accBaseInfoList[i]->server == server) {
-            //_debug("UserAgent: Full match\n");
-            return _accBaseInfoList[i]->id;
-        }
-    }
-
-    // We failed! Then only match the username
-    for (int i = 0; i < size; i++) {
-        if (_accBaseInfoList[i]->userName == userName) {
-            //_debug("UserAgent: Username match\n");
-            return _accBaseInfoList[i]->id;
-        }
-    }
-
-    // Failed again! return AccountNULL
-    return AccountNULL;
-}
-
-UserAgent::AccBaseInfo* UserAgent::getAccountInfoFromId(AccountID id) {
-    int size = _accBaseInfoList.size();
-    for (int i = 0; i < size; i++) {
-        if (_accBaseInfoList[i]->id == id) {
-            return _accBaseInfoList[i];
-        }
-    }
-
-    return NULL;
-}
-
 bool UserAgent::setCallAudioLocal(SIPCall* call) {
     // Firstly, we use the local IP and port number
     unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
@@ -882,24 +844,25 @@ bool UserAgent::makeOutgoingCall(const std::string& strTo, SIPCall* call, const 
     pj_status_t status;
     pjsip_dialog *dialog;
     pjsip_tx_data *tdata;
-    pj_str_t from, to;
+    pj_str_t from, to, contact;
 
     // Get the basic information about the callee account
-    AccBaseInfo* accBase = getAccountInfoFromId(id);
+    SIPAccount* account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(id));
     
     // Generate the from URI
-    std::string strFrom = "sip:" + accBase->userName + "@" + accBase->server;
+    std::string strFrom = "sip:" + account->getUserName() + "@" + account->getServer();
 
     _debug("UserAgent: Make a new call from:%s to %s. Contact is %s\n", 
-            strFrom.data(), strTo.data(), accBase->contact.ptr);
+            strFrom.data(), strTo.data(), account->getContact().data());
 
     // pjsip need the from and to information in pj_str_t format
     pj_strdup2(_pool, &from, strFrom.data());
     pj_strdup2(_pool, &to, strTo.data());
+    pj_strdup2(_pool, &contact, account->getContact().data());
 
     // create the dialog (UAC)
     status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from,
-                                    &accBase->contact,
+                                    &contact,
                                     &to,
                                     NULL,
                                     &dialog);
@@ -917,7 +880,7 @@ bool UserAgent::makeOutgoingCall(const std::string& strTo, SIPCall* call, const 
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
 
     // Set auth information
-    pjsip_auth_clt_set_credentials(&dialog->auth_sess, 1, &accBase->cred);
+    pjsip_auth_clt_set_credentials(&dialog->auth_sess, 1, account->getCredInfo());
 
     // Associate current call in the invite session
     inv->mod_data[_mod.id] = call;

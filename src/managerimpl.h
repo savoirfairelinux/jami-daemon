@@ -1001,6 +1001,7 @@ class ManagerImpl {
      */
     bool accountExists(const AccountID& accountID);
 
+public:
     /**
      * Get an account pointer
      * @param accountID account ID to get
@@ -1008,7 +1009,6 @@ class ManagerImpl {
      */
     Account* getAccount(const AccountID& accountID);
 
-public:
     /** Return the AccountID from a CallID
      * Protected by mutex
      * @param callID the CallID in the list
@@ -1022,6 +1022,8 @@ public:
      * @return VoIPLink*   The voip link from the account pointer or 0
      */
     VoIPLink* getAccountLink(const AccountID& accountID);
+
+    AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 
 private:
     /**
