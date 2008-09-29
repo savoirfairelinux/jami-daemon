@@ -194,17 +194,17 @@ pj_status_t UserAgent::sipInit() {
     status = pjsip_xfer_init_module(_endpt);
     PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
         
-    {
+    /*{
  	const pjsip_module handler ={
             NULL, NULL, 			// prev, next.			
-            { (char*)"mod-pjsua-options", 9}, 	// Name.				
+            { (char*)"mod-sflphone-options", 20},//9}, 	// Name.				
             -1,		 			// Id				
             PJSIP_MOD_PRIORITY_APPLICATION, 	// Priority			
             NULL, 				// load()				
             NULL, 				// start()				
             NULL, 				// stop()				
             NULL, 				// unload()				
-            &mod_on_rx_request, 		// on_rx_request()			
+            &options_on_rx_request, 		// on_rx_request()			
             NULL, 				// on_tx_request.			
             NULL, 				// on_tx_response()			
             NULL, 				// on_tsx_state()			
@@ -223,7 +223,7 @@ pj_status_t UserAgent::sipInit() {
 					PJSIP_H_ALLOW,
             				NULL, 1, 
 					&STR_OPTIONS);
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );*/
 
 
     // Initialize invite session module

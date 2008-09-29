@@ -139,7 +139,6 @@ public:
     pj_pool_t *getAppPool() {return _pool;}
     static pj_bool_t mod_on_rx_request(pjsip_rx_data *rdata);
     static pj_bool_t mod_on_rx_response(pjsip_rx_data *rdata) {return PJ_SUCCESS;}
-    static pj_bool_t options_on_rx_request(pjsip_rx_data *rdata) {return PJ_SUCCESS;}
     static void regc_cb(struct pjsip_regc_cbparam *param);
     static void xfer_func_cb( pjsip_evsub *sub, pjsip_event *event);
     static void xfer_svr_cb(pjsip_evsub *sub, pjsip_event *event);
