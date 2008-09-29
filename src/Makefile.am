@@ -49,7 +49,7 @@ sflphoned_SOURCES = \
 	call.cpp \
 	sipcall.cpp \
 	$(IAXSOURCES) \
-	sipmanager.cpp
+	useragent.cpp
 
 sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS) $(SFLPHONE_CFLAGS) $(SIP_CFLAGS)
 
@@ -89,5 +89,5 @@ noinst_HEADERS = \
 	call.h \
 	sipcall.h \
  	$(IAXHEADERS) \
-	sipmanager.h
+	useragent.h
 
