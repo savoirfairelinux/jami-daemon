@@ -53,6 +53,12 @@ class DTMFException : public std::exception
      */
     virtual ~DTMFException() throw();
 
+    // Copy Constructor
+    DTMFException(const DTMFException& rh) throw();
+
+    // Assignment Operator
+    DTMFException& operator=( const DTMFException& rh) throw(); 
+
     /**
      * @return const char* The error
      */
@@ -106,6 +112,12 @@ class DTMFGenerator
      * Destructor
      */
     ~DTMFGenerator();
+
+    // Copy Constructor
+    DTMFGenerator(const DTMFGenerator& rh);
+
+    // Assignment Operator
+    DTMFGenerator& operator=( const DTMFGenerator& rh);
 
     /*
      * Get n samples of the signal of code code

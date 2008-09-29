@@ -30,17 +30,22 @@
 #define MIN_BUFFER_SIZE	1280
 
 // Create  a ring buffer with 'size' bytes
-RingBuffer::RingBuffer(int size) {
-   mBufferSize = (size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE);
-   mStart = 0;
-   mEnd = 0;
-   mBuffer = new unsigned char[mBufferSize];
-   assert (mBuffer != NULL);
+RingBuffer::RingBuffer(int size): mStart( 0 ), mEnd( 0 )
+                                     , mBufferSize( size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE )
+                                     , mBuffer (new unsigned char[mBufferSize])
+{
+	assert (mBuffer != NULL);
 }
 
 // Free memory on object deletion
 RingBuffer::~RingBuffer() {
    delete[] mBuffer;  mBuffer = NULL;
+}
+
+// Assignment operator
+RingBuffer& RingBuffer::operator=(const RingBuffer& rh) {
+   _debug("RingBuffer assignment operator hasn't been implemented yet. Quit!");
+   exit(0);
 }
  
 void

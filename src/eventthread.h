@@ -37,7 +37,8 @@ public:
    */
 	EventThread (VoIPLink*);
 	~EventThread (void);
-	
+        EventThread(const EventThread& rh); // copy constructor
+        EventThread& operator=(const EventThread& rh);  // assignment operator	
 	virtual void 	 run ();
 	virtual void	 stop();
 	virtual void	 startLoop();

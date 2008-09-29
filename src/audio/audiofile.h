@@ -45,6 +45,15 @@ public:
    */
   ~AudioFile();
 
+  // Copy Constructor
+  AudioFile(const AudioFile& rh):_filename(""), _codec(NULL), _start(false) { *this = rh; }
+
+  // Assignment Operator
+  AudioFile& operator=( const AudioFile& rh){
+	_debug("DTMFException assignment operator hasn't been implemented yet. Quit!");
+   	exit(0);
+  }
+
   /**
    * Load a sound file in memory
    * @param filename  The absolute path to the file

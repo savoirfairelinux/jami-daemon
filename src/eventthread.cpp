@@ -20,12 +20,28 @@
 
 #include "eventthread.h"
 #include "voiplink.h"
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+#include "global.h"
 
-EventThread::EventThread (VoIPLink* link) : Thread () 
+
+EventThread::EventThread (VoIPLink* link) : Thread (),  _linkthread(link), stopIt(false)
 {
-	_linkthread = link;
 	setCancel(cancelDeferred);
-	stopIt = false;
+}
+
+// Copy Constructor
+EventThread::EventThread(const EventThread& rh): _linkthread(NULL), stopIt(false) 
+{
+	*this = rh; 
+}
+
+// Assignment Operator overloading
+EventThread& EventThread::operator=(const EventThread& rh)
+{
+	_debug("EventThread assignment operator hasn't been implemented yet. Quit! ");
+	//exit(0);
 }
 
 EventThread::~EventThread (void) 

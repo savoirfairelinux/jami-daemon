@@ -62,6 +62,18 @@ DTMFException::~DTMFException() throw()
 }
 
 
+DTMFException::DTMFException(const DTMFException& rh) throw()
+{
+   *this = rh;
+}
+
+DTMFException& DTMFException::operator=(const DTMFException& rh) throw()
+{
+   _debug("DTMFException assignment operator hasn't been implemented yet. Quit!");
+   exit(0);
+}
+
+
 const char* DTMFException::what() const throw()
 {
 	return reason;
@@ -90,6 +102,16 @@ DTMFGenerator::~DTMFGenerator() {
   }
 }
 
+DTMFGenerator::DTMFGenerator(const DTMFGenerator& rh) : tone("", rh._sampleRate)
+{
+   *this = rh;
+}
+
+DTMFGenerator& DTMFGenerator::operator=(const DTMFGenerator& rh)
+{
+   _debug("DTMFGenerator assignment operator hasn't been implemented yet. Quit!");
+   exit(0);
+}
 
 /*
  * Get n samples of the signal of code code
