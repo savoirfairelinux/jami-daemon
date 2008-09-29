@@ -52,15 +52,45 @@ class AudioLayer {
      * @param manager An instance of managerimpl
      */
     AudioLayer( ManagerImpl* manager , int type )
-      :	  _manager(manager)
+	: _layerType( type )
+        , _manager(manager)
 	, _urgentBuffer( SIZEBUF )
-	, _layerType( type )
+        , _talk ( false )
+        , deviceClosed ( true )
+        , _indexIn ( 0 )
+        , _indexOut ( 0 )
+        , _sampleRate ( 0 )
+        , _frameSize ( 0 )
+        , _inChannel( 1 )
+        , _outChannel ( 1 )
+        , _errorMessage ( 0 )
+        , _mutex (NULL)
     {
-      _inChannel  = 1; // don't put in stereo
-      _outChannel = 1; // don't put in stereo
 
-      deviceClosed = true;
+    }
 
+    //copy constructor
+    AudioLayer(const AudioLayer& rh)
+	: _layerType( rh._layerType )
+        , _manager(rh._manager)
+	, _urgentBuffer( SIZEBUF )
+        , _talk ( false )
+        , deviceClosed ( true )
+        , _indexIn ( 0 )
+        , _indexOut ( 0 )
+        , _sampleRate ( 0 )
+        , _frameSize ( 0 )
+        , _inChannel( 1 )
+        , _outChannel ( 1 )
+        , _errorMessage ( 0 )
+        , _mutex (NULL)
+    { *this = rh;}
+
+    // assignment operator
+    AudioLayer& operator=(const AudioLayer& rh)
+    {
+	_debug("RingBuffer assignment operator hasn't been implemented yet. Quit!");
+   	exit(0);
     }
     
     /**
