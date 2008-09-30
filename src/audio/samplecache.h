@@ -29,6 +29,18 @@ class SampleCache {
     SampleCache( pa_stream* stream );
     ~SampleCache();
 
+    // Copy Constructor
+    SampleCache(const SampleCache& rh):_stream(rh._stream) {
+      _debug("SampleCache copy constructor hasn't been implemented yet. Quit!");
+      exit(0); 
+    }
+
+    // Assignment Operator
+    SampleCache& operator=( const SampleCache& rh){
+	_debug("SampleCache assignment operator hasn't been implemented yet. Quit!");
+   	exit(0);
+    }  
+
     bool uploadSample( SFLDataFormat* buffer, size_t size );
     bool removeSample( );
     bool isSampleCached( );
