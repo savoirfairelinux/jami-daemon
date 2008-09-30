@@ -27,10 +27,12 @@
 #include <samplerate.h>
 
 AudioFile::AudioFile()
- : AudioLoop()
+ : AudioLoop(),
+    _filename(),
+    _codec(NULL),
+    _start(false)
+
 {
-  // could vary later ...
-  _start = false;
 }
 
 AudioFile::~AudioFile()
@@ -45,7 +47,7 @@ AudioFile::loadFile(const std::string& filename, AudioCodec* codec , unsigned in
 
   // if the filename was already load, with the same samplerate 
   // we do nothing
-  if (_filename == filename && _sampleRate == sampleRate) {
+  if ( strcmp(_filename.c_str(), filename.c_str()) == 0 && _sampleRate == (int)sampleRate) {
     return true;
   } else {
     // reset to 0
@@ -87,7 +89,7 @@ AudioFile::loadFile(const std::string& filename, AudioCodec* codec , unsigned in
   // expandedsize is the number of bytes, not the number of int
   // expandedsize should be exactly two time more, else failed
   int16 monoBuffer[length];
-  unsigned int expandedsize = _codec->codecDecode (monoBuffer, (unsigned char *) fileBuffer, length);
+  int expandedsize = (int)_codec->codecDecode (monoBuffer, (unsigned char *) fileBuffer, length);
   if (expandedsize != length*2) {
     _debug("Audio file error on loading audio file!");
     return false;

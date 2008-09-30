@@ -33,6 +33,12 @@ public:
 	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
 }
 
+    AudioCodec( const AudioCodec& codec )
+        : _codecName(codec._codecName), _clockRate(codec._clockRate), _channel(codec._channel),  _bitrate(codec._bitrate),_bandwidth(codec._bandwidth),_payload(codec._payload), _hasDynamicPayload(false),_state(true) {
+  	
+	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
+}
+
     virtual ~AudioCodec() {
 	}
     /**

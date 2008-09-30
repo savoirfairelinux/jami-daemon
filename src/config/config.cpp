@@ -25,7 +25,7 @@
 namespace Conf {
 
 // ctor
-ConfigTree::ConfigTree() 
+ConfigTree::ConfigTree():_sections()
 {
 }
 
