@@ -31,9 +31,10 @@
 
 UserAgent *UserAgent::_current;
 
-UserAgent::UserAgent() {
-    _useStun = false;
-    _localIPAddress = "127.0.0.1";
+UserAgent::UserAgent():_endpt(NULL) ,_sock(NULL), _cp(), _pool(NULL), _mutex(NULL), _mod(), _options_handler(), _useStun(false), _stunHost(),
+        _stunServer(""), _localExternAddress(""), _localIPAddress("127.0.0.1"), _localExternPort(0), _localPort(0), _thread(NULL) {
+    //_useStun = false;
+    //_localIPAddress = "127.0.0.1";
     UserAgent::_current = this;
 }
 
@@ -87,8 +88,7 @@ pj_status_t UserAgent::sipCreate() {
 pj_status_t UserAgent::sipInit() {
     
     pj_status_t status;
-    const pj_str_t STR_OPTIONS = {(char*)"OPTIONS", 7};
-
+    
     /* Init SIP UA: */
 
     //FIXME! DNS initialize here! */
@@ -278,8 +278,6 @@ pj_status_t UserAgent::sipInit() {
 }
 
 void UserAgent::sipDestory() {
-    int i, size;
-
     /* Signal threads to quit: */
     Manager::instance().setSipThreadStatus(true);
 
@@ -459,7 +457,7 @@ bool UserAgent::removeAccount(pjsip_regc *regc)
 }
 
 pj_str_t UserAgent::buildContact(char *userName) {
-    pj_str_t contact;
+    //pj_str_t contact;
     char tmp[256];
 
     //FIXME: IPV6 issue!!
@@ -501,7 +499,7 @@ pj_status_t UserAgent::stunServerResolve() {
 
 int UserAgent::createUDPServer() {
     pj_status_t status;
-    pj_str_t ipAddr;
+    //pj_str_t ipAddr;
     pj_sockaddr_in bound_addr;
     pjsip_host_port a_name;
     char tmpIP[32];
@@ -650,7 +648,7 @@ pj_bool_t UserAgent::mod_on_rx_request(pjsip_rx_data *rdata) {
     unsigned options = 0;
     pjsip_dialog* dialog;
     pjsip_tx_data *tdata;
-    pjmedia_sdp_session *r_sdp;
+    //pjmedia_sdp_session *r_sdp;
     AccountID account_id;
 
     // voicemail part
@@ -672,7 +670,7 @@ pj_bool_t UserAgent::mod_on_rx_request(pjsip_rx_data *rdata) {
     // Get the account id of callee from username and server
     account_id = Manager::instance().getAccountIdFromNameAndServer(userName, server);
     if(account_id == AccountNULL) {
-            _debug("UserAgent: Username %s doesn't match any account!\n");
+            _debug("UserAgent: Username %s doesn't match any account!\n",userName);
             return PJ_FALSE;
     }
     _debug("UserAgent: The receiver is : %s@%s\n", userName.data(), server.data());
@@ -1106,6 +1104,7 @@ bool UserAgent::onhold(SIPCall *call) {
     status = pjsip_inv_send_msg( call->getInvSession(), tdata);
  
     _debug("UserAgent: After pjsip_inv_reinite begins!\n");
+    return (status == PJ_SUCCESS);
 }
 
 bool UserAgent::offhold(SIPCall *call) {
@@ -1125,6 +1124,7 @@ bool UserAgent::offhold(SIPCall *call) {
     status = pjsip_inv_send_msg( call->getInvSession(), tdata);
  
     _debug("UserAgent: After pjsip_inv_reinite begins!\n");
+    return (status == PJ_SUCCESS);
 }
 
 bool UserAgent::hangup(SIPCall* call) {
@@ -1162,9 +1162,9 @@ bool UserAgent::transfer(SIPCall *call, const std::string& to)
 {
     pjsip_evsub *sub;
     pjsip_tx_data *tdata;
-    pjsip_dialog *dlg;
-    pjsip_generic_string_hdr *gs_hdr;
-    const pj_str_t str_ref_by = { (char*)"Referred-By", 11 };
+    //pjsip_dialog *dlg;
+    //pjsip_generic_string_hdr *gs_hdr;
+    //const pj_str_t str_ref_by = { (char*)"Referred-By", 11 };
     struct pjsip_evsub_user xfer_cb;
     pj_status_t status;
     pj_str_t dest;

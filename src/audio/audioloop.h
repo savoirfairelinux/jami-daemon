@@ -43,7 +43,10 @@ public:
   virtual ~AudioLoop();
 
   // Copy Constructor
-  AudioLoop(const AudioLoop& rh):_buffer(0),_size(0), _pos(0), _sampleRate(0) { *this = rh; }
+  AudioLoop(const AudioLoop& rh):_buffer(rh._buffer),_size(rh._size), _pos(rh._pos), _sampleRate(rh._sampleRate) {
+      _debug("AudioLoop copy constructor hasn't been implemented yet. Quit!");
+      exit(0); 
+  }
 
   // Assignment Operator
   AudioLoop& operator=( const AudioLoop& rh){
