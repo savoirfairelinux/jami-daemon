@@ -30,7 +30,7 @@ extern "C"{
 class Gsm : public AudioCodec {
 public:
   // _payload should be 3
-  Gsm (int payload=3): AudioCodec(payload, "GSM"){
+  Gsm (int payload=3): AudioCodec(payload, "GSM"), _decode_gsmhandle(), _encode_gsmhandle() {
     _clockRate = 8000;
     _channel = 1;
     _bitrate = 13.3;
@@ -40,6 +40,18 @@ public:
     printf("ERROR: decode_gsm_create\n");
     if (!(_encode_gsmhandle = gsm_create() ))
     printf("AudioCodec: ERROR: encode_gsm_create\n");
+  }
+  
+  // Copy Constructor
+  Gsm(const Gsm& rh): AudioCodec(3, "GSM"),_decode_gsmhandle(), _encode_gsmhandle() /*: _clockRate(rh._clockRate), _channel(rh._channel), _bitrate(rh._bitrate), _bandwidth(rh._bandwidth) */{
+      printf("GSM copy constructor hasn't been implemented yet. Quit!");
+      exit(0); 
+  }
+
+  // Assignment Operator
+  Gsm& operator=( const Gsm& rh){
+	printf("GSM assignment operator hasn't been implemented yet. Quit!");
+   	exit(0);
   }
   
   virtual ~Gsm (void){

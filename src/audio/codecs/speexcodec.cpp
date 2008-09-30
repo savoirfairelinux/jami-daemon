@@ -25,7 +25,7 @@
 class Speex : public AudioCodec{
 public:
 	Speex(int payload=0)
- 	: AudioCodec(payload, "speex")
+ 	: AudioCodec(payload, "speex"), _speexModePtr(NULL), _speex_dec_bits(), _speex_enc_bits(), _speex_dec_state(NULL), _speex_enc_state(NULL), _speex_frame_size(0)
 	{
   	  _clockRate = 8000;
   	  _channel = 1;
@@ -34,6 +34,19 @@ public:
   	  initSpeex();
 	}
 
+  	// Copy Constructor
+  	Speex(const Speex& rh): AudioCodec(0, "speex"), _speexModePtr(rh._speexModePtr), _speex_dec_bits(rh._speex_dec_bits), _speex_enc_bits(rh._speex_enc_bits),
+                                _speex_dec_state(rh._speex_dec_state), _speex_enc_state(rh._speex_enc_state), _speex_frame_size(rh._speex_frame_size) {
+      		printf("Speex copy constructor hasn't been implemented yet. Quit!");
+      		exit(0); 
+  	}
+
+  	// Assignment Operator
+  	Speex& operator=( const Speex& rh){
+		printf("Speex assignment operator hasn't been implemented yet. Quit!");
+   		exit(0);
+  	}
+  
 	void initSpeex() {
 	/*
   	  if (_clockRate < 16000 ) {

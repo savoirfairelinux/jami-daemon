@@ -23,12 +23,8 @@
 #include "audioloop.h"
 #include <math.h>
 
-AudioLoop::AudioLoop() 
+AudioLoop::AudioLoop():_buffer(0),  _size(0), _pos(0), _sampleRate(0) 
 {
-  _buffer = 0;
-  _pos    = 0;
-  _size   = 0;
-  _sampleRate = 0;
 }
 
 AudioLoop::~AudioLoop()
