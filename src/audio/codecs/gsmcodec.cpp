@@ -30,7 +30,7 @@ extern "C"{
 class Gsm : public AudioCodec {
 public:
   // _payload should be 3
-  Gsm (int payload=3): AudioCodec(payload, "GSM"){
+  Gsm (int payload=3): AudioCodec(payload, "GSM"), _decode_gsmhandle(NULL), _encode_gsmhandle(NULL){
     _clockRate = 8000;
     _channel = 1;
     _bitrate = 13.3;
@@ -42,6 +42,10 @@ public:
     printf("AudioCodec: ERROR: encode_gsm_create\n");
   }
   
+  Gsm( const Gsm& ); 
+
+  Gsm& operator=( const Gsm& ); 
+
   virtual ~Gsm (void){
     gsm_destroy(_decode_gsmhandle);
     gsm_destroy(_encode_gsmhandle);

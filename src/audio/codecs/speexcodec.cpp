@@ -25,7 +25,13 @@
 class Speex : public AudioCodec{
 public:
 	Speex(int payload=0)
- 	: AudioCodec(payload, "speex")
+ 	: AudioCodec(payload, "speex"),
+        _speexModePtr(NULL),
+        _speex_dec_bits(),
+        _speex_enc_bits(),
+        _speex_dec_state(),
+        _speex_enc_state(),
+        _speex_frame_size()
 	{
   	  _clockRate = 8000;
   	  _channel = 1;
@@ -33,6 +39,9 @@ public:
 	  _bandwidth = 0; 
   	  initSpeex();
 	}
+
+        Speex( const Speex& );
+        Speex& operator=(const Speex&);
 
 	void initSpeex() {
 	/*
