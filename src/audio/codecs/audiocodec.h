@@ -28,13 +28,9 @@ private:
 
 public:
     AudioCodec(int payload, const std::string &codecName)
-        : _codecName(codecName) {
-	_payload = payload;
-  	_clockRate = 8000; // default
-  	_channel   = 1; // default
-
-  	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
-	_state = true;
+        : _codecName(codecName), _clockRate(8000), _channel(1),  _bitrate(0.0),_bandwidth(0),_payload(payload), _hasDynamicPayload(false),_state(true) {
+  	
+	_hasDynamicPayload = (_payload >= 96 && _payload <= 127) ? true : false;
 }
 
     virtual ~AudioCodec() {

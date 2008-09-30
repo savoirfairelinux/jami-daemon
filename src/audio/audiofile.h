@@ -46,11 +46,14 @@ public:
   ~AudioFile();
 
   // Copy Constructor
-  AudioFile(const AudioFile& rh):_filename(""), _codec(NULL), _start(false) { *this = rh; }
+  AudioFile(const AudioFile& rh):_filename(rh._filename), _codec(rh._codec), _start(rh._start) {
+  	_debug("AudioFilie copy constructor hasn't been implemented yet. Quit!");
+   	exit(0);
+  }
 
   // Assignment Operator
   AudioFile& operator=( const AudioFile& rh){
-	_debug("DTMFException assignment operator hasn't been implemented yet. Quit!");
+	_debug("AudioFilie assignment operator hasn't been implemented yet. Quit!");
    	exit(0);
   }
 

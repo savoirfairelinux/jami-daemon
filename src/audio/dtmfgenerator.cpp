@@ -64,7 +64,8 @@ DTMFException::~DTMFException() throw()
 
 DTMFException::DTMFException(const DTMFException& rh) throw()
 {
-   *this = rh;
+   _debug("DTMFException copy constructor hasn't been implemented yet. Quit!");
+   exit(0);
 }
 
 DTMFException& DTMFException::operator=(const DTMFException& rh) throw()
@@ -104,7 +105,8 @@ DTMFGenerator::~DTMFGenerator() {
 
 DTMFGenerator::DTMFGenerator(const DTMFGenerator& rh) : tone("", rh._sampleRate)
 {
-   *this = rh;
+   _debug("DTMFGenerator copy constructor hasn't been implemented yet. Quit!");
+   exit(0);
 }
 
 DTMFGenerator& DTMFGenerator::operator=(const DTMFGenerator& rh)

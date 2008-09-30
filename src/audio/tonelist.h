@@ -40,6 +40,18 @@ public:
    */
   ~ToneList();
 
+  // Copy Constructor
+  ToneList(const ToneList& rh):_nbTone(rh._nbTone),_nbCountry(rh._nbCountry),_defaultCountryId(rh._defaultCountryId) {
+      	_debug("ToneList copy constructor hasn't been implemented yet. Quit!");
+   	exit(0);
+  }
+
+  // Assignment Operator
+  ToneList& operator=( const ToneList& rh){
+	_debug("ToneList assignment operator hasn't been implemented yet. Quit!");
+   	exit(0);
+  }
+
   /** Countries */ 
   enum COUNTRYID {
     ZID_NORTH_AMERICA = 0,
@@ -88,6 +100,18 @@ public:
   /** Initialize the toneList and set the current tone to null */
   TelephoneTone(const std::string& countryName, unsigned int sampleRate);
   ~TelephoneTone();
+
+  // Copy Constructor
+  TelephoneTone(const TelephoneTone& rh):_currentTone(rh._currentTone), _toneList(rh._toneList) { 
+  	_debug("TelephoneTone copy constructor hasn't been implemented yet. Quit!");
+ 	exit(0);
+  };
+
+  // Assignment Operator
+  TelephoneTone& operator=( const TelephoneTone& rh){
+	_debug("TelephoneTone assignment operator hasn't been implemented yet. Quit!");
+   	exit(0);
+  }
 
   /** send TONE::ZT_TONE_NULL to stop the playing */
   void setCurrentTone(Tone::TONEID toneId);

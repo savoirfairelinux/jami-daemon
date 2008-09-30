@@ -42,6 +42,15 @@ public:
    */
   virtual ~AudioLoop();
 
+  // Copy Constructor
+  AudioLoop(const AudioLoop& rh):_buffer(0),_size(0), _pos(0), _sampleRate(0) { *this = rh; }
+
+  // Assignment Operator
+  AudioLoop& operator=( const AudioLoop& rh){
+	_debug("AudioLoop assignment operator hasn't been implemented yet. Quit!");
+   	exit(0);
+  }
+
   /**
    * Get the next fragment of the tone
    * the function change the intern position, and will loop

@@ -39,8 +39,7 @@ class RingBuffer {
     ~RingBuffer();
 
     // Copy Constructor
-    RingBuffer(const RingBuffer& rh): mStart(rh.mStart), mEnd(rh.mEnd), mBufferSize( rh.mBufferSize ), mBuffer ( rh.mBuffer )
-    { *this = rh; }
+    RingBuffer(const RingBuffer& rh);
 
     // Assignment operator
     RingBuffer& operator=(const RingBuffer& rh);
