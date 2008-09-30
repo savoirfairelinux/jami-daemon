@@ -73,7 +73,10 @@ namespace Conf {
 
     private:
       friend class ConfigTree;
-      ConfigTreeIterator(ConfigTree *configTree) : _tree(configTree) {}
+      ConfigTreeIterator(ConfigTree *configTree) : _tree(configTree), _endToken(), _iter(), _iterItem() {}
+
+      ConfigTreeIterator(const Conf::ConfigTreeIterator&);
+      ConfigTreeIterator& operator=(const Conf::ConfigTreeIterator&);
 
       ConfigTree* _tree;
       TokenList _endToken;
@@ -151,7 +154,7 @@ namespace Conf {
 
   class ConfigTreeItem {
     public:
-      ConfigTreeItem() : _defaultValue(""), _type("string") {}
+      ConfigTreeItem() : _name(""), _value(""), _defaultValue(""), _type("string") {}
       // defaultvalue = value
       ConfigTreeItem(const std::string& name, const std::string& value, const std::string& type) : 
 	_name(name), _value(value), 
