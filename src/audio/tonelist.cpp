@@ -21,11 +21,9 @@
  */
 #include "tonelist.h"
 
-ToneList::ToneList() {
-  _nbTone = TONE_NBTONE; // could be dynamic
-  _nbCountry = TONE_NBCOUNTRY; // could be dynamic
-
-  _defaultCountryId = ZID_NORTH_AMERICA;
+ToneList::ToneList() : _nbTone( TONE_NBTONE ) , 
+                        _nbCountry( TONE_NBCOUNTRY ),
+                        _defaultCountryId( ZID_NORTH_AMERICA ){
   initToneDefinition();
 }
 
@@ -104,14 +102,16 @@ ToneList::getCountryId(const std::string& countryName)
   }
 }
 
-TelephoneTone::TelephoneTone(const std::string& countryName, unsigned int sampleRate) {
+TelephoneTone::TelephoneTone(const std::string& countryName, unsigned int sampleRate) : 
+    _currentTone( Tone::TONE_NULL ),
+    _toneList() 
+{
   ToneList::COUNTRYID countryId = _toneList.getCountryId(countryName);
   _tone[Tone::TONE_DIALTONE] = new Tone(_toneList.getDefinition(countryId, Tone::TONE_DIALTONE), sampleRate);
   _tone[Tone::TONE_BUSY] = new Tone(_toneList.getDefinition(countryId, Tone::TONE_BUSY), sampleRate);
   _tone[Tone::TONE_RINGTONE] = new Tone(_toneList.getDefinition(countryId, Tone::TONE_RINGTONE), sampleRate);
   _tone[Tone::TONE_CONGESTION] = new Tone(_toneList.getDefinition(countryId, Tone::TONE_CONGESTION), sampleRate);
 
-  _currentTone = Tone::TONE_NULL; 
 }
 
 TelephoneTone::~TelephoneTone() 
