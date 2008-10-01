@@ -39,19 +39,19 @@ public:
     /* methods exported by this interface,
      * you will have to implement them in your ObjectAdaptor
      */
-    void placeCall( const ::DBus::String& accountID, const ::DBus::String& callID, const ::DBus::String& to );
-    void refuse( const ::DBus::String& callID );
-    void accept( const ::DBus::String& callID );
-    void hangUp( const ::DBus::String& callID );
-    void hold( const ::DBus::String& callID );
-    void unhold( const ::DBus::String& callID );
-    void transfert( const ::DBus::String& callID, const ::DBus::String& to );
-    void setVolume( const ::DBus::String& device, const ::DBus::Double& value );
-    ::DBus::Double getVolume( const ::DBus::String& device );
-    std::map< ::DBus::String, ::DBus::String > getCallDetails( const ::DBus::String& callID );
-    ::DBus::String getCurrentCallID(  );
-    void playDTMF( const ::DBus::String& key );
-    void startTone( const ::DBus::Int32& start, const ::DBus::Int32& type );
+    void placeCall( const std::string& accountID, const std::string& callID, const std::string& to );
+    void refuse( const std::string& callID );
+    void accept( const std::string& callID );
+    void hangUp( const std::string& callID );
+    void hold( const std::string& callID );
+    void unhold( const std::string& callID );
+    void transfert( const std::string& callID, const std::string& to );
+    void setVolume( const std::string& device, const double& value );
+    double getVolume( const std::string& device );
+    std::map< std::string, std::string > getCallDetails( const std::string& callID );
+    std::string getCurrentCallID(  );
+    void playDTMF( const std::string& key );
+    void startTone( const int32_t& start, const int32_t& type );
     
 };
 

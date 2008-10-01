@@ -12,21 +12,21 @@ namespace org {
 namespace sflphone {
 namespace SFLphone {
 
-class ContactManager
+class ContactManager_adaptor
 : public ::DBus::InterfaceAdaptor
 {
 public:
 
-    ContactManager()
+    ContactManager_adaptor()
     : ::DBus::InterfaceAdaptor("org.sflphone.SFLphone.ContactManager")
     {
-        register_method(ContactManager, getContacts, _getContacts_stub);
-        register_method(ContactManager, setContacts, _setContacts_stub);
-        register_method(ContactManager, setPresence, _setPresence_stub);
-        register_method(ContactManager, setContactPresence, _setContactPresence_stub);
+        register_method(ContactManager_adaptor, getContacts, _getContacts_stub);
+        register_method(ContactManager_adaptor, setContacts, _setContacts_stub);
+        register_method(ContactManager_adaptor, setPresence, _setPresence_stub);
+        register_method(ContactManager_adaptor, setContactPresence, _setContactPresence_stub);
     }
 
-    ::DBus::IntrospectedInterface* const introspect() const 
+    ::DBus::IntrospectedInterface *const introspect() const 
     {
         static ::DBus::IntrospectedArgument getContacts_args[] = 
         {
@@ -54,7 +54,7 @@ public:
             { "additionalInfo", "s", true },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedMethod ContactManager_methods[] = 
+        static ::DBus::IntrospectedMethod ContactManager_adaptor_methods[] = 
         {
             { "getContacts", getContacts_args },
             { "setContacts", setContacts_args },
@@ -62,22 +62,22 @@ public:
             { "setContactPresence", setContactPresence_args },
             { 0, 0 }
         };
-        static ::DBus::IntrospectedMethod ContactManager_signals[] = 
+        static ::DBus::IntrospectedMethod ContactManager_adaptor_signals[] = 
         {
             { 0, 0 }
         };
-        static ::DBus::IntrospectedProperty ContactManager_properties[] = 
+        static ::DBus::IntrospectedProperty ContactManager_adaptor_properties[] = 
         {
             { 0, 0, 0, 0 }
         };
-        static ::DBus::IntrospectedInterface ContactManager_interface = 
+        static ::DBus::IntrospectedInterface ContactManager_adaptor_interface = 
         {
             "org.sflphone.SFLphone.ContactManager",
-            ContactManager_methods,
-            ContactManager_signals,
-            ContactManager_properties
+            ContactManager_adaptor_methods,
+            ContactManager_adaptor_signals,
+            ContactManager_adaptor_properties
         };
-        return &ContactManager_interface;
+        return &ContactManager_adaptor_interface;
     }
 
 public:
@@ -91,10 +91,10 @@ public:
     /* methods exported by this interface,
      * you will have to implement them in your ObjectAdaptor
      */
-    virtual std::map< ::DBus::String, ::DBus::String > getContacts( const ::DBus::String& accountID ) = 0;
-    virtual void setContacts( const ::DBus::String& accountID, const std::map< ::DBus::String, ::DBus::String >& details ) = 0;
-    virtual void setPresence( const ::DBus::String& accountID, const ::DBus::String& presence, const ::DBus::String& additionalInfo ) = 0;
-    virtual void setContactPresence( const ::DBus::String& accountID, const ::DBus::String& presence, const ::DBus::String& additionalInfo ) = 0;
+    virtual std::map< std::string, std::string > getContacts(const std::string& accountID) = 0;
+    virtual void setContacts(const std::string& accountID, const std::map< std::string, std::string >& details) = 0;
+    virtual void setPresence(const std::string& accountID, const std::string& presence, const std::string& additionalInfo) = 0;
+    virtual void setContactPresence(const std::string& accountID, const std::string& presence, const std::string& additionalInfo) = 0;
 
 public:
 
@@ -105,45 +105,45 @@ private:
 
     /* unmarshalers (to unpack the DBus message before calling the actual interface method)
      */
-    ::DBus::Message _getContacts_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getContacts_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        std::map< ::DBus::String, ::DBus::String > argout1 = getContacts(argin1);
+        std::string argin1; ri >> argin1;
+        std::map< std::string, std::string > argout1 = getContacts(argin1);
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setContacts_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setContacts_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        std::map< ::DBus::String, ::DBus::String > argin2; ri >> argin2;
+        std::string argin1; ri >> argin1;
+        std::map< std::string, std::string > argin2; ri >> argin2;
         setContacts(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _setPresence_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setPresence_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::String argin2; ri >> argin2;
-        ::DBus::String argin3; ri >> argin3;
+        std::string argin1; ri >> argin1;
+        std::string argin2; ri >> argin2;
+        std::string argin3; ri >> argin3;
         setPresence(argin1, argin2, argin3);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _setContactPresence_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setContactPresence_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::String argin2; ri >> argin2;
-        ::DBus::String argin3; ri >> argin3;
+        std::string argin1; ri >> argin1;
+        std::string argin2; ri >> argin2;
+        std::string argin3; ri >> argin3;
         setContactPresence(argin1, argin2, argin3);
         ::DBus::ReturnMessage reply(call);
         return reply;

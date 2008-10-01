@@ -79,9 +79,9 @@ public:
     /* methods exported by this interface,
      * you will have to implement them in your ObjectAdaptor
      */
-    virtual void Register( const ::DBus::Int32& pid, const ::DBus::String& name ) = 0;
-    virtual void Unregister( const ::DBus::Int32& pid ) = 0;
-    virtual ::DBus::Int32 getRegistrationCount(  ) = 0;
+    virtual void Register( const int32_t& pid, const std::string& name ) = 0;
+    virtual void Unregister( const int32_t& pid ) = 0;
+    virtual int32_t getRegistrationCount(  ) = 0;
 
 public:
 
@@ -96,8 +96,8 @@ private:
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
-        ::DBus::String argin2; ri >> argin2;
+        int32_t argin1; ri >> argin1;
+        std::string argin2; ri >> argin2;
         Register(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
@@ -106,7 +106,7 @@ private:
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
+        int32_t argin1; ri >> argin1;
         Unregister(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
@@ -115,7 +115,7 @@ private:
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getRegistrationCount();
+        int32_t argout1 = getRegistrationCount();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

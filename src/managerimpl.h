@@ -292,7 +292,7 @@ class ManagerImpl {
      *		 0 for unregistration request
      *		 1 for registration request
      */
-    void sendRegister( const ::DBus::String& accountId , const DBus::Int32& expire );
+    void sendRegister( const ::std::string& accountId , const int32_t& expire );
 
     bool getZeroconf(const std::string& sequenceId);
     bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
@@ -319,14 +319,14 @@ class ManagerImpl {
      * @param accountID	  The account identifier
      * @param details	  The account parameters
      */
-    void setAccountDetails( const ::DBus::String& accountID, 
-	const std::map< ::DBus::String, ::DBus::String >& details );
+    void setAccountDetails( const ::std::string& accountID, 
+	const std::map< ::std::string, ::std::string >& details );
 
     /**
      * Add a new account, and give it a new account ID automatically
      * @param details The new account parameters
      */
-    void addAccount(const std::map< ::DBus::String, ::DBus::String >& details);
+    void addAccount(const std::map< ::std::string, ::std::string >& details);
 
     /**
      * Delete an existing account, unregister VoIPLink associated, and
@@ -339,7 +339,7 @@ class ManagerImpl {
      * Get the list of codecs we supports, not ordered
      * @return The list of the codecs
      */  
-    std::vector< ::DBus::String > getCodecList( void );
+    std::vector< ::std::string > getCodecList( void );
 
     /**
      * Get the info about one codec
@@ -347,7 +347,7 @@ class ManagerImpl {
      * @param payload The payload of the codec
      * @return std::vector<::DBus::string> The information
      */
-    std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload);
+    std::vector< ::std::string > getCodecDetails( const int32_t& payload);
 
     /**
      * Get a list of supported input audio plugin
@@ -538,7 +538,7 @@ class ManagerImpl {
      * Get the desktop notification level
      * @return int The notification level
      */
-    ::DBus::Int32 getNotify( void );
+    int32_t getNotify( void );
 
     /**
      * Set the desktop mail notification level
@@ -551,23 +551,23 @@ class ManagerImpl {
      *		    0 ALSA
      *		    1 PULSEAUDIO
      */
-    ::DBus::Int32 getAudioManager( void );
+    int32_t getAudioManager( void );
 
     /**
      * Set the audio manager
      */
-    void setAudioManager( const DBus::Int32& api );
+    void setAudioManager( const int32_t& api );
 
     void switchAudioManager( void );
     
     void setPulseAppVolumeControl( void ); 
-    ::DBus::Int32 getPulseAppVolumeControl( void ); 
+    int32_t getPulseAppVolumeControl( void ); 
 
     /**
      * Get the desktop mail notification level
      * @return int The mail notification level
      */
-    ::DBus::Int32 getMailNotify( void );
+    int32_t getMailNotify( void );
 
     /**
      * Get the expire value for SIP registration, set in the user configuration file
@@ -583,22 +583,22 @@ class ManagerImpl {
 
     /**
      * Get the list of the active codecs
-     * @return std::vector< ::DBus::String >  The list of active codecs
+     * @return std::vector< ::std::string >  The list of active codecs
      */  
-    std::vector< ::DBus::String > getActiveCodecList( void ); 
+    std::vector< ::std::string > getActiveCodecList( void ); 
 
     /**
      * Set the list of the active codecs
      * @param list  The new list of active codecs
      */  
-    void setActiveCodecList( const std::vector< ::DBus::String >& list);
+    void setActiveCodecList( const std::vector< ::std::string >& list);
 
     /*
      * Notify the client that an error occured
      * @param errCode The error code. Could be: ALSA_CAPTURE_ERROR
      *					       ALSA_PLAYBACK_ERROR
      */
-    void notifyErrClient( const ::DBus::Int32& errCode );
+    void notifyErrClient( const int32_t& errCode );
 
     /**
      * Retrieve in the configuration tree the value of a parameter in a specific section

@@ -33,29 +33,29 @@ const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/Configur
 {
 }
 
-	std::map< ::DBus::String, ::DBus::String > 
-ConfigurationManager::getAccountDetails( const ::DBus::String& accountID )
+	std::map< std::string, std::string > 
+ConfigurationManager::getAccountDetails( const std::string& accountID )
 {
 	_debug("ConfigurationManager::getAccountDetails received\n");
 	return Manager::instance().getAccountDetails(accountID);
 }
 
 	void 
-ConfigurationManager::setAccountDetails( const ::DBus::String& accountID, 
-		const std::map< ::DBus::String, ::DBus::String >& details )
+ConfigurationManager::setAccountDetails( const std::string& accountID, 
+		const std::map< std::string, std::string >& details )
 {
 	_debug("ConfigurationManager::setAccountDetails received\n");
 	Manager::instance().setAccountDetails(accountID, details);
 }
 
 	void 
-ConfigurationManager::sendRegister( const ::DBus::String& accountID, const ::DBus::Int32& expire )
+ConfigurationManager::sendRegister( const std::string& accountID, const int32_t& expire )
 {
 	Manager::instance().sendRegister(accountID, expire);
 }
 
 	void 
-ConfigurationManager::addAccount( const std::map< ::DBus::String, ::DBus::String >& details )
+ConfigurationManager::addAccount( const std::map< std::string, std::string >& details )
 {
 	_debug("ConfigurationManager::addAccount received\n");
 	Manager::instance().addAccount(details);
@@ -63,13 +63,13 @@ ConfigurationManager::addAccount( const std::map< ::DBus::String, ::DBus::String
 
 
 	void 
-ConfigurationManager::removeAccount( const ::DBus::String& accoundID )
+ConfigurationManager::removeAccount( const std::string& accoundID )
 {
 	_debug("ConfigurationManager::removeAccount received\n");
 	return Manager::instance().removeAccount(accoundID);
 }
 
-std::vector< ::DBus::String > 
+std::vector< std::string > 
 ConfigurationManager::getAccountList(  )
 {
 	_debug("ConfigurationManager::getAccountList received\n");
@@ -77,7 +77,7 @@ ConfigurationManager::getAccountList(  )
 }
 
 
-std::vector< ::DBus::String > 
+std::vector< std::string > 
 ConfigurationManager::getToneLocaleList(  )
 {
 	_debug("ConfigurationManager::getToneLocaleList received\n");
@@ -86,7 +86,7 @@ ConfigurationManager::getToneLocaleList(  )
 
 
 
-	::DBus::String 
+	std::string 
 ConfigurationManager::getVersion(  )
 {
 	_debug("ConfigurationManager::getVersion received\n");
@@ -94,7 +94,7 @@ ConfigurationManager::getVersion(  )
 }
 
 
-	std::vector< ::DBus::String > 
+	std::vector< std::string > 
 ConfigurationManager::getRingtoneList(  )
 {
 	_debug("ConfigurationManager::getRingtoneList received\n");
@@ -103,21 +103,21 @@ ConfigurationManager::getRingtoneList(  )
 
 
 
-	std::vector< ::DBus::String  > 
+	std::vector< std::string  > 
 ConfigurationManager::getCodecList(  )
 {
 	_debug("ConfigurationManager::getCodecList received\n");
 	return Manager::instance().getCodecList();
 }
 
-	std::vector< ::DBus::String > 
-ConfigurationManager::getCodecDetails( const ::DBus::Int32& payload )
+	std::vector< std::string > 
+ConfigurationManager::getCodecDetails( const int32_t& payload )
 {
 	_debug("ConfigurationManager::getCodecList received\n");
 	return Manager::instance().getCodecDetails( payload );
 }
 
-	std::vector< ::DBus::String > 
+	std::vector< std::string > 
 ConfigurationManager::getActiveCodecList(  )
 {
 	_debug("ConfigurationManager::getActiveCodecList received\n");
@@ -125,21 +125,21 @@ ConfigurationManager::getActiveCodecList(  )
 }
 
 void 
-ConfigurationManager::setActiveCodecList( const std::vector< ::DBus::String >& list )
+ConfigurationManager::setActiveCodecList( const std::vector< std::string >& list )
 {
 	_debug("ConfigurationManager::setActiveCodecList received\n");
 	 Manager::instance().setActiveCodecList(list);
 }
 
 // Audio devices related methods
-  std::vector< ::DBus::String >
+  std::vector< std::string >
 ConfigurationManager::getInputAudioPluginList()
 {
 	_debug("ConfigurationManager::getInputAudioPluginList received\n");
 	return Manager::instance().getInputAudioPluginList();
 }
 
-  std::vector< ::DBus::String >
+  std::vector< std::string >
 ConfigurationManager::getOutputAudioPluginList()
 {
 	_debug("ConfigurationManager::getOutputAudioPluginList received\n");
@@ -147,57 +147,57 @@ ConfigurationManager::getOutputAudioPluginList()
 }
 
   void
-ConfigurationManager::setInputAudioPlugin(const ::DBus::String& audioPlugin)
+ConfigurationManager::setInputAudioPlugin(const std::string& audioPlugin)
 {
 	_debug("ConfigurationManager::setInputAudioPlugin received\n");
 	return Manager::instance().setInputAudioPlugin(audioPlugin);
 }
 
   void
-ConfigurationManager::setOutputAudioPlugin(const ::DBus::String& audioPlugin)
+ConfigurationManager::setOutputAudioPlugin(const std::string& audioPlugin)
 {
 	_debug("ConfigurationManager::setOutputAudioPlugin received\n");
 	return Manager::instance().setOutputAudioPlugin(audioPlugin);
 }
 
-  std::vector< ::DBus::String >
+  std::vector< std::string >
 ConfigurationManager::getAudioOutputDeviceList()
 {
 	_debug("ConfigurationManager::getAudioOutputDeviceList received\n");
 	return Manager::instance().getAudioOutputDeviceList();
 }
 void
-ConfigurationManager::setAudioOutputDevice(const ::DBus::Int32& index)
+ConfigurationManager::setAudioOutputDevice(const int32_t& index)
 {
 	_debug("ConfigurationManager::setAudioOutputDevice received\n");
 	return Manager::instance().setAudioOutputDevice(index);
 }
-std::vector< ::DBus::String >
+std::vector< std::string >
 ConfigurationManager::getAudioInputDeviceList()
 {
 	_debug("ConfigurationManager::getAudioInputDeviceList received\n");
 	return Manager::instance().getAudioInputDeviceList();
 }
 void
-ConfigurationManager::setAudioInputDevice(const ::DBus::Int32& index)
+ConfigurationManager::setAudioInputDevice(const int32_t& index)
 {
 	_debug("ConfigurationManager::setAudioInputDevice received\n");
 	return Manager::instance().setAudioInputDevice(index);
 }
-std::vector< ::DBus::String >
+std::vector< std::string >
 ConfigurationManager::getCurrentAudioDevicesIndex()
 {
 	_debug("ConfigurationManager::getCurrentAudioDeviceIndex received\n");
 	return Manager::instance().getCurrentAudioDevicesIndex();
 }
- ::DBus::Int32
-ConfigurationManager::getAudioDeviceIndex(const ::DBus::String& name)
+ int32_t
+ConfigurationManager::getAudioDeviceIndex(const std::string& name)
 {
 	_debug("ConfigurationManager::getAudioDeviceIndex received\n");
 	return Manager::instance().getAudioDeviceIndex(name);
 }
 
-::DBus::String 
+std::string 
 ConfigurationManager::getCurrentAudioOutputPlugin( void )
 {
    _debug("ConfigurationManager::getCurrentAudioOutputPlugin received\n");
@@ -205,21 +205,21 @@ ConfigurationManager::getCurrentAudioOutputPlugin( void )
 }
 
 
-	std::vector< ::DBus::String > 
+	std::vector< std::string > 
 ConfigurationManager::getPlaybackDeviceList(  )
 {
 	_debug("ConfigurationManager::getPlaybackDeviceList received\n");
 
 }
 
-	std::vector< ::DBus::String > 
+	std::vector< std::string > 
 ConfigurationManager::getRecordDeviceList(  )
 {
 	_debug("ConfigurationManager::getRecordDeviceList received\n");
 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::isIax2Enabled( void )
 {
   return Manager::instance().isIax2Enabled(  ); 
@@ -231,25 +231,25 @@ ConfigurationManager::ringtoneEnabled( void )
   Manager::instance().ringtoneEnabled(  ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::isRingtoneEnabled( void )
 {
   return Manager::instance().isRingtoneEnabled(  ); 
 }
 
-::DBus::String
+std::string
 ConfigurationManager::getRingtoneChoice( void )
 {
   return Manager::instance().getRingtoneChoice(  ); 
 }
 
 void
-ConfigurationManager::setRingtoneChoice( const ::DBus::String& tone )
+ConfigurationManager::setRingtoneChoice( const std::string& tone )
 {
   Manager::instance().setRingtoneChoice( tone ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::getDialpad( void )
 {
   return Manager::instance().getDialpad(  ); 
@@ -261,7 +261,7 @@ ConfigurationManager::setDialpad( void )
   Manager::instance().setDialpad( ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::getSearchbar( void )
 {
   return Manager::instance().getSearchbar(  ); 
@@ -273,7 +273,7 @@ ConfigurationManager::setSearchbar( void )
   Manager::instance().setSearchbar( ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::getVolumeControls( void )
 {
   return Manager::instance().getVolumeControls(  ); 
@@ -285,14 +285,14 @@ ConfigurationManager::setVolumeControls( void )
   Manager::instance().setVolumeControls( ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::getMaxCalls( void )
 {
   return Manager::instance().getMaxCalls(  ); 
 }
 
 void
-ConfigurationManager::setMaxCalls( const ::DBus::Int32& calls )
+ConfigurationManager::setMaxCalls( const int32_t& calls )
 {
   Manager::instance().setMaxCalls( calls ); 
 }
@@ -303,7 +303,7 @@ ConfigurationManager::startHidden( void )
   Manager::instance().startHidden(  ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::isStartHidden( void )
 {
   return Manager::instance().isStartHidden(  ); 
@@ -315,7 +315,7 @@ ConfigurationManager::switchPopupMode( void )
   Manager::instance().switchPopupMode(  ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::popupMode( void )
 {
   return Manager::instance().popupMode(  ); 
@@ -328,7 +328,7 @@ ConfigurationManager::setNotify( void )
   Manager::instance().setNotify( ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::getNotify( void )
 {
   _debug("Manager received getNotify\n");
@@ -336,13 +336,13 @@ ConfigurationManager::getNotify( void )
 }
 
 void
-ConfigurationManager::setAudioManager( const DBus::Int32& api )
+ConfigurationManager::setAudioManager( const int32_t& api )
 {
   _debug("Manager received setAudioManager\n");
   Manager::instance().setAudioManager( api ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::getAudioManager( void )
 {
   _debug("Manager received getAudioManager\n");
@@ -356,14 +356,14 @@ ConfigurationManager::setMailNotify( void )
   Manager::instance().setMailNotify( ); 
 }
 
-::DBus::Int32
+int32_t
 ConfigurationManager::getMailNotify( void )
 {
   _debug("Manager received getMailNotify\n");
   return Manager::instance().getMailNotify(  ); 
 }
 
-::DBus::Int32 
+int32_t 
 ConfigurationManager::getPulseAppVolumeControl( void )
 {
   return Manager::instance().getPulseAppVolumeControl();
