@@ -78,24 +78,12 @@ struct _wizard
  */
 void set_account_type( GtkWidget* widget , gpointer data );
 
-/**
- * Callback when the cancel button of the dialog is clicked
- * Action : close the assistant widget and get back to sflphone main window
- */
-static void cancel_callback( void );
+//static void cancel_callback( void );
 
-/**
- * Callback when the close button of the dialog is clicked
- * Action : close the assistant widget and get back to sflphone main window
- */
-static void close_callback( void );
+//static void close_callback( void );
 
-/**
- * Callback when the button apply is clicked
- * Action : Set the account parameters with the entries values and called dbus_add_account
- */
-static void sip_apply_callback( void );
-static void iax_apply_callback( void );
+//static void sip_apply_callback( void );
+//static void iax_apply_callback( void );
 
 void enable_stun( GtkWidget *widget );
 
@@ -114,12 +102,12 @@ GtkWidget* build_registration_error( void );
 /**
  * Forward function
  */
-static gint forward_page_func( gint current_page , gpointer data );
+//static gint forward_page_func( gint current_page , gpointer data );
 
 /**
  * Page template
  */
-static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
+//static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
 
 #endif // GTK_CHECK_VERSION
 
