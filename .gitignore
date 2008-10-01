@@ -45,26 +45,27 @@ doc/*.html
 /src/.libs
 
 # Ignore built DBUS stuff
-/libs/dbus/examples/*
-/libs/dbus/include
-/libs/dbus/*/*.libs*
-/libs/dbus/libtool
-/libs/dbus/autom4te*
-/libs/dbus/config.log
-/libs/dbus/config.status
-/libs/dbus/configure
-/libs/dbus/tools/dbusxx-*
-/libs/dbus/dbus-c++-1.pc
-/libs/dbus/doc
-/libs/dbus/INSTALL
-/libs/dbus/config.guess
-/libs/dbus/config.sub
-/libs/dbus/depcomp
-/libs/dbus/install-sh
-/libs/dbus/ltmain.sh
-/libs/dbus/missing
+/libs/dbus-c++/examples/*
+/libs/dbus-c++/include
+/libs/dbus-c++/*/*.libs*
+/libs/dbus-c++/libtool
+/libs/dbus-c++/autom4te*
+/libs/dbus-c++/config.log
+/libs/dbus-c++/config.status
+/libs/dbus-c++/config.status
+/libs/dbus-c++/configure
+/libs/dbus-c++/tools/dbus-c++xx-*
+/libs/dbus-c++/tools/dbusxx-*
+/libs/dbus-c++/dbus-c++-c++-1.pc
+/libs/dbus-c++/doc
+/libs/dbus-c++/INSTALL
+/libs/dbus-c++/config.guess
+/libs/dbus-c++/config.sub
+/libs/dbus-c++/depcomp
+/libs/dbus-c++/install-sh
+/libs/dbus-c++/ltmain.sh
+/libs/dbus-c++/missing
 /src/dbus/org.sflphone.SFLphone.service
-/libs/sipUpdate
 
 # Ignore sflphone-gtk stuff
 /sflphone-gtk/config.*
