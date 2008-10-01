@@ -18,6 +18,8 @@
  */
  
 #include <calllist.h>
+#include <calltree.h>
+#include <dbus.h>
 
 #include <string.h>
 

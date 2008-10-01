@@ -27,8 +27,9 @@
 #include <dbus.h>
 #include <mainwindow.h>
 #include <calltab.h>
+#include <assistant.h>
 #include <gtk/gtk.h>
-
+#include <glib/gprintf.h>
 #include <string.h> // for strlen
 
 GtkWidget * pickUpMenu;

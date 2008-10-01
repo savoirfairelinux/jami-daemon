@@ -19,6 +19,8 @@
  */
 
 #include <stdlib.h>
+#include <glib/gprintf.h>
+
 #include <gtk/gtk.h>
 #include <actions.h>
 #include <calltree.h>
