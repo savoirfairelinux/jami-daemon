@@ -19,8 +19,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#include <accountlist.h>
-#include <calllist.h>
 #include <calltab.h>
 #include <callmanager-glue.h>
 #include <configurationmanager-glue.h>
