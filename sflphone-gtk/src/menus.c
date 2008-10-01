@@ -121,10 +121,6 @@ help_about ( void * foo)
     "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>", 
     "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
     NULL};
-  gchar *translators[] = {
-    "Maxime Chambreuil <maxime.chambreuil@savoirfairelinux.com>",
-    "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
-    NULL};
 
   gtk_show_about_dialog( GTK_WINDOW(get_main_window()),
       "artists", artists,

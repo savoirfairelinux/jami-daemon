@@ -395,7 +395,6 @@ create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)
 {
   GtkWidget *vbox;
   GtkWidget *label;
-  GdkPixbuf *pixbuf;
   gchar *str;
 
   vbox = gtk_vbox_new(FALSE, 6);
