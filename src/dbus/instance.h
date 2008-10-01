@@ -25,7 +25,7 @@
 
     
 class Instance
-: public org::sflphone::SFLphone::Instance,
+: public org::sflphone::SFLphone::Instance_adaptor,
   public DBus::IntrospectableAdaptor,
   public DBus::ObjectAdaptor
 {

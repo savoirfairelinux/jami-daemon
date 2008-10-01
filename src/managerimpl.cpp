@@ -1074,7 +1074,7 @@ ManagerImpl::retrieveActiveCodecs()
 }
 
   void
-ManagerImpl::setActiveCodecList(const std::vector<  ::DBus::String >& list)
+ManagerImpl::setActiveCodecList(const std::vector<  std::string >& list)
 {
   _debug("Set active codecs list\n");
   _codecDescriptorMap.saveActiveCodecs(list);
@@ -1142,7 +1142,7 @@ ManagerImpl::getCodecList( void )
 }
 
   std::vector<std::string>
-ManagerImpl::getCodecDetails( const ::DBus::Int32& payload )
+ManagerImpl::getCodecDetails( const int32_t& payload )
 {
 
   std::vector<std::string> v;
@@ -1439,7 +1439,7 @@ ManagerImpl::popupMode( void )
   return getConfigInt( PREFERENCES , CONFIG_POPUP );
 }
 
-::DBus::Int32
+int32_t
 ManagerImpl::getNotify( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_NOTIFY );
@@ -1451,13 +1451,13 @@ ManagerImpl::setNotify( void )
   ( getConfigInt( PREFERENCES , CONFIG_NOTIFY ) == NOTIFY_ALL )?  setConfig( PREFERENCES , CONFIG_NOTIFY , NO_STR ) : setConfig( PREFERENCES , CONFIG_NOTIFY , YES_STR ); 
 }
 
-::DBus::Int32
+int32_t
 ManagerImpl::getMailNotify( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_MAIL_NOTIFY );
 }
 
-::DBus::Int32
+int32_t
 ManagerImpl::getPulseAppVolumeControl( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL );
@@ -1470,13 +1470,13 @@ ManagerImpl::setPulseAppVolumeControl( void )
 }
 
 void
-ManagerImpl::setAudioManager( const DBus::Int32& api )
+ManagerImpl::setAudioManager( const int32_t& api )
 {
   setConfig( PREFERENCES , CONFIG_AUDIO , api) ;
   switchAudioManager();
 }
 
-::DBus::Int32
+int32_t
 ManagerImpl::getAudioManager( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_AUDIO );
@@ -1495,7 +1495,7 @@ ManagerImpl::setMailNotify( void )
 }
 
 void
-ManagerImpl::notifyErrClient( const ::DBus::Int32& errCode )
+ManagerImpl::notifyErrClient( const int32_t& errCode )
 {
   if( _dbus ){
     _debug("NOTIFY ERR NUMBER %i\n" , errCode); 
@@ -1989,8 +1989,8 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 }
 
   void 
-ManagerImpl::setAccountDetails( const ::DBus::String& accountID, 
-    const std::map< ::DBus::String, ::DBus::String >& details )
+ManagerImpl::setAccountDetails( const std::string& accountID, 
+    const std::map< std::string, std::string >& details )
 {
 
   std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
@@ -2032,7 +2032,7 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
 }
 
 void
-ManagerImpl::sendRegister( const ::DBus::String& accountID , const DBus::Int32& expire )
+ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire )
 {
   // Update the active field
   setConfig( accountID, CONFIG_ACCOUNT_ENABLE, expire );
@@ -2052,7 +2052,7 @@ ManagerImpl::sendRegister( const ::DBus::String& accountID , const DBus::Int32& 
 }                   
 
   void
-ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& details)
+ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
 {
 
   /** @todo Deal with both the _accountMap and the Configuration */

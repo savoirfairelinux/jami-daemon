@@ -25,7 +25,7 @@
 
     
 class ContactManager
-: public org::sflphone::SFLphone::ContactManager,
+: public org::sflphone::SFLphone::ContactManager_adaptor,
   public DBus::IntrospectableAdaptor,
   public DBus::ObjectAdaptor
 {
