@@ -40,17 +40,6 @@ public:
    */
   ~ToneList();
 
-  // Copy Constructor
-  ToneList(const ToneList& rh):_nbTone(rh._nbTone),_nbCountry(rh._nbCountry),_defaultCountryId(rh._defaultCountryId) {
-      	_debug("ToneList copy constructor hasn't been implemented yet. Quit!");
-   	exit(0);
-  }
-
-  // Assignment Operator
-  ToneList& operator=( const ToneList& rh){
-	_debug("ToneList assignment operator hasn't been implemented yet. Quit!");
-   	exit(0);
-  }
 
   /** Countries */ 
   enum COUNTRYID {
@@ -85,6 +74,13 @@ public:
   int getNbTone() { return _nbTone; }
 
 private:
+
+  // Copy Constructor
+  ToneList(const ToneList& rh);
+
+  // Assignment Operator
+  ToneList& operator=( const ToneList& rh);
+
   void initToneDefinition();
   std::string _toneZone[TONE_NBCOUNTRY][TONE_NBTONE];
   int _nbTone;
@@ -101,17 +97,6 @@ public:
   TelephoneTone(const std::string& countryName, unsigned int sampleRate);
   ~TelephoneTone();
 
-  // Copy Constructor
-  TelephoneTone(const TelephoneTone& rh):_currentTone(rh._currentTone), _toneList(rh._toneList) { 
-  	_debug("TelephoneTone copy constructor hasn't been implemented yet. Quit!");
- 	exit(0);
-  };
-
-  // Assignment Operator
-  TelephoneTone& operator=( const TelephoneTone& rh){
-	_debug("TelephoneTone assignment operator hasn't been implemented yet. Quit!");
-   	exit(0);
-  }
 
   /** send TONE::ZT_TONE_NULL to stop the playing */
   void setCurrentTone(Tone::TONEID toneId);
@@ -126,6 +111,12 @@ public:
   bool shouldPlay();
 
 private:
+  // Copy Constructor
+  TelephoneTone(const TelephoneTone& rh);
+
+  // Assignment Operator
+  TelephoneTone& operator=( const TelephoneTone& rh);
+  
   Tone* _tone[TONE_NBTONE];
   Tone::TONEID _currentTone;
   ToneList _toneList;

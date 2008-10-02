@@ -51,29 +51,14 @@ const DTMFGenerator::DTMFTone DTMFGenerator::tones[NUM_TONES] = {
 };
 
 
-DTMFException::DTMFException(const char* _reason) throw()
+DTMFException::DTMFException(const char* _reason) throw() : reason(_reason)
 {
-	reason = _reason;
 }
 
 
 DTMFException::~DTMFException() throw()
 {
 }
-
-
-DTMFException::DTMFException(const DTMFException& rh) throw()
-{
-   _debug("DTMFException copy constructor hasn't been implemented yet. Quit!");
-   exit(0);
-}
-
-DTMFException& DTMFException::operator=(const DTMFException& rh) throw()
-{
-   _debug("DTMFException assignment operator hasn't been implemented yet. Quit!");
-   exit(0);
-}
-
 
 const char* DTMFException::what() const throw()
 {
@@ -85,9 +70,8 @@ const char* DTMFException::what() const throw()
 /*
  * Initialize the generator
  */
-DTMFGenerator::DTMFGenerator(unsigned int sampleRate) : tone("", sampleRate) 
+DTMFGenerator::DTMFGenerator(unsigned int sampleRate) : state(), _sampleRate(sampleRate), tone("", sampleRate) 
 {
-  _sampleRate = sampleRate;
   state.offset = 0;
   state.sample = 0;
 
@@ -101,18 +85,6 @@ DTMFGenerator::~DTMFGenerator() {
   for(int i = 0; i < NUM_TONES; i++) {
     delete[] samples[i]; samples[i] = NULL;
   }
-}
-
-DTMFGenerator::DTMFGenerator(const DTMFGenerator& rh) : tone("", rh._sampleRate)
-{
-   _debug("DTMFGenerator copy constructor hasn't been implemented yet. Quit!");
-   exit(0);
-}
-
-DTMFGenerator& DTMFGenerator::operator=(const DTMFGenerator& rh)
-{
-   _debug("DTMFGenerator assignment operator hasn't been implemented yet. Quit!");
-   exit(0);
 }
 
 /*

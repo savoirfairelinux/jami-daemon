@@ -23,10 +23,8 @@
 
 #include <string>
 
-Account::Account(const AccountID& accountID) : _accountID(accountID)
+Account::Account(const AccountID& accountID) : _accountID(accountID), _link(NULL), _enabled(false)
 {
-	_link = NULL;
-	_enabled = false;
 }
 
 Account::~Account()

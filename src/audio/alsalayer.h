@@ -203,6 +203,12 @@ class AlsaLayer : public AudioLayer {
     void setPlaybackVolume( double volume );
 
   private:
+  
+    // Copy Constructor
+    AlsaLayer(const AlsaLayer& rh);
+
+    // Assignment Operator
+    AlsaLayer& operator=( const AlsaLayer& rh);
 
     /**
      * Drop the pending frames and close the capture device

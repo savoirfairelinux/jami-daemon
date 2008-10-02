@@ -30,12 +30,15 @@
 #define _RECVONLY 2
 
 SIPCall::SIPCall(const CallID& id, Call::CallType type) : Call(id, type)
+            , _cid(0)
+            , _did(0)
+            , _tid(0)
+            , _localSDP(NULL)
+            , _negociator(NULL)
+            , _ipAddr("")
+            , _xferSub(NULL)
+            , _invSession(NULL)
 {
-  _cid = 0;
-  _did = 0;
-  _tid = 0;
-  _xferSub = NULL;
-  _invSession = NULL;
 }
 
 SIPCall::~SIPCall() 

@@ -24,11 +24,17 @@
 // Constructor
 AlsaLayer::AlsaLayer( ManagerImpl* manager ) 
   : AudioLayer( manager , ALSA ) 
-  , _PlaybackHandle(NULL)
-  , _CaptureHandle(NULL)
+    , _PlaybackHandle(NULL)
+    , _CaptureHandle(NULL)
+    , _periodSize()
+    , _AsyncHandler(NULL)
+    , _audioPlugin()
+    , _inChannel()
+    , _outChannel()
+    , _defaultVolume(100)
+    , IDSoundCards() 
 {
   _debug(" Constructor of AlsaLayer called\n");
-  _defaultVolume = 100;
 }
 
 // Destructor
@@ -99,7 +105,7 @@ AlsaLayer::startStream(void)
     snd_pcm_start( _CaptureHandle ) ;
 
     snd_pcm_prepare( _PlaybackHandle );
-    if( err = snd_pcm_start( _PlaybackHandle) < 0 )  _debugAlsa(" Cannot start (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_start( _PlaybackHandle)) < 0 )  _debugAlsa(" Cannot start (%s)\n", snd_strerror(err));
   }
 } 
 
@@ -132,7 +138,7 @@ AlsaLayer::fillHWBuffer( void)
   short s1, s2;
   int periodSize = 128 ;
   int frames = periodSize >> 2 ;
-  _debug("frames  = %d\n");
+  _debug("frames  = %d\n", frames);
 
   data = (unsigned char*)malloc(periodSize);
   for(l1 = 0; l1 < 100; l1++) {
@@ -286,7 +292,7 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   int dir = 0;
   snd_pcm_uframes_t period_size_in = getFrameSize() * getSampleRate() / 1000 *  2 ;
   snd_pcm_uframes_t buffer_size_in = period_size_in * 4 ; 
-  snd_pcm_uframes_t threshold = 1024 ;
+  //snd_pcm_uframes_t threshold = 1024 ;
   snd_pcm_uframes_t period_size_out =  getFrameSize() * getSampleRate() / 1000 *  2;//1024 ;
   snd_pcm_uframes_t buffer_size_out = period_size_out * 4 ;
 
@@ -296,41 +302,41 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   if(flag == SFL_PCM_BOTH || flag == SFL_PCM_CAPTURE)
   {
     _debugAlsa("Opening capture device %s\n", pcm_c.c_str());
-    if(err = snd_pcm_open(&_CaptureHandle,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, 0) < 0){
+    if( (err = snd_pcm_open(&_CaptureHandle,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, 0)) < 0){
       _debugAlsa("Error while opening capture device %s\n",  pcm_c.c_str());
       setErrorMessage( ALSA_CAPTURE_DEVICE );
       return false;
     }
 
-    if( err = snd_pcm_hw_params_malloc( &hwParams ) < 0 ) {
+    if( (err = snd_pcm_hw_params_malloc( &hwParams )) < 0 ) {
       _debugAlsa(" Cannot allocate hardware parameter structure (%s)\n", snd_strerror(err));
       return false;
     }
-    if( err = snd_pcm_hw_params_any(_CaptureHandle, hwParams) < 0) _debugAlsa(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_access( _CaptureHandle, hwParams, SND_PCM_ACCESS_MMAP_INTERLEAVED) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_format( _CaptureHandle, hwParams, SND_PCM_FORMAT_S16_LE) < 0) _debugAlsa(" Cannot set sample format (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_rate_near( _CaptureHandle, hwParams, &rate_in, &dir) < 0) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_channels( _CaptureHandle, hwParams, 1) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_period_time_near( _CaptureHandle, hwParams, &period_time , &dir) < 0) _debugAlsa(" Cannot set period time (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_buffer_time_near( _CaptureHandle, hwParams, &buffer_time , &dir) < 0) _debugAlsa(" Cannot set buffer time (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_get_period_size( hwParams, &period_size_in , &dir) < 0) _debugAlsa(" Cannot get period size (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_get_buffer_size( hwParams, &buffer_size_in ) < 0) _debugAlsa(" Cannot get buffer size (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params( _CaptureHandle, hwParams ) < 0) _debugAlsa(" Cannot set hw parameters (%s)\n", snd_strerror(err));
-    _debug("buffer size = %d\n" , period_size_in);
-    _debug("period size = %d\n" , buffer_size_in);
+    if( (err = snd_pcm_hw_params_any(_CaptureHandle, hwParams)) < 0) _debugAlsa(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_access( _CaptureHandle, hwParams, SND_PCM_ACCESS_MMAP_INTERLEAVED)) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_format( _CaptureHandle, hwParams, SND_PCM_FORMAT_S16_LE)) < 0) _debugAlsa(" Cannot set sample format (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_rate_near( _CaptureHandle, hwParams, &rate_in, &dir) < 0)) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_channels( _CaptureHandle, hwParams, 1)) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_period_time_near( _CaptureHandle, hwParams, &period_time , &dir)) < 0) _debugAlsa(" Cannot set period time (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_buffer_time_near( _CaptureHandle, hwParams, &buffer_time , &dir)) < 0) _debugAlsa(" Cannot set buffer time (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_get_period_size( hwParams, &period_size_in , &dir) < 0)) _debugAlsa(" Cannot get period size (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_get_buffer_size( hwParams, &buffer_size_in ) < 0)) _debugAlsa(" Cannot get buffer size (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params( _CaptureHandle, hwParams ) < 0)) _debugAlsa(" Cannot set hw parameters (%s)\n", snd_strerror(err));
+    _debug("buffer size = %d\n" , (int) period_size_in);
+    _debug("period size = %d\n" , (int) buffer_size_in);
     snd_pcm_hw_params_free( hwParams );
 
     snd_pcm_uframes_t val ;
     snd_pcm_sw_params_malloc( &swparams );
     snd_pcm_sw_params_current( _CaptureHandle, swparams );
 
-    if( err = snd_pcm_sw_params_set_start_threshold( _CaptureHandle, swparams, period_size_out) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
+    if( (err = snd_pcm_sw_params_set_start_threshold( _CaptureHandle, swparams, period_size_out)) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
     snd_pcm_sw_params_get_start_threshold( swparams , &val);
-    _debug("Start threshold = %d\n" ,val);
-    if( err = snd_pcm_sw_params_set_avail_min( _CaptureHandle, swparams, period_size_out) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
+    _debug("Start threshold = %d\n" ,(int)val);
+    if( (err = snd_pcm_sw_params_set_avail_min( _CaptureHandle, swparams, period_size_out)) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
     snd_pcm_sw_params_get_avail_min( swparams , &val);
-    _debug("Min available = %d\n" ,val);
-    if( err = snd_pcm_sw_params( _CaptureHandle, swparams ) < 0 ) _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
+    _debug("Min available = %d\n" ,(int)val);
+    if( (err = snd_pcm_sw_params( _CaptureHandle, swparams )) < 0 ) _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
     snd_pcm_sw_params_free( swparams );
     deviceClosed = false;
   }
@@ -339,26 +345,26 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   {
 
     _debugAlsa(" Opening playback device %s\n", pcm_p.c_str());
-    if(err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK ) < 0){
+    if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK )) < 0){
       _debugAlsa("Error while opening playback device %s\n",  pcm_p.c_str());
       setErrorMessage( ALSA_PLAYBACK_DEVICE );
       return false;
     }
-    if( err = snd_pcm_hw_params_malloc( &hwParams ) < 0 ) {
+    if( (err = snd_pcm_hw_params_malloc( &hwParams )) < 0 ) {
       _debugAlsa(" Cannot allocate hardware parameter structure (%s)\n", snd_strerror(err));
       return false;
     }
-    if( err = snd_pcm_hw_params_any( _PlaybackHandle,hwParams) < 0) _debugAlsa(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_access( _PlaybackHandle, hwParams, SND_PCM_ACCESS_MMAP_INTERLEAVED) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
+    if(( err = snd_pcm_hw_params_any( _PlaybackHandle,hwParams)) < 0) _debugAlsa(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
+    if(( err = snd_pcm_hw_params_set_access( _PlaybackHandle, hwParams, SND_PCM_ACCESS_MMAP_INTERLEAVED)) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
     //if( err = snd_pcm_hw_params_set_access( _PlaybackHandle, hwParams, SND_PCM_ACCESS_RW_INTERLEAVED) < 0) _debugAlsa(" Cannot set access type (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_format( _PlaybackHandle, hwParams, SND_PCM_FORMAT_S16_LE) < 0) _debugAlsa(" Cannot set sample format (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_rate( _PlaybackHandle, hwParams, rate_out, dir) < 0) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_channels( _PlaybackHandle, hwParams, 1) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_buffer_time_near( _PlaybackHandle, hwParams, &buffer_time , &dir) < 0) _debugAlsa(" Cannot set buffer time (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_set_period_time_near( _PlaybackHandle, hwParams, &period_time , &dir) < 0) _debugAlsa(" Cannot set period time (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_get_period_size(  hwParams, &_periodSize , &dir) < 0) _debugAlsa(" Cannot get period size (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params_get_buffer_size(  hwParams, &buffer_size_out ) < 0) _debugAlsa(" Cannot get buffer size (%s)\n", snd_strerror(err));
-    if( err = snd_pcm_hw_params( _PlaybackHandle, hwParams ) < 0) _debugAlsa(" Cannot set hw parameters (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_format( _PlaybackHandle, hwParams, SND_PCM_FORMAT_S16_LE)) < 0) _debugAlsa(" Cannot set sample format (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_rate( _PlaybackHandle, hwParams, rate_out, dir)) < 0) _debugAlsa(" Cannot set sample rate (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_channels( _PlaybackHandle, hwParams, 1)) < 0) _debugAlsa(" Cannot set channel count (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_buffer_time_near( _PlaybackHandle, hwParams, &buffer_time , &dir)) < 0) _debugAlsa(" Cannot set buffer time (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_set_period_time_near( _PlaybackHandle, hwParams, &period_time , &dir)) < 0) _debugAlsa(" Cannot set period time (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_get_period_size(  hwParams, &_periodSize , &dir)) < 0) _debugAlsa(" Cannot get period size (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params_get_buffer_size(  hwParams, &buffer_size_out )) < 0) _debugAlsa(" Cannot get buffer size (%s)\n", snd_strerror(err));
+    if( (err = snd_pcm_hw_params( _PlaybackHandle, hwParams )) < 0) _debugAlsa(" Cannot set hw parameters (%s)\n", snd_strerror(err));
 
 
     snd_pcm_hw_params_free( hwParams );
@@ -367,23 +373,23 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     snd_pcm_sw_params_malloc( &swparams );
     snd_pcm_sw_params_current( _PlaybackHandle, swparams );
 
-    if( err = snd_pcm_sw_params_set_start_threshold( _PlaybackHandle, swparams, period_size_out) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
+    if((err = snd_pcm_sw_params_set_start_threshold( _PlaybackHandle, swparams, period_size_out)) < 0 ) _debugAlsa(" Cannot set start threshold (%s)\n", snd_strerror(err)); 
     snd_pcm_sw_params_get_start_threshold( swparams , &val);
-    _debug("Start threshold = %d\n" ,val);
+    _debug("Start threshold = %d\n" ,(int)val);
     //if( err = snd_pcm_sw_params_set_stop_threshold( _PlaybackHandle, swparams, buffer_size_out ) < 0 ) _debugAlsa(" Cannot set stop threshold (%s)\n", snd_strerror(err)); 
     //snd_pcm_sw_params_get_stop_threshold( swparams , &val);
     //_debug("Stop threshold = %d\n" ,val);
-    if( err = snd_pcm_sw_params_set_avail_min( _PlaybackHandle, swparams, period_size_out) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
-    if( err = snd_pcm_sw_params_set_xfer_align( _PlaybackHandle, swparams, 1) < 0) _debugAlsa(" Cannot set xfer align (%s)\n" , snd_strerror(err)); 
+    if((err = snd_pcm_sw_params_set_avail_min( _PlaybackHandle, swparams, period_size_out)) < 0) _debugAlsa(" Cannot set min avail (%s)\n" , snd_strerror(err)); 
+    if((err = snd_pcm_sw_params_set_xfer_align( _PlaybackHandle, swparams, 1)) < 0) _debugAlsa(" Cannot set xfer align (%s)\n" , snd_strerror(err)); 
     snd_pcm_sw_params_get_avail_min( swparams , &val);
-    _debug("Min available = %d\n" ,val);
+    _debug("Min available = %d\n" ,(int)val);
     //if( err = snd_pcm_sw_params_set_silence_threshold( _PlaybackHandle, swparams, period_size_out) < 0) _debugAlsa(" Cannot set silence threshold (%s)\n" , snd_strerror(err)); 
     //snd_pcm_sw_params_get_silence_threshold( swparams , &val);
     //  _debug("Silence threshold = %d\n" ,val);
-    if( err = snd_pcm_sw_params( _PlaybackHandle, swparams ) < 0 ) _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
+    if(( err = snd_pcm_sw_params( _PlaybackHandle, swparams )) < 0 ) _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
     snd_pcm_sw_params_free( swparams );
 
-    if ( err = snd_async_add_pcm_handler( &_AsyncHandler, _PlaybackHandle , AlsaCallBack, this ) < 0)	_debugAlsa(" Unable to install the async callback handler (%s)\n", snd_strerror(err));
+    if (( err = snd_async_add_pcm_handler( &_AsyncHandler, _PlaybackHandle , AlsaCallBack, this ) < 0))	_debugAlsa(" Unable to install the async callback handler (%s)\n", snd_strerror(err));
     deviceClosed = false;
   }
   //fillHWBuffer();
@@ -421,8 +427,8 @@ AlsaLayer::write(void* buffer, int length)
       break;
   }
 
-  if( err >=0 && err < frames )
-    _debugAlsa("Short write : %d out of %d\n", err , frames);
+  if( ( err >=0 ) && ( err < (int)frames ) )
+    _debugAlsa("Short write : %d out of %d\n", err , (int)frames);
 
   return ( err > 0 )? err : 0 ;
 }
@@ -439,7 +445,7 @@ AlsaLayer::read( void* buffer, int toCopy)
     snd_pcm_start( _CaptureHandle );
   }
   snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _CaptureHandle, toCopy );
-  if( err = snd_pcm_mmap_readi( _CaptureHandle, buffer, frames) < 0 ) {
+  if(( err = snd_pcm_mmap_readi( _CaptureHandle, buffer, frames)) < 0 ) {
     switch(err){
       case EPERM:
 	_debugAlsa(" Capture EPERM (%s)\n", snd_strerror(err));
@@ -470,7 +476,9 @@ AlsaLayer::read( void* buffer, int toCopy)
 
   int
 AlsaLayer::putInCache( char code, void *buffer, int toCopy )
-{}
+{
+  return 1;
+}
 
   void
 AlsaLayer::handle_xrun_capture( void )
@@ -497,7 +505,7 @@ AlsaLayer::handle_xrun_playback( void )
   snd_pcm_status_t* status;
   snd_pcm_status_alloca( &status );
 
-  if( state = snd_pcm_status( _PlaybackHandle, status ) < 0 )   _debugAlsa(" Error: Cannot get playback handle status (%s)\n" , snd_strerror( state ) );
+  if( (state = snd_pcm_status( _PlaybackHandle, status )) < 0 )   _debugAlsa(" Error: Cannot get playback handle status (%s)\n" , snd_strerror( state ) );
   else 
   { 
     state = snd_pcm_status_get_state( status );
@@ -541,7 +549,6 @@ AlsaLayer::getSoundCardsInfo( int stream )
   snd_pcm_info_alloca( &pcminfo );
 
   int numCard = -1 ;
-  int err;
   std::string description;
 
   if(snd_card_next( &numCard ) < 0 || numCard < 0)
@@ -624,7 +631,7 @@ AlsaLayer::soundCardIndexExist( int card , int stream )
   int
 AlsaLayer::soundCardGetIndex( std::string description )
 {
-  int i;
+  unsigned int i;
   for( i = 0 ; i < IDSoundCards.size() ; i++ )
   {
     HwIDPair p = IDSoundCards[i];

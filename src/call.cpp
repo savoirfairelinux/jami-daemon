@@ -19,16 +19,23 @@
  */
 #include "call.h"
 
-Call::Call(const CallID& id, Call::CallType type) : _id(id), _type(type), 
-						    _localIPAddress(""),
-						    _remoteIPAddress("")  
+Call::Call(const CallID& id, Call::CallType type)
+           : _callMutex()
+           , _codecMap()
+           , _audioCodec()
+           , _audioStarted(false)    
+           , _localIPAddress("") 
+           , _localAudioPort(0)
+           , _localExternalAudioPort(0)
+           , _remoteIPAddress("")
+           , _remoteAudioPort(0)
+           , _id(id) 
+           , _type(type) 
+           , _connectionState(Call::Disconnected)
+           , _callState(Call::Inactive)
+           , _peerName()
+           , _peerNumber()
 {
-  _connectionState = Call::Disconnected;
-  _callState = Call::Inactive;
-  //_audioCodec = 0;
-  _localAudioPort = 0;
-  _localExternalAudioPort = 0;
-  _remoteAudioPort = 0;
 }
 
 

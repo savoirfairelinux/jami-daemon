@@ -46,6 +46,15 @@
  */
 
 class AudioLayer {
+
+  private:
+	
+    //copy constructor
+    AudioLayer(const AudioLayer& rh);
+
+    // assignment operator
+    AudioLayer& operator=(const AudioLayer& rh);
+
   public:
     /**
      * Constructor
@@ -69,37 +78,11 @@ class AudioLayer {
 
     }
 
-    //copy constructor
-    AudioLayer(const AudioLayer& rh)
-	: _layerType( rh._layerType )
-        , _manager(rh._manager)
-	, _urgentBuffer( rh._urgentBuffer )
-        , _talk ( rh._talk )
-        , deviceClosed ( rh.deviceClosed )
-        , _indexIn ( rh._indexIn )
-        , _indexOut ( rh._indexOut )
-        , _sampleRate ( rh._sampleRate )
-        , _frameSize ( rh._frameSize )
-        , _inChannel( rh._inChannel )
-        , _outChannel ( rh._outChannel )
-        , _errorMessage ( rh._errorMessage )
-        , _mutex (rh._mutex)
-    {
-        _debug("AudioLayer copy constructor hasn't been implemented yet. Quit!");
-   	exit(0);
-    }
-
-    // assignment operator
-    AudioLayer& operator=(const AudioLayer& rh)
-    {
-	_debug("AudioLayer assignment operator hasn't been implemented yet. Quit!");
-   	exit(0);
-    }
     
     /**
      * Destructor
      */
-    ~AudioLayer(void){}
+    virtual ~AudioLayer(void){}
 
     virtual void closeLayer( void ) = 0;
 

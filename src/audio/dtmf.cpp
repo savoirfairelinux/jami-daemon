@@ -24,10 +24,8 @@
 #include "dtmf.h"
 
 DTMF::DTMF (unsigned int sampleRate) 
-: dtmfgenerator(sampleRate) 
+: currentTone(0), newTone(0), dtmfgenerator(sampleRate)
 {
-  currentTone = 0;
-  newTone = 0;
 }
 
 DTMF::~DTMF (void) 

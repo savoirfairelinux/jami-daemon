@@ -137,6 +137,13 @@ public:
     static UserAgent* getInstance() {return _current;}
 
     static void set_voicemail_info( AccountID account, pjsip_msg_body *body );
+private:
+
+    // Copy Constructor
+    UserAgent(const UserAgent& rh);
+
+    // Assignment Operator
+    UserAgent& operator=( const UserAgent& rh);
 };
 
 

@@ -28,8 +28,11 @@
 
 SIPAccount::SIPAccount(const AccountID& accountID)
  : Account(accountID)
+ , _userName("")
+ , _server("")
+ , _cred(NULL)
+ , _contact("")
 {
-  _cred = NULL;
   _link = new SIPVoIPLink(accountID);
 }
 

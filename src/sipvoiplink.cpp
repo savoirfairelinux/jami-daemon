@@ -44,13 +44,21 @@
 #define INVITE_METHOD "INVITE"
 
 SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
- : VoIPLink(accountID), _localExternAddress("") 
+ : VoIPLink(accountID)
+ , _initDone(false)
+ , _nbTryListenAddr(2) // number of times to try to start SIP listener
+ , _useStun(false)
+ , _stunServer("")
+ , _localExternAddress("") 
+ , _localExternPort(0)
+ , _proxy("")
+ , _authname("")
+ , _password("")
+ , _audiortp(new AudioRtp())
+ , _regc()
+ , _server("")
+ , _bRegister(false)
 {
-
-  _nbTryListenAddr = 2; // number of times to try to start SIP listener
-  _localExternPort = 0;
-
-  _audiortp = new AudioRtp();
   // to get random number for RANDOM_PORT
   srand (time(NULL));
 }
@@ -352,7 +360,7 @@ SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code)
   SIPCall* call = getSIPCall(id);
   if (call==0) { _debug("Call doesn't exist\n"); return false; }  
 
-  int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
+  //int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
 
   // TODO Add DTMF with pjsip - INFO method
 

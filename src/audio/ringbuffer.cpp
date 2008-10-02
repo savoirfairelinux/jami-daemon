@@ -42,19 +42,6 @@ RingBuffer::~RingBuffer() {
    delete[] mBuffer;  mBuffer = NULL;
 }
 
-//copy constructor
-RingBuffer::RingBuffer(const RingBuffer& rh): mStart(rh.mStart), mEnd(rh.mEnd), mBufferSize( rh.mBufferSize ), mBuffer ( rh.mBuffer )
-{
-    _debug("RingBuffer copy constructor hasn't been implemented yet. Quit!");
-    exit(0);
-}
-
-// Assignment operator
-RingBuffer& RingBuffer::operator=(const RingBuffer& rh) {
-   _debug("RingBuffer assignment operator hasn't been implemented yet. Quit!");
-   exit(0);
-}
- 
 void
 RingBuffer::flush (void) {
 	mStart = 0; 

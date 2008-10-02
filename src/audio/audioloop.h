@@ -42,18 +42,6 @@ public:
    */
   virtual ~AudioLoop();
 
-  // Copy Constructor
-  AudioLoop(const AudioLoop& rh):_buffer(rh._buffer),_size(rh._size), _pos(rh._pos), _sampleRate(rh._sampleRate) {
-      _debug("AudioLoop copy constructor hasn't been implemented yet. Quit!");
-      exit(0); 
-  }
-
-  // Assignment Operator
-  AudioLoop& operator=( const AudioLoop& rh){
-	_debug("AudioLoop assignment operator hasn't been implemented yet. Quit!");
-   	exit(0);
-  }
-
   /**
    * Get the next fragment of the tone
    * the function change the intern position, and will loop
@@ -76,7 +64,6 @@ public:
   unsigned int getSize() { return _size; }
   
 
-
 protected:
   /** The data buffer */
   SFLDataFormat* _buffer;
@@ -88,7 +75,15 @@ protected:
   int _pos;  
 
   /** Sample rate */
-  int _sampleRate; 
+  int _sampleRate;
+
+private:
+ 
+  // Copy Constructor
+  AudioLoop(const AudioLoop& rh);
+
+  // Assignment Operator
+  AudioLoop& operator=( const AudioLoop& rh);
 };
 
 #endif // __AUDIOLOOP_H__

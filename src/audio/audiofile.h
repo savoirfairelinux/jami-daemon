@@ -45,17 +45,6 @@ public:
    */
   ~AudioFile();
 
-  // Copy Constructor
-  AudioFile(const AudioFile& rh):_filename(rh._filename), _codec(rh._codec), _start(rh._start) {
-  	_debug("AudioFilie copy constructor hasn't been implemented yet. Quit!");
-   	exit(0);
-  }
-
-  // Assignment Operator
-  AudioFile& operator=( const AudioFile& rh){
-	_debug("AudioFilie assignment operator hasn't been implemented yet. Quit!");
-   	exit(0);
-  }
 
   /**
    * Load a sound file in memory
@@ -84,6 +73,12 @@ public:
   bool isStarted() { return _start; }
 
 private:
+  // Copy Constructor
+  AudioFile(const AudioFile& rh);
+
+  // Assignment Operator
+  AudioFile& operator=( const AudioFile& rh);
+
   /** The absolute path to the sound file */
   std::string _filename;
   

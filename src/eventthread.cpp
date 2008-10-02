@@ -27,20 +27,6 @@ EventThread::EventThread (VoIPLink* link) : Thread (),  _linkthread(link), stopI
 	setCancel(cancelDeferred);
 }
 
-// Copy Constructor
-EventThread::EventThread(const EventThread& rh): _linkthread(rh._linkthread), stopIt(rh.stopIt) 
-{
-    	_debug("EventThread copy constructor hasn't been implemented yet. Quit! ");
-    	exit();
-}
-
-// Assignment Operator overloading
-EventThread& EventThread::operator=(const EventThread& rh)
-{
-	_debug("EventThread assignment operator hasn't been implemented yet. Quit! ");
-	exit();
-}
-
 EventThread::~EventThread (void) 
 {
   terminate();

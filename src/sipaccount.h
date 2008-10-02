@@ -40,6 +40,12 @@ public:
    */
   SIPAccount(const AccountID& accountID);
 
+  /* Copy Constructor */
+  SIPAccount(const SIPAccount& rh);
+
+  /* Assignment Operator */
+  SIPAccount& operator=( const SIPAccount& rh);
+  
   /**
    * Virtual destructor
    */

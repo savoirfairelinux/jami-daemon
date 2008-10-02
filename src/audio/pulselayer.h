@@ -173,6 +173,12 @@ class PulseLayer : public AudioLayer {
     void setPlaybackVolume( double volume );
 
   private:
+    // Copy Constructor
+    PulseLayer(const PulseLayer& rh);
+
+    // Assignment Operator
+    PulseLayer& operator=( const PulseLayer& rh);
+
     /**
      * Drop the pending frames and close the capture device
      */

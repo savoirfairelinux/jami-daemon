@@ -670,7 +670,7 @@ pj_bool_t UserAgent::mod_on_rx_request(pjsip_rx_data *rdata) {
     // Get the account id of callee from username and server
     account_id = Manager::instance().getAccountIdFromNameAndServer(userName, server);
     if(account_id == AccountNULL) {
-            _debug("UserAgent: Username %s doesn't match any account!\n",userName);
+            _debug("UserAgent: Username %s doesn't match any account!\n",userName.c_str());
             return PJ_FALSE;
     }
     _debug("UserAgent: The receiver is : %s@%s\n", userName.data(), server.data());

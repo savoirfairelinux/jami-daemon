@@ -819,6 +819,7 @@ class ManagerImpl {
     //pjsip_regc *getSipRegcFromID(const AccountID& id); 
 
   private:
+    
     /**
      * Create .PROGNAME directory in home user and create 
      * configuration tree from the settings file if this file exists.
@@ -1026,6 +1027,13 @@ public:
     AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 
 private:
+
+    // Copy Constructor
+    ManagerImpl(const ManagerImpl& rh);
+
+    // Assignment Operator
+    ManagerImpl& operator=( const ManagerImpl& rh);
+
     /**
      * The UserAgent provides sip operation facilities for all sip accounts
      */

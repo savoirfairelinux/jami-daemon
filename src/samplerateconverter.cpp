@@ -18,19 +18,31 @@
 
 #include "samplerateconverter.h"
 
-SamplerateConverter::SamplerateConverter( void ) {
-  // Default values
-  _frequence = Manager::instance().getConfigInt( AUDIO , ALSA_SAMPLE_RATE ); // 44100;
-  _framesize = Manager::instance().getConfigInt( AUDIO , ALSA_FRAME_SIZE );
-
+SamplerateConverter::SamplerateConverter( void )
+        : _frequence(Manager::instance().getConfigInt( AUDIO , ALSA_SAMPLE_RATE )) //44100
+        , _framesize(Manager::instance().getConfigInt( AUDIO , ALSA_FRAME_SIZE ))
+        , _floatBufferDownMic(NULL)
+        , _floatBufferUpMic(NULL)
+        , _src_state_mic(NULL)
+        , _floatBufferDownSpkr(NULL)
+        , _floatBufferUpSpkr(NULL)
+        , _src_state_spkr(NULL)
+        , _src_err(0)
+{
   init();
 }
 
-SamplerateConverter::SamplerateConverter( int freq , int fs ) {
-
-  _frequence = freq ;
-  _framesize = fs ;
-  
+SamplerateConverter::SamplerateConverter( int freq , int fs )
+        : _frequence(freq) 
+        , _framesize(fs)
+        , _floatBufferDownMic(NULL)
+        , _floatBufferUpMic(NULL)
+        , _src_state_mic(NULL)
+        , _floatBufferDownSpkr(NULL)
+        , _floatBufferUpSpkr(NULL)
+        , _src_state_spkr(NULL)
+        , _src_err(0)       
+{ 
   init();
 }
 

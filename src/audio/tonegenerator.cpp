@@ -31,8 +31,8 @@ int AMPLITUDE = 32767;
 // ToneGenerator implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-ToneGenerator::ToneGenerator (unsigned int sampleRate) {	
-  _sampleRate = sampleRate;
+ToneGenerator::ToneGenerator (unsigned int sampleRate): sample(NULL), freq1(), freq2(), time(), totalbytes(), _sampleRate(sampleRate) 
+{	
 }
 
 ToneGenerator::~ToneGenerator (void) {

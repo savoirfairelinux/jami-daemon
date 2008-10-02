@@ -25,7 +25,7 @@ const char* ContactManager::SERVER_PATH = "/org/sflphone/SFLphone/ContactManager
 std::map< ::DBus::String, ::DBus::String >
 ContactManager::getContacts( const ::DBus::String& accountID )
 {
-	// TODO
+        // TODO
 }
 
 void

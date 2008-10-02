@@ -130,6 +130,13 @@ class SIPCall : public Call
     pjsip_inv_session *getInvSession() {return _invSession;}
     
   private:
+
+    // Copy Constructor
+    SIPCall(const SIPCall& rh);
+
+    // Assignment Operator
+    SIPCall& operator=( const SIPCall& rh);
+
     /**
      * Get a valid remote SDP or return a 400 bad request response if invalid
      * @param

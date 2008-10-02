@@ -63,6 +63,12 @@ class ToneGenerator {
     int totalbytes;
 
   private:
+    // Copy Constructor
+    ToneGenerator(const ToneGenerator& rh);
+
+    // Assignment Operator
+    ToneGenerator& operator=( const ToneGenerator& rh);
+
     /*
      * Initialisation of the supported tones according to the countries.
      */

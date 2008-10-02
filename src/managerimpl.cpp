@@ -61,34 +61,51 @@
 #define fill_config_int(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
 
-ManagerImpl::ManagerImpl (void)
+ManagerImpl::ManagerImpl (void) 
+	: _hasTriedToRegister(false)
+        , _config()
+	, _currentCallId2()
+        , _currentCallMutex()
+        , _codecBuilder(NULL)
+        , _audiodriver(NULL)
+        , _dtmfKey(NULL)
+        , _codecDescriptorMap()
+        , _toneMutex()
+        , _telephoneTone(NULL)
+        , _audiofile()
+        , _spkr_volume(0)
+        , _mic_volume(0)
+        , _mutex()
+	, _dbus(NULL)
+        , _waitingCall()
+        , _waitingCallMutex()
+        , _nbIncomingWaitingCall(0)
+        , _path("")
+        , _exist(0)
+        , _setupLoaded(false)
+        , _firewallPort()
+        , _firewallAddr("")
+        , _hasZeroconf(false)
+        , _callAccountMap()
+        , _callAccountMapMutex()
+        , _accountMap()
+        , _userAgent(NULL)
+        , _userAgentInitlized(false)
+        , _sipThreadStop()
+ 
 {
-  // Init private variables 
-  _hasZeroconf = false;
+  /* Init private variables 
+     setup:    _path, _exist, _setupLoaded , _dbus
+     sound:    _audiodriver, _dtmfKey, 
+               _spkr_volume,_mic_volume  = 0;  // Initialize after by init() -> initVolume()
+     Call:     _nbIncomingWaitingCall, _hasTriedToRegister
+     SIP Link: _userAgent, _userAgentInitlized
+  */
+
 #ifdef USE_ZEROCONF
   _hasZeroconf = true;
   _DNSService = new DNSService();
 #endif
-
-  // setup
-  _path = ""; 
-  _exist = 0;
-  _setupLoaded = false;
-  _dbus = NULL;
-
-  // sound
-  _audiodriver = NULL;
-  _dtmfKey = 0;
-  _spkr_volume = 0;  // Initialize after by init() -> initVolume()
-  _mic_volume  = 0;  // Initialize after by init() -> initVolume()
-
-  // Call
-  _nbIncomingWaitingCall=0;
-  _hasTriedToRegister = false;
-
-  // SIP Link
-  _userAgent = NULL;
-  _userAgentInitlized = false;
 
   // initialize random generator for call id
   srand (time(NULL));
@@ -809,6 +826,7 @@ ManagerImpl::stopTone(bool stopAudio=true) {
 ManagerImpl::playTone()
 {
   playATone(Tone::TONE_DIALTONE);
+  return true;
 }
 
 /**
@@ -818,6 +836,7 @@ ManagerImpl::playTone()
 ManagerImpl::playToneWithMessage()
 {
   playATone(Tone::TONE_CONGESTION);
+  return true;
 }
 
 /**
@@ -1111,7 +1130,7 @@ ManagerImpl::setActiveCodecList(const std::vector<  ::DBus::String >& list)
   std::string
 ManagerImpl::serialize(std::vector<std::string> v)
 {
-  int i;
+  unsigned int i;
   std::string res;
   for(i=0;i<v.size();i++)
   {
@@ -1127,7 +1146,7 @@ ManagerImpl::getActiveCodecList( void )
   _debug("Get Active codecs list\n");
   std::vector< std::string > v;
   CodecOrder active = _codecDescriptorMap.getActiveCodecs();
-  int i=0;
+  unsigned int i=0;
   size_t size = active.size();
   while(i<size)
   {
@@ -1247,7 +1266,7 @@ ManagerImpl::setInputAudioPlugin(const std::string& audioPlugin)
   void
 ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
 {
-  int layer = _audiodriver -> getLayerType();
+  //int layer = _audiodriver -> getLayerType();
   _debug("Set output audio plugin\n");
   _audiodriver -> setErrorMessage( -1 );
   _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
@@ -1278,7 +1297,7 @@ ManagerImpl::getAudioOutputDeviceList(void)
   void
 ManagerImpl::setAudioOutputDevice(const int index)
 {
-  int layer = _audiodriver -> getLayerType();
+  //int layer = _audiodriver -> getLayerType();
   _debug("Set audio output device: %i\n", index);
   _audiodriver -> setErrorMessage( -1 );
   _audiodriver->openDevice(_audiodriver->getIndexIn(), 
@@ -1309,7 +1328,7 @@ ManagerImpl::getAudioInputDeviceList(void)
   void
 ManagerImpl::setAudioInputDevice(const int index)
 {
-  int layer = _audiodriver -> getLayerType();
+  //int layer = _audiodriver -> getLayerType();
   _debug("Set audio input device %i\n", index);
   _audiodriver -> setErrorMessage( -1 );
   _audiodriver->openDevice(index, 

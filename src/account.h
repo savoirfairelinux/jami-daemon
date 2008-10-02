@@ -76,17 +76,6 @@ class Account{
    */
   virtual ~Account();
   
-  // copy constructor
-  Account(const Account& rh):_accountID(rh._accountID), _link(rh._link), _enabled(rh._enabled){
-        _debug("Account copy constructor hasn't been implemented yet. Quit! ");
-    	exit(0);
-  } 
-  
-  // assignment operator
-  Account& operator=(const Account& rh){
-        _debug("Account assignment operator hasn't been implemented yet. Quit! ");
-    	exit(0);
-  } 
   
   /**
    * Load the settings for this account.
@@ -146,6 +135,12 @@ class Account{
   void publishPresence(std::string presenceStatus);
 
 private:
+
+  // copy constructor
+  Account(const Account& rh);
+  
+  // assignment operator
+  Account& operator=(const Account& rh);
 
 protected:
   /**

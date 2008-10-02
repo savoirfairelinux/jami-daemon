@@ -60,6 +60,12 @@ class SIPVoIPLink : public VoIPLink
      */
     ~SIPVoIPLink();
 
+    /* Copy Constructor */
+    SIPVoIPLink(const SIPVoIPLink& rh);
+
+    /* Assignment Operator */
+    SIPVoIPLink& operator=( const SIPVoIPLink& rh);
+   
     /** 
      * Try to initiate the pjsip engine/thread and set config 
      * @return bool True if OK

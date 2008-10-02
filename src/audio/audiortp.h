@@ -65,6 +65,13 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     virtual void run ();
 
   private:
+
+    // copy constructor
+    AudioRtpRTX(const AudioRtpRTX& rh);
+  
+    // assignment operator
+    AudioRtpRTX& operator=(const AudioRtpRTX& rh);
+
     /** A SIP call */
     SIPCall* _ca;
 
@@ -169,6 +176,12 @@ class AudioRtp {
     void closeRtpSession( void );
 
   private:
+    // copy constructor
+    AudioRtp(const AudioRtp& rh);
+  
+    // assignment operator
+    AudioRtp& operator=(const AudioRtp& rh);
+
     /** The RTP thread */
     AudioRtpRTX* _RTXThread;
     

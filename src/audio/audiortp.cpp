@@ -42,9 +42,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtp                                                          
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtp::AudioRtp ()
+AudioRtp::AudioRtp() :_RTXThread(0), _symmetric(), _threadMutex()
 {
-  _RTXThread = 0;
 }
 
 AudioRtp::~AudioRtp (void) {
@@ -94,12 +93,11 @@ AudioRtp::closeRtpSession () {
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
 ////////////////////////////////////////////////////////////////////////////////
-AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym)
+AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _ca(sipcall), _sessionSend(NULL), _sessionRecv(NULL), _session(NULL), _start(), 
+		               _sym(sym), micData(NULL), micDataConverted(NULL), micDataEncoded(NULL), spkrDataDecoded(NULL), spkrDataConverted(NULL), 
+		               converter(NULL), _layerSampleRate(),_codecSampleRate(), _layerFrameSize(), _audiocodec(NULL)
 {
   setCancel(cancelDeferred);
-  time = new ost::Time();
-  _ca = sipcall;
-  _sym = sym;
   // AudioRtpRTX should be close if we change sample rate
   // TODO: Change bind address according to user settings.
   // TODO: this should be the local ip not the external (router) IP
@@ -324,7 +322,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       //buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
       int nbInt16 = expandedSize / sizeof(int16);
       //nbInt16 represents the number of samples we just decoded
-      if (nbInt16 > max) {
+      if ((unsigned int)nbInt16 > max) {
 	_debug("We have decoded an RTP packet larger than expected: %d VS %d. Cropping.\n", nbInt16, max);
 	nbInt16=max;
       }

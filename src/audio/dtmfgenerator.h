@@ -39,6 +39,7 @@
 class DTMFException : public std::exception
 {
   private:
+ 
     /** Message */
     const char* reason;
   public:
@@ -52,13 +53,13 @@ class DTMFException : public std::exception
      * Destructor
      */
     virtual ~DTMFException() throw();
-
+/*
     // Copy Constructor
     DTMFException(const DTMFException& rh) throw();
 
     // Assignment Operator
-    DTMFException& operator=( const DTMFException& rh) throw(); 
-
+    DTMFException& operator=( const DTMFException& rh) throw();
+*/ 
     /**
      * @return const char* The error
      */
@@ -113,6 +114,7 @@ class DTMFGenerator
      */
     ~DTMFGenerator();
 
+
     // Copy Constructor
     DTMFGenerator(const DTMFGenerator& rh);
 
@@ -136,6 +138,7 @@ class DTMFGenerator
     void getNextSamples(SFLDataFormat* buffer, size_t n) throw (DTMFException);
 
   private:
+
     /**
      * Generate samples for a specific dtmf code
      * @param code The code
