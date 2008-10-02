@@ -30,7 +30,7 @@ SampleCache::~SampleCache()
 }
 
 bool
-SampleCache::uploadSample( SFLDataFormat* buffer , size_t size )
+SampleCache::uploadSample( SFLDataFormat* buffer UNUSED, size_t size UNUSED )
 {
   //pa_stream_write( pulse->caching , buffer , size  , pa_xfree, 0 , PA_SEEK_RELATIVE);
   //pa_stream_finish_upload( pulse->caching );

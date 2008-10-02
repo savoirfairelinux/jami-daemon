@@ -106,12 +106,12 @@ CodecDescriptor::isActive(AudioCodecType payload)
 }
 
   void 
-CodecDescriptor::removeCodec(AudioCodecType payload)
+CodecDescriptor::removeCodec(AudioCodecType payload UNUSED)
 {
 }
 
   void
-CodecDescriptor::addCodec(AudioCodecType payload)
+CodecDescriptor::addCodec(AudioCodecType payload UNUSED)
 {
 }
 
