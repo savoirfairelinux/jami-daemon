@@ -355,7 +355,7 @@ SIPVoIPLink::refuse (const CallID& id)
 }
 
 bool 
-SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code)
+SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code UNUSED)
 {
   SIPCall* call = getSIPCall(id);
   if (call==0) { _debug("Call doesn't exist\n"); return false; }  
@@ -382,7 +382,7 @@ SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code)
 }
 
 bool
-SIPVoIPLink::sendMessage(const std::string& to, const std::string& body)
+SIPVoIPLink::sendMessage(const std::string& to UNUSED, const std::string& body UNUSED)
 {
     return true;
 }
@@ -406,7 +406,7 @@ SIPVoIPLink::SIPOutgoingInvite(SIPCall* call)
 }
 
 bool
-SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject) 
+SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED) 
 {
   if (!call) return false;
 
@@ -475,7 +475,7 @@ SIPVoIPLink::SIPToHeader(const std::string& to)
 }
 
 bool
-SIPVoIPLink::SIPCheckUrl(const std::string& url)
+SIPVoIPLink::SIPCheckUrl(const std::string& url UNUSED)
 {
   return true;
 }

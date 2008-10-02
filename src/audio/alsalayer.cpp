@@ -475,9 +475,11 @@ AlsaLayer::read( void* buffer, int toCopy)
 }
 
   int
-AlsaLayer::putInCache( char code, void *buffer, int toCopy )
+AlsaLayer::putInCache( char code UNUSED, 
+                        void *buffer UNUSED, 
+                        int toCopy UNUSED )
 {
-  return 1;
+    return 1;
 }
 
   void

@@ -89,7 +89,7 @@ dnl Define C++ as default language
 AC_LANG(C++)
 
 dnl Setup C++ compiler flags
-CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS $USER_INCLUDES -O0 -g -Wall -Weffc++ -Wfatal-errors -Werror"
+CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS $USER_INCLUDES -O0 -g -Wall -Wextra"
 
 dnl Check for header files
 AC_FUNC_ALLOCA
