@@ -126,11 +126,11 @@ public:
     bool makeOutgoingCall(const std::string& to, SIPCall* call, const AccountID& id);
     pj_pool_t *getAppPool() {return _pool;}
     static pj_bool_t mod_on_rx_request(pjsip_rx_data *rdata);
-    static pj_bool_t mod_on_rx_response(pjsip_rx_data *rdata) {return PJ_SUCCESS;}
+    static pj_bool_t mod_on_rx_response(pjsip_rx_data *rdata UNUSED) {return PJ_SUCCESS;}
     static void regc_cb(struct pjsip_regc_cbparam *param);
     static void xfer_func_cb( pjsip_evsub *sub, pjsip_event *event);
     static void xfer_svr_cb(pjsip_evsub *sub, pjsip_event *event);
-    static void call_on_media_update( pjsip_inv_session *inv, pj_status_t status) {}
+    static void call_on_media_update( pjsip_inv_session *inv UNUSED, pj_status_t status UNUSED) {}
     static void call_on_state_changed( pjsip_inv_session *inv, pjsip_event *e);
     static void call_on_forked(pjsip_inv_session *inv, pjsip_event *e);
     static void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);

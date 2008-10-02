@@ -83,7 +83,7 @@ Account::subscribeContactsPresence()
 }
 
 void
-Account::publishPresence(std::string presenceStatus)
+Account::publishPresence(std::string presenceStatus UNUSED)
 {
   /*
 	if(_link->isContactPresenceSupported())

@@ -551,7 +551,7 @@ ManagerImpl::playDtmf(char code, bool isTalking)
   if( CHECK_INTERFACE( layer , PULSEAUDIO ))
   {
   // Cache the samples on the sound server
-  (PulseLayer*)audiolayer->putInCache( code, _buf , size * sizeof(SFLDataFormat) );
+  // (PulseLayer*)audiolayer->putInCache( code, _buf , size * sizeof(SFLDataFormat) );
   }
 
   delete[] _buf; _buf = 0;
@@ -731,7 +731,7 @@ ManagerImpl::registrationSucceed(const AccountID& accountid)
 
 //THREAD=VoIP
   void 
-ManagerImpl::unregistrationSucceed(const AccountID& accountid)
+ManagerImpl::unregistrationSucceed(const AccountID& accountid UNUSED)
 {
   _debug("UNREGISTRATION SUCCEED\n");
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
@@ -1791,7 +1791,7 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
  * Main Thread
  */
   bool 
-ManagerImpl::getCallStatus(const std::string& sequenceId)
+ManagerImpl::getCallStatus(const std::string& sequenceId UNUSED)
 {
   if (!_dbus) { return false; }
   ost::MutexLock m(_callAccountMapMutex);
@@ -2232,7 +2232,7 @@ ManagerImpl::loadAccountMap()
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
     // Check if it starts with "Account:" (SIP and IAX pour le moment)
-    if (iter->find("Account:") == -1) {
+    if ((int)(iter->find("Account:")) == -1) {
       iter++;
       continue;
     }
@@ -2345,7 +2345,7 @@ ManagerImpl::getAccountLink(const AccountID& accountID)
 }
 
 pjsip_regc 
-*getSipRegcFromID(const AccountID& id)
+*getSipRegcFromID(const AccountID& id UNUSED)
 {
   /*SIPAccount *tmp = dynamic_cast<SIPAccount *>getAccount(id);
   if(tmp != NULL)

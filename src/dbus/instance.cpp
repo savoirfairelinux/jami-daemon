@@ -29,8 +29,8 @@ Instance::Instance( DBus::Connection& connection )
 }
 
 void
-Instance::Register( const ::DBus::Int32& pid, 
-                     const ::DBus::String& name )
+Instance::Register( const ::DBus::Int32& pid UNUSED, 
+                     const ::DBus::String& name UNUSED)
 {
     _debug("Instance::register received\n");
     count++;
@@ -38,7 +38,7 @@ Instance::Register( const ::DBus::Int32& pid,
 
 
 void
-Instance::Unregister( const ::DBus::Int32& pid )
+Instance::Unregister( const ::DBus::Int32& pid UNUSED)
 {
     _debug("Instance::unregister received\n");
     count --;

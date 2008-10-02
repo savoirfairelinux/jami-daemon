@@ -130,7 +130,7 @@ PulseLayer::createStreams( pa_context* c )
 }
 
   bool 
-PulseLayer::openDevice(int indexIn, int indexOut, int sampleRate, int frameSize , int stream, std::string plugin) 
+PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED) 
 {
   _sampleRate = sampleRate;
   _frameSize = frameSize;	
@@ -165,7 +165,7 @@ PulseLayer::closePlaybackStream( void )
 }
 
   int 
-PulseLayer::playSamples(void* buffer, int toCopy, bool isTalking)
+PulseLayer::playSamples(void* buffer, int toCopy, bool isTalking UNUSED)
 {
   int a = _mainSndRingBuffer.AvailForPut();
   if ( a >= toCopy ) {
@@ -249,14 +249,14 @@ PulseLayer::audioCallback ( pa_stream* s, size_t bytes, void* userdata )
 }
 
   void 
-PulseLayer::underflow ( pa_stream* s,  void* userdata )
+PulseLayer::underflow ( pa_stream* s UNUSED,  void* userdata UNUSED )
 { 
   _debug("Buffer Underflow\n");
 }
 
 
   void 
-PulseLayer::overflow ( pa_stream* s, void* userdata )
+PulseLayer::overflow ( pa_stream* s, void* userdata UNUSED )
 { 
   //PulseLayer* pulse = (PulseLayer*) userdata;
   pa_stream_drop( s );
@@ -314,7 +314,7 @@ void PulseLayer::writeToSpeaker( void )
     } 
     if ( (tone=_manager->getTelephoneFile()) != 0 ) {
       toGet = framesPerBuffer;
-      toPlay = ( toGet * sizeof(SFLDataFormat)> framesPerBuffer )? framesPerBuffer : toGet * sizeof(SFLDataFormat) ;
+      toPlay = ( (int)(toGet * sizeof(SFLDataFormat)) > framesPerBuffer )? framesPerBuffer : toGet * sizeof(SFLDataFormat) ;
       out =  (SFLDataFormat*)pa_xmalloc(toPlay);
       tone->getNext(out, toPlay/2 , 100);
       pa_stream_write( playback->pulseStream() , out , toPlay   , pa_xfree, 0 , PA_SEEK_RELATIVE) ; 
@@ -354,7 +354,7 @@ void PulseLayer::readFromMic( void )
 }
 
   int
-PulseLayer::putInCache( char code, void *buffer, int toCopy )
+PulseLayer::putInCache( char code UNUSED, void *buffer UNUSED, int toCopy UNUSED )
 {
   _debug("Put the DTMF in cache\n");
   //pa_stream_write( cache->pulseStream() , buffer , toCopy  , pa_xfree, 0 , PA_SEEK_RELATIVE);
@@ -362,7 +362,7 @@ PulseLayer::putInCache( char code, void *buffer, int toCopy )
   return 1;
 }
 
-static void retrieve_server_info(pa_context *c, const pa_server_info *i, void *userdata)
+static void retrieve_server_info(pa_context *c UNUSED, const pa_server_info *i, void *userdata UNUSED)
 {
   _debug("Server Info: Process owner : %s\n" , i->user_name);  
   _debug("\t\tServer name : %s - Server version = %s\n" , i->server_name, i->server_version);  
@@ -381,7 +381,7 @@ static void retrieve_client_list(pa_context *c, const pa_client_info *i, int eol
 }
 */
 
-static void reduce_sink_list(pa_context *c, const pa_sink_input_info *i, int eol, void *userdata)
+static void reduce_sink_list(pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
 {
   PulseLayer* pulse = (PulseLayer*) userdata;
   AudioStream* s = pulse->getPlaybackStream();
@@ -396,7 +396,7 @@ static void reduce_sink_list(pa_context *c, const pa_sink_input_info *i, int eol
   }  
 }
 
-static void restore_sink_list(pa_context *c, const pa_sink_input_info *i, int eol, void *userdata)
+static void restore_sink_list(pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
 {
   PulseLayer* pulse = (PulseLayer*) userdata;
   //AudioStream* s = pulse->getPlaybackStream();
@@ -429,7 +429,7 @@ PulseLayer::serverinfo( void )
   pa_context_get_server_info( context , retrieve_server_info , NULL );
 }
 
-static void on_success(pa_context *c, int success, void *userdata)
+static void on_success(pa_context *c UNUSED, int success UNUSED, void *userdata UNUSED)
 {
   _debug("Operation successfull \n");
 }

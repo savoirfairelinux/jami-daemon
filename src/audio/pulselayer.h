@@ -110,7 +110,7 @@ class PulseLayer : public AudioLayer {
     /**
      * UNUSED in pulseaudio layer
      */
-    std::vector<std::string> getSoundCardsInfo( int stream ) { 
+    std::vector<std::string> getSoundCardsInfo( int stream UNUSED ) { 
       std::vector<std::string> tmp;
       return tmp; 
     }
@@ -118,12 +118,12 @@ class PulseLayer : public AudioLayer {
     /**
      * UNUSED in pulseaudio layer
      */
-    bool soundCardIndexExist( int card , int stream ) { return true; }
+    bool soundCardIndexExist( int card UNUSED, int stream UNUSED ) { return true; }
     
     /**
      * UNUSED in pulseaudio layer
      */
-    int soundCardGetIndex( std::string description ) { return 0;}
+    int soundCardGetIndex( std::string description UNUSED ) { return 0;}
 
     /**
      * UNUSED in pulseaudio layer
