@@ -725,10 +725,11 @@ void SIPVoIPLink::setSipServer(const std::string& sipServer)
 
 void SIPVoIPLink::setPortNumber(const std::string& port)
 {
-	istringstream is(port);
+	std::istringstream is(port);
 	unsigned int iPort;
 	is >> iPort;
-	_port = port;
+	_port = iPort;
+
 }
 
 pj_str_t SIPVoIPLink::string2PJStr(const std::string &value)
