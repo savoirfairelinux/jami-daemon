@@ -1974,6 +1974,12 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 	);
     a.insert(
 	std::pair<std::string, std::string>(
+	  SIP_PORT, 
+	  getConfigString(accountID, SIP_PORT)
+	  )
+	);	
+    a.insert(
+	std::pair<std::string, std::string>(
 	  SIP_PROXY, 
 	  getConfigString(accountID, SIP_PROXY)
 	  )
@@ -2046,7 +2052,7 @@ ManagerImpl::setAccountDetails( const ::DBus::String& accountID,
     setConfig(accountID, SIP_USER, (*details.find(SIP_USER)).second);
     setConfig(accountID, SIP_PASSWORD,  (*details.find(SIP_PASSWORD)).second);
     setConfig(accountID, SIP_HOST, (*details.find(SIP_HOST)).second);
-    //setConfig(accountID, SIP_PORT, (*details.find(SIP_PORT).second));
+    setConfig(accountID, SIP_PORT, (*details.find(SIP_PORT)).second);
     setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
     setConfig(accountID, CONFIG_ACCOUNT_MAILBOX,(*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
     setConfig(accountID, SIP_USE_STUN,
