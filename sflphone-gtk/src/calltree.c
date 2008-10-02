@@ -19,6 +19,8 @@
  */
 
 #include <stdlib.h>
+#include <glib/gprintf.h>
+
 #include <gtk/gtk.h>
 #include <actions.h>
 #include <calltree.h>
@@ -586,7 +588,6 @@ update_call_tree_remove (calltab_t* tab, call_t * c)
   GValue val;
   call_t * iterCall;
   GtkListStore* store = tab->store;
-  GtkWidget* view = tab->view;
 
   int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
   int i;
@@ -620,7 +621,6 @@ update_call_tree (calltab_t* tab, call_t * c)
   GValue val;
   call_t * iterCall;
   GtkListStore* store = tab->store;
-  GtkWidget* view = tab->view;
 
   int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
   int i;
@@ -744,7 +744,6 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   // New call in the list
   gchar * description;
   gchar * date="";
-  gchar * duration="";
   description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>", 
       call_get_number(c),
       call_get_name(c)); 

@@ -27,8 +27,9 @@
 #include <dbus.h>
 #include <mainwindow.h>
 #include <calltab.h>
+#include <assistant.h>
 #include <gtk/gtk.h>
-
+#include <glib/gprintf.h>
 #include <string.h> // for strlen
 
 GtkWidget * pickUpMenu;
@@ -119,10 +120,6 @@ help_about ( void * foo)
     NULL};
   gchar *artists[] = {
     "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>", 
-    "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
-    NULL};
-  gchar *translators[] = {
-    "Maxime Chambreuil <maxime.chambreuil@savoirfairelinux.com>",
     "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
     NULL};
 

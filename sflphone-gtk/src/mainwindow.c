@@ -21,7 +21,6 @@
 #include <config.h>
 #include <actions.h>
 #include <calltab.h>
-#include <calllist.h> 
 #include <calltree.h>
 #include <configwindow.h>
 #include <dialpad.h>
@@ -29,6 +28,7 @@
 #include <menus.h>
 #include <sliders.h>
 #include <historyfilter.h>
+#include <assistant.h>
 
 #include <gtk/gtk.h>
 
