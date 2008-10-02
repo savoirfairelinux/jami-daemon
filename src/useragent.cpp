@@ -348,7 +348,8 @@ void UserAgent::busy_sleep(unsigned msec)
 #endif
 }
 
-bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout UNUSED, const unsigned int& port) {
+bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, 
+				const int& timeout UNUSED, const unsigned int& port) {
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
     char contactTmp[256];
@@ -388,6 +389,7 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
         _debug("UserAgent: Unable to initialize regc. %d\n", status); //, regc->str_srv_url.ptr);
         return status;
     }
+
 
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
     pjsip_cred_info *cred = account->getCredInfo();
