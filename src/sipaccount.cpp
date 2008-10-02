@@ -63,6 +63,8 @@ SIPAccount::registerVoIPLink()
   thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_USER));
   thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
   thislink->setSipServer(Manager::instance().getConfigString(_accountID,SIP_HOST));
+  thislink->setPortNumber(Manager::instance().getConfigString(_accountID,SIP_PORT));
+
   _link->sendRegister();
 }
 

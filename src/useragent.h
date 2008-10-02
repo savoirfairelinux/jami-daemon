@@ -92,7 +92,8 @@ public:
     
     pj_str_t getStunServer() {return _stunHost;}
     
-    bool addAccount(AccountID id, pjsip_regc **regc, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout);
+    bool addAccount(AccountID id, pjsip_regc **regc, const std::string& server, const std::string& user, const std::string& passwd
+						   , const int& timeout,  const unsigned int& port);
     bool removeAccount(pjsip_regc *regc);
     
     pj_str_t buildContact(char *userName);

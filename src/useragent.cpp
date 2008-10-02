@@ -348,7 +348,7 @@ void UserAgent::busy_sleep(unsigned msec)
 #endif
 }
 
-bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout UNUSED) {
+bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout UNUSED, const unsigned int& port) {
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
     char contactTmp[256];
@@ -373,6 +373,10 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     
     tmp = "<sip:" + user + "@" + server + ">";
     pj_strdup2(_pool, &aor, tmp.data());
+
+
+    if (_localExternPort == 5060)
+	_localExternPort = port;
 
     sprintf(contactTmp, "<sip:%s@%s:%d>", user.data(), _localExternAddress.data(), _localExternPort);
     pj_strdup2(_pool, &contact, contactTmp);
