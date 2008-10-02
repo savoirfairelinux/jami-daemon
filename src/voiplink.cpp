@@ -135,7 +135,7 @@ VoIPLink::subscribePresenceForContact(Contact* contact)
 }*/
 
 void
-VoIPLink::publishPresenceStatus(std::string status)
+VoIPLink::publishPresenceStatus(std::string status UNUSED)
 {
 	// Nothing to do if presence is not supported
 	// or the function will be overidden

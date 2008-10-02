@@ -731,7 +731,7 @@ ManagerImpl::registrationSucceed(const AccountID& accountid)
 
 //THREAD=VoIP
   void 
-ManagerImpl::unregistrationSucceed(const AccountID& accountid)
+ManagerImpl::unregistrationSucceed(const AccountID& accountid UNUSED)
 {
   _debug("UNREGISTRATION SUCCEED\n");
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
@@ -1791,7 +1791,7 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
  * Main Thread
  */
   bool 
-ManagerImpl::getCallStatus(const std::string& sequenceId)
+ManagerImpl::getCallStatus(const std::string& sequenceId UNUSED)
 {
   if (!_dbus) { return false; }
   ost::MutexLock m(_callAccountMapMutex);
@@ -2339,7 +2339,7 @@ ManagerImpl::getAccountLink(const AccountID& accountID)
 }
 
 pjsip_regc 
-*getSipRegcFromID(const AccountID& id)
+*getSipRegcFromID(const AccountID& id UNUSED)
 {
   /*SIPAccount *tmp = dynamic_cast<SIPAccount *>getAccount(id);
   if(tmp != NULL)
