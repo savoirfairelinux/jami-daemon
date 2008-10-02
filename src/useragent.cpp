@@ -348,7 +348,7 @@ void UserAgent::busy_sleep(unsigned msec)
 #endif
 }
 
-bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout) {
+bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout UNUSED) {
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
     char contactTmp[256];
@@ -693,7 +693,7 @@ pj_bool_t UserAgent::mod_on_rx_request(pjsip_rx_data *rdata) {
 	// Retrieve all the message. Should contains only the method name but ...
 	request =  rdata->msg_info.msg->line.req.method.name.ptr;
 	// Check if the message is a notification
-	if( request.find( method_name ) != -1 ) {
+	if( request.find( method_name ) != (size_t)-1 ) {
     		set_voicemail_info( account_id, rdata->msg_info.msg->body );
 	}
         pjsip_endpt_respond_stateless(getInstance()->getEndPoint(), rdata, PJSIP_SC_OK, NULL, NULL, NULL);
