@@ -73,7 +73,7 @@ class AudioLayer {
         , _inChannel( 1 )
         , _outChannel ( 1 )
         , _errorMessage ( 0 )
-        , _mutex (NULL)
+        , _mutex ()
     {
 
     }
@@ -82,7 +82,7 @@ class AudioLayer {
     /**
      * Destructor
      */
-    virtual ~AudioLayer(void){}
+    ~AudioLayer(void){}
 
     virtual void closeLayer( void ) = 0;
 

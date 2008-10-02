@@ -954,6 +954,8 @@ void UserAgent::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *t
                 }
                 break;
             case PJSIP_TSX_STATE_COMPLETED:
+		if (tsx->status_code == 407)
+                    break;
                 if (tsx->status_code / 100 == 6 || tsx->status_code / 100 == 4) {
                     // We get error message of outgoing call from server
                     _debug("UserAgent: Server error message is received!\n");

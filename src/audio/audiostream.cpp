@@ -22,7 +22,7 @@
 static pa_channel_map channel_map ;
 
 AudioStream::AudioStream( pa_context* context, int type, std::string desc, double vol )
-		: _audiostream (createStream( context )), _streamType(type), _streamDescription(desc), flag(PA_STREAM_AUTO_TIMING_UPDATE), sample_spec(), _volume()
+		: _audiostream(NULL), _streamType(type), _streamDescription(desc), flag(PA_STREAM_AUTO_TIMING_UPDATE), sample_spec(), _volume()
 { 
   sample_spec.format = PA_SAMPLE_S16LE; 
   sample_spec.rate = 44100; 
@@ -30,7 +30,7 @@ AudioStream::AudioStream( pa_context* context, int type, std::string desc, doubl
   channel_map.channels = 1; 
   pa_cvolume_set( &_volume , 1 , PA_VOLUME_MUTED ) ; // * vol / 100 ;
   
-  //_audiostream =  createStream( context );
+  _audiostream =  createStream( context );
 } 
 
 AudioStream::~AudioStream()
