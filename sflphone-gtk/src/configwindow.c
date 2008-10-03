@@ -74,7 +74,7 @@ config_window_fill_account_list()
 		GtkTreeIter iter;
 
 		gtk_list_store_clear(accountStore);
-		int i;
+		unsigned int i;
 		for(i = 0; i < account_list_get_size(); i++)
 		{
 			account_t * a = account_list_get_nth (i);
@@ -97,27 +97,11 @@ config_window_fill_account_list()
 	}
 }
 
-
-/**
- * Refresh all audio settings
- */
-static void
-detect_all_audio_settings()
-{
-	// Update lists
-	config_window_fill_output_audio_device_list();
-	config_window_fill_input_audio_device_list();
-	
-	// Select active device in combo box
-	//select_active_output_audio_device();
-	//select_active_input_audio_device();
-}
-
 /**
  * Delete an account
  */
 static void
-delete_account(GtkWidget *widget, gpointer data)
+delete_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
 	if(selectedAccount)
 	{
@@ -129,7 +113,7 @@ delete_account(GtkWidget *widget, gpointer data)
  * Edit an account
  */
 static void
-edit_account(GtkWidget *widget, gpointer data)
+edit_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
 	if(selectedAccount)
 	{
@@ -141,7 +125,7 @@ edit_account(GtkWidget *widget, gpointer data)
  * Add an account
  */
 static void
-add_account(GtkWidget *widget, gpointer data)
+add_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
 	show_account_window(NULL);
 }
@@ -216,7 +200,7 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
 }
 
 static void
-enable_account(GtkCellRendererToggle *rend , gchar* path,  gpointer data )
+enable_account(GtkCellRendererToggle *rend UNUSED, gchar* path,  gpointer data )
 {
   GtkTreeIter iter;
   GtkTreePath *treePath;
@@ -307,7 +291,7 @@ account_move(gboolean moveUp, gpointer data)
  * Called from move up account button signal
  */
 static void
-account_move_up(GtkButton *button, gpointer data)
+account_move_up(GtkButton *button UNUSED, gpointer data)
 {
   // Change tree view ordering and get indice changed
   account_move(TRUE, data);
@@ -317,7 +301,7 @@ account_move_up(GtkButton *button, gpointer data)
  * Called from move down account button signal
  */
 static void
-account_move_down(GtkButton *button, gpointer data)
+account_move_down(GtkButton *button UNUSED, gpointer data)
 {
   // Change tree view ordering and get indice changed
   account_move(FALSE, data);

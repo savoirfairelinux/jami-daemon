@@ -214,7 +214,7 @@ guint
 account_list_get_registered_accounts( void )
 {
   guint res = 0;
-  int i;
+  unsigned int i;
   for(i=0;i<account_list_get_size();i++)
   {
     if( account_list_get_nth( i ) -> state == ( ACCOUNT_STATE_REGISTERED ))

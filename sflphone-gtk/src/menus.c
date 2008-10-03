@@ -106,7 +106,7 @@ void update_menus()
 }
 /* ----------------------------------------------------------------- */
   static void 
-help_about ( void * foo)
+help_about ( void * foo UNUSED)
 {
   gchar *authors[] = {
     "Yan Morin <yan.morin@savoirfairelinux.com>", 
@@ -159,19 +159,19 @@ create_help_menu()
 }
 /* ----------------------------------------------------------------- */
   static void 
-call_new_call ( void * foo)
+call_new_call ( void * foo UNUSED)
 {
   sflphone_new_call();
 }
 
   static void 
-call_quit ( void * foo)
+call_quit ( void * foo UNUSED)
 {
   sflphone_quit();
 }
 
   static void 
-call_minimize ( void * foo)
+call_minimize ( void * foo UNUSED)
 {
 #if GTK_CHECK_VERSION(2,10,0)
   gtk_widget_hide(GTK_WIDGET( get_main_window() ));
@@ -180,7 +180,7 @@ call_minimize ( void * foo)
 }
 
   static void
-switch_account(  GtkWidget* item , gpointer data )
+switch_account(  GtkWidget* item , gpointer data UNUSED)
 {
   account_t* acc = g_object_get_data( G_OBJECT(item) , "account" );
   g_print("%s\n" , acc->accountID);
@@ -188,7 +188,7 @@ switch_account(  GtkWidget* item , gpointer data )
 }
 
   static void 
-call_hold  (void* foo)
+call_hold  (void* foo UNUSED)
 {
   call_t * selectedCall = call_get_selected(current_calls);
   
@@ -208,19 +208,19 @@ call_hold  (void* foo)
 }
 
   static void 
-call_pick_up ( void * foo)
+call_pick_up ( void * foo UNUSED)
 {
   sflphone_pick_up();
 }
 
   static void 
-call_hang_up ( void * foo)
+call_hang_up ( void * foo UNUSED)
 {
   sflphone_hang_up();
 }
 
   static void 
-call_wizard ( void * foo)
+call_wizard ( void * foo UNUSED)
 {
 #if GTK_CHECK_VERSION(2,10,0)
   build_wizard();
@@ -228,7 +228,7 @@ call_wizard ( void * foo)
 }
 
 static void
-remove_from_history( void * foo )
+remove_from_history( void * foo UNUSED)
 {
   call_t* c = call_get_selected( history );
   if(c){
@@ -238,7 +238,7 @@ remove_from_history( void * foo )
 }
 
 static void
-call_back( void * foo )
+call_back( void * foo UNUSED)
 {
   call_t* selectedCall = call_get_selected( history );
   call_t* newCall =  g_new0 (call_t, 1);
@@ -355,20 +355,20 @@ create_call_menu()
 /* ----------------------------------------------------------------- */
 
   static void 
-edit_preferences ( void * foo)
+edit_preferences ( void * foo UNUSED)
 {
   show_config_window();
 }
 
   static void 
-edit_accounts ( void * foo)
+edit_accounts ( void * foo UNUSED)
 {
   show_accounts_window();
 }
 
 // The menu Edit/Copy should copy the current selected call's number
   static void 
-edit_copy ( void * foo)
+edit_copy ( void * foo UNUSED)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
   call_t * selectedCall = call_get_selected(current_calls);
@@ -400,7 +400,7 @@ edit_copy ( void * foo)
 
 // The menu Edit/Paste should paste the clipboard into the current selected call
   static void 
-edit_paste ( void * foo)
+edit_paste ( void * foo UNUSED)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
   call_t * selectedCall = call_get_selected(current_calls);
@@ -449,7 +449,7 @@ edit_paste ( void * foo)
       case CALL_STATE_CURRENT:
       default:
 	{
-	  int i;
+	  unsigned int i;
 	  for(i = 0; i < strlen(no); i++)
 	  {
 	    gchar * oneNo = g_strndup(&no[i], 1);
@@ -486,7 +486,7 @@ edit_paste ( void * foo)
 }
 
   static void
-clear_history( void* foo )
+clear_history( void* foo UNUSED)
 {
   gchar *markup;
   GtkWidget *dialog;
@@ -568,8 +568,8 @@ create_edit_menu()
 }
 /* ----------------------------------------------------------------- */
   static void 
-view_dialpad  (GtkImageMenuItem *imagemenuitem,
-    void* foo)
+view_dialpad  (GtkImageMenuItem *imagemenuitem UNUSED,
+    void* foo UNUSED)
 {
   gboolean state;
   main_window_dialpad( &state );
@@ -585,8 +585,8 @@ view_dialpad  (GtkImageMenuItem *imagemenuitem,
 }
 
   static void 
-view_volume_controls  (GtkImageMenuItem *imagemenuitem,
-    void* foo)
+view_volume_controls  (GtkImageMenuItem *imagemenuitem UNUSED,
+    void* foo UNUSED)
 {
   gboolean state;
   main_window_volume_controls( &state );
@@ -600,8 +600,8 @@ view_volume_controls  (GtkImageMenuItem *imagemenuitem,
 }
 
   static void 
-view_searchbar  (GtkImageMenuItem *imagemenuitem,
-    void* foo)
+view_searchbar  (GtkImageMenuItem *imagemenuitem UNUSED,
+    void* foo UNUSED)
 {
   gboolean state;
   main_window_searchbar( &state );
@@ -805,7 +805,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     gtk_widget_show (menu_items);
 
-    int i;
+    unsigned int i;
     account_t* acc;
     gchar* alias;
     for( i = 0 ; i < account_list_get_size() ; i++ ){

@@ -59,7 +59,7 @@ notify_incoming_call( call_t* c  )
   }
 }
   void
-answer_call_cb( NotifyNotification *notification, gpointer data  )
+answer_call_cb( NotifyNotification *notification, gpointer data  UNUSED )
 {
   call_t* c = (call_t*)g_object_get_data( G_OBJECT( notification ) , "call" );
   c->history_state = INCOMING;
@@ -73,7 +73,7 @@ answer_call_cb( NotifyNotification *notification, gpointer data  )
 }
 
   void
-refuse_call_cb( NotifyNotification *notification, gpointer data )
+refuse_call_cb( NotifyNotification *notification, gpointer data  UNUSED)
 {
   call_t* c = (call_t*)g_object_get_data( G_OBJECT( notification ) , "call" );
   dbus_refuse(c);
@@ -81,7 +81,7 @@ refuse_call_cb( NotifyNotification *notification, gpointer data )
 }
 
   void
-ignore_call_cb( NotifyNotification *notification, gpointer data )
+ignore_call_cb( NotifyNotification *notification, gpointer data  UNUSED)
 {
   g_object_unref( notification );
 }
@@ -190,7 +190,7 @@ notify_no_accounts(  )
 }
 
   void
-setup_accounts_cb( NotifyNotification *notification, gpointer data )
+setup_accounts_cb( NotifyNotification *notification, gpointer data  UNUSED)
 {
   //gtk_widget_set_parent( show_accounts_window() , GTK_WIDGET(get_main_window()));
   show_accounts_window();

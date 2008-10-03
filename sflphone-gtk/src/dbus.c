@@ -41,11 +41,11 @@ DBusGProxy * configurationManagerProxy;
 DBusGProxy * instanceProxy;
 
 static void  
-incoming_call_cb (DBusGProxy *proxy,
+incoming_call_cb (DBusGProxy *proxy UNUSED,
                   const gchar* accountID,
                   const gchar* callID,
                   const gchar* from,
-                  void * foo  )
+                  void * foo  UNUSED )
 {
   g_print ("Incoming call! %s\n",callID);
   call_t * c = g_new0 (call_t, 1);
@@ -62,40 +62,40 @@ incoming_call_cb (DBusGProxy *proxy,
 
 
 static void  
-volume_changed_cb (DBusGProxy *proxy,
+volume_changed_cb (DBusGProxy *proxy UNUSED,
                   const gchar* device,
                   const gdouble value,
-                  void * foo  )
+                  void * foo  UNUSED )
 {
   g_print ("Volume of %s changed to %f. \n",device, value);
   set_slider(device, value);
 }
 
 static void  
-voice_mail_cb (DBusGProxy *proxy,
+voice_mail_cb (DBusGProxy *proxy UNUSED,
                   const gchar* accountID,
                   const guint nb,
-                  void * foo  )
+                  void * foo  UNUSED )
 {
   g_print ("%d Voice mail waiting! \n",nb);
   sflphone_notify_voice_mail (accountID , nb);
 }
 
 static void  
-incoming_message_cb (DBusGProxy *proxy,
-                  const gchar* accountID,
+incoming_message_cb (DBusGProxy *proxy UNUSED,
+                  const gchar* accountID UNUSED,
                   const gchar* msg,
-                  void * foo  )
+                  void * foo  UNUSED )
 {
   g_print ("Message %s! \n",msg);
   
 }
 
 static void  
-call_state_cb (DBusGProxy *proxy,
+call_state_cb (DBusGProxy *proxy UNUSED,
                   const gchar* callID,
                   const gchar* state,
-                  void * foo  )
+                  void * foo  UNUSED )
 {
   g_print ("Call %s state %s\n",callID, state);
   call_t * c = call_list_get(current_calls, callID);
@@ -155,8 +155,8 @@ call_state_cb (DBusGProxy *proxy,
 }
 
 static void  
-accounts_changed_cb (DBusGProxy *proxy,
-                  void * foo  )
+accounts_changed_cb (DBusGProxy *proxy UNUSED,
+                  void * foo  UNUSED )
 {
   g_print ("Accounts changed\n");
   sflphone_fill_account_list(TRUE);
@@ -164,9 +164,9 @@ accounts_changed_cb (DBusGProxy *proxy,
 }
 
 static void  
-error_alert(DBusGProxy *proxy,
+error_alert(DBusGProxy *proxy UNUSED,
 		  int errCode,
-                  void * foo  )
+                  void * foo  UNUSED )
 {
   g_print ("Error notifying : (%i)\n" , errCode);
   sflphone_throw_exception( errCode );

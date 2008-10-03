@@ -31,11 +31,11 @@ create_filter(GtkTreeModel* child)
 } 
 
 gboolean
-is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data)
+is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 {
   if( SHOW_SEARCHBAR )
   {
-	GValue val = {0, };
+	GValue val = {0,};
 	gchar* text;
 	gchar* search = (gchar*)gtk_entry_get_text(GTK_ENTRY(filter_entry));
 	gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 1, &val);
@@ -51,14 +51,14 @@ is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data)
 } 
 
 void
-filter_entry_changed(GtkEntry* entry, gchar* arg1, gpointer data)
+filter_entry_changed(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
 { 
 	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), TRUE);
 	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(histfilter));
 }
 
 void
-clear_filter_entry_if_default(GtkWidget* widget, gpointer user_data)
+clear_filter_entry_if_default(GtkWidget* widget UNUSED, gpointer user_data UNUSED)
 {
 	if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry)), _("Search"), 6) == 0)
 		gtk_entry_set_text(GTK_ENTRY(filter_entry), "");
