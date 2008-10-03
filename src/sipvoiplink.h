@@ -213,6 +213,8 @@ class SIPVoIPLink : public VoIPLink
     void setPortNumber(const std::string& port);
  
     bool isRegister() {return _bRegister;}
+    
+    void setRegister(bool result) {_bRegister = result;}
 
   public:
 

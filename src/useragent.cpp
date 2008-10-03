@@ -17,6 +17,9 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <string>
+
+
 #include <iostream>
 
 #include "manager.h"
@@ -485,9 +488,18 @@ pj_status_t UserAgent::stunServerResolve() {
     stun_status = PJ_EPENDING;
 
     // Init STUN socket
-    pj_strdup2(_pool, &stun_adr, _stunServer.data());
-    stun_status = pj_sockaddr_in_init(&stun_srv.ipv4, &stun_adr, (pj_uint16_t) 3478);
-
+    size_t pos = _stunServer.find(':');
+    if(pos == std::string::npos) {
+        pj_strdup2(_pool, &stun_adr, _stunServer.data());
+        stun_status = pj_sockaddr_in_init(&stun_srv.ipv4, &stun_adr, (pj_uint16_t) 3478);
+    } else {
+        std::string serverName = _stunServer.substr(0, pos);
+        std::string serverPort = _stunServer.substr(pos + 1);
+        int nPort = atoi(serverPort.data());
+        pj_strdup2(_pool, &stun_adr, serverName.data());
+        stun_status = pj_sockaddr_in_init(&stun_srv.ipv4, &stun_adr, (pj_uint16_t) nPort);
+    }
+    
     if (stun_status != PJ_SUCCESS) {
         _debug("UserAgent: Unresolved stun server!\n");
         stun_status = pj_gethostbyname(&stun_adr, &he);
@@ -556,6 +568,9 @@ void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {
     SIPVoIPLink *voipLink;
     
     _debug("UserAgent: Account ID is %s, Register result: %d, Status: %d\n", id->data(), param->status, param->code);
+    voipLink = dynamic_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(*id));
+    if(!voipLink)
+        return;
     
     if (param->status == PJ_SUCCESS) {
         if (param->code < 0 || param->code >= 300) {
@@ -563,18 +578,20 @@ void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {
              * So checking the code for real result
              */
             Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Error);
-        } else
+            voipLink->setRegister(false);
+        } else {
             // Registration/Unregistration is success
-            voipLink = dynamic_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(*id));
-            if(!voipLink)
-                return;
         
             if(voipLink->isRegister())
                 Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Registered);
-            else
+            else {
                 Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Unregistered);
+                voipLink->setRegister(false);
+            }
+        }
     } else {
         Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Error);
+        voipLink->setRegister(false);
     }
 }
 
