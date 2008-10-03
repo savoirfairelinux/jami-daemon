@@ -113,8 +113,6 @@ pj_status_t UserAgent::sipInit() {
             _debug("UserAgent: Unable to check NAT setting\n");
             return false; // hoho we can't use the random sip port too...
         }
-    } else {
-        //FIXME! check port number availability
     }
 
     _localPort = port;
@@ -123,18 +121,27 @@ pj_status_t UserAgent::sipInit() {
         stunServerResolve();
         _localExternAddress = Manager::instance().getFirewallAddress();
         _localExternPort = Manager::instance().getFirewallPort();
+        errPjsip = createUDPServer();
+        if (errPjsip != 0) {
+            _debug("UserAgent: Could not initialize SIP listener on port %d\n", port);
+            return errPjsip;
+        }
     } else {
         _localExternAddress = _localIPAddress;
         _localExternPort = _localPort;
+        errPjsip = createUDPServer();
+        if (errPjsip != 0) {
+            _debug("UserAgent: Could not initialize SIP listener on port %d\n", _localExternPort);
+            _localExternPort = _localPort = RANDOM_SIP_PORT;
+            _debug("UserAgent: Try to initialize SIP listener on port %d\n", _localExternPort);
+            errPjsip = createUDPServer();
+            if (errPjsip != 0) {
+                _debug("UserAgent: Fail to initialize SIP listener on port %d\n", _localExternPort);
+                return errPjsip;
+            }
+        }
     }
-
-    errPjsip = createUDPServer();
-    if (errPjsip != 0) {
-        _debug("UserAgent: Could not initialize SIP listener on port %d\n", port);
-        port = RANDOM_SIP_PORT;
-        _debug("UserAgent: SIP failed to listen on port %d\n", port);
-        return errPjsip;
-    }
+    
     _debug("UserAgent: SIP Init -- listening on port %d\n", _localExternPort);
 
     // Initialize transaction layer
