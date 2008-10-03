@@ -184,6 +184,9 @@ SIPVoIPLink::sendUnregister()
 {
   _debug("SEND UNREGISTER for account %s\n" , getAccountID().c_str());
 
+  if(!_bRegister)
+      return true;
+  
   _bRegister = false;
   
   Manager::instance().getUserAgent()->removeAccount(_regc);
