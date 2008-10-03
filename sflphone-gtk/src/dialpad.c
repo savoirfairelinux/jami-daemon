@@ -24,7 +24,7 @@
  * button pressed event
  */
 static void
-dialpad_pressed (GtkWidget * widget, gpointer data)
+dialpad_pressed (GtkWidget * widget UNUSED, gpointer data)
 {
   sflphone_keypad(0, (gchar*) data);
 }

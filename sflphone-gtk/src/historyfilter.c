@@ -35,7 +35,7 @@ is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 {
   if( SHOW_SEARCHBAR )
   {
-	GValue val = {0, };
+	GValue val = {0,};
 	gchar* text;
 	gchar* search = (gchar*)gtk_entry_get_text(GTK_ENTRY(filter_entry));
 	gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 1, &val);
