@@ -57,7 +57,7 @@ config_window_fill_codec_list()
   gtk_list_store_clear(codecStore);
 
   // Insert codecs
-  int i;
+  unsigned int i;
   for(i = 0; i < codec_list_get_size(); i++)
   {
     codec_t *c = codec_list_get_nth(i);

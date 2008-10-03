@@ -30,7 +30,7 @@ GtkWidget * show_menu_item;
 gboolean __minimized = MINIMIZED;
 
 void 
-status_quit ( void * foo )
+status_quit ( void * foo UNUSED)
 {
   sflphone_quit();
 }

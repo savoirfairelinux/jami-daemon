@@ -128,7 +128,7 @@ codec_list_move_codec_up(guint index)
 	}
 	
 	// DEBUG
-	int i;
+	unsigned int i;
 	printf("\nCodec list\n");
 	for(i=0; i < codecQueue->length; i++)
 		printf("%s\n", codec_list_get_nth(i)->name);
@@ -147,7 +147,7 @@ codec_list_move_codec_down(guint index)
 	}
 
 	// PRINT
-	int i;
+	unsigned int i;
 	printf("\nCodec list\n");
 	for(i=0; i < codecQueue->length; i++)
 		printf("%s\n", codec_list_get_nth(i)->name);

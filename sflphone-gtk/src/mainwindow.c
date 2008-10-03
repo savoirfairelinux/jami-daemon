@@ -61,7 +61,7 @@ gboolean
 main_window_ask_quit(){
   guint count = call_list_get_size(current_calls);
   GtkWidget * dialog;
-  guint response;
+  gint response;
   gchar * question;
   
   if(count == 1)

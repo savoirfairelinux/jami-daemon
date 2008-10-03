@@ -68,7 +68,7 @@ is_inserted( GtkWidget* button )
 }
 
   static gboolean
-button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
+button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUSED)
 {
   if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
   {

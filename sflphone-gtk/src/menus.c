@@ -449,7 +449,7 @@ edit_paste ( void * foo UNUSED)
       case CALL_STATE_CURRENT:
       default:
 	{
-	  int i;
+	  unsigned int i;
 	  for(i = 0; i < strlen(no); i++)
 	  {
 	    gchar * oneNo = g_strndup(&no[i], 1);
@@ -805,7 +805,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     gtk_widget_show (menu_items);
 
-    int i;
+    unsigned int i;
     account_t* acc;
     gchar* alias;
     for( i = 0 ; i < account_list_get_size() ; i++ ){

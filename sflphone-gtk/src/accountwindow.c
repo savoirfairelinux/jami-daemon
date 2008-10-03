@@ -92,7 +92,7 @@ stun_state( void )
   void
 show_account_window (account_t * a)
 {
-  guint response;
+  gint response;
   GtkWidget *image;
 
   currentAccount = a;
