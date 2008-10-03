@@ -30,7 +30,7 @@ GtkWidget * show_menu_item;
 gboolean __minimized = MINIMIZED;
 
 void 
-status_quit ( void * foo)
+status_quit ( void * foo )
 {
   sflphone_quit();
 }
@@ -65,10 +65,10 @@ show_hide (void)
 
 
 void 
-status_click (GtkStatusIcon *status_icon, void * foo)
+status_click (GtkStatusIcon *status_icon UNUSED, void * foo UNUSED)
 {
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), 
-    !gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)));
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_menu_item), 
+        !gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(show_menu_item)));
 }
 
 void menu (GtkStatusIcon *status_icon,

@@ -47,7 +47,7 @@ GtkWidget * filterEntry = NULL;
  * Minimize the main window.
  */
 static gboolean
-on_delete (GtkWidget * widget, gpointer data)
+on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
 #if GTK_CHECK_VERSION(2,10,0)
   gtk_widget_hide(GTK_WIDGET( get_main_window() ));

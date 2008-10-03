@@ -51,7 +51,7 @@ GtkWidget * entryMailbox;
 
 /* Signal to entryProtocol 'changed' */
   void
-change_protocol (account_t * currentAccount)
+change_protocol (account_t * currentAccount UNUSED)
 {
   gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
   //g_print("Protocol changed\n");

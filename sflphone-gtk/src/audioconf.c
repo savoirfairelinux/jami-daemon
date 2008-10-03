@@ -238,7 +238,7 @@ select_active_input_audio_device()
  * Select the output audio plugin by calling the server
  */
   static void
-select_output_audio_plugin(GtkComboBox* widget, gpointer data)
+select_output_audio_plugin(GtkComboBox* widget, gpointer data UNUSED)
 {
   GtkTreeModel* model;
   GtkTreeIter iter;
@@ -296,7 +296,7 @@ select_active_output_audio_plugin()
  * Set the audio output device on the server with its index
  */
   static void
-select_audio_output_device(GtkComboBox* comboBox, gpointer data)
+select_audio_output_device(GtkComboBox* comboBox, gpointer data UNUSED)
 {
   GtkTreeModel* model;
   GtkTreeIter iter;
@@ -319,7 +319,7 @@ select_audio_output_device(GtkComboBox* comboBox, gpointer data)
  * Set the audio input device on the server with its index
  */
   static void
-select_audio_input_device(GtkComboBox* comboBox, gpointer data)
+select_audio_input_device(GtkComboBox* comboBox, gpointer data UNUSED)
 {
   GtkTreeModel* model;
   GtkTreeIter iter;
@@ -363,7 +363,7 @@ select_codec(GtkTreeSelection *selection, GtkTreeModel *model)
  * and in configuration files
  */
   static void
-codec_active_toggled(GtkCellRendererToggle *renderer, gchar *path, gpointer data)
+codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpointer data )
 {
   GtkTreeIter iter;
   GtkTreePath *treePath;
@@ -467,7 +467,7 @@ codec_move(gboolean moveUp, gpointer data)
  * Called from move up codec button signal
  */
   static void
-codec_move_up(GtkButton *button, gpointer data)
+codec_move_up(GtkButton *button UNUSED, gpointer data)
 {
   // Change tree view ordering and get indice changed
   codec_move(TRUE, data);
@@ -477,7 +477,7 @@ codec_move_up(GtkButton *button, gpointer data)
  * Called from move down codec button signal
  */
   static void
-codec_move_down(GtkButton *button, gpointer data)
+codec_move_down(GtkButton *button UNUSED, gpointer data)
 {
   // Change tree view ordering and get indice changed
   codec_move(FALSE, data);
@@ -496,7 +496,7 @@ ringtone_enabled( void )
 }
 
   void
-ringtone_changed( GtkFileChooser *chooser , GtkLabel *label)
+ringtone_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED)
 {
   gchar* tone = gtk_file_chooser_get_filename( GTK_FILE_CHOOSER( chooser ));
   dbus_set_ringtone_choice( tone );

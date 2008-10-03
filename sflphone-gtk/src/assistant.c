@@ -38,7 +38,7 @@ static gint forward_page_func( gint current_page , gpointer data );
 static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
 
   void
-set_account_type( GtkWidget* widget , gpointer data )
+set_account_type( GtkWidget* widget , gpointer data UNUSED )
 {
 
   if( gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( widget )) ){
@@ -370,7 +370,7 @@ build_registration_error()
 }
 
   static gint 
-forward_page_func( gint current_page , gpointer data )
+forward_page_func( gint current_page , gpointer data  UNUSED)
 {
   switch( current_page ){
     case 0:
