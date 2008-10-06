@@ -2319,15 +2319,19 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const st
   // Try to find the account id from username and server name by full match
   for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
     account = dynamic_cast<SIPAccount *>(iter->second);
-    if(account->fullMatch(userName, server))
-      return iter->first;
+    if (account != NULL){
+    	if(account->fullMatch(userName, server))
+      		return iter->first;
+    }
   }
 
   // We failed! Then only match the username
   for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
     account = dynamic_cast<SIPAccount *>(iter->second);
-    if(account->userMatch(userName))
-      return iter->first;
+    if ( account != NULL ) {
+    	if(account->userMatch(userName))
+      		return iter->first;
+    }
   }
 
   // Failed again! return AccountNULL
