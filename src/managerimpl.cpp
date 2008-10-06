@@ -26,7 +26,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
-
+#include <sstream>  
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>	// mkdir(2)
 
@@ -50,6 +50,7 @@
 
 #include "user_cfg.h"
 
+#define DEFAULT_SIP_PORT  5060
 
 #ifdef USE_ZEROCONF
 #include "zeroconf/DNSService.h"
@@ -2231,6 +2232,8 @@ ManagerImpl::loadAccountMap()
   TokenList sections = _config.getSections();
   std::string accountType;
   Account* tmpAccount;
+  std::string port;
+  unsigned int iPort;
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
@@ -2246,6 +2249,7 @@ ManagerImpl::loadAccountMap()
         // Initialize the SIP Manager
         _userAgent = new UserAgent();
         _userAgentInitlized = true;
+        _userAgent->setRegPort(DEFAULT_SIP_PORT);
       }
 
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
@@ -2257,7 +2261,12 @@ ManagerImpl::loadAccountMap()
         _userAgent->setStunServer(Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_STUN_SERVER).data());
       }
       
-      
+      // Set registration port for all accounts, The last non-5060 port will be recorded in _userAgent.
+      port = Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_PORT);
+      std::istringstream is(port);
+      is >> iPort;
+      if (iPort != DEFAULT_SIP_PORT)
+      	_userAgent->setRegPort(iPort);  
     }
     else if (accountType == "IAX") {
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);

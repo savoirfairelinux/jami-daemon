@@ -65,6 +65,7 @@ change_protocol (account_t * currentAccount)
   else if (strcmp(proto, "IAX") == 0) {
     gtk_widget_set_sensitive( GTK_WIDGET(stunEnable),   FALSE);
     gtk_widget_set_sensitive( GTK_WIDGET(stunServer),   FALSE);
+    gtk_widget_set_sensitive( GTK_WIDGET(entryPort),   FALSE);
   }
   else {
     // Should not get here.

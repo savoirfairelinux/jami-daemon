@@ -104,7 +104,7 @@ pj_status_t UserAgent::sipInit() {
         return false;
     }
     int errPjsip = 0;
-    int port = DEFAULT_SIP_PORT;
+    int port = _regPort;
 
     //_debug("stun host is %s\n", _stunHost.ptr);
     if (_useStun && !Manager::instance().behindNat(_stunServer, port)) {
