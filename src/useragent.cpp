@@ -386,9 +386,6 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     pj_strdup2(_pool, &aor, tmp.data());
 
 
-    if (_localExternPort == 5060)
-	_localExternPort = port;
-
     sprintf(contactTmp, "<sip:%s@%s:%d>", user.data(), _localExternAddress.data(), _localExternPort);
     pj_strdup2(_pool, &contact, contactTmp);
 
