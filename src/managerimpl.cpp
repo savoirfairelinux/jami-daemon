@@ -2114,19 +2114,22 @@ ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& detail
   /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
   if (accountType == "SIP") {
-      if(!_userAgentInitlized) {
+     if(!_userAgentInitlized) {
         // Initialize the SIP Manager
         _userAgent = new UserAgent();
-        _userAgentInitlized = true;
       }
 
       newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
-     
-      // Determine whether to use stun for the current account or not 
-      int useStun = Manager::instance().getConfigInt(newAccount->getAccountID(),SIP_USE_STUN);
-  
-      if(useStun == 1) {
-        _userAgent->setStunServer(Manager::instance().getConfigString(newAccount->getAccountID(), SIP_STUN_SERVER).data());
+
+      // Determine whether to use stun for the current account or not
+      if((*details.find(SIP_USE_STUN)).second == "TRUE") {
+        _userAgent->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
+      }
+
+      if(!_userAgentInitlized) {
+        _userAgentInitlized = true;
+        _userAgent->sipCreate();
+        _userAgent->sipInit();
       }
   }
   else if (accountType == "IAX") {
