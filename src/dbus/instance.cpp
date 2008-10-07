@@ -49,7 +49,7 @@ Instance::Unregister( const ::DBus::Int32& pid UNUSED)
     }
 }
 
-::DBus::Int32 
+int32_t 
 Instance::getRegistrationCount( void )
 {
   _debug("Instance::getRegistrationCount\n");

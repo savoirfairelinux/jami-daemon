@@ -143,7 +143,7 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 	}
 	g_strfreev (array);
 
-	int i;
+	unsigned int i;
 	for( i = 0; i < account_list_get_size(); i++)
 	{
 		account_t  * a = account_list_get_nth (i);
@@ -194,7 +194,6 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 gboolean
 sflphone_init()
 {
-	int i;
 	current_calls = calltab_init();
 	history = calltab_init();	
 	if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));

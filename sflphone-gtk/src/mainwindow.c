@@ -21,7 +21,6 @@
 #include <config.h>
 #include <actions.h>
 #include <calltab.h>
-#include <calllist.h> 
 #include <calltree.h>
 #include <configwindow.h>
 #include <dialpad.h>
@@ -29,6 +28,7 @@
 #include <menus.h>
 #include <sliders.h>
 #include <historyfilter.h>
+#include <assistant.h>
 
 #include <gtk/gtk.h>
 
@@ -47,7 +47,7 @@ GtkWidget * filterEntry = NULL;
  * Minimize the main window.
  */
 static gboolean
-on_delete (GtkWidget * widget, gpointer data)
+on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 {
 #if GTK_CHECK_VERSION(2,10,0)
   gtk_widget_hide(GTK_WIDGET( get_main_window() ));
@@ -61,7 +61,7 @@ gboolean
 main_window_ask_quit(){
   guint count = call_list_get_size(current_calls);
   GtkWidget * dialog;
-  guint response;
+  gint response;
   gchar * question;
   
   if(count == 1)

@@ -21,6 +21,7 @@
 #define __CALLLIST_H__
 
 #include <gtk/gtk.h>
+
 /** @file calllist.h
   * @brief A list to hold calls.
   */

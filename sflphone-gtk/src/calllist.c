@@ -18,6 +18,8 @@
  */
  
 #include <calllist.h>
+#include <calltree.h>
+#include <dbus.h>
 
 #include <string.h>
 
@@ -102,7 +104,7 @@ call_list_add (calltab_t* tab, call_t * c)
 void
 call_list_clean_history( void )
 {
-  int i;
+  unsigned int i;
   guint size = call_list_get_size( history );
   g_print("history list size = %i\n", call_list_get_size( history ));
   for( i = 0 ; i < size ; i++ )

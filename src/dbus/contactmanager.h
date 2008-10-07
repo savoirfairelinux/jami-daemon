@@ -25,7 +25,7 @@
 
     
 class ContactManager
-: public org::sflphone::SFLphone::ContactManager,
+: public org::sflphone::SFLphone::ContactManager_adaptor,
   public DBus::IntrospectableAdaptor,
   public DBus::ObjectAdaptor
 {
@@ -35,10 +35,10 @@ public:
     static const char* SERVER_PATH;
 
 public:
-    std::map< ::DBus::String, ::DBus::String > getContacts( const ::DBus::String& accountID );
-    void setContacts( const ::DBus::String& accountID, const std::map< ::DBus::String, ::DBus::String >& details );
-    void setPresence( const ::DBus::String& accountID, const ::DBus::String& presence, const ::DBus::String& additionalInfo );
-    void setContactPresence( const ::DBus::String& accountID, const ::DBus::String& presence, const ::DBus::String& additionalInfo );
+    std::map< std::string, std::string > getContacts( const std::string& accountID );
+    void setContacts( const std::string& accountID, const std::map< std::string, std::string >& details );
+    void setPresence( const std::string& accountID, const std::string& presence, const std::string& additionalInfo );
+    void setContactPresence( const std::string& accountID, const std::string& presence, const std::string& additionalInfo );
 
 };
 

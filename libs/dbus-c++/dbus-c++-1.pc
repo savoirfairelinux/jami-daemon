@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: dbus-c++
+Description: Native C++ bindings for D-Bus.
+Requires: dbus-1
+Version: 0.5.0
+Libs: -L${libdir} -ldbus-c++-1
+Cflags: -I${includedir}/dbus-c++-1 -DDBUS_API_SUBJECT_TO_CHANGE

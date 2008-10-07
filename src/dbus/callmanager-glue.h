@@ -12,30 +12,30 @@ namespace org {
 namespace sflphone {
 namespace SFLphone {
 
-class CallManager
+class CallManager_adaptor
 : public ::DBus::InterfaceAdaptor
 {
 public:
 
-    CallManager()
+    CallManager_adaptor()
     : ::DBus::InterfaceAdaptor("org.sflphone.SFLphone.CallManager")
     {
-        register_method(CallManager, placeCall, _placeCall_stub);
-        register_method(CallManager, refuse, _refuse_stub);
-        register_method(CallManager, accept, _accept_stub);
-        register_method(CallManager, hangUp, _hangUp_stub);
-        register_method(CallManager, hold, _hold_stub);
-        register_method(CallManager, unhold, _unhold_stub);
-        register_method(CallManager, transfert, _transfert_stub);
-        register_method(CallManager, playDTMF, _playDTMF_stub);
-        register_method(CallManager, startTone, _startTone_stub);
-        register_method(CallManager, setVolume, _setVolume_stub);
-        register_method(CallManager, getVolume, _getVolume_stub);
-        register_method(CallManager, getCallDetails, _getCallDetails_stub);
-        register_method(CallManager, getCurrentCallID, _getCurrentCallID_stub);
+        register_method(CallManager_adaptor, placeCall, _placeCall_stub);
+        register_method(CallManager_adaptor, refuse, _refuse_stub);
+        register_method(CallManager_adaptor, accept, _accept_stub);
+        register_method(CallManager_adaptor, hangUp, _hangUp_stub);
+        register_method(CallManager_adaptor, hold, _hold_stub);
+        register_method(CallManager_adaptor, unhold, _unhold_stub);
+        register_method(CallManager_adaptor, transfert, _transfert_stub);
+        register_method(CallManager_adaptor, playDTMF, _playDTMF_stub);
+        register_method(CallManager_adaptor, startTone, _startTone_stub);
+        register_method(CallManager_adaptor, setVolume, _setVolume_stub);
+        register_method(CallManager_adaptor, getVolume, _getVolume_stub);
+        register_method(CallManager_adaptor, getCallDetails, _getCallDetails_stub);
+        register_method(CallManager_adaptor, getCurrentCallID, _getCurrentCallID_stub);
     }
 
-    ::DBus::IntrospectedInterface* const introspect() const 
+    ::DBus::IntrospectedInterface *const introspect() const 
     {
         static ::DBus::IntrospectedArgument placeCall_args[] = 
         {
@@ -145,7 +145,7 @@ public:
             { "details", "a{ss}", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedMethod CallManager_methods[] = 
+        static ::DBus::IntrospectedMethod CallManager_adaptor_methods[] = 
         {
             { "placeCall", placeCall_args },
             { "refuse", refuse_args },
@@ -162,7 +162,7 @@ public:
             { "getCurrentCallID", getCurrentCallID_args },
             { 0, 0 }
         };
-        static ::DBus::IntrospectedMethod CallManager_signals[] = 
+        static ::DBus::IntrospectedMethod CallManager_adaptor_signals[] = 
         {
             { "incomingCall", incomingCall_args },
             { "incomingMessage", incomingMessage_args },
@@ -172,18 +172,18 @@ public:
             { "error", error_args },
             { 0, 0 }
         };
-        static ::DBus::IntrospectedProperty CallManager_properties[] = 
+        static ::DBus::IntrospectedProperty CallManager_adaptor_properties[] = 
         {
             { 0, 0, 0, 0 }
         };
-        static ::DBus::IntrospectedInterface CallManager_interface = 
+        static ::DBus::IntrospectedInterface CallManager_adaptor_interface = 
         {
             "org.sflphone.SFLphone.CallManager",
-            CallManager_methods,
-            CallManager_signals,
-            CallManager_properties
+            CallManager_adaptor_methods,
+            CallManager_adaptor_signals,
+            CallManager_adaptor_properties
         };
-        return &CallManager_interface;
+        return &CallManager_adaptor_interface;
     }
 
 public:
@@ -197,25 +197,25 @@ public:
     /* methods exported by this interface,
      * you will have to implement them in your ObjectAdaptor
      */
-    virtual void placeCall( const ::DBus::String& accountID, const ::DBus::String& callID, const ::DBus::String& to ) = 0;
-    virtual void refuse( const ::DBus::String& callID ) = 0;
-    virtual void accept( const ::DBus::String& callID ) = 0;
-    virtual void hangUp( const ::DBus::String& callID ) = 0;
-    virtual void hold( const ::DBus::String& callID ) = 0;
-    virtual void unhold( const ::DBus::String& callID ) = 0;
-    virtual void transfert( const ::DBus::String& callID, const ::DBus::String& to ) = 0;
-    virtual void playDTMF( const ::DBus::String& key ) = 0;
-    virtual void startTone( const ::DBus::Int32& start, const ::DBus::Int32& type ) = 0;
-    virtual void setVolume( const ::DBus::String& device, const ::DBus::Double& value ) = 0;
-    virtual ::DBus::Double getVolume( const ::DBus::String& device ) = 0;
-    virtual std::map< ::DBus::String, ::DBus::String > getCallDetails( const ::DBus::String& callID ) = 0;
-    virtual ::DBus::String getCurrentCallID(  ) = 0;
+    virtual void placeCall(const std::string& accountID, const std::string& callID, const std::string& to) = 0;
+    virtual void refuse(const std::string& callID) = 0;
+    virtual void accept(const std::string& callID) = 0;
+    virtual void hangUp(const std::string& callID) = 0;
+    virtual void hold(const std::string& callID) = 0;
+    virtual void unhold(const std::string& callID) = 0;
+    virtual void transfert(const std::string& callID, const std::string& to) = 0;
+    virtual void playDTMF(const std::string& key) = 0;
+    virtual void startTone(const int32_t& start, const int32_t& type) = 0;
+    virtual void setVolume(const std::string& device, const double& value) = 0;
+    virtual double getVolume(const std::string& device) = 0;
+    virtual std::map< std::string, std::string > getCallDetails(const std::string& callID) = 0;
+    virtual std::string getCurrentCallID() = 0;
 
 public:
 
     /* signal emitters for this interface
      */
-    void incomingCall( const ::DBus::String& arg1, const ::DBus::String& arg2, const ::DBus::String& arg3 )
+    void incomingCall(const std::string& arg1, const std::string& arg2, const std::string& arg3)
     {
         ::DBus::SignalMessage sig("incomingCall");
         ::DBus::MessageIter wi = sig.writer();
@@ -224,7 +224,7 @@ public:
         wi << arg3;
         emit_signal(sig);
     }
-    void incomingMessage( const ::DBus::String& arg1, const ::DBus::String& arg2 )
+    void incomingMessage(const std::string& arg1, const std::string& arg2)
     {
         ::DBus::SignalMessage sig("incomingMessage");
         ::DBus::MessageIter wi = sig.writer();
@@ -232,7 +232,7 @@ public:
         wi << arg2;
         emit_signal(sig);
     }
-    void callStateChanged( const ::DBus::String& arg1, const ::DBus::String& arg2 )
+    void callStateChanged(const std::string& arg1, const std::string& arg2)
     {
         ::DBus::SignalMessage sig("callStateChanged");
         ::DBus::MessageIter wi = sig.writer();
@@ -240,7 +240,7 @@ public:
         wi << arg2;
         emit_signal(sig);
     }
-    void voiceMailNotify( const ::DBus::String& arg1, const ::DBus::Int32& arg2 )
+    void voiceMailNotify(const std::string& arg1, const int32_t& arg2)
     {
         ::DBus::SignalMessage sig("voiceMailNotify");
         ::DBus::MessageIter wi = sig.writer();
@@ -248,7 +248,7 @@ public:
         wi << arg2;
         emit_signal(sig);
     }
-    void volumeChanged( const ::DBus::String& arg1, const ::DBus::Double& arg2 )
+    void volumeChanged(const std::string& arg1, const double& arg2)
     {
         ::DBus::SignalMessage sig("volumeChanged");
         ::DBus::MessageIter wi = sig.writer();
@@ -256,7 +256,7 @@ public:
         wi << arg2;
         emit_signal(sig);
     }
-    void error( const std::map< ::DBus::String, ::DBus::String >& arg1 )
+    void error(const std::map< std::string, std::string >& arg1)
     {
         ::DBus::SignalMessage sig("error");
         ::DBus::MessageIter wi = sig.writer();
@@ -268,128 +268,128 @@ private:
 
     /* unmarshalers (to unpack the DBus message before calling the actual interface method)
      */
-    ::DBus::Message _placeCall_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _placeCall_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::String argin2; ri >> argin2;
-        ::DBus::String argin3; ri >> argin3;
+        std::string argin1; ri >> argin1;
+        std::string argin2; ri >> argin2;
+        std::string argin3; ri >> argin3;
         placeCall(argin1, argin2, argin3);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _refuse_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _refuse_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         refuse(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _accept_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _accept_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         accept(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _hangUp_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _hangUp_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         hangUp(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _hold_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _hold_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         hold(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _unhold_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _unhold_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         unhold(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _transfert_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _transfert_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::String argin2; ri >> argin2;
+        std::string argin1; ri >> argin1;
+        std::string argin2; ri >> argin2;
         transfert(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _playDTMF_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _playDTMF_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         playDTMF(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _startTone_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _startTone_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
-        ::DBus::Int32 argin2; ri >> argin2;
+        int32_t argin1; ri >> argin1;
+        int32_t argin2; ri >> argin2;
         startTone(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _setVolume_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setVolume_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::Double argin2; ri >> argin2;
+        std::string argin1; ri >> argin1;
+        double argin2; ri >> argin2;
         setVolume(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getVolume_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getVolume_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::Double argout1 = getVolume(argin1);
+        std::string argin1; ri >> argin1;
+        double argout1 = getVolume(argin1);
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getCallDetails_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getCallDetails_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        std::map< ::DBus::String, ::DBus::String > argout1 = getCallDetails(argin1);
+        std::string argin1; ri >> argin1;
+        std::map< std::string, std::string > argout1 = getCallDetails(argin1);
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getCurrentCallID_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getCurrentCallID_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argout1 = getCurrentCallID();
+        std::string argout1 = getCurrentCallID();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

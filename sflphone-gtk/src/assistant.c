@@ -27,8 +27,18 @@ struct _wizard *wiz;
 static int account_type;
 account_t* current;
 
+/**
+ * Forward function
+ */
+static gint forward_page_func( gint current_page , gpointer data );
+
+/**
+ * Page template
+ */
+static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
+
   void
-set_account_type( GtkWidget* widget , gpointer data )
+set_account_type( GtkWidget* widget , gpointer data UNUSED )
 {
 
   if( gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( widget )) ){
@@ -38,18 +48,30 @@ set_account_type( GtkWidget* widget , gpointer data )
   }
 }
 
+/**
+ * Callback when the close button of the dialog is clicked
+ * Action : close the assistant widget and get back to sflphone main window
+ */
 static void close_callback( void )
 {
   gtk_widget_destroy(wiz->assistant);
   g_free(wiz); wiz = NULL;
 }
 
+/**
+ * Callback when the cancel button of the dialog is clicked
+ * Action : close the assistant widget and get back to sflphone main window
+ */
 static void cancel_callback( void )
 {
   gtk_widget_destroy(wiz->assistant);
   g_free(wiz); wiz = NULL;
 }
 
+/**
+ * Callback when the button apply is clicked
+ * Action : Set the account parameters with the entries values and called dbus_add_account
+ */
   static void
 sip_apply_callback( void )
 {
@@ -71,6 +93,11 @@ sip_apply_callback( void )
     g_print( "ACCOUNT ID = %s\n" , current->accountID );
   }
 }
+
+/**
+ * Callback when the button apply is clicked
+ * Action : Set the account parameters with the entries values and called dbus_add_account
+ */
   static void 
 iax_apply_callback( void ) 
 {
@@ -343,7 +370,7 @@ build_registration_error()
 }
 
   static gint 
-forward_page_func( gint current_page , gpointer data )
+forward_page_func( gint current_page , gpointer data  UNUSED)
 {
   switch( current_page ){
     case 0:
@@ -368,7 +395,6 @@ create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)
 {
   GtkWidget *vbox;
   GtkWidget *label;
-  GdkPixbuf *pixbuf;
   gchar *str;
 
   vbox = gtk_vbox_new(FALSE, 6);
