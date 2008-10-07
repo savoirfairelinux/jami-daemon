@@ -12,68 +12,68 @@ namespace org {
 namespace sflphone {
 namespace SFLphone {
 
-class ConfigurationManager
+class ConfigurationManager_adaptor
 : public ::DBus::InterfaceAdaptor
 {
 public:
 
-    ConfigurationManager()
+    ConfigurationManager_adaptor()
     : ::DBus::InterfaceAdaptor("org.sflphone.SFLphone.ConfigurationManager")
     {
-        register_method(ConfigurationManager, getAccountDetails, _getAccountDetails_stub);
-        register_method(ConfigurationManager, setAccountDetails, _setAccountDetails_stub);
-        register_method(ConfigurationManager, addAccount, _addAccount_stub);
-        register_method(ConfigurationManager, removeAccount, _removeAccount_stub);
-        register_method(ConfigurationManager, getAccountList, _getAccountList_stub);
-        register_method(ConfigurationManager, sendRegister, _sendRegister_stub);
-        register_method(ConfigurationManager, getToneLocaleList, _getToneLocaleList_stub);
-        register_method(ConfigurationManager, getVersion, _getVersion_stub);
-        register_method(ConfigurationManager, getRingtoneList, _getRingtoneList_stub);
-        register_method(ConfigurationManager, getPlaybackDeviceList, _getPlaybackDeviceList_stub);
-        register_method(ConfigurationManager, getRecordDeviceList, _getRecordDeviceList_stub);
-        register_method(ConfigurationManager, isRingtoneEnabled, _isRingtoneEnabled_stub);
-        register_method(ConfigurationManager, ringtoneEnabled, _ringtoneEnabled_stub);
-        register_method(ConfigurationManager, getRingtoneChoice, _getRingtoneChoice_stub);
-        register_method(ConfigurationManager, setRingtoneChoice, _setRingtoneChoice_stub);
-        register_method(ConfigurationManager, getAudioManager, _getAudioManager_stub);
-        register_method(ConfigurationManager, setAudioManager, _setAudioManager_stub);
-        register_method(ConfigurationManager, getCodecList, _getCodecList_stub);
-        register_method(ConfigurationManager, getCodecDetails, _getCodecDetails_stub);
-        register_method(ConfigurationManager, getActiveCodecList, _getActiveCodecList_stub);
-        register_method(ConfigurationManager, setActiveCodecList, _setActiveCodecList_stub);
-        register_method(ConfigurationManager, getInputAudioPluginList, _getInputAudioPluginList_stub);
-        register_method(ConfigurationManager, getOutputAudioPluginList, _getOutputAudioPluginList_stub);
-        register_method(ConfigurationManager, setInputAudioPlugin, _setInputAudioPlugin_stub);
-        register_method(ConfigurationManager, setOutputAudioPlugin, _setOutputAudioPlugin_stub);
-        register_method(ConfigurationManager, getAudioOutputDeviceList, _getAudioOutputDeviceList_stub);
-        register_method(ConfigurationManager, setAudioOutputDevice, _setAudioOutputDevice_stub);
-        register_method(ConfigurationManager, getAudioInputDeviceList, _getAudioInputDeviceList_stub);
-        register_method(ConfigurationManager, setAudioInputDevice, _setAudioInputDevice_stub);
-        register_method(ConfigurationManager, getCurrentAudioDevicesIndex, _getCurrentAudioDevicesIndex_stub);
-        register_method(ConfigurationManager, getAudioDeviceIndex, _getAudioDeviceIndex_stub);
-        register_method(ConfigurationManager, getCurrentAudioOutputPlugin, _getCurrentAudioOutputPlugin_stub);
-        register_method(ConfigurationManager, isIax2Enabled, _isIax2Enabled_stub);
-        register_method(ConfigurationManager, setNotify, _setNotify_stub);
-        register_method(ConfigurationManager, getNotify, _getNotify_stub);
-        register_method(ConfigurationManager, setMailNotify, _setMailNotify_stub);
-        register_method(ConfigurationManager, getMailNotify, _getMailNotify_stub);
-        register_method(ConfigurationManager, getDialpad, _getDialpad_stub);
-        register_method(ConfigurationManager, setDialpad, _setDialpad_stub);
-        register_method(ConfigurationManager, getSearchbar, _getSearchbar_stub);
-        register_method(ConfigurationManager, setSearchbar, _setSearchbar_stub);
-        register_method(ConfigurationManager, getVolumeControls, _getVolumeControls_stub);
-        register_method(ConfigurationManager, setVolumeControls, _setVolumeControls_stub);
-        register_method(ConfigurationManager, getMaxCalls, _getMaxCalls_stub);
-        register_method(ConfigurationManager, setMaxCalls, _setMaxCalls_stub);
-        register_method(ConfigurationManager, startHidden, _startHidden_stub);
-        register_method(ConfigurationManager, isStartHidden, _isStartHidden_stub);
-        register_method(ConfigurationManager, popupMode, _popupMode_stub);
-        register_method(ConfigurationManager, switchPopupMode, _switchPopupMode_stub);
-        register_method(ConfigurationManager, setPulseAppVolumeControl, _setPulseAppVolumeControl_stub);
-        register_method(ConfigurationManager, getPulseAppVolumeControl, _getPulseAppVolumeControl_stub);
+        register_method(ConfigurationManager_adaptor, getAccountDetails, _getAccountDetails_stub);
+        register_method(ConfigurationManager_adaptor, setAccountDetails, _setAccountDetails_stub);
+        register_method(ConfigurationManager_adaptor, addAccount, _addAccount_stub);
+        register_method(ConfigurationManager_adaptor, removeAccount, _removeAccount_stub);
+        register_method(ConfigurationManager_adaptor, getAccountList, _getAccountList_stub);
+        register_method(ConfigurationManager_adaptor, sendRegister, _sendRegister_stub);
+        register_method(ConfigurationManager_adaptor, getToneLocaleList, _getToneLocaleList_stub);
+        register_method(ConfigurationManager_adaptor, getVersion, _getVersion_stub);
+        register_method(ConfigurationManager_adaptor, getRingtoneList, _getRingtoneList_stub);
+        register_method(ConfigurationManager_adaptor, getPlaybackDeviceList, _getPlaybackDeviceList_stub);
+        register_method(ConfigurationManager_adaptor, getRecordDeviceList, _getRecordDeviceList_stub);
+        register_method(ConfigurationManager_adaptor, isRingtoneEnabled, _isRingtoneEnabled_stub);
+        register_method(ConfigurationManager_adaptor, ringtoneEnabled, _ringtoneEnabled_stub);
+        register_method(ConfigurationManager_adaptor, getRingtoneChoice, _getRingtoneChoice_stub);
+        register_method(ConfigurationManager_adaptor, setRingtoneChoice, _setRingtoneChoice_stub);
+        register_method(ConfigurationManager_adaptor, getAudioManager, _getAudioManager_stub);
+        register_method(ConfigurationManager_adaptor, setAudioManager, _setAudioManager_stub);
+        register_method(ConfigurationManager_adaptor, getCodecList, _getCodecList_stub);
+        register_method(ConfigurationManager_adaptor, getCodecDetails, _getCodecDetails_stub);
+        register_method(ConfigurationManager_adaptor, getActiveCodecList, _getActiveCodecList_stub);
+        register_method(ConfigurationManager_adaptor, setActiveCodecList, _setActiveCodecList_stub);
+        register_method(ConfigurationManager_adaptor, getInputAudioPluginList, _getInputAudioPluginList_stub);
+        register_method(ConfigurationManager_adaptor, getOutputAudioPluginList, _getOutputAudioPluginList_stub);
+        register_method(ConfigurationManager_adaptor, setInputAudioPlugin, _setInputAudioPlugin_stub);
+        register_method(ConfigurationManager_adaptor, setOutputAudioPlugin, _setOutputAudioPlugin_stub);
+        register_method(ConfigurationManager_adaptor, getAudioOutputDeviceList, _getAudioOutputDeviceList_stub);
+        register_method(ConfigurationManager_adaptor, setAudioOutputDevice, _setAudioOutputDevice_stub);
+        register_method(ConfigurationManager_adaptor, getAudioInputDeviceList, _getAudioInputDeviceList_stub);
+        register_method(ConfigurationManager_adaptor, setAudioInputDevice, _setAudioInputDevice_stub);
+        register_method(ConfigurationManager_adaptor, getCurrentAudioDevicesIndex, _getCurrentAudioDevicesIndex_stub);
+        register_method(ConfigurationManager_adaptor, getAudioDeviceIndex, _getAudioDeviceIndex_stub);
+        register_method(ConfigurationManager_adaptor, getCurrentAudioOutputPlugin, _getCurrentAudioOutputPlugin_stub);
+        register_method(ConfigurationManager_adaptor, isIax2Enabled, _isIax2Enabled_stub);
+        register_method(ConfigurationManager_adaptor, setNotify, _setNotify_stub);
+        register_method(ConfigurationManager_adaptor, getNotify, _getNotify_stub);
+        register_method(ConfigurationManager_adaptor, setMailNotify, _setMailNotify_stub);
+        register_method(ConfigurationManager_adaptor, getMailNotify, _getMailNotify_stub);
+        register_method(ConfigurationManager_adaptor, getDialpad, _getDialpad_stub);
+        register_method(ConfigurationManager_adaptor, setDialpad, _setDialpad_stub);
+        register_method(ConfigurationManager_adaptor, getSearchbar, _getSearchbar_stub);
+        register_method(ConfigurationManager_adaptor, setSearchbar, _setSearchbar_stub);
+        register_method(ConfigurationManager_adaptor, getVolumeControls, _getVolumeControls_stub);
+        register_method(ConfigurationManager_adaptor, setVolumeControls, _setVolumeControls_stub);
+        register_method(ConfigurationManager_adaptor, getMaxCalls, _getMaxCalls_stub);
+        register_method(ConfigurationManager_adaptor, setMaxCalls, _setMaxCalls_stub);
+        register_method(ConfigurationManager_adaptor, startHidden, _startHidden_stub);
+        register_method(ConfigurationManager_adaptor, isStartHidden, _isStartHidden_stub);
+        register_method(ConfigurationManager_adaptor, popupMode, _popupMode_stub);
+        register_method(ConfigurationManager_adaptor, switchPopupMode, _switchPopupMode_stub);
+        register_method(ConfigurationManager_adaptor, setPulseAppVolumeControl, _setPulseAppVolumeControl_stub);
+        register_method(ConfigurationManager_adaptor, getPulseAppVolumeControl, _getPulseAppVolumeControl_stub);
     }
 
-    ::DBus::IntrospectedInterface* const introspect() const 
+    ::DBus::IntrospectedInterface *const introspect() const 
     {
         static ::DBus::IntrospectedArgument getAccountDetails_args[] = 
         {
@@ -340,7 +340,7 @@ public:
             { "code", "i", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedMethod ConfigurationManager_methods[] = 
+        static ::DBus::IntrospectedMethod ConfigurationManager_adaptor_methods[] = 
         {
             { "getAccountDetails", getAccountDetails_args },
             { "setAccountDetails", setAccountDetails_args },
@@ -395,25 +395,25 @@ public:
             { "getPulseAppVolumeControl", getPulseAppVolumeControl_args },
             { 0, 0 }
         };
-        static ::DBus::IntrospectedMethod ConfigurationManager_signals[] = 
+        static ::DBus::IntrospectedMethod ConfigurationManager_adaptor_signals[] = 
         {
             { "parametersChanged", parametersChanged_args },
             { "accountsChanged", accountsChanged_args },
             { "errorAlert", errorAlert_args },
             { 0, 0 }
         };
-        static ::DBus::IntrospectedProperty ConfigurationManager_properties[] = 
+        static ::DBus::IntrospectedProperty ConfigurationManager_adaptor_properties[] = 
         {
             { 0, 0, 0, 0 }
         };
-        static ::DBus::IntrospectedInterface ConfigurationManager_interface = 
+        static ::DBus::IntrospectedInterface ConfigurationManager_adaptor_interface = 
         {
             "org.sflphone.SFLphone.ConfigurationManager",
-            ConfigurationManager_methods,
-            ConfigurationManager_signals,
-            ConfigurationManager_properties
+            ConfigurationManager_adaptor_methods,
+            ConfigurationManager_adaptor_signals,
+            ConfigurationManager_adaptor_properties
         };
-        return &ConfigurationManager_interface;
+        return &ConfigurationManager_adaptor_interface;
     }
 
 public:
@@ -427,75 +427,75 @@ public:
     /* methods exported by this interface,
      * you will have to implement them in your ObjectAdaptor
      */
-    virtual std::map< ::DBus::String, ::DBus::String > getAccountDetails( const ::DBus::String& accountID ) = 0;
-    virtual void setAccountDetails( const ::DBus::String& accountID, const std::map< ::DBus::String, ::DBus::String >& details ) = 0;
-    virtual void addAccount( const std::map< ::DBus::String, ::DBus::String >& details ) = 0;
-    virtual void removeAccount( const ::DBus::String& accoundID ) = 0;
-    virtual std::vector< ::DBus::String > getAccountList(  ) = 0;
-    virtual void sendRegister( const ::DBus::String& accountID, const ::DBus::Int32& expire ) = 0;
-    virtual std::vector< ::DBus::String > getToneLocaleList(  ) = 0;
-    virtual ::DBus::String getVersion(  ) = 0;
-    virtual std::vector< ::DBus::String > getRingtoneList(  ) = 0;
-    virtual std::vector< ::DBus::String > getPlaybackDeviceList(  ) = 0;
-    virtual std::vector< ::DBus::String > getRecordDeviceList(  ) = 0;
-    virtual ::DBus::Int32 isRingtoneEnabled(  ) = 0;
-    virtual void ringtoneEnabled(  ) = 0;
-    virtual ::DBus::String getRingtoneChoice(  ) = 0;
-    virtual void setRingtoneChoice( const ::DBus::String& tone ) = 0;
-    virtual ::DBus::Int32 getAudioManager(  ) = 0;
-    virtual void setAudioManager( const ::DBus::Int32& api ) = 0;
-    virtual std::vector< ::DBus::String > getCodecList(  ) = 0;
-    virtual std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload ) = 0;
-    virtual std::vector< ::DBus::String > getActiveCodecList(  ) = 0;
-    virtual void setActiveCodecList( const std::vector< ::DBus::String >& list ) = 0;
-    virtual std::vector< ::DBus::String > getInputAudioPluginList(  ) = 0;
-    virtual std::vector< ::DBus::String > getOutputAudioPluginList(  ) = 0;
-    virtual void setInputAudioPlugin( const ::DBus::String& audioPlugin ) = 0;
-    virtual void setOutputAudioPlugin( const ::DBus::String& audioPlugin ) = 0;
-    virtual std::vector< ::DBus::String > getAudioOutputDeviceList(  ) = 0;
-    virtual void setAudioOutputDevice( const ::DBus::Int32& index ) = 0;
-    virtual std::vector< ::DBus::String > getAudioInputDeviceList(  ) = 0;
-    virtual void setAudioInputDevice( const ::DBus::Int32& index ) = 0;
-    virtual std::vector< ::DBus::String > getCurrentAudioDevicesIndex(  ) = 0;
-    virtual ::DBus::Int32 getAudioDeviceIndex( const ::DBus::String& name ) = 0;
-    virtual ::DBus::String getCurrentAudioOutputPlugin(  ) = 0;
-    virtual ::DBus::Int32 isIax2Enabled(  ) = 0;
-    virtual void setNotify(  ) = 0;
-    virtual ::DBus::Int32 getNotify(  ) = 0;
-    virtual void setMailNotify(  ) = 0;
-    virtual ::DBus::Int32 getMailNotify(  ) = 0;
-    virtual ::DBus::Int32 getDialpad(  ) = 0;
-    virtual void setDialpad(  ) = 0;
-    virtual ::DBus::Int32 getSearchbar(  ) = 0;
-    virtual void setSearchbar(  ) = 0;
-    virtual ::DBus::Int32 getVolumeControls(  ) = 0;
-    virtual void setVolumeControls(  ) = 0;
-    virtual ::DBus::Int32 getMaxCalls(  ) = 0;
-    virtual void setMaxCalls( const ::DBus::Int32& calls ) = 0;
-    virtual void startHidden(  ) = 0;
-    virtual ::DBus::Int32 isStartHidden(  ) = 0;
-    virtual ::DBus::Int32 popupMode(  ) = 0;
-    virtual void switchPopupMode(  ) = 0;
-    virtual void setPulseAppVolumeControl(  ) = 0;
-    virtual ::DBus::Int32 getPulseAppVolumeControl(  ) = 0;
+    virtual std::map< std::string, std::string > getAccountDetails(const std::string& accountID) = 0;
+    virtual void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details) = 0;
+    virtual void addAccount(const std::map< std::string, std::string >& details) = 0;
+    virtual void removeAccount(const std::string& accoundID) = 0;
+    virtual std::vector< std::string > getAccountList() = 0;
+    virtual void sendRegister(const std::string& accountID, const int32_t& expire) = 0;
+    virtual std::vector< std::string > getToneLocaleList() = 0;
+    virtual std::string getVersion() = 0;
+    virtual std::vector< std::string > getRingtoneList() = 0;
+    virtual std::vector< std::string > getPlaybackDeviceList() = 0;
+    virtual std::vector< std::string > getRecordDeviceList() = 0;
+    virtual int32_t isRingtoneEnabled() = 0;
+    virtual void ringtoneEnabled() = 0;
+    virtual std::string getRingtoneChoice() = 0;
+    virtual void setRingtoneChoice(const std::string& tone) = 0;
+    virtual int32_t getAudioManager() = 0;
+    virtual void setAudioManager(const int32_t& api) = 0;
+    virtual std::vector< std::string > getCodecList() = 0;
+    virtual std::vector< std::string > getCodecDetails(const int32_t& payload) = 0;
+    virtual std::vector< std::string > getActiveCodecList() = 0;
+    virtual void setActiveCodecList(const std::vector< std::string >& list) = 0;
+    virtual std::vector< std::string > getInputAudioPluginList() = 0;
+    virtual std::vector< std::string > getOutputAudioPluginList() = 0;
+    virtual void setInputAudioPlugin(const std::string& audioPlugin) = 0;
+    virtual void setOutputAudioPlugin(const std::string& audioPlugin) = 0;
+    virtual std::vector< std::string > getAudioOutputDeviceList() = 0;
+    virtual void setAudioOutputDevice(const int32_t& index) = 0;
+    virtual std::vector< std::string > getAudioInputDeviceList() = 0;
+    virtual void setAudioInputDevice(const int32_t& index) = 0;
+    virtual std::vector< std::string > getCurrentAudioDevicesIndex() = 0;
+    virtual int32_t getAudioDeviceIndex(const std::string& name) = 0;
+    virtual std::string getCurrentAudioOutputPlugin() = 0;
+    virtual int32_t isIax2Enabled() = 0;
+    virtual void setNotify() = 0;
+    virtual int32_t getNotify() = 0;
+    virtual void setMailNotify() = 0;
+    virtual int32_t getMailNotify() = 0;
+    virtual int32_t getDialpad() = 0;
+    virtual void setDialpad() = 0;
+    virtual int32_t getSearchbar() = 0;
+    virtual void setSearchbar() = 0;
+    virtual int32_t getVolumeControls() = 0;
+    virtual void setVolumeControls() = 0;
+    virtual int32_t getMaxCalls() = 0;
+    virtual void setMaxCalls(const int32_t& calls) = 0;
+    virtual void startHidden() = 0;
+    virtual int32_t isStartHidden() = 0;
+    virtual int32_t popupMode() = 0;
+    virtual void switchPopupMode() = 0;
+    virtual void setPulseAppVolumeControl() = 0;
+    virtual int32_t getPulseAppVolumeControl() = 0;
 
 public:
 
     /* signal emitters for this interface
      */
-    void parametersChanged( const std::map< ::DBus::String, ::DBus::String >& arg1 )
+    void parametersChanged(const std::map< std::string, std::string >& arg1)
     {
         ::DBus::SignalMessage sig("parametersChanged");
         ::DBus::MessageIter wi = sig.writer();
         wi << arg1;
         emit_signal(sig);
     }
-    void accountsChanged(  )
+    void accountsChanged()
     {
         ::DBus::SignalMessage sig("accountsChanged");
         emit_signal(sig);
     }
-    void errorAlert( const ::DBus::Int32& arg1 )
+    void errorAlert(const int32_t& arg1)
     {
         ::DBus::SignalMessage sig("errorAlert");
         ::DBus::MessageIter wi = sig.writer();
@@ -507,126 +507,126 @@ private:
 
     /* unmarshalers (to unpack the DBus message before calling the actual interface method)
      */
-    ::DBus::Message _getAccountDetails_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getAccountDetails_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        std::map< ::DBus::String, ::DBus::String > argout1 = getAccountDetails(argin1);
+        std::string argin1; ri >> argin1;
+        std::map< std::string, std::string > argout1 = getAccountDetails(argin1);
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setAccountDetails_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setAccountDetails_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        std::map< ::DBus::String, ::DBus::String > argin2; ri >> argin2;
+        std::string argin1; ri >> argin1;
+        std::map< std::string, std::string > argin2; ri >> argin2;
         setAccountDetails(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _addAccount_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _addAccount_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::map< ::DBus::String, ::DBus::String > argin1; ri >> argin1;
+        std::map< std::string, std::string > argin1; ri >> argin1;
         addAccount(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _removeAccount_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _removeAccount_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         removeAccount(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getAccountList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getAccountList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getAccountList();
+        std::vector< std::string > argout1 = getAccountList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _sendRegister_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _sendRegister_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::Int32 argin2; ri >> argin2;
+        std::string argin1; ri >> argin1;
+        int32_t argin2; ri >> argin2;
         sendRegister(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getToneLocaleList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getToneLocaleList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getToneLocaleList();
+        std::vector< std::string > argout1 = getToneLocaleList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getVersion_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getVersion_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argout1 = getVersion();
+        std::string argout1 = getVersion();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getRingtoneList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getRingtoneList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getRingtoneList();
+        std::vector< std::string > argout1 = getRingtoneList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getPlaybackDeviceList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getPlaybackDeviceList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getPlaybackDeviceList();
+        std::vector< std::string > argout1 = getPlaybackDeviceList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getRecordDeviceList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getRecordDeviceList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getRecordDeviceList();
+        std::vector< std::string > argout1 = getRecordDeviceList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _isRingtoneEnabled_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _isRingtoneEnabled_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = isRingtoneEnabled();
+        int32_t argout1 = isRingtoneEnabled();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _ringtoneEnabled_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _ringtoneEnabled_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
@@ -634,202 +634,202 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getRingtoneChoice_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getRingtoneChoice_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argout1 = getRingtoneChoice();
+        std::string argout1 = getRingtoneChoice();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setRingtoneChoice_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setRingtoneChoice_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         setRingtoneChoice(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getAudioManager_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getAudioManager_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getAudioManager();
+        int32_t argout1 = getAudioManager();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setAudioManager_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setAudioManager_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
+        int32_t argin1; ri >> argin1;
         setAudioManager(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getCodecList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getCodecList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getCodecList();
+        std::vector< std::string > argout1 = getCodecList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getCodecDetails_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getCodecDetails_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
-        std::vector< ::DBus::String > argout1 = getCodecDetails(argin1);
+        int32_t argin1; ri >> argin1;
+        std::vector< std::string > argout1 = getCodecDetails(argin1);
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getActiveCodecList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getActiveCodecList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getActiveCodecList();
+        std::vector< std::string > argout1 = getActiveCodecList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setActiveCodecList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setActiveCodecList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argin1; ri >> argin1;
+        std::vector< std::string > argin1; ri >> argin1;
         setActiveCodecList(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getInputAudioPluginList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getInputAudioPluginList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getInputAudioPluginList();
+        std::vector< std::string > argout1 = getInputAudioPluginList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getOutputAudioPluginList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getOutputAudioPluginList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getOutputAudioPluginList();
+        std::vector< std::string > argout1 = getOutputAudioPluginList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setInputAudioPlugin_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setInputAudioPlugin_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         setInputAudioPlugin(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _setOutputAudioPlugin_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setOutputAudioPlugin_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
+        std::string argin1; ri >> argin1;
         setOutputAudioPlugin(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getAudioOutputDeviceList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getAudioOutputDeviceList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getAudioOutputDeviceList();
+        std::vector< std::string > argout1 = getAudioOutputDeviceList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setAudioOutputDevice_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setAudioOutputDevice_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
+        int32_t argin1; ri >> argin1;
         setAudioOutputDevice(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getAudioInputDeviceList_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getAudioInputDeviceList_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getAudioInputDeviceList();
+        std::vector< std::string > argout1 = getAudioInputDeviceList();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setAudioInputDevice_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setAudioInputDevice_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
+        int32_t argin1; ri >> argin1;
         setAudioInputDevice(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getCurrentAudioDevicesIndex_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getCurrentAudioDevicesIndex_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        std::vector< ::DBus::String > argout1 = getCurrentAudioDevicesIndex();
+        std::vector< std::string > argout1 = getCurrentAudioDevicesIndex();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getAudioDeviceIndex_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getAudioDeviceIndex_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argin1; ri >> argin1;
-        ::DBus::Int32 argout1 = getAudioDeviceIndex(argin1);
+        std::string argin1; ri >> argin1;
+        int32_t argout1 = getAudioDeviceIndex(argin1);
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getCurrentAudioOutputPlugin_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getCurrentAudioOutputPlugin_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::String argout1 = getCurrentAudioOutputPlugin();
+        std::string argout1 = getCurrentAudioOutputPlugin();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _isIax2Enabled_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _isIax2Enabled_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = isIax2Enabled();
+        int32_t argout1 = isIax2Enabled();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setNotify_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setNotify_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
@@ -837,17 +837,17 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getNotify_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getNotify_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getNotify();
+        int32_t argout1 = getNotify();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setMailNotify_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setMailNotify_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
@@ -855,27 +855,27 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getMailNotify_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getMailNotify_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getMailNotify();
+        int32_t argout1 = getMailNotify();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _getDialpad_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getDialpad_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getDialpad();
+        int32_t argout1 = getDialpad();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setDialpad_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setDialpad_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
@@ -883,17 +883,17 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getSearchbar_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getSearchbar_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getSearchbar();
+        int32_t argout1 = getSearchbar();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setSearchbar_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setSearchbar_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
@@ -901,17 +901,17 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getVolumeControls_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getVolumeControls_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getVolumeControls();
+        int32_t argout1 = getVolumeControls();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setVolumeControls_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setVolumeControls_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
@@ -919,26 +919,26 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getMaxCalls_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getMaxCalls_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getMaxCalls();
+        int32_t argout1 = getMaxCalls();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _setMaxCalls_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setMaxCalls_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
+        int32_t argin1; ri >> argin1;
         setMaxCalls(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _startHidden_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _startHidden_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
@@ -946,27 +946,27 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _isStartHidden_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _isStartHidden_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = isStartHidden();
+        int32_t argout1 = isStartHidden();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _popupMode_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _popupMode_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = popupMode();
+        int32_t argout1 = popupMode();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
         return reply;
     }
-    ::DBus::Message _switchPopupMode_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _switchPopupMode_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
@@ -974,7 +974,7 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _setPulseAppVolumeControl_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _setPulseAppVolumeControl_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
@@ -982,11 +982,11 @@ private:
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getPulseAppVolumeControl_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getPulseAppVolumeControl_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getPulseAppVolumeControl();
+        int32_t argout1 = getPulseAppVolumeControl();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

@@ -39,7 +39,7 @@ timestamp_get_call_date( void )
 process_call_duration( call_t* c )
 {
   gchar * res;
-  g_print("Start = %i - Stop = %i  - Call duration = %i\n", c->_start , c->_stop , (int)(c->_stop - c->_start));
+  g_print("Start = %i - Stop = %i  - Call duration = %i\n", (int)c->_start , (int)c->_stop , (int)(c->_stop - c->_start));
 
   if( c->history_state == MISSED && c->_stop == 0 )
     return g_markup_printf_escaped(_("<small>Missed call</small>"));

@@ -30,6 +30,11 @@
 /** Locale */
 #define _(STRING)   gettext( STRING )   
 
+/** Warnings unused variables **/
+#define UNUSED_VAR(var)      (void*)var
+
+#define UNUSED  __attribute__((__unused__))
+
 /** Account type : SIP / IAX */
 #define ACCOUNT_TYPE               "Account.type"
 /** Account alias */

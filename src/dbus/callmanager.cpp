@@ -29,30 +29,30 @@ CallManager::CallManager( DBus::Connection& connection )
 }
 
 void
-CallManager::placeCall( const ::DBus::String& accountID, 
-                        const ::DBus::String& callID,          
-                        const ::DBus::String& to )
+CallManager::placeCall( const std::string& accountID, 
+                        const std::string& callID,          
+                        const std::string& to )
 {
     _debug("CallManager::placeCall received\n");
     Manager::instance().outgoingCall(accountID, callID, to);
 }
 
 void
-CallManager::refuse( const ::DBus::String& callID )
+CallManager::refuse( const std::string& callID )
 {
     _debug("CallManager::refuse received\n");
     Manager::instance().refuseCall(callID);
 }
 
 void
-CallManager::accept( const ::DBus::String& callID )
+CallManager::accept( const std::string& callID )
 {
     _debug("CallManager::accept received\n");
     Manager::instance().answerCall(callID);
 }
 
 void
-CallManager::hangUp( const ::DBus::String& callID )
+CallManager::hangUp( const std::string& callID )
 {
     _debug("CallManager::hangUp received\n");
     Manager::instance().hangupCall(callID);
@@ -60,7 +60,7 @@ CallManager::hangUp( const ::DBus::String& callID )
 }
 
 void
-CallManager::hold( const ::DBus::String& callID )
+CallManager::hold( const std::string& callID )
 {
     _debug("CallManager::hold received\n");
     Manager::instance().onHoldCall(callID);
@@ -68,21 +68,21 @@ CallManager::hold( const ::DBus::String& callID )
 }
 
 void
-CallManager::unhold( const ::DBus::String& callID )
+CallManager::unhold( const std::string& callID )
 {
     _debug("CallManager::unhold received\n");
     Manager::instance().offHoldCall(callID);
 }
 
 void
-CallManager::transfert( const ::DBus::String& callID, const ::DBus::String& to )
+CallManager::transfert( const std::string& callID, const std::string& to )
 {
     _debug("CallManager::transfert received\n");
     Manager::instance().transferCall(callID, to);
 }
 
 void
-CallManager::setVolume( const ::DBus::String& device, const ::DBus::Double & value )
+CallManager::setVolume( const std::string& device, const double& value )
 {
     _debug("CallManager::setVolume received\n");
     if(device == "speaker")
@@ -96,8 +96,8 @@ CallManager::setVolume( const ::DBus::String& device, const ::DBus::Double & val
     volumeChanged(device, value);
 }
 
-::DBus::Double 
-CallManager::getVolume( const ::DBus::String& device )
+double 
+CallManager::getVolume( const std::string& device )
 {
     _debug("CallManager::getVolume received\n");
     if(device == "speaker")
@@ -113,15 +113,15 @@ CallManager::getVolume( const ::DBus::String& device )
     return 0;
 }
 
-std::map< ::DBus::String, ::DBus::String > 
-CallManager::getCallDetails( const ::DBus::String& callID UNUSED )
+std::map< std::string, std::string > 
+CallManager::getCallDetails( const std::string& callID UNUSED )
 {
     _debug("CallManager::getCallDetails received\n");
     std::map<std::string, std::string> a;
     return a;
 }
 
-::DBus::String 
+std::string 
 CallManager::getCurrentCallID(  )
 {
     _debug("CallManager::getCurrentCallID received\n");
@@ -129,13 +129,13 @@ CallManager::getCurrentCallID(  )
 }
 
 void 
-CallManager::playDTMF( const ::DBus::String& key )
+CallManager::playDTMF( const std::string& key )
 {
   Manager::instance().sendDtmf(Manager::instance().getCurrentCallId(), key.c_str()[0]);
 }
 
 void 
-CallManager::startTone( const ::DBus::Int32& start , const ::DBus::Int32& type )
+CallManager::startTone( const int32_t& start , const int32_t& type )
 {
   if( start == true )
   {

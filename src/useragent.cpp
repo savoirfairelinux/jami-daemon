@@ -397,6 +397,7 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
         return status;
     }
 
+
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
     pjsip_cred_info *cred = account->getCredInfo();
 

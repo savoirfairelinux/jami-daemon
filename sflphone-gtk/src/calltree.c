@@ -19,6 +19,8 @@
  */
 
 #include <stdlib.h>
+#include <glib/gprintf.h>
+
 #include <gtk/gtk.h>
 #include <actions.h>
 #include <calltree.h>
@@ -53,7 +55,7 @@ switch_tab()
  */
   static gboolean            
 popup_menu (GtkWidget *widget,
-    gpointer   user_data)
+    gpointer   user_data UNUSED)
 {
   show_popup_menu(widget, NULL);
   return TRUE;
@@ -66,7 +68,7 @@ is_inserted( GtkWidget* button )
 }
 
   static gboolean
-button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
+button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUSED)
 {
   if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
   {
@@ -87,7 +89,7 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data)
  * Make a call
  */
   static void 
-call_button( GtkWidget *widget, gpointer   data )
+call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
   call_t * selectedCall = call_get_selected(active_calltree);
   call_t* newCall =  g_new0 (call_t, 1);
@@ -130,7 +132,7 @@ call_button( GtkWidget *widget, gpointer   data )
  * Hang up the line
  */
   static void 
-hang_up( GtkWidget *widget, gpointer   data )
+hang_up( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
   sflphone_hang_up();
 }
@@ -139,7 +141,7 @@ hang_up( GtkWidget *widget, gpointer   data )
  * Hold the line
  */
   static void 
-hold( GtkWidget *widget, gpointer   data )
+hold( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
   sflphone_on_hold();
 }
@@ -149,7 +151,7 @@ hold( GtkWidget *widget, gpointer   data )
  */
   static void 
 transfert  (GtkToggleToolButton *toggle_tool_button,
-    gpointer             user_data)
+    gpointer             user_data UNUSED )
 {
   gboolean up = gtk_toggle_tool_button_get_active(toggle_tool_button);
   if(up)
@@ -166,14 +168,14 @@ transfert  (GtkToggleToolButton *toggle_tool_button,
  * Unhold call
  */
   static void 
-unhold( GtkWidget *widget, gpointer   data )
+unhold( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
   sflphone_off_hold();
 }
 
   static void
-toggle_history(GtkToggleToolButton *toggle_tool_button,
-    gpointer	user_data)
+toggle_history(GtkToggleToolButton *toggle_tool_button UNUSED,
+    gpointer	user_data UNUSED)
 {
 	GtkTreeSelection *sel;
 	if(history_shown){
@@ -195,7 +197,7 @@ toggle_history(GtkToggleToolButton *toggle_tool_button,
 }
 
   static void
-call_mailbox( GtkWidget* widget , gpointer data )
+call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
 {
   account_t* current = account_list_get_current();
   if( current == NULL ) // Should not happens
@@ -312,7 +314,7 @@ toolbar_update_buttons ()
 }
 /* Call back when the user click on a call in the list */
   static void 
-selected(GtkTreeSelection *sel, void* data) 
+selected(GtkTreeSelection *sel, void* data UNUSED ) 
 {
   GtkTreeIter  iter;
   GValue val;
@@ -331,10 +333,10 @@ selected(GtkTreeSelection *sel, void* data)
 }
 
 /* A row is activated when it is double clicked */
-void  row_activated(GtkTreeView       *tree_view,
-    GtkTreePath       *path,
-    GtkTreeViewColumn *column,
-    void * data) 
+void  row_activated(GtkTreeView       *tree_view UNUSED,
+    GtkTreePath       *path UNUSED,
+    GtkTreeViewColumn *column UNUSED,
+    void * data UNUSED) 
 {
   g_print("double click action\n");
   call_t* selectedCall;
@@ -489,9 +491,9 @@ create_toolbar ()
 
 }  
 static gboolean
-on_key_released (GtkWidget   *widget,
+on_key_released (GtkWidget   *widget UNUSED,
                 GdkEventKey *event,
-                gpointer     user_data)  
+                gpointer     user_data UNUSED)  
 {
   // If a modifier key is pressed, it's a shortcut, pass along
   if(event->state & GDK_CONTROL_MASK || 
@@ -586,7 +588,6 @@ update_call_tree_remove (calltab_t* tab, call_t * c)
   GValue val;
   call_t * iterCall;
   GtkListStore* store = tab->store;
-  GtkWidget* view = tab->view;
 
   int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
   int i;
@@ -620,7 +621,6 @@ update_call_tree (calltab_t* tab, call_t * c)
   GValue val;
   call_t * iterCall;
   GtkListStore* store = tab->store;
-  GtkWidget* view = tab->view;
 
   int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
   int i;
@@ -744,7 +744,6 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   // New call in the list
   gchar * description;
   gchar * date="";
-  gchar * duration="";
   description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>", 
       call_get_number(c),
       call_get_name(c)); 

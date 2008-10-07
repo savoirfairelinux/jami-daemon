@@ -12,20 +12,20 @@ namespace org {
 namespace sflphone {
 namespace SFLphone {
 
-class Instance
+class Instance_adaptor
 : public ::DBus::InterfaceAdaptor
 {
 public:
 
-    Instance()
+    Instance_adaptor()
     : ::DBus::InterfaceAdaptor("org.sflphone.SFLphone.Instance")
     {
-        register_method(Instance, Register, _Register_stub);
-        register_method(Instance, Unregister, _Unregister_stub);
-        register_method(Instance, getRegistrationCount, _getRegistrationCount_stub);
+        register_method(Instance_adaptor, Register, _Register_stub);
+        register_method(Instance_adaptor, Unregister, _Unregister_stub);
+        register_method(Instance_adaptor, getRegistrationCount, _getRegistrationCount_stub);
     }
 
-    ::DBus::IntrospectedInterface* const introspect() const 
+    ::DBus::IntrospectedInterface *const introspect() const 
     {
         static ::DBus::IntrospectedArgument Register_args[] = 
         {
@@ -43,29 +43,29 @@ public:
             { "count", "i", false },
             { 0, 0, 0 }
         };
-        static ::DBus::IntrospectedMethod Instance_methods[] = 
+        static ::DBus::IntrospectedMethod Instance_adaptor_methods[] = 
         {
             { "Register", Register_args },
             { "Unregister", Unregister_args },
             { "getRegistrationCount", getRegistrationCount_args },
             { 0, 0 }
         };
-        static ::DBus::IntrospectedMethod Instance_signals[] = 
+        static ::DBus::IntrospectedMethod Instance_adaptor_signals[] = 
         {
             { 0, 0 }
         };
-        static ::DBus::IntrospectedProperty Instance_properties[] = 
+        static ::DBus::IntrospectedProperty Instance_adaptor_properties[] = 
         {
             { 0, 0, 0, 0 }
         };
-        static ::DBus::IntrospectedInterface Instance_interface = 
+        static ::DBus::IntrospectedInterface Instance_adaptor_interface = 
         {
             "org.sflphone.SFLphone.Instance",
-            Instance_methods,
-            Instance_signals,
-            Instance_properties
+            Instance_adaptor_methods,
+            Instance_adaptor_signals,
+            Instance_adaptor_properties
         };
-        return &Instance_interface;
+        return &Instance_adaptor_interface;
     }
 
 public:
@@ -79,9 +79,9 @@ public:
     /* methods exported by this interface,
      * you will have to implement them in your ObjectAdaptor
      */
-    virtual void Register( const ::DBus::Int32& pid, const ::DBus::String& name ) = 0;
-    virtual void Unregister( const ::DBus::Int32& pid ) = 0;
-    virtual ::DBus::Int32 getRegistrationCount(  ) = 0;
+    virtual void Register(const int32_t& pid, const std::string& name) = 0;
+    virtual void Unregister(const int32_t& pid) = 0;
+    virtual int32_t getRegistrationCount() = 0;
 
 public:
 
@@ -92,30 +92,30 @@ private:
 
     /* unmarshalers (to unpack the DBus message before calling the actual interface method)
      */
-    ::DBus::Message _Register_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _Register_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
-        ::DBus::String argin2; ri >> argin2;
+        int32_t argin1; ri >> argin1;
+        std::string argin2; ri >> argin2;
         Register(argin1, argin2);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _Unregister_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _Unregister_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argin1; ri >> argin1;
+        int32_t argin1; ri >> argin1;
         Unregister(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
-    ::DBus::Message _getRegistrationCount_stub( const ::DBus::CallMessage& call )
+    ::DBus::Message _getRegistrationCount_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
-        ::DBus::Int32 argout1 = getRegistrationCount();
+        int32_t argout1 = getRegistrationCount();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

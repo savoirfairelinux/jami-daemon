@@ -22,28 +22,28 @@
 
 const char* ContactManager::SERVER_PATH = "/org/sflphone/SFLphone/ContactManager";
 
-std::map< ::DBus::String, ::DBus::String >
-ContactManager::getContacts( const ::DBus::String& accountID UNUSED)
+std::map< std::string, std::string >
+ContactManager::getContacts( const std::string& accountID UNUSED)
 {
         // TODO
-    std::map< ::DBus::String, ::DBus::String > ret;
+    std::map< std::string, std::string > ret;
     return ret;
 }
 
 void
-ContactManager::setContacts( const ::DBus::String& accountID UNUSED, const std::map< ::DBus::String UNUSED, ::DBus::String >& details UNUSED)
+ContactManager::setContacts( const std::string& accountID UNUSED, const std::map< std::string UNUSED, std::string >& details UNUSED)
 {
 	// TODO
 }
 
 void
-ContactManager::setPresence( const ::DBus::String& accountID UNUSED, const ::DBus::String& presence UNUSED, const ::DBus::String& additionalInfo UNUSED)
+ContactManager::setPresence( const std::string& accountID UNUSED, const std::string& presence UNUSED, const std::string& additionalInfo UNUSED)
 {
 	// TODO
 }
 
 void
-ContactManager::setContactPresence( const ::DBus::String& accountID UNUSED, const ::DBus::String& presence UNUSED, const ::DBus::String& additionalInfo UNUSED)
+ContactManager::setContactPresence( const std::string& accountID UNUSED, const std::string& presence UNUSED, const std::string& additionalInfo UNUSED)
 {
 	// TODO
 }

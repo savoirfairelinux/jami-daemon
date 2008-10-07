@@ -24,7 +24,10 @@
   * @brief Implements internal errors notifications to the client.
   */
 
+#include <stdlib.h>
+
 #include <sflphone_const.h>
+#include <mainwindow.h>
 
 /**
  * Display an internal error.

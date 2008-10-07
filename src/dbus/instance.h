@@ -25,7 +25,7 @@
 
     
 class Instance
-: public org::sflphone::SFLphone::Instance,
+: public org::sflphone::SFLphone::Instance_adaptor,
   public DBus::IntrospectableAdaptor,
   public DBus::ObjectAdaptor
 {
@@ -36,9 +36,9 @@ public:
   Instance(DBus::Connection& connection);
   static const char* SERVER_PATH;
   
-  void Register( const ::DBus::Int32& pid, const ::DBus::String& name ); 
-  void Unregister( const ::DBus::Int32& pid );
-  DBus::Int32 getRegistrationCount( void );
+  void Register( const int32_t& pid, const std::string& name ); 
+  void Unregister( const int32_t& pid );
+  int32_t getRegistrationCount( void );
     
 };
 

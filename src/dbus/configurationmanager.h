@@ -28,7 +28,7 @@
 
     
 class ConfigurationManager
-: public org::sflphone::SFLphone::ConfigurationManager,
+: public org::sflphone::SFLphone::ConfigurationManager_adaptor,
   public DBus::IntrospectableAdaptor,
   public DBus::ObjectAdaptor
 {
@@ -39,61 +39,61 @@ public:
 
 public:
 
-    std::map< ::DBus::String, ::DBus::String > getAccountDetails( const ::DBus::String& accountID );
-    void setAccountDetails( const ::DBus::String& accountID, const std::map< ::DBus::String, ::DBus::String >& details );
-    void addAccount( const std::map< ::DBus::String, ::DBus::String >& details );
-    void removeAccount( const ::DBus::String& accoundID );
-    std::vector< ::DBus::String > getAccountList(  );
-    void sendRegister(  const ::DBus::String& accoundID , const ::DBus::Int32& expire );
+    std::map< std::string, std::string > getAccountDetails( const std::string& accountID );
+    void setAccountDetails( const std::string& accountID, const std::map< std::string, std::string >& details );
+    void addAccount( const std::map< std::string, std::string >& details );
+    void removeAccount( const std::string& accoundID );
+    std::vector< std::string > getAccountList(  );
+    void sendRegister(  const std::string& accoundID , const int32_t& expire );
     
-    std::vector< ::DBus::String > getCodecList(  );
-    std::vector< ::DBus::String > getCodecDetails( const ::DBus::Int32& payload );
-    std::vector< ::DBus::String > getActiveCodecList(  );
-    void setActiveCodecList( const std::vector< ::DBus::String >& list );
+    std::vector< std::string > getCodecList(  );
+    std::vector< std::string > getCodecDetails( const int32_t& payload );
+    std::vector< std::string > getActiveCodecList(  );
+    void setActiveCodecList( const std::vector< std::string >& list );
     
-    std::vector< ::DBus::String > getInputAudioPluginList();
-    std::vector< ::DBus::String > getOutputAudioPluginList();
-    void setInputAudioPlugin(const ::DBus::String& audioPlugin);
-    void setOutputAudioPlugin(const ::DBus::String& audioPlugin);
-    std::vector< ::DBus::String > getAudioOutputDeviceList();
-    void setAudioOutputDevice(const ::DBus::Int32& index);
-    std::vector< ::DBus::String > getAudioInputDeviceList();
-    void setAudioInputDevice(const ::DBus::Int32& index);
-    std::vector< ::DBus::String > getCurrentAudioDevicesIndex();
-    ::DBus::Int32 getAudioDeviceIndex(const ::DBus::String& name);
-    ::DBus::String getCurrentAudioOutputPlugin( void );
+    std::vector< std::string > getInputAudioPluginList();
+    std::vector< std::string > getOutputAudioPluginList();
+    void setInputAudioPlugin(const std::string& audioPlugin);
+    void setOutputAudioPlugin(const std::string& audioPlugin);
+    std::vector< std::string > getAudioOutputDeviceList();
+    void setAudioOutputDevice(const int32_t& index);
+    std::vector< std::string > getAudioInputDeviceList();
+    void setAudioInputDevice(const int32_t& index);
+    std::vector< std::string > getCurrentAudioDevicesIndex();
+    int32_t getAudioDeviceIndex(const std::string& name);
+    std::string getCurrentAudioOutputPlugin( void );
 
    
-    std::vector< ::DBus::String > getToneLocaleList(  );
-    std::vector< ::DBus::String > getPlaybackDeviceList(  );
-    std::vector< ::DBus::String > getRecordDeviceList(  );
-    ::DBus::String getVersion(  );
-    std::vector< ::DBus::String > getRingtoneList(  );
-    ::DBus::Int32 getAudioManager( void );
-    void setAudioManager( const ::DBus::Int32& api ); 
+    std::vector< std::string > getToneLocaleList(  );
+    std::vector< std::string > getPlaybackDeviceList(  );
+    std::vector< std::string > getRecordDeviceList(  );
+    std::string getVersion(  );
+    std::vector< std::string > getRingtoneList(  );
+    int32_t getAudioManager( void );
+    void setAudioManager( const int32_t& api ); 
 
-    ::DBus::Int32 isIax2Enabled( void );
-    ::DBus::Int32 isRingtoneEnabled( void );
+    int32_t isIax2Enabled( void );
+    int32_t isRingtoneEnabled( void );
     void ringtoneEnabled( void );
-    ::DBus::String getRingtoneChoice( void );
-    void setRingtoneChoice( const ::DBus::String& tone );
-    ::DBus::Int32 getDialpad( void );
+    std::string getRingtoneChoice( void );
+    void setRingtoneChoice( const std::string& tone );
+    int32_t getDialpad( void );
     void setDialpad( void );
-    ::DBus::Int32 getSearchbar( void );
+    int32_t getSearchbar( void );
     void setSearchbar( void );
-    void setMaxCalls( const ::DBus::Int32& calls);
-    ::DBus::Int32 getMaxCalls( void );
-    ::DBus::Int32 getVolumeControls( void );
+    void setMaxCalls( const int32_t& calls);
+    int32_t getMaxCalls( void );
+    int32_t getVolumeControls( void );
     void setVolumeControls( void );
-    ::DBus::Int32 isStartHidden( void );
+    int32_t isStartHidden( void );
     void startHidden( void );
-    ::DBus::Int32 popupMode( void );
+    int32_t popupMode( void );
     void switchPopupMode( void );
-    ::DBus::Int32 getNotify( void );
+    int32_t getNotify( void );
     void setNotify( void );
-    ::DBus::Int32 getMailNotify( void );
+    int32_t getMailNotify( void );
     void setMailNotify( void );
-    ::DBus::Int32 getPulseAppVolumeControl( void );
+    int32_t getPulseAppVolumeControl( void );
     void setPulseAppVolumeControl( void );
 
 };
