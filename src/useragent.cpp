@@ -1036,7 +1036,7 @@ void UserAgent::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *t
                     accId = Manager::instance().getAccountFromCall(call->getCallId());
                     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
                     if (link) {
-                        link->SIPCallReleased(call);
+                        link->SIPCallClosed(call);
                     }
                 }
                 break;
