@@ -1,3 +1,5 @@
+include $(top_srcdir)/globals.mak
+
 sflcodecdir = $(libdir)/sflphone/codecs
 
 noinst_LTLIBRARIES = libaudio.la
