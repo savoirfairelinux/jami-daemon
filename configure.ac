@@ -39,6 +39,10 @@ AC_CONFIG_FILES([src/Makefile \
   src/dbus/Makefile \
   src/zeroconf/Makefile]) 
   
+  dnl Unitary test section
+dnl AC_CONFIG_FILES([src/test/Makefile])
+
+
 AC_CONFIG_FILES([po/Makefile \
   ringtones/Makefile])
 

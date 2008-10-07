@@ -69,4 +69,4 @@ noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h user_
 #./contact/libcontact.la \
 #	./memmanager/libmemmanager.la \
 #	./mixer/libmixer.la \
-#	./video/libvideo.la 
+#	./video/libvideo.la
