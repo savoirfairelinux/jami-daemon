@@ -113,8 +113,8 @@ CallManager::getVolume( const std::string& device )
     return 0;
 }
 
-std::map< ::DBus::String, ::DBus::String > 
-CallManager::getCallDetails( const ::DBus::String& callID UNUSED )
+std::map< std::string, std::string > 
+CallManager::getCallDetails( const std::string& callID UNUSED )
 {
     _debug("CallManager::getCallDetails received\n");
     std::map<std::string, std::string> a;

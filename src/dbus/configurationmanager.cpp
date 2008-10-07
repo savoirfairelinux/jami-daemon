@@ -80,7 +80,7 @@ ConfigurationManager::getAccountList(  )
 std::vector< std::string > 
 ConfigurationManager::getToneLocaleList(  )
 {
-        std::vector< ::DBus::String > ret;
+        std::vector< std::string > ret;
 	_debug("ConfigurationManager::getToneLocaleList received\n");
         return ret;
 }
@@ -90,7 +90,7 @@ ConfigurationManager::getToneLocaleList(  )
 	std::string 
 ConfigurationManager::getVersion(  )
 {
-	::DBus::String ret("");
+        std::string ret("");
 	_debug("ConfigurationManager::getVersion received\n");
         return ret;
 
@@ -100,7 +100,7 @@ ConfigurationManager::getVersion(  )
 	std::vector< std::string > 
 ConfigurationManager::getRingtoneList(  )
 {
-	std::vector< ::DBus::String >  ret;
+	std::vector< std::string >  ret;
 	_debug("ConfigurationManager::getRingtoneList received\n");
         return ret;
 }
@@ -212,7 +212,7 @@ ConfigurationManager::getCurrentAudioOutputPlugin( void )
 	std::vector< std::string > 
 ConfigurationManager::getPlaybackDeviceList(  )
 {
-	std::vector< ::DBus::String >  ret;
+	std::vector< std::string >  ret;
 	_debug("ConfigurationManager::getPlaybackDeviceList received\n");
         return ret;
 }
@@ -220,7 +220,7 @@ ConfigurationManager::getPlaybackDeviceList(  )
 	std::vector< std::string > 
 ConfigurationManager::getRecordDeviceList(  )
 {
-	std::vector< ::DBus::String >  ret;
+	std::vector< std::string >  ret;
 	_debug("ConfigurationManager::getRecordDeviceList received\n");
         return ret;
 
