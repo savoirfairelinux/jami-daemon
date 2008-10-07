@@ -26,7 +26,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
-
+#include <sstream>  
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>	// mkdir(2)
 
@@ -50,6 +50,7 @@
 
 #include "user_cfg.h"
 
+#define DEFAULT_SIP_PORT  5060
 
 #ifdef USE_ZEROCONF
 #include "zeroconf/DNSService.h"
@@ -2114,19 +2115,22 @@ ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& detail
   /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
   if (accountType == "SIP") {
-      if(!_userAgentInitlized) {
+     if(!_userAgentInitlized) {
         // Initialize the SIP Manager
         _userAgent = new UserAgent();
-        _userAgentInitlized = true;
       }
 
       newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
-     
-      // Determine whether to use stun for the current account or not 
-      int useStun = Manager::instance().getConfigInt(newAccount->getAccountID(),SIP_USE_STUN);
-  
-      if(useStun == 1) {
-        _userAgent->setStunServer(Manager::instance().getConfigString(newAccount->getAccountID(), SIP_STUN_SERVER).data());
+
+      // Determine whether to use stun for the current account or not
+      if((*details.find(SIP_USE_STUN)).second == "TRUE") {
+        _userAgent->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
+      }
+
+      if(!_userAgentInitlized) {
+        _userAgentInitlized = true;
+        _userAgent->sipCreate();
+        _userAgent->sipInit();
       }
   }
   else if (accountType == "IAX") {
@@ -2228,6 +2232,8 @@ ManagerImpl::loadAccountMap()
   TokenList sections = _config.getSections();
   std::string accountType;
   Account* tmpAccount;
+  std::string port;
+  unsigned int iPort;
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
@@ -2243,6 +2249,7 @@ ManagerImpl::loadAccountMap()
         // Initialize the SIP Manager
         _userAgent = new UserAgent();
         _userAgentInitlized = true;
+        _userAgent->setRegPort(DEFAULT_SIP_PORT);
       }
 
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
@@ -2254,7 +2261,12 @@ ManagerImpl::loadAccountMap()
         _userAgent->setStunServer(Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_STUN_SERVER).data());
       }
       
-      
+      // Set registration port for all accounts, The last non-5060 port will be recorded in _userAgent.
+      port = Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_PORT);
+      std::istringstream is(port);
+      is >> iPort;
+      if (iPort != DEFAULT_SIP_PORT)
+      	_userAgent->setRegPort(iPort);  
     }
     else if (accountType == "IAX") {
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);
@@ -2319,15 +2331,19 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const st
   // Try to find the account id from username and server name by full match
   for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
     account = dynamic_cast<SIPAccount *>(iter->second);
-    if(account->fullMatch(userName, server))
-      return iter->first;
+    if (account != NULL){
+    	if(account->fullMatch(userName, server))
+      		return iter->first;
+    }
   }
 
   // We failed! Then only match the username
   for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
     account = dynamic_cast<SIPAccount *>(iter->second);
-    if(account->userMatch(userName))
-      return iter->first;
+    if ( account != NULL ) {
+    	if(account->userMatch(userName))
+      		return iter->first;
+    }
   }
 
   // Failed again! return AccountNULL

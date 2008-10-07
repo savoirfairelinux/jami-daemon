@@ -104,7 +104,7 @@ pj_status_t UserAgent::sipInit() {
         return false;
     }
     int errPjsip = 0;
-    int port = DEFAULT_SIP_PORT;
+    int port = _regPort;
 
     //_debug("stun host is %s\n", _stunHost.ptr);
     if (_useStun && !Manager::instance().behindNat(_stunServer, port)) {
@@ -385,9 +385,6 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     tmp = "<sip:" + user + "@" + server + ">";
     pj_strdup2(_pool, &aor, tmp.data());
 
-
-    if (_localExternPort == 5060)
-	_localExternPort = port;
 
     sprintf(contactTmp, "<sip:%s@%s:%d>", user.data(), _localExternAddress.data(), _localExternPort);
     pj_strdup2(_pool, &contact, contactTmp);
@@ -1040,7 +1037,7 @@ void UserAgent::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *t
                     accId = Manager::instance().getAccountFromCall(call->getCallId());
                     link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
                     if (link) {
-                        link->SIPCallReleased(call);
+                        link->SIPCallClosed(call);
                     }
                 }
                 break;

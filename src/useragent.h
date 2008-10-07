@@ -65,6 +65,9 @@ private:
     /** Local Extern Port is the port seen by peers for SIP listener */
     unsigned int _localExternPort;
     unsigned int _localPort;
+
+    /** For registration use only */
+    unsigned int _regPort;
     
     pj_thread_t *_thread;
     
@@ -89,8 +92,13 @@ public:
 
     /** Set whether it will use stun server */
     void setStunServer(const char *server); 
+
+    /** Set the port number user designated */
+    void setRegPort(unsigned int port) { _regPort = port; }
+ 
+    unsigned int getRegPort() { return _regPort; }
     
-    pj_str_t getStunServer() {return _stunHost;}
+    pj_str_t getStunServer() { return _stunHost; }
     
     bool addAccount(AccountID id, pjsip_regc **regc, const std::string& server, const std::string& user, const std::string& passwd
 						   , const int& timeout,  const unsigned int& port);

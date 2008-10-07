@@ -23,7 +23,7 @@
 #include "sipvoiplink.h"
 #include "eventthread.h"
 #include "sipcall.h"
-#include <sstream> // for ostringstream
+#include <sstream> // for istringstream
 #include "sipaccount.h"
 #include "useragent.h"
 #include "audio/audiortp.h"

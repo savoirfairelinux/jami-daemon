@@ -61,10 +61,12 @@ change_protocol (account_t * currentAccount)
   if (strcmp(proto, "SIP") == 0) {
     gtk_widget_set_sensitive( GTK_WIDGET(stunEnable), TRUE);
     gtk_widget_set_sensitive( GTK_WIDGET(stunServer), TRUE);
+    gtk_widget_set_sensitive( GTK_WIDGET(entryPort),  TRUE);
   }
   else if (strcmp(proto, "IAX") == 0) {
     gtk_widget_set_sensitive( GTK_WIDGET(stunEnable),   FALSE);
     gtk_widget_set_sensitive( GTK_WIDGET(stunServer),   FALSE);
+    gtk_widget_set_sensitive( GTK_WIDGET(entryPort),   FALSE);
   }
   else {
     // Should not get here.
