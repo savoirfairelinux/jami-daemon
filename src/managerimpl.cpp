@@ -2106,6 +2106,7 @@ ManagerImpl::sendRegister( const ::DBus::String& accountID , const DBus::Int32& 
 ManagerImpl::addAccount(const std::map< ::DBus::String, ::DBus::String >& details)
 {
 
+  _debug("********************** Into ManagerImpl::addAccount \n");
   /** @todo Deal with both the _accountMap and the Configuration */
   std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
   Account* newAccount;
@@ -2223,7 +2224,15 @@ ManagerImpl::getNewCallID()
   }
   return random_id.str();
 }
-
+/*
+ManagerImpl::updatePjsip()
+{
+  if ( _userAgentInitlized )
+	delete _userAgent;
+       //loadAccountMap
+	
+}
+*/
   short
 ManagerImpl::loadAccountMap()
 {

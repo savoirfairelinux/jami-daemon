@@ -61,6 +61,7 @@ sip_apply_callback( void )
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup("888"));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_TYPE), g_strdup("SIP"));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_HOST), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_server))));
+    //g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_PORT), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_port))));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_password))));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_USER), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_username))));
     g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), g_strdup((gchar *)gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable))? "TRUE":"FALSE"));
