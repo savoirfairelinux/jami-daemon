@@ -1,4 +1,4 @@
-sflcodecdir = $(libdir)/sflphone/codecs
+include ../globals.mak
 
 bin_PROGRAMS = sflphoned
 
@@ -14,53 +14,76 @@ endif
 
 if USE_IAX
 # Use the global instead of locally built
-#IAX_LIBS =
 IAX_FLAGS = -DUSE_IAX
-#IAX_CFLAGS = -I$(top_srcdir)/libs/libiax2/src/
-IAX_CFLAGS =
 IAXSOURCES = iaxaccount.cpp iaxvoiplink.cpp iaxcall.cpp
 IAXHEADERS = iaxaccount.h iaxvoiplink.h iaxcall.h
 else
-IAX_LIBS = 
 IAX_FLAGS =
-IAX_CFLAGS =
 IAXSOURCES =
 IAXHEADERS =
 endif
 
-ALSAFLAG= -lasound
-PULSEAUDIO_LIBS=-lpulse
+SUBDIRS = audio config dbus $(ZEROCONFDIR)
 
-SUBDIRS = audio config dbus $(ZEROCONFDIR) #contact memmanager video mixer
-
-sflphoned_SOURCES = eventthread.cpp main.cpp	voiplink.cpp \
-		managerimpl.cpp	observer.cpp  samplerateconverter.cpp \
-		account.cpp sipaccount.cpp accountcreator.cpp \
-                sipvoiplink.cpp call.cpp sipcall.cpp \
+# Add here the cpp files to be build with sflphone
+sflphoned_SOURCES = \
+		eventthread.cpp \
+		main.cpp \
+		voiplink.cpp \
+		managerimpl.cpp \
+		observer.cpp \
+		samplerateconverter.cpp \
+		account.cpp \
+		sipaccount.cpp \
+		accountcreator.cpp \
+                sipvoiplink.cpp \
+		call.cpp \
+		sipcall.cpp \
 		$(IAXSOURCES)
 
-sflphoned_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" $(ZEROCONFFLAGS) $(IAX_FLAGS) $(SFLPHONE_CFLAGS) $(SIP_CFLAGS)
+sflphoned_CXXFLAGS = \
+		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" \
+		$(ZEROCONFFLAGS) \
+		$(IAX_FLAGS)
 
-sflphoned_LDADD =  ./libsflphone.la $(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) $(ALSAFLAG) $(PULSEAUDIO_LIBS)
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libccgnu2_CFLAGS) $(IAX_CFLAGS) $(USER_INCLUDES) $(libdbuscpp_CFLAGS) \
-	      -DCODECS_DIR=\""$(sflcodecdir)"\" 
-	      -DENABLE_TRACE
+# Add here the dynamic libraries sflphoned should be linked against
+sflphoned_LDADD = \
+		./libsflphone.la \
+		@CCGNU2_LIBS@ \
+		@CCEXT2_LIBS@ \
+		$(ZEROCONFLIB) \
+		$(IAX_LIBS) \
+		$(EXOSIP_LIBS) \
+		@DBUSCPP_LIBS@ \
+		@CCRTP_LIBS@ \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@SAMPLERATE_LIBS@
 
+noinst_LTLIBRARIES = libsflphone.la
 
-# libsflphone_la_LDFLAGS= -version-info 0:1:0
+noinst_HEADERS = \
+		managerimpl.h \
+		manager.h \
+		global.h \
+		observer.h \
+		eventthread.h \
+		user_cfg.h \
+                voiplink.h \
+		samplerateconverter.h \
+		account.h \
+		sipaccount.h \
+		accountcreator.h \
+                sipvoiplink.h \
+		call.h \
+		sipcall.h 
+		
 libsflphone_la_LIBADD = \
-	$(top_builddir)/libs/stund/libstun.la \
-	$(top_builddir)/libs/utilspp/libutilspp.la \
+	$(src)/libs/stund/libstun.la \
+    	$(src)/libs/utilspp/libutilspp.la \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	$(IAX_LIBS) 
 
 libsflphone_la_SOURCES =
-
-noinst_LTLIBRARIES = libsflphone.la
-noinst_HEADERS = managerimpl.h manager.h global.h observer.h eventthread.h user_cfg.h \
-                 voiplink.h  samplerateconverter.h \
-		 account.h sipaccount.h accountcreator.h \
-                 sipvoiplink.h  call.h  sipcall.h \
-		 $(IAXHEADERS)
