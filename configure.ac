@@ -40,7 +40,7 @@ AC_CONFIG_FILES([src/Makefile \
   src/zeroconf/Makefile]) 
   
   dnl Unitary test section
-dnl AC_CONFIG_FILES([src/test/Makefile])
+AC_CONFIG_FILES([test/Makefile])
 
 
 AC_CONFIG_FILES([po/Makefile \
@@ -172,6 +172,10 @@ LIBDBUSCPP_MIN_VERSION=0.5
 PKG_CHECK_MODULES(libdbuscpp, dbus-c++-1 >= ${LIBDBUSCPP_MIN_VERSION})
 SFLPHONE_CFLAGS="$SFLPHONE_CFLAGS $libdbuscpp_CFLAGS"
 SFLPHONE_LIBS="$SFLPHONE_LIBS $libdbuscpp_LIBS"
+
+CPPUNIT_MIN_VERSION=1.12
+PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION})
+AC_SUBST(CPPUNIT_LIBS)
 
 # check for libgsm1 (doesn't use pkg-config)
 dnl Check for libgsm
