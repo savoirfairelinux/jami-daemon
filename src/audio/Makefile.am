@@ -1,4 +1,4 @@
-sflcodecdir = $(libdir)/sflphone/codecs
+include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libaudio.la
 
@@ -22,16 +22,40 @@ endif
 
 SUBDIRS = codecs
 
-libaudio_la_SOURCES =    audiofile.cpp	 tonelist.cpp    \
-audiortp.cpp    audiostream.cpp     dtmf.cpp   tone.cpp  alsalayer.cpp pulselayer.cpp audiodevice.cpp  dtmfgenerator.cpp   \
-tonegenerator.cpp   codecDescriptor.cpp samplecache.cpp\
-audioloop.cpp ringbuffer.cpp $(SPEEX_SOURCES_CPP)
+libaudio_la_SOURCES = \
+		audiofile.cpp \
+		tonelist.cpp \
+		audiortp.cpp \
+		audiostream.cpp \
+		dtmf.cpp \
+		tone.cpp \
+		alsalayer.cpp \
+		pulselayer.cpp \
+		audiodevice.cpp \
+		dtmfgenerator.cpp \
+		tonegenerator.cpp \
+		codecDescriptor.cpp \
+		samplecache.cpp \
+		audioloop.cpp \
+		ringbuffer.cpp \
+		$(SPEEX_SOURCES_CPP)
 
-AM_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libs $(libccext2_CFLAGS) $(libdbuscpp_CFLAGS) $(libccrtp1_CFLAGS) $(USER_INCLUDES) \
- 	      -DCODECS_DIR=\""$(sflcodecdir)"\" $(SPEEX_FLAG) $(GSM_FLAG) $(ILBC_FLAG) 
-
-noinst_HEADERS = audioloop.h   audiostream.h common.h ringbuffer.h    audiofile.h  \
- tonelist.h         audiortp.h   audiolayer.h alsalayer.h  pulselayer.h audiodevice.h \
- dtmfgenerator.h         tonegenerator.h    samplecache.h \
- codecDescriptor.h    dtmf.h tone.h 
+noinst_HEADERS = \
+		audioloop.h \
+		audiostream.h \
+		common.h \
+		ringbuffer.h \
+		audiofile.h \
+	 	tonelist.h \
+		audiortp.h \
+		audiolayer.h \
+		alsalayer.h \
+		pulselayer.h \
+		audiodevice.h \
+ 		dtmfgenerator.h \
+		tonegenerator.h \
+		samplecache.h \
+ 		codecDescriptor.h \
+		dtmf.h \
+		tone.h 
 

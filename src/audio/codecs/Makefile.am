@@ -1,4 +1,5 @@
-sflcodecdir = $(libdir)/sflphone/codecs
+include $(top_srcdir)/globals.mak
+
 if BUILD_GSM
 GSM_LIB = libcodec_gsm.so
 libcodec_gsm_so_SOURCES = gsmcodec.cpp
