@@ -314,11 +314,9 @@ set_pulse_app_volume_control( void )
   dbus_set_pulse_app_volume_control();
 }
 
-//static void update_port( GtkSpinButton *button, void *ptr )
-static void update_port( GtkSpinButton *button )
+static void update_port( GtkSpinButton *button, void *ptr )
 {
-  dbus_set_sip_port(gtk_spin_button_get_value_as_int(button));
-  //dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
+  dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
 }
 
 /**
@@ -454,6 +452,7 @@ create_general_settings ()
 
   GtkWidget *frame;
   GtkWidget *vbox;
+  GtkWidget *hbox;
   GtkWidget *value;
   GtkWidget *label;
   GtkWidget *cleanButton;
@@ -552,18 +551,24 @@ create_general_settings ()
   gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
   gtk_widget_show( frame );
 
-  vbox = gtk_vbox_new(FALSE, 10);
-  gtk_widget_show( vbox );
-  gtk_container_add( GTK_CONTAINER(frame) , vbox);
+  hbox = gtk_hbox_new(FALSE, 10);
+  gtk_widget_show( hbox );
+  gtk_container_add( GTK_CONTAINER(frame) , hbox);
 
-  label = gtk_label_new(_("Port number:"));
+  GtkWidget *applyButton = gtk_button_new_with_label(_("Apply"));
+  gtk_widget_set_size_request(applyButton, 60, 35);
+
+  label = gtk_label_new(_("Port:"));
+
   entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(entryPort), curPort);
-  //gtk_table_attach ( GTK_TABLE( table ), entryPort, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-  gtk_box_pack_start( GTK_BOX(vbox) , entryPort , TRUE , TRUE , 1);
-  g_signal_connect( G_OBJECT( entryPort) , "value-changed" , G_CALLBACK( update_port ) , NULL);
-  //g_signal_connect( G_OBJECT( applyButton) , "value-changed" , G_CALLBACK( update_port ) , entryPort);
+  
+  gtk_box_pack_start( GTK_BOX(hbox) , label , TRUE , TRUE , 1);
+  gtk_box_pack_start( GTK_BOX(hbox) , entryPort , TRUE , TRUE , 1);
+  gtk_box_pack_start( GTK_BOX(hbox) , applyButton , FALSE , FALSE , 1);
+
+  g_signal_connect( G_OBJECT( applyButton) , "clicked" , G_CALLBACK( update_port ) , entryPort);
 
   gtk_widget_show_all(ret);
   
