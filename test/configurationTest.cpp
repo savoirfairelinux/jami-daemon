@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <sstream>
 
 #include "configurationTest.h"
 
@@ -26,7 +27,7 @@ using std::endl;
 
 void ConfigurationTest::setUp(){
     // Load the default configuration
-    Manager::instance().initConfigFile(false);
+    Manager::instance().initConfigFile();
 }
 
 void ConfigurationTest::testDefaultValueAudio(){
@@ -63,7 +64,40 @@ void ConfigurationTest::testDefaultValueSignalisation(){
     CPPUNIT_ASSERT( Manager::instance().getConfigString( SIGNALISATION , SEND_DTMF_AS ) == SIP_INFO_STR );
 }
 
-void ConfigurationTest::testLoadAccountMap(){
+void ConfigurationTest::testLoadSIPAccount(){
+
+    AccountMap accounts;
+    Account *current;
+    std::ostringstream ss;
+
+    // Load the accounts from the user file
     Manager::instance().loadAccountMap();  
+    // Save the account information
+    accounts = Manager::instance()._accountMap;
+    
+    AccountMap::iterator iter = accounts.begin(); 
+    while( iter != accounts.end() ){
+        current = iter->second;
+        CPPUNIT_ASSERT( iter->first == current->getAccountID() );
+        CPPUNIT_ASSERT( 0 ==  current->getVoIPLink() );
+        iter++;
+    }
+}    
+
+void ConfigurationTest::testUnloadSIPAccount(){
+
+    AccountMap accounts;
+
+    // Load the accounts from the user file
+    Manager::instance().loadAccountMap();  
+    // Unload the accounts
+    Manager::instance().unloadAccountMap();
+    // Save the account information
+    accounts = Manager::instance()._accountMap;
+    
+    AccountMap::iterator iter = accounts.begin(); 
+    if( iter != accounts.end() ){
+        CPPUNIT_FAIL("Unload account map failed\n");
+    }
 }
 

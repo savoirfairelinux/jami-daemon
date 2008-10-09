@@ -48,7 +48,8 @@ class ConfigurationTest : public CppUnit::TestCase {
         CPPUNIT_TEST( testDefaultValueAudio );
         CPPUNIT_TEST( testDefaultValuePreferences );
         CPPUNIT_TEST( testDefaultValueSignalisation ); 
-        CPPUNIT_TEST( testLoadAccountMap );
+        CPPUNIT_TEST( testLoadSIPAccount );
+        CPPUNIT_TEST( testUnloadSIPAccount );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -80,7 +81,8 @@ class ConfigurationTest : public CppUnit::TestCase {
 
         void testDefaultValueSignalisation();
         
-        void testLoadAccountMap();
+        void testLoadSIPAccount();
+        void testUnloadSIPAccount();
 
 };
 
