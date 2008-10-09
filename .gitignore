@@ -16,6 +16,8 @@ Makefile.in
 # Binary translation files
 *.mo
 libtool
+# The test binary
+*Tester
 
 # Ignore rendered docs
 doc/doxygen/core-doc
@@ -52,7 +54,6 @@ doc/*.html
 /libs/dbus-c++/libtool
 /libs/dbus-c++/autom4te*
 /libs/dbus-c++/config.log
-/libs/dbus-c++/config.status
 /libs/dbus-c++/config.status
 /libs/dbus-c++/configure
 /libs/dbus-c++/tools/dbus-c++xx-*

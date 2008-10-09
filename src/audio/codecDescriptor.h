@@ -27,8 +27,8 @@
 #include <vector>
 #include <dirent.h>
 
-#include "../global.h"
-#include "../user_cfg.h"
+#include "global.h"
+#include "user_cfg.h"
 #include "codecs/audiocodec.h"
 
 /** Enumeration that contains known audio payloads */

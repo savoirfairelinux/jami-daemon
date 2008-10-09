@@ -1,4 +1,4 @@
-SUBDIRS = 
+include $(top_srcdir)/globals.mak
 
 EXTRA_DIST = *.xml README
 
@@ -12,7 +12,7 @@ libdbus_la_SOURCES = \
 	dbusmanagerimpl.cpp
 
 libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
-libdbus_la_CPPFLAGS = -I$(top_srcdir)/libs -I$(top_srcdir)/src $(libccext2_CFLAGS) $(libdbuscpp_CFLAGS)
+
 libdbus_la_LIBADD = 
 
 noinst_HEADERS = \
