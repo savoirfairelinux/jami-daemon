@@ -52,7 +52,7 @@ class ConfigurationTest : public CppUnit::TestCase {
         }
 
         void setUp(){
-            Manager::instance().initConfigFile();
+            Manager::instance().initConfigFile(false);
         }
 
         void tearDown(){
