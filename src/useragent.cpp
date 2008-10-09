@@ -35,7 +35,7 @@
 UserAgent *UserAgent::_current;
 
 UserAgent::UserAgent():_endpt(NULL) ,_sock(NULL), _cp(), _pool(NULL), _mutex(NULL), _mod(), _options_handler(), _useStun(false), _stunHost(),
-        _stunServer(""), _localExternAddress(""), _localIPAddress("127.0.0.1"), _localExternPort(0), _localPort(0), _thread(NULL) {
+        _stunServer(""), _localExternAddress(""), _localIPAddress("127.0.0.1"), _localExternPort(0), _localPort(0), _regPort(DEFAULT_SIP_PORT), _thread(NULL) {
     //_useStun = false;
     //_localIPAddress = "127.0.0.1";
     UserAgent::_current = this;
@@ -359,7 +359,7 @@ void UserAgent::busy_sleep(unsigned msec)
 }
 
 bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, 
-				const int& timeout UNUSED, const unsigned int& port) {
+				const int& timeout UNUSED) {
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
     char contactTmp[256];
@@ -871,6 +871,7 @@ bool UserAgent::makeOutgoingCall(const std::string& strTo, SIPCall* call, const 
     pjsip_tx_data *tdata;
     pj_str_t from, to, contact;
 
+    _debug("*******************AccountId is %s\n", id.data());
     // Get the basic information about the callee account
     SIPAccount* account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(id));
     

@@ -67,7 +67,7 @@ private:
     unsigned int _localPort;
 
     /** For registration use only */
-    unsigned int _regPort;
+    int _regPort;
     
     pj_thread_t *_thread;
     
@@ -75,7 +75,6 @@ private:
     
     /* Sleep with polling */
     void busy_sleep(unsigned msec);
-    void sipDestory();
 public:
     UserAgent();
     ~UserAgent();
@@ -86,7 +85,10 @@ public:
      * This method is used to initialize the pjsip
      */
     pj_status_t sipInit();
-    
+
+
+    void sipDestory();
+
     /** Create SIP UDP Listener */
     int createUDPServer();
 
@@ -94,14 +96,14 @@ public:
     void setStunServer(const char *server); 
 
     /** Set the port number user designated */
-    void setRegPort(unsigned int port) { _regPort = port; }
+    void setSipPort(int port) { _regPort = port; }
  
-    unsigned int getRegPort() { return _regPort; }
+    int getSipPort() { return _regPort; }
     
     pj_str_t getStunServer() { return _stunHost; }
     
     bool addAccount(AccountID id, pjsip_regc **regc, const std::string& server, const std::string& user, const std::string& passwd
-						   , const int& timeout,  const unsigned int& port);
+						   , const int& timeout);
     bool removeAccount(pjsip_regc *regc);
     
     pj_str_t buildContact(char *userName);

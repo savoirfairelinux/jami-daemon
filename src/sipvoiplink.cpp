@@ -58,7 +58,6 @@ SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
  , _regc()
  , _server("")
  , _bRegister(false)
- , _port(5060)
 {
   // to get random number for RANDOM_PORT
   srand (time(NULL));
@@ -154,7 +153,7 @@ SIPVoIPLink::sendRegister()
 
   setRegistrationState(Trying);
 
-  return Manager::instance().getUserAgent()->addAccount(id, &_regc, _server, _authname, _password, expire_value, _port);
+  return Manager::instance().getUserAgent()->addAccount(id, &_regc, _server, _authname, _password, expire_value);
 }
 
 std::string
@@ -724,16 +723,6 @@ void SIPVoIPLink::setSipServer(const std::string& sipServer)
     //_registrar = pj_str((char *)tmp.data());
     //_user = "<sip:" + _authname + "@" + sipServer + ">";
     //_user = pj_str((char *)tmp.data());
-}
-
-void SIPVoIPLink::setPortNumber(const std::string& port)
-{
-    /*
-	istringstream is(port);
-	unsigned int iPort;
-	is >> iPort;
-	_port = port;
-     */
 }
 
 pj_str_t SIPVoIPLink::string2PJStr(const std::string &value)

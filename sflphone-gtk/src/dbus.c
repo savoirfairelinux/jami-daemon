@@ -1480,3 +1480,34 @@ dbus_get_pulse_app_volume_control( void )
 	return state;
 }
 
+void
+dbus_set_sip_port( const guint portNum  )
+{
+        GError* error = NULL;
+        org_sflphone_SFLphone_ConfigurationManager_set_sip_port(
+                        configurationManagerProxy,
+                        portNum,
+                        &error);
+        if(error)
+        {
+                g_error_free(error);
+        }
+}
+
+guint
+dbus_get_sip_port( void )
+{
+        GError* error = NULL;
+        gint portNum;
+        org_sflphone_SFLphone_ConfigurationManager_get_sip_port(
+                        configurationManagerProxy,
+                        &portNum,
+                        &error);
+        if(error)
+        {
+                g_error_free(error);
+        }
+        g_print("GET MAX CALLS = %i\n" , portNum);
+        return (guint)portNum;
+}
+

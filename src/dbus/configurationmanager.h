@@ -95,6 +95,8 @@ public:
     void setMailNotify( void );
     int32_t getPulseAppVolumeControl( void );
     void setPulseAppVolumeControl( void );
+    int32_t getSipPort( void );
+    void setSipPort( const int32_t& portNum );
 
 };
 

@@ -23,7 +23,6 @@
 
 #include "voiplink.h"
 #include <string>
-#include <sstream>
 #include <pjsip.h>
 #include <pjlib-util.h>
 #include <pjlib.h>
@@ -210,8 +209,6 @@ class SIPVoIPLink : public VoIPLink
     
     void setSipServer(const std::string& sipServer);
    
-    void setPortNumber(const std::string& port);
- 
     bool isRegister() {return _bRegister;}
     
     void setRegister(bool result) {_bRegister = result;}
@@ -386,7 +383,6 @@ private:
     pjsip_regc *_regc;
     std::string _server;
     bool _bRegister;
-    unsigned int _port;
 };
 
 #endif

@@ -1070,6 +1070,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(REGISTRATION_EXPIRE , DFT_EXPIRE_VALUE);
   fill_config_int(CONFIG_AUDIO , DFT_AUDIO_MANAGER);
   fill_config_int(CONFIG_PA_VOLUME_CTRL , YES_STR);
+  fill_config_int(CONFIG_SIP_PORT, DFT_SIP_PORT);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1) {
@@ -1975,12 +1976,6 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 	);
     a.insert(
 	std::pair<std::string, std::string>(
-	  SIP_PORT, 
-	  getConfigString(accountID, SIP_PORT)
-	  )
-	);	
-    a.insert(
-	std::pair<std::string, std::string>(
 	  SIP_PROXY, 
 	  getConfigString(accountID, SIP_PROXY)
 	  )
@@ -2053,7 +2048,6 @@ ManagerImpl::setAccountDetails( const std::string& accountID,
     setConfig(accountID, SIP_USER, (*details.find(SIP_USER)).second);
     setConfig(accountID, SIP_PASSWORD,  (*details.find(SIP_PASSWORD)).second);
     setConfig(accountID, SIP_HOST, (*details.find(SIP_HOST)).second);
-    setConfig(accountID, SIP_PORT, (*details.find(SIP_PORT)).second);
     setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
     setConfig(accountID, CONFIG_ACCOUNT_MAILBOX,(*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
     setConfig(accountID, SIP_USE_STUN,
@@ -2080,6 +2074,8 @@ ManagerImpl::setAccountDetails( const std::string& accountID,
 
   // Update account details
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+
+  //restartPjsip();
 }
 
 void
@@ -2106,7 +2102,6 @@ ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire 
 ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
 {
 
-  _debug("********************** Into ManagerImpl::addAccount \n");
   /** @todo Deal with both the _accountMap and the Configuration */
   std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
   Account* newAccount;
@@ -2119,6 +2114,7 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
      if(!_userAgentInitlized) {
         // Initialize the SIP Manager
         _userAgent = new UserAgent();
+        _userAgent->setSipPort(Manager::instance().getConfigInt(PREFERENCES , CONFIG_SIP_PORT));
       }
 
       newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
@@ -2147,6 +2143,8 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
   saveConfig();
 
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+
+  //restartPjsip();
 }
 
   void 
@@ -2224,15 +2222,21 @@ ManagerImpl::getNewCallID()
   }
   return random_id.str();
 }
-/*
-ManagerImpl::updatePjsip()
+
+  void 
+ManagerImpl::restartPjsip()
 {
-  if ( _userAgentInitlized )
-	delete _userAgent;
-       //loadAccountMap
-	
+  if ( _userAgentInitlized ){
+    unregisterCurSIPAccounts();
+    _userAgent->sipDestory();
+    //_userAgent->setSipPort(Manager::instance().getConfigInt(PREFERENCES , CONFIG_SIP_PORT));
+
+    _userAgent->sipCreate();
+    _userAgent->sipInit();
+    registerCurSIPAccounts();
+  } 
 }
-*/
+
   short
 ManagerImpl::loadAccountMap()
 {
@@ -2246,6 +2250,7 @@ ManagerImpl::loadAccountMap()
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
+    _debug("***************** In Load account: into while\n");
     // Check if it starts with "Account:" (SIP and IAX pour le moment)
     if ((int)(iter->find("Account:")) == -1) {
       iter++;
@@ -2258,7 +2263,7 @@ ManagerImpl::loadAccountMap()
         // Initialize the SIP Manager
         _userAgent = new UserAgent();
         _userAgentInitlized = true;
-        _userAgent->setRegPort(DEFAULT_SIP_PORT);
+        _userAgent->setSipPort(Manager::instance().getConfigInt(PREFERENCES , CONFIG_SIP_PORT));
       }
 
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
@@ -2270,12 +2275,12 @@ ManagerImpl::loadAccountMap()
         _userAgent->setStunServer(Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_STUN_SERVER).data());
       }
       
-      // Set registration port for all accounts, The last non-5060 port will be recorded in _userAgent.
+      /*// Set registration port for all accounts, The last non-5060 port will be recorded in _userAgent.
       port = Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_PORT);
       std::istringstream is(port);
       is >> iPort;
       if (iPort != DEFAULT_SIP_PORT)
-      	_userAgent->setRegPort(iPort);  
+      	_userAgent->setRegPort(iPort);  */
     }
     else if (accountType == "IAX") {
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);
@@ -2386,6 +2391,52 @@ pjsip_regc
 UserAgent *ManagerImpl::getUserAgent()
 {
     return _userAgent;
+}
+
+int 
+ManagerImpl::getSipPort()
+{
+    return _userAgent->getSipPort();
+}
+
+void 
+ManagerImpl::setSipPort(int portNum)
+{
+    if(portNum != _userAgent->getSipPort()) {
+        _userAgent->setSipPort(portNum);
+        restartPjsip();
+        setConfig( PREFERENCES , CONFIG_SIP_PORT , portNum );
+    }
+}
+
+void ManagerImpl::unregisterCurSIPAccounts()
+{
+  AccountMap::iterator iter = _accountMap.begin();
+  while( iter != _accountMap.end() ) {
+    if ( iter->second) {
+        std::string p =  Manager::instance().getConfigString( iter->first , CONFIG_ACCOUNT_TYPE );
+      if ( iter->second->isEnabled() && p == "SIP") {
+	// NOW
+	iter->second->unregisterVoIPLink();
+      }
+    }
+    iter++;
+  }
+}
+
+void ManagerImpl::registerCurSIPAccounts()
+{
+  AccountMap::iterator iter = _accountMap.begin();
+  while( iter != _accountMap.end() ) {
+    if ( iter->second) {
+        std::string p =  Manager::instance().getConfigString( iter->first , CONFIG_ACCOUNT_TYPE );
+      if ( iter->second->isEnabled() && p == "SIP") {
+	// NOW
+	iter->second->registerVoIPLink();
+      }
+    }
+    iter++;
+  }    
 }
 
 #ifdef TEST

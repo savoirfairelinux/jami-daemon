@@ -812,12 +812,20 @@ class ManagerImpl {
     bool isCurrentCall(const CallID& callId);
 
     /**
-     * Get the _regc in each sip account
-     * @param AccountID Account ID
-     * @return pjsip_regc*  The regc in the account
+     * Restart PJSIP
+     * @param void
+     * @return void
      */
-    //pjsip_regc *getSipRegcFromID(const AccountID& id); 
+    void restartPjsip();
 
+    int getSipPort();
+    
+    void setSipPort(int port);
+    
+    void unregisterCurSIPAccounts();
+    
+    void registerCurSIPAccounts();
+    
   private:
     
     /**

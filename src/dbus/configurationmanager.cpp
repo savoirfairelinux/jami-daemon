@@ -382,3 +382,16 @@ ConfigurationManager::setPulseAppVolumeControl( void )
   Manager::instance().setPulseAppVolumeControl();
 }
 
+int32_t 
+ConfigurationManager::getSipPort( void )
+{
+  return Manager::instance().getSipPort();
+}
+ 
+void 
+ConfigurationManager::setSipPort( const int32_t& portNum )
+{
+  _debug("Manager received setSipPort: %d\n", portNum);
+  Manager::instance().setSipPort(portNum);
+}
+
