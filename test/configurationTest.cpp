@@ -6,6 +6,7 @@
 
 #include "manager.h"
 #include "global.h"
+#include "user_cfg.h"
 
 #include <stdio.h>
 
@@ -25,28 +26,28 @@ class ConfigurationTest : public CppUnit::TestCase {
         ConfigurationTest() : CppUnit::TestCase("Configuration Tests") {}
  
         void testDefaultValueAudio(){
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( AUDIO, ALSA_CARD_ID_IN ) == 0 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( AUDIO, ALSA_CARD_ID_IN ) == 0 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( AUDIO, ALSA_SAMPLE_RATE ) == 44100 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( AUDIO, ALSA_FRAME_SIZE ) == 20 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_PLUGIN ) == "default" );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( AUDIO, VOLUME_SPKR ) == 100 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( AUDIO, VOLUME_MICRO ) == 50 );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_CARD_ID_IN ) == ALSA_DFT_CARD) ;
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_CARD_ID_OUT ) == ALSA_DFT_CARD );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_SAMPLE_RATE ) == DFT_SAMPLE_RATE);
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_FRAME_SIZE ) == DFT_FRAME_SIZE) ;
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_PLUGIN ) == PCM_DEFAULT );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, VOLUME_SPKR ) == DFT_VOL_SPKR_STR);
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, VOLUME_MICRO ) == DFT_VOL_MICRO_STR);
         }
 
         void testDefaultValuePreferences(){
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, ZONE_TONE ) == "North America" );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_ZEROCONF ) == 0 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_DIALPAD ) == 0 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_RINGTONE ) == 1 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_SEARCHBAR ) == 1 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_START ) == 0 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_POPUP ) == 1 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_NOTIFY ) == 1 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_MAIL_NOTIFY ) == 0 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_VOLUME ) == 0 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, REGISTRATION_EXPIRE ) == 180 );
-            CPPUNIT_ASSERT( Manager::instance().getConfigInt( PREFERENCES, CONFIG_AUDIO ) == 0 );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, ZONE_TONE ) == DFT_ZONE );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_ZEROCONF ) == CONFIG_ZEROCONF_DEFAULT_STR );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_DIALPAD ) == YES_STR );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_RINGTONE ) == YES_STR );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_SEARCHBAR ) == YES_STR );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_START ) == NO_STR );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_POPUP ) == YES_STR );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_NOTIFY ) == YES_STR );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_MAIL_NOTIFY ) == NO_STR );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_VOLUME ) == YES_STR );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, REGISTRATION_EXPIRE ) == DFT_EXPIRE_VALUE );
+            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_AUDIO ) == DFT_AUDIO_MANAGER );
    
         }
 

@@ -982,7 +982,7 @@ ManagerImpl::createSettingsPath (void) {
  * Initialization: Main Thread
  */
   void
-ManagerImpl::initConfigFile (void) 
+ManagerImpl::initConfigFile ( bool load_user_value ) 
 {
   std::string mes = gettext("Init config file\n");
   _debug("%s",mes.c_str());
@@ -1028,7 +1028,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_PA_VOLUME_CTRL , YES_STR);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
-  if (createSettingsPath() == 1) {
+  if (createSettingsPath() == 1 && load_user_value) {
     _exist = _config.populateFromFile(_path);
   }
 
@@ -1110,6 +1110,7 @@ ManagerImpl::getActiveCodecList( void )
     std::stringstream ss;
     ss << active[i];
     v.push_back((ss.str()).data());
+    _debug("%s\n", ss.str().data());
     i++;
   }
   return v;
