@@ -1526,8 +1526,11 @@ ManagerImpl::getCurrentAudioOutputPlugin( void )
   void
 ManagerImpl::initAudioDriver(void) 
 {
-  _debugInit("AudioLayer Creation");
   
+    int error;
+    
+    _debugInit("AudioLayer Creation");
+
   if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == ALSA )
     _audiodriver = new AlsaLayer( this );
   else if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == PULSEAUDIO )
@@ -1538,7 +1541,7 @@ ManagerImpl::initAudioDriver(void)
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
   } else {
-    int error = getAudioDriver()->getErrorMessage();
+    error = getAudioDriver()->getErrorMessage();
     if (error == -1) {
       _debug("Init audio driver: %i\n", error);
     }

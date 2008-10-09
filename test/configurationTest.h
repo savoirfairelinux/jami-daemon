@@ -27,6 +27,7 @@
 
 // Application import
 #include "manager.h"
+#include "audio/audiolayer.h"
 #include "global.h"
 #include "user_cfg.h"
 
@@ -50,6 +51,9 @@ class ConfigurationTest : public CppUnit::TestCase {
         CPPUNIT_TEST( testDefaultValueSignalisation ); 
         CPPUNIT_TEST( testLoadSIPAccount );
         CPPUNIT_TEST( testUnloadSIPAccount );
+        CPPUNIT_TEST( testInitVolume );
+        CPPUNIT_TEST( testInitAudioDriver );
+        CPPUNIT_TEST( testSelectAudioDriver );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -79,10 +83,22 @@ class ConfigurationTest : public CppUnit::TestCase {
          */
         void testDefaultValuePreferences();
 
+        /*
+         * Unit tests related to the global settings
+         */
         void testDefaultValueSignalisation();
         
+        /*
+         * Try to load one SIP account.
+         * So be sure to have only one SIP account so that the test could succeed
+         */
         void testLoadSIPAccount();
         void testUnloadSIPAccount();
+    
+        void testInitVolume(); 
+
+        void testInitAudioDriver();
+        void testSelectAudioDriver();
 
 };
 

@@ -69,13 +69,17 @@ void ConfigurationTest::testLoadSIPAccount(){
     AccountMap accounts;
     Account *current;
     std::ostringstream ss;
+    int nb_account; // Must be 1
 
-    // Load the accounts from the user file
-    Manager::instance().loadAccountMap();  
+    // Load the account from the user file
+    nb_account = Manager::instance().loadAccountMap();
+    CPPUNIT_ASSERT_EQUAL( 1, nb_account );
     // Save the account information
     accounts = Manager::instance()._accountMap;
     
     AccountMap::iterator iter = accounts.begin(); 
+    CPPUNIT_ASSERT( Manager::instance().accountExists( iter->first ) == true );
+    
     while( iter != accounts.end() ){
         current = iter->second;
         CPPUNIT_ASSERT( iter->first == current->getAccountID() );
@@ -96,8 +100,38 @@ void ConfigurationTest::testUnloadSIPAccount(){
     accounts = Manager::instance()._accountMap;
     
     AccountMap::iterator iter = accounts.begin(); 
+    CPPUNIT_ASSERT( Manager::instance().accountExists( iter->first ) == false );
+    
     if( iter != accounts.end() ){
         CPPUNIT_FAIL("Unload account map failed\n");
     }
 }
 
+void ConfigurationTest::testInitVolume(){
+        
+    Manager::instance().initVolume();
+
+    CPPUNIT_ASSERT( Manager::instance().getConfigInt( AUDIO, VOLUME_SPKR) == Manager::instance().getSpkrVolume() );
+    CPPUNIT_ASSERT( Manager::instance().getConfigInt( AUDIO, VOLUME_MICRO) == Manager::instance().getMicVolume() );
+}
+
+void ConfigurationTest::testInitAudioDriver(){
+     
+    // Load the audio driver
+    Manager::instance().initAudioDriver();
+     
+    // Check the creation
+    if( Manager::instance().getAudioDriver() == NULL )
+        CPPUNIT_FAIL("Error while loading audio layer");
+
+    // Check if it has been created with the right type
+    if( Manager::instance().getConfigInt( PREFERENCES, CONFIG_AUDIO ) == ALSA )
+        CPPUNIT_ASSERT_EQUAL( Manager::instance().getAudioDriver()->getLayerType(), ALSA );
+    else if( Manager::instance().getConfigInt( PREFERENCES, CONFIG_AUDIO ) == PULSEAUDIO )
+        CPPUNIT_ASSERT_EQUAL( Manager::instance().getAudioDriver()->getLayerType(), PULSEAUDIO );
+    else
+        CPPUNIT_FAIL("Wrong audio layer type");
+}
+
+void ConfigurationTest::testSelectAudioDriver(){
+}
