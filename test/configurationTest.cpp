@@ -17,93 +17,53 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-// Cppunit import
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/TestCaller.h>
-#include <cppunit/TestCase.h>
-#include <cppunit/TestSuite.h>
-
-#include <assert.h>
 #include <stdio.h>
 
-// Application import
-#include "manager.h"
-#include "global.h"
-#include "user_cfg.h"
-
-/*
- * @file configurationTest.cpp  
- * @brief       Regroups unitary tests related to the user configuration.
- *              Check if the default configuration has been successfully loaded
- */
+#include "configurationTest.h"
 
 using std::cout;
 using std::endl;
 
+void ConfigurationTest::setUp(){
+    // Load the default configuration
+    Manager::instance().initConfigFile(false);
+}
 
-class ConfigurationTest : public CppUnit::TestCase {
+void ConfigurationTest::testDefaultValueAudio(){
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_CARD_ID_IN ) == ALSA_DFT_CARD) ;
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_CARD_ID_OUT ) == ALSA_DFT_CARD );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_SAMPLE_RATE ) == DFT_SAMPLE_RATE);
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_FRAME_SIZE ) == DFT_FRAME_SIZE) ;
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_PLUGIN ) == PCM_DEFAULT );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, VOLUME_SPKR ) == DFT_VOL_SPKR_STR);
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, VOLUME_MICRO ) == DFT_VOL_MICRO_STR);
+}
 
-    /*
-     * Use cppunit library macros to add unit test the factory
-     */
-    CPPUNIT_TEST_SUITE( ConfigurationTest );
-        CPPUNIT_TEST( testDefaultValueAudio );
-        CPPUNIT_TEST( testDefaultValuePreferences );
-    CPPUNIT_TEST_SUITE_END();
+void ConfigurationTest::testDefaultValuePreferences(){
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, ZONE_TONE ) == DFT_ZONE );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_ZEROCONF ) == CONFIG_ZEROCONF_DEFAULT_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_DIALPAD ) == YES_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_RINGTONE ) == YES_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_SEARCHBAR ) == YES_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_START ) == NO_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_POPUP ) == YES_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_NOTIFY ) == YES_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_MAIL_NOTIFY ) == NO_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_VOLUME ) == YES_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, REGISTRATION_EXPIRE ) == DFT_EXPIRE_VALUE );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_AUDIO ) == DFT_AUDIO_MANAGER );
 
-    public:
-        ConfigurationTest() : CppUnit::TestCase("Configuration Tests") {}
- 
-        /*
-         * Unit tests related to the audio preferences
-         */
-        void testDefaultValueAudio(){
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_CARD_ID_IN ) == ALSA_DFT_CARD) ;
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_CARD_ID_OUT ) == ALSA_DFT_CARD );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_SAMPLE_RATE ) == DFT_SAMPLE_RATE);
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_FRAME_SIZE ) == DFT_FRAME_SIZE) ;
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, ALSA_PLUGIN ) == PCM_DEFAULT );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, VOLUME_SPKR ) == DFT_VOL_SPKR_STR);
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( AUDIO, VOLUME_MICRO ) == DFT_VOL_MICRO_STR);
-        }
+}
 
-        /*
-         * Unit tests related to the global settings
-         */
-        void testDefaultValuePreferences(){
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, ZONE_TONE ) == DFT_ZONE );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_ZEROCONF ) == CONFIG_ZEROCONF_DEFAULT_STR );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_DIALPAD ) == YES_STR );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_RINGTONE ) == YES_STR );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_SEARCHBAR ) == YES_STR );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_START ) == NO_STR );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_POPUP ) == YES_STR );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_NOTIFY ) == YES_STR );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_MAIL_NOTIFY ) == NO_STR );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_VOLUME ) == YES_STR );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, REGISTRATION_EXPIRE ) == DFT_EXPIRE_VALUE );
-            CPPUNIT_ASSERT( Manager::instance().getConfigString( PREFERENCES, CONFIG_AUDIO ) == DFT_AUDIO_MANAGER );
-   
-        }
+void ConfigurationTest::testDefaultValueSignalisation(){
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( SIGNALISATION , SYMMETRIC ) == YES_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( SIGNALISATION , PLAY_DTMF ) == YES_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( SIGNALISATION , PLAY_TONES ) == YES_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( SIGNALISATION , PULSE_LENGTH ) == DFT_PULSE_LENGTH_STR );
+    CPPUNIT_ASSERT( Manager::instance().getConfigString( SIGNALISATION , SEND_DTMF_AS ) == SIP_INFO_STR );
+}
 
-        /*
-         * Code factoring - Common resources can be initialized here.
-         * This method is called by unitcpp before each test
-         */
-        void setUp(){
-            // Load the default configuration
-            Manager::instance().initConfigFile(false);
-        }
+void ConfigurationTest::testLoadAccountMap(){
+    Manager::instance().loadAccountMap();  
+}
 
-        /*
-         * Code factoring - Common resources can be released here.
-         * This method is called by unitcpp after each test
-         */
-        void tearDown(){
-            // Not much to do
-        }
-
-};
-
-/* Register our test module */
-CPPUNIT_TEST_SUITE_REGISTRATION( ConfigurationTest );

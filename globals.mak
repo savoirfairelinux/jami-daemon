@@ -6,6 +6,7 @@ sflcodecdir=$(libdir)/sflphone/codecs
 AM_CPPFLAGS = \
 	-I$(src)/libs \
 	-I$(src)/src \
+	-I$(src)/test \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/sflphone\" \
 	$(ZEROCONFFLAGS) \

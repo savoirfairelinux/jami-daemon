@@ -1019,6 +1019,7 @@ class ManagerImpl {
     bool testAccountMap();
 #endif
 
+    friend class ConfigurationTest;
 };
 
 #endif // __MANAGER_H__
