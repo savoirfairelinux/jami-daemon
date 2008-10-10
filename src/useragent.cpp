@@ -1192,38 +1192,46 @@ bool UserAgent::refuse(SIPCall* call)
 bool UserAgent::carryingDTMFdigits(SIPCall* call, char *msgBody)
 {
     pj_status_t status;
-    pjsip_method method;
-    pj_str_t methodName;
     pjsip_tx_data *tdata;
-    pj_str_t from, to, contact, body;
-   
-    AccountID accId = Manager::instance().getAccountFromCall(call->getCallId());
-    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accId));
-   
+    pj_str_t methodName, content;
+    pjsip_method method;
+    pjsip_media_type ctype;
+
     pj_strdup2(_pool, &methodName, "INFO");
-    std::string fromStr = "sip:" + account->getUserName() + "@" + account->getServer();
-    pj_strdup2(_pool, &from, fromStr.data());
-    std::string toStr = "sip:" + call->getPeerNumber();
-    pj_strdup2(_pool, &to, toStr.data());
-    pj_strdup2(_pool, &contact, account->getContact().data());
-    pj_strdup2(_pool, &body, msgBody);
     pjsip_method_init_np(&method, &methodName);
-
    
-    status = pjsip_endpt_create_request(_endpt, &method,
-                &to, &from, &to, &contact, NULL, -1, &body, &tdata);
-    if(status != PJ_SUCCESS) {
-        _debug("UserAgent: Can not create DTMF message!\n");
+    /* Create request message. */
+    status = pjsip_dlg_create_request( call->getInvSession()->dlg, &method,
+                                       -1, &tdata);
+    if (status != PJ_SUCCESS) {
+        _debug("UserAgent: Unable to create INFO request -- %d\n", status);
         return false;
+    }
 
+    /* Get MIME type */
+    pj_strdup2(_pool, &ctype.type, "application");
+    pj_strdup2(_pool, &ctype.subtype, "dtmf-relay");
+
+    /* Create "application/dtmf-relay" message body. */
+    pj_strdup2(_pool, &content, msgBody);
+    tdata->msg->body = pjsip_msg_body_create( tdata->pool, &ctype.type,
+                                              &ctype.subtype, &content);
+    if (tdata->msg->body == NULL) {
+        _debug("UserAgent: Unable to create msg body!\n");
+        pjsip_tx_data_dec_ref(tdata);
+        return false;
+    }
+
+    /* Send the request. */
+    status = pjsip_dlg_send_request( call->getInvSession()->dlg, tdata,
+                                     _mod.id, NULL);
+    if (status != PJ_SUCCESS) {
+        _debug("UserAgent: Unable to send MESSAGE request -- %d\n", status);
+        return false;
     }
    
-    status = pjsip_endpt_send_request(_endpt, tdata, -1, NULL, NULL);
-    if(status != PJ_SUCCESS) {
-        _debug("UserAgent: Can not send DTMF message!\n");
-        return false;
-    }   
     return true;
+
 }
 
 bool UserAgent::transfer(SIPCall *call, const std::string& to)
