@@ -25,8 +25,6 @@ endif
 
 SUBDIRS = audio config dbus $(ZEROCONFDIR)
 
-PJSIP_LIBS = -lpjnath -lpjsua -lpjsip -lpjmedia -lpjsip-simple -lpjsip-ua -lpjmedia-codec -lpjlib-util -lpj 
-
 # Add here the cpp files to be build with sflphone
 sflphoned_SOURCES = \
 		eventthread.cpp \

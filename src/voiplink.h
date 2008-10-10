@@ -90,7 +90,7 @@ class VoIPLink {
      * @return bool True on success
      *		  false otherwise
      */
-    virtual bool sendRegister (void) = 0;
+    virtual int sendRegister (void) = 0;
     
     /**
      * Virtual method
@@ -98,7 +98,7 @@ class VoIPLink {
      * @return bool True on success
      *		  false otherwise
      */
-    virtual bool sendUnregister (void) = 0;
+    virtual int sendUnregister (void) = 0;
 
     /**
      * Place a new call

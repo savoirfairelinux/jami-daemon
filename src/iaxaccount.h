@@ -42,12 +42,12 @@ public:
   /**
    * Register an account
    */
-  void registerVoIPLink();
+  int registerVoIPLink();
 
   /**
    * Unregister an account
    */
-  void unregisterVoIPLink();
+  int unregisterVoIPLink();
 
 private:
 };

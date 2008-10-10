@@ -444,28 +444,31 @@ ManagerImpl::saveConfig (void)
 }
 
 //THREAD=Main
-  bool
+ int 
 ManagerImpl::initRegisterAccounts() 
 {
-  _debugInit("Initiate VoIP Links Registration");
-  AccountMap::iterator iter = _accountMap.begin();
-  while( iter != _accountMap.end() ) {
-    if ( iter->second) {
-      iter->second->loadConfig();
-      if ( iter->second->isEnabled() ) {
-	// NOW
-	iter->second->registerVoIPLink();
-	//iter->second->loadContacts();
-	//iter->second->publishPresence(PRESENCE_ONLINE);
-	//iter->second->subscribeContactsPresence();
+
+    int status; 
+    AccountMap::iterator iter;
+
+    _debugInit("Initiate VoIP Links Registration");
+    iter = _accountMap.begin();
+
+    while( iter != _accountMap.end() ) {
+      if ( iter->second ) {
+        iter->second->loadConfig();
+        if ( iter->second->isEnabled() ) {
+	  status = iter->second->registerVoIPLink();
+          ASSERT( status, SUCCESS );
+        }
       }
+      iter++;
     }
-    iter++;
-  }
-  // calls the client notification here in case of errors at startup...
-  if( _audiodriver -> getErrorMessage() != -1 )
-    notifyErrClient( _audiodriver -> getErrorMessage() );
-  return true;
+    // calls the client notification here in case of errors at startup...
+    if( _audiodriver -> getErrorMessage() != -1 )
+      notifyErrClient( _audiodriver -> getErrorMessage() );
+    
+    return SUCCESS;
 }
 
 //THREAD=Main

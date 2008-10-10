@@ -358,7 +358,7 @@ void UserAgent::busy_sleep(unsigned msec)
 #endif
 }
 
-bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, 
+int UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, 
 				const int& timeout UNUSED) {
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
@@ -435,7 +435,8 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     *regc2 = regc;
     
     pj_mutex_unlock(_mutex);
-    return true;
+
+    return PJ_SUCCESS;
 }
 
 bool UserAgent::removeAccount(pjsip_regc *regc)

@@ -59,12 +59,12 @@ public:
   /**
    * Initialize the SIP voip link with the account parameters and send registration
    */ 
-  void registerVoIPLink();
+  int registerVoIPLink();
 
   /**
    * Send unregistration and clean all related stuff ( calls , thread )
    */
-  void unregisterVoIPLink();
+  int unregisterVoIPLink();
 
 
   void setUserName(const std::string &name) {_userName = name;}
