@@ -31,6 +31,11 @@ typedef float float32;
 typedef short int16;
 
 
+#define SUCCESS                 0
+
+#define ASSERT( expected , value)       if( value == expected ) return SUCCESS; \
+                                        else return 1; 
+
 #ifdef DATAFORMAT_IS_FLOAT
 #define SFLDataFormat float32
 #define SFLDataFormatString "Float32"

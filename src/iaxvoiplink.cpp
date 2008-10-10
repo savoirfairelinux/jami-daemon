@@ -299,8 +299,7 @@ IAXVoIPLink::getIAXCall(const CallID& id)
 }
 
 
-
-  bool
+ int 
 IAXVoIPLink::sendRegister() 
 {
   bool result = false;
@@ -353,8 +352,7 @@ IAXVoIPLink::sendRegister()
 
 
 
-
-  bool
+ int 
 IAXVoIPLink::sendUnregister()
 {
   _mutexIAX.enterMutex();
@@ -373,7 +371,7 @@ IAXVoIPLink::sendUnregister()
   _debug("IAX2 send unregister\n");
   setRegistrationState(Unregistered);
 
-  return false;
+  return SUCCESS;
 }
 
   Call* 

@@ -92,14 +92,14 @@ class SIPVoIPLink : public VoIPLink
      * @return bool True on success
      *		  false otherwise
      */
-    bool sendRegister(void);
+    int sendRegister(void);
 
     /**
      * Build and send SIP unregistration request
      * @return bool True on success
      *		  false otherwise
      */
-    bool sendUnregister(void);
+    int sendUnregister(void);
 
     /**
      * Place a new call

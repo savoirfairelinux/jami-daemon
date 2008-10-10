@@ -171,9 +171,10 @@ class ManagerImpl {
 
     /**
      * Send registration to all enabled accounts
-     * @return false if exosip or the network checking fails
+     * @return 0 on registration success
+     *          1 otherelse
      */
-    bool initRegisterAccounts();
+    int initRegisterAccounts();
 
     /**
      * @return true if we tried to register once
