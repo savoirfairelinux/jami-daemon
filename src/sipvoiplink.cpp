@@ -360,10 +360,15 @@ SIPVoIPLink::refuse (const CallID& id)
 bool 
 SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code UNUSED)
 {
-  SIPCall* call = getSIPCall(id);
-  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
+  int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
+  const int body_len = 1000;
+  char *dtmf_body = new char[body_len];
+ 
+  snprintf(dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+ 
+  return Manager::instance().getUserAgent()->carryingDTMFdigits(call, dtmf_body);
 
-  Manager::instance().getUserAgent()->carryingDTMFdigits(call);
+
   //int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
 
   // TODO Add DTMF with pjsip - INFO method

@@ -134,8 +134,8 @@ public:
     void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
     
     bool makeOutgoingCall(const std::string& to, SIPCall* call, const AccountID& id);
-    
-    bool carryingDTMFdigits(SIPCall* call);
+
+    bool carryingDTMFdigits(SIPCall* call, char *msgBody);
 
     pj_pool_t *getAppPool() {return _pool;}
     static pj_bool_t mod_on_rx_request(pjsip_rx_data *rdata);

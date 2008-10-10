@@ -1188,9 +1188,42 @@ bool UserAgent::refuse(SIPCall* call)
     return true;
 }
 
-bool UserAgent::carryingDTMFdigits(SIPCall* call)
+
+bool UserAgent::carryingDTMFdigits(SIPCall* call, char *msgBody)
 {
-	return true;
+    pj_status_t status;
+    pjsip_method method;
+    pj_str_t methodName;
+    pjsip_tx_data *tdata;
+    pj_str_t from, to, contact, body;
+   
+    AccountID accId = Manager::instance().getAccountFromCall(call->getCallId());
+    SIPAccount *account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(accId));
+   
+    pj_strdup2(_pool, &methodName, "INFO");
+    std::string fromStr = "sip:" + account->getUserName() + "@" + account->getServer();
+    pj_strdup2(_pool, &from, fromStr.data());
+    std::string toStr = "sip:" + call->getPeerNumber();
+    pj_strdup2(_pool, &to, toStr.data());
+    pj_strdup2(_pool, &contact, account->getContact().data());
+    pj_strdup2(_pool, &body, msgBody);
+    pjsip_method_init_np(&method, &methodName);
+
+   
+    status = pjsip_endpt_create_request(_endpt, &method,
+                &to, &from, &to, &contact, NULL, -1, &body, &tdata);
+    if(status != PJ_SUCCESS) {
+        _debug("UserAgent: Can not create DTMF message!\n");
+        return false;
+
+    }
+   
+    status = pjsip_endpt_send_request(_endpt, tdata, -1, NULL, NULL);
+    if(status != PJ_SUCCESS) {
+        _debug("UserAgent: Can not send DTMF message!\n");
+        return false;
+    }   
+    return true;
 }
 
 bool UserAgent::transfer(SIPCall *call, const std::string& to)
