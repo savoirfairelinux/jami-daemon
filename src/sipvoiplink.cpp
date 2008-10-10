@@ -363,6 +363,7 @@ SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code UNUSED)
   SIPCall* call = getSIPCall(id);
   if (call==0) { _debug("Call doesn't exist\n"); return false; }  
 
+  Manager::instance().getUserAgent()->carryingDTMFdigits(call);
   //int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
 
   // TODO Add DTMF with pjsip - INFO method

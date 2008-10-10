@@ -1188,6 +1188,11 @@ bool UserAgent::refuse(SIPCall* call)
     return true;
 }
 
+bool UserAgent::carryingDTMFdigits(SIPCall* call)
+{
+	return true;
+}
+
 bool UserAgent::transfer(SIPCall *call, const std::string& to)
 {
     pjsip_evsub *sub;
