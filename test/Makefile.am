@@ -15,6 +15,7 @@ OBJECT_FILES= \
 	../src/sflphoned-sipaccount.o \
 	../src/sflphoned-iaxaccount.o \
 	../src/sflphoned-eventthread.o \
+	../src/sflphoned-useragent.o \
 	../src/sflphoned-samplerateconverter.o
 
 configurationTester_SOURCES = \
@@ -24,7 +25,7 @@ configurationTester_SOURCES = \
 
 configurationTester_LDADD = \
 		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) $(EXOSIP_LIBS) \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
 		@CPPUNIT_LIBS@ \
@@ -33,5 +34,6 @@ configurationTester_LDADD = \
 		@CCRTP_LIBS@ \
 		@DBUSCPP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
+		$(PJSIP_LIBS) \
 		$(OBJECT_FILES)
 				

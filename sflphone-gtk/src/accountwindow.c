@@ -327,6 +327,7 @@ show_account_window (account_t * a)
       g_hash_table_replace(currentAccount->properties, 
 	  g_strdup(ACCOUNT_SIP_HOST), 
 	  g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryHostname))));
+
       g_hash_table_replace(currentAccount->properties, 
 	  g_strdup(ACCOUNT_SIP_USER), 
 	  g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryUsername))));

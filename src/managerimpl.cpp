@@ -26,7 +26,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
-
+#include <sstream>  
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>	// mkdir(2)
 
@@ -37,16 +37,20 @@
 
 #include "manager.h"
 #include "account.h"
+#include "sipaccount.h"
 #include "audio/audiolayer.h"
 #include "audio/alsalayer.h"
 #include "audio/pulselayer.h"
 #include "audio/tonelist.h"
 
 #include "accountcreator.h" // create new account
-#include "voiplink.h"
+#include "sipvoiplink.h"
+
+#include "useragent.h"
 
 #include "user_cfg.h"
 
+#define DEFAULT_SIP_PORT  5060
 
 #ifdef USE_ZEROCONF
 #include "zeroconf/DNSService.h"
@@ -58,30 +62,51 @@
 #define fill_config_int(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_int)))
 
-ManagerImpl::ManagerImpl (void)
+ManagerImpl::ManagerImpl (void) 
+	: _hasTriedToRegister(false)
+        , _config()
+	, _currentCallId2()
+        , _currentCallMutex()
+        , _codecBuilder(NULL)
+        , _audiodriver(NULL)
+        , _dtmfKey(NULL)
+        , _codecDescriptorMap()
+        , _toneMutex()
+        , _telephoneTone(NULL)
+        , _audiofile()
+        , _spkr_volume(0)
+        , _mic_volume(0)
+        , _mutex()
+	, _dbus(NULL)
+        , _waitingCall()
+        , _waitingCallMutex()
+        , _nbIncomingWaitingCall(0)
+        , _path("")
+        , _exist(0)
+        , _setupLoaded(false)
+        , _firewallPort()
+        , _firewallAddr("")
+        , _hasZeroconf(false)
+        , _callAccountMap()
+        , _callAccountMapMutex()
+        , _accountMap()
+        , _userAgent(NULL)
+        , _userAgentInitlized(false)
+        , _sipThreadStop()
+ 
 {
-  // Init private variables 
-  _hasZeroconf = false;
+  /* Init private variables 
+     setup:    _path, _exist, _setupLoaded , _dbus
+     sound:    _audiodriver, _dtmfKey, 
+               _spkr_volume,_mic_volume  = 0;  // Initialize after by init() -> initVolume()
+     Call:     _nbIncomingWaitingCall, _hasTriedToRegister
+     SIP Link: _userAgent, _userAgentInitlized
+  */
+
 #ifdef USE_ZEROCONF
   _hasZeroconf = true;
   _DNSService = new DNSService();
 #endif
-
-  // setup
-  _path = ""; 
-  _exist = 0;
-  _setupLoaded = false;
-  _dbus = NULL;
-
-  // sound
-  _audiodriver = NULL;
-  _dtmfKey = 0;
-  _spkr_volume = 0;  // Initialize after by init() -> initVolume()
-  _mic_volume  = 0;  // Initialize after by init() -> initVolume()
-
-  // Call
-  _nbIncomingWaitingCall=0;
-  _hasTriedToRegister = false;
 
   // initialize random generator for call id
   srand (time(NULL));
@@ -114,6 +139,12 @@ ManagerImpl::init()
 {
   // Load accounts, init map
   loadAccountMap();
+ 
+  //Initialize sip manager 
+  if(_userAgentInitlized) {
+    _userAgent->sipCreate();
+    _userAgent->sipInit();
+  }
 
   initVolume();
 
@@ -144,6 +175,7 @@ ManagerImpl::init()
   // initRegisterAccounts was here, but we doing it after the gui loaded... 
   // the stun detection is long, so it's a better idea to do it after getEvents
   initZeroconf();
+  
 }
 
 void ManagerImpl::terminate()
@@ -151,6 +183,12 @@ void ManagerImpl::terminate()
   saveConfig();
 
   unloadAccountMap();
+  
+  if(_userAgentInitlized) {
+      delete _userAgent;
+      _userAgent = NULL;
+      _userAgentInitlized = false;
+  }
 
   _debug("Unload DTMF Key\n");
   delete _dtmfKey;
@@ -229,6 +267,7 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
 ManagerImpl::answerCall(const CallID& id)
 {
   stopTone(false); 
+  _debug("Try to answer call: %s\n", id.data());
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Answering Call: Call doesn't exists\n");
@@ -273,12 +312,14 @@ ManagerImpl::hangupCall(const CallID& id)
   }
 
   bool returnValue = getAccountLink(accountid)->hangup(id);
+  _debug("After voip link hungup!\n");
   removeCallAccount(id);
   switchCall("");
 
   if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
     _audiodriver->restorePulseAppsVolume();
 
+  _debug("Before hungup return!\n");
   return returnValue;
 }
 
@@ -511,7 +552,7 @@ ManagerImpl::playDtmf(char code, bool isTalking)
   if( CHECK_INTERFACE( layer , PULSEAUDIO ))
   {
   // Cache the samples on the sound server
-  (PulseLayer*)audiolayer->putInCache( code, _buf , size * sizeof(SFLDataFormat) );
+  // (PulseLayer*)audiolayer->putInCache( code, _buf , size * sizeof(SFLDataFormat) );
   }
 
   delete[] _buf; _buf = 0;
@@ -558,7 +599,7 @@ ManagerImpl::isWaitingCall(const CallID& id) {
   bool 
 ManagerImpl::incomingCall(Call* call, const AccountID& accountId) 
 {
-  _debug("Incoming call\n");
+  _debug("Incoming call %s\n", call->getCallId().data());
 
   associateCallToAccount(call->getCallId(), accountId);
 
@@ -582,8 +623,9 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     from.append(number);
     from.append(">");
   }
+  
   _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
-
+  
   // Reduce volume of the other pulseaudio-connected audio applications
   if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
     _audiodriver->reducePulseAppsVolume();
@@ -672,9 +714,9 @@ ManagerImpl::callFailure(const CallID& id)
 
 //THREAD=VoIP
   void
-ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, const std::string& nb_msg)
+ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, int nb_msg)
 {
-  if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, atoi(nb_msg.c_str()) );
+  if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, nb_msg) ;
 }
 
 //THREAD=VoIP
@@ -690,7 +732,7 @@ ManagerImpl::registrationSucceed(const AccountID& accountid)
 
 //THREAD=VoIP
   void 
-ManagerImpl::unregistrationSucceed(const AccountID& accountid)
+ManagerImpl::unregistrationSucceed(const AccountID& accountid UNUSED)
 {
   _debug("UNREGISTRATION SUCCEED\n");
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
@@ -785,6 +827,7 @@ ManagerImpl::stopTone(bool stopAudio=true) {
 ManagerImpl::playTone()
 {
   playATone(Tone::TONE_DIALTONE);
+  return true;
 }
 
 /**
@@ -794,6 +837,7 @@ ManagerImpl::playTone()
 ManagerImpl::playToneWithMessage()
 {
   playATone(Tone::TONE_CONGESTION);
+  return true;
 }
 
 /**
@@ -948,7 +992,7 @@ ManagerImpl::behindNat(const std::string& svr, int port)
   }
 
   // Firewall address
-  //_debug("STUN server: %s\n", svr.data());
+  _debug("STUN server: %s\n", svr.data());
   return getStunInfo(stunSvrAddr, port);
 }
 
@@ -1026,6 +1070,7 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_int(REGISTRATION_EXPIRE , DFT_EXPIRE_VALUE);
   fill_config_int(CONFIG_AUDIO , DFT_AUDIO_MANAGER);
   fill_config_int(CONFIG_PA_VOLUME_CTRL , YES_STR);
+  fill_config_int(CONFIG_SIP_PORT, DFT_SIP_PORT);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1 && load_user_value) {
@@ -1087,7 +1132,7 @@ ManagerImpl::setActiveCodecList(const std::vector<  std::string >& list)
   std::string
 ManagerImpl::serialize(std::vector<std::string> v)
 {
-  int i;
+  unsigned int i;
   std::string res;
   for(i=0;i<v.size();i++)
   {
@@ -1103,7 +1148,7 @@ ManagerImpl::getActiveCodecList( void )
   _debug("Get Active codecs list\n");
   std::vector< std::string > v;
   CodecOrder active = _codecDescriptorMap.getActiveCodecs();
-  int i=0;
+  unsigned int i=0;
   size_t size = active.size();
   while(i<size)
   {
@@ -1224,7 +1269,7 @@ ManagerImpl::setInputAudioPlugin(const std::string& audioPlugin)
   void
 ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
 {
-  int layer = _audiodriver -> getLayerType();
+  //int layer = _audiodriver -> getLayerType();
   _debug("Set output audio plugin\n");
   _audiodriver -> setErrorMessage( -1 );
   _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
@@ -1255,7 +1300,7 @@ ManagerImpl::getAudioOutputDeviceList(void)
   void
 ManagerImpl::setAudioOutputDevice(const int index)
 {
-  int layer = _audiodriver -> getLayerType();
+  //int layer = _audiodriver -> getLayerType();
   _debug("Set audio output device: %i\n", index);
   _audiodriver -> setErrorMessage( -1 );
   _audiodriver->openDevice(_audiodriver->getIndexIn(), 
@@ -1286,7 +1331,7 @@ ManagerImpl::getAudioInputDeviceList(void)
   void
 ManagerImpl::setAudioInputDevice(const int index)
 {
-  int layer = _audiodriver -> getLayerType();
+  //int layer = _audiodriver -> getLayerType();
   _debug("Set audio input device %i\n", index);
   _audiodriver -> setErrorMessage( -1 );
   _audiodriver->openDevice(index, 
@@ -1752,7 +1797,7 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
  * Main Thread
  */
   bool 
-ManagerImpl::getCallStatus(const std::string& sequenceId)
+ManagerImpl::getCallStatus(const std::string& sequenceId UNUSED)
 {
   if (!_dbus) { return false; }
   ost::MutexLock m(_callAccountMapMutex);
@@ -2033,6 +2078,8 @@ ManagerImpl::setAccountDetails( const std::string& accountID,
 
   // Update account details
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+
+  //restartPjsip();
 }
 
 void
@@ -2068,7 +2115,24 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
   /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
   if (accountType == "SIP") {
-    newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
+     if(!_userAgentInitlized) {
+        // Initialize the SIP Manager
+        _userAgent = new UserAgent();
+        _userAgent->setSipPort(Manager::instance().getConfigInt(PREFERENCES , CONFIG_SIP_PORT));
+      }
+
+      newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
+
+      // Determine whether to use stun for the current account or not
+      if((*details.find(SIP_USE_STUN)).second == "TRUE") {
+        _userAgent->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
+      }
+
+      if(!_userAgentInitlized) {
+        _userAgentInitlized = true;
+        _userAgent->sipCreate();
+        _userAgent->sipInit();
+      }
   }
   else if (accountType == "IAX") {
     newAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, newAccountID);
@@ -2083,6 +2147,8 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
   saveConfig();
 
   if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+
+  //restartPjsip();
 }
 
   void 
@@ -2113,6 +2179,7 @@ ManagerImpl::associateCallToAccount(const CallID& callID, const AccountID& accou
     if (  accountExists(accountID)  ) { // account id exist in AccountMap
       ost::MutexLock m(_callAccountMapMutex);
       _callAccountMap[callID] = accountID;
+      _debug("Associate Call %s with Account %s\n", callID.data(), accountID.data());
       return true;
     } else {
       return false; 
@@ -2160,6 +2227,20 @@ ManagerImpl::getNewCallID()
   return random_id.str();
 }
 
+  void 
+ManagerImpl::restartPjsip()
+{
+  if ( _userAgentInitlized ){
+    unregisterCurSIPAccounts();
+    _userAgent->sipDestory();
+    //_userAgent->setSipPort(Manager::instance().getConfigInt(PREFERENCES , CONFIG_SIP_PORT));
+
+    _userAgent->sipCreate();
+    _userAgent->sipInit();
+    registerCurSIPAccounts();
+  } 
+}
+
   short
 ManagerImpl::loadAccountMap()
 {
@@ -2168,18 +2249,42 @@ ManagerImpl::loadAccountMap()
   TokenList sections = _config.getSections();
   std::string accountType;
   Account* tmpAccount;
+  std::string port;
+  unsigned int iPort;
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
+    _debug("***************** In Load account: into while\n");
     // Check if it starts with "Account:" (SIP and IAX pour le moment)
-    if (iter->find("Account:") == -1) {
+    if ((int)(iter->find("Account:")) == -1) {
       iter++;
       continue;
     }
 
     accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
     if (accountType == "SIP") {
+      if(!_userAgentInitlized) {
+        // Initialize the SIP Manager
+        _userAgent = new UserAgent();
+        _userAgentInitlized = true;
+        _userAgent->setSipPort(Manager::instance().getConfigInt(PREFERENCES , CONFIG_SIP_PORT));
+      }
+
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
+     
+      // Determine whether to use stun for the current account or not 
+      int useStun = Manager::instance().getConfigInt(tmpAccount->getAccountID(),SIP_USE_STUN);
+  
+      if(useStun == 1) {
+        _userAgent->setStunServer(Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_STUN_SERVER).data());
+      }
+      
+      /*// Set registration port for all accounts, The last non-5060 port will be recorded in _userAgent.
+      port = Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_PORT);
+      std::istringstream is(port);
+      is >> iPort;
+      if (iPort != DEFAULT_SIP_PORT)
+      	_userAgent->setRegPort(iPort);  */
     }
     else if (accountType == "IAX") {
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);
@@ -2235,6 +2340,34 @@ ManagerImpl::getAccount(const AccountID& accountID)
   return iter->second;
 }
 
+AccountID 
+ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const std::string& server)
+{
+  AccountMap::iterator iter;
+  SIPAccount *account;
+
+  // Try to find the account id from username and server name by full match
+  for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+    account = dynamic_cast<SIPAccount *>(iter->second);
+    if (account != NULL){
+    	if(account->fullMatch(userName, server))
+      		return iter->first;
+    }
+  }
+
+  // We failed! Then only match the username
+  for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+    account = dynamic_cast<SIPAccount *>(iter->second);
+    if ( account != NULL ) {
+    	if(account->userMatch(userName))
+      		return iter->first;
+    }
+  }
+
+  // Failed again! return AccountNULL
+  return AccountNULL;
+}
+
   VoIPLink* 
 ManagerImpl::getAccountLink(const AccountID& accountID)
 {
@@ -2245,6 +2378,70 @@ ManagerImpl::getAccountLink(const AccountID& accountID)
   return 0;
 }
 
+pjsip_regc 
+*getSipRegcFromID(const AccountID& id UNUSED)
+{
+  /*SIPAccount *tmp = dynamic_cast<SIPAccount *>getAccount(id);
+  if(tmp != NULL)
+    return tmp->getSipRegc();
+  else*/
+    return NULL;
+}
+
+
+/** 
+ * Return the instance of sip manager
+ */
+UserAgent *ManagerImpl::getUserAgent()
+{
+    return _userAgent;
+}
+
+int 
+ManagerImpl::getSipPort()
+{
+    return _userAgent->getSipPort();
+}
+
+void 
+ManagerImpl::setSipPort(int portNum)
+{
+    if(portNum != _userAgent->getSipPort()) {
+        _userAgent->setSipPort(portNum);
+        restartPjsip();
+        setConfig( PREFERENCES , CONFIG_SIP_PORT , portNum );
+    }
+}
+
+void ManagerImpl::unregisterCurSIPAccounts()
+{
+  AccountMap::iterator iter = _accountMap.begin();
+  while( iter != _accountMap.end() ) {
+    if ( iter->second) {
+        std::string p =  Manager::instance().getConfigString( iter->first , CONFIG_ACCOUNT_TYPE );
+      if ( iter->second->isEnabled() && p == "SIP") {
+	// NOW
+	iter->second->unregisterVoIPLink();
+      }
+    }
+    iter++;
+  }
+}
+
+void ManagerImpl::registerCurSIPAccounts()
+{
+  AccountMap::iterator iter = _accountMap.begin();
+  while( iter != _accountMap.end() ) {
+    if ( iter->second) {
+        std::string p =  Manager::instance().getConfigString( iter->first , CONFIG_ACCOUNT_TYPE );
+      if ( iter->second->isEnabled() && p == "SIP") {
+	// NOW
+	iter->second->registerVoIPLink();
+      }
+    }
+    iter++;
+  }    
+}
 
 #ifdef TEST
 /** 

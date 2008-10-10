@@ -73,7 +73,8 @@ class Account{
    * Virtual destructor
    */
   virtual ~Account();
-
+  
+  
   /**
    * Load the settings for this account.
    */
@@ -132,6 +133,12 @@ class Account{
   void publishPresence(std::string presenceStatus);
 
 private:
+
+  // copy constructor
+  Account(const Account& rh);
+  
+  // assignment operator
+  Account& operator=(const Account& rh);
 
 protected:
   /**

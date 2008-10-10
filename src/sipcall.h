@@ -23,7 +23,7 @@
 
 #include "call.h"
 #include "audio/codecDescriptor.h"
-#include <eXosip2/eXosip.h>
+#include "useragent.h"
 
 class AudioCodec;
 
@@ -50,101 +50,106 @@ class SIPCall : public Call
 
     /** 
      * Call Identifier
-     * @return int  SIP call id : protected by eXosip lock 
+     * @return int  SIP call id
      */
     int  getCid() { return _cid; }
     
     /** 
      * Call Identifier
-     * @param cid SIP call id : protected by eXosip lock 
+     * @param cid SIP call id
      */
     void setCid(int cid) { _cid = cid ; } 
     
     /** 
      * Domain identifier
-     * @return int  SIP domain id : protected by eXosip lock  
+     * @return int  SIP domain id
      */
     int  getDid() { return _did; }
     
     /** 
      * Domain identifier
-     * @param did SIP domain id : protected by eXosip lock 
+     * @param did SIP domain id
      */
     void setDid(int did) { _did = did; } 
     
     /** 
      * Transaction identifier
-     * @return int  SIP transaction id : protected by eXosip lock  
+     * @return int  SIP transaction id
      */
     int  getTid() { return _tid; }
     
     /** 
      * Transaction identifier
-     * @param tid SIP transaction id : protected by eXosip lock 
+     * @param tid SIP transaction id
      */
     void setTid(int tid) { _tid = tid; } 
 
     /**
      * Setup incoming call, and verify for errors, before ringing the user.
-     * @param event eXosip Event
+     * @param pjsip_rx_data *rdata
+     * @param pj_pool_t *pool
      * @return bool True on success
      *		    false otherwise
      */
-    bool SIPCallInvite(eXosip_event_t *event);
+    bool SIPCallInvite(pjsip_rx_data *rdata, pj_pool_t *pool);
+
+    bool SIPCallAnsweredWithoutHold(pjsip_rx_data *rdata);
+ 
+    /**
+     * Save IP Address
+     * @param ip std::string 
+     * @return void
+     */
+    void setIp(std::string ip) {_ipAddr = ip;}
 
     /**
-     * newReinviteCall is called when the IP-Phone user receives a change in the call
-     * it's almost an newIncomingCall but we send a 200 OK
-     * See: 3.7.  Session with re-INVITE (IP Address Change)
-     * @param event eXosip Event
-     * @return bool True if ok
+     * Get the local SDP 
+     * @param void
+     * @return _localSDP pjmedia_sdp_session
      */
-    bool SIPCallReinvite(eXosip_event_t *event);
-
-    /**
-     * Peer answered to a call (on hold or not)
-     * @param event eXosip Event
-     * @return bool True if ok
-     */
-    bool SIPCallAnswered(eXosip_event_t *event);
-
-    /**
-     * We retreive final SDP info if they changed
-     * @param event eXosip Event
-     * @return bool True if ok (change / no change) or false on error
-     */
-    bool SIPCallAnsweredWithoutHold(eXosip_event_t *event);
-
-    //TODO: humm?
-    int sdp_complete_message(sdp_message_t * remote_sdp, osip_message_t * msg);
-
-
-  private:
-
-    // TODO: hum???
-    int sdp_analyse_attribute (sdp_message_t * sdp, sdp_media_t * med);
+    pjmedia_sdp_session* getLocalSDPSession( void ) { return _localSDP; }
     
     /**
-     * Set peer name and number with event->request->from
-     * @param event eXosip event
-     * @return bool False if the event is invalid
+     * Begin negociation of media information between caller and callee
+     * @param pj_pool_t *pool
+     * @return bool True if ok
      */
-    bool setPeerInfoFromRequest(eXosip_event_t *event);
+    bool startNegociation(pj_pool_t *pool);
+
+    /**
+     * Create the localSDP, media negociation and codec information
+     * @param pj_pool_t *pool
+     * @return void
+     */
+    bool createInitialOffer(pj_pool_t *pool);
+    
+    void setXferSub(pjsip_evsub* sub) {_xferSub = sub;}
+    pjsip_evsub *getXferSub() {return _xferSub;}
+    
+    void setInvSession(pjsip_inv_session* inv) {_invSession = inv;}
+    pjsip_inv_session *getInvSession() {return _invSession;}
+    
+  private:
+
+    // Copy Constructor
+    SIPCall(const SIPCall& rh);
+
+    // Assignment Operator
+    SIPCall& operator=( const SIPCall& rh);
 
     /**
      * Get a valid remote SDP or return a 400 bad request response if invalid
-     * @param event eXosip event
-     * @return sdp_message_t* A valid remote_sdp or 0
+     * @param
+     * @return
      */
-    sdp_message_t* getRemoteSDPFromRequest(eXosip_event_t *event);
+    pjmedia_sdp_session* getRemoteSDPFromRequest(pjsip_rx_data *rdata);
 
     /**
-     * Get a valid remote media or return a 415 unsupported media type
-     * @param tid transaction id
-     * @param remote_sdp Remote SDP pointer
-     * @return sdp_media_t* A valid sdp_media_t or 0
+     * Get a valid remote media
+     * @param remote_sdp pjmedia_sdp_session*
+     * @return pjmedia_sdp_media*. A valid sdp_media_t or 0
      */
-    sdp_media_t* getRemoteMedia(int tid, sdp_message_t* remote_sdp);
+    pjmedia_sdp_media* getRemoteMedia(pjmedia_sdp_session *remote_sdp);
 
     /**
      * Set Audio Port and Audio IP from Remote SDP Info
@@ -152,14 +157,14 @@ class SIPCall : public Call
      * @param remote_sdp Remote SDP pointer
      * @return bool True if everything is set correctly
      */
-    bool setRemoteAudioFromSDP(sdp_media_t* remote_med, sdp_message_t* remote_sdp);
+    bool setRemoteAudioFromSDP(pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media* remote_med);
 
     /**
      * Set Audio Codec with the remote choice
      * @param remote_med Remote Media info
      * @return bool True if everything is set correctly
      */
-    bool setAudioCodecFromSDP(sdp_media_t* remote_med, int tid);
+    bool setAudioCodecFromSDP(pjmedia_sdp_media* remote_med);
 
     /** SIP call id */
     int _cid;
@@ -170,6 +175,33 @@ class SIPCall : public Call
     /** SIP transaction id */
     int _tid;
 
+    /** Local SDP */
+    pjmedia_sdp_session *_localSDP;
+
+    /** negociator */
+    pjmedia_sdp_neg *_negociator;
+    
+    /**
+     * Set origin information for local SDP
+     */
+    void sdpAddOrigin( void );
+    
+    /**
+     * Set connection information for local SDP
+     */
+    void sdpAddConnectionInfo( void );
+    /**
+     * Set media information including codec for localSDP
+     * @param  pj_pool_t* pool
+     * @return void
+     */
+    void sdpAddMediaDescription(pj_pool_t* pool);
+
+    /** IP address */
+    std::string _ipAddr;
+    
+    pjsip_evsub *_xferSub;
+    pjsip_inv_session *_invSession;
 };
 
 #endif

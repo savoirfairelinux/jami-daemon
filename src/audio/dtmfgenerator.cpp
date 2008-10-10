@@ -51,16 +51,14 @@ const DTMFGenerator::DTMFTone DTMFGenerator::tones[NUM_TONES] = {
 };
 
 
-DTMFException::DTMFException(const char* _reason) throw()
+DTMFException::DTMFException(const char* _reason) throw() : reason(_reason)
 {
-	reason = _reason;
 }
 
 
 DTMFException::~DTMFException() throw()
 {
 }
-
 
 const char* DTMFException::what() const throw()
 {
@@ -72,9 +70,8 @@ const char* DTMFException::what() const throw()
 /*
  * Initialize the generator
  */
-DTMFGenerator::DTMFGenerator(unsigned int sampleRate) : tone("", sampleRate) 
+DTMFGenerator::DTMFGenerator(unsigned int sampleRate) : state(), _sampleRate(sampleRate), tone("", sampleRate) 
 {
-  _sampleRate = sampleRate;
   state.offset = 0;
   state.sample = 0;
 
@@ -89,7 +86,6 @@ DTMFGenerator::~DTMFGenerator() {
     delete[] samples[i]; samples[i] = NULL;
   }
 }
-
 
 /*
  * Get n samples of the signal of code code

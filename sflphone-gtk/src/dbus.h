@@ -425,4 +425,8 @@ void dbus_register( int pid, gchar * name);
  */
 void dbus_unregister(int pid);
 
+void dbus_set_sip_port(const guint portNum);
+
+guint dbus_get_sip_port();
+
 #endif

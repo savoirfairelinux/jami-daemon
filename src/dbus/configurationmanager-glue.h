@@ -71,6 +71,8 @@ public:
         register_method(ConfigurationManager_adaptor, switchPopupMode, _switchPopupMode_stub);
         register_method(ConfigurationManager_adaptor, setPulseAppVolumeControl, _setPulseAppVolumeControl_stub);
         register_method(ConfigurationManager_adaptor, getPulseAppVolumeControl, _getPulseAppVolumeControl_stub);
+        register_method(ConfigurationManager_adaptor, setSipPort, _setSipPort_stub);
+        register_method(ConfigurationManager_adaptor, getSipPort, _getSipPort_stub);
     }
 
     ::DBus::IntrospectedInterface *const introspect() const 
@@ -326,6 +328,16 @@ public:
             { "state", "i", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument setSipPort_args[] = 
+        {
+            { "port", "i", true },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getSipPort_args[] = 
+        {
+            { "port", "i", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
         {
             { "list", "a{ss}", false },
@@ -393,6 +405,8 @@ public:
             { "switchPopupMode", switchPopupMode_args },
             { "setPulseAppVolumeControl", setPulseAppVolumeControl_args },
             { "getPulseAppVolumeControl", getPulseAppVolumeControl_args },
+            { "setSipPort", setSipPort_args },
+            { "getSipPort", getSipPort_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_adaptor_signals[] = 
@@ -478,6 +492,8 @@ public:
     virtual void switchPopupMode() = 0;
     virtual void setPulseAppVolumeControl() = 0;
     virtual int32_t getPulseAppVolumeControl() = 0;
+    virtual void setSipPort(const int32_t& port) = 0;
+    virtual int32_t getSipPort() = 0;
 
 public:
 
@@ -987,6 +1003,25 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         int32_t argout1 = getPulseAppVolumeControl();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setSipPort_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        int32_t argin1; ri >> argin1;
+        setSipPort(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getSipPort_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        int32_t argout1 = getSipPort();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

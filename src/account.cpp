@@ -23,10 +23,8 @@
 
 #include <string>
 
-Account::Account(const AccountID& accountID) : _accountID(accountID)
+Account::Account(const AccountID& accountID) : _accountID(accountID), _link(NULL), _enabled(false)
 {
-	_link = NULL;
-	_enabled = false;
 }
 
 Account::~Account()
@@ -85,7 +83,7 @@ Account::subscribeContactsPresence()
 }
 
 void
-Account::publishPresence(std::string presenceStatus)
+Account::publishPresence(std::string presenceStatus UNUSED)
 {
   /*
 	if(_link->isContactPresenceSupported())

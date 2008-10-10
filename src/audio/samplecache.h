@@ -29,11 +29,18 @@ class SampleCache {
     SampleCache( pa_stream* stream );
     ~SampleCache();
 
+
     bool uploadSample( SFLDataFormat* buffer, size_t size );
     bool removeSample( );
     bool isSampleCached( );
 
   private:
+    // Copy Constructor
+    SampleCache(const SampleCache& rh);
+
+    // Assignment Operator
+    SampleCache& operator=( const SampleCache& rh);
+
     pa_stream* _stream;
 
 };

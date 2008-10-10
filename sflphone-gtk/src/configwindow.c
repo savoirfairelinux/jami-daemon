@@ -36,6 +36,7 @@
 /**
  * Local variables
  */
+gboolean accDialogOpen = FALSE;
 gboolean dialogOpen = FALSE;
 gboolean ringtoneEnabled = TRUE;
 
@@ -69,7 +70,7 @@ enum {
 void
 config_window_fill_account_list()
 {
-	if(dialogOpen)
+	if(accDialogOpen)
 	{
 		GtkTreeIter iter;
 
@@ -313,6 +314,11 @@ set_pulse_app_volume_control( void )
   dbus_set_pulse_app_volume_control();
 }
 
+static void update_port( GtkSpinButton *button, void *ptr )
+{
+  dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
+}
+
 /**
  * Account settings tab
  */
@@ -446,9 +452,11 @@ create_general_settings ()
 
   GtkWidget *frame;
   GtkWidget *vbox;
+  GtkWidget *hbox;
   GtkWidget *value;
   GtkWidget *label;
   GtkWidget *cleanButton;
+  GtkWidget *entryPort;
 
   // Main widget
   ret = gtk_vbox_new(FALSE, 10);
@@ -534,6 +542,34 @@ create_general_settings ()
   gtk_box_pack_start( GTK_BOX(vbox) , widg , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
 
+  /** SIP port information */
+  int curPort = dbus_get_sip_port();
+  if(curPort <= 0 || curPort > 65535)
+    curPort = 5060;
+    
+  frame = gtk_frame_new( _("SIP Port"));
+  gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+  gtk_widget_show( frame );
+
+  hbox = gtk_hbox_new(FALSE, 10);
+  gtk_widget_show( hbox );
+  gtk_container_add( GTK_CONTAINER(frame) , hbox);
+
+  GtkWidget *applyButton = gtk_button_new_with_label(_("Apply"));
+  gtk_widget_set_size_request(applyButton, 60, 35);
+
+  label = gtk_label_new(_("Port:"));
+
+  entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(entryPort), curPort);
+  
+  gtk_box_pack_start( GTK_BOX(hbox) , label , TRUE , TRUE , 1);
+  gtk_box_pack_start( GTK_BOX(hbox) , entryPort , TRUE , TRUE , 1);
+  gtk_box_pack_start( GTK_BOX(hbox) , applyButton , FALSE , FALSE , 1);
+
+  g_signal_connect( G_OBJECT( applyButton) , "clicked" , G_CALLBACK( update_port ) , entryPort);
+
   gtk_widget_show_all(ret);
   
   return ret;
@@ -599,7 +635,7 @@ show_accounts_window( void )
   GtkWidget * accountFrame;
   GtkWidget * tab;
 
-  dialogOpen = TRUE;
+  accDialogOpen = TRUE;
 
   dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Accounts"),
                               GTK_WINDOW(get_main_window()),
@@ -625,7 +661,7 @@ show_accounts_window( void )
 
       gtk_dialog_run( dialog );
 
-      dialogOpen=FALSE;
+      accDialogOpen=FALSE;
       gtk_widget_destroy(GTK_WIDGET(dialog));
       if( account_list_get_size() >0 && account_list_get_current()==NULL ) 
 	account_list_set_current_pos(0);

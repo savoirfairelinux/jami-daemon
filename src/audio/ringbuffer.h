@@ -38,6 +38,7 @@ class RingBuffer {
      */
     ~RingBuffer();
 
+
     /**
      * Reset the counters to 0
      */
@@ -92,6 +93,11 @@ class RingBuffer {
     void debug();
 
   private:
+    // Copy Constructor
+    RingBuffer(const RingBuffer& rh);
+
+    // Assignment operator
+    RingBuffer& operator=(const RingBuffer& rh);
 
     /** Pointer on the first data */
     int           mStart;

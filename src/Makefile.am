@@ -39,12 +39,14 @@ sflphoned_SOURCES = \
                 sipvoiplink.cpp \
 		call.cpp \
 		sipcall.cpp \
-		$(IAXSOURCES)
+		$(IAXSOURCES) \
+		useragent.cpp
 
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" \
 		$(ZEROCONFFLAGS) \
 		$(IAX_FLAGS)
+
 
 # Add here the dynamic libraries sflphoned should be linked against
 sflphoned_LDADD = \
@@ -53,12 +55,12 @@ sflphoned_LDADD = \
 		@CCEXT2_LIBS@ \
 		$(ZEROCONFLIB) \
 		$(IAX_LIBS) \
-		$(EXOSIP_LIBS) \
+		$(PJSIP_LIBS) \
 		@DBUSCPP_LIBS@ \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
-		@SAMPLERATE_LIBS@
+		@SAMPLERATE_LIBS@ 
 
 noinst_LTLIBRARIES = libsflphone.la
 
@@ -76,7 +78,8 @@ noinst_HEADERS = \
 		accountcreator.h \
                 sipvoiplink.h \
 		call.h \
-		sipcall.h 
+		sipcall.h \
+		useragent.h
 		
 libsflphone_la_LIBADD = \
 	$(src)/libs/stund/libstun.la \

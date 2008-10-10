@@ -64,7 +64,6 @@ public:
   unsigned int getSize() { return _size; }
   
 
-
 protected:
   /** The data buffer */
   SFLDataFormat* _buffer;
@@ -76,7 +75,15 @@ protected:
   int _pos;  
 
   /** Sample rate */
-  int _sampleRate; 
+  int _sampleRate;
+
+private:
+ 
+  // Copy Constructor
+  AudioLoop(const AudioLoop& rh);
+
+  // Assignment Operator
+  AudioLoop& operator=( const AudioLoop& rh);
 };
 
 #endif // __AUDIOLOOP_H__

@@ -24,7 +24,7 @@
 
 #include "codecDescriptor.h"
 
-CodecDescriptor::CodecDescriptor() 
+CodecDescriptor::CodecDescriptor() : _CodecsMap(), _codecOrder(), _Cache(), _nbCodecs(), _CodecInMemory() 
 {
 }
 
@@ -36,7 +36,7 @@ CodecDescriptor::~CodecDescriptor()
 CodecDescriptor::deleteHandlePointer( void )
 {
   int i;
-  for( i = 0 ; i < _CodecInMemory.size() ; i++)
+  for( i = 0 ; (unsigned int)i < _CodecInMemory.size() ; i++)
   {
     unloadCodec( _CodecInMemory[i] );
   }
@@ -97,7 +97,7 @@ CodecDescriptor::getCodec(AudioCodecType payload)
 CodecDescriptor::isActive(AudioCodecType payload) 
 {
   int i;
-  for(i=0 ; i < _codecOrder.size() ; i++)
+  for(i=0 ; (unsigned int)i < _codecOrder.size() ; i++)
   {
     if(_codecOrder[i] == payload)
       return true;
@@ -106,12 +106,12 @@ CodecDescriptor::isActive(AudioCodecType payload)
 }
 
   void 
-CodecDescriptor::removeCodec(AudioCodecType payload)
+CodecDescriptor::removeCodec(AudioCodecType payload UNUSED)
 {
 }
 
   void
-CodecDescriptor::addCodec(AudioCodecType payload)
+CodecDescriptor::addCodec(AudioCodecType payload UNUSED)
 {
 }
 
@@ -164,7 +164,7 @@ CodecDescriptor::saveActiveCodecs(const std::vector<std::string>& list)
   int i=0;
   int payload;
   size_t size = list.size();
-  while( i < size )
+  while( (unsigned int)i < size )
   {
     payload = std::atoi(list[i].data());
     if( isCodecLoaded( payload ) ) {
@@ -188,7 +188,7 @@ CodecDescriptor::scanCodecDirectory( void )
   dirToScan.push_back(homeDir);
   dirToScan.push_back(libDir);
 
-  for( i = 0 ; i < dirToScan.size() ; i++ )
+  for( i = 0 ; (unsigned int)i < dirToScan.size() ; i++ )
   {
     std::string dirStr = dirToScan[i];
     _debug("Scanning %s to find audio codecs....\n",  dirStr.c_str());
@@ -196,7 +196,7 @@ CodecDescriptor::scanCodecDirectory( void )
     AudioCodec* audioCodec;
     if( dir ){
       dirent *dirStruct;
-      while( dirStruct = readdir( dir )) {
+      while( (dirStruct = readdir( dir )) ) {
 	tmp =  dirStruct -> d_name ;
 	if( tmp == CURRENT_DIR || tmp == PARENT_DIR){}
 	else{	
@@ -241,7 +241,6 @@ CodecDescriptor::unloadCodec( CodecHandlePointer p )
 {
   // _debug("Unload codec %s\n", p.first->getCodecName().c_str());
   using std::cerr;
-  int i;
   destroy_t* destroyCodec = (destroy_t*)dlsym( p.second , "destroy");
   if(dlerror())
     cerr << dlerror() << '\n';
@@ -311,7 +310,7 @@ CodecDescriptor::seemsValid( std::string lib)
 CodecDescriptor::alreadyInCache( std::string lib )
 {
   int i;
-  for( i = 0 ; i < _Cache.size() ; i++ )
+  for( i = 0 ; (unsigned int)i < _Cache.size() ; i++ )
   {
     if( _Cache[i] == lib ){
       return true;}
@@ -322,7 +321,6 @@ CodecDescriptor::alreadyInCache( std::string lib )
 bool
 CodecDescriptor::isCodecLoaded( int payload )
 {
-  int i;
   CodecsMap::iterator iter = _CodecsMap.begin();
   while( iter != _CodecsMap.end())
   {

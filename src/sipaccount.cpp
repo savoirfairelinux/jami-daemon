@@ -1,3 +1,6 @@
+
+#include "voiplink.h"
+
 /*
  *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
@@ -21,9 +24,14 @@
 #include "sipvoiplink.h"
 #include "manager.h"
 #include "user_cfg.h"
+#include "useragent.h"
 
 SIPAccount::SIPAccount(const AccountID& accountID)
  : Account(accountID)
+ , _userName("")
+ , _server("")
+ , _cred(NULL)
+ , _contact("")
 {
   _link = new SIPVoIPLink(accountID);
 }
@@ -33,6 +41,8 @@ SIPAccount::~SIPAccount()
 {
   delete _link;
   _link = NULL;
+  delete _cred;
+  _cred = NULL;
 }
 
 void
@@ -44,12 +54,16 @@ SIPAccount::registerVoIPLink()
   SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
   thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
   thislink->setUseStun( useStun!=0 ? true : false);
-
+    
+  //SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
   _link->init();
+  
   // Stuff needed for SIP registration.
   thislink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
   thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_USER));
   thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
+  thislink->setSipServer(Manager::instance().getConfigString(_accountID,SIP_HOST));
+
   _link->sendRegister();
 }
 
@@ -71,3 +85,16 @@ SIPAccount::loadConfig()
   // SIP specific
   //none
 }
+
+bool 
+SIPAccount::fullMatch(const std::string& userName, const std::string& server)
+{
+  return (userName == _userName && server == _server);
+}
+
+bool 
+SIPAccount::userMatch(const std::string& userName)
+{
+  return (userName == _userName);
+}
+

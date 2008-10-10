@@ -21,11 +21,10 @@
 #include "eventthread.h"
 #include "voiplink.h"
 
-EventThread::EventThread (VoIPLink* link) : Thread () 
+
+EventThread::EventThread (VoIPLink* link) : Thread (),  _linkthread(link), stopIt(false)
 {
-	_linkthread = link;
 	setCancel(cancelDeferred);
-	stopIt = false;
 }
 
 EventThread::~EventThread (void) 

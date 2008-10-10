@@ -22,6 +22,9 @@
 
 #include "account.h"
 
+struct pjsip_cred_info;
+
+class SIPVoIPLink;
 
 /**
  * @file sipaccount.h
@@ -37,6 +40,12 @@ public:
    */
   SIPAccount(const AccountID& accountID);
 
+  /* Copy Constructor */
+  SIPAccount(const SIPAccount& rh);
+
+  /* Assignment Operator */
+  SIPAccount& operator=( const SIPAccount& rh);
+  
   /**
    * Virtual destructor
    */
@@ -57,7 +66,32 @@ public:
    */
   void unregisterVoIPLink();
 
+
+  void setUserName(const std::string &name) {_userName = name;}
+
+  std::string getUserName() {return _userName;}
+
+  void setServer(const std::string &server) {_server = server;}
+
+  std::string getServer() {return _server;}
+
+  void setCredInfo(pjsip_cred_info *cred) {_cred = cred;}
+
+  pjsip_cred_info *getCredInfo() {return _cred;}
+
+  void setContact(const std::string contact) {_contact = contact;}
+
+  std::string getContact() {return _contact;}
+
+  bool fullMatch(const std::string& userName, const std::string& server);
+
+  bool userMatch(const std::string& userName);
+
 private:
+  std::string _userName;
+  std::string _server;
+  pjsip_cred_info *_cred;
+  std::string _contact;
 };
 
 #endif

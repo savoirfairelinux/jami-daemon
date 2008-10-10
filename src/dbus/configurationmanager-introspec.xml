@@ -210,6 +210,14 @@
       <arg type="i" name="state" direction="out"/>
     </method>
 
+    <method name="setSipPort">
+      <arg type="i" name="port" direction="in"/>
+    </method>
+
+    <method name="getSipPort">
+      <arg type="i" name="port" direction="out"/>
+    </method>
+
   <!--        /////////////////////////////       -->
     <signal name="parametersChanged">
       <arg type="a{ss}" name="list" direction="out"/>

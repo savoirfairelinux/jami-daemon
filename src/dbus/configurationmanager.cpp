@@ -80,8 +80,9 @@ ConfigurationManager::getAccountList(  )
 std::vector< std::string > 
 ConfigurationManager::getToneLocaleList(  )
 {
+        std::vector< std::string > ret;
 	_debug("ConfigurationManager::getToneLocaleList received\n");
-
+        return ret;
 }
 
 
@@ -89,7 +90,9 @@ ConfigurationManager::getToneLocaleList(  )
 	std::string 
 ConfigurationManager::getVersion(  )
 {
+        std::string ret("");
 	_debug("ConfigurationManager::getVersion received\n");
+        return ret;
 
 }
 
@@ -97,8 +100,9 @@ ConfigurationManager::getVersion(  )
 	std::vector< std::string > 
 ConfigurationManager::getRingtoneList(  )
 {
+	std::vector< std::string >  ret;
 	_debug("ConfigurationManager::getRingtoneList received\n");
-
+        return ret;
 }
 
 
@@ -208,14 +212,17 @@ ConfigurationManager::getCurrentAudioOutputPlugin( void )
 	std::vector< std::string > 
 ConfigurationManager::getPlaybackDeviceList(  )
 {
+	std::vector< std::string >  ret;
 	_debug("ConfigurationManager::getPlaybackDeviceList received\n");
-
+        return ret;
 }
 
 	std::vector< std::string > 
 ConfigurationManager::getRecordDeviceList(  )
 {
+	std::vector< std::string >  ret;
 	_debug("ConfigurationManager::getRecordDeviceList received\n");
+        return ret;
 
 }
 
@@ -373,5 +380,18 @@ void
 ConfigurationManager::setPulseAppVolumeControl( void )
 {
   Manager::instance().setPulseAppVolumeControl();
+}
+
+int32_t 
+ConfigurationManager::getSipPort( void )
+{
+  return Manager::instance().getSipPort();
+}
+ 
+void 
+ConfigurationManager::setSipPort( const int32_t& portNum )
+{
+  _debug("Manager received setSipPort: %d\n", portNum);
+  Manager::instance().setSipPort(portNum);
 }
 

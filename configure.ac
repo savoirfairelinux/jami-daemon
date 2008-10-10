@@ -93,7 +93,7 @@ dnl Define C++ as default language
 AC_LANG(C++)
 
 dnl Setup C++ compiler flags
-CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS $USER_INCLUDES"
+CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS $USER_INCLUDES -O0 -g -Wall -Wextra"
 
 dnl Check for header files
 AC_FUNC_ALLOCA
@@ -132,22 +132,21 @@ AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
   inet_ntoa memset mkdir pathconf pow regcomp select setlocale socket \
   strchr strdup strerror strrchr strstr strtol utime])
 
-
 dnl *****************************************
 dnl Check for header files
 dnl *****************************************
 dnl Check for exosip2
 LP_CHECK_EXOSIP2
-SFLPHONE_LIBS="$SFLPHONE_LIBS $EXOSIP_LIBS"
+SFLPHONE_LIBS="$SFLPHONE_LIBS"
 
 dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
 
-dnl Check for osip parser
-LIBOSIP2_OSIPLISTNOPOINTER_MIN_VERSION=3.0.0
-PKG_CHECK_MODULES([libosip2], [libosip2 >= ${LIBOSIP2_OSIPLISTNOPOINTER_MIN_VERSION}],
-	[LIBOSIP2_CFLAGS=""], [LIBOSIP2_CFLAGS="-DLIBOSIP2_WITHPOINTER"])
-SIP_CFLAGS="$SIP_CFLAGS $LIBOSIP2_CFLAGS";
+#Trying to set PJSIP using pkg-config
+PKG_CHECK_MODULES(SIP, libpj, have_libpj=true, have_libpj=false)
+if test "x${have_libpj}" = "xfalse" ; then
+    AC_MSG_ERROR([PJSIP not found. http://www.pjsip.org/download.htm])
+fi
 AC_SUBST(SIP_CFLAGS)
 
 dnl Check for alsa development package - name: libasound2-dev 
@@ -366,26 +365,6 @@ dnl Dbus Service activation part
 DBUS_SERVICES_DIR="$datadir/dbus-1/services"
 AC_SUBST(DBUS_SERVICES_DIR)
 AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir for DBUS is])
-
-
-dnl QT interface
-AC_MSG_CHECKING([whether to enable sflphoneqt])
-AC_ARG_ENABLE(sflphoneqt,
-   AS_HELP_STRING(
-     [--enable-sflphoneqt],
-     [enable sflphone-qt compilation @<:@default=no@:>@]
-   ),
-   [with_sflphoneqt=$enableval],
-   [with_sflphoneqt=no]
-)
-AM_CONDITIONAL(WITH_QT, test "x$with_sflphoneqt" = "xyes")
-AM_CONDITIONAL(include_x11, test x$with_sflphoneqt = "xyes")
-if test "x$with_sflphoneqt" = "xno"; then
-  AC_MSG_RESULT(no)
-else
-  AC_MSG_RESULT(yes)
-  gw_CHECK_QT
-fi
 
 # Go!
 AC_SUBST(SFLPHONE_CFLAGS)

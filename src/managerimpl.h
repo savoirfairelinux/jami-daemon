@@ -47,6 +47,7 @@ class CodecDescriptor;
 class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
+class UserAgent;
 
 #ifdef USE_ZEROCONF
 class DNSService;
@@ -259,7 +260,7 @@ class ManagerImpl {
      * @param accountId	  The account identifier
      * @param nb_msg The number of messages
      */
-    void startVoiceMessageNotification(const AccountID& accountId, const std::string& nb_msg);
+    void startVoiceMessageNotification(const AccountID& accountId, int nb_msg);
 
     /** 
      * Notify the user that registration succeeded  
@@ -810,7 +811,23 @@ class ManagerImpl {
      */
     bool isCurrentCall(const CallID& callId);
 
+    /**
+     * Restart PJSIP
+     * @param void
+     * @return void
+     */
+    void restartPjsip();
+
+    int getSipPort();
+    
+    void setSipPort(int port);
+    
+    void unregisterCurSIPAccounts();
+    
+    void registerCurSIPAccounts();
+    
   private:
+    
     /**
      * Create .PROGNAME directory in home user and create 
      * configuration tree from the settings file if this file exists.
@@ -964,13 +981,6 @@ class ManagerImpl {
      */
     bool associateCallToAccount(const CallID& callID, const AccountID& accountID);
 
-    /** Return the AccountID from a CallID
-     * Protected by mutex
-     * @param callID the CallID in the list
-     * @return AccountID  The accountID associated or "" if the callID is not found
-     */
-    AccountID getAccountFromCall(const CallID& callID);
-
     /** Remove a CallID/AccountID association
      * Protected by mutex
      * @param callID the CallID to remove
@@ -1000,12 +1010,20 @@ class ManagerImpl {
      */
     bool accountExists(const AccountID& accountID);
 
+public:
     /**
      * Get an account pointer
      * @param accountID account ID to get
      * @return Account*	 The account pointer or 0
      */
     Account* getAccount(const AccountID& accountID);
+
+    /** Return the AccountID from a CallID
+     * Protected by mutex
+     * @param callID the CallID in the list
+     * @return AccountID  The accountID associated or "" if the callID is not found
+     */
+    AccountID getAccountFromCall(const CallID& callID);
 
     /**
      * Get the voip link from the account pointer
@@ -1014,12 +1032,42 @@ class ManagerImpl {
      */
     VoIPLink* getAccountLink(const AccountID& accountID);
 
+    AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
+
+private:
+
+    // Copy Constructor
+    ManagerImpl(const ManagerImpl& rh);
+
+    // Assignment Operator
+    ManagerImpl& operator=( const ManagerImpl& rh);
+
+    /**
+     * The UserAgent provides sip operation facilities for all sip accounts
+     */
+    UserAgent *_userAgent;
+
+    /** Whether the _UserAgent has been initialized */
+    bool _userAgentInitlized;
+    
+    bool _sipThreadStop;
+
 #ifdef TEST
     bool testCallAccountMap();
     bool testAccountMap();
 #endif
 
     friend class ConfigurationTest;
+
+public:
+    /**
+     * Retuun the instance of sip manager
+     */
+    UserAgent *getUserAgent();
+    
+    void setSipThreadStatus(bool status) {_sipThreadStop = status;}
+    
+    bool getSipThreadStatus() {return _sipThreadStop;}
 };
 
 #endif // __MANAGER_H__

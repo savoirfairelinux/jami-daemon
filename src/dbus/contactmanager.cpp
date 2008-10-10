@@ -23,25 +23,27 @@
 const char* ContactManager::SERVER_PATH = "/org/sflphone/SFLphone/ContactManager";
 
 std::map< std::string, std::string >
-ContactManager::getContacts( const std::string& accountID )
+ContactManager::getContacts( const std::string& accountID UNUSED)
+{
+        // TODO
+    std::map< std::string, std::string > ret;
+    return ret;
+}
+
+void
+ContactManager::setContacts( const std::string& accountID UNUSED, const std::map< std::string UNUSED, std::string >& details UNUSED)
 {
 	// TODO
 }
 
 void
-ContactManager::setContacts( const std::string& accountID, const std::map< std::string, std::string >& details )
+ContactManager::setPresence( const std::string& accountID UNUSED, const std::string& presence UNUSED, const std::string& additionalInfo UNUSED)
 {
 	// TODO
 }
 
 void
-ContactManager::setPresence( const std::string& accountID, const std::string& presence, const std::string& additionalInfo )
-{
-	// TODO
-}
-
-void
-ContactManager::setContactPresence( const std::string& accountID, const std::string& presence, const std::string& additionalInfo )
+ContactManager::setContactPresence( const std::string& accountID UNUSED, const std::string& presence UNUSED, const std::string& additionalInfo UNUSED)
 {
 	// TODO
 }

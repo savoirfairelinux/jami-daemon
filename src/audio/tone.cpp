@@ -26,9 +26,8 @@
 #include "tone.h"
 #include <math.h>
 
-Tone::Tone(const std::string& definition, unsigned int sampleRate) : AudioLoop()
+Tone::Tone(const std::string& definition, unsigned int sampleRate) : AudioLoop(), _sampleRate(sampleRate)
 {
-  _sampleRate = sampleRate;
   genBuffer(definition); // allocate memory with definition parameter
 }
 

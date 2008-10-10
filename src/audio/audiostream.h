@@ -95,6 +95,13 @@ class AudioStream {
     pa_cvolume getVolume( void ) { return _volume; }
 
   private:
+  
+    // Copy Constructor
+    AudioStream(const AudioStream& rh);
+
+    // Assignment Operator
+    AudioStream& operator=( const AudioStream& rh);
+
     /**
      * Create the audio stream into the given context
      * @param c	The pulseaudio context

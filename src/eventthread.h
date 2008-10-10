@@ -37,14 +37,16 @@ public:
    */
 	EventThread (VoIPLink*);
 	~EventThread (void);
-	
 	virtual void 	 run ();
 	virtual void	 stop();
 	virtual void	 startLoop();
 	bool		 isStopped();
 
 private:
-  /** VoIPLink is the object being called by getEvents() method  */
+        EventThread(const EventThread& rh); // copy constructor
+        EventThread& operator=(const EventThread& rh);  // assignment operator	
+
+        /** VoIPLink is the object being called by getEvents() method  */
 	VoIPLink*	_linkthread;
 	bool		stopIt;
 };

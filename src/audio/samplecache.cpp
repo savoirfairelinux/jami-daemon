@@ -19,9 +19,9 @@
 
 #include <samplecache.h>
 
-SampleCache::SampleCache( pa_stream* s )
+SampleCache::SampleCache( pa_stream* s ):_stream(s)
 {
-  _stream = s ;
+  //_stream = s ;
 }
 
 SampleCache::~SampleCache()
@@ -30,8 +30,9 @@ SampleCache::~SampleCache()
 }
 
 bool
-SampleCache::uploadSample( SFLDataFormat* buffer , size_t size )
+SampleCache::uploadSample( SFLDataFormat* buffer UNUSED, size_t size UNUSED )
 {
   //pa_stream_write( pulse->caching , buffer , size  , pa_xfree, 0 , PA_SEEK_RELATIVE);
   //pa_stream_finish_upload( pulse->caching );
+  return true;
 }  

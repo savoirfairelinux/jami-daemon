@@ -15,6 +15,7 @@ Makefile.in
 *.so
 # Binary translation files
 *.mo
+libtool
 # The test binary
 *Tester
 
@@ -57,7 +58,8 @@ doc/*.html
 /libs/dbus-c++/configure
 /libs/dbus-c++/tools/dbus-c++xx-*
 /libs/dbus-c++/tools/dbusxx-*
-/libs/dbus-c++/dbus-c++-c++-1.pc
+/libs/dbus-c++/dbus-c++-1.pc
+/libs/dbus-c++/dbus-c++-1-uninstalled.pc
 /libs/dbus-c++/doc
 /libs/dbus-c++/INSTALL
 /libs/dbus-c++/config.guess

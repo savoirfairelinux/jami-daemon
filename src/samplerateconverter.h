@@ -58,6 +58,12 @@ class SamplerateConverter {
     int getFramesize( void ) { return _framesize; } 
 
   private:
+    // Copy Constructor
+    SamplerateConverter(const SamplerateConverter& rh);
+
+    // Assignment Operator
+    SamplerateConverter& operator=( const SamplerateConverter& rh);
+    
     void init( void );
 
     /** Audio layer caracteristics */

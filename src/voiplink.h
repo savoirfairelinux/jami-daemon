@@ -29,6 +29,8 @@
 
 class AudioCodec;
 
+struct pjsip_rx_data;
+
 /** Define AccountID type */
 typedef std::string AccountID;
 
@@ -64,7 +66,7 @@ class VoIPLink {
 
     /** 
      * Virtual method
-     * Try to initiate the eXosip engine/thread and set config 
+     * Try to initiate the pjsip engine/thread and set config 
      * @return bool True if OK
      */
     virtual bool init (void) = 0;
@@ -277,7 +279,8 @@ class VoIPLink {
      */
     int _registrationError;
 
-  protected:
+  //protected:
+public:
     /** Add a call to the call map (protected by mutex)
      * @param call A call pointer with a unique pointer
      * @return bool True if the call was unique and added
@@ -295,7 +298,9 @@ class VoIPLink {
      * @return bool True on success
      */
     bool clearCallMap();
-
+    
+    
+protected:
     /** Contains all the calls for this Link, protected by mutex */
     CallMap _callMap;
 

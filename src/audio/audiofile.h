@@ -45,6 +45,7 @@ public:
    */
   ~AudioFile();
 
+
   /**
    * Load a sound file in memory
    * @param filename  The absolute path to the file
@@ -72,6 +73,12 @@ public:
   bool isStarted() { return _start; }
 
 private:
+  // Copy Constructor
+  AudioFile(const AudioFile& rh);
+
+  // Assignment Operator
+  AudioFile& operator=( const AudioFile& rh);
+
   /** The absolute path to the sound file */
   std::string _filename;
   

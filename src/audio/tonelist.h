@@ -40,6 +40,7 @@ public:
    */
   ~ToneList();
 
+
   /** Countries */ 
   enum COUNTRYID {
     ZID_NORTH_AMERICA = 0,
@@ -73,6 +74,13 @@ public:
   int getNbTone() { return _nbTone; }
 
 private:
+
+  // Copy Constructor
+  ToneList(const ToneList& rh);
+
+  // Assignment Operator
+  ToneList& operator=( const ToneList& rh);
+
   void initToneDefinition();
   std::string _toneZone[TONE_NBCOUNTRY][TONE_NBTONE];
   int _nbTone;
@@ -89,6 +97,7 @@ public:
   TelephoneTone(const std::string& countryName, unsigned int sampleRate);
   ~TelephoneTone();
 
+
   /** send TONE::ZT_TONE_NULL to stop the playing */
   void setCurrentTone(Tone::TONEID toneId);
 
@@ -102,6 +111,12 @@ public:
   bool shouldPlay();
 
 private:
+  // Copy Constructor
+  TelephoneTone(const TelephoneTone& rh);
+
+  // Assignment Operator
+  TelephoneTone& operator=( const TelephoneTone& rh);
+  
   Tone* _tone[TONE_NBTONE];
   Tone::TONEID _currentTone;
   ToneList _toneList;
