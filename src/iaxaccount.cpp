@@ -35,7 +35,7 @@ IAXAccount::~IAXAccount()
   _link = NULL;
 }
 
-void
+int
 IAXAccount::registerVoIPLink()
 {
   _link->init();
@@ -50,13 +50,17 @@ IAXAccount::registerVoIPLink()
   }
 
   _link->sendRegister();
+
+  return SUCCESS;
 }
 
-void
+int
 IAXAccount::unregisterVoIPLink()
 {
   _link->sendUnregister();
   _link->terminate();
+
+  return SUCCESS;
 }
 
 void

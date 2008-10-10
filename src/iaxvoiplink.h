@@ -83,7 +83,7 @@ class IAXVoIPLink : public VoIPLink
      * Send out registration
      * @return bool The new registration state (are we registered ?)
      */
-    bool sendRegister (void);
+    int sendRegister (void);
 
     /**
      * Destroy registration session
@@ -92,7 +92,7 @@ class IAXVoIPLink : public VoIPLink
      * @return bool true if we're registered upstream
      *		  false otherwise
      */
-    bool sendUnregister (void);
+    int sendUnregister (void);
 
     /**
      * Create a new outgoing call

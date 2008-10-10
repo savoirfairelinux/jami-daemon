@@ -45,35 +45,43 @@ SIPAccount::~SIPAccount()
   _cred = NULL;
 }
 
-void
+int
 SIPAccount::registerVoIPLink()
 {
-  _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST));
-  int useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
-  
-  SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
-  thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
-  thislink->setUseStun( useStun!=0 ? true : false);
-    
-  //SIPVoIPLink* thislink = dynamic_cast<SIPVoIPLink*> (_link);
-  _link->init();
-  
-  // Stuff needed for SIP registration.
-  thislink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
-  thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_USER));
-  thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
-  thislink->setSipServer(Manager::instance().getConfigString(_accountID,SIP_HOST));
 
-  _link->sendRegister();
+    int status, useStun;
+    SIPVoIPLink *thislink;
+
+    _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST));
+    useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
+  
+    thislink = dynamic_cast<SIPVoIPLink*> (_link);
+    thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
+    thislink->setUseStun( useStun!=0 ? true : false);
+    
+    _link->init();
+  
+    // Stuff needed for SIP registration.
+    thislink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
+    thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_USER));
+    thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
+    thislink->setSipServer(Manager::instance().getConfigString(_accountID,SIP_HOST));
+
+    status = _link->sendRegister();
+    ASSERT( status , SUCCESS );
+
+    return SUCCESS;
 }
 
-void
+int
 SIPAccount::unregisterVoIPLink()
 {
   _debug("SIPAccount: unregister account %s\n" , getAccountID().c_str());
   _link->sendUnregister();
   _debug("Terminate SIP account\n");
   _link->terminate();
+  
+  return SUCCESS;
 }
 
 void

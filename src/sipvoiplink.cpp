@@ -132,7 +132,7 @@ SIPVoIPLink::getEvent()
     // Nothing anymore. PJSIP is based on asynchronous events
 }
 
-bool
+int
 SIPVoIPLink::sendRegister()
 {
   AccountID id;
@@ -178,7 +178,7 @@ SIPVoIPLink::sendSIPAuthentification()
   return true;
 }
 
-bool
+int
 SIPVoIPLink::sendUnregister()
 {
   _debug("SEND UNREGISTER for account %s\n" , getAccountID().c_str());
