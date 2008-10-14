@@ -1189,9 +1189,50 @@ bool UserAgent::refuse(SIPCall* call)
     return true;
 }
 
-bool UserAgent::carryingDTMFdigits(SIPCall* call)
+
+bool UserAgent::carryingDTMFdigits(SIPCall* call, char *msgBody)
 {
-	return true;
+    pj_status_t status;
+    pjsip_tx_data *tdata;
+    pj_str_t methodName, content;
+    pjsip_method method;
+    pjsip_media_type ctype;
+
+    pj_strdup2(_pool, &methodName, "INFO");
+    pjsip_method_init_np(&method, &methodName);
+   
+    /* Create request message. */
+    status = pjsip_dlg_create_request( call->getInvSession()->dlg, &method,
+                                       -1, &tdata);
+    if (status != PJ_SUCCESS) {
+        _debug("UserAgent: Unable to create INFO request -- %d\n", status);
+        return false;
+    }
+
+    /* Get MIME type */
+    pj_strdup2(_pool, &ctype.type, "application");
+    pj_strdup2(_pool, &ctype.subtype, "dtmf-relay");
+
+    /* Create "application/dtmf-relay" message body. */
+    pj_strdup2(_pool, &content, msgBody);
+    tdata->msg->body = pjsip_msg_body_create( tdata->pool, &ctype.type,
+                                              &ctype.subtype, &content);
+    if (tdata->msg->body == NULL) {
+        _debug("UserAgent: Unable to create msg body!\n");
+        pjsip_tx_data_dec_ref(tdata);
+        return false;
+    }
+
+    /* Send the request. */
+    status = pjsip_dlg_send_request( call->getInvSession()->dlg, tdata,
+                                     _mod.id, NULL);
+    if (status != PJ_SUCCESS) {
+        _debug("UserAgent: Unable to send MESSAGE request -- %d\n", status);
+        return false;
+    }
+   
+    return true;
+
 }
 
 bool UserAgent::transfer(SIPCall *call, const std::string& to)

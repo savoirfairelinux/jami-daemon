@@ -198,7 +198,8 @@ SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 {
   SIPCall* call = new SIPCall(id, Call::Outgoing);
   if (call) {
-    call->setPeerNumber(toUrl);
+    //call->setPeerNumber(toUrl);
+    call->setPeerNumber(getSipTo(toUrl));
     _debug("Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data());
     // we have to add the codec before using it in SIPOutgoingInvite...
     call->setCodecMap(Manager::instance().getCodecDescriptorMap());
@@ -361,9 +362,17 @@ bool
 SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code UNUSED)
 {
   SIPCall* call = getSIPCall(id);
-  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
+  if (call==0) { _debug("Call doesn't exist\n"); return false; }
 
-  Manager::instance().getUserAgent()->carryingDTMFdigits(call);
+  int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
+  const int body_len = 1000;
+  char *dtmf_body = new char[body_len];
+ 
+  snprintf(dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+ 
+  return Manager::instance().getUserAgent()->carryingDTMFdigits(call, dtmf_body);
+
+
   //int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
 
   // TODO Add DTMF with pjsip - INFO method
