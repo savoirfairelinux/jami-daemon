@@ -2249,7 +2249,6 @@ ManagerImpl::loadAccountMap()
   std::string accountType;
   Account* tmpAccount;
   std::string port;
-  unsigned int iPort;
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {

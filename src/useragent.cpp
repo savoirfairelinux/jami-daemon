@@ -941,7 +941,12 @@ void UserAgent::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *t
     pjsip_msg *msg;
 
     _debug("UserAgent: TSX Changed! The tsx->state is %d; tsx->role is %d; code is %d; method id is %.*s.\n",
-            tsx->state, tsx->role, tsx->status_code, tsx->method.name.slen, tsx->method.name.ptr);
+            tsx->state, tsx->role, tsx->status_code, (int)tsx->method.name.slen, tsx->method.name.ptr);
+
+    if(pj_strcmp2(&tsx->method.name, "INFO") == 0) {
+	// Receive a INFO message, ingore it!
+	return;
+    }
 
     //Retrieve the body message
     rdata = e->body.tsx_state.src.rdata;
