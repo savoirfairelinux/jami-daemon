@@ -449,6 +449,7 @@ ManagerImpl::initRegisterAccounts()
 {
 
     int status; 
+    bool flag = true;
     AccountMap::iterator iter;
 
     _debugInit("Initiate VoIP Links Registration");
@@ -459,7 +460,8 @@ ManagerImpl::initRegisterAccounts()
         iter->second->loadConfig();
         if ( iter->second->isEnabled() ) {
 	  status = iter->second->registerVoIPLink();
-          ASSERT( status, SUCCESS );
+	  if (status != SUCCESS)
+		flag = false;
         }
       }
       iter++;
@@ -468,6 +470,7 @@ ManagerImpl::initRegisterAccounts()
     if( _audiodriver -> getErrorMessage() != -1 )
       notifyErrClient( _audiodriver -> getErrorMessage() );
     
+    ASSERT( flag, true );
     return SUCCESS;
 }
 

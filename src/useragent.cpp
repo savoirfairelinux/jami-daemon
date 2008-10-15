@@ -358,7 +358,7 @@ void UserAgent::busy_sleep(unsigned msec)
 #endif
 }
 
-int UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, 
+bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, 
 				const int& timeout UNUSED) {
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
@@ -376,7 +376,7 @@ int UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& s
     status = pjsip_regc_create(_endpt, (void *) currentId, &regc_cb, &regc);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to create regc.\n");
-        return status;
+        return false;
     }
 
     tmp = "sip:" + server;
@@ -394,7 +394,7 @@ int UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& s
     status = pjsip_regc_init(regc, &svr, &aor, &aor, 1, &contact, 600); //timeout);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to initialize regc. %d\n", status); //, regc->str_srv_url.ptr);
-        return status;
+        return false;
     }
 
 
@@ -418,13 +418,13 @@ int UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& s
     status = pjsip_regc_register(regc, PJ_TRUE, &tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to register regc.\n");
-        return status;
+        return false;
     }
 
     status = pjsip_regc_send(regc, tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to send regc request.\n");
-        return status;
+        return false;
     }
 
     account->setUserName(user);
@@ -436,7 +436,7 @@ int UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& s
     
     pj_mutex_unlock(_mutex);
 
-    return PJ_SUCCESS;
+    return true;
 }
 
 bool UserAgent::removeAccount(pjsip_regc *regc)
@@ -893,7 +893,7 @@ bool UserAgent::makeOutgoingCall(const std::string& strTo, SIPCall* call, const 
                                     &to,
                                     NULL,
                                     &dialog);
-    PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
 
     setCallAudioLocal(call);
     call->setIp(getInstance()->getLocalIP());
@@ -904,7 +904,7 @@ bool UserAgent::makeOutgoingCall(const std::string& strTo, SIPCall* call, const 
     // Create the invite session for this call
     pjsip_inv_session *inv;
     status = pjsip_inv_create_uac(dialog, call->getLocalSDPSession(), 0, &inv);
-    PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
 
     // Set auth information
     pjsip_auth_clt_set_credentials(&dialog->auth_sess, 1, account->getCredInfo());
@@ -913,7 +913,7 @@ bool UserAgent::makeOutgoingCall(const std::string& strTo, SIPCall* call, const 
     inv->mod_data[_mod.id] = call;
 
     status = pjsip_inv_invite(inv, &tdata);
-    PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
 
     // Associate current invite session in the call
     call->setInvSession(inv);
@@ -941,7 +941,12 @@ void UserAgent::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *t
     pjsip_msg *msg;
 
     _debug("UserAgent: TSX Changed! The tsx->state is %d; tsx->role is %d; code is %d; method id is %.*s.\n",
-            tsx->state, tsx->role, tsx->status_code, tsx->method.name.slen, tsx->method.name.ptr);
+            tsx->state, tsx->role, tsx->status_code, (int)tsx->method.name.slen, tsx->method.name.ptr);
+
+    if(pj_strcmp2(&tsx->method.name, "INFO") == 0) {
+	// Receive a INFO message, ingore it!
+	return;
+    }
 
     //Retrieve the body message
     rdata = e->body.tsx_state.src.rdata;
