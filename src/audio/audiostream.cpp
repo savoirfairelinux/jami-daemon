@@ -21,7 +21,7 @@
 
 static pa_channel_map channel_map ;
 
-AudioStream::AudioStream( pa_context* context, int type, std::string desc, double vol )
+AudioStream::AudioStream( pa_context* context, int type, std::string desc, double vol UNUSED )
 		: _audiostream(NULL), _streamType(type), _streamDescription(desc), flag(PA_STREAM_AUTO_TIMING_UPDATE), sample_spec(), _volume()
 { 
   sample_spec.format = PA_SAMPLE_S16LE; 
@@ -49,7 +49,7 @@ AudioStream::disconnect( void )
 } 
 
   void 
-AudioStream::stream_state_callback( pa_stream* s, void* user_data )
+AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
 {
   _debug("The state of the stream changed\n");
   assert(s);
