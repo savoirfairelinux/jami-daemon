@@ -96,14 +96,14 @@ AudioStream::createStream( pa_context* c )
 				//pa_cvolume_set(&cv, sample_spec.channels , PA_VOLUME_NORM) , NULL );
   }
   else if( _streamType == CAPTURE_STREAM ){
-    
+/*    
     attributes->maxlength = 66500;//-1;
     attributes->tlength = -1; //44100;
     attributes->minreq = 2000;
     attributes->prebuf = 10000;
     attributes->fragsize = -1;   
- 
-    pa_stream_connect_record( s , NULL , attributes /*NULL*/ , PA_STREAM_START_CORKED );
+*/ 
+    pa_stream_connect_record( s , NULL , /*attributes*/ NULL , PA_STREAM_START_CORKED );
   }
   else if( _streamType == UPLOAD_STREAM ){
     pa_stream_connect_upload( s , 1024  );
