@@ -604,6 +604,7 @@ select_audio_manager( void )
   
   if( !SHOW_ALSA_CONF && !gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ) )
   {
+    dbus_set_audio_manager( ALSA );
     g_print(" display alsa conf panel\n");
     alsabox = alsa_box();
     gtk_container_add( GTK_CONTAINER(alsa_conf ) , alsabox);
@@ -611,13 +612,14 @@ select_audio_manager( void )
   }
   else if( SHOW_ALSA_CONF && gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ))
   {
+    dbus_set_audio_manager( PULSEAUDIO );
     g_print(" remove alsa conf panel\n");
     gtk_container_remove( GTK_CONTAINER(alsa_conf) , alsabox );
   }
   else
     g_print("alsa conf panel...nothing\n");
 
-  gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) )? dbus_set_audio_manager( PULSEAUDIO ):dbus_set_audio_manager( ALSA );
+  //gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) )? dbus_set_audio_manager( PULSEAUDIO ):dbus_set_audio_manager( ALSA );
 }
 
 GtkWidget* api_box()
