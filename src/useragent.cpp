@@ -368,7 +368,7 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     pj_str_t aor;
     pj_str_t contact;
 
-    pj_mutex_lock(_mutex);
+    //pj_mutex_lock(_mutex);
     std::string tmp;
 
     SIPAccount *account;
@@ -394,6 +394,7 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     status = pjsip_regc_init(regc, &svr, &aor, &aor, 1, &contact, 600); //timeout);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to initialize regc. %d\n", status); //, regc->str_srv_url.ptr);
+        //pj_mutex_unlock(_mutex);
         return false;
     }
 
@@ -418,12 +419,14 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     status = pjsip_regc_register(regc, PJ_TRUE, &tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to register regc.\n");
+        //pj_mutex_unlock(_mutex);
         return false;
     }
 
     status = pjsip_regc_send(regc, tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to send regc request.\n");
+        pj_mutex_unlock(_mutex);
         return false;
     }
 
@@ -434,7 +437,7 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     // associate regc with account
     *regc2 = regc;
     
-    pj_mutex_unlock(_mutex);
+    //pj_mutex_unlock(_mutex);
 
     return true;
 }
@@ -444,29 +447,29 @@ bool UserAgent::removeAccount(pjsip_regc *regc)
     pj_status_t status = 0;
     pjsip_tx_data *tdata = NULL;
     
-    pj_mutex_lock(_mutex);
+    //pj_mutex_lock(_mutex);
 
     if(regc) {
         status = pjsip_regc_unregister(regc, &tdata);
         if(status != PJ_SUCCESS) {
             _debug("UserAgent: Unable to unregister regc.\n");
-            pj_mutex_unlock(_mutex);
+            //pj_mutex_unlock(_mutex);
             return false;
         }
         
         status = pjsip_regc_send( regc, tdata );
         if(status != PJ_SUCCESS) {
             _debug("UserAgent: Unable to send regc request.\n");
-            pj_mutex_unlock(_mutex);
+            //pj_mutex_unlock(_mutex);
             return false;
         }
     } else {
         _debug("UserAgent: regc is null!\n");
-        pj_mutex_unlock(_mutex);
+        //pj_mutex_unlock(_mutex);
         return false;
     }
     
-    pj_mutex_unlock(_mutex);
+    //pj_mutex_unlock(_mutex);
     return true;
 }
 
