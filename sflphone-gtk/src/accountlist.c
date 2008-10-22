@@ -223,3 +223,10 @@ account_list_get_registered_accounts( void )
   g_print(" %d registered accounts \n" , res );
   return res;
 }
+
+gchar* account_list_get_current_id( void ){
+        if( __CURRENT_ACCOUNT_ID == NULL )
+            return "";
+        else 
+            return __CURRENT_ACCOUNT_ID;
+}

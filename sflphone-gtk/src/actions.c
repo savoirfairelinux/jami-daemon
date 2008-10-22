@@ -39,25 +39,35 @@ guint voice_mails;
 void
 sflphone_notify_voice_mail ( const gchar* accountID , guint count )
 {
-	voice_mails = count ;
-	gchar* id = g_strdup( accountID );
-	if(count > 0)
-	{
-		gchar * message = g_new0(gchar, 50);
-		if( count > 1)
-		  g_sprintf(message, _("%d voice mails"), count);
-		else
-		  g_sprintf(message, _("%d voice mail"), count);	  
-		statusbar_push_message(message,  __MSG_VOICE_MAILS);
-		g_free(message);
-	}
-	// TODO: add ifdef
-	if( account_list_get_size() > 0 )
-	{
-	  account_t* acc = account_list_get_by_id( id );
-	  if( acc != NULL )
-	      notify_voice_mails( count , acc );	
-	}
+    gchar *id;
+    gchar *current;
+    
+    // We want to notify only for the default current account; ie the first in the list
+    id = g_strdup( accountID );
+    current = account_list_get_current_id();
+    if( strcmp( id, current ) != 0 )
+        return;
+
+    voice_mails = count ;
+
+    if(count > 0)
+    {
+        gchar * message = g_new0(gchar, 50);
+        if( count > 1)
+            g_sprintf(message, _("%d voice mails"), count);
+        else
+            g_sprintf(message, _("%d voice mail"), count);	  
+        statusbar_push_message(message,  __MSG_VOICE_MAILS);
+        g_free(message);
+    }
+	
+    // TODO: add ifdef
+    if( account_list_get_size() > 0 )
+    {
+        account_t* acc = account_list_get_by_id( id );
+	if( acc != NULL )
+            notify_voice_mails( count , acc );	
+    }
 }
 
 void
