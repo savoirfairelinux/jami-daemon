@@ -52,6 +52,7 @@ PulseLayer::closeLayer( void )
   record->disconnect();
   pa_context_disconnect( context ); 
   pa_context_unref( context );
+  sleep(2);
 }
 
   void
