@@ -124,7 +124,7 @@ class IAXVoIPLink : public VoIPLink
      * @return bool true on success
      *		  false otherwise
      */
-    bool cancel(const CallID& id) { return false; }
+    bool cancel(const CallID& id UNUSED ) { return false; }
     
     /**
      * Put a call on hold 
@@ -168,7 +168,7 @@ class IAXVoIPLink : public VoIPLink
      */
     bool carryingDTMFdigits(const CallID& id, char code);
     
-    bool sendMessage(const std::string& to, const std::string& body) { return false; }
+    bool sendMessage(const std::string& to UNUSED, const std::string& body UNUSED) { return false; }
     
     bool isContactPresenceSupported() { return false; }
 

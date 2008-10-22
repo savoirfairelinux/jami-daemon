@@ -199,6 +199,7 @@ PulseLayer::putUrgent(void* buffer, int toCopy)
   int
 PulseLayer::canGetMic()
 {
+  _debug("pulseaudio");
   if( record )
     return  _micRingBuffer.AvailForGet();
   else

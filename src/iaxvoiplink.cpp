@@ -216,16 +216,18 @@ IAXVoIPLink::getEvent()
   void
 IAXVoIPLink::sendAudioFromMic(void)
 {
-  IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
+    int maxBytesToGet, availBytesFromMic, bytesAvail, nbSample, compSize;
+    AudioCodec *ac;
 
-  if (!currentCall) {
-    // Let's mind our own business.
-    return;
-  }
+    IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
+  
+    if (!currentCall) {
+        // Let's mind our own business.
+        return;
+    }
 
-  if( currentCall -> getAudioCodec() < 0 )
-    return;
-
+    if( currentCall -> getAudioCodec() < 0 )
+        return;
 
   // Just make sure the currentCall is in state to receive audio right now.
   //_debug("Here we get: connectionState: %d   state: %d \n",
@@ -237,7 +239,7 @@ IAXVoIPLink::sendAudioFromMic(void)
     return;
   }
 
-  AudioCodec* ac = currentCall -> getCodecMap().getCodec( currentCall -> getAudioCodec() );
+  ac = currentCall -> getCodecMap().getCodec( currentCall -> getAudioCodec() );
   if (!ac) {
     // Audio codec still not determined.
     if (audiolayer) {
@@ -250,12 +252,13 @@ IAXVoIPLink::sendAudioFromMic(void)
   // Send sound here
   if (audiolayer) {
 
+    _debug("hum");
     // we have to get 20ms of data from the mic *20/1000 = /50
     // rate/50 shall be lower than IAX__20S_48KHZ_MAX
-    int maxBytesToGet = audiolayer->getSampleRate()* audiolayer->getFrameSize() / 1000 * sizeof(SFLDataFormat);
+    maxBytesToGet = audiolayer->getSampleRate()* audiolayer->getFrameSize() / 1000 * sizeof(SFLDataFormat);
 
     // available bytes inside ringbuffer
-    int availBytesFromMic = audiolayer->canGetMic();
+    availBytesFromMic = audiolayer->canGetMic();
 
     if (availBytesFromMic < maxBytesToGet) {
       // We need packets full!
@@ -263,17 +266,17 @@ IAXVoIPLink::sendAudioFromMic(void)
     }
 
     // take the lowest
-    int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+    bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
     //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
 
     // Get bytes from micRingBuffer to data_from_mic
-    int nbSample = audiolayer->getMic( micData, bytesAvail ) / sizeof(SFLDataFormat);
+    nbSample = audiolayer->getMic( micData, bytesAvail ) / sizeof(SFLDataFormat);
 
     // resample
     nbSample = converter->downsampleData( micData , micDataConverted , (int)ac ->getClockRate() ,  (int)audiolayer->getSampleRate() , nbSample );
 
     // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-    int compSize = ac->codecEncode( micDataEncoded, micDataConverted , nbSample*sizeof(int16));
+    compSize = ac->codecEncode( micDataEncoded, micDataConverted , nbSample*sizeof(int16));
 
     // Send it out!
     _mutexIAX.enterMutex();
@@ -482,6 +485,8 @@ IAXVoIPLink::transfer(const CallID& id, const std::string& to)
   iax_transfer(call->getSession(), callto); 
   _mutexIAX.leaveMutex();
 
+  return true;
+
   // should we remove it?
   // removeCall(id);
 }
@@ -498,6 +503,8 @@ IAXVoIPLink::refuse(const CallID& id)
   iax_reject(call->getSession(), (char*) reason.c_str());
   _mutexIAX.leaveMutex();
   removeCall(id);
+
+  return true;
 }
 
   bool
@@ -510,6 +517,8 @@ IAXVoIPLink::carryingDTMFdigits(const CallID& id, char code)
   _mutexIAX.enterMutex();
   iax_send_dtmf(call->getSession(), code);
   _mutexIAX.leaveMutex();
+
+  return true;
 }
 
 
@@ -575,7 +584,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
   // note activity?
   //
   CallID id = call->getCallId();
-  int16* output = 0; // for audio output
 
   switch(event->etype) {
     case IAX_EVENT_HANGUP:
@@ -675,6 +683,13 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
   void
 IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 { 
+
+
+    unsigned char *data;
+    unsigned int size, max, nbInt16;
+    int expandedSize, nbSample;    
+    AudioCodec *ac;
+
   // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
   // were triggered
   if (!event->datalen) {
@@ -691,28 +706,28 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
       call->setFormat(event->subclass);
     }
     //_debug("Receive: len=%d, format=%d, _receiveDataDecoded=%p\n", event->datalen, call->getFormat(), _receiveDataDecoded);
-    AudioCodec* ac = call->getCodecMap().getCodec( call -> getAudioCodec() );
+    ac = call->getCodecMap().getCodec( call -> getAudioCodec() );
 
-    unsigned char* data = (unsigned char*)event->data;
-    unsigned int size   = event->datalen;
+    data = (unsigned char*)event->data;
+    size   = event->datalen;
 
     // Decode data with relevant codec
-    int max = (int)( ac->getClockRate() * audiolayer->getFrameSize() / 1000 );
+    max = (int)( ac->getClockRate() * audiolayer->getFrameSize() / 1000 );
 
     if (size > max) {
       _debug("The size %d is bigger than expected %d. Packet cropped. Ouch!\n", size, max);
       size = max;
     }
 
-    int expandedSize = ac->codecDecode( spkrDataDecoded , data , size );
-    int nbInt16      = expandedSize/sizeof(int16);
+    expandedSize = ac->codecDecode( spkrDataDecoded , data , size );
+    nbInt16      = expandedSize/sizeof(int16);
 
     if (nbInt16 > max) {
-      _debug("We have decoded an IAX VOICE packet larger than expected: %s VS %s. Cropping.\n", nbInt16, max);
+      _debug("We have decoded an IAX VOICE packet larger than expected: %i VS %i. Cropping.\n", nbInt16, max);
       nbInt16 = max;
     }
 
-    int nbSample = nbInt16;
+    nbSample = nbInt16;
     // resample
     nbInt16 = converter->upsampleData( spkrDataDecoded , spkrDataConverted , ac->getClockRate() , audiolayer->getSampleRate() , nbSample);
 

@@ -195,6 +195,10 @@ AlsaLayer::putUrgent(void* buffer, int toCopy)
   int
 AlsaLayer::canGetMic()
 {
+
+
+  _debug("alsa\n");
+
   int avail;
   if ( _CaptureHandle ) {
     avail = snd_pcm_avail_update( _CaptureHandle );
