@@ -426,7 +426,7 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     status = pjsip_regc_send(regc, tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to send regc request.\n");
-        pj_mutex_unlock(_mutex);
+        //pj_mutex_unlock(_mutex);
         return false;
     }
 
