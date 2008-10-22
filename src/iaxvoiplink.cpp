@@ -730,26 +730,40 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
   void
 IAXVoIPLink::iaxHandleRegReply(iax_event* event) 
 {
-  if (event->etype == IAX_EVENT_REGREJ) {
-    /* Authentication failed! */
-    _mutexIAX.enterMutex();
-    iax_destroy(_regSession);
-    _mutexIAX.leaveMutex();
-    _regSession = NULL;
-    setRegistrationState(ErrorAuth);
-  }
-  else if (event->etype == IAX_EVENT_REGACK) {
-    /* Authentication succeeded */
-    _mutexIAX.enterMutex();
-    iax_destroy(_regSession);
-    _mutexIAX.leaveMutex();
-    _regSession = NULL;
 
-    // I mean, save the timestamp, so that we re-register again in the REFRESH time.
-    // Defaults to 60, as per draft-guy-iax-03.
-    _nextRefreshStamp = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);
-    setRegistrationState(Registered);
-  }
+    int voicemail;
+    std::string account_id;
+ 
+    if (event->etype == IAX_EVENT_REGREJ) {
+        /* Authentication failed! */
+        _mutexIAX.enterMutex();
+        iax_destroy(_regSession);
+        _mutexIAX.leaveMutex();
+        _regSession = NULL;
+        setRegistrationState(ErrorAuth);
+    }
+    
+    else if (event->etype == IAX_EVENT_REGACK) {
+        /* Authentication succeeded */
+        _mutexIAX.enterMutex();
+
+        // Looking for the voicemail information
+        //if( event->ies != 0 )        
+        voicemail = event->ies.msgcount;
+        _debug("iax voicemail number notification: %i\n", voicemail);
+        // Notify the client if new voicemail waiting for the current account
+	account_id = getAccountID();
+        Manager::instance().startVoiceMessageNotification(account_id.c_str(), voicemail);
+
+        iax_destroy(_regSession);
+        _mutexIAX.leaveMutex();
+        _regSession = NULL;
+
+        // I mean, save the timestamp, so that we re-register again in the REFRESH time.
+        // Defaults to 60, as per draft-guy-iax-03.
+        _nextRefreshStamp = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);
+        setRegistrationState(Registered);
+    }
 }
 
   void
