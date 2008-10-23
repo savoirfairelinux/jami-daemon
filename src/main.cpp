@@ -22,7 +22,7 @@
 #include <libintl.h>
 #include <cstring>
 #include <iostream>
-
+#include <string>
 //#include "config.h"
 #include "global.h"
 
@@ -50,6 +50,43 @@ main (int argc, char **argv) {
     printf(_("See http://www.sflphone.org/ for more information\n"));
 
   } else {
+    FILE *fp;
+    char homepid[128];
+    
+    unsigned int iPid = getpid();
+    char cPid[64], cOldPid[64];
+    sprintf(cPid,"%d", iPid);
+
+    sprintf(homepid, "%s/.%s/%s", HOMEDIR, PROGDIR, PIDFILE);
+
+    if( (fp = fopen(homepid,"r")) == NULL ){
+	//PID file doesn't exists, create and write pid in it
+	if( (fp = fopen(homepid,"w")) == NULL ){ 
+ 	     fprintf(stderr, _("Creating PID file %s failed. Exited.\n"), homepid);
+	     exit(-1);
+	} else {
+	     fputs(cPid , fp );
+             fclose( fp );
+        }
+    } else {
+       // PID file exists. Check the former process still alive or not. If alive, kill it and start a new one.
+       fgets( cOldPid, 64, fp );
+       fclose(fp);
+       if (kill(atoi(cOldPid), 0) == SUCCESS) {
+ 	     fprintf(stderr, _("There is already a sflphoned daemon running in the system. Starting Failed.\n"));
+	     exit(-1);
+       } else {
+       	     if( (fp = fopen(homepid,"w")) == NULL ){ 
+             	fprintf(stderr, _("Writing to PID file %s failed. Exited.\n"), homepid);
+	 	exit(-1);
+             } else {
+             	fputs(cPid , fp );
+             	fclose( fp );
+             }
+ 	
+	}
+    }
+	
     int sessionPort = 0;
     if (argc == 2) {
       char* ptrPort = strstr(argv[1], "--port=");
