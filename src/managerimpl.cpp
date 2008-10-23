@@ -2405,7 +2405,10 @@ UserAgent *ManagerImpl::getUserAgent()
 int 
 ManagerImpl::getSipPort()
 {
-    return _userAgent->getSipPort();
+    if( _userAgent )
+        return _userAgent->getSipPort();
+    else
+        return 0;
 }
 
 void 
