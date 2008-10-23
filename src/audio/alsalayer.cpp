@@ -296,8 +296,8 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
   snd_pcm_uframes_t period_size_out =  getFrameSize() * getSampleRate() / 1000 *  2;//1024 ;
   snd_pcm_uframes_t buffer_size_out = period_size_out * 4 ;
 
-  unsigned int buffer_time = 80000; //80ms
-  unsigned int period_time = buffer_time / 4 ; //20ms
+  unsigned int buffer_time = 100000; //100ms
+  unsigned int period_time = buffer_time / 4 ; //25ms
 
   if(flag == SFL_PCM_BOTH || flag == SFL_PCM_CAPTURE)
   {

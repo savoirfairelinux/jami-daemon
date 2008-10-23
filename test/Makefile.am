@@ -20,6 +20,7 @@ OBJECT_FILES= \
 
 configurationTester_SOURCES = \
 		configurationTest.cpp \
+		configurationTest.h \
 		TestMain.cpp
 
 configurationTester_LDADD = \

@@ -161,4 +161,22 @@ void account_list_move_up( guint index );
  */
 void account_list_move_down( guint index );
 
+/**
+ * Return the ID of the current default account
+ * @return gchar* The id
+ */
+gchar* account_list_get_current_id( void );
+
+/**
+ * Returns the number of SIP accounts that have been configured
+ */
+int account_list_get_sip_account_number( void );
+
+/**
+ * Returns the number of IAX accounts that have been configured
+ */
+int account_list_get_iax_account_number( void );
+
+
+
 #endif 

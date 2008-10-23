@@ -784,7 +784,7 @@ class ManagerImpl {
      * Fills the local _config (Conf::ConfigTree) with the default contents.
      * Called in main.cpp, just before Manager::init().
      */
-    void initConfigFile (void);
+    void initConfigFile ( bool load_user_value = true );
 
     /**
      * Tell if the setup was already loaded
@@ -1057,6 +1057,8 @@ private:
     bool testCallAccountMap();
     bool testAccountMap();
 #endif
+
+    friend class ConfigurationTest;
 
 public:
     /**

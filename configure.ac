@@ -135,8 +135,6 @@ AC_CHECK_FUNCS([bzero floor gethostbyname gethrtime gettimeofday \
 dnl *****************************************
 dnl Check for header files
 dnl *****************************************
-dnl Check for exosip2
-LP_CHECK_EXOSIP2
 SFLPHONE_LIBS="$SFLPHONE_LIBS"
 
 dnl Check for GNU ccRTP

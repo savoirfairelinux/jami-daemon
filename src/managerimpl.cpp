@@ -1032,7 +1032,7 @@ ManagerImpl::createSettingsPath (void) {
  * Initialization: Main Thread
  */
   void
-ManagerImpl::initConfigFile (void) 
+ManagerImpl::initConfigFile ( bool load_user_value ) 
 {
   std::string mes = gettext("Init config file\n");
   _debug("%s",mes.c_str());
@@ -1079,7 +1079,7 @@ ManagerImpl::initConfigFile (void)
   fill_config_int(CONFIG_SIP_PORT, DFT_SIP_PORT);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
-  if (createSettingsPath() == 1) {
+  if (createSettingsPath() == 1 && load_user_value) {
     _exist = _config.populateFromFile(_path);
   }
 
@@ -1161,6 +1161,7 @@ ManagerImpl::getActiveCodecList( void )
     std::stringstream ss;
     ss << active[i];
     v.push_back((ss.str()).data());
+    _debug("%s\n", ss.str().data());
     i++;
   }
   return v;
@@ -1576,8 +1577,11 @@ ManagerImpl::getCurrentAudioOutputPlugin( void )
   void
 ManagerImpl::initAudioDriver(void) 
 {
-  _debugInit("AudioLayer Creation");
   
+    int error;
+    
+    _debugInit("AudioLayer Creation");
+
   if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == ALSA )
     _audiodriver = new AlsaLayer( this );
   else if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == PULSEAUDIO )
@@ -1588,7 +1592,7 @@ ManagerImpl::initAudioDriver(void)
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
   } else {
-    int error = getAudioDriver()->getErrorMessage();
+    error = getAudioDriver()->getErrorMessage();
     if (error == -1) {
       _debug("Init audio driver: %i\n", error);
     }
@@ -2401,7 +2405,13 @@ UserAgent *ManagerImpl::getUserAgent()
 int 
 ManagerImpl::getSipPort()
 {
-    return _userAgent->getSipPort();
+    if( _userAgent )
+        return _userAgent->getSipPort();
+    else
+    {
+        // It means that no SIP accounts are configured, so return a default value
+        return 0;
+    }
 }
 
 void 

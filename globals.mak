@@ -8,6 +8,7 @@ PJSIP_LIBS = -lpjnath -lpjsua -lpjsip -lpjmedia -lpjsip-simple -lpjsip-ua -lpjme
 AM_CPPFLAGS = \
 	-I$(src)/libs \
 	-I$(src)/src \
+	-I$(src)/test \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/sflphone\" \
 	$(ZEROCONFFLAGS) \

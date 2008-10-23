@@ -6,4 +6,3 @@ libtoolize --force
 autoheader
 autoconf -f
 automake -a
-./configure --prefix=/usr --with-debug
