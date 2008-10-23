@@ -55,9 +55,11 @@ IAXCall::setFormat(int format)
 int
 IAXCall::getSupportedFormat()
 {
-  CodecOrder map = getCodecMap().getActiveCodecs();
-  int format = 0;
-  int iter;
+    CodecOrder map;
+    int format = 0;
+    unsigned int iter;
+
+    map = getCodecMap().getActiveCodecs();
 
   for(iter=0 ; iter < map.size() ; iter++){
     switch(map[iter]) {
@@ -85,7 +87,7 @@ IAXCall::getFirstMatchingFormat(int needles)
 {
   CodecOrder map = getCodecMap().getActiveCodecs();
   int format = 0;
-  int iter;
+  unsigned int iter;
 
   for(iter=0 ; iter < map.size() ; iter++) { 
   switch(map[iter]) {
