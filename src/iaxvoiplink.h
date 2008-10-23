@@ -188,6 +188,8 @@ class IAXVoIPLink : public VoIPLink
      */
     void setPass(const std::string& pass) { _pass = pass; }
 
+    void updateAudiolayer( void ); 
+
   private:
     /**
      * Get IAX Call from an id

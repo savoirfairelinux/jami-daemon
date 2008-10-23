@@ -252,13 +252,17 @@ IAXVoIPLink::sendAudioFromMic(void)
   // Send sound here
   if (audiolayer) {
 
-    _debug("hum");
     // we have to get 20ms of data from the mic *20/1000 = /50
     // rate/50 shall be lower than IAX__20S_48KHZ_MAX
     maxBytesToGet = audiolayer->getSampleRate()* audiolayer->getFrameSize() / 1000 * sizeof(SFLDataFormat);
 
+    // We have to update the audio layer type in case we switched
+    // TODO Find out a better way to do it
+    updateAudiolayer();
+
     // available bytes inside ringbuffer
     availBytesFromMic = audiolayer->canGetMic();
+
 
     if (availBytesFromMic < maxBytesToGet) {
       // We need packets full!
@@ -887,3 +891,8 @@ IAXVoIPLink::iaxCodecMapToFormat(IAXCall* call)
 }
 
 
+void IAXVoIPLink::updateAudiolayer( void )
+{
+    audiolayer = NULL;
+    audiolayer = Manager::instance().getAudioDriver();
+}
