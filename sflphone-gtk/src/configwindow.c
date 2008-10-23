@@ -314,7 +314,7 @@ set_pulse_app_volume_control( void )
   dbus_set_pulse_app_volume_control();
 }
 
-static void update_port( GtkSpinButton *button, void *ptr )
+static void update_port( GtkSpinButton *button UNUSED, void *ptr )
 {
   dbus_set_sip_port(gtk_spin_button_get_value_as_int((GtkSpinButton *)(ptr)));
 }
@@ -439,6 +439,10 @@ create_accounts_tab()
 GtkWidget*
 create_general_settings ()
 {
+
+    int curPort;
+    int n;
+
   GtkWidget *ret;
 
   GtkWidget *notifFrame;
@@ -542,14 +546,18 @@ create_general_settings ()
   gtk_box_pack_start( GTK_BOX(vbox) , widg , TRUE , TRUE , 1);
   g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
 
+  n = account_list_get_sip_account_number();
+  printf("sip account number = %i\n", n);
+
   /** SIP port information */
-  int curPort = dbus_get_sip_port();
+  curPort = dbus_get_sip_port();
   if(curPort <= 0 || curPort > 65535)
     curPort = 5060;
-    
+
   frame = gtk_frame_new( _("SIP Port"));
   gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
   gtk_widget_show( frame );
+  gtk_widget_set_sensitive( GTK_WIDGET(frame), (n==0)?FALSE:TRUE );
 
   hbox = gtk_hbox_new(FALSE, 10);
   gtk_widget_show( hbox );
@@ -557,6 +565,7 @@ create_general_settings ()
 
   GtkWidget *applyButton = gtk_button_new_with_label(_("Apply"));
   gtk_widget_set_size_request(applyButton, 60, 35);
+  //gtk_widget_set_sensitive( GTK_WIDGET(applyButton), (n==0)?FALSE:TRUE );
 
   label = gtk_label_new(_("Port:"));
 

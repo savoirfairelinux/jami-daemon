@@ -2405,7 +2405,13 @@ UserAgent *ManagerImpl::getUserAgent()
 int 
 ManagerImpl::getSipPort()
 {
-    return _userAgent->getSipPort();
+    if( _userAgent )
+        return _userAgent->getSipPort();
+    else
+    {
+        // It means that no SIP accounts are configured, so return a default value
+        return 0;
+    }
 }
 
 void 
