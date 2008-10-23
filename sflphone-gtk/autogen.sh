@@ -6,3 +6,6 @@ libtoolize --force
 autoheader
 autoconf -f
 automake -a
+
+echo "\nDone! Now you can ./configure.
+
