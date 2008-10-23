@@ -230,3 +230,37 @@ gchar* account_list_get_current_id( void ){
         else 
             return __CURRENT_ACCOUNT_ID;
 }
+
+int account_list_get_sip_account_number( void ){
+
+    int n;
+    guint size, i;
+    account_t *current;
+
+    size = account_list_get_size();
+    n = 0;
+    for( i=0; i<size ;i++ ){
+        current = account_list_get_nth( i );
+        if( strcmp(g_hash_table_lookup(current->properties, ACCOUNT_TYPE), "SIP" ) == 0 )
+            n++;
+    }
+
+    return n;
+}
+
+int account_list_get_iax_account_number( void ){
+
+    int n;
+    guint size, i;
+    account_t *current;
+
+    size = account_list_get_size();
+    n = 0;
+    for( i=0; i<size ;i++ ){
+        current = account_list_get_nth( i );
+        if( strcmp(g_hash_table_lookup(current->properties, ACCOUNT_TYPE), "IAX" ) == 0 )
+            n++;
+    }
+
+    return n;
+}
