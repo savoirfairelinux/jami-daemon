@@ -1240,7 +1240,6 @@ ManagerImpl::getOutputAudioPluginList(void)
   _debug("Get output audio plugin list");
 
   v.push_back( PCM_DEFAULT );
-  v.push_back( PCM_PLUGHW );
   v.push_back( PCM_DMIX );
 
   return v;
