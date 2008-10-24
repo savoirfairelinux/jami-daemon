@@ -219,6 +219,10 @@ IAXVoIPLink::sendAudioFromMic(void)
     int maxBytesToGet, availBytesFromMic, bytesAvail, nbSample, compSize;
     AudioCodec *ac;
 
+    // We have to update the audio layer type in case we switched
+    // TODO Find out a better way to do it
+    updateAudiolayer();
+
     IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
   
     if (!currentCall) {
@@ -231,15 +235,15 @@ IAXVoIPLink::sendAudioFromMic(void)
 
   // Just make sure the currentCall is in state to receive audio right now.
   //_debug("Here we get: connectionState: %d   state: %d \n",
-  // currentCall->getConnectionState(),
-  // currentCall->getState());
+   //currentCall->getConnectionState(),
+   //currentCall->getState());
 
   if (currentCall->getConnectionState() != Call::Connected ||
       currentCall->getState() != Call::Active) {
     return;
   }
 
-  ac = currentCall -> getCodecMap().getCodec( currentCall -> getAudioCodec() );
+  ac = currentCall->getCodecMap().getCodec( currentCall -> getAudioCodec() );
   if (!ac) {
     // Audio codec still not determined.
     if (audiolayer) {
@@ -255,14 +259,11 @@ IAXVoIPLink::sendAudioFromMic(void)
     // we have to get 20ms of data from the mic *20/1000 = /50
     // rate/50 shall be lower than IAX__20S_48KHZ_MAX
     maxBytesToGet = audiolayer->getSampleRate()* audiolayer->getFrameSize() / 1000 * sizeof(SFLDataFormat);
-
-    // We have to update the audio layer type in case we switched
-    // TODO Find out a better way to do it
-    updateAudiolayer();
-
+    
     // available bytes inside ringbuffer
     availBytesFromMic = audiolayer->canGetMic();
 
+    _debug("max bytes=%i - avail = %i\n", maxBytesToGet, availBytesFromMic);
 
     if (availBytesFromMic < maxBytesToGet) {
       // We need packets full!

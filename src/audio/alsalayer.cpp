@@ -134,28 +134,7 @@ void AlsaLayer::AlsaCallBack( snd_async_handler_t* pcm_callback )
     void 
 AlsaLayer::fillHWBuffer( void)
 {
-    unsigned char* data;
-    int pcmreturn, l1, l2;
-    short s1, s2;
-    int periodSize = 128 ;
-    int frames = periodSize >> 2 ;
-    _debug("frames  = %d\n", frames);
-
-    data = (unsigned char*)malloc(periodSize);
-    for(l1 = 0; l1 < 100; l1++) {
-        for(l2 = 0; l2 < frames; l2++) {
-            s1 = 0;
-            s2 = 0;
-            data[4*l2] = (unsigned char)s1;
-            data[4*l2+1] = s1 >> 8;
-            data[4*l2+2] = (unsigned char)s2;
-            data[4*l2+3] = s2 >> 8;
-        }
-        while ((pcmreturn = snd_pcm_writei(_PlaybackHandle, data, frames)) < 0) {
-            snd_pcm_prepare(_PlaybackHandle);
-            //_debugAlsa("< Buffer Underrun >\n");
-        }
-    }
+    
 }
 
     bool
@@ -164,7 +143,6 @@ AlsaLayer::isStreamActive (void)
     ost::MutexLock lock( _mutex );
     return (isPlaybackActive() && isCaptureActive());
 }
-
 
     int 
 AlsaLayer::playSamples(void* buffer, int toCopy, bool isTalking)
@@ -199,7 +177,7 @@ AlsaLayer::canGetMic()
     int avail;
     if ( _CaptureHandle ) {
         avail = snd_pcm_avail_update( _CaptureHandle );
-        //printf("%d\n", avail ); 
+        printf("%d\n", avail ); 
         if(avail > 0)
             return avail;
         else 
@@ -339,7 +317,7 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
         return false;
     }
     if(dir!=0) {
-        _debugAlsa("(%i) The choosen period size %d bytes is not supported by your hardware.\nUsing %d instead.\n ", type, periodsize, exact_lvalue);
+        _debugAlsa("(%i) The choosen period size %d bytes is not supported by your hardware.\nUsing %d instead.\n ", type, (int)periodsize, (int)exact_lvalue);
     }
     periodsize=exact_lvalue;
     /* Set the number of fragments */
