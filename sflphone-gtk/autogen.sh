@@ -7,5 +7,5 @@ autoheader
 autoconf -f
 automake -a
 
-echo "\nDone! Now you can ./configure.
+echo "\nDone! Now you can ./configure."
 
