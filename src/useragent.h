@@ -36,7 +36,7 @@
 #include <string>
 #include <vector>
 
-#define PJ_LOG_LEVEL	5
+#define PJ_LOG_LEVEL	1
 
 typedef std::string AccountID;
 

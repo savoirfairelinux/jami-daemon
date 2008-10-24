@@ -254,6 +254,8 @@ class AlsaLayer : public AudioLayer {
      */
     bool open_device( std::string pcm_p, std::string pcm_c, int flag); 
 
+    bool alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate );
+
     /**
      * Copy a data buffer in the internal ring buffer
      * ALSA Library API
