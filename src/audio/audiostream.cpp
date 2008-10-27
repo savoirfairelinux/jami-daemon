@@ -87,7 +87,7 @@ AudioStream::createStream( pa_context* c )
 
   if( _streamType == PLAYBACK_STREAM ){
     attributes->maxlength = 66500;
-    attributes->tlength = 44100;
+    attributes->tlength = 10000;
     attributes->prebuf = 10000;
     attributes->minreq = 940;
     pa_stream_connect_playback( s , NULL , attributes, 
