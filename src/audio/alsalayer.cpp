@@ -177,7 +177,7 @@ AlsaLayer::canGetMic()
     int avail;
     if ( _CaptureHandle ) {
         avail = snd_pcm_avail_update( _CaptureHandle );
-        printf("%d\n", avail ); 
+        //printf("%d\n", avail ); 
         if(avail > 0)
             return avail;
         else 
