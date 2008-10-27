@@ -35,7 +35,7 @@ typedef short int16;
 
 #define ASSERT( expected , value)       if( value == expected ) return SUCCESS; \
                                         else return 1; 
-
+#define PIDFILE "sfl.pid"
 #ifdef DATAFORMAT_IS_FLOAT
 #define SFLDataFormat float32
 #define SFLDataFormatString "Float32"
