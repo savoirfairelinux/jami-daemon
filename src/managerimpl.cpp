@@ -2258,7 +2258,6 @@ ManagerImpl::loadAccountMap()
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
-    _debug("***************** In Load account: into while\n");
     // Check if it starts with "Account:" (SIP and IAX pour le moment)
     if ((int)(iter->find("Account:")) == -1) {
       iter++;

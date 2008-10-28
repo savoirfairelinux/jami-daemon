@@ -438,6 +438,7 @@ IAXVoIPLink::hangup(const CallID& id)
   call->setSession(NULL);
   if (Manager::instance().isCurrentCall(id)) {
     // stop audio
+    audiolayer->stopStream();
   }
   removeCall(id);
   return true;	
@@ -592,11 +593,11 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 
   switch(event->etype) {
     case IAX_EVENT_HANGUP:
-      Manager::instance().peerHungupCall(id); 
       if (Manager::instance().isCurrentCall(id)) {
-	audiolayer->stopStream();
 	// stop audio
+	audiolayer->stopStream();
       }
+      Manager::instance().peerHungupCall(id); 
       removeCall(id);
       break;
 
@@ -631,7 +632,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 
 	Manager::instance().peerAnsweredCall(id);
 	//audiolayer->flushMic();
-	//audiolayer->startStream();
+	audiolayer->startStream();
 	// start audio here?
       } else {
 	// deja connecté ?
@@ -647,8 +648,8 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
 
     case IAX_EVENT_VOICE:
       //_debug("Should have a decent value!!!!!! = %i\n" , call -> getAudioCodec());
-      //if( !audiolayer -> isCaptureActive())
-	//audiolayer->startStream();
+      if( !audiolayer -> isCaptureActive())
+	audiolayer->startStream();
       iaxHandleVoiceEvent(event, call);
       break;
 

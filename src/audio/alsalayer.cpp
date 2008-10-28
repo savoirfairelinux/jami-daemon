@@ -134,7 +134,29 @@ void AlsaLayer::AlsaCallBack( snd_async_handler_t* pcm_callback )
     void 
 AlsaLayer::fillHWBuffer( void)
 {
-    
+
+  unsigned char* data;
+  int pcmreturn, l1, l2;
+  short s1, s2;
+  int periodSize = 128 ;
+  int frames = periodSize >> 2 ;
+  _debug("frames  = %d\n", frames);
+
+  data = (unsigned char*)malloc(periodSize);
+  for(l1 = 0; l1 < 100; l1++) {
+    for(l2 = 0; l2 < frames; l2++) {
+      s1 = 0;
+      s2 = 0;
+      data[4*l2] = (unsigned char)s1;
+      data[4*l2+1] = s1 >> 8;
+      data[4*l2+2] = (unsigned char)s2;
+      data[4*l2+3] = s2 >> 8;
+    }
+    while ((pcmreturn = snd_pcm_writei(_PlaybackHandle, data, frames)) < 0) {
+      snd_pcm_prepare(_PlaybackHandle);
+      //_debugAlsa("< Buffer Underrun >\n");
+    }
+  }
 }
 
     bool
@@ -273,6 +295,7 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
     /* Allocate the snd_pcm_hw_params_t struct */
     snd_pcm_hw_params_malloc( &hwparams );
 
+    _periodSize = 940;
     /* Full configuration space */
     if( (err = snd_pcm_hw_params_any(pcm_handle, hwparams)) < 0) { 
         _debugAlsa(" Cannot initialize hardware parameter structure (%s)\n", snd_strerror(err));
@@ -290,7 +313,7 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
         _debugAlsa(" Cannot set sample format (%s)\n", snd_strerror(err));
         return false;
     }
-
+    
     /* Set sample rate. If we can't set to the desired exact value, we set to the nearest acceptable */
     dir=0;
     rate = getSampleRate();
@@ -319,7 +342,7 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
     if(dir!=0) {
         _debugAlsa("(%i) The choosen period size %d bytes is not supported by your hardware.\nUsing %d instead.\n ", type, (int)periodsize, (int)exact_lvalue);
     }
-    periodsize=exact_lvalue;
+    periodsize = exact_lvalue;
     /* Set the number of fragments */
     exact_ivalue = periods;
     dir=0;
