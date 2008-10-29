@@ -1274,10 +1274,12 @@ ManagerImpl::setInputAudioPlugin(const std::string& audioPlugin)
   void
 ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
 {
-  //int layer = _audiodriver -> getLayerType();
+
+    int res;
+
   _debug("Set output audio plugin\n");
   _audiodriver -> setErrorMessage( -1 );
-  _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
+  res = _audiodriver -> openDevice( _audiodriver -> getIndexIn(),
 			      _audiodriver -> getIndexOut(),
 			      _audiodriver -> getSampleRate(),
 			      _audiodriver -> getFrameSize(),
@@ -1286,7 +1288,7 @@ ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
   if( _audiodriver -> getErrorMessage() != -1)
     notifyErrClient( _audiodriver -> getErrorMessage() );
   // set config
-  setConfig( AUDIO , ALSA_PLUGIN , audioPlugin );
+  if(res)   setConfig( AUDIO , ALSA_PLUGIN , audioPlugin );
 }
 
 /**

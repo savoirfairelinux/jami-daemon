@@ -59,6 +59,12 @@ AlsaLayer::closeLayer()
 AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize, int stream , std::string plugin) 
 {
 
+    // We don't accept that the audio plugin is changed during a conversation
+    if( _talk ){
+        _debug("can't switch audio plugin when talking\n. Please hang up and try again...\n");
+        return false;
+    }
+        
     if(deviceClosed == false)
     {
         if( stream == SFL_PCM_CAPTURE )
@@ -694,4 +700,4 @@ AlsaLayer::adjustVolume( void* buffer , int len, int stream )
     return src ; 
 }
 
-void AlsaLayer::setPlaybackVolume( double volume ){}
+void AlsaLayer::setPlaybackVolume( double volume UNUSED){}
