@@ -36,11 +36,11 @@ msgstr "Erreur"
 
 #: accountlist.c:170
 msgid "Bad authentification"
-msgstr ""
+msgstr "Erreur d'authentification"
 
 #: accountlist.c:173
 msgid "Network unreachable"
-msgstr ""
+msgstr "Réseau non trouvé"
 
 #: accountlist.c:175
 #, fuzzy
@@ -219,7 +219,7 @@ msgstr ""
 #: audioconf.c:150
 #, c-format
 msgid "audio device index for output = %d\n"
-msgstr ""
+msgstr "index du device audio de sortie = %d\n"
 
 #: audioconf.c:558
 msgid "Name"
@@ -251,11 +251,11 @@ msgstr "Greffon ALSA"
 
 #: audioconf.c:684
 msgid "Output"
-msgstr ""
+msgstr "Sortie"
 
 #: audioconf.c:706
 msgid "Input"
-msgstr ""
+msgstr "Entrée"
 
 #: audioconf.c:739
 msgid "_Enable ringtones"
@@ -271,7 +271,7 @@ msgstr "Fichier Audio"
 
 #: audioconf.c:774
 msgid "Sound Manager"
-msgstr ""
+msgstr "Interface Audio"
 
 #: audioconf.c:781
 #, fuzzy
@@ -370,7 +370,7 @@ msgstr "N_ombre maximum d'appels"
 
 #: configwindow.c:536
 msgid "PulseAudio sound server"
-msgstr ""
+msgstr "Serveur de son PulseAudio"
 
 #: configwindow.c:544
 msgid "_Control running applications volume"
@@ -378,11 +378,11 @@ msgstr "_Autoriser à modifier le volume des autres applications"
 
 #: configwindow.c:557
 msgid "SIP Port"
-msgstr ""
+msgstr "Port SIP"
 
 #: configwindow.c:566
 msgid "Apply"
-msgstr ""
+msgstr "Appliquer"
 
 #: configwindow.c:570
 msgid "Port:"
@@ -547,15 +547,15 @@ msgstr "Ignorer"
 #: sflnotify.c:136
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
-msgstr ""
+msgstr "Appel avec le compte %s <i>%s</i>"
 
 #: sflnotify.c:140
 msgid "Current account"
-msgstr ""
+msgstr "Compte courant"
 
 #: sflnotify.c:169
 msgid "You haven't setup any accounts"
-msgstr ""
+msgstr "Vous n'avez aucun compte configuré"
 
 #: sflnotify.c:185 sflnotify.c:224
 #, fuzzy
@@ -564,7 +564,7 @@ msgstr "Comptes"
 
 #: sflnotify.c:208
 msgid "You have no registered accounts"
-msgstr ""
+msgstr "Vous n'avez aucun compte enregistré"
 
 #: sliders.c:161
 msgid "Speakers volume"
@@ -592,49 +592,3 @@ msgstr "<small>Appel manqué</small>"
 msgid "<small>Duration:</small> %s"
 msgstr "<small>Durée:</small> %s"
 
-#~ msgid "Error while opening capture device "
-#~ msgstr "Erreur lors de l'ouverture du périphérique de capture "
-
-#~ msgid "Error while opening playback device "
-#~ msgstr "Erreur lors de l'ouverture du périphérique de lecture "
-
-#~ msgid "Clear the call history?"
-#~ msgstr "Effacer l'historique des appels?"
-
-#~ msgid "_Toolbar"
-#~ msgstr "_Barre d'outils"
-
-#~ msgid "Default"
-#~ msgstr "Défaut"
-
-#~ msgid "Set the selected account as the default one to make calls"
-#~ msgstr "Utiliser le compte sélectionné pour passer des appels par défaut"
-
-#~ msgid "Devices"
-#~ msgstr "Matériel"
-
-#~ msgid "Output peripheral"
-#~ msgstr "Périphérique de sortie"
-
-#~ msgid "Input peripheral"
-#~ msgstr "Périphérique d'entrée"
-
-#~ msgid "Detect all"
-#~ msgstr "Détecter"
-
-#~ msgid "The account selected as default is not registered."
-#~ msgstr "Le compte sélectionné par défaut n'est pas enregistré."
-
-#~ msgid "There is no registered account to make this call with."
-#~ msgstr "Vous n'avez aucun compte enregistré pour passer cet appel."
-
-#~ msgid ""
-#~ "<b><big>Welcome to SFLphone!</big></b>\n"
-#~ "\n"
-#~ "There is no VoIP account configured.\n"
-#~ " Would you like to create one now?"
-#~ msgstr ""
-#~ "<b><big>Bienvenue dans SFLphone!</big></b>\n"
-#~ "\n"
-#~ "Vous n'avez aucun compte configuré pour l'instant.\n"
-#~ " Voulez-vous en créer un immédiatement?"
