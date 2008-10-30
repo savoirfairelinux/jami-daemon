@@ -23,6 +23,8 @@
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <dirent.h>
+#include <sys/stat.h>
 //#include "config.h"
 #include "global.h"
 
@@ -52,15 +54,27 @@ main (int argc, char **argv) {
   } else {
     FILE *fp;
     char homepid[128];
+    char sfldir[128];
     
     unsigned int iPid = getpid();
     char cPid[64], cOldPid[64];
     sprintf(cPid,"%d", iPid);
 
     sprintf(homepid, "%s/.%s/%s", HOMEDIR, PROGDIR, PIDFILE);
+    sprintf(sfldir, "%s/.%s", HOMEDIR, PROGDIR);    
 
     if( (fp = fopen(homepid,"r")) == NULL ){
-	//PID file doesn't exists, create and write pid in it
+        // Check if $HOME/.sflphone directory exists or not.
+	DIR *dir;
+  	if ( (dir = opendir (sfldir)) == NULL) {
+	     //Create it
+	     if ( mkdir(sfldir, 0755) != 0){
+		fprintf(stderr, "Creating directory %s failed. Exited.\n", sfldir );
+             	exit(-1);
+	     }
+	}
+		
+	// PID file doesn't exists, create and write pid in it
 	if( (fp = fopen(homepid,"w")) == NULL ){ 
  	     fprintf(stderr, _("Creating PID file %s failed. Exited.\n"), homepid);
 	     exit(-1);
@@ -69,7 +83,7 @@ main (int argc, char **argv) {
              fclose( fp );
         }
     } else {
-       // PID file exists. Check the former process still alive or not. If alive, kill it and start a new one.
+       // PID file exists. Check the former process still alive or not. If alive, give user a hint.
        fgets( cOldPid, 64, fp );
        fclose(fp);
        if (kill(atoi(cOldPid), 0) == SUCCESS) {
