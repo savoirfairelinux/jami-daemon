@@ -14,7 +14,12 @@ Alexandre Bourget <alexandre dot bourget at savoirfairelinux dot com>
 Guillaume Carmel-Archambault <guillaume.carmel-archambault at savoirfairelinux dot com>
 	- Presence 
 	- Contacts
-
+Yun Liu <yun.liu at savoirfairelinux dot com>
+	- Change sip library to pjsip
+        - Support multiple accounts registration
+        - Add chinese translation
+        - Many portions of test and debugging
+ 
 Polytechnic School of Montreal:
   - Jean-Francois Blanchard-Dionne <jean-francois.blanchard-dionne at polymtl dot ca>
   - Ala Eddine Limame <ala-eddine.limame at polymtl dot ca>

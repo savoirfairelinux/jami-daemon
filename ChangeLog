@@ -1,3 +1,9 @@
+2008-10-30  Yun Liu
+	* Change sip library to pjsip
+	* Support multiple accounts registration
+	* Update translations (Add chinese translation)
+	* Many portions of code and debugging
+
 2008-03-18  Emmanuel Milou
 
 	* GTK client
