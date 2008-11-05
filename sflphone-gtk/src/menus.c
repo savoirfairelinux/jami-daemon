@@ -114,7 +114,8 @@ help_about ( void * foo UNUSED)
     "Julien Plissonneau Duquene <julien.plissonneau.duquene@savoirfairelinux.com>",
     "Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
     "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>", 
-    "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>"
+    "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
+    "Yun Liu <yun.liu@savoirfairelinux.com>"
     "Jean-Philippe Barrette-LaPierre",
     "Laurielle Lea",
     NULL};

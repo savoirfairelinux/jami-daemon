@@ -527,7 +527,7 @@ create_call_tree (calltab_t* tab)
   sw = gtk_scrolled_window_new( NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
-  g_signal_connect (G_OBJECT ( sw ), "key-press-event",G_CALLBACK (on_key_released), NULL);
+  g_signal_connect (G_OBJECT ( sw ), "key-release-event",G_CALLBACK (on_key_released), NULL);
 
   tab->store = gtk_list_store_new (3, 
       GDK_TYPE_PIXBUF,// Icon 
