@@ -3,10 +3,10 @@ If we need to update sflphone.pot file, do the following steps:
 >cd sflphone-gtk/src
 >xgettext -k_ -o sflphone.pot *.c
 
->msgmerge zh_CN.po sflphone.pot
->msgmerge fr.po sflphone.pot
->msgmerge es.po sflphone.pot
->msgmerge de.po sflphone.pot
+>msgmerge --update zh_CN.po sflphone.pot
+>msgmerge --update fr.po sflphone.pot
+>msgmerge --update es.po sflphone.pot
+>msgmerge --update de.po sflphone.pot
 
 Modify all the new po files, and then
 
