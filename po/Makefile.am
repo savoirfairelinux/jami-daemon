@@ -5,12 +5,14 @@ DOMAIN=sflphone
 POFILES=\
 	 fr.po \
 	 es.po \
-	 de.po
+	 de.po \
+         zh_CN.po
 
 MOFILES=\
 	 fr.mo \
 	 es.mo \
-	 de.mo
+	 de.mo \
+         zh_CN.mo
 
 MSGFMT=msgfmt
 
