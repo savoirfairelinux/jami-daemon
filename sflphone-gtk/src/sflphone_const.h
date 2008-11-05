@@ -66,6 +66,10 @@
 #define ALSA_CAPTURE_DEVICE	      0x0001
 /** Error while opening playback device */
 #define ALSA_PLAYBACK_DEVICE	      0x0010
+/** Error pulseaudio */
+#define PULSEAUDIO_NOT_RUNNING        0x0100
+
+
 
 /** Tone to play when no voice mails */
 #define TONE_WITHOUT_MESSAGE  0 

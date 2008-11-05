@@ -830,6 +830,14 @@ class ManagerImpl {
   private:
     
     /**
+     * Check if a process is running with the system command
+     *
+     * @return 0 on success
+     *          1 otherelse
+     */
+    int app_is_running(std::string process);
+
+    /**
      * Create .PROGNAME directory in home user and create 
      * configuration tree from the settings file if this file exists.
      *

@@ -1522,11 +1522,27 @@ ManagerImpl::setPulseAppVolumeControl( void )
   (getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) == 1)? setConfig( PREFERENCES , CONFIG_PA_VOLUME_CTRL , NO_STR) : setConfig( PREFERENCES , CONFIG_PA_VOLUME_CTRL , YES_STR) ;
 }
 
-void
-ManagerImpl::setAudioManager( const int32_t& api )
+void ManagerImpl::setAudioManager( const int32_t& api )
 {
-  setConfig( PREFERENCES , CONFIG_AUDIO , api) ;
-  switchAudioManager();
+    int manager;
+
+    manager = api;
+    if( manager == PULSEAUDIO )
+    {
+        if(app_is_running("pulseaudio") != 0)
+        {
+            // The pulseaudio daemon is not running
+            manager = ALSA;
+            notifyErrClient(PULSEAUDIO_NOT_RUNNING);
+        }
+    }
+    
+    if(manager == api)
+    {
+        // it means that we can change the audio manager
+        setConfig( PREFERENCES , CONFIG_AUDIO , api) ;
+        switchAudioManager();
+    }
 }
 
 int32_t
@@ -1571,6 +1587,14 @@ ManagerImpl::getCurrentAudioOutputPlugin( void )
   return _audiodriver -> getAudioPlugin();
 }
 
+int ManagerImpl::app_is_running( std::string process )
+{
+    std::ostringstream cmd;
+
+    cmd << "ps -C " << process;
+    return system(cmd.str().c_str());
+}
+
 
 /**
  * Initialization: Main Thread
@@ -1583,12 +1607,23 @@ ManagerImpl::initAudioDriver(void)
     
     _debugInit("AudioLayer Creation");
 
-  if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == ALSA )
-    _audiodriver = new AlsaLayer( this );
-  else if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == PULSEAUDIO )
-    _audiodriver = new PulseLayer( this );
-  else
-    _debug("Error - Audio API unknown\n");
+    if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == ALSA ) 
+    {
+        _audiodriver = new AlsaLayer( this );
+    }
+    else if( getConfigInt( PREFERENCES , CONFIG_AUDIO ) == PULSEAUDIO )
+    {
+        if( app_is_running("pulseaudio") == 0 )
+        {
+            _audiodriver = new PulseLayer( this );
+        } else
+        {
+            _audiodriver = new AlsaLayer( this );
+            setConfig( PREFERENCES, CONFIG_AUDIO, ALSA);
+        }
+    }
+    else
+        _debug("Error - Audio API unknown\n");
 
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
@@ -1631,6 +1666,7 @@ ManagerImpl::selectAudioDriver (void)
     numCardOut = ALSA_DFT_CARD_ID ;
     setConfig( AUDIO , ALSA_CARD_ID_OUT , ALSA_DFT_CARD_ID );
   }
+
 
   if(CHECK_INTERFACE( layer , ALSA ))
   {
