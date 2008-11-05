@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-10-29 10:56-0400\n"
+"POT-Creation-Date: 2008-11-05 16:41-0500\n"
 "PO-Revision-Date: 2008-08-11 11:53+0200\n"
 "Last-Translator: Carlos Galisteo <cgalisteo AT k-rolus.net>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -135,7 +135,6 @@ msgstr ""
 "Incapaz de conectar con el servidor SFLphone.\n"
 " Asegúrese de que el demonio esté funcionando."
 
-#: sflphone-gtk/src/actions.c: 632
 #: actions.c:741
 #, c-format
 msgid ""
@@ -212,8 +211,8 @@ msgid ""
 msgstr ""
 "Ese asistante ha finalizado.\n"
 "\n"
-"Puede comprobar en cualquier momento su estado de registro o modificar la configuración"
-" de sus cuentas en la ventana de Opciones/Cuentas."
+"Puede comprobar en cualquier momento su estado de registro o modificar la "
+"configuración de sus cuentas en la ventana de Opciones/Cuentas."
 
 #: audioconf.c:150
 #, c-format
@@ -434,6 +433,13 @@ msgstr ""
 "\n"
 "Error al abrir el dispositivo de captura"
 
+#: errors.c:34
+msgid ""
+"<b>Pulseaudio notification</b>\n"
+"\n"
+"Pulseaudio is not running"
+msgstr ""
+
 #: historyfilter.c:45 historyfilter.c:63 historyfilter.c:78
 msgid "Search"
 msgstr ""
@@ -450,77 +456,77 @@ msgid ""
 "Do you still want to quit?"
 msgstr ""
 
-#: menus.c:129
+#: menus.c:130
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
 "SFLphone es un telefono por Internet compatible con los protocolos SIP y IAX2"
 
-#: menus.c:132
+#: menus.c:133
 msgid "About SFLphone"
 msgstr "Sobre SFLphone"
 
-#: menus.c:155
+#: menus.c:156
 msgid "_Help"
 msgstr "_Ayuda"
 
-#: menus.c:272
+#: menus.c:273
 msgid "_New call"
 msgstr "_Nueva llamada"
 
-#: menus.c:284 menus.c:768
+#: menus.c:285 menus.c:769
 msgid "_Pick up"
 msgstr "_Descolgar"
 
-#: menus.c:294 menus.c:780
+#: menus.c:295 menus.c:781
 msgid "_Hang up"
 msgstr "_Colgar"
 
-#: menus.c:304 menus.c:792
+#: menus.c:305 menus.c:793
 msgid "On _Hold"
 msgstr "En _Espera"
 
-#: menus.c:320
+#: menus.c:321
 msgid "_Account Assistant"
 msgstr "_Asistente de Cuenta"
 
-#: menus.c:350
+#: menus.c:351
 msgid "_Call"
 msgstr "_Llamar"
 
-#: menus.c:496
+#: menus.c:497
 msgid "History empty"
 msgstr ""
 
-#: menus.c:537
+#: menus.c:538
 #, fuzzy
 msgid "_Clear history"
 msgstr "Historia de Llamada"
 
-#: menus.c:549
+#: menus.c:550
 msgid "_Accounts"
 msgstr "_Cuentas"
 
-#: menus.c:564
+#: menus.c:565
 msgid "_Edit"
 msgstr "_Editar"
 
-#: menus.c:624
+#: menus.c:625
 msgid "_Dialpad"
 msgstr "_Teclado numérico"
 
-#: menus.c:636
+#: menus.c:637
 msgid "_Volume controls"
 msgstr "_Controles de volumen"
 
-#: menus.c:645
+#: menus.c:646
 msgid "_Search history"
 msgstr ""
 
-#: menus.c:653
+#: menus.c:654
 msgid "_View"
 msgstr "_Ver"
 
-#: menus.c:875
+#: menus.c:876
 #, fuzzy
 msgid "_Call back"
 msgstr "_Llamar"
@@ -595,4 +601,3 @@ msgstr ""
 #, c-format
 msgid "<small>Duration:</small> %s"
 msgstr ""
-

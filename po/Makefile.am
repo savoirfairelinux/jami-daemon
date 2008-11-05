@@ -2,19 +2,22 @@
 locale_installdir=$(datadir)/locale
 DOMAIN=sflphone
 
+POTFILE=sflphone.pot
+
 POFILES=\
 	 fr.po \
 	 es.po \
 	 de.po \
-         zh_CN.po
+     zh_CN.po
 
 MOFILES=\
 	 fr.mo \
 	 es.mo \
 	 de.mo \
-         zh_CN.mo
+     zh_CN.mo
 
 MSGFMT=msgfmt
+MSGMERGE=msgmerge
 
 # necessary files
 EXTRA_DIST= $(POFILES)
@@ -25,6 +28,7 @@ all:	$(MOFILES)
 SUFFIXES=.po .mo
 
 .po.mo:
+	$(MSGMERGE) --update $< $(POTFILE) 
 	$(MSGFMT) -o $@ $<
 
 install-data-local:

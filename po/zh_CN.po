@@ -4,11 +4,11 @@
 #
 # Yun Liu <yun.liu@savoirfairelinux.com>, 2008.
 #
-
 msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.2\n"
-"Report-Msgid-Bugs-To: Yun Liu <yun.liu@savoirfairelinux.com >\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-11-05 16:41-0500\n"
 "PO-Revision-Date: 2008-10-28 14:15\n"
 "Last-Translator: Yun Liu <yun.liu@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -142,7 +142,8 @@ msgid ""
 msgstr ""
 "<b>错误：无法找到codecs编码文件.\n"
 "\n"
-"</b> SFL声音codecs文件应位于<i>%s</i> 或 位于主目录( <i>%s</i> )的<b>.sflphone</b>目录下"
+"</b> SFL声音codecs文件应位于<i>%s</i> 或 位于主目录( <i>%s</i> )的<b>."
+"sflphone</b>目录下"
 
 #: assistant.c:138
 msgid "SFLphone account configuration wizard"
@@ -417,6 +418,13 @@ msgstr ""
 "\n"
 "打开采集设备时出错"
 
+#: errors.c:34
+msgid ""
+"<b>Pulseaudio notification</b>\n"
+"\n"
+"Pulseaudio is not running"
+msgstr ""
+
 #: historyfilter.c:45 historyfilter.c:63 historyfilter.c:78
 msgid "Search"
 msgstr "查找"
@@ -437,75 +445,75 @@ msgstr ""
 "<b>有电话正在处理中</b>\n"
 "确定要退出？"
 
-#: menus.c:129
+#: menus.c:130
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone是一个VoIP客户端，它兼容SIP和IAX2协议."
 
-#: menus.c:132
+#: menus.c:133
 msgid "About SFLphone"
 msgstr "关于SFLphone"
 
-#: menus.c:155
+#: menus.c:156
 msgid "_Help"
 msgstr "帮助(H)"
 
-#: menus.c:272
+#: menus.c:273
 msgid "_New call"
 msgstr "新电话(N)"
 
-#: menus.c:284 menus.c:768
+#: menus.c:285 menus.c:769
 msgid "_Pick up"
 msgstr "拨出(P)"
 
-#: menus.c:294 menus.c:780
+#: menus.c:295 menus.c:781
 msgid "_Hang up"
 msgstr "放下(H)"
 
-#: menus.c:304 menus.c:792
+#: menus.c:305 menus.c:793
 msgid "On _Hold"
 msgstr ""
 
-#: menus.c:320
+#: menus.c:321
 msgid "_Account Assistant"
 msgstr "帐户向导(A)"
 
-#: menus.c:350
+#: menus.c:351
 msgid "_Call"
 msgstr "电话"
 
-#: menus.c:496
+#: menus.c:497
 msgid "History empty"
 msgstr "无历史记录"
 
-#: menus.c:537
+#: menus.c:538
 msgid "_Clear history"
 msgstr "清空历史记录(C)"
 
-#: menus.c:549
+#: menus.c:550
 msgid "_Accounts"
 msgstr "帐户(A)"
 
-#: menus.c:564
+#: menus.c:565
 msgid "_Edit"
 msgstr "编辑(E)"
 
-#: menus.c:624
+#: menus.c:625
 msgid "_Dialpad"
 msgstr "拨号面板"
 
-#: menus.c:636
+#: menus.c:637
 msgid "_Volume controls"
 msgstr "音量控制(V)"
 
-#: menus.c:645
+#: menus.c:646
 msgid "_Search history"
 msgstr "查找历史(S)"
 
-#: menus.c:653
+#: menus.c:654
 msgid "_View"
 msgstr "查看(V)"
 
-#: menus.c:875
+#: menus.c:876
 msgid "_Call back"
 msgstr "回叫(C)"
 
