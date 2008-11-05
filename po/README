@@ -9,9 +9,5 @@ If we need to update sflphone.pot file, do the following steps:
 >msgmerge de.po sflphone.pot
 
 Modify all the new po files, and then
-
->msgfmt -o zh_CN.mo zh_CN.po
->msgfmt -o fr.mo fr.po
->msgfmt -o es.mo es.po
->msgfmt -o de.mo de.po
+make && sudo make install
 
