@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: SFLphone 0.8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-29 10:56-0400\n"
-"PO-Revision-Date: 2008-03-27 11:15\n"
-"Last-Translator: Maxime Chambreuil <maxime.chambreuil@savoirfairelinux.com>\n"
+"PO-Revision-Date: 2008-08-11 11:53+0200\n"
+"Last-Translator: Carlos Galisteo <cgalisteo AT k-rolus.net>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -28,7 +28,7 @@ msgstr "No registrado"
 
 #: accountlist.c:164
 msgid "Trying..."
-msgstr "Tratando..."
+msgstr "Intentando..."
 
 #: accountlist.c:167 sflnotify.c:171 sflnotify.c:210
 msgid "Error"
@@ -57,7 +57,7 @@ msgstr "Configuración de cuentas"
 
 #: accountwindow.c:155
 msgid "Account parameters"
-msgstr "Paràmetros de Cuenta"
+msgstr "Paràmetros de cuenta"
 
 #: accountwindow.c:177
 msgid "_Enabled"
@@ -77,7 +77,7 @@ msgstr "Desconocido"
 
 #: accountwindow.c:219 assistant.c:218 assistant.c:272
 msgid "_Host name"
-msgstr "_Parte del servidor"
+msgstr "_Nombre de equipo"
 
 #: accountwindow.c:227 assistant.c:226 assistant.c:280
 msgid "_User name"
@@ -89,11 +89,11 @@ msgstr "_Contraseña"
 
 #: accountwindow.c:249
 msgid "_Voicemail box #"
-msgstr "_Numero de Caja de Voz"
+msgstr "_Número de buzón de voz"
 
 #: accountwindow.c:260 assistant.c:313
 msgid "Network Address Translation"
-msgstr "Conversión de Dirección de Red"
+msgstr "Conversión de Dirección de Red (NAT)"
 
 #: accountwindow.c:271 assistant.c:322
 msgid "E_nable STUN"
@@ -101,7 +101,7 @@ msgstr "A_ctivar STUN"
 
 #: accountwindow.c:275
 msgid "Enable it if you are behind a firewall, then restart SFLphone"
-msgstr "Activar si esta atras un cortafuego, despues reiniciar SFLphone"
+msgstr "Actívelo si está detrás de un cortafuegos, después reinicie SFLphone"
 
 #: accountwindow.c:279
 msgid "_STUN Server"
@@ -114,12 +114,12 @@ msgstr "Formato: nombre.servidor:puerto"
 #: actions.c:57 sflnotify.c:103
 #, c-format
 msgid "%d voice mails"
-msgstr "%d mensajes"
+msgstr "%d mensajes de voz"
 
 #: actions.c:59
 #, c-format
 msgid "%d voice mail"
-msgstr "%d mensaje"
+msgstr "%d mensaje de voz"
 
 #: actions.c:80
 #, fuzzy, c-format
@@ -132,10 +132,10 @@ msgid ""
 "Unable to connect to the SFLphone server.\n"
 "Make sure the daemon is running."
 msgstr ""
-"Incapaz e conectar con el servidor SFLphone.\n"
-" Checa que el demonio está funcionando."
+"Incapaz de conectar con el servidor SFLphone.\n"
+" Asegúrese de que el demonio esté funcionando."
 
-# r sflphone-gtk/src/actions.c: 632
+#: sflphone-gtk/src/actions.c: 632
 #: actions.c:741
 #, c-format
 msgid ""
@@ -144,14 +144,14 @@ msgid ""
 "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</"
 "b> directory in your home( <i>%s</i> )"
 msgstr ""
-"<b>Error: No codec audio encontrado.\n"
+"<b>Error: Codecs de audio no encontrados.\n"
 "\n"
-"</b> Los codecs audio de SFLphone deben estar en <i>%s</i> o en el "
+"</b> Los codecs de audio de SFLphone deben estar en <i>%s</i> o en el "
 "directorio <b>.sflphone</b> de su home( <i>%s</i> )"
 
 #: assistant.c:138
 msgid "SFLphone account configuration wizard"
-msgstr "Asistante de Configuración de Cuenta SFLphone"
+msgstr "Asistente de configuración de cuentas de SFLphone"
 
 #: assistant.c:165
 #, fuzzy
@@ -160,11 +160,11 @@ msgstr "Sobre SFLphone"
 
 #: assistant.c:165
 msgid "Welcome to SFLphone!"
-msgstr "Bienvenido en SFLphone!"
+msgstr "¡Bienvenido a SFLphone!"
 
 #: assistant.c:167
 msgid "This installation wizard will help you configure an account."
-msgstr "Ese asistante de instalaciòn ayuda usted a configurar una cuenta."
+msgstr "Este asistente de instalación le ayudará a configurar una cuenta."
 
 #: assistant.c:182
 msgid "VoIP Protocols"
@@ -172,24 +172,23 @@ msgstr "Protocolos VoIP"
 
 #: assistant.c:182
 msgid "Select an account type:"
-msgstr "Escoje un tipo de cuenta:"
+msgstr "Escoja un tipo de cuenta:"
 
 #: assistant.c:202
 msgid "SIP account configuration"
-msgstr "Configuraciòn de cuenta SIP"
+msgstr "Configuración de cuenta SIP"
 
 #: assistant.c:202 assistant.c:256
 msgid "Please fill the following information:"
-msgstr "Por favor de llenar esas informaciones:"
+msgstr "Por favor, rellene la siguiente información:"
 
 #: assistant.c:256
 msgid "IAX2 account configuration"
-msgstr "Configuraciòn de cuenta IAX2"
+msgstr "Configuración de cuenta IAX2"
 
 #: assistant.c:313
 msgid "You should probably enable this if you are behind a firewall."
-msgstr ""
-"Probablemente, tiene que activar eso si usted esta atras de un cortafuego."
+msgstr "Probablemente tiene que activar esto si está detrás de un cortafuegos."
 
 #: assistant.c:329
 #, fuzzy
@@ -198,11 +197,11 @@ msgstr "_Servidor STUN"
 
 #: assistant.c:346
 msgid "Account Registration"
-msgstr "Registraciòn de Cuenta"
+msgstr "Registro de cuenta"
 
 #: assistant.c:346
 msgid "Congratulations!"
-msgstr "Felicitaciones!"
+msgstr "¡Enhorabuena!"
 
 #: assistant.c:348
 msgid ""
@@ -211,10 +210,10 @@ msgid ""
 " You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
 msgstr ""
-"Ese asistante esta terminado.\n"
+"Ese asistante ha finalizado.\n"
 "\n"
-" Usted puede checar su estado de registraciòn o cambiar sus parametros de "
-"cuentas en cualquier momento en la ventana de Opciones/Cuentas."
+"Puede comprobar en cualquier momento su estado de registro o modificar la configuración"
+" de sus cuentas en la ventana de Opciones/Cuentas."
 
 #: audioconf.c:150
 #, c-format
@@ -227,11 +226,11 @@ msgstr "Nombre"
 
 #: audioconf.c:563
 msgid "Frequency"
-msgstr "Frequencia"
+msgstr "Frecuencia"
 
 #: audioconf.c:568
 msgid "Bitrate"
-msgstr "Bitrato"
+msgstr "Tasa de transferencia"
 
 #: audioconf.c:573
 msgid "Bandwidth"
@@ -259,15 +258,15 @@ msgstr ""
 
 #: audioconf.c:739
 msgid "_Enable ringtones"
-msgstr "_Permitir los ringtones"
+msgstr "_Habilitar tonos de llamada"
 
 #: audioconf.c:744
 msgid "Choose a ringtone"
-msgstr "Elija un ringtones"
+msgstr "Elija un tono de llmada"
 
 #: audioconf.c:749
 msgid "Audio Files"
-msgstr "Archivos Audio"
+msgstr "Archivos de Audio"
 
 #: audioconf.c:774
 msgid "Sound Manager"
@@ -298,11 +297,11 @@ msgstr "Llamar"
 
 #: calltree.c:414 calltree.c:416
 msgid "Pick up"
-msgstr "Colgar"
+msgstr "Descolgar"
 
 #: calltree.c:424 calltree.c:426
 msgid "Hang up"
-msgstr "Descolgar"
+msgstr "Colgar"
 
 #: calltree.c:434 calltree.c:436
 msgid "Off Hold"
@@ -336,7 +335,7 @@ msgstr "Estado"
 
 #: configwindow.c:470
 msgid "Desktop Notification"
-msgstr "Notificación de Escritorio"
+msgstr "Notificación de escritorio"
 
 #: configwindow.c:478
 msgid "_Enable"
@@ -345,34 +344,34 @@ msgstr "_Activar"
 #: configwindow.c:483
 #, fuzzy
 msgid "_Notify voice mails"
-msgstr "_Notificar Mensajes Vocales"
+msgstr "_Notificar mensajes de voz"
 
 #: configwindow.c:489
 msgid "System Tray Icon"
-msgstr "Icono de Bandeja del Sistema"
+msgstr "Icono de bandeja del sistema"
 
 #: configwindow.c:497
 #, fuzzy
 msgid "_Popup main window on incoming call"
-msgstr "_Popup Ventana Principal por las Llamadas Recibidas"
+msgstr "_Popup ventana principal al recibir llamadas"
 
 #: configwindow.c:502
 #, fuzzy
 msgid "Ne_ver popup main window"
-msgstr "_Jamas Popup Ventana Principal"
+msgstr "_Nunca mostrar ventana principal"
 
 #: configwindow.c:506
 #, fuzzy
 msgid "_Start hidden"
-msgstr "_Iniciar Escondido"
+msgstr "_Iniciar oculto"
 
 #: configwindow.c:512
 msgid "Calls History"
-msgstr "Historia de Llamada"
+msgstr "Historial de llamadas"
 
 #: configwindow.c:520
 msgid "_Maximum number of calls"
-msgstr "_Numero Maximo de Llamadas"
+msgstr "_Numero maximo de llamadas"
 
 #: configwindow.c:536
 msgid "PulseAudio sound server"
@@ -423,7 +422,7 @@ msgid ""
 msgstr ""
 "<b>Notificación ALSA</b>\n"
 "\n"
-"Error abriendo el dispositivo del aparato de lectura"
+"Error al abrir el dispositivo de reproducción"
 
 #: errors.c:31
 msgid ""
@@ -433,7 +432,7 @@ msgid ""
 msgstr ""
 "<b>Notificación ALSA</b>\n"
 "\n"
-"Error abriendo el dispositivo de captura"
+"Error al abrir el dispositivo de captura"
 
 #: historyfilter.c:45 historyfilter.c:63 historyfilter.c:78
 msgid "Search"
@@ -470,15 +469,15 @@ msgstr "_Nueva llamada"
 
 #: menus.c:284 menus.c:768
 msgid "_Pick up"
-msgstr "_Colgar"
+msgstr "_Descolgar"
 
 #: menus.c:294 menus.c:780
 msgid "_Hang up"
-msgstr "_Descolgar"
+msgstr "_Colgar"
 
 #: menus.c:304 menus.c:792
 msgid "On _Hold"
-msgstr "_Sostener"
+msgstr "En _Espera"
 
 #: menus.c:320
 msgid "_Account Assistant"
@@ -503,11 +502,11 @@ msgstr "_Cuentas"
 
 #: menus.c:564
 msgid "_Edit"
-msgstr "_Edición"
+msgstr "_Editar"
 
 #: menus.c:624
 msgid "_Dialpad"
-msgstr "_Pantalla de numero"
+msgstr "_Teclado numérico"
 
 #: menus.c:636
 msgid "_Volume controls"
@@ -581,7 +580,7 @@ msgstr "Volumen del micrófono"
 #: statusicon.c:91
 #, fuzzy
 msgid "_Show main window"
-msgstr "Mostrar Ventana Principal"
+msgstr "Mostrar ventana principal"
 
 #: statusicon.c:124
 #, fuzzy, c-format
@@ -597,46 +596,3 @@ msgstr ""
 msgid "<small>Duration:</small> %s"
 msgstr ""
 
-#~ msgid "Error while opening capture device "
-#~ msgstr "Error abriendo el dispositivo de captura "
-
-#~ msgid "Error while opening playback device "
-#~ msgstr "Error abriendo el dispositivo del aparato de lectura "
-
-#~ msgid "_Toolbar"
-#~ msgstr "_Herramientas"
-
-#~ msgid "Default"
-#~ msgstr "Defecto"
-
-#~ msgid "Set the selected account as the default one to make calls"
-#~ msgstr "Fije la cuenta seleccionada como el defecto para llamar"
-
-#~ msgid "Devices"
-#~ msgstr "Dispositivos"
-
-#~ msgid "Output peripheral"
-#~ msgstr "Periférico de salida"
-
-#~ msgid "Input peripheral"
-#~ msgstr "Periférico de entrada"
-
-#~ msgid "Detect all"
-#~ msgstr "Detecte todos"
-
-#~ msgid "The account selected as default is not registered."
-#~ msgstr "La cuenta seleccionada como defecto no es registrada."
-
-#~ msgid "There is no registered account to make this call with."
-#~ msgstr "No hay cuenta registrada para hacer esta llamada"
-
-#~ msgid ""
-#~ "<b><big>Welcome to SFLphone!</big></b>\n"
-#~ "\n"
-#~ "There is no VoIP account configured.\n"
-#~ " Would you like to create one now?"
-#~ msgstr ""
-#~ "<b><big>Bienvenido en SFLphone!</big></b>\n"
-#~ "\n"
-#~ "No hay cuenta VoIP configurada.\n"
-#~ " Usted quiere crear una ?"
