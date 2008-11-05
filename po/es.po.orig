@@ -310,7 +310,7 @@ msgstr "Seguir"
 
 #: calltree.c:445 calltree.c:447
 msgid "On Hold"
-msgstr "Retener"
+msgstr "Sostener"
 
 #: calltree.c:458 calltree.c:460
 msgid "Transfer"
@@ -405,7 +405,7 @@ msgstr "Configuración Audio"
 
 #: configwindow.c:625
 msgid "Audio Settings"
-msgstr "Configuración de audio"
+msgstr "Configuración Audio"
 
 #: configwindow.c:649
 msgid "Accounts"
@@ -542,7 +542,7 @@ msgstr "Aceptar"
 
 #: sflnotify.c:53
 msgid "Refuse"
-msgstr "Rechazar"
+msgstr "Renunciar"
 
 #: sflnotify.c:54 sflnotify.c:117 sflnotify.c:154
 msgid "Ignore"
