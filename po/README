@@ -1,17 +1,6 @@
 If we need to update sflphone.pot file, do the following steps:
 
->cd sflphone-gtk/src
->xgettext -k_ -o sflphone.pot *.c
+xgettext -k_ -o sflphone.pot ../sflphone-gtk/src/*.c
 
->msgmerge --update zh_CN.po sflphone.pot
->msgmerge --update fr.po sflphone.pot
->msgmerge --update es.po sflphone.pot
->msgmerge --update de.po sflphone.pot
-
-Modify all the new po files, and then
-
->msgfmt -o zh_CN.mo zh_CN.po
->msgfmt -o fr.mo fr.po
->msgfmt -o es.mo es.po
->msgfmt -o de.mo de.po
+Then make && sudo make install
 

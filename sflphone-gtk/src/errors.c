@@ -30,6 +30,9 @@ sflphone_throw_exception( int err )
     case ALSA_CAPTURE_DEVICE:
       markup = g_markup_printf_escaped(_("<b>ALSA notification</b>\n\nError while opening capture device"));
       break;
+    case PULSEAUDIO_NOT_RUNNING:
+      markup = g_markup_printf_escaped(_("<b>Pulseaudio notification</b>\n\nPulseaudio is not running"));
+      break;
   }
   main_window_error_message( markup );  
   free( markup );
