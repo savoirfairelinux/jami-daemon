@@ -7,12 +7,12 @@
 if [ $1 = "-h" ]
 then
   echo "Usage: ./autopackage.sh version arch"
-  echo "For instance: ./autopackage.sh 0.8.2 all"
+  echo "For instance: ./autopackage.sh 0.9.2 all"
   exit 0
 fi
 
 # Libraries dependencies
-dependencies="libgcc1 , libsamplerate0 (>=0.1.2) , libdbus-glib-1-2 (>= 0.73), libexpat1 , libgtk2.0-0 , libc6 (>= 2.3.6-6) , libglib2.0-0 (>= 2.12.0) , libosip2-2, libexosip2-4, libcommoncpp2-1.6-0 , libccrtp1-1.6-0  , sflphone-iax2 , libgsm1 (>=1.0.10) , libspeex1 (>=1.1.12) , dbus-c++-1 (>=0.5.0) , libsexy2 (>=0.1.11)"
+dependencies="libgcc1 , libsamplerate0 (>=0.1.2) , libdbus-glib-1-2 (>= 0.73), libexpat1 , libgtk2.0-0 , libc6 (>= 2.3.6-6) , libglib2.0-0 (>= 2.12.0) ,  libcommoncpp2-1.6-0  , sflphone-iax2 , libgsm1 (>=1.0.10) , libspeex1 (>=1.1.12) , libdbus-1-3, libdbus-glib-1-2, dbus-c++-1 (>=0.5.0) , libsexy2 (>=0.1.11), pjproject, cppunit (>= 1.12), alsa (>= 1.0), libpulse (>= 0.9.6), libccgnu2 (>= 1.3.1), libccext2 (>= 1.3.1), libccrtp1 (>= 1.3.0), libnotify (>= 0.4), libsexy (>= 0.1)"
 
 # Package Infos
 package="sflphone"
@@ -68,8 +68,16 @@ cp $sharedir/sflphone/ringtones/* $sfldir$sharedir/sflphone/ringtones
 #/usr/share/locale/fr/LC_MESSAGES
 mkdir -p $sfldir$sharedir/locale/fr/LC_MESSAGES
 cp $sharedir/locale/fr/LC_MESSAGES/sflphone.mo	$sfldir$sharedir/locale/fr/LC_MESSAGES
+#/usr/share/locale/es/LC_MESSAGES
 mkdir -p $sfldir$sharedir/locale/es/LC_MESSAGES
 cp $sharedir/locale/es/LC_MESSAGES/sflphone.mo	$sfldir$sharedir/locale/es/LC_MESSAGES
+#/usr/share/locale/zh_CN/LC_MESSAGES
+mkdir -p $sfldir$sharedir/locale/zh_CN/LC_MESSAGES
+cp $sharedir/locale/zh_CN/LC_MESSAGES/sflphone.mo  $sfldir$sharedir/locale/zh_CN/LC_MESSAGES
+#/usr/share/locale/zh_HK/LC_MESSAGES
+mkdir -p $sfldir$sharedir/locale/zh_HK/LC_MESSAGES
+cp $sharedir/locale/zh_HK/LC_MESSAGES/sflphone.mo  $sfldir$sharedir/locale/zh_HK/LC_MESSAGES
+
 #/usr/share/doc/sflphone
 mkdir -p $sfldir$sharedir/doc/sflphone
 cp changelog.Debian.gz $sfldir$sharedir/doc/sflphone
