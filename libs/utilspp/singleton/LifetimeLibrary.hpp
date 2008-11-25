@@ -25,7 +25,7 @@
 #define LIFETIME_LIBRARY_HPP
 
 #include <cassert>
-
+#include <algorithm> 
 #include "PrivateMembers.hpp"
 #include "CreationUsingNew.hpp"
 

@@ -25,6 +25,8 @@
  */
 #include "tone.h"
 #include <math.h>
+#include <cstdlib>
+#include <strings.h>
 
 Tone::Tone(const std::string& definition, unsigned int sampleRate) : AudioLoop(), _sampleRate(sampleRate)
 {

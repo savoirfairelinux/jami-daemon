@@ -21,6 +21,7 @@
 #include "config.h"
 #include "../global.h"
 #include <fstream>
+#include <cstdlib>
 
 namespace Conf {
 

@@ -25,6 +25,7 @@
 #include <fstream>
 #include <math.h>
 #include <samplerate.h>
+#include <cstring>
 
 AudioFile::AudioFile()
  : AudioLoop(),

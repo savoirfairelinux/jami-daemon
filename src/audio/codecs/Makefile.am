@@ -5,7 +5,7 @@ GSM_LIB = libcodec_gsm.so
 libcodec_gsm_so_SOURCES = gsmcodec.cpp
 libcodec_gsm_so_CFLAGS = -fPIC -g -Wall
 libcodec_gsm_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_gsm_so_LDFLAGS = -shared -lc -lgsm
+libcodec_gsm_so_LDFLAGS = --shared -lc -lgsm
 INSTALL_GSM_RULE = install-libcodec_gsm_so
 endif
 
@@ -14,7 +14,7 @@ SPEEX_LIB = libcodec_speex.so
 libcodec_speex_so_SOURCES = speexcodec.cpp
 libcodec_speex_so_CFLAGS = -fPIC -g -Wall
 libcodec_speex_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_speex_so_LDFLAGS = -shared -lc -lspeex
+libcodec_speex_so_LDFLAGS = --shared -lc -lspeex
 INSTALL_SPEEX_RULE = install-libcodec_speex_so
 endif
 
@@ -23,7 +23,7 @@ ILBC_LIB = libcodec_ilbc.so
 libcodec_ilbc_so_SOURCES = ilbc.cpp
 libcodec_ilbc_so_CFLAGS = -fPIC -g -Wall
 libcodec_ilbc_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_ilbc_so_LDFLAGS = -shared ilbc/*.o -lc
+libcodec_ilbc_so_LDFLAGS = --shared ilbc/*.o -lc
 INSTALL_ILBC_RULE = install-libcodec_ilbc_so
 SUBDIRS = ilbc
 endif
@@ -35,12 +35,12 @@ noinst_HEADERS = audiocodec.h
 libcodec_ulaw_so_SOURCES = ulaw.cpp
 libcodec_ulaw_so_CFLAGS = -fPIC -g -Wall
 libcodec_ulaw_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_ulaw_so_LDFLAGS = -shared -lc
+libcodec_ulaw_so_LDFLAGS = --shared -lc
 
 libcodec_alaw_so_SOURCES = alaw.cpp
 libcodec_alaw_so_CFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_alaw_so_LDFLAGS = -shared -lc
+libcodec_alaw_so_LDFLAGS = --shared -lc
 
 
 

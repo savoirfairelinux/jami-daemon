@@ -25,8 +25,8 @@
 #define LIFETIME_WITH_LONGEVITY_HPP
 
 #include <cassert>
-
 #include "PrivateMembers.hpp"
+#include <algorithm>
 
 namespace utilspp
 {
