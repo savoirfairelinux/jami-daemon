@@ -73,8 +73,7 @@ prefix = /usr/local
 install:
 	mkdir -p $(DESTDIR)$(prefix)/lib
 	cp -L $$(find . -name '*.a') $(DESTDIR)$(prefix)/lib
-	mkdir -p $(DESTDIR)$(prefix)/include
-	cp -RL $$(find  . -name include) $(DESTDIR)$(prefix)
+	cp -RL $$(find  ./pjnath ./third_party ./pjsip ./pjmedia ./pjlib ./pjlib-util -name include) $(DESTDIR)$(prefix)
 	cd $(DESTDIR)$(prefix)/lib && for i in $$(find . -name 'libpj*a'); do\
 		ln -s $$i $$(echo $$i | sed -e "s/-$(TARGET_NAME)//");\
 	done
