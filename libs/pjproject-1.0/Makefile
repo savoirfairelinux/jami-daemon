@@ -29,16 +29,16 @@ doc:
 		fi; \
 	done
 	
-LIBS = 	pjlib/lib/libpj-$(TARGET_NAME).a \
-	pjlib-util/lib/libpjlib-util-$(TARGET_NAME).a \
-	pjnath/lib/libpjnath-$(TARGET_NAME).a \
-	pjmedia/lib/libpjmedia-$(TARGET_NAME).a \
-	pjmedia/lib/libpjmedia-codec-$(TARGET_NAME).a \
-       	pjsip/lib/libpjsip-$(TARGET_NAME).a \
-	pjsip/lib/libpjsip-ua-$(TARGET_NAME).a \
-	pjsip/lib/libpjsip-simple-$(TARGET_NAME).a \
-	pjsip/lib/libpjsua-$(TARGET_NAME).a
-BINS = 	pjsip-apps/bin/pjsua-$(TARGET_NAME)$(HOST_EXE) 
+LIBS = 	pjlib/lib/libpj-sfl-$(TARGET_NAME).a \
+	pjlib-util/lib/libpjlib-util-sfl-$(TARGET_NAME).a \
+	pjnath/lib/libpjnath-sfl-$(TARGET_NAME).a \
+	pjmedia/lib/libpjmedia-sfl-$(TARGET_NAME).a \
+	pjmedia/lib/libpjmedia-codec-sfl-$(TARGET_NAME).a \
+       	pjsip/lib/libpjsip-sfl-$(TARGET_NAME).a \
+	pjsip/lib/libpjsip-ua-sfl-$(TARGET_NAME).a \
+	pjsip/lib/libpjsip-simple-sfl-$(TARGET_NAME).a \
+	pjsip/lib/libpjsua-sfl-$(TARGET_NAME).a
+BINS = 	pjsip-apps/bin/pjsua-sfl-$(TARGET_NAME)$(HOST_EXE) 
 
 size:
 	@echo -n 'Date: '

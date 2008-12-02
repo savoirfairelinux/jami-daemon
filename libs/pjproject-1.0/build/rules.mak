@@ -80,7 +80,7 @@ $(LIB): $(OBJDIRS) $(OBJS) $($(APP)_EXTRA_DEP)
 	$(RANLIB) $(LIB)
 
 $(EXE): $(OBJDIRS) $(OBJS) $($(APP)_EXTRA_DEP)
-	if test ! -d $(BINDIR); then $(subst @@,$(subst /,$(HOST_PSEP),$(BINDIR)),$(HOST_MKDIR)); fi
+	if test ! -d $(BINDIR); then $(subst @@,$(subst /,$(HOST_PSEP),$(BINDIR)),$(HOST_MKDIR)); fi	
 	$(LD) $(LDOUT)$(subst /,$(HOST_PSEP),$(EXE)) \
 	    $(subst /,$(HOST_PSEP),$(OBJS)) $($(APP)_LDFLAGS)
 

@@ -4,15 +4,15 @@ include $(PJDIR)/build/common.mak
 
 RULES_MAK := $(PJDIR)/build/rules.mak
 
-PJLIB_LIB:=../../pjlib/lib/libpj-$(TARGET_NAME)$(LIBEXT)
-PJLIB_UTIL_LIB:=../../pjlib-util/lib/libpjlib-util-$(TARGET_NAME)$(LIBEXT)
-PJNATH_LIB:=../../pjnath/lib/libpjnath-$(TARGET_NAME)$(LIBEXT)
-PJMEDIA_LIB:=../../pjmedia/lib/libpjmedia-$(TARGET_NAME)$(LIBEXT)
-PJMEDIA_CODEC_LIB:=../../pjmedia/lib/libpjmedia-codec-$(TARGET_NAME)$(LIBEXT)
-PJSIP_LIB:=../../pjsip/lib/libpjsip-$(TARGET_NAME)$(LIBEXT)
-PJSIP_UA_LIB:=../../pjsip/lib/libpjsip-ua-$(TARGET_NAME)$(LIBEXT)
-PJSIP_SIMPLE_LIB:=../../pjsip/lib/libpjsip-simple-$(TARGET_NAME)$(LIBEXT)
-PJSUA_LIB_LIB=../../pjsip/lib/libpjsua-$(TARGET_NAME)$(LIBEXT)
+PJLIB_LIB:=../../pjlib/lib/libpj-sfl-$(TARGET_NAME)$(LIBEXT)
+PJLIB_UTIL_LIB:=../../pjlib-util/lib/libpjlib-util-sfl-$(TARGET_NAME)$(LIBEXT)
+PJNATH_LIB:=../../pjnath/lib/libpjnath-sfl-$(TARGET_NAME)$(LIBEXT)
+PJMEDIA_LIB:=../../pjmedia/lib/libpjmedia-sfl-$(TARGET_NAME)$(LIBEXT)
+PJMEDIA_CODEC_LIB:=../../pjmedia/lib/libpjmedia-codec-sfl-$(TARGET_NAME)$(LIBEXT)
+PJSIP_LIB:=../../pjsip/lib/libpjsip-sfl-$(TARGET_NAME)$(LIBEXT)
+PJSIP_UA_LIB:=../../pjsip/lib/libpjsip-ua-sfl-$(TARGET_NAME)$(LIBEXT)
+PJSIP_SIMPLE_LIB:=../../pjsip/lib/libpjsip-simple-sfl-$(TARGET_NAME)$(LIBEXT)
+PJSUA_LIB_LIB=../../pjsip/lib/libpjsua-sfl-$(TARGET_NAME)$(LIBEXT)
 
 
 ###############################################################################

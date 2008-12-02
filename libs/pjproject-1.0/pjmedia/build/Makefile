@@ -11,13 +11,13 @@ include $(PJDIR)/build/common.mak
 
 RULES_MAK := $(PJDIR)/build/rules.mak
 
-PJLIB_LIB:=$(PJDIR)/pjlib/lib/libpj-$(TARGET_NAME)$(LIBEXT)
-PJLIB_UTIL_LIB:=$(PJDIR)/pjlib-util/lib/libpjlib-util-$(TARGET_NAME)$(LIBEXT)
-PJNATH_LIB:=$(PJDIR)/pjnath/lib/libpjnath-$(TARGET_NAME)$(LIBEXT)
+PJLIB_LIB:=$(PJDIR)/pjlib/lib/libpj-sfl-$(TARGET_NAME)$(LIBEXT)
+PJLIB_UTIL_LIB:=$(PJDIR)/pjlib-util/lib/libpjlib-util-sfl-$(TARGET_NAME)$(LIBEXT)
+PJNATH_LIB:=$(PJDIR)/pjnath/lib/libpjnath-sfl-$(TARGET_NAME)$(LIBEXT)
 
-export PJMEDIA_LIB:=../lib/libpjmedia-$(TARGET_NAME)$(LIBEXT)
-export PJMEDIA_CODEC_LIB:=../lib/libpjmedia-codec-$(TARGET_NAME)$(LIBEXT)
-export PJSDP_LIB:=../lib/libpjsdp-$(TARGET_NAME)$(LIBEXT)
+export PJMEDIA_LIB:=../lib/libpjmedia-sfl-$(TARGET_NAME)$(LIBEXT)
+export PJMEDIA_CODEC_LIB:=../lib/libpjmedia-codec-sfl-$(TARGET_NAME)$(LIBEXT)
+export PJSDP_LIB:=../lib/libpjsdp-sfl-$(TARGET_NAME)$(LIBEXT)
 
 NULLSOUND_OBJS := nullsound.o
 

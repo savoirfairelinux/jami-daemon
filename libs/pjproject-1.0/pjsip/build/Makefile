@@ -8,15 +8,15 @@ include $(PJDIR)/build/common.mak
 
 RULES_MAK := $(PJDIR)/build/rules.mak
 
-PJLIB_LIB:=../../pjlib/lib/libpj-$(TARGET_NAME)$(LIBEXT)
-PJLIB_UTIL_LIB:=../../pjlib-util/lib/libpjlib-util-$(TARGET_NAME)$(LIBEXT)
-PJMEDIA_LIB:=../../pjmedia/lib/libpjmedia-$(TARGET_NAME)$(LIBEXT)
-PJMEDIA_CODEC_LIB:=../../pjmedia/lib/libpjmedia-codec-$(TARGET_NAME)$(LIBEXT)
+PJLIB_LIB:=../../pjlib/lib/libpj-sfl-$(TARGET_NAME)$(LIBEXT)
+PJLIB_UTIL_LIB:=../../pjlib-util/lib/libpjlib-util-sfl-$(TARGET_NAME)$(LIBEXT)
+PJMEDIA_LIB:=../../pjmedia/lib/libpjmedia-sfl-$(TARGET_NAME)$(LIBEXT)
+PJMEDIA_CODEC_LIB:=../../pjmedia/lib/libpjmedia-codec-sfl-$(TARGET_NAME)$(LIBEXT)
 
-export PJSIP_LIB:=../lib/libpjsip-$(TARGET_NAME)$(LIBEXT)
-export PJSIP_UA_LIB:=../lib/libpjsip-ua-$(TARGET_NAME)$(LIBEXT)
-export PJSIP_SIMPLE_LIB:=../lib/libpjsip-simple-$(TARGET_NAME)$(LIBEXT)
-export PJSUA_LIB_LIB=../lib/libpjsua-$(TARGET_NAME)$(LIBEXT)
+export PJSIP_LIB:=../lib/libpjsip-sfl-$(TARGET_NAME)$(LIBEXT)
+export PJSIP_UA_LIB:=../lib/libpjsip-ua-sfl-$(TARGET_NAME)$(LIBEXT)
+export PJSIP_SIMPLE_LIB:=../lib/libpjsip-simple-sfl-$(TARGET_NAME)$(LIBEXT)
+export PJSUA_LIB_LIB=../lib/libpjsua-sfl-$(TARGET_NAME)$(LIBEXT)
 
 
 ###############################################################################

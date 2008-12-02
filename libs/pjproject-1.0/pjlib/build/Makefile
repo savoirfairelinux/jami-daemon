@@ -4,7 +4,7 @@ include $(PJDIR)/build/common.mak
 RULES_MAK := $(PJDIR)/build/rules.mak
 
 
-export PJLIB_LIB := ../lib/libpj-$(TARGET_NAME)$(LIBEXT)
+export PJLIB_LIB := ../lib/libpj-sfl-$(TARGET_NAME)$(LIBEXT)
 
 ###############################################################################
 # Gather all flags.

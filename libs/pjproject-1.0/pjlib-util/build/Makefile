@@ -7,8 +7,8 @@ include $(PJDIR)/build/common.mak
 
 RULES_MAK := $(PJDIR)/build/rules.mak
 
-PJLIB_LIB:=$(PJDIR)/pjlib/lib/libpj-$(TARGET_NAME)$(LIBEXT)
-export PJLIB_UTIL_LIB:=../lib/libpjlib-util-$(TARGET_NAME)$(LIBEXT)
+PJLIB_LIB:=$(PJDIR)/pjlib/lib/libpj-sfl-$(TARGET_NAME)$(LIBEXT)
+export PJLIB_UTIL_LIB:=../lib/libpjlib-util-sfl-$(TARGET_NAME)$(LIBEXT)
 
 ###############################################################################
 # Gather all flags.
@@ -21,6 +21,7 @@ export _LDFLAGS := $(subst /,$(HOST_PSEP),$(PJLIB_UTIL_LIB)) \
 		   $(subst /,$(HOST_PSEP),$(PJLIB_LIB)) \
 		   $(CC_LDFLAGS) $(OS_LDFLAGS) $(M_LDFLAGS) $(HOST_LDFLAGS) \
 		   $(LDFLAGS) 
+
 
 ###############################################################################
 # Defines for building PJLIB-UTIL library
@@ -52,7 +53,6 @@ export CC_OUT CC AR RANLIB HOST_MV HOST_RM HOST_RMDIR HOST_MKDIR OBJEXT LD LDOUT
 TARGETS := pjlib-util pjlib-util-test
 
 all: $(TARGETS)
-
 doc:
 	cd .. && rm -rf docs/html docs/latex && doxygen docs/doxygen.cfg
 	@if test ! "$(WWWDIR)" == ""; then \
