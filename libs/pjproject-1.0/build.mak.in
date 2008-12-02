@@ -1,0 +1,86 @@
+# @configure_input@
+export MACHINE_NAME := auto
+export OS_NAME := auto
+export HOST_NAME := unix
+export CC_NAME := gcc
+export TARGET_NAME := @target@
+export CROSS_COMPILE := @ac_cross_compile@
+export LINUX_POLL := @ac_linux_poll@ 
+
+LIB_SUFFIX = $(TARGET_NAME).a
+
+# Determine which party libraries to use
+export APP_THIRD_PARTY_LIBS := -lresample-$(TARGET_NAME) -lmilenage-$(TARGET_NAME) -lsrtp-$(TARGET_NAME)
+export APP_THIRD_PARTY_LIB_FILES = $(PJ_DIR)/third_party/lib/libresample-$(LIB_SUFFIX) $(PJ_DIR)/third_party/lib/libmilenage-$(LIB_SUFFIX) $(PJ_DIR)/third_party/lib/libsrtp-$(LIB_SUFFIX)
+
+ifneq (@ac_no_gsm_codec@,1)
+APP_THIRD_PARTY_LIBS += -lgsmcodec-$(TARGET_NAME)
+APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libgsmcodec-$(LIB_SUFFIX)
+endif
+
+ifneq (@ac_no_speex_codec@,1)
+APP_THIRD_PARTY_LIBS += -lspeex-$(TARGET_NAME)
+APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libspeex-$(LIB_SUFFIX)
+endif
+
+ifneq (@ac_no_ilbc_codec@,1)
+APP_THIRD_PARTY_LIBS += -lilbccodec-$(TARGET_NAME)
+APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libilbccodec-$(LIB_SUFFIX)
+endif
+
+ifneq ($(findstring pa,@ac_pjmedia_snd@),)
+APP_THIRD_PARTY_LIBS += -lportaudio-$(TARGET_NAME)
+APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libportaudio-$(LIB_SUFFIX)
+endif
+
+# Additional flags
+@ac_build_mak_vars@
+
+# CFLAGS, LDFLAGS, and LIBS to be used by applications
+export PJDIR := @ac_pjdir@
+export APP_CC := $(CROSS_COMPILE)$(CC_NAME)
+export APP_CFLAGS := -DPJ_AUTOCONF=1\
+	@CFLAGS@\
+	-I$(PJDIR)/pjlib/include\
+	-I$(PJDIR)/pjlib-util/include\
+	-I$(PJDIR)/pjnath/include\
+	-I$(PJDIR)/pjmedia/include\
+	-I$(PJDIR)/pjsip/include
+export APP_CXXFLAGS := $(APP_CFLAGS)
+export APP_LDFLAGS := -L$(PJDIR)/pjlib/lib\
+	-L$(PJDIR)/pjlib-util/lib\
+	-L$(PJDIR)/pjnath/lib\
+	-L$(PJDIR)/pjmedia/lib\
+	-L$(PJDIR)/pjsip/lib\
+	-L$(PJDIR)/third_party/lib\
+	@LDFLAGS@
+export APP_LDLIBS := -lpjsua-$(TARGET_NAME)\
+	-lpjsip-ua-$(TARGET_NAME)\
+	-lpjsip-simple-$(TARGET_NAME)\
+	-lpjsip-$(TARGET_NAME)\
+	-lpjmedia-codec-$(TARGET_NAME)\
+	-lpjmedia-$(TARGET_NAME)\
+	-lpjnath-$(TARGET_NAME)\
+	-lpjlib-util-$(TARGET_NAME)\
+	$(APP_THIRD_PARTY_LIBS)\
+	-lpj-$(TARGET_NAME)\
+	@LIBS@
+export APP_LIB_FILES = $(PJ_DIR)/pjsip/lib/libpjsua-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjsip/lib/libpjsip-ua-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjsip/lib/libpjsip-simple-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjsip/lib/libpjsip-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjmedia/lib/libpjmedia-codec-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjmedia/lib/libpjmedia-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjnath/lib/libpjnath-$(LIB_SUFFIX) \
+	$(PJ_DIR)/pjlib-util/lib/libpjlib-util-$(LIB_SUFFIX) \
+	$(APP_THIRD_PARTY_LIB_FILES) \
+	$(PJ_DIR)/pjlib/lib/libpj-$(LIB_SUFFIX)
+
+export PJ_DIR := $(PJDIR)
+export PJ_CC := $(APP_CC)
+export PJ_CFLAGS := $(APP_CFLAGS)
+export PJ_CXXFLAGS := $(APP_CXXFLAGS)
+export PJ_LDFLAGS := $(APP_LDFLAGS)
+export PJ_LDLIBS := $(APP_LDLIBS)
+export PJ_LIB_FILES := $(APP_LIB_FILES)
+
