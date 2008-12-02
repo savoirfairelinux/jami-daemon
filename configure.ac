@@ -141,7 +141,7 @@ dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
 
 #Trying to set PJSIP using pkg-config
-PKG_CHECK_MODULES(SIP, libpj, have_libpj=true, have_libpj=false)
+PKG_CHECK_MODULES(SIP, libpj-sfl, have_libpj=true, have_libpj=false)
 if test "x${have_libpj}" = "xfalse" ; then
     AC_MSG_ERROR([PJSIP not found. http://www.pjsip.org/download.htm])
 fi

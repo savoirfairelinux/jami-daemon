@@ -78,4 +78,4 @@ install:
 		ln -s $$i $$(echo $$i | sed -e "s/-$(TARGET_NAME)//");\
 	done
 	mkdir -p $(DESTDIR)$(prefix)/lib/pkgconfig
-	sed -e "s!@PREFIX@!$(DESTDIR)$(prefix)!" libpj.pc.in > $(DESTDIR)/$(prefix)/lib/pkgconfig/libpj.pc
+	sed -e "s!@PREFIX@!$(DESTDIR)$(prefix)!" libpj-sfl.pc.in > $(DESTDIR)/$(prefix)/lib/pkgconfig/libpj-sfl.pc

@@ -5,8 +5,8 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
-Name: libpj
+Name: libpj-sfl
 Description: Multimedia communication library
 Version: 0.5.10.3
-Libs: -L${libdir} -lpjsua -lpjsip -lpjmedia -lpjsip-ua -lpjsip-simple -lpjsip-ua -lpjmedia-codec -lpjlib-util -lpj
+Libs: -L${libdir} -lpjsua-sfl -lpjsip-sfl -lpjmedia-sfl -lpjsip-ua-sfl -lpjsip-simple-sfl -lpjsip-ua-sfl -lpjmedia-codec-sfl -lpjlib-util-sfl -lpj-sfl
 Cflags: -I${includedir}
