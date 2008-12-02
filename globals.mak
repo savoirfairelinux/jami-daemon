@@ -2,7 +2,7 @@
 src=$(top_srcdir)
 sflcodecdir=$(libdir)/sflphone/codecs
 
-PJSIP_LIBS = -lpjnath -lpjsua -lpjsip -lpjmedia -lpjsip-simple -lpjsip-ua -lpjmedia-codec -lpjlib-util -lpj 
+PJSIP_LIBS = -lpjnath-sfl -lpjsua-sfl -lpjsip-sfl -lpjmedia-sfl -lpjsip-simple-sfl -lpjsip-ua-sfl -lpjmedia-codec-sfl -lpjlib-util-sfl -lpj-sfl 
 
 # Preprocessor flags
 AM_CPPFLAGS = \
