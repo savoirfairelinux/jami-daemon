@@ -73,9 +73,9 @@ prefix = /usr/local
 install:
 	mkdir -p $(DESTDIR)$(prefix)/lib
 	cp -L $$(find . -name '*.a') $(DESTDIR)$(prefix)/lib
-	cp -RL $$(find  ./pjnath ./third_party ./pjsip ./pjmedia ./pjlib ./pjlib-util -name include) $(DESTDIR)$(prefix)
-	cd $(DESTDIR)$(prefix)/lib && for i in $$(find . -name 'libpj*a'); do\
+	cp -RL $$(find  ./pjnath ./pjsip ./pjmedia ./pjlib ./pjlib-util ./pjsip-apps -name include) $(DESTDIR)$(prefix)
+	cd $(DESTDIR)$(prefix)/lib; for i in $$(find . -name 'libpj*a'); do\
 		ln -s $$i $$(echo $$i | sed -e "s/-$(TARGET_NAME)//");\
-	done
+        done
 	mkdir -p $(DESTDIR)$(prefix)/lib/pkgconfig
 	sed -e "s!@PREFIX@!$(DESTDIR)$(prefix)!" libpj-sfl.pc.in > $(DESTDIR)/$(prefix)/lib/pkgconfig/libpj-sfl.pc
