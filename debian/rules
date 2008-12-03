@@ -77,6 +77,7 @@ install-arch:
 	$(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
 	cd sflphone-gtk; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
 	cd libs/pjproject-1.0; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	rm $(CURDIR)/debian/$(package)/usr/include/pj* -rf
 	dh_install -s
 # Must not depend on anything. This is to be called by
 # binary-arch/binary-indep
