@@ -33,8 +33,8 @@ build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp 
 
        # Add here commands to compile the arch part of the package.
-	$(MAKE) && (cd sflphone-gtk)
-	$(MAKE)
+	$(MAKE) 
+	cd sflphone-gtk; $(MAKE)
 	cd libs/pjproject-1.0; $(MAKE) dep; $(MAKE)
 	touch $@
 
