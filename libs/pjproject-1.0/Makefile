@@ -74,7 +74,7 @@ install:
 	mkdir -p $(DESTDIR)$(prefix)/lib
 	cp -L $$(find . -name '*.a') $(DESTDIR)$(prefix)/lib
 	cp -RL $$(find  ./pjnath ./pjsip ./pjmedia ./pjlib ./pjlib-util ./pjsip-apps -name include) $(DESTDIR)$(prefix)
-	cd $(DESTDIR)$(prefix)/lib; for i in $$(find . -name 'libpj*a'); do\
+	cd $(DESTDIR)$(prefix)/lib; for i in $$(find . -name 'libpj*x86_64*a' -or -name 'libpj*686*a'); do\
 		ln -s $$i $$(echo $$i | sed -e "s/-$(TARGET_NAME)//");\
         done
 	mkdir -p $(DESTDIR)$(prefix)/lib/pkgconfig
