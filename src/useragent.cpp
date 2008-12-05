@@ -991,7 +991,7 @@ void UserAgent::call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *t
                 }
                 break;
             case PJSIP_TSX_STATE_COMPLETED:
-		if (tsx->status_code == 407)
+		if (tsx->status_code == 407 || tsx->status_code == 401) //FIXME
                     break;
                 if (tsx->status_code / 100 == 6 || tsx->status_code / 100 == 4) {
                     // We get error message of outgoing call from server
@@ -1168,14 +1168,21 @@ bool UserAgent::offhold(SIPCall *call) {
 
 bool UserAgent::hangup(SIPCall* call) {
     pj_status_t status;
-    pjsip_tx_data *tdata;
+    pjsip_tx_data *tdata = NULL;
     
     // User hangup current call. Notify peer
     status = pjsip_inv_end_session(call->getInvSession(), 404, NULL, &tdata);
-    PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
+    if(status != PJ_SUCCESS)
+	return false;
+
+    _debug("UserAgent: Before send msg!\n");
+
+    if(tdata == NULL)
+	return true;
 
     status = pjsip_inv_send_msg(call->getInvSession(), tdata);
-    PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
+    if(status != PJ_SUCCESS)
+	return false;
 
     call->getInvSession()->mod_data[getInstance()->getModId()] = NULL;
     return true;
