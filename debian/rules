@@ -1,81 +1,62 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 # Sample debian/rules that uses debhelper.
-#
 # This file was originally written by Joey Hess and Craig Small.
 # As a special exception, when this file is copied by dh-make into a
 # dh-make output file, you may use that output file without restriction.
 # This special exception was added by Craig Small in version 0.37 of dh-make.
-#
-# Modified to make a template file for a multi-binary package with separated
-# build-arch and build-indep targets  by Bill Allombert 2001
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
-
-# This has to be exported to make some magic below work.
 export DH_OPTIONS
 
 package=sflphone
 
-# These are used for cross-compiling and for saving the configure script
-# from having to guess our platform (since we know it already)
-DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-
 CXX = g++-4.0
 CFLAGS = -Wall -g
 
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
-else
-	CFLAGS += -O2
-endif
-
-config.status: configure
+configure: configure-stamp
+configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-#autoreconf --install	
-#CFLAGS="$(CFLAGS)" CXX="$(CXX)" ./configure --prefix=/usr --with-debu
-	./configure --prefix=/
-#gnome-autogen.sh --prefix=/usr --with-debug
-	cd sflphone-gtk
-	./configure --prefix=/
-	
+	./autogen.sh
+	./configure --prefix=/usr
+	cd sflphone-gtk; ./autogen.sh; ./configure --prefix=/usr
+	cd libs/pjproject-1.0; ./configure
+	touch configure-stamp
+
 
 #Architecture 
 build: build-arch build-indep
 
 build-arch: build-arch-stamp
-build-arch-stamp:  config.status
+build-arch-stamp: configure-stamp 
 
-	# Add here commands to compile the arch part of the package.
-	$(MAKE) && (cd sflphone-gtk)
-	$(MAKE)
-	touch build-arch-stamp
+       # Add here commands to compile the arch part of the package.
+	$(MAKE) 
+	cd sflphone-gtk; $(MAKE)
+	cd libs/pjproject-1.0; $(MAKE) dep; $(MAKE)
+	touch $@
 
 build-indep: build-indep-stamp
-build-indep-stamp:  config.status
+build-indep-stamp: configure-stamp 
 
-	# Add here commands to compile the indep part of the package.
-	#$(MAKE) doc
-	touch build-indep-stamp
-
+       # Add here commands to compile the indep part of the package.
+       #$(MAKE) doc
+	touch $@
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-arch-stamp build-indep-stamp #CONFIGURE-STAMP#
-
+	rm -f build-arch-stamp build-indep-stamp configure-stamp
 	# Add here commands to clean up after the build process.
 	-$(MAKE) distclean
+
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 	cp -f /usr/share/misc/config.sub config.sub
 endif
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.guess
 endif
-
-
 	dh_clean 
 
 install: install-indep install-arch
@@ -84,27 +65,24 @@ install-indep:
 	dh_testroot
 	dh_clean -k -i 
 	dh_installdirs -i
-
-	# Add here commands to install the indep part of the package into
-	# debian/<package>-doc.
-	#INSTALLDOC#
-
-	dh_install -i
+	# Add here commands to install the package into debian/sflphone.
 
 install-arch:
 	dh_testdir
 	dh_testroot
 	dh_clean -k -s 
 	dh_installdirs -s
-
 	# Add here commands to install the arch part of the package into 
 	# debian/tmp.
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/sflphone/usr
-
+	$(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	cd sflphone-gtk; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	cd libs/pjproject-1.0; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	rm $(CURDIR)/debian/$(package)/usr/include/pj* -rf
 	dh_install -s
 # Must not depend on anything. This is to be called by
 # binary-arch/binary-indep
 # in another 'make' thread.
+
 binary-common:
 	dh_testdir
 	dh_testroot
@@ -117,6 +95,7 @@ binary-common:
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
+#	dh_python
 #	dh_installinit
 #	dh_installcron
 #	dh_installinfo
@@ -126,10 +105,9 @@ binary-common:
 	dh_compress 
 	dh_fixperms
 #	dh_perl
-#	dh_python
 	dh_makeshlibs
 	dh_installdeb
-	dh_shlibdeps
+#	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
@@ -139,7 +117,7 @@ binary-indep: build-indep install-indep
 
 # Build architecture dependant packages using the common target.
 binary-arch: build-arch install-arch
-	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+	$(MAKE) -f debian/rules DH_OPTIONS=-s binary-common
 
 binary: binary-arch binary-indep
-.PHONY: build clean binary-indep binary-arch binary install install-indep install-arch 
+.PHONY: build clean binary-indep binary-arch binary install install-indep install-arch configure

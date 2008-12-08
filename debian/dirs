@@ -1,7 +1,9 @@
 usr/bin
-usr/lib/sflphone/codecs
+usr/lib
+/usr/include
 usr/share/applications
 usr/share/dbus-1/services
 usr/share/pixmaps
-usr/share/sflphone/ringtones
-usr/share/locale/fr/LC_MESSAGES
+usr/share/sflphone
+usr/share/locale
+usr/share/docs
