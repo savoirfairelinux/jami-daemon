@@ -18,6 +18,7 @@ Makefile.in
 libtool
 # The test binary
 *Tester
+*orig
 
 # Ignore rendered docs
 doc/doxygen/core-doc
