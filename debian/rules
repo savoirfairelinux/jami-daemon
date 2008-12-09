@@ -14,6 +14,7 @@ package=sflphone
 
 CXX = g++-4.0
 CFLAGS = -Wall -g
+DEB_INSTALL_MANPAGES_sflphone = sflphoned.1 sflphone.1 sflphone-gtk.1
 
 configure: configure-stamp
 configure-stamp:
@@ -49,7 +50,7 @@ clean:
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp
 	# Add here commands to clean up after the build process.
-	[ ! -f Makefile ] || $(MAKE) distclean
+	[ ! -f Makefile ] || $(MAKE) distclean 
 
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 	cp -f /usr/share/misc/config.sub config.sub

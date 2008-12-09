@@ -46,6 +46,8 @@ AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([po/Makefile \
   ringtones/Makefile])
 
+AC_CONFIG_FILES([man/Makefile])
+
 AC_CONFIG_FILES([doc/Makefile \
   doc/doxygen/Makefile])
   

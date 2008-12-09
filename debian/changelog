@@ -9,6 +9,7 @@ sflphone (0.9.2-0ubuntu1) hardy; urgency=low
   * Improve spanish translation
   * Migrate to a maintained C++ DBus bindings
   * Clean and improve the build system
+  * Add build-dependency on Perl because we need pod2man to generate manpages
 
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Wed, 26 Nov 2008 09:47:53 -0500
 
