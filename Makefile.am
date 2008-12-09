@@ -9,6 +9,6 @@ unittest:
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = libs src ringtones po 
+SUBDIRS = libs src ringtones po man 
 EXTRA_DIST = m4/*.m4 tools/*.sh platform/* images/* README.gentoo
 
