@@ -191,6 +191,17 @@ class IAXVoIPLink : public VoIPLink
     void updateAudiolayer( void ); 
 
   private:
+
+    /* 
+     * Decode the message count IAX send.
+     * Returns only the new messages number
+     * 
+     * @param msgcount  The value sent by IAX in the REGACK message
+     * @return int  The number of new messages waiting for the current registered user
+     */
+       int processIAXMsgCount( int msgcount );
+
+
     /**
      * Get IAX Call from an id
      * @param id CallId

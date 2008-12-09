@@ -263,8 +263,6 @@ IAXVoIPLink::sendAudioFromMic(void)
     // available bytes inside ringbuffer
     availBytesFromMic = audiolayer->canGetMic();
 
-    _debug("max bytes=%i - avail = %i\n", maxBytesToGet, availBytesFromMic);
-
     if (availBytesFromMic < maxBytesToGet) {
       // We need packets full!
       return;
@@ -752,7 +750,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 IAXVoIPLink::iaxHandleRegReply(iax_event* event) 
 {
 
-    int voicemail;
+    int new_voicemails;
     std::string account_id;
  
     if (event->etype == IAX_EVENT_REGREJ) {
@@ -770,11 +768,11 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
 
         // Looking for the voicemail information
         //if( event->ies != 0 )        
-        voicemail = event->ies.msgcount;
-        _debug("iax voicemail number notification: %i\n", voicemail);
+        new_voicemails = processIAXMsgCount(event->ies.msgcount);
+        _debug("iax voicemail number notification: %i\n", new_voicemails);
         // Notify the client if new voicemail waiting for the current account
-	account_id = getAccountID();
-        Manager::instance().startVoiceMessageNotification(account_id.c_str(), voicemail);
+	    account_id = getAccountID();
+        Manager::instance().startVoiceMessageNotification(account_id.c_str(), new_voicemails);
 
         iax_destroy(_regSession);
         _mutexIAX.leaveMutex();
@@ -786,6 +784,28 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
         setRegistrationState(Registered);
     }
 }
+
+int IAXVoIPLink::processIAXMsgCount( int msgcount )
+{
+    
+    // IAX sends the message count under a specific format:
+    //                       1
+    //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+    //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    //  |      0x18     |      0x02     |
+    //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    //  |  Old messages |  New messages |
+    //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    // For now we just need the new messages informations.
+    // Thus: 
+    // 0 <= msgcount <= 255   => msgcount new messages, 0 old messages
+    // msgcount >= 256        => msgcount/256 old messages , msgcount%256 new messages (RULES)
+    
+    return msgcount%256;
+
+}
+
 
   void
 IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
