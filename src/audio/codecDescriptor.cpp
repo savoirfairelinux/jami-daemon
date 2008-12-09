@@ -276,14 +276,19 @@ CodecDescriptor::seemsValid( std::string lib)
   if( lib.substr( lib.length() - end.length() , lib.length()) != end )
     return false;
 
-#ifdef BUILD_SPEEX
+
+#ifdef HAVE_SPEEX
+  printf("cadvfsdgvssbsdfbdgfffffffffffffffffffffffffffffffffffffffff\n");
+#endif
+
+#ifdef HAVE_SPEEX
   // Nothing special
 #else
     if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == SPEEX_STRING_DESCRIPTION)
       return false;
 #endif
 
-#ifdef BUILD_GSM
+#ifdef HAVE_GSM
   // Nothing special
 #else
     if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == GSM_STRING_DESCRIPTION )  
