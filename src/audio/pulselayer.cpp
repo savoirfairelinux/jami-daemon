@@ -335,7 +335,7 @@ void PulseLayer::writeToSpeaker( void )
     }
   }
 
-  if(out)   pa_xfree(out);
+  //if(out)   pa_xfree(out);
 }
  
 void PulseLayer::readFromMic( void )
