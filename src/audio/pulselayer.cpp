@@ -296,7 +296,7 @@ void PulseLayer::writeToSpeaker( void )
   urgentAvail = _urgentRingBuffer.AvailForGet();
   if (urgentAvail > 0) {
     // Urgent data (dtmf, incoming call signal) come first.		
-    _debug("Play urgent!: %i\n" , urgentAvail);
+    //_debug("Play urgent!: %i\n" , urgentAvail);
     toGet = (urgentAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof(SFLDataFormat);
     out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) );
     _urgentRingBuffer.Get(out, toGet, 100);
