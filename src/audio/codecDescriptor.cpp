@@ -278,10 +278,6 @@ CodecDescriptor::seemsValid( std::string lib)
 
 
 #ifdef HAVE_SPEEX
-  printf("cadvfsdgvssbsdfbdgfffffffffffffffffffffffffffffffffffffffff\n");
-#endif
-
-#ifdef HAVE_SPEEX
   // Nothing special
 #else
     if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == SPEEX_STRING_DESCRIPTION)

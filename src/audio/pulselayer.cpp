@@ -325,15 +325,17 @@ void PulseLayer::writeToSpeaker( void )
       normalAvail = _mainSndRingBuffer.AvailForGet();
       toGet = (normalAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof(SFLDataFormat);
       if (toGet) {
-	_mainSndRingBuffer.Get(out, toGet, 100);
-	_mainSndRingBuffer.Discard(toGet);
+	    _mainSndRingBuffer.Get(out, toGet, 100);
+	    _mainSndRingBuffer.Discard(toGet);
       } 
       else {
-	  bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
+	    bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
       }
       pa_stream_write( playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
     }
   }
+
+  //if(out)   pa_xfree(out);
 }
  
 void PulseLayer::readFromMic( void )
