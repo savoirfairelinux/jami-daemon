@@ -223,25 +223,25 @@ void SIPCall::sdpAddMediaDescription(pj_pool_t* pool)
     med->desc.port = getLocalExternAudioPort();
     med->desc.transport = pj_str((char*)"RTP/AVP");
     
-    CodecsMap::iterator itr;
-    itr = _codecMap.getCodecsMap().begin();
-    int count = _codecMap.getCodecsNumber();
+    CodecOrder::iterator itr;
+
+    itr = _codecMap.getActiveCodecs().begin();
+    int count = _codecMap.getActiveCodecs().size();
     med->desc.fmt_count = count;
     
     int i = 0;
-    while(itr != _codecMap.getCodecsMap().end()) {
+    while(itr != _codecMap.getActiveCodecs().end()) {
         std::ostringstream format;
-        format << (*itr).first;
+        format << *itr;
         pj_strdup2(pool, &med->desc.fmt[i], format.str().data());
         
-        AudioCodec *codec = (*itr).second;
         pjmedia_sdp_rtpmap rtpMap;
         rtpMap.pt = med->desc.fmt[i];
-        rtpMap.enc_name = pj_str((char *)codec->getCodecName().data());
-        rtpMap.clock_rate = codec->getClockRate();
-        if(codec->getChannel() > 1) {
+        rtpMap.enc_name = pj_str((char *)_codecMap.getCodecName(*itr).data());
+        rtpMap.clock_rate = _codecMap.getSampleRate(*itr);
+        if(_codecMap.getChannel(*itr) > 1) {
             std::ostringstream channel;
-            channel << codec->getChannel();
+            channel << _codecMap.getChannel(*itr);
             rtpMap.param = pj_str((char *)channel.str().data());
         } else
             rtpMap.param.slen = 0;
