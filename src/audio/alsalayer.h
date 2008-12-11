@@ -309,11 +309,6 @@ class AlsaLayer : public AudioLayer {
     snd_pcm_uframes_t _periodSize;
 
     /**
-     * Handle on asynchronous event
-     */
-    snd_async_handler_t *_AsyncHandler;
-    
-    /**
      * Volume is controlled by the application. Data buffer are modified here to adjust to the right volume selected by the user on the main interface
      * @param buffer  The buffer to adjust
      * @param len The number of bytes

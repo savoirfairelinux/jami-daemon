@@ -32,7 +32,6 @@ bool ringtone_thread_is_running;
     , _PlaybackHandle(NULL)
     , _CaptureHandle(NULL)
     , _periodSize()
-    , _AsyncHandler(NULL)
     , _audioPlugin()
     , _inChannel()
     , _outChannel()
@@ -208,7 +207,7 @@ AlsaLayer::playSamples(void* buffer, int toCopy, bool isTalking)
 AlsaLayer::putUrgent(void* buffer, int toCopy)
 {
     if ( _PlaybackHandle ){ 
-        fillHWBuffer();
+        //fillHWBuffer();
         int a = _urgentBuffer.AvailForPut();
         if( a >= toCopy ){
             return _urgentBuffer.Put( buffer , toCopy , _defaultVolume );
@@ -268,9 +267,12 @@ void AlsaLayer::restorePulseAppsVolume( void ){}
     void
 AlsaLayer::playTones( void )
 {
+    int frames;
+    int maxBytes;
 
-    int frames = _periodSize ; 
-    int maxBytes = frames * sizeof(SFLDataFormat) ;
+    frames = _periodSize  ; 
+    frames = 940  ; 
+    maxBytes = frames * sizeof(SFLDataFormat)  ;
     SFLDataFormat* out = (SFLDataFormat*)malloc(maxBytes * sizeof(SFLDataFormat));
     if( _talk ) {}
     else {
@@ -371,6 +373,7 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
         _debugAlsa("(%i) The choosen period size %d bytes is not supported by your hardware.\nUsing %d instead.\n ", type, (int)periodsize, (int)exact_lvalue);
     }
     periodsize = exact_lvalue;
+    _periodSize = exact_lvalue;
     /* Set the number of fragments */
     exact_ivalue = periods;
     dir=0;
@@ -437,7 +440,7 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     
     if(flag == SFL_PCM_BOTH || flag == SFL_PCM_PLAYBACK)
     {
-        if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK )) < 0){
+        if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
             _debugAlsa("Error while opening playback device %s\n",  pcm_p.c_str());
             setErrorMessage( ALSA_PLAYBACK_DEVICE );
             return false;
@@ -484,7 +487,7 @@ AlsaLayer::write(void* buffer, int length)
     int err = snd_pcm_writei( _PlaybackHandle , buffer , frames );
     switch(err) {
         case -EAGAIN: 
-            _debugAlsa(" (%s)\n", snd_strerror( err ));
+            _debugAlsa("EAGAIN (%s)\n", snd_strerror( err ));
             snd_pcm_resume( _PlaybackHandle );
             break;
         case -EPIPE: 
@@ -493,7 +496,7 @@ AlsaLayer::write(void* buffer, int length)
             snd_pcm_writei( _PlaybackHandle , buffer , frames );
             break;
         case -ESTRPIPE:
-            _debugAlsa(" (%s)\n", snd_strerror(err));
+            _debugAlsa(" ESTRPIPE(%s)\n", snd_strerror(err));
             snd_pcm_resume( _PlaybackHandle );
             break;
         case -EBADFD:
