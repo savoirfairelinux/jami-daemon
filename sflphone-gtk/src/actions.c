@@ -141,19 +141,25 @@ sflphone_hung_up( call_t * c)
 	void
 sflphone_fill_account_list(gboolean toolbarInitialized)
 {
+
+    gchar** array;
+    gchar** accountID;
+    unsigned int i;
+
 	account_list_clear ( );
 
-	gchar ** array = (gchar **)dbus_account_list();
-	gchar ** accountID;
-	for (accountID = array; *accountID; accountID++)
-	{
-		account_t * a = g_new0(account_t,1);
-		a->accountID = g_strdup(*accountID);
-		account_list_add(a);
-	}
-	g_strfreev (array);
+	array = (gchar **)dbus_account_list();
+    if(array)
+    {
+	    for (accountID = array; *accountID; accountID++)
+	    {
+		    account_t * a = g_new0(account_t,1);
+		    a->accountID = g_strdup(*accountID);
+		    account_list_add(a);
+	    }
+	    g_strfreev (array);
+    }
 
-	unsigned int i;
 	for( i = 0; i < account_list_get_size(); i++)
 	{
 		account_t  * a = account_list_get_nth (i);
