@@ -21,6 +21,11 @@
 
 #include "alsalayer.h"
 
+void* ringtoneThreadEntry( void *ptr);
+
+static pthread_t ringtone_thread;
+bool ringtone_thread_is_running;
+
 // Constructor
     AlsaLayer::AlsaLayer( ManagerImpl* manager ) 
     : AudioLayer( manager , ALSA ) 
@@ -35,6 +40,9 @@
       , IDSoundCards() 
 {
     _debug(" Constructor of AlsaLayer called\n");
+
+    // The flag to stop the ringtone thread loop
+    ringtone_thread_is_running = false;
 }
 
 // Destructor
@@ -44,6 +52,9 @@ AlsaLayer::~AlsaLayer (void)
     closeCaptureStream();
     closePlaybackStream();
     deviceClosed = true;
+
+    ringtone_thread_is_running = false;
+    pthread_join(ringtone_thread, NULL);
 }
 
     void
@@ -53,6 +64,8 @@ AlsaLayer::closeLayer()
     closeCaptureStream();
     closePlaybackStream();
     deviceClosed = true;
+    
+    ringtone_thread_is_running = false;
 }
 
     bool 
@@ -132,10 +145,17 @@ AlsaLayer::stopStream(void)
     }
 }
 
-void AlsaLayer::AlsaCallBack( snd_async_handler_t* pcm_callback )
+
+void* ringtoneThreadEntry( void *ptr )
 { 
-    ( ( AlsaLayer *)snd_async_handler_get_callback_private( pcm_callback )) -> playTones();
+    while( ringtone_thread_is_running )
+    {
+        ( ( AlsaLayer *) ptr) -> playTones();
+
+    }
+    return 0;
 }
+
 
     void 
 AlsaLayer::fillHWBuffer( void)
@@ -248,6 +268,7 @@ void AlsaLayer::restorePulseAppsVolume( void ){}
     void
 AlsaLayer::playTones( void )
 {
+
     int frames = _periodSize ; 
     int maxBytes = frames * sizeof(SFLDataFormat) ;
     SFLDataFormat* out = (SFLDataFormat*)malloc(maxBytes * sizeof(SFLDataFormat));
@@ -267,6 +288,7 @@ AlsaLayer::playTones( void )
     // free the temporary data buffer 
     free( out ); out = 0;
 }
+
 
 bool
 AlsaLayer::isPlaybackActive(void) {
@@ -383,10 +405,21 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
         return false;
     }
     if( type == 1 ){
-        if( (err = snd_async_add_pcm_handler( &_AsyncHandler, pcm_handle , AlsaCallBack, this ) < 0)){
+        /*if( (err = snd_async_add_pcm_handler( &_AsyncHandler, pcm_handle , AlsaCallBack, this ) < 0)){
             _debugAlsa(" Unable to install the async callback handler (%s)\n", snd_strerror(err));
             return false;
+        }*/
+        
+        // So the loop could start when the ringtone thread entry function is reached
+        ringtone_thread_is_running = true;
+
+        
+        if( pthread_create(&ringtone_thread, NULL, ringtoneThreadEntry, this) != 0 )
+        {
+            _debug("Unable to start the ringtone posix thread\n");
+            return false;
         }
+
     }
 
     snd_pcm_sw_params_free( swparams );

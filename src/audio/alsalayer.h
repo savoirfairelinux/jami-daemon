@@ -22,6 +22,8 @@
 
 #include "audiolayer.h"
 
+#include <pthread.h>
+
 class RingBuffer;
 class ManagerImpl;
 
@@ -202,6 +204,15 @@ class AlsaLayer : public AudioLayer {
      */
     void setPlaybackVolume( double volume );
 
+    /**
+     * Callback used for asynchronous playback.
+     * Write tones buffer to the alsa internal ring buffer.
+     */
+    void playTones( void );
+
+
+
+
   private:
   
     // Copy Constructor
@@ -232,13 +243,7 @@ class AlsaLayer : public AudioLayer {
      * Called when a certain amount of data is written ot the device
      * @param pcm_callback  The callback pointer
      */
-    static void AlsaCallBack( snd_async_handler_t* pcm_callback);
-
-    /**
-     * Callback used for asynchronous playback.
-     * Write tones buffer to the alsa internal ring buffer.
-     */
-    void playTones( void );
+    //static void AlsaCallBack( snd_async_handler_t* pcm_callback);
 
     /**
      * Open the specified device.
