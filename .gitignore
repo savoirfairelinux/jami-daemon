@@ -49,28 +49,27 @@ doc/*.html
 /src/sflphone
 /src/.libs
 
-# Ignore built DBUS stuff
-/libs/dbus-c++/examples/*
-/libs/dbus-c++/include
-/libs/dbus-c++/*/*.libs*
-/libs/dbus-c++/libtool
-/libs/dbus-c++/autom4te*
-/libs/dbus-c++/config.log
-/libs/dbus-c++/config.status
-/libs/dbus-c++/configure
-/libs/dbus-c++/tools/dbus-c++xx-*
-/libs/dbus-c++/tools/dbusxx-*
-/libs/dbus-c++/dbus-c++-1.pc
-/libs/dbus-c++/dbus-c++-1-uninstalled.pc
-/libs/dbus-c++/doc
-/libs/dbus-c++/INSTALL
-/libs/dbus-c++/config.guess
-/libs/dbus-c++/config.sub
-/libs/dbus-c++/depcomp
-/libs/dbus-c++/install-sh
-/libs/dbus-c++/ltmain.sh
-/libs/dbus-c++/missing
 /src/dbus/org.sflphone.SFLphone.service
+
+*.depend
+*i686-pc-linux-gnu
+/libs/pjproject-1.0/build.mak
+/libs/pjproject-1.0/build/os-auto.mak
+/libs/pjproject-1.0/config.log
+/libs/pjproject-1.0/config.status
+/libs/pjproject-1.0/pjlib-util/build/os-auto.mak
+/libs/pjproject-1.0/pjlib/build/os-auto.mak
+/libs/pjproject-1.0/pjlib/include/pj/compat/m_auto.h
+/libs/pjproject-1.0/pjlib/include/pj/compat/os_auto.h
+/libs/pjproject-1.0/pjlib/include/pj/config_site.h
+/libs/pjproject-1.0/pjmedia/build/os-auto.mak
+/libs/pjproject-1.0/pjmedia/include/pjmedia-codec/config_auto.h
+/libs/pjproject-1.0/pjmedia/include/pjmedia/config_auto.h
+/libs/pjproject-1.0/pjsip/build/os-auto.mak
+/libs/pjproject-1.0/pjsip/include/pjsip/sip_autoconf.h
+/libs/pjproject-1.0/third_party/build/os-auto.mak
+/libs/pjproject-1.0/third_party/build/portaudio/os-auto.mak
+
 
 # Ignore sflphone-gtk stuff
 /sflphone-gtk/config.*
