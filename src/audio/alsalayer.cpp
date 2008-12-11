@@ -270,7 +270,7 @@ AlsaLayer::playTones( void )
     int frames;
     int maxBytes;
 
-    frames = _periodSize  ; 
+    //frames = _periodSize  ; 
     frames = 940  ; 
     maxBytes = frames * sizeof(SFLDataFormat)  ;
     SFLDataFormat* out = (SFLDataFormat*)malloc(maxBytes * sizeof(SFLDataFormat));
