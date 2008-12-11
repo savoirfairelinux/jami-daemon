@@ -19,6 +19,7 @@ libtool
 # The test binary
 *Tester
 *orig
+*.1
 
 # Ignore rendered docs
 doc/doxygen/core-doc
