@@ -1,7 +1,5 @@
 /*
  *  Copyright (C) 2008 Savoir-Faire Linux inc.
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author: Jerome Oufella <jerome.oufella@savoirfairelinux.com> 
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -105,6 +103,16 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     ost::MutexLock lock( _mutex );
 
+    
+    /*void **hint;
+    int r = snd_device_name_hint(-1, "pcm", &hint);
+
+    while( *hint ){
+        printf("%s\n", snd_device_name_get_hint(*hint, "DESC"));
+        ++hint;
+    }*/
+
+
     std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
     std::string pcmc = buildDeviceTopo( PCM_PLUGHW , indexIn , 0);
 
@@ -150,7 +158,7 @@ void* ringtoneThreadEntry( void *ptr )
     while( ringtone_thread_is_running )
     {
         ( ( AlsaLayer *) ptr) -> playTones();
-
+        sleep(0.1);
     }
     return 0;
 }
@@ -277,13 +285,12 @@ AlsaLayer::playTones( void )
     if( _talk ) {}
     else {
         AudioLoop *tone = _manager -> getTelephoneTone();
-        int spkrVol = _manager -> getSpkrVolume();
         if( tone != 0 ){
-            tone -> getNext( out , frames , spkrVol );
+            tone -> getNext( out , frames , _manager->getSpkrVolume() );
             write( out , maxBytes );
         } 
         else if( ( tone=_manager->getTelephoneFile() ) != 0 ){
-            tone ->getNext( out , frames , spkrVol );
+            tone ->getNext( out , frames , _manager->getSpkrVolume() );
             write( out , maxBytes );
         }
     }
@@ -407,6 +414,7 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
         _debugAlsa(" Cannot set sw parameters (%s)\n", snd_strerror(err)); 
         return false;
     }
+
     if( type == 1 ){
         /*if( (err = snd_async_add_pcm_handler( &_AsyncHandler, pcm_handle , AlsaCallBack, this ) < 0)){
             _debugAlsa(" Unable to install the async callback handler (%s)\n", snd_strerror(err));
@@ -415,14 +423,11 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
         
         // So the loop could start when the ringtone thread entry function is reached
         ringtone_thread_is_running = true;
-
-        
         if( pthread_create(&ringtone_thread, NULL, ringtoneThreadEntry, this) != 0 )
         {
             _debug("Unable to start the ringtone posix thread\n");
             return false;
         }
-
     }
 
     snd_pcm_sw_params_free( swparams );
