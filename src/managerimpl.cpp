@@ -274,6 +274,11 @@ ManagerImpl::answerCall(const CallID& id)
     return false;
   }
 
+  if (hasCurrentCall()) {
+    _debug("* Manager Info: there is currently a call, try to hold it\n");
+    onHoldCall(getCurrentCallId());
+  }
+
   if (!getAccountLink(accountid)->answer(id)) {
     // error when receiving...
     removeCallAccount(id);
