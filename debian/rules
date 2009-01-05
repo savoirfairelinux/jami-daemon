@@ -20,9 +20,8 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	./autogen.sh
-	./configure --prefix=/usr --with-debug
-	cd sflphone-gtk; ./autogen.sh; ./configure --prefix=/usr
+	./autogen.sh --prefix=/usr --with-debug
+	cd sflphone-gtk; ./autogen.sh --prefix=/usr
 	cd libs/pjproject-1.0; ./configure
 	touch configure-stamp
 
@@ -35,7 +34,7 @@ build-arch-stamp: configure-stamp
 
        # Add here commands to compile the arch part of the package.
 	$(MAKE) 
-	cd sflphone-gtk; $(MAKE)
+	cd sflphone-gtk; make
 	cd libs/pjproject-1.0; $(MAKE) dep; $(MAKE)
 	touch $@
 
