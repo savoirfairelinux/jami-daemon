@@ -1,31 +1,30 @@
 data_installdir=$(datadir)/man/man1
 
-PODILES=\
+SECTION="1"
+RELEASE_VERSION="0.9.2"
+
+TEMPLATES=\
          sflphone-gtk.pod \
          sflphoned.pod
 
-TFILES=\
+MANPAGES=\
 	sflphone.1 \
 	sflphoned.1 \
 	sflphone-gtk.1
 
-PODTOMAN=pod2man
+POD2MAN=pod2man
 
-EXTRA_DIST= $(PODFILES)
+EXTRA_DIST= $(MANPAGES)
 
-all:    $(TFILES)
+all:    $(MANPAGES)
 
-SUFFIXES=.po .mo
+SUFFIXES=.pod .1
 
-sflphone.1:
-	pod2man --section=1 --release="0.9.2" --center "" sflphone-gtk.pod > sflphone.1
-sflphoned.1:
-	pod2man --section=1 --release="0.9.2" --center "" sflphoned.pod > sflphoned.1
-sflphone-gtk.1:
-	pod2man --section=1 --release="0.9.2" --center "" sflphone-gtk.pod > sflphone-gtk.1
+.pod.1:
+	$(POD2MAN) --section=$(SECTION) --release=$(RELEASE_VERSION) --center "" $< > $@ 
 
 install-data-local:
-	@catalogs='$(TFILES)'; \
+	@catalogs='$(MANPAGES)'; \
         for i in $$catalogs; do \
                 destdir=$(data_installdir); \
                 $(mkinstalldirs) $(data_installdir); \
@@ -34,7 +33,7 @@ install-data-local:
         done    
 
 uninstall-local:
-	@catalogs='$(TFILES)'; \
+	@catalogs='$(MANPAGES)'; \
         for i in $$catalogs; do \
                 destdir=$(data_installdir); \
                 rm -f $(data_installdir)/$$i; \

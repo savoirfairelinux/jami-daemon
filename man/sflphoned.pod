@@ -22,6 +22,10 @@ B<sflphoned> is developed in Montreal by Savoir-Faire Linux Inc. The active deve
 
 This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>.
 
+=head1 SEE ALSO
+
+B<sflphone>(1), B<sflphone-gtk>(1)
+
 =head1 COPYRIGHT
 
 This program is free software; you can redistribute it and/or modify it
