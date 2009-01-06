@@ -24,6 +24,9 @@ void* ringtoneThreadEntry( void *ptr);
 static pthread_t ringtone_thread;
 bool ringtone_thread_is_running;
 
+pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
 // Constructor
     AlsaLayer::AlsaLayer( ManagerImpl* manager ) 
     : AudioLayer( manager , ALSA ) 
@@ -155,11 +158,19 @@ AlsaLayer::stopStream(void)
 
 void* ringtoneThreadEntry( void *ptr )
 { 
-    while( ringtone_thread_is_running )
-    {
+    //while( ringtone_thread_is_running )
+    //{
         ( ( AlsaLayer *) ptr) -> playTones();
-        sleep(0.1);
+        //sleep(0.1);
+    //}
+    /*
+    pthread_mutex_lock(&mut);
+    while( ((AlsaLayer*)ptr)->_manager->getTelephoneTone() == NULL )
+    {
+        pthread_cond_wait(&cond, &mut);
     }
+    ( AlsaLayer *) ptr -> playTones();
+    pthread_mutex_unlock(&mut);*/
     return 0;
 }
 
@@ -214,16 +225,24 @@ AlsaLayer::playSamples(void* buffer, int toCopy, bool isTalking)
     int
 AlsaLayer::putUrgent(void* buffer, int toCopy)
 {
+    int nbBytes = 0;
+
+    pthread_mutex_lock(&mut);
+
     if ( _PlaybackHandle ){ 
         //fillHWBuffer();
         int a = _urgentBuffer.AvailForPut();
         if( a >= toCopy ){
-            return _urgentBuffer.Put( buffer , toCopy , _defaultVolume );
+            nbBytes = _urgentBuffer.Put( buffer , toCopy , _defaultVolume );
         } else {
-            return _urgentBuffer.Put( buffer , a , _defaultVolume ) ;
+            nbBytes = _urgentBuffer.Put( buffer , a , _defaultVolume ) ;
         }
+        _debug("Wake up the ringtone thread\n");
+        pthread_cond_broadcast(&cond);
     }
-    return 0;
+
+    pthread_mutex_unlock(&mut);
+    return nbBytes;
 }
 
     int
@@ -278,6 +297,14 @@ AlsaLayer::playTones( void )
     int frames;
     int maxBytes;
 
+    pthread_mutex_lock(&mut);
+    while(!_manager -> getTelephoneTone() && !_manager->getTelephoneFile())
+    {
+        _debug("Make the ringtone thread wait\n");
+        pthread_cond_wait(&cond, &mut);
+    }
+
+
     //frames = _periodSize  ; 
     frames = 940  ; 
     maxBytes = frames * sizeof(SFLDataFormat)  ;
@@ -296,6 +323,7 @@ AlsaLayer::playTones( void )
     }
     // free the temporary data buffer 
     free( out ); out = 0;
+    pthread_mutex_unlock(&mut);
 }
 
 
