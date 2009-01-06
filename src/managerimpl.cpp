@@ -865,6 +865,7 @@ ManagerImpl::congestion () {
 void
 ManagerImpl::ringback () {
   playATone(Tone::TONE_RINGTONE);
+  getAudioDriver()->trigger_thread();
 }
 
 /**
@@ -892,17 +893,19 @@ ManagerImpl::ringtone()
     bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
     _toneMutex.leaveMutex(); 
     if (loadFile) {
-      _toneMutex.enterMutex(); 
-      _audiofile.start();
-      _toneMutex.leaveMutex(); 
-    if(CHECK_INTERFACE( layer, ALSA )){
-      int size = _audiofile.getSize();
-      SFLDataFormat output[ size ];
-      _audiofile.getNext(output, size , 100);
-      audiolayer->putUrgent( output , size );}
-    else{
-      audiolayer->startStream();
-    }
+        _toneMutex.enterMutex(); 
+        _audiofile.start();
+        _toneMutex.leaveMutex(); 
+        if(CHECK_INTERFACE( layer, ALSA )){
+            int size = _audiofile.getSize();
+            SFLDataFormat output[ size ];
+            _audiofile.getNext(output, size , 100);
+            audiolayer->putUrgent( output , size );
+            audiolayer->trigger_thread();
+        }
+        else{
+        audiolayer->startStream();
+        }
     } else {
       ringback();
     }

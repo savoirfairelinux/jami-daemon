@@ -86,6 +86,8 @@ class AudioLayer {
 
     virtual void closeLayer( void ) = 0;
 
+    virtual void trigger_thread(void)=0;
+
     /**
      * Check if no devices are opened, otherwise close them.
      * Then open the specified devices by calling the private functions open_device

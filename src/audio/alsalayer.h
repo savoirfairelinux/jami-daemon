@@ -48,6 +48,8 @@ class AlsaLayer : public AudioLayer {
      */
     ~AlsaLayer(void);
 
+    void trigger_thread(void);
+
     void closeLayer( void );
 
     /**
@@ -209,8 +211,6 @@ class AlsaLayer : public AudioLayer {
      * Write tones buffer to the alsa internal ring buffer.
      */
     void playTones( void );
-
-
 
 
   private:

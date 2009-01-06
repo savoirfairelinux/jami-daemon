@@ -36,6 +36,8 @@ class PulseLayer : public AudioLayer {
 
     void closeLayer( void );
 
+    void trigger_thread(void){}
+
     /**
      * Check if no devices are opened, otherwise close them.
      * Then open the specified devices by calling the private functions open_device

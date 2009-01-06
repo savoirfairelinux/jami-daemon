@@ -158,11 +158,11 @@ AlsaLayer::stopStream(void)
 
 void* ringtoneThreadEntry( void *ptr )
 { 
-    //while( ringtone_thread_is_running )
-    //{
+    while( ringtone_thread_is_running )
+    {
         ( ( AlsaLayer *) ptr) -> playTones();
         //sleep(0.1);
-    //}
+    }
     /*
     pthread_mutex_lock(&mut);
     while( ((AlsaLayer*)ptr)->_manager->getTelephoneTone() == NULL )
@@ -227,8 +227,6 @@ AlsaLayer::putUrgent(void* buffer, int toCopy)
 {
     int nbBytes = 0;
 
-    pthread_mutex_lock(&mut);
-
     if ( _PlaybackHandle ){ 
         //fillHWBuffer();
         int a = _urgentBuffer.AvailForPut();
@@ -237,13 +235,17 @@ AlsaLayer::putUrgent(void* buffer, int toCopy)
         } else {
             nbBytes = _urgentBuffer.Put( buffer , a , _defaultVolume ) ;
         }
-        _debug("Wake up the ringtone thread\n");
-        pthread_cond_broadcast(&cond);
     }
 
-    pthread_mutex_unlock(&mut);
     return nbBytes;
 }
+
+void AlsaLayer::trigger_thread(void)
+{
+        _debug("Wake up the ringtone thread\n");
+        pthread_cond_broadcast(&cond);
+}
+
 
     int
 AlsaLayer::canGetMic()
@@ -298,12 +300,11 @@ AlsaLayer::playTones( void )
     int maxBytes;
 
     pthread_mutex_lock(&mut);
-    while(!_manager -> getTelephoneTone() && !_manager->getTelephoneFile())
+    while(!_manager-> getTelephoneTone() && !_manager->getTelephoneFile())
     {
         _debug("Make the ringtone thread wait\n");
         pthread_cond_wait(&cond, &mut);
     }
-
 
     //frames = _periodSize  ; 
     frames = 940  ; 
