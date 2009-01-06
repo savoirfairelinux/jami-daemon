@@ -874,46 +874,51 @@ ManagerImpl::ringback () {
   void
 ManagerImpl::ringtone() 
 {
-  if( isRingtoneEnabled() )
-  {
-    std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
-    //if there is no / inside the path
-    if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
-      // check inside global share directory
-      ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
-    }
+    if( isRingtoneEnabled() )
+    {
+        //TODO Comment this because it makes the daemon crashes since the main thread
+        //synchronizes the ringtone thread.
+        
+        std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
+        //if there is no / inside the path
+        if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
+            // check inside global share directory
+            ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
+        }
 
-    AudioLayer* audiolayer = getAudioDriver();
-    int layer = audiolayer->getLayerType();
-    if (audiolayer==0) { return; }
-    int sampleRate  = audiolayer->getSampleRate();
-    AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
+        AudioLayer* audiolayer = getAudioDriver();
+        int layer = audiolayer->getLayerType();
+        if (audiolayer==0) { return; }
+        int sampleRate  = audiolayer->getSampleRate();
+        AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
-    _toneMutex.enterMutex(); 
-    bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
-    _toneMutex.leaveMutex(); 
-    if (loadFile) {
         _toneMutex.enterMutex(); 
-        _audiofile.start();
+         bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
         _toneMutex.leaveMutex(); 
-        if(CHECK_INTERFACE( layer, ALSA )){
-            int size = _audiofile.getSize();
-            SFLDataFormat output[ size ];
-            _audiofile.getNext(output, size , 100);
-            audiolayer->putUrgent( output , size );
-            audiolayer->trigger_thread();
+        if (loadFile) {
+            _toneMutex.enterMutex(); 
+            _audiofile.start();
+            _toneMutex.leaveMutex(); 
+            if(CHECK_INTERFACE( layer, ALSA )){
+                /*int size = _audiofile.getSize();
+                SFLDataFormat output[ size ];
+                _audiofile.getNext(output, size , 100);
+                audiolayer->putUrgent( output , size );
+                audiolayer->trigger_thread();*/
+                ringback();
+            }
+            else{
+                audiolayer->startStream();
+            }
+        } else {
+            ringback();
         }
-        else{
-        audiolayer->startStream();
-        }
-    } else {
-      ringback();
+    
     }
-  }
-  else
-  {
-    ringback();
-  }
+    else
+    {
+        ringback();
+    }
 }
 
   AudioLoop*
