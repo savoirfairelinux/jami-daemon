@@ -16,6 +16,8 @@ AC_ARG_WITH(debug,
 	)
 if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
 	CFLAGS="$CFLAGS -g -DDEBUG -Wall -Wextra"
+else
+	CFLAGS="$CFLAGS -g -Wall -O2"
 fi
 
 AC_PROG_CC
