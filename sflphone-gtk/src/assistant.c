@@ -162,7 +162,7 @@ build_intro()
 {
   GtkWidget *label;
 
-  wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , _("SFLphone 0.8") , _("Welcome to SFLphone!"));
+  wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , _("SFLphone 0.9.2") , _("Welcome to SFLphone!"));
 
   label = gtk_label_new(_("This installation wizard will help you configure an account.")) ;
   gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
