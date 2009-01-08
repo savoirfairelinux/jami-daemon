@@ -8,15 +8,17 @@ POFILES=\
 	 fr.po \
 	 es.po \
 	 de.po \
-      zh_CN.po \
-      zh_HK.po
+     zh_CN.po \
+     zh_HK.po \
+	 ru.po
 
 MOFILES=\
 	 fr.mo \
 	 es.mo \
 	 de.mo \
-      zh_CN.mo \
-      zh_HK.mo
+     zh_CN.mo \
+     zh_HK.mo \
+	 ru.mo
 
 MSGFMT=msgfmt
 MSGMERGE=msgmerge

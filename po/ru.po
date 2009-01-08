@@ -1,134 +1,140 @@
-# SFLphone translation template file. 
-# Copyright (C) 2008 2009 Savoir-Faire Linux Inc
+# Russian translation of SFLphone.
+# Copyright (C) 2008 The Free Software Foundation, Inc.
 # This file is distributed under the GNU General Public License Version 3.
-
-# Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>, 2008 2009.
 #
+# Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>, 2008.
+#
+# POT-Creation-Date: 2007-01-13 01:39+0100\n
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.2\n"
 "Report-Msgid-Bugs-To: sflphoneteam@savoirfairelinux.com\n"
 "POT-Creation-Date: 2008-11-05 16:41-0500\n"
-"PO-Revision-Date: 2009-01-06 10:15-0500\n"
-"Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
-"Language-Team: sflphoneteam@savoirfairelinux.com\n"
+"PO-Revision-Date: 2008-01-07 16:26-0500\n"
+"Last-Translator: Hussein Abdallah <hussein.abdallah@savoirfairelinux.com>\n"
+"Language-Team: Savoir-Faire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: accountlist.c:158
 msgid "Registered"
-msgstr ""
+msgstr "Зарегистрирован"
 
 #: accountlist.c:161
 msgid "Not Registered"
-msgstr ""
+msgstr "Не зарегистрирован"
 
 #: accountlist.c:164
 msgid "Trying..."
-msgstr ""
+msgstr "Пробует..."
 
 #: accountlist.c:167 sflnotify.c:171 sflnotify.c:210
 msgid "Error"
-msgstr ""
+msgstr "Ошибка"
 
 #: accountlist.c:170
 msgid "Bad authentification"
-msgstr ""
+msgstr "Неправильная идентификация"
 
 #: accountlist.c:173
 msgid "Network unreachable"
-msgstr ""
+msgstr "Сеть недоступна"
 
 #: accountlist.c:175
 msgid "Host unreachable"
-msgstr ""
+msgstr "Хост недоступен"
 
 #: accountlist.c:178
 msgid "Invalid"
-msgstr ""
+msgstr "Недействительный"
 
 #: accountwindow.c:143
 msgid "Account settings"
-msgstr ""
+msgstr "Настройки аккаунта"
 
 #: accountwindow.c:155
 msgid "Account parameters"
-msgstr ""
+msgstr "Параметры аккаунта"
 
 #: accountwindow.c:177
+#, fuzzy
 msgid "_Enabled"
-msgstr ""
+msgstr "_Включить"
 
 #: accountwindow.c:183 assistant.c:210 assistant.c:264
 msgid "_Alias"
-msgstr ""
+msgstr "_Псевдоним"
 
 #: accountwindow.c:191
 msgid "_Protocol"
-msgstr ""
+msgstr "Протокол"
 
 #: accountwindow.c:209
 msgid "Unknown"
-msgstr ""
+msgstr "Неизвестный"
 
 #: accountwindow.c:219 assistant.c:218 assistant.c:272
 msgid "_Host name"
-msgstr ""
+msgstr "_Название компьютера"
 
 #: accountwindow.c:227 assistant.c:226 assistant.c:280
 msgid "_User name"
-msgstr ""
+msgstr "_Пользователь"
 
 #: accountwindow.c:238 assistant.c:236 assistant.c:290
 msgid "_Password"
-msgstr ""
+msgstr "Па_роль"
 
 #: accountwindow.c:249
 msgid "_Voicemail box #"
-msgstr ""
+msgstr "_Содержание автоответчика #"
 
 #: accountwindow.c:260 assistant.c:313
 msgid "Network Address Translation"
-msgstr ""
+msgstr "Network Address Translation"
 
 #: accountwindow.c:271 assistant.c:322
 msgid "E_nable STUN"
-msgstr ""
+msgstr "Включить STUN"
 
 #: accountwindow.c:275
 msgid "Enable it if you are behind a firewall, then restart SFLphone"
 msgstr ""
+"Включите это если вы находитесь за сетевым экраном и потом перегрузите "
+"SFLphone"
 
 #: accountwindow.c:279
 msgid "_STUN Server"
-msgstr ""
+msgstr "_STUN-сервер"
 
 #: accountwindow.c:286
 msgid "Format: name.server:port"
-msgstr ""
+msgstr "Формат: имя.сервер:порт"
 
 #: actions.c:57 sflnotify.c:103
 #, c-format
 msgid "%d voice mails"
-msgstr ""
+msgstr "%d речевые сообщения"
 
 #: actions.c:59
 #, c-format
 msgid "%d voice mail"
-msgstr ""
+msgstr "%d речевое сообщение"
 
 #: actions.c:80
 #, c-format
 msgid "%s account- %s"
-msgstr ""
+msgstr "%s аккаунт- %s"
 
 #: actions.c:214
 msgid ""
 "Unable to connect to the SFLphone server.\n"
 "Make sure the daemon is running."
 msgstr ""
+"Невозможно подключиться к SFLphone-серверу.\n"
+"Проверьте если демон работает."
 
 #: actions.c:741
 #, c-format
@@ -138,58 +144,62 @@ msgid ""
 "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</"
 "b> directory in your home( <i>%s</i> )"
 msgstr ""
+"<b>Ошибка: звуковые кодеки не найдены .\n"
+"\n"
+"</b> Звуковые кодеки SFL должны находиться в <i>%s</i> или в <b>.sflphone</"
+"b> каталоге в вашем домашнем каталоге( <i>%s</i> )"
 
 #: assistant.c:138
 msgid "SFLphone account configuration wizard"
-msgstr ""
+msgstr "Мастер настройки SFLphone"
 
 #: assistant.c:165
 msgid "SFLphone 0.8"
-msgstr ""
+msgstr "SFLphone 0.8"
 
 #: assistant.c:165
 msgid "Welcome to SFLphone!"
-msgstr ""
+msgstr "Добро пожаловать в SFLphone!"
 
 #: assistant.c:167
 msgid "This installation wizard will help you configure an account."
-msgstr ""
+msgstr "Этот мастер установки поможет вам настроить ваш аккаунт."
 
 #: assistant.c:182
 msgid "VoIP Protocols"
-msgstr ""
+msgstr "VoIP-протоколы"
 
 #: assistant.c:182
 msgid "Select an account type:"
-msgstr ""
+msgstr "Выберите тип аккаунта:"
 
 #: assistant.c:202
 msgid "SIP account configuration"
-msgstr ""
+msgstr "Настройка SIP-аккаунта"
 
 #: assistant.c:202 assistant.c:256
 msgid "Please fill the following information:"
-msgstr ""
+msgstr "Введите пожалуйста следующие данные"
 
 #: assistant.c:256
 msgid "IAX2 account configuration"
-msgstr ""
+msgstr "Настройка IAX2-аккаунта"
 
 #: assistant.c:313
 msgid "You should probably enable this if you are behind a firewall."
-msgstr ""
+msgstr "Вы наверное должны это включить если вы находитесь за сетевым экраном."
 
 #: assistant.c:329
 msgid "_STUN server"
-msgstr ""
+msgstr "_STUN-сервер"
 
 #: assistant.c:346
 msgid "Account Registration"
-msgstr ""
+msgstr "Регистрация аккаунта"
 
 #: assistant.c:346
 msgid "Congratulations!"
-msgstr ""
+msgstr "Поздравляем!"
 
 #: assistant.c:348
 msgid ""
@@ -198,196 +208,200 @@ msgid ""
 " You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
 msgstr ""
+"Мастер закончил свою работу..\n"
+"\n"
+" Вы можете в любое время проверить статус регистрации или изменить "
+"параметры  ваших аккаунтов в окне Опции / Аккаунты."
 
 #: audioconf.c:150
 #, c-format
 msgid "audio device index for output = %d\n"
-msgstr ""
+msgstr "Индекс звукового устройства = %d\n"
 
 #: audioconf.c:558
 msgid "Name"
-msgstr ""
+msgstr "Имя"
 
 #: audioconf.c:563
 msgid "Frequency"
-msgstr ""
+msgstr "Частота"
 
 #: audioconf.c:568
 msgid "Bitrate"
-msgstr ""
+msgstr "Битрейт"
 
 #: audioconf.c:573
 msgid "Bandwidth"
-msgstr ""
+msgstr "Пропускная способность"
 
 #: audioconf.c:633
 msgid "Pulseaudio"
-msgstr ""
+msgstr "Pulseaudio"
 
 #: audioconf.c:636
 msgid "ALSA"
-msgstr ""
+msgstr "ALSA"
 
 #: audioconf.c:662
 msgid "ALSA plugin"
-msgstr ""
+msgstr "ALSA-плагин"
 
 #: audioconf.c:684
 msgid "Output"
-msgstr ""
+msgstr "Выход"
 
 #: audioconf.c:706
 msgid "Input"
-msgstr ""
+msgstr "Вход"
 
 #: audioconf.c:739
 msgid "_Enable ringtones"
-msgstr ""
+msgstr "Включить звонок"
 
 #: audioconf.c:744
 msgid "Choose a ringtone"
-msgstr ""
+msgstr "Выберите звонок"
 
 #: audioconf.c:749
 msgid "Audio Files"
-msgstr ""
+msgstr "Звуковые файлы"
 
 #: audioconf.c:774
 msgid "Sound Manager"
-msgstr ""
+msgstr "Менеджер звука"
 
 #: audioconf.c:781
 msgid "ALSA configuration"
-msgstr ""
+msgstr "Настройка ALSA"
 
 #: audioconf.c:791
 msgid "Codecs"
-msgstr ""
+msgstr "Кодеки"
 
 #: audioconf.c:799
 msgid "Ringtones"
-msgstr ""
+msgstr "Звонки"
 
 #: calltree.c:208
 #, c-format
 msgid "\"Voicemail\" <%s>"
-msgstr ""
+msgstr "\"Автоответчик\" <%s>"
 
 #: calltree.c:405 calltree.c:407
 msgid "Place a call"
-msgstr ""
+msgstr "Позвонить"
 
 #: calltree.c:414 calltree.c:416
 msgid "Pick up"
-msgstr ""
+msgstr "Взять трубку"
 
 #: calltree.c:424 calltree.c:426
 msgid "Hang up"
-msgstr ""
+msgstr "Положить трубку"
 
 #: calltree.c:434 calltree.c:436
 msgid "Off Hold"
-msgstr ""
+msgstr "Off Hold"
 
 #: calltree.c:445 calltree.c:447
 msgid "On Hold"
-msgstr ""
+msgstr "Задержан"
 
 #: calltree.c:458 calltree.c:460
 msgid "Transfer"
-msgstr ""
+msgstr "Пересылка (трансфер)"
 
 #: calltree.c:470 calltree.c:472
 msgid "History"
-msgstr ""
+msgstr "Журнал"
 
 #: calltree.c:480 calltree.c:484
 msgid "Voicemail"
-msgstr ""
+msgstr "Автоответчик"
 
 #: configwindow.c:371
 msgid "Protocol"
-msgstr ""
+msgstr "Протокол"
 
 #: configwindow.c:378
 msgid "Status"
-msgstr ""
+msgstr "Статус"
 
 #: configwindow.c:470
 msgid "Desktop Notification"
-msgstr ""
+msgstr "Извещение на рабочем столе"
 
 #: configwindow.c:478
 msgid "_Enable"
-msgstr ""
+msgstr "_Включить"
 
 #: configwindow.c:483
 msgid "_Notify voice mails"
-msgstr ""
+msgstr "_Предупредить про речевые сообщения"
 
 #: configwindow.c:489
 msgid "System Tray Icon"
-msgstr ""
+msgstr "System Tray Icon"
 
 #: configwindow.c:497
 msgid "_Popup main window on incoming call"
-msgstr ""
+msgstr "_Показать главное окно при входящем звонке"
 
 #: configwindow.c:502
 msgid "Ne_ver popup main window"
-msgstr ""
+msgstr "Никогда не показывать главное окно"
 
 #: configwindow.c:506
 msgid "_Start hidden"
-msgstr ""
+msgstr "_Начать спрятанным"
 
 #: configwindow.c:512
 msgid "Calls History"
-msgstr ""
+msgstr "Журнал звонков"
 
 #: configwindow.c:520
 msgid "_Maximum number of calls"
-msgstr ""
+msgstr "_Максимальное количество звонков"
 
 #: configwindow.c:536
 msgid "PulseAudio sound server"
-msgstr ""
+msgstr "Сервер звука PulseAudio"
 
 #: configwindow.c:544
 msgid "_Control running applications volume"
-msgstr ""
+msgstr "_Начать спрятанным "
 
 #: configwindow.c:557
 msgid "SIP Port"
-msgstr ""
+msgstr "SIP-порт"
 
 #: configwindow.c:566
 msgid "Apply"
-msgstr ""
+msgstr "Применить"
 
 #: configwindow.c:570
 msgid "Port:"
-msgstr ""
+msgstr "Порт:"
 
 #: configwindow.c:600
 msgid "Preferences"
-msgstr ""
+msgstr "Предпочтения"
 
 #: configwindow.c:620
 msgid "General Settings"
-msgstr ""
+msgstr "Общие настройки"
 
 #: configwindow.c:625
 msgid "Audio Settings"
-msgstr ""
+msgstr "Настройки звука"
 
 #: configwindow.c:649
 msgid "Accounts"
-msgstr ""
+msgstr "Аккаунты"
 
 #: configwindow.c:661
 msgid "Accounts previously setup"
-msgstr ""
+msgstr "Существующие аккаунты"
 
 #: errors.c:28
 msgid ""
@@ -395,6 +409,9 @@ msgid ""
 "\n"
 "Error while opening playback device"
 msgstr ""
+"<b>ALSA-nпредупреждение</b>\n"
+"\n"
+"Ошибка во время активирования устройства проигрывания"
 
 #: errors.c:31
 msgid ""
@@ -402,6 +419,9 @@ msgid ""
 "\n"
 "Error while opening capture device"
 msgstr ""
+"<b>ALSA-nпредупреждение</b>\n"
+"\n"
+"Ошибка во время активирования устройства входа"
 
 #: errors.c:34
 msgid ""
@@ -409,160 +429,170 @@ msgid ""
 "\n"
 "Pulseaudio is not running"
 msgstr ""
+"<b>Предупреждение Pulseaudio</b>\n"
+"\n"
+"Pulseaudio не работает"
 
 #: historyfilter.c:45 historyfilter.c:63 historyfilter.c:78
 msgid "Search"
-msgstr ""
+msgstr "Поиск"
 
 #: mainwindow.c:69
 msgid ""
 "<b>There is one call in progress.</b>\n"
 "Do you still want to quit?"
 msgstr ""
+"<b>Звонок ещё не закончился</b>\n"
+"Вы уверенны что хотите выйти?"
 
 #: mainwindow.c:73
 msgid ""
 "<b>There are calls in progress.</b>\n"
 "Do you still want to quit?"
 msgstr ""
+"<b>Несколько звонков ещё не окончены</b>\n"
+"Вы уверенны что хотите выйти?"
 
 #: menus.c:130
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
-msgstr ""
+msgstr "SFLphone - SIP и IAX2-совместимый VoIP-клиент "
 
 #: menus.c:133
 msgid "About SFLphone"
-msgstr ""
+msgstr "О SFLphone"
 
 #: menus.c:156
 msgid "_Help"
-msgstr ""
+msgstr "_Помощь"
 
 #: menus.c:273
 msgid "_New call"
-msgstr ""
+msgstr "_Новый звонок"
 
 #: menus.c:285 menus.c:769
 msgid "_Pick up"
-msgstr ""
+msgstr "_Взять трубку"
 
 #: menus.c:295 menus.c:781
 msgid "_Hang up"
-msgstr ""
+msgstr "_Положить трубку"
 
 #: menus.c:305 menus.c:793
 msgid "On _Hold"
-msgstr ""
+msgstr "Звонок удерживается"
 
 #: menus.c:321
 msgid "_Account Assistant"
-msgstr ""
+msgstr "_Мастер настройки аккаунтов"
 
 #: menus.c:351
 msgid "_Call"
-msgstr ""
+msgstr "_Звонок"
 
 #: menus.c:497
 msgid "History empty"
-msgstr ""
+msgstr "Журнал пуст"
 
 #: menus.c:538
 msgid "_Clear history"
-msgstr ""
+msgstr "_Стереть журнал"
 
 #: menus.c:550
 msgid "_Accounts"
-msgstr ""
+msgstr "_Аккаунты"
 
 #: menus.c:565
 msgid "_Edit"
-msgstr ""
+msgstr "_Правка"
 
 #: menus.c:625
 msgid "_Dialpad"
-msgstr ""
+msgstr "_Клавиатура"
 
 #: menus.c:637
 msgid "_Volume controls"
-msgstr ""
+msgstr "_Настройки громкости"
 
 #: menus.c:646
 msgid "_Search history"
-msgstr ""
+msgstr "_Искать в журнале"
 
 #: menus.c:654
 msgid "_View"
-msgstr ""
+msgstr "_Вид"
 
 #: menus.c:876
 msgid "_Call back"
-msgstr ""
+msgstr "_Перезвонить"
 
 #: sflnotify.c:34 sflnotify.c:100
 #, c-format
 msgid "%s account: %s"
-msgstr ""
+msgstr "%s аккаунт: %s"
 
 #: sflnotify.c:37
 #, c-format
 msgid "<i>From:</i> %s"
-msgstr ""
+msgstr "<i>От:</i> %s"
 
 #: sflnotify.c:52
 msgid "Accept"
-msgstr ""
+msgstr "Согласиться"
 
 #: sflnotify.c:53
 msgid "Refuse"
-msgstr ""
+msgstr "Отказаться"
 
 #: sflnotify.c:54 sflnotify.c:117 sflnotify.c:154
 msgid "Ignore"
-msgstr ""
+msgstr "Пропустить"
 
 #: sflnotify.c:136
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
-msgstr ""
+msgstr "Звонок с аккаунтом  <i>%s</i>"
 
 #: sflnotify.c:140
 msgid "Current account"
-msgstr ""
+msgstr "Нынешний аккаунт"
 
 #: sflnotify.c:169
 msgid "You haven't setup any accounts"
-msgstr ""
+msgstr "Вы не настроили ни одного аккаунта"
 
 #: sflnotify.c:185 sflnotify.c:224
 msgid "Setup Accounts"
-msgstr ""
+msgstr "Настроить аккаунты"
 
 #: sflnotify.c:208
 msgid "You have no registered accounts"
-msgstr ""
+msgstr "У вас нет зарегистрированных аккаунтов"
 
 #: sliders.c:161
 msgid "Speakers volume"
-msgstr ""
+msgstr "Громкость"
 
 #: sliders.c:163
 msgid "Mic volume"
-msgstr ""
+msgstr "Громкость микрофона"
 
 #: statusicon.c:91
 msgid "_Show main window"
-msgstr ""
+msgstr "_Показать главное окно"
 
 #: statusicon.c:124
 #, c-format
 msgid "SFLphone - %i accounts registered"
-msgstr ""
+msgstr "SFLphone - Зарегистрировано %i аккаунтов"
 
 #: timestamp.c:45
 msgid "<small>Missed call</small>"
-msgstr ""
+msgstr "<small>Пропущенный звонок</small>"
 
 #: timestamp.c:63
 #, c-format
 msgid "<small>Duration:</small> %s"
-msgstr ""
+msgstr "<small>Время:</small> %s"
+
+#~ msgid "_Enabled \" <%s>"
+#~ msgstr "_Включен\" <%s>"
