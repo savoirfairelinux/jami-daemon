@@ -1,19 +1,17 @@
-# Russian translation of SFLphone.
-# Copyright (C) 2008 The Free Software Foundation, Inc.
-# This file is distributed under the GNU General Public License Version 3.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-# Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>, 2008.
-#
-# POT-Creation-Date: 2007-01-13 01:39+0100\n
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: 0.9.2\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: sflphoneteam@savoirfairelinux.com\n"
 "POT-Creation-Date: 2008-11-05 16:41-0500\n"
-"PO-Revision-Date: 2008-01-07 16:26-0500\n"
-"Last-Translator: Hussein Abdallah <hussein.abdallah@savoirfairelinux.com>\n"
-"Language-Team: Savoir-Faire Linux Inc <sflphoneteam@savoirfairelinux.com>\n"
+"PO-Revision-Date: 2009-01-08 15:19 GMT-5\n"
+"Last-Translator: HUSSEIN ABDALLAH <hussein.abdallah@savoirfairelinux.com>\n"
+"Language-Team:  RUSSIAN <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -28,7 +26,7 @@ msgstr "Не зарегистрирован"
 
 #: accountlist.c:164
 msgid "Trying..."
-msgstr "Пробует..."
+msgstr "Пробует подключиться..."
 
 #: accountlist.c:167 sflnotify.c:171 sflnotify.c:210
 msgid "Error"
@@ -59,9 +57,8 @@ msgid "Account parameters"
 msgstr "Параметры аккаунта"
 
 #: accountwindow.c:177
-#, fuzzy
 msgid "_Enabled"
-msgstr "_Включить"
+msgstr "_Включен"
 
 #: accountwindow.c:183 assistant.c:210 assistant.c:264
 msgid "_Alias"
@@ -69,7 +66,7 @@ msgstr "_Псевдоним"
 
 #: accountwindow.c:191
 msgid "_Protocol"
-msgstr "Протокол"
+msgstr "Пр_отокол"
 
 #: accountwindow.c:209
 msgid "Unknown"
@@ -77,11 +74,11 @@ msgstr "Неизвестный"
 
 #: accountwindow.c:219 assistant.c:218 assistant.c:272
 msgid "_Host name"
-msgstr "_Название компьютера"
+msgstr "Имя или IP-адрес _сервера"
 
 #: accountwindow.c:227 assistant.c:226 assistant.c:280
 msgid "_User name"
-msgstr "_Пользователь"
+msgstr "Имя или _номер пользователя"
 
 #: accountwindow.c:238 assistant.c:236 assistant.c:290
 msgid "_Password"
@@ -89,7 +86,7 @@ msgstr "Па_роль"
 
 #: accountwindow.c:249
 msgid "_Voicemail box #"
-msgstr "_Содержание автоответчика #"
+msgstr "Номер _автоответчика #"
 
 #: accountwindow.c:260 assistant.c:313
 msgid "Network Address Translation"
@@ -102,7 +99,7 @@ msgstr "Включить STUN"
 #: accountwindow.c:275
 msgid "Enable it if you are behind a firewall, then restart SFLphone"
 msgstr ""
-"Включите это если вы находитесь за сетевым экраном и потом перегрузите "
+"Включите это если вы находитесь за сетевым экраном и потом перезагрузите "
 "SFLphone"
 
 #: accountwindow.c:279
@@ -144,7 +141,7 @@ msgid ""
 "</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</"
 "b> directory in your home( <i>%s</i> )"
 msgstr ""
-"<b>Ошибка: звуковые кодеки не найдены .\n"
+"<b>Ошибка: звуковые кодеки не найдены.\n"
 "\n"
 "</b> Звуковые кодеки SFL должны находиться в <i>%s</i> или в <b>.sflphone</"
 "b> каталоге в вашем домашнем каталоге( <i>%s</i> )"
@@ -208,10 +205,10 @@ msgid ""
 " You can at any time check your registration state or modify your accounts "
 "parameters in the Options/Accounts window."
 msgstr ""
-"Мастер закончил свою работу..\n"
+"Мастер закончил настройку.\n"
 "\n"
 " Вы можете в любое время проверить статус регистрации или изменить "
-"параметры  ваших аккаунтов в окне Опции / Аккаунты."
+"параметры  ваших аккаунтов в меню Правка / Аккаунты."
 
 #: audioconf.c:150
 #, c-format
@@ -301,15 +298,15 @@ msgstr "Положить трубку"
 
 #: calltree.c:434 calltree.c:436
 msgid "Off Hold"
-msgstr "Off Hold"
+msgstr "Снова взять"
 
 #: calltree.c:445 calltree.c:447
 msgid "On Hold"
-msgstr "Задержан"
+msgstr "Удержать звонок"
 
 #: calltree.c:458 calltree.c:460
 msgid "Transfer"
-msgstr "Пересылка (трансфер)"
+msgstr "Переслать звонок на другой номер"
 
 #: calltree.c:470 calltree.c:472
 msgid "History"
@@ -329,7 +326,7 @@ msgstr "Статус"
 
 #: configwindow.c:470
 msgid "Desktop Notification"
-msgstr "Извещение на рабочем столе"
+msgstr "Извещения на рабочем столе"
 
 #: configwindow.c:478
 msgid "_Enable"
@@ -337,7 +334,7 @@ msgstr "_Включить"
 
 #: configwindow.c:483
 msgid "_Notify voice mails"
-msgstr "_Предупредить про речевые сообщения"
+msgstr "_Предупредить о новых речевых сообщениях"
 
 #: configwindow.c:489
 msgid "System Tray Icon"
@@ -442,7 +439,7 @@ msgid ""
 "<b>There is one call in progress.</b>\n"
 "Do you still want to quit?"
 msgstr ""
-"<b>Звонок ещё не закончился</b>\n"
+"<b>Звонок ещё не окончен</b>\n"
 "Вы уверенны что хотите выйти?"
 
 #: mainwindow.c:73
@@ -479,7 +476,7 @@ msgstr "_Положить трубку"
 
 #: menus.c:305 menus.c:793
 msgid "On _Hold"
-msgstr "Звонок удерживается"
+msgstr "_Удержать звонок"
 
 #: menus.c:321
 msgid "_Account Assistant"
@@ -550,7 +547,7 @@ msgstr "Пропустить"
 #: sflnotify.c:136
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
-msgstr "Звонок с аккаунтом  <i>%s</i>"
+msgstr "Звонок с аккаунтом %s <i>%s</i>"
 
 #: sflnotify.c:140
 msgid "Current account"
@@ -594,5 +591,5 @@ msgstr "<small>Пропущенный звонок</small>"
 msgid "<small>Duration:</small> %s"
 msgstr "<small>Время:</small> %s"
 
-#~ msgid "_Enabled \" <%s>"
-#~ msgstr "_Включен\" <%s>"
+#~ msgid "Enabled"
+#~ msgstr "Включен"
