@@ -23,21 +23,16 @@ arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 os_version=`lsb_release -d -s -c | sed -e '1d'`
 
 # If intrepid(Ubuntu8.10), then use appropriate changelog file 
-cp sflphone/debian/changelog..$os_version sflphone/debian/changelog
-#if [ $os_version == "intrepid" ];then
-#	cp sflphone/debian/changelog.intrepid sflphone/debian/changelog
-#else
-#	cp sflphone/debian/changelog.hardy sflphone/debian/changelog
-#fi
+cp sflphone/debian/changelog.$os_version sflphone/debian/changelog
 
 # Remove useless git directory
 rm sflphone/.git/ -rf
 
 # Copy the appropriate control file based on different archtecture
 if [ $arch_flag -eq 32 ];then
-	cp sflphone/debian/control..$os_version..i386 sflphone/debian/control 
+	cp sflphone/debian/control.$os_version.i386 sflphone/debian/control 
 elif [ $arch_flag -eq 64 ];then
-	cp sflphone/debian/control..$os_version..amd64 sflphone/debian/control
+	cp sflphone/debian/control.$os_version.amd64 sflphone/debian/control
 fi
 
 echo "Building sflphone package on Ubuntu $os_version $arch_flag bit architecture...."
