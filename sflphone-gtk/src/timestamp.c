@@ -19,20 +19,21 @@
 
 #include <timestamp.h>
 
-gchar* months[12] = {"january","february","march", "april", "may", "june", "july", "august", "september", "october", "november", "december"};
-gchar* week_days[7] = {"Sun", "Mon", "Tue","Wed","Thu","Fri","Sat"};
 
   gchar* 
 timestamp_get_call_date( void )
 {
-  struct tm* ptr;
-  time_t lt;
+    struct tm* ptr;
+    time_t lt;
+    unsigned char str[100];
 
-  lt = time(NULL);
-  ptr = localtime(&lt);
+    time(&lt);
+    ptr = gmtime(&lt);
 
-
-  return format( ptr ) ;
+    // result function of the current locale
+    strftime((char *)str, 100, "%c",
+                               (const struct tm *)ptr);
+    return g_markup_printf_escaped("\n%s\n" , str);
 }
 
   gchar*
@@ -62,50 +63,4 @@ process_call_duration( call_t* c )
   }
   return g_markup_printf_escaped(_("<small>Duration:</small> %s"), res);
 }
-
-gchar*
-format( struct tm* ptr )
-{
-  gchar *result;
-
-  gchar *hour, *min;
-  gchar *day_of_week, *month, *day_number;
-
-  if( ptr->tm_hour < 10 )
-    hour = g_markup_printf_escaped("0%i", ptr->tm_hour);
-  else
-    hour = g_markup_printf_escaped("%i", ptr->tm_hour);
-  
-  if( ptr->tm_min < 10 )
-    min = g_markup_printf_escaped("0%i", ptr->tm_min);
-  else
-    min = g_markup_printf_escaped("%i", ptr->tm_min);
-
-  day_of_week = g_markup_printf_escaped( "%i", ptr->tm_mday );
-
-  month = months[ptr->tm_mon];
-  day_number = week_days[ptr->tm_wday];
-
-  result = g_markup_printf_escaped( "\n%s %s %s %s:%s\n" , day_number, month , day_of_week , hour, min );
-
-  return result;
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

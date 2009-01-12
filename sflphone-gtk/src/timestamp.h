@@ -36,6 +36,4 @@ gchar* timestamp_get_call_date( void );
 
 gchar* process_call_duration( call_t* c );
 
-gchar* format( struct tm* ptr );
-
 #endif
