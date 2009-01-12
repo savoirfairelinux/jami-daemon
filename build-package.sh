@@ -45,7 +45,7 @@ cp sflphone sflphone-0.9.2.orig -r
 wget -q http://www.sflphone.org/downloads/gpg/sflphone.gpg.asc -O- | gpg --import -
 
 # Build packages
-cd sflphone-0.9.2/debian; debuild --username "Savoir-Faire Linux Inc."
+cd sflphone-0.9.2/debian; debuild -k'Savoir-Faire Linux Inc.'
 
 # Clean 
 rm sflphone-0.9.2/ -rf 
