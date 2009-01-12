@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.2\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: sflphoneteam@savoirfairelinux.com\n"
 "POT-Creation-Date: 2008-11-05 16:41-0500\n"
 "PO-Revision-Date: 2008-10-28 14:15\n"
 "Last-Translator: Yun Liu <yun.liu@savoirfairelinux.com>\n"
