@@ -15,41 +15,42 @@ if [ -d "sflphone" ]; then
 	exit 1
 fi
 
-git clone git+ssh://repos-sflphone-git@sflphone.org/~/sflphone.git
+# Anonymous git http access
+git clone http://sflphone.org/git/sflphone.git
 
 # Get system parameters
 arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 os_version=`lsb_release -d -s -c | sed -e '1d'`
 
 # If intrepid(Ubuntu8.10), then use appropriate changelog file 
-if [ $os_version == "intrepid" ];then
-	cp sflphone/debian/changelog.intrepid sflphone/debian/changelog
-else
-	cp sflphone/debian/changelog.hardy sflphone/debian/changelog
-fi
+cp sflphone/debian/changelog..$os_version sflphone/debian/changelog
+#if [ $os_version == "intrepid" ];then
+#	cp sflphone/debian/changelog.intrepid sflphone/debian/changelog
+#else
+#	cp sflphone/debian/changelog.hardy sflphone/debian/changelog
+#fi
 
 # Remove useless git directory
 rm sflphone/.git/ -rf
 
 # Copy the appropriate control file based on different archtecture
-if [ $arch_flag -eq 32 ] && [ $os_version == "intrepid" ];then
-	cp sflphone/debian/control.intrepid.i386 sflphone/debian/control 
-elif [ $arch_flag -eq 64 ] && [ $os_version == "intrepid" ];then
-	cp sflphone/debian/control.intrepid.amd64 sflphone/debian/control
-elif [ $arch_flag -eq 32 ] && [ $os_version == "hardy" ];then
-	cp sflphone/debian/control.hardy.i386 sflphone/debian/control
-else
-	cp sflphone/debian/control.hardy.amd64 sflphone/debian/control
+if [ $arch_flag -eq 32 ];then
+	cp sflphone/debian/control..$os_version..i386 sflphone/debian/control 
+elif [ $arch_flag -eq 64 ];then
+	cp sflphone/debian/control..$os_version..amd64 sflphone/debian/control
 fi
 
-echo "Building sflphone package on Ubuntu $os_version $arch_flag bit archetecture...."
+echo "Building sflphone package on Ubuntu $os_version $arch_flag bit architecture...."
 
 # Provide prerequisite directories used by debuild
 cp sflphone sflphone-0.9.2 -r
 cp sflphone sflphone-0.9.2.orig -r
 
+# Get the public gpg key to sign the packages
+wget -q http://www.sflphone.org/downloads/gpg/sflphone.gpg.asc -O- | gpg --import -
+
 # Build packages
-cd sflphone-0.9.2/debian; debuild
+cd sflphone-0.9.2/debian; debuild --username "Savoir-Faire Linux Inc."
 
 # Clean 
 rm sflphone-0.9.2/ -rf 
