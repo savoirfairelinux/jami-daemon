@@ -3,12 +3,11 @@
 # @author: Yun Liu <yun.liu@savoirfairelinux.com>
 #
 # Build sflphone debian packages for Ubuntu 8.04
-#1. Before building sflphone package, you need get gpg key. Skip it if you have already one.
-#   Usage: gpg --gen-key
-#2. You mush have access to sflphone git repository. Skip this step if you have the access.
-#   Refer to http://dev.savoirfairelinux.net/sflphone/wiki/DownloadSFLphone#Developmentsources
-#3. After having all the prerequisites, you can run  "build-package.sh" to build debian packages for sflphone.
+# 1 - The SFLphone package must be build with a specific GnuPG key. Please contact us to have more information about that (<sflphoneteam@savoirfairelinux.com>) 
+# 2. The source code can be teched through anonymous http access. So no need of special access.
+# 3. After having all the prerequisites, you can run  "build-package.sh" to build debian packages for sflphone.
 #   All the source packages and binary packages will be generated in the current directory.
+# Refer to http://www.sflphone.org for futher information
 
 if [ -d "sflphone" ]; then
         echo "Directory sflphone already exists. Please remove it first."
@@ -22,8 +21,8 @@ git clone http://sflphone.org/git/sflphone.git
 arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 os_version=`lsb_release -d -s -c | sed -e '1d'`
 
-# If intrepid(Ubuntu8.10), then use appropriate changelog file 
-cp sflphone/debian/changelog.$os_version sflphone/debian/changelog
+# Generate the changelog, according to the distribution and the git commit messages
+git-dch --release
 
 # Remove useless git directory
 rm sflphone/.git/ -rf
