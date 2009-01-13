@@ -616,7 +616,8 @@ update_call_tree_remove (calltab_t* tab, call_t * c)
   void 
 update_call_tree (calltab_t* tab, call_t * c)
 {
-  GdkPixbuf *pixbuf;
+    g_print("update call tree\n");
+  GdkPixbuf *pixbuf=NULL;
   GtkTreeIter iter;
   GValue val;
   call_t * iterCall;
@@ -737,7 +738,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   if( tab == history && ( call_list_get_size( tab ) > dbus_get_max_calls() ) )
     return;
 
-  GdkPixbuf *pixbuf;
+  GdkPixbuf *pixbuf=NULL;
   GtkTreeIter iter;
   GtkTreeSelection* sel;
 
@@ -803,6 +804,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 
   if (pixbuf != NULL)
     g_object_unref(G_OBJECT(pixbuf));
+
 
   sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
   gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);

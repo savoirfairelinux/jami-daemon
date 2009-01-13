@@ -127,7 +127,7 @@ create_slider(const gchar * device)
   // which we don't want ;)
     
   GtkWidget * ret;
-  int dev;
+  int dev=0;
   
   if(strcmp(device, "speaker") == 0)
   {
