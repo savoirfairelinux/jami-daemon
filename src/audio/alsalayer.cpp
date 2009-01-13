@@ -770,4 +770,3 @@ AlsaLayer::adjustVolume( void* buffer , int len, int stream )
     return src ; 
 }
 
-void AlsaLayer::setPlaybackVolume( double volume UNUSED){}

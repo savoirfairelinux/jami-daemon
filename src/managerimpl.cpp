@@ -1766,6 +1766,32 @@ ManagerImpl::initVolume()
   setMicVolume(getConfigInt(AUDIO, VOLUME_MICRO));
 }
 
+
+void ManagerImpl::setSpkrVolume(unsigned short spkr_vol) 
+{  
+    AudioLayer *audiolayer = NULL;
+
+    _spkr_volume = spkr_vol; 
+    audiolayer = getAudioDriver();
+    if( audiolayer )
+    {
+        audiolayer->setPlaybackVolume( spkr_vol );
+    }
+    
+}
+
+void ManagerImpl::setMicVolume(unsigned short mic_vol) 
+{    
+    //AudioLayer *audiolayer = NULL;
+
+    _mic_volume = mic_vol;   
+    //audiolayer = getAudioDriver();
+    //if( audiolayer )
+    //{
+      //  audiolayer->setCaptureVolume( mic_vol );
+    //}
+}
+
 /**
  * configuration function requests
  * Main Thread

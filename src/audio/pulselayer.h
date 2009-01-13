@@ -141,20 +141,18 @@ class PulseLayer : public AudioLayer {
      * Restore the volume of every audio applications connected to the same sink to PA_VOLUME_NORM
      */
     void restorePulseAppsVolume( void );
-    
+
     /**
-     * Reduce volume of one particular application
+     * Set the volume of a sink. 
      * @param index The index of the stream 
      * @param channels	The stream's number of channels
+     * @param volume The new volume (between 0 and 100)
      */
-    void reduceAppVolume( int index , int channels ); 
-  
-    /**
-     * Restore to PA_VOLUME_NORM the volume of one particular application
-     * @param index The index of the stream 
-     * @param channels	The stream's number of channels
-     */
-    void restoreAppVolume( int index , int channels ); 
+    void setSinkVolume( int index, int channels, int volume );
+    void setSourceVolume( int index, int channels, int volume );
+
+    void setPlaybackVolume( int volume );
+    void setCaptureVolume( int volume );
 
     /**
      * Accessor
@@ -168,11 +166,11 @@ class PulseLayer : public AudioLayer {
      */
     AudioStream* getRecordStream(){ return record;}
 
-    /**
-     * Set the speaker volume to a new value ( between 0 and 100 )
-     * @param volume  The new value
-     */
-    void setPlaybackVolume( double volume );
+    int getSpkrVolume( void ) { return spkrVolume; }
+    void setSpkrVolume( int value ) { spkrVolume = value; }
+
+    int getMicVolume( void ) { return micVolume; }
+    void setMicVolume( int value ) { micVolume = value; }
 
   private:
     // Copy Constructor
@@ -180,6 +178,7 @@ class PulseLayer : public AudioLayer {
 
     // Assignment Operator
     PulseLayer& operator=( const PulseLayer& rh);
+
 
     /**
      * Drop the pending frames and close the capture device
@@ -252,6 +251,10 @@ class PulseLayer : public AudioLayer {
      * A stream object to handle the pulseaudio upload stream
      */
     AudioStream* cache;
+
+    int spkrVolume;
+    int micVolume;
+
 };
 
 #endif // _PULSE_LAYER_H_

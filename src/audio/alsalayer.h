@@ -204,7 +204,8 @@ class AlsaLayer : public AudioLayer {
     /**
      * UNUSED in ALSA layer
      */
-    void setPlaybackVolume( double volume );
+    void setPlaybackVolume( UNUSED int volume ){}
+    void setCaptureVolume( UNUSED int volume ){}
 
     /**
      * Callback used for asynchronous playback.

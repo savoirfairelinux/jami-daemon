@@ -197,7 +197,8 @@ class AudioLayer {
     virtual void reducePulseAppsVolume( void ) = 0;
     virtual void restorePulseAppsVolume( void ) = 0;
 
-    virtual void setPlaybackVolume( double volume ) = 0;
+    virtual void setPlaybackVolume( int volume ) = 0;
+    virtual void setCaptureVolume( int volume ) = 0;
   
     /**
      * Write accessor to the error state

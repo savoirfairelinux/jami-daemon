@@ -28,7 +28,7 @@ AudioStream::AudioStream( pa_context* context, int type, std::string desc, doubl
   sample_spec.rate = 44100; 
   sample_spec.channels = 1; 
   channel_map.channels = 1; 
-  pa_cvolume_set( &_volume , 1 , PA_VOLUME_NORM ) ; // * vol / 100 ;
+  pa_cvolume_set( &_volume , 1 , PA_VOLUME_MUTED ) ; // * vol / 100 ;
   
   _audiostream =  createStream( context );
 } 
@@ -93,7 +93,6 @@ AudioStream::createStream( pa_context* c )
     pa_stream_connect_playback( s , NULL , attributes, 
 				PA_STREAM_INTERPOLATE_TIMING,
 				&_volume, NULL);
-				//pa_cvolume_set(&cv, sample_spec.channels , PA_VOLUME_NORM) , NULL );
   }
   else if( _streamType == CAPTURE_STREAM ){
     

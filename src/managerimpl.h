@@ -722,7 +722,7 @@ class ManagerImpl {
      * Write by main thread only
      * @param spkr_vol	The volume value
      */
-    void setSpkrVolume(unsigned short spkr_vol) {  _spkr_volume = spkr_vol; }
+    void setSpkrVolume(unsigned short spkr_vol);
     
     /*
      * Inline functions to manage mic volume control
@@ -738,7 +738,7 @@ class ManagerImpl {
      * Write by main thread only
      * @param mic_vol	The volume value
      */
-    void setMicVolume(unsigned short mic_vol) {    _mic_volume = mic_vol;   }
+    void setMicVolume(unsigned short mic_vol);
 
     // Manage information about firewall
     

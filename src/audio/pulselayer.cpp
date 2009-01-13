@@ -384,46 +384,71 @@ static void retrieve_client_list(pa_context *c, const pa_client_info *i, int eol
 }
 */
 
-static void reduce_sink_list(pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
+static void reduce_sink_list_cb(pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
 {
   PulseLayer* pulse = (PulseLayer*) userdata;
-  AudioStream* s = pulse->getPlaybackStream();
   if( !eol ){
-    _debug("Sink Info: index : %i\n" , i->index);  
-    _debug("\t\tSink name : -%s-%s-\n" , i->name,  s->getStreamName().c_str());  
-    _debug("\t\tClient : %i\n" , i->client); 
-    _debug("\t\tVolume : %i\n" , i->volume.values[0]); 
-    _debug("\t\tChannels : %i\n" , i->volume.channels); 
+    //_debug("Sink Info: index : %i\n" , i->index);  
+    //_debug("\t\tClient : %i\n" , i->client); 
+    //_debug("\t\tVolume : %i\n" , i->volume.values[0]); 
+    //_debug("\t\tChannels : %i\n" , i->volume.channels); 
     if( strcmp( i->name , PLAYBACK_STREAM_NAME ) != 0)
-      pulse->reduceAppVolume( i->index , i->volume.channels);
+      pulse->setSinkVolume( i->index , i->volume.channels, 10 );
   }  
 }
 
-static void restore_sink_list(pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
+static void restore_sink_list_cb(pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
 {
   PulseLayer* pulse = (PulseLayer*) userdata;
-  //AudioStream* s = pulse->getPlaybackStream();
   if( !eol ){
-    _debug("Sink Info: index : %i\n" , i->index);  
-    _debug("\t\tSink name : -%s-\n" , i->name);  
-    _debug("\t\tClient : %i\n" , i->client); 
-    _debug("\t\tVolume : %i\n" , i->volume.values[0]); 
-    _debug("\t\tChannels : %i\n" , i->volume.channels); 
+    //_debug("Sink Info: index : %i\n" , i->index);  
+    //_debug("\t\tSink name : -%s-\n" , i->name);  
+    //_debug("\t\tClient : %i\n" , i->client); 
+    //_debug("\t\tVolume : %i\n" , i->volume.values[0]); 
+    //_debug("\t\tChannels : %i\n" , i->volume.channels); 
     if( strcmp( i->name , PLAYBACK_STREAM_NAME ) != 0)
-      pulse->restoreAppVolume( i->index , i->volume.channels);
+      pulse->setSinkVolume( i->index , i->volume.channels, 100);
   }  
+}
+
+static void set_playback_volume_cb(pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
+{
+    PulseLayer* pulse;
+    int volume;
+  
+    pulse = (PulseLayer*) userdata;
+    volume = pulse->getSpkrVolume();
+
+    if( !eol ){
+        if( strcmp( i->name , PLAYBACK_STREAM_NAME ) == 0)
+            pulse->setSinkVolume( i->index , i->volume.channels, volume );
+    }  
+}
+
+static void set_capture_volume_cb(pa_context *c UNUSED, const pa_source_output_info *i, int eol, void *userdata)
+{
+    PulseLayer* pulse;
+    int volume;
+  
+    pulse = (PulseLayer*) userdata;
+    volume = pulse->getMicVolume();
+
+    if( !eol ){
+        if( strcmp( i->name , CAPTURE_STREAM_NAME ) == 0)
+            pulse->setSourceVolume( i->index , i->channel_map.channels, volume );
+    }  
 }
 
   void
 PulseLayer::reducePulseAppsVolume( void )
 {
-  pa_context_get_sink_input_info_list( context , reduce_sink_list , this );
+  pa_context_get_sink_input_info_list( context , reduce_sink_list_cb , this );
 }
 
   void
 PulseLayer::restorePulseAppsVolume( void )
 {
-  pa_context_get_sink_input_info_list( context , restore_sink_list , this );
+  pa_context_get_sink_input_info_list( context , restore_sink_list_cb , this );
 }
 
   void
@@ -432,41 +457,41 @@ PulseLayer::serverinfo( void )
   pa_context_get_server_info( context , retrieve_server_info , NULL );
 }
 
-static void on_success(pa_context *c UNUSED, int success UNUSED, void *userdata UNUSED)
+
+void PulseLayer::setSinkVolume( int index, int channels, int volume )
 {
-  _debug("Operation successfull \n");
+    
+    pa_cvolume cvolume;
+    pa_volume_t vol = PA_VOLUME_NORM * ((double)volume / 100) ;
+
+    pa_cvolume_set( &cvolume , channels , vol);
+   _debug("Set sink volume of index %i\n" , index);
+   pa_context_set_sink_input_volume( context, index, &cvolume, NULL, NULL) ;
+
 }
 
-  void
-PulseLayer::reduceAppVolume( int index , int channels )
+void PulseLayer::setSourceVolume( int index, int channels, int volume )
 {
-  pa_cvolume volume;
-  pa_volume_t vol = PA_VOLUME_NORM;
-  vol /= 10; 
+    
+    pa_cvolume cvolume;
+    pa_volume_t vol = PA_VOLUME_NORM * ((double)volume / 100) ;
 
-  pa_cvolume_set( &volume , channels , vol);
-  _debug("Mute Index %i\n" , index);
-  pa_context_set_sink_input_volume( context, index, &volume, on_success, this) ;
-}
+    pa_cvolume_set( &cvolume , channels , vol);
+   _debug("Set source volume of index %i\n" , index);
+    pa_context_set_source_volume_by_index(context, index, &cvolume, NULL, NULL);
 
-  void
-PulseLayer::restoreAppVolume( int index, int channels )
-{
-  pa_cvolume volume;
-  pa_volume_t vol = PA_VOLUME_NORM;
-
-  pa_cvolume_set( &volume , channels , vol);
-  _debug("Restore Index %i\n" , index);
-  pa_context_set_sink_input_volume( context, index, &volume, on_success, this) ;
-}
-
-  void
-PulseLayer::setPlaybackVolume( double volume )
-{
-  //value between 0 and 100
-  AudioStream* s = getPlaybackStream();
-  s->setVolume( volume ); 
 }
 
 
+void PulseLayer::setPlaybackVolume( int volume )
+{
+    setSpkrVolume( volume );
+    pa_context_get_sink_input_info_list( context , set_playback_volume_cb , this );
+}
+
+void PulseLayer::setCaptureVolume( int volume )
+{
+    setMicVolume( volume );
+    pa_context_get_source_output_info_list( context , set_capture_volume_cb , this );
+}
 
