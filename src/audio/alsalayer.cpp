@@ -752,17 +752,16 @@ AlsaLayer::soundCardGetIndex( std::string description )
     void*
 AlsaLayer::adjustVolume( void* buffer , int len, int stream )
 {
-    int vol;
-    if( stream == SFL_PCM_PLAYBACK )
-        vol = _manager->getSpkrVolume();
-    else
-        vol = _manager->getMicVolume();
+    int vol, i, size;
+    SFLDataFormat *src = NULL;
 
-    SFLDataFormat* src = (SFLDataFormat*) buffer;
+    (stream == SFL_PCM_PLAYBACK)? vol = _manager->getSpkrVolume() : vol = _manager->getMicVolume();
+
+    src = (SFLDataFormat*) buffer;
+
     if( vol != 100 )
     {
-        int size = len / sizeof(SFLDataFormat);
-        int i;
+        size = len / sizeof(SFLDataFormat);
         for( i = 0 ; i < size ; i++ ){
             src[i] = src[i] * vol  / 100 ;
         }

@@ -348,7 +348,7 @@ void PulseLayer::readFromMic( void )
   }
 
   if( data != 0 ){
-    _micRingBuffer.Put( (void*)data , r, 100);
+    _micRingBuffer.Put( (void*)data ,r, 100);
   }
 
   if( pa_stream_drop( record->pulseStream() ) < 0 ) {
@@ -372,17 +372,6 @@ static void retrieve_server_info(pa_context *c UNUSED, const pa_server_info *i, 
   _debug("\t\tDefault sink name : %s\n" , i->default_sink_name);  
   _debug("\t\tDefault source name : %s\n" , i->default_source_name);  
 }
-
-/*
-static void retrieve_client_list(pa_context *c, const pa_client_info *i, int eol, void *userdata)
-{
-  _debug("end of list = %i\n", eol);
-  _debug("Clients Info: index : %i\n" , i->index);  
-  _debug("\t\tClient name : %s\n" , i->name);  
-  _debug("\t\tOwner module : %i\n" , i->owner_module);  
-  _debug("\t\tDriver : %s\n" , i->driver);  
-}
-*/
 
 static void reduce_sink_list_cb(pa_context *c UNUSED, const pa_sink_input_info *i, int eol, void *userdata)
 {
