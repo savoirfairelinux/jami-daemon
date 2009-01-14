@@ -2021,13 +2021,15 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
         setConfig(accountID, SIP_USE_STUN, (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
     }
     
+
     saveConfig();
   
     acc = getAccount(accountID);
     acc->loadConfig();
     if (acc->isEnabled()){ 
         acc->unregisterVoIPLink();
-        acc->registerVoIPLink();}
+        acc->registerVoIPLink();
+    }
     else 
         acc->unregisterVoIPLink();
 

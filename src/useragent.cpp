@@ -250,7 +250,6 @@ pj_status_t UserAgent::sipInit() {
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
 
     /* Done! */
-    _debug("sagasgasgasga\n");
     return PJ_SUCCESS;
 
 }
