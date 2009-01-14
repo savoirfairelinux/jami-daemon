@@ -1,5 +1,7 @@
 /*
- *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2009 Savoir-Faire Linux inc.
+ *
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -31,9 +33,6 @@
 #include "manager.h"
 #include "user_cfg.h" // SIGNALISATION / PULSE #define
 
-// for listener
-#define DEFAULT_SIP_PORT  5060
-#define RANDOM_SIP_PORT   rand() % 64000 + 1024
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 
 // 1XX responses
@@ -51,12 +50,8 @@ SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
  , _stunServer("")
  , _localExternAddress("") 
  , _localExternPort(0)
- , _proxy("")
- , _authname("")
- , _password("")
  , _audiortp(new AudioRtp())
  , _regc()
- , _server("")
  , _bRegister(false)
 {
   // to get random number for RANDOM_PORT
@@ -100,32 +95,6 @@ SIPVoIPLink::terminateSIPCall()
   _callMap.clear();
 }
 
-bool
-SIPVoIPLink::checkNetwork()
-{
-  // Set IP address
-  return loadSIPLocalIP();
-}
-
-bool
-SIPVoIPLink::loadSIPLocalIP() 
-{
-  bool returnValue = true;
-  if (_localIPAddress == "127.0.0.1") {
-    pj_sockaddr ip_addr;
-    if (pj_gethostip(pj_AF_INET(), &ip_addr) != PJ_SUCCESS) {
-      // Update the registration state if no network capabilities found
-      _debug("Get host ip failed!\n");
-      setRegistrationState( ErrorNetwork );
-      returnValue = false;
-    } else {
-      _localIPAddress = std::string(pj_inet_ntoa(ip_addr.ipv4.sin_addr));
-      _debug("  SIP Info: Checking network, setting local IP address to: %s\n", _localIPAddress.data());
-    }
-  }
-  return returnValue;
-}
-
 void
 SIPVoIPLink::getEvent()
 {
@@ -153,7 +122,7 @@ SIPVoIPLink::sendRegister()
 
   setRegistrationState(Trying);
 
-  return Manager::instance().getUserAgent()->addAccount(id, &_regc, _server, _authname, _password, expire_value);
+  return Manager::instance().getUserAgent()->addAccount(id, &_regc, getHostname(), getUsername(), getPassword(), expire_value);
 }
 
 std::string
@@ -165,12 +134,11 @@ SIPVoIPLink::SIPFromHeader(const std::string& userpart, const std::string& hostp
 bool
 SIPVoIPLink::sendSIPAuthentification() 
 {
-  std::string login = _authname;
-  if (login.empty()) {
+  if (getUsername().empty()) {
     /** @todo Ajouter ici un call à setRegistrationState(Error, "Fill balh") ? */
     return false;
   }
-  if (_password.empty()) {
+  if (getPassword().empty()) {
     /** @todo Même chose ici  ? */
     return false;
   }
@@ -321,7 +289,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 
   std::string tmp_to = SIPToHeader(to);
   if (tmp_to.find("@") == std::string::npos) {
-    tmp_to = tmp_to + "@" + getHostName();
+    tmp_to = tmp_to + "@" + getHostname();
   }
 
   _debug("In transfer, tmp_to is %s\n", tmp_to.data());
@@ -371,40 +339,6 @@ SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code UNUSED)
   snprintf(dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
  
   return Manager::instance().getUserAgent()->carryingDTMFdigits(call, dtmf_body);
-
-
-  //int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
-
-  // TODO Add DTMF with pjsip - INFO method
-
-  /*
-  eXosip_lock();
-  // Build info request
-  i = eXosip_call_build_info(call->getDid(), &info);
-  if (i == 0) {
-    snprintf(dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
-    osip_message_set_content_type (info, "application/dtmf-relay");
-    osip_message_set_body (info, dtmf_body, strlen (dtmf_body));
-    // Send info request
-    i = eXosip_call_send_request(call->getDid(), info);
-  }
-  eXosip_unlock();
-  */
-
-  return true;
-}
-
-bool
-SIPVoIPLink::sendMessage(const std::string& to UNUSED, const std::string& body UNUSED)
-{
-    return true;
-}
-
-// NOW
-bool
-SIPVoIPLink::isContactPresenceSupported()
-{
-    return true;
 }
 
 bool
@@ -421,36 +355,29 @@ SIPVoIPLink::SIPOutgoingInvite(SIPCall* call)
 bool
 SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED) 
 {
-  if (!call) return false;
+    std::string to;
 
-  std::string to    = getSipTo(call->getPeerNumber());
-  std::string route = getSipRoute();
-  _debug("            To: %s\n", to.data());
-  _debug("            Route: %s\n", route.data());
+    if (!call) 
+        return false;
 
-  /*if (!SIPCheckUrl(from)) {
-    _debug("! SIP Error: Source address is invalid %s\n", from.data());
-    return false;
-  }
-  if (!SIPCheckUrl(to)) {
-    return false;
-  }*/
+    to = getSipTo(call->getPeerNumber());
+    _debug("            To: %s\n", to.data());
 
-  //setCallAudioLocal(call);
-  AccountID accId = getAccountID();
-
-  return Manager::instance().getUserAgent()->makeOutgoingCall(to, call, accId);
+    return Manager::instance().getUserAgent()->makeOutgoingCall(to, call, getAccountID());
 }
 
 std::string
 SIPVoIPLink::getSipFrom() {
 
   // Form the From header field basis on configuration panel
-  std::string host = getHostName();
-  if ( host.empty() ) {
-    host = _localIPAddress;
+  std::string hostname;
+  
+  hostname = getHostname();
+
+  if ( hostname.empty() ) {
+    hostname = _localIPAddress;
   }
-  return SIPFromHeader(_authname, host);
+  return SIPFromHeader(getUsername(), hostname);
 }
 
 std::string
@@ -460,21 +387,12 @@ SIPVoIPLink::getSipTo(const std::string& to_url) {
 
   // add a @host if we are registered and there is no one inside the url
     if (to_url.find("@") == std::string::npos) {// && isRegistered) {
-    std::string host = getHostName();
+    std::string host = getHostname();
     if(!host.empty()) {
       return SIPToHeader(to_url + "@" + host);
     }
   }
   return SIPToHeader(to_url);
-}
-
-std::string
-SIPVoIPLink::getSipRoute() {
-  std::string proxy = _proxy;
-  if ( !proxy.empty() ) {
-    proxy = "<sip:" + proxy + ";lr>";
-  }
-  return proxy; // return empty
 }
 
 std::string
@@ -709,31 +627,6 @@ SIPVoIPLink::handleDtmfRelay(eXosip_event_t* event) {
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
-
-void SIPVoIPLink::setAuthName(const std::string& authname)
-{
-    _authname = authname;
-    //_cred.username = pj_str((char *)authname.data());
-}
-
-void SIPVoIPLink::setPassword(const std::string& password)
-{
-    _password = password;
-    /*_cred.data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
-    _cred.data = pj_str((char *)password.data());
-    _cred.realm = pj_str("*");
-    _cred.scheme = pj_str("digest");*/
-}
-    
-void SIPVoIPLink::setSipServer(const std::string& sipServer)
-{
-    //std::string tmp;
-    _debug("Set sip server %s\n", sipServer.data());
-    _server = sipServer;
-    //_registrar = pj_str((char *)tmp.data());
-    //_user = "<sip:" + _authname + "@" + sipServer + ">";
-    //_user = pj_str((char *)tmp.data());
-}
 
 pj_str_t SIPVoIPLink::string2PJStr(const std::string &value)
 {

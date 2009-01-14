@@ -68,13 +68,6 @@ class IAXVoIPLink : public VoIPLink
     bool init (void);
     
     /**
-     * Check if a local IP can be found
-     * @return true if pingable
-     *	      false otherwise
-     */
-    bool checkNetwork (void) { return false; }
-    
-    /**
      * Terminate a voip link by clearing the call list
      */
     void terminate (void);

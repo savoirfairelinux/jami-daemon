@@ -1,8 +1,7 @@
-
-#include "voiplink.h"
-
 /*
- *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
+ *  
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
@@ -20,8 +19,8 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #include "sipaccount.h"
-#include "sipvoiplink.h"
 #include "manager.h"
 #include "user_cfg.h"
 #include "useragent.h"
@@ -52,7 +51,7 @@ SIPAccount::registerVoIPLink()
     int status, useStun;
     SIPVoIPLink *thislink;
 
-    _link->setHostName(Manager::instance().getConfigString(_accountID,SIP_HOST));
+    _link->setHostname(Manager::instance().getConfigString(_accountID,HOSTNAME));
     useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
   
     thislink = dynamic_cast<SIPVoIPLink*> (_link);
@@ -62,10 +61,9 @@ SIPAccount::registerVoIPLink()
     _link->init();
   
     // Stuff needed for SIP registration.
-    thislink->setProxy   (Manager::instance().getConfigString(_accountID,SIP_PROXY));
-    thislink->setAuthName(Manager::instance().getConfigString(_accountID,SIP_USER));
-    thislink->setPassword(Manager::instance().getConfigString(_accountID,SIP_PASSWORD));
-    thislink->setSipServer(Manager::instance().getConfigString(_accountID,SIP_HOST));
+    thislink->setUsername(Manager::instance().getConfigString(_accountID, USERNAME));
+    thislink->setPassword(Manager::instance().getConfigString(_accountID, PASSWORD));
+    thislink->setHostname(Manager::instance().getConfigString(_accountID, HOSTNAME));
 
     status = _link->sendRegister();
     ASSERT( status , SUCCESS );
@@ -78,7 +76,6 @@ SIPAccount::unregisterVoIPLink()
 {
   _debug("SIPAccount: unregister account %s\n" , getAccountID().c_str());
   _link->sendUnregister();
-  _debug("Terminate SIP account\n");
   _link->terminate();
   
   return SUCCESS;
@@ -89,9 +86,6 @@ SIPAccount::loadConfig()
 {
   // Account generic
   Account::loadConfig();
-
-  // SIP specific
-  //none
 }
 
 bool 

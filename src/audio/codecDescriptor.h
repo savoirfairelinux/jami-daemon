@@ -22,7 +22,6 @@
 #ifndef __CODEC_DESCRIPTOR_H__
 #define __CODEC_DESCRIPTOR_H__
 
-#include <string>
 #include <map>
 #include <vector>
 #include <dirent.h>

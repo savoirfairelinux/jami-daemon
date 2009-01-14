@@ -18,8 +18,6 @@
  */
 
 #include <string>
-
-
 #include <iostream>
 
 #include "manager.h"
@@ -28,13 +26,12 @@
 #include "sipvoiplink.h"
 #include "sipaccount.h"
 
-#define DEFAULT_SIP_PORT  5060
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 
 UserAgent *UserAgent::_current;
 
-UserAgent::UserAgent():_endpt(NULL) ,_sock(NULL), _cp(), _pool(NULL), _mutex(NULL), _mod(), _options_handler(), _useStun(false), _stunHost(),
+UserAgent::UserAgent():_endpt(NULL) ,_sock(NULL), _cp(), _pool(NULL), _mutex(NULL), _mod(), _useStun(false), _stunHost(),
         _stunServer(""), _localExternAddress(""), _localIPAddress("127.0.0.1"), _localExternPort(0), _localPort(0), _regPort(DEFAULT_SIP_PORT), _thread(NULL) {
     //_useStun = false;
     //_localIPAddress = "127.0.0.1";
@@ -91,6 +88,8 @@ pj_status_t UserAgent::sipCreate() {
 pj_status_t UserAgent::sipInit() {
     
     pj_status_t status;
+    int errPjsip = 0;
+    int port;
     
     /* Init SIP UA: */
 
@@ -103,8 +102,8 @@ pj_status_t UserAgent::sipInit() {
         _debug("UserAgent: Unable to determine network capabilities\n");
         return false;
     }
-    int errPjsip = 0;
-    int port = _regPort;
+    errPjsip = 0;
+    port = _regPort;
 
     //_debug("stun host is %s\n", _stunHost.ptr);
     if (_useStun && !Manager::instance().behindNat(_stunServer, port)) {
@@ -205,38 +204,6 @@ pj_status_t UserAgent::sipInit() {
     status = pjsip_xfer_init_module(_endpt);
     PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
         
-    /*{
- 	const pjsip_module handler ={
-            NULL, NULL, 			// prev, next.			
-            { (char*)"mod-sflphone-options", 20},//9}, 	// Name.				
-            -1,		 			// Id				
-            PJSIP_MOD_PRIORITY_APPLICATION, 	// Priority			
-            NULL, 				// load()				
-            NULL, 				// start()				
-            NULL, 				// stop()				
-            NULL, 				// unload()				
-            &options_on_rx_request, 		// on_rx_request()			
-            NULL, 				// on_tx_request.			
-            NULL, 				// on_tx_response()			
-            NULL, 				// on_tsx_state()			
-        };
-
-        _options_handler = handler;
-    }
-
-    // Register the OPTIONS module
-    status = pjsip_endpt_register_module(_endpt, &_options_handler);
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
-
-    // Add OPTIONS in Allow header
-    status = pjsip_endpt_add_capability(_endpt, 
-					NULL, 
-					PJSIP_H_ALLOW,
-            				NULL, 1, 
-					&STR_OPTIONS);
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );*/
-
-
     // Initialize invite session module
     // These callbacks will be called on incoming requests, media session state, etc.
     {
@@ -273,7 +240,7 @@ pj_status_t UserAgent::sipInit() {
         pjsip_endpt_add_capability(_endpt, &_mod, PJSIP_H_ACCEPT, NULL, 1, &accepted);
     }
 
-    _debug("UserAgent: sflphone version %s for %s initialized\n", pj_get_version(), PJ_OS_NAME);
+    _debug("UserAgent: pjsip version %s for %s initialized\n", pj_get_version(), PJ_OS_NAME);
 
     Manager::instance().setSipThreadStatus(false);
     
@@ -283,6 +250,7 @@ pj_status_t UserAgent::sipInit() {
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
 
     /* Done! */
+    _debug("sagasgasgasga\n");
     return PJ_SUCCESS;
 
 }

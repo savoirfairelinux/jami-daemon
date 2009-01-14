@@ -50,8 +50,6 @@
 
 #include "user_cfg.h"
 
-#define DEFAULT_SIP_PORT  5060
-
 #ifdef USE_ZEROCONF
 #include "zeroconf/DNSService.h"
 #include "zeroconf/DNSServiceTXTRecord.h"
@@ -290,16 +288,6 @@ ManagerImpl::answerCall(const CallID& id)
   removeWaitingCall(id);
   switchCall(id);
   return true;
-}
-
-//THREAD=Main
-  bool 
-ManagerImpl::sendTextMessage(const AccountID& accountId, const std::string& to, const std::string& message) 
-{
-  if (accountExists(accountId)) {
-    return getAccountLink(accountId)->sendMessage(to, message);
-  }
-  return false;
 }
 
 //THREAD=Main
@@ -730,45 +718,12 @@ ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, int nb_ms
   if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, nb_msg) ;
 }
 
-//THREAD=VoIP
-  void 
-ManagerImpl::registrationSucceed(const AccountID& accountid)
+void ManagerImpl::connectionStatusNotification( void )
 {
-  Account* acc = getAccount(accountid);
-  if ( acc ) { 
-    _debug("REGISTRATION SUCCEED\n");
-    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-  }
-}
-
-//THREAD=VoIP
-  void 
-ManagerImpl::unregistrationSucceed(const AccountID& accountid UNUSED)
-{
-  _debug("UNREGISTRATION SUCCEED\n");
-  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-}
-
-//THREAD=VoIP
-  void 
-ManagerImpl::registrationFailed(const AccountID& accountid)
-{
-  Account* acc = getAccount(accountid);
-  if ( acc ) { 
-    _debug("REGISTRATION FAILED\n");
-    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-  }
-}
-
-//THREAD=VoIP
-  void 
-ManagerImpl::registrationTrying(const AccountID& accountid)
-{
-  Account* acc = getAccount(accountid);
-  if ( acc ) { 
-    _debug("REGISTRATION TRYING\n");
-    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-  }
+    if (_dbus)
+        _dbus->getConfigurationManager()->accountsChanged();
+    else
+        _debug("Error: DBus connection not found\n");
 }
 
 /**
@@ -2001,167 +1956,84 @@ ManagerImpl::getAccountList()
   return v;
 }
 
-  std::map< std::string, std::string > 
-ManagerImpl::getAccountDetails(const AccountID& accountID) 
+std::map< std::string, std::string > ManagerImpl::getAccountDetails(const AccountID& accountID) 
 {
+
   std::map<std::string, std::string> a;
   std::string accountType;
-  enum VoIPLink::RegistrationState state = _accountMap[accountID]->getRegistrationState();
-
+  enum VoIPLink::RegistrationState state;
+  
+  state = _accountMap[accountID]->getRegistrationState();
   accountType = getConfigString(accountID, CONFIG_ACCOUNT_TYPE);
 
-  a.insert(
-      std::pair<std::string, std::string>(
-	CONFIG_ACCOUNT_ALIAS, 
-	getConfigString(accountID, CONFIG_ACCOUNT_ALIAS)
-	)
-      );
-  a.insert(
-      std::pair<std::string, std::string>(
-	CONFIG_ACCOUNT_ENABLE, 
-	getConfigString(accountID, CONFIG_ACCOUNT_ENABLE) == "1" ? "TRUE": "FALSE"
-	)
-      );
-  a.insert(
-      std::pair<std::string, std::string>(
+  a.insert( std::pair<std::string, std::string>( CONFIG_ACCOUNT_ALIAS, getConfigString(accountID, CONFIG_ACCOUNT_ALIAS)) );
+  a.insert( std::pair<std::string, std::string>( CONFIG_ACCOUNT_ENABLE, getConfigString(accountID, CONFIG_ACCOUNT_ENABLE) == "1" ? "TRUE": "FALSE"));
+  a.insert( std::pair<std::string, std::string>(
 	"Status", 
 	(state == VoIPLink::Registered ? "REGISTERED":
 	(state == VoIPLink::Unregistered ? "UNREGISTERED":
 	(state == VoIPLink::Trying ? "TRYING":
-	(state == VoIPLink::ErrorAuth ? "ERROR_AUTH": 
-	(state == VoIPLink::ErrorNetwork ? "ERROR_NETWORK": 
-	(state == VoIPLink::ErrorHost ? "ERROR_HOST": 
-	(state == VoIPLink::Error ? "ERROR": "ERROR")))))))
+	(state == VoIPLink::Bad_Authentification ? "BAD_AUTHENTIFICATION": 
+	(state == VoIPLink::Unreachable ? "UNREACHABLE": 
+	(state == VoIPLink::Bad_Hostname ? "BAD_HOSTNAME": 
+	(state == VoIPLink::Null ? "NULL":
+    (state == VoIPLink::Ready ? "READY":
+    (state == VoIPLink::Timeout ? "TIMEOUT":
+    (state == VoIPLink::Error ? "" :"ERROR"))))))))))
 	)
-      );
-  a.insert(
-      std::pair<std::string, std::string>(
-	CONFIG_ACCOUNT_TYPE, accountType
-	)
-      );
-
+  );
+ 
+  a.insert( std::pair<std::string, std::string>( CONFIG_ACCOUNT_TYPE, accountType ) );
+  a.insert( std::pair<std::string, std::string>( USERNAME, getConfigString(accountID, USERNAME) ) );
+  a.insert( std::pair<std::string, std::string>( PASSWORD, getConfigString(accountID, PASSWORD) ) );
+  a.insert( std::pair<std::string, std::string>( HOSTNAME, getConfigString(accountID, HOSTNAME) ) );
+  a.insert( std::pair<std::string, std::string>( CONFIG_ACCOUNT_MAILBOX, getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)) );
+  
+  // SIP SPECIFIC
   if( accountType == "SIP")
   {
-    a.insert(
-	std::pair<std::string, std::string>(
-	  SIP_USER, 
-	  getConfigString(accountID, SIP_USER)
-	  )
-	);
-    a.insert(
-	std::pair<std::string, std::string>(
-	  SIP_PASSWORD, 
-	  getConfigString(accountID, SIP_PASSWORD)
-	  )
-	);
-    a.insert(
-	std::pair<std::string, std::string>(
-	  SIP_HOST, 
-	  getConfigString(accountID, SIP_HOST)
-	  )
-	);
-    a.insert(
-	std::pair<std::string, std::string>(
-	  SIP_PROXY, 
-	  getConfigString(accountID, SIP_PROXY)
-	  )
-	);
-    a.insert(
-	std::pair<std::string, std::string>(
-	  SIP_STUN_SERVER, 
-	  getConfigString(accountID, SIP_STUN_SERVER)
-	  )
-	);
-    a.insert(
-	std::pair<std::string, std::string>(
-	  SIP_USE_STUN, 
-	  getConfigString(accountID, SIP_USE_STUN) == "1" ? "TRUE": "FALSE"
-	  )
-	);
-    a.insert(
-	std::pair<std::string, std::string>(
-	  CONFIG_ACCOUNT_MAILBOX, 
-	  getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)
-	  )
-	);
-  }
-  else if (accountType == "IAX") {
-    a.insert(
-	std::pair<std::string, std::string>(
-	  IAX_HOST, 
-	  getConfigString(accountID, IAX_HOST)
-	  )
-	);    
-    a.insert(
-	std::pair<std::string, std::string>(
-	  IAX_USER, 
-	  getConfigString(accountID, IAX_USER)
-	  )
-	);
-    a.insert(
-	std::pair<std::string, std::string>(
-	  IAX_PASSWORD, 
-	  getConfigString(accountID, IAX_PASSWORD)
-	  )
-	);
-    a.insert(
-	std::pair<std::string, std::string>(
-	  CONFIG_ACCOUNT_MAILBOX, 
-	  getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)
-	  )
-	);
-  }
-  else {
-    // Unknown type
-    _debug("Unknown account type in getAccountDetails(): %s", accountType.c_str());
+    a.insert( std::pair<std::string, std::string>( SIP_STUN_SERVER, getConfigString(accountID, SIP_STUN_SERVER) ) );
+    a.insert( std::pair<std::string, std::string>( SIP_USE_STUN, getConfigString(accountID, SIP_USE_STUN) == "1" ? "TRUE": "FALSE"));
   }
 
   return a;
 }
 
-  void 
-ManagerImpl::setAccountDetails( const std::string& accountID, 
-    const std::map< std::string, std::string >& details )
+void ManagerImpl::setAccountDetails( const std::string& accountID, const std::map< std::string, std::string >& details )
 {
 
-  std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
-
-  setConfig(accountID, CONFIG_ACCOUNT_ALIAS, (*details.find(CONFIG_ACCOUNT_ALIAS)).second);
-  setConfig(accountID, CONFIG_ACCOUNT_ENABLE, (*details.find(CONFIG_ACCOUNT_ENABLE)).second == "TRUE" ? "1": "0" );
-  setConfig(accountID, CONFIG_ACCOUNT_TYPE, accountType);
+    std::string accountType;
+    Account *acc;
   
-  if (accountType == "SIP") {
-    setConfig(accountID, SIP_USER, (*details.find(SIP_USER)).second);
-    setConfig(accountID, SIP_PASSWORD,  (*details.find(SIP_PASSWORD)).second);
-    setConfig(accountID, SIP_HOST, (*details.find(SIP_HOST)).second);
-    setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
+    accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
+
+    setConfig(accountID, CONFIG_ACCOUNT_ALIAS, (*details.find(CONFIG_ACCOUNT_ALIAS)).second);
+    setConfig(accountID, CONFIG_ACCOUNT_ENABLE, (*details.find(CONFIG_ACCOUNT_ENABLE)).second == "TRUE" ? "1": "0" );
+    setConfig(accountID, CONFIG_ACCOUNT_TYPE, accountType);
+    setConfig(accountID, USERNAME, (*details.find(USERNAME)).second);
+    setConfig(accountID, PASSWORD, (*details.find(PASSWORD)).second);
+    setConfig(accountID, HOSTNAME, (*details.find(HOSTNAME)).second);
     setConfig(accountID, CONFIG_ACCOUNT_MAILBOX,(*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
-    setConfig(accountID, SIP_USE_STUN,
-        (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
-  }
-  else if (accountType == "IAX") {
-    setConfig(accountID, IAX_HOST, (*details.find(IAX_HOST)).second);
-    setConfig(accountID, IAX_USER, (*details.find(IAX_USER)).second);
-    setConfig(accountID, IAX_PASSWORD, (*details.find(IAX_PASSWORD)).second);    
-    setConfig(accountID, CONFIG_ACCOUNT_MAILBOX, (*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
-  } else {
-    _debug("Unknown account type in setAccountDetails(): %s\n", accountType.c_str());
-  }
-
-  saveConfig();
   
-  Account* acc = getAccount(accountID);
-  acc->loadConfig();
-  if (acc->isEnabled()){ 
-    acc->unregisterVoIPLink();
-    acc->registerVoIPLink();}
-  else 
-    acc->unregisterVoIPLink();
+    // SIP SPECIFIC
+    if (accountType == "SIP") {
+        setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
+        setConfig(accountID, SIP_USE_STUN, (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
+    }
+    
+    saveConfig();
+  
+    acc = getAccount(accountID);
+    acc->loadConfig();
+    if (acc->isEnabled()){ 
+        acc->unregisterVoIPLink();
+        acc->registerVoIPLink();}
+    else 
+        acc->unregisterVoIPLink();
 
-  // Update account details
-  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+    // Update account details to the client side
+    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 
-  //restartPjsip();
 }
 
 void
@@ -2326,7 +2198,7 @@ ManagerImpl::restartPjsip()
   short
 ManagerImpl::loadAccountMap()
 {
-  _debugStart("Load account:");
+  _debug("Load account:");
   short nbAccount = 0;
   TokenList sections = _config.getSections();
   std::string accountType;
@@ -2374,12 +2246,12 @@ ManagerImpl::loadAccountMap()
     }
 
     if (tmpAccount != NULL) {
-      _debugMid(" %s ", iter->c_str());
+      _debug(" %s ", iter->c_str());
       _accountMap[iter->c_str()] = tmpAccount;
       nbAccount++;
     }
 
-    _debugEnd("\n");
+    _debug("\n");
 
     iter++;
   }

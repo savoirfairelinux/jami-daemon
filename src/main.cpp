@@ -42,14 +42,14 @@ main (int argc, char **argv) {
   //bindtextdomain (PACKAGE, LOCALEDIR);
   //textdomain (PACKAGE);
 
-  if (argc == 2 && strcmp(argv[1], _("--help")) == 0) {
+  if (argc == 2 && strcmp(argv[1], "--help") == 0) {
 
     
-    printf(_("%1$s Daemon %2$s, by Savoir-Faire Linux 2004-2005\n\n"), 
+    printf("%1$s Daemon %2$s, by Savoir-Faire Linux 2004-2009\n\n", 
 	   PROGNAME, 
 	   SFLPHONED_VERSION);
-    printf(_("USAGE: sflphoned [--help]\nParameters: \n  --help\tfor this message\n\n  --port=3999\tchange the session port\n\n"));
-    printf(_("See http://www.sflphone.org/ for more information\n"));
+    printf("USAGE: sflphoned [--help]\nParameters: \n  --help\tfor this message\n\n  --port=3999\tchange the session port\n\n");
+    printf("See http://www.sflphone.org/ for more information\n");
 
   } else {
     FILE *fp;
@@ -76,7 +76,7 @@ main (int argc, char **argv) {
 		
 	// PID file doesn't exists, create and write pid in it
 	if( (fp = fopen(homepid,"w")) == NULL ){ 
- 	     fprintf(stderr, _("Creating PID file %s failed. Exited.\n"), homepid);
+ 	     fprintf(stderr, "Creating PID file %s failed. Exited.\n", homepid);
 	     exit(-1);
 	} else {
 	     fputs(cPid , fp );
@@ -87,11 +87,11 @@ main (int argc, char **argv) {
        fgets( cOldPid, 64, fp );
        fclose(fp);
        if (kill(atoi(cOldPid), 0) == SUCCESS) {
- 	     fprintf(stderr, _("There is already a sflphoned daemon running in the system. Starting Failed.\n"));
+ 	     fprintf(stderr, "There is already a sflphoned daemon running in the system. Starting Failed.\n");
 	     exit(-1);
        } else {
        	     if( (fp = fopen(homepid,"w")) == NULL ){ 
-             	fprintf(stderr, _("Writing to PID file %s failed. Exited.\n"), homepid);
+             	fprintf(stderr, "Writing to PID file %s failed. Exited.\n", homepid);
 	 	exit(-1);
              } else {
              	fputs(cPid , fp );
@@ -119,7 +119,7 @@ main (int argc, char **argv) {
       exit_code = -1;
     }
     catch (...) {
-      fprintf(stderr, _("An exception occured when initializing the system.\n"));
+      fprintf(stderr, "An exception occured when initializing the system.\n");
       exit_code = -1;
     }
     if (initOK) {
