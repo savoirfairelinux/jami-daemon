@@ -16,6 +16,7 @@ fi
 
 # Anonymous git http access
 git clone http://sflphone.org/git/sflphone.git
+git checkout debian/0.9.2-4
 
 # Get system parameters
 arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
