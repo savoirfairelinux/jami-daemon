@@ -103,7 +103,7 @@ class PulseLayer : public AudioLayer {
      */
     int playSamples(void* buffer, int toCopy, bool isTalking) ;
 
-    static void audioCallback ( pa_stream* s, size_t bytes, void* userdata );
+    //static void audioCallback ( pa_stream* s, size_t bytes, void* userdata );
     static void overflow ( pa_stream* s, void* userdata );
     static void underflow ( pa_stream* s, void* userdata );
     static void stream_state_callback( pa_stream* s, void* user_data );	
@@ -172,6 +172,7 @@ class PulseLayer : public AudioLayer {
     int getMicVolume( void ) { return micVolume; }
     void setMicVolume( int value ) { micVolume = value; }
 
+    void processData( void );
   private:
     // Copy Constructor
     PulseLayer(const PulseLayer& rh);
@@ -188,7 +189,6 @@ class PulseLayer : public AudioLayer {
     /**
      * Write data from the ring buffer to the harware and read data from the hardware
      */
-    void processData( void );
     void readFromMic( void );
     void writeToSpeaker( void );
     
