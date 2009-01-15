@@ -21,7 +21,14 @@
 
 int framesPerBuffer = 2048;
 
-  PulseLayer::PulseLayer(ManagerImpl* manager)
+static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
+{ 
+  assert( s && bytes );
+  assert( bytes > 0 );
+  static_cast<PulseLayer*>(userdata)->processData();
+}
+  
+    PulseLayer::PulseLayer(ManagerImpl* manager)
   : AudioLayer( manager , PULSEAUDIO ) 
   , _mainSndRingBuffer( SIZEBUF )
   , _urgentRingBuffer( SIZEBUF)
@@ -125,7 +132,7 @@ PulseLayer::createStreams( pa_context* c )
   record = new AudioStream(c, CAPTURE_STREAM, CAPTURE_STREAM_NAME , _manager->getMicVolume());
   pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
   //pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
-  cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples", _manager->getSpkrVolume());
+  //cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples", _manager->getSpkrVolume());
 
   pa_threaded_mainloop_signal(m , 0);
 }
@@ -240,14 +247,7 @@ PulseLayer::stopStream (void)
   flushMic();
 }
 
-  void 
-PulseLayer::audioCallback ( pa_stream* s, size_t bytes, void* userdata )
-{ 
-  PulseLayer* pulse = (PulseLayer*) userdata;
-  assert( s && bytes );
-  assert( bytes > 0 );
-  pulse->processData();
-}
+
 
   void 
 PulseLayer::underflow ( pa_stream* s UNUSED,  void* userdata UNUSED )
@@ -292,8 +292,9 @@ void PulseLayer::writeToSpeaker( void )
   int toGet;
   int toPlay;
 
-  SFLDataFormat* out;
+  SFLDataFormat* out;// = (SFLDataFormat*)pa_xmalloc(framesPerBuffer);
   urgentAvail = _urgentRingBuffer.AvailForGet();
+
   if (urgentAvail > 0) {
     // Urgent data (dtmf, incoming call signal) come first.		
     //_debug("Play urgent!: %i\n" , urgentAvail);
@@ -331,11 +332,11 @@ void PulseLayer::writeToSpeaker( void )
       else {
 	    bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
       }
-      pa_stream_write( playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
+      pa_stream_write( playback->pulseStream() , out , toGet  , NULL, 0 , PA_SEEK_RELATIVE);
+      pa_xfree(out);
     }
   }
 
-  //if(out)   pa_xfree(out);
 }
  
 void PulseLayer::readFromMic( void )
