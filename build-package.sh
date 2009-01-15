@@ -16,14 +16,16 @@ fi
 
 # Anonymous git http access
 git clone http://sflphone.org/git/sflphone.git
-git checkout debian/0.9.2-4
+cd sflphone
+git checkout origin/release release
 
 # Get system parameters
 arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 os_version=`lsb_release -d -s -c | sed -e '1d'`
 
 # Generate the changelog, according to the distribution and the git commit messages
-git-dch --release
+git-dch --debian-branch=release --release
+cd ..
 
 # Remove useless git directory
 rm sflphone/.git/ -rf
@@ -44,6 +46,7 @@ wget -q http://www.sflphone.org/downloads/gpg/sflphone.gpg.asc -O- | gpg --impor
 cd sflphone-0.9.2/debian; debuild -k'Savoir-Faire Linux Inc.'
 
 # Clean 
+cd ../..
 rm sflphone-0.9.2/ -rf 
 rm sflphone/ -rf
 
