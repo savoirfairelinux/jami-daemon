@@ -567,8 +567,13 @@ int UserAgent::createUDPServer() {
 }
 
 void UserAgent::setStunServer(const char *server) {
-    _stunServer = std::string(server);
-    _useStun = true;
+    if(server != NULL) {
+        _useStun = true;
+        _stunServer = std::string(server);
+    } else {
+        _useStun = false;
+        _stunServer = std::string("");
+    }
 }
 
 void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {

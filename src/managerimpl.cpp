@@ -2138,6 +2138,27 @@ ManagerImpl::setAccountDetails( const std::string& accountID,
     setConfig(accountID, CONFIG_ACCOUNT_MAILBOX,(*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
     setConfig(accountID, SIP_USE_STUN,
         (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
+
+    if(!_userAgentInitlized) {
+        _userAgentInitlized = true;
+
+        if((*details.find(SIP_USE_STUN)).second == "TRUE")
+            _userAgent->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
+        else
+            _userAgent->setStunServer(NULL);
+
+        _userAgent->sipCreate();
+        _userAgent->sipInit();
+    } else {
+        if((*details.find(SIP_USE_STUN)).second == "TRUE")
+            _userAgent->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
+        else
+            _userAgent->setStunServer(NULL);
+
+        restartPjsip();
+
+    }
+
   }
   else if (accountType == "IAX") {
     setConfig(accountID, IAX_HOST, (*details.find(IAX_HOST)).second);
@@ -2204,17 +2225,6 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
       }
 
       newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
-
-      // Determine whether to use stun for the current account or not
-      if((*details.find(SIP_USE_STUN)).second == "TRUE") {
-        _userAgent->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
-      }
-
-      if(!_userAgentInitlized) {
-        _userAgentInitlized = true;
-        _userAgent->sipCreate();
-        _userAgent->sipInit();
-      }
   }
   else if (accountType == "IAX") {
     newAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, newAccountID);
