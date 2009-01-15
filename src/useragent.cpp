@@ -372,13 +372,14 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     //pj_mutex_lock(_mutex);
     std::string tmp;
 
+
     SIPAccount *account;
 
     if (!validStunServer) {
 
     	SIPVoIPLink *voipLink;
         voipLink = dynamic_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(id));
-        Manager::instance().getAccountLink(id)->setRegistrationState(VoIPLink::ErrorNetwork);
+        Manager::instance().getAccountLink(id)->setRegistrationState(VoIPLink::ErrorExistStun);
         voipLink->setRegister(false);
 	return false;
     }
@@ -458,7 +459,6 @@ bool UserAgent::removeAccount(pjsip_regc *regc)
     pjsip_tx_data *tdata = NULL;
     
     //pj_mutex_lock(_mutex);
-
     if(regc) {
         status = pjsip_regc_unregister(regc, &tdata);
         if(status != PJ_SUCCESS) {
@@ -605,7 +605,7 @@ void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {
             switch(param->code) {
 		case 408:
                 case 606:
-                     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorNetwork);
+                     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorConfStun);
                      break;
                 case 503:
                      Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorHost);

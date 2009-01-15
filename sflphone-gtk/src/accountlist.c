@@ -175,6 +175,12 @@ const gchar * account_state_name(account_state_t s)
   case ACCOUNT_STATE_ERROR_HOST:
     state = _("Host unreachable");
     break;
+  case ACCOUNT_STATE_ERROR_CONF_STUN:
+    state = _("Stun configuration error");
+    break;
+  case ACCOUNT_STATE_ERROR_EXIST_STUN:
+    state = _("Stun server invalid");
+    break;
   default:
     state = _("Invalid");
     break;

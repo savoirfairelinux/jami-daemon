@@ -195,6 +195,14 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 		{
 		  a->state = ACCOUNT_STATE_ERROR_HOST;
 		}
+		else if(strcmp( status , "ERROR_CONF_STUN") == 0 )
+		{
+		  a->state = ACCOUNT_STATE_ERROR_CONF_STUN;
+		}
+		else if(strcmp( status , "ERROR_EXIST_STUN") == 0 )
+		{
+		  a->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
+		}	
 		else
 		{
 			a->state = ACCOUNT_STATE_INVALID;

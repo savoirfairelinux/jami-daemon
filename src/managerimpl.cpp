@@ -2031,7 +2031,9 @@ ManagerImpl::getAccountDetails(const AccountID& accountID)
 	(state == VoIPLink::ErrorAuth ? "ERROR_AUTH": 
 	(state == VoIPLink::ErrorNetwork ? "ERROR_NETWORK": 
 	(state == VoIPLink::ErrorHost ? "ERROR_HOST": 
-	(state == VoIPLink::Error ? "ERROR": "ERROR")))))))
+	(state == VoIPLink::ErrorExistStun ? "ERROR_EXIST_STUN": 
+	(state == VoIPLink::ErrorConfStun ? "ERROR_CONF_STUN": 
+	(state == VoIPLink::Error ? "ERROR": "ERROR")))))))))
 	)
       );
   a.insert(

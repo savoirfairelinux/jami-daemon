@@ -116,6 +116,12 @@ VoIPLink::setRegistrationState(const enum RegistrationState state, const int& er
   case ErrorHost:
     Manager::instance().registrationFailed(acc_ID);
     break;
+  case ErrorExistStun:
+    Manager::instance().registrationFailed(acc_ID);
+    break;
+  case ErrorConfStun:
+    Manager::instance().registrationFailed(acc_ID);
+    break;
   }
 }
 
