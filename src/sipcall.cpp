@@ -231,6 +231,7 @@ void SIPCall::sdpAddMediaDescription(pj_pool_t* pool)
     med->desc.fmt_count = count;
     
     int i = 0;
+
     while(itr != _codecMap.getActiveCodecs().end()) {
         std::ostringstream format;
         format << *itr;
