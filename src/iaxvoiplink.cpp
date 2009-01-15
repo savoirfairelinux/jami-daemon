@@ -173,6 +173,7 @@ IAXVoIPLink::getEvent()
   // lock iax_ stuff..
   _mutexIAX.enterMutex();
   iax_event* event = NULL;
+
   while ( (event = iax_get_event(IAX_NONBLOCKING)) != NULL ) {
     // If we received an 'ACK', libiax2 tells apps to ignore them.
     if (event->etype == IAX_EVENT_NULL) {
@@ -211,6 +212,7 @@ IAXVoIPLink::getEvent()
 
   // thread wait 3 millisecond
   _evThread->sleep(3);
+  free(event);
 }
 
   void
