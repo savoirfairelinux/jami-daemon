@@ -57,6 +57,7 @@ private:
     bool _useStun;
     pj_str_t _stunHost;
     std::string _stunServer;
+    bool validStunServer;
 
     /** Local Extern Address is the IP address seen by peers for SIP listener */
     std::string _localExternAddress;

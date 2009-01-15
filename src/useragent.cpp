@@ -91,7 +91,7 @@ pj_status_t UserAgent::sipCreate() {
 pj_status_t UserAgent::sipInit() {
     
     pj_status_t status;
-    
+    validStunServer = true;
     /* Init SIP UA: */
 
     //FIXME! DNS initialize here! */
@@ -111,6 +111,7 @@ pj_status_t UserAgent::sipInit() {
         port = RANDOM_SIP_PORT;
         if (!Manager::instance().behindNat(_stunServer, port)) {
             _debug("UserAgent: Unable to check NAT setting\n");
+	    validStunServer = false;		
             return false; // hoho we can't use the random sip port too...
         }
     }
@@ -372,6 +373,15 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     std::string tmp;
 
     SIPAccount *account;
+
+    if (!validStunServer) {
+
+    	SIPVoIPLink *voipLink;
+        voipLink = dynamic_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(id));
+        Manager::instance().getAccountLink(id)->setRegistrationState(VoIPLink::ErrorNetwork);
+        voipLink->setRegister(false);
+	return false;
+    }
 
     status = pjsip_regc_create(_endpt, (void *) currentId, &regc_cb, &regc);
     if (status != PJ_SUCCESS) {
