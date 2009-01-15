@@ -325,8 +325,8 @@ void UserAgent::busy_sleep(unsigned msec)
 #endif
 }
 
-bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, 
-				const int& timeout UNUSED) {
+bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout UNUSED) {
+    
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
     char contactTmp[256];
@@ -334,6 +334,7 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     pj_str_t svr;
     pj_str_t aor;
     pj_str_t contact;
+    pjsip_tx_data *tdata;
 
     //pj_mutex_lock(_mutex);
     std::string tmp;
@@ -357,7 +358,6 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     pj_strdup2(_pool, &contact, contactTmp);
 
     //_debug("UserAgent: Get in %s %d %s\n", svr.ptr, svr.slen, aor.ptr);
-    _debug("UserAgent: Contact is %s\n", contact.ptr);
     status = pjsip_regc_init(regc, &svr, &aor, &aor, 1, &contact, 600); //timeout);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to initialize regc. %d\n", status); //, regc->str_srv_url.ptr);
@@ -382,7 +382,6 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
 
     account->setCredInfo(cred);
 
-    pjsip_tx_data *tdata;
     status = pjsip_regc_register(regc, PJ_TRUE, &tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to register regc.\n");
