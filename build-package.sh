@@ -17,7 +17,7 @@ fi
 # Anonymous git http access
 git clone http://sflphone.org/git/sflphone.git
 cd sflphone
-git checkout origin/release release
+git checkout origin/release -b release
 
 # Get system parameters
 arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
