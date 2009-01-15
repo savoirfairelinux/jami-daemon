@@ -585,13 +585,30 @@ void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {
     voipLink = dynamic_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(*id));
     if(!voipLink)
         return;
-    
+   
     if (param->status == PJ_SUCCESS) {
         if (param->code < 0 || param->code >= 300) {
             /* Sometimes, the status is OK, but we still failed.
              * So checking the code for real result
              */
-            Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Error);
+            _debug("UserAgent: The error is: %d\n", param->code);
+            switch(param->code) {
+		case 408:
+                case 606:
+                     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorNetwork);
+                     break;
+                case 503:
+                     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorHost);
+                     break;
+                case 401:
+		case 403:
+		case 404:
+		     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorAuth);
+		     break;
+                default:
+                     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Error);
+                     break;
+            }
             voipLink->setRegister(false);
         } else {
             // Registration/Unregistration is success
@@ -604,7 +621,7 @@ void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {
             }
         }
     } else {
-        Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Error);
+        Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorAuth);
         voipLink->setRegister(false);
     }
 }
