@@ -17,13 +17,14 @@ fi
 # Anonymous git http access
 git clone http://sflphone.org/git/sflphone.git
 cd sflphone
-git checkout origin/release release
+git checkout origin/release -b release
 
 # Get system parameters
 arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 os_version=`lsb_release -d -s -c | sed -e '1d'`
 
 # Generate the changelog, according to the distribution and the git commit messages
+cp debian/changelog.$os_version debian/changelog
 git-dch --debian-branch=release --release
 cd ..
 
