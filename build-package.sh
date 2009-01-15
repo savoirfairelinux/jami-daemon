@@ -24,6 +24,7 @@ arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 os_version=`lsb_release -d -s -c | sed -e '1d'`
 
 # Generate the changelog, according to the distribution and the git commit messages
+cp debian/changelog.$os_version debian/changelog
 git-dch --debian-branch=release --release
 cd ..
 
