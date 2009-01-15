@@ -29,11 +29,7 @@ git-dch --release
 rm sflphone/.git/ -rf
 
 # Copy the appropriate control file based on different archtecture
-if [ $arch_flag -eq 32 ];then
-	cp sflphone/debian/control.$os_version.i386 sflphone/debian/control 
-elif [ $arch_flag -eq 64 ];then
-	cp sflphone/debian/control.$os_version.amd64 sflphone/debian/control
-fi
+cp sflphone/debian/control.$os_version sflphone/debian/control
 
 echo "Building sflphone package on Ubuntu $os_version $arch_flag bit architecture...."
 
