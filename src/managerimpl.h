@@ -182,11 +182,6 @@ class ManagerImpl {
     bool _hasTriedToRegister;
 
     /**
-     * Undocumented
-     */
-    bool sendTextMessage(const AccountID& accountId, const std::string& to, const std::string& message);
-
-    /**
      * Handle choice of the DTMF-send-way
      * @param   id: callid of the line.
      * @param   code: pressed key.
@@ -257,35 +252,16 @@ class ManagerImpl {
     void incomingMessage(const AccountID& accountId, const std::string& message);
 
     /**
-     * Notify the user he has voice mails
+     * Notify the client he has voice mails
      * @param accountId	  The account identifier
      * @param nb_msg The number of messages
      */
     void startVoiceMessageNotification(const AccountID& accountId, int nb_msg);
 
     /** 
-     * Notify the user that registration succeeded  
-     * @param accountId	  The account identifier
+     * Notify the client through DBus that registration state has been updated  
      */
-    void registrationSucceed(const AccountID& accountId);
-
-    /** 
-     * Notify the user that unregistration succeeded  
-     * @param accountId	  The account identifier
-     */
-    void unregistrationSucceed(const AccountID& accountId);
-
-    /** 
-     * Notify the user that registration failed  
-     * @param accountId	  The account identifier
-     */
-    void registrationFailed(const AccountID& accountId);
-
-    /** 
-     * Notify the user that registration is trying  
-     * @param accountId	  The account identifier
-     */
-    void registrationTrying(const AccountID& accountId);
+    void connectionStatusNotification(void);
 
     /**
      * ConfigurationManager - Send registration request

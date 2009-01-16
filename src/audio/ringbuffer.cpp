@@ -32,8 +32,9 @@
 // Create  a ring buffer with 'size' bytes
 RingBuffer::RingBuffer(int size): mStart( 0 ), mEnd( 0 )
                                      , mBufferSize( size > MIN_BUFFER_SIZE ? size : MIN_BUFFER_SIZE )
-                                     , mBuffer (new unsigned char[mBufferSize])
+                                     , mBuffer(NULL)
 {
+    mBuffer = new unsigned char[mBufferSize];
 	assert (mBuffer != NULL);
 }
 

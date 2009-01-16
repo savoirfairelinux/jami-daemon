@@ -176,6 +176,7 @@ bool
 ConfigTree::setConfigTreeItem(const std::string& section,
 			      const std::string& itemName,
 			      const std::string& value) {
+
   SectionMap::iterator iter = _sections.find(section);
   if ( iter == _sections.end()) {
     // Not found, create section

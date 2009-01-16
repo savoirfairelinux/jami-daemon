@@ -21,7 +21,6 @@
 #include "eventthread.h"
 #include "voiplink.h"
 
-
 EventThread::EventThread (VoIPLink* link) : Thread (),  _linkthread(link), stopIt(false)
 {
 	setCancel(cancelDeferred);

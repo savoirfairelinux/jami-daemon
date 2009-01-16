@@ -20,8 +20,8 @@
 #ifndef CALL_H
 #define CALL_H
 
-#include <string>
 #include <cc++/thread.h> // for mutex
+
 #include "audio/codecDescriptor.h"
 
 /* 
