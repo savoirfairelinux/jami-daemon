@@ -46,7 +46,12 @@ typedef enum
    /** The network is unreachable. The account is not registered */
    ACCOUNT_STATE_ERROR_NETWORK,
    /** Host is unreachable. The account is not registered */
-   ACCOUNT_STATE_ERROR_HOST
+   ACCOUNT_STATE_ERROR_HOST,
+   /** Stun server configuration error. The account is not registered */
+   ACCOUNT_STATE_ERROR_CONF_STUN,
+   /** Stun server is not existing. The account is not registered */
+   ACCOUNT_STATE_ERROR_EXIST_STUN
+
 } account_state_t;
 
 /** @struct account_t

@@ -109,4 +109,6 @@ void show_config_window();
  */
 void show_accounts_window();
 
+void config_window_set_stun_visible();
+
 #endif 

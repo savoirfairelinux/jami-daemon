@@ -27,17 +27,17 @@ SUBDIRS = audio config dbus $(ZEROCONFDIR)
 
 # Add here the cpp files to be build with sflphone
 sflphoned_SOURCES = \
-		eventthread.cpp \
-		main.cpp \
 		voiplink.cpp \
+		main.cpp \
 		managerimpl.cpp \
 		observer.cpp \
 		samplerateconverter.cpp \
-		account.cpp \
+		eventthread.cpp \
 		sipaccount.cpp \
 		accountcreator.cpp \
-                sipvoiplink.cpp \
+        sipvoiplink.cpp \
 		call.cpp \
+		account.cpp \
 		sipcall.cpp \
 		$(IAXSOURCES) \
 		useragent.cpp
@@ -65,18 +65,18 @@ sflphoned_LDADD = \
 noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \
+        voiplink.h \
 		managerimpl.h \
 		manager.h \
 		global.h \
 		observer.h \
 		eventthread.h \
 		user_cfg.h \
-                voiplink.h \
 		samplerateconverter.h \
 		account.h \
 		sipaccount.h \
 		accountcreator.h \
-                sipvoiplink.h \
+        sipvoiplink.h \
 		call.h \
 		sipcall.h \
 		useragent.h

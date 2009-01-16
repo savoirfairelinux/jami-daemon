@@ -117,10 +117,10 @@ void PulseLayer::context_state_callback( pa_context* c, void* user_data )
 void PulseLayer::disconnectPulseAudioServer( void )
 {
   if( playback )
-    delete playback;
+    delete playback; playback=NULL;
 
   if( record )
-    delete record;
+    delete record; record=NULL;
 }
 
   void

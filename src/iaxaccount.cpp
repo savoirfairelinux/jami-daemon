@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
+ *
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,58 +18,55 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include "iaxaccount.h"
-#include "account.h"
-#include "iaxvoiplink.h"
-#include "manager.h"
 
-IAXAccount::IAXAccount(const AccountID& accountID)
- : Account(accountID)
+#include "iaxaccount.h"
+#include "iaxvoiplink.h"
+
+    IAXAccount::IAXAccount(const AccountID& accountID)
+: Account(accountID)
 {
-  _link = new IAXVoIPLink(accountID);
+    _link = new IAXVoIPLink(accountID);
 }
 
 
 IAXAccount::~IAXAccount()
 {
-  delete _link;
-  _link = NULL;
+    delete _link;
+    _link = NULL;
 }
 
-int
+    int
 IAXAccount::registerVoIPLink()
 {
-  _link->init();
+    IAXVoIPLink *thislink;
 
-  //unregisterAccount(); No need to unregister first.
-  IAXVoIPLink* thislink = dynamic_cast<IAXVoIPLink*> (_link);
-  if (thislink) {
-    // Stuff needed for IAX registration
-    thislink->setHost(Manager::instance().getConfigString(_accountID, IAX_HOST));
-    thislink->setUser(Manager::instance().getConfigString(_accountID, IAX_USER));
-    thislink->setPass(Manager::instance().getConfigString(_accountID, IAX_PASSWORD));
-  }
+    _link->init();
 
-  _link->sendRegister();
+    thislink = dynamic_cast<IAXVoIPLink*> (_link);
+    if (thislink) {
+        // Stuff needed for IAX registration
+        thislink->setHost(Manager::instance().getConfigString(_accountID, HOSTNAME));
+        thislink->setUser(Manager::instance().getConfigString(_accountID, USERNAME));
+        thislink->setPass(Manager::instance().getConfigString(_accountID, PASSWORD));
+    }
 
-  return SUCCESS;
+    _link->sendRegister();
+
+    return SUCCESS;
 }
 
-int
+    int
 IAXAccount::unregisterVoIPLink()
 {
-  _link->sendUnregister();
-  _link->terminate();
+    _link->sendUnregister();
+    _link->terminate();
 
-  return SUCCESS;
+    return SUCCESS;
 }
 
-void
+    void
 IAXAccount::loadConfig() 
 {
-  // Account generic
-  Account::loadConfig();
-
-  // IAX specific
-  //none
+    // Account generic
+    Account::loadConfig();
 }

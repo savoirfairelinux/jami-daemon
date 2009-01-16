@@ -18,8 +18,6 @@
  */
 
 #include <string>
-
-
 #include <iostream>
 
 #include "manager.h"
@@ -28,13 +26,12 @@
 #include "sipvoiplink.h"
 #include "sipaccount.h"
 
-#define DEFAULT_SIP_PORT  5060
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 
 UserAgent *UserAgent::_current;
 
-UserAgent::UserAgent():_endpt(NULL) ,_sock(NULL), _cp(), _pool(NULL), _mutex(NULL), _mod(), _options_handler(), _useStun(false), _stunHost(),
+UserAgent::UserAgent():_endpt(NULL) ,_sock(NULL), _cp(), _pool(NULL), _mutex(NULL), _mod(), _useStun(false), _stunHost(),
         _stunServer(""), _localExternAddress(""), _localIPAddress("127.0.0.1"), _localExternPort(0), _localPort(0), _regPort(DEFAULT_SIP_PORT), _thread(NULL) {
     //_useStun = false;
     //_localIPAddress = "127.0.0.1";
@@ -91,7 +88,10 @@ pj_status_t UserAgent::sipCreate() {
 pj_status_t UserAgent::sipInit() {
     
     pj_status_t status;
+    int errPjsip = 0;
+    int port;
     
+    validStunServer = true;
     /* Init SIP UA: */
 
     //FIXME! DNS initialize here! */
@@ -103,14 +103,15 @@ pj_status_t UserAgent::sipInit() {
         _debug("UserAgent: Unable to determine network capabilities\n");
         return false;
     }
-    int errPjsip = 0;
-    int port = _regPort;
+    errPjsip = 0;
+    port = _regPort;
 
     //_debug("stun host is %s\n", _stunHost.ptr);
     if (_useStun && !Manager::instance().behindNat(_stunServer, port)) {
         port = RANDOM_SIP_PORT;
         if (!Manager::instance().behindNat(_stunServer, port)) {
             _debug("UserAgent: Unable to check NAT setting\n");
+	    validStunServer = false;		
             return false; // hoho we can't use the random sip port too...
         }
     }
@@ -205,38 +206,6 @@ pj_status_t UserAgent::sipInit() {
     status = pjsip_xfer_init_module(_endpt);
     PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
         
-    /*{
- 	const pjsip_module handler ={
-            NULL, NULL, 			// prev, next.			
-            { (char*)"mod-sflphone-options", 20},//9}, 	// Name.				
-            -1,		 			// Id				
-            PJSIP_MOD_PRIORITY_APPLICATION, 	// Priority			
-            NULL, 				// load()				
-            NULL, 				// start()				
-            NULL, 				// stop()				
-            NULL, 				// unload()				
-            &options_on_rx_request, 		// on_rx_request()			
-            NULL, 				// on_tx_request.			
-            NULL, 				// on_tx_response()			
-            NULL, 				// on_tsx_state()			
-        };
-
-        _options_handler = handler;
-    }
-
-    // Register the OPTIONS module
-    status = pjsip_endpt_register_module(_endpt, &_options_handler);
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
-
-    // Add OPTIONS in Allow header
-    status = pjsip_endpt_add_capability(_endpt, 
-					NULL, 
-					PJSIP_H_ALLOW,
-            				NULL, 1, 
-					&STR_OPTIONS);
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );*/
-
-
     // Initialize invite session module
     // These callbacks will be called on incoming requests, media session state, etc.
     {
@@ -273,7 +242,7 @@ pj_status_t UserAgent::sipInit() {
         pjsip_endpt_add_capability(_endpt, &_mod, PJSIP_H_ACCEPT, NULL, 1, &accepted);
     }
 
-    _debug("UserAgent: sflphone version %s for %s initialized\n", pj_get_version(), PJ_OS_NAME);
+    _debug("UserAgent: pjsip version %s for %s initialized\n", pj_get_version(), PJ_OS_NAME);
 
     Manager::instance().setSipThreadStatus(false);
     
@@ -358,8 +327,8 @@ void UserAgent::busy_sleep(unsigned msec)
 #endif
 }
 
-bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, 
-				const int& timeout UNUSED) {
+bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& server, const std::string& user, const std::string& passwd, const int& timeout UNUSED) {
+    
     pj_status_t status;
     AccountID *currentId = new AccountID(id);
     char contactTmp[256];
@@ -367,11 +336,22 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     pj_str_t svr;
     pj_str_t aor;
     pj_str_t contact;
+    pjsip_tx_data *tdata;
 
     //pj_mutex_lock(_mutex);
     std::string tmp;
 
+
     SIPAccount *account;
+
+    if (!validStunServer) {
+
+    	SIPVoIPLink *voipLink;
+        voipLink = dynamic_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(id));
+        Manager::instance().getAccountLink(id)->setRegistrationState(VoIPLink::ErrorExistStun);
+        voipLink->setRegister(false);
+	return false;
+    }
 
     status = pjsip_regc_create(_endpt, (void *) currentId, &regc_cb, &regc);
     if (status != PJ_SUCCESS) {
@@ -390,7 +370,6 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
     pj_strdup2(_pool, &contact, contactTmp);
 
     //_debug("UserAgent: Get in %s %d %s\n", svr.ptr, svr.slen, aor.ptr);
-    _debug("UserAgent: Contact is %s\n", contact.ptr);
     status = pjsip_regc_init(regc, &svr, &aor, &aor, 1, &contact, 600); //timeout);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to initialize regc. %d\n", status); //, regc->str_srv_url.ptr);
@@ -415,7 +394,6 @@ bool UserAgent::addAccount(AccountID id, pjsip_regc **regc2, const std::string& 
 
     account->setCredInfo(cred);
 
-    pjsip_tx_data *tdata;
     status = pjsip_regc_register(regc, PJ_TRUE, &tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to register regc.\n");
@@ -448,7 +426,6 @@ bool UserAgent::removeAccount(pjsip_regc *regc)
     pjsip_tx_data *tdata = NULL;
     
     //pj_mutex_lock(_mutex);
-
     if(regc) {
         status = pjsip_regc_unregister(regc, &tdata);
         if(status != PJ_SUCCESS) {
@@ -567,8 +544,13 @@ int UserAgent::createUDPServer() {
 }
 
 void UserAgent::setStunServer(const char *server) {
-    _stunServer = std::string(server);
-    _useStun = true;
+    if(server != NULL) {
+        _useStun = true;
+        _stunServer = std::string(server);
+    } else {
+        _useStun = false;
+        _stunServer = std::string("");
+    }
 }
 
 void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {
@@ -580,13 +562,30 @@ void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {
     voipLink = dynamic_cast<SIPVoIPLink *>(Manager::instance().getAccountLink(*id));
     if(!voipLink)
         return;
-    
+   
     if (param->status == PJ_SUCCESS) {
         if (param->code < 0 || param->code >= 300) {
             /* Sometimes, the status is OK, but we still failed.
              * So checking the code for real result
              */
-            Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Error);
+            _debug("UserAgent: The error is: %d\n", param->code);
+            switch(param->code) {
+		case 408:
+                case 606:
+                     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorConfStun);
+                     break;
+                case 503:
+                     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorHost);
+                     break;
+                case 401:
+		case 403:
+		case 404:
+		     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorAuth);
+		     break;
+                default:
+                     Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Error);
+                     break;
+            }
             voipLink->setRegister(false);
         } else {
             // Registration/Unregistration is success
@@ -599,7 +598,7 @@ void UserAgent::regc_cb(struct pjsip_regc_cbparam *param) {
             }
         }
     } else {
-        Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::Error);
+        Manager::instance().getAccountLink(*id)->setRegistrationState(VoIPLink::ErrorAuth);
         voipLink->setRegister(false);
     }
 }

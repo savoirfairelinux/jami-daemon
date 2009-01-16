@@ -17,114 +17,128 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: accountlist.c:158
+#: ../sflphone-gtk/src/accountlist.c:158
 msgid "Registered"
 msgstr "已注册"
 
-#: accountlist.c:161
+#: ../sflphone-gtk/src/accountlist.c:161
 msgid "Not Registered"
 msgstr "未注册"
 
-#: accountlist.c:164
+#: ../sflphone-gtk/src/accountlist.c:164
 msgid "Trying..."
 msgstr "正在连接..."
 
-#: accountlist.c:167 sflnotify.c:171 sflnotify.c:210
+#: ../sflphone-gtk/src/accountlist.c:167 ../sflphone-gtk/src/sflnotify.c:171
+#: ../sflphone-gtk/src/sflnotify.c:210
 msgid "Error"
 msgstr "注册失败"
 
-#: accountlist.c:170
+#: ../sflphone-gtk/src/accountlist.c:170
 msgid "Bad authentification"
 msgstr "认证错误"
 
-#: accountlist.c:173
+#: ../sflphone-gtk/src/accountlist.c:173
 msgid "Network unreachable"
 msgstr "网络连接失败"
 
-#: accountlist.c:175
+#: ../sflphone-gtk/src/accountlist.c:176
 msgid "Host unreachable"
 msgstr "服务器连接失败"
 
-#: accountlist.c:178
+#: ../sflphone-gtk/src/accountlist.c:179
+#, fuzzy
+msgid "Stun configuration error"
+msgstr "Stun配置有误"
+
+#: ../sflphone-gtk/src/accountlist.c:182
+msgid "Stun server invalid"
+msgstr "Stun服务器无效"
+
+#: ../sflphone-gtk/src/accountlist.c:185
 msgid "Invalid"
 msgstr "无效"
 
-#: accountwindow.c:143
+#: ../sflphone-gtk/src/accountwindow.c:143
 msgid "Account settings"
 msgstr "帐户设置"
 
-#: accountwindow.c:155
+#: ../sflphone-gtk/src/accountwindow.c:155
 msgid "Account parameters"
 msgstr "帐户相关参数"
 
-#: accountwindow.c:177
+#: ../sflphone-gtk/src/accountwindow.c:177
 msgid "_Enabled"
 msgstr "启用(E)"
 
-#: accountwindow.c:183 assistant.c:210 assistant.c:264
+#: ../sflphone-gtk/src/accountwindow.c:183 ../sflphone-gtk/src/assistant.c:210
+#: ../sflphone-gtk/src/assistant.c:264
 msgid "_Alias"
 msgstr "别名(A)"
 
-#: accountwindow.c:191
+#: ../sflphone-gtk/src/accountwindow.c:191
 msgid "_Protocol"
 msgstr "协议(P)"
 
-#: accountwindow.c:209
+#: ../sflphone-gtk/src/accountwindow.c:209
 msgid "Unknown"
 msgstr "未知"
 
-#: accountwindow.c:219 assistant.c:218 assistant.c:272
+#: ../sflphone-gtk/src/accountwindow.c:219 ../sflphone-gtk/src/assistant.c:218
+#: ../sflphone-gtk/src/assistant.c:272
 msgid "_Host name"
 msgstr "主机名(H)"
 
-#: accountwindow.c:227 assistant.c:226 assistant.c:280
+#: ../sflphone-gtk/src/accountwindow.c:227 ../sflphone-gtk/src/assistant.c:226
+#: ../sflphone-gtk/src/assistant.c:280
 msgid "_User name"
 msgstr "用户名(U)"
 
-#: accountwindow.c:238 assistant.c:236 assistant.c:290
+#: ../sflphone-gtk/src/accountwindow.c:238 ../sflphone-gtk/src/assistant.c:236
+#: ../sflphone-gtk/src/assistant.c:290
 msgid "_Password"
 msgstr "密码(P)"
 
-#: accountwindow.c:249
+#: ../sflphone-gtk/src/accountwindow.c:249
 msgid "_Voicemail box #"
 msgstr "语音信箱(V)"
 
-#: accountwindow.c:260 assistant.c:313
+#: ../sflphone-gtk/src/accountwindow.c:260 ../sflphone-gtk/src/assistant.c:313
 msgid "Network Address Translation"
 msgstr "网络地址解析"
 
-#: accountwindow.c:271 assistant.c:322
+#: ../sflphone-gtk/src/accountwindow.c:271 ../sflphone-gtk/src/assistant.c:322
 msgid "E_nable STUN"
 msgstr "使用STUN(n)"
 
-#: accountwindow.c:275
+#: ../sflphone-gtk/src/accountwindow.c:275
 msgid "Enable it if you are behind a firewall, then restart SFLphone"
 msgstr "当使用防火墙时，需设定STUN. 设置完毕后，请重新启动SFLphone"
 
-#: accountwindow.c:279
+#: ../sflphone-gtk/src/accountwindow.c:279
 msgid "_STUN Server"
 msgstr "STUN服务器(S)"
 
-#: accountwindow.c:286
+#: ../sflphone-gtk/src/accountwindow.c:286
 msgid "Format: name.server:port"
 msgstr "格式：name.server:port"
 
-#: actions.c:57 sflnotify.c:103
+#: ../sflphone-gtk/src/actions.c:57 ../sflphone-gtk/src/sflnotify.c:103
 #, c-format
 msgid "%d voice mails"
 msgstr "%d 个语音信息"
 
-#: actions.c:59
+#: ../sflphone-gtk/src/actions.c:59
 #, c-format
 msgid "%d voice mail"
 msgstr "%d 个语音信息"
 
-#: actions.c:80
+#: ../sflphone-gtk/src/actions.c:80
 #, c-format
 msgid "%s account- %s"
 msgstr "%s 帐户- %s"
 
-#: actions.c:214
+#: ../sflphone-gtk/src/actions.c:229
 msgid ""
 "Unable to connect to the SFLphone server.\n"
 "Make sure the daemon is running."
@@ -132,7 +146,7 @@ msgstr ""
 "连接SFLphone服务器失败.\n"
 "请检查daemon是否还在运行."
 
-#: actions.c:741
+#: ../sflphone-gtk/src/actions.c:756
 #, c-format
 msgid ""
 "<b>Error: No audio codecs found.\n"
@@ -145,59 +159,60 @@ msgstr ""
 "</b> SFL声音codecs文件应位于<i>%s</i> 或 位于主目录( <i>%s</i> )的<b>."
 "sflphone</b>目录下"
 
-#: assistant.c:138
+#: ../sflphone-gtk/src/assistant.c:138
 msgid "SFLphone account configuration wizard"
 msgstr "SFLphone 帐户设置向导"
 
-#: assistant.c:165
-msgid "SFLphone 0.8"
+#: ../sflphone-gtk/src/assistant.c:165
+#, fuzzy
+msgid "SFLphone 0.9.2"
 msgstr "SFLphone 0.8"
 
-#: assistant.c:165
+#: ../sflphone-gtk/src/assistant.c:165
 msgid "Welcome to SFLphone!"
 msgstr "欢迎使用SFLphone!"
 
-#: assistant.c:167
+#: ../sflphone-gtk/src/assistant.c:167
 msgid "This installation wizard will help you configure an account."
 msgstr "安装向导将帮助您配置帐户"
 
-#: assistant.c:182
+#: ../sflphone-gtk/src/assistant.c:182
 msgid "VoIP Protocols"
 msgstr "VoIP协议"
 
-#: assistant.c:182
+#: ../sflphone-gtk/src/assistant.c:182
 msgid "Select an account type:"
 msgstr "选择帐户类型:"
 
-#: assistant.c:202
+#: ../sflphone-gtk/src/assistant.c:202
 msgid "SIP account configuration"
 msgstr "SIP帐户配置"
 
-#: assistant.c:202 assistant.c:256
+#: ../sflphone-gtk/src/assistant.c:202 ../sflphone-gtk/src/assistant.c:256
 msgid "Please fill the following information:"
 msgstr "请填写以下信息:"
 
-#: assistant.c:256
+#: ../sflphone-gtk/src/assistant.c:256
 msgid "IAX2 account configuration"
 msgstr "IAX2帐户配置"
 
-#: assistant.c:313
+#: ../sflphone-gtk/src/assistant.c:313
 msgid "You should probably enable this if you are behind a firewall."
 msgstr "如果你的网络使用防火墙，你很有可能需要设定此项."
 
-#: assistant.c:329
+#: ../sflphone-gtk/src/assistant.c:329
 msgid "_STUN server"
 msgstr "STUN服务器(S)"
 
-#: assistant.c:346
+#: ../sflphone-gtk/src/assistant.c:346
 msgid "Account Registration"
 msgstr "帐户注册"
 
-#: assistant.c:346
+#: ../sflphone-gtk/src/assistant.c:346
 msgid "Congratulations!"
 msgstr "恭喜！"
 
-#: assistant.c:348
+#: ../sflphone-gtk/src/assistant.c:348
 msgid ""
 "This assistant is now finished.\n"
 "\n"
@@ -208,197 +223,197 @@ msgstr ""
 "\n"
 "你可以随时在 选项/帐户 窗口中查看注册状态或者修改帐户参数"
 
-#: audioconf.c:150
+#: ../sflphone-gtk/src/audioconf.c:150
 #, c-format
 msgid "audio device index for output = %d\n"
 msgstr "音频设备索引输出 ＝ %d\n"
 
-#: audioconf.c:558
+#: ../sflphone-gtk/src/audioconf.c:558
 msgid "Name"
 msgstr "名称"
 
-#: audioconf.c:563
+#: ../sflphone-gtk/src/audioconf.c:563
 msgid "Frequency"
 msgstr "频率"
 
-#: audioconf.c:568
+#: ../sflphone-gtk/src/audioconf.c:568
 msgid "Bitrate"
 msgstr "比率"
 
-#: audioconf.c:573
+#: ../sflphone-gtk/src/audioconf.c:573
 msgid "Bandwidth"
 msgstr "带宽"
 
-#: audioconf.c:633
+#: ../sflphone-gtk/src/audioconf.c:633
 msgid "Pulseaudio"
 msgstr "Pulseaudio"
 
-#: audioconf.c:636
+#: ../sflphone-gtk/src/audioconf.c:636
 msgid "ALSA"
 msgstr "ALSA"
 
-#: audioconf.c:662
+#: ../sflphone-gtk/src/audioconf.c:662
 msgid "ALSA plugin"
 msgstr "ALSA插件"
 
-#: audioconf.c:684
+#: ../sflphone-gtk/src/audioconf.c:684
 msgid "Output"
 msgstr "输出"
 
-#: audioconf.c:706
+#: ../sflphone-gtk/src/audioconf.c:706
 msgid "Input"
 msgstr "输入"
 
-#: audioconf.c:739
+#: ../sflphone-gtk/src/audioconf.c:739
 msgid "_Enable ringtones"
 msgstr "启用铃声(E)"
 
-#: audioconf.c:744
+#: ../sflphone-gtk/src/audioconf.c:744
 msgid "Choose a ringtone"
 msgstr "选择铃声"
 
-#: audioconf.c:749
+#: ../sflphone-gtk/src/audioconf.c:749
 msgid "Audio Files"
 msgstr "音频文件"
 
-#: audioconf.c:774
+#: ../sflphone-gtk/src/audioconf.c:774
 msgid "Sound Manager"
 msgstr "音频管理器"
 
-#: audioconf.c:781
+#: ../sflphone-gtk/src/audioconf.c:781
 msgid "ALSA configuration"
 msgstr "ALSA 配置"
 
-#: audioconf.c:791
+#: ../sflphone-gtk/src/audioconf.c:791
 msgid "Codecs"
 msgstr "Codecs编码"
 
-#: audioconf.c:799
+#: ../sflphone-gtk/src/audioconf.c:799
 msgid "Ringtones"
 msgstr "铃声"
 
-#: calltree.c:208
+#: ../sflphone-gtk/src/calltree.c:208
 #, c-format
 msgid "\"Voicemail\" <%s>"
 msgstr "\"语音邮件\" <%s>"
 
-#: calltree.c:405 calltree.c:407
+#: ../sflphone-gtk/src/calltree.c:405 ../sflphone-gtk/src/calltree.c:407
 msgid "Place a call"
 msgstr "拨号"
 
-#: calltree.c:414 calltree.c:416
+#: ../sflphone-gtk/src/calltree.c:414 ../sflphone-gtk/src/calltree.c:416
 msgid "Pick up"
 msgstr "接电话"
 
-#: calltree.c:424 calltree.c:426
+#: ../sflphone-gtk/src/calltree.c:424 ../sflphone-gtk/src/calltree.c:426
 msgid "Hang up"
 msgstr "放电话"
 
-#: calltree.c:434 calltree.c:436
+#: ../sflphone-gtk/src/calltree.c:434 ../sflphone-gtk/src/calltree.c:436
 msgid "Off Hold"
 msgstr "恢复通话"
 
-#: calltree.c:445 calltree.c:447
+#: ../sflphone-gtk/src/calltree.c:445 ../sflphone-gtk/src/calltree.c:447
 msgid "On Hold"
 msgstr "待机"
 
-#: calltree.c:458 calltree.c:460
+#: ../sflphone-gtk/src/calltree.c:458 ../sflphone-gtk/src/calltree.c:460
 msgid "Transfer"
 msgstr "转接"
 
-#: calltree.c:470 calltree.c:472
+#: ../sflphone-gtk/src/calltree.c:470 ../sflphone-gtk/src/calltree.c:472
 msgid "History"
 msgstr "历史"
 
-#: calltree.c:480 calltree.c:484
+#: ../sflphone-gtk/src/calltree.c:480 ../sflphone-gtk/src/calltree.c:484
 msgid "Voicemail"
 msgstr "语音信箱"
 
-#: configwindow.c:371
+#: ../sflphone-gtk/src/configwindow.c:371
 msgid "Protocol"
 msgstr "协议"
 
-#: configwindow.c:378
+#: ../sflphone-gtk/src/configwindow.c:378
 msgid "Status"
 msgstr "状态"
 
-#: configwindow.c:470
+#: ../sflphone-gtk/src/configwindow.c:470
 msgid "Desktop Notification"
 msgstr "桌面提示"
 
-#: configwindow.c:478
+#: ../sflphone-gtk/src/configwindow.c:478
 msgid "_Enable"
 msgstr "启用(E)"
 
-#: configwindow.c:483
+#: ../sflphone-gtk/src/configwindow.c:483
 msgid "_Notify voice mails"
 msgstr "通知语音邮件(N)"
 
-#: configwindow.c:489
+#: ../sflphone-gtk/src/configwindow.c:489
 msgid "System Tray Icon"
 msgstr "系统托盘图标"
 
-#: configwindow.c:497
+#: ../sflphone-gtk/src/configwindow.c:497
 msgid "_Popup main window on incoming call"
 msgstr "来电时弹出主窗口(P)"
 
-#: configwindow.c:502
+#: ../sflphone-gtk/src/configwindow.c:502
 msgid "Ne_ver popup main window"
 msgstr "从不弹出主窗口(v)"
 
-#: configwindow.c:506
+#: ../sflphone-gtk/src/configwindow.c:506
 msgid "_Start hidden"
 msgstr "启动时隐藏(S)"
 
-#: configwindow.c:512
+#: ../sflphone-gtk/src/configwindow.c:512
 msgid "Calls History"
 msgstr "拨号历史"
 
-#: configwindow.c:520
+#: ../sflphone-gtk/src/configwindow.c:520
 msgid "_Maximum number of calls"
 msgstr "最大拨号数(M)"
 
-#: configwindow.c:536
+#: ../sflphone-gtk/src/configwindow.c:536
 msgid "PulseAudio sound server"
 msgstr "PulseAudio服务器"
 
-#: configwindow.c:544
+#: ../sflphone-gtk/src/configwindow.c:544
 msgid "_Control running applications volume"
 msgstr "控制正在运行的应用程序的音量(C)"
 
-#: configwindow.c:557
+#: ../sflphone-gtk/src/configwindow.c:557
 msgid "SIP Port"
 msgstr "SIP端口号"
 
-#: configwindow.c:566
+#: ../sflphone-gtk/src/configwindow.c:566
 msgid "Apply"
 msgstr "应用"
 
-#: configwindow.c:570
+#: ../sflphone-gtk/src/configwindow.c:570
 msgid "Port:"
 msgstr "端口:"
 
-#: configwindow.c:600
+#: ../sflphone-gtk/src/configwindow.c:600
 msgid "Preferences"
 msgstr "属性"
 
-#: configwindow.c:620
+#: ../sflphone-gtk/src/configwindow.c:620
 msgid "General Settings"
 msgstr "常用配置"
 
-#: configwindow.c:625
+#: ../sflphone-gtk/src/configwindow.c:625
 msgid "Audio Settings"
 msgstr "音频配置"
 
-#: configwindow.c:649
+#: ../sflphone-gtk/src/configwindow.c:649
 msgid "Accounts"
 msgstr "帐户"
 
-#: configwindow.c:661
+#: ../sflphone-gtk/src/configwindow.c:661
 msgid "Accounts previously setup"
 msgstr "以前帐户设置"
 
-#: errors.c:28
+#: ../sflphone-gtk/src/errors.c:28
 msgid ""
 "<b>ALSA notification</b>\n"
 "\n"
@@ -408,7 +423,7 @@ msgstr ""
 "\n"
 "打开回放设备时出错"
 
-#: errors.c:31
+#: ../sflphone-gtk/src/errors.c:31
 msgid ""
 "<b>ALSA notification</b>\n"
 "\n"
@@ -418,18 +433,20 @@ msgstr ""
 "\n"
 "打开采集设备时出错"
 
-#: errors.c:34
+#: ../sflphone-gtk/src/errors.c:34
 msgid ""
 "<b>Pulseaudio notification</b>\n"
 "\n"
 "Pulseaudio is not running"
 msgstr ""
 
-#: historyfilter.c:45 historyfilter.c:63 historyfilter.c:78
+#: ../sflphone-gtk/src/historyfilter.c:45
+#: ../sflphone-gtk/src/historyfilter.c:63
+#: ../sflphone-gtk/src/historyfilter.c:78
 msgid "Search"
 msgstr "查找"
 
-#: mainwindow.c:69
+#: ../sflphone-gtk/src/mainwindow.c:69
 msgid ""
 "<b>There is one call in progress.</b>\n"
 "Do you still want to quit?"
@@ -437,7 +454,7 @@ msgstr ""
 "<b>有一个电话正在处理</b>\n"
 "确定要退出？"
 
-#: mainwindow.c:73
+#: ../sflphone-gtk/src/mainwindow.c:73
 msgid ""
 "<b>There are calls in progress.</b>\n"
 "Do you still want to quit?"
@@ -445,143 +462,144 @@ msgstr ""
 "<b>有电话正在处理中</b>\n"
 "确定要退出？"
 
-#: menus.c:130
+#: ../sflphone-gtk/src/menus.c:130
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone是一个VoIP客户端，它兼容SIP和IAX2协议."
 
-#: menus.c:133
+#: ../sflphone-gtk/src/menus.c:133
 msgid "About SFLphone"
 msgstr "关于SFLphone"
 
-#: menus.c:156
+#: ../sflphone-gtk/src/menus.c:156
 msgid "_Help"
 msgstr "帮助(H)"
 
-#: menus.c:273
+#: ../sflphone-gtk/src/menus.c:273
 msgid "_New call"
 msgstr "新电话(N)"
 
-#: menus.c:285 menus.c:769
+#: ../sflphone-gtk/src/menus.c:285 ../sflphone-gtk/src/menus.c:769
 msgid "_Pick up"
 msgstr "拨出(P)"
 
-#: menus.c:295 menus.c:781
+#: ../sflphone-gtk/src/menus.c:295 ../sflphone-gtk/src/menus.c:781
 msgid "_Hang up"
 msgstr "放下(H)"
 
-#: menus.c:305 menus.c:793
+#: ../sflphone-gtk/src/menus.c:305 ../sflphone-gtk/src/menus.c:793
 msgid "On _Hold"
 msgstr ""
 
-#: menus.c:321
+#: ../sflphone-gtk/src/menus.c:321
 msgid "_Account Assistant"
 msgstr "帐户向导(A)"
 
-#: menus.c:351
+#: ../sflphone-gtk/src/menus.c:351
 msgid "_Call"
 msgstr "电话"
 
-#: menus.c:497
+#: ../sflphone-gtk/src/menus.c:497
 msgid "History empty"
 msgstr "无历史记录"
 
-#: menus.c:538
+#: ../sflphone-gtk/src/menus.c:538
 msgid "_Clear history"
 msgstr "清空历史记录(C)"
 
-#: menus.c:550
+#: ../sflphone-gtk/src/menus.c:550
 msgid "_Accounts"
 msgstr "帐户(A)"
 
-#: menus.c:565
+#: ../sflphone-gtk/src/menus.c:565
 msgid "_Edit"
 msgstr "编辑(E)"
 
-#: menus.c:625
+#: ../sflphone-gtk/src/menus.c:625
 msgid "_Dialpad"
 msgstr "拨号面板"
 
-#: menus.c:637
+#: ../sflphone-gtk/src/menus.c:637
 msgid "_Volume controls"
 msgstr "音量控制(V)"
 
-#: menus.c:646
+#: ../sflphone-gtk/src/menus.c:646
 msgid "_Search history"
 msgstr "查找历史(S)"
 
-#: menus.c:654
+#: ../sflphone-gtk/src/menus.c:654
 msgid "_View"
 msgstr "查看(V)"
 
-#: menus.c:876
+#: ../sflphone-gtk/src/menus.c:876
 msgid "_Call back"
 msgstr "回叫(C)"
 
-#: sflnotify.c:34 sflnotify.c:100
+#: ../sflphone-gtk/src/sflnotify.c:34 ../sflphone-gtk/src/sflnotify.c:100
 #, c-format
 msgid "%s account: %s"
 msgstr "%s 帐户: %s"
 
-#: sflnotify.c:37
+#: ../sflphone-gtk/src/sflnotify.c:37
 #, c-format
 msgid "<i>From:</i> %s"
 msgstr "<i>拨入方：</i> %s"
 
-#: sflnotify.c:52
+#: ../sflphone-gtk/src/sflnotify.c:52
 msgid "Accept"
 msgstr "接受"
 
-#: sflnotify.c:53
+#: ../sflphone-gtk/src/sflnotify.c:53
 msgid "Refuse"
 msgstr "拒绝"
 
-#: sflnotify.c:54 sflnotify.c:117 sflnotify.c:154
+#: ../sflphone-gtk/src/sflnotify.c:54 ../sflphone-gtk/src/sflnotify.c:117
+#: ../sflphone-gtk/src/sflnotify.c:154
 msgid "Ignore"
 msgstr "忽略"
 
-#: sflnotify.c:136
+#: ../sflphone-gtk/src/sflnotify.c:136
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
 msgstr "使用%s帐户<i>%s</i>呼叫"
 
-#: sflnotify.c:140
+#: ../sflphone-gtk/src/sflnotify.c:140
 msgid "Current account"
 msgstr "当前帐户"
 
-#: sflnotify.c:169
+#: ../sflphone-gtk/src/sflnotify.c:169
 msgid "You haven't setup any accounts"
 msgstr "你没有设置任何帐户"
 
-#: sflnotify.c:185 sflnotify.c:224
+#: ../sflphone-gtk/src/sflnotify.c:185 ../sflphone-gtk/src/sflnotify.c:224
 msgid "Setup Accounts"
 msgstr "设定帐户"
 
-#: sflnotify.c:208
+#: ../sflphone-gtk/src/sflnotify.c:208
 msgid "You have no registered accounts"
 msgstr "未发现已注册帐户"
 
-#: sliders.c:161
+#: ../sflphone-gtk/src/sliders.c:161
 msgid "Speakers volume"
 msgstr "扬声器音量"
 
-#: sliders.c:163
+#: ../sflphone-gtk/src/sliders.c:163
 msgid "Mic volume"
 msgstr "话筒音量"
 
-#: statusicon.c:91
+#: ../sflphone-gtk/src/statusicon.c:91
 msgid "_Show main window"
 msgstr "显示主窗口(S)"
 
-#: statusicon.c:124
+#: ../sflphone-gtk/src/statusicon.c:124
 #, c-format
 msgid "SFLphone - %i accounts registered"
 msgstr "SFLphone - %i 个帐户已注册"
 
-#: timestamp.c:45
+#: ../sflphone-gtk/src/timestamp.c:46
 msgid "<small>Missed call</small>"
 msgstr "<small>未接电话</small>"
 
-#: timestamp.c:63
+#: ../sflphone-gtk/src/timestamp.c:64
 #, c-format
 msgid "<small>Duration:</small> %s"
 msgstr "<small>时长:</small> %s"

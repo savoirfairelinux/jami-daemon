@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #ifndef __SFLPHONE_CONST_H
 #define __SFLPHONE_CONST_H
 
@@ -35,32 +35,15 @@
 
 #define UNUSED  __attribute__((__unused__))
 
-/** Account type : SIP / IAX */
 #define ACCOUNT_TYPE               "Account.type"
-/** Account alias */
 #define ACCOUNT_ALIAS		   "Account.alias"
-/** Tells if account is enabled or not */
 #define ACCOUNT_ENABLED		   "Account.enable"
-/** Mail box number */
 #define ACCOUNT_MAILBOX		   "Account.mailbox"
-/** SIP parameter: host name */
-#define ACCOUNT_SIP_HOST      "SIP.hostPart"
-/** SIP parameter: authentification name */
-#define ACCOUNT_SIP_USER      "SIP.username"
-/** SIP parameter: password */
-#define ACCOUNT_SIP_PASSWORD       "SIP.password"
-/** SIP parameter: proxy address */
-#define ACCOUNT_SIP_PROXY          "SIP.proxy"
-/** SIP parameter: stun server address */
+#define ACCOUNT_HOSTNAME      "hostname"
+#define ACCOUNT_USERNAME      "username"
+#define ACCOUNT_PASSWORD       "password"
 #define ACCOUNT_SIP_STUN_SERVER	   "STUN.server"
-/** SIP parameter: tells if stun is enabled or not */
 #define ACCOUNT_SIP_STUN_ENABLED   "STUN.enable"
-/** IAX2 parameter: host name */
-#define ACCOUNT_IAX_HOST           "IAX.host"
-/** IAX2 parameter: user name */
-#define ACCOUNT_IAX_USER           "IAX.user"
-/** IAX2 parameter: password name */
-#define ACCOUNT_IAX_PASSWORD           "IAX.password"
 
 /** Error while opening capture device */
 #define ALSA_CAPTURE_DEVICE	      0x0001
