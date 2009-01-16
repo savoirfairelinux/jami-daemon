@@ -1,32 +1,48 @@
-sflphone (0.9.2-0ubuntu4) hardy; urgency=low
+sflphone (0.9.2-2ubuntu5) hardy; urgency=low
+
+  * Fix memory leak in the pulseaudio callback
+  * Update debian package generation script
+  * Warnings removal in GTK+ client
+  * Clean adjust volume method in alsalayer
+  * Plug the sflphone playback volume control to the pulseaudio volume
+    manager
+  * Display the date in history according to the current locale
+  * Generate the changelog according to the git commit messages
+  * Complete header in chinese translation file
+  * Use the right gpg key to sign the packages
+  * add debian jaunty jackalope support
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 14 Jan 2009 21:17:20 -0500
+
+sflphone (0.9.2-2ubuntu4) hardy; urgency=low
 
   [ Emmanuel Milou ]
   * add german translation
-
+  
   [ Yun Liu ]
   * Fix GUI crash in Ubuntu8.10 64bit system
-
+  
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Thu, 08 Jan 2009 13:08:51 -0500
 
-sflphone (0.9.2-0ubuntu3) hardy; urgency=low
+sflphone (0.9.2-2ubuntu3) hardy; urgency=low
 
   [ Emmanuel Milou ]
   * The main thread synchronizes the ringtone thread
   * disable custom ringtone for the ALSA layer
   * Fix the Makefile.am in man directory, add a SEE ALSO section
-
+  
   [ Yun Liu ]
   * Fix daemon crash caused by the previous patch ( for bug ticket #129)
-
+  
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Tue, 06 Jan 2009 16:18:38 -0500
 
-sflphone (0.9.2-0ubuntu2) hardy; urgency=low
+sflphone (0.9.2-2ubuntu2) hardy; urgency=low
   
   * Fix bug ticket #129
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Wed, 5 Jan 2009 15:54:53 -0500
 
-sflphone (0.9.2-0ubuntu1) hardy; urgency=low
+sflphone (0.9.2-2ubuntu1) hardy; urgency=low
 
   * Migrate from eXosip library to pjsip
   * Add multiple SIP accounts support

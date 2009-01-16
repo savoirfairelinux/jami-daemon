@@ -1,3 +1,19 @@
+sflphone (0.9.2-2ubuntu5) jaunty; urgency=low
+
+  * Fix memory leak in the pulseaudio callback
+  * Update debian package generation script
+  * Warnings removal in GTK+ client
+  * Clean adjust volume method in alsalayer
+  * Plug the sflphone playback volume control to the pulseaudio volume
+    manager
+  * Display the date in history according to the current locale
+  * Generate the changelog according to the git commit messages
+  * Complete header in chinese translation file
+  * Use the right gpg key to sign the packages
+  * add debian jaunty jackalope support
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 14 Jan 2009 21:17:20 -0500
+
 sflphone (0.9.2-2ubuntu4) jaunty; urgency=low
 
   [ Emmanuel Milou ]
