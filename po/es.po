@@ -51,11 +51,11 @@ msgstr "_Parte del servidor"
 #: ../sflphone-gtk/src/accountlist.c:179
 #, fuzzy
 msgid "Stun configuration error"
-msgstr ""
+msgstr "Error de configuración Stun"
 
 #: ../sflphone-gtk/src/accountlist.c:182
 msgid "Stun server invalid"
-msgstr ""
+msgstr "Servidor stun inválido"
 
 #: ../sflphone-gtk/src/accountlist.c:185
 msgid "Invalid"
