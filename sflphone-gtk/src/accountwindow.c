@@ -34,9 +34,7 @@ account_t * currentAccount;
 GtkDialog * dialog;
 GtkWidget * hbox;
 GtkWidget * frame;
-GtkWidget * frameNat;
 GtkWidget * table;
-GtkWidget * tableNat;
 GtkWidget * label;
 GtkWidget * entryID;
 GtkWidget * entryAlias;
@@ -45,30 +43,13 @@ GtkWidget * entryEnabled;
 GtkWidget * entryUsername;
 GtkWidget * entryHostname;
 GtkWidget * entryPassword;
-GtkWidget * stunServer;
-GtkWidget * stunEnable;
 GtkWidget * entryMailbox;
 
 /* Signal to entryProtocol 'changed' */
     void
 change_protocol (account_t * currentAccount UNUSED)
 {
-    gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
-    //g_print("Protocol changed\n");
-
-    // toggle sensitivity for: entryUserPart 
-    if (strcmp(proto, "SIP") == 0) {
-        gtk_widget_set_sensitive( GTK_WIDGET(stunEnable), TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(stunServer), TRUE);
-    }
-    else if (strcmp(proto, "IAX") == 0) {
-        gtk_widget_set_sensitive( GTK_WIDGET(stunEnable),   FALSE);
-        gtk_widget_set_sensitive( GTK_WIDGET(stunServer),   FALSE);
-    }
-    else {
-        // Should not get here.
-        g_print("Unknown protocol: %s\n", proto);
-    }
+    (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
 }
 
     int 
@@ -80,14 +61,6 @@ is_iax_enabled(void)
     else	
         return FALSE;
 }
-
-    void
-stun_state( void )
-{
-    gboolean stunActive = (gboolean)gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( stunEnable ));
-    gtk_widget_set_sensitive( GTK_WIDGET( stunServer ) , stunActive );
-}
-
 
     void
 show_account_window (account_t * a)
@@ -106,8 +79,6 @@ show_account_window (account_t * a)
     gchar * curHostname = "";
     gchar * curPassword = "";
     /* TODO: add curProxy, and add boxes for Proxy support */
-    gchar * stun_enabled = "FALSE";
-    gchar * stun_server= "stun.fwdnet.net:3478";
     gchar * curMailbox = "888";
 
     // Load from SIP/IAX/Unknown ?
@@ -123,8 +94,9 @@ show_account_window (account_t * a)
         curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
 
         if (strcmp(curAccountType, "SIP") == 0) {
-            stun_enabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_STUN_ENABLED);
+            /*stun_enabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_STUN_ENABLED);
             stun_server = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_STUN_SERVER);
+            */
         }
     }
     else
@@ -250,56 +222,19 @@ show_account_window (account_t * a)
 
     gtk_widget_show_all( table );
     gtk_container_set_border_width (GTK_CONTAINER(table), 10);
-
-    frameNat = gtk_frame_new( _("Network Address Translation") );
-    gtk_box_pack_start(GTK_BOX(dialog->vbox), frameNat, FALSE, FALSE, 0);
-    gtk_widget_show(frameNat);
-
-    tableNat = gtk_table_new ( 2, 2  ,  FALSE/* homogeneous */);
-    gtk_table_set_row_spacings( GTK_TABLE(tableNat), 10);
-    gtk_table_set_col_spacings( GTK_TABLE(tableNat), 10);
-    gtk_widget_show(tableNat);
-    gtk_container_add( GTK_CONTAINER( frameNat) , tableNat );
-
-    // NAT detection code section
-    stunEnable = gtk_check_button_new_with_mnemonic(_("E_nable STUN"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stunEnable), strcmp(stun_enabled,"TRUE") == 0 ? TRUE: FALSE);
-    g_signal_connect( G_OBJECT (GTK_TOGGLE_BUTTON(stunEnable)) , "toggled" , G_CALLBACK( stun_state ), NULL);
-#if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text( GTK_WIDGET( stunEnable ) , _("Enable it if you are behind a firewall, then restart SFLphone"));
-#endif
-    gtk_table_attach ( GTK_TABLE( tableNat ), stunEnable, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-
-    label = gtk_label_new_with_mnemonic(_("_STUN Server"));
-    gtk_table_attach( GTK_TABLE( tableNat ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
-    stunServer = gtk_entry_new();
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), stunServer);
-    gtk_entry_set_text(GTK_ENTRY(stunServer), stun_server);
-#if GTK_CHECK_VERSION(2,12,0)
-    gtk_widget_set_tooltip_text( GTK_WIDGET( stunServer ) , _("Format: name.server:port"));
-#endif
-    gtk_table_attach ( GTK_TABLE( tableNat ), stunServer, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_widget_set_sensitive( GTK_WIDGET( stunServer ), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stunEnable)));
-
-
+    
     // Toggle enabled/disabled widgets
     if (strcmp(curAccountType, "SIP") == 0) {
         //gtk_widget_set_sesitive( GTK_WIDGET(entryUserPart), TRUE);<    
     }
     else if (strcmp(curAccountType, "IAX") == 0) {
-        gtk_widget_set_sensitive( GTK_WIDGET(stunEnable), FALSE);
-        gtk_widget_set_sensitive( GTK_WIDGET(stunServer), FALSE);
+        //gtk_widget_set_sensitive( GTK_WIDGET(stunEnable), FALSE);
+        //gtk_widget_set_sensitive( GTK_WIDGET(stunServer), FALSE);
     }
     else {
         // Disable everything ! ouch!
         // Shouldn't get there.
     }
-
-
-
-    gtk_widget_show_all( tableNat );
-    gtk_container_set_border_width (GTK_CONTAINER(tableNat), 10);
 
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     if(response == GTK_RESPONSE_ACCEPT)
@@ -329,12 +264,38 @@ show_account_window (account_t * a)
                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
 
         if (strcmp(proto, "SIP") == 0) { 
-            g_hash_table_replace(currentAccount->properties, 
-                    g_strdup(ACCOUNT_SIP_STUN_SERVER), 
-                    g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(stunServer))));
-            g_hash_table_replace(currentAccount->properties, 
-                    g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
-                    g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stunEnable)) ? "TRUE": "FALSE"));
+            guint i, size;
+            account_t * account;
+            gchar * stun_srv;            
+            gchar * stun_enable;
+            gboolean flag = FALSE;
+
+            size = account_list_get_size();
+            // If a SIP account already exists, fetch its information about STUN
+            for(i=0; i<size; i++){
+                account = account_list_get_nth(i);
+                if( strcmp(g_hash_table_lookup(account->properties, ACCOUNT_TYPE), "SIP" ) == 0 )
+                {
+                    stun_srv = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_SERVER);
+                    stun_enable = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_ENABLED);
+                    g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), 
+                                            g_strdup(stun_srv));
+                    g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
+                                            g_strdup(stun_enable));
+                    flag = TRUE;
+                    break;
+                }
+            }
+            
+            // Otherelse set a default value
+            if(!flag)
+            {
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), (gchar*)"");
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
+                                            "FALSE");
+            }
+
+            config_window_set_stun_visible();
         }
        
         /** @todo Verify if it's the best condition to check */
