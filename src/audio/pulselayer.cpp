@@ -57,9 +57,9 @@ PulseLayer::closeLayer( void )
 {
   playback->disconnect(); 
   record->disconnect();
+  sleep(2);
   pa_context_disconnect( context ); 
   pa_context_unref( context );
-  sleep(2);
 }
 
   void
