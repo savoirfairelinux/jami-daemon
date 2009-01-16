@@ -16,24 +16,23 @@ fi
 
 # Anonymous git http access
 git clone http://sflphone.org/git/sflphone.git
-git checkout debian/0.9.2-4
+cd sflphone
+git checkout origin/release -b release
 
 # Get system parameters
 arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 os_version=`lsb_release -d -s -c | sed -e '1d'`
 
 # Generate the changelog, according to the distribution and the git commit messages
-git-dch --release
+cp debian/changelog.$os_version debian/changelog
+git-dch --debian-branch=release --release
+cd ..
 
 # Remove useless git directory
 rm sflphone/.git/ -rf
 
 # Copy the appropriate control file based on different archtecture
-if [ $arch_flag -eq 32 ];then
-	cp sflphone/debian/control.$os_version.i386 sflphone/debian/control 
-elif [ $arch_flag -eq 64 ];then
-	cp sflphone/debian/control.$os_version.amd64 sflphone/debian/control
-fi
+cp sflphone/debian/control.$os_version sflphone/debian/control
 
 echo "Building sflphone package on Ubuntu $os_version $arch_flag bit architecture...."
 
@@ -48,6 +47,7 @@ wget -q http://www.sflphone.org/downloads/gpg/sflphone.gpg.asc -O- | gpg --impor
 cd sflphone-0.9.2/debian; debuild -k'Savoir-Faire Linux Inc.'
 
 # Clean 
+cd ../..
 rm sflphone-0.9.2/ -rf 
 rm sflphone/ -rf
 

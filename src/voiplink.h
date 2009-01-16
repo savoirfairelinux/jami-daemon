@@ -52,7 +52,7 @@ class VoIPLink {
     virtual ~VoIPLink (void);
 
     /** Contains all the state an Voip can be in */
-    enum RegistrationState {Null, Ready, Unregistered, Trying, Registered, Bad_Authentification , Unreachable , Timeout, Bad_Hostname, Error};
+    enum RegistrationState {Unregistered, Trying, Registered, Error, ErrorAuth , ErrorNetwork , ErrorHost, ErrorExistStun, ErrorConfStun};
     typedef enum RegistrationState RegistrationState;
 
     /**

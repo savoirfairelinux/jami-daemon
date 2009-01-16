@@ -1973,15 +1973,14 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails(const Accoun
 	(state == VoIPLink::Registered ? "REGISTERED":
 	(state == VoIPLink::Unregistered ? "UNREGISTERED":
 	(state == VoIPLink::Trying ? "TRYING":
-	(state == VoIPLink::Bad_Authentification ? "BAD_AUTHENTIFICATION": 
-	(state == VoIPLink::Unreachable ? "UNREACHABLE": 
-	(state == VoIPLink::Bad_Hostname ? "BAD_HOSTNAME": 
-	(state == VoIPLink::Null ? "NULL":
-    (state == VoIPLink::Ready ? "READY":
-    (state == VoIPLink::Timeout ? "TIMEOUT":
-    (state == VoIPLink::Error ? "" :"ERROR"))))))))))
+	(state == VoIPLink::ErrorAuth ? "ERROR_AUTH": 
+	(state == VoIPLink::ErrorNetwork ? "ERROR_NETWORK": 
+	(state == VoIPLink::ErrorHost ? "ERROR_HOST": 
+	(state == VoIPLink::ErrorExistStun ? "ERROR_EXIST_STUN": 
+	(state == VoIPLink::ErrorConfStun ? "ERROR_CONF_STUN": 
+	(state == VoIPLink::Error ? "ERROR": "ERROR")))))))))
 	)
-  );
+      );
  
   a.insert( std::pair<std::string, std::string>( CONFIG_ACCOUNT_TYPE, accountType ) );
   a.insert( std::pair<std::string, std::string>( USERNAME, getConfigString(accountID, USERNAME) ) );
@@ -2038,9 +2037,7 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 
         	restartPjsip();
     	}
-
-    }
-    
+  }
 
     saveConfig();
   

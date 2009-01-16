@@ -761,7 +761,7 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
         iax_destroy(_regSession);
         _mutexIAX.leaveMutex();
         _regSession = NULL;
-        setRegistrationState(Bad_Authentification);
+        setRegistrationState(ErrorAuth);
     }
     
     else if (event->etype == IAX_EVENT_REGACK) {

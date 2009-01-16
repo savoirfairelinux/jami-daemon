@@ -151,8 +151,10 @@ SIPVoIPLink::sendUnregister()
 {
   _debug("SEND UNREGISTER for account %s\n" , getAccountID().c_str());
 
-  if(!_bRegister)
+  if(!_bRegister){
+      setRegistrationState(VoIPLink::Unregistered); 
       return true;
+  }
   
   _bRegister = false;
   
