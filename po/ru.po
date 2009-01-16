@@ -48,11 +48,11 @@ msgstr "Хост недоступен"
 #: ../sflphone-gtk/src/accountlist.c:179
 #, fuzzy
 msgid "Stun configuration error"
-msgstr ""
+msgstr "Ошибка настройки Stun"
 
 #: ../sflphone-gtk/src/accountlist.c:182
 msgid "Stun server invalid"
-msgstr ""
+msgstr "Недействительный Stun-сервер"
 
 #: ../sflphone-gtk/src/accountlist.c:185
 msgid "Invalid"
