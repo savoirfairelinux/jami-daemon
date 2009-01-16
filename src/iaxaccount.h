@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
@@ -22,34 +22,33 @@
 
 #include "account.h"
 
-
 /**
  * @file: iaxaccount.h
  * @brief An IAX Account specify IAX specific functions and objects (IAXCall/IAXVoIPLink)
  */
 class IAXAccount : public Account
 {
-public:
-  IAXAccount(const AccountID& accountID);
+    public:
+        IAXAccount(const AccountID& accountID);
 
-  ~IAXAccount();
+        ~IAXAccount();
 
-  /** 
-   * Actually unuseful, since config loading is done in init() 
-   */
-  void loadConfig();
+        /** 
+         * Actually unuseful, since config loading is done in init() 
+         */
+        void loadConfig();
 
-  /**
-   * Register an account
-   */
-  int registerVoIPLink();
+        /**
+         * Register an account
+         */
+        int registerVoIPLink();
 
-  /**
-   * Unregister an account
-   */
-  int unregisterVoIPLink();
+        /**
+         * Unregister an account
+         */
+        int unregisterVoIPLink();
 
-private:
+    private:
 };
 
 #endif

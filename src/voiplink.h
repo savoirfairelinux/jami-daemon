@@ -1,8 +1,9 @@
 /*
- *  Copyright (C) 2005-2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2005-2009 Savoir-Faire Linux inc.
+ *
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,14 +23,9 @@
 #ifndef __VOIP_LINK_H__
 #define __VOIP_LINK_H__
 
-#include <string>
 #include "call.h"
-#include <map>
-#include <cc++/thread.h> // for mutex
 
 class AudioCodec;
-
-struct pjsip_rx_data;
 
 /** Define AccountID type */
 typedef std::string AccountID;
@@ -57,6 +53,7 @@ class VoIPLink {
 
     /** Contains all the state an Voip can be in */
     enum RegistrationState {Unregistered, Trying, Registered, Error, ErrorAuth , ErrorNetwork , ErrorHost, ErrorExistStun, ErrorConfStun};
+    typedef enum RegistrationState RegistrationState;
 
     /**
      * Virtual method
@@ -70,13 +67,6 @@ class VoIPLink {
      * @return bool True if OK
      */
     virtual bool init (void) = 0;
-    
-    /**
-     * Virtual method
-     * Check if a local IP can be found
-     * @return bool True if network is reachable
-     */
-    virtual bool checkNetwork (void) = 0;
     
     /**
      * Virtual method
@@ -165,50 +155,18 @@ class VoIPLink {
      */
     virtual bool carryingDTMFdigits(const CallID& id, char code) = 0;
 
-    /**
-     * Send text message
-     */
-    virtual bool sendMessage(const std::string& to, const std::string& body) = 0;
-
-    // NOW
-    /**
-     * Determine if link supports presence information
-     */
-    virtual bool isContactPresenceSupported() = 0;
-
-    /**
-     * Register contacts for presence information if supported
-     */
-    //virtual void subscribePresenceForContact(Contact* contact);
-
-    /**
-     * Publish presence status to server
-     */
-    virtual void publishPresenceStatus(std::string status);
-
-    /**
-     * Set the account full name
-     * @param fullname	The full name
-     */
+    /* Accessors */
+    std::string& getFullName (void) { return _fullname; }
     void setFullName (const std::string& fullname) { _fullname = fullname; }
 
-    /**
-     * Get the account full name
-     * @return std::string The full name
-     */
-    std::string& getFullName (void) { return _fullname; }
+    std::string& getHostname (void) { return _hostname; }
+    void setHostname (const std::string& hostname) {  _hostname = hostname; }
 
-    /**
-     * Set the account host name
-     * @param hostname	The host name
-     */
-    void setHostName (const std::string& hostname) {  _hostname = hostname; }
-    
-    /**
-     * Get the account host name
-     * @return std::string  The host name
-     */
-    std::string& getHostName (void) { return _hostname; }
+    std::string& getUsername (void) { return _username; }
+    void setUsername (const std::string& username) {  _username = username; }
+
+    std::string& getPassword (void) { return _password; }
+    void setPassword (const std::string& password) {  _password = password; }
 
     /**
      * @return AccountID  parent Account's ID
@@ -227,42 +185,22 @@ class VoIPLink {
     Call* getCall(const CallID& id);
 
     /**
-     * Get registration state
-     * @return RegistrationState
+     * Get connection status
+     * @return Connection status
      */
-    enum RegistrationState getRegistrationState() { return _registrationState; }
-
-    /**
-     * Get registration error message, if set.
-     */
-    int getRegistrationError() { return _registrationError; }
-
-    /**
-     * Set new registration state
-     * We use this function, in case the server needs to PUSH to the
-     * GUI when the state changes.
-     * @param state The registration state
-     * @param errorCode The error code
-     */
-    void setRegistrationState(const enum RegistrationState state,
-	const int& errorCode);
+    RegistrationState getRegistrationState() { return _registrationState; }
 
     /**
      * Set new registration state
      * @param state The registration state
      */
-    void setRegistrationState(const enum RegistrationState state);
+    void setRegistrationState(const RegistrationState state);
 
   private:
-    /**
-     * Full name used as outgoing Caller ID
-     */
-    std::string _fullname;
-
-    /**
-     * Host name used for authentication
-     */
     std::string _hostname;
+    std::string _username;
+    std::string _password;
+    std::string _fullname;
 
     /**
      * ID of parent's Account
@@ -272,14 +210,8 @@ class VoIPLink {
     /**
      * State of registration
      */
-    enum RegistrationState _registrationState;
+    RegistrationState _registrationState;
 
-    /**
-     * Registration error code -> refers to global.h
-     */
-    int _registrationError;
-
-  //protected:
 public:
     /** Add a call to the call map (protected by mutex)
      * @param call A call pointer with a unique pointer

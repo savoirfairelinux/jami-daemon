@@ -142,6 +142,8 @@ AudioRtpRTX::~AudioRtpRTX () {
   delete [] spkrDataConverted; spkrDataConverted = NULL;
 
   delete time; time = NULL;
+
+  delete converter; converter = NULL;
 }
 
   void

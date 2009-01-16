@@ -212,6 +212,7 @@ void SIPCall::sdpAddMediaDescription(pj_pool_t* pool)
 {
     pjmedia_sdp_media* med;
     pjmedia_sdp_attr *attr;
+    pjmedia_sdp_rtpmap rtpMap;
     //int nbMedia, i;
 
     med = PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_media);
@@ -230,12 +231,12 @@ void SIPCall::sdpAddMediaDescription(pj_pool_t* pool)
     med->desc.fmt_count = count;
     
     int i = 0;
+
     while(itr != _codecMap.getActiveCodecs().end()) {
         std::ostringstream format;
         format << *itr;
         pj_strdup2(pool, &med->desc.fmt[i], format.str().data());
         
-        pjmedia_sdp_rtpmap rtpMap;
         rtpMap.pt = med->desc.fmt[i];
         rtpMap.enc_name = pj_str((char *)_codecMap.getCodecName(*itr).data());
         rtpMap.clock_rate = _codecMap.getSampleRate(*itr);

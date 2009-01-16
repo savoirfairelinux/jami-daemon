@@ -22,7 +22,7 @@
   void
 sflphone_throw_exception( int err )
 {
-  gchar* markup; 
+  gchar* markup=""; 
   switch( err ){
     case ALSA_PLAYBACK_DEVICE:
       markup = g_markup_printf_escaped(_("<b>ALSA notification</b>\n\nError while opening playback device"));

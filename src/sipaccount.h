@@ -1,5 +1,7 @@
 /*
- *  Copyright (C) 2006-2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
+ *
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
@@ -17,10 +19,12 @@
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #ifndef SIPACCOUNT_H
 #define SIPACCOUNT_H
 
 #include "account.h"
+#include "sipvoiplink.h"
 
 struct pjsip_cred_info;
 
