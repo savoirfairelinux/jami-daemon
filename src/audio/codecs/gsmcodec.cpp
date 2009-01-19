@@ -21,7 +21,7 @@
 
 #include "audiocodec.h"
 extern "C"{
-#include <gsm.h>
+#include <gsm/gsm.h>
 }
 
 /**
