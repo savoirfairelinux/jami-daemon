@@ -643,60 +643,63 @@ sflphone_keypad( guint keyval, gchar * key)
 void 
 sflphone_place_call ( call_t * c )
 {
-  if(c->state == CALL_STATE_DIALING)
-  {
-    if( account_list_get_size() == 0 )
+
+    if(c->state == CALL_STATE_DIALING && strcmp(c->to, "") != 0)
     {
-      notify_no_accounts();
-      sflphone_fail(c);
+        if( account_list_get_size() == 0 )
+        {
+            notify_no_accounts();
+            sflphone_fail(c);
+        }
+        
+        else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
+        {
+            notify_no_registered_accounts();
+            sflphone_fail(c);
+        }
+    
+        else
+        {
+            account_t * current = account_list_get_current();
+            if( current )
+            {
+	            if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
+	            { 
+	                // OK, everything alright - the call is made with the current account
+	                c -> accountID = current -> accountID;
+	                status_bar_display_account(c);
+	                dbus_place_call(c);
+	            }
+	            else
+	            {
+	                // Current account is not registered 
+	                // So we place a call with the first registered account
+	                // And we switch the current account
+	                current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
+	                c -> accountID = current -> accountID;
+	                dbus_place_call(c);
+	                notify_current_account( current );
+	                status_bar_display_account(c);
+	                account_list_set_current_id( c-> accountID );
+	            }
+            }
+            else
+            {
+	            // No current accounts have been setup. 
+	            // So we place a call with the first registered account
+	            // and we change the current account
+	            current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
+	            c -> accountID = current -> accountID;
+	            dbus_place_call(c);
+	            notify_current_account( current );
+	            status_bar_display_account(c);
+	            account_list_set_current_id( c-> accountID );
+            }
+        }
+	    // Update history
+	    c->history_state = OUTGOING;
+	    call_list_add(history, c);
     }
-    else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
-    {
-      notify_no_registered_accounts();
-      sflphone_fail(c);
-    }
-    else
-    {
-      account_t * current = account_list_get_current();
-      if( current )
-      {
-	if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
-	{ 
-	  // OK, everything alright - the call is made with the current account
-	  c -> accountID = current -> accountID;
-	  status_bar_display_account(c);
-	  dbus_place_call(c);
-	}
-	else
-	{
-	  // Current account is not registered 
-	  // So we place a call with the first registered account
-	  // And we switch the current account
-	  current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-	  c -> accountID = current -> accountID;
-	  dbus_place_call(c);
-	  notify_current_account( current );
-	  status_bar_display_account(c);
-	  account_list_set_current_id( c-> accountID );
-	}
-      }
-      else
-      {
-	// No current accounts have been setup. 
-	// So we place a call with the first registered account
-	// and we change the current account
-	current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-	c -> accountID = current -> accountID;
-	dbus_place_call(c);
-	notify_current_account( current );
-	status_bar_display_account(c);
-	account_list_set_current_id( c-> accountID );
-      }
-    }
-	// Update history
-	c->history_state = OUTGOING;
-	call_list_add(history, c);
-  }
 }
 
 /* Internal to action - set the __CURRENT_ACCOUNT variable */
