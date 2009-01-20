@@ -47,13 +47,12 @@ msgid "Host unreachable"
 msgstr "Host unerreichbar"
 
 #: ../sflphone-gtk/src/accountlist.c:179
-#, fuzzy
 msgid "Stun configuration error"
-msgstr ""
+msgstr "Stun: Konfigurationsfehler"
 
 #: ../sflphone-gtk/src/accountlist.c:182
 msgid "Stun server invalid"
-msgstr ""
+msgstr "Ungültiger Stun Server"
 
 #: ../sflphone-gtk/src/accountlist.c:185
 msgid "Invalid"
