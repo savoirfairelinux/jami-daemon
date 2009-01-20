@@ -269,22 +269,6 @@ class SIPVoIPLink : public VoIPLink
     void SIPCallReleased(SIPCall *call);
 
     /**
-     * Find a SIPCall with cid
-     * Explication there is no DID when the dialog is not establish...
-     * @param cid call ID
-     * @return SIPCall*	SIPCall pointer or 0
-     */
-    SIPCall* findSIPCallWithCid(int cid);
-
-    /**
-     * Find a SIPCall with cid and did
-     * @param cid call ID
-     * @param did domain ID
-     * @return SIPCall*	SIPCall pointer or 0
-     */
-    SIPCall* findSIPCallWithCidDid(int cid, int did);
-
-    /**
      * SIPCall accessor
      * @param id  The call identifier
      * @return SIPCall*	  A pointer on SIPCall object
