@@ -28,7 +28,7 @@ AudioStream::AudioStream( pa_context* context, int type, std::string desc, doubl
   sample_spec.rate = 44100; 
   sample_spec.channels = 1; 
   channel_map.channels = 1; 
-  pa_cvolume_set( &_volume , 1 , PA_VOLUME_MUTED ) ; // * vol / 100 ;
+  pa_cvolume_set( &_volume , 1 , PA_VOLUME_NORM ) ; // * vol / 100 ;
   
   _audiostream =  createStream( context );
 } 
