@@ -184,7 +184,7 @@ clean_history( void )
 select_account(GtkTreeSelection *selection, GtkTreeModel *model)
 {
     GtkTreeIter iter;
-    GValue val;
+    GValue val = {0};
 
     if (!gtk_tree_selection_get_selected(selection, &model, &iter))
     {
@@ -194,7 +194,7 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
         return;
     }
 
-    val.g_type = G_TYPE_POINTER;
+    // The Gvalue will be initialized in the following function
     gtk_tree_model_get_value(model, &iter, COLUMN_ACCOUNT_DATA, &val);
 
     selectedAccount = (account_t*)g_value_get_pointer(&val);
