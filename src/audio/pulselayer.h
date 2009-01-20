@@ -255,6 +255,8 @@ class PulseLayer : public AudioLayer {
     int spkrVolume;
     int micVolume;
 
+public: 
+    static int streamState;
 };
 
 #endif // _PULSE_LAYER_H_

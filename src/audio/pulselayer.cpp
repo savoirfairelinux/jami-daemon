@@ -21,6 +21,8 @@
 
 int framesPerBuffer = 2048;
 
+int PulseLayer::streamState;
+
 static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
 { 
   assert( s && bytes );
@@ -39,6 +41,7 @@ static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
   , record()
   , cache()   
 {
+  PulseLayer::streamState = 0;
   _debug("Pulse audio constructor: Create context\n");
 }
 
@@ -54,10 +57,14 @@ PulseLayer::~PulseLayer (void)
 
   void
 PulseLayer::closeLayer( void )
-{
+{ 
   playback->disconnect(); 
   record->disconnect();
-  pa_context_disconnect( context ); 
+ 
+  while(PulseLayer::streamState != 2)
+    ;
+  PulseLayer::streamState = 0; 
+  pa_context_disconnect( context );  
   pa_context_unref( context );
   sleep(2);
 }
