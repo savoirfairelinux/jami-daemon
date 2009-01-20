@@ -215,15 +215,8 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 		toolbar_update_buttons();
 }
 
-gboolean
-sflphone_init()
+gboolean sflphone_init()
 {
-	current_calls = calltab_init();
-	history = calltab_init();
-	sleep(0.5);	
-	if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
-	account_list_init ();
-        codec_list_init();
 	if(!dbus_connect ()){
 	
 		main_window_error_message(_("Unable to connect to the SFLphone server.\nMake sure the daemon is running."));
@@ -232,6 +225,11 @@ sflphone_init()
 	else 
 	{
 		dbus_register(getpid(), "Gtk+ Client");
+        current_calls = calltab_init();
+	    history = calltab_init();
+	    if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
+	    account_list_init ();
+        codec_list_init();
 		sflphone_fill_account_list(FALSE);
 		sflphone_fill_codec_list();
 		sflphone_set_current_account();
