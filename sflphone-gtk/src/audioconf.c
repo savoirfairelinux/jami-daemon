@@ -90,15 +90,18 @@ config_window_fill_output_audio_plugin_list()
 
   // Call dbus to retreive list
   list = dbus_get_output_audio_plugin_list();
-
   // For each API name included in list
   int c = 0;
-  for(managerName = list[c]; managerName != NULL; managerName = list[c])
-  {
-    c++;
-    gtk_list_store_append(pluginlist, &iter);
-    gtk_list_store_set(pluginlist, &iter, 0 , managerName, -1);
-  }
+  
+	if (list != NULL){
+  		for(managerName = list[c]; managerName != NULL; managerName = list[c])
+  		{
+    			c++;
+    			gtk_list_store_append(pluginlist, &iter);
+    			gtk_list_store_set(pluginlist, &iter, 0 , managerName, -1);
+  		}
+  	}
+  list = NULL;
 }
 
 /**

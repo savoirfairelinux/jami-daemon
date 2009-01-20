@@ -823,22 +823,22 @@ dbus_get_input_audio_plugin_list()
 gchar**
 dbus_get_output_audio_plugin_list()
 {
-	g_print("Before get output audio plugin list");
 	gchar** array;
 	GError* error = NULL;
-	org_sflphone_SFLphone_ConfigurationManager_get_output_audio_plugin_list(
-			configurationManagerProxy,
-			&array,
-			&error);
-	g_print("After");
-	if(error)
+	
+	if(!org_sflphone_SFLphone_ConfigurationManager_get_output_audio_plugin_list( configurationManagerProxy, &array, &error))
 	{
-		g_printerr("Failed to call get_output_audio_plugin_list() on ConfigurationManager: %s\n", error->message);
-		g_error_free(error);
+		if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            		g_printerr ("Caught remote method (get_output_audio_plugin_list) exception  %s: %s\n", dbus_g_error_get_name(error), error->message);
+        	else
+            		g_printerr("Error while calling get_out_audio_plugin_list: %s\n", error->message);
+        	g_error_free (error);
+        	return NULL;
 	}
-	else
+	else{
 		g_print("DBus called get_output_audio_plugin_list() on ConfigurationManager\n");
-	return array;
+		return array;
+	}
 }
 
 void
