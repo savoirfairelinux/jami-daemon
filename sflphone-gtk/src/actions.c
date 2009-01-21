@@ -164,6 +164,8 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 	{
 		account_t  * a = account_list_get_nth (i);
 		GHashTable * details = (GHashTable *) dbus_account_details(a->accountID);
+        if( details == NULL )
+            break;
 		a->properties = details;
 
 		gchar * status = g_hash_table_lookup(details, "Status");
