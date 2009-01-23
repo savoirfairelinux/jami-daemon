@@ -62,6 +62,8 @@ sflphoned_LDADD = \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ 
 
+#sflphoned_LDFLAGS=-pg
+
 noinst_LTLIBRARIES = libsflphone.la
 
 noinst_HEADERS = \

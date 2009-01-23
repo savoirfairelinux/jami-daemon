@@ -81,7 +81,7 @@ void
 SIPVoIPLink::terminateSIPCall()
 {
   
-  ost::MutexLock m(_callMapMutex);
+  //ost::MutexLock m(_callMapMutex);
   CallMap::iterator iter = _callMap.begin();
   SIPCall *call;
   while( iter != _callMap.end() ) {
@@ -219,18 +219,21 @@ SIPVoIPLink::answer(const CallID& id)
 bool
 SIPVoIPLink::hangup(const CallID& id)
 {
-  SIPCall* call = getSIPCall(id);
-  if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
+    SIPCall* call = getSIPCall(id);
+    if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
 
-    Manager::instance().getUserAgent()->hangup(call);
+    if(!Manager::instance().getUserAgent()->hangup(call))
+        return false;
   
-  // Release RTP thread
-  if (Manager::instance().isCurrentCall(id)) {
-    _debug("* SIP Info: Stopping AudioRTP for hangup\n");
-    _audiortp->closeRtpSession();
-  }
-  removeCall(id);
-  return true;
+    // Release RTP thread
+    if (Manager::instance().isCurrentCall(id)) {
+        _debug("* SIP Info: Stopping AudioRTP for hangup\n");
+        _audiortp->closeRtpSession();
+    }
+    
+    removeCall(id);
+    
+    return true;
 }
 
 bool

@@ -1195,16 +1195,16 @@ bool UserAgent::hangup(SIPCall* call) {
     // User hangup current call. Notify peer
     status = pjsip_inv_end_session(call->getInvSession(), 404, NULL, &tdata);
     if(status != PJ_SUCCESS)
-	return false;
+	    return false;
 
     _debug("UserAgent: Before send msg!\n");
 
     if(tdata == NULL)
-	return true;
+	    return true;
 
     status = pjsip_inv_send_msg(call->getInvSession(), tdata);
     if(status != PJ_SUCCESS)
-	return false;
+	    return false;
 
     call->getInvSession()->mod_data[getInstance()->getModId()] = NULL;
     return true;

@@ -868,7 +868,7 @@ class ManagerImpl {
     CallID _currentCallId2;
 
     /** Protected current call access */
-    ost::Mutex _currentCallMutex;
+    //ost::Mutex _currentCallMutex;
 
     /** Vector of CodecDescriptor */
     CodecDescriptor* _codecBuilder;
@@ -886,7 +886,7 @@ class ManagerImpl {
     /////////////////////
     // Protected by Mutex
     /////////////////////
-    ost::Mutex _toneMutex;
+    //ost::Mutex _toneMutex;
     TelephoneTone* _telephoneTone;
     AudioFile _audiofile;
 
@@ -899,7 +899,7 @@ class ManagerImpl {
     // Multithread variable (protected by _mutex)
     // 
     /** Mutex to protect access to code section */
-    ost::Mutex _mutex;
+    //ost::Mutex _mutex;
 
     // Multithread variable (non protected)
     DBusManagerImpl * _dbus;
@@ -908,7 +908,7 @@ class ManagerImpl {
     CallIDSet _waitingCall;
 
     /** Protect waiting call list, access by many voip/audio threads */
-    ost::Mutex _waitingCallMutex;
+    //ost::Mutex _waitingCallMutex;
     
     /** Number of waiting call, synchronize with waitingcall callidvector */
     unsigned int _nbIncomingWaitingCall;
@@ -956,7 +956,7 @@ class ManagerImpl {
     CallAccountMap _callAccountMap;
     
     /** Mutex to lock the call account map (main thread + voiplink thread) */
-    ost::Mutex _callAccountMapMutex;
+    //ost::Mutex _callAccountMapMutex;
 
     /** Associate a new CallID to a AccountID
      * Protected by mutex
