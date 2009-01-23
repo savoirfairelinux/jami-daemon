@@ -75,7 +75,6 @@ if [ $platform == "ubuntu" ];then
 	cp sflphone/debian/control.$os_version sflphone/debian/control
 
 	echo "Building sflphone package on Ubuntu $os_version $arch_flag bit architecture...."
-	exit
 	# Provide prerequisite directories used by debuild
 	cp sflphone sflphone-$ver -r
 	cp sflphone sflphone-$ver.orig -r
