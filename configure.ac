@@ -202,7 +202,7 @@ AC_ARG_WITH([gsm],
 
 LIBGSM=
 AS_IF([test "x$with_gsm" != xno],
-  [AC_CHECK_HEADER([gsm.h], , AC_MSG_FAILURE([Unable to find the libgsm1 headers (you may need to install the dev package).  You may use --without-gsm to compile without gsm codec support.]))]
+  [AC_CHECK_HEADER([gsm/gsm.h], , AC_MSG_FAILURE([Unable to find the libgsm1 headers (you may need to install the dev package).  You may use --without-gsm to compile without gsm codec support.]))]
   [AC_CHECK_LIB([gsm], [gsm_decode],
     [],
     [AC_MSG_FAILURE(

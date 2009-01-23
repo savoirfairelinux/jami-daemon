@@ -175,13 +175,14 @@ error_alert(DBusGProxy *proxy UNUSED,
 gboolean 
 dbus_connect ()
 {
+
   GError *error = NULL;
+  connection = NULL;
   
   g_type_init ();
 
-  error = NULL;
-  connection = dbus_g_bus_get (DBUS_BUS_SESSION,
-                               &error);
+  connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
+  
   if (connection == NULL)
   {
     g_printerr ("Failed to open connection to bus: %s\n",
@@ -280,6 +281,7 @@ dbus_clean ()
 {
     g_object_unref (callManagerProxy);
     g_object_unref (configurationManagerProxy);
+    g_object_unref (instanceProxy);
 }
 
 
@@ -823,22 +825,22 @@ dbus_get_input_audio_plugin_list()
 gchar**
 dbus_get_output_audio_plugin_list()
 {
-	g_print("Before get output audio plugin list");
 	gchar** array;
 	GError* error = NULL;
-	org_sflphone_SFLphone_ConfigurationManager_get_output_audio_plugin_list(
-			configurationManagerProxy,
-			&array,
-			&error);
-	g_print("After");
-	if(error)
+	
+	if(!org_sflphone_SFLphone_ConfigurationManager_get_output_audio_plugin_list( configurationManagerProxy, &array, &error))
 	{
-		g_printerr("Failed to call get_output_audio_plugin_list() on ConfigurationManager: %s\n", error->message);
-		g_error_free(error);
+		if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            		g_printerr ("Caught remote method (get_output_audio_plugin_list) exception  %s: %s\n", dbus_g_error_get_name(error), error->message);
+        	else
+            		g_printerr("Error while calling get_out_audio_plugin_list: %s\n", error->message);
+        	g_error_free (error);
+        	return NULL;
 	}
-	else
+	else{
 		g_print("DBus called get_output_audio_plugin_list() on ConfigurationManager\n");
-	return array;
+		return array;
+	}
 }
 
 void
@@ -1026,7 +1028,7 @@ gchar*
 dbus_get_current_audio_output_plugin()
 {
 	g_print("Before get audio plugin");
-	gchar* plugin;
+	gchar* plugin="";
 	GError* error = NULL;
 	org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin(
 			configurationManagerProxy,
@@ -1174,18 +1176,20 @@ dbus_get_searchbar()
 {
 	int state;
 	GError* error = NULL;
-	org_sflphone_SFLphone_ConfigurationManager_get_searchbar(
-			configurationManagerProxy,
-			&state,
-			&error);
-	g_print("After");
-	if(error)
-	{
-		g_error_free(error);
-	}
+	if(!org_sflphone_SFLphone_ConfigurationManager_get_searchbar( configurationManagerProxy, &state, &error))
+    {
+        if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            g_printerr ("Caught remote method (get_searchbar) exception  %s: %s\n", dbus_g_error_get_name(error), error->message);
+        else
+            g_printerr("Error while calling get_searchbar: %s\n", error->message);
+        g_error_free (error);
+        return -1;
+    }
 	else
+    {
 		g_print("DBus called get_searchbar on ConfigurationManager\n");
-	return state;
+	    return state;
+    }
 }
 
 void
@@ -1354,23 +1358,23 @@ dbus_set_notify( void )
 guint
 dbus_get_notify( void )
 {
-  g_print("Before dbus_get_notif_level()\n");
 	gint level;
 	GError* error = NULL;
-	org_sflphone_SFLphone_ConfigurationManager_get_notify(
-			configurationManagerProxy,
-			&level,
-			&error);
-	if(error)
-	{
-	  g_print("Error calling dbus_get_notif_level\n");
-		g_error_free(error);
-	}
-	else
-	  g_print("Called dbus_get_notif_level\n");
-	
-	return (guint)level;
+	if( !org_sflphone_SFLphone_ConfigurationManager_get_notify( configurationManagerProxy,&level, &error) )
+    {
+        if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            g_printerr ("Caught remote method (get_notify) exception  %s: %s\n", dbus_g_error_get_name(error), error->message);
+        else
+            g_printerr("Error while calling get_notify: %s\n", error->message);
+        g_error_free (error);
+        return 0;
+    }
+    else{
+        g_print ("DBus called get_notify() on ConfigurationManager\n");
+        return (guint)level;
+    }
 }
+
 
 void
 dbus_set_mail_notify( void )
@@ -1390,7 +1394,7 @@ dbus_set_mail_notify( void )
 guint
 dbus_get_mail_notify( void )
 {
-  g_print("Before dbus_get_mail_notif_level()\n");
+    g_print("Before dbus_get_mail_notif_level()\n");
 	gint level;
 	GError* error = NULL;
 	org_sflphone_SFLphone_ConfigurationManager_get_mail_notify(

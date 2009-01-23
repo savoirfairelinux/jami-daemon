@@ -259,49 +259,59 @@ SIPVoIPLink::onhold(const CallID& id)
   _debug("* SIP Info: Stopping AudioRTP for onhold action\n");
   _audiortp->closeRtpSession();
 
-  Manager::instance().getUserAgent()->onhold(call);
-
-  return true;
+  return Manager::instance().getUserAgent()->onhold(call);
 }
 
 bool 
 SIPVoIPLink::offhold(const CallID& id)
 {
-  SIPCall* call = getSIPCall(id);
-  if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }
+    SIPCall *call;
 
-  Manager::instance().getUserAgent()->offhold(call);
+    call = getSIPCall(id);
+    if (call==0) { 
+        _debug("! SIP Error: Call doesn't exist\n"); 
+        return false; 
+    }
 
-  // Enable audio
-  _debug("* SIP Info: Starting AudioRTP when offhold\n");
-  call->setState(Call::Active);
-  // it's sure that this is the current call id...
-  if (_audiortp->createNewSession(call) < 0) {
-    _debug("! SIP Failure: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
-    return false;
-  }
-  return true;
+    if(!Manager::instance().getUserAgent()->offhold(call))
+        return false;
+
+    // Enable audio
+    _debug("* SIP Info: Starting AudioRTP when offhold\n");
+    call->setState(Call::Active);
+    // it's sure that this is the current call id...
+    if (_audiortp->createNewSession(call) < 0) {
+        _debug("! SIP Failure: Unable to start sound (%s:%d)\n", __FILE__, __LINE__);
+        return false;
+    }
+    
+    return true;
 }
 
 bool 
 SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 {
-  SIPCall* call = getSIPCall(id);
-  if (call==0) { _debug("! SIP Failure: Call doesn't exist\n"); return false; }  
+    SIPCall *call;
+    std::string tmp_to;
 
-  std::string tmp_to = SIPToHeader(to);
-  if (tmp_to.find("@") == std::string::npos) {
-    tmp_to = tmp_to + "@" + getHostname();
-  }
+    call = getSIPCall(id);
+    if (call==0) { 
+        _debug("! SIP Failure: Call doesn't exist\n"); 
+        return false; 
+    }  
 
-  _debug("In transfer, tmp_to is %s\n", tmp_to.data());
+    tmp_to = SIPToHeader(to);
+    if (tmp_to.find("@") == std::string::npos) {
+        tmp_to = tmp_to + "@" + getHostname();
+    }
 
-  Manager::instance().getUserAgent()->transfer(call, tmp_to);
+    _debug("In transfer, tmp_to is %s\n", tmp_to.data());
+
+    return Manager::instance().getUserAgent()->transfer(call, tmp_to);
 
   //_audiortp->closeRtpSession();
   // shall we delete the call?
   //removeCall(id);
-  return true;
 }
 
 bool SIPVoIPLink::transferStep2()
@@ -313,34 +323,45 @@ bool SIPVoIPLink::transferStep2()
 bool
 SIPVoIPLink::refuse (const CallID& id)
 {
-  SIPCall* call = getSIPCall(id);
+    SIPCall *call;
 
-  if (call==0) { _debug("Call doesn't exist\n"); return false; }  
+    call = getSIPCall(id);
 
-  // can't refuse outgoing call or connected
-  if (!call->isIncoming() || call->getConnectionState() == Call::Connected) { 
-    _debug("It's not an incoming call, or it's already answered\n");
-    return false; 
-  }
+    if (call==0) { 
+        _debug("Call doesn't exist\n"); 
+        return false; 
+    }  
 
-  Manager::instance().getUserAgent()->refuse(call);
-  
-  return true;
+    // can't refuse outgoing call or connected
+    if (!call->isIncoming() || call->getConnectionState() == Call::Connected) { 
+        _debug("It's not an incoming call, or it's already answered\n");
+        return false; 
+    }
+
+    return Manager::instance().getUserAgent()->refuse(call);
 }
 
 bool 
-SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code UNUSED)
+SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code)
 {
-  SIPCall* call = getSIPCall(id);
-  if (call==0) { _debug("Call doesn't exist\n"); return false; }
 
-  int duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
-  const int body_len = 1000;
-  char *dtmf_body = new char[body_len];
+    SIPCall *call;
+    int duration;
+    const int body_len = 1000;
+    char *dtmf_body;
+
+    call = getSIPCall(id);
+    if (call==0) { 
+        _debug("Call doesn't exist\n"); 
+        return false; 
+    }
+
+    duration = Manager::instance().getConfigInt(SIGNALISATION, PULSE_LENGTH);
+    dtmf_body = new char[body_len];
  
-  snprintf(dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+    snprintf(dtmf_body, body_len - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
  
-  return Manager::instance().getUserAgent()->carryingDTMFdigits(call, dtmf_body);
+    return Manager::instance().getUserAgent()->carryingDTMFdigits(call, dtmf_body);
 }
 
 bool
@@ -447,9 +468,9 @@ SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
     //SIPCall* call = findSIPCallWithCid(event->cid);
     if (call != 0) {
         _debug("Server error!\n");
-      CallID id = call->getCallId();
-      Manager::instance().callFailure(id);
-      removeCall(id);
+        CallID id = call->getCallId();
+        Manager::instance().callFailure(id);
+        removeCall(id);
     }
   //break;
   //}
@@ -522,45 +543,6 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
   }
 }
 
-SIPCall* 
-SIPVoIPLink::findSIPCallWithCid(int cid) 
-{
-  if (cid < 1) {
-    _debug("! SIP Error: Not enough information for this event\n");
-    return NULL;
-  }
-  ost::MutexLock m(_callMapMutex);
-  SIPCall* call = 0;
-  CallMap::iterator iter = _callMap.begin();
-  while(iter != _callMap.end()) {
-    call = dynamic_cast<SIPCall*>(iter->second);
-    if (call && call->getCid() == cid) {
-      return call;
-    }
-    iter++;
-  }
-  return NULL;
-}
-
-SIPCall* 
-SIPVoIPLink::findSIPCallWithCidDid(int cid, int did) 
-{
-  if (cid < 1 && did < -1) {
-    _debug("! SIP Error: Not enough information for this event\n");
-    return NULL;
-  }
-  ost::MutexLock m(_callMapMutex);
-  SIPCall* call = 0;
-  CallMap::iterator iter = _callMap.begin();
-  while(iter != _callMap.end()) {
-    call = dynamic_cast<SIPCall*>(iter->second);
-    if (call && call->getCid() == cid && call->getDid() == did) {
-      return call;
-    }
-    iter++;
-  }
-  return NULL;
-}
 
 SIPCall*
 SIPVoIPLink::getSIPCall(const CallID& id) 
@@ -571,61 +553,7 @@ SIPVoIPLink::getSIPCall(const CallID& id)
   }
   return NULL;
 }
-/*
-bool
-SIPVoIPLink::handleDtmfRelay(eXosip_event_t* event) {
 
-  SIPCall* call = findSIPCallWithCidDid(event->cid, event->did);
-  if (call==0) { return false; }
-
-
-  bool returnValue = false;
-  osip_body_t *body = NULL;
-  // Get the message body
-  if (0 == osip_message_get_body(event->request, 0, &body) && body->body != 0 )   {
-    _debug("* SIP Info: Text body: %s\n", body->body);
-    std::string dtmfBody(body->body);
-    std::string::size_type posStart = 0;
-    std::string::size_type posEnd = 0;
-    std::string signal;
-    std::string duration;
-    // search for signal=and duration=
-    posStart = dtmfBody.find("Signal=");
-    if (posStart != std::string::npos) {
-      posStart += strlen("Signal=");
-      posEnd = dtmfBody.find("\n", posStart);
-      if (posEnd == std::string::npos) {
-        posEnd = dtmfBody.length();
-      }
-      signal = dtmfBody.substr(posStart, posEnd-posStart+1);
-      _debug("* SIP Info: Signal value: %s\n", signal.c_str());
-      
-      if (!signal.empty()) {
-        if (Manager::instance().isCurrentCall(call->getCallId())) {
-          Manager::instance().playDtmf(signal[0], true);
-          returnValue = true;
-        }
-      }
-
- // we receive the duration, but we use our configuration...
-
-      posStart = dtmfBody.find("Duration=");
-      if (posStart != std::string::npos) {
-        posStart += strlen("Duration=");
-        posEnd = dtmfBody.find("\n", posStart);
-        if (posEnd == std::string::npos) {
-            posEnd = dtmfBody.length();
-        }
-        duration = dtmfBody.substr(posStart, posEnd-posStart+1);
-        _debug("Duration value: %s\n", duration.c_str());
-        returnValue = true;
-      }
-
-    }
-  }
-  return returnValue;
-}
-*/
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////

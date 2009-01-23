@@ -18,8 +18,10 @@
  */
 
 #include <audiostream.h>
+#include "pulselayer.h"
 
 static pa_channel_map channel_map ;
+
 
 AudioStream::AudioStream( pa_context* context, int type, std::string desc, double vol UNUSED )
 		: _audiostream(NULL), _streamType(type), _streamDescription(desc), flag(PA_STREAM_AUTO_TIMING_UPDATE), sample_spec(), _volume()
@@ -28,7 +30,7 @@ AudioStream::AudioStream( pa_context* context, int type, std::string desc, doubl
   sample_spec.rate = 44100; 
   sample_spec.channels = 1; 
   channel_map.channels = 1; 
-  pa_cvolume_set( &_volume , 1 , PA_VOLUME_MUTED ) ; // * vol / 100 ;
+  pa_cvolume_set( &_volume , 1 , PA_VOLUME_NORM ) ; // * vol / 100 ;
   
   _audiostream =  createStream( context );
 } 
@@ -48,18 +50,24 @@ AudioStream::disconnect( void )
   pa_stream_unref( pulseStream() );
 } 
 
-  void 
+void 
 AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
 {
   _debug("The state of the stream changed\n");
   assert(s);
   switch(pa_stream_get_state(s)){
     case PA_STREAM_CREATING:
-    case PA_STREAM_TERMINATED:
       _debug("Stream is creating...\n");
+      break;
+    case PA_STREAM_TERMINATED:
+      _debug("Stream is terminating...\n" );
+      PulseLayer::streamState++;
       break;
     case PA_STREAM_READY:
       _debug("Stream successfully created, connected to %s\n", pa_stream_get_device_name( s ));
+      break;
+    case PA_STREAM_UNCONNECTED:
+      _debug("Stream unconnected\n");
       break;
     case PA_STREAM_FAILED:
     default:

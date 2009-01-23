@@ -1,3 +1,37 @@
+sflphone (0.9.2-2ubuntu6) intrepid; urgency=low
+
+  [ Emmanuel Milou ]
+  * Migrate STUN configuration to the main config window
+  * Update french translation
+  * Other tiny memory leaks
+  * Fix memory leak in sampleconverter.cpp
+  * Generate packages from the release branch
+  * update the build package script
+  * modify the control files with architecture=any
+  * Remove valgring uninitialized value
+  * IAX and SIP use the same global variables to set account
+    configuration ; fix broken code
+
+  [ Maxime Chambreuil ]
+  * Update spanish translation
+
+  [ Hussein Abdallah ]
+  * Update russian translation
+
+  [ Yun Liu ]
+  * Update translation files
+  * Fix the bug when user uncheck the account which fails in the
+    previous registration
+  * Add stun error status
+  * Fix bug ticket #143
+  * Script for auto-install dependencies
+  * Fix bug ticket #140
+  * Fix bug ticket 141
+  * Fix the reregister process when user change the details of an
+    account
+
+ -- Emmanuel Milou <manu@sulfur.inside.savoirfairelinux.net>  Fri, 16 Jan 2009 18:19:05 -0500
+
 sflphone (0.9.2-2ubuntu5) intrepid; urgency=low
 
   * Fix memory leak in the pulseaudio callback

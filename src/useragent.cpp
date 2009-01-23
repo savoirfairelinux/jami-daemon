@@ -1126,42 +1126,65 @@ void UserAgent::call_on_state_changed(pjsip_inv_session *inv, pjsip_event *e) {
 }
 
 bool UserAgent::onhold(SIPCall *call) {
-    _debug("UserAgent: Before onhold pjsip_inv_reinite begins!\n");
+
     pj_status_t status;
     pjsip_tx_data *tdata;
     pjmedia_sdp_attr *attr;
+    pjmedia_sdp_session* local_sdp;
 
+    local_sdp = call->getLocalSDPSession();
+    if( local_sdp == NULL ){
+        _debug("! SIP Failure: unable to find local_sdp\n");
+        return false;
+    }
 
     /* Create re-INVITE with new offer */
-    pjmedia_sdp_media_remove_all_attr(call->getLocalSDPSession()->media[0], "sendrecv");
+    // Remove all the attributes with the specified name
+    pjmedia_sdp_media_remove_all_attr(local_sdp->media[0], "sendrecv");
     attr = pjmedia_sdp_attr_create(_pool, "sendonly", NULL);
-    pjmedia_sdp_media_add_attr(call->getLocalSDPSession()->media[0], attr);
+    pjmedia_sdp_media_add_attr(local_sdp->media[0], attr);
 
-    status = pjsip_inv_reinvite( call->getInvSession(), NULL, call->getLocalSDPSession(), &tdata);
+    status = pjsip_inv_reinvite( call->getInvSession(), NULL, local_sdp, &tdata);
+    if( status != PJ_SUCCESS )
+    {
+        _debug("On hold: creation of the Re-invite request failed\n");
+        return false;
+    }
     /* Send the request */
     status = pjsip_inv_send_msg( call->getInvSession(), tdata);
  
-    _debug("UserAgent: After pjsip_inv_reinite begins!\n");
     return (status == PJ_SUCCESS);
 }
 
 bool UserAgent::offhold(SIPCall *call) {
-    _debug("UserAgent: Before offhold pjsip_inv_reinite begins!\n");
+
     pj_status_t status;
     pjsip_tx_data *tdata;
     pjmedia_sdp_attr *attr;
+    pjmedia_sdp_session* local_sdp;
 
+    local_sdp = call->getLocalSDPSession();
+    if( local_sdp == NULL ){
+        _debug("! SIP Failure: unable to find local_sdp\n");
+        return false;
+    }
 
     /* Create re-INVITE with new offer */
-    pjmedia_sdp_media_remove_all_attr(call->getLocalSDPSession()->media[0], "sendonly");
+    // Remove all the attributes with the specified name
+    pjmedia_sdp_media_remove_all_attr(local_sdp->media[0], "sendonly");
     attr = pjmedia_sdp_attr_create(_pool, "sendrecv", NULL);
-    pjmedia_sdp_media_add_attr(call->getLocalSDPSession()->media[0], attr);
+    pjmedia_sdp_media_add_attr(local_sdp->media[0], attr);
 
-    status = pjsip_inv_reinvite( call->getInvSession(), NULL, call->getLocalSDPSession(), &tdata);
+    status = pjsip_inv_reinvite( call->getInvSession(), NULL, local_sdp , &tdata);
+    if( status != PJ_SUCCESS )
+    {
+        _debug("Off hold: creation of the Re-invite request failed\n");
+        return false;
+    }
+
     /* Send the request */
     status = pjsip_inv_send_msg( call->getInvSession(), tdata);
  
-    _debug("UserAgent: After pjsip_inv_reinite begins!\n");
     return (status == PJ_SUCCESS);
 }
 
@@ -1194,10 +1217,12 @@ bool UserAgent::refuse(SIPCall* call)
     
     // User refuse current call. Notify peer
     status = pjsip_inv_end_session(call->getInvSession(), PJSIP_SC_DECLINE, NULL, &tdata); //603
-    PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
+    if(status != PJ_SUCCESS)
+        return false;
 
     status = pjsip_inv_send_msg(call->getInvSession(), tdata);
-    PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
+    if(status != PJ_SUCCESS)
+        return false;
 
     call->getInvSession()->mod_data[getInstance()->getModId()] = NULL;
     return true;
@@ -1253,9 +1278,6 @@ bool UserAgent::transfer(SIPCall *call, const std::string& to)
 {
     pjsip_evsub *sub;
     pjsip_tx_data *tdata;
-    //pjsip_dialog *dlg;
-    //pjsip_generic_string_hdr *gs_hdr;
-    //const pj_str_t str_ref_by = { (char*)"Referred-By", 11 };
     struct pjsip_evsub_user xfer_cb;
     pj_status_t status;
     pj_str_t dest;
