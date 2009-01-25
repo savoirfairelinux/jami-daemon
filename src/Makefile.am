@@ -23,7 +23,7 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
-SUBDIRS = audio config dbus $(ZEROCONFDIR)
+SUBDIRS = audio config dbus $(ZEROCONFDIR) plug-in
 
 # Add here the cpp files to be build with sflphone
 sflphoned_SOURCES = \

@@ -2,8 +2,8 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT([SFLPhone],[0.7],[sflphoneteam@savoirfairelinux.com],[sflphone])
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2008]])
+AC_INIT([SFLPhone],[0.9.2-7],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
 AC_REVISION([$Revision$])
 
 dnl Compute canonical system name
@@ -37,7 +37,8 @@ AC_CONFIG_FILES([src/Makefile \
   src/audio/codecs/ilbc/Makefile \
   src/config/Makefile \
   src/dbus/Makefile \
-  src/zeroconf/Makefile]) 
+  src/zeroconf/Makefile \
+  src/plug-in/Makefile]) 
   
   dnl Unitary test section
 AC_CONFIG_FILES([test/Makefile])
