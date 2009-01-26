@@ -60,6 +60,7 @@ sflphoned_LDADD = \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
+		-luuid \
 		@SAMPLERATE_LIBS@ 
 
 noinst_LTLIBRARIES = libsflphone.la

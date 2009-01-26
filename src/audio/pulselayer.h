@@ -22,6 +22,7 @@
 
 #include "audiolayer.h"
 #include "audiostream.h"
+#include "audiorecord.h"
 
 #define PLAYBACK_STREAM_NAME	    "SFLphone out"
 #define CAPTURE_STREAM_NAME	    "SFLphone in"
