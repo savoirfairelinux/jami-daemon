@@ -92,7 +92,7 @@ else
 	mv sflphone sflphone-$ver
 
 	cp sflphone-$ver/platform/$platform.spec $BUILDDIR/SPECS/
-	cp sflphone-$ver/libs/pjproject-1.0/libpj-sfl.pc $BUILDDIR/SOURCES
+ 	sed -e "s!@PREFIX@!/usr!" sflphone-$ver/libs/pjproject-1.0/libpj-sfl.pc.in > $BUILDDIR/SOURCES/libpj-sfl.pc
 	tar zcvf sflphone-$ver.tar.gz sflphone-$ver
 
 	rm sflphone-$ver -rf

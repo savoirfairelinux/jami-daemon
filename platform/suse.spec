@@ -36,13 +36,14 @@ make
 cd ..
 
 %install
-%makeinstall
+make prefix=%{buildroot}/usr install
 
 cd sflphone-gtk/
-%makeinstall
+make prefix=%{buildroot}/usr install
 
 cd ../libs/pjproject-1.0
-%makeinstall
+make prefix=%{buildroot}/usr install
+
 cd ../..
 cd %{buildroot}/usr/bin/
 ln -sf ./sflphone-gtk sflphone 
