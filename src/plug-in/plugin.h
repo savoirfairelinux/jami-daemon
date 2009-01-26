@@ -3,6 +3,8 @@
 
 #include <string> 
 
+#include "global.h" 
+
 /*
  * @file plugin.h
  * @brief Define a plugin object 
@@ -15,21 +17,21 @@ class PluginManager;
     class Plugin {
     
         public:
-            Plugin( const std::string &filename );
-            Plugin( const Plugin &plugin );
-            ~Plugin();
+            Plugin( const std::string &name );
+            //Plugin( const Plugin &plugin );
+            virtual ~Plugin()  {}
 
         public:
             /**
              * Return the minimal core version required so that the plugin could work
              * @return int  The version required
              */
-            int getCoreVersion() const;
+            virtual int getCoreVersion() const = 0;
             
             /**
              * Register the plugin to the plugin manager
              */
-            void registerPlugin( PluginManager & );
+            virtual void registerPlugin( PluginManager & ) = 0;
 
         private:
             Plugin &operator =(const Plugin &plugin);

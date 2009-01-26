@@ -87,6 +87,7 @@ libsflphone_la_LIBADD = \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
+	./plug-in/libplugin.la \
 	$(IAX_LIBS) 
 
 libsflphone_la_SOURCES =
