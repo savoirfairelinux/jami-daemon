@@ -2,8 +2,8 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT([SFLPhone],[0.7],[sflphoneteam@savoirfairelinux.com],[sflphone])
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2008]])
+AC_INIT([SFLPhone],[0.9.2-7],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
 AC_REVISION([$Revision$])
 
 dnl Compute canonical system name
@@ -13,7 +13,7 @@ dnl Rewrite name of programs to be installed
 AC_ARG_PROGRAM
 
 dnl Automake options
-AM_INIT_AUTOMAKE([-Wall -Wno-portability])
+AM_INIT_AUTOMAKE([-Wno-portability])
 
 dnl Improve make variable MAKE
 AC_PROG_MAKE_SET
@@ -37,7 +37,8 @@ AC_CONFIG_FILES([src/Makefile \
   src/audio/codecs/ilbc/Makefile \
   src/config/Makefile \
   src/dbus/Makefile \
-  src/zeroconf/Makefile]) 
+  src/zeroconf/Makefile \
+  src/plug-in/Makefile]) 
   
   dnl Unitary test section
 AC_CONFIG_FILES([test/Makefile])
@@ -95,7 +96,7 @@ dnl Define C++ as default language
 AC_LANG(C++)
 
 dnl Setup C++ compiler flags
-CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS $USER_INCLUDES -O0 -g -Wall -Wextra"
+CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS $USER_INCLUDES -O0 -g -Wno-return-type"
 
 dnl Check for header files
 AC_FUNC_ALLOCA

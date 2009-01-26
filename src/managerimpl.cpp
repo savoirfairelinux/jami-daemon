@@ -64,20 +64,20 @@ ManagerImpl::ManagerImpl (void)
 	: _hasTriedToRegister(false)
         , _config()
 	, _currentCallId2()
-        , _currentCallMutex()
+        //, _currentCallMutex()
         , _codecBuilder(NULL)
         , _audiodriver(NULL)
         , _dtmfKey(NULL)
         , _codecDescriptorMap()
-        , _toneMutex()
+        //, _toneMutex()
         , _telephoneTone(NULL)
         , _audiofile()
         , _spkr_volume(0)
         , _mic_volume(0)
-        , _mutex()
+        //, _mutex()
 	, _dbus(NULL)
         , _waitingCall()
-        , _waitingCallMutex()
+        //, _waitingCallMutex()
         , _nbIncomingWaitingCall(0)
         , _path("")
         , _exist(0)
@@ -86,7 +86,7 @@ ManagerImpl::ManagerImpl (void)
         , _firewallAddr("")
         , _hasZeroconf(false)
         , _callAccountMap()
-        , _callAccountMapMutex()
+        //, _callAccountMapMutex()
         , _accountMap()
         , _userAgent(NULL)
         , _userAgentInitlized(false)
@@ -203,13 +203,13 @@ void ManagerImpl::terminate()
 
 bool
 ManagerImpl::isCurrentCall(const CallID& callId) {
-  ost::MutexLock m(_currentCallMutex);
+  //ost::MutexLock m(_currentCallMutex);
   return (_currentCallId2 == callId ? true : false);
 }
 
 bool
 ManagerImpl::hasCurrentCall() {
-  ost::MutexLock m(_currentCallMutex);
+  //ost::MutexLock m(_currentCallMutex);
   _debug("Current call ID = %s\n", _currentCallId2.c_str());
   if ( _currentCallId2 != "") {
     return true;
@@ -219,13 +219,13 @@ ManagerImpl::hasCurrentCall() {
 
 const CallID& 
 ManagerImpl::getCurrentCallId() {
-  ost::MutexLock m(_currentCallMutex);
+  //ost::MutexLock m(_currentCallMutex);
   return _currentCallId2;
 }
 
 void
 ManagerImpl::switchCall(const CallID& id ) {
-  ost::MutexLock m(_currentCallMutex);
+  //ost::MutexLock m(_currentCallMutex);
   _currentCallId2 = id;
 }
 
@@ -295,7 +295,9 @@ ManagerImpl::answerCall(const CallID& id)
 ManagerImpl::hangupCall(const CallID& id)
 {
   stopTone(true);
+
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+  
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     /** @todo We should tell the GUI that the call doesn't exist, so
@@ -305,6 +307,7 @@ ManagerImpl::hangupCall(const CallID& id)
   }
 
   bool returnValue = getAccountLink(accountid)->hangup(id);
+
   _debug("After voip link hungup!\n");
   removeCallAccount(id);
   switchCall("");
@@ -561,20 +564,20 @@ ManagerImpl::playDtmf(char code, bool isTalking)
 // Multi-thread 
 bool
 ManagerImpl::incomingCallWaiting() {
-  ost::MutexLock m(_waitingCallMutex);
+  //ost::MutexLock m(_waitingCallMutex);
   return (_nbIncomingWaitingCall > 0) ? true : false;
 }
 
 void
 ManagerImpl::addWaitingCall(const CallID& id) {
-  ost::MutexLock m(_waitingCallMutex);
+  //ost::MutexLock m(_waitingCallMutex);
   _waitingCall.insert(id);
   _nbIncomingWaitingCall++;
 }
 
 void
 ManagerImpl::removeWaitingCall(const CallID& id) {
-  ost::MutexLock m(_waitingCallMutex);
+  //ost::MutexLock m(_waitingCallMutex);
   // should return more than 1 if it erase a call
   if (_waitingCall.erase(id)) {
     _nbIncomingWaitingCall--;
@@ -583,7 +586,7 @@ ManagerImpl::removeWaitingCall(const CallID& id) {
 
 bool
 ManagerImpl::isWaitingCall(const CallID& id) {
-  ost::MutexLock m(_waitingCallMutex);
+  //ost::MutexLock m(_waitingCallMutex);
   CallIDSet::iterator iter = _waitingCall.find(id);
   if (iter != _waitingCall.end()) {
     return false;
@@ -735,9 +738,9 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
   if (!hasToPlayTone) return false;
 
   if (_telephoneTone != 0) {
-    _toneMutex.enterMutex();
+    //_toneMutex.enterMutex();
     _telephoneTone->setCurrentTone(toneId);
-    _toneMutex.leaveMutex();
+    //_toneMutex.leaveMutex();
 
     AudioLoop* audioloop = getTelephoneTone();
     unsigned int nbSampling = audioloop->getSize();
@@ -774,16 +777,16 @@ ManagerImpl::stopTone(bool stopAudio=true) {
 
   }
 
-  _toneMutex.enterMutex();
+  //_toneMutex.enterMutex();
   if (_telephoneTone != 0) {
     _telephoneTone->setCurrentTone(Tone::TONE_NULL);
   }
-  _toneMutex.leaveMutex();
+  //_toneMutex.leaveMutex();
 
   // for ringing tone..
-  _toneMutex.enterMutex();
+  //_toneMutex.enterMutex();
   _audiofile.stop();
-  _toneMutex.leaveMutex();
+  //_toneMutex.leaveMutex();
 }
 
 /**
@@ -847,13 +850,13 @@ ManagerImpl::ringtone()
         int sampleRate  = audiolayer->getSampleRate();
         AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
-        _toneMutex.enterMutex(); 
+        //_toneMutex.enterMutex(); 
          bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
-        _toneMutex.leaveMutex(); 
+        //_toneMutex.leaveMutex(); 
         if (loadFile) {
-            _toneMutex.enterMutex(); 
+            //_toneMutex.enterMutex(); 
             _audiofile.start();
-            _toneMutex.leaveMutex(); 
+            //_toneMutex.leaveMutex(); 
             if(CHECK_INTERFACE( layer, ALSA )){
                 /*int size = _audiofile.getSize();
                 SFLDataFormat output[ size ];
@@ -880,7 +883,7 @@ ManagerImpl::ringtone()
 ManagerImpl::getTelephoneTone()
 {
   if(_telephoneTone != 0) {
-    ost::MutexLock m(_toneMutex);
+    //ost::MutexLock m(_toneMutex);
     return _telephoneTone->getCurrentTone();
   }
   else {
@@ -891,7 +894,7 @@ ManagerImpl::getTelephoneTone()
   AudioLoop*
 ManagerImpl::getTelephoneFile()
 {
-  ost::MutexLock m(_toneMutex);
+  //ost::MutexLock m(_toneMutex);
   if(_audiofile.isStarted()) {
     return &_audiofile;
   } else {
@@ -1837,7 +1840,7 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
 ManagerImpl::getCallStatus(const std::string& sequenceId UNUSED)
 {
   if (!_dbus) { return false; }
-  ost::MutexLock m(_callAccountMapMutex);
+  //ost::MutexLock m(_callAccountMapMutex);
   CallAccountMap::iterator iter = _callAccountMap.begin();
   TokenList tk;
   std::string code;
@@ -2139,7 +2142,7 @@ ManagerImpl::associateCallToAccount(const CallID& callID, const AccountID& accou
 {
   if (getAccountFromCall(callID) == AccountNULL) { // nothing with the same ID
     if (  accountExists(accountID)  ) { // account id exist in AccountMap
-      ost::MutexLock m(_callAccountMapMutex);
+      //ost::MutexLock m(_callAccountMapMutex);
       _callAccountMap[callID] = accountID;
       _debug("Associate Call %s with Account %s\n", callID.data(), accountID.data());
       return true;
@@ -2154,7 +2157,7 @@ ManagerImpl::associateCallToAccount(const CallID& callID, const AccountID& accou
   AccountID
 ManagerImpl::getAccountFromCall(const CallID& callID)
 {
-  ost::MutexLock m(_callAccountMapMutex);
+  //ost::MutexLock m(_callAccountMapMutex);
   CallAccountMap::iterator iter = _callAccountMap.find(callID);
   if ( iter == _callAccountMap.end()) {
     return AccountNULL;
@@ -2166,7 +2169,7 @@ ManagerImpl::getAccountFromCall(const CallID& callID)
   bool
 ManagerImpl::removeCallAccount(const CallID& callID)
 {
-  ost::MutexLock m(_callAccountMapMutex);
+  //ost::MutexLock m(_callAccountMapMutex);
   if ( _callAccountMap.erase(callID) ) {
     return true;
   }

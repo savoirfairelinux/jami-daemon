@@ -39,6 +39,7 @@ DBusGConnection * connection;
 DBusGProxy * callManagerProxy;
 DBusGProxy * configurationManagerProxy;
 DBusGProxy * instanceProxy;
+DBusGProxy * nameOwnerProxy;
 
 static void  
 incoming_call_cb (DBusGProxy *proxy UNUSED,
@@ -172,17 +173,32 @@ error_alert(DBusGProxy *proxy UNUSED,
   sflphone_throw_exception( errCode );
 }
 
+
+static void nameOwnerChanged(DBusGProxy *proxy, char *name, char *old_owner, char *new_owner, gpointer data )
+{
+
+    g_print("******************************************************************\n");
+    g_print("Owner name of the service %s changed from %s to %s\n", name, old_owner, new_owner);
+    g_print("******************************************************************\n");
+
+    if (strcmp(name, "org.sflphone.SFLphone")!=0)   return;
+
+}
+
 gboolean 
 dbus_connect ()
 {
+
   GError *error = NULL;
+  connection = NULL;
+  instanceProxy = NULL;
+  nameOwnerProxy = NULL;
   
   g_type_init ();
 
-  error = NULL;
-  connection = dbus_g_bus_get (DBUS_BUS_SESSION,
-                               &error);
-  if (connection == NULL)
+  connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
+  
+  if (error)
   {
     g_printerr ("Failed to open connection to bus: %s\n",
                 error->message);
@@ -190,13 +206,33 @@ dbus_connect ()
     return FALSE;
   }
 
+    
+    nameOwnerProxy = dbus_g_proxy_new_for_name_owner( connection,
+                                                    DBUS_SERVICE_DBUS,
+                                                    DBUS_PATH_DBUS,
+                                                    DBUS_INTERFACE_DBUS,
+                                                    &error);
+
+    if( nameOwnerProxy==NULL)
+    {
+        g_printerr ("Failed to get proxy to NameOwner\n");
+        return FALSE;
+    }
+
+    dbus_g_proxy_add_signal( nameOwnerProxy, "NameOwnerChanged",
+                G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (nameOwnerProxy, "NameOwnerChanged",
+                G_CALLBACK (nameOwnerChanged), NULL, NULL);
+
+
   /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
   
-  instanceProxy = dbus_g_proxy_new_for_name (connection,
+  instanceProxy = dbus_g_proxy_new_for_name_owner (connection,
                                      "org.sflphone.SFLphone",
                                      "/org/sflphone/SFLphone/Instance",
-                                     "org.sflphone.SFLphone.Instance");
-  if (!instanceProxy) 
+                                     "org.sflphone.SFLphone.Instance",
+                                     &error);
+  if (instanceProxy==NULL) 
   {
     g_printerr ("Failed to get proxy to Instance\n");
     return FALSE;
@@ -205,11 +241,12 @@ dbus_connect ()
   g_print ("DBus connected to Instance\n");
   
   
-  callManagerProxy = dbus_g_proxy_new_for_name (connection,
+  callManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
                                      "org.sflphone.SFLphone",
                                      "/org/sflphone/SFLphone/CallManager",
-                                     "org.sflphone.SFLphone.CallManager");
-  if (!callManagerProxy) 
+                                     "org.sflphone.SFLphone.CallManager",
+                                     &error);
+  if (callManagerProxy==NULL) 
   {
     g_printerr ("Failed to get proxy to CallManagers\n");
     return FALSE;
@@ -251,10 +288,11 @@ dbus_connect ()
   dbus_g_proxy_connect_signal (callManagerProxy,
     "volumeChanged", G_CALLBACK(volume_changed_cb), NULL, NULL);
     
-  configurationManagerProxy = dbus_g_proxy_new_for_name (connection,
+  configurationManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
                                   "org.sflphone.SFLphone",
                                   "/org/sflphone/SFLphone/ConfigurationManager",
-                                  "org.sflphone.SFLphone.ConfigurationManager");
+                                  "org.sflphone.SFLphone.ConfigurationManager",
+                                  &error);
   if (!configurationManagerProxy) 
   {
     g_printerr ("Failed to get proxy to ConfigurationManager\n");
@@ -280,6 +318,7 @@ dbus_clean ()
 {
     g_object_unref (callManagerProxy);
     g_object_unref (configurationManagerProxy);
+    g_object_unref (instanceProxy);
 }
 
 
@@ -1026,7 +1065,7 @@ gchar*
 dbus_get_current_audio_output_plugin()
 {
 	g_print("Before get audio plugin");
-	gchar* plugin;
+	gchar* plugin="";
 	GError* error = NULL;
 	org_sflphone_SFLphone_ConfigurationManager_get_current_audio_output_plugin(
 			configurationManagerProxy,
@@ -1174,18 +1213,20 @@ dbus_get_searchbar()
 {
 	int state;
 	GError* error = NULL;
-	org_sflphone_SFLphone_ConfigurationManager_get_searchbar(
-			configurationManagerProxy,
-			&state,
-			&error);
-	g_print("After");
-	if(error)
-	{
-		g_error_free(error);
-	}
+	if(!org_sflphone_SFLphone_ConfigurationManager_get_searchbar( configurationManagerProxy, &state, &error))
+    {
+        if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            g_printerr ("Caught remote method (get_searchbar) exception  %s: %s\n", dbus_g_error_get_name(error), error->message);
+        else
+            g_printerr("Error while calling get_searchbar: %s\n", error->message);
+        g_error_free (error);
+        return -1;
+    }
 	else
+    {
 		g_print("DBus called get_searchbar on ConfigurationManager\n");
-	return state;
+	    return state;
+    }
 }
 
 void
@@ -1354,23 +1395,23 @@ dbus_set_notify( void )
 guint
 dbus_get_notify( void )
 {
-  g_print("Before dbus_get_notif_level()\n");
 	gint level;
 	GError* error = NULL;
-	org_sflphone_SFLphone_ConfigurationManager_get_notify(
-			configurationManagerProxy,
-			&level,
-			&error);
-	if(error)
-	{
-	  g_print("Error calling dbus_get_notif_level\n");
-		g_error_free(error);
-	}
-	else
-	  g_print("Called dbus_get_notif_level\n");
-	
-	return (guint)level;
+	if( !org_sflphone_SFLphone_ConfigurationManager_get_notify( configurationManagerProxy,&level, &error) )
+    {
+        if(error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
+            g_printerr ("Caught remote method (get_notify) exception  %s: %s\n", dbus_g_error_get_name(error), error->message);
+        else
+            g_printerr("Error while calling get_notify: %s\n", error->message);
+        g_error_free (error);
+        return 0;
+    }
+    else{
+        g_print ("DBus called get_notify() on ConfigurationManager\n");
+        return (guint)level;
+    }
 }
+
 
 void
 dbus_set_mail_notify( void )
@@ -1390,7 +1431,7 @@ dbus_set_mail_notify( void )
 guint
 dbus_get_mail_notify( void )
 {
-  g_print("Before dbus_get_mail_notif_level()\n");
+    g_print("Before dbus_get_mail_notif_level()\n");
 	gint level;
 	GError* error = NULL;
 	org_sflphone_SFLphone_ConfigurationManager_get_mail_notify(

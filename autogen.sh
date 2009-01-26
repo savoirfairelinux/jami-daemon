@@ -4,6 +4,6 @@
 aclocal -I m4
 libtoolize --force
 autoheader
-autoconf -f
+autoconf -v -f
 automake -a
 ./configure $@

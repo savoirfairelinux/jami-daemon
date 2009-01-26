@@ -52,7 +52,7 @@ AudioRtp::~AudioRtp (void) {
 
 int 
 AudioRtp::createNewSession (SIPCall *ca) {
-  ost::MutexLock m(_threadMutex);
+  //ost::MutexLock m(_threadMutex);
 
   // something should stop the thread before...
   if ( _RTXThread != 0 ) { 
@@ -66,7 +66,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
   _RTXThread = new AudioRtpRTX (ca, _symmetric);
   try {
     if (_RTXThread->start() != 0) {
-      _debug("! ARTP Failure: unable to start RTX Thread\n");
+     _debug("! ARTP Failure: unable to start RTX Thread\n");
       return -1;
     }
   } catch(...) {
@@ -79,7 +79,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
 
 void
 AudioRtp::closeRtpSession () {
-  ost::MutexLock m(_threadMutex);
+  //ost::MutexLock m(_threadMutex);
   // This will make RTP threads finish.
   // _debug("Stopping AudioRTP\n");
   try {
