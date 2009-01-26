@@ -13,6 +13,15 @@
     _instance = 0;
 }
 
+::sflphone::PluginManager* ::sflphone::PluginManager::instance()
+{
+    if(! _instance ){
+        _instance = new PluginManager();
+    }
+    return _instance;
+}   
+
+
 int ::sflphone::PluginManager::loadPlugins( const std::string &path )
 {
     std::string pluginDir, current;

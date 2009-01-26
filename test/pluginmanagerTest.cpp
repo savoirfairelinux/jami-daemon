@@ -27,7 +27,7 @@ using std::endl;
 
 void PluginManagerTest::setUp(){
     // Instanciate the plugin manager object
-    _pm = new ::sflphone::PluginManager();
+    _pm = ::sflphone::PluginManager::instance();
 }
 
 void PluginManagerTest::testLoadPluginDirectory(){

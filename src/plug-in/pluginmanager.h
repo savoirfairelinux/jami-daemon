@@ -18,11 +18,6 @@ namespace sflphone {
 
         public:
             /**
-             * Default constructor
-             */
-            PluginManager();
-
-            /**
              * Destructor
              */
             ~PluginManager();
@@ -47,6 +42,11 @@ namespace sflphone {
             Plugin* isPluginLoaded( const std::string &name );
 
         private:
+            /**
+             * Default constructor
+             */
+            PluginManager();
+
             /**
              * Load a unix dynamic/shared library 
              * @param filename  The path to the dynamic/shared library
