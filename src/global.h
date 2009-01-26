@@ -32,6 +32,19 @@
 typedef float float32;
 typedef short int16;
 
+useful typedefs.
+typedef signed short SINT16;
+typedef signed int SINT32;
+
+typedef unsigned long FILE_TYPE;
+typedef unsigned long SOUND_FORMAT;
+
+const FILE_TYPE  FILE_RAW = 1;
+const FILE_TYPE  FILE_WAV = 2;
+
+static const SOUND_FORMAT INT16 = 0x2; // TODO shold change these symbols
+static const SOUND_FORMAT INT32 = 0x8;
+
 #define SUCCESS                 0
 
 #define ASSERT( expected , value)       if( value == expected ) return SUCCESS; \
