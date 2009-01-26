@@ -38,6 +38,7 @@ AC_CONFIG_FILES([src/Makefile \
   src/config/Makefile \
   src/dbus/Makefile \
   src/zeroconf/Makefile \
+  src/plug-in/audiorecorder/Makefile \
   src/plug-in/Makefile]) 
   
   dnl Unitary test section

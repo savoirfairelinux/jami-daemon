@@ -32,7 +32,7 @@
 typedef float float32;
 typedef short int16;
 
-useful typedefs.
+//useful typedefs.
 typedef signed short SINT16;
 typedef signed int SINT32;
 
