@@ -91,7 +91,7 @@ else
 	# Prepare for packaging
 	mv sflphone sflphone-$ver
 
-	cp sflphone-$ver/platform/$platform.spec $BUILDDIR/SPECS/
+	cp sflphone-$ver/platform/$platform.spec $BUILDDIR/SPECS/sflphone.spec
  	sed -e "s!@PREFIX@!/usr!" sflphone-$ver/libs/pjproject-1.0/libpj-sfl.pc.in > $BUILDDIR/SOURCES/libpj-sfl.pc
 	tar zcvf sflphone-$ver.tar.gz sflphone-$ver
 
