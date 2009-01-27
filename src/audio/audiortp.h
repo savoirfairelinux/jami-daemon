@@ -40,7 +40,6 @@
  * @brief Manage the real-time data transport in a SIP call
  */
 
-typedef unsigned char* samplePtr;
 
 class SIPCall;
 
@@ -119,6 +118,18 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** Length of the sound frame we capture in ms(typically 20ms) */
     int _layerFrameSize; 
 
+    /** Speaker buffer length in samples once the data are resampled
+     *  (used for mixing and recording)
+     */
+    int _nSamplesSpkr;
+
+    /** Mic buffer length in samples once the data are resampled
+     *  (used for mixing and recording)
+     */
+    int _nSamplesMic;
+    
+  
+    
     /**
      * Init the RTP session. Create either symmetric or double sessions to manage data transport
      * Set the payloads according to the manager preferences

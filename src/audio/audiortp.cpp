@@ -269,6 +269,10 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     //_debug("get data from mic\n");
     int nbSample = audiolayer->getMic( micData , bytesAvail ) / sizeof(SFLDataFormat);
     int nb_sample_up = nbSample;
+    
+    // Store the length of the mic buffer in samples for recording
+    _nSamplesMic = nbSample;
+
     int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
 
     //_debug("resample data\n");
@@ -349,9 +353,9 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 #ifdef DATAFORMAT_IS_FLOAT
 #else
 #endif
-      
-      // Record before sending to audio
-      recAudio.recData(spkrDataConverted,nbSample);
+    
+      // Stor the number of samples for recording
+      _nSamplesSpkr = nbSample;
         
       audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
 
@@ -432,6 +436,9 @@ AudioRtpRTX::run () {
       ////////////////////////////
       receiveSessionForSpkr(countTime);
       // Let's wait for the next transmit cycle
+
+      recAudio.recData(spkrDataConverted,_nSamplesSpkr);
+      
       Thread::sleep(TimerPort::getTimer());
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
     }

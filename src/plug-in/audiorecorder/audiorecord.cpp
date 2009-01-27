@@ -163,7 +163,7 @@ void AudioRecord::recData(SFLDataFormat* buffer, int nSamples) {
   // printf("AudioRecord : buffer: %x : ", buffer);
  
   if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
-    if ( fwrite(buffer, nSamples*sizeof(SFLDataFormat), 1, fp) != 1)
+    if ( fwrite(buffer, sizeof(SFLDataFormat), nSamples, fp) != nSamples)
       _debug("AudioRecord: Could not record data!\n");
     else {
       // printf("Buffer : %x \n",*buffer);

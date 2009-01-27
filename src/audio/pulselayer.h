@@ -22,7 +22,6 @@
 
 #include "audiolayer.h"
 #include "audiostream.h"
-#include "plug-in/audiorecorder/audiorecord.h"
 
 #define PLAYBACK_STREAM_NAME	    "SFLphone out"
 #define CAPTURE_STREAM_NAME	    "SFLphone in"
@@ -256,10 +255,6 @@ class PulseLayer : public AudioLayer {
     int spkrVolume;
     int micVolume;
 
-    /**
-     * Audio device to record audio streams on disk
-     */ 
-    AudioRecord audioRec;
 
 public: 
     static int streamState;
