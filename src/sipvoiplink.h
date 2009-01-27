@@ -23,11 +23,23 @@
 #define SIPVOIPLINK_H
 
 #include "voiplink.h"
-#include "useragent.h"
+
+#include <pjsip.h>
+#include <pjlib-util.h>
+#include <pjlib.h>
+#include <pjnath/stun_config.h>
+#include <pjsip_simple.h>
+#include <pjsip_ua.h>
+#include <pjmedia/sdp.h>
+#include <pjmedia/sdp_neg.h>
 
 class EventThread;
 class SIPCall;
 class AudioRtp;
+
+#define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
+#define RANDOM_SIP_PORT   rand() % 64000 + 1024
+#define PJ_LOG_LEVEL 5
 
 /**
  * @file sipvoiplink.h
@@ -43,6 +55,8 @@ class SIPVoIPLink : public VoIPLink
      * @param accountID The account identifier
      */
     SIPVoIPLink(const AccountID& accountID);
+
+    static SIPVoIPLink* instance( const AccountID& id );
 
     /**
      * Destructor
@@ -61,10 +75,7 @@ class SIPVoIPLink : public VoIPLink
      */
     bool init(void);
 
-    /**
-     * Delete link-related stuuf like calls
-     */
-    void terminate(void);
+    void terminate( void );
 
     /**
      * Event listener. Each event send by the call manager is received and handled from here
@@ -158,8 +169,10 @@ class SIPVoIPLink : public VoIPLink
      * If set to true, we check for a firewall
      * @param use true if we use STUN
      */
-    void setUseStun(bool use) { _useStun = use; }
+    void setUseStun(bool use);
 
+    bool useStun( void );
+    
     /** 
      * The name of the STUN server
      * @param server Server FQDN/IP
@@ -235,15 +248,7 @@ class SIPVoIPLink : public VoIPLink
      */
     std::string getSipTo(const std::string& to_url);
 
-    /**
-     * Set audio (SDP) configuration for a call
-     * localport, localip, localexternalport
-     * @param call a SIPCall valid pointer
-     * @return bool True
-     */
-    bool setCallAudioLocal(SIPCall* call);
-
-    /**
+        /**
      * Tell the user that the call was answered
      * @param
      */
@@ -268,6 +273,10 @@ class SIPVoIPLink : public VoIPLink
      */
     void SIPCallReleased(SIPCall *call);
 
+    bool isInitDone() { return _initDone; }
+
+    void setInitState( bool state ){ _initDone = state; }
+
     /**
      * SIPCall accessor
      * @param id  The call identifier
@@ -275,23 +284,8 @@ class SIPVoIPLink : public VoIPLink
      */
     SIPCall* getSIPCall(const CallID& id);
 
-    /** Tell if the initialisation was done */
-    bool _initDone;
-
-    /** when we init the listener, how many times we try to bind a port? */
+        /** when we init the listener, how many times we try to bind a port? */
     int _nbTryListenAddr;
-
-    /** Do we use stun? */
-    bool _useStun;
-
-    /** What is the stun server? */
-    std::string _stunServer;
-
-    /** Local Extern Address is the IP address seen by peers for SIP listener */
-    std::string _localExternAddress;
-
-    /** Local Extern Port is the port seen by peers for SIP listener */
-    unsigned int _localExternPort;  
 
     /** Starting sound */
     AudioRtp* _audiortp;
@@ -299,7 +293,57 @@ class SIPVoIPLink : public VoIPLink
     pj_str_t string2PJStr(const std::string &value);
 
 private:
+    static SIPVoIPLink* _instance;
+
+    int getModId();
+    /** 
+     * Initialize the PJSIP library
+     * Must be called before any other calls to the SIP layer
+     *
+     * @return bool True on success
+     */
+    bool pjsip_init();
+ 
+    /**
+     * Delete link-related stuuf like calls
+     */
+    bool pjsip_shutdown(void);
+
+    pj_status_t stunServerResolve();
+
+    /** Create SIP UDP Listener */
+    int createUDPServer();
+
+    bool loadSIPLocalIP();
+    
+    std::string getLocalIP() {return _localExternAddress;}
+
     pjsip_regc *_regc;
+    
+    /** For registration use only */
+    int _regPort;
+    
+    /** Tell if the initialisation has been done */
+    bool _initDone;
+
+    /* Flag to check if the STUN server is valid or not */
+    bool validStunServer;
+    
+    /** The current STUN server address */
+    std::string _stunServer;
+    
+    /** Local Extern Address is the IP address seen by peers for SIP listener */
+    std::string _localExternAddress;
+    std::string _localIPAddress;
+
+    /** Local Extern Port is the port seen by peers for SIP listener */
+    unsigned int _localExternPort;
+    unsigned int _localPort;
+
+    /** Threading object */
+    EventThread* _evThread;
+    ost::Mutex _mutexSIP;
+
     bool _bRegister;
 };
 

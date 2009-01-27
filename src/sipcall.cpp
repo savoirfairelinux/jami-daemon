@@ -51,13 +51,13 @@ SIPCall::SIPCallInvite(pjsip_rx_data *rdata, pj_pool_t *pool)
 {
   pj_status_t status;
   
+  // We retrieve the remote sdp offer in the rdata struct to begin the negociation
   pjmedia_sdp_session* remote_sdp = getRemoteSDPFromRequest(rdata);
   if (remote_sdp == 0) {
     return false;
   }
 
   // Have to do some stuff here with the SDP
-  // We retrieve the remote sdp offer in the rdata struct to begin the negociation
   _localSDP = PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_session);
   _localSDP->conn =  PJ_POOL_ZALLOC_T(pool, pjmedia_sdp_conn);
   
@@ -68,7 +68,11 @@ SIPCall::SIPCallInvite(pjsip_rx_data *rdata, pj_pool_t *pool)
   _localSDP->time.start = _localSDP->time.stop = 0;
   sdpAddMediaDescription(pool);
   
+    _debug("SDP: addr: %s\nuser: %s\nid: %i\nversion: %i\naddr: %s\nattr count: %i\n", 
+            _ipAddr.c_str(), _localSDP->origin.user, _localSDP->origin.id, _localSDP->origin.version, _localSDP->origin.addr.ptr, _localSDP->attr_count );
+
   _debug("Before validate SDP!\n");
+
   status = pjmedia_sdp_validate( _localSDP );
   if (status != PJ_SUCCESS) {
     _debug("Can not generate valid local sdp\n");

@@ -45,7 +45,7 @@
   IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
 : VoIPLink(accountID)
 {
-  _evThread = new EventThread(this);
+  _evThread = new IAXEventThread(this);
   _regSession = NULL;
   _nextRefreshStamp = 0;
 
@@ -917,6 +917,8 @@ IAXVoIPLink::iaxCodecMapToFormat(IAXCall* call)
 
 void IAXVoIPLink::updateAudiolayer( void )
 {
+    _mutexIAX.enterMutex();
     audiolayer = NULL;
     audiolayer = Manager::instance().getAudioDriver();
+    _mutexIAX.leaveMutex();
 }

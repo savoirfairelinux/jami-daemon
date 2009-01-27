@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2004-2005 Savoir-Faire Linux inc.
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,24 +30,52 @@ class VoIPLink;
  */
 
 class EventThread : public ost::Thread {
-public:
-  /**
-   * Build a thread that call getEvents 
-   */
-	EventThread (VoIPLink*);
-	~EventThread (void);
-	virtual void 	 run ();
-	virtual void	 stop();
-	virtual void	 startLoop();
-	bool		 isStopped();
 
-private:
+    friend class SIPEventThread;
+    friend class IAXEventThread;
+
+    public:
+        /**
+         * Thread constructor 
+         */
+        EventThread (VoIPLink* link) : Thread(), _linkthread(link){
+            setCancel( cancelDeferred );
+        }
+        
+        
+        virtual ~EventThread (void){
+            terminate();
+        }
+        
+        virtual void run () = 0;
+        
+    private:
         EventThread(const EventThread& rh); // copy constructor
         EventThread& operator=(const EventThread& rh);  // assignment operator	
 
         /** VoIPLink is the object being called by getEvents() method  */
-	VoIPLink*	_linkthread;
-	bool		stopIt;
+        VoIPLink*	_linkthread;
 };
+
+class IAXEventThread : public EventThread {
+    
+    public:
+        IAXEventThread( VoIPLink* voiplink )
+            : EventThread( voiplink ){
+        }
+
+        virtual void run();
+};
+
+class SIPEventThread : public EventThread {
+    
+    public:
+        SIPEventThread( VoIPLink* voiplink )
+            : EventThread( voiplink ){
+        }
+
+        virtual void run();
+};
+
 
 #endif // __EVENT_THREAD_H__

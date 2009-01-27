@@ -23,7 +23,6 @@
 #include "sipaccount.h"
 #include "manager.h"
 #include "user_cfg.h"
-#include "useragent.h"
 
 SIPAccount::SIPAccount(const AccountID& accountID)
  : Account(accountID)
@@ -33,6 +32,7 @@ SIPAccount::SIPAccount(const AccountID& accountID)
  , _contact("")
 {
   _link = new SIPVoIPLink(accountID);
+   //_link = SIPVoIPLink::instance( accountID ); 
 }
 
 
@@ -44,16 +44,15 @@ SIPAccount::~SIPAccount()
   _cred = NULL;
 }
 
-int
-SIPAccount::registerVoIPLink()
+int SIPAccount::registerVoIPLink()
 {
 
     int status, useStun;
     SIPVoIPLink *thislink;
 
+    /* Retrieve the account information */
     _link->setHostname(Manager::instance().getConfigString(_accountID,HOSTNAME));
     useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
-  
     thislink = dynamic_cast<SIPVoIPLink*> (_link);
     thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
     thislink->setUseStun( useStun!=0 ? true : false);
@@ -65,6 +64,7 @@ SIPAccount::registerVoIPLink()
     thislink->setPassword(Manager::instance().getConfigString(_accountID, PASSWORD));
     thislink->setHostname(Manager::instance().getConfigString(_accountID, HOSTNAME));
 
+    // Start registration
     status = _link->sendRegister();
     ASSERT( status , SUCCESS );
 
@@ -76,7 +76,6 @@ SIPAccount::unregisterVoIPLink()
 {
   _debug("SIPAccount: unregister account %s\n" , getAccountID().c_str());
   _link->sendUnregister();
-  _link->terminate();
   
   return SUCCESS;
 }
