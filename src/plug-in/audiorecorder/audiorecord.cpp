@@ -79,16 +79,16 @@ bool AudioRecord::setRawFile(const char *fileName) {
   if ( strstr(name, ".raw") == NULL) strcat(name, ".raw");
   fp = fopen(name, "wb");
   if ( !fp ) {
-    cout << "AudioRecord: could not create RAW file: " << name << '.';
+    _debug("AudioRecord: could not create RAW file!\n");
     return false;
   }
 
   if ( sndFormat_ != INT16 ) { // TODO need to change INT16 to SINT16
     sndFormat_ = INT16;
-    cout << "AudioRecord: using 16-bit signed integer data format for file " << name << '.';
+    _debug("AudioRecord: using 16-bit signed integer data format for file.\n");
   }
 
-  cout << "AudioRecord: creating RAW file: " << name;
+  _debug("AudioRecord: creating RAW file.\n");
   return true;
 }
 
@@ -100,7 +100,7 @@ bool AudioRecord::setWavFile(const char *fileName) {
   if ( strstr(name, ".wav") == NULL) strcat(name, ".wav");
   fp = fopen(name, "wb");
   if ( !fp ) {
-    cout << "AudioRecord: could not create WAV file: " << name;
+    _debug("AudioRecord: could not create WAV file.\n");
     return false;
   }
 
@@ -117,13 +117,13 @@ bool AudioRecord::setWavFile(const char *fileName) {
   hdr.bytes_per_samp = (SINT16) (channels_ * hdr.bits_per_samp / 8);
   hdr.bytes_per_sec = (SINT32) (hdr.sample_rate * hdr.bytes_per_samp);
 
-
-  if ( fwrite(&hdr, 4, 11, fp) != 11 ) {
-    cout << "AudioRecord: could not write WAV header for file " << name << '.';
+  
+  if ( fwrite(&hdr, 4, 11, fp) != 11) {
+    _debug("AudioRecord: could not write WAV header for file.\n");
     return false;
   }
 
-  cout << "AudioRecord: creating WAV file: " << name;
+  _debug("AudioRecord: creating WAV file.\n");
   return true;
 }
 
@@ -149,20 +149,19 @@ void AudioRecord::closeWavFile()
 void AudioRecord::recData(SFLDataFormat* buffer, int nSamples) {
 
   if (fp == 0){
-    cout << "AudioRecord: Can't record data, a file has not yet been opened!";
+    _debug("AudioRecord: Can't record data, a file has not yet been opened!\n");
     return;
   }
  
   if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
     if (nSamples <= 1){
       if ( fwrite(buffer, 2, 1, fp) != 1)
-        cout << "AudioRecord: Could not record data!";
+        _debug("AudioRecord: Could not record data!\n");
     }
     else { 
       for ( int k=0; k<nSamples; k++ ) {
-        cout << "Buffer[" << k << "] : " << buffer[k] << "\n";
         if ( fwrite(&buffer[k], 2, 1, fp) != 1 )
-          cout << "AudioRecord: Could not record data!";
+          _debug("AudioRecord: Could not record data!\n");
       }
     }
   }

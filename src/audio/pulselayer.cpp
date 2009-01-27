@@ -92,6 +92,11 @@ PulseLayer::connectPulseAudioServer( void )
   //serverinfo();
   //muteAudioApps(99);
   _debug("Context creation done\n");
+
+  //FILE_TYPE ft = FILE_WAV;
+  //SOUND_FORMAT sf = INT16;
+  //audioRec.setSndSamplingRate(44100);
+  //audioRec.openFile("SFLWavFile.wav",ft,sf);
 }
 
 void PulseLayer::context_state_callback( pa_context* c, void* user_data )
@@ -243,6 +248,13 @@ PulseLayer::startStream (void)
   pa_threaded_mainloop_lock(m);
   pa_stream_cork( record->pulseStream(), NULL, NULL, NULL);
   pa_threaded_mainloop_unlock(m);
+
+  _debug("Opening the wave file\n");
+  FILE_TYPE ft = FILE_WAV;
+  SOUND_FORMAT sf = INT16;
+  audioRec.setSndSamplingRate(44100);
+  audioRec.openFile("SFLWavFile.wav",ft,sf); 
+
 }
 
   void 
@@ -252,6 +264,9 @@ PulseLayer::stopStream (void)
   pa_stream_flush( playback->pulseStream(), NULL, NULL );
   pa_stream_flush( record->pulseStream(), NULL, NULL );
   flushMic();
+
+  _debug("Closing the wav file\n");
+  audioRec.closeFile();
 }
 
 

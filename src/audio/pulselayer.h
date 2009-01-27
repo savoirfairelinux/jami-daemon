@@ -256,6 +256,11 @@ class PulseLayer : public AudioLayer {
     int spkrVolume;
     int micVolume;
 
+    /**
+     * Audio device to record audio streams on disk
+     */ 
+    AudioRecord audioRec;
+
 public: 
     static int streamState;
 };
