@@ -13,7 +13,7 @@ dnl Rewrite name of programs to be installed
 AC_ARG_PROGRAM
 
 dnl Automake options
-AM_INIT_AUTOMAKE([-Wall -Wno-portability])
+AM_INIT_AUTOMAKE([-Wno-portability])
 
 dnl Improve make variable MAKE
 AC_PROG_MAKE_SET
@@ -97,7 +97,7 @@ dnl Define C++ as default language
 AC_LANG(C++)
 
 dnl Setup C++ compiler flags
-CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS $USER_INCLUDES -O0 -g -Wall -Wextra"
+CXXFLAGS="$CXXFLAGS $USE_EXCEPTIONS $USER_INCLUDES -O0 -g -Wno-return-type"
 
 dnl Check for header files
 AC_FUNC_ALLOCA

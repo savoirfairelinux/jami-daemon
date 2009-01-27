@@ -39,6 +39,7 @@ DBusGConnection * connection;
 DBusGProxy * callManagerProxy;
 DBusGProxy * configurationManagerProxy;
 DBusGProxy * instanceProxy;
+DBusGProxy * nameOwnerProxy;
 
 static void  
 incoming_call_cb (DBusGProxy *proxy UNUSED,
@@ -172,18 +173,32 @@ error_alert(DBusGProxy *proxy UNUSED,
   sflphone_throw_exception( errCode );
 }
 
+
+static void nameOwnerChanged(DBusGProxy *proxy, char *name, char *old_owner, char *new_owner, gpointer data )
+{
+
+    g_print("******************************************************************\n");
+    g_print("Owner name of the service %s changed from %s to %s\n", name, old_owner, new_owner);
+    g_print("******************************************************************\n");
+
+    if (strcmp(name, "org.sflphone.SFLphone")!=0)   return;
+
+}
+
 gboolean 
 dbus_connect ()
 {
 
   GError *error = NULL;
   connection = NULL;
+  instanceProxy = NULL;
+  nameOwnerProxy = NULL;
   
   g_type_init ();
 
   connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
   
-  if (connection == NULL)
+  if (error)
   {
     g_printerr ("Failed to open connection to bus: %s\n",
                 error->message);
@@ -191,13 +206,33 @@ dbus_connect ()
     return FALSE;
   }
 
+    
+    nameOwnerProxy = dbus_g_proxy_new_for_name_owner( connection,
+                                                    DBUS_SERVICE_DBUS,
+                                                    DBUS_PATH_DBUS,
+                                                    DBUS_INTERFACE_DBUS,
+                                                    &error);
+
+    if( nameOwnerProxy==NULL)
+    {
+        g_printerr ("Failed to get proxy to NameOwner\n");
+        return FALSE;
+    }
+
+    dbus_g_proxy_add_signal( nameOwnerProxy, "NameOwnerChanged",
+                G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (nameOwnerProxy, "NameOwnerChanged",
+                G_CALLBACK (nameOwnerChanged), NULL, NULL);
+
+
   /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
   
-  instanceProxy = dbus_g_proxy_new_for_name (connection,
+  instanceProxy = dbus_g_proxy_new_for_name_owner (connection,
                                      "org.sflphone.SFLphone",
                                      "/org/sflphone/SFLphone/Instance",
-                                     "org.sflphone.SFLphone.Instance");
-  if (!instanceProxy) 
+                                     "org.sflphone.SFLphone.Instance",
+                                     &error);
+  if (instanceProxy==NULL) 
   {
     g_printerr ("Failed to get proxy to Instance\n");
     return FALSE;
@@ -206,11 +241,12 @@ dbus_connect ()
   g_print ("DBus connected to Instance\n");
   
   
-  callManagerProxy = dbus_g_proxy_new_for_name (connection,
+  callManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
                                      "org.sflphone.SFLphone",
                                      "/org/sflphone/SFLphone/CallManager",
-                                     "org.sflphone.SFLphone.CallManager");
-  if (!callManagerProxy) 
+                                     "org.sflphone.SFLphone.CallManager",
+                                     &error);
+  if (callManagerProxy==NULL) 
   {
     g_printerr ("Failed to get proxy to CallManagers\n");
     return FALSE;
@@ -252,10 +288,11 @@ dbus_connect ()
   dbus_g_proxy_connect_signal (callManagerProxy,
     "volumeChanged", G_CALLBACK(volume_changed_cb), NULL, NULL);
     
-  configurationManagerProxy = dbus_g_proxy_new_for_name (connection,
+  configurationManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
                                   "org.sflphone.SFLphone",
                                   "/org/sflphone/SFLphone/ConfigurationManager",
-                                  "org.sflphone.SFLphone.ConfigurationManager");
+                                  "org.sflphone.SFLphone.ConfigurationManager",
+                                  &error);
   if (!configurationManagerProxy) 
   {
     g_printerr ("Failed to get proxy to ConfigurationManager\n");

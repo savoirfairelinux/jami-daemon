@@ -128,7 +128,7 @@ help_about ( void * foo UNUSED)
       "artists", artists,
       "authors", authors,
       "comments", _("SFLphone is a VoIP client compatible with SIP and IAX2 protocols."),
-      "copyright", "Copyright © 2004-2008 Savoir-faire Linux Inc.",
+      "copyright", "Copyright © 2004-2009 Savoir-faire Linux Inc.",
       "name", PACKAGE,
       "title", _("About SFLphone"),
       "version", VERSION,

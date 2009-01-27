@@ -89,7 +89,7 @@ PulseLayer::connectPulseAudioServer( void )
   }
 
   pa_threaded_mainloop_unlock( m );
-  serverinfo();
+  //serverinfo();
   //muteAudioApps(99);
   _debug("Context creation done\n");
 }

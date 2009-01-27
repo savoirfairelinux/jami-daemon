@@ -54,7 +54,7 @@ AlsaLayer::~AlsaLayer (void)
     deviceClosed = true;
 
     ringtone_thread_is_running = false;
-    pthread_join(ringtone_thread, NULL);
+    //pthread_join(ringtone_thread, NULL);
 }
 
     void
@@ -104,7 +104,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     _debugAlsa("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
     _debugAlsa("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLDataFormatString);
 
-    ost::MutexLock lock( _mutex );
+    //ost::MutexLock lock( _mutex );
 
     
     /*void **hint;
@@ -163,6 +163,7 @@ void* ringtoneThreadEntry( void *ptr )
         ( ( AlsaLayer *) ptr) -> playTones();
         //sleep(0.1);
     }
+    
     /*
     pthread_mutex_lock(&mut);
     while( ((AlsaLayer*)ptr)->_manager->getTelephoneTone() == NULL )
@@ -171,6 +172,7 @@ void* ringtoneThreadEntry( void *ptr )
     }
     ( AlsaLayer *) ptr -> playTones();
     pthread_mutex_unlock(&mut);*/
+    
     return 0;
 }
 
@@ -206,7 +208,7 @@ AlsaLayer::fillHWBuffer( void)
     bool
 AlsaLayer::isStreamActive (void) 
 {
-    ost::MutexLock lock( _mutex );
+    //ost::MutexLock lock( _mutex );
     return (isPlaybackActive() && isCaptureActive());
 }
 
@@ -279,7 +281,7 @@ AlsaLayer::getMic(void *buffer, int toCopy)
     bool
 AlsaLayer::isStreamStopped (void) 
 {
-    ost::MutexLock lock( _mutex );
+    //ost::MutexLock lock( _mutex );
     return !(isStreamActive());
 }
 
@@ -291,20 +293,18 @@ void AlsaLayer::restorePulseAppsVolume( void ){}
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
     void
 AlsaLayer::playTones( void )
 {
     int frames;
     int maxBytes;
 
-    pthread_mutex_lock(&mut);
-    while(!_manager-> getTelephoneTone() && !_manager->getTelephoneFile())
-    {
+    //pthread_mutex_lock(&mut);
+    //while(!_manager-> getTelephoneTone() && !_manager->getTelephoneFile())
+    //{
         _debug("Make the ringtone thread wait\n");
         pthread_cond_wait(&cond, &mut);
-    }
+    //}
 
     //frames = _periodSize  ; 
     frames = 940  ; 
@@ -324,13 +324,13 @@ AlsaLayer::playTones( void )
     }
     // free the temporary data buffer 
     free( out ); out = 0;
-    pthread_mutex_unlock(&mut);
+    //pthread_mutex_unlock(&mut);
 }
 
 
 bool
 AlsaLayer::isPlaybackActive(void) {
-    ost::MutexLock guard( _mutex );
+    //ost::MutexLock guard( _mutex );
     if( _PlaybackHandle )
         return (snd_pcm_state(_PlaybackHandle) == SND_PCM_STATE_RUNNING ? true : false); 
     else
@@ -339,7 +339,7 @@ AlsaLayer::isPlaybackActive(void) {
 
 bool
 AlsaLayer::isCaptureActive(void) {
-    ost::MutexLock guard( _mutex );
+    //ost::MutexLock guard( _mutex );
     if( _CaptureHandle )
         return (snd_pcm_state( _CaptureHandle) == SND_PCM_STATE_RUNNING ? true : false); 
     else
@@ -452,11 +452,11 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
         
         // So the loop could start when the ringtone thread entry function is reached
         ringtone_thread_is_running = true;
-        if( pthread_create(&ringtone_thread, NULL, ringtoneThreadEntry, this) != 0 )
+        /*if( pthread_create(&ringtone_thread, NULL, ringtoneThreadEntry, this) != 0 )
         {
             _debug("Unable to start the ringtone posix thread\n");
             return false;
-        }
+        }*/
     }
 
     snd_pcm_sw_params_free( swparams );
