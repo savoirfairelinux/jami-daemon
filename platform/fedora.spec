@@ -49,13 +49,12 @@ ln -sf ./sflphone-gtk sflphone
 cd -
 cp %{SOURCE1} %{buildroot}/usr/lib/pkgconfig/ -f
 
-rm -f  %{buildroot}/usr/include/Makefile.*
-rm -rf  %{buildroot}/usr/lib/debug
+rm -rf %{buildroot}/usr/lib/debug
+rm -rf %{buildroot}/usr/include/
 
 %files
 %defattr(-, root, root)
 /usr/bin/*
-/usr/include/*
 /usr/lib/*
 /usr/share/applications/*
 /usr/share/dbus-1/services/*
