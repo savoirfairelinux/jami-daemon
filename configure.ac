@@ -38,7 +38,8 @@ AC_CONFIG_FILES([src/Makefile \
   src/config/Makefile \
   src/dbus/Makefile \
   src/zeroconf/Makefile \
-  src/plug-in/Makefile]) 
+  src/plug-in/Makefile \
+  src/plug-in/test/Makefile]) 
   
   dnl Unitary test section
 AC_CONFIG_FILES([test/Makefile])
