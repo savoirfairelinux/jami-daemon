@@ -153,23 +153,29 @@ void AudioRecord::recData(SFLDataFormat* buffer, int nSamples) {
     return;
   }
  
+  // int size = nSamples * (sizeof(SFLDataFormat));
+  // int size = sizeof(buffer);
+  // int count = sizeof(buffer) / sizeof(SFLDataFormat);
+  
+  // printf("AudioRecord : sizeof(buffer) : %d \n",size); 
+  // printf("AudioRecord : sizeof(buffer) / sizeof(SFLDataFormat) : %d \n",count);
+  // printf("AudioRecord : nSamples : %d \n",nSamples);
+  // printf("AudioRecord : buffer: %x : ", buffer);
+ 
   if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
-    if (nSamples <= 1){
-      if ( fwrite(buffer, 2, 1, fp) != 1)
-        _debug("AudioRecord: Could not record data!\n");
-    }
-    else { 
-      for ( int k=0; k<nSamples; k++ ) {
-        if ( fwrite(&buffer[k], 2, 1, fp) != 1 )
-          _debug("AudioRecord: Could not record data!\n");
-      }
+    if ( fwrite(buffer, nSamples*sizeof(SFLDataFormat), 1, fp) != 1)
+      _debug("AudioRecord: Could not record data!\n");
+    else {
+      // printf("Buffer : %x \n",*buffer);
+      fflush(fp);
+      // _debug("Flushing!\n");
     }
   }
 
   
 
 
-  byteCounter_ += (unsigned long)(sizeof(buffer) / sizeof(SINT16));
+  byteCounter_ += (unsigned long)(nSamples*sizeof(SFLDataFormat));
 
   return;
 }

@@ -79,6 +79,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
 
 void
 AudioRtp::closeRtpSession () {
+
   //ost::MutexLock m(_threadMutex);
   // This will make RTP threads finish.
   // _debug("Stopping AudioRTP\n");
@@ -88,6 +89,8 @@ AudioRtp::closeRtpSession () {
     _debugException("! ARTP Exception: when stopping audiortp\n");
     throw;
   }
+  
+
   AudioLayer* audiolayer = Manager::instance().getAudioDriver();
   audiolayer->stopStream();
 }
@@ -225,6 +228,13 @@ AudioRtpRTX::initAudioRtpSession (void)
 	}
       }
     }
+    
+    _debug("Opening the wave file\n");
+    FILE_TYPE ft = FILE_WAV;
+    SOUND_FORMAT sf = INT16;
+    recAudio.setSndSamplingRate(44100);
+    recAudio.openFile("SFLWavFile.wav",ft,sf);
+
   } catch(...) {
     _debugException("! ARTP Failure: initialisation failed");
     throw;
@@ -321,6 +331,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     }
 
     if (_audiocodec != NULL) {
+  
 
       int expandedSize = _audiocodec->codecDecode( spkrDataDecoded , spkrData , size );
       //buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
@@ -339,7 +350,11 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 #else
 #endif
       
+      // Record before sending to audio
+      recAudio.recData(spkrDataConverted,nbSample);
+        
       audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
+
       
       // Notify (with a beep) an incoming call when there is already a call 
       countTime += time->getSecond();
@@ -420,15 +435,25 @@ AudioRtpRTX::run () {
       Thread::sleep(TimerPort::getTimer());
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
     }
+
+    _debug("Close wave file\n");
+    recAudio.closeFile();
+
     //_debug("stop stream for audiortp loop\n");
     audiolayer->stopStream();
   } catch(std::exception &e) {
     _start.post();
     _debug("! ARTP: Stop %s\n", e.what());
+    _debug("! Close wave file\n");
+    recAudio.closeFile();
+ 
     throw;
   } catch(...) {
     _start.post();
     _debugException("* ARTP Action: Stop");
+    _debug("* Close wave file\n");
+    recAudio.closeFile(); 
+
     throw;
   }
 }

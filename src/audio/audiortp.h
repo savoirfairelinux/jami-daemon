@@ -29,6 +29,7 @@
 #include <cc++/numbers.h>
 
 #include "../global.h"
+#include "plug-in/audiorecorder/audiorecord.h"
 #include "../samplerateconverter.h"
 
 #define UP_SAMPLING 0
@@ -38,6 +39,8 @@
  * @file audiortp.h
  * @brief Manage the real-time data transport in a SIP call
  */
+
+typedef unsigned char* samplePtr;
 
 class SIPCall;
 
@@ -63,6 +66,11 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
 
     /** Thread associated method */    
     virtual void run ();
+
+    /**
+     * Audio recording object
+     */
+    AudioRecord recAudio;
 
   private:
 
@@ -146,7 +154,12 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     int reSampleData(int sampleRate_codec, int nbSamples, int status);
     
     /** The audio codec used during the session */
-    AudioCodec* _audiocodec;	
+    AudioCodec* _audiocodec;
+   
+    /**
+     * Audio recording object
+     */
+    // AudioRecord recAudio;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
