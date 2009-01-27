@@ -437,7 +437,7 @@ AudioRtpRTX::run () {
       receiveSessionForSpkr(countTime);
       // Let's wait for the next transmit cycle
 
-      recAudio.recData(spkrDataConverted,_nSamplesSpkr);
+      recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
       
       Thread::sleep(TimerPort::getTimer());
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms

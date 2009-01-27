@@ -75,7 +75,16 @@ public:
    * @param buffer  The data chunk to be recorded
    * @param nSamples Number of samples (number of bytes) to be recorded 
    */
-  void recData(SFLDataFormat* buffer, int nSamples); // TODO ad the data to rec
+  void recData(SFLDataFormat* buffer, int nSamples);
+
+  /**
+   * Record a chunk of data in an openend file, Mix two differnet buffer
+   * @param buffer_1  The first data chunk to be recorded
+   * @param buffer_2  The second data chunk to be recorded
+   * @param nSamples_1 Number of samples (number of bytes) of buffer_1
+   * @param nSamples_2 Number of samples (number of bytes) of buffer_2
+   */
+  void recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
 
 protected:
 
@@ -93,6 +102,11 @@ protected:
    * Compute the number of byte recorded and close the file
    */
   void closeWavFile();
+
+  /**
+   * Given two buffers, return one mixed audio buffer
+   */
+  void mixBuffers(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
 
   /**
    * Pointer to the recorded file
@@ -123,5 +137,10 @@ protected:
    * Sampling rate
    */
   int sndSmplRate_;
+
+  /**
+   * Buffer used for mixing two channels
+   */
+  SFLDataFormat* mixBuffer_;
 
 };

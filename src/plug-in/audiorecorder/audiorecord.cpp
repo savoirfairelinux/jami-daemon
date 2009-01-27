@@ -180,3 +180,46 @@ void AudioRecord::recData(SFLDataFormat* buffer, int nSamples) {
   return;
 }
 
+
+void AudioRecord::recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2) {
+
+  if (fp == 0){
+    _debug("AudioRecord: Can't record data, a file has not yet been opened!\n");
+    return;
+  }
+
+  mixBuffer_ = new SFLDataFormat[nSamples_1]; 
+ 
+  // int size = nSamples * (sizeof(SFLDataFormat));
+  // int size = sizeof(buffer);
+  // int count = sizeof(buffer) / sizeof(SFLDataFormat);
+  
+  // printf("AudioRecord : sizeof(buffer) : %d \n",size); 
+  // printf("AudioRecord : sizeof(buffer) / sizeof(SFLDataFormat) : %d \n",count);
+  // printf("AudioRecord : nSamples : %d \n",nSamples);
+  // printf("AudioRecord : buffer: %x : ", buffer);
+ 
+  if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
+    for (int k=0; k<nSamples_1; k++){
+      
+      mixBuffer_[k] = (buffer_1[k]+buffer_2[k])/2;
+      
+      if ( fwrite(&buffer_1[k], 2, 1, fp) != 1)
+        _debug("AudioRecord: Could not record data!\n");
+      else {
+        // printf("Buffer : %x \n",*buffer);
+        fflush(fp);
+        // _debug("Flushing!\n");
+      }
+    }
+  }
+
+  
+
+
+  byteCounter_ += (unsigned long)(nSamples_1*sizeof(SFLDataFormat));
+
+  delete [] mixBuffer_;
+
+  return;
+}
