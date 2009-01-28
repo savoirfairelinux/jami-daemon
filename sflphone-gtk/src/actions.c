@@ -702,6 +702,13 @@ sflphone_place_call ( call_t * c )
     }
 }
 
+
+void
+sflphone_rec_call()
+{
+  
+}
+
 /* Internal to action - set the __CURRENT_ACCOUNT variable */
 void
 sflphone_set_current_account()
