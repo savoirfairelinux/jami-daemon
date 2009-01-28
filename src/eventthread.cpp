@@ -20,31 +20,22 @@
 #include "eventthread.h"
 #include "voiplink.h"
 
-/********************************** IAX Voiplink thread *************************************/
+/********************************** Voiplink thread *************************************/
+EventThread::EventThread( VoIPLink *link ) 
+    : Thread(), _linkthread(link)
+{
+    setCancel( cancelDeferred );
+}
+
+
 /**
  * Reimplementation of run() 
  */
-void IAXEventThread::run (void) 
+void EventThread::run (void) 
 {
   while(!testCancel()) {
     _linkthread->getEvent();
   }
 }	
-
-/********************************************************************************************/
-
-
-
-/********************************** SIP Voiplink thread *************************************/
-/**
- * Reimplementation of run() 
- */
-void SIPEventThread::run (void) 
-
-{
-  while(!testCancel()) {
-    _linkthread->getEvent();
-  }
-}
 
 /********************************************************************************************/

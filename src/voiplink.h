@@ -38,8 +38,8 @@ typedef std::map<CallID, Call*> CallMap;
  * @brief Listener and manager interface for each VoIP protocol
  */
 class VoIPLink {
-  public:
-
+  
+    public:
     /**
      * Constructor
      * @param accountID The account identifier
@@ -51,10 +51,7 @@ class VoIPLink {
      */
     virtual ~VoIPLink (void);
 
-    /** Contains all the state an Voip can be in */
-    enum RegistrationState {Unregistered, Trying, Registered, Error, ErrorAuth , ErrorNetwork , ErrorHost, ErrorExistStun, ErrorConfStun};
-    typedef enum RegistrationState RegistrationState;
-
+    
     /**
      * Virtual method
      * Event listener. Each event send by the call manager is received and handled from here
@@ -63,28 +60,28 @@ class VoIPLink {
 
     /** 
      * Virtual method
-     * Try to initiate the pjsip engine/thread and set config 
+     * Try to initiate the communication layer and set config 
      * @return bool True if OK
      */
     virtual bool init (void) = 0;
     
     /**
      * Virtual method
-     * Delete link-related stuuf like calls
+     * Delete link-related stuff like calls
      */
     virtual void terminate (void) = 0;
     
     /**
      * Virtual method
-     * Build and send SIP registration request
+     * Build and send account registration request
      * @return bool True on success
      *		  false otherwise
      */
-    virtual int sendRegister (void) = 0;
+    virtual int sendRegister ( AccountID id ) = 0;
     
     /**
      * Virtual method
-     * Build and send SIP unregistration request
+     * Build and send account unregistration request
      * @return bool True on success
      *		  false otherwise
      */
@@ -93,10 +90,11 @@ class VoIPLink {
     /**
      * Place a new call
      * @param id  The call identifier
-     * @param toUrl  The Sip address of the recipient of the call
+     * @param toUrl  The address of the recipient of the call
      * @return Call* The current call
      */
     virtual Call* newOutgoingCall(const CallID& id, const std::string& toUrl) = 0;
+
     /**
      * Answer the call
      * @param id The call identifier
@@ -155,64 +153,6 @@ class VoIPLink {
      */
     virtual bool carryingDTMFdigits(const CallID& id, char code) = 0;
 
-    /* Accessors */
-    std::string& getFullName (void) { return _fullname; }
-    void setFullName (const std::string& fullname) { _fullname = fullname; }
-
-    std::string& getHostname (void) { return _hostname; }
-    void setHostname (const std::string& hostname) {  _hostname = hostname; }
-
-    std::string& getUsername (void) { return _username; }
-    void setUsername (const std::string& username) {  _username = username; }
-
-    std::string& getPassword (void) { return _password; }
-    void setPassword (const std::string& password) {  _password = password; }
-
-    /**
-     * @return AccountID  parent Account's ID
-     */
-    AccountID& getAccountID(void) { return _accountID; }
-
-    /**
-     * @param accountID The account identifier
-     */
-    void setAccountID( const AccountID& accountID) { _accountID = accountID; }
-
-    /** Get the call pointer from the call map (protected by mutex)
-     * @param id A Call ID
-     * @return Call*  Call pointer or 0
-     */
-    Call* getCall(const CallID& id);
-
-    /**
-     * Get connection status
-     * @return Connection status
-     */
-    RegistrationState getRegistrationState() { return _registrationState; }
-
-    /**
-     * Set new registration state
-     * @param state The registration state
-     */
-    void setRegistrationState(const RegistrationState state);
-
-  private:
-    std::string _hostname;
-    std::string _username;
-    std::string _password;
-    std::string _fullname;
-
-    /**
-     * ID of parent's Account
-     */
-    AccountID _accountID;
-
-    /**
-     * State of registration
-     */
-    RegistrationState _registrationState;
-
-public:
     /** Add a call to the call map (protected by mutex)
      * @param call A call pointer with a unique pointer
      * @return bool True if the call was unique and added
@@ -230,8 +170,47 @@ public:
      * @return bool True on success
      */
     bool clearCallMap();
-    
-    
+ 
+    /**
+     * @return AccountID  parent Account's ID
+     */
+    inline AccountID& getAccountID(void) { return _accountID; }
+
+    /**
+     * @param accountID The account identifier
+     */
+    inline void setAccountID( const AccountID& accountID) { _accountID = accountID; }
+
+    /** 
+     * Get the call pointer from the call map (protected by mutex)
+     * @param id A Call ID
+     * @return Call*  Call pointer or 0
+     */
+    Call* getCall(const CallID& id);
+
+    /**
+     * Get an account connection status
+     * @return Connection status
+     */
+    RegistrationState getRegistrationState( void );
+
+    /**
+     * Set new registration state
+     * @param state The registration state
+     */
+    void setRegistrationState(AccountID id, const RegistrationState state);
+
+  private:
+    /**
+     * ID of parent's Account
+     */
+    AccountID _accountID;
+
+    /**
+     * State of registration
+     */
+    RegistrationState _registrationState;
+
 protected:
     /** Contains all the calls for this Link, protected by mutex */
     CallMap _callMap;

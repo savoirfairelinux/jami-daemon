@@ -33,69 +33,75 @@ class SIPVoIPLink;
 /**
  * @file sipaccount.h
  * @brief A SIP Account specify SIP specific functions and object (SIPCall/SIPVoIPLink)
-*/
+ */
 
 class SIPAccount : public Account
 {
-public:
-  /**
-   * Constructor
-   * @param accountID The account identifier
-   */
-  SIPAccount(const AccountID& accountID);
+    public:
+        /**
+         * Constructor
+         * @param accountID The account identifier
+         */
+        SIPAccount(const AccountID& accountID);
 
-  /* Copy Constructor */
-  SIPAccount(const SIPAccount& rh);
+        /* Copy Constructor */
+        SIPAccount(const SIPAccount& rh);
 
-  /* Assignment Operator */
-  SIPAccount& operator=( const SIPAccount& rh);
-  
-  /**
-   * Virtual destructor
-   */
-  virtual ~SIPAccount();
+        /* Assignment Operator */
+        SIPAccount& operator=( const SIPAccount& rh);
 
-  /** 
-   * Actually unuseful, since config loading is done in init() 
-   */
-  void loadConfig();
+        /**
+         * Virtual destructor
+         */
+        virtual ~SIPAccount();
 
-  /**
-   * Initialize the SIP voip link with the account parameters and send registration
-   */ 
-  int registerVoIPLink();
+        /** 
+         * Actually unuseful, since config loading is done in init() 
+         */
+        void loadConfig();
 
-  /**
-   * Send unregistration and clean all related stuff ( calls , thread )
-   */
-  int unregisterVoIPLink();
+        /**
+         * Initialize the SIP voip link with the account parameters and send registration
+         */ 
+        int registerVoIPLink();
+
+        /**
+         * Send unregistration and clean all related stuff ( calls , thread )
+         */
+        int unregisterVoIPLink();
+
+        inline void setCredInfo(pjsip_cred_info *cred) {_cred = cred;}
+        inline pjsip_cred_info *getCredInfo() {return _cred;}
+
+        inline void setContact(const std::string &contact) {_contact = contact;}
+        inline std::string getContact() {return _contact;}
+
+        bool fullMatch(const std::string& username, const std::string& hostname);
+        bool userMatch(const std::string& username);
+
+        inline std::string getHostname( void ) { return _hostname; }
+        inline void setHostname( std::string hostname) { _hostname = hostname; }
+
+        inline std::string getPassword( void ) { return _password; }
+        inline void setPassword( std::string password ) { _password = password; }
+
+        inline std::string getAlias( void ) { return _alias; }
+        inline void setAlias( std::string alias ) { _alias = alias; }
+
+        inline std::string getType( void ) { return _type; }
+        inline void setType( std::string type ) { _type = type; }
 
 
-  void setUserName(const std::string &name) {_userName = name;}
+    private:
+        /**
+         * Credential information
+         */
+        pjsip_cred_info *_cred;
 
-  std::string getUserName() {return _userName;}
-
-  void setServer(const std::string &server) {_server = server;}
-
-  std::string getServer() {return _server;}
-
-  void setCredInfo(pjsip_cred_info *cred) {_cred = cred;}
-
-  pjsip_cred_info *getCredInfo() {return _cred;}
-
-  void setContact(const std::string contact) {_contact = contact;}
-
-  std::string getContact() {return _contact;}
-
-  bool fullMatch(const std::string& userName, const std::string& server);
-
-  bool userMatch(const std::string& userName);
-
-private:
-  std::string _userName;
-  std::string _server;
-  pjsip_cred_info *_cred;
-  std::string _contact;
+        /*
+         * SIP address
+         */
+        std::string _contact;
 };
 
 #endif

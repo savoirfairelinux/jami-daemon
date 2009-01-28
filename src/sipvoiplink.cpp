@@ -2,8 +2,7 @@
  *  Copyright (C) 2004-2009 Savoir-Faire Linux inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -75,26 +74,23 @@ void xfer_svr_cb(pjsip_evsub *sub, pjsip_event *event);
 void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
 /*******************************/
 
-
-
     SIPVoIPLink::SIPVoIPLink(const AccountID& accountID)
     : VoIPLink(accountID)
-    , _initDone(false)
     , _nbTryListenAddr(2) // number of times to try to start SIP listener
-      , _stunServer("")
-      , _localExternAddress("") 
+    , _stunServer("")
+    , _localExternAddress("") 
     , _localExternPort(0)
     , _audiortp(new AudioRtp())
     , _regc()
     , _bRegister(false)
-      ,_regPort(DEFAULT_SIP_PORT)
+    ,_regPort(DEFAULT_SIP_PORT)
 {
     // to get random number for RANDOM_PORT
     srand (time(NULL));
     _useStun = false;
     _localIPAddress = "127.0.0.1"; 
 
-    _evThread = new SIPEventThread(this);
+    _evThread = new EventThread(this);
 }
 
 SIPVoIPLink::~SIPVoIPLink()
@@ -113,13 +109,14 @@ SIPVoIPLink* SIPVoIPLink::instance( const AccountID& id){
 
 bool SIPVoIPLink::init()
 {
+    if(_initDone)
+        return false;
     /* Initialize the pjsip library */
-    if( !isInitDone() ){
-        _regc = NULL;
-        pjsip_init();
-    }
+    _regc = NULL;
+    if(!pjsip_init())
+        return false;
 
-    setInitState(true);
+    _initDone = true;
     return true;
 }
 
@@ -127,7 +124,8 @@ bool SIPVoIPLink::init()
 SIPVoIPLink::terminate()
 {
     /* Clean shutdown of pjsip library */
-    pjsip_shutdown();
+    if( _initDone )
+        pjsip_shutdown();
     _initDone = false;
 }
 
@@ -167,10 +165,8 @@ SIPVoIPLink::getEvent()
     _mutexSIP.leaveMutex(); 
 }
 
-int SIPVoIPLink::sendRegister()
+int SIPVoIPLink::sendRegister( AccountID id )
 {
-
-    AccountID id;
     pj_status_t status;
     int expire_value;
     char contactTmp[256];
@@ -179,11 +175,10 @@ int SIPVoIPLink::sendRegister()
     std::string tmp, hostname, username, password;
     SIPAccount *account;
 
-    /* Get the current account ID */
-    id = getAccountID();
-    hostname = getHostname();
-    username = getUsername();
-    password = getPassword();
+    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
+    hostname = account->getHostname();
+    username = account->getUsername();
+    password = account->getPassword();
 
     _mutexSIP.enterMutex(); 
 
@@ -209,6 +204,7 @@ int SIPVoIPLink::sendRegister()
         return false;
     }
 
+    /* Create the registration according to the account ID */
     status = pjsip_regc_create(_endpt, (void*)new AccountID(id), &regc_cb, &_regc);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to create regc.\n");
@@ -224,6 +220,7 @@ int SIPVoIPLink::sendRegister()
 
     sprintf(contactTmp, "<sip:%s@%s:%d>", username.data(), _localExternAddress.data(), _localExternPort);
     pj_strdup2(_pool, &contact, contactTmp);
+    account->setContact(contactTmp);
 
     status = pjsip_regc_init(_regc, &svr, &aor, &aor, 1, &contact, 600); //timeout);
     if (status != PJ_SUCCESS) {
@@ -232,7 +229,6 @@ int SIPVoIPLink::sendRegister()
         return false;
     }
 
-    account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
     pjsip_cred_info *cred = account->getCredInfo();
 
     if(!cred)
@@ -261,34 +257,8 @@ int SIPVoIPLink::sendRegister()
         _mutexSIP.leaveMutex(); 
         return false;
     }
-
-    account->setUserName(username);
-    account->setServer(hostname);
-    account->setContact(contactTmp);
-
+    
     _mutexSIP.leaveMutex(); 
-
-    return true;
-}
-
-
-    std::string
-SIPVoIPLink::SIPFromHeader(const std::string& userpart, const std::string& hostpart) 
-{
-    return ("\"" + getFullName() + "\"" + " <sip:" + userpart + "@" + hostpart + ">");
-}
-
-    bool
-SIPVoIPLink::sendSIPAuthentification() 
-{
-    if (getUsername().empty()) {
-        /** @todo Ajouter ici un call à setRegistrationState(Error, "Fill balh") ? */
-        return false;
-    }
-    if (getPassword().empty()) {
-        /** @todo Même chose ici  ? */
-        return false;
-    }
 
     return true;
 }
@@ -298,8 +268,6 @@ SIPVoIPLink::sendUnregister()
 {
     pj_status_t status = 0;
     pjsip_tx_data *tdata = NULL;
-
-    _debug("SEND UNREGISTER for account %s\n" , getAccountID().c_str());
 
     if(!isRegister()){
         setRegistrationState(VoIPLink::Unregistered); 
@@ -331,10 +299,14 @@ SIPVoIPLink::sendUnregister()
     Call* 
 SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 {
+    Account* account;
+
     SIPCall* call = new SIPCall(id, Call::Outgoing);
+    
     if (call) {
+        account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(Manager::instance().getAccountFromCall(id)));
         //call->setPeerNumber(toUrl);
-        call->setPeerNumber(getSipTo(toUrl));
+        call->setPeerNumber(getSipTo(toUrl, account->getHostname()));
         _debug("Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data());
         // we have to add the codec before using it in SIPOutgoingInvite...
         call->setCodecMap(Manager::instance().getCodecDescriptorMap());
@@ -545,8 +517,13 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
     struct pjsip_evsub_user xfer_cb;
     pj_status_t status;
     pj_str_t dest;
+    AccountID account_id;
+    Account* account;
+
 
     call = getSIPCall(id);
+    account_id = Manager::instance().getAccountFromCall(id);
+    account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
 
     if (call==0) { 
         _debug("! SIP Failure: Call doesn't exist\n"); 
@@ -555,7 +532,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 
     tmp_to = SIPToHeader(to);
     if (tmp_to.find("@") == std::string::npos) {
-        tmp_to = tmp_to + "@" + getHostname();
+        tmp_to = tmp_to + "@" + account->getHostname();
     }
 
     _debug("In transfer, tmp_to is %s\n", tmp_to.data());
@@ -723,15 +700,15 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED)
     if (!call) 
         return false;
 
-    strTo = getSipTo(call->getPeerNumber());
-    _debug("            To: %s\n", strTo.data());
-
-    id = getAccountID();
+    id = Manager::instance().getAccountFromCall(call->getCallId());
     // Get the basic information about the callee account
     account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(id));
+    
+    strTo = getSipTo(call->getPeerNumber(), account->getHostname());
+    _debug("            To: %s\n", strTo.data());
 
     // Generate the from URI
-    strFrom = "sip:" + account->getUserName() + "@" + account->getServer();
+    strFrom = "sip:" + account->getUsername() + "@" + account->getHostname();
 
     // pjsip need the from and to information in pj_str_t format
     pj_strdup2(_pool, &from, strFrom.data());
@@ -777,42 +754,27 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED)
     return true;
 }
 
-std::string
-SIPVoIPLink::getSipFrom() {
-
-    // Form the From header field basis on configuration panel
-    std::string hostname;
-
-    hostname = getHostname();
-
-    if ( hostname.empty() ) {
-        hostname = _localIPAddress;
-    }
-    return SIPFromHeader(getUsername(), hostname);
-}
-
-std::string SIPVoIPLink::getSipTo(const std::string& to_url) {
+std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostname) {
     // Form the From header field basis on configuration panel
     //bool isRegistered = (_eXosipRegID == EXOSIP_ERROR_STD) ? false : true;
 
     // add a @host if we are registered and there is no one inside the url
     if (to_url.find("@") == std::string::npos) {// && isRegistered) {
-        std::string host = getHostname();
-        if(!host.empty()) {
-            return SIPToHeader(to_url + "@" + host);
+        if(!hostname.empty()) {
+            return SIPToHeader(to_url + "@" + hostname);
         }
     }
     return SIPToHeader(to_url);
     }
 
-    std::string SIPVoIPLink::SIPToHeader(const std::string& to) 
-    {
-        if (to.find("sip:") == std::string::npos) {
-            return ("sip:" + to );
-        } else {
-            return to;
-        }
+std::string SIPVoIPLink::SIPToHeader(const std::string& to) 
+{
+    if (to.find("sip:") == std::string::npos) {
+        return ("sip:" + to );
+    } else {
+        return to;
     }
+}
 
     bool
         SIPVoIPLink::SIPCheckUrl(const std::string& url UNUSED)

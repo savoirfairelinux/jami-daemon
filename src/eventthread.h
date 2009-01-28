@@ -31,23 +31,17 @@ class VoIPLink;
 
 class EventThread : public ost::Thread {
 
-    friend class SIPEventThread;
-    friend class IAXEventThread;
-
     public:
         /**
          * Thread constructor 
          */
-        EventThread (VoIPLink* link) : Thread(), _linkthread(link){
-            setCancel( cancelDeferred );
-        }
+        EventThread (VoIPLink* link);        
         
-        
-        virtual ~EventThread (void){
+        ~EventThread (void){
             terminate();
         }
         
-        virtual void run () = 0;
+        virtual void run () ;
         
     private:
         EventThread(const EventThread& rh); // copy constructor
@@ -55,26 +49,6 @@ class EventThread : public ost::Thread {
 
         /** VoIPLink is the object being called by getEvents() method  */
         VoIPLink*	_linkthread;
-};
-
-class IAXEventThread : public EventThread {
-    
-    public:
-        IAXEventThread( VoIPLink* voiplink )
-            : EventThread( voiplink ){
-        }
-
-        virtual void run();
-};
-
-class SIPEventThread : public EventThread {
-    
-    public:
-        SIPEventThread( VoIPLink* voiplink )
-            : EventThread( voiplink ){
-        }
-
-        virtual void run();
 };
 
 

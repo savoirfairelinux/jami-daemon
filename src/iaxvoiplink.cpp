@@ -45,7 +45,7 @@
   IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
 : VoIPLink(accountID)
 {
-  _evThread = new IAXEventThread(this);
+  _evThread = new EventThread(this);
   _regSession = NULL;
   _nextRefreshStamp = 0;
 
@@ -207,7 +207,7 @@ IAXVoIPLink::getEvent()
 
   // Refresh registration.
   if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
-    sendRegister();
+    sendRegister(-1);
   }
 
   // thread wait 3 millisecond
@@ -308,7 +308,7 @@ IAXVoIPLink::getIAXCall(const CallID& id)
 
 
  int 
-IAXVoIPLink::sendRegister() 
+IAXVoIPLink::sendRegister(AccountID id UNUSED) 
 {
   bool result = false;
   if (_host.empty()) {

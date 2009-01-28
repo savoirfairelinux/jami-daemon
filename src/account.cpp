@@ -22,9 +22,10 @@
 #include "account.h"
 #include "manager.h"
 
-Account::Account(const AccountID& accountID) : 
-    _accountID(accountID), _link(NULL), _enabled(false)
+Account::Account(const AccountID& accountID, std::string type) : 
+    _accountID(accountID), _link(NULL), _enabled(false), _type(type)
 {
+    setRegistrationState(VoIPLink::Unregistered);
 }
 
 Account::~Account()

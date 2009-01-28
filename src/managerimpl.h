@@ -271,9 +271,6 @@ class ManagerImpl {
      */
     void sendRegister( const ::std::string& accountId , const int32_t& expire );
 
-    bool getZeroconf(const std::string& sequenceId);
-    bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
-    bool detachZeroconfEvents(Pattern::Observer& observer);
     bool getCallStatus(const std::string& sequenceId);
 
     /** 
@@ -798,6 +795,11 @@ class ManagerImpl {
     
     void registerCurSIPAccounts();
     
+    /**
+     * Returns a map with only the existing SIP accounts
+     */
+    AccountMap getSipAccountMap( void );
+
   private:
     
     /**

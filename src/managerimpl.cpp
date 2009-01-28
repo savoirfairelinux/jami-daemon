@@ -680,7 +680,7 @@ ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, int nb_ms
   if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, nb_msg) ;
 }
 
-void ManagerImpl::connectionStatusNotification( void )
+void ManagerImpl::connectionStatusNotification(  )
 {
     if (_dbus)
         _dbus->getConfigurationManager()->accountsChanged();
@@ -1701,88 +1701,6 @@ int ManagerImpl::getSipPort( void )
 }
 
 
-/**
- * configuration function requests
- * Main Thread
- */
-  bool 
-ManagerImpl::getZeroconf(const std::string& sequenceId)
-{
-  bool returnValue = false;
-#ifdef USE_ZEROCONF
-  int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
-  if (useZeroconf && _dbus != NULL) {
-    TokenList arg;
-    TokenList argTXT;
-    std::string newService = "new service";
-    std::string newTXT = "new txt record";
-    if (!_DNSService->isStart()) { _DNSService->startScanServices(); }
-    DNSServiceMap services = _DNSService->getServices();
-    DNSServiceMap::iterator iter = services.begin();
-    arg.push_back(newService);
-    while(iter!=services.end()) {
-      arg.push_front(iter->first);
-      //_gui->sendMessage("100",sequenceId,arg);
-      arg.pop_front(); // remove the first, the name
-
-      TXTRecordMap record = iter->second.getTXTRecords();
-      TXTRecordMap::iterator iterTXT = record.begin();
-      while(iterTXT!=record.end()) {
-	argTXT.clear();
-	argTXT.push_back(iter->first);
-	argTXT.push_back(iterTXT->first);
-	argTXT.push_back(iterTXT->second);
-	argTXT.push_back(newTXT);
-	// _gui->sendMessage("101",sequenceId,argTXT);
-	iterTXT++;
-      }
-      iter++;
-    }
-    returnValue = true;
-  }
-#else
-  (void)sequenceId;
-#endif
-  return returnValue;
-}
-
-/**
- * Main Thread
- */
-  bool 
-ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer)
-{
-  bool returnValue = false;
-  // don't need the _gui like getZeroconf function
-  // because Observer is here
-#ifdef USE_ZEROCONF
-  int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
-  if (useZeroconf) {
-    if (!_DNSService->isStart()) { _DNSService->startScanServices(); }
-    _DNSService->attach(observer);
-    returnValue = true;
-  }
-#else
-  (void)sequenceId;
-  (void)observer;
-#endif
-  return returnValue;
-}
-  bool
-ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
-{
-  bool returnValue = false;
-#ifdef USE_ZEROCONF
-  if (_DNSService) {
-    _DNSService->detach(observer);
-    returnValue = true;
-  }
-#else
-  (void)observer;
-#endif
-  return returnValue;
-}
-
 // TODO: rewrite this
 /**
  * Main Thread
@@ -2227,8 +2145,25 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const st
   return AccountNULL;
 }
 
-  VoIPLink* 
-ManagerImpl::getAccountLink(const AccountID& accountID)
+AccountMap ManagerImpl::getSipAccountMap( void )
+{
+    
+    AccountMap::iterator iter;
+    AccountMap sipaccounts;
+    AccountID id;
+    Account *account;
+
+    for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+        if( iter->second->getType() == "sip" ){
+            //id = iter->first;
+            //account = iter->second;
+            //sipaccounts.insert( std::pair<id, account> );
+        }
+    }
+    return sipaccounts;
+}
+
+VoIPLink* ManagerImpl::getAccountLink(const AccountID& accountID)
 {
   Account* acc = getAccount(accountID);
   if ( acc ) {

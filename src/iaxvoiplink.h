@@ -76,7 +76,7 @@ class IAXVoIPLink : public VoIPLink
      * Send out registration
      * @return bool The new registration state (are we registered ?)
      */
-    int sendRegister (void);
+    int sendRegister (AccountID id);
 
     /**
      * Destroy registration session
