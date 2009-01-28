@@ -2,7 +2,7 @@ include ../../globals.mak
 
 noinst_LTLIBRARIES = libplugin.la
 
-noinst_HEADERS=plugin_api.h
+SUBDIRS=test
 
 libplugin_la_SOURCES = \
 		pluginmanager.cpp 

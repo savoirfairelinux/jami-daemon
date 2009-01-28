@@ -48,7 +48,7 @@ int ::sflphone::PluginManager::loadPlugins( const std::string &path )
     return result;
 }
 
-::sflphone::Plugin* ::sflphone::PluginManager::isPluginLoaded( const std::string &name )
+::sflphone::PluginWrap* ::sflphone::PluginManager::isPluginLoaded( const std::string &name )
 {
     if(_loadedPlugins.empty())    return NULL;  
 

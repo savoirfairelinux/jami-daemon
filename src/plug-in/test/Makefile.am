@@ -8,14 +8,12 @@ INSTALL_PLUGIN_RULE = install-libplugintest_so
 
 noinst_PROGRAMS = libplugintest.so
 
-noinst_HEADERS = plugin_api.h
-
 install-exec-local:  install-libplugintest_so
 uninstall-local:  uninstall-libplugintest_so
 
 install-libplugintest_so: libplugintest.so
-	mkdir -p $(sflpluginsdir)
-	$(INSTALL_PROGRAM) libplugintest.so $(sflpluginsdir)
+	mkdir -p $(sflplugindir)
+	$(INSTALL_PROGRAM) libplugintest.so $(sflplugindir)
 
 uninstall-libplugintest_so:
-	rm -f $(sflpluginsdir)/libplugintest.so
+	rm -f $(sflplugindir)/libplugintest.so

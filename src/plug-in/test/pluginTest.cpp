@@ -1,15 +1,22 @@
 #include "../plugin_api.h" 
 
-class PluginTest : public Plugin {
-    public:
-        PluginTest():Plugin(){
-        }
-};
+namespace sflphone {
 
-extern "C" Plugin* create_t( void * ){
-    return new PluginTest();
+    class PluginTest : public Plugin {
+        public:
+            PluginTest( const std::string &name ):Plugin( name ){
+            }
+
+            virtual int getCoreVersion() const{
+                return 1;
+            }
+    };
+
+}
+extern "C" ::sflphone::Plugin* create_t( void * ){
+    return new ::sflphone::PluginTest("test");
 }
 
-extern "C" void* destroy_t( Plugin *p ){
+extern "C" void* destroy_t( ::sflphone::Plugin *p ){
     delete p;
 }

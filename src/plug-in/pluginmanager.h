@@ -6,13 +6,22 @@
  * @brief   Base class of the plugin manager
  */
 
-#include "plugin.h"
+#include "plugin_api.h"
 #include "global.h"
 
 #include <map> 
 #include <string> 
 
+
 namespace sflphone {
+
+    typedef struct {
+        Plugin *plugin;
+        createFunc *create_func;
+        destroyFunc *destroy_func;
+        std::string name;
+    } PluginWrap;
+
 
     class PluginManager {
 
@@ -44,7 +53,9 @@ namespace sflphone {
              * @param name  The name of the plugin looked for
              * @return Plugin*  The pointer on the plugin or NULL if not found
              */
-            Plugin* isPluginLoaded( const std::string &name );
+            PluginWrap* isPluginLoaded( const std::string &name );
+
+            int initPlugins( void );
 
         private:
             /**
@@ -61,7 +72,7 @@ namespace sflphone {
             void unloadDynamicLibrary( void * pluginHandlePtr );
 
             /* Map of plugins associated by their string name */
-            typedef std::map<std::string, ::sflphone::Plugin*> pluginMap;
+            typedef std::map<std::string, ::sflphone::PluginWrap*> pluginMap;
             pluginMap _loadedPlugins;
 
             /* The unique static instance */
