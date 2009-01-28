@@ -1020,6 +1020,11 @@ public:
 
     void setSipPort( int port );
 
+    std::string getStunServer (void);
+    void setStunServer (const std::string &server);
+
+    int isStunEnabled (void);
+    void enableStun (void);
 private:
 
     // Copy Constructor

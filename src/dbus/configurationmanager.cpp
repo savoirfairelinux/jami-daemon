@@ -395,3 +395,22 @@ ConfigurationManager::setSipPort( const int32_t& portNum )
   Manager::instance().setSipPort(portNum);
 }
 
+std::string ConfigurationManager::getStunServer( void )
+{
+    return Manager::instance().getStunServer();
+}
+    
+void ConfigurationManager::setStunServer( const std::string& server )
+{
+    Manager::instance().setStunServer( server );
+}
+
+void ConfigurationManager::enableStun (void)
+{
+    Manager::instance().enableStun();
+}
+
+int32_t ConfigurationManager::isStunEnabled (void)
+{
+    return Manager::instance().isStunEnabled();
+}

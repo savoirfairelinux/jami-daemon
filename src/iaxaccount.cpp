@@ -49,7 +49,7 @@ int IAXAccount::registerVoIPLink()
         thislink->setPass(Manager::instance().getConfigString(_accountID, PASSWORD));
     }
 
-    _link->sendRegister();
+    _link->sendRegister( _accountID );
 
     return SUCCESS;
 }
@@ -57,7 +57,7 @@ int IAXAccount::registerVoIPLink()
     int
 IAXAccount::unregisterVoIPLink()
 {
-    _link->sendUnregister();
+    _link->sendUnregister( _accountID );
     _link->terminate();
 
     return SUCCESS;

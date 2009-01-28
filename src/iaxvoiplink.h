@@ -85,7 +85,7 @@ class IAXVoIPLink : public VoIPLink
      * @return bool true if we're registered upstream
      *		  false otherwise
      */
-    int sendUnregister (void);
+    int sendUnregister (AccountID id);
 
     /**
      * Create a new outgoing call
@@ -182,6 +182,8 @@ class IAXVoIPLink : public VoIPLink
     void setPass(const std::string& pass) { _pass = pass; }
 
     void updateAudiolayer( void ); 
+
+    void setStunServer( const std::string &server ) {};
 
   private:
 

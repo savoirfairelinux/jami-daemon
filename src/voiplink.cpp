@@ -76,10 +76,3 @@ bool VoIPLink::clearCallMap()
   return true;
 }
 
-void VoIPLink::setRegistrationState(AccountID id, const RegistrationState state)
-{
-    Account *account;
-
-    account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(id));
-    account->setRegistrationState( state );
-}

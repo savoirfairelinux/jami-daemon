@@ -192,27 +192,31 @@ ManagerImpl::switchCall(const CallID& id ) {
   bool
 ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
-  if (!accountExists(accountid)) {
-    _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
-    return false;
-  }
-  if (getAccountFromCall(id) != AccountNULL) {
-    _debug("! Manager Error: Outgoing Call: call id already exists\n");
-    return false;
-  }
-  if (hasCurrentCall()) {
-    _debug("* Manager Info: there is currently a call, try to hold it\n");
-    onHoldCall(getCurrentCallId());
-  }
-  _debug("- Manager Action: Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
-  if ( getAccountLink(accountid)->newOutgoingCall(id, to) ) {
+    if (!accountExists(accountid)) {
+        _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
+        return false;
+    }
+  
+    if (getAccountFromCall(id) != AccountNULL) {
+        _debug("! Manager Error: Outgoing Call: call id already exists\n");
+        return false;
+    }
+  
+    if (hasCurrentCall()) {
+        _debug("* Manager Info: there is currently a call, try to hold it\n");
+        onHoldCall(getCurrentCallId());
+    }
+  
+    _debug("- Manager Action: Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
     associateCallToAccount( id, accountid );
-    switchCall(id);
-    return true;
-  } else {
-    _debug("! Manager Error: An error occur, the call was not created\n");
-  }
-  return false;
+    if ( getAccountLink(accountid)->newOutgoingCall(id, to) ) {
+        switchCall(id);
+        return true;
+    } else {
+        callFailure(id);
+        _debug("! Manager Error: An error occur, the call was not created\n");
+    }
+    return false;
 }
 
 //THREAD=Main : for outgoing Call
@@ -971,15 +975,17 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   std::string type_int("int");
 
   std::string section;
-  section = SIGNALISATION;
 
   // Default values, that will be overwritten by the call to
   // 'populateFromFile' below.
+  section = SIGNALISATION;
   fill_config_int(SYMMETRIC, YES_STR);
   fill_config_int(PLAY_DTMF, YES_STR);
   fill_config_int(PLAY_TONES, YES_STR);
   fill_config_int(PULSE_LENGTH, DFT_PULSE_LENGTH_STR);
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
+  fill_config_int(STUN_ENABLE, DFT_STUN_ENABLE);
+  fill_config_int(STUN_SERVER, DFT_STUN_SERVER);
 
   section = AUDIO;
   fill_config_int(ALSA_CARD_ID_IN, ALSA_DFT_CARD);
@@ -1361,7 +1367,27 @@ ManagerImpl::setDialpad( void )
   ( getConfigInt( PREFERENCES , CONFIG_DIALPAD ) == DISPLAY_DIALPAD )? setConfig(PREFERENCES , CONFIG_DIALPAD , NO_STR ) : setConfig( PREFERENCES , CONFIG_DIALPAD , YES_STR );
 }
 
-int
+std::string ManagerImpl::getStunServer( void )
+{
+  return getConfigString(SIGNALISATION , STUN_SERVER);
+}
+
+void ManagerImpl::setStunServer( const std::string &server )
+{
+  setConfig(SIGNALISATION , STUN_SERVER, server );
+}
+
+int ManagerImpl::isStunEnabled (void)
+{
+    return getConfigInt(SIGNALISATION , STUN_ENABLE);
+}
+
+void ManagerImpl::enableStun (void)
+{
+  ( getConfigInt( SIGNALISATION , STUN_ENABLE ) == STUN_ENABLED )? setConfig(SIGNALISATION , STUN_ENABLE , NO_STR ) : setConfig( SIGNALISATION , STUN_ENABLE , YES_STR );
+}
+
+    int
 ManagerImpl::getVolumeControls( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_VOLUME );
@@ -1833,7 +1859,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails(const Accoun
 
   std::map<std::string, std::string> a;
   std::string accountType;
-  enum VoIPLink::RegistrationState state;
+  RegistrationState state;
   
   state = _accountMap[accountID]->getRegistrationState();
   accountType = getConfigString(accountID, CONFIG_ACCOUNT_TYPE);
@@ -1842,15 +1868,15 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails(const Accoun
   a.insert( std::pair<std::string, std::string>( CONFIG_ACCOUNT_ENABLE, getConfigString(accountID, CONFIG_ACCOUNT_ENABLE) == "1" ? "TRUE": "FALSE"));
   a.insert( std::pair<std::string, std::string>(
 	"Status", 
-	(state == VoIPLink::Registered ? "REGISTERED":
-	(state == VoIPLink::Unregistered ? "UNREGISTERED":
-	(state == VoIPLink::Trying ? "TRYING":
-	(state == VoIPLink::ErrorAuth ? "ERROR_AUTH": 
-	(state == VoIPLink::ErrorNetwork ? "ERROR_NETWORK": 
-	(state == VoIPLink::ErrorHost ? "ERROR_HOST": 
-	(state == VoIPLink::ErrorExistStun ? "ERROR_EXIST_STUN": 
-	(state == VoIPLink::ErrorConfStun ? "ERROR_CONF_STUN": 
-	(state == VoIPLink::Error ? "ERROR": "ERROR")))))))))
+	(state == Registered ? "REGISTERED":
+	(state == Unregistered ? "UNREGISTERED":
+	(state == Trying ? "TRYING":
+	(state == ErrorAuth ? "ERROR_AUTH": 
+	(state == ErrorNetwork ? "ERROR_NETWORK": 
+	(state == ErrorHost ? "ERROR_HOST": 
+	(state == ErrorExistStun ? "ERROR_EXIST_STUN": 
+	(state == ErrorConfStun ? "ERROR_CONF_STUN": 
+	(state == Error ? "ERROR": "ERROR")))))))))
 	)
       );
  
@@ -1875,6 +1901,7 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 
     std::string accountType;
     Account *acc;
+    VoIPLink *link;
   
     accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
 
@@ -1888,16 +1915,25 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
   
     // SIP SPECIFIC
     if (accountType == "SIP") {
+    
+        link =  Manager::instance().getAccountLink( accountID );
+        
+        if( link==0 )
+        {
+            _debug("Can not retrieve SIP link...\n");
+            return;
+        }
+    
         setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
         setConfig(accountID, SIP_USE_STUN, (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
 
         if((*details.find(SIP_USE_STUN)).second == "TRUE")
         {
-           //TODO Replace:  _userAgent->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
+           link->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
         }
         else
         {
-            //TODO: replace: _userAgent->setStunServer(NULL);
+            link->setStunServer("");
         }
         //restartPjsip();
     }
@@ -1915,6 +1951,8 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 
     // Update account details to the client side
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+
+    //delete link; link=0;
 
 }
 

@@ -2,8 +2,6 @@
  *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
  *  
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,18 +26,28 @@ SIPAccount::SIPAccount(const AccountID& accountID)
  : Account(accountID, "sip")
  , _cred(NULL)
  , _contact("")
+ , _bRegister(false)
+ , _regc()
 {
-  _link = new SIPVoIPLink(accountID);
-   //_link = SIPVoIPLink::instance( accountID ); 
+    /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
+    /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
+    /* The SIP library initialization is done in the SIPVoIPLink constructor */
+    /* The SIP voip link is now independant of the account ID as it can manage several SIP accounts */
+    _link = SIPVoIPLink::instance("");
+    
+    /* Represents the number of SIP accounts connected the same link */
+    dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
+    
 }
 
 
 SIPAccount::~SIPAccount()
 {
-  delete _link;
-  _link = NULL;
-  delete _cred;
-  _cred = NULL;
+    /* One SIP account less connected to the sip voiplink */
+    dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
+    /* Delete accounts-related information */
+    _regc = NULL;
+    delete _cred; _cred = NULL;
 }
 
 int SIPAccount::registerVoIPLink()
@@ -56,12 +64,7 @@ int SIPAccount::registerVoIPLink()
     /* STUN configuration is attached to a voiplink because it is applied to every accounts (PJSIP limitation)*/
     thislink = dynamic_cast<SIPVoIPLink*> (_link);
     if (thislink) {
-        useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
-        thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
-        thislink->setUseStun( useStun!=0 ? true : false);
     }
-    /* Link initialization */
-    _link->init();
 
     /* Start registration */
     status = _link->sendRegister( _accountID );
@@ -73,7 +76,7 @@ int SIPAccount::registerVoIPLink()
 int SIPAccount::unregisterVoIPLink()
 {
   _debug("SIPAccount: unregister account %s\n" , getAccountID().c_str());
-  return _link->sendUnregister();
+  return _link->sendUnregister( _accountID );
 }
 
 void SIPAccount::loadConfig() 

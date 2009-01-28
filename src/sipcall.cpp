@@ -22,8 +22,6 @@
 
 #include "sipcall.h"
 #include "global.h" // for _debug
-#include <sstream> // for media buffer
-#include <string>
 
 #define _SENDRECV 0
 #define _SENDONLY 1
@@ -68,11 +66,6 @@ SIPCall::SIPCallInvite(pjsip_rx_data *rdata, pj_pool_t *pool)
   _localSDP->time.start = _localSDP->time.stop = 0;
   sdpAddMediaDescription(pool);
   
-    _debug("SDP: addr: %s\nuser: %s\nid: %i\nversion: %i\naddr: %s\nattr count: %i\n", 
-            _ipAddr.c_str(), _localSDP->origin.user, _localSDP->origin.id, _localSDP->origin.version, _localSDP->origin.addr.ptr, _localSDP->attr_count );
-
-  _debug("Before validate SDP!\n");
-
   status = pjmedia_sdp_validate( _localSDP );
   if (status != PJ_SUCCESS) {
     _debug("Can not generate valid local sdp\n");

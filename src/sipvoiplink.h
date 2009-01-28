@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2009 Savoir-Faire Linux inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,14 +24,15 @@
 
 #include "voiplink.h"
 
+//////////////////////////////
+/* PJSIP imports */
 #include <pjsip.h>
-#include <pjlib-util.h>
 #include <pjlib.h>
-#include <pjnath/stun_config.h>
-#include <pjsip_simple.h>
 #include <pjsip_ua.h>
-#include <pjmedia/sdp.h>
-#include <pjmedia/sdp_neg.h>
+#include <pjlib-util.h>
+#include <pjnath/stun_config.h>
+///////////////////////////////
+
 
 class EventThread;
 class SIPCall;
@@ -39,11 +40,15 @@ class AudioRtp;
 
 #define RANDOM_LOCAL_PORT ((rand() % 27250) + 5250)*2
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
+
+// To set the verbosity. From 0 (min) to 6 (max)
 #define PJ_LOG_LEVEL 5
 
 /**
  * @file sipvoiplink.h
- * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events)
+ * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).
+ *          This class is based on the singleton design pattern.
+ *          One SIPVoIPLink can handle multiple SIP accounts, but all the SIP accounts have all the same SIPVoIPLink
  */
 
 class SIPVoIPLink : public VoIPLink
@@ -51,11 +56,9 @@ class SIPVoIPLink : public VoIPLink
     public:
 
         /**
-         * Constructor
-         * @param accountID The account identifier
+         * Singleton method. Enable to retrieve the unique static instance
+         * @return SIPVoIPLink* A pointer on the object
          */
-        SIPVoIPLink(const AccountID& accountID);
-
         static SIPVoIPLink* instance( const AccountID& id );
 
         /**
@@ -75,6 +78,9 @@ class SIPVoIPLink : public VoIPLink
          */
         bool init(void);
 
+        /**
+         * Shut the library and clean up
+         */
         void terminate( void );
 
         /**
@@ -94,7 +100,7 @@ class SIPVoIPLink : public VoIPLink
          * @return bool True on success
          *		  false otherwise
          */
-        int sendUnregister(void);
+        int sendUnregister(AccountID id);
 
         /**
          * Place a new call
@@ -169,19 +175,17 @@ class SIPVoIPLink : public VoIPLink
          * If set to true, we check for a firewall
          * @param use true if we use STUN
          */
-        void setUseStun(bool use);
+        inline void useStun(bool use) { _useStun=use; }
 
-        bool useStun( void );
+        inline bool useStun( void ) { return _useStun; }
 
         /** 
          * The name of the STUN server
          * @param server Server FQDN/IP
          */
-        void setStunServer(const std::string& server) { _stunServer = server; }
+        void setStunServer(const std::string& server);
 
-        bool isRegister() {return _bRegister;}
-
-        void setRegister(bool result) {_bRegister = result;}
+        std::string getStunServer (void) { return _stunServer; }
 
         /** 
          * Terminate every call not hangup | brutal | Protected by mutex 
@@ -264,12 +268,24 @@ class SIPVoIPLink : public VoIPLink
         /** Starting sound */
         AudioRtp* _audiortp;
 
-        pj_str_t string2PJStr(const std::string &value);
+        /** Increment the number of SIP account connected to this link */
+        void incrementClients (void) { _clients++; }
+
+        /** Decrement the number of SIP account connected to this link */
+        void decrementClients (void);
 
     private:
+        /**
+         * Constructor
+         * @param accountID The account identifier
+         */
+        SIPVoIPLink(const AccountID& accountID);
+
+        /* The singleton instance */
         static SIPVoIPLink* _instance;
 
         int getModId();
+
         /** 
          * Initialize the PJSIP library
          * Must be called before any other calls to the SIP layer
@@ -283,6 +299,9 @@ class SIPVoIPLink : public VoIPLink
          */
         bool pjsip_shutdown(void);
 
+        /** Do we use stun? */
+        bool _useStun;
+
         pj_status_t stunServerResolve();
 
         /** Create SIP UDP Listener */
@@ -291,8 +310,6 @@ class SIPVoIPLink : public VoIPLink
         bool loadSIPLocalIP();
 
         std::string getLocalIP() {return _localExternAddress;}
-
-        pjsip_regc *_regc;
 
         /** For registration use only */
         int _regPort;
@@ -313,7 +330,9 @@ class SIPVoIPLink : public VoIPLink
         EventThread* _evThread;
         ost::Mutex _mutexSIP;
 
-        bool _bRegister;
+        /* Number of SIP accounts connected to the link */
+        int _clients;
+
 };
 
 #endif

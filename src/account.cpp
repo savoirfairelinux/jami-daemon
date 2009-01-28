@@ -25,7 +25,7 @@
 Account::Account(const AccountID& accountID, std::string type) : 
     _accountID(accountID), _link(NULL), _enabled(false), _type(type)
 {
-    setRegistrationState(VoIPLink::Unregistered);
+    setRegistrationState(Unregistered);
 }
 
 Account::~Account()
@@ -47,3 +47,9 @@ void Account::loadConfig()
 #endif
 }
 
+void Account::setRegistrationState( RegistrationState state ) { 
+    _registrationState = state; 
+
+    // Notify the client
+    Manager::instance().connectionStatusNotification( );
+}

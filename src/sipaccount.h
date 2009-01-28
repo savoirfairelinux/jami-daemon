@@ -26,8 +26,6 @@
 #include "account.h"
 #include "sipvoiplink.h"
 
-struct pjsip_cred_info;
-
 class SIPVoIPLink;
 
 /**
@@ -91,13 +89,31 @@ class SIPAccount : public Account
         inline std::string getType( void ) { return _type; }
         inline void setType( std::string type ) { _type = type; }
 
+        pjsip_regc* getRegistrationInfo( void ) { return _regc; }
+        void setRegistrationInfo( pjsip_regc *regc ) { _regc = regc; }
+
+        //TODO See if it useful
+        bool isRegister() {return _bRegister;}
+        void setRegister(bool result) {_bRegister = result;}
+
 
     private:
+
         /**
          * Credential information
          */
         pjsip_cred_info *_cred;
 
+        /**
+         * The pjsip client registration information
+         */
+        pjsip_regc *_regc;
+        
+        /**
+         * To check if the account is registered
+         */
+        bool _bRegister;
+        
         /*
          * SIP address
          */

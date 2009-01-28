@@ -39,7 +39,7 @@ class VoIPLink;
 typedef std::string AccountID;
 
 /** Contains all the state an Voip can be in */
-    typedef enum RegistrationState {
+typedef enum RegistrationState {
         Unregistered, 
         Trying, 
         Registered, 
@@ -49,7 +49,7 @@ typedef std::string AccountID;
         ErrorHost, 
         ErrorExistStun, 
         ErrorConfStun
-    } RegistrationState;
+} RegistrationState;
 
 #define AccountNULL ""
 
@@ -121,13 +121,9 @@ class Account{
          */
         inline RegistrationState getRegistrationState() { return _registrationState; }
 
-        inline void setRegistrationState( RegistrationState state ) { 
-            _registrationState = state; 
-        
-            // Notify the client
-            Manager::instance().connectionStatusNotification( );
-        }
+        void setRegistrationState( RegistrationState state );
 
+        //TODO inline?
         inline std::string getUsername( void ) { return _username; }
         inline void setUsername( std::string username) { _username = username; }
 
