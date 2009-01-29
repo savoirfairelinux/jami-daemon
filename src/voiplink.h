@@ -27,6 +27,7 @@
 #include "account.h"
 
 class AudioCodec;
+class Account;
 
 /** Define AccountID type */
 typedef std::string AccountID;
@@ -181,6 +182,8 @@ class VoIPLink {
          * @return AccountID  parent Account's ID
          */
         inline AccountID& getAccountID(void) { return _accountID; }
+
+        Account* getAccountPtr(void);
 
         /**
          * @param accountID The account identifier

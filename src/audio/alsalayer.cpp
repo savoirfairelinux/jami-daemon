@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2008 2009 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,14 +19,6 @@
 
 #include "alsalayer.h"
 
-void* ringtoneThreadEntry( void *ptr);
-
-static pthread_t ringtone_thread;
-bool ringtone_thread_is_running;
-
-pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-
 // Constructor
     AlsaLayer::AlsaLayer( ManagerImpl* manager ) 
     : AudioLayer( manager , ALSA ) 
@@ -40,21 +32,12 @@ pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
       , IDSoundCards() 
 {
     _debug(" Constructor of AlsaLayer called\n");
-
-    // The flag to stop the ringtone thread loop
-    ringtone_thread_is_running = false;
 }
 
 // Destructor
 AlsaLayer::~AlsaLayer (void) 
 { 
-    _debugAlsa("Close ALSA streams\n");
-    closeCaptureStream();
-    closePlaybackStream();
-    deviceClosed = true;
-
-    ringtone_thread_is_running = false;
-    //pthread_join(ringtone_thread, NULL);
+    closeLayer();
 }
 
     void
@@ -64,8 +47,6 @@ AlsaLayer::closeLayer()
     closeCaptureStream();
     closePlaybackStream();
     deviceClosed = true;
-    
-    ringtone_thread_is_running = false;
 }
 
     bool 
@@ -156,27 +137,6 @@ AlsaLayer::stopStream(void)
 }
 
 
-void* ringtoneThreadEntry( void *ptr )
-{ 
-    while( ringtone_thread_is_running )
-    {
-        ( ( AlsaLayer *) ptr) -> playTones();
-        //sleep(0.1);
-    }
-    
-    /*
-    pthread_mutex_lock(&mut);
-    while( ((AlsaLayer*)ptr)->_manager->getTelephoneTone() == NULL )
-    {
-        pthread_cond_wait(&cond, &mut);
-    }
-    ( AlsaLayer *) ptr -> playTones();
-    pthread_mutex_unlock(&mut);*/
-    
-    return 0;
-}
-
-
     void 
 AlsaLayer::fillHWBuffer( void)
 {
@@ -242,13 +202,6 @@ AlsaLayer::putUrgent(void* buffer, int toCopy)
     return nbBytes;
 }
 
-void AlsaLayer::trigger_thread(void)
-{
-        _debug("Wake up the ringtone thread\n");
-        pthread_cond_broadcast(&cond);
-}
-
-
     int
 AlsaLayer::canGetMic()
 {
@@ -299,13 +252,6 @@ AlsaLayer::playTones( void )
     int frames;
     int maxBytes;
 
-    //pthread_mutex_lock(&mut);
-    //while(!_manager-> getTelephoneTone() && !_manager->getTelephoneFile())
-    //{
-        _debug("Make the ringtone thread wait\n");
-        pthread_cond_wait(&cond, &mut);
-    //}
-
     //frames = _periodSize  ; 
     frames = 940  ; 
     maxBytes = frames * sizeof(SFLDataFormat)  ;
@@ -324,7 +270,6 @@ AlsaLayer::playTones( void )
     }
     // free the temporary data buffer 
     free( out ); out = 0;
-    //pthread_mutex_unlock(&mut);
 }
 
 
@@ -445,18 +390,7 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
     }
 
     if( type == 1 ){
-        /*if( (err = snd_async_add_pcm_handler( &_AsyncHandler, pcm_handle , AlsaCallBack, this ) < 0)){
-            _debugAlsa(" Unable to install the async callback handler (%s)\n", snd_strerror(err));
-            return false;
-        }*/
         
-        // So the loop could start when the ringtone thread entry function is reached
-        ringtone_thread_is_running = true;
-        /*if( pthread_create(&ringtone_thread, NULL, ringtoneThreadEntry, this) != 0 )
-        {
-            _debug("Unable to start the ringtone posix thread\n");
-            return false;
-        }*/
     }
 
     snd_pcm_sw_params_free( swparams );

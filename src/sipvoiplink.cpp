@@ -211,13 +211,13 @@ SIPVoIPLink::terminate()
 SIPVoIPLink::terminateSIPCall()
 {
 
-    //ost::MutexLock m(_callMapMutex);
+    ost::MutexLock m(_callMapMutex);
     CallMap::iterator iter = _callMap.begin();
     SIPCall *call;
     while( iter != _callMap.end() ) {
         call = dynamic_cast<SIPCall*>(iter->second);
         if (call) {
-            //TODO terminate the sip call
+            // terminate the sip call
             delete call; call = 0;
         }
         iter++;
@@ -517,16 +517,16 @@ SIPVoIPLink::onhold(const CallID& id)
 
     if (call==0) { _debug("! SIP Error: call doesn't exist\n"); return false; }  
 
-    _mutexSIP.enterMutex();
 
     // Stop sound
     call->setAudioStart(false);
     call->setState(Call::Hold);
     _debug("* SIP Info: Stopping AudioRTP for onhold action\n");
-    _audiortp->closeRtpSession();
+    //_mutexSIP.enterMutex();
+        _audiortp->closeRtpSession();
+    //_mutexSIP.leaveMutex();
+    
     local_sdp = call->getLocalSDPSession();
-
-    _mutexSIP.leaveMutex();
 
     if( local_sdp == NULL ){
         _debug("! SIP Failure: unable to find local_sdp\n");
@@ -1145,7 +1145,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
         // Init the callback for INVITE session: 
-        // TODO The invite session as global ?
         pj_bzero(&inv_cb, sizeof (inv_cb));
 
         inv_cb.on_state_changed = &call_on_state_changed;
@@ -1171,7 +1170,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
         _debug("UserAgent: pjsip version %s for %s initialized\n", pj_get_version(), PJ_OS_NAME);
 
-        //TODO Create the secondary thread to poll sip events
+        // Create the secondary thread to poll sip events
         _evThread->start();
 
         /* Done! */
@@ -1434,9 +1433,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         SIPCall *call;
         SIPVoIPLink *link;
         pjsip_msg *msg;
-
-        _debug("UserAgent: TSX Changed! The tsx->state is %d; tsx->role is %d; code is %d; method id is %.*s.\n",
-                tsx->state, tsx->role, tsx->status_code, (int)tsx->method.name.slen, tsx->method.name.ptr);
 
         if(pj_strcmp2(&tsx->method.name, "INFO") == 0) {
             // Receive a INFO message, ingore it!

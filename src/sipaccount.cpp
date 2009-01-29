@@ -52,19 +52,13 @@ SIPAccount::~SIPAccount()
 
 int SIPAccount::registerVoIPLink()
 {
-    int status, useStun;
-    SIPVoIPLink *thislink;
+    int status;
 
     /* Retrieve the account information */
     /* Stuff needed for SIP registration */
     setHostname(Manager::instance().getConfigString(_accountID,HOSTNAME));
     setUsername(Manager::instance().getConfigString(_accountID, USERNAME));
     setPassword(Manager::instance().getConfigString(_accountID, PASSWORD));
-    /* Retrieve STUN stuff */
-    /* STUN configuration is attached to a voiplink because it is applied to every accounts (PJSIP limitation)*/
-    thislink = dynamic_cast<SIPVoIPLink*> (_link);
-    if (thislink) {
-    }
 
     /* Start registration */
     status = _link->sendRegister( _accountID );

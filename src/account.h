@@ -123,7 +123,8 @@ class Account{
 
         void setRegistrationState( RegistrationState state );
 
-        //TODO inline?
+        /* inline functions */
+        /* They should be treated like macro definitions by the C++ compiler */
         inline std::string getUsername( void ) { return _username; }
         inline void setUsername( std::string username) { _username = username; }
 

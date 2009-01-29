@@ -29,6 +29,8 @@
 #include <string>
 #include <stdlib.h>
 #include <sstream>
+#include <map>
+#include <vector>
 
 #define SFLPHONED_VERSION "0.9.2-4"		/** Version number */
 

@@ -21,8 +21,7 @@
 #define _ALSA_LAYER_H
 
 #include "audiolayer.h"
-
-#include <pthread.h>
+#include <alsa/asoundlib.h>
 
 class RingBuffer;
 class ManagerImpl;
@@ -47,8 +46,6 @@ class AlsaLayer : public AudioLayer {
      * Destructor
      */
     ~AlsaLayer(void);
-
-    void trigger_thread(void);
 
     void closeLayer( void );
 

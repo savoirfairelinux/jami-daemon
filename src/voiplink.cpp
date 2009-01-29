@@ -76,3 +76,11 @@ bool VoIPLink::clearCallMap()
   return true;
 }
 
+Account* VoIPLink::getAccountPtr(void)
+{
+    Account* account;
+    AccountID id;
+
+    id = getAccountID();
+    return Manager::instance().getAccount(id);
+}

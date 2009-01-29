@@ -77,22 +77,10 @@ class SIPAccount : public Account
         bool fullMatch(const std::string& username, const std::string& hostname);
         bool userMatch(const std::string& username);
 
-        inline std::string getHostname( void ) { return _hostname; }
-        inline void setHostname( std::string hostname) { _hostname = hostname; }
-
-        inline std::string getPassword( void ) { return _password; }
-        inline void setPassword( std::string password ) { _password = password; }
-
-        inline std::string getAlias( void ) { return _alias; }
-        inline void setAlias( std::string alias ) { _alias = alias; }
-
-        inline std::string getType( void ) { return _type; }
-        inline void setType( std::string type ) { _type = type; }
-
         pjsip_regc* getRegistrationInfo( void ) { return _regc; }
         void setRegistrationInfo( pjsip_regc *regc ) { _regc = regc; }
 
-        //TODO See if it useful
+        /* Registration flag */
         bool isRegister() {return _bRegister;}
         void setRegister(bool result) {_bRegister = result;}
 

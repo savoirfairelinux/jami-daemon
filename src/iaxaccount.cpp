@@ -22,8 +22,8 @@
 #include "iaxaccount.h"
 #include "iaxvoiplink.h"
 
-    IAXAccount::IAXAccount(const AccountID& accountID)
-: Account(accountID, "iax2")
+IAXAccount::IAXAccount(const AccountID& accountID)
+    : Account(accountID, "iax2")
 {
     _link = new IAXVoIPLink(accountID);
 }
@@ -37,17 +37,12 @@ IAXAccount::~IAXAccount()
 
 int IAXAccount::registerVoIPLink()
 {
-    IAXVoIPLink *thislink;
-
     _link->init();
 
-    thislink = dynamic_cast<IAXVoIPLink*> (_link);
-    if (thislink) {
-        // Stuff needed for IAX registration
-        thislink->setHost(Manager::instance().getConfigString(_accountID, HOSTNAME));
-        thislink->setUser(Manager::instance().getConfigString(_accountID, USERNAME));
-        thislink->setPass(Manager::instance().getConfigString(_accountID, PASSWORD));
-    }
+    // Stuff needed for IAX registration
+    setHostname(Manager::instance().getConfigString(_accountID, HOSTNAME));
+    setUsername(Manager::instance().getConfigString(_accountID, USERNAME));
+    setPassword(Manager::instance().getConfigString(_accountID, PASSWORD));
 
     _link->sendRegister( _accountID );
 

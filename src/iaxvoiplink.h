@@ -166,21 +166,7 @@ class IAXVoIPLink : public VoIPLink
     bool isContactPresenceSupported() { return false; }
 
   public: // iaxvoiplink only
-    /**
-     * @param host Set the host name 
-     */
-    void setHost(const std::string& host) { _host = host; }
-
-    /**
-     * @param user Set the user name 
-     */
-    void setUser(const std::string& user) { _user = user; }
-    
-    /**
-     * @param pass Set the password
-     */
-    void setPass(const std::string& pass) { _pass = pass; }
-
+   
     void updateAudiolayer( void ); 
 
     void setStunServer( const std::string &server ) {};
@@ -194,7 +180,7 @@ class IAXVoIPLink : public VoIPLink
      * @param msgcount  The value sent by IAX in the REGACK message
      * @return int  The number of new messages waiting for the current registered user
      */
-       int processIAXMsgCount( int msgcount );
+     int processIAXMsgCount( int msgcount );
 
 
     /**
@@ -253,27 +239,11 @@ class IAXVoIPLink : public VoIPLink
      */
     bool iaxOutgoingInvite(IAXCall* call);
 
-
-    /**
-     * Convert CodecMap to IAX format using IAX constants
-     * @return `format` ready to go into iax_* calls
-     */
-    int iaxCodecMapToFormat(IAXCall* call);
-
     /** Threading object */
     EventThread* _evThread;
 
     /** registration session : 0 if not register */
     struct iax_session* _regSession;
-
-    /** IAX Host */
-    std::string _host;
-
-    /** IAX User */
-    std::string _user;
-
-    /** IAX Password */
-    std::string _pass;
 
     /** Timestamp of when we should refresh the registration up with
      * the registrar.  Values can be: EPOCH timestamp, 0 if we want no registration, 1

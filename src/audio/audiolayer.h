@@ -22,20 +22,14 @@
 #ifndef _AUDIO_LAYER_H
 #define _AUDIO_LAYER_H
 
-#include "../global.h"
-#include "../manager.h"
+#include "global.h"
 #include "audiodevice.h"
 #include "ringbuffer.h"
+#include "manager.h"
 
 #include <cc++/thread.h> // for ost::Mutex
-#include <vector>
 
-#include <alsa/asoundlib.h>
 #include <pulse/pulseaudio.h>
-
-#include <iostream>
-#include <istream>
-#include <sstream>
 
 #define FRAME_PER_BUFFER	160
 
@@ -85,8 +79,6 @@ class AudioLayer {
     ~AudioLayer(void){}
 
     virtual void closeLayer( void ) = 0;
-
-    virtual void trigger_thread(void)=0;
 
     /**
      * Check if no devices are opened, otherwise close them.
