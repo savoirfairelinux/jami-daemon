@@ -23,7 +23,7 @@
 #include "iaxvoiplink.h"
 
     IAXAccount::IAXAccount(const AccountID& accountID)
-: Account(accountID)
+: Account(accountID, "iax2")
 {
     _link = new IAXVoIPLink(accountID);
 }
@@ -35,8 +35,7 @@ IAXAccount::~IAXAccount()
     _link = NULL;
 }
 
-    int
-IAXAccount::registerVoIPLink()
+int IAXAccount::registerVoIPLink()
 {
     IAXVoIPLink *thislink;
 
@@ -50,7 +49,7 @@ IAXAccount::registerVoIPLink()
         thislink->setPass(Manager::instance().getConfigString(_accountID, PASSWORD));
     }
 
-    _link->sendRegister();
+    _link->sendRegister( _accountID );
 
     return SUCCESS;
 }
@@ -58,7 +57,7 @@ IAXAccount::registerVoIPLink()
     int
 IAXAccount::unregisterVoIPLink()
 {
-    _link->sendUnregister();
+    _link->sendUnregister( _accountID );
     _link->terminate();
 
     return SUCCESS;

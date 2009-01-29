@@ -26,7 +26,6 @@
 
 VoIPLink::VoIPLink(const AccountID& accountID) : _accountID(accountID), _localIPAddress("127.0.0.1"), _localPort(0),  _initDone(false) 
 {
-    setRegistrationState(VoIPLink::Unregistered);
 }
 
 VoIPLink::~VoIPLink (void) 
@@ -64,8 +63,7 @@ Call* VoIPLink::getCall(const CallID& id)
   return 0;
 }
 
-bool
-VoIPLink::clearCallMap()
+bool VoIPLink::clearCallMap()
 {
   ost::MutexLock m(_callMapMutex);
   CallMap::iterator iter = _callMap.begin();
@@ -78,9 +76,3 @@ VoIPLink::clearCallMap()
   return true;
 }
 
-void VoIPLink::setRegistrationState(const RegistrationState state)
-{
-    _registrationState = state;
-    // Notify the client
-    Manager::instance().connectionStatusNotification( );
-}

@@ -96,7 +96,11 @@ public:
     int32_t getPulseAppVolumeControl( void );
     void setPulseAppVolumeControl( void );
     int32_t getSipPort( void );
-    void setSipPort( const int32_t& portNum );
+    void setSipPort( const int32_t& portNum);
+    std::string getStunServer( void );
+    void setStunServer( const std::string& server );
+    void enableStun (void);
+    int32_t isStunEnabled (void);
 
 };
 

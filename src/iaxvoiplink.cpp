@@ -21,6 +21,7 @@
 #include "global.h" // for _debug
 #include "iaxcall.h"
 #include "eventthread.h"
+#include "iaxaccount.h"
 
 #include "manager.h"
 #include "audio/audiolayer.h"
@@ -207,7 +208,7 @@ IAXVoIPLink::getEvent()
 
   // Refresh registration.
   if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
-    sendRegister();
+    sendRegister("");
   }
 
   // thread wait 3 millisecond
@@ -308,48 +309,52 @@ IAXVoIPLink::getIAXCall(const CallID& id)
 
 
  int 
-IAXVoIPLink::sendRegister() 
+IAXVoIPLink::sendRegister(AccountID id) 
 {
-  bool result = false;
-  if (_host.empty()) {
-    return false;
-  }
-  if (_user.empty()) {
-    return false;
-  }
+    IAXAccount *account;
+    bool result;
 
-  // lock
-  _mutexIAX.enterMutex();
+    result = false;
+    account = dynamic_cast<IAXAccount *> (Manager::instance().getAccount(id));
+    if (_host.empty()) {
+        return false;
+    }
+    if (_user.empty()) {
+        return false;
+    }
 
-  // Always use a brand new session
-  if (_regSession) {
-    iax_destroy(_regSession);
-  }
+    // lock
+    _mutexIAX.enterMutex();
 
-  _regSession = iax_session_new();
+    // Always use a brand new session
+    if (_regSession) {
+        iax_destroy(_regSession);
+    }
 
-  if (!_regSession) {
-    _debug("Error when generating new session for register");
-  } else {
-    // refresh
-    // last reg
-    char host[_host.length()+1]; 
-    strcpy(host, _host.c_str());
-    char user[_user.length()+1];
-    strcpy(user, _user.c_str());
-    char pass[_pass.length()+1]; 
-    strcpy(pass, _pass.c_str());
-    // iax_register doesn't use const char*
+    _regSession = iax_session_new();
 
-    _debug("IAX Sending registration to %s with user %s\n", host, user);
-    int val = iax_register(_regSession, host, user, pass, 120);
-    _debug ("Return value: %d\n", val);
-    // set the time-out to 15 seconds, after that, resend a registration request.
-    // until we unregister.
-    _nextRefreshStamp = time(NULL) + 10;
-    result = true;
+    if (!_regSession) {
+        _debug("Error when generating new session for register");
+    } else {
+        // refresh
+        // last reg
+        char host[_host.length()+1]; 
+        strcpy(host, _host.c_str());
+        char user[_user.length()+1];
+        strcpy(user, _user.c_str());
+        char pass[_pass.length()+1]; 
+        strcpy(pass, _pass.c_str());
+        // iax_register doesn't use const char*
 
-    setRegistrationState(Trying);
+        _debug("IAX Sending registration to %s with user %s\n", host, user);
+        int val = iax_register(_regSession, host, user, pass, 120);
+        _debug ("Return value: %d\n", val);
+        // set the time-out to 15 seconds, after that, resend a registration request.
+        // until we unregister.
+        _nextRefreshStamp = time(NULL) + 10;
+        result = true;
+
+        account->setRegistrationState(Trying);
   }
 
   // unlock
@@ -361,7 +366,7 @@ IAXVoIPLink::sendRegister()
 
 
  int 
-IAXVoIPLink::sendUnregister()
+IAXVoIPLink::sendUnregister(AccountID id)
 {
   _mutexIAX.enterMutex();
   if (_regSession) {
@@ -377,7 +382,7 @@ IAXVoIPLink::sendUnregister()
   _nextRefreshStamp = 0;
 
   _debug("IAX2 send unregister\n");
-  setRegistrationState(Unregistered);
+  //setRegistrationState(Unregistered);
 
   return SUCCESS;
 }
@@ -761,7 +766,8 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
         iax_destroy(_regSession);
         _mutexIAX.leaveMutex();
         _regSession = NULL;
-        setRegistrationState(ErrorAuth);
+        //TODO Restore that
+        //setRegistrationState(ErrorAuth);
     }
     
     else if (event->etype == IAX_EVENT_REGACK) {
@@ -783,7 +789,7 @@ IAXVoIPLink::iaxHandleRegReply(iax_event* event)
         // I mean, save the timestamp, so that we re-register again in the REFRESH time.
         // Defaults to 60, as per draft-guy-iax-03.
         _nextRefreshStamp = time(NULL) + (event->ies.refresh ? event->ies.refresh : 60);
-        setRegistrationState(Registered);
+        //nsetRegistrationState(Registered);
     }
 }
 
@@ -917,6 +923,8 @@ IAXVoIPLink::iaxCodecMapToFormat(IAXCall* call)
 
 void IAXVoIPLink::updateAudiolayer( void )
 {
+    _mutexIAX.enterMutex();
     audiolayer = NULL;
     audiolayer = Manager::instance().getAudioDriver();
+    _mutexIAX.leaveMutex();
 }

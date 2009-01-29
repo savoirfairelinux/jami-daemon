@@ -56,20 +56,8 @@ private:
     pjsip_module _options_handler;
     bool _useStun;
     pj_str_t _stunHost;
-    std::string _stunServer;
-    bool validStunServer;
 
-    /** Local Extern Address is the IP address seen by peers for SIP listener */
-    std::string _localExternAddress;
-    std::string _localIPAddress;
-
-    /** Local Extern Port is the port seen by peers for SIP listener */
-    unsigned int _localExternPort;
-    unsigned int _localPort;
-
-    /** For registration use only */
-    int _regPort;
-    
+        
     pj_thread_t *_thread;
     
     static UserAgent *_current;
@@ -90,9 +78,6 @@ public:
 
     void sipDestory();
 
-    /** Create SIP UDP Listener */
-    int createUDPServer();
-
     /** Set whether it will use stun server */
     void setStunServer(const char *server); 
 
@@ -111,7 +96,6 @@ public:
     
     bool loadSIPLocalIP();
     
-    pj_status_t stunServerResolve();
     
     pjsip_endpoint* getEndPoint() {return _endpt;}
     
