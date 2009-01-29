@@ -53,7 +53,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
      * @param sipcall The pointer on the SIP call
      * @param sym     Tells whether or not the voip links are symmetric
      */
-    AudioRtpRTX (SIPCall* sipcall, bool sym);
+  AudioRtpRTX (SIPCall* sipcall, bool sym);
 
     /**
      * Destructor
@@ -198,6 +198,12 @@ class AudioRtp {
      * Close a RTP session and kills the remaining threads
      */
     void closeRtpSession( void );
+
+    /**
+     * Start recording
+     */
+    void setRecording ();
+    
 
   private:
     // copy constructor

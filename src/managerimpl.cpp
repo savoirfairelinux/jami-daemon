@@ -1414,6 +1414,16 @@ ManagerImpl::setVolumeControls( void )
   ( getConfigInt( PREFERENCES , CONFIG_VOLUME ) == DISPLAY_VOLUME_CONTROLS )? setConfig(PREFERENCES , CONFIG_VOLUME , NO_STR ) : setConfig( PREFERENCES , CONFIG_VOLUME , YES_STR );
 }
 
+void
+ManagerImpl::setRecordingCall(const CallID& id)
+{
+  _debug("ManagerImpl::setRecording!.\n");
+  AccountID accountid = getAccountFromCall( id );
+
+  // printf("ManagerImpl::CallID: %s", id);
+  getAccountLink(accountid)->setRecording(id);
+}
+
 void 
 ManagerImpl::startHidden( void )
 {

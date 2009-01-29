@@ -459,6 +459,13 @@ class ManagerImpl {
     void setVolumeControls( void );
 
     /**
+     * Functions which occur with a user's action
+     * Start recording
+     * @param id  The call identifier
+     */
+    void setRecordingCall(const CallID& id);
+
+    /**
      * Set the maximum number of calls to keep in the history
      * @param calls The number of calls
      */

@@ -513,6 +513,14 @@ IAXVoIPLink::refuse(const CallID& id)
   return true;
 }
 
+
+void 
+IAXVoIPLink::setRecording(const CallID& id)
+{
+  _debug("SIPVoIPLink::setRecording!");
+}
+
+
   bool
 IAXVoIPLink::carryingDTMFdigits(const CallID& id, char code)
 {

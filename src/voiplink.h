@@ -148,6 +148,12 @@ class VoIPLink {
     virtual bool refuse(const CallID& id) = 0;
 
     /**
+     * Set Recording
+     * @param id The call identifier
+     */
+    virtual void setRecording(const CallID& id) = 0;
+
+    /**
      * Send DTMF
      * @param id The call identifier
      * @param code  The char code

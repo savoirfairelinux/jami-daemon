@@ -1279,6 +1279,21 @@ dbus_set_volume_controls(  )
 		g_print("DBus called set_volume_controls on ConfigurationManager\n");
 }
 
+
+void
+dbus_set_record(const call_t * c)
+{
+       g_print("calling dbus_set_record on CallManager\n");
+       printf("CallID : %s \n", c->callID);
+       GError* error = NULL;
+       org_sflphone_SFLphone_CallManager_set_recording (
+                       callManagerProxy,
+                       c->callID,
+                       error);
+       g_print("called dbus_set_record on CallManager\n");
+}
+
+
 void
 dbus_set_max_calls( const guint calls  )
 {

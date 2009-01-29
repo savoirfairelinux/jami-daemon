@@ -51,6 +51,10 @@
       <arg type="s" name="device" direction="in"/>
       <arg type="d" name="value" direction="out"/>
     </method>
+
+    <method name="setRecording">
+      <arg type="s" name="callID" direction="in"/>
+    </method>
     
     <method name="getCallDetails">
       <arg type="s" name="callID" direction="in"/>
@@ -87,6 +91,8 @@
       <arg type="s" name="device"  direction="out"/>
       <arg type="d" name="value"  direction="out"/>
     </signal>
+
+ 
     
     <signal name="error">
       <arg type="a{ss}" name="details"  direction="out"/>

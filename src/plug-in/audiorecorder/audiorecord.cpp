@@ -20,15 +20,17 @@
 #include "audiorecord.h"
 
 AudioRecord::AudioRecord(){
+  
   sndSmplRate_ = 44100;
   channels_ = 1;
   byteCounter_ = 0;
+  recordingEnabled_ = false;
 
 }
 
 
 void AudioRecord::setSndSamplingRate(int smplRate){
-  sndSmplRate_ = smplRate;
+  sndSmplRate_ = smplRate;  
 }
 
 
@@ -69,6 +71,17 @@ bool AudioRecord::isOpenFile() {
     return true;
   else
     return false;
+}
+
+
+bool AudioRecord::setRecording() {
+  printf("AudioRecord::setRecording()");
+  
+  if(!recordingEnabled_)
+    recordingEnabled_ = true;
+  else 
+    recordingEnabled_ = false;
+  
 }
 
 
@@ -198,22 +211,23 @@ void AudioRecord::recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int 
   // printf("AudioRecord : sizeof(buffer) / sizeof(SFLDataFormat) : %d \n",count);
   // printf("AudioRecord : nSamples : %d \n",nSamples);
   // printf("AudioRecord : buffer: %x : ", buffer);
- 
-  if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
-    for (int k=0; k<nSamples_1; k++){
+  if (recordingEnabled_) {
+
+    if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
+      for (int k=0; k<nSamples_1; k++){
       
-      mixBuffer_[k] = (buffer_1[k]+buffer_2[k])/2;
+        mixBuffer_[k] = (buffer_1[k]+buffer_2[k])/2;
       
-      if ( fwrite(&buffer_1[k], 2, 1, fp) != 1)
-        _debug("AudioRecord: Could not record data!\n");
-      else {
-        // printf("Buffer : %x \n",*buffer);
-        fflush(fp);
-        // _debug("Flushing!\n");
+        if ( fwrite(&buffer_1[k], 2, 1, fp) != 1)
+          _debug("AudioRecord: Could not record data!\n");
+        else {
+          // printf("Buffer : %x \n",*buffer);
+          fflush(fp);
+          // _debug("Flushing!\n");
+        }
       }
     }
   }
-
   
 
 

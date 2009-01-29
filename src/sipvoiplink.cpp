@@ -344,6 +344,15 @@ SIPVoIPLink::refuse (const CallID& id)
     return Manager::instance().getUserAgent()->refuse(call);
 }
 
+void 
+SIPVoIPLink::setRecording(const CallID& id)
+{
+  // _debug("SIPVoIPLink::setRecording!");
+  // printf("SIPVoIPLink:: CallID: %s", id);
+
+  _audiortp->setRecording();
+}
+
 bool 
 SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code)
 {

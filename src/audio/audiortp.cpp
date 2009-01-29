@@ -73,6 +73,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
     _debugException("! ARTP Failure: when trying to start a thread");
     throw;
   }
+
   return 0;
 }
 
@@ -89,11 +90,21 @@ AudioRtp::closeRtpSession () {
     _debugException("! ARTP Exception: when stopping audiortp\n");
     throw;
   }
-  
 
   AudioLayer* audiolayer = Manager::instance().getAudioDriver();
   audiolayer->stopStream();
 }
+
+
+void
+AudioRtp::setRecording() {
+  
+  _debug("AudioRtp::setRecording");
+  _RTXThread->recAudio.setRecording();
+  
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
@@ -446,11 +457,12 @@ AudioRtpRTX::run () {
     _debug("Close wave file\n");
     recAudio.closeFile();
 
-    //_debug("stop stream for audiortp loop\n");
+    // _debug("stop stream for audiortp loop\n");
     audiolayer->stopStream();
   } catch(std::exception &e) {
     _start.post();
     _debug("! ARTP: Stop %s\n", e.what());
+    
     _debug("! Close wave file\n");
     recAudio.closeFile();
  

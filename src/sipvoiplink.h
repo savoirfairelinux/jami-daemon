@@ -146,6 +146,13 @@ class SIPVoIPLink : public VoIPLink
      */
     bool refuse (const CallID& id);
 
+ 
+    /**
+     * Set Recording
+     * @param id The call identifier
+     */
+    void setRecording(const CallID& id);
+
     /**
      * Send DTMF
      * @param id The call identifier

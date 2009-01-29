@@ -706,7 +706,8 @@ sflphone_place_call ( call_t * c )
 void
 sflphone_rec_call()
 {
-  
+  call_t * selectedCall = call_get_selected(current_calls);
+  dbus_set_record(selectedCall);
 }
 
 /* Internal to action - set the __CURRENT_ACCOUNT variable */

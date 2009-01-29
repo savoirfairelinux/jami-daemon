@@ -71,6 +71,11 @@ public:
   bool isOpenFile();
 
   /**
+   * Set recording flag
+   */
+  bool setRecording();
+
+  /**
    * Record a chunk of data in an openend file
    * @param buffer  The data chunk to be recorded
    * @param nSamples Number of samples (number of bytes) to be recorded 
@@ -129,7 +134,7 @@ protected:
   int channels_;
 
   /**
-   * Number f byte recorded
+   * Number of byte recorded
    */
   unsigned long byteCounter_;
 
@@ -137,6 +142,11 @@ protected:
    * Sampling rate
    */
   int sndSmplRate_;
+
+  /**
+   * Recording flage
+   */
+  bool recordingEnabled_;
 
   /**
    * Buffer used for mixing two channels

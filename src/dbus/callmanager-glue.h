@@ -31,6 +31,7 @@ public:
         register_method(CallManager_adaptor, startTone, _startTone_stub);
         register_method(CallManager_adaptor, setVolume, _setVolume_stub);
         register_method(CallManager_adaptor, getVolume, _getVolume_stub);
+        register_method(CallManager_adaptor, setRecording, _setRecording_stub);
         register_method(CallManager_adaptor, getCallDetails, _getCallDetails_stub);
         register_method(CallManager_adaptor, getCurrentCallID, _getCurrentCallID_stub);
     }
@@ -98,6 +99,11 @@ public:
             { "value", "d", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument setRecording_args[] = 
+        {
+            { "callID", "s", true },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument getCallDetails_args[] = 
         {
             { "callID", "s", true },
@@ -158,6 +164,7 @@ public:
             { "startTone", startTone_args },
             { "setVolume", setVolume_args },
             { "getVolume", getVolume_args },
+            { "setRecording", setRecording_args },
             { "getCallDetails", getCallDetails_args },
             { "getCurrentCallID", getCurrentCallID_args },
             { 0, 0 }
@@ -208,6 +215,7 @@ public:
     virtual void startTone(const int32_t& start, const int32_t& type) = 0;
     virtual void setVolume(const std::string& device, const double& value) = 0;
     virtual double getVolume(const std::string& device) = 0;
+    virtual void setRecording(const std::string& callID) = 0;
     virtual std::map< std::string, std::string > getCallDetails(const std::string& callID) = 0;
     virtual std::string getCurrentCallID() = 0;
 
@@ -372,6 +380,15 @@ private:
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setRecording_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::string argin1; ri >> argin1;
+        setRecording(argin1);
+        ::DBus::ReturnMessage reply(call);
         return reply;
     }
     ::DBus::Message _getCallDetails_stub(const ::DBus::CallMessage &call)
