@@ -26,19 +26,26 @@ using std::cout;
 using std::endl;
 
 void PluginManagerTest::setUp(){
-    // Instanciate the plugin manager object
-    _pm = new ::sflphone::PluginManager();
+    // Instanciate the plugin manager singleton
+    _pm = ::sflphone::PluginManager::instance();
 }
 
 void PluginManagerTest::testLoadPluginDirectory(){
-    _pm->loadPlugins();
+    CPPUNIT_ASSERT(_pm->loadPlugins() == 0);
 }
 
-void PluginManagerTest::testNonloadedPlugin(){
-    CPPUNIT_ASSERT( _pm->isPluginLoaded("test") == NULL );
+void PluginManagerTest::testLoadPlugin(){
+    CPPUNIT_ASSERT(_pm->loadPlugins() == 0);
+    //CPPUNIT_ASSERT( _pm->isPluginLoaded("test") == NULL );
+}
+
+void PluginManagerTest::testRegisterPlugin(){
+    // First load the default directory
+    _pm->loadPlugins();
+    // Resolve the symbol
 }
 
 void PluginManagerTest::tearDown(){
     // Delete the plugin manager object
-    delete _pm; _pm=NULL;
+    delete _pm; _pm=0;
 }

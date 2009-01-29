@@ -3,7 +3,19 @@
 
 #include "pluginmanager.h"
 
-::sflphone::PluginManager::PluginManager():_loadedPlugins()
+::sflphone::PluginManager* ::sflphone::PluginManager::_instance = 0;
+
+    ::sflphone::PluginManager* 
+::sflphone::PluginManager::instance()
+{
+    if(!_instance){
+        return new PluginManager();
+    }
+    return _instance;
+}
+
+::sflphone::PluginManager::PluginManager()
+    :_loadedPlugins()
 {
     _instance = this;
 }
@@ -13,13 +25,16 @@
     _instance = 0;
 }
 
-int ::sflphone::PluginManager::loadPlugins( const std::string &path )
+    int 
+::sflphone::PluginManager::loadPlugins (const std::string &path)
 {
     std::string pluginDir, current;
-    ::sflphone::Plugin *plugin;
+    ::sflphone::PluginInterface *interface;
     DIR *dir;
     dirent *dirStruct;
     int result=0;
+    void *handle;
+    createFunc* createPlugin;
     
     const std::string pDir = "..";
     const std::string cDir = ".";
@@ -37,18 +52,31 @@ int ::sflphone::PluginManager::loadPlugins( const std::string &path )
             current = dirStruct->d_name;
             /* Test if the current item is not the parent or the current directory */
             if( current != pDir && current != cDir ){
-                loadDynamicLibrary( current );
-                result++;
-	        }
+                handle = loadDynamicLibrary( pluginDir + current );
+                
+                if(instanciatePlugin (handle, &interface) != 0)       	        
+                {
+                    _debug("Error instanciating the plugin ...\n");
+                    return 1;
+                }
+                
+                if(registerPlugin (handle, interface) != 0)
+                    _debug("Error registering the plugin ...\n");
+                    return 1;
+            }
 	    }
     }
+    else
+        return 1;
+
     /* Close the directory */
     closedir( dir );
 
-    return result;
+    return 0;
 }
 
-::sflphone::PluginWrap* ::sflphone::PluginManager::isPluginLoaded( const std::string &name )
+    ::sflphone::Plugin* 
+::sflphone::PluginManager::isPluginLoaded (const std::string &name)
 {
     if(_loadedPlugins.empty())    return NULL;  
 
@@ -68,31 +96,68 @@ int ::sflphone::PluginManager::loadPlugins( const std::string &path )
     return NULL;
 }
 
-void* ::sflphone::PluginManager::loadDynamicLibrary( const std::string& filename ) {
+
+    void* 
+::sflphone::PluginManager::loadDynamicLibrary (const std::string& filename) 
+{
 
     void *pluginHandlePtr = NULL;
     const char *error;
 
     _debug("Loading dynamic library %s\n", filename.c_str());
 
-#if defined(Q_OS_UNIX)
     /* Load the library */
     pluginHandlePtr = dlopen( filename.c_str(), RTLD_LAZY );
     if( !pluginHandlePtr ) {
         error = dlerror();
         _debug("Error while opening plug-in: %s\n", error);
+        return NULL;
     }
     dlerror();
-#endif
-
     return pluginHandlePtr;
+
 }
 
-void ::sflphone::PluginManager::unloadDynamicLibrary( void * pluginHandlePtr ) {
+    int 
+::sflphone::PluginManager::instanciatePlugin (void *handlePtr, ::sflphone::PluginInterface **plugin)
+{
+    createFunc *createPlugin;
+
+    createPlugin = (createFunc*)dlsym(handlePtr, "create");
+    if( dlerror() )
+    {
+        _debug("Error creating the plugin: %s\n", dlerror());
+        return 1;
+    }
+    *plugin = createPlugin();
+    return 0;
+}
+
+    int 
+::sflphone::PluginManager::registerPlugin (void *handlePtr, PluginInterface *interface)
+{
+    Plugin *myplugin;
+    std::string name;
+
+    if( !( handlePtr && interface!=0 ) )
+        return 1;
     
+    /* Fetch information from the loaded plugin interface */
+    if(interface->registerFunc (&myplugin) != 0)
+        return 1;
+    /* Creation of the plugin wrapper */
+    myplugin = new Plugin (handlePtr, interface);
+
+    /* Add the data in the loaded plugin map */
+    _loadedPlugins[ myplugin->_name ] = myplugin;
+    return 0;
+}
+
+    void 
+::sflphone::PluginManager::unloadDynamicLibrary (void * pluginHandlePtr) 
+{
     dlclose( pluginHandlePtr );
     dlerror();
 }
 
-::sflphone::PluginManager* ::sflphone::PluginManager::_instance = 0;
 

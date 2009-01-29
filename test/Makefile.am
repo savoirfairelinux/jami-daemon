@@ -15,7 +15,6 @@ OBJECT_FILES= \
 	../src/sflphoned-sipaccount.o \
 	../src/sflphoned-iaxaccount.o \
 	../src/sflphoned-eventthread.o \
-	../src/sflphoned-useragent.o \
 	../src/plug-in/pluginmanager.o \
 	../src/sflphoned-samplerateconverter.o
 
