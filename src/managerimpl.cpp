@@ -462,62 +462,58 @@ ManagerImpl::sendDtmf(const CallID& id, char code)
   bool
 ManagerImpl::playDtmf(char code, bool isTalking)
 {
-  // HERE are the variable:
-  // - boolean variable to play or not (config)
-  // - length in milliseconds to play
-  // - sample of audiolayer
-  stopTone(false);
-  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_DTMF);
-  if (!hasToPlayTone) return false;
+    int hasToPlayTone, pulselen, layer, size;
+    bool ret = false;
+    AudioLayer *audiolayer;
+    SFLDataFormat *buf;
+  
+    stopTone(false);
+    
+    hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_DTMF);
+    if (!hasToPlayTone) 
+        return false;
 
-  // length in milliseconds
-  int pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
-  if (!pulselen) { return false; }
+    // length in milliseconds
+    pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
+    if (!pulselen)
+        return false;
 
-  // numbers of int = length in milliseconds / 1000 (number of seconds)
-  //                = number of seconds * SAMPLING_RATE by SECONDS
-  AudioLayer* audiolayer = getAudioDriver();
-  int layer = audiolayer->getLayerType();
+    // numbers of int = length in milliseconds / 1000 (number of seconds)
+    //                = number of seconds * SAMPLING_RATE by SECONDS
+    audiolayer = getAudioDriver();
+    layer = audiolayer->getLayerType();
 
-  // fast return, no sound, so no dtmf
-  if (audiolayer==0 || _dtmfKey == 0) { return false; }
-  // number of data sampling in one pulselen depends on samplerate
-  // size (n sampling) = time_ms * sampling/s 
-  //                     ---------------------
-  //                            ms/s
-  int size = (int)(pulselen * ((float)audiolayer->getSampleRate()/1000));
+    // fast return, no sound, so no dtmf
+    if (audiolayer==0 || _dtmfKey == 0)
+        return false;
 
-  // this buffer is for mono
-  // TODO <-- this should be global and hide if same size
-  SFLDataFormat* _buf = new SFLDataFormat[size];
-  bool returnValue = false;
+    // number of data sampling in one pulselen depends on samplerate
+    // size (n sampling) = time_ms * sampling/s 
+    //                     ---------------------
+    //                            ms/s
+    size = (int)(pulselen * ((float)audiolayer->getSampleRate()/1000));
 
-  // Handle dtmf
-  _dtmfKey->startTone(code);
+    // this buffer is for mono
+    // TODO <-- this should be global and hide if same size
+    buf = new SFLDataFormat[size];
 
-  // copy the sound
-  if ( _dtmfKey->generateDTMF(_buf, size) ) {
+    // Handle dtmf
+    _dtmfKey->startTone(code);
 
-    // Put buffer to urgentRingBuffer 
-    // put the size in bytes...
-    // so size * 1 channel (mono) * sizeof (bytes for the data)
-    if(CHECK_INTERFACE( layer , ALSA ))
-      audiolayer->playSamples(_buf, size * sizeof(SFLDataFormat), isTalking);
-    else
-      _debug("DTMF disabled\n");
-      audiolayer->putUrgent( _buf, size * sizeof(SFLDataFormat) );
+    // copy the sound
+    if ( _dtmfKey->generateDTMF(buf, size) ) {
+        // Put buffer to urgentRingBuffer 
+        // put the size in bytes...
+        // so size * 1 channel (mono) * sizeof (bytes for the data)
+        audiolayer->putUrgent (buf, size * sizeof(SFLDataFormat));
+    }
+    ret = true;
 
-  }
-  returnValue = true;
+    // TODO Cache the DTMF
 
-  if( CHECK_INTERFACE( layer , PULSEAUDIO ))
-  {
-  // Cache the samples on the sound server
-  // (PulseLayer*)audiolayer->putInCache( code, _buf , size * sizeof(SFLDataFormat) );
-  }
-
-  delete[] _buf; _buf = 0;
-  return returnValue;
+    delete[] buf; buf = 0;
+    
+    return ret;
 }
 
 // Multi-thread 
@@ -689,30 +685,32 @@ void ManagerImpl::connectionStatusNotification(  )
 /**
  * Multi Thread
  */
-bool 
-ManagerImpl::playATone(Tone::TONEID toneId) {
-  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
-  if (!hasToPlayTone) return false;
+bool ManagerImpl::playATone(Tone::TONEID toneId) 
+{
+    int hasToPlayTone;
+    AudioLoop *audioloop;
+    AudioLayer *audiolayer;
+    unsigned int nbSamples;
 
-  if (_telephoneTone != 0) {
-    _toneMutex.enterMutex();
-    _telephoneTone->setCurrentTone(toneId);
-    _toneMutex.leaveMutex();
+    hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
+    if (!hasToPlayTone) 
+        return false;
+    
+    audiolayer = getAudioDriver();
 
-    AudioLoop* audioloop = getTelephoneTone();
-    unsigned int nbSampling = audioloop->getSize();
-    AudioLayer* audiolayer = getAudioDriver();
-    SFLDataFormat buf[nbSampling];
-    if ( audiolayer ) {
-      int layer = audiolayer->getLayerType(); 
-    if(CHECK_INTERFACE( layer , ALSA ) )
-      audiolayer->putUrgent( buf, nbSampling );
-    else{
-      audiolayer->startStream();
-    }
-    }
-    else 
-      return false;
+    if (_telephoneTone != 0) {
+        _toneMutex.enterMutex();
+        _telephoneTone->setCurrentTone(toneId);
+        _toneMutex.leaveMutex();
+
+        audioloop = getTelephoneTone();
+        nbSamples = audioloop->getSize();
+        SFLDataFormat buf[nbSamples];
+    
+        if ( audiolayer ){ 
+            audiolayer->putUrgent( buf, nbSamples );
+        } else 
+            return false;
   }
   return true;
 }
@@ -720,30 +718,30 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
 /**
  * Multi Thread
  */
-void 
-ManagerImpl::stopTone(bool stopAudio=true) {
-  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
-  if (!hasToPlayTone) return;
+void ManagerImpl::stopTone (bool stopAudio=true)
+{
+    int hasToPlayTone;
+    AudioLayer *audiolayer;
 
-  if (stopAudio) {
-    AudioLayer* audiolayer = getAudioDriver();
-    int layer = audiolayer->getLayerType();
-    if(CHECK_INTERFACE( layer , ALSA ) ){}
-    else{}
-  //if (audiolayer) { audiolayer->stopStream(); }
+    hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
+    if (!hasToPlayTone) 
+        return;
 
-  }
+    if (stopAudio) {
+        audiolayer = getAudioDriver();
+        if (audiolayer) audiolayer->stopStream();
+    }
 
-  _toneMutex.enterMutex();
-  if (_telephoneTone != 0) {
-    _telephoneTone->setCurrentTone(Tone::TONE_NULL);
-  }
-  _toneMutex.leaveMutex();
+    _toneMutex.enterMutex();
+    if (_telephoneTone != 0) {
+        _telephoneTone->setCurrentTone(Tone::TONE_NULL);
+    }
+    _toneMutex.leaveMutex();
 
-  // for ringing tone..
-  _toneMutex.enterMutex();
-  _audiofile.stop();
-  _toneMutex.leaveMutex();
+    // for ringing tone..
+    _toneMutex.enterMutex();
+    _audiofile.stop();
+    _toneMutex.leaveMutex();
 }
 
 /**
@@ -788,38 +786,42 @@ ManagerImpl::ringback () {
   void
 ManagerImpl::ringtone() 
 {
+    std::string ringchoice;
+    AudioLayer *audiolayer;
+    AudioCodec *codecForTone;
+    int layer, samplerate;
+    bool loadFile;
+
     if( isRingtoneEnabled() )
     {
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
         
-        std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
+        ringchoice = getConfigString(AUDIO, RING_CHOICE);
         //if there is no / inside the path
         if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
             // check inside global share directory
             ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
         }
 
-        AudioLayer* audiolayer = getAudioDriver();
-        int layer = audiolayer->getLayerType();
-        if (audiolayer==0) { return; }
-        int sampleRate  = audiolayer->getSampleRate();
-        AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
+        audiolayer = getAudioDriver();
+        layer = audiolayer->getLayerType();
+        if (audiolayer == 0)
+            return;
+
+        samplerate  = audiolayer->getSampleRate();
+        codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
         _toneMutex.enterMutex(); 
-         bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
+        loadFile = _audiofile.loadFile(ringchoice, codecForTone , samplerate);
         _toneMutex.leaveMutex(); 
+
         if (loadFile) {
             _toneMutex.enterMutex(); 
             _audiofile.start();
             _toneMutex.leaveMutex(); 
             if(CHECK_INTERFACE( layer, ALSA )){
-                /*int size = _audiofile.getSize();
-                SFLDataFormat output[ size ];
-                _audiofile.getNext(output, size , 100);
-                audiolayer->putUrgent( output , size );
-                audiolayer->trigger_thread();*/
-                ringback();
+                //ringback();
             }
             else{
                 audiolayer->startStream();
@@ -858,26 +860,23 @@ ManagerImpl::getTelephoneFile()
   }
 }
 
-void
-ManagerImpl::notificationIncomingCall(void) {
-
-  AudioLayer* audiolayer = getAudioDriver();
-  if (audiolayer != 0) {
-    int layer = audiolayer->getLayerType();
-    unsigned int samplerate = audiolayer->getSampleRate();
+void ManagerImpl::notificationIncomingCall(void) 
+{
+    AudioLayer *audiolayer;
     std::ostringstream frequency;
-    frequency << "440/" << FRAME_PER_BUFFER;
+    unsigned int samplerate, nbSampling;
 
-    Tone tone(frequency.str(), samplerate);
-    unsigned int nbSampling = tone.getSize();
-    SFLDataFormat buf[nbSampling];
-    tone.getNext(buf, tone.getSize());
-    if(CHECK_INTERFACE( layer , ALSA ))
-      audiolayer->playSamples(buf, sizeof(SFLDataFormat)*nbSampling, true);
-    else
-      audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
-  
-  }
+    audiolayer = getAudioDriver();
+    if (audiolayer != 0) {
+        samplerate = audiolayer->getSampleRate();
+        frequency << "440/" << FRAME_PER_BUFFER;
+        Tone tone(frequency.str(), samplerate);
+        nbSampling = tone.getSize();
+        SFLDataFormat buf[nbSampling];
+        tone.getNext(buf, tone.getSize());
+        /* Put the data in the urgent ring buffer */
+        audiolayer->putUrgent (buf, sizeof(SFLDataFormat)*nbSampling);
+    }
 }
 
 /**
@@ -1638,38 +1637,44 @@ ManagerImpl::selectAudioDriver (void)
 
 }
 
-void
-ManagerImpl::switchAudioManager( void ) 
+void ManagerImpl::switchAudioManager (void) 
 {
-  _debug( "Switching audio manager \n");
+    int type, samplerate, framesize, numCardIn, numCardOut;
+    std::string alsaPlugin;
 
-  int type = _audiodriver->getLayerType();
-  int samplerate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
-  int framesize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
-  std::string alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
-  int numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
-  int numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
+    _debug( "Switching audio manager \n");
 
-  _debug("Deleting current layer... \n" );
-  _audiodriver->closeLayer();
-  delete _audiodriver; _audiodriver = NULL;
+    if(!_audiodriver)
+        return;
+
+    type = _audiodriver->getLayerType();
+    samplerate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
+    framesize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
+    alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
+    numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
+    numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
+
+    _debug("Deleting current layer... \n" );
+    //_audiodriver->closeLayer();
+    delete _audiodriver; _audiodriver = NULL;
   
-  switch( type ){
-    case ALSA:
-      _debug("Creating Pulseaudio layer...\n");
-      _audiodriver = new PulseLayer( this );
-      break;
-    case PULSEAUDIO:
-      _debug("Creating ALSA layer...\n");
-      _audiodriver = new AlsaLayer( this );
-      break;
-    default:
-      _debug("Error: audio layer unknown\n");
-  }
-  _audiodriver->setErrorMessage(-1);
-  _audiodriver->openDevice( numCardIn , numCardOut, samplerate, framesize, SFL_PCM_BOTH, alsaPlugin ); 
-  if( _audiodriver -> getErrorMessage() != -1 )
-    notifyErrClient( _audiodriver -> getErrorMessage());
+    switch( type ){
+        case ALSA:
+            _debug("Creating Pulseaudio layer...\n");
+            _audiodriver = new PulseLayer( this );
+            break;
+        case PULSEAUDIO:
+            _debug("Creating ALSA layer...\n");
+            _audiodriver = new AlsaLayer( this );
+            break;
+        default:
+            _debug("Error: audio layer unknown\n");
+    }
+  
+    _audiodriver->setErrorMessage(-1);
+    _audiodriver->openDevice( numCardIn , numCardOut, samplerate, framesize, SFL_PCM_BOTH, alsaPlugin ); 
+    if( _audiodriver -> getErrorMessage() != -1 )
+        notifyErrClient( _audiodriver -> getErrorMessage());
 } 
 
 /**

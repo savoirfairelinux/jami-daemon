@@ -21,6 +21,7 @@
 #define _ALSA_LAYER_H
 
 #include "audiolayer.h"
+#include "eventthread.h"
 #include <alsa/asoundlib.h>
 
 class RingBuffer;
@@ -106,25 +107,7 @@ class AlsaLayer : public AudioLayer {
      */
     bool isStreamStopped(void);
 
-    /**
-     * Send samples to the audio device. 
-     * @param buffer The buffer containing the data to be played ( voice and DTMF )
-     * @param toCopy The number of samples, in bytes
-     * @param isTalking	If whether or not the conversation is running
-     * @return int The number of bytes played
-     */
-    int playSamples(void* buffer, int toCopy, bool isTalking);
-
-    /**
-     * Send a chunk of data to the hardware buffer to start the playback
-     * Copy data in the urgent buffer. 
-     * @param buffer The buffer containing the data to be played ( ringtones )
-     * @param toCopy The size of the buffer
-     * @return int  The number of bytes copied in the urgent buffer
-     */
-    int putUrgent(void* buffer, int toCopy);
-
-    /**
+        /**
      * Query the capture device for number of bytes available in the hardware ring buffer
      * @return int The number of bytes available
      */
@@ -185,12 +168,6 @@ class AlsaLayer : public AudioLayer {
     /**
      * UNUSED in ALSA layer
      */
-    int putInCache( char code, void *buffer, int toCopy );
-
-
-    /**
-     * UNUSED in ALSA layer
-     */
     void reducePulseAppsVolume( void );
 
     /**
@@ -204,12 +181,7 @@ class AlsaLayer : public AudioLayer {
     void setPlaybackVolume( UNUSED int volume ){}
     void setCaptureVolume( UNUSED int volume ){}
 
-    /**
-     * Callback used for asynchronous playback.
-     * Write tones buffer to the alsa internal ring buffer.
-     */
-    void playTones( void );
-
+    void audioCallback (void);
 
   private:
   
@@ -230,18 +202,6 @@ class AlsaLayer : public AudioLayer {
      * ALSA Library API
      */
     void closePlaybackStream( void );
-
-    /**
-     * Fill the alsa internal ring buffer with chunks of data
-     */
-    void fillHWBuffer( void) ;
-
-    /**
-     * Callback used for asynchronous playback.
-     * Called when a certain amount of data is written ot the device
-     * @param pcm_callback  The callback pointer
-     */
-    //static void AlsaCallBack( snd_async_handler_t* pcm_callback);
 
     /**
      * Open the specified device.
@@ -307,14 +267,6 @@ class AlsaLayer : public AudioLayer {
     snd_pcm_uframes_t _periodSize;
 
     /**
-     * Volume is controlled by the application. Data buffer are modified here to adjust to the right volume selected by the user on the main interface
-     * @param buffer  The buffer to adjust
-     * @param len The number of bytes
-     * @param stream  The stream mode ( PLAYBACK - CAPTURE )
-     */
-    void * adjustVolume( void * , int , int);
-
-    /**
      * name of the alsa audio plugin used
      */
     std::string _audioPlugin;
@@ -329,14 +281,12 @@ class AlsaLayer : public AudioLayer {
      */
     unsigned int _outChannel; 
 
-    /**
-     * Default volume for incoming RTP and Urgent sounds.
-     */
-    unsigned short _defaultVolume; // 100
 
 
     /** Vector to manage all soundcard index - description association of the system */
     std::vector<HwIDPair> IDSoundCards;
+
+    AudioThread *_audioThread;
 
 };
 

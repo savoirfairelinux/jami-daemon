@@ -741,7 +741,8 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
         // resample
         nbInt16 = converter->upsampleData( spkrDataDecoded , spkrDataConverted , ac->getClockRate() , audiolayer->getSampleRate() , nbSample);
 
-        audiolayer->playSamples( spkrDataConverted , nbInt16 * sizeof(SFLDataFormat), true);
+        //audiolayer->playSamples( spkrDataConverted , nbInt16 * sizeof(SFLDataFormat), true);
+        audiolayer->putMain (spkrDataConverted , nbInt16 * sizeof(SFLDataFormat));
 
     } else {
         _debug("IAX: incoming audio, but no sound card open");

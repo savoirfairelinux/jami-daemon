@@ -19,6 +19,7 @@
 
 #include "eventthread.h"
 #include "voiplink.h"
+#include "audio/alsalayer.h"
 
 /********************************** Voiplink thread *************************************/
 EventThread::EventThread( VoIPLink *link ) 
@@ -39,3 +40,24 @@ void EventThread::run (void)
 }	
 
 /********************************************************************************************/
+
+AudioThread::AudioThread (AlsaLayer *alsa)
+    : Thread(), _alsa(alsa)
+{
+    setCancel (cancelDeferred);
+}
+
+/**
+ * Reimplementation of run() 
+ */
+void AudioThread::run (void) 
+{
+    while(!testCancel()) {
+        _alsa->audioCallback();
+    }
+}
+
+void AudioThread::stop (void)
+{
+    exit();
+}

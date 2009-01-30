@@ -19,6 +19,8 @@
 
 #include "alsalayer.h"
 
+int framesPerBufferAlsa = 2048;
+
 // Constructor
     AlsaLayer::AlsaLayer( ManagerImpl* manager ) 
     : AudioLayer( manager , ALSA ) 
@@ -28,10 +30,11 @@
     , _audioPlugin()
     , _inChannel()
     , _outChannel()
-    , _defaultVolume(100)
-      , IDSoundCards() 
+    , IDSoundCards() 
 {
     _debug(" Constructor of AlsaLayer called\n");
+    /* Instanciate the audio thread */
+    _audioThread = new AudioThread (this);
 }
 
 // Destructor
@@ -44,21 +47,24 @@ AlsaLayer::~AlsaLayer (void)
 AlsaLayer::closeLayer()
 {
     _debugAlsa("Close ALSA streams\n");
+    
+    ost::MutexLock guard(_mutex);
+    
+    if (_audioThread)
+    {
+        _audioThread->stop();
+        delete _audioThread; _audioThread=NULL;
+    }
     closeCaptureStream();
     closePlaybackStream();
+    
     deviceClosed = true;
 }
 
     bool 
 AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize, int stream , std::string plugin) 
 {
-
-    // We don't accept that the audio plugin is changed during a conversation
-    if( _talk ){
-        _debug("can't switch audio plugin when talking\n. Please hang up and try again...\n");
-        return false;
-    }
-        
+      
     if(deviceClosed == false)
     {
         if( stream == SFL_PCM_CAPTURE )
@@ -85,7 +91,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     _debugAlsa("                   : nb channel in=%2d, out=%2d\n", _inChannel, _outChannel);
     _debugAlsa("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLDataFormatString);
 
-    //ost::MutexLock lock( _mutex );
+    ost::MutexLock lock( _mutex );
 
     
     /*void **hint;
@@ -106,12 +112,12 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     void
 AlsaLayer::startStream(void) 
 {
+    ost::MutexLock guard(_mutex);
+    int err;
+
     if( _CaptureHandle && _PlaybackHandle )
     {
-        _talk = true ;
         _debugAlsa(" Start stream\n");
-        int err;
-        //ost::MutexLock lock( _mutex );
         snd_pcm_prepare( _CaptureHandle );
         snd_pcm_start( _CaptureHandle ) ;
 
@@ -123,83 +129,27 @@ AlsaLayer::startStream(void)
     void
 AlsaLayer::stopStream(void) 
 {
+    ost::MutexLock guard(_mutex);
+    
     if( _CaptureHandle && _PlaybackHandle )
     {
         //ost::MutexLock lock( _mutex );
         _debugAlsa(" Stop Stream\n ");
-        _talk = false;
         snd_pcm_drop( _CaptureHandle );
         snd_pcm_prepare( _CaptureHandle );
         snd_pcm_drop( _PlaybackHandle );
         snd_pcm_prepare( _PlaybackHandle );
-        _urgentBuffer.flush();
+        flushUrgent();
+        flushMain();
     }
 }
 
-
-    void 
-AlsaLayer::fillHWBuffer( void)
-{
-
-  unsigned char* data;
-  int pcmreturn, l1, l2;
-  short s1, s2;
-  int periodSize = 128 ;
-  int frames = periodSize >> 2 ;
-  _debug("frames  = %d\n", frames);
-
-  data = (unsigned char*)malloc(periodSize);
-  for(l1 = 0; l1 < 100; l1++) {
-    for(l2 = 0; l2 < frames; l2++) {
-      s1 = 0;
-      s2 = 0;
-      data[4*l2] = (unsigned char)s1;
-      data[4*l2+1] = s1 >> 8;
-      data[4*l2+2] = (unsigned char)s2;
-      data[4*l2+3] = s2 >> 8;
-    }
-    while ((pcmreturn = snd_pcm_writei(_PlaybackHandle, data, frames)) < 0) {
-      snd_pcm_prepare(_PlaybackHandle);
-      //_debugAlsa("< Buffer Underrun >\n");
-    }
-  }
-}
 
     bool
 AlsaLayer::isStreamActive (void) 
 {
     //ost::MutexLock lock( _mutex );
     return (isPlaybackActive() && isCaptureActive());
-}
-
-    int 
-AlsaLayer::playSamples(void* buffer, int toCopy, bool isTalking)
-{
-    //ost::MutexLock lock( _mutex );
-    if( isTalking )
-        _talk = true;
-    if ( _PlaybackHandle ){ 
-        write( adjustVolume( buffer , toCopy , SFL_PCM_PLAYBACK ) , toCopy );
-    }
-    return 0;
-}
-
-    int
-AlsaLayer::putUrgent(void* buffer, int toCopy)
-{
-    int nbBytes = 0;
-
-    if ( _PlaybackHandle ){ 
-        //fillHWBuffer();
-        int a = _urgentBuffer.AvailForPut();
-        if( a >= toCopy ){
-            nbBytes = _urgentBuffer.Put( buffer , toCopy , _defaultVolume );
-        } else {
-            nbBytes = _urgentBuffer.Put( buffer , a , _defaultVolume ) ;
-        }
-    }
-
-    return nbBytes;
 }
 
     int
@@ -225,7 +175,6 @@ AlsaLayer::getMic(void *buffer, int toCopy)
     if( _CaptureHandle ) 
     {
         res = read( buffer, toCopy );
-        adjustVolume( buffer , toCopy , SFL_PCM_CAPTURE );
     }
     return res ;
 }
@@ -245,33 +194,6 @@ void AlsaLayer::restorePulseAppsVolume( void ){}
 //////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
-
-    void
-AlsaLayer::playTones( void )
-{
-    int frames;
-    int maxBytes;
-
-    //frames = _periodSize  ; 
-    frames = 940  ; 
-    maxBytes = frames * sizeof(SFLDataFormat)  ;
-    SFLDataFormat* out = (SFLDataFormat*)malloc(maxBytes * sizeof(SFLDataFormat));
-    if( _talk ) {}
-    else {
-        AudioLoop *tone = _manager -> getTelephoneTone();
-        if( tone != 0 ){
-            tone -> getNext( out , frames , _manager->getSpkrVolume() );
-            write( out , maxBytes );
-        } 
-        else if( ( tone=_manager->getTelephoneFile() ) != 0 ){
-            tone ->getNext( out , frames , _manager->getSpkrVolume() );
-            write( out , maxBytes );
-        }
-    }
-    // free the temporary data buffer 
-    free( out ); out = 0;
-}
-
 
 bool
 AlsaLayer::isPlaybackActive(void) {
@@ -437,8 +359,8 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
         }
     }
 
-    //TODO something, really!
-    _talk = false;
+    /* Start the secondary audio thread for callbacks */
+    _audioThread->start();
 
     return true;
 }
@@ -481,6 +403,8 @@ AlsaLayer::write(void* buffer, int length)
     int
 AlsaLayer::read( void* buffer, int toCopy)
 {
+    ost::MutexLock lock( _mutex );
+    
     if(deviceClosed || _CaptureHandle == NULL)
         return 0;
 
@@ -511,14 +435,6 @@ AlsaLayer::read( void* buffer, int toCopy)
 
     return toCopy;
 
-}
-
-    int
-AlsaLayer::putInCache( char code UNUSED, 
-        void *buffer UNUSED, 
-        int toCopy UNUSED )
-{
-    return 1;
 }
 
     void
@@ -683,23 +599,62 @@ AlsaLayer::soundCardGetIndex( std::string description )
     return 0;
 }
 
-    void*
-AlsaLayer::adjustVolume( void* buffer , int len, int stream )
+void AlsaLayer::audioCallback (void)
 {
-    int vol, i, size;
-    SFLDataFormat *src = NULL;
 
-    (stream == SFL_PCM_PLAYBACK)? vol = _manager->getSpkrVolume() : vol = _manager->getMicVolume();
+    int toGet, toPut, urgentAvail, normalAvail, micAvailPut, maxBytes; 
+    unsigned short spkrVolume, micVolume;
+    AudioLoop *tone;
 
-    src = (SFLDataFormat*) buffer;
+    SFLDataFormat *out;
 
-    if( vol != 100 )
-    {
-        size = len / sizeof(SFLDataFormat);
-        for( i = 0 ; i < size ; i++ ){
-            src[i] = src[i] * vol  / 100 ;
+    spkrVolume = _manager->getSpkrVolume();
+    micVolume  = _manager->getMicVolume();
+
+    // AvailForGet tell the number of chars inside the buffer
+    // framePerBuffer are the number of data for one channel (left)
+    urgentAvail = _urgentRingBuffer.AvailForGet();
+    if (urgentAvail > 0) {
+        // Urgent data (dtmf, incoming call signal) come first.     
+        toGet = (urgentAvail < (int)(framesPerBufferAlsa * sizeof(SFLDataFormat))) ? urgentAvail : framesPerBufferAlsa * sizeof(SFLDataFormat);
+        out =  (SFLDataFormat*)malloc(toGet * sizeof(SFLDataFormat) );
+        _urgentRingBuffer.Get(out, toGet, spkrVolume);
+        /* Play the sound */
+        write( out , toGet );
+        free(out); out=0;
+        // Consume the regular one as well (same amount of bytes)
+        _voiceRingBuffer.Discard(toGet);
+    } else {
+        tone = _manager->getTelephoneTone();
+        toGet = 940  ; 
+        maxBytes = toGet * sizeof(SFLDataFormat)  ;
+        if ( tone != 0) {
+            out = (SFLDataFormat*)malloc(maxBytes * sizeof(SFLDataFormat));
+            tone->getNext(out, toGet, spkrVolume);
+            write (out , maxBytes);
+        } else if ( (tone=_manager->getTelephoneFile()) != 0 ) {
+            out =  (SFLDataFormat*)malloc(maxBytes * sizeof(SFLDataFormat) );
+            tone->getNext(out, toGet, spkrVolume);
+            write (out , maxBytes);
+        } else {
+            // If nothing urgent, play the regular sound samples
+            normalAvail = _voiceRingBuffer.AvailForGet();
+            toGet = (normalAvail < (int)(framesPerBufferAlsa * sizeof(SFLDataFormat))) ? normalAvail : framesPerBufferAlsa * sizeof(SFLDataFormat);
+            out =  (SFLDataFormat*)malloc(framesPerBufferAlsa * sizeof(SFLDataFormat));
+
+            if (toGet) {
+                _voiceRingBuffer.Get(out, toGet, spkrVolume);
+                write (out, toGet);
+            } else {
+                bzero(out, framesPerBufferAlsa * sizeof(SFLDataFormat));
+            }
         }
+        free(out); out=0;
     }
-    return src ; 
+    
+    // Additionally handle the mic's audio stream 
+    micAvailPut = _micRingBuffer.AvailForPut();
+    toPut = (micAvailPut <= (int)(framesPerBufferAlsa * sizeof(SFLDataFormat))) ? micAvailPut : framesPerBufferAlsa * sizeof(SFLDataFormat);
+    //_debug("AL: Nb sample: %d char, [0]=%f [1]=%f [2]=%f\n", toPut, in[0], in[1], in[2]);
+    _micRingBuffer.Put(in, toPut, micVolume);
 }
-

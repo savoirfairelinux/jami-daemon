@@ -23,6 +23,7 @@
 #include <cc++/thread.h>
 
 class VoIPLink;
+class AlsaLayer;
 
 /**
  * @file eventthread.h
@@ -51,5 +52,24 @@ class EventThread : public ost::Thread {
         VoIPLink*	_linkthread;
 };
 
+class AudioThread : public ost::Thread {
+
+    public:
+        AudioThread (AlsaLayer *alsa);
+
+        ~AudioThread (void){
+            terminate();
+        }
+
+        virtual void run (void);
+
+        void stop (void);
+    
+    private:
+        AudioThread (const AudioThread& at);
+        AudioThread& operator=(const AudioThread& at);
+
+        AlsaLayer* _alsa;
+};
 
 #endif // __EVENT_THREAD_H__

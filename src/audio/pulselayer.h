@@ -23,6 +23,8 @@
 #include "audiolayer.h"
 #include "audiostream.h"
 
+#include <pulse/pulseaudio.h>
+
 #define PLAYBACK_STREAM_NAME	    "SFLphone out"
 #define CAPTURE_STREAM_NAME	    "SFLphone in"
 
@@ -35,8 +37,6 @@ class PulseLayer : public AudioLayer {
     ~PulseLayer(void);
 
     void closeLayer( void );
-
-    void trigger_thread(void){}
 
     /**
      * Check if no devices are opened, otherwise close them.
@@ -68,18 +68,6 @@ class PulseLayer : public AudioLayer {
     bool isStreamActive (void); 
 
     /**
-     * Flush the main ringbuffer, reserved for the voice
-     */
-    void flushMain();
-    
-    int putUrgent(void* buffer, int toCopy);
-
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    int putInCache( char code, void* buffer , int toCopy );
-
-    /**
      * Query the capture device for number of bytes available in the hardware ring buffer
      * @return int The number of bytes available
      */
@@ -98,12 +86,6 @@ class PulseLayer : public AudioLayer {
      */
     void flushMic();
 
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    int playSamples(void* buffer, int toCopy, bool isTalking) ;
-
-    //static void audioCallback ( pa_stream* s, size_t bytes, void* userdata );
     static void overflow ( pa_stream* s, void* userdata );
     static void underflow ( pa_stream* s, void* userdata );
     static void stream_state_callback( pa_stream* s, void* user_data );	
@@ -218,21 +200,6 @@ class PulseLayer : public AudioLayer {
      */
     void serverinfo( void );
 
-    /** 
-     * Ringbuffer for incoming voice data (playback)
-     */
-    RingBuffer _mainSndRingBuffer;
-
-    /** 
-     * Ringbuffer for dtmf data
-     */
-    RingBuffer _urgentRingBuffer;
-
-    /** 
-     * Ringbuffer for outgoing voice data (mic)
-     */
-    RingBuffer _micRingBuffer;
-
     /** PulseAudio context and asynchronous loop */
     pa_context* context;
     pa_threaded_mainloop* m;
@@ -246,11 +213,6 @@ class PulseLayer : public AudioLayer {
      * A stream object to handle the pulseaudio capture stream
      */
     AudioStream* record;
-
-    /**
-     * A stream object to handle the pulseaudio upload stream
-     */
-    AudioStream* cache;
 
     int spkrVolume;
     int micVolume;

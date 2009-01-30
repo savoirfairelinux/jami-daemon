@@ -341,8 +341,10 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 #else
 #endif
       
-      audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
+    //audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
+    audiolayer->putMain (spkrDataConverted, nbSample * sizeof(SFLDataFormat));
       
+
       // Notify (with a beep) an incoming call when there is already a call 
       countTime += time->getSecond();
       if (Manager::instance().incomingCallWaiting() > 0) {

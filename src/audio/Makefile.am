@@ -30,6 +30,7 @@ libaudio_la_SOURCES = \
 		dtmf.cpp \
 		tone.cpp \
 		alsalayer.cpp \
+		audiolayer.cpp \
 		pulselayer.cpp \
 		audiodevice.cpp \
 		dtmfgenerator.cpp \
