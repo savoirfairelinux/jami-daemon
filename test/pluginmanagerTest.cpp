@@ -19,33 +19,67 @@
 
 #include <stdio.h>
 #include <sstream>
+#include <dlfcn.h>
 
 #include "pluginmanagerTest.h"
 
 using std::cout;
 using std::endl;
 
+#define PLUGIN_TEST_DIR  "/usr/lib/sflphone/plugins/libplugintest.so"
+#define PLUGIN_TEST_NAME  "mytest"
+
+
 void PluginManagerTest::setUp(){
     // Instanciate the plugin manager singleton
     _pm = ::sflphone::PluginManager::instance();
+    handlePtr = NULL;
+    plugin = 0;
 }
 
-void PluginManagerTest::testLoadPluginDirectory(){
-    CPPUNIT_ASSERT(_pm->loadPlugins() == 0);
+void PluginManagerTest::testLoadDynamicLibrary(){
+    CPPUNIT_ASSERT(_pm->loadDynamicLibrary(PLUGIN_TEST_DIR) != NULL);
 }
 
-void PluginManagerTest::testLoadPlugin(){
-    CPPUNIT_ASSERT(_pm->loadPlugins() == 0);
-    //CPPUNIT_ASSERT( _pm->isPluginLoaded("test") == NULL );
+void PluginManagerTest::testUnloadDynamicLibrary(){
+
+    handlePtr = _pm->loadDynamicLibrary(PLUGIN_TEST_DIR);
+    CPPUNIT_ASSERT(handlePtr != 0);
+    CPPUNIT_ASSERT(_pm->unloadDynamicLibrary(handlePtr) == 0 );
+}
+
+void PluginManagerTest::testInstanciatePlugin(){
+    
+    handlePtr = _pm->loadDynamicLibrary (PLUGIN_TEST_DIR);
+    CPPUNIT_ASSERT (handlePtr != 0);
+    CPPUNIT_ASSERT (_pm->instanciatePlugin (handlePtr, &plugin) == 0);
+    CPPUNIT_ASSERT (plugin!=NULL);
+}
+
+void PluginManagerTest::testInitPlugin(){
+
+    handlePtr = _pm->loadDynamicLibrary (PLUGIN_TEST_DIR);
+    CPPUNIT_ASSERT (handlePtr != 0);
+    CPPUNIT_ASSERT (_pm->instanciatePlugin (handlePtr, &plugin) == 0);
+    CPPUNIT_ASSERT (plugin!=NULL);
+    CPPUNIT_ASSERT (plugin->initFunc(0) == 0);
+    CPPUNIT_ASSERT (plugin->getPluginName() == PLUGIN_TEST_NAME);
 }
 
 void PluginManagerTest::testRegisterPlugin(){
-    // First load the default directory
-    _pm->loadPlugins();
-    // Resolve the symbol
+
+    handlePtr = _pm->loadDynamicLibrary (PLUGIN_TEST_DIR);
+    CPPUNIT_ASSERT (handlePtr != 0);
+    CPPUNIT_ASSERT (_pm->instanciatePlugin (handlePtr, &plugin) == 0);
+    CPPUNIT_ASSERT (_pm->isPluginLoaded (PLUGIN_TEST_NAME) == NULL);
+    CPPUNIT_ASSERT (_pm->registerPlugin (handlePtr, plugin) == 0);
+    CPPUNIT_ASSERT (_pm->isPluginLoaded (PLUGIN_TEST_NAME) == plugin);
 }
 
 void PluginManagerTest::tearDown(){
     // Delete the plugin manager object
     delete _pm; _pm=0;
+    handlePtr = NULL;
+    if(plugin)
+        delete plugin; plugin = 0;
 }

@@ -1,39 +1,26 @@
-#include "../plugininterface.h" 
+#include "../plugin.h" 
 
 namespace sflphone {
 
-    class PluginTest : public PluginInterface {
+    class PluginTest : public Plugin {
     
         public:
-            PluginTest( const std::string &name ):PluginInterface( name ){
-            }
+            PluginTest( const std::string &name )
+                :Plugin( name ) {
+                }
 
-            virtual int initFunc (void)
+            virtual int initFunc (int i)
             {
-                return 0;
+                return i;
             }
 
-            virtual int registerFunc (Plugin **plugin)
-            {
-                Plugin *ret;
-
-                ret = new Plugin(this);
-                
-                ret->_name = getInterfaceName();
-                ret->_required = 1;
-                ret->_version_major=1;
-                ret->_version_minor=0;
-
-                *plugin = ret;
-                return 0;
-            }
     };
-
-}
-extern "C" ::sflphone::PluginInterface* create (void){
-    return new ::sflphone::PluginTest("test");
 }
 
-extern "C" void* destroy( ::sflphone::PluginInterface *p ){
+extern "C" ::sflphone::Plugin* create (void){
+    return new ::sflphone::PluginTest("mytest");
+}
+
+extern "C" void destroy (::sflphone::Plugin *p){
     delete p;
 }

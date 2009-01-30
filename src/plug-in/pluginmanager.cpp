@@ -29,7 +29,7 @@
 ::sflphone::PluginManager::loadPlugins (const std::string &path)
 {
     std::string pluginDir, current;
-    ::sflphone::PluginInterface *interface;
+    ::sflphone::Plugin *plugin;
     DIR *dir;
     dirent *dirStruct;
     int result=0;
@@ -54,15 +54,18 @@
             if( current != pDir && current != cDir ){
                 handle = loadDynamicLibrary( pluginDir + current );
                 
-                if(instanciatePlugin (handle, &interface) != 0)       	        
+                if(instanciatePlugin (handle, &plugin) != 0)       	        
                 {
                     _debug("Error instanciating the plugin ...\n");
                     return 1;
                 }
                 
+                /*
                 if(registerPlugin (handle, interface) != 0)
+                {
                     _debug("Error registering the plugin ...\n");
                     return 1;
+                }*/
             }
 	    }
     }
@@ -119,7 +122,7 @@
 }
 
     int 
-::sflphone::PluginManager::instanciatePlugin (void *handlePtr, ::sflphone::PluginInterface **plugin)
+::sflphone::PluginManager::instanciatePlugin (void *handlePtr, ::sflphone::Plugin **plugin)
 {
     createFunc *createPlugin;
 
@@ -134,30 +137,25 @@
 }
 
     int 
-::sflphone::PluginManager::registerPlugin (void *handlePtr, PluginInterface *interface)
+::sflphone::PluginManager::registerPlugin (void *handlePtr, Plugin *plugin)
 {
-    Plugin *myplugin;
     std::string name;
 
-    if( !( handlePtr && interface!=0 ) )
+    if( !(handlePtr && plugin!=0) )
         return 1;
     
-    /* Fetch information from the loaded plugin interface */
-    if(interface->registerFunc (&myplugin) != 0)
-        return 1;
-    /* Creation of the plugin wrapper */
-    myplugin = new Plugin (handlePtr, interface);
-
+    name = plugin->getPluginName();
     /* Add the data in the loaded plugin map */
-    _loadedPlugins[ myplugin->_name ] = myplugin;
+    _loadedPlugins[ name ] = plugin;
     return 0;
 }
 
-    void 
+    int 
 ::sflphone::PluginManager::unloadDynamicLibrary (void * pluginHandlePtr) 
 {
     dlclose( pluginHandlePtr );
     dlerror();
+    return 0;
 }
 
 

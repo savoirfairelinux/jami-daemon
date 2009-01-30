@@ -27,6 +27,7 @@
 
 // Application import
 #include "plug-in/pluginmanager.h"
+#include "plug-in/plugin.h"
 
 /*
  * @file pluginManagerTest.cpp  
@@ -38,12 +39,16 @@
 
 class PluginManagerTest : public CppUnit::TestCase {
 
+    class Plugin;
+
     /*
      * Use cppunit library macros to add unit test the factory
      */
     CPPUNIT_TEST_SUITE( PluginManagerTest );
-        CPPUNIT_TEST( testLoadPluginDirectory );
-        CPPUNIT_TEST( testLoadPlugin );
+        CPPUNIT_TEST( testLoadDynamicLibrary );
+        CPPUNIT_TEST( testUnloadDynamicLibrary );
+        CPPUNIT_TEST( testInstanciatePlugin );
+        CPPUNIT_TEST( testInitPlugin );
         CPPUNIT_TEST( testRegisterPlugin );
     CPPUNIT_TEST_SUITE_END();
 
@@ -62,14 +67,20 @@ class PluginManagerTest : public CppUnit::TestCase {
          */
         inline void tearDown();
 
-        void testLoadPluginDirectory();
+        void testLoadDynamicLibrary();
         
-        void testLoadPlugin();
+        void testUnloadDynamicLibrary();
+
+        void testInstanciatePlugin();
+
+        void testInitPlugin();
 
         void testRegisterPlugin();
 
     private:
         ::sflphone::PluginManager *_pm;
+        void *handlePtr;
+        ::sflphone::Plugin *plugin;
 };
 
 /* Register our test module */

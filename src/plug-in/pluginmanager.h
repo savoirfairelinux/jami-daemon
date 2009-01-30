@@ -6,7 +6,7 @@
  * @brief   Base class of the plugin manager
  */
 
-#include "plugininterface.h"
+#include "plugin.h"
 #include "global.h"
 
 #include <map> 
@@ -18,6 +18,7 @@ namespace sflphone {
 
 
         public:
+
         /**
          * Destructor
          */
@@ -35,7 +36,7 @@ namespace sflphone {
          */
         int loadPlugins( const std::string &path = "" );
 
-        int instanciatePlugin( void *handlePtr, PluginInterface** plugin );
+        int instanciatePlugin( void *handlePtr, Plugin** plugin );
 
         /**
          * Check if a plugin has been already loaded
@@ -44,27 +45,28 @@ namespace sflphone {
          */
         Plugin* isPluginLoaded( const std::string &name );
 
-        int registerPlugin (void *handle, PluginInterface *interface);
-
-        private:
-        /**
-         * Default constructor
-         */
-        PluginManager();
-
+        int registerPlugin (void *handle, Plugin *plugin);
+        
         /**
          * Load a unix dynamic/shared library 
          * @param filename  The path to the dynamic/shared library
          * @return void*    A pointer on it
          */
         void * loadDynamicLibrary( const std::string &filename );
-
+        
         /**
          * Unload a unix dynamic/shared library 
          * @param pluginHandleptr  The pointer on the loaded plugin
          */
-        void unloadDynamicLibrary( void * pluginHandlePtr );
+        int unloadDynamicLibrary( void * pluginHandlePtr );
 
+
+        private:
+        /**
+         * Default constructor
+         */
+        PluginManager();
+        
         /* Map of plugins associated by their string name */
         typedef std::map<std::string, Plugin*> pluginMap;
         pluginMap _loadedPlugins;
