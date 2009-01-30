@@ -80,34 +80,6 @@ class AlsaLayer : public AudioLayer {
     void stopStream(void);
     
     /**
-     * Check if the playback is running
-     * @return true if the state of the playback handle equals SND_PCM_STATE_RUNNING
-     *	       false otherwise
-     */
-    bool isPlaybackActive( void );
-
-    /**
-     * Check if the capture is running
-     * @return true if the state of the capture handle equals SND_PCM_STATE_RUNNING
-     *	       false otherwise
-     */
-    bool isCaptureActive( void );
-
-    /**
-     * Check if both capture and playback are running
-     * @return true if capture and playback are running
-     *	       false otherwise
-     */
-    bool isStreamActive(void);
-
-    /**
-     * Check if both capture and playback are stopped
-     * @return true if capture and playback are stopped
-     *	       false otherwise
-     */
-    bool isStreamStopped(void);
-
-        /**
      * Query the capture device for number of bytes available in the hardware ring buffer
      * @return int The number of bytes available
      */
@@ -191,17 +163,44 @@ class AlsaLayer : public AudioLayer {
     // Assignment Operator
     AlsaLayer& operator=( const AlsaLayer& rh);
 
+    bool _is_prepared_playback;
+    bool _is_prepared_capture;
+    bool _is_running_capture;
+    bool _is_running_playback;
+    bool _is_open_playback;
+    bool _is_open_capture;
+    bool _trigger_request;
+    
+    bool is_playback_prepared (void) { return _is_prepared_playback; }
+    bool is_capture_prepared (void) { return _is_prepared_capture; }
+    void prepare_playback (void) { _is_prepared_playback = true; }
+    void prepare_capture (void) { _is_prepared_capture = true; }
+    bool is_capture_running (void) { return _is_running_capture; }
+    bool is_playback_running (void) { return _is_running_playback; }
+    void start_playback (void) { _is_running_playback = true; }
+    void stop_playback (void) { _is_running_playback = false; _is_prepared_playback = false; }
+    void start_capture (void) { _is_running_capture = true; }
+    void stop_capture (void) { _is_running_capture = false; _is_prepared_capture = false; }
+    void close_playback (void) { _is_open_playback = false; }
+    void close_capture (void) { _is_open_capture = false; }
+    void open_playback (void) { _is_open_playback = true; }
+    void open_capture (void) { _is_open_capture = true; }
+    bool is_capture_open (void) { return _is_open_capture; }
+    bool is_playback_open (void) { return _is_open_playback; }
+    
     /**
      * Drop the pending frames and close the capture device
      * ALSA Library API
      */
     void closeCaptureStream( void );
+    void stopCaptureStream( void );
+    void startCaptureStream( void );
+    void prepareCaptureStream( void );
 
-    /**
-     * Drop the pending frames and close the playback device
-     * ALSA Library API
-     */
     void closePlaybackStream( void );
+    void stopPlaybackStream( void );
+    void startPlaybackStream( void );
+    void preparePlaybackStream( void );
 
     /**
      * Open the specified device.

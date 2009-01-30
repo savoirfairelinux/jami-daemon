@@ -58,16 +58,6 @@ class PulseLayer : public AudioLayer {
     void stopStream(void);
 
     /**
-     * UNUSED in pulseaudio layer
-     */
-    bool isCaptureActive( void ) { return true; }
-
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    bool isStreamActive (void); 
-
-    /**
      * Query the capture device for number of bytes available in the hardware ring buffer
      * @return int The number of bytes available
      */
@@ -81,11 +71,6 @@ class PulseLayer : public AudioLayer {
      */
     int getMic(void *, int);
     
-    /**
-     * Flush the mic ringbuffer
-     */
-    void flushMic();
-
     static void overflow ( pa_stream* s, void* userdata );
     static void underflow ( pa_stream* s, void* userdata );
     static void stream_state_callback( pa_stream* s, void* user_data );	

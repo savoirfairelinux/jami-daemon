@@ -1590,17 +1590,20 @@ ManagerImpl::initAudioDriver(void)
   void
 ManagerImpl::selectAudioDriver (void)
 {
-  int layer = _audiodriver->getLayerType();
+    int layer, numCardIn, numCardOut, sampleRate, frameSize;
+    std::string alsaPlugin;
+
+    layer = _audiodriver->getLayerType();
   _debug("Audio layer type: %i\n" , layer);
 
-  std::string alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
-  int numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
-  int numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
-  int sampleRate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
+ alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
+  numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
+  numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
+  sampleRate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
   if (sampleRate <=0 || sampleRate > 48000) {
     sampleRate = 44100;
   }
-  int frameSize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
+  frameSize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
 
   if( !_audiodriver -> soundCardIndexExist( numCardIn , SFL_PCM_CAPTURE ) )
   {
@@ -1614,8 +1617,7 @@ ManagerImpl::selectAudioDriver (void)
     numCardOut = ALSA_DFT_CARD_ID ;
     setConfig( AUDIO , ALSA_CARD_ID_OUT , ALSA_DFT_CARD_ID );
   }
-
-
+  
   if(CHECK_INTERFACE( layer , ALSA ))
   {
   delete _audiodriver;

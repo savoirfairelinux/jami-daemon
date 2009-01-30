@@ -285,7 +285,7 @@ IAXVoIPLink::sendAudioFromMic(void)
         _mutexIAX.enterMutex();
         // Make sure the session and the call still exists.
         if (currentCall->getSession()) {
-            if ( iax_send_voice(currentCall->getSession(), currentCall->getFormat(), micDataEncoded, compSize, nbSample) == -1) {
+            if (iax_send_voice(currentCall->getSession(), currentCall->getFormat(), micDataEncoded, compSize, nbSample) == -1) {
                 _debug("IAX: Error sending voice data.\n");
             }
         }
@@ -540,8 +540,6 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
     std::string username, strNum;
     char *lang=NULL;
     int wait, audio_format_preferred, audio_format_capability;
-    char user[username.length()+1];
-    char num[strNum.length()+1];
     IAXAccount *account;
 
     newsession = iax_session_new();
@@ -554,16 +552,14 @@ IAXVoIPLink::iaxOutgoingInvite(IAXCall* call)
     account = dynamic_cast<IAXAccount*> (getAccountPtr());
     username = account->getUsername();
     strNum = username + ":" + account->getPassword() + "@" + account->getHostname() + "/" + call->getPeerNumber();  
-    strcpy(user, username.c_str());
-    strcpy(num, strNum.c_str());
 
     wait = 0;
     /** @todo Make preference dynamic, and configurable */
     audio_format_preferred =  call->getFirstMatchingFormat(call->getSupportedFormat());
     audio_format_capability = call->getSupportedFormat();
 
-    _debug("IAX New call: %s\n", num);
-    iax_call(newsession, user, user, num, lang, wait, audio_format_preferred, audio_format_capability);
+    _debug("IAX New call: %s\n", strNum.c_str());
+    iax_call(newsession, username.c_str(), username.c_str(), strNum.c_str(), lang, wait, audio_format_preferred, audio_format_capability);
 
     return true;
 }
@@ -653,8 +649,8 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
         case IAX_EVENT_VOICE:
             //_debug("Should have a decent value!!!!!! = %i\n" , call -> getAudioCodec());
             //TODO Check this method
-            if( !audiolayer -> isCaptureActive())
-                audiolayer->startStream();
+            //if( !audiolayer -> is_capture_running())
+                //audiolayer->startStream();
             iaxHandleVoiceEvent(event, call);
             break;
 

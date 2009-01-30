@@ -59,5 +59,10 @@ void AudioThread::run (void)
 
 void AudioThread::stop (void)
 {
-    exit();
+    try{
+        terminate();
+    } catch(...){
+        _debugException("! ARTP: Thread destructor didn't terminate correctly");
+        throw;
+    }
 }

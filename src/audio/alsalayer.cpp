@@ -31,6 +31,14 @@ int framesPerBufferAlsa = 2048;
     , _inChannel()
     , _outChannel()
     , IDSoundCards() 
+    , _is_prepared_playback (false)
+    , _is_running_playback (false)
+    , _is_open_playback (false)
+    , _is_prepared_capture (false)
+    , _is_running_capture (false)
+    , _is_open_capture (false)
+    , _trigger_request (false)
+ 
 {
     _debug(" Constructor of AlsaLayer called\n");
     /* Instanciate the audio thread */
@@ -40,6 +48,7 @@ int framesPerBufferAlsa = 2048;
 // Destructor
 AlsaLayer::~AlsaLayer (void) 
 { 
+    _debug("Destructor of AlsaLayer called\n");
     closeLayer();
 }
 
@@ -48,35 +57,31 @@ AlsaLayer::closeLayer()
 {
     _debugAlsa("Close ALSA streams\n");
     
-    ost::MutexLock guard(_mutex);
-    
     if (_audioThread)
     {
+        _debug("Try to stop audio thread\n");
         _audioThread->stop();
         delete _audioThread; _audioThread=NULL;
     }
+
     closeCaptureStream();
     closePlaybackStream();
-    
-    deviceClosed = true;
 }
 
     bool 
 AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize, int stream , std::string plugin) 
 {
-      
-    if(deviceClosed == false)
+    /* Close the devices before open it */  
+    if (stream == SFL_PCM_BOTH && is_capture_open() == true && is_playback_open() == true)
     {
-        if( stream == SFL_PCM_CAPTURE )
-            closeCaptureStream();
-        else if( stream == SFL_PCM_PLAYBACK)
-            closePlaybackStream();
-        else
-        {
-            closeCaptureStream();
-            closePlaybackStream();
-        }
+        closeCaptureStream();
+        closePlaybackStream();
     }
+    else if ((stream == SFL_PCM_CAPTURE || stream == SFL_PCM_BOTH) && is_capture_open() == true)
+        closeCaptureStream ();
+    else if ((stream == SFL_PCM_PLAYBACK || stream == SFL_PCM_BOTH) && is_playback_open () == true)
+        closePlaybackStream ();
+
 
     _indexIn = indexIn;
     _indexOut = indexOut;
@@ -92,17 +97,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     _debugAlsa("                   : sample rate=%5d, format=%s\n", _sampleRate, SFLDataFormatString);
 
     ost::MutexLock lock( _mutex );
-
     
-    /*void **hint;
-    int r = snd_device_name_hint(-1, "pcm", &hint);
-
-    while( *hint ){
-        printf("%s\n", snd_device_name_get_hint(*hint, "DESC"));
-        ++hint;
-    }*/
-
-
     std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
     std::string pcmc = buildDeviceTopo( PCM_PLUGHW , indexIn , 0);
 
@@ -112,44 +107,22 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     void
 AlsaLayer::startStream(void) 
 {
-    ost::MutexLock guard(_mutex);
-    int err;
-
-    if( _CaptureHandle && _PlaybackHandle )
-    {
-        _debugAlsa(" Start stream\n");
-        snd_pcm_prepare( _CaptureHandle );
-        snd_pcm_start( _CaptureHandle ) ;
-
-        snd_pcm_prepare( _PlaybackHandle );
-        if( (err = snd_pcm_start( _PlaybackHandle)) < 0 )  _debugAlsa(" Cannot start (%s)\n", snd_strerror(err));
-    }
+    _debug ("Start ALSA streams\n");
+    prepareCaptureStream ();
+    startCaptureStream ();
+    startPlaybackStream ();
 } 
 
     void
 AlsaLayer::stopStream(void) 
 {
-    ost::MutexLock guard(_mutex);
-    
-    if( _CaptureHandle && _PlaybackHandle )
-    {
-        //ost::MutexLock lock( _mutex );
-        _debugAlsa(" Stop Stream\n ");
-        snd_pcm_drop( _CaptureHandle );
-        snd_pcm_prepare( _CaptureHandle );
-        snd_pcm_drop( _PlaybackHandle );
-        snd_pcm_prepare( _PlaybackHandle );
-        flushUrgent();
-        flushMain();
-    }
-}
+    _debug ("Stop ALSA streams\n");
+    stopCaptureStream ();
+    //stopPlaybackStream ();
 
-
-    bool
-AlsaLayer::isStreamActive (void) 
-{
-    //ost::MutexLock lock( _mutex );
-    return (isPlaybackActive() && isCaptureActive());
+    /* Flush the ring buffers */
+    flushUrgent();
+    flushMain();
 }
 
     int
@@ -179,38 +152,86 @@ AlsaLayer::getMic(void *buffer, int toCopy)
     return res ;
 }
 
-
-    bool
-AlsaLayer::isStreamStopped (void) 
-{
-    //ost::MutexLock lock( _mutex );
-    return !(isStreamActive());
-}
-
-
 void AlsaLayer::reducePulseAppsVolume( void ){}
 void AlsaLayer::restorePulseAppsVolume( void ){}
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
-
-bool
-AlsaLayer::isPlaybackActive(void) {
-    //ost::MutexLock guard( _mutex );
-    if( _PlaybackHandle )
-        return (snd_pcm_state(_PlaybackHandle) == SND_PCM_STATE_RUNNING ? true : false); 
-    else
-        return false;
+    
+void AlsaLayer::stopCaptureStream (void)
+{
+    if(_CaptureHandle){
+        snd_pcm_drop (_CaptureHandle);
+        stop_capture ();
+    }
 }
 
-bool
-AlsaLayer::isCaptureActive(void) {
-    //ost::MutexLock guard( _mutex );
-    if( _CaptureHandle )
-        return (snd_pcm_state( _CaptureHandle) == SND_PCM_STATE_RUNNING ? true : false); 
-    else
-        return false;
+void AlsaLayer::closeCaptureStream (void)
+{
+    if( is_capture_prepared() == true && is_capture_running() == true ) 
+        stopCaptureStream ();
+    if (is_capture_open())
+        snd_pcm_close (_CaptureHandle);
+
+    close_capture ();
+}
+
+void AlsaLayer::startCaptureStream (void)
+{
+    if(_CaptureHandle){
+        snd_pcm_start (_CaptureHandle);
+        start_capture();
+    }
+}
+
+void AlsaLayer::prepareCaptureStream (void)
+{
+    int err;
+
+    err = snd_pcm_prepare (_CaptureHandle);
+    if( err<0 )
+        _debug("Error preparing the device\n");
+
+    prepare_capture ();
+}
+
+void AlsaLayer::stopPlaybackStream (void)
+{
+    if( _PlaybackHandle){
+        snd_pcm_drop (_PlaybackHandle);
+        stop_playback ();
+    }
+}
+
+
+void AlsaLayer::closePlaybackStream (void)
+{
+    if( is_playback_prepared() == true && is_playback_running() == true ) 
+        stopPlaybackStream ();
+    if (is_playback_open()) 
+        snd_pcm_close (_PlaybackHandle);
+
+    close_playback ();
+}
+
+void AlsaLayer::startPlaybackStream (void)
+{
+    if( _PlaybackHandle){
+        snd_pcm_start (_PlaybackHandle);
+        start_playback();
+    }
+}
+
+void AlsaLayer::preparePlaybackStream (void)
+{
+    int err;
+
+    err = snd_pcm_prepare (_PlaybackHandle);
+    if( err<0 )
+        _debug("Error preparing the device\n");
+
+    prepare_playback ();
 }
 
 bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
@@ -311,12 +332,8 @@ bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
         return false;
     }
 
-    if( type == 1 ){
-        
-    }
 
     snd_pcm_sw_params_free( swparams );
-    deviceClosed = false;
 
     return true;
 }
@@ -340,6 +357,8 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
             snd_pcm_close( _PlaybackHandle );
             return false;
         }
+
+        open_playback ();
     }
 
     if(flag == SFL_PCM_BOTH || flag == SFL_PCM_CAPTURE)
@@ -354,9 +373,10 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
             snd_pcm_close( _CaptureHandle );
             return false;
         }
-        if( (err = snd_pcm_start( _CaptureHandle ))<0) {
-          _debugAlsa( "snd_pcm_start failed\n");
-        }
+
+        open_capture ();
+        
+        startCaptureStream ();
     }
 
     /* Start the secondary audio thread for callbacks */
@@ -369,33 +389,34 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     int
 AlsaLayer::write(void* buffer, int length)
 {
-    //if(snd_pcm_state( _PlaybackHandle ) == SND_PCM_STATE_XRUN)
-    //handle_xrun_playback();  
-    //_debugAlsa("avail = %d - toWrite = %d\n" , snd_pcm_avail_update( _PlaybackHandle ) , length / 2);
 
-    snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _PlaybackHandle, length);
-    int err = snd_pcm_writei( _PlaybackHandle , buffer , frames );
-    switch(err) {
-        case -EAGAIN: 
-            _debugAlsa("EAGAIN (%s)\n", snd_strerror( err ));
-            snd_pcm_resume( _PlaybackHandle );
-            break;
-        case -EPIPE: 
-            _debugAlsa(" UNDERRUN (%s)\n", snd_strerror(err));
-            handle_xrun_playback();
-            snd_pcm_writei( _PlaybackHandle , buffer , frames );
-            break;
-        case -ESTRPIPE:
-            _debugAlsa(" ESTRPIPE(%s)\n", snd_strerror(err));
-            snd_pcm_resume( _PlaybackHandle );
-            break;
-        case -EBADFD:
-            _debugAlsa(" (%s)\n", snd_strerror( err ));
-            break;
+
+    if (_trigger_request == true)
+    {
+        _trigger_request = false;
+        startPlaybackStream ();
     }
 
-    if( ( err >=0 ) && ( err < (int)frames ) )
-        _debugAlsa("Short write : %d out of %d\n", err , (int)frames);
+    snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _PlaybackHandle, length);
+    int err;
+    if ((err=snd_pcm_writei( _PlaybackHandle , buffer , frames ))<0) 
+    {
+        switch(err) {
+            case -EPIPE: 
+            case -ESTRPIPE: 
+            case -EIO: 
+                //_debugAlsa(" XRUN playback ignored (%s)\n", snd_strerror(err));
+                handle_xrun_playback();
+                if (snd_pcm_writei( _PlaybackHandle , buffer , frames )<0)
+                    _debugAlsa ("XRUN handling failed\n");
+                _trigger_request = true;
+                break;
+            default:
+                //_debugAlsa ("Write error unknown - dropping frames **********************************: %s\n", snd_strerror(err));
+                stopPlaybackStream ();
+                break;
+        }
+    }
 
     return ( err > 0 )? err : 0 ;
 }
@@ -405,29 +426,29 @@ AlsaLayer::read( void* buffer, int toCopy)
 {
     ost::MutexLock lock( _mutex );
     
-    if(deviceClosed || _CaptureHandle == NULL)
-        return 0;
+    int samples;
 
-    int err;
     if(snd_pcm_state( _CaptureHandle ) == SND_PCM_STATE_XRUN)
     {
-        snd_pcm_prepare( _CaptureHandle );
-        snd_pcm_start( _CaptureHandle );
+        prepareCaptureStream ();
+        startCaptureStream ();
     }
+    
     snd_pcm_uframes_t frames = snd_pcm_bytes_to_frames( _CaptureHandle, toCopy );
-    if(( err = snd_pcm_readi( _CaptureHandle, buffer, frames)) < 0 ) {
-        switch(err){
-            case EPERM:
-                _debugAlsa(" Capture EPERM (%s)\n", snd_strerror(err));
-                snd_pcm_prepare( _CaptureHandle);
-                snd_pcm_start( _CaptureHandle );
-                break;
-            case -EAGAIN:
-                _debugAlsa(" Capture EAGAIN (%s)\n", snd_strerror(err));
-                break;
+    if(( samples = snd_pcm_readi( _CaptureHandle, buffer, frames)) < 0 ) {
+        switch (samples)
+        {
             case -EPIPE:
-                _debugAlsa(" Capture EPIPE (%s)\n", snd_strerror(err));
+            case -ESTRPIPE:
+            case -EIO:
+                //_debugAlsa(" XRUN capture ignored (%s)\n", snd_strerror(samples));
                 handle_xrun_capture();
+                samples = snd_pcm_readi( _CaptureHandle, buffer, frames);
+                if (samples<0)  samples=0;
+                break;
+            default:
+                //_debugAlsa ("Error when capturing data ***********************************************: %s\n", snd_strerror(samples));
+                stopCaptureStream();
                 break;
         }
         return 0;
@@ -446,9 +467,9 @@ AlsaLayer::handle_xrun_capture( void )
     int res = snd_pcm_status( _CaptureHandle, status );
     if( res <= 0){
         if(snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN ){
-            snd_pcm_drop( _CaptureHandle );
-            snd_pcm_prepare( _CaptureHandle );
-            snd_pcm_start( _CaptureHandle ); 
+            stop_capture ();
+            prepare_capture ();
+            start_capture ();
         }
     }
     else
@@ -468,9 +489,9 @@ AlsaLayer::handle_xrun_playback( void )
         state = snd_pcm_status_get_state( status );
         if( state  == SND_PCM_STATE_XRUN )
         {
-            snd_pcm_drop( _PlaybackHandle );
-            snd_pcm_prepare( _PlaybackHandle );
-            //snd_pcm_start( _PlaybackHandle ); 
+            stopPlaybackStream ();
+            preparePlaybackStream ();
+            _trigger_request = true;
         }
     }
 }
@@ -545,25 +566,7 @@ AlsaLayer::getSoundCardsInfo( int stream )
     return cards_id;
 }
 
-    void
-AlsaLayer::closeCaptureStream( void)
-{
-    if(_CaptureHandle){
-        snd_pcm_drop( _CaptureHandle );
-        snd_pcm_close( _CaptureHandle );
-        _CaptureHandle = 0;
-    }
-}
 
-    void
-AlsaLayer::closePlaybackStream( void)
-{
-    if(_PlaybackHandle){
-        snd_pcm_drop( _PlaybackHandle );
-        snd_pcm_close( _PlaybackHandle );
-        _PlaybackHandle = 0;
-    }
-}
 
     bool
 AlsaLayer::soundCardIndexExist( int card , int stream )
@@ -653,8 +656,8 @@ void AlsaLayer::audioCallback (void)
     }
     
     // Additionally handle the mic's audio stream 
-    micAvailPut = _micRingBuffer.AvailForPut();
-    toPut = (micAvailPut <= (int)(framesPerBufferAlsa * sizeof(SFLDataFormat))) ? micAvailPut : framesPerBufferAlsa * sizeof(SFLDataFormat);
+    //micAvailPut = _micRingBuffer.AvailForPut();
+    //toPut = (micAvailPut <= (int)(framesPerBufferAlsa * sizeof(SFLDataFormat))) ? micAvailPut : framesPerBufferAlsa * sizeof(SFLDataFormat);
     //_debug("AL: Nb sample: %d char, [0]=%f [1]=%f [2]=%f\n", toPut, in[0], in[1], in[2]);
-    _micRingBuffer.Put(in, toPut, micVolume);
+    //_micRingBuffer.Put(in, toPut, micVolume);
 }

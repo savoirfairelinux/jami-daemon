@@ -198,12 +198,6 @@ PulseLayer::getMic(void *buffer, int toCopy)
     return 0;
 }
 
-  void
-PulseLayer::flushMic()
-{
-  _micRingBuffer.flush();
-}
-
   void 
 PulseLayer::startStream (void) 
 {
@@ -221,6 +215,8 @@ PulseLayer::stopStream (void)
   pa_stream_flush( playback->pulseStream(), NULL, NULL );
   pa_stream_flush( record->pulseStream(), NULL, NULL );
   flushMic();
+  flushMain();
+  flushUrgent();
 }
 
 
@@ -273,7 +269,7 @@ void PulseLayer::writeToSpeaker( void )
 
   if (urgentAvail > 0) {
     // Urgent data (dtmf, incoming call signal) come first.		
-    //_debug("Play urgent!: %i\n" , urgentAvail);
+    //_debug("Play urgent!: %i\e" , urgentAvail);
     toGet = (urgentAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof(SFLDataFormat);
     out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) );
     _urgentRingBuffer.Get(out, toGet, 100);

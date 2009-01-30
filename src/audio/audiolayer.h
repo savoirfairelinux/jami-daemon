@@ -60,7 +60,6 @@ class AudioLayer {
               , _micRingBuffer( SIZEBUF )
               , _defaultVolume(100)
               , _talk ( false )
-              , deviceClosed ( true )
               , _indexIn ( 0 )
               , _indexOut ( 0 )
               , _sampleRate ( 0 )
@@ -77,7 +76,7 @@ class AudioLayer {
         /**
          * Destructor
          */
-        ~AudioLayer(void){}
+        virtual ~AudioLayer(void) {} 
 
         virtual void closeLayer( void ) = 0;
 
@@ -109,14 +108,6 @@ class AudioLayer {
          * ALSA Library API
          */
         virtual void stopStream(void) = 0;
-
-
-        /**
-         * Check if the capture is running
-         * @return true if the state of the capture handle equals SND_PCM_STATE_RUNNING
-         *	       false otherwise
-         */
-        virtual bool isCaptureActive( void ) = 0;
 
         /**
          * Query the capture device for number of bytes available in the hardware ring buffer
@@ -193,6 +184,11 @@ class AudioLayer {
         void flushMain (void);
 
         void flushUrgent (void);
+
+        /**
+         * Flush the mic ringbuffer
+         */
+        void flushMic();
 
 
         /**
@@ -281,13 +277,6 @@ class AudioLayer {
          *	false otherwise
          */
         bool _talk;
-
-        /**
-         * Enable to determine if the devices are opened or not
-         *		  true if the devices are closed
-         *		  false otherwise
-         */
-        bool deviceClosed;
 
         /**
          * Number of audio cards on which capture stream has been opened 

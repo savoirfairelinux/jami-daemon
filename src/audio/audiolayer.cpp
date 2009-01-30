@@ -31,6 +31,12 @@ void AudioLayer::flushUrgent (void)
     _urgentRingBuffer.flush();
 }
 
+void AudioLayer::flushMic (void)
+{
+    ost::MutexLock guard(_mutex);
+    _micRingBuffer.flush();
+}
+
 int AudioLayer::putUrgent(void* buffer, int toCopy)
 {
     int a;

@@ -60,7 +60,6 @@ AudioRtp::createNewSession (SIPCall *ca) {
         _debug("! ARTP Failure: Thread already exists..., stopping it\n");
         _debug("**********************************************************\n");
         delete _RTXThread; _RTXThread = 0;
-        //return -1; 
     }
 
   // Start RTP Send/Receive threads
@@ -263,7 +262,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     int nb_sample_up = nbSample;
     int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
 
-    //_debug("resample data\n");
+    //_debug("resample data = %i\n", nb_sample_up);
     nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
 
     if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
