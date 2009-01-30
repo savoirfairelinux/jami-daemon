@@ -43,7 +43,8 @@ class PluginManagerTest : public CppUnit::TestCase {
      */
     CPPUNIT_TEST_SUITE( PluginManagerTest );
         CPPUNIT_TEST( testLoadPluginDirectory );
-        CPPUNIT_TEST( testNonloadedPlugin );
+        CPPUNIT_TEST( testLoadPlugin );
+        CPPUNIT_TEST( testRegisterPlugin );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -63,7 +64,9 @@ class PluginManagerTest : public CppUnit::TestCase {
 
         void testLoadPluginDirectory();
         
-        void testNonloadedPlugin();
+        void testLoadPlugin();
+
+        void testRegisterPlugin();
 
     private:
         ::sflphone::PluginManager *_pm;

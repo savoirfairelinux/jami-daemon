@@ -69,6 +69,8 @@
 #define PULSE_LENGTH		"DTMF.pulseLength"    /** Length of the DTMF in millisecond */
 #define SEND_DTMF_AS		"DTMF.sendDTMFas"     /** DTMF send mode */
 #define SYMMETRIC		"VoIPLink.symmetric"  /** VoIP link type */
+#define STUN_ENABLE     "STUN.enable"
+#define STUN_SERVER     "STUN.server"
 
 #define EMPTY_FIELD		""			/** Default value for empty field */
 #define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"	/** Default STUN server address */
@@ -89,6 +91,7 @@
 #define DFT_EXPIRE_VALUE	"180"			/** Default expire value for registration */
 #define DFT_AUDIO_MANAGER	"1"			/** Default audio manager */
 #define DFT_SIP_PORT            "5060"
+#define DFT_STUN_ENABLE     "0"
 
 #ifdef USE_ZEROCONF
 #define CONFIG_ZEROCONF_DEFAULT_STR "1"			/** Default Zero configuration networking module value */

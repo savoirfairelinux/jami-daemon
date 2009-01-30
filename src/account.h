@@ -38,6 +38,19 @@ class VoIPLink;
 
 typedef std::string AccountID;
 
+/** Contains all the state an Voip can be in */
+typedef enum RegistrationState {
+        Unregistered, 
+        Trying, 
+        Registered, 
+        Error, 
+        ErrorAuth , 
+        ErrorNetwork , 
+        ErrorHost, 
+        ErrorExistStun, 
+        ErrorConfStun
+} RegistrationState;
+
 #define AccountNULL ""
 
 // Common account parameters
@@ -59,7 +72,7 @@ class Account{
 
     public:
 
-        Account(const AccountID& accountID);
+        Account(const AccountID& accountID, std::string type);
 
         /**
          * Virtual destructor
@@ -106,10 +119,27 @@ class Account{
          * Get the registration state of the specified link
          * @return RegistrationState	The registration state of underlying VoIPLink
          */
-        VoIPLink::RegistrationState getRegistrationState() { return _link->getRegistrationState(); }
+        inline RegistrationState getRegistrationState() { return _registrationState; }
+
+        void setRegistrationState( RegistrationState state );
+
+        //TODO inline?
+        inline std::string getUsername( void ) { return _username; }
+        inline void setUsername( std::string username) { _username = username; }
+
+        inline std::string getHostname( void ) { return _hostname; }
+        inline void setHostname( std::string hostname) { _hostname = hostname; }
+
+        inline std::string getPassword( void ) { return _password; }
+        inline void setPassword( std::string password ) { _password = password; }
+
+        inline std::string getAlias( void ) { return _alias; }
+        inline void setAlias( std::string alias ) { _alias = alias; }
+
+        inline std::string getType( void ) { return _type; }
+        inline void setType( std::string type ) { _type = type; }
 
     private:
-
         // copy constructor
         Account(const Account& rh);
 
@@ -123,6 +153,32 @@ class Account{
         AccountID _accountID;
 
         /**
+         * Account login information: username
+         */
+        std::string _username;
+
+        /**
+         * Account login information: hostname
+         */
+        std::string _hostname;
+
+        /**
+         * Account login information: password
+         */
+        std::string _password;
+
+        /**
+         * Account login information: Alias
+         */
+        std::string _alias;
+
+        /*
+         * The account type
+         * IAX2 or SIP
+         */
+        std::string _type;
+
+        /**
          * Voice over IP Link contains a listener thread and calls
          */
         VoIPLink* _link;
@@ -133,6 +189,11 @@ class Account{
          * Modified by the configuration (key: ENABLED)
          */
         bool _enabled;
+
+        /*
+         * The registration state of the account
+         */
+        RegistrationState _registrationState;
 
 };
 

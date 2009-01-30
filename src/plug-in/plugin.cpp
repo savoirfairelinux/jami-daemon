@@ -1,27 +1,15 @@
-#include "plugin.h"
+#include "plugin.h" 
 
-::sflphone::Plugin::Plugin( const std::string &filename UNUSED )
+::sflphone::Plugin::Plugin (void *handle, PluginInterface *interface)
+    :_handlePtr(handle), _interface(interface)
 {
-    //TODO IMPLEMENT
 }
 
-::sflphone::Plugin::Plugin( const Plugin &plugin UNUSED )
+::sflphone::Plugin::Plugin (PluginInterface *interface)
+    :_interface(interface)
 {
-    //TODO IMPLEMENT
 }
 
-::sflphone::Plugin::~Plugin()
+::sflphone::Plugin::~Plugin ()
 {
-    //TODO IMPLEMENT
-}
-
-int ::sflphone::Plugin::getCoreVersion( void ) const
-{
-    //TODO IMPLEMENT
-    return 1;
-}
-
-void ::sflphone::Plugin::registerPlugin( PluginManager & )
-{
-    //TODO IMPLEMENT
 }
