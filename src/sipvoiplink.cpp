@@ -477,7 +477,6 @@ SIPVoIPLink::hangup(const CallID& id)
         return false;
 
     call->getInvSession()->mod_data[getModId()] = NULL;
-    return true;
 
     // Release RTP thread
     if (Manager::instance().isCurrentCall(id)) {
