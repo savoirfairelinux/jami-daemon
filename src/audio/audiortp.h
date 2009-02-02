@@ -29,7 +29,7 @@
 #include <cc++/numbers.h>
 
 #include "../global.h"
-#include "plug-in/audiorecorder/audiorecord.h"
+// #include "plug-in/audiorecorder/audiorecord.h"
 #include "../samplerateconverter.h"
 
 #define UP_SAMPLING 0
@@ -71,6 +71,9 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
      */
     AudioRecord recAudio;
 
+    /** A SIP call */
+    SIPCall* _ca;    
+
   private:
 
     // copy constructor
@@ -78,9 +81,6 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
   
     // assignment operator
     AudioRtpRTX& operator=(const AudioRtpRTX& rh);
-
-    /** A SIP call */
-    SIPCall* _ca;
 
     /** RTP session to send data */
     ost::RTPSession *_sessionSend;

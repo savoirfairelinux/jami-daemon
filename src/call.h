@@ -218,7 +218,13 @@ class Call{
     /**
      * A recorder fro this call
      */
-    AudioRecord audioRec; 
+    AudioRecord recAudio;
+  
+    /**
+     * SetRecording
+     */
+    void setRecording();
+     
 
   protected:
     /** Protect every attribute that can be changed by two threads */

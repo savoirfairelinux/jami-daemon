@@ -61,7 +61,7 @@ public:
    * @param type     The sound file format (FILE_RAW, FILE_WAVE)
    * @param format   Internal sound format (INT16 / INT32)
    */
-  void openFile(std::string fileName, FILE_TYPE type, SOUND_FORMAT format, CallID& id);
+  void openFile(std::string fileName, FILE_TYPE type, SOUND_FORMAT format);
 
   /**
    * Close the opend recording file. If wave: cout the number of byte

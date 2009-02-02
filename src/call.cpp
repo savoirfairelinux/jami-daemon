@@ -55,11 +55,21 @@ Call::Call(const CallID& id, Call::CallType type)
     _filename = out.str();
 
     printf("Call::constructor filename for tis call %s \n",_filename.c_str());
+
+
+
+    FILE_TYPE ft = FILE_WAV;
+    SOUND_FORMAT sf = INT16;
+    _debug("CALL::Opening the wave file in call nstance\n");
+    recAudio.setSndSamplingRate(44100);
+    recAudio.openFile("testRecFromCall",ft,sf);
 }
 
 
 Call::~Call()
 {
+   _debug("CALL::Close wave file in call instance\n");
+   recAudio.closeFile();
 }
 
 void 
@@ -146,3 +156,8 @@ Call::isAudioStarted()
   return _audioStarted;
 }
 
+void
+Call::setRecording()
+{
+  recAudio.setRecording();
+}

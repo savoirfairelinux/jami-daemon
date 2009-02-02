@@ -101,7 +101,8 @@ void
 AudioRtp::setRecording() {
   
   _debug("AudioRtp::setRecording");
-  _RTXThread->recAudio.setRecording();
+  // _RTXThread->recAudio.setRecording();
+  _RTXThread->_ca->setRecording();
   
 }
 
@@ -203,7 +204,11 @@ AudioRtpRTX::initAudioRtpSession (void)
     FILE_TYPE ft = FILE_WAV;
     SOUND_FORMAT sf = INT16;
     recAudio.setSndSamplingRate(44100);
-    recAudio.openFile(_ca->getFileName(),ft,sf,_ca->getCallId());
+    recAudio.openFile(_ca->getFileName(),ft,sf);
+    
+    //_debug("Opening the wave file in call nstance\n");
+    //_ca->recAudio.setSndSamplingRate(44100);
+    //_ca->recAudio.openFile("testRecFromCall",ft,sf,_ca->getCallId());
 
 
     if (!_sym) {
@@ -459,13 +464,17 @@ AudioRtpRTX::run () {
       // Let's wait for the next transmit cycle
 
       recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
-      
+      _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
+
       Thread::sleep(TimerPort::getTimer()); 
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
     }
 
     _debug("Close wave file\n");
     recAudio.closeFile();
+   
+    //_debug("Close wave file in call instance\n");
+    //_ca->recAudio.closeFile();
 
     // _debug("stop stream for audiortp loop\n");
     audiolayer->stopStream();
@@ -475,6 +484,9 @@ AudioRtpRTX::run () {
     
     _debug("! Close wave file\n");
     recAudio.closeFile();
+   
+    //_debug("Close wave file in call instance\n");
+    //_ca->recAudio.closeFile();
  
     throw;
   } catch(...) {
@@ -482,6 +494,9 @@ AudioRtpRTX::run () {
     _debugException("* ARTP Action: Stop");
     _debug("* Close wave file\n");
     recAudio.closeFile(); 
+   
+    //_debug("Close wave file in call instance\n");
+    //_ca->recAudio.closeFile();
 
     throw;
   }

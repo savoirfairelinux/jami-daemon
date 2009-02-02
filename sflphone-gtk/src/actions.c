@@ -259,6 +259,7 @@ sflphone_hang_up()
 			case CALL_STATE_HOLD:
 			case CALL_STATE_BUSY:
 			case CALL_STATE_FAILURE:
+                        case CALL_STATE_RECORDING:
 				dbus_hang_up (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
 				(void) time(&selectedCall->_stop);
@@ -330,6 +331,10 @@ sflphone_on_hold ()
 			case CALL_STATE_CURRENT:
 				dbus_hold (selectedCall);
 				break;
+                        case CALL_STATE_RECORD:
+                                dbus_hold (selectedCall);
+                                break;
+                                
 			default:
 				g_warning("Should not happen in sflphone_on_hold!");
 				break;
@@ -714,17 +719,16 @@ sflphone_rec_call()
   {
       case CALL_STATE_CURRENT:
             selectedCall->state = CALL_STATE_RECORD;
-            update_call_tree(current_calls,selectedCall);
-            update_menus();
             break; 
       case CALL_STATE_RECORD:
             selectedCall->state = CALL_STATE_CURRENT;
-            update_call_tree(current_calls,selectedCall);
-            update_menus();
             break;
       default: 
+            g_warning("Should not happen in sflphone_off_hold ()!");
         break;
   }
+  update_call_tree(current_calls,selectedCall);
+  update_menus();
 }
 
 /* Internal to action - set the __CURRENT_ACCOUNT variable */
@@ -761,7 +765,7 @@ sflphone_fill_codec_list()
     c->_bandwidth = atof(details[3]);
     codec_list_add(c);
   }
- 
+
   for(pl=codecs; *codecs; codecs++)
   {
     details = (gchar **)dbus_codec_details(atoi(*codecs));

@@ -36,7 +36,7 @@ void AudioRecord::setSndSamplingRate(int smplRate){
 }
 
 
-void AudioRecord::openFile(std::string name, FILE_TYPE type, SOUND_FORMAT format, CallID& id){
+void AudioRecord::openFile(std::string name, FILE_TYPE type, SOUND_FORMAT format){
   
    _debug("AudioRecord::openFile()\n");  
   
