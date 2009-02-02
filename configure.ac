@@ -36,8 +36,7 @@ AC_CONFIG_FILES([src/Makefile \
   src/audio/codecs/Makefile
   src/audio/codecs/ilbc/Makefile \
   src/config/Makefile \
-  src/dbus/Makefile \
-  src/zeroconf/Makefile]) 
+  src/dbus/Makefile ]) 
   
   dnl Unitary test section
 AC_CONFIG_FILES([test/Makefile])
