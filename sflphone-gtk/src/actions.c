@@ -259,7 +259,7 @@ sflphone_hang_up()
 			case CALL_STATE_HOLD:
 			case CALL_STATE_BUSY:
 			case CALL_STATE_FAILURE:
-                        case CALL_STATE_RECORDING:
+                        case CALL_STATE_RECORD:
 				dbus_hang_up (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
 				(void) time(&selectedCall->_stop);

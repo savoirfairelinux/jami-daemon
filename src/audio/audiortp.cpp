@@ -53,14 +53,15 @@ AudioRtp::~AudioRtp (void) {
 
 int 
 AudioRtp::createNewSession (SIPCall *ca) {
-  //ost::MutexLock m(_threadMutex);
+    ost::MutexLock m(_threadMutex);
 
-  // something should stop the thread before...
-  if ( _RTXThread != 0 ) { 
-    _debug("! ARTP Failure: Thread already exists..., stopping it\n");
-    delete _RTXThread; _RTXThread = 0;
-    //return -1; 
-  }
+    // something should stop the thread before...
+    if ( _RTXThread != 0 ) { 
+        _debug("**********************************************************\n");
+        _debug("! ARTP Failure: Thread already exists..., stopping it\n");
+        _debug("**********************************************************\n");
+        delete _RTXThread; _RTXThread = 0;
+    }
 
   // Start RTP Send/Receive threads
   _symmetric = Manager::instance().getConfigInt(SIGNALISATION,SYMMETRIC) ? true : false;
@@ -82,7 +83,7 @@ AudioRtp::createNewSession (SIPCall *ca) {
 void
 AudioRtp::closeRtpSession () {
 
-  //ost::MutexLock m(_threadMutex);
+  ost::MutexLock m(_threadMutex);
   // This will make RTP threads finish.
   // _debug("Stopping AudioRTP\n");
   try {
@@ -91,9 +92,8 @@ AudioRtp::closeRtpSession () {
     _debugException("! ARTP Exception: when stopping audiortp\n");
     throw;
   }
-
-  AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-  audiolayer->stopStream();
+  //AudioLayer* audiolayer = Manager::instance().getAudioDriver();
+  //audiolayer->stopStream();
 }
 
 
@@ -114,7 +114,7 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _
 		               _sym(sym), micData(NULL), micDataConverted(NULL), micDataEncoded(NULL), spkrDataDecoded(NULL), spkrDataConverted(NULL), 
 		               converter(NULL), _layerSampleRate(),_codecSampleRate(), _layerFrameSize(), _audiocodec(NULL)
 {
-  setCancel(cancelDeferred);
+  setCancel(cancelDefault);
   // AudioRtpRTX should be close if we change sample rate
   // TODO: Change bind address according to user settings.
   // TODO: this should be the local ip not the external (router) IP
@@ -282,7 +282,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
 
-    //_debug("resample data\n");
+    //_debug("resample data = %i\n", nb_sample_up);
     nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
 
     if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
@@ -364,9 +364,10 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       // Stor the number of samples for recording
       _nSamplesSpkr = nbSample;
         
-      audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
-
+    //audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
+    audiolayer->putMain (spkrDataConverted, nbSample * sizeof(SFLDataFormat));
       
+
       // Notify (with a beep) an incoming call when there is already a call 
       countTime += time->getSecond();
       if (Manager::instance().incomingCallWaiting() > 0) {

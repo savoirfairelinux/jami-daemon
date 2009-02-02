@@ -46,14 +46,7 @@
 #include "accountcreator.h" // create new account
 #include "sipvoiplink.h"
 
-#include "useragent.h"
-
 #include "user_cfg.h"
-
-#ifdef USE_ZEROCONF
-#include "zeroconf/DNSService.h"
-#include "zeroconf/DNSServiceTXTRecord.h"
-#endif
 
 #define fill_config_str(name, value) \
   (_config.addConfigTreeItem(section, Conf::ConfigTreeItem(std::string(name), std::string(value), type_str)))
@@ -64,20 +57,20 @@ ManagerImpl::ManagerImpl (void)
 	: _hasTriedToRegister(false)
         , _config()
 	, _currentCallId2()
-        //, _currentCallMutex()
+        , _currentCallMutex()
         , _codecBuilder(NULL)
         , _audiodriver(NULL)
         , _dtmfKey(NULL)
         , _codecDescriptorMap()
-        //, _toneMutex()
+        , _toneMutex()
         , _telephoneTone(NULL)
         , _audiofile()
         , _spkr_volume(0)
         , _mic_volume(0)
-        //, _mutex()
+        , _mutex()
 	, _dbus(NULL)
         , _waitingCall()
-        //, _waitingCallMutex()
+        , _waitingCallMutex()
         , _nbIncomingWaitingCall(0)
         , _path("")
         , _exist(0)
@@ -86,28 +79,12 @@ ManagerImpl::ManagerImpl (void)
         , _firewallAddr("")
         , _hasZeroconf(false)
         , _callAccountMap()
-        //, _callAccountMapMutex()
+        , _callAccountMapMutex()
         , _accountMap()
-        , _userAgent(NULL)
-        , _userAgentInitlized(false)
-        , _sipThreadStop()
- 
 {
-  /* Init private variables 
-     setup:    _path, _exist, _setupLoaded , _dbus
-     sound:    _audiodriver, _dtmfKey, 
-               _spkr_volume,_mic_volume  = 0;  // Initialize after by init() -> initVolume()
-     Call:     _nbIncomingWaitingCall, _hasTriedToRegister
-     SIP Link: _userAgent, _userAgentInitlized
-  */
-
-#ifdef USE_ZEROCONF
-  _hasZeroconf = true;
-  _DNSService = new DNSService();
-#endif
-
-  // initialize random generator for call id
-  srand (time(NULL));
+  
+    // initialize random generator for call id
+    srand (time(NULL));
 
 #ifdef TEST
   testAccountMap();
@@ -123,93 +100,68 @@ ManagerImpl::ManagerImpl (void)
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void) 
 {
-  terminate();
-
-#ifdef USE_ZEROCONF
-  delete _DNSService; _DNSService = 0;
-#endif
-
-  _debug("%s stop correctly.\n", PROGNAME);
+    terminate();
+    _debug("%s stop correctly.\n", PROGNAME);
 }
 
   void 
 ManagerImpl::init() 
 {
-  // Load accounts, init map
-  loadAccountMap();
+    // Load accounts, init map
+    loadAccountMap();
  
-  //Initialize sip manager 
-  if(_userAgentInitlized) {
-    _userAgent->sipCreate();
-    _userAgent->sipInit();
-  }
+    initVolume();
 
-  initVolume();
+    if (_exist == 0) {
+        _debug("Cannot create config file in your home directory\n");
+    }
 
-  if (_exist == 0) {
-    _debug("Cannot create config file in your home directory\n");
-  }
+    initAudioDriver();
+    selectAudioDriver();
 
-  initAudioDriver();
-  selectAudioDriver();
+    // Initialize the list of supported audio codecs
+    initAudioCodec();
 
-  // Initialize the list of supported audio codecs
-  initAudioCodec();
+    AudioLayer *audiolayer = getAudioDriver();
+    
+    if (audiolayer!=0) {
+        unsigned int sampleRate = audiolayer->getSampleRate();
 
-  getAudioInputDeviceList();
+        _debugInit("Load Telephone Tone");
+        std::string country = getConfigString(PREFERENCES, ZONE_TONE);
+        _telephoneTone = new TelephoneTone(country, sampleRate);
 
-  AudioLayer *audiolayer = getAudioDriver();
-  if (audiolayer!=0) {
-    unsigned int sampleRate = audiolayer->getSampleRate();
-
-    _debugInit("Load Telephone Tone");
-    std::string country = getConfigString(PREFERENCES, ZONE_TONE);
-    _telephoneTone = new TelephoneTone(country, sampleRate);
-
-    _debugInit("Loading DTMF key");
-    _dtmfKey = new DTMF(sampleRate);
-  }
-
-  // initRegisterAccounts was here, but we doing it after the gui loaded... 
-  // the stun detection is long, so it's a better idea to do it after getEvents
-  initZeroconf();
-  
+        _debugInit("Loading DTMF key");
+        _dtmfKey = new DTMF(sampleRate);
+    }
 }
 
 void ManagerImpl::terminate()
 {
-  saveConfig();
+    saveConfig();
 
-  unloadAccountMap();
+    unloadAccountMap();
   
-  if(_userAgentInitlized) {
-      delete _userAgent;
-      _userAgent = NULL;
-      _userAgentInitlized = false;
-  }
+    _debug("Unload DTMF Key\n");
+    delete _dtmfKey;
 
-  _debug("Unload DTMF Key\n");
-  delete _dtmfKey;
+    _debug("Unload Audio Driver\n");
+    delete _audiodriver; _audiodriver = NULL;
 
-  _debug("Unload Audio Driver\n");
-  delete _audiodriver; _audiodriver = NULL;
+    _debug("Unload Telephone Tone\n");
+    delete _telephoneTone; _telephoneTone = NULL;
 
-  _debug("Unload Telephone Tone\n");
-  delete _telephoneTone; _telephoneTone = NULL;
-
-  _debug("Unload Audio Codecs\n");
-  _codecDescriptorMap.deleteHandlePointer();
+    _debug("Unload Audio Codecs\n");
+    _codecDescriptorMap.deleteHandlePointer();
 }
 
 bool
 ManagerImpl::isCurrentCall(const CallID& callId) {
-  //ost::MutexLock m(_currentCallMutex);
   return (_currentCallId2 == callId ? true : false);
 }
 
 bool
 ManagerImpl::hasCurrentCall() {
-  //ost::MutexLock m(_currentCallMutex);
   _debug("Current call ID = %s\n", _currentCallId2.c_str());
   if ( _currentCallId2 != "") {
     return true;
@@ -219,13 +171,12 @@ ManagerImpl::hasCurrentCall() {
 
 const CallID& 
 ManagerImpl::getCurrentCallId() {
-  //ost::MutexLock m(_currentCallMutex);
   return _currentCallId2;
 }
 
 void
 ManagerImpl::switchCall(const CallID& id ) {
-  //ost::MutexLock m(_currentCallMutex);
+  ost::MutexLock m(_currentCallMutex);
   _currentCallId2 = id;
 }
 
@@ -237,27 +188,31 @@ ManagerImpl::switchCall(const CallID& id ) {
   bool
 ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
-  if (!accountExists(accountid)) {
-    _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
-    return false;
-  }
-  if (getAccountFromCall(id) != AccountNULL) {
-    _debug("! Manager Error: Outgoing Call: call id already exists\n");
-    return false;
-  }
-  if (hasCurrentCall()) {
-    _debug("* Manager Info: there is currently a call, try to hold it\n");
-    onHoldCall(getCurrentCallId());
-  }
-  _debug("- Manager Action: Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
-  if ( getAccountLink(accountid)->newOutgoingCall(id, to) ) {
+    if (!accountExists(accountid)) {
+        _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
+        return false;
+    }
+  
+    if (getAccountFromCall(id) != AccountNULL) {
+        _debug("! Manager Error: Outgoing Call: call id already exists\n");
+        return false;
+    }
+  
+    if (hasCurrentCall()) {
+        _debug("* Manager Info: there is currently a call, try to hold it\n");
+        onHoldCall(getCurrentCallId());
+    }
+  
+    _debug("- Manager Action: Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
     associateCallToAccount( id, accountid );
-    switchCall(id);
-    return true;
-  } else {
-    _debug("! Manager Error: An error occur, the call was not created\n");
-  }
-  return false;
+    if ( getAccountLink(accountid)->newOutgoingCall(id, to) ) {
+        switchCall(id);
+        return true;
+    } else {
+        callFailure(id);
+        _debug("! Manager Error: An error occur, the call was not created\n");
+    }
+    return false;
 }
 
 //THREAD=Main : for outgoing Call
@@ -294,29 +249,35 @@ ManagerImpl::answerCall(const CallID& id)
   bool
 ManagerImpl::hangupCall(const CallID& id)
 {
-  stopTone(true);
+    PulseLayer *pulselayer;
+    AccountID accountid;
+    bool returnValue;
 
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+    stopTone(true);
+
+    /* Broadcast a signal over DBus */
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    /** @todo We should tell the GUI that the call doesn't exist, so
-     * it clears up. This can happen. */
-    _debug("! Manager Hangup Call: Call doesn't exists\n");
-    return false;
-  }
+    accountid = getAccountFromCall( id );
+    if (accountid == AccountNULL) {
+        /** @todo We should tell the GUI that the call doesn't exist, so
+        * it clears up. This can happen. */
+        _debug("! Manager Hangup Call: Call doesn't exists\n");
+        return false;
+    }
 
-  bool returnValue = getAccountLink(accountid)->hangup(id);
+    returnValue = getAccountLink(accountid)->hangup(id);
 
-  _debug("After voip link hungup!\n");
-  removeCallAccount(id);
-  switchCall("");
+    _debug("After voip link hungup!\n");
+    removeCallAccount(id);
+    switchCall("");
 
-  if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
-    _audiodriver->restorePulseAppsVolume();
-
-  _debug("Before hungup return!\n");
-  return returnValue;
+    if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
+        pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
+        if(pulselayer)  pulselayer->restorePulseAppsVolume();
+    }
+  
+    return returnValue;
 }
 
 //THREAD=Main
@@ -443,7 +404,6 @@ ManagerImpl::saveConfig (void)
  int 
 ManagerImpl::initRegisterAccounts() 
 {
-
     int status; 
     bool flag = true;
     AccountMap::iterator iter;
@@ -451,17 +411,21 @@ ManagerImpl::initRegisterAccounts()
     _debugInit("Initiate VoIP Links Registration");
     iter = _accountMap.begin();
 
+    /* Loop on the account map previously loaded */
     while( iter != _accountMap.end() ) {
-      if ( iter->second ) {
-        iter->second->loadConfig();
-        if ( iter->second->isEnabled() ) {
-	  status = iter->second->registerVoIPLink();
-	  if (status != SUCCESS)
-		flag = false;
+        if ( iter->second ) {
+            iter->second->loadConfig();
+            /* If the account is set as enabled, try to register */
+            if ( iter->second->isEnabled() ) {
+	            status = iter->second->registerVoIPLink();
+	            if (status != SUCCESS){
+		            flag = false;
+                }
+            }
         }
-      }
-      iter++;
+        iter++;
     }
+
     // calls the client notification here in case of errors at startup...
     if( _audiodriver -> getErrorMessage() != -1 )
       notifyErrClient( _audiodriver -> getErrorMessage() );
@@ -503,81 +467,76 @@ ManagerImpl::sendDtmf(const CallID& id, char code)
   bool
 ManagerImpl::playDtmf(char code, bool isTalking)
 {
-  // HERE are the variable:
-  // - boolean variable to play or not (config)
-  // - length in milliseconds to play
-  // - sample of audiolayer
-  stopTone(false);
-  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_DTMF);
-  if (!hasToPlayTone) return false;
+    int hasToPlayTone, pulselen, layer, size;
+    bool ret = false;
+    AudioLayer *audiolayer;
+    SFLDataFormat *buf;
+  
+    stopTone(false);
+    
+    hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_DTMF);
+    if (!hasToPlayTone) 
+        return false;
 
-  // length in milliseconds
-  int pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
-  if (!pulselen) { return false; }
+    // length in milliseconds
+    pulselen = getConfigInt(SIGNALISATION, PULSE_LENGTH);
+    if (!pulselen)
+        return false;
 
-  // numbers of int = length in milliseconds / 1000 (number of seconds)
-  //                = number of seconds * SAMPLING_RATE by SECONDS
-  AudioLayer* audiolayer = getAudioDriver();
-  int layer = audiolayer->getLayerType();
+    // numbers of int = length in milliseconds / 1000 (number of seconds)
+    //                = number of seconds * SAMPLING_RATE by SECONDS
+    audiolayer = getAudioDriver();
+    layer = audiolayer->getLayerType();
 
-  // fast return, no sound, so no dtmf
-  if (audiolayer==0 || _dtmfKey == 0) { return false; }
-  // number of data sampling in one pulselen depends on samplerate
-  // size (n sampling) = time_ms * sampling/s 
-  //                     ---------------------
-  //                            ms/s
-  int size = (int)(pulselen * ((float)audiolayer->getSampleRate()/1000));
+    // fast return, no sound, so no dtmf
+    if (audiolayer==0 || _dtmfKey == 0)
+        return false;
 
-  // this buffer is for mono
-  // TODO <-- this should be global and hide if same size
-  SFLDataFormat* _buf = new SFLDataFormat[size];
-  bool returnValue = false;
+    // number of data sampling in one pulselen depends on samplerate
+    // size (n sampling) = time_ms * sampling/s 
+    //                     ---------------------
+    //                            ms/s
+    size = (int)(pulselen * ((float)audiolayer->getSampleRate()/1000));
 
-  // Handle dtmf
-  _dtmfKey->startTone(code);
+    // this buffer is for mono
+    // TODO <-- this should be global and hide if same size
+    buf = new SFLDataFormat[size];
 
-  // copy the sound
-  if ( _dtmfKey->generateDTMF(_buf, size) ) {
+    // Handle dtmf
+    _dtmfKey->startTone(code);
 
-    // Put buffer to urgentRingBuffer 
-    // put the size in bytes...
-    // so size * 1 channel (mono) * sizeof (bytes for the data)
-    if(CHECK_INTERFACE( layer , ALSA ))
-      audiolayer->playSamples(_buf, size * sizeof(SFLDataFormat), isTalking);
-    else
-      _debug("DTMF disabled\n");
-      audiolayer->putUrgent( _buf, size * sizeof(SFLDataFormat) );
+    // copy the sound
+    if ( _dtmfKey->generateDTMF(buf, size) ) {
+        // Put buffer to urgentRingBuffer 
+        // put the size in bytes...
+        // so size * 1 channel (mono) * sizeof (bytes for the data)
+        audiolayer->putUrgent (buf, size * sizeof(SFLDataFormat));
+    }
+    ret = true;
 
-  }
-  returnValue = true;
+    // TODO Cache the DTMF
 
-  if( CHECK_INTERFACE( layer , PULSEAUDIO ))
-  {
-  // Cache the samples on the sound server
-  // (PulseLayer*)audiolayer->putInCache( code, _buf , size * sizeof(SFLDataFormat) );
-  }
-
-  delete[] _buf; _buf = 0;
-  return returnValue;
+    delete[] buf; buf = 0;
+    
+    return ret;
 }
 
 // Multi-thread 
 bool
 ManagerImpl::incomingCallWaiting() {
-  //ost::MutexLock m(_waitingCallMutex);
   return (_nbIncomingWaitingCall > 0) ? true : false;
 }
 
 void
 ManagerImpl::addWaitingCall(const CallID& id) {
-  //ost::MutexLock m(_waitingCallMutex);
+  ost::MutexLock m(_waitingCallMutex);
   _waitingCall.insert(id);
   _nbIncomingWaitingCall++;
 }
 
 void
 ManagerImpl::removeWaitingCall(const CallID& id) {
-  //ost::MutexLock m(_waitingCallMutex);
+  ost::MutexLock m(_waitingCallMutex);
   // should return more than 1 if it erase a call
   if (_waitingCall.erase(id)) {
     _nbIncomingWaitingCall--;
@@ -586,7 +545,6 @@ ManagerImpl::removeWaitingCall(const CallID& id) {
 
 bool
 ManagerImpl::isWaitingCall(const CallID& id) {
-  //ost::MutexLock m(_waitingCallMutex);
   CallIDSet::iterator iter = _waitingCall.find(id);
   if (iter != _waitingCall.end()) {
     return false;
@@ -601,38 +559,44 @@ ManagerImpl::isWaitingCall(const CallID& id) {
   bool 
 ManagerImpl::incomingCall(Call* call, const AccountID& accountId) 
 {
-  _debug("Incoming call %s\n", call->getCallId().data());
+    PulseLayer *pulselayer;
+    std::string from, number;
 
-  associateCallToAccount(call->getCallId(), accountId);
+    _debug("Incoming call %s\n", call->getCallId().data());
 
-  if ( !hasCurrentCall() ) {
-    call->setConnectionState(Call::Ringing);
-    ringtone();
-    switchCall(call->getCallId());
-  } else {
-    addWaitingCall(call->getCallId());
-  }
+    associateCallToAccount(call->getCallId(), accountId);
 
-  std::string from = call->getPeerName();
-  std::string number = call->getPeerNumber();
+    if ( !hasCurrentCall() ) {
+        call->setConnectionState(Call::Ringing);
+        ringtone();
+        switchCall(call->getCallId());
+    } else {
+        addWaitingCall(call->getCallId());
+    }
 
-  if (from != "" && number != "") {
-    from.append(" <");
-    from.append(number);
-    from.append(">");
-  } else if ( from.empty() ) {
-    from.append("<");
-    from.append(number);
-    from.append(">");
-  }
+    from = call->getPeerName();
+    number = call->getPeerNumber();
+
+    if (from != "" && number != "") {
+        from.append(" <");
+        from.append(number);
+        from.append(">");
+    } else if ( from.empty() ) {
+        from.append("<");
+        from.append(number);
+        from.append(">");
+    }
   
-  _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+    /* Broadcast a signal over DBus */
+    _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
   
-  // Reduce volume of the other pulseaudio-connected audio applications
-  if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
-    _audiodriver->reducePulseAppsVolume();
+    // Reduce volume of the other pulseaudio-connected audio applications
+    if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
+        pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
+        if(pulselayer)  pulselayer->reducePulseAppsVolume();
+    }
   
-  return true;
+    return true;
 }
 
 //THREAD=VoIP
@@ -667,22 +631,30 @@ ManagerImpl::peerRingingCall(const CallID& id)
   void
 ManagerImpl::peerHungupCall(const CallID& id)
 {
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("peerHungupCall: Call doesn't exists\n");
-    return;
-  }
+    PulseLayer *pulselayer;
+    AccountID accountid;
+
+    accountid = getAccountFromCall( id );
+    if (accountid == AccountNULL) {
+        _debug("peerHungupCall: Call doesn't exists\n");
+        return;
+    }
   
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
-  if (isCurrentCall(id)) {
-    stopTone(true);
-    switchCall("");
-  }
-  removeWaitingCall(id);
-  removeCallAccount(id);
+    /* Broadcast a signal over DBus */
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+    
+    if (isCurrentCall(id)) {
+        stopTone(true);
+        switchCall("");
+    }
+
+    removeWaitingCall(id);
+    removeCallAccount(id);
   
-  if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
-    _audiodriver->restorePulseAppsVolume();
+    if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
+        pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
+        if(pulselayer)  pulselayer->restorePulseAppsVolume();
+    }
 }
 
 //THREAD=VoIP
@@ -721,7 +693,7 @@ ManagerImpl::startVoiceMessageNotification(const AccountID& accountId, int nb_ms
   if (_dbus) _dbus->getCallManager()->voiceMailNotify(accountId, nb_msg) ;
 }
 
-void ManagerImpl::connectionStatusNotification( void )
+void ManagerImpl::connectionStatusNotification(  )
 {
     if (_dbus)
         _dbus->getConfigurationManager()->accountsChanged();
@@ -732,30 +704,32 @@ void ManagerImpl::connectionStatusNotification( void )
 /**
  * Multi Thread
  */
-bool 
-ManagerImpl::playATone(Tone::TONEID toneId) {
-  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
-  if (!hasToPlayTone) return false;
+bool ManagerImpl::playATone(Tone::TONEID toneId) 
+{
+    int hasToPlayTone;
+    AudioLoop *audioloop;
+    AudioLayer *audiolayer;
+    unsigned int nbSamples;
 
-  if (_telephoneTone != 0) {
-    //_toneMutex.enterMutex();
-    _telephoneTone->setCurrentTone(toneId);
-    //_toneMutex.leaveMutex();
+    hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
+    if (!hasToPlayTone) 
+        return false;
+    
+    audiolayer = getAudioDriver();
 
-    AudioLoop* audioloop = getTelephoneTone();
-    unsigned int nbSampling = audioloop->getSize();
-    AudioLayer* audiolayer = getAudioDriver();
-    SFLDataFormat buf[nbSampling];
-    if ( audiolayer ) {
-      int layer = audiolayer->getLayerType(); 
-    if(CHECK_INTERFACE( layer , ALSA ) )
-      audiolayer->putUrgent( buf, nbSampling );
-    else{
-      audiolayer->startStream();
-    }
-    }
-    else 
-      return false;
+    if (_telephoneTone != 0) {
+        _toneMutex.enterMutex();
+        _telephoneTone->setCurrentTone(toneId);
+        _toneMutex.leaveMutex();
+
+        audioloop = getTelephoneTone();
+        nbSamples = audioloop->getSize();
+        SFLDataFormat buf[nbSamples];
+    
+        if ( audiolayer ){ 
+            audiolayer->putUrgent( buf, nbSamples );
+        } else 
+            return false;
   }
   return true;
 }
@@ -763,30 +737,30 @@ ManagerImpl::playATone(Tone::TONEID toneId) {
 /**
  * Multi Thread
  */
-void 
-ManagerImpl::stopTone(bool stopAudio=true) {
-  int hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
-  if (!hasToPlayTone) return;
+void ManagerImpl::stopTone (bool stopAudio=true)
+{
+    int hasToPlayTone;
+    AudioLayer *audiolayer;
 
-  if (stopAudio) {
-    AudioLayer* audiolayer = getAudioDriver();
-    int layer = audiolayer->getLayerType();
-    if(CHECK_INTERFACE( layer , ALSA ) ){}
-    else{}
-  //if (audiolayer) { audiolayer->stopStream(); }
+    hasToPlayTone = getConfigInt(SIGNALISATION, PLAY_TONES);
+    if (!hasToPlayTone) 
+        return;
 
-  }
+    if (stopAudio) {
+        audiolayer = getAudioDriver();
+        if (audiolayer) audiolayer->stopStream();
+    }
 
-  //_toneMutex.enterMutex();
-  if (_telephoneTone != 0) {
-    _telephoneTone->setCurrentTone(Tone::TONE_NULL);
-  }
-  //_toneMutex.leaveMutex();
+    _toneMutex.enterMutex();
+    if (_telephoneTone != 0) {
+        _telephoneTone->setCurrentTone(Tone::TONE_NULL);
+    }
+    _toneMutex.leaveMutex();
 
-  // for ringing tone..
-  //_toneMutex.enterMutex();
-  _audiofile.stop();
-  //_toneMutex.leaveMutex();
+    // for ringing tone..
+    _toneMutex.enterMutex();
+    _audiofile.stop();
+    _toneMutex.leaveMutex();
 }
 
 /**
@@ -823,7 +797,6 @@ ManagerImpl::congestion () {
 void
 ManagerImpl::ringback () {
   playATone(Tone::TONE_RINGTONE);
-  getAudioDriver()->trigger_thread();
 }
 
 /**
@@ -832,38 +805,42 @@ ManagerImpl::ringback () {
   void
 ManagerImpl::ringtone() 
 {
+    std::string ringchoice;
+    AudioLayer *audiolayer;
+    AudioCodec *codecForTone;
+    int layer, samplerate;
+    bool loadFile;
+
     if( isRingtoneEnabled() )
     {
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
         
-        std::string ringchoice = getConfigString(AUDIO, RING_CHOICE);
+        ringchoice = getConfigString(AUDIO, RING_CHOICE);
         //if there is no / inside the path
         if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
             // check inside global share directory
             ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
         }
 
-        AudioLayer* audiolayer = getAudioDriver();
-        int layer = audiolayer->getLayerType();
-        if (audiolayer==0) { return; }
-        int sampleRate  = audiolayer->getSampleRate();
-        AudioCodec* codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
+        audiolayer = getAudioDriver();
+        layer = audiolayer->getLayerType();
+        if (audiolayer == 0)
+            return;
 
-        //_toneMutex.enterMutex(); 
-         bool loadFile = _audiofile.loadFile(ringchoice, codecForTone , sampleRate);
-        //_toneMutex.leaveMutex(); 
+        samplerate  = audiolayer->getSampleRate();
+        codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
+
+        _toneMutex.enterMutex(); 
+        loadFile = _audiofile.loadFile(ringchoice, codecForTone , samplerate);
+        _toneMutex.leaveMutex(); 
+
         if (loadFile) {
-            //_toneMutex.enterMutex(); 
+            _toneMutex.enterMutex(); 
             _audiofile.start();
-            //_toneMutex.leaveMutex(); 
+            _toneMutex.leaveMutex(); 
             if(CHECK_INTERFACE( layer, ALSA )){
-                /*int size = _audiofile.getSize();
-                SFLDataFormat output[ size ];
-                _audiofile.getNext(output, size , 100);
-                audiolayer->putUrgent( output , size );
-                audiolayer->trigger_thread();*/
-                ringback();
+                //ringback();
             }
             else{
                 audiolayer->startStream();
@@ -883,7 +860,7 @@ ManagerImpl::ringtone()
 ManagerImpl::getTelephoneTone()
 {
   if(_telephoneTone != 0) {
-    //ost::MutexLock m(_toneMutex);
+    ost::MutexLock m(_toneMutex);
     return _telephoneTone->getCurrentTone();
   }
   else {
@@ -894,7 +871,7 @@ ManagerImpl::getTelephoneTone()
   AudioLoop*
 ManagerImpl::getTelephoneFile()
 {
-  //ost::MutexLock m(_toneMutex);
+  ost::MutexLock m(_toneMutex);
   if(_audiofile.isStarted()) {
     return &_audiofile;
   } else {
@@ -902,26 +879,23 @@ ManagerImpl::getTelephoneFile()
   }
 }
 
-void
-ManagerImpl::notificationIncomingCall(void) {
-
-  AudioLayer* audiolayer = getAudioDriver();
-  if (audiolayer != 0) {
-    int layer = audiolayer->getLayerType();
-    unsigned int samplerate = audiolayer->getSampleRate();
+void ManagerImpl::notificationIncomingCall(void) 
+{
+    AudioLayer *audiolayer;
     std::ostringstream frequency;
-    frequency << "440/" << FRAME_PER_BUFFER;
+    unsigned int samplerate, nbSampling;
 
-    Tone tone(frequency.str(), samplerate);
-    unsigned int nbSampling = tone.getSize();
-    SFLDataFormat buf[nbSampling];
-    tone.getNext(buf, tone.getSize());
-    if(CHECK_INTERFACE( layer , ALSA ))
-      audiolayer->playSamples(buf, sizeof(SFLDataFormat)*nbSampling, true);
-    else
-      audiolayer->putUrgent( buf, sizeof(SFLDataFormat)*nbSampling );
-  
-  }
+    audiolayer = getAudioDriver();
+    if (audiolayer != 0) {
+        samplerate = audiolayer->getSampleRate();
+        frequency << "440/" << FRAME_PER_BUFFER;
+        Tone tone(frequency.str(), samplerate);
+        nbSampling = tone.getSize();
+        SFLDataFormat buf[nbSampling];
+        tone.getNext(buf, tone.getSize());
+        /* Put the data in the urgent ring buffer */
+        audiolayer->putUrgent (buf, sizeof(SFLDataFormat)*nbSampling);
+    }
 }
 
 /**
@@ -1012,15 +986,17 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   std::string type_int("int");
 
   std::string section;
-  section = SIGNALISATION;
 
   // Default values, that will be overwritten by the call to
   // 'populateFromFile' below.
+  section = SIGNALISATION;
   fill_config_int(SYMMETRIC, YES_STR);
   fill_config_int(PLAY_DTMF, YES_STR);
   fill_config_int(PLAY_TONES, YES_STR);
   fill_config_int(PULSE_LENGTH, DFT_PULSE_LENGTH_STR);
   fill_config_int(SEND_DTMF_AS, SIP_INFO_STR);
+  fill_config_int(STUN_ENABLE, DFT_STUN_ENABLE);
+  fill_config_int(STUN_SERVER, DFT_STUN_SERVER);
 
   section = AUDIO;
   fill_config_int(ALSA_CARD_ID_IN, ALSA_DFT_CARD);
@@ -1269,7 +1245,10 @@ ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
 ManagerImpl::getAudioOutputDeviceList(void)
 {
   _debug("Get audio output device list\n");
-  return _audiodriver -> getSoundCardsInfo(SFL_PCM_PLAYBACK);
+  AlsaLayer *layer;
+
+  layer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
+  if (layer)    return layer -> getSoundCardsInfo(SFL_PCM_PLAYBACK);
 }
 
 /**
@@ -1278,19 +1257,22 @@ ManagerImpl::getAudioOutputDeviceList(void)
   void
 ManagerImpl::setAudioOutputDevice(const int index)
 {
-  //int layer = _audiodriver -> getLayerType();
-  _debug("Set audio output device: %i\n", index);
-  _audiodriver -> setErrorMessage( -1 );
-  _audiodriver->openDevice(_audiodriver->getIndexIn(), 
-      index, 
-      _audiodriver->getSampleRate(), 
-      _audiodriver->getFrameSize(), 
-      SFL_PCM_PLAYBACK,
-      _audiodriver->getAudioPlugin());
-  if( _audiodriver -> getErrorMessage() != -1)
-    notifyErrClient( _audiodriver -> getErrorMessage() );
-  // set config
-  setConfig( AUDIO , ALSA_CARD_ID_OUT , index );
+    AlsaLayer *alsalayer;
+    std::string alsaplugin;
+    _debug("Set audio output device: %i\n", index);
+  
+    _audiodriver -> setErrorMessage( -1 );
+    
+    alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
+    alsaplugin = alsalayer->getAudioPlugin ();
+
+    _audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_PLAYBACK, alsaplugin );
+  
+    if( _audiodriver -> getErrorMessage() != -1)
+        notifyErrClient( _audiodriver -> getErrorMessage() );
+    
+    // set config
+    setConfig( AUDIO , ALSA_CARD_ID_OUT , index );
 }
 
 /**
@@ -1300,7 +1282,10 @@ ManagerImpl::setAudioOutputDevice(const int index)
 ManagerImpl::getAudioInputDeviceList(void)
 {
   _debug("Get audio input device list\n");
-  return _audiodriver->getSoundCardsInfo(SFL_PCM_CAPTURE);
+  AlsaLayer *audiolayer;
+
+  audiolayer = dynamic_cast<AlsaLayer *> ( getAudioDriver());
+  if(audiolayer)    return audiolayer->getSoundCardsInfo(SFL_PCM_CAPTURE);
 }
 
 /**
@@ -1309,19 +1294,23 @@ ManagerImpl::getAudioInputDeviceList(void)
   void
 ManagerImpl::setAudioInputDevice(const int index)
 {
-  //int layer = _audiodriver -> getLayerType();
-  _debug("Set audio input device %i\n", index);
-  _audiodriver -> setErrorMessage( -1 );
-  _audiodriver->openDevice(index, 
-      _audiodriver->getIndexOut(), 
-      _audiodriver->getSampleRate(), 
-      _audiodriver->getFrameSize(), 
-      SFL_PCM_CAPTURE,
-      _audiodriver->getAudioPlugin());
-  if( _audiodriver -> getErrorMessage() != -1)
-    notifyErrClient( _audiodriver -> getErrorMessage() );
-  // set config
-  setConfig( AUDIO , ALSA_CARD_ID_IN , index );
+    AlsaLayer *alsalayer;
+    std::string alsaplugin;
+  
+    _debug("Set audio input device %i\n", index);
+  
+    _audiodriver -> setErrorMessage( -1 );
+  
+    alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
+    alsaplugin = alsalayer->getAudioPlugin ();
+    
+    _audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_CAPTURE, alsaplugin );
+
+    if( _audiodriver -> getErrorMessage() != -1)
+        notifyErrClient( _audiodriver -> getErrorMessage() );
+  
+    // set config
+    setConfig( AUDIO , ALSA_CARD_ID_IN , index );
 }
 
 /**
@@ -1402,7 +1391,27 @@ ManagerImpl::setDialpad( void )
   ( getConfigInt( PREFERENCES , CONFIG_DIALPAD ) == DISPLAY_DIALPAD )? setConfig(PREFERENCES , CONFIG_DIALPAD , NO_STR ) : setConfig( PREFERENCES , CONFIG_DIALPAD , YES_STR );
 }
 
-int
+std::string ManagerImpl::getStunServer( void )
+{
+  return getConfigString(SIGNALISATION , STUN_SERVER);
+}
+
+void ManagerImpl::setStunServer( const std::string &server )
+{
+  setConfig(SIGNALISATION , STUN_SERVER, server );
+}
+
+int ManagerImpl::isStunEnabled (void)
+{
+    return getConfigInt(SIGNALISATION , STUN_ENABLE);
+}
+
+void ManagerImpl::enableStun (void)
+{
+  ( getConfigInt( SIGNALISATION , STUN_ENABLE ) == STUN_ENABLED )? setConfig(SIGNALISATION , STUN_ENABLE , NO_STR ) : setConfig( SIGNALISATION , STUN_ENABLE , YES_STR );
+}
+
+    int
 ManagerImpl::getVolumeControls( void )
 {
   return getConfigInt( PREFERENCES , CONFIG_VOLUME );
@@ -1556,16 +1565,23 @@ ManagerImpl::notifyErrClient( const int32_t& errCode )
   int
 ManagerImpl::getAudioDeviceIndex(const std::string name)
 {
-  _debug("Get audio device index\n");
-  int num = _audiodriver -> soundCardGetIndex( name );
-  return num;
+    AlsaLayer *alsalayer;
+
+    _debug("Get audio device index\n");
+    
+    alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
+    if(alsalayer)   return alsalayer -> soundCardGetIndex( name );
 }
 
   std::string 
 ManagerImpl::getCurrentAudioOutputPlugin( void )
 {
-  _debug("Get alsa plugin\n");
-  return _audiodriver -> getAudioPlugin();
+    AlsaLayer *alsalayer;
+  
+    _debug("Get alsa plugin\n");
+    
+    alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
+    if(alsalayer)   return alsalayer -> getAudioPlugin ();
 }
 
 int ManagerImpl::app_is_running( std::string process )
@@ -1623,104 +1639,88 @@ ManagerImpl::initAudioDriver(void)
   void
 ManagerImpl::selectAudioDriver (void)
 {
-  int layer = _audiodriver->getLayerType();
-  _debug("Audio layer type: %i\n" , layer);
+    int layer, numCardIn, numCardOut, sampleRate, frameSize;
+    std::string alsaPlugin;
+    AlsaLayer *alsalayer;
 
-  std::string alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
-  int numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
-  int numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
-  int sampleRate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
-  if (sampleRate <=0 || sampleRate > 48000) {
-    sampleRate = 44100;
-  }
-  int frameSize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
+    layer = _audiodriver->getLayerType();
+    _debug("Audio layer type: %i\n" , layer);
 
-  if( !_audiodriver -> soundCardIndexExist( numCardIn , SFL_PCM_CAPTURE ) )
-  {
-    _debug(" Card with index %i doesn't exist or cannot capture. Switch to 0.\n", numCardIn);
-    numCardIn = ALSA_DFT_CARD_ID ;
-    setConfig( AUDIO , ALSA_CARD_ID_IN , ALSA_DFT_CARD_ID );
-  }
-  if( !_audiodriver -> soundCardIndexExist( numCardOut , SFL_PCM_PLAYBACK ) )
-  {  
-    _debug(" Card with index %i doesn't exist or cannot playback . Switch to 0.\n", numCardOut);
-    numCardOut = ALSA_DFT_CARD_ID ;
-    setConfig( AUDIO , ALSA_CARD_ID_OUT , ALSA_DFT_CARD_ID );
-  }
+    /* Retrieve the global devices info from the user config */
+    alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
+    numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
+    numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
+    sampleRate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
+    if (sampleRate <=0 || sampleRate > 48000) {
+        sampleRate = 44100;
+    }
+    frameSize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
 
-
-  if(CHECK_INTERFACE( layer , ALSA ))
-  {
-  delete _audiodriver;
-  _audiodriver = new AlsaLayer( this );
-  _debugInit(" ALSA audio driver \n");
-  _audiodriver->setErrorMessage(-1);
-  _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
-  if( _audiodriver -> getErrorMessage() != -1 )
-    notifyErrClient( _audiodriver -> getErrorMessage());
-  }else{
-    delete _audiodriver;
-    _audiodriver = new PulseLayer( this );
-  _debug(" Pulse audio driver \n");
-  _audiodriver->setErrorMessage(-1);
-  _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
-  if( _audiodriver -> getErrorMessage() != -1 )
-    notifyErrClient( _audiodriver -> getErrorMessage());
-  }
-
-}
-
-void
-ManagerImpl::switchAudioManager( void ) 
-{
-  _debug( "Switching audio manager \n");
-
-  int type = _audiodriver->getLayerType();
-  int samplerate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
-  int framesize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
-  std::string alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
-  int numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
-  int numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
-
-  _debug("Deleting current layer... \n" );
-  _audiodriver->closeLayer();
-  delete _audiodriver; _audiodriver = NULL;
+    /* Only for the ALSA layer, we check the sound card information */
+    if (layer == ALSA)
+    {
+        alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
+        if( !alsalayer -> soundCardIndexExist( numCardIn , SFL_PCM_CAPTURE ) )
+        {
+            _debug(" Card with index %i doesn't exist or cannot capture. Switch to 0.\n", numCardIn);
+            numCardIn = ALSA_DFT_CARD_ID ;
+            setConfig( AUDIO , ALSA_CARD_ID_IN , ALSA_DFT_CARD_ID );
+        }
+        if( !alsalayer -> soundCardIndexExist( numCardOut , SFL_PCM_PLAYBACK ) )
+        {  
+            _debug(" Card with index %i doesn't exist or cannot playback . Switch to 0.\n", numCardOut);
+            numCardOut = ALSA_DFT_CARD_ID ;
+            setConfig( AUDIO , ALSA_CARD_ID_OUT , ALSA_DFT_CARD_ID );
+        }
+    }
   
-  switch( type ){
-    case ALSA:
-      _debug("Creating Pulseaudio layer...\n");
-      _audiodriver = new PulseLayer( this );
-      break;
-    case PULSEAUDIO:
-      _debug("Creating ALSA layer...\n");
-      _audiodriver = new AlsaLayer( this );
-      break;
-    default:
-      _debug("Error: audio layer unknown\n");
-  }
-  _audiodriver->setErrorMessage(-1);
-  _audiodriver->openDevice( numCardIn , numCardOut, samplerate, framesize, SFL_PCM_BOTH, alsaPlugin ); 
-  if( _audiodriver -> getErrorMessage() != -1 )
-    notifyErrClient( _audiodriver -> getErrorMessage());
-} 
-
-/**
- * Initialize the Zeroconf scanning services loop
- * Informations will be store inside a map DNSService->_services
- * Initialization: Main Thread
- */
-  void 
-ManagerImpl::initZeroconf(void) 
-{
-#ifdef USE_ZEROCONF
-  _debugInit("Zeroconf Initialization");
-  int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
-
-  if (useZeroconf) {
-    _DNSService->startScanServices();
-  }
-#endif
+    _audiodriver->setErrorMessage(-1);
+    /* Open the audio devices */
+    _audiodriver->openDevice( numCardIn , numCardOut, sampleRate, frameSize, SFL_PCM_BOTH, alsaPlugin ); 
+    /* Notify the error if there is one */
+    if( _audiodriver -> getErrorMessage() != -1 )
+        notifyErrClient( _audiodriver -> getErrorMessage());
 }
+
+void ManagerImpl::switchAudioManager (void) 
+{
+    int type, samplerate, framesize, numCardIn, numCardOut;
+    std::string alsaPlugin;
+
+    _debug( "Switching audio manager \n");
+
+    if(!_audiodriver)
+        return;
+
+    type = _audiodriver->getLayerType();
+    samplerate = getConfigInt( AUDIO , ALSA_SAMPLE_RATE );
+    framesize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
+    alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
+    numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
+    numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
+
+    _debug("Deleting current layer... \n" );
+    //_audiodriver->closeLayer();
+    delete _audiodriver; _audiodriver = NULL;
+  
+    switch( type ){
+        case ALSA:
+            _debug("Creating Pulseaudio layer...\n");
+            _audiodriver = new PulseLayer( this );
+            break;
+        case PULSEAUDIO:
+            _debug("Creating ALSA layer...\n");
+            _audiodriver = new AlsaLayer( this );
+            break;
+        default:
+            _debug("Error: audio layer unknown\n");
+    }
+  
+    _audiodriver->setErrorMessage(-1);
+    _audiodriver->openDevice( numCardIn , numCardOut, samplerate, framesize, SFL_PCM_BOTH, alsaPlugin ); 
+    if( _audiodriver -> getErrorMessage() != -1 )
+        notifyErrClient( _audiodriver -> getErrorMessage());
+} 
 
 /**
  * Init the volume for speakers/micro from 0 to 100 value
@@ -1737,110 +1737,36 @@ ManagerImpl::initVolume()
 
 void ManagerImpl::setSpkrVolume(unsigned short spkr_vol) 
 {  
-    AudioLayer *audiolayer = NULL;
+    PulseLayer *pulselayer = NULL;
 
+    /* Set the manager sound volume */
     _spkr_volume = spkr_vol; 
-    audiolayer = getAudioDriver();
-    if( audiolayer )
+
+    /* Only for PulseAudio */
+    pulselayer = dynamic_cast<PulseLayer*> (getAudioDriver());
+    if (pulselayer)
     {
-        audiolayer->setPlaybackVolume( spkr_vol );
+        if( pulselayer->getLayerType() == PULSEAUDIO )
+        {
+            if(pulselayer)  pulselayer->setPlaybackVolume (spkr_vol);
+        }
     }
-    
 }
 
 void ManagerImpl::setMicVolume(unsigned short mic_vol) 
 {    
-    //AudioLayer *audiolayer = NULL;
-
     _mic_volume = mic_vol;   
-    //audiolayer = getAudioDriver();
-    //if( audiolayer )
-    //{
-      //  audiolayer->setCaptureVolume( mic_vol );
-    //}
 }
 
-/**
- * configuration function requests
- * Main Thread
- */
-  bool 
-ManagerImpl::getZeroconf(const std::string& sequenceId)
+void ManagerImpl::setSipPort( int port )
 {
-  bool returnValue = false;
-#ifdef USE_ZEROCONF
-  int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
-  if (useZeroconf && _dbus != NULL) {
-    TokenList arg;
-    TokenList argTXT;
-    std::string newService = "new service";
-    std::string newTXT = "new txt record";
-    if (!_DNSService->isStart()) { _DNSService->startScanServices(); }
-    DNSServiceMap services = _DNSService->getServices();
-    DNSServiceMap::iterator iter = services.begin();
-    arg.push_back(newService);
-    while(iter!=services.end()) {
-      arg.push_front(iter->first);
-      //_gui->sendMessage("100",sequenceId,arg);
-      arg.pop_front(); // remove the first, the name
-
-      TXTRecordMap record = iter->second.getTXTRecords();
-      TXTRecordMap::iterator iterTXT = record.begin();
-      while(iterTXT!=record.end()) {
-	argTXT.clear();
-	argTXT.push_back(iter->first);
-	argTXT.push_back(iterTXT->first);
-	argTXT.push_back(iterTXT->second);
-	argTXT.push_back(newTXT);
-	// _gui->sendMessage("101",sequenceId,argTXT);
-	iterTXT++;
-      }
-      iter++;
-    }
-    returnValue = true;
-  }
-#else
-  (void)sequenceId;
-#endif
-  return returnValue;
 }
 
-/**
- * Main Thread
- */
-  bool 
-ManagerImpl::attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer)
+int ManagerImpl::getSipPort( void )
 {
-  bool returnValue = false;
-  // don't need the _gui like getZeroconf function
-  // because Observer is here
-#ifdef USE_ZEROCONF
-  int useZeroconf = getConfigInt(PREFERENCES, CONFIG_ZEROCONF);
-  if (useZeroconf) {
-    if (!_DNSService->isStart()) { _DNSService->startScanServices(); }
-    _DNSService->attach(observer);
-    returnValue = true;
-  }
-#else
-  (void)sequenceId;
-  (void)observer;
-#endif
-  return returnValue;
+    return 5060;
 }
-  bool
-ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
-{
-  bool returnValue = false;
-#ifdef USE_ZEROCONF
-  if (_DNSService) {
-    _DNSService->detach(observer);
-    returnValue = true;
-  }
-#else
-  (void)observer;
-#endif
-  return returnValue;
-}
+
 
 // TODO: rewrite this
 /**
@@ -1850,7 +1776,7 @@ ManagerImpl::detachZeroconfEvents(Pattern::Observer& observer)
 ManagerImpl::getCallStatus(const std::string& sequenceId UNUSED)
 {
   if (!_dbus) { return false; }
-  //ost::MutexLock m(_callAccountMapMutex);
+  ost::MutexLock m(_callAccountMapMutex);
   CallAccountMap::iterator iter = _callAccountMap.begin();
   TokenList tk;
   std::string code;
@@ -1974,7 +1900,7 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails(const Accoun
 
   std::map<std::string, std::string> a;
   std::string accountType;
-  enum VoIPLink::RegistrationState state;
+  RegistrationState state;
   
   state = _accountMap[accountID]->getRegistrationState();
   accountType = getConfigString(accountID, CONFIG_ACCOUNT_TYPE);
@@ -1983,15 +1909,15 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails(const Accoun
   a.insert( std::pair<std::string, std::string>( CONFIG_ACCOUNT_ENABLE, getConfigString(accountID, CONFIG_ACCOUNT_ENABLE) == "1" ? "TRUE": "FALSE"));
   a.insert( std::pair<std::string, std::string>(
 	"Status", 
-	(state == VoIPLink::Registered ? "REGISTERED":
-	(state == VoIPLink::Unregistered ? "UNREGISTERED":
-	(state == VoIPLink::Trying ? "TRYING":
-	(state == VoIPLink::ErrorAuth ? "ERROR_AUTH": 
-	(state == VoIPLink::ErrorNetwork ? "ERROR_NETWORK": 
-	(state == VoIPLink::ErrorHost ? "ERROR_HOST": 
-	(state == VoIPLink::ErrorExistStun ? "ERROR_EXIST_STUN": 
-	(state == VoIPLink::ErrorConfStun ? "ERROR_CONF_STUN": 
-	(state == VoIPLink::Error ? "ERROR": "ERROR")))))))))
+	(state == Registered ? "REGISTERED":
+	(state == Unregistered ? "UNREGISTERED":
+	(state == Trying ? "TRYING":
+	(state == ErrorAuth ? "ERROR_AUTH": 
+	(state == ErrorNetwork ? "ERROR_NETWORK": 
+	(state == ErrorHost ? "ERROR_HOST": 
+	(state == ErrorExistStun ? "ERROR_EXIST_STUN": 
+	(state == ErrorConfStun ? "ERROR_CONF_STUN": 
+	(state == Error ? "ERROR": "ERROR")))))))))
 	)
       );
  
@@ -2016,6 +1942,7 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 
     std::string accountType;
     Account *acc;
+    VoIPLink *link;
   
     accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
 
@@ -2029,28 +1956,28 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
   
     // SIP SPECIFIC
     if (accountType == "SIP") {
+    
+        link =  Manager::instance().getAccountLink( accountID );
+        
+        if( link==0 )
+        {
+            _debug("Can not retrieve SIP link...\n");
+            return;
+        }
+    
         setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
         setConfig(accountID, SIP_USE_STUN, (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
-	
-	if(!_userAgentInitlized) {
-        	_userAgentInitlized = true;
 
-        	if((*details.find(SIP_USE_STUN)).second == "TRUE")
-            		_userAgent->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
-        	else
-            		_userAgent->setStunServer(NULL);
-
-        	_userAgent->sipCreate();
-        	_userAgent->sipInit();
-    	} else {
-        	if((*details.find(SIP_USE_STUN)).second == "TRUE")
-            		_userAgent->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
-        	else
-            		_userAgent->setStunServer(NULL);
-
-        	restartPjsip();
-    	}
-  }
+        if((*details.find(SIP_USE_STUN)).second == "TRUE")
+        {
+           link->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
+        }
+        else
+        {
+            link->setStunServer("");
+        }
+        //restartPjsip();
+    }
 
     saveConfig();
   
@@ -2065,6 +1992,8 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 
     // Update account details to the client side
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+
+    //delete link; link=0;
 
 }
 
@@ -2092,38 +2021,30 @@ ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire 
 ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
 {
 
-  /** @todo Deal with both the _accountMap and the Configuration */
-  std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
-  Account* newAccount;
-  std::stringstream accountID;
-  accountID << "Account:" << time(NULL);
-  AccountID newAccountID = accountID.str();
-  /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
+    /** @todo Deal with both the _accountMap and the Configuration */
+    std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
+    Account* newAccount;
+    std::stringstream accountID;
+    accountID << "Account:" << time(NULL);
+    AccountID newAccountID = accountID.str();
+    /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
-  if (accountType == "SIP") {
-     if(!_userAgentInitlized) {
-        // Initialize the SIP Manager
-        _userAgent = new UserAgent();
-        _userAgent->setSipPort(Manager::instance().getConfigInt(PREFERENCES , CONFIG_SIP_PORT));
-      }
+    if (accountType == "SIP") {
+        newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
+    }
+    else if (accountType == "IAX") {
+        newAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, newAccountID);
+    }
+    else {
+        _debug("Unknown %s param when calling addAccount(): %s\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
+        return;
+    }
+    _accountMap[newAccountID] = newAccount;
+    setAccountDetails(accountID.str(), details);
 
-      newAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, newAccountID);
-  }
-  else if (accountType == "IAX") {
-    newAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, newAccountID);
-  }
-  else {
-    _debug("Unknown %s param when calling addAccount(): %s\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
-    return;
-  }
-  _accountMap[newAccountID] = newAccount;
-  setAccountDetails(accountID.str(), details);
+    saveConfig();
 
-  saveConfig();
-
-  if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-
-  //restartPjsip();
+    if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
 }
 
   void 
@@ -2152,7 +2073,7 @@ ManagerImpl::associateCallToAccount(const CallID& callID, const AccountID& accou
 {
   if (getAccountFromCall(callID) == AccountNULL) { // nothing with the same ID
     if (  accountExists(accountID)  ) { // account id exist in AccountMap
-      //ost::MutexLock m(_callAccountMapMutex);
+      ost::MutexLock m(_callAccountMapMutex);
       _callAccountMap[callID] = accountID;
       _debug("Associate Call %s with Account %s\n", callID.data(), accountID.data());
       return true;
@@ -2167,7 +2088,7 @@ ManagerImpl::associateCallToAccount(const CallID& callID, const AccountID& accou
   AccountID
 ManagerImpl::getAccountFromCall(const CallID& callID)
 {
-  //ost::MutexLock m(_callAccountMapMutex);
+  ost::MutexLock m(_callAccountMapMutex);
   CallAccountMap::iterator iter = _callAccountMap.find(callID);
   if ( iter == _callAccountMap.end()) {
     return AccountNULL;
@@ -2179,7 +2100,7 @@ ManagerImpl::getAccountFromCall(const CallID& callID)
   bool
 ManagerImpl::removeCallAccount(const CallID& callID)
 {
-  //ost::MutexLock m(_callAccountMapMutex);
+  ost::MutexLock m(_callAccountMapMutex);
   if ( _callAccountMap.erase(callID) ) {
     return true;
   }
@@ -2202,20 +2123,6 @@ ManagerImpl::getNewCallID()
   return random_id.str();
 }
 
-  void 
-ManagerImpl::restartPjsip()
-{
-  if ( _userAgentInitlized ){
-    unregisterCurSIPAccounts();
-    _userAgent->sipDestory();
-    //_userAgent->setSipPort(Manager::instance().getConfigInt(PREFERENCES , CONFIG_SIP_PORT));
-
-    _userAgent->sipCreate();
-    _userAgent->sipInit();
-    registerCurSIPAccounts();
-  } 
-}
-
   short
 ManagerImpl::loadAccountMap()
 {
@@ -2224,7 +2131,6 @@ ManagerImpl::loadAccountMap()
   TokenList sections = _config.getSections();
   std::string accountType;
   Account* tmpAccount;
-  std::string port;
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
@@ -2236,28 +2142,7 @@ ManagerImpl::loadAccountMap()
 
     accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
     if (accountType == "SIP") {
-      if(!_userAgentInitlized) {
-        // Initialize the SIP Manager
-        _userAgent = new UserAgent();
-        _userAgentInitlized = true;
-        _userAgent->setSipPort(Manager::instance().getConfigInt(PREFERENCES , CONFIG_SIP_PORT));
-      }
-
       tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
-     
-      // Determine whether to use stun for the current account or not 
-      int useStun = Manager::instance().getConfigInt(tmpAccount->getAccountID(),SIP_USE_STUN);
-  
-      if(useStun == 1) {
-        _userAgent->setStunServer(Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_STUN_SERVER).data());
-      }
-      
-      /*// Set registration port for all accounts, The last non-5060 port will be recorded in _userAgent.
-      port = Manager::instance().getConfigString(tmpAccount->getAccountID(), SIP_PORT);
-      std::istringstream is(port);
-      is >> iPort;
-      if (iPort != DEFAULT_SIP_PORT)
-      	_userAgent->setRegPort(iPort);  */
     }
     else if (accountType == "IAX") {
       tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);
@@ -2271,8 +2156,6 @@ ManagerImpl::loadAccountMap()
       _accountMap[iter->c_str()] = tmpAccount;
       nbAccount++;
     }
-
-    _debug("\n");
 
     iter++;
   }
@@ -2341,8 +2224,25 @@ ManagerImpl::getAccountIdFromNameAndServer(const std::string& userName, const st
   return AccountNULL;
 }
 
-  VoIPLink* 
-ManagerImpl::getAccountLink(const AccountID& accountID)
+AccountMap ManagerImpl::getSipAccountMap( void )
+{
+    
+    AccountMap::iterator iter;
+    AccountMap sipaccounts;
+    AccountID id;
+    Account *account;
+
+    for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+        if( iter->second->getType() == "sip" ){
+            //id = iter->first;
+            //account = iter->second;
+            //sipaccounts.insert( std::pair<id, account> );
+        }
+    }
+    return sipaccounts;
+}
+
+VoIPLink* ManagerImpl::getAccountLink(const AccountID& accountID)
 {
   Account* acc = getAccount(accountID);
   if ( acc ) {
@@ -2359,37 +2259,6 @@ pjsip_regc
     return tmp->getSipRegc();
   else*/
     return NULL;
-}
-
-
-/** 
- * Return the instance of sip manager
- */
-UserAgent *ManagerImpl::getUserAgent()
-{
-    return _userAgent;
-}
-
-int 
-ManagerImpl::getSipPort()
-{
-    if( _userAgent )
-        return _userAgent->getSipPort();
-    else
-    {
-        // It means that no SIP accounts are configured, so return a default value
-        return 0;
-    }
-}
-
-void 
-ManagerImpl::setSipPort(int portNum)
-{
-    if(portNum != _userAgent->getSipPort()) {
-        _userAgent->setSipPort(portNum);
-        restartPjsip();
-        setConfig( PREFERENCES , CONFIG_SIP_PORT , portNum );
-    }
 }
 
 void ManagerImpl::unregisterCurSIPAccounts()

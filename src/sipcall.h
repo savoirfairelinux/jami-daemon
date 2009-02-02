@@ -22,8 +22,8 @@
 #define SIPCALL_H
 
 #include "call.h"
+#include "sipvoiplink.h"
 #include "audio/codecDescriptor.h"
-#include "useragent.h"
 
 class AudioCodec;
 

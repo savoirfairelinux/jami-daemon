@@ -39,8 +39,7 @@ sflphoned_SOURCES = \
 		call.cpp \
 		account.cpp \
 		sipcall.cpp \
-		$(IAXSOURCES) \
-		useragent.cpp
+		$(IAXSOURCES) 
 
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" \
@@ -81,8 +80,7 @@ noinst_HEADERS = \
 		accountcreator.h \
         sipvoiplink.h \
 		call.h \
-		sipcall.h \
-		useragent.h
+		sipcall.h 
 		
 libsflphone_la_LIBADD = \
 	$(src)/libs/stund/libstun.la \
