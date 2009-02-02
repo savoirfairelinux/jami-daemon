@@ -29,6 +29,7 @@
 #include <math.h>
 #include <dlfcn.h>
 #include <iostream>
+#include <sstream>
 
 #include "../global.h"
 #include "../manager.h"
@@ -190,7 +191,21 @@ AudioRtpRTX::initAudioRtpSession (void)
       return;
     }
 
-    // Initialization
+    // Initialization   
+    printf("AudioRTPX::initAudioRtpSession: CallID to be used: %s \n",_ca->getCallId().c_str());           
+ 
+    printf("AudioRTPX::initAudioRtpSession: Account %s \n",Manager::instance().getAccountFromCall(_ca->getCallId()).c_str());
+    
+    printf("AudioRTPX::initAudioSRtpSession: FileName from call class: %s \n", _ca->getFileName().c_str());
+    
+ 
+    _debug("Opening the wave file\n");
+    FILE_TYPE ft = FILE_WAV;
+    SOUND_FORMAT sf = INT16;
+    recAudio.setSndSamplingRate(44100);
+    recAudio.openFile(_ca->getFileName(),ft,sf,_ca->getCallId());
+
+
     if (!_sym) {
       _sessionRecv->setSchedulingTimeout (10000);
       _sessionRecv->setExpireTimeout(1000000);
@@ -239,12 +254,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 	}
       }
     }
-    
-    _debug("Opening the wave file\n");
-    FILE_TYPE ft = FILE_WAV;
-    SOUND_FORMAT sf = INT16;
-    recAudio.setSndSamplingRate(44100);
-    recAudio.openFile("SFLWavFile.wav",ft,sf);
+
 
   } catch(...) {
     _debugException("! ARTP Failure: initialisation failed");
@@ -450,7 +460,7 @@ AudioRtpRTX::run () {
 
       recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
       
-      Thread::sleep(TimerPort::getTimer());
+      Thread::sleep(TimerPort::getTimer()); 
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
     }
 

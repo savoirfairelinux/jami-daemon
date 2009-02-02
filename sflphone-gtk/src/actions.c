@@ -708,6 +708,23 @@ sflphone_rec_call()
 {
   call_t * selectedCall = call_get_selected(current_calls);
   dbus_set_record(selectedCall);
+  
+
+  switch(selectedCall->state)
+  {
+      case CALL_STATE_CURRENT:
+            selectedCall->state = CALL_STATE_RECORD;
+            update_call_tree(current_calls,selectedCall);
+            update_menus();
+            break; 
+      case CALL_STATE_RECORD:
+            selectedCall->state = CALL_STATE_CURRENT;
+            update_call_tree(current_calls,selectedCall);
+            update_menus();
+            break;
+      default: 
+        break;
+  }
 }
 
 /* Internal to action - set the __CURRENT_ACCOUNT variable */

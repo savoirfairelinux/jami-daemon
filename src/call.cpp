@@ -36,6 +36,25 @@ Call::Call(const CallID& id, Call::CallType type)
            , _peerName()
            , _peerNumber()
 {
+    time_t rawtime;
+    struct tm * timeinfo;
+
+    rawtime = std::time(NULL);
+    timeinfo = localtime ( &rawtime );
+
+    std::stringstream out;
+
+    out << timeinfo->tm_year+1900;
+    if (timeinfo->tm_mon < 9) // january is 01, not 1
+      out << 0;
+    out << timeinfo->tm_mon+1;
+    if (timeinfo->tm_mday < 10) // 01 02 03, not 1 2 3
+      out << 0;
+    out << timeinfo->tm_mday;
+    
+    _filename = out.str();
+
+    printf("Call::constructor filename for tis call %s \n",_filename.c_str());
 }
 
 

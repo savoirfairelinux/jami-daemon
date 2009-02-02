@@ -282,7 +282,6 @@ toolbar_update_buttons ()
       case CALL_STATE_RINGING:
 	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
 	gtk_widget_set_sensitive( GTK_WIDGET(callButton),     TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
 	break;
       case CALL_STATE_DIALING:
 	if( active_calltree != history )  gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
@@ -302,7 +301,7 @@ toolbar_update_buttons ()
       case CALL_STATE_FAILURE:
 	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
 	break; 
-    case CALL_STATE_TRANSFERT:
+      case CALL_STATE_TRANSFERT:
 	gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
 	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), TRUE);
 	gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
@@ -310,6 +309,13 @@ toolbar_update_buttons ()
 	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
 	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
 	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
+	break;
+      case CALL_STATE_RECORD:
+	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
+	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
+	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
 	break;
       default:
 	g_warning("Should not happen!");
@@ -513,6 +519,7 @@ create_toolbar ()
 #if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text(GTK_WIDGET(recButton), _("Record a call"));
 #endif
+  gtk_widget_set_state( GTK_WIDGET(recButton), GTK_STATE_INSENSITIVE);
   g_signal_connect (G_OBJECT (recButton), "clicked",
       G_CALLBACK (rec_button), NULL);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(recButton), -1);
@@ -710,6 +717,9 @@ update_call_tree (calltab_t* tab, call_t * c)
 	      break;
 	    case CALL_STATE_TRANSFERT:
 	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfert.svg", NULL);
+              break;
+            case CALL_STATE_RECORD:
+	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/rec_call.svg", NULL);
 	      break;
 	    default:
 	      g_warning("Should not happen!");

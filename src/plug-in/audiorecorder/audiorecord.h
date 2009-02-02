@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <string.h>
+#include <sndfile.h>
 
 #include "global.h"
 
@@ -43,6 +44,8 @@ struct wavhdr {
   SINT32 data_length;     // in bytes
 };
 
+typedef std::string CallID;
+
 class AudioRecord
 {
 
@@ -58,7 +61,7 @@ public:
    * @param type     The sound file format (FILE_RAW, FILE_WAVE)
    * @param format   Internal sound format (INT16 / INT32)
    */
-  void openFile(std::string fileName, FILE_TYPE type, SOUND_FORMAT format);
+  void openFile(std::string fileName, FILE_TYPE type, SOUND_FORMAT format, CallID& id);
 
   /**
    * Close the opend recording file. If wave: cout the number of byte
@@ -69,6 +72,11 @@ public:
    * Check if a file is already opened
    */
   bool isOpenFile();
+
+  /** 
+   * Check if a file already exist
+   */
+  bool isFileExist();
 
   /**
    * Set recording flag
@@ -96,12 +104,22 @@ protected:
   /**
    * Set the header for raw files
    */
-  bool setRawFile(const char* fileName);
+  bool setRawFile();
 
   /**
    * Set the header for wave files
    */
-  bool setWavFile(const char* fileName);
+  bool setWavFile();
+
+  /**
+   * Open an existing raw file, used when the call is set on hold    
+   */
+  bool openExistingRawFile();
+
+  /**
+   * Open an existing wav file, used when the call is set on hold
+   */
+  bool openExistingWavFile();
 
   /**
    * Compute the number of byte recorded and close the file
@@ -152,5 +170,11 @@ protected:
    * Buffer used for mixing two channels
    */
   SFLDataFormat* mixBuffer_;
+  
+  /**
+   * Filename for this recording
+   */
+  char fileName_[8192];
+
 
 };

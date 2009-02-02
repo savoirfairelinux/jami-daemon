@@ -121,7 +121,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** Speaker buffer length in samples once the data are resampled
      *  (used for mixing and recording)
      */
-    int _nSamplesSpkr;
+    int _nSamplesSpkr; 
 
     /** Mic buffer length in samples once the data are resampled
      *  (used for mixing and recording)

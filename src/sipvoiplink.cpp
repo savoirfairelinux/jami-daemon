@@ -194,6 +194,7 @@ SIPVoIPLink::answer(const CallID& id)
     _debug("! SIP Failure: SIPCall doesn't exists\n");
     return false;
   }
+  
 
   int i = Manager::instance().getUserAgent()->answer(call);
   
@@ -202,8 +203,8 @@ SIPVoIPLink::answer(const CallID& id)
   } else {
     // use exosip, bug locked
     i = 0;
-    _debug("* SIP Info: Starting AudioRTP when answering\n");
     if (_audiortp->createNewSession(call) >= 0) {
+      printf("3.SIPVoIPLink::answer CallID %i:",call->getCid());
       call->setAudioStart(true);
       call->setConnectionState(Call::Connected);
       call->setState(Call::Active);
@@ -532,7 +533,6 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
     return;
   }
   //call->setDid(event->did);
-
   if (call->getConnectionState() != Call::Connected) {
     //call->SIPCallAnswered(event);
     call->SIPCallAnsweredWithoutHold(rdata);
