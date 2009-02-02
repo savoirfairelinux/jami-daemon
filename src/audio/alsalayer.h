@@ -21,8 +21,8 @@
 #define _ALSA_LAYER_H
 
 #include "audiolayer.h"
-
-#include <pthread.h>
+#include "eventthread.h"
+#include <alsa/asoundlib.h>
 
 class RingBuffer;
 class ManagerImpl;
@@ -47,8 +47,6 @@ class AlsaLayer : public AudioLayer {
      * Destructor
      */
     ~AlsaLayer(void);
-
-    void trigger_thread(void);
 
     void closeLayer( void );
 
@@ -81,52 +79,6 @@ class AlsaLayer : public AudioLayer {
      */
     void stopStream(void);
     
-    /**
-     * Check if the playback is running
-     * @return true if the state of the playback handle equals SND_PCM_STATE_RUNNING
-     *	       false otherwise
-     */
-    bool isPlaybackActive( void );
-
-    /**
-     * Check if the capture is running
-     * @return true if the state of the capture handle equals SND_PCM_STATE_RUNNING
-     *	       false otherwise
-     */
-    bool isCaptureActive( void );
-
-    /**
-     * Check if both capture and playback are running
-     * @return true if capture and playback are running
-     *	       false otherwise
-     */
-    bool isStreamActive(void);
-
-    /**
-     * Check if both capture and playback are stopped
-     * @return true if capture and playback are stopped
-     *	       false otherwise
-     */
-    bool isStreamStopped(void);
-
-    /**
-     * Send samples to the audio device. 
-     * @param buffer The buffer containing the data to be played ( voice and DTMF )
-     * @param toCopy The number of samples, in bytes
-     * @param isTalking	If whether or not the conversation is running
-     * @return int The number of bytes played
-     */
-    int playSamples(void* buffer, int toCopy, bool isTalking);
-
-    /**
-     * Send a chunk of data to the hardware buffer to start the playback
-     * Copy data in the urgent buffer. 
-     * @param buffer The buffer containing the data to be played ( ringtones )
-     * @param toCopy The size of the buffer
-     * @return int  The number of bytes copied in the urgent buffer
-     */
-    int putUrgent(void* buffer, int toCopy);
-
     /**
      * Query the capture device for number of bytes available in the hardware ring buffer
      * @return int The number of bytes available
@@ -185,34 +137,9 @@ class AlsaLayer : public AudioLayer {
      */
     std::string getAudioPlugin( void ) { return _audioPlugin; }
 
-    /**
-     * UNUSED in ALSA layer
-     */
-    int putInCache( char code, void *buffer, int toCopy );
+    void audioCallback (void);
 
-
-    /**
-     * UNUSED in ALSA layer
-     */
-    void reducePulseAppsVolume( void );
-
-    /**
-     * UNUSED in ALSA layer
-     */
-    void restorePulseAppsVolume( void ); 
-
-    /**
-     * UNUSED in ALSA layer
-     */
-    void setPlaybackVolume( UNUSED int volume ){}
-    void setCaptureVolume( UNUSED int volume ){}
-
-    /**
-     * Callback used for asynchronous playback.
-     * Write tones buffer to the alsa internal ring buffer.
-     */
-    void playTones( void );
-
+    bool isCaptureActive (void) { return is_capture_running (); }
 
   private:
   
@@ -222,29 +149,44 @@ class AlsaLayer : public AudioLayer {
     // Assignment Operator
     AlsaLayer& operator=( const AlsaLayer& rh);
 
+    bool _is_prepared_playback;
+    bool _is_prepared_capture;
+    bool _is_running_capture;
+    bool _is_running_playback;
+    bool _is_open_playback;
+    bool _is_open_capture;
+    bool _trigger_request;
+    
+    bool is_playback_prepared (void) { return _is_prepared_playback; }
+    bool is_capture_prepared (void) { return _is_prepared_capture; }
+    void prepare_playback (void) { _is_prepared_playback = true; }
+    void prepare_capture (void) { _is_prepared_capture = true; }
+    bool is_capture_running (void) { return _is_running_capture; }
+    bool is_playback_running (void) { return _is_running_playback; }
+    void start_playback (void) { _is_running_playback = true; }
+    void stop_playback (void) { _is_running_playback = false; _is_prepared_playback = false; }
+    void start_capture (void) { _is_running_capture = true; }
+    void stop_capture (void) { _is_running_capture = false; _is_prepared_capture = false; }
+    void close_playback (void) { _is_open_playback = false; }
+    void close_capture (void) { _is_open_capture = false; }
+    void open_playback (void) { _is_open_playback = true; }
+    void open_capture (void) { _is_open_capture = true; }
+    bool is_capture_open (void) { return _is_open_capture; }
+    bool is_playback_open (void) { return _is_open_playback; }
+    
     /**
      * Drop the pending frames and close the capture device
      * ALSA Library API
      */
     void closeCaptureStream( void );
+    void stopCaptureStream( void );
+    void startCaptureStream( void );
+    void prepareCaptureStream( void );
 
-    /**
-     * Drop the pending frames and close the playback device
-     * ALSA Library API
-     */
     void closePlaybackStream( void );
-
-    /**
-     * Fill the alsa internal ring buffer with chunks of data
-     */
-    void fillHWBuffer( void) ;
-
-    /**
-     * Callback used for asynchronous playback.
-     * Called when a certain amount of data is written ot the device
-     * @param pcm_callback  The callback pointer
-     */
-    //static void AlsaCallBack( snd_async_handler_t* pcm_callback);
+    void stopPlaybackStream( void );
+    void startPlaybackStream( void );
+    void preparePlaybackStream( void );
 
     /**
      * Open the specified device.
@@ -280,6 +222,8 @@ class AlsaLayer : public AudioLayer {
      */
     int read( void* buffer, int toCopy);
     
+    
+
     /**
      * Recover from XRUN state for capture
      * ALSA Library API
@@ -292,7 +236,9 @@ class AlsaLayer : public AudioLayer {
      */
     void handle_xrun_playback( void );
     
-    /**
+    void* adjustVolume( void* buffer , int len, int stream );
+    
+/**
      * Handles to manipulate playback stream
      * ALSA Library API
      */
@@ -310,36 +256,14 @@ class AlsaLayer : public AudioLayer {
     snd_pcm_uframes_t _periodSize;
 
     /**
-     * Volume is controlled by the application. Data buffer are modified here to adjust to the right volume selected by the user on the main interface
-     * @param buffer  The buffer to adjust
-     * @param len The number of bytes
-     * @param stream  The stream mode ( PLAYBACK - CAPTURE )
-     */
-    void * adjustVolume( void * , int , int);
-
-    /**
      * name of the alsa audio plugin used
      */
     std::string _audioPlugin;
 
-    /**
-     * Input channel (mic) should be 1 mono
-     */
-    unsigned int _inChannel; 
-
-    /**
-     * Output channel (stereo) should be 1 mono
-     */
-    unsigned int _outChannel; 
-
-    /**
-     * Default volume for incoming RTP and Urgent sounds.
-     */
-    unsigned short _defaultVolume; // 100
-
-
     /** Vector to manage all soundcard index - description association of the system */
     std::vector<HwIDPair> IDSoundCards;
+
+    AudioThread *_audioThread;
 
 };
 

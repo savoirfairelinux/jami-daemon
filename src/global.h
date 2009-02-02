@@ -26,6 +26,11 @@
 #include <stdio.h>
 #include <libintl.h>
 #include <locale.h>
+#include <string>
+#include <stdlib.h>
+#include <sstream>
+#include <map>
+#include <vector>
 
 #define SFLPHONED_VERSION "0.9.2-4"		/** Version number */
 
@@ -98,6 +103,7 @@ typedef short int16;
 #define WINDOW_POPUP		  1		/** Popup mode */
 #define NOTIFY_ALL		  1		/** Desktop notification level 0: never notify */
 #define NOTIFY_MAILS		  1		/** Desktop mail notification level 0: never notify */
+#define STUN_ENABLED         1
 
 // Error codes for error handling
 #define NO_ERROR		      0x0000	/** No error - Everything alright */

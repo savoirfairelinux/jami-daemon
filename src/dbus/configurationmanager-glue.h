@@ -73,6 +73,10 @@ public:
         register_method(ConfigurationManager_adaptor, getPulseAppVolumeControl, _getPulseAppVolumeControl_stub);
         register_method(ConfigurationManager_adaptor, setSipPort, _setSipPort_stub);
         register_method(ConfigurationManager_adaptor, getSipPort, _getSipPort_stub);
+        register_method(ConfigurationManager_adaptor, setStunServer, _setStunServer_stub);
+        register_method(ConfigurationManager_adaptor, getStunServer, _getStunServer_stub);
+        register_method(ConfigurationManager_adaptor, enableStun, _enableStun_stub);
+        register_method(ConfigurationManager_adaptor, isStunEnabled, _isStunEnabled_stub);
     }
 
     ::DBus::IntrospectedInterface *const introspect() const 
@@ -338,6 +342,25 @@ public:
             { "port", "i", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument setStunServer_args[] = 
+        {
+            { "server", "s", true },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getStunServer_args[] = 
+        {
+            { "server", "s", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument enableStun_args[] = 
+        {
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument isStunEnabled_args[] = 
+        {
+            { "state", "i", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
         {
             { "list", "a{ss}", false },
@@ -407,6 +430,10 @@ public:
             { "getPulseAppVolumeControl", getPulseAppVolumeControl_args },
             { "setSipPort", setSipPort_args },
             { "getSipPort", getSipPort_args },
+            { "setStunServer", setStunServer_args },
+            { "getStunServer", getStunServer_args },
+            { "enableStun", enableStun_args },
+            { "isStunEnabled", isStunEnabled_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_adaptor_signals[] = 
@@ -494,6 +521,10 @@ public:
     virtual int32_t getPulseAppVolumeControl() = 0;
     virtual void setSipPort(const int32_t& port) = 0;
     virtual int32_t getSipPort() = 0;
+    virtual void setStunServer(const std::string& server) = 0;
+    virtual std::string getStunServer() = 0;
+    virtual void enableStun() = 0;
+    virtual int32_t isStunEnabled() = 0;
 
 public:
 
@@ -1022,6 +1053,43 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         int32_t argout1 = getSipPort();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setStunServer_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::string argin1; ri >> argin1;
+        setStunServer(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getStunServer_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::string argout1 = getStunServer();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _enableStun_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        enableStun();
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _isStunEnabled_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        int32_t argout1 = isStunEnabled();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

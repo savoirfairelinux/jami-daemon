@@ -109,7 +109,7 @@ config_window_fill_account_list()
  * Delete an account
  */
     static void
-delete_account(GtkWidget *widget, gpointer data UNUSED)
+delete_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
 {
     if(selectedAccount)
     {
@@ -449,24 +449,15 @@ create_accounts_tab()
 void stun_state( void )
 {
     
-    guint i, size;
-    gchar * stun_enabled = "FALSE";
-    account_t * account;
+    guint stun_enabled = 0;
 
     gboolean stunActive = (gboolean)gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( stunEnable ));
     gtk_widget_set_sensitive( GTK_WIDGET( stunServer ) , stunActive );
+
     // Check if we actually change the state
-    size = account_list_get_size();
-    for(i=0; i<size; i++)
-    {
-        account = account_list_get_nth(i);
-        if( strcmp(g_hash_table_lookup(account->properties, ACCOUNT_TYPE), "SIP" ) == 0 )
-        {
-            stun_enabled = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_ENABLED);
-            break;
-        }
-    }
-    if( (stunActive && strcmp(stun_enabled, "FALSE")==0) || (!stunActive && strcmp(stun_enabled, "TRUE")==0) )
+    stun_enabled = dbus_stun_is_enabled();
+    
+    if( (stunActive && stun_enabled ==0 ) || (!stunActive && stun_enabled ==1))
     {
         gtk_widget_set_sensitive( GTK_WIDGET( applyButton ) , TRUE );
     }
@@ -477,24 +468,8 @@ void stun_state( void )
 
 void update_registration( void )
 {
-    guint nb_accounts, i;
-    account_t *current;
-
-    nb_accounts = account_list_get_size();
-
-    for(i=0; i<nb_accounts;i++){
-        
-        current = account_list_get_nth(i);
-        // If SIP account, then set the new value
-        if( strcmp(g_hash_table_lookup(current->properties, ACCOUNT_TYPE), "SIP" ) == 0 )
-        {
-            g_hash_table_replace(current->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), 
-                                    g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(stunServer))));
-            g_hash_table_replace(current->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
-                                    g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stunEnable)) ? "TRUE": "FALSE"));
-            dbus_set_account_details(current);
-        }
-    }
+    dbus_set_stun_server((gchar *)gtk_entry_get_text(GTK_ENTRY(stunServer)));
+    dbus_enable_stun();
 
     gtk_widget_set_sensitive(GTK_WIDGET( applyButton ) , FALSE );
 }
@@ -505,23 +480,11 @@ GtkWidget* create_stun_tab()
     gchar * stun_server= "stun.fwdnet.net:3478";
     gchar * stun_enabled = "FALSE";
     GtkWidget * label;
-    account_t * account;
-    guint i, size;
 
-    // All SIP accounts are supposed to have the same STUN configuration
-    // So let's take the first SIP account we find
-    size = account_list_get_size();
-    for(i=0; i<size; i++)
-    {
-        account = account_list_get_nth(i);
-        if( strcmp(g_hash_table_lookup(account->properties, ACCOUNT_TYPE), "SIP" ) == 0 )
-        {
-            stun_enabled = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_ENABLED);
-            stun_server = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_SERVER);
-            break;
-        }
-    }
-    
+    /* Retrieve the STUN configuration */
+    stun_enabled = (dbus_stun_is_enabled()==1)?"TRUE":"FALSE";
+    stun_server = dbus_get_stun_server();
+
     tableNat = gtk_table_new ( 3, 2  , FALSE/* homogeneous */);
 
     // NAT detection code section

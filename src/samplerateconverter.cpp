@@ -78,6 +78,7 @@ void SamplerateConverter::init( void ) {
 int SamplerateConverter::upsampleData(  SFLDataFormat* dataIn , SFLDataFormat* dataOut, int samplerate1 , int samplerate2 , int nbSamples ){
   
   double upsampleFactor = (double)samplerate2 / samplerate1 ;
+  //_debug("factor = %f\n" , upsampleFactor);
   int nbSamplesMax = (int) ( samplerate2 * getFramesize() / 1000 );
   if( upsampleFactor != 1 && dataIn != NULL )
   {
@@ -106,7 +107,7 @@ int SamplerateConverter::downsampleData(  SFLDataFormat* dataIn , SFLDataFormat*
   double downsampleFactor = (double)samplerate1 / samplerate2;
   //_debug("factor = %f\n" , downsampleFactor);
   int nbSamplesMax = (int) ( samplerate1 * getFramesize() / 1000 );
-  if ( downsampleFactor != 1)
+  if ( downsampleFactor != 1 )
   {
     SRC_DATA src_data;	
     src_data.data_in = _floatBufferUpMic;

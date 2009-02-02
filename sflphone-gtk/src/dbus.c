@@ -39,6 +39,7 @@ DBusGConnection * connection;
 DBusGProxy * callManagerProxy;
 DBusGProxy * configurationManagerProxy;
 DBusGProxy * instanceProxy;
+DBusGProxy * nameOwnerProxy;
 
 static void  
 incoming_call_cb (DBusGProxy *proxy UNUSED,
@@ -172,18 +173,32 @@ error_alert(DBusGProxy *proxy UNUSED,
   sflphone_throw_exception( errCode );
 }
 
+
+static void nameOwnerChanged(DBusGProxy *proxy, char *name, char *old_owner, char *new_owner, gpointer data )
+{
+
+    g_print("******************************************************************\n");
+    g_print("Owner name of the service %s changed from %s to %s\n", name, old_owner, new_owner);
+    g_print("******************************************************************\n");
+
+    if (strcmp(name, "org.sflphone.SFLphone")!=0)   return;
+
+}
+
 gboolean 
 dbus_connect ()
 {
 
   GError *error = NULL;
   connection = NULL;
+  instanceProxy = NULL;
+  nameOwnerProxy = NULL;
   
   g_type_init ();
 
   connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
   
-  if (connection == NULL)
+  if (error)
   {
     g_printerr ("Failed to open connection to bus: %s\n",
                 error->message);
@@ -191,13 +206,32 @@ dbus_connect ()
     return FALSE;
   }
 
+    
+    nameOwnerProxy = dbus_g_proxy_new_for_name( connection,
+                                                    DBUS_SERVICE_DBUS,
+                                                    DBUS_PATH_DBUS,
+                                                    DBUS_INTERFACE_DBUS);
+
+    if( nameOwnerProxy==NULL)
+    {
+        g_printerr ("Failed to get proxy to NameOwner\n");
+        return FALSE;
+    }
+
+    dbus_g_proxy_add_signal( nameOwnerProxy, "NameOwnerChanged",
+                G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+    dbus_g_proxy_connect_signal (nameOwnerProxy, "NameOwnerChanged",
+                G_CALLBACK (nameOwnerChanged), NULL, NULL);
+
+
   /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
   
   instanceProxy = dbus_g_proxy_new_for_name (connection,
                                      "org.sflphone.SFLphone",
                                      "/org/sflphone/SFLphone/Instance",
                                      "org.sflphone.SFLphone.Instance");
-  if (!instanceProxy) 
+                                     
+  if (instanceProxy==NULL) 
   {
     g_printerr ("Failed to get proxy to Instance\n");
     return FALSE;
@@ -210,7 +244,8 @@ dbus_connect ()
                                      "org.sflphone.SFLphone",
                                      "/org/sflphone/SFLphone/CallManager",
                                      "org.sflphone.SFLphone.CallManager");
-  if (!callManagerProxy) 
+
+  if (callManagerProxy==NULL) 
   {
     g_printerr ("Failed to get proxy to CallManagers\n");
     return FALSE;
@@ -256,6 +291,7 @@ dbus_connect ()
                                   "org.sflphone.SFLphone",
                                   "/org/sflphone/SFLphone/ConfigurationManager",
                                   "org.sflphone.SFLphone.ConfigurationManager");
+
   if (!configurationManagerProxy) 
   {
     g_printerr ("Failed to get proxy to ConfigurationManager\n");
@@ -1505,3 +1541,58 @@ dbus_get_sip_port( void )
         return (guint)portNum;
 }
 
+gchar* dbus_get_stun_server (void)
+{
+        GError* error = NULL;
+        gchar* server;
+        org_sflphone_SFLphone_ConfigurationManager_get_stun_server(
+                        configurationManagerProxy,
+                        &server,
+                        &error);
+        if(error)
+        {
+                g_error_free(error);
+        }
+        return server;
+}
+
+void dbus_set_stun_server( gchar* server)
+{
+        GError* error = NULL;
+        org_sflphone_SFLphone_ConfigurationManager_set_stun_server(
+                        configurationManagerProxy,
+                        server,
+                        &error);
+        if(error)
+        {
+                g_error_free(error);
+        }
+}
+
+guint dbus_stun_is_enabled (void)
+{
+    GError* error = NULL;
+    guint stun;
+    org_sflphone_SFLphone_ConfigurationManager_is_stun_enabled(
+                        configurationManagerProxy,
+                        &stun,
+                        &error);
+        if(error)
+        {
+                g_error_free(error);
+        }
+        return stun;
+}
+
+void dbus_enable_stun (void)
+{
+    
+    GError* error = NULL;
+    org_sflphone_SFLphone_ConfigurationManager_enable_stun(
+                        configurationManagerProxy,
+                        &error);
+        if(error)
+        {
+                g_error_free(error);
+        }
+}
