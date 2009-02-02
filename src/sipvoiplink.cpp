@@ -210,6 +210,7 @@ SIPVoIPLink::terminate()
     void
 SIPVoIPLink::terminateSIPCall()
 {
+    _debug("SIPVoIPLink::terminateSIPCall(): function called");
     ost::MutexLock m(_callMapMutex);
     CallMap::iterator iter = _callMap.begin();
     SIPCall *call;
@@ -477,7 +478,7 @@ SIPVoIPLink::hangup(const CallID& id)
         return false;
 
     call->getInvSession()->mod_data[getModId()] = NULL;
-    return true;
+    
 
     // Release RTP thread
     if (Manager::instance().isCurrentCall(id)) {
@@ -906,63 +907,63 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         return true;
     }
 
-    void
-        SIPVoIPLink::SIPCallServerFailure(SIPCall *call) 
-        {
-            //if (!event->response) { return; }
-            //switch(event->response->status_code) {
-            //case SIP_SERVICE_UNAVAILABLE: // 500
-            //case SIP_BUSY_EVRYWHERE:     // 600
-            //case SIP_DECLINE:             // 603
-            //SIPCall* call = findSIPCallWithCid(event->cid);
-            if (call != 0) {
-                _debug("Server error!\n");
-                CallID id = call->getCallId();
-                Manager::instance().callFailure(id);
-                removeCall(id);
-            }
-            //break;
-            //}
-        }
+void
+SIPVoIPLink::SIPCallServerFailure(SIPCall *call) 
+{
+    //if (!event->response) { return; }
+    //switch(event->response->status_code) {
+    //case SIP_SERVICE_UNAVAILABLE: // 500
+    //case SIP_BUSY_EVRYWHERE:     // 600
+    //case SIP_DECLINE:             // 603
+    //SIPCall* call = findSIPCallWithCid(event->cid);
+    if (call != 0) {
+        _debug("Server error!\n");
+        CallID id = call->getCallId();
+        Manager::instance().callFailure(id);
+        removeCall(id);
+    }
+    //break;
+    //}
+}
 
-    void
-        SIPVoIPLink::SIPCallClosed(SIPCall *call) 
-        {
-            // it was without did before
-            //SIPCall* call = findSIPCallWithCid(event->cid);
-            if (!call) { return; }
+void
+SIPVoIPLink::SIPCallClosed(SIPCall *call) 
+{
+    // it was without did before
+    //SIPCall* call = findSIPCallWithCid(event->cid);
+    if (!call) { return; }
 
-            CallID id = call->getCallId();
-            //call->setDid(event->did);
-            if (Manager::instance().isCurrentCall(id)) {
-                call->setAudioStart(false);
-                _debug("* SIP Info: Stopping AudioRTP when closing\n");
-                _audiortp->closeRtpSession();
-            }
-            _debug("After close RTP\n");
-            Manager::instance().peerHungupCall(id);
-            removeCall(id);
-            _debug("After remove call ID\n");
-        }
+    CallID id = call->getCallId();
+    //call->setDid(event->did);
+    if (Manager::instance().isCurrentCall(id)) {
+        call->setAudioStart(false);
+        _debug("* SIP Info: Stopping AudioRTP when closing\n");
+        _audiortp->closeRtpSession();
+    }
+    _debug("After close RTP\n");
+    Manager::instance().peerHungupCall(id);
+    removeCall(id);
+    _debug("After remove call ID\n");
+}
 
-    void
-        SIPVoIPLink::SIPCallReleased(SIPCall *call)
-        {
-            // do cleanup if exists
-            // only cid because did is always 0 in these case..
-            //SIPCall* call = findSIPCallWithCid(event->cid);
-            if (!call) { return; }
+void
+SIPVoIPLink::SIPCallReleased(SIPCall *call)
+{
+    // do cleanup if exists
+    // only cid because did is always 0 in these case..
+    //SIPCall* call = findSIPCallWithCid(event->cid);
+    if (!call) { return; }
 
-            // if we are here.. something when wrong before...
-            _debug("SIP call release\n");
-            CallID id = call->getCallId();
-            Manager::instance().callFailure(id);
-            removeCall(id);
-        }
+    // if we are here.. something when wrong before...
+    _debug("SIP call release\n");
+    CallID id = call->getCallId();
+    Manager::instance().callFailure(id);
+    removeCall(id);
+}
 
-    void
-        SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
-        {
+void
+SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
+{
             //SIPCall* call = dynamic_cast<SIPCall *>(theCall);//findSIPCallWithCid(event->cid);
             if (!call) {
                 _debug("! SIP Failure: unknown call\n");

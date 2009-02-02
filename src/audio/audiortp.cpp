@@ -53,6 +53,7 @@ AudioRtp::~AudioRtp (void) {
 
 int 
 AudioRtp::createNewSession (SIPCall *ca) {
+   
     ost::MutexLock m(_threadMutex);
 
     // something should stop the thread before...
@@ -87,6 +88,7 @@ AudioRtp::closeRtpSession () {
   // This will make RTP threads finish.
   // _debug("Stopping AudioRTP\n");
   try {
+    
     delete _RTXThread; _RTXThread = 0;
   } catch(...) {
     _debugException("! ARTP Exception: when stopping audiortp\n");
@@ -140,7 +142,7 @@ AudioRtpRTX::~AudioRtpRTX () {
     _debugException("! ARTP: Thread destructor didn't terminate correctly");
     throw;
   }
-  //_debug("terminate audiortprtx ended...\n");
+  _debug("terminate audiortprtx ended...\n");
   _ca = 0;
   if (!_sym) {
     delete _sessionRecv; _sessionRecv = NULL;
@@ -148,7 +150,7 @@ AudioRtpRTX::~AudioRtpRTX () {
   } else {
     delete _session;     _session = NULL;
   }
-
+ 
   delete [] micData;  micData = NULL;
   delete [] micDataConverted;  micDataConverted = NULL;
   delete [] micDataEncoded;  micDataEncoded = NULL;
@@ -159,6 +161,9 @@ AudioRtpRTX::~AudioRtpRTX () {
   delete time; time = NULL;
 
   delete converter; converter = NULL;
+
+  _debug("AudioRtpRTX::~AudioRtpRTX () : Deleting the call instance \n");
+  
 }
 
   void
