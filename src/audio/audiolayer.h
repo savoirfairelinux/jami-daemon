@@ -59,7 +59,6 @@ class AudioLayer {
               , _urgentRingBuffer( SIZEBUF)
               , _micRingBuffer( SIZEBUF )
               , _defaultVolume(100)
-              , _talk ( false )
               , _indexIn ( 0 )
               , _indexOut ( 0 )
               , _sampleRate ( 0 )
@@ -71,7 +70,6 @@ class AudioLayer {
     {
 
     }
-
 
         /**
          * Destructor
@@ -122,47 +120,6 @@ class AudioLayer {
          * @return int The number of bytes acquired ( 0 if an error occured)
          */
         virtual int getMic(void * buffer, int toCopy) = 0;
-
-        /**
-         * Scan the sound card available on the system
-         * @param stream To indicate whether we are looking for capture devices or playback devices
-         *		   SFL_PCM_CAPTURE
-         *		   SFL_PCM_PLAYBACK
-         *		   SFL_PCM_BOTH
-         * @return std::vector<std::string> The vector containing the string description of the card
-         */
-        virtual std::vector<std::string> getSoundCardsInfo( int stream ) = 0;
-
-        /**
-         * Check if the given index corresponds to an existing sound card and supports the specified streaming mode
-         * @param card   An index
-         * @param stream  The stream mode
-         *		  SFL_PCM_CAPTURE
-         *		  SFL_PCM_PLAYBACK
-         *		  SFL_PCM_BOTH
-         * @return bool True if it exists and supports the mode
-         *		    false otherwise
-         */
-        virtual bool soundCardIndexExist( int card , int stream ) = 0;
-
-        /**
-         * An index is associated with its string description
-         * @param description The string description
-         * @return	int	  Its index
-         */
-        virtual int soundCardGetIndex( std::string description ) = 0;
-
-        /**
-         * Get the current audio plugin.
-         * @return std::string  The name of the audio plugin
-         */
-        virtual std::string getAudioPlugin( void ) = 0; 
-
-        virtual void reducePulseAppsVolume( void ) = 0;
-        virtual void restorePulseAppsVolume( void ) = 0;
-
-        virtual void setPlaybackVolume( int volume ) = 0;
-        virtual void setCaptureVolume( int volume ) = 0;
 
         /**
          * Send a chunk of data to the hardware buffer to start the playback
@@ -233,13 +190,6 @@ class AudioLayer {
          */
         unsigned int getFrameSize() { return _frameSize; }
 
-        /**
-         * Get the current state. Conversation or not
-         * @return bool true if playSamples has been called  
-         *		    false otherwise
-         */
-        bool getCurrentState( void ) { return _talk; }
-
         int getLayerType( void ) { return _layerType; }
 
         /**
@@ -270,13 +220,6 @@ class AudioLayer {
         RingBuffer _urgentRingBuffer;
         RingBuffer _voiceRingBuffer;
         RingBuffer _micRingBuffer;
-
-        /**
-         * Determine if both endpoints hang up.
-         *	true if conversation is running
-         *	false otherwise
-         */
-        bool _talk;
 
         /**
          * Number of audio cards on which capture stream has been opened 

@@ -137,22 +137,6 @@ class AlsaLayer : public AudioLayer {
      */
     std::string getAudioPlugin( void ) { return _audioPlugin; }
 
-    /**
-     * UNUSED in ALSA layer
-     */
-    void reducePulseAppsVolume( void );
-
-    /**
-     * UNUSED in ALSA layer
-     */
-    void restorePulseAppsVolume( void ); 
-
-    /**
-     * UNUSED in ALSA layer
-     */
-    void setPlaybackVolume( UNUSED int volume ){}
-    void setCaptureVolume( UNUSED int volume ){}
-
     void audioCallback (void);
 
   private:
@@ -269,18 +253,6 @@ class AlsaLayer : public AudioLayer {
      * name of the alsa audio plugin used
      */
     std::string _audioPlugin;
-
-    /**
-     * Input channel (mic) should be 1 mono
-     */
-    unsigned int _inChannel; 
-
-    /**
-     * Output channel (stereo) should be 1 mono
-     */
-    unsigned int _outChannel; 
-
-
 
     /** Vector to manage all soundcard index - description association of the system */
     std::vector<HwIDPair> IDSoundCards;

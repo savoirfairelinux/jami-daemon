@@ -79,26 +79,11 @@ class PulseLayer : public AudioLayer {
     /**
      * UNUSED in pulseaudio layer
      */
-    std::vector<std::string> getSoundCardsInfo( int stream UNUSED ) { 
-      std::vector<std::string> tmp;
-      return tmp; 
-    }
+    //std::vector<std::string> getSoundCardsInfo( int stream UNUSED ) { 
+      //std::vector<std::string> tmp;
+      //return tmp; 
+    //}
 
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    bool soundCardIndexExist( int card UNUSED, int stream UNUSED ) { return true; }
-    
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    int soundCardGetIndex( std::string description UNUSED ) { return 0;}
-
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    std::string getAudioPlugin( void ) { return "default"; }
-    
     /**
      * Reduce volume of every audio applications connected to the same sink
      */

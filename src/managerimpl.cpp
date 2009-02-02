@@ -122,9 +122,8 @@ ManagerImpl::init()
     // Initialize the list of supported audio codecs
     initAudioCodec();
 
-    getAudioInputDeviceList();
-
     AudioLayer *audiolayer = getAudioDriver();
+    
     if (audiolayer!=0) {
         unsigned int sampleRate = audiolayer->getSampleRate();
 
@@ -250,29 +249,35 @@ ManagerImpl::answerCall(const CallID& id)
   bool
 ManagerImpl::hangupCall(const CallID& id)
 {
-  stopTone(true);
+    PulseLayer *pulselayer;
+    AccountID accountid;
+    bool returnValue;
 
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+    stopTone(true);
+
+    /* Broadcast a signal over DBus */
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
   
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    /** @todo We should tell the GUI that the call doesn't exist, so
-     * it clears up. This can happen. */
-    _debug("! Manager Hangup Call: Call doesn't exists\n");
-    return false;
-  }
+    accountid = getAccountFromCall( id );
+    if (accountid == AccountNULL) {
+        /** @todo We should tell the GUI that the call doesn't exist, so
+        * it clears up. This can happen. */
+        _debug("! Manager Hangup Call: Call doesn't exists\n");
+        return false;
+    }
 
-  bool returnValue = getAccountLink(accountid)->hangup(id);
+    returnValue = getAccountLink(accountid)->hangup(id);
 
-  _debug("After voip link hungup!\n");
-  removeCallAccount(id);
-  switchCall("");
+    _debug("After voip link hungup!\n");
+    removeCallAccount(id);
+    switchCall("");
 
-  if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
-    _audiodriver->restorePulseAppsVolume();
-
-  _debug("Before hungup return!\n");
-  return returnValue;
+    if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
+        pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
+        if(pulselayer)  pulselayer->restorePulseAppsVolume();
+    }
+  
+    return returnValue;
 }
 
 //THREAD=Main
@@ -554,38 +559,44 @@ ManagerImpl::isWaitingCall(const CallID& id) {
   bool 
 ManagerImpl::incomingCall(Call* call, const AccountID& accountId) 
 {
-  _debug("Incoming call %s\n", call->getCallId().data());
+    PulseLayer *pulselayer;
+    std::string from, number;
 
-  associateCallToAccount(call->getCallId(), accountId);
+    _debug("Incoming call %s\n", call->getCallId().data());
 
-  if ( !hasCurrentCall() ) {
-    call->setConnectionState(Call::Ringing);
-    ringtone();
-    switchCall(call->getCallId());
-  } else {
-    addWaitingCall(call->getCallId());
-  }
+    associateCallToAccount(call->getCallId(), accountId);
 
-  std::string from = call->getPeerName();
-  std::string number = call->getPeerNumber();
+    if ( !hasCurrentCall() ) {
+        call->setConnectionState(Call::Ringing);
+        ringtone();
+        switchCall(call->getCallId());
+    } else {
+        addWaitingCall(call->getCallId());
+    }
 
-  if (from != "" && number != "") {
-    from.append(" <");
-    from.append(number);
-    from.append(">");
-  } else if ( from.empty() ) {
-    from.append("<");
-    from.append(number);
-    from.append(">");
-  }
+    from = call->getPeerName();
+    number = call->getPeerNumber();
+
+    if (from != "" && number != "") {
+        from.append(" <");
+        from.append(number);
+        from.append(">");
+    } else if ( from.empty() ) {
+        from.append("<");
+        from.append(number);
+        from.append(">");
+    }
   
-  _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+    /* Broadcast a signal over DBus */
+    _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
   
-  // Reduce volume of the other pulseaudio-connected audio applications
-  if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
-    _audiodriver->reducePulseAppsVolume();
+    // Reduce volume of the other pulseaudio-connected audio applications
+    if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
+        pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
+        if(pulselayer)  pulselayer->reducePulseAppsVolume();
+    }
   
-  return true;
+    return true;
 }
 
 //THREAD=VoIP
@@ -620,22 +631,30 @@ ManagerImpl::peerRingingCall(const CallID& id)
   void
 ManagerImpl::peerHungupCall(const CallID& id)
 {
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("peerHungupCall: Call doesn't exists\n");
-    return;
-  }
+    PulseLayer *pulselayer;
+    AccountID accountid;
+
+    accountid = getAccountFromCall( id );
+    if (accountid == AccountNULL) {
+        _debug("peerHungupCall: Call doesn't exists\n");
+        return;
+    }
   
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
-  if (isCurrentCall(id)) {
-    stopTone(true);
-    switchCall("");
-  }
-  removeWaitingCall(id);
-  removeCallAccount(id);
+    /* Broadcast a signal over DBus */
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+    
+    if (isCurrentCall(id)) {
+        stopTone(true);
+        switchCall("");
+    }
+
+    removeWaitingCall(id);
+    removeCallAccount(id);
   
-  if( getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) )
-    _audiodriver->restorePulseAppsVolume();
+    if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
+        pulselayer = dynamic_cast<PulseLayer *> (getAudioDriver());
+        if(pulselayer)  pulselayer->restorePulseAppsVolume();
+    }
 }
 
 //THREAD=VoIP
@@ -1226,7 +1245,10 @@ ManagerImpl::setOutputAudioPlugin(const std::string& audioPlugin)
 ManagerImpl::getAudioOutputDeviceList(void)
 {
   _debug("Get audio output device list\n");
-  return _audiodriver -> getSoundCardsInfo(SFL_PCM_PLAYBACK);
+  AlsaLayer *layer;
+
+  layer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
+  if (layer)    return layer -> getSoundCardsInfo(SFL_PCM_PLAYBACK);
 }
 
 /**
@@ -1235,19 +1257,22 @@ ManagerImpl::getAudioOutputDeviceList(void)
   void
 ManagerImpl::setAudioOutputDevice(const int index)
 {
-  //int layer = _audiodriver -> getLayerType();
-  _debug("Set audio output device: %i\n", index);
-  _audiodriver -> setErrorMessage( -1 );
-  _audiodriver->openDevice(_audiodriver->getIndexIn(), 
-      index, 
-      _audiodriver->getSampleRate(), 
-      _audiodriver->getFrameSize(), 
-      SFL_PCM_PLAYBACK,
-      _audiodriver->getAudioPlugin());
-  if( _audiodriver -> getErrorMessage() != -1)
-    notifyErrClient( _audiodriver -> getErrorMessage() );
-  // set config
-  setConfig( AUDIO , ALSA_CARD_ID_OUT , index );
+    AlsaLayer *alsalayer;
+    std::string alsaplugin;
+    _debug("Set audio output device: %i\n", index);
+  
+    _audiodriver -> setErrorMessage( -1 );
+    
+    alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
+    alsaplugin = alsalayer->getAudioPlugin ();
+
+    _audiodriver->openDevice(_audiodriver->getIndexIn(), index, _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_PLAYBACK, alsaplugin );
+  
+    if( _audiodriver -> getErrorMessage() != -1)
+        notifyErrClient( _audiodriver -> getErrorMessage() );
+    
+    // set config
+    setConfig( AUDIO , ALSA_CARD_ID_OUT , index );
 }
 
 /**
@@ -1257,7 +1282,10 @@ ManagerImpl::setAudioOutputDevice(const int index)
 ManagerImpl::getAudioInputDeviceList(void)
 {
   _debug("Get audio input device list\n");
-  return _audiodriver->getSoundCardsInfo(SFL_PCM_CAPTURE);
+  AlsaLayer *audiolayer;
+
+  audiolayer = dynamic_cast<AlsaLayer *> ( getAudioDriver());
+  if(audiolayer)    return audiolayer->getSoundCardsInfo(SFL_PCM_CAPTURE);
 }
 
 /**
@@ -1266,19 +1294,23 @@ ManagerImpl::getAudioInputDeviceList(void)
   void
 ManagerImpl::setAudioInputDevice(const int index)
 {
-  //int layer = _audiodriver -> getLayerType();
-  _debug("Set audio input device %i\n", index);
-  _audiodriver -> setErrorMessage( -1 );
-  _audiodriver->openDevice(index, 
-      _audiodriver->getIndexOut(), 
-      _audiodriver->getSampleRate(), 
-      _audiodriver->getFrameSize(), 
-      SFL_PCM_CAPTURE,
-      _audiodriver->getAudioPlugin());
-  if( _audiodriver -> getErrorMessage() != -1)
-    notifyErrClient( _audiodriver -> getErrorMessage() );
-  // set config
-  setConfig( AUDIO , ALSA_CARD_ID_IN , index );
+    AlsaLayer *alsalayer;
+    std::string alsaplugin;
+  
+    _debug("Set audio input device %i\n", index);
+  
+    _audiodriver -> setErrorMessage( -1 );
+  
+    alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
+    alsaplugin = alsalayer->getAudioPlugin ();
+    
+    _audiodriver->openDevice(index, _audiodriver->getIndexOut(), _audiodriver->getSampleRate(), _audiodriver->getFrameSize(), SFL_PCM_CAPTURE, alsaplugin );
+
+    if( _audiodriver -> getErrorMessage() != -1)
+        notifyErrClient( _audiodriver -> getErrorMessage() );
+  
+    // set config
+    setConfig( AUDIO , ALSA_CARD_ID_IN , index );
 }
 
 /**
@@ -1523,16 +1555,23 @@ ManagerImpl::notifyErrClient( const int32_t& errCode )
   int
 ManagerImpl::getAudioDeviceIndex(const std::string name)
 {
-  _debug("Get audio device index\n");
-  int num = _audiodriver -> soundCardGetIndex( name );
-  return num;
+    AlsaLayer *alsalayer;
+
+    _debug("Get audio device index\n");
+    
+    alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
+    if(alsalayer)   return alsalayer -> soundCardGetIndex( name );
 }
 
   std::string 
 ManagerImpl::getCurrentAudioOutputPlugin( void )
 {
-  _debug("Get alsa plugin\n");
-  return _audiodriver -> getAudioPlugin();
+    AlsaLayer *alsalayer;
+  
+    _debug("Get alsa plugin\n");
+    
+    alsalayer = dynamic_cast<AlsaLayer *> (getAudioDriver());
+    if(alsalayer)   return alsalayer -> getAudioPlugin ();
 }
 
 int ManagerImpl::app_is_running( std::string process )
@@ -1592,10 +1631,12 @@ ManagerImpl::selectAudioDriver (void)
 {
     int layer, numCardIn, numCardOut, sampleRate, frameSize;
     std::string alsaPlugin;
+    AlsaLayer *alsalayer;
 
     layer = _audiodriver->getLayerType();
     _debug("Audio layer type: %i\n" , layer);
 
+    /* Retrieve the global devices info from the user config */
     alsaPlugin = getConfigString( AUDIO , ALSA_PLUGIN );
     numCardIn  = getConfigInt( AUDIO , ALSA_CARD_ID_IN );
     numCardOut = getConfigInt( AUDIO , ALSA_CARD_ID_OUT );
@@ -1605,17 +1646,22 @@ ManagerImpl::selectAudioDriver (void)
     }
     frameSize = getConfigInt( AUDIO , ALSA_FRAME_SIZE );
 
-    if( !_audiodriver -> soundCardIndexExist( numCardIn , SFL_PCM_CAPTURE ) )
+    /* Only for the ALSA layer, we check the sound card information */
+    if (layer == ALSA)
     {
-        _debug(" Card with index %i doesn't exist or cannot capture. Switch to 0.\n", numCardIn);
-        numCardIn = ALSA_DFT_CARD_ID ;
-        setConfig( AUDIO , ALSA_CARD_ID_IN , ALSA_DFT_CARD_ID );
-    }
-    if( !_audiodriver -> soundCardIndexExist( numCardOut , SFL_PCM_PLAYBACK ) )
-    {  
-        _debug(" Card with index %i doesn't exist or cannot playback . Switch to 0.\n", numCardOut);
-        numCardOut = ALSA_DFT_CARD_ID ;
-        setConfig( AUDIO , ALSA_CARD_ID_OUT , ALSA_DFT_CARD_ID );
+        alsalayer = dynamic_cast<AlsaLayer*> (getAudioDriver ());
+        if( !alsalayer -> soundCardIndexExist( numCardIn , SFL_PCM_CAPTURE ) )
+        {
+            _debug(" Card with index %i doesn't exist or cannot capture. Switch to 0.\n", numCardIn);
+            numCardIn = ALSA_DFT_CARD_ID ;
+            setConfig( AUDIO , ALSA_CARD_ID_IN , ALSA_DFT_CARD_ID );
+        }
+        if( !alsalayer -> soundCardIndexExist( numCardOut , SFL_PCM_PLAYBACK ) )
+        {  
+            _debug(" Card with index %i doesn't exist or cannot playback . Switch to 0.\n", numCardOut);
+            numCardOut = ALSA_DFT_CARD_ID ;
+            setConfig( AUDIO , ALSA_CARD_ID_OUT , ALSA_DFT_CARD_ID );
+        }
     }
   
     _audiodriver->setErrorMessage(-1);
@@ -1681,27 +1727,25 @@ ManagerImpl::initVolume()
 
 void ManagerImpl::setSpkrVolume(unsigned short spkr_vol) 
 {  
-    AudioLayer *audiolayer = NULL;
+    PulseLayer *pulselayer = NULL;
 
+    /* Set the manager sound volume */
     _spkr_volume = spkr_vol; 
-    audiolayer = getAudioDriver();
-    if( audiolayer )
+
+    /* Only for PulseAudio */
+    pulselayer = dynamic_cast<PulseLayer*> (getAudioDriver());
+    if (pulselayer)
     {
-        audiolayer->setPlaybackVolume( spkr_vol );
+        if( pulselayer->getLayerType() == PULSEAUDIO )
+        {
+            if(pulselayer)  pulselayer->setPlaybackVolume (spkr_vol);
+        }
     }
-    
 }
 
 void ManagerImpl::setMicVolume(unsigned short mic_vol) 
 {    
-    //AudioLayer *audiolayer = NULL;
-
     _mic_volume = mic_vol;   
-    //audiolayer = getAudioDriver();
-    //if( audiolayer )
-    //{
-      //  audiolayer->setCaptureVolume( mic_vol );
-    //}
 }
 
 void ManagerImpl::setSipPort( int port )

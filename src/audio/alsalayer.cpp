@@ -28,8 +28,6 @@ int framesPerBufferAlsa = 2048;
     , _CaptureHandle(NULL)
     , _periodSize()
     , _audioPlugin()
-    , _inChannel()
-    , _outChannel()
     , IDSoundCards() 
     , _is_prepared_playback (false)
     , _is_running_playback (false)
@@ -88,8 +86,6 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     _sampleRate = sampleRate;
     _frameSize = frameSize;	
     _audioPlugin = plugin;
-    _inChannel = 1;
-    _outChannel = 1;
 
     _debugAlsa(" Setting AlsaLayer: device     in=%2d, out=%2d\n", _indexIn, _indexOut);
     _debugAlsa("                   : alsa plugin=%s\n", _audioPlugin.c_str());
@@ -151,9 +147,6 @@ AlsaLayer::getMic(void *buffer, int toCopy)
     }
     return res ;
 }
-
-void AlsaLayer::reducePulseAppsVolume( void ){}
-void AlsaLayer::restorePulseAppsVolume( void ){}
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////   ALSA PRIVATE FUNCTIONS   ////////////////////////////////////////////////
