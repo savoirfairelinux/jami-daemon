@@ -58,7 +58,6 @@ AlsaLayer::closeLayer()
     if (_audioThread)
     {
         _debug("Try to stop audio thread\n");
-        _audioThread->stop();
         delete _audioThread; _audioThread=NULL;
     }
 
@@ -180,13 +179,10 @@ void AlsaLayer::startCaptureStream (void)
 
 void AlsaLayer::prepareCaptureStream (void)
 {
-    int err;
-
-    err = snd_pcm_prepare (_CaptureHandle);
-    if( err<0 )
-        _debug("Error preparing the device\n");
-
-    prepare_capture ();
+    if (is_capture_open() ) {
+        if(snd_pcm_prepare (_CaptureHandle) < 0)    _debug("Error preparing the device\n");
+        prepare_capture ();
+    }
 }
 
 void AlsaLayer::stopPlaybackStream (void)
@@ -218,13 +214,10 @@ void AlsaLayer::startPlaybackStream (void)
 
 void AlsaLayer::preparePlaybackStream (void)
 {
-    int err;
-
-    err = snd_pcm_prepare (_PlaybackHandle);
-    if( err<0 )
-        _debug("Error preparing the device\n");
-
-    prepare_playback ();
+    if(is_playback_open()){
+        if( snd_pcm_prepare (_PlaybackHandle) < 0)  _debug("Error preparing the device\n");
+        prepare_playback ();
+    }
 }
 
 bool AlsaLayer::alsa_set_params( snd_pcm_t *pcm_handle, int type, int rate ){
@@ -343,11 +336,13 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
         if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
             _debugAlsa("Error while opening playback device %s\n",  pcm_p.c_str());
             setErrorMessage( ALSA_PLAYBACK_DEVICE );
+            close_playback ();
             return false;
         }
         if(!alsa_set_params( _PlaybackHandle, 1, getSampleRate() )){
             _debug("playback failed\n");
             snd_pcm_close( _PlaybackHandle );
+            close_playback ();
             return false;
         }
 
@@ -359,11 +354,13 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
         if( (err = snd_pcm_open(&_CaptureHandle,  pcm_c.c_str(),  SND_PCM_STREAM_CAPTURE, 0)) < 0){
             _debugAlsa("Error while opening capture device %s\n",  pcm_c.c_str());
             setErrorMessage( ALSA_CAPTURE_DEVICE );
+            close_capture ();
             return false;
         }
         if(!alsa_set_params( _CaptureHandle, 0, 8000 /*getSampleRate()*/ )){
             _debug("capture failed\n");
             snd_pcm_close( _CaptureHandle );
+            close_capture ();
             return false;
         }
 

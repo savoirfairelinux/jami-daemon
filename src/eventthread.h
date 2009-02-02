@@ -63,8 +63,6 @@ class AudioThread : public ost::Thread {
 
         virtual void run (void);
 
-        void stop (void);
-    
     private:
         AudioThread (const AudioThread& at);
         AudioThread& operator=(const AudioThread& at);
