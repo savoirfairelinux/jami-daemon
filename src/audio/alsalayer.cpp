@@ -143,6 +143,7 @@ AlsaLayer::getMic(void *buffer, int toCopy)
     if( _CaptureHandle ) 
     {
         res = read( buffer, toCopy );
+        adjustVolume( buffer , toCopy , SFL_PCM_CAPTURE );
     }
     return res ;
 }
@@ -650,4 +651,24 @@ void AlsaLayer::audioCallback (void)
     //toPut = (micAvailPut <= (int)(framesPerBufferAlsa * sizeof(SFLDataFormat))) ? micAvailPut : framesPerBufferAlsa * sizeof(SFLDataFormat);
     //_debug("AL: Nb sample: %d char, [0]=%f [1]=%f [2]=%f\n", toPut, in[0], in[1], in[2]);
     //_micRingBuffer.Put(in, toPut, micVolume);
+}
+
+
+void* AlsaLayer::adjustVolume( void* buffer , int len, int stream )
+{
+    int vol, i, size;
+    SFLDataFormat *src = NULL;
+
+    (stream == SFL_PCM_PLAYBACK)? vol = _manager->getSpkrVolume() : vol = _manager->getMicVolume();
+
+    src = (SFLDataFormat*) buffer;
+
+    if( vol != 100 )
+    {
+        size = len / sizeof(SFLDataFormat);
+        for( i = 0 ; i < size ; i++ ){
+            src[i] = src[i] * vol  / 100 ;
+        }
+    }
+    return src ; 
 }

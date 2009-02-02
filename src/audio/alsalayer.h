@@ -220,6 +220,8 @@ class AlsaLayer : public AudioLayer {
      */
     int read( void* buffer, int toCopy);
     
+    
+
     /**
      * Recover from XRUN state for capture
      * ALSA Library API
@@ -232,7 +234,9 @@ class AlsaLayer : public AudioLayer {
      */
     void handle_xrun_playback( void );
     
-    /**
+    void* adjustVolume( void* buffer , int len, int stream );
+    
+/**
      * Handles to manipulate playback stream
      * ALSA Library API
      */

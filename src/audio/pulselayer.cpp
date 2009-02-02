@@ -142,7 +142,6 @@ PulseLayer::createStreams( pa_context* c )
   record = new AudioStream(c, CAPTURE_STREAM, CAPTURE_STREAM_NAME , _manager->getMicVolume());
   pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
   //pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
-  //cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples", _manager->getSpkrVolume());
 
   pa_threaded_mainloop_signal(m , 0);
 }
