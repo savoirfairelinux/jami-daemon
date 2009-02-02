@@ -216,7 +216,7 @@ class Call{
     std::string getFileName() {return _filename;}
 
     /**
-     * A recorder fro this call
+     * A recorder for this call
      */
     AudioRecord recAudio;
   
@@ -275,6 +275,7 @@ class Call{
 
 
   private:  
+  
     /** Unique ID of the call */
     CallID _id;
 

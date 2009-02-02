@@ -55,13 +55,15 @@ public:
 
   void setSndSamplingRate(int smplRate);
 
+  void setRecordingOption(std::string name, FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate);
+
   /**
    * Check if no otehr file is opened, then create a new one
    * @param fileName A string containing teh file (with/without extension)
    * @param type     The sound file format (FILE_RAW, FILE_WAVE)
    * @param format   Internal sound format (INT16 / INT32)
    */
-  void openFile(std::string fileName, FILE_TYPE type, SOUND_FORMAT format);
+  void openFile();
 
   /**
    * Close the opend recording file. If wave: cout the number of byte

@@ -100,10 +100,9 @@ AudioRtp::closeRtpSession () {
 void
 AudioRtp::setRecording() {
   
-  _debug("AudioRtp::setRecording");
-  // _RTXThread->recAudio.setRecording();
+  _debug("AudioRtp::setRecording\n");
   _RTXThread->_ca->setRecording();
-  
+
 }
 
 
@@ -191,24 +190,6 @@ AudioRtpRTX::initAudioRtpSession (void)
       _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getRemoteIp().data());
       return;
     }
-
-    // Initialization   
-    printf("AudioRTPX::initAudioRtpSession: CallID to be used: %s \n",_ca->getCallId().c_str());           
- 
-    printf("AudioRTPX::initAudioRtpSession: Account %s \n",Manager::instance().getAccountFromCall(_ca->getCallId()).c_str());
-    
-    printf("AudioRTPX::initAudioSRtpSession: FileName from call class: %s \n", _ca->getFileName().c_str());
-    
- 
-    _debug("Opening the wave file\n");
-    FILE_TYPE ft = FILE_WAV;
-    SOUND_FORMAT sf = INT16;
-    recAudio.setSndSamplingRate(44100);
-    recAudio.openFile(_ca->getFileName(),ft,sf);
-    
-    //_debug("Opening the wave file in call nstance\n");
-    //_ca->recAudio.setSndSamplingRate(44100);
-    //_ca->recAudio.openFile("testRecFromCall",ft,sf,_ca->getCallId());
 
 
     if (!_sym) {
@@ -463,18 +444,11 @@ AudioRtpRTX::run () {
       receiveSessionForSpkr(countTime);
       // Let's wait for the next transmit cycle
 
-      recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
       _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
 
       Thread::sleep(TimerPort::getTimer()); 
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
     }
-
-    _debug("Close wave file\n");
-    recAudio.closeFile();
-   
-    //_debug("Close wave file in call instance\n");
-    //_ca->recAudio.closeFile();
 
     // _debug("stop stream for audiortp loop\n");
     audiolayer->stopStream();
@@ -482,21 +456,11 @@ AudioRtpRTX::run () {
     _start.post();
     _debug("! ARTP: Stop %s\n", e.what());
     
-    _debug("! Close wave file\n");
-    recAudio.closeFile();
-   
-    //_debug("Close wave file in call instance\n");
-    //_ca->recAudio.closeFile();
  
     throw;
   } catch(...) {
     _start.post();
     _debugException("* ARTP Action: Stop");
-    _debug("* Close wave file\n");
-    recAudio.closeFile(); 
-   
-    //_debug("Close wave file in call instance\n");
-    //_ca->recAudio.closeFile();
 
     throw;
   }

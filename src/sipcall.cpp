@@ -39,10 +39,13 @@ SIPCall::SIPCall(const CallID& id, Call::CallType type) : Call(id, type)
             , _xferSub(NULL)
             , _invSession(NULL)
 {
+  _debug("SIPCALL::Constructor for this clss is called \n");
 }
 
 SIPCall::~SIPCall() 
 {
+
+  _debug("SIPCALL::Destructor for this clss is called \n");
 }
 
 

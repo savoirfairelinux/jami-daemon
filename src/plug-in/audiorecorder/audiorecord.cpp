@@ -27,6 +27,7 @@ AudioRecord::AudioRecord(){
   channels_ = 1;
   byteCounter_ = 0;
   recordingEnabled_ = false;
+  fp = 0;
 
 }
 
@@ -35,17 +36,16 @@ void AudioRecord::setSndSamplingRate(int smplRate){
   sndSmplRate_ = smplRate;  
 }
 
+void AudioRecord::setRecordingOption(std::string name, FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate){
 
-void AudioRecord::openFile(std::string name, FILE_TYPE type, SOUND_FORMAT format){
+  strncpy(fileName_, name.c_str(), 8192);
+ 
+  fileType_ = type;
+  sndFormat_ = format;
+  channels_ = 1;
+  sndSmplRate_ = sndSmplRate;
   
-   _debug("AudioRecord::openFile()\n");  
-  
-    bool result = false;
-
-   strncpy(fileName_, name.c_str(), 8192);
-   fileType_ = type;
-  
-   if (fileType_ == FILE_RAW){
+  if (fileType_ == FILE_RAW){
      if ( strstr(fileName_, ".raw") == NULL){
        printf("AudioRecord::openFile::concatenate .raw file extension: name : %s \n", fileName_); 
        strcat(fileName_, ".raw");
@@ -57,31 +57,34 @@ void AudioRecord::openFile(std::string name, FILE_TYPE type, SOUND_FORMAT format
        strcat(fileName_, ".wav");
      }
    }
+}
+
+void AudioRecord::openFile(){
+  
+   _debug("AudioRecord::openFile()\n");  
+  
+   bool result = false;
    
    if(isFileExist()) {
-    _debug("AudioRecord::Filename does not exist, creating one \n");
-    channels_ = 1;
-    byteCounter_ = 0;
-    sndFormat_ = format;
+     _debug("AudioRecord::Filename does not exist, creating one \n");
+     byteCounter_ = 0;
 
-    if(fileType_ == FILE_RAW){
-      result = setRawFile();
-    }
-    else if (fileType_ == FILE_WAV){
-      result = setWavFile();
-    }
-  }
-  else {
-    fileType_ = type;
-    _debug("AudioRecord::Filename already exist opening it \n");
-    if(fileType_ == FILE_RAW){
-      result = openExistingRawFile();
-    }   
-    else if (fileType_ == FILE_WAV){
-      result = openExistingWavFile();      
-    }
-  }
-  
+     if(fileType_ == FILE_RAW){
+       result = setRawFile();
+     }
+     else if (fileType_ == FILE_WAV){
+       result = setWavFile();
+     }
+   }
+   else {
+     _debug("AudioRecord::Filename already exist opening it \n");
+     if(fileType_ == FILE_RAW){
+       result = openExistingRawFile();
+     }   
+     else if (fileType_ == FILE_WAV){
+       result = openExistingWavFile();      
+     }
+   }  
 }
 
 
@@ -99,10 +102,14 @@ void AudioRecord::closeFile() {
 
 bool AudioRecord::isOpenFile() {
   
-  if(fp)
+  if(fp){
+    _debug("AudioRecord::isOpenFile(): file already openend\n");
     return true;
-  else
+  }
+  else {
+    _debug("AudioRecord::isOpenFIle(): file not openend \n");
     return false;
+  }
 }
 
 
@@ -118,12 +125,21 @@ bool AudioRecord::isFileExist() {
 
 
 bool AudioRecord::setRecording() {
-  _debug("AudioRecord::setRecording()");
+  _debug("AudioRecord::setRecording()\n");
   
-  if(!recordingEnabled_)
-    recordingEnabled_ = true;
-  else 
-    recordingEnabled_ = false;
+  if (isOpenFile()){
+    _debug("AuioRecord::setRecording()::file already opened\n");
+    if(!recordingEnabled_)
+      recordingEnabled_ = true;
+    else 
+      recordingEnabled_ = false;
+  }
+  else {
+    _debug("AudioRecord::setRecording():Opening the wave file in call during call instantiation\n");
+    openFile();
+
+    recordingEnabled_ = true; // once opend file, start recording
+  }
   
 }
 

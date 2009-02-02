@@ -51,24 +51,31 @@ Call::Call(const CallID& id, Call::CallType type)
     if (timeinfo->tm_mday < 10) // 01 02 03, not 1 2 3
       out << 0;
     out << timeinfo->tm_mday;
-    
+    if (timeinfo->tm_hour < 10) // 01 02 03, not 1 2 3
+      out << 0;
+    out << timeinfo->tm_hour;
+    if (timeinfo->tm_min < 10) // 01 02 03, not 1 2 3
+      out << 0;
+    out << timeinfo->tm_min;
+    if (timeinfo->tm_sec < 10) // 01 02 03,  not 1 2 3
+      out << 0;
+    out << timeinfo->tm_sec;
+
     _filename = out.str();
 
-    printf("Call::constructor filename for tis call %s \n",_filename.c_str());
+    printf("Call::constructor filename for this call %s \n",_filename.c_str());
+ 
+    FILE_TYPE fileType = FILE_WAV;
+    SOUND_FORMAT soundFormat = INT16;
+    recAudio.setRecordingOption(_filename.c_str(),fileType,soundFormat,44100);
 
-
-
-    FILE_TYPE ft = FILE_WAV;
-    SOUND_FORMAT sf = INT16;
-    _debug("CALL::Opening the wave file in call nstance\n");
-    recAudio.setSndSamplingRate(44100);
-    recAudio.openFile("testRecFromCall",ft,sf);
+    _debug("CALL::Constructor for this clss is called \n");    
 }
 
 
 Call::~Call()
 {
-   _debug("CALL::Close wave file in call instance\n");
+   _debug("CALL::Destructor for this clss is called \n");
    recAudio.closeFile();
 }
 

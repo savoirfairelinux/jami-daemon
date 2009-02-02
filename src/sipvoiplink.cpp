@@ -88,6 +88,7 @@ SIPVoIPLink::terminateSIPCall()
     call = dynamic_cast<SIPCall*>(iter->second);
     if (call) {
       //TODO terminate the sip call
+      _debug("SIPVOIP::the call is deleted, should close recording file \n");
       delete call; call = 0;
     }
     iter++;
@@ -348,9 +349,7 @@ SIPVoIPLink::refuse (const CallID& id)
 void 
 SIPVoIPLink::setRecording(const CallID& id)
 {
-  // _debug("SIPVoIPLink::setRecording!");
-  // printf("SIPVoIPLink:: CallID: %s", id);
-
+  
   _audiortp->setRecording();
 }
 
