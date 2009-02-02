@@ -147,6 +147,7 @@ class AudioLayer {
          */
         void flushMic();
 
+        virtual bool isCaptureActive (void) = 0;
 
         /**
          * Write accessor to the error state

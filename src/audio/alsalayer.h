@@ -139,6 +139,8 @@ class AlsaLayer : public AudioLayer {
 
     void audioCallback (void);
 
+    bool isCaptureActive (void) { return is_capture_running (); }
+
   private:
   
     // Copy Constructor

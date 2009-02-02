@@ -124,16 +124,18 @@ AlsaLayer::stopStream(void)
 AlsaLayer::canGetMic()
 {
     int avail;
-    if ( _CaptureHandle ) {
-        avail = snd_pcm_avail_update( _CaptureHandle );
-        //printf("%d\n", avail ); 
-        if(avail > 0)
-            return avail;
-        else 
-            return 0;  
+    
+    if (! _CaptureHandle )
+        return 0;
+
+    avail = snd_pcm_avail_update( _CaptureHandle );
+    
+    if( avail == -EPIPE ){
+        stop_capture ();
+        return 0;
     }
     else
-        return 0;
+        return ((avail < 0)? 0:avail);
 }
 
     int 
@@ -421,6 +423,7 @@ AlsaLayer::read( void* buffer, int toCopy)
 
     if(snd_pcm_state( _CaptureHandle ) == SND_PCM_STATE_XRUN)
     {
+        _debug("xrun caught before start\n");
         prepareCaptureStream ();
         startCaptureStream ();
     }
@@ -432,7 +435,7 @@ AlsaLayer::read( void* buffer, int toCopy)
             case -EPIPE:
             case -ESTRPIPE:
             case -EIO:
-                //_debugAlsa(" XRUN capture ignored (%s)\n", snd_strerror(samples));
+                _debugAlsa(" XRUN capture ignored (%s)\n", snd_strerror(samples));
                 handle_xrun_capture();
                 samples = snd_pcm_readi( _CaptureHandle, buffer, frames);
                 if (samples<0)  samples=0;
@@ -458,9 +461,9 @@ AlsaLayer::handle_xrun_capture( void )
     int res = snd_pcm_status( _CaptureHandle, status );
     if( res <= 0){
         if(snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN ){
-            stop_capture ();
-            prepare_capture ();
-            start_capture ();
+            stopCaptureStream ();
+            prepareCaptureStream ();
+            startCaptureStream ();
         }
     }
     else

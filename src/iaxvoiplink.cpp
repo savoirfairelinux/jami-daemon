@@ -333,16 +333,6 @@ IAXVoIPLink::sendRegister(AccountID id)
     if (!_regSession) {
         _debug("Error when generating new session for register");
     } else {
-        // refresh
-        // last reg
-        //char host[_host.length()+1]; 
-        //strcpy(host, _host.c_str());
-        //char user[_user.length()+1];
-        //strcpy(user, _user.c_str());
-        //char pass[_pass.length()+1]; 
-        //strcpy(pass, _pass.c_str());
-        // iax_register doesn't use const char*
-
         _debug("IAX Sending registration to %s with user %s\n", account->getHostname().c_str() , account->getUsername().c_str() );
         int val = iax_register(_regSession, account->getHostname().data(), account->getUsername().data(), account->getPassword().data(), 120);
         _debug ("Return value: %d\n", val);
@@ -647,10 +637,8 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_VOICE:
-            //_debug("Should have a decent value!!!!!! = %i\n" , call -> getAudioCodec());
-            //TODO Check this method
-            //if( !audiolayer -> is_capture_running())
-                //audiolayer->startStream();
+            if (!audiolayer->isCaptureActive ())
+                audiolayer->startStream ();
             iaxHandleVoiceEvent(event, call);
             break;
 

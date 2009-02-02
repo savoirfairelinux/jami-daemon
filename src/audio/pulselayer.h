@@ -76,6 +76,8 @@ class PulseLayer : public AudioLayer {
     static void stream_state_callback( pa_stream* s, void* user_data );	
     static void context_state_callback( pa_context* c, void* user_data );	
 
+    bool isCaptureActive (void){return true;}
+
     /**
      * UNUSED in pulseaudio layer
      */
