@@ -387,6 +387,16 @@ sflphone_current( call_t * c )
   update_menus();
 }
 
+void
+sflphone_record( call_t * c )
+{
+  if( c->state != CALL_STATE_HOLD )
+	(void) time(&c->_start);
+  c->state = CALL_STATE_RECORD;
+  update_call_tree(current_calls,c);
+  update_menus();
+}
+
 void 
 sflphone_set_transfert()
 {

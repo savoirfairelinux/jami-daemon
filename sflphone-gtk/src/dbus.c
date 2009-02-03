@@ -115,9 +115,13 @@ call_state_cb (DBusGProxy *proxy UNUSED,
       sflphone_hung_up (c);
       update_call_tree( history, c );
     }
-    else if ( strcmp(state, "UNHOLD") == 0 )
+    else if ( strcmp(state, "UNHOLD_CURRENT") == 0 )
     {
       sflphone_current (c);
+    }
+    else if ( strcmp(state, "UNHOLD_RECORD") == 0 )
+    {
+      sflphone_record (c);
     }
     else if ( strcmp(state, "HOLD") == 0 )
     {
