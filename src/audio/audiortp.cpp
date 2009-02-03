@@ -89,8 +89,8 @@ AudioRtp::closeRtpSession () {
     _debugException("! ARTP Exception: when stopping audiortp\n");
     throw;
   }
-  //AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-  //audiolayer->stopStream();
+  AudioLayer* audiolayer = Manager::instance().getAudioDriver();
+  audiolayer->stopStream();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

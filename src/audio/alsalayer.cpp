@@ -55,14 +55,26 @@ AlsaLayer::closeLayer()
 {
     _debugAlsa("Close ALSA streams\n");
     
-    if (_audioThread)
+    /* Stop the audio thread first */ 
+    try {
+        if (_audioThread)
+        {
+            _debug("Try to stop audio thread\n");
+            delete _audioThread; _audioThread=NULL;
+        }
+    }
+    catch( ... )
     {
-        _debug("Try to stop audio thread\n");
-        delete _audioThread; _audioThread=NULL;
+        _debugException("! Audio Thread Exception\n");
+         throw;
     }
 
+    /* Then close the audio devices */
     closeCaptureStream();
     closePlaybackStream();
+
+    _CaptureHandle = 0;
+    _PlaybackHandle = 0;
 }
 
     bool 
@@ -373,8 +385,12 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     }
 
     /* Start the secondary audio thread for callbacks */
-    _audioThread->start();
-
+    try{
+        _audioThread->start();
+    }
+    catch (...) {
+        _debugException("Fail to start audio thread\n");
+    }
     return true;
 }
 
