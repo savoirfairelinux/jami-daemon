@@ -149,6 +149,8 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
     , _useStun(false)
     , _clients(0)
 {
+    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink constructor called \n");    
+
     // to get random number for RANDOM_PORT
     srand (time(NULL));
 
@@ -161,6 +163,7 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
 SIPVoIPLink::~SIPVoIPLink()
 {
+    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink destructor called \n");
     terminate();
 }
 
@@ -210,7 +213,7 @@ SIPVoIPLink::terminate()
     void
 SIPVoIPLink::terminateSIPCall()
 {
-    _debug("SIPVoIPLink::terminateSIPCall(): function called");
+    _debug("SIPVoIPLink::terminateSIPCall(): function called \n");
     ost::MutexLock m(_callMapMutex);
     CallMap::iterator iter = _callMap.begin();
     SIPCall *call;
@@ -218,7 +221,7 @@ SIPVoIPLink::terminateSIPCall()
         call = dynamic_cast<SIPCall*>(iter->second);
         if (call) {
             // terminate the sip call
-      	    _debug("SIPVOIP::the call is deleted, should close recording file \n");
+      	    _debug("SIPVoIPLink::terminateSIPCall()::the call is deleted, should close recording file \n");
             delete call; call = 0;
         }
         iter++;
@@ -485,6 +488,8 @@ SIPVoIPLink::hangup(const CallID& id)
         _debug("* SIP Info: Stopping AudioRTP for hangup\n");
         _audiortp->closeRtpSession();
     }
+ 
+    terminateSIPCall();
 
     removeCall(id);
 
@@ -686,7 +691,7 @@ SIPVoIPLink::refuse (const CallID& id)
     pj_status_t status;
     pjsip_tx_data *tdata;
 
-
+    _debug("SIPVoIPLink::refuse() : teh call is refused \n");
     call = getSIPCall(id);
 
     if (call==0) { 
@@ -710,6 +715,8 @@ SIPVoIPLink::refuse (const CallID& id)
         return false;
 
     call->getInvSession()->mod_data[getModId()] = NULL;
+
+    terminateSIPCall();
     return true;
 }
 
@@ -929,6 +936,8 @@ SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
 void
 SIPVoIPLink::SIPCallClosed(SIPCall *call) 
 {
+
+  _debug("SIPVoIPLink::SIPCallClosed():: function called when peer hangup");
     // it was without did before
     //SIPCall* call = findSIPCallWithCid(event->cid);
     if (!call) { return; }

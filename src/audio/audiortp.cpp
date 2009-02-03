@@ -142,7 +142,7 @@ AudioRtpRTX::~AudioRtpRTX () {
     _debugException("! ARTP: Thread destructor didn't terminate correctly");
     throw;
   }
-  _debug("terminate audiortprtx ended...\n");
+  _debug("AudioRtpRTX::~AudioRtpRTX() :: terminate audiortprtx ended...\n");
   _ca = 0;
   if (!_sym) {
     delete _sessionRecv; _sessionRecv = NULL;
@@ -161,8 +161,6 @@ AudioRtpRTX::~AudioRtpRTX () {
   delete time; time = NULL;
 
   delete converter; converter = NULL;
-
-  _debug("AudioRtpRTX::~AudioRtpRTX () : Deleting the call instance \n");
   
 }
 
