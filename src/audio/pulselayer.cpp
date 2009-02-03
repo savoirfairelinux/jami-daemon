@@ -44,16 +44,10 @@ static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
 // Destructor
 PulseLayer::~PulseLayer (void) 
 { 
-    //closeLayer();
-  
-    /* Delete the pointer streams */
-    delete playback;
-    delete record;
-  
+    closeLayer ();
+
     pa_context_disconnect( context );  
     pa_context_unref( context );
-
-    sleep(2);
 }
 
   void
