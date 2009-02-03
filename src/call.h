@@ -224,7 +224,11 @@ class Call{
      * SetRecording
      */
     void setRecording();
-     
+    
+    /**
+     * Return Recording state
+     */
+    bool isRecording(); 
 
   protected:
     /** Protect every attribute that can be changed by two threads */

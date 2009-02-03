@@ -501,6 +501,7 @@ IAXVoIPLink::refuse(const CallID& id)
     _mutexIAX.enterMutex();
     iax_reject(call->getSession(), (char*) reason.c_str());
     _mutexIAX.leaveMutex();
+
     removeCall(id);
 
     return true;
@@ -510,8 +511,16 @@ IAXVoIPLink::refuse(const CallID& id)
 void 
 IAXVoIPLink::setRecording(const CallID& id)
 {
-  _debug("SIPVoIPLink::setRecording!");
+  _debug("IAXVoIPLink::setRecording!");
 }
+
+bool 
+IAXVoIPLink::isRecording(const CallID& id)
+{
+  _debug("IAXVoIPLink::setRecording!");
+}
+
+
 
 
     bool

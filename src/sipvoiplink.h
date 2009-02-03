@@ -279,6 +279,12 @@ class SIPVoIPLink : public VoIPLink
      	* @param id The call identifier
      	*/
     	void setRecording(const CallID& id);
+      
+        /**
+     	* Returning state (true recording)
+     	* @param id The call identifier
+     	*/
+    	bool isRecording(const CallID& id);
 
     private:
         /**

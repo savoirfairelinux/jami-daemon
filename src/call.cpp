@@ -172,3 +172,10 @@ Call::setRecording()
 {
   recAudio.setRecording();
 }
+
+bool
+Call::isRecording()
+{
+  return recAudio.isRecording();
+}
+

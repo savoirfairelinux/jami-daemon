@@ -160,6 +160,12 @@ class VoIPLink {
      	*/
     	virtual void setRecording(const CallID& id) = 0;
 
+        /**
+     	* Return recording state
+     	* @param id The call identifier
+     	*/
+    	virtual bool isRecording(const CallID& id) = 0;
+
         bool initDone (void) { return _initDone; }
         void initDone (bool state) { _initDone = state; }
 

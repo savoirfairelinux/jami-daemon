@@ -723,7 +723,21 @@ SIPVoIPLink::refuse (const CallID& id)
 void 
 SIPVoIPLink::setRecording(const CallID& id)
 {
+  //SIPCall *call;
+  //call = getSIPCall(id);
+  
+  //call->setRecording();
+
   _audiortp->setRecording();
+}
+
+bool
+SIPVoIPLink::isRecording(const CallID& id)
+{
+  SIPCall *call;
+  call = getSIPCall(id);
+  
+  return call->isRecording();
 }
 
     bool 

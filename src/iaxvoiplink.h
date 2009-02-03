@@ -157,6 +157,12 @@ class IAXVoIPLink : public VoIPLink
      * @param id The call identifier
      */
     void setRecording(const CallID& id);
+
+    /**
+     * Return recording state
+     * @param id The call identifier
+     */
+    bool isRecording(const CallID& id);
  
     /**
      * Send DTMF  
