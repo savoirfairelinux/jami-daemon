@@ -248,7 +248,7 @@ IAXVoIPLink::sendAudioFromMic(void)
         // Audio codec still not determined.
         if (audiolayer) {
             // To keep latency low..
-            //audiolayer->flushMic();
+            audiolayer->flushMic();
         }
         return;
     }
@@ -412,8 +412,8 @@ IAXVoIPLink::answer(const CallID& id)
     call->setState(Call::Active);
     call->setConnectionState(Call::Connected);
     // Start audio
+    audiolayer->flushMic();
     audiolayer->startStream();
-    //audiolayer->flushMic();
 
     return true;
 }
@@ -621,7 +621,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
                 }
 
                 Manager::instance().peerAnsweredCall(id);
-                //audiolayer->flushMic();
+                audiolayer->flushMic();
                 audiolayer->startStream();
                 // start audio here?
             } else {
@@ -637,8 +637,8 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_VOICE:
-            if (!audiolayer->isCaptureActive ())
-                audiolayer->startStream ();
+            //if (!audiolayer->isCaptureActive ())
+              //  audiolayer->startStream ();
             iaxHandleVoiceEvent(event, call);
             break;
 

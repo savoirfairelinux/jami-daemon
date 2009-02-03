@@ -54,15 +54,25 @@ AlsaLayer::~AlsaLayer (void)
 AlsaLayer::closeLayer()
 {
     _debugAlsa("Close ALSA streams\n");
-    
-    if (_audioThread)
-    {
-        _debug("Try to stop audio thread\n");
-        delete _audioThread; _audioThread=NULL;
+        
+    try {
+        /* Stop the audio thread first */ 
+        if (_audioThread)
+        {
+            delete _audioThread; _audioThread=NULL;
+        }
     }
-
+    catch(...) {
+        _debugException("! ARTP Exception: when stopping audiortp\n");
+        throw;
+    }
+    
+    /* Then close the audio devices */
     closeCaptureStream();
     closePlaybackStream();
+    
+    _CaptureHandle = 0;
+    _PlaybackHandle = 0;
 }
 
     bool 
@@ -106,6 +116,7 @@ AlsaLayer::startStream(void)
     prepareCaptureStream ();
     startCaptureStream ();
     startPlaybackStream ();
+
 } 
 
     void
@@ -116,38 +127,36 @@ AlsaLayer::stopStream(void)
     //stopPlaybackStream ();
 
     /* Flush the ring buffers */
-    flushUrgent();
-    flushMain();
+    flushUrgent ();
+    flushMain ();
+    flushMic ();
 }
 
     int
 AlsaLayer::canGetMic()
 {
-    int avail;
-    
-    if (! _CaptureHandle )
-        return 0;
-
-    avail = snd_pcm_avail_update( _CaptureHandle );
-    
-    if( avail == -EPIPE ){
-        stop_capture ();
-        return 0;
-    }
+    if(_CaptureHandle) 
+        return _micRingBuffer.AvailForGet();
     else
-        return ((avail < 0)? 0:avail);
+        return 0;
 }
 
     int 
 AlsaLayer::getMic(void *buffer, int toCopy)
 {
-    int res = 0 ; 
-    if( _CaptureHandle ) 
-    {
-        res = read( buffer, toCopy );
-        adjustVolume( buffer , toCopy , SFL_PCM_CAPTURE );
-    }
-    return res ;
+    if( _CaptureHandle ){
+        return _micRingBuffer.Get(buffer, toCopy,100);
+    } 
+    else
+        return 0;
+}
+
+bool AlsaLayer::isCaptureActive(void) {
+    ost::MutexLock guard( _mutex );
+    if( _CaptureHandle )
+        return (snd_pcm_state( _CaptureHandle) == SND_PCM_STATE_RUNNING ? true : false); 
+    else
+        return false;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,6 +184,7 @@ void AlsaLayer::closeCaptureStream (void)
 void AlsaLayer::startCaptureStream (void)
 {
     if(_CaptureHandle){
+        _debug("Start the capture\n");
         snd_pcm_start (_CaptureHandle);
         start_capture();
     }
@@ -183,6 +193,7 @@ void AlsaLayer::startCaptureStream (void)
 void AlsaLayer::prepareCaptureStream (void)
 {
     if (is_capture_open() ) {
+        _debug("Prepare the capture\n");
         if(snd_pcm_prepare (_CaptureHandle) < 0)    _debug("Error preparing the device\n");
         prepare_capture ();
     }
@@ -360,7 +371,7 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
             close_capture ();
             return false;
         }
-        if(!alsa_set_params( _CaptureHandle, 0, 8000 /*getSampleRate()*/ )){
+        if(!alsa_set_params( _CaptureHandle, 0, 8000 )){
             _debug("capture failed\n");
             snd_pcm_close( _CaptureHandle );
             close_capture ();
@@ -368,12 +379,16 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
         }
 
         open_capture ();
-        
-        startCaptureStream ();
+        prepare_capture ();
     }
 
     /* Start the secondary audio thread for callbacks */
-    _audioThread->start();
+    try {
+        _audioThread->start();
+    }
+    catch(...){
+        _debug("Fail to start audio thread\n");
+    }
 
     return true;
 }
@@ -382,8 +397,6 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     int
 AlsaLayer::write(void* buffer, int length)
 {
-
-
     if (_trigger_request == true)
     {
         _trigger_request = false;
@@ -417,13 +430,12 @@ AlsaLayer::write(void* buffer, int length)
     int
 AlsaLayer::read( void* buffer, int toCopy)
 {
-    ost::MutexLock lock( _mutex );
+    //ost::MutexLock lock( _mutex );
     
     int samples;
 
     if(snd_pcm_state( _CaptureHandle ) == SND_PCM_STATE_XRUN)
     {
-        _debug("xrun caught before start\n");
         prepareCaptureStream ();
         startCaptureStream ();
     }
@@ -437,12 +449,16 @@ AlsaLayer::read( void* buffer, int toCopy)
             case -EIO:
                 _debugAlsa(" XRUN capture ignored (%s)\n", snd_strerror(samples));
                 handle_xrun_capture();
-                samples = snd_pcm_readi( _CaptureHandle, buffer, frames);
-                if (samples<0)  samples=0;
+                //samples = snd_pcm_readi( _CaptureHandle, buffer, frames);
+                //if (samples<0)  samples=0;
+                break;
+            case EPERM:
+                _debugAlsa(" Capture EPERM (%s)\n", snd_strerror(samples));
+                prepareCaptureStream ();
+                startCaptureStream ();
                 break;
             default:
-                //_debugAlsa ("Error when capturing data ***********************************************: %s\n", snd_strerror(samples));
-                stopCaptureStream();
+                _debugAlsa("%s\n", snd_strerror(samples));
                 break;
         }
         return 0;
@@ -599,11 +615,12 @@ AlsaLayer::soundCardGetIndex( std::string description )
 void AlsaLayer::audioCallback (void)
 {
 
-    int toGet, toPut, urgentAvail, normalAvail, micAvailPut, maxBytes; 
+    int toGet, toPut, urgentAvail, normalAvail, micAvailAlsa, micAvailPut, maxBytes; 
     unsigned short spkrVolume, micVolume;
     AudioLoop *tone;
 
     SFLDataFormat *out;
+    SFLDataFormat *in;
 
     spkrVolume = _manager->getSpkrVolume();
     micVolume  = _manager->getMicVolume();
@@ -650,12 +667,20 @@ void AlsaLayer::audioCallback (void)
     }
     
     // Additionally handle the mic's audio stream 
-    //micAvailPut = _micRingBuffer.AvailForPut();
-    //toPut = (micAvailPut <= (int)(framesPerBufferAlsa * sizeof(SFLDataFormat))) ? micAvailPut : framesPerBufferAlsa * sizeof(SFLDataFormat);
-    //_debug("AL: Nb sample: %d char, [0]=%f [1]=%f [2]=%f\n", toPut, in[0], in[1], in[2]);
-    //_micRingBuffer.Put(in, toPut, micVolume);
+    //if(is_capture_running()){  
+    micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
+    if(micAvailAlsa > 0) {
+        micAvailPut = _micRingBuffer.AvailForPut();
+        toPut = (micAvailAlsa <= micAvailPut) ? micAvailAlsa : micAvailPut;
+        in = (SFLDataFormat*)malloc(toPut * sizeof(SFLDataFormat));
+        toPut = read (in, toPut);
+        if (in != 0)
+        {   
+            _micRingBuffer.Put(in, toPut, 100);
+        }
+        free(in); in=0;
+    }
 }
-
 
 void* AlsaLayer::adjustVolume( void* buffer , int len, int stream )
 {

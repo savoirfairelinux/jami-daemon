@@ -522,7 +522,7 @@ SIPVoIPLink::onhold(const CallID& id)
     call->setState(Call::Hold);
     _debug("* SIP Info: Stopping AudioRTP for onhold action\n");
     //_mutexSIP.enterMutex();
-        _audiortp->closeRtpSession();
+    _audiortp->closeRtpSession();
     //_mutexSIP.leaveMutex();
     
     local_sdp = call->getLocalSDPSession();
