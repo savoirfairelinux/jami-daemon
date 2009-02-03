@@ -152,9 +152,6 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
     // to get random number for RANDOM_PORT
     srand (time(NULL));
 
-    /* Instanciate the C++ thread */
-    _evThread = new EventThread(this);
-
     /* Start pjsip initialization step */
     init();
 }
@@ -187,6 +184,10 @@ bool SIPVoIPLink::init()
 {
     if(initDone())
         return false;
+    
+    /* Instanciate the C++ thread */
+    _evThread = new EventThread(this);
+
     /* Initialize the pjsip library */
     pjsip_init();
     initDone(true);
@@ -197,7 +198,9 @@ bool SIPVoIPLink::init()
     void 
 SIPVoIPLink::terminate()
 {
-    delete _evThread; _evThread = NULL;
+    if (_evThread){
+        delete _evThread; _evThread = NULL;
+    }
 
     /* Clean shutdown of pjsip library */
     if( initDone() )
@@ -228,6 +231,7 @@ SIPVoIPLink::terminateSIPCall()
     void
 SIPVoIPLink::getEvent()
 {
+    _debug("a");
     // We have to register the external thread so it could access the pjsip framework
     if(!pj_thread_is_registered())
         pj_thread_register( NULL, desc, &thread );
@@ -235,6 +239,7 @@ SIPVoIPLink::getEvent()
     // PJSIP polling
     pj_time_val timeout = {0, 10};
     pjsip_endpt_handle_events( _endpt, &timeout);
+    
 }
 
 int SIPVoIPLink::sendRegister( AccountID id )
@@ -1287,8 +1292,39 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         return returnValue;
     }
 
+    void SIPVoIPLink::busy_sleep(unsigned msec)
+    {
+#if defined(PJ_SYMBIAN) && PJ_SYMBIAN != 0
+    /* Ideally we shouldn't call pj_thread_sleep() and rather
+     * CActiveScheduler::WaitForAnyRequest() here, but that will
+     * drag in Symbian header and it doesn't look pretty.
+     */
+        pj_thread_sleep(msec);
+#else
+        pj_time_val timeout, now, tv;
+
+        pj_gettimeofday(&timeout);
+        timeout.msec += msec;
+        pj_time_val_normalize(&timeout);
+
+        tv.sec = 0;
+        tv.msec = 10;
+        pj_time_val_normalize(&tv);
+    
+        do {
+            pjsip_endpt_handle_events(_endpt, &tv);
+            pj_gettimeofday(&now);
+        } while (PJ_TIME_VAL_LT(now, timeout));
+#endif
+}    
+
     bool SIPVoIPLink::pjsip_shutdown( void )
     {
+        /*if (_endpt) {
+            _debug("UserAgent: Shutting down...\n");
+            busy_sleep(1000);
+        }*/
+
         /* Destroy endpoint. */
         if (_endpt) {
             pjsip_endpt_destroy(_endpt);

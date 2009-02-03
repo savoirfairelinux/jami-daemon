@@ -284,6 +284,7 @@ class SIPVoIPLink : public VoIPLink
         /* The singleton instance */
         static SIPVoIPLink* _instance;
 
+        void busy_sleep(unsigned msec);
         int getModId();
 
         /** 
