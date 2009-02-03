@@ -149,6 +149,8 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
     , _useStun(false)
     , _clients(0)
 {
+    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink constructor called \n");    
+
     // to get random number for RANDOM_PORT
     srand (time(NULL));
 
@@ -158,6 +160,7 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
 SIPVoIPLink::~SIPVoIPLink()
 {
+    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink destructor called \n");
     terminate();
 }
 
@@ -213,7 +216,6 @@ SIPVoIPLink::terminate()
     void
 SIPVoIPLink::terminateSIPCall()
 {
-
     ost::MutexLock m(_callMapMutex);
     CallMap::iterator iter = _callMap.begin();
     SIPCall *call;
@@ -488,6 +490,8 @@ SIPVoIPLink::hangup(const CallID& id)
         _debug("* SIP Info: Stopping AudioRTP for hangup\n");
         _audiortp->closeRtpSession();
     }
+ 
+    terminateSIPCall();
 
     removeCall(id);
 
@@ -689,7 +693,7 @@ SIPVoIPLink::refuse (const CallID& id)
     pj_status_t status;
     pjsip_tx_data *tdata;
 
-
+    _debug("SIPVoIPLink::refuse() : teh call is refused \n");
     call = getSIPCall(id);
 
     if (call==0) { 
@@ -713,6 +717,8 @@ SIPVoIPLink::refuse (const CallID& id)
         return false;
 
     call->getInvSession()->mod_data[getModId()] = NULL;
+
+    terminateSIPCall();
     return true;
 }
 

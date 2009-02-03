@@ -249,6 +249,7 @@ ManagerImpl::answerCall(const CallID& id)
   bool
 ManagerImpl::hangupCall(const CallID& id)
 {
+  _debug("ManagerImpl::hangupCall(): This function is called when user hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
@@ -370,6 +371,7 @@ ManagerImpl::transferCall(const CallID& id, const std::string& to)
   bool
 ManagerImpl::refuseCall (const CallID& id)
 {
+  _debug("ManagerImpl::refuseCall(): method called");
   stopTone(true);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
@@ -632,8 +634,10 @@ ManagerImpl::peerRingingCall(const CallID& id)
   void
 ManagerImpl::peerHungupCall(const CallID& id)
 {
+    _debug("ManagerImpl::peerHungupCall():this function is called when peer hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
+    bool returnValue;
 
     accountid = getAccountFromCall( id );
     if (accountid == AccountNULL) {
@@ -648,6 +652,8 @@ ManagerImpl::peerHungupCall(const CallID& id)
         stopTone(true);
         switchCall("");
     }
+
+    returnValue = getAccountLink(accountid)->hangup(id);
 
     removeWaitingCall(id);
     removeCallAccount(id);
