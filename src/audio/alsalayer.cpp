@@ -195,8 +195,10 @@ void AlsaLayer::startCaptureStream (void)
 void AlsaLayer::prepareCaptureStream (void)
 {
     if (is_capture_open() ) {
-        if(snd_pcm_prepare (_CaptureHandle) < 0)    _debug("Error preparing the device\n");
-        prepare_capture ();
+        if(snd_pcm_prepare (_CaptureHandle) < 0)    
+            _debug("");
+        else
+            prepare_capture ();
     }
 }
 
