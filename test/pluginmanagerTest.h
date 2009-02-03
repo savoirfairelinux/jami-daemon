@@ -27,6 +27,7 @@
 
 // Application import
 #include "plug-in/pluginmanager.h"
+#include "plug-in/librarymanager.h"
 #include "plug-in/plugin.h"
 
 /*
@@ -39,8 +40,6 @@
 
 class PluginManagerTest : public CppUnit::TestCase {
 
-    class Plugin;
-
     /*
      * Use cppunit library macros to add unit test the factory
      */
@@ -50,6 +49,8 @@ class PluginManagerTest : public CppUnit::TestCase {
         CPPUNIT_TEST( testInstanciatePlugin );
         CPPUNIT_TEST( testInitPlugin );
         CPPUNIT_TEST( testRegisterPlugin );
+        CPPUNIT_TEST( testLoadPlugins );
+        CPPUNIT_TEST( testUnloadPlugins );
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -65,22 +66,26 @@ class PluginManagerTest : public CppUnit::TestCase {
          * Code factoring - Common resources can be released here.
          * This method is called by unitcpp after each test
          */
-        inline void tearDown();
+        inline void tearDown ();
 
-        void testLoadDynamicLibrary();
+        void testLoadDynamicLibrary ();
         
-        void testUnloadDynamicLibrary();
+        void testUnloadDynamicLibrary ();
 
-        void testInstanciatePlugin();
+        void testInstanciatePlugin ();
 
-        void testInitPlugin();
+        void testInitPlugin ();
 
-        void testRegisterPlugin();
+        void testRegisterPlugin ();
+
+        void testLoadPlugins ();
+
+        void testUnloadPlugins ();
 
     private:
-        ::sflphone::PluginManager *_pm;
-        void *handlePtr;
-        ::sflphone::Plugin *plugin;
+        PluginManager *_pm;
+        LibraryManager *library;
+        Plugin *plugin;
 };
 
 /* Register our test module */

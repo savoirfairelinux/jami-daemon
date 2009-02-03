@@ -3,10 +3,10 @@
 
 #include "pluginmanager.h"
 
-::sflphone::PluginManager* ::sflphone::PluginManager::_instance = 0;
+PluginManager* PluginManager::_instance = 0;
 
-    ::sflphone::PluginManager* 
-::sflphone::PluginManager::instance()
+    PluginManager* 
+PluginManager::instance()
 {
     if(!_instance){
         return new PluginManager();
@@ -14,28 +14,26 @@
     return _instance;
 }
 
-::sflphone::PluginManager::PluginManager()
-    :_loadedPlugins()
+    PluginManager::PluginManager()
+:_loadedPlugins()
 {
     _instance = this;
 }
 
-::sflphone::PluginManager::~PluginManager()
+PluginManager::~PluginManager()
 {
     _instance = 0;
 }
 
     int 
-::sflphone::PluginManager::loadPlugins (const std::string &path)
+PluginManager::loadPlugins (const std::string &path)
 {
     std::string pluginDir, current;
-    ::sflphone::Plugin *plugin;
     DIR *dir;
     dirent *dirStruct;
-    int result=0;
-    void *handle;
-    createFunc* createPlugin;
-    
+    LibraryManager *library;
+    Plugin *plugin;
+
     const std::string pDir = "..";
     const std::string cDir = ".";
 
@@ -52,22 +50,25 @@
             current = dirStruct->d_name;
             /* Test if the current item is not the parent or the current directory */
             if( current != pDir && current != cDir ){
-                handle = loadDynamicLibrary( pluginDir + current );
-                
-                if(instanciatePlugin (handle, &plugin) != 0)       	        
+
+                /* Load the dynamic library */
+                library = loadDynamicLibrary( pluginDir + current );
+
+                /* Instanciate the plugin object */
+                if(instanciatePlugin (library, &plugin) != 0)       	        
                 {
                     _debug("Error instanciating the plugin ...\n");
                     return 1;
                 }
-                
-                /*
-                if(registerPlugin (handle, interface) != 0)
+
+                /* Regitering the current plugin */
+                if(registerPlugin (plugin, library) != 0)
                 {
                     _debug("Error registering the plugin ...\n");
                     return 1;
-                }*/
+                }
             }
-	    }
+        }
     }
     else
         return 1;
@@ -78,84 +79,134 @@
     return 0;
 }
 
-    ::sflphone::Plugin* 
-::sflphone::PluginManager::isPluginLoaded (const std::string &name)
+int 
+PluginManager::unloadPlugins (void)
 {
-    if(_loadedPlugins.empty())    return NULL;  
+    PluginInfo *info;
+
+    if(_loadedPlugins.empty())    return 0;  
 
     /* Use an iterator on the loaded plugins map */
     pluginMap::iterator iter;
 
     iter = _loadedPlugins.begin();
     while( iter != _loadedPlugins.end() ) {
-        if ( iter->first == name ) {
-            /* Return the associated plugin */
-            return iter->second;
+        info = iter->second;
+        
+        if (deletePlugin (info) != 0)
+        {
+            _debug("Error deleting the plugin ... \n");
+            return 1;
         }
+        
+        unloadDynamicLibrary (info->_libraryPtr);
+        
+        if (unregisterPlugin (info) != 0)
+        {
+            _debug("Error unregistering the plugin ... \n");
+            return 1;
+        }
+
         iter++;
     }
+    return 0;
+}
 
-    /* If we are here, it means that the plugin we were looking for has not been loaded */
-    return NULL;
+    bool 
+PluginManager::isPluginLoaded (const std::string &name)
+{
+    if(_loadedPlugins.empty())    return false;  
+
+    /* Use an iterator on the loaded plugins map */
+    pluginMap::iterator iter;
+    iter = _loadedPlugins.find (name);
+
+    /* Returns map::end if the specified key has not been found */
+    if(iter==_loadedPlugins.end())
+        return false;
+
+    /* Returns the plugin pointer */
+    return true;
 }
 
 
-    void* 
-::sflphone::PluginManager::loadDynamicLibrary (const std::string& filename) 
+   LibraryManager* 
+PluginManager::loadDynamicLibrary (const std::string& filename) 
 {
-
-    void *pluginHandlePtr = NULL;
-    const char *error;
-
-    _debug("Loading dynamic library %s\n", filename.c_str());
-
-    /* Load the library */
-    pluginHandlePtr = dlopen( filename.c_str(), RTLD_LAZY );
-    if( !pluginHandlePtr ) {
-        error = dlerror();
-        _debug("Error while opening plug-in: %s\n", error);
-        return NULL;
-    }
-    dlerror();
-    return pluginHandlePtr;
-
+    /* Load the library through the library manager */
+    return new LibraryManager (filename);
 }
 
     int 
-::sflphone::PluginManager::instanciatePlugin (void *handlePtr, ::sflphone::Plugin **plugin)
+PluginManager::unloadDynamicLibrary (LibraryManager *libraryPtr) 
+{
+    _debug("Unloading dynamic library ...\n");
+    /* Close it */
+    return libraryPtr->unloadLibrary ();
+}
+
+    int 
+PluginManager::instanciatePlugin (LibraryManager *libraryPtr, Plugin **plugin)
 {
     createFunc *createPlugin;
+    LibraryManager::SymbolHandle symbol;
 
-    createPlugin = (createFunc*)dlsym(handlePtr, "create");
-    if( dlerror() )
-    {
-        _debug("Error creating the plugin: %s\n", dlerror());
+    if (libraryPtr->resolveSymbol ("createPlugin", &symbol) != 0)
         return 1;
-    }
+    createPlugin = (createFunc*)symbol;
     *plugin = createPlugin();
     return 0;
 }
 
     int 
-::sflphone::PluginManager::registerPlugin (void *handlePtr, Plugin *plugin)
+PluginManager::deletePlugin (PluginInfo *plugin)
 {
-    std::string name;
+    destroyFunc *destroyPlugin;
+    LibraryManager::SymbolHandle symbol;
 
-    if( !(handlePtr && plugin!=0) )
+    if (plugin->_libraryPtr->resolveSymbol ("destroyPlugin", &symbol) != 0)
         return 1;
-    
-    name = plugin->getPluginName();
-    /* Add the data in the loaded plugin map */
-    _loadedPlugins[ name ] = plugin;
+    destroyPlugin = (destroyFunc*)symbol;
+    /* Call it */
+    destroyPlugin (plugin->_plugin);
     return 0;
 }
 
     int 
-::sflphone::PluginManager::unloadDynamicLibrary (void * pluginHandlePtr) 
+PluginManager::registerPlugin (Plugin *plugin, LibraryManager *library)
 {
-    dlclose( pluginHandlePtr );
-    dlerror();
+    std::string key;
+    PluginInfo *p_info;
+
+    if( plugin==0 )
+        return 1;
+    
+    p_info = new PluginInfo();
+    /* Retrieve information from the plugin */
+    plugin->initFunc (&p_info);
+    key = p_info->_name;
+
+    //p_info->_plugin = plugin;
+    p_info->_libraryPtr = library;
+
+    /* Add the data in the loaded plugin map */
+    _loadedPlugins[ key ] = p_info;
     return 0;
 }
 
+int 
+PluginManager::unregisterPlugin (PluginInfo *plugin)
+{
+    pluginMap::iterator iter;
+    std::string key;
 
+    key = plugin->_name;
+
+    if (!isPluginLoaded(key))
+        return 1;
+
+    iter = _loadedPlugins.find (key);
+    _loadedPlugins.erase (iter);
+
+    return 0;
+}

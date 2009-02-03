@@ -4,40 +4,39 @@
 #include <string> 
 #include "global.h" 
 
+#include "pluginmanager.h" 
+
 /*
  * @file plugin.h
  * @brief Define a plugin object 
  */
 
-namespace sflphone {
+class Plugin {
 
-    class Plugin {
+    public:
+        Plugin( const std::string &name ){
+            _name = name;
+        }
 
-        public:
-            Plugin( const std::string &name ){
-                _name = name;
-            }
+        virtual ~Plugin()  {}
 
-            virtual ~Plugin()  {}
+        inline std::string getPluginName (void) { return _name; }
 
-            inline std::string getPluginName (void) { return _name; }
+        /**
+         * Return the minimal core version required so that the plugin could work
+         * @return int  The version required
+         */
+        virtual int initFunc (PluginInfo **info) = 0;
 
-            /**
-             * Return the minimal core version required so that the plugin could work
-             * @return int  The version required
-             */
-            virtual int initFunc (int i)  = 0;
-        
-        private:
-            Plugin &operator =(const Plugin &plugin);
+    private:
+        Plugin &operator =(const Plugin &plugin);
 
-            std::string _name;
-    };
+        std::string _name;
+};
 
-}
-typedef ::sflphone::Plugin* createFunc (void);
+typedef Plugin* createFunc (void);
 
-typedef void destroyFunc (::sflphone::Plugin*);
+typedef void destroyFunc (Plugin*);
 
 #endif //PLUGIN_H
 
