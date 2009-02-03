@@ -82,7 +82,7 @@ void
 AudioRtp::closeRtpSession () {
   ost::MutexLock m(_threadMutex);
   // This will make RTP threads finish.
-  // _debug("Stopping AudioRTP\n");
+  _debug("Stopping AudioRTP\n");
   try {
     delete _RTXThread; _RTXThread = 0;
   } catch(...) {
@@ -388,7 +388,6 @@ AudioRtpRTX::run () {
   initBuffers();
   int step; 
 
-  try {
     // Init the session
     initAudioRtpSession();
     step = (int) (_layerFrameSize * _codecSampleRate / 1000);
@@ -425,15 +424,9 @@ AudioRtpRTX::run () {
     }
     //_debug("stop stream for audiortp loop\n");
     audiolayer->stopStream();
-  } catch(std::exception &e) {
     _start.post();
-    _debug("! ARTP: Stop %s\n", e.what());
-    throw;
-  } catch(...) {
-    _start.post();
-    _debugException("* ARTP Action: Stop");
-    throw;
-  }
+    _debug("- ARTP Action: Stop\n");
+
 }
 
 
