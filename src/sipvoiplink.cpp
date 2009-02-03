@@ -937,7 +937,7 @@ void
 SIPVoIPLink::SIPCallClosed(SIPCall *call) 
 {
 
-  _debug("SIPVoIPLink::SIPCallClosed():: function called when peer hangup");
+    _debug("SIPVoIPLink::SIPCallClosed():: function called when peer hangup");
     // it was without did before
     //SIPCall* call = findSIPCallWithCid(event->cid);
     if (!call) { return; }
@@ -951,6 +951,7 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
     }
     _debug("After close RTP\n");
     Manager::instance().peerHungupCall(id);
+    terminateSIPCall();
     removeCall(id);
     _debug("After remove call ID\n");
 }

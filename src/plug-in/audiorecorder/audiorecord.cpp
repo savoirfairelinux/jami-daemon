@@ -123,6 +123,15 @@ bool AudioRecord::isFileExist() {
   return false;  
 }
 
+bool AudioRecord::isRecording() {
+  _debug("AudioRecording::setRecording() \n");
+  
+  if(recordingEnabled_)
+    return true;
+  else 
+    return false;
+}
+
 
 bool AudioRecord::setRecording() {
   _debug("AudioRecord::setRecording()\n");

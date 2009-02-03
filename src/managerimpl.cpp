@@ -636,7 +636,6 @@ ManagerImpl::peerHungupCall(const CallID& id)
     _debug("ManagerImpl::peerHungupCall():this function is called when peer hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
-    bool returnValue;
 
     accountid = getAccountFromCall( id );
     if (accountid == AccountNULL) {
@@ -651,8 +650,6 @@ ManagerImpl::peerHungupCall(const CallID& id)
         stopTone(true);
         switchCall("");
     }
-
-    returnValue = getAccountLink(accountid)->hangup(id);
 
     removeWaitingCall(id);
     removeCallAccount(id);

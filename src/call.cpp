@@ -75,8 +75,12 @@ Call::Call(const CallID& id, Call::CallType type)
 
 Call::~Call()
 {
-   _debug("CALL::Destructor for this clss is called \n");
-   recAudio.closeFile();
+   _debug("CALL::~Call(): Destructor for this clss is called \n");
+   
+   if(recAudio.isOpenFile()) {
+     _debug("CALL::~Call(): A recording file is open, close it \n");
+     recAudio.closeFile();
+   }
 }
 
 void 

@@ -81,6 +81,11 @@ public:
   bool isFileExist();
 
   /**
+   * Check recording state 
+   */ 
+  bool isRecording();
+
+  /**
    * Set recording flag
    */
   bool setRecording();
