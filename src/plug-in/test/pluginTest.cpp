@@ -1,40 +1,49 @@
-#include "../plugininterface.h" 
+/*
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include "../plugin.h"
 
-namespace sflphone {
+#define MAJOR_VERSION   1
+#define MINOR_VERSION   0
 
-    class PluginTest : public PluginInterface {
-    
-        public:
-            PluginTest( const std::string &name ):PluginInterface( name ){
+class PluginTest : public Plugin {
+
+    public:
+        PluginTest( const std::string &name )
+            :Plugin( name ) {
             }
 
-            virtual int initFunc (void)
-            {
-                return 0;
-            }
+        virtual int initFunc (PluginInfo **info) {
 
-            virtual int registerFunc (Plugin **plugin)
-            {
-                Plugin *ret;
+            (*info)->_plugin = this;
+            (*info)->_major_version = MAJOR_VERSION;
+            (*info)->_minor_version = MINOR_VERSION;
+            (*info)->_name = getPluginName();
 
-                ret = new Plugin(this);
-                
-                ret->_name = getInterfaceName();
-                ret->_required = 1;
-                ret->_version_major=1;
-                ret->_version_minor=0;
+            return 0;
+        }
+};
 
-                *plugin = ret;
-                return 0;
-            }
-    };
-
-}
-extern "C" ::sflphone::PluginInterface* create (void){
-    return new ::sflphone::PluginTest("test");
+extern "C" Plugin* createPlugin (void){
+    return new PluginTest("mytest");
 }
 
-extern "C" void* destroy( ::sflphone::PluginInterface *p ){
+extern "C" void destroyPlugin (Plugin *p){
     delete p;
 }
