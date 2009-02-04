@@ -8,5 +8,5 @@ SUBDIRS=test
 
 libplugin_la_SOURCES = \
 		pluginmanager.cpp \
-		plugin.cpp
+		librarymanager.cpp
 
