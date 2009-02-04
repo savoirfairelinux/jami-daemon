@@ -1,10 +1,8 @@
 include ../../globals.mak
 
-SUBDIRS=audiorecorder
+SUBDIRS=audiorecorder test
 
 noinst_LTLIBRARIES = libplugin.la
-
-SUBDIRS=test
 
 libplugin_la_SOURCES = \
 		pluginmanager.cpp \

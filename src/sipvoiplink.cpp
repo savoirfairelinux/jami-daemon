@@ -950,10 +950,6 @@ SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
 void
 SIPVoIPLink::SIPCallClosed(SIPCall *call) 
 {
-
-void
-SIPVoIPLink::SIPCallClosed(SIPCall *call) 
-{
     // it was without did before
     //SIPCall* call = findSIPCallWithCid(event->cid);
     if (!call) { return; }
