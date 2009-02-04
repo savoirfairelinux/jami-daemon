@@ -233,7 +233,6 @@ SIPVoIPLink::terminateSIPCall()
     void
 SIPVoIPLink::getEvent()
 {
-    _debug("a");
     // We have to register the external thread so it could access the pjsip framework
     if(!pj_thread_is_registered())
         pj_thread_register( NULL, desc, &thread );
@@ -1326,10 +1325,13 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
     bool SIPVoIPLink::pjsip_shutdown( void )
     {
-        /*if (_endpt) {
+        if (_endpt) {
             _debug("UserAgent: Shutting down...\n");
             busy_sleep(1000);
-        }*/
+        }
+
+        pj_thread_destroy( thread );
+        thread = NULL;
 
         /* Destroy endpoint. */
         if (_endpt) {

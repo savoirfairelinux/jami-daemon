@@ -2247,20 +2247,24 @@ AccountMap ManagerImpl::getSipAccountMap( void )
 
 void ManagerImpl::restartPJSIP (void)
 {
-    SIPVoIPLink *siplink;
+    //SIPVoIPLink *siplink;
+
+    //unloadAccountMap ();
 
     /* First unregister all SIP accounts */
-    this->unregisterCurSIPAccounts();
+    //this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
-    siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
-    if (siplink) 
-    {
-        siplink->terminate ();
-        _debug ("*************************************************Terminate done\n");
+    //siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
+    //if (siplink) 
+    //{
+      //  siplink->terminate ();
+       // _debug ("*************************************************Terminate done\n");
         //siplink = SIPVoIPLink::instance("");
-        siplink->init ();
-    }
-    _debug("***************************************************Init Done\n");
+        //siplink->init ();
+    //}
+    //_debug("***************************************************Init Done\n");
+    //loadAccountMap();
+    //initRegisterAccounts ();
     /* Then register all enabled SIP accounts */
     //this->registerCurSIPAccounts(siplink);
 }
@@ -2326,7 +2330,7 @@ void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
         current = iter->second;
         if (current) {
             if ( current->isEnabled() && current->getType() == "sip") {
-                current->setVoIPLink(link);
+                //current->setVoIPLink(link);
 	            current->registerVoIPLink();
             }
         }
