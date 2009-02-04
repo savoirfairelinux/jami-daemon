@@ -230,6 +230,23 @@ SIPVoIPLink::terminateSIPCall()
 }
 
     void
+SIPVoIPLink::terminateOneCall(const CallID& id)
+{
+    _debug("SIPVoIPLink::terminateOneCall(): function called \n");
+  
+    SIPCall *call;
+    
+    call = getSIPCall(id);
+    if (call) {
+    // terminate the sip call
+        _debug("SIPVoIPLink::terminateOneCall()::the call is deleted, should close recording file \n");
+        delete call; call = 0;
+    }
+}
+
+
+
+    void
 SIPVoIPLink::getEvent()
 {
     // We have to register the external thread so it could access the pjsip framework
@@ -383,7 +400,7 @@ SIPVoIPLink::sendUnregister( AccountID id )
     return true;
 }
 
-    Call* 
+Call* 
 SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 {
     Account* account;
@@ -453,6 +470,7 @@ SIPVoIPLink::answer(const CallID& id)
             _debug("! SIP Failure: Unable to start sound when answering %s/%d\n", __FILE__, __LINE__);
         }
     }
+    terminateOneCall(call->getCallId());
     removeCall(call->getCallId());
     return false;
 }
@@ -489,8 +507,7 @@ SIPVoIPLink::hangup(const CallID& id)
         _audiortp->closeRtpSession();
     }
  
-    terminateSIPCall();
-
+    terminateOneCall(id);
     removeCall(id);
 
     return true;
@@ -504,6 +521,7 @@ SIPVoIPLink::cancel(const CallID& id)
 
     _debug("- SIP Action: Cancel call %s [cid: %3d]\n", id.data(), call->getCid()); 
 
+    terminateOneCall(id);
     removeCall(id);
 
     return true;
@@ -716,7 +734,7 @@ SIPVoIPLink::refuse (const CallID& id)
 
     call->getInvSession()->mod_data[getModId()] = NULL;
 
-    terminateSIPCall();
+    terminateOneCall(id);
     return true;
 }
 
@@ -941,6 +959,7 @@ SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
         _debug("Server error!\n");
         CallID id = call->getCallId();
         Manager::instance().callFailure(id);
+        terminateOneCall(id);
         removeCall(id);
     }
     //break;
@@ -965,7 +984,7 @@ SIPVoIPLink::SIPCallClosed(SIPCall *call)
     }
     _debug("After close RTP\n");
     Manager::instance().peerHungupCall(id);
-    terminateSIPCall();
+    terminateOneCall(id);
     removeCall(id);
     _debug("After remove call ID\n");
 }
@@ -982,6 +1001,7 @@ SIPVoIPLink::SIPCallReleased(SIPCall *call)
     _debug("SIP call release\n");
     CallID id = call->getCallId();
     Manager::instance().callFailure(id);
+    terminateOneCall(id);
     removeCall(id);
 }
 
