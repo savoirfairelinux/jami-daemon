@@ -642,6 +642,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 
 
     call = getSIPCall(id);
+    call->stopRecording();
     account_id = Manager::instance().getAccountFromCall(id);
     account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
 

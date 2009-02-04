@@ -224,6 +224,11 @@ class Call{
      * SetRecording
      */
     void setRecording();
+
+    /**
+     * stopRecording, make sure the recording is stopped (whe transfering call)
+     */
+    void stopRecording();
     
     /**
      * Return Recording state

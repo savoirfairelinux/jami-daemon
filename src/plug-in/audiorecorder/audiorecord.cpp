@@ -152,6 +152,13 @@ bool AudioRecord::setRecording() {
   
 }
 
+void AudioRecord::stopRecording() {
+  _debug("AudioRecording::stopRecording() \n");
+
+  if(recordingEnabled_)
+    recordingEnabled_ = false;
+}
+
 
 bool AudioRecord::setRawFile() {
 

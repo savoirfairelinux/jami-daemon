@@ -173,6 +173,12 @@ Call::setRecording()
   recAudio.setRecording();
 }
 
+void
+Call::stopRecording()
+{
+  recAudio.stopRecording();
+}
+
 bool
 Call::isRecording()
 {

@@ -91,6 +91,11 @@ public:
   bool setRecording();
 
   /**
+   * Stop recording flag
+   */
+  void stopRecording();
+
+  /**
    * Record a chunk of data in an openend file
    * @param buffer  The data chunk to be recorded
    * @param nSamples Number of samples (number of bytes) to be recorded 
