@@ -191,6 +191,11 @@ class SIPVoIPLink : public VoIPLink
          * Terminate every call not hangup | brutal | Protected by mutex 
          */
         void terminateSIPCall(); 
+ 
+        /**
+         * Terminate only one call
+         */
+        void terminateOneCall(const CallID& id);
 
         /**
          * Build a sip address with the number that you want to call
