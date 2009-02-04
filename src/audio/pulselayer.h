@@ -22,6 +22,9 @@
 
 #include "audiolayer.h"
 #include "audiostream.h"
+#include "plug-in/audiorecorder/audiorecord.h"
+
+#include <pulse/pulseaudio.h>
 
 #define PLAYBACK_STREAM_NAME	    "SFLphone out"
 #define CAPTURE_STREAM_NAME	    "SFLphone in"
@@ -35,8 +38,6 @@ class PulseLayer : public AudioLayer {
     ~PulseLayer(void);
 
     void closeLayer( void );
-
-    void trigger_thread(void){}
 
     /**
      * Check if no devices are opened, otherwise close them.
@@ -58,28 +59,6 @@ class PulseLayer : public AudioLayer {
     void stopStream(void);
 
     /**
-     * UNUSED in pulseaudio layer
-     */
-    bool isCaptureActive( void ) { return true; }
-
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    bool isStreamActive (void); 
-
-    /**
-     * Flush the main ringbuffer, reserved for the voice
-     */
-    void flushMain();
-    
-    int putUrgent(void* buffer, int toCopy);
-
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    int putInCache( char code, void* buffer , int toCopy );
-
-    /**
      * Query the capture device for number of bytes available in the hardware ring buffer
      * @return int The number of bytes available
      */
@@ -93,45 +72,21 @@ class PulseLayer : public AudioLayer {
      */
     int getMic(void *, int);
     
-    /**
-     * Flush the mic ringbuffer
-     */
-    void flushMic();
-
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    int playSamples(void* buffer, int toCopy, bool isTalking) ;
-
-    //static void audioCallback ( pa_stream* s, size_t bytes, void* userdata );
     static void overflow ( pa_stream* s, void* userdata );
     static void underflow ( pa_stream* s, void* userdata );
     static void stream_state_callback( pa_stream* s, void* user_data );	
     static void context_state_callback( pa_context* c, void* user_data );	
 
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    std::vector<std::string> getSoundCardsInfo( int stream UNUSED ) { 
-      std::vector<std::string> tmp;
-      return tmp; 
-    }
+    bool isCaptureActive (void){return true;}
 
     /**
      * UNUSED in pulseaudio layer
      */
-    bool soundCardIndexExist( int card UNUSED, int stream UNUSED ) { return true; }
-    
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    int soundCardGetIndex( std::string description UNUSED ) { return 0;}
+    //std::vector<std::string> getSoundCardsInfo( int stream UNUSED ) { 
+      //std::vector<std::string> tmp;
+      //return tmp; 
+    //}
 
-    /**
-     * UNUSED in pulseaudio layer
-     */
-    std::string getAudioPlugin( void ) { return "default"; }
-    
     /**
      * Reduce volume of every audio applications connected to the same sink
      */
@@ -218,21 +173,6 @@ class PulseLayer : public AudioLayer {
      */
     void serverinfo( void );
 
-    /** 
-     * Ringbuffer for incoming voice data (playback)
-     */
-    RingBuffer _mainSndRingBuffer;
-
-    /** 
-     * Ringbuffer for dtmf data
-     */
-    RingBuffer _urgentRingBuffer;
-
-    /** 
-     * Ringbuffer for outgoing voice data (mic)
-     */
-    RingBuffer _micRingBuffer;
-
     /** PulseAudio context and asynchronous loop */
     pa_context* context;
     pa_threaded_mainloop* m;
@@ -246,11 +186,6 @@ class PulseLayer : public AudioLayer {
      * A stream object to handle the pulseaudio capture stream
      */
     AudioStream* record;
-
-    /**
-     * A stream object to handle the pulseaudio upload stream
-     */
-    AudioStream* cache;
 
     int spkrVolume;
     int micVolume;

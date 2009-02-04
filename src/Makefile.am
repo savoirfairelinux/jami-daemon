@@ -2,16 +2,6 @@ include ../globals.mak
 
 bin_PROGRAMS = sflphoned
 
-if USE_ZEROCONF
-ZEROCONFDIR = zeroconf
-ZEROCONFLIB = zeroconf/libzeroconf.la
-ZEROCONFFLAGS = -DUSE_ZEROCONF
-else
-ZEROCONFDIR =
-ZEROCONFLIB =
-ZEROCONFFLAGS =  
-endif
-
 if USE_IAX
 # Use the global instead of locally built
 IAX_FLAGS = -DUSE_IAX
@@ -23,7 +13,7 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
-SUBDIRS = audio config dbus $(ZEROCONFDIR)
+SUBDIRS = audio config dbus plug-in
 
 # Add here the cpp files to be build with sflphone
 sflphoned_SOURCES = \
@@ -39,12 +29,10 @@ sflphoned_SOURCES = \
 		call.cpp \
 		account.cpp \
 		sipcall.cpp \
-		$(IAXSOURCES) \
-		useragent.cpp
+		$(IAXSOURCES) 
 
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" \
-		$(ZEROCONFFLAGS) \
 		$(IAX_FLAGS)
 
 
@@ -53,7 +41,6 @@ sflphoned_LDADD = \
 		./libsflphone.la \
 		@CCGNU2_LIBS@ \
 		@CCEXT2_LIBS@ \
-		$(ZEROCONFLIB) \
 		$(IAX_LIBS) \
 		$(PJSIP_LIBS) \
 		@DBUSCPP_LIBS@ \
@@ -61,6 +48,8 @@ sflphoned_LDADD = \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ 
+
+#sflphoned_LDFLAGS=-pg
 
 noinst_LTLIBRARIES = libsflphone.la
 
@@ -78,8 +67,7 @@ noinst_HEADERS = \
 		accountcreator.h \
         sipvoiplink.h \
 		call.h \
-		sipcall.h \
-		useragent.h
+		sipcall.h 
 		
 libsflphone_la_LIBADD = \
 	$(src)/libs/stund/libstun.la \
@@ -87,6 +75,8 @@ libsflphone_la_LIBADD = \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
+	./plug-in/libplugin.la \
+	./plug-in/audiorecorder/libaudiorecorder.la \
 	$(IAX_LIBS) 
 
 libsflphone_la_SOURCES =

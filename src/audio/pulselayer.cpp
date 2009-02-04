@@ -32,14 +32,10 @@ static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
   
     PulseLayer::PulseLayer(ManagerImpl* manager)
   : AudioLayer( manager , PULSEAUDIO ) 
-  , _mainSndRingBuffer( SIZEBUF )
-  , _urgentRingBuffer( SIZEBUF)
-  , _micRingBuffer( SIZEBUF )
   , context(NULL)
   , m(NULL)
   , playback()
   , record()
-  , cache()   
 {
   PulseLayer::streamState = 0;
   _debug("Pulse audio constructor: Create context\n");
@@ -48,24 +44,25 @@ static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
 // Destructor
 PulseLayer::~PulseLayer (void) 
 { 
-  _debug(" Destroy pulselayer\n");
-  delete playback;
-  delete record;
-  pa_context_disconnect(context);
-  pa_context_unref( context );
+    closeLayer ();
+
+    pa_context_disconnect( context );  
+    pa_context_unref( context );
 }
 
   void
 PulseLayer::closeLayer( void )
 { 
+  _debug(" Destroy pulselayer\n");
+  
   playback->disconnect(); 
   record->disconnect();
  
   while(PulseLayer::streamState != 2)
     ;
   PulseLayer::streamState = 0; 
-  pa_context_disconnect( context );  
-  pa_context_unref( context );
+
+  //TODO  Remove this ugly hack
   sleep(2);
 }
 
@@ -89,7 +86,7 @@ PulseLayer::connectPulseAudioServer( void )
   }
 
   pa_threaded_mainloop_unlock( m );
-  serverinfo();
+  //serverinfo();
   //muteAudioApps(99);
   _debug("Context creation done\n");
 }
@@ -139,7 +136,6 @@ PulseLayer::createStreams( pa_context* c )
   record = new AudioStream(c, CAPTURE_STREAM, CAPTURE_STREAM_NAME , _manager->getMicVolume());
   pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
   //pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
-  //cache = new AudioStream(c, UPLOAD_STREAM, "Cache samples", _manager->getSpkrVolume());
 
   pa_threaded_mainloop_signal(m , 0);
 }
@@ -179,37 +175,6 @@ PulseLayer::closePlaybackStream( void )
 {
 }
 
-  int 
-PulseLayer::playSamples(void* buffer, int toCopy, bool isTalking UNUSED)
-{
-  int a = _mainSndRingBuffer.AvailForPut();
-  if ( a >= toCopy ) {
-    return _mainSndRingBuffer.Put(buffer, toCopy, 100);
-  } else {
-    _debug("Chopping sound, Ouch! RingBuffer full ?\n");
-    return _mainSndRingBuffer.Put(buffer, a, 100);
-  }
-  return 0;
-}
-
-  void
-PulseLayer::flushMain()
-{
-  _mainSndRingBuffer.flush();
-}
-
-  int
-PulseLayer::putUrgent(void* buffer, int toCopy)
-{
-  int a = _urgentRingBuffer.AvailForPut();
-  if ( a >= toCopy ) {
-    return _urgentRingBuffer.Put(buffer, toCopy, 100 );
-  } else {
-    return _urgentRingBuffer.Put(buffer, a, 100 );
-  }
-  return 0;
-}
-
   int
 PulseLayer::canGetMic()
 {
@@ -229,12 +194,6 @@ PulseLayer::getMic(void *buffer, int toCopy)
     return 0;
 }
 
-  void
-PulseLayer::flushMic()
-{
-  _micRingBuffer.flush();
-}
-
   void 
 PulseLayer::startStream (void) 
 {
@@ -252,6 +211,8 @@ PulseLayer::stopStream (void)
   pa_stream_flush( playback->pulseStream(), NULL, NULL );
   pa_stream_flush( record->pulseStream(), NULL, NULL );
   flushMic();
+  flushMain();
+  flushUrgent();
 }
 
 
@@ -304,13 +265,13 @@ void PulseLayer::writeToSpeaker( void )
 
   if (urgentAvail > 0) {
     // Urgent data (dtmf, incoming call signal) come first.		
-    //_debug("Play urgent!: %i\n" , urgentAvail);
+    //_debug("Play urgent!: %i\e" , urgentAvail);
     toGet = (urgentAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? urgentAvail : framesPerBuffer * sizeof(SFLDataFormat);
     out =  (SFLDataFormat*)pa_xmalloc(toGet * sizeof(SFLDataFormat) );
     _urgentRingBuffer.Get(out, toGet, 100);
     pa_stream_write( playback->pulseStream() , out , toGet  , pa_xfree, 0 , PA_SEEK_RELATIVE);
     // Consume the regular one as well (same amount of bytes)
-    _mainSndRingBuffer.Discard(toGet);
+    _voiceRingBuffer.Discard(toGet);
   }
   else
   {
@@ -330,11 +291,11 @@ void PulseLayer::writeToSpeaker( void )
     } 
     else {
       out =  (SFLDataFormat*)pa_xmalloc(framesPerBuffer * sizeof(SFLDataFormat));
-      normalAvail = _mainSndRingBuffer.AvailForGet();
+      normalAvail = _voiceRingBuffer.AvailForGet();
       toGet = (normalAvail < (int)(framesPerBuffer * sizeof(SFLDataFormat))) ? normalAvail : framesPerBuffer * sizeof(SFLDataFormat);
       if (toGet) {
-	    _mainSndRingBuffer.Get(out, toGet, 100);
-	    _mainSndRingBuffer.Discard(toGet);
+	    _voiceRingBuffer.Get(out, toGet, 100);
+	    _voiceRingBuffer.Discard(toGet);
       } 
       else {
 	    bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
@@ -362,15 +323,6 @@ void PulseLayer::readFromMic( void )
   if( pa_stream_drop( record->pulseStream() ) < 0 ) {
     //_debug("pa_stream_drop() failed: %s\n" , pa_strerror( pa_context_errno( context) ));
   }
-}
-
-  int
-PulseLayer::putInCache( char code UNUSED, void *buffer UNUSED, int toCopy UNUSED )
-{
-  _debug("Put the DTMF in cache\n");
-  //pa_stream_write( cache->pulseStream() , buffer , toCopy  , pa_xfree, 0 , PA_SEEK_RELATIVE);
-  //pa_stream_finish_upload( cache->pulseStream() );
-  return 1;
 }
 
 static void retrieve_server_info(pa_context *c UNUSED, const pa_server_info *i, void *userdata UNUSED)

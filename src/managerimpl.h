@@ -47,7 +47,6 @@ class CodecDescriptor;
 class GuiFramework;
 class TelephoneTone;
 class VoIPLink;
-class UserAgent;
 
 #ifdef USE_ZEROCONF
 class DNSService;
@@ -272,9 +271,6 @@ class ManagerImpl {
      */
     void sendRegister( const ::std::string& accountId , const int32_t& expire );
 
-    bool getZeroconf(const std::string& sequenceId);
-    bool attachZeroconfEvents(const std::string& sequenceId, Pattern::Observer& observer);
-    bool detachZeroconfEvents(Pattern::Observer& observer);
     bool getCallStatus(const std::string& sequenceId);
 
     /** 
@@ -793,16 +789,17 @@ class ManagerImpl {
      * @param void
      * @return void
      */
-    void restartPjsip();
+    void restartPJSIP( );
 
-    int getSipPort();
-    
-    void setSipPort(int port);
-    
     void unregisterCurSIPAccounts();
     
-    void registerCurSIPAccounts();
+    void registerCurSIPAccounts(VoIPLink *link);
     
+    /**
+     * Returns a map with only the existing SIP accounts
+     */
+    AccountMap getSipAccountMap( void );
+
   private:
     
     /**
@@ -1017,8 +1014,19 @@ public:
      */
     VoIPLink* getAccountLink(const AccountID& accountID);
 
+    VoIPLink* getSIPAccountLink (void);
+
     AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 
+    int getSipPort();
+
+    void setSipPort( int port );
+
+    std::string getStunServer (void);
+    void setStunServer (const std::string &server);
+
+    int isStunEnabled (void);
+    void enableStun (void);
 private:
 
     // Copy Constructor
@@ -1027,32 +1035,12 @@ private:
     // Assignment Operator
     ManagerImpl& operator=( const ManagerImpl& rh);
 
-    /**
-     * The UserAgent provides sip operation facilities for all sip accounts
-     */
-    UserAgent *_userAgent;
-
-    /** Whether the _UserAgent has been initialized */
-    bool _userAgentInitlized;
-    
-    bool _sipThreadStop;
-
 #ifdef TEST
     bool testCallAccountMap();
     bool testAccountMap();
 #endif
 
     friend class ConfigurationTest;
-
-public:
-    /**
-     * Retuun the instance of sip manager
-     */
-    UserAgent *getUserAgent();
-    
-    void setSipThreadStatus(bool status) {_sipThreadStop = status;}
-    
-    bool getSipThreadStatus() {return _sipThreadStop;}
 };
 
 #endif // __MANAGER_H__

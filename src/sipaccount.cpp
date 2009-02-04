@@ -2,8 +2,6 @@
  *  Copyright (C) 2006-2009 Savoir-Faire Linux inc.
  *  
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,80 +21,71 @@
 #include "sipaccount.h"
 #include "manager.h"
 #include "user_cfg.h"
-#include "useragent.h"
 
 SIPAccount::SIPAccount(const AccountID& accountID)
- : Account(accountID)
- , _userName("")
- , _server("")
+ : Account(accountID, "sip")
  , _cred(NULL)
  , _contact("")
+ , _bRegister(false)
+ , _regc()
 {
-  _link = new SIPVoIPLink(accountID);
+    /* SIPVoIPlink is used as a singleton, because we want to have only one link for all the SIP accounts created */
+    /* So instead of creating a new instance, we just fetch the static instance, or create one if it is not yet */
+    /* The SIP library initialization is done in the SIPVoIPLink constructor */
+    /* The SIP voip link is now independant of the account ID as it can manage several SIP accounts */
+    _link = SIPVoIPLink::instance("");
+    
+    /* Represents the number of SIP accounts connected the same link */
+    dynamic_cast<SIPVoIPLink*> (_link)->incrementClients();
+    
 }
 
 
 SIPAccount::~SIPAccount()
 {
-  delete _link;
-  _link = NULL;
-  delete _cred;
-  _cred = NULL;
+    /* One SIP account less connected to the sip voiplink */
+    dynamic_cast<SIPVoIPLink*> (_link)->decrementClients();
+    /* Delete accounts-related information */
+    _regc = NULL;
+    delete _cred; _cred = NULL;
 }
 
-int
-SIPAccount::registerVoIPLink()
+int SIPAccount::registerVoIPLink()
 {
+    int status;
 
-    int status, useStun;
-    SIPVoIPLink *thislink;
+    /* Retrieve the account information */
+    /* Stuff needed for SIP registration */
+    setHostname(Manager::instance().getConfigString(_accountID,HOSTNAME));
+    setUsername(Manager::instance().getConfigString(_accountID, USERNAME));
+    setPassword(Manager::instance().getConfigString(_accountID, PASSWORD));
 
-    _link->setHostname(Manager::instance().getConfigString(_accountID,HOSTNAME));
-    useStun = Manager::instance().getConfigInt(_accountID,SIP_USE_STUN);
-  
-    thislink = dynamic_cast<SIPVoIPLink*> (_link);
-    thislink->setStunServer(Manager::instance().getConfigString(_accountID,SIP_STUN_SERVER));
-    thislink->setUseStun( useStun!=0 ? true : false);
-    
-    _link->init();
-  
-    // Stuff needed for SIP registration.
-    thislink->setUsername(Manager::instance().getConfigString(_accountID, USERNAME));
-    thislink->setPassword(Manager::instance().getConfigString(_accountID, PASSWORD));
-    thislink->setHostname(Manager::instance().getConfigString(_accountID, HOSTNAME));
-
-    status = _link->sendRegister();
+    /* Start registration */
+    status = _link->sendRegister( _accountID );
     ASSERT( status , SUCCESS );
 
     return SUCCESS;
 }
 
-int
-SIPAccount::unregisterVoIPLink()
+int SIPAccount::unregisterVoIPLink()
 {
   _debug("SIPAccount: unregister account %s\n" , getAccountID().c_str());
-  _link->sendUnregister();
-  _link->terminate();
-  
-  return SUCCESS;
+  return _link->sendUnregister( _accountID );
 }
 
-void
-SIPAccount::loadConfig() 
+void SIPAccount::loadConfig() 
 {
   // Account generic
   Account::loadConfig();
 }
 
-bool 
-SIPAccount::fullMatch(const std::string& userName, const std::string& server)
+bool SIPAccount::fullMatch(const std::string& username, const std::string& hostname)
 {
-  return (userName == _userName && server == _server);
+  return (username == getUsername() && hostname == getHostname());
 }
 
-bool 
-SIPAccount::userMatch(const std::string& userName)
+bool SIPAccount::userMatch(const std::string& username)
 {
-  return (userName == _userName);
+  return (username == getUsername());
 }
 

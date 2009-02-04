@@ -1,8 +1,7 @@
 /*
- *  Copyright (C) 2004, 2005, 2006 Savoir-Faire Linux inc.
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
- *                                                                              
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -20,44 +19,42 @@
 
 #include "eventthread.h"
 #include "voiplink.h"
+#include "audio/alsalayer.h"
 
-EventThread::EventThread (VoIPLink* link) : Thread (),  _linkthread(link), stopIt(false)
+/********************************** Voiplink thread *************************************/
+EventThread::EventThread( VoIPLink *link ) 
+    : Thread(), _linkthread(link)
 {
-	setCancel(cancelDeferred);
+    setCancel( cancelDeferred );
 }
 
-EventThread::~EventThread (void) 
+
+/**
+ * Reimplementation of run() 
+ */
+void EventThread::run (void) 
 {
-  terminate();
+  while(!testCancel()) {
+    _linkthread->getEvent();
+  }
+}	
+
+/********************************************************************************************/
+
+AudioThread::AudioThread (AlsaLayer *alsa)
+    : Thread(), _alsa(alsa)
+{
+    setCancel (cancelDeferred);
 }
 
 /**
  * Reimplementation of run() 
  */
-void
-EventThread::run (void) 
+void AudioThread::run (void) 
 {
-  //stopIt = false;
-  while(!testCancel()) {
-    _linkthread->getEvent();
-  }
+    while(!testCancel()) {
+        _alsa->audioCallback();
+        Thread::sleep(3);
+    }
 }
 
-void
-EventThread::stop( void )
-{
-  stopIt = true; 
-}
-
-void
-EventThread::startLoop( void )
-{
-  stopIt = false;
-  //start();
-}
-
-bool
-EventThread::isStopped( void )
-{
-  return stopIt;
-}

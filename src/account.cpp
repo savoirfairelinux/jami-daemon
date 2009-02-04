@@ -22,9 +22,10 @@
 #include "account.h"
 #include "manager.h"
 
-Account::Account(const AccountID& accountID) : 
-    _accountID(accountID), _link(NULL), _enabled(false)
+Account::Account(const AccountID& accountID, std::string type) : 
+    _accountID(accountID), _link(NULL), _enabled(false), _type(type)
 {
+    setRegistrationState(Unregistered);
 }
 
 Account::~Account()
@@ -46,3 +47,9 @@ void Account::loadConfig()
 #endif
 }
 
+void Account::setRegistrationState( RegistrationState state ) { 
+    _registrationState = state; 
+
+    // Notify the client
+    Manager::instance().connectionStatusNotification( );
+}
