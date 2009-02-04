@@ -22,6 +22,7 @@
 
 #include "audiolayer.h"
 #include "audiostream.h"
+#include "plug-in/audiorecorder/audiorecord.h"
 
 #include <pulse/pulseaudio.h>
 

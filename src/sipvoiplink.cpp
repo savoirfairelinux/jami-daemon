@@ -149,11 +149,10 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
     , _useStun(false)
     , _clients(0)
 {
+    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink constructor called \n");    
+
     // to get random number for RANDOM_PORT
     srand (time(NULL));
-
-    /* Instanciate the C++ thread */
-    _evThread = new EventThread(this);
 
     /* Start pjsip initialization step */
     init();
@@ -161,6 +160,7 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
 SIPVoIPLink::~SIPVoIPLink()
 {
+    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink destructor called \n");
     terminate();
 }
 
@@ -187,6 +187,10 @@ bool SIPVoIPLink::init()
 {
     if(initDone())
         return false;
+    
+    /* Instanciate the C++ thread */
+    _evThread = new EventThread(this);
+
     /* Initialize the pjsip library */
     pjsip_init();
     initDone(true);
@@ -197,7 +201,9 @@ bool SIPVoIPLink::init()
     void 
 SIPVoIPLink::terminate()
 {
-    delete _evThread; _evThread = NULL;
+    if (_evThread){
+        delete _evThread; _evThread = NULL;
+    }
 
     /* Clean shutdown of pjsip library */
     if( initDone() )
@@ -210,7 +216,6 @@ SIPVoIPLink::terminate()
     void
 SIPVoIPLink::terminateSIPCall()
 {
-
     ost::MutexLock m(_callMapMutex);
     CallMap::iterator iter = _callMap.begin();
     SIPCall *call;
@@ -226,6 +231,23 @@ SIPVoIPLink::terminateSIPCall()
 }
 
     void
+SIPVoIPLink::terminateOneCall(const CallID& id)
+{
+    _debug("SIPVoIPLink::terminateOneCall(): function called \n");
+  
+    SIPCall *call;
+    
+    call = getSIPCall(id);
+    if (call) {
+    // terminate the sip call
+        _debug("SIPVoIPLink::terminateOneCall()::the call is deleted, should close recording file \n");
+        delete call; call = 0;
+    }
+}
+
+
+
+    void
 SIPVoIPLink::getEvent()
 {
     // We have to register the external thread so it could access the pjsip framework
@@ -235,6 +257,7 @@ SIPVoIPLink::getEvent()
     // PJSIP polling
     pj_time_val timeout = {0, 10};
     pjsip_endpt_handle_events( _endpt, &timeout);
+    
 }
 
 int SIPVoIPLink::sendRegister( AccountID id )
@@ -379,7 +402,7 @@ SIPVoIPLink::sendUnregister( AccountID id )
     return true;
 }
 
-    Call* 
+Call* 
 SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 {
     Account* account;
@@ -449,6 +472,7 @@ SIPVoIPLink::answer(const CallID& id)
             _debug("! SIP Failure: Unable to start sound when answering %s/%d\n", __FILE__, __LINE__);
         }
     }
+    terminateOneCall(call->getCallId());
     removeCall(call->getCallId());
     return false;
 }
@@ -483,7 +507,8 @@ SIPVoIPLink::hangup(const CallID& id)
         _debug("* SIP Info: Stopping AudioRTP for hangup\n");
         _audiortp->closeRtpSession();
     }
-
+ 
+    terminateOneCall(id);
     removeCall(id);
 
     return true;
@@ -497,6 +522,7 @@ SIPVoIPLink::cancel(const CallID& id)
 
     _debug("- SIP Action: Cancel call %s [cid: %3d]\n", id.data(), call->getCid()); 
 
+    terminateOneCall(id);
     removeCall(id);
 
     return true;
@@ -684,7 +710,7 @@ SIPVoIPLink::refuse (const CallID& id)
     pj_status_t status;
     pjsip_tx_data *tdata;
 
-
+    _debug("SIPVoIPLink::refuse() : teh call is refused \n");
     call = getSIPCall(id);
 
     if (call==0) { 
@@ -708,6 +734,8 @@ SIPVoIPLink::refuse (const CallID& id)
         return false;
 
     call->getInvSession()->mod_data[getModId()] = NULL;
+
+    terminateOneCall(id);
     return true;
 }
 
@@ -899,59 +927,66 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         return true;
     }
 
-    void
-        SIPVoIPLink::SIPCallServerFailure(SIPCall *call) 
-        {
-            //if (!event->response) { return; }
-            //switch(event->response->status_code) {
-            //case SIP_SERVICE_UNAVAILABLE: // 500
-            //case SIP_BUSY_EVRYWHERE:     // 600
-            //case SIP_DECLINE:             // 603
-            //SIPCall* call = findSIPCallWithCid(event->cid);
-            if (call != 0) {
-                _debug("Server error!\n");
-                CallID id = call->getCallId();
-                Manager::instance().callFailure(id);
-                removeCall(id);
-            }
-            //break;
-            //}
-        }
+void
+SIPVoIPLink::SIPCallServerFailure(SIPCall *call) 
+{
+    //if (!event->response) { return; }
+    //switch(event->response->status_code) {
+    //case SIP_SERVICE_UNAVAILABLE: // 500
+    //case SIP_BUSY_EVRYWHERE:     // 600
+    //case SIP_DECLINE:             // 603
+    //SIPCall* call = findSIPCallWithCid(event->cid);
+    if (call != 0) {
+        _debug("Server error!\n");
+        CallID id = call->getCallId();
+        Manager::instance().callFailure(id);
+        terminateOneCall(id);
+        removeCall(id);
+    }
+    //break;
+    //}
+}
 
-    void
-        SIPVoIPLink::SIPCallClosed(SIPCall *call) 
-        {
-            // it was without did before
-            //SIPCall* call = findSIPCallWithCid(event->cid);
-            if (!call) { return; }
+void
+SIPVoIPLink::SIPCallClosed(SIPCall *call) 
+{
 
-            CallID id = call->getCallId();
-            //call->setDid(event->did);
-            if (Manager::instance().isCurrentCall(id)) {
-                call->setAudioStart(false);
-                _debug("* SIP Info: Stopping AudioRTP when closing\n");
-                _audiortp->closeRtpSession();
-            }
-            _debug("After close RTP\n");
-            Manager::instance().peerHungupCall(id);
-            removeCall(id);
-            _debug("After remove call ID\n");
-        }
+void
+SIPVoIPLink::SIPCallClosed(SIPCall *call) 
+{
+    // it was without did before
+    //SIPCall* call = findSIPCallWithCid(event->cid);
+    if (!call) { return; }
 
-    void
-        SIPVoIPLink::SIPCallReleased(SIPCall *call)
-        {
-            // do cleanup if exists
-            // only cid because did is always 0 in these case..
-            //SIPCall* call = findSIPCallWithCid(event->cid);
-            if (!call) { return; }
+    CallID id = call->getCallId();
+    //call->setDid(event->did);
+    if (Manager::instance().isCurrentCall(id)) {
+        call->setAudioStart(false);
+        _debug("* SIP Info: Stopping AudioRTP when closing\n");
+        _audiortp->closeRtpSession();
+    }
+    _debug("After close RTP\n");
+    Manager::instance().peerHungupCall(id);
+    terminateOneCall(id);
+    removeCall(id);
+    _debug("After remove call ID\n");
+}
 
-            // if we are here.. something when wrong before...
-            _debug("SIP call release\n");
-            CallID id = call->getCallId();
-            Manager::instance().callFailure(id);
-            removeCall(id);
-        }
+void
+SIPVoIPLink::SIPCallReleased(SIPCall *call)
+{
+    // do cleanup if exists
+    // only cid because did is always 0 in these case..
+    //SIPCall* call = findSIPCallWithCid(event->cid);
+    if (!call) { return; }
+
+    // if we are here.. something when wrong before...
+    _debug("SIP call release\n");
+    CallID id = call->getCallId();
+    Manager::instance().callFailure(id);
+    terminateOneCall(id);
+    removeCall(id);
+}
 
     void
         SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
@@ -1287,8 +1322,42 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         return returnValue;
     }
 
+    void SIPVoIPLink::busy_sleep(unsigned msec)
+    {
+#if defined(PJ_SYMBIAN) && PJ_SYMBIAN != 0
+    /* Ideally we shouldn't call pj_thread_sleep() and rather
+     * CActiveScheduler::WaitForAnyRequest() here, but that will
+     * drag in Symbian header and it doesn't look pretty.
+     */
+        pj_thread_sleep(msec);
+#else
+        pj_time_val timeout, now, tv;
+
+        pj_gettimeofday(&timeout);
+        timeout.msec += msec;
+        pj_time_val_normalize(&timeout);
+
+        tv.sec = 0;
+        tv.msec = 10;
+        pj_time_val_normalize(&tv);
+    
+        do {
+            pjsip_endpt_handle_events(_endpt, &tv);
+            pj_gettimeofday(&now);
+        } while (PJ_TIME_VAL_LT(now, timeout));
+#endif
+}    
+
     bool SIPVoIPLink::pjsip_shutdown( void )
     {
+        if (_endpt) {
+            _debug("UserAgent: Shutting down...\n");
+            busy_sleep(1000);
+        }
+
+        pj_thread_destroy( thread );
+        thread = NULL;
+
         /* Destroy endpoint. */
         if (_endpt) {
             pjsip_endpt_destroy(_endpt);

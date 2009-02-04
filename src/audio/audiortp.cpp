@@ -82,7 +82,7 @@ void
 AudioRtp::closeRtpSession () {
   ost::MutexLock m(_threadMutex);
   // This will make RTP threads finish.
-  // _debug("Stopping AudioRTP\n");
+  _debug("Stopping AudioRTP\n");
   try {
     delete _RTXThread; _RTXThread = 0;
   } catch(...) {
@@ -126,7 +126,6 @@ AudioRtpRTX::~AudioRtpRTX () {
     _debugException("! ARTP: Thread destructor didn't terminate correctly");
     throw;
   }
-  //_debug("terminate audiortprtx ended...\n");
   _ca = 0;
   if (!_sym) {
     delete _sessionRecv; _sessionRecv = NULL;
@@ -145,6 +144,7 @@ AudioRtpRTX::~AudioRtpRTX () {
   delete time; time = NULL;
 
   delete converter; converter = NULL;
+  
 }
 
   void

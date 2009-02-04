@@ -193,9 +193,10 @@ void AlsaLayer::startCaptureStream (void)
 void AlsaLayer::prepareCaptureStream (void)
 {
     if (is_capture_open() ) {
-        _debug("Prepare the capture\n");
-        if(snd_pcm_prepare (_CaptureHandle) < 0)    _debug("Error preparing the device\n");
-        prepare_capture ();
+        if(snd_pcm_prepare (_CaptureHandle) < 0)    
+            _debug("");
+        else
+            prepare_capture ();
     }
 }
 
@@ -383,11 +384,11 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     }
 
     /* Start the secondary audio thread for callbacks */
-    try {
+    try{
         _audioThread->start();
     }
-    catch(...){
-        _debug("Fail to start audio thread\n");
+    catch (...) {
+        _debugException("Fail to start audio thread\n");
     }
 
     return true;
