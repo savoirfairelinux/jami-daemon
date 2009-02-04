@@ -1,3 +1,25 @@
+sflphone (0.9.2-2ubuntu7) intrepid; urgency=low
+
+  [ Emmanuel Milou ]
+  * Update changelog to 0.9.2-6
+  * Fix some dbus-glib implementation details on the client side
+  * Init history after dbus initialization
+  * Add error checking in useragent; Clean sipvoiplink
+  * Prevent crash when trying to call an empty number
+  * Set the volume of the playback stream to PA_VOLUME_NORM at startup
+  * Fix GTK+ generic value double initialization
+  * Fix jaunty control file dependency problems
+  * Fix jaunty control file dependency problems
+
+  [ Yun Liu ]
+  * Fix bug ticket # 137
+  * Tolerant to gsm library of OpenSuse 11
+
+  [ Sven Werlen ]
+  * Update german translation
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 23 Jan 2009 17:48:13 -0500
+
 sflphone (0.9.2-2ubuntu6) intrepid; urgency=low
 
   [ Emmanuel Milou ]
