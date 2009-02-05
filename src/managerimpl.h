@@ -61,6 +61,9 @@ typedef std::map<CallID, AccountID> CallAccountMap;
 /** Define a type for CallID vector (waiting list, incoming not answered) */
 typedef std::set<CallID> CallIDSet;
 
+/** Define a type for recorded audio file names vector */
+typedef std::map<CallID, std::string> RecFileNames; 
+
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
 
@@ -453,6 +456,18 @@ class ManagerImpl {
      * Set the volume controls ( mic and speaker ) visible or not
      */
     void setVolumeControls( void );
+
+    /**
+     * Set recording on / off
+     * Start recording
+     * @param id  The call identifier
+     */
+    void setRecordingCall(const CallID& id);
+
+    /**
+     * Return true if the call is currently recorded
+     */
+    bool isRecording(const CallID& id);
 
     /**
      * Set the maximum number of calls to keep in the history
@@ -970,7 +985,8 @@ class ManagerImpl {
      */
     bool removeCallAccount(const CallID& callID);
 
-    /** Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
+    /** 
+     *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
     AccountMap _accountMap;
 
     /**
@@ -991,6 +1007,12 @@ class ManagerImpl {
      *		  false otherwise
      */
     bool accountExists(const AccountID& accountID);
+
+    /**
+     * Map the call id to coresponding call
+     */
+    RecFileNames _fileNamesMap;
+    
 
 public:
     /**

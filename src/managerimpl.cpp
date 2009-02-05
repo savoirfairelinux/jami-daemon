@@ -342,8 +342,23 @@ ManagerImpl::offHoldCall(const CallID& id)
 
   _debug("Setting OFFHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
 
+  bool rec = getAccountLink(accountid)->isRecording(id);
+  
+  /*
+  if(rec)
+    _debug("ManagerImpl::offHoldCall(): Record state is true \n");
+  else
+    _debug("ManagerImpl::offHoldCall(): Record state is false \n");
+  */
+
   bool returnValue = getAccountLink(accountid)->offhold(id);
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "UNHOLD");
+
+  if (_dbus){ 
+    if (rec)
+      _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
+    else 
+      _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
+  }
   switchCall(id);
 
   return returnValue;
@@ -1433,6 +1448,25 @@ void
 ManagerImpl::setVolumeControls( void )
 {
   ( getConfigInt( PREFERENCES , CONFIG_VOLUME ) == DISPLAY_VOLUME_CONTROLS )? setConfig(PREFERENCES , CONFIG_VOLUME , NO_STR ) : setConfig( PREFERENCES , CONFIG_VOLUME , YES_STR );
+}
+
+void
+ManagerImpl::setRecordingCall(const CallID& id)
+{
+  _debug("ManagerImpl::setRecording()! \n");
+  AccountID accountid = getAccountFromCall( id );
+
+  // printf("ManagerImpl::CallID: %s", id);
+  getAccountLink(accountid)->setRecording(id);
+}
+
+bool
+ManagerImpl::isRecording(const CallID& id)
+{
+  _debug("ManagerImpl::isRecording()! \n");
+  AccountID accountid = getAccountFromCall( id );
+
+  return getAccountLink(accountid)->isRecording(id);
 }
 
 void 

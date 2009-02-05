@@ -21,8 +21,10 @@
 #define CALL_H
 
 #include <cc++/thread.h> // for mutex
+#include <sstream>
 
 #include "audio/codecDescriptor.h"
+#include "plug-in/audiorecorder/audiorecord.h"
 
 /* 
  * @file call.h 
@@ -208,6 +210,26 @@ class Call{
      */
     AudioCodecType getAudioCodec();
 
+    /**
+     * @return Return the file name for this call
+     */
+    std::string getFileName() {return _filename;}
+
+    /**
+     * A recorder for this call
+     */
+    AudioRecord recAudio;
+  
+    /**
+     * SetRecording
+     */
+    void setRecording();
+    
+    /**
+     * Return Recording state
+     */
+    bool isRecording(); 
+
   protected:
     /** Protect every attribute that can be changed by two threads */
     ost::Mutex _callMutex;
@@ -257,6 +279,7 @@ class Call{
 
 
   private:  
+  
     /** Unique ID of the call */
     CallID _id;
 
@@ -273,6 +296,8 @@ class Call{
     /** Number of the peer */
     std::string _peerNumber;
 
+    /** File name for his call : time YY-MM-DD */
+    std::string _filename;
 };
 
 #endif

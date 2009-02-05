@@ -501,10 +501,27 @@ IAXVoIPLink::refuse(const CallID& id)
     _mutexIAX.enterMutex();
     iax_reject(call->getSession(), (char*) reason.c_str());
     _mutexIAX.leaveMutex();
+
     removeCall(id);
 
     return true;
 }
+
+
+void 
+IAXVoIPLink::setRecording(const CallID& id)
+{
+  _debug("IAXVoIPLink::setRecording!");
+}
+
+bool 
+IAXVoIPLink::isRecording(const CallID& id)
+{
+  _debug("IAXVoIPLink::setRecording!");
+}
+
+
+
 
     bool
 IAXVoIPLink::carryingDTMFdigits(const CallID& id, char code)

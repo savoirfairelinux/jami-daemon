@@ -4,4 +4,4 @@ noinst_LTLIBRARIES = libaudiorecorder.la
 
 libaudiorecorder_la_SOURCES = \
 		audiorecord.cpp 
-
+		libsndfile.h

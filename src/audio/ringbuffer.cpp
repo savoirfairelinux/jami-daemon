@@ -82,7 +82,8 @@ RingBuffer::Put(void* buffer, int toCopy, unsigned short volume) {
       toCopy = (mBufferSize-4) - len;
 
    src = (samplePtr) buffer;
-
+   
+  
    copied = 0;
    pos = mEnd;
 

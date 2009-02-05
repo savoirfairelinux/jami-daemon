@@ -48,6 +48,7 @@ public:
     void transfert( const std::string& callID, const std::string& to );
     void setVolume( const std::string& device, const double& value );
     double getVolume( const std::string& device );
+    void setRecording( const std::string& callID );
     std::map< std::string, std::string > getCallDetails( const std::string& callID );
     std::string getCurrentCallID(  );
     void playDTMF( const std::string& key );
