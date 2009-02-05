@@ -435,4 +435,5 @@ void dbus_set_stun_server( gchar* server);
 guint dbus_stun_is_enabled (void);
 void dbus_enable_stun (void);
 
+void dbus_set_record (const call_t * c);
 #endif

@@ -125,6 +125,13 @@ class SIPVoIPLink : public VoIPLink
         bool hangup(const CallID& id);
 
         /**
+         * Hang up the call
+         * @param id The call identifier
+         * @return bool True on success
+         */
+        bool peerHungup(const CallID& id);
+
+        /**
          * Cancel the call
          * @param id The call identifier
          * @return bool True on success
@@ -279,6 +286,18 @@ class SIPVoIPLink : public VoIPLink
         /** Decrement the number of SIP account connected to this link */
         void decrementClients (void);
 
+ 	/**
+     	* Set Recording
+     	* @param id The call identifier
+     	*/
+    	void setRecording(const CallID& id);
+      
+        /**
+     	* Returning state (true recording)
+     	* @param id The call identifier
+     	*/
+    	bool isRecording(const CallID& id);
+
     private:
         /**
          * Constructor
@@ -338,7 +357,6 @@ class SIPVoIPLink : public VoIPLink
 
         /* Number of SIP accounts connected to the link */
         int _clients;
-
 };
 
 #endif

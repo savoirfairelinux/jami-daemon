@@ -115,6 +115,14 @@ CallManager::getVolume( const std::string& device )
     return 0;
 }
 
+void
+CallManager::setRecording(const std::string& callID)
+{ 
+  _debug("CallManager::setRecording received\n");
+    Manager::instance().setRecordingCall(callID);
+}
+
+
 std::map< std::string, std::string > 
 CallManager::getCallDetails( const std::string& callID UNUSED )
 {

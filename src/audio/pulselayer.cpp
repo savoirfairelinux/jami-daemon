@@ -89,6 +89,7 @@ PulseLayer::connectPulseAudioServer( void )
   //serverinfo();
   //muteAudioApps(99);
   _debug("Context creation done\n");
+
 }
 
 void PulseLayer::context_state_callback( pa_context* c, void* user_data )
@@ -202,6 +203,7 @@ PulseLayer::startStream (void)
   pa_threaded_mainloop_lock(m);
   pa_stream_cork( record->pulseStream(), NULL, NULL, NULL);
   pa_threaded_mainloop_unlock(m);
+
 }
 
   void 
@@ -251,7 +253,8 @@ PulseLayer::processData( void )
   }
 }
 
-void PulseLayer::writeToSpeaker( void )
+void
+PulseLayer::writeToSpeaker( void )
 {   
   /** Bytes available in the urgent ringbuffer ( reserved for DTMF ) */
   int urgentAvail; 

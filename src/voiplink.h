@@ -40,7 +40,6 @@ typedef std::map<CallID, Call*> CallMap;
  * @brief Listener and manager interface for each VoIP protocol
  */
 class VoIPLink {
-
     public:
         /**
          * Constructor
@@ -111,6 +110,13 @@ class VoIPLink {
          */
         virtual bool hangup(const CallID& id) = 0;
 
+         /**
+         * Peer Hung up a call
+         * @param id The call identifier
+         * @return bool True on success
+         */
+        virtual bool peerHungup(const CallID& id) = 0;
+
         /**
          * Cancel the call dialing
          * @param id The call identifier
@@ -154,6 +160,18 @@ class VoIPLink {
          * @return bool True on success
          */
         virtual bool carryingDTMFdigits(const CallID& id, char code) = 0;
+
+    	/**
+     	* Set Recording
+     	* @param id The call identifier
+     	*/
+    	virtual void setRecording(const CallID& id) = 0;
+
+        /**
+     	* Return recording state
+     	* @param id The call identifier
+     	*/
+    	virtual bool isRecording(const CallID& id) = 0;
 
         bool initDone (void) { return _initDone; }
         void initDone (bool state) { _initDone = state; }

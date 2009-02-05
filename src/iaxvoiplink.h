@@ -73,6 +73,11 @@ class IAXVoIPLink : public VoIPLink
     void terminate (void);
 
     /**
+     * Terminate on call
+     */
+    void terminateOneCall(const CallID& id);
+
+    /**
      * Send out registration
      * @return bool The new registration state (are we registered ?)
      */
@@ -110,6 +115,14 @@ class IAXVoIPLink : public VoIPLink
      *		  false otherwise
      */
     bool hangup(const CallID& id);
+
+    /**
+     * Peer Hungup a call 
+     * @param id The ID of the call
+     * @return bool true on success
+     *		  false otherwise
+     */
+    bool peerHungup(const CallID& id);
 
     /**
      * Cancel a call 
@@ -151,7 +164,19 @@ class IAXVoIPLink : public VoIPLink
      *		  false otherwise
      */
     bool refuse (const CallID& id);
-    
+   
+    /**
+     * Set Recording
+     * @param id The call identifier
+     */
+    void setRecording(const CallID& id);
+
+    /**
+     * Return recording state
+     * @param id The call identifier
+     */
+    bool isRecording(const CallID& id);
+ 
     /**
      * Send DTMF  
      * @param id The ID of the call
@@ -268,7 +293,9 @@ class IAXVoIPLink : public VoIPLink
 
     /** Sample rate converter object */
     SamplerateConverter* converter;
-
+    
+    /** number of sample */
+    int nbSample_;
 };
 
 #endif

@@ -29,6 +29,7 @@
 #include <math.h>
 #include <dlfcn.h>
 #include <iostream>
+#include <sstream>
 
 #include "../global.h"
 #include "../manager.h"
@@ -52,6 +53,7 @@ AudioRtp::~AudioRtp (void) {
 
 int 
 AudioRtp::createNewSession (SIPCall *ca) {
+   
     ost::MutexLock m(_threadMutex);
 
     // something should stop the thread before...
@@ -74,16 +76,19 @@ AudioRtp::createNewSession (SIPCall *ca) {
     _debugException("! ARTP Failure: when trying to start a thread");
     throw;
   }
+
   return 0;
 }
 
 
 void
 AudioRtp::closeRtpSession () {
+
   ost::MutexLock m(_threadMutex);
   // This will make RTP threads finish.
   _debug("Stopping AudioRTP\n");
   try {
+    
     delete _RTXThread; _RTXThread = 0;
   } catch(...) {
     _debugException("! ARTP Exception: when stopping audiortp\n");
@@ -92,6 +97,17 @@ AudioRtp::closeRtpSession () {
   AudioLayer* audiolayer = Manager::instance().getAudioDriver();
   audiolayer->stopStream();
 }
+
+
+void
+AudioRtp::setRecording() {
+  
+  _debug("AudioRtp::setRecording\n");
+  _RTXThread->_ca->setRecording();
+
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // AudioRtpRTX Class                                                          //
@@ -133,7 +149,7 @@ AudioRtpRTX::~AudioRtpRTX () {
   } else {
     delete _session;     _session = NULL;
   }
-
+ 
   delete [] micData;  micData = NULL;
   delete [] micDataConverted;  micDataConverted = NULL;
   delete [] micDataEncoded;  micDataEncoded = NULL;
@@ -177,7 +193,7 @@ AudioRtpRTX::initAudioRtpSession (void)
       return;
     }
 
-    // Initialization
+
     if (!_sym) {
       _sessionRecv->setSchedulingTimeout (10000);
       _sessionRecv->setExpireTimeout(1000000);
@@ -226,6 +242,8 @@ AudioRtpRTX::initAudioRtpSession (void)
 	}
       }
     }
+
+
   } catch(...) {
     _debugException("! ARTP Failure: initialisation failed");
     throw;
@@ -260,6 +278,10 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     //_debug("get data from mic\n");
     int nbSample = audiolayer->getMic( micData , bytesAvail ) / sizeof(SFLDataFormat);
     int nb_sample_up = nbSample;
+    
+    // Store the length of the mic buffer in samples for recording
+    _nSamplesMic = nbSample;
+
     int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
 
     //_debug("resample data = %i\n", nb_sample_up);
@@ -322,6 +344,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     }
 
     if (_audiocodec != NULL) {
+  
 
       int expandedSize = _audiocodec->codecDecode( spkrDataDecoded , spkrData , size );
       //buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
@@ -339,7 +362,10 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 #ifdef DATAFORMAT_IS_FLOAT
 #else
 #endif
-      
+    
+      // Stor the number of samples for recording
+      _nSamplesSpkr = nbSample;
+        
     //audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
     audiolayer->putMain (spkrDataConverted, nbSample * sizeof(SFLDataFormat));
       
@@ -419,10 +445,14 @@ AudioRtpRTX::run () {
       ////////////////////////////
       receiveSessionForSpkr(countTime);
       // Let's wait for the next transmit cycle
-      Thread::sleep(TimerPort::getTimer());
+
+      _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
+
+      Thread::sleep(TimerPort::getTimer()); 
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
     }
-    //_debug("stop stream for audiortp loop\n");
+
+    // _debug("stop stream for audiortp loop\n");
     audiolayer->stopStream();
     _debug("- ARTP Action: Stop\n");
   //} catch(std::exception &e) {
@@ -434,6 +464,7 @@ AudioRtpRTX::run () {
     //_debugException("* ARTP Action: Stop");
     //throw;
   //}
+    
 }
 
 

@@ -342,8 +342,23 @@ ManagerImpl::offHoldCall(const CallID& id)
 
   _debug("Setting OFFHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
 
+  bool rec = getAccountLink(accountid)->isRecording(id);
+  
+  /*
+  if(rec)
+    _debug("ManagerImpl::offHoldCall(): Record state is true \n");
+  else
+    _debug("ManagerImpl::offHoldCall(): Record state is false \n");
+  */
+
   bool returnValue = getAccountLink(accountid)->offhold(id);
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "UNHOLD");
+
+  if (_dbus){ 
+    if (rec)
+      _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
+    else 
+      _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
+  }
   switchCall(id);
 
   return returnValue;
@@ -653,7 +668,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
         switchCall("");
     }
 
-    returnValue = getAccountLink(accountid)->hangup(id);
+    returnValue = getAccountLink(accountid)->peerHungup(id);
 
     removeWaitingCall(id);
     removeCallAccount(id);
@@ -1435,6 +1450,25 @@ ManagerImpl::setVolumeControls( void )
   ( getConfigInt( PREFERENCES , CONFIG_VOLUME ) == DISPLAY_VOLUME_CONTROLS )? setConfig(PREFERENCES , CONFIG_VOLUME , NO_STR ) : setConfig( PREFERENCES , CONFIG_VOLUME , YES_STR );
 }
 
+void
+ManagerImpl::setRecordingCall(const CallID& id)
+{
+  _debug("ManagerImpl::setRecording()! \n");
+  AccountID accountid = getAccountFromCall( id );
+
+  // printf("ManagerImpl::CallID: %s", id);
+  getAccountLink(accountid)->setRecording(id);
+}
+
+bool
+ManagerImpl::isRecording(const CallID& id)
+{
+  _debug("ManagerImpl::isRecording()! \n");
+  AccountID accountid = getAccountFromCall( id );
+
+  return getAccountLink(accountid)->isRecording(id);
+}
+
 void 
 ManagerImpl::startHidden( void )
 {
@@ -1956,32 +1990,6 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
     setConfig(accountID, HOSTNAME, (*details.find(HOSTNAME)).second);
     setConfig(accountID, CONFIG_ACCOUNT_MAILBOX,(*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
   
-    // SIP SPECIFIC
-    /*
-    if (accountType == "SIP") {
-    
-        link =  Manager::instance().getAccountLink( accountID );
-        
-        if( link==0 )
-        {
-            _debug("Can not retrieve SIP link...\n");
-            return;
-        }
-    
-        setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
-        setConfig(accountID, SIP_USE_STUN, (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
-
-        if((*details.find(SIP_USE_STUN)).second == "TRUE")
-        {
-           link->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
-        }
-        else
-        {
-            link->setStunServer("");
-        }
-        restartPJSIP();
-    }*/
-
     saveConfig();
   
     acc = getAccount(accountID);
@@ -1995,8 +2003,6 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 
     // Update account details to the client side
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-
-    //delete link; link=0;
 
 }
 

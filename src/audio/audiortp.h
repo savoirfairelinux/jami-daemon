@@ -29,6 +29,7 @@
 #include <cc++/numbers.h>
 
 #include "../global.h"
+// #include "plug-in/audiorecorder/audiorecord.h"
 #include "../samplerateconverter.h"
 
 #define UP_SAMPLING 0
@@ -38,6 +39,7 @@
  * @file audiortp.h
  * @brief Manage the real-time data transport in a SIP call
  */
+
 
 class SIPCall;
 
@@ -51,7 +53,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
      * @param sipcall The pointer on the SIP call
      * @param sym     Tells whether or not the voip links are symmetric
      */
-    AudioRtpRTX (SIPCall* sipcall, bool sym);
+  AudioRtpRTX (SIPCall* sipcall, bool sym);
 
     /**
      * Destructor
@@ -64,6 +66,14 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** Thread associated method */    
     virtual void run ();
 
+    /**
+     * Audio recording object
+     */
+    AudioRecord recAudio;
+
+    /** A SIP call */
+    SIPCall* _ca;    
+
   private:
 
     // copy constructor
@@ -71,9 +81,6 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
   
     // assignment operator
     AudioRtpRTX& operator=(const AudioRtpRTX& rh);
-
-    /** A SIP call */
-    SIPCall* _ca;
 
     /** RTP session to send data */
     ost::RTPSession *_sessionSend;
@@ -105,12 +112,24 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** Variables to process audio stream: sample rate for playing sound (typically 44100HZ) */
     int _layerSampleRate;  
 
-    /** Sample rate of the codec we use to encode and decode (most of time 8000HZ) */
+    /** Sample rate of te codec we use to encode and decode (most of time 8000HZ) */
     int _codecSampleRate; 
 
     /** Length of the sound frame we capture in ms(typically 20ms) */
     int _layerFrameSize; 
 
+    /** Speaker buffer length in samples once the data are resampled
+     *  (used for mixing and recording)
+     */
+    int _nSamplesSpkr; 
+
+    /** Mic buffer length in samples once the data are resampled
+     *  (used for mixing and recording)
+     */
+    int _nSamplesMic;
+    
+  
+    
     /**
      * Init the RTP session. Create either symmetric or double sessions to manage data transport
      * Set the payloads according to the manager preferences
@@ -146,7 +165,12 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     int reSampleData(int sampleRate_codec, int nbSamples, int status);
     
     /** The audio codec used during the session */
-    AudioCodec* _audiocodec;	
+    AudioCodec* _audiocodec;
+   
+    /**
+     * Audio recording object
+     */
+    // AudioRecord recAudio;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -174,6 +198,12 @@ class AudioRtp {
      * Close a RTP session and kills the remaining threads
      */
     void closeRtpSession( void );
+
+    /**
+     * Start recording
+     */
+    void setRecording ();
+    
 
   private:
     // copy constructor

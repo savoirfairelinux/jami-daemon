@@ -223,6 +223,7 @@ SIPVoIPLink::terminateSIPCall()
         call = dynamic_cast<SIPCall*>(iter->second);
         if (call) {
             // terminate the sip call
+      	    _debug("SIPVoIPLink::terminateSIPCall()::the call is deleted, should close recording file \n");
             delete call; call = 0;
         }
         iter++;
@@ -235,9 +236,7 @@ SIPVoIPLink::terminateOneCall(const CallID& id)
 {
     _debug("SIPVoIPLink::terminateOneCall(): function called \n");
   
-    SIPCall *call;
-    
-    call = getSIPCall(id);
+    SIPCall *call = getSIPCall(id);
     if (call) {
     // terminate the sip call
         _debug("SIPVoIPLink::terminateOneCall()::the call is deleted, should close recording file \n");
@@ -501,7 +500,45 @@ SIPVoIPLink::hangup(const CallID& id)
         return false;
 
     call->getInvSession()->mod_data[getModId()] = NULL;
+    
 
+    // Release RTP thread
+    if (Manager::instance().isCurrentCall(id)) {
+        _debug("* SIP Info: Stopping AudioRTP for hangup\n");
+        _audiortp->closeRtpSession();
+    }
+ 
+    terminateOneCall(id);
+    removeCall(id);
+
+    return true;
+}
+
+bool
+SIPVoIPLink::peerHungup(const CallID& id)
+{
+    pj_status_t status;
+    pjsip_tx_data *tdata = NULL;
+    SIPCall* call;
+
+    call = getSIPCall(id);
+
+    if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
+
+    // User hangup current call. Notify peer
+    status = pjsip_inv_end_session(call->getInvSession(), 404, NULL, &tdata);
+    if(status != PJ_SUCCESS)
+        return false;
+
+    if(tdata == NULL)
+        return true;
+
+    status = pjsip_inv_send_msg(call->getInvSession(), tdata);
+    if(status != PJ_SUCCESS)
+        return false;
+
+    call->getInvSession()->mod_data[getModId()] = NULL;
+    
     // Release RTP thread
     if (Manager::instance().isCurrentCall(id)) {
         _debug("* SIP Info: Stopping AudioRTP for hangup\n");
@@ -643,6 +680,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 
 
     call = getSIPCall(id);
+    call->stopRecording();
     account_id = Manager::instance().getAccountFromCall(id);
     account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(account_id));
 
@@ -737,6 +775,24 @@ SIPVoIPLink::refuse (const CallID& id)
 
     terminateOneCall(id);
     return true;
+}
+
+void 
+SIPVoIPLink::setRecording(const CallID& id)
+{
+  SIPCall* call = getSIPCall(id);
+  
+  call->setRecording();
+
+  // _audiortp->setRecording();
+}
+
+bool
+SIPVoIPLink::isRecording(const CallID& id)
+{
+  SIPCall* call = getSIPCall(id);
+  
+  return call->isRecording();
 }
 
     bool 
@@ -950,6 +1006,8 @@ SIPVoIPLink::SIPCallServerFailure(SIPCall *call)
 void
 SIPVoIPLink::SIPCallClosed(SIPCall *call) 
 {
+
+    _debug("SIPVoIPLink::SIPCallClosed():: function called when peer hangup");
     // it was without did before
     //SIPCall* call = findSIPCallWithCid(event->cid);
     if (!call) { return; }
@@ -984,9 +1042,10 @@ SIPVoIPLink::SIPCallReleased(SIPCall *call)
     removeCall(id);
 }
 
-    void
-        SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
-        {
+
+void
+SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
+{
             //SIPCall* call = dynamic_cast<SIPCall *>(theCall);//findSIPCallWithCid(event->cid);
             if (!call) {
                 _debug("! SIP Failure: unknown call\n");
