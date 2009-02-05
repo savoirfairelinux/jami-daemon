@@ -527,6 +527,7 @@ ManagerImpl::playDtmf(char code, bool isTalking)
         // Put buffer to urgentRingBuffer 
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
+        audiolayer->startStream();
         audiolayer->putUrgent (buf, size * sizeof(SFLDataFormat));
     }
     ret = true;
@@ -651,6 +652,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
     _debug("ManagerImpl::peerHungupCall():this function is called when peer hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
+    bool returnValue;
 
     accountid = getAccountFromCall( id );
     if (accountid == AccountNULL) {
@@ -665,6 +667,8 @@ ManagerImpl::peerHungupCall(const CallID& id)
         stopTone(true);
         switchCall("");
     }
+
+    returnValue = getAccountLink(accountid)->peerHungup(id);
 
     removeWaitingCall(id);
     removeCallAccount(id);
@@ -1426,8 +1430,13 @@ int ManagerImpl::isStunEnabled (void)
 
 void ManagerImpl::enableStun (void)
 {
-  ( getConfigInt( SIGNALISATION , STUN_ENABLE ) == STUN_ENABLED )? setConfig(SIGNALISATION , STUN_ENABLE , NO_STR ) : setConfig( SIGNALISATION , STUN_ENABLE , YES_STR );
+    /* Update the config */
+    ( getConfigInt( SIGNALISATION , STUN_ENABLE ) == STUN_ENABLED )? setConfig(SIGNALISATION , STUN_ENABLE , NO_STR ) : setConfig( SIGNALISATION , STUN_ENABLE , YES_STR );
+
+    /* Restart PJSIP */
+    this->restartPJSIP (); 
 }
+
 
     int
 ManagerImpl::getVolumeControls( void )
@@ -1982,6 +1991,7 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
     setConfig(accountID, CONFIG_ACCOUNT_MAILBOX,(*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
   
     // SIP SPECIFIC
+    /*
     if (accountType == "SIP") {
     
         link =  Manager::instance().getAccountLink( accountID );
@@ -2003,8 +2013,8 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
         {
             link->setStunServer("");
         }
-        //restartPjsip();
-    }
+        restartPJSIP();
+    }*/
 
     saveConfig();
   
@@ -2269,6 +2279,30 @@ AccountMap ManagerImpl::getSipAccountMap( void )
     return sipaccounts;
 }
 
+void ManagerImpl::restartPJSIP (void)
+{
+    //SIPVoIPLink *siplink;
+
+    //unloadAccountMap ();
+
+    /* First unregister all SIP accounts */
+    //this->unregisterCurSIPAccounts();
+    /* Terminate and initialize the PJSIP library */
+    //siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
+    //if (siplink) 
+    //{
+      //  siplink->terminate ();
+       // _debug ("*************************************************Terminate done\n");
+        //siplink = SIPVoIPLink::instance("");
+        //siplink->init ();
+    //}
+    //_debug("***************************************************Init Done\n");
+    //loadAccountMap();
+    //initRegisterAccounts ();
+    /* Then register all enabled SIP accounts */
+    //this->registerCurSIPAccounts(siplink);
+}
+
 VoIPLink* ManagerImpl::getAccountLink(const AccountID& accountID)
 {
   Account* acc = getAccount(accountID);
@@ -2277,6 +2311,23 @@ VoIPLink* ManagerImpl::getAccountLink(const AccountID& accountID)
   }
   return 0;
 }
+
+VoIPLink* ManagerImpl::getSIPAccountLink()
+{
+    /* We are looking for the first SIP account we met because all the SIP accounts have the same voiplink */
+    Account *account;
+    AccountMap::iterator iter;
+    for(iter = _accountMap.begin(); iter != _accountMap.end(); ++iter) {
+        account = iter->second;
+        if( account->getType() == "sip" ){
+            return account->getVoIPLink();
+        }
+    }
+    return NULL;
+}
+
+
+
 
 pjsip_regc 
 *getSipRegcFromID(const AccountID& id UNUSED)
@@ -2290,32 +2341,35 @@ pjsip_regc
 
 void ManagerImpl::unregisterCurSIPAccounts()
 {
-  AccountMap::iterator iter = _accountMap.begin();
-  while( iter != _accountMap.end() ) {
-    if ( iter->second) {
-        std::string p =  Manager::instance().getConfigString( iter->first , CONFIG_ACCOUNT_TYPE );
-      if ( iter->second->isEnabled() && p == "SIP") {
-	// NOW
-	iter->second->unregisterVoIPLink();
-      }
-    }
+    Account *current;
+
+    AccountMap::iterator iter = _accountMap.begin();
+    while( iter != _accountMap.end() ) {
+        current = iter->second;
+        if (current) {
+            if ( current->isEnabled() && current->getType() == "sip") {
+	            current->unregisterVoIPLink();
+            }
+        }
     iter++;
-  }
+    }
 }
 
-void ManagerImpl::registerCurSIPAccounts()
+void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
 {
-  AccountMap::iterator iter = _accountMap.begin();
-  while( iter != _accountMap.end() ) {
-    if ( iter->second) {
-        std::string p =  Manager::instance().getConfigString( iter->first , CONFIG_ACCOUNT_TYPE );
-      if ( iter->second->isEnabled() && p == "SIP") {
-	// NOW
-	iter->second->registerVoIPLink();
-      }
-    }
+    Account *current;
+  
+    AccountMap::iterator iter = _accountMap.begin();
+    while( iter != _accountMap.end() ) {
+        current = iter->second;
+        if (current) {
+            if ( current->isEnabled() && current->getType() == "sip") {
+                //current->setVoIPLink(link);
+	            current->registerVoIPLink();
+            }
+        }
     iter++;
-  }    
+    }    
 }
 
 #ifdef TEST

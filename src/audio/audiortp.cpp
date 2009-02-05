@@ -86,7 +86,7 @@ AudioRtp::closeRtpSession () {
 
   ost::MutexLock m(_threadMutex);
   // This will make RTP threads finish.
-  // _debug("Stopping AudioRTP\n");
+  _debug("Stopping AudioRTP\n");
   try {
     
     delete _RTXThread; _RTXThread = 0;
@@ -94,8 +94,8 @@ AudioRtp::closeRtpSession () {
     _debugException("! ARTP Exception: when stopping audiortp\n");
     throw;
   }
-  //AudioLayer* audiolayer = Manager::instance().getAudioDriver();
-  //audiolayer->stopStream();
+  AudioLayer* audiolayer = Manager::instance().getAudioDriver();
+  audiolayer->stopStream();
 }
 
 
@@ -142,7 +142,6 @@ AudioRtpRTX::~AudioRtpRTX () {
     _debugException("! ARTP: Thread destructor didn't terminate correctly");
     throw;
   }
-  _debug("AudioRtpRTX::~AudioRtpRTX() :: terminate audiortprtx ended...\n");
   _ca = 0;
   if (!_sym) {
     delete _sessionRecv; _sessionRecv = NULL;
@@ -259,7 +258,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
   //   2. convert it to int16 - good sample, good rate
   //   3. encode it
   //   4. send it
-  try {
+  //try {
 
     timestamp += time->getSecond();
     if (_ca==0) { _debug(" !ARTP: No call associated (mic)\n"); return; } // no call, so we do nothing
@@ -302,10 +301,10 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     } else {
       _session->putData(timestamp, micDataEncoded, compSize);
     }
-  } catch(...) {
+  /*} catch(...) {
     _debugException("! ARTP: sending failed");
     throw;
-  }
+  }*/
 }
 
   void
@@ -314,7 +313,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 
 
   if (_ca == 0) { return; }
-  try {
+  //try {
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     if (!audiolayer) { return; }
 
@@ -384,11 +383,10 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       countTime += time->getSecond();
     }
     delete adu; adu = NULL;
-  } catch(...) {
-    _debugException("! ARTP: receiving failed");
-    throw;
-  }
-
+  //} catch(...) {
+    //_debugException("! ARTP: receiving failed");
+    //throw;
+  //}
 
 }
 
@@ -415,7 +413,7 @@ AudioRtpRTX::run () {
   initBuffers();
   int step; 
 
-  try {
+  //try {
     // Init the session
     initAudioRtpSession();
     step = (int) (_layerFrameSize * _codecSampleRate / 1000);
@@ -456,18 +454,16 @@ AudioRtpRTX::run () {
 
     // _debug("stop stream for audiortp loop\n");
     audiolayer->stopStream();
-  } catch(std::exception &e) {
-    _start.post();
-    _debug("! ARTP: Stop %s\n", e.what());
-    
- 
-    throw;
-  } catch(...) {
-    _start.post();
-    _debugException("* ARTP Action: Stop");
-
-    throw;
-  }
+    _debug("- ARTP Action: Stop\n");
+  //} catch(std::exception &e) {
+    //_start.post();
+    //_debug("! ARTP: Stop %s\n", e.what());
+    //throw;
+  //} catch(...) {
+    //_start.post();
+    //_debugException("* ARTP Action: Stop");
+    //throw;
+  //}
 }
 
 

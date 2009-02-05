@@ -804,11 +804,11 @@ class ManagerImpl {
      * @param void
      * @return void
      */
-    void restartPjsip();
+    void restartPJSIP( );
 
     void unregisterCurSIPAccounts();
     
-    void registerCurSIPAccounts();
+    void registerCurSIPAccounts(VoIPLink *link);
     
     /**
      * Returns a map with only the existing SIP accounts
@@ -1035,6 +1035,8 @@ public:
      * @return VoIPLink*   The voip link from the account pointer or 0
      */
     VoIPLink* getAccountLink(const AccountID& accountID);
+
+    VoIPLink* getSIPAccountLink (void);
 
     AccountID getAccountIdFromNameAndServer(const std::string& userName, const std::string& server);
 

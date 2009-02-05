@@ -15,7 +15,6 @@ OBJECT_FILES= \
 	../src/sflphoned-sipaccount.o \
 	../src/sflphoned-iaxaccount.o \
 	../src/sflphoned-eventthread.o \
-	../src/sflphoned-useragent.o \
 	../src/plug-in/pluginmanager.o \
 	../src/plug-in/audiorecorder/audiorecord.o \
 	../src/sflphoned-samplerateconverter.o
@@ -48,7 +47,6 @@ configurationTester_LDADD = \
 		@DBUSCPP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 	
 pluginmanagerTester_LDADD = \
@@ -63,7 +61,6 @@ pluginmanagerTester_LDADD = \
 		@DBUSCPP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 	
 audiorecorderTester_LDADD = \
@@ -78,6 +75,5 @@ audiorecorderTester_LDADD = \
 		@DBUSCPP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
-		-luuid \
 		$(OBJECT_FILES)
 							

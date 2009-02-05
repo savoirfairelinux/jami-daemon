@@ -43,12 +43,10 @@ void AudioRecorderTest::testRecordData(){
   for (SFLDataFormat i = -32768; i < 32767; i++ ){
     buf[0] = i;
     buf[1] = i;
-    recAudio.recData(buf,2);
+    _ar->recData(buf,2);
   }
 
-  recAudio.closeFile();
-
-
+  _ar->closeFile();
 }
 
 void AudioRecorderTest::tearDown(){

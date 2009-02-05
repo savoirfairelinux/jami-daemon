@@ -2,16 +2,6 @@ include ../globals.mak
 
 bin_PROGRAMS = sflphoned
 
-if USE_ZEROCONF
-ZEROCONFDIR = zeroconf
-ZEROCONFLIB = zeroconf/libzeroconf.la
-ZEROCONFFLAGS = -DUSE_ZEROCONF
-else
-ZEROCONFDIR =
-ZEROCONFLIB =
-ZEROCONFFLAGS =  
-endif
-
 if USE_IAX
 # Use the global instead of locally built
 IAX_FLAGS = -DUSE_IAX
@@ -23,7 +13,7 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
-SUBDIRS = audio config dbus $(ZEROCONFDIR) plug-in
+SUBDIRS = audio config dbus plug-in
 
 # Add here the cpp files to be build with sflphone
 sflphoned_SOURCES = \
@@ -43,7 +33,6 @@ sflphoned_SOURCES = \
 
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" \
-		$(ZEROCONFFLAGS) \
 		$(IAX_FLAGS)
 
 
@@ -52,14 +41,12 @@ sflphoned_LDADD = \
 		./libsflphone.la \
 		@CCGNU2_LIBS@ \
 		@CCEXT2_LIBS@ \
-		$(ZEROCONFLIB) \
 		$(IAX_LIBS) \
 		$(PJSIP_LIBS) \
 		@DBUSCPP_LIBS@ \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
-		-luuid \
 		@SAMPLERATE_LIBS@ 
 
 #sflphoned_LDFLAGS=-pg

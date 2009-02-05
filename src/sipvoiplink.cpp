@@ -154,9 +154,6 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
     // to get random number for RANDOM_PORT
     srand (time(NULL));
 
-    /* Instanciate the C++ thread */
-    _evThread = new EventThread(this);
-
     /* Start pjsip initialization step */
     init();
 }
@@ -190,6 +187,10 @@ bool SIPVoIPLink::init()
 {
     if(initDone())
         return false;
+    
+    /* Instanciate the C++ thread */
+    _evThread = new EventThread(this);
+
     /* Initialize the pjsip library */
     pjsip_init();
     initDone(true);
@@ -200,7 +201,9 @@ bool SIPVoIPLink::init()
     void 
 SIPVoIPLink::terminate()
 {
-    delete _evThread; _evThread = NULL;
+    if (_evThread){
+        delete _evThread; _evThread = NULL;
+    }
 
     /* Clean shutdown of pjsip library */
     if( initDone() )
@@ -213,7 +216,6 @@ SIPVoIPLink::terminate()
     void
 SIPVoIPLink::terminateSIPCall()
 {
-    _debug("SIPVoIPLink::terminateSIPCall(): function called \n");
     ost::MutexLock m(_callMapMutex);
     CallMap::iterator iter = _callMap.begin();
     SIPCall *call;
@@ -234,9 +236,7 @@ SIPVoIPLink::terminateOneCall(const CallID& id)
 {
     _debug("SIPVoIPLink::terminateOneCall(): function called \n");
   
-    SIPCall *call;
-    
-    call = getSIPCall(id);
+    SIPCall *call = getSIPCall(id);
     if (call) {
     // terminate the sip call
         _debug("SIPVoIPLink::terminateOneCall()::the call is deleted, should close recording file \n");
@@ -256,6 +256,7 @@ SIPVoIPLink::getEvent()
     // PJSIP polling
     pj_time_val timeout = {0, 10};
     pjsip_endpt_handle_events( _endpt, &timeout);
+    
 }
 
 int SIPVoIPLink::sendRegister( AccountID id )
@@ -513,6 +514,44 @@ SIPVoIPLink::hangup(const CallID& id)
     return true;
 }
 
+bool
+SIPVoIPLink::peerHungup(const CallID& id)
+{
+    pj_status_t status;
+    pjsip_tx_data *tdata = NULL;
+    SIPCall* call;
+
+    call = getSIPCall(id);
+
+    if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
+
+    // User hangup current call. Notify peer
+    status = pjsip_inv_end_session(call->getInvSession(), 404, NULL, &tdata);
+    if(status != PJ_SUCCESS)
+        return false;
+
+    if(tdata == NULL)
+        return true;
+
+    status = pjsip_inv_send_msg(call->getInvSession(), tdata);
+    if(status != PJ_SUCCESS)
+        return false;
+
+    call->getInvSession()->mod_data[getModId()] = NULL;
+    
+
+    // Release RTP thread
+    if (Manager::instance().isCurrentCall(id)) {
+        _debug("* SIP Info: Stopping AudioRTP for hangup\n");
+        _audiortp->closeRtpSession();
+    }
+ 
+    terminateOneCall(id);
+    removeCall(id);
+
+    return true;
+}
+
     bool
 SIPVoIPLink::cancel(const CallID& id)
 {
@@ -547,7 +586,7 @@ SIPVoIPLink::onhold(const CallID& id)
     call->setState(Call::Hold);
     _debug("* SIP Info: Stopping AudioRTP for onhold action\n");
     //_mutexSIP.enterMutex();
-        _audiortp->closeRtpSession();
+    _audiortp->closeRtpSession();
     //_mutexSIP.leaveMutex();
     
     local_sdp = call->getLocalSDPSession();
@@ -742,19 +781,17 @@ SIPVoIPLink::refuse (const CallID& id)
 void 
 SIPVoIPLink::setRecording(const CallID& id)
 {
-  //SIPCall *call;
-  //call = getSIPCall(id);
+  SIPCall* call = getSIPCall(id);
   
-  //call->setRecording();
+  call->setRecording();
 
-  _audiortp->setRecording();
+  // _audiortp->setRecording();
 }
 
 bool
 SIPVoIPLink::isRecording(const CallID& id)
 {
-  SIPCall *call;
-  call = getSIPCall(id);
+  SIPCall* call = getSIPCall(id);
   
   return call->isRecording();
 }
@@ -1005,6 +1042,7 @@ SIPVoIPLink::SIPCallReleased(SIPCall *call)
     terminateOneCall(id);
     removeCall(id);
 }
+
 
 void
 SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
@@ -1340,8 +1378,42 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
         return returnValue;
     }
 
+    void SIPVoIPLink::busy_sleep(unsigned msec)
+    {
+#if defined(PJ_SYMBIAN) && PJ_SYMBIAN != 0
+    /* Ideally we shouldn't call pj_thread_sleep() and rather
+     * CActiveScheduler::WaitForAnyRequest() here, but that will
+     * drag in Symbian header and it doesn't look pretty.
+     */
+        pj_thread_sleep(msec);
+#else
+        pj_time_val timeout, now, tv;
+
+        pj_gettimeofday(&timeout);
+        timeout.msec += msec;
+        pj_time_val_normalize(&timeout);
+
+        tv.sec = 0;
+        tv.msec = 10;
+        pj_time_val_normalize(&tv);
+    
+        do {
+            pjsip_endpt_handle_events(_endpt, &tv);
+            pj_gettimeofday(&now);
+        } while (PJ_TIME_VAL_LT(now, timeout));
+#endif
+}    
+
     bool SIPVoIPLink::pjsip_shutdown( void )
     {
+        if (_endpt) {
+            _debug("UserAgent: Shutting down...\n");
+            busy_sleep(1000);
+        }
+
+        pj_thread_destroy( thread );
+        thread = NULL;
+
         /* Destroy endpoint. */
         if (_endpt) {
             pjsip_endpt_destroy(_endpt);

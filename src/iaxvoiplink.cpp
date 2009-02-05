@@ -163,6 +163,17 @@ IAXVoIPLink::terminateIAXCall()
     _callMap.clear();
 }
 
+void IAXVoIPLink::terminateOneCall(const CallID& id)
+{
+    IAXCall* call = getIAXCall(id);
+    if(call){
+        _debug("IAXVoIPLink::terminateOneCall()::the call is deleted, should close recording file \n");
+        delete call; call = 0;
+    }
+}
+
+
+
     void
 IAXVoIPLink::getEvent() 
 {
@@ -207,6 +218,8 @@ IAXVoIPLink::getEvent()
     if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
         sendRegister("");
     }
+    if(call)
+      call->recAudio.recData(spkrDataConverted,micData,nbSample_,nbSample_);
 
     // thread wait 3 millisecond
     _evThread->sleep(3);
@@ -216,7 +229,7 @@ IAXVoIPLink::getEvent()
     void
 IAXVoIPLink::sendAudioFromMic(void)
 {
-    int maxBytesToGet, availBytesFromMic, bytesAvail, nbSample, compSize;
+    int maxBytesToGet, availBytesFromMic, bytesAvail, compSize;
     AudioCodec *ac;
 
     // We have to update the audio layer type in case we switched
@@ -248,7 +261,7 @@ IAXVoIPLink::sendAudioFromMic(void)
         // Audio codec still not determined.
         if (audiolayer) {
             // To keep latency low..
-            //audiolayer->flushMic();
+            audiolayer->flushMic();
         }
         return;
     }
@@ -273,19 +286,19 @@ IAXVoIPLink::sendAudioFromMic(void)
         //_debug("available = %d, maxBytesToGet = %d\n", availBytesFromMic, maxBytesToGet);
 
         // Get bytes from micRingBuffer to data_from_mic
-        nbSample = audiolayer->getMic( micData, bytesAvail ) / sizeof(SFLDataFormat);
+        nbSample_ = audiolayer->getMic( micData, bytesAvail ) / sizeof(SFLDataFormat);
 
         // resample
-        nbSample = converter->downsampleData( micData , micDataConverted , (int)ac ->getClockRate() ,  (int)audiolayer->getSampleRate() , nbSample );
+        nbSample_ = converter->downsampleData( micData , micDataConverted , (int)ac ->getClockRate() ,  (int)audiolayer->getSampleRate() , nbSample_ );
 
         // for the mono: range = 0 to IAX_FRAME2SEND * sizeof(int16)
-        compSize = ac->codecEncode( micDataEncoded, micDataConverted , nbSample*sizeof(int16));
+        compSize = ac->codecEncode( micDataEncoded, micDataConverted , nbSample_*sizeof(int16));
 
         // Send it out!
         _mutexIAX.enterMutex();
         // Make sure the session and the call still exists.
         if (currentCall->getSession()) {
-            if (iax_send_voice(currentCall->getSession(), currentCall->getFormat(), micDataEncoded, compSize, nbSample) == -1) {
+            if (iax_send_voice(currentCall->getSession(), currentCall->getFormat(), micDataEncoded, compSize, nbSample_) == -1) {
                 _debug("IAX: Error sending voice data.\n");
             }
         }
@@ -412,8 +425,8 @@ IAXVoIPLink::answer(const CallID& id)
     call->setState(Call::Active);
     call->setConnectionState(Call::Connected);
     // Start audio
+    audiolayer->flushMic();
     audiolayer->startStream();
-    //audiolayer->flushMic();
 
     return true;
 }
@@ -421,11 +434,12 @@ IAXVoIPLink::answer(const CallID& id)
     bool 
 IAXVoIPLink::hangup(const CallID& id)
 {
+    _debug("IAXVoIPLink::hangup() : function called once hangup \n");
     IAXCall* call = getIAXCall(id);
     std::string reason = "Dumped Call";
     CHK_VALID_CALL;
-
     _mutexIAX.enterMutex();
+    
     iax_hangup(call->getSession(), (char*) reason.c_str());
     _mutexIAX.leaveMutex();
     call->setSession(NULL);
@@ -433,9 +447,33 @@ IAXVoIPLink::hangup(const CallID& id)
         // stop audio
         audiolayer->stopStream();
     }
+    terminateOneCall(id);
     removeCall(id);
     return true;	
 }
+
+
+bool 
+IAXVoIPLink::peerHungup(const CallID& id)
+{
+    _debug("IAXVoIPLink::peerHangup() : function called once hangup \n");
+    IAXCall* call = getIAXCall(id);
+    std::string reason = "Dumped Call";
+    CHK_VALID_CALL;
+    _mutexIAX.enterMutex();
+    
+    _mutexIAX.leaveMutex();
+    call->setSession(NULL);
+    if (Manager::instance().isCurrentCall(id)) {
+        // stop audio
+        audiolayer->stopStream();
+    }
+    terminateOneCall(id);
+    removeCall(id);
+    return true;	
+}
+
+
 
     bool 
 IAXVoIPLink::onhold(const CallID& id) 
@@ -502,6 +540,8 @@ IAXVoIPLink::refuse(const CallID& id)
     iax_reject(call->getSession(), (char*) reason.c_str());
     _mutexIAX.leaveMutex();
 
+
+    // terminateOneCall(id);
     removeCall(id);
 
     return true;
@@ -511,13 +551,21 @@ IAXVoIPLink::refuse(const CallID& id)
 void 
 IAXVoIPLink::setRecording(const CallID& id)
 {
-  _debug("IAXVoIPLink::setRecording!");
+  _debug("IAXVoIPLink::setRecording()!");
+
+  IAXCall* call = getIAXCall(id);
+
+  call->setRecording();
 }
 
 bool 
 IAXVoIPLink::isRecording(const CallID& id)
 {
-  _debug("IAXVoIPLink::setRecording!");
+  _debug("IAXVoIPLink::setRecording()!");
+
+  IAXCall* call = getIAXCall(id);
+
+  return call->isRecording();
 }
 
 
@@ -604,7 +652,17 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
                 // stop audio
                 audiolayer->stopStream();
             }
-            Manager::instance().peerHungupCall(id); 
+            Manager::instance().peerHungupCall(id);
+            /*
+            _debug("IAXVoIPLink::iaxHandleCallEvent, peer hangup have been called");        
+            std::string reason = "Dumped Call";
+            _mutexIAX.enterMutex();
+            iax_hangup(call->getSession(), (char*)reason.c_str());
+            _mutexIAX.leaveMutex();
+            call->setSession(NULL);
+            audiolayer->stopStream();
+            terminateOneCall(id);
+            */ 
             removeCall(id);
             break;
 
@@ -617,6 +675,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             call->setConnectionState(Call::Connected);
             call->setState(Call::Error);
             Manager::instance().callFailure(id);
+            // terminateOneCall(id);
             removeCall(id);
             break;
 
@@ -638,7 +697,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
                 }
 
                 Manager::instance().peerAnsweredCall(id);
-                //audiolayer->flushMic();
+                audiolayer->flushMic();
                 audiolayer->startStream();
                 // start audio here?
             } else {
@@ -650,12 +709,13 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             call->setConnectionState(Call::Connected);
             call->setState(Call::Busy);
             Manager::instance().callBusy(id);
+            // terminateOneCall(id);
             removeCall(id);
             break;
 
         case IAX_EVENT_VOICE:
-            if (!audiolayer->isCaptureActive ())
-                audiolayer->startStream ();
+            //if (!audiolayer->isCaptureActive ())
+              //  audiolayer->startStream ();
             iaxHandleVoiceEvent(event, call);
             break;
 
@@ -698,7 +758,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
 
     unsigned char *data;
     unsigned int size, max, nbInt16;
-    int expandedSize, nbSample;    
+    int expandedSize, nbSample_;    
     AudioCodec *ac;
 
     // If we receive datalen == 0, some things of the jitter buffer in libiax2/iax.c
@@ -738,9 +798,9 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
             nbInt16 = max;
         }
 
-        nbSample = nbInt16;
+        nbSample_ = nbInt16;
         // resample
-        nbInt16 = converter->upsampleData( spkrDataDecoded , spkrDataConverted , ac->getClockRate() , audiolayer->getSampleRate() , nbSample);
+        nbInt16 = converter->upsampleData( spkrDataDecoded , spkrDataConverted , ac->getClockRate() , audiolayer->getSampleRate() , nbSample_);
 
         //audiolayer->playSamples( spkrDataConverted , nbInt16 * sizeof(SFLDataFormat), true);
         audiolayer->putMain (spkrDataConverted , nbInt16 * sizeof(SFLDataFormat));
@@ -897,8 +957,9 @@ IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
             // Remote peer hung up
             call = iaxFindCallBySession(event->session);
             id = call->getCallId();
-
+            _debug("IAXVoIPLink::hungup::iaxHandlePrecallEvent");
             Manager::instance().peerHungupCall(id);
+            // terminateOneCall(id);
             removeCall(id);
             break;
 
