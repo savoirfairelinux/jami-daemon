@@ -110,6 +110,13 @@ class VoIPLink {
          */
         virtual bool hangup(const CallID& id) = 0;
 
+         /**
+         * Peer Hung up a call
+         * @param id The call identifier
+         * @return bool True on success
+         */
+        virtual bool peerHungup(const CallID& id) = 0;
+
         /**
          * Cancel the call dialing
          * @param id The call identifier

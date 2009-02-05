@@ -125,6 +125,13 @@ class SIPVoIPLink : public VoIPLink
         bool hangup(const CallID& id);
 
         /**
+         * Hang up the call
+         * @param id The call identifier
+         * @return bool True on success
+         */
+        bool peerHungup(const CallID& id);
+
+        /**
          * Cancel the call
          * @param id The call identifier
          * @return bool True on success

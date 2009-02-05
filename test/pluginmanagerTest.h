@@ -40,7 +40,7 @@
 
 class PluginManagerTest : public CppUnit::TestCase {
 
-    /*
+   /**
      * Use cppunit library macros to add unit test the factory
      */
     CPPUNIT_TEST_SUITE( PluginManagerTest );

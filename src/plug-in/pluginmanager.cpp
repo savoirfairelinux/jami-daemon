@@ -33,7 +33,7 @@ PluginManager::instance()
     return _instance;
 }
 
-    PluginManager::PluginManager()
+PluginManager::PluginManager()
 :_loadedPlugins()
 {
     _instance = this;

@@ -23,7 +23,7 @@
 #include <sndfile.h>
 
 #include "global.h"
-
+#include "plug-in/plugin.h"
 using namespace std;
 
 
@@ -57,7 +57,7 @@ public:
 
   void setRecordingOption(std::string name, FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate);
 
-  /**
+  /** 
    * Check if no otehr file is opened, then create a new one
    * @param fileName A string containing teh file (with/without extension)
    * @param type     The sound file format (FILE_RAW, FILE_WAVE)
@@ -89,6 +89,11 @@ public:
    * Set recording flag
    */
   bool setRecording();
+
+  /**
+   * Stop recording flag
+   */
+  void stopRecording();
 
   /**
    * Record a chunk of data in an openend file

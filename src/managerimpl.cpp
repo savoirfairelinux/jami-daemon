@@ -668,7 +668,7 @@ ManagerImpl::peerHungupCall(const CallID& id)
         switchCall("");
     }
 
-    returnValue = getAccountLink(accountid)->hangup(id);
+    returnValue = getAccountLink(accountid)->peerHungup(id);
 
     removeWaitingCall(id);
     removeCallAccount(id);
