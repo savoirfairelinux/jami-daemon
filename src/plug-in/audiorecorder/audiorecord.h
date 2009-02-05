@@ -20,7 +20,6 @@
 
 #include <iostream>
 #include <string.h>
-#include <sndfile.h>
 
 #include "global.h"
 #include "plug-in/plugin.h"
