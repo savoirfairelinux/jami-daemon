@@ -47,6 +47,7 @@ configurationTester_LDADD = \
 		@DBUSCPP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
+		-luuid \
 		$(OBJECT_FILES)
 	
 pluginmanagerTester_LDADD = \
@@ -61,6 +62,7 @@ pluginmanagerTester_LDADD = \
 		@DBUSCPP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
+		-luuid \
 		$(OBJECT_FILES)
 	
 audiorecorderTester_LDADD = \
@@ -75,5 +77,6 @@ audiorecorderTester_LDADD = \
 		@DBUSCPP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
+		-luuid \
 		$(OBJECT_FILES)
 							
