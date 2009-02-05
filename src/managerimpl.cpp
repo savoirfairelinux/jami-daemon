@@ -1990,32 +1990,6 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
     setConfig(accountID, HOSTNAME, (*details.find(HOSTNAME)).second);
     setConfig(accountID, CONFIG_ACCOUNT_MAILBOX,(*details.find(CONFIG_ACCOUNT_MAILBOX)).second);
   
-    // SIP SPECIFIC
-    /*
-    if (accountType == "SIP") {
-    
-        link =  Manager::instance().getAccountLink( accountID );
-        
-        if( link==0 )
-        {
-            _debug("Can not retrieve SIP link...\n");
-            return;
-        }
-    
-        setConfig(accountID, SIP_STUN_SERVER,(*details.find(SIP_STUN_SERVER)).second);
-        setConfig(accountID, SIP_USE_STUN, (*details.find(SIP_USE_STUN)).second == "TRUE" ? "1" : "0");
-
-        if((*details.find(SIP_USE_STUN)).second == "TRUE")
-        {
-           link->setStunServer((*details.find(SIP_STUN_SERVER)).second.data());
-        }
-        else
-        {
-            link->setStunServer("");
-        }
-        restartPJSIP();
-    }*/
-
     saveConfig();
   
     acc = getAccount(accountID);
@@ -2029,8 +2003,6 @@ void ManagerImpl::setAccountDetails( const std::string& accountID, const std::ma
 
     // Update account details to the client side
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
-
-    //delete link; link=0;
 
 }
 
