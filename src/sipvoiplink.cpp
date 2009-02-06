@@ -1409,7 +1409,8 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
             _debug("UserAgent: Shutting down...\n");
             busy_sleep(1000);
         }
-
+        
+        pj_thread_join( thread );
         pj_thread_destroy( thread );
         thread = NULL;
 
