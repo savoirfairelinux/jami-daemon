@@ -737,6 +737,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 
 bool SIPVoIPLink::transferStep2()
 {
+  _debug("SIPVoIPLink::transferStep2():When is this function called?");
     _audiortp->closeRtpSession();
     return true;
 }
@@ -944,24 +945,24 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         }
     }
     return SIPToHeader(to_url);
+}
+
+std::string SIPVoIPLink::SIPToHeader(const std::string& to) 
+{
+    if (to.find("sip:") == std::string::npos) {
+        return ("sip:" + to );
+    } else {
+       return to;
     }
+}
 
-    std::string SIPVoIPLink::SIPToHeader(const std::string& to) 
-    {
-        if (to.find("sip:") == std::string::npos) {
-            return ("sip:" + to );
-        } else {
-            return to;
-        }
-    }
+bool
+SIPVoIPLink::SIPCheckUrl(const std::string& url UNUSED)
+{
+    return true;
+}
 
-    bool
-        SIPVoIPLink::SIPCheckUrl(const std::string& url UNUSED)
-        {
-            return true;
-        }
-
-    bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::string server) 
+bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::string server) 
     {
         // Setting Audio
         unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
@@ -1719,9 +1720,9 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
 
     }
 
-    pj_bool_t 
-        mod_on_rx_request(pjsip_rx_data *rdata)
-        {
+pj_bool_t 
+mod_on_rx_request(pjsip_rx_data *rdata)
+{
 
             pj_status_t status;
             pj_str_t reason;
@@ -2108,8 +2109,7 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
 
 
 
-
-    void xfer_func_cb( pjsip_evsub *sub, pjsip_event *event){
+void xfer_func_cb( pjsip_evsub *sub, pjsip_event *event){
 
         PJ_UNUSED_ARG(event);
 
