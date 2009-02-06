@@ -492,25 +492,11 @@ edit_paste ( void * foo UNUSED)
 }
 
   static void
-clear_history( void* foo UNUSED)
+clear_history (void)
 {
-  gchar *markup;
-  GtkWidget *dialog;
-  int response;
-
-  if( call_list_get_size( history ) == 0 ){
-    markup = g_markup_printf_escaped(_("History empty"));
-    dialog = gtk_message_dialog_new_with_markup ( GTK_WINDOW(get_main_window()),
-							    GTK_DIALOG_DESTROY_WITH_PARENT,
-							    GTK_MESSAGE_INFO,
-							    GTK_BUTTONS_CLOSE,
-							    markup);
-    response = gtk_dialog_run (GTK_DIALOG(dialog));
-    gtk_widget_destroy (GTK_WIDGET(dialog));
-  }
-  else{  
+  if( call_list_get_size( history ) != 0 ){
       call_list_clean_history();
-  }
+    }
 }
 
   GtkWidget * 
