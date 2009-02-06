@@ -43,8 +43,8 @@ EXTRA_DIST   = marshaller.list
 sflphone_gtk_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SEXY_LIBS)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS) \
-              -DICONS_DIR=\""/usr/share/sflphone"\" \
-	      -DCODECS_DIR=\""/usr/lib/sflphone/codecs"\" 
+              -DICONS_DIR=\""$(prefix)/share/sflphone"\" \
+	      	-DCODECS_DIR=\""$(prefix)/lib/sflphone/codecs"\" 
 
 # add symbolic link	     
 install-exec-local:

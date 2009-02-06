@@ -1,8 +1,8 @@
-AC_INIT([SFLphone],[0.9.2-7],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_INIT([SFLphone],[0.9.3],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AM_CONFIG_HEADER(config.h)
 
 PACKAGE=SFLphone
-VERSION=0.9.2-7
+VERSION=0.9.3
 
 AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 
@@ -15,7 +15,7 @@ AC_ARG_WITH(debug,
 		[with_debug=no]
 	)
 if test "x$with_debug" = "xfull" -o "x$with_debug" = "xyes"; then
-	CFLAGS="$CFLAGS -g -DDEBUG -Wall -Wextra"
+	CFLAGS="$CFLAGS -g -O2 -DDEBUG -Wall -Wextra"
 else
 	CFLAGS="$CFLAGS -g -Wall -O2"
 fi

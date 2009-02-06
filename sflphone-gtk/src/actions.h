@@ -165,4 +165,7 @@ void sflphone_set_current_account();
  */
 void sflphone_fill_codec_list();
 
+void sflphone_record (call_t *c);
+
+void sflphone_rec_call (void);
 #endif 

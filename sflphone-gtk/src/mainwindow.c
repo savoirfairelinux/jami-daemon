@@ -59,25 +59,28 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 /** Ask the user if he wants to hangup current calls */
 gboolean 
 main_window_ask_quit(){
-  guint count = call_list_get_size(current_calls);
-  GtkWidget * dialog;
-  gint response;
-  gchar * question;
-  
+    guint count = call_list_get_size(current_calls);
+    GtkWidget * dialog;
+    gint response;
+    gchar * question;
+
   if(count == 1)
   {
-    question = _("<b>There is one call in progress.</b>\nDo you still want to quit?");
+    question = _("There is one call in progress.");
   }
   else
   {
-    question = _("<b>There are calls in progress.</b>\nDo you still want to quit?");
+    question = _("There are calls in progress.");
   }
   
   dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(window) ,
                                   GTK_DIALOG_MODAL,
                                   GTK_MESSAGE_QUESTION,
                                   GTK_BUTTONS_YES_NO,
-                                  question);
+                                  "<b>%s<b>\n%s",
+                                  question,
+                                   _("Do you still want to quit?") );
+
   
   response = gtk_dialog_run (GTK_DIALOG (dialog));
   
@@ -209,6 +212,7 @@ main_window_message(GtkMessageType type, gchar * markup){
                                       GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                       type,
                                       GTK_BUTTONS_CLOSE,
+                                      "%s\n",
                                       markup);
   gtk_dialog_run (GTK_DIALOG(dialog));
   
