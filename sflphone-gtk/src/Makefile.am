@@ -33,11 +33,12 @@ sflphone_gtk_SOURCES = \
   sliders.c \
   $(STATUSICON_SOURCE) \
   codeclist.c \
-  timestamp.c 
+  timestamp.c \
+  reqaccount.c
   
-noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h audioconf.h codeclist.h assistant.h\
+noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h audioconf.h codeclist.h assistant.h \
                   callmanager-glue.h errors.h sflphone_const.h configurationmanager-glue.h instance-glue.h menus.h calltab.h calltree.h configwindow.h \
-                  accountlist.h accountwindow.h marshaller.h sliders.h $(STATUSICON_HEADER) timestamp.h historyfilter.c
+                  accountlist.h accountwindow.h marshaller.h sliders.h $(STATUSICON_HEADER) timestamp.h historyfilter.c reqaccount.h
 
 EXTRA_DIST   = marshaller.list  
 sflphone_gtk_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SEXY_LIBS)
