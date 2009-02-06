@@ -32,9 +32,14 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #include "reqaccount.h"
 
 int req(char *host, int port, char *req, char *ret) {
+
   int s;
   struct sockaddr_in servSockAddr;
   struct hostent *servHostEnt;

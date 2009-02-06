@@ -65,6 +65,8 @@ struct _wizard
   GtkWidget *summary;
   /** Page 6 - Registration failed*/
   GtkWidget *reg_failed;
+
+  GtkWidget *sflphone_org;
   
 }; 
 
@@ -98,6 +100,7 @@ GtkWidget* build_nat_settings( void );
 GtkWidget* build_iax_account_configuration( void );
 GtkWidget* build_summary( void );
 GtkWidget* build_registration_error( void );
+GtkWidget* build_sfl_or_account (void);
 
 /**
  * Forward function
