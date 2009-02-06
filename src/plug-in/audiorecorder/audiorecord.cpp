@@ -29,6 +29,8 @@ AudioRecord::AudioRecord(){
   recordingEnabled_ = false;
   fp = 0;
 
+  createFilename();
+  
 }
 
 
@@ -36,9 +38,7 @@ void AudioRecord::setSndSamplingRate(int smplRate){
   sndSmplRate_ = smplRate;  
 }
 
-void AudioRecord::setRecordingOption(std::string name, FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate){
-
-  strncpy(fileName_, name.c_str(), 8192);
+void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate){
  
   fileType_ = type;
   sndFormat_ = format;
@@ -61,10 +61,22 @@ void AudioRecord::setRecordingOption(std::string name, FILE_TYPE type, SOUND_FOR
 
 void AudioRecord::openFile(){
   
+   
    _debug("AudioRecord::openFile()\n");  
   
+   savePath_ = getenv("HOME");
+  
+   std::string fName(fileName_);
+ 
+   savePath_ += "/";
+   
+   
+   savePath_.append(fName);
+  
+
    bool result = false;
    
+   _debug("AudioRecord::openFile()\n");
    if(isFileExist()) {
      _debug("AudioRecord::Filename does not exist, creating one \n");
      byteCounter_ = 0;
@@ -160,9 +172,47 @@ void AudioRecord::stopRecording() {
 }
 
 
+void AudioRecord::createFilename(){
+    
+    time_t rawtime;
+    struct tm * timeinfo;
+
+    rawtime = time(NULL);
+    timeinfo = localtime ( &rawtime );
+
+    stringstream out;
+    
+    // DATE
+    out << timeinfo->tm_year+1900;
+    if (timeinfo->tm_mon < 9) // january is 01, not 1
+      out << 0;
+    out << timeinfo->tm_mon+1;
+    if (timeinfo->tm_mday < 10) // 01 02 03, not 1 2 3
+      out << 0;
+    out << timeinfo->tm_mday;
+ 
+    out << '-';
+   
+    // hour
+    if (timeinfo->tm_hour < 10) // 01 02 03, not 1 2 3
+      out << 0;
+    out << timeinfo->tm_hour;
+    if (timeinfo->tm_min < 10) // 01 02 03, not 1 2 3
+      out << 0;
+    out << timeinfo->tm_min;
+    if (timeinfo->tm_sec < 10) // 01 02 03,  not 1 2 3
+      out << 0;
+    out << timeinfo->tm_sec;
+
+    // fileName_ = out.str();
+    strncpy(fileName_, out.str().c_str(), 8192);
+
+    printf("AudioRecord::createFilename::filename for this call %s \n",fileName_);
+}
+
 bool AudioRecord::setRawFile() {
 
-  fp = fopen(fileName_, "wb");
+  fp = fopen(savePath_.c_str(), "wb");
   if ( !fp ) {
     _debug("AudioRecord::setRawFile() : could not create RAW file!\n");
     return false;
@@ -180,7 +230,7 @@ bool AudioRecord::setRawFile() {
 
 bool AudioRecord::setWavFile() {
   
-  fp = fopen(fileName_, "wb");
+  fp = fopen(savePath_.c_str(), "wb");
   if ( !fp ) {
     _debug("AudioRecord::setWavFile() : could not create WAV file.\n");
     return false;

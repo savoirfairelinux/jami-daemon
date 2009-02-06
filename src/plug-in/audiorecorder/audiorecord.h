@@ -21,6 +21,8 @@
 #include <iostream>
 #include <string.h>
 #include <sndfile.h>
+#include <stdlib.h>
+#include <sstream>
 
 #include "global.h"
 #include "plug-in/plugin.h"
@@ -55,7 +57,7 @@ public:
 
   void setSndSamplingRate(int smplRate);
 
-  void setRecordingOption(std::string name, FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate);
+  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate);
 
   /** 
    * Check if no otehr file is opened, then create a new one
@@ -113,6 +115,11 @@ public:
 
 protected:
 
+  /**
+   * Create name file according to current date
+   */
+  void createFilename();
+  
   /**
    * Set the header for raw files
    */
@@ -187,6 +194,11 @@ protected:
    * Filename for this recording
    */
   char fileName_[8192];
+
+  /**
+   * Path for this recording
+   */
+  std::string savePath_;
 
 
 };
