@@ -184,8 +184,9 @@ clean_history( void )
 select_account(GtkTreeSelection *selection, GtkTreeModel *model)
 {
     GtkTreeIter iter;
-    GValue val = {0};
+    GValue val;
 
+    memset (&val, 0, sizeof(val));
     if (!gtk_tree_selection_get_selected(selection, &model, &iter))
     {
         selectedAccount = NULL;

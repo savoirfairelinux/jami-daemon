@@ -17,6 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <string.h>
+
 #include <historyfilter.h>
 #include <calltree.h>
 
@@ -35,9 +37,11 @@ is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 {
   if( SHOW_SEARCHBAR )
   {
-	GValue val = {0,};
+	GValue val;
+
 	gchar* text = NULL;
 	gchar* search = (gchar*)gtk_entry_get_text(GTK_ENTRY(filter_entry));
+    memset (&val, 0, sizeof(val));
 	gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 1, &val);
 	if(G_VALUE_HOLDS_STRING(&val)){
 		text = (gchar *)g_value_get_string(&val);
@@ -45,6 +49,7 @@ is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 	if(text != NULL && g_ascii_strncasecmp(search, _("Search"), 6) != 0){
 		return g_regex_match_simple(search, text, G_REGEX_CASELESS, 0);
  	}
+    g_value_unset (&val);
 	return TRUE;
   }
   return TRUE;
