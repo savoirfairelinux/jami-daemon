@@ -178,12 +178,13 @@ error_alert(DBusGProxy *proxy UNUSED,
 }
 
 
-static void nameOwnerChanged(DBusGProxy *proxy, char *name, char *old_owner, char *new_owner, gpointer data )
+static void nameOwnerChanged(DBusGProxy *proxy UNUSED, char *name , char *old_owner, char *new_owner, gpointer data UNUSED)
 {
-
+    #if 0
     g_print("******************************************************************\n");
     g_print("Owner name of the service %s changed from %s to %s\n", name, old_owner, new_owner);
     g_print("******************************************************************\n");
+    #endif
 
     if (strcmp(name, "org.sflphone.SFLphone")!=0)   return;
 
@@ -1292,8 +1293,12 @@ dbus_set_record(const call_t * c)
        org_sflphone_SFLphone_CallManager_set_recording (
                        callManagerProxy,
                        c->callID,
-                       error);
-       g_print("called dbus_set_record on CallManager\n");
+                       &error);
+	    if(error)
+	    {
+		    g_error_free(error);
+	    }
+        g_print("called dbus_set_record on CallManager\n");
 }
 
 
@@ -1588,10 +1593,10 @@ void dbus_set_stun_server( gchar* server)
         }
 }
 
-guint dbus_stun_is_enabled (void)
+gint dbus_stun_is_enabled (void)
 {
     GError* error = NULL;
-    guint stun;
+    gint stun;
     org_sflphone_SFLphone_ConfigurationManager_is_stun_enabled(
                         configurationManagerProxy,
                         &stun,

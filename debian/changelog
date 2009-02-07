@@ -1,3 +1,16 @@
+sflphone (0.9.3-0ubuntu1) intrepid; urgency=low
+
+  * Remove debug
+  * Join thread before leaving
+  * Fix implicit declaration in reqaccount
+  * Add REST code to build the request to server
+  * Fix GValue initialization warnings
+  * Update version number, fix implicit declaration, fix GTK markup
+    warnings
+  * Apply patch to create custom SIP account from our own server
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 06 Feb 2009 19:17:32 -0500
+
 sflphone (0.9.2-2ubuntu9) intrepid; urgency=low
 
   [ Alexandre Savard ]
