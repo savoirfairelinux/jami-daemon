@@ -696,7 +696,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 
     _debug("In transfer, tmp_to is %s\n", tmp_to.data());
 
-    pj_strdup2(_pool, &dest, to.data());
+    pj_strdup2(_pool, &dest, tmp_to.data());
 
     /* Create xfer client subscription. */
     pj_bzero(&xfer_cb, sizeof(xfer_cb));
