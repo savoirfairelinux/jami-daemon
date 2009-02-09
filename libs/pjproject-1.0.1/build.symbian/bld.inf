@@ -1,0 +1,41 @@
+#define SND_USE_NULL	0
+#define SND_USE_APS	0
+
+prj_platforms
+winscw
+//armv5
+gcce
+
+prj_mmpfiles
+
+/* Libraries */
+pjlib.mmp
+pjlib_util.mmp
+pjnath.mmp
+pjsdp.mmp
+pjmedia.mmp
+pjsip.mmp
+pjsip_simple.mmp
+pjsip_ua.mmp
+pjsua_lib.mmp
+libsrtp.mmp
+
+/* Codecs */
+libgsmcodec.mmp
+libspeexcodec.mmp
+
+/* Sound device impl */
+#if SND_USE_NULL
+	null_audio.mmp
+#elif SND_USE_APS
+	symbian_audio_aps.mmp
+#else
+	symbian_audio.mmp
+#endif
+
+/* Applications */
+//pjlib_test.mmp
+//symsndtest.mmp
+symbian_ua.mmp
+..\pjsip-apps\src\symbian_ua_gui\group\symbian_ua_gui.mmp
+gnumakefile ..\pjsip-apps\src\symbian_ua_gui\group\Icons_aif_scalable_dc.mk
