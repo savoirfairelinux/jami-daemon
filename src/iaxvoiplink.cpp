@@ -218,9 +218,10 @@ IAXVoIPLink::getEvent()
     if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
         sendRegister("");
     }
-    if(call)
-      call->recAudio.recData(spkrDataConverted,micData,nbSample_,nbSample_);
-
+    if(call){
+      printf("IAXVoIPLink::getEvent() : nbSample_ %i \n",nbSampleForRec_*sizeof(SFLDataFormat));
+      call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_*sizeof(SFLDataFormat),nbSampleForRec_*sizeof(SFLDataFormat));
+    }
     // thread wait 3 millisecond
     _evThread->sleep(3);
     free(event);
@@ -287,6 +288,9 @@ IAXVoIPLink::sendAudioFromMic(void)
 
         // Get bytes from micRingBuffer to data_from_mic
         nbSample_ = audiolayer->getMic( micData, bytesAvail ) / sizeof(SFLDataFormat);
+        
+        // Store the number of samples for recording
+        nbSampleForRec_ = nbSample_;       
 
         // resample
         nbSample_ = converter->downsampleData( micData , micDataConverted , (int)ac ->getClockRate() ,  (int)audiolayer->getSampleRate() , nbSample_ );

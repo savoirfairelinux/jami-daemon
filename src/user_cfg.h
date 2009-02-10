@@ -43,7 +43,7 @@
 #define RING_CHOICE		"Rings.ringChoice"    /** Ringtone */
 #define VOLUME_SPKR		"Volume.speakers"     /** Speaker volume */
 #define VOLUME_MICRO		"Volume.micro"	      /** Mic volume */
-#define RECORD_PATH             "Record.path          /** Recording path */
+#define RECORD_PATH             "Record.path"          /** Recording path */
 
 #define VIDEO			"Video"		      /** Section Video */
 

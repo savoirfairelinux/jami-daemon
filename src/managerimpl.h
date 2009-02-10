@@ -443,7 +443,7 @@ class ManagerImpl {
      * Set the recoding path in the configuration tree
      * @param a string reresenting the path
      */
-    std::string setRecordingPath( const std::string );
+    void setRecordPath( const std::string& recPath);
 
     /**
      * Tells if the user wants to display the dialpad or not 

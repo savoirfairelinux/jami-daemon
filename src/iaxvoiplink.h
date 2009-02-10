@@ -296,6 +296,9 @@ class IAXVoIPLink : public VoIPLink
     
     /** number of sample */
     int nbSample_;
+     
+    /** number of sample before conversion (recording) */
+    int nbSampleForRec_;
 };
 
 #endif
