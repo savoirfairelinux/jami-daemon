@@ -716,7 +716,7 @@ create_recording_settings ()
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
     savePathText = gtk_entry_new();
-    gtk_label_set_mnemonic_idget(GTK_LABEL(label), savePathText);
+    gtk_label_set_mnemonic_widget(GTK_LABEL(label), savePathText);
     gtk_entry_set_text(GTK_ENTRY(savePathText),defaultSavePath);
     gtk_table_attach(GTK_TABLE(table), savePathText, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     
