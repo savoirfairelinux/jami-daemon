@@ -219,8 +219,7 @@ IAXVoIPLink::getEvent()
         sendRegister("");
     }
     if(call){
-      printf("IAXVoIPLink::getEvent() : nbSample_ %i \n",nbSampleForRec_*sizeof(SFLDataFormat));
-      call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_*sizeof(SFLDataFormat),nbSampleForRec_*sizeof(SFLDataFormat));
+      call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
     }
     // thread wait 3 millisecond
     _evThread->sleep(3);
