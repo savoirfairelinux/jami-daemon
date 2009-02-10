@@ -1410,7 +1410,7 @@ ManagerImpl::getRecordPath( void )
 void 
 ManagerImpl::setRecordPath( const std::string& recPath)
 {
-  setConfig( AUDIO, RECORD_PATH, recPath );
+  setConfig( AUDIO, RECORD_PATH, recPath.substr(7));
 }
 
 int
@@ -1975,13 +1975,6 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails(const Accoun
   a.insert( std::pair<std::string, std::string>( HOSTNAME, getConfigString(accountID, HOSTNAME) ) );
   a.insert( std::pair<std::string, std::string>( CONFIG_ACCOUNT_MAILBOX, getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)) );
   
-  // SIP SPECIFIC
-  if( accountType == "SIP")
-  {
-    a.insert( std::pair<std::string, std::string>( SIP_STUN_SERVER, getConfigString(accountID, SIP_STUN_SERVER) ) );
-    a.insert( std::pair<std::string, std::string>( SIP_USE_STUN, getConfigString(accountID, SIP_USE_STUN) == "1" ? "TRUE": "FALSE"));
-  }
-
   return a;
 }
 

@@ -77,7 +77,7 @@ main_window_ask_quit(){
                                   GTK_DIALOG_MODAL,
                                   GTK_MESSAGE_QUESTION,
                                   GTK_BUTTONS_YES_NO,
-                                  "<b>%s<b>\n%s",
+                                  "%s\n%s",
                                   question,
                                    _("Do you still want to quit?") );
 

@@ -672,37 +672,36 @@ create_general_settings ()
     return ret;
 }
 
-
 void
 record_path_changed( GtkFileChooser *chooser , GtkLabel *label UNUSED)
 {
-  // gchar* tone = gtk_file_chooser_get_filename( GTK_FILE_CHOOSER( chooser ));
-  // dbus_set_ringtone_choice( tone );
+    gchar* path;
+
+    path = gtk_file_chooser_get_uri( GTK_FILE_CHOOSER( chooser ));
+    dbus_set_record_path( path );
 }
 
 GtkWidget*
 create_recording_settings ()
 {
 
-    int curPort;
-    int n;
-
-    gchar *defaultSavePath = "/home/alexandresavard/";
-
     GtkWidget *ret;
     GtkWidget *label;
     GtkWidget *table;
     GtkWidget *savePathFrame;
-    GtkWidget *savePathText;
     GtkWidget *folderChooser;
+    gchar *dftPath;
+    
+    /* Get the path where to save audio files */
+    dftPath = dbus_get_record_path ();
 
     // Main widget
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Recorded file saving path
-    savePathFrame = gtk_frame_new(_("Recorded File Saving Path"));
-    gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 0);
+    savePathFrame = gtk_frame_new(_("General"));
+    gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 5);
     gtk_widget_show(savePathFrame);
    
     table = gtk_table_new(1, 2, FALSE);
@@ -712,20 +711,17 @@ create_recording_settings ()
     gtk_container_add(GTK_CONTAINER(savePathFrame), table);
 
     // label 
-    label = gtk_label_new_with_mnemonic(_("_Save Path"));
-    gtk_table_attach( GTK_TABLE(table), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    label = gtk_label_new_with_mnemonic(_("_Destination folder"));
+    gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-    savePathText = gtk_entry_new();
-    gtk_label_set_mnemonic_widget(GTK_LABEL(label), savePathText);
-    gtk_entry_set_text(GTK_ENTRY(savePathText),defaultSavePath);
-    gtk_table_attach(GTK_TABLE(table), savePathText, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
     
     // folder chooser button
-    folderChooser = gtk_file_chooser_button_new(_("Choose a path"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( folderChooser) , g_get_home_dir());
-    g_signal_connect( G_OBJECT( folderChooser ) , "recordPath_changed" , G_CALLBACK( record_path_changed ) , NULL );
-    gtk_box_pack_start( GTK_BOX(ret) , folderChooser , TRUE , TRUE , 1);
-    // gtk_container_add(GTK_CONTAINER(savePathFrame), folder);
+    folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( folderChooser) , 
+                        (strcmp(dftPath,"")==0)?g_get_home_dir():dftPath);
+    gtk_table_attach(GTK_TABLE(table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
+    g_signal_connect( G_OBJECT( folderChooser ) , "selection_changed" , G_CALLBACK( record_path_changed ) , NULL );
 
     gtk_widget_show_all(ret);
 
@@ -776,7 +772,7 @@ show_config_window ()
 
     // Recording tab
     tab = create_recording_settings();	
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Recording Settings")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Record")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  1);
