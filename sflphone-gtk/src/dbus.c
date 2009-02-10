@@ -180,10 +180,11 @@ error_alert(DBusGProxy *proxy UNUSED,
 
 static void nameOwnerChanged(DBusGProxy *proxy UNUSED, char *name , char *old_owner, char *new_owner, gpointer data UNUSED)
 {
-
+    #if 0
     g_print("******************************************************************\n");
     g_print("Owner name of the service %s changed from %s to %s\n", name, old_owner, new_owner);
     g_print("******************************************************************\n");
+    #endif
 
     if (strcmp(name, "org.sflphone.SFLphone")!=0)   return;
 

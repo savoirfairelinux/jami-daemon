@@ -696,7 +696,7 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 
     _debug("In transfer, tmp_to is %s\n", tmp_to.data());
 
-    pj_strdup2(_pool, &dest, to.data());
+    pj_strdup2(_pool, &dest, tmp_to.data());
 
     /* Create xfer client subscription. */
     pj_bzero(&xfer_cb, sizeof(xfer_cb));
@@ -1410,7 +1410,8 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
             _debug("UserAgent: Shutting down...\n");
             busy_sleep(1000);
         }
-
+        
+        pj_thread_join( thread );
         pj_thread_destroy( thread );
         thread = NULL;
 

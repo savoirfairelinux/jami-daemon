@@ -18,13 +18,18 @@
  */
 
 #include <assistant.h>
+#include "reqaccount.h"
 
 #include <libsexy/sexy-icon-entry.h>
 
 #if GTK_CHECK_VERSION(2,10,0)
 
+#define SFLPHONE_ORG_SERVER "sip.sflphone.org"
+#define SFLPHONE_ORG_ALIAS "sflphone.org"
+
 struct _wizard *wiz;
 static int account_type;
+static int use_sflphone_org = 1;
 account_t* current;
 
 /**
@@ -47,6 +52,12 @@ set_account_type( GtkWidget* widget , gpointer data UNUSED )
     account_type = _IAX ;
   }
 }
+
+void set_sflphone_org( GtkWidget* widget , gpointer data UNUSED ) {
+  use_sflphone_org = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)) && 1;
+}
+
+
 
 /**
  * Callback when the close button of the dialog is clicked
@@ -140,6 +151,7 @@ if(!wiz){
   gtk_assistant_set_forward_page_func( GTK_ASSISTANT( wiz->assistant ), (GtkAssistantPageFunc) forward_page_func , NULL , NULL );
 
   build_intro();
+  build_sfl_or_account();
   build_select_account();
   build_sip_account_configuration();
   build_nat_settings();
@@ -153,7 +165,7 @@ if(!wiz){
   gtk_widget_show_all(wiz->assistant);
 
   gtk_assistant_update_buttons_state(GTK_ASSISTANT(wiz->assistant));
-	}
+ }
 }
 
   GtkWidget*
@@ -188,6 +200,23 @@ build_select_account()
   g_signal_connect(G_OBJECT( sip ) , "clicked" , G_CALLBACK( set_account_type ) , NULL );
 
   return wiz->protocols;
+}
+
+
+GtkWidget* build_sfl_or_account()
+{
+  GtkWidget* sfl;
+  GtkWidget* cus;
+
+  wiz->sflphone_org = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Account") , _("Please select one of the following option:"));
+
+  sfl = gtk_radio_button_new_with_label(NULL, "Create a free SIP/IAX2 account on sflphone.org");
+  gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , sfl , TRUE, TRUE, 0);
+  cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), "Register an existing SIP or IAX2 account");
+  gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , cus , TRUE, TRUE, 0);
+  g_signal_connect(G_OBJECT( sfl ) , "clicked" , G_CALLBACK( set_sflphone_org ) , NULL );
+
+  return wiz->sflphone_org;
 }
 
 
@@ -369,26 +398,72 @@ build_registration_error()
 
 }
 
-  static gint 
-forward_page_func( gint current_page , gpointer data  UNUSED)
-{
-  switch( current_page ){
-    case 0:
-      return 1;
-    case 1:
-      if( account_type == _SIP )
-	return 2;
-      return 4;
-    case 2:  
-      return 3;
-    case 3:
-      return 6;
-    case 4:
-      return 6;
-    default:
-      return -1;
+void set_sip_infos_sentivite(gboolean b) {
+  gtk_widget_set_sensitive(GTK_WIDGET(wiz->sip_alias), b);
+  gtk_widget_set_sensitive(GTK_WIDGET(wiz->sip_server), b);
+  gtk_widget_set_sensitive(GTK_WIDGET(wiz->sip_username), b);
+  gtk_widget_set_sensitive(GTK_WIDGET(wiz->sip_password), b);
+}
+
+void prefill_sip(void) {
+  if (use_sflphone_org == 1) {
+    rest_account ra = get_rest_account(SFLPHONE_ORG_SERVER);
+    if (ra.success) {
+      set_sip_infos_sentivite(FALSE);
+      gtk_entry_set_text (GTK_ENTRY(wiz->sip_alias), SFLPHONE_ORG_ALIAS);
+      gtk_entry_set_text (GTK_ENTRY(wiz->sip_server), SFLPHONE_ORG_SERVER);
+      gtk_entry_set_text (GTK_ENTRY(wiz->sip_username), ra.user);
+      gtk_entry_set_text (GTK_ENTRY(wiz->sip_password), ra.passwd);
+    }
   }
 }
+
+
+#define PAGE_INTRO   0
+#define PAGE_SFL     1
+#define PAGE_TYPE    2
+#define PAGE_SIP     3
+#define PAGE_STUN    4
+#define PAGE_IAX     5
+#define PAGE_REG_ERR 6
+#define PAGE_SUMMARY 8
+
+static gint 
+forward_page_func( gint current_page , gpointer data  UNUSED) {
+  
+  switch( current_page ){
+  case PAGE_INTRO:
+    return PAGE_SFL;
+
+  case PAGE_SFL:
+    if (use_sflphone_org) {
+      prefill_sip();
+      account_type = _SIP;
+      return PAGE_SIP;
+    }
+    return PAGE_TYPE;
+
+  case PAGE_TYPE:
+    if( account_type == _SIP ) {
+      set_sip_infos_sentivite(TRUE);
+      return PAGE_SIP;
+    }
+    return PAGE_IAX;
+
+  case PAGE_SIP:  
+    return PAGE_STUN;
+
+  case PAGE_STUN:
+    return PAGE_SUMMARY;
+
+  case PAGE_IAX:
+    return PAGE_SUMMARY;
+
+  default:
+    return -1;
+  }
+}
+
 
   static GtkWidget*
 create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)

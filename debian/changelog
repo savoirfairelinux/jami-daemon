@@ -1,3 +1,44 @@
+sflphone (0.9.3-0ubuntu1) intrepid; urgency=low
+
+  * Remove debug
+  * Join thread before leaving
+  * Fix implicit declaration in reqaccount
+  * Add REST code to build the request to server
+  * Fix GValue initialization warnings
+  * Update version number, fix implicit declaration, fix GTK markup
+    warnings
+  * Apply patch to create custom SIP account from our own server
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 06 Feb 2009 19:17:32 -0500
+
+sflphone (0.9.2-2ubuntu9) intrepid; urgency=low
+
+  [ Alexandre Savard ]
+  * Speex audio codec preprocessing initialization
+  * peer hung up segmentation fault solved
+  * Stop recording when transfering
+  * Terminate only one call
+  * Add isRecording() function
+  * Fix call_icon GTK client
+  * Fix SIPCallClose() function, recorded file now close properly
+  * Function terminateSIPCall added in sipvoiplink and managerimpl
+  * Fix thread destructor
+  * setRecordingOption function implement in audiorecord
+  * Record now implemented in Call class
+  * Record interface complete (on hold erase previous recording)
+  * Added recButton in client
+  * Added: record button related icons
+  * Record button added
+  * Overload AudioRecord::recData to get mic and speaker data mixed
+  * Recording now in audiortp::run() method
+  * Audio recording working in AudioRTP: receiveSessionForSpeaker
+  * Open/close a wave file when pulse audio stream start/stop
+
+  [ Emmanuel Milou ]
+  * Fix path for GTK+ icons; clean up
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Thu, 05 Feb 2009 18:27:53 -0500
+
 sflphone (0.9.2-2ubuntu8) intrepid; urgency=low
 
   [ Emmanuel Milou ]

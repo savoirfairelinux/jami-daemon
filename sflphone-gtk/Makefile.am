@@ -1,5 +1,7 @@
 SUBDIRS = src pixmaps
 
+ACLOCAL_AMFLAGS = -I m4
+
 EXTRA_DIST   = sflphone.desktop.in 
 appsdir = $(datadir)/applications
 apps_in_files = sflphone.desktop.in

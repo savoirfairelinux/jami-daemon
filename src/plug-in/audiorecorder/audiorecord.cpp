@@ -430,7 +430,7 @@ void AudioRecord::recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int 
    
     byteCounter_ += (unsigned long)(nSamples_1*sizeof(SFLDataFormat));
 
-    printf("AudioRecord::recData():: byteCounter_ : %i \n",(int)byteCounter_ );
+    //printf("AudioRecord::recData():: byteCounter_ : %i \n",(int)byteCounter_ );
 
     delete [] mixBuffer_;
   }
