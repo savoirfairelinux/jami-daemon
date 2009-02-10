@@ -178,7 +178,7 @@ error_alert(DBusGProxy *proxy UNUSED,
 }
 
 
-static void nameOwnerChanged(DBusGProxy *proxy UNUSED, char *name , char *old_owner, char *new_owner, gpointer data UNUSED)
+static void nameOwnerChanged(DBusGProxy *proxy UNUSED, char *name , char *old_owner UNUSED, char *new_owner UNUSED, gpointer data UNUSED)
 {
     #if 0
     g_print("******************************************************************\n");
@@ -1301,6 +1301,35 @@ dbus_set_record(const call_t * c)
         g_print("called dbus_set_record on CallManager\n");
 }
 
+void
+dbus_set_record_path(const gchar* path)
+{
+       GError* error = NULL;
+       org_sflphone_SFLphone_ConfigurationManager_set_record_path (
+                       configurationManagerProxy,
+                       path,
+                       &error);
+	    if(error)
+	    {
+		    g_error_free(error);
+	    }
+}
+
+    gchar*
+dbus_get_record_path(void)
+{
+       GError* error = NULL;
+       gchar *path;
+       org_sflphone_SFLphone_ConfigurationManager_get_record_path (
+                       configurationManagerProxy,
+                       &path,
+                       &error);
+	    if(error)
+	    {
+		    g_error_free(error);
+	    }
+        return path;
+}
 
 void
 dbus_set_max_calls( const guint calls  )

@@ -1410,7 +1410,7 @@ ManagerImpl::getRecordPath( void )
 void 
 ManagerImpl::setRecordPath( const std::string& recPath)
 {
-  setConfig( AUDIO, RECORD_PATH, recPath );
+  setConfig( AUDIO, RECORD_PATH, recPath.substr(7));
 }
 
 int

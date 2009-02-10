@@ -17,33 +17,16 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef _AUDIO_RECORD_H
+#define _AUDIO_RECORD_H
 
 #include <iostream>
 #include <string.h>
 #include <stdlib.h>
 #include <sstream>
 
-#include "global.h"
 #include "plug-in/plugin.h"
 using namespace std;
-
-
-// structure for the wave header
-struct wavhdr {
-  char riff[4];           // "RIFF"
-  SINT32 file_size;       // in bytes
-  char wave[4];           // "WAVE"
-  char fmt[4];            // "fmt "
-  SINT32 chunk_size;      // in bytes (16 for PCM)
-  SINT16 format_tag;      // 1=PCM, 2=ADPCM, 3=IEEE float, 6=A-Law, 7=Mu-Law
-  SINT16 num_chans;       // 1=mono, 2=stereo
-  SINT32 sample_rate;
-  SINT32 bytes_per_sec;
-  SINT16 bytes_per_samp;  // 2=16-bit mono, 4=16-bit stereo
-  SINT16 bits_per_samp;
-  char data[4];           // "data"
-  SINT32 data_length;     // in bytes
-};
 
 typedef std::string CallID;
 
@@ -56,7 +39,7 @@ public:
 
   void setSndSamplingRate(int smplRate);
 
-  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate);
+  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
 
   /** 
    * Check if no otehr file is opened, then create a new one
@@ -201,3 +184,5 @@ protected:
 
 
 };
+
+#endif // _AUDIO_RECORD_H

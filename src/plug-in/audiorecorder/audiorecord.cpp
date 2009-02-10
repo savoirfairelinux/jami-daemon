@@ -19,6 +19,22 @@
 
 #include "audiorecord.h"
 
+// structure for the wave header
+struct wavhdr {
+  char riff[4];           // "RIFF"
+  SINT32 file_size;       // in bytes
+  char wave[4];           // "WAVE"
+  char fmt[4];            // "fmt "
+  SINT32 chunk_size;      // in bytes (16 for PCM)
+  SINT16 format_tag;      // 1=PCM, 2=ADPCM, 3=IEEE float, 6=A-Law, 7=Mu-Law
+  SINT16 num_chans;       // 1=mono, 2=stereo
+  SINT32 sample_rate;
+  SINT32 bytes_per_sec;
+  SINT16 bytes_per_samp;  // 2=16-bit mono, 4=16-bit stereo
+  SINT16 bits_per_samp;
+  char data[4];           // "data"
+  SINT32 data_length;     // in bytes
+};
 
 
 AudioRecord::AudioRecord(){
@@ -38,9 +54,11 @@ void AudioRecord::setSndSamplingRate(int smplRate){
   sndSmplRate_ = smplRate;  
 }
 
-void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate){
+void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path){
  
-  fileType_ = type;
+    std::string fName;
+
+    fileType_ = type;
   sndFormat_ = format;
   channels_ = 1;
   sndSmplRate_ = sndSmplRate;
@@ -57,6 +75,11 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sn
        strcat(fileName_, ".wav");
      }
    }
+
+   fName = fileName_;
+   savePath_ = path + "/";
+   savePath_.append(fName);
+
 }
 
 void AudioRecord::openFile(){
@@ -64,16 +87,6 @@ void AudioRecord::openFile(){
    
    _debug("AudioRecord::openFile()\n");  
   
-   savePath_ = getenv("HOME");
-  
-   std::string fName(fileName_);
- 
-   savePath_ += "/";
-   
-   
-   savePath_.append(fName);
-  
-
    bool result = false;
    
    _debug("AudioRecord::openFile()\n");

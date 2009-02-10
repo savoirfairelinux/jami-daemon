@@ -23,8 +23,8 @@
 #ifndef __VOIP_LINK_H__
 #define __VOIP_LINK_H__
 
-#include "call.h"
 #include "account.h"
+#include "call.h"
 
 class AudioCodec;
 class Account;

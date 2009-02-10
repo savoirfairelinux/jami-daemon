@@ -798,7 +798,7 @@ GtkWidget* create_audio_configuration()
   box = codecs_box();
   gtk_container_add( GTK_CONTAINER(codecs_conf) , box );
 
-  // Box for the codecs
+  // Box for the ringtones
   ringtones_conf = gtk_frame_new(_("Ringtones"));
   gtk_box_pack_start(GTK_BOX(ret), ringtones_conf, FALSE, FALSE, 0);
   gtk_widget_show( ringtones_conf );
