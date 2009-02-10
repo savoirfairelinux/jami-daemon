@@ -615,6 +615,44 @@ static
 inline
 #endif
 gboolean
+org_sflphone_SFLphone_ConfigurationManager_get_record_path (DBusGProxy *proxy, char ** OUT_rec, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getRecordPath", error, G_TYPE_INVALID, G_TYPE_STRING, OUT_rec, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_record_path_reply) (DBusGProxy *proxy, char * OUT_rec, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_get_record_path_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  char * OUT_rec;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_STRING, &OUT_rec, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_record_path_reply)data->cb) (proxy, OUT_rec, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_get_record_path_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_record_path_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getRecordPath", org_sflphone_SFLphone_ConfigurationManager_get_record_path_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
 org_sflphone_SFLphone_ConfigurationManager_set_audio_manager (DBusGProxy *proxy, const gint IN_api, GError **error)
 
 {
@@ -646,6 +684,43 @@ org_sflphone_SFLphone_ConfigurationManager_set_audio_manager_async (DBusGProxy *
   stuff->cb = G_CALLBACK (callback);
   stuff->userdata = userdata;
   return dbus_g_proxy_begin_call (proxy, "setAudioManager", org_sflphone_SFLphone_ConfigurationManager_set_audio_manager_async_callback, stuff, g_free, G_TYPE_INT, IN_api, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_set_record_path (DBusGProxy *proxy, const char * IN_rec, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "setRecordPath", error, G_TYPE_STRING, IN_rec, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_record_path_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_set_record_path_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_set_record_path_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_set_record_path_async (DBusGProxy *proxy, const char * IN_rec, org_sflphone_SFLphone_ConfigurationManager_set_record_path_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "setRecordPath", org_sflphone_SFLphone_ConfigurationManager_set_record_path_async_callback, stuff, g_free, G_TYPE_STRING, IN_rec, G_TYPE_INVALID);
 }
 static
 #ifdef G_HAVE_INLINE

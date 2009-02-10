@@ -1401,6 +1401,18 @@ ManagerImpl::setRingtoneChoice( const std::string& tone )
   setConfig( AUDIO , RING_CHOICE , tone ); 
 }
 
+std::string
+ManagerImpl::getRecordPath( void )
+{
+  return getConfigString( AUDIO, RECORD_PATH );
+}
+
+void 
+ManagerImpl::setRecordPath( const std::string& recPath)
+{
+  setConfig( AUDIO, RECORD_PATH, recPath );
+}
+
 int
 ManagerImpl::getDialpad( void )
 {

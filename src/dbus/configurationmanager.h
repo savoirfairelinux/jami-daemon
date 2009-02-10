@@ -77,6 +77,8 @@ public:
     void ringtoneEnabled( void );
     std::string getRingtoneChoice( void );
     void setRingtoneChoice( const std::string& tone );
+    std::string getRecordPath( void );
+    void setRecordPath(const std::string& recPath );
     int32_t getDialpad( void );
     void setDialpad( void );
     int32_t getSearchbar( void );

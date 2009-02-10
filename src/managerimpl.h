@@ -434,6 +434,18 @@ class ManagerImpl {
     void setRingtoneChoice( const std::string& );
 
     /**
+     * Get the recording path from configuration tree
+     * @return the string correspoding to the path
+     */
+    std::string getRecordPath( void );
+
+    /**
+     * Set the recoding path in the configuration tree
+     * @param a string reresenting the path
+     */
+    std::string setRecordingPath( const std::string );
+
+    /**
      * Tells if the user wants to display the dialpad or not 
      * @return int 1 if dialpad has to be displayed
      *	       0 otherwise

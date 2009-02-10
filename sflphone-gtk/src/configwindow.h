@@ -100,6 +100,11 @@ GtkWidget * create_accounts_tab();
 GtkWidget * create_audio_tab();
 
 /**
+ * Create the recording configuration tab and add it to the main configuration window
+ */
+GtkWidget * create_recording_settings();
+
+/**
  * Display the main configuration window
  */
 void show_config_window();

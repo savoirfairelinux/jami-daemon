@@ -36,7 +36,9 @@ public:
         register_method(ConfigurationManager_adaptor, getRingtoneChoice, _getRingtoneChoice_stub);
         register_method(ConfigurationManager_adaptor, setRingtoneChoice, _setRingtoneChoice_stub);
         register_method(ConfigurationManager_adaptor, getAudioManager, _getAudioManager_stub);
+        register_method(ConfigurationManager_adaptor, getRecordPath, _getRecordPath_stub);
         register_method(ConfigurationManager_adaptor, setAudioManager, _setAudioManager_stub);
+        register_method(ConfigurationManager_adaptor, setRecordPath, _setRecordPath_stub);
         register_method(ConfigurationManager_adaptor, getCodecList, _getCodecList_stub);
         register_method(ConfigurationManager_adaptor, getCodecDetails, _getCodecDetails_stub);
         register_method(ConfigurationManager_adaptor, getActiveCodecList, _getActiveCodecList_stub);
@@ -163,9 +165,19 @@ public:
             { "api", "i", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getRecordPath_args[] = 
+        {
+            { "rec", "s", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument setAudioManager_args[] = 
         {
             { "api", "i", true },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setRecordPath_args[] = 
+        {
+            { "rec", "s", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getCodecList_args[] = 
@@ -393,7 +405,9 @@ public:
             { "getRingtoneChoice", getRingtoneChoice_args },
             { "setRingtoneChoice", setRingtoneChoice_args },
             { "getAudioManager", getAudioManager_args },
+            { "getRecordPath", getRecordPath_args },
             { "setAudioManager", setAudioManager_args },
+            { "setRecordPath", setRecordPath_args },
             { "getCodecList", getCodecList_args },
             { "getCodecDetails", getCodecDetails_args },
             { "getActiveCodecList", getActiveCodecList_args },
@@ -484,7 +498,9 @@ public:
     virtual std::string getRingtoneChoice() = 0;
     virtual void setRingtoneChoice(const std::string& tone) = 0;
     virtual int32_t getAudioManager() = 0;
+    virtual std::string getRecordPath() = 0;
     virtual void setAudioManager(const int32_t& api) = 0;
+    virtual void setRecordPath(const std::string& rec) = 0;
     virtual std::vector< std::string > getCodecList() = 0;
     virtual std::vector< std::string > getCodecDetails(const int32_t& payload) = 0;
     virtual std::vector< std::string > getActiveCodecList() = 0;
@@ -710,12 +726,31 @@ private:
         wi << argout1;
         return reply;
     }
+    ::DBus::Message _getRecordPath_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::string argout1 = getRecordPath();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
     ::DBus::Message _setAudioManager_stub(const ::DBus::CallMessage &call)
     {
         ::DBus::MessageIter ri = call.reader();
 
         int32_t argin1; ri >> argin1;
         setAudioManager(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _setRecordPath_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::string argin1; ri >> argin1;
+        setRecordPath(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

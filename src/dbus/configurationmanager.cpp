@@ -256,6 +256,18 @@ ConfigurationManager::setRingtoneChoice( const std::string& tone )
   Manager::instance().setRingtoneChoice( tone ); 
 }
 
+std::string
+ConfigurationManager::getRecordPath( void )
+{
+  return Manager::instance().getRecordPath( );
+}
+
+void
+ConfigurationManager::setRecordPath( const std::string& recPath)
+{
+  Manager::instance().setRecordPath( recPath );
+}
+
 int32_t
 ConfigurationManager::getDialpad( void )
 {
