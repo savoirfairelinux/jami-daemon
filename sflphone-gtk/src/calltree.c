@@ -514,8 +514,9 @@ create_toolbar ()
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
 
   
-  image = gtk_image_new_from_file( ICONS_DIR "/record.svg");
-  recButton = gtk_tool_button_new (image, _("Record a call"));
+  //image = gtk_image_new_from_file( ICONS_DIR "/record.svg");
+  //recButton = gtk_tool_button_new (image, _("Record a call"));
+  recButton = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
 #if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text(GTK_WIDGET(recButton), _("Record a call"));
 #endif
