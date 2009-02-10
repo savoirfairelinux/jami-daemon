@@ -53,22 +53,22 @@ doc/*.html
 
 *.depend
 *i686-pc-linux-gnu
-/libs/pjproject-1.0/build.mak
-/libs/pjproject-1.0/build/os-auto.mak
-/libs/pjproject-1.0/config.log
-/libs/pjproject-1.0/config.status
-/libs/pjproject-1.0/pjlib-util/build/os-auto.mak
-/libs/pjproject-1.0/pjlib/build/os-auto.mak
-/libs/pjproject-1.0/pjlib/include/pj/compat/m_auto.h
-/libs/pjproject-1.0/pjlib/include/pj/compat/os_auto.h
-/libs/pjproject-1.0/pjlib/include/pj/config_site.h
-/libs/pjproject-1.0/pjmedia/build/os-auto.mak
-/libs/pjproject-1.0/pjmedia/include/pjmedia-codec/config_auto.h
-/libs/pjproject-1.0/pjmedia/include/pjmedia/config_auto.h
-/libs/pjproject-1.0/pjsip/build/os-auto.mak
-/libs/pjproject-1.0/pjsip/include/pjsip/sip_autoconf.h
-/libs/pjproject-1.0/third_party/build/os-auto.mak
-/libs/pjproject-1.0/third_party/build/portaudio/os-auto.mak
+/libs/pjproject-1.0.1/build.mak
+/libs/pjproject-1.0.1/build/os-auto.mak
+/libs/pjproject-1.0.1/config.log
+/libs/pjproject-1.0.1/config.status
+/libs/pjproject-1.0.1/pjlib-util/build/os-auto.mak
+/libs/pjproject-1.0.1/pjlib/build/os-auto.mak
+/libs/pjproject-1.0.1/pjlib/include/pj/compat/m_auto.h
+/libs/pjproject-1.0.1/pjlib/include/pj/compat/os_auto.h
+/libs/pjproject-1.0.1/pjlib/include/pj/config_site.h
+/libs/pjproject-1.0.1/pjmedia/build/os-auto.mak
+/libs/pjproject-1.0.1/pjmedia/include/pjmedia-codec/config_auto.h
+/libs/pjproject-1.0.1/pjmedia/include/pjmedia/config_auto.h
+/libs/pjproject-1.0.1/pjsip/build/os-auto.mak
+/libs/pjproject-1.0.1/pjsip/include/pjsip/sip_autoconf.h
+/libs/pjproject-1.0.1/third_party/build/os-auto.mak
+/libs/pjproject-1.0.1/third_party/build/portaudio/os-auto.mak
 
 
 # Ignore sflphone-gtk stuff
