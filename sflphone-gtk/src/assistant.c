@@ -208,11 +208,11 @@ GtkWidget* build_sfl_or_account()
   GtkWidget* sfl;
   GtkWidget* cus;
 
-  wiz->sflphone_org = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Account") , _("Choose SFLphone an account or a custom one"));
+  wiz->sflphone_org = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Account") , _("Please select one of the following option:"));
 
-  sfl = gtk_radio_button_new_with_label(NULL, "sflphone.org account");
+  sfl = gtk_radio_button_new_with_label(NULL, "Create a free SIP/IAX2 account on sflphone.org");
   gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , sfl , TRUE, TRUE, 0);
-  cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), "Custom SIP or IAX2 account");
+  cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), "Register an existing SIP or IAX2 account");
   gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , cus , TRUE, TRUE, 0);
   g_signal_connect(G_OBJECT( sfl ) , "clicked" , G_CALLBACK( set_sflphone_org ) , NULL );
 
