@@ -8,53 +8,44 @@
 	<link rel="stylesheet" type="text/css"  href="css/s3Slider.css" media="screen"/>
     
     <!--  jquery  -->
-  <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/jquery.js"></script>
 	<script type="text/javascript" src="js/s3Slider.js"></script>
 	<script type="text/javascript" src="js/script.js"> </script>
 	<script type="text/javascript" src="js/animated-menu.js"></script>
-	
-
 </head>
 
 <body>
-
     <div id="header">
-            <!--//Background image -->
+        <!--//Background image -->
     </div>
  
- <div id="global">
+    <div id="global">
 
-  <div id="controller">
-    <!-- Taille fixe ou Dynamique -->
+        <div id="controller">
+        <!-- Taille fixe ou Dynamique -->
 
-    <!-- Nav -->
-    <table class="navTabs" cellpadding="0" cellspacing="0">
-      <tbody valign="top">
-      <tr>
-        <td  class="option">
-          <div id="option">
+        <!-- Nav -->
+        <table class="navTabs" cellpadding="0" cellspacing="0">
+            <tbody valign="top">
+                <tr>
+                    <td  class="option">
+                    <div id="option">
+                    </div>
+                </td>
 
-          </div>
-        </td>
-
-        <td  class="navigation">
-          <div id="navigation">
-            <div class="dynamic-nav" style="background: #CDCDCD;" >&nbsp;</div>
-            <ul>
-              <li><a href='contact.php'><span>Contact</span></a></li>
-              <li><a href='http://dev.savoirfairelinux.net/sflphone/'><span>Wiki</span></a></li>
-              <li  class="active"><a href='download.php'><span>Download</span></a>
-              </li>
-              <li><a href='features.php'><span>Features</span></a></li>
-              <li><a href='index.php'><span>Home</span></a>
-              </li>
-            </ul>
-          </div>
-        </td>
-      </tr>
-      </tbody>
+                <td  class="navigation">
+                    <div id="navigation">
+                        <div class="dynamic-nav" style="background: #CDCDCD;" >&nbsp;</div>
+                            <ul>
+                                <li><a href='contact.php'><span>Contact</span></a></li>
+                                <li><a href='http://dev.savoirfairelinux.net/sflphone/'><span>Wiki</span></a></li>
+                                <li class="active"><a href='download.php'><span>Download</span></a></li>
+                                <li><a href='features.php'><span>Features</span></a></li>
+                                <li><a href='index.php'><span>Home</span></a></li>
+                            </ul>
+                        </div>
+                </td>
+            </tr>
+        </tbody>
     </table>
    
-
-    
- 
