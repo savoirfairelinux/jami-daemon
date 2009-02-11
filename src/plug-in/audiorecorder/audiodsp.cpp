@@ -39,7 +39,8 @@ AudioDSP::~AudioDSP()
 
 float AudioDSP::getRMS(int data)
 {
-  printf("AudioDSP::getRMS() : bufPointer_ %i \n ", bufPointer_);
+  // printf("AudioDSP::getRMS() : bufPointer_ %i \n ", bufPointer_);
+  printf("AudioDSP::getRMS() : %i \n", data);
   circBuffer_[bufPointer_++] = (float)data;
   
   if(bufPointer_ >= bufferLength_)
@@ -56,12 +57,12 @@ float AudioDSP::computeRMS()
 
   
   for(int i = 0; i < bufferLength_; i++){
-    printf("AudioDSP::computeRMS() : i_ %i \n ", i);
+    // printf("AudioDSP::computeRMS() : i_ %i \n ", i);
     rms += (float)(circBuffer_[i]*circBuffer_[i]);
   }
   rms = sqrt(rms / (float)bufferLength_);
 
-  printf("AudioDSP::computeRMS() : RMS VALUE: %f \n", rms);
+  // printf("AudioDSP::computeRMS() : RMS VALUE: %f \n", rms);
   return rms;
  
 }

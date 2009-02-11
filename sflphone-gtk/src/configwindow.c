@@ -718,8 +718,7 @@ create_recording_settings ()
     
     // folder chooser button
     folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( folderChooser) , 
-                        (strcmp(dftPath,"")==0)?g_get_home_dir():dftPath);
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( folderChooser), dftPath);
     gtk_table_attach(GTK_TABLE(table), folderChooser, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     g_signal_connect( G_OBJECT( folderChooser ) , "selection_changed" , G_CALLBACK( record_path_changed ) , NULL );
 
