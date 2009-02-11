@@ -26,6 +26,10 @@
 #include <sstream>
 
 #include "plug-in/plugin.h"
+#include "audiodsp.h"
+
+// class AudioDSP;
+
 using namespace std;
 
 typedef std::string CallID;
@@ -182,7 +186,12 @@ protected:
    */
   std::string savePath_;
 
-
+  
+  /**
+   * AudioDSP test (compute RMS value)
+   */
+  AudioDSP dsp;
+ 
 };
 
 #endif // _AUDIO_RECORD_H

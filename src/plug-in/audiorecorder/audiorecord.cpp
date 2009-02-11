@@ -430,6 +430,8 @@ void AudioRecord::recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int 
       for (int k=0; k<nSamples_1; k++){
       
         mixBuffer_[k] = (buffer_1[k]+buffer_2[k])/2;
+    
+        dsp.getRMS(mixBuffer_[k]);
       
         if ( fwrite(&buffer_1[k], 2, 1, fp) != 1)
           _debug("AudioRecord: Could not record data!\n");

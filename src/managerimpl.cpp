@@ -1029,6 +1029,7 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
+  fill_config_str(RECORD_PATH,DFT_RECORD_PATH);
 
   section = PREFERENCES;
   fill_config_str(ZONE_TONE, DFT_ZONE);

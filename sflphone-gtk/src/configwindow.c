@@ -714,6 +714,7 @@ create_recording_settings ()
     label = gtk_label_new_with_mnemonic(_("_Destination folder"));
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+
     
     // folder chooser button
     folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
