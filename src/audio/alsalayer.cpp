@@ -459,7 +459,7 @@ AlsaLayer::read( void* buffer, int toCopy)
                 startCaptureStream ();
                 break;
             default:
-                _debugAlsa("%s\n", snd_strerror(samples));
+                //_debugAlsa("%s\n", snd_strerror(samples));
                 break;
         }
         return 0;
