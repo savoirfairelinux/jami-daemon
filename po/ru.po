@@ -145,7 +145,7 @@ msgstr "Мастер настройки SFLphone"
 #: ../sflphone-gtk/src/assistant.c:176
 #, fuzzy
 msgid "SFLphone 0.9.2"
-msgstr "SFLphone 0.8"
+msgstr "SFLphone 0.9.2"
 
 #: ../sflphone-gtk/src/assistant.c:176
 msgid "Welcome to SFLphone!"
@@ -284,7 +284,7 @@ msgstr "Звуковые файлы"
 
 #: ../sflphone-gtk/src/audioconf.c:770
 msgid "_Activate silence detection"
-msgstr ""
+msgstr "Включить детектор тишины"
 
 #: ../sflphone-gtk/src/audioconf.c:798
 msgid "Sound Manager"
@@ -499,20 +499,16 @@ msgstr "Поиск"
 #: ../sflphone-gtk/src/mainwindow.c:69
 #, fuzzy
 msgid "There is one call in progress."
-msgstr ""
-"<b>Звонок ещё не окончен</b>\n"
-"Вы уверенны что хотите выйти?"
+msgstr "Звонок ещё не окончен"
 
 #: ../sflphone-gtk/src/mainwindow.c:73
 #, fuzzy
 msgid "There are calls in progress."
-msgstr ""
-"<b>Несколько звонков ещё не окончены</b>\n"
-"Вы уверенны что хотите выйти?"
+msgstr "Несколько звонков ещё не окончены"
 
 #: ../sflphone-gtk/src/mainwindow.c:82
 msgid "Do you still want to quit?"
-msgstr ""
+msgstr "Вы уверенны что хотите выйти?"
 
 #: ../sflphone-gtk/src/menus.c:135
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
