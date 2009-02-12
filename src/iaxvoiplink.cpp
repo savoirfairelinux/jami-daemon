@@ -429,7 +429,6 @@ IAXVoIPLink::answer(const CallID& id)
     call->setConnectionState(Call::Connected);
     // Start audio
     audiolayer->startStream();
-    audiolayer->flushMic();
 
     return true;
 }
@@ -701,7 +700,6 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
                 }
 
                 Manager::instance().peerAnsweredCall(id);
-                audiolayer->flushMic();
                 // start audio here?
             } else {
                 // deja connecté ?
@@ -805,7 +803,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall* call)
         // resample
         nbInt16 = converter->upsampleData( spkrDataDecoded , spkrDataConverted , ac->getClockRate() , audiolayer->getSampleRate() , nbSample_);
 
-        //audiolayer->playSamples( spkrDataConverted , nbInt16 * sizeof(SFLDataFormat), true);
+        /* Write the data to the mic ring buffer */
         audiolayer->putMain (spkrDataConverted , nbInt16 * sizeof(SFLDataFormat));
 
     } else {
