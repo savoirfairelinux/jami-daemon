@@ -308,6 +308,7 @@ sflphone_pick_up()
 				(void) time(&selectedCall->_stop);
 				break;
 			case CALL_STATE_CURRENT:
+                        case CALL_STATE_RECORD:
 				sflphone_new_call();
 				break;
 			case CALL_STATE_RINGING:
