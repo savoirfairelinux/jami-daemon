@@ -11,10 +11,11 @@ $.fn.animatedMenu = function(){
       var activePos;
       $(element).children('li.active:first').each(
               function(){
-                activePos = { left: this.offsetLeft, top: this.offsetTop, width: this.offsetWidth, height: this.offsetHeight}
+                this.opacity = 0;
+                activePos = { left: this.offsetLeft, top: this.offsetTop, width: this.offsetWidth, height: this.offsetHeight, opacity: 0}
               }
             );
-      $('div.dynamic-nav').hide(0,function(){$(this).animate(activePos,0);});
+      $('div.dynamic-nav').hide(1,function(){$(this).animate(activePos,1);});
       
       $(element).children('li').hover(
         function(){
@@ -22,10 +23,11 @@ $.fn.animatedMenu = function(){
               left: this.offsetLeft, 
               top: this.offsetTop, 
               width: this.offsetWidth, 
-              height: this.offsetHeight
+              height: this.offsetHeight,
+              opacity: 1
           }
-          
-          $('div.dynamic-nav').show().animate(liPos,200);
+     
+          $('div.dynamic-nav').stop().show().animate(liPos,500);
         },
         function(){
           $('div.dynamic-nav').hide();

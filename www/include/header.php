@@ -8,10 +8,17 @@
 	<link rel="stylesheet" type="text/css"  href="css/s3Slider.css" media="screen"/>
     
     <!--  jquery  -->
-    <script type="text/javascript" src="js/jquery.js"></script>
-	<script type="text/javascript" src="js/s3Slider.js"></script>
-	<script type="text/javascript" src="js/script.js"> </script>
-	<script type="text/javascript" src="js/animated-menu.js"></script>
+  <?php
+    //Inlucde javascript
+    $javascript = array_merge(array(),(array)$javascript);
+    foreach($javascript as $script){
+      echo "<script type='text/javascript' src='js/$script.js'></script>";
+    }
+  //<script type="text/javascript" src="js/jquery.js"></script>
+	//<script type="text/javascript" src="js/s3Slider.js"></script>
+	//<script type="text/javascript" src="js/script.js"> </script>
+	//<script type="text/javascript" src="js/animated-menu.js"></script>
+  ?>
 </head>
 
 <body>
@@ -37,15 +44,14 @@
                     <div id="navigation">
                         <div class="dynamic-nav" style="background: #CDCDCD;" >&nbsp;</div>
                             <ul>
-                                <li><a href='contact.php'><span>Contact</span></a></li>
-                                <li><a href='http://dev.savoirfairelinux.net/sflphone/'><span>Wiki</span></a></li>
-                                <li class="active"><a href='download.php'><span>Download</span></a></li>
-                                <li><a href='features.php'><span>Features</span></a></li>
-                                <li><a href='index.php'><span>Home</span></a></li>
+                                <li <?php echo ($name == 'contact')?'class="active"':"" ?>><a href='contact.php'><span>Contact</span></a></li>
+                                <li <?php echo ($name == 'wiki')?'class="active"':"" ?>><a href='http://dev.savoirfairelinux.net/sflphone/'><span>Wiki</span></a></li>
+                                <li <?php echo ($name == 'download')?'class="active"':"" ?>><a href='download.php'><span>Download</span></a></li>
+                                <li <?php echo ($name == 'feature')?'class="active"':"" ?>><a href='features.php'><span>Features</span></a></li>
+                                <li <?php echo ($name == 'home')?'class="active"':"" ?>><a href='index.php'><span>Home</span></a></li>
                             </ul>
                         </div>
                 </td>
             </tr>
         </tbody>
     </table>
-   
