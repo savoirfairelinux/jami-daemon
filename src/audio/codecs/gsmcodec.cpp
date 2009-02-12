@@ -52,6 +52,7 @@ public:
   }
 
   virtual int	codecDecode	(short * dst, unsigned char * src, unsigned int size){
+    // _debug("Decoded by gsm \n");
     (void)size;
     if(gsm_decode(_decode_gsmhandle, (gsm_byte*)src, (gsm_signal*)dst) < 0)
       printf("ERROR: gsm_decode\n");
@@ -59,6 +60,8 @@ public:
   }
   
   virtual int	codecEncode	(unsigned char * dst, short * src, unsigned int size){
+        
+    // _debug("Encoded by gsm \n");
 	(void)size;
 	gsm_encode(_encode_gsmhandle, (gsm_signal*)src, (gsm_byte*) dst);
     	return 33;
