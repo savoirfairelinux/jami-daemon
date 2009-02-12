@@ -25,15 +25,15 @@ include('include/header.php');
             <td><img class="logo" src="img/logos/small/ubuntu.png" alt="Ubuntu downloads" /></td>
             <td>
               <ul style="margin:10px; padding:5px;">
-                <li>Ubuntu 8.10 "Intrepid Ibex" <a href="http://www.sflphone.org/debian/dists/intrepid/universe/binary-i386/sflphone_0.9.3-0ubuntu1_i386.deb">i386</a> | <a href="http://www.sflphone.org/debian/dists/intrepid/universe/binary-amd64/sflphone_0.9.3-0ubuntu1_amd64.deb" >amd64</a>
+                <li>Ubuntu 8.10 "Intrepid Ibex" <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-i386/sflphone_0.9.3-0ubuntu1_i386.deb">i386</a> | <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-amd64/sflphone_0.9.3-0ubuntu1_amd64.deb" >amd64</a>
               </li>
               <li>
-              Ubuntu 8.04 LTS "Hardy Heron" <a href="http://www.sflphone.org/debian/dists/hardy/universe/binary-i386/sflphone_0.9.2-0ubuntu7_i386.deb" >i386</a> | <a href="http://www.sflphone.org/debian/dists/hardy/universe/binary-amd64/sflphone_0.9.2-0ubuntu7_amd64.deb" >amd64</a></li>
+              Ubuntu 8.04 LTS "Hardy Heron" <a href="http://sflphone.org/debian/dists/hardy/universe/binary-i386/sflphone_0.9.2-2ubuntu7_i386.deb" >i386</a> | <a href="http://sflphone.org/debian/dists/hardy/universe/binary-amd64/sflphone_0.9.2-2ubuntu7_amd64.deb" >amd64</a></li>
               </ul>
               <br/>
               <a href="http://dev.savoirfairelinux.net/sflphone/wiki/DebianPackaging">add our repository</a>
-               | <a href="">release note</a>  
-               | <a href="">changelog</a>
+               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#ReleaseNote">release note</a>  
+               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#Changelog">changelog</a>
             </td>
             <td><a href="mailto:emmanuel.milou@savoirfairelinux.com">Emmanuel Milou</a></td>
           </tr>
@@ -42,12 +42,15 @@ include('include/header.php');
             <td>
             <ul style="margin:10px; padding:5px;">
               <li>
-              Fedora 9 "Sulphur" <a href="http://www.sflphone.org/downloads/sflphone-0.9.2-2.i386.rpm" >i386</a><br />
+              Fedora 9 "Sulphur" <a href="http://sflphone.org/downloads/sflphone-0.9.2-2.i386.rpm" >i386</a>
+              </li>
+              <li>
+              Fedora 10 : <i>Soon</i><br />
               </li>
             </ul>
               <a href="http://dev.savoirfairelinux.net/sflphone/wiki/YumRepository">add our repository</a> 
-              | <a href="">release note</a>
-              | <a href="">changelog</a>
+               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#ReleaseNote">release note</a>  
+               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#Changelog">changelog</a>
             </td>
             <td><a href="mailto:emmanuel.milou@savoirfairelinux.com">Emmanuel Milou</a></td>
           </tr>

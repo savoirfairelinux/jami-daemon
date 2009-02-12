@@ -407,10 +407,14 @@ void set_sip_infos_sentivite(gboolean b) {
 
 void prefill_sip(void) {
   if (use_sflphone_org == 1) {
+    char alias[400];
     rest_account ra = get_rest_account(SFLPHONE_ORG_SERVER);
     if (ra.success) {
       set_sip_infos_sentivite(FALSE);
-      gtk_entry_set_text (GTK_ENTRY(wiz->sip_alias), SFLPHONE_ORG_ALIAS);
+      strcpy(alias,ra.user);
+      strcat(alias,"@");
+      strcat(alias,"sip.sflphone.org");
+      gtk_entry_set_text (GTK_ENTRY(wiz->sip_alias),alias );
       gtk_entry_set_text (GTK_ENTRY(wiz->sip_server), SFLPHONE_ORG_SERVER);
       gtk_entry_set_text (GTK_ENTRY(wiz->sip_username), ra.user);
       gtk_entry_set_text (GTK_ENTRY(wiz->sip_password), ra.passwd);
