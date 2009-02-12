@@ -14,7 +14,7 @@ SPEEX_LIB = libcodec_speex.so
 libcodec_speex_so_SOURCES = speexcodec.cpp
 libcodec_speex_so_CFLAGS = -fPIC -g -Wall
 libcodec_speex_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_speex_so_LDFLAGS = --shared -lc -lspeex
+libcodec_speex_so_LDFLAGS = --shared -lc -lspeex -lspeexdsp -lm
 INSTALL_SPEEX_RULE = install-libcodec_speex_so
 endif
 
