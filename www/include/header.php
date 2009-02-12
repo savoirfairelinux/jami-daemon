@@ -5,8 +5,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>SFLphone - Official Website</title>
     <link rel="stylesheet" type="text/css" id="style1" href="css/style1.css" />
-	<link rel="stylesheet" type="text/css"  href="css/s3Slider.css" media="screen"/>
-    
+    <link rel="stylesheet" type="text/css"  href="css/s3Slider.css" media="screen"/>
+    <link rel="shortcut icon" href="favicon.ico" /> 
     <!--  jquery  -->
   <?php
     //Inlucde javascript
