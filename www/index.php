@@ -1,5 +1,6 @@
 <?php
-
+$name = 'home';
+$javascript = array('jquery','s3Slider','script','animated-menu');
 include('include/header.php');
 
 ?>

@@ -1,4 +1,6 @@
 <?php
+$name = 'contact';
+$javascript = array('jquery','animated-menu');
 
 include('include/header.php');
 

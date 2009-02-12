@@ -1,4 +1,6 @@
 <?php
+$name = 'download';
+$javascript = array('jquery','animated-menu');
 
 include_once('utils.php');
 
