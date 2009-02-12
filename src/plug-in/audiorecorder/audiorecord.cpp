@@ -56,12 +56,14 @@ void AudioRecord::setSndSamplingRate(int smplRate){
 
 void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path){
  
-    std::string fName;
-
-    fileType_ = type;
+  std::string fName;
+ 
+  fileType_ = type;
   sndFormat_ = format;
   channels_ = 1;
   sndSmplRate_ = sndSmplRate;
+
+  
   
   if (fileType_ == FILE_RAW){
      if ( strstr(fileName_, ".raw") == NULL){
@@ -79,7 +81,6 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sn
    fName = fileName_;
    savePath_ = path + "/";
    savePath_.append(fName);
-
 }
 
 void AudioRecord::openFile(){
@@ -121,6 +122,8 @@ void AudioRecord::closeFile() {
     fclose(fp);
   else if (fileType_ == FILE_WAV)
     this->closeWavFile();
+
+  
 
 }
 
@@ -331,7 +334,7 @@ void AudioRecord::closeWavFile()
     _debug("AudioRecord:: Can't closeWavFile, a file has not yet been opened!\n");
     return;
   }
- 
+  /*
   _debug("AudioRecord::closeWavFile() \n");
 
   if ( fclose( fp ) != 0)
@@ -344,7 +347,7 @@ void AudioRecord::closeWavFile()
     _debug("AudioRecord::closeWavFile() : could not open WAV file rb+!\n");
     return;
   }
-
+  */
 
   SINT32 bytes = byteCounter_ * channels_;
   fseek(fp, 40, SEEK_SET); // jump to data length
