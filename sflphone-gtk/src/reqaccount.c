@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2009 Jean Schurger <jean@schurger.org>
- *  and Savoir-Faire Linux inc.
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Author Jean Schurger <jean.schurger@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,25 +43,19 @@ int req(char *host, int port, char *req, char *ret) {
   int s;
   struct sockaddr_in servSockAddr;
   struct hostent *servHostEnt;
-  long hostAddr;
-  long status;
-  int length, i;
+  long int length=0;
+  long int status=0;
+  int i=0;
   FILE *f;
   char buf[1024];
   
   bzero(&servSockAddr, sizeof(servSockAddr));
-  hostAddr = inet_addr(host);
-
-  if ((long)hostAddr != (long)-1)
-    bcopy(&hostAddr, &servSockAddr.sin_addr, sizeof(hostAddr));
-  else {
-    servHostEnt = gethostbyname(host);
-    if (servHostEnt == NULL) {
+  servHostEnt = gethostbyname(host);
+  if (servHostEnt == NULL) {
       strcpy(ret, "gethostbyname");
       return -1;
-    }
-    bcopy(servHostEnt->h_addr, &servSockAddr.sin_addr, servHostEnt->h_length);
   }
+  bcopy((char *)servHostEnt->h_addr, (char *)&servSockAddr.sin_addr, servHostEnt->h_length);
   servSockAddr.sin_port = htons(port);
   servSockAddr.sin_family = AF_INET;
   
@@ -70,8 +64,8 @@ int req(char *host, int port, char *req, char *ret) {
     return -1;
   }
   
-  if(connect(s, (const struct sockaddr *) &servSockAddr,
-	     (socklen_t) sizeof(servSockAddr)) < 0 ) {
+  if(connect(s, (const struct sockaddr *) &servSockAddr, (socklen_t) sizeof(servSockAddr)) < 0 ) {
+    perror("foo");
     strcpy(ret, "connect");
     return -1;
   }
@@ -109,6 +103,7 @@ rest_account get_rest_account(char *host) {
   char ret[4096];
   rest_account ra;
   bzero(ret, sizeof(ret));
+	printf("HOST: %s\n", host);
   if (req(host, 80, "GET /rest/accountcreator", ret) != -1) {
     strcpy(ra.user, strtok(ret, "\n"));
     strcpy(ra.passwd, strtok(NULL, "\n"));\
@@ -117,6 +112,7 @@ rest_account get_rest_account(char *host) {
     ra.success = 0;
     strcpy(ra.reason, ret);
   }
+  puts(ret);
   return ra;
 }
 
