@@ -298,7 +298,7 @@ msgstr ""
 
 #: ../sflphone-gtk/src/audioconf.c:823
 msgid "Noise reduction"
-msgstr ""
+msgstr "Reducción de ruidos"
 
 #: ../sflphone-gtk/src/audioconf.c:830
 msgid "Ringtones"
@@ -307,7 +307,7 @@ msgstr "_Permitir los ringtones"
 #: ../sflphone-gtk/src/calltree.c:209
 #, fuzzy, c-format
 msgid "\"Voicemail\" <%s>"
-msgstr "_Numero de Caja de Voz"
+msgstr "\"Buzón de Voz\" <%s>"
 
 #: ../sflphone-gtk/src/calltree.c:431 ../sflphone-gtk/src/calltree.c:433
 msgid "Place a call"
