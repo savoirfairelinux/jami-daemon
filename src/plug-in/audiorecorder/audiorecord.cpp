@@ -54,7 +54,7 @@ void AudioRecord::setSndSamplingRate(int smplRate){
   sndSmplRate_ = smplRate;  
 }
 
-void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path){
+void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path, std::string id){
  
   std::string fName;
  
@@ -62,23 +62,25 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sn
   sndFormat_ = format;
   channels_ = 1;
   sndSmplRate_ = sndSmplRate;
+  call_id_ = id;
 
+  fName = fileName_;
+  fName.append("-"+call_id_);
   
   
   if (fileType_ == FILE_RAW){
      if ( strstr(fileName_, ".raw") == NULL){
        printf("AudioRecord::openFile::concatenate .raw file extension: name : %s \n", fileName_); 
-       strcat(fileName_, ".raw");
+       fName.append(".raw");
      }
    }
    else if (fileType_ == FILE_WAV){
      if ( strstr(fileName_, ".wav") == NULL){ 
        printf("AudioRecord::openFile::concatenate .wav file extension: name : %s \n", fileName_);
-       strcat(fileName_, ".wav");
+       fName.append(".wav");
      }
    }
 
-   fName = fileName_;
    savePath_ = path + "/";
    savePath_.append(fName);
 }
