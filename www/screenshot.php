@@ -37,7 +37,9 @@ include('include/header.php');
           array('incoming-call.png','Incoming call'),
           array('main-history.png','Call history'),
           array('main-history-opt.png','Call history options'),
-          array('main-transfer.png','Call transfer')          
+          array('main-transfer.png','Call transfer'),
+          array('account-edit.png','Account add dialog'),
+          array('account-add.png','Account edit dialog')          
         );
         
         
@@ -57,56 +59,54 @@ include('include/header.php');
         I should thank all the jQuery team and users for making one of the most awesome javascript library out there.
         http://jquery.org
     -->
-    <script type="text/javascript"> 
-      //jQuery(function($) { $('ul.gallery').galleria(); }); 
-      	
-	jQuery(function($) {
+    <script type="text/javascript">       	
+	    jQuery(function($) {
 		
-		$('.gallery_demo_unstyled').addClass('gallery_demo'); // adds new class name to maintain degradability
+		    $('.gallery_demo_unstyled').addClass('gallery_demo'); // adds new class name to maintain degradability
 		
-		$('ul.gallery').galleria({
-			history   : true, // activates the history object for bookmarking, back-button etc.
-			clickNext : true, // helper for making the image clickable
-			insert    : '#main_image', // the containing selector for our main image
-			onImage   : function(image,caption,thumb) { // let's add some image effects for demonstration purposes
+		    $('ul.gallery').galleria({
+			    history   : true, // activates the history object for bookmarking, back-button etc.
+			    clickNext : true, // helper for making the image clickable
+			    insert    : '#main_image', // the containing selector for our main image
+			    onImage   : function(image,caption,thumb) { // let's add some image effects for demonstration purposes
 				
-				// fade in the image & caption
-				if(! ($.browser.mozilla && navigator.appVersion.indexOf("Win")!=-1) ) { // FF/Win fades large images terribly slow
-					image.css('display','none').fadeIn(1000);
-				}
-				caption.css('display','none').fadeIn(1000);
+				    // fade in the image & caption
+				    if(! ($.browser.mozilla && navigator.appVersion.indexOf("Win")!=-1) ) { // FF/Win fades large images terribly slow
+					    image.css('display','none').fadeIn(1000);
+				    }
+				    caption.css('display','none').fadeIn(1000);
 				
-				// fetch the thumbnail container
-				var _li = thumb.parents('li');
+				    // fetch the thumbnail container
+				    var _li = thumb.parents('li');
 				
-				// fade out inactive thumbnail
-				_li.siblings().children('img.selected').fadeTo(500,0.3);
+				    // fade out inactive thumbnail
+				    _li.siblings().children('img.selected').fadeTo(500,0.3);
 				
-				// fade in active thumbnail
-				thumb.fadeTo('fast',1).addClass('selected');
+				    // fade in active thumbnail
+				    thumb.fadeTo('fast',1).addClass('selected');
 				
-				// add a title for the clickable image
-				image.attr('title','Next image >>');
-			},
-			onThumb : function(thumb) { // thumbnail effects goes here
+				    // add a title for the clickable image
+				    image.attr('title','Next image >>');
+			    },
+			    onThumb : function(thumb) { // thumbnail effects goes here
 				
-				// fetch the thumbnail container
-				var _li = thumb.parents('li');
+				    // fetch the thumbnail container
+				    var _li = thumb.parents('li');
 				
-				// if thumbnail is active, fade all the way.
-				var _fadeTo = _li.is('.active') ? '1' : '0.3';
+				    // if thumbnail is active, fade all the way.
+				    var _fadeTo = _li.is('.active') ? '1' : '0.3';
 				
-				// fade in the thumbnail when finnished loading
-				thumb.css({display:'none',opacity:_fadeTo}).fadeIn(1500);
+				    // fade in the thumbnail when finnished loading
+				    thumb.css({display:'none',opacity:_fadeTo}).fadeIn(1500);
 				
-				// hover effects
-				thumb.hover(
-					function() { thumb.fadeTo('fast',1); },
-					function() { _li.not('.active').children('img').fadeTo('fast',0.3); } // don't fade out if the parent is active
-				)
-			}
-		});
-	});
+				    // hover effects
+				    thumb.hover(
+					    function() { thumb.fadeTo('fast',1); },
+					    function() { _li.not('.active').children('img').fadeTo('fast',0.3); } // don't fade out if the parent is active
+				    )
+			    }
+		    });
+	    });
 
     </script>
 <?php

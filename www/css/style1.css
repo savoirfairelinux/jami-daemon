@@ -532,4 +532,10 @@ code {
   padding: 3px;
 }
 
+.discover-image {
+  bottom: -50px;
+  left: -50px;
+  position: relative;
+}
+
 
