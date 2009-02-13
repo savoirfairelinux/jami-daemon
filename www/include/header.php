@@ -14,6 +14,10 @@
     foreach($javascript as $script){
       echo "<script type='text/javascript' src='js/$script.js'></script>";
     }
+    $css = array_merge(array(),(array)$css);
+    foreach($css as $style){
+      echo "<link rel='stylesheet' type='text/css' href='css/$style.css' />";
+    }
   //<script type="text/javascript" src="js/jquery.js"></script>
 	//<script type="text/javascript" src="js/s3Slider.js"></script>
 	//<script type="text/javascript" src="js/script.js"> </script>
@@ -47,6 +51,7 @@
                                 <li <?php echo ($name == 'contact')?'class="active"':"" ?>><a href='contact.php'><span>Contact</span></a></li>
                                 <li <?php echo ($name == 'wiki')?'class="active"':"" ?>><a href='http://dev.savoirfairelinux.net/sflphone/'><span>Wiki</span></a></li>
                                 <li <?php echo ($name == 'download')?'class="active"':"" ?>><a href='download.php'><span>Download</span></a></li>
+                                <li <?php echo ($name == 'screenshot')?'class="active"':"" ?>><a href='screenshot.php'><span>Screenshots</span></a></li>
                                 <li <?php echo ($name == 'feature')?'class="active"':"" ?>><a href='features.php'><span>Features</span></a></li>
                                 <li <?php echo ($name == 'home')?'class="active"':"" ?>><a href='index.php'><span>Home</span></a></li>
                             </ul>
