@@ -129,7 +129,7 @@ body {
 
 #controller {
 	margin: 0 auto;
-	min-width: 1000px;
+	/* min-width: 1000px; */
 	width: 92%;
 }
 
@@ -251,6 +251,7 @@ body {
 	border: 1px dashed #ddd;
 	padding: 5px;
 	margin-top:15px;
+	clear: both;
 }
 
 #foot {
