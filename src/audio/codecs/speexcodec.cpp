@@ -21,6 +21,7 @@
 #include "audiocodec.h"
 #include <cstdio>
 #include <speex/speex.h>
+#include <speex/speex_preprocess.h>
 
 
 

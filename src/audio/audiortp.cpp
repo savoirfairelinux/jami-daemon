@@ -30,7 +30,6 @@
 #include <dlfcn.h>
 #include <iostream>
 #include <sstream>
-#include <speex/speex_preprocess.h>
 
 #include "../global.h"
 #include "../manager.h"
