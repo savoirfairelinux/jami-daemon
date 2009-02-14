@@ -43,7 +43,7 @@ public:
 
   void setSndSamplingRate(int smplRate);
 
-  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
+  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path, std::string id);
 
   /** 
    * Check if no otehr file is opened, then create a new one
@@ -186,6 +186,7 @@ protected:
    */
   std::string savePath_;
 
+  std::string call_id_;
   
   /**
    * AudioDSP test (compute RMS value)

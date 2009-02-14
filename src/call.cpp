@@ -41,7 +41,7 @@ Call::Call(const CallID& id, Call::CallType type)
     FILE_TYPE fileType = FILE_WAV;
     SOUND_FORMAT soundFormat = INT16;
 
-    recAudio.setRecordingOption(fileType,soundFormat,44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH));
+    recAudio.setRecordingOption(fileType,soundFormat,44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH),id);
     _debug("CALL::Constructor for this clss is called \n");    
 }
 

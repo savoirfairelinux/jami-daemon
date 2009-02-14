@@ -24,6 +24,7 @@
 #include <speex/speex_preprocess.h>
 
 
+
 class Speex : public AudioCodec{
 public:
 	Speex(int payload=0)
@@ -47,21 +48,10 @@ public:
         Speex& operator=(const Speex&);
 
 	void initSpeex() { 
-          int temp = 1;
-          int temp10 = 10;
-          int db = -10;
-             
-          int *enable;
-          enable = &temp;
-          
-          int *quality;
-          quality = &temp10;
-
-          int *complex;
-          complex = &temp10;
-
-          int *attenuation;
-          attenuation = &db;
+          int enable = 1;
+          int quality = 10;
+          int complex = 10;
+          int attenuation = -10;
          
 	/*
   	  if (_clockRate < 16000 ) {
@@ -83,20 +73,20 @@ public:
 	  // Init the encoder struct
   	  speex_bits_init(&_speex_enc_bits);
   	  _speex_enc_state = speex_encoder_init(_speexModePtr);
-          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_VAD, enable);
-          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_DTX, enable);
-          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_VBR_QUALITY, quality);
-          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_COMPLEXITY, complex);
+          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_VAD, &enable);
+          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_DTX, &enable);
+          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_VBR_QUALITY, &quality);
+          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_COMPLEXITY, &complex);
 
           // Init the decoder struct
   	  speex_decoder_ctl(_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
 
           // Init the preprocess struct
           _preprocess_state = speex_preprocess_state_init(_speex_frame_size,_clockRate);
-          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_DENOISE, enable);
-          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, attenuation);
-          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_VAD, enable);
-          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_AGC, enable);
+          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_DENOISE, &enable);
+          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &attenuation);
+          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_VAD, &enable);
+          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_AGC, &enable);
           
         }
 
