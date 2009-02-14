@@ -3,5 +3,6 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libaudiorecorder.la
 
 libaudiorecorder_la_SOURCES = \
-		audiorecord.cpp 
-		libsndfile.h
+		audiorecord.cpp \
+		audiodsp.h \
+		audiodsp.cpp

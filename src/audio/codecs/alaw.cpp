@@ -36,6 +36,7 @@ public:
         virtual ~Alaw(){}
 	virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
 	{
+          // _debug("Decoded by alaw \n");
 		int16* end = dst+size;
         	while(dst<end)
                 	*dst++ = ALawDecode(*src++);
@@ -44,6 +45,7 @@ public:
 
 	virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
 	{	
+          // _debug("Encoded by alaw \n");
 		size >>= 1;
         	uint8* end = dst+size;
         	while(dst<end)

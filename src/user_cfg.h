@@ -24,7 +24,7 @@
 
 #include <stdlib.h>
 
-#define HOMEDIR	(getenv ("HOME"))		      /** Home directory */
+#define HOMEDIR	(getenv ("HOME"))	              /** Home directory */
 
 #define DIR_SEPARATOR_CH '/'			      /** Directory separator string */
 #define DIR_SEPARATOR_STR "/"			      /** Directory separator char */
@@ -43,6 +43,7 @@
 #define RING_CHOICE		"Rings.ringChoice"    /** Ringtone */
 #define VOLUME_SPKR		"Volume.speakers"     /** Speaker volume */
 #define VOLUME_MICRO		"Volume.micro"	      /** Mic volume */
+#define RECORD_PATH             "Record.path"          /** Recording path */
 
 #define VIDEO			"Video"		      /** Section Video */
 
@@ -91,7 +92,8 @@
 #define DFT_EXPIRE_VALUE	"180"			/** Default expire value for registration */
 #define DFT_AUDIO_MANAGER	"1"			/** Default audio manager */
 #define DFT_SIP_PORT            "5060"
-#define DFT_STUN_ENABLE     "0"
+#define DFT_STUN_ENABLE         "0"
+#define DFT_RECORD_PATH         HOMEDIR
 
 #ifdef USE_ZEROCONF
 #define CONFIG_ZEROCONF_DEFAULT_STR "1"			/** Default Zero configuration networking module value */

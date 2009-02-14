@@ -226,6 +226,7 @@ AC_ARG_WITH([speex],
 LIBSPEEX=
 AS_IF([test "x$with_speex" != xno],
   [AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Unable to find the libspeex headers (you may need to install the dev package).  You may use --without-speex to compile without speex codec support.]))]
+  [AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package).  You may use --without-speex to compile without speex codec support.]))]
   [AC_CHECK_LIB([speex], [speex_decode_int],
     [],
     [AC_MSG_FAILURE(

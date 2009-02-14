@@ -104,7 +104,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     ost::MutexLock lock( _mutex );
     
     std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
-    std::string pcmc = buildDeviceTopo( PCM_PLUGHW , indexIn , 0);
+    std::string pcmc = buildDeviceTopo( plugin , indexIn , 0);
 
     return open_device( pcmp , pcmc , stream);
 }
@@ -134,21 +134,46 @@ AlsaLayer::stopStream(void)
 
     int
 AlsaLayer::canGetMic()
-{
+{   
+    int avail;
+
+    if (!_CaptureHandle)
+        return 0;
+
+    avail = snd_pcm_avail_update (_CaptureHandle);
+
+    if (avail == -EPIPE)
+    {
+        stop_capture ();
+        return 0;
+    }
+    else
+        return ((avail<0)?0:avail);
+
+    /*
     if(_CaptureHandle) 
+
         return _micRingBuffer.AvailForGet();
     else
-        return 0;
+        return 0;*/
 }
 
     int 
 AlsaLayer::getMic(void *buffer, int toCopy)
 {
+    /*
     if( _CaptureHandle ){
         return _micRingBuffer.Get(buffer, toCopy,100);
     } 
     else
-        return 0;
+        return 0;*/
+   int res = 0;
+   if( _CaptureHandle )
+   {
+       res = read( buffer, toCopy);
+       adjustVolume (buffer, toCopy, SFL_PCM_CAPTURE);
+   }
+   return res;
 }
 
 bool AlsaLayer::isCaptureActive(void) {
@@ -459,7 +484,7 @@ AlsaLayer::read( void* buffer, int toCopy)
                 startCaptureStream ();
                 break;
             default:
-                _debugAlsa("%s\n", snd_strerror(samples));
+                //_debugAlsa("%s\n", snd_strerror(samples));
                 break;
         }
         return 0;
@@ -669,7 +694,7 @@ void AlsaLayer::audioCallback (void)
     
     // Additionally handle the mic's audio stream 
     //if(is_capture_running()){  
-    micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
+    /*micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
     if(micAvailAlsa > 0) {
         micAvailPut = _micRingBuffer.AvailForPut();
         toPut = (micAvailAlsa <= micAvailPut) ? micAvailAlsa : micAvailPut;
@@ -680,7 +705,7 @@ void AlsaLayer::audioCallback (void)
             _micRingBuffer.Put(in, toPut, 100);
         }
         free(in); in=0;
-    }
+    }*/
 }
 
 void* AlsaLayer::adjustVolume( void* buffer , int len, int stream )

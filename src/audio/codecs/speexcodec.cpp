@@ -21,6 +21,8 @@
 #include "audiocodec.h"
 #include <cstdio>
 #include <speex/speex.h>
+#include <speex/speex_preprocess.h>
+
 
 
 class Speex : public AudioCodec{
@@ -32,7 +34,8 @@ public:
         _speex_enc_bits(),
         _speex_dec_state(),
         _speex_enc_state(),
-        _speex_frame_size()
+        _speex_frame_size(),
+        _preprocess_state()
 	{
   	  _clockRate = 8000;
   	  _channel = 1;
@@ -44,7 +47,12 @@ public:
         Speex( const Speex& );
         Speex& operator=(const Speex&);
 
-	void initSpeex() {
+	void initSpeex() { 
+          int enable = 1;
+          int quality = 10;
+          int complex = 10;
+          int attenuation = -10;
+         
 	/*
   	  if (_clockRate < 16000 ) {
     		_speexModePtr = &speex_nb_mode;
@@ -60,14 +68,27 @@ public:
 
 	// Init the decoder struct
   	  speex_bits_init(&_speex_dec_bits);
-  	  _speex_dec_state = speex_decoder_init(_speexModePtr);
-
-	// Init the encoder struct
+  	  _speex_dec_state = speex_decoder_init(_speexModePtr);      
+ 
+	  // Init the encoder struct
   	  speex_bits_init(&_speex_enc_bits);
   	  _speex_enc_state = speex_encoder_init(_speexModePtr);
+          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_VAD, &enable);
+          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_DTX, &enable);
+          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_VBR_QUALITY, &quality);
+          speex_encoder_ctl(_speex_enc_state, SPEEX_SET_COMPLEXITY, &complex);
 
-  	  speex_decoder_ctl(_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size); 
-	}
+          // Init the decoder struct
+  	  speex_decoder_ctl(_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
+
+          // Init the preprocess struct
+          _preprocess_state = speex_preprocess_state_init(_speex_frame_size,_clockRate);
+          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_DENOISE, &enable);
+          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &attenuation);
+          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_VAD, &enable);
+          speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_AGC, &enable);
+          
+        }
 
 	~Speex() 
 	{
@@ -91,6 +112,7 @@ public:
     	  int ratio = 320 / _speex_frame_size;
   	  speex_bits_read_from(&_speex_dec_bits, (char*)src, size);
   	  speex_decode_int(_speex_dec_state, &_speex_dec_bits, dst);
+         
   	  return _speex_frame_size * ratio; 
 	}
 
@@ -98,8 +120,8 @@ public:
 	{
   	  speex_bits_reset(&_speex_enc_bits);
   	  speex_encoder_ctl(_speex_enc_state,SPEEX_SET_SAMPLING_RATE,&_clockRate);
-
-  	  speex_encode_int(_speex_enc_state, src, &_speex_enc_bits);
+  	  speex_preprocess_run(_preprocess_state, src);
+          speex_encode_int(_speex_enc_state, src, &_speex_enc_bits);
   	  int nbBytes = speex_bits_write(&_speex_enc_bits, (char*)dst, size); 
   	  return nbBytes;
 	}
@@ -111,6 +133,7 @@ private:
   	void *_speex_dec_state;
   	void *_speex_enc_state;
   	int _speex_frame_size;
+        SpeexPreprocessState *_preprocess_state;
 };
 
 // the class factories

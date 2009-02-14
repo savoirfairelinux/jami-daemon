@@ -1,4 +1,72 @@
-sflphone (0.9.3-0ubuntu1) intrepid; urgency=low
+sflphone (0.9.3-0ubuntu2) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * Add compilation note in README
+  * Use default ALSA plugin for capture
+  * Fix the ALSA capture problem one more time
+  * Clean up debug messages in dbus.c
+  * Add libspeexdsp dependency
+  * Remove implicit declaration compilation warnings
+  * Fix links in the website, add release note
+  * Change capture for the website front page
+  * Add alsa devel dependency in build-depends control file field
+  * Clean up, indentation, try to handle latency problems in iax/pulseaudio
+  * Remove pjsip generated files from the repo
+  * Use the previous declared curAlias function in accountwindow
+  * Fix bug in history call duration when the call fails
+  * Remove runtime warning in the GTK+ client
+  * Add librsvg2-common dependency to load SVG under KDE
+  * Refresh .gitignore
+  * Update locales files + french translation
+  * Add configuration panel for future noise reduction
+  * Add configuration panel for audio record module
+  * Daemon less verbose; accounts don't try to access STUn options anymore
+  * Fix typo in configwindow
+  * Add content in the official website
+  * use a GTK_STOCK icon for the record button
+  * Complete description text in the assistant manager
+  * Add libtool flags in client configure.ac
+  * Remove unuseful dependency (snd)
+  * Fix SIP transfer problems
+  * Remove previous version of PJSIP from the repo
+  * Upgrade PJSIP to version 1.0.1
+  * Add the new website source in the repository
+
+  [ Loïc Faure-Lacroix ]
+  * Ajout du logo gpl3
+  * Ajout des images
+  * Ajout de la section screenshot pour le site
+  * Ajout du favicon dans le header
+  * Modification des cartes
+
+  [ Alexandre Savard ]
+  * Clean up <speex/libspeexdsp>
+  * Small cleanup
+  * Save Wave fixed
+  * Fix new call button when recording
+  * libspeexdsp added
+  * Recording: default home folder at startup
+  * Minor changes to config window
+  * IAX recording fixed
+  * Set / get recording path, still need some GTK for client
+  * AudioRecord file name format
+  * Now recording in HOME folder
+
+  [ Cyrille Béraud ]
+  * Fix bug in reqaccount.c
+
+  [ Maxime Chambreuil ]
+  * Update spanish translation
+
+  [Yun Liu ]
+  * Update chinese translation 
+
+  [ Hussein Abdallah ]
+  * Update russian translation
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Sat, 14 Feb 2009 13:29:15 -0500
+
+sflphone (0.9.3-0ubuntu1) %system%; urgency=low
 
   * Remove debug
   * Join thread before leaving
@@ -11,7 +79,7 @@ sflphone (0.9.3-0ubuntu1) intrepid; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 06 Feb 2009 19:17:32 -0500
 
-sflphone (0.9.2-2ubuntu9) intrepid; urgency=low
+sflphone (0.9.2-2ubuntu9) %system%; urgency=low
 
   [ Alexandre Savard ]
   * Speex audio codec preprocessing initialization
@@ -39,7 +107,7 @@ sflphone (0.9.2-2ubuntu9) intrepid; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Thu, 05 Feb 2009 18:27:53 -0500
 
-sflphone (0.9.2-2ubuntu8) intrepid; urgency=low
+sflphone (0.9.2-2ubuntu8) %system%; urgency=low
 
   [ Emmanuel Milou ]
   * Update changelogs
@@ -71,9 +139,7 @@ sflphone (0.9.2-2ubuntu8) intrepid; urgency=low
   * Complete singleton pattern for the plugin manager
   * Add -Wno-return-type compilation flag to remove warnings; Update
     version number in configure.ac
-  * Add the dynamic loading for the plugin framework; integate unit
-  * Fix jaunty control file dependency problems
-    tests
+  * Add the dynamic loading for the plugin framework; integate unittest
 
   [ Yun Liu ]
   * Update rpm spec file
@@ -85,7 +151,7 @@ sflphone (0.9.2-2ubuntu8) intrepid; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 04 Feb 2009 14:00:30 -0500
 
-sflphone (0.9.2-2ubuntu7) intrepid; urgency=low
+sflphone (0.9.2-2ubuntu7) %system%; urgency=low
 
   [ Emmanuel Milou ]
   * Update changelog to 0.9.2-6
@@ -107,7 +173,7 @@ sflphone (0.9.2-2ubuntu7) intrepid; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 23 Jan 2009 17:48:13 -0500
 
-sflphone (0.9.2-2ubuntu6) intrepid; urgency=low
+sflphone (0.9.2-2ubuntu6) %system%; urgency=low
 
   [ Emmanuel Milou ]
   * Migrate STUN configuration to the main config window
@@ -141,7 +207,7 @@ sflphone (0.9.2-2ubuntu6) intrepid; urgency=low
 
  -- Emmanuel Milou <manu@sulfur.inside.savoirfairelinux.net>  Fri, 16 Jan 2009 18:19:05 -0500
 
-sflphone (0.9.2-2ubuntu5) intrepid; urgency=low
+sflphone (0.9.2-2ubuntu5) %system%; urgency=low
 
   * Fix memory leak in the pulseaudio callback
   * Update debian package generation script
@@ -157,7 +223,7 @@ sflphone (0.9.2-2ubuntu5) intrepid; urgency=low
 
  -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 14 Jan 2009 21:17:20 -0500
 
-sflphone (0.9.2-2ubuntu4) intrepid; urgency=low
+sflphone (0.9.2-2ubuntu4) %system%; urgency=low
 
   [ Emmanuel Milou ]
   * add german translation
@@ -167,7 +233,7 @@ sflphone (0.9.2-2ubuntu4) intrepid; urgency=low
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Thu, 08 Jan 2009 13:08:51 -0500
 
-sflphone (0.9.2-2ubuntu3) intrepid; urgency=low
+sflphone (0.9.2-2ubuntu3) %system%; urgency=low
 
   [ Emmanuel Milou ]
   * The main thread synchronizes the ringtone thread
@@ -179,13 +245,13 @@ sflphone (0.9.2-2ubuntu3) intrepid; urgency=low
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Tue, 06 Jan 2009 16:18:38 -0500
 
-sflphone (0.9.2-2ubuntu2) intrepid; urgency=low
+sflphone (0.9.2-2ubuntu2) %system%; urgency=low
   
   * Fix bug ticket #129
   
  -- Yun Liu <yun.liu@savoirfairelinux.com>  Wed, 5 Jan 2009 15:54:53 -0500
 
-sflphone (0.9.2-2ubuntu1) intrepid; urgency=low
+sflphone (0.9.2-2ubuntu1) %system%; urgency=low
 
   * Migrate from eXosip library to pjsip
   * Add multiple SIP accounts support

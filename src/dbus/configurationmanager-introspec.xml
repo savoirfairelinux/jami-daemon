@@ -73,9 +73,18 @@
       <arg type="i" name="api" direction="out"/>
     </method>
 
+     <method name="getRecordPath">
+      <arg type="s" name="rec" direction="out"/>
+    </method>
+
     <method name="setAudioManager">
       <arg type="i" name="api" direction="in"/>
     </method>
+
+    <method name="setRecordPath">
+      <arg type="s" name="rec" direction="in"/>
+    </method>
+ 
 
    <!--      ///////////////////////               -->
    

@@ -1029,6 +1029,7 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_str(RING_CHOICE, DFT_RINGTONE);
   fill_config_int(VOLUME_SPKR, DFT_VOL_SPKR_STR);
   fill_config_int(VOLUME_MICRO, DFT_VOL_MICRO_STR);
+  fill_config_str(RECORD_PATH,DFT_RECORD_PATH);
 
   section = PREFERENCES;
   fill_config_str(ZONE_TONE, DFT_ZONE);
@@ -1399,6 +1400,18 @@ ManagerImpl::setRingtoneChoice( const std::string& tone )
 {
   // we save the absolute path 
   setConfig( AUDIO , RING_CHOICE , tone ); 
+}
+
+std::string
+ManagerImpl::getRecordPath( void )
+{
+  return getConfigString( AUDIO, RECORD_PATH );
+}
+
+void 
+ManagerImpl::setRecordPath( const std::string& recPath)
+{
+  setConfig( AUDIO, RECORD_PATH, recPath.substr(7));
 }
 
 int
@@ -1963,13 +1976,6 @@ std::map< std::string, std::string > ManagerImpl::getAccountDetails(const Accoun
   a.insert( std::pair<std::string, std::string>( HOSTNAME, getConfigString(accountID, HOSTNAME) ) );
   a.insert( std::pair<std::string, std::string>( CONFIG_ACCOUNT_MAILBOX, getConfigString(accountID, CONFIG_ACCOUNT_MAILBOX)) );
   
-  // SIP SPECIFIC
-  if( accountType == "SIP")
-  {
-    a.insert( std::pair<std::string, std::string>( SIP_STUN_SERVER, getConfigString(accountID, SIP_STUN_SERVER) ) );
-    a.insert( std::pair<std::string, std::string>( SIP_USE_STUN, getConfigString(accountID, SIP_USE_STUN) == "1" ? "TRUE": "FALSE"));
-  }
-
   return a;
 }
 

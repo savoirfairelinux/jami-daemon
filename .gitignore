@@ -6,7 +6,6 @@
 *.Po
 *.Plo
 *.loT
-Makefile
 *.m4
 Makefile.in
 *.spec
@@ -35,40 +34,56 @@ doc/*.html
 /libtool
 /install-sh
 /stamp-h1
-
-# Ignore QT automatically-rendered stuff
-/src/gui/qt/*moc*.*
-/src/gui/qt/ConfigurationPanel.h
-/src/gui/qt/ConfigurationPanelui.cpp
-/src/gui/qt/qmake_image_collection.cpp
+/Makefile
 
 # Ignore built stuff
-/src/gui/cli/sflphone-cli
-/src/gui/qt/sflphone-qt
 /src/sflphoned
 /src/sflphone
 /src/.libs
 
 /src/dbus/org.sflphone.SFLphone.service
 
+# PJSIP files
 *.depend
 *i686-pc-linux-gnu
-/libs/pjproject-1.0/build.mak
-/libs/pjproject-1.0/build/os-auto.mak
-/libs/pjproject-1.0/config.log
-/libs/pjproject-1.0/config.status
-/libs/pjproject-1.0/pjlib-util/build/os-auto.mak
-/libs/pjproject-1.0/pjlib/build/os-auto.mak
-/libs/pjproject-1.0/pjlib/include/pj/compat/m_auto.h
-/libs/pjproject-1.0/pjlib/include/pj/compat/os_auto.h
-/libs/pjproject-1.0/pjlib/include/pj/config_site.h
-/libs/pjproject-1.0/pjmedia/build/os-auto.mak
-/libs/pjproject-1.0/pjmedia/include/pjmedia-codec/config_auto.h
-/libs/pjproject-1.0/pjmedia/include/pjmedia/config_auto.h
-/libs/pjproject-1.0/pjsip/build/os-auto.mak
-/libs/pjproject-1.0/pjsip/include/pjsip/sip_autoconf.h
-/libs/pjproject-1.0/third_party/build/os-auto.mak
-/libs/pjproject-1.0/third_party/build/portaudio/os-auto.mak
+/libs/pjproject-1.0.1/pjlib-util/build/os-auto.mak
+/libs/pjproject-1.0.1/pjlib/build/os-auto.mak
+/libs/pjproject-1.0.1/pjlib/include/pj/compat/m_auto.h
+/libs/pjproject-1.0.1/pjlib/include/pj/compat/os_auto.h
+/libs/pjproject-1.0.1/pjlib/include/pj/config_site.h
+/libs/pjproject-1.0.1/pjmedia/build/os-auto.mak
+/libs/pjproject-1.0.1/pjmedia/include/pjmedia-codec/config_auto.h
+/libs/pjproject-1.0.1/pjmedia/include/pjmedia/config_auto.h
+/libs/pjproject-1.0.1/pjsip/build/os-auto.mak
+/libs/pjproject-1.0.1/pjsip/include/pjsip/sip_autoconf.h
+/libs/pjproject-1.0.1/third_party/build/os-auto.mak
+/libs/pjproject-1.0.1/third_party/build/portaudio/os-auto.mak
+
+# Makefile
+src/Makefile
+src/dbus/Makefile
+src/config/Makefile
+src/plug-in/Makefile
+src/plug-in/test/Makefile
+src/plug-in/audiorecorder/Makefile
+src/audio/Makefile
+src/audio/codecs/Makefile
+src/audio/codecs/ilbc/Makefile
+doc/Makefile
+man/Makefile
+po/Makefile
+test/Makefile
+ringtones/Makefile
+doc/doxygen/Makefile
+libs/Makefile
+libs/utilspp/Makefile
+libs/stund/Makefile
+libs/utilspp/functor/Makefile
+libs/utilspp/singleton/Makefile
+sflphone-gtk/Makefile
+sflphone-gtk/src/Makefile
+sflphone-gtk/pixmaps/Makefile
+
 
 
 # Ignore sflphone-gtk stuff
@@ -82,12 +97,6 @@ doc/*.html
 /sflphone-gtk/autom4te*
 /sflphone-gtk/sflphone.desktop
 
-
-
-
-# Ignore temp libs stuff
-tools/portaudio
-
 # Ignore sub-modules stuff
 ## libiax2
 /libs/libiax2/doc/html
@@ -99,24 +108,7 @@ tools/portaudio
 /libs/libiax2/iax-config
 /libs/libiax2/configure
 
-## taxidermy
-/libs/taxidermy/*moc*.*
-
-
 
 # Ignore temp files
 *~
-
-# Ignore website stuff
-/www/cache
-/www/config.inc.php
-/www/lighttpd.*
-/doc/images/graphics/*
-
-# Ignore platform packaging temp files
-/platform/debian/changelog
-
-
-# Les foutus .svn
-*.svn*
 

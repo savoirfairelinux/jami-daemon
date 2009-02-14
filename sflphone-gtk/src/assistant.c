@@ -17,6 +17,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <string.h>
+
 #include <assistant.h>
 #include "reqaccount.h"
 
@@ -208,11 +210,11 @@ GtkWidget* build_sfl_or_account()
   GtkWidget* sfl;
   GtkWidget* cus;
 
-  wiz->sflphone_org = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Account") , _("Choose SFLphone an account or a custom one"));
+  wiz->sflphone_org = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Account") , _("Please select one of the following option:"));
 
-  sfl = gtk_radio_button_new_with_label(NULL, "sflphone.org account");
+  sfl = gtk_radio_button_new_with_label(NULL, _("Create a free SIP/IAX2 account on sflphone.org"));
   gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , sfl , TRUE, TRUE, 0);
-  cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), "Custom SIP or IAX2 account");
+  cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), _("Register an existing SIP or IAX2 account"));
   gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , cus , TRUE, TRUE, 0);
   g_signal_connect(G_OBJECT( sfl ) , "clicked" , G_CALLBACK( set_sflphone_org ) , NULL );
 
@@ -407,10 +409,14 @@ void set_sip_infos_sentivite(gboolean b) {
 
 void prefill_sip(void) {
   if (use_sflphone_org == 1) {
+    char alias[400];
     rest_account ra = get_rest_account(SFLPHONE_ORG_SERVER);
     if (ra.success) {
       set_sip_infos_sentivite(FALSE);
-      gtk_entry_set_text (GTK_ENTRY(wiz->sip_alias), SFLPHONE_ORG_ALIAS);
+      strcpy(alias,ra.user);
+      strcat(alias,"@");
+      strcat(alias,"sip.sflphone.org");
+      gtk_entry_set_text (GTK_ENTRY(wiz->sip_alias),alias );
       gtk_entry_set_text (GTK_ENTRY(wiz->sip_server), SFLPHONE_ORG_SERVER);
       gtk_entry_set_text (GTK_ENTRY(wiz->sip_username), ra.user);
       gtk_entry_set_text (GTK_ENTRY(wiz->sip_password), ra.passwd);

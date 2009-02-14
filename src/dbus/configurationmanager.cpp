@@ -36,7 +36,6 @@ const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/Configur
 	std::map< std::string, std::string > 
 ConfigurationManager::getAccountDetails( const std::string& accountID )
 {
-	_debug("ConfigurationManager::getAccountDetails received\n");
 	return Manager::instance().getAccountDetails(accountID);
 }
 
@@ -254,6 +253,18 @@ void
 ConfigurationManager::setRingtoneChoice( const std::string& tone )
 {
   Manager::instance().setRingtoneChoice( tone ); 
+}
+
+std::string
+ConfigurationManager::getRecordPath( void )
+{
+  return Manager::instance().getRecordPath( );
+}
+
+void
+ConfigurationManager::setRecordPath( const std::string& recPath)
+{
+  Manager::instance().setRecordPath( recPath );
 }
 
 int32_t

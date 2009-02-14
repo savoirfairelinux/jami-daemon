@@ -33,6 +33,8 @@
 
 typedef std::string CallID;
 
+class AudioRecord;
+
 class Call{
   public:
     /**

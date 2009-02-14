@@ -18,6 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "call.h"
+#include "manager.h"
 
 Call::Call(const CallID& id, Call::CallType type)
            : _callMutex()
@@ -36,39 +37,11 @@ Call::Call(const CallID& id, Call::CallType type)
            , _peerName()
            , _peerNumber()
 {
-    time_t rawtime;
-    struct tm * timeinfo;
-
-    rawtime = std::time(NULL);
-    timeinfo = localtime ( &rawtime );
-
-    std::stringstream out;
-
-    out << timeinfo->tm_year+1900;
-    if (timeinfo->tm_mon < 9) // january is 01, not 1
-      out << 0;
-    out << timeinfo->tm_mon+1;
-    if (timeinfo->tm_mday < 10) // 01 02 03, not 1 2 3
-      out << 0;
-    out << timeinfo->tm_mday;
-    if (timeinfo->tm_hour < 10) // 01 02 03, not 1 2 3
-      out << 0;
-    out << timeinfo->tm_hour;
-    if (timeinfo->tm_min < 10) // 01 02 03, not 1 2 3
-      out << 0;
-    out << timeinfo->tm_min;
-    if (timeinfo->tm_sec < 10) // 01 02 03,  not 1 2 3
-      out << 0;
-    out << timeinfo->tm_sec;
-
-    _filename = out.str();
-
-    printf("Call::constructor filename for this call %s \n",_filename.c_str());
  
     FILE_TYPE fileType = FILE_WAV;
     SOUND_FORMAT soundFormat = INT16;
-    recAudio.setRecordingOption(_filename.c_str(),fileType,soundFormat,44100);
 
+    recAudio.setRecordingOption(fileType,soundFormat,44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH),id);
     _debug("CALL::Constructor for this clss is called \n");    
 }
 
