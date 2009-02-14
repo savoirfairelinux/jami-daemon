@@ -104,7 +104,7 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
     ost::MutexLock lock( _mutex );
     
     std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
-    std::string pcmc = buildDeviceTopo( PCM_PLUGHW , indexIn , 0);
+    std::string pcmc = buildDeviceTopo( plugin , indexIn , 0);
 
     return open_device( pcmp , pcmc , stream);
 }
