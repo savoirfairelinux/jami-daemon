@@ -23,7 +23,6 @@
 
 #include "call.h"
 #include "sipvoiplink.h"
-#include "audio/codecDescriptor.h"
 
 class AudioCodec;
 
@@ -78,51 +77,13 @@ class SIPCall : public Call
      */
     int  getTid() { return _tid; }
     
+    
     /** 
      * Transaction identifier
      * @param tid SIP transaction id
      */
     void setTid(int tid) { _tid = tid; } 
 
-    /**
-     * Setup incoming call, and verify for errors, before ringing the user.
-     * @param pjsip_rx_data *rdata
-     * @param pj_pool_t *pool
-     * @return bool True on success
-     *		    false otherwise
-     */
-    bool SIPCallInvite(pjsip_rx_data *rdata, pj_pool_t *pool);
-
-    bool SIPCallAnsweredWithoutHold(pjsip_rx_data *rdata);
- 
-    /**
-     * Save IP Address
-     * @param ip std::string 
-     * @return void
-     */
-    void setIp(std::string ip) {_ipAddr = ip;}
-
-    /**
-     * Get the local SDP 
-     * @param void
-     * @return _localSDP pjmedia_sdp_session
-     */
-    pjmedia_sdp_session* getLocalSDPSession( void ) { return _localSDP; }
-    
-    /**
-     * Begin negociation of media information between caller and callee
-     * @param pj_pool_t *pool
-     * @return bool True if ok
-     */
-    bool startNegociation(pj_pool_t *pool);
-
-    /**
-     * Create the localSDP, media negociation and codec information
-     * @param pj_pool_t *pool
-     * @return void
-     */
-    bool createInitialOffer(pj_pool_t *pool);
-    
     void setXferSub(pjsip_evsub* sub) {_xferSub = sub;}
     pjsip_evsub *getXferSub() {return _xferSub;}
     
@@ -131,74 +92,16 @@ class SIPCall : public Call
     
   private:
 
+    int _cid;
+    int _did;
+    int _tid;
+
     // Copy Constructor
     SIPCall(const SIPCall& rh);
 
     // Assignment Operator
     SIPCall& operator=( const SIPCall& rh);
-
-    /**
-     * Get a valid remote SDP or return a 400 bad request response if invalid
-     * @param
-     * @return
-     */
-    pjmedia_sdp_session* getRemoteSDPFromRequest(pjsip_rx_data *rdata);
-
-    /**
-     * Get a valid remote media
-     * @param remote_sdp pjmedia_sdp_session*
-     * @return pjmedia_sdp_media*. A valid sdp_media_t or 0
-     */
-    pjmedia_sdp_media* getRemoteMedia(pjmedia_sdp_session *remote_sdp);
-
-    /**
-     * Set Audio Port and Audio IP from Remote SDP Info
-     * @param remote_med Remote Media info
-     * @param remote_sdp Remote SDP pointer
-     * @return bool True if everything is set correctly
-     */
-    bool setRemoteAudioFromSDP(pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media* remote_med);
-
-    /**
-     * Set Audio Codec with the remote choice
-     * @param remote_med Remote Media info
-     * @return bool True if everything is set correctly
-     */
-    bool setAudioCodecFromSDP(pjmedia_sdp_media* remote_med);
-
-    /** SIP call id */
-    int _cid;
-
-    /** SIP domain id */
-    int _did;
     
-    /** SIP transaction id */
-    int _tid;
-
-    /** Local SDP */
-    pjmedia_sdp_session *_localSDP;
-
-    /** negociator */
-    pjmedia_sdp_neg *_negociator;
-    
-    /**
-     * Set origin information for local SDP
-     */
-    void sdpAddOrigin( void );
-    
-    /**
-     * Set connection information for local SDP
-     */
-    void sdpAddConnectionInfo( void );
-    /**
-     * Set media information including codec for localSDP
-     * @param  pj_pool_t* pool
-     * @return void
-     */
-    void sdpAddMediaDescription(pj_pool_t* pool);
-
-    /** IP address */
-    std::string _ipAddr;
     
     pjsip_evsub *_xferSub;
     pjsip_inv_session *_invSession;

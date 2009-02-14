@@ -33,7 +33,6 @@
 #include <pjnath/stun_config.h>
 ///////////////////////////////
 
-
 class EventThread;
 class SIPCall;
 class AudioRtp;
@@ -42,7 +41,7 @@ class AudioRtp;
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
-#define PJ_LOG_LEVEL 1
+#define PJ_LOG_LEVEL 6
 
 /**
  * @file sipvoiplink.h
@@ -309,7 +308,6 @@ class SIPVoIPLink : public VoIPLink
         static SIPVoIPLink* _instance;
 
         void busy_sleep(unsigned msec);
-        int getModId();
 
         /** 
          * Initialize the PJSIP library

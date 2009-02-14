@@ -29,6 +29,7 @@ sflphoned_SOURCES = \
 		call.cpp \
 		account.cpp \
 		sipcall.cpp \
+		sdp.cpp \
 		$(IAXSOURCES) 
 
 sflphoned_CXXFLAGS = \
@@ -67,7 +68,8 @@ noinst_HEADERS = \
 		accountcreator.h \
         sipvoiplink.h \
 		call.h \
-		sipcall.h 
+		sipcall.h \
+		sdp.h
 		
 libsflphone_la_LIBADD = \
 	$(src)/libs/stund/libstun.la \
