@@ -18,13 +18,19 @@ include('include/header.php');
 									<div id="slider" >
                                         <ul id="sliderContent">
                                             <li class="sliderImage">
-                                                <img src="img/comm.jpg" width="210" height="384" alt=""/>
+                                                <img src="img/slider/lady-wise.jpg"      width="310" height="384" alt=""/>
                                                 <span class="bottom">
                                                 <strong>Savoir-Faire Linux</strong>
                                                 <br />presents SFLphone</span>
                                             </li>
                                             <li class="sliderImage">
-                                                <img src="img/sflPhone_a.png" width="210" height="384" alt=""/>
+                                                <img src="img/slider/mrbad.jpg" width="310" height="384" alt=""/>
+                                                <span class="bottom">
+                                                <strong>SFLphone</strong>
+                                                <br />It's free and you can use it everywhere.</span>
+                                            </li>
+                                            <li class="sliderImage">
+                                                <img src="img/slider/homepage.png" width="310" height="384" alt=""/>
                                                 <span class="bottom">
                                                 <strong>SFLphone</strong>
                                                 <br />SIP and IAX2 softphone</span>
@@ -75,6 +81,7 @@ include('include/header.php');
                     a Canadian Linux consulting company, in partnership with the global community. 
                     Savoir-Faire Linux provides to users easy-to-install packages for most of the main Linux distributions.  
                     </p>
+                    <img class="discover-image" src="img/slider/lady-discover.jpg" />
                 </td>
             </tr>
         </tbody>
