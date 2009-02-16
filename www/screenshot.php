@@ -9,6 +9,7 @@ include('include/header.php');
 
 ?>
     <div id="content">
+      <div id="main-image">&nbsp;</div>
       <ul class="gallery">
         <?php
         //  $imageDirectory = "./img/gallery";
@@ -22,7 +23,7 @@ include('include/header.php');
         //<li><a href="img/gallery/<?php echo $file " title="Main Window"><img src="img/gallery/thumbs/<?php echo $file " alt="Main Window"></a></li> 
         //php endforeach; 
         $images = array(
-          array('assistant-1.png','File menu'),
+          array('assistant-1.png','File menu', 'state' => 'active'),
           array('main-edit.png','Edit menu'),
           array('main-view.png','View menu'),
           array('main-help.png','Help menu'),
@@ -46,7 +47,10 @@ include('include/header.php');
         foreach($images as $image){
           $fileName    = $image[0];
           $description = $image[1];
-          echo "<li><a href='img/gallery/$fileName' title='$description'><img src='img/gallery/thumbs/$fileName' alt='$description'></a></li>";
+          echo "<li ";
+          if($image['state'] != null)
+            echo 'class="active" > ';
+          echo "<a href='img/gallery/$fileName' title='$description'><img src='img/gallery/thumbs/$fileName' alt='$description'></a></li>";
         }
         
         ?>
@@ -67,7 +71,7 @@ include('include/header.php');
 		    $('ul.gallery').galleria({
 			    history   : true, // activates the history object for bookmarking, back-button etc.
 			    clickNext : true, // helper for making the image clickable
-			    insert    : '#main_image', // the containing selector for our main image
+			    insert : '#main-image', 
 			    onImage   : function(image,caption,thumb) { // let's add some image effects for demonstration purposes
 				
 				    // fade in the image & caption
@@ -106,8 +110,9 @@ include('include/header.php');
 				    )
 			    }
 		    });
-	    });
 
+	    });
+      //$('ul.gallery > li:first > img').click();
     </script>
 <?php
 
