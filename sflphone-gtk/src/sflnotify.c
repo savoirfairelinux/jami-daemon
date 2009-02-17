@@ -205,6 +205,8 @@ notify_no_registered_accounts(  )
   gchar* body="";
   notify_init("sflphone");
 
+  printf("This should print \n");
+
   body = g_markup_printf_escaped(_("You have no registered accounts")); 
 
   title = g_markup_printf_escaped(_("Error"));
@@ -226,19 +228,34 @@ notify_no_registered_accounts(  )
   if (!notify_notification_show (notification, NULL)) {
     g_print("notify(), failed to send notification\n");
   }
+  printf("This should print \n");
 }
 
 void  
 stop_notification( void )
 {
+
+  printf("stop_notification called \n");
   if( notification != NULL  )
   {
-    if(notify_notification_show( notification , NULL))  
+    printf("stop_notification first if \n");
+    GError *error;
+    
+    // if(notify_notification_show( notification , NULL))
+    if(notify_notification_show( notification , &error))  
     {
+      printf("stop_notification second if \n");
       notify_notification_close( notification , NULL);
       g_object_unref( notification );
       notification = NULL;
     }
+    if(error) {   
+      printf("OUPS!!!!!!!!!!!!!!!!!!!!!!!! \n");
+      int i = 1;
+      //while(i)
+      printf("stop_notification after first if %d \n", error->code);
+    }
+    printf("stop_notification after first if \n");
     notification = NULL;
   }
 }
