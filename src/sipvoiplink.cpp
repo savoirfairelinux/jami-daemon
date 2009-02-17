@@ -1077,8 +1077,8 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
         }
 
 
-    SIPCall*
-        SIPVoIPLink::getSIPCall(const CallID& id) 
+SIPCall*
+SIPVoIPLink::getSIPCall(const CallID& id) 
         {
             Call* call = getCall(id);
             if (call) {
@@ -1087,8 +1087,8 @@ SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
             return NULL;
         }
 
-    void SIPVoIPLink::setStunServer( const std::string &server )
-    {
+void SIPVoIPLink::setStunServer( const std::string &server )
+{
          if(server != "") {
             useStun(true);
             _stunServer = server;

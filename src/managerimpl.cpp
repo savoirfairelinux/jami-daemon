@@ -574,7 +574,7 @@ ManagerImpl::isWaitingCall(const CallID& id) {
 // Management of event peer IP-phone 
 ////////////////////////////////////////////////////////////////////////////////
 // SipEvent Thread 
-  bool 
+bool 
 ManagerImpl::incomingCall(Call* call, const AccountID& accountId) 
 {
     PulseLayer *pulselayer;
