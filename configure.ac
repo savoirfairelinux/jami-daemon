@@ -223,7 +223,6 @@ AC_ARG_WITH([speex],
   [],
   [with_speex=yes])
 
-LIBSPEEX=
 AS_IF([test "x$with_speex" != xno],
   [AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Unable to find the libspeex headers (you may need to install the dev package).  You may use --without-speex to compile without speex codec support.]))]
   [AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package).  You may use --without-speex to compile without speex codec support.]))]
@@ -234,12 +233,17 @@ AS_IF([test "x$with_speex" != xno],
        )
     ]
 dnl More advanced check in case the libspeexdsp is not installed
-AC_CHECK_LIB(speex, speex_preprocess_run, [AC_DEFINE(HAVE_SPEEX_DSP)])
+AC_CHECK_LIB(speex, speex_preprocess_run, HAVE_SPEEXDSP=true, HAVE_SPEEXDSP=false)
+
+if test $HAVE_SPEEXDSP = false; then
+ AC_MSG_WARN([The silence detection in speex could not have been enabled])
+fi
+
 )
-    
+
 AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspeex])
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
-AM_CONDITIONAL(HAVE_SPEEX_DSP, $(HAVE_SPEEX_DSP))
+AM_CONDITIONAL(ENABLE_SPEEXDSP, $HAVE_SPEEXDSP)
 
 dnl Check for ilbc support
 AC_ARG_WITH([ilbc],

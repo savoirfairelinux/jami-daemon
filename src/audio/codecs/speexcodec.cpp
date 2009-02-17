@@ -59,7 +59,7 @@ class Speex : public AudioCodec{
             speex_bits_init(&_speex_enc_bits);
             _speex_enc_state = speex_encoder_init(_speexModePtr);
 
-#ifdef HAVE_SPEEX_DSP
+#if ENABLE_SPEEXDSP
 
             int enable = 1;
             int quality = 10;
@@ -114,7 +114,7 @@ class Speex : public AudioCodec{
         {
             speex_bits_reset(&_speex_enc_bits);
 
-#ifdef HAVE_SPEEX_DSP
+#if ENABLE_SPEEXDSP
             speex_encoder_ctl(_speex_enc_state,SPEEX_SET_SAMPLING_RATE,&_clockRate);
             speex_preprocess_run(_preprocess_state, src);
 #endif
