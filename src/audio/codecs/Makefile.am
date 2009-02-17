@@ -11,10 +11,14 @@ endif
 
 if BUILD_SPEEX
 SPEEX_LIB = libcodec_speex.so
+SPEEX_DSP_LIB=
+if HAVE_SPEEX_DSP
+SPEEX_DSP_LIB = -lspeexdsp
+endif
 libcodec_speex_so_SOURCES = speexcodec.cpp
 libcodec_speex_so_CFLAGS = -fPIC -g -Wall
 libcodec_speex_so_CXXFLAGS = -fPIC -g -Wall
-libcodec_speex_so_LDFLAGS = --shared -lc -lspeex -lspeexdsp -lm
+libcodec_speex_so_LDFLAGS = --shared -lc -lspeex $(SPEEX_DSP_LIB) -lm
 INSTALL_SPEEX_RULE = install-libcodec_speex_so
 endif
 

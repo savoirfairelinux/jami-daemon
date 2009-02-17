@@ -232,11 +232,14 @@ AS_IF([test "x$with_speex" != xno],
     [AC_MSG_FAILURE(
        [libspeex link test failed.   You may use --without-speex to compile without speex codec support.])]
        )
-   ]
-   )
+    ]
+dnl More advanced check in case the libspeexdsp is not installed
+AC_CHECK_LIB(speex, speex_preprocess_run, [AC_DEFINE(HAVE_SPEEX_DSP)])
+)
     
 AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspeex])
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
+AM_CONDITIONAL(HAVE_SPEEX_DSP, $(HAVE_SPEEX_DSP))
 
 dnl Check for ilbc support
 AC_ARG_WITH([ilbc],
