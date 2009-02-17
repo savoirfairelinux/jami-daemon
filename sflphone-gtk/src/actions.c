@@ -535,7 +535,7 @@ sflphone_new_call()
 void 
 sflphone_keypad( guint keyval, gchar * key)
 {
-
+  
 	call_t * c = call_get_selected(current_calls);
 	if(c)
 	{
@@ -544,6 +544,7 @@ sflphone_keypad( guint keyval, gchar * key)
 			case CALL_STATE_DIALING: // Currently dialing => edit number
 				process_dialing(c, keyval, key);
 				break;
+                case CALL_STATE_RECORD:
 			case CALL_STATE_CURRENT:
 				switch (keyval)
 				{
