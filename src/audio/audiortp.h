@@ -128,7 +128,10 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
      */
     int _nSamplesMic;
     
-  
+    /**
+     * Maximum number of sample for audio buffers (mic and spkr)
+     */
+    int nbSamplesMax; 
     
     /**
      * Init the RTP session. Create either symmetric or double sessions to manage data transport

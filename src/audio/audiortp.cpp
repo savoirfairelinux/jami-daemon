@@ -131,6 +131,7 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _
     _sessionRecv = NULL;
     _sessionSend = NULL;
   }
+  
 }
 
 AudioRtpRTX::~AudioRtpRTX () {
@@ -168,7 +169,7 @@ AudioRtpRTX::initBuffers()
 {
   converter = new SamplerateConverter( _layerSampleRate , _layerFrameSize );
 
-  int nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
+  nbSamplesMax = (int) (_layerSampleRate * _layerFrameSize /1000);
 
   micData = new SFLDataFormat[nbSamplesMax];
   micDataConverted = new SFLDataFormat[nbSamplesMax];
@@ -314,11 +315,14 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 
   if (_ca == 0) { return; }
   //try {
+
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     if (!audiolayer) { return; }
 
     const ost::AppDataUnit* adu = NULL;
     // Get audio data stream
+
+    // printf("AudioRtpRTX::receiveSessionForSpkr() %i \n",_session->getFirstTimestamp());
 
     if (!_sym) {
       adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
@@ -330,9 +334,13 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
       return;
     }
 
+    
+
     //int payload = adu->getType(); // codec type
     unsigned char* spkrData  = (unsigned char*)adu->getData(); // data in char
     unsigned int size = adu->getSize(); // size in char
+
+    // printf("AudioRtpRTX::receiveSessionForSpkr() Size of data from %i \n",size);
 
     // Decode data with relevant codec
     unsigned int max = (unsigned int)(_codecSampleRate * _layerFrameSize / 1000);
@@ -344,7 +352,6 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     }
 
     if (_audiocodec != NULL) {
-  
 
       int expandedSize = _audiocodec->codecDecode( spkrDataDecoded , spkrData , size );
       //buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
@@ -409,7 +416,7 @@ AudioRtpRTX::run () {
   //encoding before sending
   AudioLayer *audiolayer = Manager::instance().getAudioDriver();
   _layerFrameSize = audiolayer->getFrameSize(); // en ms
-  _layerSampleRate = audiolayer->getSampleRate();	
+  _layerSampleRate = audiolayer->getSampleRate();
   initBuffers();
   int step; 
 
@@ -435,6 +442,11 @@ AudioRtpRTX::run () {
     _start.post();
     _debug("- ARTP Action: Start\n");
     while (!testCancel()) {
+      
+      // printf("AudioRtpRTX::run() _session->getFirstTimestamp() %i \n",_session->getFirstTimestamp());
+    
+      // printf("AudioRtpRTX::run() _session->isWaiting() %i \n",_session->isWaiting());
+      /////////////////////
       ////////////////////////////
       // Send session
       ////////////////////////////
@@ -446,7 +458,10 @@ AudioRtpRTX::run () {
       receiveSessionForSpkr(countTime);
       // Let's wait for the next transmit cycle
 
-      _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
+      if(_session->isWaiting())
+        _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
+      else
+        _ca->recAudio.recData(micData,_nSamplesMic);
 
       Thread::sleep(TimerPort::getTimer()); 
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms

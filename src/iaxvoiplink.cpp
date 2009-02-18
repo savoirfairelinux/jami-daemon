@@ -89,7 +89,7 @@ IAXVoIPLink::init()
         return false;
 
     bool returnValue = false;
-    //_localAddress = "127.0.0.1";
+    // _localAddress = "127.0.0.1";
     // port 0 is default
     //  iax_enable_debug(); have to enable debug when compiling iax...
     int port = IAX_DEFAULT_PORTNO;
@@ -207,6 +207,8 @@ IAXVoIPLink::getEvent()
             iaxHandlePrecallEvent(event);
         }
 
+        // _debug("IAXVoIPLink::getEvent() : timestamp %i \n",event->ts);
+
         iax_event_free(event);
     }
     _mutexIAX.leaveMutex();
@@ -218,6 +220,7 @@ IAXVoIPLink::getEvent()
     if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
         sendRegister("");
     }
+
     if(call){
       call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
     }
