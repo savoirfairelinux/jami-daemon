@@ -677,7 +677,17 @@ sflphone_place_call ( call_t * c )
     
         else
         {
-            account_t * current = account_list_get_current();
+            account_t * current;
+
+            if(c->accountID != 0)
+                current = account_list_get_by_id(c->accountID);
+            else
+                current = account_list_get_current();
+
+            // printf("sflphone_place_call :: c->accountID : %i \n",c->accountID);
+
+            // account_t * current = c->accountID;
+
             if( current )
             {
 	            if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)

@@ -222,7 +222,7 @@ IAXVoIPLink::getEvent()
     }
 
     if(call){
-      _debug("Are we recording");
+      // _debug("Are we recording");
         call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
     }
 
