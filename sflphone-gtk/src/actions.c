@@ -508,6 +508,9 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 call_t * 
 sflphone_new_call()
 {
+
+        sflphone_on_hold();
+
 	// Play a tone when creating a new call
 	if( call_list_get_size(current_calls) == 0 )
 	  dbus_start_tone( TRUE , ( voice_mails > 0 )? TONE_WITH_MESSAGE : TONE_WITHOUT_MESSAGE) ;

@@ -188,6 +188,8 @@ ManagerImpl::switchCall(const CallID& id ) {
   bool
 ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
+    _debug("ManagerImpl::outgoingCall() method \n");
+
     if (!accountExists(accountid)) {
         _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
         return false;
