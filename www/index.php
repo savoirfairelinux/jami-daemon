@@ -47,7 +47,7 @@ include('include/header.php');
                                         <li>SIP and IAX2 compatible softphone</li>
                                         <li>Robust enterprise-class desktop phone for Linux</li>
                                         <li>Provide support of unlimited number of calls, multi-accounts, call transfer and hold.</li>
-                                        <li>Enjoy a perfect audio quality</li>
+                                        <li>Enjoy perfect audio quality</li>
                                     </ul> 
                                     <br>
                                     <div class="float_it_middle">

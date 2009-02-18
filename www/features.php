@@ -21,7 +21,7 @@ include('include/header.php');
                     <a href="http://www.pulseaudio.org">PulseAudio</a>  
                     sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
                     <br/> 
-                    The GTK+ graphical user interface provides you an intuitiv and easy way to phone, and, thanks to the integration of the GNOME desktop notification, you will never miss a call.
+                    The GTK+ graphical user interface provides you an intuitive and easy way to phone, and, thanks to the integration of the GNOME desktop notification, you will never miss a call.
                     <br/>
                     </p>
                 </td>
