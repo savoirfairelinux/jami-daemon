@@ -45,6 +45,8 @@ public:
 
   void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path, std::string id);
 
+  void initFileName( std::string peerNumber );
+
   /** 
    * Check if no otehr file is opened, then create a new one
    * @param fileName A string containing teh file (with/without extension)

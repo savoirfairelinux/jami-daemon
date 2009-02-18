@@ -420,6 +420,9 @@ SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
         }
         //call->setPeerNumber(toUrl);
         call->setPeerNumber(getSipTo(toUrl, account->getHostname()));
+      
+        call->initRecFileName();
+
         _debug("Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data());
         // we have to add the codec before using it in SIPOutgoingInvite...
         call->setCodecMap(Manager::instance().getCodecDescriptorMap());
@@ -1837,6 +1840,8 @@ mod_on_rx_request(pjsip_rx_data *rdata)
             call->setConnectionState(Call::Progressing);
             call->setIp(link->getLocalIPAddress());
             call->setPeerNumber(peerNumber);
+
+            call->initRecFileName();
 
             /* Call the SIPCallInvite function to generate the local sdp,
              * remote sdp and negociator.
