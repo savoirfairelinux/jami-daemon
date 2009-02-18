@@ -222,8 +222,15 @@ IAXVoIPLink::getEvent()
     }
 
     if(call){
-      call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
+      _debug("Are we recording");
+        call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
     }
+
+    // reinitialize speaker buffer for recording (when recording a voice mail)
+    for (int i = 0; i < nbSampleForRec_; i++)
+        spkrDataConverted[i] = 0;
+    
+
     // thread wait 3 millisecond
     _evThread->sleep(3);
     free(event);
