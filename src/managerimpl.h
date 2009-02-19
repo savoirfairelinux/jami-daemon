@@ -327,6 +327,13 @@ class ManagerImpl {
     std::vector< ::std::string > getCodecDetails( const int32_t& payload);
 
     /**
+     * Get current codec name
+     * @param call id
+     * @return std::string The codec name
+     */
+    std::string getCurrentCodecName(const CallID& id);
+
+    /**
      * Get a list of supported input audio plugin
      * @return std::vector<std::string> List of names
      */

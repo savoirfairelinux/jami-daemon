@@ -135,6 +135,8 @@ sflphone_hung_up( call_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
   status_tray_icon_blink( FALSE );
 #endif
+
+  statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
 }
 
 /** Internal to actions: Fill account list */
@@ -733,6 +735,31 @@ sflphone_place_call ( call_t * c )
 }
 
 
+void 
+sflphone_display_selected_codec (const gchar* codecName)
+{
+    call_t * selectedCall = call_get_selected(current_calls);
+    gchar* msg;
+    account_t* acc;
+    if(selectedCall->accountID != NULL){
+      acc = account_list_get_by_id(selectedCall->accountID);
+      msg = g_markup_printf_escaped(_("%s account- %s             %s") , 
+		 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
+                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+                 codecName);
+      statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+      g_free(msg);
+  }
+
+}
+
+gchar*
+sflphone_get_current_codec_name()
+{
+    call_t * selectedCall = call_get_selected(current_calls);
+    return dbus_get_current_codec_name(selectedCall);
+}
+
 void
 sflphone_rec_call()
 {
@@ -754,6 +781,9 @@ sflphone_rec_call()
   }
   update_call_tree(current_calls,selectedCall);
   update_menus();
+
+  // gchar* codname = sflphone_get_current_codec_name();
+  // printf("sflphone_get_current_codec_name: %s \n",codname);
 }
 
 /* Internal to action - set the __CURRENT_ACCOUNT variable */
@@ -816,3 +846,4 @@ sflphone_fill_codec_list()
     exit(0);
   }
 }
+

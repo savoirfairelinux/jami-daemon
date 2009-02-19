@@ -101,7 +101,7 @@ CallManager::setVolume( const std::string& device, const double& value )
 double 
 CallManager::getVolume( const std::string& device )
 {
-    _debug("CallManager::getVolume received\n");
+    _debug("CallManager::getVolume received \n");
     if(device == "speaker")
     {
       _debug("Current speaker = %d\n", Manager::instance().getSpkrVolume());
@@ -120,6 +120,14 @@ CallManager::setRecording(const std::string& callID)
 { 
   _debug("CallManager::setRecording received\n");
     Manager::instance().setRecordingCall(callID);
+}
+
+
+std::string
+CallManager::getCurrentCodecName(const std::string& callID)
+{ 
+    _debug("CallManager::getCurrentCodecName received %s \n",Manager::instance().getCurrentCodecName(callID).c_str());
+    return Manager::instance().getCurrentCodecName(callID).c_str();
 }
 
 

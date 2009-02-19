@@ -799,6 +799,20 @@ SIPVoIPLink::isRecording(const CallID& id)
   return call->isRecording();
 }
 
+
+std::string 
+SIPVoIPLink::getCurrentCodecName()
+{
+
+  // _debug("SIPVoIPLink::getCurrentCodecName : \n");
+
+  SIPCall *call = getSIPCall(Manager::instance().getCurrentCallId());
+  
+  AudioCodec *ac = call->getCodecMap().getCodec(call->getAudioCodec());
+
+  return ac->getCodecName();
+}
+
     bool 
 SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code)
 {

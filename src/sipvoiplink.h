@@ -298,6 +298,13 @@ class SIPVoIPLink : public VoIPLink
      	*/
     	bool isRecording(const CallID& id);
 
+        /**
+         * Return the codec protocol used for this call 
+         * @param id The call identifier
+         */
+         std::string getCurrentCodecName();
+      
+
     private:
         /**
          * Constructor

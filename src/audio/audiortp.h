@@ -69,7 +69,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /**
      * Audio recording object
      */
-    AudioRecord recAudio;
+    // AudioRecord recAudio;
 
     /** A SIP call */
     SIPCall* _ca;    
@@ -170,10 +170,6 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** The audio codec used during the session */
     AudioCodec* _audiocodec;
    
-    /**
-     * Audio recording object
-     */
-    // AudioRecord recAudio;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -206,7 +202,7 @@ class AudioRtp {
      * Start recording
      */
     void setRecording ();
-    
+
 
   private:
     // copy constructor

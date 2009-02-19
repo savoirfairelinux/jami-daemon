@@ -190,6 +190,13 @@ class IAXVoIPLink : public VoIPLink
     
     bool isContactPresenceSupported() { return false; }
 
+    /**
+     * Return the codec protocol used for this call 
+     * @param id The call identifier
+     */
+    std::string getCurrentCodecName();
+
+
   public: // iaxvoiplink only
    
     void updateAudiolayer( void ); 

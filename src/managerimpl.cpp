@@ -239,6 +239,10 @@ ManagerImpl::answerCall(const CallID& id)
     removeCallAccount(id);
     return false;
   }
+
+  std::string codecName = getCurrentCodecName(id);
+  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
   
   // if it was waiting, it's waiting no more
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
@@ -251,7 +255,7 @@ ManagerImpl::answerCall(const CallID& id)
   bool
 ManagerImpl::hangupCall(const CallID& id)
 {
-  _debug("ManagerImpl::hangupCall(): This function is called when user hangup \n");
+    _debug("ManagerImpl::hangupCall(): This function is called when user hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
@@ -635,6 +639,10 @@ ManagerImpl::peerAnsweredCall(const CallID& id)
     stopTone(false);
   }
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
+  
+  std::string codecName = getCurrentCodecName(id);
+  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -1184,6 +1192,15 @@ ManagerImpl::getCodecDetails( const int32_t& payload )
   ss.str("");
 
   return v;
+}
+
+std::string
+ManagerImpl::getCurrentCodecName(const CallID& id)
+{
+  // _debug("ManagerImpl::getCurrentCodecName method called \n");
+  AccountID accountid = getAccountFromCall(id);
+  // _debug("ManagerImpl::getCurrentCodecName : %s \n",getAccountLink(accountid)->getCurrentCodecName().c_str());
+  return getAccountLink(accountid)->getCurrentCodecName();
 }
 
 /**

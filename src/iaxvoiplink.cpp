@@ -213,6 +213,12 @@ IAXVoIPLink::getEvent()
     }
     _mutexIAX.leaveMutex();
 
+
+    if(call){
+      // _debug("Are we recording");
+        call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
+    }
+
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
     sendAudioFromMic();
 
@@ -220,12 +226,8 @@ IAXVoIPLink::getEvent()
     if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
         sendRegister("");
     }
-
-    if(call){
-      // _debug("Are we recording");
-        call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
-    }
-
+  
+    // _debug("IAXVoIPLink::getEvent() \n");
     // reinitialize speaker buffer for recording (when recording a voice mail)
     for (int i = 0; i < nbSampleForRec_; i++)
         spkrDataConverted[i] = 0;
@@ -239,6 +241,8 @@ IAXVoIPLink::getEvent()
     void
 IAXVoIPLink::sendAudioFromMic(void)
 {
+    // _debug("IAXVoIPLink::sendAudioFromMic");
+
     int maxBytesToGet, availBytesFromMic, bytesAvail, compSize;
     AudioCodec *ac;
 
@@ -299,7 +303,9 @@ IAXVoIPLink::sendAudioFromMic(void)
         nbSample_ = audiolayer->getMic( micData, bytesAvail ) / sizeof(SFLDataFormat);
         
         // Store the number of samples for recording
-        nbSampleForRec_ = nbSample_;       
+        nbSampleForRec_ = nbSample_;      
+      
+        // _debug("IAXVoIPLink::sendAudioFromMic : %i \n",nbSampleForRec_); 
 
         // resample
         nbSample_ = converter->downsampleData( micData , micDataConverted , (int)ac ->getClockRate() ,  (int)audiolayer->getSampleRate() , nbSample_ );
@@ -600,6 +606,16 @@ IAXVoIPLink::carryingDTMFdigits(const CallID& id, char code)
 }
 
 
+std::string 
+IAXVoIPLink::getCurrentCodecName()
+{
+    IAXCall *call = getIAXCall(Manager::instance().getCurrentCallId());
+  
+    AudioCodec *ac = call->getCodecMap().getCodec(call->getAudioCodec());
+  
+    return ac->getCodecName();
+}
+
 
     bool
 IAXVoIPLink::iaxOutgoingInvite(IAXCall* call) 
@@ -730,6 +746,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
         case IAX_EVENT_VOICE:
             //if (!audiolayer->isCaptureActive ())
               //  audiolayer->startStream ();
+            // _debug("IAX_EVENT_VOICE: \n");
             iaxHandleVoiceEvent(event, call);
             break;
 
