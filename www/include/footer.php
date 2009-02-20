@@ -26,7 +26,7 @@
                                     <div class="footBlock">
                                         <ul>
                                         <li>Development team</li>
-                                        <li><a href="mailto:sflphoneteam@savoirfairelinux.com">sflphoneteam@savoirfairelinux.com</a></li>
+                                        <li><a href="mailto:sflphone@lists.savoirfairelinux.net">sflphone@lists.savoirfairelinux.net</a></li>
                                         <li>Support</li>
                                         <li><a href="mailto:support@savoirfairelinux.com">support@savoirfairelinux.com</a></li>
                                         <li>General Information</li>
