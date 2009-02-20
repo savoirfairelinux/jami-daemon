@@ -29,6 +29,7 @@
 #define SFLPHONE_ORG_SERVER "sip.sflphone.org"
 #define SFLPHONE_ORG_ALIAS "sflphone.org"
 
+
 struct _wizard *wiz;
 static int account_type;
 static int use_sflphone_org = 1;
@@ -43,6 +44,7 @@ static gint forward_page_func( gint current_page , gpointer data );
  * Page template
  */
 static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section);
+void prefill_sip(void) ;
 
   void
 set_account_type( GtkWidget* widget , gpointer data UNUSED )
@@ -56,7 +58,9 @@ set_account_type( GtkWidget* widget , gpointer data UNUSED )
 }
 
 void set_sflphone_org( GtkWidget* widget , gpointer data UNUSED ) {
-  use_sflphone_org = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)) && 1;
+	
+  use_sflphone_org = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))?1:0) ;
+  g_print("SET SFLPHONEORG : %d\n", use_sflphone_org);
 }
 
 
@@ -88,6 +92,10 @@ static void cancel_callback( void )
   static void
 sip_apply_callback( void )
 {
+    if(use_sflphone_org){
+      	prefill_sip();
+    	account_type = _SIP;
+    }
   if( account_type == _SIP )
   {
     g_print("SIP APPLY CALLBACK\n");
@@ -150,7 +158,6 @@ if(!wiz){
   gtk_window_set_title( GTK_WINDOW(wiz->assistant), _("SFLphone account configuration wizard") );
   gtk_window_set_position(GTK_WINDOW(wiz->assistant), GTK_WIN_POS_CENTER);
   gtk_window_set_default_size(GTK_WINDOW(wiz->assistant), 200 , 200);
-  gtk_assistant_set_forward_page_func( GTK_ASSISTANT( wiz->assistant ), (GtkAssistantPageFunc) forward_page_func , NULL , NULL );
 
   build_intro();
   build_sfl_or_account();
@@ -158,14 +165,15 @@ if(!wiz){
   build_sip_account_configuration();
   build_nat_settings();
   build_iax_account_configuration();
-  build_registration_error();
   build_summary();
+//  build_registration_error();
   
   g_signal_connect(G_OBJECT(wiz->assistant), "close" , G_CALLBACK(close_callback), NULL);
   g_signal_connect(G_OBJECT(wiz->assistant), "cancel" , G_CALLBACK(cancel_callback), NULL);
 
   gtk_widget_show_all(wiz->assistant);
 
+  gtk_assistant_set_forward_page_func( GTK_ASSISTANT( wiz->assistant ), (GtkAssistantPageFunc) forward_page_func , NULL , NULL );
   gtk_assistant_update_buttons_state(GTK_ASSISTANT(wiz->assistant));
  }
 }
@@ -175,14 +183,14 @@ build_intro()
 {
   GtkWidget *label;
 
-  wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , _("SFLphone 0.9.2") , _("Welcome to SFLphone!"));
-
+  wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , _("SFLphone 0.9.3") , _("Welcome to SFLphone!"));
   label = gtk_label_new(_("This installation wizard will help you configure an account.")) ;
   gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
   gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
   gtk_widget_set_size_request(GTK_WIDGET(label), 380, -1);
   gtk_box_pack_start(GTK_BOX(wiz->intro), label, FALSE, TRUE, 0);
 
+  gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->intro, TRUE);
   return wiz->intro;
 }
 
@@ -201,6 +209,7 @@ build_select_account()
 
   g_signal_connect(G_OBJECT( sip ) , "clicked" , G_CALLBACK( set_account_type ) , NULL );
 
+  gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->protocols, TRUE);
   return wiz->protocols;
 }
 
@@ -212,7 +221,7 @@ GtkWidget* build_sfl_or_account()
 
   wiz->sflphone_org = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Account") , _("Please select one of the following option:"));
 
-  sfl = gtk_radio_button_new_with_label(NULL, _("Create a free SIP/IAX2 account on sflphone.org"));
+  sfl = gtk_radio_button_new_with_label( NULL, _("Create a free SIP/IAX2 account on sflphone.org"));
   gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , sfl , TRUE, TRUE, 0);
   cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), _("Register an existing SIP or IAX2 account"));
   gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , cus , TRUE, TRUE, 0);
@@ -273,6 +282,7 @@ build_sip_account_configuration( void )
   gtk_entry_set_visibility(GTK_ENTRY(wiz->sip_password), FALSE);
   gtk_table_attach ( GTK_TABLE( table ), wiz->sip_password, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
+  //gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->sip_account, TRUE);
   return wiz->sip_account;
 }
 
@@ -424,54 +434,63 @@ void prefill_sip(void) {
   }
 }
 
+typedef enum
+{
+  PAGE_INTRO,
+  PAGE_SFL,
+  PAGE_TYPE,
+  PAGE_SIP,
+  PAGE_STUN,
+  PAGE_IAX,
+  PAGE_SUMMARY
+} assistant_state;
 
-#define PAGE_INTRO   0
-#define PAGE_SFL     1
-#define PAGE_TYPE    2
-#define PAGE_SIP     3
-#define PAGE_STUN    4
-#define PAGE_IAX     5
-#define PAGE_REG_ERR 6
-#define PAGE_SUMMARY 8
+static gint forward_page_func( gint current_page , gpointer data) {
+ 	gint next_page = 0;
+  	g_print("CURRENT PAGE %d\n", current_page);  
 
-static gint 
-forward_page_func( gint current_page , gpointer data  UNUSED) {
-  
-  switch( current_page ){
-  case PAGE_INTRO:
-    return PAGE_SFL;
+	switch( current_page ){
+  		case PAGE_INTRO:
+			next_page = PAGE_SFL;
+			break;
+  		case PAGE_SFL:
+    			if (use_sflphone_org) {
+				next_page = PAGE_STUN;
+    			} else
+				next_page = PAGE_TYPE;	
+			break;
+		case PAGE_TYPE:
+    			if( account_type == _SIP ) {
+      				set_sip_infos_sentivite(TRUE);
+				next_page = PAGE_SIP;	
+    			} else
+				next_page = PAGE_IAX;	
+			break;
+		case PAGE_SIP:  
+    			if (use_sflphone_org ) {
+			}
 
-  case PAGE_SFL:
-    if (use_sflphone_org) {
-      prefill_sip();
-      account_type = _SIP;
-      return PAGE_SIP;
-    }
-    return PAGE_TYPE;
-
-  case PAGE_TYPE:
-    if( account_type == _SIP ) {
-      set_sip_infos_sentivite(TRUE);
-      return PAGE_SIP;
-    }
-    return PAGE_IAX;
-
-  case PAGE_SIP:  
-    return PAGE_STUN;
-
-  case PAGE_STUN:
-    return PAGE_SUMMARY;
-
-  case PAGE_IAX:
-    return PAGE_SUMMARY;
-
-  default:
-    return -1;
-  }
+			next_page = PAGE_STUN;	
+			break;
+		case PAGE_STUN:
+			next_page = PAGE_SUMMARY;	
+			break;
+  		case PAGE_IAX:
+			next_page = PAGE_SUMMARY;	
+			break;
+  		case PAGE_SUMMARY:
+                        g_print("XXXXXXXXXXXXXXXXXXXXXX\n");
+			next_page = PAGE_SUMMARY;	
+			break;
+		default:
+			next_page = -1;	
+	}
+	g_print("NEXT PAGE : %d\n",next_page);
+	return next_page;
 }
 
 
-  static GtkWidget*
+static GtkWidget*
 create_vbox(GtkAssistantPageType type, const gchar *title, const gchar *section)
 {
   GtkWidget *vbox;
