@@ -1,26 +1,26 @@
 %define name sflphone
-%define version 0.9.2
+%define version 0.9.3
 Autoreq: 0
 
 Name:		%name
 Summary:	A VoIP daemon with SIP protocol and IAX protocol
 Version:	%version
-Release:        6suse
+Release:        2suse
 License:	GPL
 Group:		System Environment/Daemons
 URL:		http://www.sflphone.org/
-Packager:	Yun Liu <yun.liu@savoirfairelinux.com>
+Packager:	Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 Source0:	%{name}-%{version}.tar.gz
 Source1:        libpj-sfl.pc
 BuildRoot:	%{_tmppath}/%{name}-%{version}
 Requires: 	commoncpp2 ccrtp cppunit libsamplerate pulseaudio-libs-zeroconf pulseaudio-libs-devel gsm speex sflphone-iax2 dbus-c++ libgcc dbus-glib expat gtk2 glibc glib2 dbus-libs dbus-glib libsexy libnotify perl
 
 %description
-SFLPhoned is a VoIP daeamon with SIP protocol and IAX protocol.
+SFLphoned is a VoIP daeamon with SIP protocol and IAX protocol.
 
 %prep
 %setup -q
-cd libs/pjproject-1.0
+cd libs/pjproject-1.0.1
 ./configure --prefix=/usr
 make dep
 make clean
@@ -41,7 +41,7 @@ make prefix=%{buildroot}/usr install
 cd sflphone-gtk/
 make prefix=%{buildroot}/usr install
 
-cd ../libs/pjproject-1.0
+cd ../libs/pjproject-1.0.1
 make prefix=%{buildroot}/usr install
 
 cd ../..
@@ -67,9 +67,10 @@ rm -rf  %{buildroot}/usr/include
 %clean
 rm -rf %{buildroot}
 
-
-
 %changelog
+* Mon Feb 16 2009 Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> 2suse
+  - Packaging 0.9.3-2 sflphone version on openSUSE 11
+
 * Mon Jan 26 2009 Yun Liu <yun.liu@savoirfairelinux.com> 6suse
   - Packaging sflphone on openSUSE 11
 

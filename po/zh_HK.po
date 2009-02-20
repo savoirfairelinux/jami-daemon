@@ -146,7 +146,7 @@ msgstr "SFLphone 帳戶設置向導"
 #: ../sflphone-gtk/src/assistant.c:176
 #, fuzzy
 msgid "SFLphone 0.9.2"
-msgstr "SFLphone 0.8"
+msgstr "SFLphone 0.9.2"
 
 #: ../sflphone-gtk/src/assistant.c:176
 msgid "Welcome to SFLphone!"
@@ -176,11 +176,11 @@ msgstr "請填寫如下信息:"
 
 #: ../sflphone-gtk/src/assistant.c:213
 msgid "Create a free SIP/IAX2 account on sflphone.org"
-msgstr ""
+msgstr "在sflphone.org上創建免費的SIP/IAX2帳戶"
 
 #: ../sflphone-gtk/src/assistant.c:215
 msgid "Register an existing SIP or IAX2 account"
-msgstr ""
+msgstr "註冊已存在的SIP或IAX2帳戶"
 
 #: ../sflphone-gtk/src/assistant.c:230
 msgid "SIP account configuration"
@@ -204,7 +204,7 @@ msgstr "如果你的網路防火牆，你很有可能需要設定該項."
 
 #: ../sflphone-gtk/src/assistant.c:350 ../sflphone-gtk/src/configwindow.c:496
 msgid "E_nable STUN"
-msgstr "使用STUN(n)"
+msgstr "啟用STUN(n)"
 
 #: ../sflphone-gtk/src/assistant.c:357
 msgid "_STUN server"
@@ -284,7 +284,7 @@ msgstr "音訊檔案"
 
 #: ../sflphone-gtk/src/audioconf.c:770
 msgid "_Activate silence detection"
-msgstr ""
+msgstr "啟用靜音檢測(A)"
 
 #: ../sflphone-gtk/src/audioconf.c:798
 msgid "Sound Manager"
@@ -300,7 +300,7 @@ msgstr "編碼"
 
 #: ../sflphone-gtk/src/audioconf.c:823
 msgid "Noise reduction"
-msgstr ""
+msgstr "降噪"
 
 #: ../sflphone-gtk/src/audioconf.c:830
 msgid "Ringtones"
@@ -358,7 +358,7 @@ msgstr "狀態"
 
 #: ../sflphone-gtk/src/configwindow.c:492
 msgid "Stun parameters will apply to each SIP account created."
-msgstr ""
+msgstr "Stun參數將應用於每一個註冊的SIP帳戶"
 
 #: ../sflphone-gtk/src/configwindow.c:500
 #, fuzzy
@@ -428,11 +428,11 @@ msgstr "常用配置"
 
 #: ../sflphone-gtk/src/configwindow.c:714
 msgid "_Destination folder"
-msgstr ""
+msgstr "目標文件夾(D)"
 
 #: ../sflphone-gtk/src/configwindow.c:719
 msgid "Select a folder"
-msgstr ""
+msgstr "選擇文件夾"
 
 #: ../sflphone-gtk/src/configwindow.c:744
 msgid "Preferences"
@@ -448,7 +448,7 @@ msgstr "音訊配置"
 
 #: ../sflphone-gtk/src/configwindow.c:774
 msgid "Record"
-msgstr ""
+msgstr "記錄"
 
 #: ../sflphone-gtk/src/configwindow.c:798
 msgid "Accounts"
@@ -507,7 +507,7 @@ msgstr ""
 
 #: ../sflphone-gtk/src/mainwindow.c:82
 msgid "Do you still want to quit?"
-msgstr ""
+msgstr "確認要退出?"
 
 #: ../sflphone-gtk/src/menus.c:135
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."

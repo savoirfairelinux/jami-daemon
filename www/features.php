@@ -1,5 +1,6 @@
 <?php
-
+$name = 'feature';
+$javascript = array('jquery','animated-menu');
 include('include/header.php');
 
 ?>
@@ -15,12 +16,14 @@ include('include/header.php');
                     <p class="title alignLeft fntBleu">
                     Great User Experience
                     </p>
+                    <p>
                     SFLphone now fully supports 
                     <a href="http://www.pulseaudio.org">PulseAudio</a>  
                     sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
                     <br/> 
-                    The GTK+ graphical user interface provides you an intuitiv and easy way to phone, and, thanks to the integration of the GNOME desktop notification, you will never miss a call.
+                    The GTK+ graphical user interface provides you an intuitive and easy way to phone, and, thanks to the integration of the GNOME desktop notification, you will never miss a call.
                     <br/>
+                    </p>
                 </td>
             </tr>
             <tr>

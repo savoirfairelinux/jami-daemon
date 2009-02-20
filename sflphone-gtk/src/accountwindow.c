@@ -92,18 +92,12 @@ show_account_window (account_t * a)
         curPassword = g_hash_table_lookup(currentAccount->properties, ACCOUNT_PASSWORD);
         curUsername = g_hash_table_lookup(currentAccount->properties, ACCOUNT_USERNAME);
         curMailbox = g_hash_table_lookup(currentAccount->properties, ACCOUNT_MAILBOX);
-
-        if (strcmp(curAccountType, "SIP") == 0) {
-            /*stun_enabled = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_STUN_ENABLED);
-            stun_server = g_hash_table_lookup(currentAccount->properties, ACCOUNT_SIP_STUN_SERVER);
-            */
-        }
     }
     else
     {
         currentAccount = g_new0(account_t, 1);
         currentAccount->properties = g_hash_table_new(NULL, g_str_equal);
-        curAccountID = "test";
+        curAccountID = "new";
     }
 
     dialog = GTK_DIALOG(gtk_dialog_new_with_buttons (_("Account settings"),
@@ -151,7 +145,7 @@ show_account_window (account_t * a)
     gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
     entryAlias = gtk_entry_new();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryAlias);
-    gtk_entry_set_text(GTK_ENTRY(entryAlias), g_hash_table_lookup(currentAccount->properties, ACCOUNT_ALIAS));
+    gtk_entry_set_text(GTK_ENTRY(entryAlias), curAlias);
     gtk_table_attach ( GTK_TABLE( table ), entryAlias, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     label = gtk_label_new_with_mnemonic (_("_Protocol"));

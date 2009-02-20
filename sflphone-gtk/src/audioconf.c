@@ -774,7 +774,7 @@ GtkWidget* noise_box()
     //TODO Enable it
     gtk_widget_set_sensitive(GTK_WIDGET(noise_conf), FALSE);
     //TODO Add a callback function
-    g_signal_connect(G_OBJECT( enableNoiseReduction) , "clicked" , NULL , NULL);
+    //g_signal_connect(G_OBJECT( enableNoiseReduction) , "clicked" , NULL , NULL);
         
     return ret;
 }

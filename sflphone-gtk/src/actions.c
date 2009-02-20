@@ -260,11 +260,15 @@ sflphone_hang_up()
 			case CALL_STATE_CURRENT:
 			case CALL_STATE_HOLD:
 			case CALL_STATE_BUSY:
-			case CALL_STATE_FAILURE:
-                        case CALL_STATE_RECORD:
+            case CALL_STATE_RECORD:
 				dbus_hang_up (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
 				(void) time(&selectedCall->_stop);
+				break;
+			case CALL_STATE_FAILURE:
+				dbus_hang_up (selectedCall);
+				selectedCall->state = CALL_STATE_DIALING;
+				selectedCall->_stop = 0;
 				break;
 			case CALL_STATE_INCOMING:  
 				dbus_refuse (selectedCall);
@@ -630,6 +634,7 @@ sflphone_keypad( guint keyval, gchar * key)
 			case CALL_STATE_RINGING:
 			case CALL_STATE_BUSY:
 			case CALL_STATE_FAILURE:
+				c->_stop = 0;
 				switch (keyval)
 				{
 					case 65307: /* ESCAPE */
