@@ -691,6 +691,7 @@ update_call_tree (calltab_t* tab, call_t * c)
 	}
 	else
 	{
+          g_print("Stuff to be printed  %s  %s \n",call_get_number(c),call_get_name(c));
 	  description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>", 
 	      call_get_number(c),
 	      call_get_name(c)); 

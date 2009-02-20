@@ -447,6 +447,10 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 	  dbus_start_tone( FALSE , 0 );
 	  //dbus_play_dtmf( key );
 	}
+
+        g_print("process_dialing : keyval : %i \n",keyval);
+        g_print("process_dialing : key : %s \n",key);
+
 	switch (keyval)
 	{
 		case 65293: /* ENTER */
@@ -460,9 +464,10 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 			{  /* Brackets mandatory because of local vars */
 				gchar * before = c->to;
 				if(strlen(c->to) >= 1){
+                                        
 					c->to = g_strndup(c->to, strlen(c->to) -1);
 					g_free(before);
-					g_print("TO: %s\n", c->to);
+					g_print("TO: backspace %s\n", c->to);
 
 					if(c->state == CALL_STATE_DIALING)
 					{
@@ -485,14 +490,16 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 		case 65509: /* CAPS */
 			break;
 		default:
-			if (keyval < 255 || (keyval >65453 && keyval < 65466))
+                  // if (keyval < 255 || (keyval >65453 && keyval < 65466))
+                        if (keyval < 127)
 			{ 
-				if(c->state != CALL_STATE_TRANSFERT)
+                               
+                                if(c->state != CALL_STATE_TRANSFERT)
 				  dbus_play_dtmf( key );
 				  gchar * before = c->to;
 				  c->to = g_strconcat(c->to, key, NULL);
 				  g_free(before);
-				  g_print("TO: %s\n", c->to);
+				  g_print("TO:default %s\n", c->to);
 
 				if(c->state == CALL_STATE_DIALING)
 				{
