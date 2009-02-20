@@ -37,8 +37,8 @@ include('include/header.php');
                     </li>
                 
                     <li>Ubuntu 8.04 LTS "Hardy Heron" 
-                        <a href="http://sflphone.org/debian/dists/hardy/universe/binary-i386/sflphone_0.9.2-2ubuntu7_i386.deb" >i386</a> 
-                        | <a href="http://sflphone.org/debian/dists/hardy/universe/binary-amd64/sflphone_0.9.2-2ubuntu7_amd64.deb" >amd64</a>
+                        <a href="http://sflphone.org/debian/dists/hardy/universe/binary-i386/sflphone_0.9.3-0ubuntu2_i386.deb" >i386</a> 
+                        | <a href="http://sflphone.org/debian/dists/hardy/universe/binary-amd64/sflphone_0.9.3-0ubuntu2_amd64.deb" >amd64</a>
                     </li>
                 </ul>
               <br/>
