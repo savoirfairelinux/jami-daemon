@@ -460,8 +460,8 @@ void AudioRecord::recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int 
     if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
       for (int k=0; k<nSamples_1; k++){
       
+        // mixBuffer_[k] = ((buffer_1[k]+buffer_2[k])/2)/32767;
         mixBuffer_[k] = (buffer_1[k]+buffer_2[k]);
-    
         // dsp.getRMS(mixBuffer_[k]);
       
         if ( fwrite(&buffer_1[k], 2, 1, fp) != 1)

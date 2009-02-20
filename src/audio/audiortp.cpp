@@ -425,6 +425,8 @@ AudioRtpRTX::run () {
   initBuffers();
   int step; 
 
+  int sessionWaiting;
+
   //try {
     // Init the session
     initAudioRtpSession();
@@ -455,6 +457,9 @@ AudioRtpRTX::run () {
       ////////////////////////////
       // Send session
       ////////////////////////////
+
+      sessionWaiting = _session->isWaiting();
+
       sendSessionFromMic(timestamp); 
       timestamp += step;
       
@@ -465,10 +470,15 @@ AudioRtpRTX::run () {
       
       // Let's wait for the next transmit cycle
 
-      if(_session->isWaiting())
+      
+      if(sessionWaiting == 1){
+        _debug("Record TWO buffer \n");
         _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
-      else
+      }
+      else {
+        _debug("Record ONE buffer \n");
         _ca->recAudio.recData(micData,_nSamplesMic);
+      }
 
       Thread::sleep(TimerPort::getTimer());
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
