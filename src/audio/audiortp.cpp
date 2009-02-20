@@ -472,11 +472,11 @@ AudioRtpRTX::run () {
 
       
       if(sessionWaiting == 1){
-        _debug("Record TWO buffer \n");
+        // _debug("Record TWO buffer \n");
         _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
       }
       else {
-        _debug("Record ONE buffer \n");
+        // _debug("Record ONE buffer \n");
         _ca->recAudio.recData(micData,_nSamplesMic);
       }
 

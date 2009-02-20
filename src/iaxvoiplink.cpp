@@ -89,7 +89,6 @@ IAXVoIPLink::init()
     if (initDone())
         return false;
 
-    
     bool returnValue = false;
     // _localAddress = "127.0.0.1";
     // port 0 is default
@@ -215,7 +214,7 @@ IAXVoIPLink::getEvent()
     }
     _mutexIAX.leaveMutex();
 
-
+   
     if(call){
       // _debug("Are we recording");
         call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
