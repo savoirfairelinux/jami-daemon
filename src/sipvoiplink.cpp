@@ -446,7 +446,7 @@ SIPVoIPLink::answer(const CallID& id)
     pj_status_t status;
     pjsip_tx_data *tdata;
 
-    _debug("- SIP Action: start answering\n");
+    _debug("SIPVoIPLink::answer: start answering \n");
 
     call = getSIPCall(id);
 
@@ -458,22 +458,23 @@ SIPVoIPLink::answer(const CallID& id)
     // User answered the incoming call, tell peer this news
     if (call->startNegociation(_pool)) {
         // Create and send a 200(OK) response
-        _debug("UserAgent: Negociation success!\n");
+        _debug("SIPVoIPLink::answer:UserAgent: Negociation success! : call %s \n", call->getCallId().c_str());
         status = pjsip_inv_answer(call->getInvSession(), PJSIP_SC_OK, NULL, NULL, &tdata);
         PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
         status = pjsip_inv_send_msg(call->getInvSession(), tdata);
         PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
 
-        _debug("* SIP Info: Starting AudioRTP when answering\n");
+        _debug("SIPVoIPLink::answer: Starting AudioRTP when answering : call %s \n", call->getCallId().c_str());
         if (_audiortp->createNewSession(call) >= 0) {
             call->setAudioStart(true);
             call->setConnectionState(Call::Connected);
             call->setState(Call::Active);
             return true;
         } else {
-            _debug("! SIP Failure: Unable to start sound when answering %s/%d\n", __FILE__, __LINE__);
+            _debug("SIPVoIPLink::answer: Unable to start sound when answering %s/%d\n", __FILE__, __LINE__);
         }
     }
+    _debug("SIPVoIPLink::answer: fail terminate call %s \n",call->getCallId().c_str());
     terminateOneCall(call->getCallId());
     removeCall(call->getCallId());
     return false;
@@ -804,10 +805,16 @@ std::string
 SIPVoIPLink::getCurrentCodecName()
 {
 
-  // _debug("SIPVoIPLink::getCurrentCodecName : \n");
+  _debug("SIPVoIPLink::getCurrentCodecName Ok 1 : \n");
+ 
+  printf("AAAAAAAAAAAAAHHHHHHH!!!!!!:: %s \n",Manager::instance().getCurrentCallId().c_str());
 
   SIPCall *call = getSIPCall(Manager::instance().getCurrentCallId());
   
+  _debug("SIPVoIPLink::getCurrentCodecName Ok 2 : \n");
+  
+  printf("OOOOOOOUUUUUUPPPPPPPPPPSSSSSSSSSSS!!!!!!:: %s \n",call->getCallId().c_str());  
+
   AudioCodec *ac = call->getCodecMap().getCodec(call->getAudioCodec());
 
   return ac->getCodecName();

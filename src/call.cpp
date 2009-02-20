@@ -122,7 +122,6 @@ Call::getRemoteIp()
 AudioCodecType 
 Call::getAudioCodec()
 {
-  ost::MutexLock m(_callMutex);  
   return _audioCodec;  
 }
 

@@ -221,6 +221,7 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
   bool
 ManagerImpl::answerCall(const CallID& id)
 {
+
   stopTone(false); 
   _debug("Try to answer call: %s\n", id.data());
   AccountID accountid = getAccountFromCall( id );
@@ -240,14 +241,15 @@ ManagerImpl::answerCall(const CallID& id)
     return false;
   }
 
-  std::string codecName = getCurrentCodecName(id);
-  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
-  
   // if it was waiting, it's waiting no more
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
   removeWaitingCall(id);
   switchCall(id);
+ 
+  std::string codecName = getCurrentCodecName(id);
+  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+
   return true;
 }
 
@@ -366,6 +368,10 @@ ManagerImpl::offHoldCall(const CallID& id)
       _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
   }
   switchCall(id);
+
+  std::string codecName = getCurrentCodecName(id);
+  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
   return returnValue;
 }
@@ -748,7 +754,7 @@ bool ManagerImpl::playATone(Tone::TONEID toneId)
         return false;
     
     audiolayer = getAudioDriver();
-
+   
     if (_telephoneTone != 0) {
         _toneMutex.enterMutex();
         _telephoneTone->setCurrentTone(toneId);

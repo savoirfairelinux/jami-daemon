@@ -182,15 +182,17 @@ AudioRtpRTX::initBuffers()
   void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
+  _debug("AudioRtpRTX::initAudioRtpSession: call %s \n",_ca->getCallId().c_str());
   try {
     if (_ca == 0) { return; }
+    
     _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( _ca->getAudioCodec() );
-    _codecSampleRate = _audiocodec->getClockRate();	
+    
+    _codecSampleRate = _audiocodec->getClockRate();
 
-    _debug("Init audio RTP session\n");
     ost::InetHostAddress remote_ip(_ca->getRemoteIp().c_str());
+    
     if (!remote_ip) {
-      _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getRemoteIp().data());
       return;
     }
 
@@ -249,6 +251,7 @@ AudioRtpRTX::initAudioRtpSession (void)
     _debugException("! ARTP Failure: initialisation failed");
     throw;
   }
+  _debug("AudioRtpRTX::initAudioRtpSession: Init audio RTP sessionend of method\n");
 }
 
   void
@@ -442,7 +445,7 @@ AudioRtpRTX::run () {
 
     audiolayer->startStream();
     _start.post();
-    _debug("- ARTP Action: Start\n");
+    _debug("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
     while (!testCancel()) {
       
       // printf("AudioRtpRTX::run() _session->getFirstTimestamp() %i \n",_session->getFirstTimestamp());
@@ -452,12 +455,14 @@ AudioRtpRTX::run () {
       ////////////////////////////
       // Send session
       ////////////////////////////
-      sendSessionFromMic(timestamp);
+      sendSessionFromMic(timestamp); 
       timestamp += step;
+      
       ////////////////////////////
       // Recv session
       ////////////////////////////
       receiveSessionForSpkr(countTime);
+      
       // Let's wait for the next transmit cycle
 
       if(_session->isWaiting())
@@ -465,13 +470,14 @@ AudioRtpRTX::run () {
       else
         _ca->recAudio.recData(micData,_nSamplesMic);
 
-      Thread::sleep(TimerPort::getTimer()); 
+      Thread::sleep(TimerPort::getTimer());
       TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
+      
     }
-
+    
     // _debug("stop stream for audiortp loop\n");
     audiolayer->stopStream();
-    _debug("- ARTP Action: Stop\n");
+    _debug("- ARTP Action: Stop call %s\n",_ca->getCallId().c_str());
   //} catch(std::exception &e) {
     //_start.post();
     //_debug("! ARTP: Stop %s\n", e.what());

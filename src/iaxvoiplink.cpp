@@ -43,6 +43,7 @@
     IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
 : VoIPLink(accountID)
 {
+    // _debug("IAXVoIPLink::IAXVoIPLink : creating eventhread \n ");
     _evThread = new EventThread(this);
     _regSession = NULL;
     _nextRefreshStamp = 0;
@@ -88,6 +89,7 @@ IAXVoIPLink::init()
     if (initDone())
         return false;
 
+    
     bool returnValue = false;
     // _localAddress = "127.0.0.1";
     // port 0 is default

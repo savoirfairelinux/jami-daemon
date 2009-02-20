@@ -114,6 +114,7 @@ msgid "%d voice mail"
 msgstr "%d mensaje de voz"
 
 #: ../sflphone-gtk/src/actions.c:80
+#, c-format
 msgid "%s account- %s"
 msgstr "%s cuenta: %s"
 
@@ -304,6 +305,7 @@ msgid "Ringtones"
 msgstr "_Permitir los ringtones"
 
 #: ../sflphone-gtk/src/calltree.c:209
+#, fuzzy, c-format
 msgid "\"Voicemail\" <%s>"
 msgstr "_Numero de Caja de Voz"
 
@@ -625,6 +627,7 @@ msgid "_Show main window"
 msgstr "Mostrar ventana principal"
 
 #: ../sflphone-gtk/src/statusicon.c:124
+#, c-format
 msgid "SFLphone - %i accounts registered"
 msgstr "SFLphone - %i cuenta registrada"
 
