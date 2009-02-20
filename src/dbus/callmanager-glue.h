@@ -34,6 +34,7 @@ public:
         register_method(CallManager_adaptor, setRecording, _setRecording_stub);
         register_method(CallManager_adaptor, getCallDetails, _getCallDetails_stub);
         register_method(CallManager_adaptor, getCurrentCallID, _getCurrentCallID_stub);
+        register_method(CallManager_adaptor, getCurrentCodecName, _getCurrentCodecName_stub);
     }
 
     ::DBus::IntrospectedInterface *const introspect() const 
@@ -115,6 +116,18 @@ public:
             { "callID", "s", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getCurrentCodecName_args[] = 
+        {
+            { "callID", "s", true },
+            { "codecName", "s", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument currentSelectedCodec_args[] = 
+        {
+            { "callID", "s", false },
+            { "codecName", "s", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument incomingCall_args[] = 
         {
             { "accountID", "s", false },
@@ -167,10 +180,12 @@ public:
             { "setRecording", setRecording_args },
             { "getCallDetails", getCallDetails_args },
             { "getCurrentCallID", getCurrentCallID_args },
+            { "getCurrentCodecName", getCurrentCodecName_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod CallManager_adaptor_signals[] = 
         {
+            { "currentSelectedCodec", currentSelectedCodec_args },
             { "incomingCall", incomingCall_args },
             { "incomingMessage", incomingMessage_args },
             { "callStateChanged", callStateChanged_args },
@@ -218,11 +233,20 @@ public:
     virtual void setRecording(const std::string& callID) = 0;
     virtual std::map< std::string, std::string > getCallDetails(const std::string& callID) = 0;
     virtual std::string getCurrentCallID() = 0;
+    virtual std::string getCurrentCodecName(const std::string& callID) = 0;
 
 public:
 
     /* signal emitters for this interface
      */
+    void currentSelectedCodec(const std::string& arg1, const std::string& arg2)
+    {
+        ::DBus::SignalMessage sig("currentSelectedCodec");
+        ::DBus::MessageIter wi = sig.writer();
+        wi << arg1;
+        wi << arg2;
+        emit_signal(sig);
+    }
     void incomingCall(const std::string& arg1, const std::string& arg2, const std::string& arg3)
     {
         ::DBus::SignalMessage sig("incomingCall");
@@ -407,6 +431,17 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         std::string argout1 = getCurrentCallID();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _getCurrentCodecName_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::string argin1; ri >> argin1;
+        std::string argout1 = getCurrentCodecName(argin1);
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

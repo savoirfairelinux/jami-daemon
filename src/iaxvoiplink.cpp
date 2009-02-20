@@ -43,6 +43,7 @@
     IAXVoIPLink::IAXVoIPLink(const AccountID& accountID)
 : VoIPLink(accountID)
 {
+    // _debug("IAXVoIPLink::IAXVoIPLink : creating eventhread \n ");
     _evThread = new EventThread(this);
     _regSession = NULL;
     _nextRefreshStamp = 0;
@@ -89,7 +90,7 @@ IAXVoIPLink::init()
         return false;
 
     bool returnValue = false;
-    //_localAddress = "127.0.0.1";
+    // _localAddress = "127.0.0.1";
     // port 0 is default
     //  iax_enable_debug(); have to enable debug when compiling iax...
     int port = IAX_DEFAULT_PORTNO;
@@ -207,9 +208,17 @@ IAXVoIPLink::getEvent()
             iaxHandlePrecallEvent(event);
         }
 
+        // _debug("IAXVoIPLink::getEvent() : timestamp %i \n",event->ts);
+
         iax_event_free(event);
     }
     _mutexIAX.leaveMutex();
+
+   
+    if(call){
+      // _debug("Are we recording");
+        call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
+    }
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
     sendAudioFromMic();
@@ -218,9 +227,13 @@ IAXVoIPLink::getEvent()
     if (_nextRefreshStamp && _nextRefreshStamp - 2 < time(NULL)) {
         sendRegister("");
     }
-    if(call){
-      call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
-    }
+  
+    // _debug("IAXVoIPLink::getEvent() \n");
+    // reinitialize speaker buffer for recording (when recording a voice mail)
+    for (int i = 0; i < nbSampleForRec_; i++)
+        spkrDataConverted[i] = 0;
+    
+
     // thread wait 3 millisecond
     _evThread->sleep(3);
     free(event);
@@ -229,6 +242,8 @@ IAXVoIPLink::getEvent()
     void
 IAXVoIPLink::sendAudioFromMic(void)
 {
+    // _debug("IAXVoIPLink::sendAudioFromMic");
+
     int maxBytesToGet, availBytesFromMic, bytesAvail, compSize;
     AudioCodec *ac;
 
@@ -289,7 +304,9 @@ IAXVoIPLink::sendAudioFromMic(void)
         nbSample_ = audiolayer->getMic( micData, bytesAvail ) / sizeof(SFLDataFormat);
         
         // Store the number of samples for recording
-        nbSampleForRec_ = nbSample_;       
+        nbSampleForRec_ = nbSample_;      
+      
+        // _debug("IAXVoIPLink::sendAudioFromMic : %i \n",nbSampleForRec_); 
 
         // resample
         nbSample_ = converter->downsampleData( micData , micDataConverted , (int)ac ->getClockRate() ,  (int)audiolayer->getSampleRate() , nbSample_ );
@@ -400,7 +417,8 @@ IAXVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 
     if (call) {
         call->setPeerNumber(toUrl);
-
+        call->initRecFileName();
+        
         if ( iaxOutgoingInvite(call) ) {
             call->setConnectionState(Call::Progressing);
             call->setState(Call::Active);
@@ -588,6 +606,16 @@ IAXVoIPLink::carryingDTMFdigits(const CallID& id, char code)
 }
 
 
+std::string 
+IAXVoIPLink::getCurrentCodecName()
+{
+    IAXCall *call = getIAXCall(Manager::instance().getCurrentCallId());
+  
+    AudioCodec *ac = call->getCodecMap().getCodec(call->getAudioCodec());
+  
+    return ac->getCodecName();
+}
+
 
     bool
 IAXVoIPLink::iaxOutgoingInvite(IAXCall* call) 
@@ -717,6 +745,7 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
         case IAX_EVENT_VOICE:
             //if (!audiolayer->isCaptureActive ())
               //  audiolayer->startStream ();
+            // _debug("IAX_EVENT_VOICE: \n");
             iaxHandleVoiceEvent(event, call);
             break;
 
@@ -924,8 +953,11 @@ IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 
             if (event->ies.calling_number)
                 call->setPeerNumber(std::string(event->ies.calling_number));
-            if (event->ies.calling_name)
+            if (event->ies.calling_name) 
                 call->setPeerName(std::string(event->ies.calling_name));
+           
+            // if peerNumber exist append it to the name string
+            call->initRecFileName();
 
             if (Manager::instance().incomingCall(call, getAccountID())) {
                 /** @todo Faudra considérer éventuellement le champ CODEC PREFS pour

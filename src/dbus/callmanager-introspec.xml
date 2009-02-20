@@ -64,6 +64,16 @@
     <method name="getCurrentCallID">
       <arg type="s" name="callID" direction="out"/>
     </method>
+
+    <method name="getCurrentCodecName">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="s" name="codecName" direction="out"/>
+    </method>
+
+    <signal name="currentSelectedCodec">
+      <arg type="s" name="callID"  direction="out" />
+      <arg type="s" name="codecName"  direction="out"/>
+    </signal>
     
     <signal name="incomingCall">
       <arg type="s" name="accountID" />
@@ -91,7 +101,6 @@
       <arg type="s" name="device"  direction="out"/>
       <arg type="d" name="value"  direction="out"/>
     </signal>
-
  
     
     <signal name="error">

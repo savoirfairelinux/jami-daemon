@@ -178,6 +178,12 @@ gchar** dbus_get_active_codec_list( void );
 void dbus_set_active_codec_list( const gchar** list );
 
 /**
+ * CallManager - return the codec name
+ * @param call_t* current call
+ */
+gchar* dbus_get_current_codec_name(const call_t * c);
+
+/**
  * ConfigurationManager - Get the list of available input audio plugins
  * @return gchar** The list of plugins
  */

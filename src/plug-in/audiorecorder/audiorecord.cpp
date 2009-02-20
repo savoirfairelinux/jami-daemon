@@ -56,7 +56,7 @@ void AudioRecord::setSndSamplingRate(int smplRate){
 
 void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path, std::string id){
  
-  std::string fName;
+  // std::string fName;
  
   fileType_ = type;
   sndFormat_ = format;
@@ -64,10 +64,10 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sn
   sndSmplRate_ = sndSmplRate;
   call_id_ = id;
 
-  fName = fileName_;
-  fName.append("-"+call_id_);
+  // fName = fileName_;
+  // fName.append("-"+call_id_);
   
-  
+  /*
   if (fileType_ == FILE_RAW){
      if ( strstr(fileName_, ".raw") == NULL){
        printf("AudioRecord::openFile::concatenate .raw file extension: name : %s \n", fileName_); 
@@ -80,8 +80,34 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sn
        fName.append(".wav");
      }
    }
+   */
 
    savePath_ = path + "/";
+   // savePath_.append(fName);
+}
+
+
+
+void AudioRecord::initFileName( std::string peerNumber){
+
+   std::string fName;
+   
+   fName = fileName_;
+   fName.append("-"+peerNumber);
+
+    if (fileType_ == FILE_RAW){
+     if ( strstr(fileName_, ".raw") == NULL){
+       printf("AudioRecord::openFile::concatenate .raw file extension: name : %s \n", fileName_); 
+       fName.append(".raw");
+     }
+   }
+   else if (fileType_ == FILE_WAV){
+     if ( strstr(fileName_, ".wav") == NULL){ 
+       printf("AudioRecord::openFile::concatenate .wav file extension: name : %s \n", fileName_);
+       fName.append(".wav");
+     }
+   }
+   
    savePath_.append(fName);
 }
 
@@ -434,8 +460,8 @@ void AudioRecord::recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int 
     if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
       for (int k=0; k<nSamples_1; k++){
       
-        mixBuffer_[k] = (buffer_1[k]+buffer_2[k])/2;
-    
+        // mixBuffer_[k] = ((buffer_1[k]+buffer_2[k])/2)/32767;
+        mixBuffer_[k] = (buffer_1[k]+buffer_2[k]);
         // dsp.getRMS(mixBuffer_[k]);
       
         if ( fwrite(&buffer_1[k], 2, 1, fp) != 1)

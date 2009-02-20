@@ -168,4 +168,8 @@ void sflphone_fill_codec_list();
 void sflphone_record (call_t *c);
 
 void sflphone_rec_call (void);
+
+gchar* sflphone_get_current_codec_name();
+
+void sflphone_display_selected_codec (const gchar* codecName);
 #endif 

@@ -37,7 +37,7 @@ GtkToolItem * hangupButton;
 GtkToolItem * holdButton;
 GtkToolItem * transfertButton;
 GtkToolItem * unholdButton;
-GtkToolItem * historyButton;
+// GtkToolItem * historyButton;
 GtkToolItem * mailboxButton;
 GtkToolItem * recButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
@@ -395,6 +395,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
 	  break;
       }
     }
+    // if history
     else
     {
       newCall = g_new0( call_t, 1 );
@@ -405,7 +406,8 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
       g_sprintf(newCall->callID, "%d", rand()); 
       newCall->_start = 0;
       newCall->_stop = 0;
-
+      printf("call : account : %s \n", selectedCall->accountID);
+      newCall->accountID = selectedCall->accountID;
       printf("call : from : %s to %s\n", newCall->from, newCall->to);
       call_list_add(current_calls, newCall);
       update_call_tree_add(current_calls, newCall);
@@ -689,6 +691,7 @@ update_call_tree (calltab_t* tab, call_t * c)
 	}
 	else
 	{
+          g_print("Stuff to be printed  %s  %s \n",call_get_number(c),call_get_name(c));
 	  description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>", 
 	      call_get_number(c),
 	      call_get_name(c)); 

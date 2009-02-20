@@ -188,6 +188,8 @@ ManagerImpl::switchCall(const CallID& id ) {
   bool
 ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
+    _debug("ManagerImpl::outgoingCall() method \n");
+
     if (!accountExists(accountid)) {
         _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
         return false;
@@ -219,6 +221,7 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
   bool
 ManagerImpl::answerCall(const CallID& id)
 {
+
   stopTone(false); 
   _debug("Try to answer call: %s\n", id.data());
   AccountID accountid = getAccountFromCall( id );
@@ -237,11 +240,16 @@ ManagerImpl::answerCall(const CallID& id)
     removeCallAccount(id);
     return false;
   }
-  
+
   // if it was waiting, it's waiting no more
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
   removeWaitingCall(id);
   switchCall(id);
+ 
+  std::string codecName = getCurrentCodecName(id);
+  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+
   return true;
 }
 
@@ -249,7 +257,7 @@ ManagerImpl::answerCall(const CallID& id)
   bool
 ManagerImpl::hangupCall(const CallID& id)
 {
-  _debug("ManagerImpl::hangupCall(): This function is called when user hangup \n");
+    _debug("ManagerImpl::hangupCall(): This function is called when user hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
@@ -360,6 +368,10 @@ ManagerImpl::offHoldCall(const CallID& id)
       _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
   }
   switchCall(id);
+
+  std::string codecName = getCurrentCodecName(id);
+  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
   return returnValue;
 }
@@ -574,7 +586,7 @@ ManagerImpl::isWaitingCall(const CallID& id) {
 // Management of event peer IP-phone 
 ////////////////////////////////////////////////////////////////////////////////
 // SipEvent Thread 
-  bool 
+bool 
 ManagerImpl::incomingCall(Call* call, const AccountID& accountId) 
 {
     PulseLayer *pulselayer;
@@ -633,6 +645,10 @@ ManagerImpl::peerAnsweredCall(const CallID& id)
     stopTone(false);
   }
   if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
+  
+  std::string codecName = getCurrentCodecName(id);
+  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -738,7 +754,7 @@ bool ManagerImpl::playATone(Tone::TONEID toneId)
         return false;
     
     audiolayer = getAudioDriver();
-
+   
     if (_telephoneTone != 0) {
         _toneMutex.enterMutex();
         _telephoneTone->setCurrentTone(toneId);
@@ -1182,6 +1198,15 @@ ManagerImpl::getCodecDetails( const int32_t& payload )
   ss.str("");
 
   return v;
+}
+
+std::string
+ManagerImpl::getCurrentCodecName(const CallID& id)
+{
+  // _debug("ManagerImpl::getCurrentCodecName method called \n");
+  AccountID accountid = getAccountFromCall(id);
+  // _debug("ManagerImpl::getCurrentCodecName : %s \n",getAccountLink(accountid)->getCurrentCodecName().c_str());
+  return getAccountLink(accountid)->getCurrentCodecName();
 }
 
 /**
