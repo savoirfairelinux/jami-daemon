@@ -24,6 +24,8 @@ configure-stamp:
 	cd sflphone-gtk; ./autogen.sh --prefix=/usr
 	cd libs/pjproject-1.0.1; ./configure
 	touch configure-stamp
+	cd libs/dbus-c++; ./configure
+	cd libs/libiax2; ./configure
 
 
 #Architecture 
@@ -37,6 +39,8 @@ build-arch-stamp: configure-stamp
 	cd sflphone-gtk; make
 	cd libs/pjproject-1.0.1; $(MAKE) dep; $(MAKE)
 	touch $@
+	cd libs/dbus-c++; $(MAKE)
+	cd libs/libiax2; $(MAKE)
 
 build-indep: build-indep-stamp
 build-indep-stamp: configure-stamp 
@@ -76,7 +80,9 @@ install-arch:
 	# debian/tmp.
 	$(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
 	cd sflphone-gtk; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
-	cd libs/pjproject-1.0; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	cd libs/pjproject-1.0.1; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	cd libs/dbus-c++; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	cd libs/libiax2; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
 	rm -rf $(CURDIR)/debian/$(package)/usr/include
 	dh_install -s
 # Must not depend on anything. This is to be called by
