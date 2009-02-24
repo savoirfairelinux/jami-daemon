@@ -1,0 +1,44 @@
+Source: sflphone-iax2
+Priority: optional
+Maintainer: Yun Liu <yun.liu@savoirfairelinux.com>
+Build-Depends: debhelper (>= 5), autotools-dev
+Standards-Version: 3.8.0
+Section: libs
+
+Package: sflphone-iax2-dev
+Section: libdevel
+Architecture: amd64
+Depends: libc6 (>=2.6.1-1), sflphone-iax2(>= 0.2.3)
+Homepage: http://www.sflphone.org
+Description: IAX2 protocol support for SFLphone
+ Inter Asterisk eXchange, lovingly called IAX (pronounced: eeks), is the 
+ protocol used by the Asterisk PBX system for inter-asterisk-communication.
+ Other applications may use libiax to communicate with each other and 
+ other asterisk servers.  
+ IAX is a high performance, feature rich protocol unrelated to SIP or H.323.
+ Its single-socket design allows it to interoperate with NAT and 
+ PAT masquerade firewalls. It supports internationalization, remote dialplans, 
+ and voice, HTML, image, DTMF, and video content.
+ This library is needed by SFLphone to support the IAX2 protocol.
+ SFLphone is being developed by the global community, and maintained by 
+ Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.
+ This package is only the library development files.
+
+Package: sflphone-iax2
+Section: libs
+Architecture: amd64
+Depends: libc6 (>=2.6.1-1), ${shlibs:Depends}
+Homepage: http://www.sflphone.org
+Description: IAX2 protocol support for SFLphone
+ Inter Asterisk eXchange, lovingly called IAX (pronounced: eeks), is the 
+ protocol used by the Asterisk PBX system for inter-asterisk-communication.
+ Other applications may use libiax to communicate with each other and 
+ other asterisk servers.  
+ IAX is a high performance, feature rich protocol unrelated to SIP or H.323.
+ Its single-socket design allows it to interoperate with NAT and 
+ PAT masquerade firewalls. It supports internationalization, remote dialplans, 
+ and voice, HTML, image, DTMF, and video content.
+ This library is needed by SFLphone to support the IAX2 protocol.
+ SFLphone is being developed by the global community, and maintained by 
+ Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.
+ This package is only the library files.
