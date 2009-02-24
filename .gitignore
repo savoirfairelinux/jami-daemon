@@ -107,13 +107,16 @@ sflphone-gtk/pixmaps/Makefile
 /libs/libiax2/ltmain.sh
 /libs/libiax2/iax-config
 /libs/libiax2/configure
+/libs/libiax2/Makefile
+/libs/libiax2/iax2-config
+/libs/libiax2/src/Makefile
 
 ## dbus-c++
-/libs/dbus-c++/Makefile
-/libs/dbus-c++/autom4te.cache/requests
-/libs/dbus-c++/config.log
-/libs/dbus-c++/Makefile
-/libs/dbus-c++/autom4te.cache/requests
+libs/dbus-c++/Makefile
+libs/dbus-c++/autom4te.cache/requests
+libs/dbus-c++/config.log
+libs/dbus-c++/Makefile
+libs/dbus-c++/autom4te.cache/requests
 libs/dbus-c++/config.log
 libs/dbus-c++/config.status
 libs/dbus-c++/configure

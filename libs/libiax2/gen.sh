@@ -14,7 +14,4 @@
 	exit;
 }
 
-libtoolize --copy --force
-aclocal
-autoconf
-automake
+autoreconf -vifs 
