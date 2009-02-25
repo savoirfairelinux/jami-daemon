@@ -26,7 +26,7 @@
 #include <sstream>
 
 #include "plug-in/plugin.h"
-#include "audiodsp.h"
+// #include "audiodsp.h"
 
 // class AudioDSP;
 
@@ -189,11 +189,6 @@ protected:
   std::string savePath_;
 
   std::string call_id_;
-  
-  /**
-   * AudioDSP test (compute RMS value)
-   */
-  AudioDSP dsp;
  
 };
 

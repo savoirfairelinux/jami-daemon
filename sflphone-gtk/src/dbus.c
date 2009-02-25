@@ -66,7 +66,7 @@ curent_selected_codec (DBusGProxy *proxy UNUSED,
                   const gchar* codecName,
                   void * foo  UNUSED )
 {
-  g_print ("Codec decided! %s\n",codecName);
+  g_print ("%s codec decided for call %s\n",codecName,callID);
   sflphone_display_selected_codec (codecName);
 }
 
