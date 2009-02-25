@@ -1,5 +1,5 @@
 %define name sflphone
-%define version 0.9.3
+%define version 
 Autoreq: 0
 
 Name:		%name
@@ -13,7 +13,7 @@ Packager:	Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 Source0:	%{name}-%{version}.tar.gz
 Source1:        libpj-sfl.pc
 BuildRoot:	%{_tmppath}/%{name}-%{version}
-Requires: 	commoncpp2 ccrtp cppunit libsamplerate pulseaudio-libs-zeroconf pulseaudio-libs-devel gsm speex sflphone-iax2 dbus-c++ libgcc dbus-glib expat gtk2 glibc glib2 dbus-libs dbus-glib libsexy libnotify perl
+Requires: 	commoncpp2 ccrtp cppunit libsamplerate pulseaudio-libs-zeroconf pulseaudio-libs-devel gsm speex libgcc dbus-glib expat gtk2 glibc glib2 dbus-libs dbus-glib libsexy libnotify perl
 
 %description
 SFLphoned is a VoIP daeamon with SIP protocol and IAX protocol.
@@ -24,6 +24,13 @@ cd libs/pjproject-1.0.1
 ./configure --prefix=/usr
 make dep
 make clean
+make
+cd ../dbus-c++
+./configure --prefix=/usr
+make
+cd ../libiax2
+./gen.sh 
+./configure --prefix=/usr
 make
 cd ../..
 
@@ -42,6 +49,12 @@ cd sflphone-gtk/
 make prefix=%{buildroot}/usr install
 
 cd ../libs/pjproject-1.0.1
+make prefix=%{buildroot}/usr install
+
+cd ../dbus-c++
+make prefix=%{buildroot}/usr install
+
+cd ../libiax2
 make prefix=%{buildroot}/usr install
 
 cd ../..
