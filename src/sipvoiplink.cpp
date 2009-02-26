@@ -805,15 +805,7 @@ std::string
 SIPVoIPLink::getCurrentCodecName()
 {
 
-  _debug("SIPVoIPLink::getCurrentCodecName Ok 1 : \n");
- 
-  printf("AAAAAAAAAAAAAHHHHHHH!!!!!!:: %s \n",Manager::instance().getCurrentCallId().c_str());
-
-  SIPCall *call = getSIPCall(Manager::instance().getCurrentCallId());
-  
-  _debug("SIPVoIPLink::getCurrentCodecName Ok 2 : \n");
-  
-  printf("OOOOOOOUUUUUUPPPPPPPPPPSSSSSSSSSSS!!!!!!:: %s \n",call->getCallId().c_str());  
+  SIPCall *call = getSIPCall(Manager::instance().getCurrentCallId());  
 
   AudioCodec *ac = call->getCodecMap().getCodec(call->getAudioCodec());
 

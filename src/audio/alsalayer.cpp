@@ -122,7 +122,7 @@ AlsaLayer::startStream(void)
     void
 AlsaLayer::stopStream(void) 
 {
-    _debug ("Stop ALSA streams\n");
+    _debug ("AlsaLayer::stopStream :: Stop ALSA streams\n");
     stopCaptureStream ();
     //stopPlaybackStream ();
 
@@ -190,9 +190,13 @@ bool AlsaLayer::isCaptureActive(void) {
     
 void AlsaLayer::stopCaptureStream (void)
 {
+    int err;  
+
     if(_CaptureHandle){
-        snd_pcm_drop (_CaptureHandle);
+        err = snd_pcm_drop (_CaptureHandle);
+        _debug("AlsaLayer::stopCaptureStream snd_pcm_drop returned vaue : %i\n",err);
         stop_capture ();
+        _debug("Wroking here !!!!!!!!!!!!!!!\n");
     }
 }
 
@@ -373,7 +377,8 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     
     if(flag == SFL_PCM_BOTH || flag == SFL_PCM_PLAYBACK)
     {
-        if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
+      // if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
+        if((err = snd_pcm_open(&_PlaybackHandle, PCM_PLUGHW,  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
             _debugAlsa("Error while opening playback device %s\n",  pcm_p.c_str());
             setErrorMessage( ALSA_PLAYBACK_DEVICE );
             close_playback ();

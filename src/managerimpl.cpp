@@ -313,6 +313,7 @@ ManagerImpl::cancelCall (const CallID& id)
   bool
 ManagerImpl::onHoldCall(const CallID& id)
 {
+  _debug("*************** ON HOLD ***********************************\n");
   stopTone(true);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
@@ -335,6 +336,7 @@ ManagerImpl::onHoldCall(const CallID& id)
   bool
 ManagerImpl::offHoldCall(const CallID& id)
 {
+  _debug("*************** OFF HOLD ***********************************\n");
   stopTone(false);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {

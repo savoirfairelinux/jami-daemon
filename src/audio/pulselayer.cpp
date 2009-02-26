@@ -248,7 +248,8 @@ PulseLayer::processData( void )
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if( pa_stream_writable_size(playback->pulseStream()) == 0 )
             return;
-
+        
+        _debug("PulseLayer::processData() \n");
         writeToSpeaker();
     }
 }
@@ -256,6 +257,7 @@ PulseLayer::processData( void )
     void
 PulseLayer::writeToSpeaker( void )
 {   
+     _debug("PulseLayer::writeToSpeaker() \n");
     /** Bytes available in the urgent ringbuffer ( reserved for DTMF ) */
     int urgentAvail; 
     /** Bytes available in the regular ringbuffer ( reserved for voice ) */
