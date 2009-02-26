@@ -41,7 +41,7 @@ include('include/header.php');
                     <br/>
                     Connect it to 
                     <a href="http://www.asterisk.org">Asterisk</a> 
-                    PABX to get the best of it. 
+                    PBX to get the best of it. 
                     <br/>
                     </p>
                 </td>

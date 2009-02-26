@@ -1,19 +1,19 @@
 %define name sflphone
-%define version 
+%define version @VERSION@
 Autoreq: 0
 
 Name:		%name
 Summary:	A VoIP daemon with SIP protocol and IAX protocol
 Version:	%version
-Release:        2fedora
+Release:        2suse
 License:	GPL
 Group:		System Environment/Daemons
 URL:		http://www.sflphone.org/
-Packager:	Emmanuel Milou <emmanuel.milouu@savoirfairelinux.com>
+Packager:	Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 Source0:	%{name}-%{version}.tar.gz
 Source1:        libpj-sfl.pc
 BuildRoot:	%{_tmppath}/%{name}-%{version}
-Requires: 	commoncpp2 ccrtp cppunit libsamplerate pulseaudio-libs-zeroconf pulseaudio-libs-devel gsm speex  libgcc dbus-glib expat gtk2 glibc glib2 dbus-libs dbus-glib libsexy libnotify perl
+Requires: 	commoncpp2 ccrtp cppunit libsamplerate pulseaudio-libs-zeroconf pulseaudio-libs-devel gsm speex libgcc dbus-glib expat gtk2 glibc glib2 dbus-libs dbus-glib libsexy libnotify perl
 
 %description
 SFLphoned is a VoIP daeamon with SIP protocol and IAX protocol.
@@ -43,19 +43,19 @@ make
 cd ..
 
 %install
-%makeinstall
+make prefix=%{buildroot}/usr install
 
 cd sflphone-gtk/
-%makeinstall
+make prefix=%{buildroot}/usr install
 
 cd ../libs/pjproject-1.0.1
-%makeinstall
+make prefix=%{buildroot}/usr install
 
 cd ../dbus-c++
-%makeinstall
+make prefix=%{buildroot}/usr install
 
 cd ../libiax2
-%makeinstall
+make prefix=%{buildroot}/usr install
 
 cd ../..
 cd %{buildroot}/usr/bin/
@@ -63,8 +63,8 @@ ln -sf ./sflphone-gtk sflphone
 cd -
 cp %{SOURCE1} %{buildroot}/usr/lib/pkgconfig/ -f
 
-rm -rf %{buildroot}/usr/lib/debug
-rm -rf %{buildroot}/usr/include/
+rm -rf  %{buildroot}/usr/lib/debug
+rm -rf  %{buildroot}/usr/include
 
 %files
 %defattr(-, root, root)
@@ -80,14 +80,12 @@ rm -rf %{buildroot}/usr/include/
 %clean
 rm -rf %{buildroot}
 
-
-
 %changelog
-* Mon Feb 16 2009 Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> 2fedora
-  - Packaging 0.9.3-2 sflphone version on Fedora 10
+* Mon Feb 16 2009 Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> 2suse
+  - Packaging 0.9.3-2 sflphone version on openSUSE 11
 
-* Mon Jan 26 2009 Yun Liu <yun.liu@savoirfairelinux.com> 6
-  - Packaging sflphone for Fedora 10
+* Mon Jan 26 2009 Yun Liu <yun.liu@savoirfairelinux.com> 6suse
+  - Packaging sflphone on openSUSE 11
 
 * Mon Jan 5 2009 Yun Liu <yun.liu@savoirfairelinux.com>
   - Fix bug ticket #107, #108, #109, #110, #111, #117, #129

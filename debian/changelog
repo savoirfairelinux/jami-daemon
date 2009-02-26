@@ -31,6 +31,7 @@ sflphone (0.9.3-0ubuntu2) %system%; urgency=low
   * Remove previous version of PJSIP from the repo
   * Upgrade PJSIP to version 1.0.1
   * Add the new website source in the repository
+  * Use libspeexdsp for silence detection only if available
 
   [ Loïc Faure-Lacroix ]
   * Ajout du logo gpl3
