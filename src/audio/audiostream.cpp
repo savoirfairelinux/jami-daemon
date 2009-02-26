@@ -53,7 +53,7 @@ AudioStream::disconnect( void )
 void 
 AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
 {
-  _debug("The state of the stream changed\n");
+  _debug("AudioStream::stream_state_callback :: The state of the stream changed\n");
   assert(s);
   switch(pa_stream_get_state(s)){
     case PA_STREAM_CREATING:
@@ -64,7 +64,8 @@ AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
       PulseLayer::streamState++;
       break;
     case PA_STREAM_READY:
-      _debug("Stream successfully created, connected to %s\n", pa_stream_get_device_name( s ));
+ 
+     _debug("Stream successfully created, connected to %s\n", pa_stream_get_device_name( s ));
       break;
     case PA_STREAM_UNCONNECTED:
       _debug("Stream unconnected\n");

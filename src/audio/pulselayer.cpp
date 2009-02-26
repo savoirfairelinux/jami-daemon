@@ -38,7 +38,7 @@ static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
       , record()
 {
     PulseLayer::streamState = 0;
-    _debug("Pulse audio constructor: Create context\n");
+    _debug("PulseLayer::Pulse audio constructor: Create context\n");
 }
 
 // Destructor
@@ -53,7 +53,7 @@ PulseLayer::~PulseLayer (void)
     void
 PulseLayer::closeLayer( void )
 { 
-    _debug(" Destroy pulselayer\n");
+    _debug("PulseLayer::closeLayer :: Destroy pulselayer\n");
 
     playback->disconnect(); 
     record->disconnect();
@@ -69,6 +69,7 @@ PulseLayer::closeLayer( void )
     void
 PulseLayer::connectPulseAudioServer( void )
 {
+    _debug("PulseLayer::connectPulseAudioServer \n");
     pa_context_flags_t flag = PA_CONTEXT_NOAUTOSPAWN ;  
 
     pa_threaded_mainloop_lock( m );
@@ -94,7 +95,7 @@ PulseLayer::connectPulseAudioServer( void )
 
 void PulseLayer::context_state_callback( pa_context* c, void* user_data )
 {
-    _debug("The state of the context changed\n");
+    _debug("PulseLayer::context_state_callback ::The state of the context changed\n");
     PulseLayer* pulse = (PulseLayer*)user_data;
     assert(c && pulse->m);
     switch(pa_context_get_state(c)){
@@ -121,6 +122,7 @@ void PulseLayer::context_state_callback( pa_context* c, void* user_data )
 
 void PulseLayer::disconnectPulseAudioServer( void )
 {
+  _debug(" PulseLayer::disconnectPulseAudioServer( void ) \n");
     if( playback )
         delete playback; playback=NULL;
 
@@ -131,6 +133,7 @@ void PulseLayer::disconnectPulseAudioServer( void )
     void
 PulseLayer::createStreams( pa_context* c )
 {
+    _debug("PulseLayer::createStreams \n");
     playback = new AudioStream(c, PLAYBACK_STREAM, PLAYBACK_STREAM_NAME, _manager->getSpkrVolume());
     pa_stream_set_write_callback( playback->pulseStream() , audioCallback, this);
     //pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
@@ -144,6 +147,7 @@ PulseLayer::createStreams( pa_context* c )
     bool 
 PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED) 
 {
+  _debug("PulseLayer::openDevice \n");
     _sampleRate = sampleRate;
     _frameSize = frameSize;	
 
@@ -173,7 +177,7 @@ PulseLayer::closeCaptureStream( void )
 
     void 
 PulseLayer::closePlaybackStream( void )
-{
+{ 
 }
 
     int
@@ -199,9 +203,12 @@ PulseLayer::getMic(void *buffer, int toCopy)
 PulseLayer::startStream (void) 
 {
     flushMic();
-    _debug("Start stream\n");
+    _debug("PulseLayer::Start stream\n");
     pa_threaded_mainloop_lock(m);
+   
+    pa_stream_cork( playback->pulseStream(), NULL, NULL, NULL);
     pa_stream_cork( record->pulseStream(), NULL, NULL, NULL);
+  
     pa_threaded_mainloop_unlock(m);
 
 }
@@ -209,9 +216,13 @@ PulseLayer::startStream (void)
     void 
 PulseLayer::stopStream (void) 
 {
-    _debug("Stop stream\n");
+    _debug("PulseLayer::Stop stream\n");
     pa_stream_flush( playback->pulseStream(), NULL, NULL );
     pa_stream_flush( record->pulseStream(), NULL, NULL );
+    
+    pa_stream_cork( playback->pulseStream(), NULL, NULL, NULL);
+    pa_stream_cork( record->pulseStream(), NULL, NULL, NULL);
+    
     flushMic();
     flushMain();
     flushUrgent();
@@ -222,7 +233,7 @@ PulseLayer::stopStream (void)
     void 
 PulseLayer::underflow ( pa_stream* s UNUSED,  void* userdata UNUSED )
 { 
-    _debug("Buffer Underflow\n");
+    _debug("PulseLayer::Buffer Underflow\n");
 }
 
 
@@ -239,17 +250,18 @@ PulseLayer::processData( void )
 {
     // Handle the mic
     // We check if the stream is ready
-    if( (record->pulseStream()) && pa_stream_get_state( record->pulseStream()) == PA_STREAM_READY) 
+  if( (record->pulseStream()) && (pa_stream_get_state( record->pulseStream()) == PA_STREAM_READY) && record) 
+    // _debug("PulseLayer::processData() readFromMic() \n");
         readFromMic();
 
     // Handle the data for the speakers
-    if( (playback->pulseStream()) && pa_stream_get_state( playback->pulseStream()) == PA_STREAM_READY){
+        if( (playback->pulseStream()) && (pa_stream_get_state( playback->pulseStream()) == PA_STREAM_READY) && playback){
 
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if( pa_stream_writable_size(playback->pulseStream()) == 0 )
             return;
         
-        _debug("PulseLayer::processData() \n");
+        // _debug("PulseLayer::processData() writeToSpeaker()\n");
         writeToSpeaker();
     }
 }
@@ -257,7 +269,6 @@ PulseLayer::processData( void )
     void
 PulseLayer::writeToSpeaker( void )
 {   
-     _debug("PulseLayer::writeToSpeaker() \n");
     /** Bytes available in the urgent ringbuffer ( reserved for DTMF ) */
     int urgentAvail; 
     /** Bytes available in the regular ringbuffer ( reserved for voice ) */
