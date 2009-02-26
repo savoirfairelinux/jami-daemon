@@ -115,7 +115,6 @@ void
 Tone::genSin(SFLDataFormat* buffer, int frequency1, int frequency2, int nb) 
 {
 
-  _debug("Tone::genSin :: called!!!!!!!!!!!!!!!!!! %i \n",nb);
   double pi2 = 6.28318520; 
   double var1 = pi2 * (double)frequency1 / (double)_sampleRate;
   double var2 = pi2 * (double)frequency2 / (double)_sampleRate;
