@@ -103,8 +103,8 @@ AlsaLayer::openDevice (int indexIn, int indexOut, int sampleRate, int frameSize,
 
     ost::MutexLock lock( _mutex );
     
-    std::string pcmp = buildDeviceTopo( plugin , indexOut , 0);
-    std::string pcmc = buildDeviceTopo( plugin , indexIn , 0);
+    std::string pcmp = buildDeviceTopo( PCM_PLUGHW , indexOut , 0);
+    std::string pcmc = buildDeviceTopo( PCM_PLUGHW , indexIn , 0);
 
     return open_device( pcmp , pcmc , stream);
 }
@@ -378,7 +378,7 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     if(flag == SFL_PCM_BOTH || flag == SFL_PCM_PLAYBACK)
     {
       // if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
-        if((err = snd_pcm_open(&_PlaybackHandle, PCM_PLUGHW,  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
+      if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
             _debugAlsa("Error while opening playback device %s\n",  pcm_p.c_str());
             setErrorMessage( ALSA_PLAYBACK_DEVICE );
             close_playback ();
