@@ -1,3 +1,28 @@
+sflphone (0.9.3-0ubuntu3) %system%; urgency=low
+
+  [ Alexandre Savard ]
+  * Both playback and record streams in PA_STREAM_CORKED (pulseaudio)
+  * Use PLUGHW device for ALSA capture
+  * Functional IAX and SIP recording for voicemail
+  * Use the less CPU-consuming interpolator algorithm for resampling
+  * Display in GTK GUI the codec used in conversation
+  * GTK GUI use ASCII instread of utf-8
+  * Add record menus in GTK GUI
+  * Put on hold when dialing a new number
+  * AccountID's are saved in the history
+
+  [ Emmanuel Milou ]
+  * Integrate DBUS C++, libiax2 in the git repository
+  * Update website
+  * Use libspeexdsp only if available on the system
+  * Updated .gitignore file
+
+  [Cyrille Béraud]
+  * Account assistant manager improvment
+  * Add an email request when creating a new account to receive voicemails
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Sat, 14 Feb 2009 13:29:15 -0500
+
 sflphone (0.9.3-0ubuntu2) %system%; urgency=low
 
   [ Emmanuel Milou ]

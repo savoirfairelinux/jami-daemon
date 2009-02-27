@@ -45,7 +45,7 @@ ToneGenerator::~ToneGenerator (void) {
 void
 ToneGenerator::generateSin (int lowerfreq, int higherfreq, int16* ptr, int len) const {
   double var1, var2;
-													
+ 										
   var1 = (double)2 * (double)M_PI * (double)higherfreq / (double)_sampleRate; 
   var2 = (double)2 * (double)M_PI * (double)lowerfreq / (double)_sampleRate;
 

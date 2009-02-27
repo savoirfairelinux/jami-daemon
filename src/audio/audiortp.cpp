@@ -493,6 +493,7 @@ AudioRtpRTX::run () {
     }
     
     // _debug("stop stream for audiortp loop\n");
+    _debug("AudioRtpRTX::run () :: This is bad when holding a call!!!!!!!\n");
     audiolayer->stopStream();
     _debug("- ARTP Action: Stop call %s\n",_ca->getCallId().c_str());
   //} catch(std::exception &e) {

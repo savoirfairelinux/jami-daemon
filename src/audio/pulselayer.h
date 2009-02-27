@@ -24,6 +24,7 @@
 #include "audiostream.h"
 
 #include <pulse/pulseaudio.h>
+#include <pulse/stream.h>
 
 #define PLAYBACK_STREAM_NAME	    "SFLphone out"
 #define CAPTURE_STREAM_NAME	    "SFLphone in"
@@ -74,7 +75,8 @@ class PulseLayer : public AudioLayer {
     static void overflow ( pa_stream* s, void* userdata );
     static void underflow ( pa_stream* s, void* userdata );
     static void stream_state_callback( pa_stream* s, void* user_data );	
-    static void context_state_callback( pa_context* c, void* user_data );	
+    static void context_state_callback( pa_context* c, void* user_data );
+    static void stream_suspended_callback ( pa_stream* s, void* userdata );	
 
     bool isCaptureActive (void){return true;}
 
@@ -127,6 +129,7 @@ class PulseLayer : public AudioLayer {
     void setMicVolume( int value ) { micVolume = value; }
 
     void processData( void );
+    
   private:
     // Copy Constructor
     PulseLayer(const PulseLayer& rh);
