@@ -24,8 +24,8 @@ configure-stamp:
 	cd sflphone-gtk; ./autogen.sh --prefix=/usr
 	cd libs/pjproject-1.0.1; ./configure
 	touch configure-stamp
-	cd libs/dbus-c++; ./configure
-	cd libs/libiax2; ./configure
+	cd libs/dbus-c++; ./autogen.sh; ./configure
+	cd libs/libiax2; ./gen.sh; ./configure
 
 
 #Architecture 
