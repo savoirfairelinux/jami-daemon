@@ -23,6 +23,7 @@
 
 #include "call.h"
 #include "sipvoiplink.h"
+#include "sdp.h"
 
 class AudioCodec;
 
@@ -40,7 +41,7 @@ class SIPCall : public Call
      * @param type  The type of the call. Could be Incoming
      *						 Outgoing
      */
-    SIPCall(const CallID& id, Call::CallType type);
+    SIPCall(const CallID& id, Call::CallType type, pj_pool_t *pool );
 
     /**
      * Destructor
@@ -90,7 +91,13 @@ class SIPCall : public Call
     void setInvSession(pjsip_inv_session* inv) {_invSession = inv;}
     pjsip_inv_session *getInvSession() {return _invSession;}
     
+    Sdp* getLocalSDP (void) { return _local_sdp; }
+
+    void setLocalSDP (Sdp *local_sdp) { _local_sdp = local_sdp; }
+
   private:
+
+    Sdp *_local_sdp;
 
     int _cid;
     int _did;

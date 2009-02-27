@@ -192,8 +192,11 @@ void Sdp::sdpAddOrigin( void )
 void Sdp::sdpAddConnectionInfo( void )
 {
     _localSDP->conn->net_type = _localSDP->origin.net_type;
+    _debug("IP : %s\n", _localSDP->origin.net_type.ptr );
     _localSDP->conn->addr_type = _localSDP->origin.addr_type;
+    _debug("IP : %s\n", _localSDP->origin.addr_type.ptr );
     _localSDP->conn->addr = _localSDP->origin.addr;
+    _debug("IP : %s\n", _localSDP->origin.addr.ptr );
 }
 
 void Sdp::sdpAddMediaDescription()
