@@ -10,6 +10,6 @@ libtoolize --force
 autoheader
 autoconf -f
 automake -a
-./configure $@
+#./configure $@
 
 

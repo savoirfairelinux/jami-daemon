@@ -2,17 +2,17 @@
  *  Copyright (C) 2007 - 2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -41,7 +41,7 @@ sflphone_notify_voice_mail ( const gchar* accountID , guint count )
 {
     gchar *id;
     gchar *current;
-    
+
     // We want to notify only for the default current account; ie the first in the list
     id = g_strdup( accountID );
     current = account_list_get_current_id();
@@ -56,17 +56,17 @@ sflphone_notify_voice_mail ( const gchar* accountID , guint count )
         if( count > 1)
             g_sprintf(message, _("%d voice mails"), count);
         else
-            g_sprintf(message, _("%d voice mail"), count);	  
+            g_sprintf(message, _("%d voice mail"), count);
         statusbar_push_message(message,  __MSG_VOICE_MAILS);
         g_free(message);
     }
-	
+
     // TODO: add ifdef
     if( account_list_get_size() > 0 )
     {
         account_t* acc = account_list_get_by_id( id );
 	if( acc != NULL )
-            notify_voice_mails( count , acc );	
+            notify_voice_mails( count , acc );
     }
 }
 
@@ -77,14 +77,14 @@ status_bar_display_account( call_t* c)
     account_t* acc;
     if(c->accountID != NULL){
       acc = account_list_get_by_id(c->accountID);
-      msg = g_markup_printf_escaped(_("%s account- %s") , 
-				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
+      msg = g_markup_printf_escaped(_("%s account- %s") ,
+				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
 				  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
       statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
       g_free(msg);
   }
 }
-  
+
 
 gboolean
 sflphone_quit ()
@@ -109,7 +109,7 @@ sflphone_quit ()
 	return quit;
 }
 
-void 
+void
 sflphone_hold(call_t * c )
 {
 	c->state = CALL_STATE_HOLD;
@@ -117,7 +117,7 @@ sflphone_hold(call_t * c )
 	update_menus();
 }
 
-void 
+void
 sflphone_ringing(call_t * c )
 {
 	c->state = CALL_STATE_RINGING;
@@ -206,7 +206,7 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 		else if(strcmp( status , "ERROR_EXIST_STUN") == 0 )
 		{
 		  a->state = ACCOUNT_STATE_ERROR_EXIST_STUN;
-		}	
+		}
 		else
 		{
 			a->state = ACCOUNT_STATE_INVALID;
@@ -222,18 +222,20 @@ sflphone_fill_account_list(gboolean toolbarInitialized)
 gboolean sflphone_init()
 {
 	if(!dbus_connect ()){
-	
+
 		main_window_error_message(_("Unable to connect to the SFLphone server.\nMake sure the daemon is running."));
 		return FALSE;
 	}
-	else 
+	else
 	{
 		dbus_register(getpid(), "Gtk+ Client");
-        current_calls = calltab_init();
-	    history = calltab_init();
-	    if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
-	    account_list_init ();
-        codec_list_init();
+    current_calls = calltab_init();
+	  history = calltab_init();
+	  contacts = calltab_init();
+	  if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
+	  contactfilter = create_filter(GTK_TREE_MODEL(contacts->store));
+	  account_list_init ();
+    codec_list_init();
 		sflphone_fill_account_list(FALSE);
 		sflphone_fill_codec_list();
 		sflphone_set_current_account();
@@ -241,7 +243,7 @@ gboolean sflphone_init()
 	}
 }
 
-void 
+void
 sflphone_hang_up()
 {
 	call_t * selectedCall = call_get_selected(current_calls);
@@ -270,13 +272,13 @@ sflphone_hang_up()
 				selectedCall->state = CALL_STATE_DIALING;
 				selectedCall->_stop = 0;
 				break;
-			case CALL_STATE_INCOMING:  
+			case CALL_STATE_INCOMING:
 				dbus_refuse (selectedCall);
 				selectedCall->state = CALL_STATE_DIALING;
 				selectedCall->_stop = 0;
 				g_print("from sflphone_hang_up : "); stop_notification();
 				break;
-			case CALL_STATE_TRANSFERT:  
+			case CALL_STATE_TRANSFERT:
 				dbus_hang_up (selectedCall);
 				(void) time(&selectedCall->_stop);
 				break;
@@ -289,7 +291,7 @@ sflphone_hang_up()
 }
 
 
-void 
+void
 sflphone_pick_up()
 {
 	call_t * selectedCall = call_get_selected(active_calltree);
@@ -327,7 +329,7 @@ sflphone_pick_up()
 	}
 }
 
-void 
+void
 sflphone_on_hold ()
 {
 	call_t * selectedCall = call_get_selected(current_calls);
@@ -341,7 +343,7 @@ sflphone_on_hold ()
                         case CALL_STATE_RECORD:
                                 dbus_hold (selectedCall);
                                 break;
-                                
+
 			default:
 				g_warning("Should not happen in sflphone_on_hold!");
 				break;
@@ -349,7 +351,7 @@ sflphone_on_hold ()
 	}
 }
 
-void 
+void
 sflphone_off_hold ()
 {
 	call_t * selectedCall = call_get_selected(current_calls);
@@ -368,7 +370,7 @@ sflphone_off_hold ()
 }
 
 
-void 
+void
 sflphone_fail( call_t * c )
 {
 	c->state = CALL_STATE_FAILURE;
@@ -376,7 +378,7 @@ sflphone_fail( call_t * c )
 	update_menus();
 }
 
-void 
+void
 sflphone_busy( call_t * c )
 {
 	c->state = CALL_STATE_BUSY;
@@ -384,7 +386,7 @@ sflphone_busy( call_t * c )
 	update_menus();
 }
 
-void 
+void
 sflphone_current( call_t * c )
 {
   if( c->state != CALL_STATE_HOLD )
@@ -404,7 +406,7 @@ sflphone_record( call_t * c )
   update_menus();
 }
 
-void 
+void
 sflphone_set_transfert()
 {
 	call_t * c = call_get_selected(current_calls);
@@ -418,7 +420,7 @@ sflphone_set_transfert()
 	toolbar_update_buttons();
 }
 
-void 
+void
 sflphone_unset_transfert()
 {
 	call_t * c = call_get_selected(current_calls);
@@ -433,7 +435,7 @@ sflphone_unset_transfert()
 }
 
 void
-sflphone_incoming_call (call_t * c) 
+sflphone_incoming_call (call_t * c)
 {
 	c->history_state = MISSED;
 	call_list_add ( current_calls, c );
@@ -468,7 +470,7 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 			{  /* Brackets mandatory because of local vars */
 				gchar * before = c->to;
 				if(strlen(c->to) >= 1){
-                                        
+
 					c->to = g_strndup(c->to, strlen(c->to) -1);
 					g_free(before);
 					g_print("TO: backspace %s\n", c->to);
@@ -479,7 +481,7 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 						c->from = g_strconcat("\"\" <", c->to, ">", NULL);
 					}
 					update_call_tree(current_calls,c);
-				} 
+				}
 				else if(strlen(c->to) == 0)
 				{
 				  if(c->state != CALL_STATE_TRANSFERT)
@@ -496,8 +498,8 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 		default:
                   // if (keyval < 255 || (keyval >65453 && keyval < 65466))
                         if (keyval < 127)
-			{ 
-                               
+			{
+
                                 if(c->state != CALL_STATE_TRANSFERT)
 				  dbus_play_dtmf( key );
 				  gchar * before = c->to;
@@ -518,7 +520,7 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 }
 
 
-call_t * 
+call_t *
 sflphone_new_call()
 {
 
@@ -533,7 +535,7 @@ sflphone_new_call()
 	c->from = g_strconcat("\"\" <>", NULL);
 
 	c->callID = g_new0(gchar, 30);
-	g_sprintf(c->callID, "%d", rand()); 
+	g_sprintf(c->callID, "%d", rand());
 
 	c->to = g_strdup("");
 
@@ -541,21 +543,21 @@ sflphone_new_call()
 	c->_stop = 0;
 
 	call_list_add(current_calls,c);
-	update_call_tree_add(current_calls,c);  
+	update_call_tree_add(current_calls,c);
 	update_menus();
 
 	return c;
 }
 
 
-void 
+void
 sflphone_keypad( guint keyval, gchar * key)
 {
-  
+
 	call_t * c = call_get_selected(current_calls);
 	if(c)
 	{
-		switch(c->state) 
+		switch(c->state)
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
 				process_dialing(c, keyval, key);
@@ -569,11 +571,11 @@ sflphone_keypad( guint keyval, gchar * key)
 						(void) time(&c->_stop);
 						update_call_tree( history , c );
 						break;
-					default:  
+					default:
 						// To play the dtmf when calling mail box for instance
 						dbus_play_dtmf(key);
 						if (keyval < 255 || (keyval >65453 && keyval < 65466))
-						{ 
+						{
 							//gchar * temp = g_strconcat(call_get_number(c), key, NULL);
 							//gchar * before = c->from;
 							//c->from = g_strconcat("\"",call_get_name(c) ,"\" <", temp, ">", NULL);
@@ -609,7 +611,7 @@ sflphone_keypad( guint keyval, gchar * key)
 						(void) time(&c->_stop);
 						break;
 					case 65307: /* ESCAPE */
-						sflphone_unset_transfert(c); 
+						sflphone_unset_transfert(c);
 						break;
 					default: // When a call is on transfert, typing new numbers will add it to c->to
 						process_dialing(c, keyval, key);
@@ -646,10 +648,10 @@ sflphone_keypad( guint keyval, gchar * key)
 				break;
 			default:
 				break;
-		} 
+		}
 	}
-	else 
-	{ // Not in a call, not dialing, create a new call 
+	else
+	{ // Not in a call, not dialing, create a new call
 		//dbus_play_dtmf(key);
 		switch (keyval)
 		{
@@ -666,15 +668,15 @@ sflphone_keypad( guint keyval, gchar * key)
 
 
 	}
- } 
+ }
 
 /*
  * Place a call with the current account.
- * If there is no default account selected, place a call with the first 
+ * If there is no default account selected, place a call with the first
  * registered account of the account list
  * Else, popup an error message
  */
-void 
+void
 sflphone_place_call ( call_t * c )
 {
 
@@ -685,13 +687,13 @@ sflphone_place_call ( call_t * c )
             notify_no_accounts();
             sflphone_fail(c);
         }
-        
+
         else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
         {
             notify_no_registered_accounts();
             sflphone_fail(c);
         }
-    
+
         else
         {
             account_t * current;
@@ -708,7 +710,7 @@ sflphone_place_call ( call_t * c )
             if( current )
             {
 	            if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
-	            { 
+	            {
 	                // OK, everything alright - the call is made with the current account
 	                c -> accountID = current -> accountID;
 	                status_bar_display_account(c);
@@ -716,7 +718,7 @@ sflphone_place_call ( call_t * c )
 	            }
 	            else
 	            {
-	                // Current account is not registered 
+	                // Current account is not registered
 	                // So we place a call with the first registered account
 	                // And we switch the current account
 	                current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
@@ -729,7 +731,7 @@ sflphone_place_call ( call_t * c )
             }
             else
             {
-	            // No current accounts have been setup. 
+	            // No current accounts have been setup.
 	            // So we place a call with the first registered account
 	            // and we change the current account
 	            current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
@@ -742,12 +744,13 @@ sflphone_place_call ( call_t * c )
         }
 	    // Update history
 	    c->history_state = OUTGOING;
+	    c->from;
 	    call_list_add(history, c);
     }
 }
 
 
-void 
+void
 sflphone_display_selected_codec (const gchar* codecName)
 {
     call_t * selectedCall = call_get_selected(current_calls);
@@ -755,8 +758,8 @@ sflphone_display_selected_codec (const gchar* codecName)
     account_t* acc;
     if(selectedCall->accountID != NULL){
       acc = account_list_get_by_id(selectedCall->accountID);
-      msg = g_markup_printf_escaped(_("%s account- %s             %s") , 
-		 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
+      msg = g_markup_printf_escaped(_("%s account- %s             %s") ,
+		 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
                  (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                  codecName);
       statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
@@ -777,17 +780,17 @@ sflphone_rec_call()
 {
   call_t * selectedCall = call_get_selected(current_calls);
   dbus_set_record(selectedCall);
-  
+
 
   switch(selectedCall->state)
   {
       case CALL_STATE_CURRENT:
             selectedCall->state = CALL_STATE_RECORD;
-            break; 
+            break;
       case CALL_STATE_RECORD:
             selectedCall->state = CALL_STATE_CURRENT;
             break;
-      default: 
+      default:
             g_warning("Should not happen in sflphone_off_hold ()!");
         break;
   }
@@ -803,17 +806,17 @@ void
 sflphone_set_current_account()
 {
   if( account_list_get_size() > 0 )
-    account_list_set_current_pos( 0 );	
+    account_list_set_current_pos( 0 );
 }
 
 
 /* Internal to action - get the codec list */
-void	
+void
 sflphone_fill_codec_list()
 {
 
   codec_list_clear();
-    
+
   gchar** codecs = (gchar**)dbus_codec_list();
   gchar** order = (gchar**)dbus_get_active_codec_list();
   gchar** details;
@@ -851,7 +854,7 @@ sflphone_fill_codec_list()
     }
   }
   if( codec_list_get_size() == 0) {
-    
+
     gchar* markup = g_markup_printf_escaped(_("<b>Error: No audio codecs found.\n\n</b> SFL audio codecs have to be placed in <i>%s</i> or in the <b>.sflphone</b> directory in your home( <i>%s</i> )") , CODECS_DIR , g_get_home_dir());
     main_window_error_message( markup );
     dbus_unregister(getpid());

@@ -1,22 +1,22 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #ifndef __CALLLIST_H__
 #define __CALLLIST_H__
 
@@ -25,31 +25,31 @@
 /** @file calllist.h
   * @brief A list to hold calls.
   */
-  
-/** @enum call_state_t 
+
+/** @enum call_state_t
   * This enum have all the states a call can take.
   */
 typedef enum
 {  /** Invalid state */
-   CALL_STATE_INVALID = 0, 
+   CALL_STATE_INVALID = 0,
    /** Ringing incoming call */
-   CALL_STATE_INCOMING, 
+   CALL_STATE_INCOMING,
    /** Ringing outgoing call */
-   CALL_STATE_RINGING,  
+   CALL_STATE_RINGING,
    /** Call to which the user can speak and hear */
-   CALL_STATE_CURRENT,  
+   CALL_STATE_CURRENT,
    /** Call which numbers are being added by the user */
-   CALL_STATE_DIALING,  
+   CALL_STATE_DIALING,
    /** Call is on hold */
-   CALL_STATE_HOLD,      
+   CALL_STATE_HOLD,
    /** Call has failed */
-   CALL_STATE_FAILURE,      
+   CALL_STATE_FAILURE,
    /** Call is busy */
-   CALL_STATE_BUSY,        
+   CALL_STATE_BUSY,
    /** Call is being transfert.  During this state, the user can enter the new number. */
    CALL_STATE_TRANSFERT,
    /** Call is on hold */
-   CALL_STATE_RECORD       
+   CALL_STATE_RECORD
 } call_state_t;
 
 /**
@@ -66,7 +66,7 @@ typedef enum
 
 /** @struct call_t
   * @brief Call information.
-  * This struct holds information about a call.    
+  * This struct holds information about a call.
   */
 typedef struct  {
   /** Unique identifier of the call */
@@ -100,6 +100,7 @@ typedef struct {
 
 calltab_t* current_calls;
 calltab_t* history;
+calltab_t* contacts;
 
 /** This function initialize a call list. */
 void call_list_init (calltab_t* tab);
@@ -111,22 +112,22 @@ void call_list_clean(calltab_t* tab);
 void call_list_reset (calltab_t* tab);
 
 /** Get the maximun number of calls in the history calltab */
-gdouble call_history_get_max_calls( void ); 
+gdouble call_history_get_max_calls( void );
 
 /** Set the maximun number of calls in the history calltab */
-void call_history_set_max_calls( const gdouble number ); 
+void call_history_set_max_calls( const gdouble number );
 
-/** This function append a call to list. 
-  * @param c The call you want to add 
+/** This function append a call to list.
+  * @param c The call you want to add
   * */
 void call_list_add (calltab_t* tab, call_t * c);
 
-/** This function remove a call from list. 
+/** This function remove a call from list.
   * @param callID The callID of the call you want to remove
   */
 void call_list_remove (calltab_t* tab, const gchar * callID);
 
-/** Return the first call that corresponds to the state.  
+/** Return the first call that corresponds to the state.
   * This is usefull for unique states as DIALING and CURRENT.
   * @param state The state
   * @return A call or NULL */
@@ -151,10 +152,10 @@ call_t * call_list_get (calltab_t* tab, const gchar * callID );
   * @return The full name of the caller or an empty string */
 gchar * call_get_name ( const call_t * c);
 
-/** 
+/**
  * This function parse the call_t.from field to return the number
  * @param c The call
- * @return The number of the caller 
+ * @return The number of the caller
  */
 gchar * call_get_number (const call_t * c);
 
@@ -178,4 +179,4 @@ void call_list_clean_history();
  */
 void call_list_remove_from_history( call_t* c);
 
-#endif 
+#endif
