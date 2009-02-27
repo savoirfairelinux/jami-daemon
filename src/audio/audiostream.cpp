@@ -79,6 +79,8 @@ AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
 }
 
 
+
+
   pa_stream*
 AudioStream::createStream( pa_context* c )
 {
@@ -100,7 +102,7 @@ AudioStream::createStream( pa_context* c )
     attributes->prebuf = 10000;
     attributes->minreq = 940;
     pa_stream_connect_playback( s , NULL , attributes, 
-				PA_STREAM_INTERPOLATE_TIMING,
+				PA_STREAM_START_CORKED,
 				&_volume, NULL);
   }
   else if( _streamType == CAPTURE_STREAM ){
