@@ -24,7 +24,6 @@
 #include <gtk/gtk.h>
 
 GtkTreeModel* histfilter;
-GtkTreeModel* contactfilter;
 
 calltab_t* calltab_init();
 

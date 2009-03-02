@@ -77,7 +77,7 @@ AUTOMAKE = ${SHELL} /home/jbonjean/dev/Savoir.Faire.Linux/sflphone/missing --run
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2 -g -Wall -O2
+CFLAGS = -g -O2 -g -O2 -DDEBUG -Wall -Wextra
 CPP = gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo

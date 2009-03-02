@@ -210,12 +210,14 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
   GList *i;
   char ext[30];
 
+  printf("EDS : %s\n",gtk_entry_get_text(GTK_ENTRY(filter_entry)));
+
   // Reset previous results
   call_list_reset(contacts);
   reset_call_tree(contacts);
 
   // Do a synchronized search
-  results = search_sync ("j", 50);
+  results = search_sync (gtk_entry_get_text(GTK_ENTRY(filter_entry)), 50);
 
   if(results == NULL)
   {
@@ -253,8 +255,6 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
   sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
   g_signal_emit_by_name(sel, "changed");
   toolbar_update_buttons();
-
-  //gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(contactfilter));
 }
 
   static void
@@ -933,6 +933,23 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   toolbar_update_buttons();
 }
 
+
+  void
+refresh_tab(calltab_t* tab)
+{
+  if(tab == contacts)
+  {
+    toggle_contacts(NULL, NULL);
+  }
+  else if (tab == history)
+  {
+    toggle_history(NULL, NULL);
+  }
+  else
+  {
+    toggle_current_calls(NULL, NULL);
+  }
+}
   void
 switch_tab(calltab_t* tab)
 {
