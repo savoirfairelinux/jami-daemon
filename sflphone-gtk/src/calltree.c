@@ -41,7 +41,6 @@ GtkToolItem * unholdButton;
 GtkToolItem * mailboxButton;
 GtkToolItem * recButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
-gboolean history_shown;
 
 /**
  * Show popup menu
@@ -176,7 +175,6 @@ toggle_current_calls(GtkToggleToolButton *toggle_tool_button UNUSED,
   gtk_widget_hide(history->tree);
   gtk_widget_hide(contacts->tree);
   gtk_widget_show(current_calls->tree);
-  history_shown = FALSE;
 
   sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
   g_signal_emit_by_name(sel, "changed");
@@ -193,7 +191,6 @@ toggle_history(GtkToggleToolButton *toggle_tool_button UNUSED,
   gtk_widget_hide(current_calls->tree);
   gtk_widget_hide(contacts->tree);
   gtk_widget_show(history->tree);
-  history_shown = TRUE;
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
 	g_signal_emit_by_name(sel, "changed");
@@ -247,17 +244,16 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
     }
   }
 
+  active_calltree = contacts;
   gtk_widget_hide(current_calls->tree);
   gtk_widget_hide(history->tree);
   gtk_widget_show(contacts->tree);
-  active_calltree = contacts;
-  history_shown = FALSE;
 
-  sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (contacts->view));
+  sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
   g_signal_emit_by_name(sel, "changed");
   toolbar_update_buttons();
 
-  gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(contactfilter));
+  //gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(contactfilter));
 }
 
   static void
@@ -562,7 +558,6 @@ create_toolbar ()
   g_signal_connect (G_OBJECT (historyButton), "clicked",
       G_CALLBACK (toggle_history), NULL);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);
-  history_shown = FALSE;
   active_calltree = current_calls;
 
   image = gtk_image_new_from_file( ICONS_DIR "/contacts.svg");
