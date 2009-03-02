@@ -208,7 +208,6 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
   GtkTreeSelection *sel;
   GList *results;
   GList *i;
-  char ext[30];
 
   printf("EDS : %s\n",gtk_entry_get_text(GTK_ENTRY(filter_entry)));
 
@@ -234,11 +233,7 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
       call_t * call;
 
       call = g_new0 (call_t, 1);
-      call->accountID = g_strdup("Account:1235677223");
-      call->callID = g_new0(gchar, 30);
-      g_sprintf(call->callID, "%d", rand());
-      sprintf(ext, "%d", rand()%100 + 100);
-      call->from = g_strconcat("\"" , entry->text, "\"<", ext, ">", NULL);
+      call->from = g_strconcat("\"" , entry->name, "\"<", entry->phone, ">", NULL);
       call->state = CALL_STATE_RECORD;
       call->history_state = OUTGOING;
 
