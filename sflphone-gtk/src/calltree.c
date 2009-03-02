@@ -43,14 +43,6 @@ GtkToolItem * recButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
 gboolean history_shown;
 
-  void
-switch_tab()
-{
-  (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(historyButton)))?
-    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), FALSE):
-    gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), TRUE);
-}
-
 /**
  * Show popup menu
  */
@@ -114,18 +106,18 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
       call_list_add(current_calls, newCall);
       update_call_tree_add(current_calls, newCall);
       sflphone_place_call(newCall);
-      if( active_calltree == history )  switch_tab();
+      switch_tab(current_calls);
     }
     else
     {
       sflphone_new_call();
-      if( active_calltree == history )  switch_tab();
+      switch_tab(current_calls);
     }
   }
   else
   {
     sflphone_new_call();
-    if( active_calltree == history )  switch_tab();
+    switch_tab(current_calls);
   }
 }
 
@@ -172,6 +164,23 @@ transfert  (GtkToggleToolButton *toggle_tool_button,
 unhold( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
   sflphone_off_hold();
+}
+
+  static void
+toggle_current_calls(GtkToggleToolButton *toggle_tool_button UNUSED,
+    gpointer  user_data UNUSED)
+{
+  GtkTreeSelection *sel;
+
+  active_calltree = current_calls;
+  gtk_widget_hide(history->tree);
+  gtk_widget_hide(contacts->tree);
+  gtk_widget_show(current_calls->tree);
+  history_shown = FALSE;
+
+  sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
+  g_signal_emit_by_name(sel, "changed");
+  toolbar_update_buttons();
 }
 
   static void
@@ -241,6 +250,7 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
   gtk_widget_hide(current_calls->tree);
   gtk_widget_hide(history->tree);
   gtk_widget_show(contacts->tree);
+  active_calltree = contacts;
   history_shown = FALSE;
 
   sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (contacts->view));
@@ -270,7 +280,7 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
   update_call_tree_add( current_calls , mailboxCall );
   update_menus();
   sflphone_place_call( mailboxCall );
-  if( active_calltree == history )  switch_tab();
+  switch_tab(current_calls);
 }
 
 
@@ -465,7 +475,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
       call_list_add(current_calls, newCall);
       update_call_tree_add(current_calls, newCall);
       sflphone_place_call(newCall);
-      switch_tab();
+      switch_tab(current_calls);
     }
   }
 }
@@ -925,4 +935,24 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
   gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
   toolbar_update_buttons();
+}
+
+  void
+switch_tab(calltab_t* tab)
+{
+  if(active_calltree != tab)
+  {
+    if(tab == contacts)
+    {
+      toggle_contacts(NULL, NULL);
+    }
+    else if (tab == history)
+    {
+      toggle_history(NULL, NULL);
+    }
+    else
+    {
+      toggle_current_calls(NULL, NULL);
+    }
+  }
 }

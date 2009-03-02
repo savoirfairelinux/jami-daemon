@@ -444,7 +444,7 @@ sflphone_incoming_call (call_t * c)
 	call_list_add( history, c );
 	update_call_tree_add( current_calls , c );
 	update_menus();
-	if( active_calltree == history )  switch_tab();
+	switch_tab(current_calls);
 }
 
 void
@@ -662,8 +662,7 @@ sflphone_keypad( guint keyval, gchar * key)
 			case 65307: /* ESCAPE */
 				break;
 			default:
-				if( active_calltree == history )
-				  switch_tab();
+				switch_tab(current_calls);
 				process_dialing(sflphone_new_call(), keyval, key);
 				break;
 		}

@@ -71,6 +71,6 @@ void reset_call_tree (calltab_t* tab);
  */
 GtkWidget * create_toolbar();
 
-void switch_tab( void );
+void switch_tab( calltab_t* tab );
 
 #endif
