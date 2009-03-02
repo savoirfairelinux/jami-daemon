@@ -175,6 +175,7 @@ toggle_current_calls(GtkToggleToolButton *toggle_tool_button UNUSED,
   gtk_widget_hide(history->tree);
   gtk_widget_hide(contacts->tree);
   gtk_widget_show(current_calls->tree);
+  printf("current calls toggle\n");
 
   sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
   g_signal_emit_by_name(sel, "changed");

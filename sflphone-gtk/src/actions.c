@@ -555,10 +555,27 @@ sflphone_new_call()
 void
 sflphone_keypad( guint keyval, gchar * key)
 {
-
 	call_t * c = call_get_selected(current_calls);
-	if(c)
+
+	if((active_calltree != current_calls) || (active_calltree == current_calls && !c))
+  {
+    // Not in a call, not dialing, create a new call
+    //dbus_play_dtmf(key);
+    switch (keyval)
+    {
+      case 65293: /* ENTER */
+      case 65421: /* ENTER numpad */
+      case 65307: /* ESCAPE */
+        break;
+      default:
+        switch_tab(current_calls);
+        process_dialing(sflphone_new_call(), keyval, key);
+        break;
+    }
+  }
+  else if(c)
 	{
+	  printf("call\n");
 		switch(c->state)
 		{
 			case CALL_STATE_DIALING: // Currently dialing => edit number
@@ -651,23 +668,6 @@ sflphone_keypad( guint keyval, gchar * key)
 			default:
 				break;
 		}
-	}
-	else
-	{ // Not in a call, not dialing, create a new call
-		//dbus_play_dtmf(key);
-		switch (keyval)
-		{
-			case 65293: /* ENTER */
-			case 65421: /* ENTER numpad */
-			case 65307: /* ESCAPE */
-				break;
-			default:
-				switch_tab(current_calls);
-				process_dialing(sflphone_new_call(), keyval, key);
-				break;
-		}
-
-
 	}
  }
 
