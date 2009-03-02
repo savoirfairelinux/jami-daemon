@@ -251,7 +251,7 @@ remove_from_history( void * foo UNUSED)
 static void
 call_back( void * foo UNUSED)
 {
-  call_t* selectedCall = call_get_selected( history );
+  call_t* selectedCall = call_get_selected( active_calltree );
   call_t* newCall =  g_new0 (call_t, 1);
   if( selectedCall )
   {
@@ -874,11 +874,12 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
   gboolean pickup = FALSE;
   gboolean remove = FALSE;
 
-  call_t * selectedCall = call_get_selected( history );
+  call_t * selectedCall = call_get_selected( active_calltree );
   if (selectedCall)
   {
-    remove = TRUE;
     pickup = TRUE;
+    if(active_calltree == history)
+      remove = TRUE;
   }
 
   GtkWidget *menu;
@@ -901,12 +902,12 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
     gtk_widget_show (menu_items);
   }
 
-  menu_items = gtk_separator_menu_item_new ();
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-  gtk_widget_show (menu_items);
-
   if(remove)
   {
+    menu_items = gtk_separator_menu_item_new ();
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    gtk_widget_show (menu_items);
+
     menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_DELETE, get_accel_group());
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect (G_OBJECT (menu_items), "activate", G_CALLBACK (remove_from_history),  NULL);
