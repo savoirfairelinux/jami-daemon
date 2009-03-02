@@ -237,6 +237,11 @@ class Call{
      */
     bool isRecording(); 
 
+    /**
+     *
+     */
+    void initRecFileName();
+
   protected:
     /** Protect every attribute that can be changed by two threads */
     ost::Mutex _callMutex;

@@ -205,7 +205,9 @@ notify_no_registered_accounts(  )
     gchar* body="";
     notify_init("sflphone");
 
+
     body = g_markup_printf_escaped(_("You have no registered accounts")); 
+
 
     title = g_markup_printf_escaped(_("Error"));
 
@@ -223,9 +225,10 @@ notify_no_registered_accounts(  )
     notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
     notify_notification_add_action( notification , "setup" , _("Setup Accounts") , (NotifyActionCallback) setup_accounts_cb , NULL , NULL );
 
-    if (!notify_notification_show (notification, NULL)) {
-        g_print("notify(), failed to send notification\n");
-    }
+  if (!notify_notification_show (notification, NULL)) {
+    g_print("notify(), failed to send notification\n");
+  }
+
 }
 
     void  

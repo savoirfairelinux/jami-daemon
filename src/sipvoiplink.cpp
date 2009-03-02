@@ -424,6 +424,9 @@ SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
         }
         //call->setPeerNumber(toUrl);
         call->setPeerNumber(getSipTo(toUrl, account->getHostname()));
+      
+        call->initRecFileName();
+
         _debug("Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data());
         // we have to add the codec before using it in SIPOutgoingInvite...
         call->setCodecMap(Manager::instance().getCodecDescriptorMap());
@@ -447,7 +450,7 @@ SIPVoIPLink::answer(const CallID& id)
     pj_status_t status;
     pjsip_tx_data *tdata;
 
-    _debug("- SIP Action: start answering\n");
+    _debug("SIPVoIPLink::answer: start answering \n");
 
     call = getSIPCall(id);
 
@@ -459,22 +462,23 @@ SIPVoIPLink::answer(const CallID& id)
     // User answered the incoming call, tell peer this news
     if (call->getLocalSDP()->startNegociation()) {
         // Create and send a 200(OK) response
-        _debug("UserAgent: Negociation success!\n");
+        _debug("SIPVoIPLink::answer:UserAgent: Negociation success! : call %s \n", call->getCallId().c_str());
         status = pjsip_inv_answer(call->getInvSession(), PJSIP_SC_OK, NULL, NULL, &tdata);
         PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
         status = pjsip_inv_send_msg(call->getInvSession(), tdata);
         PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
 
-        _debug("* SIP Info: Starting AudioRTP when answering\n");
+        _debug("SIPVoIPLink::answer: Starting AudioRTP when answering : call %s \n", call->getCallId().c_str());
         if (_audiortp->createNewSession(call) >= 0) {
             call->setAudioStart(true);
             call->setConnectionState(Call::Connected);
             call->setState(Call::Active);
             return true;
         } else {
-            _debug("! SIP Failure: Unable to start sound when answering %s/%d\n", __FILE__, __LINE__);
+            _debug("SIPVoIPLink::answer: Unable to start sound when answering %s/%d\n", __FILE__, __LINE__);
         }
     }
+    _debug("SIPVoIPLink::answer: fail terminate call %s \n",call->getCallId().c_str());
     terminateOneCall(call->getCallId());
     removeCall(call->getCallId());
     return false;
@@ -800,6 +804,18 @@ SIPVoIPLink::isRecording(const CallID& id)
     return call->isRecording();
 }
 
+
+std::string 
+SIPVoIPLink::getCurrentCodecName()
+{
+
+  SIPCall *call = getSIPCall(Manager::instance().getCurrentCallId());  
+
+  AudioCodec *ac = call->getCodecMap().getCodec(call->getAudioCodec());
+
+  return ac->getCodecName();
+}
+
     bool 
 SIPVoIPLink::carryingDTMFdigits(const CallID& id, char code)
 {
@@ -1082,8 +1098,8 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         }
 
 
-    SIPCall*
-        SIPVoIPLink::getSIPCall(const CallID& id) 
+SIPCall*
+SIPVoIPLink::getSIPCall(const CallID& id) 
         {
             Call* call = getCall(id);
             if (call) {
@@ -1092,9 +1108,11 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             return NULL;
         }
 
-    void SIPVoIPLink::setStunServer( const std::string &server )
-    {
-        if(server != "") {
+
+void SIPVoIPLink::setStunServer( const std::string &server )
+{
+         if(server != "") {
+
             useStun(true);
             _stunServer = server;
         } else {
@@ -1847,6 +1865,8 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             call->setConnectionState(Call::Progressing);
             call->getLocalSDP()->setIp(link->getLocalIPAddress());
             call->setPeerNumber(peerNumber);
+
+            call->initRecFileName();
 
             /* Call the SIPCallInvite function to generate the local sdp,
              * remote sdp and negociator.

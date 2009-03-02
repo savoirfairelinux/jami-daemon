@@ -1,0 +1,12 @@
+This package was debianized by Yun Liu <yun.liu@savoirfairelinux.com> on
+Mon, 01 Dec 2008 10:29:29 -0500.
+
+It was download from: svn --username guest --password guest --non-interactive co http://dev.openwengo.org/svn/openwengo/wengophone-ng/branches/wengophone-dbus-api/libs/dbus/
+Copyright:
+      Copyright (C) 2005-2007  Paolo Durante <shackan@gmail.com>
+
+License:
+      Lesser General Public License ( LGPL )
+
+On Debian systems, the complete text of the licenses can be found in the
+/usr/share/common-licenses/LGPL and /usr/share/common-licenses/GPL files.

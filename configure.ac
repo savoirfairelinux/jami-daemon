@@ -2,7 +2,7 @@ dnl SFLPhone - configure.ac for automake 1.9 and autoconf 2.59
 dnl
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT([SFLPhone],[0.9.3],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_INIT([SFLphone],[0.9.3],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
 AC_REVISION([$Revision$])
 
@@ -53,30 +53,29 @@ AC_CONFIG_FILES([man/Makefile])
 AC_CONFIG_FILES([doc/Makefile \
   doc/doxygen/Makefile])
   
-AC_CONFIG_FILES([platform/rpm/sflphone.spec \
-  platform/fedora/sflphone.spec \
-  platform/fedora/sflphone-fc6.spec])
+AC_CONFIG_FILES([platform/suse.spec \
+  platform/fedora.spec]) 
   
 dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
 dnl AM_CONFIG_HEADER(config.h)
 
 dnl Get project version
-VERSION=`sed -ne 's/^#define SFLPHONED_VERSION "\(.*\)"/\1/p' ${srcdir}/src/global.h`
+VERSION=`sed -ne 's/^#define SFLPHONED_VERSION "\(.*\)"/\1/p' src/global.h`
 
 dnl Get rid of release number
 RPM_VERSION=`echo $VERSION | cut -d- -f1`
 AC_SUBST(RPM_VERSION)
 RPM_RELEASE=`echo $VERSION | sed -ne 's/.*-\(.*\)/\1/p' `
 AC_SUBST(RPM_RELEASE)
-VERSION=`echo $VERSION | cut -d- -f1`
+VERSION=`echo $VERSION | cut -f1 -d\' \'`
 AC_SUBST(VERSION)
 
 dnl Settings need Standard C++ Library
 LIBS="$LIBS -lstdc++"
 
 dnl Solaris pkgadd support definitions
-PKGADD_PKG="SFLPhone"
-PKGADD_NAME="SFLPhone - a SIP client and daemon"
+PKGADD_PKG="SFLphone"
+PKGADD_NAME="SFLphone - a SIP client and daemon"
 PKGADD_VENDOR="http://www.sflphone.org/"
 AC_SUBST(PKGADD_PKG)
 AC_SUBST(PKGADD_NAME)
@@ -223,7 +222,6 @@ AC_ARG_WITH([speex],
   [],
   [with_speex=yes])
 
-LIBSPEEX=
 AS_IF([test "x$with_speex" != xno],
   [AC_CHECK_HEADER([speex/speex.h], , AC_MSG_FAILURE([Unable to find the libspeex headers (you may need to install the dev package).  You may use --without-speex to compile without speex codec support.]))]
   [AC_CHECK_HEADER([speex/speex_preprocess.h], , AC_MSG_FAILURE([Unable to find the libspeexdsp headers (you may need to install the libspeexdsp-dev package).  You may use --without-speex to compile without speex codec support.]))]
@@ -232,11 +230,20 @@ AS_IF([test "x$with_speex" != xno],
     [AC_MSG_FAILURE(
        [libspeex link test failed.   You may use --without-speex to compile without speex codec support.])]
        )
-   ]
-   )
-    
+  ]
+dnl More advanced check in case the libspeexdsp is not installed
+AC_SEARCH_LIBS(speex_preprocess_run, speexdsp, HAVE_SPEEXDSP="yes", HAVE_SPEEXDSP="no", [])
+
+if test $HAVE_SPEEXDSP="no"; then
+    echo $HAVE_SPEEXDSP;
+    AC_MSG_WARN([The silence detection in speex could not have been enabled])
+fi
+
+)
+
 AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspeex])
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
+AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
 
 dnl Check for ilbc support
 AC_ARG_WITH([ilbc],

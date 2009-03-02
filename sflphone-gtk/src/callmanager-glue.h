@@ -529,6 +529,44 @@ org_sflphone_SFLphone_CallManager_get_current_call_id_async (DBusGProxy *proxy, 
   stuff->userdata = userdata;
   return dbus_g_proxy_begin_call (proxy, "getCurrentCallID", org_sflphone_SFLphone_CallManager_get_current_call_id_async_callback, stuff, g_free, G_TYPE_INVALID);
 }
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_CallManager_get_current_codec_name (DBusGProxy *proxy, const char * IN_callID, char ** OUT_codecName, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getCurrentCodecName", error, G_TYPE_STRING, IN_callID, G_TYPE_INVALID, G_TYPE_STRING, OUT_codecName, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_CallManager_get_current_codec_name_reply) (DBusGProxy *proxy, char * OUT_codecName, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_CallManager_get_current_codec_name_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  char * OUT_codecName;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_STRING, &OUT_codecName, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_CallManager_get_current_codec_name_reply)data->cb) (proxy, OUT_codecName, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_CallManager_get_current_codec_name_async (DBusGProxy *proxy, const char * IN_callID, org_sflphone_SFLphone_CallManager_get_current_codec_name_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getCurrentCodecName", org_sflphone_SFLphone_CallManager_get_current_codec_name_async_callback, stuff, g_free, G_TYPE_STRING, IN_callID, G_TYPE_INVALID);
+}
 #endif /* defined DBUS_GLIB_CLIENT_WRAPPERS_org_sflphone_SFLphone_CallManager */
 
 G_END_DECLS

@@ -122,7 +122,7 @@ AlsaLayer::startStream(void)
     void
 AlsaLayer::stopStream(void) 
 {
-    _debug ("Stop ALSA streams\n");
+    _debug ("AlsaLayer::stopStream :: Stop ALSA streams\n");
     stopCaptureStream ();
     //stopPlaybackStream ();
 
@@ -134,21 +134,46 @@ AlsaLayer::stopStream(void)
 
     int
 AlsaLayer::canGetMic()
-{
+{   
+    int avail;
+
+    if (!_CaptureHandle)
+        return 0;
+
+    avail = snd_pcm_avail_update (_CaptureHandle);
+
+    if (avail == -EPIPE)
+    {
+        stop_capture ();
+        return 0;
+    }
+    else
+        return ((avail<0)?0:avail);
+
+    /*
     if(_CaptureHandle) 
+
         return _micRingBuffer.AvailForGet();
     else
-        return 0;
+        return 0;*/
 }
 
     int 
 AlsaLayer::getMic(void *buffer, int toCopy)
 {
+    /*
     if( _CaptureHandle ){
         return _micRingBuffer.Get(buffer, toCopy,100);
     } 
     else
-        return 0;
+        return 0;*/
+   int res = 0;
+   if( _CaptureHandle )
+   {
+       res = read( buffer, toCopy);
+       adjustVolume (buffer, toCopy, SFL_PCM_CAPTURE);
+   }
+   return res;
 }
 
 bool AlsaLayer::isCaptureActive(void) {
@@ -165,9 +190,13 @@ bool AlsaLayer::isCaptureActive(void) {
     
 void AlsaLayer::stopCaptureStream (void)
 {
+    int err;  
+
     if(_CaptureHandle){
-        snd_pcm_drop (_CaptureHandle);
+        err = snd_pcm_drop (_CaptureHandle);
+        _debug("AlsaLayer::stopCaptureStream snd_pcm_drop returned vaue : %i\n",err);
         stop_capture ();
+        _debug("Wroking here !!!!!!!!!!!!!!!\n");
     }
 }
 
@@ -348,7 +377,8 @@ AlsaLayer::open_device(std::string pcm_p, std::string pcm_c, int flag)
     
     if(flag == SFL_PCM_BOTH || flag == SFL_PCM_PLAYBACK)
     {
-        if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
+      // if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
+      if((err = snd_pcm_open(&_PlaybackHandle, pcm_p.c_str(),  SND_PCM_STREAM_PLAYBACK, 0 )) < 0){
             _debugAlsa("Error while opening playback device %s\n",  pcm_p.c_str());
             setErrorMessage( ALSA_PLAYBACK_DEVICE );
             close_playback ();
@@ -669,7 +699,7 @@ void AlsaLayer::audioCallback (void)
     
     // Additionally handle the mic's audio stream 
     //if(is_capture_running()){  
-    micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
+    /*micAvailAlsa = snd_pcm_avail_update(_CaptureHandle);
     if(micAvailAlsa > 0) {
         micAvailPut = _micRingBuffer.AvailForPut();
         toPut = (micAvailAlsa <= micAvailPut) ? micAvailAlsa : micAvailPut;
@@ -680,7 +710,7 @@ void AlsaLayer::audioCallback (void)
             _micRingBuffer.Put(in, toPut, 100);
         }
         free(in); in=0;
-    }
+    }*/
 }
 
 void* AlsaLayer::adjustVolume( void* buffer , int len, int stream )

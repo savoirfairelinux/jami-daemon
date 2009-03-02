@@ -1,29 +1,36 @@
 %define name sflphone
-%define version 0.9.2
+%define version 
 Autoreq: 0
 
 Name:		%name
 Summary:	A VoIP daemon with SIP protocol and IAX protocol
 Version:	%version
-Release:        6fedora
+Release:        2fedora
 License:	GPL
 Group:		System Environment/Daemons
 URL:		http://www.sflphone.org/
-Packager:	Yun Liu <yun.liu@savoirfairelinux.com>
+Packager:	Emmanuel Milou <emmanuel.milouu@savoirfairelinux.com>
 Source0:	%{name}-%{version}.tar.gz
 Source1:        libpj-sfl.pc
 BuildRoot:	%{_tmppath}/%{name}-%{version}
-Requires: 	commoncpp2 ccrtp cppunit libsamplerate pulseaudio-libs-zeroconf pulseaudio-libs-devel gsm speex sflphone-iax2 dbus-c++ libgcc dbus-glib expat gtk2 glibc glib2 dbus-libs dbus-glib libsexy libnotify perl
+Requires: 	commoncpp2 ccrtp cppunit libsamplerate pulseaudio-libs-zeroconf pulseaudio-libs-devel gsm speex  libgcc dbus-glib expat gtk2 glibc glib2 dbus-libs dbus-glib libsexy libnotify perl
 
 %description
-SFLPhoned is a VoIP daeamon with SIP protocol and IAX protocol.
+SFLphoned is a VoIP daeamon with SIP protocol and IAX protocol.
 
 %prep
 %setup -q
-cd libs/pjproject-1.0
+cd libs/pjproject-1.0.1
 ./configure --prefix=/usr
 make dep
 make clean
+make
+cd ../dbus-c++
+./configure --prefix=/usr
+make
+cd ../libiax2
+./gen.sh 
+./configure --prefix=/usr
 make
 cd ../..
 
@@ -41,8 +48,15 @@ cd ..
 cd sflphone-gtk/
 %makeinstall
 
-cd ../libs/pjproject-1.0
+cd ../libs/pjproject-1.0.1
 %makeinstall
+
+cd ../dbus-c++
+%makeinstall
+
+cd ../libiax2
+%makeinstall
+
 cd ../..
 cd %{buildroot}/usr/bin/
 ln -sf ./sflphone-gtk sflphone 
@@ -69,6 +83,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Mon Feb 16 2009 Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> 2fedora
+  - Packaging 0.9.3-2 sflphone version on Fedora 10
+
 * Mon Jan 26 2009 Yun Liu <yun.liu@savoirfairelinux.com> 6
   - Packaging sflphone for Fedora 10
 

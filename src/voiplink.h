@@ -173,6 +173,12 @@ class VoIPLink {
      	*/
     	virtual bool isRecording(const CallID& id) = 0;
 
+        /**
+         * Return the codec protocol used for this call 
+         * @param id The call identifier
+         */
+        virtual std::string getCurrentCodecName() = 0;
+
         bool initDone (void) { return _initDone; }
         void initDone (bool state) { _initDone = state; }
 

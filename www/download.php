@@ -24,19 +24,36 @@ include('include/header.php');
           <tr>
             <td><img class="logo" src="img/logos/small/ubuntu.png" alt="Ubuntu downloads" /></td>
             <td>
-              <ul style="margin:10px; padding:5px;">
-                <li>Ubuntu 8.10 "Intrepid Ibex" <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-i386/sflphone_0.9.3-0ubuntu1_i386.deb">i386</a> | <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-amd64/sflphone_0.9.3-0ubuntu1_amd64.deb" >amd64</a>
-              </li>
-              <li>
-              Ubuntu 8.04 LTS "Hardy Heron" <a href="http://sflphone.org/debian/dists/hardy/universe/binary-i386/sflphone_0.9.2-2ubuntu7_i386.deb" >i386</a> | <a href="http://sflphone.org/debian/dists/hardy/universe/binary-amd64/sflphone_0.9.2-2ubuntu7_amd64.deb" >amd64</a></li>
-              </ul>
-              <br/>
+            <!-- UBUNTU SECTION -->
+                <ul style="margin:10px; padding:5px;">
+                    <li>Ubuntu 9.04 "Jaunty Jackalope" 
+                        <a href="http://sflphone.org/debian/dists/jaunty/universe/binary-i386/sflphone_0.9.3-0ubuntu2_i386.deb">i386</a> 
+                    </li>
+                
+
+                    <li>Ubuntu 8.10 "Intrepid Ibex" 
+                        <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-i386/sflphone_0.9.3-0ubuntu3_i386.deb">i386</a> 
+                        | <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-amd64/sflphone_0.9.3-0ubuntu3_amd64.deb" >amd64</a>
+                    </li>
+                
+                    <li>Ubuntu 8.04 LTS "Hardy Heron" 
+                        <a href="http://sflphone.org/debian/dists/hardy/universe/binary-i386/sflphone_0.9.3-0ubuntu3_i386.deb" >i386</a> 
+                        | <a href="http://sflphone.org/debian/dists/hardy/universe/binary-amd64/sflphone_0.9.3-0ubuntu3_amd64.deb" >amd64</a>
+                    </li>
+                </ul>
+                <i>Before installing the latest version 0.9.3-3, please remove the following packages: <b>dbus-c++-1</b> and <b>sflphone-iax2</b>. 
+                    The both libraries are now provided with sflphone package.</i>
+              <br/><br/>
               <a href="http://dev.savoirfairelinux.net/sflphone/wiki/DebianPackaging">add our repository</a>
                | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#ReleaseNote">release note</a>  
                | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#Changelog">changelog</a>
             </td>
             <td><a href="mailto:emmanuel.milou@savoirfairelinux.com">Emmanuel Milou</a></td>
           </tr>
+
+        <!-- END UBUNTU SECTION -->
+
+        <!-- FEDORA SECTION -->
           <tr>
             <td><img class="logo" src="img/logos/small/fedora.png" alt="Fedora downloads" /></td>
             <td>
@@ -48,6 +65,7 @@ include('include/header.php');
               Fedora 10 : <i>Soon</i><br />
               </li>
             </ul>
+              <br/>
               <a href="http://dev.savoirfairelinux.net/sflphone/wiki/YumRepository">add our repository</a> 
                | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#ReleaseNote">release note</a>  
                | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#Changelog">changelog</a>
@@ -56,7 +74,16 @@ include('include/header.php');
           </tr>
           <tr>
             <td><img  class="logo"src="img/logos/small/suse.png" alt="Suse downloads" /></td>
-            <td>Follow the steps to add our Suse yum repository <a href="http://dev.savoirfairelinux.net/sflphone/wiki/DownloadSFLphone#Binaries">here</a>.</td>
+            <td>
+            <ul style="margin:10px; padding:5px;">
+                <li>OpenSUSE 11: <a href="http://sflphone.org/yum/suse/11/i586/sflphone-0.9.3-2suse.i586.rpm">i586</a>
+                </li>
+            </ul>
+            <br/>
+              <a href="http://dev.savoirfairelinux.net/sflphone/wiki/YumRepository">add our repository</a>
+               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#ReleaseNote">release note</a>  
+               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#Changelog">changelog</a>
+            </td>
             <td><a href="mailto:emmanuel.milou@savoirfairelinux.com">Emmanuel Milou</a></td>
           </tr>
             <tr>
@@ -76,7 +103,7 @@ include('include/header.php');
         </thead>
         <tbody>
           <tr>
-            <td><a href="http://dev.savoirfairelinux.net/sflphone/downloads/5">sflphone_0.9.2.orig.tar.gz</a></td>
+            <td><a href="http://dev.savoirfairelinux.net/sflphone/downloads/7">sflphone_0.9.3.orig.tar.gz</a></td>
             <td>Compressed code source</td>
           </tr>
           <tr>

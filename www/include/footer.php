@@ -26,7 +26,7 @@
                                     <div class="footBlock">
                                         <ul>
                                         <li>Development team</li>
-                                        <li><a href="mailto:sflphoneteam@savoirfairelinux.com">sflphoneteam@savoirfairelinux.com</a></li>
+                                        <li><a href="mailto:sflphone@lists.savoirfairelinux.net">sflphone@lists.savoirfairelinux.net</a></li>
                                         <li>Support</li>
                                         <li><a href="mailto:support@savoirfairelinux.com">support@savoirfairelinux.com</a></li>
                                         <li>General Information</li>
@@ -38,7 +38,7 @@
                                     <div class="rightfootBlock">
                                         <ul>
                                         <li>
-                                    		© Savoir-Faire Linux Inc 2009</li>
+                                    		© Savoir-Faire Linux Inc 2009<img src="img/logos/custom/gpl3.png" /></li>
                                         </ul>
                                     </div>
                                     <div class="clear">&nbsp;

@@ -116,6 +116,7 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _
     _sym(sym), micData(NULL), micDataConverted(NULL), micDataEncoded(NULL), spkrDataDecoded(NULL), spkrDataConverted(NULL), 
     converter(NULL), _layerSampleRate(),_codecSampleRate(), _layerFrameSize(), _audiocodec(NULL)
 {
+
     setCancel(cancelDefault);
     // AudioRtpRTX should be close if we change sample rate
     // TODO: Change bind address according to user settings.
@@ -150,6 +151,7 @@ AudioRtpRTX::~AudioRtpRTX () {
         delete _session;     _session = NULL;
     }
 
+
     delete [] micData;  micData = NULL;
     delete [] micDataConverted;  micDataConverted = NULL;
     delete [] micDataEncoded;  micDataEncoded = NULL;
@@ -162,6 +164,8 @@ AudioRtpRTX::~AudioRtpRTX () {
     delete converter; converter = NULL;
 
 }
+
+
 
     void
 AudioRtpRTX::initBuffers()
@@ -248,6 +252,7 @@ AudioRtpRTX::initAudioRtpSession (void)
         _debugException("! ARTP Failure: initialisation failed");
         throw;
     }
+
 }
 
     void
@@ -312,13 +317,17 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
 {
 
 
+
     if (_ca == 0) { return; }
     //try {
+
     AudioLayer* audiolayer = Manager::instance().getAudioDriver();
     if (!audiolayer) { return; }
 
     const ost::AppDataUnit* adu = NULL;
     // Get audio data stream
+
+    // printf("AudioRtpRTX::receiveSessionForSpkr() %i \n",_session->getFirstTimestamp());
 
     if (!_sym) {
         adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
@@ -330,9 +339,13 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
         return;
     }
 
+    
+
     //int payload = adu->getType(); // codec type
     unsigned char* spkrData  = (unsigned char*)adu->getData(); // data in char
     unsigned int size = adu->getSize(); // size in char
+
+    // printf("AudioRtpRTX::receiveSessionForSpkr() Size of data from %i \n",size);
 
     // Decode data with relevant codec
     unsigned int max = (unsigned int)(_codecSampleRate * _layerFrameSize / 1000);
@@ -359,6 +372,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
         // Do sample rate conversion
         int nb_sample_down = nbSample;
         nbSample = reSampleData(_codecSampleRate , nb_sample_down, UP_SAMPLING);
+
 #ifdef DATAFORMAT_IS_FLOAT
 #else
 #endif
@@ -403,17 +417,23 @@ AudioRtpRTX::reSampleData(int sampleRate_codec, int nbSamples, int status)
         return 0;
 }
 
+
+
 void
 AudioRtpRTX::run () {
-    //mic, we receive from soundcard in stereo, and we send encoded
-    //encoding before sending
-    AudioLayer *audiolayer = Manager::instance().getAudioDriver();
-    _layerFrameSize = audiolayer->getFrameSize(); // en ms
-    _layerSampleRate = audiolayer->getSampleRate();	
-    initBuffers();
-    int step; 
 
-    //try {
+  //mic, we receive from soundcard in stereo, and we send encoded
+  //encoding before sending
+  AudioLayer *audiolayer = Manager::instance().getAudioDriver();
+  _layerFrameSize = audiolayer->getFrameSize(); // en ms
+  _layerSampleRate = audiolayer->getSampleRate();
+  initBuffers();
+  int step; 
+
+  int sessionWaiting;
+
+  //try {
+
     // Init the session
     initAudioRtpSession();
     step = (int) (_layerFrameSize * _codecSampleRate / 1000);
@@ -433,27 +453,59 @@ AudioRtpRTX::run () {
 
     audiolayer->startStream();
     _start.post();
-    _debug("- ARTP Action: Start\n");
+    _debug("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
     while (!testCancel()) {
-        ////////////////////////////
-        // Send session
-        ////////////////////////////
-        sendSessionFromMic(timestamp);
-        timestamp += step;
-        ////////////////////////////
-        // Recv session
-        ////////////////////////////
-        receiveSessionForSpkr(countTime);
-        // Let's wait for the next transmit cycle
 
+      
+      // printf("AudioRtpRTX::run() _session->getFirstTimestamp() %i \n",_session->getFirstTimestamp());
+    
+      // printf("AudioRtpRTX::run() _session->isWaiting() %i \n",_session->isWaiting());
+      /////////////////////
+      ////////////////////////////
+      // Send session
+      ////////////////////////////
+
+      sessionWaiting = _session->isWaiting();
+
+      sendSessionFromMic(timestamp); 
+      timestamp += step;
+      
+      ////////////////////////////
+      // Recv session
+      ////////////////////////////
+      receiveSessionForSpkr(countTime);
+      
+      // Let's wait for the next transmit cycle
+
+      
+      if(sessionWaiting == 1){
+        // _debug("Record TWO buffer \n");
         _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
+      }
+      else {
+        // _debug("Record ONE buffer \n");
+        _ca->recAudio.recData(micData,_nSamplesMic);
+      }
 
-        Thread::sleep(TimerPort::getTimer()); 
-        TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
+      Thread::sleep(TimerPort::getTimer());
+      TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
+      
     }
-
+    
+    // _debug("stop stream for audiortp loop\n");
+    _debug("AudioRtpRTX::run () :: This is bad when holding a call!!!!!!!\n");
     audiolayer->stopStream();
-    _debug("- ARTP Action: Stop\n");
+    _debug("- ARTP Action: Stop call %s\n",_ca->getCallId().c_str());
+  //} catch(std::exception &e) {
+    //_start.post();
+    //_debug("! ARTP: Stop %s\n", e.what());
+    //throw;
+  //} catch(...) {
+    //_start.post();
+    //_debugException("* ARTP Action: Stop");
+    //throw;
+  //}
+    
 }
 
 

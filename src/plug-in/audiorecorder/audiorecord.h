@@ -26,7 +26,7 @@
 #include <sstream>
 
 #include "plug-in/plugin.h"
-#include "audiodsp.h"
+// #include "audiodsp.h"
 
 // class AudioDSP;
 
@@ -41,9 +41,13 @@ public:
 
   AudioRecord();
 
+  ~AudioRecord();
+  
   void setSndSamplingRate(int smplRate);
 
-  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path);
+  void setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path, std::string id);
+
+  void initFileName( std::string peerNumber );
 
   /** 
    * Check if no otehr file is opened, then create a new one
@@ -83,6 +87,21 @@ public:
    */
   void stopRecording();
 
+
+  /**
+   * Record a chunk of data in an internal buffer
+   * @param buffer  The data chunk to be recorded
+   * @param nSamples Number of samples (number of bytes) to be recorded 
+   */
+  void recSpkrData(SFLDataFormat* buffer, int nSamples);
+
+  /**
+   * Record a chunk of data in an internal buffer
+   * @param buffer  The data chunk to be recorded
+   * @param nSamples Number of samples (number of bytes) to be recorded 
+   */
+  void recMicData(SFLDataFormat* buffer, int nSamples);
+
   /**
    * Record a chunk of data in an openend file
    * @param buffer  The data chunk to be recorded
@@ -98,6 +117,7 @@ public:
    * @param nSamples_2 Number of samples (number of bytes) of buffer_2
    */
   void recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
+
 
 protected:
 
@@ -131,10 +151,6 @@ protected:
    */
   void closeWavFile();
 
-  /**
-   * Given two buffers, return one mixed audio buffer
-   */
-  void mixBuffers(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int nSamples_1, int nSamples_2);
 
   /**
    * Pointer to the recorded file
@@ -165,6 +181,21 @@ protected:
    * Sampling rate
    */
   int sndSmplRate_;
+  
+  /**
+   * number of samples recorded for mic buffer
+   */
+  int nbSamplesMic_;
+
+  /**
+   * number of samples recorded for speaker buffer
+   */
+  int nbSamplesSpk_;
+
+  /**
+   * Maximum number of samples
+   */
+  int nbSamplesMax_;
 
   /**
    * Recording flage
@@ -175,6 +206,16 @@ protected:
    * Buffer used for mixing two channels
    */
   SFLDataFormat* mixBuffer_;
+
+  /**
+   * Buffer used to copy mic info
+   */
+  SFLDataFormat* micBuffer_;
+  
+  /**
+   * Buffer used to copy spkr info
+   */
+  SFLDataFormat* spkBuffer_;
   
   /**
    * Filename for this recording
@@ -185,12 +226,11 @@ protected:
    * Path for this recording
    */
   std::string savePath_;
-
   
   /**
-   * AudioDSP test (compute RMS value)
+   * Path for this recordingId for this call
    */
-  AudioDSP dsp;
+  std::string call_id_;
  
 };
 

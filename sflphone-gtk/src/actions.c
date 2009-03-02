@@ -135,6 +135,8 @@ sflphone_hung_up( call_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
   status_tray_icon_blink( FALSE );
 #endif
+
+  statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
 }
 
 /** Internal to actions: Fill account list */
@@ -449,6 +451,10 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 	  dbus_start_tone( FALSE , 0 );
 	  //dbus_play_dtmf( key );
 	}
+
+        g_print("process_dialing : keyval : %i \n",keyval);
+        g_print("process_dialing : key : %s \n",key);
+
 	switch (keyval)
 	{
 		case 65293: /* ENTER */
@@ -462,9 +468,10 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 			{  /* Brackets mandatory because of local vars */
 				gchar * before = c->to;
 				if(strlen(c->to) >= 1){
+                                        
 					c->to = g_strndup(c->to, strlen(c->to) -1);
 					g_free(before);
-					g_print("TO: %s\n", c->to);
+					g_print("TO: backspace %s\n", c->to);
 
 					if(c->state == CALL_STATE_DIALING)
 					{
@@ -487,14 +494,16 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 		case 65509: /* CAPS */
 			break;
 		default:
-			if (keyval < 255 || (keyval >65453 && keyval < 65466))
+                  // if (keyval < 255 || (keyval >65453 && keyval < 65466))
+                        if (keyval < 127)
 			{ 
-				if(c->state != CALL_STATE_TRANSFERT)
+                               
+                                if(c->state != CALL_STATE_TRANSFERT)
 				  dbus_play_dtmf( key );
 				  gchar * before = c->to;
 				  c->to = g_strconcat(c->to, key, NULL);
 				  g_free(before);
-				  g_print("TO: %s\n", c->to);
+				  g_print("TO:default %s\n", c->to);
 
 				if(c->state == CALL_STATE_DIALING)
 				{
@@ -512,6 +521,9 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 call_t * 
 sflphone_new_call()
 {
+
+        sflphone_on_hold();
+
 	// Play a tone when creating a new call
 	if( call_list_get_size(current_calls) == 0 )
 	  dbus_start_tone( TRUE , ( voice_mails > 0 )? TONE_WITH_MESSAGE : TONE_WITHOUT_MESSAGE) ;
@@ -539,7 +551,7 @@ sflphone_new_call()
 void 
 sflphone_keypad( guint keyval, gchar * key)
 {
-
+  
 	call_t * c = call_get_selected(current_calls);
 	if(c)
 	{
@@ -548,6 +560,7 @@ sflphone_keypad( guint keyval, gchar * key)
 			case CALL_STATE_DIALING: // Currently dialing => edit number
 				process_dialing(c, keyval, key);
 				break;
+                case CALL_STATE_RECORD:
 			case CALL_STATE_CURRENT:
 				switch (keyval)
 				{
@@ -681,7 +694,17 @@ sflphone_place_call ( call_t * c )
     
         else
         {
-            account_t * current = account_list_get_current();
+            account_t * current;
+
+            if(c->accountID != 0)
+                current = account_list_get_by_id(c->accountID);
+            else
+                current = account_list_get_current();
+
+            // printf("sflphone_place_call :: c->accountID : %i \n",c->accountID);
+
+            // account_t * current = c->accountID;
+
             if( current )
             {
 	            if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
@@ -724,6 +747,31 @@ sflphone_place_call ( call_t * c )
 }
 
 
+void 
+sflphone_display_selected_codec (const gchar* codecName)
+{
+    call_t * selectedCall = call_get_selected(current_calls);
+    gchar* msg;
+    account_t* acc;
+    if(selectedCall->accountID != NULL){
+      acc = account_list_get_by_id(selectedCall->accountID);
+      msg = g_markup_printf_escaped(_("%s account- %s             %s") , 
+		 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE), 
+                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+                 codecName);
+      statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+      g_free(msg);
+  }
+
+}
+
+gchar*
+sflphone_get_current_codec_name()
+{
+    call_t * selectedCall = call_get_selected(current_calls);
+    return dbus_get_current_codec_name(selectedCall);
+}
+
 void
 sflphone_rec_call()
 {
@@ -745,6 +793,9 @@ sflphone_rec_call()
   }
   update_call_tree(current_calls,selectedCall);
   update_menus();
+
+  // gchar* codname = sflphone_get_current_codec_name();
+  // printf("sflphone_get_current_codec_name: %s \n",codname);
 }
 
 /* Internal to action - set the __CURRENT_ACCOUNT variable */
@@ -807,3 +858,4 @@ sflphone_fill_codec_list()
     exit(0);
   }
 }
+

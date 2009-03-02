@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2009 Jean Schurger <jean@schurger.org>
- *  and Savoir-Faire Linux inc.
+ *  Copyright (C) 2009 Savoir-faire Linux inc. 
+ *  Author Jean Schurger <jean.schurger@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,4 +24,4 @@ typedef struct {
   char passwd[200];
 } rest_account;
 
-rest_account get_rest_account(char *host);
+rest_account get_rest_account(char *host, char *email);

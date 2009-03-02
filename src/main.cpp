@@ -110,6 +110,7 @@ main (int argc, char **argv) {
     }
     bool initOK = false;
     try {
+      _debug("Initialize manager in main \n");
       Manager::instance().initConfigFile();
       Manager::instance().init();
       initOK = true;

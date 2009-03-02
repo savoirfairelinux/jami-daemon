@@ -69,7 +69,7 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /**
      * Audio recording object
      */
-    AudioRecord recAudio;
+    // AudioRecord recAudio;
 
     /** A SIP call */
     SIPCall* _ca;    
@@ -128,7 +128,10 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
      */
     int _nSamplesMic;
     
-  
+    /**
+     * Maximum number of sample for audio buffers (mic and spkr)
+     */
+    int nbSamplesMax; 
     
     /**
      * Init the RTP session. Create either symmetric or double sessions to manage data transport
@@ -167,10 +170,6 @@ class AudioRtpRTX : public ost::Thread, public ost::TimerPort {
     /** The audio codec used during the session */
     AudioCodec* _audiocodec;
    
-    /**
-     * Audio recording object
-     */
-    // AudioRecord recAudio;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -203,7 +202,7 @@ class AudioRtp {
      * Start recording
      */
     void setRecording ();
-    
+
 
   private:
     // copy constructor
