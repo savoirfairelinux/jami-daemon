@@ -378,6 +378,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
       {
 	case CALL_STATE_INCOMING:
 	  dbus_accept(selectedCall);
+          stop_notification();
 	  break;
 	case CALL_STATE_HOLD:
 	  dbus_unhold(selectedCall);
