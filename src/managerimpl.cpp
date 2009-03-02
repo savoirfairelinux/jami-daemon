@@ -124,7 +124,7 @@ ManagerImpl::init()
 
     AudioLayer *audiolayer = getAudioDriver();
     
-    if (audiolayer!=0) {
+    if (audiolayer != 0) {
         unsigned int sampleRate = audiolayer->getSampleRate();
 
         _debugInit("Load Telephone Tone");
@@ -134,6 +134,9 @@ ManagerImpl::init()
         _debugInit("Loading DTMF key");
         _dtmfKey = new DTMF(sampleRate);
     }
+
+    if (audiolayer == 0)
+      audiolayer->stopStream();
 }
 
 void ManagerImpl::terminate()
@@ -189,6 +192,9 @@ ManagerImpl::switchCall(const CallID& id ) {
 ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
     _debug("ManagerImpl::outgoingCall() method \n");
+
+    stopTone(false);
+    playTone();
 
     if (!accountExists(accountid)) {
         _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
@@ -313,7 +319,7 @@ ManagerImpl::cancelCall (const CallID& id)
   bool
 ManagerImpl::onHoldCall(const CallID& id)
 {
-  _debug("*************** ON HOLD ***********************************\n");
+
   stopTone(true);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
@@ -336,7 +342,7 @@ ManagerImpl::onHoldCall(const CallID& id)
   bool
 ManagerImpl::offHoldCall(const CallID& id)
 {
-  _debug("*************** OFF HOLD ***********************************\n");
+  
   stopTone(false);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
@@ -1592,6 +1598,8 @@ void ManagerImpl::setAudioManager( const int32_t& api )
 {
     int manager;
 
+    _debug(" ManagerImpl::setAudioManager :: %i \n",api);
+
     manager = api;
     if( manager == PULSEAUDIO )
     {
@@ -1705,8 +1713,8 @@ ManagerImpl::initAudioDriver(void)
     if (error == -1) {
       _debug("Init audio driver: %i\n", error);
     }
-  } 
-  
+  }
+ 
 }
 
 /**
@@ -1756,6 +1764,7 @@ ManagerImpl::selectAudioDriver (void)
     /* Notify the error if there is one */
     if( _audiodriver -> getErrorMessage() != -1 )
         notifyErrClient( _audiodriver -> getErrorMessage());
+
 }
 
 void ManagerImpl::switchAudioManager (void) 
@@ -1796,6 +1805,16 @@ void ManagerImpl::switchAudioManager (void)
     _audiodriver->openDevice( numCardIn , numCardOut, samplerate, framesize, SFL_PCM_BOTH, alsaPlugin ); 
     if( _audiodriver -> getErrorMessage() != -1 )
         notifyErrClient( _audiodriver -> getErrorMessage());
+   
+    _debug("Current device: %i \n", type);
+    _debug("has current call: %i \n", hasCurrentCall());
+
+    // need to stop audio streams if there is currently no call
+    if( (type != PULSEAUDIO) && (!hasCurrentCall())) {
+        _debug("There is currently a call!!\n");
+        _audiodriver->stopStream();
+        
+    }
 } 
 
 /**

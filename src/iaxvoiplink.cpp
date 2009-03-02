@@ -74,6 +74,8 @@ IAXVoIPLink::~IAXVoIPLink()
 
     audiolayer = NULL;
 
+    delete converter;
+
     delete [] micData;  micData = NULL;
     delete [] micDataConverted;  micDataConverted = NULL;
     delete [] micDataEncoded;  micDataEncoded = NULL;
