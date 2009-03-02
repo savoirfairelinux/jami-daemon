@@ -63,6 +63,8 @@ void update_call_tree (calltab_t* ct, call_t * c);
  */
 void update_call_tree_remove (calltab_t* ct, call_t * c);
 
+void reset_call_tree (calltab_t* tab);
+
 /**
  * Build the toolbar
  * @return GtkWidget* The toolbar

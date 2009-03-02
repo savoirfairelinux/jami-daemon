@@ -180,17 +180,11 @@ toggle_history(GtkToggleToolButton *toggle_tool_button UNUSED,
 {
 	GtkTreeSelection *sel;
 
-	if(history_shown){
-		active_calltree = current_calls;
-		gtk_widget_hide(history->tree);
-		gtk_widget_show(current_calls->tree);
-		history_shown = FALSE;
-	}else{
-		active_calltree = history;
-		gtk_widget_hide(current_calls->tree);
-		gtk_widget_show(history->tree);
-		history_shown = TRUE;
-	}
+  active_calltree = history;
+  gtk_widget_hide(current_calls->tree);
+  gtk_widget_hide(contacts->tree);
+  gtk_widget_show(history->tree);
+  history_shown = TRUE;
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
 	g_signal_emit_by_name(sel, "changed");
@@ -207,15 +201,19 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
   GtkTreeSelection *sel;
   GList *results;
   GList *i;
+  char ext[30];
 
-  //gtk_init (&argc, &argv);
-  init();
-  results = search_sync ("s", 50);
+  // Reset previous results
+  call_list_reset(contacts);
+  reset_call_tree(contacts);
+
+  // Do a synchronized search
+  results = search_sync ("j", 50);
 
   if(results == NULL)
   {
-    printf("null\n");
-    return -1;
+    printf("No results\n");
+    return ;
   }
 
   for (i = results; i != NULL; i = i->next)
@@ -228,11 +226,10 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
 
       call = g_new0 (call_t, 1);
       call->accountID = g_strdup("Account:1235677223");
-      //call->callID = g_strdup("468809080");
       call->callID = g_new0(gchar, 30);
       g_sprintf(call->callID, "%d", rand());
-      call->to = g_strdup("\"\" <66e>");
-      call->from = g_strconcat("\"\" <", entry->text , ">");
+      sprintf(ext, "%d", rand()%100 + 100);
+      call->from = g_strconcat("\"" , entry->text, "\"<", ext, ">", NULL);
       call->state = CALL_STATE_RECORD;
       call->history_state = OUTGOING;
 
@@ -240,44 +237,7 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
       update_call_tree_add(contacts,call);
     }
   }
-  /*
-  call_t * call;
 
-  call = g_new0 (call_t, 1);
-  call->accountID = g_strdup("Account:1235677223");
-  call->callID = g_strdup("468809080");
-  call->callID = g_new0(gchar, 30);
-  g_sprintf(call->callID, "%d", rand());
-  call->from = g_strdup("\"\" <666>");
-  call->to = g_strdup("");
-  call->state = CALL_STATE_INCOMING;
-  call->history_state = INCOMING;
-*/
-
-  /*
-  call_list_add (contacts, call);
-  update_call_tree_add(contacts,call);
-*/
-
-
-
-  /*
-  g_queue_push_tail (calltree->callQueue, (gpointer *) call);
-  g_queue_push_tail (calltree->callQueue, (gpointer *) call);
-  */
-  /*
-  if(history_shown){
-    active_calltree = current_calls;
-    gtk_widget_hide(history->tree);
-    gtk_widget_show(current_calls->tree);
-    history_shown = FALSE;
-  }else{
-    active_calltree = history;
-    gtk_widget_hide(current_calls->tree);
-    gtk_widget_show(history->tree);
-    history_shown = TRUE;
-  }
-  */
   gtk_widget_hide(current_calls->tree);
   gtk_widget_hide(history->tree);
   gtk_widget_show(contacts->tree);
@@ -585,26 +545,22 @@ create_toolbar ()
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);
 
   image = gtk_image_new_from_file( ICONS_DIR "/history2.svg");
-  historyButton = gtk_toggle_tool_button_new();
-  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(historyButton), image);
+  historyButton = gtk_tool_button_new(image, _("History"));
 #if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
 #endif
-  gtk_tool_button_set_label(GTK_TOOL_BUTTON(historyButton), _("History"));
-  g_signal_connect (G_OBJECT (historyButton), "toggled",
+  g_signal_connect (G_OBJECT (historyButton), "clicked",
       G_CALLBACK (toggle_history), NULL);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);
   history_shown = FALSE;
   active_calltree = current_calls;
 
-  image = gtk_image_new_from_file( ICONS_DIR "/history2.svg");
-  contactButton = gtk_toggle_tool_button_new();
-  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(contactButton), image);
+  image = gtk_image_new_from_file( ICONS_DIR "/contacts.svg");
+  contactButton = gtk_tool_button_new(image, _("Contacts"));
 #if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text(GTK_WIDGET(contactButton), _("Contacts"));
 #endif
-  gtk_tool_button_set_label(GTK_TOOL_BUTTON(contactButton), _("Contacts"));
-  g_signal_connect (G_OBJECT (contactButton), "toggled",
+  g_signal_connect (G_OBJECT (contactButton), "clicked",
       G_CALLBACK (toggle_contacts), NULL);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(contactButton), -1);
 
@@ -655,6 +611,15 @@ on_key_released (GtkWidget   *widget UNUSED,
   else
     sflphone_keypad(event->keyval, event->string);
   return TRUE;
+}
+
+/**
+ * Reset call tree
+ */
+  void
+reset_call_tree (calltab_t* tab)
+{
+  gtk_list_store_clear (tab->store);
 }
 
   void
@@ -933,7 +898,10 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	g_warning("History - Should not happen!");
     }
     date = timestamp_get_call_date();
-    description = g_strconcat( date , description , NULL);
+    if(tab == contacts)
+      description = g_strconcat( description , NULL);
+    else
+      description = g_strconcat( date , description , NULL);
   }
 
   //Resize it

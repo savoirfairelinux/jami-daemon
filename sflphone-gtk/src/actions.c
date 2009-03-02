@@ -26,6 +26,7 @@
 #include <statusicon.h>
 #include <calltab.h>
 #include <historyfilter.h>
+#include <contactlist/eds.h>
 
 #include <gtk/gtk.h>
 #include <string.h>
@@ -234,6 +235,7 @@ gboolean sflphone_init()
 	  contacts = calltab_init();
 	  if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
 	  contactfilter = create_filter(GTK_TREE_MODEL(contacts->store));
+	  init();
 	  account_list_init ();
     codec_list_init();
 		sflphone_fill_account_list(FALSE);
