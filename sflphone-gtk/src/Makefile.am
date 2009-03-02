@@ -2,7 +2,7 @@ bin_PROGRAMS = sflphone-gtk
 
 SUBDIRS=contactlist
   
-noinst_LTLIBRARIES = libsflphonegtk.la
+# noinst_LTLIBRARIES = libsflphonegtk.la
 
 NOFIFY_LIBS=-lnotify
 SEXY_LIBS=-lsexy
@@ -47,10 +47,8 @@ noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h
 EXTRA_DIST   = marshaller.list  
 
 sflphone_gtk_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SEXY_LIBS) \
-			./libsflphonegtk.la
+			./contactlist/libcontact.la
 
-libsflphonegtk_la_LIBADD = \
-	contactlist/libcontact.la 
 
 AM_CPPFLAGS = $(DEPS_CFLAGS) \
               -DICONS_DIR=\""$(prefix)/share/sflphone"\" \
