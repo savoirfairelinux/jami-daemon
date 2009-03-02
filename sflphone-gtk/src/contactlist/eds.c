@@ -21,7 +21,7 @@ static int n_search_fields = G_N_ELEMENTS (search_fields) - 1;
 
 
 
-
+/*
 int
 main (int argc, char *argv[])
 {
@@ -54,7 +54,7 @@ printf("fini\n");
 
 return 0;
 }
-
+*/
 
 
 

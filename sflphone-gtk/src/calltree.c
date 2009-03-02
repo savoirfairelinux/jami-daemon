@@ -27,7 +27,7 @@
 #include <calllist.h>
 #include <menus.h>
 #include <dbus.h>
-
+#include <contactlist/eds.h>
 
 
 GtkWidget   * toolbar;
@@ -205,7 +205,41 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
 {
 
   GtkTreeSelection *sel;
+  GList *results;
+  GList *i;
 
+  //gtk_init (&argc, &argv);
+  init();
+  results = search_sync ("s", 50);
+
+  if(results == NULL)
+  {
+    printf("null\n");
+    return -1;
+  }
+
+  for (i = results; i != NULL; i = i->next)
+  {
+    Hit *entry;
+    entry = i->data;
+    if (i->data)
+    {
+      call_t * call;
+
+      call = g_new0 (call_t, 1);
+      call->accountID = g_strdup("Account:1235677223");
+      //call->callID = g_strdup("468809080");
+      call->callID = g_new0(gchar, 30);
+      g_sprintf(call->callID, "%d", rand());
+      call->to = g_strdup("\"\" <66e>");
+      call->from = g_strconcat("\"\" <", entry->text , ">");
+      call->state = CALL_STATE_RECORD;
+      call->history_state = OUTGOING;
+
+      call_list_add (contacts, call);
+      update_call_tree_add(contacts,call);
+    }
+  }
   /*
   call_t * call;
 
