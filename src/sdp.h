@@ -70,6 +70,8 @@ class Sdp {
          */
         bool createInitialOffer();
 
+        bool createLocalOffer ();
+
         /** 
          * Set internal codec Map: initialization only, not protected 
          * @param map The codec map
@@ -94,6 +96,8 @@ class Sdp {
         int  getLocalExternAudioPort (void){ return _localPort; }
 
         int receiving_initial_offer( pjmedia_sdp_session* remote );
+
+        void toString (void);
 
     private:
         /** 

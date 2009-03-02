@@ -25,6 +25,8 @@
 #include "sipaccount.h"
 #include "audio/audiortp.h"
 
+#define CAN_REINVITE    1
+
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
 int getModId();
@@ -430,6 +432,7 @@ SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
         _debug("Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data());
         // we have to add the codec before using it in SIPOutgoingInvite...
         call->setCodecMap(Manager::instance().getCodecDescriptorMap());
+        call->getLocalSDP()->setCodecMap(Manager::instance().getCodecDescriptorMap());
         if ( SIPOutgoingInvite(call) ) {
             call->setConnectionState(Call::Progressing);
             call->setState(Call::Active);
@@ -928,6 +931,8 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED)
 
     // Building the local SDP offer
     call->getLocalSDP()->createInitialOffer();
+
+    call->getLocalSDP()->toString ();
 
     // Create the invite session for this call
     pjsip_inv_session *inv;
@@ -2322,6 +2327,9 @@ void SIPVoIPLink::setStunServer( const std::string &server )
             PJ_UNUSED_ARG( inv );
 
 #ifdef CAN_REINVITE
+            
+            _debug ("reinvite                                                  SIP\n");
+
             SIPCall *call;
             pj_status_t status;
                 
