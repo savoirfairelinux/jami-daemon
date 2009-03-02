@@ -64,16 +64,29 @@ typedef enum
   MISSED
 } history_state_t;
 
+/**
+ * @enum call_type
+ * This enum have all types of call
+ */
+typedef enum
+{
+  CALL,
+  HISTORY,
+  CONTACT
+} call_type_t;
+
 /** @struct call_t
   * @brief Call information.
   * This struct holds information about a call.
   */
 typedef struct  {
+  /** Type of call entry */
+  call_type_t call_type;
   /** Unique identifier of the call */
   gchar * callID;
   /** The account used to place/receive the call */
   gchar * accountID;
-/** The information about the calling person.  See call_get_name() and call_get_number()
+  /** The information about the calling person.  See call_get_name() and call_get_number()
     * on how to get the name and number separately. */
   gchar * from;
   /** The number we are calling.  Only used when dialing out */
