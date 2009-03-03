@@ -1,6 +1,13 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Antoine Reversat <antoine.reversat@savoirfairelinux.com>
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *
+ *  File originally copied from evolution module of deskbar-applet 2.24.1
+ *   Authors :
+ *    Nigel Tao <nigel.tao@myrealbox.com>
+ *    Raphaël Slinckx <raphael@slinckx.net>
+ *    Mikkel Kamstrup Erlandsen <kamstrup@daimi.au.dk>
+ *    Sebastian Pölsterl <marduk@k-d-w.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,27 +24,25 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <gtk/gtk.h>
-#include <stdlib.h>
-#include <calltree.h>
-#include <calllist.h>
-#include <calltab.h>
+#ifndef __EDS_H__
+#define __EDS_H__
 
-calltab_t*
-calltab_init()
+#include <glib/gtypes.h>
+
+G_BEGIN_DECLS
+
+typedef struct _Hit
 {
-	calltab_t* ret;
+  gchar *name;
+  gchar *phone;
+} Hit;
 
-	ret = malloc(sizeof(calltab_t));
+void free_hit (Hit *hit);
 
-	ret->store = NULL;
-	ret->view = NULL;
-	ret->tree = NULL;
-	ret->callQueue = NULL;
-	ret->selectedCall = NULL;
+void init (void);
 
-	create_call_tree(ret);
-	call_list_init(ret);
+GList * search_sync (const char *query, int max_results);
 
-	return ret;
-}
+G_END_DECLS
+
+#endif /* __EDS_H__ */

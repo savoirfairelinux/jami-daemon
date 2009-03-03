@@ -1,22 +1,22 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #ifndef __CALLTREE_H__
 #define __CALLTREE_H__
 
@@ -32,8 +32,14 @@
   */
 
 GtkToolItem * historyButton;
+GtkToolItem * contactButton;
+
+GtkWidget * filter_entry;
 
 calltab_t* active_calltree;
+
+void free_call_t (call_t *c);
+
 /**
  * Create a new widget calltree
  * @return GtkWidget* A new widget
@@ -54,7 +60,7 @@ void update_call_tree_add (calltab_t* ct, call_t * c);
 /*
  * Update the call tree if the call state changes
  * @param c The call to update
- */ 
+ */
 void update_call_tree (calltab_t* ct, call_t * c);
 /**
  * Remove a call from the call tree
@@ -62,12 +68,16 @@ void update_call_tree (calltab_t* ct, call_t * c);
  */
 void update_call_tree_remove (calltab_t* ct, call_t * c);
 
+void reset_call_tree (calltab_t* tab);
+
 /**
  * Build the toolbar
  * @return GtkWidget* The toolbar
  */
 GtkWidget * create_toolbar();
 
-void switch_tab( void );
+void switch_tab( calltab_t* tab );
 
-#endif 
+void refresh_tab( calltab_t* tab );
+
+#endif

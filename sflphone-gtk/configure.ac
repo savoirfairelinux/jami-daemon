@@ -42,6 +42,7 @@ AC_SUBST(DEPS_LIBS)
 AC_OUTPUT([
 Makefile 
 src/Makefile 
+src/contactlist/Makefile
 pixmaps/Makefile
 sflphone.desktop
 ])

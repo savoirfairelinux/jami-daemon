@@ -1,22 +1,22 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #include <calllist.h>
 #include <calltree.h>
 #include <dbus.h>
@@ -29,7 +29,7 @@
  */
 
 /* GCompareFunc to compare a callID (gchar* and a call_t) */
-gint 
+gint
 is_callID_callstruct ( gconstpointer a, gconstpointer b)
 {
   call_t * c = (call_t*)a;
@@ -44,7 +44,7 @@ is_callID_callstruct ( gconstpointer a, gconstpointer b)
 }
 
 /* GCompareFunc to get current call (gchar* and a call_t) */
-gint 
+gint
 get_state_callstruct ( gconstpointer a, gconstpointer b)
 {
   call_t * c = (call_t*)a;
@@ -58,30 +58,30 @@ get_state_callstruct ( gconstpointer a, gconstpointer b)
   }
 }
 
-void 
+void
 call_list_init (calltab_t* tab)
 {
   tab->callQueue = g_queue_new ();
   tab->selectedCall = NULL;
 }
 
-void 
+void
 call_list_clean (calltab_t* tab)
 {
   g_queue_free (tab->callQueue);
 }
 
-void 
+void
 call_list_reset (calltab_t* tab)
 {
   g_queue_free (tab->callQueue);
   tab->callQueue = g_queue_new();
 }
 
-void 
+void
 call_list_add (calltab_t* tab, call_t * c)
 {
-  if( tab == history )	
+  if( tab == history )
   {
     // First case: can still add calls to the list
     if( call_list_get_size(tab) < dbus_get_max_calls() )
@@ -92,7 +92,7 @@ call_list_add (calltab_t* tab, call_t * c)
     // List full -> Remove the last call from history and preprend the new call to the list
     else
     {
-      update_call_tree_remove( history , (call_t*)g_queue_pop_head( tab -> callQueue ) );      
+      update_call_tree_remove( history , (call_t*)g_queue_pop_head( tab -> callQueue ) );
       g_queue_push_tail (tab->callQueue, (gpointer *) c);
       update_call_tree_add( history , c );
     }
@@ -126,7 +126,7 @@ call_list_remove_from_history( call_t* c )
   g_print("Size of history = %i\n" , call_list_get_size( history ));
 }
 
-void 
+void
 call_list_remove (calltab_t* tab, const gchar * callID)
 {
   call_t * c = call_list_get(tab, callID);
@@ -137,7 +137,7 @@ call_list_remove (calltab_t* tab, const gchar * callID)
 }
 
 
-call_t * 
+call_t *
 call_list_get_by_state (calltab_t* tab, call_state_t state )
 {
   GList * c = g_queue_find_custom (tab->callQueue, &state, get_state_callstruct);
@@ -145,11 +145,11 @@ call_list_get_by_state (calltab_t* tab, call_state_t state )
   {
     return (call_t *)c->data;
   }
-  else 
+  else
   {
     return NULL;
   }
-  
+
 }
 
 guint
@@ -158,13 +158,13 @@ call_list_get_size (calltab_t* tab)
   return g_queue_get_length (tab->callQueue);
 }
 
-call_t * 
+call_t *
 call_list_get_nth (calltab_t* tab, guint n )
 {
   return g_queue_peek_nth (tab->callQueue, n);
 }
 
-gchar * 
+gchar *
 call_get_name (const call_t * c)
 {
   gchar * end = g_strrstr(c->from, "\"");
@@ -176,7 +176,7 @@ call_get_name (const call_t * c)
   }
 }
 
-gchar * 
+gchar *
 call_get_number (const call_t * c)
 {
   gchar * number = g_strrstr(c->from, "<") + 1;
@@ -192,7 +192,7 @@ call_get_recipient( const call_t * c )
 }
 
 
-call_t * 
+call_t *
 call_list_get (calltab_t* tab, const gchar * callID )
 {
   GList * c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
@@ -200,7 +200,7 @@ call_list_get (calltab_t* tab, const gchar * callID )
   {
     return (call_t *)c->data;
   }
-  else 
+  else
   {
     return NULL;
   }

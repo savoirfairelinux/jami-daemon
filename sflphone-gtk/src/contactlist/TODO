@@ -1,0 +1,5 @@
+* Adding dependencies for configure
+* Define better interface (to easily distinct contacts, history and current calls)
+* Make stuff more generic (to be able to add other contact list sources later)
+* Rename historyfilter.c ... for something more generic
+* Handle gtk_widget_hide et gtk_widget_show more cleanly
