@@ -37,6 +37,9 @@ GtkToolItem * contactButton;
 GtkWidget * filter_entry;
 
 calltab_t* active_calltree;
+
+void free_call_t (call_t *c);
+
 /**
  * Create a new widget calltree
  * @return GtkWidget* A new widget

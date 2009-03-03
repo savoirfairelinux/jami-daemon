@@ -11,7 +11,7 @@ static EContactField search_fields[] = { E_CONTACT_FULL_NAME, E_CONTACT_PHONE_BU
 static int n_search_fields = G_N_ELEMENTS (search_fields) - 1;
 
 void
-free_hit (Hit *h, gpointer unused)
+free_hit (Hit *h)
 {
     g_free (h->name);
     g_free (h->phone);
@@ -142,7 +142,7 @@ search_sync (const char *query,
       {
         // Temporary fix for empty phone numbers
         sprintf(ext, "%d", rand()%100 + 100);
-        hit->phone = g_strdup(ext);
+        hit->phone = g_strconcat("rand",ext,NULL);
         //hit->phone = "";
       }
 

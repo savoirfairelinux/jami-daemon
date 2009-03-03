@@ -42,6 +42,16 @@ GtkToolItem * mailboxButton;
 GtkToolItem * recButton;
 guint transfertButtonConnId; //The button toggled signal connection ID
 
+void
+free_call_t (call_t *c)
+{
+    g_free (c->callID);
+    g_free (c->accountID);
+    g_free (c->from);
+    g_free (c->to);
+    g_free (c);
+}
+
 /**
  * Show popup menu
  */
@@ -170,6 +180,12 @@ toggle_current_calls(GtkToggleToolButton *toggle_tool_button UNUSED,
     gpointer  user_data UNUSED)
 {
   GtkTreeSelection *sel;
+  gchar* msg;
+
+  // temporary display in status bar
+  msg = g_strdup("Current calls");
+  statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+  g_free(msg);
 
   active_calltree = current_calls;
   gtk_widget_hide(history->tree);
@@ -187,6 +203,12 @@ toggle_history(GtkToggleToolButton *toggle_tool_button UNUSED,
     gpointer	user_data UNUSED)
 {
 	GtkTreeSelection *sel;
+  gchar* msg;
+
+  // temporary display in status bar
+  msg = g_strdup("History");
+  statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+  g_free(msg);
 
   active_calltree = history;
   gtk_widget_hide(current_calls->tree);
@@ -204,18 +226,31 @@ toggle_history(GtkToggleToolButton *toggle_tool_button UNUSED,
 toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
     gpointer  user_data UNUSED)
 {
-
   GtkTreeSelection *sel;
   GList *results;
   GList *i;
+  call_t *j;
+  gchar* msg;
 
+  // temporary display in status bar
+  msg = g_strdup("Contacts");
+  statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+  g_free(msg);
+
+  // debug
   printf("EDS : %s\n",gtk_entry_get_text(GTK_ENTRY(filter_entry)));
 
-  // Reset previous results
-  call_list_reset(contacts);
-  reset_call_tree(contacts);
+  // freeing calls
+  while((j = (call_t *)g_queue_pop_tail (contacts->callQueue)) != NULL)
+  {
+    free_call_t(j);
+  }
 
-  // Do a synchronized search
+  // reset previous results
+  reset_call_tree(contacts);
+  call_list_reset(contacts);
+
+  // do a synchronized search
   results = search_sync (gtk_entry_get_text(GTK_ENTRY(filter_entry)), 50);
 
   if(results == NULL)
@@ -240,7 +275,10 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
       call_list_add (contacts, call);
       update_call_tree_add(contacts,call);
     }
+    free_hit(entry);
   }
+  g_list_free(results);
+
 
   active_calltree = contacts;
   gtk_widget_hide(current_calls->tree);

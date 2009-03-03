@@ -12,7 +12,7 @@ typedef struct _Hit {
   gchar *phone;
 } Hit;
 
-void free_hit (Hit *hit, gpointer unused);
+void free_hit (Hit *hit);
 
 void init (void);
 
