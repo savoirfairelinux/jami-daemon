@@ -253,12 +253,6 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
   // do a synchronized search
   results = search_sync (gtk_entry_get_text(GTK_ENTRY(filter_entry)), 50);
 
-  if(results == NULL)
-  {
-    printf("No results\n");
-    return ;
-  }
-
   for (i = results; i != NULL; i = i->next)
   {
     Hit *entry;

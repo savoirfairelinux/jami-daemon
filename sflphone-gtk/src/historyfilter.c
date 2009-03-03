@@ -56,13 +56,10 @@ is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED)
 void
 filter_entry_changed(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
-  //printf("%s\n",gtk_entry_get_text(GTK_ENTRY(entry)));
-
   if(active_calltree == current_calls)
     switch_tab(contacts);
   else
     refresh_tab(active_calltree);
-
 }
 
 void
