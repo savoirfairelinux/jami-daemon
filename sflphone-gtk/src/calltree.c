@@ -176,7 +176,7 @@ unhold( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 }
 
   static void
-toggle_current_calls(GtkToggleToolButton *toggle_tool_button UNUSED,
+show_current_calls_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
     gpointer  user_data UNUSED)
 {
   GtkTreeSelection *sel;
@@ -199,7 +199,7 @@ toggle_current_calls(GtkToggleToolButton *toggle_tool_button UNUSED,
 }
 
   static void
-toggle_history(GtkToggleToolButton *toggle_tool_button UNUSED,
+show_history_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
     gpointer	user_data UNUSED)
 {
 	GtkTreeSelection *sel;
@@ -223,7 +223,7 @@ toggle_history(GtkToggleToolButton *toggle_tool_button UNUSED,
 }
 
   static void
-toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
+show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
     gpointer  user_data UNUSED)
 {
   GtkTreeSelection *sel;
@@ -236,9 +236,6 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
   msg = g_strdup("Contacts");
   statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
   g_free(msg);
-
-  // debug
-  printf("EDS : %s\n",gtk_entry_get_text(GTK_ENTRY(filter_entry)));
 
   // freeing calls
   while((j = (call_t *)g_queue_pop_tail (contacts->callQueue)) != NULL)
@@ -272,7 +269,6 @@ toggle_contacts(GtkToggleToolButton *toggle_tool_button UNUSED,
     free_hit(entry);
   }
   g_list_free(results);
-
 
   active_calltree = contacts;
   gtk_widget_hide(current_calls->tree);
@@ -584,7 +580,7 @@ create_toolbar ()
   gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
 #endif
   g_signal_connect (G_OBJECT (historyButton), "clicked",
-      G_CALLBACK (toggle_history), NULL);
+      G_CALLBACK (show_history_tab), NULL);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);
   active_calltree = current_calls;
 
@@ -594,7 +590,7 @@ create_toolbar ()
   gtk_widget_set_tooltip_text(GTK_WIDGET(contactButton), _("Contacts"));
 #endif
   g_signal_connect (G_OBJECT (contactButton), "clicked",
-      G_CALLBACK (toggle_contacts), NULL);
+      G_CALLBACK (show_contacts_tab), NULL);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(contactButton), -1);
 
   image = gtk_image_new_from_file( ICONS_DIR "/mailbox.svg");
@@ -966,15 +962,15 @@ refresh_tab(calltab_t* tab)
 {
   if(tab == contacts)
   {
-    toggle_contacts(NULL, NULL);
+    show_contacts_tab(NULL, NULL);
   }
   else if (tab == history)
   {
-    toggle_history(NULL, NULL);
+    show_history_tab(NULL, NULL);
   }
   else
   {
-    toggle_current_calls(NULL, NULL);
+    show_current_calls_tab(NULL, NULL);
   }
 }
   void
@@ -984,15 +980,15 @@ switch_tab(calltab_t* tab)
   {
     if(tab == contacts)
     {
-      toggle_contacts(NULL, NULL);
+      show_contacts_tab(NULL, NULL);
     }
     else if (tab == history)
     {
-      toggle_history(NULL, NULL);
+      show_history_tab(NULL, NULL);
     }
     else
     {
-      toggle_current_calls(NULL, NULL);
+      show_current_calls_tab(NULL, NULL);
     }
   }
 }

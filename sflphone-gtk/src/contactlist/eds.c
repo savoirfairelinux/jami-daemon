@@ -1,8 +1,33 @@
+/*
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *
+ *  File originally copied from evolution module of deskbar-applet 2.24.1
+ *   Authors :
+ *    Nigel Tao <nigel.tao@myrealbox.com>
+ *    Raphaël Slinckx <raphael@slinckx.net>
+ *    Mikkel Kamstrup Erlandsen <kamstrup@daimi.au.dk>
+ *    Sebastian Pölsterl <marduk@k-d-w.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include <glib.h>
 #include <glib/gstring.h>
 #include <libebook/e-book.h>
 #include <pango/pango.h>
-#include <string.h>
 #include "eds.h"
 
 static GSList *books = NULL;
@@ -85,6 +110,9 @@ create_query (const char* s)
   return query;
 }
 
+/**
+ * Initialize address book
+ */
 void
 init (void)
 {
@@ -114,6 +142,9 @@ init (void)
   g_object_unref (source_list);
 }
 
+/**
+ * Do a synchronized search in EDS address book
+ */
 GList *
 search_sync (const char *query,
              int         max_results)
