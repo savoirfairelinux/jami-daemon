@@ -8,8 +8,8 @@
  * Do not edit! All changes made to it will be lost.
  */
 
-#ifndef DAEMON_INTERFACE_P_H_1234818066
-#define DAEMON_INTERFACE_P_H_1234818066
+#ifndef DAEMON_INTERFACE_P_H_1235666747
+#define DAEMON_INTERFACE_P_H_1235666747
 
 #include <QtCore/QObject>
 #include <QtCore/QByteArray>
@@ -37,7 +37,7 @@ public:
     ~DaemonInterface();
 
 public Q_SLOTS: // METHODS
-    inline QDBusReply<void> addAccount(MapStringString details)
+    inline QDBusReply<QString> addAccount(MapStringString details)
     {
         QList<QVariant> argumentList;
         argumentList << qVariantFromValue(details);

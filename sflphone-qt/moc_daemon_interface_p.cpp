@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'daemon_interface_p.h'
 **
-** Created: Wed Feb 18 11:29:38 2009
+** Created: Thu Feb 26 12:01:33 2009
 **      by: The Qt Meta Object Compiler version 59 (Qt 4.4.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -33,63 +33,63 @@ static const uint qt_meta_data_DaemonInterface[] = {
       64,   56,   16,   16, 0x05,
 
  // slots: signature, parameters, type, tag, flags
-     116,   56,   99,   16, 0x0a,
-     144,   16,   99,   16, 0x0a,
-     195,  185,  157,   16, 0x0a,
-     246,   16,  222,   16, 0x0a,
-     263,   16,  222,   16, 0x0a,
-     305,  300,  284,   16, 0x0a,
-     334,   16,  222,   16, 0x0a,
-     360,   16,  284,   16, 0x0a,
-     378,   16,  222,   16, 0x0a,
-     413,  405,  222,   16, 0x0a,
-     434,   16,  222,   16, 0x0a,
-     449,   16,  222,   16, 0x0a,
-     499,   16,  479,   16, 0x0a,
-     529,   16,  284,   16, 0x0a,
-     542,   16,  222,   16, 0x0a,
-     568,   16,  284,   16, 0x0a,
-     584,   16,  284,   16, 0x0a,
-     598,   16,  284,   16, 0x0a,
-     610,   16,  222,   16, 0x0a,
-     637,   16,  222,   16, 0x0a,
-     661,   16,  284,   16, 0x0a,
-     688,   16,  222,   16, 0x0a,
-     710,   16,  479,   16, 0x0a,
-     730,   16,  222,   16, 0x0a,
-     748,   16,  284,   16, 0x0a,
-     763,   16,  284,   16, 0x0a,
-     776,   16,  479,   16, 0x0a,
-     792,   16,  222,   16, 0x0a,
-     812,   16,  479,   16, 0x0a,
-     825,   16,  284,   16, 0x0a,
-     845,   16,  284,   16, 0x0a,
-     861,   16,  284,   16, 0x0a,
-     881,   16,  284,   16, 0x0a,
-     897,   16,  284,   16, 0x0a,
-     913,   16,  284,   16, 0x0a,
-     935,  925,   99,   16, 0x0a,
-     958,   16,   99,   16, 0x0a,
-     993,  976,   99,   16, 0x0a,
-    1037, 1019,   99,   16, 0x0a,
-    1085, 1080,   99,   16, 0x0a,
-    1123, 1117,   99,   16, 0x0a,
-    1152, 1148,   99,   16, 0x0a,
-    1173, 1117,   99,   16, 0x0a,
-    1199,   16,   99,   16, 0x0a,
-    1224, 1212,   99,   16, 0x0a,
-    1253,   16,   99,   16, 0x0a,
-    1275, 1269,   99,   16, 0x0a,
-    1292,   16,   99,   16, 0x0a,
-    1304, 1212,   99,   16, 0x0a,
-    1334,   16,   99,   16, 0x0a,
-    1366, 1361,   99,   16, 0x0a,
-    1393,   16,   99,   16, 0x0a,
-    1413, 1408,   99,   16, 0x0a,
-    1436, 1429,   99,   16, 0x0a,
-    1459,   16,   99,   16, 0x0a,
-    1479,   16,   99,   16, 0x0a,
-    1493,   16,   99,   16, 0x0a,
+     119,   56,   99,   16, 0x0a,
+     164,   16,  147,   16, 0x0a,
+     215,  205,  177,   16, 0x0a,
+     266,   16,  242,   16, 0x0a,
+     283,   16,  242,   16, 0x0a,
+     325,  320,  304,   16, 0x0a,
+     354,   16,  242,   16, 0x0a,
+     380,   16,  304,   16, 0x0a,
+     398,   16,  242,   16, 0x0a,
+     433,  425,  242,   16, 0x0a,
+     454,   16,  242,   16, 0x0a,
+     469,   16,  242,   16, 0x0a,
+     499,   16,   99,   16, 0x0a,
+     529,   16,  304,   16, 0x0a,
+     542,   16,  242,   16, 0x0a,
+     568,   16,  304,   16, 0x0a,
+     584,   16,  304,   16, 0x0a,
+     598,   16,  304,   16, 0x0a,
+     610,   16,  242,   16, 0x0a,
+     637,   16,  242,   16, 0x0a,
+     661,   16,  304,   16, 0x0a,
+     688,   16,  242,   16, 0x0a,
+     710,   16,   99,   16, 0x0a,
+     730,   16,  242,   16, 0x0a,
+     748,   16,  304,   16, 0x0a,
+     763,   16,  304,   16, 0x0a,
+     776,   16,   99,   16, 0x0a,
+     792,   16,  242,   16, 0x0a,
+     812,   16,   99,   16, 0x0a,
+     825,   16,  304,   16, 0x0a,
+     845,   16,  304,   16, 0x0a,
+     861,   16,  304,   16, 0x0a,
+     881,   16,  304,   16, 0x0a,
+     897,   16,  304,   16, 0x0a,
+     913,   16,  304,   16, 0x0a,
+     935,  925,  147,   16, 0x0a,
+     958,   16,  147,   16, 0x0a,
+     993,  976,  147,   16, 0x0a,
+    1037, 1019,  147,   16, 0x0a,
+    1085, 1080,  147,   16, 0x0a,
+    1123, 1117,  147,   16, 0x0a,
+    1152, 1148,  147,   16, 0x0a,
+    1173, 1117,  147,   16, 0x0a,
+    1199,   16,  147,   16, 0x0a,
+    1224, 1212,  147,   16, 0x0a,
+    1253,   16,  147,   16, 0x0a,
+    1275, 1269,  147,   16, 0x0a,
+    1292,   16,  147,   16, 0x0a,
+    1304, 1212,  147,   16, 0x0a,
+    1334,   16,  147,   16, 0x0a,
+    1366, 1361,  147,   16, 0x0a,
+    1393,   16,  147,   16, 0x0a,
+    1413, 1408,  147,   16, 0x0a,
+    1436, 1429,  147,   16, 0x0a,
+    1459,   16,  147,   16, 0x0a,
+    1479,   16,  147,   16, 0x0a,
+    1493,   16,  147,   16, 0x0a,
 
        0        // eod
 };
@@ -98,9 +98,10 @@ static const char qt_meta_stringdata_DaemonInterface[] = {
     "DaemonInterface\0\0accountsChanged()\0"
     "code\0errorAlert(int)\0details\0"
     "parametersChanged(MapStringString)\0"
-    "QDBusReply<void>\0addAccount(MapStringString)\0"
-    "enableStun()\0QDBusReply<MapStringString>\0"
-    "accountID\0getAccountDetails(QString)\0"
+    "QDBusReply<QString>\0addAccount(MapStringString)\0"
+    "QDBusReply<void>\0enableStun()\0"
+    "QDBusReply<MapStringString>\0accountID\0"
+    "getAccountDetails(QString)\0"
     "QDBusReply<QStringList>\0getAccountList()\0"
     "getActiveCodecList()\0QDBusReply<int>\0"
     "name\0getAudioDeviceIndex(QString)\0"
@@ -108,7 +109,7 @@ static const char qt_meta_stringdata_DaemonInterface[] = {
     "getAudioOutputDeviceList()\0payload\0"
     "getCodecDetails(int)\0getCodecList()\0"
     "getCurrentAudioDevicesIndex()\0"
-    "QDBusReply<QString>\0getCurrentAudioOutputPlugin()\0"
+    "getCurrentAudioOutputPlugin()\0"
     "getDialpad()\0getInputAudioPluginList()\0"
     "getMailNotify()\0getMaxCalls()\0getNotify()\0"
     "getOutputAudioPluginList()\0"
@@ -167,8 +168,8 @@ int DaemonInterface::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
         case 0: accountsChanged(); break;
         case 1: errorAlert((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 2: parametersChanged((*reinterpret_cast< MapStringString(*)>(_a[1]))); break;
-        case 3: { QDBusReply<void> _r = addAccount((*reinterpret_cast< MapStringString(*)>(_a[1])));
-            if (_a[0]) *reinterpret_cast< QDBusReply<void>*>(_a[0]) = _r; }  break;
+        case 3: { QDBusReply<QString> _r = addAccount((*reinterpret_cast< MapStringString(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QDBusReply<QString>*>(_a[0]) = _r; }  break;
         case 4: { QDBusReply<void> _r = enableStun();
             if (_a[0]) *reinterpret_cast< QDBusReply<void>*>(_a[0]) = _r; }  break;
         case 5: { QDBusReply<MapStringString> _r = getAccountDetails((*reinterpret_cast< const QString(*)>(_a[1])));

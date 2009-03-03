@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'ConfigDialog.h'
 **
-** Created: Wed Feb 18 14:02:53 2009
+** Created: Thu Feb 26 14:45:20 2009
 **      by: The Qt Meta Object Compiler version 59 (Qt 4.4.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,25 +23,31 @@ static const uint qt_meta_data_ConfigurationDialog[] = {
        1,       // revision
        0,       // classname
        0,    0, // classinfo
-       3,   10, // methods
+       6,   10, // methods
        0,    0, // properties
        0,    0, // enums/sets
 
  // slots: signature, parameters, type, tag, flags
       21,   20,   20,   20, 0x08,
-      59,   54,   20,   20, 0x08,
-     112,   95,   20,   20, 0x08,
+      56,   20,   20,   20, 0x08,
+      94,   89,   20,   20, 0x08,
+     147,  130,   20,   20, 0x08,
+     228,  222,   20,   20, 0x08,
+     272,  265,   20,   20, 0x08,
 
        0        // eod
 };
 
 static const char qt_meta_stringdata_ConfigurationDialog[] = {
     "ConfigurationDialog\0\0"
+    "on_buttonSupprimerCompte_clicked()\0"
     "on_buttonNouveauCompte_clicked()\0text\0"
     "on_edit1_Alias_textChanged(QString)\0"
     "current,previous\0"
     "on_listWidgetComptes_currentItemChanged(QListWidgetItem*,QListWidgetIt"
     "em*)\0"
+    "value\0on_spinBox_PortSIP_valueChanged(int)\0"
+    "button\0on_buttonBoxDialog_clicked(QAbstractButton*)\0"
 };
 
 const QMetaObject ConfigurationDialog::staticMetaObject = {
@@ -69,11 +75,14 @@ int ConfigurationDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
-        case 0: on_buttonNouveauCompte_clicked(); break;
-        case 1: on_edit1_Alias_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 2: on_listWidgetComptes_currentItemChanged((*reinterpret_cast< QListWidgetItem*(*)>(_a[1])),(*reinterpret_cast< QListWidgetItem*(*)>(_a[2]))); break;
+        case 0: on_buttonSupprimerCompte_clicked(); break;
+        case 1: on_buttonNouveauCompte_clicked(); break;
+        case 2: on_edit1_Alias_textChanged((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 3: on_listWidgetComptes_currentItemChanged((*reinterpret_cast< QListWidgetItem*(*)>(_a[1])),(*reinterpret_cast< QListWidgetItem*(*)>(_a[2]))); break;
+        case 4: on_spinBox_PortSIP_valueChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 5: on_buttonBoxDialog_clicked((*reinterpret_cast< QAbstractButton*(*)>(_a[1]))); break;
         }
-        _id -= 3;
+        _id -= 6;
     }
     return _id;
 }

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>504</width>
-    <height>392</height>
+    <height>432</height>
    </rect>
   </property>
   <property name="minimumSize" >
@@ -125,7 +125,7 @@
          <string>Général</string>
         </property>
         <property name="icon" >
-         <iconset resource="../../sflphone-qt/resources.qrc" >
+         <iconset>
           <normaloff>:/Images/sflphone.png</normaloff>:/Images/sflphone.png</iconset>
         </property>
        </item>
@@ -134,7 +134,7 @@
          <string>Affichage</string>
         </property>
         <property name="icon" >
-         <iconset resource="../../sflphone-qt/resources.qrc" >
+         <iconset>
           <normaloff>:/Images/sflphone.png</normaloff>:/Images/sflphone.png</iconset>
         </property>
        </item>
@@ -143,7 +143,7 @@
          <string>Comptes</string>
         </property>
         <property name="icon" >
-         <iconset resource="../../sflphone-qt/resources.qrc" >
+         <iconset>
           <normaloff>:/Images/stock_person.svg</normaloff>:/Images/stock_person.svg</iconset>
         </property>
        </item>
@@ -152,7 +152,7 @@
          <string>Audio</string>
         </property>
         <property name="icon" >
-         <iconset resource="../../sflphone-qt/resources.qrc" >
+         <iconset>
           <normaloff>:/Images/icon_volume_off.svg</normaloff>:/Images/icon_volume_off.svg</iconset>
         </property>
        </item>
@@ -210,12 +210,12 @@
                   <string>&amp;Capacité</string>
                  </property>
                  <property name="buddy" >
-                  <cstring>horizontalSlider</cstring>
+                  <cstring>horizontalSlider_Capacity</cstring>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QSlider" name="horizontalSlider" >
+                <widget class="QSlider" name="horizontalSlider_Capacity" >
                  <property name="maximum" >
                   <number>100</number>
                  </property>
@@ -252,6 +252,9 @@
             <string>Connexion</string>
            </property>
            <layout class="QFormLayout" name="formLayout_12" >
+            <property name="fieldGrowthPolicy" >
+             <enum>QFormLayout::ExpandingFieldsGrow</enum>
+            </property>
             <item row="0" column="0" >
              <widget class="QLabel" name="label_PortSIP" >
               <property name="text" >
@@ -260,7 +263,45 @@
              </widget>
             </item>
             <item row="0" column="1" >
-             <widget class="QSpinBox" name="spinBox_PortSIP" />
+             <widget class="QWidget" native="1" name="widget" >
+              <property name="minimumSize" >
+               <size>
+                <width>50</width>
+                <height>0</height>
+               </size>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout" >
+               <property name="margin" >
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QSpinBox" name="spinBox_PortSIP" >
+                 <property name="sizePolicy" >
+                  <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimum" >
+                  <number>1025</number>
+                 </property>
+                 <property name="maximum" >
+                  <number>65536</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_WarningSIP" >
+                 <property name="enabled" >
+                  <bool>false</bool>
+                 </property>
+                 <property name="text" >
+                  <string>Attention </string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -513,7 +554,7 @@
                      <string/>
                     </property>
                     <property name="icon" >
-                     <iconset resource="../../sflphone-qt/resources.qrc" >
+                     <iconset>
                       <normaloff>:/Images/hang_up.svg</normaloff>:/Images/hang_up.svg</iconset>
                     </property>
                     <property name="shortcut" >
@@ -539,16 +580,12 @@
                      <string>...</string>
                     </property>
                     <property name="icon" >
-                     <iconset resource="../../sflphone-qt/resources.qrc" >
+                     <iconset>
                       <normaloff>:/Images/accept.svg</normaloff>:/Images/accept.svg</iconset>
                     </property>
                    </widget>
                   </item>
                  </layout>
-                 <zorder>buttonSupprimerCompte</zorder>
-                 <zorder>toolButton</zorder>
-                 <zorder>toolButton_2</zorder>
-                 <zorder>buttonNouveauCompte</zorder>
                 </widget>
                </item>
               </layout>
@@ -679,6 +716,20 @@
                  </item>
                 </widget>
                </item>
+               <item row="6" column="1" >
+                <widget class="QLabel" name="edit7_Etat" >
+                 <property name="text" >
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="0" >
+                <widget class="QLabel" name="label7_Etat" >
+                 <property name="text" >
+                  <string>État </string>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </widget>
             </item>
@@ -794,20 +845,16 @@
          </item>
          <item>
           <widget class="QGroupBox" name="groupBox2_Codecs" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="title" >
             <string>&amp;Codecs</string>
            </property>
            <layout class="QGridLayout" name="gridLayout" >
-            <item row="0" column="0" >
-             <widget class="QTableView" name="tableViewCodecs" >
-              <property name="dragEnabled" >
-               <bool>true</bool>
-              </property>
-              <property name="sortingEnabled" >
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="2" >
              <layout class="QVBoxLayout" name="verticalLayout_OrdreCodecs" >
               <property name="leftMargin" >
@@ -831,6 +878,65 @@
                </widget>
               </item>
              </layout>
+            </item>
+            <item row="0" column="0" >
+             <widget class="QTableWidget" name="tableWidget_Codecs" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Preferred" hsizetype="Expanding" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize" >
+               <size>
+                <width>0</width>
+                <height>100</height>
+               </size>
+              </property>
+              <property name="frameShape" >
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow" >
+               <enum>QFrame::Sunken</enum>
+              </property>
+              <property name="verticalScrollBarPolicy" >
+               <enum>Qt::ScrollBarAsNeeded</enum>
+              </property>
+              <property name="textElideMode" >
+               <enum>Qt::ElideRight</enum>
+              </property>
+              <property name="verticalScrollMode" >
+               <enum>QAbstractItemView::ScrollPerPixel</enum>
+              </property>
+              <property name="horizontalScrollMode" >
+               <enum>QAbstractItemView::ScrollPerPixel</enum>
+              </property>
+              <column>
+               <property name="text" >
+                <string>Actif</string>
+               </property>
+              </column>
+              <column>
+               <property name="text" >
+                <string>Nom</string>
+               </property>
+              </column>
+              <column>
+               <property name="text" >
+                <string>Fréquence</string>
+               </property>
+              </column>
+              <column>
+               <property name="text" >
+                <string>Bitrate</string>
+               </property>
+              </column>
+              <column>
+               <property name="text" >
+                <string>Bande Passante</string>
+               </property>
+              </column>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -927,7 +1033,7 @@
              <item>
               <widget class="QGroupBox" name="groupBox_PulseAudio" >
                <property name="sizePolicy" >
-                <sizepolicy vsizetype="Preferred" hsizetype="Expanding" >
+                <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -936,20 +1042,13 @@
                 <string>Paramètres PulseAudio</string>
                </property>
                <layout class="QFormLayout" name="formLayout_11" >
+                <property name="fieldGrowthPolicy" >
+                 <enum>QFormLayout::ExpandingFieldsGrow</enum>
+                </property>
                 <item row="0" column="0" >
                  <widget class="QCheckBox" name="checkBox_ModifVolumeApps" >
                   <property name="text" >
                    <string>Autoriser à &amp;modifier le volume des autres applications</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0" >
-                 <widget class="QPushButton" name="pushButton" >
-                  <property name="text" >
-                   <string>PushButton</string>
-                  </property>
-                  <property name="default" >
-                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -998,29 +1097,13 @@
  <connections>
   <connection>
    <sender>buttonBoxDialog</sender>
-   <signal>accepted()</signal>
-   <receiver>ConfigurationDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel" >
-     <x>231</x>
-     <y>390</y>
-    </hint>
-    <hint type="destinationlabel" >
-     <x>157</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBoxDialog</sender>
    <signal>rejected()</signal>
    <receiver>ConfigurationDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>299</x>
-     <y>390</y>
+     <x>300</x>
+     <y>430</y>
     </hint>
     <hint type="destinationlabel" >
      <x>286</x>
@@ -1052,11 +1135,11 @@
    <hints>
     <hint type="sourcelabel" >
      <x>228</x>
-     <y>319</y>
+     <y>374</y>
     </hint>
     <hint type="destinationlabel" >
-     <x>441</x>
-     <y>319</y>
+     <x>431</x>
+     <y>378</y>
     </hint>
    </hints>
   </connection>
@@ -1067,17 +1150,17 @@
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>378</x>
-     <y>52</y>
+     <x>229</x>
+     <y>21</y>
     </hint>
     <hint type="destinationlabel" >
-     <x>331</x>
-     <y>342</y>
+     <x>208</x>
+     <y>27</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>horizontalSlider</sender>
+   <sender>horizontalSlider_Capacity</sender>
    <signal>valueChanged(int)</signal>
    <receiver>spinBox_CapaciteHist</receiver>
    <slot>setValue(int)</slot>
@@ -1095,7 +1178,7 @@
   <connection>
    <sender>spinBox_CapaciteHist</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>horizontalSlider</receiver>
+   <receiver>horizontalSlider_Capacity</receiver>
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel" >

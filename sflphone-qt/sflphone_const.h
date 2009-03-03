@@ -35,15 +35,36 @@
 
 #define UNUSED  __attribute__((__unused__))
 
-#define ACCOUNT_TYPE               "Account.type"
+#define ACCOUNT_TYPE          "Account.type"
 #define ACCOUNT_ALIAS		   "Account.alias"
 #define ACCOUNT_ENABLED		   "Account.enable"
 #define ACCOUNT_MAILBOX		   "Account.mailbox"
 #define ACCOUNT_HOSTNAME      "hostname"
 #define ACCOUNT_USERNAME      "username"
-#define ACCOUNT_PASSWORD       "password"
-#define ACCOUNT_SIP_STUN_SERVER	   "STUN.server"
+#define ACCOUNT_PASSWORD      "password"
+#define ACCOUNT_STATUS        "Status"
+#define ACCOUNT_SIP_STUN_SERVER	  "STUN.server"
 #define ACCOUNT_SIP_STUN_ENABLED   "STUN.enable"
+
+#define ACCOUNT_ENABLED_TRUE        "TRUE"
+#define ACCOUNT_ENABLED_FALSE       "FALSE"
+
+#define ACCOUNT_STATE_REGISTERED         "REGISTERED"
+#define ACCOUNT_STATE_UNREGISTERED       "UNREGISTERED"
+#define ACCOUNT_STATE_TRYING             "TRYING"
+#define ACCOUNT_STATE_ERROR              "ERROR"
+#define ACCOUNT_STATE_ERROR_AUTH         "ERROR_AUTH"
+#define ACCOUNT_STATE_ERROR_NETWORK      "ERROR_NETWORK"
+#define ACCOUNT_STATE_ERROR_HOST         "ERROR_HOST"
+#define ACCOUNT_STATE_ERROR_CONF_STUN    "ERROR_CONF_STUN"
+#define ACCOUNT_STATE_ERROR_EXIST_STUN   "ERROR_EXIST_STUN"
+
+#define MAX_HISTORY_CAPACITY      60
+
+#define CODEC_NAME              0
+#define CODEC_SAMPLE_RATE       1
+#define CODEC_BIT_RATE          2
+#define CODEC_BANDWIDTH         3
 
 /** Error while opening capture device */
 #define ALSA_CAPTURE_DEVICE	      0x0001

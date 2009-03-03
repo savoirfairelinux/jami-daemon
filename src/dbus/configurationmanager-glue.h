@@ -96,6 +96,7 @@ public:
         static ::DBus::IntrospectedArgument addAccount_args[] = 
         {
             { "details", "a{ss}", true },
+            { "createdAccountId", "s", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument removeAccount_args[] = 
@@ -470,7 +471,7 @@ public:
      */
     virtual std::map< std::string, std::string > getAccountDetails(const std::string& accountID) = 0;
     virtual void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details) = 0;
-    virtual void addAccount(const std::map< std::string, std::string >& details) = 0;
+    virtual std::string addAccount(const std::map< std::string, std::string >& details) = 0;
     virtual void removeAccount(const std::string& accoundID) = 0;
     virtual std::vector< std::string > getAccountList() = 0;
     virtual void sendRegister(const std::string& accountID, const int32_t& expire) = 0;
@@ -580,8 +581,10 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         std::map< std::string, std::string > argin1; ri >> argin1;
-        addAccount(argin1);
+        std::string argout1 = addAccount(argin1);
         ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
         return reply;
     }
     ::DBus::Message _removeAccount_stub(const ::DBus::CallMessage &call)

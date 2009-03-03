@@ -15,5 +15,5 @@ QString getIndexProtocole(int protocoleIndex)
 		return "SIP";
 	if(protocoleIndex == 1)
 		return "IAX";
-	return NULL;
+	return "UNKNOWN PROTOCOLE INDEX";
 }

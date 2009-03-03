@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'ConfigDialog.ui'
 **
-** Created: Tue Feb 17 11:57:42 2009
+** Created: Thu Feb 26 14:45:15 2009
 **      by: Qt User Interface Compiler version 4.4.3
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -26,11 +26,10 @@
 #include <QtGui/QLabel>
 #include <QtGui/QLineEdit>
 #include <QtGui/QListWidget>
-#include <QtGui/QPushButton>
 #include <QtGui/QSlider>
 #include <QtGui/QSpinBox>
 #include <QtGui/QStackedWidget>
-#include <QtGui/QTableView>
+#include <QtGui/QTableWidget>
 #include <QtGui/QToolButton>
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QWidget>
@@ -54,13 +53,16 @@ public:
     QWidget *widget_CapaciteHist;
     QHBoxLayout *horizontalLayout_10;
     QLabel *label_Capacite;
-    QSlider *horizontalSlider;
+    QSlider *horizontalSlider_Capacity;
     QSpinBox *spinBox_CapaciteHist;
     QToolButton *toolButtonEffacerHist;
     QGroupBox *groupBox2_Connexion;
     QFormLayout *formLayout_12;
     QLabel *label_PortSIP;
+    QWidget *widget;
+    QHBoxLayout *horizontalLayout;
     QSpinBox *spinBox_PortSIP;
+    QLabel *label_WarningSIP;
     QWidget *widget_RemplissageConfGeneral;
     QWidget *page_Affichage;
     QVBoxLayout *verticalLayout_9;
@@ -106,6 +108,8 @@ public:
     QLineEdit *edit5_Mdp;
     QLineEdit *edit6_BoiteVocale;
     QComboBox *edit2_Protocole;
+    QLabel *edit7_Etat;
+    QLabel *label7_Etat;
     QGroupBox *groupBox_ConfComptesCommuns;
     QVBoxLayout *verticalLayout_10;
     QLabel *label_ConfComptesCommus;
@@ -123,10 +127,10 @@ public:
     QCheckBox *checkBox_Sonneries;
     QGroupBox *groupBox2_Codecs;
     QGridLayout *gridLayout;
-    QTableView *tableViewCodecs;
     QVBoxLayout *verticalLayout_OrdreCodecs;
     QToolButton *toolButton_MonterCodec;
     QToolButton *toolButton_DescendreCodec;
+    QTableWidget *tableWidget_Codecs;
     QStackedWidget *stackedWidget_ParametresSpecif;
     QWidget *page1_Alsa;
     QVBoxLayout *verticalLayout_20;
@@ -143,7 +147,6 @@ public:
     QGroupBox *groupBox_PulseAudio;
     QFormLayout *formLayout_11;
     QCheckBox *checkBox_ModifVolumeApps;
-    QPushButton *pushButton;
     QFrame *lineDialog;
     QDialogButtonBox *buttonBoxDialog;
 
@@ -151,7 +154,7 @@ public:
     {
     if (ConfigurationDialog->objectName().isEmpty())
         ConfigurationDialog->setObjectName(QString::fromUtf8("ConfigurationDialog"));
-    ConfigurationDialog->resize(504, 392);
+    ConfigurationDialog->resize(504, 432);
     ConfigurationDialog->setMinimumSize(QSize(0, 0));
     verticalLayout = new QVBoxLayout(ConfigurationDialog);
     verticalLayout->setSpacing(4);
@@ -259,12 +262,12 @@ public:
 
     horizontalLayout_10->addWidget(label_Capacite);
 
-    horizontalSlider = new QSlider(widget_CapaciteHist);
-    horizontalSlider->setObjectName(QString::fromUtf8("horizontalSlider"));
-    horizontalSlider->setMaximum(100);
-    horizontalSlider->setOrientation(Qt::Horizontal);
+    horizontalSlider_Capacity = new QSlider(widget_CapaciteHist);
+    horizontalSlider_Capacity->setObjectName(QString::fromUtf8("horizontalSlider_Capacity"));
+    horizontalSlider_Capacity->setMaximum(100);
+    horizontalSlider_Capacity->setOrientation(Qt::Horizontal);
 
-    horizontalLayout_10->addWidget(horizontalSlider);
+    horizontalLayout_10->addWidget(horizontalSlider_Capacity);
 
     spinBox_CapaciteHist = new QSpinBox(widget_CapaciteHist);
     spinBox_CapaciteHist->setObjectName(QString::fromUtf8("spinBox_CapaciteHist"));
@@ -290,15 +293,39 @@ public:
     formLayout_12->setSpacing(4);
     formLayout_12->setMargin(4);
     formLayout_12->setObjectName(QString::fromUtf8("formLayout_12"));
+    formLayout_12->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
     label_PortSIP = new QLabel(groupBox2_Connexion);
     label_PortSIP->setObjectName(QString::fromUtf8("label_PortSIP"));
 
     formLayout_12->setWidget(0, QFormLayout::LabelRole, label_PortSIP);
 
-    spinBox_PortSIP = new QSpinBox(groupBox2_Connexion);
+    widget = new QWidget(groupBox2_Connexion);
+    widget->setObjectName(QString::fromUtf8("widget"));
+    widget->setMinimumSize(QSize(50, 0));
+    horizontalLayout = new QHBoxLayout(widget);
+    horizontalLayout->setSpacing(4);
+    horizontalLayout->setMargin(0);
+    horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
+    spinBox_PortSIP = new QSpinBox(widget);
     spinBox_PortSIP->setObjectName(QString::fromUtf8("spinBox_PortSIP"));
+    QSizePolicy sizePolicy2(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    sizePolicy2.setHorizontalStretch(0);
+    sizePolicy2.setVerticalStretch(0);
+    sizePolicy2.setHeightForWidth(spinBox_PortSIP->sizePolicy().hasHeightForWidth());
+    spinBox_PortSIP->setSizePolicy(sizePolicy2);
+    spinBox_PortSIP->setMinimum(1025);
+    spinBox_PortSIP->setMaximum(65536);
 
-    formLayout_12->setWidget(0, QFormLayout::FieldRole, spinBox_PortSIP);
+    horizontalLayout->addWidget(spinBox_PortSIP);
+
+    label_WarningSIP = new QLabel(widget);
+    label_WarningSIP->setObjectName(QString::fromUtf8("label_WarningSIP"));
+    label_WarningSIP->setEnabled(false);
+
+    horizontalLayout->addWidget(label_WarningSIP);
+
+
+    formLayout_12->setWidget(0, QFormLayout::FieldRole, widget);
 
 
     verticalLayout_18->addWidget(groupBox2_Connexion);
@@ -333,9 +360,6 @@ public:
 
     frameAffichage = new QFrame(page_Affichage);
     frameAffichage->setObjectName(QString::fromUtf8("frameAffichage"));
-    QSizePolicy sizePolicy2(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    sizePolicy2.setHorizontalStretch(0);
-    sizePolicy2.setVerticalStretch(0);
     sizePolicy2.setHeightForWidth(frameAffichage->sizePolicy().hasHeightForWidth());
     frameAffichage->setSizePolicy(sizePolicy2);
     frameAffichage->setFrameShape(QFrame::StyledPanel);
@@ -490,8 +514,6 @@ public:
 
     horizontalLayout_2->addWidget(buttonNouveauCompte);
 
-    buttonSupprimerCompte->raise();
-    buttonNouveauCompte->raise();
 
     verticalLayout_6->addWidget(groupBoxGestionComptes);
 
@@ -574,6 +596,16 @@ public:
     edit2_Protocole->setObjectName(QString::fromUtf8("edit2_Protocole"));
 
     formLayout_2->setWidget(1, QFormLayout::FieldRole, edit2_Protocole);
+
+    edit7_Etat = new QLabel(frame2_EditComptes);
+    edit7_Etat->setObjectName(QString::fromUtf8("edit7_Etat"));
+
+    formLayout_2->setWidget(6, QFormLayout::FieldRole, edit7_Etat);
+
+    label7_Etat = new QLabel(frame2_EditComptes);
+    label7_Etat->setObjectName(QString::fromUtf8("label7_Etat"));
+
+    formLayout_2->setWidget(6, QFormLayout::LabelRole, label7_Etat);
 
 
     horizontalLayout_3->addWidget(frame2_EditComptes);
@@ -661,17 +693,12 @@ public:
 
     groupBox2_Codecs = new QGroupBox(page_Audio);
     groupBox2_Codecs->setObjectName(QString::fromUtf8("groupBox2_Codecs"));
+    sizePolicy2.setHeightForWidth(groupBox2_Codecs->sizePolicy().hasHeightForWidth());
+    groupBox2_Codecs->setSizePolicy(sizePolicy2);
     gridLayout = new QGridLayout(groupBox2_Codecs);
     gridLayout->setSpacing(4);
     gridLayout->setMargin(4);
     gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
-    tableViewCodecs = new QTableView(groupBox2_Codecs);
-    tableViewCodecs->setObjectName(QString::fromUtf8("tableViewCodecs"));
-    tableViewCodecs->setDragEnabled(true);
-    tableViewCodecs->setSortingEnabled(true);
-
-    gridLayout->addWidget(tableViewCodecs, 0, 0, 1, 1);
-
     verticalLayout_OrdreCodecs = new QVBoxLayout();
     verticalLayout_OrdreCodecs->setSpacing(4);
     verticalLayout_OrdreCodecs->setObjectName(QString::fromUtf8("verticalLayout_OrdreCodecs"));
@@ -688,6 +715,35 @@ public:
 
 
     gridLayout->addLayout(verticalLayout_OrdreCodecs, 0, 2, 1, 1);
+
+    tableWidget_Codecs = new QTableWidget(groupBox2_Codecs);
+    if (tableWidget_Codecs->columnCount() < 5)
+        tableWidget_Codecs->setColumnCount(5);
+    QTableWidgetItem *__colItem = new QTableWidgetItem();
+    tableWidget_Codecs->setHorizontalHeaderItem(0, __colItem);
+    QTableWidgetItem *__colItem1 = new QTableWidgetItem();
+    tableWidget_Codecs->setHorizontalHeaderItem(1, __colItem1);
+    QTableWidgetItem *__colItem2 = new QTableWidgetItem();
+    tableWidget_Codecs->setHorizontalHeaderItem(2, __colItem2);
+    QTableWidgetItem *__colItem3 = new QTableWidgetItem();
+    tableWidget_Codecs->setHorizontalHeaderItem(3, __colItem3);
+    QTableWidgetItem *__colItem4 = new QTableWidgetItem();
+    tableWidget_Codecs->setHorizontalHeaderItem(4, __colItem4);
+    tableWidget_Codecs->setObjectName(QString::fromUtf8("tableWidget_Codecs"));
+    QSizePolicy sizePolicy5(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    sizePolicy5.setHorizontalStretch(0);
+    sizePolicy5.setVerticalStretch(0);
+    sizePolicy5.setHeightForWidth(tableWidget_Codecs->sizePolicy().hasHeightForWidth());
+    tableWidget_Codecs->setSizePolicy(sizePolicy5);
+    tableWidget_Codecs->setMinimumSize(QSize(0, 100));
+    tableWidget_Codecs->setFrameShape(QFrame::StyledPanel);
+    tableWidget_Codecs->setFrameShadow(QFrame::Sunken);
+    tableWidget_Codecs->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    tableWidget_Codecs->setTextElideMode(Qt::ElideRight);
+    tableWidget_Codecs->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    tableWidget_Codecs->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+    gridLayout->addWidget(tableWidget_Codecs, 0, 0, 1, 1);
 
 
     verticalLayout_5->addWidget(groupBox2_Codecs);
@@ -753,25 +809,17 @@ public:
     verticalLayout_7->setObjectName(QString::fromUtf8("verticalLayout_7"));
     groupBox_PulseAudio = new QGroupBox(page2_PulseAudio);
     groupBox_PulseAudio->setObjectName(QString::fromUtf8("groupBox_PulseAudio"));
-    QSizePolicy sizePolicy5(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    sizePolicy5.setHorizontalStretch(0);
-    sizePolicy5.setVerticalStretch(0);
-    sizePolicy5.setHeightForWidth(groupBox_PulseAudio->sizePolicy().hasHeightForWidth());
-    groupBox_PulseAudio->setSizePolicy(sizePolicy5);
+    sizePolicy4.setHeightForWidth(groupBox_PulseAudio->sizePolicy().hasHeightForWidth());
+    groupBox_PulseAudio->setSizePolicy(sizePolicy4);
     formLayout_11 = new QFormLayout(groupBox_PulseAudio);
     formLayout_11->setSpacing(4);
     formLayout_11->setMargin(4);
     formLayout_11->setObjectName(QString::fromUtf8("formLayout_11"));
+    formLayout_11->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
     checkBox_ModifVolumeApps = new QCheckBox(groupBox_PulseAudio);
     checkBox_ModifVolumeApps->setObjectName(QString::fromUtf8("checkBox_ModifVolumeApps"));
 
     formLayout_11->setWidget(0, QFormLayout::LabelRole, checkBox_ModifVolumeApps);
-
-    pushButton = new QPushButton(groupBox_PulseAudio);
-    pushButton->setObjectName(QString::fromUtf8("pushButton"));
-    pushButton->setDefault(false);
-
-    formLayout_11->setWidget(1, QFormLayout::LabelRole, pushButton);
 
 
     verticalLayout_7->addWidget(groupBox_PulseAudio);
@@ -805,7 +853,7 @@ public:
 
 
 #ifndef QT_NO_SHORTCUT
-    label_Capacite->setBuddy(horizontalSlider);
+    label_Capacite->setBuddy(horizontalSlider_Capacity);
     label1_Alias->setBuddy(edit1_Alias);
     label2_Protocole->setBuddy(edit2_Protocole);
     label3_Serveur->setBuddy(edit3_Serveur);
@@ -820,13 +868,12 @@ public:
 
 
     retranslateUi(ConfigurationDialog);
-    QObject::connect(buttonBoxDialog, SIGNAL(accepted()), ConfigurationDialog, SLOT(accept()));
     QObject::connect(buttonBoxDialog, SIGNAL(rejected()), ConfigurationDialog, SLOT(reject()));
     QObject::connect(listOptions, SIGNAL(currentRowChanged(int)), stackedWidgetOptions, SLOT(setCurrentIndex(int)));
     QObject::connect(checkBoxStun, SIGNAL(toggled(bool)), lineEdit_Stun, SLOT(setEnabled(bool)));
     QObject::connect(comboBox_Interface, SIGNAL(currentIndexChanged(int)), stackedWidget_ParametresSpecif, SLOT(setCurrentIndex(int)));
-    QObject::connect(horizontalSlider, SIGNAL(valueChanged(int)), spinBox_CapaciteHist, SLOT(setValue(int)));
-    QObject::connect(spinBox_CapaciteHist, SIGNAL(valueChanged(int)), horizontalSlider, SLOT(setValue(int)));
+    QObject::connect(horizontalSlider_Capacity, SIGNAL(valueChanged(int)), spinBox_CapaciteHist, SLOT(setValue(int)));
+    QObject::connect(spinBox_CapaciteHist, SIGNAL(valueChanged(int)), horizontalSlider_Capacity, SLOT(setValue(int)));
 
     stackedWidgetOptions->setCurrentIndex(2);
     stackedWidget_ParametresSpecif->setCurrentIndex(1);
@@ -853,6 +900,7 @@ public:
     toolButtonEffacerHist->setText(QApplication::translate("ConfigurationDialog", "&Effacer l'Historique", 0, QApplication::UnicodeUTF8));
     groupBox2_Connexion->setTitle(QApplication::translate("ConfigurationDialog", "Connexion", 0, QApplication::UnicodeUTF8));
     label_PortSIP->setText(QApplication::translate("ConfigurationDialog", "Port SIP", 0, QApplication::UnicodeUTF8));
+    label_WarningSIP->setText(QApplication::translate("ConfigurationDialog", "Attention ", 0, QApplication::UnicodeUTF8));
     label_ConfAffichage->setText(QApplication::translate("ConfigurationDialog", "Configuration de l'affichage", 0, QApplication::UnicodeUTF8));
     label1_Notifications->setText(QApplication::translate("ConfigurationDialog", "Activer les notifications du bureau", 0, QApplication::UnicodeUTF8));
     checkBox1_NotifAppels->setText(QApplication::translate("ConfigurationDialog", "&Appels entrants", 0, QApplication::UnicodeUTF8));
@@ -876,6 +924,8 @@ public:
      << QApplication::translate("ConfigurationDialog", "SIP", 0, QApplication::UnicodeUTF8)
      << QApplication::translate("ConfigurationDialog", "IAX", 0, QApplication::UnicodeUTF8)
     );
+    edit7_Etat->setText(QString());
+    label7_Etat->setText(QApplication::translate("ConfigurationDialog", "\303\211tat ", 0, QApplication::UnicodeUTF8));
     groupBox_ConfComptesCommuns->setTitle(QString());
     label_ConfComptesCommus->setText(QApplication::translate("ConfigurationDialog", "Les param\303\250tres STUN seront appliqu\303\251s \303\240 tous les comptes", 0, QApplication::UnicodeUTF8));
     checkBoxStun->setText(QApplication::translate("ConfigurationDialog", "Activer Stun", 0, QApplication::UnicodeUTF8));
@@ -891,13 +941,17 @@ public:
     groupBox2_Codecs->setTitle(QApplication::translate("ConfigurationDialog", "&Codecs", 0, QApplication::UnicodeUTF8));
     toolButton_MonterCodec->setText(QApplication::translate("ConfigurationDialog", "...", 0, QApplication::UnicodeUTF8));
     toolButton_DescendreCodec->setText(QApplication::translate("ConfigurationDialog", "...", 0, QApplication::UnicodeUTF8));
+    tableWidget_Codecs->horizontalHeaderItem(0)->setText(QApplication::translate("ConfigurationDialog", "Actif", 0, QApplication::UnicodeUTF8));
+    tableWidget_Codecs->horizontalHeaderItem(1)->setText(QApplication::translate("ConfigurationDialog", "Nom", 0, QApplication::UnicodeUTF8));
+    tableWidget_Codecs->horizontalHeaderItem(2)->setText(QApplication::translate("ConfigurationDialog", "Fr\303\251quence", 0, QApplication::UnicodeUTF8));
+    tableWidget_Codecs->horizontalHeaderItem(3)->setText(QApplication::translate("ConfigurationDialog", "Bitrate", 0, QApplication::UnicodeUTF8));
+    tableWidget_Codecs->horizontalHeaderItem(4)->setText(QApplication::translate("ConfigurationDialog", "Bande Passante", 0, QApplication::UnicodeUTF8));
     groupBox_Alsa->setTitle(QApplication::translate("ConfigurationDialog", "Param\303\250tres ALSA", 0, QApplication::UnicodeUTF8));
     label2_Entree->setText(QApplication::translate("ConfigurationDialog", "&Entr\303\251e", 0, QApplication::UnicodeUTF8));
     label3_Sortie->setText(QApplication::translate("ConfigurationDialog", "&Sortie", 0, QApplication::UnicodeUTF8));
     label1_GreffonAlsa->setText(QApplication::translate("ConfigurationDialog", "&Greffon ALSA", 0, QApplication::UnicodeUTF8));
     groupBox_PulseAudio->setTitle(QApplication::translate("ConfigurationDialog", "Param\303\250tres PulseAudio", 0, QApplication::UnicodeUTF8));
     checkBox_ModifVolumeApps->setText(QApplication::translate("ConfigurationDialog", "Autoriser \303\240 &modifier le volume des autres applications", 0, QApplication::UnicodeUTF8));
-    pushButton->setText(QApplication::translate("ConfigurationDialog", "PushButton", 0, QApplication::UnicodeUTF8));
     Q_UNUSED(ConfigurationDialog);
     } // retranslateUi
 

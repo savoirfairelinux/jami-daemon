@@ -2,53 +2,45 @@
 #include "sflphone_const.h"
 #include "daemon_interface_singleton.h"
 
-const QString account_state_name(account_state_t & s)
+#include <iostream>
+
+using namespace std;
+
+const QString account_state_name(QString & s)
 {
-  QString state;
-  switch(s)
-  {
-  case ACCOUNT_STATE_REGISTERED:
-    state = QApplication::translate("ConfigurationDialog", "Registered", 0, QApplication::UnicodeUTF8);
-    break;
-  case ACCOUNT_STATE_UNREGISTERED:
-    state = QApplication::translate("ConfigurationDialog", "Not Registered", 0, QApplication::UnicodeUTF8);
-    break;
-  case ACCOUNT_STATE_TRYING:
-    state = QApplication::translate("ConfigurationDialog", "Trying...", 0, QApplication::UnicodeUTF8);
-    break;
-  case ACCOUNT_STATE_ERROR:
-    state = QApplication::translate("ConfigurationDialog", "Error", 0, QApplication::UnicodeUTF8);
-    break;
-  case ACCOUNT_STATE_ERROR_AUTH:
-    state = QApplication::translate("ConfigurationDialog", "Bad authentification", 0, QApplication::UnicodeUTF8);
-    break;
-  case ACCOUNT_STATE_ERROR_NETWORK:
-    state = QApplication::translate("ConfigurationDialog", "Network unreachable", 0, QApplication::UnicodeUTF8);
-    break;
-  case ACCOUNT_STATE_ERROR_HOST:
-    state = QApplication::translate("ConfigurationDialog", "Host unreachable", 0, QApplication::UnicodeUTF8);
-    break;
-  case ACCOUNT_STATE_ERROR_CONF_STUN:
-    state = QApplication::translate("ConfigurationDialog", "Stun configuration error", 0, QApplication::UnicodeUTF8);
-    break;
-  case ACCOUNT_STATE_ERROR_EXIST_STUN:
-    state = QApplication::translate("ConfigurationDialog", "Stun server invalid", 0, QApplication::UnicodeUTF8);
-    break;
-  default:
-    state = QApplication::translate("ConfigurationDialog", "Invalid", 0, QApplication::UnicodeUTF8);
-    break;
-  }
-  return state;
+	if(s == QString(ACCOUNT_STATE_REGISTERED))
+		return QApplication::translate("ConfigurationDialog", "Registered", 0, QApplication::UnicodeUTF8);
+	if(s == QString(ACCOUNT_STATE_UNREGISTERED))
+		return QApplication::translate("ConfigurationDialog", "Not Registered", 0, QApplication::UnicodeUTF8);
+	if(s == QString(ACCOUNT_STATE_TRYING))
+		return QApplication::translate("ConfigurationDialog", "Trying...", 0, QApplication::UnicodeUTF8);
+	if(s == QString(ACCOUNT_STATE_ERROR))
+		return QApplication::translate("ConfigurationDialog", "Error", 0, QApplication::UnicodeUTF8);
+	if(s == QString(ACCOUNT_STATE_ERROR_AUTH))
+		return QApplication::translate("ConfigurationDialog", "Bad authentification", 0, QApplication::UnicodeUTF8);
+	if(s == QString(ACCOUNT_STATE_ERROR_NETWORK))
+		return QApplication::translate("ConfigurationDialog", "Network unreachable", 0, QApplication::UnicodeUTF8);
+	if(s == QString(ACCOUNT_STATE_ERROR_HOST))
+		return QApplication::translate("ConfigurationDialog", "Host unreachable", 0, QApplication::UnicodeUTF8);
+	if(s == QString(ACCOUNT_STATE_ERROR_CONF_STUN))
+		return QApplication::translate("ConfigurationDialog", "Stun configuration error", 0, QApplication::UnicodeUTF8);
+	if(s == QString(ACCOUNT_STATE_ERROR_EXIST_STUN))
+		return QApplication::translate("ConfigurationDialog", "Stun server invalid", 0, QApplication::UnicodeUTF8);
+	return QApplication::translate("ConfigurationDialog", "Invalid", 0, QApplication::UnicodeUTF8);
 }
 
 //Constructors
+
+	Account::Account():accountId(NULL){}
+
+/*
 Account::Account(QListWidgetItem & _item, QString & alias)
 {
 	accountDetails = new MapStringString();
 	(*accountDetails)[ACCOUNT_ALIAS] = alias;
 	item = & _item;
 }
-/*
+
 Account::Account(QString & _accountId, MapStringString & _accountDetails, account_state_t & _state)
 {
 	*accountDetails = _accountDetails;
@@ -56,20 +48,54 @@ Account::Account(QString & _accountId, MapStringString & _accountDetails, accoun
 	*state = _state;
 }
 */
-Account::Account(QString & _accountId)
+
+void Account::initAccountItem()
 {
-	accountDetails = & DaemonInterfaceSingleton::getInstance().getAccountDetails(_accountId).value();
+	item = new QListWidgetItem();
+	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
+	cout << getAccountDetail(*(new QString(ACCOUNT_ENABLED))).toStdString() << endl;
+	item->setCheckState((getAccountDetail(*(new QString(ACCOUNT_ENABLED))) == ACCOUNT_ENABLED_TRUE) ? Qt::Checked : Qt::Unchecked);
+	item->setText(getAccountDetail(*(new QString(ACCOUNT_ALIAS))));
+}
+
+Account * Account::buildExistingAccountFromId(QString _accountId)
+{
+	Account * a = new Account();
+	a->accountId = new QString(_accountId);
+	a->accountDetails = new MapStringString( DaemonInterfaceSingleton::getInstance().getAccountDetails(_accountId).value() );
+	a->initAccountItem();
+	if(a->item->checkState() == Qt::Checked)
+		if(a->getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+			a->item->setTextColor(Qt::darkGreen);
+		else
+			a->item->setTextColor(Qt::red);
+	return a;
+}
+
+Account * Account::buildNewAccountFromAlias(QString alias)
+{
+	Account * a = new Account();
+	a->accountDetails = new MapStringString();
+	a->setAccountDetail(QString(ACCOUNT_ALIAS),alias);
+	a->initAccountItem();
+	return a;
 }
 
 Account::~Account()
 {
 	delete accountId;
 	delete accountDetails;
-	delete state;
 	delete item;
 }
 
 //Getters
+
+bool Account::isNew()
+{
+	qDebug() << accountId;
+	return(!accountId);
+}
+
 QString & Account::getAccountId()
 {
 	return *accountId; 
@@ -80,19 +106,40 @@ MapStringString & Account::getAccountDetails()
 	return *accountDetails;
 }
 
-account_state_t & Account::getState()
+QListWidgetItem * Account::getItem()
 {
-	return *state;
+	if(!item)
+		cout<<"null"<<endl;
+	return item;
+	
 }
 
-QListWidgetItem & Account::getItem()
+QString Account::getStateName(QString & state)
 {
-	return *item;
+	return account_state_name(state);
 }
 
-QString Account::getStateName()
+QColor Account::getStateColor()
 {
-	return account_state_name(*state);
+	if(item->checkState() == Qt::Checked)
+	{
+		if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+			return Qt::darkGreen;
+		return Qt::red;
+	}
+	return Qt::black;
+}
+
+
+QString Account::getStateColorName()
+{
+	if(item->checkState() == Qt::Checked)
+	{
+		if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+			return "darkGreen";
+		return "red";
+	}
+	return "black";
 }
 
 QString Account::getAccountDetail(QString & param)

@@ -41,7 +41,7 @@ public:
 
     std::map< std::string, std::string > getAccountDetails( const std::string& accountID );
     void setAccountDetails( const std::string& accountID, const std::map< std::string, std::string >& details );
-    void addAccount( const std::map< std::string, std::string >& details );
+    std::string addAccount( const std::map< std::string, std::string >& details );
     void removeAccount( const std::string& accoundID );
     std::vector< std::string > getAccountList(  );
     void sendRegister(  const std::string& accoundID , const int32_t& expire );

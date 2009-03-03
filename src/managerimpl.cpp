@@ -1563,6 +1563,27 @@ ManagerImpl::setPulseAppVolumeControl( void )
 
 void ManagerImpl::setAudioManager( const int32_t& api )
 {
+
+    int type, samplerate, framesize, numCardIn, numCardOut;
+    std::string alsaPlugin;
+
+    _debug( "Setting audio manager \n");
+
+    if(!_audiodriver)
+        return;
+
+    type = _audiodriver->getLayerType();
+
+    if(type == api){
+        _debug( "Audio manager chosen already in use. No changes made. \n");
+        return;
+    }
+
+    setConfig( PREFERENCES , CONFIG_AUDIO , api) ;
+    switchAudioManager();
+    return;
+
+/*
     int manager;
 
     manager = api;
@@ -1582,6 +1603,8 @@ void ManagerImpl::setAudioManager( const int32_t& api )
         setConfig( PREFERENCES , CONFIG_AUDIO , api) ;
         switchAudioManager();
     }
+*/
+
 }
 
 int32_t
@@ -2032,7 +2055,7 @@ ManagerImpl::sendRegister( const std::string& accountID , const int32_t& expire 
   }
 }                   
 
-  void
+  std::string
 ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
 {
 
@@ -2052,7 +2075,7 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
     }
     else {
         _debug("Unknown %s param when calling addAccount(): %s\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
-        return;
+        return "";
     }
     _accountMap[newAccountID] = newAccount;
     setAccountDetails(accountID.str(), details);
@@ -2060,6 +2083,7 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
     saveConfig();
 
     if (_dbus) _dbus->getConfigurationManager()->accountsChanged();
+    return newAccountID;
 }
 
   void 
