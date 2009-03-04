@@ -267,6 +267,7 @@ SIPVoIPLink::getEvent()
 
 int SIPVoIPLink::sendRegister( AccountID id )
 {
+  _debug("sendRegister called!!!!!!!!!!!!!!!!!!!!!!! \n");
     pj_status_t status;
     int expire_value;
     char contactTmp[256];
@@ -1348,36 +1349,34 @@ void SIPVoIPLink::setStunServer( const std::string &server )
         pj_sockaddr_in bound_addr;
         pjsip_host_port a_name;
         char tmpIP[32];
-        pj_sock_t sock;
+        pj_sock_t sock;        
 
         // Init bound address to ANY
         pj_memset(&bound_addr, 0, sizeof (bound_addr));
-        bound_addr.sin_addr.s_addr = PJ_INADDR_ANY;
+        
+       
+        bound_addr.sin_addr.s_addr = pj_htonl(PJ_INADDR_ANY);
+        bound_addr.sin_port = pj_htons((pj_uint16_t) _localPort);
+        bound_addr.sin_family = PJ_AF_INET;
+        pj_bzero(bound_addr.sin_zero, sizeof(bound_addr.sin_zero));
 
-        // Create UDP server socket
-        status = pj_sock_socket(PJ_AF_INET, PJ_SOCK_DGRAM, 0, &sock);
-        if (status != PJ_SUCCESS) {
-            _debug("UserAgent: (%d) UDP socket() error\n", status);
-            return status;
-        }
 
-        status = pj_sock_bind_in(sock, pj_ntohl(bound_addr.sin_addr.s_addr), (pj_uint16_t) _localPort);
-        if (status != PJ_SUCCESS) {
-            _debug("UserAgent: (%d) UDP bind() error\n", status);
-            pj_sock_close(sock);
-            return status;
-        }
 
+        _debug("bound_addr.sin_port %i \n", bound_addr.sin_port);
+
+        
         _debug("UserAgent: Use IP: %s\n", _localExternAddress.data());
-
+        
+        
         // Create UDP-Server (default port: 5060)
         strcpy(tmpIP, _localExternAddress.data());
         pj_strdup2(_pool, &a_name.host, tmpIP);
         a_name.port = (pj_uint16_t) _localExternPort;
 
-        _debug("a_name: host: %s  - port : %i\n", a_name.host.ptr, a_name.port);
 
-        status = pjsip_udp_transport_attach(_endpt, sock, &a_name, 1, NULL);
+        // status = pjsip_tls_transport_start(_endpt, NULL, &bound_addr, &a_name, 1, NULL);
+        status = pjsip_udp_transport_start(_endpt, &bound_addr, &a_name, 1, NULL);
+
         if (status != PJ_SUCCESS) {
             _debug("UserAgent: (%d) Unable to start UDP transport!\n", status);
             return -1;

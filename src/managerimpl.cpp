@@ -124,7 +124,7 @@ ManagerImpl::init()
 
     AudioLayer *audiolayer = getAudioDriver();
     
-    if (audiolayer!=0) {
+    if (audiolayer != 0) {
         unsigned int sampleRate = audiolayer->getSampleRate();
 
         _debugInit("Load Telephone Tone");
@@ -134,6 +134,9 @@ ManagerImpl::init()
         _debugInit("Loading DTMF key");
         _dtmfKey = new DTMF(sampleRate);
     }
+
+    if (audiolayer == 0)
+      audiolayer->stopStream();
 }
 
 void ManagerImpl::terminate()
@@ -190,6 +193,9 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
 {
     _debug("ManagerImpl::outgoingCall() method \n");
 
+    stopTone(false);
+    playTone();
+
     if (!accountExists(accountid)) {
         _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
         return false;
@@ -221,6 +227,14 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
   bool
 ManagerImpl::answerCall(const CallID& id)
 {
+  bool isActive = false;
+
+  AccountID currentaccountid = getAccountFromCall( id );
+  Call* currentcall = getAccountLink(currentaccountid)->getCall(getCurrentCallId());
+  _debug("ManagerImpl::answerCall :: current call->getState %i \n",currentcall->getState());
+
+  if (currentcall->getState() == 1)
+      isActive = true;
 
   stopTone(false); 
   _debug("Try to answer call: %s\n", id.data());
@@ -230,10 +244,27 @@ ManagerImpl::answerCall(const CallID& id)
     return false;
   }
 
-  if (id != getCurrentCallId()) {
+  /*
+  _debug("_nbIncomingWaitingCall =======>>>>>>>> %i \n",_nbIncomingWaitingCall);
+  
+  CallIDSet::iterator iter = _waitingCall.begin();
+  while (iter != _waitingCall.end()) {
+      CallID ident = *iter;
+      AccountID acc = getAccountFromCall( ident );
+      Call* call = getAccountLink(acc)->getCall(ident);
+      _debug("ManagerImpl::answerCall :: incoming call ident: %s \n",ident.c_str());
+      _debug("ManagerImpl::answerCall :: incoming call state: %i \n",call->getState());
+      ++iter;
+  }
+  */
+  
+  //  if (id != getCurrentCallId()) {
+  if (isActive) { 
     _debug("* Manager Info: there is currently a call, try to hold it\n");
+
     onHoldCall(getCurrentCallId());
   }
+  
 
   if (!getAccountLink(accountid)->answer(id)) {
     // error when receiving...
@@ -313,11 +344,11 @@ ManagerImpl::cancelCall (const CallID& id)
   bool
 ManagerImpl::onHoldCall(const CallID& id)
 {
-  _debug("*************** ON HOLD ***********************************\n");
+
   stopTone(true);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
-    _debug("5 Manager On Hold Call: Account ID %s or callid %s desn't exists\n", accountid.c_str(), id.c_str());
+    _debug("5 Manager On Hold Call: Account ID %s or callid %s doesn't exists\n", accountid.c_str(), id.c_str());
     return false;
   }
 
@@ -336,7 +367,7 @@ ManagerImpl::onHoldCall(const CallID& id)
   bool
 ManagerImpl::offHoldCall(const CallID& id)
 {
-  _debug("*************** OFF HOLD ***********************************\n");
+  
   stopTone(false);
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
@@ -598,13 +629,21 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
 
     associateCallToAccount(call->getCallId(), accountId);
 
+    _debug("ManagerImpl::incomingCall :: hasCurrentCall() %i \n",hasCurrentCall());
+
     if ( !hasCurrentCall() ) {
         call->setConnectionState(Call::Ringing);
         ringtone();
         switchCall(call->getCallId());
-    } else {
+    
+    }
+    /* 
+    else {
         addWaitingCall(call->getCallId());
     }
+    */
+
+    addWaitingCall(call->getCallId());
 
     from = call->getPeerName();
     number = call->getPeerNumber();
@@ -618,6 +657,15 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
         from.append(number);
         from.append(">");
     }
+
+    /*
+    CallIDSet::iterator iter = _waitingCall.begin();
+    while (iter != _waitingCall.end()) {
+        CallID ident = *iter;
+        _debug("ManagerImpl::incomingCall :: CALL iteration: %s \n",ident.c_str());
+        ++iter;
+    }
+    */
   
     /* Broadcast a signal over DBus */
     _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
@@ -1592,6 +1640,8 @@ void ManagerImpl::setAudioManager( const int32_t& api )
 {
     int manager;
 
+    _debug(" ManagerImpl::setAudioManager :: %i \n",api);
+
     manager = api;
     if( manager == PULSEAUDIO )
     {
@@ -1705,8 +1755,8 @@ ManagerImpl::initAudioDriver(void)
     if (error == -1) {
       _debug("Init audio driver: %i\n", error);
     }
-  } 
-  
+  }
+ 
 }
 
 /**
@@ -1756,6 +1806,7 @@ ManagerImpl::selectAudioDriver (void)
     /* Notify the error if there is one */
     if( _audiodriver -> getErrorMessage() != -1 )
         notifyErrClient( _audiodriver -> getErrorMessage());
+
 }
 
 void ManagerImpl::switchAudioManager (void) 
@@ -1796,6 +1847,16 @@ void ManagerImpl::switchAudioManager (void)
     _audiodriver->openDevice( numCardIn , numCardOut, samplerate, framesize, SFL_PCM_BOTH, alsaPlugin ); 
     if( _audiodriver -> getErrorMessage() != -1 )
         notifyErrClient( _audiodriver -> getErrorMessage());
+   
+    _debug("Current device: %i \n", type);
+    _debug("has current call: %i \n", hasCurrentCall());
+
+    // need to stop audio streams if there is currently no call
+    if( (type != PULSEAUDIO) && (!hasCurrentCall())) {
+        _debug("There is currently a call!!\n");
+        _audiodriver->stopStream();
+        
+    }
 } 
 
 /**

@@ -194,9 +194,9 @@ void AlsaLayer::stopCaptureStream (void)
 
     if(_CaptureHandle){
         err = snd_pcm_drop (_CaptureHandle);
-        _debug("AlsaLayer::stopCaptureStream snd_pcm_drop returned vaue : %i\n",err);
+
         stop_capture ();
-        _debug("Wroking here !!!!!!!!!!!!!!!\n");
+
     }
 }
 

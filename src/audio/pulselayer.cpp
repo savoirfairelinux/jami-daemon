@@ -140,12 +140,12 @@ void PulseLayer::createStreams( pa_context* c )
     
     playback = new AudioStream(c, PLAYBACK_STREAM, PLAYBACK_STREAM_NAME, _manager->getSpkrVolume());
     pa_stream_set_write_callback( playback->pulseStream(), audioCallback, this);
-    //pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
+    // pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
     // pa_stream_set_suspended_callback( playback->pulseStream(), stream_suspended_callback, this);
     
     record = new AudioStream(c, CAPTURE_STREAM, CAPTURE_STREAM_NAME , _manager->getMicVolume());
     pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
-    //pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
+    // pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
 
 
@@ -173,6 +173,8 @@ bool PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleR
     assert(context);
 
     connectPulseAudioServer();
+ 
+    startStream();
 
     _debug("Connection Done!! \n");
     return true;
@@ -254,8 +256,6 @@ void PulseLayer::stream_suspended_callback(pa_stream *s, void *userdata UNUSED )
 void PulseLayer::processData( void )
 {
 
-        _debug("PulseLayer::processData() \n");
-    
         // Handle the mic
         // We check if the stream is ready
         if( (record->pulseStream()) && (pa_stream_get_state( record->pulseStream()) == PA_STREAM_READY)) 
