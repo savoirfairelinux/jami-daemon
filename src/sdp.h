@@ -90,9 +90,9 @@ class Sdp {
          * @return CodecDescriptor	The codec map
          */
         CodecDescriptor& getCodecMap(){ return _codecMap; }
-        
+
         void  setLocalExternAudioPort(int port){ _localPort = port; }
-        
+
         int  getLocalExternAudioPort (void){ return _localPort; }
 
         int receiving_initial_offer( pjmedia_sdp_session* remote );
@@ -100,7 +100,32 @@ class Sdp {
         void toString (void);
 
         AudioCodecType getAudioCodec (void) { return _audioCodec; }
-         
+
+        /** 
+         * Set remote's IP addr. [not protected]
+         * @param ip  The remote IP address
+         */
+        void setRemoteIP(const std::string& ip)    { _remoteIPAddress = ip; }
+
+        /** 
+         * Set remote's audio port. [not protected]
+         * @param port  The remote audio port
+         */
+        void setRemoteAudioPort(unsigned int port) { _remoteAudioPort = port; }
+
+        /** 
+         * Return audio port at destination [mutex protected] 
+         * @return unsigned int The remote audio port
+         */
+        unsigned int getRemoteAudioPort() { return _remoteAudioPort; }
+
+        /** 
+         * Return IP of destination [mutex protected]
+         * @return const std:string	The remote IP address
+         */
+        const std::string& getRemoteIp() { return _remoteIPAddress; }
+
+
     private:
         /** 
          * Set the audio codec used.  [not protected] 
@@ -115,6 +140,13 @@ class Sdp {
         std::string _ipAddr;
 
         int _localPort;
+
+        /** Remote's IP address */
+        std::string  _remoteIPAddress;
+
+        /** Remote's audio port */
+        unsigned int _remoteAudioPort;
+
 
         /**
          * Get a valid remote media

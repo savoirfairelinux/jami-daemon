@@ -147,10 +147,10 @@ Sdp::setRemoteAudioFromSDP(pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media *r
 {
     std::string remoteIP(remote_sdp->conn->addr.ptr, remote_sdp->conn->addr.slen);
     _debug("            Remote Audio IP: %s\n", remoteIP.data());
-    //setRemoteIP(remoteIP);
+    setRemoteIP(remoteIP);
     int remotePort = remote_med->desc.port; 
     _debug("            Remote Audio Port: %d\n", remotePort);
-    //setRemoteAudioPort(remotePort);
+    setRemoteAudioPort(remotePort);
 
     return true;
 }
@@ -382,6 +382,6 @@ void Sdp::toString (void) {
     sdp << "fmt_count=" << _localSDP->media[0]->desc.fmt_count << "\n";
     sdp << "fmt=" << _localSDP->media[0]->desc.fmt[0].ptr << "\n";
     
-    _debug ("LOCAL SDP: \n%s\n", sdp.str().c_str());
+    //_debug ("LOCAL SDP: \n%s\n", sdp.str().c_str());
 
 }

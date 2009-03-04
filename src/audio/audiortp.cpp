@@ -185,18 +185,21 @@ AudioRtpRTX::initBuffers()
     void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
+    std::string remoteIP;
+    unsigned int remotePort;
+
     try {
         if (_ca == 0) { return; }
         _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( _ca->getLocalSDP()->getAudioCodec() );
         _codecSampleRate = _audiocodec->getClockRate();	
 
-        _debug("Init audio RTP session\n");
-        ost::InetHostAddress remote_ip(_ca->getRemoteIp().c_str());
+        remoteIP = _ca->getLocalSDP()->getRemoteIp();
+        _debug("Init audio RTP session - remote IP = %s\n", remoteIP.c_str());
+        ost::InetHostAddress remote_ip(remoteIP.c_str());
         if (!remote_ip) {
-            _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", _ca->getRemoteIp().data());
+            _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", remoteIP.data());
             return;
         }
-
 
         if (!_sym) {
             _sessionRecv->setSchedulingTimeout (10000);
@@ -210,12 +213,13 @@ AudioRtpRTX::initAudioRtpSession (void)
         }
 
         if (!_sym) {
-            if ( !_sessionRecv->addDestination(remote_ip, (unsigned short) _ca->getRemoteAudioPort()) ) {
-                _debug("AudioRTP Thread Error: could not connect to port %d\n",  _ca->getRemoteAudioPort());
+            remotePort = _ca->getLocalSDP()->getRemoteAudioPort();
+            if ( !_sessionRecv->addDestination(remote_ip, (unsigned short) remotePort) ) {
+                _debug("AudioRTP Thread Error: could not connect to port %d\n",  remotePort);
                 return;
             }
-            if (!_sessionSend->addDestination (remote_ip, (unsigned short) _ca->getRemoteAudioPort())) {
-                _debug("! ARTP Thread Error: could not connect to port %d\n",  _ca->getRemoteAudioPort());
+            if (!_sessionSend->addDestination (remote_ip, (unsigned short) remotePort)) {
+                _debug("! ARTP Thread Error: could not connect to port %d\n",  remotePort);
                 return;
             }
 
@@ -233,7 +237,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 
             //_debug("AudioRTP Thread: Added session destination %s\n", remote_ip.getHostname() );
 
-            if (!_session->addDestination (remote_ip, (unsigned short) _ca->getRemoteAudioPort())) {
+            if (!_session->addDestination (remote_ip, (unsigned short) remotePort)) {
                 return;
             }
 
