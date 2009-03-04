@@ -28,6 +28,7 @@
     Sdp::Sdp( pj_pool_t *pool ) :  _localSDP(NULL)
     , _negociator(NULL)
     , _codecMap()
+    , _audioCodec()
     , _ipAddr("")
 {
     _pool = pool;

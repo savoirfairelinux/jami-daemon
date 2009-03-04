@@ -187,7 +187,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 {
     try {
         if (_ca == 0) { return; }
-        _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( _ca->getAudioCodec() );
+        _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( _ca->getLocalSDP()->getAudioCodec() );
         _codecSampleRate = _audiocodec->getClockRate();	
 
         _debug("Init audio RTP session\n");

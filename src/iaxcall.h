@@ -21,6 +21,8 @@
 #define IAXCALL_H
 
 #include "call.h"
+#include "audio/codecDescriptor.h"
+
 #include <iax2/iax-client.h>
 #include <iax2/frame.h>
 
@@ -90,10 +92,40 @@ public:
      */
     int getFirstMatchingFormat(int needles);
 
+    // AUDIO
+    /** 
+     * Set internal codec Map: initialization only, not protected 
+     * @param map The codec map
+     */
+    void setCodecMap(const CodecDescriptor& map) { _codecMap = map; } 
+
+    /** 
+     * Get internal codec Map: initialization only, not protected 
+     * @return CodecDescriptor	The codec map
+     */
+    CodecDescriptor& getCodecMap();
+
+    /** 
+     * Return audio codec [mutex protected]
+     * @return AudioCodecType The payload of the codec
+     */
+    AudioCodecType getAudioCodec();
 
 private:
     /** Each call is associated with an iax_session */
     struct iax_session* _session;
+
+    /** 
+     * Set the audio codec used.  [not protected] 
+     * @param audioCodec  The payload of the codec
+     */
+    void setAudioCodec(AudioCodecType audioCodec) { _audioCodec = audioCodec; }
+
+    /** Codec Map */
+    CodecDescriptor _codecMap;
+
+    /** Codec pointer */
+    AudioCodecType _audioCodec;
 
     /**
      * Format currently in use in the conversation,

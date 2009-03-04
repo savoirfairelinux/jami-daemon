@@ -431,7 +431,6 @@ SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 
         _debug("Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data());
         // we have to add the codec before using it in SIPOutgoingInvite...
-        call->setCodecMap(Manager::instance().getCodecDescriptorMap());
         call->getLocalSDP()->setCodecMap(Manager::instance().getCodecDescriptorMap());
         if ( SIPOutgoingInvite(call) ) {
             call->setConnectionState(Call::Progressing);
@@ -814,7 +813,7 @@ SIPVoIPLink::getCurrentCodecName()
 
   SIPCall *call = getSIPCall(Manager::instance().getCurrentCallId());  
 
-  AudioCodec *ac = call->getCodecMap().getCodec(call->getAudioCodec());
+  AudioCodec *ac = call->getLocalSDP()->getCodecMap().getCodec(call->getLocalSDP()->getAudioCodec());
 
   return ac->getCodecName();
 }
@@ -2324,7 +2323,6 @@ void SIPVoIPLink::setStunServer( const std::string &server )
     }
 
     void on_rx_offer( pjsip_inv_session *inv, const pjmedia_sdp_session *offer ){
-            PJ_UNUSED_ARG( inv );
 
 #ifdef CAN_REINVITE
             
@@ -2338,6 +2336,7 @@ void SIPVoIPLink::setStunServer( const std::string &server )
                 return;
 
             call->getLocalSDP()->receiving_initial_offer( (pjmedia_sdp_session*)offer);
+            _debug("audio codec stté dans l'objet call: %i\n", call->getLocalSDP()->getAudioCodec());
             status=pjsip_inv_set_sdp_answer( call->getInvSession(), call->getLocalSDP()->getLocalSDPSession() );
 #endif
 

@@ -89,7 +89,7 @@ class Sdp {
          * Get internal codec Map: initialization only, not protected 
          * @return CodecDescriptor	The codec map
          */
-        CodecDescriptor& getCodecMap();
+        CodecDescriptor& getCodecMap(){ return _codecMap; }
         
         void  setLocalExternAudioPort(int port){ _localPort = port; }
         
@@ -99,6 +99,8 @@ class Sdp {
 
         void toString (void);
 
+        AudioCodecType getAudioCodec (void) { return _audioCodec; }
+         
     private:
         /** 
          * Set the audio codec used.  [not protected] 

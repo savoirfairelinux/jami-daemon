@@ -23,7 +23,6 @@
 #include <cc++/thread.h> // for mutex
 #include <sstream>
 
-#include "audio/codecDescriptor.h"
 #include "plug-in/audiorecorder/audiorecord.h"
 
 /* 
@@ -145,20 +144,7 @@ class Call{
      */
     bool isAudioStarted();
 
-    // AUDIO
-    /** 
-     * Set internal codec Map: initialization only, not protected 
-     * @param map The codec map
-     */
-    void setCodecMap(const CodecDescriptor& map) { _codecMap = map; } 
-
-    /** 
-     * Get internal codec Map: initialization only, not protected 
-     * @return CodecDescriptor	The codec map
-     */
-    CodecDescriptor& getCodecMap();
-
-    /** 
+        /** 
      * Set my IP [not protected] 
      * @param ip  The local IP address
      */
@@ -206,12 +192,6 @@ class Call{
      */
     const std::string& getRemoteIp();
 
-    /** 
-     * Return audio codec [mutex protected]
-     * @return AudioCodecType The payload of the codec
-     */
-    AudioCodecType getAudioCodec();
-
     /**
      * @return Return the file name for this call
      */
@@ -257,18 +237,6 @@ class Call{
      * @param port  The remote audio port
      */
     void setRemoteAudioPort(unsigned int port) { _remoteAudioPort = port; }
-
-    /** 
-     * Set the audio codec used.  [not protected] 
-     * @param audioCodec  The payload of the codec
-     */
-    void setAudioCodec(AudioCodecType audioCodec) { _audioCodec = audioCodec; }
-
-    /** Codec Map */
-    CodecDescriptor _codecMap;
-
-    /** Codec pointer */
-    AudioCodecType _audioCodec;
 
     bool _audioStarted;
 
