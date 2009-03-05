@@ -29,73 +29,124 @@
 #include <pj/assert.h>
 
 #include "audio/codecDescriptor.h"
+#include "sdpmedia.h"
 
 class Sdp {
 
     public:
-
+        
+        /*
+         * Class Constructor.
+         *
+         * @param ip_addr
+         */
         Sdp(pj_pool_t *pool);
 
+        /* Class destructor */
         ~Sdp();
 
-        /**
-         * Setup incoming call, and verify for errors, before ringing the user.
-         * @param pjsip_rx_data *rdata
-         * @param pj_pool_t *pool
-         * @return bool True on success
-         *		    false otherwise
+        /*
+         * Read accessor. Get the list of the local media capabilities. 
+         *
+         * @return std::vector<sdpMedia*>   the vector containing the different media
          */
-        bool SIPCallInvite(pjsip_rx_data *rdata);
+        std::vector<sdpMedia*> get_local_media_cap( void ) { return _local_media_cap; }
 
-        bool SIPCallAnsweredWithoutHold(pjsip_rx_data *rdata);
+        void set_local_media_cap (void);
 
-        /**
-         * Get the local SDP 
-         * @param void
-         * @return _localSDP pjmedia_sdp_session
+         /*
+         *  Read accessor. Get the sdp session information
+         *
+         *  @return pjmedia_sdp_session   The structure that describes a SDP session
          */
-        pjmedia_sdp_session* getLocalSDPSession( void ) { return _localSDP; }
+        pjmedia_sdp_session* get_local_sdp_session( void ) { return _local_offer; }
 
-        /**
-         * Begin negociation of media information between caller and callee
-         * @param pj_pool_t *pool
-         * @return bool True if ok
+        /*
+         * Write accessor. Set the local IP address that will be used in the sdp session
          */
-        bool startNegociation();
+        void set_ip_address( std::string ip_addr ) { _ip_addr = ip_addr; }
 
-        /**
-         * Create the localSDP, media negociation and codec information
-         * @param pj_pool_t *pool
-         * @return void
+        /*
+         * Read accessor. Get the local IP address
          */
-        bool createInitialOffer();
-
-        bool createLocalOffer ();
-
-        /** 
-         * Set internal codec Map: initialization only, not protected 
-         * @param map The codec map
+        std::string get_ip_address( void ) { return _ip_addr; }
+        
+        /*
+         * Build the local SDP offer
          */
-        void setCodecMap(const CodecDescriptor& map) { _codecMap = map; } 
+        int create_local_offer( );
 
-        /**
-         * Save IP Address
-         * @param ip std::string 
-         * @return void
+        /*
+         * Build the sdp media section
+         * Add rtpmap field if necessary
+         *
+         * @param media     The media to add to SDP
+         * @param med   The structure to receive the media section
          */
-        void setIp(std::string ip) {_ipAddr = ip;}
+        void set_media_descriptor_line( sdpMedia* media, pjmedia_sdp_media** p_med );
 
-        /** 
-         * Get internal codec Map: initialization only, not protected 
-         * @return CodecDescriptor	The codec map
+        /*
+         * On building an invite outside a dialog, build the local offer and create the
+         * SDP negociator instance with it.
          */
-        CodecDescriptor& getCodecMap(){ return _codecMap; }
+        int create_initial_offer( );
 
+         /*
+         * On receiving an invite outside a dialog, build the local offer and create the
+         * SDP negociator instance with the remote offer.
+         *
+         * @param remote    The remote offer
+         */
+        int receiving_initial_offer( pjmedia_sdp_session* remote );
+        
+        /*
+         * Remove all media in the session media vector.
+         */
+        void clean_session_media();
+
+        /*
+         * Return a string description of the media added to the session,
+         * ie the local media capabilities
+         */
+        std::string media_to_string( void );
+
+        /*
+         * Return the codec of the first media after negociation
+         */
+        AudioCodec* get_session_media( void );
+
+        /*
+         * read accessor. Return the negociated offer
+         *
+         * @return pjmedia_sdp_session  The negociated offer
+         */
+        pjmedia_sdp_session* get_negociated_offer( void ){
+            return _negociated_offer;
+        }
+
+         /*
+         * Start the sdp negociation.
+         *
+         * @return pj_status_t  0 on success
+         *                      1 otherwise
+         */
+        pj_status_t start_negociation( void ){
+            return pjmedia_sdp_neg_negotiate(
+                       _pool, _negociator, 0);
+        }
+
+         /*
+         * Retrieve the negociated sdp offer from the sip payload.
+         *
+         * @param sdp   the negociated offer
+         */
+        void set_negociated_offer( const pjmedia_sdp_session *sdp );
+
+
+  ///////////////////////////////////////////////////////////////////////////33
         void  setLocalExternAudioPort(int port){ _localPort = port; }
 
         int  getLocalExternAudioPort (void){ return _localPort; }
-
-        int receiving_initial_offer( pjmedia_sdp_session* remote );
 
         void toString (void);
 
@@ -125,6 +176,7 @@ class Sdp {
          */
         const std::string& getRemoteIp() { return _remoteIPAddress; }
 
+        /////////////////////////////////////////////////////////////////////////
 
     private:
         /** 
@@ -133,11 +185,113 @@ class Sdp {
          */
         void setAudioCodec(AudioCodecType audioCodec) { _audioCodec = audioCodec; }
 
-        /** Codec pointer */
-        AudioCodecType _audioCodec;
+        /** Codec Map */
+        std::vector<sdpMedia*> _local_media_cap;
+
+        /* The media that will be used by the session (after the SDP negociation) */
+        std::vector<sdpMedia*> _session_media;
+
+        /** negociator */
+        pjmedia_sdp_neg *_negociator;
 
         /** IP address */
-        std::string _ipAddr;
+        std::string _ip_addr;
+
+        /** Local SDP */
+        pjmedia_sdp_session *_local_offer;
+
+        /* The negociated SDP offer */
+        // Explanation: each endpoint's offer is negociated, and a new sdp offer results from this
+        // negociation, with the compatible media from each part 
+        pjmedia_sdp_session *_negociated_offer;
+
+        // The pool to allocate memory
+        pj_pool_t *_pool;
+
+        Sdp(const Sdp&); //No Copy Constructor
+        Sdp& operator=(const Sdp&); //No Assignment Operator
+
+        void set_local_media_capabilities ();
+
+        /*
+         *  Mandatory field: Origin ("o=")
+         *  Gives the originator of the session.
+         *  Serves as a globally unique identifier for this version of this session description.
+         */
+        void sdp_add_origin( void );
+
+        /*
+         *  Mandatory field: Protocol version ("v=")
+         *  Add the protocol version in the SDP session description
+         */
+        void sdp_add_protocol( void );
+
+        /*
+         *  Optional field: Connection data ("c=")
+         *  Contains connection data.
+         */
+        void sdp_add_connection_info( void );
+        
+        /*
+         *  Mandatory field: Session name ("s=")
+         *  Add a textual session name.
+         */
+        void sdp_add_session_name( void );
+
+        /*
+         *  Optional field: Session information ("s=")
+         *  Provides textual information about the session.
+         */
+        void sdp_add_session_info( void ){}
+
+        /*
+         *  Optional field: Uri ("u=")
+         *  Add a pointer to additional information about the session.
+         */
+        void sdp_add_uri( void ) {}
+
+        /*
+         *  Optional fields: Email address and phone number ("e=" and "p=")
+         *  Add contact information for the person responsible for the conference.
+         */
+        void sdp_add_email( void ) {}
+
+        /*
+         *  Optional field: Bandwidth ("b=")
+         *  Denotes the proposed bandwidth to be used by the session or the media .
+         */
+        void sdp_add_bandwidth( void ) {}
+
+        /*
+         *  Mandatory field: Timing ("t=")
+         *  Specify the start and the stop time for a session.
+         */
+        void sdp_add_timing( void );
+
+        /*
+         * Optional field: Time zones ("z=")
+         */
+        void sdp_add_time_zone( void ) {}
+
+        /*
+         * Optional field: Encryption keys ("k=")
+         */
+        void sdp_add_encryption_key( void ) {}
+
+        /*
+         * Optional field: Attributes ("a=")
+         */
+        void sdp_add_attributes( );
+
+        /*
+         * Mandatory field: Media descriptions ("m=")
+         */
+        void sdp_add_media_description();
+
+
+//////////////////////////////////////////////////////////////////3
+        /** Codec pointer */
+        AudioCodecType _audioCodec;
 
         int _localPort;
 
@@ -147,60 +301,8 @@ class Sdp {
         /** Remote's audio port */
         unsigned int _remoteAudioPort;
 
-
-        /**
-         * Get a valid remote media
-         * @param remote_sdp pjmedia_sdp_session*
-         * @return pjmedia_sdp_media*. A valid sdp_media_t or 0
-         */
-        pjmedia_sdp_media* getRemoteMedia(pjmedia_sdp_session *remote_sdp);
-
-        pjmedia_sdp_session * getRemoteSDPFromRequest (pjsip_rx_data *rdata);
-
-        /**
-         * Set Audio Port and Audio IP from Remote SDP Info
-         * @param remote_med Remote Media info
-         * @param remote_sdp Remote SDP pointer
-         * @return bool True if everything is set correctly
-         */
-        bool setRemoteAudioFromSDP(pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media* remote_med);
-
-        /**
-         * Set Audio Codec with the remote choice
-         * @param remote_med Remote Media info
-         * @return bool True if everything is set correctly
-         */
-        bool setAudioCodecFromSDP(pjmedia_sdp_media* remote_med);
-
-        /** Local SDP */
-        pjmedia_sdp_session *_localSDP;
-        pjmedia_sdp_session *_negociated_offer;
-
-        /** negociator */
-        pjmedia_sdp_neg *_negociator;
-
-        // The pool to allocate memory
-        pj_pool_t *_pool;
-
-        /** Codec Map */
-        CodecDescriptor _codecMap;
-
-        /**
-         * Set origin information for local SDP
-         */
-        void sdpAddOrigin( void );
-
-        /**
-         * Set connection information for local SDP
-         */
-        void sdpAddConnectionInfo( void );
-        /**
-         * Set media information including codec for localSDP
-         * @param  pj_pool_t* pool
-         * @return void
-         */
-        void sdpAddMediaDescription();
-
+////////////////////////////////////////////////////////////////////
+              
 };
 
 

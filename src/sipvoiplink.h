@@ -303,6 +303,8 @@ class SIPVoIPLink : public VoIPLink
          */
          std::string getCurrentCodecName();
       
+        int inv_session_reinvite (SIPCall *call, std::string direction="");
+        
 
     private:
         /**
