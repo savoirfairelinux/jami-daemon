@@ -149,10 +149,10 @@ class Sdp {
          */
         void attribute_port_to_all_media (int port);
 
-  ///////////////////////////////////////////////////////////////////////////33
-        void  setLocalExternAudioPort(int port){ _localAudioPort = port; }
+        void  set_local_extern_audio_port(int port){ _local_extern_audio_port = port; }
 
-        int  getLocalExternAudioPort (void){ return _localAudioPort; }
+        int  get_local_extern_audio_port (void){ return _local_extern_audio_port; }
+  ///////////////////////////////////////////////////////////////////////////33
 
         void toString (void);
 
@@ -160,25 +160,25 @@ class Sdp {
          * Set remote's IP addr. [not protected]
          * @param ip  The remote IP address
          */
-        void setRemoteIP(const std::string& ip)    { _remoteIPAddress = ip; }
+        void set_remote_ip(const std::string& ip)    { _remoteIPAddress = ip; }
 
         /** 
          * Set remote's audio port. [not protected]
          * @param port  The remote audio port
          */
-        void setRemoteAudioPort(unsigned int port) { _remoteAudioPort = port; }
+        void set_remote_audio_port(unsigned int port) { _remote_audio_port = port; }
 
         /** 
          * Return audio port at destination [mutex protected] 
          * @return unsigned int The remote audio port
          */
-        unsigned int getRemoteAudioPort() { return _remoteAudioPort; }
+        unsigned int get_remote_audio_port() { return _remote_audio_port; }
 
         /** 
          * Return IP of destination [mutex protected]
          * @return const std:string	The remote IP address
          */
-        const std::string& getRemoteIp() { return _remoteIPAddress; }
+        const std::string& get_remote_ip() { return _remoteIPAddress; }
 
         /////////////////////////////////////////////////////////////////////////
 
@@ -288,7 +288,11 @@ class Sdp {
 
         std::string convert_int_to_string (int value);
 
-        int _localAudioPort;
+        void fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp);
+        
+        void fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_sdp);
+
+        int _local_extern_audio_port;
 
 //////////////////////////////////////////////////////////////////3
         /** Remote's IP address */

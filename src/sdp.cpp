@@ -165,6 +165,10 @@ int Sdp::receiving_initial_offer( pjmedia_sdp_session* remote ){
     // Build the local offer to respond
     create_local_offer(  );
 
+    // Retrieve some useful remote information
+    this->fetch_remote_ip_from_sdp (remote);
+    //this->fetch_remote_audio_port_from_sdp ();
+
     status = pjmedia_sdp_neg_create_w_remote_offer( _pool,
                                                     get_local_sdp_session(), remote, &_negociator );
     state = pjmedia_sdp_neg_get_state( _negociator );
@@ -347,7 +351,7 @@ void Sdp::set_local_media_capabilities () {
 
     /* Only one audio media used right now */
     audio = new sdpMedia(MIME_TYPE_AUDIO);
-    audio->set_port (_localAudioPort);
+    audio->set_port (getocalAudioPort);
     
     /* We retrieve the codecs selected by the user */
     selected_codecs = Manager::instance().getCodecDescriptorMap().getActiveCodecs(); 
@@ -367,6 +371,8 @@ void Sdp::attribute_port_to_all_media (int port) {
     std::vector<sdpMedia*> medias;
     int i, size;    
 
+    set_local_extern_audio_port (port);
+
     medias = get_local_media_cap (); 
     size = medias.size();
 
@@ -380,4 +386,13 @@ std::string Sdp::convert_int_to_string (int value) {
     std::ostringstream result;
     result << value;
     return result.str();
+}
+
+void Sdp::fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp) {
+
+    std::string remote_ip;
+        
+    remote_ip = r_sdp->conn->addr.ptr;
+    _debug("            Remote Audio IP: %s\n", remote_ip.c_str());
+    set_remote_ip(remote_ip);
 }

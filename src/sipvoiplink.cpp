@@ -469,7 +469,7 @@ SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
     return call;
 }
 
-    bool
+   bool 
 SIPVoIPLink::answer(const CallID& id)
 {
 
@@ -477,6 +477,8 @@ SIPVoIPLink::answer(const CallID& id)
     SIPCall *call;
     pj_status_t status;
     pjsip_tx_data *tdata;
+    Sdp *local_sdp;
+    pjsip_inv_session *inv_session;
 
     _debug("SIPVoIPLink::answer: start answering \n");
 
@@ -487,15 +489,19 @@ SIPVoIPLink::answer(const CallID& id)
         return false;
     }
 
-    // User answered the incoming call, tell peer this news
-    if (call->getLocalSDP()->start_negociation()) {
-        // Create and send a 200(OK) response
-        _debug("SIPVoIPLink::answer:UserAgent: Negociation success! : call %s \n", call->getCallId().c_str());
-        status = pjsip_inv_answer(call->getInvSession(), PJSIP_SC_OK, NULL, NULL, &tdata);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-        status = pjsip_inv_send_msg(call->getInvSession(), tdata);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+    local_sdp = call->getLocalSDP();
+    inv_session = call->getInvSession();
+    status = local_sdp->start_negociation ();
 
+    if (status == PJ_SUCCESS) {
+        _debug("SIPVoIPLink::answer:UserAgent: Negociation success! : call %s \n", call->getCallId().c_str());
+        // Create and send a 200(OK) response
+        status = pjsip_inv_answer(inv_session, PJSIP_SC_OK, NULL, NULL, &tdata);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjsip_inv_send_msg(inv_session, tdata);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        
+        // Start the RTP sessions
         _debug("SIPVoIPLink::answer: Starting AudioRTP when answering : call %s \n", call->getCallId().c_str());
         if (_audiortp->createNewSession(call) >= 0) {
             call->setAudioStart(true);
@@ -506,10 +512,21 @@ SIPVoIPLink::answer(const CallID& id)
             _debug("SIPVoIPLink::answer: Unable to start sound when answering %s/%d\n", __FILE__, __LINE__);
         }
     }
-    _debug("SIPVoIPLink::answer: fail terminate call %s \n",call->getCallId().c_str());
-    terminateOneCall(call->getCallId());
-    removeCall(call->getCallId());
-    return false;
+    else {
+        // Create and send a 488/Not acceptable here
+        // because the SDP negociation failed
+        status = pjsip_inv_answer( inv_session, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL,
+                                   &tdata );
+        PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+        status = pjsip_inv_send_msg( inv_session, tdata );
+        PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+
+        // Terminate the call
+        _debug("SIPVoIPLink::answer: fail terminate call %s \n",call->getCallId().c_str());
+        terminateOneCall(call->getCallId());
+        removeCall(call->getCallId());
+        return false;
+    }
 }
 
     bool

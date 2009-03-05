@@ -112,7 +112,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Answer the call
          * @param id The call identifier
-         * @return bool True on success
+         * @return int True on success
          */
         bool answer(const CallID& id);
 
