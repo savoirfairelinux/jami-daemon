@@ -152,7 +152,6 @@ class Sdp {
         void  set_local_extern_audio_port(int port){ _local_extern_audio_port = port; }
 
         int  get_local_extern_audio_port (void){ return _local_extern_audio_port; }
-  ///////////////////////////////////////////////////////////////////////////33
 
         void toString (void);
 
@@ -160,7 +159,13 @@ class Sdp {
          * Set remote's IP addr. [not protected]
          * @param ip  The remote IP address
          */
-        void set_remote_ip(const std::string& ip)    { _remoteIPAddress = ip; }
+        void set_remote_ip(const std::string& ip)    { _remote_ip_addr = ip; }
+        
+        /** 
+         * Return IP of destination [mutex protected]
+         * @return const std:string	The remote IP address
+         */
+        const std::string& get_remote_ip() { return _remote_ip_addr; }
 
         /** 
          * Set remote's audio port. [not protected]
@@ -174,14 +179,7 @@ class Sdp {
          */
         unsigned int get_remote_audio_port() { return _remote_audio_port; }
 
-        /** 
-         * Return IP of destination [mutex protected]
-         * @return const std:string	The remote IP address
-         */
-        const std::string& get_remote_ip() { return _remoteIPAddress; }
-
-        /////////////////////////////////////////////////////////////////////////
-
+        void fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remote_sdp);
     private:
         /** Codec Map */
         std::vector<sdpMedia*> _local_media_cap;
@@ -195,6 +193,9 @@ class Sdp {
         /** IP address */
         std::string _ip_addr;
 
+        /** Remote's IP address */
+        std::string  _remote_ip_addr;
+        
         /** Local SDP */
         pjmedia_sdp_session *_local_offer;
 
@@ -202,6 +203,12 @@ class Sdp {
         // Explanation: each endpoint's offer is negociated, and a new sdp offer results from this
         // negociation, with the compatible media from each part 
         pjmedia_sdp_session *_negociated_offer;
+
+        /** Local audio port */
+        int _local_extern_audio_port;
+
+        /** Remote's audio port */
+        unsigned int _remote_audio_port;
 
         // The pool to allocate memory
         pj_pool_t *_pool;
@@ -290,16 +297,11 @@ class Sdp {
 
         void fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp);
         
-        void fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_sdp);
+        void fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media);
 
-        int _local_extern_audio_port;
+        void get_remote_sdp_media_from_offer (pjmedia_sdp_session* r_sdp, pjmedia_sdp_media** r_media);
 
 //////////////////////////////////////////////////////////////////3
-        /** Remote's IP address */
-        std::string  _remoteIPAddress;
-
-        /** Remote's audio port */
-        unsigned int _remoteAudioPort;
 ////////////////////////////////////////////////////////////////////
               
 };

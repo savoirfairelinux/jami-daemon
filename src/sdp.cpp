@@ -29,11 +29,11 @@ static const pj_str_t STR_IN = { (char*)"IN", 2 };
 static const pj_str_t STR_IP4 = { (char*)"IP4", 3};
 static const pj_str_t STR_IP6 = { (char*)"IP6", 3};
 static const pj_str_t STR_RTP_AVP = { (char*)"RTP/AVP", 7 };
-static const pj_str_t STR_SDP_NAME = { (char*)"sflphone", 7 };
+static const pj_str_t STR_SDP_NAME = { (char*)"sflphone", 8 };
 static const pj_str_t STR_SENDRECV = { (char*)"sendrecv", 8 };
 
-    Sdp::Sdp( pj_pool_t *pool ) 
-        : _local_media_cap(), _session_media(0),  _ip_addr( "" ), _local_offer( NULL ), _negociated_offer(NULL), _negociator(NULL), _pool(NULL) 
+Sdp::Sdp( pj_pool_t *pool ) 
+    : _local_media_cap(), _session_media(0),  _ip_addr( "" ), _local_offer( NULL ), _negociated_offer(NULL), _negociator(NULL), _pool(NULL), _local_extern_audio_port(0) 
 {
     _pool = pool;
 }
@@ -46,10 +46,15 @@ Sdp::~Sdp() {
         delete _session_media[k];
         _session_media[k] = 0;
     }
+
+    //for( k=0; k<_local_media_cap.size(); k++ ){
+      //  delete _local_media_cap[k];
+        //_local_media_cap[k] = 0;
+    //}
 }
 
 void Sdp::set_media_descriptor_line( sdpMedia *media,
-                                  pjmedia_sdp_media** p_med ) {
+        pjmedia_sdp_media** p_med ) {
     pjmedia_sdp_media* med;
     pjmedia_sdp_rtpmap rtpmap;
     pjmedia_sdp_attr *attr;
@@ -61,7 +66,7 @@ void Sdp::set_media_descriptor_line( sdpMedia *media,
 
     // Get the right media format
     pj_strdup(_pool, &med->desc.media,
-              ( media->get_media_type() == MIME_TYPE_AUDIO ) ? &STR_AUDIO : &STR_VIDEO );
+            ( media->get_media_type() == MIME_TYPE_AUDIO ) ? &STR_AUDIO : &STR_VIDEO );
     med->desc.port_count = 1;
     med->desc.port = media->get_port();
     pj_strdup (_pool, &med->desc.transport, &STR_RTP_AVP);
@@ -92,7 +97,7 @@ void Sdp::set_media_descriptor_line( sdpMedia *media,
         pjmedia_sdp_rtpmap_to_attr( _pool, &rtpmap, &attr );
         med->attr[med->attr_count++] = attr;
     }
-    
+
     // Add the direction stream
     attr = (pjmedia_sdp_attr*)pj_pool_zalloc( _pool, sizeof(pjmedia_sdp_attr) );
     pj_strdup2( _pool, &attr->name, media->get_stream_direction_str().c_str());
@@ -129,7 +134,7 @@ int Sdp::create_local_offer (){
     status = pjmedia_sdp_validate( this->_local_offer );
     if (status != PJ_SUCCESS)
         return status;
-    
+
     return PJ_SUCCESS;
 }
 
@@ -170,7 +175,7 @@ int Sdp::receiving_initial_offer( pjmedia_sdp_session* remote ){
     //this->fetch_remote_audio_port_from_sdp ();
 
     status = pjmedia_sdp_neg_create_w_remote_offer( _pool,
-                                                    get_local_sdp_session(), remote, &_negociator );
+            get_local_sdp_session(), remote, &_negociator );
     state = pjmedia_sdp_neg_get_state( _negociator );
     PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
@@ -269,7 +274,9 @@ void Sdp::set_negociated_offer( const pjmedia_sdp_session *sdp ){
     AudioCodec *codec_to_add;
 
     _negociated_offer = (pjmedia_sdp_session*)sdp;
-    
+
+    //this->fetch_remote_ip_from_sdp ((pjmedia_sdp_session*)sdp);
+
     codecs_list = Manager::instance().getCodecDescriptorMap().getCodecsMap();
 
     // retrieve the media information
@@ -334,25 +341,25 @@ void Sdp::toString (void) {
         sdp << _local_offer->media[0]->desc.fmt[i].ptr << " ";
     }
     sdp << "\n";
-    
+
     _debug ("LOCAL SDP: \n%s\n", sdp.str().c_str());
 
 }
 
 void Sdp::set_local_media_capabilities () {
-    
+
     CodecOrder selected_codecs;
     int i;
     sdpMedia *audio;
     CodecsMap codecs_list;
     CodecsMap::iterator iter;
 
-    _debug ("Fetch local media capabilities .......... %i" , getLocalExternAudioPort());
+    _debug ("Fetch local media capabilities .......... %i" , get_local_extern_audio_port());
 
     /* Only one audio media used right now */
     audio = new sdpMedia(MIME_TYPE_AUDIO);
-    audio->set_port (getocalAudioPort);
-    
+    audio->set_port (get_local_extern_audio_port());
+
     /* We retrieve the codecs selected by the user */
     selected_codecs = Manager::instance().getCodecDescriptorMap().getActiveCodecs(); 
     codecs_list = Manager::instance().getCodecDescriptorMap().getCodecsMap();
@@ -379,7 +386,6 @@ void Sdp::attribute_port_to_all_media (int port) {
     for(i=0; i<size; i++) {
         medias[i]->set_port (port);
     }   
-
 }
 
 std::string Sdp::convert_int_to_string (int value) {
@@ -391,8 +397,49 @@ std::string Sdp::convert_int_to_string (int value) {
 void Sdp::fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp) {
 
     std::string remote_ip;
-        
+
     remote_ip = r_sdp->conn->addr.ptr;
     _debug("            Remote Audio IP: %s\n", remote_ip.c_str());
-    set_remote_ip(remote_ip);
+    this->set_remote_ip(remote_ip);
 }
+
+
+void Sdp::fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media){
+
+    int remote_port;
+    
+    remote_port = r_media->desc.port;
+    _debug("            Remote Audio Port: %d\n", remote_port);
+    this->set_remote_audio_port(remote_port);
+}
+
+void Sdp::fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remote_sdp) {
+
+    pjmedia_sdp_media *r_media;
+
+    this->get_remote_sdp_media_from_offer (remote_sdp, &r_media);
+
+    if (r_media==NULL){
+        _debug("SDP Failure: no remote sdp media found in the remote offer\n");
+        return;
+    }
+    
+    this->fetch_remote_ip_from_sdp (remote_sdp);
+    this->fetch_remote_audio_port_from_sdp (r_media);
+}
+
+void Sdp::get_remote_sdp_media_from_offer (pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media){
+    int count, i;
+
+    count = remote_sdp->media_count;
+    *r_media =  NULL;
+    for(i = 0; i < count; ++i) {
+        if(pj_stricmp2(&remote_sdp->media[i]->desc.media, "audio") == 0) {
+            *r_media = remote_sdp->media[i];
+            return;
+        }
+    }
+}
+
+
+

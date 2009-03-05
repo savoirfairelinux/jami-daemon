@@ -128,6 +128,7 @@ AudioRtpRTX::AudioRtpRTX (SIPCall *sipcall, bool sym) : time(new ost::Time()), _
         _sessionSend = new ost::RTPSession(local_ip, _ca->getLocalAudioPort());
         _session = NULL;
     } else {
+        _debug ("%i\n", _ca->getLocalAudioPort());
         _session = new ost::SymmetricRTPSession (local_ip, _ca->getLocalAudioPort());
         _sessionRecv = NULL;
         _sessionSend = NULL;
@@ -197,8 +198,10 @@ AudioRtpRTX::initAudioRtpSession (void)
         _codecSampleRate = _audiocodec->getClockRate();	
 
         remoteIP = _ca->getLocalSDP()->get_remote_ip();
+        remotePort = _ca->getLocalSDP()->get_remote_audio_port();
         _debug("Init audio RTP session - remote IP = %s\n", remoteIP.c_str());
         ost::InetHostAddress remote_ip(remoteIP.c_str());
+        _debug("Init audio RTP session - remote IP = %s\n", remoteIP.c_str());
         if (!remote_ip) {
             _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", remoteIP.data());
             return;
@@ -216,7 +219,7 @@ AudioRtpRTX::initAudioRtpSession (void)
         }
 
         if (!_sym) {
-            remotePort = _ca->getLocalSDP()->getRemoteAudioPort();
+            _debug("! AudioRTP Thread: Added session destination %s:%d\n", remote_ip.getHostname(), remotePort );
             if ( !_sessionRecv->addDestination(remote_ip, (unsigned short) remotePort) ) {
                 _debug("AudioRTP Thread Error: could not connect to port %d\n",  remotePort);
                 return;
@@ -238,9 +241,10 @@ AudioRtpRTX::initAudioRtpSession (void)
             _sessionSend->setMark(true);
         } else {
 
-            //_debug("AudioRTP Thread: Added session destination %s\n", remote_ip.getHostname() );
+            _debug("AudioRTP Thread: Added session destination %s:%d\n", remote_ip.getHostname(), remotePort );
 
             if (!_session->addDestination (remote_ip, (unsigned short) remotePort)) {
+                _debug ("could not connect to port %d\n", remotePort);
                 return;
             }
 

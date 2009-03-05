@@ -274,7 +274,6 @@ void get_remote_sdp_from_offer( pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
     *r_sdp = sdp;
 }
 
-
     void
 SIPVoIPLink::getEvent()
 {
@@ -450,6 +449,7 @@ SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
         }
 
         call->setPeerNumber(getSipTo(toUrl, account->getHostname()));
+        setCallAudioLocal(call, getLocalIPAddress(), useStun(), getStunServer());
 
         call->initRecFileName();
 
@@ -958,8 +958,6 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED)
             &dialog);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
 
-    setCallAudioLocal(call, getLocalIPAddress(), useStun(), getStunServer());
-
     // Create the invite session for this call
     status = pjsip_inv_create_uac(dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
@@ -1075,6 +1073,9 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     void
         SIPVoIPLink::SIPCallAnswered(SIPCall *call, pjsip_rx_data *rdata)
         {
+
+            pjmedia_sdp_session *r_sdp;    
+        
             //SIPCall* call = dynamic_cast<SIPCall *>(theCall);//findSIPCallWithCid(event->cid);
             if (!call) {
                 _debug("! SIP Failure: unknown call\n");
@@ -1083,8 +1084,12 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             //call->setDid(event->did);
 
             if (call->getConnectionState() != Call::Connected) {
-                //call->SIPCallAnswered(event);
-                //call->getLocalSDP()->SIPCallAnsweredWithoutHold(rdata);
+                get_remote_sdp_from_offer (rdata, &r_sdp);
+                if (r_sdp==NULL) {
+                     _debug("SIP Failure: no remote sdp session\n");
+                    return;
+                }
+                call->getLocalSDP()->fetch_media_transport_info_from_remote_sdp (r_sdp);
 
                 call->setConnectionState(Call::Connected);
                 call->setState(Call::Active);
@@ -1100,7 +1105,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
                 }
             } else {
                 _debug("* SIP Info: Answering call (on/off hold to send ACK)\n");
-                //call->SIPCallAnswered(event);
             }
         }
 
@@ -1510,6 +1514,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
         PJ_UNUSED_ARG(inv);
 
+        _debug (" *****************************  NEW CALL STATE %i **************************\n", inv->state);        
 
         SIPCall *call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
         if(!call)
@@ -1619,8 +1624,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
             switch (tsx->state) {
                 case PJSIP_TSX_STATE_TERMINATED:
-                    if (tsx->status_code == 200 &&
-                            pjsip_method_cmp(&tsx->method, pjsip_get_refer_method()) != 0) {
+                    if (tsx->status_code == 200 && pjsip_method_cmp(&tsx->method, pjsip_get_refer_method()) != 0) {
                         // Peer answered the outgoing call
                         _debug("UserAgent: Peer answered the outgoing call!\n");
                         call = reinterpret_cast<SIPCall *> (inv->mod_data[_mod_ua.id]);
@@ -1631,8 +1635,11 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
                         accId = Manager::instance().getAccountFromCall(call->getCallId());
                         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
-                        if (link)
+                        if (link) {
                             link->SIPCallAnswered(call, rdata);
+                        } else {
+                        }
+                        
                     } else if (tsx->status_code / 100 == 5) {
                         _debug("UserAgent: 5xx error message received\n");
                     }
@@ -1890,7 +1897,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             call->getLocalSDP()->set_ip_address(link->getLocalIPAddress());
             get_remote_sdp_from_offer( rdata, &r_sdp );
             call->getLocalSDP()->receiving_initial_offer( r_sdp );
-
 
             call->setConnectionState(Call::Progressing);
             call->setPeerNumber(peerNumber);
