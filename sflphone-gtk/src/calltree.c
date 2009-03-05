@@ -247,7 +247,7 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
   reset_call_tree(contacts);
   call_list_reset(contacts);
 
-  // do a synchronized search
+  // do a synchronous search
   results = search_sync (gtk_entry_get_text(GTK_ENTRY(filter_entry)), 50);
 
   for (i = results; i != NULL; i = i->next)
@@ -260,8 +260,9 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
 
       call = g_new0 (call_t, 1);
       call->from = g_strconcat("\"" , entry->name, "\"<", entry->phone, ">", NULL);
-      call->state = CALL_STATE_RECORD;
-      call->history_state = OUTGOING;
+      call->state = CALL_STATE_DIALING;
+      //call->history_state = MISSED;
+      call->contact_type = HOME;
 
       call_list_add (contacts, call);
       update_call_tree_add(contacts,call);
@@ -401,7 +402,7 @@ toolbar_update_buttons ()
         gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
 	break;
       default:
-	g_warning("Should not happen!");
+	g_warning("Toolbar update - Should not happen!");
 	break;
     }
   }
@@ -474,7 +475,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
 	  sflphone_place_call (selectedCall);
 	  break;
 	default:
-	  g_warning("Should not happen!");
+	  g_warning("Row activated - Should not happen!");
 	  break;
       }
     }
@@ -584,7 +585,7 @@ create_toolbar ()
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);
   active_calltree = current_calls;
 
-  image = gtk_image_new_from_file( ICONS_DIR "/contacts.svg");
+  image = gtk_image_new_from_file( ICONS_DIR "/addressbook.svg");
   contactButton = gtk_tool_button_new(image, _("Contacts"));
 #if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text(GTK_WIDGET(contactButton), _("Contacts"));
@@ -604,9 +605,6 @@ create_toolbar ()
       G_CALLBACK (call_mailbox), NULL);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(mailboxButton), -1);
 
-
-  //image = gtk_image_new_from_file( ICONS_DIR "/record.svg");
-  //recButton = gtk_tool_button_new (image, _("Record a call"));
   recButton = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
 #if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text(GTK_WIDGET(recButton), _("Record a call"));
@@ -823,7 +821,7 @@ update_call_tree (calltab_t* tab, call_t * c)
 	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/rec_call.svg", NULL);
 	      break;
 	    default:
-	      g_warning("Should not happen!");
+	      g_warning("Update calltree - Should not happen!");
 	  }
 	}
 	else
@@ -908,14 +906,15 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
 	break;
       default:
-	g_warning("Should not happen!");
+	g_warning("Update calltree add - Should not happen!");
     }
   }
-  else{
+
+  else if (tab == history) {
     switch(c->history_state)
     {
       case INCOMING:
-	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
+	    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
 	break;
       case OUTGOING:
 	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
@@ -924,14 +923,35 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
 	break;
       default:
-	g_warning("History - Should not happen!");
+	    g_warning("History - Should not happen!");
     }
     date = timestamp_get_call_date();
-    if(tab == contacts)
-      description = g_strconcat( description , NULL);
-    else
-      description = g_strconcat( date , description , NULL);
+    description = g_strconcat( date , description , NULL);
   }
+
+  else if (tab == contacts) {
+    switch (c->contact_type)
+    {
+        case HOME:
+	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
+            break;
+        case WORK:
+	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
+            break;
+        case CELLPHONE:
+	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
+            break;
+        default:
+	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
+            break;
+    }
+    description = g_strconcat( description , NULL);
+  }
+
+  else {
+        g_warning ("This widget doesn't exist - This is a bug in the application\n.");
+  }
+
 
   //Resize it
   if(pixbuf)
@@ -949,7 +969,6 @@ update_call_tree_add (calltab_t* tab, call_t * c)
 
   if (pixbuf != NULL)
     g_object_unref(G_OBJECT(pixbuf));
-
 
   sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
   gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);

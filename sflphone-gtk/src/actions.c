@@ -230,9 +230,9 @@ gboolean sflphone_init()
 	else
 	{
 		dbus_register(getpid(), "Gtk+ Client");
-    current_calls = calltab_init();
-	  history = calltab_init();
-	  contacts = calltab_init();
+        current_calls = calltab_init();
+	    history = calltab_init();
+	    contacts = calltab_init();
 	  if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
 	  init();
 	  account_list_init ();

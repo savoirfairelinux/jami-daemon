@@ -75,6 +75,17 @@ typedef enum
   CONTACT
 } call_type_t;
 
+/**
+ * @enum contact_type
+ * This enum have all types of contacts: HOME phone, cell phone, etc...
+ */
+typedef enum
+{
+  HOME,
+  CELLPHONE,
+  WORK
+} contact_type_t;
+
 /** @struct call_t
   * @brief Call information.
   * This struct holds information about a call.
@@ -93,8 +104,10 @@ typedef struct  {
   gchar * to;
   /** The current state of the call */
   call_state_t state;
-  /** The history state */
+  /** The history state if necessary */
   history_state_t history_state;
+  /** The contact type if necessary */
+  contact_type_t contact_type;
 
   time_t _start;
   time_t _stop;
