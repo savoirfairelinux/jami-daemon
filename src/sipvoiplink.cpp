@@ -913,6 +913,7 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED)
     pj_str_t from, to, contact;
     AccountID id;
     SIPAccount *account;
+    pjsip_inv_session *inv;
 
     if (!call) 
         return false;
@@ -943,7 +944,6 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED)
     setCallAudioLocal(call, getLocalIPAddress(), useStun(), getStunServer());
 
     // Create the invite session for this call
-    pjsip_inv_session *inv;
     status = pjsip_inv_create_uac(dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
 

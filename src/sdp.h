@@ -40,7 +40,7 @@ class Sdp {
          *
          * @param ip_addr
          */
-        Sdp(pj_pool_t *pool);
+        Sdp(pj_pool_t *pool, int port);
 
         /* Class destructor */
         ~Sdp();
@@ -144,9 +144,9 @@ class Sdp {
 
 
   ///////////////////////////////////////////////////////////////////////////33
-        void  setLocalExternAudioPort(int port){ _localPort = port; }
+        void  setLocalExternAudioPort(int port){ _localAudioPort = port; }
 
-        int  getLocalExternAudioPort (void){ return _localPort; }
+        int  getLocalExternAudioPort (void){ return _localAudioPort; }
 
         void toString (void);
 
@@ -288,12 +288,12 @@ class Sdp {
          */
         void sdp_add_media_description();
 
+        int _localAudioPort;
 
 //////////////////////////////////////////////////////////////////3
         /** Codec pointer */
         AudioCodecType _audioCodec;
 
-        int _localPort;
 
         /** Remote's IP address */
         std::string  _remoteIPAddress;

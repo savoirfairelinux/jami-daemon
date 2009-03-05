@@ -32,10 +32,11 @@ static const pj_str_t STR_RTP_AVP = { (char*)"RTP/AVP", 7 };
 static const pj_str_t STR_SDP_NAME = { (char*)"sflphone", 7 };
 static const pj_str_t STR_SENDRECV = { (char*)"sendrecv", 8 };
 
-    Sdp::Sdp( pj_pool_t *pool ) 
+    Sdp::Sdp( pj_pool_t *pool, int port ) 
         : _local_media_cap(), _session_media(0),  _ip_addr( "" ), _local_offer( NULL ), _negociated_offer(NULL), _negociator(NULL), _pool(NULL) 
 {
     _pool = pool;
+    _localAudioPort = 65555; ///port;
 }
 
 Sdp::~Sdp() {
@@ -63,7 +64,7 @@ void Sdp::set_media_descriptor_line( sdpMedia *media,
     pj_strdup(_pool, &med->desc.media,
               ( media->get_media_type() == MIME_TYPE_AUDIO ) ? &STR_AUDIO : &STR_VIDEO );
     med->desc.port_count = 1;
-    med->desc.port = media->get_port();
+    med->desc.port = 65555; //media->get_port();
     pj_strdup (_pool, &med->desc.transport, &STR_RTP_AVP);
 
     // Media format ( RTP payload )
@@ -103,6 +104,7 @@ void Sdp::set_media_descriptor_line( sdpMedia *media,
 int Sdp::create_local_offer (){
     pj_status_t status;
 
+    _debug ("Create local offer\n");
     // Build local media capabilities
     set_local_media_capabilities ();
 
@@ -121,20 +123,22 @@ int Sdp::create_local_offer (){
     //sdp_addAttributes( _pool );
     sdp_add_media_description( );
 
+    _debug ("local port = %i\n", _localAudioPort);
+    toString ();
+
     // Validate the sdp session
     status = pjmedia_sdp_validate( this->_local_offer );
     if (status != PJ_SUCCESS)
         return status;
+    
     return PJ_SUCCESS;
 }
-
-
-
 
 int Sdp::create_initial_offer(  ){
     pj_status_t status;
     pjmedia_sdp_neg_state state;
 
+    _debug ("Create initial offer\n");
     // Build the SDP session descriptor
     create_local_offer( );
 
@@ -153,6 +157,8 @@ int Sdp::receiving_initial_offer( pjmedia_sdp_session* remote ){
 
     pj_status_t status;
     pjmedia_sdp_neg_state state;
+
+    _debug ("Receiving initial offer\n");
 
     // Create the SDP negociator instance by calling
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
@@ -336,10 +342,12 @@ void Sdp::set_local_media_capabilities () {
     sdpMedia *audio;
     CodecsMap codecs_list;
     CodecsMap::iterator iter;
-    AudioCodec *codec_to_add;
+
+    _debug ("Fetch local media capabilities .......... %i" , getLocalExternAudioPort());
 
     /* Only one audio media used right now */
     audio = new sdpMedia(MIME_TYPE_AUDIO);
+    audio->set_port (_localAudioPort);
     
     /* We retrieve the codecs selected by the user */
     selected_codecs = Manager::instance().getCodecDescriptorMap().getActiveCodecs(); 
@@ -352,4 +360,6 @@ void Sdp::set_local_media_capabilities () {
 
         audio->add_codec (iter->second);
     } 
+    _local_media_cap.push_back (audio);
+    _debug ("%s\n", audio->to_string ().c_str());
 }
