@@ -40,7 +40,7 @@ class Sdp {
          *
          * @param ip_addr
          */
-        Sdp(pj_pool_t *pool, int port);
+        Sdp(pj_pool_t *pool);
 
         /* Class destructor */
         ~Sdp();

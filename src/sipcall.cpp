@@ -32,7 +32,7 @@ SIPCall::SIPCall(const CallID& id, Call::CallType type, pj_pool_t *pool) : Call(
             , _invSession(NULL)
             , _local_sdp(0)
 {
-    _local_sdp = new Sdp (pool, getLocalExternAudioPort() );
+    _local_sdp = new Sdp (pool);
   _debug("SIPCALL::Constructor for this clss is called \n");
 }
 

@@ -36,7 +36,6 @@ static const pj_str_t STR_SENDRECV = { (char*)"sendrecv", 8 };
         : _local_media_cap(), _session_media(0),  _ip_addr( "" ), _local_offer( NULL ), _negociated_offer(NULL), _negociator(NULL), _pool(NULL) 
 {
     _pool = pool;
-    _localAudioPort = 65555; ///port;
 }
 
 Sdp::~Sdp() {
