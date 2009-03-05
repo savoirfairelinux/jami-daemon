@@ -52,8 +52,6 @@ class Sdp {
          */
         std::vector<sdpMedia*> get_local_media_cap( void ) { return _local_media_cap; }
 
-        void set_local_media_cap (void);
-
          /*
          *  Read accessor. Get the sdp session information
          *
@@ -142,6 +140,14 @@ class Sdp {
          */
         void set_negociated_offer( const pjmedia_sdp_session *sdp );
 
+        /*
+         * Attribute the specified port to every medias provided
+         * This is valid only because we are using one media
+         * We should change this to support multiple medias
+         *
+         * @param port  The media port
+         */
+        void attribute_port_to_all_media (int port);
 
   ///////////////////////////////////////////////////////////////////////////33
         void  setLocalExternAudioPort(int port){ _localAudioPort = port; }
@@ -149,8 +155,6 @@ class Sdp {
         int  getLocalExternAudioPort (void){ return _localAudioPort; }
 
         void toString (void);
-
-        AudioCodecType getAudioCodec (void) { return _audioCodec; }
 
         /** 
          * Set remote's IP addr. [not protected]
@@ -179,12 +183,6 @@ class Sdp {
         /////////////////////////////////////////////////////////////////////////
 
     private:
-        /** 
-         * Set the audio codec used.  [not protected] 
-         * @param audioCodec  The payload of the codec
-         */
-        void setAudioCodec(AudioCodecType audioCodec) { _audioCodec = audioCodec; }
-
         /** Codec Map */
         std::vector<sdpMedia*> _local_media_cap;
 
@@ -288,19 +286,16 @@ class Sdp {
          */
         void sdp_add_media_description();
 
+        std::string convert_int_to_string (int value);
+
         int _localAudioPort;
 
 //////////////////////////////////////////////////////////////////3
-        /** Codec pointer */
-        AudioCodecType _audioCodec;
-
-
         /** Remote's IP address */
         std::string  _remoteIPAddress;
 
         /** Remote's audio port */
         unsigned int _remoteAudioPort;
-
 ////////////////////////////////////////////////////////////////////
               
 };

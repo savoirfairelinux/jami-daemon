@@ -32,7 +32,7 @@ static const pj_str_t STR_RTP_AVP = { (char*)"RTP/AVP", 7 };
 static const pj_str_t STR_SDP_NAME = { (char*)"sflphone", 7 };
 static const pj_str_t STR_SENDRECV = { (char*)"sendrecv", 8 };
 
-    Sdp::Sdp( pj_pool_t *pool, int port ) 
+    Sdp::Sdp( pj_pool_t *pool ) 
         : _local_media_cap(), _session_media(0),  _ip_addr( "" ), _local_offer( NULL ), _negociated_offer(NULL), _negociator(NULL), _pool(NULL) 
 {
     _pool = pool;
@@ -55,7 +55,7 @@ void Sdp::set_media_descriptor_line( sdpMedia *media,
     pjmedia_sdp_attr *attr;
     AudioCodec *codec;
     int count, i;
-    std::ostringstream tmp;
+    std::string tmp;
 
     med = PJ_POOL_ZALLOC_T( _pool, pjmedia_sdp_media );
 
@@ -63,7 +63,7 @@ void Sdp::set_media_descriptor_line( sdpMedia *media,
     pj_strdup(_pool, &med->desc.media,
               ( media->get_media_type() == MIME_TYPE_AUDIO ) ? &STR_AUDIO : &STR_VIDEO );
     med->desc.port_count = 1;
-    med->desc.port = 65555; //media->get_port();
+    med->desc.port = media->get_port();
     pj_strdup (_pool, &med->desc.transport, &STR_RTP_AVP);
 
     // Media format ( RTP payload )
@@ -73,8 +73,9 @@ void Sdp::set_media_descriptor_line( sdpMedia *media,
     // add the payload list
     for(i=0; i<count; i++){
         codec = media->get_media_codec_list()[i];
-        tmp << codec->getPayload (); 
-        pj_strdup2( _pool, &med->desc.fmt[i], tmp.str().c_str());
+        tmp = this->convert_int_to_string (codec->getPayload ()); 
+        _debug ("%s\n", tmp.c_str());
+        pj_strdup2( _pool, &med->desc.fmt[i], tmp.c_str());
 
         // Add a rtpmap field for each codec
         // We could add one only for dynamic payloads because the codecs with static RTP payloads
@@ -122,7 +123,6 @@ int Sdp::create_local_offer (){
     //sdp_addAttributes( _pool );
     sdp_add_media_description( );
 
-    _debug ("local port = %i\n", _localAudioPort);
     toString ();
 
     // Validate the sdp session
@@ -191,9 +191,6 @@ void Sdp::sdp_add_origin( void ){
     // The address of the machine from which the session was created
     this->_local_offer->origin.addr = pj_str( (char*)_ip_addr.c_str() );
 }
-
-
-
 
 void Sdp::sdp_add_session_name( void ){
     this->_local_offer->name = STR_SDP_NAME;
@@ -306,6 +303,7 @@ AudioCodec* Sdp::get_session_media( void ){
 void Sdp::toString (void) {
 
     std::ostringstream sdp;
+    int count, i;
 
     sdp <<  "origin= " <<  _local_offer->origin.user.ptr << "\n";
     sdp << "origin.id= " << _local_offer->origin.id << "\n";
@@ -324,11 +322,14 @@ void Sdp::toString (void) {
 
     sdp << "attr_count=" << _local_offer->attr_count << "\n";
     sdp << "media_count=" << _local_offer->media_count << "\n";
-    sdp << "m=" << _local_offer->media[0]->desc.media.ptr << "\n";
-    sdp << "port=" << _local_offer->media[0]->desc.port << "\n";
-    sdp << "transport=" << _local_offer->media[0]->desc.transport.ptr << "\n";
-    sdp << "fmt_count=" << _local_offer->media[0]->desc.fmt_count << "\n";
-    sdp << "fmt=" << _local_offer->media[0]->desc.fmt[0].ptr << "\n";
+    sdp << "m=" << _local_offer->media[0]->desc.media.ptr << " ";
+    sdp << _local_offer->media[0]->desc.port << " ";
+    sdp << _local_offer->media[0]->desc.transport.ptr << " ";
+    count = _local_offer->media[0]->desc.fmt_count;
+    for (i=0; i<count; i++) {
+        sdp << _local_offer->media[0]->desc.fmt[i].ptr << " ";
+    }
+    sdp << "\n";
     
     _debug ("LOCAL SDP: \n%s\n", sdp.str().c_str());
 
@@ -352,13 +353,31 @@ void Sdp::set_local_media_capabilities () {
     selected_codecs = Manager::instance().getCodecDescriptorMap().getActiveCodecs(); 
     codecs_list = Manager::instance().getCodecDescriptorMap().getCodecsMap();
     for (i=0; i<selected_codecs.size(); i++){
-        iter = codecs_list.find(selected_codecs[i]);  
-    
-        if (iter==codecs_list.end())
-            return;
-
-        audio->add_codec (iter->second);
+        iter=codecs_list.find(selected_codecs[i]);  
+        if (iter!=codecs_list.end()){
+            audio->add_codec (iter->second);
+        }
     } 
     _local_media_cap.push_back (audio);
     _debug ("%s\n", audio->to_string ().c_str());
+}
+
+void Sdp::attribute_port_to_all_media (int port) {
+
+    std::vector<sdpMedia*> medias;
+    int i, size;    
+
+    medias = get_local_media_cap (); 
+    size = medias.size();
+
+    for(i=0; i<size; i++) {
+        medias[i]->set_port (port);
+    }   
+
+}
+
+std::string Sdp::convert_int_to_string (int value) {
+    std::ostringstream result;
+    result << value;
+    return result.str();
 }

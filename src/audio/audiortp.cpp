@@ -190,10 +190,13 @@ AudioRtpRTX::initAudioRtpSession (void)
 
     try {
         if (_ca == 0) { return; }
-        _audiocodec = Manager::instance().getCodecDescriptorMap().getCodec( _ca->getLocalSDP()->getAudioCodec() );
+        _audiocodec = _ca->getLocalSDP()->get_session_media ();
+
+        if(_audiocodec == 0) { return; }
+
         _codecSampleRate = _audiocodec->getClockRate();	
 
-        remoteIP = _ca->getLocalSDP()->getRemoteIp();
+        remoteIP = _ca->getRemoteIp();
         _debug("Init audio RTP session - remote IP = %s\n", remoteIP.c_str());
         ost::InetHostAddress remote_ip(remoteIP.c_str());
         if (!remote_ip) {

@@ -39,6 +39,14 @@ void get_remote_sdp_from_offer( pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
 
 int getModId();
 
+/**
+ *  * Set audio (SDP) configuration for a call
+ *   * localport, localip, localexternalport
+ *    * @param call a SIPCall valid pointer
+ *     * @return bool True
+ *      */
+bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::string server);
+
 /*
  *  The global pool factory
  */
@@ -69,14 +77,6 @@ pj_thread_desc desc;
  * Get the number of voicemail waiting in a SIP message
  */
 void set_voicemail_info( AccountID account, pjsip_msg_body *body );
-
-/**
- * Set audio (SDP) configuration for a call
- * localport, localip, localexternalport
- * @param call a SIPCall valid pointer
- * @return bool True
- */
-bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::string server);
 
 // Documentated from the PJSIP Developer's Guide, available on the pjsip website/
 
@@ -995,29 +995,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             return true;
         }
 
-    bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::string server) 
-    {
-        // Setting Audio
-        unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
-        unsigned int callLocalExternAudioPort = callLocalAudioPort;
-        if (stun) {
-            // If use Stun server
-            if (Manager::instance().behindNat(server, callLocalAudioPort)) {
-                callLocalExternAudioPort = Manager::instance().getFirewallPort();
-            }
-        }
-        _debug("            Setting local audio port to: %d\n", callLocalAudioPort);
-        _debug("            Setting local audio port (external) to: %d\n", callLocalExternAudioPort);
-
-        // Set local audio port for SIPCall(id)
-        call->setLocalIp(localIP);
-        call->setLocalAudioPort(callLocalAudioPort);
-        call->setLocalExternAudioPort(callLocalExternAudioPort);
-        call->getLocalSDP()->setLocalExternAudioPort(callLocalExternAudioPort);
-
-        return true;
-    }
-
     void
         SIPVoIPLink::SIPCallServerFailure(SIPCall *call) 
         {
@@ -1579,19 +1556,25 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         }
     }
 
-    void call_on_media_update( pjsip_inv_session *inv UNUSED, pj_status_t status UNUSED) {
+    void call_on_media_update( pjsip_inv_session *inv, pj_status_t status) {
         _debug("call_on_media_updated\n");
 
         const pjmedia_sdp_session *r_sdp;
+        SIPCall *call;
 
         if (status != PJ_SUCCESS) {
+            _debug ("Error while negociating the offer\n");
             return;
         }
 
         // Get the new sdp, result of the negociation
         pjmedia_sdp_neg_get_active_local( inv->neg, &r_sdp );
-
+        
+        call = reinterpret_cast<SIPCall *> (inv->mod_data[getModId()]);
         // Clean the resulting sdp offer to create a new one (in case of a reinvite)
+        call->getLocalSDP()->clean_session_media();
+        // Set the fresh negociated one
+        call->getLocalSDP()->set_negociated_offer( r_sdp );
     }
 
     void call_on_forked(pjsip_inv_session *inv, pjsip_event *e){
@@ -1884,13 +1867,13 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             }
 
             // Have to do some stuff with the SDP
+            // Set the codec map, IP, peer number and so on... for the SIPCall object
+            setCallAudioLocal(call, link->getLocalIPAddress(), link->useStun(), link->getStunServer());
             // We retrieve the remote sdp offer in the rdata struct to begin the negociation
             call->getLocalSDP()->set_ip_address(link->getLocalIPAddress());
             get_remote_sdp_from_offer( rdata, &r_sdp );
             call->getLocalSDP()->receiving_initial_offer( r_sdp );
 
-            // Set the codec map, IP, peer number and so on... for the SIPCall object
-            setCallAudioLocal(call, link->getLocalIPAddress(), link->useStun(), link->getStunServer());
 
             call->setConnectionState(Call::Progressing);
             call->setPeerNumber(peerNumber);
@@ -2344,10 +2327,33 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             return;
 
         call->getLocalSDP()->receiving_initial_offer( (pjmedia_sdp_session*)offer);
-        _debug("audio codec setté dans l'objet call: %i\n", call->getLocalSDP()->getAudioCodec());
         status=pjsip_inv_set_sdp_answer( call->getInvSession(), call->getLocalSDP()->get_local_sdp_session() );
 #endif
 
     }
+
+bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::string server) {
+        // Setting Audio
+        unsigned int callLocalAudioPort = RANDOM_LOCAL_PORT;
+        unsigned int callLocalExternAudioPort = callLocalAudioPort;
+        if (stun) {
+            // If use Stun server
+            if (Manager::instance().behindNat(server, callLocalAudioPort)) {
+                callLocalExternAudioPort = Manager::instance().getFirewallPort();
+            }
+        }
+        _debug("            Setting local audio port to: %d\n", callLocalAudioPort);
+        _debug("            Setting local audio port (external) to: %d\n", callLocalExternAudioPort);
+
+        // Set local audio port for SIPCall(id)
+        call->setLocalIp(localIP);
+        call->setLocalAudioPort(callLocalAudioPort);
+        call->setLocalExternAudioPort(callLocalExternAudioPort);
+
+        call->getLocalSDP()->attribute_port_to_all_media (callLocalExternAudioPort);
+
+        return true;
+}
+
 
 
