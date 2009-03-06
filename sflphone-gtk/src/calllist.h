@@ -106,6 +106,7 @@ typedef struct  {
   call_state_t state;
   /** The history state if necessary */
   history_state_t history_state;
+  contact_type_t contact_type;
 
   time_t _start;
   time_t _stop;

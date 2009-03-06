@@ -259,11 +259,11 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
     if (entry)
     {
         /* Create entry for business phone information */
-        create_new_entry_in_contactlist (entry->name, entry->phone_business);
+        create_new_entry_in_contactlist (entry->name, entry->phone_business, CONTACT_PHONE_BUSINESS);
         /* Create entry for home phone information */
-        create_new_entry_in_contactlist (entry->name, entry->phone_home);
+        create_new_entry_in_contactlist (entry->name, entry->phone_home, CONTACT_PHONE_HOME);
         /* Create entry for mobile phone information */
-        create_new_entry_in_contactlist (entry->name, entry->phone_mobile);
+        create_new_entry_in_contactlist (entry->name, entry->phone_mobile, CONTACT_PHONE_MOBILE);
     }
     free_hit(entry);
   }
@@ -279,7 +279,7 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
   toolbar_update_buttons();
 }
 
-void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone){
+void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type){
    
     gchar *from;
     call_t *new_call;
@@ -288,6 +288,7 @@ void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone)
     if (strcmp (contact_phone, EMPTY_ENTRY) != 0){
         from = g_strconcat("\"" , contact_name, "\"<", contact_phone, ">", NULL);
         create_new_call (from, from, CALL_STATE_DIALING, "", &new_call);
+        new_call->contact_type = type;
         call_list_add (contacts, new_call);
         update_call_tree_add(contacts, new_call);
     }
@@ -940,23 +941,21 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   }
 
   else if (tab == contacts) {
-    /*switch (c->contact_type)
+    switch (c->contact_type)
     {
         case CONTACT_PHONE_HOME:
-	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
+	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/home.svg", NULL);
             break;
         case CONTACT_PHONE_BUSINESS:
 	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
             break;
         case CONTACT_PHONE_MOBILE:
-	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
+	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
             break;
         default:
 	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
             break;
-    }*/
-
-	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
+    }
     description = g_strconcat( description , NULL);
   }
 
