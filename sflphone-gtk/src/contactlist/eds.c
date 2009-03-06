@@ -26,6 +26,7 @@
 
 #include <glib.h>
 #include <glib/gstring.h>
+#include <string.h>
 #include <pango/pango.h>
 #include "eds.h"
 
@@ -153,7 +154,6 @@ search_sync (const char *query,
   GSList *iter = NULL;
   GList *contacts = NULL;
   GList *hits = NULL;
-  char ext[30];
 
   EBookQuery* book_query = create_query (query);
   for (iter = books; iter != NULL; iter = iter->next) {

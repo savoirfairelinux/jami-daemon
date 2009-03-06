@@ -323,9 +323,7 @@ create_call_menu()
       NULL);
   gtk_widget_show (menu_items);
 
-  image = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
-  recordMenu = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
-  gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( recordMenu ), image );
+  recordMenu = gtk_image_menu_item_new_from_stock (GTK_STOCK_MEDIA_RECORD, get_accel_group());
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), recordMenu);
   gtk_widget_set_sensitive( GTK_WIDGET(recordMenu), FALSE);
   g_signal_connect_swapped (G_OBJECT (recordMenu), "activate",
@@ -810,9 +808,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 
    if(record)
   {
-    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
-    image = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+    menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_MEDIA_RECORD, get_accel_group());
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect (G_OBJECT (menu_items), "activate",
 	G_CALLBACK (call_record),

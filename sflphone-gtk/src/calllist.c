@@ -21,7 +21,7 @@
 #include <calltree.h>
 #include <dbus.h>
 
-#include <string.h>
+#include <glib/gprintf.h>
 
 /*
  * GQueue * callQueue = NULL;
@@ -33,7 +33,7 @@ gint
 is_callID_callstruct ( gconstpointer a, gconstpointer b)
 {
   call_t * c = (call_t*)a;
-  if(strcmp(c->callID, (const gchar*) b) == 0)
+  if(g_strcasecmp(c->callID, (const gchar*) b) == 0)
   {
     return 0;
   }

@@ -285,7 +285,7 @@ void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone,
     call_t *new_call;
 
     /* Check if the information is valid */
-    if (strcmp (contact_phone, EMPTY_ENTRY) != 0){
+    if (g_strcasecmp (contact_phone, EMPTY_ENTRY) != 0){
         from = g_strconcat("\"" , contact_name, "\"<", contact_phone, ">", NULL);
         create_new_call (from, from, CALL_STATE_DIALING, "", &new_call);
         new_call->contact_type = type;

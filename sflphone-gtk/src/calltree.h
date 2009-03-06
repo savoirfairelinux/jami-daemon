@@ -80,4 +80,6 @@ void switch_tab( calltab_t* tab );
 
 void refresh_tab( calltab_t* tab );
 
+void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type);
+
 #endif
