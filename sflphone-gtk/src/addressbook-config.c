@@ -33,10 +33,16 @@ void addressbook_load_parameters (AddressBook_Config **settings) {
     if (_params == NULL) {
         _settings->max_results = 30;
         _settings->display_contact_photo = 0;
+        _settings->search_phone_business = 1;
+        _settings->search_phone_home = 1;
+        _settings->search_phone_mobile = 1;
     }
     else {
         _settings->max_results =  (guint)(g_hash_table_lookup (_params, "ADDRESSBOOK_MAX_RESULTS"));
         _settings->display_contact_photo = (guint) (g_hash_table_lookup (_params, "ADDRESSBOOK_DISPLAY_CONTACT_PHOTO"));
+        _settings->search_phone_business = (guint) (g_hash_table_lookup (_params, "ADDRESSBOOK_SEARCH_PHONE_BUSINESS"));
+        _settings->search_phone_home = (guint) (g_hash_table_lookup (_params, "ADDRESSBOOK_SEARCH_PHONE_HOME"));
+        _settings->search_phone_mobile = (guint) (g_hash_table_lookup (_params, "ADDRESSBOOK_SEARCH_PHONE_MOBILE"));
     }
     
     *settings = _settings;
@@ -54,10 +60,27 @@ static void display_contact_photo_cb (GtkWidget *widget, gpointer user_data) {
     settings->display_contact_photo = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
 }
 
+static void search_phone_business_cb (GtkWidget *widget, gpointer user_data) {
+
+    AddressBook_Config *settings = (AddressBook_Config*)user_data;
+    settings->search_phone_business = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+}
+
+static void search_phone_home_cb (GtkWidget *widget, gpointer user_data) {
+
+    AddressBook_Config *settings = (AddressBook_Config*)user_data;
+    settings->search_phone_home = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+}
+
+static void search_phone_mobile_cb (GtkWidget *widget, gpointer user_data) {
+
+    AddressBook_Config *settings = (AddressBook_Config*)user_data;
+    settings->search_phone_mobile = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+}
 
 GtkWidget* create_addressbook_settings () {
     
-    GtkWidget *ret, *result_frame, *box, *value, *label, *photo;
+    GtkWidget *ret, *result_frame, *box, *value, *label, *photo, *item;
     AddressBook_Config *settings;
 
     // Load the user value
@@ -90,6 +113,24 @@ GtkWidget* create_addressbook_settings () {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(photo), settings->display_contact_photo);
     g_signal_connect (G_OBJECT(photo) , "clicked" , G_CALLBACK (display_contact_photo_cb) , settings);
     gtk_box_pack_start (GTK_BOX(box) , photo , TRUE , TRUE , 1);
+     
+    label = gtk_label_new (_("Search for and display: "));
+    gtk_box_pack_start (GTK_BOX(box) , label , FALSE , FALSE , 1);
+    
+    item = gtk_check_button_new_with_mnemonic( _("_Business phone"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), settings->search_phone_business);
+    g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_business_cb) , settings);
+    gtk_box_pack_start (GTK_BOX(box) , item , TRUE , TRUE , 1);
+     
+    item = gtk_check_button_new_with_mnemonic( _("_Home phone"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), settings->search_phone_home);
+    g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_home_cb) , settings);
+    gtk_box_pack_start (GTK_BOX(box) , item , TRUE , TRUE , 1);
+     
+    item = gtk_check_button_new_with_mnemonic( _("_Mobile phone"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), settings->search_phone_mobile);
+    g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_mobile_cb) , settings);
+    gtk_box_pack_start (GTK_BOX(box) , item , TRUE , TRUE , 1);
      
     gtk_widget_show_all(ret);
 
