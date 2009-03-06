@@ -28,6 +28,7 @@
 #include <dbus.h>
 #include <mainwindow.h>
 #include <audioconf.h>
+#include <addressbook-config.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -772,6 +773,11 @@ show_config_window ()
     // Recording tab
     tab = create_recording_settings();	
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Record")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+
+    // Addressbook tab
+    tab = create_addressbook_settings();	
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  1);

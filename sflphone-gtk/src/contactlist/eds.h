@@ -28,6 +28,7 @@
 #define __EDS_H__
 
 #include <glib/gtypes.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <libebook/e-book.h>
 
 #define EMPTY_ENTRY     "empty"
@@ -36,10 +37,11 @@ G_BEGIN_DECLS
 
 typedef struct _Hit
 {
-  gchar *name;
-  gchar *phone_business;
-  gchar *phone_home;
-  gchar *phone_mobile;
+    gchar *name;
+    GdkPixbuf *photo;
+    gchar *phone_business;
+    gchar *phone_home;
+    gchar *phone_mobile;
 } Hit;
 
 void free_hit (Hit *h);

@@ -79,6 +79,7 @@ public:
         register_method(ConfigurationManager_adaptor, getStunServer, _getStunServer_stub);
         register_method(ConfigurationManager_adaptor, enableStun, _enableStun_stub);
         register_method(ConfigurationManager_adaptor, isStunEnabled, _isStunEnabled_stub);
+        register_method(ConfigurationManager_adaptor, getAddressbookSettings, _getAddressbookSettings_stub);
     }
 
     ::DBus::IntrospectedInterface *const introspect() const 
@@ -373,6 +374,11 @@ public:
             { "state", "i", false },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getAddressbookSettings_args[] = 
+        {
+            { "settings", "a{si}", false },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
         {
             { "list", "a{ss}", false },
@@ -448,6 +454,7 @@ public:
             { "getStunServer", getStunServer_args },
             { "enableStun", enableStun_args },
             { "isStunEnabled", isStunEnabled_args },
+            { "getAddressbookSettings", getAddressbookSettings_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_adaptor_signals[] = 
@@ -541,6 +548,7 @@ public:
     virtual std::string getStunServer() = 0;
     virtual void enableStun() = 0;
     virtual int32_t isStunEnabled() = 0;
+    virtual std::map< std::string, int32_t > getAddressbookSettings() = 0;
 
 public:
 
@@ -1125,6 +1133,16 @@ private:
         ::DBus::MessageIter ri = call.reader();
 
         int32_t argout1 = isStunEnabled();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _getAddressbookSettings_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::map< std::string, int32_t > argout1 = getAddressbookSettings();
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;

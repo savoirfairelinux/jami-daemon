@@ -242,6 +242,11 @@
       <arg type="i" name="state" direction="out"/>
     </method>
 
+    <!-- Addressbook configuration -->
+    <method name="getAddressbookSettings">
+      <arg type="a{si}" name="settings" direction="out"/>
+    </method>
+
   <!--        /////////////////////////////       -->
     <signal name="parametersChanged">
       <arg type="a{ss}" name="list" direction="out"/>

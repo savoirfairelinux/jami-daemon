@@ -39,6 +39,7 @@ typedef struct _Handler_And_Data {
 } Handler_And_Data;
 
 static GSList *books = NULL;
+static int pixbuf_size = 16;
 
 static EContactField search_fields[] = { E_CONTACT_FULL_NAME, E_CONTACT_PHONE_BUSINESS, E_CONTACT_NICKNAME, 0 };
 static int n_search_fields = G_N_ELEMENTS (search_fields) - 1;
@@ -118,6 +119,44 @@ create_query (const char* s)
     g_free (q);
 
     return query;
+}
+
+static GdkPixbuf*
+pixbuf_from_contact (EContact *contact)
+{
+    GdkPixbuf *pixbuf = NULL;
+    EContactPhoto *photo = e_contact_get (contact, E_CONTACT_PHOTO);
+    if (photo) {
+        GdkPixbufLoader *loader;
+
+        loader = gdk_pixbuf_loader_new ();
+
+        if (photo->type == E_CONTACT_PHOTO_TYPE_INLINED) {
+            if (gdk_pixbuf_loader_write (loader, (guchar *) photo->data.inlined.data, photo->data.inlined.length, NULL))
+                pixbuf = gdk_pixbuf_loader_get_pixbuf (loader);
+        }
+
+        if (pixbuf) {
+            GdkPixbuf *tmp;
+            gint width = gdk_pixbuf_get_width (pixbuf);
+            gint height = gdk_pixbuf_get_height (pixbuf);
+            double scale = 1.0;
+
+            if (height > width) {
+                scale = pixbuf_size / (double) height;
+            } else {
+                scale = pixbuf_size / (double) width;
+            }
+
+            if (scale < 1.0) {
+                tmp = gdk_pixbuf_scale_simple (pixbuf, width * scale, height * scale, GDK_INTERP_BILINEAR);
+                g_object_unref (pixbuf);
+                pixbuf = tmp;
+            }
+        }
+        e_contact_photo_free (photo);
+    }
+    return pixbuf;
 }
 
 /**
@@ -240,7 +279,9 @@ view_contacts_added_cb (EBookView *book_view, GList *contacts, gpointer user_dat
         contact = E_CONTACT (contacts->data);
         hit = g_new (Hit, 1);
 
-        //hit->pixbuf = pixbuf_from_contact (contact);
+        /* Get the photo contact */
+        hit->photo = pixbuf_from_contact (contact);
+
         /* Get business phone information */
         fetch_information_from_contact (contact, E_CONTACT_PHONE_BUSINESS, &number);
         hit->phone_business = g_strdup (number);

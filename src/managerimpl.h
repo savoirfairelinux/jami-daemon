@@ -553,6 +553,12 @@ class ManagerImpl {
      */
     void setMailNotify( void );
 
+    
+    /**
+     * Addressbook configuration 
+     */
+    std::map<std::string, int32_t> getAddressbookSettings (void);
+
     /**
      * Get the audio manager
      * @return int The audio manager

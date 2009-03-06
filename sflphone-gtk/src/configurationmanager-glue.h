@@ -2225,6 +2225,44 @@ org_sflphone_SFLphone_ConfigurationManager_is_stun_enabled_async (DBusGProxy *pr
   stuff->userdata = userdata;
   return dbus_g_proxy_begin_call (proxy, "isStunEnabled", org_sflphone_SFLphone_ConfigurationManager_is_stun_enabled_async_callback, stuff, g_free, G_TYPE_INVALID);
 }
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings (DBusGProxy *proxy, GHashTable** OUT_settings, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getAddressbookSettings", error, G_TYPE_INVALID, dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_INT), OUT_settings, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings_reply) (DBusGProxy *proxy, GHashTable *OUT_settings, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  GHashTable* OUT_settings;
+  dbus_g_proxy_end_call (proxy, call, &error, dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_INT), &OUT_settings, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings_reply)data->cb) (proxy, OUT_settings, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getAddressbookSettings", org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
 #endif /* defined DBUS_GLIB_CLIENT_WRAPPERS_org_sflphone_SFLphone_ConfigurationManager */
 
 G_END_DECLS

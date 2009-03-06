@@ -1066,6 +1066,10 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_int(CONFIG_PA_VOLUME_CTRL , YES_STR);
   fill_config_int(CONFIG_SIP_PORT, DFT_SIP_PORT);
 
+  section = ADDRESSBOOK;
+  fill_config_int (ADDRESSBOOK_MAX_RESULTS, "25");
+  fill_config_int (ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, YES_STR);
+
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1 && load_user_value) {
     _exist = _config.populateFromFile(_path);
@@ -2376,6 +2380,18 @@ void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
     iter++;
     }    
 }
+
+
+std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
+
+    std::map<std::string, int32_t> settings;
+
+    settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_MAX_RESULTS", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS)) );
+    settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO)));
+
+    return settings;
+}
+
 
 #ifdef TEST
 /** 

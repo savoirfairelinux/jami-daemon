@@ -229,6 +229,7 @@ handler_async_search (GList *hits, gpointer user_data) {
 
     GtkTreeSelection *sel;
     GList *i;
+    GdkPixbuf *photo;
 
     for (i = hits; i != NULL; i = i->next)
     {
@@ -236,12 +237,14 @@ handler_async_search (GList *hits, gpointer user_data) {
         entry = i->data;
         if (entry)
         {
+            /* Get the photo */
+            photo = entry->photo;
             /* Create entry for business phone information */
-            create_new_entry_in_contactlist (entry->name, entry->phone_business, CONTACT_PHONE_BUSINESS);
+            create_new_entry_in_contactlist (entry->name, entry->phone_business, CONTACT_PHONE_BUSINESS, photo);
             /* Create entry for home phone information */
-            create_new_entry_in_contactlist (entry->name, entry->phone_home, CONTACT_PHONE_HOME);
+            create_new_entry_in_contactlist (entry->name, entry->phone_home, CONTACT_PHONE_HOME, photo);
             /* Create entry for mobile phone information */
-            create_new_entry_in_contactlist (entry->name, entry->phone_mobile, CONTACT_PHONE_MOBILE);
+            create_new_entry_in_contactlist (entry->name, entry->phone_mobile, CONTACT_PHONE_MOBILE, photo);
         }
         free_hit(entry);
     }
@@ -287,7 +290,7 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
    search_async (gtk_entry_get_text (GTK_ENTRY (filter_entry)), 50, &handler_async_search, NULL); 
 }
 
-void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type){
+void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo){
    
     gchar *from;
     call_t *new_call;

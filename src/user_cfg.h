@@ -73,6 +73,10 @@
 #define STUN_ENABLE     "STUN.enable"
 #define STUN_SERVER     "STUN.server"
 
+#define ADDRESSBOOK                 "Addressbook"               /** Address book section */
+#define ADDRESSBOOK_MAX_RESULTS      "Addressbook.max_results"
+#define ADDRESSBOOK_DISPLAY_CONTACT_PHOTO   "Addressbook.contact_photo"
+
 #define EMPTY_FIELD		""			/** Default value for empty field */
 #define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"	/** Default STUN server address */
 #define	YES_STR			"1"			/** Default YES value */   
