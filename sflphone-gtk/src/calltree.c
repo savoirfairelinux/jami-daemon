@@ -254,15 +254,13 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
   {
     Hit *entry;
     entry = i->data;
-    if (i->data)
+    if (entry)
     {
       call_t * call;
-
       call = g_new0 (call_t, 1);
-      call->from = g_strconcat("\"" , entry->name, "\"<", entry->phone, ">", NULL);
+      call->from = g_strconcat("\"" , entry->name, "\"<", entry->phone_business, ">", NULL);
       call->state = CALL_STATE_DIALING;
       //call->history_state = MISSED;
-      call->contact_type = HOME;
 
       call_list_add (contacts, call);
       update_call_tree_add(contacts,call);
@@ -284,24 +282,25 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
   static void
 call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
 {
-  account_t* current = account_list_get_current();
-  if( current == NULL ) // Should not happens
-    return;
-  call_t* mailboxCall = g_new0( call_t , 1);
-  mailboxCall->state = CALL_STATE_DIALING;
-  mailboxCall->to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
-  mailboxCall->from = g_markup_printf_escaped(_("\"Voicemail\" <%s>"),  mailboxCall->to);
-  mailboxCall->callID = g_new0(gchar, 30);
-  g_sprintf(mailboxCall->callID, "%d", rand());
-  mailboxCall->accountID = g_strdup(current->accountID);
-  mailboxCall->_start = 0;
-  mailboxCall->_stop = 0;
-  g_print("TO : %s\n" , mailboxCall->to);
-  call_list_add( current_calls , mailboxCall );
-  update_call_tree_add( current_calls , mailboxCall );
-  update_menus();
-  sflphone_place_call( mailboxCall );
-  switch_tab(current_calls);
+    account_t* current;
+    call_t *mailbox_call;
+    gchar *to, *from, *account_id;
+
+    current = account_list_get_current ();
+    if( current == NULL ) // Should not happens
+        return;
+  
+    to = g_strdup(g_hash_table_lookup(current->properties, ACCOUNT_MAILBOX));
+    from = g_markup_printf_escaped(_("\"Voicemail\" <%s>"),  to);
+    account_id = g_strdup (current->accountID);
+  
+    create_new_call (to, from, CALL_STATE_DIALING, account_id, &mailbox_call);
+    g_print("TO : %s\n" , mailbox_call->to);
+    call_list_add( current_calls , mailbox_call );
+    update_call_tree_add( current_calls , mailbox_call );
+    update_menus();
+    sflphone_place_call( mailbox_call );
+    switch_tab(current_calls);
 }
 
 
@@ -930,21 +929,23 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   }
 
   else if (tab == contacts) {
-    switch (c->contact_type)
+    /*switch (c->contact_type)
     {
-        case HOME:
+        case CONTACT_PHONE_HOME:
 	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
             break;
-        case WORK:
+        case CONTACT_PHONE_BUSINESS:
 	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
             break;
-        case CELLPHONE:
+        case CONTACT_PHONE_MOBILE:
 	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
             break;
         default:
 	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
             break;
-    }
+    }*/
+
+	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
     description = g_strconcat( description , NULL);
   }
 

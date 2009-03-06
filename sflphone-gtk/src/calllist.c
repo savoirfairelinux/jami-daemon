@@ -218,3 +218,23 @@ call_get_selected (calltab_t* tab)
 {
   return tab->selectedCall;
 }
+
+void create_new_call (gchar *to, gchar *from, call_state_t state, gchar *accountID, call_t **new_call) {
+
+    gchar *call_id;
+    call_t *call;
+
+    call = g_new0 (call_t, 1);
+    call->to = g_strdup (to); 
+    call->from = g_strdup (from);
+    call->state = state;
+    call->accountID = g_strdup (accountID);
+    call->_start = 0;
+    call->_stop = 0;
+
+    call_id = g_new0(gchar, 30);
+    g_sprintf(call_id, "%d", rand());
+    call->callID = g_strdup (call_id);
+
+    *new_call = call;
+}

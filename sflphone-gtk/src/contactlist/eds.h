@@ -34,10 +34,10 @@ G_BEGIN_DECLS
 typedef struct _Hit
 {
   gchar *name;
-  gchar *phone;
+  gchar *phone_business;
 } Hit;
 
-void free_hit (Hit *hit);
+void free_hit (Hit *h);
 
 void init (void);
 

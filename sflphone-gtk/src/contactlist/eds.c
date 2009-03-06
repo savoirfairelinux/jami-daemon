@@ -39,7 +39,7 @@ void
 free_hit (Hit *h)
 {
     g_free (h->name);
-    g_free (h->phone);
+    g_free (h->phone_business);
     g_free (h);
 }
 
@@ -167,16 +167,16 @@ search_sync (const char *query,
 
       contact = E_CONTACT (contacts->data);
       hit = g_new (Hit, 1);
-
-      hit->phone = g_strdup ((char*) e_contact_get_const (contact, E_CONTACT_PHONE_BUSINESS));
-      if(! hit->phone)
+        
+      hit->phone_business = g_strdup ((char*) e_contact_get_const (contact, E_CONTACT_PHONE_BUSINESS));
+      if(! hit->phone_business)
       {
         // Temporary fix for empty phone numbers
         sprintf(ext, "%d", rand()%100 + 100);
-        hit->phone = g_strconcat("rand",ext,NULL);
+        hit->phone_business = g_strconcat("rand",ext,NULL);
         //hit->phone = "";
       }
-
+    
       hit->name = g_strdup ((char*) e_contact_get_const (contact, E_CONTACT_NAME_OR_ORG));
       if(! hit->name)
         hit->name = "";
