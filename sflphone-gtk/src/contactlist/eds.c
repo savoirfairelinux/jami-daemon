@@ -26,7 +26,6 @@
 
 #include <glib.h>
 #include <glib/gstring.h>
-#include <libebook/e-book.h>
 #include <pango/pango.h>
 #include "eds.h"
 
@@ -40,6 +39,8 @@ free_hit (Hit *h)
 {
     g_free (h->name);
     g_free (h->phone_business);
+    g_free (h->phone_home);
+    g_free (h->phone_mobile);
     g_free (h);
 }
 
@@ -164,19 +165,23 @@ search_sync (const char *query,
     for (; contacts != NULL; contacts = g_list_next (contacts)) {
       EContact *contact;
       Hit *hit;
+      gchar *number;
 
       contact = E_CONTACT (contacts->data);
-      hit = g_new (Hit, 1);
+      hit = g_new0 (Hit, 1);
         
-      hit->phone_business = g_strdup ((char*) e_contact_get_const (contact, E_CONTACT_PHONE_BUSINESS));
-      if(! hit->phone_business)
-      {
-        // Temporary fix for empty phone numbers
-        sprintf(ext, "%d", rand()%100 + 100);
-        hit->phone_business = g_strconcat("rand",ext,NULL);
-        //hit->phone = "";
-      }
+      /* Get business phone information */
+      fetch_information_from_contact (contact, E_CONTACT_PHONE_BUSINESS, &number);
+      hit->phone_business = g_strdup (number);
     
+      /* Get home phone information */
+      fetch_information_from_contact (contact, E_CONTACT_PHONE_HOME, &number);
+      hit->phone_home = g_strdup (number);
+
+      /* Get mobile phone information */
+      fetch_information_from_contact (contact, E_CONTACT_PHONE_MOBILE, &number);
+      hit->phone_mobile = g_strdup (number);
+
       hit->name = g_strdup ((char*) e_contact_get_const (contact, E_CONTACT_NAME_OR_ORG));
       if(! hit->name)
         hit->name = "";
@@ -191,4 +196,16 @@ search_sync (const char *query,
   e_book_query_unref (book_query);
 
   return hits;
+}
+
+void fetch_information_from_contact (EContact *contact, EContactField field, gchar **info){
+
+    gchar *to_fetch;
+
+    to_fetch = g_strdup ((char*) e_contact_get_const (contact, field));
+    if(! to_fetch) {
+        to_fetch = g_strdup (EMPTY_ENTRY);
+    }
+
+    *info = g_strdup (to_fetch);
 }

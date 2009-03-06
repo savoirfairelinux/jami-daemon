@@ -28,6 +28,9 @@
 #define __EDS_H__
 
 #include <glib/gtypes.h>
+#include <libebook/e-book.h>
+
+#define EMPTY_ENTRY     "empty"
 
 G_BEGIN_DECLS
 
@@ -35,6 +38,8 @@ typedef struct _Hit
 {
   gchar *name;
   gchar *phone_business;
+  gchar *phone_home;
+  gchar *phone_mobile;
 } Hit;
 
 void free_hit (Hit *h);
@@ -42,6 +47,8 @@ void free_hit (Hit *h);
 void init (void);
 
 GList * search_sync (const char *query, int max_results);
+
+void fetch_information_from_contact (EContact *contact, EContactField field, gchar **info);
 
 G_END_DECLS
 

@@ -93,28 +93,30 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
   static void
 call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
-  call_t * selectedCall = call_get_selected(active_calltree);
-  call_t* newCall =  g_new0 (call_t, 1);
-  printf("Call button pressed\n");
+  call_t * selectedCall;
+  call_t* new_call;
+  gchar *to, *from;
+
+  selectedCall = call_get_selected(active_calltree);
+  
   if(call_list_get_size(current_calls)>0)
     sflphone_pick_up();
+  
   else if(call_list_get_size(active_calltree) > 0){
     if( selectedCall)
     {
       printf("Calling a called num\n");
 
-      newCall->to = g_strdup(call_get_number(selectedCall));
-      newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
-      newCall->state = CALL_STATE_DIALING;
-      newCall->callID = g_new0(gchar, 30);
-      g_sprintf(newCall->callID, "%d", rand());
-      newCall->_start = 0;
-      newCall->_stop = 0;
+      to = g_strdup(call_get_number(selectedCall));
+      from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
 
-      printf("call : from : %s to %s\n", newCall->from, newCall->to);
-      call_list_add(current_calls, newCall);
-      update_call_tree_add(current_calls, newCall);
-      sflphone_place_call(newCall);
+      create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
+
+      printf("call : from : %s to %s\n", new_call->from, new_call->to);
+
+      call_list_add(current_calls, new_call);
+      update_call_tree_add(current_calls, new_call);
+      sflphone_place_call(new_call);
       switch_tab(current_calls);
     }
     else
@@ -256,14 +258,12 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
     entry = i->data;
     if (entry)
     {
-      call_t * call;
-      call = g_new0 (call_t, 1);
-      call->from = g_strconcat("\"" , entry->name, "\"<", entry->phone_business, ">", NULL);
-      call->state = CALL_STATE_DIALING;
-      //call->history_state = MISSED;
-
-      call_list_add (contacts, call);
-      update_call_tree_add(contacts,call);
+        /* Create entry for business phone information */
+        create_new_entry_in_contactlist (entry->name, entry->phone_business);
+        /* Create entry for home phone information */
+        create_new_entry_in_contactlist (entry->name, entry->phone_home);
+        /* Create entry for mobile phone information */
+        create_new_entry_in_contactlist (entry->name, entry->phone_mobile);
     }
     free_hit(entry);
   }
@@ -277,6 +277,21 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
   sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
   g_signal_emit_by_name(sel, "changed");
   toolbar_update_buttons();
+}
+
+void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone){
+   
+    gchar *from;
+    call_t *new_call;
+
+    /* Check if the information is valid */
+    if (strcmp (contact_phone, EMPTY_ENTRY) != 0){
+        from = g_strconcat("\"" , contact_name, "\"<", contact_phone, ">", NULL);
+        create_new_call (from, from, CALL_STATE_DIALING, "", &new_call);
+        call_list_add (contacts, new_call);
+        update_call_tree_add(contacts, new_call);
+    }
+
 }
 
   static void
@@ -449,7 +464,8 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
 {
   g_print("double click action\n");
   call_t* selectedCall;
-  call_t* newCall;
+  call_t* new_call;
+  gchar *to, *from, *account_id;
   selectedCall = call_get_selected( active_calltree );
 
   if (selectedCall)
@@ -481,20 +497,15 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
     // if history
     else
     {
-      newCall = g_new0( call_t, 1 );
-      newCall->to = g_strdup(call_get_number(selectedCall));
-      newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
-      newCall->state = CALL_STATE_DIALING;
-      newCall->callID = g_new0(gchar, 30);
-      g_sprintf(newCall->callID, "%d", rand());
-      newCall->_start = 0;
-      newCall->_stop = 0;
-      printf("call : account : %s \n", selectedCall->accountID);
-      newCall->accountID = selectedCall->accountID;
-      printf("call : from : %s to %s\n", newCall->from, newCall->to);
-      call_list_add(current_calls, newCall);
-      update_call_tree_add(current_calls, newCall);
-      sflphone_place_call(newCall);
+      to = g_strdup(call_get_number(selectedCall));
+      from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
+      account_id = g_strdup (selectedCall->accountID);
+
+      create_new_call (to, from, CALL_STATE_DIALING, account_id, &new_call);
+
+      call_list_add(current_calls, new_call);
+      update_call_tree_add(current_calls, new_call);
+      sflphone_place_call(new_call);
       switch_tab(current_calls);
     }
   }
