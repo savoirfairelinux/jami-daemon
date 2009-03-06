@@ -224,13 +224,44 @@ show_history_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
 
 }
 
+    static void 
+handler_async_search (GList *hits, gpointer user_data) {
+
+    GtkTreeSelection *sel;
+    GList *i;
+
+    for (i = hits; i != NULL; i = i->next)
+    {
+        Hit *entry;
+        entry = i->data;
+        if (entry)
+        {
+            /* Create entry for business phone information */
+            create_new_entry_in_contactlist (entry->name, entry->phone_business, CONTACT_PHONE_BUSINESS);
+            /* Create entry for home phone information */
+            create_new_entry_in_contactlist (entry->name, entry->phone_home, CONTACT_PHONE_HOME);
+            /* Create entry for mobile phone information */
+            create_new_entry_in_contactlist (entry->name, entry->phone_mobile, CONTACT_PHONE_MOBILE);
+        }
+        free_hit(entry);
+    }
+    g_list_free(hits);
+
+    active_calltree = contacts;
+    gtk_widget_hide(current_calls->tree);
+    gtk_widget_hide(history->tree);
+    gtk_widget_show(contacts->tree);
+
+    sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
+    g_signal_emit_by_name(sel, "changed");
+    toolbar_update_buttons();
+ 
+}
+
   static void
 show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
     gpointer  user_data UNUSED)
 {
-  GtkTreeSelection *sel;
-  GList *results;
-  GList *i;
   call_t *j;
   gchar* msg;
 
@@ -250,33 +281,10 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
   call_list_reset(contacts);
 
   // do a synchronous search
-  results = search_sync (gtk_entry_get_text(GTK_ENTRY(filter_entry)), 50);
+  //results = search_sync (gtk_entry_get_text(GTK_ENTRY(filter_entry)), 50);
 
-  for (i = results; i != NULL; i = i->next)
-  {
-    Hit *entry;
-    entry = i->data;
-    if (entry)
-    {
-        /* Create entry for business phone information */
-        create_new_entry_in_contactlist (entry->name, entry->phone_business, CONTACT_PHONE_BUSINESS);
-        /* Create entry for home phone information */
-        create_new_entry_in_contactlist (entry->name, entry->phone_home, CONTACT_PHONE_HOME);
-        /* Create entry for mobile phone information */
-        create_new_entry_in_contactlist (entry->name, entry->phone_mobile, CONTACT_PHONE_MOBILE);
-    }
-    free_hit(entry);
-  }
-  g_list_free(results);
-
-  active_calltree = contacts;
-  gtk_widget_hide(current_calls->tree);
-  gtk_widget_hide(history->tree);
-  gtk_widget_show(contacts->tree);
-
-  sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
-  g_signal_emit_by_name(sel, "changed");
-  toolbar_update_buttons();
+  // do an asynchronous search
+   search_async (gtk_entry_get_text (GTK_ENTRY (filter_entry)), 50, &handler_async_search, NULL); 
 }
 
 void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type){

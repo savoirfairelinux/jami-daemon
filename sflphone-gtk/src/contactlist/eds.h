@@ -44,7 +44,14 @@ typedef struct _Hit
 
 void free_hit (Hit *h);
 
+typedef void (* SearchAsyncHandler) (GList *hits, gpointer user_data);
+
 void init (void);
+
+void search_async (const char         *query,
+                   int                 max_results,
+                   SearchAsyncHandler  handler,
+                   gpointer            user_data);
 
 GList * search_sync (const char *query, int max_results);
 
