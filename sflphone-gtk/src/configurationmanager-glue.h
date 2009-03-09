@@ -2263,6 +2263,43 @@ org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings_async (DBusG
   stuff->userdata = userdata;
   return dbus_g_proxy_begin_call (proxy, "getAddressbookSettings", org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings_async_callback, stuff, g_free, G_TYPE_INVALID);
 }
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings (DBusGProxy *proxy, const GHashTable* IN_settings, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "setAddressbookSettings", error, dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_INT), IN_settings, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings_async (DBusGProxy *proxy, const GHashTable* IN_settings, org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "setAddressbookSettings", org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings_async_callback, stuff, g_free, dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_INT), IN_settings, G_TYPE_INVALID);
+}
 #endif /* defined DBUS_GLIB_CLIENT_WRAPPERS_org_sflphone_SFLphone_ConfigurationManager */
 
 G_END_DECLS

@@ -1068,10 +1068,10 @@ ManagerImpl::initConfigFile ( bool load_user_value )
 
   section = ADDRESSBOOK;
   fill_config_int (ADDRESSBOOK_MAX_RESULTS, "25");
-  fill_config_int (ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, YES_STR);
+  fill_config_int (ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, NO_STR);
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, YES_STR);
-  fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_HOME, YES_STR);
-  fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_MOBILE, YES_STR);
+  fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_HOME, NO_STR);
+  fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_MOBILE, NO_STR);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1 && load_user_value) {
@@ -2396,6 +2396,18 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
     settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_DISPLAY_PHONE_MOBILE", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_MOBILE)));
 
     return settings;
+}
+
+void ManagerImpl::setAddressbookSettings (const std::map<std::string, int32_t>& settings){
+
+    setConfig(ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS, (*settings.find("ADDRESSBOOK_MAX_RESULTS")).second);
+    setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO , (*settings.find("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")).second);
+    setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS , (*settings.find("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")).second);
+    setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_HOME , (*settings.find("ADDRESSBOOK_DISPLAY_PHONE_HOME")).second);
+    setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_MOBILE , (*settings.find("ADDRESSBOOK_DISPLAY_PHONE_MOBILE")).second);
+
+    // Write it to the configuration file
+    saveConfig ();
 }
 
 

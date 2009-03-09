@@ -560,6 +560,11 @@ class ManagerImpl {
     std::map<std::string, int32_t> getAddressbookSettings (void);
 
     /**
+     * Addressbook configuration 
+     */
+     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
+
+    /**
      * Get the audio manager
      * @return int The audio manager
      *		    0 ALSA

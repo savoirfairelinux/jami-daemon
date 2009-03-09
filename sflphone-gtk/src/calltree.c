@@ -28,7 +28,7 @@
 #include <menus.h>
 #include <dbus.h>
 #include <contactlist/eds.h>
-
+#include "addressbook-config.h"
 
 GtkWidget   * toolbar;
 GtkToolItem * pickupButton;
@@ -229,7 +229,11 @@ handler_async_search (GList *hits, gpointer user_data) {
 
     GtkTreeSelection *sel;
     GList *i;
-    GdkPixbuf *photo;
+    GdkPixbuf *photo = NULL;
+    AddressBook_Config *addressbook_config;
+
+    // Load the parameters
+    addressbook_load_parameters (&addressbook_config);
 
     for (i = hits; i != NULL; i = i->next)
     {
@@ -238,13 +242,17 @@ handler_async_search (GList *hits, gpointer user_data) {
         if (entry)
         {
             /* Get the photo */
-            photo = entry->photo;
+            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
+                photo = entry->photo;
             /* Create entry for business phone information */
-            create_new_entry_in_contactlist (entry->name, entry->phone_business, CONTACT_PHONE_BUSINESS, photo);
+            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
+                create_new_entry_in_contactlist (entry->name, entry->phone_business, CONTACT_PHONE_BUSINESS, photo);
             /* Create entry for home phone information */
-            create_new_entry_in_contactlist (entry->name, entry->phone_home, CONTACT_PHONE_HOME, photo);
+            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_PHONE_HOME))
+                create_new_entry_in_contactlist (entry->name, entry->phone_home, CONTACT_PHONE_HOME, photo);
             /* Create entry for mobile phone information */
-            create_new_entry_in_contactlist (entry->name, entry->phone_mobile, CONTACT_PHONE_MOBILE, photo);
+            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
+                create_new_entry_in_contactlist (entry->name, entry->phone_mobile, CONTACT_PHONE_MOBILE, photo);
         }
         free_hit(entry);
     }

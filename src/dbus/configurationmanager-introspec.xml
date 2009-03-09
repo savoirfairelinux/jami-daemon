@@ -247,6 +247,10 @@
       <arg type="a{si}" name="settings" direction="out"/>
     </method>
 
+    <method name="setAddressbookSettings">
+      <arg type="a{si}" name="settings" direction="in"/>
+    </method>
+
   <!--        /////////////////////////////       -->
     <signal name="parametersChanged">
       <arg type="a{ss}" name="list" direction="out"/>

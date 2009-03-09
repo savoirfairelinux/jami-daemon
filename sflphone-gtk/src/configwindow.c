@@ -739,6 +739,7 @@ show_config_window ()
     GtkDialog * dialog;
     GtkWidget * notebook;
     GtkWidget * tab;
+    guint result;
 
     dialogOpen = TRUE;
 
@@ -782,7 +783,9 @@ show_config_window ()
 
     gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  1);
 
-    gtk_dialog_run(dialog);
+    result = gtk_dialog_run(dialog);
+
+    save_configuration_parameters ();
 
     dialogOpen = FALSE;
 
@@ -848,4 +851,10 @@ show_accounts_window( void )
 void config_window_set_stun_visible()
 {
     gtk_widget_set_sensitive( GTK_WIDGET(stunFrame), TRUE );
+}
+
+void save_configuration_parameters (void) {
+
+    addressbook_save_parameters ();
+
 }
