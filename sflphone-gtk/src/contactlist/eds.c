@@ -39,7 +39,7 @@ typedef struct _Handler_And_Data {
 } Handler_And_Data;
 
 static GSList *books = NULL;
-static int pixbuf_size = 16;
+static int pixbuf_size = 32;
 
 static EContactField search_fields[] = { E_CONTACT_FULL_NAME, E_CONTACT_PHONE_BUSINESS, E_CONTACT_NICKNAME, 0 };
 static int n_search_fields = G_N_ELEMENTS (search_fields) - 1;

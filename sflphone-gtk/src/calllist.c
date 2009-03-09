@@ -238,3 +238,7 @@ void create_new_call (gchar *to, gchar *from, call_state_t state, gchar *account
 
     *new_call = call;
 }
+
+void attach_thumbnail (call_t *call, GdkPixbuf *pixbuf) {
+    call->contact_thumbnail = pixbuf;
+}

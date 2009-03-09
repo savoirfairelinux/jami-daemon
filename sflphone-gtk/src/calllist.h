@@ -106,7 +106,8 @@ typedef struct  {
   call_state_t state;
   /** The history state if necessary */
   history_state_t history_state;
-  contact_type_t contact_type;
+
+  GdkPixbuf *contact_thumbnail;
 
   time_t _start;
   time_t _stop;
@@ -205,4 +206,7 @@ void call_list_clean_history();
 void call_list_remove_from_history( call_t* c);
 
 void create_new_call (gchar *to, gchar *from, call_state_t state, gchar *accountID, call_t **new_call);
+
+void attach_thumbnail (call_t *call, GdkPixbuf *pixbuf);
+
 #endif

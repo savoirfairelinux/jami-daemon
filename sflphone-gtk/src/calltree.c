@@ -231,9 +231,20 @@ handler_async_search (GList *hits, gpointer user_data) {
     GList *i;
     GdkPixbuf *photo = NULL;
     AddressBook_Config *addressbook_config;
+    call_t *j;
 
     // Load the parameters
     addressbook_load_parameters (&addressbook_config);
+
+    // freeing calls
+    while((j = (call_t *)g_queue_pop_tail (contacts->callQueue)) != NULL)
+    {
+        free_call_t(j);
+    }
+
+    // reset previous results
+    reset_call_tree(contacts);
+    call_list_reset(contacts);
 
     for (i = hits; i != NULL; i = i->next)
     {
@@ -273,23 +284,12 @@ handler_async_search (GList *hits, gpointer user_data) {
 show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
     gpointer  user_data UNUSED)
 {
-  call_t *j;
   gchar* msg;
 
   // temporary display in status bar
   msg = g_strdup("Contacts");
   statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
   g_free(msg);
-
-  // freeing calls
-  while((j = (call_t *)g_queue_pop_tail (contacts->callQueue)) != NULL)
-  {
-    free_call_t(j);
-  }
-
-  // reset previous results
-  reset_call_tree(contacts);
-  call_list_reset(contacts);
 
   // do a synchronous search
   //results = search_sync (gtk_entry_get_text(GTK_ENTRY(filter_entry)), 50);
@@ -302,12 +302,35 @@ void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone,
    
     gchar *from;
     call_t *new_call;
+    GdkPixbuf *pixbuf;
 
     /* Check if the information is valid */
     if (g_strcasecmp (contact_phone, EMPTY_ENTRY) != 0){
         from = g_strconcat("\"" , contact_name, "\"<", contact_phone, ">", NULL);
         create_new_call (from, from, CALL_STATE_DIALING, "", &new_call);
-        new_call->contact_type = type;
+
+        // Attach a pixbuf to a contact
+        if (photo) {
+            attach_thumbnail (new_call, photo);
+        }
+        else {
+            switch (type) {
+                case CONTACT_PHONE_BUSINESS:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
+                    break;
+                case CONTACT_PHONE_HOME:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/home.svg", NULL);
+                    break;
+                case CONTACT_PHONE_MOBILE:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
+                    break;
+                default:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
+                    break;
+            }
+            attach_thumbnail (new_call, pixbuf);
+        }
+
         call_list_add (contacts, new_call);
         update_call_tree_add(contacts, new_call);
     }
@@ -960,21 +983,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   }
 
   else if (tab == contacts) {
-    switch (c->contact_type)
-    {
-        case CONTACT_PHONE_HOME:
-	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/home.svg", NULL);
-            break;
-        case CONTACT_PHONE_BUSINESS:
-	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
-            break;
-        case CONTACT_PHONE_MOBILE:
-	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
-            break;
-        default:
-	        pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
-            break;
-    }
+    pixbuf = c->contact_thumbnail; 
     description = g_strconcat( description , NULL);
   }
 
