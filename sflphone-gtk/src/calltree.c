@@ -291,9 +291,6 @@ show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
   statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
   g_free(msg);
 
-  // do a synchronous search
-  //results = search_sync (gtk_entry_get_text(GTK_ENTRY(filter_entry)), 50);
-
   // do an asynchronous search
    search_async (gtk_entry_get_text (GTK_ENTRY (filter_entry)), 50, &handler_async_search, NULL); 
 }
@@ -334,7 +331,6 @@ void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone,
         call_list_add (contacts, new_call);
         update_call_tree_add(contacts, new_call);
     }
-
 }
 
   static void
