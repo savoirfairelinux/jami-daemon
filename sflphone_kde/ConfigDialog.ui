@@ -1,0 +1,1206 @@
+<ui version="4.0" >
+ <author>Jérémy Quentin</author>
+ <class>ConfigurationDialog</class>
+ <widget class="QDialog" name="ConfigurationDialog" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>504</width>
+    <height>432</height>
+   </rect>
+  </property>
+  <property name="minimumSize" >
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="windowTitle" >
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" >
+   <property name="margin" >
+    <number>1</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayoutDialog" >
+     <property name="sizeConstraint" >
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
+     <item>
+      <widget class="QListWidget" name="listOptions" >
+       <property name="sizePolicy" >
+        <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize" >
+        <size>
+         <width>100</width>
+         <height>300</height>
+        </size>
+       </property>
+       <property name="maximumSize" >
+        <size>
+         <width>100</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="sizeIncrement" >
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="mouseTracking" >
+        <bool>false</bool>
+       </property>
+       <property name="contextMenuPolicy" >
+        <enum>Qt::DefaultContextMenu</enum>
+       </property>
+       <property name="acceptDrops" >
+        <bool>false</bool>
+       </property>
+       <property name="layoutDirection" >
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="autoFillBackground" >
+        <bool>true</bool>
+       </property>
+       <property name="autoScrollMargin" >
+        <number>16</number>
+       </property>
+       <property name="editTriggers" >
+        <set>QAbstractItemView::AllEditTriggers</set>
+       </property>
+       <property name="dragEnabled" >
+        <bool>true</bool>
+       </property>
+       <property name="iconSize" >
+        <size>
+         <width>200</width>
+         <height>200</height>
+        </size>
+       </property>
+       <property name="textElideMode" >
+        <enum>Qt::ElideMiddle</enum>
+       </property>
+       <property name="verticalScrollMode" >
+        <enum>QAbstractItemView::ScrollPerItem</enum>
+       </property>
+       <property name="horizontalScrollMode" >
+        <enum>QAbstractItemView::ScrollPerItem</enum>
+       </property>
+       <property name="movement" >
+        <enum>QListView::Static</enum>
+       </property>
+       <property name="flow" >
+        <enum>QListView::TopToBottom</enum>
+       </property>
+       <property name="resizeMode" >
+        <enum>QListView::Adjust</enum>
+       </property>
+       <property name="layoutMode" >
+        <enum>QListView::SinglePass</enum>
+       </property>
+       <property name="viewMode" >
+        <enum>QListView::IconMode</enum>
+       </property>
+       <property name="modelColumn" >
+        <number>0</number>
+       </property>
+       <property name="uniformItemSizes" >
+        <bool>false</bool>
+       </property>
+       <property name="wordWrap" >
+        <bool>false</bool>
+       </property>
+       <property name="sortingEnabled" >
+        <bool>false</bool>
+       </property>
+       <item>
+        <property name="text" >
+         <string>Général</string>
+        </property>
+        <property name="icon" >
+         <iconset>
+          <normaloff>:/Images/sflphone.png</normaloff>:/Images/sflphone.png</iconset>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>Affichage</string>
+        </property>
+        <property name="icon" >
+         <iconset>
+          <normaloff>:/Images/sflphone.png</normaloff>:/Images/sflphone.png</iconset>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>Comptes</string>
+        </property>
+        <property name="icon" >
+         <iconset>
+          <normaloff>:/Images/stock_person.svg</normaloff>:/Images/stock_person.svg</iconset>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>Audio</string>
+        </property>
+        <property name="icon" >
+         <iconset>
+          <normaloff>:/Images/icon_volume_off.svg</normaloff>:/Images/icon_volume_off.svg</iconset>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="Line" name="lineOptions" >
+       <property name="orientation" >
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QStackedWidget" name="stackedWidgetOptions" >
+       <property name="currentIndex" >
+        <number>1</number>
+       </property>
+       <widget class="QWidget" name="page_General" >
+        <layout class="QVBoxLayout" name="verticalLayout_18" >
+         <property name="leftMargin" >
+          <number>4</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_ConfGeneral" >
+           <property name="text" >
+            <string>Configuration des paramètres généraux</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line_ConfGeneral" >
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox1_Historique" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="title" >
+            <string>Historique des appels</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_19" >
+            <item>
+             <widget class="QWidget" native="1" name="widget_CapaciteHist" >
+              <layout class="QHBoxLayout" name="horizontalLayout_10" >
+               <item>
+                <widget class="QLabel" name="label_Capacite" >
+                 <property name="text" >
+                  <string>&amp;Capacité</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>horizontalSlider_Capacity</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSlider" name="horizontalSlider_Capacity" >
+                 <property name="maximum" >
+                  <number>100</number>
+                 </property>
+                 <property name="orientation" >
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="spinBox_CapaciteHist" />
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="toolButtonEffacerHist" >
+              <property name="text" >
+               <string>&amp;Effacer l'Historique</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox2_Connexion" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="title" >
+            <string>Connexion</string>
+           </property>
+           <layout class="QFormLayout" name="formLayout_12" >
+            <property name="fieldGrowthPolicy" >
+             <enum>QFormLayout::ExpandingFieldsGrow</enum>
+            </property>
+            <item row="0" column="0" >
+             <widget class="QLabel" name="label_PortSIP" >
+              <property name="text" >
+               <string>Port SIP</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1" >
+             <widget class="QWidget" native="1" name="widget" >
+              <property name="minimumSize" >
+               <size>
+                <width>50</width>
+                <height>0</height>
+               </size>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout" >
+               <property name="margin" >
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QSpinBox" name="spinBox_PortSIP" >
+                 <property name="sizePolicy" >
+                  <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimum" >
+                  <number>1025</number>
+                 </property>
+                 <property name="maximum" >
+                  <number>65536</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_WarningSIP" >
+                 <property name="enabled" >
+                  <bool>false</bool>
+                 </property>
+                 <property name="text" >
+                  <string>Attention </string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" native="1" name="widget_RemplissageConfGeneral" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_Affichage" >
+        <layout class="QVBoxLayout" name="verticalLayout_9" >
+         <item>
+          <widget class="QLabel" name="label_ConfAffichage" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text" >
+            <string>Configuration de l'affichage</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line_ConfAffichage" >
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="frameAffichage" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="frameShape" >
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow" >
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_8" >
+            <item>
+             <widget class="QLabel" name="label1_Notifications" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text" >
+               <string>Activer les notifications du bureau</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" native="1" name="widget1_Notifications" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_5" >
+               <item>
+                <widget class="QCheckBox" name="checkBox1_NotifAppels" >
+                 <property name="text" >
+                  <string>&amp;Appels entrants</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBox2_NotifMessages" >
+                 <property name="text" >
+                  <string>&amp;Messages vocaux</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label2_FenetrePrincipale" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text" >
+               <string>Faire apparaître la fenêtre principale</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" native="1" name="widget_FenetrePrincipale" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_6" >
+               <item>
+                <widget class="QCheckBox" name="checkBox1_FenDemarrage" >
+                 <property name="text" >
+                  <string>Au &amp;démarrage</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBox2_FenAppel" >
+                 <property name="text" >
+                  <string>Lors d'un appel &amp;entrant</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" native="1" name="widget_5" />
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_Comptes" >
+        <layout class="QVBoxLayout" name="verticalLayout_2" >
+         <item>
+          <widget class="QLabel" name="label_ConfComptes" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text" >
+            <string>Configuration des comptes utilisateur</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line_ConfComptes" >
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" native="1" name="widget1_ConfComptes" >
+           <layout class="QHBoxLayout" name="horizontalLayout_3" >
+            <item>
+             <widget class="QFrame" name="frame1_ListeComptes" >
+              <property name="minimumSize" >
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize" >
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="frameShape" >
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow" >
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_6" >
+               <item>
+                <widget class="QListWidget" name="listWidgetComptes" >
+                 <property name="sizePolicy" >
+                  <sizepolicy vsizetype="Expanding" hsizetype="Fixed" >
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize" >
+                  <size>
+                   <width>150</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize" >
+                  <size>
+                   <width>150</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="dragEnabled" >
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="groupBoxGestionComptes" >
+                 <property name="sizePolicy" >
+                  <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize" >
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="layoutDirection" >
+                  <enum>Qt::RightToLeft</enum>
+                 </property>
+                 <property name="title" >
+                  <string/>
+                 </property>
+                 <property name="alignment" >
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_2" >
+                  <property name="spacing" >
+                   <number>0</number>
+                  </property>
+                  <property name="margin" >
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QToolButton" name="buttonSupprimerCompte" >
+                    <property name="sizePolicy" >
+                     <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text" >
+                     <string/>
+                    </property>
+                    <property name="icon" >
+                     <iconset>
+                      <normaloff>:/Images/hang_up.svg</normaloff>:/Images/hang_up.svg</iconset>
+                    </property>
+                    <property name="shortcut" >
+                     <string>+</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QToolButton" name="buttonNouveauCompte" >
+                    <property name="sizePolicy" >
+                     <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="sizeIncrement" >
+                     <size>
+                      <width>0</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="text" >
+                     <string>...</string>
+                    </property>
+                    <property name="icon" >
+                     <iconset>
+                      <normaloff>:/Images/accept.svg</normaloff>:/Images/accept.svg</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QFrame" name="frame2_EditComptes" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="frameShape" >
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow" >
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QFormLayout" name="formLayout_2" >
+               <property name="fieldGrowthPolicy" >
+                <enum>QFormLayout::ExpandingFieldsGrow</enum>
+               </property>
+               <item row="0" column="0" >
+                <widget class="QLabel" name="label1_Alias" >
+                 <property name="text" >
+                  <string>&amp;Alias</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit1_Alias</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1" >
+                <widget class="QLineEdit" name="edit1_Alias" >
+                 <property name="minimumSize" >
+                  <size>
+                   <width>0</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0" >
+                <widget class="QLabel" name="label2_Protocole" >
+                 <property name="text" >
+                  <string>&amp;Protocole</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit2_Protocole</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0" >
+                <widget class="QLabel" name="label3_Serveur" >
+                 <property name="text" >
+                  <string>&amp;Serveur</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit3_Serveur</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0" >
+                <widget class="QLabel" name="label4_Usager" >
+                 <property name="text" >
+                  <string>&amp;Usager</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit4_Usager</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0" >
+                <widget class="QLabel" name="label5_Mdp" >
+                 <property name="text" >
+                  <string>&amp;Mot de Passe</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit5_Mdp</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0" >
+                <widget class="QLabel" name="label6_BoiteVocale" >
+                 <property name="text" >
+                  <string>&amp;Boîte Vocale</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit6_BoiteVocale</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1" >
+                <widget class="QLineEdit" name="edit3_Serveur" >
+                 <property name="minimumSize" >
+                  <size>
+                   <width>0</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1" >
+                <widget class="QLineEdit" name="edit4_Usager" />
+               </item>
+               <item row="4" column="1" >
+                <widget class="QLineEdit" name="edit5_Mdp" >
+                 <property name="echoMode" >
+                  <enum>QLineEdit::Password</enum>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1" >
+                <widget class="QLineEdit" name="edit6_BoiteVocale" />
+               </item>
+               <item row="1" column="1" >
+                <widget class="QComboBox" name="edit2_Protocole" >
+                 <item>
+                  <property name="text" >
+                   <string>SIP</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text" >
+                   <string>IAX</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item row="6" column="1" >
+                <widget class="QLabel" name="edit7_Etat" >
+                 <property name="text" >
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="0" >
+                <widget class="QLabel" name="label7_Etat" >
+                 <property name="text" >
+                  <string>État </string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_ConfComptesCommuns" >
+           <property name="title" >
+            <string/>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_10" >
+            <item>
+             <widget class="QLabel" name="label_ConfComptesCommus" >
+              <property name="text" >
+               <string>Les paramètres STUN seront appliqués à tous les comptes</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="formLayoutConfComptesCommus" >
+              <property name="fieldGrowthPolicy" >
+               <enum>QFormLayout::ExpandingFieldsGrow</enum>
+              </property>
+              <item row="0" column="0" >
+               <widget class="QCheckBox" name="checkBoxStun" >
+                <property name="text" >
+                 <string>Activer Stun</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1" >
+               <widget class="QLineEdit" name="lineEdit_Stun" >
+                <property name="enabled" >
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_Audio" >
+        <layout class="QVBoxLayout" name="verticalLayout_5" >
+         <item>
+          <widget class="QLabel" name="label_ConfAudio" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text" >
+            <string>Configuration des paramètres audio</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line_ConfAudio" >
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox1_Audio" >
+           <property name="title" >
+            <string/>
+           </property>
+           <layout class="QFormLayout" name="formLayout_3" >
+            <item row="0" column="0" >
+             <widget class="QLabel" name="label_Interface" >
+              <property name="text" >
+               <string>&amp;Interface audio</string>
+              </property>
+              <property name="buddy" >
+               <cstring>comboBox_Interface</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1" >
+             <widget class="QComboBox" name="comboBox_Interface" >
+              <property name="minimumSize" >
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <item>
+               <property name="text" >
+                <string>ALSA</string>
+               </property>
+              </item>
+              <item>
+               <property name="text" >
+                <string>PulseAudio</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="1" column="0" >
+             <widget class="QCheckBox" name="checkBox_Sonneries" >
+              <property name="text" >
+               <string>&amp;Activer les sonneries</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox2_Codecs" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="title" >
+            <string>&amp;Codecs</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout" >
+            <item row="0" column="2" >
+             <layout class="QVBoxLayout" name="verticalLayout_OrdreCodecs" >
+              <property name="leftMargin" >
+               <number>0</number>
+              </property>
+              <property name="rightMargin" >
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QToolButton" name="toolButton_MonterCodec" >
+                <property name="text" >
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="toolButton_DescendreCodec" >
+                <property name="text" >
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="0" column="0" >
+             <widget class="QTableWidget" name="tableWidget_Codecs" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Preferred" hsizetype="Expanding" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize" >
+               <size>
+                <width>0</width>
+                <height>100</height>
+               </size>
+              </property>
+              <property name="frameShape" >
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow" >
+               <enum>QFrame::Sunken</enum>
+              </property>
+              <property name="verticalScrollBarPolicy" >
+               <enum>Qt::ScrollBarAsNeeded</enum>
+              </property>
+              <property name="textElideMode" >
+               <enum>Qt::ElideRight</enum>
+              </property>
+              <property name="verticalScrollMode" >
+               <enum>QAbstractItemView::ScrollPerPixel</enum>
+              </property>
+              <property name="horizontalScrollMode" >
+               <enum>QAbstractItemView::ScrollPerPixel</enum>
+              </property>
+              <column>
+               <property name="text" >
+                <string>Actif</string>
+               </property>
+              </column>
+              <column>
+               <property name="text" >
+                <string>Nom</string>
+               </property>
+              </column>
+              <column>
+               <property name="text" >
+                <string>Fréquence</string>
+               </property>
+              </column>
+              <column>
+               <property name="text" >
+                <string>Bitrate</string>
+               </property>
+              </column>
+              <column>
+               <property name="text" >
+                <string>Bande Passante</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QStackedWidget" name="stackedWidget_ParametresSpecif" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="currentIndex" >
+            <number>1</number>
+           </property>
+           <widget class="QWidget" name="page1_Alsa" >
+            <layout class="QVBoxLayout" name="verticalLayout_20" >
+             <property name="margin" >
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QGroupBox" name="groupBox_Alsa" >
+               <property name="title" >
+                <string>Paramètres ALSA</string>
+               </property>
+               <layout class="QFormLayout" name="formLayout_4" >
+                <item row="2" column="1" >
+                 <widget class="QComboBox" name="comboBox2_Entree" >
+                  <property name="minimumSize" >
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0" >
+                 <widget class="QLabel" name="label2_Entree" >
+                  <property name="text" >
+                   <string>&amp;Entrée</string>
+                  </property>
+                  <property name="buddy" >
+                   <cstring>comboBox2_Entree</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0" >
+                 <widget class="QLabel" name="label3_Sortie" >
+                  <property name="text" >
+                   <string>&amp;Sortie</string>
+                  </property>
+                  <property name="buddy" >
+                   <cstring>comboBox3_Sortie</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1" >
+                 <widget class="QComboBox" name="comboBox3_Sortie" >
+                  <property name="minimumSize" >
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0" >
+                 <widget class="QLabel" name="label1_GreffonAlsa" >
+                  <property name="text" >
+                   <string>&amp;Greffon ALSA</string>
+                  </property>
+                  <property name="buddy" >
+                   <cstring>comboBox1_GreffonAlsa</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1" >
+                 <widget class="QComboBox" name="comboBox1_GreffonAlsa" >
+                  <property name="minimumSize" >
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="page2_PulseAudio" >
+            <layout class="QVBoxLayout" name="verticalLayout_7" >
+             <item>
+              <widget class="QGroupBox" name="groupBox_PulseAudio" >
+               <property name="sizePolicy" >
+                <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="title" >
+                <string>Paramètres PulseAudio</string>
+               </property>
+               <layout class="QFormLayout" name="formLayout_11" >
+                <property name="fieldGrowthPolicy" >
+                 <enum>QFormLayout::ExpandingFieldsGrow</enum>
+                </property>
+                <item row="0" column="0" >
+                 <widget class="QCheckBox" name="checkBox_ModifVolumeApps" >
+                  <property name="text" >
+                   <string>Autoriser à &amp;modifier le volume des autres applications</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0" >
+                 <widget class="KButtonGroup" name="kbuttongroup" />
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="Line" name="lineDialog" >
+     <property name="orientation" >
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBoxDialog" >
+     <property name="layoutDirection" >
+      <enum>Qt::LeftToRight</enum>
+     </property>
+     <property name="orientation" >
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons" >
+      <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel|QDialogButtonBox::Ok|QDialogButtonBox::RestoreDefaults</set>
+     </property>
+     <property name="centerButtons" >
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="4" margin="4" />
+ <customwidgets>
+  <customwidget>
+   <class>KButtonGroup</class>
+   <extends>QGroupBox</extends>
+   <header>kbuttongroup.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../../sflphone-qt/resources.qrc" />
+ </resources>
+ <connections>
+  <connection>
+   <sender>buttonBoxDialog</sender>
+   <signal>rejected()</signal>
+   <receiver>ConfigurationDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>300</x>
+     <y>430</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>listOptions</sender>
+   <signal>currentRowChanged(int)</signal>
+   <receiver>stackedWidgetOptions</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>73</x>
+     <y>92</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>191</x>
+     <y>82</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxStun</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_Stun</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>228</x>
+     <y>374</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>431</x>
+     <y>378</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_Interface</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>stackedWidget_ParametresSpecif</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>488</x>
+     <y>64</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>325</x>
+     <y>286</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>horizontalSlider_Capacity</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>spinBox_CapaciteHist</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>352</x>
+     <y>89</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>484</x>
+     <y>88</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_CapaciteHist</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>horizontalSlider_Capacity</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>484</x>
+     <y>88</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>352</x>
+     <y>89</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
