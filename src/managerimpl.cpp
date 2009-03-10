@@ -419,6 +419,7 @@ ManagerImpl::transferCall(const CallID& id, const std::string& to)
     _debug("! Manager Transfer Call: Call doesn't exists\n");
     return false;
   }
+  _debug("Call transfering to: %s \n", to.c_str());
   bool returnValue = getAccountLink(accountid)->transfer(id, to);
   removeWaitingCall(id);
   removeCallAccount(id);

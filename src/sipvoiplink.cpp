@@ -25,6 +25,7 @@
 #include "sipaccount.h"
 #include "audio/audiortp.h"
 
+
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
 /*
@@ -261,7 +262,8 @@ SIPVoIPLink::getEvent()
 
 int SIPVoIPLink::sendRegister( AccountID id )
 {
-  _debug("sendRegister called!!!!!!!!!!!!!!!!!!!!!!! \n");
+ 
+    _debug("Send register################## \n");
     pj_status_t status;
     int expire_value;
     char contactTmp[256];
@@ -313,6 +315,7 @@ int SIPVoIPLink::sendRegister( AccountID id )
     tmp = "sip:" + hostname;
     pj_strdup2(_pool, &svr, tmp.data());
 
+    // tmp = "<sip:" + username + "@" + hostname + ";transport=tls>";
     tmp = "<sip:" + username + "@" + hostname + ">";
     pj_strdup2(_pool, &aor, tmp.data());
 
@@ -349,6 +352,7 @@ int SIPVoIPLink::sendRegister( AccountID id )
         return false;
     }
 
+    _debug("Send the registration ######### \n");
     status = pjsip_regc_send(regc, tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to send regc request.\n");
@@ -1339,7 +1343,8 @@ void SIPVoIPLink::setStunServer( const std::string &server )
         pj_sockaddr_in bound_addr;
         pjsip_host_port a_name;
         char tmpIP[32];
-        pj_sock_t sock;        
+        pj_sock_t sock;
+
 
         // Init bound address to ANY
         pj_memset(&bound_addr, 0, sizeof (bound_addr));
@@ -1349,33 +1354,32 @@ void SIPVoIPLink::setStunServer( const std::string &server )
         bound_addr.sin_port = pj_htons((pj_uint16_t) _localPort);
         bound_addr.sin_family = PJ_AF_INET;
         pj_bzero(bound_addr.sin_zero, sizeof(bound_addr.sin_zero));
-
-
-
-        _debug("bound_addr.sin_port %i \n", bound_addr.sin_port);
-
         
-        _debug("UserAgent: Use IP: %s\n", _localExternAddress.data());
-        
+        // _debug("UserAgent: Use IP: %s\n", _localExternAddress.data());
+
         
         // Create UDP-Server (default port: 5060)
         strcpy(tmpIP, _localExternAddress.data());
         pj_strdup2(_pool, &a_name.host, tmpIP);
-        a_name.port = (pj_uint16_t) _localExternPort;
+        a_name.port = (pj_uint16_t) _localExternPort; 
 
 
-        // status = pjsip_tls_transport_start(_endpt, NULL, &bound_addr, &a_name, 1, NULL);
-        status = pjsip_udp_transport_start(_endpt, &bound_addr, &a_name, 1, NULL);
-
+        status = pjsip_udp_transport_start(_endpt, &bound_addr, &a_name, 1, NULL);   
         if (status != PJ_SUCCESS) {
             _debug("UserAgent: (%d) Unable to start UDP transport!\n", status);
             return -1;
         } else {
             _debug("UserAgent: UDP server listening on port %d\n", _localExternPort);
         }
-
+        
+        
+        _debug("Transport initialized successfully! \n");
         return PJ_SUCCESS;
     }
+
+    
+   
+    
 
     bool SIPVoIPLink::loadSIPLocalIP() {
 
@@ -1575,6 +1579,8 @@ void SIPVoIPLink::setStunServer( const std::string &server )
         SIPCall *call;
         SIPVoIPLink *link;
         pjsip_msg *msg;
+
+        _debug("State Changed !!!! status code %i \n",tsx->status_code);
 
         if(pj_strcmp2(&tsx->method.name, "INFO") == 0) {
             // Receive a INFO message, ingore it!
@@ -2134,6 +2140,9 @@ void SIPVoIPLink::setStunServer( const std::string &server )
         PJ_UNUSED_ARG(event);
 
         _debug("UserAgent: Transfer callback is involved!\n");
+        _debug("UserAgent: pjsip_evsub_get_state_name: %s \n", pjsip_evsub_get_state_name(sub));
+         
+      
         /*
          * When subscription is accepted (got 200/OK to REFER), check if 
          * subscription suppressed.
@@ -2144,8 +2153,7 @@ void SIPVoIPLink::setStunServer( const std::string &server )
             pjsip_generic_string_hdr *refer_sub;
             const pj_str_t REFER_SUB = {(char*)"Refer-Sub", 9 };
 
-            SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data(sub,
-                        _mod_ua.id));
+            SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data(sub, _mod_ua.id));
 
             /* Must be receipt of response message */
             pj_assert(event->type == PJSIP_EVENT_TSX_STATE &&
@@ -2154,8 +2162,7 @@ void SIPVoIPLink::setStunServer( const std::string &server )
 
             /* Find Refer-Sub header */
             refer_sub = (pjsip_generic_string_hdr*)
-                pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
-                        &REFER_SUB, NULL);
+                pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &REFER_SUB, NULL);
 
             /* Check if subscription is suppressed */
             if (refer_sub && pj_stricmp2(&refer_sub->hvalue, "false")==0) {
