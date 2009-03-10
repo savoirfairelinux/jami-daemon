@@ -22,14 +22,10 @@
 
 Call::Call(const CallID& id, Call::CallType type)
            : _callMutex()
-           , _codecMap()
-           , _audioCodec()
            , _audioStarted(false)    
            , _localIPAddress("") 
            , _localAudioPort(0)
            , _localExternalAudioPort(0)
-           , _remoteIPAddress("")
-           , _remoteAudioPort(0)
            , _id(id) 
            , _type(type) 
            , _connectionState(Call::Disconnected)
@@ -85,12 +81,6 @@ Call::getState()
   return _callState;
 }
 
-CodecDescriptor& 
-Call::getCodecMap()
-{
-  return _codecMap;
-}
-
 const std::string& 
 Call::getLocalIp()
 {
@@ -103,26 +93,6 @@ Call::getLocalAudioPort()
 {
   ost::MutexLock m(_callMutex);  
   return _localAudioPort;
-}
-
-unsigned int 
-Call::getRemoteAudioPort()
-{
-  ost::MutexLock m(_callMutex);  
-  return _remoteAudioPort;
-}
-
-const std::string& 
-Call::getRemoteIp()
-{
-  ost::MutexLock m(_callMutex);  
-  return _remoteIPAddress;
-}
-
-AudioCodecType 
-Call::getAudioCodec()
-{
-  return _audioCodec;  
 }
 
 void 

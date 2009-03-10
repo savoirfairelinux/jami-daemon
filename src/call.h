@@ -23,7 +23,6 @@
 #include <cc++/thread.h> // for mutex
 #include <sstream>
 
-#include "audio/codecDescriptor.h"
 #include "plug-in/audiorecorder/audiorecord.h"
 
 /* 
@@ -145,20 +144,7 @@ class Call{
      */
     bool isAudioStarted();
 
-    // AUDIO
-    /** 
-     * Set internal codec Map: initialization only, not protected 
-     * @param map The codec map
-     */
-    void setCodecMap(const CodecDescriptor& map) { _codecMap = map; } 
-
-    /** 
-     * Get internal codec Map: initialization only, not protected 
-     * @return CodecDescriptor	The codec map
-     */
-    CodecDescriptor& getCodecMap();
-
-    /** 
+        /** 
      * Set my IP [not protected] 
      * @param ip  The local IP address
      */
@@ -194,24 +180,6 @@ class Call{
      */
     unsigned int getLocalAudioPort();
 
-    /** 
-     * Return audio port at destination [mutex protected] 
-     * @return unsigned int The remote audio port
-     */
-    unsigned int getRemoteAudioPort();
-
-    /** 
-     * Return IP of destination [mutex protected]
-     * @return const std:string	The remote IP address
-     */
-    const std::string& getRemoteIp();
-
-    /** 
-     * Return audio codec [mutex protected]
-     * @return AudioCodecType The payload of the codec
-     */
-    AudioCodecType getAudioCodec();
-
     /**
      * @return Return the file name for this call
      */
@@ -246,30 +214,6 @@ class Call{
     /** Protect every attribute that can be changed by two threads */
     ost::Mutex _callMutex;
 
-    /** 
-     * Set remote's IP addr. [not protected]
-     * @param ip  The remote IP address
-     */
-    void setRemoteIP(const std::string& ip)    { _remoteIPAddress = ip; }
-
-    /** 
-     * Set remote's audio port. [not protected]
-     * @param port  The remote audio port
-     */
-    void setRemoteAudioPort(unsigned int port) { _remoteAudioPort = port; }
-
-    /** 
-     * Set the audio codec used.  [not protected] 
-     * @param audioCodec  The payload of the codec
-     */
-    void setAudioCodec(AudioCodecType audioCodec) { _audioCodec = audioCodec; }
-
-    /** Codec Map */
-    CodecDescriptor _codecMap;
-
-    /** Codec pointer */
-    AudioCodecType _audioCodec;
-
     bool _audioStarted;
 
     // Informations about call socket / audio
@@ -283,13 +227,7 @@ class Call{
     /** Port assigned to my machine by the NAT, as seen by remote peer (he connects there) */
     unsigned int _localExternalAudioPort;
 
-    /** Remote's IP address */
-    std::string  _remoteIPAddress;
-
-    /** Remote's audio port */
-    unsigned int _remoteAudioPort;
-
-
+    
   private:  
   
     /** Unique ID of the call */
