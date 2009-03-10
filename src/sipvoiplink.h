@@ -267,6 +267,13 @@ class SIPVoIPLink : public VoIPLink
         void SIPCallReleased(SIPCall *call);
 
         /**
+         * Handle a re-invite request by the remote peer.
+         * A re-invite is an invite request inside a dialog.
+         * When receiving a re-invite, we close the current rtp session and create a new one with the updated information
+         */
+        void handle_reinvite (SIPCall *call);
+
+        /**
          * SIPCall accessor
          * @param id  The call identifier
          * @return SIPCall*	  A pointer on SIPCall object

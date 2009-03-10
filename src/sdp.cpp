@@ -129,7 +129,7 @@ int Sdp::create_local_offer (){
     //sdp_addAttributes( _pool );
     sdp_add_media_description( );
 
-    toString ();
+    //toString ();
 
     // Validate the sdp session
     status = pjmedia_sdp_validate( this->_local_offer );
@@ -172,8 +172,7 @@ int Sdp::receiving_initial_offer( pjmedia_sdp_session* remote ){
     create_local_offer(  );
 
     // Retrieve some useful remote information
-    this->fetch_remote_ip_from_sdp (remote);
-    //this->fetch_remote_audio_port_from_sdp ();
+    this->fetch_media_transport_info_from_remote_sdp (remote);
 
     status = pjmedia_sdp_neg_create_w_remote_offer( _pool,
             get_local_sdp_session(), remote, &_negociator );
@@ -407,7 +406,6 @@ void Sdp::fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp) {
     this->set_remote_ip(remote_ip);
 }
 
-
 void Sdp::fetch_remote_audio_port_from_sdp (pjmedia_sdp_media *r_media){
 
     int remote_port;
@@ -428,8 +426,8 @@ void Sdp::fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remot
         return;
     }
     
-    this->fetch_remote_ip_from_sdp (remote_sdp);
     this->fetch_remote_audio_port_from_sdp (r_media);
+    this->fetch_remote_ip_from_sdp (remote_sdp);
 }
 
 void Sdp::get_remote_sdp_media_from_offer (pjmedia_sdp_session* remote_sdp, pjmedia_sdp_media** r_media){
@@ -444,6 +442,4 @@ void Sdp::get_remote_sdp_media_from_offer (pjmedia_sdp_session* remote_sdp, pjme
         }
     }
 }
-
-
 
