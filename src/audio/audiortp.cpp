@@ -201,7 +201,6 @@ AudioRtpRTX::initAudioRtpSession (void)
         remotePort = _ca->getLocalSDP()->get_remote_audio_port();
         _debug("Init audio RTP session - remote IP = %s\n", remoteIP.c_str());
         ost::InetHostAddress remote_ip(remoteIP.c_str());
-        _debug("Init audio RTP session - remote IP = %s\n", remoteIP.c_str());
         if (!remote_ip) {
             _debug("! ARTP Thread Error: Target IP address [%s] is not correct!\n", remoteIP.data());
             return;

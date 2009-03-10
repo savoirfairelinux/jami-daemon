@@ -40,12 +40,13 @@ Sdp::Sdp( pj_pool_t *pool )
 
 Sdp::~Sdp() {
 
-    unsigned int k;
+    //unsigned int k;
 
+    /*
     for( k=0; k<_session_media.size(); k++ ){
         delete _session_media[k];
         _session_media[k] = 0;
-    }
+    }*/
 
     //for( k=0; k<_local_media_cap.size(); k++ ){
       //  delete _local_media_cap[k];
@@ -53,8 +54,8 @@ Sdp::~Sdp() {
     //}
 }
 
-void Sdp::set_media_descriptor_line( sdpMedia *media,
-        pjmedia_sdp_media** p_med ) {
+void Sdp::set_media_descriptor_line( sdpMedia *media, pjmedia_sdp_media** p_med ) {
+
     pjmedia_sdp_media* med;
     pjmedia_sdp_rtpmap rtpmap;
     pjmedia_sdp_attr *attr;
@@ -354,7 +355,10 @@ void Sdp::set_local_media_capabilities () {
     CodecsMap codecs_list;
     CodecsMap::iterator iter;
 
-    _debug ("Fetch local media capabilities .......... %i" , get_local_extern_audio_port());
+    // Clean it first
+    _local_media_cap.clear();
+
+    _debug ("Fetch local media capabilities .......... %i\n" , get_local_extern_audio_port());
 
     /* Only one audio media used right now */
     audio = new sdpMedia(MIME_TYPE_AUDIO);
@@ -399,7 +403,7 @@ void Sdp::fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp) {
     std::string remote_ip;
 
     remote_ip = r_sdp->conn->addr.ptr;
-    _debug("            Remote Audio IP: %s\n", remote_ip.c_str());
+    _debug("**************************************************            Remote Audio IP: %s\n", remote_ip.c_str());
     this->set_remote_ip(remote_ip);
 }
 
