@@ -1618,16 +1618,21 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
                         }
                         break; 
 
-                    case PJSIP_SC_REQUEST_TIMEOUT:
-                        // The host was probably unreachable: bad address, bad port, ...
+                    /* The call connection failed */
+                    case PJSIP_SC_NOT_FOUND:            /* peer not found */
+                    case PJSIP_SC_REQUEST_TIMEOUT:      /* request timeout */
+                    case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
+                    case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
+                    case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
+                        accId = Manager::instance().getAccountFromCall(call->getCallId());
+                        link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
+                        if (link) {
+                            link->SIPCallServerFailure(call);
+                        }
                         break;
-                    case PJSIP_SC_NOT_ACCEPTABLE_HERE:
-                        // The SDP negociation failed
-                        break;
+                    
                     default:
-                        
-                        // The call terminated successfully; normal behaviour
-                        // Core notification
+                        _debug ("sipvoiplink.cpp - line 1635 : Unhandled call state. This is probably a bug.\n");
                         break;
                 }
             }
