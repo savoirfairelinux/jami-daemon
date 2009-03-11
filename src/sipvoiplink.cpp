@@ -1178,7 +1178,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             pj_strdup2(_pool, &contact, uri_contact.str().data());
 
             // create the dialog (UAC)
-            _debug("Try to make a call %s -  %s -  %s - \n", from.ptr, contact.ptr, str_to.ptr);
             status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from, &contact, &str_to, NULL, &dialog);
             PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
 
@@ -1709,6 +1708,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
                     /* The call terminates normally - BYE / CANCEL */
                     case PJSIP_SC_OK:
                     case PJSIP_SC_DECLINE:
+                    case PJSIP_SC_REQUEST_TERMINATED: 
                         accId = Manager::instance().getAccountFromCall(call->getCallId());
                         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
                         if (link) {

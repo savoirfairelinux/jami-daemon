@@ -333,7 +333,6 @@ ManagerImpl::hangupCall(const CallID& id)
             _debug("! Manager Hangup Call: Call doesn't exists\n");
             return false;
         }
-    
         returnValue = getAccountLink(accountid)->hangup(id);
         removeCallAccount(id);
     }
@@ -352,43 +351,64 @@ ManagerImpl::hangupCall(const CallID& id)
   bool
 ManagerImpl::cancelCall (const CallID& id)
 {
-  stopTone(true);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("! Manager Cancel Call: Call doesn't exists\n");
-    return false;
-  }
+    AccountID accountid;
+    bool returnValue;
 
-  bool returnValue = getAccountLink(accountid)->cancel(id);
-  // it could be a waiting call?
-  removeWaitingCall(id);
-  removeCallAccount(id);
-  switchCall("");
+    stopTone(true);
 
-  return returnValue;
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)->cancel (id);        
+    }
+
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("! Manager Cancel Call: Call doesn't exists\n");
+            return false;
+        }
+        returnValue = getAccountLink(accountid)->cancel(id);
+        removeCallAccount(id);
+    }
+        
+    // it could be a waiting call?
+    removeWaitingCall(id);
+    switchCall("");
+
+    return returnValue;
 }
 
 //THREAD=Main
   bool
 ManagerImpl::onHoldCall(const CallID& id)
 {
+    AccountID accountid;
+    bool returnValue;
 
-  stopTone(true);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("5 Manager On Hold Call: Account ID %s or callid %s doesn't exists\n", accountid.c_str(), id.c_str());
-    return false;
-  }
+    stopTone(true);
 
-  _debug("Setting ONHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (id);        
+    }
 
-  bool returnValue = getAccountLink(accountid)->onhold(id);
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("Manager On Hold Call: Account ID %s or callid %s doesn't exists\n", accountid.c_str(), id.c_str());
+            return false;
+        }
+        returnValue = getAccountLink(accountid)->onhold(id);
+    }
 
-  removeWaitingCall(id);
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HOLD");
-  switchCall("");
+    removeWaitingCall(id);
+    switchCall("");
+  
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HOLD");
 
-  return returnValue;
+    return returnValue;
 }
 
 //THREAD=Main
@@ -396,86 +416,117 @@ ManagerImpl::onHoldCall(const CallID& id)
 ManagerImpl::offHoldCall(const CallID& id)
 {
   
-  stopTone(false);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("5 Manager OffHold Call: Call doesn't exists\n");
-    return false;
-  }
+    AccountID accountid;
+    bool returnValue, rec;
+    std::string codecName;
 
-  //Place current call on hold if it isn't
-  if (hasCurrentCall()) 
-  { 
-    onHoldCall(getCurrentCallId());
-  }
+    stopTone(false);
 
-  _debug("Setting OFFHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
+    //Place current call on hold if it isn't
+    if (hasCurrentCall()) 
+    { 
+        onHoldCall(getCurrentCallId());
+    }
 
-  bool rec = getAccountLink(accountid)->isRecording(id);
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        rec = SIPVoIPLink::instance (AccountNULL)-> isRecording (id);
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> offhold (id);        
+    }
+
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("Manager OffHold Call: Call doesn't exists\n");
+            return false;
+        }
+        _debug("Setting OFFHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
+        rec = getAccountLink(accountid)->isRecording(id);
+        returnValue = getAccountLink(accountid)->offhold(id);
+    }
+
+    if (_dbus){ 
+        if (rec)
+            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
+        else 
+            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
+    }
   
-  /*
-  if(rec)
-    _debug("ManagerImpl::offHoldCall(): Record state is true \n");
-  else
-    _debug("ManagerImpl::offHoldCall(): Record state is false \n");
-  */
+    switchCall(id);
 
-  bool returnValue = getAccountLink(accountid)->offhold(id);
+    codecName = getCurrentCodecName(id);
+    _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+    if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
-  if (_dbus){ 
-    if (rec)
-      _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
-    else 
-      _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
-  }
-  switchCall(id);
-
-  std::string codecName = getCurrentCodecName(id);
-  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
-
-  return returnValue;
+    return returnValue;
 }
 
 //THREAD=Main
   bool
 ManagerImpl::transferCall(const CallID& id, const std::string& to)
 {
-  stopTone(true);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("! Manager Transfer Call: Call doesn't exists\n");
-    return false;
-  }
-  bool returnValue = getAccountLink(accountid)->transfer(id, to);
-  removeWaitingCall(id);
-  removeCallAccount(id);
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
-  switchCall("");
-  return returnValue;
+    AccountID accountid;
+    bool returnValue;
+  
+    stopTone(true);
+  
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> transfer (id, to);        
+    }
+
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("! Manager Transfer Call: Call doesn't exists\n");
+            return false;
+        }
+        returnValue = getAccountLink(accountid)->transfer(id, to);
+        removeCallAccount(id);
+    }
+        
+    removeWaitingCall(id);
+    switchCall("");
+  
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+    return returnValue;
 }
 
 //THREAD=Main : Call:Incoming
   bool
 ManagerImpl::refuseCall (const CallID& id)
 {
-  _debug("ManagerImpl::refuseCall(): method called");
-  stopTone(true);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("! Manager OffHold Call: Call doesn't exists\n");
-    return false;
-  }
-  bool returnValue = getAccountLink(accountid)->refuse(id);
-  // if the call was outgoing or established, we didn't refuse it
-  // so the method did nothing
-  if (returnValue) {
-    removeWaitingCall(id);
-    removeCallAccount(id);
-    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
-    switchCall("");
-  }
-  return returnValue;
+    AccountID accountid;
+    bool returnValue;
+  
+    stopTone(true);
+
+     /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> refuse (id);        
+    }
+
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("! Manager OffHold Call: Call doesn't exists\n");
+            return false;
+        }
+        returnValue = getAccountLink(accountid)->refuse(id);
+        removeCallAccount(id);
+    } 
+    
+    // if the call was outgoing or established, we didn't refuse it
+    // so the method did nothing
+    if (returnValue) {
+        removeWaitingCall(id);
+        if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+        switchCall("");
+    }
+    return returnValue;
 }
 
 //THREAD=Main
