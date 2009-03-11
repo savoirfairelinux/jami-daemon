@@ -17,6 +17,14 @@ include_once('include/header.php');
                         <tbody valign="top">
                             <tr>
                                 <td>
+                                    <ul class="thumbnails">
+                                        <li><a href="/screenshot.php#img/gallery/main-view.png"><img class="thumb" src="img/gallery/thumbs/main-view.png" /></a></li>
+                                        <li><a href="/screenshot.php#img/gallery/main-history-opt.png"><img class="thumb" src="img/gallery/thumbs/main-history-opt.png" /></a></li>
+                                        <li><a href="/screenshot.php#img/gallery/main-transer.png"><img class="thumb" src="img/gallery/thumbs/main-transfer.png" /></a></li>
+                                        <!--<li><a href="/screenshot.php#img/gallery/incoming-call.png"><img class="thumb" src="img/gallery/thumbs/incoming-call.png" /></a></li>-->
+                                    </ul>
+                                </td>
+                                <td>
                                     <ul class="fntBleu list" style="padding:10px;">
                                         <li>SIP and IAX2 compatible softphone</li>
                                         <li>Robust enterprise-class desktop phone for Linux</li>
@@ -34,12 +42,6 @@ include_once('include/header.php');
                             </tr>
                             <tr>
                                 <td>
-                                    <ul class="thumbnails">
-                                        <li><a href="/screenshot.php#img/gallery/main-view.png"><img class="thumb" src="img/gallery/thumbs/main-view.png" /></a></li>
-                                        <li><a href="/screenshot.php#img/gallery/main-history-opt.png"><img class="thumb" src="img/gallery/thumbs/main-history-opt.png" /></a></li>
-                                        <li><a href="/screenshot.php#img/gallery/main-transer.png"><img class="thumb" src="img/gallery/thumbs/main-transfer.png" /></a></li>
-                                        <li><a href="/screenshot.php#img/gallery/incoming-call.png"><img class="thumb" src="img/gallery/thumbs/incoming-call.png" /></a></li>
-                                    </ul>
                                 </td>
                             </tr>
                         </tbody>

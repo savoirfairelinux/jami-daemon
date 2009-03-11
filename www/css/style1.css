@@ -540,13 +540,13 @@ code {
 
 .thumbnails li {
     list-style: none;
-    display: table-cell;
+    /*display: table-cell;*/
     opacity: 0.5;
 }
 
 .thumbnails li img {
     outline: 4px solid;
-    margin: 25%;
+    margin: 0.5em;
 }
 
 .thumbnails li:hover {
