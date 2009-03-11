@@ -180,6 +180,7 @@ class Sdp {
         unsigned int get_remote_audio_port() { return _remote_audio_port; }
 
         void fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remote_sdp);
+
     private:
         /** Codec Map */
         std::vector<sdpMedia*> _local_media_cap;

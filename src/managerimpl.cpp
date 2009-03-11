@@ -80,6 +80,7 @@ ManagerImpl::ManagerImpl (void)
         , _hasZeroconf(false)
         , _callAccountMap()
         , _callAccountMapMutex()
+        , _callConfigMap()
         , _accountMap()
 {
   
@@ -188,13 +189,35 @@ ManagerImpl::switchCall(const CallID& id ) {
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
 /* Main Thread */ 
+
   bool
 ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
+    std::string pattern;
+    Call::CallConfiguration callConfig;
+    SIPVoIPLink *siplink;
+    
     _debug("ManagerImpl::outgoingCall() method \n");
 
     stopTone(false);
     playTone();
+
+    /* Check what kind of call we are dealing with */
+    check_call_configuration (id, to, &callConfig);
+    
+    if (callConfig == Call::IPtoIP) {
+        _debug ("Start IP to IP call\n");
+        /* We need to retrieve the sip voiplink instance */
+        siplink = SIPVoIPLink::instance("");     
+        if (siplink->new_ip_to_ip_call (id, to)) {
+            switchCall (id);
+            return true;
+        }
+        else {
+            callFailure (id);
+        }
+        return false;
+    } 
 
     if (!accountExists(accountid)) {
         _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
@@ -277,9 +300,9 @@ ManagerImpl::answerCall(const CallID& id)
   removeWaitingCall(id);
   switchCall(id);
  
-  std::string codecName = getCurrentCodecName(id);
-  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+  //std::string codecName = getCurrentCodecName(id);
+  //_debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  //if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
   return true;
 }
@@ -297,19 +320,24 @@ ManagerImpl::hangupCall(const CallID& id)
 
     /* Broadcast a signal over DBus */
     if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
-  
-    accountid = getAccountFromCall( id );
-    if (accountid == AccountNULL) {
-        /** @todo We should tell the GUI that the call doesn't exist, so
-        * it clears up. This can happen. */
-        _debug("! Manager Hangup Call: Call doesn't exists\n");
-        return false;
+    
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (id);        
     }
 
-    returnValue = getAccountLink(accountid)->hangup(id);
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("! Manager Hangup Call: Call doesn't exists\n");
+            return false;
+        }
+    
+        returnValue = getAccountLink(accountid)->hangup(id);
+        removeCallAccount(id);
+    }
 
-    _debug("After voip link hungup!\n");
-    removeCallAccount(id);
     switchCall("");
 
     if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
@@ -691,14 +719,15 @@ ManagerImpl::incomingMessage(const AccountID& accountId, const std::string& mess
   void
 ManagerImpl::peerAnsweredCall(const CallID& id)
 {
-  if (isCurrentCall(id)) {
-    stopTone(false);
-  }
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
+    if (isCurrentCall(id)) {
+        stopTone(false);
+    }
   
-  std::string codecName = getCurrentCodecName(id);
-  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
+  
+  //std::string codecName = getCurrentCodecName(id);
+  //_debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  //if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -2371,11 +2400,15 @@ void ManagerImpl::restartPJSIP (void)
 
 VoIPLink* ManagerImpl::getAccountLink(const AccountID& accountID)
 {
-  Account* acc = getAccount(accountID);
-  if ( acc ) {
-    return acc->getVoIPLink();
-  }
-  return 0;
+    if (accountID!=AccountNULL) {
+        Account* acc = getAccount(accountID);
+        if ( acc ) {
+            return acc->getVoIPLink();
+        }
+        return 0;
+    }
+    else
+        return SIPVoIPLink::instance("");
 }
 
 VoIPLink* ManagerImpl::getSIPAccountLink()
@@ -2438,65 +2471,51 @@ void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
     }    
 }
 
-#ifdef TEST
-/** 
- * Test accountMap
- */
-bool ManagerImpl::testCallAccountMap()
-{
-  if ( getAccountFromCall(1) != AccountNULL ) {
-    _debug("TEST: getAccountFromCall with empty list failed\n");
-  }
-  if ( removeCallAccount(1) != false ) {
-    _debug("TEST: removeCallAccount with empty list failed\n");
-  }
-  CallID newid = getNewCallID();
-  if ( associateCallToAccount(newid, "acc0") == false ) {
-    _debug("TEST: associateCallToAccount with new CallID empty list failed\n");
-  }
-  if ( associateCallToAccount(newid, "acc1") == true ) {
-    _debug("TEST: associateCallToAccount with a known CallID failed\n");
-  }
-  if ( getAccountFromCall( newid ) != "acc0" ) {
-    _debug("TEST: getAccountFromCall don't return the good account id\n");
-  }
-  CallID secondnewid = getNewCallID();
-  if ( associateCallToAccount(secondnewid, "xxxx") == true ) {
-    _debug("TEST: associateCallToAccount with unknown account id failed\n");
-  }
-  if ( removeCallAccount( newid ) != true ) {
-    _debug("TEST: removeCallAccount don't remove the association\n");
-  }
+void ManagerImpl::check_call_configuration (const CallID& id, const std::string &to, Call::CallConfiguration *callConfig) {
 
-  return true;
-}
+    std::string pattern;
+    Call::CallConfiguration config;
 
-/**
- * Test AccountMap
- */
-bool ManagerImpl::testAccountMap() 
-{
-  if (loadAccountMap() != 2) {
-    _debug("TEST: loadAccountMap didn't load 2 account\n");
-  }
-  if (accountExists("acc0") == false) {
-    _debug("TEST: accountExists didn't find acc0\n");
-  }
-  if (accountExists("accZ") != false) {
-    _debug("TEST: accountExists found an unknown account\n");
-  }
-  if (getAccount("acc0") == 0) {
-    _debug("TEST: getAccount didn't find acc0\n");
-  }
-  if (getAccount("accZ") != 0) {
-    _debug("TEST: getAccount found an unknown account\n");
-  }
-  unloadAccountMap();
-  if ( accountExists("acc0") == true ) {
-    _debug("TEST: accountExists found an account after unloadAccount\n");
-  }
-  return true;
+    /* Check if the call is an IP-to-IP call */
+    /* For an IP-to-IP call, we don't need any account */
+    /* Pattern looked for : ip:xxx.xxx.xxx.xxx */
+    pattern = to.substr (0,3);
+    if (pattern==IP_TO_IP_PATTERN) {
+        config = Call::IPtoIP;
+    } else {
+        config = Call::Classic;
+    }
+    associateConfigToCall (id, config);
+    *callConfig = config;
 }
 
 
-#endif
+bool ManagerImpl::associateConfigToCall (const CallID& callID, Call::CallConfiguration config) {
+
+    if (getConfigFromCall(callID) == CallConfigNULL) { // nothing with the same ID
+        _callConfigMap[callID] = config;
+        _debug("Associate Call %s with config %i\n", callID.data(), config);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+Call::CallConfiguration ManagerImpl::getConfigFromCall(const CallID& callID) {
+
+    CallConfigMap::iterator iter = _callConfigMap.find(callID);
+    if ( iter == _callConfigMap.end()) {
+        return (Call::CallConfiguration)CallConfigNULL;
+    } else {
+        return iter->second;
+    }
+}
+
+bool ManagerImpl::removeCallConfig(const CallID& callID) {
+
+    if ( _callConfigMap.erase(callID) ) {
+        return true;
+    }
+    return false;
+}
+
