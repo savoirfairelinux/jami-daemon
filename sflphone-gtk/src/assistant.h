@@ -64,6 +64,7 @@ struct _wizard
   GtkWidget *addr;
   /** Page 5 - Registration successful*/
   GtkWidget *summary;
+  GtkWidget *label_summary;
   /** Page 6 - Registration failed*/
   GtkWidget *reg_failed;
 
