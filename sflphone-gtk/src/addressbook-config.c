@@ -113,7 +113,7 @@ GtkWidget* create_addressbook_settings () {
     // SCALE BUTTON - NUMBER OF RESULTS
     label = gtk_label_new (_("Maximum result number for a request: "));
     gtk_box_pack_start (GTK_BOX(box) , label , FALSE , FALSE , 1);
-    value = gtk_hscale_new_with_range (0.0 , 50.0 , 5.0);
+    value = gtk_hscale_new_with_range (25.0 , 50.0 , 5.0);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
     gtk_scale_set_digits (GTK_SCALE(value) , 0);
     gtk_scale_set_value_pos (GTK_SCALE(value) , GTK_POS_RIGHT); 

@@ -191,60 +191,6 @@ init (void)
     g_object_unref (source_list);
 }
 
-/**
- * Do a synchronized search in EDS address book
- */
-    GList *
-search_sync (const char *query,
-        int         max_results)
-{
-    GSList *iter = NULL;
-    GList *contacts = NULL;
-    GList *hits = NULL;
-
-    EBookQuery* book_query = create_query (query);
-    for (iter = books; iter != NULL; iter = iter->next) {
-        if (max_results <= 0) {
-            break;
-        }
-        EBook *book = (EBook *) iter->data;
-        e_book_get_contacts (book, book_query, &contacts, NULL);
-        for (; contacts != NULL; contacts = g_list_next (contacts)) {
-            EContact *contact;
-            Hit *hit;
-            gchar *number;
-
-            contact = E_CONTACT (contacts->data);
-            hit = g_new0 (Hit, 1);
-
-            /* Get business phone information */
-            fetch_information_from_contact (contact, E_CONTACT_PHONE_BUSINESS, &number);
-            hit->phone_business = g_strdup (number);
-
-            /* Get home phone information */
-            fetch_information_from_contact (contact, E_CONTACT_PHONE_HOME, &number);
-            hit->phone_home = g_strdup (number);
-
-            /* Get mobile phone information */
-            fetch_information_from_contact (contact, E_CONTACT_PHONE_MOBILE, &number);
-            hit->phone_mobile = g_strdup (number);
-
-            hit->name = g_strdup ((char*) e_contact_get_const (contact, E_CONTACT_NAME_OR_ORG));
-            if(! hit->name)
-                hit->name = "";
-
-            hits = g_list_append (hits, hit);
-            max_results--;
-            if (max_results <= 0) {
-                break;
-            }
-        }
-    }
-    e_book_query_unref (book_query);
-
-    return hits;
-}
-
     static void
 view_finish (EBookView *book_view, Handler_And_Data *had)
 {

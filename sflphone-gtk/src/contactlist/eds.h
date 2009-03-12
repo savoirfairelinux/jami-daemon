@@ -35,6 +35,9 @@
 
 G_BEGIN_DECLS
 
+/**
+ * Reprsent a contact entry 
+ */
 typedef struct _Hit
 {
     gchar *name;
@@ -44,19 +47,33 @@ typedef struct _Hit
     gchar *phone_mobile;
 } Hit;
 
+/**
+ * Free a contact entry 
+ */
 void free_hit (Hit *h);
 
+/**
+ * Template callback function for the asynchronous search
+ */
 typedef void (* SearchAsyncHandler) (GList *hits, gpointer user_data);
 
+/**
+ * Initialize the address book.
+ * Connection to evolution data server
+ */
 void init (void);
 
+/**
+ * Asynchronous search function
+ */
 void search_async (const char         *query,
                    int                 max_results,
                    SearchAsyncHandler  handler,
                    gpointer            user_data);
 
-GList * search_sync (const char *query, int max_results);
-
+/**
+ * Retrieve the specified information from the contact
+ */
 void fetch_information_from_contact (EContact *contact, EContactField field, gchar **info);
 
 G_END_DECLS

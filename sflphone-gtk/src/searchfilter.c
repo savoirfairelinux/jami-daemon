@@ -61,15 +61,12 @@ gboolean is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSE
 
 }
 
-static void handler_async_search (GList *hits, gpointer user_data UNUSED) {
+static void handler_async_search (GList *hits, gpointer user_data) {
 
     GList *i;
     GdkPixbuf *photo = NULL;
     AddressBook_Config *addressbook_config;
     call_t *j;
-
-    // Load the parameters
-    addressbook_load_parameters (&addressbook_config);
 
     // freeing calls
     while((j = (call_t *)g_queue_pop_tail (contacts->callQueue)) != NULL)
@@ -77,6 +74,9 @@ static void handler_async_search (GList *hits, gpointer user_data UNUSED) {
         free_call_t(j);
     }
 
+    // Retrieve the address book parameters
+    addressbook_config = (AddressBook_Config*) user_data;
+        
     // reset previous results
     reset_call_tree(contacts);
     call_list_reset(contacts);
@@ -108,11 +108,20 @@ static void handler_async_search (GList *hits, gpointer user_data UNUSED) {
 
 void filter_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED) {
 
+    AddressBook_Config *addressbook_config;
+    
+    /* Switch to the address book when the focus is on the search bar */
     if (active_calltree == current_calls)
         display_calltree (contacts);
 
-    if (active_calltree == contacts)
-        search_async (gtk_entry_get_text (GTK_ENTRY (filter_entry)), 50, &handler_async_search, NULL); 
+
+    /* We want to search in the contact list */
+    if (active_calltree == contacts) {
+        // Load the address book parameters
+        addressbook_load_parameters (&addressbook_config);
+        // Start the asynchronous search as soon as we have an entry */ 
+        search_async (gtk_entry_get_text (GTK_ENTRY (filter_entry)), addressbook_config->max_results, &handler_async_search, addressbook_config); 
+    }
 
 }
 
