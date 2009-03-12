@@ -6,7 +6,7 @@
     <x>0</x>
     <y>0</y>
     <width>384</width>
-    <height>373</height>
+    <height>366</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -14,15 +14,21 @@
   </property>
   <widget class="QWidget" name="centralwidget" >
    <layout class="QVBoxLayout" name="verticalLayout" >
+    <property name="sizeConstraint" >
+     <enum>QLayout::SetDefaultConstraint</enum>
+    </property>
     <item>
      <widget class="QListWidget" name="listWidget_callList" />
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout" >
+      <property name="spacing" >
+       <number>0</number>
+      </property>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2" >
         <property name="spacing" >
-         <number>4</number>
+         <number>0</number>
         </property>
         <property name="sizeConstraint" >
          <enum>QLayout::SetDefaultConstraint</enum>
@@ -45,13 +51,19 @@
            </size>
           </property>
           <property name="layoutDirection" >
-           <enum>Qt::LeftToRight</enum>
+           <enum>Qt::RightToLeft</enum>
           </property>
           <property name="autoFillBackground" >
            <bool>false</bool>
           </property>
           <property name="orientation" >
            <enum>Qt::Vertical</enum>
+          </property>
+          <property name="invertedAppearance" >
+           <bool>false</bool>
+          </property>
+          <property name="invertedControls" >
+           <bool>false</bool>
           </property>
           <property name="tickPosition" >
            <enum>QSlider::NoTicks</enum>
@@ -72,8 +84,8 @@
        </layout>
       </item>
       <item>
-       <widget class="KButtonGroup" name="dialpadButtonGroup" >
-        <layout class="QGridLayout" name="gridLayout_2" >
+       <widget class="QWidget" native="1" name="widget" >
+        <layout class="QGridLayout" name="gridLayout" >
          <item row="0" column="0" >
           <widget class="QPushButton" name="pushButton_1" >
            <property name="sizePolicy" >
@@ -309,6 +321,8 @@
     <addaction name="actionRaccrocher" />
     <addaction name="actionMettre_en_attente" />
     <addaction name="actionTransferer" />
+    <addaction name="actionRecord" />
+    <addaction name="separator" />
     <addaction name="actionBoite_vocale" />
    </widget>
    <widget class="QMenu" name="menu_Configuration" >
@@ -347,14 +361,15 @@
    <addaction name="actionRaccrocher" />
    <addaction name="actionMettre_en_attente" />
    <addaction name="actionTransferer" />
-   <addaction name="actionBoite_vocale" />
+   <addaction name="actionRecord" />
    <addaction name="separator" />
+   <addaction name="actionBoite_vocale" />
    <addaction name="actionHistorique" />
   </widget>
   <action name="actionDecrocher" >
    <property name="icon" >
-    <iconset>
-     <normaloff>:/Images/accept.svg</normaloff>:/Images/accept.svg</iconset>
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/call.svg</normaloff>:/images/icons/call.svg</iconset>
    </property>
    <property name="text" >
     <string>&amp;Décrocher</string>
@@ -362,8 +377,8 @@
   </action>
   <action name="actionRaccrocher" >
    <property name="icon" >
-    <iconset>
-     <normaloff>:/Images/hang_up.svg</normaloff>:/Images/hang_up.svg</iconset>
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/hang_up.svg</normaloff>:/images/icons/hang_up.svg</iconset>
    </property>
    <property name="text" >
     <string>&amp;Raccrocher</string>
@@ -371,8 +386,8 @@
   </action>
   <action name="actionMettre_en_attente" >
    <property name="icon" >
-    <iconset>
-     <normaloff>:/Images/hold.svg</normaloff>:/Images/hold.svg</iconset>
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/hold.svg</normaloff>:/images/icons/hold.svg</iconset>
    </property>
    <property name="text" >
     <string>Mettre en &amp;Attente</string>
@@ -380,8 +395,8 @@
   </action>
   <action name="actionTransferer" >
    <property name="icon" >
-    <iconset>
-     <normaloff>:/Images/transfert.svg</normaloff>:/Images/transfert.svg</iconset>
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/transfert.svg</normaloff>:/images/icons/transfert.svg</iconset>
    </property>
    <property name="text" >
     <string>&amp;Transférer</string>
@@ -389,8 +404,8 @@
   </action>
   <action name="actionHistorique" >
    <property name="icon" >
-    <iconset>
-     <normaloff>:/Images/history2.svg</normaloff>:/Images/history2.svg</iconset>
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/history2.svg</normaloff>:/images/icons/history2.svg</iconset>
    </property>
    <property name="text" >
     <string>&amp;Historique</string>
@@ -398,8 +413,8 @@
   </action>
   <action name="actionBoite_vocale" >
    <property name="icon" >
-    <iconset>
-     <normaloff>:/Images/mailbox.svg</normaloff>:/Images/mailbox.svg</iconset>
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/mailbox.svg</normaloff>:/images/icons/mailbox.svg</iconset>
    </property>
    <property name="text" >
     <string>&amp;Boîte Vocale</string>
@@ -467,34 +482,17 @@
     <string>Afficher le &amp;clavier</string>
    </property>
   </action>
+  <action name="actionRecord" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="text" >
+    <string>&amp;Record</string>
+   </property>
+  </action>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>KButtonGroup</class>
-   <extends>QGroupBox</extends>
-   <header>kbuttongroup.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources>
   <include location="resources.qrc" />
  </resources>
- <connections>
-  <connection>
-   <sender>actionAfficher_les_barres_de_volume</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>verticalSlider_2</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel" >
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel" >
-     <x>16</x>
-     <y>313</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

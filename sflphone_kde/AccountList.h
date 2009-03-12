@@ -1,5 +1,5 @@
-#ifndef HEADER_ACCOUNTLIST
-#define HEADER_ACCOUNTLIST
+#ifndef ACCOUNT_LIST_H
+#define ACCOUNT_LIST_H
 
 #include <QtGui>
 #include "Account.h"

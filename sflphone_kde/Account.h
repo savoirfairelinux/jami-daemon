@@ -1,5 +1,5 @@
-#ifndef HEADER_ACCOUNT
-#define HEADER_ACCOUNT
+#ifndef ACCOUNT_H
+#define ACCOUNT_H
 
 #include <QtGui>
 #include "metatypes.h"

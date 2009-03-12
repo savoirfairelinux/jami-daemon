@@ -121,7 +121,7 @@
   </cppsupportpart>
   <kdevcustomproject>
     <run>
-      <mainprogram/>
+      <mainprogram>/home/jquentin/sflphone_kde/build</mainprogram>
       <programargs/>
       <terminal>false</terminal>
       <autocompile>false</autocompile>
@@ -145,7 +145,7 @@
     </run>
     <build>
       <buildtool>make</buildtool>
-      <builddir>/home/jquentin/sflphone_kde/build</builddir>
+      <builddir>/home/jquentin/sflphone/sflphone_kde/build</builddir>
     </build>
     <make>
       <abortonerror>false</abortonerror>

@@ -3,6 +3,8 @@ Account.cpp
 Account.h
 AccountList.cpp
 AccountList.h
+Automate.cpp
+Automate.h
 CMakeLists.txt
 Call.cpp
 Call.h
@@ -25,6 +27,7 @@ configurationmanager_interface_singleton.h
 main.cpp
 mainorig.cpp
 metatypes.h
+prefs_base.ui
 settings.kcfgc
 sflphone-qt.ui
 sflphone_const.cpp
@@ -36,3 +39,4 @@ sflphone_kde.kcfg
 sflphone_kdeui.rc
 sflphone_kdeview.cpp
 sflphone_kdeview.h
+sflphone_kdeview_base.ui

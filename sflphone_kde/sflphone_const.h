@@ -40,6 +40,23 @@
 #define PAGE_ACCOUNTS  2
 #define PAGE_AUDIO    3
 
+#define ICON_INCOMING ":/images/icons/ring.svg"
+#define ICON_RINGING ":/images/icons/ring.svg"
+#define ICON_CURRENT ":/images/icons/current.svg"
+#define ICON_DIALING ":/images/icons/dial.svg"
+#define ICON_HOLD ":/images/icons/hold.svg"
+#define ICON_FAILURE ":/images/icons/fail.svg"
+#define ICON_BUSY ":/images/icons/busy.svg"
+#define ICON_TRANSFER ":/images/icons/transfert.svg"
+#define ICON_TRANSFER_HOLD ":/images/icons/transfert.svg"
+
+#define ICON_CALL ":/images/icons/call.svg"
+#define ICON_HANGUP ":/images/icons/hang_up.svg"
+#define ICON_UNHOLD ":/images/icons/unhold.svg"
+#define ICON_ACCEPT ":/images/icons/accept.svg"
+#define ICON_REFUSE ":/images/icons/refuse.svg"
+#define ICON_EXEC_TRANSF ":/images/icons/call.svg"
+
 #define ACCOUNT_TYPE          "Account.type"
 #define ACCOUNT_ALIAS		   "Account.alias"
 #define ACCOUNT_ENABLED		   "Account.enable"
@@ -77,6 +94,7 @@
 #define ALSA_PLAYBACK_DEVICE	      0x0010
 /** Error pulseaudio */
 #define PULSEAUDIO_NOT_RUNNING        0x0100
+
 
 
 

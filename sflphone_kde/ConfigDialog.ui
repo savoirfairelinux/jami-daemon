@@ -168,7 +168,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidgetOptions" >
        <property name="currentIndex" >
-        <number>1</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_General" >
         <layout class="QVBoxLayout" name="verticalLayout_18" >
@@ -950,7 +950,7 @@
             </sizepolicy>
            </property>
            <property name="currentIndex" >
-            <number>1</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="page1_Alsa" >
             <layout class="QVBoxLayout" name="verticalLayout_20" >
@@ -1052,9 +1052,6 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="0" >
-                 <widget class="KButtonGroup" name="kbuttongroup" />
-                </item>
                </layout>
               </widget>
              </item>
@@ -1092,18 +1089,15 @@
     </widget>
    </item>
   </layout>
+  <action name="actionAbout" >
+   <property name="text" >
+    <string>about</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="4" margin="4" />
- <customwidgets>
-  <customwidget>
-   <class>KButtonGroup</class>
-   <extends>QGroupBox</extends>
-   <header>kbuttongroup.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources>
-  <include location="../../sflphone-qt/resources.qrc" />
+  <include location="resources.qrc" />
  </resources>
  <connections>
   <connection>
