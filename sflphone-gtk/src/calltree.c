@@ -37,9 +37,11 @@ GtkToolItem * hangupButton;
 GtkToolItem * holdButton;
 GtkToolItem * transfertButton;
 GtkToolItem * unholdButton;
-// GtkToolItem * historyButton;
 GtkToolItem * mailboxButton;
 GtkToolItem * recButton;
+GtkToolItem * historyButton;
+GtkToolItem * contactButton;
+
 guint transfertButtonConnId; //The button toggled signal connection ID
 
 void
@@ -117,18 +119,18 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
       call_list_add(current_calls, new_call);
       update_call_tree_add(current_calls, new_call);
       sflphone_place_call(new_call);
-      switch_tab(current_calls);
+      display_calltree (current_calls);
     }
     else
     {
       sflphone_new_call();
-      switch_tab(current_calls);
+      display_calltree(current_calls);
     }
   }
   else
   {
     sflphone_new_call();
-    switch_tab(current_calls);
+    display_calltree(current_calls);
   }
 }
 
@@ -177,123 +179,19 @@ unhold( GtkWidget *widget UNUSED, gpointer   data UNUSED)
   sflphone_off_hold();
 }
 
-  static void
-show_current_calls_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
-    gpointer  user_data UNUSED)
+static void toggle_button_cb (GtkToggleToolButton *widget, gpointer user_data)
 {
-  GtkTreeSelection *sel;
-  gchar* msg;
+    calltab_t * to_switch;
+    gboolean toggle;
 
-  // temporary display in status bar
-  msg = g_strdup("Current calls");
-  statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
-  g_free(msg);
+    to_switch = (calltab_t*) user_data;
+    toggle = gtk_toggle_tool_button_get_active (widget);
 
-  active_calltree = current_calls;
-  gtk_widget_hide(history->tree);
-  gtk_widget_hide(contacts->tree);
-  gtk_widget_show(current_calls->tree);
-  printf("current calls toggle\n");
+    g_print ("%i\n", toggle);
 
-  sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
-  g_signal_emit_by_name(sel, "changed");
-  toolbar_update_buttons();
+    (toggle)? display_calltree (to_switch) : display_calltree (current_calls);
 }
 
-  static void
-show_history_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
-    gpointer	user_data UNUSED)
-{
-	GtkTreeSelection *sel;
-  gchar* msg;
-
-  // temporary display in status bar
-  msg = g_strdup("History");
-  statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
-  g_free(msg);
-
-  active_calltree = history;
-  gtk_widget_hide(current_calls->tree);
-  gtk_widget_hide(contacts->tree);
-  gtk_widget_show(history->tree);
-
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
-	g_signal_emit_by_name(sel, "changed");
-	toolbar_update_buttons();
-	gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(histfilter));
-
-}
-
-    static void 
-handler_async_search (GList *hits, gpointer user_data) {
-
-    GtkTreeSelection *sel;
-    GList *i;
-    GdkPixbuf *photo = NULL;
-    AddressBook_Config *addressbook_config;
-    call_t *j;
-
-    // Load the parameters
-    addressbook_load_parameters (&addressbook_config);
-
-    // freeing calls
-    while((j = (call_t *)g_queue_pop_tail (contacts->callQueue)) != NULL)
-    {
-        free_call_t(j);
-    }
-
-    // reset previous results
-    reset_call_tree(contacts);
-    call_list_reset(contacts);
-
-    for (i = hits; i != NULL; i = i->next)
-    {
-        Hit *entry;
-        entry = i->data;
-        if (entry)
-        {
-            /* Get the photo */
-            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
-                photo = entry->photo;
-            /* Create entry for business phone information */
-            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
-                create_new_entry_in_contactlist (entry->name, entry->phone_business, CONTACT_PHONE_BUSINESS, photo);
-            /* Create entry for home phone information */
-            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_PHONE_HOME))
-                create_new_entry_in_contactlist (entry->name, entry->phone_home, CONTACT_PHONE_HOME, photo);
-            /* Create entry for mobile phone information */
-            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
-                create_new_entry_in_contactlist (entry->name, entry->phone_mobile, CONTACT_PHONE_MOBILE, photo);
-        }
-        free_hit(entry);
-    }
-    g_list_free(hits);
-
-    active_calltree = contacts;
-    gtk_widget_hide(current_calls->tree);
-    gtk_widget_hide(history->tree);
-    gtk_widget_show(contacts->tree);
-
-    sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
-    g_signal_emit_by_name(sel, "changed");
-    toolbar_update_buttons();
- 
-}
-
-  static void
-show_contacts_tab(GtkToggleToolButton *toggle_tool_button UNUSED,
-    gpointer  user_data UNUSED)
-{
-  gchar* msg;
-
-  // temporary display in status bar
-  msg = g_strdup("Contacts");
-  statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
-  g_free(msg);
-
-  // do an asynchronous search
-   search_async (gtk_entry_get_text (GTK_ENTRY (filter_entry)), 50, &handler_async_search, NULL); 
-}
 
 void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo){
    
@@ -354,7 +252,7 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
     update_call_tree_add( current_calls , mailbox_call );
     update_menus();
     sflphone_place_call( mailbox_call );
-    switch_tab(current_calls);
+    display_calltree(current_calls);
 }
 
 
@@ -545,7 +443,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
       call_list_add(current_calls, new_call);
       update_call_tree_add(current_calls, new_call);
       sflphone_place_call(new_call);
-      switch_tab(current_calls);
+      display_calltree(current_calls);
     }
   }
 }
@@ -625,22 +523,24 @@ create_toolbar ()
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(transfertButton), -1);
 
   image = gtk_image_new_from_file( ICONS_DIR "/history2.svg");
-  historyButton = gtk_tool_button_new(image, _("History"));
+  historyButton = gtk_toggle_tool_button_new();
+  gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON (historyButton), image);
 #if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text(GTK_WIDGET(historyButton), _("History"));
 #endif
-  g_signal_connect (G_OBJECT (historyButton), "clicked",
-      G_CALLBACK (show_history_tab), NULL);
+  gtk_tool_button_set_label (GTK_TOOL_BUTTON (historyButton), _("History"));
+  g_signal_connect (G_OBJECT (historyButton), "toggled", G_CALLBACK (toggle_button_cb), history);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(historyButton), -1);
   active_calltree = current_calls;
 
   image = gtk_image_new_from_file( ICONS_DIR "/addressbook.svg");
-  contactButton = gtk_tool_button_new(image, _("Contacts"));
+  contactButton = gtk_toggle_tool_button_new();
+  gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON (contactButton), image);
 #if GTK_CHECK_VERSION(2,12,0)
-  gtk_widget_set_tooltip_text(GTK_WIDGET(contactButton), _("Contacts"));
+  gtk_widget_set_tooltip_text(GTK_WIDGET(contactButton), _("Address book"));
 #endif
-  g_signal_connect (G_OBJECT (contactButton), "clicked",
-      G_CALLBACK (show_contacts_tab), NULL);
+  gtk_tool_button_set_label (GTK_TOOL_BUTTON (contactButton), _("Address book"));
+  g_signal_connect (G_OBJECT (contactButton), "toggled", G_CALLBACK (toggle_button_cb), contacts);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(contactButton), -1);
 
   image = gtk_image_new_from_file( ICONS_DIR "/mailbox.svg");
@@ -1010,39 +910,82 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   toolbar_update_buttons();
 }
 
+void display_calltree (calltab_t *tab) {
 
-  void
-refresh_tab(calltab_t* tab)
-{
-  if(tab == contacts)
-  {
-    show_contacts_tab(NULL, NULL);
-  }
-  else if (tab == history)
-  {
-    show_history_tab(NULL, NULL);
-  }
-  else
-  {
-    show_current_calls_tab(NULL, NULL);
-  }
+    GtkTreeSelection *sel;
+
+    g_print ("display_calltree called\n");
+
+    /* If we already are displaying the specified calltree */
+    if (active_calltree == tab)
+        return;
+
+    /* case 1: we want to display the main calltree */
+    if (tab==current_calls) {
+
+        g_print ("display main tab\n");
+        
+        if (active_calltree==contacts) {
+            gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
+        } else {
+            gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
+        }
+    
+    }
+    
+    /* case 2: we want to display the history */
+    else if (tab==history) {
+        
+        g_print ("display history tab\n");
+
+        if (active_calltree==contacts) {
+            gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
+        }
+
+        gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, TRUE);
+    }
+
+    else if (tab==contacts) {
+    
+        g_print ("display contact tab\n");
+        
+        if (active_calltree==history) {
+            gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
+        }
+        
+        gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, TRUE);
+    }
+
+    else 
+        g_print ("calltree.c line 1050 . This is probably a bug in the application\n");
+
+
+    gtk_widget_hide (active_calltree->tree);
+    active_calltree = tab;
+    gtk_widget_show (active_calltree->tree);
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
+	g_signal_emit_by_name(sel, "changed");
+	toolbar_update_buttons();
+	//gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(histfilter));
 }
-  void
-switch_tab(calltab_t* tab)
-{
-  if(active_calltree != tab)
-  {
-    if(tab == contacts)
-    {
-      show_contacts_tab(NULL, NULL);
-    }
-    else if (tab == history)
-    {
-      show_history_tab(NULL, NULL);
-    }
-    else
-    {
-      show_current_calls_tab(NULL, NULL);
-    }
-  }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

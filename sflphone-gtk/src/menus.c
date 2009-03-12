@@ -265,7 +265,7 @@ call_back( void * foo UNUSED)
     call_list_add(current_calls, newCall);
     update_call_tree_add(current_calls, newCall);
     sflphone_place_call(newCall);
-    switch_tab(current_calls);
+    display_calltree (current_calls);
   }
 }
 

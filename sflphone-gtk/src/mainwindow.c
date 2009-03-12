@@ -27,7 +27,7 @@
 #include <mainwindow.h>
 #include <menus.h>
 #include <sliders.h>
-#include <historyfilter.h>
+#include <searchfilter.h>
 #include <assistant.h>
 
 #include <gtk/gtk.h>

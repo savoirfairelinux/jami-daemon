@@ -1,6 +1,8 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2008 2009 Savoir-Faire Linux inc.
+ *
  *  Author: Antoine Reversat <antoine.reversat@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *                                                                              
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,8 +19,8 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
  
-#ifndef __HFILTER_H__
-#define __HFILTER_H__
+#ifndef __SEARCH_FILTER_H__
+#define __SEARCH_FILTER_H__
 
 #include <calllist.h>
 #include <gtk/gtk.h>
@@ -27,5 +29,7 @@
 GtkTreeModel* create_filter(GtkTreeModel* child);
 
 gboolean is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data);
+
 GtkWidget* create_filter_entry();
+
 #endif
