@@ -446,4 +446,19 @@ void dbus_set_record (const call_t * c);
 void dbus_set_record_path (const gchar *path);
 gchar* dbus_get_record_path (void);
 
+/**
+ * Encapsulate all the address book-related configuration
+ * Get the configuration
+ */
+GHashTable* dbus_get_addressbook_settings (void);
+
+/**
+ * Encapsulate all the address book-related configuration
+ * Set the configuration
+ */
+void dbus_set_addressbook_settings (GHashTable *);
+
+
+
+
 #endif
