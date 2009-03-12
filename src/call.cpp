@@ -30,6 +30,7 @@ Call::Call(const CallID& id, Call::CallType type)
            , _type(type) 
            , _connectionState(Call::Disconnected)
            , _callState(Call::Inactive)
+           , _callConfig (Call::Classic)
            , _peerName()
            , _peerNumber()
 {
