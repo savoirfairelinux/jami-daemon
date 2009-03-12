@@ -208,6 +208,9 @@ view_finish (EBookView *book_view, Handler_And_Data *had)
     static void
 view_contacts_added_cb (EBookView *book_view, GList *contacts, gpointer user_data)
 {
+    
+    GdkPixbuf *photo;
+
     Handler_And_Data *had = (Handler_And_Data *) user_data;
     if (had->max_results_remaining <= 0) {
         e_book_view_stop (book_view);
@@ -226,7 +229,8 @@ view_contacts_added_cb (EBookView *book_view, GList *contacts, gpointer user_dat
         hit = g_new (Hit, 1);
 
         /* Get the photo contact */
-        hit->photo = pixbuf_from_contact (contact);
+        photo = pixbuf_from_contact (contact);
+        hit->photo = photo;
 
         /* Get business phone information */
         fetch_information_from_contact (contact, E_CONTACT_PHONE_BUSINESS, &number);
