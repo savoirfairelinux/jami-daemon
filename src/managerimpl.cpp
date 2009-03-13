@@ -199,8 +199,8 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
     
     _debug("ManagerImpl::outgoingCall() method \n");
 
-    stopTone(false);
-    playTone();
+    // stopTone(false);
+    // playTone();
 
     /* Check what kind of call we are dealing with */
     check_call_configuration (id, to, &callConfig);
@@ -259,27 +259,13 @@ ManagerImpl::answerCall(const CallID& id)
   if (currentcall->getState() == 1)
       isActive = true;
 
-  stopTone(false); 
+  // stopTone(false); 
   _debug("Try to answer call: %s\n", id.data());
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Answering Call: Call doesn't exists\n");
     return false;
   }
-
-  /*
-  _debug("_nbIncomingWaitingCall =======>>>>>>>> %i \n",_nbIncomingWaitingCall);
-  
-  CallIDSet::iterator iter = _waitingCall.begin();
-  while (iter != _waitingCall.end()) {
-      CallID ident = *iter;
-      AccountID acc = getAccountFromCall( ident );
-      Call* call = getAccountLink(acc)->getCall(ident);
-      _debug("ManagerImpl::answerCall :: incoming call ident: %s \n",ident.c_str());
-      _debug("ManagerImpl::answerCall :: incoming call state: %i \n",call->getState());
-      ++iter;
-  }
-  */
   
   //  if (id != getCurrentCallId()) {
   if (isActive) { 
@@ -300,9 +286,9 @@ ManagerImpl::answerCall(const CallID& id)
   removeWaitingCall(id);
   switchCall(id);
  
-  //std::string codecName = getCurrentCodecName(id);
-  //_debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  //if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+  std::string codecName = getCurrentCodecName(id);
+  // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
   return true;
 }
@@ -776,9 +762,9 @@ ManagerImpl::peerAnsweredCall(const CallID& id)
   
     if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
   
-  //std::string codecName = getCurrentCodecName(id);
-  //_debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  //if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+  std::string codecName = getCurrentCodecName(id);
+  // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 }
 
 //THREAD=VoIP Call=Outgoing
