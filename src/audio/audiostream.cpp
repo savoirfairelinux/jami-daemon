@@ -66,7 +66,7 @@ AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
     case PA_STREAM_READY:
  
      _debug("Stream successfully created, connected to %s\n", pa_stream_get_device_name( s ));
-      pa_stream_cork( s, 0, NULL, NULL);
+     // pa_stream_cork( s, 0, NULL, NULL);
       break;
     case PA_STREAM_UNCONNECTED:
       _debug("Stream unconnected\n");
