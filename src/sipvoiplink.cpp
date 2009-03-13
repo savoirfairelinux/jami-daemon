@@ -1543,7 +1543,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         rdata = e->body.tsx_state.src.rdata;
 
         
-        // _debug("RECEIVING NOTIFY!!!!!!!!!!!!!!!!! \n"); //, rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD);
         /* If this is an outgoing INVITE that was created because of
          * REFER/transfer, send NOTIFY to transferer.
          */
@@ -1657,7 +1656,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     }
 
     void call_on_media_update( pjsip_inv_session *inv, pj_status_t status) {
-        _debug("call_on_media_updated!!!!!!!!!!!!!!!!!!\n");
 
         const pjmedia_sdp_session *r_sdp;
         SIPCall *call;
@@ -1678,15 +1676,13 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     }
 
     void call_on_forked(pjsip_inv_session *inv, pjsip_event *e){
-        _debug("call_on_forked!!!!!!!!!!!!!!\n");
     }
 
-    void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e){
-        _debug ("call_on_tsx_changed!!!!!!!!!!!!!!!\n");
+void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e){
     }
 
     void regc_cb(struct pjsip_regc_cbparam *param){
-        _debug("regc_cb!!!!!!!!!\n");
+
 
         //AccountID *id = static_cast<AccountID *> (param->token);
         SIPAccount *account;
@@ -1807,7 +1803,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
             // Get the server voicemail notification
             // Catch the NOTIFY message
-            _debug("RECEIVING NOTIFY!!!!!!!!!!!!!!!!! %i \n", rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD);
             if( rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD )
             {
                 method_name = "NOTIFY";  	
@@ -1912,13 +1907,11 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         }
 
     pj_bool_t mod_on_rx_response(pjsip_rx_data *rdata UNUSED) {
-        _debug("mod_on_rx_response!!!!!!!!!!!!!!!\n");
         return PJ_SUCCESS;
     }
 
     void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     {
-        _debug("onCallTransfered!!!!!!!!!!!!!!!!!\n");
 
         pj_status_t status;
         pjsip_tx_data *tdata;
@@ -2135,60 +2128,56 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         _debug("UserAgent: Transfer callback is involved!\n");
         // _debug("UserAgent: pjsip_evsub_get_state_name: %s \n", pjsip_evsub_get_state_name(sub));
 
-        // Get current account
-        SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data(sub, _mod_ua.id));
-
-
         /*
          * When subscription is accepted (got 200/OK to REFER), check if 
          * subscription suppressed.
          */
         if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_ACCEPTED) {
-         
- 
+             
+            _debug("Transfer accepted! Waiting for notifications. \n");
+
+            /*
             pjsip_rx_data *rdata;
             pjsip_generic_string_hdr *refer_sub;
             const pj_str_t REFER_SUB = {(char*)"Refer-Sub", 9 };
 
-            // SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data(sub, _mod_ua.id));
-
-            /* Must be receipt of response message */
-            pj_assert(event->type == PJSIP_EVENT_TSX_STATE &&
-                    event->body.tsx_state.type == PJSIP_EVENT_RX_MSG);
-            // rdata = event->body.tsx_state.src.rdata;
-
-            /* Find Refer-Sub header */
-            refer_sub = (pjsip_generic_string_hdr*)
-                pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &REFER_SUB, NULL);
-
-            /* Check if subscription is suppressed */
+            SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data(sub, _mod_ua.id));
+            
+            // Must be receipt of response message 
+            pj_assert(event->type == PJSIP_EVENT_TSX_STATE && event->body.tsx_state.type == PJSIP_EVENT_RX_MSG);
+            rdata = event->body.tsx_state.src.rdata;
+ 
+            // Find Refer-Sub header 
+            refer_sub = (pjsip_generic_string_hdr*)pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &REFER_SUB, NULL);
+                
+            // Check if subscription is suppressed 
             if (refer_sub && pj_stricmp2(&refer_sub->hvalue, "false")==0) {
-                /* Since no subscription is desired, assume that call has been
-                 * transfered successfully.
-                 */
+                // Since no subscription is desired, assume that call has been transfered successfully.
+                    
                 if (link) {
                     // It's the time to stop the RTP
+                      
                     link->transferStep2();
                 }
-
-                /* Yes, subscription is suppressed.
-                 * Terminate our subscription now.
-                 */
+                    
+                // Yes, subscription is suppressed.Terminate our subscription now.
                 _debug("UserAgent: Xfer subscription suppressed, terminating event subcription...\n");
                 pjsip_evsub_terminate(sub, PJ_TRUE);
-
-            } else {
-                /* Notify application about call transfer progress. 
-                 * Initially notify with 100/Accepted status.
-                 */
+            } 
+                
+            
+            else {
+              // Notify application about call transfer progress. Initially notify with 100/Accepted status.
+                 
                 _debug("UserAgent: Xfer subscription 100/Accepted received...\n");
             }
+            */
         }
         /*
          * On incoming NOTIFY, notify application about call transfer progress.
          */
         else if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_ACTIVE ||
-                pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED)
+                   pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED)
         {
             pjsip_msg *msg;
             pjsip_msg_body *body;
@@ -2197,7 +2186,15 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             pj_bool_t cont;
             pj_status_t status;
 
-            // SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data(sub, _mod_ua.id));
+            std::string noresource;
+            std::string ringing;
+            std::string request;
+
+            noresource = "noresource";
+            ringing = "Ringing";
+
+
+            SIPVoIPLink *link = reinterpret_cast<SIPVoIPLink *> (pjsip_evsub_get_mod_data(sub, _mod_ua.id));
 
             /* When subscription is terminated, clear the xfer_sub member of 
              * the inv_data.
@@ -2213,35 +2210,13 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
                 _debug("UserAgent: Either link or event is empty!\n");
                 return;
             }
-
-            std::string noresource;
-            std::string ringing;
-
-            noresource = "noresource";
-            ringing = "Ringing";
-        
-            std::string request;
-            if(event->body.rx_msg.rdata->msg_info.msg_buf != NULL) {
-                request = event->body.rx_msg.rdata->msg_info.msg_buf;
-        
-                if (request.find( noresource ) != -1) {
-                    _debug("NORESOURCE!!!!!!!!!!!!!!!!!!!!!!!\n");
-                    link->transferStep2();
-                    return;
-                }
-
-                if (request.find( ringing ) != -1){
-                    _debug("RINGING!!!!!!!!!!!!!!!!!!!!!!!\n");
-                    link->transferStep2();
-                    return;
-                }
-            }
-
+            
 
             /* This better be a NOTIFY request */
             if (event->type == PJSIP_EVENT_TSX_STATE &&
                     event->body.tsx_state.type == PJSIP_EVENT_RX_MSG)
             {
+
                 pjsip_rx_data *rdata;
 
                 rdata = event->body.tsx_state.src.rdata;
@@ -2278,6 +2253,25 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
                 status_line.reason = *pjsip_get_status_text(500);
             }
 
+            
+            if(event->body.rx_msg.rdata->msg_info.msg_buf != NULL) {
+                request = event->body.rx_msg.rdata->msg_info.msg_buf;
+                if (request.find( noresource ) != -1) {
+                    _debug("UserAgent: NORESOURCE for transfer!\n");
+                    link->transferStep2();
+                    pjsip_evsub_terminate(sub, PJ_TRUE);
+                    return;
+                }
+
+                if (request.find( ringing ) != -1){
+                    _debug("UserAgent: transfered call RINGING!\n");
+                    link->transferStep2();
+                    pjsip_evsub_terminate(sub, PJ_TRUE);
+                    return;
+                }
+            }
+
+
             // Get current call
             SIPCall *call = dynamic_cast<SIPCall *>(link->getCall(Manager::instance().getCurrentCallId()));
             if(!call) {
@@ -2291,6 +2285,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             cont = !is_last;
 
             if(status_line.code/100 == 2) {
+                
                 _debug("UserAgent: Try to stop rtp!\n");
                 pjsip_tx_data *tdata;
 
@@ -2318,7 +2313,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
     void xfer_svr_cb(pjsip_evsub *sub, pjsip_event *event)
     {
-        _debug("xfer_func_cb!!!!!!!!!!!!!!!!!\n"); 
         
         PJ_UNUSED_ARG(event);
 
@@ -2341,7 +2335,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     }
 
     void on_rx_offer( pjsip_inv_session *inv, const pjmedia_sdp_session *offer ){
-        _debug("on_rx_offer!!!!!!!!!!!!!!!!!\n");
         
         _debug ( "********************************* REINVITE RECEIVED *******************************\n" );
 
