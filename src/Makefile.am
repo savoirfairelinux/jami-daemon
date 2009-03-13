@@ -76,7 +76,6 @@ noinst_HEADERS = \
 		sdp.h \
 		sdpmedia.h
 
-
 libsflphone_la_LIBADD = \
 	$(src)/libs/stund/libstun.la \
 	$(src)/libs/utilspp/libutilspp.la \

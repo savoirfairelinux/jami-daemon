@@ -116,4 +116,6 @@ void show_accounts_window();
 
 void config_window_set_stun_visible();
 
+void save_configuration_parameters (void);
+
 #endif 

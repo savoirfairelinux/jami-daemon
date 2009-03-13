@@ -312,6 +312,7 @@ class SIPVoIPLink : public VoIPLink
       
         int inv_session_reinvite (SIPCall *call, std::string direction="");
         
+        bool new_ip_to_ip_call (const CallID& id, const std::string& to);
 
     private:
         /**

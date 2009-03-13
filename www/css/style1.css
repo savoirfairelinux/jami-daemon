@@ -171,7 +171,7 @@ body {
 }
 .tabsIndex td{
 }
-.tabsIndex td ul li{
+.tabsIndex ul.list li{
 	font-weight: normal;
 	font-size: 13pt;
 	margin-bottom: 5px;
@@ -538,4 +538,18 @@ code {
   position: relative;
 }
 
+.thumbnails li {
+    list-style: none;
+    /*display: table-cell;*/
+    opacity: 0.5;
+}
+
+.thumbnails li img {
+    outline: 4px solid;
+    margin: 0.5em;
+}
+
+.thumbnails li:hover {
+    opacity: 1;
+}
 

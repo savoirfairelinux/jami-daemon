@@ -18,7 +18,7 @@
                                         <li><a href="features.php">Features</a></li>
                                         <li><a href="download.php">Download</a></li>
                                             
-                                        <li><a href="http://dev.savoirfairelinux.net/sflphone/">Wiki</a></li>
+                                        <li><a href="http://projects.savoirfairelinux.net/wiki/sflphone">Wiki</a></li>
                                         <li><a href="contact.php">Contact</a></li>
                                         </ul>
                                     </div>
