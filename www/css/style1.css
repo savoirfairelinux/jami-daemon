@@ -553,3 +553,43 @@ code {
     opacity: 1;
 }
 
+
+.separator {
+    margin: 2em;
+}
+
+
+/**GNU LOGO **/
+.gpl-logo {
+    float: right;
+    position: relative;
+}
+
+.gpl-logo img {
+    margin-top: -8px;
+}
+    
+
+.download {
+    background: url(/img/download.png);
+    width: 280px;
+    height: 45px;
+    padding-top: 2.7em;
+    margin: 0 auto;
+}
+
+.download:hover {
+    background: url(/img/download-up.png);
+}
+
+.download span {
+    display: block;
+}
+
+.free-download {
+    margin-top: 7px;
+}
+
+.sfl-version {
+    line-height: 5px;
+}

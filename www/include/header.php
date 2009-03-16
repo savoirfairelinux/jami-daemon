@@ -40,22 +40,22 @@
             <tbody valign="top">
                 <tr>
                     <td  class="option">
-                    <div id="option">
-                    </div>
-                </td>
+                        <div id="option"> </div>
+                    </td>
 
                 <td  class="navigation">
+                    <div class="gpl-logo"><a href="http://www.gnu.org/copyleft/gpl.html" ><img src="img/logos/custom/gpl3.png" /></a></div>
                     <div id="navigation">
                         <div class="dynamic-nav" style="background: #CDCDCD;" >&nbsp;</div>
-                            <ul>
-                                <li <?php echo ($name == 'contact')?'class="active"':"" ?>><a href='contact.php'><span>Contact</span></a></li>
-                                <li <?php echo ($name == 'wiki')?'class="active"':"" ?>><a href='http://dev.savoirfairelinux.net/sflphone/'><span>Wiki</span></a></li>
-                                <li <?php echo ($name == 'download')?'class="active"':"" ?>><a href='download.php'><span>Download</span></a></li>
-                                <li <?php echo ($name == 'screenshot')?'class="active"':"" ?>><a href='screenshot.php'><span>Screenshots</span></a></li>
-                                <li <?php echo ($name == 'feature')?'class="active"':"" ?>><a href='features.php'><span>Features</span></a></li>
-                                <li <?php echo ($name == 'home')?'class="active"':"" ?>><a href='index.php'><span>Home</span></a></li>
-                            </ul>
-                        </div>
+                        <ul>
+                            <li <?php echo ($name == 'contact')?'class="active"':"" ?>><a href='contact.php'><span>Contact</span></a></li>
+                            <li <?php echo ($name == 'wiki')?'class="active"':"" ?>><a href='http://dev.savoirfairelinux.net/sflphone/'><span>Wiki</span></a></li>
+                            <li <?php echo ($name == 'download')?'class="active"':"" ?>><a href='download.php'><span>Download</span></a></li>
+                            <li <?php echo ($name == 'screenshot')?'class="active"':"" ?>><a href='screenshot.php'><span>Screenshots</span></a></li>
+                            <li <?php echo ($name == 'feature')?'class="active"':"" ?>><a href='features.php'><span>Features</span></a></li>
+                            <li <?php echo ($name == 'home')?'class="active"':"" ?>><a href='index.php'><span>Home</span></a></li>
+                        </ul>
+                    </div>
                 </td>
             </tr>
         </tbody>

@@ -38,7 +38,7 @@
                                     <div class="rightfootBlock">
                                         <ul>
                                         <li>
-                                    		© Savoir-Faire Linux Inc 2009<img src="img/logos/custom/gpl3.png" /></li>
+                                    		© Savoir-Faire Linux Inc 2009</li>
                                         </ul>
                                     </div>
                                     <div class="clear">&nbsp;
