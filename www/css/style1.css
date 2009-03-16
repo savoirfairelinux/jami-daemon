@@ -547,6 +547,7 @@ code {
 .thumbnails li img {
     outline: 4px solid;
     margin: 0.5em;
+    margin-top: 15%;
 }
 
 .thumbnails li:hover {
