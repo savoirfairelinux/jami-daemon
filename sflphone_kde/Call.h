@@ -10,7 +10,7 @@
 class Call
 {
 private:
-	//Account * account;
+	Account * account;
 	QString id;
 	QString from;
 	QString to;
@@ -25,7 +25,8 @@ private:
 public:
 	
 	~Call();
-	static Call * buildDialingCall(QString calllId);
+	static Call * buildDialingCall(QString callId);
+	static Call * buildIncomingCall(QString callId, QString from, Account & account);
 	QListWidgetItem * getItem();
 	call_state getState() const;
 	QString getCallId();

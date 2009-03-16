@@ -8,6 +8,14 @@ Call::Call(call_state startState, QString callId)
 	this->item = new QListWidgetItem("");
 }
 
+Call::Call(call_state startState, QString callId, QString from, Account & account)
+{
+	this->automate = new Automate(startState);
+	this->id = callId;
+	this->item = new QListWidgetItem(from);
+	this->account = & account;
+}
+
 Call::~Call()
 {
 	delete item;
@@ -17,6 +25,12 @@ Call::~Call()
 Call * Call::buildDialingCall(QString callId)
 {
 	Call * call = new Call(CALL_STATE_DIALING, callId);
+	return call;
+}
+
+Call * Call::buildIncomingCall(QString callId, QString from, Account & account)
+{
+	Call * call = new Call(CALL_STATE_INCOMING, callId, from, account);
 	return call;
 }
 

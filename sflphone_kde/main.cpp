@@ -16,6 +16,8 @@ int main(int argc, char *argv[])
 		app.installTranslator(&translator);
 	
 		SFLPhone fenetre;
+		
+
 		fenetre.show();
 	
 		return app.exec();	

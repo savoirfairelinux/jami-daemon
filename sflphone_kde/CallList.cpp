@@ -37,3 +37,10 @@ QListWidgetItem * CallList::addDialingCall()
 	calls->append(call);
 	return call->getItem();
 }
+
+QListWidgetItem * CallList::addIncomingCall(QString callId, QString from, Account & account)
+{
+	Call * call = Call::buildIncomingCall(callId, from, account);
+	calls->append(call);
+	return call->getItem();
+}

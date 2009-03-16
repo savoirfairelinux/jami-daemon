@@ -17,6 +17,7 @@ public:
 	Call * operator[](QListWidgetItem * item);
 
 	QListWidgetItem * addDialingCall();
+	QListWidgetItem * addIncomingCall(QString callId, QString from, Account & account);
 
 	QString getAndIncCallId();
 	int size();

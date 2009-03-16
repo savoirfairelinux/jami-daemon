@@ -57,6 +57,19 @@
 #define ICON_REFUSE ":/images/icons/refuse.svg"
 #define ICON_EXEC_TRANSF ":/images/icons/call.svg"
 
+#define ICON_REC_VOL_0 ":/images/icons/mic.svg"
+#define ICON_REC_VOL_1 ":/images/icons/mic_25.svg"
+#define ICON_REC_VOL_2 ":/images/icons/mic_50.svg"
+#define ICON_REC_VOL_3 ":/images/icons/mic_75.svg"
+
+#define ICON_SND_VOL_0 ":/images/icons/speaker.svg"
+#define ICON_SND_VOL_1 ":/images/icons/speaker_25.svg"
+#define ICON_SND_VOL_2 ":/images/icons/speaker_50.svg"
+#define ICON_SND_VOL_3 ":/images/icons/speaker_75.svg"
+
+#define RECORD_DEVICE "mic"
+#define SOUND_DEVICE "speaker"
+
 #define ACCOUNT_TYPE          "Account.type"
 #define ACCOUNT_ALIAS		   "Account.alias"
 #define ACCOUNT_ENABLED		   "Account.enable"
