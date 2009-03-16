@@ -51,7 +51,7 @@ include('include/header.php');
                 </td>
                 <td>
                     <br/><br/>
-                    <a href="http://dev.savoirfairelinux.net/sflphone/">more information ...</a> | 
+                    <a href="http://projects.savoirfairelinux.net/wiki/sflphone/AboutSFLphone#Features">complete list of features ...</a> | 
                     <a href="download.php"> download</a>  
                 </td>
             </tr>
