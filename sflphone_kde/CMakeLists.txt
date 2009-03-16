@@ -13,8 +13,7 @@ SET(
 	main.cpp
 	sflphone_const.cpp
 	Account.cpp
-	AccountList.cpp	
-	Automate.cpp
+	AccountList.cpp
 	Call.cpp
 	CallList.cpp
 	configurationmanager_interface.cpp

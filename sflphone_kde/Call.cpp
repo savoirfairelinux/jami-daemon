@@ -1,25 +1,63 @@
 #include "Call.h"
 
+#include "callmanager_interface_p.h"
+#include "callmanager_interface_singleton.h"
+#include "SFLPhone.h"
+
+
+const call_state Call::stateMap [11][5] = 
+{
+//                      ACCEPT                  REFUSE             TRANSFER                   HOLD                           RECORD
+/*INCOMING       */  {CALL_STATE_CURRENT  , CALL_STATE_OVER  , CALL_STATE_OVER           , CALL_STATE_HOLD           ,  CALL_STATE_INCOMING       },
+/*RINGING        */  {CALL_STATE_ERROR    , CALL_STATE_OVER  , CALL_STATE_ERROR          , CALL_STATE_ERROR          ,  CALL_STATE_RINGING        },
+/*CURRENT        */  {CALL_STATE_ERROR    , CALL_STATE_OVER  , CALL_STATE_TRANSFER       , CALL_STATE_HOLD           ,  CALL_STATE_CURRENT        },
+/*DIALING        */  {CALL_STATE_RINGING  , CALL_STATE_OVER  , CALL_STATE_ERROR          , CALL_STATE_ERROR          ,  CALL_STATE_DIALING        },
+/*HOLD           */  {CALL_STATE_ERROR    , CALL_STATE_OVER  , CALL_STATE_TRANSFER_HOLD  , CALL_STATE_CURRENT        ,  CALL_STATE_HOLD           },
+/*FAILURE        */  {CALL_STATE_ERROR    , CALL_STATE_OVER  , CALL_STATE_ERROR          , CALL_STATE_ERROR          ,  CALL_STATE_ERROR          },
+/*BUSY           */  {CALL_STATE_ERROR    , CALL_STATE_OVER  , CALL_STATE_ERROR          , CALL_STATE_ERROR          ,  CALL_STATE_ERROR          },
+/*TRANSFER       */  {CALL_STATE_OVER     , CALL_STATE_OVER  , CALL_STATE_CURRENT        , CALL_STATE_TRANSFER_HOLD  ,  CALL_STATE_TRANSFER       },
+/*TRANSFER_HOLD  */  {CALL_STATE_OVER     , CALL_STATE_OVER  , CALL_STATE_HOLD           , CALL_STATE_TRANSFER       ,  CALL_STATE_TRANSFER_HOLD  },
+/*OVER           */  {CALL_STATE_ERROR    , CALL_STATE_ERROR , CALL_STATE_ERROR          , CALL_STATE_ERROR          ,  CALL_STATE_ERROR          },
+/*ERROR          */  {CALL_STATE_ERROR    , CALL_STATE_ERROR , CALL_STATE_ERROR          , CALL_STATE_ERROR          ,  CALL_STATE_ERROR          }
+};
+
+const function Call::functionMap[11][5] = 
+{ 
+//                      ACCEPT               REFUSE            TRANSFER                 HOLD                  RECORD
+/*INCOMING       */  {&Call::accept     , &Call::refuse   , &Call::acceptTransf   , &Call::acceptHold  ,  &Call::switchRecord  },
+/*RINGING        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::switchRecord  },
+/*CURRENT        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },
+/*DIALING        */  {&Call::call       , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::switchRecord  },
+/*HOLD           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     },
+/*FAILURE        */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
+/*BUSY           */  {&Call::nothing    , &Call::hangUp   , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
+/*TRANSFERT      */  {&Call::transfer   , &Call::hangUp   , &Call::nothing        , &Call::hold        ,  &Call::setRecord     },
+/*TRANSFERT_HOLD */  {&Call::transfer   , &Call::hangUp   , &Call::nothing        , &Call::unhold      ,  &Call::setRecord     },
+/*OVER           */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       },
+/*ERROR          */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       }
+};
+
 
 Call::Call(call_state startState, QString callId)
-{
-	this->automate = new Automate(startState);
-	this->id = callId;
+{	
+	this->callId = callId;
 	this->item = new QListWidgetItem("");
+	this->recording = false;
+	this->currentState = startState;
 }
 
 Call::Call(call_state startState, QString callId, QString from, Account & account)
 {
-	this->automate = new Automate(startState);
-	this->id = callId;
+	this->callId = callId;
 	this->item = new QListWidgetItem(from);
 	this->account = & account;
+	this->recording = false;
+	this->currentState = startState;
 }
 
 Call::~Call()
 {
 	delete item;
-	delete automate;
 }
 	
 Call * Call::buildDialingCall(QString callId)
@@ -41,15 +79,124 @@ QListWidgetItem * Call::getItem()
 
 call_state Call::getState() const
 {
-	return automate->getCurrentState();
+	return currentState;
 }
 
 call_state Call::action(call_action action, QString number)
 {
-	return automate->action(action, id, number);
+	call_state previousState = currentState;
+	//execute the action associated with this transition
+	(this->*(functionMap[currentState][action]))(number);
+	//update the state
+	currentState = stateMap[currentState][action];
+	qDebug() << "Calling action " << action << " on call with state " << previousState << ". Become " << currentState;
+	//return the new state
+	return currentState;
 }
 
 QString Call::getCallId()
 {
-	return id;
+	return callId;
 }
+
+call_state Call::getCurrentState() const
+{
+	return currentState;
+}
+
+
+
+
+
+
+
+
+/*************************************************
+*************   Automate functions   *************
+*************************************************/
+
+
+void Call::nothing(QString number)
+{
+}
+
+void Call::accept(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Accepting call. callId : " << callId;
+	callManager.accept(callId);
+}
+
+void Call::refuse(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Refusing call. callId : " << callId;
+	callManager.refuse(callId);
+}
+
+void Call::acceptTransf(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Accepting call and transfering it to number : " << number << ". callId : " << callId;
+	callManager.accept(callId);
+	callManager.transfert(callId, number);
+}
+
+void Call::acceptHold(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Accepting call and holding it. callId : " << callId;
+	callManager.accept(callId);
+	callManager.hold(callId);
+}
+
+void Call::hangUp(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Hanging up call. callId : " << callId;
+	callManager.hangUp(callId);
+}
+
+void Call::hold(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Holding call. callId : " << callId;
+	callManager.hold(callId);
+}
+
+void Call::call(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	QString account = SFLPhone::firstAccount();
+	qDebug() << "Calling " << number << " with account " << account << ". callId : " << callId;
+	callManager.placeCall(account, callId, number);
+}
+
+void Call::transfer(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	QString account = SFLPhone::firstAccount();
+	qDebug() << "Transfering call to number : " << number << ". callId : " << callId;
+	callManager.transfert(callId, number);
+}
+
+void Call::unhold(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Unholding call. callId : " << callId;
+	callManager.unhold(callId);
+}
+
+void Call::switchRecord(QString number)
+{
+	qDebug() << "Switching record state for call automate. callId : " << callId;
+	recording = !recording;
+}
+
+void Call::setRecord(QString number)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	qDebug() << "Setting record for call. callId : " << callId;
+	callManager.unhold(callId);
+}
+
