@@ -498,7 +498,7 @@ process_dialing(call_t * c, guint keyval, gchar * key)
             break;
         default:
             // if (keyval < 255 || (keyval >65453 && keyval < 65466))
-            if (keyval < 127 || (keyval > 65455 && keyval < 65466))
+            if (keyval < 127 || (keyval > 65400 && keyval < 65466))
             { 
 
                 if(c->state != CALL_STATE_TRANSFERT)
