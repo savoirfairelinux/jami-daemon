@@ -124,36 +124,20 @@
         <property name="text" >
          <string>Général</string>
         </property>
-        <property name="icon" >
-         <iconset>
-          <normaloff>:/Images/sflphone.png</normaloff>:/Images/sflphone.png</iconset>
-        </property>
        </item>
        <item>
         <property name="text" >
          <string>Affichage</string>
-        </property>
-        <property name="icon" >
-         <iconset>
-          <normaloff>:/Images/sflphone.png</normaloff>:/Images/sflphone.png</iconset>
         </property>
        </item>
        <item>
         <property name="text" >
          <string>Comptes</string>
         </property>
-        <property name="icon" >
-         <iconset>
-          <normaloff>:/Images/stock_person.svg</normaloff>:/Images/stock_person.svg</iconset>
-        </property>
        </item>
        <item>
         <property name="text" >
          <string>Audio</string>
-        </property>
-        <property name="icon" >
-         <iconset>
-          <normaloff>:/Images/icon_volume_off.svg</normaloff>:/Images/icon_volume_off.svg</iconset>
         </property>
        </item>
       </widget>

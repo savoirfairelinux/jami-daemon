@@ -56,6 +56,10 @@
       <arg type="d" name="value" direction="out"/>
     </method>
     
+	 <method name="setRecording">
+		 <arg type="s" name="callID" direction="in"/>
+    </method>
+	 
     <method name="getCallDetails">
       <arg type="s" name="callID" direction="in"/>
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>

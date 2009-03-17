@@ -48,7 +48,7 @@
 #define ICON_FAILURE ":/images/icons/fail.svg"
 #define ICON_BUSY ":/images/icons/busy.svg"
 #define ICON_TRANSFER ":/images/icons/transfert.svg"
-#define ICON_TRANSFER_HOLD ":/images/icons/transfert.svg"
+#define ICON_TRANSF_HOLD ":/images/icons/transfert.svg"
 
 #define ICON_CALL ":/images/icons/call.svg"
 #define ICON_HANGUP ":/images/icons/hang_up.svg"
@@ -93,6 +93,13 @@
 #define ACCOUNT_STATE_ERROR_HOST         "ERROR_HOST"
 #define ACCOUNT_STATE_ERROR_CONF_STUN    "ERROR_CONF_STUN"
 #define ACCOUNT_STATE_ERROR_EXIST_STUN   "ERROR_EXIST_STUN"
+
+#define CALL_STATE_CHANGE_HUNG_UP         "HUNGUP"
+#define CALL_STATE_CHANGE_RINGING         "RINGING"
+#define CALL_STATE_CHANGE_CURRENT         "CURRENT"
+#define CALL_STATE_CHANGE_HOLD            "HOLD"
+#define CALL_STATE_CHANGE_BUSY            "BUSY"
+#define CALL_STATE_CHANGE_FAILURE         "FAILURE"
 
 #define MAX_HISTORY_CAPACITY      60
 

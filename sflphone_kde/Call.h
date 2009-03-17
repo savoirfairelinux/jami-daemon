@@ -25,7 +25,7 @@ typedef enum
    /** Call is being transfered.  During this state, the user can enter the new number. */
    CALL_STATE_TRANSFER,
    /** Call is on hold for transfer */
-   CALL_STATE_TRANSFER_HOLD,
+   CALL_STATE_TRANSF_HOLD,
    /** Call is over and should not be used */
    CALL_STATE_OVER,
    /** This state should never be reached */
@@ -46,8 +46,22 @@ typedef enum
    /** Blue-green button, hold or unhold the call */
    CALL_ACTION_HOLD,
    /** Record button, enable or disable recording */
-   CALL_ACTION_RECORD
+   CALL_ACTION_RECORD,
+   /** Other user state changes */
+   CALL_ACTION_STATE_CHANGED
 } call_action;
+
+/**
+ * @enum history_state
+ * This enum have all the state a call can take in the history
+ */
+typedef enum
+{
+  NONE,
+  INCOMING,
+  OUTGOING,
+  MISSED
+} history_state;
 
 
 class Call;
@@ -59,15 +73,14 @@ class Call
 private:
 
 	//Call attributes
-	Account * account;
+	QString account;
 	QString callId;
 	QString from;
 	QString to;
-//	HistoryState * historyState;
-	QTime start;
-	QTime stop;
+	history_state historyState;
+	QDateTime * startTime;
+	QDateTime * stopTime;
 	QListWidgetItem * item;
-	//Automate * automate;
 	
 	//Automate attributes
 	static const call_state stateMap [11][5];
@@ -76,7 +89,7 @@ private:
 	bool recording;
 
 	Call(call_state startState, QString callId);
-	Call(call_state startState, QString callId, QString from, Account & account);
+	Call(call_state startState, QString callId, QString from, QString account);
 	
 	//Automate functions
 	void nothing(QString number);
@@ -96,10 +109,11 @@ public:
 	
 	~Call();
 	static Call * buildDialingCall(QString callId);
-	static Call * buildIncomingCall(QString callId, QString from, Account & account);
+	static Call * buildIncomingCall(const QString & callId, const QString & from, const QString & account);
 	QListWidgetItem * getItem();
 	call_state getState() const;
 	QString getCallId();
+	call_state stateChanged(const QString & newState);
 	call_state action(call_action action, QString number = NULL);
 	call_state getCurrentState() const;
 

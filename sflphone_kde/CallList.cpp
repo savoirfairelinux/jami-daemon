@@ -7,7 +7,7 @@ CallList::CallList()
 }
 
 
-Call * CallList::operator[](QListWidgetItem * item)
+Call * CallList::operator[](const QListWidgetItem * item)
 {
 	for(int i = 0 ; i < size() ; i++)
 	{
@@ -19,9 +19,21 @@ Call * CallList::operator[](QListWidgetItem * item)
 	return NULL;
 }
 
+Call * CallList::operator[](const QString & callId)
+{
+	for(int i = 0 ; i < size() ; i++)
+	{
+		if ((*calls)[i]->getCallId() == callId)
+		{
+			return (*calls)[i];
+		}
+	}
+	return NULL;
+}
+
 QString CallList::getAndIncCallId()
 {
-	QString res = QString::number(callIdCpt);
+	QString res = QString::number(callIdCpt++);
 	
 	return res;
 }
@@ -38,7 +50,7 @@ QListWidgetItem * CallList::addDialingCall()
 	return call->getItem();
 }
 
-QListWidgetItem * CallList::addIncomingCall(QString callId, QString from, Account & account)
+QListWidgetItem * CallList::addIncomingCall(const QString & callId, const QString & from, const QString & account)
 {
 	Call * call = Call::buildIncomingCall(callId, from, account);
 	calls->append(call);

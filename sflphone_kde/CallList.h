@@ -14,10 +14,12 @@ public:
 	CallList();
 	~CallList();
 
-	Call * operator[](QListWidgetItem * item);
+	Call * operator[](const QListWidgetItem * item);
+	Call * operator[](const QString & callId);
+	void remove(Call * call);
 
 	QListWidgetItem * addDialingCall();
-	QListWidgetItem * addIncomingCall(QString callId, QString from, Account & account);
+	QListWidgetItem * addIncomingCall(const QString & callId, const QString & from, const QString & account);
 
 	QString getAndIncCallId();
 	int size();

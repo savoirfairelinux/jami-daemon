@@ -87,6 +87,7 @@ void SFLPhone::action(QListWidgetItem * item, call_action action)
 	updateWindowCallState();
 }
 
+
 /*******************************************
 ******** Update Display Functions **********
 *******************************************/
@@ -100,6 +101,7 @@ void SFLPhone::updateWindowCallState()
 	char * iconFile;
 	char * buttonIconFiles[3] = {ICON_CALL, ICON_HANGUP, ICON_HOLD};
 	bool transfer = false;
+	bool record = false;
 	
 	if (!item)
 	{
@@ -173,7 +175,8 @@ void SFLPhone::updateWindowCallState()
 				break;
 			case CALL_STATE_OVER:
 				qDebug() << "Reached CALL_STATE_OVER. Deleting call " << (*callList)[item]->getCallId();
-				delete (*callList)[item];
+				//delete (*callList)[item];
+				callList->remove((*callList)[item]);
 				return;
 				break;
 			case CALL_STATE_ERROR:
@@ -500,17 +503,22 @@ void SFLPhone::on_actionBoite_vocale_triggered()
 
 void SFLPhone::on_callStateChanged(const QString &callID, const QString &state)
 {
-	qDebug() << "on_callStateChanged !";
+	qDebug() << "on_callStateChanged " << callID << " . New state : " << state;
+	(*callList)[callID]->action(CALL_ACTION_STATE_CHANGED, state);
+	updateWindowCallState();
 }
 
 void SFLPhone::on_error(MapStringString details)
 {
-	qDebug() << "on_error !";
+	qDebug() << "Daemon error : " << details;
 }
 
-void SFLPhone::on_incomingCall(const QString &accountID, const QString &callID, const QString &from)
+void SFLPhone::on_incomingCall(const QString &accountID, const QString & callID, const QString &from)
 {
 	qDebug() << "Incoming Call !";
+	QListWidgetItem * item = callList->addIncomingCall(callID, from, accountID);
+	listWidget_callList->addItem(item);
+	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 }
 
 void SFLPhone::on_incomingMessage(const QString &accountID, const QString &message)
