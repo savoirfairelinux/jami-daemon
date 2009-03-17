@@ -257,6 +257,15 @@
       <arg type="i" name="state" direction="out"/>
     </method>
 
+    <!-- Addressbook configuration -->
+    <method name="getAddressbookSettings">
+      <arg type="a{si}" name="settings" direction="out"/>
+    </method>
+
+    <method name="setAddressbookSettings">
+      <arg type="a{si}" name="settings" direction="in"/>
+    </method>
+
   <!--        /////////////////////////////       -->
     <signal name="parametersChanged">
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>

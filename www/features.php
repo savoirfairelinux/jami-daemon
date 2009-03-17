@@ -21,7 +21,7 @@ include('include/header.php');
                     <a href="http://www.pulseaudio.org">PulseAudio</a>  
                     sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
                     <br/> 
-                    The GTK+ graphical user interface provides you an intuitiv and easy way to phone, and, thanks to the integration of the GNOME desktop notification, you will never miss a call.
+                    The GTK+ graphical user interface provides you an intuitive and easy way to phone, and, thanks to the integration of the GNOME desktop notification, you will never miss a call.
                     <br/>
                     </p>
                 </td>
@@ -41,7 +41,7 @@ include('include/header.php');
                     <br/>
                     Connect it to 
                     <a href="http://www.asterisk.org">Asterisk</a> 
-                    PABX to get the best of it. 
+                    PBX to get the best of it. 
                     <br/>
                     </p>
                 </td>
@@ -51,7 +51,7 @@ include('include/header.php');
                 </td>
                 <td>
                     <br/><br/>
-                    <a href="http://dev.savoirfairelinux.net/sflphone/">more information ...</a> | 
+                    <a href="http://projects.savoirfairelinux.net/wiki/sflphone/AboutSFLphone#Features">complete list of features ...</a> | 
                     <a href="download.php"> download</a>  
                 </td>
             </tr>

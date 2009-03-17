@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2004-2006 Savoir-Faire Linux inc.
+ *  Copyright (C) 2004-2009 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -23,9 +24,11 @@
 #include <cc++/thread.h> // for mutex
 #include <sstream>
 
-#include "audio/codecDescriptor.h"
 #include "plug-in/audiorecorder/audiorecord.h"
 
+#define IP_TO_IP_PATTERN       "ip:"
+
+#define CallConfigNULL          NULL
 /* 
  * @file call.h 
  * @brief A call is the base class for protocol-based calls
@@ -36,275 +39,232 @@ typedef std::string CallID;
 class AudioRecord;
 
 class Call{
-  public:
-    /**
-     * This determines if the call originated from the local user (Outgoing)
-     * or from some remote peer (Incoming).
-     */
-    enum CallType {Incoming, Outgoing};
+    public:
 
-    /**
-     * Tell where we're at with the call. The call gets Connected when we know
-     * from the other end what happened with out call. A call can be 'Connected'
-     * even if the call state is Busy, Refused, or Error.
-     *
-     * Audio should be transmitted when ConnectionState = Connected AND
-     * CallState = Active.
-     */
-    enum ConnectionState {Disconnected, Trying, Progressing, Ringing, Connected};
+        /**
+         * This determines if the call is a direct IP-to-IP call or a classic call, made with an existing account
+         */
+        enum CallConfiguration {Classic, IPtoIP};
 
-    /**
-     * The Call State.
-     */
-    enum CallState {Inactive, Active, Hold, Busy, Refused, Error};
+        /**
+         * This determines if the call originated from the local user (Outgoing)
+         * or from some remote peer (Incoming).
+         */
+        enum CallType {Incoming, Outgoing};
 
-    /**
-     * Constructor of a call
-     * @param id Unique identifier of the call
-     * @param type set definitely this call as incoming/outgoing
-     */
-    Call(const CallID& id, Call::CallType type);
-    virtual ~Call();
+        /**
+         * Tell where we're at with the call. The call gets Connected when we know
+         * from the other end what happened with out call. A call can be 'Connected'
+         * even if the call state is Busy, Refused, or Error.
+         *
+         * Audio should be transmitted when ConnectionState = Connected AND
+         * CallState = Active.
+         */
+        enum ConnectionState {Disconnected, Trying, Progressing, Ringing, Connected};
 
-    /** 
-     * Return a reference on the call id
-     * @return call id
-     */
-    CallID& getCallId() {return _id; }
+        /**
+         * The Call State.
+         */
+        enum CallState {Inactive, Active, Hold, Busy, Refused, Error};
 
-    /** 
-     * Set the peer number (destination on outgoing)
-     * not protected by mutex (when created)
-     * @param number peer number
-     */
-    void setPeerNumber(const std::string& number) {  _peerNumber = number; }
+        /**
+         * Constructor of a call
+         * @param id Unique identifier of the call
+         * @param type set definitely this call as incoming/outgoing
+         */
+        Call(const CallID& id, Call::CallType type);
+        virtual ~Call();
 
-    /** 
-     * Get the peer number (destination on outgoing)
-     * not protected by mutex (when created)
-     * @return std::string The peer number
-     */
-    const std::string& getPeerNumber() {  return _peerNumber; }
+        /** 
+         * Return a reference on the call id
+         * @return call id
+         */
+        CallID& getCallId() {return _id; }
 
-    /** 
-     * Set the peer name (caller in ingoing)
-     * not protected by mutex (when created)
-     * @param name The peer name
-     */
-    void setPeerName(const std::string& name) {  _peerName = name; }
+        /** 
+         * Set the peer number (destination on outgoing)
+         * not protected by mutex (when created)
+         * @param number peer number
+         */
+        void setPeerNumber(const std::string& number) {  _peerNumber = number; }
 
-    /** 
-     * Get the peer name (caller in ingoing)
-     * not protected by mutex (when created)
-     * @return std::string The peer name
-     */
-    const std::string& getPeerName() {  return _peerName; }
+        /** 
+         * Get the peer number (destination on outgoing)
+         * not protected by mutex (when created)
+         * @return std::string The peer number
+         */
+        const std::string& getPeerNumber() {  return _peerNumber; }
 
-    /**
-     * Tell if the call is incoming
-     * @return true if yes
-     *	      false otherwise
-     */
-    bool isIncoming() { return (_type == Incoming) ? true : false; }
+        /** 
+         * Set the peer name (caller in ingoing)
+         * not protected by mutex (when created)
+         * @param name The peer name
+         */
+        void setPeerName(const std::string& name) {  _peerName = name; }
 
-    /** 
-     * Set the connection state of the call (protected by mutex)
-     * @param state The connection state
-     */
-    void setConnectionState(ConnectionState state);
-    
-    /** 
-     * Get the connection state of the call (protected by mutex)
-     * @return ConnectionState The connection state
-     */
-    ConnectionState getConnectionState();
+        /** 
+         * Get the peer name (caller in ingoing)
+         * not protected by mutex (when created)
+         * @return std::string The peer name
+         */
+        const std::string& getPeerName() {  return _peerName; }
 
-    /**
-     * Set the state of the call (protected by mutex)
-     * @param state The call state
-     */
-    void setState(CallState state);
+        /**
+         * Tell if the call is incoming
+         * @return true if yes
+         *	      false otherwise
+         */
+        bool isIncoming() { return (_type == Incoming) ? true : false; }
 
-    /** 
-     * Get the call state of the call (protected by mutex)
-     * @return CallState  The call state
-     */
-    CallState getState();
+        /** 
+         * Set the connection state of the call (protected by mutex)
+         * @param state The connection state
+         */
+        void setConnectionState(ConnectionState state);
 
-    /**
-     * Set the audio start boolean (protected by mutex)
-     * @param start true if we start the audio
-     *		    false otherwise
-     */
-    void setAudioStart(bool start);
+        /** 
+         * Get the connection state of the call (protected by mutex)
+         * @return ConnectionState The connection state
+         */
+        ConnectionState getConnectionState();
 
-    /**
-     * Tell if the audio is started (protected by mutex)
-     * @return true if it's already started
-     *	      false otherwise
-     */
-    bool isAudioStarted();
+        /**
+         * Set the state of the call (protected by mutex)
+         * @param state The call state
+         */
+        void setState(CallState state);
 
-    // AUDIO
-    /** 
-     * Set internal codec Map: initialization only, not protected 
-     * @param map The codec map
-     */
-    void setCodecMap(const CodecDescriptor& map) { _codecMap = map; } 
+        /** 
+         * Get the call state of the call (protected by mutex)
+         * @return CallState  The call state
+         */
+        CallState getState();
 
-    /** 
-     * Get internal codec Map: initialization only, not protected 
-     * @return CodecDescriptor	The codec map
-     */
-    CodecDescriptor& getCodecMap();
+        void setCallConfiguration (Call::CallConfiguration callConfig) { _callConfig = callConfig; }
+        
+        Call::CallConfiguration getCallConfiguration (void) { return _callConfig; }
+        
+        /**
+         * Set the audio start boolean (protected by mutex)
+         * @param start true if we start the audio
+         *		    false otherwise
+         */
+        void setAudioStart(bool start);
 
-    /** 
-     * Set my IP [not protected] 
-     * @param ip  The local IP address
-     */
-    void setLocalIp(const std::string& ip)     { _localIPAddress = ip; }
+        /**
+         * Tell if the audio is started (protected by mutex)
+         * @return true if it's already started
+         *	      false otherwise
+         */
+        bool isAudioStarted();
 
-    /** 
-     * Set local audio port, as seen by me [not protected]
-     * @param port  The local audio port
-     */
-    void setLocalAudioPort(unsigned int port)  { _localAudioPort = port;}
+        /** 
+         * Set my IP [not protected] 
+         * @param ip  The local IP address
+         */
+        void setLocalIp(const std::string& ip)     { _localIPAddress = ip; }
 
-    /** 
-     * Set the audio port that remote will see.
-     * @param port  The external audio port
-     */
-    void setLocalExternAudioPort(unsigned int port) { _localExternalAudioPort = port; }
+        /** 
+         * Set local audio port, as seen by me [not protected]
+         * @param port  The local audio port
+         */
+        void setLocalAudioPort(unsigned int port)  { _localAudioPort = port;}
 
-    /** 
-     * Return the audio port seen by the remote side. 
-     * @return unsigned int The external audio port
-    */
-    unsigned int getLocalExternAudioPort() { return _localExternalAudioPort; }
+        /** 
+         * Set the audio port that remote will see.
+         * @param port  The external audio port
+         */
+        void setLocalExternAudioPort(unsigned int port) { _localExternalAudioPort = port; }
 
-    /** 
-     * Return my IP [mutex protected] 
-     * @return std::string The local IP
-     */
-    const std::string& getLocalIp();
+        /** 
+         * Return the audio port seen by the remote side. 
+         * @return unsigned int The external audio port
+         */
+        unsigned int getLocalExternAudioPort() { return _localExternalAudioPort; }
 
-    /** 
-     * Return port used locally (for my machine) [mutex protected] 
-     * @return unsigned int  The local audio port
-     */
-    unsigned int getLocalAudioPort();
+        /** 
+         * Return my IP [mutex protected] 
+         * @return std::string The local IP
+         */
+        const std::string& getLocalIp();
 
-    /** 
-     * Return audio port at destination [mutex protected] 
-     * @return unsigned int The remote audio port
-     */
-    unsigned int getRemoteAudioPort();
+        /** 
+         * Return port used locally (for my machine) [mutex protected] 
+         * @return unsigned int  The local audio port
+         */
+        unsigned int getLocalAudioPort();
 
-    /** 
-     * Return IP of destination [mutex protected]
-     * @return const std:string	The remote IP address
-     */
-    const std::string& getRemoteIp();
+        /**
+         * @return Return the file name for this call
+         */
+        std::string getFileName() {return _filename;}
 
-    /** 
-     * Return audio codec [mutex protected]
-     * @return AudioCodecType The payload of the codec
-     */
-    AudioCodecType getAudioCodec();
+        /**
+         * A recorder for this call
+         */
+        AudioRecord recAudio;
 
-    /**
-     * @return Return the file name for this call
-     */
-    std::string getFileName() {return _filename;}
+        /**
+         * SetRecording
+         */
+        void setRecording();
 
-    /**
-     * A recorder for this call
-     */
-    AudioRecord recAudio;
-  
-    /**
-     * SetRecording
-     */
-    void setRecording();
+        /**
+         * stopRecording, make sure the recording is stopped (whe transfering call)
+         */
+        void stopRecording();
 
-    /**
-     * stopRecording, make sure the recording is stopped (whe transfering call)
-     */
-    void stopRecording();
-    
-    /**
-     * Return Recording state
-     */
-    bool isRecording(); 
+        /**
+         * Return Recording state
+         */
+        bool isRecording(); 
 
-  protected:
-    /** Protect every attribute that can be changed by two threads */
-    ost::Mutex _callMutex;
+        /**
+         *
+         */
+        void initRecFileName();
 
-    /** 
-     * Set remote's IP addr. [not protected]
-     * @param ip  The remote IP address
-     */
-    void setRemoteIP(const std::string& ip)    { _remoteIPAddress = ip; }
+    protected:
+        /** Protect every attribute that can be changed by two threads */
+        ost::Mutex _callMutex;
 
-    /** 
-     * Set remote's audio port. [not protected]
-     * @param port  The remote audio port
-     */
-    void setRemoteAudioPort(unsigned int port) { _remoteAudioPort = port; }
+        bool _audioStarted;
 
-    /** 
-     * Set the audio codec used.  [not protected] 
-     * @param audioCodec  The payload of the codec
-     */
-    void setAudioCodec(AudioCodecType audioCodec) { _audioCodec = audioCodec; }
+        // Informations about call socket / audio
 
-    /** Codec Map */
-    CodecDescriptor _codecMap;
+        /** My IP address */
+        std::string  _localIPAddress;
 
-    /** Codec pointer */
-    AudioCodecType _audioCodec;
+        /** Local audio port, as seen by me. */
+        unsigned int _localAudioPort;
 
-    bool _audioStarted;
-
-    // Informations about call socket / audio
-
-    /** My IP address */
-    std::string  _localIPAddress;
-
-    /** Local audio port, as seen by me. */
-    unsigned int _localAudioPort;
-
-    /** Port assigned to my machine by the NAT, as seen by remote peer (he connects there) */
-    unsigned int _localExternalAudioPort;
-
-    /** Remote's IP address */
-    std::string  _remoteIPAddress;
-
-    /** Remote's audio port */
-    unsigned int _remoteAudioPort;
+        /** Port assigned to my machine by the NAT, as seen by remote peer (he connects there) */
+        unsigned int _localExternalAudioPort;
 
 
-  private:  
-  
-    /** Unique ID of the call */
-    CallID _id;
+    private:  
 
-    /** Type of the call */
-    CallType _type;
-    /** Disconnected/Progressing/Trying/Ringing/Connected */
-    ConnectionState _connectionState;
-    /** Inactive/Active/Hold/Busy/Refused/Error */
-    CallState _callState;
+        /** Unique ID of the call */
+        CallID _id;
 
-    /** Name of the peer */
-    std::string _peerName;
+        /** Type of the call */
+        CallType _type;
+        /** Disconnected/Progressing/Trying/Ringing/Connected */
+        ConnectionState _connectionState;
+        /** Inactive/Active/Hold/Busy/Refused/Error */
+        CallState _callState;
 
-    /** Number of the peer */
-    std::string _peerNumber;
+        /** Direct IP-to-IP or classic call */
+        CallConfiguration _callConfig;
 
-    /** File name for his call : time YY-MM-DD */
-    std::string _filename;
+        /** Name of the peer */
+        std::string _peerName;
+
+        /** Number of the peer */
+        std::string _peerNumber;
+
+        /** File name for his call : time YY-MM-DD */
+        std::string _filename;
 };
 
 #endif

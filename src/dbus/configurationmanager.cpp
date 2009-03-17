@@ -425,3 +425,11 @@ int32_t ConfigurationManager::isStunEnabled (void)
 {
     return Manager::instance().isStunEnabled();
 }
+
+std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (void) {
+    return Manager::instance().getAddressbookSettings ();
+}
+
+void ConfigurationManager::setAddressbookSettings (const std::map<std::string, int32_t>& settings) {
+    Manager::instance().setAddressbookSettings (settings);
+}

@@ -30,15 +30,17 @@ static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
     static_cast<PulseLayer*>(userdata)->processData();
 }
 
+
+
     PulseLayer::PulseLayer(ManagerImpl* manager)
     : AudioLayer( manager , PULSEAUDIO ) 
     , context(NULL)
     , m(NULL)
     , playback()
-      , record()
+    , record()
 {
     PulseLayer::streamState = 0;
-    _debug("Pulse audio constructor: Create context\n");
+    _debug("PulseLayer::Pulse audio constructor: Create context\n");
 }
 
 // Destructor
@@ -53,7 +55,7 @@ PulseLayer::~PulseLayer (void)
     void
 PulseLayer::closeLayer( void )
 { 
-    _debug(" Destroy pulselayer\n");
+    _debug("PulseLayer::closeLayer :: Destroy pulselayer\n");
 
     playback->disconnect(); 
     record->disconnect();
@@ -69,6 +71,7 @@ PulseLayer::closeLayer( void )
     void
 PulseLayer::connectPulseAudioServer( void )
 {
+    _debug("PulseLayer::connectPulseAudioServer \n");
     pa_context_flags_t flag = PA_CONTEXT_NOAUTOSPAWN ;  
 
     pa_threaded_mainloop_lock( m );
@@ -94,7 +97,7 @@ PulseLayer::connectPulseAudioServer( void )
 
 void PulseLayer::context_state_callback( pa_context* c, void* user_data )
 {
-    _debug("The state of the context changed\n");
+    _debug("PulseLayer::context_state_callback ::The state of the context changed\n");
     PulseLayer* pulse = (PulseLayer*)user_data;
     assert(c && pulse->m);
     switch(pa_context_get_state(c)){
@@ -105,7 +108,8 @@ void PulseLayer::context_state_callback( pa_context* c, void* user_data )
             break;
         case PA_CONTEXT_READY:
             pulse->createStreams( c );
-            _debug("Connection to PulseAudio server established\n");	
+            _debug("Connection to PulseAudio server established\n");
+            	
             break;
         case PA_CONTEXT_TERMINATED:
             _debug("Context terminated\n");
@@ -121,6 +125,7 @@ void PulseLayer::context_state_callback( pa_context* c, void* user_data )
 
 void PulseLayer::disconnectPulseAudioServer( void )
 {
+  _debug(" PulseLayer::disconnectPulseAudioServer( void ) \n");
     if( playback )
         delete playback; playback=NULL;
 
@@ -128,22 +133,29 @@ void PulseLayer::disconnectPulseAudioServer( void )
         delete record; record=NULL;
 }
 
-    void
-PulseLayer::createStreams( pa_context* c )
+
+void PulseLayer::createStreams( pa_context* c )
 {
+    _debug("PulseLayer::createStreams \n");
+    
     playback = new AudioStream(c, PLAYBACK_STREAM, PLAYBACK_STREAM_NAME, _manager->getSpkrVolume());
-    pa_stream_set_write_callback( playback->pulseStream() , audioCallback, this);
-    //pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
+    pa_stream_set_write_callback( playback->pulseStream(), audioCallback, this);
+    // pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
+    // pa_stream_set_suspended_callback( playback->pulseStream(), stream_suspended_callback, this);
+    
     record = new AudioStream(c, CAPTURE_STREAM, CAPTURE_STREAM_NAME , _manager->getMicVolume());
     pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
-    //pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
+    // pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
+    // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
+
 
     pa_threaded_mainloop_signal(m , 0);
 }
 
-    bool 
-PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED) 
+
+bool PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED) 
 {
+    _debug("PulseLayer::openDevice \n");
     _sampleRate = sampleRate;
     _frameSize = frameSize;	
 
@@ -161,23 +173,22 @@ PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleRate, 
     assert(context);
 
     connectPulseAudioServer();
+ 
+    // startStream();
 
     _debug("Connection Done!! \n");
     return true;
 }
 
-    void 
-PulseLayer::closeCaptureStream( void )
+void PulseLayer::closeCaptureStream( void )
 {
 }
 
-    void 
-PulseLayer::closePlaybackStream( void )
-{
+void PulseLayer::closePlaybackStream( void )
+{ 
 }
 
-    int
-PulseLayer::canGetMic()
+int PulseLayer::canGetMic()
 {
     if( record )
         return  _micRingBuffer.AvailForGet();
@@ -185,8 +196,7 @@ PulseLayer::canGetMic()
         return 0;
 }
 
-    int 
-PulseLayer::getMic(void *buffer, int toCopy)
+int PulseLayer::getMic(void *buffer, int toCopy)
 {
     if( record ){
         return _micRingBuffer.Get(buffer, toCopy, 100);
@@ -195,13 +205,15 @@ PulseLayer::getMic(void *buffer, int toCopy)
         return 0;
 }
 
-    void 
-PulseLayer::startStream (void) 
+void PulseLayer::startStream (void) 
 {
     flushMic();
-    _debug("Start stream\n");
+    _debug("PulseLayer::Start stream\n");
     pa_threaded_mainloop_lock(m);
-    pa_stream_cork( record->pulseStream(), NULL, NULL, NULL);
+   
+    pa_stream_cork( playback->pulseStream(), 0, NULL, NULL);
+    pa_stream_cork( record->pulseStream(), 0, NULL, NULL);
+  
     pa_threaded_mainloop_unlock(m);
 
 }
@@ -209,52 +221,62 @@ PulseLayer::startStream (void)
     void 
 PulseLayer::stopStream (void) 
 {
-    _debug("Stop stream\n");
-    pa_stream_flush( playback->pulseStream(), NULL, NULL );
-    pa_stream_flush( record->pulseStream(), NULL, NULL );
+    _debug("PulseLayer::Stop stream\n");
+     pa_stream_flush( playback->pulseStream(), NULL, NULL );
+     pa_stream_flush( record->pulseStream(), NULL, NULL );
+    
+    
     flushMic();
     flushMain();
     flushUrgent();
+
+    pa_stream_cork( playback->pulseStream(), 1, NULL, NULL);
+    pa_stream_cork( record->pulseStream(), 1, NULL, NULL); 
 }
 
 
 
-    void 
-PulseLayer::underflow ( pa_stream* s UNUSED,  void* userdata UNUSED )
+void PulseLayer::underflow ( pa_stream* s UNUSED,  void* userdata UNUSED )
 { 
-    _debug("Buffer Underflow\n");
+    _debug("PulseLayer::Buffer Underflow\n");
 }
 
 
-    void 
-PulseLayer::overflow ( pa_stream* s, void* userdata UNUSED )
+void PulseLayer::overflow ( pa_stream* s, void* userdata UNUSED )
 { 
     //PulseLayer* pulse = (PulseLayer*) userdata;
     pa_stream_drop( s );
     pa_stream_trigger( s, NULL, NULL);
 }
 
-    void
-PulseLayer::processData( void )
+void PulseLayer::stream_suspended_callback(pa_stream *s, void *userdata UNUSED ) 
 {
-    // Handle the mic
-    // We check if the stream is ready
-    if( (record->pulseStream()) && pa_stream_get_state( record->pulseStream()) == PA_STREAM_READY) 
-        readFromMic();
+    
+}
 
-    // Handle the data for the speakers
-    if( (playback->pulseStream()) && pa_stream_get_state( playback->pulseStream()) == PA_STREAM_READY){
+void PulseLayer::processData( void )
+{
+  
+
+        // Handle the mic
+        // We check if the stream is ready
+        if( (record->pulseStream()) && (pa_stream_get_state( record->pulseStream()) == PA_STREAM_READY)) 
+            readFromMic();
+
+        // _debug("PulseLayer::processData() playback->pulseStream() \n");
+    
+        // Handle the data for the speakers
+        if( (playback->pulseStream()) && (pa_stream_get_state( playback->pulseStream()) == PA_STREAM_READY)){
 
         // If the playback buffer is full, we don't overflow it; wait for it to have free space
         if( pa_stream_writable_size(playback->pulseStream()) == 0 )
             return;
-
+        
         writeToSpeaker();
     }
 }
 
-    void
-PulseLayer::writeToSpeaker( void )
+void PulseLayer::writeToSpeaker( void )
 {   
     /** Bytes available in the urgent ringbuffer ( reserved for DTMF ) */
     int urgentAvail; 
@@ -303,6 +325,7 @@ PulseLayer::writeToSpeaker( void )
             else {
                 bzero(out, framesPerBuffer * sizeof(SFLDataFormat));
             }
+
             pa_stream_write( playback->pulseStream() , out , toGet  , NULL, 0 , PA_SEEK_RELATIVE);
             pa_xfree(out);
         }

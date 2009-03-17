@@ -11,7 +11,7 @@ include('include/header.php');
                                     <tbody>
                                     <tr>
                                     	<td >
-                                            <h5>SAVOIR-FAIRE LINUX - À MONTRÉAL</h5>                 	
+                                            <h5>SAVOIR-FAIRE LINUX - IN MONTREAL</h5>                 	
                                             <p>7275 Saint Urbain Bureau 306</p>
                                             <p>Montréal (Québec) H2R 2Y5</p>
                                             <p>Tél. (514) 276-5468</p>
@@ -22,7 +22,7 @@ include('include/header.php');
 
                                     	</td >
                                         <td >  
-                                    	    <h5>À QUÉBEC :</h5>
+                                    	    <h5>IN QUEBEC :</h5>
                                             <p>275, rue du Parvis </p>
                                             <p>Bureau 310 </p>
                                             <p>Québec (Québec) G1K 6G7 </p>
@@ -34,7 +34,7 @@ include('include/header.php');
                                     </tr> 
                                     <tr> 
                                         <td > 
-                                            <h5>À OTTAWA / Gatineau :</h5>
+                                            <h5>IN OTTAWA / Gatineau :</h5>
                                             <p>151, rue Slater</p>
                                             <p>Bureau 504</p>
                                             <p>Ottawa, ON, K1P 5H3</p>

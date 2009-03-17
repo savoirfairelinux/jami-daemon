@@ -38,6 +38,7 @@ GtkWidget * newCallMenu;
 GtkWidget * holdMenu;
 GtkWidget * copyMenu;
 GtkWidget * pasteMenu;
+GtkWidget * recordMenu;
 
 guint holdConnId;     //The hold_menu signal connection ID
 
@@ -55,6 +56,7 @@ void update_menus()
   gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(recordMenu), FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
 
   call_t * selectedCall = call_get_selected(active_calltree);
@@ -83,20 +85,17 @@ void update_menus()
 	gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
 	break;
       case CALL_STATE_CURRENT:
+      case CALL_STATE_RECORD:
 	gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
 	gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
 	gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
+        gtk_widget_set_sensitive( GTK_WIDGET(recordMenu), TRUE);
         gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( holdMenu ), gtk_image_new_from_file( ICONS_DIR "/icon_hold.svg"));
 	break;
       case CALL_STATE_BUSY:
       case CALL_STATE_FAILURE:
 	gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
 	break; 
-      case CALL_STATE_RECORD:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(holdMenu),   TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(newCallMenu),TRUE);
-        break;
       default:
 	g_warning("Should not happen in update_menus()!");
 	break;
@@ -225,6 +224,12 @@ call_hang_up ( void * foo UNUSED)
   sflphone_hang_up();
 }
 
+static void 
+call_record ( void * foo UNUSED)
+{
+  sflphone_rec_call();
+}
+
   static void 
 call_wizard ( void * foo UNUSED)
 {
@@ -246,22 +251,23 @@ remove_from_history( void * foo UNUSED)
 static void
 call_back( void * foo UNUSED)
 {
-  call_t* selectedCall = call_get_selected( history );
-  call_t* newCall =  g_new0 (call_t, 1);
-  if( selectedCall )
-  {
-    newCall->to = g_strdup(call_get_number(selectedCall));
-    newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
-    newCall->state = CALL_STATE_DIALING;
-    newCall->callID = g_new0(gchar, 30);
-    g_sprintf(newCall->callID, "%d", rand()); 
-    newCall->_start = 0;
-    newCall->_stop = 0;
-    call_list_add(current_calls, newCall);
-    update_call_tree_add(current_calls, newCall);
-    sflphone_place_call(newCall);
-    switch_tab();
-  } 
+    call_t *selected_call, *new_call;
+    gchar *to, *from;
+
+    selected_call = call_get_selected( active_calltree );
+
+    if( selected_call )
+    {
+        to = g_strdup(call_get_number(selected_call));
+        from = g_strconcat("\"\" <", call_get_number(selected_call), ">",NULL);
+
+        create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
+
+        call_list_add(current_calls, new_call);
+        update_call_tree_add(current_calls, new_call);
+        sflphone_place_call(new_call);
+        display_calltree (current_calls);
+    }
 }
     
   GtkWidget * 
@@ -317,6 +323,16 @@ create_call_menu()
       G_CALLBACK (call_hold), 
       NULL);
   gtk_widget_show (menu_items);
+
+  image = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
+  recordMenu = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
+  gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( recordMenu ), image );
+  gtk_menu_shell_append (GTK_MENU_SHELL (menu), recordMenu);
+  gtk_widget_set_sensitive( GTK_WIDGET(recordMenu), FALSE);
+  g_signal_connect_swapped (G_OBJECT (recordMenu), "activate",
+      G_CALLBACK (call_record), 
+      NULL);
+  gtk_widget_show (recordMenu);
 
   // Separator
   menu_items = gtk_separator_menu_item_new ();
@@ -682,7 +698,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 {
   // TODO update the selection to make sure the call under the mouse is the call selected
 
-  gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE;
+  gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE;
   gboolean accounts = FALSE;
 
   call_t * selectedCall = call_get_selected(current_calls);
@@ -707,9 +723,11 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 	hangup = TRUE;
 	accounts = TRUE;
 	break;
+      case CALL_STATE_RECORD:
       case CALL_STATE_CURRENT:
 	hangup = TRUE;
 	hold   = TRUE;
+        record = TRUE;
 	break;
       case CALL_STATE_BUSY:
       case CALL_STATE_FAILURE:
@@ -790,6 +808,18 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 	NULL);
     gtk_widget_show (menu_items);
   }  
+
+   if(record)
+  {
+    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
+    image = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    g_signal_connect (G_OBJECT (menu_items), "activate",
+	G_CALLBACK (call_record), 
+	NULL);
+    gtk_widget_show (menu_items);
+  }
 
   if(accounts)
   {

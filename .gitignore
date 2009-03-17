@@ -7,6 +7,7 @@
 *.Plo
 *.loT
 *.m4
+*.Tpo
 Makefile.in
 *.spec
 /config.*
@@ -82,6 +83,7 @@ libs/utilspp/functor/Makefile
 libs/utilspp/singleton/Makefile
 sflphone-gtk/Makefile
 sflphone-gtk/src/Makefile
+sflphone-gtk/src/contactlist/Makefile
 sflphone-gtk/pixmaps/Makefile
 
 
@@ -107,7 +109,50 @@ sflphone-gtk/pixmaps/Makefile
 /libs/libiax2/ltmain.sh
 /libs/libiax2/iax-config
 /libs/libiax2/configure
+/libs/libiax2/Makefile
+/libs/libiax2/iax2-config
+/libs/libiax2/src/Makefile
 
+## dbus-c++
+libs/dbus-c++/Makefile
+libs/dbus-c++/autom4te.cache/requests
+libs/dbus-c++/config.log
+libs/dbus-c++/Makefile
+libs/dbus-c++/autom4te.cache/requests
+libs/dbus-c++/config.log
+libs/dbus-c++/config.status
+libs/dbus-c++/configure
+libs/dbus-c++/data/Makefile
+libs/dbus-c++/dbus-c++-1-uninstalled.pc
+libs/dbus-c++/dbus-c++-1.pc
+libs/dbus-c++/doc/Doxyfile
+libs/dbus-c++/doc/Makefile
+libs/dbus-c++/examples/Makefile
+libs/dbus-c++/examples/echo/.libs/
+libs/dbus-c++/examples/echo/Makefile
+libs/dbus-c++/examples/echo/echo-client-glue.h
+libs/dbus-c++/examples/echo/echo-client-mt
+libs/dbus-c++/examples/echo/echo-server
+libs/dbus-c++/examples/echo/echo-server-glue.h
+libs/dbus-c++/examples/glib/Makefile
+libs/dbus-c++/examples/glib/dbus-glue.h
+libs/dbus-c++/examples/hal/.libs/
+libs/dbus-c++/examples/hal/Makefile
+libs/dbus-c++/examples/hal/hal-listen
+libs/dbus-c++/examples/properties/.libs/
+libs/dbus-c++/examples/properties/Makefile
+libs/dbus-c++/examples/properties/propsgs-client
+libs/dbus-c++/examples/properties/propsgs-glue-adaptor.h
+libs/dbus-c++/examples/properties/propsgs-glue-proxy.h
+libs/dbus-c++/examples/properties/propsgs-server
+libs/dbus-c++/include/dbus-c++/config.h
+libs/dbus-c++/include/dbus-c++/stamp-h1
+libs/dbus-c++/src/.libs/
+libs/dbus-c++/src/Makefile
+libs/dbus-c++/tools/.libs/
+libs/dbus-c++/tools/Makefile
+libs/dbus-c++/tools/dbusxx-introspect
+libs/dbus-c++/tools/dbusxx-xml2cpp
 
 # Ignore temp files
 *~

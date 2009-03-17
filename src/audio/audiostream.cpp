@@ -53,7 +53,7 @@ AudioStream::disconnect( void )
 void 
 AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
 {
-  _debug("The state of the stream changed\n");
+  _debug("AudioStream::stream_state_callback :: The state of the stream changed\n");
   assert(s);
   switch(pa_stream_get_state(s)){
     case PA_STREAM_CREATING:
@@ -64,7 +64,9 @@ AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
       PulseLayer::streamState++;
       break;
     case PA_STREAM_READY:
-      _debug("Stream successfully created, connected to %s\n", pa_stream_get_device_name( s ));
+ 
+     _debug("Stream successfully created, connected to %s\n", pa_stream_get_device_name( s ));
+     // pa_stream_cork( s, 0, NULL, NULL);
       break;
     case PA_STREAM_UNCONNECTED:
       _debug("Stream unconnected\n");
@@ -76,6 +78,8 @@ AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
       break;
   }
 }
+
+
 
 
   pa_stream*
@@ -98,9 +102,8 @@ AudioStream::createStream( pa_context* c )
     attributes->tlength = 10000;
     attributes->prebuf = 10000;
     attributes->minreq = 940;
-    pa_stream_connect_playback( s , NULL , attributes, 
-				PA_STREAM_INTERPOLATE_TIMING,
-				&_volume, NULL);
+    // pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_INTERPOLATE_TIMING, &_volume, NULL);
+    pa_stream_connect_playback( s , NULL , attributes, PA_STREAM_START_CORKED, &_volume, NULL);
   }
   else if( _streamType == CAPTURE_STREAM ){
     
@@ -108,6 +111,7 @@ AudioStream::createStream( pa_context* c )
     attributes->fragsize = (uint32_t)-1;   
  
     pa_stream_connect_record( s , NULL , attributes , PA_STREAM_START_CORKED );
+    // pa_stream_connect_record( s , NULL , attributes , PA_STREAM_INTERPOLATE_TIMING );
   }
   else if( _streamType == UPLOAD_STREAM ){
     pa_stream_connect_upload( s , 1024  );

@@ -178,6 +178,12 @@ gchar** dbus_get_active_codec_list( void );
 void dbus_set_active_codec_list( const gchar** list );
 
 /**
+ * CallManager - return the codec name
+ * @param call_t* current call
+ */
+gchar* dbus_get_current_codec_name(const call_t * c);
+
+/**
  * ConfigurationManager - Get the list of available input audio plugins
  * @return gchar** The list of plugins
  */
@@ -439,5 +445,20 @@ void dbus_set_record (const call_t * c);
 
 void dbus_set_record_path (const gchar *path);
 gchar* dbus_get_record_path (void);
+
+/**
+ * Encapsulate all the address book-related configuration
+ * Get the configuration
+ */
+GHashTable* dbus_get_addressbook_settings (void);
+
+/**
+ * Encapsulate all the address book-related configuration
+ * Set the configuration
+ */
+void dbus_set_addressbook_settings (GHashTable *);
+
+
+
 
 #endif

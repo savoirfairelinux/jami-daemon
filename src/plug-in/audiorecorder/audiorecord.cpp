@@ -44,9 +44,19 @@ AudioRecord::AudioRecord(){
   byteCounter_ = 0;
   recordingEnabled_ = false;
   fp = 0;
+  nbSamplesMax_ = 3000;
 
   createFilename();
-  
+
+  mixBuffer_ = new SFLDataFormat[nbSamplesMax_];
+  micBuffer_ = new SFLDataFormat[nbSamplesMax_];
+  spkBuffer_ = new SFLDataFormat[nbSamplesMax_];
+}
+
+AudioRecord::~AudioRecord() {
+    delete [] mixBuffer_;
+    delete [] micBuffer_;
+    delete [] spkBuffer_;
 }
 
 
@@ -56,7 +66,6 @@ void AudioRecord::setSndSamplingRate(int smplRate){
 
 void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sndSmplRate, std::string path, std::string id){
  
-  std::string fName;
  
   fileType_ = type;
   sndFormat_ = format;
@@ -64,11 +73,20 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sn
   sndSmplRate_ = sndSmplRate;
   call_id_ = id;
 
-  fName = fileName_;
-  fName.append("-"+call_id_);
-  
-  
-  if (fileType_ == FILE_RAW){
+  savePath_ = path + "/";
+   
+}
+
+
+
+void AudioRecord::initFileName( std::string peerNumber){
+
+   std::string fName;
+   
+   fName = fileName_;
+   fName.append("-"+peerNumber);
+
+    if (fileType_ == FILE_RAW){
      if ( strstr(fileName_, ".raw") == NULL){
        printf("AudioRecord::openFile::concatenate .raw file extension: name : %s \n", fileName_); 
        fName.append(".raw");
@@ -80,8 +98,7 @@ void AudioRecord::setRecordingOption(FILE_TYPE type, SOUND_FORMAT format, int sn
        fName.append(".wav");
      }
    }
-
-   savePath_ = path + "/";
+   
    savePath_.append(fName);
 }
 
@@ -336,22 +353,10 @@ void AudioRecord::closeWavFile()
     _debug("AudioRecord:: Can't closeWavFile, a file has not yet been opened!\n");
     return;
   }
-  /*
-  _debug("AudioRecord::closeWavFile() \n");
-
-  if ( fclose( fp ) != 0)
-    _debug("AudioRecord::closeWavFile()::ERROR: can't close file ab \n");
-
-  
-
-  fp = fopen(fileName_, "rb+");
-  if ( !fp ) {
-    _debug("AudioRecord::closeWavFile() : could not open WAV file rb+!\n");
-    return;
-  }
-  */
+ 
 
   SINT32 bytes = byteCounter_ * channels_;
+  
   fseek(fp, 40, SEEK_SET); // jump to data length
   if (ferror(fp))perror("AudioRecord::closeWavFile()::ERROR: can't reach offset 40\n");
   
@@ -371,9 +376,35 @@ void AudioRecord::closeWavFile()
   if ( fclose( fp ) != 0)
     _debug("AudioRecord::closeWavFile()::ERROR: can't close file\n");
  
-  // i = fclose(fp);
-  // printf("AudioRecord::closeWavFile : indicator i : %i \n",i);
 
+}
+
+void AudioRecord::recSpkrData(SFLDataFormat* buffer, int nSamples) {
+
+  if (recordingEnabled_) {
+   
+    nbSamplesMic_ = nSamples;
+
+    for(int i = 0; i < nbSamplesMic_; i++)
+      micBuffer_[i] = buffer[i];
+  }
+
+  return;
+}
+
+
+void AudioRecord::recMicData(SFLDataFormat* buffer, int nSamples) {
+
+  if (recordingEnabled_) {
+
+    nbSamplesSpk_ = nSamples;
+
+    for(int i = 0; i < nbSamplesSpk_; i++)
+      spkBuffer_[i] = buffer[i];
+
+  }
+
+  return;
 }
 
 
@@ -386,22 +417,13 @@ void AudioRecord::recData(SFLDataFormat* buffer, int nSamples) {
       return;
     }
  
-    // int size = nSamples * (sizeof(SFLDataFormat));
-    // int size = sizeof(buffer);
-    // int count = sizeof(buffer) / sizeof(SFLDataFormat);
-  
-    // printf("AudioRecord : sizeof(buffer) : %d \n",size); 
-    // printf("AudioRecord : sizeof(buffer) / sizeof(SFLDataFormat) : %d \n",count);
-    // printf("AudioRecord : nSamples : %d \n",nSamples);
-    // printf("AudioRecord : buffer: %x : ", buffer);
+   
  
     if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
       if ( fwrite(buffer, sizeof(SFLDataFormat), nSamples, fp) != nSamples)
         _debug("AudioRecord: Could not record data! \n");
       else {
-        // printf("Buffer : %x \n",*buffer);
         fflush(fp);
-        // _debug("Flushing!\n");
         byteCounter_ += (unsigned long)(nSamples*sizeof(SFLDataFormat));
       }
     } 
@@ -420,40 +442,25 @@ void AudioRecord::recData(SFLDataFormat* buffer_1, SFLDataFormat* buffer_2, int 
       return;
     }
 
-    mixBuffer_ = new SFLDataFormat[nSamples_1]; 
- 
-    // int size = nSamples * (sizeof(SFLDataFormat));
-    // int size = sizeof(buffer);
-    // int count = sizeof(buffer) / sizeof(SFLDataFormat);
-  
-    // printf("AudioRecord : sizeof(buffer) : %d \n",size); 
-    // printf("AudioRecord : sizeof(buffer) / sizeof(SFLDataFormat) : %d \n",count);
-    // printf("AudioRecord : nSamples : %d \n",nSamples);
-    // printf("AudioRecord : buffer: %x : ", buffer);
 
     if ( sndFormat_ == INT16 ) { // TODO change INT16 to SINT16
       for (int k=0; k<nSamples_1; k++){
       
-        mixBuffer_[k] = (buffer_1[k]+buffer_2[k])/2;
-    
-        // dsp.getRMS(mixBuffer_[k]);
+        mixBuffer_[k] = (buffer_1[k]+buffer_2[k]);
+        
       
-        if ( fwrite(&buffer_1[k], 2, 1, fp) != 1)
+        if ( fwrite(&mixBuffer_[k], 2, 1, fp) != 1)
           _debug("AudioRecord: Could not record data!\n");
         else {
-          // printf("Buffer : %x \n",*buffer);
           fflush(fp);
-          // _debug("Flushing!\n");
         }
       }
     }
    
     byteCounter_ += (unsigned long)(nSamples_1*sizeof(SFLDataFormat));
 
-    //printf("AudioRecord::recData():: byteCounter_ : %i \n",(int)byteCounter_ );
-
-    delete [] mixBuffer_;
   }
 
   return;
 }
+

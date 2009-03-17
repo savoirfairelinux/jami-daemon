@@ -1,17 +1,17 @@
-This package was debianized by Yun Liu <yun.liu@savoirfairelinux.com> on
+This package was debianized by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> on
 Wed, 26 Nov 2008 09:47:53 -0500.
 
 It was downloaded from the git repository of SFLphone: git://sflphone.org/git/sflphone.git
 
-Upstream Author: Yun Liu <yun.liu@savoirfairelinux.com>
+Upstream Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 
 Copyright:
 
-SavoirFaire Linux Inc.
+Savoir-Faire Linux Inc.
 
 License:
 
-This software is copyright (c) 2004-2008 Savoir-Faire Linux inc.
+This software is copyright (c) 2004-2009 Savoir-Faire Linux inc.
 
 You are free to distribute this software under the terms of
 the GNU General Public License version 3.

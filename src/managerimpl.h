@@ -58,6 +58,8 @@ typedef std::map<AccountID, Account*> AccountMap;
 /** Define a type for a CallID to AccountID Map inside ManagerImpl */
 typedef std::map<CallID, AccountID> CallAccountMap;
 
+typedef std::map<CallID, Call::CallConfiguration> CallConfigMap;
+
 /** Define a type for CallID vector (waiting list, incoming not answered) */
 typedef std::set<CallID> CallIDSet;
 
@@ -328,6 +330,13 @@ class ManagerImpl {
     std::vector< ::std::string > getCodecDetails( const int32_t& payload);
 
     /**
+     * Get current codec name
+     * @param call id
+     * @return std::string The codec name
+     */
+    std::string getCurrentCodecName(const CallID& id);
+
+    /**
      * Get a list of supported input audio plugin
      * @return std::vector<std::string> List of names
      */
@@ -546,6 +555,17 @@ class ManagerImpl {
      * Set the desktop mail notification level
      */
     void setMailNotify( void );
+
+    
+    /**
+     * Addressbook configuration 
+     */
+    std::map<std::string, int32_t> getAddressbookSettings (void);
+
+    /**
+     * Addressbook configuration 
+     */
+     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
 
     /**
      * Get the audio manager
@@ -983,6 +1003,14 @@ class ManagerImpl {
     /** Mutex to lock the call account map (main thread + voiplink thread) */
     ost::Mutex _callAccountMapMutex;
 
+    CallConfigMap _callConfigMap;
+
+    bool associateConfigToCall (const CallID& callID, Call::CallConfiguration config);
+
+    Call::CallConfiguration getConfigFromCall(const CallID& callID);
+
+    bool removeCallConfig(const CallID& callID);
+
     /** Associate a new CallID to a AccountID
      * Protected by mutex
      * @param callID the new CallID not in the list yet
@@ -1047,7 +1075,7 @@ public:
      * @param accountID	  Account ID to get
      * @return VoIPLink*   The voip link from the account pointer or 0
      */
-    VoIPLink* getAccountLink(const AccountID& accountID);
+    VoIPLink* getAccountLink(const AccountID& accountID=AccountNULL);
 
     VoIPLink* getSIPAccountLink (void);
 
@@ -1069,6 +1097,11 @@ private:
 
     // Assignment Operator
     ManagerImpl& operator=( const ManagerImpl& rh);
+
+    /**
+     * Check if the call is a classic call or a direct IP-to-IP call
+     */
+    void check_call_configuration (const CallID& id, const std::string& to, Call::CallConfiguration *callConfig);
 
 #ifdef TEST
     bool testCallAccountMap();

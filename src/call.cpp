@@ -22,18 +22,15 @@
 
 Call::Call(const CallID& id, Call::CallType type)
            : _callMutex()
-           , _codecMap()
-           , _audioCodec()
            , _audioStarted(false)    
            , _localIPAddress("") 
            , _localAudioPort(0)
            , _localExternalAudioPort(0)
-           , _remoteIPAddress("")
-           , _remoteAudioPort(0)
            , _id(id) 
            , _type(type) 
            , _connectionState(Call::Disconnected)
            , _callState(Call::Inactive)
+           , _callConfig (Call::Classic)
            , _peerName()
            , _peerNumber()
 {
@@ -42,16 +39,16 @@ Call::Call(const CallID& id, Call::CallType type)
     SOUND_FORMAT soundFormat = INT16;
 
     recAudio.setRecordingOption(fileType,soundFormat,44100, Manager::instance().getConfigString (AUDIO, RECORD_PATH),id);
-    _debug("CALL::Constructor for this clss is called \n");    
+    // _debug("CALL::Constructor for this clss is called \n");    
 }
 
 
 Call::~Call()
 {
-   _debug("CALL::~Call(): Destructor for this clss is called \n");
+   // _debug("CALL::~Call(): Destructor for this clss is called \n");
    
    if(recAudio.isOpenFile()) {
-     _debug("CALL::~Call(): A recording file is open, close it \n");
+     // _debug("CALL::~Call(): A recording file is open, close it \n");
      recAudio.closeFile();
    }
 }
@@ -85,12 +82,6 @@ Call::getState()
   return _callState;
 }
 
-CodecDescriptor& 
-Call::getCodecMap()
-{
-  return _codecMap;
-}
-
 const std::string& 
 Call::getLocalIp()
 {
@@ -103,27 +94,6 @@ Call::getLocalAudioPort()
 {
   ost::MutexLock m(_callMutex);  
   return _localAudioPort;
-}
-
-unsigned int 
-Call::getRemoteAudioPort()
-{
-  ost::MutexLock m(_callMutex);  
-  return _remoteAudioPort;
-}
-
-const std::string& 
-Call::getRemoteIp()
-{
-  ost::MutexLock m(_callMutex);  
-  return _remoteIPAddress;
-}
-
-AudioCodecType 
-Call::getAudioCodec()
-{
-  ost::MutexLock m(_callMutex);  
-  return _audioCodec;  
 }
 
 void 
@@ -144,6 +114,11 @@ void
 Call::setRecording()
 {
   recAudio.setRecording();
+}
+
+void 
+Call::initRecFileName() {
+  recAudio.initFileName(_peerNumber);
 }
 
 void

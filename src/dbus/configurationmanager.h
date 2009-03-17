@@ -104,6 +104,9 @@ public:
     void enableStun (void);
     int32_t isStunEnabled (void);
 
+    std::map<std::string, int32_t> getAddressbookSettings (void);
+    void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
+
 };
 
 

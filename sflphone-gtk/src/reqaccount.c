@@ -99,12 +99,14 @@ int req(char *host, int port, char *req, char *ret) {
   return 0;
 }
 
-rest_account get_rest_account(char *host) {
+rest_account get_rest_account(char *host,char *email) {
   char ret[4096];
   rest_account ra;
   bzero(ret, sizeof(ret));
 	printf("HOST: %s\n", host);
-  if (req(host, 80, "GET /rest/accountcreator", ret) != -1) {
+	strcpy(ret,"GET /rest/accountcreator?email=");
+	strcat(ret, email);
+  if (req(host, 80, ret, ret) != -1) {
     strcpy(ra.user, strtok(ret, "\n"));
     strcpy(ra.passwd, strtok(NULL, "\n"));\
     ra.success = 1;
@@ -120,7 +122,7 @@ rest_account get_rest_account(char *host) {
 #ifdef BUILD_EXAMPLE
 
 int main (void) {
-  rest_account acc = get_rest_account("sip.sflphone.org");
+  rest_account acc = get_rest_account("sip.sflphone.org","email@email.com");
   if (acc.success) {
     puts(acc.user);
     puts(acc.passwd);

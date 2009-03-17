@@ -60,6 +60,15 @@ incoming_call_cb (DBusGProxy *proxy UNUSED,
   sflphone_incoming_call (c);
 }
 
+static void
+curent_selected_codec (DBusGProxy *proxy UNUSED,
+                  const gchar* callID,
+                  const gchar* codecName,
+                  void * foo  UNUSED )
+{
+  g_print ("%s codec decided for call %s\n",codecName,callID);
+  sflphone_display_selected_codec (codecName);
+}
 
 static void  
 volume_changed_cb (DBusGProxy *proxy UNUSED,
@@ -231,6 +240,14 @@ dbus_connect ()
     "incomingCall", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
   dbus_g_proxy_connect_signal (callManagerProxy,
     "incomingCall", G_CALLBACK(incoming_call_cb), NULL, NULL);
+
+  /* Current codec */
+  dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING_STRING, 
+    G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+  dbus_g_proxy_add_signal (callManagerProxy, 
+    "currentSelectedCodec", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+  dbus_g_proxy_connect_signal (callManagerProxy,
+    "currentSelectedCodec", G_CALLBACK(curent_selected_codec), NULL, NULL);
 
   /* Register a marshaller for STRING,STRING */
   dbus_g_object_register_marshaller(g_cclosure_user_marshal_VOID__STRING_STRING, 
@@ -647,6 +664,30 @@ dbus_codec_details( int payload )
   g_error_free (error);
   }
   return array;
+}
+
+gchar*
+dbus_get_current_codec_name(const call_t * c)
+{
+    
+    printf("dbus_get_current_codec_name : CallID : %s \n", c->callID);
+
+    gchar* codecName;
+    GError* error = NULL;
+       
+    org_sflphone_SFLphone_CallManager_get_current_codec_name (
+                       callManagerProxy,
+                       c->callID,
+                       &codecName,
+                       &error);
+    if(error)
+    {
+        g_error_free(error);
+    }
+    
+    printf("dbus_get_current_codec_name : codecName : %s \n", codecName);
+
+    return codecName;    
 }
 
 
@@ -1407,3 +1448,34 @@ void dbus_enable_stun (void)
                 g_error_free(error);
         }
 }
+
+GHashTable* dbus_get_addressbook_settings (void) {
+
+    GError *error = NULL;
+    GHashTable *results = NULL;
+
+    //g_print ("Calling org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings\n");
+    
+    org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings (configurationManagerProxy, &results, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings\n");
+        g_error_free (error);
+    }
+    
+    return results;
+}
+
+void dbus_set_addressbook_settings (GHashTable * settings){
+
+    GError *error = NULL;
+
+    g_print ("Calling org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings\n");
+    
+    org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings (configurationManagerProxy, settings, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings\n");
+        g_error_free (error);
+    }
+}
+
+

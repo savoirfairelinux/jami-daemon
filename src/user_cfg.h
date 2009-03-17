@@ -45,8 +45,6 @@
 #define VOLUME_MICRO		"Volume.micro"	      /** Mic volume */
 #define RECORD_PATH             "Record.path"          /** Recording path */
 
-#define VIDEO			"Video"		      /** Section Video */
-
 #define PREFERENCES		"Preferences"		  /** Section Preferences */
 #define CONFIG_DIALPAD		"Dialpad.display"	  /** Display dialpad preferences */
 #define CONFIG_SEARCHBAR	"Searchbar.display"	  /** Whether or nor display the search bar */
@@ -72,6 +70,13 @@
 #define SYMMETRIC		"VoIPLink.symmetric"  /** VoIP link type */
 #define STUN_ENABLE     "STUN.enable"
 #define STUN_SERVER     "STUN.server"
+
+#define ADDRESSBOOK                 "Addressbook"               /** Address book section */
+#define ADDRESSBOOK_MAX_RESULTS      "Addressbook.max_results"
+#define ADDRESSBOOK_DISPLAY_CONTACT_PHOTO   "Addressbook.contact_photo"
+#define ADDRESSBOOK_DISPLAY_PHONE_BUSINESS   "Addressbook.phone_business"
+#define ADDRESSBOOK_DISPLAY_PHONE_HOME          "Addressbook.phone_home"
+#define ADDRESSBOOK_DISPLAY_PHONE_MOBILE    "Addressbook.phone_mobile"
 
 #define EMPTY_FIELD		""			/** Default value for empty field */
 #define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"	/** Default STUN server address */

@@ -1,5 +1,9 @@
 bin_PROGRAMS = sflphone-gtk
 
+SUBDIRS=contactlist
+  
+# noinst_LTLIBRARIES = libsflphonegtk.la
+
 NOFIFY_LIBS=-lnotify
 SEXY_LIBS=-lsexy
 
@@ -24,7 +28,7 @@ sflphone_gtk_SOURCES = \
   menus.c \
   calltab.c \
   calltree.c \
-  historyfilter.c \
+  searchfilter.c \
   actions.c \
   configwindow.c \
   accountlist.c \
@@ -34,14 +38,18 @@ sflphone_gtk_SOURCES = \
   $(STATUSICON_SOURCE) \
   codeclist.c \
   timestamp.c \
-  reqaccount.c
-  
+  reqaccount.c \
+  addressbook-config.c
+
 noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h audioconf.h codeclist.h assistant.h \
                   callmanager-glue.h errors.h sflphone_const.h configurationmanager-glue.h instance-glue.h menus.h calltab.h calltree.h configwindow.h \
-                  accountlist.h accountwindow.h marshaller.h sliders.h $(STATUSICON_HEADER) timestamp.h historyfilter.c reqaccount.h
+                  accountlist.h accountwindow.h marshaller.h sliders.h $(STATUSICON_HEADER) timestamp.h searchfilter.h reqaccount.h addressbook-config.h
 
 EXTRA_DIST   = marshaller.list  
-sflphone_gtk_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SEXY_LIBS)
+
+sflphone_gtk_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SEXY_LIBS) \
+			./contactlist/libcontact.la
+
 
 AM_CPPFLAGS = $(DEPS_CFLAGS) \
               -DICONS_DIR=\""$(prefix)/share/sflphone"\" \

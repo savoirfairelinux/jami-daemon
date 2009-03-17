@@ -49,7 +49,7 @@
                         <div class="dynamic-nav" style="background: #CDCDCD;" >&nbsp;</div>
                             <ul>
                                 <li <?php echo ($name == 'contact')?'class="active"':"" ?>><a href='contact.php'><span>Contact</span></a></li>
-                                <li <?php echo ($name == 'wiki')?'class="active"':"" ?>><a href='http://dev.savoirfairelinux.net/sflphone/'><span>Wiki</span></a></li>
+                                <li <?php echo ($name == 'wiki')?'class="active"':"" ?>><a href='http://projects.savoirfairelinux.net/wiki/sflphone'><span>Wiki</span></a></li>
                                 <li <?php echo ($name == 'download')?'class="active"':"" ?>><a href='download.php'><span>Download</span></a></li>
                                 <li <?php echo ($name == 'screenshot')?'class="active"':"" ?>><a href='screenshot.php'><span>Screenshots</span></a></li>
                                 <li <?php echo ($name == 'feature')?'class="active"':"" ?>><a href='features.php'><span>Features</span></a></li>
