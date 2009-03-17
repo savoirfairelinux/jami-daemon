@@ -239,7 +239,6 @@ SIPVoIPLink::terminateSIPCall()
         call = dynamic_cast<SIPCall*>(iter->second);
         if (call) {
             // terminate the sip call
-            _debug("SIPVoIPLink::terminateSIPCall()::the call is deleted, should close recording file \n");
             delete call; call = 0;
         }
         iter++;
@@ -250,12 +249,10 @@ SIPVoIPLink::terminateSIPCall()
     void
 SIPVoIPLink::terminateOneCall(const CallID& id)
 {
-    _debug("SIPVoIPLink::terminateOneCall(): function called \n");
 
     SIPCall *call = getSIPCall(id);
     if (call) {
         // terminate the sip call
-        _debug("SIPVoIPLink::terminateOneCall()::the call is deleted, should close recording file \n");
         delete call; call = 0;
     }
 }
@@ -291,7 +288,7 @@ SIPVoIPLink::getEvent()
 
 int SIPVoIPLink::sendRegister( AccountID id )
 {
-
+    _debug("User agent: SIP account registration!!!!!!!!!\n");
     pj_status_t status;
     int expire_value;
     char contactTmp[256];
@@ -828,7 +825,8 @@ SIPVoIPLink::setRecording(const CallID& id)
 {
     SIPCall* call = getSIPCall(id);
 
-    call->setRecording();
+    if(call)
+        call->setRecording();
 
     // _audiortp->setRecording();
 }
@@ -837,8 +835,11 @@ SIPVoIPLink::setRecording(const CallID& id)
 SIPVoIPLink::isRecording(const CallID& id)
 {
     SIPCall* call = getSIPCall(id);
-
-    return call->isRecording();
+    _debug("call->isRecording() %i \n",call->isRecording());
+    if(call)
+        return call->isRecording();
+    else 
+        return false;
 }
 
 

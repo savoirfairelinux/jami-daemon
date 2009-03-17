@@ -1636,7 +1636,6 @@ ManagerImpl::setRecordingCall(const CallID& id)
   _debug("ManagerImpl::setRecording()! \n");
   AccountID accountid = getAccountFromCall( id );
 
-  // printf("ManagerImpl::CallID: %s", id);
   getAccountLink(accountid)->setRecording(id);
 }
 
@@ -2321,11 +2320,14 @@ ManagerImpl::getNewCallID()
   short
 ManagerImpl::loadAccountMap()
 {
-  _debug("Load account:");
+ 
+  _debug("*********************** Load account: \n");
   short nbAccount = 0;
   TokenList sections = _config.getSections();
   std::string accountType;
   Account* tmpAccount;
+
+  AccountMap currentAccount = _accountMap;
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
@@ -2334,6 +2336,14 @@ ManagerImpl::loadAccountMap()
       iter++;
       continue;
     }
+
+    // TokenList::iterator curr = currentAccount.find(iter->c_str());
+    /*
+    if(curr != currentAccount.end())
+        _debug("Account %s does not exist! creating it\n",iter->c_str());
+    else
+        _debug("Account %s already exist! sorry...",iter->c_str());
+    */
 
     accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
     if (accountType == "SIP") {
@@ -2345,28 +2355,43 @@ ManagerImpl::loadAccountMap()
     else {
       _debug("Unknown %s param in config file (%s)\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
     }
-
+ 
+    _debug("tmpAccount.getRegistrationState() %i \n ",tmpAccount->getRegistrationState());
     if (tmpAccount != NULL) {
-      _debug(" %s ", iter->c_str());
+    
+      _debug(" %s \n", iter->c_str());
       _accountMap[iter->c_str()] = tmpAccount;
       nbAccount++;
     }
 
     iter++;
   }
-
+  _debug("nbAccount loaded %i \n",nbAccount);
   return nbAccount;
 }
 
   void
 ManagerImpl::unloadAccountMap()
 {
-  _debug("Unloading account map...\n");
+  _debug("********************** Unloading account map: \n");
+
+  Account* tmpAccount = NULL;
+
   AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
-    _debug("-> Deleting account %s\n", iter->first.c_str());
-    delete iter->second; iter->second = 0;
+
+    tmpAccount = getAccount(iter->first.c_str());
+    
+    _debug("tmpAccount.getRegistrationState() %i \n ",tmpAccount->getRegistrationState());
+    
+    // if account is still trying 
+    if(tmpAccount->getRegistrationState() != 1){
+      _debug("-> Deleting account %s\n", iter->first.c_str());
+      delete iter->second; iter->second = 0;
+    }
+
     iter++;
+    tmpAccount = NULL;
   }
   _accountMap.clear();
 }
@@ -2439,26 +2464,28 @@ AccountMap ManagerImpl::getSipAccountMap( void )
 
 void ManagerImpl::restartPJSIP (void)
 {
-    //SIPVoIPLink *siplink;
+    SIPVoIPLink *siplink;
+    siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
 
-    //unloadAccountMap ();
+    // unregister all SIP accounts
+    unloadAccountMap();
 
-    /* First unregister all SIP accounts */
-    //this->unregisterCurSIPAccounts();
+    
+    this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
-    //siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
-    //if (siplink) 
-    //{
-      //  siplink->terminate ();
-       // _debug ("*************************************************Terminate done\n");
-        //siplink = SIPVoIPLink::instance("");
-        //siplink->init ();
-    //}
-    //_debug("***************************************************Init Done\n");
-    //loadAccountMap();
-    //initRegisterAccounts ();
+    
+    if (siplink) 
+    {
+        siplink->terminate ();
+        _debug("*************************************************Terminate done\n");
+        siplink = SIPVoIPLink::instance("");
+        siplink->init ();
+    }
+    loadAccountMap();
+    _debug("***************************************************Init Done\n");
+    initRegisterAccounts ();
     /* Then register all enabled SIP accounts */
-    //this->registerCurSIPAccounts(siplink);
+    this->registerCurSIPAccounts(siplink);
 }
 
 VoIPLink* ManagerImpl::getAccountLink(const AccountID& accountID)
