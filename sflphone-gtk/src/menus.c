@@ -251,22 +251,23 @@ remove_from_history( void * foo UNUSED)
 static void
 call_back( void * foo UNUSED)
 {
-  call_t* selectedCall = call_get_selected( history );
-  call_t* newCall =  g_new0 (call_t, 1);
-  if( selectedCall )
-  {
-    newCall->to = g_strdup(call_get_number(selectedCall));
-    newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
-    newCall->state = CALL_STATE_DIALING;
-    newCall->callID = g_new0(gchar, 30);
-    g_sprintf(newCall->callID, "%d", rand()); 
-    newCall->_start = 0;
-    newCall->_stop = 0;
-    call_list_add(current_calls, newCall);
-    update_call_tree_add(current_calls, newCall);
-    sflphone_place_call(newCall);
-    switch_tab();
-  } 
+    call_t *selected_call, *new_call;
+    gchar *to, *from;
+
+    selected_call = call_get_selected( active_calltree );
+
+    if( selected_call )
+    {
+        to = g_strdup(call_get_number(selected_call));
+        from = g_strconcat("\"\" <", call_get_number(selected_call), ">",NULL);
+
+        create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
+
+        call_list_add(current_calls, new_call);
+        update_call_tree_add(current_calls, new_call);
+        sflphone_place_call(new_call);
+        display_calltree (current_calls);
+    }
 }
     
   GtkWidget * 

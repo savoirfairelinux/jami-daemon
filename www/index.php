@@ -33,31 +33,17 @@ include_once('include/header.php');
                                         <li>Gnome integration</li>
                                     </ul> 
                                     <div class="float_it_middle">
-                                        <a href="download.php" >
-                                            <div class="download">
-                                                <span class="free-download">Free download</span>
-                                                <span class="sfl-version">Linux version: 0.9.3-3</span>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div class="separator">&nbsp;</div>
+                                        <a href="download.php" ><img src="img/download_icon.png" width="61" height="68" alt=""/></a>
+                                    </div> 
                                     <div class="float_it_middle">
-                                    <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-                                        <input type="hidden" name="cmd" value="_s-xclick">
-                                        <input type="hidden" name="hosted_button_id" value="3918066">
-                                        <input type="image" 
-                                        src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" 
-                                        name="submit" alt="PayPal - The safer, easier way to pay online!">
-                                        <img alt="" border="0" 
-                                        src="https://www.paypal.com/fr_XC/i/scr/pixel.gif" width="1" height="1">
-                                    </form>
+                                        <p class="highlight"><a href="download.php" >Download now!</a></p>
                                     </div>
                                 </td>
                             </tr>
-                            <!--<tr>
+                            <tr>
                                 <td>
                                 </td>
-                            </tr>-->
+                            </tr>
                         </tbody>
                     </table>  
                 </td>

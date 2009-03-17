@@ -37,7 +37,7 @@ static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
     , context(NULL)
     , m(NULL)
     , playback()
-      , record()
+    , record()
 {
     PulseLayer::streamState = 0;
     _debug("PulseLayer::Pulse audio constructor: Create context\n");
@@ -155,7 +155,7 @@ void PulseLayer::createStreams( pa_context* c )
 
 bool PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleRate, int frameSize , int stream UNUSED, std::string plugin UNUSED) 
 {
-  _debug("PulseLayer::openDevice \n");
+    _debug("PulseLayer::openDevice \n");
     _sampleRate = sampleRate;
     _frameSize = frameSize;	
 
@@ -174,7 +174,7 @@ bool PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleR
 
     connectPulseAudioServer();
  
-    startStream();
+    // startStream();
 
     _debug("Connection Done!! \n");
     return true;
@@ -222,15 +222,16 @@ void PulseLayer::startStream (void)
 PulseLayer::stopStream (void) 
 {
     _debug("PulseLayer::Stop stream\n");
-    pa_stream_flush( playback->pulseStream(), NULL, NULL );
-    pa_stream_flush( record->pulseStream(), NULL, NULL );
+     pa_stream_flush( playback->pulseStream(), NULL, NULL );
+     pa_stream_flush( record->pulseStream(), NULL, NULL );
     
-    pa_stream_cork( playback->pulseStream(), 1, NULL, NULL);
-    pa_stream_cork( record->pulseStream(), 1, NULL, NULL);
     
     flushMic();
     flushMain();
     flushUrgent();
+
+    pa_stream_cork( playback->pulseStream(), 1, NULL, NULL);
+    pa_stream_cork( record->pulseStream(), 1, NULL, NULL); 
 }
 
 
@@ -255,6 +256,7 @@ void PulseLayer::stream_suspended_callback(pa_stream *s, void *userdata UNUSED )
 
 void PulseLayer::processData( void )
 {
+  
 
         // Handle the mic
         // We check if the stream is ready

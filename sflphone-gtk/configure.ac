@@ -33,6 +33,7 @@ PKG_CHECK_MODULES(DEPS, \
     gtk+-2.0 >= 2.2     \
     glib-2.0 >= 2.2     \
     libsexy >= 0.1    \
+    libebook-1.2 >= 2.22
 )
 
 
@@ -42,6 +43,7 @@ AC_SUBST(DEPS_LIBS)
 AC_OUTPUT([
 Makefile 
 src/Makefile 
+src/contactlist/Makefile
 pixmaps/Makefile
 sflphone.desktop
 ])
