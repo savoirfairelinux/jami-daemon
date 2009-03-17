@@ -44,15 +44,19 @@ Instance::Unregister( const int32_t& pid UNUSED)
     count --;
     if(count <= 0)
     {
-      _debug("0 client running, quitting...");
-      DBusManager::instance().exit();
+        
+        DBusManager::instance().exit();
+
+        Manager::instance().terminate();
+
+       
     }
 }
 
 int32_t 
 Instance::getRegistrationCount( void )
 {
-  _debug("Instance::getRegistrationCount\n");
+  
   return count;
 }
 

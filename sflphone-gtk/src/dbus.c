@@ -1123,6 +1123,23 @@ dbus_set_record(const call_t * c)
 	    }
 }
 
+gboolean
+dbus_get_is_recording(const call_t * c)
+{
+       g_print("calling dbus_get_is_recording on CallManager\n");
+       GError* error = NULL;
+       gboolean* isRecording = NULL;
+       org_sflphone_SFLphone_CallManager_get_is_recording (
+                       callManagerProxy, 
+                       c->callID, 
+                       isRecording, 
+                       &error);
+	    if(error)
+	    {
+		    g_error_free(error);
+	    }
+}
+
 void
 dbus_set_record_path(const gchar* path)
 {

@@ -101,7 +101,7 @@ ManagerImpl::ManagerImpl (void)
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void) 
 {
-    terminate();
+    // terminate();
     _debug("%s stop correctly.\n", PROGNAME);
 }
 
@@ -142,21 +142,23 @@ ManagerImpl::init()
 
 void ManagerImpl::terminate()
 {
+    _debug("ManagerImpl::terminate \n");
     saveConfig();
 
     unloadAccountMap();
   
-    _debug("Unload DTMF Key\n");
+    _debug("Unload DTMF Key \n");
     delete _dtmfKey;
 
-    _debug("Unload Audio Driver\n");
+    _debug("Unload Audio Driver \n");
     delete _audiodriver; _audiodriver = NULL;
 
-    _debug("Unload Telephone Tone\n");
+    _debug("Unload Telephone Tone \n");
     delete _telephoneTone; _telephoneTone = NULL;
 
-    _debug("Unload Audio Codecs\n");
+    _debug("Unload Audio Codecs \n");
     _codecDescriptorMap.deleteHandlePointer();
+    
 }
 
 bool
@@ -252,6 +254,8 @@ ManagerImpl::answerCall(const CallID& id)
 {
   bool isActive = false;
 
+  stopTone(true);
+
   AccountID currentaccountid = getAccountFromCall( id );
   Call* currentcall = getAccountLink(currentaccountid)->getCall(getCurrentCallId());
   _debug("ManagerImpl::answerCall :: current call->getState %i \n",currentcall->getState());
@@ -286,9 +290,9 @@ ManagerImpl::answerCall(const CallID& id)
   removeWaitingCall(id);
   switchCall(id);
  
-  std::string codecName = getCurrentCodecName(id);
+  // std::string codecName = getCurrentCodecName(id);
   // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+  // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
   return true;
 }
@@ -302,7 +306,7 @@ ManagerImpl::hangupCall(const CallID& id)
     AccountID accountid;
     bool returnValue;
 
-    stopTone(true);
+    stopTone(false);
 
     /* Broadcast a signal over DBus */
     if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
@@ -441,9 +445,9 @@ ManagerImpl::offHoldCall(const CallID& id)
   
     switchCall(id);
 
-    codecName = getCurrentCodecName(id);
-    _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-    if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+    // codecName = getCurrentCodecName(id);
+    // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
     return returnValue;
 }
@@ -689,6 +693,8 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
 {
     PulseLayer *pulselayer;
     std::string from, number;
+
+    stopTone(true);
 
     _debug("Incoming call %s\n", call->getCallId().data());
 
@@ -965,22 +971,29 @@ ManagerImpl::ringtone()
     int layer, samplerate;
     bool loadFile;
 
+    // stopTone(true);
+
     if( isRingtoneEnabled() )
     {
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
+        _debug("RINGING!!! 1\n");
         
         ringchoice = getConfigString(AUDIO, RING_CHOICE);
         //if there is no / inside the path
         if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
             // check inside global share directory
             ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
+
+            _debug("RINGING!!! 2\n");
         }
 
         audiolayer = getAudioDriver();
         layer = audiolayer->getLayerType();
         if (audiolayer == 0)
             return;
+
+        _debug("RINGING!!! 3\n");
 
         samplerate  = audiolayer->getSampleRate();
         codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
@@ -990,23 +1003,29 @@ ManagerImpl::ringtone()
         _toneMutex.leaveMutex(); 
 
         if (loadFile) {
+            
+            _debug("RINGING!!! 5\n");
             _toneMutex.enterMutex(); 
             _audiofile.start();
             _toneMutex.leaveMutex(); 
             if(CHECK_INTERFACE( layer, ALSA )){
                 //ringback();
+            
             }
             else{
                 audiolayer->startStream();
+                _debug("RINGING!!! 6\n");
             }
         } else {
             ringback();
+            _debug("RINGING!!! 7\n");
         }
     
     }
     else
     {
         ringback();
+        _debug("RINGING!!! 8\n");
     }
 }
 

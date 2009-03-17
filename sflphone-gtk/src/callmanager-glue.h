@@ -458,6 +458,44 @@ static
 inline
 #endif
 gboolean
+org_sflphone_SFLphone_CallManager_get_is_recording (DBusGProxy *proxy, const char * IN_callID, gboolean* OUT_isRecording, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getIsRecording", error, G_TYPE_STRING, IN_callID, G_TYPE_INVALID, G_TYPE_BOOLEAN, OUT_isRecording, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_CallManager_get_is_recording_reply) (DBusGProxy *proxy, gboolean OUT_isRecording, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_CallManager_get_is_recording_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  gboolean OUT_isRecording;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_BOOLEAN, &OUT_isRecording, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_CallManager_get_is_recording_reply)data->cb) (proxy, OUT_isRecording, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_CallManager_get_is_recording_async (DBusGProxy *proxy, const char * IN_callID, org_sflphone_SFLphone_CallManager_get_is_recording_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getIsRecording", org_sflphone_SFLphone_CallManager_get_is_recording_async_callback, stuff, g_free, G_TYPE_STRING, IN_callID, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
 org_sflphone_SFLphone_CallManager_get_call_details (DBusGProxy *proxy, const char * IN_callID, GHashTable** OUT_infos, GError **error)
 
 {
