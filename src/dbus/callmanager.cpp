@@ -1,3 +1,4 @@
+
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
@@ -120,6 +121,13 @@ CallManager::setRecording(const std::string& callID)
 { 
   _debug("CallManager::setRecording received\n");
     Manager::instance().setRecordingCall(callID);
+}
+
+bool
+CallManager::getIsRecording(const std::string& callID)
+{ 
+    _debug("CallManager::getIsRecording received  \n");
+    return Manager::instance().isRecording(callID);
 }
 
 
