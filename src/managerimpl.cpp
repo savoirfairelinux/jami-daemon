@@ -1187,6 +1187,10 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_HOME, NO_STR);
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_MOBILE, NO_STR);
 
+  section = HOOKS;
+  fill_config_str (URLHOOK_SIP_FIELD, HOOK_DEFAULT_SIP_FIELD);
+  fill_config_str (URLHOOK_COMMAND, HOOK_DEFAULT_URL_COMMAND);
+
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1 && load_user_value) {
     _exist = _config.populateFromFile(_path);
@@ -2540,6 +2544,29 @@ void ManagerImpl::setAddressbookSettings (const std::map<std::string, int32_t>& 
     // Write it to the configuration file
     saveConfig ();
 }
+
+
+std::map<std::string, std::string> ManagerImpl::getHookSettings () {
+
+    std::map<std::string, std::string> settings;
+
+    settings.insert (std::pair<std::string, std::string> ("URLHOOK_SIP_FIELD", getConfigString (HOOKS, URLHOOK_SIP_FIELD)) );
+    settings.insert (std::pair<std::string, std::string> ("URLHOOK_COMMAND", getConfigString (HOOKS, URLHOOK_COMMAND)) );
+
+    return settings;
+}
+
+void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& settings){
+
+    setConfig(HOOKS, URLHOOK_SIP_FIELD, (*settings.find("URLHOOK_SIP_FIELD")).second);
+    setConfig(HOOKS, URLHOOK_COMMAND, (*settings.find("URLHOOK_COMMAND")).second);
+
+    // Write it to the configuration file
+    saveConfig ();
+}
+
+
+
 
 void ManagerImpl::check_call_configuration (const CallID& id, const std::string &to, Call::CallConfiguration *callConfig) {
     std::string pattern;

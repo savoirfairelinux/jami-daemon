@@ -565,6 +565,17 @@ class ManagerImpl {
      * Addressbook configuration 
      */
      void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
+ 
+    /**
+     * Hook configuration 
+     */
+    std::map<std::string, std::string> getHookSettings (void);
+
+    /**
+     * Hook configuration 
+     */
+     void setHookSettings (const std::map<std::string, std::string>& settings);
+
 
     /**
      * Get the audio manager

@@ -458,6 +458,18 @@ GHashTable* dbus_get_addressbook_settings (void);
  */
 void dbus_set_addressbook_settings (GHashTable *);
 
+/**
+ * Encapsulate all the url hook-related configuration
+ * Get the configuration
+ */
+GHashTable* dbus_get_hook_settings (void);
+
+/**
+ * Encapsulate all the url hook-related configuration
+ * Set the configuration
+ */
+void dbus_set_hook_settings (GHashTable *);
+
 
 
 

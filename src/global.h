@@ -135,4 +135,8 @@ static const SOUND_FORMAT INT32 = 0x8;
 
 #define DEFAULT_SIP_PORT    5060
 
+#define HOOK_DEFAULT_SIP_FIELD      "X-Call-url"
+#define HOOK_DEFAULT_URL_COMMAND    "x-www-browser"
+
+
 #endif	// __GLOBAL_H__
