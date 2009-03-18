@@ -98,6 +98,8 @@ sflphone-gtk/pixmaps/Makefile
 /sflphone-gtk/src/sflphone-gtk
 /sflphone-gtk/autom4te*
 /sflphone-gtk/sflphone.desktop
+/sflphone-gtk/confdefs.h
+/sflphone-gtk/conftest.dir
 
 # Ignore sub-modules stuff
 ## libiax2
