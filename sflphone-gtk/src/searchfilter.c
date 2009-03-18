@@ -87,7 +87,6 @@ static void handler_async_search (GList *hits, gpointer user_data) {
         entry = i->data;
         if (entry)
         {
-            g_print ("%s\n", entry->name);
             /* Get the photo */
             if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
                 photo = entry->photo;

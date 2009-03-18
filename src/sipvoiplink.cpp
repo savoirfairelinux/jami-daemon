@@ -963,7 +963,7 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED)
     pj_strdup2(_pool, &to, strTo.data());
     pj_strdup2(_pool, &contact, account->getContact().data());
 
-    _debug("%s %s %s\n", from.ptr, contact.ptr, to.ptr);
+    //_debug("%s %s %s\n", from.ptr, contact.ptr, to.ptr);
     // create the dialog (UAC)
     status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from,
             &contact,
