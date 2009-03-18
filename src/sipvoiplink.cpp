@@ -1896,7 +1896,6 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                 method_name = "NOTIFY";  	
                 // Retrieve all the message. Should contains only the method name but ...
                 request =  rdata->msg_info.msg->line.req.method.name.ptr;
-                _debug("PRINT REQUEST: %s \n",request);
                 // Check if the message is a notification
                 if( request.find( method_name ) != (size_t)-1 ) {
                     /* Notify the right account */
