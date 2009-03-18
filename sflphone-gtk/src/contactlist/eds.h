@@ -35,8 +35,10 @@
 
 G_BEGIN_DECLS
 
+int current_search_id;
+
 /**
- * Reprsent a contact entry 
+ * Reprsent a contact entry
  */
 typedef struct _Hit
 {
@@ -48,7 +50,7 @@ typedef struct _Hit
 } Hit;
 
 /**
- * Free a contact entry 
+ * Free a contact entry
  */
 void free_hit (Hit *h);
 

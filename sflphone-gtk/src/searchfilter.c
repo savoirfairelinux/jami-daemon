@@ -31,7 +31,7 @@ static void handler_async_search (GList *hits, gpointer user_data UNUSED);
 GtkTreeModel* create_filter (GtkTreeModel* child) {
 
     GtkTreeModel* ret;
-    
+
     ret = gtk_tree_model_filter_new(child, NULL);
     gtk_tree_model_filter_set_visible_func(GTK_TREE_MODEL_FILTER(ret), is_visible, NULL, NULL);
     return GTK_TREE_MODEL(ret);
@@ -76,7 +76,7 @@ static void handler_async_search (GList *hits, gpointer user_data) {
 
     // Retrieve the address book parameters
     addressbook_config = (AddressBook_Config*) user_data;
-        
+
     // reset previous results
     reset_call_tree(contacts);
     call_list_reset(contacts);
@@ -104,12 +104,14 @@ static void handler_async_search (GList *hits, gpointer user_data) {
     }
     g_list_free(hits);
 
+    // Deactivate waiting image
+    deactivateWaitingLayer();
 }
 
 void filter_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED) {
 
     AddressBook_Config *addressbook_config;
-    
+
     /* Switch to the address book when the focus is on the search bar */
     if (active_calltree == current_calls)
         display_calltree (contacts);
@@ -117,10 +119,14 @@ void filter_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer 
 
     /* We want to search in the contact list */
     if (active_calltree == contacts) {
+        // Activate waiting layer
+        activateWaitingLayer();
+
         // Load the address book parameters
         addressbook_load_parameters (&addressbook_config);
-        // Start the asynchronous search as soon as we have an entry */ 
-        search_async (gtk_entry_get_text (GTK_ENTRY (filter_entry)), addressbook_config->max_results, &handler_async_search, addressbook_config); 
+
+        // Start the asynchronous search as soon as we have an entry */
+        search_async (gtk_entry_get_text (GTK_ENTRY (filter_entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
     }
 
 }
@@ -147,6 +153,22 @@ GtkWidget* create_filter_entry() {
     g_signal_connect(GTK_ENTRY(filter_entry), "grab-focus", G_CALLBACK(clear_filter_entry_if_default), NULL);
 
     gtk_box_pack_start(GTK_BOX(ret), filter_entry, TRUE, TRUE, 0);
+
+    // Create waiting icon
+    waitingPixOn = gdk_pixbuf_animation_new_from_file(ICONS_DIR "/throbber.gif", NULL);
+    waitingPixOff = gdk_pixbuf_new_from_file(ICONS_DIR "/throbber.png", NULL);
+    waitingLayer = gtk_image_new_from_pixbuf(waitingPixOff);
+
+    gtk_box_pack_end(GTK_BOX(ret), waitingLayer, TRUE, TRUE, 0);
+
     return ret;
 
+}
+
+void activateWaitingLayer() {
+  gtk_image_set_from_animation(GTK_IMAGE(waitingLayer),waitingPixOn);
+}
+
+void deactivateWaitingLayer() {
+  gtk_image_set_from_pixbuf (GTK_IMAGE(waitingLayer),waitingPixOff);
 }

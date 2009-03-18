@@ -31,6 +31,7 @@
 #include "eds.h"
 
 typedef struct _Handler_And_Data {
+    int                 search_id;
     SearchAsyncHandler  handler;
     gpointer            user_data;
     GList              *hits;
@@ -95,6 +96,7 @@ create_query (const char* s)
     GArray *parts = split_query_string (s);
     EBookQuery ***field_queries;
     EBookQuery **q;
+    EBookQuery **phone;
     guint j;
     int i;
 
@@ -110,13 +112,19 @@ create_query (const char* s)
     }
     g_array_free (parts, TRUE);
 
-    query = e_book_query_or (n_search_fields, q, TRUE);
+    phone = g_new0 (EBookQuery *, 3);
+    phone[0] = e_book_query_field_exists (E_CONTACT_PHONE_BUSINESS);
+    phone[1] = e_book_query_field_exists (E_CONTACT_PHONE_HOME);
+    phone[2] = e_book_query_field_exists (E_CONTACT_PHONE_MOBILE);
+
+    query = e_book_query_andv (e_book_query_or (n_search_fields, q, FALSE), e_book_query_or (3, phone, FALSE));
 
     for (i = 0; i < n_search_fields; i++) {
         g_free (field_queries[i]);
     }
     g_free (field_queries);
     g_free (q);
+    g_free (phone);
 
     return query;
 }
@@ -188,30 +196,66 @@ init (void)
         }
     }
 
+    current_search_id = 0;
+
     g_object_unref (source_list);
 }
 
+/**
+ * Final callback after all books have been processed.
+ */
     static void
 view_finish (EBookView *book_view, Handler_And_Data *had)
 {
+    GList *i;
     SearchAsyncHandler had_handler = had->handler;
     GList *had_hits = had->hits;
     gpointer had_user_data = had->user_data;
+    int search_id = had->search_id;
     g_free (had);
 
     g_return_if_fail (book_view != NULL);
     g_object_unref (book_view);
 
-    had_handler (had_hits, had_user_data);
+    if(search_id == current_search_id)
+    {
+      // Reinitialize search id to prevent overflow
+      if(current_search_id > 5000)
+        current_search_id = 0;
+
+      // Call display callback
+      had_handler (had_hits, had_user_data);
+    }
+    else
+    {
+      // Some hits could have been processed but will not be used
+      for (i = had_hits; i != NULL; i = i->next)
+      {
+          Hit *entry;
+          entry = i->data;
+          free_hit(entry);
+      }
+      g_list_free(had_hits);
+    }
 }
 
+/**
+ * Callback called after each ebook search completed.
+ * Used to store book search results.
+ */
     static void
 view_contacts_added_cb (EBookView *book_view, GList *contacts, gpointer user_data)
 {
-    
     GdkPixbuf *photo;
 
     Handler_And_Data *had = (Handler_And_Data *) user_data;
+
+    if(had->search_id != current_search_id)
+    {
+      e_book_view_stop (book_view);
+      return;
+    }
+
     if (had->max_results_remaining <= 0) {
         e_book_view_stop (book_view);
         had->book_views_remaining--;
@@ -261,6 +305,10 @@ view_contacts_added_cb (EBookView *book_view, GList *contacts, gpointer user_dat
     }
 }
 
+/**
+ * Callback called after each ebook search completed.
+ * Used to call final callback when all books have been read.
+ */
     static void
 view_completed_cb (EBookView *book_view, EBookViewStatus status, gpointer user_data)
 {
@@ -271,17 +319,30 @@ view_completed_cb (EBookView *book_view, EBookViewStatus status, gpointer user_d
     }
 }
 
+
     void
 search_async (const char         *query,
         int                 max_results,
         SearchAsyncHandler  handler,
         gpointer            user_data)
 {
+    // Increment search id
+    current_search_id++;
+
+    // If query is null
+    if(strlen(query) < 1)
+    {
+      // If data displayed (from previous search), directly call callback
+      handler(NULL, user_data);
+
+      return;
+    }
+
     GSList *iter;
-
     EBookQuery* book_query = create_query (query);
-
     Handler_And_Data *had = g_new (Handler_And_Data, 1);
+
+    had->search_id = current_search_id;
     had->handler = handler;
     had->user_data = user_data;
     had->hits = NULL;
