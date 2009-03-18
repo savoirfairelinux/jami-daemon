@@ -871,7 +871,7 @@ void format_phone_number (gchar **number) {
 
     _number = *number;
 
-    strip_spaces (&_number);
+    // strip_spaces (&_number);
     
 
 }
