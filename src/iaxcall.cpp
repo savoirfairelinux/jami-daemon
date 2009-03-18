@@ -112,3 +112,16 @@ IAXCall::getFirstMatchingFormat(int needles)
   }
   return 0;
 }
+
+CodecDescriptor& IAXCall::getCodecMap()
+{
+  return _codecMap;
+}
+
+AudioCodecType IAXCall::getAudioCodec()
+{
+  return _audioCodec;  
+}
+
+
+

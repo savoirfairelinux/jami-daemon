@@ -56,7 +56,7 @@ int SIPAccount::registerVoIPLink()
 
     /* Retrieve the account information */
     /* Stuff needed for SIP registration */
-    setHostname(Manager::instance().getConfigString(_accountID,HOSTNAME));
+    setHostname(Manager::instance().getConfigString(_accountID, HOSTNAME));
     setUsername(Manager::instance().getConfigString(_accountID, USERNAME));
     setPassword(Manager::instance().getConfigString(_accountID, PASSWORD));
 
@@ -69,8 +69,15 @@ int SIPAccount::registerVoIPLink()
 
 int SIPAccount::unregisterVoIPLink()
 {
-  _debug("SIPAccount: unregister account %s\n" , getAccountID().c_str());
-  return _link->sendUnregister( _accountID );
+  _debug("unregister account %s\n" , getAccountID().c_str());
+
+  _regc = NULL;
+
+  if(_link->sendUnregister( _accountID ))
+      return true;
+  else
+      return false;
+  
 }
 
 void SIPAccount::loadConfig() 

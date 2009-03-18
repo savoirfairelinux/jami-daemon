@@ -74,6 +74,8 @@ IAXVoIPLink::~IAXVoIPLink()
 
     audiolayer = NULL;
 
+    delete converter;
+
     delete [] micData;  micData = NULL;
     delete [] micDataConverted;  micDataConverted = NULL;
     delete [] micDataEncoded;  micDataEncoded = NULL;
@@ -216,8 +218,7 @@ IAXVoIPLink::getEvent()
 
    
     if(call){
-      // _debug("Are we recording");
-        call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
+      call->recAudio.recData(spkrDataConverted,micData,nbSampleForRec_,nbSampleForRec_);
     }
 
     // Do the doodle-moodle to send audio from the microphone to the IAX channel.
@@ -228,7 +229,6 @@ IAXVoIPLink::getEvent()
         sendRegister("");
     }
   
-    // _debug("IAXVoIPLink::getEvent() \n");
     // reinitialize speaker buffer for recording (when recording a voice mail)
     for (int i = 0; i < nbSampleForRec_; i++)
         spkrDataConverted[i] = 0;

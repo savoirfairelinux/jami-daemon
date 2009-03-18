@@ -295,80 +295,80 @@ toolbar_update_buttons ()
   gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
 
   call_t * selectedCall = call_get_selected(active_calltree);
-  if (selectedCall)
-  {
-    switch(selectedCall->state)
+    if (selectedCall)
     {
-      case CALL_STATE_INCOMING:
-	gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),	TRUE);
-	g_object_ref(callButton);
-	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
-	break;
-      case CALL_STATE_HOLD:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-	g_object_ref(holdButton);
-	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), unholdButton, 3);
-	break;
-      case CALL_STATE_RINGING:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),     TRUE);
-	break;
-      case CALL_STATE_DIALING:
-	if( active_calltree != history )  gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),       TRUE);
-	g_object_ref(callButton);
-	gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
-	break;
-      case CALL_STATE_CURRENT:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
-	break;
-      case CALL_STATE_BUSY:
-      case CALL_STATE_FAILURE:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-	break;
-      case CALL_STATE_TRANSFERT:
-	gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
-	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), TRUE);
-	gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
-	break;
-      case CALL_STATE_RECORD:
-	gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
-	gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
-        gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
-	break;
-      default:
-	g_warning("Toolbar update - Should not happen!");
-	break;
-    }
-  }
-  else
-  {
-    if( account_list_get_size() > 0 )
-    {
-      gtk_widget_set_sensitive( GTK_WIDGET(callButton), TRUE );
-      gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton), TRUE );
+        switch(selectedCall->state)
+        {
+            case CALL_STATE_INCOMING:
+	            gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),     TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),	TRUE);
+	            g_object_ref(callButton);
+	            gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
+	            gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
+	        break;
+            case CALL_STATE_HOLD:
+	            gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+	            g_object_ref(holdButton);
+	            gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
+	            gtk_toolbar_insert(GTK_TOOLBAR(toolbar), unholdButton, 3);
+	        break;
+            case CALL_STATE_RINGING:
+	            gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(callButton),     TRUE);
+	        break;
+            case CALL_STATE_DIALING:
+	            if( active_calltree == current_calls )  gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(pickupButton),       TRUE);
+	            g_object_ref(callButton);
+	            gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(callButton));
+	            gtk_toolbar_insert(GTK_TOOLBAR(toolbar), pickupButton, 0);
+	        break;
+            case CALL_STATE_CURRENT:
+	            gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+                gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
+	        break;
+            case CALL_STATE_BUSY:
+            case CALL_STATE_FAILURE:
+	            gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+	            break;
+            case CALL_STATE_TRANSFERT:
+	            gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
+            	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), TRUE);
+	            gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
+	            gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
+	            break;
+            case CALL_STATE_RECORD:
+	            gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(transfertButton),  TRUE);
+	            gtk_widget_set_sensitive( GTK_WIDGET(callButton),       TRUE);
+                gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
+	        break;
+            default:
+	            g_warning("Toolbar update - Should not happen!");
+	        break;
+        }
     }
     else
     {
-      gtk_widget_set_sensitive( GTK_WIDGET(callButton), FALSE);
+        if( account_list_get_size() > 0 )
+        {
+            gtk_widget_set_sensitive( GTK_WIDGET(callButton), TRUE );
+            gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton), TRUE );
+        }
+        else
+        {
+            gtk_widget_set_sensitive( GTK_WIDGET(callButton), FALSE);
+        }
     }
-  }
 }
 
 
@@ -399,53 +399,58 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
     GtkTreeViewColumn *column UNUSED,
     void * data UNUSED)
 {
-  g_print("double click action\n");
-  call_t* selectedCall;
-  call_t* new_call;
-  gchar *to, *from, *account_id;
-  selectedCall = call_get_selected( active_calltree );
+    call_t* selectedCall;
+    call_t* new_call;
+    gchar *to, *from, *account_id;
+    
+    g_print("double click action\n");
+  
+    selectedCall = call_get_selected( active_calltree );
 
-  if (selectedCall)
-  {
-    // Get the right event from the right calltree
-    if( active_calltree == current_calls )
+    if (selectedCall)
     {
-      switch(selectedCall->state)
-      {
-	case CALL_STATE_INCOMING:
-	  dbus_accept(selectedCall);
-	  break;
-	case CALL_STATE_HOLD:
-	  dbus_unhold(selectedCall);
-	  break;
-	case CALL_STATE_RINGING:
-	case CALL_STATE_CURRENT:
-	case CALL_STATE_BUSY:
-	case CALL_STATE_FAILURE:
-	  break;
-	case CALL_STATE_DIALING:
-	  sflphone_place_call (selectedCall);
-	  break;
-	default:
-	  g_warning("Row activated - Should not happen!");
-	  break;
-      }
-    }
-    // if history
-    else
-    {
-      to = g_strdup(call_get_number(selectedCall));
-      from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
-      account_id = g_strdup (selectedCall->accountID);
+        // Get the right event from the right calltree
+        if( active_calltree == current_calls )
+        {
+            switch(selectedCall->state)
+            {
+                case CALL_STATE_INCOMING:
+	                dbus_accept(selectedCall);
+                    stop_notification();
+	                break;
+	            case CALL_STATE_HOLD:
+	                dbus_unhold(selectedCall);
+	                break;
+	            case CALL_STATE_RINGING:
+	            case CALL_STATE_CURRENT:
+	            case CALL_STATE_BUSY:
+	            case CALL_STATE_FAILURE:
+	                break;
+	            case CALL_STATE_DIALING:
+	                sflphone_place_call (selectedCall);
+	            break;
+	            default:
+	                g_warning("Row activated - Should not happen!");
+	                break;
+            }
+        }
+    
+        // If history or contact: double click action places a new call
+        else
+        {
+            to = g_strdup(call_get_number(selectedCall));
+            from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
+            account_id = g_strdup (selectedCall->accountID);
 
-      create_new_call (to, from, CALL_STATE_DIALING, account_id, &new_call);
+            // Create a new call
+            create_new_call (to, from, CALL_STATE_DIALING, account_id, &new_call);
 
-      call_list_add(current_calls, new_call);
-      update_call_tree_add(current_calls, new_call);
-      sflphone_place_call(new_call);
-      display_calltree(current_calls);
+            call_list_add(current_calls, new_call);
+            update_call_tree_add(current_calls, new_call);
+            sflphone_place_call(new_call);
+            display_calltree(current_calls);
+        }
     }
-  }
 }
 
   GtkWidget *

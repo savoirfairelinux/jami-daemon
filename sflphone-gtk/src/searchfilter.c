@@ -108,12 +108,12 @@ static void handler_async_search (GList *hits, gpointer user_data) {
     deactivateWaitingLayer();
 }
 
-void filter_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED) {
+void filter_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED) {
 
     AddressBook_Config *addressbook_config;
 
     /* Switch to the address book when the focus is on the search bar */
-    if (active_calltree == current_calls)
+    if (active_calltree != contacts)
         display_calltree (contacts);
 
 
@@ -126,7 +126,12 @@ void filter_entry_changed (GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer 
         addressbook_load_parameters (&addressbook_config);
 
         // Start the asynchronous search as soon as we have an entry */
-        search_async (gtk_entry_get_text (GTK_ENTRY (filter_entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
+        search_async (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
+    }
+
+    else if (active_calltree == history) {
+        // Filter the displayed calls
+
     }
 
 }
@@ -144,7 +149,6 @@ GtkWidget* create_filter_entry() {
     GtkWidget* ret = gtk_hbox_new(FALSE, 0);
 
     filter_entry = sexy_icon_entry_new();
-    //filter_entry = gtk_entry_new();
     image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
     sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(filter_entry), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
     sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(filter_entry) );

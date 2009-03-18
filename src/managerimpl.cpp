@@ -80,6 +80,7 @@ ManagerImpl::ManagerImpl (void)
         , _hasZeroconf(false)
         , _callAccountMap()
         , _callAccountMapMutex()
+        , _callConfigMap()
         , _accountMap()
 {
   
@@ -100,7 +101,7 @@ ManagerImpl::ManagerImpl (void)
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void) 
 {
-    terminate();
+    // terminate();
     _debug("%s stop correctly.\n", PROGNAME);
 }
 
@@ -124,7 +125,7 @@ ManagerImpl::init()
 
     AudioLayer *audiolayer = getAudioDriver();
     
-    if (audiolayer!=0) {
+    if (audiolayer != 0) {
         unsigned int sampleRate = audiolayer->getSampleRate();
 
         _debugInit("Load Telephone Tone");
@@ -134,25 +135,30 @@ ManagerImpl::init()
         _debugInit("Loading DTMF key");
         _dtmfKey = new DTMF(sampleRate);
     }
+
+    if (audiolayer == 0)
+      audiolayer->stopStream();
 }
 
 void ManagerImpl::terminate()
 {
+    _debug("ManagerImpl::terminate \n");
     saveConfig();
 
     unloadAccountMap();
   
-    _debug("Unload DTMF Key\n");
+    _debug("Unload DTMF Key \n");
     delete _dtmfKey;
 
-    _debug("Unload Audio Driver\n");
+    _debug("Unload Audio Driver \n");
     delete _audiodriver; _audiodriver = NULL;
 
-    _debug("Unload Telephone Tone\n");
+    _debug("Unload Telephone Tone \n");
     delete _telephoneTone; _telephoneTone = NULL;
 
-    _debug("Unload Audio Codecs\n");
+    _debug("Unload Audio Codecs \n");
     _codecDescriptorMap.deleteHandlePointer();
+    
 }
 
 bool
@@ -185,10 +191,35 @@ ManagerImpl::switchCall(const CallID& id ) {
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
 /* Main Thread */ 
+
   bool
 ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
+    std::string pattern;
+    Call::CallConfiguration callConfig;
+    SIPVoIPLink *siplink;
+    
     _debug("ManagerImpl::outgoingCall() method \n");
+
+    // stopTone(false);
+    // playTone();
+
+    /* Check what kind of call we are dealing with */
+    check_call_configuration (id, to, &callConfig);
+    
+    if (callConfig == Call::IPtoIP) {
+        _debug ("Start IP to IP call\n");
+        /* We need to retrieve the sip voiplink instance */
+        siplink = SIPVoIPLink::instance("");     
+        if (siplink->new_ip_to_ip_call (id, to)) {
+            switchCall (id);
+            return true;
+        }
+        else {
+            callFailure (id);
+        }
+        return false;
+    } 
 
     if (!accountExists(accountid)) {
         _debug("! Manager Error: Outgoing Call: account doesn't exist\n");
@@ -221,19 +252,32 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
   bool
 ManagerImpl::answerCall(const CallID& id)
 {
+  bool isActive = false;
 
-  stopTone(false); 
+  stopTone(true);
+
+  AccountID currentaccountid = getAccountFromCall( id );
+  Call* currentcall = getAccountLink(currentaccountid)->getCall(getCurrentCallId());
+  _debug("ManagerImpl::answerCall :: current call->getState %i \n",currentcall->getState());
+
+  if (currentcall->getState() == 1)
+      isActive = true;
+
+  // stopTone(false); 
   _debug("Try to answer call: %s\n", id.data());
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Answering Call: Call doesn't exists\n");
     return false;
   }
-
-  if (id != getCurrentCallId()) {
+  
+  //  if (id != getCurrentCallId()) {
+  if (isActive) { 
     _debug("* Manager Info: there is currently a call, try to hold it\n");
+
     onHoldCall(getCurrentCallId());
   }
+  
 
   if (!getAccountLink(accountid)->answer(id)) {
     // error when receiving...
@@ -246,9 +290,9 @@ ManagerImpl::answerCall(const CallID& id)
   removeWaitingCall(id);
   switchCall(id);
  
-  std::string codecName = getCurrentCodecName(id);
-  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+  // std::string codecName = getCurrentCodecName(id);
+  // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
   return true;
 }
@@ -262,23 +306,27 @@ ManagerImpl::hangupCall(const CallID& id)
     AccountID accountid;
     bool returnValue;
 
-    stopTone(true);
+    stopTone(false);
 
     /* Broadcast a signal over DBus */
     if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
-  
-    accountid = getAccountFromCall( id );
-    if (accountid == AccountNULL) {
-        /** @todo We should tell the GUI that the call doesn't exist, so
-        * it clears up. This can happen. */
-        _debug("! Manager Hangup Call: Call doesn't exists\n");
-        return false;
+    
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)->hangup (id);        
     }
 
-    returnValue = getAccountLink(accountid)->hangup(id);
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("! Manager Hangup Call: Call doesn't exists\n");
+            return false;
+        }
+        returnValue = getAccountLink(accountid)->hangup(id);
+        removeCallAccount(id);
+    }
 
-    _debug("After voip link hungup!\n");
-    removeCallAccount(id);
     switchCall("");
 
     if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
@@ -293,130 +341,182 @@ ManagerImpl::hangupCall(const CallID& id)
   bool
 ManagerImpl::cancelCall (const CallID& id)
 {
-  stopTone(true);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("! Manager Cancel Call: Call doesn't exists\n");
-    return false;
-  }
+    AccountID accountid;
+    bool returnValue;
 
-  bool returnValue = getAccountLink(accountid)->cancel(id);
-  // it could be a waiting call?
-  removeWaitingCall(id);
-  removeCallAccount(id);
-  switchCall("");
+    stopTone(true);
 
-  return returnValue;
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)->cancel (id);        
+    }
+
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("! Manager Cancel Call: Call doesn't exists\n");
+            return false;
+        }
+        returnValue = getAccountLink(accountid)->cancel(id);
+        removeCallAccount(id);
+    }
+        
+    // it could be a waiting call?
+    removeWaitingCall(id);
+    switchCall("");
+
+    return returnValue;
 }
 
 //THREAD=Main
   bool
 ManagerImpl::onHoldCall(const CallID& id)
 {
-  _debug("*************** ON HOLD ***********************************\n");
-  stopTone(true);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("5 Manager On Hold Call: Account ID %s or callid %s desn't exists\n", accountid.c_str(), id.c_str());
-    return false;
-  }
+    AccountID accountid;
+    bool returnValue;
 
-  _debug("Setting ONHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
+    stopTone(true);
 
-  bool returnValue = getAccountLink(accountid)->onhold(id);
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> onhold (id);        
+    }
 
-  removeWaitingCall(id);
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HOLD");
-  switchCall("");
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("Manager On Hold Call: Account ID %s or callid %s doesn't exists\n", accountid.c_str(), id.c_str());
+            return false;
+        }
+        returnValue = getAccountLink(accountid)->onhold(id);
+    }
 
-  return returnValue;
+    removeWaitingCall(id);
+    switchCall("");
+  
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HOLD");
+
+    return returnValue;
 }
 
 //THREAD=Main
   bool
 ManagerImpl::offHoldCall(const CallID& id)
 {
-  _debug("*************** OFF HOLD ***********************************\n");
-  stopTone(false);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("5 Manager OffHold Call: Call doesn't exists\n");
-    return false;
-  }
-
-  //Place current call on hold if it isn't
-  if (hasCurrentCall()) 
-  { 
-    onHoldCall(getCurrentCallId());
-  }
-
-  _debug("Setting OFFHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
-
-  bool rec = getAccountLink(accountid)->isRecording(id);
   
-  /*
-  if(rec)
-    _debug("ManagerImpl::offHoldCall(): Record state is true \n");
-  else
-    _debug("ManagerImpl::offHoldCall(): Record state is false \n");
-  */
+    AccountID accountid;
+    bool returnValue, rec;
+    std::string codecName;
 
-  bool returnValue = getAccountLink(accountid)->offhold(id);
+    stopTone(false);
 
-  if (_dbus){ 
-    if (rec)
-      _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
-    else 
-      _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
-  }
-  switchCall(id);
+    //Place current call on hold if it isn't
+    if (hasCurrentCall()) 
+    { 
+        onHoldCall(getCurrentCallId());
+    }
 
-  std::string codecName = getCurrentCodecName(id);
-  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        rec = SIPVoIPLink::instance (AccountNULL)-> isRecording (id);
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> offhold (id);        
+    }
 
-  return returnValue;
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("Manager OffHold Call: Call doesn't exists\n");
+            return false;
+        }
+        _debug("Setting OFFHOLD, Account %s, callid %s\n", accountid.c_str(), id.c_str());
+        rec = getAccountLink(accountid)->isRecording(id);
+        returnValue = getAccountLink(accountid)->offhold(id);
+    }
+
+    if (_dbus){ 
+        if (rec)
+            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
+        else 
+            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
+    }
+  
+    switchCall(id);
+
+    // codecName = getCurrentCodecName(id);
+    // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+
+    return returnValue;
 }
 
 //THREAD=Main
   bool
 ManagerImpl::transferCall(const CallID& id, const std::string& to)
 {
-  stopTone(true);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("! Manager Transfer Call: Call doesn't exists\n");
-    return false;
-  }
-  bool returnValue = getAccountLink(accountid)->transfer(id, to);
-  removeWaitingCall(id);
-  removeCallAccount(id);
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
-  switchCall("");
-  return returnValue;
+    AccountID accountid;
+    bool returnValue;
+  
+    stopTone(true);
+  
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> transfer (id, to);        
+    }
+
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("! Manager Transfer Call: Call doesn't exists\n");
+            return false;
+        }
+        returnValue = getAccountLink(accountid)->transfer(id, to);
+        removeCallAccount(id);
+    }
+        
+    removeWaitingCall(id);
+    switchCall("");
+  
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+    return returnValue;
 }
 
 //THREAD=Main : Call:Incoming
   bool
 ManagerImpl::refuseCall (const CallID& id)
 {
-  _debug("ManagerImpl::refuseCall(): method called");
-  stopTone(true);
-  AccountID accountid = getAccountFromCall( id );
-  if (accountid == AccountNULL) {
-    _debug("! Manager OffHold Call: Call doesn't exists\n");
-    return false;
-  }
-  bool returnValue = getAccountLink(accountid)->refuse(id);
-  // if the call was outgoing or established, we didn't refuse it
-  // so the method did nothing
-  if (returnValue) {
-    removeWaitingCall(id);
-    removeCallAccount(id);
-    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
-    switchCall("");
-  }
-  return returnValue;
+    AccountID accountid;
+    bool returnValue;
+  
+    stopTone(true);
+
+     /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        returnValue = SIPVoIPLink::instance (AccountNULL)-> refuse (id);        
+    }
+
+    /* Classic call, attached to an account */
+    else { 
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("! Manager OffHold Call: Call doesn't exists\n");
+            return false;
+        }
+        returnValue = getAccountLink(accountid)->refuse(id);
+        removeCallAccount(id);
+    } 
+    
+    // if the call was outgoing or established, we didn't refuse it
+    // so the method did nothing
+    if (returnValue) {
+        removeWaitingCall(id);
+        if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
+        switchCall("");
+    }
+    return returnValue;
 }
 
 //THREAD=Main
@@ -594,17 +694,27 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     PulseLayer *pulselayer;
     std::string from, number;
 
+    stopTone(true);
+
     _debug("Incoming call %s\n", call->getCallId().data());
 
     associateCallToAccount(call->getCallId(), accountId);
+
+    _debug("ManagerImpl::incomingCall :: hasCurrentCall() %i \n",hasCurrentCall());
 
     if ( !hasCurrentCall() ) {
         call->setConnectionState(Call::Ringing);
         ringtone();
         switchCall(call->getCallId());
-    } else {
+    
+    }
+    /* 
+    else {
         addWaitingCall(call->getCallId());
     }
+    */
+
+    addWaitingCall(call->getCallId());
 
     from = call->getPeerName();
     number = call->getPeerNumber();
@@ -618,6 +728,15 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
         from.append(number);
         from.append(">");
     }
+
+    /*
+    CallIDSet::iterator iter = _waitingCall.begin();
+    while (iter != _waitingCall.end()) {
+        CallID ident = *iter;
+        _debug("ManagerImpl::incomingCall :: CALL iteration: %s \n",ident.c_str());
+        ++iter;
+    }
+    */
   
     /* Broadcast a signal over DBus */
     _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
@@ -643,13 +762,14 @@ ManagerImpl::incomingMessage(const AccountID& accountId, const std::string& mess
   void
 ManagerImpl::peerAnsweredCall(const CallID& id)
 {
-  if (isCurrentCall(id)) {
-    stopTone(false);
-  }
-  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
+    if (isCurrentCall(id)) {
+        stopTone(false);
+    }
+  
+    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "CURRENT");
   
   std::string codecName = getCurrentCodecName(id);
-  _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+  // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
   if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 }
 
@@ -851,22 +971,29 @@ ManagerImpl::ringtone()
     int layer, samplerate;
     bool loadFile;
 
+    // stopTone(true);
+
     if( isRingtoneEnabled() )
     {
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
+        _debug("RINGING!!! 1\n");
         
         ringchoice = getConfigString(AUDIO, RING_CHOICE);
         //if there is no / inside the path
         if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
             // check inside global share directory
             ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
+
+            _debug("RINGING!!! 2\n");
         }
 
         audiolayer = getAudioDriver();
         layer = audiolayer->getLayerType();
         if (audiolayer == 0)
             return;
+
+        _debug("RINGING!!! 3\n");
 
         samplerate  = audiolayer->getSampleRate();
         codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
@@ -876,23 +1003,29 @@ ManagerImpl::ringtone()
         _toneMutex.leaveMutex(); 
 
         if (loadFile) {
+            
+            _debug("RINGING!!! 5\n");
             _toneMutex.enterMutex(); 
             _audiofile.start();
             _toneMutex.leaveMutex(); 
             if(CHECK_INTERFACE( layer, ALSA )){
                 //ringback();
+            
             }
             else{
                 audiolayer->startStream();
+                _debug("RINGING!!! 6\n");
             }
         } else {
             ringback();
+            _debug("RINGING!!! 7\n");
         }
     
     }
     else
     {
         ringback();
+        _debug("RINGING!!! 8\n");
     }
 }
 
@@ -1503,7 +1636,6 @@ ManagerImpl::setRecordingCall(const CallID& id)
   _debug("ManagerImpl::setRecording()! \n");
   AccountID accountid = getAccountFromCall( id );
 
-  // printf("ManagerImpl::CallID: %s", id);
   getAccountLink(accountid)->setRecording(id);
 }
 
@@ -1598,6 +1730,8 @@ ManagerImpl::setPulseAppVolumeControl( void )
 void ManagerImpl::setAudioManager( const int32_t& api )
 {
     int manager;
+
+    _debug(" ManagerImpl::setAudioManager :: %i \n",api);
 
     manager = api;
     if( manager == PULSEAUDIO )
@@ -1712,8 +1846,8 @@ ManagerImpl::initAudioDriver(void)
     if (error == -1) {
       _debug("Init audio driver: %i\n", error);
     }
-  } 
-  
+  }
+ 
 }
 
 /**
@@ -1763,6 +1897,7 @@ ManagerImpl::selectAudioDriver (void)
     /* Notify the error if there is one */
     if( _audiodriver -> getErrorMessage() != -1 )
         notifyErrClient( _audiodriver -> getErrorMessage());
+
 }
 
 void ManagerImpl::switchAudioManager (void) 
@@ -1803,6 +1938,16 @@ void ManagerImpl::switchAudioManager (void)
     _audiodriver->openDevice( numCardIn , numCardOut, samplerate, framesize, SFL_PCM_BOTH, alsaPlugin ); 
     if( _audiodriver -> getErrorMessage() != -1 )
         notifyErrClient( _audiodriver -> getErrorMessage());
+   
+    _debug("Current device: %i \n", type);
+    _debug("has current call: %i \n", hasCurrentCall());
+
+    // need to stop audio streams if there is currently no call
+    if( (type != PULSEAUDIO) && (!hasCurrentCall())) {
+        _debug("There is currently a call!!\n");
+        _audiodriver->stopStream();
+        
+    }
 } 
 
 /**
@@ -2175,11 +2320,12 @@ ManagerImpl::getNewCallID()
   short
 ManagerImpl::loadAccountMap()
 {
-  _debug("Load account:");
+ 
   short nbAccount = 0;
   TokenList sections = _config.getSections();
   std::string accountType;
   Account* tmpAccount;
+
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
@@ -2199,27 +2345,31 @@ ManagerImpl::loadAccountMap()
     else {
       _debug("Unknown %s param in config file (%s)\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
     }
-
+ 
+    _debug("tmpAccount.getRegistrationState() %i \n ",tmpAccount->getRegistrationState());
     if (tmpAccount != NULL) {
-      _debug(" %s ", iter->c_str());
+    
+      _debug(" %s \n", iter->c_str());
       _accountMap[iter->c_str()] = tmpAccount;
       nbAccount++;
     }
 
     iter++;
   }
-
+  _debug("nbAccount loaded %i \n",nbAccount);
   return nbAccount;
 }
 
   void
 ManagerImpl::unloadAccountMap()
 {
-  _debug("Unloading account map...\n");
+
   AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
+
     _debug("-> Deleting account %s\n", iter->first.c_str());
     delete iter->second; iter->second = 0;
+
     iter++;
   }
   _accountMap.clear();
@@ -2293,35 +2443,34 @@ AccountMap ManagerImpl::getSipAccountMap( void )
 
 void ManagerImpl::restartPJSIP (void)
 {
-    //SIPVoIPLink *siplink;
-
-    //unloadAccountMap ();
-
-    /* First unregister all SIP accounts */
-    //this->unregisterCurSIPAccounts();
+    SIPVoIPLink *siplink;
+    siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
+    
+    this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
-    //siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
-    //if (siplink) 
-    //{
-      //  siplink->terminate ();
-       // _debug ("*************************************************Terminate done\n");
-        //siplink = SIPVoIPLink::instance("");
-        //siplink->init ();
-    //}
-    //_debug("***************************************************Init Done\n");
-    //loadAccountMap();
-    //initRegisterAccounts ();
+    
+    if (siplink) 
+    {
+        siplink->terminate ();
+        siplink = SIPVoIPLink::instance("");
+        siplink->init ();
+    }
+
     /* Then register all enabled SIP accounts */
-    //this->registerCurSIPAccounts(siplink);
+    this->registerCurSIPAccounts(siplink);
 }
 
 VoIPLink* ManagerImpl::getAccountLink(const AccountID& accountID)
 {
-  Account* acc = getAccount(accountID);
-  if ( acc ) {
-    return acc->getVoIPLink();
-  }
-  return 0;
+    if (accountID!=AccountNULL) {
+        Account* acc = getAccount(accountID);
+        if ( acc ) {
+            return acc->getVoIPLink();
+        }
+        return 0;
+    }
+    else
+        return SIPVoIPLink::instance("");
 }
 
 VoIPLink* ManagerImpl::getSIPAccountLink()
@@ -2369,17 +2518,21 @@ void ManagerImpl::unregisterCurSIPAccounts()
 
 void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
 {
+    
     Account *current;
-  
+
     AccountMap::iterator iter = _accountMap.begin();
+
     while( iter != _accountMap.end() ) {
         current = iter->second;
+        
         if (current) {
             if ( current->isEnabled() && current->getType() == "sip") {
                 //current->setVoIPLink(link);
 	            current->registerVoIPLink();
             }
         }
+        current = NULL;
     iter++;
     }    
 }
@@ -2410,66 +2563,50 @@ void ManagerImpl::setAddressbookSettings (const std::map<std::string, int32_t>& 
     saveConfig ();
 }
 
+void ManagerImpl::check_call_configuration (const CallID& id, const std::string &to, Call::CallConfiguration *callConfig) {
+    std::string pattern;
+    Call::CallConfiguration config;
 
-#ifdef TEST
-/** 
- * Test accountMap
- */
-bool ManagerImpl::testCallAccountMap()
-{
-  if ( getAccountFromCall(1) != AccountNULL ) {
-    _debug("TEST: getAccountFromCall with empty list failed\n");
-  }
-  if ( removeCallAccount(1) != false ) {
-    _debug("TEST: removeCallAccount with empty list failed\n");
-  }
-  CallID newid = getNewCallID();
-  if ( associateCallToAccount(newid, "acc0") == false ) {
-    _debug("TEST: associateCallToAccount with new CallID empty list failed\n");
-  }
-  if ( associateCallToAccount(newid, "acc1") == true ) {
-    _debug("TEST: associateCallToAccount with a known CallID failed\n");
-  }
-  if ( getAccountFromCall( newid ) != "acc0" ) {
-    _debug("TEST: getAccountFromCall don't return the good account id\n");
-  }
-  CallID secondnewid = getNewCallID();
-  if ( associateCallToAccount(secondnewid, "xxxx") == true ) {
-    _debug("TEST: associateCallToAccount with unknown account id failed\n");
-  }
-  if ( removeCallAccount( newid ) != true ) {
-    _debug("TEST: removeCallAccount don't remove the association\n");
-  }
-
-  return true;
-}
-
-/**
- * Test AccountMap
- */
-bool ManagerImpl::testAccountMap() 
-{
-  if (loadAccountMap() != 2) {
-    _debug("TEST: loadAccountMap didn't load 2 account\n");
-  }
-  if (accountExists("acc0") == false) {
-    _debug("TEST: accountExists didn't find acc0\n");
-  }
-  if (accountExists("accZ") != false) {
-    _debug("TEST: accountExists found an unknown account\n");
-  }
-  if (getAccount("acc0") == 0) {
-    _debug("TEST: getAccount didn't find acc0\n");
-  }
-  if (getAccount("accZ") != 0) {
-    _debug("TEST: getAccount found an unknown account\n");
-  }
-  unloadAccountMap();
-  if ( accountExists("acc0") == true ) {
-    _debug("TEST: accountExists found an account after unloadAccount\n");
-  }
-  return true;
+    /* Check if the call is an IP-to-IP call */
+    /* For an IP-to-IP call, we don't need any account */
+    /* Pattern looked for : ip:xxx.xxx.xxx.xxx */
+    pattern = to.substr (0,3);
+    if (pattern==IP_TO_IP_PATTERN) {
+        config = Call::IPtoIP;
+    } else {
+        config = Call::Classic;
+    }
+    associateConfigToCall (id, config);
+    *callConfig = config;
 }
 
 
-#endif
+bool ManagerImpl::associateConfigToCall (const CallID& callID, Call::CallConfiguration config) {
+
+    if (getConfigFromCall(callID) == CallConfigNULL) { // nothing with the same ID
+        _callConfigMap[callID] = config;
+        _debug("Associate Call %s with config %i\n", callID.data(), config);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+Call::CallConfiguration ManagerImpl::getConfigFromCall(const CallID& callID) {
+
+    CallConfigMap::iterator iter = _callConfigMap.find(callID);
+    if ( iter == _callConfigMap.end()) {
+        return (Call::CallConfiguration)CallConfigNULL;
+    } else {
+        return iter->second;
+    }
+}
+
+bool ManagerImpl::removeCallConfig(const CallID& callID) {
+
+    if ( _callConfigMap.erase(callID) ) {
+        return true;
+    }
+    return false;
+}
+

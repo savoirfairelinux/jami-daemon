@@ -46,6 +46,8 @@ DBusManagerImpl::exec(){
 void
 DBusManagerImpl::exit()
 {
+    
     _dispatcher.leave();
+    
 }
 

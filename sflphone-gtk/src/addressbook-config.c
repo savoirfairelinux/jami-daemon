@@ -67,7 +67,7 @@ void addressbook_save_parameters (void) {
     g_hash_table_unref (params);
 }
 
-static void max_results_cb (GtkRange* scale, gpointer user_data) {
+static void max_results_cb (GtkRange* scale) {
 
     addressbook_config->max_results = (guint) gtk_range_get_value (GTK_RANGE (scale));
 }

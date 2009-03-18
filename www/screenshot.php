@@ -12,16 +12,7 @@ include('include/header.php');
       <div id="main-image">&nbsp;</div>
       <ul class="gallery">
         <?php
-        //  $imageDirectory = "./img/gallery";
-        //  $files = scandir($imageDirectory);
-          
-        //  array_shift($files); // shift folder "."
-        //  array_shift($files); // shift folder ".."          
-       // //  print_r($files);
-       //   foreach($files as $file):
-       // 
-        //<li><a href="img/gallery/<?php echo $file " title="Main Window"><img src="img/gallery/thumbs/<?php echo $file " alt="Main Window"></a></li> 
-        //php endforeach; 
+
         $images = array(
           array('assistant-1.png','File menu', 'state' => 'active'),
           array('main-edit.png','Edit menu'),
@@ -112,7 +103,6 @@ include('include/header.php');
 		    });
 
 	    });
-      //$('ul.gallery > li:first > img').click();
     </script>
 <?php
 

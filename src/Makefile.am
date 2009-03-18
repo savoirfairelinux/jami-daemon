@@ -25,11 +25,14 @@ sflphoned_SOURCES = \
 		eventthread.cpp \
 		sipaccount.cpp \
 		accountcreator.cpp \
-        sipvoiplink.cpp \
+                sipvoiplink.cpp \
 		call.cpp \
 		account.cpp \
 		sipcall.cpp \
+		sdp.cpp \
+		sdpmedia.cpp \
 		$(IAXSOURCES) 
+
 
 sflphoned_CXXFLAGS = \
 		-DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\" \
@@ -47,9 +50,11 @@ sflphoned_LDADD = \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
-		@SAMPLERATE_LIBS@ 
+		@SAMPLERATE_LIBS@ \
+		@LIBOPENSSL_LIBS@
 
-#sflphoned_LDFLAGS=-pg
+# sflphoned_LDFLAGS= -pg -luuid
+sflphoned_LDFLAGS= -luuid
 
 noinst_LTLIBRARIES = libsflphone.la
 
@@ -67,11 +72,13 @@ noinst_HEADERS = \
 		accountcreator.h \
         sipvoiplink.h \
 		call.h \
-		sipcall.h 
-		
+		sipcall.h \
+		sdp.h \
+		sdpmedia.h
+
 libsflphone_la_LIBADD = \
 	$(src)/libs/stund/libstun.la \
-    	$(src)/libs/utilspp/libutilspp.la \
+	$(src)/libs/utilspp/libutilspp.la \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
