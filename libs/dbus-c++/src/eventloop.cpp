@@ -150,7 +150,8 @@ void DefaultMainLoop::dispatch()
 	}
 	_mutex_w.unlock();
 
-	int wait_min = 10000;
+	// int wait_min = 10000;
+        int wait_min = 500;
 
 	DefaultTimeouts::iterator ti;
 

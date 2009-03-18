@@ -161,8 +161,8 @@ bool AudioRecord::isOpenFile() {
 
 
 bool AudioRecord::isFileExist() {
+  _debug("AudioRecord::isFileExist(): try to open name : %s \n", fileName_);
   
-  printf("AudioRecord::isFileExist(): try to open name : %s \n", fileName_);
   if(fopen(fileName_,"rb")==0) {
     return true;
   }
@@ -171,7 +171,8 @@ bool AudioRecord::isFileExist() {
 }
 
 bool AudioRecord::isRecording() {
-  _debug("AudioRecording::setRecording() \n");
+  _debug("AudioRecording::isRecording() %i \n", recordingEnabled_);
+  
   
   if(recordingEnabled_)
     return true;
@@ -181,17 +182,17 @@ bool AudioRecord::isRecording() {
 
 
 bool AudioRecord::setRecording() {
-  _debug("AudioRecord::setRecording()\n");
+  _debug("AudioRecord::setRecording() \n");
   
   if (isOpenFile()){
-    _debug("AuioRecord::setRecording()::file already opened\n");
+    _debug("AuioRecord::setRecording()::file already opened \n");
     if(!recordingEnabled_)
       recordingEnabled_ = true;
     else 
       recordingEnabled_ = false;
   }
   else {
-    _debug("AudioRecord::setRecording():Opening the wave file in call during call instantiation\n");
+    _debug("AudioRecord::setRecording():Opening the wave file in call during call instantiation \n");
     openFile();
 
     recordingEnabled_ = true; // once opend file, start recording

@@ -239,7 +239,6 @@ SIPVoIPLink::terminateSIPCall()
         call = dynamic_cast<SIPCall*>(iter->second);
         if (call) {
             // terminate the sip call
-            _debug("SIPVoIPLink::terminateSIPCall()::the call is deleted, should close recording file \n");
             delete call; call = 0;
         }
         iter++;
@@ -250,12 +249,10 @@ SIPVoIPLink::terminateSIPCall()
     void
 SIPVoIPLink::terminateOneCall(const CallID& id)
 {
-    _debug("SIPVoIPLink::terminateOneCall(): function called \n");
 
     SIPCall *call = getSIPCall(id);
     if (call) {
         // terminate the sip call
-        _debug("SIPVoIPLink::terminateOneCall()::the call is deleted, should close recording file \n");
         delete call; call = 0;
     }
 }
@@ -291,7 +288,6 @@ SIPVoIPLink::getEvent()
 
 int SIPVoIPLink::sendRegister( AccountID id )
 {
-
     pj_status_t status;
     int expire_value;
     char contactTmp[256];
@@ -301,6 +297,7 @@ int SIPVoIPLink::sendRegister( AccountID id )
     SIPAccount *account;
     pjsip_regc *regc;
 
+    
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
     hostname = account->getHostname();
     username = account->getUsername();
@@ -312,10 +309,12 @@ int SIPVoIPLink::sendRegister( AccountID id )
     regc = account->getRegistrationInfo();
     /* If the registration already exists, delete it */
     if(regc) {
+        
         status = pjsip_regc_destroy(regc);
         regc = NULL;
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
     }
+
 
     account->setRegister(true);
 
@@ -324,6 +323,7 @@ int SIPVoIPLink::sendRegister( AccountID id )
 
     /* Update the state of the voip link */
     account->setRegistrationState(Trying);
+
 
     if (!validStunServer) {
         account->setRegistrationState(ErrorExistStun);
@@ -380,7 +380,7 @@ int SIPVoIPLink::sendRegister( AccountID id )
         return false;
     }
 
-    _debug("Send the registration ######### \n");
+    
     status = pjsip_regc_send(regc, tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to send regc request.\n");
@@ -828,7 +828,8 @@ SIPVoIPLink::setRecording(const CallID& id)
 {
     SIPCall* call = getSIPCall(id);
 
-    call->setRecording();
+    if(call)
+        call->setRecording();
 
     // _audiortp->setRecording();
 }
@@ -837,8 +838,11 @@ SIPVoIPLink::setRecording(const CallID& id)
 SIPVoIPLink::isRecording(const CallID& id)
 {
     SIPCall* call = getSIPCall(id);
-
-    return call->isRecording();
+    _debug("call->isRecording() %i \n",call->isRecording());
+    if(call)
+        return call->isRecording();
+    else 
+        return false;
 }
 
 
@@ -1609,7 +1613,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     /*******************************/
 
     void call_on_state_changed( pjsip_inv_session *inv, pjsip_event *e){
-        _debug("call_on_state_changed!!!!!!!!!\n");
 
         SIPCall *call;
         AccountID accId;
@@ -1828,7 +1831,6 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
     pj_bool_t 
         mod_on_rx_request(pjsip_rx_data *rdata)
         {
-            _debug("mod_on_rx_request!!!!!!!!!\n");
 
             pj_status_t status;
             pj_str_t reason;

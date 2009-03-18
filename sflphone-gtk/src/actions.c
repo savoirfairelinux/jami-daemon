@@ -368,6 +368,12 @@ sflphone_off_hold ()
                 break;
         }
     }
+  
+    if(dbus_get_is_recording(selectedCall))
+        g_print("Currently recording! \n");
+    else
+        g_print("Not recording currently \n");
+    
 }
 
 
