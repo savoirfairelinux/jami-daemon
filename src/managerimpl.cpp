@@ -2321,13 +2321,11 @@ ManagerImpl::getNewCallID()
 ManagerImpl::loadAccountMap()
 {
  
-  _debug("*********************** Load account: \n");
   short nbAccount = 0;
   TokenList sections = _config.getSections();
   std::string accountType;
   Account* tmpAccount;
 
-  AccountMap currentAccount = _accountMap;
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
@@ -2336,14 +2334,6 @@ ManagerImpl::loadAccountMap()
       iter++;
       continue;
     }
-
-    // TokenList::iterator curr = currentAccount.find(iter->c_str());
-    /*
-    if(curr != currentAccount.end())
-        _debug("Account %s does not exist! creating it\n",iter->c_str());
-    else
-        _debug("Account %s already exist! sorry...",iter->c_str());
-    */
 
     accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
     if (accountType == "SIP") {
@@ -2373,25 +2363,14 @@ ManagerImpl::loadAccountMap()
   void
 ManagerImpl::unloadAccountMap()
 {
-  _debug("********************** Unloading account map: \n");
-
-  Account* tmpAccount = NULL;
 
   AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
 
-    tmpAccount = getAccount(iter->first.c_str());
-    
-    _debug("tmpAccount.getRegistrationState() %i \n ",tmpAccount->getRegistrationState());
-    
-    // if account is still trying 
-    if(tmpAccount->getRegistrationState() != 1){
-      _debug("-> Deleting account %s\n", iter->first.c_str());
-      delete iter->second; iter->second = 0;
-    }
+    _debug("-> Deleting account %s\n", iter->first.c_str());
+    delete iter->second; iter->second = 0;
 
     iter++;
-    tmpAccount = NULL;
   }
   _accountMap.clear();
 }
@@ -2466,10 +2445,6 @@ void ManagerImpl::restartPJSIP (void)
 {
     SIPVoIPLink *siplink;
     siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
-
-    // unregister all SIP accounts
-    unloadAccountMap();
-
     
     this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
@@ -2477,13 +2452,10 @@ void ManagerImpl::restartPJSIP (void)
     if (siplink) 
     {
         siplink->terminate ();
-        _debug("*************************************************Terminate done\n");
         siplink = SIPVoIPLink::instance("");
         siplink->init ();
     }
-    loadAccountMap();
-    _debug("***************************************************Init Done\n");
-    initRegisterAccounts ();
+
     /* Then register all enabled SIP accounts */
     this->registerCurSIPAccounts(siplink);
 }
@@ -2546,17 +2518,21 @@ void ManagerImpl::unregisterCurSIPAccounts()
 
 void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
 {
+    
     Account *current;
-  
+
     AccountMap::iterator iter = _accountMap.begin();
+
     while( iter != _accountMap.end() ) {
         current = iter->second;
+        
         if (current) {
             if ( current->isEnabled() && current->getType() == "sip") {
                 //current->setVoIPLink(link);
 	            current->registerVoIPLink();
             }
         }
+        current = NULL;
     iter++;
     }    
 }
