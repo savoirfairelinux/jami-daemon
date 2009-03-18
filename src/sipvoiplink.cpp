@@ -846,11 +846,17 @@ SIPVoIPLink::isRecording(const CallID& id)
 SIPVoIPLink::getCurrentCodecName()
 {
 
-    SIPCall *call = getSIPCall(Manager::instance().getCurrentCallId());  
+    SIPCall *call;
+    AudioCodec *ac;
+    std::string name = "";
+    
+    call = getSIPCall(Manager::instance().getCurrentCallId());  
+    ac = call->getLocalSDP()->get_session_media();
 
-    AudioCodec *ac = call->getLocalSDP()->get_session_media();
+    if (ac)
+        name = ac->getCodecName();
 
-    return ac->getCodecName();
+    return name;
 }
 
     bool 
