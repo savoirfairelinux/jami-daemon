@@ -743,6 +743,7 @@ sflphone_place_call ( call_t * c )
         }
         // Update history
         c->history_state = OUTGOING;
+        g_print ("add in history\n");
         call_list_add(history, c);
     }
 }
