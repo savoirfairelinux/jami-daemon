@@ -233,7 +233,7 @@ gboolean sflphone_init()
         current_calls = calltab_init();
         history = calltab_init();
         contacts = calltab_init();
-        if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
+        //if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
         init();
         account_list_init ();
         codec_list_init();
@@ -530,23 +530,18 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 sflphone_new_call()
 {
 
+    call_t *c;
+    gchar *from, *to;
+
     sflphone_on_hold();
 
     // Play a tone when creating a new call
     if( call_list_get_size(current_calls) == 0 )
         dbus_start_tone( TRUE , ( voice_mails > 0 )? TONE_WITH_MESSAGE : TONE_WITHOUT_MESSAGE) ;
 
-    call_t * c = g_new0 (call_t, 1);
-    c->state = CALL_STATE_DIALING;
-    c->from = g_strconcat("\"\" <>", NULL);
-
-    c->callID = g_new0(gchar, 30);
-    g_sprintf(c->callID, "%d", rand());
-
-    c->to = g_strdup("");
-
-    c->_start = 0;
-    c->_stop = 0;
+    to = g_strdup("");
+    from = g_strconcat("\"\" <>", NULL);
+    create_new_call (to, from, CALL_STATE_DIALING, "", &c);
 
     call_list_add(current_calls,c);
     update_call_tree_add(current_calls,c);
@@ -687,6 +682,9 @@ sflphone_place_call ( call_t * c )
 
     if(c->state == CALL_STATE_DIALING && strcmp(c->to, "") != 0)
     {
+    
+        //format_phone_number (&c->to); 
+        
         if( account_list_get_size() == 0 )
         {
             notify_no_accounts();
@@ -749,6 +747,7 @@ sflphone_place_call ( call_t * c )
         }
         // Update history
         c->history_state = OUTGOING;
+        g_print ("add in history\n");
         call_list_add(history, c);
     }
 }
@@ -866,3 +865,11 @@ sflphone_fill_codec_list()
     }
 }
 
+void format_phone_number (gchar **number) {
+
+    gchar *_number;
+
+    _number = *number;
+
+    //strip_spaces (&_number);
+}

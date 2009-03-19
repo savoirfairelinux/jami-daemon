@@ -23,7 +23,7 @@
 #include <calllist.h>
 #include <gtk/gtk.h>
 
-GtkTreeModel* histfilter;
+//GtkTreeModel* histfilter;
 
 calltab_t* calltab_init();
 
