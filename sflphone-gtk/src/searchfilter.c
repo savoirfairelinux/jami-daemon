@@ -159,8 +159,8 @@ GtkWidget* create_filter_entry() {
     gtk_box_pack_start(GTK_BOX(ret), filter_entry, TRUE, TRUE, 0);
 
     // Create waiting icon
-    waitingPixOn = gdk_pixbuf_animation_new_from_file(ICONS_DIR "/throbber.gif", NULL);
-    waitingPixOff = gdk_pixbuf_new_from_file(ICONS_DIR "/throbber.png", NULL);
+    waitingPixOn = gdk_pixbuf_animation_new_from_file(ICONS_DIR "/wait-on.gif", NULL);
+    waitingPixOff = gdk_pixbuf_new_from_file(ICONS_DIR "/wait-off.gif", NULL);
     waitingLayer = gtk_image_new_from_pixbuf(waitingPixOff);
 
     gtk_box_pack_end(GTK_BOX(ret), waitingLayer, TRUE, TRUE, 0);
