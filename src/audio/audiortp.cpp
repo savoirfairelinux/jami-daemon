@@ -190,6 +190,9 @@ AudioRtpRTX::initAudioRtpSession (void)
     try {
         if (_ca == 0) { return; }
         _audiocodec = _ca->getLocalSDP()->get_session_media ();
+
+        if (_audiocodec == NULL) { return; }
+
         _codecSampleRate = _audiocodec->getClockRate(); 
 
         ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());

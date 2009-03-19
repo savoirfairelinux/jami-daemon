@@ -44,12 +44,12 @@ Instance::Unregister( const int32_t& pid UNUSED)
     count --;
     if(count <= 0)
     {
-        
-        DBusManager::instance().exit();
 
+        
         Manager::instance().terminate();
 
-       
+        DBusManager::instance().exit();
+
     }
 }
 
@@ -58,5 +58,6 @@ Instance::getRegistrationCount( void )
 {
   
   return count;
+
 }
 

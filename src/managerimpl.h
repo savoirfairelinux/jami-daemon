@@ -63,9 +63,6 @@ typedef std::map<CallID, Call::CallConfiguration> CallConfigMap;
 /** Define a type for CallID vector (waiting list, incoming not answered) */
 typedef std::set<CallID> CallIDSet;
 
-/** Define a type for recorded audio file names vector */
-typedef std::map<CallID, std::string> RecFileNames; 
-
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
 
@@ -1048,11 +1045,6 @@ class ManagerImpl {
      *		  false otherwise
      */
     bool accountExists(const AccountID& accountID);
-
-    /**
-     * Map the call id to coresponding call
-     */
-    RecFileNames _fileNamesMap;
     
 
 public:

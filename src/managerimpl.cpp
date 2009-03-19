@@ -447,9 +447,9 @@ ManagerImpl::offHoldCall(const CallID& id)
   
     switchCall(id);
 
-    // codecName = getCurrentCodecName(id);
+    codecName = getCurrentCodecName(id);
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+    if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
     return returnValue;
 }
@@ -741,7 +741,9 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     */
   
     /* Broadcast a signal over DBus */
-    _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+    if (_dbus) _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+
+    //if (_dbus) _dbus->getCallManager()->callStateChanged(call->getCallId(), "INCOMING");
   
     // Reduce volume of the other pulseaudio-connected audio applications
     if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
@@ -789,7 +791,6 @@ ManagerImpl::peerRingingCall(const CallID& id)
   void
 ManagerImpl::peerHungupCall(const CallID& id)
 {
-    _debug("ManagerImpl::peerHungupCall():this function is called when peer hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
@@ -979,15 +980,12 @@ ManagerImpl::ringtone()
     {
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
-        _debug("RINGING!!! 1\n");
         
         ringchoice = getConfigString(AUDIO, RING_CHOICE);
         //if there is no / inside the path
         if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
             // check inside global share directory
             ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
-
-            _debug("RINGING!!! 2\n");
         }
 
         audiolayer = getAudioDriver();
@@ -995,7 +993,6 @@ ManagerImpl::ringtone()
         if (audiolayer == 0)
             return;
 
-        _debug("RINGING!!! 3\n");
 
         samplerate  = audiolayer->getSampleRate();
         codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
@@ -1006,7 +1003,6 @@ ManagerImpl::ringtone()
 
         if (loadFile) {
             
-            _debug("RINGING!!! 5\n");
             _toneMutex.enterMutex(); 
             _audiofile.start();
             _toneMutex.leaveMutex(); 
@@ -1016,18 +1012,15 @@ ManagerImpl::ringtone()
             }
             else{
                 audiolayer->startStream();
-                _debug("RINGING!!! 6\n");
             }
         } else {
             ringback();
-            _debug("RINGING!!! 7\n");
         }
     
     }
     else
     {
         ringback();
-        _debug("RINGING!!! 8\n");
     }
 }
 
@@ -1638,7 +1631,6 @@ ManagerImpl::setRecordingCall(const CallID& id)
   _debug("ManagerImpl::setRecording()! \n");
   AccountID accountid = getAccountFromCall( id );
 
-  // printf("ManagerImpl::CallID: %s", id);
   getAccountLink(accountid)->setRecording(id);
 }
 
@@ -2347,11 +2339,12 @@ ManagerImpl::getNewCallID()
   short
 ManagerImpl::loadAccountMap()
 {
-  _debug("Load account:");
+ 
   short nbAccount = 0;
   TokenList sections = _config.getSections();
   std::string accountType;
   Account* tmpAccount;
+
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
@@ -2371,27 +2364,31 @@ ManagerImpl::loadAccountMap()
     else {
       _debug("Unknown %s param in config file (%s)\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
     }
-
+ 
+    _debug("tmpAccount.getRegistrationState() %i \n ",tmpAccount->getRegistrationState());
     if (tmpAccount != NULL) {
-      _debug(" %s ", iter->c_str());
+    
+      _debug(" %s \n", iter->c_str());
       _accountMap[iter->c_str()] = tmpAccount;
       nbAccount++;
     }
 
     iter++;
   }
-
+  _debug("nbAccount loaded %i \n",nbAccount);
   return nbAccount;
 }
 
   void
 ManagerImpl::unloadAccountMap()
 {
-  _debug("Unloading account map...\n");
+
   AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
+
     _debug("-> Deleting account %s\n", iter->first.c_str());
     delete iter->second; iter->second = 0;
+
     iter++;
   }
   _accountMap.clear();
@@ -2465,26 +2462,21 @@ AccountMap ManagerImpl::getSipAccountMap( void )
 
 void ManagerImpl::restartPJSIP (void)
 {
-    //SIPVoIPLink *siplink;
-
-    //unloadAccountMap ();
-
-    /* First unregister all SIP accounts */
-    //this->unregisterCurSIPAccounts();
+    SIPVoIPLink *siplink;
+    siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
+    
+    this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
-    //siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
-    //if (siplink) 
-    //{
-      //  siplink->terminate ();
-       // _debug ("*************************************************Terminate done\n");
-        //siplink = SIPVoIPLink::instance("");
-        //siplink->init ();
-    //}
-    //_debug("***************************************************Init Done\n");
-    //loadAccountMap();
-    //initRegisterAccounts ();
+    
+    if (siplink) 
+    {
+        siplink->terminate ();
+        siplink = SIPVoIPLink::instance("");
+        siplink->init ();
+    }
+
     /* Then register all enabled SIP accounts */
-    //this->registerCurSIPAccounts(siplink);
+    this->registerCurSIPAccounts(siplink);
 }
 
 VoIPLink* ManagerImpl::getAccountLink(const AccountID& accountID)
@@ -2545,17 +2537,21 @@ void ManagerImpl::unregisterCurSIPAccounts()
 
 void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
 {
+    
     Account *current;
-  
+
     AccountMap::iterator iter = _accountMap.begin();
+
     while( iter != _accountMap.end() ) {
         current = iter->second;
+        
         if (current) {
             if ( current->isEnabled() && current->getType() == "sip") {
                 //current->setVoIPLink(link);
 	            current->registerVoIPLink();
             }
         }
+        current = NULL;
     iter++;
     }    
 }
