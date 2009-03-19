@@ -119,6 +119,8 @@ typedef struct {
 	GtkWidget* view;
 	GtkWidget* tree;
 
+        GtkWidget* searchbar;
+
 	// Calllist vars
 	GQueue* callQueue;
 	call_t* selectedCall;

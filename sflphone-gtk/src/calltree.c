@@ -407,19 +407,20 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
 
   if (selectedCall)
   {
+    g_print("is selected call? Current state: %i \n",selectedCall->state);
     // Get the right event from the right calltree
     if( active_calltree == current_calls )
     {
       switch(selectedCall->state)
       {
-	case CALL_STATE_INCOMING:
+        case CALL_STATE_INCOMING:
 	  dbus_accept(selectedCall);
           stop_notification();
 	  break;
 	case CALL_STATE_HOLD:
 	  dbus_unhold(selectedCall);
 	  break;
-	case CALL_STATE_RINGING:
+        case CALL_STATE_RINGING:
 	case CALL_STATE_CURRENT:
 	case CALL_STATE_BUSY:
 	case CALL_STATE_FAILURE:
