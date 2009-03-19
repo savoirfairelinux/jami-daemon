@@ -303,12 +303,18 @@ AudioCodec* Sdp::get_session_media( void ){
 
     int nb_media;
     int nb_codec;
+    AudioCodec *codec = NULL;
 
     nb_media = _session_media.size();
-    nb_codec = _session_media[0]->get_media_codec_list().size();
-
-    return _session_media[0]->get_media_codec_list()[0];
+    if (nb_media > 0) {
+        nb_codec = _session_media[0]->get_media_codec_list().size();
+        if (nb_codec > 0) {
+            codec = _session_media[0]->get_media_codec_list()[0];
+        }
+    }
+    return codec;
 }
+
 
 
 void Sdp::toString (void) {

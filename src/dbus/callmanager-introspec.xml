@@ -55,6 +55,11 @@
     <method name="setRecording">
       <arg type="s" name="callID" direction="in"/>
     </method>
+
+     <method name="getIsRecording">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="b" name="isRecording" direction="out"/>
+    </method>
     
     <method name="getCallDetails">
       <arg type="s" name="callID" direction="in"/>
