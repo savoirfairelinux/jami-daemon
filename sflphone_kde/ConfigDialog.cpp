@@ -401,9 +401,9 @@ void ConfigurationDialog::on_spinBox_PortSIP_valueChanged ( int value )
 
 
 
-void ConfigurationDialog::on_buttonNouveauCompte_clicked()
+void ConfigurationDialog::on_button_newAccount_clicked()
 {
-	QString itemName = QInputDialog::getText(this, "Item", "Enter new item");
+	QString itemName = QInputDialog::getText(this, "New account", "Enter new account's alias");
 	itemName = itemName.simplified();
 	if (!itemName.isEmpty()) {
 		QListWidgetItem * item = accountList->addAccount(itemName);
@@ -415,7 +415,7 @@ void ConfigurationDialog::on_buttonNouveauCompte_clicked()
 	}
 }
 
-void ConfigurationDialog::on_buttonSupprimerCompte_clicked()
+void ConfigurationDialog::on_button_delAccount_clicked()
 {
 	int r = listWidgetComptes->currentRow();
 	QListWidgetItem * item = listWidgetComptes->takeItem(r);

@@ -16,7 +16,7 @@ public:
 
 	Call * operator[](const QListWidgetItem * item);
 	Call * operator[](const QString & callId);
-	void remove(Call * call);
+	Call * operator[](int ind);
 
 	QListWidgetItem * addDialingCall();
 	QListWidgetItem * addIncomingCall(const QString & callId, const QString & from, const QString & account);

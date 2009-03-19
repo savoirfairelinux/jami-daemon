@@ -31,6 +31,11 @@ Call * CallList::operator[](const QString & callId)
 	return NULL;
 }
 
+Call * CallList::operator[](int ind)
+{
+	return (*calls)[ind];
+}
+
 QString CallList::getAndIncCallId()
 {
 	QString res = QString::number(callIdCpt++);

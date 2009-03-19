@@ -32,6 +32,25 @@ typedef enum
    CALL_STATE_ERROR
 } call_state;
 
+/** @enum daemon_call_state_t 
+  * This enum have all the states a call can take for the daemon.
+  */
+typedef enum
+{ 
+   /** Ringing outgoing or incoming call */
+   DAEMON_CALL_STATE_RINGING,
+   /** Call to which the user can speak and hear */
+   DAEMON_CALL_STATE_CURRENT,
+   /** Call is busy */
+   DAEMON_CALL_STATE_BUSY,   
+   /** Call is on hold */
+   DAEMON_CALL_STATE_HOLD,    
+   /** Call is over  */
+   DAEMON_CALL_STATE_HUNG_UP,  
+   /** Call has failed */
+   DAEMON_CALL_STATE_FAILURE      
+} daemon_call_state;
+
 /** @enum call_action
   * This enum have all the actions you can make on a call.
   */
@@ -47,8 +66,6 @@ typedef enum
    CALL_ACTION_HOLD,
    /** Record button, enable or disable recording */
    CALL_ACTION_RECORD,
-   /** Other user state changes */
-   CALL_ACTION_STATE_CHANGED
 } call_action;
 
 /**
@@ -57,10 +74,10 @@ typedef enum
  */
 typedef enum
 {
-  NONE,
   INCOMING,
   OUTGOING,
-  MISSED
+  MISSED,
+  NONE
 } history_state;
 
 
@@ -75,21 +92,25 @@ private:
 	//Call attributes
 	QString account;
 	QString callId;
-	QString from;
-	QString to;
+	QString peer;
 	history_state historyState;
 	QDateTime * startTime;
 	QDateTime * stopTime;
 	QListWidgetItem * item;
+	QListWidgetItem * historyItem;
 	
 	//Automate attributes
-	static const call_state stateMap [11][5];
-	static const function functionMap[11][5];
+	static const call_state actionPerformedStateMap [11][5];
+	static const function actionPerformedFunctionMap [11][5];
+	static const call_state stateChangedStateMap [11][6];
+	static const QIcon historyIcons[3];
+	
 	call_state currentState;
 	bool recording;
 
-	Call(call_state startState, QString callId);
-	Call(call_state startState, QString callId, QString from, QString account);
+	Call(call_state startState, QString callId, QString from = "", QString account = "");
+	
+	static daemon_call_state toDaemonCallState(const QString & stateName);
 	
 	//Automate functions
 	void nothing(QString number);
@@ -111,11 +132,14 @@ public:
 	static Call * buildDialingCall(QString callId);
 	static Call * buildIncomingCall(const QString & callId, const QString & from, const QString & account);
 	QListWidgetItem * getItem();
+	QListWidgetItem * getHistoryItem();
 	call_state getState() const;
 	QString getCallId();
 	call_state stateChanged(const QString & newState);
-	call_state action(call_action action, QString number = NULL);
+	call_state actionPerformed(call_action action, QString number = NULL);
 	call_state getCurrentState() const;
+	history_state getHistoryState() const;
+	bool getRecording() const;
 
 };
 

@@ -152,7 +152,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidgetOptions" >
        <property name="currentIndex" >
-        <number>3</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_General" >
         <layout class="QVBoxLayout" name="verticalLayout_18" >
@@ -527,19 +527,19 @@
                    <number>0</number>
                   </property>
                   <item>
-                   <widget class="QToolButton" name="buttonSupprimerCompte" >
+                   <widget class="QToolButton" name="button_delAccount" >
                     <property name="sizePolicy" >
-                     <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+                     <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
                     <property name="text" >
-                     <string/>
+                     <string>Remove this account</string>
                     </property>
                     <property name="icon" >
-                     <iconset>
-                      <normaloff>:/Images/hang_up.svg</normaloff>:/Images/hang_up.svg</iconset>
+                     <iconset resource="resources.qrc" >
+                      <normaloff>:/images/icons/fail.svg</normaloff>:/images/icons/fail.svg</iconset>
                     </property>
                     <property name="shortcut" >
                      <string>+</string>
@@ -547,9 +547,9 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QToolButton" name="buttonNouveauCompte" >
+                   <widget class="QToolButton" name="button_newAccount" >
                     <property name="sizePolicy" >
-                     <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+                     <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
@@ -561,11 +561,33 @@
                      </size>
                     </property>
                     <property name="text" >
-                     <string>...</string>
+                     <string>Add a new account</string>
                     </property>
                     <property name="icon" >
-                     <iconset>
-                      <normaloff>:/Images/accept.svg</normaloff>:/Images/accept.svg</iconset>
+                     <iconset resource="resources.qrc" >
+                      <normaloff>:/images/icons/accept.svg</normaloff>:/images/icons/accept.svg</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QToolButton" name="button_accountDown" >
+                    <property name="text" >
+                     <string>Down</string>
+                    </property>
+                    <property name="icon" >
+                     <iconset resource="resources.qrc" >
+                      <normaloff>:/images/icons/incoming.svg</normaloff>:/images/icons/incoming.svg</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QToolButton" name="button_accountDown_2" >
+                    <property name="text" >
+                     <string>Up</string>
+                    </property>
+                    <property name="icon" >
+                     <iconset resource="resources.qrc" >
+                      <normaloff>:/images/icons/accept.svg</normaloff>:/images/icons/accept.svg</iconset>
                     </property>
                    </widget>
                   </item>

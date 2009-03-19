@@ -18,7 +18,28 @@
      <enum>QLayout::SetDefaultConstraint</enum>
     </property>
     <item>
-     <widget class="QListWidget" name="listWidget_callList" />
+     <widget class="QStackedWidget" name="stackedWidget_screen" >
+      <property name="currentIndex" >
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="page_callList" >
+       <layout class="QHBoxLayout" name="horizontalLayout_3" >
+        <item>
+         <widget class="QListWidget" name="listWidget_callList" />
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page_callHistory" >
+       <layout class="QVBoxLayout" name="verticalLayout_3" >
+        <item>
+         <widget class="QLineEdit" name="label_searchHistory" />
+        </item>
+        <item>
+         <widget class="QListWidget" name="listWidget_callHistory" />
+        </item>
+       </layout>
+      </widget>
+     </widget>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout" >
@@ -335,13 +356,13 @@
     <property name="title" >
      <string>&amp;Actions</string>
     </property>
-    <addaction name="actionDecrocher" />
-    <addaction name="actionRaccrocher" />
-    <addaction name="actionMettre_en_attente" />
-    <addaction name="actionTransferer" />
-    <addaction name="actionRecord" />
+    <addaction name="action_accept" />
+    <addaction name="action_refuse" />
+    <addaction name="action_hold" />
+    <addaction name="action_transfer" />
+    <addaction name="action_record" />
     <addaction name="separator" />
-    <addaction name="actionBoite_vocale" />
+    <addaction name="action_mailBox" />
    </widget>
    <widget class="QMenu" name="menu_Configuration" >
     <property name="title" >
@@ -375,16 +396,16 @@
    <attribute name="toolBarBreak" >
     <bool>false</bool>
    </attribute>
-   <addaction name="actionDecrocher" />
-   <addaction name="actionRaccrocher" />
-   <addaction name="actionMettre_en_attente" />
-   <addaction name="actionTransferer" />
-   <addaction name="actionRecord" />
+   <addaction name="action_accept" />
+   <addaction name="action_refuse" />
+   <addaction name="action_hold" />
+   <addaction name="action_transfer" />
+   <addaction name="action_record" />
    <addaction name="separator" />
-   <addaction name="actionBoite_vocale" />
-   <addaction name="actionHistorique" />
+   <addaction name="action_mailBox" />
+   <addaction name="action_history" />
   </widget>
-  <action name="actionDecrocher" >
+  <action name="action_accept" >
    <property name="icon" >
     <iconset resource="resources.qrc" >
      <normaloff>:/images/icons/call.svg</normaloff>:/images/icons/call.svg</iconset>
@@ -393,7 +414,7 @@
     <string>&amp;Décrocher</string>
    </property>
   </action>
-  <action name="actionRaccrocher" >
+  <action name="action_refuse" >
    <property name="icon" >
     <iconset resource="resources.qrc" >
      <normaloff>:/images/icons/hang_up.svg</normaloff>:/images/icons/hang_up.svg</iconset>
@@ -402,7 +423,7 @@
     <string>&amp;Raccrocher</string>
    </property>
   </action>
-  <action name="actionMettre_en_attente" >
+  <action name="action_hold" >
    <property name="icon" >
     <iconset resource="resources.qrc" >
      <normaloff>:/images/icons/hold.svg</normaloff>:/images/icons/hold.svg</iconset>
@@ -411,7 +432,10 @@
     <string>Mettre en &amp;Attente</string>
    </property>
   </action>
-  <action name="actionTransferer" >
+  <action name="action_transfer" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
    <property name="icon" >
     <iconset resource="resources.qrc" >
      <normaloff>:/images/icons/transfert.svg</normaloff>:/images/icons/transfert.svg</iconset>
@@ -420,7 +444,10 @@
     <string>&amp;Transférer</string>
    </property>
   </action>
-  <action name="actionHistorique" >
+  <action name="action_history" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
    <property name="icon" >
     <iconset resource="resources.qrc" >
      <normaloff>:/images/icons/history2.svg</normaloff>:/images/icons/history2.svg</iconset>
@@ -429,7 +456,7 @@
     <string>&amp;Historique</string>
    </property>
   </action>
-  <action name="actionBoite_vocale" >
+  <action name="action_mailBox" >
    <property name="icon" >
     <iconset resource="resources.qrc" >
      <normaloff>:/images/icons/mailbox.svg</normaloff>:/images/icons/mailbox.svg</iconset>
@@ -500,9 +527,13 @@
     <string>Afficher le &amp;clavier</string>
    </property>
   </action>
-  <action name="actionRecord" >
+  <action name="action_record" >
    <property name="checkable" >
     <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/del_off.png</normaloff>:/images/icons/del_off.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Record</string>

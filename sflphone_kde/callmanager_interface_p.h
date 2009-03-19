@@ -8,8 +8,8 @@
  * Do not edit! All changes made to it will be lost.
  */
 
-#ifndef CALLMANAGER_INTERFACE_P_H_1237229754
-#define CALLMANAGER_INTERFACE_P_H_1237229754
+#ifndef CALLMANAGER_INTERFACE_P_H_1237301614
+#define CALLMANAGER_INTERFACE_P_H_1237301614
 
 #include <QtCore/QObject>
 #include <QtCore/QByteArray>
@@ -55,6 +55,13 @@ public Q_SLOTS: // METHODS
     {
         QList<QVariant> argumentList;
         return callWithArgumentList(QDBus::Block, QLatin1String("getCurrentCallID"), argumentList);
+    }
+
+    inline QDBusReply<bool> getIsRecording(const QString &callID)
+    {
+        QList<QVariant> argumentList;
+        argumentList << qVariantFromValue(callID);
+        return callWithArgumentList(QDBus::Block, QLatin1String("getIsRecording"), argumentList);
     }
 
     inline QDBusReply<double> getVolume(const QString &device)

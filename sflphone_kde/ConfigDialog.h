@@ -40,8 +40,8 @@ public:
 	void setPage(int page);
 
 private slots:
-	void on_buttonSupprimerCompte_clicked();
-	void on_buttonNouveauCompte_clicked();
+	void on_button_delAccount_clicked();
+	void on_button_newAccount_clicked();
 	void on_edit1_Alias_textChanged(const QString & text);
 	void on_listWidgetComptes_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous );
 	void on_spinBox_PortSIP_valueChanged ( int value );

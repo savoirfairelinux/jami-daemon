@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="images" >
+    <file>icons/del_off.png</file>
+    <file>icons/del_on.png</file>
     <file>icons/accept.svg</file>
     <file>icons/busy.svg</file>
     <file>icons/call.svg</file>

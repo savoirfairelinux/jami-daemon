@@ -56,6 +56,11 @@
       <arg type="d" name="value" direction="out"/>
     </method>
     
+    <method name="getIsRecording">
+      <arg type="s" name="callID" direction="in"/>
+      <arg type="b" name="isRecording" direction="out"/>
+    </method>
+	 
 	 <method name="setRecording">
 		 <arg type="s" name="callID" direction="in"/>
     </method>

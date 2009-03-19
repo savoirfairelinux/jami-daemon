@@ -437,10 +437,12 @@ ManagerImpl::offHoldCall(const CallID& id)
     }
 
     if (_dbus){ 
-        if (rec)
+        /*if (rec)
             _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
         else 
             _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
+        */
+        _dbus->getCallManager()->callStateChanged(id, "CURRENT");
     }
   
     switchCall(id);
