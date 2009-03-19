@@ -1138,7 +1138,7 @@ dbus_get_is_recording(const call_t * c)
 	    {
 		    g_error_free(error);
 	    }
-            g_print("RECORDING: %i \n",isRecording);
+            //g_print("RECORDING: %i \n",isRecording);
             return isRecording;
 }
 
