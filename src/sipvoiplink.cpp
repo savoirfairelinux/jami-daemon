@@ -1619,8 +1619,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         SIPVoIPLink *link;
         pjsip_rx_data *rdata;
 
-        _debug (" *****************************  NEW CALL STATE %i **************************\n", inv->state);        
-
         /* Retrieve the call information */
         call = reinterpret_cast<SIPCall*> (inv->mod_data[_mod_ua.id]);
         if(!call)
@@ -1688,8 +1686,8 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         }
         else {
 
-            // The call is ringing
-            if (inv->state == PJSIP_INV_STATE_EARLY){
+            // The call is ringing - We need to handle this case only on outgoing call
+            if (inv->state == PJSIP_INV_STATE_EARLY && e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC){
                 _debug ("*************************** PJSIP_INV_STATE_EARLY - PEER RINGING ***********************************\n");
                 call->setConnectionState(Call::Ringing);
                 Manager::instance().peerRingingCall(call->getCallId());

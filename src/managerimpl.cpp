@@ -741,7 +741,7 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     /* Broadcast a signal over DBus */
     if (_dbus) _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
 
-    if (_dbus) _dbus->getCallManager()->callStateChanged(call->getCallId(), "INCOMING");
+    //if (_dbus) _dbus->getCallManager()->callStateChanged(call->getCallId(), "INCOMING");
   
     // Reduce volume of the other pulseaudio-connected audio applications
     if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
@@ -782,7 +782,7 @@ ManagerImpl::peerRingingCall(const CallID& id)
   if (isCurrentCall(id)) {
     ringback();
   }
-  // if (_dbus) _dbus->getCallManager()->callStateChanged(id, "RINGING");
+  if (_dbus) _dbus->getCallManager()->callStateChanged(id, "RINGING");
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
