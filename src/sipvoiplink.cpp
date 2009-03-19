@@ -101,7 +101,7 @@ void call_on_state_changed( pjsip_inv_session *inv, pjsip_event *e);
 void call_on_media_update( pjsip_inv_session *inv UNUSED, pj_status_t status UNUSED);
 
 /*
- * Called when the invote usage module has created a new dialog and invite
+ * Called when the invite usage module has created a new dialog and invite
  * because of forked outgoing request.
  *
  * @param	inv	A pointer on a pjsip_inv_session structure
@@ -1376,7 +1376,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         _debug("UserAgent: VOIP callbacks initialized\n");
 
         // Add endpoint capabilities (INFO, OPTIONS, etc) for this UA
-        pj_str_t allowed[] = { {(char*)"INFO", 4}, {(char*)"REGISTER", 8} }; //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6},  {"OPTIONS", 7}, 
+        pj_str_t allowed[] = { {(char*)"INFO", 4}, {(char*)"REGISTER", 8}, {(char*)"OPTIONS", 7} }; //  //{"INVITE", 6}, {"ACK",3}, {"BYE",3}, {"CANCEL",6} 
         accepted = pj_str((char*)"application/sdp");
 
         // Register supported methods
