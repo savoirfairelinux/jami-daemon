@@ -49,6 +49,8 @@ int getModId();
  *      */
 bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::string server);
 
+void handle_incoming_options (pjsip_rx_data *rxdata);
+
 /*
  *  The global pool factory
  */
@@ -258,6 +260,7 @@ SIPVoIPLink::terminateOneCall(const CallID& id)
 }
 
 void get_remote_sdp_from_offer( pjsip_rx_data *rdata, pjmedia_sdp_session** r_sdp ){
+
     pjmedia_sdp_session *sdp;
     pjsip_msg *msg;
     pjsip_msg_body *body;
@@ -268,9 +271,13 @@ void get_remote_sdp_from_offer( pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
     body = msg->body;
 
     // Parse the remote request to get the sdp session
-    pjmedia_sdp_parse( rdata->tp_info.pool, (char*)body->data, body->len, &sdp );
+    if (body) {   
+        pjmedia_sdp_parse( rdata->tp_info.pool, (char*)body->data, body->len, &sdp );
+        *r_sdp = sdp;
+    }
 
-    *r_sdp = sdp;
+    else
+        *r_sdp = NULL;
 }
 
     void
@@ -970,7 +977,10 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED)
             &to,
             NULL,
             &dialog);
-    PJ_ASSERT_RETURN(status == PJ_SUCCESS, false);
+    if (status != PJ_SUCCESS){
+        _debug ("UAC creation failed\n");
+        return false;
+    }
 
     // Create the invite session for this call
     status = pjsip_inv_create_uac(dialog, call->getLocalSDP()->get_local_sdp_session(), 0, &inv);
@@ -1910,6 +1920,12 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                 return true;
             }
 
+            // Handle an OPTIONS message
+            if (rdata->msg_info.msg->line.req.method.id == PJSIP_OPTIONS_METHOD) {
+                handle_incoming_options (rdata);
+                return true;
+            }
+
             // Respond statelessly any non-INVITE requests with 500
             if (rdata->msg_info.msg->line.req.method.id != PJSIP_INVITE_METHOD) {
                 if (rdata->msg_info.msg->line.req.method.id != PJSIP_ACK_METHOD) {
@@ -2450,6 +2466,50 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             link->handle_reinvite (call);
 #endif
 
+    }
+
+    void handle_incoming_options (pjsip_rx_data *rdata) {
+        
+        pjsip_tx_data *tdata;
+        pjsip_response_addr res_addr;
+        const pjsip_hdr *cap_hdr;
+        pj_status_t status;
+
+        /* Create basic response. */
+        status = pjsip_endpt_create_response(_endpt, rdata, PJSIP_SC_OK, NULL, &tdata);
+        if (status != PJ_SUCCESS) {
+            return;
+        }
+        
+        /* Add Allow header */
+        cap_hdr = pjsip_endpt_get_capability(_endpt, PJSIP_H_ALLOW, NULL);
+        if (cap_hdr) {
+            pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)pjsip_hdr_clone(tdata->pool, cap_hdr));
+        }
+
+        /* Add Accept header */
+        cap_hdr = pjsip_endpt_get_capability(_endpt, PJSIP_H_ACCEPT, NULL);
+        if (cap_hdr) {
+            pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)pjsip_hdr_clone(tdata->pool, cap_hdr));
+        }
+
+        /* Add Supported header */
+        cap_hdr = pjsip_endpt_get_capability(_endpt, PJSIP_H_SUPPORTED, NULL);
+        if (cap_hdr) {
+            pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)pjsip_hdr_clone(tdata->pool, cap_hdr));
+        }
+
+        /* Add Allow-Events header from the evsub module */
+        cap_hdr = pjsip_evsub_get_allow_events_hdr(NULL);
+        if (cap_hdr) {
+            pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)pjsip_hdr_clone(tdata->pool, cap_hdr));
+        }
+
+        /* Send response statelessly */
+        pjsip_get_response_addr(tdata->pool, rdata, &res_addr);
+        status = pjsip_endpt_send_response(_endpt, &res_addr, tdata, NULL, NULL);
+        if (status != PJ_SUCCESS)
+            pjsip_tx_data_dec_ref(tdata);
     }
 
     /*****************************************************************************************************************/
