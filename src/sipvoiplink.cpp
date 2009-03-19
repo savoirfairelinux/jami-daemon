@@ -850,11 +850,17 @@ SIPVoIPLink::isRecording(const CallID& id)
 SIPVoIPLink::getCurrentCodecName()
 {
 
-    SIPCall *call = getSIPCall(Manager::instance().getCurrentCallId());  
+    SIPCall *call;
+    AudioCodec *ac;
+    std::string name = "";
+    
+    call = getSIPCall(Manager::instance().getCurrentCallId());  
+    ac = call->getLocalSDP()->get_session_media();
 
-    AudioCodec *ac = call->getLocalSDP()->get_session_media();
+    if (ac)
+        name = ac->getCodecName();
 
-    return ac->getCodecName();
+    return name;
 }
 
     bool 
@@ -957,7 +963,7 @@ SIPVoIPLink::SIPStartCall(SIPCall* call, const std::string& subject UNUSED)
     pj_strdup2(_pool, &to, strTo.data());
     pj_strdup2(_pool, &contact, account->getContact().data());
 
-    _debug("%s %s %s\n", from.ptr, contact.ptr, to.ptr);
+    //_debug("%s %s %s\n", from.ptr, contact.ptr, to.ptr);
     // create the dialog (UAC)
     status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from,
             &contact,

@@ -650,7 +650,7 @@ create_view_menu()
   gtk_widget_show (volumeMenu);
 
   image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_MENU );
-  searchbarMenu = gtk_image_menu_item_new_with_mnemonic (_("_Search history"));
+  searchbarMenu = gtk_image_menu_item_new_with_mnemonic (_("_Search contact"));
   gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( searchbarMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), searchbarMenu);
   g_signal_connect(G_OBJECT (searchbarMenu), "activate",
