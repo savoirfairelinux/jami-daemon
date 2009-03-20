@@ -1,67 +1,34 @@
 <?xml version = '1.0' encoding = 'UTF-8'?>
 <!DOCTYPE KDevPrjSession>
 <KDevPrjSession>
- <DocsAndViews NumberOfDocuments="20" >
-  <Doc0 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/AccountList.h" >
-   <View0 Encoding="" line="0" Type="Source" />
+ <DocsAndViews NumberOfDocuments="9" >
+  <Doc0 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/ConfigDialog.cpp" >
+   <View0 Encoding="" Type="Source" />
   </Doc0>
-  <Doc1 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/callmanager-introspec.xml" >
-   <View0 Encoding="" line="44" Type="Source" />
+  <Doc1 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/SFLPhone.cpp" >
+   <View0 Encoding="" line="229" Type="Source" />
   </Doc1>
-  <Doc2 NumberOfViews="1" URL="file:///home/jquentin/sflphone/src/dbus/callmanager-introspec.xml" >
-   <View0 Encoding="" line="91" Type="Source" />
+  <Doc2 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/Call.cpp" >
+   <View0 Encoding="" Type="Source" />
   </Doc2>
-  <Doc3 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/callmanager_interface_p.h" >
-   <View0 Encoding="" line="0" Type="Source" />
+  <Doc3 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/Call.h" >
+   <View0 Encoding="" Type="Source" />
   </Doc3>
-  <Doc4 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/Call.cpp" >
-   <View0 Encoding="" line="251" Type="Source" />
+  <Doc4 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/sflphone_const.h" >
+   <View0 Encoding="" Type="Source" />
   </Doc4>
   <Doc5 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/SFLPhone.h" >
-   <View0 Encoding="" line="89" Type="Source" />
+   <View0 Encoding="" Type="Source" />
   </Doc5>
-  <Doc6 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/SFLPhone.cpp" >
-   <View0 Encoding="" line="695" Type="Source" />
+  <Doc6 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/configurationmanager_interface_singleton.cpp" >
+   <View0 Encoding="" Type="Source" />
   </Doc6>
-  <Doc7 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/Call.h" >
-   <View0 Encoding="" line="56" Type="Source" />
+  <Doc7 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/Account.cpp" >
+   <View0 Encoding="" line="90" Type="Source" />
   </Doc7>
-  <Doc8 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/sflphone_const.h" >
-   <View0 Encoding="" line="77" Type="Source" />
+  <Doc8 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/sflphone_kdeui.rc" >
+   <View0 Encoding="" line="8" Type="Source" />
   </Doc8>
-  <Doc9 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/CallList.h" >
-   <View0 Encoding="" line="18" Type="Source" />
-  </Doc9>
-  <Doc10 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/CallList.cpp" >
-   <View0 Encoding="" line="34" Type="Source" />
-  </Doc10>
-  <Doc11 NumberOfViews="1" URL="file:///home/jquentin/sflphone/src/managerimpl.cpp" >
-   <View0 Encoding="" line="444" Type="Source" />
-  </Doc11>
-  <Doc12 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/callmanager_interface_singleton.h" >
-   <View0 Encoding="" line="19" Type="Source" />
-  </Doc12>
-  <Doc13 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/ConfigDialog.h" >
-   <View0 Encoding="" line="43" Type="Source" />
-  </Doc13>
-  <Doc14 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/ConfigDialog.cpp" >
-   <View0 Encoding="" line="412" Type="Source" />
-  </Doc14>
-  <Doc15 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/callmanager_interface_singleton.cpp" >
-   <View0 Encoding="" line="11" Type="Source" />
-  </Doc15>
-  <Doc16 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/main.cpp" >
-   <View0 Encoding="" line="24" Type="Source" />
-  </Doc16>
-  <Doc17 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/configurationmanager-introspec.xml" >
-   <View0 Encoding="" line="5" Type="Source" />
-  </Doc17>
-  <Doc18 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/AccountList.cpp" >
-   <View0 Encoding="" line="15" Type="Source" />
-  </Doc18>
-  <Doc19 NumberOfViews="1" URL="file:///home/jquentin/sflphone/sflphone_kde/Account.cpp" >
-   <View0 Encoding="" line="64" Type="Source" />
-  </Doc19>
  </DocsAndViews>
  <pluginList>
   <kdevdebugger>

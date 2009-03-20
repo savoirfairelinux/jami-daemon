@@ -32,7 +32,7 @@
  * But only do this if user doesn't explicitly configure in pj/config_site.h.
  */
 #ifndef PJSIP_HAS_TLS_TRANSPORT
-/* #undef PJSIP_HAS_TLS_TRANSPORT */
+#define PJSIP_HAS_TLS_TRANSPORT 1
 #endif
 
 
