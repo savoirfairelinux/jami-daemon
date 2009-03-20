@@ -373,7 +373,6 @@ sflphone_off_hold ()
         g_print("Currently recording! \n");
     else
         g_print("Not recording currently \n");
-    
 }
 
 
@@ -701,11 +700,13 @@ sflphone_place_call ( call_t * c )
         {
             account_t * current;
 
-            if(c->accountID != 0)
+            if(g_strcasecmp(c->accountID, "") != 0) {
+                g_print ("account_list_get_by_id : %s\n", c->accountID);
                 current = account_list_get_by_id(c->accountID);
-            else
+            } else {
+                g_print ("account_list_get_current\n");
                 current = account_list_get_current();
-
+            }
             // printf("sflphone_place_call :: c->accountID : %i \n",c->accountID);
 
             // account_t * current = c->accountID;
