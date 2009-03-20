@@ -604,7 +604,7 @@ reset_call_tree (calltab_t* tab)
 }
 
   void
-create_call_tree (calltab_t* tab)
+  create_call_tree (calltab_t* tab, gchar* searchbar_type)
 {
   GtkWidget *sw;
   GtkCellRenderer *rend;
@@ -665,12 +665,24 @@ create_call_tree (calltab_t* tab)
       NULL);
 
   gtk_box_pack_start(GTK_BOX(tab->tree), sw, TRUE, TRUE, 0);
+ 
+  if(searchbar_type){
+
+      create_searchbar(tab,searchbar_type);
+      gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
+
+  }
 
   gtk_widget_show(tab->tree);
+
+
+  // gtk_widget_show(tab->searchbar);
 
   //toolbar_update_buttons();
 
 }
+
+
 
   void
 update_call_tree_remove (calltab_t* tab, call_t * c)
@@ -824,6 +836,35 @@ update_call_tree (calltab_t* tab, call_t * c)
 
   }
   toolbar_update_buttons();
+}
+
+void
+create_searchbar(calltab_t* tab, gchar* searchbar_type)
+{
+  // g_strcmp0 returns 0 if str1 == str2
+  if(g_strcmp0(searchbar_type,"history") == 0){
+
+      GtkTreeIter *iter;
+
+      GtkTreeModel *model = (GtkTreeModel*)history->store;
+
+      // create_filter (model);
+      
+ 
+      // gtk_tree_model_get_iter_first (history->store, iter);
+
+      // gtk_tree_model_get_iter (model, &iter, NULL);
+
+      // create_filter (model);
+
+      // is_visible(model, iter);
+
+      tab->searchbar = create_filter_entry();
+  }
+
+  else if(g_strcmp0(searchbar_type,"contacts") == 0)
+      tab->searchbar = create_filter_entry();
+
 }
 
   void
