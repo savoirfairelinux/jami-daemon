@@ -120,6 +120,7 @@ typedef struct {
 	GtkWidget* tree;
 
         GtkWidget* searchbar;
+        // GtkTreeModel* histfilter;
 
 	// Calllist vars
 	GQueue* callQueue;

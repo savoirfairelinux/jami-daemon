@@ -135,6 +135,10 @@ create_main_window ()
   gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   gtk_box_pack_start (GTK_BOX (vbox), contacts->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
 
+  // gtk_box_pack_start (GTK_BOX (vbox), current_calls->searchbar, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+  // gtk_box_pack_start (GTK_BOX (vbox), history->searchbar, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+  // gtk_box_pack_start (GTK_BOX (vbox), contacts ->searchbar, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
 
   
@@ -174,7 +178,7 @@ create_main_window ()
   /* dont't show the contact list */
   gtk_widget_hide(contacts->tree);
 
-  //gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
+  gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
   // Configuration wizard
   if (account_list_get_size() == 0)
   {

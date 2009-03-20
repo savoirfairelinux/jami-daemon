@@ -23,8 +23,8 @@
 #include <calllist.h>
 #include <gtk/gtk.h>
 
-//GtkTreeModel* histfilter;
+GtkTreeModel* histfilter;
 
-calltab_t* calltab_init();
+calltab_t* calltab_init(gchar* searchbar_type);
 
 #endif
