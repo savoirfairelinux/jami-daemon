@@ -19,6 +19,10 @@ ConfigurationDialog::ConfigurationDialog(SFLPhone *parent) : QDialog(parent)
 	codecPayloads = new MapStringString();
 	horizontalSlider_Capacity->setMaximum(MAX_HISTORY_CAPACITY);
 	label_WarningSIP->setVisible(false);
+	for(int i = 0 ; i < listOptions->count() ; i++)
+	{
+		listOptions->item(i)->setTextAlignment(Qt::AlignHCenter);
+	}
 
 	//TODO ajouter les items de l'interface audio ici avec les constantes
 	

@@ -581,7 +581,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QToolButton" name="button_accountDown_2" >
+                   <widget class="QToolButton" name="button_accountUp" >
                     <property name="text" >
                      <string>Up</string>
                     </property>

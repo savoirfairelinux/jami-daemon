@@ -123,10 +123,10 @@ QListWidgetItem * Call::getHistoryItem()
 {
 	if(historyItem == NULL)
 	{
-		historyItem = new QListWidgetItem(peer);
+		historyItem = new QListWidgetItem("<H1>"+peer+"</H1>");
 		historyItem->setIcon(historyIcons[historyState]);
 	}
-	return item;
+	return historyItem;
 }
 
 call_state Call::getState() const

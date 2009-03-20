@@ -226,6 +226,7 @@ void SFLPhone::updateWindowCallState()
 					qDebug() << "Reached CALL_STATE_OVER. Deleting item " << (*callList)[item]->getCallId();
 					listWidget_callList->takeItem(listWidget_callList->row(item));
 					listWidget_callHistory->addItem(call->getHistoryItem());
+					qDebug() << call->getHistoryItem();
 					listWidget_callHistory->setCurrentRow(listWidget_callHistory->count() - 1);
 					return;
 					break;
@@ -237,7 +238,7 @@ void SFLPhone::updateWindowCallState()
 					break;
 			}
 		}
-		qDebug() << "mi";
+		//qDebug() << "mi";
 		if (item)
 		{
 			qDebug() << "rentre " << item;
