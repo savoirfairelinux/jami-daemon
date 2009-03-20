@@ -152,7 +152,7 @@ AC_SUBST(SIP_CFLAGS)
 
 dnl Check for uuid development package - name: uuid-dev 
 UUID_MIN_VERSION=1.0
-PKG_CHECK_MODULES(UUID, uuid-dev >= ${UUID_MIN_VERSION})
+PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
 AC_SUBST(UUID_CFLAGS)
 AC_SUBST(UUID_LIBS)
 
