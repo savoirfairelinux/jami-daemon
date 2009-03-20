@@ -314,14 +314,12 @@ int SIPVoIPLink::sendRegister( AccountID id )
 
     /* Get the client registration information for this particular account */
     regc = account->getRegistrationInfo();
-    /* If the registration already exists, delete it */
-    if(regc) {
-        
+    /* TODO If the registration already exists, delete it */
+    /*if(regc) {
         status = pjsip_regc_destroy(regc);
         regc = NULL;
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
-    }
-
+    }*/
 
     account->setRegister(true);
 
@@ -330,7 +328,6 @@ int SIPVoIPLink::sendRegister( AccountID id )
 
     /* Update the state of the voip link */
     account->setRegistrationState(Trying);
-
 
     if (!validStunServer) {
         account->setRegistrationState(ErrorExistStun);
@@ -387,7 +384,6 @@ int SIPVoIPLink::sendRegister( AccountID id )
         return false;
     }
 
-    
     status = pjsip_regc_send(regc, tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to send regc request.\n");
@@ -403,7 +399,7 @@ int SIPVoIPLink::sendRegister( AccountID id )
 }
 
     int 
-SIPVoIPLink::sendUnregister( AccountID id )
+SIPVoIPLink::sendUnregister (AccountID id)
 {
     pj_status_t status = 0;
     pjsip_tx_data *tdata = NULL;
@@ -435,7 +431,7 @@ SIPVoIPLink::sendUnregister( AccountID id )
         return false;
     }
 
-    account->setRegistrationInfo(regc);
+    //account->setRegistrationInfo(regc);
     account->setRegister(false);
 
     return true;
@@ -1799,11 +1795,11 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                  */
                 _debug("UserAgent: The error is: %d\n", param->code);
                 switch(param->code) {
-                    case 408:
                     case 606:
                         account->setRegistrationState(ErrorConfStun);
                         break;
                     case 503:
+                    case 408:
                         account->setRegistrationState(ErrorHost);
                         break;
                     case 401:
