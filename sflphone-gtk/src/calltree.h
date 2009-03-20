@@ -1,22 +1,22 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #ifndef __CALLTREE_H__
 #define __CALLTREE_H__
 
@@ -31,14 +31,18 @@
   * @brief The GtkTreeView that list calls in the main window.
   */
 
-GtkToolItem * historyButton;
+GtkWidget * filter_entry_contact;
+GtkWidget * filter_entry_history;
 
 calltab_t* active_calltree;
+
+void free_call_t (call_t *c);
+
 /**
  * Create a new widget calltree
  * @return GtkWidget* A new widget
  */
-void create_call_tree(calltab_t* tab);
+void create_call_tree(calltab_t* tab, gchar* searchbar_type);
 
 /**
  * Update the toolbar's buttons state, according to the call state
@@ -54,7 +58,7 @@ void update_call_tree_add (calltab_t* ct, call_t * c);
 /*
  * Update the call tree if the call state changes
  * @param c The call to update
- */ 
+ */
 void update_call_tree (calltab_t* ct, call_t * c);
 /**
  * Remove a call from the call tree
@@ -62,12 +66,22 @@ void update_call_tree (calltab_t* ct, call_t * c);
  */
 void update_call_tree_remove (calltab_t* ct, call_t * c);
 
+void reset_call_tree (calltab_t* tab);
+
 /**
  * Build the toolbar
  * @return GtkWidget* The toolbar
  */
 GtkWidget * create_toolbar();
 
-void switch_tab( void );
+GtkWidget * create_filter_entry();
 
-#endif 
+GtkTreeModel * create_filter (GtkTreeModel* child);
+
+void display_calltree (calltab_t *tab);
+
+void create_searchbar(calltab_t* tab, gchar* searchbar_type);
+
+void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo);
+
+#endif

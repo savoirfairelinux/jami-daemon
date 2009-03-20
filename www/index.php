@@ -1,8 +1,11 @@
 <?php
 $name = 'home';
-$javascript = array('jquery','s3Slider','script','animated-menu');
-include('include/header.php');
+$javascript = array(
+                'jquery',/*'s3Slider','script',*/
+                'animated-menu'
+            );
 
+include_once('include/header.php');
 ?>
 
 <div id="content">
@@ -13,54 +16,32 @@ include('include/header.php');
                     <table class="tabsIndex" cellpadding="0" cellspacing="0">
                         <tbody valign="top">
                             <tr>
-                                <td class="imgSliderTd">
-								    <!-- // slider -->
-									<div id="slider" >
-                                        <ul id="sliderContent">
-                                            <li class="sliderImage">
-                                                <img src="img/slider/lady-wise.jpg"      width="310" height="384" alt=""/>
-                                                <span class="bottom">
-                                                <strong>Savoir-Faire Linux</strong>
-                                                <br />presents SFLphone</span>
-                                            </li>
-                                            <li class="sliderImage">
-                                                <img src="img/slider/mrbad.jpg" width="310" height="384" alt=""/>
-                                                <span class="bottom">
-                                                <strong>SFLphone</strong>
-                                                <br />It's free and you can use it everywhere.</span>
-                                            </li>
-                                            <li class="sliderImage">
-                                                <img src="img/slider/homepage.png" width="310" height="384" alt=""/>
-                                                <span class="bottom">
-                                                <strong>SFLphone</strong>
-                                                <br />SIP and IAX2 softphone</span>
-                                            </li>
-                                            <li>
-                                                <div class="clear sliderImage">&nbsp;</div>
-                                            </li>
-                                        </ul>
-									</div>
+                                <td>
+                                    <ul class="thumbnails">
+                                        <li><a href="/screenshot.php#img/gallery/main-view.png"><img class="thumb" src="img/gallery/thumbs/main-view.png" /></a></li>
+                                        <li><a href="/screenshot.php#img/gallery/main-history-opt.png"><img class="thumb" src="img/gallery/thumbs/main-history-opt.png" /></a></li>
+                                        <li><a href="/screenshot.php#img/gallery/main-transer.png"><img class="thumb" src="img/gallery/thumbs/main-transfer.png" /></a></li>
+                                        <!--<li><a href="/screenshot.php#img/gallery/incoming-call.png"><img class="thumb" src="img/gallery/thumbs/incoming-call.png" /></a></li>-->
+                                    </ul>
                                 </td>
                                 <td>
-                                <br> <br> <br>                                        
                                     <ul class="fntBleu list" style="padding:10px;">
                                         <li>SIP and IAX2 compatible softphone</li>
                                         <li>Robust enterprise-class desktop phone for Linux</li>
                                         <li>Provide support of unlimited number of calls, multi-accounts, call transfer and hold.</li>
                                         <li>Enjoy perfect audio quality</li>
+                                        <li>Gnome integration</li>
                                     </ul> 
-                                    <br>
                                     <div class="float_it_middle">
-                                        <a href="download.php" >
-                                        <img src="img/download_icon.png" width="61" height="68" alt=""/>
-                                        </a>
+                                        <a href="download.php" ><img src="img/download_icon.png" width="61" height="68" alt=""/></a>
                                     </div> 
                                     <div class="float_it_middle">
-                                        <p class="highlight"> 
-                                        <a href="download.php" >
-                                        Download now!</a>
-                                        </p>
+                                        <p class="highlight"><a href="download.php" >Download now!</a></p>
                                     </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
                                 </td>
                             </tr>
                         </tbody>
@@ -87,7 +68,6 @@ include('include/header.php');
         </tbody>
     </table>
 </div>
-
 <?php
-
-include ('include/footer.php');
+include_once ('include/footer.php');
+?>

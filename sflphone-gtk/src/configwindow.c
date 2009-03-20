@@ -28,6 +28,7 @@
 #include <dbus.h>
 #include <mainwindow.h>
 #include <audioconf.h>
+#include <addressbook-config.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -478,7 +479,7 @@ void update_registration( void )
 GtkWidget* create_stun_tab()
 {
     GtkWidget * tableNat;
-    gchar * stun_server= "stun.fwdnet.net:3478";
+    gchar * stun_server= "stun.ekiga.net:3478";
     gchar * stun_enabled = "FALSE";
     GtkWidget * label;
 
@@ -738,6 +739,7 @@ show_config_window ()
     GtkDialog * dialog;
     GtkWidget * notebook;
     GtkWidget * tab;
+    guint result;
 
     dialogOpen = TRUE;
 
@@ -774,9 +776,16 @@ show_config_window ()
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Record")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
+    // Addressbook tab
+    tab = create_addressbook_settings();	
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+
     gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  1);
 
-    gtk_dialog_run(dialog);
+    result = gtk_dialog_run(dialog);
+
+    save_configuration_parameters ();
 
     dialogOpen = FALSE;
 
@@ -842,4 +851,10 @@ show_accounts_window( void )
 void config_window_set_stun_visible()
 {
     gtk_widget_set_sensitive( GTK_WIDGET(stunFrame), TRUE );
+}
+
+void save_configuration_parameters (void) {
+
+    addressbook_save_parameters ();
+
 }

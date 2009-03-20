@@ -18,16 +18,16 @@
                                         <li><a href="features.php">Features</a></li>
                                         <li><a href="download.php">Download</a></li>
                                             
-                                        <li><a href="http://dev.savoirfairelinux.net/sflphone/">Wiki</a></li>
+                                        <li><a href="http://projects.savoirfairelinux.net/wiki/sflphone">Wiki</a></li>
                                         <li><a href="contact.php">Contact</a></li>
                                         </ul>
                                     </div>
                                         
                                     <div class="footBlock">
                                         <ul>
-                                        <li>Development team</li>
+                                        <li>Technical support</li>
                                         <li><a href="mailto:sflphone@lists.savoirfairelinux.net">sflphone@lists.savoirfairelinux.net</a></li>
-                                        <li>Support</li>
+                                        <li>Commercial Support</li>
                                         <li><a href="mailto:support@savoirfairelinux.com">support@savoirfairelinux.com</a></li>
                                         <li>General Information</li>
                                         <li><a href="mailto:contact@savoirfairelinux.com">contact@savoirfairelinux.com</a></li>

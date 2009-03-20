@@ -32,19 +32,20 @@ include('include/header.php');
                 
 
                     <li>Ubuntu 8.10 "Intrepid Ibex" 
-                        <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-i386/sflphone_0.9.3-0ubuntu2_i386.deb">i386</a> 
-                        | <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-amd64/sflphone_0.9.3-0ubuntu2_amd64.deb" >amd64</a>
+                        <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-i386/sflphone_0.9.3-0ubuntu3_i386.deb">i386</a> 
+                        | <a href="http://sflphone.org/debian/dists/intrepid/universe/binary-amd64/sflphone_0.9.3-0ubuntu3_amd64.deb" >amd64</a>
                     </li>
                 
                     <li>Ubuntu 8.04 LTS "Hardy Heron" 
-                        <a href="http://sflphone.org/debian/dists/hardy/universe/binary-i386/sflphone_0.9.3-0ubuntu2_i386.deb" >i386</a> 
-                        | <a href="http://sflphone.org/debian/dists/hardy/universe/binary-amd64/sflphone_0.9.3-0ubuntu2_amd64.deb" >amd64</a>
+                        <a href="http://sflphone.org/debian/dists/hardy/universe/binary-i386/sflphone_0.9.3-0ubuntu3_i386.deb" >i386</a> 
+                        | <a href="http://sflphone.org/debian/dists/hardy/universe/binary-amd64/sflphone_0.9.3-0ubuntu3_amd64.deb" >amd64</a>
                     </li>
                 </ul>
-              <br/>
-              <a href="http://dev.savoirfairelinux.net/sflphone/wiki/DebianPackaging">add our repository</a>
-               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#ReleaseNote">release note</a>  
-               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#Changelog">changelog</a>
+                <i>Before installing the latest version 0.9.3-3, please remove the following packages: <b>dbus-c++-1</b> and <b>sflphone-iax2</b>. 
+                    The both libraries are now provided with sflphone package.</i>
+              <br/><br/>
+              <a href="http://projects.savoirfairelinux.net/wiki/sflphone/DebianPackaging">add our repository</a>
+               | <a href="http://projects.savoirfairelinux.net/wiki/sflphone/093">release note and changelog</a>  
             </td>
             <td><a href="mailto:emmanuel.milou@savoirfairelinux.com">Emmanuel Milou</a></td>
           </tr>
@@ -64,9 +65,8 @@ include('include/header.php');
               </li>
             </ul>
               <br/>
-              <a href="http://dev.savoirfairelinux.net/sflphone/wiki/YumRepository">add our repository</a> 
-               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#ReleaseNote">release note</a>  
-               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#Changelog">changelog</a>
+              <a href="http://projects.savoirfairelinux.net/wiki/sflphone/YumRepository">add our repository</a> 
+               | <a href="http://projects.savoirfairelinux.net/wiki/sflphone/093">release note and changelog</a>  
             </td>
             <td><a href="mailto:emmanuel.milou@savoirfairelinux.com">Emmanuel Milou</a></td>
           </tr>
@@ -78,9 +78,8 @@ include('include/header.php');
                 </li>
             </ul>
             <br/>
-              <a href="http://dev.savoirfairelinux.net/sflphone/wiki/YumRepository">add our repository</a>
-               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#ReleaseNote">release note</a>  
-               | <a href="http://dev.savoirfairelinux.net/sflphone/milestone/0.9.3#Changelog">changelog</a>
+              <a href="http://projects.savoirfairelinux.net/wiki/sflphone/YumRepository">add our repository</a>
+               | <a href="http://projects.savoirfairelinux.net/wiki/sflphone/093">release note and changelog</a>  
             </td>
             <td><a href="mailto:emmanuel.milou@savoirfairelinux.com">Emmanuel Milou</a></td>
           </tr>
@@ -101,11 +100,11 @@ include('include/header.php');
         </thead>
         <tbody>
           <tr>
-            <td><a href="http://dev.savoirfairelinux.net/sflphone/downloads/7">sflphone_0.9.3.orig.tar.gz</a></td>
+            <td><a href="http://projects.savoirfairelinux.net/attachments/download/98/sflphone-0.9.3.tar.gz">sflphone_0.9.3.orig.tar.gz</a></td>
             <td>Compressed code source</td>
           </tr>
           <tr>
-            <td><a href="http://dev.savoirfairelinux.net/sflphone/browser">GIT Trac browser</a></td>
+            <td><a href="http://projects.savoirfairelinux.net/repositories/show/sflphone">GIT Repository</a></td>
             <td>Fetch the latest code with git: <br/><i>git clone http://sflphone.org/git/sflphone.git</i></td>
           </tr>
           <tr>

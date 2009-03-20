@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008 Savoir-Faire Linux inc.
+ *  Copyright (C) 2008 2009,  Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,13 +28,14 @@
 
 #define SFLPHONE_ORG_SERVER "sip.sflphone.org"
 #define SFLPHONE_ORG_ALIAS "sflphone.org"
+#define MESSAGE_SUMMARY _("This assistant is now finished.\nYou can at any time check your registration state or modify your accounts parameters in the Options/Accounts window.\n\nAlias :    %s\nServer :   %s\nUsername : %s\nPassword : %s")
 
 
 struct _wizard *wiz;
 static int account_type;
 static int use_sflphone_org = 1;
 account_t* current;
-
+char message[1024];
 /**
  * Forward function
  */
@@ -100,6 +101,13 @@ static void sip_apply_callback( void ) {
 
 		dbus_add_account( current );
 		account_list_set_current_id( current->accountID );
+        	sprintf(message, MESSAGE_SUMMARY,  
+			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
+			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
+			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username)),
+			gtk_entry_get_text (GTK_ENTRY(wiz->sip_password))
+				) ;
+	gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
 	}
 }
 
@@ -118,6 +126,13 @@ static void iax_apply_callback( void ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
 		dbus_add_account( current );
 		account_list_set_current_id( current->accountID );
+        	sprintf(message, MESSAGE_SUMMARY,  
+			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),
+			gtk_entry_get_text (GTK_ENTRY(wiz->iax_server)),
+			gtk_entry_get_text (GTK_ENTRY(wiz->iax_username)),
+			gtk_entry_get_text (GTK_ENTRY(wiz->iax_password))
+			) ;
+		gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
 	}
 }
 
@@ -126,6 +141,7 @@ void enable_stun( GtkWidget* widget ) {
 }
 
 void build_wizard( void ) {
+        use_sflphone_org = 1;
 	if (wiz)
 		return ;
 
@@ -371,14 +387,15 @@ GtkWidget* build_nat_settings( void ) {
 }
 
 GtkWidget* build_summary() {
-	GtkWidget *label;
 	wiz->summary = create_vbox( GTK_ASSISTANT_PAGE_SUMMARY  , _("Account Registration") , _("Congratulations!"));
-	
-	label = gtk_label_new(_("This assistant is now finished.\n\n You can at any time check your registration state or modify your accounts parameters in the Options/Accounts window.")) ;
-	gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
-	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
-	gtk_widget_set_size_request(GTK_WIDGET(label), 380, -1);
-	gtk_box_pack_start(GTK_BOX(wiz->summary), label, FALSE, TRUE, 0);
+
+	strcpy(message,"");
+	wiz->label_summary = gtk_label_new(message) ;
+	gtk_label_set_selectable (GTK_LABEL(wiz->label_summary), TRUE);
+	gtk_misc_set_alignment(GTK_MISC(wiz->label_summary), 0, 0);
+	gtk_label_set_line_wrap(GTK_LABEL(wiz->label_summary), TRUE);
+	//gtk_widget_set_size_request(GTK_WIDGET(wiz->label_summary), 380, -1);
+	gtk_box_pack_start(GTK_BOX(wiz->summary), wiz->label_summary, FALSE, TRUE, 0);
 	
 	return wiz->summary;
 }

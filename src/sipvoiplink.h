@@ -33,7 +33,6 @@
 #include <pjnath/stun_config.h>
 ///////////////////////////////
 
-
 class EventThread;
 class SIPCall;
 class AudioRtp;
@@ -113,7 +112,7 @@ class SIPVoIPLink : public VoIPLink
         /**
          * Answer the call
          * @param id The call identifier
-         * @return bool True on success
+         * @return int True on success
          */
         bool answer(const CallID& id);
 
@@ -268,6 +267,13 @@ class SIPVoIPLink : public VoIPLink
         void SIPCallReleased(SIPCall *call);
 
         /**
+         * Handle a re-invite request by the remote peer.
+         * A re-invite is an invite request inside a dialog.
+         * When receiving a re-invite, we close the current rtp session and create a new one with the updated information
+         */
+        void handle_reinvite (SIPCall *call);
+
+        /**
          * SIPCall accessor
          * @param id  The call identifier
          * @return SIPCall*	  A pointer on SIPCall object
@@ -304,6 +310,9 @@ class SIPVoIPLink : public VoIPLink
          */
          std::string getCurrentCodecName();
       
+        int inv_session_reinvite (SIPCall *call, std::string direction="");
+        
+        bool new_ip_to_ip_call (const CallID& id, const std::string& to);
 
     private:
         /**
@@ -316,7 +325,6 @@ class SIPVoIPLink : public VoIPLink
         static SIPVoIPLink* _instance;
 
         void busy_sleep(unsigned msec);
-        int getModId();
 
         /** 
          * Initialize the PJSIP library

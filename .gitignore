@@ -7,6 +7,7 @@
 *.Plo
 *.loT
 *.m4
+*.Tpo
 Makefile.in
 *.spec
 /config.*
@@ -82,6 +83,7 @@ libs/utilspp/functor/Makefile
 libs/utilspp/singleton/Makefile
 sflphone-gtk/Makefile
 sflphone-gtk/src/Makefile
+sflphone-gtk/src/contactlist/Makefile
 sflphone-gtk/pixmaps/Makefile
 
 
@@ -96,6 +98,8 @@ sflphone-gtk/pixmaps/Makefile
 /sflphone-gtk/src/sflphone-gtk
 /sflphone-gtk/autom4te*
 /sflphone-gtk/sflphone.desktop
+/sflphone-gtk/confdefs.h
+/sflphone-gtk/conftest.dir
 
 # Ignore sub-modules stuff
 ## libiax2

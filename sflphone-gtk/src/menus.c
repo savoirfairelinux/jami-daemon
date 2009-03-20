@@ -120,6 +120,7 @@ help_about ( void * foo UNUSED)
     "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>", 
     "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
     "Yun Liu <yun.liu@savoirfairelinux.com>"
+    "Alexandre Savard <alexandre.savard@savoirfairelinux.com>",
     "Jean-Philippe Barrette-LaPierre",
     "Laurielle Lea",
     NULL};
@@ -251,22 +252,23 @@ remove_from_history( void * foo UNUSED)
 static void
 call_back( void * foo UNUSED)
 {
-  call_t* selectedCall = call_get_selected( history );
-  call_t* newCall =  g_new0 (call_t, 1);
-  if( selectedCall )
-  {
-    newCall->to = g_strdup(call_get_number(selectedCall));
-    newCall->from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
-    newCall->state = CALL_STATE_DIALING;
-    newCall->callID = g_new0(gchar, 30);
-    g_sprintf(newCall->callID, "%d", rand()); 
-    newCall->_start = 0;
-    newCall->_stop = 0;
-    call_list_add(current_calls, newCall);
-    update_call_tree_add(current_calls, newCall);
-    sflphone_place_call(newCall);
-    switch_tab();
-  } 
+    call_t *selected_call, *new_call;
+    gchar *to, *from;
+
+    selected_call = call_get_selected( active_calltree );
+
+    if( selected_call )
+    {
+        to = g_strdup(call_get_number(selected_call));
+        from = g_strconcat("\"\" <", call_get_number(selected_call), ">",NULL);
+
+        create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
+
+        call_list_add(current_calls, new_call);
+        update_call_tree_add(current_calls, new_call);
+        sflphone_place_call(new_call);
+        display_calltree (current_calls);
+    }
 }
     
   GtkWidget * 
@@ -323,7 +325,7 @@ create_call_menu()
       NULL);
   gtk_widget_show (menu_items);
 
-  image = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
+  image = gtk_image_new_from_stock (GTK_STOCK_MEDIA_RECORD, GTK_ICON_SIZE_MENU);
   recordMenu = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
   gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( recordMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), recordMenu);
@@ -649,7 +651,7 @@ create_view_menu()
   gtk_widget_show (volumeMenu);
 
   image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_MENU );
-  searchbarMenu = gtk_image_menu_item_new_with_mnemonic (_("_Search history"));
+  searchbarMenu = gtk_image_menu_item_new_with_mnemonic (_("_Search contact"));
   gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( searchbarMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), searchbarMenu);
   g_signal_connect(G_OBJECT (searchbarMenu), "activate",
@@ -811,7 +813,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
    if(record)
   {
     menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
-    image = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
+    image = gtk_image_new_from_stock (GTK_STOCK_MEDIA_RECORD, GTK_ICON_SIZE_MENU);
     gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect (G_OBJECT (menu_items), "activate",
