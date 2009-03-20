@@ -101,6 +101,9 @@ sflphone-gtk/pixmaps/Makefile
 /sflphone-gtk/confdefs.h
 /sflphone-gtk/conftest.dir
 
+# Ignore sflphone_kde stuff
+/sflphone_kde/build
+
 # Ignore sub-modules stuff
 ## libiax2
 /libs/libiax2/doc/html
