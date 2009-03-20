@@ -1698,14 +1698,12 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
             // The call is ringing - We need to handle this case only on outgoing call
             if (inv->state == PJSIP_INV_STATE_EARLY && e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC){
-                _debug ("*************************** PJSIP_INV_STATE_EARLY - PEER RINGING ***********************************\n");
                 call->setConnectionState(Call::Ringing);
                 Manager::instance().peerRingingCall(call->getCallId());
             }
 
             // We receive a ACK - The connection is established
             else if( inv->state == PJSIP_INV_STATE_CONFIRMED ){
-                _debug ("*************************** PJSIP_INV_STATE_CONFIRMED ***********************************\n");
                     
                 /* If the call is a direct IP-to-IP call */
                 if (call->getCallConfiguration () == Call::IPtoIP) {
@@ -1721,7 +1719,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             }
 
             else if( inv->state == PJSIP_INV_STATE_DISCONNECTED ){
-                _debug ("*************************** PJSIP_INV_STATE_DISCONNECTED  %i***********************************\n", inv->cause);
                 switch( inv->cause )
                 {
                     /* The call terminates normally - BYE / CANCEL */
@@ -2442,8 +2439,6 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
     }
 
     void on_rx_offer( pjsip_inv_session *inv, const pjmedia_sdp_session *offer ){
-
-        _debug ( "********************************* REINVITE RECEIVED *******************************\n" );
 
 #ifdef CAN_REINVITE
         _debug ("reinvite                                                  SIP\n");
