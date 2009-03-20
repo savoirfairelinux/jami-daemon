@@ -54,7 +54,7 @@ git checkout origin/release -b release
 # Get system parameters
 arch_flag=`getconf -a|grep LONG_BIT | sed -e 's/LONG_BIT\s*//'`
 os_version=`lsb_release -d -s -c | sed -e '1d'`
-ver=0.9.3
+ver=0.9.4
 
 if [ $platform == "ubuntu" ];then
 	# Generate the changelog, according to the distribution and the git commit messages

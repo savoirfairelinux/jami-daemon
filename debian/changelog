@@ -1,3 +1,19 @@
+sflphone (0.9.4-beta1) %system%; urgency=low
+
+  [ Alexandre Savard ]
+  * Display codec used during conversation on the GUI
+  * Enable/disable STUN parameters at runtime
+  * Refactor search bar use
+  [ Emmanuel Milou ]
+  * Build system fixes
+  * Implement SIP re-invite
+  * Implement IP to IP call
+  [ Julien Bonjean ]
+  * Integrate GNOME address book based on evolution data server
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 20 Mar 2009 18:29:15 -0500
+
+
 sflphone (0.9.3-0ubuntu3) %system%; urgency=low
 
   [ Alexandre Savard ]

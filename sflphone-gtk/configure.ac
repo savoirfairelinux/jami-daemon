@@ -1,10 +1,10 @@
-AC_INIT([SFLphone],[0.9.3],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_INIT([SFLphone],[0.9.4],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AM_CONFIG_HEADER(config.h)
 
 LT_INIT
 
 PACKAGE=SFLphone
-VERSION=0.9.3
+VERSION=0.9.4
 
 AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 AC_CONFIG_MACRO_DIR([m4])
