@@ -844,9 +844,9 @@ create_searchbar(calltab_t* tab, gchar* searchbar_type)
   // g_strcmp0 returns 0 if str1 == str2
   if(g_strcmp0(searchbar_type,"history") == 0){
 
-      GtkTreeIter *iter;
+    // GtkTreeIter *iter;
 
-      GtkTreeModel *model = (GtkTreeModel*)history->store;
+      // GtkTreeModel *model = (GtkTreeModel*)history->store;
 
       // create_filter (model);
       
@@ -858,8 +858,9 @@ create_searchbar(calltab_t* tab, gchar* searchbar_type)
       // create_filter (model);
 
       // is_visible(model, iter);
-
+      
       tab->searchbar = create_filter_entry();
+      gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
   }
 
   else if(g_strcmp0(searchbar_type,"contacts") == 0)
