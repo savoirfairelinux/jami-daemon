@@ -1,4 +1,4 @@
-sflphone (0.9.4-beta1) %system%; urgency=low
+sflphone (0.9.4-0beta1) %system%; urgency=low
 
   [ Alexandre Savard ]
   * Display codec used during conversation on the GUI
