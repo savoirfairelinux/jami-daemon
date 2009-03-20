@@ -36,7 +36,9 @@ GtkTreeModel* create_filter(GtkTreeModel* child);
 
 gboolean is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data);
 
-GtkWidget* create_filter_entry();
+GtkWidget* create_filter_entry_contact();
+
+GtkWidget* create_filter_entry_history();
 
 void activateWaitingLayer();
 

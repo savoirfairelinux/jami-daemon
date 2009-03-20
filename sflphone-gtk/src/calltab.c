@@ -36,6 +36,7 @@ calltab_init(gchar* searchbar_type)
         ret->searchbar = NULL;
 	ret->callQueue = NULL;
 	ret->selectedCall = NULL;
+        // ret->histfilter = NULL;
 
 	create_call_tree(ret, searchbar_type);
 	call_list_init(ret);

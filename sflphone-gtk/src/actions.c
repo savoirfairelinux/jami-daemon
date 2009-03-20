@@ -231,8 +231,9 @@ gboolean sflphone_init()
     {
         dbus_register(getpid(), "Gtk+ Client");
         current_calls = calltab_init(NULL);
-        history = calltab_init("history");
+        // history = calltab_init("history");
         contacts = calltab_init("contacts");
+        history = calltab_init("history");
         histfilter = create_filter(GTK_TREE_MODEL(history->store));
         init();
         account_list_init ();
@@ -295,6 +296,7 @@ sflphone_hang_up()
     void
 sflphone_pick_up()
 {
+  
     call_t * selectedCall = call_get_selected(active_calltree);
     if(selectedCall)
     {
@@ -529,7 +531,7 @@ process_dialing(call_t * c, guint keyval, gchar * key)
     call_t *
 sflphone_new_call()
 {
-
+    
     call_t *c;
     gchar *from, *to;
 
@@ -680,9 +682,10 @@ sflphone_keypad( guint keyval, gchar * key)
 sflphone_place_call ( call_t * c )
 {
 
+
     if(c->state == CALL_STATE_DIALING && strcmp(c->to, "") != 0)
     {
-    
+        
         //format_phone_number (&c->to); 
         
         if( account_list_get_size() == 0 )
@@ -699,19 +702,26 @@ sflphone_place_call ( call_t * c )
 
         else
         {
+             
+            
             account_t * current;
 
-            if(c->accountID != 0)
+            if(c->accountID != 0){
+                
                 current = account_list_get_by_id(c->accountID);
-            else
+            }
+            else {
+                
                 current = account_list_get_current();
-
+            }
             // printf("sflphone_place_call :: c->accountID : %i \n",c->accountID);
 
             // account_t * current = c->accountID;
-
+            
+            
             if( current )
             {
+                
                 if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
                 {
                     // OK, everything alright - the call is made with the current account
@@ -734,6 +744,7 @@ sflphone_place_call ( call_t * c )
             }
             else
             {
+   
                 // No current accounts have been setup.
                 // So we place a call with the first registered account
                 // and we change the current account
@@ -756,6 +767,7 @@ sflphone_place_call ( call_t * c )
     void
 sflphone_display_selected_codec (const gchar* codecName)
 {
+  
     call_t * selectedCall = call_get_selected(current_calls);
     gchar* msg;
     account_t* acc;

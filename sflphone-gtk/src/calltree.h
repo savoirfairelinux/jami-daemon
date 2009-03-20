@@ -31,7 +31,8 @@
   * @brief The GtkTreeView that list calls in the main window.
   */
 
-GtkWidget * filter_entry;
+GtkWidget * filter_entry_contact;
+GtkWidget * filter_entry_history;
 
 calltab_t* active_calltree;
 
