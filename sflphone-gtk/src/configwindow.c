@@ -479,7 +479,7 @@ void update_registration( void )
 GtkWidget* create_stun_tab()
 {
     GtkWidget * tableNat;
-    gchar * stun_server= "stun.fwdnet.net:3478";
+    gchar * stun_server= "stun.ekiga.net:3478";
     gchar * stun_enabled = "FALSE";
     GtkWidget * label;
 

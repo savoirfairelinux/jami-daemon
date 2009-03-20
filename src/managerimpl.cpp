@@ -2520,7 +2520,7 @@ void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
         current = iter->second;
         
         if (current) {
-            if ( current->isEnabled() && current->getType() == "sip") {
+            if (current->isEnabled() && current->getType() == "sip") {
                 //current->setVoIPLink(link);
 	            current->registerVoIPLink();
             }

@@ -79,7 +79,7 @@
 #define ADDRESSBOOK_DISPLAY_PHONE_MOBILE    "Addressbook.phone_mobile"
 
 #define EMPTY_FIELD		""			/** Default value for empty field */
-#define DFT_STUN_SERVER 	"stun.fwdnet.net:3478"	/** Default STUN server address */
+#define DFT_STUN_SERVER 	"stun.ekiga.net"	/** Default STUN server address */
 #define	YES_STR			"1"			/** Default YES value */   
 #define	NO_STR			"0"			/** Default NO value */
 #define DFT_PULSE_LENGTH_STR	"250"			/** Default DTMF lenght */

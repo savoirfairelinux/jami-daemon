@@ -150,6 +150,12 @@ if test "x${have_libpj}" = "xfalse" ; then
 fi
 AC_SUBST(SIP_CFLAGS)
 
+dnl Check for uuid development package - name: uuid-dev 
+UUID_MIN_VERSION=1.0
+PKG_CHECK_MODULES(UUID, uuid >= ${UUID_MIN_VERSION})
+AC_SUBST(UUID_CFLAGS)
+AC_SUBST(UUID_LIBS)
+
 dnl Check for alsa development package - name: libasound2-dev 
 LIBASOUND2_MIN_VERSION=1.0
 PKG_CHECK_MODULES(ALSA, alsa >= ${LIBASOUND2_MIN_VERSION})
@@ -188,17 +194,10 @@ PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1 >= ${LIBDBUSCPP_MIN_VERSION})
 AC_SUBST(DBUSCPP_LIBS)
 AC_SUBST(DBUSCPP_CFLAGS)
 
-LIBOPENSSL_MIN_VERSION=0.9.8
-PKG_CHECK_MODULES(LIBOPENSSL, libssl >= ${LIBOPENSSL_MIN_VERSION})
-AC_SUBST(LIBOPENSSL_LIBS)
-AC_SUBST(LIBOPENSSL_CFLAGS)
-
 dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12
 PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION})
 AC_SUBST(CPPUNIT_LIBS)
-
-LIBSSL_MIN_VERSION=0.9.8
 
 # check for libgsm1 (doesn't use pkg-config)
 dnl Check for libgsm
