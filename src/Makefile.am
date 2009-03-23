@@ -50,8 +50,7 @@ sflphoned_LDADD = \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		@LIBOPENSSL_LIBS@
+		@SAMPLERATE_LIBS@ 
 
 # sflphoned_LDFLAGS= -pg -luuid
 sflphoned_LDFLAGS= -luuid

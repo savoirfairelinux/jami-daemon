@@ -45,7 +45,7 @@ msgstr "Réseau non trouvé"
 
 #: ../sflphone-gtk/src/accountlist.c:176
 msgid "Host unreachable"
-msgstr "_Serveur introuvable"
+msgstr "Serveur introuvable"
 
 #: ../sflphone-gtk/src/accountlist.c:179
 msgid "Stun configuration error"

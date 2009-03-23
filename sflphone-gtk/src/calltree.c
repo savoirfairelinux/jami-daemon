@@ -25,6 +25,7 @@
 #include <actions.h>
 #include <calltree.h>
 #include <calllist.h>
+#include <calltab.h>
 #include <menus.h>
 #include <dbus.h>
 #include <contactlist/eds.h>
@@ -95,6 +96,7 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
   static void
 call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
+  g_print("------ call_button ----- \n");
   call_t * selectedCall;
   call_t* new_call;
   gchar *to, *from;
@@ -377,6 +379,7 @@ toolbar_update_buttons ()
   static void
 selected(GtkTreeSelection *sel, void* data UNUSED )
 {
+  g_print("---- selected --- \n");
   GtkTreeIter  iter;
   GValue val;
   GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
@@ -604,7 +607,7 @@ reset_call_tree (calltab_t* tab)
 }
 
   void
-create_call_tree (calltab_t* tab)
+  create_call_tree (calltab_t* tab, gchar* searchbar_type)
 {
   GtkWidget *sw;
   GtkCellRenderer *rend;
@@ -665,12 +668,23 @@ create_call_tree (calltab_t* tab)
       NULL);
 
   gtk_box_pack_start(GTK_BOX(tab->tree), sw, TRUE, TRUE, 0);
+ 
+  // no search bar if tab is either "history" or "addressbook"
+  if(searchbar_type){
+      create_searchbar(tab,searchbar_type);
+      gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
+  }
 
   gtk_widget_show(tab->tree);
+
+
+  // gtk_widget_show(tab->searchbar);
 
   //toolbar_update_buttons();
 
 }
+
+
 
   void
 update_call_tree_remove (calltab_t* tab, call_t * c)
@@ -824,6 +838,21 @@ update_call_tree (calltab_t* tab, call_t * c)
 
   }
   toolbar_update_buttons();
+}
+
+void
+create_searchbar(calltab_t* tab, gchar* searchbar_type)
+{
+  // g_strcmp0 returns 0 if str1 == str2
+  if(g_strcmp0(searchbar_type,"history") == 0){      
+
+      tab->searchbar = create_filter_entry_history();
+
+  }
+
+  else if(g_strcmp0(searchbar_type,"contacts") == 0)
+      tab->searchbar = create_filter_entry_contact();
+
 }
 
   void

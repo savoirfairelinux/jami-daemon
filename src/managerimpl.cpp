@@ -445,9 +445,9 @@ ManagerImpl::offHoldCall(const CallID& id)
   
     switchCall(id);
 
-    // codecName = getCurrentCodecName(id);
+    codecName = getCurrentCodecName(id);
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+    if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
     return returnValue;
 }
@@ -739,7 +739,9 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     */
   
     /* Broadcast a signal over DBus */
-    _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+    if (_dbus) _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+
+    //if (_dbus) _dbus->getCallManager()->callStateChanged(call->getCallId(), "INCOMING");
   
     // Reduce volume of the other pulseaudio-connected audio applications
     if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
@@ -787,7 +789,6 @@ ManagerImpl::peerRingingCall(const CallID& id)
   void
 ManagerImpl::peerHungupCall(const CallID& id)
 {
-    _debug("ManagerImpl::peerHungupCall():this function is called when peer hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
@@ -977,15 +978,12 @@ ManagerImpl::ringtone()
     {
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
-        _debug("RINGING!!! 1\n");
         
         ringchoice = getConfigString(AUDIO, RING_CHOICE);
         //if there is no / inside the path
         if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
             // check inside global share directory
             ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
-
-            _debug("RINGING!!! 2\n");
         }
 
         audiolayer = getAudioDriver();
@@ -993,7 +991,6 @@ ManagerImpl::ringtone()
         if (audiolayer == 0)
             return;
 
-        _debug("RINGING!!! 3\n");
 
         samplerate  = audiolayer->getSampleRate();
         codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
@@ -1004,7 +1001,6 @@ ManagerImpl::ringtone()
 
         if (loadFile) {
             
-            _debug("RINGING!!! 5\n");
             _toneMutex.enterMutex(); 
             _audiofile.start();
             _toneMutex.leaveMutex(); 
@@ -1014,18 +1010,15 @@ ManagerImpl::ringtone()
             }
             else{
                 audiolayer->startStream();
-                _debug("RINGING!!! 6\n");
             }
         } else {
             ringback();
-            _debug("RINGING!!! 7\n");
         }
     
     }
     else
     {
         ringback();
-        _debug("RINGING!!! 8\n");
     }
 }
 
@@ -2531,7 +2524,7 @@ void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
         current = iter->second;
         
         if (current) {
-            if ( current->isEnabled() && current->getType() == "sip") {
+            if (current->isEnabled() && current->getType() == "sip") {
                 //current->setVoIPLink(link);
 	            current->registerVoIPLink();
             }
