@@ -117,7 +117,7 @@ create_query (const char* s)
     phone[1] = e_book_query_field_exists (E_CONTACT_PHONE_HOME);
     phone[2] = e_book_query_field_exists (E_CONTACT_PHONE_MOBILE);
 
-    query = e_book_query_andv (e_book_query_or (n_search_fields, q, FALSE), e_book_query_or (3, phone, FALSE));
+    query = e_book_query_andv (e_book_query_or (n_search_fields, q, FALSE), e_book_query_or (3, phone, FALSE), NULL);
 
     for (i = 0; i < n_search_fields; i++) {
         g_free (field_queries[i]);
