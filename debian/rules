@@ -20,12 +20,12 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	./autogen.sh --prefix=/usr --with-debug
-	cd sflphone-gtk; ./autogen.sh --prefix=/usr
+	cd libs/dbus-c++; ./configure
+	cd libs/libiax2; ./configure
 	cd libs/pjproject-1.0.1; ./configure
+	cd ../.. ; ./autogen.sh --prefix=/usr --with-debug
+	cd sflphone-gtk; ./autogen.sh --prefix=/usr
 	touch configure-stamp
-	cd libs/dbus-c++; ./autogen.sh; ./configure
-	cd libs/libiax2; ./gen.sh; ./configure
 
 
 #Architecture 
