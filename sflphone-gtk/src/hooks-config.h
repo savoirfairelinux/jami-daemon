@@ -34,6 +34,8 @@ G_BEGIN_DECLS
 
 
 typedef struct _URLHook_Config {
+    guint sip_enabled;
+    guint iax2_enabled;
     gchar *sip_field;
     gchar *command;
 }URLHook_Config;
