@@ -368,12 +368,12 @@
     <property name="title" >
      <string>&amp;Configuration</string>
     </property>
-    <addaction name="actionAfficher_les_barres_de_volume" />
-    <addaction name="actionAfficher_le_clavier" />
+    <addaction name="action_displayVolumeControls" />
+    <addaction name="action_displayDialpad" />
     <addaction name="separator" />
-    <addaction name="actionConfigurer_les_comptes" />
-    <addaction name="actionConfigurer_le_son" />
-    <addaction name="actionConfigurer_SFLPhone" />
+    <addaction name="action_configureAccounts" />
+    <addaction name="action_configureAudio" />
+    <addaction name="action_configureSflPhone" />
    </widget>
    <widget class="QMenu" name="menuAide" >
     <property name="title" >
@@ -465,7 +465,7 @@
     <string>&amp;Boîte Vocale</string>
    </property>
   </action>
-  <action name="actionConfigurer_les_comptes" >
+  <action name="action_configureAccounts" >
    <property name="icon" >
     <iconset>
      <normaloff>:/Images/stock_person.svg</normaloff>:/Images/stock_person.svg</iconset>
@@ -474,7 +474,7 @@
     <string>Configurer les &amp;comptes</string>
    </property>
   </action>
-  <action name="actionConfigurer_le_son" >
+  <action name="action_configureAudio" >
    <property name="icon" >
     <iconset>
      <normaloff>:/Images/icon_volume.svg</normaloff>:/Images/icon_volume.svg</iconset>
@@ -483,7 +483,7 @@
     <string>Configurer le &amp;son</string>
    </property>
   </action>
-  <action name="actionConfigurer_SFLPhone" >
+  <action name="action_configureSflPhone" >
    <property name="icon" >
     <iconset>
      <normaloff>:/Images/sflphone.png</normaloff>:/Images/sflphone.png</iconset>
@@ -492,7 +492,7 @@
     <string>&amp;Configurer SFLPhone</string>
    </property>
   </action>
-  <action name="actionAfficher_les_barres_de_volume" >
+  <action name="action_displayVolumeControls" >
    <property name="checkable" >
     <bool>true</bool>
    </property>
@@ -512,7 +512,7 @@
     <string>&amp;About</string>
    </property>
   </action>
-  <action name="actionAfficher_le_clavier" >
+  <action name="action_displayDialpad" >
    <property name="checkable" >
     <bool>true</bool>
    </property>

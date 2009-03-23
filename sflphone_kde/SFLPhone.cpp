@@ -43,8 +43,8 @@ SFLPhone::~SFLPhone()
 void SFLPhone::loadWindow()
 {
 	ConfigurationManagerInterface & daemon = ConfigurationManagerInterfaceSingleton::getInstance();
-	actionAfficher_les_barres_de_volume->setChecked(daemon.getVolumeControls());
-	actionAfficher_le_clavier->setChecked(daemon.getDialpad());
+	action_displayVolumeControls->setChecked(daemon.getVolumeControls());
+	action_displayDialpad->setChecked(daemon.getDialpad());
 	updateWindowCallState();
 	updateRecordButton();
 	updateVolumeButton();
@@ -154,7 +154,6 @@ void SFLPhone::updateWindowCallState()
 		}
 		else
 		{
-			CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 			Call * call = (*callList)[item];
 			call_state state = call->getState();
 			//qDebug() << "calling getIsRecording on " << call->getCallId();
@@ -239,7 +238,7 @@ void SFLPhone::updateWindowCallState()
 			}
 		}
 		//qDebug() << "mi";
-		if (item)
+		if (item && iconFile)
 		{
 			qDebug() << "rentre " << item;
 			item->setIcon(QIcon(iconFile));
@@ -400,14 +399,14 @@ void SFLPhone::updateDialpad()
 ************            Autoconnect             *************
 ************************************************************/
 
-void SFLPhone::on_actionAfficher_les_barres_de_volume_toggled()
+void SFLPhone::on_action_displayVolumeControls_toggled()
 {
 	ConfigurationManagerInterface & daemon = ConfigurationManagerInterfaceSingleton::getInstance();
 	daemon.setVolumeControls();
 	updateVolumeControls();
 }
 
-void SFLPhone::on_actionAfficher_le_clavier_toggled()
+void SFLPhone::on_action_displayDialpad_toggled()
 {
 	ConfigurationManagerInterface & daemon = ConfigurationManagerInterfaceSingleton::getInstance();
 	daemon.setDialpad();
@@ -427,7 +426,7 @@ void SFLPhone::on_pushButton_0_clicked()      { typeString("0"); }
 void SFLPhone::on_pushButton_diese_clicked()  { typeString("#"); }
 void SFLPhone::on_pushButton_etoile_clicked() { typeString("*"); }
 
-void SFLPhone::on_label_searchHistory_textChanged(const QString & text)
+void SFLPhone::on_label_searchHistory_textChanged()
 {
 	qDebug() << "on_label_searchHistory_textEdited";
 	updateSearchHistory();
@@ -530,21 +529,21 @@ void SFLPhone::on_listWidget_callHistory_currentItemChanged()
 	updateWindowCallState();
 }
 
-void SFLPhone::on_actionConfigurer_les_comptes_triggered()
+void SFLPhone::on_action_configureAccounts_triggered()
 {
 	configDialog->loadOptions();
 	configDialog->setPage(PAGE_ACCOUNTS);
 	configDialog->show();
 }
 
-void SFLPhone::on_actionConfigurer_le_son_triggered()
+void SFLPhone::on_action_configureAudio_triggered()
 {
 	configDialog->loadOptions();
 	configDialog->setPage(PAGE_AUDIO);
 	configDialog->show();
 }
 
-void SFLPhone::on_actionConfigurer_SFLPhone_triggered()
+void SFLPhone::on_action_configureSflPhone_triggered()
 {
 	configDialog->loadOptions();
 	configDialog->setPage(PAGE_GENERAL);
@@ -693,12 +692,12 @@ void SFLPhone::on1_incomingCall(const QString &accountID, const QString & callID
 
 void SFLPhone::on1_incomingMessage(const QString &accountID, const QString &message)
 {
-	qDebug() << "on_incomingMessage !";
+	qDebug() << "on_incomingMessage ! ";
 }
 
 void SFLPhone::on1_voiceMailNotify(const QString &accountID, int count)
 {
-	qDebug() << "on_voiceMailNotify !";
+	qDebug() << "on_voiceMailNotify ! " << count << " new voice mails for account " << accountID;
 }
 
 void SFLPhone::on1_volumeChanged(const QString &device, double value)

@@ -53,7 +53,8 @@ const function Call::actionPerformedFunctionMap[11][5] =
 /*ERROR          */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       }
 };
 
-const QIcon Call::historyIcons[3] = {QIcon(ICON_HISTORY_INCOMING), QIcon(ICON_HISTORY_OUTGOING), QIcon(ICON_HISTORY_MISSED)};
+const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
+
 
 Call::Call(call_state startState, QString callId, QString from, QString account)
 {
@@ -64,6 +65,7 @@ Call::Call(call_state startState, QString callId, QString from, QString account)
 	this->recording = false;
 	this->currentState = startState;
 	this->historyItem = NULL;
+	
 }
 
 Call::~Call()
@@ -112,6 +114,7 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
 		return DAEMON_CALL_STATE_FAILURE;
 	}
 	qDebug() << "stateChanged signal received with unknown state.";
+	return DAEMON_CALL_STATE_FAILURE;
 }
 
 QListWidgetItem * Call::getItem()
@@ -123,8 +126,8 @@ QListWidgetItem * Call::getHistoryItem()
 {
 	if(historyItem == NULL)
 	{
-		historyItem = new QListWidgetItem("<H1>"+peer+"</H1>");
-		historyItem->setIcon(historyIcons[historyState]);
+		historyItem = new QListWidgetItem(peer);
+		historyItem->setIcon(QIcon(historyIcons[historyState]));
 	}
 	return historyItem;
 }
@@ -197,7 +200,7 @@ void Call::accept(QString number)
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Accepting call. callId : " << callId;
 	callManager.accept(callId);
-	this->startTime = & QDateTime::currentDateTime();
+	this->startTime = new QDateTime(QDateTime::currentDateTime());
 	this->historyState = INCOMING;
 }
 
@@ -206,7 +209,7 @@ void Call::refuse(QString number)
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Refusing call. callId : " << callId;
 	callManager.refuse(callId);
-	this->startTime = & QDateTime::currentDateTime();
+	this->startTime = new QDateTime(QDateTime::currentDateTime());
 	this->historyState = MISSED;
 }
 
@@ -267,7 +270,7 @@ void Call::transfer(QString number)
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Transfering call to number : " << number << ". callId : " << callId;
 	callManager.transfert(callId, number);
-	this->stopTime = & QDateTime::currentDateTime();
+	this->stopTime = new QDateTime(QDateTime::currentDateTime());
 }
 
 void Call::unhold(QString number)

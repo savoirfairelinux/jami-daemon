@@ -103,7 +103,7 @@ private:
 	static const call_state actionPerformedStateMap [11][5];
 	static const function actionPerformedFunctionMap [11][5];
 	static const call_state stateChangedStateMap [11][6];
-	static const QIcon historyIcons[3];
+	static const char * historyIcons[3];
 	
 	call_state currentState;
 	bool recording;

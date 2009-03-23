@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>504</width>
-    <height>432</height>
+    <height>435</height>
    </rect>
   </property>
   <property name="minimumSize" >
@@ -29,7 +29,7 @@
       <enum>QLayout::SetDefaultConstraint</enum>
      </property>
      <item>
-      <widget class="QListWidget" name="listOptions" >
+      <widget class="QListWidget" name="list_options" >
        <property name="sizePolicy" >
         <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
          <horstretch>0</horstretch>
@@ -143,38 +143,38 @@
       </widget>
      </item>
      <item>
-      <widget class="Line" name="lineOptions" >
+      <widget class="Line" name="line_options" >
        <property name="orientation" >
         <enum>Qt::Vertical</enum>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QStackedWidget" name="stackedWidgetOptions" >
+      <widget class="QStackedWidget" name="stackedWidget_options" >
        <property name="currentIndex" >
         <number>2</number>
        </property>
-       <widget class="QWidget" name="page_General" >
+       <widget class="QWidget" name="page_general" >
         <layout class="QVBoxLayout" name="verticalLayout_18" >
          <property name="leftMargin" >
           <number>4</number>
          </property>
          <item>
-          <widget class="QLabel" name="label_ConfGeneral" >
+          <widget class="QLabel" name="label_configGeneral" >
            <property name="text" >
             <string>Configuration des paramètres généraux</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="Line" name="line_ConfGeneral" >
+          <widget class="Line" name="line_ConfigGeneral" >
            <property name="orientation" >
             <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox1_Historique" >
+          <widget class="QGroupBox" name="groupBox1_history" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
              <horstretch>0</horstretch>
@@ -186,20 +186,20 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_19" >
             <item>
-             <widget class="QWidget" native="1" name="widget_CapaciteHist" >
+             <widget class="QWidget" native="1" name="widget_historyCapacity" >
               <layout class="QHBoxLayout" name="horizontalLayout_10" >
                <item>
-                <widget class="QLabel" name="label_Capacite" >
+                <widget class="QLabel" name="label_historyCapacity" >
                  <property name="text" >
                   <string>&amp;Capacité</string>
                  </property>
                  <property name="buddy" >
-                  <cstring>horizontalSlider_Capacity</cstring>
+                  <cstring>horizontalSlider_historyCapacity</cstring>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QSlider" name="horizontalSlider_Capacity" >
+                <widget class="QSlider" name="horizontalSlider_historyCapacity" >
                  <property name="maximum" >
                   <number>100</number>
                  </property>
@@ -209,13 +209,13 @@
                 </widget>
                </item>
                <item>
-                <widget class="QSpinBox" name="spinBox_CapaciteHist" />
+                <widget class="QSpinBox" name="spinBox_historyCapacity" />
                </item>
               </layout>
              </widget>
             </item>
             <item>
-             <widget class="QToolButton" name="toolButtonEffacerHist" >
+             <widget class="QToolButton" name="toolButton_historyClear" >
               <property name="text" >
                <string>&amp;Effacer l'Historique</string>
               </property>
@@ -225,7 +225,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox2_Connexion" >
+          <widget class="QGroupBox" name="groupBox2_connection" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
              <horstretch>0</horstretch>
@@ -240,14 +240,14 @@
              <enum>QFormLayout::ExpandingFieldsGrow</enum>
             </property>
             <item row="0" column="0" >
-             <widget class="QLabel" name="label_PortSIP" >
+             <widget class="QLabel" name="label_SIPPort" >
               <property name="text" >
                <string>Port SIP</string>
               </property>
              </widget>
             </item>
             <item row="0" column="1" >
-             <widget class="QWidget" native="1" name="widget" >
+             <widget class="QWidget" native="1" name="widget_SIPPort" >
               <property name="minimumSize" >
                <size>
                 <width>50</width>
@@ -259,7 +259,7 @@
                 <number>0</number>
                </property>
                <item>
-                <widget class="QSpinBox" name="spinBox_PortSIP" >
+                <widget class="QSpinBox" name="spinBox_SIPPort" >
                  <property name="sizePolicy" >
                   <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
                    <horstretch>0</horstretch>
@@ -291,7 +291,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QWidget" native="1" name="widget_RemplissageConfGeneral" >
+          <widget class="QWidget" native="1" name="widget_fullConfigGeneral" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
              <horstretch>0</horstretch>
@@ -302,10 +302,10 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_Affichage" >
+       <widget class="QWidget" name="page_display" >
         <layout class="QVBoxLayout" name="verticalLayout_9" >
          <item>
-          <widget class="QLabel" name="label_ConfAffichage" >
+          <widget class="QLabel" name="label_configDisplay" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
              <horstretch>0</horstretch>
@@ -318,14 +318,14 @@
           </widget>
          </item>
          <item>
-          <widget class="Line" name="line_ConfAffichage" >
+          <widget class="Line" name="line_configDisplay" >
            <property name="orientation" >
             <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QFrame" name="frameAffichage" >
+          <widget class="QFrame" name="frame_display" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
              <horstretch>0</horstretch>
@@ -340,7 +340,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_8" >
             <item>
-             <widget class="QLabel" name="label1_Notifications" >
+             <widget class="QLabel" name="label1_notifications" >
               <property name="sizePolicy" >
                <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
                 <horstretch>0</horstretch>
@@ -353,7 +353,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QWidget" native="1" name="widget1_Notifications" >
+             <widget class="QWidget" native="1" name="widget1_notifications" >
               <property name="sizePolicy" >
                <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
                 <horstretch>0</horstretch>
@@ -362,14 +362,14 @@
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_5" >
                <item>
-                <widget class="QCheckBox" name="checkBox1_NotifAppels" >
+                <widget class="QCheckBox" name="checkBox1_notifOnCalls" >
                  <property name="text" >
                   <string>&amp;Appels entrants</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="checkBox2_NotifMessages" >
+                <widget class="QCheckBox" name="checkBox2_notifOnMessages" >
                  <property name="text" >
                   <string>&amp;Messages vocaux</string>
                  </property>
@@ -379,7 +379,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label2_FenetrePrincipale" >
+             <widget class="QLabel" name="label2_displayMainWindow" >
               <property name="sizePolicy" >
                <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
                 <horstretch>0</horstretch>
@@ -392,7 +392,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QWidget" native="1" name="widget_FenetrePrincipale" >
+             <widget class="QWidget" native="1" name="widget_displayMainWindow" >
               <property name="sizePolicy" >
                <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
                 <horstretch>0</horstretch>
@@ -401,14 +401,14 @@
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_6" >
                <item>
-                <widget class="QCheckBox" name="checkBox1_FenDemarrage" >
+                <widget class="QCheckBox" name="checkBox1_displayOnStart" >
                  <property name="text" >
                   <string>Au &amp;démarrage</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="checkBox2_FenAppel" >
+                <widget class="QCheckBox" name="checkBox2_displayOnCalls" >
                  <property name="text" >
                   <string>Lors d'un appel &amp;entrant</string>
                  </property>
@@ -418,17 +418,17 @@
              </widget>
             </item>
             <item>
-             <widget class="QWidget" native="1" name="widget_5" />
+             <widget class="QWidget" native="1" name="widget_fullConfigDisplay" />
             </item>
            </layout>
           </widget>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_Comptes" >
+       <widget class="QWidget" name="page_accounts" >
         <layout class="QVBoxLayout" name="verticalLayout_2" >
          <item>
-          <widget class="QLabel" name="label_ConfComptes" >
+          <widget class="QLabel" name="label_configAccounts" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
              <horstretch>0</horstretch>
@@ -441,17 +441,17 @@
           </widget>
          </item>
          <item>
-          <widget class="Line" name="line_ConfComptes" >
+          <widget class="Line" name="line_configAccounts" >
            <property name="orientation" >
             <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QWidget" native="1" name="widget1_ConfComptes" >
+          <widget class="QWidget" native="1" name="widget1_configAccounts" >
            <layout class="QHBoxLayout" name="horizontalLayout_3" >
             <item>
-             <widget class="QFrame" name="frame1_ListeComptes" >
+             <widget class="QFrame" name="frame1_accountList" >
               <property name="minimumSize" >
                <size>
                 <width>0</width>
@@ -472,7 +472,7 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_6" >
                <item>
-                <widget class="QListWidget" name="listWidgetComptes" >
+                <widget class="QListWidget" name="listWidget_accountList" >
                  <property name="sizePolicy" >
                   <sizepolicy vsizetype="Expanding" hsizetype="Fixed" >
                    <horstretch>0</horstretch>
@@ -497,7 +497,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QGroupBox" name="groupBoxGestionComptes" >
+                <widget class="QGroupBox" name="groupBox_accountListHandle" >
                  <property name="sizePolicy" >
                   <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
                    <horstretch>0</horstretch>
@@ -527,7 +527,7 @@
                    <number>0</number>
                   </property>
                   <item>
-                   <widget class="QToolButton" name="button_delAccount" >
+                   <widget class="QToolButton" name="button_accountRemove" >
                     <property name="sizePolicy" >
                      <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
                       <horstretch>0</horstretch>
@@ -539,7 +539,7 @@
                     </property>
                     <property name="icon" >
                      <iconset resource="resources.qrc" >
-                      <normaloff>:/images/icons/fail.svg</normaloff>:/images/icons/fail.svg</iconset>
+                      <normaloff>:/images/icons/remove.png</normaloff>:/images/icons/remove.png</iconset>
                     </property>
                     <property name="shortcut" >
                      <string>+</string>
@@ -547,7 +547,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QToolButton" name="button_newAccount" >
+                   <widget class="QToolButton" name="button_accountAdd" >
                     <property name="sizePolicy" >
                      <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
                       <horstretch>0</horstretch>
@@ -565,7 +565,7 @@
                     </property>
                     <property name="icon" >
                      <iconset resource="resources.qrc" >
-                      <normaloff>:/images/icons/accept.svg</normaloff>:/images/icons/accept.svg</iconset>
+                      <normaloff>:/images/icons/add.png</normaloff>:/images/icons/add.png</iconset>
                     </property>
                    </widget>
                   </item>
@@ -574,20 +574,12 @@
                     <property name="text" >
                      <string>Down</string>
                     </property>
-                    <property name="icon" >
-                     <iconset resource="resources.qrc" >
-                      <normaloff>:/images/icons/incoming.svg</normaloff>:/images/icons/incoming.svg</iconset>
-                    </property>
                    </widget>
                   </item>
                   <item>
                    <widget class="QToolButton" name="button_accountUp" >
                     <property name="text" >
                      <string>Up</string>
-                    </property>
-                    <property name="icon" >
-                     <iconset resource="resources.qrc" >
-                      <normaloff>:/images/icons/accept.svg</normaloff>:/images/icons/accept.svg</iconset>
                     </property>
                    </widget>
                   </item>
@@ -598,7 +590,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QFrame" name="frame2_EditComptes" >
+             <widget class="QFrame" name="frame2_editAccounts" >
               <property name="sizePolicy" >
                <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
                 <horstretch>0</horstretch>
@@ -616,17 +608,17 @@
                 <enum>QFormLayout::ExpandingFieldsGrow</enum>
                </property>
                <item row="0" column="0" >
-                <widget class="QLabel" name="label1_Alias" >
+                <widget class="QLabel" name="label1_alias" >
                  <property name="text" >
                   <string>&amp;Alias</string>
                  </property>
                  <property name="buddy" >
-                  <cstring>edit1_Alias</cstring>
+                  <cstring>edit1_alias</cstring>
                  </property>
                 </widget>
                </item>
                <item row="0" column="1" >
-                <widget class="QLineEdit" name="edit1_Alias" >
+                <widget class="QLineEdit" name="edit1_alias" >
                  <property name="minimumSize" >
                   <size>
                    <width>0</width>
@@ -636,57 +628,57 @@
                 </widget>
                </item>
                <item row="1" column="0" >
-                <widget class="QLabel" name="label2_Protocole" >
+                <widget class="QLabel" name="label2_protocol" >
                  <property name="text" >
                   <string>&amp;Protocole</string>
                  </property>
                  <property name="buddy" >
-                  <cstring>edit2_Protocole</cstring>
+                  <cstring>edit2_protocol</cstring>
                  </property>
                 </widget>
                </item>
                <item row="2" column="0" >
-                <widget class="QLabel" name="label3_Serveur" >
+                <widget class="QLabel" name="label3_server" >
                  <property name="text" >
                   <string>&amp;Serveur</string>
                  </property>
                  <property name="buddy" >
-                  <cstring>edit3_Serveur</cstring>
+                  <cstring>edit3_server</cstring>
                  </property>
                 </widget>
                </item>
                <item row="3" column="0" >
-                <widget class="QLabel" name="label4_Usager" >
+                <widget class="QLabel" name="label4_user" >
                  <property name="text" >
                   <string>&amp;Usager</string>
                  </property>
                  <property name="buddy" >
-                  <cstring>edit4_Usager</cstring>
+                  <cstring>edit4_user</cstring>
                  </property>
                 </widget>
                </item>
                <item row="4" column="0" >
-                <widget class="QLabel" name="label5_Mdp" >
+                <widget class="QLabel" name="label5_password" >
                  <property name="text" >
                   <string>&amp;Mot de Passe</string>
                  </property>
                  <property name="buddy" >
-                  <cstring>edit5_Mdp</cstring>
+                  <cstring>edit5_password</cstring>
                  </property>
                 </widget>
                </item>
                <item row="5" column="0" >
-                <widget class="QLabel" name="label6_BoiteVocale" >
+                <widget class="QLabel" name="label6_mailbox" >
                  <property name="text" >
                   <string>&amp;Boîte Vocale</string>
                  </property>
                  <property name="buddy" >
-                  <cstring>edit6_BoiteVocale</cstring>
+                  <cstring>edit6_mailbox</cstring>
                  </property>
                 </widget>
                </item>
                <item row="2" column="1" >
-                <widget class="QLineEdit" name="edit3_Serveur" >
+                <widget class="QLineEdit" name="edit3_server" >
                  <property name="minimumSize" >
                   <size>
                    <width>0</width>
@@ -696,20 +688,20 @@
                 </widget>
                </item>
                <item row="3" column="1" >
-                <widget class="QLineEdit" name="edit4_Usager" />
+                <widget class="QLineEdit" name="edit4_user" />
                </item>
                <item row="4" column="1" >
-                <widget class="QLineEdit" name="edit5_Mdp" >
+                <widget class="QLineEdit" name="edit5_password" >
                  <property name="echoMode" >
                   <enum>QLineEdit::Password</enum>
                  </property>
                 </widget>
                </item>
                <item row="5" column="1" >
-                <widget class="QLineEdit" name="edit6_BoiteVocale" />
+                <widget class="QLineEdit" name="edit6_mailbox" />
                </item>
                <item row="1" column="1" >
-                <widget class="QComboBox" name="edit2_Protocole" >
+                <widget class="QComboBox" name="edit2_protocol" >
                  <item>
                   <property name="text" >
                    <string>SIP</string>
@@ -723,14 +715,14 @@
                 </widget>
                </item>
                <item row="6" column="1" >
-                <widget class="QLabel" name="edit7_Etat" >
+                <widget class="QLabel" name="edit7_state" >
                  <property name="text" >
                   <string/>
                  </property>
                 </widget>
                </item>
                <item row="6" column="0" >
-                <widget class="QLabel" name="label7_Etat" >
+                <widget class="QLabel" name="label7_state" >
                  <property name="text" >
                   <string>État </string>
                  </property>
@@ -743,32 +735,32 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_ConfComptesCommuns" >
+          <widget class="QGroupBox" name="groupBox_commonSettings" >
            <property name="title" >
             <string/>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_10" >
             <item>
-             <widget class="QLabel" name="label_ConfComptesCommus" >
+             <widget class="QLabel" name="label_commonSettings" >
               <property name="text" >
                <string>Les paramètres STUN seront appliqués à tous les comptes</string>
               </property>
              </widget>
             </item>
             <item>
-             <layout class="QFormLayout" name="formLayoutConfComptesCommus" >
+             <layout class="QFormLayout" name="formLayout_commonSettings" >
               <property name="fieldGrowthPolicy" >
                <enum>QFormLayout::ExpandingFieldsGrow</enum>
               </property>
               <item row="0" column="0" >
-               <widget class="QCheckBox" name="checkBoxStun" >
+               <widget class="QCheckBox" name="checkBox_stun" >
                 <property name="text" >
                  <string>Activer Stun</string>
                 </property>
                </widget>
               </item>
               <item row="0" column="1" >
-               <widget class="QLineEdit" name="lineEdit_Stun" >
+               <widget class="QLineEdit" name="lineEdit_stun" >
                 <property name="enabled" >
                  <bool>false</bool>
                 </property>
@@ -781,10 +773,10 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_Audio" >
+       <widget class="QWidget" name="page_audio" >
         <layout class="QVBoxLayout" name="verticalLayout_5" >
          <item>
-          <widget class="QLabel" name="label_ConfAudio" >
+          <widget class="QLabel" name="label_configAudio" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
              <horstretch>0</horstretch>
@@ -797,30 +789,30 @@
           </widget>
          </item>
          <item>
-          <widget class="Line" name="line_ConfAudio" >
+          <widget class="Line" name="line_configAudio" >
            <property name="orientation" >
             <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox1_Audio" >
+          <widget class="QGroupBox" name="groupBox1_audio" >
            <property name="title" >
             <string/>
            </property>
            <layout class="QFormLayout" name="formLayout_3" >
             <item row="0" column="0" >
-             <widget class="QLabel" name="label_Interface" >
+             <widget class="QLabel" name="label_interface" >
               <property name="text" >
                <string>&amp;Interface audio</string>
               </property>
               <property name="buddy" >
-               <cstring>comboBox_Interface</cstring>
+               <cstring>comboBox_interface</cstring>
               </property>
              </widget>
             </item>
             <item row="0" column="1" >
-             <widget class="QComboBox" name="comboBox_Interface" >
+             <widget class="QComboBox" name="comboBox_interface" >
               <property name="minimumSize" >
                <size>
                 <width>100</width>
@@ -840,17 +832,20 @@
              </widget>
             </item>
             <item row="1" column="0" >
-             <widget class="QCheckBox" name="checkBox_Sonneries" >
+             <widget class="QCheckBox" name="checkBox_ringtones" >
               <property name="text" >
                <string>&amp;Activer les sonneries</string>
               </property>
              </widget>
             </item>
+            <item row="1" column="1" >
+             <widget class="KUrlComboRequester" name="kurlcomborequester" />
+            </item>
            </layout>
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox2_Codecs" >
+          <widget class="QGroupBox" name="groupBox2_codecs" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
              <horstretch>0</horstretch>
@@ -862,7 +857,7 @@
            </property>
            <layout class="QGridLayout" name="gridLayout" >
             <item row="0" column="2" >
-             <layout class="QVBoxLayout" name="verticalLayout_OrdreCodecs" >
+             <layout class="QVBoxLayout" name="verticalLayout_codecsOrder" >
               <property name="leftMargin" >
                <number>0</number>
               </property>
@@ -870,23 +865,23 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="QToolButton" name="toolButton_MonterCodec" >
+               <widget class="QToolButton" name="toolButton_codecUp" >
                 <property name="text" >
-                 <string>...</string>
+                 <string/>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="toolButton_DescendreCodec" >
+               <widget class="QToolButton" name="toolButton_codecDown" >
                 <property name="text" >
-                 <string>...</string>
+                 <string/>
                 </property>
                </widget>
               </item>
              </layout>
             </item>
             <item row="0" column="0" >
-             <widget class="QTableWidget" name="tableWidget_Codecs" >
+             <widget class="QTableWidget" name="tableWidget_codecs" >
               <property name="sizePolicy" >
                <sizepolicy vsizetype="Preferred" hsizetype="Expanding" >
                 <horstretch>0</horstretch>
@@ -948,7 +943,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QStackedWidget" name="stackedWidget_ParametresSpecif" >
+          <widget class="QStackedWidget" name="stackedWidget_interfaceSpecificSettings" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
              <horstretch>0</horstretch>
@@ -958,19 +953,19 @@
            <property name="currentIndex" >
             <number>0</number>
            </property>
-           <widget class="QWidget" name="page1_Alsa" >
+           <widget class="QWidget" name="page1_alsa" >
             <layout class="QVBoxLayout" name="verticalLayout_20" >
              <property name="margin" >
               <number>0</number>
              </property>
              <item>
-              <widget class="QGroupBox" name="groupBox_Alsa" >
+              <widget class="QGroupBox" name="groupBox_alsa" >
                <property name="title" >
                 <string>Paramètres ALSA</string>
                </property>
                <layout class="QFormLayout" name="formLayout_4" >
                 <item row="2" column="1" >
-                 <widget class="QComboBox" name="comboBox2_Entree" >
+                 <widget class="QComboBox" name="comboBox2_in" >
                   <property name="minimumSize" >
                    <size>
                     <width>100</width>
@@ -980,27 +975,27 @@
                  </widget>
                 </item>
                 <item row="2" column="0" >
-                 <widget class="QLabel" name="label2_Entree" >
+                 <widget class="QLabel" name="label2_in" >
                   <property name="text" >
                    <string>&amp;Entrée</string>
                   </property>
                   <property name="buddy" >
-                   <cstring>comboBox2_Entree</cstring>
+                   <cstring>comboBox2_in</cstring>
                   </property>
                  </widget>
                 </item>
                 <item row="3" column="0" >
-                 <widget class="QLabel" name="label3_Sortie" >
+                 <widget class="QLabel" name="label3_out" >
                   <property name="text" >
                    <string>&amp;Sortie</string>
                   </property>
                   <property name="buddy" >
-                   <cstring>comboBox3_Sortie</cstring>
+                   <cstring>comboBox3_out</cstring>
                   </property>
                  </widget>
                 </item>
                 <item row="3" column="1" >
-                 <widget class="QComboBox" name="comboBox3_Sortie" >
+                 <widget class="QComboBox" name="comboBox3_out" >
                   <property name="minimumSize" >
                    <size>
                     <width>100</width>
@@ -1010,17 +1005,17 @@
                  </widget>
                 </item>
                 <item row="0" column="0" >
-                 <widget class="QLabel" name="label1_GreffonAlsa" >
+                 <widget class="QLabel" name="label1_alsaPugin" >
                   <property name="text" >
                    <string>&amp;Greffon ALSA</string>
                   </property>
                   <property name="buddy" >
-                   <cstring>comboBox1_GreffonAlsa</cstring>
+                   <cstring>comboBox1_alsaPlugin</cstring>
                   </property>
                  </widget>
                 </item>
                 <item row="0" column="1" >
-                 <widget class="QComboBox" name="comboBox1_GreffonAlsa" >
+                 <widget class="QComboBox" name="comboBox1_alsaPlugin" >
                   <property name="minimumSize" >
                    <size>
                     <width>100</width>
@@ -1034,10 +1029,10 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="page2_PulseAudio" >
+           <widget class="QWidget" name="page2_pulseAudio" >
             <layout class="QVBoxLayout" name="verticalLayout_7" >
              <item>
-              <widget class="QGroupBox" name="groupBox_PulseAudio" >
+              <widget class="QGroupBox" name="groupBox_pulseAudio" >
                <property name="sizePolicy" >
                 <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
                  <horstretch>0</horstretch>
@@ -1052,7 +1047,7 @@
                  <enum>QFormLayout::ExpandingFieldsGrow</enum>
                 </property>
                 <item row="0" column="0" >
-                 <widget class="QCheckBox" name="checkBox_ModifVolumeApps" >
+                 <widget class="QCheckBox" name="checkBox_pulseAudioVolumeAlter" >
                   <property name="text" >
                    <string>Autoriser à &amp;modifier le volume des autres applications</string>
                   </property>
@@ -1102,6 +1097,13 @@
   </action>
  </widget>
  <layoutdefault spacing="4" margin="4" />
+ <customwidgets>
+  <customwidget>
+   <class>KUrlComboRequester</class>
+   <extends>KUrlRequester</extends>
+   <header>kurlrequester.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="resources.qrc" />
  </resources>
@@ -1123,9 +1125,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>listOptions</sender>
+   <sender>list_options</sender>
    <signal>currentRowChanged(int)</signal>
-   <receiver>stackedWidgetOptions</receiver>
+   <receiver>stackedWidget_options</receiver>
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel" >
@@ -1139,9 +1141,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>checkBoxStun</sender>
+   <sender>checkBox_stun</sender>
    <signal>toggled(bool)</signal>
-   <receiver>lineEdit_Stun</receiver>
+   <receiver>lineEdit_stun</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel" >
@@ -1155,9 +1157,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>comboBox_Interface</sender>
+   <sender>comboBox_interface</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>stackedWidget_ParametresSpecif</receiver>
+   <receiver>stackedWidget_interfaceSpecificSettings</receiver>
    <slot>setCurrentIndex(int)</slot>
    <hints>
     <hint type="sourcelabel" >
@@ -1171,9 +1173,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>horizontalSlider_Capacity</sender>
+   <sender>horizontalSlider_historyCapacity</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>spinBox_CapaciteHist</receiver>
+   <receiver>spinBox_historyCapacity</receiver>
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel" >
@@ -1187,9 +1189,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>spinBox_CapaciteHist</sender>
+   <sender>spinBox_historyCapacity</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>horizontalSlider_Capacity</receiver>
+   <receiver>horizontalSlider_historyCapacity</receiver>
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel" >

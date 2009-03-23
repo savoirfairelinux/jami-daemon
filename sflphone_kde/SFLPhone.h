@@ -48,11 +48,11 @@ private slots:
 	}
 }
 	
-	void on_actionAfficher_les_barres_de_volume_toggled();
-	void on_actionAfficher_le_clavier_toggled();
-	void on_actionConfigurer_les_comptes_triggered();
-	void on_actionConfigurer_le_son_triggered();
-	void on_actionConfigurer_SFLPhone_triggered();
+	void on_action_displayVolumeControls_toggled();
+	void on_action_displayDialpad_toggled();
+	void on_action_configureAccounts_triggered();
+	void on_action_configureAudio_triggered();
+	void on_action_configureSflPhone_triggered();
 	void on_action_accept_triggered();
 	void on_action_refuse_triggered();
 	void on_action_hold_triggered();
@@ -75,7 +75,7 @@ private slots:
 	void on_pushButton_diese_clicked();
 	void on_pushButton_etoile_clicked();
 	
-	void on_label_searchHistory_textChanged(const QString & text);
+	void on_label_searchHistory_textChanged();
 	
 	void on_slider_recVol_valueChanged(int value);
 	void on_slider_sndVol_valueChanged(int value);

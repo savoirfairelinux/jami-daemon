@@ -65,10 +65,12 @@ Account * Account::buildExistingAccountFromId(QString _accountId)
 	a->accountDetails = new MapStringString( ConfigurationManagerInterfaceSingleton::getInstance().getAccountDetails(_accountId).value() );
 	a->initAccountItem();
 	if(a->item->checkState() == Qt::Checked)
+	{
 		if(a->getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
 			a->item->setTextColor(Qt::darkGreen);
 		else
 			a->item->setTextColor(Qt::red);
+	}
 	return a;
 }
 
