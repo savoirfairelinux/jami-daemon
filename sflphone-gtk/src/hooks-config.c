@@ -108,7 +108,7 @@ GtkWidget* create_hooks_settings (){
     command = gtk_entry_new ();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), command);
     gtk_entry_set_text(GTK_ENTRY(command), _urlhook_config->command);
-    gtk_table_attach ( GTK_TABLE( table ), command, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach ( GTK_TABLE( table ), command, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
 
     gtk_widget_show_all(ret);
 
