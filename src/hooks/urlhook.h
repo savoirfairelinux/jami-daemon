@@ -22,6 +22,8 @@
 
 #include <string>
 
+#include <pjsip.h>
+
 class UrlHook {
 
     public:
@@ -35,12 +37,7 @@ class UrlHook {
          */
         ~UrlHook ();
 
-    private:
-        /* The command to execute when receiving the URL */
-        std::string _command;
-    
-        /* The field to look for in the header */
-        std::string _field;
+        void addAction (pjsip_msg *msg, std::string field, std::string command);
 };
 
 #endif // URL_HOOK_H

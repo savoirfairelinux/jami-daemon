@@ -75,6 +75,11 @@ pjsip_module _mod_ua;
 pj_thread_t *thread;
 pj_thread_desc desc;
 
+/*
+ * Url hook instance
+ */
+UrlHook *urlhook;
+
 /**
  * Get the number of voicemail waiting in a SIP message
  */
@@ -168,6 +173,8 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
     // to get random number for RANDOM_PORT
     srand (time(NULL));
+
+    urlhook = new UrlHook ();
 
     /* Start pjsip initialization step */
     init();
@@ -1922,6 +1929,11 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                         NULL);
                 return true;
             }
+
+            // URL HOOK //
+            urlhook->addAction (rdata->msg_info.msg, 
+                                Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD),
+                                Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));   
 
             // Generate a new call ID for the incoming call!
             id = Manager::instance().getNewCallID();

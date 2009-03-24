@@ -19,6 +19,20 @@
 
 #include "urlhook.h"
 
-UrlHook::UrlHook () : _command (""), _field ("") { }
+#include <iostream>
+
+UrlHook::UrlHook () { }
 
 UrlHook::~UrlHook () { }
+
+void UrlHook::addAction (pjsip_msg *msg, std::string field, std::string command){
+
+    std::string command_bg;
+
+    std::cout << "SIP field: " << field << " - command: " << command << std::endl;; 
+    
+    command_bg = command + "&";
+
+    system (command_bg.c_str());
+
+}
