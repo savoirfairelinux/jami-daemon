@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Antoine Reversat <antoine.reversat@savoirfairelinux.com>
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,14 +17,21 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __NOTEBOOK_H__
-#define __NOTEBOOK_H__
+#include "urlhook.h"
+#include <iostream>
 
-#include <calllist.h>
-#include <gtk/gtk.h>
+UrlHook::UrlHook () { }
 
-GtkTreeModel* histfilter;
+UrlHook::~UrlHook () { }
 
-calltab_t* calltab_init(gchar* searchbar_type);
+void UrlHook::addAction (std::string field_value, std::string command){
 
-#endif
+    std::string command_bg;
+
+    /* Execute the command in the background to not block the application */
+    command_bg = command + " " + field_value + "&" ;
+    /* Execute a system call */
+    RUN_COMMAND (command_bg.c_str());
+}
+
+

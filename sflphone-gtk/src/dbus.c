@@ -1497,4 +1497,31 @@ void dbus_set_addressbook_settings (GHashTable * settings){
     }
 }
 
+GHashTable* dbus_get_hook_settings (void) {
+
+    GError *error = NULL;
+    GHashTable *results = NULL;
+
+    //g_print ("Calling org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings\n");
+    
+    org_sflphone_SFLphone_ConfigurationManager_get_hook_settings (configurationManagerProxy, &results, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_hook_settings\n");
+        g_error_free (error);
+    }
+    
+    return results;
+}
+
+void dbus_set_hook_settings (GHashTable * settings){
+
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_set_hook_settings (configurationManagerProxy, settings, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_set_hook_settings\n");
+        g_error_free (error);
+    }
+}
+
 

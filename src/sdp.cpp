@@ -379,7 +379,6 @@ void Sdp::set_local_media_capabilities () {
         }
     } 
     _local_media_cap.push_back (audio);
-    _debug ("%s\n", audio->to_string ().c_str());
 }
 
 void Sdp::attribute_port_to_all_media (int port) {
@@ -408,7 +407,6 @@ void Sdp::fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp) {
     std::string remote_ip;
 
     remote_ip = r_sdp->conn->addr.ptr;
-    _debug("**************************************************            Remote Audio IP: %s\n", remote_ip.c_str());
     this->set_remote_ip(remote_ip);
 }
 

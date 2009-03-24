@@ -375,8 +375,11 @@ ManagerImpl::onHoldCall(const CallID& id)
 {
     AccountID accountid;
     bool returnValue;
+    CallID call_id;
 
     stopTone(true);
+
+    call_id = id;
 
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -396,7 +399,7 @@ ManagerImpl::onHoldCall(const CallID& id)
     removeWaitingCall(id);
     switchCall("");
   
-    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HOLD");
+    if (_dbus) _dbus->getCallManager()->callStateChanged(call_id, "HOLD");
 
     return returnValue;
 }
@@ -409,12 +412,15 @@ ManagerImpl::offHoldCall(const CallID& id)
     AccountID accountid;
     bool returnValue, rec;
     std::string codecName;
+    CallID call_id;
 
     stopTone(false);
 
+    call_id = id;
     //Place current call on hold if it isn't
     if (hasCurrentCall()) 
     { 
+        _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
         onHoldCall(getCurrentCallId());
     }
 
@@ -438,9 +444,9 @@ ManagerImpl::offHoldCall(const CallID& id)
 
     if (_dbus){ 
         if (rec)
-            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
+            _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_RECORD");
         else 
-            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
+            _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_CURRENT");
     }
   
     switchCall(id);
@@ -1198,6 +1204,10 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, YES_STR);
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_HOME, NO_STR);
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_MOBILE, NO_STR);
+
+  section = HOOKS;
+  fill_config_str (URLHOOK_SIP_FIELD, HOOK_DEFAULT_SIP_FIELD);
+  fill_config_str (URLHOOK_COMMAND, HOOK_DEFAULT_URL_COMMAND);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1 && load_user_value) {
@@ -2520,7 +2530,7 @@ void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
         current = iter->second;
         
         if (current) {
-            if ( current->isEnabled() && current->getType() == "sip") {
+            if (current->isEnabled() && current->getType() == "sip") {
                 //current->setVoIPLink(link);
 	            current->registerVoIPLink();
             }
@@ -2555,6 +2565,29 @@ void ManagerImpl::setAddressbookSettings (const std::map<std::string, int32_t>& 
     // Write it to the configuration file
     saveConfig ();
 }
+
+
+std::map<std::string, std::string> ManagerImpl::getHookSettings () {
+
+    std::map<std::string, std::string> settings;
+
+    settings.insert (std::pair<std::string, std::string> ("URLHOOK_SIP_FIELD", getConfigString (HOOKS, URLHOOK_SIP_FIELD)) );
+    settings.insert (std::pair<std::string, std::string> ("URLHOOK_COMMAND", getConfigString (HOOKS, URLHOOK_COMMAND)) );
+
+    return settings;
+}
+
+void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& settings){
+
+    setConfig(HOOKS, URLHOOK_SIP_FIELD, (*settings.find("URLHOOK_SIP_FIELD")).second);
+    setConfig(HOOKS, URLHOOK_COMMAND, (*settings.find("URLHOOK_COMMAND")).second);
+
+    // Write it to the configuration file
+    saveConfig ();
+}
+
+
+
 
 void ManagerImpl::check_call_configuration (const CallID& id, const std::string &to, Call::CallConfiguration *callConfig) {
     std::string pattern;
