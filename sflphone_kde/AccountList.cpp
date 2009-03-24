@@ -34,7 +34,9 @@ QVector<Account *> & AccountList::getAccounts()
 
 Account * AccountList::getAccountById(QString & id)
 {
+	qDebug() << "for ";
 	for (int i = 0; i < accounts->size(); ++i){
+		qDebug() << "account " << i << " (*accounts)[i]->getAccountId() " << (*accounts)[i]->getAccountId();
 		if ((*accounts)[i]->getAccountId() == id)
 			return (*accounts)[i];
 	}

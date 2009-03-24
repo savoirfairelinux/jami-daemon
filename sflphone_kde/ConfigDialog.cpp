@@ -29,6 +29,9 @@ ConfigurationDialog::ConfigurationDialog(SFLPhone *parent) : QDialog(parent)
 	button_accountDown->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
 	toolButton_codecUp->setIcon(style->standardIcon(QStyle::SP_ArrowUp));
 	toolButton_codecDown->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
+	tableWidget_codecs->verticalHeader()->hide();
+	tableWidget_codecs->setSelectionBehavior(QAbstractItemView::SelectRows);
+
 
 	//TODO ajouter les items de l'interface audio ici avec les constantes
 	
@@ -271,7 +274,7 @@ void ConfigurationDialog::saveAccountList()
 				currentId = QString(current.getAccountId());
 			}
 		}
-		daemon.sendRegister(currentId, (current.getItem()->checkState() == Qt::Checked) ? 1 : 0  );
+		daemon.sendRegister(currentId, (current.getItem()->checkState() == Qt::Checked) ? 1 : 0 );
 	}
 	//remove accounts that are in the daemon but not in the client
 	for (int i = 0; i < accountIds.size(); i++)
@@ -413,16 +416,16 @@ void ConfigurationDialog::updateAccountListCommands()
 void ConfigurationDialog::updateCodecListCommands()
 {
 	bool buttonsEnabled[2] = {true,true};
-	if(! listWidget_accountList->currentItem())
+	if(! tableWidget_codecs->currentItem())
 	{
 		buttonsEnabled[0] = false;
 		buttonsEnabled[1] = false;
 	}
-	else if(listWidget_accountList->currentRow() == 0)
+	else if(tableWidget_codecs->currentRow() == 0)
 	{
 		buttonsEnabled[0] = false;
 	}
-	else if(listWidget_accountList->currentRow() == listWidget_accountList->count() - 1)
+	else if(tableWidget_codecs->currentRow() == tableWidget_codecs->rowCount() - 1)
 	{
 		buttonsEnabled[1] = false;
 	}
@@ -451,17 +454,35 @@ void ConfigurationDialog::on_listWidget_codecs_currentItemChanged ( QListWidgetI
 
 void ConfigurationDialog::on_toolButton_codecUp_clicked()
 {
+	qDebug() << "on_toolButton_codecUp_clicked";
+	int currentCol = tableWidget_codecs->currentColumn();
+	int currentRow = tableWidget_codecs->currentRow();
+	int nbCol = tableWidget_codecs->columnCount();
+	for(int i = 0 ; i < nbCol ; i++)
+	{
+		QTableWidgetItem * item1 = tableWidget_codecs->takeItem(currentRow, i);
+		QTableWidgetItem * item2 = tableWidget_codecs->takeItem(currentRow - 1, i);
+		tableWidget_codecs->setItem(currentRow - 1, i , item1);
+		tableWidget_codecs->setItem(currentRow, i , item2);
+	}
+	tableWidget_codecs->setCurrentCell(currentRow - 1, currentCol);
 }
 
 void ConfigurationDialog::on_toolButton_codecDown_clicked()
-{/*
-	int currentRow = listWidget_codecs->currentRow();
+{
+	qDebug() << "on_toolButton_codecUp_clicked";
+	int currentCol = tableWidget_codecs->currentColumn();
+	int currentRow = tableWidget_codecs->currentRow();
 	int nbCol = tableWidget_codecs->columnCount();
-	QTableWidgetSelectionRange row(currentRow, 0, currentRow, nbCol - 1);
-	QListWidgetItem * item = listWidget_accountList->takeItem(currentRow);
-	listWidget_accountList->insertItem(currentRow + 1 , item);
-	listWidget_accountList->setCurrentItem(item);
-*/}
+	for(int i = 0 ; i < nbCol ; i++)
+	{
+		QTableWidgetItem * item1 = tableWidget_codecs->takeItem(currentRow, i);
+		QTableWidgetItem * item2 = tableWidget_codecs->takeItem(currentRow + 1, i);
+		tableWidget_codecs->setItem(currentRow + 1, i , item1);
+		tableWidget_codecs->setItem(currentRow, i , item2);
+	}
+	tableWidget_codecs->setCurrentCell(currentRow + 1, currentCol);
+}
 
 void ConfigurationDialog::on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous )
 {

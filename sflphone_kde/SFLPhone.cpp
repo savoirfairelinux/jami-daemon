@@ -87,6 +87,8 @@ void SFLPhone::typeChar(QChar c)
 void SFLPhone::typeString(QString str)
 {
 	qDebug() << "typeString";
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	callManager.playDTMF(str);
 	if(stackedWidget_screen->currentWidget() == page_callList)
 	{
 		QListWidgetItem * item = listWidget_callList->currentItem();
