@@ -21,8 +21,7 @@
 #define URL_HOOK_H
 
 #include <string>
-
-#include <pjsip.h>
+#include <stdlib.h>
 
 #define RUN_COMMAND(command)   system(command);
 
@@ -39,11 +38,9 @@ class UrlHook {
          */
         ~UrlHook ();
 
-        bool addAction (pjsip_msg *msg, std::string field, std::string command);
+        void addAction (std::string, std::string);
 
     private:
-
-        void* url_hook_fetch_header_value (pjsip_msg *msg, std::string field);
 };
 
 #endif // URL_HOOK_H

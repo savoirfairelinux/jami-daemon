@@ -24,44 +24,14 @@ UrlHook::UrlHook () { }
 
 UrlHook::~UrlHook () { }
 
-bool UrlHook::addAction (pjsip_msg *msg, std::string field, std::string command){
+void UrlHook::addAction (std::string field_value, std::string command){
 
-    std::string command_bg, value, url;
-    pjsip_generic_string_hdr * hdr;
-    size_t pos;
+    std::string command_bg;
 
-    std::cout << "SIP field: " << field << " - command: " << command << std::endl;; 
-    
-    /* Get the URL in the SIP header */
-    if ( (hdr = (pjsip_generic_string_hdr*)this->url_hook_fetch_header_value (msg, field)) != NULL)
-    {
-        value = hdr->hvalue.ptr;
-        if ( (pos=value.find ("\n")) != std::string::npos) {
-            url = value.substr (0, pos);
-        
-            /* Execute the command in the background to not block the application */
-            command_bg = command + " " + url + "&" ;
-            /* Execute a system call */
-            RUN_COMMAND (command_bg.c_str());
-
-            return true;
-        }
-        else
-            return false;
-    }
-
-    return false;
+    /* Execute the command in the background to not block the application */
+    command_bg = command + " " + field_value + "&" ;
+    /* Execute a system call */
+    RUN_COMMAND (command_bg.c_str());
 }
 
-void* UrlHook::url_hook_fetch_header_value (pjsip_msg *msg, std::string field) {
 
-    pj_str_t name;
-
-    std::cout << "url hook fetch header value" << std::endl;
-
-    /* Convert the field name into pjsip type */
-    name = pj_str ((char*)field.c_str());
-
-    /* Get the header value and convert into string*/
-    return pjsip_msg_find_hdr_by_name (msg, &name, NULL);
-}
