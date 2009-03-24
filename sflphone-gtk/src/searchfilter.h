@@ -26,7 +26,7 @@
 #include <gtk/gtk.h>
 #include <libsexy/sexy-icon-entry.h>
 
-GtkWidget *waitingLayer;
+
 
 GdkPixbufAnimation *waitingPixOn;
 

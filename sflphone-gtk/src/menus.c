@@ -685,8 +685,9 @@ create_menus ( )
   root_menu = create_help_menu();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), root_menu);
 
-  gtk_widget_show (menu_bar);
-
+  waitingLayer = gtk_image_menu_item_new_with_label("");
+  gtk_menu_item_set_right_justified(GTK_MENU_ITEM(waitingLayer),TRUE);
+  gtk_menu_shell_append(GTK_MENU_SHELL (menu_bar),waitingLayer);
 
   return menu_bar;
 }
