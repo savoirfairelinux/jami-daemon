@@ -375,8 +375,11 @@ ManagerImpl::onHoldCall(const CallID& id)
 {
     AccountID accountid;
     bool returnValue;
+    CallID call_id;
 
     stopTone(true);
+
+    call_id = id;
 
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -396,7 +399,7 @@ ManagerImpl::onHoldCall(const CallID& id)
     removeWaitingCall(id);
     switchCall("");
   
-    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HOLD");
+    if (_dbus) _dbus->getCallManager()->callStateChanged(call_id, "HOLD");
 
     return returnValue;
 }
@@ -409,12 +412,15 @@ ManagerImpl::offHoldCall(const CallID& id)
     AccountID accountid;
     bool returnValue, rec;
     std::string codecName;
+    CallID call_id;
 
     stopTone(false);
 
+    call_id = id;
     //Place current call on hold if it isn't
     if (hasCurrentCall()) 
     { 
+        _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
         onHoldCall(getCurrentCallId());
     }
 
@@ -438,9 +444,9 @@ ManagerImpl::offHoldCall(const CallID& id)
 
     if (_dbus){ 
         if (rec)
-            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
+            _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_RECORD");
         else 
-            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
+            _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_CURRENT");
     }
   
     switchCall(id);

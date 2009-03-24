@@ -717,6 +717,7 @@ SIPVoIPLink::offhold(const CallID& id)
     bool 
 SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 {
+
     SIPCall *call;
     std::string tmp_to;
     pjsip_evsub *sub;
@@ -726,7 +727,6 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
     pj_str_t dest;
     AccountID account_id;
     Account* account;
-
 
     call = getSIPCall(id);
     call->stopRecording();
@@ -739,8 +739,14 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
     }  
 
     tmp_to = SIPToHeader(to);
-    if (tmp_to.find("@") == std::string::npos) {
-        tmp_to = tmp_to + "@" + account->getHostname();
+    if (account) {
+        if (tmp_to.find("@") == std::string::npos) {
+            tmp_to = tmp_to + "@" + account->getHostname();
+        }
+    }
+
+    else {
+        
     }
 
     _debug("In transfer, tmp_to is %s\n", tmp_to.data());
@@ -762,7 +768,6 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
      * because after this function, we can not find the cooresponding
      * voiplink from the call any more. But the voiplink is useful!
      */
-    AccountID accId = Manager::instance().getAccountFromCall(call->getCallId());
     pjsip_evsub_set_mod_data(sub, getModId(), this);
 
     /*
