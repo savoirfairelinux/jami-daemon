@@ -1951,9 +1951,11 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             }
 
             // URL HOOK //
-            urlhook->addAction (rdata->msg_info.msg, 
+            if (!urlhook->addAction (rdata->msg_info.msg, 
                                 Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD),
-                                Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));   
+                                Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND)) ) {
+                _debug ("URL hook failed\n");
+            }
 
             // Generate a new call ID for the incoming call!
             id = Manager::instance().getNewCallID();
