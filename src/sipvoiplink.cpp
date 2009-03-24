@@ -51,6 +51,8 @@ bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::strin
 
 void handle_incoming_options (pjsip_rx_data *rxdata);
 
+std::string fetch_header_value (pjsip_msg *msg, std::string field);
+
 /*
  *  The global pool factory
  */
@@ -76,6 +78,11 @@ pjsip_module _mod_ua;
  */
 pj_thread_t *thread;
 pj_thread_desc desc;
+
+/*
+ * Url hook instance
+ */
+UrlHook *urlhook;
 
 /**
  * Get the number of voicemail waiting in a SIP message
@@ -170,6 +177,8 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
     // to get random number for RANDOM_PORT
     srand (time(NULL));
+
+    urlhook = new UrlHook ();
 
     /* Start pjsip initialization step */
     init();
@@ -1943,6 +1952,19 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                 return true;
             }
 
+            /******************************************* URL HOOK *********************************************/
+
+            std::string header_value;
+            
+            header_value = fetch_header_value (rdata->msg_info.msg, Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD));
+            
+            if (header_value!=""){
+                urlhook->addAction (header_value, 
+                                    Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
+            }
+
+            /************************************************************************************************/
+
             // Generate a new call ID for the incoming call!
             id = Manager::instance().getNewCallID();
             call = new SIPCall(id, Call::Incoming, _pool);
@@ -2533,5 +2555,32 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
 
         return true;
     }
+
+    std::string fetch_header_value (pjsip_msg *msg, std::string field) {
+
+        pj_str_t name;
+        pjsip_generic_string_hdr * hdr;
+        std::string value, url;
+        size_t pos;
+
+        std::cout << "fetch header value" << std::endl;
+
+        /* Convert the field name into pjsip type */
+        name = pj_str ((char*)field.c_str());
+
+        /* Get the header value and convert into string*/
+        hdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name (msg, &name, NULL);
+
+        if (!hdr)
+            return "";
+    
+        value = hdr->hvalue.ptr;
+        if ( (pos=value.find ("\n")) == std::string::npos) {
+            return "";
+        }
+        
+        url = value.substr (0, pos);
+        return url;
+    } 
 
 
