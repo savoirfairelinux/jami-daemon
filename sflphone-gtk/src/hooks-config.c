@@ -37,10 +37,12 @@ void hooks_load_parameters (URLHook_Config** settings){
     if (_params == NULL) {
         _settings->sip_field = DEFAULT_SIP_URL_FIELD;
         _settings->command = DEFAULT_URL_COMMAND;
+        _settings->sip_enabled = "0";
     }
     else {
         _settings->sip_field =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_SIP_FIELD));
         _settings->command =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_COMMAND));
+        _settings->sip_enabled =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_SIP_ENABLED));
     }
  
     *settings = _settings;
@@ -56,6 +58,8 @@ void hooks_save_parameters (void){
                                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(field))));
     g_hash_table_replace (params, (gpointer)URLHOOK_COMMAND, 
                                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(command))));
+    g_hash_table_replace (params, (gpointer)URLHOOK_SIP_ENABLED, 
+                                (gpointer)g_strdup(_urlhook_config->sip_enabled));
     
     dbus_set_hook_settings (params);
 
@@ -64,6 +68,16 @@ void hooks_save_parameters (void){
 
 }
 
+static void sip_enabled_cb (GtkWidget *widget) {
+
+    guint check;
+
+    check = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+    if (check)
+        _urlhook_config->sip_enabled="1";
+    else
+        _urlhook_config->sip_enabled="0";
+}
 
 GtkWidget* create_hooks_settings (){
 
@@ -86,17 +100,17 @@ GtkWidget* create_hooks_settings (){
     gtk_container_add( GTK_CONTAINER (url_frame) , table );
 
     field = gtk_check_button_new_with_mnemonic( _("_SIP protocol"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(field), TRUE);
-    g_signal_connect (G_OBJECT(field) , "clicked" , NULL, NULL);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(field), (g_strcasecmp (_urlhook_config->sip_enabled, "1")==0)?TRUE:FALSE);
+    g_signal_connect (G_OBJECT(field) , "clicked" , G_CALLBACK (sip_enabled_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), field, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
  
     field = gtk_check_button_new_with_mnemonic( _("_IAX2 protocol"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(field), TRUE);
-    g_signal_connect (G_OBJECT(field) , "clicked" , NULL, NULL);
+    //g_signal_connect (G_OBJECT(field) , "clicked" , NULL, NULL);
     gtk_table_attach ( GTK_TABLE( table ), field, 0, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
- 
+    gtk_widget_set_sensitive (GTK_WIDGET (field), FALSE);
 
-    label = gtk_label_new_with_mnemonic (_("_SIP Field name: "));
+    label = gtk_label_new_with_mnemonic (_("_SIP Header: "));
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     field = gtk_entry_new ();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), field);
