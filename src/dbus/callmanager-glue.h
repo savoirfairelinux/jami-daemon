@@ -32,6 +32,7 @@ public:
         register_method(CallManager_adaptor, setVolume, _setVolume_stub);
         register_method(CallManager_adaptor, getVolume, _getVolume_stub);
         register_method(CallManager_adaptor, setRecording, _setRecording_stub);
+        register_method(CallManager_adaptor, getIsRecording, _getIsRecording_stub);
         register_method(CallManager_adaptor, getCallDetails, _getCallDetails_stub);
         register_method(CallManager_adaptor, getCurrentCallID, _getCurrentCallID_stub);
         register_method(CallManager_adaptor, getCurrentCodecName, _getCurrentCodecName_stub);
@@ -103,6 +104,12 @@ public:
         static ::DBus::IntrospectedArgument setRecording_args[] = 
         {
             { "callID", "s", true },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument getIsRecording_args[] = 
+        {
+            { "callID", "s", true },
+            { "isRecording", "b", false },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument getCallDetails_args[] = 
@@ -178,6 +185,7 @@ public:
             { "setVolume", setVolume_args },
             { "getVolume", getVolume_args },
             { "setRecording", setRecording_args },
+            { "getIsRecording", getIsRecording_args },
             { "getCallDetails", getCallDetails_args },
             { "getCurrentCallID", getCurrentCallID_args },
             { "getCurrentCodecName", getCurrentCodecName_args },
@@ -231,6 +239,7 @@ public:
     virtual void setVolume(const std::string& device, const double& value) = 0;
     virtual double getVolume(const std::string& device) = 0;
     virtual void setRecording(const std::string& callID) = 0;
+    virtual bool getIsRecording(const std::string& callID) = 0;
     virtual std::map< std::string, std::string > getCallDetails(const std::string& callID) = 0;
     virtual std::string getCurrentCallID() = 0;
     virtual std::string getCurrentCodecName(const std::string& callID) = 0;
@@ -413,6 +422,17 @@ private:
         std::string argin1; ri >> argin1;
         setRecording(argin1);
         ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getIsRecording_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::string argin1; ri >> argin1;
+        bool argout1 = getIsRecording(argin1);
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
         return reply;
     }
     ::DBus::Message _getCallDetails_stub(const ::DBus::CallMessage &call)

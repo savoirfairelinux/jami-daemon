@@ -303,12 +303,18 @@ AudioCodec* Sdp::get_session_media( void ){
 
     int nb_media;
     int nb_codec;
+    AudioCodec *codec = NULL;
 
     nb_media = _session_media.size();
-    nb_codec = _session_media[0]->get_media_codec_list().size();
-
-    return _session_media[0]->get_media_codec_list()[0];
+    if (nb_media > 0) {
+        nb_codec = _session_media[0]->get_media_codec_list().size();
+        if (nb_codec > 0) {
+            codec = _session_media[0]->get_media_codec_list()[0];
+        }
+    }
+    return codec;
 }
+
 
 
 void Sdp::toString (void) {
@@ -373,7 +379,6 @@ void Sdp::set_local_media_capabilities () {
         }
     } 
     _local_media_cap.push_back (audio);
-    _debug ("%s\n", audio->to_string ().c_str());
 }
 
 void Sdp::attribute_port_to_all_media (int port) {
@@ -402,7 +407,6 @@ void Sdp::fetch_remote_ip_from_sdp (pjmedia_sdp_session *r_sdp) {
     std::string remote_ip;
 
     remote_ip = r_sdp->conn->addr.ptr;
-    _debug("**************************************************            Remote Audio IP: %s\n", remote_ip.c_str());
     this->set_remote_ip(remote_ip);
 }
 

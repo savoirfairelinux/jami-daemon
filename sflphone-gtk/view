@@ -1,0 +1,6 @@
+src/actions.c:	    if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
+src/calltree.c:		gtk_widget_hide(history->tree);
+src/calltree.c:		gtk_widget_show(history->tree);
+src/mainwindow.c:  gtk_box_pack_start (GTK_BOX (vbox), history->tree, TRUE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
+src/mainwindow.c:  gtk_widget_hide(history->tree);
+src/mainwindow.c:  gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));

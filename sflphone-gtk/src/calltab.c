@@ -24,7 +24,7 @@
 #include <calltab.h>
 
 calltab_t*
-calltab_init()
+calltab_init(gchar* searchbar_type)
 {
 	calltab_t* ret;
 
@@ -33,11 +33,14 @@ calltab_init()
 	ret->store = NULL;
 	ret->view = NULL;
 	ret->tree = NULL;
+        ret->searchbar = NULL;
 	ret->callQueue = NULL;
 	ret->selectedCall = NULL;
+        // ret->histfilter = NULL;
 
-	create_call_tree(ret);
+	create_call_tree(ret, searchbar_type);
 	call_list_init(ret);
+
 
 	return ret;
 }

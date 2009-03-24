@@ -230,10 +230,11 @@ gboolean sflphone_init()
     else
     {
         dbus_register(getpid(), "Gtk+ Client");
-        current_calls = calltab_init();
-        history = calltab_init();
-        contacts = calltab_init();
-        if(SHOW_SEARCHBAR)  histfilter = create_filter(GTK_TREE_MODEL(history->store));
+        current_calls = calltab_init(NULL);
+        // history = calltab_init("history");
+        contacts = calltab_init("contacts");
+        history = calltab_init("history");
+        histfilter = create_filter(GTK_TREE_MODEL(history->store));
         init();
         account_list_init ();
         codec_list_init();
@@ -295,6 +296,7 @@ sflphone_hang_up()
     void
 sflphone_pick_up()
 {
+  
     call_t * selectedCall = call_get_selected(active_calltree);
     if(selectedCall)
     {
@@ -368,6 +370,11 @@ sflphone_off_hold ()
                 break;
         }
     }
+  
+    if(dbus_get_is_recording(selectedCall))
+        g_print("Currently recording! \n");
+    else
+        g_print("Not recording currently \n");
 }
 
 
@@ -523,6 +530,9 @@ process_dialing(call_t * c, guint keyval, gchar * key)
     call_t *
 sflphone_new_call()
 {
+    
+    call_t *c;
+    gchar *from, *to;
 
     sflphone_on_hold();
 
@@ -530,17 +540,9 @@ sflphone_new_call()
     if( call_list_get_size(current_calls) == 0 )
         dbus_start_tone( TRUE , ( voice_mails > 0 )? TONE_WITH_MESSAGE : TONE_WITHOUT_MESSAGE) ;
 
-    call_t * c = g_new0 (call_t, 1);
-    c->state = CALL_STATE_DIALING;
-    c->from = g_strconcat("\"\" <>", NULL);
-
-    c->callID = g_new0(gchar, 30);
-    g_sprintf(c->callID, "%d", rand());
-
-    c->to = g_strdup("");
-
-    c->_start = 0;
-    c->_stop = 0;
+    to = g_strdup("");
+    from = g_strconcat("\"\" <>", NULL);
+    create_new_call (to, from, CALL_STATE_DIALING, "", &c);
 
     call_list_add(current_calls,c);
     update_call_tree_add(current_calls,c);
@@ -679,8 +681,12 @@ sflphone_keypad( guint keyval, gchar * key)
 sflphone_place_call ( call_t * c )
 {
 
+
     if(c->state == CALL_STATE_DIALING && strcmp(c->to, "") != 0)
     {
+        
+        //format_phone_number (&c->to); 
+        
         if( account_list_get_size() == 0 )
         {
             notify_no_accounts();
@@ -695,19 +701,23 @@ sflphone_place_call ( call_t * c )
 
         else
         {
+             
+            
             account_t * current;
 
-            if(c->accountID != 0)
+            if(g_strcasecmp(c->accountID, "") != 0) {
                 current = account_list_get_by_id(c->accountID);
-            else
+            } else {
                 current = account_list_get_current();
-
+            }
             // printf("sflphone_place_call :: c->accountID : %i \n",c->accountID);
 
             // account_t * current = c->accountID;
-
+            
+            
             if( current )
             {
+                
                 if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
                 {
                     // OK, everything alright - the call is made with the current account
@@ -730,6 +740,7 @@ sflphone_place_call ( call_t * c )
             }
             else
             {
+   
                 // No current accounts have been setup.
                 // So we place a call with the first registered account
                 // and we change the current account
@@ -743,6 +754,7 @@ sflphone_place_call ( call_t * c )
         }
         // Update history
         c->history_state = OUTGOING;
+        g_print ("add in history\n");
         call_list_add(history, c);
     }
 }
@@ -751,6 +763,7 @@ sflphone_place_call ( call_t * c )
     void
 sflphone_display_selected_codec (const gchar* codecName)
 {
+  
     call_t * selectedCall = call_get_selected(current_calls);
     gchar* msg;
     account_t* acc;
@@ -860,3 +873,11 @@ sflphone_fill_codec_list()
     }
 }
 
+void format_phone_number (gchar **number) {
+
+    gchar *_number;
+
+    _number = *number;
+
+    //strip_spaces (&_number);
+}

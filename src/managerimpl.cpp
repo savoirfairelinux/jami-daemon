@@ -101,7 +101,7 @@ ManagerImpl::ManagerImpl (void)
 // never call if we use only the singleton...
 ManagerImpl::~ManagerImpl (void) 
 {
-    terminate();
+    // terminate();
     _debug("%s stop correctly.\n", PROGNAME);
 }
 
@@ -142,21 +142,23 @@ ManagerImpl::init()
 
 void ManagerImpl::terminate()
 {
+    _debug("ManagerImpl::terminate \n");
     saveConfig();
 
     unloadAccountMap();
   
-    _debug("Unload DTMF Key\n");
+    _debug("Unload DTMF Key \n");
     delete _dtmfKey;
 
-    _debug("Unload Audio Driver\n");
+    _debug("Unload Audio Driver \n");
     delete _audiodriver; _audiodriver = NULL;
 
-    _debug("Unload Telephone Tone\n");
+    _debug("Unload Telephone Tone \n");
     delete _telephoneTone; _telephoneTone = NULL;
 
-    _debug("Unload Audio Codecs\n");
+    _debug("Unload Audio Codecs \n");
     _codecDescriptorMap.deleteHandlePointer();
+    
 }
 
 bool
@@ -252,6 +254,8 @@ ManagerImpl::answerCall(const CallID& id)
 {
   bool isActive = false;
 
+  stopTone(true);
+
   AccountID currentaccountid = getAccountFromCall( id );
   Call* currentcall = getAccountLink(currentaccountid)->getCall(getCurrentCallId());
   _debug("ManagerImpl::answerCall :: current call->getState %i \n",currentcall->getState());
@@ -286,9 +290,9 @@ ManagerImpl::answerCall(const CallID& id)
   removeWaitingCall(id);
   switchCall(id);
  
-  std::string codecName = getCurrentCodecName(id);
+  // std::string codecName = getCurrentCodecName(id);
   // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-  if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+  // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
   return true;
 }
@@ -302,7 +306,7 @@ ManagerImpl::hangupCall(const CallID& id)
     AccountID accountid;
     bool returnValue;
 
-    stopTone(true);
+    stopTone(false);
 
     /* Broadcast a signal over DBus */
     if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HUNGUP");
@@ -371,8 +375,11 @@ ManagerImpl::onHoldCall(const CallID& id)
 {
     AccountID accountid;
     bool returnValue;
+    CallID call_id;
 
     stopTone(true);
+
+    call_id = id;
 
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -392,7 +399,7 @@ ManagerImpl::onHoldCall(const CallID& id)
     removeWaitingCall(id);
     switchCall("");
   
-    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HOLD");
+    if (_dbus) _dbus->getCallManager()->callStateChanged(call_id, "HOLD");
 
     return returnValue;
 }
@@ -405,12 +412,15 @@ ManagerImpl::offHoldCall(const CallID& id)
     AccountID accountid;
     bool returnValue, rec;
     std::string codecName;
+    CallID call_id;
 
     stopTone(false);
 
+    call_id = id;
     //Place current call on hold if it isn't
     if (hasCurrentCall()) 
     { 
+        _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
         onHoldCall(getCurrentCallId());
     }
 
@@ -434,15 +444,15 @@ ManagerImpl::offHoldCall(const CallID& id)
 
     if (_dbus){ 
         if (rec)
-            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
+            _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_RECORD");
         else 
-            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
+            _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_CURRENT");
     }
   
     switchCall(id);
 
     codecName = getCurrentCodecName(id);
-    _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
+    // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
     if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
     return returnValue;
@@ -690,6 +700,8 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     PulseLayer *pulselayer;
     std::string from, number;
 
+    stopTone(true);
+
     _debug("Incoming call %s\n", call->getCallId().data());
 
     associateCallToAccount(call->getCallId(), accountId);
@@ -733,7 +745,9 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     */
   
     /* Broadcast a signal over DBus */
-    _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+    if (_dbus) _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+
+    //if (_dbus) _dbus->getCallManager()->callStateChanged(call->getCallId(), "INCOMING");
   
     // Reduce volume of the other pulseaudio-connected audio applications
     if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
@@ -781,7 +795,6 @@ ManagerImpl::peerRingingCall(const CallID& id)
   void
 ManagerImpl::peerHungupCall(const CallID& id)
 {
-    _debug("ManagerImpl::peerHungupCall():this function is called when peer hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
@@ -965,6 +978,8 @@ ManagerImpl::ringtone()
     int layer, samplerate;
     bool loadFile;
 
+    // stopTone(true);
+
     if( isRingtoneEnabled() )
     {
         //TODO Comment this because it makes the daemon crashes since the main thread
@@ -982,6 +997,7 @@ ManagerImpl::ringtone()
         if (audiolayer == 0)
             return;
 
+
         samplerate  = audiolayer->getSampleRate();
         codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
 
@@ -990,11 +1006,13 @@ ManagerImpl::ringtone()
         _toneMutex.leaveMutex(); 
 
         if (loadFile) {
+            
             _toneMutex.enterMutex(); 
             _audiofile.start();
             _toneMutex.leaveMutex(); 
             if(CHECK_INTERFACE( layer, ALSA )){
                 //ringback();
+            
             }
             else{
                 audiolayer->startStream();
@@ -1621,7 +1639,6 @@ ManagerImpl::setRecordingCall(const CallID& id)
   _debug("ManagerImpl::setRecording()! \n");
   AccountID accountid = getAccountFromCall( id );
 
-  // printf("ManagerImpl::CallID: %s", id);
   getAccountLink(accountid)->setRecording(id);
 }
 
@@ -2306,11 +2323,12 @@ ManagerImpl::getNewCallID()
   short
 ManagerImpl::loadAccountMap()
 {
-  _debug("Load account:");
+ 
   short nbAccount = 0;
   TokenList sections = _config.getSections();
   std::string accountType;
   Account* tmpAccount;
+
 
   TokenList::iterator iter = sections.begin();
   while(iter != sections.end()) {
@@ -2330,27 +2348,31 @@ ManagerImpl::loadAccountMap()
     else {
       _debug("Unknown %s param in config file (%s)\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
     }
-
+ 
+    _debug("tmpAccount.getRegistrationState() %i \n ",tmpAccount->getRegistrationState());
     if (tmpAccount != NULL) {
-      _debug(" %s ", iter->c_str());
+    
+      _debug(" %s \n", iter->c_str());
       _accountMap[iter->c_str()] = tmpAccount;
       nbAccount++;
     }
 
     iter++;
   }
-
+  _debug("nbAccount loaded %i \n",nbAccount);
   return nbAccount;
 }
 
   void
 ManagerImpl::unloadAccountMap()
 {
-  _debug("Unloading account map...\n");
+
   AccountMap::iterator iter = _accountMap.begin();
   while ( iter != _accountMap.end() ) {
+
     _debug("-> Deleting account %s\n", iter->first.c_str());
     delete iter->second; iter->second = 0;
+
     iter++;
   }
   _accountMap.clear();
@@ -2424,26 +2446,21 @@ AccountMap ManagerImpl::getSipAccountMap( void )
 
 void ManagerImpl::restartPJSIP (void)
 {
-    //SIPVoIPLink *siplink;
-
-    //unloadAccountMap ();
-
-    /* First unregister all SIP accounts */
-    //this->unregisterCurSIPAccounts();
+    SIPVoIPLink *siplink;
+    siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
+    
+    this->unregisterCurSIPAccounts();
     /* Terminate and initialize the PJSIP library */
-    //siplink = dynamic_cast<SIPVoIPLink*> (getSIPAccountLink ());
-    //if (siplink) 
-    //{
-      //  siplink->terminate ();
-       // _debug ("*************************************************Terminate done\n");
-        //siplink = SIPVoIPLink::instance("");
-        //siplink->init ();
-    //}
-    //_debug("***************************************************Init Done\n");
-    //loadAccountMap();
-    //initRegisterAccounts ();
+    
+    if (siplink) 
+    {
+        siplink->terminate ();
+        siplink = SIPVoIPLink::instance("");
+        siplink->init ();
+    }
+
     /* Then register all enabled SIP accounts */
-    //this->registerCurSIPAccounts(siplink);
+    this->registerCurSIPAccounts(siplink);
 }
 
 VoIPLink* ManagerImpl::getAccountLink(const AccountID& accountID)
@@ -2504,17 +2521,21 @@ void ManagerImpl::unregisterCurSIPAccounts()
 
 void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
 {
+    
     Account *current;
-  
+
     AccountMap::iterator iter = _accountMap.begin();
+
     while( iter != _accountMap.end() ) {
         current = iter->second;
+        
         if (current) {
-            if ( current->isEnabled() && current->getType() == "sip") {
+            if (current->isEnabled() && current->getType() == "sip") {
                 //current->setVoIPLink(link);
 	            current->registerVoIPLink();
             }
         }
+        current = NULL;
     iter++;
     }    
 }
