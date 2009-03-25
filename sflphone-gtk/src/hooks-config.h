@@ -27,15 +27,15 @@
 
 G_BEGIN_DECLS
 
-#define DEFAULT_SIP_URL_FIELD       "X-Call-Url"
+#define DEFAULT_SIP_URL_FIELD       "X-sflphone-url"
 #define DEFAULT_URL_COMMAND         "x-www-browser"
 #define URLHOOK_COMMAND         "URLHOOK_COMMAND"
 #define URLHOOK_SIP_FIELD         "URLHOOK_SIP_FIELD"
+#define URLHOOK_SIP_ENABLED         "URLHOOK_SIP_ENABLED"
 
 
 typedef struct _URLHook_Config {
-    guint sip_enabled;
-    guint iax2_enabled;
+    gchar *sip_enabled;
     gchar *sip_field;
     gchar *command;
 }URLHook_Config;

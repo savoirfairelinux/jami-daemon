@@ -1954,13 +1954,16 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
 
             /******************************************* URL HOOK *********************************************/
 
-            std::string header_value;
+            if (Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_ENABLED) == "1") {
+
+                std::string header_value;
             
-            header_value = fetch_header_value (rdata->msg_info.msg, Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD));
+                header_value = fetch_header_value (rdata->msg_info.msg, Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD));
             
-            if (header_value!=""){
-                urlhook->addAction (header_value, 
-                                    Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
+                if (header_value!=""){
+                    urlhook->addAction (header_value, 
+                                        Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
+                }
             }
 
             /************************************************************************************************/
