@@ -70,6 +70,7 @@ src/plug-in/audiorecorder/Makefile
 src/audio/Makefile
 src/audio/codecs/Makefile
 src/audio/codecs/ilbc/Makefile
+src/hooks/Makefile
 doc/Makefile
 man/Makefile
 po/Makefile
