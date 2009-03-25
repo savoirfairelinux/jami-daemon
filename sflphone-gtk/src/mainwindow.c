@@ -179,6 +179,9 @@ create_main_window ()
   gtk_widget_hide(contacts->tree);
 
   gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
+  /* don't show waiting layer */
+  gtk_widget_hide(waitingLayer);
+
   // Configuration wizard
   if (account_list_get_size() == 0)
   {

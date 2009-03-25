@@ -174,10 +174,8 @@ GtkWidget* create_filter_entry_contact() {
 
     // Create waiting icon
     waitingPixOn = gdk_pixbuf_animation_new_from_file(ICONS_DIR "/wait-on.gif", NULL);
-    waitingPixOff = gdk_pixbuf_new_from_file(ICONS_DIR "/wait-off.gif", NULL);
-    waitingLayer = gtk_image_new_from_pixbuf(waitingPixOff);
-
-    gtk_box_pack_end(GTK_BOX(ret), waitingLayer, TRUE, TRUE, 0);
+    // waitingPixOff = gdk_pixbuf_new_from_file(ICONS_DIR "/wait-off.gif", NULL);
+    gtk_image_menu_item_set_image (waitingLayer,GTK_IMAGE(gtk_image_new_from_animation(waitingPixOn)));
 
     return ret;
 
@@ -214,9 +212,9 @@ GtkWidget* create_filter_entry_history() {
 }
 
 void activateWaitingLayer() {
-  gtk_image_set_from_animation(GTK_IMAGE(waitingLayer),waitingPixOn);
+  gtk_widget_show(waitingLayer);
 }
 
 void deactivateWaitingLayer() {
-  gtk_image_set_from_pixbuf (GTK_IMAGE(waitingLayer),waitingPixOff);
+  gtk_widget_hide(waitingLayer);
 }
