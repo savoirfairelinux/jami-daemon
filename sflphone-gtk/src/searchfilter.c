@@ -139,8 +139,6 @@ void filter_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UN
 void
 filter_entry_changed_history(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
 {
-  g_print("--- filter_entry_changed_history --- \n");
-
   if (active_calltree != history)
         display_calltree (history);
 
@@ -177,8 +175,6 @@ GtkWidget* create_filter_entry_contact() {
 
 
 GtkWidget* create_filter_entry_history() {
-
-    g_print("--- create_filter_entry_history --- \n");
 
     GtkWidget* image;
     GtkWidget* ret = gtk_hbox_new(FALSE, 0);
