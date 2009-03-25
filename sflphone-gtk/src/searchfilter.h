@@ -27,9 +27,6 @@
 #include <libsexy/sexy-icon-entry.h>
 
 
-
-GdkPixbufAnimation *waitingPixOn;
-
 GdkPixbuf *waitingPixOff;
 
 GtkTreeModel* create_filter(GtkTreeModel* child);
