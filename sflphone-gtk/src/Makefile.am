@@ -1,19 +1,13 @@
+include ../globals.mak
+
 bin_PROGRAMS = sflphone-gtk
 
-SUBDIRS=contactlist
+SUBDIRS = config contacts
   
-# noinst_LTLIBRARIES = libsflphonegtk.la
+NOFIFY_LIBS = -lnotify
+SEXY_LIBS = -lsexy
 
-NOFIFY_LIBS=-lnotify
-SEXY_LIBS=-lsexy
-
-#if GTK_CHECK_VERSION(2,10,0)  
-STATUSICON_HEADER = statusicon.h
-STATUSICON_SOURCE = statusicon.c
-#elif
-#STATUSICON_HEADER = 
-#STATUSICON_SOURCE = 
-#endif
+SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la
 
 sflphone_gtk_SOURCES = \
   main.c \
@@ -28,33 +22,25 @@ sflphone_gtk_SOURCES = \
   menus.c \
   calltab.c \
   calltree.c \
-  searchfilter.c \
   actions.c \
   configwindow.c \
   accountlist.c \
   accountwindow.c \
   marshaller.c \
   sliders.c \
-  $(STATUSICON_SOURCE) \
+  statusicon.c \
   codeclist.c \
   timestamp.c \
   reqaccount.c \
-  addressbook-config.c \
   hooks-config.c
 
 noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h audioconf.h codeclist.h assistant.h \
                   callmanager-glue.h errors.h sflphone_const.h configurationmanager-glue.h instance-glue.h menus.h calltab.h calltree.h configwindow.h \
-                  accountlist.h accountwindow.h marshaller.h sliders.h $(STATUSICON_HEADER) timestamp.h searchfilter.h reqaccount.h addressbook-config.h hooks-config.h
+                  accountlist.h accountwindow.h marshaller.h sliders.h statusicon.h timestamp.h reqaccount.h hooks-config.h
 
 EXTRA_DIST   = marshaller.list  
 
-sflphone_gtk_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SEXY_LIBS) \
-			./contactlist/libcontact.la
-
-
-AM_CPPFLAGS = $(DEPS_CFLAGS) \
-              -DICONS_DIR=\""$(prefix)/share/sflphone"\" \
-	      	-DCODECS_DIR=\""$(prefix)/lib/sflphone/codecs"\" 
+sflphone_gtk_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SEXY_LIBS) $(SFLPHONEGTK_LIBS)
 
 # add symbolic link	     
 install-exec-local:

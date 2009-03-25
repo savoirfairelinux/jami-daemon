@@ -27,10 +27,10 @@
 #include <calllist.h>
 #include <calltab.h>
 #include <menus.h>
-#include <searchfilter.h>
+#include <contacts/searchfilter.h>
+#include <contacts/addressbook/eds.h>
 #include <dbus.h>
-#include <contactlist/eds.h>
-#include "addressbook-config.h"
+#include <addressbook-config.h>
 
 GtkWidget   * toolbar;
 GtkToolItem * pickupButton;

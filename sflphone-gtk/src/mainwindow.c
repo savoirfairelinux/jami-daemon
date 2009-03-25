@@ -27,7 +27,7 @@
 #include <mainwindow.h>
 #include <menus.h>
 #include <sliders.h>
-#include <searchfilter.h>
+#include <contacts/searchfilter.h>
 #include <assistant.h>
 
 #include <gtk/gtk.h>
@@ -141,13 +141,13 @@ create_main_window ()
 
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
 
-  
+
   // if( SHOW_SEARCHBAR ){
   //   filterEntry = create_filter_entry();
   //   gtk_box_pack_start (GTK_BOX (subvbox), filterEntry, FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   //   gtk_widget_show_all ( filterEntry );
   // }
-  
+
 
  if( SHOW_VOLUME ){
     speaker_control = create_slider("speaker");

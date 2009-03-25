@@ -23,7 +23,7 @@
 
 #include <searchfilter.h>
 #include <calltree.h>
-#include <contactlist/eds.h>
+#include <addressbook/eds.h>
 #include "addressbook-config.h"
 
 static void handler_async_search (GList *hits, gpointer user_data UNUSED);
