@@ -19,43 +19,44 @@
 
 #include <calllist.h>
 #include <calltree.h>
-#include <dbus.h>
+#include <contacts/addressbook/eds.h>
 
-#include <glib/gprintf.h>
+void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo){
 
-/*
- * GQueue * callQueue = NULL;
- * call_t * selectedCall = NULL;
- */
+    gchar *from;
+    call_t *new_call;
+    GdkPixbuf *pixbuf;
 
-/* GCompareFunc to compare a callID (gchar* and a call_t) */
-gint
-is_callID_callstruct ( gconstpointer a, gconstpointer b)
-{
-  call_t * c = (call_t*)a;
-  if(g_strcasecmp(c->callID, (const gchar*) b) == 0)
-  {
-    return 0;
-  }
-  else
-  {
-    return 1;
-  }
-}
+    /* Check if the information is valid */
+    if (g_strcasecmp (contact_phone, EMPTY_ENTRY) != 0){
+        from = g_strconcat("\"" , contact_name, "\"<", contact_phone, ">", NULL);
+        create_new_call (from, from, CALL_STATE_DIALING, "", &new_call);
 
-/* GCompareFunc to get current call (gchar* and a call_t) */
-gint
-get_state_callstruct ( gconstpointer a, gconstpointer b)
-{
-  call_t * c = (call_t*)a;
-  if( c->state == *((call_state_t*)b))
-  {
-    return 0;
-  }
-  else
-  {
-    return 1;
-  }
+        // Attach a pixbuf to a contact
+        if (photo) {
+            attach_thumbnail (new_call, photo);
+        }
+        else {
+            switch (type) {
+                case CONTACT_PHONE_BUSINESS:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/face-monkey.svg", NULL);
+                    break;
+                case CONTACT_PHONE_HOME:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/home.svg", NULL);
+                    break;
+                case CONTACT_PHONE_MOBILE:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/users.svg", NULL);
+                    break;
+                default:
+                    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/contact_default.svg", NULL);
+                    break;
+            }
+            attach_thumbnail (new_call, pixbuf);
+        }
+
+        call_list_add (contacts, new_call);
+        update_call_tree_add(contacts, new_call);
+    }
 }
 
 void
@@ -164,34 +165,6 @@ call_list_get_nth (calltab_t* tab, guint n )
   return g_queue_peek_nth (tab->callQueue, n);
 }
 
-gchar *
-call_get_name (const call_t * c)
-{
-  gchar * end = g_strrstr(c->from, "\"");
-  if (!end) {
-    return g_strndup(c->from, 0);
-  } else {
-    gchar * name = c->from +1;
-    return g_strndup(name, end - name);
-  }
-}
-
-gchar *
-call_get_number (const call_t * c)
-{
-  gchar * number = g_strrstr(c->from, "<") + 1;
-  gchar * end = g_strrstr(c->from, ">");
-  number = g_strndup(number, end - number  );
-  return number;
-}
-
-gchar *
-call_get_recipient( const call_t * c )
-{
-  return c->to;
-}
-
-
 call_t *
 call_list_get (calltab_t* tab, const gchar * callID )
 {
@@ -204,41 +177,4 @@ call_list_get (calltab_t* tab, const gchar * callID )
   {
     return NULL;
   }
-}
-
-void
-call_select (calltab_t* tab, call_t * c )
-{
-  tab->selectedCall = c;
-}
-
-
-call_t *
-call_get_selected (calltab_t* tab)
-{
-  return tab->selectedCall;
-}
-
-void create_new_call (gchar *to, gchar *from, call_state_t state, gchar *accountID, call_t **new_call) {
-
-    gchar *call_id;
-    call_t *call;
-
-    call = g_new0 (call_t, 1);
-    call->to = g_strdup (to); 
-    call->from = g_strdup (from);
-    call->state = state;
-    call->accountID = g_strdup (accountID);
-    call->_start = 0;
-    call->_stop = 0;
-
-    call_id = g_new0(gchar, 30);
-    g_sprintf(call_id, "%d", rand());
-    call->callID = g_strdup (call_id);
-
-    *new_call = call;
-}
-
-void attach_thumbnail (call_t *call, GdkPixbuf *pixbuf) {
-    call->contact_thumbnail = pixbuf;
 }

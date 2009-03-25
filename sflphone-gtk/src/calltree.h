@@ -21,8 +21,6 @@
 #define __CALLTREE_H__
 
 #include <gtk/gtk.h>
-
-#include <calllist.h>
 #include <calltab.h>
 #include <timestamp.h>
 
@@ -35,53 +33,45 @@ GtkWidget * filter_entry_contact;
 GtkWidget * filter_entry_history;
 
 calltab_t* active_calltree;
-
-void free_call_t (call_t *c);
+calltab_t* current_calls;
+calltab_t* history;
+calltab_t* contacts;
 
 /**
  * Create a new widget calltree
  * @return GtkWidget* A new widget
  */
-void create_call_tree(calltab_t* tab, gchar* searchbar_type);
-
-/**
- * Update the toolbar's buttons state, according to the call state
- */
-void toolbar_update_buttons();
+void
+create_call_tree(calltab_t* tab, gchar* searchbar_type);
 
 /**
  * Add a call in the calltree
  * @param c The call to add
  */
-void update_call_tree_add (calltab_t* ct, call_t * c);
+void
+update_call_tree_add (calltab_t* ct, call_t * c);
 
 /*
  * Update the call tree if the call state changes
  * @param c The call to update
  */
-void update_call_tree (calltab_t* ct, call_t * c);
+void
+update_call_tree (calltab_t* ct, call_t * c);
+
 /**
  * Remove a call from the call tree
  * @param c The call to remove
  */
-void update_call_tree_remove (calltab_t* ct, call_t * c);
+void
+update_call_tree_remove (calltab_t* ct, call_t * c);
 
-void reset_call_tree (calltab_t* tab);
+void
+reset_call_tree (calltab_t* tab);
 
-/**
- * Build the toolbar
- * @return GtkWidget* The toolbar
- */
-GtkWidget * create_toolbar();
+void
+display_calltree (calltab_t *tab);
 
-GtkWidget * create_filter_entry();
-
-GtkTreeModel * create_filter (GtkTreeModel* child);
-
-void display_calltree (calltab_t *tab);
-
-void create_searchbar(calltab_t* tab, gchar* searchbar_type);
-
-void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo);
+void
+row_activated(GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);
 
 #endif

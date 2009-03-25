@@ -19,14 +19,10 @@
  */
 
 #include <menus.h>
-#include <actions.h>
-#include <calllist.h>
-#include <calltree.h>
 #include <config.h>
 #include <configwindow.h>
 #include <dbus.h>
 #include <mainwindow.h>
-#include <calltab.h>
 #include <assistant.h>
 #include <gtk/gtk.h>
 #include <glib/gprintf.h>

@@ -27,4 +27,18 @@ GtkTreeModel* histfilter;
 
 calltab_t* calltab_init(gchar* searchbar_type);
 
+/** Mark a call as selected.  There can be only one selected call.  This call
+  * is the currently highlighted one in the list.
+  * @param c The call */
+void
+call_select (calltab_t*, call_t *);
+
+/** Return the selected call.
+  * @return The number of the caller */
+call_t *
+call_get_selected (calltab_t*);
+
+void
+create_searchbar(calltab_t *, gchar *);
+
 #endif

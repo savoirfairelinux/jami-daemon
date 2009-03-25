@@ -17,11 +17,11 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <calltab.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <calltree.h>
-#include <calllist.h>
-#include <calltab.h>
+#include <contacts/searchfilter.h>
 
 calltab_t*
 calltab_init(gchar* searchbar_type)
@@ -43,4 +43,31 @@ calltab_init(gchar* searchbar_type)
 
 
 	return ret;
+}
+
+void
+call_select (calltab_t* tab, call_t * c )
+{
+  tab->selectedCall = c;
+}
+
+
+call_t *
+call_get_selected (calltab_t* tab)
+{
+  return tab->selectedCall;
+}
+
+void
+create_searchbar(calltab_t* tab, gchar* searchbar_type)
+{
+  // g_strcmp0 returns 0 if str1 == str2
+  if(g_strcmp0(searchbar_type,"history") == 0){
+
+      tab->searchbar = create_filter_entry_history();
+
+  }
+
+  else if(g_strcmp0(searchbar_type,"contacts") == 0)
+      tab->searchbar = create_filter_entry_contact();
 }

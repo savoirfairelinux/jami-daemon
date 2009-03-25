@@ -3,17 +3,17 @@
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
- *  
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -25,6 +25,7 @@
 #include <accountwindow.h>
 #include <actions.h>
 #include <config.h>
+#include <toolbar.h>
 #include <dbus.h>
 #include <mainwindow.h>
 #include <audioconf.h>
@@ -116,7 +117,7 @@ delete_account(GtkWidget *widget UNUSED, gpointer data UNUSED)
     if(selectedAccount)
     {
         dbus_remove_account(selectedAccount->accountID);
-        if(account_list_get_sip_account_number() == 1 &&  
+        if(account_list_get_sip_account_number() == 1 &&
                 strcmp(g_hash_table_lookup(selectedAccount->properties, ACCOUNT_TYPE), "SIP")==0 )
             gtk_widget_set_sensitive(GTK_WIDGET(stunFrame), FALSE);
     }
@@ -241,7 +242,7 @@ enable_account(GtkCellRendererToggle *rend UNUSED, gchar* path,  gpointer data )
 
     gtk_tree_path_free(treePath);
 
-    // Modify account state       
+    // Modify account state
     g_hash_table_replace( acc->properties , g_strdup(ACCOUNT_ENABLED) , g_strdup((enable == 1)? "TRUE":"FALSE"));
     dbus_send_register( acc->accountID , enable );
 }
@@ -348,7 +349,7 @@ create_accounts_tab()
 
     selectedAccount = NULL;
 
-    ret = gtk_vbox_new(FALSE, 10); 
+    ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER (ret), 10);
 
     scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
@@ -422,7 +423,7 @@ create_accounts_tab()
     gtk_box_set_spacing(GTK_BOX(buttonBox), 10); //GAIM_HIG_BOX_SPACE
     gtk_button_box_set_layout(GTK_BUTTON_BOX(buttonBox), GTK_BUTTONBOX_SPREAD);
     gtk_box_pack_start(GTK_BOX(ret), buttonBox, FALSE, FALSE, 0);
-    gtk_widget_show (buttonBox); 
+    gtk_widget_show (buttonBox);
 
     addButton = gtk_button_new_from_stock (GTK_STOCK_ADD);
     g_signal_connect_swapped(G_OBJECT(addButton), "clicked",
@@ -451,7 +452,7 @@ create_accounts_tab()
 
 void stun_state( void )
 {
-    
+
     guint stun_enabled = 0;
 
     gboolean stunActive = (gboolean)gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( stunEnable ));
@@ -459,7 +460,7 @@ void stun_state( void )
 
     // Check if we actually change the state
     stun_enabled = dbus_stun_is_enabled();
-    
+
     if( (stunActive && stun_enabled ==0 ) || (!stunActive && stun_enabled ==1))
     {
         gtk_widget_set_sensitive( GTK_WIDGET( applyButton ) , TRUE );
@@ -613,7 +614,7 @@ create_general_settings ()
     value = gtk_hscale_new_with_range(0.0 , 50.0 , 5.0);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
     gtk_scale_set_digits( GTK_SCALE(value) , 0);
-    gtk_scale_set_value_pos( GTK_SCALE(value) , GTK_POS_RIGHT); 
+    gtk_scale_set_value_pos( GTK_SCALE(value) , GTK_POS_RIGHT);
     gtk_range_set_value( GTK_RANGE( value ) , dbus_get_max_calls());
     gtk_box_pack_start( GTK_BOX(vbox) , value , TRUE , TRUE , 0);
     g_signal_connect( G_OBJECT( value) , "value-changed" , G_CALLBACK( update_max_value ) , NULL);
@@ -693,7 +694,7 @@ create_recording_settings ()
     GtkWidget *savePathFrame;
     GtkWidget *folderChooser;
     gchar *dftPath;
-    
+
     /* Get the path where to save audio files */
     dftPath = dbus_get_record_path ();
 
@@ -705,19 +706,19 @@ create_recording_settings ()
     savePathFrame = gtk_frame_new(_("General"));
     gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 5);
     gtk_widget_show(savePathFrame);
-   
+
     table = gtk_table_new(1, 2, FALSE);
     gtk_table_set_row_spacings( GTK_TABLE(table), 10);
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
     gtk_widget_show(table);
     gtk_container_add(GTK_CONTAINER(savePathFrame), table);
 
-    // label 
+    // label
     label = gtk_label_new_with_mnemonic(_("_Destination folder"));
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 
-    
+
     // folder chooser button
     folderChooser = gtk_file_chooser_button_new(_("Select a folder"), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( folderChooser), dftPath);
@@ -768,22 +769,22 @@ show_config_window ()
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Audio tab
-    tab = create_audio_configuration();	
+    tab = create_audio_configuration();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Audio Settings")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Recording tab
-    tab = create_recording_settings();	
+    tab = create_recording_settings();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Record")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Addressbook tab
-    tab = create_addressbook_settings();	
+    tab = create_addressbook_settings();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // HookS tab
-    tab = create_hooks_settings();	
+    tab = create_hooks_settings();
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Hooks")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
@@ -839,7 +840,7 @@ show_accounts_window( void )
     gtk_widget_show(stunFrame);
 
     gtk_container_add(GTK_CONTAINER(stunFrame), create_stun_tab());
-    
+
     if( account_list_get_sip_account_number() == 0 )
     {
         gtk_widget_set_sensitive(GTK_WIDGET(stunFrame), FALSE);
@@ -849,7 +850,7 @@ show_accounts_window( void )
 
     accDialogOpen=FALSE;
     gtk_widget_destroy(GTK_WIDGET(dialog));
-    if( account_list_get_size() >0 && account_list_get_current()==NULL ) 
+    if( account_list_get_size() >0 && account_list_get_current()==NULL )
         account_list_set_current_pos(0);
     toolbar_update_buttons();
 }

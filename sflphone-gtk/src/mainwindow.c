@@ -18,6 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <toolbar.h>
 #include <config.h>
 #include <actions.h>
 #include <calltab.h>

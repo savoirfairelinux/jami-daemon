@@ -19,15 +19,13 @@
  */
 
 #include <actions.h>
-#include <calltree.h>
 #include <dbus.h>
 #include <mainwindow.h>
 #include <menus.h>
 #include <statusicon.h>
-#include <calltab.h>
+#include <toolbar.h>
 #include <contacts/searchfilter.h>
 #include <contacts/addressbook/eds.h>
-
 #include <gtk/gtk.h>
 #include <string.h>
 #include <glib/gprintf.h>

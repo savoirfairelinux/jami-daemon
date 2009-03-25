@@ -2,29 +2,27 @@
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #ifndef __ACTIONS_H__
 #define __ACTIONS_H__
 
 #include <libintl.h>
 #include <locale.h>
-
-#include <calllist.h>
 #include <accountlist.h>
 #include <codeclist.h>
 #include <sflphone_const.h>
@@ -38,7 +36,7 @@
 
 
 /**
- * Initialize lists and configurations 
+ * Initialize lists and configurations
  * @return TRUE if succeeded, FALSE otherwise
  */
 gboolean sflphone_init ( ) ;
@@ -55,7 +53,7 @@ gboolean sflphone_quit ( ) ;
 void sflphone_hang_up ();
 
 /**
- * Put the selected call on hold 
+ * Put the selected call on hold
  */
 void sflphone_on_hold ();
 
@@ -124,7 +122,7 @@ void sflphone_fail( call_t * c );
 void sflphone_current ( call_t * c);
 
 /**
- * The callee has hung up 
+ * The callee has hung up
  * @param c The current call
  */
 void sflphone_hung_up( call_t * c);
@@ -144,7 +142,7 @@ void sflphone_incoming_call ( call_t * c);
 void sflphone_keypad ( guint keyval, gchar * key);
 
 /**
- * Place a call with a filled call_t.to 
+ * Place a call with a filled call_t.to
  * @param c A call in CALL_STATE_DIALING state
  */
 void sflphone_place_call ( call_t * c );
@@ -157,7 +155,7 @@ void sflphone_fill_account_list(gboolean toolbarInitialized);
 /**
  * Set an account as current. The current account is to one used to place calls with by default
  * The current account is the first in the account list ( index 0 )
- */ 
+ */
 void sflphone_set_current_account();
 
 /**
@@ -172,4 +170,4 @@ void sflphone_rec_call (void);
 gchar* sflphone_get_current_codec_name();
 
 void sflphone_display_selected_codec (const gchar* codecName);
-#endif 
+#endif
