@@ -80,11 +80,11 @@ void AccountList::addAccount(Account & account)
 	accounts->add(account);
 }
 */
-QListWidgetItem * AccountList::addAccount(QString & alias)
+Account * AccountList::addAccount(QString & alias)
 {
 	Account * a = Account::buildNewAccountFromAlias(alias);
 	(*accounts) += a;
-	return a->getItem();
+	return a;
 }
 
 void AccountList::removeAccount(QListWidgetItem * item)

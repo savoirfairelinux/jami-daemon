@@ -28,6 +28,8 @@ public:
 
 	void loadAccountList();
 	void saveAccountList();
+	
+	void addAccountToAccountList(Account * account);
 
 	void loadCodecs();
 	void saveCodecs();

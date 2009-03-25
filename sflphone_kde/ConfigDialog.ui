@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>504</width>
-    <height>435</height>
+    <height>455</height>
    </rect>
   </property>
   <property name="minimumSize" >
@@ -474,7 +474,7 @@
                <item>
                 <widget class="QListWidget" name="listWidget_accountList" >
                  <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Expanding" hsizetype="Fixed" >
+                  <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -797,10 +797,16 @@
          </item>
          <item>
           <widget class="QGroupBox" name="groupBox1_audio" >
+           <property name="mouseTracking" >
+            <bool>false</bool>
+           </property>
            <property name="title" >
             <string/>
            </property>
            <layout class="QFormLayout" name="formLayout_3" >
+            <property name="fieldGrowthPolicy" >
+             <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+            </property>
             <item row="0" column="0" >
              <widget class="QLabel" name="label_interface" >
               <property name="text" >
@@ -839,7 +845,35 @@
              </widget>
             </item>
             <item row="1" column="1" >
-             <widget class="KUrlComboRequester" name="kurlcomborequester" />
+             <widget class="KUrlComboRequester" name="urlComboRequester_ringtone" />
+            </item>
+            <item row="2" column="0" >
+             <widget class="KLed" name="kled" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Preferred" hsizetype="Fixed" >
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="mouseTracking" >
+               <bool>false</bool>
+              </property>
+              <property name="focusPolicy" >
+               <enum>Qt::NoFocus</enum>
+              </property>
+              <property name="layoutDirection" >
+               <enum>Qt::RightToLeft</enum>
+              </property>
+              <property name="state" >
+               <enum>KLed::On</enum>
+              </property>
+              <property name="shape" >
+               <enum>KLed::Circular</enum>
+              </property>
+              <property name="look" >
+               <enum>KLed::Flat</enum>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -1098,6 +1132,11 @@
  </widget>
  <layoutdefault spacing="4" margin="4" />
  <customwidgets>
+  <customwidget>
+   <class>KLed</class>
+   <extends>QWidget</extends>
+   <header>kled.h</header>
+  </customwidget>
   <customwidget>
    <class>KUrlComboRequester</class>
    <extends>KUrlRequester</extends>

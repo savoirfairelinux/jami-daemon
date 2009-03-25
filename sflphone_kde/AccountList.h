@@ -27,7 +27,7 @@ public:
 	
 	//Setters
 	//void addAccount(Account & account);
-	QListWidgetItem * addAccount(QString & alias);
+	Account * addAccount(QString & alias);
 	void removeAccount(QListWidgetItem * item);
 
 	//Operators

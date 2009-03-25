@@ -1,6 +1,7 @@
 #include "Account.h"
 #include "sflphone_const.h"
 #include "configurationmanager_interface_singleton.h"
+#include "kled.h"
 
 #include <iostream>
 
@@ -49,28 +50,68 @@ Account::Account(QString & _accountId, MapStringString & _accountDetails, accoun
 }
 */
 
+/**
+ * Sets text of the item associated with some spaces to avoid writing under checkbox.
+ * @param text the text to set in the item
+ */
+void Account::setItemText(QString text)
+{
+	item->setText("       " + text);
+}
+
 void Account::initAccountItem()
 {
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	item = new QListWidgetItem();
-	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
-	cout << getAccountDetail(*(new QString(ACCOUNT_ENABLED))).toStdString() << endl;
-	item->setCheckState((getAccountDetail(*(new QString(ACCOUNT_ENABLED))) == ACCOUNT_ENABLED_TRUE) ? Qt::Checked : Qt::Unchecked);
-	item->setText(getAccountDetail(*(new QString(ACCOUNT_ALIAS))));
+	item->setSizeHint(QSize(140,25));
+	//item->setTextAlignment(Qt::AlignCenter);
+	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
+	bool enabled = getAccountDetail(*(new QString(ACCOUNT_ENABLED))) == ACCOUNT_ENABLED_TRUE;
+	//item->setCheckState(enabled ? Qt::Checked : Qt::Unchecked);
+	setItemText(getAccountDetail(*(new QString(ACCOUNT_ALIAS))));
+	itemWidget = new QWidget();
+	QCheckBox * checkbox = new QCheckBox(itemWidget);
+	checkbox->setObjectName("checkbox");
+	checkbox->setCheckState(enabled ? Qt::Checked : Qt::Unchecked);
+	//QLabel* name = new QLabel(getAccountDetail(*(new QString(ACCOUNT_ALIAS))), itemWidget);
+	//QLabel* name = new QLabel("", itemWidget);
+	KLed * led = new KLed(itemWidget);
+	led->setObjectName("led");
+	led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+	if(! isNew() && enabled)
+	{
+		led->setState(KLed::On);
+		if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+		{
+			led->setColor(QColor(0,255,0));
+		}
+		else
+		{
+			led->setColor(QColor(255,0,0));
+		}
+	}
+	else
+	{
+		led->setState(KLed::Off);
+	}
+	QHBoxLayout* hlayout = new QHBoxLayout();
+	hlayout->setContentsMargins(0,0,0,0);
+	hlayout->addWidget(checkbox);
+	//hlayout->addWidget(name);
+	hlayout->addWidget(led);
+	itemWidget->setLayoutDirection(Qt::LeftToRight);
+	itemWidget->setLayout(hlayout);
+	//itemWidget->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
+	//item->parent()->setItemWidget(item, widget);
 }
 
 Account * Account::buildExistingAccountFromId(QString _accountId)
 {
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	Account * a = new Account();
 	a->accountId = new QString(_accountId);
-	a->accountDetails = new MapStringString( ConfigurationManagerInterfaceSingleton::getInstance().getAccountDetails(_accountId).value() );
+	a->accountDetails = new MapStringString( configurationManager.getAccountDetails(_accountId).value() );
 	a->initAccountItem();
-	if(a->item->checkState() == Qt::Checked)
-	{
-		if(a->getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
-			a->item->setTextColor(Qt::darkGreen);
-		else
-			a->item->setTextColor(Qt::red);
-	}
 	return a;
 }
 
@@ -113,7 +154,13 @@ QListWidgetItem * Account::getItem()
 	if(!item)
 		cout<<"null"<<endl;
 	return item;
-	
+}
+
+QWidget * Account::getItemWidget()
+{
+	if(!item)
+		cout<<"null"<<endl;
+	return itemWidget;
 }
 
 QString Account::getStateName(QString & state)

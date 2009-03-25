@@ -12,6 +12,10 @@
   <property name="windowTitle" >
    <string>SFLPhone</string>
   </property>
+  <property name="windowIcon" >
+   <iconset resource="resources.qrc" >
+    <normaloff>:/images/icons/sflphone.png</normaloff>:/images/icons/sflphone.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget" >
    <layout class="QVBoxLayout" name="verticalLayout" >
     <property name="sizeConstraint" >

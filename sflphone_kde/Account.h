@@ -13,6 +13,7 @@ private:
 	QString * accountId;
 	MapStringString * accountDetails;
 	QListWidgetItem * item;
+	QWidget * itemWidget;
 
 	Account();
 
@@ -29,6 +30,7 @@ public:
 	QString & getAccountId();
 	MapStringString & getAccountDetails();
 	QListWidgetItem * getItem();
+	QWidget * getItemWidget();
 	QString getStateName(QString & state);
 	QColor getStateColor();
 	QString getStateColorName();
@@ -36,6 +38,7 @@ public:
 	//QString getAccountDetail(std::string param);
 	
 	//Setters
+	void setItemText(QString text);
 	void initAccountItem();
 	void setAccountId(QString id);
 	void setAccountDetails(MapStringString m);
