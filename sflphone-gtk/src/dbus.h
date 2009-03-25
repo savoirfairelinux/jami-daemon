@@ -3,17 +3,17 @@
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -32,9 +32,9 @@
   * @brief General DBus functions wrappers.
   */
 
-/** 
+/**
  * Try to connect to DBus services
- * @return TRUE if connection succeeded, FALSE otherwise 
+ * @return TRUE if connection succeeded, FALSE otherwise
  */
 gboolean dbus_connect ();
 
@@ -88,26 +88,26 @@ void dbus_place_call (const call_t * c);
 
 /**
  * ConfigurationManager - Get the list of the setup accounts
- * @return gchar** The list of accounts 
+ * @return gchar** The list of accounts
  */
 gchar ** dbus_account_list();
 
 /**
  * ConfigurationManager - Get the details of a specific account
- * @param accountID The unique of the account 
+ * @param accountID The unique of the account
  * @return GHashTable* The details of the account
  */
 GHashTable * dbus_account_details(gchar * accountID);
 
 /**
  * ConfigurationManager - Set the details of a specific account
- * @param a The account to update 
+ * @param a The account to update
  */
 void dbus_set_account_details(account_t *a);
 
 /**
  * ConfigurationManager - Send registration request
- * @param accountID The account to register/unregister 
+ * @param accountID The account to register/unregister
  * @param expire The flag for the type of registration
  *		 0 for unregistration request
  *		 1 for registration request
@@ -116,18 +116,18 @@ void dbus_send_register( gchar* accountID , const guint expire );
 
 /**
  * ConfigurationManager - Add an account to the list
- * @param a The account to add  
+ * @param a The account to add
  */
 void dbus_add_account(account_t *a);
 
 /**
  * ConfigurationManager - Remove an account from the list
- * @param accountID The account to remove  
+ * @param accountID The account to remove
  */
 void dbus_remove_account(gchar * accountID);
 
 /**
- * ConfigurationManager - Set volume for speaker/mic 
+ * ConfigurationManager - Set volume for speaker/mic
  * @param device The speaker or the mic
  * @param value The new value
  */
@@ -141,18 +141,18 @@ gdouble dbus_get_volume(const gchar * device);
 
 /**
  * ConfigurationManager - Play DTMF
- * @param key The DTMF to send 
+ * @param key The DTMF to send
  */
 void dbus_play_dtmf(const gchar * key);
 
 /**
- * ConfigurationManager - Get the codecs list 
- * @return gchar** The list of codecs 
+ * ConfigurationManager - Get the codecs list
+ * @return gchar** The list of codecs
  */
 gchar** dbus_codec_list();
 
 /**
- * ConfigurationManager - Get the codec details 
+ * ConfigurationManager - Get the codec details
  * @param payload The payload of the codec
  * @return gchar** The codec details
  */
@@ -160,8 +160,8 @@ gchar** dbus_codec_details(int payload);
 
 /**
  * ConfigurationManager - Get the default codec list
- * The default codec list are the codecs selected by the server if the user hasn't made any changes 
- * @return gchar** The default codec list 
+ * The default codec list are the codecs selected by the server if the user hasn't made any changes
+ * @return gchar** The default codec list
  */
 gchar** dbus_default_codec_list();
 
@@ -246,7 +246,7 @@ int dbus_get_audio_device_index(const gchar* name);
 
 /**
  * ConfigurationManager - Get the current output audio plugin
- * @return gchar* The current plugin 
+ * @return gchar* The current plugin
  *		  default
  *		  plughw
  *		  dmix
@@ -262,31 +262,31 @@ int dbus_is_iax2_enabled( void );
 
 /**
  * ConfigurationManager - Query the server about the ringtone option.
- * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone. 
+ * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone.
  * @return int	1 if enabled
  *	        0 otherwise
  */
 int dbus_is_ringtone_enabled( void );
 
 /**
- * ConfigurationManager - Set the ringtone option 
+ * ConfigurationManager - Set the ringtone option
  * Inverse current value
  */
 void dbus_ringtone_enabled( void );
 
 /**
- * ConfigurationManager - Set PA behaviour for the other sound streams 
+ * ConfigurationManager - Set PA behaviour for the other sound streams
  * Inverse current value
  */
 void dbus_set_pulse_app_volume_control( void );
 
 /**
- * ConfigurationManager - Get PA behaviour for the other sound streams 
+ * ConfigurationManager - Get PA behaviour for the other sound streams
  */
 int dbus_get_pulse_app_volume_control( void );
 
 /**
- * ConfigurationManager - Get the ringtone 
+ * ConfigurationManager - Get the ringtone
  * @return gchar* The file name selected as a ringtone
  */
 gchar* dbus_get_ringtone_choice( void );
@@ -303,7 +303,7 @@ void dbus_set_ringtone_choice( const gchar* tone );
 void dbus_set_dialpad(  );
 
 /**
- * ConfigurationManager - Tells if the user wants to display the dialpad or not 
+ * ConfigurationManager - Tells if the user wants to display the dialpad or not
  * @return int 1 if dialpad has to be displayed
  *	       0 otherwise
  */
@@ -315,7 +315,7 @@ int dbus_get_dialpad( void );
 void dbus_set_searchbar(  );
 
 /**
- * ConfigurationManager - Tells if the user wants to display the search bar or not 
+ * ConfigurationManager - Tells if the user wants to display the search bar or not
  * @return int 1 if the search bar has to be displayed
  *	       0 otherwise
  */
@@ -327,7 +327,7 @@ int dbus_get_searchbar( void );
 void dbus_set_volume_controls(  );
 
 /**
- * ConfigurationManager - Tells if the user wants to display the volume controls or not 
+ * ConfigurationManager - Tells if the user wants to display the volume controls or not
  * @return int 1 if the controls have to be displayed
  *	       0 otherwise
  */
@@ -340,13 +340,13 @@ int dbus_get_volume_controls( void );
 void dbus_start_hidden( void );
 
 /**
- * ConfigurationManager - Gives the maximum number of calls the user wants to have in the history 
+ * ConfigurationManager - Gives the maximum number of calls the user wants to have in the history
  * @return double The maximum number of calls
  */
 guint dbus_get_max_calls( void );
 
 /**
- * ConfigurationManager - Gives the maximum number of calls the user wants to have in the history 
+ * ConfigurationManager - Gives the maximum number of calls the user wants to have in the history
  */
 void dbus_set_max_calls( const guint calls );
 /**
@@ -357,7 +357,7 @@ void dbus_set_max_calls( const guint calls );
 int dbus_is_start_hidden( void );
 
 /**
- * ConfigurationManager - Configure the popup behaviour 
+ * ConfigurationManager - Configure the popup behaviour
  * When SFLphone is in the system tray, you can configure when it popups
  * Never or only on incoming calls
  */
@@ -366,27 +366,27 @@ void dbus_switch_popup_mode( void );
 /**
  * ConfigurationManager - Configure the popup behaviour
  * @return int	1 if it should popup on incoming calls
- *		0 if it should never popups  
+ *		0 if it should never popups
  */
 int dbus_popup_mode( void );
 
 /**
  * ConfigurationManager - Returns the selected audio manager
  * @return int	0	ALSA
- *		1	PULSEAUDIO 
+ *		1	PULSEAUDIO
  */
 int dbus_get_audio_manager( void );
 
 /**
  * ConfigurationManager - Set the audio manager
  * @param api	0	ALSA
- *		1	PULSEAUDIO 
+ *		1	PULSEAUDIO
  */
 void dbus_set_audio_manager( int api );
 
 /**
  * ConfigurationManager - Configure the notification level
- * @return int	0 disable 
+ * @return int	0 disable
  *		1 enable
  */
 guint dbus_get_notify( void );
@@ -398,7 +398,7 @@ void dbus_set_notify( void );
 
 /**
  * ConfigurationManager - Configure the mail notification level
- * @return int	0 disable 
+ * @return int	0 disable
  *		1 enable
  */
 guint dbus_get_mail_notify( void );
@@ -409,15 +409,15 @@ guint dbus_get_mail_notify( void );
 void dbus_set_mail_notify( void );
 
 /**
- * ConfigurationManager - Start a tone when a new call is open and no numbers have been dialed 
+ * ConfigurationManager - Start a tone when a new call is open and no numbers have been dialed
  * @param start 1 to start
  *		0 to stop
  * @param type  TONE_WITH_MESSAGE
- *		TONE_WITHOUT_MESSAGE	
+ *		TONE_WITHOUT_MESSAGE
  */
-void dbus_start_tone(const int start , const guint type); 
+void dbus_start_tone(const int start , const guint type);
 
-/** 
+/**
  * Instance - Send registration request to dbus service.
  * Manage the instances of clients connected to the server
  * @param pid The pid of the processus client
@@ -471,6 +471,6 @@ GHashTable* dbus_get_hook_settings (void);
 void dbus_set_hook_settings (GHashTable *);
 
 
-
+gboolean dbus_get_is_recording(const call_t *);
 
 #endif
