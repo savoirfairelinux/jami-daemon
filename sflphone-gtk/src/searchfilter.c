@@ -138,7 +138,7 @@ void filter_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UN
 
 void
 filter_entry_changed_history(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
-{ 
+{
   g_print("--- filter_entry_changed_history --- \n");
 
   if (active_calltree != history)
@@ -172,13 +172,7 @@ GtkWidget* create_filter_entry_contact() {
 
     gtk_box_pack_start(GTK_BOX(ret), filter_entry_contact, TRUE, TRUE, 0);
 
-    // Create waiting icon
-    waitingPixOn = gdk_pixbuf_animation_new_from_file(ICONS_DIR "/wait-on.gif", NULL);
-    // waitingPixOff = gdk_pixbuf_new_from_file(ICONS_DIR "/wait-off.gif", NULL);
-    gtk_image_menu_item_set_image (waitingLayer,GTK_IMAGE(gtk_image_new_from_animation(waitingPixOn)));
-
     return ret;
-
 }
 
 
@@ -199,16 +193,7 @@ GtkWidget* create_filter_entry_history() {
 
     gtk_box_pack_start(GTK_BOX(ret), filter_entry_history, TRUE, TRUE, 0);
 
-    // Create waiting icon
-    //waitingPixOn = gdk_pixbuf_animation_new_from_file(ICONS_DIR "/wait-on.gif", NULL);
-    //waitingPixOff = gdk_pixbuf_new_from_file(ICONS_DIR "/wait-off.gif", NULL);
-    //waitingLayer = gtk_image_new_from_pixbuf(waitingPixOff);
-
-    //gtk_box_pack_end(GTK_BOX(ret), waitingLayer, TRUE, TRUE, 0);
-
-
     return ret;
-
 }
 
 void activateWaitingLayer() {
