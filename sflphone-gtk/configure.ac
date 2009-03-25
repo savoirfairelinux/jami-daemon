@@ -1,10 +1,10 @@
-AC_INIT([SFLphone],[0.9.3],[sflphoneteam@savoirfairelinux.com],[sflphone])
+AC_INIT([SFLphone],[0.9.4],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AM_CONFIG_HEADER(config.h)
 
 LT_INIT
 
 PACKAGE=SFLphone
-VERSION=0.9.3
+VERSION=0.9.4
 
 AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 AC_CONFIG_MACRO_DIR([m4])
@@ -26,16 +26,16 @@ fi
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_STDC_HEADERS
+AC_PROG_LIBTOOL
 
 PKG_CHECK_MODULES(DEPS, \
     dbus-glib-1 >= 0.35 \
     libnotify >= 0.4 \
     gtk+-2.0 >= 2.2     \
     glib-2.0 >= 2.2     \
-    libsexy >= 0.1    \
+    libsexy >= 0.1  \
     libebook-1.2 >= 2.22
 )
-
 
 AC_SUBST(DEPS_CFLAGS)
 AC_SUBST(DEPS_LIBS)

@@ -120,6 +120,7 @@ help_about ( void * foo UNUSED)
     "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>", 
     "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
     "Yun Liu <yun.liu@savoirfairelinux.com>"
+    "Alexandre Savard <alexandre.savard@savoirfairelinux.com>",
     "Jean-Philippe Barrette-LaPierre",
     "Laurielle Lea",
     NULL};
@@ -324,7 +325,7 @@ create_call_menu()
       NULL);
   gtk_widget_show (menu_items);
 
-  image = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
+  image = gtk_image_new_from_stock (GTK_STOCK_MEDIA_RECORD, GTK_ICON_SIZE_MENU);
   recordMenu = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
   gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( recordMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), recordMenu);
@@ -813,7 +814,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
    if(record)
   {
     menu_items = gtk_image_menu_item_new_with_mnemonic(_("_Record"));
-    image = gtk_tool_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
+    image = gtk_image_new_from_stock (GTK_STOCK_MEDIA_RECORD, GTK_ICON_SIZE_MENU);
     gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_items), image);
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     g_signal_connect (G_OBJECT (menu_items), "activate",

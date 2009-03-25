@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Antoine Reversat <antoine.reversat@savoirfairelinux.com>
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,14 +17,30 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __NOTEBOOK_H__
-#define __NOTEBOOK_H__
+#ifndef URL_HOOK_H
+#define URL_HOOK_H
 
-#include <calllist.h>
-#include <gtk/gtk.h>
+#include <string>
+#include <stdlib.h>
 
-GtkTreeModel* histfilter;
+#define RUN_COMMAND(command)   system(command);
 
-calltab_t* calltab_init(gchar* searchbar_type);
+class UrlHook {
 
-#endif
+    public:
+        /**
+         * Constructor
+         */
+        UrlHook ();
+
+        /**
+         * Destructor
+         */
+        ~UrlHook ();
+
+        void addAction (std::string, std::string);
+
+    private:
+};
+
+#endif // URL_HOOK_H

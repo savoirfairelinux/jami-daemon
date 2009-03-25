@@ -31,7 +31,8 @@
   * @brief The GtkTreeView that list calls in the main window.
   */
 
-GtkWidget * filter_entry;
+GtkWidget * filter_entry_contact;
+GtkWidget * filter_entry_history;
 
 calltab_t* active_calltree;
 
@@ -41,7 +42,7 @@ void free_call_t (call_t *c);
  * Create a new widget calltree
  * @return GtkWidget* A new widget
  */
-void create_call_tree(calltab_t* tab);
+void create_call_tree(calltab_t* tab, gchar* searchbar_type);
 
 /**
  * Update the toolbar's buttons state, according to the call state
@@ -73,7 +74,13 @@ void reset_call_tree (calltab_t* tab);
  */
 GtkWidget * create_toolbar();
 
+GtkWidget * create_filter_entry();
+
+GtkTreeModel * create_filter (GtkTreeModel* child);
+
 void display_calltree (calltab_t *tab);
+
+void create_searchbar(calltab_t* tab, gchar* searchbar_type);
 
 void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo);
 

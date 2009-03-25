@@ -375,8 +375,11 @@ ManagerImpl::onHoldCall(const CallID& id)
 {
     AccountID accountid;
     bool returnValue;
+    CallID call_id;
 
     stopTone(true);
+
+    call_id = id;
 
     /* Direct IP to IP call */
     if (getConfigFromCall (id) == Call::IPtoIP) {
@@ -396,7 +399,7 @@ ManagerImpl::onHoldCall(const CallID& id)
     removeWaitingCall(id);
     switchCall("");
   
-    if (_dbus) _dbus->getCallManager()->callStateChanged(id, "HOLD");
+    if (_dbus) _dbus->getCallManager()->callStateChanged(call_id, "HOLD");
 
     return returnValue;
 }
@@ -409,12 +412,15 @@ ManagerImpl::offHoldCall(const CallID& id)
     AccountID accountid;
     bool returnValue, rec;
     std::string codecName;
+    CallID call_id;
 
     stopTone(false);
 
+    call_id = id;
     //Place current call on hold if it isn't
     if (hasCurrentCall()) 
     { 
+        _debug ("Put the current call (ID=%s) on hold\n", getCurrentCallId().c_str());
         onHoldCall(getCurrentCallId());
     }
 
@@ -438,16 +444,16 @@ ManagerImpl::offHoldCall(const CallID& id)
 
     if (_dbus){ 
         if (rec)
-            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_RECORD");
+            _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_RECORD");
         else 
-            _dbus->getCallManager()->callStateChanged(id, "UNHOLD_CURRENT");
+            _dbus->getCallManager()->callStateChanged(call_id, "UNHOLD_CURRENT");
     }
   
     switchCall(id);
 
-    // codecName = getCurrentCodecName(id);
+    codecName = getCurrentCodecName(id);
     // _debug("ManagerImpl::hangupCall(): broadcast codec name %s \n",codecName.c_str());
-    // if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
+    if (_dbus) _dbus->getCallManager()->currentSelectedCodec(id,codecName.c_str());
 
     return returnValue;
 }
@@ -739,7 +745,9 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
     */
   
     /* Broadcast a signal over DBus */
-    _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+    if (_dbus) _dbus->getCallManager()->incomingCall(accountId, call->getCallId(), from);
+
+    //if (_dbus) _dbus->getCallManager()->callStateChanged(call->getCallId(), "INCOMING");
   
     // Reduce volume of the other pulseaudio-connected audio applications
     if( _audiodriver->getLayerType() == PULSEAUDIO && getConfigInt( PREFERENCES , CONFIG_PA_VOLUME_CTRL ) ) {
@@ -787,7 +795,6 @@ ManagerImpl::peerRingingCall(const CallID& id)
   void
 ManagerImpl::peerHungupCall(const CallID& id)
 {
-    _debug("ManagerImpl::peerHungupCall():this function is called when peer hangup \n");
     PulseLayer *pulselayer;
     AccountID accountid;
     bool returnValue;
@@ -977,15 +984,12 @@ ManagerImpl::ringtone()
     {
         //TODO Comment this because it makes the daemon crashes since the main thread
         //synchronizes the ringtone thread.
-        _debug("RINGING!!! 1\n");
         
         ringchoice = getConfigString(AUDIO, RING_CHOICE);
         //if there is no / inside the path
         if ( ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos ) {
             // check inside global share directory
             ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR + ringchoice; 
-
-            _debug("RINGING!!! 2\n");
         }
 
         audiolayer = getAudioDriver();
@@ -993,7 +997,6 @@ ManagerImpl::ringtone()
         if (audiolayer == 0)
             return;
 
-        _debug("RINGING!!! 3\n");
 
         samplerate  = audiolayer->getSampleRate();
         codecForTone = _codecDescriptorMap.getFirstCodecAvailable();
@@ -1004,7 +1007,6 @@ ManagerImpl::ringtone()
 
         if (loadFile) {
             
-            _debug("RINGING!!! 5\n");
             _toneMutex.enterMutex(); 
             _audiofile.start();
             _toneMutex.leaveMutex(); 
@@ -1014,18 +1016,15 @@ ManagerImpl::ringtone()
             }
             else{
                 audiolayer->startStream();
-                _debug("RINGING!!! 6\n");
             }
         } else {
             ringback();
-            _debug("RINGING!!! 7\n");
         }
     
     }
     else
     {
         ringback();
-        _debug("RINGING!!! 8\n");
     }
 }
 
@@ -1205,6 +1204,11 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, YES_STR);
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_HOME, NO_STR);
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_MOBILE, NO_STR);
+
+  section = HOOKS;
+  fill_config_str (URLHOOK_SIP_FIELD, HOOK_DEFAULT_SIP_FIELD);
+  fill_config_str (URLHOOK_COMMAND, HOOK_DEFAULT_URL_COMMAND);
+  fill_config_str (URLHOOK_SIP_ENABLED, NO_STR);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1 && load_user_value) {
@@ -2527,7 +2531,7 @@ void ManagerImpl::registerCurSIPAccounts(VoIPLink *link)
         current = iter->second;
         
         if (current) {
-            if ( current->isEnabled() && current->getType() == "sip") {
+            if (current->isEnabled() && current->getType() == "sip") {
                 //current->setVoIPLink(link);
 	            current->registerVoIPLink();
             }
@@ -2562,6 +2566,31 @@ void ManagerImpl::setAddressbookSettings (const std::map<std::string, int32_t>& 
     // Write it to the configuration file
     saveConfig ();
 }
+
+
+std::map<std::string, std::string> ManagerImpl::getHookSettings () {
+
+    std::map<std::string, std::string> settings;
+
+    settings.insert (std::pair<std::string, std::string> ("URLHOOK_SIP_FIELD", getConfigString (HOOKS, URLHOOK_SIP_FIELD)) );
+    settings.insert (std::pair<std::string, std::string> ("URLHOOK_COMMAND", getConfigString (HOOKS, URLHOOK_COMMAND)) );
+    settings.insert (std::pair<std::string, std::string> ("URLHOOK_SIP_ENABLED", getConfigString (HOOKS, URLHOOK_SIP_ENABLED)) );
+
+    return settings;
+}
+
+void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& settings){
+
+    setConfig(HOOKS, URLHOOK_SIP_FIELD, (*settings.find("URLHOOK_SIP_FIELD")).second);
+    setConfig(HOOKS, URLHOOK_COMMAND, (*settings.find("URLHOOK_COMMAND")).second);
+    setConfig(HOOKS, URLHOOK_SIP_ENABLED, (*settings.find("URLHOOK_SIP_ENABLED")).second);
+
+    // Write it to the configuration file
+    saveConfig ();
+}
+
+
+
 
 void ManagerImpl::check_call_configuration (const CallID& id, const std::string &to, Call::CallConfiguration *callConfig) {
     std::string pattern;

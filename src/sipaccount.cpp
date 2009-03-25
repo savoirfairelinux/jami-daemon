@@ -69,14 +69,14 @@ int SIPAccount::registerVoIPLink()
 
 int SIPAccount::unregisterVoIPLink()
 {
-  _debug("unregister account %s\n" , getAccountID().c_str());
-
-  _regc = NULL;
-
-  if(_link->sendUnregister( _accountID ))
-      return true;
-  else
-      return false;
+    _debug("unregister account %s\n" , getAccountID().c_str());
+  
+    if(_link->sendUnregister( _accountID )){
+        setRegistrationInfo (NULL);
+        return true;
+    }
+    else
+        return false;
   
 }
 

@@ -1138,7 +1138,7 @@ dbus_get_is_recording(const call_t * c)
 	    {
 		    g_error_free(error);
 	    }
-            g_print("RECORDING: %i \n",isRecording);
+            //g_print("RECORDING: %i \n",isRecording);
             return isRecording;
 }
 
@@ -1493,6 +1493,33 @@ void dbus_set_addressbook_settings (GHashTable * settings){
     org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings (configurationManagerProxy, settings, &error);
     if (error){
         g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_set_addressbook_settings\n");
+        g_error_free (error);
+    }
+}
+
+GHashTable* dbus_get_hook_settings (void) {
+
+    GError *error = NULL;
+    GHashTable *results = NULL;
+
+    //g_print ("Calling org_sflphone_SFLphone_ConfigurationManager_get_addressbook_settings\n");
+    
+    org_sflphone_SFLphone_ConfigurationManager_get_hook_settings (configurationManagerProxy, &results, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_hook_settings\n");
+        g_error_free (error);
+    }
+    
+    return results;
+}
+
+void dbus_set_hook_settings (GHashTable * settings){
+
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_set_hook_settings (configurationManagerProxy, settings, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_set_hook_settings\n");
         g_error_free (error);
     }
 }

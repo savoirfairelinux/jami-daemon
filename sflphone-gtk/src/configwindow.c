@@ -29,6 +29,7 @@
 #include <mainwindow.h>
 #include <audioconf.h>
 #include <addressbook-config.h>
+#include <hooks-config.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -479,7 +480,7 @@ void update_registration( void )
 GtkWidget* create_stun_tab()
 {
     GtkWidget * tableNat;
-    gchar * stun_server= "stun.fwdnet.net:3478";
+    gchar * stun_server= "stun.ekiga.net:3478";
     gchar * stun_enabled = "FALSE";
     GtkWidget * label;
 
@@ -781,6 +782,11 @@ show_config_window ()
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Address Book")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
+    // HookS tab
+    tab = create_hooks_settings();	
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Hooks")));
+    gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
+
     gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  1);
 
     result = gtk_dialog_run(dialog);
@@ -856,5 +862,6 @@ void config_window_set_stun_visible()
 void save_configuration_parameters (void) {
 
     addressbook_save_parameters ();
+    hooks_save_parameters ();
 
 }

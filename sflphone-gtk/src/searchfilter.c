@@ -45,7 +45,7 @@ gboolean is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSE
         GValue val;
 
         gchar* text = NULL;
-        gchar* search = (gchar*)gtk_entry_get_text(GTK_ENTRY(filter_entry));
+        gchar* search = (gchar*)gtk_entry_get_text(GTK_ENTRY(filter_entry_history));
         memset (&val, 0, sizeof(val));
         gtk_tree_model_get_value(GTK_TREE_MODEL(model), iter, 1, &val);
         if(G_VALUE_HOLDS_STRING(&val)){
@@ -113,8 +113,8 @@ void filter_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UN
     AddressBook_Config *addressbook_config;
 
     /* Switch to the address book when the focus is on the search bar */
-    if (active_calltree != contacts)
-        display_calltree (contacts);
+    // if (active_calltree != contacts)
+    //     display_calltree (contacts);
 
 
     /* We want to search in the contact list */
@@ -136,32 +136,76 @@ void filter_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UN
 
 }
 
-void clear_filter_entry_if_default (GtkWidget* widget UNUSED, gpointer user_data UNUSED) {
+void
+filter_entry_changed_history(GtkEntry* entry UNUSED, gchar* arg1 UNUSED, gpointer data UNUSED)
+{ 
+  g_print("--- filter_entry_changed_history --- \n");
 
-    if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry)), _("Search"), 6) == 0)
-        gtk_entry_set_text(GTK_ENTRY(filter_entry), "");
+  if (active_calltree != history)
+        display_calltree (history);
+
+  // gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(historyButton), TRUE);
+  gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(histfilter));
+  // gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
+}
+
+
+void clear_filter_entry_if_default (GtkWidget* widget, gpointer user_data UNUSED) {
+
+    if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(widget)), _("Search"), 6) == 0)
+        gtk_entry_set_text(GTK_ENTRY(widget), "");
 
 }
 
-GtkWidget* create_filter_entry() {
+GtkWidget* create_filter_entry_contact() {
 
     GtkWidget* image;
     GtkWidget* ret = gtk_hbox_new(FALSE, 0);
 
-    filter_entry = sexy_icon_entry_new();
+    filter_entry_contact = sexy_icon_entry_new();
     image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
-    sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(filter_entry), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
-    sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(filter_entry) );
-    gtk_entry_set_text(GTK_ENTRY(filter_entry), _("Search"));
-    g_signal_connect(GTK_ENTRY(filter_entry), "changed", G_CALLBACK(filter_entry_changed), NULL);
-    g_signal_connect(GTK_ENTRY(filter_entry), "grab-focus", G_CALLBACK(clear_filter_entry_if_default), NULL);
+    sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(filter_entry_contact), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
+    sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(filter_entry_contact) );
+    gtk_entry_set_text(GTK_ENTRY(filter_entry_contact), _("Search"));
+    g_signal_connect(GTK_ENTRY(filter_entry_contact), "changed", G_CALLBACK(filter_entry_changed), NULL);
+    g_signal_connect(GTK_ENTRY(filter_entry_contact), "grab-focus", G_CALLBACK(clear_filter_entry_if_default), NULL);
 
-    gtk_box_pack_start(GTK_BOX(ret), filter_entry, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(ret), filter_entry_contact, TRUE, TRUE, 0);
 
     // Create waiting icon
     waitingPixOn = gdk_pixbuf_animation_new_from_file(ICONS_DIR "/wait-on.gif", NULL);
     // waitingPixOff = gdk_pixbuf_new_from_file(ICONS_DIR "/wait-off.gif", NULL);
     gtk_image_menu_item_set_image (waitingLayer,GTK_IMAGE(gtk_image_new_from_animation(waitingPixOn)));
+
+    return ret;
+
+}
+
+
+GtkWidget* create_filter_entry_history() {
+
+    g_print("--- create_filter_entry_history --- \n");
+
+    GtkWidget* image;
+    GtkWidget* ret = gtk_hbox_new(FALSE, 0);
+
+    filter_entry_history = sexy_icon_entry_new();
+    image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
+    sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(filter_entry_history), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
+    sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(filter_entry_history) );
+    gtk_entry_set_text(GTK_ENTRY(filter_entry_history), _("Search"));
+    g_signal_connect(GTK_ENTRY(filter_entry_history), "changed", G_CALLBACK(filter_entry_changed_history), NULL);
+    g_signal_connect(GTK_ENTRY(filter_entry_history), "grab-focus", G_CALLBACK(clear_filter_entry_if_default), NULL);
+
+    gtk_box_pack_start(GTK_BOX(ret), filter_entry_history, TRUE, TRUE, 0);
+
+    // Create waiting icon
+    //waitingPixOn = gdk_pixbuf_animation_new_from_file(ICONS_DIR "/wait-on.gif", NULL);
+    //waitingPixOff = gdk_pixbuf_new_from_file(ICONS_DIR "/wait-off.gif", NULL);
+    //waitingLayer = gtk_image_new_from_pixbuf(waitingPixOff);
+
+    //gtk_box_pack_end(GTK_BOX(ret), waitingLayer, TRUE, TRUE, 0);
+
 
     return ret;
 
