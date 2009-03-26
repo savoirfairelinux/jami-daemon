@@ -1748,6 +1748,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
                     case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
                     case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
                     case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
+                    case PJSIP_SC_UNAUTHORIZED:
                         accId = Manager::instance().getAccountFromCall(call->getCallId());
                         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
                         if (link) {
