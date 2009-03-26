@@ -56,6 +56,9 @@ private slots:
 	void on_buttonBoxDialog_clicked(QAbstractButton * button);
 	void on_tableWidget_codecs_currentItemChanged(QTableWidgetItem * current, QTableWidgetItem * previous);
 	void on_tableWidget_codecs_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
+	void on1_accountsChanged();
+	void on1_parametersChanged();
+	void on1_errorAlert(int code);
 
 };
 

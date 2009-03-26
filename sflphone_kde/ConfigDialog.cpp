@@ -43,9 +43,12 @@ ConfigurationDialog::ConfigurationDialog(SFLPhone *parent) : QDialog(parent)
 
 	
 	
-	
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	connect(&configurationManager, SIGNAL(accountsChanged()),
+	        this,                  SLOT(on1_accountsChanged()));
 	
 	loadOptions();
+	
 }
 
 ConfigurationDialog::~ConfigurationDialog()
@@ -596,4 +599,19 @@ void ConfigurationDialog::on_tableWidget_codecs_currentCellChanged(int currentRo
 		tableWidget_codecs->setRangeSelected(QTableWidgetSelectionRange(currentRow, 0, currentRow, nbCol - 1), true);
 	}
 	updateCodecListCommands();
+}
+
+void ConfigurationDialog::on1_accountsChanged()
+{
+	qDebug() << "on1_accountsChanged";
+}
+
+void ConfigurationDialog::on1_parametersChanged()
+{
+	qDebug() << "on1_parametersChanged";
+}
+
+void ConfigurationDialog::on1_errorAlert(int code)
+{
+	qDebug() << "on1_errorAlert code : " << code ;
 }
