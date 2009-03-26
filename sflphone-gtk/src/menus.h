@@ -49,4 +49,8 @@ void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event);
  * @param event The mouse event
  */
 void show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event);
+
+void show_popup_menu_contacts (GtkWidget *my_widget, GdkEventButton *event);
+
+void add_registered_accounts_to_menu (GtkWidget *menu);
 #endif 

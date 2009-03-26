@@ -69,12 +69,15 @@ sflphone_notify_voice_mail ( const gchar* accountID , guint count )
 }
 
     void
-status_bar_display_account( call_t* c)
+status_bar_display_account ()
 {
     gchar* msg;
     account_t* acc;
-    if(c->accountID != NULL){
-        acc = account_list_get_by_id(c->accountID);
+
+    statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
+
+    acc = account_list_get_current ();
+    if(acc){
         msg = g_markup_printf_escaped(_("%s account- %s") ,
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
@@ -133,8 +136,6 @@ sflphone_hung_up( call_t * c)
 #if GTK_CHECK_VERSION(2,10,0)
     status_tray_icon_blink( FALSE );
 #endif
-
-    statusbar_pop_message(__MSG_ACCOUNT_DEFAULT);
 }
 
 /** Internal to actions: Fill account list */
@@ -716,7 +717,6 @@ sflphone_place_call ( call_t * c )
                 {
                     // OK, everything alright - the call is made with the current account
                     c -> accountID = current -> accountID;
-                    status_bar_display_account(c);
                     dbus_place_call(c);
                 }
                 else
@@ -728,7 +728,6 @@ sflphone_place_call ( call_t * c )
                     c -> accountID = current -> accountID;
                     dbus_place_call(c);
                     notify_current_account( current );
-                    status_bar_display_account(c);
                     account_list_set_current_id( c-> accountID );
                 }
             }
@@ -742,7 +741,6 @@ sflphone_place_call ( call_t * c )
                 c -> accountID = current -> accountID;
                 dbus_place_call(c);
                 notify_current_account( current );
-                status_bar_display_account(c);
                 account_list_set_current_id( c-> accountID );
             }
         }

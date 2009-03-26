@@ -147,10 +147,14 @@ if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
     show_popup_menu(widget,  event);
     return TRUE;
   }
-  else
+  else if (active_calltree == history)
   {
-    show_popup_menu_history(widget,  event);
+    show_popup_menu_history (widget,  event);
     return TRUE;
+  }
+  else{
+      show_popup_menu_contacts (widget, event);
+      return TRUE;
   }
 }
 return FALSE;

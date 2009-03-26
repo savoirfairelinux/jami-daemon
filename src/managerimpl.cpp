@@ -864,8 +864,6 @@ void ManagerImpl::connectionStatusNotification(  )
 {
     if (_dbus)
         _dbus->getConfigurationManager()->accountsChanged();
-    else
-        _debug("Error: DBus connection not found\n");
 }
 
 /**
