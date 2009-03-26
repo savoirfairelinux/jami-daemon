@@ -182,7 +182,7 @@ notify_no_accounts(  )
     notify_notification_attach_to_status_icon( notification , get_status_icon() );
 #endif
     notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
-    notify_notification_add_action( notification , "setup" , _("Setup Accounts") , (NotifyActionCallback) setup_accounts_cb , NULL , NULL );
+    //notify_notification_add_action( notification , "setup" , _("Setup Accounts") , (NotifyActionCallback) setup_accounts_cb , NULL , NULL );
 
     if (!notify_notification_show (notification, NULL)) {
         g_print("notify(), failed to send notification\n");
@@ -223,7 +223,7 @@ notify_no_registered_accounts(  )
     notify_notification_attach_to_status_icon( notification , get_status_icon() );
 #endif
     notify_notification_set_timeout( notification , NOTIFY_EXPIRES_DEFAULT );
-    notify_notification_add_action( notification , "setup" , _("Setup Accounts") , (NotifyActionCallback) setup_accounts_cb , NULL , NULL );
+    //notify_notification_add_action( notification , "setup" , _("Setup Accounts") , (NotifyActionCallback) setup_accounts_cb , NULL , NULL );
 
   if (!notify_notification_show (notification, NULL)) {
     g_print("notify(), failed to send notification\n");
