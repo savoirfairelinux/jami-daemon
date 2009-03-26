@@ -51,6 +51,8 @@ bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::strin
 
 void handle_incoming_options (pjsip_rx_data *rxdata);
 
+std::string fetch_header_value (pjsip_msg *msg, std::string field);
+
 /*
  *  The global pool factory
  */
@@ -76,6 +78,11 @@ pjsip_module _mod_ua;
  */
 pj_thread_t *thread;
 pj_thread_desc desc;
+
+/*
+ * Url hook instance
+ */
+UrlHook *urlhook;
 
 /**
  * Get the number of voicemail waiting in a SIP message
@@ -170,6 +177,8 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
     // to get random number for RANDOM_PORT
     srand (time(NULL));
+
+    urlhook = new UrlHook ();
 
     /* Start pjsip initialization step */
     init();
@@ -314,14 +323,12 @@ int SIPVoIPLink::sendRegister( AccountID id )
 
     /* Get the client registration information for this particular account */
     regc = account->getRegistrationInfo();
-    /* If the registration already exists, delete it */
-    if(regc) {
-        
+    /* TODO If the registration already exists, delete it */
+    /*if(regc) {
         status = pjsip_regc_destroy(regc);
         regc = NULL;
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
-    }
-
+    }*/
 
     account->setRegister(true);
 
@@ -330,7 +337,6 @@ int SIPVoIPLink::sendRegister( AccountID id )
 
     /* Update the state of the voip link */
     account->setRegistrationState(Trying);
-
 
     if (!validStunServer) {
         account->setRegistrationState(ErrorExistStun);
@@ -387,7 +393,6 @@ int SIPVoIPLink::sendRegister( AccountID id )
         return false;
     }
 
-    
     status = pjsip_regc_send(regc, tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to send regc request.\n");
@@ -403,7 +408,7 @@ int SIPVoIPLink::sendRegister( AccountID id )
 }
 
     int 
-SIPVoIPLink::sendUnregister( AccountID id )
+SIPVoIPLink::sendUnregister (AccountID id)
 {
     pj_status_t status = 0;
     pjsip_tx_data *tdata = NULL;
@@ -435,7 +440,7 @@ SIPVoIPLink::sendUnregister( AccountID id )
         return false;
     }
 
-    account->setRegistrationInfo(regc);
+    //account->setRegistrationInfo(regc);
     account->setRegister(false);
 
     return true;
@@ -721,6 +726,7 @@ SIPVoIPLink::offhold(const CallID& id)
     bool 
 SIPVoIPLink::transfer(const CallID& id, const std::string& to)
 {
+
     SIPCall *call;
     std::string tmp_to;
     pjsip_evsub *sub;
@@ -730,7 +736,6 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
     pj_str_t dest;
     AccountID account_id;
     Account* account;
-
 
     call = getSIPCall(id);
     call->stopRecording();
@@ -743,8 +748,14 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
     }  
 
     tmp_to = SIPToHeader(to);
-    if (tmp_to.find("@") == std::string::npos) {
-        tmp_to = tmp_to + "@" + account->getHostname();
+    if (account) {
+        if (tmp_to.find("@") == std::string::npos) {
+            tmp_to = tmp_to + "@" + account->getHostname();
+        }
+    }
+
+    else {
+        
     }
 
     _debug("In transfer, tmp_to is %s\n", tmp_to.data());
@@ -766,7 +777,6 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
      * because after this function, we can not find the cooresponding
      * voiplink from the call any more. But the voiplink is useful!
      */
-    AccountID accId = Manager::instance().getAccountFromCall(call->getCallId());
     pjsip_evsub_set_mod_data(sub, getModId(), this);
 
     /*
@@ -1698,14 +1708,12 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
             // The call is ringing - We need to handle this case only on outgoing call
             if (inv->state == PJSIP_INV_STATE_EARLY && e->body.tsx_state.tsx->role == PJSIP_ROLE_UAC){
-                _debug ("*************************** PJSIP_INV_STATE_EARLY - PEER RINGING ***********************************\n");
                 call->setConnectionState(Call::Ringing);
                 Manager::instance().peerRingingCall(call->getCallId());
             }
 
             // We receive a ACK - The connection is established
             else if( inv->state == PJSIP_INV_STATE_CONFIRMED ){
-                _debug ("*************************** PJSIP_INV_STATE_CONFIRMED ***********************************\n");
                     
                 /* If the call is a direct IP-to-IP call */
                 if (call->getCallConfiguration () == Call::IPtoIP) {
@@ -1721,7 +1729,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             }
 
             else if( inv->state == PJSIP_INV_STATE_DISCONNECTED ){
-                _debug ("*************************** PJSIP_INV_STATE_DISCONNECTED  %i***********************************\n", inv->cause);
                 switch( inv->cause )
                 {
                     /* The call terminates normally - BYE / CANCEL */
@@ -1802,11 +1809,11 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                  */
                 _debug("UserAgent: The error is: %d\n", param->code);
                 switch(param->code) {
-                    case 408:
                     case 606:
                         account->setRegistrationState(ErrorConfStun);
                         break;
                     case 503:
+                    case 408:
                         account->setRegistrationState(ErrorHost);
                         break;
                     case 401:
@@ -1944,6 +1951,22 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                         NULL);
                 return true;
             }
+
+            /******************************************* URL HOOK *********************************************/
+
+            if (Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_ENABLED) == "1") {
+
+                std::string header_value;
+            
+                header_value = fetch_header_value (rdata->msg_info.msg, Manager::instance().getConfigString (HOOKS, URLHOOK_SIP_FIELD));
+            
+                if (header_value!=""){
+                    urlhook->addAction (header_value, 
+                                        Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
+                }
+            }
+
+            /************************************************************************************************/
 
             // Generate a new call ID for the incoming call!
             id = Manager::instance().getNewCallID();
@@ -2443,8 +2466,6 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
 
     void on_rx_offer( pjsip_inv_session *inv, const pjmedia_sdp_session *offer ){
 
-        _debug ( "********************************* REINVITE RECEIVED *******************************\n" );
-
 #ifdef CAN_REINVITE
         _debug ("reinvite                                                  SIP\n");
 
@@ -2537,5 +2558,32 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
 
         return true;
     }
+
+    std::string fetch_header_value (pjsip_msg *msg, std::string field) {
+
+        pj_str_t name;
+        pjsip_generic_string_hdr * hdr;
+        std::string value, url;
+        size_t pos;
+
+        std::cout << "fetch header value" << std::endl;
+
+        /* Convert the field name into pjsip type */
+        name = pj_str ((char*)field.c_str());
+
+        /* Get the header value and convert into string*/
+        hdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name (msg, &name, NULL);
+
+        if (!hdr)
+            return "";
+    
+        value = hdr->hvalue.ptr;
+        if ( (pos=value.find ("\n")) == std::string::npos) {
+            return "";
+        }
+        
+        url = value.substr (0, pos);
+        return url;
+    } 
 
 

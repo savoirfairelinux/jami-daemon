@@ -79,6 +79,8 @@ public:
         register_method(ConfigurationManager_adaptor, isStunEnabled, _isStunEnabled_stub);
         register_method(ConfigurationManager_adaptor, getAddressbookSettings, _getAddressbookSettings_stub);
         register_method(ConfigurationManager_adaptor, setAddressbookSettings, _setAddressbookSettings_stub);
+        register_method(ConfigurationManager_adaptor, getHookSettings, _getHookSettings_stub);
+        register_method(ConfigurationManager_adaptor, setHookSettings, _setHookSettings_stub);
     }
 
     ::DBus::IntrospectedInterface *const introspect() const 
@@ -374,6 +376,16 @@ public:
             { "settings", "a{si}", true },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getHookSettings_args[] = 
+        {
+            { "settings", "a{ss}", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setHookSettings_args[] = 
+        {
+            { "settings", "a{ss}", true },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument parametersChanged_args[] = 
         {
             { "details", "a{ss}", false },
@@ -449,6 +461,8 @@ public:
             { "isStunEnabled", isStunEnabled_args },
             { "getAddressbookSettings", getAddressbookSettings_args },
             { "setAddressbookSettings", setAddressbookSettings_args },
+            { "getHookSettings", getHookSettings_args },
+            { "setHookSettings", setHookSettings_args },
             { 0, 0 }
         };
         static ::DBus::IntrospectedMethod ConfigurationManager_adaptor_signals[] = 
@@ -542,6 +556,8 @@ public:
     virtual int32_t isStunEnabled() = 0;
     virtual std::map< std::string, int32_t > getAddressbookSettings() = 0;
     virtual void setAddressbookSettings(const std::map< std::string, int32_t >& settings) = 0;
+    virtual std::map< std::string, std::string > getHookSettings() = 0;
+    virtual void setHookSettings(const std::map< std::string, std::string >& settings) = 0;
 
 public:
 
@@ -1130,6 +1146,25 @@ private:
 
         std::map< std::string, int32_t > argin1; ri >> argin1;
         setAddressbookSettings(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getHookSettings_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::map< std::string, std::string > argout1 = getHookSettings();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setHookSettings_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::map< std::string, std::string > argin1; ri >> argin1;
+        setHookSettings(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

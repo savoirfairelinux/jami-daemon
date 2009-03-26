@@ -266,6 +266,15 @@
       <arg type="a{si}" name="settings" direction="in"/>
     </method>
 
+    <!-- Hook configuration -->
+    <method name="getHookSettings">
+      <arg type="a{ss}" name="settings" direction="out"/>
+    </method>
+
+    <method name="setHookSettings">
+      <arg type="a{ss}" name="settings" direction="in"/>
+    </method>
+
   <!--        /////////////////////////////       -->
     <signal name="parametersChanged">
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>

@@ -13,7 +13,7 @@ IAXSOURCES =
 IAXHEADERS =
 endif
 
-SUBDIRS = audio config dbus plug-in
+SUBDIRS = audio config dbus plug-in hooks
 
 # Add here the cpp files to be build with sflphone
 sflphoned_SOURCES = \
@@ -50,8 +50,7 @@ sflphoned_LDADD = \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		@LIBOPENSSL_LIBS@
+		@SAMPLERATE_LIBS@ 
 
 # sflphoned_LDFLAGS= -pg -luuid
 sflphoned_LDFLAGS= -luuid
@@ -84,6 +83,7 @@ libsflphone_la_LIBADD = \
 	./config/libconfig.la \
 	./plug-in/libplugin.la \
 	./plug-in/audiorecorder/libaudiorecorder.la \
+	./hooks/libhooks.la \
 	$(IAX_LIBS) 
 
 libsflphone_la_SOURCES =

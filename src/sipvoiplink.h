@@ -23,6 +23,7 @@
 #define SIPVOIPLINK_H
 
 #include "voiplink.h"
+#include "hooks/urlhook.h"
 
 //////////////////////////////
 /* PJSIP imports */

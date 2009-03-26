@@ -433,3 +433,11 @@ std::map<std::string, int32_t> ConfigurationManager::getAddressbookSettings (voi
 void ConfigurationManager::setAddressbookSettings (const std::map<std::string, int32_t>& settings) {
     Manager::instance().setAddressbookSettings (settings);
 }
+
+std::map<std::string,std::string> ConfigurationManager::getHookSettings (void) {
+    return Manager::instance().getHookSettings ();
+}
+
+void ConfigurationManager::setHookSettings (const std::map<std::string, std::string>& settings) {
+    Manager::instance().setHookSettings (settings);
+}

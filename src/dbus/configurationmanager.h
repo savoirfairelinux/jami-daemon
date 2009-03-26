@@ -107,6 +107,9 @@ public:
     std::map<std::string, int32_t> getAddressbookSettings (void);
     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
 
+    std::map<std::string, std::string> getHookSettings (void);
+    void setHookSettings (const std::map<std::string, std::string>& settings);
+
 };
 
 
