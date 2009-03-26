@@ -170,4 +170,7 @@ void sflphone_rec_call (void);
 gchar* sflphone_get_current_codec_name();
 
 void sflphone_display_selected_codec (const gchar* codecName);
+
+void status_bar_display_account ();
+
 #endif

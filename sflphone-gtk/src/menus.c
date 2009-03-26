@@ -201,6 +201,7 @@ switch_account(  GtkWidget* item , gpointer data UNUSED)
   account_t* acc = g_object_get_data( G_OBJECT(item) , "account" );
   g_print("%s\n" , acc->accountID);
   account_list_set_current_id( acc->accountID );
+  status_bar_display_account ();
 }
 
   static void
@@ -835,32 +836,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 
   if(accounts)
   {
-    menu_items = gtk_separator_menu_item_new ();
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-    gtk_widget_show (menu_items);
-
-    unsigned int i;
-    account_t* acc;
-    gchar* alias;
-    for( i = 0 ; i < account_list_get_size() ; i++ ){
-      acc = account_list_get_nth(i);
-      // Display only the registered accounts
-      if( g_strcasecmp( account_state_name(acc -> state) , account_state_name(ACCOUNT_STATE_REGISTERED) ) == 0 ){
-	alias = g_strconcat( g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) , " - ",g_hash_table_lookup(acc->properties , ACCOUNT_TYPE), NULL);
-	menu_items = gtk_check_menu_item_new_with_mnemonic(alias);
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-	g_object_set_data( G_OBJECT( menu_items ) , "account" , acc );
-	g_free( alias );
-	if( account_list_get_current() != NULL ){
-	  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
-	      (g_strcasecmp( acc->accountID , account_list_get_current()->accountID) == 0)? TRUE : FALSE);
-	}
-	g_signal_connect (G_OBJECT (menu_items), "activate",
-	    G_CALLBACK (switch_account),
-	    NULL);
-	gtk_widget_show (menu_items);
-      } // fi
-    }
+      add_registered_accounts_to_menu (menu);
   }
 
   if (event)
@@ -940,4 +916,95 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
   gtk_menu_attach_to_widget (GTK_MENU (menu), my_widget, NULL);
   gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
       button, event_time);
+}
+
+    void
+show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
+{
+
+  gboolean pickup = FALSE;
+  gboolean remove = FALSE;
+  gboolean accounts = FALSE;
+
+  call_t * selectedCall = calltab_get_selected_call( history );
+  if (selectedCall)
+  {
+    remove = TRUE;
+    pickup = TRUE;
+    accounts = TRUE;
+  }
+
+  GtkWidget *menu;
+  GtkWidget *image;
+  int button, event_time;
+  GtkWidget * menu_items;
+
+  menu = gtk_menu_new ();
+  //g_signal_connect (menu, "deactivate",
+  //       G_CALLBACK (gtk_widget_destroy), NULL);
+
+  if(pickup)
+  {
+
+    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_New call"));
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_accept.svg");
+    gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( menu_items ), image );
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (call_back), NULL);
+    gtk_widget_show (menu_items);
+  }
+
+  if(accounts)
+  {
+      add_registered_accounts_to_menu (menu);
+    }
+
+  if (event)
+  {
+    button = event->button;
+    event_time = event->time;
+  }
+  else
+  {
+    button = 0;
+    event_time = gtk_get_current_event_time ();
+  }
+
+  gtk_menu_attach_to_widget (GTK_MENU (menu), my_widget, NULL);
+  gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
+      button, event_time);
+}
+
+
+void add_registered_accounts_to_menu (GtkWidget *menu) {
+
+    GtkWidget *menu_items;
+    unsigned int i;
+    account_t* acc;
+    gchar* alias;
+    
+    menu_items = gtk_separator_menu_item_new ();
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    gtk_widget_show (menu_items);
+
+    for( i = 0 ; i < account_list_get_size() ; i++ ){
+      acc = account_list_get_nth(i);
+      // Display only the registered accounts
+      if( g_strcasecmp( account_state_name(acc -> state) , account_state_name(ACCOUNT_STATE_REGISTERED) ) == 0 ){
+	        alias = g_strconcat( g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) , " - ",g_hash_table_lookup(acc->properties , ACCOUNT_TYPE), NULL);
+	menu_items = gtk_check_menu_item_new_with_mnemonic(alias);
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	g_object_set_data( G_OBJECT( menu_items ) , "account" , acc );
+	g_free( alias );
+	if( account_list_get_current() != NULL ){
+	  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
+	      (g_strcasecmp( acc->accountID , account_list_get_current()->accountID) == 0)? TRUE : FALSE);
+	}
+	g_signal_connect (G_OBJECT (menu_items), "activate",
+	    G_CALLBACK (switch_account),
+	    NULL);
+	gtk_widget_show (menu_items);
+      } // fi
+    }
+
 }

@@ -59,6 +59,8 @@ There is NO WARRANTY, to the extent permitted by law.\n\n");
     }
   #endif
 
+    status_bar_display_account ();
+
     /* start the main loop */
     gtk_main ();
   }
