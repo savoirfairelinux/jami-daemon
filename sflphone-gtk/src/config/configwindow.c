@@ -862,7 +862,7 @@ void config_window_set_stun_visible()
 
 void save_configuration_parameters (void) {
 
-    addressbook_save_parameters ();
+    addressbook_config_save_parameters ();
     hooks_save_parameters ();
 
 }

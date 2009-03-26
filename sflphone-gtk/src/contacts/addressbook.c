@@ -21,10 +21,12 @@
 #include <searchbar.h>
 #include <addressbook-config.h>
 
-static void handler_async_search (GList *, gpointer);
+static void
+handler_async_search(GList *, gpointer);
 
 void
-addressbook_search(GtkEntry* entry){
+addressbook_search(GtkEntry* entry)
+{
 
   AddressBook_Config *addressbook_config;
 
@@ -32,60 +34,71 @@ addressbook_search(GtkEntry* entry){
   activateWaitingLayer();
 
   // Load the address book parameters
-  addressbook_load_parameters (&addressbook_config);
+  addressbook_config_load_parameters(&addressbook_config);
 
   // Start the asynchronous search as soon as we have an entry */
-  search_async (gtk_entry_get_text (GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search, addressbook_config);
+  search_async(gtk_entry_get_text(GTK_ENTRY (entry)), addressbook_config->max_results, &handler_async_search,
+      addressbook_config);
 }
 
 void
-addressbook_init(){
+addressbook_init()
+{
   init();
 }
 
-static void handler_async_search (GList *hits, gpointer user_data) {
+static void
+handler_async_search(GList *hits, gpointer user_data)
+{
 
-    GList *i;
-    GdkPixbuf *photo = NULL;
-    AddressBook_Config *addressbook_config;
-    call_t *j;
+  GList *i;
+  GdkPixbuf *photo = NULL;
+  AddressBook_Config *addressbook_config;
+  call_t *j;
 
-    // freeing calls
-    while((j = (call_t *)g_queue_pop_tail (contacts->callQueue)) != NULL)
+  // freeing calls
+  while ((j = (call_t *) g_queue_pop_tail(contacts->callQueue)) != NULL)
     {
-        free_call_t(j);
+      free_call_t(j);
     }
 
-    // Retrieve the address book parameters
-    addressbook_config = (AddressBook_Config*) user_data;
+  // Retrieve the address book parameters
+  addressbook_config = (AddressBook_Config*) user_data;
 
-    // reset previous results
-    calltree_reset(contacts);
-    calllist_reset(contacts);
+  // reset previous results
+  calltree_reset(contacts);
+  calllist_reset(contacts);
 
-    for (i = hits; i != NULL; i = i->next)
+  for (i = hits; i != NULL; i = i->next)
     {
-        Hit *entry;
-        entry = i->data;
-        if (entry)
+      Hit *entry;
+      entry = i->data;
+      if (entry)
         {
-            /* Get the photo */
-            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
-                photo = entry->photo;
-            /* Create entry for business phone information */
-            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
-                calllist_add_contact (entry->name, entry->phone_business, CONTACT_PHONE_BUSINESS, photo);
-            /* Create entry for home phone information */
-            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_PHONE_HOME))
-                calllist_add_contact (entry->name, entry->phone_home, CONTACT_PHONE_HOME, photo);
-            /* Create entry for mobile phone information */
-            if (addressbook_display (addressbook_config, ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
-                calllist_add_contact (entry->name, entry->phone_mobile, CONTACT_PHONE_MOBILE, photo);
+          /* Get the photo */
+          if (addressbook_display(addressbook_config,
+              ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
+            photo = entry->photo;
+          /* Create entry for business phone information */
+          if (addressbook_display(addressbook_config,
+              ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
+            calllist_add_contact(entry->name, entry->phone_business,
+                CONTACT_PHONE_BUSINESS, photo);
+          /* Create entry for home phone information */
+          if (addressbook_display(addressbook_config,
+              ADDRESSBOOK_DISPLAY_PHONE_HOME))
+            calllist_add_contact(entry->name, entry->phone_home,
+                CONTACT_PHONE_HOME, photo);
+          /* Create entry for mobile phone information */
+          if (addressbook_display(addressbook_config,
+              ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
+            calllist_add_contact(entry->name, entry->phone_mobile,
+                CONTACT_PHONE_MOBILE, photo);
         }
-        free_hit(entry);
+      free_hit(entry);
     }
-    g_list_free(hits);
+  g_list_free(hits);
 
-    // Deactivate waiting image
-    deactivateWaitingLayer();
+  // Deactivate waiting image
+  deactivateWaitingLayer();
 }
