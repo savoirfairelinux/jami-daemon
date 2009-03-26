@@ -101,6 +101,14 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
 	{
 		return DAEMON_CALL_STATE_CURRENT;
 	}
+	if(stateName == QString(CALL_STATE_CHANGE_UNHOLD_CURRENT))
+	{
+		return DAEMON_CALL_STATE_CURRENT;
+	}
+	if(stateName == QString(CALL_STATE_CHANGE_UNHOLD_RECORD))
+	{
+		return DAEMON_CALL_STATE_CURRENT;
+	}
 	if(stateName == QString(CALL_STATE_CHANGE_HOLD))
 	{
 		return DAEMON_CALL_STATE_HOLD;
