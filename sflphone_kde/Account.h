@@ -27,6 +27,7 @@ public:
 	
 	//Getters
 	bool isNew();
+	bool isChecked();
 	QString & getAccountId();
 	MapStringString & getAccountDetails();
 	QListWidgetItem * getItem();

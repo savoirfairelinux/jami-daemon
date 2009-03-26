@@ -230,8 +230,9 @@ void ConfigurationDialog::saveOptions()
 
 void ConfigurationDialog::loadAccountList()
 {
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	//ask for the list of accounts ids to the configurationManager
-	QStringList accountIds = ConfigurationManagerInterfaceSingleton::getInstance().getAccountList().value();
+	QStringList accountIds = configurationManager.getAccountList().value();
 	//create the AccountList object with the ids
 	accountList = new AccountList(accountIds);
 	//initialize the QListWidget object with the AccountList
@@ -276,7 +277,7 @@ void ConfigurationDialog::saveAccountList()
 				currentId = QString(current.getAccountId());
 			}
 		}
-		configurationManager.sendRegister(currentId, (current.getItem()->checkState() == Qt::Checked) ? 1 : 0 );
+		configurationManager.sendRegister(currentId, current.isChecked() ? 1 : 0 );
 	}
 	//remove accounts that are in the configurationManager but not in the client
 	for (int i = 0; i < accountIds.size(); i++)

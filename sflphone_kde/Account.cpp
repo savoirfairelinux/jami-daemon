@@ -71,7 +71,7 @@ void Account::initAccountItem()
 	setItemText(getAccountDetail(*(new QString(ACCOUNT_ALIAS))));
 	itemWidget = new QWidget();
 	QCheckBox * checkbox = new QCheckBox(itemWidget);
-	checkbox->setObjectName("checkbox");
+	checkbox->setObjectName(QString(ACCOUNT_ITEM_CHECKBOX));
 	checkbox->setCheckState(enabled ? Qt::Checked : Qt::Unchecked);
 	//QLabel* name = new QLabel(getAccountDetail(*(new QString(ACCOUNT_ALIAS))), itemWidget);
 	//QLabel* name = new QLabel("", itemWidget);
@@ -139,6 +139,11 @@ bool Account::isNew()
 	return(!accountId);
 }
 
+bool Account::isChecked()
+{
+	return itemWidget->findChild<QCheckBox *>(QString(ACCOUNT_ITEM_CHECKBOX))->checkState() == Qt::Checked;
+}
+
 QString & Account::getAccountId()
 {
 	return *accountId; 
@@ -170,25 +175,21 @@ QString Account::getStateName(QString & state)
 
 QColor Account::getStateColor()
 {
-	if(item->checkState() == Qt::Checked)
-	{
-		if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
-			return Qt::darkGreen;
-		return Qt::red;
-	}
-	return Qt::black;
+	if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_UNREGISTERED)
+		return Qt::black;
+	if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+		return Qt::darkGreen;
+	return Qt::red;
 }
 
 
 QString Account::getStateColorName()
 {
-	if(item->checkState() == Qt::Checked)
-	{
-		if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
-			return "darkGreen";
-		return "red";
-	}
-	return "black";
+	if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_UNREGISTERED)
+		return "black";
+	if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+		return "darkGreen";
+	return "red";
 }
 
 QString Account::getAccountDetail(QString & param)
