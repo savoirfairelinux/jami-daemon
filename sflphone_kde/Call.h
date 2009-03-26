@@ -83,7 +83,7 @@ typedef enum
 
 class Call;
 
-typedef  void (Call::*function)(QString number);
+typedef  void (Call::*function)();
 
 class Call
 {
@@ -97,6 +97,7 @@ private:
 	QDateTime * startTime;
 	QDateTime * stopTime;
 	QListWidgetItem * item;
+	QWidget * itemWidget;
 	QListWidgetItem * historyItem;
 	
 	//Automate attributes
@@ -113,33 +114,40 @@ private:
 	static daemon_call_state toDaemonCallState(const QString & stateName);
 	
 	//Automate functions
-	void nothing(QString number);
-	void accept(QString number);
-	void refuse(QString number);
-	void acceptTransf(QString number);
-	void acceptHold(QString number);
-	void hangUp(QString number);
-	void hold(QString number);
-	void call(QString number);
-	void transfer(QString number);
-	void unhold(QString number);
-	void switchRecord(QString number);
-	void setRecord(QString number);
+	void nothing();
+	void accept();
+	void refuse();
+	void acceptTransf();
+	void acceptHold();
+	void hangUp();
+	void hold();
+	void call();
+	void transfer();
+	void unhold();
+	void switchRecord();
+	void setRecord();
 
 public:
 	
 	~Call();
+	void initCallItem();
 	static Call * buildDialingCall(QString callId);
 	static Call * buildIncomingCall(const QString & callId, const QString & from, const QString & account);
 	QListWidgetItem * getItem();
+	QWidget * getItemWidget();
 	QListWidgetItem * getHistoryItem();
 	call_state getState() const;
 	QString getCallId();
 	call_state stateChanged(const QString & newState);
-	call_state actionPerformed(call_action action, QString number = NULL);
+	call_state actionPerformed(call_action action);
 	call_state getCurrentState() const;
 	history_state getHistoryState() const;
 	bool getRecording() const;
+	void appendItemText(QString text);
+	void setItemIcon(const QString & pixmap);
+	void changeCurrentState(call_state newState);
+	void updateItem();
+
 
 };
 

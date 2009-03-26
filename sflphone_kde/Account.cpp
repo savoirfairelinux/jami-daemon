@@ -64,19 +64,15 @@ void Account::initAccountItem()
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,25));
-	//item->setTextAlignment(Qt::AlignCenter);
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
 	bool enabled = getAccountDetail(*(new QString(ACCOUNT_ENABLED))) == ACCOUNT_ENABLED_TRUE;
-	//item->setCheckState(enabled ? Qt::Checked : Qt::Unchecked);
 	setItemText(getAccountDetail(*(new QString(ACCOUNT_ALIAS))));
 	itemWidget = new QWidget();
 	QCheckBox * checkbox = new QCheckBox(itemWidget);
 	checkbox->setObjectName(QString(ACCOUNT_ITEM_CHECKBOX));
 	checkbox->setCheckState(enabled ? Qt::Checked : Qt::Unchecked);
-	//QLabel* name = new QLabel(getAccountDetail(*(new QString(ACCOUNT_ALIAS))), itemWidget);
-	//QLabel* name = new QLabel("", itemWidget);
 	KLed * led = new KLed(itemWidget);
-	led->setObjectName("led");
+	led->setObjectName(QString(ACCOUNT_ITEM_LED));
 	led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 	if(! isNew() && enabled)
 	{
@@ -97,12 +93,9 @@ void Account::initAccountItem()
 	QHBoxLayout* hlayout = new QHBoxLayout();
 	hlayout->setContentsMargins(0,0,0,0);
 	hlayout->addWidget(checkbox);
-	//hlayout->addWidget(name);
 	hlayout->addWidget(led);
 	itemWidget->setLayoutDirection(Qt::LeftToRight);
 	itemWidget->setLayout(hlayout);
-	//itemWidget->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
-	//item->parent()->setItemWidget(item, widget);
 }
 
 Account * Account::buildExistingAccountFromId(QString _accountId)
@@ -196,29 +189,15 @@ QString Account::getAccountDetail(QString & param)
 {
 	return (*accountDetails)[param];
 }
-/*
-QString Account::getAccountDetail(std::string param)
-{
-	return (*accountDetails)[QString(param)];
-}
-*/
+
+
 //Setters
-/*
-void Account::setAccountId(QString id)
-{
-	accountId = id;
-}
-*/
+
 void Account::setAccountDetails(MapStringString m)
 {
 	*accountDetails = m;
 }
-/*
-void Account::setState(account_state_t s)
-{
-	
-}
-*/
+
 void Account::setAccountDetail(QString param, QString val)
 {
 	(*accountDetails)[param] = val;

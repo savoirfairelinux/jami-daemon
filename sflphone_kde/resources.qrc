@@ -26,9 +26,6 @@
     <file>icons/icon_volume.svg</file>
     <file>icons/incoming.svg</file>
     <file>icons/mailbox.svg</file>
-    <file>icons/Makefile</file>
-    <file>icons/Makefile.am</file>
-    <file>icons/Makefile.in</file>
     <file>icons/mic_25.svg</file>
     <file>icons/mic_50.svg</file>
     <file>icons/mic_75.svg</file>
@@ -68,9 +65,6 @@
     <file>icons/icon_volume.svg</file>
     <file>icons/incoming.svg</file>
     <file>icons/mailbox.svg</file>
-    <file>icons/Makefile</file>
-    <file>icons/Makefile.am</file>
-    <file>icons/Makefile.in</file>
     <file>icons/mic_25.svg</file>
     <file>icons/mic_50.svg</file>
     <file>icons/mic_75.svg</file>

@@ -55,17 +55,47 @@ const function Call::actionPerformedFunctionMap[11][5] =
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
 
+void Call::initCallItem()
+{
+	item = new QListWidgetItem();
+	item->setSizeHint(QSize(140,25));
+	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
+	itemWidget = new QWidget();
+	QLabel * labelIcon = new QLabel("", itemWidget);
+	QLabel * labelCallNumber = new QLabel(peer, itemWidget);
+	QLabel * labelTransferTo = new QLabel("Transfer to : ", itemWidget);
+	QLabel * labelTransferNumber = new QLabel("", itemWidget);
+	labelIcon->setObjectName(QString(CALL_ITEM_ICON));
+	labelCallNumber->setObjectName(QString(CALL_ITEM_CALL_NUMBER));
+	labelTransferNumber->setObjectName(QString(CALL_ITEM_TRANSFER_NUMBER));
+	QGridLayout * layout = new QGridLayout();
+	layout->setContentsMargins(0,0,0,0);
+	layout->setSpacing(1);
+	layout->addWidget(labelIcon, 0, 0, 1, 0);
+	layout->addWidget(labelCallNumber, 0, 1, 0, 2);
+	layout->addWidget(labelTransferTo, 1, 1);
+	layout->addWidget(labelTransferNumber, 1, 2);
+	itemWidget->setLayoutDirection(Qt::LeftToRight);
+	itemWidget->setLayout(layout);
+	item->setSizeHint(itemWidget->sizeHint());
+	setItemIcon(QString(ICON_REFUSE));
+}
+
+void Call::setItemIcon(const QString & pixmap)
+{
+	itemWidget->findChild<QLabel * >(QString(CALL_ITEM_ICON))->setPixmap(QPixmap(pixmap));
+}
 
 Call::Call(call_state startState, QString callId, QString from, QString account)
 {
 	this->callId = callId;
 	this->peer = from;
-	this->item = new QListWidgetItem(from);
+	initCallItem();
+	//this->item = new QListWidgetItem(from);
 	this->account = account;
 	this->recording = false;
-	this->currentState = startState;
+	changeCurrentState(startState);
 	this->historyItem = NULL;
-	
 }
 
 Call::~Call()
@@ -130,6 +160,11 @@ QListWidgetItem * Call::getItem()
 	return item;
 }
 
+QWidget * Call::getItemWidget()
+{
+	return itemWidget;
+}
+
 QListWidgetItem * Call::getHistoryItem()
 {
 	if(historyItem == NULL)
@@ -145,22 +180,22 @@ call_state Call::getState() const
 	return currentState;
 }
 
-call_state Call::stateChanged(const QString & newState)
+call_state Call::stateChanged(const QString & newStateName)
 {
 	call_state previousState = currentState;
-	daemon_call_state dcs = toDaemonCallState(newState);
-	currentState = stateChangedStateMap[currentState][dcs];
-	qDebug() << "Calling stateChanged " << newState << " -> " << toDaemonCallState(newState) << " on call with state " << previousState << ". Become " << currentState;
+	daemon_call_state dcs = toDaemonCallState(newStateName);
+	changeCurrentState(stateChangedStateMap[currentState][dcs]);
+	qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newState) << " on call with state " << previousState << ". Become " << currentState;
 	return currentState;
 }
 
-call_state Call::actionPerformed(call_action action, QString number)
+call_state Call::actionPerformed(call_action action)
 {
 	call_state previousState = currentState;
 	//execute the action associated with this transition
-	(this->*(actionPerformedFunctionMap[currentState][action]))(number);
+	(this->*(actionPerformedFunctionMap[currentState][action]))();
 	//update the state
-	currentState = actionPerformedStateMap[currentState][action];
+	changeCurrentState(actionPerformedStateMap[currentState][action]);
 	qDebug() << "Calling action " << action << " on call with state " << previousState << ". Become " << currentState;
 	//return the new state
 	return currentState;
@@ -199,11 +234,11 @@ void Call::putRecording()
 *************************************************/
 
 
-void Call::nothing(QString number)
+void Call::nothing()
 {
 }
 
-void Call::accept(QString number)
+void Call::accept()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Accepting call. callId : " << callId;
@@ -212,7 +247,7 @@ void Call::accept(QString number)
 	this->historyState = INCOMING;
 }
 
-void Call::refuse(QString number)
+void Call::refuse()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Refusing call. callId : " << callId;
@@ -221,16 +256,18 @@ void Call::refuse(QString number)
 	this->historyState = MISSED;
 }
 
-void Call::acceptTransf(QString number)
+void Call::acceptTransf()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	QLabel * transferNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_NUMBER));
+	QString number = transferNumber->text();
 	qDebug() << "Accepting call and transfering it to number : " << number << ". callId : " << callId;
 	callManager.accept(callId);
 	callManager.transfert(callId, number);
 	//this->historyState = TRANSFERED;
 }
 
-void Call::acceptHold(QString number)
+void Call::acceptHold()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Accepting call and holding it. callId : " << callId;
@@ -239,23 +276,25 @@ void Call::acceptHold(QString number)
 	this->historyState = INCOMING;
 }
 
-void Call::hangUp(QString number)
+void Call::hangUp()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Hanging up call. callId : " << callId;
 	callManager.hangUp(callId);
 }
 
-void Call::hold(QString number)
+void Call::hold()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Holding call. callId : " << callId;
 	callManager.hold(callId);
 }
 
-void Call::call(QString number)
+void Call::call()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	QLabel * callNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_CALL_NUMBER));
+	QString number = callNumber->text();
 	this->account = SFLPhone::firstAccount();
 	if(!account.isEmpty())
 	{
@@ -273,15 +312,17 @@ void Call::call(QString number)
 	}
 }
 
-void Call::transfer(QString number)
+void Call::transfer()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	QLabel * transferNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_NUMBER));
+	QString number = transferNumber->text();
 	qDebug() << "Transfering call to number : " << number << ". callId : " << callId;
 	callManager.transfert(callId, number);
 	this->stopTime = new QDateTime(QDateTime::currentDateTime());
 }
 
-void Call::unhold(QString number)
+void Call::unhold()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Unholding call. callId : " << callId;
@@ -289,14 +330,14 @@ void Call::unhold(QString number)
 }
 
 /*
-void Call::switchRecord(QString number)
+void Call::switchRecord()
 {
 	qDebug() << "Switching record state for call automate. callId : " << callId;
 	recording = !recording;
 }
 */
 
-void Call::setRecord(QString number)
+void Call::setRecord()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "Setting record for call. callId : " << callId;
@@ -304,3 +345,28 @@ void Call::setRecord(QString number)
 	recording = !recording;
 }
 
+void Call::appendItemText(QString text)
+{
+	if(currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD)
+	{
+		QLabel * transferNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_NUMBER));
+		transferNumber->setText(transferNumber->text() + text);
+	}
+	else
+	{
+		QLabel * callNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_CALL_NUMBER));
+		callNumber->setText(callNumber->text() + text);
+	}
+}
+
+void Call::changeCurrentState(call_state newState)
+{
+	currentState = newState;
+	updateItem();
+}
+
+void Call::updateItem()
+{
+	setItemIcon(QString(callStateIcons[currentState]));
+	
+}

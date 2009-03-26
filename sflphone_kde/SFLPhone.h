@@ -27,7 +27,10 @@ public:
 private slots:
 	//void typeChar(QChar c);
 	void typeString(QString str);
+	void actionb(Call * call, call_action action);
 	void action(QListWidgetItem * item, call_action action);
+	
+	void addCallToCallList(Call * call);
 	
 	void updateWindowCallState();
 	void updateSearchHistory();

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>504</width>
+    <width>681</width>
     <height>455</height>
    </rect>
   </property>
@@ -637,69 +637,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="2" column="0" >
-                <widget class="QLabel" name="label3_server" >
-                 <property name="text" >
-                  <string>&amp;Serveur</string>
-                 </property>
-                 <property name="buddy" >
-                  <cstring>edit3_server</cstring>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="0" >
-                <widget class="QLabel" name="label4_user" >
-                 <property name="text" >
-                  <string>&amp;Usager</string>
-                 </property>
-                 <property name="buddy" >
-                  <cstring>edit4_user</cstring>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="0" >
-                <widget class="QLabel" name="label5_password" >
-                 <property name="text" >
-                  <string>&amp;Mot de Passe</string>
-                 </property>
-                 <property name="buddy" >
-                  <cstring>edit5_password</cstring>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="0" >
-                <widget class="QLabel" name="label6_mailbox" >
-                 <property name="text" >
-                  <string>&amp;Boîte Vocale</string>
-                 </property>
-                 <property name="buddy" >
-                  <cstring>edit6_mailbox</cstring>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="1" >
-                <widget class="QLineEdit" name="edit3_server" >
-                 <property name="minimumSize" >
-                  <size>
-                   <width>0</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="1" >
-                <widget class="QLineEdit" name="edit4_user" />
-               </item>
-               <item row="4" column="1" >
-                <widget class="QLineEdit" name="edit5_password" >
-                 <property name="echoMode" >
-                  <enum>QLineEdit::Password</enum>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="1" >
-                <widget class="QLineEdit" name="edit6_mailbox" />
-               </item>
                <item row="1" column="1" >
                 <widget class="QComboBox" name="edit2_protocol" >
                  <item>
@@ -714,6 +651,76 @@
                  </item>
                 </widget>
                </item>
+               <item row="2" column="0" >
+                <widget class="QLabel" name="label3_server" >
+                 <property name="text" >
+                  <string>&amp;Serveur</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit3_server</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1" >
+                <widget class="QLineEdit" name="edit3_server" >
+                 <property name="minimumSize" >
+                  <size>
+                   <width>0</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0" >
+                <widget class="QLabel" name="label4_user" >
+                 <property name="text" >
+                  <string>&amp;Usager</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit4_user</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1" >
+                <widget class="QLineEdit" name="edit4_user" />
+               </item>
+               <item row="4" column="0" >
+                <widget class="QLabel" name="label5_password" >
+                 <property name="text" >
+                  <string>&amp;Mot de Passe</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit5_password</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1" >
+                <widget class="QLineEdit" name="edit5_password" >
+                 <property name="echoMode" >
+                  <enum>QLineEdit::Password</enum>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0" >
+                <widget class="QLabel" name="label6_mailbox" >
+                 <property name="text" >
+                  <string>&amp;Boîte Vocale</string>
+                 </property>
+                 <property name="buddy" >
+                  <cstring>edit6_mailbox</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1" >
+                <widget class="QLineEdit" name="edit6_mailbox" />
+               </item>
+               <item row="6" column="0" >
+                <widget class="QLabel" name="label7_state" >
+                 <property name="text" >
+                  <string>État </string>
+                 </property>
+                </widget>
+               </item>
                <item row="6" column="1" >
                 <widget class="QLabel" name="edit7_state" >
                  <property name="text" >
@@ -721,11 +728,124 @@
                  </property>
                 </widget>
                </item>
-               <item row="6" column="0" >
-                <widget class="QLabel" name="label7_state" >
-                 <property name="text" >
-                  <string>État </string>
-                 </property>
+               <item row="7" column="0" >
+                <widget class="QWidget" native="1" name="widget_3" >
+                 <layout class="QHBoxLayout" name="horizontalLayout_7" >
+                  <property name="spacing" >
+                   <number>0</number>
+                  </property>
+                  <property name="margin" >
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_4" >
+                    <property name="text" >
+                     <string/>
+                    </property>
+                    <property name="pixmap" >
+                     <pixmap resource="resources.qrc" >:/images/icons/hang_up.svg</pixmap>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="verticalLayout_4" >
+                    <property name="spacing" >
+                     <number>0</number>
+                    </property>
+                    <property name="leftMargin" >
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin" >
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_2" >
+                      <property name="text" >
+                       <string>144</string>
+                      </property>
+                      <property name="indent" >
+                       <number>5</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_8" >
+                      <property name="spacing" >
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin" >
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QLabel" name="label" >
+                        <property name="text" >
+                         <string>&lt;FONT SIZE=2>Transfer to :&lt;/FONT></string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_3" >
+                        <property name="text" >
+                         <string>&lt;FONT SIZE=2>122&lt;/FONT></string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item row="8" column="0" >
+                <widget class="QWidget" native="1" name="widget_4" >
+                 <layout class="QGridLayout" name="gridLayout_2" >
+                  <property name="margin" >
+                   <number>0</number>
+                  </property>
+                  <property name="spacing" >
+                   <number>0</number>
+                  </property>
+                  <item rowspan="2" row="0" column="0" >
+                   <widget class="QLabel" name="label_5" >
+                    <property name="text" >
+                     <string/>
+                    </property>
+                    <property name="pixmap" >
+                     <pixmap resource="resources.qrc" >:/images/icons/hang_up.svg</pixmap>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1" >
+                   <widget class="QLabel" name="label_7" >
+                    <property name="text" >
+                     <string>&lt;FONT SIZE=2>Transfer to :&lt;/FONT></string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="2" >
+                   <widget class="QLabel" name="label_8" >
+                    <property name="text" >
+                     <string>&lt;FONT SIZE=2>122&lt;/FONT></string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1" colspan="2" >
+                   <widget class="QLabel" name="label_6" >
+                    <property name="text" >
+                     <string>144</string>
+                    </property>
+                    <property name="indent" >
+                     <number>5</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                 <zorder>label_5</zorder>
+                 <zorder>label_5</zorder>
+                 <zorder>label_7</zorder>
+                 <zorder>label_8</zorder>
+                 <zorder>label_6</zorder>
                 </widget>
                </item>
               </layout>

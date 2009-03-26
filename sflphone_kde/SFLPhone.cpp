@@ -70,19 +70,18 @@ QString SFLPhone::firstAccount()
 	return QString();
 }
 
-/*
-void SFLPhone::typeChar(QChar c)
+void SFLPhone::addCallToCallList(Call * call)
 {
-	QListWidgetItem * item = listWidget_callList->currentItem();
-	if(!item)
-	{
-		qDebug() << "Typing when no item is selected. Opening an item.";
-		item = callList->addDialingCall();
-		listWidget_callList->addItem(item);
-		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
-	}
-	listWidget_callList->currentItem()->setText(listWidget_callList->currentItem()->text() + c);
-}*/
+	qDebug() << "addCallToCallList";
+	QListWidgetItem * item = call->getItem();
+	qDebug() << "addCallToCallList2";
+	QWidget * widget = call->getItemWidget();
+	qDebug() << "addCallToCallList3";
+	listWidget_callList->addItem(item);
+	qDebug() << "addCallToCallList4";
+	listWidget_callList->setItemWidget(item, widget);
+	qDebug() << "addCallToCallList5";
+}
 
 void SFLPhone::typeString(QString str)
 {
@@ -95,11 +94,12 @@ void SFLPhone::typeString(QString str)
 		if(!item)
 		{
 			qDebug() << "Typing when no item is selected. Opening an item.";
-			item = callList->addDialingCall();
-			listWidget_callList->addItem(item);
+			Call * call = callList->addDialingCall();
+			addCallToCallList(call);
 			listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 		}
-		listWidget_callList->currentItem()->setText(listWidget_callList->currentItem()->text() + str);
+		callList->getCallByItem(listWidget_callList->currentItem())->appendItemText(str);
+		//listWidget_callList->currentItem()->setText(listWidget_callList->currentItem()->text() + str);
 	}
 	if(stackedWidget_screen->currentWidget() == page_callHistory)
 	{
@@ -109,11 +109,11 @@ void SFLPhone::typeString(QString str)
 	}
 }
 
-void SFLPhone::action(QListWidgetItem * item, call_action action)
+void SFLPhone::actionb(Call * call, call_action action)
 {
 	try
 	{
-		(*callList)[item]->actionPerformed(action, item->text());
+		call->actionPerformed(action);
 	}
 	catch(const char * msg)
 	{
@@ -122,6 +122,10 @@ void SFLPhone::action(QListWidgetItem * item, call_action action)
 	updateWindowCallState();
 }
 
+void SFLPhone::action(QListWidgetItem * item, call_action action)
+{
+	actionb(callList->getCallByItem(item), action);
+}
 
 /*******************************************
 ******** Update Display Functions **********
@@ -560,8 +564,8 @@ void SFLPhone::on_action_accept_triggered()
 		if(!item || (*callList)[item]->getState() == CALL_STATE_RINGING || (*callList)[item]->getState() == CALL_STATE_CURRENT || (*callList)[item]->getState() == CALL_STATE_HOLD || (*callList)[item]->getState() == CALL_STATE_BUSY)
 		{
 			qDebug() << "Calling when no item is selected or item currently ringing, current, hold or busy. Opening an item.";
-			item = callList->addDialingCall();
-			listWidget_callList->addItem(item);
+			Call * call = callList->addDialingCall();
+			addCallToCallList(call);
 			listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 		}
 		else
@@ -572,11 +576,11 @@ void SFLPhone::on_action_accept_triggered()
 	if(stackedWidget_screen->currentWidget() == page_callHistory)
 	{
 		action_history->setChecked(false);
-		QListWidgetItem * item = callList->addDialingCall();
-		item->setText(listWidget_callHistory->currentItem()->text());
-		listWidget_callList->addItem(item);
+		Call * call = callList->addDialingCall();
+		call->appendItemText(listWidget_callHistory->currentItem()->text());
+		addCallToCallList(call);
 		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
-		action(item, CALL_ACTION_ACCEPT);
+		actionb(call, CALL_ACTION_ACCEPT);
 	}
 }
 
@@ -656,11 +660,11 @@ void SFLPhone::on_action_mailBox_triggered()
 	else
 	{
 		QString mailBoxNumber = configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX];
-		QListWidgetItem * item = callList->addDialingCall();
-		item->setText(mailBoxNumber);
-		listWidget_callList->addItem(item);
+		Call * call = callList->addDialingCall();
+		call->appendItemText(mailBoxNumber);
+		addCallToCallList(call);
 		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
-		action(item, CALL_ACTION_ACCEPT);
+		actionb(call, CALL_ACTION_ACCEPT);
 	}
 }
 
@@ -687,8 +691,8 @@ void SFLPhone::on1_error(MapStringString details)
 void SFLPhone::on1_incomingCall(const QString &accountID, const QString & callID, const QString &from)
 {
 	qDebug() << "Incoming Call !";
-	QListWidgetItem * item = callList->addIncomingCall(callID, from, accountID);
-	listWidget_callList->addItem(item);
+	Call * call = callList->addIncomingCall(callID, from, accountID);
+	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 }
 
