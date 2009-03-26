@@ -1,8 +1,6 @@
 /*
- *  Copyright (C) 2008 2009 Savoir-Faire Linux inc.
- *
+ *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Antoine Reversat <antoine.reversat@savoirfairelinux.com>
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,26 +17,48 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __SEARCH_FILTER_H__
-#define __SEARCH_FILTER_H__
-
-#include <calllist.h>
+#include <calltab.h>
 #include <gtk/gtk.h>
-#include <libsexy/sexy-icon-entry.h>
+#include <stdlib.h>
+#include <calltree.h>
+#include <contacts/searchbar.h>
+
+calltab_t*
+calltab_init(gchar* searchbar_type)
+{
+	calltab_t* ret;
+
+	ret = malloc(sizeof(calltab_t));
+
+	ret->store = NULL;
+	ret->view = NULL;
+	ret->tree = NULL;
+  ret->searchbar = NULL;
+	ret->callQueue = NULL;
+	ret->selectedCall = NULL;
+
+	calltree_create(ret, searchbar_type);
+	calllist_init(ret);
 
 
-GdkPixbuf *waitingPixOff;
+	return ret;
+}
 
-GtkTreeModel* create_filter(GtkTreeModel* child);
+void
+calltab_select_call (calltab_t* tab, call_t * c )
+{
+  tab->selectedCall = c;
+}
 
-gboolean is_visible(GtkTreeModel* model, GtkTreeIter* iter, gpointer data);
 
-GtkWidget* create_filter_entry_contact();
+call_t *
+calltab_get_selected_call (calltab_t* tab)
+{
+  return tab->selectedCall;
+}
 
-GtkWidget* create_filter_entry_history();
-
-void activateWaitingLayer();
-
-void deactivateWaitingLayer();
-
-#endif
+void
+calltab_create_searchbar(calltab_t* tab, gchar* searchbar_type)
+{
+  tab->searchbar = searchbar_new(searchbar_type);
+}

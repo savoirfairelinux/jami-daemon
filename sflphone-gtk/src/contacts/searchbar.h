@@ -1,6 +1,9 @@
 /*
- *  Copyright (C) 2007 Savoir-Faire Linux inc.
+ *  Copyright (C) 2008 2009 Savoir-Faire Linux inc.
+ *
  *  Author: Antoine Reversat <antoine.reversat@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,28 +20,42 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __NOTEBOOK_H__
-#define __NOTEBOOK_H__
+/**
+ * This file contains functions relative to search bar used with history and
+ * addressbook.
+ */
+
+#ifndef __SEARCH_FILTER_H__
+#define __SEARCH_FILTER_H__
 
 #include <calllist.h>
 #include <gtk/gtk.h>
+#include <libsexy/sexy-icon-entry.h>
+#include <addressbook.h>
+#include <history.h>
 
-GtkTreeModel* histfilter;
 
-calltab_t* calltab_init(gchar* searchbar_type);
+GdkPixbuf *waitingPixOff;
 
-/** Mark a call as selected.  There can be only one selected call.  This call
-  * is the currently highlighted one in the list.
-  * @param c The call */
-void
-call_select (calltab_t*, call_t *);
+/**
+ * Create a new search bar with "type" passed in
+ * parameter
+ */
+GtkWidget* searchbar_new(gchar*);
 
-/** Return the selected call.
-  * @return The number of the caller */
-call_t *
-call_get_selected (calltab_t*);
+/**
+ * Initialize a specific search bar
+ */
+void searchbar_init(calltab_t *);
 
-void
-create_searchbar(calltab_t *, gchar *);
+/**
+ * Activate a waiting layer during search
+ */
+void activateWaitingLayer();
+
+/**
+ * Deactivate waiting layer
+ */
+void deactivateWaitingLayer();
 
 #endif

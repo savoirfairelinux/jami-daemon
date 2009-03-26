@@ -19,9 +19,10 @@
 
 #include <calllist.h>
 #include <calltree.h>
-#include <contacts/addressbook/eds.h>
+#include <contacts/searchbar.h>
 
-void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo){
+// TODO : sflphoneGTK : try to do this more generic
+void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_type_t type, GdkPixbuf *photo){
 
     gchar *from;
     call_t *new_call;
@@ -54,83 +55,85 @@ void create_new_entry_in_contactlist (gchar *contact_name, gchar *contact_phone,
             attach_thumbnail (new_call, pixbuf);
         }
 
-        call_list_add (contacts, new_call);
-        update_call_tree_add(contacts, new_call);
+        calllist_add (contacts, new_call);
+        calltree_add_call(contacts, new_call);
     }
 }
 
 void
-call_list_init (calltab_t* tab)
+calllist_init (calltab_t* tab)
 {
   tab->callQueue = g_queue_new ();
   tab->selectedCall = NULL;
 }
 
 void
-call_list_clean (calltab_t* tab)
+calllist_clean (calltab_t* tab)
 {
   g_queue_free (tab->callQueue);
 }
 
 void
-call_list_reset (calltab_t* tab)
+calllist_reset (calltab_t* tab)
 {
   g_queue_free (tab->callQueue);
   tab->callQueue = g_queue_new();
 }
 
 void
-call_list_add (calltab_t* tab, call_t * c)
+calllist_add (calltab_t* tab, call_t * c)
 {
   if( tab == history )
   {
     // First case: can still add calls to the list
-    if( call_list_get_size(tab) < dbus_get_max_calls() )
+    if( calllist_get_size(tab) < dbus_get_max_calls() )
     {
       g_queue_push_tail (tab->callQueue, (gpointer *) c);
-      update_call_tree_add( history , c );
+      calltree_add_call( history , c );
     }
     // List full -> Remove the last call from history and preprend the new call to the list
     else
     {
-      update_call_tree_remove( history , (call_t*)g_queue_pop_head( tab -> callQueue ) );
+      calltree_remove_call( history , (call_t*)g_queue_pop_head( tab -> callQueue ) );
       g_queue_push_tail (tab->callQueue, (gpointer *) c);
-      update_call_tree_add( history , c );
+      calltree_add_call( history , c );
     }
   }
   else
     g_queue_push_tail (tab->callQueue, (gpointer *) c);
 }
 
+// TODO : sflphoneGTK : try to do this more generic
 void
-call_list_clean_history( void )
+calllist_clean_history( void )
 {
   unsigned int i;
-  guint size = call_list_get_size( history );
-  g_print("history list size = %i\n", call_list_get_size( history ));
+  guint size = calllist_get_size( history );
+  g_print("history list size = %i\n", calllist_get_size( history ));
   for( i = 0 ; i < size ; i++ )
   {
     g_print("Delete calls");
-    call_t* c = call_list_get_nth( history , i );
+    call_t* c = calllist_get_nth( history , i );
     // Delete the call from the call tree
     g_print("Delete calls");
-    update_call_tree_remove(history , c);
+    calltree_remove_call(history , c);
   }
-  call_list_reset( history );
+  calllist_reset( history );
+}
+
+// TODO : sflphoneGTK : try to do this more generic
+void
+calllist_remove_from_history( call_t* c )
+{
+  calllist_remove( history, c->callID );
+  calltree_remove_call( history, c );
+  g_print("Size of history = %i\n" , calllist_get_size( history ));
 }
 
 void
-call_list_remove_from_history( call_t* c )
+calllist_remove (calltab_t* tab, const gchar * callID)
 {
-  call_list_remove( history, c->callID );
-  update_call_tree_remove( history, c );
-  g_print("Size of history = %i\n" , call_list_get_size( history ));
-}
-
-void
-call_list_remove (calltab_t* tab, const gchar * callID)
-{
-  call_t * c = call_list_get(tab, callID);
+  call_t * c = calllist_get(tab, callID);
   if (c)
   {
     g_queue_remove(tab->callQueue, c);
@@ -139,7 +142,7 @@ call_list_remove (calltab_t* tab, const gchar * callID)
 
 
 call_t *
-call_list_get_by_state (calltab_t* tab, call_state_t state )
+calllist_get_by_state (calltab_t* tab, call_state_t state )
 {
   GList * c = g_queue_find_custom (tab->callQueue, &state, get_state_callstruct);
   if (c)
@@ -154,19 +157,19 @@ call_list_get_by_state (calltab_t* tab, call_state_t state )
 }
 
 guint
-call_list_get_size (calltab_t* tab)
+calllist_get_size (calltab_t* tab)
 {
   return g_queue_get_length (tab->callQueue);
 }
 
 call_t *
-call_list_get_nth (calltab_t* tab, guint n )
+calllist_get_nth (calltab_t* tab, guint n )
 {
   return g_queue_peek_nth (tab->callQueue, n);
 }
 
 call_t *
-call_list_get (calltab_t* tab, const gchar * callID )
+calllist_get (calltab_t* tab, const gchar * callID )
 {
   GList * c = g_queue_find_custom (tab->callQueue, callID, is_callID_callstruct);
   if (c)

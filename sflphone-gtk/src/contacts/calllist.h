@@ -31,29 +31,27 @@ typedef struct {
 	GtkListStore* store;
 	GtkWidget* view;
 	GtkWidget* tree;
+  GtkWidget* searchbar;
 
-        GtkWidget* searchbar;
-        // GtkTreeModel* histfilter;
-
-	// Calllist vars
+  // Calllist vars
 	GQueue* callQueue;
 	call_t* selectedCall;
 } calltab_t;
 
 void
-create_new_entry_in_contactlist (gchar *, gchar *, contact_type_t, GdkPixbuf *);
+calllist_add_contact (gchar *, gchar *, contact_type_t, GdkPixbuf *);
 
 /** This function initialize a call list. */
 void
-call_list_init (calltab_t* tab);
+calllist_init (calltab_t* tab);
 
 /** This function empty and free the call list. */
 void
-call_list_clean(calltab_t* tab);
+calllist_clean(calltab_t* tab);
 
 /** This function empty, free the call list and allocate a new one. */
 void
-call_list_reset (calltab_t* tab);
+calllist_reset (calltab_t* tab);
 
 /** Get the maximun number of calls in the history calltab */
 gdouble
@@ -67,49 +65,49 @@ call_history_set_max_calls( const gdouble number );
   * @param c The call you want to add
   * */
 void
-call_list_add (calltab_t* tab, call_t * c);
+calllist_add (calltab_t* tab, call_t * c);
 
 /** This function remove a call from list.
   * @param callID The callID of the call you want to remove
   */
 void
-call_list_remove (calltab_t* tab, const gchar * callID);
+calllist_remove (calltab_t* tab, const gchar * callID);
 
 /** Return the first call that corresponds to the state.
   * This is usefull for unique states as DIALING and CURRENT.
   * @param state The state
   * @return A call or NULL */
 call_t *
-call_list_get_by_state (calltab_t* tab, call_state_t state);
+calllist_get_by_state (calltab_t* tab, call_state_t state);
 
 /** Return the number of calls in the list
   * @return The number of calls in the list */
 guint
-call_list_get_size (calltab_t* tab);
+calllist_get_size (calltab_t* tab);
 
 /** Return the call at the nth position in the list
   * @param n The position of the call you want
   * @return A call or NULL */
 call_t *
-call_list_get_nth (calltab_t* tab, guint n );
+calllist_get_nth (calltab_t* tab, guint n );
 
 /** Return the call corresponding to the callID
   * @param n The callID of the call you want
   * @return A call or NULL */
 call_t *
-call_list_get (calltab_t* tab, const gchar * callID );
+calllist_get (calltab_t* tab, const gchar * callID );
 
 /**
  * Clean the history. Delete all calls
  */
 void
-call_list_clean_history();
+calllist_clean_history();
 
 /**
  * Remove one specified call from the history list
  * @param c The call to remove
  */
 void
-call_list_remove_from_history( call_t* c);
+calllist_remove_from_history( call_t* c);
 
 #endif

@@ -49,7 +49,7 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
   val.g_type = 0;
   gtk_tree_model_get_value (model, &iter, 2, &val);
 
-  call_select(active_calltree, (call_t*) g_value_get_pointer(&val));
+  calltab_select_call(active_calltree, (call_t*) g_value_get_pointer(&val));
   g_value_unset(&val);
 
   toolbar_update_buttons();
@@ -67,7 +67,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
 
     g_print("double click action\n");
 
-    selectedCall = call_get_selected( active_calltree );
+    selectedCall = calltab_get_selected_call( active_calltree );
 
     if (selectedCall)
     {
@@ -107,10 +107,10 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
             // Create a new call
             create_new_call (to, from, CALL_STATE_DIALING, account_id, &new_call);
 
-            call_list_add(current_calls, new_call);
-            update_call_tree_add(current_calls, new_call);
+            calllist_add(current_calls, new_call);
+            calltree_add_call(current_calls, new_call);
             sflphone_place_call(new_call);
-            display_calltree(current_calls);
+            calltree_display(current_calls);
         }
     }
 }
@@ -160,13 +160,13 @@ return FALSE;
  * Reset call tree
  */
   void
-reset_call_tree (calltab_t* tab)
+calltree_reset (calltab_t* tab)
 {
   gtk_list_store_clear (tab->store);
 }
 
   void
-create_call_tree (calltab_t* tab, gchar* searchbar_type)
+calltree_create (calltab_t* tab, gchar* searchbar_type)
 {
   GtkWidget *sw;
   GtkCellRenderer *rend;
@@ -230,7 +230,7 @@ create_call_tree (calltab_t* tab, gchar* searchbar_type)
 
   // no search bar if tab is either "history" or "addressbook"
   if(searchbar_type){
-      create_searchbar(tab,searchbar_type);
+      calltab_create_searchbar(tab,searchbar_type);
       gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
   }
 
@@ -244,7 +244,7 @@ create_call_tree (calltab_t* tab, gchar* searchbar_type)
 }
 
 void
-update_call_tree_remove (calltab_t* tab, call_t * c)
+calltree_remove_call (calltab_t* tab, call_t * c)
 {
   GtkTreeIter iter;
   GValue val;
@@ -269,14 +269,14 @@ update_call_tree_remove (calltab_t* tab, call_t * c)
       }
     }
   }
-  call_t * selectedCall = call_get_selected(tab);
+  call_t * selectedCall = calltab_get_selected_call(tab);
   if(selectedCall == c)
-    call_select(tab, NULL);
+    calltab_select_call(tab, NULL);
   toolbar_update_buttons();
 }
 
   void
-update_call_tree (calltab_t* tab, call_t * c)
+calltree_update_call (calltab_t* tab, call_t * c)
 {
   GdkPixbuf *pixbuf=NULL;
   GtkTreeIter iter;
@@ -397,9 +397,9 @@ update_call_tree (calltab_t* tab, call_t * c)
 }
 
   void
-update_call_tree_add (calltab_t* tab, call_t * c)
+calltree_add_call (calltab_t* tab, call_t * c)
 {
-  if( tab == history && ( call_list_get_size( tab ) > dbus_get_max_calls() ) )
+  if( tab == history && ( calllist_get_size( tab ) > dbus_get_max_calls() ) )
     return;
 
   GdkPixbuf *pixbuf=NULL;
@@ -485,7 +485,7 @@ update_call_tree_add (calltab_t* tab, call_t * c)
   toolbar_update_buttons();
 }
 
-void display_calltree (calltab_t *tab) {
+void calltree_display (calltab_t *tab) {
 
     GtkTreeSelection *sel;
 
@@ -540,5 +540,4 @@ void display_calltree (calltab_t *tab) {
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
 	g_signal_emit_by_name(sel, "changed");
 	toolbar_update_buttons();
-	//gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(histfilter));
 }

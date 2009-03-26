@@ -29,47 +29,39 @@
   * @brief The GtkTreeView that list calls in the main window.
   */
 
-GtkWidget * filter_entry_contact;
-GtkWidget * filter_entry_history;
-
-calltab_t* active_calltree;
-calltab_t* current_calls;
-calltab_t* history;
-calltab_t* contacts;
-
 /**
  * Create a new widget calltree
  * @return GtkWidget* A new widget
  */
 void
-create_call_tree(calltab_t* tab, gchar* searchbar_type);
+calltree_create(calltab_t* tab, gchar* searchbar_type);
 
 /**
  * Add a call in the calltree
  * @param c The call to add
  */
 void
-update_call_tree_add (calltab_t* ct, call_t * c);
+calltree_add_call (calltab_t* ct, call_t * c);
 
 /*
  * Update the call tree if the call state changes
  * @param c The call to update
  */
 void
-update_call_tree (calltab_t* ct, call_t * c);
+calltree_update_call (calltab_t* ct, call_t * c);
 
 /**
  * Remove a call from the call tree
  * @param c The call to remove
  */
 void
-update_call_tree_remove (calltab_t* ct, call_t * c);
+calltree_remove_call (calltab_t* ct, call_t * c);
 
 void
-reset_call_tree (calltab_t* tab);
+calltree_reset (calltab_t* tab);
 
 void
-display_calltree (calltab_t *tab);
+calltree_display (calltab_t *tab);
 
 void
 row_activated(GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, void *);

@@ -28,7 +28,7 @@
 #include <mainwindow.h>
 #include <menus.h>
 #include <sliders.h>
-#include <contacts/searchfilter.h>
+#include <contacts/searchbar.h>
 #include <assistant.h>
 
 #include <gtk/gtk.h>
@@ -60,7 +60,7 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 /** Ask the user if he wants to hangup current calls */
 gboolean
 main_window_ask_quit(){
-    guint count = call_list_get_size(current_calls);
+    guint count = calllist_get_size(current_calls);
     GtkWidget * dialog;
     gint response;
     gchar * question;
@@ -179,7 +179,9 @@ create_main_window ()
   /* dont't show the contact list */
   gtk_widget_hide(contacts->tree);
 
-  gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
+  searchbar_init(history);
+  searchbar_init(contacts);
+
   /* don't show waiting layer */
   gtk_widget_hide(waitingLayer);
 

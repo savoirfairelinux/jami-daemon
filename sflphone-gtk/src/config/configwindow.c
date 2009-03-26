@@ -177,7 +177,7 @@ update_max_value( GtkRange* scale )
     void
 clean_history( void )
 {
-    call_list_clean_history();
+    calllist_clean_history();
 }
 
 /**

@@ -55,7 +55,7 @@ void update_menus()
   gtk_widget_set_sensitive( GTK_WIDGET(recordMenu), FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
 
-  call_t * selectedCall = call_get_selected(active_calltree);
+  call_t * selectedCall = calltab_get_selected_call(active_calltree);
   if (selectedCall)
   {
     gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   TRUE);
@@ -206,7 +206,7 @@ switch_account(  GtkWidget* item , gpointer data UNUSED)
   static void
 call_hold  (void* foo UNUSED)
 {
-  call_t * selectedCall = call_get_selected(current_calls);
+  call_t * selectedCall = calltab_get_selected_call(current_calls);
 
   if(selectedCall)
   {
@@ -252,10 +252,10 @@ call_wizard ( void * foo UNUSED)
 static void
 remove_from_history( void * foo UNUSED)
 {
-  call_t* c = call_get_selected( history );
+  call_t* c = calltab_get_selected_call( history );
   if(c){
     g_print("Remove the call from the history\n");
-    call_list_remove_from_history( c );
+    calllist_remove_from_history( c );
   }
 }
 
@@ -265,7 +265,7 @@ call_back( void * foo UNUSED)
     call_t *selected_call, *new_call;
     gchar *to, *from;
 
-    selected_call = call_get_selected( active_calltree );
+    selected_call = calltab_get_selected_call( active_calltree );
 
     if( selected_call )
     {
@@ -274,10 +274,10 @@ call_back( void * foo UNUSED)
 
         create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
 
-        call_list_add(current_calls, new_call);
-        update_call_tree_add(current_calls, new_call);
+        calllist_add(current_calls, new_call);
+        calltree_add_call(current_calls, new_call);
         sflphone_place_call(new_call);
-        display_calltree (current_calls);
+        calltree_display (current_calls);
     }
 }
 
@@ -404,7 +404,7 @@ edit_accounts ( void * foo UNUSED)
 edit_copy ( void * foo UNUSED)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected(current_calls);
+  call_t * selectedCall = calltab_get_selected_call(current_calls);
   gchar * no = NULL;
 
   if(selectedCall)
@@ -436,7 +436,7 @@ edit_copy ( void * foo UNUSED)
 edit_paste ( void * foo UNUSED)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected(current_calls);
+  call_t * selectedCall = calltab_get_selected_call(current_calls);
   gchar * no = gtk_clipboard_wait_for_text (clip);
 
   if(no && selectedCall)
@@ -457,7 +457,7 @@ edit_paste ( void * foo UNUSED)
 	    g_free(selectedCall->from);
 	    selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
 	  }
-	  update_call_tree(current_calls, selectedCall);
+	  calltree_update_call(current_calls, selectedCall);
 	}
 	break;
       case CALL_STATE_RINGING:
@@ -476,7 +476,7 @@ edit_paste ( void * foo UNUSED)
 	  g_free(selectedCall->from);
 	  selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
 
-	  update_call_tree(current_calls, selectedCall);
+	  calltree_update_call(current_calls, selectedCall);
 	}
 	break;
       case CALL_STATE_CURRENT:
@@ -494,7 +494,7 @@ edit_paste ( void * foo UNUSED)
 	    selectedCall->from = g_strconcat("\"",call_get_name(selectedCall) ,"\" <", temp, ">", NULL);
 	    g_free(before);
 	    g_free(temp);
-	    update_call_tree(current_calls, selectedCall);
+	    calltree_update_call(current_calls, selectedCall);
 
 	  }
 	}
@@ -513,7 +513,7 @@ edit_paste ( void * foo UNUSED)
 
     g_free(selectedCall->from);
     selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
-    update_call_tree(current_calls,selectedCall);
+    calltree_update_call(current_calls,selectedCall);
   }
 
 }
@@ -521,8 +521,8 @@ edit_paste ( void * foo UNUSED)
   static void
 clear_history (void)
 {
-  if( call_list_get_size( history ) != 0 ){
-      call_list_clean_history();
+  if( calllist_get_size( history ) != 0 ){
+      calllist_clean_history();
     }
 }
 
@@ -713,7 +713,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
   gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE;
   gboolean accounts = FALSE;
 
-  call_t * selectedCall = call_get_selected(current_calls);
+  call_t * selectedCall = calltab_get_selected_call(current_calls);
   if (selectedCall)
   {
     copy = TRUE;
@@ -887,7 +887,7 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
   gboolean pickup = FALSE;
   gboolean remove = FALSE;
 
-  call_t * selectedCall = call_get_selected( history );
+  call_t * selectedCall = calltab_get_selected_call( history );
   if (selectedCall)
   {
     remove = TRUE;

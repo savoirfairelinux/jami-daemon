@@ -107,7 +107,7 @@ call_state_cb (DBusGProxy *proxy UNUSED,
                   void * foo  UNUSED )
 {
   g_print ("Call %s state %s\n",callID, state);
-  call_t * c = call_list_get(current_calls, callID);
+  call_t * c = calllist_get(current_calls, callID);
   if(c)
   {
     if ( strcmp(state, "HUNGUP") == 0 )
@@ -117,11 +117,11 @@ call_state_cb (DBusGProxy *proxy UNUSED,
 	// peer hung up, the conversation was established, so _start has been initialized with the current time value
 	g_print("call state current\n");
 	(void) time(&c->_stop);
-	update_call_tree( history, c );
+	calltree_update_call( history, c );
       }
       stop_notification();
       sflphone_hung_up (c);
-      update_call_tree( history, c );
+      calltree_update_call( history, c );
     }
     else if ( strcmp(state, "UNHOLD_CURRENT") == 0 )
     {

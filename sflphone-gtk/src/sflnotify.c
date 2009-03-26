@@ -63,7 +63,7 @@ answer_call_cb( NotifyNotification *notification, gpointer data  UNUSED )
 {
     call_t* c = (call_t*)g_object_get_data( G_OBJECT( notification ) , "call" );
     c->history_state = INCOMING;
-    update_call_tree( history , c );
+    calltree_update_call( history , c );
     dbus_accept(c);
 #if GTK_CHECK_VERSION(2,10,0)
     if( __POPUP_WINDOW )

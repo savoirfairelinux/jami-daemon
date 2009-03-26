@@ -4,7 +4,13 @@ SUBDIRS = addressbook
 
 noinst_LTLIBRARIES = libcontacts.la
 
-libcontacts_la_SOURCES = searchfilter.c
+libcontacts_la_SOURCES = \
+  searchbar.c \
+  calllist.c \
+  calltab.c \
+  calltree.c \
+  history.c \
+  addressbook.c
 
 libcontacts_la_LDFLAGS = @DEPS_LDFLAGS@
 					  

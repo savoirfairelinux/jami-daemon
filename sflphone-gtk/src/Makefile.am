@@ -16,13 +16,10 @@ sflphone_gtk_SOURCES = \
   sflnotify.c \
   assistant.c \
   mainwindow.c \
-  calllist.c \
   dialpad.c \
   menus.c \
   toolbar.c \
   call.c \
-  calltab.c \
-  calltree.c \
   actions.c \
   accountlist.c \
   marshaller.c \
@@ -32,8 +29,8 @@ sflphone_gtk_SOURCES = \
   timestamp.c \
   reqaccount.c
 
-noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h calllist.h dialpad.h codeclist.h assistant.h timestamp.h reqaccount.h \
-                  callmanager-glue.h errors.h sflphone_const.h configurationmanager-glue.h instance-glue.h menus.h calltab.h calltree.h \
+noinst_HEADERS =  actions.h dbus.h sflnotify.h mainwindow.h dialpad.h codeclist.h assistant.h timestamp.h reqaccount.h \
+                  callmanager-glue.h errors.h sflphone_const.h configurationmanager-glue.h instance-glue.h menus.h \
                   accountlist.h marshaller.h sliders.h statusicon.h call.h toolbar.h
 
 EXTRA_DIST   = marshaller.list  

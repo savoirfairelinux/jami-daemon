@@ -51,11 +51,11 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
 
   create_new_call (to, from, CALL_STATE_DIALING, account_id, &mailbox_call);
   g_print("TO : %s\n" , mailbox_call->to);
-  call_list_add( current_calls , mailbox_call );
-  update_call_tree_add( current_calls , mailbox_call );
+  calllist_add( current_calls , mailbox_call );
+  calltree_add_call( current_calls , mailbox_call );
   update_menus();
   sflphone_place_call( mailbox_call );
-  display_calltree(current_calls);
+  calltree_display(current_calls);
 }
 
   /**
@@ -69,12 +69,12 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
   call_t* new_call;
   gchar *to, *from;
 
-  selectedCall = call_get_selected(active_calltree);
+  selectedCall = calltab_get_selected_call(active_calltree);
 
-  if(call_list_get_size(current_calls)>0)
+  if(calllist_get_size(current_calls)>0)
     sflphone_pick_up();
 
-  else if(call_list_get_size(active_calltree) > 0){
+  else if(calllist_get_size(active_calltree) > 0){
     if( selectedCall)
     {
       printf("Calling a called num\n");
@@ -86,21 +86,21 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 
       printf("call : from : %s to %s\n", new_call->from, new_call->to);
 
-      call_list_add(current_calls, new_call);
-      update_call_tree_add(current_calls, new_call);
+      calllist_add(current_calls, new_call);
+      calltree_add_call(current_calls, new_call);
       sflphone_place_call(new_call);
-      display_calltree (current_calls);
+      calltree_display (current_calls);
     }
     else
     {
       sflphone_new_call();
-      display_calltree(current_calls);
+      calltree_display(current_calls);
     }
   }
   else
   {
     sflphone_new_call();
-    display_calltree(current_calls);
+    calltree_display(current_calls);
   }
 }
 
@@ -157,7 +157,7 @@ static void toggle_button_cb (GtkToggleToolButton *widget, gpointer user_data)
     to_switch = (calltab_t*) user_data;
     toggle = gtk_toggle_tool_button_get_active (widget);
 
-    (toggle)? display_calltree (to_switch) : display_calltree (current_calls);
+    (toggle)? calltree_display (to_switch) : calltree_display (current_calls);
 }
 
 GtkWidget *create_toolbar ()
@@ -305,7 +305,7 @@ toolbar_update_buttons ()
   gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(transfertButton), FALSE);
   gtk_signal_handler_unblock(transfertButton, transfertButtonConnId);
 
-  call_t * selectedCall = call_get_selected(active_calltree);
+  call_t * selectedCall = calltab_get_selected_call(active_calltree);
     if (selectedCall)
     {
         switch(selectedCall->state)
