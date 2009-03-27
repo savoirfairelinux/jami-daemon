@@ -108,6 +108,8 @@ private:
 	
 	call_state currentState;
 	bool recording;
+	
+	static const char * callStateIcons[11];
 
 	Call(call_state startState, QString callId, QString from = "", QString account = "");
 	

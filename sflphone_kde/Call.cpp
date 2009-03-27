@@ -5,6 +5,8 @@
 #include "SFLPhone.h"
 #include "sflphone_const.h"
 
+const char * Call::callStateIcons[11] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", ""};
+
 const call_state Call::actionPerformedStateMap [11][5] = 
 {
 //                      ACCEPT                  REFUSE                  TRANSFER                   HOLD                           RECORD
@@ -61,20 +63,24 @@ void Call::initCallItem()
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
 	itemWidget = new QWidget();
-	QLabel * labelIcon = new QLabel("", itemWidget);
+	QLabel * labelIcon = new QLabel(itemWidget);
 	QLabel * labelCallNumber = new QLabel(peer, itemWidget);
 	QLabel * labelTransferTo = new QLabel("Transfer to : ", itemWidget);
-	QLabel * labelTransferNumber = new QLabel("", itemWidget);
+	QLabel * labelTransferNumber = new QLabel(itemWidget);
 	labelIcon->setObjectName(QString(CALL_ITEM_ICON));
 	labelCallNumber->setObjectName(QString(CALL_ITEM_CALL_NUMBER));
 	labelTransferNumber->setObjectName(QString(CALL_ITEM_TRANSFER_NUMBER));
-	QGridLayout * layout = new QGridLayout();
-	layout->setContentsMargins(0,0,0,0);
-	layout->setSpacing(1);
-	layout->addWidget(labelIcon, 0, 0, 1, 0);
-	layout->addWidget(labelCallNumber, 0, 1, 0, 2);
-	layout->addWidget(labelTransferTo, 1, 1);
-	layout->addWidget(labelTransferNumber, 1, 2);
+	QGridLayout * layout = new QGridLayout(itemWidget);
+	layout->setMargin(0);
+	layout->setSpacing(0);
+	layout->addWidget(labelIcon, 0, 0, 2, 1);
+	layout->addWidget(labelCallNumber, 0, 1, 1, 2);
+	layout->addWidget(labelTransferTo, 1, 2, 1, 1);
+	layout->addWidget(labelTransferNumber, 1, 1, 1, 1);
+	labelIcon->raise();
+	labelCallNumber->raise();
+	labelTransferTo->raise();
+	labelTransferNumber->raise();
 	itemWidget->setLayoutDirection(Qt::LeftToRight);
 	itemWidget->setLayout(layout);
 	item->setSizeHint(itemWidget->sizeHint());
@@ -185,7 +191,7 @@ call_state Call::stateChanged(const QString & newStateName)
 	call_state previousState = currentState;
 	daemon_call_state dcs = toDaemonCallState(newStateName);
 	changeCurrentState(stateChangedStateMap[currentState][dcs]);
-	qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newState) << " on call with state " << previousState << ". Become " << currentState;
+	qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newStateName) << " on call with state " << previousState << ". Become " << currentState;
 	return currentState;
 }
 
