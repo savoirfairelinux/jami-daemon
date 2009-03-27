@@ -19,6 +19,7 @@
 
 #include <addressbook.h>
 #include <searchbar.h>
+#include <string.h>
 #include <addressbook-config.h>
 
 static void
@@ -44,7 +45,22 @@ addressbook_search(GtkEntry* entry)
 void
 addressbook_init()
 {
+  gchar **list;
+  gchar **config_book_uid;
+
   init();
+
+  list = (gchar **) dbus_get_addressbook_list();
+
+  if (list)
+    {
+      for (config_book_uid = list; *config_book_uid; config_book_uid++)
+        {
+          books_get_book_data_by_uid(*config_book_uid)->active = TRUE;
+        }
+      g_strfreev(list);
+    }
+
 }
 
 static void

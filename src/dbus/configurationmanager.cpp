@@ -439,6 +439,7 @@ std::vector< std::string > ConfigurationManager::getAddressbookList ( void ) {
 }
 
 void ConfigurationManager::setAddressbookList( const std::vector< std::string >& list ) {
+  _debug("Manager received setAddressbookList") ;
     Manager::instance().setAddressbookList(list);
 }
 

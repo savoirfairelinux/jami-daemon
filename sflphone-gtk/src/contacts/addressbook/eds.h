@@ -50,6 +50,19 @@ typedef struct _Hit
 } Hit;
 
 /**
+ * Book structure for "outside world"
+ */
+typedef struct
+{
+  gchar *uid;
+  gchar *name;
+  gboolean active;
+  EBook *ebook;
+} book_data_t;
+
+GSList *books_data;
+
+/**
  * Free a contact entry
  */
 void
@@ -84,6 +97,9 @@ fetch_information_from_contact(EContact *contact, EContactField field,
 
 GSList*
 get_books(void);
+
+book_data_t *
+books_get_book_data_by_uid(gchar *uid);
 
 G_END_DECLS
 

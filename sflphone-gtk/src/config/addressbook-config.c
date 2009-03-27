@@ -19,13 +19,15 @@
 
 #include "addressbook-config.h"
 #include <contacts/addressbook/eds.h>
+#include <string.h>
+#include <stdlib.h>
 
 AddressBook_Config *addressbook_config;
 GtkWidget *book_tree_view;
 
 enum
 {
-  COLUMN_BOOK_ACTIVE, COLUMN_BOOK_NAME
+  COLUMN_BOOK_ACTIVE, COLUMN_BOOK_NAME, COLUMN_BOOK_UID
 };
 
 void
@@ -141,27 +143,69 @@ addressbook_config_book_active_toggled(
   GtkTreePath *treePath;
   GtkTreeModel *model;
   gboolean active;
-  char* name;
+  gchar* name;
+  gchar* uid;
 
   // Get path of clicked book active toggle box
   treePath = gtk_tree_path_new_from_string(path);
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(data));
   gtk_tree_model_get_iter(model, &iter, treePath);
 
-  // Get active value and name at iteration
+  // Get active value  at iteration
   gtk_tree_model_get(model, &iter, COLUMN_BOOK_ACTIVE, &active,
-      COLUMN_BOOK_NAME, &name, -1);
+      COLUMN_BOOK_UID, &uid, COLUMN_BOOK_NAME, &name, -1);
 
   // Toggle active value
   active = !active;
+
+  printf("-> change active to : %d for %s\n", active, uid);
 
   // Store value
   gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_BOOK_ACTIVE, active, -1);
 
   gtk_tree_path_free(treePath);
 
-  printf("%s : %d\n", name, active);
-  printf("Not implemented !\n");
+  // Update current memory stored books data
+  books_get_book_data_by_uid(uid)->active = active;
+
+  // Save data
+
+  gboolean valid;
+
+  // Initiate double array char list for one string
+  const gchar** list = (void*) malloc(sizeof(void*));
+  int c = 0;
+
+  /* Get the first iter in the list */
+  valid = gtk_tree_model_get_iter_first(model, &iter);
+
+  while (valid)
+    {
+      // Get active value at iteration
+      gtk_tree_model_get(model, &iter, COLUMN_BOOK_ACTIVE, &active,
+          COLUMN_BOOK_UID, &uid, COLUMN_BOOK_NAME, &name, -1);
+
+      if (active)
+        {
+          // Reallocate memory each time
+          if (c != 0)
+            list = (void*) realloc(list, (c + 1) * sizeof(void*));
+
+          *(list + c) = uid;
+          c++;
+        }
+
+      valid = gtk_tree_model_iter_next(model, &iter);
+    }
+
+  // Allocate NULL array at the end for Dbus
+  list = (void*) realloc(list, (c + 1) * sizeof(void*));
+  *(list + c) = NULL;
+
+  // Call daemon to store in config file
+  dbus_set_addressbook_list(list);
+
+  free(list);
 }
 
 static void
@@ -170,26 +214,25 @@ addressbook_config_fill_book_list()
   GtkTreeIter list_store_iterator;
   GSList *book_list_iterator;
   GtkListStore *store;
-  EBook *book;
-  ESource *source;
+  book_data_t *book_data;
 
   // Get model of view and clear it
   store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));
   gtk_list_store_clear(store);
 
-  // Get list of books
-  GSList *books = get_books();
-
   // Populate window
-  for (book_list_iterator = books; book_list_iterator != NULL; book_list_iterator
+  for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
       = book_list_iterator->next)
     {
-      book = (EBook *) book_list_iterator->data;
-      source = e_book_get_source(book);
+      book_data = (book_data_t *) book_list_iterator->data;
       gtk_list_store_append(store, &list_store_iterator);
-      gtk_list_store_set(store, &list_store_iterator, COLUMN_BOOK_ACTIVE, TRUE,
-      COLUMN_BOOK_NAME, e_source_peek_name(source), -1);
+      gtk_list_store_set(store, &list_store_iterator, COLUMN_BOOK_ACTIVE,
+          book_data->active, COLUMN_BOOK_UID, book_data->uid, COLUMN_BOOK_NAME,
+          book_data->name, -1);
     }
+
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));
+
 }
 
 GtkWidget*
@@ -275,8 +318,9 @@ create_addressbook_settings()
 
   gtk_container_add( GTK_CONTAINER (result_frame) , scrolled_window );
 
-  store = gtk_list_store_new(2,
+  store = gtk_list_store_new(3,
           G_TYPE_BOOLEAN,             // Active
+          G_TYPE_STRING,             // uid
           G_TYPE_STRING              // Name
           );
 

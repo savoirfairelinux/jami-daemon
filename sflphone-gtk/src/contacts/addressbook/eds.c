@@ -40,7 +40,6 @@ typedef struct _Handler_And_Data
   int book_views_remaining;
 } Handler_And_Data;
 
-static GSList *books = NULL;
 static int pixbuf_size = 32;
 
 static EContactField search_fields[] =
@@ -55,6 +54,22 @@ free_hit(Hit *h)
   g_free(h->phone_home);
   g_free(h->phone_mobile);
   g_free(h);
+}
+
+book_data_t *
+books_get_book_data_by_uid(gchar *uid)
+{
+  GSList *book_list_iterator;
+  book_data_t *book_data;
+
+  for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
+      = book_list_iterator->next)
+    {
+      book_data = (book_data_t *) book_list_iterator->data;
+      if (strcmp(book_data->uid, uid) == 0)
+        return book_data;
+    }
+  return NULL;
 }
 
 /**
@@ -196,6 +211,8 @@ init(void)
 {
   GSList *list, *l;
   ESourceList *source_list;
+  book_data_t *book_data;
+
   source_list = e_source_list_new_for_gconf_default(
       "/apps/evolution/addressbook/sources");
 
@@ -213,14 +230,15 @@ init(void)
       for (m = sources; m != NULL; m = m->next)
         {
           ESource *source = m->data;
-          //printf("%s\n",e_source_peek_name(source));
-          //printf("%s\n",e_source_get_property (source, "limit"));
-          //printf("%s\n",e_source_get_property (source, "timeout"));
-          //printf("end\n");
           EBook *book = e_book_new(source, NULL);
           if (book != NULL)
             {
-              books = g_slist_prepend(books, book);
+              book_data = g_new(book_data_t, 1);
+              book_data->active = FALSE;
+              book_data->name = e_source_peek_name(source);
+              book_data->uid = e_source_peek_uid(source);
+              book_data->ebook = book;
+              books_data = g_slist_prepend(books_data, book_data);
               e_book_open(book, TRUE, NULL);
             }
         }
@@ -229,18 +247,11 @@ init(void)
   current_search_id = 0;
 
   g_object_unref (source_list);
-  get_books();
 }
 
-GSList*
-get_books(void)
-{
-  return books;
-}
-
-/**
- * Final callback after all books have been processed.
- */
+              /**
+               * Final callback after all books have been processed.
+               */
 static void
 view_finish(EBookView *book_view, Handler_And_Data *had)
 {
@@ -391,18 +402,22 @@ search_async(const char *query, int max_results, SearchAsyncHandler handler,
   had->hits = NULL;
   had->max_results_remaining = max_results;
   had->book_views_remaining = 0;
-  for (iter = books; iter != NULL; iter = iter->next)
+  for (iter = books_data; iter != NULL; iter = iter->next)
     {
-      EBook *book = (EBook *) iter->data;
-      EBookView *book_view = NULL;
-      e_book_get_book_view(book, book_query, NULL, max_results, &book_view,
-          NULL);
-      if (book_view != NULL)
+      book_data_t *book_data = (book_data_t *) iter->data;
+
+      if (book_data->active)
         {
-          had->book_views_remaining++;
-          g_signal_connect (book_view, "contacts_added", (GCallback) view_contacts_added_cb, had);
-          g_signal_connect (book_view, "sequence_complete", (GCallback) view_completed_cb, had);
-          e_book_view_start(book_view);
+          EBookView *book_view = NULL;
+          e_book_get_book_view(book_data->ebook, book_query, NULL, max_results,
+              &book_view, NULL);
+          if (book_view != NULL)
+            {
+              had->book_views_remaining++;
+              g_signal_connect (book_view, "contacts_added", (GCallback) view_contacts_added_cb, had);
+              g_signal_connect (book_view, "sequence_complete", (GCallback) view_completed_cb, had);
+              e_book_view_start(book_view);
+            }
         }
     }
   if (had->book_views_remaining == 0)
