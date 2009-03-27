@@ -21,7 +21,7 @@
 #include <menus.h>
 #include <config.h>
 #include <configwindow.h>
-#include <dbus.h>
+#include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <assistant.h>
 #include <gtk/gtk.h>
@@ -982,7 +982,7 @@ void add_registered_accounts_to_menu (GtkWidget *menu) {
     unsigned int i;
     account_t* acc;
     gchar* alias;
-    
+
     menu_items = gtk_separator_menu_item_new ();
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
     gtk_widget_show (menu_items);

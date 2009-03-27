@@ -19,7 +19,7 @@
  */
 
 #include <actions.h>
-#include <dbus.h>
+#include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <menus.h>
 #include <statusicon.h>
