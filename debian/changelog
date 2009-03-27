@@ -1,3 +1,17 @@
+sflphone (0.9.4-rc1) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * Fix bug while trying to hold/unhold several simultaneous call
+  * Improve address book build system
+  * Implement SIP url popup on incoming call
+  * Improve GTK+ panel configuration
+  [ Julien Bonjean ]
+  * GTK+ client refactoring
+  * GTK+ clean up
+  * Address book improvment
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 27 Mar 2009 18:29:15 -0500
+
 sflphone (0.9.4-0beta1) %system%; urgency=low
 
   [ Alexandre Savard ]
