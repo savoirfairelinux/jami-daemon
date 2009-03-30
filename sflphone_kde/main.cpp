@@ -5,6 +5,7 @@
 #include <QtGui>
 #include "ConfigDialog.h"
 #include "SFLPhone.h"
+#include "AccountWizard.h"
 
 static const char description[] = I18N_NOOP("A KDE 4 Client for SflPhone");
 
@@ -29,7 +30,6 @@ int main(int argc, char **argv)
 		app.installTranslator(&translator);
 	
 		SFLPhone fenetre;
-		
 
 		fenetre.show();
 	

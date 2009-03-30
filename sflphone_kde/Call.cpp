@@ -5,7 +5,7 @@
 #include "SFLPhone.h"
 #include "sflphone_const.h"
 
-const char * Call::callStateIcons[11] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", ""};
+
 
 const call_state Call::actionPerformedStateMap [11][5] = 
 {
@@ -55,52 +55,76 @@ const function Call::actionPerformedFunctionMap[11][5] =
 /*ERROR          */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       }
 };
 
+const char * Call::callStateIcons[11] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", ""};
+
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
 
 void Call::initCallItem()
 {
+	qDebug() << "initCallItem";
 	item = new QListWidgetItem();
-	item->setSizeHint(QSize(140,25));
+	item->setSizeHint(QSize(140,30));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
+	
 	itemWidget = new QWidget();
-	QLabel * labelIcon = new QLabel(itemWidget);
-	QLabel * labelCallNumber = new QLabel(peer, itemWidget);
-	QLabel * labelTransferTo = new QLabel("Transfer to : ", itemWidget);
-	QLabel * labelTransferNumber = new QLabel(itemWidget);
+	labelIcon = new QLabel(itemWidget);
+	labelCallNumber = new QLabel(peer, itemWidget);
+	labelTransferTo = new QLabel("Transfer to : ", itemWidget);
+	labelTransferNumber = new QLabel(itemWidget);
+	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 	labelIcon->setObjectName(QString(CALL_ITEM_ICON));
 	labelCallNumber->setObjectName(QString(CALL_ITEM_CALL_NUMBER));
+	labelTransferTo->setObjectName(QString(CALL_ITEM_TRANSFER_LABEL));
 	labelTransferNumber->setObjectName(QString(CALL_ITEM_TRANSFER_NUMBER));
 	QGridLayout * layout = new QGridLayout(itemWidget);
-	layout->setMargin(0);
-	layout->setSpacing(0);
+	layout->setMargin(3);
+	layout->setSpacing(3);
 	layout->addWidget(labelIcon, 0, 0, 2, 1);
 	layout->addWidget(labelCallNumber, 0, 1, 1, 2);
-	layout->addWidget(labelTransferTo, 1, 2, 1, 1);
-	layout->addWidget(labelTransferNumber, 1, 1, 1, 1);
-	labelIcon->raise();
-	labelCallNumber->raise();
-	labelTransferTo->raise();
-	labelTransferNumber->raise();
-	itemWidget->setLayoutDirection(Qt::LeftToRight);
+	layout->addWidget(labelTransferTo, 1, 1, 1, 1);
+	layout->addWidget(labelTransferNumber, 1, 2, 1, 2);
+	layout->addItem(horizontalSpacer, 0, 3, 1, 3);
+	//labelIcon->raise();
+	//labelCallNumber->raise();
+	//labelTransferTo->raise();
+	//labelTransferNumber->raise();
+	//itemWidget->setLayoutDirection(Qt::LeftToRight);
 	itemWidget->setLayout(layout);
-	item->setSizeHint(itemWidget->sizeHint());
-	setItemIcon(QString(ICON_REFUSE));
+	//item->setSizeHint(itemWidget->sizeHint());
+	//setItemIcon(QString(ICON_REFUSE));
+	updateItem();
 }
 
-void Call::setItemIcon(const QString & pixmap)
+void Call::setItemIcon(const QString pixmap)
 {
-	itemWidget->findChild<QLabel * >(QString(CALL_ITEM_ICON))->setPixmap(QPixmap(pixmap));
+	qDebug() << "setItemIcon(" << pixmap << ");";
+	QString str(CALL_ITEM_ICON);
+	qDebug() << "str = " << str;
+	qDebug() << "setItemIcon1";
+	//QLabel * labelIcon = itemWidget->findChild<QLabel * >(str);
+	qDebug() << "setItemIcon2";
+	//QPixmap icon(pixmap);
+	QPixmap * icon = new QPixmap(":/images/icons/dial.svg");
+	qDebug() << "setItemIcon2b";
+	labelIcon->setPixmap(*icon);
+	qDebug() << "setItemIcon3";
 }
 
 Call::Call(call_state startState, QString callId, QString from, QString account)
 {
+	for(int i = 0 ; i < 100 ; i++)
+	{
+		qDebug() << i << " :";
+		QString str(callStateIcons[startState]);
+		qDebug() << str;
+	}
+	qDebug() << "<<<<Done>>>>";
 	this->callId = callId;
 	this->peer = from;
+	changeCurrentState(startState);
 	initCallItem();
-	//this->item = new QListWidgetItem(from);
 	this->account = account;
 	this->recording = false;
-	changeCurrentState(startState);
 	this->historyItem = NULL;
 }
 
@@ -373,6 +397,25 @@ void Call::changeCurrentState(call_state newState)
 
 void Call::updateItem()
 {
-	setItemIcon(QString(callStateIcons[currentState]));
-	
+	qDebug() << callStateIcons[currentState];
+	qDebug() << "updateItem0";
+	QString str(callStateIcons[currentState]);
+	qDebug() << "updateItem1";
+	setItemIcon(str);
+	qDebug() << "updateItem2";
+	bool transfer = currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD;
+	qDebug() << "updateItem3";
+	qDebug() << "transfer : " << transfer;
+	qDebug() << "updateItem4";
+	QLabel * transferLabel = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_LABEL));
+	qDebug() << "updateItem5";
+	QLabel * transferNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_NUMBER));
+	qDebug() << "updateItem6";
+	transferLabel->setVisible(transfer);
+	qDebug() << "updateItem7";
+	transferNumber->setVisible(transfer);
+	qDebug() << "updateItem8";
+	if(!transfer)
+		transferNumber->setText("");
+	qDebug() << "updateItem9";
 }

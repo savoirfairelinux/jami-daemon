@@ -20,6 +20,7 @@ SET(
 	configurationmanager_interface_singleton.cpp
 	callmanager_interface.cpp
 	callmanager_interface_singleton.cpp
+	AccountWizard.cpp
 )
  
 SET(QtApp_RCCS resources.qrc)

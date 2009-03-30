@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle" >
-   <string>Dialog</string>
+   <string>Configuration Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" >
    <property name="margin" >
@@ -122,17 +122,17 @@
        </property>
        <item>
         <property name="text" >
-         <string>Général</string>
+         <string>General</string>
         </property>
        </item>
        <item>
         <property name="text" >
-         <string>Affichage</string>
+         <string>Display</string>
         </property>
        </item>
        <item>
         <property name="text" >
-         <string>Comptes</string>
+         <string>Accounts</string>
         </property>
        </item>
        <item>
@@ -152,7 +152,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget_options" >
        <property name="currentIndex" >
-        <number>2</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_general" >
         <layout class="QVBoxLayout" name="verticalLayout_18" >
@@ -162,7 +162,7 @@
          <item>
           <widget class="QLabel" name="label_configGeneral" >
            <property name="text" >
-            <string>Configuration des paramètres généraux</string>
+            <string>Configure general settings</string>
            </property>
           </widget>
          </item>
@@ -182,7 +182,7 @@
             </sizepolicy>
            </property>
            <property name="title" >
-            <string>Historique des appels</string>
+            <string>Call history</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_19" >
             <item>
@@ -191,7 +191,7 @@
                <item>
                 <widget class="QLabel" name="label_historyCapacity" >
                  <property name="text" >
-                  <string>&amp;Capacité</string>
+                  <string>&amp;Capacity</string>
                  </property>
                  <property name="buddy" >
                   <cstring>horizontalSlider_historyCapacity</cstring>
@@ -217,7 +217,7 @@
             <item>
              <widget class="QToolButton" name="toolButton_historyClear" >
               <property name="text" >
-               <string>&amp;Effacer l'Historique</string>
+               <string>C&amp;lear history</string>
               </property>
              </widget>
             </item>
@@ -233,7 +233,7 @@
             </sizepolicy>
            </property>
            <property name="title" >
-            <string>Connexion</string>
+            <string>Connection</string>
            </property>
            <layout class="QFormLayout" name="formLayout_12" >
             <property name="fieldGrowthPolicy" >
@@ -242,7 +242,10 @@
             <item row="0" column="0" >
              <widget class="QLabel" name="label_SIPPort" >
               <property name="text" >
-               <string>Port SIP</string>
+               <string>SIP &amp;Port</string>
+              </property>
+              <property name="buddy" >
+               <cstring>spinBox_SIPPort</cstring>
               </property>
              </widget>
             </item>
@@ -313,7 +316,7 @@
             </sizepolicy>
            </property>
            <property name="text" >
-            <string>Configuration de l'affichage</string>
+            <string>Configure display</string>
            </property>
           </widget>
          </item>
@@ -348,7 +351,7 @@
                </sizepolicy>
               </property>
               <property name="text" >
-               <string>Activer les notifications du bureau</string>
+               <string>Enable notifications</string>
               </property>
              </widget>
             </item>
@@ -364,14 +367,14 @@
                <item>
                 <widget class="QCheckBox" name="checkBox1_notifOnCalls" >
                  <property name="text" >
-                  <string>&amp;Appels entrants</string>
+                  <string>On incoming &amp;calls</string>
                  </property>
                 </widget>
                </item>
                <item>
                 <widget class="QCheckBox" name="checkBox2_notifOnMessages" >
                  <property name="text" >
-                  <string>&amp;Messages vocaux</string>
+                  <string>On &amp;messages</string>
                  </property>
                 </widget>
                </item>
@@ -387,7 +390,7 @@
                </sizepolicy>
               </property>
               <property name="text" >
-               <string>Faire apparaître la fenêtre principale</string>
+               <string>Show main window</string>
               </property>
              </widget>
             </item>
@@ -403,14 +406,14 @@
                <item>
                 <widget class="QCheckBox" name="checkBox1_displayOnStart" >
                  <property name="text" >
-                  <string>Au &amp;démarrage</string>
+                  <string>On &amp;start</string>
                  </property>
                 </widget>
                </item>
                <item>
                 <widget class="QCheckBox" name="checkBox2_displayOnCalls" >
                  <property name="text" >
-                  <string>Lors d'un appel &amp;entrant</string>
+                  <string>On &amp;incoming calls</string>
                  </property>
                 </widget>
                </item>
@@ -436,7 +439,7 @@
             </sizepolicy>
            </property>
            <property name="text" >
-            <string>Configuration des comptes utilisateur</string>
+            <string>Configure user accounts</string>
            </property>
           </widget>
          </item>
@@ -630,7 +633,7 @@
                <item row="1" column="0" >
                 <widget class="QLabel" name="label2_protocol" >
                  <property name="text" >
-                  <string>&amp;Protocole</string>
+                  <string>&amp;Protocol</string>
                  </property>
                  <property name="buddy" >
                   <cstring>edit2_protocol</cstring>
@@ -654,7 +657,7 @@
                <item row="2" column="0" >
                 <widget class="QLabel" name="label3_server" >
                  <property name="text" >
-                  <string>&amp;Serveur</string>
+                  <string>&amp;Server</string>
                  </property>
                  <property name="buddy" >
                   <cstring>edit3_server</cstring>
@@ -674,7 +677,7 @@
                <item row="3" column="0" >
                 <widget class="QLabel" name="label4_user" >
                  <property name="text" >
-                  <string>&amp;Usager</string>
+                  <string>&amp;User</string>
                  </property>
                  <property name="buddy" >
                   <cstring>edit4_user</cstring>
@@ -687,7 +690,7 @@
                <item row="4" column="0" >
                 <widget class="QLabel" name="label5_password" >
                  <property name="text" >
-                  <string>&amp;Mot de Passe</string>
+                  <string>Pass&amp;word</string>
                  </property>
                  <property name="buddy" >
                   <cstring>edit5_password</cstring>
@@ -697,14 +700,14 @@
                <item row="4" column="1" >
                 <widget class="QLineEdit" name="edit5_password" >
                  <property name="echoMode" >
-                  <enum>QLineEdit::Password</enum>
+                  <enum>QLineEdit::PasswordEchoOnEdit</enum>
                  </property>
                 </widget>
                </item>
                <item row="5" column="0" >
                 <widget class="QLabel" name="label6_mailbox" >
                  <property name="text" >
-                  <string>&amp;Boîte Vocale</string>
+                  <string>&amp;Mailbox</string>
                  </property>
                  <property name="buddy" >
                   <cstring>edit6_mailbox</cstring>
@@ -717,7 +720,7 @@
                <item row="6" column="0" >
                 <widget class="QLabel" name="label7_state" >
                  <property name="text" >
-                  <string>État </string>
+                  <string>State</string>
                  </property>
                 </widget>
                </item>
@@ -726,126 +729,6 @@
                  <property name="text" >
                   <string/>
                  </property>
-                </widget>
-               </item>
-               <item row="7" column="0" >
-                <widget class="QWidget" native="1" name="widget_3" >
-                 <layout class="QHBoxLayout" name="horizontalLayout_7" >
-                  <property name="spacing" >
-                   <number>0</number>
-                  </property>
-                  <property name="margin" >
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="QLabel" name="label_4" >
-                    <property name="text" >
-                     <string/>
-                    </property>
-                    <property name="pixmap" >
-                     <pixmap resource="resources.qrc" >:/images/icons/hang_up.svg</pixmap>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <layout class="QVBoxLayout" name="verticalLayout_4" >
-                    <property name="spacing" >
-                     <number>0</number>
-                    </property>
-                    <property name="leftMargin" >
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin" >
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QLabel" name="label_2" >
-                      <property name="text" >
-                       <string>144</string>
-                      </property>
-                      <property name="indent" >
-                       <number>5</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <layout class="QHBoxLayout" name="horizontalLayout_8" >
-                      <property name="spacing" >
-                       <number>0</number>
-                      </property>
-                      <property name="topMargin" >
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <widget class="QLabel" name="label" >
-                        <property name="text" >
-                         <string>&lt;FONT SIZE=2>Transfer to :&lt;/FONT></string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLabel" name="label_3" >
-                        <property name="text" >
-                         <string>&lt;FONT SIZE=2>122&lt;/FONT></string>
-                        </property>
-                       </widget>
-                      </item>
-                     </layout>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item row="8" column="0" >
-                <widget class="QWidget" native="1" name="widget_4" >
-                 <layout class="QGridLayout" name="gridLayout_2" >
-                  <property name="margin" >
-                   <number>0</number>
-                  </property>
-                  <property name="spacing" >
-                   <number>0</number>
-                  </property>
-                  <item rowspan="2" row="0" column="0" >
-                   <widget class="QLabel" name="label_5" >
-                    <property name="text" >
-                     <string/>
-                    </property>
-                    <property name="pixmap" >
-                     <pixmap resource="resources.qrc" >:/images/icons/hang_up.svg</pixmap>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="1" >
-                   <widget class="QLabel" name="label_7" >
-                    <property name="text" >
-                     <string>&lt;FONT SIZE=2>Transfer to :&lt;/FONT></string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="2" >
-                   <widget class="QLabel" name="label_8" >
-                    <property name="text" >
-                     <string>&lt;FONT SIZE=2>122&lt;/FONT></string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="1" colspan="2" >
-                   <widget class="QLabel" name="label_6" >
-                    <property name="text" >
-                     <string>144</string>
-                    </property>
-                    <property name="indent" >
-                     <number>5</number>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                 <zorder>label_5</zorder>
-                 <zorder>label_5</zorder>
-                 <zorder>label_7</zorder>
-                 <zorder>label_8</zorder>
-                 <zorder>label_6</zorder>
                 </widget>
                </item>
               </layout>
@@ -863,7 +746,7 @@
             <item>
              <widget class="QLabel" name="label_commonSettings" >
               <property name="text" >
-               <string>Les paramètres STUN seront appliqués à tous les comptes</string>
+               <string>Stun settings will be applied on each account</string>
               </property>
              </widget>
             </item>
@@ -875,7 +758,7 @@
               <item row="0" column="0" >
                <widget class="QCheckBox" name="checkBox_stun" >
                 <property name="text" >
-                 <string>Activer Stun</string>
+                 <string>&amp;Enable Stun</string>
                 </property>
                </widget>
               </item>
@@ -904,7 +787,7 @@
             </sizepolicy>
            </property>
            <property name="text" >
-            <string>Configuration des paramètres audio</string>
+            <string>Configure audio settings</string>
            </property>
           </widget>
          </item>
@@ -930,7 +813,7 @@
             <item row="0" column="0" >
              <widget class="QLabel" name="label_interface" >
               <property name="text" >
-               <string>&amp;Interface audio</string>
+               <string>Audio &amp;device</string>
               </property>
               <property name="buddy" >
                <cstring>comboBox_interface</cstring>
@@ -960,40 +843,12 @@
             <item row="1" column="0" >
              <widget class="QCheckBox" name="checkBox_ringtones" >
               <property name="text" >
-               <string>&amp;Activer les sonneries</string>
+               <string>&amp;Enable ringtones</string>
               </property>
              </widget>
             </item>
             <item row="1" column="1" >
              <widget class="KUrlComboRequester" name="urlComboRequester_ringtone" />
-            </item>
-            <item row="2" column="0" >
-             <widget class="KLed" name="kled" >
-              <property name="sizePolicy" >
-               <sizepolicy vsizetype="Preferred" hsizetype="Fixed" >
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="mouseTracking" >
-               <bool>false</bool>
-              </property>
-              <property name="focusPolicy" >
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="layoutDirection" >
-               <enum>Qt::RightToLeft</enum>
-              </property>
-              <property name="state" >
-               <enum>KLed::On</enum>
-              </property>
-              <property name="shape" >
-               <enum>KLed::Circular</enum>
-              </property>
-              <property name="look" >
-               <enum>KLed::Flat</enum>
-              </property>
-             </widget>
             </item>
            </layout>
           </widget>
@@ -1068,17 +923,17 @@
               </property>
               <column>
                <property name="text" >
-                <string>Actif</string>
+                <string>Active</string>
                </property>
               </column>
               <column>
                <property name="text" >
-                <string>Nom</string>
+                <string>Name</string>
                </property>
               </column>
               <column>
                <property name="text" >
-                <string>Fréquence</string>
+                <string>Frequency</string>
                </property>
               </column>
               <column>
@@ -1088,7 +943,7 @@
               </column>
               <column>
                <property name="text" >
-                <string>Bande Passante</string>
+                <string>Bandwidth</string>
                </property>
               </column>
              </widget>
@@ -1115,7 +970,7 @@
              <item>
               <widget class="QGroupBox" name="groupBox_alsa" >
                <property name="title" >
-                <string>Paramètres ALSA</string>
+                <string>ALSA settings</string>
                </property>
                <layout class="QFormLayout" name="formLayout_4" >
                 <item row="2" column="1" >
@@ -1131,7 +986,7 @@
                 <item row="2" column="0" >
                  <widget class="QLabel" name="label2_in" >
                   <property name="text" >
-                   <string>&amp;Entrée</string>
+                   <string>&amp;In</string>
                   </property>
                   <property name="buddy" >
                    <cstring>comboBox2_in</cstring>
@@ -1141,7 +996,7 @@
                 <item row="3" column="0" >
                  <widget class="QLabel" name="label3_out" >
                   <property name="text" >
-                   <string>&amp;Sortie</string>
+                   <string>&amp;Out</string>
                   </property>
                   <property name="buddy" >
                    <cstring>comboBox3_out</cstring>
@@ -1161,7 +1016,7 @@
                 <item row="0" column="0" >
                  <widget class="QLabel" name="label1_alsaPugin" >
                   <property name="text" >
-                   <string>&amp;Greffon ALSA</string>
+                   <string>ALSA &amp;plugin</string>
                   </property>
                   <property name="buddy" >
                    <cstring>comboBox1_alsaPlugin</cstring>
@@ -1252,11 +1107,6 @@
  </widget>
  <layoutdefault spacing="4" margin="4" />
  <customwidgets>
-  <customwidget>
-   <class>KLed</class>
-   <extends>QWidget</extends>
-   <header>kled.h</header>
-  </customwidget>
   <customwidget>
    <class>KUrlComboRequester</class>
    <extends>KUrlRequester</extends>

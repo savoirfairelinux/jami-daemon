@@ -5,6 +5,7 @@
 #include "ui_sflphone-qt.h"
 #include "ConfigDialog.h"
 #include "CallList.h"
+#include "AccountWizard.h"
 
 class ConfigurationDialog;
 
@@ -15,6 +16,7 @@ Q_OBJECT
 
 private:
 	ConfigurationDialog * configDialog;
+	AccountWizard * wizard;
 	CallList * callList;
 	QErrorMessage * errorWindow;
 
@@ -56,6 +58,7 @@ private slots:
 	void on_action_configureAccounts_triggered();
 	void on_action_configureAudio_triggered();
 	void on_action_configureSflPhone_triggered();
+	void on_action_accountCreationWizard_triggered();
 	void on_action_accept_triggered();
 	void on_action_refuse_triggered();
 	void on_action_hold_triggered();

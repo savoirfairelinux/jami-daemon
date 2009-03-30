@@ -35,6 +35,8 @@
 
 #define UNUSED  __attribute__((__unused__))
 
+#define SIP                               0
+#define IAX                               1
 
 #define PAGE_GENERAL                      0
 #define PAGE_DISPLAY                      1
@@ -118,6 +120,7 @@
 #define CALL_STATE_CHANGE_UNHOLD_RECORD   "UNHOLD_RECORD"
 
 #define CALL_ITEM_CALL_NUMBER             "callNumber"
+#define CALL_ITEM_TRANSFER_LABEL          "transferLabel"
 #define CALL_ITEM_TRANSFER_NUMBER         "transferNumber"
 #define CALL_ITEM_ICON                    "icon"
 

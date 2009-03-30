@@ -356,7 +356,7 @@
      <height>25</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuActions" >
+   <widget class="QMenu" name="menu_Actions" >
     <property name="title" >
      <string>&amp;Actions</string>
     </property>
@@ -367,10 +367,11 @@
     <addaction name="action_record" />
     <addaction name="separator" />
     <addaction name="action_mailBox" />
+    <addaction name="action_history" />
    </widget>
-   <widget class="QMenu" name="menu_Configuration" >
+   <widget class="QMenu" name="menu_Configure" >
     <property name="title" >
-     <string>&amp;Configuration</string>
+     <string>&amp;Configure</string>
     </property>
     <addaction name="action_displayVolumeControls" />
     <addaction name="action_displayDialpad" />
@@ -378,16 +379,18 @@
     <addaction name="action_configureAccounts" />
     <addaction name="action_configureAudio" />
     <addaction name="action_configureSflPhone" />
+    <addaction name="separator" />
+    <addaction name="action_accountCreationWizard" />
    </widget>
-   <widget class="QMenu" name="menuAide" >
+   <widget class="QMenu" name="menu_help" >
     <property name="title" >
-     <string>Ai&amp;de</string>
+     <string>&amp;Help</string>
     </property>
     <addaction name="action_About" />
    </widget>
-   <addaction name="menuActions" />
-   <addaction name="menu_Configuration" />
-   <addaction name="menuAide" />
+   <addaction name="menu_Actions" />
+   <addaction name="menu_Configure" />
+   <addaction name="menu_help" />
   </widget>
   <widget class="QStatusBar" name="statusbar" />
   <widget class="QToolBar" name="toolBar" >
@@ -415,7 +418,7 @@
      <normaloff>:/images/icons/call.svg</normaloff>:/images/icons/call.svg</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Décrocher</string>
+    <string>&amp;Pick up</string>
    </property>
   </action>
   <action name="action_refuse" >
@@ -424,7 +427,7 @@
      <normaloff>:/images/icons/hang_up.svg</normaloff>:/images/icons/hang_up.svg</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Raccrocher</string>
+    <string>&amp;Hang up</string>
    </property>
   </action>
   <action name="action_hold" >
@@ -433,7 +436,7 @@
      <normaloff>:/images/icons/hold.svg</normaloff>:/images/icons/hold.svg</iconset>
    </property>
    <property name="text" >
-    <string>Mettre en &amp;Attente</string>
+    <string>H&amp;old</string>
    </property>
   </action>
   <action name="action_transfer" >
@@ -445,7 +448,7 @@
      <normaloff>:/images/icons/transfert.svg</normaloff>:/images/icons/transfert.svg</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Transférer</string>
+    <string>&amp;Transfer</string>
    </property>
   </action>
   <action name="action_history" >
@@ -457,7 +460,7 @@
      <normaloff>:/images/icons/history2.svg</normaloff>:/images/icons/history2.svg</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Historique</string>
+    <string>H&amp;istory</string>
    </property>
   </action>
   <action name="action_mailBox" >
@@ -466,7 +469,7 @@
      <normaloff>:/images/icons/mailbox.svg</normaloff>:/images/icons/mailbox.svg</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Boîte Vocale</string>
+    <string>&amp;Mailbox</string>
    </property>
   </action>
   <action name="action_configureAccounts" >
@@ -475,7 +478,7 @@
      <normaloff>:/Images/stock_person.svg</normaloff>:/Images/stock_person.svg</iconset>
    </property>
    <property name="text" >
-    <string>Configurer les &amp;comptes</string>
+    <string>Configure &amp;accounts</string>
    </property>
   </action>
   <action name="action_configureAudio" >
@@ -484,7 +487,7 @@
      <normaloff>:/Images/icon_volume.svg</normaloff>:/Images/icon_volume.svg</iconset>
    </property>
    <property name="text" >
-    <string>Configurer le &amp;son</string>
+    <string>Configure a&amp;udio</string>
    </property>
   </action>
   <action name="action_configureSflPhone" >
@@ -493,7 +496,7 @@
      <normaloff>:/Images/sflphone.png</normaloff>:/Images/sflphone.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Configurer SFLPhone</string>
+    <string>&amp;Configure SFLPhone</string>
    </property>
   </action>
   <action name="action_displayVolumeControls" >
@@ -508,7 +511,7 @@
      <normaloff>:/Images/icon_volume.svg</normaloff>:/Images/icon_volume.svg</iconset>
    </property>
    <property name="text" >
-    <string>Afficher les barres de &amp;volume</string>
+    <string>Display &amp;volume bars</string>
    </property>
   </action>
   <action name="action_About" >
@@ -528,7 +531,7 @@
      <normaloff>:/Images/icon_dialpad.svg</normaloff>:/Images/icon_dialpad.svg</iconset>
    </property>
    <property name="text" >
-    <string>Afficher le &amp;clavier</string>
+    <string>Display &amp;dialpad</string>
    </property>
   </action>
   <action name="action_record" >
@@ -541,6 +544,11 @@
    </property>
    <property name="text" >
     <string>&amp;Record</string>
+   </property>
+  </action>
+  <action name="action_accountCreationWizard" >
+   <property name="text" >
+    <string>Account creation &amp;wizard</string>
    </property>
   </action>
  </widget>

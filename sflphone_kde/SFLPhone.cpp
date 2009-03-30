@@ -13,6 +13,9 @@ SFLPhone::SFLPhone(QMainWindow *parent) : QMainWindow(parent)
 	configDialog = new ConfigurationDialog(this);
 	configDialog->setModal(true);
 	
+	wizard = new AccountWizard(this);
+	wizard->setModal(false);
+	
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	connect(&callManager, SIGNAL(callStateChanged(const QString &, const QString &)),
 	        this,         SLOT(on1_callStateChanged(const QString &, const QString &)));
@@ -555,6 +558,12 @@ void SFLPhone::on_action_configureSflPhone_triggered()
 	configDialog->setPage(PAGE_GENERAL);
 	configDialog->show();
 }
+
+void SFLPhone::on_action_accountCreationWizard_triggered()
+{
+	wizard->show();
+}
+	
 
 void SFLPhone::on_action_accept_triggered()
 {

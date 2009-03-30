@@ -98,6 +98,11 @@ private:
 	QDateTime * stopTime;
 	QListWidgetItem * item;
 	QWidget * itemWidget;
+	QLabel * labelIcon;
+	QLabel * labelCallNumber;
+	QLabel * labelTransferTo;
+	QLabel * labelTransferNumber;
+	
 	QListWidgetItem * historyItem;
 	
 	//Automate attributes
@@ -146,7 +151,7 @@ public:
 	history_state getHistoryState() const;
 	bool getRecording() const;
 	void appendItemText(QString text);
-	void setItemIcon(const QString & pixmap);
+	void setItemIcon(const QString pixmap);
 	void changeCurrentState(call_state newState);
 	void updateItem();
 
