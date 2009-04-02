@@ -22,5 +22,6 @@ AM_CPPFLAGS = \
 	$(DBUSCPP_CFLAGS) \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \
 	-DPLUGINS_DIR=\""$(sflplugindir)"\" \
-	-DENABLE_TRACE
+	-DENABLE_TRACE \
+	-DSFLDEBUG
 
