@@ -1,15 +1,15 @@
 # French translation of SFLphone.
-# Copyright (C) 2008 The Free Software Foundation, Inc.
+# Copyright (C) 2008 2009 The Free Software Foundation, Inc.
 # This file is distributed under the GNU General Public License Version 3.
 #
 # Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>, 2008.
 #
-# POT-Creation-Date: 2007-01-13 01:39+0100\n
+# POT-Creation-Date: 2008-01-13 01:39+0100\n
 msgid ""
 msgstr ""
-"Project-Id-Version: SFLphone 0.9.2\n"
+"Project-Id-Version: SFLphone 0.9.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-02-10 15:24-0500\n"
+"POT-Creation-Date: 2009-04-02 11:15-0400\n"
 "PO-Revision-Date: 2008-03-31 14:15\n"
 "Last-Translator: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -31,7 +31,7 @@ msgid "Trying..."
 msgstr "En cours..."
 
 #: ../sflphone-gtk/src/accountlist.c:167 ../sflphone-gtk/src/sflnotify.c:171
-#: ../sflphone-gtk/src/sflnotify.c:210
+#: ../sflphone-gtk/src/sflnotify.c:212
 msgid "Error"
 msgstr "Erreur"
 
@@ -59,66 +59,22 @@ msgstr "Serveur Stun invalide"
 msgid "Invalid"
 msgstr "Non valide"
 
-#: ../sflphone-gtk/src/accountwindow.c:109
-msgid "Account settings"
-msgstr "Configuration des comptes"
-
-#: ../sflphone-gtk/src/accountwindow.c:121
-msgid "Account parameters"
-msgstr "Paramètres du compte"
-
-#: ../sflphone-gtk/src/accountwindow.c:143
-msgid "_Enabled"
-msgstr "_Activé"
-
-#: ../sflphone-gtk/src/accountwindow.c:149 ../sflphone-gtk/src/assistant.c:238
-#: ../sflphone-gtk/src/assistant.c:292
-msgid "_Alias"
-msgstr "A_lias"
-
-#: ../sflphone-gtk/src/accountwindow.c:157
-msgid "_Protocol"
-msgstr "_Protocole"
-
-#: ../sflphone-gtk/src/accountwindow.c:175
-msgid "Unknown"
-msgstr "Inconnu"
-
-#: ../sflphone-gtk/src/accountwindow.c:185 ../sflphone-gtk/src/assistant.c:246
-#: ../sflphone-gtk/src/assistant.c:300
-msgid "_Host name"
-msgstr "_Serveur"
-
-#: ../sflphone-gtk/src/accountwindow.c:193 ../sflphone-gtk/src/assistant.c:254
-#: ../sflphone-gtk/src/assistant.c:308
-msgid "_User name"
-msgstr "Usa_ger"
-
-#: ../sflphone-gtk/src/accountwindow.c:204 ../sflphone-gtk/src/assistant.c:264
-#: ../sflphone-gtk/src/assistant.c:318
-msgid "_Password"
-msgstr "_Mot de passe"
-
-#: ../sflphone-gtk/src/accountwindow.c:215
-msgid "_Voicemail box #"
-msgstr "_Boite vocale #"
-
-#: ../sflphone-gtk/src/actions.c:57 ../sflphone-gtk/src/sflnotify.c:103
+#: ../sflphone-gtk/src/actions.c:55 ../sflphone-gtk/src/sflnotify.c:103
 #, c-format
 msgid "%d voice mails"
 msgstr "%d messages vocaux"
 
-#: ../sflphone-gtk/src/actions.c:59
+#: ../sflphone-gtk/src/actions.c:57
 #, c-format
 msgid "%d voice mail"
 msgstr "%d message vocal"
 
-#: ../sflphone-gtk/src/actions.c:80
+#: ../sflphone-gtk/src/actions.c:81
 #, c-format
 msgid "%s account- %s"
 msgstr "compte %s- %s"
 
-#: ../sflphone-gtk/src/actions.c:224
+#: ../sflphone-gtk/src/actions.c:225
 msgid ""
 "Unable to connect to the SFLphone server.\n"
 "Make sure the daemon is running."
@@ -126,7 +82,12 @@ msgstr ""
 "Impossible de se connecter au serveur SFLphone.\n"
 " Assurez-vous que le démon est lancé."
 
-#: ../sflphone-gtk/src/actions.c:798
+#: ../sflphone-gtk/src/actions.c:764
+#, fuzzy, c-format
+msgid "%s account- %s             %s"
+msgstr "compte %s- %s"
+
+#: ../sflphone-gtk/src/actions.c:861
 #, c-format
 msgid ""
 "<b>Error: No audio codecs found.\n"
@@ -139,43 +100,61 @@ msgstr ""
 "</b> Les codecs audio SFL doivent être soit dans <i>%s</i> soit dans le "
 "répertoire <b>.sflphone</b> de votre répertoire racine( <i>%s</i> )"
 
-#: ../sflphone-gtk/src/assistant.c:148
+#: ../sflphone-gtk/src/assistant.c:31
+#, c-format
+msgid ""
+"This assistant is now finished.\n"
+"You can at any time check your registration state or modify your accounts "
+"parameters in the Options/Accounts window.\n"
+"\n"
+"Alias :    %s\n"
+"Server :   %s\n"
+"Username : %s\n"
+"Password : %s"
+msgstr ""
+"Cet assistant est maintenant terminé.\n"
+"\n"
+" Vous pouvez à tout moment vérifier votre état d'enregistrement ou modifier "
+"les paramètres de vos comptes dans la fenêtre Options/Comptes.\n"
+"\n"
+"Alias :    %s\n"
+"Serveur :   %s\n"
+"Nom d'usager : %s\n"
+"Mot de passe : %s"
+
+#: ../sflphone-gtk/src/assistant.c:154
 msgid "SFLphone account configuration wizard"
 msgstr "Assistant de configuration de compte"
 
-#: ../sflphone-gtk/src/assistant.c:176
-msgid "SFLphone 0.9.2"
-msgstr "SFLphone 0.9.3"
-
-#: ../sflphone-gtk/src/assistant.c:176
+#: ../sflphone-gtk/src/assistant.c:180
 msgid "Welcome to SFLphone!"
 msgstr "Bienvenue dans SFLphone"
 
-#: ../sflphone-gtk/src/assistant.c:178
+#: ../sflphone-gtk/src/assistant.c:181
 msgid "This installation wizard will help you configure an account."
 msgstr "Cet assistant va vous guider dans la configuration d'un compte. "
 
-#: ../sflphone-gtk/src/assistant.c:193
+#: ../sflphone-gtk/src/assistant.c:195
 msgid "VoIP Protocols"
 msgstr "Protocoles VoIP"
 
-#: ../sflphone-gtk/src/assistant.c:193
+#: ../sflphone-gtk/src/assistant.c:195
 msgid "Select an account type:"
 msgstr "Choisissez un type de compte:"
 
-#: ../sflphone-gtk/src/assistant.c:211
+#: ../sflphone-gtk/src/assistant.c:213
 msgid "Account"
 msgstr "Comptes"
 
-#: ../sflphone-gtk/src/assistant.c:211
+#: ../sflphone-gtk/src/assistant.c:213
 msgid "Please select one of the following option:"
 msgstr "Veuillez remplir les champs suivants:"
 
-#: ../sflphone-gtk/src/assistant.c:213
+#: ../sflphone-gtk/src/assistant.c:215
 msgid "Create a free SIP/IAX2 account on sflphone.org"
 msgstr "Créer un compte SIP/IAX2 gratuit sur sflphone.org"
 
-#: ../sflphone-gtk/src/assistant.c:215
+#: ../sflphone-gtk/src/assistant.c:217
 msgid "Register an existing SIP or IAX2 account"
 msgstr "Enregistrer un compte SIP ou IAX2 existant"
 
@@ -183,277 +162,95 @@ msgstr "Enregistrer un compte SIP ou IAX2 existant"
 msgid "SIP account configuration"
 msgstr "Configuration d'un compte SIP"
 
-#: ../sflphone-gtk/src/assistant.c:230 ../sflphone-gtk/src/assistant.c:284
+#: ../sflphone-gtk/src/assistant.c:230 ../sflphone-gtk/src/assistant.c:305
 msgid "Please fill the following information:"
 msgstr "Veuillez remplir les champs suivants:"
 
-#: ../sflphone-gtk/src/assistant.c:284
+#: ../sflphone-gtk/src/assistant.c:238 ../sflphone-gtk/src/assistant.c:313
+#: ../sflphone-gtk/src/config/accountwindow.c:143
+msgid "_Alias"
+msgstr "A_lias"
+
+#: ../sflphone-gtk/src/assistant.c:246 ../sflphone-gtk/src/assistant.c:321
+#: ../sflphone-gtk/src/config/accountwindow.c:179
+msgid "_Host name"
+msgstr "_Serveur"
+
+#: ../sflphone-gtk/src/assistant.c:254 ../sflphone-gtk/src/assistant.c:329
+#: ../sflphone-gtk/src/config/accountwindow.c:187
+msgid "_User name"
+msgstr "Usa_ger"
+
+#: ../sflphone-gtk/src/assistant.c:264 ../sflphone-gtk/src/assistant.c:339
+#: ../sflphone-gtk/src/config/accountwindow.c:198
+msgid "_Password"
+msgstr "_Mot de passe"
+
+#: ../sflphone-gtk/src/assistant.c:282
+msgid "Optional Email Address "
+msgstr "Courriel optionnel"
+
+#: ../sflphone-gtk/src/assistant.c:282
+msgid "This email address will be use to send your voicemail messages"
+msgstr "Vos messages vocaux seront envoyés par courriel à cette adresse "
+
+#: ../sflphone-gtk/src/assistant.c:290
+#, fuzzy
+msgid "_Email"
+msgstr "_Email"
+
+#: ../sflphone-gtk/src/assistant.c:305
 msgid "IAX2 account configuration"
 msgstr "Configuration d'un compte IAX2"
 
-#: ../sflphone-gtk/src/assistant.c:341 ../sflphone-gtk/src/configwindow.c:821
+#: ../sflphone-gtk/src/assistant.c:360
+#: ../sflphone-gtk/src/config/configwindow.c:837
 msgid "Network Address Translation"
 msgstr "Traduction d'adresse réseau (NAT)"
 
-#: ../sflphone-gtk/src/assistant.c:341
+#: ../sflphone-gtk/src/assistant.c:360
 msgid "You should probably enable this if you are behind a firewall."
 msgstr ""
 "Vous devriez probablement activer cette option si \n"
 "vous vous trouvez derrière un pare-feu."
 
-#: ../sflphone-gtk/src/assistant.c:350 ../sflphone-gtk/src/configwindow.c:496
+#: ../sflphone-gtk/src/assistant.c:369
+#: ../sflphone-gtk/src/config/configwindow.c:499
 msgid "E_nable STUN"
 msgstr "A_ctiver STUN"
 
-#: ../sflphone-gtk/src/assistant.c:357
+#: ../sflphone-gtk/src/assistant.c:376
 msgid "_STUN server"
 msgstr "S_erveur STUN"
 
-#: ../sflphone-gtk/src/assistant.c:374
+#: ../sflphone-gtk/src/assistant.c:390
 msgid "Account Registration"
 msgstr "Enregistrement du compte"
 
-#: ../sflphone-gtk/src/assistant.c:374
+#: ../sflphone-gtk/src/assistant.c:390
 msgid "Congratulations!"
 msgstr "Félicitations!"
 
-#: ../sflphone-gtk/src/assistant.c:376
-msgid ""
-"This assistant is now finished.\n"
-"\n"
-" You can at any time check your registration state or modify your accounts "
-"parameters in the Options/Accounts window."
-msgstr ""
-"Cet assistant est maintenant terminé.\n"
-"\n"
-" Vous pouvez à tout moment vérifier votre état d'enregistrement ou modifier "
-"les paramètres de vos comptes dans la fenêtre Options/Comptes."
+#: ../sflphone-gtk/src/context-menu.c:296 ../sflphone-gtk/src/menus.c:308
+#: ../sflphone-gtk/src/menus.c:791
+msgid "_Pick up"
+msgstr "_Décrocher"
 
-#: ../sflphone-gtk/src/audioconf.c:154
-#, c-format
-msgid "audio device index for output = %d\n"
-msgstr "index du device audio de sortie = %d\n"
+#: ../sflphone-gtk/src/context-menu.c:308 ../sflphone-gtk/src/menus.c:318
+#: ../sflphone-gtk/src/menus.c:803
+msgid "_Hang up"
+msgstr "_Raccrocher"
 
-#: ../sflphone-gtk/src/audioconf.c:562
-msgid "Name"
-msgstr "Nom"
+#: ../sflphone-gtk/src/context-menu.c:320 ../sflphone-gtk/src/menus.c:328
+#: ../sflphone-gtk/src/menus.c:815
+msgid "On _Hold"
+msgstr "_Mettre en attente"
 
-#: ../sflphone-gtk/src/audioconf.c:567
-msgid "Frequency"
-msgstr "Fréquence"
-
-#: ../sflphone-gtk/src/audioconf.c:572
-msgid "Bitrate"
-msgstr "Bitrate"
-
-#: ../sflphone-gtk/src/audioconf.c:577
-msgid "Bandwidth"
-msgstr "Bande passante"
-
-#: ../sflphone-gtk/src/audioconf.c:637
-msgid "Pulseaudio"
-msgstr ""
-
-#: ../sflphone-gtk/src/audioconf.c:640
-msgid "ALSA"
-msgstr ""
-
-#: ../sflphone-gtk/src/audioconf.c:666
-msgid "ALSA plugin"
-msgstr "Greffon ALSA"
-
-#: ../sflphone-gtk/src/audioconf.c:688
-msgid "Output"
-msgstr "Sortie"
-
-#: ../sflphone-gtk/src/audioconf.c:710
-msgid "Input"
-msgstr "Entrée"
-
-#: ../sflphone-gtk/src/audioconf.c:743
-msgid "_Enable ringtones"
-msgstr "_Activer les sonneries"
-
-#: ../sflphone-gtk/src/audioconf.c:748
-msgid "Choose a ringtone"
-msgstr "Sélectionner une sonnerie"
-
-#: ../sflphone-gtk/src/audioconf.c:753
-msgid "Audio Files"
-msgstr "Fichier Audio"
-
-#: ../sflphone-gtk/src/audioconf.c:770
-msgid "_Activate silence detection"
-msgstr "Activer la détection de silence"
-
-#: ../sflphone-gtk/src/audioconf.c:798
-msgid "Sound Manager"
-msgstr "Interface Audio"
-
-#: ../sflphone-gtk/src/audioconf.c:805
-msgid "ALSA configuration"
-msgstr "Configuration ALSA"
-
-#: ../sflphone-gtk/src/audioconf.c:815
-msgid "Codecs"
-msgstr ""
-
-#: ../sflphone-gtk/src/audioconf.c:823
-msgid "Noise reduction"
-msgstr "Réduction du bruit"
-
-#: ../sflphone-gtk/src/audioconf.c:830
-msgid "Ringtones"
-msgstr "_Activer les sonneries"
-
-#: ../sflphone-gtk/src/calltree.c:209
-#, c-format
-msgid "\"Voicemail\" <%s>"
-msgstr "\"Boite vocale\" <%s>"
-
-#: ../sflphone-gtk/src/calltree.c:431 ../sflphone-gtk/src/calltree.c:433
-msgid "Place a call"
-msgstr "Appeler"
-
-#: ../sflphone-gtk/src/calltree.c:440 ../sflphone-gtk/src/calltree.c:442
-msgid "Pick up"
-msgstr "Décrocher"
-
-#: ../sflphone-gtk/src/calltree.c:450 ../sflphone-gtk/src/calltree.c:452
-msgid "Hang up"
-msgstr "Raccrocher"
-
-#: ../sflphone-gtk/src/calltree.c:460 ../sflphone-gtk/src/calltree.c:462
-msgid "Off Hold"
-msgstr "Reprendre"
-
-#: ../sflphone-gtk/src/calltree.c:471 ../sflphone-gtk/src/calltree.c:473
-msgid "On Hold"
-msgstr "Mettre en attente"
-
-#: ../sflphone-gtk/src/calltree.c:484 ../sflphone-gtk/src/calltree.c:486
-msgid "Transfer"
-msgstr "Transférer"
-
-#: ../sflphone-gtk/src/calltree.c:496 ../sflphone-gtk/src/calltree.c:498
-msgid "History"
-msgstr "Historique"
-
-#: ../sflphone-gtk/src/calltree.c:506 ../sflphone-gtk/src/calltree.c:510
-msgid "Voicemail"
-msgstr "Boite vocale"
-
-#: ../sflphone-gtk/src/calltree.c:521
-msgid "Record a call"
-msgstr "Enregistrer un appel"
-
-#: ../sflphone-gtk/src/configwindow.c:382
-msgid "Protocol"
-msgstr "Protocole"
-
-#: ../sflphone-gtk/src/configwindow.c:389
-msgid "Status"
-msgstr "Statut"
-
-#: ../sflphone-gtk/src/configwindow.c:492
-msgid "Stun parameters will apply to each SIP account created."
-msgstr "Les paramètres STUN sont appliqués à tous les comptes SIP créés"
-
-#: ../sflphone-gtk/src/configwindow.c:500
-msgid "Enable it if you are behind a firewall"
-msgstr "À activer si vous êtes derrière un pare-feu, puis redémarrez SFLphone"
-
-#: ../sflphone-gtk/src/configwindow.c:508
-msgid "Format: name.server:port"
-msgstr "Format: nom.serveur:port"
-
-#: ../sflphone-gtk/src/configwindow.c:558
-msgid "Desktop Notification"
-msgstr "Notifications du bureau"
-
-#: ../sflphone-gtk/src/configwindow.c:566
-msgid "_Enable"
-msgstr "_Activer"
-
-#: ../sflphone-gtk/src/configwindow.c:571
-msgid "_Notify voice mails"
-msgstr "_Notifier les messages vocaux"
-
-#: ../sflphone-gtk/src/configwindow.c:577
-msgid "System Tray Icon"
-msgstr "Icône dans la barre des tâches"
-
-#: ../sflphone-gtk/src/configwindow.c:585
-msgid "_Popup main window on incoming call"
-msgstr "_Faire apparaître la fenêtre principale lors d'appel entrant"
-
-#: ../sflphone-gtk/src/configwindow.c:590
-msgid "Ne_ver popup main window"
-msgstr "Ne _jamais afficher la fenêtre principale"
-
-#: ../sflphone-gtk/src/configwindow.c:594
-msgid "_Start hidden"
-msgstr "_Démarrer caché"
-
-#: ../sflphone-gtk/src/configwindow.c:600
-msgid "Calls History"
-msgstr "Historique des appels"
-
-#: ../sflphone-gtk/src/configwindow.c:608
-msgid "_Maximum number of calls"
-msgstr "N_ombre maximum d'appels"
-
-#: ../sflphone-gtk/src/configwindow.c:624
-msgid "PulseAudio sound server"
-msgstr "Serveur de son PulseAudio"
-
-#: ../sflphone-gtk/src/configwindow.c:632
-msgid "_Control running applications volume"
-msgstr "_Autoriser à modifier le volume des autres applications"
-
-#: ../sflphone-gtk/src/configwindow.c:645
-msgid "SIP Port"
-msgstr "Port SIP"
-
-#: ../sflphone-gtk/src/configwindow.c:658
-msgid "Port:"
-msgstr ""
-
-#: ../sflphone-gtk/src/configwindow.c:703
-msgid "General"
-msgstr "Général"
-
-#: ../sflphone-gtk/src/configwindow.c:714
-msgid "_Destination folder"
-msgstr "_Dossier de destination"
-
-#: ../sflphone-gtk/src/configwindow.c:719
-msgid "Select a folder"
-msgstr "Choisissez un dossier"
-
-#: ../sflphone-gtk/src/configwindow.c:744
-msgid "Preferences"
-msgstr "Préférences"
-
-#: ../sflphone-gtk/src/configwindow.c:764
-msgid "General Settings"
-msgstr "Préférences"
-
-#: ../sflphone-gtk/src/configwindow.c:769
-msgid "Audio Settings"
-msgstr "Paramètres Audio"
-
-#: ../sflphone-gtk/src/configwindow.c:774
-msgid "Record"
+#: ../sflphone-gtk/src/context-menu.c:332 ../sflphone-gtk/src/menus.c:340
+#: ../sflphone-gtk/src/menus.c:827
+#, fuzzy
+msgid "_Record"
 msgstr "Enregistrement"
-
-#: ../sflphone-gtk/src/configwindow.c:798
-msgid "Accounts"
-msgstr "Comptes"
-
-#: ../sflphone-gtk/src/configwindow.c:810
-msgid "Accounts previously setup"
-msgstr "Liste des comptes existants"
 
 #: ../sflphone-gtk/src/errors.c:28
 msgid ""
@@ -485,90 +282,73 @@ msgstr ""
 "\n"
 "Pulseaudio n'est pas lancé"
 
-#: ../sflphone-gtk/src/historyfilter.c:49
-#: ../sflphone-gtk/src/historyfilter.c:68
-#: ../sflphone-gtk/src/historyfilter.c:83
-msgid "Search"
-msgstr "Recherche"
-
-#: ../sflphone-gtk/src/mainwindow.c:69
+#: ../sflphone-gtk/src/mainwindow.c:70
 msgid "There is one call in progress."
 msgstr "Vous avez un appel en cours."
 
-#: ../sflphone-gtk/src/mainwindow.c:73
+#: ../sflphone-gtk/src/mainwindow.c:74
 msgid "There are calls in progress."
 msgstr "Vous avez des appels en cours."
 
-#: ../sflphone-gtk/src/mainwindow.c:82
+#: ../sflphone-gtk/src/mainwindow.c:83
 msgid "Do you still want to quit?"
 msgstr "Voulez-vous quitter?"
 
-#: ../sflphone-gtk/src/menus.c:135
+#: ../sflphone-gtk/src/menus.c:131
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr ""
 "SFLphone est un client VoIP compatible avec les protocoles SIP et IAX2."
 
-#: ../sflphone-gtk/src/menus.c:138
+#: ../sflphone-gtk/src/menus.c:134
 msgid "About SFLphone"
 msgstr "A propos de SFLphone"
 
-#: ../sflphone-gtk/src/menus.c:161
+#: ../sflphone-gtk/src/menus.c:157
 msgid "_Help"
 msgstr "A_ide"
 
-#: ../sflphone-gtk/src/menus.c:278
+#: ../sflphone-gtk/src/menus.c:296 ../sflphone-gtk/src/menus.c:949
 msgid "_New call"
 msgstr "_Nouvel appel"
 
-#: ../sflphone-gtk/src/menus.c:290 ../sflphone-gtk/src/menus.c:760
-msgid "_Pick up"
-msgstr "_Décrocher"
-
-#: ../sflphone-gtk/src/menus.c:300 ../sflphone-gtk/src/menus.c:772
-msgid "_Hang up"
-msgstr "_Raccrocher"
-
-#: ../sflphone-gtk/src/menus.c:310 ../sflphone-gtk/src/menus.c:784
-msgid "On _Hold"
-msgstr "_Mettre en attente"
-
-#: ../sflphone-gtk/src/menus.c:326
+#: ../sflphone-gtk/src/menus.c:354
 msgid "_Account Assistant"
 msgstr "_Assistant SFLphone"
 
-#: ../sflphone-gtk/src/menus.c:356
+#: ../sflphone-gtk/src/menus.c:384
 msgid "_Call"
 msgstr "_Actions"
 
-#: ../sflphone-gtk/src/menus.c:529
+#: ../sflphone-gtk/src/menus.c:557
 msgid "_Clear history"
 msgstr "Effacer l'historique"
 
-#: ../sflphone-gtk/src/menus.c:541
+#: ../sflphone-gtk/src/menus.c:569
 msgid "_Accounts"
 msgstr "Co_mptes"
 
-#: ../sflphone-gtk/src/menus.c:556
+#: ../sflphone-gtk/src/menus.c:584
 msgid "_Edit"
 msgstr "_Options"
 
-#: ../sflphone-gtk/src/menus.c:616
+#: ../sflphone-gtk/src/menus.c:644
 msgid "_Dialpad"
 msgstr "_Clavier"
 
-#: ../sflphone-gtk/src/menus.c:628
+#: ../sflphone-gtk/src/menus.c:656
 msgid "_Volume controls"
 msgstr "_Contrôle du volume"
 
-#: ../sflphone-gtk/src/menus.c:637
-msgid "_Search history"
-msgstr "Recherche dans l'historique"
+#: ../sflphone-gtk/src/menus.c:665
+#, fuzzy
+msgid "_Search contact"
+msgstr "Rechercher un contact"
 
-#: ../sflphone-gtk/src/menus.c:645
+#: ../sflphone-gtk/src/menus.c:673
 msgid "_View"
 msgstr "A_ffichage"
 
-#: ../sflphone-gtk/src/menus.c:867
+#: ../sflphone-gtk/src/menus.c:885
 msgid "_Call back"
 msgstr "_Rappeler"
 
@@ -608,11 +388,7 @@ msgstr "Compte courant"
 msgid "You haven't setup any accounts"
 msgstr "Vous n'avez aucun compte configuré"
 
-#: ../sflphone-gtk/src/sflnotify.c:185 ../sflphone-gtk/src/sflnotify.c:224
-msgid "Setup Accounts"
-msgstr "Configurer les comptes"
-
-#: ../sflphone-gtk/src/sflnotify.c:208
+#: ../sflphone-gtk/src/sflnotify.c:209
 msgid "You have no registered accounts"
 msgstr "Vous n'avez aucun compte enregistré"
 
@@ -641,6 +417,329 @@ msgstr "<small>Appel manqué</small>"
 #, c-format
 msgid "<small>Duration:</small> %s"
 msgstr "<small>Durée:</small> %s"
+
+#: ../sflphone-gtk/src/toolbar.c:49
+#, c-format
+msgid "\"Voicemail\" <%s>"
+msgstr "\"Boite vocale\" <%s>"
+
+#: ../sflphone-gtk/src/toolbar.c:175 ../sflphone-gtk/src/toolbar.c:177
+msgid "Place a call"
+msgstr "Appeler"
+
+#: ../sflphone-gtk/src/toolbar.c:184 ../sflphone-gtk/src/toolbar.c:186
+msgid "Pick up"
+msgstr "Décrocher"
+
+#: ../sflphone-gtk/src/toolbar.c:194 ../sflphone-gtk/src/toolbar.c:196
+msgid "Hang up"
+msgstr "Raccrocher"
+
+#: ../sflphone-gtk/src/toolbar.c:204 ../sflphone-gtk/src/toolbar.c:206
+msgid "Off Hold"
+msgstr "Reprendre"
+
+#: ../sflphone-gtk/src/toolbar.c:215 ../sflphone-gtk/src/toolbar.c:217
+msgid "On Hold"
+msgstr "Mettre en attente"
+
+#: ../sflphone-gtk/src/toolbar.c:228 ../sflphone-gtk/src/toolbar.c:230
+msgid "Transfer"
+msgstr "Transférer"
+
+#: ../sflphone-gtk/src/toolbar.c:240 ../sflphone-gtk/src/toolbar.c:242
+msgid "History"
+msgstr "Historique"
+
+#: ../sflphone-gtk/src/toolbar.c:251 ../sflphone-gtk/src/toolbar.c:253
+msgid "Address book"
+msgstr "Carnet d'adresse"
+
+#: ../sflphone-gtk/src/toolbar.c:258 ../sflphone-gtk/src/toolbar.c:262
+msgid "Voicemail"
+msgstr "Boite vocale"
+
+#: ../sflphone-gtk/src/toolbar.c:270
+msgid "Record a call"
+msgstr "Enregistrer un appel"
+
+#: ../sflphone-gtk/src/contacts/history.c:75
+#: ../sflphone-gtk/src/contacts/searchbar.c:39
+#: ../sflphone-gtk/src/contacts/searchbar.c:65
+msgid "Search"
+msgstr "Recherche"
+
+#: ../sflphone-gtk/src/config/accountwindow.c:103
+msgid "Account settings"
+msgstr "Configuration des comptes"
+
+#: ../sflphone-gtk/src/config/accountwindow.c:115
+msgid "Account parameters"
+msgstr "Paramètres du compte"
+
+#: ../sflphone-gtk/src/config/accountwindow.c:137
+msgid "_Enabled"
+msgstr "_Activé"
+
+#: ../sflphone-gtk/src/config/accountwindow.c:151
+msgid "_Protocol"
+msgstr "_Protocole"
+
+#: ../sflphone-gtk/src/config/accountwindow.c:169
+msgid "Unknown"
+msgstr "Inconnu"
+
+#: ../sflphone-gtk/src/config/accountwindow.c:209
+msgid "_Voicemail box #"
+msgstr "_Boite vocale #"
+
+#: ../sflphone-gtk/src/config/addressbook-config.c:105
+msgid "Search Parameters"
+msgstr "Paramètres de recherche"
+
+#: ../sflphone-gtk/src/config/addressbook-config.c:116
+msgid "Maximum result number for a request: "
+msgstr "Nombre maximum d'appels"
+
+#: ../sflphone-gtk/src/config/addressbook-config.c:127
+msgid "_Display contact photo if available"
+msgstr "Afficher la photo si disponible"
+
+#: ../sflphone-gtk/src/config/addressbook-config.c:132
+msgid "Search for and display: "
+msgstr "Chercher et afficher: "
+
+#: ../sflphone-gtk/src/config/addressbook-config.c:135
+msgid "_Business phone"
+msgstr "Tél du bureau"
+
+#: ../sflphone-gtk/src/config/addressbook-config.c:140
+msgid "_Home phone"
+msgstr "Tél du domicile"
+
+#: ../sflphone-gtk/src/config/addressbook-config.c:145
+msgid "_Mobile phone"
+msgstr "Tél portable"
+
+#: ../sflphone-gtk/src/config/audioconf.c:154
+#, c-format
+msgid "audio device index for output = %d\n"
+msgstr "index du device audio de sortie = %d\n"
+
+#: ../sflphone-gtk/src/config/audioconf.c:562
+msgid "Name"
+msgstr "Nom"
+
+#: ../sflphone-gtk/src/config/audioconf.c:567
+msgid "Frequency"
+msgstr "Fréquence"
+
+#: ../sflphone-gtk/src/config/audioconf.c:572
+msgid "Bitrate"
+msgstr "Bitrate"
+
+#: ../sflphone-gtk/src/config/audioconf.c:577
+msgid "Bandwidth"
+msgstr "Bande passante"
+
+#: ../sflphone-gtk/src/config/audioconf.c:637
+msgid "Pulseaudio"
+msgstr ""
+
+#: ../sflphone-gtk/src/config/audioconf.c:640
+msgid "ALSA"
+msgstr ""
+
+#: ../sflphone-gtk/src/config/audioconf.c:666
+msgid "ALSA plugin"
+msgstr "Greffon ALSA"
+
+#: ../sflphone-gtk/src/config/audioconf.c:688
+msgid "Output"
+msgstr "Sortie"
+
+#: ../sflphone-gtk/src/config/audioconf.c:710
+msgid "Input"
+msgstr "Entrée"
+
+#: ../sflphone-gtk/src/config/audioconf.c:743
+msgid "_Enable ringtones"
+msgstr "_Activer les sonneries"
+
+#: ../sflphone-gtk/src/config/audioconf.c:748
+msgid "Choose a ringtone"
+msgstr "Sélectionner une sonnerie"
+
+#: ../sflphone-gtk/src/config/audioconf.c:753
+msgid "Audio Files"
+msgstr "Fichier Audio"
+
+#: ../sflphone-gtk/src/config/audioconf.c:770
+msgid "_Activate silence detection"
+msgstr "Activer la détection de silence"
+
+#: ../sflphone-gtk/src/config/audioconf.c:798
+msgid "Sound Manager"
+msgstr "Interface Audio"
+
+#: ../sflphone-gtk/src/config/audioconf.c:805
+msgid "ALSA configuration"
+msgstr "Configuration ALSA"
+
+#: ../sflphone-gtk/src/config/audioconf.c:815
+msgid "Codecs"
+msgstr ""
+
+#: ../sflphone-gtk/src/config/audioconf.c:823
+msgid "Noise reduction"
+msgstr "Réduction du bruit"
+
+#: ../sflphone-gtk/src/config/audioconf.c:830
+msgid "Ringtones"
+msgstr "_Activer les sonneries"
+
+#: ../sflphone-gtk/src/config/configwindow.c:385
+msgid "Protocol"
+msgstr "Protocole"
+
+#: ../sflphone-gtk/src/config/configwindow.c:392
+msgid "Status"
+msgstr "Statut"
+
+#: ../sflphone-gtk/src/config/configwindow.c:495
+msgid "Stun parameters will apply to each SIP account created."
+msgstr "Les paramètres STUN sont appliqués à tous les comptes SIP créés"
+
+#: ../sflphone-gtk/src/config/configwindow.c:503
+msgid "Enable it if you are behind a firewall"
+msgstr "À activer si vous êtes derrière un pare-feu, puis redémarrez SFLphone"
+
+#: ../sflphone-gtk/src/config/configwindow.c:511
+msgid "Format: name.server:port"
+msgstr "Format: nom.serveur:port"
+
+#: ../sflphone-gtk/src/config/configwindow.c:561
+msgid "Desktop Notification"
+msgstr "Notifications du bureau"
+
+#: ../sflphone-gtk/src/config/configwindow.c:569
+msgid "_Enable"
+msgstr "_Activer"
+
+#: ../sflphone-gtk/src/config/configwindow.c:574
+msgid "_Notify voice mails"
+msgstr "_Notifier les messages vocaux"
+
+#: ../sflphone-gtk/src/config/configwindow.c:580
+msgid "System Tray Icon"
+msgstr "Icône dans la barre des tâches"
+
+#: ../sflphone-gtk/src/config/configwindow.c:588
+msgid "_Popup main window on incoming call"
+msgstr "_Faire apparaître la fenêtre principale lors d'appel entrant"
+
+#: ../sflphone-gtk/src/config/configwindow.c:593
+msgid "Ne_ver popup main window"
+msgstr "Ne _jamais afficher la fenêtre principale"
+
+#: ../sflphone-gtk/src/config/configwindow.c:597
+msgid "_Start hidden"
+msgstr "_Démarrer caché"
+
+#: ../sflphone-gtk/src/config/configwindow.c:603
+msgid "Calls History"
+msgstr "Historique des appels"
+
+#: ../sflphone-gtk/src/config/configwindow.c:611
+msgid "_Maximum number of calls"
+msgstr "N_ombre maximum d'appels"
+
+#: ../sflphone-gtk/src/config/configwindow.c:627
+msgid "PulseAudio sound server"
+msgstr "Serveur de son PulseAudio"
+
+#: ../sflphone-gtk/src/config/configwindow.c:635
+msgid "_Control running applications volume"
+msgstr "_Autoriser à modifier le volume des autres applications"
+
+#: ../sflphone-gtk/src/config/configwindow.c:648
+msgid "SIP Port"
+msgstr "Port SIP"
+
+#: ../sflphone-gtk/src/config/configwindow.c:661
+msgid "Port:"
+msgstr ""
+
+#: ../sflphone-gtk/src/config/configwindow.c:706
+msgid "General"
+msgstr "Général"
+
+#: ../sflphone-gtk/src/config/configwindow.c:717
+msgid "_Destination folder"
+msgstr "_Dossier de destination"
+
+#: ../sflphone-gtk/src/config/configwindow.c:723
+msgid "Select a folder"
+msgstr "Choisissez un dossier"
+
+#: ../sflphone-gtk/src/config/configwindow.c:748
+msgid "Preferences"
+msgstr "Préférences"
+
+#: ../sflphone-gtk/src/config/configwindow.c:768
+msgid "General Settings"
+msgstr "Préférences"
+
+#: ../sflphone-gtk/src/config/configwindow.c:773
+msgid "Audio Settings"
+msgstr "Paramètres Audio"
+
+#: ../sflphone-gtk/src/config/configwindow.c:778
+msgid "Record"
+msgstr "Enregistrement"
+
+#: ../sflphone-gtk/src/config/configwindow.c:783
+msgid "Address Book"
+msgstr "Carnet d'adresse"
+
+#: ../sflphone-gtk/src/config/configwindow.c:788
+msgid "Hooks"
+msgstr "Ancrage"
+
+#: ../sflphone-gtk/src/config/configwindow.c:814
+msgid "Accounts"
+msgstr "Comptes"
+
+#: ../sflphone-gtk/src/config/configwindow.c:826
+msgid "Accounts previously setup"
+msgstr "Liste des comptes existants"
+
+#: ../sflphone-gtk/src/config/hooks-config.c:92
+msgid "URL argument"
+msgstr "Argument URL"
+
+#: ../sflphone-gtk/src/config/hooks-config.c:102
+msgid "_SIP protocol"
+msgstr "_Protocole SIP"
+
+#: ../sflphone-gtk/src/config/hooks-config.c:107
+msgid "_IAX2 protocol"
+msgstr "_Protocole IAX2"
+
+#: ../sflphone-gtk/src/config/hooks-config.c:113
+msgid "_SIP Header: "
+msgstr "En-tête SIP: "
+
+#: ../sflphone-gtk/src/config/hooks-config.c:120
+msgid "_Command: "
+msgstr "Commande"
+
+#, fuzzy
+#~ msgid "SFLphone 0.9.4"
+#~ msgstr "SFLphone 0.9.4"
+
+#~ msgid "Setup Accounts"
+#~ msgstr "Configurer les comptes"
 
 #~ msgid "_STUN Server"
 #~ msgstr "S_erveur STUN"
