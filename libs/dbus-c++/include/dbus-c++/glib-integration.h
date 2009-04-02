@@ -25,7 +25,7 @@
 #ifndef __DBUSXX_GLIB_INTEGRATION_H
 #define __DBUSXX_GLIB_INTEGRATION_H
 
-#ifdef HAVE_CONFIG_H
+#ifdef DBUS_HAVE_CONFIG_H
 #include "config.h"
 #endif
 

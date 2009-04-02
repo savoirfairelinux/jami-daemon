@@ -1,9 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 
-# could be replaced with autoconf -v -f (verbose, force rebuild of ltmain, .in files, etc.)
-aclocal -I m4
-libtoolize --force
-autoheader
-autoconf -f
-automake -a
+function autocmd()
+{
+    echo "Running ${1}..."
+        $* || {
+            echo "Error running ${1}"
+                exit 1
+        }
+}
+
+autocmd libtoolize --force --copy
+autocmd aclocal
+autocmd autoheader
+autocmd autoconf -f
+autocmd automake --add-missing --force-missing --copy -Wall
+
 ./configure $@
+
+

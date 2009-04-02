@@ -25,7 +25,7 @@ sflphoned_SOURCES = \
 		eventthread.cpp \
 		sipaccount.cpp \
 		accountcreator.cpp \
-                sipvoiplink.cpp \
+        sipvoiplink.cpp \
 		call.cpp \
 		account.cpp \
 		sipcall.cpp \
@@ -44,9 +44,7 @@ sflphoned_LDADD = \
 		./libsflphone.la \
 		@CCGNU2_LIBS@ \
 		@CCEXT2_LIBS@ \
-		$(IAX_LIBS) \
 		$(PJSIP_LIBS) \
-		@DBUSCPP_LIBS@ \
 		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
@@ -78,12 +76,12 @@ noinst_HEADERS = \
 libsflphone_la_LIBADD = \
 	$(src)/libs/stund/libstun.la \
 	$(src)/libs/utilspp/libutilspp.la \
+	$(src)/libs/iax2/libiax2.la \
 	./audio/libaudio.la \
 	./dbus/libdbus.la \
 	./config/libconfig.la \
 	./plug-in/libplugin.la \
 	./plug-in/audiorecorder/libaudiorecorder.la \
-	./hooks/libhooks.la \
-	$(IAX_LIBS) 
+	./hooks/libhooks.la 
 
 libsflphone_la_SOURCES =

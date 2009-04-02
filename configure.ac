@@ -6,14 +6,19 @@ AC_INIT([SFLphone],[0.9.4],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
 AC_REVISION([$Revision$])
 
+AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+AM_CONFIG_HEADER([config.h])
+
 dnl Compute canonical system name
-AC_CANONICAL_TARGET
+dnl AC_CANONICAL_TARGET
+
+dnl Use this variable in the program
+AC_SUBST(PACKAGE_VERSION)
+
+AM_PROG_LIBTOOL
 
 dnl Rewrite name of programs to be installed
-AC_ARG_PROGRAM
-
-dnl Automake options
-AM_INIT_AUTOMAKE([-Wno-portability])
+dnl AC_ARG_PROGRAM
 
 dnl Improve make variable MAKE
 AC_PROG_MAKE_SET
@@ -29,7 +34,12 @@ AC_CONFIG_FILES([libs/Makefile \
   libs/stund/Makefile \
   libs/utilspp/Makefile \
   libs/utilspp/functor/Makefile \
-  libs/utilspp/singleton/Makefile])
+  libs/utilspp/singleton/Makefile \
+  libs/dbus-c++/Makefile \
+  libs/dbus-c++/src/Makefile \
+  libs/dbus-c++/tools/Makefile \
+  libs/dbus-c++/data/Makefile \
+  libs/iax2/Makefile])
   
 AC_CONFIG_FILES([src/Makefile \
   src/audio/Makefile \
@@ -59,17 +69,6 @@ AC_CONFIG_FILES([platform/suse.spec \
   
 dnl the file stamp-h.in should be there before (instead of AC_CONFIG_HEADERS(config.h))
 dnl AM_CONFIG_HEADER(config.h)
-
-dnl Get project version
-VERSION=`sed -ne 's/^#define SFLPHONED_VERSION "\(.*\)"/\1/p' src/global.h`
-
-dnl Get rid of release number
-RPM_VERSION=`echo $VERSION | cut -d- -f1`
-AC_SUBST(RPM_VERSION)
-RPM_RELEASE=`echo $VERSION | sed -ne 's/.*-\(.*\)/\1/p' `
-AC_SUBST(RPM_RELEASE)
-VERSION=`echo $VERSION | cut -f1 -d\' \'`
-AC_SUBST(VERSION)
 
 dnl Settings need Standard C++ Library
 LIBS="$LIBS -lstdc++"
@@ -190,10 +189,82 @@ PKG_CHECK_MODULES(CCRTP, libccrtp1 >= ${LIBCCRT_MIN_VERSION})
 AC_SUBST(CCRTP_LIBS)
 AC_SUBST(CCRTP_CFLAGS)
 
-LIBDBUSCPP_MIN_VERSION=0.5
-PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1 >= ${LIBDBUSCPP_MIN_VERSION})
-AC_SUBST(DBUSCPP_LIBS)
-AC_SUBST(DBUSCPP_CFLAGS)
+dnl DBus-C++ detection (used to be in library own build system)
+DBUS_REQUIRED_VERSION=0.60
+PKG_CHECK_MODULES(dbus, [dbus-1 >= $DBUS_REQUIRED_VERSION],,
+	AC_MSG_ERROR([You need the DBus libraries (version 0.6 or better)]
+	[http://www.freedesktop.org/wiki/Software_2fdbus])
+)
+AC_SUBST(dbus_CFLAGS)
+AC_SUBST(dbus_LIBS)
+
+DBUS_API_STABLE_VERSION=1.0.0
+PKG_CHECK_EXISTS([dbus-1 < $DBUS_API_STABLE_VERSION],
+	[AC_DEFINE(DBUS_API_SUBJECT_TO_CHANGE, , [unstable DBus])]
+)
+
+DBUS_THREADS_INIT_DEFAULT_VERSION=0.93
+PKG_CHECK_EXISTS([dbus-1 >= $DBUS_THREADS_INIT_DEFAULT_VERSION],
+	[AC_DEFINE(DBUS_HAS_THREADS_INIT_DEFAULT, , [dbus_threads_init_default (needs DBus >= 0.93)])]
+)
+
+DBUS_RECURSIVE_MUTEX_VERSION=0.95
+PKG_CHECK_EXISTS([dbus-1 >= $DBUS_RECURSIVE_MUTEX_VERSION],
+	[AC_DEFINE(DBUS_HAS_RECURSIVE_MUTEX, , [DBus supports recursive mutexes (needs DBus >= 0.95)])]
+)
+
+if test "$enable_glib" = "yes" ; then
+PKG_CHECK_MODULES([glib], glib-2.0)
+AC_SUBST(glib_CFLAGS)
+AC_SUBST(glib_LIBS)
+AM_CONDITIONAL(ENABLE_GLIB, test 1 = 1)
+PKG_CHECK_MODULES([gtkmm], gtkmm-2.4,
+	AM_CONDITIONAL(HAVE_GTKMM, test 1 = 1),
+	AM_CONDITIONAL(HAVE_GTKMM, test 0 = 1)
+)
+AC_SUBST(gtkmm_CFLAGS)
+AC_SUBST(gtkmm_LIBS)
+else
+AM_CONDITIONAL(ENABLE_GLIB, test 0 = 1)
+AM_CONDITIONAL(HAVE_GTKMM, test 0 = 1)
+fi
+
+AC_CHECK_LIB([expat], XML_ParserCreate_MM,
+   	[AC_CHECK_HEADERS(expat.h, have_expat=true, have_expat=false)],
+	have_expat=false)
+
+if ! $have_expat; then
+	AC_MSG_ERROR([You need the eXpat xml parser]
+		[http://expat.sourceforge.net/])
+fi
+
+xml_CFLAGS=
+xml_LIBS=-lexpat
+
+AC_SUBST(xml_CFLAGS)
+AC_SUBST(xml_LIBS)
+
+AC_CHECK_LIB([pthread], pthread_create,
+	[AC_CHECK_HEADERS(pthread.h, have_pthread=true, have_pthread=false)],
+	have_pthread=false)
+
+if test "$have_pthread" = "false"; then
+	AC_MSG_ERROR([You need the POSIX Thread library (pthreads)])	
+fi
+
+# For the tools/, we need libdbus-c++ for the "build" architecture as well
+
+AM_CONDITIONAL(CROSS_COMPILING, test "$cross_compiling" = "yes")
+
+AC_ARG_WITH(build-libdbus-cxx,
+	AS_HELP_STRING([--with-build-libdbus-cxx],
+	[For cross compilation: path to libdbus-cxx which was compiled for the 'build' system.]),
+	[ BUILD_LIBDBUS_CXX_DIR=${withval} ],
+	[ BUILD_LIBDBUS_CXX_DIR="\$(top_builddir)" ]
+)
+AC_SUBST(BUILD_LIBDBUS_CXX_DIR)
+
+
 
 dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12
@@ -268,72 +339,9 @@ AC_ARG_WITH([iax2],
   [],
   [with_iax2=yes])
 
-LIBIAX2=
-AS_IF([test "x$with_iax2" != xno],
-    [AC_CHECK_HEADER([iax2/iax.h], , AC_MSG_FAILURE([Unable to find the libiax2 headers. You may need to install sflphone-iax2-dev package. You may use --without-iax2 to compile without iax2 protocol support.]))]
-    [AC_CHECK_LIB([iax2], [iax_init],
-    [],
-    [AC_MSG_FAILURE(
-       [libiax2 link test failed. You may use --without-iax2 to compile without iax2 protocol support.])]
-       )
-    ]
-)
-    
 AC_DEFINE([HAVE_IAX], test "x$with_iax2" = "xyes", [Define if you have libiax2])
 AM_CONDITIONAL(USE_IAX, test "x$with_iax2" = "xyes" )
 
-dnl Check for readline
-GNUPG_CHECK_READLINE
-
-dnl Check for zeroconf (from apple)
-AC_ARG_ENABLE(zeroconf, 
-  AS_HELP_STRING(
-    [--disable-zeroconf],
-    [disables libdns_sd (browsing and publishing DNS-SD services will not be possible) @<:@default=no@:>@]
-  ),  
-  [without_zeroconf=$enableval], 
-  [without_zeroconf="no"]
-)
-if test "x$without_zeroconf" = "xno"; then
-  AC_MSG_CHECKING(for DNS-SD support)
-  save_dnssdtest_LIBS="$LIBS"
-  save_dnssdtest_LDFLAGS="$LDFLAGS"
-  save_dnssdtest_CPPFLAGS="$CPPFLAGS"
-  LDFLAGS="$all_libraries $LDFLAGS"
-  CPPFLAGS="$CPPFLAGS $all_includes"
-  case $host_os in
-    darwin*) LIBS="" ;;
-    *) LIBS="-ldns_sd" ;;
-  esac
-  have_libdns_sd="no"
-  AC_LINK_IFELSE(
-    [AC_LANG_SOURCE([[
-        #include <dns_sd.h>
-      ]], [[
-        DNSServiceRefDeallocate( (DNSServiceRef) 0);
-        TXTRecordDeallocate( (TXTRecordRef*) 0);
-      ]])
-    ],[
-      AC_DEFINE(HAVE_DNSSD, 1, [Define if dns-sd is available])
-      case $host_os in
-        darwin*) LIB_DNSSD="" ;;
-        *) LIB_DNSSD="-ldns_sd" ;;
-      esac
-      have_libdns_sd="yes"
-      AC_MSG_RESULT(yes)
-    ],[
-      AC_MSG_RESULT(no)
-      LIB_DNSSD=""
-    ])
-  CPPFLAGS=$save_dnssdtest_CPPFLAGS
-  LDFLAGS=$save_dnssdtest_LDFLAGS
-  LIBS=$save_dnssdtest_LIBS
-fi
-AC_SUBST(LIB_DNSSD)
-AM_CONDITIONAL(USE_ZEROCONF, test "$have_libdns_sd" = "yes")	
-
-
- 
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
 # ----------------------------------------------------------------------------
 AC_DEFUN([BB_ENABLE_DOXYGEN],

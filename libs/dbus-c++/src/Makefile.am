@@ -1,17 +1,17 @@
 AM_CPPFLAGS = \
 	$(dbus_CFLAGS) \
 	$(glib_CFLAGS) \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include
+	-I$(top_srcdir)/libs/dbus-c++/include \
+	-I$(top_builddir)/libs/dbus-c++/include
 
 if ENABLE_GLIB
 GLIB_H = $(HEADER_DIR)/glib-integration.h
 GLIB_CPP = glib-integration.cpp
 endif
 
-CONFIG_H = $(top_builddir)/include/dbus-c++/config.h
+CONFIG_H = $(top_builddir)/libs/dbus-c++/include/dbus-c++/config.h
 
-HEADER_DIR  = $(top_srcdir)/include/dbus-c++
+HEADER_DIR  = $(top_builddir)/libs/dbus-c++/include/dbus-c++
 HEADER_FILES = \
 	$(CONFIG_H) \
 	$(HEADER_DIR)/dbus.h \
@@ -36,9 +36,9 @@ HEADER_FILES = \
 	$(GLIB_H)
 
 lib_includedir=$(includedir)/dbus-c++-1/dbus-c++/
-lib_include_HEADERS = $(HEADER_FILES)
+#lib_include_HEADERS = $(HEADER_FILES)
 
-lib_LTLIBRARIES = libdbus-c++-1.la
+noinst_LTLIBRARIES = libdbus-c++-1.la
 libdbus_c___1_la_SOURCES = $(HEADER_FILES) interface.cpp object.cpp introspection.cpp debug.cpp types.cpp connection.cpp connection_p.h property.cpp dispatcher.cpp dispatcher_p.h pendingcall.cpp pendingcall_p.h error.cpp internalerror.h message.cpp message_p.h server.cpp server_p.h eventloop.cpp eventloop-integration.cpp $(GLIB_CPP)
 libdbus_c___1_la_LIBADD = $(dbus_LIBS) $(glib_LIBS) $(pthread_LIBS)
 

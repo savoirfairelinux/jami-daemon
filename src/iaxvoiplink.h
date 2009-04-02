@@ -22,7 +22,7 @@
 #define IAXVOIPLINK_H
 
 #include "voiplink.h"
-#include <iax2/iax-client.h>
+#include <iax-client.h>
 #include "global.h"
 
 #include "audio/codecDescriptor.h"

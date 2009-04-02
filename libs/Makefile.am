@@ -1,1 +1,1 @@
-SUBDIRS = stund utilspp
+SUBDIRS = stund utilspp iax2 dbus-c++
