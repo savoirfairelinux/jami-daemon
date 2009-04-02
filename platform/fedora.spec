@@ -1,5 +1,5 @@
 %define name sflphone
-%define version 
+%define version 0.9.4
 Autoreq: 0
 
 Name:		%name
