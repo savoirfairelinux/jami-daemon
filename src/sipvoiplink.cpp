@@ -450,8 +450,10 @@ SIPVoIPLink::sendUnregister (AccountID id)
 SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 {
     Account* account;
+    pj_status_t status;
 
     SIPCall* call = new SIPCall(id, Call::Outgoing, _pool);
+
 
     if (call) {
         account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(Manager::instance().getAccountFromCall(id)));
@@ -472,7 +474,11 @@ SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
         _debug("Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data());
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address(getLocalIP());
-        call->getLocalSDP()->create_initial_offer();
+        status = call->getLocalSDP()->create_initial_offer();
+    	if (status != PJ_SUCCESS) {
+            delete call; call=0;
+            return call;
+	}
 
         if ( SIPOutgoingInvite(call) ) {
             call->setConnectionState(Call::Progressing);
@@ -1985,7 +1991,12 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             // We retrieve the remote sdp offer in the rdata struct to begin the negociation
             call->getLocalSDP()->set_ip_address(link->getLocalIPAddress());
             get_remote_sdp_from_offer( rdata, &r_sdp );
-            call->getLocalSDP()->receiving_initial_offer( r_sdp );
+            status = call->getLocalSDP()->receiving_initial_offer( r_sdp );
+	    if (status!=PJ_SUCCESS) {
+                delete call; call=0;
+                return false;
+	    }	 
+		
 
             call->setConnectionState(Call::Progressing);
             call->setPeerNumber(peerNumber);

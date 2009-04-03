@@ -129,7 +129,7 @@ int Sdp::create_local_offer (){
     //sdp_addAttributes( _pool );
     sdp_add_media_description( );
 
-    //toString ();
+    toString ();
 
     // Validate the sdp session
     status = pjmedia_sdp_validate( this->_local_offer );
@@ -145,7 +145,10 @@ int Sdp::create_initial_offer(  ){
 
     _debug ("Create initial offer\n");
     // Build the SDP session descriptor
-    create_local_offer( );
+    status = create_local_offer( );
+    if (status != PJ_SUCCESS) {
+	return status;
+    }
 
     // Create the SDP negociator instance with local offer
     status = pjmedia_sdp_neg_create_w_local_offer( _pool, get_local_sdp_session(), &_negociator);
@@ -169,7 +172,10 @@ int Sdp::receiving_initial_offer( pjmedia_sdp_session* remote ){
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
 
     // Build the local offer to respond
-    create_local_offer(  );
+    status = create_local_offer(  );
+    if (status != PJ_SUCCESS) {
+	return status;
+    }
 
     // Retrieve some useful remote information
     this->fetch_media_transport_info_from_remote_sdp (remote);
