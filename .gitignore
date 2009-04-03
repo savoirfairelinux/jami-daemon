@@ -26,6 +26,8 @@ doc/doxygen/core-doc
 doc/doxygen/gtk-gui-doc
 doc/*.html
 
+INSTALL
+
 # Ignore buildsys stuff
 /autom4te.cache
 /configure
@@ -80,6 +82,7 @@ doc/doxygen/Makefile
 libs/Makefile
 libs/utilspp/Makefile
 libs/stund/Makefile
+libs/iax2/Makefile
 libs/utilspp/functor/Makefile
 libs/utilspp/singleton/Makefile
 sflphone-gtk/Makefile
