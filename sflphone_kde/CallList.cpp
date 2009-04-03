@@ -6,6 +6,14 @@ CallList::CallList()
 	calls = new QVector<Call *>();
 }
 
+CallList::~CallList()
+{
+	for(int i=0 ; i<size() ; i++)
+	{
+		delete (*calls)[i];
+	}
+	delete calls;
+}
 
 Call * CallList::operator[](const QListWidgetItem * item)
 {
@@ -70,6 +78,13 @@ Call * CallList::addDialingCall()
 Call * CallList::addIncomingCall(const QString & callId, const QString & from, const QString & account)
 {
 	Call * call = Call::buildIncomingCall(callId, from, account);
+	calls->append(call);
+	return call;
+}
+
+Call * CallList::addRingingCall(const QString & callId)
+{
+	Call * call = Call::buildRingingCall(callId);
 	calls->append(call);
 	return call;
 }

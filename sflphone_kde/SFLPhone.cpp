@@ -73,17 +73,36 @@ QString SFLPhone::firstAccount()
 	return QString();
 }
 
+QList<Account *> SFLPhone::registeredAccounts()
+{
+	ConfigurationManagerInterface & daemon = ConfigurationManagerInterfaceSingleton::getInstance();
+	//ask for the list of accounts ids to the daemon
+	QStringList accountIds = daemon.getAccountList().value();
+	for (int i = 0; i < accountIds.size(); ++i){
+		MapStringString accountDetails = daemon.getAccountDetails(accountIds[i]);
+		if(accountDetails[QString(ACCOUNT_STATUS)] == QString(ACCOUNT_STATE_REGISTERED))
+		{
+			return accountIds[i];
+		}
+	}
+	return QString();
+}
+
 void SFLPhone::addCallToCallList(Call * call)
 {
-	qDebug() << "addCallToCallList";
 	QListWidgetItem * item = call->getItem();
-	qDebug() << "addCallToCallList2";
 	QWidget * widget = call->getItemWidget();
-	qDebug() << "addCallToCallList3";
 	listWidget_callList->addItem(item);
-	qDebug() << "addCallToCallList4";
 	listWidget_callList->setItemWidget(item, widget);
-	qDebug() << "addCallToCallList5";
+}
+
+void SFLPhone::addCallToCallHistory(Call * call)
+{
+	QListWidgetItem * item = call->getHistoryItem();
+	if(item)
+	{
+		listWidget_callHistory->addItem(item);
+	}
 }
 
 void SFLPhone::typeString(QString str)
@@ -102,13 +121,46 @@ void SFLPhone::typeString(QString str)
 			listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 		}
 		callList->getCallByItem(listWidget_callList->currentItem())->appendItemText(str);
-		//listWidget_callList->currentItem()->setText(listWidget_callList->currentItem()->text() + str);
 	}
 	if(stackedWidget_screen->currentWidget() == page_callHistory)
 	{
 		qDebug() << "In call history.";
 		label_searchHistory->setText(label_searchHistory->text() + str);
-		
+	}
+}
+
+void SFLPhone::backspace()
+{
+	qDebug() << "backspace";
+	if(stackedWidget_screen->currentWidget() == page_callList)
+	{
+		QListWidgetItem * item = listWidget_callList->currentItem();
+		if(!item)
+		{
+			qDebug() << "Backspace when no item is selected. Doing nothing.";
+		}
+		else
+		{
+			Call * call = callList->getCallByItem(listWidget_callList->currentItem());
+			if(!call)
+			{
+				qDebug() << "Error : Backspace on unexisting call.";
+			}
+			else
+			{
+				call->backspaceItemText();
+				updateCallItem(call);
+			}
+		}
+	}
+	if(stackedWidget_screen->currentWidget() == page_callHistory)
+	{
+		qDebug() << "In call history.";
+		int textSize = label_searchHistory->text().size();
+		if(textSize > 0)
+		{
+			label_searchHistory->setText(label_searchHistory->text().remove(textSize-1, 1));
+		}
 	}
 }
 
@@ -122,6 +174,7 @@ void SFLPhone::actionb(Call * call, call_action action)
 	{
 		errorWindow->showMessage(QString(msg));
 	}
+	updateCallItem(call);
 	updateWindowCallState();
 }
 
@@ -134,6 +187,17 @@ void SFLPhone::action(QListWidgetItem * item, call_action action)
 ******** Update Display Functions **********
 *******************************************/
 
+void SFLPhone::updateCallItem(Call * call)
+{
+	QListWidgetItem * item = call->getItem();
+	call_state state = call->getState();
+	if(state == CALL_STATE_OVER)
+	{
+		qDebug() << "Updating call with CALL_STATE_OVER. Deleting item " << (*callList)[item]->getCallId();
+		listWidget_callList->takeItem(listWidget_callList->row(item));
+		addCallToCallHistory(call);
+	}
+}
 
 
 void SFLPhone::updateWindowCallState()
@@ -142,7 +206,6 @@ void SFLPhone::updateWindowCallState()
 	QListWidgetItem * item;
 	
 	bool enabledActions[6]= {true,true,true,true,true,true};
-	char * iconFile;
 	char * buttonIconFiles[3] = {ICON_CALL, ICON_HANGUP, ICON_HOLD};
 	bool transfer = false;
 	//tells whether the call is in recording position
@@ -172,7 +235,6 @@ void SFLPhone::updateWindowCallState()
 			{
 				case CALL_STATE_INCOMING:
 					qDebug() << "Reached CALL_STATE_INCOMING with call " << (*callList)[item]->getCallId() << ". Updating window.";
-					iconFile = ICON_INCOMING;
 					buttonIconFiles[0] = ICON_ACCEPT;
 					buttonIconFiles[1] = ICON_REFUSE;
 					break;
@@ -180,11 +242,9 @@ void SFLPhone::updateWindowCallState()
 					qDebug() << "Reached CALL_STATE_RINGING with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					enabledActions[2] = false;
 					enabledActions[3] = false;
-					iconFile = ICON_RINGING;
 					break;
 				case CALL_STATE_CURRENT:
 					qDebug() << "Reached CALL_STATE_CURRENT with call " << (*callList)[item]->getCallId() << ". Updating window.";
-					iconFile = ICON_CURRENT;
 					recordEnabled = true;
 					break;
 				case CALL_STATE_DIALING:
@@ -192,12 +252,10 @@ void SFLPhone::updateWindowCallState()
 					enabledActions[2] = false;
 					enabledActions[3] = false;
 					enabledActions[4] = false;
-					iconFile = ICON_DIALING;
 					buttonIconFiles[0] = ICON_ACCEPT;
 					break;
 				case CALL_STATE_HOLD:
 					qDebug() << "Reached CALL_STATE_HOLD with call " << (*callList)[item]->getCallId() << ". Updating window.";
-					iconFile = ICON_HOLD;
 					buttonIconFiles[2] = ICON_UNHOLD;
 					break;		
 				case CALL_STATE_FAILURE:
@@ -206,7 +264,6 @@ void SFLPhone::updateWindowCallState()
 					enabledActions[2] = false;
 					enabledActions[3] = false;
 					enabledActions[4] = false;
-					iconFile = ICON_FAILURE;
 					break;
 				case CALL_STATE_BUSY:
 					qDebug() << "Reached CALL_STATE_BUSY with call " << (*callList)[item]->getCallId() << ". Updating window.";
@@ -214,43 +271,29 @@ void SFLPhone::updateWindowCallState()
 					enabledActions[2] = false;
 					enabledActions[3] = false;
 					enabledActions[4] = false;
-					iconFile = ICON_BUSY;
 				break;
 				case CALL_STATE_TRANSFER:
 					qDebug() << "Reached CALL_STATE_TRANSFER with call " << (*callList)[item]->getCallId() << ". Updating window.";
-					iconFile = ICON_TRANSFER;
 					buttonIconFiles[0] = ICON_EXEC_TRANSF;
 					transfer = true;
 					recordEnabled = true;
 					break;
 				case CALL_STATE_TRANSF_HOLD:
 					qDebug() << "Reached CALL_STATE_TRANSF_HOLD with call " << (*callList)[item]->getCallId() << ". Updating window.";
-					iconFile = ICON_TRANSF_HOLD;
 					buttonIconFiles[0] = ICON_EXEC_TRANSF;
 					buttonIconFiles[2] = ICON_UNHOLD;
 					transfer = true;
 					break;
 				case CALL_STATE_OVER:
-					qDebug() << "Reached CALL_STATE_OVER. Deleting item " << (*callList)[item]->getCallId();
-					listWidget_callList->takeItem(listWidget_callList->row(item));
-					listWidget_callHistory->addItem(call->getHistoryItem());
-					qDebug() << call->getHistoryItem();
-					listWidget_callHistory->setCurrentRow(listWidget_callHistory->count() - 1);
-					return;
+					qDebug() << "Error : Reached CALL_STATE_OVER with call " << (*callList)[item]->getCallId() << "!";
 					break;
 				case CALL_STATE_ERROR:
-					qDebug() << "Reached CALL_STATE_ERROR with call " << (*callList)[item]->getCallId() << "!";
+					qDebug() << "Error : Reached CALL_STATE_ERROR with call " << (*callList)[item]->getCallId() << "!";
 					break;
 				default:
-					qDebug() << "Reached unexisting state for call " << (*callList)[item]->getCallId() << "!";
+					qDebug() << "Error : Reached unexisting state for call " << (*callList)[item]->getCallId() << "!";
 					break;
 			}
-		}
-		//qDebug() << "mi";
-		if (item && iconFile)
-		{
-			qDebug() << "rentre " << item;
-			item->setIcon(QIcon(iconFile));
 		}
 	}
 	if(stackedWidget_screen->currentWidget() == page_callHistory)
@@ -314,7 +357,7 @@ void SFLPhone::updateCallHistory()
 	{
 		Call * call = (*callList)[i];
 		qDebug() << "" << call->getCallId();
-		if(call->getState() == CALL_STATE_OVER && call->getHistoryItem()->text().contains(textSearched))
+		if(call->getState() == CALL_STATE_OVER && call->getHistoryState() != NONE && call->getHistoryItem()->text().contains(textSearched))
 		{
 			qDebug() << "call->getItem()->text()=" << call->getHistoryItem()->text() << " contains textSearched=" << textSearched;
 			listWidget_callHistory->addItem(call->getHistoryItem());
@@ -370,6 +413,8 @@ void SFLPhone::updateVolumeButton()
 	if(sndVol > 0)
 		toolButton_sndVol->setChecked(false);
 }
+
+
 void SFLPhone::updateRecordBar()
 {
 	qDebug() << "updateRecordBar";
@@ -459,11 +504,11 @@ void SFLPhone::on_slider_sndVol_valueChanged(int value)
 	updateVolumeButton();
 }
 
-void SFLPhone::on_toolButton_recVol_clicked()
+void SFLPhone::on_toolButton_recVol_clicked(bool checked)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "on_toolButton_recVol_clicked().";
-	if(! toolButton_recVol->isChecked())
+	if(!checked)
 	{
 		qDebug() << "checked";
 		toolButton_recVol->setChecked(false);
@@ -478,22 +523,13 @@ void SFLPhone::on_toolButton_recVol_clicked()
 		callManager.setVolume(RECORD_DEVICE, 0.0);
 	}
 	updateRecordButton();
-	/*
-	qDebug() << "on_toolButton_recVol_clicked(). checked = " << toolButton_recVol->isChecked();
-	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	toolButton_recVol->setChecked(toolButton_recVol->isChecked());
-	//toolButton_recVol->setChecked(true);
-	slider_recVol->setEnabled(! toolButton_recVol->isChecked());
-	callManager.setVolume(RECORD_DEVICE, toolButton_recVol->isChecked() ? (double)slider_recVol->value() / 100.0 : 0.0);
-	updateRecordButton();
-	*/
 }
 
-void SFLPhone::on_toolButton_sndVol_clicked()
+void SFLPhone::on_toolButton_sndVol_clicked(bool checked)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	qDebug() << "on_toolButton_sndVol_clicked().";
-	if(! toolButton_sndVol->isChecked())
+	if(!checked)
 	{
 		qDebug() << "checked";
 		toolButton_sndVol->setChecked(false);
@@ -508,15 +544,6 @@ void SFLPhone::on_toolButton_sndVol_clicked()
 		callManager.setVolume(SOUND_DEVICE, 0.0);
 	}
 	updateVolumeButton();
-	/*
-	qDebug() << "on_toolButton_sndVol_clicked(). checked = " << toolButton_recVol->isChecked();
-	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	toolButton_sndVol->setChecked(toolButton_sndVol->isChecked());
-	slider_sndVol->setEnabled(! toolButton_sndVol->isChecked());
-	//callManager.setVolume(SOUND_DEVICE, toolButton_recVol->isChecked() ? 0.0 : (double)slider_sndVol->value() / 100.0);
-	callManager.setVolume(SOUND_DEVICE, 0.0);
-	updateVolumeButton();
-	*/
 }
 
 
@@ -530,6 +557,38 @@ void SFLPhone::on_listWidget_callList_itemChanged()
 {
 	qDebug() << "on_listWidget_callList_itemChanged";
 	stackedWidget_screen->setCurrentWidget(page_callList);
+}
+
+void SFLPhone::on_listWidget_callList_itemDoubleClicked(QListWidgetItem * item)
+{
+	qDebug() << "on_listWidget_callList_itemDoubleClicked";
+	Call * call = callList->getCallByItem(item);
+	call_state state = call->getCurrentState();
+	switch(state)
+	{
+		case CALL_STATE_HOLD:
+			actionb(call, CALL_ACTION_HOLD);
+			break;
+		case CALL_STATE_DIALING:
+			actionb(call, CALL_ACTION_ACCEPT);
+			break;
+		default:
+			qDebug() << "Double clicked an item with no action on double click.";
+	}
+}
+
+
+void SFLPhone::contextMenuEvent(QContextMenuEvent *event)
+{
+	QMenu menu(this);
+	menu.addAction(action_accept);
+	menu.addAction(action_refuse);
+	menu.addAction(action_hold);
+	menu.addAction(action_transfer);
+	menu.addAction(action_record);
+	//TODO accounts to choose
+	menu.addSeparator();
+	menu.exec(event->globalPos());
 }
 
 void SFLPhone::on_listWidget_callHistory_currentItemChanged()
@@ -600,7 +659,7 @@ void SFLPhone::on_action_refuse_triggered()
 		QListWidgetItem * item = listWidget_callList->currentItem();
 		if(!item)
 		{
-			qDebug() << "Hanging up when no item selected. Should not happen.";
+			qDebug() << "Error : Hanging up when no item selected. Should not happen.";
 		}
 		else
 		{
@@ -618,7 +677,7 @@ void SFLPhone::on_action_hold_triggered()
 	QListWidgetItem * item = listWidget_callList->currentItem();
 	if(!item)
 	{
-		qDebug() << "Holding when no item selected. Should not happen.";
+		qDebug() << "Error : Holding when no item selected. Should not happen.";
 	}
 	else
 	{
@@ -631,7 +690,7 @@ void SFLPhone::on_action_transfer_triggered()
 	QListWidgetItem * item = listWidget_callList->currentItem();
 	if(!item)
 	{
-		qDebug() << "Transfering when no item selected. Should not happen.";
+		qDebug() << "Error : Transfering when no item selected. Should not happen.";
 	}
 	else
 	{
@@ -644,7 +703,7 @@ void SFLPhone::on_action_record_triggered()
 	QListWidgetItem * item = listWidget_callList->currentItem();
 	if(!item)
 	{
-		qDebug() << "Recording when no item selected. Should not happen.";
+		qDebug() << "Error : Recording when no item selected. Should not happen.";
 	}
 	else
 	{
@@ -679,27 +738,37 @@ void SFLPhone::on_action_mailBox_triggered()
 
 void SFLPhone::on1_callStateChanged(const QString &callID, const QString &state)
 {
-	qDebug() << "on_callStateChanged " << callID << " . New state : " << state;
+	qDebug() << "Signal : Call State Changed for call  " << callID << " . New state : " << state;
 	Call * call = (*callList)[callID];
 	if(!call)
 	{
-		qDebug() << "Call doesn't exist in this client. Might have been initialized by another client instance before this one started.";
+		if(state == CALL_STATE_CHANGE_RINGING)
+		{
+			call = callList->addRingingCall(callID);
+			addCallToCallList(call);
+		}
+		else
+		{
+			qDebug() << "Call doesn't exist in this client. Might have been initialized by another client instance before this one started.";
+			return;
+		}
 	}
 	else
 	{
 		call->stateChanged(state);
 	}
+	updateCallItem(call);
 	updateWindowCallState();
 }
 
 void SFLPhone::on1_error(MapStringString details)
 {
-	qDebug() << "Daemon error : " << details;
+	qDebug() << "Signal : Daemon error : " << details;
 }
 
 void SFLPhone::on1_incomingCall(const QString &accountID, const QString & callID, const QString &from)
 {
-	qDebug() << "Incoming Call !";
+	qDebug() << "Signal : Incoming Call !";
 	Call * call = callList->addIncomingCall(callID, from, accountID);
 	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
@@ -707,29 +776,21 @@ void SFLPhone::on1_incomingCall(const QString &accountID, const QString & callID
 
 void SFLPhone::on1_incomingMessage(const QString &accountID, const QString &message)
 {
-	qDebug() << "on_incomingMessage ! ";
+	qDebug() << "Signal : Incoming Message ! ";
 }
 
 void SFLPhone::on1_voiceMailNotify(const QString &accountID, int count)
 {
-	qDebug() << "on_voiceMailNotify ! " << count << " new voice mails for account " << accountID;
+	qDebug() << "Signal : VoiceMail Notify ! " << count << " new voice mails for account " << accountID;
 }
 
 void SFLPhone::on1_volumeChanged(const QString &device, double value)
 {
-	qDebug() << "on_volumeChanged !";
+	qDebug() << "Signal : Volume Changed !";
 	if(! (toolButton_recVol->isChecked() && value == 0.0))
 		updateRecordBar();
 	if(! (toolButton_sndVol->isChecked() && value == 0.0))
 		updateVolumeBar();
 }
-
-
-/*void SFLPhone::on_actionAbout()
-{
-
-}*/
-
-
 
 

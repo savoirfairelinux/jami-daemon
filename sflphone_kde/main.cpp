@@ -7,6 +7,7 @@
 #include "SFLPhone.h"
 #include "AccountWizard.h"
 
+
 static const char description[] = I18N_NOOP("A KDE 4 Client for SflPhone");
 
 static const char version[] = "0.1";

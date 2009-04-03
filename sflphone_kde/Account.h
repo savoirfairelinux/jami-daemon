@@ -36,18 +36,17 @@ public:
 	QColor getStateColor();
 	QString getStateColorName();
 	QString getAccountDetail(QString & param);
-	//QString getAccountDetail(std::string param);
 	
 	//Setters
 	void setItemText(QString text);
 	void initAccountItem();
 	void setAccountId(QString id);
 	void setAccountDetails(MapStringString m);
-	//void setState(account_state_t s);
 	void setAccountDetail(QString param, QString val);
 	
 	//Operators
 	bool operator==(const Account&)const;
+	
 	
 };
 

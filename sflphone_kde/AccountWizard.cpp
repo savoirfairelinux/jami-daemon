@@ -22,18 +22,132 @@
 #include <QVBoxLayout>
 #include <QFormLayout>
 #include "sflphone_const.h"
+#include "configurationmanager_interface_singleton.h"
 
+
+#include <netdb.h>
+
+
+#define FIELD_SFL_ACCOUNT        "SFL"
+#define FIELD_OTHER_ACCOUNT      "OTHER"
+#define FIELD_SIP_ACCOUNT        "SIP"
+#define FIELD_IAX_ACCOUNT        "IAX"
+#define FIELD_EMAIL_ADDRESS      "EMAIL_ADDRESS"
+#define FIELD_ENABLE_STUN        "ENABLE_STUN"
+#define FIELD_STUN_SERVER        "STUN_SERVER"
+#define FIELD_SIP_ALIAS          "SIP_ALIAS"
+#define FIELD_SIP_SERVER         "SIP_SERVER"
+#define FIELD_SIP_USER           "SIP_USER"
+#define FIELD_SIP_PASSWORD       "SIP_PASSWORD"
+#define FIELD_IAX_ALIAS          "IAX_ALIAS"
+#define FIELD_IAX_SERVER         "IAX_SERVER"
+#define FIELD_IAX_USER           "IAX_USER"
+#define FIELD_IAX_PASSWORD       "IAX_PASSWORD"
+
+
+#define SFL_ACCOUNT_HOST         "sip.sflphone.org"
+
+/***************************************************************************
+ *   Global functions for creating an account on sflphone.org              *
+ *                                                                         *
+ ***************************************************************************/
+
+typedef struct {
+	char success;
+	char reason[200];
+	char user[200];
+	char passwd[200];
+} rest_account;
+
+int req(char *host, int port, char *req, char *ret) {
+
+	int s;
+	struct sockaddr_in servSockAddr;
+	struct hostent *servHostEnt;
+	long int length=0;
+	long int status=0;
+	int i=0;
+	FILE *f;
+	char buf[1024];
+	
+	bzero(&servSockAddr, sizeof(servSockAddr));
+	servHostEnt = gethostbyname(host);
+	if (servHostEnt == NULL) {
+		strcpy(ret, "gethostbyname");
+		return -1;
+	}
+	bcopy((char *)servHostEnt->h_addr, (char *)&servSockAddr.sin_addr, servHostEnt->h_length);
+	servSockAddr.sin_port = htons(port);
+	servSockAddr.sin_family = AF_INET;
+  
+	if ((s = socket(AF_INET,SOCK_STREAM,0)) < 0) {
+		strcpy(ret, "socket");
+		return -1;
+	}
+  
+	if(connect(s, (const struct sockaddr *) &servSockAddr, (socklen_t) sizeof(servSockAddr)) < 0 ) {
+		perror("foo");
+		strcpy(ret, "connect");
+		return -1;
+	}
+  
+	f = fdopen(s, "r+");
+	
+	fprintf(f, "%s HTTP/1.1\r\n", req);
+	fprintf(f, "Host: %s\r\n", host);
+	fputs("User-Agent: SFLphone\r\n", f);
+	fputs("\r\n", f);
+
+	while (strncmp(fgets(buf, sizeof(buf), f), "\r\n", 2)) {
+		const char *len_h = "content-length";
+		const char *status_h = "HTTP/1.1";
+		if (strncasecmp(buf, len_h, strlen(len_h)) == 0)
+			length = atoi(buf + strlen(len_h) + 1);
+		if (strncasecmp(buf, status_h, strlen(status_h)) == 0)
+			status = atoi(buf + strlen(status_h) + 1);
+	}
+	for (i = 0; i < length; i++)
+		ret[i] = fgetc(f);
+	
+	if (status != 200) {
+		sprintf(ret, "http error: %ld", status);
+		return -1;
+	}
+
+	fclose(f);
+	shutdown(s, 2);
+	close(s);
+	return 0;
+}
+
+rest_account get_rest_account(char *host,char *email) {
+	char ret[4096];
+	rest_account ra;
+	bzero(ret, sizeof(ret));
+	printf("HOST: %s\n", host);
+	strcpy(ret,"GET /rest/accountcreator?email=");
+	strcat(ret, email);
+	if (req(host, 80, ret, ret) != -1) {
+		strcpy(ra.user, strtok(ret, "\n"));
+		strcpy(ra.passwd, strtok(NULL, "\n"));\
+		ra.success = 1;
+	} else {
+		ra.success = 0;
+		strcpy(ra.reason, ret);
+	}
+	puts(ret);
+	return ra;
+} 
 
 /***************************************************************************
  *   Class AccountWizard                                                   *
  *   Widget of the wizard for creating an account.                         *
  ***************************************************************************/
 
-AccountWizard::AccountWizard(QWidget *parent)
+AccountWizard::AccountWizard(QWidget * parent)
  : QWizard(parent)
 {
 	
-
 	setPage(Page_Intro, new WizardIntroPage);
 	setPage(Page_AutoMan, new WizardAccountAutoManualPage);
 	setPage(Page_Type, new WizardAccountTypePage);
@@ -56,18 +170,108 @@ AccountWizard::~AccountWizard()
 }
 
 void AccountWizard::accept()
- {
-     QByteArray className = field("className").toByteArray();
-     QByteArray baseClass = field("baseClass").toByteArray();
-     QByteArray macroName = field("macroName").toByteArray();
-     QByteArray baseInclude = field("baseInclude").toByteArray();
+{
+	QString ret;
+	MapStringString accountDetails;
+	accountDetails[QString(ACCOUNT_ALIAS)] = QString();
+	accountDetails[QString(ACCOUNT_HOSTNAME)] = QString();
+	accountDetails[QString(ACCOUNT_USERNAME)] = QString();
+	accountDetails[QString(ACCOUNT_PASSWORD)] = QString();
+	accountDetails[QString(ACCOUNT_TYPE)] = QString();
+	accountDetails[QString(ACCOUNT_MAILBOX)] = QString();
+	
+	QString & alias = accountDetails[QString(ACCOUNT_ALIAS)];
+	QString & server = accountDetails[QString(ACCOUNT_HOSTNAME)];
+	QString & user = accountDetails[QString(ACCOUNT_USERNAME)];
+	QString & password = accountDetails[QString(ACCOUNT_PASSWORD)];
+	QString & protocol = accountDetails[QString(ACCOUNT_TYPE)];
+	QString & mailbox = accountDetails[QString(ACCOUNT_MAILBOX)];
+	
+	bool createAccount = false;
+	bool sip = false;
+	bool SFL = field(FIELD_SFL_ACCOUNT).toBool();
+	if(SFL)
+	{
+		QString emailAddress = field(FIELD_EMAIL_ADDRESS).toString();
+		char charEmailAddress[1024];
+		strncpy(charEmailAddress, emailAddress.toLatin1(), sizeof(charEmailAddress) - 1);
 
-     QString outputDir = field("outputDir").toString();
-     QString header = field("header").toString();
-     QString implementation = field("implementation").toString();
-     
-     QDialog::accept();
- }
+		rest_account acc = get_rest_account(SFL_ACCOUNT_HOST, charEmailAddress);
+		if(acc.success)
+		{
+			ret += tr("Creation of account succeed with parameters :\n");
+			alias = QString(acc.user) + "@" + SFL_ACCOUNT_HOST;
+			server = QString(SFL_ACCOUNT_HOST);
+			user = QString(acc.user);
+			password = QString(acc.passwd);
+			protocol = QString(ACCOUNT_TYPE_SIP);
+			createAccount = true;
+			sip = true;
+		}
+		else
+		{
+			ret += tr("Creation of account has failed for the reason :\n");
+			ret += acc.reason;
+		}
+	}
+	else
+	{
+		ret += tr("Register of account succeed with parameters :\n");
+		bool SIPAccount = field(FIELD_SIP_ACCOUNT).toBool();
+		if(SIPAccount)
+		{
+			alias = field(FIELD_SIP_ALIAS).toString();
+			server = field(FIELD_SIP_SERVER).toString();
+			user = field(FIELD_SIP_USER).toString();
+			password = field(FIELD_SIP_PASSWORD).toString();
+			protocol = QString(ACCOUNT_TYPE_SIP);
+			sip = true;
+			
+		}
+		else
+		{
+			alias = field(FIELD_IAX_ALIAS).toString();
+			server = field(FIELD_IAX_SERVER).toString();
+			user = field(FIELD_IAX_USER).toString();
+			password = field(FIELD_IAX_PASSWORD).toString();
+			protocol = QString(ACCOUNT_TYPE_IAX);
+		}
+		createAccount = true;
+	}
+	if(createAccount)
+	{
+		mailbox = QString(ACCOUNT_MAILBOX_DEFAULT_VALUE);
+		qDebug() << "ligne1";
+		ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+		qDebug() << "ligne2";
+		QString accountId = configurationManager.addAccount(accountDetails);
+		qDebug() << "ligne3";
+		configurationManager.sendRegister(accountId, 1);
+		qDebug() << "ligne4";
+		if(sip)
+		{
+			qDebug() << "ligne5";
+			bool enableStun = field(FIELD_ENABLE_STUN).toBool();
+			qDebug() << "ligne6";
+			QString stunServer = field(FIELD_STUN_SERVER).toString();
+			qDebug() << "ligne7";
+			if(enableStun != configurationManager.isStunEnabled()) configurationManager.enableStun();
+			qDebug() << "ligne8";
+			if(enableStun) configurationManager.setStunServer(stunServer);
+			qDebug() << "ligne9";
+		}
+		ret += tr("Alias : ") + alias + "\n";
+		ret += tr("Server : ") + server + "\n";
+		ret += tr("User : ") + user + "\n";
+		ret += tr("Password : ") + password + "\n";
+		ret += tr("Protocol : ") + protocol + "\n";
+		ret += tr("Mailbox : ") + mailbox + "\n";
+	}
+	qDebug() << ret;
+	QDialog::accept();
+}
+ 
+
 
 
 /***************************************************************************
@@ -116,8 +320,8 @@ WizardAccountAutoManualPage::WizardAccountAutoManualPage(QWidget *parent)
 	radioButton_manual = new QRadioButton(tr("Register an existing SIP/IAX2 account"));
 	radioButton_SFL->setChecked(true);
 
-	registerField("SFL", radioButton_SFL);
-	registerField("manual", radioButton_manual);
+	registerField(FIELD_SFL_ACCOUNT, radioButton_SFL);
+	registerField(FIELD_OTHER_ACCOUNT, radioButton_manual);
 
 	QVBoxLayout *layout = new QVBoxLayout;
 	layout->addWidget(radioButton_SFL);
@@ -159,8 +363,8 @@ WizardAccountTypePage::WizardAccountTypePage(QWidget *parent)
 	radioButton_IAX = new QRadioButton(tr("Create a IAX2 (InterAsterisk eXchange) account"));
 	radioButton_SIP->setChecked(true);
 	
-	registerField("SIP", radioButton_SIP);
-	registerField("IAX", radioButton_IAX);
+	registerField(FIELD_SIP_ACCOUNT, radioButton_SIP);
+	registerField(FIELD_IAX_ACCOUNT, radioButton_IAX);
 
 	QVBoxLayout *layout = new QVBoxLayout;
 	layout->addWidget(radioButton_SIP);
@@ -201,7 +405,7 @@ WizardAccountEmailAddressPage::WizardAccountEmailAddressPage(QWidget *parent)
 	label_emailAddress = new QLabel(tr("Email address"));
 	lineEdit_emailAddress = new QLineEdit();
 	
-	registerField("emailAddress", lineEdit_emailAddress);
+	registerField(FIELD_EMAIL_ADDRESS, lineEdit_emailAddress);
 
 	QFormLayout *layout = new QFormLayout;
 	layout->setWidget(0, QFormLayout::LabelRole, label_emailAddress);
@@ -250,21 +454,21 @@ WizardAccountFormPage::WizardAccountFormPage(int type, QWidget *parent)
 	lineEdit_user = new QLineEdit;
 	lineEdit_password = new QLineEdit;
 
-	lineEdit_password->setEchoMode(QLineEdit::PasswordEchoOnEdit);
+	lineEdit_password->setEchoMode(QLineEdit::Password);
 	
 	if(type == SIP)
 	{
-		registerField("alias_SIP", lineEdit_alias);
-		registerField("server_SIP", lineEdit_server);
-		registerField("user_SIP", lineEdit_user);
-		registerField("password_SIP", lineEdit_password);
+		registerField(FIELD_SIP_ALIAS, lineEdit_alias);
+		registerField(FIELD_SIP_SERVER, lineEdit_server);
+		registerField(FIELD_SIP_USER, lineEdit_user);
+		registerField(FIELD_SIP_PASSWORD, lineEdit_password);
 	}
 	else
 	{
-		registerField("alias_IAX", lineEdit_alias);
-		registerField("server_IAX", lineEdit_server);
-		registerField("user_IAX", lineEdit_user);
-		registerField("password_IAX", lineEdit_password);
+		registerField(FIELD_IAX_ALIAS, lineEdit_alias);
+		registerField(FIELD_IAX_SERVER, lineEdit_server);
+		registerField(FIELD_IAX_USER, lineEdit_user);
+		registerField(FIELD_IAX_PASSWORD, lineEdit_password);
 	}
 	
 	QFormLayout *layout = new QFormLayout;
@@ -322,8 +526,8 @@ WizardAccountStunPage::WizardAccountStunPage(QWidget *parent)
 	label_StunServer = new QLabel(tr("Stun Server"));
 	lineEdit_StunServer = new QLineEdit();
 	
-	registerField("enableStun", checkBox_enableStun);
-	registerField("stunServer", lineEdit_StunServer);
+	registerField(FIELD_ENABLE_STUN, checkBox_enableStun);
+	registerField(FIELD_STUN_SERVER, lineEdit_StunServer);
 
 	QFormLayout *layout = new QFormLayout;
 	layout->addWidget(checkBox_enableStun);

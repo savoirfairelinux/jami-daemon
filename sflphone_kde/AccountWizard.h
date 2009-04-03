@@ -27,17 +27,19 @@
 #include <QLineEdit>
 #include <QCheckBox>
 
+
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
 class AccountWizard : public QWizard
 {
 Q_OBJECT
+
 public:
 	
 	enum { Page_Intro, Page_AutoMan, Page_Type, Page_Email, Page_SIPForm, Page_IAXForm, Page_Stun, Page_Conclusion };
 	
-	AccountWizard(QWidget *parent = 0);
+	AccountWizard(QWidget * parent = 0);
 	~AccountWizard();
 	void accept();
 

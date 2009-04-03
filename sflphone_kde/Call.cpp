@@ -23,21 +23,6 @@ const call_state Call::actionPerformedStateMap [11][5] =
 /*ERROR        */  {CALL_STATE_ERROR      , CALL_STATE_ERROR       , CALL_STATE_ERROR        , CALL_STATE_ERROR        ,  CALL_STATE_ERROR        }
 };
 
-const call_state Call::stateChangedStateMap [11][6] = 
-{
-//                      RINGING                  CURRENT             BUSY              HOLD                           HUNGUP           FAILURE
-/*INCOMING     */  {CALL_STATE_INCOMING , CALL_STATE_CURRENT  , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*RINGING      */  {CALL_STATE_ERROR    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*CURRENT      */  {CALL_STATE_ERROR    , CALL_STATE_CURRENT  , CALL_STATE_ERROR  , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*DIALING      */  {CALL_STATE_RINGING  , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_FAILURE  },
-/*HOLD         */  {CALL_STATE_ERROR    , CALL_STATE_CURRENT  , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*FAILURE      */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_ERROR    },
-/*BUSY         */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*TRANSFER     */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*TRANSF_HOLD  */  {CALL_STATE_ERROR    , CALL_STATE_TRANSFER , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
-/*OVER         */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    },
-/*ERROR        */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    }
-};
 
 const function Call::actionPerformedFunctionMap[11][5] = 
 { 
@@ -55,6 +40,25 @@ const function Call::actionPerformedFunctionMap[11][5] =
 /*ERROR          */  {&Call::nothing    , &Call::nothing  , &Call::nothing        , &Call::nothing     ,  &Call::nothing       }
 };
 
+
+const call_state Call::stateChangedStateMap [11][6] = 
+{
+//                      RINGING                  CURRENT             BUSY              HOLD                           HUNGUP           FAILURE
+/*INCOMING     */  {CALL_STATE_INCOMING , CALL_STATE_CURRENT  , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*RINGING      */  {CALL_STATE_ERROR    , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*CURRENT      */  {CALL_STATE_ERROR    , CALL_STATE_CURRENT  , CALL_STATE_ERROR  , CALL_STATE_HOLD         ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*DIALING      */  {CALL_STATE_RINGING  , CALL_STATE_CURRENT  , CALL_STATE_BUSY   , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_FAILURE  },
+/*HOLD         */  {CALL_STATE_ERROR    , CALL_STATE_CURRENT  , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*FAILURE      */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_ERROR    },
+/*BUSY         */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*TRANSFER     */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_TRANSF_HOLD  ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*TRANSF_HOLD  */  {CALL_STATE_ERROR    , CALL_STATE_TRANSFER , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_OVER  ,  CALL_STATE_FAILURE  },
+/*OVER         */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    },
+/*ERROR        */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    }
+};
+
+
+
 const char * Call::callStateIcons[11] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", ""};
 
 const char * Call::historyIcons[3] = {ICON_HISTORY_INCOMING, ICON_HISTORY_OUTGOING, ICON_HISTORY_MISSED};
@@ -69,19 +73,15 @@ void Call::initCallItem()
 	itemWidget = new QWidget();
 	labelIcon = new QLabel(itemWidget);
 	labelCallNumber = new QLabel(peer, itemWidget);
-	labelTransferTo = new QLabel("Transfer to : ", itemWidget);
+	labelTransferPrefix = new QLabel("Transfer to : ", itemWidget);
 	labelTransferNumber = new QLabel(itemWidget);
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
-	labelIcon->setObjectName(QString(CALL_ITEM_ICON));
-	labelCallNumber->setObjectName(QString(CALL_ITEM_CALL_NUMBER));
-	labelTransferTo->setObjectName(QString(CALL_ITEM_TRANSFER_LABEL));
-	labelTransferNumber->setObjectName(QString(CALL_ITEM_TRANSFER_NUMBER));
 	QGridLayout * layout = new QGridLayout(itemWidget);
 	layout->setMargin(3);
 	layout->setSpacing(3);
 	layout->addWidget(labelIcon, 0, 0, 2, 1);
 	layout->addWidget(labelCallNumber, 0, 1, 1, 2);
-	layout->addWidget(labelTransferTo, 1, 1, 1, 1);
+	layout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
 	layout->addWidget(labelTransferNumber, 1, 2, 1, 2);
 	layout->addItem(horizontalSpacer, 0, 3, 1, 3);
 	//labelIcon->raise();
@@ -92,37 +92,19 @@ void Call::initCallItem()
 	itemWidget->setLayout(layout);
 	//item->setSizeHint(itemWidget->sizeHint());
 	//setItemIcon(QString(ICON_REFUSE));
-	updateItem();
 }
 
 void Call::setItemIcon(const QString pixmap)
 {
-	qDebug() << "setItemIcon(" << pixmap << ");";
-	QString str(CALL_ITEM_ICON);
-	qDebug() << "str = " << str;
-	qDebug() << "setItemIcon1";
-	//QLabel * labelIcon = itemWidget->findChild<QLabel * >(str);
-	qDebug() << "setItemIcon2";
-	//QPixmap icon(pixmap);
-	QPixmap * icon = new QPixmap(":/images/icons/dial.svg");
-	qDebug() << "setItemIcon2b";
-	labelIcon->setPixmap(*icon);
-	qDebug() << "setItemIcon3";
+	labelIcon->setPixmap(QPixmap(pixmap));
 }
 
 Call::Call(call_state startState, QString callId, QString from, QString account)
 {
-	for(int i = 0 ; i < 100 ; i++)
-	{
-		qDebug() << i << " :";
-		QString str(callStateIcons[startState]);
-		qDebug() << str;
-	}
-	qDebug() << "<<<<Done>>>>";
 	this->callId = callId;
 	this->peer = from;
-	changeCurrentState(startState);
 	initCallItem();
+	changeCurrentState(startState);
 	this->account = account;
 	this->recording = false;
 	this->historyItem = NULL;
@@ -130,7 +112,15 @@ Call::Call(call_state startState, QString callId, QString from, QString account)
 
 Call::~Call()
 {
+	delete startTime;
+	delete stopTime;
 	delete item;
+	delete itemWidget;
+	delete labelIcon;
+	delete labelCallNumber;
+	delete labelTransferPrefix;
+	delete labelTransferNumber;
+	delete historyItem;
 }
 	
 Call * Call::buildDialingCall(QString callId)
@@ -144,6 +134,18 @@ Call * Call::buildIncomingCall(const QString & callId, const QString & from, con
 {
 	Call * call = new Call(CALL_STATE_INCOMING, callId, from, account);
 	call->historyState = MISSED;
+	return call;
+}
+
+Call * Call::buildRingingCall(const QString & callId)
+{
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	MapStringString details = callManager.getCallDetails(callId).value();
+	//QString from = details[CALL_FROM];
+	//QString from = details[CALL_ACCOUNT];
+	//Call * call = new Call(CALL_STATE_RINGING, callId, from, account);
+	Call * call = new Call(CALL_STATE_RINGING, callId);
+	call->historyState = OUTGOING;
 	return call;
 }
 
@@ -197,9 +199,10 @@ QWidget * Call::getItemWidget()
 
 QListWidgetItem * Call::getHistoryItem()
 {
-	if(historyItem == NULL)
+	if(historyItem == NULL && historyState != NONE)
 	{
 		historyItem = new QListWidgetItem(peer);
+		qDebug() << "historystate = " << historyState;
 		historyItem->setIcon(QIcon(historyIcons[historyState]));
 	}
 	return historyItem;
@@ -210,10 +213,16 @@ call_state Call::getState() const
 	return currentState;
 }
 
+history_state Call::getHistoryState() const
+{
+	return historyState;
+}
+
 call_state Call::stateChanged(const QString & newStateName)
 {
 	call_state previousState = currentState;
 	daemon_call_state dcs = toDaemonCallState(newStateName);
+	//(this->*(stateChangedFunctionMap[currentState][dcs]))();
 	changeCurrentState(stateChangedStateMap[currentState][dcs]);
 	qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newStateName) << " on call with state " << previousState << ". Become " << currentState;
 	return currentState;
@@ -289,8 +298,7 @@ void Call::refuse()
 void Call::acceptTransf()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	QLabel * transferNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_NUMBER));
-	QString number = transferNumber->text();
+	QString number = labelTransferNumber->text();
 	qDebug() << "Accepting call and transfering it to number : " << number << ". callId : " << callId;
 	callManager.accept(callId);
 	callManager.transfert(callId, number);
@@ -323,8 +331,7 @@ void Call::hold()
 void Call::call()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	QLabel * callNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_CALL_NUMBER));
-	QString number = callNumber->text();
+	QString number = labelCallNumber->text();
 	this->account = SFLPhone::firstAccount();
 	if(!account.isEmpty())
 	{
@@ -345,8 +352,7 @@ void Call::call()
 void Call::transfer()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
-	QLabel * transferNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_NUMBER));
-	QString number = transferNumber->text();
+	QString number = labelTransferNumber->text();
 	qDebug() << "Transfering call to number : " << number << ". callId : " << callId;
 	callManager.transfert(callId, number);
 	this->stopTime = new QDateTime(QDateTime::currentDateTime());
@@ -377,15 +383,48 @@ void Call::setRecord()
 
 void Call::appendItemText(QString text)
 {
-	if(currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD)
+	QLabel * editNumber;
+	switch(currentState)
 	{
-		QLabel * transferNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_NUMBER));
-		transferNumber->setText(transferNumber->text() + text);
+		case CALL_STATE_TRANSFER:
+		case CALL_STATE_TRANSF_HOLD:
+			editNumber = labelTransferNumber;
+			break;
+		case CALL_STATE_DIALING:
+			editNumber = labelCallNumber;
+			break;
+		default:
+			qDebug() << "Type key on call not editable. Doing nothing.";
+			return;
+	}
+	editNumber->setText(editNumber->text() + text);
+}
+
+void Call::backspaceItemText()
+{
+	QLabel * editNumber;
+	switch (currentState)
+	{
+		case CALL_STATE_TRANSFER:
+		case CALL_STATE_TRANSF_HOLD:
+			editNumber = labelTransferNumber;
+			break;
+		case CALL_STATE_DIALING:
+			editNumber = labelCallNumber;
+			break;
+		default:
+			qDebug() << "Backspace on call not editable. Doing nothing.";
+			return;
+	}
+	QString text = editNumber->text();
+	int textSize = text.size();
+	if(textSize > 0)
+	{
+		editNumber->setText(text.remove(textSize-1, 1));
 	}
 	else
 	{
-		QLabel * callNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_CALL_NUMBER));
-		callNumber->setText(callNumber->text() + text);
+		changeCurrentState(CALL_STATE_OVER);
 	}
 }
 
@@ -397,25 +436,16 @@ void Call::changeCurrentState(call_state newState)
 
 void Call::updateItem()
 {
-	qDebug() << callStateIcons[currentState];
-	qDebug() << "updateItem0";
-	QString str(callStateIcons[currentState]);
-	qDebug() << "updateItem1";
-	setItemIcon(str);
-	qDebug() << "updateItem2";
+	if(currentState == CALL_STATE_CURRENT && recording)
+		setItemIcon(ICON_CURRENT_REC);
+	else
+	{
+		QString str(callStateIcons[currentState]);
+		setItemIcon(str);
+	}
 	bool transfer = currentState == CALL_STATE_TRANSFER || currentState == CALL_STATE_TRANSF_HOLD;
-	qDebug() << "updateItem3";
-	qDebug() << "transfer : " << transfer;
-	qDebug() << "updateItem4";
-	QLabel * transferLabel = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_LABEL));
-	qDebug() << "updateItem5";
-	QLabel * transferNumber = itemWidget->findChild<QLabel *>(QString(CALL_ITEM_TRANSFER_NUMBER));
-	qDebug() << "updateItem6";
-	transferLabel->setVisible(transfer);
-	qDebug() << "updateItem7";
-	transferNumber->setVisible(transfer);
-	qDebug() << "updateItem8";
+	labelTransferPrefix->setVisible(transfer);
+	labelTransferNumber->setVisible(transfer);
 	if(!transfer)
-		transferNumber->setText("");
-	qDebug() << "updateItem9";
+		labelTransferNumber->setText("");
 }

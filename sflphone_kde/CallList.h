@@ -21,6 +21,7 @@ public:
 
 	Call * addDialingCall();
 	Call * addIncomingCall(const QString & callId, const QString & from, const QString & account);
+	Call * addRingingCall(const QString & callId);
 
 	QString getAndIncCallId();
 	int size();

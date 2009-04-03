@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>681</width>
-    <height>455</height>
+    <width>504</width>
+    <height>449</height>
    </rect>
   </property>
   <property name="minimumSize" >
@@ -152,7 +152,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget_options" >
        <property name="currentIndex" >
-        <number>3</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_general" >
         <layout class="QVBoxLayout" name="verticalLayout_18" >
@@ -452,9 +452,30 @@
          </item>
          <item>
           <widget class="QWidget" native="1" name="widget1_configAccounts" >
+           <property name="autoFillBackground" >
+            <bool>false</bool>
+           </property>
            <layout class="QHBoxLayout" name="horizontalLayout_3" >
+            <property name="sizeConstraint" >
+             <enum>QLayout::SetDefaultConstraint</enum>
+            </property>
+            <property name="leftMargin" >
+             <number>0</number>
+            </property>
+            <property name="topMargin" >
+             <number>0</number>
+            </property>
+            <property name="bottomMargin" >
+             <number>0</number>
+            </property>
             <item>
              <widget class="QFrame" name="frame1_accountList" >
+              <property name="sizePolicy" >
+               <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize" >
                <size>
                 <width>0</width>
@@ -477,7 +498,7 @@
                <item>
                 <widget class="QListWidget" name="listWidget_accountList" >
                  <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
+                  <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -490,7 +511,7 @@
                  </property>
                  <property name="maximumSize" >
                   <size>
-                   <width>150</width>
+                   <width>16777215</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -525,6 +546,9 @@
                  <layout class="QHBoxLayout" name="horizontalLayout_2" >
                   <property name="spacing" >
                    <number>0</number>
+                  </property>
+                  <property name="sizeConstraint" >
+                   <enum>QLayout::SetNoConstraint</enum>
                   </property>
                   <property name="margin" >
                    <number>0</number>
@@ -573,6 +597,13 @@
                    </widget>
                   </item>
                   <item>
+                   <widget class="QToolButton" name="button_accountUp" >
+                    <property name="text" >
+                     <string>Up</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <widget class="QToolButton" name="button_accountDown" >
                     <property name="text" >
                      <string>Down</string>
@@ -580,11 +611,17 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QToolButton" name="button_accountUp" >
-                    <property name="text" >
-                     <string>Up</string>
+                   <spacer name="horizontalSpacer" >
+                    <property name="orientation" >
+                     <enum>Qt::Horizontal</enum>
                     </property>
-                   </widget>
+                    <property name="sizeHint" stdset="0" >
+                     <size>
+                      <width>0</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                   </spacer>
                   </item>
                  </layout>
                 </widget>
@@ -596,7 +633,7 @@
              <widget class="QFrame" name="frame2_editAccounts" >
               <property name="sizePolicy" >
                <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
-                <horstretch>0</horstretch>
+                <horstretch>1</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
@@ -1067,6 +1104,16 @@
              </item>
             </layout>
            </widget>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" native="1" name="widget_fullConfigAudio" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
           </widget>
          </item>
         </layout>

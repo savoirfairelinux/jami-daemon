@@ -115,7 +115,6 @@ void ConfigurationDialog::loadOptions()
 	
 	//ringtones settings
 	checkBox_ringtones->setCheckState(configurationManager.isRingtoneEnabled() ? Qt::Checked : Qt::Unchecked);
-	//TODO widget choix de sonnerie
 	urlComboRequester_ringtone->setUrl(KUrl::fromPath(configurationManager.getRingtoneChoice()));
 	
 	//codecs settings
@@ -206,8 +205,6 @@ void ConfigurationDialog::saveOptions()
 	//ringtones settings
 	qDebug() << "setting ringtone options";
 	if(checkBox_ringtones->checkState() != (configurationManager.isRingtoneEnabled() ? Qt::Checked : Qt::Unchecked)) configurationManager.ringtoneEnabled();
-	//TODO widget choix de sonnerie
-	//configurationManager.setRingtoneChoice(urlComboRequester_ringtone->text());
 	configurationManager.setRingtoneChoice(urlComboRequester_ringtone->url().url());
 	
 	//codecs settings
@@ -265,7 +262,7 @@ void ConfigurationDialog::saveAccountList()
 		//if the account has no instanciated id, it has just been created in the client
 		if(current.isNew())
 		{
-			currentId = QString(configurationManager.addAccount(current.getAccountDetails()));
+			currentId = configurationManager.addAccount(current.getAccountDetails());
 		}
 		//if the account has an instanciated id but it's not in configurationManager
 		else{
@@ -284,10 +281,13 @@ void ConfigurationDialog::saveAccountList()
 	}
 	//remove accounts that are in the configurationManager but not in the client
 	for (int i = 0; i < accountIds.size(); i++)
-		if(! accountList->getAccountById(accountIds[i])){
+	{
+		if(! accountList->getAccountById(accountIds[i]))
+		{
 			qDebug() << "remove account " << accountIds[i];
 			configurationManager.removeAccount(accountIds[i]);
 		}
+	}
 }
 
 void ConfigurationDialog::loadAccount(QListWidgetItem * item)
@@ -298,8 +298,15 @@ void ConfigurationDialog::loadAccount(QListWidgetItem * item)
 	if(! account )  {  qDebug() << "Attempting to load details of an unexisting account";  return;  }
 
 	edit1_alias->setText( account->getAccountDetail(*(new QString(ACCOUNT_ALIAS))));
-	int protocoleIndex = getProtocoleIndex(account->getAccountDetail(*(new QString(ACCOUNT_TYPE))));
-	edit2_protocol->setCurrentIndex( (protocoleIndex < 0) ? 0 : protocoleIndex );
+	
+	QString protocolsTab[] = ACCOUNT_TYPES_TAB;
+	QList<QString> * protocolsList = new QList<QString>();
+	for(int i=0;i<sizeof(protocolsTab)/sizeof(QString);i++) protocolsList->append(protocolsTab[i]);
+	QString accountName = account->getAccountDetail(* new QString(ACCOUNT_TYPE));
+	int protocolIndex = protocolsList->indexOf(accountName);
+	delete protocolsList;
+	
+	edit2_protocol->setCurrentIndex( (protocolIndex < 0) ? 0 : protocolIndex );
 	edit3_server->setText( account->getAccountDetail(*(new QString(ACCOUNT_HOSTNAME))));
 	edit4_user->setText( account->getAccountDetail(*(new QString(ACCOUNT_USERNAME))));
 	edit5_password->setText( account->getAccountDetail(*(new QString(ACCOUNT_PASSWORD))));
@@ -319,7 +326,8 @@ void ConfigurationDialog::saveAccount(QListWidgetItem * item)
 	if(! account)  {  qDebug() << "Attempting to save details of an unexisting account : " << item->text(); return;  }
 
 	account->setAccountDetail(ACCOUNT_ALIAS, edit1_alias->text());
-	account->setAccountDetail(ACCOUNT_TYPE, getIndexProtocole(edit2_protocol->currentIndex()));
+	QString protocolsTab[] = ACCOUNT_TYPES_TAB;
+	account->setAccountDetail(ACCOUNT_TYPE, protocolsTab[edit2_protocol->currentIndex()]);
 	account->setAccountDetail(ACCOUNT_HOSTNAME, edit3_server->text());
 	account->setAccountDetail(ACCOUNT_USERNAME, edit4_user->text());
 	account->setAccountDetail(ACCOUNT_PASSWORD, edit5_password->text());

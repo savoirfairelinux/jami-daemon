@@ -20,6 +20,9 @@ private:
 	CallList * callList;
 	QErrorMessage * errorWindow;
 
+protected:
+	void contextMenuEvent(QContextMenuEvent *event);
+
 public:
 	SFLPhone(QMainWindow *parent = 0);
 	~SFLPhone();
@@ -29,11 +32,14 @@ public:
 private slots:
 	//void typeChar(QChar c);
 	void typeString(QString str);
+	void backspace();
 	void actionb(Call * call, call_action action);
 	void action(QListWidgetItem * item, call_action action);
 	
 	void addCallToCallList(Call * call);
+	void addCallToCallHistory(Call * call);
 	
+	void updateCallItem(Call * call);
 	void updateWindowCallState();
 	void updateSearchHistory();
 	void updateCallHistory();
@@ -46,12 +52,23 @@ private slots:
 	
 	virtual void keyPressEvent(QKeyEvent *event)
 {
-	QString text = event->text();
-	if(! text.isEmpty())
+	int key = event->key();
+	if(key == Qt::Key_Escape)
+		on_action_refuse_triggered();
+	else if(key == Qt::Key_Return || key == Qt::Key_Enter)
+		on_action_accept_triggered();
+	else if(key == Qt::Key_Backspace)
+		backspace();
+	else
 	{
-		typeString(text);
+		QString text = event->text();
+		if(! event->text().isEmpty())
+		{
+			typeString(text);
+		}
 	}
 }
+
 	
 	void on_action_displayVolumeControls_toggled();
 	void on_action_displayDialpad_toggled();
@@ -86,11 +103,12 @@ private slots:
 	void on_slider_recVol_valueChanged(int value);
 	void on_slider_sndVol_valueChanged(int value);
 	
-	void on_toolButton_recVol_clicked();
-	void on_toolButton_sndVol_clicked();
+	void on_toolButton_recVol_clicked(bool checked);
+	void on_toolButton_sndVol_clicked(bool checked);
 	
 	void on_listWidget_callList_currentItemChanged();
 	void on_listWidget_callList_itemChanged();
+	void on_listWidget_callList_itemDoubleClicked(QListWidgetItem * item);
 	void on_listWidget_callHistory_currentItemChanged();
 
 	void on1_callStateChanged(const QString &callID, const QString &state);

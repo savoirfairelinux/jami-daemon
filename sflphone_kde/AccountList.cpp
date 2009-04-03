@@ -21,6 +21,17 @@ AccountList::AccountList(QStringList & _accountIds)
 	}
 }
 
+AccountList::AccountList()
+{
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	//ask for the list of accounts ids to the configurationManager
+	QStringList accountIds = configurationManager.getAccountList().value();
+	accounts = new QVector<Account *>();
+	for (int i = 0; i < accountIds.size(); ++i){
+		(*accounts) += Account::buildExistingAccountFromId(accountIds[i]);
+	}
+}
+
 AccountList::~AccountList()
 {
 	delete accounts;

@@ -47,6 +47,7 @@
 #define ICON_INCOMING                     ":/images/icons/ring.svg"
 #define ICON_RINGING                      ":/images/icons/ring.svg"
 #define ICON_CURRENT                      ":/images/icons/current.svg"
+#define ICON_CURRENT_REC                  ":/images/icons/rec_call.svg"
 #define ICON_DIALING                      ":/images/icons/dial.svg"
 #define ICON_HOLD                         ":/images/icons/hold.svg"
 #define ICON_FAILURE                      ":/images/icons/fail.svg"
@@ -96,6 +97,12 @@
 #define ACCOUNT_ENABLED_TRUE              "TRUE"
 #define ACCOUNT_ENABLED_FALSE             "FALSE"
 
+#define ACCOUNT_TYPE_SIP                  "SIP"
+#define ACCOUNT_TYPE_IAX                  "IAX"
+#define ACCOUNT_TYPES_TAB                 {QString(ACCOUNT_TYPE_SIP), QString(ACCOUNT_TYPE_IAX)}
+
+#define ACCOUNT_MAILBOX_DEFAULT_VALUE     "888"
+
 #define ACCOUNT_STATE_REGISTERED          "REGISTERED"
 #define ACCOUNT_STATE_UNREGISTERED        "UNREGISTERED"
 #define ACCOUNT_STATE_TRYING              "TRYING"
@@ -118,11 +125,6 @@
 #define CALL_STATE_CHANGE_FAILURE         "FAILURE"
 #define CALL_STATE_CHANGE_UNHOLD_CURRENT  "UNHOLD_CURRENT"
 #define CALL_STATE_CHANGE_UNHOLD_RECORD   "UNHOLD_RECORD"
-
-#define CALL_ITEM_CALL_NUMBER             "callNumber"
-#define CALL_ITEM_TRANSFER_LABEL          "transferLabel"
-#define CALL_ITEM_TRANSFER_NUMBER         "transferNumber"
-#define CALL_ITEM_ICON                    "icon"
 
 
 #define MAX_HISTORY_CAPACITY              60
@@ -182,9 +184,10 @@
 /** Desktop notifications - Time before to close the notification*/
 #define __TIMEOUT_TIME      18000       // 30 secondes
 
+/*
 //TODO constantes pour protocoles
-int getProtocoleIndex(QString protocoleName);
+int getProtocolIndexByName(QString protocolName);
 
-QString getIndexProtocole(int protocoleIndex);
-
+QString getProtocolNameByIndex(int protocolIndex);
+*/
 #endif

@@ -1,19 +1,19 @@
 #include "sflphone_const.h"
 
-int getProtocoleIndex(QString protocoleName)
+int getProtocolIndexByName(QString protocolName)
 {
-	if(protocoleName == (QString)"SIP")
+	if(protocolName == (QString)"SIP")
 		return 0;
-	if(protocoleName == (QString)"IAX")
+	if(protocolName == (QString)"IAX")
 		return 1;
 	return -1;
 }
 
-QString getIndexProtocole(int protocoleIndex)
+QString getProtocolNameByIndex(int protocolIndex)
 {
-	if(protocoleIndex == 0)
+	if(protocolIndex == 0)
 		return "SIP";
-	if(protocoleIndex == 1)
+	if(protocolIndex == 1)
 		return "IAX";
 	return "UNKNOWN PROTOCOLE INDEX";
 }

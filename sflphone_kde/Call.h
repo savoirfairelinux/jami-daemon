@@ -100,7 +100,7 @@ private:
 	QWidget * itemWidget;
 	QLabel * labelIcon;
 	QLabel * labelCallNumber;
-	QLabel * labelTransferTo;
+	QLabel * labelTransferPrefix;
 	QLabel * labelTransferNumber;
 	
 	QListWidgetItem * historyItem;
@@ -140,6 +140,7 @@ public:
 	void initCallItem();
 	static Call * buildDialingCall(QString callId);
 	static Call * buildIncomingCall(const QString & callId, const QString & from, const QString & account);
+	static Call * buildRingingCall(const QString & callId);
 	QListWidgetItem * getItem();
 	QWidget * getItemWidget();
 	QListWidgetItem * getHistoryItem();
@@ -151,6 +152,7 @@ public:
 	history_state getHistoryState() const;
 	bool getRecording() const;
 	void appendItemText(QString text);
+	void backspaceItemText();
 	void setItemIcon(const QString pixmap);
 	void changeCurrentState(call_state newState);
 	void updateItem();
