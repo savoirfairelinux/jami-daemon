@@ -619,6 +619,7 @@ view_volume_controls  (GtkImageMenuItem *imagemenuitem UNUSED,
   dbus_set_volume_controls( state );
 }
 
+/*
   static void
 view_searchbar  (GtkImageMenuItem *imagemenuitem UNUSED,
     void* foo UNUSED)
@@ -627,7 +628,7 @@ view_searchbar  (GtkImageMenuItem *imagemenuitem UNUSED,
   main_window_searchbar( &state );
   dbus_set_searchbar( state );
 }
-
+*/
   GtkWidget *
 create_view_menu()
 {
@@ -661,7 +662,7 @@ create_view_menu()
       NULL);
   gtk_widget_show (volumeMenu);
 
-  image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_MENU );
+  /*image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_MENU );
   searchbarMenu = gtk_image_menu_item_new_with_mnemonic (_("_Search bar"));
   gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( searchbarMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), searchbarMenu);
@@ -669,6 +670,7 @@ create_view_menu()
       G_CALLBACK (view_searchbar),
       NULL);
   gtk_widget_show (searchbarMenu);
+    */
 
   root_menu = gtk_menu_item_new_with_mnemonic (_("_View"));
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);
