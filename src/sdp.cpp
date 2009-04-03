@@ -129,7 +129,7 @@ int Sdp::create_local_offer (){
     //sdp_addAttributes( _pool );
     sdp_add_media_description( );
 
-    toString ();
+    //toString ();
 
     // Validate the sdp session
     status = pjmedia_sdp_validate( this->_local_offer );
@@ -310,12 +310,16 @@ AudioCodec* Sdp::get_session_media( void ){
     int nb_media;
     int nb_codec;
     AudioCodec *codec = NULL;
+    std::vector<sdpMedia*> media_list;
 
-    nb_media = _session_media.size();
+    _debug ("sdp line 314 - get_session_media ()\n");
+
+    media_list = get_session_media_list ();
+    nb_media = media_list.size();
     if (nb_media > 0) {
-        nb_codec = _session_media[0]->get_media_codec_list().size();
+        nb_codec = media_list[0]->get_media_codec_list().size();
         if (nb_codec > 0) {
-            codec = _session_media[0]->get_media_codec_list()[0];
+            codec = media_list[0]->get_media_codec_list()[0];
         }
     }
     return codec;

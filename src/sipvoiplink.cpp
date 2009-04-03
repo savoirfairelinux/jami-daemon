@@ -660,8 +660,10 @@ SIPVoIPLink::onhold(const CallID& id)
 
     /* Create re-INVITE with new offer */
     status = inv_session_reinvite (call, "sendonly");
+    if (status != PJ_SUCCESS)
+        return false;
 
-    return (status == PJ_SUCCESS);
+    return true;
 }
 
 int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction) {
@@ -675,26 +677,30 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction) {
 
     if( local_sdp == NULL ){
         _debug("! SIP Failure: unable to find local_sdp\n");
-        return false;
+        return !PJ_SUCCESS;
     }
 
     // reinvite only if connected
     // Build the local SDP offer
     status = call->getLocalSDP()->create_initial_offer( );
+    if (status != PJ_SUCCESS)
+        return 1;   // !PJ_SUCCESS 
+
     pjmedia_sdp_media_remove_all_attr(local_sdp->media[0], "sendrecv");
     attr = pjmedia_sdp_attr_create(_pool, direction.c_str(), NULL);
     pjmedia_sdp_media_add_attr(local_sdp->media[0], attr);
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
     // Build the reinvite request
     status = pjsip_inv_reinvite( call->getInvSession(), NULL,
             local_sdp, &tdata );
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+    if (status != PJ_SUCCESS)
+        return 1;   // !PJ_SUCCESS 
 
     // Send it
     status = pjsip_inv_send_msg( call->getInvSession(), tdata );
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
-
+    if (status != PJ_SUCCESS)
+        return 1;   // !PJ_SUCCESS 
+    
     return PJ_SUCCESS;
 }
 
@@ -874,11 +880,12 @@ SIPVoIPLink::getCurrentCodecName()
 {
 
     SIPCall *call;
-    AudioCodec *ac;
+    AudioCodec *ac = NULL;
     std::string name = "";
     
     call = getSIPCall(Manager::instance().getCurrentCallId());  
-    ac = call->getLocalSDP()->get_session_media();
+    if (call)
+        ac = call->getLocalSDP()->get_session_media();
 
     if (ac)
         name = ac->getCodecName();

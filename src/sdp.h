@@ -181,6 +181,8 @@ class Sdp {
 
         void fetch_media_transport_info_from_remote_sdp (pjmedia_sdp_session *remote_sdp);
 
+        std::vector<sdpMedia*> get_session_media_list (void) { return _session_media; }
+
     private:
         /** Codec Map */
         std::vector<sdpMedia*> _local_media_cap;
