@@ -20,10 +20,7 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	cd libs/dbus-c++; ./autogen.sh; ./configure
-	cd libs/libiax2; ./gen.sh; ./configure
-	cd libs/pjproject-1.0.1; ./configure
-	./autogen.sh --prefix=/usr --with-debug
+	./autogen.sh --prefix=/usr
 	cd sflphone-gtk; ./autogen.sh --prefix=/usr
 	touch configure-stamp
 
@@ -34,13 +31,10 @@ build: build-arch build-indep
 build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp 
 
-       # Add here commands to compile the arch part of the package.
+    # Add here commands to compile the arch part of the package.
 	$(MAKE) 
 	cd sflphone-gtk; make
-	cd libs/pjproject-1.0.1; $(MAKE) dep; $(MAKE)
 	touch $@
-	cd libs/dbus-c++; $(MAKE)
-	cd libs/libiax2; $(MAKE)
 
 build-indep: build-indep-stamp
 build-indep-stamp: configure-stamp 
@@ -80,9 +74,6 @@ install-arch:
 	# debian/tmp.
 	$(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
 	cd sflphone-gtk; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
-	cd libs/pjproject-1.0.1; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
-	cd libs/dbus-c++; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
-	cd libs/libiax2; $(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
 	rm -rf $(CURDIR)/debian/$(package)/usr/include
 	dh_install -s
 # Must not depend on anything. This is to be called by
