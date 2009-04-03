@@ -17,24 +17,30 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "urlhook.h"
-#include <iostream>
+#include <stdio.h>
+#include <sstream>
+#include <dlfcn.h>
 
-UrlHook::UrlHook () { }
+#include "hookmanagerTest.h"
 
-UrlHook::~UrlHook () { }
+using std::cout;
+using std::endl;
 
-int UrlHook::addAction (std::string field_value, std::string command){
 
-    std::string command_bg;
-
-    /* Execute the command in the background to not block the application */
-    command_bg = command + " " + field_value + "&" ;
-    /* Execute a system call */
-    RUN_COMMAND (command_bg.c_str());
-
-    return 0;
-
+void HookManagerTest::setUp(){
+    // Instanciate the hook manager singleton
+    urlhook = new UrlHook ();
 }
 
+void HookManagerTest::testAddAction (){
 
+    int status;
+
+    status = urlhook->addAction ("www.google.ca", "gnome-www-browser");
+    CPPUNIT_ASSERT (status == 0); 
+}
+
+void HookManagerTest::tearDown(){
+    // Delete the hook manager object
+    delete urlhook; urlhook=0;
+}

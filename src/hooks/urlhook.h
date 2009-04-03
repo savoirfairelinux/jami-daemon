@@ -38,7 +38,7 @@ class UrlHook {
          */
         ~UrlHook ();
 
-        void addAction (std::string, std::string);
+        int addAction (std::string, std::string);
 
     private:
 };
