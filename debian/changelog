@@ -1,3 +1,28 @@
+sflphone (0.9.4-0ubuntu1) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * Integrate DBus-c++ and libiax2 in the main build system
+  * Clean up in the working repository
+  * Reorder hooks configuration panel
+  * Protect case when no codecs are active
+  * Fix some return values
+  * Add unitary tests for the hook manager (premisces)
+  
+  [Yun Liu]
+  * Update chinese translation
+
+  [Sven Werlen]
+  * Update german translation
+
+  [Hussein Abdallah]
+  * Update russian translation
+
+  [Maxime Chambreuil]
+  * Update spanish translation
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 3 Apr 2009 18:29:15 -0500
+
+
 sflphone (0.9.4-rc1) %system%; urgency=low
 
   [ Emmanuel Milou ]
