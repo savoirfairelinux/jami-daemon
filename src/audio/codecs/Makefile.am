@@ -10,11 +10,11 @@ INSTALL_GSM_RULE = install-libcodec_gsm_so
 endif
 
 if ENABLE_SPEEXDSP
-SPEEXDSP= -DHAVE_SPEEXDSP_LIB
+SPEEXDSP=-DHAVE_SPEEXDSP_LIB
 endif
 
 if BUILD_SPEEX
-SPEEX_LIB = libcodec_speex.so
+SPEEX_LIB=libcodec_speex.so
 libcodec_speex_so_SOURCES = speexcodec.cpp
 libcodec_speex_so_CFLAGS = -fPIC -g -Wall
 libcodec_speex_so_CXXFLAGS = -fPIC -g -Wall $(SPEEXDSP)
