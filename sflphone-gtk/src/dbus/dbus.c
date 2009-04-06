@@ -1497,6 +1497,31 @@ void dbus_set_addressbook_settings (GHashTable * settings){
     }
 }
 
+gchar** dbus_get_addressbook_list (void) {
+
+    GError *error = NULL;
+    gchar** array;
+
+    org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list (configurationManagerProxy, &array, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list\n");
+        g_error_free (error);
+    }
+
+    return array;
+}
+
+void dbus_set_addressbook_list (const gchar** list){
+
+    GError *error = NULL;
+
+    org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list(configurationManagerProxy, list, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list\n");
+        g_error_free (error);
+    }
+}
+
 GHashTable* dbus_get_hook_settings (void) {
 
     GError *error = NULL;

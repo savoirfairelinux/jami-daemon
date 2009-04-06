@@ -88,6 +88,7 @@ libs/utilspp/singleton/Makefile
 sflphone-gtk/Makefile
 sflphone-gtk/src/Makefile
 sflphone-gtk/src/config/Makefile
+sflphone-gtk/src/dbus/Makefile
 sflphone-gtk/src/contacts/Makefile
 sflphone-gtk/src/contacts/addressbook/Makefile
 sflphone-gtk/pixmaps/Makefile

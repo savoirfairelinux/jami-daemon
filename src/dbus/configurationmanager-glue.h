@@ -81,6 +81,8 @@ public:
         register_method(ConfigurationManager_adaptor, isStunEnabled, _isStunEnabled_stub);
         register_method(ConfigurationManager_adaptor, getAddressbookSettings, _getAddressbookSettings_stub);
         register_method(ConfigurationManager_adaptor, setAddressbookSettings, _setAddressbookSettings_stub);
+        register_method(ConfigurationManager_adaptor, getAddressbookList, _getAddressbookList_stub);
+        register_method(ConfigurationManager_adaptor, setAddressbookList, _setAddressbookList_stub);
         register_method(ConfigurationManager_adaptor, getHookSettings, _getHookSettings_stub);
         register_method(ConfigurationManager_adaptor, setHookSettings, _setHookSettings_stub);
     }
@@ -387,6 +389,16 @@ public:
             { "settings", "a{si}", true },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getAddressbookList_args[] = 
+        {
+            { "settings", "as", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setAddressbookList_args[] = 
+        {
+            { "settings", "as", true },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument getHookSettings_args[] = 
         {
             { "settings", "a{ss}", false },
@@ -474,6 +486,8 @@ public:
             { "isStunEnabled", isStunEnabled_args },
             { "getAddressbookSettings", getAddressbookSettings_args },
             { "setAddressbookSettings", setAddressbookSettings_args },
+            { "getAddressbookList", getAddressbookList_args },
+            { "setAddressbookList", setAddressbookList_args },
             { "getHookSettings", getHookSettings_args },
             { "setHookSettings", setHookSettings_args },
             { 0, 0 }
@@ -571,6 +585,8 @@ public:
     virtual int32_t isStunEnabled() = 0;
     virtual std::map< std::string, int32_t > getAddressbookSettings() = 0;
     virtual void setAddressbookSettings(const std::map< std::string, int32_t >& settings) = 0;
+    virtual std::vector< std::string > getAddressbookList() = 0;
+    virtual void setAddressbookList(const std::vector< std::string >& settings) = 0;
     virtual std::map< std::string, std::string > getHookSettings() = 0;
     virtual void setHookSettings(const std::map< std::string, std::string >& settings) = 0;
 
@@ -1178,6 +1194,25 @@ private:
 
         std::map< std::string, int32_t > argin1; ri >> argin1;
         setAddressbookSettings(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getAddressbookList_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::vector< std::string > argout1 = getAddressbookList();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setAddressbookList_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::vector< std::string > argin1; ri >> argin1;
+        setAddressbookList(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

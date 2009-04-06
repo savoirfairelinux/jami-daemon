@@ -43,7 +43,8 @@ AC_SUBST(DEPS_LIBS)
 AC_OUTPUT([
 Makefile 
 src/Makefile
-src/config/Makefile 
+src/config/Makefile
+src/dbus/Makefile
 src/contacts/Makefile
 src/contacts/addressbook/Makefile
 pixmaps/Makefile

@@ -163,8 +163,8 @@ class ManagerImpl {
      */
     bool refuseCall(const CallID& id);
 
-    /** 
-     * Save config to file 
+    /**
+     * Save config to file
      * @return true on success
      *	    false otherwise
      */
@@ -204,7 +204,7 @@ class ManagerImpl {
     bool playTone ();
 
     /**
-     * Play a special ringtone ( BUSY ) if there's at least one message on the voice mail 
+     * Play a special ringtone ( BUSY ) if there's at least one message on the voice mail
      * @return bool True on success
      *	      false otherwise
      */
@@ -259,14 +259,14 @@ class ManagerImpl {
      */
     void startVoiceMessageNotification(const AccountID& accountId, int nb_msg);
 
-    /** 
-     * Notify the client through DBus that registration state has been updated  
+    /**
+     * Notify the client through DBus that registration state has been updated
      */
     void connectionStatusNotification(void);
 
     /**
      * ConfigurationManager - Send registration request
-     * @param accountId The account to register/unregister 
+     * @param accountId The account to register/unregister
      * @param expire The flag for the type of registration
      *		 0 for unregistration request
      *		 1 for registration request
@@ -275,8 +275,8 @@ class ManagerImpl {
 
     bool getCallStatus(const std::string& sequenceId);
 
-    /** 
-     * Get account list 
+    /**
+     * Get account list
      * @return std::vector<std::string> A list of accoundIDs
      */
     std::vector< std::string >  getAccountList();
@@ -295,7 +295,7 @@ class ManagerImpl {
      * @param accountID	  The account identifier
      * @param details	  The account parameters
      */
-    void setAccountDetails( const ::std::string& accountID, 
+    void setAccountDetails( const ::std::string& accountID,
 	const std::map< ::std::string, ::std::string >& details );
 
     /**
@@ -314,7 +314,7 @@ class ManagerImpl {
     /**
      * Get the list of codecs we supports, not ordered
      * @return The list of the codecs
-     */  
+     */
     std::vector< ::std::string > getCodecList( void );
 
     /**
@@ -345,13 +345,13 @@ class ManagerImpl {
     std::vector< std::string> getOutputAudioPluginList(void);
 
     /**
-     * Set input audio plugin 
+     * Set input audio plugin
      * @param audioPlugin The audio plugin
      */
     void setInputAudioPlugin(const std::string& audioPlugin);
 
     /**
-     * Set output audio plugin 
+     * Set output audio plugin
      * @param audioPlugin The audio plugin
      */
     void setOutputAudioPlugin(const std::string& audioPlugin);
@@ -397,7 +397,7 @@ class ManagerImpl {
      * Get current alsa plugin
      * @return std::string  The Alsa plugin
      */
-    std::string getCurrentAudioOutputPlugin( void ); 
+    std::string getCurrentAudioOutputPlugin( void );
 
     /**
      * Convert a list of payload in a special format, readable by the server.
@@ -406,29 +406,31 @@ class ManagerImpl {
      */
     std::string serialize(std::vector<std::string> v);
 
+    std::vector<std::string> unserialize(std::string v);
+
     /**
      * Tells if IAX2 support is enabled
      * @return int 1 if IAX2 is enabled
      *	       0 otherwise
      */
-    int isIax2Enabled( void ); 
+    int isIax2Enabled( void );
 
     /**
      * Ringtone option.
-     * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone. 
+     * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone.
      * @return int	1 if enabled
      *	        0 otherwise
      */
-    int isRingtoneEnabled( void ); 
+    int isRingtoneEnabled( void );
 
     /**
-     * Set the ringtone option 
+     * Set the ringtone option
      * Inverse current value
      */
-    void ringtoneEnabled( void ); 
+    void ringtoneEnabled( void );
 
     /**
-     * Get the ringtone 
+     * Get the ringtone
      * @return gchar* The file name selected as a ringtone
      */
     std::string getRingtoneChoice( void );
@@ -452,7 +454,7 @@ class ManagerImpl {
     void setRecordPath( const std::string& recPath);
 
     /**
-     * Tells if the user wants to display the dialpad or not 
+     * Tells if the user wants to display the dialpad or not
      * @return int 1 if dialpad has to be displayed
      *	       0 otherwise
      */
@@ -464,7 +466,7 @@ class ManagerImpl {
     void setDialpad( void );
 
     /**
-     * Tells if the user wants to display the volume controls or not 
+     * Tells if the user wants to display the volume controls or not
      * @return int 1 if the controls have to be displayed
      *	       0 otherwise
      */
@@ -515,12 +517,12 @@ class ManagerImpl {
     /**
      * Configure the popup behaviour
      * @return int	1 if it should popup on incoming calls
-     *		0 if it should never popups  
+     *		0 if it should never popups
      */
     int popupMode( void );
 
     /**
-     * Configure the popup behaviour 
+     * Configure the popup behaviour
      * When SFLphone is in the system tray, you can configure when it popups
      * Never or only on incoming calls
      */
@@ -552,24 +554,34 @@ class ManagerImpl {
      */
     void setMailNotify( void );
 
-    
+
     /**
-     * Addressbook configuration 
+     * Addressbook configuration
      */
     std::map<std::string, int32_t> getAddressbookSettings (void);
 
     /**
-     * Addressbook configuration 
+     * Addressbook configuration
      */
-     void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
- 
+    void setAddressbookSettings (const std::map<std::string, int32_t>& settings);
+
     /**
-     * Hook configuration 
+     * Addressbook list
+     */
+    void setAddressbookList(const std::vector<  std::string >& list);
+
+    /**
+     * Addressbook list
+     */
+    std::vector <std::string> getAddressbookList( void );
+
+    /**
+     * Hook configuration
      */
     std::map<std::string, std::string> getHookSettings (void);
 
     /**
-     * Hook configuration 
+     * Hook configuration
      */
      void setHookSettings (const std::map<std::string, std::string>& settings);
 
@@ -588,9 +600,9 @@ class ManagerImpl {
     void setAudioManager( const int32_t& api );
 
     void switchAudioManager( void );
-    
-    void setPulseAppVolumeControl( void ); 
-    int32_t getPulseAppVolumeControl( void ); 
+
+    void setPulseAppVolumeControl( void );
+    int32_t getPulseAppVolumeControl( void );
 
     /**
      * Get the desktop mail notification level
@@ -613,13 +625,13 @@ class ManagerImpl {
     /**
      * Get the list of the active codecs
      * @return std::vector< ::std::string >  The list of active codecs
-     */  
-    std::vector< ::std::string > getActiveCodecList( void ); 
+     */
+    std::vector< ::std::string > getActiveCodecList( void );
 
     /**
      * Set the list of the active codecs
      * @param list  The new list of active codecs
-     */  
+     */
     void setActiveCodecList( const std::vector< ::std::string >& list);
 
     /*
@@ -638,30 +650,30 @@ class ManagerImpl {
      *			false otherwise
      */
     bool getConfig(const std::string& section, const std::string& name, TokenList& arg);
-    
+
     /**
      * Change a specific value in the configuration tree.
      * This value will then be saved in the user config file sflphonedrc
-     * @param section	The section name 
+     * @param section	The section name
      * @param name	The parameter name
-     * @param value	The new string value 
+     * @param value	The new string value
      * @return bool	true on success
      *		      false otherwise
      */
     bool setConfig(const std::string& section, const std::string& name, const std::string& value);
-    
+
     /**
      * Change a specific value in the configuration tree.
      * This value will then be saved in the user config file sflphonedrc
-     * @param section	The section name 
+     * @param section	The section name
      * @param name	The parameter name
-     * @param value	The new int value 
+     * @param value	The new int value
      * @return bool	true on success
      *		      false otherwise
      */
     bool setConfig(const std::string& section, const std::string& name, int value);
-    
-    /** 
+
+    /**
      * Get a int from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found
      * @param section The section name to look in
@@ -670,7 +682,7 @@ class ManagerImpl {
      */
     int getConfigInt(const std::string& section, const std::string& name);
 
-    /** 
+    /**
      * Get a string from the configuration tree
      * Throw an Conf::ConfigTreeItemException if not found
      * @param section The section name to look in
@@ -687,7 +699,7 @@ class ManagerImpl {
     void selectAudioDriver(void);
 
     /**
-     * Handle audio sounds heard by a caller while they wait for their 
+     * Handle audio sounds heard by a caller while they wait for their
      * connection to a called party to be completed.
      */
     void ringback ();
@@ -701,7 +713,7 @@ class ManagerImpl {
      * Handle played music when a congestion occurs
      */
     void congestion ();
-    
+
     /**
      * Handle played sound when a call can not be conpleted because of a busy recipient
      */
@@ -712,15 +724,15 @@ class ManagerImpl {
      */
     void callFailure(const CallID& id);
 
-    /** 
+    /**
      * Retrieve the current telephone tone
-     * @return AudioLoop*   The audio tone or 0 if no tone (init before calling this function) 
+     * @return AudioLoop*   The audio tone or 0 if no tone (init before calling this function)
      */
     AudioLoop* getTelephoneTone();
-    
-    /** 
+
+    /**
      * Retrieve the current telephone file
-     * @return AudioLoop* The audio file or 0 if the wav is stopped 
+     * @return AudioLoop* The audio file or 0 if the wav is stopped
      */
     AudioLoop* getTelephoneFile();
 
@@ -742,7 +754,7 @@ class ManagerImpl {
      * @return unsigned short	The volume value
      */
     unsigned short getSpkrVolume(void) { return _spkr_volume; }
-    
+
     /*
      * Inline functions to manage speaker volume control
      * Read by main thread and AudioLayer thread
@@ -750,7 +762,7 @@ class ManagerImpl {
      * @param spkr_vol	The volume value
      */
     void setSpkrVolume(unsigned short spkr_vol);
-    
+
     /*
      * Inline functions to manage mic volume control
      * Read by main thread and AudioLayer thread
@@ -758,7 +770,7 @@ class ManagerImpl {
      * @return unsigned short	The volume value
      */
     unsigned short getMicVolume(void) {  return _mic_volume;  }
-    
+
     /*
      * Inline functions to manage mic volume control
      * Read by main thread and AudioLayer thread
@@ -768,9 +780,9 @@ class ManagerImpl {
     void setMicVolume(unsigned short mic_vol);
 
     // Manage information about firewall
-    
+
     /*
-     * Get information about firewall 
+     * Get information about firewall
      * @param  stunSvrAddr: stun server
      * @param  port         port number to open to test the connection
      * @return true if the connection is successful
@@ -782,13 +794,13 @@ class ManagerImpl {
      * @return int The firewall port
      */
     inline int getFirewallPort(void) 		{ return _firewallPort; }
-    
+
     /*
      * Inline functions to manage firewall settings
      * @param port The firewall port
      */
     inline void setFirewallPort(int port) 	{ _firewallPort = port; }
-    
+
     /*
      * Inline functions to manage firewall settings
      * @return std::string The firewall address
@@ -796,8 +808,8 @@ class ManagerImpl {
     inline std::string getFirewallAddress (void) 	{ return _firewallAddr; }
 
     /**
-     * If you are behind a NAT, you have to use STUN server, specified in 
-     * STUN configuration(you can change this one by default) to give you an 
+     * If you are behind a NAT, you have to use STUN server, specified in
+     * STUN configuration(you can change this one by default) to give you an
      * public IP address and assign a port number.
      * Note: Set firewall port/address retreive
      * @param svr   Server on which to send request
@@ -820,7 +832,7 @@ class ManagerImpl {
      */
     bool hasLoadedSetup() { return _setupLoaded; }
 
-    /** 
+    /**
      * Return a new random callid that is not present in the list
      * @return CallID A brand new callid
      */
@@ -847,16 +859,16 @@ class ManagerImpl {
     void restartPJSIP( );
 
     void unregisterCurSIPAccounts();
-    
+
     void registerCurSIPAccounts(VoIPLink *link);
-    
+
     /**
      * Returns a map with only the existing SIP accounts
      */
     AccountMap getSipAccountMap( void );
 
   private:
-    
+
     /**
      * Check if a process is running with the system command
      *
@@ -866,7 +878,7 @@ class ManagerImpl {
     int app_is_running(std::string process);
 
     /**
-     * Create .PROGNAME directory in home user and create 
+     * Create .PROGNAME directory in home user and create
      * configuration tree from the settings file if this file exists.
      *
      * @return	0 if creating file failed
@@ -892,7 +904,7 @@ class ManagerImpl {
 
     /*
      * Init the volume for speakers/micro from 0 to 100 value
-     */ 
+     */
     void initVolume();
 
     /**
@@ -906,7 +918,7 @@ class ManagerImpl {
      * @param id The new callid
      */
     void switchCall(const CallID& id);
-    
+
     /*
      * Play one tone
      * @return false if the driver is uninitialize
@@ -949,7 +961,7 @@ class ManagerImpl {
 
 
     // Multithread variable (protected by _mutex)
-    // 
+    //
     /** Mutex to protect access to code section */
     ost::Mutex _mutex;
 
@@ -961,10 +973,10 @@ class ManagerImpl {
 
     /** Protect waiting call list, access by many voip/audio threads */
     ost::Mutex _waitingCallMutex;
-    
+
     /** Number of waiting call, synchronize with waitingcall callidvector */
     unsigned int _nbIncomingWaitingCall;
-    
+
     /**
      * Add incoming callid to the waiting list
      * @param id CallID to add
@@ -985,7 +997,7 @@ class ManagerImpl {
     bool isWaitingCall(const CallID& id);
 
     /**
-     * Path of the ConfigFile 
+     * Path of the ConfigFile
      */
     std::string 	_path;
     int _exist;
@@ -1006,7 +1018,7 @@ class ManagerImpl {
 
     /** Map to associate a CallID to the good account */
     CallAccountMap _callAccountMap;
-    
+
     /** Mutex to lock the call account map (main thread + voiplink thread) */
     ost::Mutex _callAccountMapMutex;
 
@@ -1033,7 +1045,7 @@ class ManagerImpl {
      */
     bool removeCallAccount(const CallID& callID);
 
-    /** 
+    /**
      *Contains a list of account (sip, aix, etc) and their respective voiplink/calls */
     AccountMap _accountMap;
 
@@ -1055,7 +1067,7 @@ class ManagerImpl {
      *		  false otherwise
      */
     bool accountExists(const AccountID& accountID);
-    
+
 
 public:
     /**

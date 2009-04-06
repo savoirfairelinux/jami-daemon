@@ -33,29 +33,34 @@ G_BEGIN_DECLS
 #define ADDRESSBOOK_DISPLAY_PHONE_HOME       "ADDRESSBOOK_DISPLAY_PHONE_HOME"
 #define ADDRESSBOOK_DISPLAY_PHONE_MOBILE     "ADDRESSBOOK_DISPLAY_PHONE_MOBILE"
 
-typedef struct _AddressBook_Config {
-    guint max_results;
-    guint display_contact_photo;
-    guint search_phone_home;
-    guint search_phone_business;
-    guint search_phone_mobile;
+typedef struct _AddressBook_Config
+{
+  guint max_results;
+  guint display_contact_photo;
+  guint search_phone_home;
+  guint search_phone_business;
+  guint search_phone_mobile;
 } AddressBook_Config;
 
 /**
  * Save the parameters through D-BUS
  */
-void addressbook_save_parameters (void);
+void
+addressbook_config_save_parameters(void);
 
 /**
  * Initialize the address book structure, and retrieve the saved parameters through D-Bus
  *
  * @param settings  The addressbook structure
  */
-void addressbook_load_parameters (AddressBook_Config **settings);
+void
+addressbook_config_load_parameters(AddressBook_Config **settings);
 
-gboolean addressbook_display (AddressBook_Config *settings, const gchar *field);
+gboolean
+addressbook_display(AddressBook_Config *settings, const gchar *field);
 
-GtkWidget* create_addressbook_settings ();
+GtkWidget*
+create_addressbook_settings();
 
 G_END_DECLS
 

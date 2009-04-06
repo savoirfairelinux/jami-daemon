@@ -18,159 +18,361 @@
  */
 
 #include "addressbook-config.h"
+#include <contacts/addressbook/eds.h>
+#include <string.h>
+#include <stdlib.h>
 
 AddressBook_Config *addressbook_config;
+GtkWidget *book_tree_view;
 
-void addressbook_load_parameters (AddressBook_Config **settings) {
+enum
+{
+  COLUMN_BOOK_ACTIVE, COLUMN_BOOK_NAME, COLUMN_BOOK_UID
+};
 
-    GHashTable *_params = NULL;
-    AddressBook_Config *_settings;
+void
+addressbook_config_load_parameters(AddressBook_Config **settings)
+{
 
-    // Allocate a struct
-    _settings = g_new0 (AddressBook_Config, 1);
+  GHashTable *_params = NULL;
+  AddressBook_Config *_settings;
 
-    // Fetch the settings from D-Bus
-    _params = (GHashTable*) dbus_get_addressbook_settings ();
+  // Allocate a struct
+  _settings = g_new0 (AddressBook_Config, 1);
 
-    if (_params == NULL) {
-        _settings->max_results = 30;
-        _settings->display_contact_photo = 0;
-        _settings->search_phone_business = 1;
-        _settings->search_phone_home = 1;
-        _settings->search_phone_mobile = 1;
+  // Fetch the settings from D-Bus
+  _params = (GHashTable*) dbus_get_addressbook_settings();
+
+  if (_params == NULL)
+    {
+      _settings->max_results = 30;
+      _settings->display_contact_photo = 0;
+      _settings->search_phone_business = 1;
+      _settings->search_phone_home = 1;
+      _settings->search_phone_mobile = 1;
     }
-    else {
-        _settings->max_results =  (guint)(g_hash_table_lookup (_params, ADDRESSBOOK_MAX_RESULTS));
-        _settings->display_contact_photo = (guint) (g_hash_table_lookup (_params, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
-        _settings->search_phone_business = (guint) (g_hash_table_lookup (_params, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS));
-        _settings->search_phone_home = (guint) (g_hash_table_lookup (_params, ADDRESSBOOK_DISPLAY_PHONE_HOME));
-        _settings->search_phone_mobile = (guint) (g_hash_table_lookup (_params, ADDRESSBOOK_DISPLAY_PHONE_MOBILE));
+  else
+    {
+      _settings->max_results = (guint) (g_hash_table_lookup(_params,
+          ADDRESSBOOK_MAX_RESULTS));
+      _settings->display_contact_photo = (guint) (g_hash_table_lookup(_params,
+          ADDRESSBOOK_DISPLAY_CONTACT_PHOTO));
+      _settings->search_phone_business = (guint) (g_hash_table_lookup(_params,
+          ADDRESSBOOK_DISPLAY_PHONE_BUSINESS));
+      _settings->search_phone_home = (guint) (g_hash_table_lookup(_params,
+          ADDRESSBOOK_DISPLAY_PHONE_HOME));
+      _settings->search_phone_mobile = (guint) (g_hash_table_lookup(_params,
+          ADDRESSBOOK_DISPLAY_PHONE_MOBILE));
     }
 
-    *settings = _settings;
+  *settings = _settings;
 }
 
-void addressbook_save_parameters (void) {
+void
+addressbook_config_save_parameters(void)
+{
 
-    GHashTable *params = NULL;
+  GHashTable *params = NULL;
 
-    params = g_hash_table_new (NULL, g_str_equal);
-    g_hash_table_replace (params, (gpointer)ADDRESSBOOK_MAX_RESULTS, (gpointer)addressbook_config->max_results);
-    g_hash_table_replace (params, (gpointer)ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, (gpointer)addressbook_config->display_contact_photo);
-    g_hash_table_replace (params, (gpointer)ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, (gpointer)addressbook_config->search_phone_business);
-    g_hash_table_replace (params, (gpointer)ADDRESSBOOK_DISPLAY_PHONE_HOME, (gpointer)addressbook_config->search_phone_home);
-    g_hash_table_replace (params, (gpointer)ADDRESSBOOK_DISPLAY_PHONE_MOBILE, (gpointer)addressbook_config->search_phone_mobile);
+  params = g_hash_table_new(NULL, g_str_equal);
+  g_hash_table_replace(params, (gpointer) ADDRESSBOOK_MAX_RESULTS,
+      (gpointer) addressbook_config->max_results);
+  g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_CONTACT_PHOTO,
+      (gpointer) addressbook_config->display_contact_photo);
+  g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_BUSINESS,
+      (gpointer) addressbook_config->search_phone_business);
+  g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_HOME,
+      (gpointer) addressbook_config->search_phone_home);
+  g_hash_table_replace(params, (gpointer) ADDRESSBOOK_DISPLAY_PHONE_MOBILE,
+      (gpointer) addressbook_config->search_phone_mobile);
 
-    dbus_set_addressbook_settings (params);
+  dbus_set_addressbook_settings(params);
 
-    // Decrement the reference count
-    g_hash_table_unref (params);
+  // Decrement the reference count
+  g_hash_table_unref(params);
 }
 
-static void max_results_cb (GtkRange* scale) {
+static void
+max_results_cb(GtkRange* scale)
+{
 
-    addressbook_config->max_results = (guint) gtk_range_get_value (GTK_RANGE (scale));
+  addressbook_config->max_results = (guint) gtk_range_get_value(GTK_RANGE (scale));
 }
 
-static void display_contact_photo_cb (GtkWidget *widget) {
+static void
+display_contact_photo_cb(GtkWidget *widget)
+{
 
-    addressbook_config->display_contact_photo = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+  addressbook_config->display_contact_photo
+      = (guint) gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
-static void search_phone_business_cb (GtkWidget *widget) {
+static void
+search_phone_business_cb(GtkWidget *widget)
+{
 
-    addressbook_config->search_phone_business = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+  addressbook_config->search_phone_business
+      = (guint) gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
-static void search_phone_home_cb (GtkWidget *widget) {
+static void
+search_phone_home_cb(GtkWidget *widget)
+{
 
-    addressbook_config->search_phone_home = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+  addressbook_config->search_phone_home = (guint) gtk_toggle_button_get_active(
+      GTK_TOGGLE_BUTTON(widget));
 }
 
-static void search_phone_mobile_cb (GtkWidget *widget) {
+static void
+search_phone_mobile_cb(GtkWidget *widget)
+{
 
-    addressbook_config->search_phone_mobile = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+  addressbook_config->search_phone_mobile
+      = (guint) gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
-GtkWidget* create_addressbook_settings () {
+/**
+ * Toggle active value of book on click and update changes to the deamon
+ * and in configuration files
+ */
+static void
+addressbook_config_book_active_toggled(
+    GtkCellRendererToggle *renderer UNUSED, gchar *path, gpointer data)
+{
+  GtkTreeIter iter;
+  GtkTreePath *treePath;
+  GtkTreeModel *model;
+  gboolean active;
+  gchar* name;
+  gchar* uid;
 
-    GtkWidget *ret, *result_frame, *table, *value, *label, *photo, *item;
+  // Get path of clicked book active toggle box
+  treePath = gtk_tree_path_new_from_string(path);
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(data));
+  gtk_tree_model_get_iter(model, &iter, treePath);
 
-    // Load the user value
-    addressbook_load_parameters (&addressbook_config);
+  // Get active value  at iteration
+  gtk_tree_model_get(model, &iter, COLUMN_BOOK_ACTIVE, &active,
+      COLUMN_BOOK_UID, &uid, COLUMN_BOOK_NAME, &name, -1);
 
-    ret = gtk_vbox_new(FALSE, 10);
-    gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
+  // Toggle active value
+  active = !active;
 
-    result_frame = gtk_frame_new(_("Search Parameters"));
-    gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
-    gtk_widget_show (result_frame);
+  printf("-> change active to : %d for %s\n", active, uid);
 
-    table = gtk_table_new ( 5, 3,  FALSE/* homogeneous */);
-    gtk_table_set_row_spacings( GTK_TABLE(table), 10);
-    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
-    gtk_widget_show(table);
-    gtk_container_add( GTK_CONTAINER (result_frame) , table );
+  // Store value
+  gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_BOOK_ACTIVE, active, -1);
 
-    // SCALE BUTTON - NUMBER OF RESULTS
-    label = gtk_label_new (_("Maximum result number for a request: "));
-    gtk_table_attach ( GTK_TABLE( table ), label, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
-    value = gtk_hscale_new_with_range (25.0 , 50.0 , 5.0);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
-    gtk_scale_set_digits (GTK_SCALE(value) , 0);
-    gtk_scale_set_value_pos (GTK_SCALE(value) , GTK_POS_RIGHT);
-    gtk_range_set_value (GTK_RANGE( value ) , addressbook_config->max_results);
-    g_signal_connect (G_OBJECT (value) , "value-changed" , G_CALLBACK(max_results_cb), NULL );
-    gtk_table_attach ( GTK_TABLE( table ), value, 2, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+  gtk_tree_path_free(treePath);
 
-    // PHOTO DISPLAY
-    photo = gtk_check_button_new_with_mnemonic( _("_Display contact photo if available"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(photo), addressbook_config->display_contact_photo);
-    g_signal_connect (G_OBJECT(photo) , "clicked" , G_CALLBACK (display_contact_photo_cb), NULL);
-    gtk_table_attach ( GTK_TABLE( table ), photo, 0, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+  // Update current memory stored books data
+  books_get_book_data_by_uid(uid)->active = active;
 
-    label = gtk_label_new (_("Search for and display: "));
-    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+  // Save data
 
-    item = gtk_check_button_new_with_mnemonic( _("_Business phone"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), addressbook_config->search_phone_business);
-    g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_business_cb) , NULL);
-    gtk_table_attach ( GTK_TABLE( table ), item, 1, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+  gboolean valid;
 
-    item = gtk_check_button_new_with_mnemonic( _("_Home phone"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), addressbook_config->search_phone_home);
-    g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_home_cb) , NULL);
-    gtk_table_attach ( GTK_TABLE( table ), item, 1, 3, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+  // Initiate double array char list for one string
+  const gchar** list = (void*) malloc(sizeof(void*));
+  int c = 0;
 
-    item = gtk_check_button_new_with_mnemonic( _("_Mobile phone"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), addressbook_config->search_phone_mobile);
-    g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_mobile_cb) , NULL);
-    gtk_table_attach ( GTK_TABLE( table ), item, 1, 3, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+  /* Get the first iter in the list */
+  valid = gtk_tree_model_get_iter_first(model, &iter);
 
-    gtk_widget_show_all(ret);
+  while (valid)
+    {
+      // Get active value at iteration
+      gtk_tree_model_get(model, &iter, COLUMN_BOOK_ACTIVE, &active,
+          COLUMN_BOOK_UID, &uid, COLUMN_BOOK_NAME, &name, -1);
 
-    return ret;
+      if (active)
+        {
+          // Reallocate memory each time
+          if (c != 0)
+            list = (void*) realloc(list, (c + 1) * sizeof(void*));
+
+          *(list + c) = uid;
+          c++;
+        }
+
+      valid = gtk_tree_model_iter_next(model, &iter);
+    }
+
+  // Allocate NULL array at the end for Dbus
+  list = (void*) realloc(list, (c + 1) * sizeof(void*));
+  *(list + c) = NULL;
+
+  // Call daemon to store in config file
+  dbus_set_addressbook_list(list);
+
+  free(list);
+}
+
+static void
+addressbook_config_fill_book_list()
+{
+  GtkTreeIter list_store_iterator;
+  GSList *book_list_iterator;
+  GtkListStore *store;
+  book_data_t *book_data;
+
+  // Get model of view and clear it
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));
+  gtk_list_store_clear(store);
+
+  // Populate window
+  for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
+      = book_list_iterator->next)
+    {
+      book_data = (book_data_t *) book_list_iterator->data;
+      gtk_list_store_append(store, &list_store_iterator);
+      gtk_list_store_set(store, &list_store_iterator, COLUMN_BOOK_ACTIVE,
+          book_data->active, COLUMN_BOOK_UID, book_data->uid, COLUMN_BOOK_NAME,
+          book_data->name, -1);
+    }
+
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));
 
 }
 
-gboolean addressbook_display (AddressBook_Config *settings, const gchar *field) {
+GtkWidget*
+create_addressbook_settings()
+{
 
-    gboolean display = FALSE;
+  GtkWidget *ret, *result_frame, *table, *value, *label, *photo, *item;
 
-    if (g_strcasecmp (field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO) == 0)
-        display = (settings->display_contact_photo == 1)? TRUE : FALSE;
+  GtkListStore *store;
+  GtkCellRenderer *renderer;
+  GtkTreeSelection *tree_selection;
+  GtkTreeViewColumn *tree_view_column;
+  GtkWidget *scrolled_window, *hbox;
 
-    else if (g_strcasecmp (field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS) == 0)
-        display = (settings->search_phone_business == 1)? TRUE : FALSE;
+  // Load the user value
+  addressbook_config_load_parameters(&addressbook_config);
 
-    else if (g_strcasecmp (field, ADDRESSBOOK_DISPLAY_PHONE_HOME) == 0)
-        display = (settings->search_phone_home == 1)? TRUE : FALSE;
+  ret = gtk_vbox_new(FALSE, 10);
+  gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    else if (g_strcasecmp (field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE) == 0)
-        display = (settings->search_phone_mobile == 1)? TRUE : FALSE;
+  result_frame = gtk_frame_new(_("General"));
+  gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
+  gtk_widget_show (result_frame);
 
-    else
-        display = FALSE;
+  table = gtk_table_new ( 5, 3, FALSE/* homogeneous */);
+  gtk_table_set_row_spacings( GTK_TABLE(table), 10);
+  gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+  gtk_widget_show(table);
+  gtk_container_add( GTK_CONTAINER (result_frame) , table );
 
-    return display;
+  // SCALE BUTTON - NUMBER OF RESULTS
+      hbox = gtk_hbox_new(FALSE, 0);
+      label = gtk_label_new (_("Maximum results: "));
+      gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
+      value = gtk_hscale_new_with_range (25.0 , 50.0 , 5.0);
+      gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
+      gtk_scale_set_digits (GTK_SCALE(value) , 0);
+      gtk_scale_set_value_pos (GTK_SCALE(value) , GTK_POS_RIGHT);
+      gtk_range_set_value (GTK_RANGE( value ) , addressbook_config->max_results);
+      g_signal_connect (G_OBJECT (value) , "value-changed" , G_CALLBACK(max_results_cb), NULL );
+      gtk_box_pack_start(GTK_BOX(hbox),value,TRUE,TRUE,10);
+      gtk_table_attach ( GTK_TABLE( table ), hbox, 1, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND |GTK_FILL, 0, 0);
+  gtk_widget_show_all(hbox);
+
+  // PHOTO DISPLAY
+  photo = gtk_check_button_new_with_mnemonic( _("_Display contact photo if available"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(photo), addressbook_config->display_contact_photo);
+  g_signal_connect (G_OBJECT(photo) , "clicked" , G_CALLBACK (display_contact_photo_cb), NULL);
+  gtk_table_attach ( GTK_TABLE( table ), photo, 1, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+  result_frame = gtk_frame_new(_("Fields"));
+  gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
+  gtk_widget_show (result_frame);
+
+  table = gtk_table_new ( 5, 3, FALSE);
+  gtk_table_set_row_spacings( GTK_TABLE(table), 10);
+  gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+  gtk_widget_show(table);
+  gtk_container_add( GTK_CONTAINER (result_frame) , table );
+
+  item = gtk_check_button_new_with_mnemonic( _("_Business phone"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), addressbook_config->search_phone_business);
+  g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_business_cb) , NULL);
+  gtk_table_attach ( GTK_TABLE( table ), item, 1, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+  item = gtk_check_button_new_with_mnemonic( _("_Home phone"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), addressbook_config->search_phone_home);
+  g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_home_cb) , NULL);
+  gtk_table_attach ( GTK_TABLE( table ), item, 1, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+  item = gtk_check_button_new_with_mnemonic( _("_Mobile phone"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), addressbook_config->search_phone_mobile);
+  g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_mobile_cb) , NULL);
+  gtk_table_attach ( GTK_TABLE( table ), item, 1, 3, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+
+  result_frame = gtk_frame_new(_("Books"));
+  gtk_box_pack_start(GTK_BOX(ret), result_frame, TRUE, TRUE, 0);
+  gtk_widget_show (result_frame);
+
+  scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window), GTK_SHADOW_IN);
+
+  gtk_container_add( GTK_CONTAINER (result_frame) , scrolled_window );
+
+  store = gtk_list_store_new(3,
+          G_TYPE_BOOLEAN,             // Active
+          G_TYPE_STRING,             // uid
+          G_TYPE_STRING              // Name
+          );
+
+  // Create tree view with list store
+  book_tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+
+  // Get tree selection manager
+  tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(book_tree_view));
+
+  // Active column
+  renderer = gtk_cell_renderer_toggle_new();
+  tree_view_column = gtk_tree_view_column_new_with_attributes("", renderer, "active", COLUMN_BOOK_ACTIVE, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(book_tree_view), tree_view_column);
+
+  // Toggle active property on clicked
+  g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(addressbook_config_book_active_toggled), (gpointer)book_tree_view);
+
+  // Name column
+  renderer = gtk_cell_renderer_text_new();
+  tree_view_column = gtk_tree_view_column_new_with_attributes(_("Name"), renderer, "markup", COLUMN_BOOK_NAME, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(book_tree_view), tree_view_column);
+
+  g_object_unref(G_OBJECT(store));
+  gtk_container_add(GTK_CONTAINER(scrolled_window), book_tree_view);
+
+  addressbook_config_fill_book_list();
+
+  gtk_widget_show_all(ret);
+
+  return ret;
+}
+
+gboolean
+addressbook_display(AddressBook_Config *settings, const gchar *field)
+{
+
+  gboolean display = FALSE;
+
+  if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO) == 0)
+    display = (settings->display_contact_photo == 1) ? TRUE : FALSE;
+
+  else if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS) == 0)
+    display = (settings->search_phone_business == 1) ? TRUE : FALSE;
+
+  else if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_PHONE_HOME) == 0)
+    display = (settings->search_phone_home == 1) ? TRUE : FALSE;
+
+  else if (g_strcasecmp(field, ADDRESSBOOK_DISPLAY_PHONE_MOBILE) == 0)
+    display = (settings->search_phone_mobile == 1) ? TRUE : FALSE;
+
+  else
+    display = FALSE;
+
+  return display;
 }
