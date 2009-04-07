@@ -928,7 +928,7 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
   gboolean remove = FALSE;
   gboolean accounts = FALSE;
 
-  call_t * selectedCall = calltab_get_selected_call( history );
+  call_t * selectedCall = calltab_get_selected_call( contacts );
   if (selectedCall)
   {
     remove = TRUE;
