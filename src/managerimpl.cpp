@@ -706,6 +706,9 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
 
     associateCallToAccount(call->getCallId(), accountId);
 
+    if (accountId==AccountNULL)
+        associateConfigToCall (call->getCallId(), Call::IPtoIP);
+
     _debug("ManagerImpl::incomingCall :: hasCurrentCall() %i \n",hasCurrentCall());
 
     if ( !hasCurrentCall() ) {
