@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="images" >
+    <file>icons/office-address-book.png</file>
+    <file>icons/x-office-address-book.png</file>
     <file>icons/add.png</file>
     <file>icons/remove.png</file>
     <file>icons/del_off.png</file>

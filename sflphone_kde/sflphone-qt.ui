@@ -36,10 +36,20 @@
       <widget class="QWidget" name="page_callHistory" >
        <layout class="QVBoxLayout" name="verticalLayout_3" >
         <item>
-         <widget class="QLineEdit" name="label_searchHistory" />
+         <widget class="QListWidget" name="listWidget_callHistory" />
         </item>
         <item>
-         <widget class="QListWidget" name="listWidget_callHistory" />
+         <widget class="QLineEdit" name="lineEdit_searchHistory" />
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page_addressBook" >
+       <layout class="QVBoxLayout" name="verticalLayout_5" >
+        <item>
+         <widget class="QListWidget" name="listWidget_addressBook" />
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_addressBook" />
         </item>
        </layout>
       </widget>
@@ -368,6 +378,7 @@
     <addaction name="separator" />
     <addaction name="action_mailBox" />
     <addaction name="action_history" />
+    <addaction name="action_addressBook" />
    </widget>
    <widget class="QMenu" name="menu_Configure" >
     <property name="title" >
@@ -411,6 +422,7 @@
    <addaction name="separator" />
    <addaction name="action_mailBox" />
    <addaction name="action_history" />
+   <addaction name="action_addressBook" />
   </widget>
   <action name="action_accept" >
    <property name="icon" >
@@ -549,6 +561,18 @@
   <action name="action_accountCreationWizard" >
    <property name="text" >
     <string>Account creation &amp;wizard</string>
+   </property>
+  </action>
+  <action name="action_addressBook" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/x-office-address-book.png</normaloff>:/images/icons/x-office-address-book.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Address book</string>
    </property>
   </action>
  </widget>

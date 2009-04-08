@@ -8,8 +8,8 @@
  * Do not edit! All changes made to it will be lost.
  */
 
-#ifndef CONFIGURATIONMANAGER_INTERFACE_P_H_1236371540
-#define CONFIGURATIONMANAGER_INTERFACE_P_H_1236371540
+#ifndef CONFIGURATIONMANAGER_INTERFACE_P_H_1238787208
+#define CONFIGURATIONMANAGER_INTERFACE_P_H_1238787208
 
 #include <QtCore/QObject>
 #include <QtCore/QByteArray>
@@ -69,6 +69,12 @@ public Q_SLOTS: // METHODS
         return callWithArgumentList(QDBus::Block, QLatin1String("getActiveCodecList"), argumentList);
     }
 
+    inline QDBusReply<MapStringInt> getAddressbookSettings()
+    {
+        QList<QVariant> argumentList;
+        return callWithArgumentList(QDBus::Block, QLatin1String("getAddressbookSettings"), argumentList);
+    }
+
     inline QDBusReply<int> getAudioDeviceIndex(const QString &name)
     {
         QList<QVariant> argumentList;
@@ -125,6 +131,12 @@ public Q_SLOTS: // METHODS
         return callWithArgumentList(QDBus::Block, QLatin1String("getDialpad"), argumentList);
     }
 
+    inline QDBusReply<MapStringString> getHookSettings()
+    {
+        QList<QVariant> argumentList;
+        return callWithArgumentList(QDBus::Block, QLatin1String("getHookSettings"), argumentList);
+    }
+
     inline QDBusReply<QStringList> getInputAudioPluginList()
     {
         QList<QVariant> argumentList;
@@ -171,6 +183,12 @@ public Q_SLOTS: // METHODS
     {
         QList<QVariant> argumentList;
         return callWithArgumentList(QDBus::Block, QLatin1String("getRecordDeviceList"), argumentList);
+    }
+
+    inline QDBusReply<QString> getRecordPath()
+    {
+        QList<QVariant> argumentList;
+        return callWithArgumentList(QDBus::Block, QLatin1String("getRecordPath"), argumentList);
     }
 
     inline QDBusReply<QString> getRingtoneChoice()
@@ -285,6 +303,13 @@ public Q_SLOTS: // METHODS
         return callWithArgumentList(QDBus::Block, QLatin1String("setActiveCodecList"), argumentList);
     }
 
+    inline QDBusReply<void> setAddressbookSettings(MapStringInt settings)
+    {
+        QList<QVariant> argumentList;
+        argumentList << qVariantFromValue(settings);
+        return callWithArgumentList(QDBus::Block, QLatin1String("setAddressbookSettings"), argumentList);
+    }
+
     inline QDBusReply<void> setAudioInputDevice(int index)
     {
         QList<QVariant> argumentList;
@@ -310,6 +335,13 @@ public Q_SLOTS: // METHODS
     {
         QList<QVariant> argumentList;
         return callWithArgumentList(QDBus::Block, QLatin1String("setDialpad"), argumentList);
+    }
+
+    inline QDBusReply<void> setHookSettings(MapStringString settings)
+    {
+        QList<QVariant> argumentList;
+        argumentList << qVariantFromValue(settings);
+        return callWithArgumentList(QDBus::Block, QLatin1String("setHookSettings"), argumentList);
     }
 
     inline QDBusReply<void> setInputAudioPlugin(const QString &audioPlugin)
@@ -349,6 +381,13 @@ public Q_SLOTS: // METHODS
     {
         QList<QVariant> argumentList;
         return callWithArgumentList(QDBus::Block, QLatin1String("setPulseAppVolumeControl"), argumentList);
+    }
+
+    inline QDBusReply<void> setRecordPath(const QString &rec)
+    {
+        QList<QVariant> argumentList;
+        argumentList << qVariantFromValue(rec);
+        return callWithArgumentList(QDBus::Block, QLatin1String("setRecordPath"), argumentList);
     }
 
     inline QDBusReply<void> setRingtoneChoice(const QString &tone)

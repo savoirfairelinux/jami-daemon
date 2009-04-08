@@ -1,6 +1,10 @@
 #ifndef CALL_LIST_H
 #define CALL_LIST_H
 
+#include <QtCore/QVector>
+#include <QtCore/QString>
+#include <QtGui/QListWidgetItem>
+
 #include "Call.h"
 
 class CallList

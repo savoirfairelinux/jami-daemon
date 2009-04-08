@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>504</width>
-    <height>449</height>
+    <width>508</width>
+    <height>456</height>
    </rect>
   </property>
   <property name="minimumSize" >
@@ -140,6 +140,18 @@
          <string>Audio</string>
         </property>
        </item>
+       <item>
+        <property name="text" >
+         <string>Record</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="Line" name="line_ConfigGeneral_2" >
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
       </widget>
      </item>
      <item>
@@ -597,16 +609,16 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QToolButton" name="button_accountUp" >
+                   <widget class="QToolButton" name="button_accountDown" >
                     <property name="text" >
-                     <string>Up</string>
+                     <string>Down</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QToolButton" name="button_accountDown" >
+                   <widget class="QToolButton" name="button_accountUp" >
                     <property name="text" >
-                     <string>Down</string>
+                     <string>Up</string>
                     </property>
                    </widget>
                   </item>
@@ -622,6 +634,13 @@
                      </size>
                     </property>
                    </spacer>
+                  </item>
+                  <item>
+                   <widget class="QToolButton" name="toolButton_accountsApply" >
+                    <property name="text" >
+                     <string>Apply</string>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </widget>
@@ -1108,6 +1127,59 @@
          </item>
          <item>
           <widget class="QWidget" native="1" name="widget_fullConfigAudio" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_record" >
+        <layout class="QVBoxLayout" name="verticalLayout_3" >
+         <item>
+          <widget class="QLabel" name="label_configRecord" >
+           <property name="text" >
+            <string>Configure record settings</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line_configRecord" >
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox1_recordGeneral" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="title" >
+            <string>General</string>
+           </property>
+           <layout class="QFormLayout" name="formLayout" >
+            <item row="0" column="0" >
+             <widget class="QLabel" name="label_destinationFolder" >
+              <property name="text" >
+               <string>Destination folder</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1" >
+             <widget class="KUrlComboRequester" name="urlcomborequester_destinationFolder" />
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" native="1" name="widget_fullConfigRecord" >
            <property name="sizePolicy" >
             <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
              <horstretch>0</horstretch>

@@ -173,12 +173,13 @@ void AccountWizard::accept()
 {
 	QString ret;
 	MapStringString accountDetails;
-	accountDetails[QString(ACCOUNT_ALIAS)] = QString();
-	accountDetails[QString(ACCOUNT_HOSTNAME)] = QString();
-	accountDetails[QString(ACCOUNT_USERNAME)] = QString();
-	accountDetails[QString(ACCOUNT_PASSWORD)] = QString();
-	accountDetails[QString(ACCOUNT_TYPE)] = QString();
-	accountDetails[QString(ACCOUNT_MAILBOX)] = QString();
+	//accountDetails[QString(ACCOUNT_ALIAS)] = QString();
+	//accountDetails[QString(ACCOUNT_HOSTNAME)] = QString();
+	//accountDetails[QString(ACCOUNT_USERNAME)] = QString();
+	//accountDetails[QString(ACCOUNT_PASSWORD)] = QString();
+	//accountDetails[QString(ACCOUNT_TYPE)] = QString();
+	//accountDetails[QString(ACCOUNT_MAILBOX)] = QString();
+	//accountDetails[QString(ACCOUNT_ENABLED)] = QString();
 	
 	QString & alias = accountDetails[QString(ACCOUNT_ALIAS)];
 	QString & server = accountDetails[QString(ACCOUNT_HOSTNAME)];
@@ -186,6 +187,7 @@ void AccountWizard::accept()
 	QString & password = accountDetails[QString(ACCOUNT_PASSWORD)];
 	QString & protocol = accountDetails[QString(ACCOUNT_TYPE)];
 	QString & mailbox = accountDetails[QString(ACCOUNT_MAILBOX)];
+	QString & enabled = accountDetails[QString(ACCOUNT_ENABLED)];
 	
 	bool createAccount = false;
 	bool sip = false;
@@ -240,25 +242,17 @@ void AccountWizard::accept()
 	}
 	if(createAccount)
 	{
-		mailbox = QString(ACCOUNT_MAILBOX_DEFAULT_VALUE);
-		qDebug() << "ligne1";
+		mailbox = ACCOUNT_MAILBOX_DEFAULT_VALUE;
+		enabled = ACCOUNT_ENABLED_TRUE;
 		ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-		qDebug() << "ligne2";
 		QString accountId = configurationManager.addAccount(accountDetails);
-		qDebug() << "ligne3";
-		configurationManager.sendRegister(accountId, 1);
-		qDebug() << "ligne4";
+		//configurationManager.sendRegister(accountId, 1);
 		if(sip)
 		{
-			qDebug() << "ligne5";
 			bool enableStun = field(FIELD_ENABLE_STUN).toBool();
-			qDebug() << "ligne6";
 			QString stunServer = field(FIELD_STUN_SERVER).toString();
-			qDebug() << "ligne7";
 			if(enableStun != configurationManager.isStunEnabled()) configurationManager.enableStun();
-			qDebug() << "ligne8";
 			if(enableStun) configurationManager.setStunServer(stunServer);
-			qDebug() << "ligne9";
 		}
 		ret += tr("Alias : ") + alias + "\n";
 		ret += tr("Server : ") + server + "\n";

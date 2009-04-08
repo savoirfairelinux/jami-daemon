@@ -1,8 +1,12 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
-#include <QtGui>
+#include <QtCore/QString>
+#include <QtGui/QListWidgetItem>
+#include <QtGui/QColor>
+
 #include "metatypes.h"
+#include "AccountItemWidget.h"
 
 const QString account_state_name(QString & s);
 
@@ -13,7 +17,7 @@ private:
 	QString * accountId;
 	MapStringString * accountDetails;
 	QListWidgetItem * item;
-	QWidget * itemWidget;
+	AccountItemWidget * itemWidget;
 
 	Account();
 
@@ -26,16 +30,18 @@ public:
 	~Account();
 	
 	//Getters
-	bool isNew();
-	bool isChecked();
+	bool isNew() const;
+	bool isChecked() const;
 	QString & getAccountId();
-	MapStringString & getAccountDetails();
+	MapStringString & getAccountDetails() const;
 	QListWidgetItem * getItem();
-	QWidget * getItemWidget();
+	QListWidgetItem * renewItem();
+	AccountItemWidget * getItemWidget();
 	QString getStateName(QString & state);
 	QColor getStateColor();
 	QString getStateColorName();
-	QString getAccountDetail(QString & param);
+	QString getAccountDetail(QString param) const;
+	QString getAlias();
 	
 	//Setters
 	void setItemText(QString text);

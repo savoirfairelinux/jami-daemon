@@ -8,7 +8,7 @@ class CallManagerInterfaceSingleton
 
 private:
 
-	static CallManagerInterface * daemon;
+	static CallManagerInterface * interface;
 
 public:
 

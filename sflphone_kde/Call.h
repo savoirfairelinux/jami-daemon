@@ -1,7 +1,11 @@
 #ifndef CALL_H
 #define CALL_H
-#include <QtGui>
-#include "Account.h"
+
+#include <QtCore/QString>
+#include <QtCore/QDateTime>
+#include <QtGui/QListWidgetItem>
+#include <QtGui/QLabel>
+#include <QtGui/QWidget>
 
 /** @enum call_state_t 
   * This enum have all the states a call can take.
@@ -90,6 +94,7 @@ class Call
 private:
 
 	//Call attributes
+	
 	QString account;
 	QString callId;
 	QString peer;
@@ -104,6 +109,7 @@ private:
 	QLabel * labelTransferNumber;
 	
 	QListWidgetItem * historyItem;
+	QWidget * historyItemWidget;
 	
 	//Automate attributes
 	static const call_state actionPerformedStateMap [11][5];
@@ -144,6 +150,7 @@ public:
 	QListWidgetItem * getItem();
 	QWidget * getItemWidget();
 	QListWidgetItem * getHistoryItem();
+	QWidget * getHistoryItemWidget();
 	call_state getState() const;
 	QString getCallId();
 	call_state stateChanged(const QString & newState);

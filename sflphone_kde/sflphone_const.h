@@ -21,19 +21,21 @@
 #define __SFLPHONE_CONST_H
 
 #include <libintl.h>
-#include <QtGui>
+#include <QtCore/QString>
 
 /* @file sflphone_const.h
  * @brief Contains the global variables for the client code
  */
+ 
+#define APP_NAME                          "KDE Client"
 
 /** Locale */
-#define _(STRING)   gettext( STRING )   
+#define _(STRING)                         gettext( STRING )   
 
 /** Warnings unused variables **/
-#define UNUSED_VAR(var)      (void*)var
+#define UNUSED_VAR(var)                   (void*)var
 
-#define UNUSED  __attribute__((__unused__))
+#define UNUSED                            __attribute__((__unused__))
 
 #define SIP                               0
 #define IAX                               1
@@ -145,49 +147,45 @@
 
 
 /** Tone to play when no voice mails */
-#define TONE_WITHOUT_MESSAGE  0
+#define TONE_WITHOUT_MESSAGE              0
 /** Tone to play when voice mails */
-#define TONE_WITH_MESSAGE     1
+#define TONE_WITH_MESSAGE                 1
 /** Tells if the main window is reduced to the system tray or not */
-#define MINIMIZED	      TRUE
+#define MINIMIZED	                        TRUE
 /** Behaviour of the main window on incoming calls */
-#define __POPUP_WINDOW  ( dbus_popup_mode() )
+#define __POPUP_WINDOW                    ( dbus_popup_mode() )
 /** Show/Hide the dialpad */
-#define SHOW_DIALPAD	( dbus_get_dialpad() ) 
+#define SHOW_DIALPAD	                     ( dbus_get_dialpad() ) 
 /** Show/Hide the volume controls */
-#define SHOW_VOLUME	( dbus_get_volume_controls() ) 
+#define SHOW_VOLUME	                     ( dbus_get_volume_controls() ) 
 /** Show/Hide the dialpad */
-#define SHOW_SEARCHBAR	( dbus_get_searchbar() ) 
+#define SHOW_SEARCHBAR	                  ( dbus_get_searchbar() ) 
 /** Show/Hide the alsa configuration panel */
-#define SHOW_ALSA_CONF  ( dbus_get_audio_manager() == ALSA )
+#define SHOW_ALSA_CONF                    ( dbus_get_audio_manager() == ALSA )
 
 /** Audio Managers */
-#define ALSA	      0
-#define PULSEAUDIO    1
+#define ALSA	                           0
+#define PULSEAUDIO                        1
 
 /** Notification levels */
-#define __NOTIF_LEVEL_MIN     0
-#define __NOTIF_LEVEL_MED     1
-#define __NOTIF_LEVEL_HIGH    2
+#define __NOTIF_LEVEL_MIN                 0
+#define __NOTIF_LEVEL_MED                 1
+#define __NOTIF_LEVEL_HIGH                2
 
 /** Messages ID for the status bar - Incoming calls */
-#define __MSG_INCOMING_CALL  0 
+#define __MSG_INCOMING_CALL               0
 /** Messages ID for the status bar - Calling */
-#define __MSG_CALLING	     1
+#define __MSG_CALLING	                  1
 /** Messages ID for the status bar - Voice mails  notification */
-#define __MSG_VOICE_MAILS    2
+#define __MSG_VOICE_MAILS                 2
 /** Messages ID for the status bar - Current account */
-#define __MSG_ACCOUNT_DEFAULT  3
+#define __MSG_ACCOUNT_DEFAULT             3
 
 /** Desktop notifications - Time before to close the notification*/
-#define __TIMEOUT_MODE      "default"
+#define __TIMEOUT_MODE                    "default"
 /** Desktop notifications - Time before to close the notification*/
-#define __TIMEOUT_TIME      18000       // 30 secondes
+#define __TIMEOUT_TIME                    18000       // 30 secondes
 
-/*
-//TODO constantes pour protocoles
-int getProtocolIndexByName(QString protocolName);
 
-QString getProtocolNameByIndex(int protocolIndex);
-*/
+
 #endif

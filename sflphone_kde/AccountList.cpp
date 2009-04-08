@@ -1,6 +1,6 @@
 #include "AccountList.h"
 #include "sflphone_const.h"
-
+#include "configurationmanager_interface_singleton.h"
 
 //Constructors
 /*
@@ -15,6 +15,7 @@ AccountList::AccountList(VectorString & _accountIds)
 */
 AccountList::AccountList(QStringList & _accountIds)
 {
+	firstAccount = NULL;
 	accounts = new QVector<Account *>();
 	for (int i = 0; i < _accountIds.size(); ++i){
 		(*accounts) += Account::buildExistingAccountFromId(_accountIds[i]);
@@ -23,6 +24,7 @@ AccountList::AccountList(QStringList & _accountIds)
 
 AccountList::AccountList()
 {
+	firstAccount = NULL;
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	//ask for the list of accounts ids to the configurationManager
 	QStringList accountIds = configurationManager.getAccountList().value();
@@ -30,6 +32,58 @@ AccountList::AccountList()
 	for (int i = 0; i < accountIds.size(); ++i){
 		(*accounts) += Account::buildExistingAccountFromId(accountIds[i]);
 	}
+}
+
+void AccountList::update()
+{
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	Account * current;
+	for (int i = 0; i < accounts->size(); i++){
+		current = (*accounts)[i];
+		if (!(*accounts)[i]->isNew())
+			removeAccount(current);
+	}
+	//ask for the list of accounts ids to the configurationManager
+	QStringList accountIds = configurationManager.getAccountList().value();
+	for (int i = 0; i < accountIds.size(); ++i){
+		accounts->insert(i, Account::buildExistingAccountFromId(accountIds[i]));
+	}
+}
+
+QVector<Account *> AccountList::registeredAccounts() const
+{
+	QVector<Account *> registeredAccounts;
+	Account * current;
+	for (int i = 0; i < accounts->count(); ++i){
+		current = (*accounts)[i];
+		if(current->getAccountDetail(ACCOUNT_STATUS) == QString(ACCOUNT_STATE_REGISTERED))
+		{
+			registeredAccounts.append(current);
+		}
+	}
+	return registeredAccounts;
+}
+
+Account * AccountList::firstRegisteredAccount() const
+{
+	if(firstAccount != NULL)
+	{
+		return firstAccount;
+	}
+	Account * current;
+	for (int i = 0; i < accounts->count(); ++i){
+		current = (*accounts)[i];
+		if(current->getAccountDetail(ACCOUNT_STATUS) == QString(ACCOUNT_STATE_REGISTERED))
+		{
+			return current;
+		}
+	}
+	return NULL;
+}
+
+void AccountList::setAccountFirst(Account * account)
+{
+	firstAccount = account;
 }
 
 AccountList::~AccountList()
@@ -45,11 +99,15 @@ QVector<Account *> & AccountList::getAccounts()
 
 Account * AccountList::getAccountById(QString & id)
 {
-	qDebug() << "for ";
-	for (int i = 0; i < accounts->size(); ++i){
-		qDebug() << "account " << i << " (*accounts)[i]->getAccountId() " << (*accounts)[i]->getAccountId();
-		if ((*accounts)[i]->getAccountId() == id)
+	qDebug() << "for " << accounts->size();
+	for (int i = 0; i < accounts->size(); ++i)
+	{
+		qDebug() << "account " << i << " (*accounts)[i]->getAccountId() " << (*accounts)[i];
+		if (!(*accounts)[i]->isNew() && (*accounts)[i]->getAccountId() == id)
+		{
+			qDebug() << "found ";
 			return (*accounts)[i];
+		}
 	}
 	return NULL;
 }
@@ -106,6 +164,11 @@ void AccountList::removeAccount(QListWidgetItem * item)
 	if(!a) {qDebug() << "Attempting to remove an unexisting account."; return; }
 
 	accounts->remove(accounts->indexOf(a));
+}
+
+void AccountList::removeAccount(Account * account)
+{
+	accounts->remove(accounts->indexOf(account));
 }
 
 const Account & AccountList::operator[] (int i) const

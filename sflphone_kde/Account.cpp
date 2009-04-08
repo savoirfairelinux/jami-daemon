@@ -1,11 +1,10 @@
 #include "Account.h"
+
+#include <QtGui/QApplication>
+
 #include "sflphone_const.h"
 #include "configurationmanager_interface_singleton.h"
-#include "kled.h"
 
-#include <iostream>
-
-using namespace std;
 
 const QString account_state_name(QString & s)
 {
@@ -61,41 +60,26 @@ void Account::setItemText(QString text)
 
 void Account::initAccountItem()
 {
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	//ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
 	bool enabled = getAccountDetail(*(new QString(ACCOUNT_ENABLED))) == ACCOUNT_ENABLED_TRUE;
 	setItemText(getAccountDetail(*(new QString(ACCOUNT_ALIAS))));
-	itemWidget = new QWidget();
-	QCheckBox * checkbox = new QCheckBox(itemWidget);
-	checkbox->setObjectName(QString(ACCOUNT_ITEM_CHECKBOX));
-	checkbox->setCheckState(enabled ? Qt::Checked : Qt::Unchecked);
-	KLed * led = new KLed(itemWidget);
-	led->setObjectName(QString(ACCOUNT_ITEM_LED));
-	led->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-	if(! isNew() && enabled)
+	itemWidget = new AccountItemWidget();
+	itemWidget->setEnabled(enabled);
+	if(isNew() || !enabled)
 	{
-		led->setState(KLed::On);
-		if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
-		{
-			led->setColor(QColor(0,255,0));
-		}
-		else
-		{
-			led->setColor(QColor(255,0,0));
-		}
+		itemWidget->setState(AccountItemWidget::Unregistered);
+	}
+	else if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+	{
+		itemWidget->setState(AccountItemWidget::Registered);
 	}
 	else
 	{
-		led->setState(KLed::Off);
+		itemWidget->setState(AccountItemWidget::NotWorking);
 	}
-	QHBoxLayout* hlayout = new QHBoxLayout();
-	hlayout->setContentsMargins(0,0,0,0);
-	hlayout->addWidget(checkbox);
-	hlayout->addWidget(led);
-	itemWidget->setLayoutDirection(Qt::LeftToRight);
-	itemWidget->setLayout(hlayout);
 }
 
 Account * Account::buildExistingAccountFromId(QString _accountId)
@@ -112,7 +96,7 @@ Account * Account::buildNewAccountFromAlias(QString alias)
 {
 	Account * a = new Account();
 	a->accountDetails = new MapStringString();
-	a->setAccountDetail(QString(ACCOUNT_ALIAS),alias);
+	a->setAccountDetail(ACCOUNT_ALIAS,alias);
 	a->initAccountItem();
 	return a;
 }
@@ -126,23 +110,26 @@ Account::~Account()
 
 //Getters
 
-bool Account::isNew()
+bool Account::isNew() const
 {
-	qDebug() << accountId;
-	return(!accountId);
+	return (accountId == NULL);
 }
 
-bool Account::isChecked()
+bool Account::isChecked() const
 {
-	return itemWidget->findChild<QCheckBox *>(QString(ACCOUNT_ITEM_CHECKBOX))->checkState() == Qt::Checked;
+	return itemWidget->getEnabled();
 }
 
 QString & Account::getAccountId()
 {
+	if (isNew())
+	{
+		qDebug() << "Error : getting AccountId of a new account.";
+	}
 	return *accountId; 
 }
 
-MapStringString & Account::getAccountDetails()
+MapStringString & Account::getAccountDetails() const
 {
 	return *accountDetails;
 }
@@ -150,14 +137,36 @@ MapStringString & Account::getAccountDetails()
 QListWidgetItem * Account::getItem()
 {
 	if(!item)
-		cout<<"null"<<endl;
+		qDebug() << "null" ;
 	return item;
 }
 
-QWidget * Account::getItemWidget()
+QListWidgetItem * Account::renewItem()
 {
 	if(!item)
-		cout<<"null"<<endl;
+		qDebug() << "null" ;
+	item = new QListWidgetItem(*item);
+	return item;
+}
+
+AccountItemWidget * Account::getItemWidget()
+{
+	delete itemWidget;
+	bool enabled = getAccountDetail(*(new QString(ACCOUNT_ENABLED))) == ACCOUNT_ENABLED_TRUE;
+		itemWidget = new AccountItemWidget();
+	itemWidget->setEnabled(enabled);
+	if(isNew() || !enabled)
+	{
+		itemWidget->setState(AccountItemWidget::Unregistered);
+	}
+	else if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+	{
+		itemWidget->setState(AccountItemWidget::Registered);
+	}
+	else
+	{
+		itemWidget->setState(AccountItemWidget::NotWorking);
+	}
 	return itemWidget;
 }
 
@@ -185,9 +194,14 @@ QString Account::getStateColorName()
 	return "red";
 }
 
-QString Account::getAccountDetail(QString & param)
+QString Account::getAccountDetail(QString param) const
 {
 	return (*accountDetails)[param];
+}
+
+QString Account::getAlias()
+{
+	return getAccountDetail(ACCOUNT_ALIAS);
 }
 
 

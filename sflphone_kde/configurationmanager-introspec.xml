@@ -85,6 +85,16 @@
     <method name="setAudioManager">
       <arg type="i" name="api" direction="in"/>
     </method>
+	 
+	 <method name="getRecordPath">
+		 <arg type="s" name="rec" direction="out"/>
+	 </method>
+	 
+	 <method name="setRecordPath">
+		 <arg type="s" name="rec" direction="in"/>
+	 </method>
+	 
+	 
 
    <!--      ///////////////////////               -->
    
@@ -255,6 +265,28 @@
 
     <method name="isStunEnabled">
       <arg type="i" name="state" direction="out"/>
+    </method>
+
+    <!-- Addressbook configuration -->
+	 <method name="getAddressbookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringInt"/>
+      <arg type="a{si}" name="settings" direction="out"/>
+    </method>
+
+	 <method name="setAddressbookSettings">
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringInt"/>
+      <arg type="a{si}" name="settings" direction="in"/>
+    </method>
+
+    <!-- Hook configuration -->
+    <method name="getHookSettings">
+		<annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="a{ss}" name="settings" direction="out"/>
+    </method>
+
+    <method name="setHookSettings">
+		<annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
+      <arg type="a{ss}" name="settings" direction="in"/>
     </method>
 
   <!--        /////////////////////////////       -->

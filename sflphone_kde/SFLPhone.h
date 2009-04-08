@@ -1,11 +1,17 @@
 #ifndef SFLPHONE_H
 #define SFLPHONE_H
 
-#include <QtGui>
+#include <QtCore/QString>
+#include <QtCore/QVector>
+#include <QtGui/QListWidgetItem>
+#include <QtGui/QKeyEvent>
+#include <QErrorMessage>
+
 #include "ui_sflphone-qt.h"
 #include "ConfigDialog.h"
 #include "CallList.h"
 #include "AccountWizard.h"
+#include "Contact.h"
 
 class ConfigurationDialog;
 
@@ -15,7 +21,7 @@ class SFLPhone : public QMainWindow, private Ui::SFLPhone
 Q_OBJECT
 
 private:
-	ConfigurationDialog * configDialog;
+	static ConfigurationDialog * configDialog;
 	AccountWizard * wizard;
 	CallList * callList;
 	QErrorMessage * errorWindow;
@@ -27,7 +33,11 @@ public:
 	SFLPhone(QMainWindow *parent = 0);
 	~SFLPhone();
 	void loadWindow();
-	static QString firstAccount();
+	static QString firstAccountId();
+	static Account * firstRegisteredAccount();
+	static QVector<Account *> registeredAccounts();
+	static AccountList * getAccountList();
+	QVector<Contact *> findContactsInKAddressBook(QString textSearched);
 
 private slots:
 	//void typeChar(QChar c);
@@ -38,11 +48,14 @@ private slots:
 	
 	void addCallToCallList(Call * call);
 	void addCallToCallHistory(Call * call);
+	void addContactToContactList(Contact * contact);
 	
 	void updateCallItem(Call * call);
 	void updateWindowCallState();
 	void updateSearchHistory();
+	void updateSearchAddressBook();
 	void updateCallHistory();
+	void updateAddressBook();
 	void updateRecordButton();
 	void updateVolumeButton();
 	void updateRecordBar();
@@ -81,7 +94,8 @@ private slots:
 	void on_action_hold_triggered();
 	void on_action_transfer_triggered();
 	void on_action_record_triggered();
-	void on_action_history_toggled(bool checked);
+	void on_action_history_triggered(bool checked);
+	void on_action_addressBook_triggered(bool checked);
 	void on_action_mailBox_triggered();
 	//void on_actionAbout();
 	
@@ -98,7 +112,8 @@ private slots:
 	void on_pushButton_diese_clicked();
 	void on_pushButton_etoile_clicked();
 	
-	void on_label_searchHistory_textChanged();
+	void on_lineEdit_searchHistory_textChanged();
+	void on_lineEdit_addressBook_textChanged();
 	
 	void on_slider_recVol_valueChanged(int value);
 	void on_slider_sndVol_valueChanged(int value);
@@ -110,6 +125,7 @@ private slots:
 	void on_listWidget_callList_itemChanged();
 	void on_listWidget_callList_itemDoubleClicked(QListWidgetItem * item);
 	void on_listWidget_callHistory_currentItemChanged();
+	void on_listWidget_addressBook_currentItemChanged();
 
 	void on1_callStateChanged(const QString &callID, const QString &state);
 	void on1_error(MapStringString details);
@@ -117,6 +133,8 @@ private slots:
 	void on1_incomingMessage(const QString &accountID, const QString &message);
 	void on1_voiceMailNotify(const QString &accountID, int count);
 	void on1_volumeChanged(const QString &device, double value);
+	
+	void setAccountFirst(Account * account);
 
 };
 

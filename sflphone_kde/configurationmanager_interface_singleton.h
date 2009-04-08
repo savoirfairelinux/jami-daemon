@@ -8,7 +8,7 @@ class ConfigurationManagerInterfaceSingleton
 
 private:
 
-	static ConfigurationManagerInterface * daemon;
+	static ConfigurationManagerInterface * interface;
 
 public:
 

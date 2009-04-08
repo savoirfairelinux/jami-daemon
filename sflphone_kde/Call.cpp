@@ -72,6 +72,7 @@ void Call::initCallItem()
 	
 	itemWidget = new QWidget();
 	labelIcon = new QLabel(itemWidget);
+	qDebug() << "labelIcon : " << labelIcon;
 	labelCallNumber = new QLabel(peer, itemWidget);
 	labelTransferPrefix = new QLabel("Transfer to : ", itemWidget);
 	labelTransferNumber = new QLabel(itemWidget);
@@ -84,14 +85,7 @@ void Call::initCallItem()
 	layout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
 	layout->addWidget(labelTransferNumber, 1, 2, 1, 2);
 	layout->addItem(horizontalSpacer, 0, 3, 1, 3);
-	//labelIcon->raise();
-	//labelCallNumber->raise();
-	//labelTransferTo->raise();
-	//labelTransferNumber->raise();
-	//itemWidget->setLayoutDirection(Qt::LeftToRight);
 	itemWidget->setLayout(layout);
-	//item->setSizeHint(itemWidget->sizeHint());
-	//setItemIcon(QString(ICON_REFUSE));
 }
 
 void Call::setItemIcon(const QString pixmap)
@@ -108,6 +102,9 @@ Call::Call(call_state startState, QString callId, QString from, QString account)
 	this->account = account;
 	this->recording = false;
 	this->historyItem = NULL;
+	this->historyItemWidget = NULL;
+	this->startTime = NULL;
+	this->stopTime = NULL;
 }
 
 Call::~Call()
@@ -115,12 +112,9 @@ Call::~Call()
 	delete startTime;
 	delete stopTime;
 	delete item;
-	delete itemWidget;
-	delete labelIcon;
-	delete labelCallNumber;
-	delete labelTransferPrefix;
-	delete labelTransferNumber;
+	//delete itemWidget;
 	delete historyItem;
+	//delete historyItemWidget;
 }
 	
 Call * Call::buildDialingCall(QString callId)
@@ -206,6 +200,11 @@ QListWidgetItem * Call::getHistoryItem()
 		historyItem->setIcon(QIcon(historyIcons[historyState]));
 	}
 	return historyItem;
+}
+
+QWidget * Call::getHistoryItemWidget()
+{
+	return historyItemWidget;
 }
 
 call_state Call::getState() const
@@ -332,7 +331,7 @@ void Call::call()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	QString number = labelCallNumber->text();
-	this->account = SFLPhone::firstAccount();
+	this->account = SFLPhone::firstAccountId();
 	if(!account.isEmpty())
 	{
 		qDebug() << "Calling " << number << " with account " << account << ". callId : " << callId;

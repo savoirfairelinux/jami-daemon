@@ -3,20 +3,23 @@
 
 #include <QtCore/QList>
 #include <QtCore/QMetaType>
+#include <QtCore/QMap>
+#include <QtCore/QString>
 #include <QtDBus/QtDBus>
-#include <qmap.h>
-#include <qstring.h>
 
 //class MapStringString:public QMap<QString, QString>{};
 typedef QMap<QString, QString> MapStringString;
-typedef QVector<QString> VectorString;
+typedef QMap<QString, int> MapStringInt;
+//typedef QVector<QString> VectorString;
 
 Q_DECLARE_METATYPE(MapStringString)
+Q_DECLARE_METATYPE(MapStringInt)
 //Q_DECLARE_METATYPE(VectorString)
 
 
 inline void registerCommTypes() {
 	qDBusRegisterMetaType<MapStringString>();
+	qDBusRegisterMetaType<MapStringInt>();
 	//qDBusRegisterMetaType<VectorString>();
 }
 

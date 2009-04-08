@@ -11,7 +11,7 @@ SET(
 	SFLPhone.cpp
 	ConfigDialog.cpp
 	main.cpp
-	sflphone_const.cpp
+	sflphone_const.h
 	Account.cpp
 	AccountList.cpp
 	Call.cpp
@@ -20,7 +20,12 @@ SET(
 	configurationmanager_interface_singleton.cpp
 	callmanager_interface.cpp
 	callmanager_interface_singleton.cpp
+	instance_interface.cpp
+	instance_interface_singleton.cpp
 	AccountWizard.cpp
+	AccountItemWidget.cpp
+	ActionSetAccountFirst.cpp
+	Contact.cpp
 )
  
 SET(QtApp_RCCS resources.qrc)
@@ -38,7 +43,7 @@ kde4_add_kcfg_files(sflphone_kde_SRCS settings.kcfgc )
 
 kde4_add_executable(sflphone_kde ${sflphone_kde_SRCS} ${QtApp_RCC_SRCS})
 
-target_link_libraries(sflphone_kde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS})
+target_link_libraries(sflphone_kde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${KDE4_KABCdef_LIBS})
 
 install(TARGETS sflphone_kde DESTINATION ${BIN_INSTALL_DIR} )
 
