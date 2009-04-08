@@ -42,7 +42,7 @@ class AudioRtp;
 #define RANDOM_SIP_PORT   rand() % 64000 + 1024
 
 // To set the verbosity. From 0 (min) to 6 (max)
-#define PJ_LOG_LEVEL 1
+#define PJ_LOG_LEVEL 6
 
 /**
  * @file sipvoiplink.h
@@ -324,6 +324,15 @@ class SIPVoIPLink : public VoIPLink
 
         /* The singleton instance */
         static SIPVoIPLink* _instance;
+
+        /**
+         * Enable the SIP SRV resolver
+         * @param endpt     The SIP endpoint
+         * @param p_resv    Pointer to receive The DNS resolver instance
+         *
+         * @return pj_status_t  PJ_SUCCESS on success
+         */
+        pj_status_t enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_resolver ** p_resv);
 
         void busy_sleep(unsigned msec);
 

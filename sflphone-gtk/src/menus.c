@@ -920,20 +920,26 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
       button, event_time);
 }
 
+static void edit_number_cb (gpointer user_data) {
+
+    show_edit_number ((call_t*)user_data);
+}
+
+
     void
 show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
 {
 
   gboolean pickup = FALSE;
-  gboolean remove = FALSE;
   gboolean accounts = FALSE;
+  gboolean edit = FALSE;
 
   call_t * selectedCall = calltab_get_selected_call( contacts );
   if (selectedCall)
   {
-    remove = TRUE;
     pickup = TRUE;
     accounts = TRUE;
+    edit = TRUE;
   }
 
   GtkWidget *menu;
@@ -955,6 +961,14 @@ show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
     g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (call_back), NULL);
     gtk_widget_show (menu_items);
   }
+
+    if (edit)
+    {
+        menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_EDIT, get_accel_group());
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+        g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (edit_number_cb), selectedCall);
+        gtk_widget_show (menu_items);
+    }
 
   if(accounts)
   {
@@ -1010,3 +1024,40 @@ void add_registered_accounts_to_menu (GtkWidget *menu) {
     }
 
 }
+
+
+static void change_number_cb (gpointer userdata) {
+
+    gtk_widget_destroy (GTK_WIDGET (userdata));
+}
+
+void show_edit_number (call_t *call) {
+
+    GtkDialog * dialog;
+    GtkWidget * num, *ok, *hbox;
+    
+    dialog = GTK_DIALOG (gtk_dialog_new());
+
+    // Set window properties
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 200, 20);
+    gtk_window_set_title(GTK_WINDOW(dialog), _("Edit number"));
+    
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start(GTK_BOX (dialog->vbox), hbox, TRUE, TRUE, 0);
+
+    num = gtk_entry_new ();
+    gtk_entry_set_text(GTK_ENTRY(num), "514-384-8557");
+    gtk_box_pack_start(GTK_BOX (hbox), num, TRUE, TRUE, 0);
+    
+    ok = gtk_button_new_from_stock (GTK_STOCK_OK);
+    gtk_box_pack_start(GTK_BOX (hbox), ok, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT (ok), "clicked", G_CALLBACK (change_number_cb), dialog);
+
+    gtk_widget_show_all (dialog->vbox);
+
+    gtk_dialog_run(dialog);
+    gtk_widget_destroy(GTK_WIDGET(dialog));
+
+}
+
+
