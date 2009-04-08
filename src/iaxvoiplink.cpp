@@ -63,6 +63,8 @@
 
     spkrDataConverted = new SFLDataFormat[nbSamplesMax];
     spkrDataDecoded = new SFLDataFormat[nbSamplesMax];
+
+    urlhook = new UrlHook ();
 }
 
 
@@ -763,10 +765,13 @@ IAXVoIPLink::iaxHandleCallEvent(iax_event* event, IAXCall* call)
             break;
 
         case IAX_EVENT_URL:
+            if (Manager::instance().getConfigString (HOOKS, URLHOOK_IAX2_ENABLED) == "1") {
+                if (strcmp((char*)event->data, "") != 0) {
+                    _debug ("> IAX_EVENT_URL received: %s\n", event->data);
+                    urlhook->addAction ((char*)event->data, Manager::instance().getConfigString (HOOKS, URLHOOK_COMMAND));
+                }
+            }
             break;
-
-            //    case IAX_EVENT_CNG: ??
-            //    break;
 
         case IAX_EVENT_TIMEOUT:
             break;
@@ -1017,3 +1022,4 @@ void IAXVoIPLink::updateAudiolayer( void )
     audiolayer = Manager::instance().getAudioDriver();
     _mutexIAX.leaveMutex();
 }
+

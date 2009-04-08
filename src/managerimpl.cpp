@@ -278,8 +278,7 @@ ManagerImpl::answerCall(const CallID& id)
     onHoldCall(getCurrentCallId());
   }
 
-
-  if (!getAccountLink(AccountNULL)->answer(id)) {
+  if (!getAccountLink(accountid)->answer(id)) {
     // error when receiving...
     removeCallAccount(id);
     return false;
@@ -1210,6 +1209,7 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_str (URLHOOK_SIP_FIELD, HOOK_DEFAULT_SIP_FIELD);
   fill_config_str (URLHOOK_COMMAND, HOOK_DEFAULT_URL_COMMAND);
   fill_config_str (URLHOOK_SIP_ENABLED, NO_STR);
+  fill_config_str (URLHOOK_IAX2_ENABLED, NO_STR);
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1 && load_user_value) {
@@ -2596,6 +2596,7 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings () {
     settings.insert (std::pair<std::string, std::string> ("URLHOOK_SIP_FIELD", getConfigString (HOOKS, URLHOOK_SIP_FIELD)) );
     settings.insert (std::pair<std::string, std::string> ("URLHOOK_COMMAND", getConfigString (HOOKS, URLHOOK_COMMAND)) );
     settings.insert (std::pair<std::string, std::string> ("URLHOOK_SIP_ENABLED", getConfigString (HOOKS, URLHOOK_SIP_ENABLED)) );
+    settings.insert (std::pair<std::string, std::string> ("URLHOOK_IAX2_ENABLED", getConfigString (HOOKS, URLHOOK_IAX2_ENABLED)) );
 
     return settings;
 }
@@ -2605,6 +2606,7 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     setConfig(HOOKS, URLHOOK_SIP_FIELD, (*settings.find("URLHOOK_SIP_FIELD")).second);
     setConfig(HOOKS, URLHOOK_COMMAND, (*settings.find("URLHOOK_COMMAND")).second);
     setConfig(HOOKS, URLHOOK_SIP_ENABLED, (*settings.find("URLHOOK_SIP_ENABLED")).second);
+    setConfig(HOOKS, URLHOOK_IAX2_ENABLED, (*settings.find("URLHOOK_IAX2_ENABLED")).second);
 
     // Write it to the configuration file
     saveConfig ();

@@ -38,11 +38,13 @@ void hooks_load_parameters (URLHook_Config** settings){
         _settings->sip_field = DEFAULT_SIP_URL_FIELD;
         _settings->command = DEFAULT_URL_COMMAND;
         _settings->sip_enabled = "0";
+        _settings->iax2_enabled = "0";
     }
     else {
         _settings->sip_field =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_SIP_FIELD));
         _settings->command =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_COMMAND));
         _settings->sip_enabled =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_SIP_ENABLED));
+        _settings->iax2_enabled =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_IAX2_ENABLED));
     }
  
     *settings = _settings;
@@ -60,6 +62,8 @@ void hooks_save_parameters (void){
                                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(command))));
     g_hash_table_replace (params, (gpointer)URLHOOK_SIP_ENABLED, 
                                 (gpointer)g_strdup(_urlhook_config->sip_enabled));
+    g_hash_table_replace (params, (gpointer)URLHOOK_IAX2_ENABLED, 
+                                (gpointer)g_strdup(_urlhook_config->iax2_enabled));
     
     dbus_set_hook_settings (params);
 
@@ -77,6 +81,17 @@ static void sip_enabled_cb (GtkWidget *widget) {
         _urlhook_config->sip_enabled="1";
     else
         _urlhook_config->sip_enabled="0";
+}
+
+static void iax2_enabled_cb (GtkWidget *widget) {
+
+    guint check;
+
+    check = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+    if (check)
+        _urlhook_config->iax2_enabled="1";
+    else
+        _urlhook_config->iax2_enabled="0";
 }
 
 GtkWidget* create_hooks_settings (){
@@ -112,10 +127,9 @@ GtkWidget* create_hooks_settings (){
     gtk_table_attach ( GTK_TABLE( table ), field, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
     widg = gtk_check_button_new_with_mnemonic( _("_IAX2 protocol"));
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), FALSE); // Not implemented yet
-    //g_signal_connect (G_OBJECT(field) , "clicked" , NULL, NULL);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), (g_strcasecmp (_urlhook_config->iax2_enabled, "1")==0)?TRUE:FALSE); 
+    g_signal_connect (G_OBJECT(widg) , "clicked" , G_CALLBACK (iax2_enabled_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), widg, 0, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_widget_set_sensitive (GTK_WIDGET (widg), FALSE);
 
     label = gtk_label_new_with_mnemonic (_("_Command: "));
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);

@@ -1046,7 +1046,7 @@ void show_edit_number (call_t *call) {
     gtk_box_pack_start(GTK_BOX (dialog->vbox), hbox, TRUE, TRUE, 0);
 
     num = gtk_entry_new ();
-    gtk_entry_set_text(GTK_ENTRY(num), "514-384-8557");
+    gtk_entry_set_text(GTK_ENTRY(num), "00000000000");
     gtk_box_pack_start(GTK_BOX (hbox), num, TRUE, TRUE, 0);
     
     ok = gtk_button_new_from_stock (GTK_STOCK_OK);

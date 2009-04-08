@@ -32,10 +32,12 @@ G_BEGIN_DECLS
 #define URLHOOK_COMMAND         "URLHOOK_COMMAND"
 #define URLHOOK_SIP_FIELD         "URLHOOK_SIP_FIELD"
 #define URLHOOK_SIP_ENABLED         "URLHOOK_SIP_ENABLED"
+#define URLHOOK_IAX2_ENABLED         "URLHOOK_IAX2_ENABLED"
 
 
 typedef struct _URLHook_Config {
     gchar *sip_enabled;
+    gchar *iax2_enabled;
     gchar *sip_field;
     gchar *command;
 }URLHook_Config;
