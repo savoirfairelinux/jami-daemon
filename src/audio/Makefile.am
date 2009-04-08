@@ -36,7 +36,6 @@ libaudio_la_SOURCES = \
 		dtmfgenerator.cpp \
 		tonegenerator.cpp \
 		codecDescriptor.cpp \
-		samplecache.cpp \
 		audioloop.cpp \
 		ringbuffer.cpp \
 		$(SPEEX_SOURCES_CPP)
@@ -55,7 +54,6 @@ noinst_HEADERS = \
 		audiodevice.h \
  		dtmfgenerator.h \
 		tonegenerator.h \
-		samplecache.h \
  		codecDescriptor.h \
 		dtmf.h \
 		tone.h 
