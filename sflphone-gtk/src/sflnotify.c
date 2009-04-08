@@ -31,9 +31,14 @@ notify_incoming_call( call_t* c  )
         gchar* title;
         notify_init("sflphone");
 
-        title = g_markup_printf_escaped(_("%s account: %s") , 
-                (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_TYPE) , 
-                (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_ALIAS) ) ;
+        if (g_strcasecmp (c->accountID,"") == 0) {
+            title = g_markup_printf_escaped ("IP-to-IP call");
+        }
+        else {
+            title = g_markup_printf_escaped(_("%s account: %s") , 
+                    (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_TYPE) , 
+                    (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_ALIAS) ) ;
+        }
         callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , c->from);
 
         pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);

@@ -1396,9 +1396,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
         _debug("UserAgent: SIP Init -- listening on port %d\n", _localExternPort);
 
-        status = enable_dns_srv_resolver (_endpt, &p_resv);
-        PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
-
         // Initialize transaction layer
         status = pjsip_tsx_layer_init_module(_endpt);
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
@@ -1433,6 +1430,9 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         // Init xfer/REFER module
         status = pjsip_xfer_init_module(_endpt);
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+
+        //status = enable_dns_srv_resolver (_endpt, &p_resv);
+        //PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
         // Init the callback for INVITE session: 
         pj_bzero(&inv_cb, sizeof (inv_cb));
@@ -1922,7 +1922,7 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             std::string request;
 
             // Handle the incoming call invite in this function 
-            _debug("UserAgent: Callback on_rx_request is involved!\n");
+            _debug("UserAgent: Callback on_rx_request is involved! *****************************************************\n");
 
             /* First, let's got the username and server name from the invite.
              * We will use them to detect which account is the callee.
@@ -1933,13 +1933,15 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             userName = std::string(sip_uri->user.ptr, sip_uri->user.slen);
             server = std::string(sip_uri->host.ptr, sip_uri->host.slen) ;
 
+            std::cout << userName << " ------------------ " << server << std::endl;
+
             // Get the account id of callee from username and server
             account_id = Manager::instance().getAccountIdFromNameAndServer(userName, server);
 
             /* If we don't find any account to receive the call */
             if(account_id == AccountNULL) {
                 _debug("UserAgent: Username %s doesn't match any account!\n",userName.c_str());
-                return false;
+                //return false;
             }
 
             /* Get the voip link associated to the incoming call */

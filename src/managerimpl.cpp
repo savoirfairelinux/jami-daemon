@@ -268,7 +268,7 @@ ManagerImpl::answerCall(const CallID& id)
   AccountID accountid = getAccountFromCall( id );
   if (accountid == AccountNULL) {
     _debug("Answering Call: Call doesn't exists\n");
-    return false;
+    //return false;
   }
 
   //  if (id != getCurrentCallId()) {
@@ -279,7 +279,7 @@ ManagerImpl::answerCall(const CallID& id)
   }
 
 
-  if (!getAccountLink(accountid)->answer(id)) {
+  if (!getAccountLink(AccountNULL)->answer(id)) {
     // error when receiving...
     removeCallAccount(id);
     return false;
