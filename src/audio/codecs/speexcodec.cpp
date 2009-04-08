@@ -35,7 +35,7 @@ class Speex : public AudioCodec{
             _speex_frame_size(),
             _preprocess_state()
     {
-        _clockRate = 8000;
+        _clockRate = 16000;
         _channel = 1;
         _bitrate = 0;
         _bandwidth = 0; 
@@ -136,7 +136,7 @@ class Speex : public AudioCodec{
 
 // the class factories
 extern "C" AudioCodec* create() {
-    return new Speex(110);
+    return new Speex(111);
 }
 
 extern "C" void destroy(AudioCodec* a) {
