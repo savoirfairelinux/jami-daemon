@@ -42,41 +42,64 @@ int current_search_id;
  */
 typedef struct _Hit
 {
-    gchar *name;
-    GdkPixbuf *photo;
-    gchar *phone_business;
-    gchar *phone_home;
-    gchar *phone_mobile;
+  gchar *name;
+  GdkPixbuf *photo;
+  gchar *phone_business;
+  gchar *phone_home;
+  gchar *phone_mobile;
 } Hit;
+
+/**
+ * Book structure for "outside world"
+ */
+typedef struct
+{
+  gchar *uid;
+  gchar *name;
+  gboolean active;
+  EBook *ebook;
+} book_data_t;
+
+GSList *books_data;
 
 /**
  * Free a contact entry
  */
-void free_hit (Hit *h);
+void
+free_hit(Hit *h);
 
 /**
  * Template callback function for the asynchronous search
  */
-typedef void (* SearchAsyncHandler) (GList *hits, gpointer user_data);
+typedef void
+(* SearchAsyncHandler)(GList *hits, gpointer user_data);
 
 /**
  * Initialize the address book.
  * Connection to evolution data server
  */
-void init (void);
+void
+init(void);
 
 /**
  * Asynchronous search function
  */
-void search_async (const char         *query,
-                   int                 max_results,
-                   SearchAsyncHandler  handler,
-                   gpointer            user_data);
+void
+search_async(const char *query, int max_results, SearchAsyncHandler handler,
+    gpointer user_data);
 
 /**
  * Retrieve the specified information from the contact
  */
-void fetch_information_from_contact (EContact *contact, EContactField field, gchar **info);
+void
+fetch_information_from_contact(EContact *contact, EContactField field,
+    gchar **info);
+
+GSList*
+get_books(void);
+
+book_data_t *
+books_get_book_data_by_uid(gchar *uid);
 
 G_END_DECLS
 

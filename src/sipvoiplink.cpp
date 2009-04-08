@@ -1261,6 +1261,43 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     // Private functions
     ///////////////////////////////////////////////////////////////////////////////
 
+    pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_resolver **p_resv) {
+
+        pj_status_t status;
+        pj_dns_resolver *resv;
+        pj_str_t servers[1];
+        pj_uint16_t port = 5353;
+        pjsip_resolver_t *res;
+
+        // Create the DNS resolver instance 
+        status = pjsip_endpt_create_resolver (endpt, &resv);
+        if (status != PJ_SUCCESS) {
+            _debug ("Error creating the DNS resolver instance\n");
+            return status;
+        }
+
+        // Update the name servers for the DNS resolver
+        servers[0] = pj_str((char*)"savoirfairelinux.com");
+        status = pj_dns_resolver_set_ns (resv, 1, servers, NULL);
+        if (status != PJ_SUCCESS){
+            _debug ("Error updating the name servers for the DNS resolver\n");
+            return status;
+        }
+
+        // Set the DNS resolver instance of the SIP resolver engine
+        status = pjsip_endpt_set_resolver (endpt, resv);
+        if (status != PJ_SUCCESS){
+            _debug ("Error setting the DNS resolver instance of the SIP resolver engine\n");
+            return status;
+        }
+
+        *p_resv = resv;
+
+        return PJ_SUCCESS;
+    
+    }
+
+
     bool SIPVoIPLink::pjsip_init()
     {
         pj_status_t status;
@@ -1271,6 +1308,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         std::string name_mod;
         bool useStun;
         validStunServer = true;
+        pj_dns_resolver *p_resv; 
 
         name_mod = "sflphone";
 
@@ -1392,6 +1430,9 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         // Init xfer/REFER module
         status = pjsip_xfer_init_module(_endpt);
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+
+        //status = enable_dns_srv_resolver (_endpt, &p_resv);
+        //PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
         // Init the callback for INVITE session: 
         pj_bzero(&inv_cb, sizeof (inv_cb));
@@ -1881,7 +1922,7 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             std::string request;
 
             // Handle the incoming call invite in this function 
-            _debug("UserAgent: Callback on_rx_request is involved!\n");
+            _debug("UserAgent: Callback on_rx_request is involved! *****************************************************\n");
 
             /* First, let's got the username and server name from the invite.
              * We will use them to detect which account is the callee.
@@ -1892,13 +1933,15 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             userName = std::string(sip_uri->user.ptr, sip_uri->user.slen);
             server = std::string(sip_uri->host.ptr, sip_uri->host.slen) ;
 
+            std::cout << userName << " ------------------ " << server << std::endl;
+
             // Get the account id of callee from username and server
             account_id = Manager::instance().getAccountIdFromNameAndServer(userName, server);
 
             /* If we don't find any account to receive the call */
             if(account_id == AccountNULL) {
                 _debug("UserAgent: Username %s doesn't match any account!\n",userName.c_str());
-                return false;
+                //return false;
             }
 
             /* Get the voip link associated to the incoming call */

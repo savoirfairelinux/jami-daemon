@@ -26,7 +26,7 @@
 #include <actions.h>
 #include <config.h>
 #include <toolbar.h>
-#include <dbus.h>
+#include <dbus/dbus.h>
 #include <mainwindow.h>
 #include <audioconf.h>
 #include <addressbook-config.h>
@@ -849,9 +849,9 @@ show_accounts_window( void )
     gtk_dialog_run( dialog );
 
     status_bar_display_account ();
-    
+
     accDialogOpen=FALSE;
-    
+
     gtk_widget_destroy(GTK_WIDGET(dialog));
     if( account_list_get_size() >0 && account_list_get_current()==NULL )
         account_list_set_current_pos(0);
@@ -865,7 +865,7 @@ void config_window_set_stun_visible()
 
 void save_configuration_parameters (void) {
 
-    addressbook_save_parameters ();
+    addressbook_config_save_parameters ();
     hooks_save_parameters ();
 
 }

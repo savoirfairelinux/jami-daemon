@@ -2305,6 +2305,81 @@ static
 inline
 #endif
 gboolean
+org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list (DBusGProxy *proxy, char *** OUT_settings, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "getAddressbookList", error, G_TYPE_INVALID, G_TYPE_STRV, OUT_settings, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list_reply) (DBusGProxy *proxy, char * *OUT_settings, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  char ** OUT_settings;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_STRV, &OUT_settings, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list_reply)data->cb) (proxy, OUT_settings, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list_async (DBusGProxy *proxy, org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "getAddressbookList", org_sflphone_SFLphone_ConfigurationManager_get_addressbook_list_async_callback, stuff, g_free, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
+org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list (DBusGProxy *proxy, const char ** IN_settings, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "setAddressbookList", error, G_TYPE_STRV, IN_settings, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list_async (DBusGProxy *proxy, const char ** IN_settings, org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "setAddressbookList", org_sflphone_SFLphone_ConfigurationManager_set_addressbook_list_async_callback, stuff, g_free, G_TYPE_STRV, IN_settings, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
 org_sflphone_SFLphone_ConfigurationManager_get_hook_settings (DBusGProxy *proxy, GHashTable** OUT_settings, GError **error)
 
 {

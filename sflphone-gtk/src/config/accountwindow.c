@@ -2,17 +2,17 @@
  *  Copyright (C) 2007-2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -24,7 +24,7 @@
 
 #include <libsexy/sexy-icon-entry.h>
 #include <string.h>
-#include <dbus.h>
+#include <dbus/dbus.h>
 #include <config.h>
 #include <gtk/gtk.h>
 
@@ -52,13 +52,13 @@ change_protocol (account_t * currentAccount UNUSED)
     (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
 }
 
-    int 
+    int
 is_iax_enabled(void)
 {
     int res = dbus_is_iax2_enabled();
-    if(res == 1)	
+    if(res == 1)
         return TRUE;
-    else	
+    else
         return FALSE;
 }
 
@@ -123,7 +123,7 @@ show_account_window (account_t * a)
     gtk_container_add( GTK_CONTAINER( frame) , table );
 
 
-#ifdef DEBUG  
+#ifdef DEBUG
     label = gtk_label_new_with_mnemonic ("ID:");
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
@@ -132,11 +132,11 @@ show_account_window (account_t * a)
     gtk_entry_set_text(GTK_ENTRY(entryID), curAccountID);
     gtk_widget_set_sensitive( GTK_WIDGET(entryID), FALSE);
     gtk_table_attach ( GTK_TABLE( table ), entryID, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-#endif 
+#endif
 
     entryEnabled = gtk_check_button_new_with_mnemonic(_("_Enabled"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryEnabled), 
-            g_strcasecmp(curAccountEnabled,"TRUE") == 0 ? TRUE: FALSE); 
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryEnabled),
+            g_strcasecmp(curAccountEnabled,"TRUE") == 0 ? TRUE: FALSE);
     gtk_table_attach ( GTK_TABLE( table ), entryEnabled, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_set_sensitive( GTK_WIDGET( entryEnabled ) , TRUE );
 
@@ -167,7 +167,7 @@ show_account_window (account_t * a)
     {
         /* Should never come here, add debug message. */
         gtk_combo_box_append_text(GTK_COMBO_BOX(entryProtocol), _("Unknown"));
-        gtk_combo_box_set_active(GTK_COMBO_BOX(entryProtocol),2);  
+        gtk_combo_box_set_active(GTK_COMBO_BOX(entryProtocol),2);
     }
     gtk_table_attach ( GTK_TABLE( table ), entryProtocol, 1, 2, 4, 5, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
@@ -190,7 +190,7 @@ show_account_window (account_t * a)
     entryUsername = sexy_icon_entry_new();
     //image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
     image = gtk_image_new_from_file( ICONS_DIR "/stock_person.svg" );
-    sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(entryUsername), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
+    sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(entryUsername), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryUsername);
     gtk_entry_set_text(GTK_ENTRY(entryUsername), curUsername);
     gtk_table_attach ( GTK_TABLE( table ), entryUsername, 1, 2, 6, 7, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -200,7 +200,7 @@ show_account_window (account_t * a)
     gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
     entryPassword = sexy_icon_entry_new();
     image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
-    sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(entryPassword), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
+    sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(entryPassword), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
     gtk_entry_set_visibility(GTK_ENTRY(entryPassword), FALSE);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPassword);
     gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
@@ -216,10 +216,10 @@ show_account_window (account_t * a)
 
     gtk_widget_show_all( table );
     gtk_container_set_border_width (GTK_CONTAINER(table), 10);
-    
+
     // Toggle enabled/disabled widgets
     if (strcmp(curAccountType, "SIP") == 0) {
-        //gtk_widget_set_sesitive( GTK_WIDGET(entryUserPart), TRUE);<    
+        //gtk_widget_set_sesitive( GTK_WIDGET(entryUserPart), TRUE);<
     }
     else if (strcmp(curAccountType, "IAX") == 0) {
         //gtk_widget_set_sensitive( GTK_WIDGET(stunEnable), FALSE);
@@ -235,32 +235,32 @@ show_account_window (account_t * a)
     {
         gchar* proto = (gchar *)gtk_combo_box_get_active_text(GTK_COMBO_BOX(entryProtocol));
 
-        g_hash_table_replace(currentAccount->properties, 
-                g_strdup(ACCOUNT_ENABLED), 
+        g_hash_table_replace(currentAccount->properties,
+                g_strdup(ACCOUNT_ENABLED),
                 g_strdup(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(entryEnabled)) ? "TRUE": "FALSE"));
-        g_hash_table_replace(currentAccount->properties, 
-                g_strdup(ACCOUNT_ALIAS), 
+        g_hash_table_replace(currentAccount->properties,
+                g_strdup(ACCOUNT_ALIAS),
                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryAlias))));
-        g_hash_table_replace(currentAccount->properties, 
-                g_strdup(ACCOUNT_TYPE), 
+        g_hash_table_replace(currentAccount->properties,
+                g_strdup(ACCOUNT_TYPE),
                 g_strdup(proto));
-        g_hash_table_replace(currentAccount->properties, 
-                g_strdup(ACCOUNT_HOSTNAME), 
+        g_hash_table_replace(currentAccount->properties,
+                g_strdup(ACCOUNT_HOSTNAME),
                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryHostname))));
-        g_hash_table_replace(currentAccount->properties, 
-                g_strdup(ACCOUNT_USERNAME), 
+        g_hash_table_replace(currentAccount->properties,
+                g_strdup(ACCOUNT_USERNAME),
                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryUsername))));
-        g_hash_table_replace(currentAccount->properties, 
-                g_strdup(ACCOUNT_PASSWORD), 
+        g_hash_table_replace(currentAccount->properties,
+                g_strdup(ACCOUNT_PASSWORD),
                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryPassword))));
-        g_hash_table_replace(currentAccount->properties, 
-                g_strdup(ACCOUNT_MAILBOX), 
+        g_hash_table_replace(currentAccount->properties,
+                g_strdup(ACCOUNT_MAILBOX),
                 g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(entryMailbox))));
 
-        if (strcmp(proto, "SIP") == 0) { 
+        if (strcmp(proto, "SIP") == 0) {
             guint i, size;
             account_t * account;
-            gchar * stun_srv;            
+            gchar * stun_srv;
             gchar * stun_enable;
             gboolean flag = FALSE;
 
@@ -272,26 +272,26 @@ show_account_window (account_t * a)
                 {
                     stun_srv = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_SERVER);
                     stun_enable = g_hash_table_lookup(account->properties, ACCOUNT_SIP_STUN_ENABLED);
-                    g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), 
+                    g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER),
                                             g_strdup(stun_srv));
-                    g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
+                    g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED),
                                             g_strdup(stun_enable));
                     flag = TRUE;
                     break;
                 }
             }
-            
+
             // Otherelse set a default value
             if(!flag)
             {
                 g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), (gchar*)"");
-                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED), 
+                g_hash_table_replace(currentAccount->properties, g_strdup(ACCOUNT_SIP_STUN_ENABLED),
                                             "FALSE");
             }
 
             config_window_set_stun_visible();
         }
-       
+
         /** @todo Verify if it's the best condition to check */
         if (currentAccount->accountID == NULL) {
             dbus_add_account(currentAccount);
