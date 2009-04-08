@@ -25,6 +25,11 @@
 #include "sipaccount.h"
 #include "audio/audiortp.h"
 
+#include <netinet/in.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
+//extern struct state _res;
+
 
 #define CAN_REINVITE    1
 
@@ -1261,13 +1266,42 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     // Private functions
     ///////////////////////////////////////////////////////////////////////////////
 
+
+    bool get_dns_server_addresses (std::vector<std::string> *servers) {
+    
+        int server_count, i;
+        std::vector<std::string> nameservers;
+        struct  sockaddr_in current_server;
+        in_addr address;
+
+        // Read configuration files
+        if (res_init () != 0)
+        {
+            _debug ("Resolver initialization failed\n");
+            return false;
+        }
+
+        server_count = _res.nscount;
+        for (i=0; i<server_count; i++) {
+            current_server = (struct  sockaddr_in)_res.nsaddr_list[i];
+            address = current_server.sin_addr;
+            nameservers.push_back (inet_ntoa (address));
+        }
+
+        //nameservers.push_back ("192.168.50.3");
+        *servers = nameservers;
+
+        return true;
+    }
+
     pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_resolver **p_resv) {
 
         pj_status_t status;
         pj_dns_resolver *resv;
-        pj_str_t servers[1];
+        std::vector <std::string> dns_servers;
         pj_uint16_t port = 5353;
         pjsip_resolver_t *res;
+        int scount, i;
 
         // Create the DNS resolver instance 
         status = pjsip_endpt_create_resolver (endpt, &resv);
@@ -1276,9 +1310,22 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             return status;
         }
 
+        if (!get_dns_server_addresses (&dns_servers))
+        {
+            _debug ("Error  while fetching DNS information\n");
+            return -1;
+        }
+
+        // Build the nameservers list needed by pjsip
+        scount = dns_servers.size ();
+        pj_str_t nameservers[scount];
+
+        for (i = 0; i<scount; i++) {
+            nameservers[i] = pj_str((char*)dns_servers[i].c_str());
+        }
+
         // Update the name servers for the DNS resolver
-        servers[0] = pj_str((char*)"savoirfairelinux.com");
-        status = pj_dns_resolver_set_ns (resv, 1, servers, NULL);
+        status = pj_dns_resolver_set_ns (resv, scount, nameservers, NULL);
         if (status != PJ_SUCCESS){
             _debug ("Error updating the name servers for the DNS resolver\n");
             return status;
@@ -1431,8 +1478,8 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         status = pjsip_xfer_init_module(_endpt);
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-        //status = enable_dns_srv_resolver (_endpt, &p_resv);
-        //PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+        status = enable_dns_srv_resolver (_endpt, &p_resv);
+        PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
         // Init the callback for INVITE session: 
         pj_bzero(&inv_cb, sizeof (inv_cb));
