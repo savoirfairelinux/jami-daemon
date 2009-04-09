@@ -376,9 +376,11 @@
     <addaction name="action_transfer" />
     <addaction name="action_record" />
     <addaction name="separator" />
-    <addaction name="action_mailBox" />
     <addaction name="action_history" />
     <addaction name="action_addressBook" />
+    <addaction name="separator" />
+    <addaction name="action_mailBox" />
+    <addaction name="separator" />
    </widget>
    <widget class="QMenu" name="menu_Configure" >
     <property name="title" >
@@ -393,15 +395,8 @@
     <addaction name="separator" />
     <addaction name="action_accountCreationWizard" />
    </widget>
-   <widget class="QMenu" name="menu_help" >
-    <property name="title" >
-     <string>&amp;Help</string>
-    </property>
-    <addaction name="action_About" />
-   </widget>
    <addaction name="menu_Actions" />
    <addaction name="menu_Configure" />
-   <addaction name="menu_help" />
   </widget>
   <widget class="QStatusBar" name="statusbar" />
   <widget class="QToolBar" name="toolBar" >
@@ -420,9 +415,10 @@
    <addaction name="action_transfer" />
    <addaction name="action_record" />
    <addaction name="separator" />
-   <addaction name="action_mailBox" />
    <addaction name="action_history" />
    <addaction name="action_addressBook" />
+   <addaction name="separator" />
+   <addaction name="action_mailBox" />
   </widget>
   <action name="action_accept" >
    <property name="icon" >

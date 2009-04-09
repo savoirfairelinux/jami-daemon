@@ -1,10 +1,9 @@
 #include <QApplication>
 #include <QtCore/QString>
 #include <QtGui/QCursor>
-#include "kapplication.h"
-#include "kcmdlineargs.h"
-#include "kaboutdata.h"
-#include <kabc/vcardformat.h>
+#include <kapplication.h>
+#include <kcmdlineargs.h>
+#include <kaboutdata.h>
 
 #include "ConfigDialog.h"
 #include "SFLPhone.h"
@@ -19,7 +18,9 @@ static const char version[] = "0.1";
 
 int main(int argc, char **argv)
 {
-	FILE *fp;
+
+	///home/jquentin/.kde/share/apps/kabc
+/*	FILE *fp;
 	int status;
 	char path[PATH_MAX];
 
@@ -31,18 +32,29 @@ int main(int argc, char **argv)
 	printf("%s", path);
 
 	status = pclose(fp);
-
+*/
 
 	try
 	{
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
-		KAboutData about("sflphone_kde", 0, ki18n("sflphone_kde"), version, ki18n(description),
-		                 KAboutData::License_GPL, ki18n("(C) 2009 Jérémy Quentin"), KLocalizedString(), 0, "jeremy.quentin@gsavoirfairelinux.com");
+		KAboutData about(
+		   "sflphone_kde", 
+		   0, 
+		   ki18n("sflphone_kde"), 
+		   version, 
+		   ki18n(description),
+		   KAboutData::License_GPL, 
+		   ki18n("(C) 2009 Jérémy Quentin"), 
+		   KLocalizedString(), 
+		   0, 
+		   "jeremy.quentin@gsavoirfairelinux.com");
+		
 		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@gmail.com" );
 		KCmdLineArgs::init(argc, argv, &about);
 		KCmdLineOptions options;
 		//options.add("+[URL]", ki18n( "Document to open" ));
+		KCmdLineArgs::addCmdLineOptions(options);
 		KApplication app;
 	
 		QString locale = QLocale::system().name();
@@ -51,10 +63,10 @@ int main(int argc, char **argv)
 		translator.load(QString("config_") + locale);
 		app.installTranslator(&translator);
 	
-		SFLPhone fenetre;
+		SFLPhone * fenetre = new SFLPhone();
 
-		fenetre.move(QCursor::pos());
-		fenetre.show();
+		fenetre->move(QCursor::pos().x() - fenetre->geometry().width()/2, QCursor::pos().y() - fenetre->geometry().height()/2);
+		fenetre->show();
 	
 		return app.exec();	
 	}

@@ -20,13 +20,26 @@
  ***************************************************************************/
 #include "Contact.h"
 
-Contact::Contact()
+Contact::Contact(Addressee addressee, QString number)
 {
+	this->firstName = addressee.name();
+	this->secondName = addressee.familyName();
+	this->nickName = addressee.nickName();
+	this->phoneNumber = number;
+	this->photo = addressee.photo().url();
+	
+	initItem();
 }
 
 
 Contact::~Contact()
 {
+}
+
+void Contact::initItem()
+{
+	this->item = new QListWidgetItem(phoneNumber);
+	this->itemWidget = new QWidget();
 }
 
 

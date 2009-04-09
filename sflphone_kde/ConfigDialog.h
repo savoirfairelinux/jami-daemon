@@ -56,10 +56,8 @@ private slots:
 	void on_button_accountRemove_clicked();
 	void on_edit1_alias_textChanged(const QString & text);
 	void on_listWidget_accountList_currentItemChanged ( QListWidgetItem * current, QListWidgetItem * previous );
-	void on_listWidget_codecs_currentItemChanged ();
 	void on_spinBox_SIPPort_valueChanged ( int value );
 	void on_buttonBoxDialog_clicked(QAbstractButton * button);
-	void on_tableWidget_codecs_currentItemChanged(QTableWidgetItem * current);
 	void on_tableWidget_codecs_currentCellChanged(int currentRow);
 	void on_toolButton_accountsApply_clicked();
 	

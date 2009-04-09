@@ -2,20 +2,43 @@
 
 #include <QtGui/QContextMenuEvent>
 
+#include <kstandardaction.h>
+#include <kactioncollection.h>
+#include <kaction.h>
+
 #include "sflphone_const.h"
 #include "configurationmanager_interface_singleton.h"
 #include "callmanager_interface_singleton.h"
 #include "instance_interface_singleton.h"
 #include "ActionSetAccountFirst.h"
 
+
+#include <kabc/addressbook.h>
+#include <kabc/stdaddressbook.h>
+#include <kabc/addresseelist.h>
+
+using namespace KABC;
+
 ConfigurationDialog * SFLPhone::configDialog;
 
-SFLPhone::SFLPhone(QMainWindow *parent) : QMainWindow(parent)
+SFLPhone::SFLPhone(QMainWindow *parent) : KXmlGuiWindow(parent)
 {
 	setupUi(this);
 	
+	
+
+	AddressBook * ab = KABC::StdAddressBook::self();
+	
+	AddresseeList results = ab->findByEmail("savoir");
+	for(int i = 0 ; i < results.count() ; i++)
+	{
+		qDebug() << results[i].name();
+	}
+	
+	
 	errorWindow = new QErrorMessage(this);
 	callList = new CallList();
+	
 	configDialog = new ConfigurationDialog(this);
 	configDialog->setModal(true);
 	
@@ -40,7 +63,7 @@ SFLPhone::SFLPhone(QMainWindow *parent) : QMainWindow(parent)
    //             this, SLOT(on_incomingCall(const QString &accountID, const QString &callID, const QString &from)));
 
 	loadWindow();
-
+	setupActions();
 } 
 
 SFLPhone::~SFLPhone()
@@ -51,6 +74,25 @@ SFLPhone::~SFLPhone()
 	delete errorWindow;
 	InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 	instance.Unregister(getpid());
+}
+
+void SFLPhone::setupActions()
+{
+	qDebug() << "setupActions";
+	KAction * action_quit = KStandardAction::quit(qApp, SLOT(closeAllWindows()), menu_Actions);
+	menu_Actions->addAction(action_quit);
+}
+
+bool SFLPhone::queryClose()
+{
+	qDebug() << "queryClose : " << listWidget_callList->count() << " calls open.";
+	if(listWidget_callList->count() > 0)
+	{
+		qDebug() << "Attempting to quit when still having some calls open.";
+		errorWindow->showMessage(tr2i18n("You still have some calls open. Please close all calls before quitting.", 0));
+		return false;
+	}
+	return true;
 }
 
 void SFLPhone::loadWindow()
@@ -68,21 +110,6 @@ void SFLPhone::loadWindow()
 	updateSearchHistory();
 	updateSearchAddressBook();
 }
-
-/*QString SFLPhone::firstAccount()
-{
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	//ask for the list of accounts ids to the daemon
-	QStringList accountIds = configurationManager.getAccountList().value();
-	for (int i = 0; i < accountIds.size(); ++i){
-		MapStringString accountDetails = configurationManager.getAccountDetails(accountIds[i]);
-		if(accountDetails[QString(ACCOUNT_STATUS)] == QString(ACCOUNT_STATE_REGISTERED))
-		{
-			return accountIds[i];
-		}
-	}
-	return QString();
-}*/
 
 QString SFLPhone::firstAccountId()
 {
@@ -456,22 +483,46 @@ void SFLPhone::updateAddressBook()
 		QListWidgetItem * item = listWidget_addressBook->takeItem(0);
 		qDebug() << "take item " << item->text();
 	}
-	QString textSearched = lineEdit_searchHistory->text();
+	QString textSearched = lineEdit_addressBook->text();
+	if(textSearched.isEmpty())
+	{
+		return;
+	}
 	QVector<Contact *> contactsFound = findContactsInKAddressBook(textSearched);
 	for(int i = 0 ; i < contactsFound.size() ; i++)
 	{
 		Contact * contact = contactsFound[i];
 		qDebug() << "contact->getItem()->text()=" << contact->getItem()->text() << " contains textSearched=" << textSearched;
 		addContactToContactList(contact);
-		//QListWidgetItem * item = contact->getItem();
-		//listWidget_addressBook->addItem(item);
-		//listWidget_addressBook->setItemWidget(item, contact->getItemWidget());
 	}
 }
 
 QVector<Contact *> SFLPhone::findContactsInKAddressBook(QString textSearched)
 {
-	return QVector<Contact *>();
+	AddressBook * ab = KABC::StdAddressBook::self();
+	QVector<Contact *> results = QVector<Contact *>();
+	AddressBook::Iterator it;
+	for ( it = ab->begin(); it != ab->end(); ++it ) {
+		//kDebug(5700) << "UID=" << (*it).uid();
+		if(it->name().contains(textSearched, Qt::CaseInsensitive) || it->familyName().contains(textSearched, Qt::CaseInsensitive) || it->nickName().contains(textSearched, Qt::CaseInsensitive))
+		{
+			
+			for(int i = 0 ; i < it->phoneNumbers().count() ; i++)
+			{
+				if(phoneNumberTypeDisplayed(it->phoneNumbers().at(i).type()))
+				{
+					results.append(new Contact( *it, it->phoneNumbers().at(i).number() ));
+				}
+			}
+		}
+	}
+	return results;
+}
+
+bool SFLPhone::phoneNumberTypeDisplayed(int type)
+{
+	//TODO
+	return true;
 }
 
 void SFLPhone::updateRecordButton()
@@ -801,7 +852,7 @@ void SFLPhone::on_action_accept_triggered()
 		action_addressBook->setChecked(false);
 		stackedWidget_screen->setCurrentWidget(page_callList);
 		Call * call = callList->addDialingCall();
-		call->appendItemText(listWidget_callHistory->currentItem()->text());
+		call->appendItemText(listWidget_addressBook->currentItem()->text());
 		addCallToCallList(call);
 		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 		actionb(call, CALL_ACTION_ACCEPT);

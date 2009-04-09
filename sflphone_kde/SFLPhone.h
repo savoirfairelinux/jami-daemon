@@ -6,6 +6,7 @@
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QKeyEvent>
 #include <QErrorMessage>
+#include <KXmlGuiWindow>
 
 #include "ui_sflphone-qt.h"
 #include "ConfigDialog.h"
@@ -15,7 +16,7 @@
 
 class ConfigurationDialog;
 
-class SFLPhone : public QMainWindow, private Ui::SFLPhone
+class SFLPhone : public KXmlGuiWindow, private Ui::SFLPhone
 {
 
 Q_OBJECT
@@ -28,6 +29,7 @@ private:
 
 protected:
 	void contextMenuEvent(QContextMenuEvent *event);
+	virtual bool queryClose();
 
 public:
 	SFLPhone(QMainWindow *parent = 0);
@@ -38,6 +40,7 @@ public:
 	static QVector<Account *> registeredAccounts();
 	static AccountList * getAccountList();
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched);
+	bool phoneNumberTypeDisplayed(int type);
 
 private slots:
 	//void typeChar(QChar c);
@@ -45,6 +48,7 @@ private slots:
 	void backspace();
 	void actionb(Call * call, call_action action);
 	void action(QListWidgetItem * item, call_action action);
+	void setupActions();
 	
 	void addCallToCallList(Call * call);
 	void addCallToCallHistory(Call * call);

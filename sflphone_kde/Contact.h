@@ -24,6 +24,10 @@
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QWidget>
 
+#include <kabc/addressee.h>
+
+using namespace KABC;
+
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
 */
@@ -31,9 +35,17 @@ class Contact{
 private:
 	QListWidgetItem * item;
 	QWidget * itemWidget;
+	QString firstName;
+	QString secondName;
+	QString nickName;
+	QString phoneNumber;
+	QString photo;
+	
+private:
+	void initItem();
 
 public:
-    Contact();
+    Contact(Addressee addressee, QString number);
 
     ~Contact();
     

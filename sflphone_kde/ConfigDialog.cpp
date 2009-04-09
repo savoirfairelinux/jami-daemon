@@ -483,11 +483,6 @@ void ConfigurationDialog::on_spinBox_SIPPort_valueChanged ( int value )
 		label_WarningSIP->setVisible(true);
 }
 
-void ConfigurationDialog::on_listWidget_codecs_currentItemChanged ()
-{
-	qDebug() << "on_listWidget_codecs_currentItemChanged";
-	updateCodecListCommands();
-}
 
 void ConfigurationDialog::on_toolButton_codecUp_clicked()
 {
@@ -617,18 +612,6 @@ void ConfigurationDialog::on_buttonBoxDialog_clicked(QAbstractButton * button)
 	{
 		this->setVisible(false);
 	}
-}
-
-void ConfigurationDialog::on_tableWidget_codecs_currentItemChanged(QTableWidgetItem * current)
-{
-	qDebug() << "on_tableWidget_codecs_currentItemChanged";
-	int row = current->row();
-	int nbCol = tableWidget_codecs->columnCount();
-	for(int i = 0 ; i < nbCol ; i++)
-	{
-		tableWidget_codecs->setRangeSelected(QTableWidgetSelectionRange(row, 0, row, nbCol - 1), true);
-	}
-	updateCodecListCommands();
 }
 
 void ConfigurationDialog::on_tableWidget_codecs_currentCellChanged(int currentRow)

@@ -43,9 +43,9 @@ kde4_add_kcfg_files(sflphone_kde_SRCS settings.kcfgc )
 
 kde4_add_executable(sflphone_kde ${sflphone_kde_SRCS} ${QtApp_RCC_SRCS})
 
-target_link_libraries(sflphone_kde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${KDE4_KABCdef_LIBS})
+target_link_libraries(sflphone_kde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} -lkabc)
 
-install(TARGETS sflphone_kde DESTINATION ${BIN_INSTALL_DIR} )
+install(TARGETS sflphone_kde DESTINATION ${BIN_INSTALL_DIR})
 
 
 ########### install files ###############

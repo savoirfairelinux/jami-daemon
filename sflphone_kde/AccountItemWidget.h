@@ -23,7 +23,7 @@
 
 #include <QWidget>
 #include <QCheckBox>
-#include "kled.h"
+#include <kled.h>
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>
