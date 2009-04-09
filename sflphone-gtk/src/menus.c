@@ -1034,12 +1034,11 @@ static void ok_cb (GtkWidget *widget, gpointer userdata) {
     call_t *modified_call, *original;
 
     // Change the number of the selected call before calling
-    new_number = gtk_entry_get_text (GTK_WIDGET (editable_num));
+    new_number = (gchar*) gtk_entry_get_text (GTK_ENTRY (editable_num));
     original = (call_t*)userdata;
     
     // Edit the from field with the updated phone number value 
     from = g_strconcat("\"", call_get_name (original), "\" <", new_number, ">",NULL);
-    g_print ("name:%s \n", from);
 
     // Create the new call
     create_new_call (g_strdup (new_number), from,  CALL_STATE_DIALING, g_strdup (original->accountID), &modified_call);
@@ -1054,6 +1053,11 @@ static void ok_cb (GtkWidget *widget, gpointer userdata) {
     gtk_widget_destroy (GTK_WIDGET (edit_dialog));
 }
 
+static void on_delete (GtkWidget * widget)
+{
+    gtk_widget_destroy (widget);
+}
+
 void show_edit_number (call_t *call) {
 
     GtkWidget *ok, *hbox, *image;
@@ -1066,6 +1070,8 @@ void show_edit_number (call_t *call) {
     gtk_window_set_title(GTK_WINDOW(edit_dialog), _("Edit phone"));
     gtk_window_set_resizable (GTK_WINDOW (edit_dialog), FALSE);
     
+    g_signal_connect (G_OBJECT (edit_dialog), "delete-event", G_CALLBACK (on_delete), NULL);
+
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start(GTK_BOX (edit_dialog->vbox), hbox, TRUE, TRUE, 0);
 

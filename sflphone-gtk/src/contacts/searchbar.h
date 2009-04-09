@@ -30,7 +30,13 @@
 
 #include <calllist.h>
 #include <gtk/gtk.h>
+
+// From version 2.16, gtk provides the functionalities libsexy used to provide
+#if GTK_CHECK_VERSION(2,16,0)
+#else
 #include <libsexy/sexy-icon-entry.h>
+#endif
+
 #include <addressbook.h>
 #include <history.h>
 
