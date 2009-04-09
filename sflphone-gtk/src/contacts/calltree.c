@@ -27,39 +27,39 @@
 /**
  * Show popup menu
  */
-  static gboolean
+    static gboolean
 popup_menu (GtkWidget *widget,
-    gpointer   user_data UNUSED)
+        gpointer   user_data UNUSED)
 {
-  show_popup_menu(widget, NULL);
-  return TRUE;
+    show_popup_menu(widget, NULL);
+    return TRUE;
 }
 
 /* Call back when the user click on a call in the list */
-  static void
+    static void
 selected(GtkTreeSelection *sel, void* data UNUSED )
 {
-  GtkTreeIter  iter;
-  GValue val;
-  GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
+    GtkTreeIter  iter;
+    GValue val;
+    GtkTreeModel *model = (GtkTreeModel*)active_calltree->store;
 
-  if (! gtk_tree_selection_get_selected (sel, &model, &iter))
-    return;
+    if (! gtk_tree_selection_get_selected (sel, &model, &iter))
+        return;
 
-  val.g_type = 0;
-  gtk_tree_model_get_value (model, &iter, 2, &val);
+    val.g_type = 0;
+    gtk_tree_model_get_value (model, &iter, 2, &val);
 
-  calltab_select_call(active_calltree, (call_t*) g_value_get_pointer(&val));
-  g_value_unset(&val);
+    calltab_select_call(active_calltree, (call_t*) g_value_get_pointer(&val));
+    g_value_unset(&val);
 
-  toolbar_update_buttons();
+    toolbar_update_buttons();
 }
 
 /* A row is activated when it is double clicked */
 void  row_activated(GtkTreeView       *tree_view UNUSED,
-    GtkTreePath       *path UNUSED,
-    GtkTreeViewColumn *column UNUSED,
-    void * data UNUSED)
+        GtkTreePath       *path UNUSED,
+        GtkTreeViewColumn *column UNUSED,
+        void * data UNUSED)
 {
     call_t* selectedCall;
     call_t* new_call;
@@ -77,23 +77,23 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
             switch(selectedCall->state)
             {
                 case CALL_STATE_INCOMING:
-	                dbus_accept(selectedCall);
+                    dbus_accept(selectedCall);
                     stop_notification();
-	                break;
-	            case CALL_STATE_HOLD:
-	                dbus_unhold(selectedCall);
-	                break;
-	            case CALL_STATE_RINGING:
-	            case CALL_STATE_CURRENT:
-	            case CALL_STATE_BUSY:
-	            case CALL_STATE_FAILURE:
-	                break;
-	            case CALL_STATE_DIALING:
-	                sflphone_place_call (selectedCall);
-	            break;
-	            default:
-	                g_warning("Row activated - Should not happen!");
-	                break;
+                    break;
+                case CALL_STATE_HOLD:
+                    dbus_unhold(selectedCall);
+                    break;
+                case CALL_STATE_RINGING:
+                case CALL_STATE_CURRENT:
+                case CALL_STATE_BUSY:
+                case CALL_STATE_FAILURE:
+                    break;
+                case CALL_STATE_DIALING:
+                    sflphone_place_call (selectedCall);
+                    break;
+                default:
+                    g_warning("Row activated - Should not happen!");
+                    break;
             }
         }
 
@@ -101,7 +101,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
         else
         {
             to = g_strdup(call_get_number(selectedCall));
-            from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
+            from = g_strconcat("\"", call_get_name (selectedCall), "\" <", call_get_number(selectedCall), ">",NULL);
             account_id = g_strdup (selectedCall->accountID);
 
             // Create a new call
@@ -115,378 +115,381 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
     }
 }
 
-static gboolean
+    static gboolean
 on_key_released (GtkWidget   *widget UNUSED,
-                GdkEventKey *event,
-                gpointer     user_data UNUSED)
+        GdkEventKey *event,
+        gpointer     user_data UNUSED)
 {
-  // If a modifier key is pressed, it's a shortcut, pass along
-  if(event->state & GDK_CONTROL_MASK ||
-     event->state & GDK_MOD1_MASK    ||
-     event->keyval == 60             || // <
-     event->keyval == 62             || // >
-     event->keyval == 34             || // "
-     event->keyval == 65361          || // left arrow
-     event->keyval == 65363          || // right arrow
-     event->keyval >= 65470          || // F-keys
-     event->keyval == 32                // space
-     )
-    return FALSE;
-  else
-    sflphone_keypad(event->keyval, event->string);
-  return TRUE;
+    // If a modifier key is pressed, it's a shortcut, pass along
+    if(event->state & GDK_CONTROL_MASK ||
+            event->state & GDK_MOD1_MASK    ||
+            event->keyval == 60             || // <
+            event->keyval == 62             || // >
+            event->keyval == 34             || // "
+            event->keyval == 65361          || // left arrow
+            event->keyval == 65363          || // right arrow
+            event->keyval >= 65470          || // F-keys
+            event->keyval == 32                // space
+      )
+        return FALSE;
+    else
+        sflphone_keypad(event->keyval, event->string);
+    return TRUE;
 }
 
-static gboolean
+    static gboolean
 button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUSED)
 {
-if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
-{
-  if( active_calltree == current_calls )
-  {
-    show_popup_menu(widget,  event);
-    return TRUE;
-  }
-  else if (active_calltree == history)
-  {
-    show_popup_menu_history (widget,  event);
-    return TRUE;
-  }
-  else{
-      show_popup_menu_contacts (widget, event);
-      return TRUE;
-  }
-}
-return FALSE;
+    if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
+    {
+        if( active_calltree == current_calls )
+        {
+            show_popup_menu(widget,  event);
+            return TRUE;
+        }
+        else if (active_calltree == history)
+        {
+            show_popup_menu_history (widget,  event);
+            return TRUE;
+        }
+        else{
+            show_popup_menu_contacts (widget, event);
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 /**
  * Reset call tree
  */
-  void
+    void
 calltree_reset (calltab_t* tab)
 {
-  gtk_list_store_clear (tab->store);
+    gtk_list_store_clear (tab->store);
 }
 
-  void
+    void
 calltree_create (calltab_t* tab, gchar* searchbar_type)
 {
-  GtkWidget *sw;
-  GtkCellRenderer *rend;
-  GtkTreeViewColumn *col;
-  GtkTreeSelection *sel;
+    GtkWidget *sw;
+    GtkCellRenderer *rend;
+    GtkTreeViewColumn *col;
+    GtkTreeSelection *sel;
 
-  tab->tree = gtk_vbox_new(FALSE, 10);
+    tab->tree = gtk_vbox_new(FALSE, 10);
 
-  gtk_container_set_border_width (GTK_CONTAINER (tab->tree), 0);
+    gtk_container_set_border_width (GTK_CONTAINER (tab->tree), 0);
 
-  sw = gtk_scrolled_window_new( NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
-  g_signal_connect (G_OBJECT ( sw ), "key-release-event",G_CALLBACK (on_key_released), NULL);
+    sw = gtk_scrolled_window_new( NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
+    g_signal_connect (G_OBJECT ( sw ), "key-release-event",G_CALLBACK (on_key_released), NULL);
 
-  tab->store = gtk_list_store_new (3,
-      GDK_TYPE_PIXBUF,// Icon
-      G_TYPE_STRING,  // Description
-      G_TYPE_POINTER  // Pointer to the Object
-      );
+    tab->store = gtk_list_store_new (3,
+            GDK_TYPE_PIXBUF,// Icon
+            G_TYPE_STRING,  // Description
+            G_TYPE_POINTER  // Pointer to the Object
+            );
 
-  tab->view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(tab->store));
-  gtk_tree_view_set_enable_search( GTK_TREE_VIEW(tab->view), FALSE);
-  gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(tab->view), FALSE);
-  g_signal_connect (G_OBJECT (tab->view), "row-activated",
-      G_CALLBACK (row_activated),
-      NULL);
+    tab->view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(tab->store));
+    gtk_tree_view_set_enable_search( GTK_TREE_VIEW(tab->view), FALSE);
+    gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(tab->view), FALSE);
+    g_signal_connect (G_OBJECT (tab->view), "row-activated",
+            G_CALLBACK (row_activated),
+            NULL);
 
-  // Connect the popup menu
-  g_signal_connect (G_OBJECT (tab->view), "popup-menu",
-      G_CALLBACK (popup_menu),
-      NULL);
-  g_signal_connect (G_OBJECT (tab->view), "button-press-event",
-      G_CALLBACK (button_pressed),
-      NULL);
-
-
-  rend = gtk_cell_renderer_pixbuf_new();
-  col = gtk_tree_view_column_new_with_attributes ("Icon",
-      rend,
-      "pixbuf", 0,
-      NULL);
-  gtk_tree_view_append_column (GTK_TREE_VIEW(tab->view), col);
-
-  rend = gtk_cell_renderer_text_new();
-  col = gtk_tree_view_column_new_with_attributes ("Description",
-      rend,
-      "markup", 1,
-      NULL);
-  gtk_tree_view_append_column (GTK_TREE_VIEW(tab->view), col);
-
-  g_object_unref(G_OBJECT(tab->store));
-  gtk_container_add(GTK_CONTAINER(sw), tab->view);
-
-  sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (tab->view));
-  g_signal_connect (G_OBJECT (sel), "changed",
-      G_CALLBACK (selected),
-      NULL);
-
-  gtk_box_pack_start(GTK_BOX(tab->tree), sw, TRUE, TRUE, 0);
-
-  // no search bar if tab is either "history" or "addressbook"
-  if(searchbar_type){
-      calltab_create_searchbar(tab,searchbar_type);
-      gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
-  }
-
-  gtk_widget_show(tab->tree);
+    // Connect the popup menu
+    g_signal_connect (G_OBJECT (tab->view), "popup-menu",
+            G_CALLBACK (popup_menu),
+            NULL);
+    g_signal_connect (G_OBJECT (tab->view), "button-press-event",
+            G_CALLBACK (button_pressed),
+            NULL);
 
 
-  // gtk_widget_show(tab->searchbar);
+    rend = gtk_cell_renderer_pixbuf_new();
+    col = gtk_tree_view_column_new_with_attributes ("Icon",
+            rend,
+            "pixbuf", 0,
+            NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW(tab->view), col);
 
-  //toolbar_update_buttons();
+    rend = gtk_cell_renderer_text_new();
+    col = gtk_tree_view_column_new_with_attributes ("Description",
+            rend,
+            "markup", 1,
+            NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW(tab->view), col);
+
+    g_object_unref(G_OBJECT(tab->store));
+    gtk_container_add(GTK_CONTAINER(sw), tab->view);
+
+    sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (tab->view));
+    g_signal_connect (G_OBJECT (sel), "changed",
+            G_CALLBACK (selected),
+            NULL);
+
+    gtk_box_pack_start(GTK_BOX(tab->tree), sw, TRUE, TRUE, 0);
+
+    // no search bar if tab is either "history" or "addressbook"
+    if(searchbar_type){
+        calltab_create_searchbar(tab,searchbar_type);
+        gtk_box_pack_start(GTK_BOX(tab->tree), tab->searchbar, FALSE, TRUE, 0);
+    }
+
+    gtk_widget_show(tab->tree);
+
+
+    // gtk_widget_show(tab->searchbar);
+
+    //toolbar_update_buttons();
 
 }
 
-void
+    void
 calltree_remove_call (calltab_t* tab, call_t * c)
 {
-  GtkTreeIter iter;
-  GValue val;
-  call_t * iterCall;
-  GtkListStore* store = tab->store;
+    GtkTreeIter iter;
+    GValue val;
+    call_t * iterCall;
+    GtkListStore* store = tab->store;
 
-  int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
-  int i;
-  for( i = 0; i < nbChild; i++)
-  {
-    if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
+    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
+    int i;
+    for( i = 0; i < nbChild; i++)
     {
-      val.g_type = 0;
-      gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
+        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
+        {
+            val.g_type = 0;
+            gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
-      iterCall = (call_t*) g_value_get_pointer(&val);
-      g_value_unset(&val);
+            iterCall = (call_t*) g_value_get_pointer(&val);
+            g_value_unset(&val);
 
-      if(iterCall == c)
-      {
-	gtk_list_store_remove(store, &iter);
-      }
+            if(iterCall == c)
+            {
+                gtk_list_store_remove(store, &iter);
+            }
+        }
     }
-  }
-  call_t * selectedCall = calltab_get_selected_call(tab);
-  if(selectedCall == c)
-    calltab_select_call(tab, NULL);
-  toolbar_update_buttons();
+    call_t * selectedCall = calltab_get_selected_call(tab);
+    if(selectedCall == c)
+        calltab_select_call(tab, NULL);
+    toolbar_update_buttons();
 }
 
-  void
+    void
 calltree_update_call (calltab_t* tab, call_t * c)
 {
-  GdkPixbuf *pixbuf=NULL;
-  GtkTreeIter iter;
-  GValue val;
-  call_t * iterCall;
-  GtkListStore* store = tab->store;
+    GdkPixbuf *pixbuf=NULL;
+    GtkTreeIter iter;
+    GValue val;
+    call_t * iterCall;
+    GtkListStore* store = tab->store;
 
-  int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
-  int i;
-  for( i = 0; i < nbChild; i++)
-  {
-    if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
+    int nbChild = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
+    int i;
+    for( i = 0; i < nbChild; i++)
     {
-      val.g_type = 0;
-      gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
+        if(gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, i))
+        {
+            val.g_type = 0;
+            gtk_tree_model_get_value (GTK_TREE_MODEL(store), &iter, 2, &val);
 
-      iterCall = (call_t*) g_value_get_pointer(&val);
-      g_value_unset(&val);
+            iterCall = (call_t*) g_value_get_pointer(&val);
+            g_value_unset(&val);
 
-      if(iterCall == c)
-      {
-	// Existing call in the list
-	gchar * description;
-	gchar * date="";
-	gchar * duration="";
-	if(c->state == CALL_STATE_TRANSFERT)
-	{
-	  description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> %s",
-	      call_get_number(c),
-	      call_get_name(c),
-	      c->to);
-	}
-	else
-	{
-	  description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
-	      call_get_number(c),
-	      call_get_name(c));
-	}
+            if(iterCall == c)
+            {
+                // Existing call in the list
+                gchar * description;
+                gchar * date="";
+                gchar * duration="";
+                if(c->state == CALL_STATE_TRANSFERT)
+                {
+                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>\n<i>Transfert to:</i> %s",
+                            call_get_number(c),
+                            call_get_name(c),
+                            c->to);
+                }
+                else
+                {
+                    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
+                            call_get_number(c),
+                            call_get_name(c));
+                }
 
-	if( tab == current_calls )
-	{
-	  switch(c->state)
-	  {
-	    case CALL_STATE_HOLD:
-	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
-	      break;
-	    case CALL_STATE_RINGING:
-	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
-	      break;
-	    case CALL_STATE_CURRENT:
-	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
-	      break;
-	    case CALL_STATE_DIALING:
-	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
-	      break;
-	    case CALL_STATE_FAILURE:
-	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
-	      break;
-	    case CALL_STATE_BUSY:
-	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
-	      break;
-	    case CALL_STATE_TRANSFERT:
-	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfert.svg", NULL);
-              break;
-            case CALL_STATE_RECORD:
-	      pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/rec_call.svg", NULL);
-	      break;
-	    default:
-	      g_warning("Update calltree - Should not happen!");
-	  }
-	}
-	else
-	{
-	  switch(c->history_state)
-	  {
-	    case OUTGOING:
-	      g_print("Outgoing state\n");
-	      pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/outgoing.svg", NULL);
-	      break;
-	    case INCOMING:
-	      g_print("Incoming state\n");
-	      pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/incoming.svg", NULL);
-	      break;
-	    case MISSED:
-	      g_print("Missed state\n");
-	      pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/missed.svg", NULL);
-	      break;
-	    default:
-	      g_print("No history state\n");
-	      break;
-	  }
-	  date = timestamp_get_call_date();
-	  duration = process_call_duration(c);
-	  duration = g_strconcat( date , duration , NULL);
-	  description = g_strconcat( description , duration, NULL);
-	}
-	//Resize it
-	if(pixbuf)
-	{
-	  if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
-	  {
-	    pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
-	  }
-	}
-	gtk_list_store_set(store, &iter,
-	    0, pixbuf, // Icon
-	    1, description, // Description
-	    -1);
+                if( tab == current_calls )
+                {
+                    switch(c->state)
+                    {
+                        case CALL_STATE_HOLD:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/hold.svg", NULL);
+                            break;
+                        case CALL_STATE_RINGING:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
+                            break;
+                        case CALL_STATE_CURRENT:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/current.svg", NULL);
+                            break;
+                        case CALL_STATE_DIALING:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
+                            break;
+                        case CALL_STATE_FAILURE:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/fail.svg", NULL);
+                            break;
+                        case CALL_STATE_BUSY:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/busy.svg", NULL);
+                            break;
+                        case CALL_STATE_TRANSFERT:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/transfert.svg", NULL);
+                            break;
+                        case CALL_STATE_RECORD:
+                            pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/rec_call.svg", NULL);
+                            break;
+                        default:
+                            g_warning("Update calltree - Should not happen!");
+                    }
+                }
+                else
+                {
+                    switch(c->history_state)
+                    {
+                        case OUTGOING:
+                            g_print("Outgoing state\n");
+                            pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/outgoing.svg", NULL);
+                            break;
+                        case INCOMING:
+                            g_print("Incoming state\n");
+                            pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/incoming.svg", NULL);
+                            break;
+                        case MISSED:
+                            g_print("Missed state\n");
+                            pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/missed.svg", NULL);
+                            break;
+                        default:
+                            g_print("No history state\n");
+                            break;
+                    }
+                    date = timestamp_get_call_date();
+                    duration = process_call_duration(c);
+                    duration = g_strconcat( date , duration , NULL);
+                    description = g_strconcat( description , duration, NULL);
+                }
+                //Resize it
+                if(pixbuf)
+                {
+                    if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
+                    {
+                        pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+                    }
+                }
+                gtk_list_store_set(store, &iter,
+                        0, pixbuf, // Icon
+                        1, description, // Description
+                        -1);
 
-	if (pixbuf != NULL)
-	  g_object_unref(G_OBJECT(pixbuf));
+                if (pixbuf != NULL)
+                    g_object_unref(G_OBJECT(pixbuf));
 
-      }
+            }
+        }
+
     }
-
-  }
-  toolbar_update_buttons();
+    toolbar_update_buttons();
 }
 
-  void
+    void
 calltree_add_call (calltab_t* tab, call_t * c)
 {
-  if( tab == history && ( calllist_get_size( tab ) > dbus_get_max_calls() ) )
-    return;
+    if( tab == history && ( calllist_get_size( tab ) > dbus_get_max_calls() ) )
+        return;
 
-  GdkPixbuf *pixbuf=NULL;
-  GtkTreeIter iter;
-  GtkTreeSelection* sel;
+    GdkPixbuf *pixbuf=NULL;
+    GtkTreeIter iter;
+    GtkTreeSelection* sel;
 
-  // New call in the list
-  gchar * description;
-  gchar * date="";
-  description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
-      call_get_number(c),
-      call_get_name(c));
+    // New call in the list
+    gchar * description;
+    gchar * date="";
+    description = g_markup_printf_escaped("<b>%s</b> <i>%s</i>",
+            call_get_number(c),
+            call_get_name(c));
+
+    g_print ("calltree_add_call %s\n", call_get_number (c));
+    g_print ("description %s\n", description);
 
 
-  gtk_list_store_prepend (tab->store, &iter);
+    gtk_list_store_prepend (tab->store, &iter);
 
-  if( tab == current_calls )
-  {
-    switch(c->state)
+    if( tab == current_calls )
     {
-      case CALL_STATE_INCOMING:
-	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
-	break;
-      case CALL_STATE_DIALING:
-	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
-	break;
-      case CALL_STATE_RINGING:
-	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
-	break;
-      default:
-	g_warning("Update calltree add - Should not happen!");
+        switch(c->state)
+        {
+            case CALL_STATE_INCOMING:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
+                break;
+            case CALL_STATE_DIALING:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/dial.svg", NULL);
+                break;
+            case CALL_STATE_RINGING:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
+                break;
+            default:
+                g_warning("Update calltree add - Should not happen!");
+        }
     }
-  }
 
-  else if (tab == history) {
-    switch(c->history_state)
-    {
-      case INCOMING:
-	    pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
-	break;
-      case OUTGOING:
-	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
-	break;
-      case MISSED:
-	pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
-	break;
-      default:
-	    g_warning("History - Should not happen!");
+    else if (tab == history) {
+        switch(c->history_state)
+        {
+            case INCOMING:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/incoming.svg", NULL);
+                break;
+            case OUTGOING:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/outgoing.svg", NULL);
+                break;
+            case MISSED:
+                pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
+                break;
+            default:
+                g_warning("History - Should not happen!");
+        }
+        date = timestamp_get_call_date();
+        description = g_strconcat( date , description , NULL);
     }
-    date = timestamp_get_call_date();
-    description = g_strconcat( date , description , NULL);
-  }
 
-  else if (tab == contacts) {
-    pixbuf = c->contact_thumbnail;
-    description = g_strconcat( description , NULL);
-  }
+    else if (tab == contacts) {
+        pixbuf = c->contact_thumbnail;
+        description = g_strconcat( description , NULL);
+    }
 
-  else {
+    else {
         g_warning ("This widget doesn't exist - This is a bug in the application\n.");
-  }
-
-
-  //Resize it
-  if(pixbuf)
-  {
-    if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
-    {
-      pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
     }
-  }
-  gtk_list_store_set(tab->store, &iter,
-      0, pixbuf, // Icon
-      1, description, // Description
-      2, c,      // Pointer
-      -1);
 
-  if (pixbuf != NULL)
-    g_object_unref(G_OBJECT(pixbuf));
 
-  sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
-  gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
-  toolbar_update_buttons();
+    //Resize it
+    if(pixbuf)
+    {
+        if(gdk_pixbuf_get_width(pixbuf) > 32 || gdk_pixbuf_get_height(pixbuf) > 32)
+        {
+            pixbuf =  gdk_pixbuf_scale_simple(pixbuf, 32, 32, GDK_INTERP_BILINEAR);
+        }
+    }
+    gtk_list_store_set(tab->store, &iter,
+            0, pixbuf, // Icon
+            1, description, // Description
+            2, c,      // Pointer
+            -1);
+
+    if (pixbuf != NULL)
+        g_object_unref(G_OBJECT(pixbuf));
+
+    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tab->view));
+    gtk_tree_selection_select_iter(GTK_TREE_SELECTION(sel), &iter);
+    toolbar_update_buttons();
 }
 
 void calltree_display (calltab_t *tab) {
@@ -541,7 +544,7 @@ void calltree_display (calltab_t *tab) {
     active_calltree = tab;
     gtk_widget_show (active_calltree->tree);
 
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
-	g_signal_emit_by_name(sel, "changed");
-	toolbar_update_buttons();
+    sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (active_calltree->view));
+    g_signal_emit_by_name(sel, "changed");
+    toolbar_update_buttons();
 }
