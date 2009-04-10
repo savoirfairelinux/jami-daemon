@@ -82,10 +82,13 @@ ManagerImpl::ManagerImpl (void)
         , _callAccountMapMutex()
         , _callConfigMap()
         , _accountMap()
+        , _cleaner (NULL)
 {
 
     // initialize random generator for call id
     srand (time(NULL));
+
+    _cleaner = new NumberCleaner ();
 
 #ifdef TEST
   testAccountMap();
@@ -102,6 +105,7 @@ ManagerImpl::ManagerImpl (void)
 ManagerImpl::~ManagerImpl (void)
 {
     // terminate();
+    delete _cleaner; _cleaner=0;
     _debug("%s stop correctly.\n", PROGNAME);
 }
 
@@ -195,23 +199,26 @@ ManagerImpl::switchCall(const CallID& id ) {
   bool
 ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const std::string& to)
 {
-    std::string pattern;
+    std::string pattern, to_cleaned;
     Call::CallConfiguration callConfig;
     SIPVoIPLink *siplink;
 
     _debug("ManagerImpl::outgoingCall() method \n");
 
-    // stopTone(false);
-    // playTone();
+    if (getConfigString (HOOKS, PHONE_NUMBER_HOOK_ENABLED) ==  "1") 
+        _cleaner->set_phone_number_prefix (getConfigString (HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX ));
+    else
+        _cleaner->set_phone_number_prefix ("");
+    to_cleaned = _cleaner->clean (to);
 
     /* Check what kind of call we are dealing with */
-    check_call_configuration (id, to, &callConfig);
+    check_call_configuration (id, to_cleaned, &callConfig);
 
     if (callConfig == Call::IPtoIP) {
         _debug ("Start IP to IP call\n");
         /* We need to retrieve the sip voiplink instance */
         siplink = SIPVoIPLink::instance("");
-        if (siplink->new_ip_to_ip_call (id, to)) {
+        if (siplink->new_ip_to_ip_call (id, to_cleaned)) {
             switchCall (id);
             return true;
         }
@@ -238,7 +245,7 @@ ManagerImpl::outgoingCall(const std::string& accountid, const CallID& id, const 
 
     _debug("- Manager Action: Adding Outgoing Call %s on account %s\n", id.data(), accountid.data());
     associateCallToAccount( id, accountid );
-    if ( getAccountLink(accountid)->newOutgoingCall(id, to) ) {
+    if ( getAccountLink(accountid)->newOutgoingCall(id, to_cleaned) ) {
         switchCall(id);
         return true;
     } else {
@@ -1210,6 +1217,8 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_str (URLHOOK_COMMAND, HOOK_DEFAULT_URL_COMMAND);
   fill_config_str (URLHOOK_SIP_ENABLED, NO_STR);
   fill_config_str (URLHOOK_IAX2_ENABLED, NO_STR);
+  fill_config_str (PHONE_NUMBER_HOOK_ENABLED, NO_STR);
+  fill_config_str (PHONE_NUMBER_HOOK_ADD_PREFIX, "");
 
   // Loads config from ~/.sflphone/sflphonedrc or so..
   if (createSettingsPath() == 1 && load_user_value) {
@@ -2597,6 +2606,8 @@ std::map<std::string, std::string> ManagerImpl::getHookSettings () {
     settings.insert (std::pair<std::string, std::string> ("URLHOOK_COMMAND", getConfigString (HOOKS, URLHOOK_COMMAND)) );
     settings.insert (std::pair<std::string, std::string> ("URLHOOK_SIP_ENABLED", getConfigString (HOOKS, URLHOOK_SIP_ENABLED)) );
     settings.insert (std::pair<std::string, std::string> ("URLHOOK_IAX2_ENABLED", getConfigString (HOOKS, URLHOOK_IAX2_ENABLED)) );
+    settings.insert (std::pair<std::string, std::string> ("PHONE_NUMBER_HOOK_ENABLED", getConfigString (HOOKS, PHONE_NUMBER_HOOK_ENABLED)) );
+    settings.insert (std::pair<std::string, std::string> ("PHONE_NUMBER_HOOK_ADD_PREFIX", getConfigString (HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX)) );
 
     return settings;
 }
@@ -2606,7 +2617,9 @@ void ManagerImpl::setHookSettings (const std::map<std::string, std::string>& set
     setConfig(HOOKS, URLHOOK_SIP_FIELD, (*settings.find("URLHOOK_SIP_FIELD")).second);
     setConfig(HOOKS, URLHOOK_COMMAND, (*settings.find("URLHOOK_COMMAND")).second);
     setConfig(HOOKS, URLHOOK_SIP_ENABLED, (*settings.find("URLHOOK_SIP_ENABLED")).second);
-    setConfig(HOOKS, URLHOOK_IAX2_ENABLED, (*settings.find("URLHOOK_IAX2_ENABLED")).second);
+    setConfig(HOOKS, URLHOOK_IAX2_ENABLED, (*settings.find("URLHOOK_IAX2_ENABLED")).second); 
+    setConfig(HOOKS, PHONE_NUMBER_HOOK_ENABLED, (*settings.find("PHONE_NUMBER_HOOK_ENABLED")).second); 
+    setConfig(HOOKS, PHONE_NUMBER_HOOK_ADD_PREFIX, (*settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")).second); 
 
     // Write it to the configuration file
     saveConfig ();

@@ -21,7 +21,7 @@
 
 URLHook_Config *_urlhook_config;
 
-GtkWidget *field, *command;
+GtkWidget *field, *command, *prefix;
 
 void hooks_load_parameters (URLHook_Config** settings){
 
@@ -39,12 +39,16 @@ void hooks_load_parameters (URLHook_Config** settings){
         _settings->command = DEFAULT_URL_COMMAND;
         _settings->sip_enabled = "0";
         _settings->iax2_enabled = "0";
+        _settings->phone_number_enabled = "0";
+        _settings->phone_number_prefix = "";
     }
     else {
         _settings->sip_field =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_SIP_FIELD));
         _settings->command =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_COMMAND));
         _settings->sip_enabled =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_SIP_ENABLED));
         _settings->iax2_enabled =  (gchar*)(g_hash_table_lookup (_params, URLHOOK_IAX2_ENABLED));
+        _settings->phone_number_enabled =  (gchar*)(g_hash_table_lookup (_params, PHONE_NUMBER_HOOK_ENABLED ));
+        _settings->phone_number_prefix =  (gchar*)(g_hash_table_lookup (_params, PHONE_NUMBER_HOOK_ADD_PREFIX ));
     }
  
     *settings = _settings;
@@ -64,6 +68,10 @@ void hooks_save_parameters (void){
                                 (gpointer)g_strdup(_urlhook_config->sip_enabled));
     g_hash_table_replace (params, (gpointer)URLHOOK_IAX2_ENABLED, 
                                 (gpointer)g_strdup(_urlhook_config->iax2_enabled));
+    g_hash_table_replace (params, (gpointer)PHONE_NUMBER_HOOK_ENABLED, 
+                                (gpointer)g_strdup(_urlhook_config->phone_number_enabled));
+    g_hash_table_replace (params, (gpointer)PHONE_NUMBER_HOOK_ADD_PREFIX, 
+                                g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(prefix)))); 
     
     dbus_set_hook_settings (params);
 
@@ -94,9 +102,24 @@ static void iax2_enabled_cb (GtkWidget *widget) {
         _urlhook_config->iax2_enabled="0";
 }
 
+static void phone_number_enabled_cb (GtkWidget *widget) {
+
+    guint check;
+
+    check = (guint) gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+    if (check){
+        _urlhook_config->phone_number_enabled="1";
+        gtk_widget_set_sensitive (GTK_WIDGET (prefix), TRUE);  
+    }else{
+        _urlhook_config->phone_number_enabled="0";
+        gtk_widget_set_sensitive (GTK_WIDGET (prefix), FALSE);  
+    }
+}
+
+
 GtkWidget* create_hooks_settings (){
 
-    GtkWidget *ret, *url_frame, *table, *label, *widg;
+    GtkWidget *ret, *frame, *table, *label, *widg;
 
     // Load the user value
     hooks_load_parameters (&_urlhook_config);
@@ -104,15 +127,15 @@ GtkWidget* create_hooks_settings (){
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    url_frame = gtk_frame_new(_("URL argument"));
-    gtk_box_pack_start(GTK_BOX(ret), url_frame, FALSE, FALSE, 0);
-    gtk_widget_show (url_frame);
+    frame = gtk_frame_new(_("URL argument"));
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+    gtk_widget_show (frame);
 
     table = gtk_table_new ( 5, 3,  FALSE/* homogeneous */);
     gtk_table_set_row_spacings( GTK_TABLE(table), 10);
     gtk_table_set_col_spacings( GTK_TABLE(table), 10);
     gtk_widget_show(table);
-    gtk_container_add( GTK_CONTAINER (url_frame) , table );
+    gtk_container_add( GTK_CONTAINER (frame) , table );
 
     widg = gtk_check_button_new_with_mnemonic( _("_SIP protocol"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), (g_strcasecmp (_urlhook_config->sip_enabled, "1")==0)?TRUE:FALSE);
@@ -137,6 +160,29 @@ GtkWidget* create_hooks_settings (){
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), command);
     gtk_entry_set_text(GTK_ENTRY(command), _urlhook_config->command);
     gtk_table_attach ( GTK_TABLE( table ), command, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
+
+    frame = gtk_frame_new(_("Phone number formatting"));
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+    gtk_widget_show (frame);
+
+    table = gtk_table_new ( 2, 2,  FALSE/* homogeneous */);
+    gtk_table_set_row_spacings( GTK_TABLE(table), 10);
+    gtk_table_set_col_spacings( GTK_TABLE(table), 10);
+    gtk_widget_show(table);
+    gtk_container_add( GTK_CONTAINER (frame) , table );
+
+    widg = gtk_check_button_new_with_mnemonic( _("_Add phone number prefix"));
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), (g_strcasecmp (_urlhook_config->phone_number_enabled, "1")==0)?TRUE:FALSE);
+    g_signal_connect (G_OBJECT(widg) , "clicked" , G_CALLBACK (phone_number_enabled_cb), NULL);
+    gtk_table_attach ( GTK_TABLE( table ), widg, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+ 
+    label = gtk_label_new_with_mnemonic (_("_Prepend: "));
+    gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    prefix = gtk_entry_new ();
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefix);
+    gtk_entry_set_text(GTK_ENTRY(prefix), _urlhook_config->phone_number_prefix);
+    gtk_widget_set_sensitive (GTK_WIDGET (prefix), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (widg)));
+    gtk_table_attach ( GTK_TABLE( table ), prefix, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
 
     gtk_widget_show_all(ret);
 

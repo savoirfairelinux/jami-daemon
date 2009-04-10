@@ -82,8 +82,10 @@
 #define HOOKS                           "Hooks"                     /** Hooks section */
 #define URLHOOK_SIP_FIELD               "Hooks.url_sip_field"
 #define URLHOOK_COMMAND                 "Hooks.url_command"
-#define URLHOOK_SIP_ENABLED                 "Hooks.sip_enabled"
-#define URLHOOK_IAX2_ENABLED                 "Hooks.iax2_enabled"
+#define URLHOOK_SIP_ENABLED             "Hooks.sip_enabled"
+#define URLHOOK_IAX2_ENABLED            "Hooks.iax2_enabled"
+#define PHONE_NUMBER_HOOK_ENABLED               "Hooks.phone_number_enabled"    
+#define PHONE_NUMBER_HOOK_ADD_PREFIX                      "Hooks.phone_number_add_prefix"
 
 #define EMPTY_FIELD		""			/** Default value for empty field */
 #define DFT_STUN_SERVER 	"stun.ekiga.net"	/** Default STUN server address */

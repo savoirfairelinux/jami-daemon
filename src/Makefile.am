@@ -31,6 +31,7 @@ sflphoned_SOURCES = \
 		sipcall.cpp \
 		sdp.cpp \
 		sdpmedia.cpp \
+		numbercleaner.cpp \
 		$(IAXSOURCES) 
 
 
@@ -71,7 +72,8 @@ noinst_HEADERS = \
 		call.h \
 		sipcall.h \
 		sdp.h \
-		sdpmedia.h
+		sdpmedia.h \
+		numbercleaner.h
 
 libsflphone_la_LIBADD = \
 	$(src)/libs/stund/libstun.la \
