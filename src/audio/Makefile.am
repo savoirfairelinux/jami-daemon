@@ -2,17 +2,6 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libaudio.la
 
-if BUILD_SPEEX
-SPEEX_FLAG = -DBUILD_SPEEX
-else
-SPEEX_FLAG = 
-endif
-
-if BUILD_GSM
-GSM_FLAG = -DBUILD_GSM
-else
-GSM_FLAG = 
-endif
 
 if BUILD_ILBC
 ILBC_FLAG = -DBUILD_ILBC

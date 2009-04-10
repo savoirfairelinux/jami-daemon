@@ -1,3 +1,13 @@
+sflphone (0.9.4-0ubuntu2) %system%; urgency=low
+
+  [ Alexandre Savard ]
+  * Restore speex and GSM detection
+
+  [ Emmanuel Milou ]
+  * Fix bug #1090
+ 
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 8 Apr 2009 11:29:15 -0500
+
 sflphone (0.9.4-0ubuntu1) %system%; urgency=low
 
   [ Emmanuel Milou ]

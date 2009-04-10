@@ -7,6 +7,18 @@ PJSIP_LIBS = -lpjnath-sfl -lpjsua-sfl -lpjsip-sfl -lpjmedia-sfl -lpjsip-simple-s
 
 DBUSCPP_CFLAGS=$(top_srcdir)/libs/dbus-c++/include/dbus-c++
 
+if BUILD_SPEEX
+SPEEXCODEC=-DHAVE_SPEEX_CODEC
+else
+SPEEXCODEC= 
+endif
+
+if BUILD_GSM
+GSMCODEC=-DHAVE_GSM_CODEC
+else
+GSMCODEC= 
+endif
+
 # Preprocessor flags
 AM_CPPFLAGS = \
 	-I$(src)/libs \
@@ -23,5 +35,6 @@ AM_CPPFLAGS = \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \
 	-DPLUGINS_DIR=\""$(sflplugindir)"\" \
 	-DENABLE_TRACE \
-	-DSFLDEBUG
-
+	-DSFLDEBUG \
+         $(SPEEXCODEC) \
+         $(GSMCODEC)
