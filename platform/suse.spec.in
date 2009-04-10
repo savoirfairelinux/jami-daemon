@@ -13,7 +13,7 @@ Packager:	Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
 Source0:	%{name}-%{version}.tar.gz
 Source1:        libpj-sfl.pc
 BuildRoot:	%{_tmppath}/%{name}-%{version}
-Requires: 	commoncpp2 ccrtp cppunit libsamplerate pulseaudio-libs-zeroconf pulseaudio-libs-devel gsm speex libgcc dbus-glib expat gtk2 glibc glib2 dbus-libs dbus-glib libsexy libnotify perl
+Requires:   commoncpp2 libccrtp1 libsamplerate pulseaudio libgsm1 libspeex  dbus-1-glib expat gtk2 glibc glib2 dbus-1 libsexy libnotify perl
 
 %description
 SFLphoned is a VoIP daeamon with SIP protocol and IAX protocol.
