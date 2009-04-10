@@ -52,6 +52,7 @@ class NumberCleanerTest : public CppUnit::TestCase {
         CPPUNIT_TEST (test_format_8);
         CPPUNIT_TEST (test_format_9);
         CPPUNIT_TEST (test_format_10);
+        CPPUNIT_TEST (test_format_11);
     CPPUNIT_TEST_SUITE_END ();
 
     public:
@@ -82,6 +83,8 @@ class NumberCleanerTest : public CppUnit::TestCase {
         void test_format_9 ();
         
         void test_format_10 ();
+
+        void test_format_11 ();
 
         /*
          * Code factoring - Common resources can be released here.

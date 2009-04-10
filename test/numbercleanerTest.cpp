@@ -32,9 +32,11 @@
 #define NUMBER_TEST_7   "ext 136"
 #define NUMBER_TEST_8   "514 333  4444 ext. 136"
 #define NUMBER_TEST_9   "514 333  4444 ext 136"
+#define NUMBER_TEST_10   "136"
 
 #define VALID_NUMBER                "5143334444"
 #define VALID_PREPENDED_NUMBER      "95143334444"
+#define VALID_EXTENSION             "136"
 
 using std::cout;
 using std::endl;
@@ -97,6 +99,12 @@ void NumberCleanerTest::test_format_10 (void) {
     CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_1) == VALID_PREPENDED_NUMBER);
 }
 
+void NumberCleanerTest::test_format_11 (void) {
+
+    cleaner->set_phone_number_prefix ("9");
+    CPPUNIT_ASSERT (cleaner->get_phone_number_prefix () == "9");
+    CPPUNIT_ASSERT (cleaner->clean (NUMBER_TEST_10) == VALID_EXTENSION);
+}
 void NumberCleanerTest::tearDown(){
     // Delete the cleaner object
     delete cleaner; cleaner=0;
