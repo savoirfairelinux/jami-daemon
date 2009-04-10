@@ -761,24 +761,27 @@ sflphone_place_call ( call_t * c )
 sflphone_display_selected_codec (const gchar* codecName)
 {
 
-    call_t * selectedCall = calltab_get_selected_call(current_calls);
+    call_t * selectedCall;
     gchar* msg;
     account_t* acc;
-    if(selectedCall->accountID != NULL){
-        acc = account_list_get_by_id(selectedCall->accountID);
-        if (!acc) {
-            msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
-        }
-        else {
-            msg = g_markup_printf_escaped(_("%s account- %s             %s") ,
-                (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
-                (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
-                codecName);
-        }
-        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
-        g_free(msg);
-    }
 
+    selectedCall =  calltab_get_selected_call(current_calls);
+    if (selectedCall) {
+        if(selectedCall->accountID != NULL){
+            acc = account_list_get_by_id(selectedCall->accountID);
+            if (!acc) {
+                msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
+            }
+            else {
+                msg = g_markup_printf_escaped(_("%s account- %s             %s") ,
+                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
+                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+                    codecName);
+            }
+            statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+            g_free(msg);
+        }
+    }
 }
 
     gchar*
