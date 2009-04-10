@@ -711,6 +711,12 @@ create_menus ( )
 
 /* ----------------------------------------------------------------- */
 
+static void edit_number_cb (GtkWidget *widget, gpointer user_data) {
+
+    show_edit_number ((call_t*)user_data);
+}
+
+
   void
 show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 {
@@ -867,12 +873,14 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 
   gboolean pickup = FALSE;
   gboolean remove = FALSE;
+  gboolean edit = FALSE;
 
   call_t * selectedCall = calltab_get_selected_call( history );
   if (selectedCall)
   {
     remove = TRUE;
     pickup = TRUE;
+    edit = TRUE;
   }
 
   GtkWidget *menu;
@@ -899,6 +907,15 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   gtk_widget_show (menu_items);
 
+  if (edit)
+    {
+        menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_EDIT, get_accel_group());
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+        g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (edit_number_cb), selectedCall);
+        gtk_widget_show (menu_items);
+    }
+
+
   if(remove)
   {
     menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_DELETE, get_accel_group());
@@ -922,13 +939,6 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
   gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
       button, event_time);
 }
-
-static void edit_number_cb (GtkWidget *widget, gpointer user_data) {
-
-    show_edit_number ((call_t*)user_data);
-}
-
-
     void
 show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
 {
