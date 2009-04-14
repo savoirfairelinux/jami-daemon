@@ -42,11 +42,16 @@ addressbook_search(GtkEntry* entry)
       addressbook_config);
 }
 
+/**
+ * Initialize books.
+ * Set active/inactive status depending on config.
+ */
 void
 addressbook_init()
 {
   gchar **list;
   gchar **config_book_uid;
+  book_data_t *book_data;
 
   init();
 
@@ -56,11 +61,15 @@ addressbook_init()
     {
       for (config_book_uid = list; *config_book_uid; config_book_uid++)
         {
-          books_get_book_data_by_uid(*config_book_uid)->active = TRUE;
+          // Get corresponding book data
+          book_data = books_get_book_data_by_uid(*config_book_uid);
+
+          // If book_data exists
+          if(book_data != NULL)
+            book_data->active = TRUE;
         }
       g_strfreev(list);
     }
-
 }
 
 static void
