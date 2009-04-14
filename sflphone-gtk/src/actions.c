@@ -670,60 +670,79 @@ sflphone_keypad( guint keyval, gchar * key)
  * Place a call with the current account.
  * If there is no default account selected, place a call with the first
  * registered account of the account list
- * Else, popup an error message
+ * Else, check if it an IP call. if not, popup an error message
  */
     void
 sflphone_place_call ( call_t * c )
 {
 
 
-    if(c->state == CALL_STATE_DIALING && strcmp(c->to, "") != 0)
+    if (c->state == CALL_STATE_DIALING && g_str_has_prefix (c->to, "ip:"))
     {
+        dbus_place_call (c);
+    }
 
-        //format_phone_number (&c->to);
+    else {
 
-        if( account_list_get_size() == 0 )
-        {
-            notify_no_accounts();
-            sflphone_fail(c);
-        }
-
-        else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
-        {
-            notify_no_registered_accounts();
-            sflphone_fail(c);
-        }
-
-        else
+        if(c->state == CALL_STATE_DIALING && strcmp(c->to, "") != 0)
         {
 
+            //format_phone_number (&c->to);
 
-            account_t * current;
-
-            if(g_strcasecmp(c->accountID, "") != 0) {
-                current = account_list_get_by_id(c->accountID);
-            } else {
-                current = account_list_get_current();
+            if( account_list_get_size() == 0 )
+            {
+                notify_no_accounts();
+                sflphone_fail(c);
             }
-            // printf("sflphone_place_call :: c->accountID : %i \n",c->accountID);
 
-            // account_t * current = c->accountID;
+            else if( account_list_get_by_state( ACCOUNT_STATE_REGISTERED ) == NULL )
+            {
+                notify_no_registered_accounts();
+                sflphone_fail(c);
+            }
 
-
-            if( current )
+            else
             {
 
-                if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
+                account_t * current;
+
+                if(g_strcasecmp(c->accountID, "") != 0) {
+                    current = account_list_get_by_id(c->accountID);
+                } else {
+                    current = account_list_get_current();
+                }
+                // printf("sflphone_place_call :: c->accountID : %i \n",c->accountID);
+
+                // account_t * current = c->accountID;
+
+
+                if( current )
                 {
-                    // OK, everything alright - the call is made with the current account
-                    c -> accountID = current -> accountID;
-                    dbus_place_call(c);
+
+                    if(g_strcasecmp(g_hash_table_lookup( current->properties, "Status"),"REGISTERED")==0)
+                    {
+                        // OK, everything alright - the call is made with the current account
+                        c -> accountID = current -> accountID;
+                        dbus_place_call(c);
+                    }
+                    else
+                    {
+                        // Current account is not registered
+                        // So we place a call with the first registered account
+                        // And we switch the current account
+                        current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
+                        c -> accountID = current -> accountID;
+                        dbus_place_call(c);
+                        notify_current_account( current );
+                        account_list_set_current_id( c-> accountID );
+                    }
                 }
                 else
                 {
-                    // Current account is not registered
+
+                    // No current accounts have been setup.
                     // So we place a call with the first registered account
-                    // And we switch the current account
+                    // and we change the current account
                     current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
                     c -> accountID = current -> accountID;
                     dbus_place_call(c);
@@ -731,44 +750,38 @@ sflphone_place_call ( call_t * c )
                     account_list_set_current_id( c-> accountID );
                 }
             }
-            else
-            {
-
-                // No current accounts have been setup.
-                // So we place a call with the first registered account
-                // and we change the current account
-                current = account_list_get_by_state( ACCOUNT_STATE_REGISTERED );
-                c -> accountID = current -> accountID;
-                dbus_place_call(c);
-                notify_current_account( current );
-                account_list_set_current_id( c-> accountID );
-            }
+            // Update history
+            c->history_state = OUTGOING;
+            calllist_add(history, c);
         }
-        // Update history
-        c->history_state = OUTGOING;
-        g_print ("add in history\n");
-        calllist_add(history, c);
     }
 }
-
 
     void
 sflphone_display_selected_codec (const gchar* codecName)
 {
 
-    call_t * selectedCall = calltab_get_selected_call(current_calls);
+    call_t * selectedCall;
     gchar* msg;
     account_t* acc;
-    if(selectedCall->accountID != NULL){
-        acc = account_list_get_by_id(selectedCall->accountID);
-        msg = g_markup_printf_escaped(_("%s account- %s             %s") ,
-                (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
-                (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
-                codecName);
-        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
-        g_free(msg);
-    }
 
+    selectedCall =  calltab_get_selected_call(current_calls);
+    if (selectedCall) {
+        if(selectedCall->accountID != NULL){
+            acc = account_list_get_by_id(selectedCall->accountID);
+            if (!acc) {
+                msg = g_markup_printf_escaped (_("IP call - %s"), codecName);
+            }
+            else {
+                msg = g_markup_printf_escaped(_("%s account- %s             %s") ,
+                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
+                    (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+                    codecName);
+            }
+            statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+            g_free(msg);
+        }
+    }
 }
 
     gchar*

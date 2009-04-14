@@ -36,6 +36,7 @@
 
 #include "account.h"
 #include "call.h"
+#include "numbercleaner.h"
 
 #include "audio/tonelist.h" // for Tone::TONEID declaration
 #include "audio/audiofile.h"
@@ -1111,6 +1112,8 @@ private:
 
     // Assignment Operator
     ManagerImpl& operator=( const ManagerImpl& rh);
+
+    NumberCleaner *_cleaner;
 
     /**
      * Check if the call is a classic call or a direct IP-to-IP call

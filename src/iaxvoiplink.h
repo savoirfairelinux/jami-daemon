@@ -27,6 +27,7 @@
 
 #include "audio/codecDescriptor.h"
 #include "samplerateconverter.h"
+#include "hooks/urlhook.h"
 
 class EventThread;
 class IAXCall;
@@ -306,6 +307,9 @@ class IAXVoIPLink : public VoIPLink
      
     /** number of sample before conversion (recording) */
     int nbSampleForRec_;
+
+    /* URL hook */
+    UrlHook *urlhook;
 };
 
 #endif

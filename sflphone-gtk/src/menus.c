@@ -36,6 +36,9 @@ GtkWidget * copyMenu;
 GtkWidget * pasteMenu;
 GtkWidget * recordMenu;
 
+GtkWidget * editable_num;
+GtkDialog * edit_dialog;
+
 guint holdConnId;     //The hold_menu signal connection ID
 
 GtkWidget * dialpadMenu;
@@ -708,6 +711,12 @@ create_menus ( )
 
 /* ----------------------------------------------------------------- */
 
+static void edit_number_cb (GtkWidget *widget, gpointer user_data) {
+
+    show_edit_number ((call_t*)user_data);
+}
+
+
   void
 show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 {
@@ -864,12 +873,14 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 
   gboolean pickup = FALSE;
   gboolean remove = FALSE;
+  gboolean edit = FALSE;
 
   call_t * selectedCall = calltab_get_selected_call( history );
   if (selectedCall)
   {
     remove = TRUE;
     pickup = TRUE;
+    edit = TRUE;
   }
 
   GtkWidget *menu;
@@ -896,6 +907,15 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   gtk_widget_show (menu_items);
 
+  if (edit)
+    {
+        menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_EDIT, get_accel_group());
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+        g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (edit_number_cb), selectedCall);
+        gtk_widget_show (menu_items);
+    }
+
+
   if(remove)
   {
     menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_DELETE, get_accel_group());
@@ -919,13 +939,6 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
   gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
       button, event_time);
 }
-
-static void edit_number_cb (gpointer user_data) {
-
-    show_edit_number ((call_t*)user_data);
-}
-
-
     void
 show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
 {
@@ -1025,38 +1038,76 @@ void add_registered_accounts_to_menu (GtkWidget *menu) {
 
 }
 
+static void ok_cb (GtkWidget *widget, gpointer userdata) {
 
-static void change_number_cb (gpointer userdata) {
+    gchar *new_number, *from;
+    call_t *modified_call, *original;
 
-    gtk_widget_destroy (GTK_WIDGET (userdata));
+    // Change the number of the selected call before calling
+    new_number = (gchar*) gtk_entry_get_text (GTK_ENTRY (editable_num));
+    original = (call_t*)userdata;
+    
+    // Edit the from field with the updated phone number value 
+    from = g_strconcat("\"", call_get_name (original), "\" <", new_number, ">",NULL);
+
+    // Create the new call
+    create_new_call (g_strdup (new_number), from,  CALL_STATE_DIALING, g_strdup (original->accountID), &modified_call);
+
+    // Update the internal data structure and the GUI
+    calllist_add(current_calls, modified_call);
+    calltree_add_call(current_calls, modified_call);
+    sflphone_place_call(modified_call);
+    calltree_display (current_calls);
+
+    // Close the contextual menu
+    gtk_widget_destroy (GTK_WIDGET (edit_dialog));
+}
+
+static void on_delete (GtkWidget * widget)
+{
+    gtk_widget_destroy (widget);
 }
 
 void show_edit_number (call_t *call) {
 
-    GtkDialog * dialog;
-    GtkWidget * num, *ok, *hbox;
+    GtkWidget *ok, *hbox, *image;
+    GdkPixbuf *pixbuf;
     
-    dialog = GTK_DIALOG (gtk_dialog_new());
+    edit_dialog = GTK_DIALOG (gtk_dialog_new());
 
     // Set window properties
-    gtk_window_set_default_size(GTK_WINDOW(dialog), 200, 20);
-    gtk_window_set_title(GTK_WINDOW(dialog), _("Edit number"));
+    gtk_window_set_default_size(GTK_WINDOW(edit_dialog), 300, 20);
+    gtk_window_set_title(GTK_WINDOW(edit_dialog), _("Edit phone"));
+    gtk_window_set_resizable (GTK_WINDOW (edit_dialog), FALSE);
     
+    g_signal_connect (G_OBJECT (edit_dialog), "delete-event", G_CALLBACK (on_delete), NULL);
+
     hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start(GTK_BOX (dialog->vbox), hbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX (edit_dialog->vbox), hbox, TRUE, TRUE, 0);
 
-    num = gtk_entry_new ();
-    gtk_entry_set_text(GTK_ENTRY(num), "514-384-8557");
-    gtk_box_pack_start(GTK_BOX (hbox), num, TRUE, TRUE, 0);
-    
-    ok = gtk_button_new_from_stock (GTK_STOCK_OK);
+    // Set the number to be edited
+    editable_num = gtk_entry_new ();
+#if GTK_CHECK_VERSION(2,12,0)
+      gtk_widget_set_tooltip_text(GTK_WIDGET(editable_num), _("Edit the phone number before making a call"));
+#endif
+    if (call)  
+        gtk_entry_set_text(GTK_ENTRY(editable_num), g_strdup (call_get_number (call)));
+    else
+        g_print ("This a bug, the call should be defined. menus.c line 1051\n");
+
+    gtk_box_pack_start(GTK_BOX (hbox), editable_num, TRUE, TRUE, 0);
+   
+    // Set a custom image for the button
+    pixbuf = gdk_pixbuf_new_from_file_at_scale (ICONS_DIR "/outgoing.svg", 32, 32, TRUE, NULL);
+    image = gtk_image_new_from_pixbuf (pixbuf);
+    ok = gtk_button_new ();
+    gtk_button_set_image (GTK_BUTTON (ok), image);
     gtk_box_pack_start(GTK_BOX (hbox), ok, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT (ok), "clicked", G_CALLBACK (change_number_cb), dialog);
+    g_signal_connect(G_OBJECT (ok), "clicked", G_CALLBACK (ok_cb), call);
 
-    gtk_widget_show_all (dialog->vbox);
+    gtk_widget_show_all (edit_dialog->vbox);
 
-    gtk_dialog_run(dialog);
-    gtk_widget_destroy(GTK_WIDGET(dialog));
+    gtk_dialog_run(edit_dialog);
 
 }
 

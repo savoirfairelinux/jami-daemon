@@ -1,6 +1,6 @@
 include ../globals.mak
 
-bin_PROGRAMS = pluginmanagerTester hookmanagerTester
+bin_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester
 
 OBJECT_FILES= \
 	../src/sflphoned-managerimpl.o \
@@ -19,7 +19,27 @@ OBJECT_FILES= \
 	../src/plug-in/audiorecorder/audiorecord.o \
 	../src/sflphoned-samplerateconverter.o \
 	../src/sflphoned-sdp.o \
-	../src/sflphoned-sdpmedia.o
+	../src/sflphoned-sdpmedia.o \
+	../src/sflphoned-numbercleaner.o
+
+numbercleanerTester_SOURCES = \
+		numbercleanerTest.h \
+		numbercleanerTest.cpp \
+		TestMain.cpp
+
+numbercleanerTester_LDADD = \
+		../src/libsflphone.la  \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@CPPUNIT_LIBS@ \
+		@CCEXT2_LIBS@ \
+		@CCGNU2_LIBS@ \
+		@CCRTP_LIBS@ \
+		@SAMPLERATE_LIBS@ \
+		$(PJSIP_LIBS) \
+		-luuid \
+		$(OBJECT_FILES)
 
 pluginmanagerTester_SOURCES = \
 		pluginmanagerTest.h \

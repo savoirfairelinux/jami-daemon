@@ -58,10 +58,16 @@ GtkWidget* searchbar_new(gchar* searchbar_type) {
   GtkWidget* image;
   GtkWidget* ret = gtk_hbox_new(FALSE, 0);
 
+#if GTK_CHECK_VERSION(2,16,0)
+  searchbox = gtk_entry_new();
+  gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
+  gtk_entry_set_icon_from_stock (GTK_ENTRY (searchbox), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
+#else
   searchbox = sexy_icon_entry_new();
   image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_SMALL_TOOLBAR);
   sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(searchbox), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
   sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(searchbox) );
+#endif
   gtk_entry_set_text(GTK_ENTRY(searchbox), _("Search"));
   g_signal_connect(GTK_ENTRY(searchbox), "changed", G_CALLBACK(searchbar_entry_changed), NULL);
   g_signal_connect(GTK_ENTRY(searchbox), "grab-focus", G_CALLBACK(searchbar_clear_entry_if_default), NULL);

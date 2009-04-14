@@ -311,12 +311,6 @@ AS_IF([test "x$with_speex" != xno],
   ]
 dnl More advanced check in case the libspeexdsp is not installed
 AC_SEARCH_LIBS(speex_preprocess_run, speexdsp, HAVE_SPEEXDSP="yes", HAVE_SPEEXDSP="no", [])
-
-if test $HAVE_SPEEXDSP="no"; then
-    echo $HAVE_SPEEXDSP;
-    AC_MSG_WARN([The silence detection in speex could not have been enabled])
-fi
-
 )
 
 AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspeex])
