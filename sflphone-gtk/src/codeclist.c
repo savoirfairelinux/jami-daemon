@@ -68,9 +68,9 @@ codec_list_add(codec_t * c)
 
 
 void 
-codec_set_active(gchar* name)
+codec_set_active(codec_t * c)
 {
-	codec_t * c = codec_list_get_by_name(name);
+	
 	if(c)
 	{
 		printf("%s set active\n", c->name);
@@ -79,9 +79,9 @@ codec_set_active(gchar* name)
 }
 
 void
-codec_set_inactive(gchar* name)
+codec_set_inactive(codec_t * c)
 {
-  codec_t * c = codec_list_get_by_name(name);
+  
   if(c)
     c->is_active = FALSE;
 }

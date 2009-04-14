@@ -66,13 +66,13 @@ void codec_list_add(codec_t * c);
  * Set a codec active. An active codec will be used for codec negociation
  * @param name The string description of the codec
  */
-void codec_set_active(gchar* name);
+void codec_set_active(codec_t * c);
 
 /**
  * Set a codec inactive. An active codec won't be used for codec negociation
  * @param name The string description of the codec
  */
-void codec_set_inactive(gchar* name);
+void codec_set_inactive(codec_t * c);
 
 /** 
  * Return the number of codecs in the list
