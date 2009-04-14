@@ -47,6 +47,8 @@ class Speex : public AudioCodec{
 
         void initSpeex() { 
 
+            int _samplingRate = 16000; 
+
             // 8000 HZ --> Narrow-band mode
             // TODO Manage the other modes
             // _speexModePtr = &speex_nb_mode; 
@@ -60,6 +62,10 @@ class Speex : public AudioCodec{
             speex_bits_init(&_speex_enc_bits);
             _speex_enc_state = speex_encoder_init(_speexModePtr);
 
+            speex_encoder_ctl(_speex_enc_state,SPEEX_SET_SAMPLING_RATE,&_clockRate);
+
+            speex_decoder_ctl(_speex_dec_state, SPEEX_GET_FRAME_SIZE, &_speex_frame_size);
+            
 #ifdef HAVE_SPEEXDSP_LIB
 
             int enable = 1;
@@ -82,7 +88,7 @@ class Speex : public AudioCodec{
             speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_VAD, &enable);
             speex_preprocess_ctl(_preprocess_state, SPEEX_PREPROCESS_SET_AGC, &enable);
 #endif
-
+            
         }
 
         ~Speex() 
@@ -103,12 +109,13 @@ class Speex : public AudioCodec{
         }
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
-        {
+        {   
+            
             int ratio = 320 / _speex_frame_size;
             speex_bits_read_from(&_speex_dec_bits, (char*)src, size);
             speex_decode_int(_speex_dec_state, &_speex_dec_bits, dst);
 
-            return _speex_frame_size * ratio; 
+            return 2 * _speex_frame_size * ratio; 
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
@@ -116,12 +123,13 @@ class Speex : public AudioCodec{
             speex_bits_reset(&_speex_enc_bits);
 
 #ifdef HAVE_SPEEXDSP_LIB
-            speex_encoder_ctl(_speex_enc_state,SPEEX_SET_SAMPLING_RATE,&_clockRate);
+            
             speex_preprocess_run(_preprocess_state, src);
 #endif 
 
             speex_encode_int(_speex_enc_state, src, &_speex_enc_bits);
-            int nbBytes = speex_bits_write(&_speex_enc_bits, (char*)dst, size); 
+            int nbBytes = speex_bits_write(&_speex_enc_bits, (char*)dst, size);
+            printf("Codec::codecEncode() nbBytes: %i \n",nbBytes);
             return nbBytes;
         }
 
