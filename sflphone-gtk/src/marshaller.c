@@ -1,5 +1,5 @@
 
-#include	<glib-object.h>
+#include	<marshaller.h>
 
 
 #ifdef G_ENABLE_DEBUG
@@ -50,10 +50,10 @@
 /* VOID:STRING,STRING,STRING (marshaller.list:1) */
 void
 g_cclosure_user_marshal_VOID__STRING_STRING_STRING (GClosure     *closure,
-                                                    GValue       *return_value,
+                                                    GValue       *return_value UNUSED,
                                                     guint         n_param_values,
                                                     const GValue *param_values,
-                                                    gpointer      invocation_hint,
+                                                    gpointer      invocation_hint UNUSED,
                                                     gpointer      marshal_data)
 {
   typedef void (*GMarshalFunc_VOID__STRING_STRING_STRING) (gpointer     data1,
@@ -89,10 +89,10 @@ g_cclosure_user_marshal_VOID__STRING_STRING_STRING (GClosure     *closure,
 /* VOID:STRING,STRING (marshaller.list:2) */
 void
 g_cclosure_user_marshal_VOID__STRING_STRING (GClosure     *closure,
-                                             GValue       *return_value,
+                                             GValue       *return_value UNUSED,
                                              guint         n_param_values,
                                              const GValue *param_values,
-                                             gpointer      invocation_hint,
+                                             gpointer      invocation_hint UNUSED,
                                              gpointer      marshal_data)
 {
   typedef void (*GMarshalFunc_VOID__STRING_STRING) (gpointer     data1,
@@ -128,10 +128,10 @@ g_cclosure_user_marshal_VOID__STRING_STRING (GClosure     *closure,
 /* VOID:STRING,INT (marshaller.list:4) */
 void
 g_cclosure_user_marshal_VOID__STRING_INT (GClosure     *closure,
-                                          GValue       *return_value,
+                                          GValue       *return_value UNUSED,
                                           guint         n_param_values,
                                           const GValue *param_values,
-                                          gpointer      invocation_hint,
+                                          gpointer      invocation_hint UNUSED,
                                           gpointer      marshal_data)
 {
   typedef void (*GMarshalFunc_VOID__STRING_INT) (gpointer     data1,
@@ -165,10 +165,10 @@ g_cclosure_user_marshal_VOID__STRING_INT (GClosure     *closure,
 /* VOID:STRING,DOUBLE (marshaller.list:5) */
 void
 g_cclosure_user_marshal_VOID__STRING_DOUBLE (GClosure     *closure,
-                                             GValue       *return_value,
+                                             GValue       *return_value UNUSED,
                                              guint         n_param_values,
                                              const GValue *param_values,
-                                             gpointer      invocation_hint,
+                                             gpointer      invocation_hint UNUSED,
                                              gpointer      marshal_data)
 {
   typedef void (*GMarshalFunc_VOID__STRING_DOUBLE) (gpointer     data1,

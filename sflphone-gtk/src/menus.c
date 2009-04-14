@@ -711,7 +711,7 @@ create_menus ( )
 
 /* ----------------------------------------------------------------- */
 
-static void edit_number_cb (GtkWidget *widget, gpointer user_data) {
+static void edit_number_cb (GtkWidget *widget UNUSED, gpointer user_data) {
 
     show_edit_number ((call_t*)user_data);
 }
@@ -1038,7 +1038,7 @@ void add_registered_accounts_to_menu (GtkWidget *menu) {
 
 }
 
-static void ok_cb (GtkWidget *widget, gpointer userdata) {
+static void ok_cb (GtkWidget *widget UNUSED, gpointer userdata) {
 
     gchar *new_number, *from;
     call_t *modified_call, *original;
@@ -1046,8 +1046,8 @@ static void ok_cb (GtkWidget *widget, gpointer userdata) {
     // Change the number of the selected call before calling
     new_number = (gchar*) gtk_entry_get_text (GTK_ENTRY (editable_num));
     original = (call_t*)userdata;
-    
-    // Edit the from field with the updated phone number value 
+
+    // Edit the from field with the updated phone number value
     from = g_strconcat("\"", call_get_name (original), "\" <", new_number, ">",NULL);
 
     // Create the new call
@@ -1072,14 +1072,14 @@ void show_edit_number (call_t *call) {
 
     GtkWidget *ok, *hbox, *image;
     GdkPixbuf *pixbuf;
-    
+
     edit_dialog = GTK_DIALOG (gtk_dialog_new());
 
     // Set window properties
     gtk_window_set_default_size(GTK_WINDOW(edit_dialog), 300, 20);
     gtk_window_set_title(GTK_WINDOW(edit_dialog), _("Edit phone"));
     gtk_window_set_resizable (GTK_WINDOW (edit_dialog), FALSE);
-    
+
     g_signal_connect (G_OBJECT (edit_dialog), "delete-event", G_CALLBACK (on_delete), NULL);
 
     hbox = gtk_hbox_new (FALSE, 0);
@@ -1090,13 +1090,13 @@ void show_edit_number (call_t *call) {
 #if GTK_CHECK_VERSION(2,12,0)
       gtk_widget_set_tooltip_text(GTK_WIDGET(editable_num), _("Edit the phone number before making a call"));
 #endif
-    if (call)  
+    if (call)
         gtk_entry_set_text(GTK_ENTRY(editable_num), g_strdup (call_get_number (call)));
     else
         g_print ("This a bug, the call should be defined. menus.c line 1051\n");
 
     gtk_box_pack_start(GTK_BOX (hbox), editable_num, TRUE, TRUE, 0);
-   
+
     // Set a custom image for the button
     pixbuf = gdk_pixbuf_new_from_file_at_scale (ICONS_DIR "/outgoing.svg", 32, 32, TRUE, NULL);
     image = gtk_image_new_from_pixbuf (pixbuf);
