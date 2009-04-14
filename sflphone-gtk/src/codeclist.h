@@ -85,7 +85,7 @@ guint codec_list_get_size();
  * @param name The string description of the codec
  * @return codec_t* A codec or NULL 
  */
-codec_t * codec_list_get(const gchar * name);
+codec_t * codec_list_get_by_name(const gchar * name);
 
 /** 
  * Return the codec at the nth position in the list
@@ -116,5 +116,7 @@ void codec_list_move_codec_down(guint index);
  * Notify modifications on codecs to the server
  */
 void codec_list_update_to_daemon();
+
+codec_t* codec_list_get_by_payload( const int payload);
 
 #endif
