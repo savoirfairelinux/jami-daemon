@@ -235,8 +235,8 @@ init(void)
             {
               book_data = g_new(book_data_t, 1);
               book_data->active = FALSE;
-              book_data->name = e_source_peek_name(source);
-              book_data->uid = e_source_peek_uid(source);
+              book_data->name = g_strdup(e_source_peek_name(source));
+              book_data->uid = g_strdup(e_source_peek_uid(source));
               book_data->ebook = book;
               books_data = g_slist_prepend(books_data, book_data);
               e_book_open(book, TRUE, NULL);
@@ -365,7 +365,7 @@ view_contacts_added_cb(EBookView *book_view, GList *contacts,
  * Used to call final callback when all books have been read.
  */
 static void
-view_completed_cb(EBookView *book_view, EBookViewStatus status,
+view_completed_cb(EBookView *book_view, EBookViewStatus status UNUSED,
     gpointer user_data)
 {
   Handler_And_Data *had = (Handler_And_Data *) user_data;

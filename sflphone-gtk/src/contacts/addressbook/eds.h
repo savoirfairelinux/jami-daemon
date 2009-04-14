@@ -30,6 +30,7 @@
 #include <glib/gtypes.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <libebook/e-book.h>
+#include <sflphone_const.h>
 
 #define EMPTY_ENTRY     "empty"
 

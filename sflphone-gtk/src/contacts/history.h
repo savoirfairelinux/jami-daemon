@@ -25,12 +25,13 @@
 #define __HISTORY_H__
 
 #include <gtk/gtk.h>
+#include <sflphone_const.h>
 
 /**
  * Execute a search in history
  */
 void
-history_search(GtkEntry*);
+history_search(GtkEntry* entry UNUSED);
 
 /**
  * Initialize history
