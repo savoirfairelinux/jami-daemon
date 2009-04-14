@@ -262,8 +262,8 @@ view_finish(EBookView *book_view, Handler_And_Data *had)
   int search_id = had->search_id;
   g_free(had);
 
-  g_return_if_fail (book_view != NULL);
-  g_object_unref(book_view);
+  if (book_view != NULL)
+    g_object_unref(book_view);
 
   if (search_id == current_search_id)
     {
@@ -376,6 +376,9 @@ view_completed_cb(EBookView *book_view, EBookViewStatus status,
     }
 }
 
+/**
+ * Perform an asynchronous search
+ */
 void
 search_async(const char *query, int max_results, SearchAsyncHandler handler,
     gpointer user_data)
@@ -395,6 +398,7 @@ search_async(const char *query, int max_results, SearchAsyncHandler handler,
   GSList *iter;
   EBookQuery* book_query = create_query(query);
   Handler_And_Data *had = g_new (Handler_And_Data, 1);
+  int search_count = 0;
 
   had->search_id = current_search_id;
   had->handler = handler;
@@ -417,22 +421,28 @@ search_async(const char *query, int max_results, SearchAsyncHandler handler,
               g_signal_connect (book_view, "contacts_added", (GCallback) view_contacts_added_cb, had);
               g_signal_connect (book_view, "sequence_complete", (GCallback) view_completed_cb, had);
               e_book_view_start(book_view);
+              search_count++;
             }
         }
     }
-  if (had->book_views_remaining == 0)
-    {
-      g_free(had);
-    }
 
   e_book_query_unref(book_query);
+
+  // If no search has been executed (no book selected)
+  if (search_count == 0)
+    {
+      // Call last callback anyway
+      view_finish(NULL, had);
+    }
 }
 
+/**
+ * Fetch information for a specific contact
+ */
 void
 fetch_information_from_contact(EContact *contact, EContactField field,
     gchar **info)
 {
-
   gchar *to_fetch;
 
   to_fetch = g_strdup((char*) e_contact_get_const(contact, field));
