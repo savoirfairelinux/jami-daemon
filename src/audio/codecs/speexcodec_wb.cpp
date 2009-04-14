@@ -35,7 +35,7 @@ class Speex : public AudioCodec{
             _speex_frame_size(),
             _preprocess_state()
     {
-        _clockRate = 8000;
+        _clockRate = 16000;
         _channel = 1;
         _bitrate = 0;
         _bandwidth = 0; 
@@ -47,11 +47,11 @@ class Speex : public AudioCodec{
 
         void initSpeex() { 
 
-            int _samplingRate = 8000; 
+            int _samplingRate = 16000; 
 
             // 8000 HZ --> Narrow-band mode
             // TODO Manage the other modes
-            _speexModePtr = &speex_nb_mode; 
+            _speexModePtr = &speex_wb_mode; 
             // _speexModePtr = &speex_wb_mode; 
 
             // Init the decoder struct
@@ -115,7 +115,7 @@ class Speex : public AudioCodec{
             speex_bits_read_from(&_speex_dec_bits, (char*)src, size);
             speex_decode_int(_speex_dec_state, &_speex_dec_bits, dst);
 
-            return _speex_frame_size * ratio; 
+            return 2 * _speex_frame_size * ratio; 
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
@@ -145,7 +145,7 @@ class Speex : public AudioCodec{
 
 // the class factories
 extern "C" AudioCodec* create() {
-    return new Speex(110);
+    return new Speex(111);
 }
 
 extern "C" void destroy(AudioCodec* a) {
