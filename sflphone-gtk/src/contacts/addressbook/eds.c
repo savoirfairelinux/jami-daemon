@@ -233,25 +233,38 @@ init(void)
           EBook *book = e_book_new(source, NULL);
           if (book != NULL)
             {
-              book_data = g_new(book_data_t, 1);
-              book_data->active = FALSE;
-              book_data->name = g_strdup(e_source_peek_name(source));
-              book_data->uid = g_strdup(e_source_peek_uid(source));
-              book_data->ebook = book;
-              books_data = g_slist_prepend(books_data, book_data);
-              e_book_open(book, TRUE, NULL);
+              GError *error = NULL;
+
+              e_book_open(book, TRUE, &error);
+
+              // If we cannot open the book
+              if (error)
+                {
+                  g_printerr("Cannot open address book: %s\n",
+                      e_source_peek_name(source));
+                  g_object_unref(book);
+                }
+              // Everything OK, we load ebook
+              else
+                {
+                  book_data = g_new(book_data_t, 1);
+                  book_data->active = FALSE;
+                  book_data->name = g_strdup(e_source_peek_name(source));
+                  book_data->uid = g_strdup(e_source_peek_uid(source));
+                  book_data->ebook = book;
+                  books_data = g_slist_prepend(books_data, book_data);
+                }
             }
         }
     }
-
   current_search_id = 0;
 
-  g_object_unref (source_list);
+  g_object_unref(source_list);
 }
 
-              /**
-               * Final callback after all books have been processed.
-               */
+/**
+ * Final callback after all books have been processed.
+ */
 static void
 view_finish(EBookView *book_view, Handler_And_Data *had)
 {
@@ -366,7 +379,7 @@ view_contacts_added_cb(EBookView *book_view, GList *contacts,
  */
 static void
 view_completed_cb(EBookView *book_view, EBookViewStatus status UNUSED,
-    gpointer user_data)
+gpointer user_data)
 {
   Handler_And_Data *had = (Handler_And_Data *) user_data;
   had->book_views_remaining--;
