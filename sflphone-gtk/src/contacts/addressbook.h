@@ -30,6 +30,12 @@
 #include <addressbook/eds.h>
 
 /**
+ * Return addressbook state
+ */
+gboolean
+addressbook_is_ready();
+
+/**
  * Perform a search in addressbook
  */
 void

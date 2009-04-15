@@ -19,6 +19,7 @@
 
 #include <addressbook.h>
 #include <searchbar.h>
+#include <toolbar.h>
 #include <string.h>
 #include <addressbook-config.h>
 
@@ -46,6 +47,15 @@ addressbook_search(GtkEntry* entry)
 }
 
 /**
+ * Return addressbook state
+ */
+gboolean
+addressbook_is_ready()
+{
+  return books_ready();
+}
+
+/**
  * Asynchronous open callback.
  * Used to handle activation of books.
  */
@@ -69,12 +79,14 @@ addressbook_config_books()
           // If book_data exists
           if (book_data != NULL)
             {
-              printf("activating %s\n", *config_book_uid);
               book_data->active = TRUE;
             }
         }
       g_strfreev(list);
     }
+
+  // Update buttons
+  toolbar_update_buttons();
 }
 
 /**

@@ -88,7 +88,7 @@ free_hit(Hit *h)
 gboolean
 books_ready()
 {
-  return (g_slist_length(books_data) == 0);
+  return (g_slist_length(books_data) > 0);
 }
 
 /**
@@ -257,8 +257,6 @@ eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure)
   Open_Handler_And_Data *had = (Open_Handler_And_Data *) closure;
 
   remaining_books_to_open--;
-
-  printf("async open !\n");
 
   if (status == E_BOOK_ERROR_OK)
     {

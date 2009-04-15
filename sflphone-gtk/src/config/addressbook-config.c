@@ -158,8 +158,6 @@ addressbook_config_book_active_toggled(
   // Toggle active value
   active = !active;
 
-  printf("-> change active to : %d for %s\n", active, uid);
-
   // Store value
   gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_BOOK_ACTIVE, active, -1);
 

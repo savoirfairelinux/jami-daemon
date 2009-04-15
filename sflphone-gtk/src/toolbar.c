@@ -18,6 +18,7 @@
  */
 
 #include <toolbar.h>
+#include <contacts/addressbook.h>
 
 static gboolean
 is_inserted( GtkWidget* button )
@@ -251,6 +252,7 @@ GtkWidget *create_toolbar ()
   gtk_widget_set_tooltip_text(GTK_WIDGET(contactButton), _("Address book"));
 #endif
   gtk_tool_button_set_label (GTK_TOOL_BUTTON (contactButton), _("Address book"));
+  gtk_widget_set_state( GTK_WIDGET(contactButton), GTK_STATE_INSENSITIVE);
   g_signal_connect (G_OBJECT (contactButton), "toggled", G_CALLBACK (toggle_button_cb), contacts);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(contactButton), -1);
 
@@ -383,4 +385,11 @@ toolbar_update_buttons ()
             gtk_widget_set_sensitive( GTK_WIDGET(callButton), FALSE);
         }
     }
+
+    // Activate addressbook button if needed
+    // TODO : should be moved in a better place
+    if(addressbook_is_ready())
+      gtk_widget_set_sensitive( GTK_WIDGET(contactButton), TRUE);
+    else
+      gtk_widget_set_sensitive( GTK_WIDGET(contactButton), FALSE);
 }
