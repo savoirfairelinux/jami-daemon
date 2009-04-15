@@ -8,6 +8,7 @@ INCLUDE(   ${QT_USE_FILE}   )
 
 SET(
 	sflphone_kde_SRCS
+	sflphone_kdeview.cpp
 	SFLPhone.cpp
 	ConfigDialog.cpp
 	main.cpp
@@ -37,7 +38,7 @@ QT4_ADD_RESOURCES(QtApp_RCC_SRCS ${QtApp_RCCS})
 
 #kde4_automoc(${sflphone_kde_SRCS})
 
-kde4_add_ui_files(sflphone_kde_SRCS sflphone-qt.ui ConfigDialog.ui)
+kde4_add_ui_files(sflphone_kde_SRCS sflphone_kdeview_base.ui ConfigDialog.ui)
 
 kde4_add_kcfg_files(sflphone_kde_SRCS settings.kcfgc )
 

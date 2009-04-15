@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 		   ki18n("(C) 2009 Jérémy Quentin"), 
 		   KLocalizedString(), 
 		   0, 
-		   "jeremy.quentin@gsavoirfairelinux.com");
+		   "jeremy.quentin@savoirfairelinux.com");
 		
 		about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@gmail.com" );
 		KCmdLineArgs::init(argc, argv, &about);

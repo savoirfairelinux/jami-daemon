@@ -33,7 +33,7 @@ static const char version[] = "0.1";
 int main(int argc, char **argv)
 {
     KAboutData about("sflphone_kde", 0, ki18n("sflphone_kde"), version, ki18n(description),
-                     KAboutData::License_GPL, ki18n("(C) 2009 Jérémy Quentin"), KLocalizedString(), 0, "jeremy.quentin@gmail.com");
+	                 KAboutData::License_GPL, ki18n("(C) 2009 Jérémy Quentin"), KLocalizedString(), 0, "jeremy.quentin@gmail.com");
     about.addAuthor( ki18n("Jérémy Quentin"), KLocalizedString(), "jeremy.quentin@gmail.com" );
     KCmdLineArgs::init(argc, argv, &about);
 

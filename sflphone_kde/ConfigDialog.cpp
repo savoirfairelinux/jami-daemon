@@ -15,7 +15,7 @@
 
 AccountList * ConfigurationDialog::accountList;
 
-ConfigurationDialog::ConfigurationDialog(SFLPhone *parent) : QDialog(parent)
+ConfigurationDialog::ConfigurationDialog(sflphone_kdeView *parent) : QDialog(parent)
 {
 	//configuration qt designer
 	setupUi(this);

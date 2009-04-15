@@ -10,9 +10,9 @@
 #include "ui_ConfigDialog.h"
 #include "configurationmanager_interface_p.h"
 #include "AccountList.h"
-#include "SFLPhone.h"
+#include "sflphone_kdeview.h"
 
-class SFLPhone;
+class sflphone_kdeView;
 
 class ConfigurationDialog : public QDialog, private Ui::ConfigurationDialog
 {
@@ -24,7 +24,7 @@ private:
 	MapStringString * codecPayloads;
 
 public:
-	ConfigurationDialog(SFLPhone *parent = 0);
+	ConfigurationDialog(sflphone_kdeView *parent = 0);
 	~ConfigurationDialog();
 	static AccountList * getAccountList();
 

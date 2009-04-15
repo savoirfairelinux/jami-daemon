@@ -331,7 +331,7 @@ void Call::call()
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	QString number = labelCallNumber->text();
-	this->account = SFLPhone::firstAccountId();
+	this->account = sflphone_kdeView::firstAccountId();
 	if(!account.isEmpty())
 	{
 		qDebug() << "Calling " << number << " with account " << account << ". callId : " << callId;
