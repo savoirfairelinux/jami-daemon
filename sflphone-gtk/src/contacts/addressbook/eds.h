@@ -36,10 +36,14 @@
 
 G_BEGIN_DECLS
 
+/**
+ * Current search id used to prevent processing
+ * of previous search
+ */
 int current_search_id;
 
 /**
- * Reprsent a contact entry
+ * Represent a contact entry
  */
 typedef struct _Hit
 {
@@ -105,3 +109,4 @@ books_get_book_data_by_uid(gchar *uid);
 G_END_DECLS
 
 #endif /* __EDS_H__ */
+

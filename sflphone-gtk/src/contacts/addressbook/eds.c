@@ -30,6 +30,9 @@
 #include <pango/pango.h>
 #include "eds.h"
 
+/**
+ * Structure used to store search and callback data
+ */
 typedef struct _Handler_And_Data
 {
   int search_id;
@@ -40,12 +43,22 @@ typedef struct _Handler_And_Data
   int book_views_remaining;
 } Handler_And_Data;
 
+/**
+ * Size of image that will be displayed in contact list
+ */
 static int pixbuf_size = 32;
 
+/**
+ * Fields on which search will be performed
+ */
 static EContactField search_fields[] =
   { E_CONTACT_FULL_NAME, E_CONTACT_PHONE_BUSINESS, E_CONTACT_NICKNAME, 0 };
+
 static int n_search_fields = G_N_ELEMENTS (search_fields) - 1;
 
+/**
+ * Freeing a hit instance
+ */
 void
 free_hit(Hit *h)
 {
@@ -56,12 +69,16 @@ free_hit(Hit *h)
   g_free(h);
 }
 
+/**
+ * Get a specific book data by UID
+ */
 book_data_t *
 books_get_book_data_by_uid(gchar *uid)
 {
   GSList *book_list_iterator;
   book_data_t *book_data;
 
+  // Iterate throw the list
   for (book_list_iterator = books_data; book_list_iterator != NULL; book_list_iterator
       = book_list_iterator->next)
     {
@@ -69,6 +86,8 @@ books_get_book_data_by_uid(gchar *uid)
       if (strcmp(book_data->uid, uid) == 0)
         return book_data;
     }
+
+  // If no result
   return NULL;
 }
 
@@ -105,10 +124,10 @@ split_query_string(const gchar *str)
   return parts;
 }
 
-  /**
-   * Create a query which looks for the specified string in a contact's full name, email addresses and
-   * nick name.
-   */
+/**
+ * Create a query which looks for the specified string in a contact's full name, email addresses and
+ * nick name.
+ */
 static EBookQuery*
 create_query(const char* s)
 {
@@ -154,6 +173,9 @@ create_query(const char* s)
   return query;
 }
 
+/**
+ * Retrieve the contact's picture
+ */
 static GdkPixbuf*
 pixbuf_from_contact(EContact *contact)
 {
@@ -174,6 +196,7 @@ pixbuf_from_contact(EContact *contact)
             pixbuf = gdk_pixbuf_loader_get_pixbuf(loader);
         }
 
+      // If pixbuf has been found, check size and resize if needed
       if (pixbuf)
         {
           GdkPixbuf *tmp;
@@ -312,22 +335,28 @@ view_contacts_added_cb(EBookView *book_view, GList *contacts,
 
   Handler_And_Data *had = (Handler_And_Data *) user_data;
 
+  // If it's not the last search launched, stop it
   if (had->search_id != current_search_id)
     {
       e_book_view_stop(book_view);
       return;
     }
 
+  // If we reached max results
   if (had->max_results_remaining <= 0)
     {
       e_book_view_stop(book_view);
       had->book_views_remaining--;
+
+      // All books have been computed
       if (had->book_views_remaining == 0)
         {
           view_finish(book_view, had);
           return;
         }
     }
+
+  // For each contact
   for (; contacts != NULL; contacts = g_list_next (contacts))
     {
       EContact *contact;
@@ -337,19 +366,19 @@ view_contacts_added_cb(EBookView *book_view, GList *contacts,
       contact = E_CONTACT (contacts->data);
       hit = g_new (Hit, 1);
 
-      /* Get the photo contact */
+      // Get the photo contact
       photo = pixbuf_from_contact(contact);
       hit->photo = photo;
 
-      /* Get business phone information */
+      // Get business phone information
       fetch_information_from_contact(contact, E_CONTACT_PHONE_BUSINESS, &number);
       hit->phone_business = g_strdup(number);
 
-      /* Get home phone information */
+      // Get home phone information
       fetch_information_from_contact(contact, E_CONTACT_PHONE_HOME, &number);
       hit->phone_home = g_strdup(number);
 
-      /* Get mobile phone information */
+      // Get mobile phone information
       fetch_information_from_contact(contact, E_CONTACT_PHONE_MOBILE, &number);
       hit->phone_mobile = g_strdup(number);
 
@@ -358,8 +387,11 @@ view_contacts_added_cb(EBookView *book_view, GList *contacts,
       if (!hit->name)
         hit->name = "";
 
+      // Append list of contacts
       had->hits = g_list_append(had->hits, hit);
       had->max_results_remaining--;
+
+      // If we reached max results
       if (had->max_results_remaining <= 0)
         {
           e_book_view_stop(book_view);
@@ -383,8 +415,11 @@ gpointer user_data)
 {
   Handler_And_Data *had = (Handler_And_Data *) user_data;
   had->book_views_remaining--;
+
+  // All books have been prcessed
   if (had->book_views_remaining == 0)
     {
+      // Call finish function
       view_finish(book_view, had);
     }
 }
@@ -413,23 +448,31 @@ search_async(const char *query, int max_results, SearchAsyncHandler handler,
   Handler_And_Data *had = g_new (Handler_And_Data, 1);
   int search_count = 0;
 
+  // Initialize search data
   had->search_id = current_search_id;
   had->handler = handler;
   had->user_data = user_data;
   had->hits = NULL;
   had->max_results_remaining = max_results;
   had->book_views_remaining = 0;
+
+  // Iterate throw books data
   for (iter = books_data; iter != NULL; iter = iter->next)
     {
       book_data_t *book_data = (book_data_t *) iter->data;
 
+      // If book is active
       if (book_data->active)
         {
           EBookView *book_view = NULL;
           e_book_get_book_view(book_data->ebook, book_query, NULL, max_results,
               &book_view, NULL);
+
+          // If book view exists
           if (book_view != NULL)
             {
+
+              // Perform search
               had->book_views_remaining++;
               g_signal_connect (book_view, "contacts_added", (GCallback) view_contacts_added_cb, had);
               g_signal_connect (book_view, "sequence_complete", (GCallback) view_completed_cb, had);
@@ -466,3 +509,4 @@ fetch_information_from_contact(EContact *contact, EContactField field,
 
   *info = g_strdup(to_fetch);
 }
+

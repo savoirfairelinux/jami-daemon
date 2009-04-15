@@ -25,6 +25,9 @@
 static void
 handler_async_search(GList *, gpointer);
 
+/**
+ * Perform a search on address book
+ */
 void
 addressbook_search(GtkEntry* entry)
 {
@@ -53,8 +56,10 @@ addressbook_init()
   gchar **config_book_uid;
   book_data_t *book_data;
 
+  // Call books initialization
   init();
 
+  // Retrieve list of books
   list = (gchar **) dbus_get_addressbook_list();
 
   if (list)
@@ -72,6 +77,9 @@ addressbook_init()
     }
 }
 
+/**
+ * Callback called after all book have been processed
+ */
 static void
 handler_async_search(GList *hits, gpointer user_data)
 {
@@ -100,21 +108,21 @@ handler_async_search(GList *hits, gpointer user_data)
       entry = i->data;
       if (entry)
         {
-          /* Get the photo */
+          // Get the photo
           if (addressbook_display(addressbook_config,
               ADDRESSBOOK_DISPLAY_CONTACT_PHOTO))
             photo = entry->photo;
-          /* Create entry for business phone information */
+          // Create entry for business phone information
           if (addressbook_display(addressbook_config,
               ADDRESSBOOK_DISPLAY_PHONE_BUSINESS))
             calllist_add_contact(entry->name, entry->phone_business,
                 CONTACT_PHONE_BUSINESS, photo);
-          /* Create entry for home phone information */
+          // Create entry for home phone information
           if (addressbook_display(addressbook_config,
               ADDRESSBOOK_DISPLAY_PHONE_HOME))
             calllist_add_contact(entry->name, entry->phone_home,
                 CONTACT_PHONE_HOME, photo);
-          /* Create entry for mobile phone information */
+          // Create entry for mobile phone information
           if (addressbook_display(addressbook_config,
               ADDRESSBOOK_DISPLAY_PHONE_MOBILE))
             calllist_add_contact(entry->name, entry->phone_mobile,
@@ -127,3 +135,4 @@ handler_async_search(GList *hits, gpointer user_data)
   // Deactivate waiting image
   deactivateWaitingLayer();
 }
+
