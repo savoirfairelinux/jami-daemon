@@ -417,10 +417,6 @@ calltree_add_call (calltab_t* tab, call_t * c)
             call_get_number(c),
             call_get_name(c));
 
-    g_print ("calltree_add_call %s\n", call_get_number (c));
-    g_print ("description %s\n", description);
-
-
     gtk_list_store_prepend (tab->store, &iter);
 
     if( tab == current_calls )
