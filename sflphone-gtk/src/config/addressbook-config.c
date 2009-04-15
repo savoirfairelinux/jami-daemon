@@ -215,6 +215,7 @@ addressbook_config_fill_book_list()
   GSList *book_list_iterator;
   GtkListStore *store;
   book_data_t *book_data;
+  GSList *books_data = addressbook_get_books_data();
 
   // Get model of view and clear it
   store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));

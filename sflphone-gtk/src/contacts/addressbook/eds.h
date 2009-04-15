@@ -80,11 +80,17 @@ typedef void
 (* SearchAsyncHandler)(GList *hits, gpointer user_data);
 
 /**
+ * Template callback function for the asynchronous open
+ */
+typedef void
+(* OpenAsyncHandler)();
+
+/**
  * Initialize the address book.
  * Connection to evolution data server
  */
 void
-init(void);
+init(OpenAsyncHandler);
 
 /**
  * Asynchronous search function
@@ -111,6 +117,12 @@ books_get_book_data_by_uid(gchar *uid);
  */
 gboolean
 books_ready();
+
+/**
+ * Good method to retrieve books_data (handle async)
+ */
+GSList *
+addressbook_get_books_data();
 
 G_END_DECLS
 

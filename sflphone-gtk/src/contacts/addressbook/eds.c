@@ -31,9 +31,9 @@
 #include "eds.h"
 
 /**
- * Structure used to store search and callback data
+ * Structure used to store search callback and data
  */
-typedef struct _Handler_And_Data
+typedef struct _Search_Handler_And_Data
 {
   int search_id;
   SearchAsyncHandler handler;
@@ -41,7 +41,15 @@ typedef struct _Handler_And_Data
   GList *hits;
   int max_results_remaining;
   int book_views_remaining;
-} Handler_And_Data;
+} Search_Handler_And_Data;
+
+/**
+ * Structure used to store open callback and data
+ */
+typedef struct _Open_Handler_And_Data
+{
+  OpenAsyncHandler handler;
+} Open_Handler_And_Data;
 
 /**
  * Size of image that will be displayed in contact list
@@ -244,14 +252,13 @@ pixbuf_from_contact(EContact *contact)
  * Callback for asynchronous open of books
  */
 static void
-eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure UNUSED)
+eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure)
 {
+  Open_Handler_And_Data *had = (Open_Handler_And_Data *) closure;
+
   remaining_books_to_open--;
 
   printf("async open !\n");
-
-  //ContactsData *data = closure;
-  //EBookQuery *query;
 
   if (status == E_BOOK_ERROR_OK)
     {
@@ -261,6 +268,7 @@ eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure UNUSED
       book_data->uid = g_strdup(e_source_peek_uid(e_book_get_source(book)));
       book_data->ebook = book;
       books_data = g_slist_prepend(books_data, book_data);
+      had->handler();
     }
   else
     {
@@ -272,7 +280,7 @@ eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure UNUSED
  * Initialize address book
  */
 void
-init(void)
+init(OpenAsyncHandler callback)
 {
   GSList *list, *l;
   ESourceList *source_list;
@@ -287,6 +295,9 @@ init(void)
     }
 
   list = e_source_list_peek_groups(source_list);
+
+  Open_Handler_And_Data *had = g_new (Open_Handler_And_Data, 1);
+  had->handler = callback;
 
   for (l = list; l != NULL; l = l->next)
     {
@@ -303,7 +314,7 @@ init(void)
               remaining_books_to_open++;
 
               // Asynchronous open
-              e_book_async_open(book, TRUE, eds_async_open_callback, NULL);
+              e_book_async_open(book, TRUE, eds_async_open_callback, had);
             }
         }
     }
@@ -316,7 +327,7 @@ init(void)
  * Final callback after all books have been processed.
  */
 static void
-view_finish(EBookView *book_view, Handler_And_Data *had)
+view_finish(EBookView *book_view, Search_Handler_And_Data *had)
 {
   GList *i;
   SearchAsyncHandler had_handler = had->handler;
@@ -360,7 +371,7 @@ view_contacts_added_cb(EBookView *book_view, GList *contacts,
 {
   GdkPixbuf *photo;
 
-  Handler_And_Data *had = (Handler_And_Data *) user_data;
+  Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
 
   // If it's not the last search launched, stop it
   if (had->search_id != current_search_id)
@@ -440,7 +451,7 @@ static void
 view_completed_cb(EBookView *book_view, EBookViewStatus status UNUSED,
 gpointer user_data)
 {
-  Handler_And_Data *had = (Handler_And_Data *) user_data;
+  Search_Handler_And_Data *had = (Search_Handler_And_Data *) user_data;
   had->book_views_remaining--;
 
   // All books have been prcessed
@@ -472,7 +483,7 @@ search_async(const char *query, int max_results, SearchAsyncHandler handler,
 
   GSList *iter;
   EBookQuery* book_query = create_query(query);
-  Handler_And_Data *had = g_new (Handler_And_Data, 1);
+  Search_Handler_And_Data *had = g_new (Search_Handler_And_Data, 1);
   int search_count = 0;
 
   // Initialize search data

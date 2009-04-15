@@ -46,18 +46,15 @@ addressbook_search(GtkEntry* entry)
 }
 
 /**
- * Initialize books.
- * Set active/inactive status depending on config.
+ * Asynchronous open callback.
+ * Used to handle activation of books.
  */
-void
-addressbook_init()
+static void
+addressbook_config_books()
 {
-  gchar **list;
   gchar **config_book_uid;
   book_data_t *book_data;
-
-  // Call books initialization
-  init();
+  gchar **list;
 
   // Retrieve list of books
   list = (gchar **) dbus_get_addressbook_list();
@@ -70,11 +67,35 @@ addressbook_init()
           book_data = books_get_book_data_by_uid(*config_book_uid);
 
           // If book_data exists
-          if(book_data != NULL)
-            book_data->active = TRUE;
+          if (book_data != NULL)
+            {
+              printf("activating %s\n", *config_book_uid);
+              book_data->active = TRUE;
+            }
         }
       g_strfreev(list);
     }
+}
+
+/**
+ * Good method to get books_data
+ */
+GSList *
+addressbook_get_books_data()
+{
+  addressbook_config_books();
+  return books_data;
+}
+
+/**
+ * Initialize books.
+ * Set active/inactive status depending on config.
+ */
+void
+addressbook_init()
+{
+  // Call books initialization
+  init(&addressbook_config_books);
 }
 
 /**
