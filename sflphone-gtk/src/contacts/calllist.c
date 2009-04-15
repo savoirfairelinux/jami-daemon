@@ -35,7 +35,7 @@ void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_ty
 
         // Attach a pixbuf to a contact
         if (photo) {
-            attach_thumbnail (new_call, photo);
+            attach_thumbnail (new_call, gdk_pixbuf_copy(photo));
         }
         else {
             switch (type) {
