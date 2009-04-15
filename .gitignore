@@ -38,6 +38,7 @@ INSTALL
 /install-sh
 /stamp-h1
 /Makefile
+sflphone-gtk/stamp-h1
 
 # Ignore built stuff
 /src/sflphoned
