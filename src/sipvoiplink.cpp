@@ -28,11 +28,8 @@
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
-//extern struct state _res;
-
 
 #define CAN_REINVITE    1
-
 
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
@@ -47,11 +44,11 @@ void get_remote_sdp_from_offer( pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
 int getModId();
 
 /**
- *  * Set audio (SDP) configuration for a call
- *   * localport, localip, localexternalport
- *    * @param call a SIPCall valid pointer
- *     * @return bool True
- *      */
+ * Set audio (SDP) configuration for a call
+ * localport, localip, localexternalport
+ * @param call a SIPCall valid pointer
+ * @return bool True
+ */
 bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::string server);
 
 void handle_incoming_options (pjsip_rx_data *rxdata);
@@ -178,8 +175,6 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
     , _useStun(false)
       , _clients(0)
 {
-    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink constructor called \n");    
-
     // to get random number for RANDOM_PORT
     srand (time(NULL));
 
@@ -191,7 +186,6 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink destructor called \n");
     terminate();
 }
 
