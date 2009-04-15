@@ -477,4 +477,6 @@ void dbus_set_hook_settings (GHashTable *);
 
 gboolean dbus_get_is_recording(const call_t *);
 
+GHashTable* dbus_get_call_details (const gchar* callID);
+
 #endif

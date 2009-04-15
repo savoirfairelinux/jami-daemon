@@ -708,7 +708,7 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
 
     stopTone(true);
 
-    _debug("Incoming call %s\n", call->getCallId().data());
+    _debug("Incoming call %s for account %s\n", call->getCallId().data(), accountId.c_str());
 
     associateCallToAccount(call->getCallId(), accountId);
 
@@ -2675,3 +2675,44 @@ bool ManagerImpl::removeCallConfig(const CallID& callID) {
     return false;
 }
 
+std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& callID) {
+
+    std::map<std::string, std::string> call_details;
+    AccountID accountid;
+    Account *account;
+    VoIPLink *link;
+    Call *call;
+
+    // We need here to retrieve the call information attached to the call ID
+    // To achieve that, we need to get the voip link attached to the call
+    // But to achieve that, we need to get the account the call was made with
+
+    // So first we fetch the account
+    accountid = getAccountFromCall (callID);
+
+    // Then the VoIP link this account is linked with (IAX2 or SIP)
+    if ( (account=getAccount (accountid)) != 0) {
+        link = account->getVoIPLink ();
+
+        if (link) {
+            call = link->getCall (callID);
+        }
+
+    }
+
+    if (call) 
+    {
+        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
+    }
+    else 
+    {
+        _debug ("Error: Managerimpl - getCallDetails ()\n");
+        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
+    }
+
+    return call_details;
+}
