@@ -364,7 +364,10 @@ toolbar_update_buttons ()
                 gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
           break;
             default:
-              g_warning("Toolbar update - Should not happen!");
+              // Fix bug #1145
+              // Actually it could happen when sflphone_fill_account_list()
+              // call this function and no "call" is selected
+              // g_warning("Toolbar update - Should not happen!");
           break;
         }
     }
