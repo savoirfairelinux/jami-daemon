@@ -49,6 +49,11 @@ typedef struct _Handler_And_Data
 static int pixbuf_size = 32;
 
 /**
+ * Remaining books to open (asynchronous)
+ */
+int remaining_books_to_open;
+
+/**
  * Fields on which search will be performed
  */
 static EContactField search_fields[] =
@@ -67,6 +72,15 @@ free_hit(Hit *h)
   g_free(h->phone_home);
   g_free(h->phone_mobile);
   g_free(h);
+}
+
+/**
+ * Public way to know if we can perform a search
+ */
+gboolean
+books_ready()
+{
+  return (g_slist_length(books_data) == 0);
 }
 
 /**
@@ -124,10 +138,10 @@ split_query_string(const gchar *str)
   return parts;
 }
 
-/**
- * Create a query which looks for the specified string in a contact's full name, email addresses and
- * nick name.
- */
+  /**
+   * Create a query which looks for the specified string in a contact's full name, email addresses and
+   * nick name.
+   */
 static EBookQuery*
 create_query(const char* s)
 {
@@ -227,6 +241,34 @@ pixbuf_from_contact(EContact *contact)
 }
 
 /**
+ * Callback for asynchronous open of books
+ */
+static void
+eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure UNUSED)
+{
+  remaining_books_to_open--;
+
+  printf("async open !\n");
+
+  //ContactsData *data = closure;
+  //EBookQuery *query;
+
+  if (status == E_BOOK_ERROR_OK)
+    {
+      book_data_t *book_data = g_new(book_data_t, 1);
+      book_data->active = FALSE;
+      book_data->name = g_strdup(e_source_peek_name(e_book_get_source(book)));
+      book_data->uid = g_strdup(e_source_peek_uid(e_book_get_source(book)));
+      book_data->ebook = book;
+      books_data = g_slist_prepend(books_data, book_data);
+    }
+  else
+    {
+      g_warning("Got error %d when opening book", status);
+    }
+}
+
+/**
  * Initialize address book
  */
 void
@@ -234,15 +276,16 @@ init(void)
 {
   GSList *list, *l;
   ESourceList *source_list;
-  book_data_t *book_data;
+  remaining_books_to_open = 0;
+  books_data = NULL;
 
   source_list = e_source_list_new_for_gconf_default(
       "/apps/evolution/addressbook/sources");
-
   if (source_list == NULL)
     {
       return;
     }
+
   list = e_source_list_peek_groups(source_list);
 
   for (l = list; l != NULL; l = l->next)
@@ -256,27 +299,11 @@ init(void)
           EBook *book = e_book_new(source, NULL);
           if (book != NULL)
             {
-              GError *error = NULL;
+              // Keep count of remaining books to open
+              remaining_books_to_open++;
 
-              e_book_open(book, TRUE, &error);
-
-              // If we cannot open the book
-              if (error)
-                {
-                  g_printerr("Cannot open address book: %s\n",
-                      e_source_peek_name(source));
-                  g_object_unref(book);
-                }
-              // Everything OK, we load ebook
-              else
-                {
-                  book_data = g_new(book_data_t, 1);
-                  book_data->active = FALSE;
-                  book_data->name = g_strdup(e_source_peek_name(source));
-                  book_data->uid = g_strdup(e_source_peek_uid(source));
-                  book_data->ebook = book;
-                  books_data = g_slist_prepend(books_data, book_data);
-                }
+              // Asynchronous open
+              e_book_async_open(book, TRUE, eds_async_open_callback, NULL);
             }
         }
     }
@@ -435,7 +462,7 @@ search_async(const char *query, int max_results, SearchAsyncHandler handler,
   current_search_id++;
 
   // If query is null
-  if (strlen(query) < 1)
+  if (strlen(query) < 1 || g_slist_length(books_data) == 0)
     {
       // If data displayed (from previous search), directly call callback
       handler(NULL, user_data);
@@ -471,7 +498,6 @@ search_async(const char *query, int max_results, SearchAsyncHandler handler,
           // If book view exists
           if (book_view != NULL)
             {
-
               // Perform search
               had->book_views_remaining++;
               g_signal_connect (book_view, "contacts_added", (GCallback) view_contacts_added_cb, had);

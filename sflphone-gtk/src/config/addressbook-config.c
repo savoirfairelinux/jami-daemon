@@ -232,7 +232,6 @@ addressbook_config_fill_book_list()
     }
 
   store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));
-
 }
 
 GtkWidget*

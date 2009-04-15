@@ -106,7 +106,12 @@ get_books(void);
 book_data_t *
 books_get_book_data_by_uid(gchar *uid);
 
+/**
+ * Public way to know if we can perform a search
+ */
+gboolean
+books_ready();
+
 G_END_DECLS
 
 #endif /* __EDS_H__ */
-
