@@ -40,7 +40,6 @@ SIPAccount::SIPAccount(const AccountID& accountID)
     
 }
 
-
 SIPAccount::~SIPAccount()
 {
     /* One SIP account less connected to the sip voiplink */

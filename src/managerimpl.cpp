@@ -708,7 +708,7 @@ ManagerImpl::incomingCall(Call* call, const AccountID& accountId)
 
     stopTone(true);
 
-    _debug("Incoming call %s\n", call->getCallId().data());
+    _debug("Incoming call %s for account %s\n", call->getCallId().data(), accountId.c_str());
 
     associateCallToAccount(call->getCallId(), accountId);
 
@@ -1204,6 +1204,7 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_int(CONFIG_AUDIO , DFT_AUDIO_MANAGER);
   fill_config_int(CONFIG_PA_VOLUME_CTRL , YES_STR);
   fill_config_int(CONFIG_SIP_PORT, DFT_SIP_PORT);
+  fill_config_str(CONFIG_ACCOUNTS_ORDER, "");
 
   section = ADDRESSBOOK;
   fill_config_int (ADDRESSBOOK_MAX_RESULTS, "25");
@@ -2126,22 +2127,53 @@ ManagerImpl::setConfig(const std::string& section, const std::string& name, int 
   return _config.setConfigTreeItem(section, name, valueStream.str());
 }
 
+
+void ManagerImpl::setAccountsOrder (const std::string& order) 
+{
+    // Set the new config
+    setConfig (PREFERENCES, CONFIG_ACCOUNTS_ORDER, order);
+}
+
   std::vector< std::string >
 ManagerImpl::getAccountList()
 {
-  std::vector< std::string > v;
+    std::vector< std::string > v;
+    std::vector< std::string > account_order;
+    int i;
 
-  AccountMap::iterator iter = _accountMap.begin();
-  while ( iter != _accountMap.end() ) {
-    if ( iter->second != 0 ) {
-      _debug("Account List: %s\n", iter->first.data());
-      v.push_back(iter->first.data());
+    account_order = loadAccountOrder ();
+    AccountMap::iterator iter;
 
+    // If no order has been set, load the default one
+    // ie according to the creation date.
+    if (account_order.size () == 0) {
+        iter = _accountMap.begin ();
+        while ( iter != _accountMap.end() ) {
+            if ( iter->second != 0 ) {
+                v.push_back(iter->first.data());
+            }
+            iter++;
+        }   
     }
-    iter++;
-  }
-  _debug("Size: %d\n", v.size());
-  return v;
+
+    // Otherelse, load the custom one
+    // ie according to the saved order
+    else {
+
+        for (i=0; i<account_order.size (); i++) {
+            // This account has not been loaded, so we ignore it
+            if ( (iter=_accountMap.find (account_order[i])) != _accountMap.end() )
+            {
+                // If the account is valid
+                if (iter->second != 0) 
+                {
+                    v.push_back (iter->first.data ());
+                }
+            }
+        }
+    }
+   
+    return v;
 }
 
 std::map< std::string, std::string > ManagerImpl::getAccountDetails(const AccountID& accountID)
@@ -2338,47 +2370,61 @@ ManagerImpl::getNewCallID()
   return random_id.str();
 }
 
+std::vector <std::string> ManagerImpl::loadAccountOrder (void)
+{
+
+    std::string account_list;
+    std::vector <std::string> account_vect;
+
+    account_list = getConfigString (PREFERENCES, CONFIG_ACCOUNTS_ORDER);
+    return unserialize (account_list);
+}
+
+
   short
 ManagerImpl::loadAccountMap()
 {
 
-  short nbAccount = 0;
-  TokenList sections = _config.getSections();
-  std::string accountType;
-  Account* tmpAccount;
+    short nbAccount = 0;
+    TokenList sections = _config.getSections();
+    std::string accountType;
+    Account* tmpAccount;
+    std::vector <std::string> account_order;
 
+    TokenList::iterator iter = sections.begin();
+  
+    while(iter != sections.end()) {
+        // Check if it starts with "Account:" (SIP and IAX pour le moment)
+        if ((int)(iter->find("Account:")) == -1) {
+            iter++;
+            continue;
+        }
 
-  TokenList::iterator iter = sections.begin();
-  while(iter != sections.end()) {
-    // Check if it starts with "Account:" (SIP and IAX pour le moment)
-    if ((int)(iter->find("Account:")) == -1) {
-      iter++;
-      continue;
+        accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
+        
+        if (accountType == "SIP") {
+            tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
+        }
+    
+        else if (accountType == "IAX") {
+            tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);
+        }
+    
+        else {
+        _debug("Unknown %s param in config file (%s)\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
+        }
+
+        if (tmpAccount != NULL) {
+            _debug(" %s \n", iter->c_str());
+            _accountMap[iter->c_str()] = tmpAccount;
+            nbAccount++;
+        }
+
+        iter++;
     }
-
-    accountType = getConfigString(*iter, CONFIG_ACCOUNT_TYPE);
-    if (accountType == "SIP") {
-      tmpAccount = AccountCreator::createAccount(AccountCreator::SIP_ACCOUNT, *iter);
-    }
-    else if (accountType == "IAX") {
-      tmpAccount = AccountCreator::createAccount(AccountCreator::IAX_ACCOUNT, *iter);
-    }
-    else {
-      _debug("Unknown %s param in config file (%s)\n", CONFIG_ACCOUNT_TYPE, accountType.c_str());
-    }
-
-    _debug("tmpAccount.getRegistrationState() %i \n ",tmpAccount->getRegistrationState());
-    if (tmpAccount != NULL) {
-
-      _debug(" %s \n", iter->c_str());
-      _accountMap[iter->c_str()] = tmpAccount;
-      nbAccount++;
-    }
-
-    iter++;
-  }
-  _debug("nbAccount loaded %i \n",nbAccount);
-  return nbAccount;
+    
+    _debug("nbAccount loaded %i \n",nbAccount);
+    return nbAccount;
 }
 
   void
@@ -2675,3 +2721,44 @@ bool ManagerImpl::removeCallConfig(const CallID& callID) {
     return false;
 }
 
+std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& callID) {
+
+    std::map<std::string, std::string> call_details;
+    AccountID accountid;
+    Account *account;
+    VoIPLink *link;
+    Call *call;
+
+    // We need here to retrieve the call information attached to the call ID
+    // To achieve that, we need to get the voip link attached to the call
+    // But to achieve that, we need to get the account the call was made with
+
+    // So first we fetch the account
+    accountid = getAccountFromCall (callID);
+
+    // Then the VoIP link this account is linked with (IAX2 or SIP)
+    if ( (account=getAccount (accountid)) != 0) {
+        link = account->getVoIPLink ();
+
+        if (link) {
+            call = link->getCall (callID);
+        }
+
+    }
+
+    if (call) 
+    {
+        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", accountid));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", call->getPeerNumber ()));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", call->getPeerName ()));
+    }
+    else 
+    {
+        _debug ("Error: Managerimpl - getCallDetails ()\n");
+        call_details.insert (std::pair<std::string, std::string> ("ACCOUNTID", AccountNULL));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NUMBER", "Unknown"));
+        call_details.insert (std::pair<std::string, std::string> ("PEER_NAME", "Unknown"));
+    }
+
+    return call_details;
+}

@@ -125,6 +125,43 @@ static
 inline
 #endif
 gboolean
+org_sflphone_SFLphone_ConfigurationManager_set_accounts_order (DBusGProxy *proxy, const char * IN_order, GError **error)
+
+{
+  return dbus_g_proxy_call (proxy, "setAccountsOrder", error, G_TYPE_STRING, IN_order, G_TYPE_INVALID, G_TYPE_INVALID);
+}
+
+typedef void (*org_sflphone_SFLphone_ConfigurationManager_set_accounts_order_reply) (DBusGProxy *proxy, GError *error, gpointer userdata);
+
+static void
+org_sflphone_SFLphone_ConfigurationManager_set_accounts_order_async_callback (DBusGProxy *proxy, DBusGProxyCall *call, void *user_data)
+{
+  DBusGAsyncData *data = (DBusGAsyncData*) user_data;
+  GError *error = NULL;
+  dbus_g_proxy_end_call (proxy, call, &error, G_TYPE_INVALID);
+  (*(org_sflphone_SFLphone_ConfigurationManager_set_accounts_order_reply)data->cb) (proxy, error, data->userdata);
+  return;
+}
+
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+DBusGProxyCall*
+org_sflphone_SFLphone_ConfigurationManager_set_accounts_order_async (DBusGProxy *proxy, const char * IN_order, org_sflphone_SFLphone_ConfigurationManager_set_accounts_order_reply callback, gpointer userdata)
+
+{
+  DBusGAsyncData *stuff;
+  stuff = g_new (DBusGAsyncData, 1);
+  stuff->cb = G_CALLBACK (callback);
+  stuff->userdata = userdata;
+  return dbus_g_proxy_begin_call (proxy, "setAccountsOrder", org_sflphone_SFLphone_ConfigurationManager_set_accounts_order_async_callback, stuff, g_free, G_TYPE_STRING, IN_order, G_TYPE_INVALID);
+}
+static
+#ifdef G_HAVE_INLINE
+inline
+#endif
+gboolean
 org_sflphone_SFLphone_ConfigurationManager_remove_account (DBusGProxy *proxy, const char * IN_accoundID, GError **error)
 
 {

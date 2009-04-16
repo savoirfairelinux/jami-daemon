@@ -109,14 +109,12 @@ ConfigurationManager::getRingtoneList(  )
 	std::vector< std::string  >
 ConfigurationManager::getCodecList(  )
 {
-	_debug("ConfigurationManager::getCodecList received\n");
 	return Manager::instance().getCodecList();
 }
 
 	std::vector< std::string >
 ConfigurationManager::getCodecDetails( const int32_t& payload )
 {
-	_debug("ConfigurationManager::getCodecList received\n");
 	return Manager::instance().getCodecDetails( payload );
 }
 
@@ -450,3 +448,8 @@ std::map<std::string,std::string> ConfigurationManager::getHookSettings (void) {
 void ConfigurationManager::setHookSettings (const std::map<std::string, std::string>& settings) {
     Manager::instance().setHookSettings (settings);
 }
+
+void  ConfigurationManager::setAccountsOrder (const std::string& order) {
+    Manager::instance().setAccountsOrder (order);
+}
+

@@ -17,6 +17,10 @@
       <arg type="a{ss}" name="details" direction="in"/>
     </method>
     
+    <method name="setAccountsOrder">
+      <arg type="s" name="order" direction="in"/>
+    </method>
+    
     <method name="removeAccount">
       <arg type="s" name="accoundID" direction="in"/>
     </method>

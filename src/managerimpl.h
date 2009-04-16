@@ -283,11 +283,23 @@ class ManagerImpl {
     std::vector< std::string >  getAccountList();
 
     /**
+     * Set the account order in the config file
+     */
+    void setAccountsOrder (const std::string& order);
+
+    /**
      * Retrieve details about a given account
      * @param accountID	  The account identifier
      * @return std::map< std::string, std::string > The account details
      */
     std::map< std::string, std::string > getAccountDetails(const AccountID& accountID);
+
+    /**
+     * Retrieve details about a given call
+     * @param callID	  The account identifier
+     * @return std::map< std::string, std::string > The call details
+     */
+    std::map< std::string, std::string > getCallDetails(const CallID& callID);
 
     /**
      * Save the details of an existing account, given the account ID
@@ -1055,6 +1067,13 @@ class ManagerImpl {
      * @return short Number of account
      */
     short loadAccountMap();
+
+    /**
+     * Load the accounts order set by the user from the sflphonedrc config file
+     * @return std::vector<std::string> A vector containing the account ID's
+     */
+    std::vector<std::string> loadAccountOrder ();
+
 
     /**
      * Unload the account (delete them)

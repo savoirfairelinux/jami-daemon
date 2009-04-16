@@ -153,16 +153,25 @@ call_state_cb (DBusGProxy *proxy UNUSED,
     }
   }
   else
-  { //The callID is unknow, threat it like a new call
+  { 
+    // The callID is unknow, threat it like a new call
+    // If it were an incoming call, we won't be here
+    // It means that a new call has been initiated with an other client (cli for instance)
     if ( strcmp(state, "RINGING") == 0 )
     {
-      g_print ("New ringing call! %s\n",callID);
-      call_t * c = g_new0 (call_t, 1);
-      c->accountID = g_strdup("1");
-      c->callID = g_strdup(callID);
-      c->from = g_strdup("\"\" <>");
-      c->state = CALL_STATE_RINGING;
-      sflphone_incoming_call (c);
+        call_t *new_call;
+        GHashTable *call_details;
+
+        g_print ("New ringing call! accountID: %s\n", callID);
+        
+        // We fetch the details associated to the specified call
+        call_details = dbus_get_call_details (callID);
+        create_new_call_from_details (callID, call_details, &new_call);
+
+        // Restore the callID to be synchronous with the daemon
+        new_call->callID = g_strdup(callID);
+      
+        sflphone_incoming_call (new_call);
     }
   }
 }
@@ -1549,4 +1558,28 @@ void dbus_set_hook_settings (GHashTable * settings){
     }
 }
 
+GHashTable* dbus_get_call_details (const gchar *callID) 
+{
+    GError *error = NULL;
+    GHashTable *details = NULL;
+
+    org_sflphone_SFLphone_CallManager_get_call_details (callManagerProxy, callID, &details, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_CallManager_get_call_details\n");
+        g_error_free (error);
+    }
+
+    return details;
+}
+
+void dbus_set_accounts_order (const gchar* order) {
+
+    GError *error = NULL;
+    
+    org_sflphone_SFLphone_ConfigurationManager_set_accounts_order (configurationManagerProxy, order, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_set_accounts_order\n");
+        g_error_free (error);
+    }
+}
 
