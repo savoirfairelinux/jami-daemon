@@ -279,7 +279,7 @@ gchar * account_list_get_ordered_list (void) {
 
     for( i=0; i<account_list_get_size(); i++ )
     {
-        order = g_strconcat (account_list_get_nth (i)->accountID, "/", NULL);
+        order = g_strconcat (order, account_list_get_nth (i)->accountID, "/", NULL);
     }
     return order;
 }
