@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.net> 
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -66,13 +66,13 @@ codec_list_add(codec_t * c)
 }
 
 
-void 
+void
 codec_set_active(gchar* name)
 {
 	codec_t * c = codec_list_get(name);
 	if(c)
 	{
-		printf("%s set active\n", c->name);
+		DEBUG("%s set active", c->name);
 		c->is_active = TRUE;
 	}
 }
@@ -116,7 +116,7 @@ codec_set_prefered_order(guint index)
 }
 
 /**
- * 
+ *
  */
 void
 codec_list_move_codec_up(guint index)
@@ -126,16 +126,16 @@ codec_list_move_codec_up(guint index)
 		gpointer codec = g_queue_pop_nth(codecQueue, index);
 		g_queue_push_nth(codecQueue, codec, index-1);
 	}
-	
+
 	// DEBUG
 	unsigned int i;
-	printf("\nCodec list\n");
+	DEBUG("Codec list");
 	for(i=0; i < codecQueue->length; i++)
-		printf("%s\n", codec_list_get_nth(i)->name);
+		DEBUG("%s", codec_list_get_nth(i)->name);
 }
 
 /**
- * 
+ *
  */
 void
 codec_list_move_codec_down(guint index)
@@ -148,29 +148,29 @@ codec_list_move_codec_down(guint index)
 
 	// PRINT
 	unsigned int i;
-	printf("\nCodec list\n");
+	DEBUG("Codec list");
 	for(i=0; i < codecQueue->length; i++)
-		printf("%s\n", codec_list_get_nth(i)->name);
+		DEBUG("%s", codec_list_get_nth(i)->name);
 }
 
 /**
- * 
+ *
  */
 void
 codec_list_update_to_daemon()
 {
 	// String listing of all codecs payloads
 	const gchar** codecList;
-	
+
 	// Length of the codec list
 	int length = codecQueue->length;
-	
+
 	// Initiate double array char list for one string
 	codecList = (void*)malloc(sizeof(void*));
-	
+
 	// Get all codecs in queue
 	int i, c = 0;
-	printf("List of active codecs :");
+	DEBUG("List of active codecs :");
 	for(i = 0; i < length; i++)
 	{
 		codec_t* currentCodec = codec_list_get_nth(i);
@@ -189,18 +189,16 @@ codec_list_update_to_daemon()
 				// Put payload string in char array
 				sprintf(payload, "%d", currentCodec->_payload);
 				strcpy((char*)*(codecList+c), payload);
-				g_print(" %s", *(codecList+c));
+				DEBUG(" %s", *(codecList+c));
 				c++;
 			}
 		}
 	}
-	
+
 	// Allocate NULL array at the end for Dbus
 	codecList = (void*)realloc(codecList, (c+1)*sizeof(void*));
 	*(codecList+c) = NULL;
 
-	printf("\n");
-		
 	// call dbus function with array of strings
 	dbus_set_active_codec_list(codecList);
 

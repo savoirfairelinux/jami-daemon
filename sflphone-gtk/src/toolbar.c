@@ -51,7 +51,7 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
   account_id = g_strdup (current->accountID);
 
   create_new_call (to, from, CALL_STATE_DIALING, account_id, &mailbox_call);
-  g_print("TO : %s\n" , mailbox_call->to);
+  DEBUG("TO : %s" , mailbox_call->to);
   calllist_add( current_calls , mailbox_call );
   calltree_add_call( current_calls , mailbox_call );
   update_menus();
@@ -65,7 +65,7 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
   static void
 call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
-  g_print("------ call_button ----- \n");
+  DEBUG("------ call_button -----");
   call_t * selectedCall;
   call_t* new_call;
   gchar *to, *from;
@@ -78,14 +78,14 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
   else if(calllist_get_size(active_calltree) > 0){
     if( selectedCall)
     {
-      printf("Calling a called num\n");
+      DEBUG("Calling a called num");
 
       to = g_strdup(call_get_number(selectedCall));
       from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
 
       create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
 
-      printf("call : from : %s to %s\n", new_call->from, new_call->to);
+      DEBUG("call : from : %s to %s", new_call->from, new_call->to);
 
       calllist_add(current_calls, new_call);
       calltree_add_call(current_calls, new_call);
@@ -369,7 +369,7 @@ toolbar_update_buttons ()
               // Fix bug #1145
               // Actually it could happen when sflphone_fill_account_list()
               // call this function and no "call" is selected
-              // g_warning("Toolbar update - Should not happen!");
+              // WARN("Toolbar update - Should not happen!");
           break;
         }
     }

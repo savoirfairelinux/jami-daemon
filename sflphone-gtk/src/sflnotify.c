@@ -1,17 +1,17 @@
 /*
  *  Copyright (C) 2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -24,7 +24,7 @@ static NotifyNotification *notification;
     void
 notify_incoming_call( call_t* c  )
 {
-    if( dbus_get_notify()){ 
+    if( dbus_get_notify()){
 
         GdkPixbuf *pixbuf;
         gchar* callerid;
@@ -35,15 +35,15 @@ notify_incoming_call( call_t* c  )
             title = g_markup_printf_escaped ("IP-to-IP call");
         }
         else {
-            title = g_markup_printf_escaped(_("%s account: %s") , 
-                    (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_TYPE) , 
+            title = g_markup_printf_escaped(_("%s account: %s") ,
+                    (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_TYPE) ,
                     (gchar*)g_hash_table_lookup(account_list_get_by_id(c->accountID)->properties , ACCOUNT_ALIAS) ) ;
         }
         callerid = g_markup_printf_escaped(_("<i>From:</i> %s") , c->from);
 
         pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
 
-        notification = notify_notification_new( title, 
+        notification = notify_notification_new( title,
                 callerid,
                 NULL,
                 NULL);
@@ -59,7 +59,7 @@ notify_incoming_call( call_t* c  )
         notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
 
         if (!notify_notification_show (notification, NULL)) {
-            g_print("notify(), failed to send notification\n");
+            ERROR("notify(), failed to send notification");
         }
     }
 }
@@ -95,7 +95,7 @@ ignore_call_cb( NotifyNotification *notification, gpointer data  UNUSED)
 notify_voice_mails( guint count , account_t* acc )
 {
 
-    if( dbus_get_mail_notify()) { 
+    if( dbus_get_mail_notify()) {
         // the account is different from NULL
         GdkPixbuf *pixbuf;
         gchar* title;
@@ -122,7 +122,7 @@ notify_voice_mails( guint count , account_t* acc )
         notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
 
         if (!notify_notification_show (notification, NULL)) {
-            g_print("notify(), failed to send notification\n");
+            ERROR("notify(), failed to send notification");
         }
     }
 }
@@ -159,7 +159,7 @@ notify_current_account( account_t* acc )
         notify_notification_add_action( notification , "ignore" , _("Ignore") , (NotifyActionCallback) ignore_call_cb , NULL , NULL );
 
         if (!notify_notification_show (notification, NULL)) {
-            g_print("notify(), failed to send notification\n");
+            ERROR("notify(), failed to send notification");
         }
     }
 }
@@ -171,7 +171,7 @@ notify_no_accounts(  )
     gchar* body="";
     notify_init("sflphone");
 
-    body = g_markup_printf_escaped(_("You haven't setup any accounts")); 
+    body = g_markup_printf_escaped(_("You haven't setup any accounts"));
 
     title = g_markup_printf_escaped(_("Error"));
 
@@ -190,7 +190,7 @@ notify_no_accounts(  )
     //notify_notification_add_action( notification , "setup" , _("Setup Accounts") , (NotifyActionCallback) setup_accounts_cb , NULL , NULL );
 
     if (!notify_notification_show (notification, NULL)) {
-        g_print("notify(), failed to send notification\n");
+        ERROR("notify(), failed to send notification");
     }
 }
 
@@ -211,7 +211,7 @@ notify_no_registered_accounts(  )
     notify_init("sflphone");
 
 
-    body = g_markup_printf_escaped(_("You have no registered accounts")); 
+    body = g_markup_printf_escaped(_("You have no registered accounts"));
 
 
     title = g_markup_printf_escaped(_("Error"));
@@ -231,17 +231,17 @@ notify_no_registered_accounts(  )
     //notify_notification_add_action( notification , "setup" , _("Setup Accounts") , (NotifyActionCallback) setup_accounts_cb , NULL , NULL );
 
   if (!notify_notification_show (notification, NULL)) {
-    g_print("notify(), failed to send notification\n");
+    ERROR("notify(), failed to send notification");
   }
 
 }
 
-    void  
+    void
 stop_notification( void )
 {
     if( notification != NULL )
     {
-        if(notify_notification_show( notification , NULL))  
+        if(notify_notification_show( notification , NULL))
         {
             notify_notification_close( notification , NULL);
             g_object_unref( notification );

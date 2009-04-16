@@ -270,7 +270,7 @@ eds_async_open_callback(EBook *book, EBookStatus status, gpointer closure)
     }
   else
     {
-      g_warning("Got error %d when opening book", status);
+      WARN("Got error %d when opening book", status);
     }
 }
 

@@ -21,7 +21,7 @@
  *  To test:
  *
  *  cc -o reqhttp reqhttp.c -DBUILD_EXAMPLE
- * 
+ *
  */
 
 #include <stdio.h>
@@ -35,6 +35,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sflphone_const.h>
 
 #include "reqaccount.h"
 
@@ -48,7 +49,7 @@ int req(char *host, int port, char *req, char *ret) {
   int i=0;
   FILE *f;
   char buf[1024];
-  
+
   bzero(&servSockAddr, sizeof(servSockAddr));
   servHostEnt = gethostbyname(host);
   if (servHostEnt == NULL) {
@@ -58,18 +59,18 @@ int req(char *host, int port, char *req, char *ret) {
   bcopy((char *)servHostEnt->h_addr, (char *)&servSockAddr.sin_addr, servHostEnt->h_length);
   servSockAddr.sin_port = htons(port);
   servSockAddr.sin_family = AF_INET;
-  
+
   if ((s = socket(AF_INET,SOCK_STREAM,0)) < 0) {
     strcpy(ret, "socket");
     return -1;
   }
-  
+
   if(connect(s, (const struct sockaddr *) &servSockAddr, (socklen_t) sizeof(servSockAddr)) < 0 ) {
     perror("foo");
     strcpy(ret, "connect");
     return -1;
   }
-  
+
   f = fdopen(s, "r+");
 
   fprintf(f, "%s HTTP/1.1\r\n", req);
@@ -103,7 +104,7 @@ rest_account get_rest_account(char *host,char *email) {
   char ret[4096];
   rest_account ra;
   bzero(ret, sizeof(ret));
-	printf("HOST: %s\n", host);
+	DEBUG("HOST: %s", host);
 	strcpy(ret,"GET /rest/accountcreator?email=");
 	strcat(ret, email);
   if (req(host, 80, ret, ret) != -1) {
@@ -127,7 +128,7 @@ int main (void) {
     puts(acc.user);
     puts(acc.passwd);
   } else {
-    printf("FAILED: %s\n", acc.reason);
+    ERROR("FAILED: %s", acc.reason);
   }
 }
 #endif

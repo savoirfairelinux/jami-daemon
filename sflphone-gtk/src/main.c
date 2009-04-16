@@ -27,24 +27,29 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
-#include "log4c.h"
-
-static log4c_category_t* log4c_global_category = NULL;
-
-static void
-startup_logging()
-{
-  log4c_init();
-  log4c_global_category = log4c_category_get("org.sflphone.gtk");
-}
-
+/**
+ * Stop logging engine
+ */
 static void
 shutdown_logging()
 {
   if (log4c_fini())
     {
-      printf("log4c_fini() failed");
+      ERROR("log4c_fini() failed");
     }
+}
+
+/**
+ * Start loggin engine
+ */
+static void
+startup_logging()
+{
+  log4c_init();
+  if (log4c_load(DATA_DIR "/log4crc") == -1)
+    g_warning("Cannot load log4j configuration file : %s",DATA_DIR "/log4crc");
+
+  log4c_sfl_gtk_category = log4c_category_get("org.sflphone.gtk");
 }
 
 int
@@ -53,11 +58,13 @@ main(int argc, char *argv[])
   // Handle logging
   int i;
 
+  // Startup logging
   startup_logging();
 
+  // Check arguments if debug mode is activated
   for (i = 0; i < argc; i++)
     if (g_strcmp0(argv[i], "--debug") == 0)
-      log4c_category_set_priority(log4c_global_category, LOG4C_PRIORITY_DEBUG);
+      log4c_category_set_priority(log4c_sfl_gtk_category, LOG4C_PRIORITY_DEBUG);
 
   // Start GTK application
 

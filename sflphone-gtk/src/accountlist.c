@@ -2,22 +2,22 @@
  *  Copyright (C) 2007 Savoir-Faire Linux inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #include <accountlist.h>
 #include <actions.h>
 #include <string.h>
@@ -26,7 +26,7 @@ GQueue * accountQueue;
 gchar* __CURRENT_ACCOUNT_ID = NULL;
 
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
-gint 
+gint
 is_accountID_struct ( gconstpointer a, gconstpointer b)
 {
   account_t * c = (account_t*)a;
@@ -41,7 +41,7 @@ is_accountID_struct ( gconstpointer a, gconstpointer b)
 }
 
 /* GCompareFunc to get current call (gchar* and a account_t) */
-gint 
+gint
 get_state_struct ( gconstpointer a, gconstpointer b)
 {
   account_t * c = (account_t*)a;
@@ -55,26 +55,26 @@ get_state_struct ( gconstpointer a, gconstpointer b)
   }
 }
 
-void 
+void
 account_list_init ()
 {
   accountQueue = g_queue_new ();
 }
 
-void 
+void
 account_list_clean ()
 {
   g_queue_free (accountQueue);
 }
 
-void 
+void
 account_list_add (account_t * c)
 {
   g_queue_push_tail (accountQueue, (gpointer *) c);
 }
 
 
-void 
+void
 account_list_remove (const gchar * accountID)
 {
   GList * c = g_queue_find_custom (accountQueue, accountID, is_accountID_struct);
@@ -85,7 +85,7 @@ account_list_remove (const gchar * accountID)
 }
 
 
-account_t * 
+account_t *
 account_list_get_by_state (account_state_t state )
 {
   GList * c = g_queue_find_custom (accountQueue, &state, get_state_struct);
@@ -93,11 +93,11 @@ account_list_get_by_state (account_state_t state )
   {
     return (account_t *)c->data;
   }
-  else 
+  else
   {
     return NULL;
   }
-  
+
 }
 
 account_t *
@@ -120,7 +120,7 @@ account_list_get_size ( )
   return g_queue_get_length (accountQueue);
 }
 
-account_t * 
+account_t *
 account_list_get_nth ( guint n )
 {
   return g_queue_peek_nth (accountQueue, n);
@@ -138,7 +138,7 @@ account_list_get_current( )
 void
 account_list_set_current_id(const gchar * accountID)
 {
-  g_print("set current id = %s\n", accountID);
+  DEBUG("set current id = %s", accountID);
   __CURRENT_ACCOUNT_ID = g_strdup(accountID);
 }
 
@@ -227,14 +227,14 @@ account_list_get_registered_accounts( void )
     if( account_list_get_nth( i ) -> state == ( ACCOUNT_STATE_REGISTERED ))
       res ++;
   }
-  g_print(" %d registered accounts \n" , res );
+  DEBUG(" %d registered accounts" , res );
   return res;
 }
 
 gchar* account_list_get_current_id( void ){
         if( __CURRENT_ACCOUNT_ID == NULL )
             return "";
-        else 
+        else
             return __CURRENT_ACCOUNT_ID;
 }
 
