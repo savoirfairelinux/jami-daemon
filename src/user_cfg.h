@@ -61,6 +61,7 @@
 #define CONFIG_AUDIO		"Audio.api"		  /** Audio manager (ALSA or pulseaudio) */
 #define CONFIG_PA_VOLUME_CTRL	"Pulseaudio.volumeCtrl"	  /** Whether or not PA should modify volume of other applications on the same sink */
 #define CONFIG_SIP_PORT         "SIP.portNum"
+#define CONFIG_ACCOUNTS_ORDER    "Accounts.order"            /** To restore account order */
 
 #define SIGNALISATION		"VoIPLink"	      /** Section Signalisation */
 #define PLAY_DTMF		"DTMF.playDtmf"	      /** Whether or not should play dtmf */
