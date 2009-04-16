@@ -1571,3 +1571,15 @@ GHashTable* dbus_get_call_details (const gchar *callID)
 
     return details;
 }
+
+void dbus_set_accounts_order (const gchar* order) {
+
+    GError *error = NULL;
+    
+    org_sflphone_SFLphone_ConfigurationManager_set_accounts_order (configurationManagerProxy, order, &error);
+    if (error){
+        g_print ("Error calling org_sflphone_SFLphone_ConfigurationManager_set_accounts_order\n");
+        g_error_free (error);
+    }
+}
+

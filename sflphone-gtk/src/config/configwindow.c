@@ -300,6 +300,10 @@ account_move(gboolean moveUp, gpointer data)
         account_list_move_up(indice);
     else
         account_list_move_down(indice);
+
+
+    // Set the order in the configuration file
+    dbus_set_accounts_order (account_list_get_ordered_list ());
 }
 
 /**

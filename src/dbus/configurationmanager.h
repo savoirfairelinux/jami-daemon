@@ -109,6 +109,8 @@ public:
     std::vector< std::string > getAddressbookList ( void );
     void setAddressbookList( const std::vector< std::string >& list );
 
+    void setAccountsOrder (const std::string& order);
+
     std::map<std::string, std::string> getHookSettings (void);
     void setHookSettings (const std::map<std::string, std::string>& settings);
 

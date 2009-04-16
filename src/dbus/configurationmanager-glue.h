@@ -23,6 +23,7 @@ public:
         register_method(ConfigurationManager_adaptor, getAccountDetails, _getAccountDetails_stub);
         register_method(ConfigurationManager_adaptor, setAccountDetails, _setAccountDetails_stub);
         register_method(ConfigurationManager_adaptor, addAccount, _addAccount_stub);
+        register_method(ConfigurationManager_adaptor, setAccountsOrder, _setAccountsOrder_stub);
         register_method(ConfigurationManager_adaptor, removeAccount, _removeAccount_stub);
         register_method(ConfigurationManager_adaptor, getAccountList, _getAccountList_stub);
         register_method(ConfigurationManager_adaptor, sendRegister, _sendRegister_stub);
@@ -104,6 +105,11 @@ public:
         static ::DBus::IntrospectedArgument addAccount_args[] = 
         {
             { "details", "a{ss}", true },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setAccountsOrder_args[] = 
+        {
+            { "order", "s", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument removeAccount_args[] = 
@@ -428,6 +434,7 @@ public:
             { "getAccountDetails", getAccountDetails_args },
             { "setAccountDetails", setAccountDetails_args },
             { "addAccount", addAccount_args },
+            { "setAccountsOrder", setAccountsOrder_args },
             { "removeAccount", removeAccount_args },
             { "getAccountList", getAccountList_args },
             { "sendRegister", sendRegister_args },
@@ -527,6 +534,7 @@ public:
     virtual std::map< std::string, std::string > getAccountDetails(const std::string& accountID) = 0;
     virtual void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details) = 0;
     virtual void addAccount(const std::map< std::string, std::string >& details) = 0;
+    virtual void setAccountsOrder(const std::string& order) = 0;
     virtual void removeAccount(const std::string& accoundID) = 0;
     virtual std::vector< std::string > getAccountList() = 0;
     virtual void sendRegister(const std::string& accountID, const int32_t& expire) = 0;
@@ -645,6 +653,15 @@ private:
 
         std::map< std::string, std::string > argin1; ri >> argin1;
         addAccount(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _setAccountsOrder_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::string argin1; ri >> argin1;
+        setAccountsOrder(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }
