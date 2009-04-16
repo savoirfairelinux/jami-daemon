@@ -2159,7 +2159,7 @@ ManagerImpl::getAccountList()
     // Otherelse, load the custom one
     // ie according to the saved order
     else {
-
+               
         for (i=0; i<account_order.size (); i++) {
             // This account has not been loaded, so we ignore it
             if ( (iter=_accountMap.find (account_order[i])) != _accountMap.end() )
@@ -2171,6 +2171,8 @@ ManagerImpl::getAccountList()
                 }
             }
         }
+
+        
     }
    
     return v;
@@ -2269,11 +2271,17 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
 {
 
     /** @todo Deal with both the _accountMap and the Configuration */
-    std::string accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
+    std::string accountType, account_list;
     Account* newAccount;
     std::stringstream accountID;
+    AccountID newAccountID;
+
     accountID << "Account:" << time(NULL);
-    AccountID newAccountID = accountID.str();
+    newAccountID = accountID.str();
+    
+    // Get the type
+    accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second;
+
     /** @todo Verify the uniqueness, in case a program adds accounts, two in a row. */
 
     if (accountType == "SIP") {
@@ -2288,6 +2296,16 @@ ManagerImpl::addAccount(const std::map< std::string, std::string >& details)
     }
     _accountMap[newAccountID] = newAccount;
     setAccountDetails(accountID.str(), details);
+
+    // Add the newly created account in the account order list
+    account_list = getConfigString (PREFERENCES, CONFIG_ACCOUNTS_ORDER);
+    if (account_list != "")
+    {
+        newAccountID += "/";
+        // Prepend the new account 
+        account_list.insert (0, newAccountID);
+        setConfig (PREFERENCES, CONFIG_ACCOUNTS_ORDER, account_list);
+    }
 
     saveConfig();
 
