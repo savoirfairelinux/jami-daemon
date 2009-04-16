@@ -6,8 +6,7 @@ int main(int argc, const char* argv[])
     CppUnit::TextTestRunner runner;
     runner.addTest(CppUnit::TestFactoryRegistry::getRegistry().makeTest());
 
-    runner.run();
+    return runner.run();
 
-    return 0;
 }
 

@@ -96,7 +96,22 @@ void create_new_call (gchar *to, gchar *from, call_state_t state, gchar *account
     *new_call = call;
 }
 
-void
+void create_new_call_from_details (const gchar *call_id, GHashTable *details, call_t **call) 
+{
+    gchar *from, *to, *accountID;
+    call_t *new_call;
+    GHashTable *call_details;
+        
+    accountID = g_hash_table_lookup (details, "ACCOUNTID");
+    to = g_hash_table_lookup (details, "PEER_NUMBER");
+    from = g_markup_printf_escaped("\"\" <%s>",  to);
+        
+    create_new_call (from, from, CALL_STATE_DIALING, accountID, &new_call);
+    *call = new_call;
+}
+
+    
+    void
 free_call_t (call_t *c)
 {
     g_free (c->callID);

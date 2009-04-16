@@ -271,3 +271,15 @@ int account_list_get_iax_account_number( void ){
 
     return n;
 }
+
+gchar * account_list_get_ordered_list (void) {
+
+    gchar *order="";
+    guint i;
+
+    for( i=0; i<account_list_get_size(); i++ )
+    {
+        order = g_strconcat (account_list_get_nth (i)->accountID, "/", NULL);
+    }
+    return order;
+}
