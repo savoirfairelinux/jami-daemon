@@ -28,6 +28,11 @@ AC_PROG_INSTALL
 AC_STDC_HEADERS
 AC_PROG_LIBTOOL
 
+AC_CHECK_HEADERS(log4c.h, have_log4c=true, have_log4c=false)
+if ! $have_log4c; then
+    AC_MSG_ERROR(Please install the log4c library)
+fi
+
 PKG_CHECK_MODULES(DEPS, \
     dbus-glib-1 >= 0.35 \
     libnotify >= 0.4 \
