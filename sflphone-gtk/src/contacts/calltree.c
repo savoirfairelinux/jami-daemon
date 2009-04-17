@@ -179,6 +179,9 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
 
     tab->tree = gtk_vbox_new(FALSE, 10);
 
+    // Fix bug #708 (resize)
+    gtk_widget_set_usize(tab->tree,100,80);
+
     gtk_container_set_border_width (GTK_CONTAINER (tab->tree), 0);
 
     sw = gtk_scrolled_window_new( NULL, NULL);
