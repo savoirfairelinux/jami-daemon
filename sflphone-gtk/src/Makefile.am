@@ -5,7 +5,6 @@ bin_PROGRAMS = sflphone-gtk
 SUBDIRS = config contacts dbus
   
 NOFIFY_LIBS = -lnotify
-SEXY_LIBS = -lsexy
 LOG4C = -llog4c
 
 SFLPHONEGTK_LIBS=./contacts/libcontacts.la ./config/libconfig.la ./dbus/libdbus.la
@@ -35,7 +34,7 @@ noinst_HEADERS =  actions.h sflnotify.h mainwindow.h dialpad.h codeclist.h \
 
 EXTRA_DIST   = marshaller.list  
 
-sflphone_gtk_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SEXY_LIBS) $(SFLPHONEGTK_LIBS) $(LOG4C)
+sflphone_gtk_LDADD = $(DEPS_LIBS) $(NOTIFY_LIBS) $(SFLPHONEGTK_LIBS) $(LIBSEXY_LIBS) $(LOG4C)
 
 # add symbolic link	     
 install-exec-local:

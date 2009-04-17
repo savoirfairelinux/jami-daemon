@@ -29,7 +29,9 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 
-#define CAN_REINVITE    1
+#define CAN_REINVITE        1
+
+const pj_str_t STR_USER_AGENT = { (char*)"User-Agent", 10 };
 
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
@@ -288,6 +290,14 @@ void get_remote_sdp_from_offer( pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
         *r_sdp = NULL;
 }
 
+
+std::string SIPVoIPLink::get_useragent_name (void)
+{
+    std::ostringstream  useragent;
+    useragent << PROGNAME << "/" << SFLPHONED_VERSION;
+    return useragent.str();
+}
+
     void
 SIPVoIPLink::getEvent()
 {
@@ -306,13 +316,14 @@ int SIPVoIPLink::sendRegister( AccountID id )
     pj_status_t status;
     int expire_value;
     char contactTmp[256];
-    pj_str_t svr, aor, contact;
+    pj_str_t svr, aor, contact, useragent;
     pjsip_tx_data *tdata;
     std::string tmp, hostname, username, password;
     SIPAccount *account;
     pjsip_regc *regc;
+    pjsip_generic_string_hdr *h;
+    pjsip_hdr hdr_list;
 
-    
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
     hostname = account->getHostname();
     username = account->getUsername();
@@ -384,6 +395,13 @@ int SIPVoIPLink::sendRegister( AccountID id )
     pjsip_regc_set_credentials(regc, 1, cred);
 
     account->setCredInfo(cred);
+
+    // Add User-Agent Header
+    pj_list_init (&hdr_list);
+    useragent = pj_str( (char*)get_useragent_name ().c_str() );
+    h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
+    pj_list_push_back (&hdr_list, (pjsip_hdr*)h);
+    pjsip_regc_add_headers (regc, &hdr_list);
 
     status = pjsip_regc_register(regc, PJ_TRUE, &tdata);
     if (status != PJ_SUCCESS) {
