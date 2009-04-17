@@ -28,17 +28,29 @@ AC_PROG_INSTALL
 AC_STDC_HEADERS
 AC_PROG_LIBTOOL
 
+dnl Check for log4c
 AC_CHECK_HEADERS(log4c.h, have_log4c=true, have_log4c=false)
 if ! $have_log4c; then
     AC_MSG_ERROR(Please install the log4c library)
 fi
 
-PKG_CHECK_MODULES(DEPS, \
-    dbus-glib-1 >= 0.35 \
-    libnotify >= 0.4 \
-    gtk+-2.0 >= 2.2     \
-    glib-2.0 >= 2.2     \
-    libsexy >= 0.1  \
+dnl Check for GTK+ version
+dnl If gtk+-2.0 >= 2.16, we don't need libsexy package anymore
+PKG_CHECK_MODULES(GTK216, gtk+-2.0 >= 2.16, need_libsexy=false, need_libsexy=true)
+if  $need_libsexy; then
+    PKG_CHECK_MODULES(LIBSEXY, libsexy >= 0.1, have_libsexy=true, have_libsexy=false)
+    if ! $have_libsexy; then
+        AC_MSG_ERROR(libsexy package has not been found. Please install it.)
+    fi
+fi
+AC_SUBST(LIBSEXY_CFLAGS)
+AC_SUBST(LIBSEXY_LIBS)
+
+PKG_CHECK_MODULES(DEPS,     \
+    dbus-glib-1 >= 0.35     \
+    libnotify >= 0.4        \
+    gtk+-2.0 >= 2.2         \
+    glib-2.0 >= 2.2         \
     libebook-1.2 >= 2.22
 )
 
