@@ -20,15 +20,20 @@
 #include <check.h>
 #include <stdlib.h>
 #include "../src/contacts/addressbook/eds.h"
+#include "../src/contacts/addressbook.h"
+
+
+void plop()
+{
+  printf("plop\n");
+}
 
 
 START_TEST (test_eds)
 {
-  fail_unless (5 == 5,"Erreur");
+  fail_unless (5 == 2,"Error");
 }
 END_TEST
-
-
 
 Suite *
 contacts_suite (void)
