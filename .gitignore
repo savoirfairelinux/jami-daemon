@@ -93,7 +93,7 @@ sflphone-gtk/src/dbus/Makefile
 sflphone-gtk/src/contacts/Makefile
 sflphone-gtk/src/contacts/addressbook/Makefile
 sflphone-gtk/pixmaps/Makefile
-
+sflphone-gtk/tests/Makefile
 
 
 # Ignore sflphone-gtk stuff
@@ -108,6 +108,10 @@ sflphone-gtk/pixmaps/Makefile
 /sflphone-gtk/sflphone.desktop
 /sflphone-gtk/confdefs.h
 /sflphone-gtk/conftest.dir
+/sflphone-gtk/tests/check_config
+/sflphone-gtk/tests/check_contacts
+/sflphone-gtk/tests/check_dbus
+/sflphone-gtk/tests/check_global
 
 # Ignore sub-modules stuff
 ## libiax2
