@@ -27,7 +27,7 @@ class Celt : public AudioCodec{
     public:
         Celt(int payload=0)
             : AudioCodec(payload, "celt"),
-              _celt_frame_size(256)
+              _celt_frame_size(128)
     {
         _clockRate = 44100;
         _channel = 1;
