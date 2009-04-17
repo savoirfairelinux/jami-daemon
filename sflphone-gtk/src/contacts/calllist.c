@@ -35,7 +35,7 @@ void calllist_add_contact (gchar *contact_name, gchar *contact_phone, contact_ty
 
         // Attach a pixbuf to a contact
         if (photo) {
-            attach_thumbnail (new_call, photo);
+            attach_thumbnail (new_call, gdk_pixbuf_copy(photo));
         }
         else {
             switch (type) {
@@ -109,13 +109,13 @@ calllist_clean_history( void )
 {
   unsigned int i;
   guint size = calllist_get_size( history );
-  g_print("history list size = %i\n", calllist_get_size( history ));
+  DEBUG("history list size = %i", calllist_get_size( history ));
   for( i = 0 ; i < size ; i++ )
   {
-    g_print("Delete calls");
+    DEBUG("Delete calls");
     call_t* c = calllist_get_nth( history , i );
     // Delete the call from the call tree
-    g_print("Delete calls");
+    DEBUG("Delete calls");
     calltree_remove_call(history , c);
   }
   calllist_reset( history );
@@ -127,7 +127,7 @@ calllist_remove_from_history( call_t* c )
 {
   calllist_remove( history, c->callID );
   calltree_remove_call( history, c );
-  g_print("Size of history = %i\n" , calllist_get_size( history ));
+  DEBUG("Size of history = %i" , calllist_get_size( history ));
 }
 
 void

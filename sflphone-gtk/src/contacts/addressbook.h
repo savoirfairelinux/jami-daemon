@@ -30,7 +30,13 @@
 #include <addressbook/eds.h>
 
 /**
- * Execute a search in addressbook
+ * Return addressbook state
+ */
+gboolean
+addressbook_is_ready();
+
+/**
+ * Perform a search in addressbook
  */
 void
 addressbook_search(GtkEntry*);

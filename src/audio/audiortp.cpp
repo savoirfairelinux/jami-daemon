@@ -377,8 +377,8 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     // Store the length of the mic buffer in samples for recording
     _nSamplesMic = nbSample;
 
-    _debug("_audiocodec->getClockRate(): %i \n",_audiocodec->getClockRate());
-    int nbSamplesMax = 2 * _layerFrameSize * _audiocodec->getClockRate() / 1000;
+    _debug("_audiocodec->getClockRate(): %i \n", _audiocodec->getClockRate());
+    int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
     _debug("_nbSamplesMax %i\n", nbSamplesMax);
 
     //_debug("resample data = %i\n", nb_sample_up);

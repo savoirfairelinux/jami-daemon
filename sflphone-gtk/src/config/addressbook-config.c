@@ -158,8 +158,6 @@ addressbook_config_book_active_toggled(
   // Toggle active value
   active = !active;
 
-  printf("-> change active to : %d for %s\n", active, uid);
-
   // Store value
   gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_BOOK_ACTIVE, active, -1);
 
@@ -215,6 +213,7 @@ addressbook_config_fill_book_list()
   GSList *book_list_iterator;
   GtkListStore *store;
   book_data_t *book_data;
+  GSList *books_data = addressbook_get_books_data();
 
   // Get model of view and clear it
   store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));
@@ -232,7 +231,6 @@ addressbook_config_fill_book_list()
     }
 
   store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(book_tree_view)));
-
 }
 
 GtkWidget*

@@ -18,6 +18,7 @@
  */
 
 #include <toolbar.h>
+#include <contacts/addressbook.h>
 
 static gboolean
 is_inserted( GtkWidget* button )
@@ -50,7 +51,7 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
   account_id = g_strdup (current->accountID);
 
   create_new_call (to, from, CALL_STATE_DIALING, account_id, &mailbox_call);
-  g_print("TO : %s\n" , mailbox_call->to);
+  DEBUG("TO : %s" , mailbox_call->to);
   calllist_add( current_calls , mailbox_call );
   calltree_add_call( current_calls , mailbox_call );
   update_menus();
@@ -64,7 +65,7 @@ call_mailbox( GtkWidget* widget UNUSED, gpointer data UNUSED)
   static void
 call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
 {
-  g_print("------ call_button ----- \n");
+  DEBUG("------ call_button -----");
   call_t * selectedCall;
   call_t* new_call;
   gchar *to, *from;
@@ -77,14 +78,14 @@ call_button( GtkWidget *widget UNUSED, gpointer   data UNUSED)
   else if(calllist_get_size(active_calltree) > 0){
     if( selectedCall)
     {
-      printf("Calling a called num\n");
+      DEBUG("Calling a called num");
 
       to = g_strdup(call_get_number(selectedCall));
       from = g_strconcat("\"\" <", call_get_number(selectedCall), ">",NULL);
 
       create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
 
-      printf("call : from : %s to %s\n", new_call->from, new_call->to);
+      DEBUG("call : from : %s to %s", new_call->from, new_call->to);
 
       calllist_add(current_calls, new_call);
       calltree_add_call(current_calls, new_call);
@@ -251,6 +252,7 @@ GtkWidget *create_toolbar ()
   gtk_widget_set_tooltip_text(GTK_WIDGET(contactButton), _("Address book"));
 #endif
   gtk_tool_button_set_label (GTK_TOOL_BUTTON (contactButton), _("Address book"));
+  gtk_widget_set_state( GTK_WIDGET(contactButton), GTK_STATE_INSENSITIVE);
   g_signal_connect (G_OBJECT (contactButton), "toggled", G_CALLBACK (toggle_button_cb), contacts);
   gtk_toolbar_insert(GTK_TOOLBAR(ret), GTK_TOOL_ITEM(contactButton), -1);
 
@@ -364,7 +366,10 @@ toolbar_update_buttons ()
                 gtk_widget_set_sensitive( GTK_WIDGET(recButton),        TRUE);
           break;
             default:
-              g_warning("Toolbar update - Should not happen!");
+              // Fix bug #1145
+              // Actually it could happen when sflphone_fill_account_list()
+              // call this function and no "call" is selected
+              // WARN("Toolbar update - Should not happen!");
           break;
         }
     }
@@ -380,4 +385,11 @@ toolbar_update_buttons ()
             gtk_widget_set_sensitive( GTK_WIDGET(callButton), FALSE);
         }
     }
+
+    // Activate addressbook button if needed
+    // TODO : should be moved in a better place
+    if(addressbook_is_ready())
+      gtk_widget_set_sensitive( GTK_WIDGET(contactButton), TRUE);
+    else
+      gtk_widget_set_sensitive( GTK_WIDGET(contactButton), FALSE);
 }

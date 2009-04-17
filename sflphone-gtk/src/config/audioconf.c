@@ -1,17 +1,17 @@
 /*
  *  Copyright (C) 2008 Savoir-Faire Linux inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -62,7 +62,7 @@ config_window_fill_codec_list()
     for(i = 0; i < codec_list_get_size(); i++)
     {
         codec_t *c = codec_list_get_nth(i);
-        printf("%s\n", c->name);
+        DEBUG("%s", c->name);
         if(c)
         {
             gtk_list_store_append(codecStore, &iter);
@@ -151,7 +151,7 @@ select_active_output_audio_device()
         // Select active output device on server
         devices = dbus_get_current_audio_devices_index();
         currentDeviceIndex = atoi(devices[0]);
-        printf(_("audio device index for output = %d\n"), currentDeviceIndex);
+        DEBUG(_("audio device index for output = %d"), currentDeviceIndex);
         model = gtk_combo_box_get_model(GTK_COMBO_BOX(output));
 
         // Find the currently set output device
@@ -167,7 +167,7 @@ select_active_output_audio_device()
         } while(gtk_tree_model_iter_next(model, &iter));
 
         // No index was found, select first one
-        g_print("Warning : No active output device found");
+        WARN("Warning : No active output device found");
         gtk_combo_box_set_active(GTK_COMBO_BOX(output), 0);
     }
 }
@@ -233,7 +233,7 @@ select_active_input_audio_device()
         } while(gtk_tree_model_iter_next(model, &iter));
 
         // No index was found, select first one
-        g_print("Warning : No active input device found");
+        WARN("Warning : No active input device found");
         gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
     }
 }
@@ -255,7 +255,7 @@ select_output_audio_plugin(GtkComboBox* widget, gpointer data UNUSED)
     {
         model = gtk_combo_box_get_model(widget);
         gtk_combo_box_get_active_iter(widget, &iter);
-        gtk_tree_model_get(model, &iter, 0, &pluginName, -1);	
+        gtk_tree_model_get(model, &iter, 0, &pluginName, -1);
         dbus_set_output_audio_plugin(pluginName);
         //update_combo_box( pluginName);
     }
@@ -291,7 +291,7 @@ select_active_output_audio_plugin()
     } while(gtk_tree_model_iter_next(model, &iter));
 
     // No index was found, select first one
-    g_print("Warning : No active output device found\n");
+    WARN("Warning : No active output device found");
     gtk_combo_box_set_active(GTK_COMBO_BOX(plugin), 0);
 }
 
@@ -409,7 +409,7 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
 
     gtk_tree_path_free(treePath);
 
-    // Modify codec queue to represent change	
+    // Modify codec queue to represent change
     if(active)
         codec_set_active(codec);
     else
@@ -498,16 +498,16 @@ codec_move_down(GtkButton *button UNUSED, gpointer data)
     codec_move(FALSE, data);
 }
 
-    int 
+    int
 is_ringtone_enabled( void )
 {
-    return dbus_is_ringtone_enabled();  
+    return dbus_is_ringtone_enabled();
 }
 
-    void 
+    void
 ringtone_enabled( void )
 {
-    dbus_ringtone_enabled();  
+    dbus_ringtone_enabled();
 }
 
     void
@@ -615,24 +615,24 @@ GtkWidget* codecs_box()
 select_audio_manager( void )
 {
 
-    g_print("audio manager selected\n");
+    DEBUG("audio manager selected");
 
     if( !SHOW_ALSA_CONF && !gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ) )
     {
         dbus_set_audio_manager( ALSA );
-        g_print(" display alsa conf panel\n");
+        DEBUG(" display alsa conf panel");
         alsabox = alsa_box();
         gtk_container_add( GTK_CONTAINER(alsa_conf ) , alsabox);
-        gtk_widget_show( alsa_conf );    
+        gtk_widget_show( alsa_conf );
     }
     else if( SHOW_ALSA_CONF && gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ))
     {
         dbus_set_audio_manager( PULSEAUDIO );
-        g_print(" remove alsa conf panel\n");
+        DEBUG(" remove alsa conf panel");
         gtk_container_remove( GTK_CONTAINER(alsa_conf) , alsabox );
     }
     else
-        g_print("alsa conf panel...nothing\n");
+        DEBUG("alsa conf panel...nothing");
 
     //gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) )? dbus_set_audio_manager( PULSEAUDIO ):dbus_set_audio_manager( ALSA );
 }
@@ -673,7 +673,7 @@ GtkWidget* alsa_box()
     gtk_box_pack_start( GTK_BOX(ret) , table , TRUE , TRUE , 1);
     gtk_widget_show(table);
 
-    g_print("plugin\n");
+    DEBUG("plugin");
     item = gtk_label_new(_("ALSA plugin"));
     gtk_misc_set_alignment(GTK_MISC(item), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), item, 1, 2, 1, 2, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -695,7 +695,7 @@ GtkWidget* alsa_box()
 
     // Device : Output device
     // Create title label
-    g_print("output\n");
+    DEBUG("output");
     item = gtk_label_new(_("Output"));
     gtk_misc_set_alignment(GTK_MISC(item), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), item, 1, 2, 2, 3, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -717,7 +717,7 @@ GtkWidget* alsa_box()
 
     // Device : Input device
     // Create title label
-    g_print("input\n");
+    DEBUG("input");
     item = gtk_label_new(_("Input"));
     gtk_misc_set_alignment(GTK_MISC(item), 0, 0.5);
     gtk_table_attach(GTK_TABLE(table), item, 1, 2, 3, 4, GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
@@ -739,7 +739,7 @@ GtkWidget* alsa_box()
 
     gtk_widget_show_all(ret);
 
-    g_print("done\n");
+    DEBUG("done");
     return ret;
 }
 
@@ -757,8 +757,8 @@ GtkWidget* ringtones_box()
     g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
     // file chooser button
     fileChooser = gtk_file_chooser_button_new(_("Choose a ringtone"), GTK_FILE_CHOOSER_ACTION_OPEN);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());	
-    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , get_ringtone_choice());	
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER( fileChooser) , g_get_home_dir());
+    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER( fileChooser) , get_ringtone_choice());
     g_signal_connect( G_OBJECT( fileChooser ) , "selection_changed" , G_CALLBACK( ringtone_changed ) , NULL );
     GtkFileFilter *filter = gtk_file_filter_new();
     gtk_file_filter_set_name( filter , _("Audio Files") );
@@ -786,7 +786,7 @@ GtkWidget* noise_box()
     gtk_widget_set_sensitive(GTK_WIDGET(noise_conf), FALSE);
     //TODO Add a callback function
     //g_signal_connect(G_OBJECT( enableNoiseReduction) , "clicked" , NULL , NULL);
-        
+
     return ret;
 }
 

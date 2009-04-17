@@ -286,7 +286,7 @@ main_window_volume_controls( gboolean *state ){
 }
 
 void
-main_window_searchbar( gboolean *state ){
+main_window_searchbar( gboolean *state UNUSED){
   if( !SHOW_SEARCHBAR )
   {
     // filterEntry = create_filter_entry();

@@ -21,7 +21,6 @@
 #include <string.h>
 #include <searchbar.h>
 #include <calltab.h>
-#include <sflphone_const.h>
 
 GtkTreeModel* history_filter;
 GtkWidget * history_searchbar_widget;
@@ -31,7 +30,7 @@ static gboolean history_is_visible (GtkTreeModel*, GtkTreeIter*, gpointer);
 
 
 void
-history_search(GtkEntry* entry){
+history_search(GtkEntry* entry UNUSED){
 
   gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(history_filter));
 }
@@ -59,7 +58,7 @@ history_create_filter (GtkTreeModel* child) {
 }
 
 static gboolean
-history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data) {
+history_is_visible (GtkTreeModel* model, GtkTreeIter* iter, gpointer data UNUSED) {
 
     if( SHOW_SEARCHBAR )
     {

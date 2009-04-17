@@ -67,7 +67,7 @@ void
 slider_moved(GtkRange* range, gchar* device)
 {
   gdouble value = gtk_range_get_value(range);
-  g_print("Volume changed for %s: %f\n ", device, value);
+  DEBUG("Volume changed for %s: %f ", device, value);
   dbus_set_volume(device, value);
   if(strcmp(device, "speaker") == 0)
     update_icons(SPEAKER);
@@ -86,13 +86,13 @@ mute_cb( GtkWidget *widget, gchar*  device )
 
   if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))
   { // Save value
-    g_print("Save");
+    DEBUG("Save");
     value[dev] = gtk_range_get_value(GTK_RANGE(slider[dev]));
     dbus_set_volume(device, 0);
   }
   else
   { //Restore value
-    g_print("Restore");
+    DEBUG("Restore");
     dbus_set_volume(device, value[dev]);
   }
   update_icons (dev);

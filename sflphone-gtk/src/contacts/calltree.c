@@ -65,7 +65,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
     call_t* new_call;
     gchar *to, *from, *account_id;
 
-    g_print("double click action\n");
+    DEBUG("double click action");
 
     selectedCall = calltab_get_selected_call( active_calltree );
 
@@ -92,7 +92,7 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
                     sflphone_place_call (selectedCall);
                     break;
                 default:
-                    g_warning("Row activated - Should not happen!");
+                    WARN("Row activated - Should not happen!");
                     break;
             }
         }
@@ -349,7 +349,7 @@ calltree_update_call (calltab_t* tab, call_t * c)
                             pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/rec_call.svg", NULL);
                             break;
                         default:
-                            g_warning("Update calltree - Should not happen!");
+                            WARN("Update calltree - Should not happen!");
                     }
                 }
                 else
@@ -357,19 +357,19 @@ calltree_update_call (calltab_t* tab, call_t * c)
                     switch(c->history_state)
                     {
                         case OUTGOING:
-                            g_print("Outgoing state\n");
+                            DEBUG("Outgoing state");
                             pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/outgoing.svg", NULL);
                             break;
                         case INCOMING:
-                            g_print("Incoming state\n");
+                            DEBUG("Incoming state");
                             pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/incoming.svg", NULL);
                             break;
                         case MISSED:
-                            g_print("Missed state\n");
+                            DEBUG("Missed state");
                             pixbuf = gdk_pixbuf_new_from_file( ICONS_DIR "/missed.svg", NULL);
                             break;
                         default:
-                            g_print("No history state\n");
+                            DEBUG("No history state");
                             break;
                     }
                     date = timestamp_get_call_date();
@@ -417,10 +417,6 @@ calltree_add_call (calltab_t* tab, call_t * c)
             call_get_number(c),
             call_get_name(c));
 
-    g_print ("calltree_add_call %s\n", call_get_number (c));
-    g_print ("description %s\n", description);
-
-
     gtk_list_store_prepend (tab->store, &iter);
 
     if( tab == current_calls )
@@ -437,7 +433,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/ring.svg", NULL);
                 break;
             default:
-                g_warning("Update calltree add - Should not happen!");
+                WARN("Update calltree add - Should not happen!");
         }
     }
 
@@ -454,7 +450,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
                 pixbuf = gdk_pixbuf_new_from_file(ICONS_DIR "/missed.svg", NULL);
                 break;
             default:
-                g_warning("History - Should not happen!");
+                WARN("History - Should not happen!");
         }
         date = timestamp_get_call_date();
         description = g_strconcat( date , description , NULL);
@@ -466,7 +462,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
     }
 
     else {
-        g_warning ("This widget doesn't exist - This is a bug in the application\n.");
+        WARN ("This widget doesn't exist - This is a bug in the application.");
     }
 
 
@@ -503,7 +499,7 @@ void calltree_display (calltab_t *tab) {
     /* case 1: we want to display the main calltree */
     if (tab==current_calls) {
 
-        g_print ("display main tab\n");
+        DEBUG ("display main tab");
 
         if (active_calltree==contacts) {
             gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
@@ -516,7 +512,7 @@ void calltree_display (calltab_t *tab) {
     /* case 2: we want to display the history */
     else if (tab==history) {
 
-        g_print ("display history tab\n");
+        DEBUG ("display history tab");
 
         if (active_calltree==contacts) {
             gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)contactButton, FALSE);
@@ -527,7 +523,7 @@ void calltree_display (calltab_t *tab) {
 
     else if (tab==contacts) {
 
-        g_print ("display contact tab\n");
+        DEBUG ("display contact tab");
 
         if (active_calltree==history) {
             gtk_toggle_tool_button_set_active ((GtkToggleToolButton*)historyButton, FALSE);
@@ -537,7 +533,7 @@ void calltree_display (calltab_t *tab) {
     }
 
     else
-        g_print ("calltree.c line 1050 . This is probably a bug in the application\n");
+        ERROR ("calltree.c line 1050 . This is probably a bug in the application");
 
 
     gtk_widget_hide (active_calltree->tree);

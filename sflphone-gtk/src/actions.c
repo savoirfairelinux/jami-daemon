@@ -273,14 +273,14 @@ sflphone_hang_up()
                 dbus_refuse (selectedCall);
                 selectedCall->state = CALL_STATE_DIALING;
                 selectedCall->_stop = 0;
-                g_print("from sflphone_hang_up : "); stop_notification();
+                DEBUG("from sflphone_hang_up : "); stop_notification();
                 break;
             case CALL_STATE_TRANSFERT:
                 dbus_hang_up (selectedCall);
                 (void) time(&selectedCall->_stop);
                 break;
             default:
-                g_warning("Should not happen in sflphone_hang_up()!");
+                WARN("Should not happen in sflphone_hang_up()!");
                 break;
         }
     }
@@ -304,7 +304,7 @@ sflphone_pick_up()
                 selectedCall->history_state = INCOMING;
                 calltree_update_call( history , selectedCall );
                 dbus_accept (selectedCall);
-                g_print("from sflphone_pick_up : "); stop_notification();
+                DEBUG("from sflphone_pick_up : "); stop_notification();
                 break;
             case CALL_STATE_HOLD:
                 sflphone_new_call();
@@ -321,7 +321,7 @@ sflphone_pick_up()
                 sflphone_new_call();
                 break;
             default:
-                g_warning("Should not happen in sflphone_pick_up()!");
+                WARN("Should not happen in sflphone_pick_up()!");
                 break;
         }
     }
@@ -343,7 +343,7 @@ sflphone_on_hold ()
                 break;
 
             default:
-                g_warning("Should not happen in sflphone_on_hold!");
+                WARN("Should not happen in sflphone_on_hold!");
                 break;
         }
     }
@@ -361,15 +361,19 @@ sflphone_off_hold ()
                 dbus_unhold (selectedCall);
                 break;
             default:
-                g_warning("Should not happen in sflphone_off_hold ()!");
+                WARN("Should not happen in sflphone_off_hold ()!");
                 break;
         }
     }
 
     if(dbus_get_is_recording(selectedCall))
-        g_print("Currently recording! \n");
+      {
+        DEBUG("Currently recording!");
+      }
     else
-        g_print("Not recording currently \n");
+      {
+        DEBUG("Not recording currently");
+      }
 }
 
 
@@ -457,8 +461,8 @@ process_dialing(call_t * c, guint keyval, gchar * key)
         //dbus_play_dtmf( key );
     }
 
-    g_print("process_dialing : keyval : %i \n",keyval);
-    g_print("process_dialing : key : %s \n",key);
+    DEBUG("process_dialing : keyval : %i",keyval);
+    DEBUG("process_dialing : key : %s",key);
 
     switch (keyval)
     {
@@ -476,7 +480,7 @@ process_dialing(call_t * c, guint keyval, gchar * key)
 
                     c->to = g_strndup(c->to, strlen(c->to) -1);
                     g_free(before);
-                    g_print("TO: backspace %s\n", c->to);
+                    DEBUG("TO: backspace %s", c->to);
 
                     if(c->state == CALL_STATE_DIALING)
                     {
@@ -508,7 +512,7 @@ process_dialing(call_t * c, guint keyval, gchar * key)
                 gchar * before = c->to;
                 c->to = g_strconcat(c->to, key, NULL);
                 g_free(before);
-                g_print("TO:default %s\n", c->to);
+                DEBUG("TO:default %s", c->to);
 
                 if(c->state == CALL_STATE_DIALING)
                 {
@@ -570,7 +574,7 @@ sflphone_keypad( guint keyval, gchar * key)
     }
     else if(c)
     {
-        printf("call\n");
+        DEBUG("call");
         switch(c->state)
         {
             case CALL_STATE_DIALING: // Currently dialing => edit number
@@ -608,11 +612,11 @@ sflphone_keypad( guint keyval, gchar * key)
                         c->history_state = INCOMING;
                         calltree_update_call( history , c );
                         dbus_accept(c);
-                        g_print("from sflphone_keypad ( enter ) : "); stop_notification();
+                        DEBUG("from sflphone_keypad ( enter ) : "); stop_notification();
                         break;
                     case 65307: /* ESCAPE */
                         dbus_refuse(c);
-                        g_print("from sflphone_keypad ( escape ) : "); stop_notification();
+                        DEBUG("from sflphone_keypad ( escape ) : "); stop_notification();
                         break;
                 }
                 break;
@@ -711,7 +715,7 @@ sflphone_place_call ( call_t * c )
                 } else {
                     current = account_list_get_current();
                 }
-                // printf("sflphone_place_call :: c->accountID : %i \n",c->accountID);
+                // DEBUG("sflphone_place_call :: c->accountID : %i",c->accountID);
 
                 // account_t * current = c->accountID;
 
@@ -807,14 +811,14 @@ sflphone_rec_call()
             selectedCall->state = CALL_STATE_CURRENT;
             break;
         default:
-            g_warning("Should not happen in sflphone_off_hold ()!");
+            WARN("Should not happen in sflphone_off_hold ()!");
             break;
     }
     calltree_update_call(current_calls,selectedCall);
     update_menus();
 
     // gchar* codname = sflphone_get_current_codec_name();
-    // printf("sflphone_get_current_codec_name: %s \n",codname);
+    // DEBUG("sflphone_get_current_codec_name: %s",codname);
 }
 
 /* Internal to action - set the __CURRENT_ACCOUNT variable */
@@ -842,6 +846,9 @@ sflphone_fill_codec_list()
         codec_t * c = g_new0(codec_t, 1);
         c->_payload = atoi(*order);
         details = (gchar **)dbus_codec_details(c->_payload);
+
+        //DEBUG("Codec details: %s / %s / %s / %s",details[0],details[1],details[2],details[3]);
+
         c->name = details[0];
         c->is_active = TRUE;
         c->sample_rate = atoi(details[1]);

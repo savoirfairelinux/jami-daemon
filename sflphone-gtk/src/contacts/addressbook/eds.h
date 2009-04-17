@@ -30,15 +30,20 @@
 #include <glib/gtypes.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <libebook/e-book.h>
+#include <sflphone_const.h>
 
 #define EMPTY_ENTRY     "empty"
 
 G_BEGIN_DECLS
 
+/**
+ * Current search id used to prevent processing
+ * of previous search
+ */
 int current_search_id;
 
 /**
- * Reprsent a contact entry
+ * Represent a contact entry
  */
 typedef struct _Hit
 {
@@ -75,11 +80,17 @@ typedef void
 (* SearchAsyncHandler)(GList *hits, gpointer user_data);
 
 /**
+ * Template callback function for the asynchronous open
+ */
+typedef void
+(* OpenAsyncHandler)();
+
+/**
  * Initialize the address book.
  * Connection to evolution data server
  */
 void
-init(void);
+init(OpenAsyncHandler);
 
 /**
  * Asynchronous search function
@@ -100,6 +111,18 @@ get_books(void);
 
 book_data_t *
 books_get_book_data_by_uid(gchar *uid);
+
+/**
+ * Public way to know if we can perform a search
+ */
+gboolean
+books_ready();
+
+/**
+ * Good method to retrieve books_data (handle async)
+ */
+GSList *
+addressbook_get_books_data();
 
 G_END_DECLS
 

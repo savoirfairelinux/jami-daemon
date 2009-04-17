@@ -96,7 +96,7 @@ void update_menus()
 	gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
 	break;
       default:
-	g_warning("Should not happen in update_menus()!");
+        WARN("Should not happen in update_menus()!");
 	break;
     }
   }
@@ -202,7 +202,7 @@ call_minimize ( void * foo UNUSED)
 switch_account(  GtkWidget* item , gpointer data UNUSED)
 {
   account_t* acc = g_object_get_data( G_OBJECT(item) , "account" );
-  g_print("%s\n" , acc->accountID);
+  DEBUG("%s" , acc->accountID);
   account_list_set_current_id( acc->accountID );
   status_bar_display_account ();
 }
@@ -258,7 +258,7 @@ remove_from_history( void * foo UNUSED)
 {
   call_t* c = calltab_get_selected_call( history );
   if(c){
-    g_print("Remove the call from the history\n");
+    DEBUG("Remove the call from the history");
     calllist_remove_from_history( c );
   }
 }
@@ -454,7 +454,7 @@ edit_paste ( void * foo UNUSED)
 	  gchar * before = selectedCall->to;
 	  selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
 	  g_free(before);
-	  g_print("TO: %s\n", selectedCall->to);
+	  DEBUG("TO: %s", selectedCall->to);
 
 	  if(selectedCall->state == CALL_STATE_DIALING)
 	  {
@@ -475,7 +475,7 @@ edit_paste ( void * foo UNUSED)
 	  gchar * before = selectedCall->to;
 	  selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
 	  g_free(before);
-	  g_print("TO: %s\n", selectedCall->to);
+	  DEBUG("TO: %s", selectedCall->to);
 
 	  g_free(selectedCall->from);
 	  selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
@@ -490,7 +490,7 @@ edit_paste ( void * foo UNUSED)
 	  for(i = 0; i < strlen(no); i++)
 	  {
 	    gchar * oneNo = g_strndup(&no[i], 1);
-	    g_print("<%s>\n", oneNo);
+	    DEBUG("<%s>", oneNo);
 	    dbus_play_dtmf(oneNo);
 
 	    gchar * temp = g_strconcat(call_get_number(selectedCall), oneNo, NULL);
@@ -513,7 +513,7 @@ edit_paste ( void * foo UNUSED)
     gchar * before = selectedCall->to;
     selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
     g_free(before);
-    g_print("TO: %s\n", selectedCall->to);
+    DEBUG("TO: %s", selectedCall->to);
 
     g_free(selectedCall->from);
     selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
@@ -711,7 +711,7 @@ create_menus ( )
 
 /* ----------------------------------------------------------------- */
 
-static void edit_number_cb (GtkWidget *widget, gpointer user_data) {
+static void edit_number_cb (GtkWidget *widget UNUSED, gpointer user_data) {
 
     show_edit_number ((call_t*)user_data);
 }
@@ -758,7 +758,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 	hangup = TRUE;
 	break;
       default:
-	g_warning("Should not happen in show_popup_menu!");
+        WARN("Should not happen in show_popup_menu!");
 	break;
     }
   }
@@ -1038,7 +1038,7 @@ void add_registered_accounts_to_menu (GtkWidget *menu) {
 
 }
 
-static void ok_cb (GtkWidget *widget, gpointer userdata) {
+static void ok_cb (GtkWidget *widget UNUSED, gpointer userdata) {
 
     gchar *new_number, *from;
     call_t *modified_call, *original;
@@ -1046,8 +1046,8 @@ static void ok_cb (GtkWidget *widget, gpointer userdata) {
     // Change the number of the selected call before calling
     new_number = (gchar*) gtk_entry_get_text (GTK_ENTRY (editable_num));
     original = (call_t*)userdata;
-    
-    // Edit the from field with the updated phone number value 
+
+    // Edit the from field with the updated phone number value
     from = g_strconcat("\"", call_get_name (original), "\" <", new_number, ">",NULL);
 
     // Create the new call
@@ -1072,14 +1072,14 @@ void show_edit_number (call_t *call) {
 
     GtkWidget *ok, *hbox, *image;
     GdkPixbuf *pixbuf;
-    
+
     edit_dialog = GTK_DIALOG (gtk_dialog_new());
 
     // Set window properties
     gtk_window_set_default_size(GTK_WINDOW(edit_dialog), 300, 20);
     gtk_window_set_title(GTK_WINDOW(edit_dialog), _("Edit phone"));
     gtk_window_set_resizable (GTK_WINDOW (edit_dialog), FALSE);
-    
+
     g_signal_connect (G_OBJECT (edit_dialog), "delete-event", G_CALLBACK (on_delete), NULL);
 
     hbox = gtk_hbox_new (FALSE, 0);
@@ -1090,13 +1090,13 @@ void show_edit_number (call_t *call) {
 #if GTK_CHECK_VERSION(2,12,0)
       gtk_widget_set_tooltip_text(GTK_WIDGET(editable_num), _("Edit the phone number before making a call"));
 #endif
-    if (call)  
+    if (call)
         gtk_entry_set_text(GTK_ENTRY(editable_num), g_strdup (call_get_number (call)));
     else
-        g_print ("This a bug, the call should be defined. menus.c line 1051\n");
+        ERROR ("This a bug, the call should be defined. menus.c line 1051");
 
     gtk_box_pack_start(GTK_BOX (hbox), editable_num, TRUE, TRUE, 0);
-   
+
     // Set a custom image for the button
     pixbuf = gdk_pixbuf_new_from_file_at_scale (ICONS_DIR "/outgoing.svg", 32, 32, TRUE, NULL);
     image = gtk_image_new_from_pixbuf (pixbuf);

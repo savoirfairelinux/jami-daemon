@@ -91,7 +91,7 @@ config_window_fill_account_list()
             account_t * a = account_list_get_nth (i);
             if (a)
             {
-                g_print("fill account list : %s\n" , (gchar*)g_hash_table_lookup(a->properties, ACCOUNT_ENABLED));
+                DEBUG("fill account list : %s" , (gchar*)g_hash_table_lookup(a->properties, ACCOUNT_ENABLED));
                 gtk_list_store_append (accountStore, &iter);
                 gtk_list_store_set(accountStore, &iter,
                         COLUMN_ACCOUNT_ALIAS, g_hash_table_lookup(a->properties, ACCOUNT_ALIAS),  // Name
@@ -211,7 +211,7 @@ select_account(GtkTreeSelection *selection, GtkTreeModel *model)
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveUpButton), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(accountMoveDownButton), TRUE);
     }
-    g_print("select");
+    DEBUG("select");
 }
 
     static void
@@ -642,7 +642,7 @@ create_general_settings ()
     g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
 
     n = account_list_get_sip_account_number();
-    printf("sip account number = %i\n", n);
+    DEBUG("sip account number = %i", n);
 
     /** SIP port information */
     curPort = dbus_get_sip_port();
