@@ -173,6 +173,7 @@ void Dispatcher::dispatch_pending()
 	_mutex_p.unlock();
 }
 
+#undef DBUS_HAS_THREADS_INIT_DEFAULT
 #ifdef DBUS_HAS_THREADS_INIT_DEFAULT
 void DBus::_init_threading()
 {

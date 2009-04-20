@@ -222,8 +222,8 @@ void PulseLayer::startStream (void)
 PulseLayer::stopStream (void) 
 {
     _debug("PulseLayer::Stop stream\n");
-     pa_stream_flush( playback->pulseStream(), NULL, NULL );
-     pa_stream_flush( record->pulseStream(), NULL, NULL );
+     //pa_stream_flush( playback->pulseStream(), NULL, NULL );
+     //pa_stream_flush( record->pulseStream(), NULL, NULL );
     
     
     flushMic();

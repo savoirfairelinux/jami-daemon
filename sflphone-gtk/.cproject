@@ -33,6 +33,7 @@
 <option id="gnu.c.compiler.option.preprocessor.def.symbols.1676995808" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 <listOptionValue builtIn="false" value="&quot;ICONS_DIR=&quot;/usr/share/sflphone\&quot;"/>
 <listOptionValue builtIn="false" value="&quot;CODECS_DIR=&quot;/usr/lib/sflphone/codecs\&quot;"/>
+<listOptionValue builtIn="false" value="&quot;DATA_DIR=&quot;/usr/share/sflphone\&quot;"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1938301835" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
@@ -44,7 +45,7 @@
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.963771621" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base"/>
 <tool id="cdt.managedbuild.tool.gnu.assembler.base.1924201184" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base">
-<option id="gnu.both.asm.option.include.paths.1513412733" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath"/>
+<option id="gnu.both.asm.option.include.paths.1513412733" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.assembler.input.938125330" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 </tool>
 </toolChain>
@@ -54,6 +55,7 @@
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 <storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 <storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+
 
 <storageModule moduleId="scannerConfiguration">
 <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>

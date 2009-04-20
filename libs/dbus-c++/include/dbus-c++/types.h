@@ -25,7 +25,7 @@
 #ifndef __DBUSXX_TYPES_H
 #define __DBUSXX_TYPES_H
 
-#ifdef HAVE_CONFIG_H
+#ifdef _DBUS_HAVE_CONFIG_H
 #include <dbus-c++/config.h>
 #endif
 

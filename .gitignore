@@ -26,6 +26,8 @@ doc/doxygen/core-doc
 doc/doxygen/gtk-gui-doc
 doc/*.html
 
+INSTALL
+
 # Ignore buildsys stuff
 /autom4te.cache
 /configure
@@ -36,6 +38,7 @@ doc/*.html
 /install-sh
 /stamp-h1
 /Makefile
+sflphone-gtk/stamp-h1
 
 # Ignore built stuff
 /src/sflphoned
@@ -70,6 +73,7 @@ src/plug-in/audiorecorder/Makefile
 src/audio/Makefile
 src/audio/codecs/Makefile
 src/audio/codecs/ilbc/Makefile
+src/hooks/Makefile
 doc/Makefile
 man/Makefile
 po/Makefile
@@ -79,13 +83,17 @@ doc/doxygen/Makefile
 libs/Makefile
 libs/utilspp/Makefile
 libs/stund/Makefile
+libs/iax2/Makefile
 libs/utilspp/functor/Makefile
 libs/utilspp/singleton/Makefile
 sflphone-gtk/Makefile
 sflphone-gtk/src/Makefile
-sflphone-gtk/src/contactlist/Makefile
+sflphone-gtk/src/config/Makefile
+sflphone-gtk/src/dbus/Makefile
+sflphone-gtk/src/contacts/Makefile
+sflphone-gtk/src/contacts/addressbook/Makefile
 sflphone-gtk/pixmaps/Makefile
-
+sflphone-gtk/tests/Makefile
 
 
 # Ignore sflphone-gtk stuff
@@ -100,6 +108,10 @@ sflphone-gtk/pixmaps/Makefile
 /sflphone-gtk/sflphone.desktop
 /sflphone-gtk/confdefs.h
 /sflphone-gtk/conftest.dir
+/sflphone-gtk/tests/check_config
+/sflphone-gtk/tests/check_contacts
+/sflphone-gtk/tests/check_dbus
+/sflphone-gtk/tests/check_global
 
 # Ignore sflphone_kde stuff
 /sflphone_kde/build

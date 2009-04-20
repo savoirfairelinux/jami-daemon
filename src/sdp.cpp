@@ -145,7 +145,10 @@ int Sdp::create_initial_offer(  ){
 
     _debug ("Create initial offer\n");
     // Build the SDP session descriptor
-    create_local_offer( );
+    status = create_local_offer( );
+    if (status != PJ_SUCCESS) {
+	return status;
+    }
 
     // Create the SDP negociator instance with local offer
     status = pjmedia_sdp_neg_create_w_local_offer( _pool, get_local_sdp_session(), &_negociator);
@@ -169,7 +172,10 @@ int Sdp::receiving_initial_offer( pjmedia_sdp_session* remote ){
     // pjmedia_sdp_neg_create_w_remote_offer with the remote offer, and by providing the local offer ( optional )
 
     // Build the local offer to respond
-    create_local_offer(  );
+    status = create_local_offer(  );
+    if (status != PJ_SUCCESS) {
+	return status;
+    }
 
     // Retrieve some useful remote information
     this->fetch_media_transport_info_from_remote_sdp (remote);
@@ -304,12 +310,16 @@ AudioCodec* Sdp::get_session_media( void ){
     int nb_media;
     int nb_codec;
     AudioCodec *codec = NULL;
+    std::vector<sdpMedia*> media_list;
 
-    nb_media = _session_media.size();
+    _debug ("sdp line 314 - get_session_media ()\n");
+
+    media_list = get_session_media_list ();
+    nb_media = media_list.size();
     if (nb_media > 0) {
-        nb_codec = _session_media[0]->get_media_codec_list().size();
+        nb_codec = media_list[0]->get_media_codec_list().size();
         if (nb_codec > 0) {
-            codec = _session_media[0]->get_media_codec_list()[0];
+            codec = media_list[0]->get_media_codec_list()[0];
         }
     }
     return codec;

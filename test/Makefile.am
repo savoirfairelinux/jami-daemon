@@ -1,6 +1,6 @@
 include ../globals.mak
 
-bin_PROGRAMS = configurationTester pluginmanagerTester audiorecorderTester
+bin_PROGRAMS = numbercleanerTester pluginmanagerTester hookmanagerTester
 
 OBJECT_FILES= \
 	../src/sflphoned-managerimpl.o \
@@ -17,66 +17,64 @@ OBJECT_FILES= \
 	../src/sflphoned-eventthread.o \
 	../src/plug-in/pluginmanager.o \
 	../src/plug-in/audiorecorder/audiorecord.o \
-	../src/sflphoned-samplerateconverter.o
+	../src/sflphoned-samplerateconverter.o \
+	../src/sflphoned-sdp.o \
+	../src/sflphoned-sdpmedia.o \
+	../src/sflphoned-numbercleaner.o
 
-configurationTester_SOURCES = \
-		configurationTest.cpp \
-		configurationTest.h \
+numbercleanerTester_SOURCES = \
+		numbercleanerTest.h \
+		numbercleanerTest.cpp \
 		TestMain.cpp
+
+numbercleanerTester_LDADD = \
+		../src/libsflphone.la  \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
+		@ALSA_LIBS@ \
+		@PULSEAUDIO_LIBS@ \
+		@CPPUNIT_LIBS@ \
+		@CCEXT2_LIBS@ \
+		@CCGNU2_LIBS@ \
+		@CCRTP_LIBS@ \
+		@SAMPLERATE_LIBS@ \
+		$(PJSIP_LIBS) \
+		-luuid \
+		$(OBJECT_FILES)
 
 pluginmanagerTester_SOURCES = \
 		pluginmanagerTest.h \
 		pluginmanagerTest.cpp \
 		TestMain.cpp
 
-audiorecorderTester_SOURCES = \
-		audiorecorderTest.h \
-		audiorecorderTest.cpp \
-		TestMain.cpp
-
-
-configurationTester_LDADD = \
-		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@CPPUNIT_LIBS@ \
-		@CCEXT2_LIBS@ \
-		@CCGNU2_LIBS@ \
-		@CCRTP_LIBS@ \
-		@DBUSCPP_LIBS@ \
-		@SAMPLERATE_LIBS@ \
-		$(PJSIP_LIBS) \
-		-luuid \
-		$(OBJECT_FILES)
-	
 pluginmanagerTester_LDADD = \
 		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
 		@CPPUNIT_LIBS@ \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
-		@DBUSCPP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
 		$(OBJECT_FILES)
-	
-audiorecorderTester_LDADD = \
+						
+hookmanagerTester_SOURCES = \
+		hookmanagerTest.cpp \
+		TestMain.cpp
+
+hookmanagerTester_LDADD = \
 		../src/libsflphone.la  \
-		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) $(IAX_LIBS) \
+		$(SFLPHONE_LIBS) $(ZEROCONFLIB) $(LIB_DNSSD) \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
 		@CPPUNIT_LIBS@ \
 		@CCEXT2_LIBS@ \
 		@CCGNU2_LIBS@ \
 		@CCRTP_LIBS@ \
-		@DBUSCPP_LIBS@ \
 		@SAMPLERATE_LIBS@ \
 		$(PJSIP_LIBS) \
 		-luuid \
 		$(OBJECT_FILES)
-							
+

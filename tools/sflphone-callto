@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# This script can be used as a callto: (or other) protocol handler in
+# Mozilla/Firefox/whatever browser.
+# In Firefox use Preferences > Applications and set the callto handler
+# to this script.
+
+# Configuration:
+# All you have to do is set this to your account alias name
+# (see ~/.sflphone/sflphonedrc file)
+ACCOUNT_ALIAS="manu"
+
+################################################################################
+
+# The sflphone daemon config file
+RESFILE=~/.sflphone/sflphonedrc
+
+# Parse sflphonedrc and get account id string from defined alias
+if [ -f "$RESFILE" ]; then
+    ACCOUNTID=`grep -B2 "Account.alias=$ACCOUNT_ALIAS" "$RESFILE" | \
+        grep "Account:[0-9]" |                                      \
+        head -n 1 |                                                 \
+        sed -e 's/[^a-zA-Z0-9:]//g' `
+else
+    echo Fatal: Cant find sflphonedrc config file.
+    exit 1
+fi
+
+# Check 1st argument (phone number)
+if [ "$1" = "" ]; then
+    echo "Error: argument 1 (phone number) not provided."
+    exit 1
+fi
+
+# Cleanup destination removing callto: prefix
+TO="`echo $1 | sed -e 's/callto://'`"
+
+# Generate call id.
+CALLID=${RANDOM}$$  
+
+dbus-send                                           \
+    --type="method_call"                            \
+    --dest="org.sflphone.SFLphone"                  \
+    "/org/sflphone/SFLphone/CallManager"            \
+    "org.sflphone.SFLphone.CallManager.placeCall"   \
+    string:"$ACCOUNTID"                             \
+    string:"$CALLID"                                \
+    string:"$TO"
+
+# EOF

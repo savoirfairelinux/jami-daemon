@@ -1,4 +1,0 @@
-dbus-c++-1 (0.5.1-1) unstable; urgency=low
-  * Debian package (no warning version)
-
- -- Yun Liu <yun.liu@savoirfairelinux.com>  Mon, 01 Dec 2008 10:29:29 -0500

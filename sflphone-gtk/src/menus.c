@@ -19,14 +19,10 @@
  */
 
 #include <menus.h>
-#include <actions.h>
-#include <calllist.h>
-#include <calltree.h>
 #include <config.h>
 #include <configwindow.h>
-#include <dbus.h>
+#include <dbus/dbus.h>
 #include <mainwindow.h>
-#include <calltab.h>
 #include <assistant.h>
 #include <gtk/gtk.h>
 #include <glib/gprintf.h>
@@ -39,6 +35,9 @@ GtkWidget * holdMenu;
 GtkWidget * copyMenu;
 GtkWidget * pasteMenu;
 GtkWidget * recordMenu;
+
+GtkWidget * editable_num;
+GtkDialog * edit_dialog;
 
 guint holdConnId;     //The hold_menu signal connection ID
 
@@ -59,7 +58,7 @@ void update_menus()
   gtk_widget_set_sensitive( GTK_WIDGET(recordMenu), FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   FALSE);
 
-  call_t * selectedCall = call_get_selected(active_calltree);
+  call_t * selectedCall = calltab_get_selected_call(active_calltree);
   if (selectedCall)
   {
     gtk_widget_set_sensitive( GTK_WIDGET(copyMenu),   TRUE);
@@ -97,7 +96,7 @@ void update_menus()
 	gtk_widget_set_sensitive( GTK_WIDGET(hangUpMenu), TRUE);
 	break;
       default:
-	g_warning("Should not happen in update_menus()!");
+        WARN("Should not happen in update_menus()!");
 	break;
     }
   }
@@ -203,14 +202,15 @@ call_minimize ( void * foo UNUSED)
 switch_account(  GtkWidget* item , gpointer data UNUSED)
 {
   account_t* acc = g_object_get_data( G_OBJECT(item) , "account" );
-  g_print("%s\n" , acc->accountID);
+  DEBUG("%s" , acc->accountID);
   account_list_set_current_id( acc->accountID );
+  status_bar_display_account ();
 }
 
   static void
 call_hold  (void* foo UNUSED)
 {
-  call_t * selectedCall = call_get_selected(current_calls);
+  call_t * selectedCall = calltab_get_selected_call(current_calls);
 
   if(selectedCall)
   {
@@ -256,10 +256,10 @@ call_wizard ( void * foo UNUSED)
 static void
 remove_from_history( void * foo UNUSED)
 {
-  call_t* c = call_get_selected( history );
+  call_t* c = calltab_get_selected_call( history );
   if(c){
-    g_print("Remove the call from the history\n");
-    call_list_remove_from_history( c );
+    DEBUG("Remove the call from the history");
+    calllist_remove_from_history( c );
   }
 }
 
@@ -269,7 +269,7 @@ call_back( void * foo UNUSED)
     call_t *selected_call, *new_call;
     gchar *to, *from;
 
-    selected_call = call_get_selected( active_calltree );
+    selected_call = calltab_get_selected_call( active_calltree );
 
     if( selected_call )
     {
@@ -278,10 +278,10 @@ call_back( void * foo UNUSED)
 
         create_new_call (to, from, CALL_STATE_DIALING, "", &new_call);
 
-        call_list_add(current_calls, new_call);
-        update_call_tree_add(current_calls, new_call);
+        calllist_add(current_calls, new_call);
+        calltree_add_call(current_calls, new_call);
         sflphone_place_call(new_call);
-        display_calltree (current_calls);
+        calltree_display (current_calls);
     }
 }
 
@@ -408,7 +408,7 @@ edit_accounts ( void * foo UNUSED)
 edit_copy ( void * foo UNUSED)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected(current_calls);
+  call_t * selectedCall = calltab_get_selected_call(current_calls);
   gchar * no = NULL;
 
   if(selectedCall)
@@ -440,7 +440,7 @@ edit_copy ( void * foo UNUSED)
 edit_paste ( void * foo UNUSED)
 {
   GtkClipboard* clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-  call_t * selectedCall = call_get_selected(current_calls);
+  call_t * selectedCall = calltab_get_selected_call(current_calls);
   gchar * no = gtk_clipboard_wait_for_text (clip);
 
   if(no && selectedCall)
@@ -454,14 +454,14 @@ edit_paste ( void * foo UNUSED)
 	  gchar * before = selectedCall->to;
 	  selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
 	  g_free(before);
-	  g_print("TO: %s\n", selectedCall->to);
+	  DEBUG("TO: %s", selectedCall->to);
 
 	  if(selectedCall->state == CALL_STATE_DIALING)
 	  {
 	    g_free(selectedCall->from);
 	    selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
 	  }
-	  update_call_tree(current_calls, selectedCall);
+	  calltree_update_call(current_calls, selectedCall);
 	}
 	break;
       case CALL_STATE_RINGING:
@@ -475,12 +475,12 @@ edit_paste ( void * foo UNUSED)
 	  gchar * before = selectedCall->to;
 	  selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
 	  g_free(before);
-	  g_print("TO: %s\n", selectedCall->to);
+	  DEBUG("TO: %s", selectedCall->to);
 
 	  g_free(selectedCall->from);
 	  selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
 
-	  update_call_tree(current_calls, selectedCall);
+	  calltree_update_call(current_calls, selectedCall);
 	}
 	break;
       case CALL_STATE_CURRENT:
@@ -490,7 +490,7 @@ edit_paste ( void * foo UNUSED)
 	  for(i = 0; i < strlen(no); i++)
 	  {
 	    gchar * oneNo = g_strndup(&no[i], 1);
-	    g_print("<%s>\n", oneNo);
+	    DEBUG("<%s>", oneNo);
 	    dbus_play_dtmf(oneNo);
 
 	    gchar * temp = g_strconcat(call_get_number(selectedCall), oneNo, NULL);
@@ -498,7 +498,7 @@ edit_paste ( void * foo UNUSED)
 	    selectedCall->from = g_strconcat("\"",call_get_name(selectedCall) ,"\" <", temp, ">", NULL);
 	    g_free(before);
 	    g_free(temp);
-	    update_call_tree(current_calls, selectedCall);
+	    calltree_update_call(current_calls, selectedCall);
 
 	  }
 	}
@@ -513,11 +513,11 @@ edit_paste ( void * foo UNUSED)
     gchar * before = selectedCall->to;
     selectedCall->to = g_strconcat(selectedCall->to, no, NULL);
     g_free(before);
-    g_print("TO: %s\n", selectedCall->to);
+    DEBUG("TO: %s", selectedCall->to);
 
     g_free(selectedCall->from);
     selectedCall->from = g_strconcat("\"\" <", selectedCall->to, ">", NULL);
-    update_call_tree(current_calls,selectedCall);
+    calltree_update_call(current_calls,selectedCall);
   }
 
 }
@@ -525,8 +525,8 @@ edit_paste ( void * foo UNUSED)
   static void
 clear_history (void)
 {
-  if( call_list_get_size( history ) != 0 ){
-      call_list_clean_history();
+  if( calllist_get_size( history ) != 0 ){
+      calllist_clean_history();
     }
 }
 
@@ -622,6 +622,7 @@ view_volume_controls  (GtkImageMenuItem *imagemenuitem UNUSED,
   dbus_set_volume_controls( state );
 }
 
+/*
   static void
 view_searchbar  (GtkImageMenuItem *imagemenuitem UNUSED,
     void* foo UNUSED)
@@ -630,7 +631,7 @@ view_searchbar  (GtkImageMenuItem *imagemenuitem UNUSED,
   main_window_searchbar( &state );
   dbus_set_searchbar( state );
 }
-
+*/
   GtkWidget *
 create_view_menu()
 {
@@ -664,14 +665,15 @@ create_view_menu()
       NULL);
   gtk_widget_show (volumeMenu);
 
-  image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_MENU );
-  searchbarMenu = gtk_image_menu_item_new_with_mnemonic (_("_Search contact"));
+  /*image = gtk_image_new_from_stock( GTK_STOCK_FIND , GTK_ICON_SIZE_MENU );
+  searchbarMenu = gtk_image_menu_item_new_with_mnemonic (_("_Search bar"));
   gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( searchbarMenu ), image );
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), searchbarMenu);
   g_signal_connect(G_OBJECT (searchbarMenu), "activate",
       G_CALLBACK (view_searchbar),
       NULL);
   gtk_widget_show (searchbarMenu);
+    */
 
   root_menu = gtk_menu_item_new_with_mnemonic (_("_View"));
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu), menu);
@@ -709,6 +711,12 @@ create_menus ( )
 
 /* ----------------------------------------------------------------- */
 
+static void edit_number_cb (GtkWidget *widget UNUSED, gpointer user_data) {
+
+    show_edit_number ((call_t*)user_data);
+}
+
+
   void
 show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 {
@@ -717,7 +725,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
   gboolean pickup = FALSE, hangup = FALSE, hold = FALSE, copy = FALSE, record = FALSE;
   gboolean accounts = FALSE;
 
-  call_t * selectedCall = call_get_selected(current_calls);
+  call_t * selectedCall = calltab_get_selected_call(current_calls);
   if (selectedCall)
   {
     copy = TRUE;
@@ -750,7 +758,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 	hangup = TRUE;
 	break;
       default:
-	g_warning("Should not happen in show_popup_menu!");
+        WARN("Should not happen in show_popup_menu!");
 	break;
     }
   }
@@ -839,32 +847,7 @@ show_popup_menu (GtkWidget *my_widget, GdkEventButton *event)
 
   if(accounts)
   {
-    menu_items = gtk_separator_menu_item_new ();
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-    gtk_widget_show (menu_items);
-
-    unsigned int i;
-    account_t* acc;
-    gchar* alias;
-    for( i = 0 ; i < account_list_get_size() ; i++ ){
-      acc = account_list_get_nth(i);
-      // Display only the registered accounts
-      if( g_strcasecmp( account_state_name(acc -> state) , account_state_name(ACCOUNT_STATE_REGISTERED) ) == 0 ){
-	alias = g_strconcat( g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) , " - ",g_hash_table_lookup(acc->properties , ACCOUNT_TYPE), NULL);
-	menu_items = gtk_check_menu_item_new_with_mnemonic(alias);
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
-	g_object_set_data( G_OBJECT( menu_items ) , "account" , acc );
-	g_free( alias );
-	if( account_list_get_current() != NULL ){
-	  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
-	      (g_strcasecmp( acc->accountID , account_list_get_current()->accountID) == 0)? TRUE : FALSE);
-	}
-	g_signal_connect (G_OBJECT (menu_items), "activate",
-	    G_CALLBACK (switch_account),
-	    NULL);
-	gtk_widget_show (menu_items);
-      } // fi
-    }
+      add_registered_accounts_to_menu (menu);
   }
 
   if (event)
@@ -890,12 +873,14 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
 
   gboolean pickup = FALSE;
   gboolean remove = FALSE;
+  gboolean edit = FALSE;
 
-  call_t * selectedCall = call_get_selected( history );
+  call_t * selectedCall = calltab_get_selected_call( history );
   if (selectedCall)
   {
     remove = TRUE;
     pickup = TRUE;
+    edit = TRUE;
   }
 
   GtkWidget *menu;
@@ -922,6 +907,15 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
   gtk_widget_show (menu_items);
 
+  if (edit)
+    {
+        menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_EDIT, get_accel_group());
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+        g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (edit_number_cb), selectedCall);
+        gtk_widget_show (menu_items);
+    }
+
+
   if(remove)
   {
     menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_DELETE, get_accel_group());
@@ -945,3 +939,176 @@ show_popup_menu_history(GtkWidget *my_widget, GdkEventButton *event)
   gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
       button, event_time);
 }
+    void
+show_popup_menu_contacts(GtkWidget *my_widget, GdkEventButton *event)
+{
+
+  gboolean pickup = FALSE;
+  gboolean accounts = FALSE;
+  gboolean edit = FALSE;
+
+  call_t * selectedCall = calltab_get_selected_call( contacts );
+  if (selectedCall)
+  {
+    pickup = TRUE;
+    accounts = TRUE;
+    edit = TRUE;
+  }
+
+  GtkWidget *menu;
+  GtkWidget *image;
+  int button, event_time;
+  GtkWidget * menu_items;
+
+  menu = gtk_menu_new ();
+  //g_signal_connect (menu, "deactivate",
+  //       G_CALLBACK (gtk_widget_destroy), NULL);
+
+  if(pickup)
+  {
+
+    menu_items = gtk_image_menu_item_new_with_mnemonic(_("_New call"));
+    image = gtk_image_new_from_file( ICONS_DIR "/icon_accept.svg");
+    gtk_image_menu_item_set_image( GTK_IMAGE_MENU_ITEM ( menu_items ), image );
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (call_back), NULL);
+    gtk_widget_show (menu_items);
+  }
+
+    if (edit)
+    {
+        menu_items = gtk_image_menu_item_new_from_stock( GTK_STOCK_EDIT, get_accel_group());
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+        g_signal_connect (G_OBJECT (menu_items), "activate",G_CALLBACK (edit_number_cb), selectedCall);
+        gtk_widget_show (menu_items);
+    }
+
+  if(accounts)
+  {
+      add_registered_accounts_to_menu (menu);
+    }
+
+  if (event)
+  {
+    button = event->button;
+    event_time = event->time;
+  }
+  else
+  {
+    button = 0;
+    event_time = gtk_get_current_event_time ();
+  }
+
+  gtk_menu_attach_to_widget (GTK_MENU (menu), my_widget, NULL);
+  gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
+      button, event_time);
+}
+
+
+void add_registered_accounts_to_menu (GtkWidget *menu) {
+
+    GtkWidget *menu_items;
+    unsigned int i;
+    account_t* acc;
+    gchar* alias;
+
+    menu_items = gtk_separator_menu_item_new ();
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+    gtk_widget_show (menu_items);
+
+    for( i = 0 ; i < account_list_get_size() ; i++ ){
+      acc = account_list_get_nth(i);
+      // Display only the registered accounts
+      if( g_strcasecmp( account_state_name(acc -> state) , account_state_name(ACCOUNT_STATE_REGISTERED) ) == 0 ){
+	        alias = g_strconcat( g_hash_table_lookup(acc->properties , ACCOUNT_ALIAS) , " - ",g_hash_table_lookup(acc->properties , ACCOUNT_TYPE), NULL);
+	menu_items = gtk_check_menu_item_new_with_mnemonic(alias);
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_items);
+	g_object_set_data( G_OBJECT( menu_items ) , "account" , acc );
+	g_free( alias );
+	if( account_list_get_current() != NULL ){
+	  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_items),
+	      (g_strcasecmp( acc->accountID , account_list_get_current()->accountID) == 0)? TRUE : FALSE);
+	}
+	g_signal_connect (G_OBJECT (menu_items), "activate",
+	    G_CALLBACK (switch_account),
+	    NULL);
+	gtk_widget_show (menu_items);
+      } // fi
+    }
+
+}
+
+static void ok_cb (GtkWidget *widget UNUSED, gpointer userdata) {
+
+    gchar *new_number, *from;
+    call_t *modified_call, *original;
+
+    // Change the number of the selected call before calling
+    new_number = (gchar*) gtk_entry_get_text (GTK_ENTRY (editable_num));
+    original = (call_t*)userdata;
+
+    // Edit the from field with the updated phone number value
+    from = g_strconcat("\"", call_get_name (original), "\" <", new_number, ">",NULL);
+
+    // Create the new call
+    create_new_call (g_strdup (new_number), from,  CALL_STATE_DIALING, g_strdup (original->accountID), &modified_call);
+
+    // Update the internal data structure and the GUI
+    calllist_add(current_calls, modified_call);
+    calltree_add_call(current_calls, modified_call);
+    sflphone_place_call(modified_call);
+    calltree_display (current_calls);
+
+    // Close the contextual menu
+    gtk_widget_destroy (GTK_WIDGET (edit_dialog));
+}
+
+static void on_delete (GtkWidget * widget)
+{
+    gtk_widget_destroy (widget);
+}
+
+void show_edit_number (call_t *call) {
+
+    GtkWidget *ok, *hbox, *image;
+    GdkPixbuf *pixbuf;
+
+    edit_dialog = GTK_DIALOG (gtk_dialog_new());
+
+    // Set window properties
+    gtk_window_set_default_size(GTK_WINDOW(edit_dialog), 300, 20);
+    gtk_window_set_title(GTK_WINDOW(edit_dialog), _("Edit phone"));
+    gtk_window_set_resizable (GTK_WINDOW (edit_dialog), FALSE);
+
+    g_signal_connect (G_OBJECT (edit_dialog), "delete-event", G_CALLBACK (on_delete), NULL);
+
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start(GTK_BOX (edit_dialog->vbox), hbox, TRUE, TRUE, 0);
+
+    // Set the number to be edited
+    editable_num = gtk_entry_new ();
+#if GTK_CHECK_VERSION(2,12,0)
+      gtk_widget_set_tooltip_text(GTK_WIDGET(editable_num), _("Edit the phone number before making a call"));
+#endif
+    if (call)
+        gtk_entry_set_text(GTK_ENTRY(editable_num), g_strdup (call_get_number (call)));
+    else
+        ERROR ("This a bug, the call should be defined. menus.c line 1051");
+
+    gtk_box_pack_start(GTK_BOX (hbox), editable_num, TRUE, TRUE, 0);
+
+    // Set a custom image for the button
+    pixbuf = gdk_pixbuf_new_from_file_at_scale (ICONS_DIR "/outgoing.svg", 32, 32, TRUE, NULL);
+    image = gtk_image_new_from_pixbuf (pixbuf);
+    ok = gtk_button_new ();
+    gtk_button_set_image (GTK_BUTTON (ok), image);
+    gtk_box_pack_start(GTK_BOX (hbox), ok, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT (ok), "clicked", G_CALLBACK (ok_cb), call);
+
+    gtk_widget_show_all (edit_dialog->vbox);
+
+    gtk_dialog_run(edit_dialog);
+
+}
+
+

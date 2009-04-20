@@ -25,9 +25,13 @@
 #include "sipaccount.h"
 #include "audio/audiortp.h"
 
+#include <netinet/in.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
 
-#define CAN_REINVITE    1
+#define CAN_REINVITE        1
 
+const pj_str_t STR_USER_AGENT = { (char*)"User-Agent", 10 };
 
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
@@ -42,11 +46,11 @@ void get_remote_sdp_from_offer( pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
 int getModId();
 
 /**
- *  * Set audio (SDP) configuration for a call
- *   * localport, localip, localexternalport
- *    * @param call a SIPCall valid pointer
- *     * @return bool True
- *      */
+ * Set audio (SDP) configuration for a call
+ * localport, localip, localexternalport
+ * @param call a SIPCall valid pointer
+ * @return bool True
+ */
 bool setCallAudioLocal(SIPCall* call, std::string localIP, bool stun, std::string server);
 
 void handle_incoming_options (pjsip_rx_data *rxdata);
@@ -173,8 +177,6 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
     , _useStun(false)
       , _clients(0)
 {
-    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink constructor called \n");    
-
     // to get random number for RANDOM_PORT
     srand (time(NULL));
 
@@ -186,7 +188,6 @@ SIPVoIPLink* SIPVoIPLink::_instance = NULL;
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-    _debug("SIPVoIPLink::~SIPVoIPLink(): sipvoiplink destructor called \n");
     terminate();
 }
 
@@ -289,6 +290,14 @@ void get_remote_sdp_from_offer( pjsip_rx_data *rdata, pjmedia_sdp_session** r_sd
         *r_sdp = NULL;
 }
 
+
+std::string SIPVoIPLink::get_useragent_name (void)
+{
+    std::ostringstream  useragent;
+    useragent << PROGNAME << "/" << SFLPHONED_VERSION;
+    return useragent.str();
+}
+
     void
 SIPVoIPLink::getEvent()
 {
@@ -307,13 +316,14 @@ int SIPVoIPLink::sendRegister( AccountID id )
     pj_status_t status;
     int expire_value;
     char contactTmp[256];
-    pj_str_t svr, aor, contact;
+    pj_str_t svr, aor, contact, useragent;
     pjsip_tx_data *tdata;
     std::string tmp, hostname, username, password;
     SIPAccount *account;
     pjsip_regc *regc;
+    pjsip_generic_string_hdr *h;
+    pjsip_hdr hdr_list;
 
-    
     account = dynamic_cast<SIPAccount *> (Manager::instance().getAccount(id));
     hostname = account->getHostname();
     username = account->getUsername();
@@ -386,6 +396,13 @@ int SIPVoIPLink::sendRegister( AccountID id )
 
     account->setCredInfo(cred);
 
+    // Add User-Agent Header
+    pj_list_init (&hdr_list);
+    useragent = pj_str( (char*)get_useragent_name ().c_str() );
+    h = pjsip_generic_string_hdr_create (_pool, &STR_USER_AGENT, &useragent);
+    pj_list_push_back (&hdr_list, (pjsip_hdr*)h);
+    pjsip_regc_add_headers (regc, &hdr_list);
+
     status = pjsip_regc_register(regc, PJ_TRUE, &tdata);
     if (status != PJ_SUCCESS) {
         _debug("UserAgent: Unable to register regc.\n");
@@ -450,8 +467,10 @@ SIPVoIPLink::sendUnregister (AccountID id)
 SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
 {
     Account* account;
+    pj_status_t status;
 
     SIPCall* call = new SIPCall(id, Call::Outgoing, _pool);
+
 
     if (call) {
         account = dynamic_cast<SIPAccount *>(Manager::instance().getAccount(Manager::instance().getAccountFromCall(id)));
@@ -472,7 +491,11 @@ SIPVoIPLink::newOutgoingCall(const CallID& id, const std::string& toUrl)
         _debug("Try to make a call to: %s with call ID: %s\n", toUrl.data(), id.data());
         // Building the local SDP offer
         call->getLocalSDP()->set_ip_address(getLocalIP());
-        call->getLocalSDP()->create_initial_offer();
+        status = call->getLocalSDP()->create_initial_offer();
+    	if (status != PJ_SUCCESS) {
+            delete call; call=0;
+            return call;
+	}
 
         if ( SIPOutgoingInvite(call) ) {
             call->setConnectionState(Call::Progressing);
@@ -654,8 +677,10 @@ SIPVoIPLink::onhold(const CallID& id)
 
     /* Create re-INVITE with new offer */
     status = inv_session_reinvite (call, "sendonly");
+    if (status != PJ_SUCCESS)
+        return false;
 
-    return (status == PJ_SUCCESS);
+    return true;
 }
 
 int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction) {
@@ -669,26 +694,30 @@ int SIPVoIPLink::inv_session_reinvite (SIPCall *call, std::string direction) {
 
     if( local_sdp == NULL ){
         _debug("! SIP Failure: unable to find local_sdp\n");
-        return false;
+        return !PJ_SUCCESS;
     }
 
     // reinvite only if connected
     // Build the local SDP offer
     status = call->getLocalSDP()->create_initial_offer( );
+    if (status != PJ_SUCCESS)
+        return 1;   // !PJ_SUCCESS 
+
     pjmedia_sdp_media_remove_all_attr(local_sdp->media[0], "sendrecv");
     attr = pjmedia_sdp_attr_create(_pool, direction.c_str(), NULL);
     pjmedia_sdp_media_add_attr(local_sdp->media[0], attr);
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
     // Build the reinvite request
     status = pjsip_inv_reinvite( call->getInvSession(), NULL,
             local_sdp, &tdata );
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+    if (status != PJ_SUCCESS)
+        return 1;   // !PJ_SUCCESS 
 
     // Send it
     status = pjsip_inv_send_msg( call->getInvSession(), tdata );
-    PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
-
+    if (status != PJ_SUCCESS)
+        return 1;   // !PJ_SUCCESS 
+    
     return PJ_SUCCESS;
 }
 
@@ -868,11 +897,12 @@ SIPVoIPLink::getCurrentCodecName()
 {
 
     SIPCall *call;
-    AudioCodec *ac;
+    AudioCodec *ac = NULL;
     std::string name = "";
     
     call = getSIPCall(Manager::instance().getCurrentCallId());  
-    ac = call->getLocalSDP()->get_session_media();
+    if (call)
+        ac = call->getLocalSDP()->get_session_media();
 
     if (ac)
         name = ac->getCodecName();
@@ -1248,6 +1278,85 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     // Private functions
     ///////////////////////////////////////////////////////////////////////////////
 
+
+    bool get_dns_server_addresses (std::vector<std::string> *servers) {
+    
+        int server_count, i;
+        std::vector<std::string> nameservers;
+        struct  sockaddr_in current_server;
+        in_addr address;
+
+        // Read configuration files
+        if (res_init () != 0)
+        {
+            _debug ("Resolver initialization failed\n");
+            return false;
+        }
+
+        server_count = _res.nscount;
+        for (i=0; i<server_count; i++) {
+            current_server = (struct  sockaddr_in)_res.nsaddr_list[i];
+            address = current_server.sin_addr;
+            nameservers.push_back (inet_ntoa (address));
+        }
+
+        //nameservers.push_back ("192.168.50.3");
+        *servers = nameservers;
+
+        return true;
+    }
+
+    pj_status_t SIPVoIPLink::enable_dns_srv_resolver (pjsip_endpoint *endpt, pj_dns_resolver **p_resv) {
+
+        pj_status_t status;
+        pj_dns_resolver *resv;
+        std::vector <std::string> dns_servers;
+        pj_uint16_t port = 5353;
+        pjsip_resolver_t *res;
+        int scount, i;
+
+        // Create the DNS resolver instance 
+        status = pjsip_endpt_create_resolver (endpt, &resv);
+        if (status != PJ_SUCCESS) {
+            _debug ("Error creating the DNS resolver instance\n");
+            return status;
+        }
+
+        if (!get_dns_server_addresses (&dns_servers))
+        {
+            _debug ("Error  while fetching DNS information\n");
+            return -1;
+        }
+
+        // Build the nameservers list needed by pjsip
+        scount = dns_servers.size ();
+        pj_str_t nameservers[scount];
+
+        for (i = 0; i<scount; i++) {
+            nameservers[i] = pj_str((char*)dns_servers[i].c_str());
+        }
+
+        // Update the name servers for the DNS resolver
+        status = pj_dns_resolver_set_ns (resv, scount, nameservers, NULL);
+        if (status != PJ_SUCCESS){
+            _debug ("Error updating the name servers for the DNS resolver\n");
+            return status;
+        }
+
+        // Set the DNS resolver instance of the SIP resolver engine
+        status = pjsip_endpt_set_resolver (endpt, resv);
+        if (status != PJ_SUCCESS){
+            _debug ("Error setting the DNS resolver instance of the SIP resolver engine\n");
+            return status;
+        }
+
+        *p_resv = resv;
+
+        return PJ_SUCCESS;
+    
+    }
+
+
     bool SIPVoIPLink::pjsip_init()
     {
         pj_status_t status;
@@ -1258,6 +1367,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         std::string name_mod;
         bool useStun;
         validStunServer = true;
+        pj_dns_resolver *p_resv; 
 
         name_mod = "sflphone";
 
@@ -1378,6 +1488,9 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
 
         // Init xfer/REFER module
         status = pjsip_xfer_init_module(_endpt);
+        PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+
+        status = enable_dns_srv_resolver (_endpt, &p_resv);
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
         // Init the callback for INVITE session: 
@@ -1748,6 +1861,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
                     case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
                     case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
                     case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
+                    case PJSIP_SC_UNAUTHORIZED:
                         accId = Manager::instance().getAccountFromCall(call->getCallId());
                         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
                         if (link) {
@@ -1867,7 +1981,7 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             std::string request;
 
             // Handle the incoming call invite in this function 
-            _debug("UserAgent: Callback on_rx_request is involved!\n");
+            _debug("UserAgent: Callback on_rx_request is involved! *****************************************************\n");
 
             /* First, let's got the username and server name from the invite.
              * We will use them to detect which account is the callee.
@@ -1878,13 +1992,15 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             userName = std::string(sip_uri->user.ptr, sip_uri->user.slen);
             server = std::string(sip_uri->host.ptr, sip_uri->host.slen) ;
 
+            std::cout << userName << " ------------------ " << server << std::endl;
+
             // Get the account id of callee from username and server
             account_id = Manager::instance().getAccountIdFromNameAndServer(userName, server);
 
             /* If we don't find any account to receive the call */
             if(account_id == AccountNULL) {
                 _debug("UserAgent: Username %s doesn't match any account!\n",userName.c_str());
-                return false;
+                //return false;
             }
 
             /* Get the voip link associated to the incoming call */
@@ -1984,7 +2100,12 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             // We retrieve the remote sdp offer in the rdata struct to begin the negociation
             call->getLocalSDP()->set_ip_address(link->getLocalIPAddress());
             get_remote_sdp_from_offer( rdata, &r_sdp );
-            call->getLocalSDP()->receiving_initial_offer( r_sdp );
+            status = call->getLocalSDP()->receiving_initial_offer( r_sdp );
+	    if (status!=PJ_SUCCESS) {
+                delete call; call=0;
+                return false;
+	    }	 
+		
 
             call->setConnectionState(Call::Progressing);
             call->setPeerNumber(peerNumber);

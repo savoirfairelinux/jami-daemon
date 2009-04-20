@@ -12,7 +12,7 @@ libdbus_la_SOURCES = \
 
 libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphone\"
 
-libdbus_la_LIBADD = 
+libdbus_la_LIBADD = $(top_srcdir)/libs/dbus-c++/src/libdbus-c++-1.la
 
 noinst_HEADERS = \
 	callmanager-glue.h \

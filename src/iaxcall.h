@@ -23,8 +23,8 @@
 #include "call.h"
 #include "audio/codecDescriptor.h"
 
-#include <iax2/iax-client.h>
-#include <iax2/frame.h>
+#include <iax-client.h>
+#include <frame.h>
 
 /**
  * @file: iaxcall.h

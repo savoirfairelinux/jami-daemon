@@ -1,5 +1,4 @@
 SECTION="1"
-RELEASE_VERSION="0.9.2"
 
 TEMPLATES=\
          sflphone-gtk.pod \
@@ -18,7 +17,7 @@ all:    $(MANPAGES)
 SUFFIXES=.pod .1
 
 .pod.1:
-	$(POD2MAN) --section=$(SECTION) --release=$(RELEASE_VERSION) --center "" $< > $@ 
+	$(POD2MAN) --section=$(SECTION) --release=@VERSION@ --center "" $< > $@ 
 
 
 #install-data-local:

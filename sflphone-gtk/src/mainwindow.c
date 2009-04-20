@@ -18,6 +18,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <toolbar.h>
 #include <config.h>
 #include <actions.h>
 #include <calltab.h>
@@ -27,7 +28,7 @@
 #include <mainwindow.h>
 #include <menus.h>
 #include <sliders.h>
-#include <searchfilter.h>
+#include <contacts/searchbar.h>
 #include <assistant.h>
 
 #include <gtk/gtk.h>
@@ -59,7 +60,7 @@ on_delete (GtkWidget * widget UNUSED, gpointer data UNUSED)
 /** Ask the user if he wants to hangup current calls */
 gboolean
 main_window_ask_quit(){
-    guint count = call_list_get_size(current_calls);
+    guint count = calllist_get_size(current_calls);
     GtkWidget * dialog;
     gint response;
     gchar * question;
@@ -104,7 +105,7 @@ create_main_window ()
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 0);
   gtk_window_set_title (GTK_WINDOW (window), PACKAGE);
-  gtk_window_set_default_size (GTK_WINDOW (window), 258, 320);
+  gtk_window_set_default_size (GTK_WINDOW (window), 300, 320);
   gtk_window_set_default_icon_from_file (ICONS_DIR "/sflphone.png",
                                           NULL);
   gtk_window_set_position( GTK_WINDOW( window ) , GTK_WIN_POS_MOUSE);
@@ -141,13 +142,13 @@ create_main_window ()
 
   gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE /*expand*/, FALSE /*fill*/, 0 /*padding*/);
 
-  
+
   // if( SHOW_SEARCHBAR ){
   //   filterEntry = create_filter_entry();
   //   gtk_box_pack_start (GTK_BOX (subvbox), filterEntry, FALSE /*expand*/, TRUE /*fill*/,  0 /*padding*/);
   //   gtk_widget_show_all ( filterEntry );
   // }
-  
+
 
  if( SHOW_VOLUME ){
     speaker_control = create_slider("speaker");
@@ -178,7 +179,9 @@ create_main_window ()
   /* dont't show the contact list */
   gtk_widget_hide(contacts->tree);
 
-  gtk_tree_view_set_model(GTK_TREE_VIEW(history->view), GTK_TREE_MODEL(histfilter));
+  searchbar_init(history);
+  searchbar_init(contacts);
+
   /* don't show waiting layer */
   gtk_widget_hide(waitingLayer);
 
@@ -283,7 +286,7 @@ main_window_volume_controls( gboolean *state ){
 }
 
 void
-main_window_searchbar( gboolean *state ){
+main_window_searchbar( gboolean *state UNUSED){
   if( !SHOW_SEARCHBAR )
   {
     // filterEntry = create_filter_entry();

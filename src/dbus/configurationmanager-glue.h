@@ -23,6 +23,7 @@ public:
         register_method(ConfigurationManager_adaptor, getAccountDetails, _getAccountDetails_stub);
         register_method(ConfigurationManager_adaptor, setAccountDetails, _setAccountDetails_stub);
         register_method(ConfigurationManager_adaptor, addAccount, _addAccount_stub);
+        register_method(ConfigurationManager_adaptor, setAccountsOrder, _setAccountsOrder_stub);
         register_method(ConfigurationManager_adaptor, removeAccount, _removeAccount_stub);
         register_method(ConfigurationManager_adaptor, getAccountList, _getAccountList_stub);
         register_method(ConfigurationManager_adaptor, sendRegister, _sendRegister_stub);
@@ -79,6 +80,8 @@ public:
         register_method(ConfigurationManager_adaptor, isStunEnabled, _isStunEnabled_stub);
         register_method(ConfigurationManager_adaptor, getAddressbookSettings, _getAddressbookSettings_stub);
         register_method(ConfigurationManager_adaptor, setAddressbookSettings, _setAddressbookSettings_stub);
+        register_method(ConfigurationManager_adaptor, getAddressbookList, _getAddressbookList_stub);
+        register_method(ConfigurationManager_adaptor, setAddressbookList, _setAddressbookList_stub);
         register_method(ConfigurationManager_adaptor, getHookSettings, _getHookSettings_stub);
         register_method(ConfigurationManager_adaptor, setHookSettings, _setHookSettings_stub);
     }
@@ -101,6 +104,11 @@ public:
         {
             { "details", "a{ss}", true },
             { "createdAccountId", "s", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setAccountsOrder_args[] = 
+        {
+            { "order", "s", true },
             { 0, 0, 0 }
         };
         static ::DBus::IntrospectedArgument removeAccount_args[] = 
@@ -376,6 +384,16 @@ public:
             { "settings", "a{si}", true },
             { 0, 0, 0 }
         };
+        static ::DBus::IntrospectedArgument getAddressbookList_args[] = 
+        {
+            { "settings", "as", false },
+            { 0, 0, 0 }
+        };
+        static ::DBus::IntrospectedArgument setAddressbookList_args[] = 
+        {
+            { "settings", "as", true },
+            { 0, 0, 0 }
+        };
         static ::DBus::IntrospectedArgument getHookSettings_args[] = 
         {
             { "settings", "a{ss}", false },
@@ -405,6 +423,7 @@ public:
             { "getAccountDetails", getAccountDetails_args },
             { "setAccountDetails", setAccountDetails_args },
             { "addAccount", addAccount_args },
+            { "setAccountsOrder", setAccountsOrder_args },
             { "removeAccount", removeAccount_args },
             { "getAccountList", getAccountList_args },
             { "sendRegister", sendRegister_args },
@@ -461,6 +480,8 @@ public:
             { "isStunEnabled", isStunEnabled_args },
             { "getAddressbookSettings", getAddressbookSettings_args },
             { "setAddressbookSettings", setAddressbookSettings_args },
+            { "getAddressbookList", getAddressbookList_args },
+            { "setAddressbookList", setAddressbookList_args },
             { "getHookSettings", getHookSettings_args },
             { "setHookSettings", setHookSettings_args },
             { 0, 0 }
@@ -499,7 +520,8 @@ public:
      */
     virtual std::map< std::string, std::string > getAccountDetails(const std::string& accountID) = 0;
     virtual void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details) = 0;
-    virtual std::string addAccount(const std::map< std::string, std::string >& details) = 0;
+    virtual void addAccount(const std::map< std::string, std::string >& details) = 0;
+    virtual void setAccountsOrder(const std::string& order) = 0;
     virtual void removeAccount(const std::string& accoundID) = 0;
     virtual std::vector< std::string > getAccountList() = 0;
     virtual void sendRegister(const std::string& accountID, const int32_t& expire) = 0;
@@ -556,6 +578,8 @@ public:
     virtual int32_t isStunEnabled() = 0;
     virtual std::map< std::string, int32_t > getAddressbookSettings() = 0;
     virtual void setAddressbookSettings(const std::map< std::string, int32_t >& settings) = 0;
+    virtual std::vector< std::string > getAddressbookList() = 0;
+    virtual void setAddressbookList(const std::vector< std::string >& settings) = 0;
     virtual std::map< std::string, std::string > getHookSettings() = 0;
     virtual void setHookSettings(const std::map< std::string, std::string >& settings) = 0;
 
@@ -617,6 +641,15 @@ private:
         ::DBus::ReturnMessage reply(call);
         ::DBus::MessageIter wi = reply.writer();
         wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setAccountsOrder_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::string argin1; ri >> argin1;
+        setAccountsOrder(argin1);
+        ::DBus::ReturnMessage reply(call);
         return reply;
     }
     ::DBus::Message _removeAccount_stub(const ::DBus::CallMessage &call)
@@ -1146,6 +1179,25 @@ private:
 
         std::map< std::string, int32_t > argin1; ri >> argin1;
         setAddressbookSettings(argin1);
+        ::DBus::ReturnMessage reply(call);
+        return reply;
+    }
+    ::DBus::Message _getAddressbookList_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::vector< std::string > argout1 = getAddressbookList();
+        ::DBus::ReturnMessage reply(call);
+        ::DBus::MessageIter wi = reply.writer();
+        wi << argout1;
+        return reply;
+    }
+    ::DBus::Message _setAddressbookList_stub(const ::DBus::CallMessage &call)
+    {
+        ::DBus::MessageIter ri = call.reader();
+
+        std::vector< std::string > argin1; ri >> argin1;
+        setAddressbookList(argin1);
         ::DBus::ReturnMessage reply(call);
         return reply;
     }

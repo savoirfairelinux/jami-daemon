@@ -140,11 +140,10 @@ CallManager::getCurrentCodecName(const std::string& callID)
 
 
 std::map< std::string, std::string > 
-CallManager::getCallDetails( const std::string& callID UNUSED )
+CallManager::getCallDetails( const std::string& callID )
 {
     _debug("CallManager::getCallDetails received\n");
-    std::map<std::string, std::string> a;
-    return a;
+    return Manager::instance().getCallDetails (callID);
 }
 
 std::string 

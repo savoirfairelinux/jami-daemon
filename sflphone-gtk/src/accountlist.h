@@ -182,6 +182,7 @@ int account_list_get_sip_account_number( void );
  */
 int account_list_get_iax_account_number( void );
 
+gchar * account_list_get_ordered_list (void);
 
 
 #endif 

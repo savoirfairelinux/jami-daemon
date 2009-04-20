@@ -6,7 +6,7 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -22,7 +22,11 @@
 #include <assistant.h>
 #include "reqaccount.h"
 
+// From version 2.16, gtk provides the functionalities libsexy used to provide
+#if GTK_CHECK_VERSION(2,16,0)
+#else
 #include <libsexy/sexy-icon-entry.h>
+#endif
 
 #if GTK_CHECK_VERSION(2,10,0)
 
@@ -50,7 +54,7 @@ void prefill_sip(void) ;
 void set_account_type( GtkWidget* widget , gpointer data UNUSED ) {
 	if( gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( widget )) ){
 		account_type = _SIP;
-	}else{ 
+	}else{
 		account_type = _IAX ;
 	}
 }
@@ -101,7 +105,7 @@ static void sip_apply_callback( void ) {
 
 		dbus_add_account( current );
 		account_list_set_current_id( current->accountID );
-        	sprintf(message, MESSAGE_SUMMARY,  
+        	sprintf(message, MESSAGE_SUMMARY,
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username)),
@@ -126,7 +130,7 @@ static void iax_apply_callback( void ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
 		dbus_add_account( current );
 		account_list_set_current_id( current->accountID );
-        	sprintf(message, MESSAGE_SUMMARY,  
+        	sprintf(message, MESSAGE_SUMMARY,
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_server)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_username)),
@@ -165,7 +169,7 @@ void build_wizard( void ) {
 	build_summary();
 
 	g_signal_connect(G_OBJECT(wiz->assistant), "close" , G_CALLBACK(close_callback), NULL);
-	
+
 	g_signal_connect(G_OBJECT(wiz->assistant), "cancel" , G_CALLBACK(cancel_callback), NULL);
 
 	gtk_widget_show_all(wiz->assistant);
@@ -177,7 +181,7 @@ void build_wizard( void ) {
 GtkWidget* build_intro() {
 	GtkWidget *label;
 
-	wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , _("SFLphone 0.9.3") , _("Welcome to SFLphone!"));
+	wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , "SFLphone 0.9.4" , _("Welcome to SFLphone!"));
 	label = gtk_label_new(_("This installation wizard will help you configure an account.")) ;
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
 	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
@@ -198,9 +202,9 @@ GtkWidget* build_select_account() {
 	gtk_box_pack_start( GTK_BOX(wiz->protocols) , sip , TRUE, TRUE, 0);
 	iax = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sip), "IAX2 (InterAsterix Exchange)");
 	gtk_box_pack_start( GTK_BOX(wiz->protocols) , iax , TRUE, TRUE, 0);
-	
+
 	g_signal_connect(G_OBJECT( sip ) , "clicked" , G_CALLBACK( set_account_type ) , NULL );
-	
+
 	gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->protocols, TRUE);
 	return wiz->protocols;
 }
@@ -217,7 +221,7 @@ GtkWidget* build_sfl_or_account() {
 	cus = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(sfl), _("Register an existing SIP or IAX2 account"));
 	gtk_box_pack_start( GTK_BOX(wiz->sflphone_org) , cus , TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT( sfl ) , "clicked" , G_CALLBACK( set_sflphone_org ) , NULL );
-	
+
 	return wiz->sflphone_org;
 }
 
@@ -227,13 +231,13 @@ GtkWidget* build_sip_account_configuration( void ) {
 	GtkWidget* label;
 	GtkWidget* image;
 
-	wiz->sip_account = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("SIP account configuration") , _("Please fill the following information:")); 
+	wiz->sip_account = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("SIP account configuration") , _("Please fill the following information:"));
 	// table
 	table = gtk_table_new ( 4, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
 	gtk_table_set_col_spacings( GTK_TABLE(table), 10);
 	gtk_box_pack_start( GTK_BOX(wiz->sip_account) , table , TRUE, TRUE, 0);
-	
+
 	// alias field
 	label = gtk_label_new_with_mnemonic (_("_Alias"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -241,7 +245,7 @@ GtkWidget* build_sip_account_configuration( void ) {
 	wiz->sip_alias = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->sip_alias);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->sip_alias, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	
+
 	// server field
 	label = gtk_label_new_with_mnemonic (_("_Host name"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -249,28 +253,38 @@ GtkWidget* build_sip_account_configuration( void ) {
 	wiz->sip_server = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->sip_server);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->sip_server, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	
+
 	// username field
 	label = gtk_label_new_with_mnemonic (_("_User name"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+#if GTK_CHECK_VERSION(2,16,0)
+	wiz->sip_username = gtk_entry_new();
+    gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (wiz->sip_username), GTK_ENTRY_ICON_PRIMARY, gdk_pixbuf_new_from_file(ICONS_DIR "/stock_person.svg", NULL));
+#else
 	wiz->sip_username = sexy_icon_entry_new();
 	image = gtk_image_new_from_file( ICONS_DIR "/stock_person.svg" );
-	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->sip_username), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
+	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->sip_username), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
+#endif
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->sip_username);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->sip_username, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	
+
 	// password field
 	label = gtk_label_new_with_mnemonic (_("_Password"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+#if GTK_CHECK_VERSION(2,16,0)
+	wiz->sip_password = gtk_entry_new();
+    gtk_entry_set_icon_from_stock (GTK_ENTRY (wiz->sip_password), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
+#else
 	wiz->sip_password = sexy_icon_entry_new();
 	image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
-	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->sip_password), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
+	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->sip_password), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
+#endif
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->sip_password);
 	gtk_entry_set_visibility(GTK_ENTRY(wiz->sip_password), FALSE);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->sip_password, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	
+
 	//gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant),  wiz->sip_account, TRUE);
 	return wiz->sip_account;
 }
@@ -279,13 +293,13 @@ GtkWidget* build_email_configuration( void ) {
 	GtkWidget* label;
 	GtkWidget*  table;
 
-	wiz->email = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Optional Email Address ") , _("This email address will be use to send your voicemail messages")); 
+	wiz->email = create_vbox( GTK_ASSISTANT_PAGE_CONTENT , _("Optional Email Address ") , _("This email address will be use to send your voicemail messages"));
 
 	table = gtk_table_new ( 4, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
 	gtk_table_set_col_spacings( GTK_TABLE(table), 10);
 	gtk_box_pack_start( GTK_BOX(wiz->email) , table , TRUE, TRUE, 0);
-	
+
 	// email field
 	label = gtk_label_new_with_mnemonic (_("_Email"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -296,19 +310,19 @@ GtkWidget* build_email_configuration( void ) {
 
 	return wiz->email;
 }
-	
+
 GtkWidget* build_iax_account_configuration( void ) {
 	GtkWidget* label;
 	GtkWidget*  table;
 	GtkWidget*  image;
 
-	wiz->iax_account = create_vbox( GTK_ASSISTANT_PAGE_CONFIRM , _("IAX2 account configuration") , _("Please fill the following information:")); 
-	
+	wiz->iax_account = create_vbox( GTK_ASSISTANT_PAGE_CONFIRM , _("IAX2 account configuration") , _("Please fill the following information:"));
+
 	table = gtk_table_new ( 4, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
 	gtk_table_set_col_spacings( GTK_TABLE(table), 10);
 	gtk_box_pack_start( GTK_BOX(wiz->iax_account) , table , TRUE, TRUE, 0);
-	
+
 	// alias field
 	label = gtk_label_new_with_mnemonic (_("_Alias"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -316,7 +330,7 @@ GtkWidget* build_iax_account_configuration( void ) {
 	wiz->iax_alias = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->iax_alias);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->iax_alias, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	
+
 	// server field
 	label = gtk_label_new_with_mnemonic (_("_Host name"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -324,30 +338,41 @@ GtkWidget* build_iax_account_configuration( void ) {
 	wiz->iax_server = gtk_entry_new();
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->iax_server);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->iax_server, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	
+
 	// username field
 	label = gtk_label_new_with_mnemonic (_("_User name"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+#if GTK_CHECK_VERSION(2,16,0)
+	wiz->iax_username = gtk_entry_new();
+    gtk_entry_set_icon_from_pixbuf (GTK_ENTRY (wiz->iax_username), GTK_ENTRY_ICON_PRIMARY, gdk_pixbuf_new_from_file(ICONS_DIR "/stock_person.svg", NULL));
+#else
 	wiz->iax_username = sexy_icon_entry_new();
-	image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
-	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->iax_username), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
+	image = gtk_image_new_from_file( ICONS_DIR "/stock_person.svg" );
+	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->iax_username), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
+#endif
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->iax_username);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->iax_username, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	
+
 	// password field
 	label = gtk_label_new_with_mnemonic (_("_Password"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+#if GTK_CHECK_VERSION(2,16,0)
+	wiz->iax_password = gtk_entry_new();
+    gtk_entry_set_icon_from_stock (GTK_ENTRY (wiz->iax_password), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
+#else
 	wiz->iax_password = sexy_icon_entry_new();
-	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->iax_password), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) ); 
+	image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
+	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->iax_password), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
+#endif
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->iax_password);
 	gtk_entry_set_visibility(GTK_ENTRY(wiz->iax_password), FALSE);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->iax_password, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-	
-	
+
+
 	current -> state = ACCOUNT_STATE_UNREGISTERED;
-	
+
 	g_signal_connect( G_OBJECT( wiz->assistant ) , "apply" , G_CALLBACK( iax_apply_callback ), NULL);
 
 	return wiz->iax_account;
@@ -356,22 +381,22 @@ GtkWidget* build_iax_account_configuration( void ) {
 GtkWidget* build_nat_settings( void ) {
 	GtkWidget* label;
 	GtkWidget* table;
-	
-	wiz->nat = create_vbox( GTK_ASSISTANT_PAGE_CONFIRM , _("Network Address Translation") , _("You should probably enable this if you are behind a firewall.")); 
-	
+
+	wiz->nat = create_vbox( GTK_ASSISTANT_PAGE_CONFIRM , _("Network Address Translation") , _("You should probably enable this if you are behind a firewall."));
+
 	// table
 	table = gtk_table_new ( 2, 2  ,  FALSE/* homogeneous */);
 	gtk_table_set_row_spacings( GTK_TABLE(table), 10);
 	gtk_table_set_col_spacings( GTK_TABLE(table), 10);
 	gtk_box_pack_start( GTK_BOX(wiz->nat), table , TRUE, TRUE, 0);
-	
+
 	// enable
 	wiz->enable = gtk_check_button_new_with_mnemonic(_("E_nable STUN"));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->enable), FALSE); 
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wiz->enable), FALSE);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->enable, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_widget_set_sensitive( GTK_WIDGET( wiz->enable ) , TRUE );
 	g_signal_connect( G_OBJECT( GTK_TOGGLE_BUTTON(wiz->enable)) , "toggled" , G_CALLBACK( enable_stun ), NULL);
-	
+
 	// server address
 	label = gtk_label_new_with_mnemonic (_("_STUN server"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -380,9 +405,9 @@ GtkWidget* build_nat_settings( void ) {
 	gtk_label_set_mnemonic_widget (GTK_LABEL (label), wiz->addr);
 	gtk_table_attach ( GTK_TABLE( table ), wiz->addr, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_widget_set_sensitive( GTK_WIDGET( wiz->addr ), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wiz->enable)));
-	
+
 	g_signal_connect( G_OBJECT( wiz->assistant ) , "apply" , G_CALLBACK( sip_apply_callback ), NULL);
-	
+
 	return wiz->nat;
 }
 
@@ -396,20 +421,20 @@ GtkWidget* build_summary() {
 	gtk_label_set_line_wrap(GTK_LABEL(wiz->label_summary), TRUE);
 	//gtk_widget_set_size_request(GTK_WIDGET(wiz->label_summary), 380, -1);
 	gtk_box_pack_start(GTK_BOX(wiz->summary), wiz->label_summary, FALSE, TRUE, 0);
-	
+
 	return wiz->summary;
 }
 
 GtkWidget* build_registration_error() {
 	GtkWidget *label;
 	wiz->reg_failed = create_vbox( GTK_ASSISTANT_PAGE_SUMMARY  , "Account Registration" , "Registration error");
-	
+
 	label = gtk_label_new(" Please correct the information.") ;
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
 	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 	gtk_widget_set_size_request(GTK_WIDGET(label), 380, -1);
 	gtk_box_pack_start(GTK_BOX(wiz->reg_failed), label, FALSE, TRUE, 0);
-	
+
 	return wiz->reg_failed;
 }
 
@@ -450,7 +475,7 @@ typedef enum {
 	PAGE_SUMMARY
 } assistant_state;
 
-static gint forward_page_func( gint current_page , gpointer data) {
+static gint forward_page_func( gint current_page , gpointer data UNUSED) {
  	gint next_page = 0;
 
 	switch( current_page ){
@@ -461,32 +486,32 @@ static gint forward_page_func( gint current_page , gpointer data) {
  			if (use_sflphone_org) {
 				next_page = PAGE_EMAIL;
  			} else
-				next_page = PAGE_TYPE;	
+				next_page = PAGE_TYPE;
 			break;
 		case PAGE_TYPE:
  			if( account_type == _SIP ) {
 				set_sip_infos_sentivite(TRUE);
-				next_page = PAGE_SIP;	
+				next_page = PAGE_SIP;
  			} else
-				next_page = PAGE_IAX;	
+				next_page = PAGE_IAX;
 			break;
-		case PAGE_SIP:  
-			next_page = PAGE_STUN;	
+		case PAGE_SIP:
+			next_page = PAGE_STUN;
 			break;
-		case PAGE_EMAIL:  
-			next_page = PAGE_STUN;	
+		case PAGE_EMAIL:
+			next_page = PAGE_STUN;
 			break;
 		case PAGE_STUN:
-			next_page = PAGE_SUMMARY;	
+			next_page = PAGE_SUMMARY;
 			break;
 		case PAGE_IAX:
-			next_page = PAGE_SUMMARY;	
+			next_page = PAGE_SUMMARY;
 			break;
 		case PAGE_SUMMARY:
-			next_page = PAGE_SUMMARY;	
+			next_page = PAGE_SUMMARY;
 			break;
 		default:
-			next_page = -1;	
+			next_page = -1;
 	}
 	return next_page;
 }
@@ -499,7 +524,7 @@ static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, con
 
 	vbox = gtk_vbox_new(FALSE, 6);
 	gtk_container_set_border_width(GTK_CONTAINER(vbox), 24);
-	
+
 	gtk_assistant_append_page(GTK_ASSISTANT(wiz->assistant), vbox);
 	gtk_assistant_set_page_type(GTK_ASSISTANT(wiz->assistant), vbox, type);
 	str = g_strdup_printf(" %s", title);
@@ -508,7 +533,7 @@ static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, con
 	g_free(str);
 
 	gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), vbox, TRUE);
-	
+
 	wiz->logo = gdk_pixbuf_new_from_file(ICONS_DIR "/sflphone.png", NULL);
 	gtk_assistant_set_page_header_image(GTK_ASSISTANT(wiz->assistant),vbox, wiz->logo);
 	g_object_unref(wiz->logo);
@@ -524,4 +549,4 @@ static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, con
 	return vbox;
 }
 
-#endif // GTK_CHECK_VERSION 
+#endif // GTK_CHECK_VERSION

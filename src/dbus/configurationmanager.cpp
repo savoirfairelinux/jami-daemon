@@ -3,17 +3,17 @@
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
- *                                                                              
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
- *                                                                                
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -33,27 +33,27 @@ const char* ConfigurationManager::SERVER_PATH = "/org/sflphone/SFLphone/Configur
 {
 }
 
-	std::map< std::string, std::string > 
+	std::map< std::string, std::string >
 ConfigurationManager::getAccountDetails( const std::string& accountID )
 {
 	return Manager::instance().getAccountDetails(accountID);
 }
 
-	void 
-ConfigurationManager::setAccountDetails( const std::string& accountID, 
+	void
+ConfigurationManager::setAccountDetails( const std::string& accountID,
 		const std::map< std::string, std::string >& details )
 {
 	_debug("ConfigurationManager::setAccountDetails received\n");
 	Manager::instance().setAccountDetails(accountID, details);
 }
 
-	void 
+	void
 ConfigurationManager::sendRegister( const std::string& accountID, const int32_t& expire )
 {
 	Manager::instance().sendRegister(accountID, expire);
 }
 
-	std::string 
+	void
 ConfigurationManager::addAccount( const std::map< std::string, std::string >& details )
 {
 	_debug("ConfigurationManager::addAccount received\n");
@@ -61,14 +61,14 @@ ConfigurationManager::addAccount( const std::map< std::string, std::string >& de
 }
 
 
-	void 
+	void
 ConfigurationManager::removeAccount( const std::string& accoundID )
 {
 	_debug("ConfigurationManager::removeAccount received\n");
 	return Manager::instance().removeAccount(accoundID);
 }
 
-std::vector< std::string > 
+std::vector< std::string >
 ConfigurationManager::getAccountList(  )
 {
 	_debug("ConfigurationManager::getAccountList received\n");
@@ -76,7 +76,7 @@ ConfigurationManager::getAccountList(  )
 }
 
 
-std::vector< std::string > 
+std::vector< std::string >
 ConfigurationManager::getToneLocaleList(  )
 {
         std::vector< std::string > ret;
@@ -86,7 +86,7 @@ ConfigurationManager::getToneLocaleList(  )
 
 
 
-	std::string 
+	std::string
 ConfigurationManager::getVersion(  )
 {
         std::string ret("");
@@ -96,7 +96,7 @@ ConfigurationManager::getVersion(  )
 }
 
 
-	std::vector< std::string > 
+	std::vector< std::string >
 ConfigurationManager::getRingtoneList(  )
 {
 	std::vector< std::string >  ret;
@@ -106,28 +106,26 @@ ConfigurationManager::getRingtoneList(  )
 
 
 
-	std::vector< std::string  > 
+	std::vector< std::string  >
 ConfigurationManager::getCodecList(  )
 {
-	_debug("ConfigurationManager::getCodecList received\n");
 	return Manager::instance().getCodecList();
 }
 
-	std::vector< std::string > 
+	std::vector< std::string >
 ConfigurationManager::getCodecDetails( const int32_t& payload )
 {
-	_debug("ConfigurationManager::getCodecList received\n");
 	return Manager::instance().getCodecDetails( payload );
 }
 
-	std::vector< std::string > 
+	std::vector< std::string >
 ConfigurationManager::getActiveCodecList(  )
 {
 	_debug("ConfigurationManager::getActiveCodecList received\n");
 	return Manager::instance().getActiveCodecList();
 }
 
-void 
+void
 ConfigurationManager::setActiveCodecList( const std::vector< std::string >& list )
 {
 	_debug("ConfigurationManager::setActiveCodecList received\n");
@@ -200,7 +198,7 @@ ConfigurationManager::getAudioDeviceIndex(const std::string& name)
 	return Manager::instance().getAudioDeviceIndex(name);
 }
 
-std::string 
+std::string
 ConfigurationManager::getCurrentAudioOutputPlugin( void )
 {
    _debug("ConfigurationManager::getCurrentAudioOutputPlugin received\n");
@@ -208,7 +206,7 @@ ConfigurationManager::getCurrentAudioOutputPlugin( void )
 }
 
 
-	std::vector< std::string > 
+	std::vector< std::string >
 ConfigurationManager::getPlaybackDeviceList(  )
 {
 	std::vector< std::string >  ret;
@@ -216,7 +214,7 @@ ConfigurationManager::getPlaybackDeviceList(  )
         return ret;
 }
 
-	std::vector< std::string > 
+	std::vector< std::string >
 ConfigurationManager::getRecordDeviceList(  )
 {
 	std::vector< std::string >  ret;
@@ -228,31 +226,31 @@ ConfigurationManager::getRecordDeviceList(  )
 int32_t
 ConfigurationManager::isIax2Enabled( void )
 {
-  return Manager::instance().isIax2Enabled(  ); 
+  return Manager::instance().isIax2Enabled(  );
 }
 
 void
 ConfigurationManager::ringtoneEnabled( void )
 {
-  Manager::instance().ringtoneEnabled(  ); 
+  Manager::instance().ringtoneEnabled(  );
 }
 
 int32_t
 ConfigurationManager::isRingtoneEnabled( void )
 {
-  return Manager::instance().isRingtoneEnabled(  ); 
+  return Manager::instance().isRingtoneEnabled(  );
 }
 
 std::string
 ConfigurationManager::getRingtoneChoice( void )
 {
-  return Manager::instance().getRingtoneChoice(  ); 
+  return Manager::instance().getRingtoneChoice(  );
 }
 
 void
 ConfigurationManager::setRingtoneChoice( const std::string& tone )
 {
-  Manager::instance().setRingtoneChoice( tone ); 
+  Manager::instance().setRingtoneChoice( tone );
 }
 
 std::string
@@ -270,136 +268,136 @@ ConfigurationManager::setRecordPath( const std::string& recPath)
 int32_t
 ConfigurationManager::getDialpad( void )
 {
-  return Manager::instance().getDialpad(  ); 
+  return Manager::instance().getDialpad(  );
 }
 
 void
 ConfigurationManager::setDialpad( void )
 {
-  Manager::instance().setDialpad( ); 
+  Manager::instance().setDialpad( );
 }
 
 int32_t
 ConfigurationManager::getSearchbar( void )
 {
-  return Manager::instance().getSearchbar(  ); 
+  return Manager::instance().getSearchbar(  );
 }
 
 void
 ConfigurationManager::setSearchbar( void )
 {
-  Manager::instance().setSearchbar( ); 
+  Manager::instance().setSearchbar( );
 }
 
 int32_t
 ConfigurationManager::getVolumeControls( void )
 {
-  return Manager::instance().getVolumeControls(  ); 
+  return Manager::instance().getVolumeControls(  );
 }
 
 void
 ConfigurationManager::setVolumeControls( void )
 {
-  Manager::instance().setVolumeControls( ); 
+  Manager::instance().setVolumeControls( );
 }
 
 int32_t
 ConfigurationManager::getMaxCalls( void )
 {
-  return Manager::instance().getMaxCalls(  ); 
+  return Manager::instance().getMaxCalls(  );
 }
 
 void
 ConfigurationManager::setMaxCalls( const int32_t& calls )
 {
-  Manager::instance().setMaxCalls( calls ); 
+  Manager::instance().setMaxCalls( calls );
 }
 
 void
 ConfigurationManager::startHidden( void )
 {
-  Manager::instance().startHidden(  ); 
+  Manager::instance().startHidden(  );
 }
 
 int32_t
 ConfigurationManager::isStartHidden( void )
 {
-  return Manager::instance().isStartHidden(  ); 
+  return Manager::instance().isStartHidden(  );
 }
 
 void
 ConfigurationManager::switchPopupMode( void )
 {
-  Manager::instance().switchPopupMode(  ); 
+  Manager::instance().switchPopupMode(  );
 }
 
 int32_t
 ConfigurationManager::popupMode( void )
 {
-  return Manager::instance().popupMode(  ); 
+  return Manager::instance().popupMode(  );
 }
 
 void
 ConfigurationManager::setNotify( void )
 {
   _debug("Manager received setNotify\n");
-  Manager::instance().setNotify( ); 
+  Manager::instance().setNotify( );
 }
 
 int32_t
 ConfigurationManager::getNotify( void )
 {
   _debug("Manager received getNotify\n");
-  return Manager::instance().getNotify(  ); 
+  return Manager::instance().getNotify(  );
 }
 
 void
 ConfigurationManager::setAudioManager( const int32_t& api )
 {
   _debug("Manager received setAudioManager\n");
-  Manager::instance().setAudioManager( api ); 
+  Manager::instance().setAudioManager( api );
 }
 
 int32_t
 ConfigurationManager::getAudioManager( void )
 {
   _debug("Manager received getAudioManager\n");
-  return Manager::instance().getAudioManager(  ); 
+  return Manager::instance().getAudioManager(  );
 }
 
 void
 ConfigurationManager::setMailNotify( void )
 {
   _debug("Manager received setMailNotify\n");
-  Manager::instance().setMailNotify( ); 
+  Manager::instance().setMailNotify( );
 }
 
 int32_t
 ConfigurationManager::getMailNotify( void )
 {
   _debug("Manager received getMailNotify\n");
-  return Manager::instance().getMailNotify(  ); 
+  return Manager::instance().getMailNotify(  );
 }
 
-int32_t 
+int32_t
 ConfigurationManager::getPulseAppVolumeControl( void )
 {
   return Manager::instance().getPulseAppVolumeControl();
 }
-    
-void 
+
+void
 ConfigurationManager::setPulseAppVolumeControl( void )
 {
   Manager::instance().setPulseAppVolumeControl();
 }
 
-int32_t 
+int32_t
 ConfigurationManager::getSipPort( void )
 {
   return Manager::instance().getSipPort();
 }
- 
-void 
+
+void
 ConfigurationManager::setSipPort( const int32_t& portNum )
 {
   _debug("Manager received setSipPort: %d\n", portNum);
@@ -410,7 +408,7 @@ std::string ConfigurationManager::getStunServer( void )
 {
     return Manager::instance().getStunServer();
 }
-    
+
 void ConfigurationManager::setStunServer( const std::string& server )
 {
     Manager::instance().setStunServer( server );
@@ -434,6 +432,15 @@ void ConfigurationManager::setAddressbookSettings (const std::map<std::string, i
     Manager::instance().setAddressbookSettings (settings);
 }
 
+std::vector< std::string > ConfigurationManager::getAddressbookList ( void ) {
+    return Manager::instance().getAddressbookList();
+}
+
+void ConfigurationManager::setAddressbookList( const std::vector< std::string >& list ) {
+  _debug("Manager received setAddressbookList") ;
+    Manager::instance().setAddressbookList(list);
+}
+
 std::map<std::string,std::string> ConfigurationManager::getHookSettings (void) {
     return Manager::instance().getHookSettings ();
 }
@@ -441,3 +448,8 @@ std::map<std::string,std::string> ConfigurationManager::getHookSettings (void) {
 void ConfigurationManager::setHookSettings (const std::map<std::string, std::string>& settings) {
     Manager::instance().setHookSettings (settings);
 }
+
+void  ConfigurationManager::setAccountsOrder (const std::string& order) {
+    Manager::instance().setAccountsOrder (order);
+}
+

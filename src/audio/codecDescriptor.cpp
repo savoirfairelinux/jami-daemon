@@ -277,14 +277,14 @@ CodecDescriptor::seemsValid( std::string lib)
     return false;
 
 
-#ifdef HAVE_SPEEX
+#ifdef HAVE_SPEEX_CODEC
   // Nothing special
 #else
     if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == SPEEX_STRING_DESCRIPTION)
       return false;
 #endif
 
-#ifdef HAVE_GSM
+#ifdef HAVE_GSM_CODEC
   // Nothing special
 #else
     if( lib.substr(begin.length() , lib.length() - begin.length() - end.length()) == GSM_STRING_DESCRIPTION )  

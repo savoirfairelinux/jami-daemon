@@ -24,7 +24,7 @@ UrlHook::UrlHook () { }
 
 UrlHook::~UrlHook () { }
 
-void UrlHook::addAction (std::string field_value, std::string command){
+int UrlHook::addAction (std::string field_value, std::string command){
 
     std::string command_bg;
 
@@ -32,6 +32,9 @@ void UrlHook::addAction (std::string field_value, std::string command){
     command_bg = command + " " + field_value + "&" ;
     /* Execute a system call */
     RUN_COMMAND (command_bg.c_str());
+
+    return 0;
+
 }
 
 

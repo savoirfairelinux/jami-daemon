@@ -21,6 +21,7 @@
 #define __MENUS_H__
 
 #include <gtk/gtk.h>
+#include <call.h>
 /** @file menus.h
   * @brief The menus of the main window.
   */
@@ -49,4 +50,10 @@ void show_popup_menu (GtkWidget *my_widget, GdkEventButton *event);
  * @param event The mouse event
  */
 void show_popup_menu_history (GtkWidget *my_widget, GdkEventButton *event);
+
+void show_popup_menu_contacts (GtkWidget *my_widget, GdkEventButton *event);
+
+void add_registered_accounts_to_menu (GtkWidget *menu);
+
+void show_edit_number (call_t *call);
 #endif 

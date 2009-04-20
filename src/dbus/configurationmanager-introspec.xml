@@ -21,6 +21,10 @@
       <arg type="s" name="createdAccountId" direction="out"/>
     </method>
     
+    <method name="setAccountsOrder">
+      <arg type="s" name="order" direction="in"/>
+    </method>
+    
     <method name="removeAccount">
       <arg type="s" name="accoundID" direction="in"/>
     </method>
@@ -264,6 +268,15 @@
 
     <method name="setAddressbookSettings">
       <arg type="a{si}" name="settings" direction="in"/>
+    </method>
+
+	<!-- Addressbook list -->
+    <method name="getAddressbookList">
+      <arg type="as" name="settings" direction="out"/>
+    </method>
+
+    <method name="setAddressbookList">
+      <arg type="as" name="settings" direction="in"/>
     </method>
 
     <!-- Hook configuration -->
