@@ -1,0 +1,434 @@
+sflphone-client-gnome (0.9.5-0ubuntu1~beta) %system%; urgency=low
+    
+    [Julien Bonjean]
+    * Address book improvements
+    * Unit test framework implementation (check)
+
+    [Emmanuel Milou]
+    * Replace libsexy with GTK 2.16 when applicable
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 8 Apr 2009 11:29:15 -0500
+
+sflphone (0.9.4-0ubuntu2) %system%; urgency=low
+
+  [ Alexandre Savard ]
+  * Restore speex and GSM detection
+
+  [ Emmanuel Milou ]
+  * Fix bug #1090
+ 
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 8 Apr 2009 11:29:15 -0500
+
+sflphone (0.9.4-0ubuntu1) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * Integrate DBus-c++ and libiax2 in the main build system
+  * Clean up in the working repository
+  * Reorder hooks configuration panel
+  * Protect case when no codecs are active
+  * Fix some return values
+  * Add unitary tests for the hook manager (premisces)
+  
+  [Yun Liu]
+  * Update chinese translation
+
+  [Sven Werlen]
+  * Update german translation
+
+  [Hussein Abdallah]
+  * Update russian translation
+
+  [Maxime Chambreuil]
+  * Update spanish translation
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 3 Apr 2009 18:29:15 -0500
+
+
+sflphone (0.9.4-rc1) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * Fix bug while trying to hold/unhold several simultaneous call
+  * Improve address book build system
+  * Implement SIP url popup on incoming call
+  * Improve GTK+ panel configuration
+  [ Julien Bonjean ]
+  * GTK+ client refactoring
+  * GTK+ clean up
+  * Address book improvment
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 27 Mar 2009 18:29:15 -0500
+
+sflphone (0.9.4-0beta1) %system%; urgency=low
+
+  [ Alexandre Savard ]
+  * Display codec used during conversation on the GUI
+  * Enable/disable STUN parameters at runtime
+  * Refactor search bar use
+  [ Emmanuel Milou ]
+  * Build system fixes
+  * Implement SIP re-invite
+  * Implement IP to IP call
+  [ Julien Bonjean ]
+  * Integrate GNOME address book based on evolution data server
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 20 Mar 2009 18:29:15 -0500
+
+
+sflphone (0.9.3-0ubuntu3) %system%; urgency=low
+
+  [ Alexandre Savard ]
+  * Both playback and record streams in PA_STREAM_CORKED (pulseaudio)
+  * Use PLUGHW device for ALSA capture
+  * Functional IAX and SIP recording for voicemail
+  * Use the less CPU-consuming interpolator algorithm for resampling
+  * Display in GTK GUI the codec used in conversation
+  * GTK GUI use ASCII instread of utf-8
+  * Add record menus in GTK GUI
+  * Put on hold when dialing a new number
+  * AccountID's are saved in the history
+
+  [ Emmanuel Milou ]
+  * Integrate DBUS C++, libiax2 in the git repository
+  * Update website
+  * Use libspeexdsp only if available on the system
+  * Updated .gitignore file
+
+  [Cyrille Béraud]
+  * Account assistant manager improvment
+  * Add an email request when creating a new account to receive voicemails
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Sat, 14 Feb 2009 13:29:15 -0500
+
+sflphone (0.9.3-0ubuntu2) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * Add compilation note in README
+  * Use default ALSA plugin for capture
+  * Fix the ALSA capture problem one more time
+  * Clean up debug messages in dbus.c
+  * Add libspeexdsp dependency
+  * Remove implicit declaration compilation warnings
+  * Fix links in the website, add release note
+  * Change capture for the website front page
+  * Add alsa devel dependency in build-depends control file field
+  * Clean up, indentation, try to handle latency problems in iax/pulseaudio
+  * Remove pjsip generated files from the repo
+  * Use the previous declared curAlias function in accountwindow
+  * Fix bug in history call duration when the call fails
+  * Remove runtime warning in the GTK+ client
+  * Add librsvg2-common dependency to load SVG under KDE
+  * Refresh .gitignore
+  * Update locales files + french translation
+  * Add configuration panel for future noise reduction
+  * Add configuration panel for audio record module
+  * Daemon less verbose; accounts don't try to access STUn options anymore
+  * Fix typo in configwindow
+  * Add content in the official website
+  * use a GTK_STOCK icon for the record button
+  * Complete description text in the assistant manager
+  * Add libtool flags in client configure.ac
+  * Remove unuseful dependency (snd)
+  * Fix SIP transfer problems
+  * Remove previous version of PJSIP from the repo
+  * Upgrade PJSIP to version 1.0.1
+  * Add the new website source in the repository
+  * Use libspeexdsp for silence detection only if available
+
+  [ Loïc Faure-Lacroix ]
+  * Ajout du logo gpl3
+  * Ajout des images
+  * Ajout de la section screenshot pour le site
+  * Ajout du favicon dans le header
+  * Modification des cartes
+
+  [ Alexandre Savard ]
+  * Clean up <speex/libspeexdsp>
+  * Small cleanup
+  * Save Wave fixed
+  * Fix new call button when recording
+  * libspeexdsp added
+  * Recording: default home folder at startup
+  * Minor changes to config window
+  * IAX recording fixed
+  * Set / get recording path, still need some GTK for client
+  * AudioRecord file name format
+  * Now recording in HOME folder
+
+  [ Cyrille Béraud ]
+  * Fix bug in reqaccount.c
+
+  [ Maxime Chambreuil ]
+  * Update spanish translation
+
+  [Yun Liu ]
+  * Update chinese translation 
+
+  [ Hussein Abdallah ]
+  * Update russian translation
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Sat, 14 Feb 2009 13:29:15 -0500
+
+sflphone (0.9.3-0ubuntu1) %system%; urgency=low
+
+  * Remove debug
+  * Join thread before leaving
+  * Fix implicit declaration in reqaccount
+  * Add REST code to build the request to server
+  * Fix GValue initialization warnings
+  * Update version number, fix implicit declaration, fix GTK markup
+    warnings
+  * Apply patch to create custom SIP account from our own server
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 06 Feb 2009 19:17:32 -0500
+
+sflphone (0.9.2-2ubuntu9) %system%; urgency=low
+
+  [ Alexandre Savard ]
+  * Speex audio codec preprocessing initialization
+  * peer hung up segmentation fault solved
+  * Stop recording when transfering
+  * Terminate only one call
+  * Add isRecording() function
+  * Fix call_icon GTK client
+  * Fix SIPCallClose() function, recorded file now close properly
+  * Function terminateSIPCall added in sipvoiplink and managerimpl
+  * Fix thread destructor
+  * setRecordingOption function implement in audiorecord
+  * Record now implemented in Call class
+  * Record interface complete (on hold erase previous recording)
+  * Added recButton in client
+  * Added: record button related icons
+  * Record button added
+  * Overload AudioRecord::recData to get mic and speaker data mixed
+  * Recording now in audiortp::run() method
+  * Audio recording working in AudioRTP: receiveSessionForSpeaker
+  * Open/close a wave file when pulse audio stream start/stop
+
+  [ Emmanuel Milou ]
+  * Fix path for GTK+ icons; clean up
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Thu, 05 Feb 2009 18:27:53 -0500
+
+sflphone (0.9.2-2ubuntu8) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * Update changelogs
+  * Fix bug in merge and in Makefile.am
+  * Terminate only one call
+  * Disable PJsip shutdown when changing STUN parameters
+  * Function terminateSIPCall added in sipvoiplink and managerimpl
+  * Add a timer to the alsa thread to not jam the CPU load
+  * Fix bug in sipvoiplink.cpp
+  * Clean shutdown of pulseaudio on quiting
+  * Fix DTMF at first start with Pulseaudio
+  * Remove zeroconf from the build system
+  * Add a library manager + exception handling
+  * Clean up in the working directory
+  * Better handling of capture XRUNs
+  * Restore mic adjust volume on ALSA layer
+  * Protect device ALSA operation if not opened
+  * Fix the switching layer bug
+  * Use dynamic_cast<> to use audiolayer-specific methods
+  * Open the audio devices only once at startup
+  * Refactoring of the ALSA part
+  * Functional plug-in manager
+  * Use a C++ thread to handle tones and DTMF in ALSA
+  * Restore IAXVoIPLink, restore Mutex
+  * Make the plugins registering against the plugin manager
+  * Migrate to 1->N relationship between voiplink and accounts
+  * API plugin for registration
+  * Use C++ thread in SIP, move everything in sipvoiplink
+  * Complete singleton pattern for the plugin manager
+  * Add -Wno-return-type compilation flag to remove warnings; Update
+    version number in configure.ac
+  * Add the dynamic loading for the plugin framework; integate unittest
+
+  [ Yun Liu ]
+  * Update rpm spec file
+  * modify build package script and spec file for suse
+
+  [ Alexandre Savard ]
+  * Add audiorecorder plugin and testaudiorecorder
+  * Add audio Recording class, edit global.h
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 04 Feb 2009 14:00:30 -0500
+
+sflphone (0.9.2-2ubuntu7) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * Update changelog to 0.9.2-6
+  * Fix some dbus-glib implementation details on the client side
+  * Init history after dbus initialization
+  * Add error checking in useragent; Clean sipvoiplink
+  * Prevent crash when trying to call an empty number
+  * Set the volume of the playback stream to PA_VOLUME_NORM at startup
+  * Fix GTK+ generic value double initialization
+  * Fix jaunty control file dependency problems
+  * Fix jaunty control file dependency problems
+
+  [ Yun Liu ]
+  * Fix bug ticket # 137
+  * Tolerant to gsm library of OpenSuse 11
+
+  [ Sven Werlen ]
+  * Update german translation
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 23 Jan 2009 17:48:13 -0500
+
+sflphone (0.9.2-2ubuntu6) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * Migrate STUN configuration to the main config window
+  * Update french translation
+  * Other tiny memory leaks
+  * Fix memory leak in sampleconverter.cpp
+  * Generate packages from the release branch
+  * update the build package script
+  * modify the control files with architecture=any
+  * Remove valgring uninitialized value
+  * IAX and SIP use the same global variables to set account
+    configuration ; fix broken code
+
+  [ Maxime Chambreuil ]
+  * Update spanish translation
+
+  [ Hussein Abdallah ]
+  * Update russian translation
+
+  [ Yun Liu ]
+  * Update translation files
+  * Fix the bug when user uncheck the account which fails in the
+    previous registration
+  * Add stun error status
+  * Fix bug ticket #143
+  * Script for auto-install dependencies
+  * Fix bug ticket #140
+  * Fix bug ticket 141
+  * Fix the reregister process when user change the details of an
+    account
+
+ -- Emmanuel Milou <manu@sulfur.inside.savoirfairelinux.net>  Fri, 16 Jan 2009 18:19:05 -0500
+
+sflphone (0.9.2-2ubuntu5) %system%; urgency=low
+
+  * Fix memory leak in the pulseaudio callback
+  * Update debian package generation script
+  * Warnings removal in GTK+ client
+  * Clean adjust volume method in alsalayer
+  * Plug the sflphone playback volume control to the pulseaudio volume
+    manager
+  * Display the date in history according to the current locale
+  * Generate the changelog according to the git commit messages
+  * Complete header in chinese translation file
+  * Use the right gpg key to sign the packages
+  * add debian jaunty jackalope support
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 14 Jan 2009 21:17:20 -0500
+
+sflphone (0.9.2-2ubuntu4) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * add german translation
+  
+  [ Yun Liu ]
+  * Fix GUI crash in Ubuntu8.10 64bit system
+  
+ -- Yun Liu <yun.liu@savoirfairelinux.com>  Thu, 08 Jan 2009 13:08:51 -0500
+
+sflphone (0.9.2-2ubuntu3) %system%; urgency=low
+
+  [ Emmanuel Milou ]
+  * The main thread synchronizes the ringtone thread
+  * disable custom ringtone for the ALSA layer
+  * Fix the Makefile.am in man directory, add a SEE ALSO section
+  
+  [ Yun Liu ]
+  * Fix daemon crash caused by the previous patch ( for bug ticket #129)
+  
+ -- Yun Liu <yun.liu@savoirfairelinux.com>  Tue, 06 Jan 2009 16:18:38 -0500
+
+sflphone (0.9.2-2ubuntu2) %system%; urgency=low
+  
+  * Fix bug ticket #129
+  
+ -- Yun Liu <yun.liu@savoirfairelinux.com>  Wed, 5 Jan 2009 15:54:53 -0500
+
+sflphone (0.9.2-2ubuntu1) %system%; urgency=low
+
+  * Migrate from eXosip library to pjsip
+  * Add multiple SIP accounts support
+  * Fix ringtones problems
+  * Add a pulseaudio support
+  * Improve audio quality with ALSA
+  * Add chinese translation
+  * Improve spanish translation
+  * Migrate to a maintained C++ DBus bindings
+  * Clean and improve the build system
+  * Add build-dependency on Perl because we need pod2man to generate manpages
+
+ -- Yun Liu <yun.liu@savoirfairelinux.com>  Wed, 26 Nov 2008 09:47:53 -0500
+
+sflphone (0.9.1) unstable; urgency=low
+  * Add a search tool in the history
+  * Migrate some gtk_entry_new to sexy_icon_entry_new
+  * Bug fix (Ticket #78): The voicemail password isn't displayed anymore in
+    the history tab
+  * Add the SIP registration expire value in the user file.
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Thu, 22 May 2008 11:14:25 -0500
+
+sflphone (0.9.0) unstable; urgency=low
+  * Add history features
+    * Call date
+    * Call duration
+    * Mouse events in the history tab
+  * Smooth switch from the history tab to the calls tab
+  * Remove most of GTK-Critical warnings
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 13 May 2008 16:58:25 -0500
+
+sflphone (0.9-2008-06-06) unstable; urgency=low
+  * Audio bug correction: capture stopped after a few minutes of conversation
+  with USB Plantronics sound card
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Tue, 06 May 2008 16:58:25 -0500
+
+sflphone (0.9-2008-05-06) unstable; urgency=low
+  * Bug correction: account creation with the assistant
+  * GTK+ warnings removal
+  * libnotify warnings removal
+  * Remove aliasing on the SFLphone logo
+  
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Mon, 05 May 2008 16:58:25 -0500
+
+sflphone (0.9) unstable; urgency=low
+  * Clean dependencies ( removal of libboost )
+  * Several GTK improvement and updates
+    -account window
+    -configuration window
+  * Migrate from GtkCheckMenuItem to GtkImageMenuItem  
+  * ALSA standard I/O transfers: MMAP instead of R/W
+  * Fix speex audio quality
+  * IAX2 protocol
+    -Fix hold/unhold situation
+    -Add on hold music
+  * SIP protocol
+    -Ringtone on incoming call
+    -Fix transfer situation
+  * Add desktop notification ( libnotify )
+  * Improve the system tray icon behaviour
+  * Improve registration error handling
+  * Register/unregister from the account window takes effect without starting back SFLphone
+  * Compilation warnings removal
+  * Call history
+  * Add an account configuration wizard
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Wed, 30 Apr 2008 16:58:25 -0500
+
+sflphone (0.8.2) unstable; urgency=low
+  * Internationalization of the GTK GUI
+  * English / French
+  * STUN support
+  * Slight modifications of the graphical interface ( tooltips, dialpad, ...)
+
+ -- Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>  Fri, 21 Mar 2008 11:37:53 -0500

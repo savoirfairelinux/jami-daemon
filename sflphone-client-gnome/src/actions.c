@@ -691,8 +691,6 @@ sflphone_place_call ( call_t * c )
         if(c->state == CALL_STATE_DIALING && strcmp(c->to, "") != 0)
         {
 
-            //format_phone_number (&c->to);
-
             if( account_list_get_size() == 0 )
             {
                 notify_no_accounts();
