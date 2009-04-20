@@ -34,18 +34,18 @@ check_global_LDADD =		@CHECK_LIBS@
 
 check_contacts_SOURCES =	check_contacts.c
 check_contacts_CFLAGS =		@CHECK_CFLAGS@ @DEPS_CFLAGS@
-check_contacts_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @DEPS_LIBS@ -llog4c
+check_contacts_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @DEPS_LIBS@ @LIBSEXY_LIBS@ -llog4c
 
 ###########################################################
 
 check_config_SOURCES =		check_config.c
 check_config_CFLAGS = 		@CHECK_CFLAGS@ @DEPS_CFLAGS@
-check_contacts_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @DEPS_LIBS@ -llog4c
+check_config_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @DEPS_LIBS@ @LIBSEXY_LIBS@ -llog4c
 
 ###########################################################
 
 check_dbus_SOURCES =		check_dbus.c
 check_dbus_CFLAGS = 		@CHECK_CFLAGS@ @DEPS_CFLAGS@
-check_contacts_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @DEPS_LIBS@ -llog4c
+check_dbus_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @DEPS_LIBS@ @LIBSEXY_LIBS@ -llog4c
 
 ###########################################################
