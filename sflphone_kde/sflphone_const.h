@@ -11,7 +11,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *                                                                              
+ *                                                                               
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -45,6 +45,7 @@
 #define PAGE_ACCOUNTS                     2
 #define PAGE_AUDIO                        3
 
+#define CONTACT_ITEM_HEIGHT               40
 
 #define ICON_INCOMING                     ":/images/icons/ring.svg"
 #define ICON_RINGING                      ":/images/icons/ring.svg"
@@ -79,6 +80,10 @@
 #define ICON_HISTORY_INCOMING             ":/images/icons/incoming.svg"
 #define ICON_HISTORY_OUTGOING             ":/images/icons/outgoing.svg"
 #define ICON_HISTORY_MISSED               ":/images/icons/missed.svg"
+
+#define ICON_QUIT                         ":/images/icons/application-exit.png"
+
+#define ICON_SFLPHONE                     ":/images/icons/sflphone.png"
 
 
 #define RECORD_DEVICE                     "mic"

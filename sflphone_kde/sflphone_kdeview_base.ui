@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>310</width>
-    <height>390</height>
+    <width>391</width>
+    <height>349</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -348,12 +348,160 @@
     </layout>
    </item>
   </layout>
-  <action name="action_Pick_up" >
+  <action name="action_accept" >
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/call.svg</normaloff>:/images/icons/call.svg</iconset>
+   </property>
    <property name="text" >
     <string>&amp;Pick up</string>
    </property>
   </action>
+  <action name="action_refuse" >
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/hang_up.svg</normaloff>:/images/icons/hang_up.svg</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Hang up</string>
+   </property>
+  </action>
+  <action name="action_hold" >
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/hold.svg</normaloff>:/images/icons/hold.svg</iconset>
+   </property>
+   <property name="text" >
+    <string>H&amp;old</string>
+   </property>
+  </action>
+  <action name="action_transfer" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/transfert.svg</normaloff>:/images/icons/transfert.svg</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Transfer</string>
+   </property>
+  </action>
+  <action name="action_history" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/history2.svg</normaloff>:/images/icons/history2.svg</iconset>
+   </property>
+   <property name="text" >
+    <string>H&amp;istory</string>
+   </property>
+  </action>
+  <action name="action_mailBox" >
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/mailbox.svg</normaloff>:/images/icons/mailbox.svg</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Mailbox</string>
+   </property>
+  </action>
+  <action name="action_configureAccounts" >
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/stock_person.svg</normaloff>:/images/icons/stock_person.svg</iconset>
+   </property>
+   <property name="text" >
+    <string>Configure &amp;accounts</string>
+   </property>
+  </action>
+  <action name="action_configureAudio" >
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/icon_volume.svg</normaloff>:/images/icons/icon_volume.svg</iconset>
+   </property>
+   <property name="text" >
+    <string>Configure a&amp;udio</string>
+   </property>
+  </action>
+  <action name="action_configureSflPhone" >
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/sflphone.png</normaloff>:/images/icons/sflphone.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Configure SFLPhone</string>
+   </property>
+  </action>
+  <action name="action_displayVolumeControls" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="checked" >
+    <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/icon_volume_off.svg</normaloff>:/images/icons/icon_volume_off.svg</iconset>
+   </property>
+   <property name="text" >
+    <string>Display &amp;volume bars</string>
+   </property>
+  </action>
+  <action name="action_About" >
+   <property name="text" >
+    <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="action_displayDialpad" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="checked" >
+    <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/icon_dialpad.svg</normaloff>:/images/icons/icon_dialpad.svg</iconset>
+   </property>
+   <property name="text" >
+    <string>Display &amp;dialpad</string>
+   </property>
+  </action>
+  <action name="action_record" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/del_off.png</normaloff>:/images/icons/del_off.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Record</string>
+   </property>
+  </action>
+  <action name="action_accountCreationWizard" >
+   <property name="text" >
+    <string>Account creation &amp;wizard</string>
+   </property>
+  </action>
+  <action name="action_addressBook" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="resources.qrc" >
+     <normaloff>:/images/icons/x-office-address-book.png</normaloff>:/images/icons/x-office-address-book.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Address book</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc" />
+ </resources>
  <connections/>
 </ui>

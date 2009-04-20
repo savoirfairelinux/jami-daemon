@@ -1,8 +1,38 @@
-<!DOCTYPE kpartgui SYSTEM "kpartgui.dtd">
-<kpartgui name="KApp4" version="1">
-<MenuBar>
-  <Menu name="move"><text>&amp;Move</text>
-    <Action name="switch_action" />
-  </Menu>
-</MenuBar>
-</kpartgui>
+<?xml version="1.0" encoding="UTF-8"?>
+<gui name="tutorial3"
+	  version="1"
+	  xmlns="http://www.kde.org/standards/kxmlgui/1.0"
+	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:schemaLocation="http://www.kde.org/standards/kxmlgui/1.0
+	  http://www.kde.org/standards/kxmlgui/1.0/kxmlgui.xsd" >
+	
+	<MenuBar>
+		<Menu name="Actions" >
+			<text>Actions</text>
+			<Action name="action_accept" />
+			<Action name="action_refuse" />
+			<Action name="action_hold" />
+			<Action name="action_transfer" />
+			<Action name="action_record" />
+			<Separator />
+			<Action name="action_history" />
+			<Action name="action_addressBook" />
+			<Separator />
+			<Action name="action_mailBox" />
+			<Separator />
+			<Action name="action_quit" />
+		</Menu>
+		<Menu name="Settings" >
+			<text>Settings</text>
+			<Action name="action_displayVolumeControls" />
+			<Action name="action_displayDialpad" />
+			<Separator />
+			<Action name="action_configureAccounts" />
+			<Action name="action_configureAudio" />
+			<Action name="action_configureSflPhone" />
+			<Separator />
+			<Action name="action_accountCreationWizard" />
+		</Menu>
+	</MenuBar>
+	
+</gui>

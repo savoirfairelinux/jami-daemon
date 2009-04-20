@@ -27,6 +27,7 @@ SET(
 	AccountItemWidget.cpp
 	ActionSetAccountFirst.cpp
 	Contact.cpp
+	ContactItemWidget.cpp
 )
  
 SET(QtApp_RCCS resources.qrc)

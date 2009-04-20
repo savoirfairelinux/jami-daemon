@@ -19,7 +19,7 @@
 class ConfigurationDialog;
 class sflphone_kdeView;
 
-class SFLPhone : public KMainWindow
+class SFLPhone : public KXmlGuiWindow
 {
 
 Q_OBJECT
@@ -27,12 +27,14 @@ Q_OBJECT
 private:
 	sflphone_kdeView * view;
 
-
+protected:
+	virtual bool queryClose();
 
 public:
 	SFLPhone(QWidget *parent = 0);
 	~SFLPhone();
 	void setupActions();
+	
 
 };
 

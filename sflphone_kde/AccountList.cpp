@@ -99,13 +99,10 @@ QVector<Account *> & AccountList::getAccounts()
 
 Account * AccountList::getAccountById(QString & id)
 {
-	qDebug() << "for " << accounts->size();
 	for (int i = 0; i < accounts->size(); ++i)
 	{
-		qDebug() << "account " << i << " (*accounts)[i]->getAccountId() " << (*accounts)[i];
 		if (!(*accounts)[i]->isNew() && (*accounts)[i]->getAccountId() == id)
 		{
-			qDebug() << "found ";
 			return (*accounts)[i];
 		}
 	}
@@ -116,7 +113,7 @@ QVector<Account *> AccountList::getAccountByState(QString & state)
 {
 	QVector<Account *> v;
 	for (int i = 0; i < accounts->size(); ++i){
-		if ((*accounts)[i]->getAccountDetail(*(new QString(ACCOUNT_STATUS))) == state)
+		if ((*accounts)[i]->getAccountDetail(ACCOUNT_STATUS) == state)
 			v += (*accounts)[i];
 	}
 	return v;

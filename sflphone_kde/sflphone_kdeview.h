@@ -49,6 +49,7 @@ class ConfigurationDialog;
  * @author Jérémy Quentin <jeremy.quentin@gmail.com>
  * @version 0.1
  */
+ 
 
 class sflphone_kdeView : public QWidget, public Ui::SFLPhone
 {
@@ -64,7 +65,6 @@ private:
 
 protected:
 	void contextMenuEvent(QContextMenuEvent *event);
-	virtual bool queryClose();
 
 public:
 	sflphone_kdeView(QWidget *parent);
@@ -77,6 +77,7 @@ public:
 	static AccountList * getAccountList();
 	QVector<Contact *> findContactsInKAddressBook(QString textSearched);
 	bool phoneNumberTypeDisplayed(int type);
+	QErrorMessage * getErrorWindow();
 
 private slots:
 	//void typeChar(QChar c);
@@ -84,7 +85,6 @@ private slots:
 	void backspace();
 	void actionb(Call * call, call_action action);
 	void action(QListWidgetItem * item, call_action action);
-	void setupActions();
 	
 	void addCallToCallList(Call * call);
 	void addCallToCallHistory(Call * call);
@@ -103,11 +103,14 @@ private slots:
 	void updateVolumeControls();
 	void updateDialpad();
 	
+	void escape();
+	void enter();
+	
 	virtual void keyPressEvent(QKeyEvent *event)
 {
 	int key = event->key();
 	if(key == Qt::Key_Escape)
-		on_action_refuse_triggered();
+		escape();
 	else if(key == Qt::Key_Return || key == Qt::Key_Enter)
 		on_action_accept_triggered();
 	else if(key == Qt::Key_Backspace)

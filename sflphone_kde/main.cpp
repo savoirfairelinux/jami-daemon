@@ -1,6 +1,9 @@
 #include <QApplication>
 #include <QtCore/QString>
 #include <QtGui/QCursor>
+#include <QtGui/QMenu>
+#include <QtGui/QMenuBar>
+#include <QtGui/QAction>
 #include <kapplication.h>
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
@@ -38,6 +41,7 @@ int main(int argc, char **argv)
 	{
 		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 		instance.Register(getpid(), APP_NAME);
+		
 		KAboutData about(
 		   "sflphone_kde", 
 		   0, 
@@ -56,15 +60,27 @@ int main(int argc, char **argv)
 		//options.add("+[URL]", ki18n( "Document to open" ));
 		KCmdLineArgs::addCmdLineOptions(options);
 		KApplication app;
-	
+		
+		SFLPhone * fenetre = new SFLPhone();
+		
 		QString locale = QLocale::system().name();
 	
 		QTranslator translator;
 		translator.load(QString("config_") + locale);
 		app.installTranslator(&translator);
 	
-		SFLPhone * fenetre = new SFLPhone();
-
+	/*
+		QApplication app(argc,argv);
+		//
+		QMainWindow * fenetre = new QMainWindow();
+		QMenu * menu = new QMenu("menubb",0);
+		fenetre->menuBar()->addMenu(menu);
+		//QMenu * menu = fenetre->menuBar()->addMenu("menu");
+		QAction * action = new QAction("actioncc", 0);
+		action->setText("actionbb");
+		menu->addAction(action);
+		//fenetre->menuBar()->addMenu("menu");
+*/
 		fenetre->move(QCursor::pos().x() - fenetre->geometry().width()/2, QCursor::pos().y() - fenetre->geometry().height()/2);
 		fenetre->show();
 	

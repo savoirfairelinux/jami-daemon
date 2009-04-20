@@ -27,11 +27,23 @@ Call * CallList::operator[](const QListWidgetItem * item)
 	return NULL;
 }
 
-Call * CallList::getCallByItem(const QListWidgetItem * item)
+Call * CallList::findCallByItem(const QListWidgetItem * item)
 {
 	for(int i = 0 ; i < size() ; i++)
 	{
 		if ((*calls)[i]->getItem() == item)
+		{
+			return (*calls)[i];
+		}
+	}
+	return NULL;
+}
+
+Call * CallList::findCallByHistoryItem(const QListWidgetItem * item)
+{
+	for(int i = 0 ; i < size() ; i++)
+	{
+		if ((*calls)[i]->getHistoryItem() == item)
 		{
 			return (*calls)[i];
 		}

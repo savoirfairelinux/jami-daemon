@@ -18,70 +18,33 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#ifndef CONTACTITEMWIDGET_H
+#define CONTACTITEMWIDGET_H
+
+#include <QWidget>
+#include <QtGui/QLabel>
 #include "Contact.h"
 
-#include <QtCore/QDebug>
-
-#include "ContactItemWidget.h"
-#include "sflphone_const.h"
-
-
-Contact::Contact(Addressee addressee, QString number)
+/**
+	@author Jérémy Quentin <jeremy.quentin@gmail.com>
+*/
+class ContactItemWidget : public QWidget
 {
-	this->firstName = addressee.name();
-	this->secondName = addressee.familyName();
-	this->nickName = addressee.nickName();
-	this->phoneNumber = number;
-	this->photo = new Picture(addressee.photo());
+Q_OBJECT
+
+private:
+	QLabel * contactName;
+	QLabel * contactNumber;
+	QLabel * contactPhoto;
 	
-	initItem();
-}
+public:
+	ContactItemWidget(const Contact * contact, QWidget *parent = 0);
 
+	~ContactItemWidget();
+	
+	QString getContactName();
+	QString getContactNumber();
 
-Contact::~Contact()
-{
-}
+};
 
-void Contact::initItem()
-{
-	this->item = new QListWidgetItem();
-	this->item->setSizeHint(QSize(140,CONTACT_ITEM_HEIGHT));
-	this->itemWidget = new ContactItemWidget(this);
-}
-
-QString Contact::getPhoneNumber() const
-{
-	return phoneNumber;
-}
-
-QString Contact::getNickName() const
-{
-	return nickName;
-}
-
-QString Contact::getFirstName() const
-{
-	return firstName;
-}
-
-QString Contact::getSecondName() const
-{
-	return secondName;
-}
-
-const Picture * Contact::getPhoto() const
-{
-	return photo;
-}
-
-//TODO
-QListWidgetItem * Contact::getItem()
-{
-	return item;
-}
-    
-QWidget * Contact::getItemWidget()
-{
-	return itemWidget;
-}
-
+#endif

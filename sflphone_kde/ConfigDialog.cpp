@@ -11,6 +11,7 @@
 #include "sflphone_const.h"
 #include "metatypes.h"
 #include "configurationmanager_interface_singleton.h"
+#include "configurationmanager_interface_p.h"
 
 
 AccountList * ConfigurationDialog::accountList;
@@ -153,6 +154,11 @@ void ConfigurationDialog::loadOptions()
 	//pulseaudio settings
 	checkBox_pulseAudioVolumeAlter->setCheckState(configurationManager.getPulseAppVolumeControl() ? Qt::Checked : Qt::Unchecked);
 	
+	//////////////////////
+	////Record settings////
+	//////////////////////
+	
+	urlcomborequester_destinationFolder->setUrl(KUrl::fromPath(configurationManager.getRecordPath()));
 	
 }
 
@@ -307,12 +313,12 @@ void ConfigurationDialog::loadAccount(QListWidgetItem * item)
 	Account * account = accountList->getAccountByItem(item);
 	if(! account )  {  qDebug() << "Attempting to load details of an unexisting account";  return;  }
 
-	edit1_alias->setText( account->getAccountDetail(*(new QString(ACCOUNT_ALIAS))));
+	edit1_alias->setText( account->getAccountDetail(ACCOUNT_ALIAS));
 	
 	QString protocolsTab[] = ACCOUNT_TYPES_TAB;
 	QList<QString> * protocolsList = new QList<QString>();
 	for(int i=0;i<sizeof(protocolsTab)/sizeof(QString);i++) protocolsList->append(protocolsTab[i]);
-	QString accountName = account->getAccountDetail(* new QString(ACCOUNT_TYPE));
+	QString accountName = account->getAccountDetail(ACCOUNT_TYPE);
 	int protocolIndex = protocolsList->indexOf(accountName);
 	delete protocolsList;
 	

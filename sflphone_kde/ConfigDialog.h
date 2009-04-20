@@ -8,7 +8,6 @@
 #include <QErrorMessage>
 
 #include "ui_ConfigDialog.h"
-#include "configurationmanager_interface_p.h"
 #include "AccountList.h"
 #include "sflphone_kdeview.h"
 

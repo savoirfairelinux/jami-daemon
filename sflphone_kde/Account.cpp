@@ -64,15 +64,15 @@ void Account::initAccountItem()
 	item = new QListWidgetItem();
 	item->setSizeHint(QSize(140,25));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
-	bool enabled = getAccountDetail(*(new QString(ACCOUNT_ENABLED))) == ACCOUNT_ENABLED_TRUE;
-	setItemText(getAccountDetail(*(new QString(ACCOUNT_ALIAS))));
+	bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
+	setItemText(getAccountDetail(ACCOUNT_ALIAS));
 	itemWidget = new AccountItemWidget();
 	itemWidget->setEnabled(enabled);
 	if(isNew() || !enabled)
 	{
 		itemWidget->setState(AccountItemWidget::Unregistered);
 	}
-	else if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+	else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
 	{
 		itemWidget->setState(AccountItemWidget::Registered);
 	}
@@ -152,14 +152,14 @@ QListWidgetItem * Account::renewItem()
 AccountItemWidget * Account::getItemWidget()
 {
 	delete itemWidget;
-	bool enabled = getAccountDetail(*(new QString(ACCOUNT_ENABLED))) == ACCOUNT_ENABLED_TRUE;
+	bool enabled = getAccountDetail(ACCOUNT_ENABLED) == ACCOUNT_ENABLED_TRUE;
 		itemWidget = new AccountItemWidget();
 	itemWidget->setEnabled(enabled);
 	if(isNew() || !enabled)
 	{
 		itemWidget->setState(AccountItemWidget::Unregistered);
 	}
-	else if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+	else if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
 	{
 		itemWidget->setState(AccountItemWidget::Registered);
 	}
@@ -177,9 +177,9 @@ QString Account::getStateName(QString & state)
 
 QColor Account::getStateColor()
 {
-	if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_UNREGISTERED)
+	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
 		return Qt::black;
-	if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
 		return Qt::darkGreen;
 	return Qt::red;
 }
@@ -187,9 +187,9 @@ QColor Account::getStateColor()
 
 QString Account::getStateColorName()
 {
-	if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_UNREGISTERED)
+	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_UNREGISTERED)
 		return "black";
-	if(getAccountDetail(* new QString(ACCOUNT_STATUS)) == ACCOUNT_STATE_REGISTERED)
+	if(getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
 		return "darkGreen";
 	return "red";
 }

@@ -18,7 +18,8 @@ public:
 	CallList();
 	~CallList();
 
-	Call * getCallByItem(const QListWidgetItem * item);
+	Call * findCallByItem(const QListWidgetItem * item);
+	Call * findCallByHistoryItem(const QListWidgetItem * item);
 	Call * operator[](const QListWidgetItem * item);
 	Call * operator[](const QString & callId);
 	Call * operator[](int ind);

@@ -4,8 +4,14 @@
 #include "callmanager_interface_singleton.h"
 #include "SFLPhone.h"
 #include "sflphone_const.h"
+#include "configurationmanager_interface_p.h"
+#include "configurationmanager_interface_singleton.h"
+
+#include <kabc/addressbook.h>
+#include <kabc/stdaddressbook.h>
 
 
+using namespace KABC;
 
 const call_state Call::actionPerformedStateMap [11][5] = 
 {
@@ -57,6 +63,21 @@ const call_state Call::stateChangedStateMap [11][6] =
 /*ERROR        */  {CALL_STATE_ERROR    , CALL_STATE_ERROR    , CALL_STATE_ERROR  , CALL_STATE_ERROR        ,  CALL_STATE_ERROR ,  CALL_STATE_ERROR    }
 };
 
+const function Call::stateChangedFunctionMap[11][6] = 
+{ 
+//                      RINGING                  CURRENT             BUSY              HOLD                    HUNGUP           FAILURE
+/*INCOMING       */  {&Call::nothing    , &Call::start     , &Call::start          , &Call::start        ,  &Call::start        , &Call::start  },
+/*RINGING        */  {&Call::nothing    , &Call::start     , &Call::start          , &Call::start        ,  &Call::start        , &Call::start  },
+/*CURRENT        */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
+/*DIALING        */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
+/*HOLD           */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
+/*FAILURE        */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
+/*BUSY           */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
+/*TRANSFERT      */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
+/*TRANSFERT_HOLD */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
+/*OVER           */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing },
+/*ERROR          */  {&Call::nothing    , &Call::nothing   , &Call::nothing        , &Call::nothing      ,  &Call::nothing      , &Call::nothing }
+};
 
 
 const char * Call::callStateIcons[11] = {ICON_INCOMING, ICON_RINGING, ICON_CURRENT, ICON_DIALING, ICON_HOLD, ICON_FAILURE, ICON_BUSY, ICON_TRANSFER, ICON_TRANSF_HOLD, "", ""};
@@ -73,7 +94,8 @@ void Call::initCallItem()
 	itemWidget = new QWidget();
 	labelIcon = new QLabel(itemWidget);
 	qDebug() << "labelIcon : " << labelIcon;
-	labelCallNumber = new QLabel(peer, itemWidget);
+	labelCallNumber = new QLabel(peerPhoneNumber, itemWidget);
+	labelPeerName = NULL;
 	labelTransferPrefix = new QLabel("Transfer to : ", itemWidget);
 	labelTransferNumber = new QLabel(itemWidget);
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
@@ -93,10 +115,17 @@ void Call::setItemIcon(const QString pixmap)
 	labelIcon->setPixmap(QPixmap(pixmap));
 }
 
+void Call::setPeerName(const QString peerName)
+{
+	this->peerName = peerName;
+	if(!labelPeerName) labelPeerName = new QLabel(peerName + " : ");
+	labelPeerName->setText(peerName + " : ");
+}
+
 Call::Call(call_state startState, QString callId, QString from, QString account)
 {
 	this->callId = callId;
-	this->peer = from;
+	this->peerPhoneNumber = from;
 	initCallItem();
 	changeCurrentState(startState);
 	this->account = account;
@@ -181,6 +210,24 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
 	return DAEMON_CALL_STATE_FAILURE;
 }
 
+
+Contact * Call::findContactForNumberInKAddressBook(QString number)
+{
+	AddressBook * ab = KABC::StdAddressBook::self();
+	QVector<Contact *> results = QVector<Contact *>();
+	AddressBook::Iterator it;
+	for ( it = ab->begin(); it != ab->end(); ++it ) {	
+		for(int i = 0 ; i < it->phoneNumbers().count() ; i++)
+		{
+			if(it->phoneNumbers().at(i) == number)
+			{
+				return new Contact( *it, it->phoneNumbers().at(i).number() );
+			}
+		}
+	}
+	return NULL;
+}
+
 QListWidgetItem * Call::getItem()
 {
 	return item;
@@ -195,18 +242,45 @@ QListWidgetItem * Call::getHistoryItem()
 {
 	if(historyItem == NULL && historyState != NONE)
 	{
-		historyItem = new QListWidgetItem(peer);
+		historyItem = new QListWidgetItem();
+		historyItem->setSizeHint(QSize(140,30));
 		qDebug() << "historystate = " << historyState;
-		historyItem->setIcon(QIcon(historyIcons[historyState]));
 	}
 	return historyItem;
 }
 
 QWidget * Call::getHistoryItemWidget()
 {
+	if(historyItemWidget == NULL && historyState != NONE)
+	{
+		historyItemWidget = new QWidget();
+		labelHistoryIcon = new QLabel(historyItemWidget);
+		labelHistoryIcon->setPixmap(QPixmap(historyIcons[historyState]));
+		labelHistoryCallNumber = new QLabel(peerPhoneNumber, historyItemWidget);
+		labelHistoryPeerName = NULL;
+		if(!peerName.isEmpty())
+			labelHistoryPeerName = new QLabel(peerName + " : ", historyItemWidget);
+		labelHistoryTime = new QLabel(startTime->toString(Qt::LocaleDate), historyItemWidget);
+		QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+		QGridLayout * layout = new QGridLayout(historyItemWidget);
+		layout->setMargin(3);
+		layout->setSpacing(3);
+		layout->addWidget(labelHistoryIcon, 0, 0, 2, 1);
+		layout->addWidget(labelHistoryCallNumber, 0, 1, 1, 2);
+		layout->addWidget(labelHistoryTime, 1, 1, 1, 1);
+		layout->addItem(horizontalSpacer, 0, 3, 1, 3);
+		historyItemWidget->setLayout(layout);
+	}
 	return historyItemWidget;
 }
 
+/*
+layout->addWidget(labelIcon, 0, 0, 2, 1);
+	layout->addWidget(labelCallNumber, 0, 1, 1, 2);
+	layout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
+	layout->addWidget(labelTransferNumber, 1, 2, 1, 2);
+	layout->addItem(horizontalSpacer, 0, 3, 1, 3);
+*/
 call_state Call::getState() const
 {
 	return currentState;
@@ -223,6 +297,7 @@ call_state Call::stateChanged(const QString & newStateName)
 	daemon_call_state dcs = toDaemonCallState(newStateName);
 	//(this->*(stateChangedFunctionMap[currentState][dcs]))();
 	changeCurrentState(stateChangedStateMap[currentState][dcs]);
+	(this->*(stateChangedFunctionMap[previousState][dcs]))();
 	qDebug() << "Calling stateChanged " << newStateName << " -> " << toDaemonCallState(newStateName) << " on call with state " << previousState << ". Become " << currentState;
 	return currentState;
 }
@@ -230,18 +305,28 @@ call_state Call::stateChanged(const QString & newStateName)
 call_state Call::actionPerformed(call_action action)
 {
 	call_state previousState = currentState;
-	//execute the action associated with this transition
-	(this->*(actionPerformedFunctionMap[currentState][action]))();
 	//update the state
-	changeCurrentState(actionPerformedStateMap[currentState][action]);
+	changeCurrentState(actionPerformedStateMap[previousState][action]);
+	//execute the action associated with this transition
+	(this->*(actionPerformedFunctionMap[previousState][action]))();
 	qDebug() << "Calling action " << action << " on call with state " << previousState << ". Become " << currentState;
 	//return the new state
 	return currentState;
 }
 
-QString Call::getCallId()
+QString Call::getCallId() const
 {
 	return callId;
+}
+
+QString Call::getPeerPhoneNumber() const
+{
+	return peerPhoneNumber;
+}
+
+QString Call::getPeerName() const
+{
+	return peerName;
 }
 
 call_state Call::getCurrentState() const
@@ -337,7 +422,10 @@ void Call::call()
 		qDebug() << "Calling " << number << " with account " << account << ". callId : " << callId;
 		callManager.placeCall(account, callId, number);
 		this->account = account;
-		this->peer = number;
+		this->peerPhoneNumber = number;
+		Contact * contact = findContactForNumberInKAddressBook(peerPhoneNumber);
+		if(contact) this->peerName = contact->getNickName();
+		this->startTime = new QDateTime(QDateTime::currentDateTime());
 		this->historyState = OUTGOING;
 	}
 	else
@@ -380,8 +468,15 @@ void Call::setRecord()
 	recording = !recording;
 }
 
+void Call::start()
+{
+	qDebug() << "Starting call. callId : " << callId;
+	this->startTime = new QDateTime(QDateTime::currentDateTime());
+}
+
 void Call::appendItemText(QString text)
 {
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QLabel * editNumber;
 	switch(currentState)
 	{
@@ -392,6 +487,15 @@ void Call::appendItemText(QString text)
 		case CALL_STATE_DIALING:
 			editNumber = labelCallNumber;
 			break;
+		case CALL_STATE_CURRENT:
+			//TODO replace account string by an Account instance and handle damn pointers to avoid detruction of Accounts
+			//if(peer == account->getAccountDetail(ACCOUNT_MAILBOX))
+			if(peerPhoneNumber == configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX])
+			{
+				text = QString(QChar(0x9A));
+			}
+			editNumber = labelCallNumber;
+			break;		
 		default:
 			qDebug() << "Type key on call not editable. Doing nothing.";
 			return;

@@ -25,6 +25,7 @@
 #include <QtGui/QWidget>
 
 #include <kabc/addressee.h>
+#include <kabc/picture.h>
 
 using namespace KABC;
 
@@ -39,7 +40,7 @@ private:
 	QString secondName;
 	QString nickName;
 	QString phoneNumber;
-	QString photo;
+	Picture * photo;
 	
 private:
 	void initItem();
@@ -48,6 +49,12 @@ public:
     Contact(Addressee addressee, QString number);
 
     ~Contact();
+    
+    QString getPhoneNumber() const;
+    QString getNickName() const;
+    QString getFirstName() const;
+    QString getSecondName() const;
+    const Picture * getPhoto() const;
     
     QListWidgetItem * getItem();
     

@@ -7,6 +7,8 @@
 #include <QtGui/QLabel>
 #include <QtGui/QWidget>
 
+#include "Contact.h"
+
 /** @enum call_state_t 
   * This enum have all the states a call can take.
   */
@@ -21,11 +23,11 @@ typedef enum
    /** Call which numbers are being added by the user */
    CALL_STATE_DIALING,
    /** Call is on hold */
-   CALL_STATE_HOLD,      
+   CALL_STATE_HOLD,
    /** Call has failed */
-   CALL_STATE_FAILURE,      
+   CALL_STATE_FAILURE,
    /** Call is busy */
-   CALL_STATE_BUSY,        
+   CALL_STATE_BUSY,
    /** Call is being transfered.  During this state, the user can enter the new number. */
    CALL_STATE_TRANSFER,
    /** Call is on hold for transfer */
@@ -46,13 +48,13 @@ typedef enum
    /** Call to which the user can speak and hear */
    DAEMON_CALL_STATE_CURRENT,
    /** Call is busy */
-   DAEMON_CALL_STATE_BUSY,   
+   DAEMON_CALL_STATE_BUSY,
    /** Call is on hold */
-   DAEMON_CALL_STATE_HOLD,    
+   DAEMON_CALL_STATE_HOLD,
    /** Call is over  */
-   DAEMON_CALL_STATE_HUNG_UP,  
+   DAEMON_CALL_STATE_HUNG_UP,
    /** Call has failed */
-   DAEMON_CALL_STATE_FAILURE      
+   DAEMON_CALL_STATE_FAILURE
 } daemon_call_state;
 
 /** @enum call_action
@@ -97,24 +99,34 @@ private:
 	
 	QString account;
 	QString callId;
-	QString peer;
+	QString peerPhoneNumber;
+	QString peerName;
 	history_state historyState;
 	QDateTime * startTime;
 	QDateTime * stopTime;
+	
 	QListWidgetItem * item;
 	QWidget * itemWidget;
 	QLabel * labelIcon;
+	QLabel * labelPeerName;
 	QLabel * labelCallNumber;
 	QLabel * labelTransferPrefix;
 	QLabel * labelTransferNumber;
 	
 	QListWidgetItem * historyItem;
 	QWidget * historyItemWidget;
+	QLabel * labelHistoryIcon;
+	QLabel * labelHistoryPeerName;
+	QLabel * labelHistoryCallNumber;
+	QLabel * labelHistoryTime;
+	
 	
 	//Automate attributes
 	static const call_state actionPerformedStateMap [11][5];
 	static const function actionPerformedFunctionMap [11][5];
 	static const call_state stateChangedStateMap [11][6];
+	static const function stateChangedFunctionMap [11][6];
+	
 	static const char * historyIcons[3];
 	
 	call_state currentState;
@@ -139,6 +151,8 @@ private:
 	void unhold();
 	void switchRecord();
 	void setRecord();
+	
+	void start();
 
 public:
 	
@@ -147,12 +161,17 @@ public:
 	static Call * buildDialingCall(QString callId);
 	static Call * buildIncomingCall(const QString & callId, const QString & from, const QString & account);
 	static Call * buildRingingCall(const QString & callId);
+	Contact * findContactForNumberInKAddressBook(QString number);
+	
 	QListWidgetItem * getItem();
 	QWidget * getItemWidget();
 	QListWidgetItem * getHistoryItem();
 	QWidget * getHistoryItemWidget();
 	call_state getState() const;
-	QString getCallId();
+	QString getCallId() const;
+	QString getPeerPhoneNumber() const;
+	QString getPeerName() const;
+	
 	call_state stateChanged(const QString & newState);
 	call_state actionPerformed(call_action action);
 	call_state getCurrentState() const;
@@ -161,6 +180,7 @@ public:
 	void appendItemText(QString text);
 	void backspaceItemText();
 	void setItemIcon(const QString pixmap);
+	void setPeerName(const QString peerName);
 	void changeCurrentState(call_state newState);
 	void updateItem();
 

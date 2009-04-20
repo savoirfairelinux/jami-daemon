@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="images" >
+    <file>icons/application-exit.png</file>
     <file>icons/office-address-book.png</file>
     <file>icons/x-office-address-book.png</file>
     <file>icons/add.png</file>
@@ -16,6 +17,7 @@
     <file>icons/history2.svg</file>
     <file>icons/history.svg</file>
     <file>icons/hold.svg</file>
+    <file>icons/application-exit.png</file>
     <file>icons/icon_accept.svg</file>
     <file>icons/icon_call.svg</file>
     <file>icons/icon_dialpad_off.svg</file>
