@@ -248,12 +248,13 @@ IAXVoIPLink::sendAudioFromMic(void)
 
     int maxBytesToGet, availBytesFromMic, bytesAvail, compSize;
     AudioCodec *ac;
+    IAXCall *currentCall;
 
     // We have to update the audio layer type in case we switched
     // TODO Find out a better way to do it
     updateAudiolayer();
 
-    IAXCall* currentCall = getIAXCall(Manager::instance().getCurrentCallId());
+    currentCall = getIAXCall(Manager::instance().getCurrentCallId());
 
     if (!currentCall) {
         // Let's mind our own business.
@@ -319,7 +320,7 @@ IAXVoIPLink::sendAudioFromMic(void)
         // Send it out!
         _mutexIAX.enterMutex();
         // Make sure the session and the call still exists.
-        if (currentCall->getSession()) {
+        if (currentCall->getSession() && micDataEncoded != NULL) {
             if (iax_send_voice(currentCall->getSession(), currentCall->getFormat(), micDataEncoded, compSize, nbSample_) == -1) {
                 _debug("IAX: Error sending voice data.\n");
             }
