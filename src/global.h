@@ -32,7 +32,7 @@
 #include <map>
 #include <vector>
 
-#define SFLPHONED_VERSION "0.9.4"		/** Version number */
+#define SFLPHONED_VERSION "0.9.5~beta"		/** Version number */
 
 #define HOMEDIR	(getenv ("HOME"))		/** Home directory */
 
