@@ -2,7 +2,7 @@ Source: sflphone
 Maintainer: SavoirFaireLinux Inc <emmanuel.milou@savoirfairelinux.com>
 Section: gnome
 Priority: optional
-Build-Depends: debhelper (>= 5), autoconf, libpulse-dev, libsamplerate0-dev, libcommoncpp2-dev, libccrtp-dev, libcppunit-dev, libgsm1-dev, libspeex-dev, libtool, libgtk2.0-dev, libsexy-dev, libdbus-1-dev, libdbus-glib-1-dev, libnotify-dev, libasound2-dev, libspeexdsp-dev, uuid-dev, libebook1.2-dev
+Build-Depends: debhelper (>= 5), autoconf, libpulse-dev, libsamplerate0-dev, libcommoncpp2-dev, libccrtp-dev, libcppunit-dev, libgsm1-dev, libspeex-dev, libtool, libgtk2.0-dev, libsexy-dev, libdbus-1-dev, libdbus-glib-1-dev, libnotify-dev, libasound2-dev, libspeexdsp-dev, uuid-dev, libebook1.2-dev, check
 Standards-Version: 3.8.0
 
 Package: sflphone
