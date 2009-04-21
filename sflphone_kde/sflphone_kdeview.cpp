@@ -842,6 +842,32 @@ void sflphone_kdeView::on_listWidget_callList_itemDoubleClicked(QListWidgetItem 
 	}
 }
 
+void sflphone_kdeView::on_listWidget_callHistory_itemDoubleClicked(QListWidgetItem * item)
+{
+	qDebug() << "on_listWidget_callHistory_itemDoubleClicked";
+	action_history->setChecked(false);
+	stackedWidget_screen->setCurrentWidget(page_callList);
+	Call * pastCall = callList->findCallByHistoryItem(listWidget_callHistory->currentItem());
+	Call * call = callList->addDialingCall(pastCall->getPeerName());
+	call->appendItemText(pastCall->getPeerPhoneNumber());
+	addCallToCallList(call);
+	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+	actionb(call, CALL_ACTION_ACCEPT);
+}
+
+
+void sflphone_kdeView::on_listWidget_addressBook_itemDoubleClicked(QListWidgetItem * item)
+{
+	qDebug() << "on_listWidget_addressBook_itemDoubleClicked";
+	action_addressBook->setChecked(false);
+	stackedWidget_screen->setCurrentWidget(page_callList);
+	ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(listWidget_addressBook->currentItem()));
+	Call * call = callList->addDialingCall(w->getContactName());
+	call->appendItemText(w->getContactNumber());
+	addCallToCallList(call);
+	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+	actionb(call, CALL_ACTION_ACCEPT);
+}
 
 void sflphone_kdeView::contextMenuEvent(QContextMenuEvent *event)
 {

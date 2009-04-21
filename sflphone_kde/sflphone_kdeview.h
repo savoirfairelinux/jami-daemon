@@ -168,7 +168,9 @@ private slots:
 	void on_listWidget_callList_itemChanged();
 	void on_listWidget_callList_itemDoubleClicked(QListWidgetItem * item);
 	void on_listWidget_callHistory_currentItemChanged();
+	void on_listWidget_callHistory_itemDoubleClicked(QListWidgetItem * item);
 	void on_listWidget_addressBook_currentItemChanged();
+	void on_listWidget_addressBook_itemDoubleClicked(QListWidgetItem * item);
 
 	void on1_callStateChanged(const QString &callID, const QString &state);
 	void on1_error(MapStringString details);
