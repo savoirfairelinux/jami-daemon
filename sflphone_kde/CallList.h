@@ -20,12 +20,13 @@ public:
 
 	Call * findCallByItem(const QListWidgetItem * item);
 	Call * findCallByHistoryItem(const QListWidgetItem * item);
+	Call * findCallByCallId(const QString & callId);
 	Call * operator[](const QListWidgetItem * item);
 	Call * operator[](const QString & callId);
 	Call * operator[](int ind);
 
-	Call * addDialingCall();
-	Call * addIncomingCall(const QString & callId, const QString & from, const QString & account);
+	Call * addDialingCall(const QString & peerName = "");
+	Call * addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
 	Call * addRingingCall(const QString & callId);
 
 	QString getAndIncCallId();

@@ -372,6 +372,7 @@ void sflphone_kdeView::updateWindowCallState()
 	
 	bool enabledActions[6]= {true,true,true,true,true,true};
 	QString buttonIconFiles[3] = {ICON_CALL, ICON_HANGUP, ICON_HOLD};
+	QString actionTexts[5] = {tr2i18n("Call", 0), tr2i18n("Hang up", 0), tr2i18n("Hold", 0), tr2i18n("Transfer", 0), tr2i18n("Record", 0)};
 	bool transfer = false;
 	//tells whether the call is in recording position
 	bool recordActivated = false;
@@ -402,6 +403,8 @@ void sflphone_kdeView::updateWindowCallState()
 					qDebug() << "Reached CALL_STATE_INCOMING with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					buttonIconFiles[0] = ICON_ACCEPT;
 					buttonIconFiles[1] = ICON_REFUSE;
+					actionTexts[0] = tr2i18n("Accept", 0);
+					actionTexts[0] = tr2i18n("Refuse", 0);
 					break;
 				case CALL_STATE_RINGING:
 					qDebug() << "Reached CALL_STATE_RINGING with call " << (*callList)[item]->getCallId() << ". Updating window.";
@@ -422,6 +425,7 @@ void sflphone_kdeView::updateWindowCallState()
 				case CALL_STATE_HOLD:
 					qDebug() << "Reached CALL_STATE_HOLD with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					buttonIconFiles[2] = ICON_UNHOLD;
+					actionTexts[2] = tr2i18n("Unhold", 0);
 					break;		
 				case CALL_STATE_FAILURE:
 					qDebug() << "Reached CALL_STATE_FAILURE with call " << (*callList)[item]->getCallId() << ". Updating window.";
@@ -440,6 +444,7 @@ void sflphone_kdeView::updateWindowCallState()
 				case CALL_STATE_TRANSFER:
 					qDebug() << "Reached CALL_STATE_TRANSFER with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					buttonIconFiles[0] = ICON_EXEC_TRANSF;
+					actionTexts[3] = tr2i18n("Give up transfer", 0);
 					transfer = true;
 					recordEnabled = true;
 					break;
@@ -447,6 +452,8 @@ void sflphone_kdeView::updateWindowCallState()
 					qDebug() << "Reached CALL_STATE_TRANSF_HOLD with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					buttonIconFiles[0] = ICON_EXEC_TRANSF;
 					buttonIconFiles[2] = ICON_UNHOLD;
+					actionTexts[3] = tr2i18n("Give up transfer", 0);
+					actionTexts[2] = tr2i18n("Unhold", 0);
 					transfer = true;
 					break;
 				case CALL_STATE_OVER:
@@ -522,6 +529,12 @@ void sflphone_kdeView::updateWindowCallState()
 	action_accept->setIcon(QIcon(buttonIconFiles[0]));
 	action_refuse->setIcon(QIcon(buttonIconFiles[1]));
 	action_hold->setIcon(QIcon(buttonIconFiles[2]));
+	
+	action_accept->setText(actionTexts[0]);
+	action_refuse->setText(actionTexts[1]);
+	action_hold->setText(actionTexts[2]);
+	action_transfer->setText(actionTexts[3]);
+	action_record->setText(actionTexts[4]);
 	
 	action_transfer->setChecked(transfer);
 	action_record->setChecked(recordActivated);
@@ -944,11 +957,12 @@ void sflphone_kdeView::on_action_accept_triggered()
 	{
 		action_history->setChecked(false);
 		stackedWidget_screen->setCurrentWidget(page_callList);
-		Call * call = callList->addDialingCall();
+		
 		Call * pastCall = callList->findCallByHistoryItem(listWidget_callHistory->currentItem());
+		Call * call = callList->addDialingCall(pastCall->getPeerName());
 		call->appendItemText(pastCall->getPeerPhoneNumber());
-		if(!pastCall->getPeerName().isEmpty())
-			call->setPeerName(pastCall->getPeerName());
+// 		if(!pastCall->getPeerName().isEmpty())
+// 			call->setPeerName(pastCall->getPeerName());
 		addCallToCallList(call);
 		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 		actionb(call, CALL_ACTION_ACCEPT);
@@ -957,9 +971,9 @@ void sflphone_kdeView::on_action_accept_triggered()
 	{
 		action_addressBook->setChecked(false);
 		stackedWidget_screen->setCurrentWidget(page_callList);
-		Call * call = callList->addDialingCall();
 		ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(listWidget_addressBook->currentItem()));
-		call->setPeerName(w->getContactName());
+		Call * call = callList->addDialingCall(w->getContactName());
+// 		call->setPeerName(w->getContactName());
 		call->appendItemText(w->getContactNumber());
 		addCallToCallList(call);
 		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
@@ -1081,7 +1095,7 @@ void sflphone_kdeView::on_action_mailBox_triggered()
 void sflphone_kdeView::on1_callStateChanged(const QString &callID, const QString &state)
 {
 	qDebug() << "Signal : Call State Changed for call  " << callID << " . New state : " << state;
-	Call * call = (*callList)[callID];
+	Call * call = callList->findCallByCallId(callID);
 	if(!call)
 	{
 		if(state == CALL_STATE_CHANGE_RINGING)
@@ -1108,10 +1122,10 @@ void sflphone_kdeView::on1_error(MapStringString details)
 	qDebug() << "Signal : Daemon error : " << details;
 }
 
-void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString & callID, const QString &from)
+void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString & callID/*, const QString &from*/)
 {
 	qDebug() << "Signal : Incoming Call !";
-	Call * call = callList->addIncomingCall(callID, from, accountID);
+	Call * call = callList->addIncomingCall(callID/*, from, accountID*/);
 	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 }

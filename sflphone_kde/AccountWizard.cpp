@@ -173,13 +173,6 @@ void AccountWizard::accept()
 {
 	QString ret;
 	MapStringString accountDetails;
-	//accountDetails[QString(ACCOUNT_ALIAS)] = QString();
-	//accountDetails[QString(ACCOUNT_HOSTNAME)] = QString();
-	//accountDetails[QString(ACCOUNT_USERNAME)] = QString();
-	//accountDetails[QString(ACCOUNT_PASSWORD)] = QString();
-	//accountDetails[QString(ACCOUNT_TYPE)] = QString();
-	//accountDetails[QString(ACCOUNT_MAILBOX)] = QString();
-	//accountDetails[QString(ACCOUNT_ENABLED)] = QString();
 	
 	QString & alias = accountDetails[QString(ACCOUNT_ALIAS)];
 	QString & server = accountDetails[QString(ACCOUNT_HOSTNAME)];

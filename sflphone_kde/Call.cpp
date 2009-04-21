@@ -88,26 +88,50 @@ void Call::initCallItem()
 {
 	qDebug() << "initCallItem";
 	item = new QListWidgetItem();
-	item->setSizeHint(QSize(140,30));
+	item->setSizeHint(QSize(140,45));
 	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled|Qt::ItemIsEnabled);
 	
 	itemWidget = new QWidget();
-	labelIcon = new QLabel(itemWidget);
+	labelIcon = new QLabel();
 	qDebug() << "labelIcon : " << labelIcon;
-	labelCallNumber = new QLabel(peerPhoneNumber, itemWidget);
-	labelPeerName = NULL;
-	labelTransferPrefix = new QLabel("Transfer to : ", itemWidget);
-	labelTransferNumber = new QLabel(itemWidget);
+	labelCallNumber = new QLabel(peerPhoneNumber);
+	labelTransferPrefix = new QLabel(tr2i18n("Transfer to : "));
+	labelTransferNumber = new QLabel();
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
-	QGridLayout * layout = new QGridLayout(itemWidget);
-	layout->setMargin(3);
-	layout->setSpacing(3);
-	layout->addWidget(labelIcon, 0, 0, 2, 1);
-	layout->addWidget(labelCallNumber, 0, 1, 1, 2);
-	layout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
-	layout->addWidget(labelTransferNumber, 1, 2, 1, 2);
-	layout->addItem(horizontalSpacer, 0, 3, 1, 3);
-	itemWidget->setLayout(layout);
+	
+	QHBoxLayout * mainLayout = new QHBoxLayout();
+	mainLayout->setContentsMargins ( 3, 1, 2, 1);
+	mainLayout->setSpacing(4);
+	QVBoxLayout * descr = new QVBoxLayout();
+	descr->setMargin(1);
+	descr->setSpacing(1);
+	QHBoxLayout * transfer = new QHBoxLayout();
+	transfer->setMargin(0);
+	transfer->setSpacing(0);
+	mainLayout->addWidget(labelIcon);
+	qDebug() << "descr->addWidget(labelPeerName);";
+	if(! peerName.isEmpty())
+	{
+		labelPeerName = new QLabel(peerName);
+		descr->addWidget(labelPeerName);
+	}
+	descr->addWidget(labelCallNumber);
+	transfer->addWidget(labelTransferPrefix);
+	transfer->addWidget(labelTransferNumber);
+	descr->addLayout(transfer);
+	mainLayout->addLayout(descr);
+	mainLayout->addItem(horizontalSpacer);
+	
+// 	QGridLayout * mainLayout = new QGridLayout(itemWidget);
+// 	mainLayout->setMargin(3);
+// 	mainLayout->setSpacing(3);
+// 	mainLayout->addWidget(labelIcon, 0, 0, 2, 1);
+// 	mainLayout->addWidget(labelCallNumber, 0, 1, 1, 2);
+// 	mainLayout->addWidget(labelTransferPrefix, 1, 1, 1, 1);
+// 	mainLayout->addWidget(labelTransferNumber, 1, 2, 1, 2);
+// 	mainLayout->addItem(horizontalSpacer, 0, 3, 1, 3);
+
+	itemWidget->setLayout(mainLayout);
 }
 
 void Call::setItemIcon(const QString pixmap)
@@ -115,17 +139,19 @@ void Call::setItemIcon(const QString pixmap)
 	labelIcon->setPixmap(QPixmap(pixmap));
 }
 
-void Call::setPeerName(const QString peerName)
-{
-	this->peerName = peerName;
-	if(!labelPeerName) labelPeerName = new QLabel(peerName + " : ");
-	labelPeerName->setText(peerName + " : ");
-}
+// void Call::setPeerName(const QString peerName)
+// {
+// 	qDebug() << "setPeerName(" << peerName;
+// 	this->peerName = peerName;
+// 	if(!labelPeerName) labelPeerName = new QLabel(peerName + " : ");
+// 	labelPeerName->setText(peerName + " : ");
+// }
 
-Call::Call(call_state startState, QString callId, QString from, QString account)
+Call::Call(call_state startState, QString callId, QString peerName, QString peerNumber, QString account)
 {
 	this->callId = callId;
-	this->peerPhoneNumber = from;
+	this->peerPhoneNumber = peerNumber;
+	this->peerName = peerName;
 	initCallItem();
 	changeCurrentState(startState);
 	this->account = account;
@@ -146,16 +172,21 @@ Call::~Call()
 	//delete historyItemWidget;
 }
 	
-Call * Call::buildDialingCall(QString callId)
+Call * Call::buildDialingCall(QString callId, const QString & peerName)
 {
-	Call * call = new Call(CALL_STATE_DIALING, callId);
+	Call * call = new Call(CALL_STATE_DIALING, callId, peerName);
 	call->historyState = NONE;
 	return call;
 }
 
-Call * Call::buildIncomingCall(const QString & callId, const QString & from, const QString & account)
+Call * Call::buildIncomingCall(const QString & callId/*, const QString & from, const QString & account*/)
 {
-	Call * call = new Call(CALL_STATE_INCOMING, callId, from, account);
+	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
+	MapStringString details = callManager.getCallDetails(callId).value();
+	QString from = details[CALL_PEER_NUMBER];
+	QString account = details[CALL_ACCOUNTID];
+	QString peerName = details[CALL_PEER_NAME];
+	Call * call = new Call(CALL_STATE_INCOMING, callId, peerName, from, account);
 	call->historyState = MISSED;
 	return call;
 }
@@ -164,10 +195,13 @@ Call * Call::buildRingingCall(const QString & callId)
 {
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	MapStringString details = callManager.getCallDetails(callId).value();
-	//QString from = details[CALL_FROM];
+// 	qDebug() << "Details : " << details.keys();
+	QString from = details[CALL_PEER_NUMBER];
+	QString account = details[CALL_ACCOUNTID];
+	QString peerName = details[CALL_PEER_NAME];
 	//QString from = details[CALL_ACCOUNT];
-	//Call * call = new Call(CALL_STATE_RINGING, callId, from, account);
-	Call * call = new Call(CALL_STATE_RINGING, callId);
+	Call * call = new Call(CALL_STATE_RINGING, callId, peerName, from, account);
+// 	call->setPeerName(details[CALL_PEER_NAME]);
 	call->historyState = OUTGOING;
 	return call;
 }
@@ -243,7 +277,7 @@ QListWidgetItem * Call::getHistoryItem()
 	if(historyItem == NULL && historyState != NONE)
 	{
 		historyItem = new QListWidgetItem();
-		historyItem->setSizeHint(QSize(140,30));
+		historyItem->setSizeHint(QSize(140,45));
 		qDebug() << "historystate = " << historyState;
 	}
 	return historyItem;
@@ -254,22 +288,33 @@ QWidget * Call::getHistoryItemWidget()
 	if(historyItemWidget == NULL && historyState != NONE)
 	{
 		historyItemWidget = new QWidget();
-		labelHistoryIcon = new QLabel(historyItemWidget);
+		labelHistoryIcon = new QLabel();
 		labelHistoryIcon->setPixmap(QPixmap(historyIcons[historyState]));
-		labelHistoryCallNumber = new QLabel(peerPhoneNumber, historyItemWidget);
-		labelHistoryPeerName = NULL;
-		if(!peerName.isEmpty())
-			labelHistoryPeerName = new QLabel(peerName + " : ", historyItemWidget);
-		labelHistoryTime = new QLabel(startTime->toString(Qt::LocaleDate), historyItemWidget);
+		labelHistoryCallNumber = new QLabel(peerPhoneNumber);
+		labelHistoryTime = new QLabel(startTime->toString(Qt::LocaleDate));
+		
 		QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
-		QGridLayout * layout = new QGridLayout(historyItemWidget);
-		layout->setMargin(3);
-		layout->setSpacing(3);
-		layout->addWidget(labelHistoryIcon, 0, 0, 2, 1);
-		layout->addWidget(labelHistoryCallNumber, 0, 1, 1, 2);
-		layout->addWidget(labelHistoryTime, 1, 1, 1, 1);
-		layout->addItem(horizontalSpacer, 0, 3, 1, 3);
-		historyItemWidget->setLayout(layout);
+	
+		QHBoxLayout * mainLayout = new QHBoxLayout();
+		mainLayout->setContentsMargins ( 3, 1, 2, 1);
+		mainLayout->setSpacing(4);
+		QVBoxLayout * descr = new QVBoxLayout();
+		descr->setMargin(1);
+		descr->setSpacing(1);
+		descr->setMargin(0);
+		descr->setSpacing(1);
+		mainLayout->addWidget(labelHistoryIcon);
+		qDebug() << "descr->addWidget(labelPeerName);";
+		if(! peerName.isEmpty())
+		{
+			labelHistoryPeerName = new QLabel(peerName);
+			descr->addWidget(labelHistoryPeerName);
+		}
+		descr->addWidget(labelHistoryCallNumber);
+		descr->addWidget(labelHistoryTime);
+		mainLayout->addLayout(descr);
+		mainLayout->addItem(horizontalSpacer);
+		historyItemWidget->setLayout(mainLayout);
 	}
 	return historyItemWidget;
 }

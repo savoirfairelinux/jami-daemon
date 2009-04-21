@@ -134,7 +134,7 @@ private:
 	
 	static const char * callStateIcons[11];
 
-	Call(call_state startState, QString callId, QString from = "", QString account = "");
+	Call(call_state startState, QString callId, QString peerNumber = "", QString account = "", QString peerName = "");
 	
 	static daemon_call_state toDaemonCallState(const QString & stateName);
 	
@@ -158,8 +158,8 @@ public:
 	
 	~Call();
 	void initCallItem();
-	static Call * buildDialingCall(QString callId);
-	static Call * buildIncomingCall(const QString & callId, const QString & from, const QString & account);
+	static Call * buildDialingCall(QString callId, const QString & peerName);
+	static Call * buildIncomingCall(const QString & callId/*, const QString & from, const QString & account*/);
 	static Call * buildRingingCall(const QString & callId);
 	Contact * findContactForNumberInKAddressBook(QString number);
 	
@@ -180,7 +180,7 @@ public:
 	void appendItemText(QString text);
 	void backspaceItemText();
 	void setItemIcon(const QString pixmap);
-	void setPeerName(const QString peerName);
+// 	void setPeerName(const QString peerName);
 	void changeCurrentState(call_state newState);
 	void updateItem();
 

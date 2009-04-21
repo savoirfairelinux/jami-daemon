@@ -2779,7 +2779,7 @@ std::map< std::string, std::string > ManagerImpl::getCallDetails(const CallID& c
 
     // So first we fetch the account
     accountid = getAccountFromCall (callID);
-
+ _debug("%s\n",callID.c_str());
     // Then the VoIP link this account is linked with (IAX2 or SIP)
     if ( (account=getAccount (accountid)) != 0) {
         link = account->getVoIPLink ();

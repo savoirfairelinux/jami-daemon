@@ -172,7 +172,7 @@ private slots:
 
 	void on1_callStateChanged(const QString &callID, const QString &state);
 	void on1_error(MapStringString details);
-	void on1_incomingCall(const QString &accountID, const QString &callID, const QString &from);
+	void on1_incomingCall(const QString &accountID, const QString &callID/*, const QString &from*/);
 	void on1_incomingMessage(const QString &accountID, const QString &message);
 	void on1_voiceMailNotify(const QString &accountID, int count);
 	void on1_volumeChanged(const QString &device, double value);

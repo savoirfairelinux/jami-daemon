@@ -120,9 +120,10 @@
 #define ACCOUNT_STATE_ERROR_CONF_STUN     "ERROR_CONF_STUN"
 #define ACCOUNT_STATE_ERROR_EXIST_STUN    "ERROR_EXIST_STUN"
 
-#define ACCOUNT_ITEM_CHECKBOX             "checkbox"
-#define ACCOUNT_ITEM_LED                  "led"
 
+#define CALL_PEER_NAME                    "PEER_NAME"
+#define CALL_PEER_NUMBER                  "PEER_NUMBER"
+#define CALL_ACCOUNTID                    "ACCOUNTID"
 
 #define CALL_STATE_CHANGE_HUNG_UP         "HUNGUP"
 #define CALL_STATE_CHANGE_RINGING         "RINGING"

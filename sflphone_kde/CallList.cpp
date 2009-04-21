@@ -51,6 +51,18 @@ Call * CallList::findCallByHistoryItem(const QListWidgetItem * item)
 	return NULL;
 }
 
+Call * CallList::findCallByCallId(const QString & callId)
+{
+	for(int i = 0 ; i < size() ; i++)
+	{
+		if ((*calls)[i]->getCallId() == callId)
+		{
+			return (*calls)[i];
+		}
+	}
+	return NULL;
+}
+
 Call * CallList::operator[](const QString & callId)
 {
 	for(int i = 0 ; i < size() ; i++)
@@ -80,16 +92,16 @@ int CallList::size()
 	return calls->size();
 }
 
-Call * CallList::addDialingCall()
+Call * CallList::addDialingCall(const QString & peerName)
 {
-	Call * call = Call::buildDialingCall(getAndIncCallId());
+	Call * call = Call::buildDialingCall(getAndIncCallId(), peerName);
 	calls->append(call);
 	return call;
 }
 
-Call * CallList::addIncomingCall(const QString & callId, const QString & from, const QString & account)
+Call * CallList::addIncomingCall(const QString & callId/*, const QString & from, const QString & account*/)
 {
-	Call * call = Call::buildIncomingCall(callId, from, account);
+	Call * call = Call::buildIncomingCall(callId/*, from, account*/);
 	calls->append(call);
 	return call;
 }

@@ -520,7 +520,7 @@ public:
      */
     virtual std::map< std::string, std::string > getAccountDetails(const std::string& accountID) = 0;
     virtual void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details) = 0;
-    virtual void addAccount(const std::map< std::string, std::string >& details) = 0;
+    virtual std::string addAccount(const std::map< std::string, std::string >& details) = 0;
     virtual void setAccountsOrder(const std::string& order) = 0;
     virtual void removeAccount(const std::string& accoundID) = 0;
     virtual std::vector< std::string > getAccountList() = 0;

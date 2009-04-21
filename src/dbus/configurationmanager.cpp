@@ -53,11 +53,11 @@ ConfigurationManager::sendRegister( const std::string& accountID, const int32_t&
 	Manager::instance().sendRegister(accountID, expire);
 }
 
-	void
+	std::string
 ConfigurationManager::addAccount( const std::map< std::string, std::string >& details )
 {
 	_debug("ConfigurationManager::addAccount received\n");
-	Manager::instance().addAccount(details);
+	return Manager::instance().addAccount(details);
 }
 
 
