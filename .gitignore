@@ -20,6 +20,7 @@ libtool
 *Tester
 *orig
 *.1
+*-glue.h
 
 # Ignore rendered docs
 doc/doxygen/core-doc
@@ -38,7 +39,7 @@ INSTALL
 /install-sh
 /stamp-h1
 /Makefile
-sflphone-gtk/stamp-h1
+sflphone-client-gnome/stamp-h1
 
 # Ignore built stuff
 /src/sflphoned
@@ -86,32 +87,35 @@ libs/stund/Makefile
 libs/iax2/Makefile
 libs/utilspp/functor/Makefile
 libs/utilspp/singleton/Makefile
-sflphone-gtk/Makefile
-sflphone-gtk/src/Makefile
-sflphone-gtk/src/config/Makefile
-sflphone-gtk/src/dbus/Makefile
-sflphone-gtk/src/contacts/Makefile
-sflphone-gtk/src/contacts/addressbook/Makefile
-sflphone-gtk/pixmaps/Makefile
-sflphone-gtk/tests/Makefile
+sflphone-client-gnome/Makefile
+sflphone-client-gnome/src/Makefile
+sflphone-client-gnome/src/config/Makefile
+sflphone-client-gnome/src/dbus/Makefile
+sflphone-client-gnome/src/contacts/Makefile
+sflphone-client-gnome/src/contacts/addressbook/Makefile
+sflphone-client-gnome/pixmaps/Makefile
+sflphone-client-gnome/tests/Makefile
+sflphone-client-gnome/man/Makefile
 
 
-# Ignore sflphone-gtk stuff
-/sflphone-gtk/config.*
-/sflphone-gtk/configure
-/sflphone-gtk/depcomp
-/sflphone-gtk/install-sh
-/sflphone-gtk/missing
-/sflphone-gtk/mkinstalldirs
-/sflphone-gtk/src/sflphone-gtk
-/sflphone-gtk/autom4te*
-/sflphone-gtk/sflphone.desktop
-/sflphone-gtk/confdefs.h
-/sflphone-gtk/conftest.dir
-/sflphone-gtk/tests/check_config
-/sflphone-gtk/tests/check_contacts
-/sflphone-gtk/tests/check_dbus
-/sflphone-gtk/tests/check_global
+# Ignore sflphone-client-gnome stuff
+/sflphone-client-gnome/config.*
+/sflphone-client-gnome/configure
+/sflphone-client-gnome/depcomp
+/sflphone-client-gnome/install-sh
+/sflphone-client-gnome/missing
+/sflphone-client-gnome/mkinstalldirs
+/sflphone-client-gnome/src/sflphone-client-gnome
+/sflphone-client-gnome/autom4te*
+/sflphone-client-gnome/sflphone.desktop
+/sflphone-client-gnome/confdefs.h
+/sflphone-client-gnome/conftest.dir
+/sflphone-client-gnome/tests/check_config
+/sflphone-client-gnome/tests/check_contacts
+/sflphone-client-gnome/tests/check_dbus
+/sflphone-client-gnome/tests/check_global
+/sflphone-client-gnome/src/dbus/marshaller.c
+/sflphone-client-gnome/src/dbus/marshaller.h
 
 # Ignore sub-modules stuff
 ## libiax2
