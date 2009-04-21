@@ -14,7 +14,7 @@ package=sflphone-common
 
 CXX = g++-4.0
 CFLAGS = -Wall -g
-DEB_INSTALL_MANPAGES_sflphone = sflphoned.1
+DEB_INSTALL_MANPAGES_sflphone_common = sflphoned.1
 
 configure: configure-stamp
 configure-stamp:

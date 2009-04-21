@@ -14,7 +14,7 @@ package=sflphone-client-gnome
 
 CXX = g++-4.0
 CFLAGS = -Wall -g
-DEB_INSTALL_MANPAGES_sflphone = sflphone.1 sflphone-gtk.1
+DEB_INSTALL_MANPAGES_sflphone_client_gnome = sflphone.1 sflphone-gtk.1
 
 configure: configure-stamp
 configure-stamp:
