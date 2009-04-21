@@ -2,7 +2,7 @@ include ../../globals.mak
 
 noinst_LTLIBRARIES=libdbus.la
 
-BUILD_SOURCES=                      \
+BUILT_SOURCES=                      \
     callmanager-glue.h              \
     configurationmanager-glue.h     \
     instance-glue.h                 \
@@ -22,7 +22,7 @@ marshaller.h: marshaller.list
 
 libdbus_la_SOURCES=     \
     dbus.c              \
-    $(BUILD_SOURCES)
+    $(BUILT_SOURCES)
 
 libdbus_la_LDFLAGS= @DEPS_LDFLAGS@
 libdbus_la_CFLAGS= @DEPS_CFLAGS@
@@ -31,4 +31,4 @@ EXTRA_DIST= \
     marshaller.list
 
 CLEANFILES= \
-    $(BUILD_SOURCES)
+    $(BUILT_SOURCES)
