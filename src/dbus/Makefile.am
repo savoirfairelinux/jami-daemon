@@ -2,6 +2,18 @@ include $(top_srcdir)/globals.mak
 
 EXTRA_DIST = *.xml README
 
+GENHEADERS= \
+	callmanager-glue.h \
+	configurationmanager-glue.h \
+	instance-glue.h
+
+CLEANFILES= \
+	$(GENHEADERS)
+
+# Rule to generate the binding headers
+%-glue.h: %-introspec.xml Makefile.am
+	dbusxx-xml2cpp $< --adaptor=$@
+
 noinst_LTLIBRARIES = libdbus.la
 
 libdbus_la_SOURCES = \
@@ -15,12 +27,10 @@ libdbus_la_CXXFLAGS = -DPREFIX=\"$(prefix)\" -DPROGSHAREDIR=\"${datadir}/sflphon
 libdbus_la_LIBADD = $(top_srcdir)/libs/dbus-c++/src/libdbus-c++-1.la
 
 noinst_HEADERS = \
-	callmanager-glue.h \
+	$(GENHEADERS) \
 	callmanager.h  \
 	configurationmanager.h  \
-	configurationmanager-glue.h \
 	instance.h  \
-	instance-glue.h \
 	dbusmanager.h \
 	dbusmanagerimpl.h
 	
