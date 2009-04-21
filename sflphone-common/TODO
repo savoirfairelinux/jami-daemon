@@ -1,0 +1,8 @@
+For project core:
+----------------
+Management Config like about:config in Mozilla
+Management of exceptions
+Remove all warnings in compilation
+
+Improvement of STUN (done?)
+Better handling for an reINVITE request. (done?)
