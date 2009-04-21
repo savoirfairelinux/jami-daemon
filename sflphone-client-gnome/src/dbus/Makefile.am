@@ -10,7 +10,7 @@ BUILT_SOURCES=                      \
     marshaller.h
 
 # Rule to generate the binding headers
-%-glue.h: ../../../src/dbus/%-introspec.xml Makefile.am
+%-glue.h: ../../../sflphone-common/src/dbus/%-introspec.xml Makefile.am
 	dbus-binding-tool --mode=glib-client $<  > $@
 
 # Create the necessary marshallers for the signals implemented by the library
