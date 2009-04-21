@@ -2,7 +2,7 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libdbus.la
 
-BUILD_SOURCES=                      \
+BUILT_SOURCES=                      \
     callmanager-glue.h              \
     configurationmanager-glue.h     \
     instance-glue.h
@@ -27,7 +27,7 @@ noinst_HEADERS =            \
     instance.h              \
     dbusmanager.h           \
     dbusmanagerimpl.h       \
-    $(BUILD_SOURCES)
+    $(BUILT_SOURCES)
 
 # Dbus service file
 servicedir = $(DBUS_SERVICES_DIR)
@@ -41,4 +41,4 @@ $(service_DATA): $(service_in_files) Makefile
 EXTRA_DIST = *.xml README
 
 CLEANFILES= \
-    $(BUILD_SOURCES)
+    $(BUILT_SOURCES)
