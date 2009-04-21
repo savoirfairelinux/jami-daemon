@@ -1,16 +1,16 @@
 =head1 NAME
 
-sflphone-gtk - SIP and IAX2 compatible voice over IP softphone GTK+ client.
+sflphone-client-gnome - SIP and IAX2 compatible voice over IP softphone GTK+ client.
 
 =head1 SYNOPSIS
 
-sflphone-gtk 
+sflphone-client-gnome 
 
 =head1 DESCRIPTION
 
 SFLphone is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
 SFLphone audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
-B<sflphone-gtk> is a GTK+ client for SFLphone; it communicates with the core side through DBus. SFLphone package comes with the core, B<sflphoned>.
+B<sflphone-client-gnome> is a GTK+ client for SFLphone; it communicates with the core side through DBus. SFLphone package comes with the core, B<sflphoned>.
 
 =head1 BUGS
 

@@ -5,11 +5,14 @@
 
 set -e
 
-package=sflphone
+package=sflphone-client-gnome
 
 case "$1" in
     install|upgrade)
-        # Clear the old dbus-c++ and iax2 if presents
+        ## Clean up the previous manpage
+        if [ -f /usr/share/man/man1/sflphone-gtk.1 ]; then
+            rm /usr/share/man/man1/sflphone-gtk.1
+        fi
     ;;
 esac
 

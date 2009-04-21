@@ -10,7 +10,7 @@ sflphoned --help
 
 SFLphone is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
 SFLphone audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
-B<sflphoned> is the core of SFLphone; it communicates with the client side through DBus. SFLphone package comes with a GTK+ client, B<sflphone-gtk>.
+B<sflphoned> is the core of SFLphone; it communicates with the client side through DBus. You need to install a client to use the daemon, for instance GTK+ client, B<sflphone-client-gnome>.
 
 =head1 BUGS
 
@@ -24,7 +24,7 @@ This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.
 
 =head1 SEE ALSO
 
-B<sflphone>(1), B<sflphone-gtk>(1)
+B<sflphone>(1), B<sflphone-client-gnome>(1)
 
 =head1 COPYRIGHT
 

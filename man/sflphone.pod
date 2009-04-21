@@ -1,1 +1,0 @@
-sflphone-gtk.pod

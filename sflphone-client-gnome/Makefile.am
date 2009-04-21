@@ -1,4 +1,4 @@
-SUBDIRS = src pixmaps tests
+SUBDIRS = src pixmaps tests man
 
 ACLOCAL_AMFLAGS = -I m4
 

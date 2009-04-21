@@ -75,6 +75,7 @@ src/contacts/addressbook/Makefile
 pixmaps/Makefile
 sflphone.desktop
 tests/Makefile
+man/Makefile
 ])
 
 

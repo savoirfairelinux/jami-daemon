@@ -1,9 +1,11 @@
 SECTION="1"
 
 TEMPLATES=\
-         sflphoned.pod
+         sflphone-client-gnome.pod
 
-man_MANS = sflphoned.1
+man_MANS = \
+			sflphone-client-gnome.1 \
+			sflphone.1 
 
 POD2MAN=pod2man
 
