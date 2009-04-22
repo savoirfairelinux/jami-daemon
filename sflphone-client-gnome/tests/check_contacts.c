@@ -31,7 +31,6 @@ void plop()
 
 START_TEST (test_eds)
 {
-  fail_unless (5 == 2,"Error");
 }
 END_TEST
 

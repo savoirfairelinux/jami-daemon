@@ -23,6 +23,8 @@
 #ifndef __DBUS_H__
 #define __DBUS_H__
 
+#include <dbus/dbus-glib.h>
+
 #include <accountlist.h>
 #include <calllist.h>
 #include <sflnotify.h>

@@ -20,10 +20,22 @@
 #include <check.h>
 #include <stdlib.h>
 
+#include "../src/dbus/dbus.h"
+
+START_TEST (test_dbus_connect)
+{
+    fail_unless (dbus_connect () == TRUE, "dbus_connect () returns FALSE");
+}
+END_TEST
+
 Suite *
 dbus_suite (void)
 {
-  Suite *s = suite_create ("DBus");
+  Suite *s = suite_create ("D-Bus");
+
+  TCase *tc_cases = tcase_create ("D-BUS connection");
+  tcase_add_test (tc_cases, test_dbus_connect);
+  suite_add_tcase (s, tc_cases);
 
   return s;
 }

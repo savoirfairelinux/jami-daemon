@@ -15,7 +15,6 @@ SFLPHONE_OBJ = $(top_builddir)/src/accountlist.o \
 				$(top_builddir)/src/dialpad.o \
 				$(top_builddir)/src/errors.o \
 				$(top_builddir)/src/mainwindow.o \
-				$(top_builddir)/src/marshaller.o \
 				$(top_builddir)/src/menus.o \
 				$(top_builddir)/src/reqaccount.o \
 				$(top_builddir)/src/sflnotify.o \
@@ -28,13 +27,13 @@ SFLPHONE_OBJ = $(top_builddir)/src/accountlist.o \
 
 check_global_SOURCES =		check_global.c
 check_global_CFLAGS =		@CHECK_CFLAGS@ @DEPS_CFLAGS@
-check_global_LDADD =		@CHECK_LIBS@ 
+check_global_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ $(DEPS_LIBS) @LIBSEXY_LIBS@ -llog4c
 
 ###########################################################
 
 check_contacts_SOURCES =	check_contacts.c
 check_contacts_CFLAGS =		@CHECK_CFLAGS@ @DEPS_CFLAGS@
-check_contacts_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ @DEPS_LIBS@ @LIBSEXY_LIBS@ -llog4c
+check_contacts_LDADD =		$(SFLPHONE_LIBS) $(SFLPHONE_OBJ) @CHECK_LIBS@ $(DEPS_LIBS) @LIBSEXY_LIBS@ -llog4c
 
 ###########################################################
 

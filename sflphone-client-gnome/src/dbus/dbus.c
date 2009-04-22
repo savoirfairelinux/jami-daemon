@@ -33,7 +33,6 @@
 #include <dbus.h>
 #include <actions.h>
 #include <string.h>
-#include <dbus/dbus-glib.h>
 
 DBusGConnection * connection;
 DBusGProxy * callManagerProxy;
