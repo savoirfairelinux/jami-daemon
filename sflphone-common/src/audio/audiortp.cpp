@@ -398,7 +398,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
         int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
         _debug("_nbSamplesMax %i\n", nbSamplesMax);
 
-        //_debug("resample data = %i\n", nb_sample_up);
+        _debug("resample data = %i\n", nb_sample_up);
         nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
 
         if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
@@ -410,6 +410,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     } else {
 
+        int nbSamplesMax = 128;
         // no resampling required
         compSize = _audiocodec->codecEncode( micDataEncoded, micData, nbSample*sizeof(int16));
 

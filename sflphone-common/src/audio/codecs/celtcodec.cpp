@@ -26,8 +26,7 @@
 class Celt : public AudioCodec{
     public:
         Celt(int payload=0)
-            : AudioCodec(payload, "celt"),
-              _celt_frame_size(128)
+            : AudioCodec(payload, "celt")
     {
         _clockRate = 44100;
         _frameSize = 512; // fixed frameSize, TODO: support 64 to 512 frame size
@@ -86,7 +85,8 @@ class Celt : public AudioCodec{
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
         {
             int len = 0;
-            len = celt_encode(enc, (celt_int16_t *)src, NULL, dst, size);
+            len = celt_encode(enc, (celt_int16_t *)src, NULL, dst, 128);
+            // returns the number of bytes writen
             return len;
         }
 
