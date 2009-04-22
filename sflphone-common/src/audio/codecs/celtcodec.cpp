@@ -30,6 +30,7 @@ class Celt : public AudioCodec{
               _celt_frame_size(128)
     {
         _clockRate = 44100;
+        _frameSize = 512;
         _channel = 1;
         _bitrate = 0;
         _bandwidth = 0;
@@ -42,7 +43,7 @@ class Celt : public AudioCodec{
         void initCelt() {
             printf("init celt");
             
-            mode = celt_mode_create(_clockRate, _channel, _celt_frame_size, NULL);
+            mode = celt_mode_create(_clockRate, _channel, _frameSize, NULL);
             // celt_mode_info(mode, CELT_GET_LOOKAHEAD, &skip);
 
             if (mode == NULL)
@@ -77,9 +78,9 @@ class Celt : public AudioCodec{
 
         virtual int codecDecode (short *dst, unsigned char *src, unsigned int size) 
         {
-            int len = 0;
-            len = celt_decode(dec, src, size, (celt_int16_t*)dst);
-            return len;
+            int err = 0;
+            err = celt_decode(dec, src, size, (celt_int16_t*)dst);
+            return _frameSize * sizeof(celt_int16_t);
         }
 
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
