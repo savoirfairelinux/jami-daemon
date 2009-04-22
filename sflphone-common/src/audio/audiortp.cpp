@@ -358,18 +358,28 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     if (!_audiocodec) { _debug(" !ARTP: No audiocodec available for mic\n"); return; }
 
     // we have to get 20ms of data from the mic *20/1000 = /50
-    int maxBytesToGet = _layerSampleRate * _layerFrameSize * sizeof(SFLDataFormat) / 1000;
-    _debug("maxBytesToGet: %i \n", maxBytesToGet);
-    _debug("_layerSampleRate: %i \n", _layerSampleRate);
-    _debug("_layerFrameSize: %i \n", _layerFrameSize);
+    // int maxBytesToGet = _layerSampleRate * _layerFrameSize * sizeof(SFLDataFormat) / 1000;
+
+    // compute codec framesize in ms
+    int fixed_codec_framesize = (_audiocodec->getFrameSize() * 1000) / _audiocodec->getFrameSize();
+
+    int maxBytesToGet = _layerSampleRate * fixed_codec_framesize * sizeof(SFLDataFormat) / 1000;
+    
+
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
     _debug("availBytesFromMic: %i \n", availBytesFromMic);
     // take the lowest
+    // int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+    
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
+    
+
     // Get bytes from micRingBuffer to data_from_mic
     //_debug("get data from mic\n");
     int nbSample = audiolayer->getMic( micData , bytesAvail ) / sizeof(SFLDataFormat);
+
+    
     int nb_sample_up = nbSample;
     _debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
     
