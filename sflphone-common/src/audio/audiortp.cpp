@@ -465,13 +465,13 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     // printf("AudioRtpRTX::receiveSessionForSpkr() Size of data from %i \n",size);
 
     // Decode data with relevant codec
-    unsigned int max = (unsigned int)(_codecSampleRate * _layerFrameSize / 1000);
+    // unsigned int max = (unsigned int)(_codecSampleRate * _layerFrameSize / 1000);
 
-    if ( size > max ) {
-        _debug("We have received from RTP a packet larger than expected: %d VS %d\n", size, max);
-        _debug("The packet size has been cropped\n");
-        size=max;
-    }
+    // if ( size > max ) {
+    //      _debug("We have received from RTP a packet larger than expected: %d VS %d\n", size, max);
+    //      _debug("The packet size has been cropped\n");
+    //      size=max;
+    // }
 
     if (_audiocodec != NULL) {
 
@@ -480,10 +480,10 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
         //buffer _receiveDataDecoded ----> short int or int16, coded on 2 bytes
         int nbInt16 = expandedSize / sizeof(int16);
         //nbInt16 represents the number of samples we just decoded
-        if ((unsigned int)nbInt16 > max) {
-            _debug("We have decoded an RTP packet larger than expected: %d VS %d. Cropping.\n", nbInt16, max);
-            nbInt16=max;
-        }
+        // if ((unsigned int)nbInt16 > max) {
+        //     _debug("We have decoded an RTP packet larger than expected: %d VS %d. Cropping.\n", nbInt16, max);
+        //     nbInt16=max;
+        // }
         int nbSample = nbInt16;
 
         if (_audiocodec->getClockRate() != _layerSampleRate) {
