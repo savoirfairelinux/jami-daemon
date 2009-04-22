@@ -375,6 +375,8 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
 
+    if (bytesAvail == 0)
+      return;
 
     // Get bytes from micRingBuffer to data_from_mic
     //_debug("get data from mic\n");
