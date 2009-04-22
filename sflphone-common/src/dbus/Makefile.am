@@ -1,5 +1,7 @@
 include $(top_srcdir)/globals.mak
 
+DBUSXX=$(top_srcdir)/libs/dbus-c++/tools/dbusxx-xml2cpp
+
 noinst_LTLIBRARIES = libdbus.la
 
 BUILT_SOURCES=                      \
@@ -9,7 +11,7 @@ BUILT_SOURCES=                      \
 
 # Rule to generate the binding headers
 %-glue.h: %-introspec.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
+	$(DBUSXX) $< --adaptor=$@
 
 libdbus_la_SOURCES = \
     callmanager.cpp \
