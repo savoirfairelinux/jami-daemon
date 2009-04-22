@@ -380,27 +380,38 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     //_debug("get data from mic\n");
     int nbSample = audiolayer->getMic( micData , bytesAvail ) / sizeof(SFLDataFormat);
 
+    int compSize = 0;
+    // test if resampling is required
+    if(_audiocodec->getClockRate() != _layerSampleRate) {
+
+        int nb_sample_up = nbSample;
+        _debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
     
-    int nb_sample_up = nbSample;
-    _debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
-    
 
-    // Store the length of the mic buffer in samples for recording
-    _nSamplesMic = nbSample;
+        // Store the length of the mic buffer in samples for recording
+        _nSamplesMic = nbSample;
 
-    _debug("_audiocodec->getClockRate(): %i \n", _audiocodec->getClockRate());
-    int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
-    _debug("_nbSamplesMax %i\n", nbSamplesMax);
+        _debug("_audiocodec->getClockRate(): %i \n", _audiocodec->getClockRate());
+        int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
+        _debug("_nbSamplesMax %i\n", nbSamplesMax);
 
-    //_debug("resample data = %i\n", nb_sample_up);
-    nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
+        //_debug("resample data = %i\n", nb_sample_up);
+        nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
 
-    if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
-        // fill end with 0...
-        memset( micDataConverted + nbSample, 0, (nbSamplesMax-nbSample)*sizeof(int16));
-        nbSample = nbSamplesMax;
+        if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
+            // fill end with 0...
+            memset( micDataConverted + nbSample, 0, (nbSamplesMax-nbSample)*sizeof(int16));
+            nbSample = nbSamplesMax;
+        }
+        compSize = _audiocodec->codecEncode( micDataEncoded, micDataConverted, nbSample*sizeof(int16));
+
+    } else {
+
+        // no resampling required
+        compSize = _audiocodec->codecEncode( micDataEncoded, micData, nbSample*sizeof(int16));
+
     }
-    int compSize = _audiocodec->codecEncode( micDataEncoded , micDataConverted , nbSample*sizeof(int16));
+
     // encode divise by two
     // Send encoded audio sample over the network
     if (compSize > nbSamplesMax) { _debug("! ARTP: %d should be %d\n", compSize, nbSamplesMax);}
