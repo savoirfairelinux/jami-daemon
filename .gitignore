@@ -27,8 +27,6 @@ doc/doxygen/core-doc
 doc/doxygen/gtk-gui-doc
 doc/*.html
 
-INSTALL
-
 # Ignore buildsys stuff
 /autom4te.cache
 /configure
