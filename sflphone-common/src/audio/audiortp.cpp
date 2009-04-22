@@ -462,10 +462,10 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     unsigned char* spkrData  = (unsigned char*)adu->getData(); // data in char
     unsigned int size = adu->getSize(); // size in char
 
-    // printf("AudioRtpRTX::receiveSessionForSpkr() Size of data from %i \n",size);
+    printf("AudioRtpRTX::receiveSessionForSpkr() Size of data from %i \n",size);
 
     // Decode data with relevant codec
-    // unsigned int max = (unsigned int)(_codecSampleRate * _layerFrameSize / 1000);
+    unsigned int max = (unsigned int)(_codecSampleRate * _layerFrameSize / 1000);
 
     // if ( size > max ) {
     //      _debug("We have received from RTP a packet larger than expected: %d VS %d\n", size, max);
