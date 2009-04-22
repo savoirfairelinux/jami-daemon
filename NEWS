@@ -1,99 +1,20 @@
-SFLphoned (0.7.0) / 2006-...
-	* adding reload (sound driver) button
-	* fix: peer hangup remove flashing buttons
-	* removing old packaging stuff like FIXME or sflphone.spec.in
-	* fix: click on flashing buttons
-	* fix: send ringing, hangup, busy message
-	* fix for using call command two times in a row
-	* add --disable-sflphoneqt 2006-05-01
-	* remove libexosip2 internally, it's in debian unstable 2005-01-01
-	* add iax support - in development
-	* add account support
-	* remove callid string/int
-	* add account SIP0 (default) in sflphone-cli
-	* add account SIP0 (default) in sflphone-qt
-	* fix nat handling (use the same port that it test)
-	* add register/unregister in qt
-	* add test audio driver button
-	* add hold/unhold/hangup to sflphone-cli
+################################################
+# SFLphone
+################################################
 
-SFLphoned (0.6.2) / 2005-11-29
-	* integral mono support
-	* libsamplerate added for macosx
+* Upcoming 0.9.5~beta version on 2008-04-21
 
-SFLphoned (0.6.1) / 2005-11-26
-	* add speex codec (experimental)
-	* fix for codec handling in sdp and audiortp
-	* new codec class
-	* add portaudio missing file 
-	  (thanks to Pierre POMES)
-	* add samplerate and inChannel/outChannel in AudioLayer
-	  we could use microphone in mono and speaker in stereo
+* 2009-04-03: SFLphone 0.9.4 has been released
 
-SFLphoned/SFLphone (0.6) / 2005-11-04
-	* improve sip protocol
-	* can now receive text message
-	* accept reinvite call
-	* cleaning headers
-	* improving bash launcher script
-	* select audio input and output device
-	* installation review
+* 2009-02-07: SFLphone 0.9.3 has been released
 
-SFLphoned/SFLphone (0.5a) / 2005-10-17
-	* sflphoned
-	* bug fixes
-	* sflphone-qt
-	* client/server protocol
+* 2008-12-01: SFLphone 0.9.2 has been released
 
-SFLphone (0.4.1-pre2) / 2005-09-30
-	* rearranged utilspp use
-	* Bug fix when trying to use more than 6 lines.
-	* Now, we send a final response to reINVITEs 
-	  (thanks to Mikael Magnusson)
-	* We can build in different build directories.
-	  (thanks to Mikael Magnusson)
-	* We actualy check if portaudio and eXosip2 libs
-	  are installed
-	* zeroconf integration start
+* 2008-07-01: SFLphone 0.9.1 has been released
 
-SFLphone (0.4.1-pre1) / 2005-08-11
-	* Use libeXosip2
-	* Add blink notification for voice-message
-	* Add scrolling text
 
-SFLphone (0.4) / 2005-07-06
-	* Cleanup code
-	* Add autotools support
-	* Handle CANCEL method
-	* PortAudio replace OSS and ALSA devices choice
-	* Add PortAudioCpp to make easy use of RingBuffer object for
-	  audio callback 
-	* Add PortAudio library to make easy sound portability
-	* Fix a few memory leak
-	* Reorganisation of SFLphone architecture
-	* Handle error messages on screen
-	* Handle "refused call"
-	* Notification of remote RINGING event added
-	* Call management updated
+Please refer to the development website for further information at http://projects.savoirfairelinux.net/projects/show/sflphone
 
-SFLphone (0.3) / 2005-04-05
-	* ALSA driver support added 
-	* GSM audio codec support added
-	* Ringtones support (just ulaw format) added
-	* Notification incoming call added
-	* Apply skin feature added
-	* Volume control added
-	* Registration manually added
-	* Config-file in home directory changed to ".sflphone"
+    Thanks You
 
-SFLphone (0.2) / 2005-01-18
-	* Lines management updated
-	* Blocking bug fixed
-	* Configuration tree, made from a config file, added for setup
-	* Dial tone updated
-	* Timer call updated
-	* Apply feature updated
-	* Non-network or request failure cases updated
-
-SFLphone (0.1a) / 2004-12-22
-	* First release
+    SFLphone Team.
