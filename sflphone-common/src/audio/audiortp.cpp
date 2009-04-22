@@ -365,7 +365,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     _debug("fixed_codec_framesize: %i \n", fixed_codec_framesize);
 
     int maxBytesToGet = _layerSampleRate * fixed_codec_framesize * sizeof(SFLDataFormat) / 1000;
-    
+    _debug("maxBytesToGet %i \n", maxBytesToGet);
 
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
@@ -374,15 +374,16 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
     // int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
     
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
-    
+
 
     // Get bytes from micRingBuffer to data_from_mic
     //_debug("get data from mic\n");
     int nbSample = audiolayer->getMic( micData , bytesAvail ) / sizeof(SFLDataFormat);
+    _debug("nb of sample from mic %i \n", nbSample);
 
     int compSize = 0;
     // test if resampling is required
-    if(_audiocodec->getClockRate() != _layerSampleRate) {
+    if (_audiocodec->getClockRate() != _layerSampleRate) {
 
         int nb_sample_up = nbSample;
         _debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
@@ -483,20 +484,27 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
         }
         int nbSample = nbInt16;
 
-        // Do sample rate conversion
-        int nb_sample_down = nbSample;
-        nbSample = reSampleData(_codecSampleRate , nb_sample_down, UP_SAMPLING);
+        if (_audiocodec->getClockRate() != _layerSampleRate) {
 
-#ifdef DATAFORMAT_IS_FLOAT
-#else
-#endif
+            // Do sample rate conversion
+            int nb_sample_down = nbSample;
+            nbSample = reSampleData(_codecSampleRate , nb_sample_down, UP_SAMPLING);
 
-        // Stor the number of samples for recording
-        _nSamplesSpkr = nbSample;
+            // #ifdef DATAFORMAT_IS_FLOAT
+            // #else
+            // #endif
 
-        //audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
-        audiolayer->putMain (spkrDataConverted, nbSample * sizeof(SFLDataFormat));
+            // Stor the number of samples for recording
+            _nSamplesSpkr = nbSample;
 
+            //audiolayer->playSamples( spkrDataConverted, nbSample * sizeof(SFLDataFormat), true);
+            audiolayer->putMain (spkrDataConverted, nbSample * sizeof(SFLDataFormat));
+        } else {
+
+            // Stor the number of samples for recording
+            _nSamplesSpkr = nbSample;
+            audiolayer->putMain (spkrDataDecoded, nbSample * sizeof(SFLDataFormat));
+        }
 
         // Notify (with a beep) an incoming call when there is already a call 
         countTime += time->getSecond();
