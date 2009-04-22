@@ -36,6 +36,7 @@ class Speex : public AudioCodec{
             _preprocess_state()
     {
         _clockRate = 16000;
+        _frameSize = 320; // 20 ms at 16 kHz
         _channel = 1;
         _bitrate = 0;
         _bandwidth = 0; 

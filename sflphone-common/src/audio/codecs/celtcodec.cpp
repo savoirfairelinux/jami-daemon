@@ -30,7 +30,7 @@ class Celt : public AudioCodec{
               _celt_frame_size(128)
     {
         _clockRate = 44100;
-        _frameSize = 512;
+        _frameSize = 512; // fixed frameSize, TODO: support 64 to 512 frame size
         _channel = 1;
         _bitrate = 0;
         _bandwidth = 0;
