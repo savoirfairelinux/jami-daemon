@@ -619,7 +619,7 @@ AudioRtpRTX::run () {
       // Thread::sleep(TimerPort::getTimer());
       // TimerPort::incTimer(5); // 'frameSize' ms
 
-      usleep(500);
+      usleep(50);
       
     }
     
