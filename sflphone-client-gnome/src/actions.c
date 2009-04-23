@@ -832,7 +832,6 @@ sflphone_set_current_account()
     void
 sflphone_fill_codec_list()
 {
-
     codec_list_clear();
 
     gchar** codecs = (gchar**)dbus_codec_list();
@@ -845,7 +844,9 @@ sflphone_fill_codec_list()
         codec_t * c = g_new0(codec_t, 1);
         c->_payload = atoi(*order);
         details = (gchar **)dbus_codec_details(c->_payload);
+
         //DEBUG("Codec details: %s / %s / %s / %s",details[0],details[1],details[2],details[3]);
+
         c->name = details[0];
         c->is_active = TRUE;
         c->sample_rate = atoi(details[1]);
@@ -857,7 +858,7 @@ sflphone_fill_codec_list()
     for(pl=codecs; *codecs; codecs++)
     {
         details = (gchar **)dbus_codec_details(atoi(*codecs));
-        if(codec_list_get(details[0])!=NULL){
+        if(codec_list_get_by_payload(atoi(*codecs))!=NULL){
             // does nothing - the codec is already in the list, so is active.
         }
         else{

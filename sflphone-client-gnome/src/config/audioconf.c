@@ -374,6 +374,8 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     GtkTreeModel *model;
     gboolean active;
     char* name;
+    char* srate;
+    codec_t* codec;
 
     // Get path of clicked codec active toggle box
     treePath = gtk_tree_path_new_from_string(path);
@@ -384,9 +386,18 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
     gtk_tree_model_get(model, &iter,
             COLUMN_CODEC_ACTIVE, &active,
             COLUMN_CODEC_NAME, &name,
+            COLUMN_CODEC_FREQUENCY, &srate,
             -1);
 
-    DEBUG("%s", name);
+    printf("%s, %s\n", name, srate);
+
+    // codec_list_get_by_name(name);
+    if ((strcmp(name,"speex")==0) && (strcmp(srate,"8 kHz")==0))
+        codec = codec_list_get_by_payload(110);
+    else if ((strcmp(name,"speex")==0) && (strcmp(srate,"16 kHz")==0))
+        codec = codec_list_get_by_payload(111);
+    else
+        codec = codec_list_get_by_name(name);
 
     // Toggle active value
     active = !active;
@@ -400,9 +411,9 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
 
     // Modify codec queue to represent change
     if(active)
-        codec_set_active(name);
+        codec_set_active(codec);
     else
-        codec_set_inactive(name);
+        codec_set_inactive(codec);
 
     // Perpetuate changes to the deamon
     codec_list_update_to_daemon();

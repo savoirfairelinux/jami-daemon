@@ -66,13 +66,13 @@ void codec_list_add(codec_t * c);
  * Set a codec active. An active codec will be used for codec negociation
  * @param name The string description of the codec
  */
-void codec_set_active(gchar* name);
+void codec_set_active(codec_t * c);
 
 /**
  * Set a codec inactive. An active codec won't be used for codec negociation
  * @param name The string description of the codec
  */
-void codec_set_inactive(gchar* name);
+void codec_set_inactive(codec_t * c);
 
 /** 
  * Return the number of codecs in the list
@@ -85,7 +85,7 @@ guint codec_list_get_size();
  * @param name The string description of the codec
  * @return codec_t* A codec or NULL 
  */
-codec_t * codec_list_get(const gchar * name);
+codec_t * codec_list_get_by_name(const gchar * name);
 
 /** 
  * Return the codec at the nth position in the list
@@ -116,5 +116,7 @@ void codec_list_move_codec_down(guint index);
  * Notify modifications on codecs to the server
  */
 void codec_list_update_to_daemon();
+
+codec_t* codec_list_get_by_payload( const int payload);
 
 #endif

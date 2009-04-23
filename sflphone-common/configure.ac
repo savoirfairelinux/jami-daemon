@@ -317,6 +317,8 @@ AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspe
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
 
+
+
 dnl Check for ilbc support
 AC_ARG_WITH([ilbc],
   [AS_HELP_STRING([--without-ilbc],

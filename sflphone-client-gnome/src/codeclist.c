@@ -62,14 +62,16 @@ codec_list_clear ()
 void
 codec_list_add(codec_t * c)
 {
+  g_print ("add %s codec\n", c->name);
   g_queue_push_tail (codecQueue, (gpointer *) c);
 }
 
 
-void
-codec_set_active(gchar* name)
+
+void 
+codec_set_active(codec_t * c)
 {
-	codec_t * c = codec_list_get(name);
+	
 	if(c)
 	{
 		DEBUG("%s set active", c->name);
@@ -78,9 +80,9 @@ codec_set_active(gchar* name)
 }
 
 void
-codec_set_inactive(gchar* name)
+codec_set_inactive(codec_t * c)
 {
-  codec_t * c = codec_list_get(name);
+  
   if(c)
     c->is_active = FALSE;
 }
@@ -92,9 +94,19 @@ codec_list_get_size()
 }
 
 codec_t*
-codec_list_get( const gchar* name)
+codec_list_get_by_name( const gchar* name)
 {
   GList * c = g_queue_find_custom(codecQueue, name, is_name_codecstruct);
+  if(c)
+    return (codec_t *)c->data;
+  else
+    return NULL;
+}
+
+codec_t*
+codec_list_get_by_payload( const int payload)
+{
+  GList * c = g_queue_find_custom(codecQueue, payload, is_payload_codecstruct);
   if(c)
     return (codec_t *)c->data;
   else
@@ -121,6 +133,7 @@ codec_set_prefered_order(guint index)
 void
 codec_list_move_codec_up(guint index)
 {
+        printf("Codec list Size: %i \n",codec_list_get_size());
 	if(index != 0)
 	{
 		gpointer codec = g_queue_pop_nth(codecQueue, index);
@@ -140,6 +153,7 @@ codec_list_move_codec_up(guint index)
 void
 codec_list_move_codec_down(guint index)
 {
+        printf("Codec list Size: %i \n",codec_list_get_size());
 	if(index != codecQueue->length)
 	{
 		gpointer codec = g_queue_pop_nth(codecQueue, index);
