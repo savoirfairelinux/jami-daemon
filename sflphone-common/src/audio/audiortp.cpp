@@ -410,7 +410,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     } else {
 
-        int nbSamplesMax = 128;
+        int nbSamplesMax = 512;
         // no resampling required
         compSize = _audiocodec->codecEncode( micDataEncoded, micData, nbSample*sizeof(int16));
 

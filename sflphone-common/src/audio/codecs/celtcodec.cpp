@@ -87,7 +87,7 @@ class Celt : public AudioCodec{
         virtual int codecEncode (unsigned char *dst, short *src, unsigned int size) 
         {
             int len = 0;
-            len = celt_encode(enc, (celt_int16_t *)src, (celt_int16_t *)src, dst, 128);
+            len = celt_encode(enc, (celt_int16_t *)src, (celt_int16_t *)src, dst, 512);
             // returns the number of bytes writen
             return len;
         }
