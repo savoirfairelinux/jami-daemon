@@ -318,27 +318,6 @@ AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
 
 
-# check for libgsm1 (doesn't use pkg-config)
-dnl Check for libgsm
-AC_ARG_WITH([celt],
-  [AS_HELP_STRING([--without-celt],
-    [disable support for celt codec])],
-  [],
-  [with_celt=yes])
-
-LIBCELT=
-AS_IF([test "x$with_celt" != xno],
-  [AC_CHECK_HEADER([celt/celt.h], , AC_MSG_FAILURE([Unable to find the libcelt headers.  You may use --without-celt to compile without celt codec support.]))]
-  [AC_CHECK_LIB([celt], [celt_decode],
-    [],
-    [AC_MSG_FAILURE(
-       [libcelt link test failed.   You may use --without-celt to compile without celt codec support.])]
-       )
-   ]
-   )
-    
-AC_DEFINE([HAVE_CELT], test "x$with_celt" = "xyes", [Define if you have libcelt])
-AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
 
 dnl Check for ilbc support
 AC_ARG_WITH([ilbc],
