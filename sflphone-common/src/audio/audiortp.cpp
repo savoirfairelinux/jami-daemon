@@ -574,8 +574,7 @@ AudioRtpRTX::run () {
 
     int timestamp = 0; // for mic
     int countTime = 0; // for receive
-    // TimerPort::setTimer(_layerFrameSize);
-    TimerPort::setTimer(5);
+    TimerPort::setTimer(_layerFrameSize);
 
     audiolayer->startStream();
     _start.post();
@@ -613,13 +612,8 @@ AudioRtpRTX::run () {
         _ca->recAudio.recData(micData,_nSamplesMic);
       }
 
-      // Thread::sleep(TimerPort::getTimer());
-      // TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
-
-      // Thread::sleep(TimerPort::getTimer());
-      // TimerPort::incTimer(5); // 'frameSize' ms
-
-      usleep(50);
+      Thread::sleep(TimerPort::getTimer());
+      TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
       
     }
     
