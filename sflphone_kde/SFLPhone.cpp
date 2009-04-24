@@ -10,6 +10,7 @@
 #include <KActionCollection>
 
 #include "sflphone_const.h"
+#include "instance_interface_singleton.h"
 
 
 
@@ -100,13 +101,15 @@ void SFLPhone::setupActions()
 
 bool SFLPhone::queryClose()
 {
+	InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
 	qDebug() << "queryClose : " << view->listWidget_callList->count() << " calls open.";
-	if(view->listWidget_callList->count() > 0)
+	if(view->listWidget_callList->count() > 0 && instance.getRegistrationCount() <= 1)
 	{
 		qDebug() << "Attempting to quit when still having some calls open.";
 		view->getErrorWindow()->showMessage(tr2i18n("You still have some calls open. Please close all calls before quitting.", 0));
 		return false;
 	}
+	instance.Unregister(getpid());
 	return true;
 }
 

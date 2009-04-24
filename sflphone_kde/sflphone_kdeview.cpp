@@ -89,8 +89,8 @@ sflphone_kdeView::~sflphone_kdeView()
 	delete wizard;
 	delete callList;
 	delete errorWindow;
-	InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
-	instance.Unregister(getpid());
+// 	InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
+// 	instance.Unregister(getpid());
 }
 
 
