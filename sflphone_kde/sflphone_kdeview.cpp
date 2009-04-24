@@ -19,12 +19,14 @@
  ***************************************************************************/
 
 #include "sflphone_kdeview.h"
-#include "settings.h"
+//#include "settings.h"
 
 #include <klocale.h>
 #include <QtGui/QLabel>
 #include <QtGui/QContextMenuEvent>
 #include <QtGui/QMenu>
+#include <QtGui/QBrush>
+#include <QtGui/QPalette>
 
 #include <kstandardaction.h>
 #include <kactioncollection.h>
@@ -37,12 +39,10 @@
 #include "ActionSetAccountFirst.h"
 #include "ContactItemWidget.h"
 
-
 #include <kabc/addressbook.h>
 #include <kabc/stdaddressbook.h>
 #include <kabc/addresseelist.h>
 //#include <kabc/ldapclient.h>
-
 
 using namespace KABC;
 
@@ -67,7 +67,7 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	connect(&callManager, SIGNAL(error(MapStringString)),
 	        this,         SLOT(on1_error(MapStringString)));
 	connect(&callManager, SIGNAL(incomingCall(const QString &, const QString &, const QString &)),
-	        this,         SLOT(on1_incomingCall(const QString &, const QString &, const QString &)));
+	        this,         SLOT(on1_incomingCall(const QString &, const QString &)));
 	connect(&callManager, SIGNAL(incomingMessage(const QString &, const QString &)),
 	        this,         SLOT(on1_incomingMessage(const QString &, const QString &)));
 	connect(&callManager, SIGNAL(voiceMailNotify(const QString &, int)),
@@ -75,6 +75,10 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	connect(&callManager, SIGNAL(volumeChanged(const QString &, double)),
 	        this,         SLOT(on1_volumeChanged(const QString &, double)));
 	        
+	QPalette pal = QPalette(palette());
+	pal.setColor(QPalette::AlternateBase, Qt::lightGray);
+	setPalette(pal);
+	
 	loadWindow();
 	
 } 
@@ -146,13 +150,23 @@ void sflphone_kdeView::addCallToCallList(Call * call)
 
 void sflphone_kdeView::addCallToCallHistory(Call * call)
 {
+	qDebug() << "addCallToCallHistory1";
 	QListWidgetItem * item = call->getHistoryItem();
+	qDebug() << "addCallToCallHistory2";
 	QWidget * widget = call->getHistoryItemWidget();
+	qDebug() << "addCallToCallHistory3";
 	if(item && widget)
 	{
+		qDebug() << "addCallToCallHistory4";
 		listWidget_callHistory->addItem(item);
+		qDebug() << "addCallToCallHistory5";
+		qDebug() << "item = " << item;
+		qDebug() << "widget = " << widget;
+		qDebug() << "itemWidget(item) = " << listWidget_callHistory->itemWidget(item);
 		listWidget_callHistory->setItemWidget(item, widget);
+		qDebug() << "addCallToCallHistory6";
 	}
+	qDebug() << "addCallToCallHistory7";
 }
 
 void sflphone_kdeView::addContactToContactList(Contact * contact)
@@ -188,11 +202,13 @@ void sflphone_kdeView::typeString(QString str)
 	{
 		qDebug() << "In call history.";
 		lineEdit_searchHistory->setText(lineEdit_searchHistory->text() + str);
+		lineEdit_searchHistory->setFocus();
 	}
 	if(stackedWidget_screen->currentWidget() == page_addressBook)
 	{
 		qDebug() << "In address book.";
 		lineEdit_addressBook->setText(lineEdit_addressBook->text() + str);
+		lineEdit_addressBook->setFocus();
 	}
 }
 
@@ -558,20 +574,24 @@ void sflphone_kdeView::updateCallHistory()
 	while(listWidget_callHistory->count() > 0)
 	{
 		QListWidgetItem * item = listWidget_callHistory->takeItem(0);
-		qDebug() << "take item " << item->text();
+		qDebug() << "take item " << item->text() << " ; widget = " << callList->findCallByHistoryItem(item);
 	}
-	//listWidget_callHistory->clear();
 	QString textSearched = lineEdit_searchHistory->text();
 	for(int i = 0 ; i < callList->size() ; i++)
 	{
 		Call * call = (*callList)[i];
 		qDebug() << "" << call->getCallId();
-		if(call->getState() == CALL_STATE_OVER && call->getHistoryState() != NONE && call->getHistoryItem()->text().contains(textSearched))
+		if(
+		     call->getState() == CALL_STATE_OVER && 
+		     call->getHistoryState() != NONE && 
+		    (call->getPeerPhoneNumber().contains(textSearched) || call->getPeerName().contains(textSearched))
+		  )
 		{
-			qDebug() << "call->getItem()->text()=" << call->getHistoryItem()->text() << " contains textSearched=" << textSearched;
+			qDebug() << "call->getPeerPhoneNumber()=" << call->getPeerPhoneNumber() << " contains textSearched=" << textSearched;
 			addCallToCallHistory(call);
 		}
 	}
+	alternateColors(listWidget_callHistory);
 }
 
 void sflphone_kdeView::updateAddressBook()
@@ -594,6 +614,23 @@ void sflphone_kdeView::updateAddressBook()
 		qDebug() << "contact->getItem()->text()=" << contact->getItem()->text() << " contains textSearched=" << textSearched;
 		addContactToContactList(contact);
 	}
+	alternateColors(listWidget_addressBook);
+}
+
+void sflphone_kdeView::alternateColors(QListWidget * listWidget)
+{
+//TODO
+	qDebug() << "alternateColors";
+	qDebug() << "listWidget->count() = " << listWidget->count();
+	for(int i = 0 ; i < listWidget->count(); i++)
+	{
+		QListWidgetItem* item = listWidget->item(i);
+		QBrush c = (i % 2 == 1) ? palette().base() : palette().alternateBase();
+		qDebug() << "brush = " << c;
+		item->setBackground( c );
+	}
+	listWidget->setUpdatesEnabled( true );
+
 }
 
 QVector<Contact *> sflphone_kdeView::findContactsInKAddressBook(QString textSearched)
@@ -867,6 +904,28 @@ void sflphone_kdeView::on_listWidget_addressBook_itemDoubleClicked(QListWidgetIt
 	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 	actionb(call, CALL_ACTION_ACCEPT);
+}
+
+void sflphone_kdeView::on_stackedWidget_screen_currentChanged(int index)
+{
+	qDebug() << "on_stackedWidget_screen_currentChanged";
+	switch(index)
+	{
+		case 0:
+			qDebug() << "Switched to call list screen.";
+			break;
+		case 1:
+			qDebug() << "Switched to call history screen.";
+			updateCallHistory();
+			break;
+		case 2:
+			qDebug() << "Switched to address book screen.";
+			updateAddressBook();
+			break;
+		default:
+			qDebug() << "Error : reached an unknown index \"" << index << "\" with stackedWidget_screen.";
+			break;
+	}
 }
 
 void sflphone_kdeView::contextMenuEvent(QContextMenuEvent *event)

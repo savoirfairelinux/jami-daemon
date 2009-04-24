@@ -154,12 +154,24 @@ void ConfigurationDialog::loadOptions()
 	//pulseaudio settings
 	checkBox_pulseAudioVolumeAlter->setCheckState(configurationManager.getPulseAppVolumeControl() ? Qt::Checked : Qt::Unchecked);
 	
-	//////////////////////
+	///////////////////////
 	////Record settings////
-	//////////////////////
+	///////////////////////
 	
 	urlcomborequester_destinationFolder->setUrl(KUrl::fromPath(configurationManager.getRecordPath()));
 	
+	
+	/////////////////////////////
+	////Address book settings////
+	/////////////////////////////
+	
+	qDebug() << "getAddressbookSettings() : " << configurationManager.getAddressbookSettings().value();
+	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
+	spinBox_maxResults->setValue(addressBookSettings[ADDRESSBOOK_MAX_RESULTS]);
+	checkBox_displayPhoto->setChecked(addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO]);
+	checkBox_business->setChecked(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]);
+	checkBox_mobile->setChecked(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]);
+	checkBox_home->setChecked(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]);
 }
 
 
@@ -240,6 +252,24 @@ void ConfigurationDialog::saveOptions()
 		qDebug() << "setting pulseaudio settings";
 		if(checkBox_pulseAudioVolumeAlter->checkState() != (configurationManager.getPulseAppVolumeControl() ? Qt::Checked : Qt::Unchecked)) configurationManager.setPulseAppVolumeControl();
 	}
+	
+	///////////////////////
+	////Record settings////
+	///////////////////////
+	
+	configurationManager.setRecordPath(urlcomborequester_destinationFolder->url().url());
+	
+	/////////////////////////////
+	////Address Book settings////
+	/////////////////////////////
+	
+	MapStringInt addressBookSettings = MapStringInt();
+	addressBookSettings[ADDRESSBOOK_MAX_RESULTS] = spinBox_maxResults->value();
+	addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO] = checkBox_displayPhoto->isChecked();
+	addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS] = checkBox_business->isChecked();
+	addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE] = checkBox_mobile->isChecked();
+	addressBookSettings[ADDRESSBOOK_DISPLAY_HOME] = checkBox_home->isChecked();
+	configurationManager.setAddressbookSettings(addressBookSettings);
 }
 
 

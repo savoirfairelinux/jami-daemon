@@ -5,6 +5,7 @@ include_directories( ${KDE4_INCLUDES} ${QT_INCLUDES} )
 INCLUDE (  ${CMAKE_ROOT}/Modules/FindQt4.cmake  )
 INCLUDE(   ${QT_USE_FILE}   )
 
+ADD_DEFINITIONS(${KDE4_DEFINITIONS} ${QT_DEFINITIONS} -fexceptions -DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\"")
 
 SET(
 	sflphone_kde_SRCS
@@ -41,7 +42,7 @@ QT4_ADD_RESOURCES(QtApp_RCC_SRCS ${QtApp_RCCS})
 
 kde4_add_ui_files(sflphone_kde_SRCS sflphone_kdeview_base.ui ConfigDialog.ui)
 
-kde4_add_kcfg_files(sflphone_kde_SRCS settings.kcfgc )
+#kde4_add_kcfg_files(sflphone_kde_SRCS settings.kcfgc )
 
 kde4_add_executable(sflphone_kde ${sflphone_kde_SRCS} ${QtApp_RCC_SRCS})
 
@@ -53,7 +54,7 @@ install(TARGETS sflphone_kde DESTINATION ${BIN_INSTALL_DIR})
 ########### install files ###############
 
 install( FILES sflphone_kde.desktop  DESTINATION  ${XDG_APPS_INSTALL_DIR} )
-install( FILES sflphone_kde.kcfg  DESTINATION  ${KCFG_INSTALL_DIR} )
+#install( FILES sflphone_kde.kcfg  DESTINATION  ${KCFG_INSTALL_DIR} )
 install( FILES sflphone_kdeui.rc  DESTINATION  ${DATA_INSTALL_DIR}/sflphone_kde )
 
 

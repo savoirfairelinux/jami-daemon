@@ -6,6 +6,8 @@
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QKeyEvent>
 #include <QErrorMessage>
+#include <QSystemTrayIcon>
+
 #include <KXmlGuiWindow>
 
 #include "ui_sflphone_kdeview_base.h"
@@ -26,6 +28,9 @@ Q_OBJECT
 
 private:
 	sflphone_kdeView * view;
+	QSystemTrayIcon *trayIcon;
+	QMenu *trayIconMenu;
+
 
 protected:
 	virtual bool queryClose();
@@ -35,6 +40,8 @@ public:
 	~SFLPhone();
 	void setupActions();
 	
+private slots:
+	void iconActivated(QSystemTrayIcon::ActivationReason reason);
 
 };
 

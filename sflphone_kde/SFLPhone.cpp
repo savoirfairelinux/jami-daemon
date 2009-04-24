@@ -22,22 +22,23 @@ SFLPhone::SFLPhone(QWidget *parent)
 
     // tell the KXmlGuiWindow that this is indeed the main widget
 		setCentralWidget(view);
-
-    // then, setup our actions
    
 
     // add a status bar
 //    statusBar()->show();
 
-    // a call to KXmlGuiWindow::setupGUI() populates the GUI
-    // with actions, using KXMLGUI.
-    // It also applies the saved mainwindow settings, if any, and ask the
-    // mainwindow to automatically save settings if changed: window size,
-    // toolbar position, icon size, etc.
- 
-		setupActions();
-		createGUI("/home/jquentin/sflphone/sflphone_kde/sflphone_kdeui.rc");
+
 		setWindowIcon(QIcon(ICON_SFLPHONE));
+		
+		setupActions();
+		
+		QString str = QString(DATA_INSTALL_DIR) + "/sflphone_kde/sflphone_kdeui.rc";
+		qDebug() << "str = " << str ;
+		createGUI(str);
+		
+		connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
+             this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
+
 } 
 
 SFLPhone::~SFLPhone()
@@ -47,17 +48,6 @@ SFLPhone::~SFLPhone()
 void SFLPhone::setupActions()
 {
 	qDebug() << "setupActions";
-// 	KStandardAction::openNew(this, SLOT(fileNew()), actionCollection());
-// 	KStandardAction::quit(qApp, SLOT(quit()), actionCollection());
-
-// 	KStandardAction::preferences(this, SLOT(optionsPreferences()), actionCollection());
-
-//     custom menu and menu item - the slot is in the class testkde4appfwView
-// 	KAction *custom = new KAction(KIcon("colorize"), i18n("Swi&tch Colors"), this);
-// 	actionCollection()->addAction( QLatin1String("switch_action"), custom );
-// 	connect(custom, SIGNAL(triggered(bool)), view, SLOT(switchColors()));
-// 	KAction * action_quit = KStandardAction::quit(qApp, SLOT(closeAllWindows()), menu_Actions);
-// 	menu_Actions->addAction(action_quit);
 	
 	actionCollection()->addAction("action_accept", view->action_accept);
 	actionCollection()->addAction("action_refuse", view->action_refuse);
@@ -70,43 +60,14 @@ void SFLPhone::setupActions()
 	KAction * action_quit = KStandardAction::quit(qApp, SLOT(closeAllWindows()), 0);
 	actionCollection()->addAction("action_quit", action_quit);
 	
-	//KMenu * menu_Actions = new KMenu(tr2i18n("&Actions"));
-	//actionCollection()->addMenu("Actions", menu_Actions);
-	//menu_Actions->setObjectName(QString::fromUtf8("menu_Actions"));
-// 	menu_Actions->addAction(view->action_accept);
-// 	menu_Actions->addAction(view->action_refuse);
-// 	menu_Actions->addAction(view->action_hold);
-// 	menu_Actions->addAction(view->action_transfer);
-// 	menu_Actions->addAction(view->action_record);
-// 	menu_Actions->addSeparator();
-// 	menu_Actions->addAction(view->action_history);
-// 	menu_Actions->addAction(view->action_addressBook);
-// 	menu_Actions->addSeparator();
-// 	menu_Actions->addAction(view->action_mailBox);
-// 	menu_Actions->addSeparator();
-// 	KAction * action_quit = KStandardAction::quit(qApp, SLOT(closeAllWindows()), 0);
-// 	menu_Actions->addAction(action_quit);
-// 	qDebug() << "menuBar()->addMenu(menu_Actions) : " << menuBar()->addMenu(menu_Actions);
-	//menuBar()->addMenu(menu_Actions);
 	
 	actionCollection()->addAction("action_displayVolumeControls", view->action_displayVolumeControls);
 	actionCollection()->addAction("action_displayDialpad", view->action_displayDialpad);
+	actionCollection()->addAction("action_configureSflPhone", view->action_configureSflPhone);
 	actionCollection()->addAction("action_configureAccounts", view->action_configureAccounts);
 	actionCollection()->addAction("action_configureAudio", view->action_configureAudio);
-	actionCollection()->addAction("action_configureSflPhone", view->action_configureSflPhone);
 	actionCollection()->addAction("action_accountCreationWizard", view->action_accountCreationWizard);
 	
-// 	KMenu * menu_Configure = new KMenu(tr2i18n("&Settings"));
-// 	menu_Configure->setObjectName(QString::fromUtf8("menu_Configure"));
-// 	menu_Configure->addAction(view->action_displayVolumeControls);
-// 	menu_Configure->addAction(view->action_displayDialpad);
-// 	menu_Configure->addSeparator();
-// 	menu_Configure->addAction(view->action_configureAccounts);
-// 	menu_Configure->addAction(view->action_configureAudio);
-// 	menu_Configure->addAction(view->action_configureSflPhone);
-// 	menu_Configure->addSeparator();
-// 	menu_Configure->addAction(view->action_accountCreationWizard);
-// 	menuBar()->addMenu(menu_Configure);
 	
 	QStatusBar * statusbar = new QStatusBar(this);
 	statusbar->setObjectName(QString::fromUtf8("statusbar"));
@@ -126,6 +87,14 @@ void SFLPhone::setupActions()
 	toolbar->addAction(view->action_mailBox);
 	
 	
+ 	trayIconMenu = new QMenu(this);
+ 	trayIconMenu->addAction(action_quit);
+
+	trayIcon = new QSystemTrayIcon(this->windowIcon(), this);
+	trayIcon->setContextMenu(trayIconMenu);
+	trayIcon->show();
+	qDebug() << "trayicon = " << trayIcon->icon();
+
 }
 
 
@@ -139,6 +108,41 @@ bool SFLPhone::queryClose()
 		return false;
 	}
 	return true;
+}
+
+
+void SFLPhone::iconActivated(QSystemTrayIcon::ActivationReason reason)
+{
+	qDebug() << "on_trayIcon_activated";
+	switch (reason) {
+		case QSystemTrayIcon::Trigger:
+		case QSystemTrayIcon::DoubleClick:
+			qDebug() << "Tray icon clicked.";
+			qDebug() << "windowState() = " << windowState();
+			if(isActiveWindow())
+			{
+				qDebug() << "isactive";
+				hide();
+			}
+			else
+			{
+				qDebug() << "isnotactive";
+				hide();
+				show();
+				activateWindow();
+			}
+			break;
+// 		case QSystemTrayIcon::DoubleClick:
+// 			iconComboBox->setCurrentIndex((iconComboBox->currentIndex() + 1)
+// 													% iconComboBox->count());
+// 			break;
+// 		case QSystemTrayIcon::MiddleClick:
+// 			showMessage();
+// 			break;
+		default:
+			qDebug() << "Tray icon activated with unknown reason.";
+			break;
+	}
 }
 
 

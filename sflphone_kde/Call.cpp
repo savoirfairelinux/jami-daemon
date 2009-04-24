@@ -285,8 +285,8 @@ QListWidgetItem * Call::getHistoryItem()
 
 QWidget * Call::getHistoryItemWidget()
 {
-	if(historyItemWidget == NULL && historyState != NONE)
-	{
+// 	if(historyItemWidget == NULL && historyState != NONE)
+// 	{
 		historyItemWidget = new QWidget();
 		labelHistoryIcon = new QLabel();
 		labelHistoryIcon->setPixmap(QPixmap(historyIcons[historyState]));
@@ -315,7 +315,7 @@ QWidget * Call::getHistoryItemWidget()
 		mainLayout->addLayout(descr);
 		mainLayout->addItem(horizontalSpacer);
 		historyItemWidget->setLayout(mainLayout);
-	}
+// 	}
 	return historyItemWidget;
 }
 

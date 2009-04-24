@@ -86,6 +86,8 @@ private slots:
 	void actionb(Call * call, call_action action);
 	void action(QListWidgetItem * item, call_action action);
 	
+	void alternateColors(QListWidget * listWidget);
+	
 	void addCallToCallList(Call * call);
 	void addCallToCallHistory(Call * call);
 	void addContactToContactList(Contact * contact);
@@ -171,7 +173,9 @@ private slots:
 	void on_listWidget_callHistory_itemDoubleClicked(QListWidgetItem * item);
 	void on_listWidget_addressBook_currentItemChanged();
 	void on_listWidget_addressBook_itemDoubleClicked(QListWidgetItem * item);
-
+	
+	void on_stackedWidget_screen_currentChanged(int index);
+	
 	void on1_callStateChanged(const QString &callID, const QString &state);
 	void on1_error(MapStringString details);
 	void on1_incomingCall(const QString &accountID, const QString &callID/*, const QString &from*/);
