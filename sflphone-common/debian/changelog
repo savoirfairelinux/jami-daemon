@@ -1,3 +1,214 @@
+sflphone-common (0.9.4-0ubuntu3~1.gbpe1d2be) UNRELEASED; urgency=low
+
+  ** SNAPSHOT build @e1d2be42f0144f5cd0c67bffceb967a9f7d2aca3 **
+
+  [ Julien Bonjean ]
+  * Updated Eclipse stuff
+  * Improved addressbook config window
+  * Added sflphone Eclipse stuff
+  * Implemented addressbook list server side
+  * Moved dbus stuff in dbus directory
+  * Updated addressbook configuration
+
+  [ Emmanuel Milou ]
+  * Remove unuseful installation scripts. Use apt-get build-dep sflphone
+    instead
+  * fix bug #1090
+
+  [ Alexandre Savard ]
+  * defining speex 16khz
+
+  [ Emmanuel Milou ]
+  * Remove unuseful file from build system
+  * Start dns srv resolver
+
+  [ Alexandre Savard ]
+  * Basic ogg/vorbis initialization
+
+  [ Emmanuel Milou ]
+  * Handle incoming IP-to-IP invite correctly
+
+  [ Alexandre Savard ]
+  * speex wideband 16000
+
+  [ Emmanuel Milou ]
+  * Better handling of incoming IP to IP call
+  * DNS SRV resolution functional
+  * Implement IAX2 incoming URL
+  * Allow user to make IP call without any accounts configured
+  * Add a contextual menu to edit a number from the contacts tab
+  * Add comments, tooltip and new button to the contextual menu
+  * add delete event, migrate to GTK 2.16 for sexy icons
+  * Resolve ticket #1118
+  * Update suse spec file
+  * Add phone number cleanup functions, unit tests and panel
+    configuration
+  * Add pertinent test that fails
+  * fix dependencies for suse package
+  * Add contextual edit menu in history - #1120
+
+  [ Alexandre Savard ]
+  * Temporary comit: make speex wideband (16 khz)
+  * Temporary: shared object for speex narrow band
+  * Temporary: speex narrowband and wideband coexist
+
+  [ Julien Bonjean ]
+  * Fixed bug when no book selected
+  * Fixed addressbook related compilation warnings
+  * Fixed GTK client remaining compilation warnings
+  * Fixed segfault when book removed since last sflphone run
+  * Fixed bug when book is unreachable (ldap error)
+
+  [ Alexandre Savard ]
+  * Fix codec list in audio config window
+  * Active/inactive speex codec by payload
+
+  [ Julien Bonjean ]
+  * Updated gitignore
+  * Added some comments
+
+  [ Emmanuel Milou ]
+  * Add callto: handler script for browsers and al.
+  * Integrate test compilation in the daemon build-system
+
+  [ Julien Bonjean ]
+  * Fixed g_object_unref warning for pixbuf
+  * Cleaned too verbose output
+  * Fixed toolbar update warning
+  * Added support for asynchornous books open (first shot)
+
+  [ Emmanuel Milou ]
+  * Add a DBus call to fetch the call details from a call ID - Ticket
+    #928
+
+  [ Julien Bonjean ]
+  * Improved async open books
+  * Fixed bug #1139
+
+  [ Emmanuel Milou ]
+  * Add a way to save account order
+  * commit missing files
+
+  [ Julien Bonjean ]
+  * Introduced log4c (ticket #1162)
+
+  [ Emmanuel Milou ]
+  * Load/save account order functionnal - ticket #813
+
+  [ Alexandre Savard ]
+  * Add CELT codec (#1143)
+  * Make celt frame size 256  (*1143)
+
+  [ Julien Bonjean ]
+  * Switched everything to log4c (ticket #1162)
+  * Updated eclipse settings
+
+  [ Emmanuel Milou ]
+  * Restore adding account - ticket #1172
+  * Add liblog4c dependecy - ticket #1179
+
+  [ Alexandre Savard ]
+  * Double maxAvailByte for frame size in rtp (#1143)
+
+  [ Emmanuel Milou ]
+  * Add User-Agent SIP header - Ticket #1173
+
+  [ Julien Bonjean ]
+  * Fixed autoresize issue (#708)
+
+  [ Emmanuel Milou ]
+  * Remove libcppuint dependency for the debian packages
+  * Look for libsexy only if gtk version < 2.16 - Ticket #1116
+  * Remove libsexy dependency for jaunty. ticket #1116
+
+  [ Julien Bonjean ]
+  * Introduced unit tests (#1146)
+  * Updated gitignore
+  * Fixed Makefile (#1146)
+
+  [ Emmanuel Milou ]
+  * [TICKET #1112] Add a test on the voice buffer to send through iax
+    packets
+  * Remove doublon in dependencies
+  * Remove warnings from the client test framework
+  * Update version number to 0.9.5~beta
+  * Update build-package script
+  * Add check dependency in build-deps control file field
+  * Create debian files for the new sflphone-client-gnome
+  * [TICKET #1212] Add Replaces field in control files
+  * [TICKET #1212] Fix manpages installation path
+  * [TICKET #1212] Add maintainer scripts to create alternatives
+  * [#1212] Update the manpages generation - edit preinst maintainer
+    script
+  * [#1212] Fix reference error in manpage
+  * [#1212] Add missing files on the client side
+  * [#1212] Fix debian docs files - no TODO file
+  * [1212] Fix manpage creation problem
+  * [#1220] Generate client-side glue files and marshaller at
+    compilation time
+  * [#1220] Generate server-side glue files at compilation time
+  * [#1212] Change binary name to sflphone-client-gnome
+  * [#1212] Update .gitignore to fit the new working tree
+  * [#1220] Explicitly generate glue files before building the library
+  * [#1220] Compile dbus directory before audio
+  * [#1212] Create sflphone-common at the root of the repository
+  * [#1212] Re-add pjproject
+  * [#1212] Remove Makefile from repo
+  * [#1220] Fix Makefile.am
+  * [#1212] New working directory functional
+  * [#1212] Update .gitignore
+  * [#1212] Hack to make pjsip compile..
+  * [#1220] Use non-installed binary for dbusxx-xml2cpp
+  * [#1212] Add descriptive files, remove unuseful scripts from tools/
+
+  [ Alexandre Savard ]
+  * Restore speex codecs
+  * add frame size for celt (#1143)
+  * add framesize to codec, independant from audiolayer (#1143)
+  * use codec frame size in rtp (#1143)
+  * compute fixed_codec_framesize (#1143)
+  * do not resample if not required (#1143)
+  * add condition on resampling for decoder (#1143)
+  * add a condition on bytesAvail == 0 from mic data
+  * no maximum in rtp decode (#1143)
+  * compute maximum for decoding (#1143)
+
+  [ Emmanuel Milou ]
+  * [#1146] Implement unitary tests on the client-side
+
+  [ Alexandre Savard ]
+  * use float instead of int to compute max nb of sample (#1143)
+  * add nbSampleMax for unresampled data (#1143)
+  * make thread sleep during 5 ms insead of 20 (#1143)
+  * use unix usleep (#1143)
+  * 50 usecond thread!!!!! (#1143)
+  * try with the smallest compression (#1143)
+  * use timer set at framesize (#1143)
+
+  [ Emmanuel Milou ]
+  * [#1161] Restore changelog version
+
+  [ Alexandre Savard ]
+  * Remove celt stuff
+
+  [ Emmanuel Milou ]
+  * [#1161] Update changelog
+  * [#1220] Add Conflicts: sflphone in debian control files
+  * [#1179] Add liblog4c3 runtime dependency
+  * [#1212] FIx typo error in dependency list for itnrepid
+  * [#1212] FIx .desktop file to point on the right exec
+  * [#1212] Modify changelog replacing tag
+
+  [ Sflphone Project ]
+  * "[#1262] Updated changelogs for version 0.9.5-0ubuntu1~beta"
+
+  [ Emmanuel Milou ]
+  * [#1212] restore changelogs
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Mon, 27 Apr 2009 14:19:05 -0400
+
 sflphone-common (0.9.4-0ubuntu2) SYSTEM; urgency=low
 
   [ Alexandre Savard ]
