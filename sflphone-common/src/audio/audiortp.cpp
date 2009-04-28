@@ -194,6 +194,7 @@ AudioRtpRTX::initAudioRtpSession (void)
         if (_audiocodec == NULL) { return; }
 
         _codecSampleRate = _audiocodec->getClockRate();
+        _codecFrameSize = _audiocodec->getFrameSize();
 
         ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
         _debug("Init audio RTP session %s\n", _ca->getLocalSDP()->get_remote_ip().data());
@@ -561,7 +562,9 @@ AudioRtpRTX::run () {
 
     // Init the session
     initAudioRtpSession();
-    step = (int) (_layerFrameSize * _codecSampleRate / 1000);
+
+    // step = (int) (_layerFrameSize * _codecSampleRate / 1000);
+    step = _codecFrameSize;
     // start running the packet queue scheduler.
     //_debug("AudioRTP Thread started\n");
     if (!_sym) {
@@ -581,7 +584,7 @@ AudioRtpRTX::run () {
     _debug("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
     while (!testCancel()) {
 
-      
+      printf("  --------- >Step: %i ", step);
       // printf("AudioRtpRTX::run() _session->getFirstTimestamp() %i \n",_session->getFirstTimestamp());
     
       // printf("AudioRtpRTX::run() _session->isWaiting() %i \n",_session->isWaiting());
