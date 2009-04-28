@@ -1,3 +1,45 @@
+sflphone-client-gnome (0.9.5-0ubuntu1~1.gbpf07060) SYSTEM; urgency=low
+
+  ** SNAPSHOT build @f07060721d61850d67b89f24f0415d7237281886 **
+
+  [ Emmanuel Milou ]
+  * [#1220] Add Conflicts: sflphone in debian control files
+  * [#1179] Add liblog4c3 runtime dependency
+  * [#1212] FIx typo error in dependency list for itnrepid
+  * [#1212] FIx .desktop file to point on the right exec
+  * [#1212] Modify changelog replacing tag
+
+  [ Sflphone Project ]
+  * "[#1262] Updated changelogs for version 0.9.5-0ubuntu1~beta"
+
+  [ Emmanuel Milou ]
+  * [#1212] restore changelogs
+
+  [ Sflphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    04-27
+
+  [ Emmanuel Milou ]
+  * [#1212] restore changelogs
+
+  [ Sflphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1~beta
+
+  [ Emmanuel Milou ]
+  * [#1212] restore changelogs
+
+  [ Sflphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1~beta
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    04-28
+
+  [ Emmanuel Milou ]
+  * [#1212] Restore changelogs
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Tue, 28 Apr 2009 12:23:35 -0400
+
 sflphone-client-gnome (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
   [ Julien Bonjean ]
