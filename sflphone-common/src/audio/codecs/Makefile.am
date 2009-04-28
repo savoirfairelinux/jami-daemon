@@ -31,6 +31,17 @@ libcodec_speex_wb_so_LDFLAGS = --shared -lc -lspeex $(SPEEX_NIMP)
 INSTALL_SPEEX_WB_RULE = install-libcodec_speex_wb_so
 endif
 
+
+if BUILD_CELT
+CELT_LIB = libcodec_celt.so
+libcodec_celt_so_SOURCES = celtcodec.cpp
+libcodec_celt_so_CFLAGS = -fPIC -g -Wall
+libcodec_celt_so_CXXFLAGS = -fPIC -g -Wall
+libcodec_celt_so_LDFLAGS = --shared -lc -lcelt $(CELT_NIMP)
+INSTALL_CELT_RULE = install-libcodec_celt_so
+endif
+
+
 if BUILD_ILBC
 ILBC_LIB = libcodec_ilbc.so
 libcodec_ilbc_so_SOURCES = ilbc.cpp
@@ -41,7 +52,8 @@ INSTALL_ILBC_RULE = install-libcodec_ilbc_so
 SUBDIRS = ilbc
 endif
 
-noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(ILBC_LIB)
+noinst_PROGRAMS = libcodec_ulaw.so libcodec_alaw.so $(GSM_LIB) $(SPEEX_NB_LIB) $(SPEEX_WB_LIB) $(CELT_LIB) $(ILBC_LIB)
+
 
 noinst_HEADERS = audiocodec.h
 
@@ -55,10 +67,9 @@ libcodec_alaw_so_CFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_CXXFLAGS = -fPIC -g -Wall
 libcodec_alaw_so_LDFLAGS = --shared -lc
 
+install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_CELT_RULE) $(INSTALL_ILBC_RULE) 
+uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so uninstall-libcodec_celt_so
 
-
-install-exec-local:  install-libcodec_ulaw_so install-libcodec_alaw_so $(INSTALL_GSM_RULE) $(INSTALL_SPEEX_NB_RULE) $(INSTALL_SPEEX_WB_RULE) $(INSTALL_ILBC_RULE) 
-uninstall-local:  uninstall-libcodec_ulaw_so uninstall-libcodec_alaw_so uninstall-libcodec_gsm_so uninstall-libcodec_speex_nb_so uninstall-libcodec_speex_wb_so
 
 install-libcodec_ulaw_so: libcodec_ulaw.so
 	mkdir -p $(sflcodecdir)
@@ -71,6 +82,8 @@ install-libcodec_speex_nb_so: libcodec_speex_nb.so
 	$(INSTALL_PROGRAM)  libcodec_speex_nb.so $(sflcodecdir)
 install-libcodec_speex_wb_so: libcodec_speex_wb.so
 	$(INSTALL_PROGRAM)  libcodec_speex_wb.so $(sflcodecdir)
+install-libcodec_celt_so: libcodec_celt.so
+	$(INSTALL_PROGRAM)  libcodec_celt.so $(sflcodecdir)
 install-libcodec_ilbc_so: libcodec_ilbc.so
 	$(INSTALL_PROGRAM)  libcodec_ilbc.so $(sflcodecdir)
 
@@ -86,6 +99,8 @@ uninstall-libcodec_speex_nb_so:
 uninstall-libcodec_speex_wb_so:
 	rm -f $(sflcodecdir)/libcodec_speex_wb.so
 	rm -rf $(sflcodecdir)
+install-libcodec_celt_so: libcodec_celt.so
+	$(INSTALL_PROGRAM)  libcodec_celt.so $(sflcodecdir)
 uninstall-libcodec_ilbc_so:
 	rm -f $(sflcodecdir)/libcodec_ilbc.so
 
