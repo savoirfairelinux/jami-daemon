@@ -1,0 +1,39 @@
+=head1 NAME
+
+sflphoned - SIP and IAX2 compatible voice over IP softphone core.
+
+=head1 SYNOPSIS
+
+sflphoned --help
+
+=head1 DESCRIPTION
+
+SFLphone is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
+SFLphone audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
+B<sflphoned> is the core of SFLphone; it communicates with the client side through DBus. You need to install a client to use the daemon, for instance GTK+ client, B<sflphone-client-gnome>.
+
+=head1 BUGS
+
+Please report bugs  at http://dev.savoirfairelinux.net/sflphone/newticket.
+
+=head1 AUTHORS
+
+B<sflphoned> is developed in Montreal by Savoir-Faire Linux Inc. The active developers are Emmanuel Milou <emmanuel.milou@savoirfairelinux.com> and Yun Liu <yun.liu@savoirfairelinux.com>.
+
+This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>.
+
+=head1 SEE ALSO
+
+B<sflphone>(1), B<sflphone-client-gnome>(1)
+
+=head1 COPYRIGHT
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as published by the
+Free Software Foundation.
+
+On Debian GNU/Linux systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL'.
+
+=cut
+

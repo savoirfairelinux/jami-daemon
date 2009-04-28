@@ -1,0 +1,133 @@
+/*
+ *  Copyright (C) 2009 Savoir-Faire Linux inc.
+ *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#include <check.h>
+#include <stdlib.h>
+#include <gtk/gtk.h>
+
+#include "../src/accountlist.h"
+#include "../src/sflphone_const.h"
+
+account_t* create_test_account ()
+{
+    account_t *test;
+    
+    test = g_new0 (account_t, 1); 
+    test->accountID = "test";
+    test->state = ACCOUNT_STATE_REGISTERED;
+    test->properties = g_hash_table_new(NULL, g_str_equal);
+    
+    // Populate the properties
+    g_hash_table_replace (test->properties, ACCOUNT_ENABLED, "1");
+    g_hash_table_replace (test->properties, ACCOUNT_ALIAS, "test account");
+    g_hash_table_replace (test->properties, ACCOUNT_TYPE, "SIP");
+    g_hash_table_replace (test->properties, ACCOUNT_HOSTNAME, "192.168.1.1");
+    g_hash_table_replace (test->properties, ACCOUNT_USERNAME, "test");
+    g_hash_table_replace (test->properties, ACCOUNT_PASSWORD, "my-password");
+    g_hash_table_replace (test->properties, ACCOUNT_MAILBOX, "888");
+    g_hash_table_replace (test->properties, ACCOUNT_SIP_STUN_SERVER, "");
+    g_hash_table_replace (test->properties, ACCOUNT_SIP_STUN_ENABLED, "0");
+
+    return test;
+    
+}
+
+START_TEST (test_add_account)
+{
+    account_t *test = create_test_account ();
+
+    account_list_init ();
+    account_list_add (test);
+    fail_unless (account_list_get_registered_accounts () == 1, "ERROR");
+    account_list_remove (test->accountID);
+    fail_unless (account_list_get_registered_accounts () == 0, "ERROR");
+}
+END_TEST
+
+START_TEST (test_ordered_list)
+{
+    account_t *test = create_test_account ();
+
+    account_list_init ();
+    account_list_add (test);
+    account_list_add (test);
+    fail_unless (g_strcasecmp (account_list_get_ordered_list (), "test/test/") == 0, "ERROR - BAD ACCOUNT LIST SERIALIZING");
+}
+END_TEST
+
+START_TEST (test_get_by_id)
+{
+    account_t *test = create_test_account ();
+    account_t *tmp;
+
+    account_list_init ();
+    account_list_add (test);
+    tmp = account_list_get_by_id (test->accountID);
+    fail_unless (g_strcasecmp (tmp->accountID, test->accountID) == 0, "ERROR - ACCOUNTLIST_GET_BY_ID");
+}
+END_TEST
+
+START_TEST (test_sip_account)
+{
+    account_t *test = create_test_account ();
+
+    account_list_init ();
+    account_list_add (test);
+    fail_unless (account_list_get_sip_account_number () == 1, "ERROR - BAD SIP ACCOUNT NUMBER");
+}
+END_TEST
+
+START_TEST (test_set_current_account)
+{
+    account_t *test = create_test_account ();
+
+    account_list_init ();
+    account_list_add (test);
+    account_list_set_current_id (test->accountID);
+    fail_unless (account_list_get_sip_account_number () == 1, "ERROR - BAD CURRENT ACCOUNT");
+}
+END_TEST
+
+
+Suite *
+global_suite (void)
+{
+  Suite *s = suite_create ("Global");
+
+  TCase *tc_cases = tcase_create ("Accounts");
+  tcase_add_test (tc_cases, test_add_account);
+  tcase_add_test (tc_cases, test_ordered_list);
+  tcase_add_test (tc_cases, test_sip_account);
+  tcase_add_test (tc_cases, test_get_by_id);
+  suite_add_tcase (s, tc_cases);
+
+  return s;
+}
+
+int
+main (void)
+{
+  int number_failed;
+  Suite *s = global_suite ();
+  SRunner *sr = srunner_create (s);
+  srunner_run_all (sr, CK_NORMAL);
+  number_failed = srunner_ntests_failed (sr);
+  srunner_free (sr);
+  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+}

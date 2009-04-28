@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=SFLphone GNOME VoIP client
+GenericName=Telephone
+Comment=Call and receive calls with SIP or IAX protocols
+Exec=sflphone-client-gnome
+Icon=sflphone.png
+StartupNotify=true
+Terminal=false
+Type=Application
+Categories=Network;Telephony;
