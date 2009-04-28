@@ -16,7 +16,7 @@ protected:
   /** Number of channel 1 = mono, 2 = stereo */
   unsigned int _channel;
 
-  /** codec frame size */
+  /** codec frame size in samples*/
   unsigned int _frameSize;
 
   /** Bitrate */

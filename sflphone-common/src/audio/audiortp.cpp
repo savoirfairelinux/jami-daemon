@@ -193,7 +193,7 @@ AudioRtpRTX::initAudioRtpSession (void)
 
         if (_audiocodec == NULL) { return; }
 
-        _codecSampleRate = _audiocodec->getClockRate(); 
+        _codecSampleRate = _audiocodec->getClockRate();
 
         ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
         _debug("Init audio RTP session %s\n", _ca->getLocalSDP()->get_remote_ip().data());

@@ -1,7 +1,6 @@
 /*
  *  Copyright (C) 2007-2009 Savoir-Faire Linux inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

@@ -32,6 +32,7 @@ public:
   // _payload should be 3
   Gsm (int payload=3): AudioCodec(payload, "GSM"), _decode_gsmhandle(NULL), _encode_gsmhandle(NULL){
     _clockRate = 8000;
+    _frameSize = 160; // samples, 20 ms at 8kHz
     _channel = 1;
     _bitrate = 13.3;
     _bandwidth = 29.2;
