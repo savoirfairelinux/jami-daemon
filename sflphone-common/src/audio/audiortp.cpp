@@ -368,16 +368,11 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     // compute codec framesize in ms
     float fixed_codec_framesize = ((float)_audiocodec->getFrameSize() * 1000.0) / (float)_audiocodec->getClockRate();
-    _debug("fixed_codec_framesize: %i \n", (int)fixed_codec_framesize);
 
     int maxBytesToGet = (int)((float)_layerSampleRate * fixed_codec_framesize * (float)sizeof(SFLDataFormat) / 1000.0);
-    _debug("maxBytesToGet %i \n", maxBytesToGet);
-
+    
     // available bytes inside ringbuffer
     int availBytesFromMic = audiolayer->canGetMic();
-    _debug("availBytesFromMic: %i \n", availBytesFromMic);
-    // take the lowest
-    // int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
     
     int bytesAvail = (availBytesFromMic < maxBytesToGet) ? availBytesFromMic : maxBytesToGet;
 
@@ -385,26 +380,23 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
       return;
 
     // Get bytes from micRingBuffer to data_from_mic
-    //_debug("get data from mic\n");
     int nbSample = audiolayer->getMic( micData , bytesAvail ) / sizeof(SFLDataFormat);
-    _debug("nb of sample from mic %i \n", nbSample);
 
+    // nb bytes to be sent over RTP
     int compSize = 0;
+
     // test if resampling is required
     if (_audiocodec->getClockRate() != _layerSampleRate) {
 
         int nb_sample_up = nbSample;
-        _debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
+        // _debug("_nbSample audiolayer->getMic(): %i \n", nbSample);
     
-
         // Store the length of the mic buffer in samples for recording
         _nSamplesMic = nbSample;
 
-        _debug("_audiocodec->getClockRate(): %i \n", _audiocodec->getClockRate());
         int nbSamplesMax = _layerFrameSize * _audiocodec->getClockRate() / 1000;
-        _debug("_nbSamplesMax %i\n", nbSamplesMax);
+        // _debug("_nbSamplesMax %i\n", nbSamplesMax);
 
-        _debug("resample data = %i\n", nb_sample_up);
         nbSample = reSampleData(_audiocodec->getClockRate(), nb_sample_up, DOWN_SAMPLING);	
 
         if ( nbSample < nbSamplesMax - 10 ) { // if only 10 is missing, it's ok
@@ -415,9 +407,9 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
         compSize = _audiocodec->codecEncode( micDataEncoded, micDataConverted, nbSample*sizeof(int16));
 
     } else {
-
-        int nbSamplesMax = 512;
         // no resampling required
+
+        int nbSamplesMax = _codecFrameSize;
         compSize = _audiocodec->codecEncode( micDataEncoded, micData, nbSample*sizeof(int16));
 
     }
@@ -451,7 +443,6 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     const ost::AppDataUnit* adu = NULL;
     // Get audio data stream
 
-    // printf("AudioRtpRTX::receiveSessionForSpkr() %i \n",_session->getFirstTimestamp());
 
     if (!_sym) {
         adu = _sessionRecv->getData(_sessionRecv->getFirstTimestamp());
@@ -469,7 +460,6 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     unsigned char* spkrData  = (unsigned char*)adu->getData(); // data in char
     unsigned int size = adu->getSize(); // size in char
 
-    printf("AudioRtpRTX::receiveSessionForSpkr() Size of data from %i \n",size);
 
     // Decode data with relevant codec
     unsigned int max = (unsigned int)(_codecSampleRate * _layerFrameSize / 1000);
@@ -480,6 +470,7 @@ AudioRtpRTX::receiveSessionForSpkr (int& countTime)
     //      size=max;
     // }
 
+    // test if resampling is required 
     if (_audiocodec != NULL) {
 
 
@@ -587,10 +578,7 @@ AudioRtpRTX::run () {
     step = _codecFrameSize;
 
     int countTime = 0; // for receive
-    // TimerPort::setTimer(20);
-    _debug("****************************************************** \n");
-    _debug("_codecFrameSize: %i\n", _codecFrameSize);
-    _debug("_codecSampleRate: %i\n", _codecSampleRate);
+ 
     int threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
     TimerPort::setTimer(threadSleep);
 
@@ -599,8 +587,7 @@ AudioRtpRTX::run () {
     _debug("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
     while (!testCancel()) {
 
-      printf("  --------- >Step: %i \n", step);
-      _debug("_codecFrameSize: %i \n", _codecFrameSize);
+     
       // printf("AudioRtpRTX::run() _session->getFirstTimestamp() %i \n",_session->getFirstTimestamp());
     
       // printf("AudioRtpRTX::run() _session->isWaiting() %i \n",_session->isWaiting());
@@ -637,8 +624,6 @@ AudioRtpRTX::run () {
       
     }
     
-    // _debug("stop stream for audiortp loop\n");
-    _debug("AudioRtpRTX::run () :: This is bad when holding a call!!!!!!!\n");
     audiolayer->stopStream();
     _debug("- ARTP Action: Stop call %s\n",_ca->getCallId().c_str());
   //} catch(std::exception &e) {
