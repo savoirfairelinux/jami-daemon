@@ -181,7 +181,7 @@ void build_wizard( void ) {
 GtkWidget* build_intro() {
 	GtkWidget *label;
 
-	wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , "SFLphone 0.9.4" , _("Welcome to SFLphone!"));
+	wiz->intro = create_vbox( GTK_ASSISTANT_PAGE_INTRO  , "SFLphone GNOME client" , _("Welcome to SFLphone!"));
 	label = gtk_label_new(_("This installation wizard will help you configure an account.")) ;
 	gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
 	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
