@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 
   gtk_init(&argc, &argv);
 
-  g_print("%s\n", PACKAGE_STRING);
+  g_print("%s %s\n", PACKAGE, VERSION);
   g_print("Copyright (c) 2005 2006 2007 2008 2009 Savoir-faire Linux Inc.\n");
   g_print(
       "This is free software.  You may redistribute copies of it under the terms of\n\
