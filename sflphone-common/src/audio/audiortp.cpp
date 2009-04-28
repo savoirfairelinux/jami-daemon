@@ -565,6 +565,9 @@ AudioRtpRTX::run () {
     // Init the session
     initAudioRtpSession();
 
+    // frame length in ms
+    int threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
+
     // step = (int) (_layerFrameSize * _codecSampleRate / 1000);
     step = _codecFrameSize;
     // start running the packet queue scheduler.
@@ -580,7 +583,7 @@ AudioRtpRTX::run () {
     int timestamp = 0; // for mic
     int countTime = 0; // for receive
     // TimerPort::setTimer(_layerFrameSize);
-    TimerPort::setTimer(11);
+    TimerPort::setTimer(threadSleep);
 
     audiolayer->startStream();
     _start.post();
@@ -620,7 +623,7 @@ AudioRtpRTX::run () {
 
       Thread::sleep(TimerPort::getTimer());
       // TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
-      TimerPort::incTimer(11);
+      TimerPort::incTimer(threadSleep);
       
     }
     
