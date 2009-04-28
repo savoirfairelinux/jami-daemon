@@ -186,6 +186,7 @@ AudioRtpRTX::initBuffers()
     void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
+    _debug("************* initAudioRtpSession *******************\n");
 
     try {
         if (_ca == 0) { return; }
@@ -193,8 +194,12 @@ AudioRtpRTX::initAudioRtpSession (void)
 
         if (_audiocodec == NULL) { return; }
 
+        _debug("************* get codec info *******************\n");
         _codecSampleRate = _audiocodec->getClockRate();
         _codecFrameSize = _audiocodec->getFrameSize();
+        _debug("_codecFrameSize: %i\n", _codecFrameSize);
+        _debug("_codecSampleRate: %i\n", _codecSampleRate);
+        
 
         ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
         _debug("Init audio RTP session %s\n", _ca->getLocalSDP()->get_remote_ip().data());
@@ -553,10 +558,9 @@ AudioRtpRTX::run () {
   AudioLayer *audiolayer = Manager::instance().getAudioDriver();
   _layerFrameSize = audiolayer->getFrameSize(); // en ms
   _layerSampleRate = audiolayer->getSampleRate();
+  
   initBuffers();
   int step; 
-
-  
 
   int sessionWaiting;
 
@@ -565,8 +569,6 @@ AudioRtpRTX::run () {
     // Init the session
     initAudioRtpSession();
 
-    // frame length in ms
-    int threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
 
     // step = (int) (_layerFrameSize * _codecSampleRate / 1000);
     step = _codecFrameSize;
@@ -581,8 +583,15 @@ AudioRtpRTX::run () {
     }
 
     int timestamp = 0; // for mic
+    // step = (int) (_layerFrameSize * _codecSampleRate / 1000);
+    step = _codecFrameSize;
+
     int countTime = 0; // for receive
-    // TimerPort::setTimer(_layerFrameSize);
+    // TimerPort::setTimer(20);
+    _debug("****************************************************** \n");
+    _debug("_codecFrameSize: %i\n", _codecFrameSize);
+    _debug("_codecSampleRate: %i\n", _codecSampleRate);
+    int threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
     TimerPort::setTimer(threadSleep);
 
     audiolayer->startStream();
@@ -590,7 +599,8 @@ AudioRtpRTX::run () {
     _debug("- ARTP Action: Start call %s\n",_ca->getCallId().c_str());
     while (!testCancel()) {
 
-      printf("  --------- >Step: %i ", step);
+      printf("  --------- >Step: %i \n", step);
+      _debug("_codecFrameSize: %i \n", _codecFrameSize);
       // printf("AudioRtpRTX::run() _session->getFirstTimestamp() %i \n",_session->getFirstTimestamp());
     
       // printf("AudioRtpRTX::run() _session->isWaiting() %i \n",_session->isWaiting());
@@ -622,7 +632,7 @@ AudioRtpRTX::run () {
       }
 
       Thread::sleep(TimerPort::getTimer());
-      // TimerPort::incTimer(_layerFrameSize); // 'frameSize' ms
+      // TimerPort::incTimer(20); // 'frameSize' ms
       TimerPort::incTimer(threadSleep);
       
     }
