@@ -26,15 +26,23 @@
 #include "sflphone_const.h"
 
 
-Contact::Contact(Addressee addressee, QString number)
+Contact::Contact(Addressee addressee, const PhoneNumber & number, bool displayPhoto)
 {
 	this->firstName = addressee.name();
 	this->secondName = addressee.familyName();
 	this->nickName = addressee.nickName();
-	this->phoneNumber = number;
-	this->photo = new Picture(addressee.photo());
+	this->phoneNumber = number.number();
+	this->type = number.type();
+	if(displayPhoto)
+	{
+		this->photo = new Picture(addressee.photo());
+	}
+	else
+	{
+		this->photo = NULL;
+	}
 	
-	initItem();
+	initItem(displayPhoto);
 }
 
 
@@ -42,11 +50,11 @@ Contact::~Contact()
 {
 }
 
-void Contact::initItem()
+void Contact::initItem(bool displayPhoto)
 {
 	this->item = new QListWidgetItem();
 	this->item->setSizeHint(QSize(140,CONTACT_ITEM_HEIGHT));
-	this->itemWidget = new ContactItemWidget(this);
+	this->itemWidget = new ContactItemWidget(this, displayPhoto);
 }
 
 QString Contact::getPhoneNumber() const
@@ -74,7 +82,11 @@ const Picture * Contact::getPhoto() const
 	return photo;
 }
 
-//TODO
+PhoneNumber::Type Contact::getType() const
+{
+	return type;
+}
+
 QListWidgetItem * Contact::getItem()
 {
 	return item;

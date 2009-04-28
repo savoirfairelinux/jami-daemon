@@ -605,13 +605,16 @@ void sflphone_kdeView::updateAddressBook()
 	QString textSearched = lineEdit_addressBook->text();
 	if(textSearched.isEmpty())
 	{
+		label_addressBookFull->setVisible(false);
 		return;
 	}
-	QVector<Contact *> contactsFound = findContactsInKAddressBook(textSearched);
+	bool full = false;
+	QVector<Contact *> contactsFound = findContactsInKAddressBook(textSearched, full);
+	qDebug() << "Full : " << full;
+	label_addressBookFull->setVisible(full);
 	for(int i = 0 ; i < contactsFound.size() ; i++)
 	{
 		Contact * contact = contactsFound[i];
-		qDebug() << "contact->getItem()->text()=" << contact->getItem()->text() << " contains textSearched=" << textSearched;
 		addContactToContactList(contact);
 	}
 	alternateColors(listWidget_addressBook);
@@ -619,44 +622,69 @@ void sflphone_kdeView::updateAddressBook()
 
 void sflphone_kdeView::alternateColors(QListWidget * listWidget)
 {
-//TODO
 	qDebug() << "alternateColors";
-	qDebug() << "listWidget->count() = " << listWidget->count();
 	for(int i = 0 ; i < listWidget->count(); i++)
 	{
 		QListWidgetItem* item = listWidget->item(i);
 		QBrush c = (i % 2 == 1) ? palette().base() : palette().alternateBase();
-		qDebug() << "brush = " << c;
 		item->setBackground( c );
 	}
 	listWidget->setUpdatesEnabled( true );
 
 }
 
-QVector<Contact *> sflphone_kdeView::findContactsInKAddressBook(QString textSearched)
+QVector<Contact *> sflphone_kdeView::findContactsInKAddressBook(QString textSearched, bool & full)
 {
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
+	int maxResults = addressBookSettings[ADDRESSBOOK_MAX_RESULTS];
+	int typesDisplayed = phoneNumberTypesDisplayed();
+	bool displayPhoto = addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO];
+	
 	AddressBook * ab = KABC::StdAddressBook::self();
 	QVector<Contact *> results = QVector<Contact *>();
 	AddressBook::Iterator it;
-	for ( it = ab->begin(); it != ab->end(); ++it ) {
+	full = false;
+	int k = 0;
+	for ( it = ab->begin(); it != ab->end() && !full ; it++ ) {
 		if(it->name().contains(textSearched, Qt::CaseInsensitive) || it->nickName().contains(textSearched, Qt::CaseInsensitive))
 		{
 			for(int i = 0 ; i < it->phoneNumbers().count() ; i++)
 			{
-				if(phoneNumberTypeDisplayed(it->phoneNumbers().at(i).type()))
+				int typeFlag = it->phoneNumbers().at(i).type();
+				if((typesDisplayed & typeFlag) != 0)
 				{
-					results.append(new Contact( *it, it->phoneNumbers().at(i).number() ));
+					results.append(new Contact( *it, it->phoneNumbers().at(i), displayPhoto ));
+					k++;
 				}
 			}
+		}
+		if(k >= maxResults)
+		{
+			full = true;
 		}
 	}
 	return results;
 }
 
-bool sflphone_kdeView::phoneNumberTypeDisplayed(int type)
+int sflphone_kdeView::phoneNumberTypesDisplayed()
 {
-	//TODO
-	return true;
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
+	int typesDisplayed = 0;
+	if(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS])
+	{
+		typesDisplayed = typesDisplayed | PhoneNumber::Work;
+	}
+	if(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE])
+	{
+		typesDisplayed = typesDisplayed | PhoneNumber::Cell;
+	}
+	if(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME])
+	{
+		typesDisplayed = typesDisplayed | PhoneNumber::Home;
+	}
+	return typesDisplayed;
 }
 
 void sflphone_kdeView::updateRecordButton()

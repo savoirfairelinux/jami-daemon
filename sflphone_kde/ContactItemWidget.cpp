@@ -27,7 +27,7 @@
 
 #include "sflphone_const.h"
 
-ContactItemWidget::ContactItemWidget(const Contact * contact, QWidget *parent)
+ContactItemWidget::ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent)
  : QWidget(parent)
 {
 	if(!contact->getNickName().isEmpty())
@@ -38,29 +38,33 @@ ContactItemWidget::ContactItemWidget(const Contact * contact, QWidget *parent)
 	{
 		contactName = new QLabel(contact->getFirstName());
 	}
-	if(!contact->getPhoto()->isEmpty())
+	if(displayPhoto)
 	{
-		QPixmap pixmap;
-		if(contact->getPhoto()->isIntern())
+		if(!contact->getPhoto()->isEmpty())
 		{
-			contactPhoto = new QLabel();
-			pixmap = QPixmap::fromImage(contact->getPhoto()->data());
+			QPixmap pixmap;
+			if(contact->getPhoto()->isIntern())
+			{
+				contactPhoto = new QLabel();
+				pixmap = QPixmap::fromImage(contact->getPhoto()->data());
+			}
+			else
+			{
+				contactPhoto = new QLabel();
+				pixmap = QPixmap(contact->getPhoto()->url());
+			}
+			if(pixmap.height() > pixmap.width())
+				contactPhoto->setPixmap(pixmap.scaledToHeight(CONTACT_ITEM_HEIGHT-4));
+			else
+				contactPhoto->setPixmap(pixmap.scaledToWidth(CONTACT_ITEM_HEIGHT-4));
 		}
 		else
 		{
 			contactPhoto = new QLabel();
-			pixmap = QPixmap(contact->getPhoto()->url());
+			contactPhoto->setMinimumSize(CONTACT_ITEM_HEIGHT-4, 0);
 		}
-		if(pixmap.height() > pixmap.width())
-			contactPhoto->setPixmap(pixmap.scaledToHeight(CONTACT_ITEM_HEIGHT-4));
-		else
-			contactPhoto->setPixmap(pixmap.scaledToWidth(CONTACT_ITEM_HEIGHT-4));
 	}
-	else
-	{
-		contactPhoto = new QLabel();
-		contactPhoto->setMinimumSize(CONTACT_ITEM_HEIGHT-4, 0);
-	}
+	contactType = new QLabel(PhoneNumber::typeLabel(contact->getType()));
 	contactNumber = new QLabel(contact->getPhoneNumber());
 	QSpacerItem * horizontalSpacer = new QSpacerItem(16777215, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 	QHBoxLayout * hlayout = new QHBoxLayout(this);
@@ -71,9 +75,13 @@ ContactItemWidget::ContactItemWidget(const Contact * contact, QWidget *parent)
 	vlayout->setSpacing(2);
 	vlayout->addWidget(contactName);
 	vlayout->addWidget(contactNumber);
-	hlayout->addWidget(contactPhoto);
+	if(displayPhoto)
+	{
+		hlayout->addWidget(contactPhoto);
+	}
 	hlayout->addLayout(vlayout);
 	hlayout->addItem(horizontalSpacer);
+	hlayout->addWidget(contactType);
 	this->setLayout(hlayout);
 }
 

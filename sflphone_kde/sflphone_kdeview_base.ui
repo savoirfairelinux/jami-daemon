@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>329</width>
+    <width>327</width>
     <height>475</height>
    </rect>
   </property>
@@ -62,6 +62,13 @@
        </item>
        <item>
         <widget class="QLineEdit" name="lineEdit_addressBook"/>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_addressBookFull">
+         <property name="text">
+          <string>Attention:number of results exceeds max displayed.</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

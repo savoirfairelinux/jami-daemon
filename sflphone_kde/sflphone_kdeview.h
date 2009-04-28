@@ -24,6 +24,7 @@
 #include <QtGui/QWidget>
 #include <QtCore/QString>
 #include <QtCore/QVector>
+#include <QtCore/QList>
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QKeyEvent>
 #include <QErrorMessage>
@@ -75,8 +76,8 @@ public:
 	static Account * firstRegisteredAccount();
 	static QVector<Account *> registeredAccounts();
 	static AccountList * getAccountList();
-	QVector<Contact *> findContactsInKAddressBook(QString textSearched);
-	bool phoneNumberTypeDisplayed(int type);
+	QVector<Contact *> findContactsInKAddressBook(QString textSearched, bool & full);
+	int phoneNumberTypesDisplayed();
 	QErrorMessage * getErrorWindow();
 
 private slots:

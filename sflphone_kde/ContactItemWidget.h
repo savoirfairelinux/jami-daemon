@@ -36,9 +36,10 @@ private:
 	QLabel * contactName;
 	QLabel * contactNumber;
 	QLabel * contactPhoto;
+	QLabel * contactType;
 	
 public:
-	ContactItemWidget(const Contact * contact, QWidget *parent = 0);
+	ContactItemWidget(const Contact * contact, bool displayPhoto, QWidget *parent = 0);
 
 	~ContactItemWidget();
 	

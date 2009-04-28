@@ -26,6 +26,7 @@
 
 #include <kabc/addressee.h>
 #include <kabc/picture.h>
+#include <kabc/phonenumber.h>
 
 using namespace KABC;
 
@@ -41,12 +42,13 @@ private:
 	QString nickName;
 	QString phoneNumber;
 	Picture * photo;
+	PhoneNumber::Type type;
 	
 private:
-	void initItem();
+	void initItem(bool displayPhoto);
 
 public:
-    Contact(Addressee addressee, QString number);
+    Contact(Addressee addressee, const PhoneNumber & number, bool displayPhoto);
 
     ~Contact();
     
@@ -55,6 +57,7 @@ public:
     QString getFirstName() const;
     QString getSecondName() const;
     const Picture * getPhoto() const;
+    PhoneNumber::Type getType() const;
     
     QListWidgetItem * getItem();
     

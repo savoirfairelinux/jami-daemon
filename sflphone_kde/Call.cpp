@@ -247,6 +247,9 @@ daemon_call_state Call::toDaemonCallState(const QString & stateName)
 
 Contact * Call::findContactForNumberInKAddressBook(QString number)
 {
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
+	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
+	bool displayPhoto = addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO];
 	AddressBook * ab = KABC::StdAddressBook::self();
 	QVector<Contact *> results = QVector<Contact *>();
 	AddressBook::Iterator it;
@@ -255,7 +258,7 @@ Contact * Call::findContactForNumberInKAddressBook(QString number)
 		{
 			if(it->phoneNumbers().at(i) == number)
 			{
-				return new Contact( *it, it->phoneNumbers().at(i).number() );
+				return new Contact( *it, it->phoneNumbers().at(i), displayPhoto );
 			}
 		}
 	}
