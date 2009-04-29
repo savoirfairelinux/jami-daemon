@@ -20,7 +20,7 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	./autogen.sh --prefix=/usr
+	./autogen.sh --prefix=/usr --without-celt
 	cd libs/pjproject-1.0.1; ./configure
 	touch configure-stamp
 
