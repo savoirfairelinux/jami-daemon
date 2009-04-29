@@ -317,30 +317,10 @@ AC_DEFINE([HAVE_SPEEX], test "x$with_speex" = "xyes", [Define if you have libspe
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 AM_CONDITIONAL(ENABLE_SPEEXDSP, test  $HAVE_SPEEXDSP = yes)
 
-
-# check for libcelt1 (doesn't use pkg-config)
-dnl Check for libgsm
-AC_ARG_WITH([celt],
-  [AS_HELP_STRING([--without-celt],
-    [disable support for celt codec])],
-  [],
-  [with_celt=yes])
-
-LIBCELT=
-AS_IF([test "x$with_celt" != xno],
-  [AC_CHECK_HEADER([celt/celt.h], , AC_MSG_FAILURE([Unable to find the libcelt headers.  You may use --without-celt to compile without celt codec support.]))]
-  [AC_CHECK_LIB([celt], [celt_decode],
-    [],
-    [AC_MSG_FAILURE(
-       [libcelt link test failed.   You may use --without-celt to compile without celt codec support.])]
-       )
-   ]
-   )
+dnl Check for celt. Compile it only if a recent enough version is found
+LIBCELT_MIN_VERSION=0.5.1
+PKG_CHECK_MODULES(CELT, celt >= ${LIBCELT_MIN_VERSION}, AM_CONDITIONAL(BUILD_CELT, test 1 = 1 ), AM_CONDITIONAL(BUILD_CELT, test 0 = 1 ))
     
-AC_DEFINE([HAVE_CELT], test "x$with_celt" = "xyes", [Define if you have libcelt])
-AM_CONDITIONAL(BUILD_CELT, test "x$with_celt" = "xyes" )
-
-
 dnl Check for ilbc support
 AC_ARG_WITH([ilbc],
   [AS_HELP_STRING([--without-ilbc],
