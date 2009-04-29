@@ -718,7 +718,7 @@ create_recording_settings ()
     gtk_container_add(GTK_CONTAINER(savePathFrame), table);
 
     // label
-    label = gtk_label_new_with_mnemonic(_("_Destination folder"));
+    label = gtk_label_new_with_mnemonic(_("_Recordings folder"));
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
     gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
 
@@ -779,7 +779,7 @@ show_config_window ()
 
     // Recording tab
     tab = create_recording_settings();
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Record")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Recordings")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
     // Addressbook tab
