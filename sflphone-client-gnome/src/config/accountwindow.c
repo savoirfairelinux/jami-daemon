@@ -139,7 +139,7 @@ show_account_window (account_t * a)
     gtk_table_attach ( GTK_TABLE( table ), entryID, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 #endif
 
-    entryEnabled = gtk_check_button_new_with_mnemonic(_("_Enabled"));
+    entryEnabled = gtk_check_button_new_with_mnemonic(_("_Enable this account"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(entryEnabled),
             g_strcasecmp(curAccountEnabled,"TRUE") == 0 ? TRUE: FALSE);
     gtk_table_attach ( GTK_TABLE( table ), entryEnabled, 0, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -220,7 +220,7 @@ show_account_window (account_t * a)
     gtk_entry_set_text(GTK_ENTRY(entryPassword), curPassword);
     gtk_table_attach ( GTK_TABLE( table ), entryPassword, 1, 2, 7, 8, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    label = gtk_label_new_with_mnemonic (_("_Voicemail box #"));
+    label = gtk_label_new_with_mnemonic (_("_Voicemail number"));
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 8, 9, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
     entryMailbox = gtk_entry_new();
