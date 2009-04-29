@@ -1,6 +1,6 @@
-sflphone-common (0.9.5-0ubuntu1~1.gbpf07060) SYSTEM; urgency=low
+sflphone-common (0.9.5-0ubuntu1~2.gbpgbpf07) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @f07060721d61850d67b89f24f0415d7237281886 **
+  ** SNAPSHOT build @gbpf07060 **
 
   [ Emmanuel Milou ]
   * [#1220] Add Conflicts: sflphone in debian control files
@@ -37,8 +37,15 @@ sflphone-common (0.9.5-0ubuntu1~1.gbpf07060) SYSTEM; urgency=low
   * [#1212] Restore changelogs
 
   [ Sflphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    04-28
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Tue, 28 Apr 2009 12:23:29 -0400
+  [ Julien Bonjean ]
+  * [#1262]Introduced dynamic version setting
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Wed, 29 Apr 2009 00:01:52 -0400
 
 sflphone-common (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
