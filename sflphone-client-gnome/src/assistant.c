@@ -534,7 +534,7 @@ static GtkWidget* create_vbox(GtkAssistantPageType type, const gchar *title, con
 
 	gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz->assistant), vbox, TRUE);
 
-	wiz->logo = gdk_pixbuf_new_from_file(ICONS_DIR "/sflphone.png", NULL);
+	wiz->logo = gdk_pixbuf_new_from_file(LOGO, NULL);
 	gtk_assistant_set_page_header_image(GTK_ASSISTANT(wiz->assistant),vbox, wiz->logo);
 	g_object_unref(wiz->logo);
 
