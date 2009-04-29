@@ -1,6 +1,6 @@
 sflphone-common (0.9.5-0ubuntu1~2.gbpgbpf07) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @gbpf07060 **
+  ** SNAPSHOT build @07374a187167c1d8c0c2458fcbf4ca408990897f **
 
   [ Emmanuel Milou ]
   * [#1220] Add Conflicts: sflphone in debian control files
