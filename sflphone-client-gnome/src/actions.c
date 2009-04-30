@@ -681,7 +681,7 @@ sflphone_place_call ( call_t * c )
 {
 
 
-    if (c->state == CALL_STATE_DIALING && g_str_has_prefix (c->to, "ip:"))
+    if (c->state == CALL_STATE_DIALING && g_str_has_prefix (c->to, "sip:"))
     {
         dbus_place_call (c);
     }
