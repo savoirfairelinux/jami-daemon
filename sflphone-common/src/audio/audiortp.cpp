@@ -610,11 +610,14 @@ AudioRtpRTX::run () {
 
       
       if(sessionWaiting == 1){
-        // _debug("Record TWO buffer \n");
-        _ca->recAudio.recData(spkrDataDecoded,micData,_nSamplesSpkr,_nSamplesMic);
+        // Record mic and speaker during conversation
+        _debug("_nSamplesSpkr: %i \n", _nSamplesSpkr);
+        _debug("_nSamplesMic: %i \n", _nSamplesMic);
+        _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
       }
       else {
-        // _debug("Record ONE buffer \n");
+        // Record mic only while leaving a message
+        _debug("_nSamplesMic: %i \n", _nSamplesMic);
         _ca->recAudio.recData(micData,_nSamplesMic);
       }
 
