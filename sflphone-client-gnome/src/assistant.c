@@ -32,7 +32,7 @@
 
 #define SFLPHONE_ORG_SERVER "sip.sflphone.org"
 #define SFLPHONE_ORG_ALIAS "sflphone.org"
-#define MESSAGE_SUMMARY _("This assistant is now finished.\nYou can at any time check your registration state or modify your accounts parameters in the Options/Accounts window.\n\nAlias :    %s\nServer :   %s\nUsername : %s\nPassword : %s")
+#define MESSAGE_SUMMARY _("This assistant is now finished.\nYou can at any time check your registration state or modify your accounts parameters in the Options/Accounts window.\n\nAlias :    %s\nServer :   %s\nUsername : %s\n")
 
 
 struct _wizard *wiz;
@@ -108,8 +108,8 @@ static void sip_apply_callback( void ) {
         	sprintf(message, MESSAGE_SUMMARY,
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
-			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username)),
-			gtk_entry_get_text (GTK_ENTRY(wiz->sip_password))
+			gtk_entry_get_text (GTK_ENTRY(wiz->sip_username))
+                       	// gtk_entry_get_text (GTK_ENTRY(wiz->sip_password))
 				) ;
 	gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
 	}
@@ -134,7 +134,7 @@ static void iax_apply_callback( void ) {
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_server)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_username)),
-			gtk_entry_get_text (GTK_ENTRY(wiz->iax_password))
+		        gtk_entry_get_text (GTK_ENTRY(wiz->iax_password))
 			) ;
 		gtk_label_set_text (GTK_LABEL(wiz->label_summary), message);
 	}
@@ -270,6 +270,7 @@ GtkWidget* build_sip_account_configuration( void ) {
 	gtk_table_attach ( GTK_TABLE( table ), wiz->sip_username, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
 	// password field
+        
 	label = gtk_label_new_with_mnemonic (_("_Password"));
 	gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 	gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
@@ -277,6 +278,8 @@ GtkWidget* build_sip_account_configuration( void ) {
 	wiz->sip_password = gtk_entry_new();
     gtk_entry_set_icon_from_stock (GTK_ENTRY (wiz->sip_password), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_DIALOG_AUTHENTICATION);
 #else
+        
+
 	wiz->sip_password = sexy_icon_entry_new();
 	image = gtk_image_new_from_stock( GTK_STOCK_DIALOG_AUTHENTICATION , GTK_ICON_SIZE_SMALL_TOOLBAR );
 	sexy_icon_entry_set_icon( SEXY_ICON_ENTRY(wiz->sip_password), SEXY_ICON_ENTRY_PRIMARY , GTK_IMAGE(image) );
