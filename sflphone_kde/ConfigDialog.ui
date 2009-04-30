@@ -596,7 +596,7 @@
                      <string>Remove this account</string>
                     </property>
                     <property name="icon">
-                     <iconset resource="resources.qrc">
+                     <iconset>
                       <normaloff>:/images/icons/remove.png</normaloff>:/images/icons/remove.png</iconset>
                     </property>
                     <property name="shortcut">
@@ -622,7 +622,7 @@
                      <string>Add a new account</string>
                     </property>
                     <property name="icon">
-                     <iconset resource="resources.qrc">
+                     <iconset>
                       <normaloff>:/images/icons/add.png</normaloff>:/images/icons/add.png</iconset>
                     </property>
                    </widget>

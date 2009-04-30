@@ -19,7 +19,6 @@
  ***************************************************************************/
 
 #include "sflphone_kdeview.h"
-//#include "settings.h"
 
 #include <klocale.h>
 #include <QtGui/QLabel>
@@ -42,7 +41,6 @@
 #include <kabc/addressbook.h>
 #include <kabc/stdaddressbook.h>
 #include <kabc/addresseelist.h>
-//#include <kabc/ldapclient.h>
 
 using namespace KABC;
 
@@ -64,8 +62,6 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	CallManagerInterface & callManager = CallManagerInterfaceSingleton::getInstance();
 	connect(&callManager, SIGNAL(callStateChanged(const QString &, const QString &)),
 	        this,         SLOT(on1_callStateChanged(const QString &, const QString &)));
-	connect(&callManager, SIGNAL(error(MapStringString)),
-	        this,         SLOT(on1_error(MapStringString)));
 	connect(&callManager, SIGNAL(incomingCall(const QString &, const QString &, const QString &)),
 	        this,         SLOT(on1_incomingCall(const QString &, const QString &)));
 	connect(&callManager, SIGNAL(incomingMessage(const QString &, const QString &)),

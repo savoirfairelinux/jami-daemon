@@ -3,9 +3,9 @@
   <interface name="org.sflphone.SFLphone.ConfigurationManager">
     
   <!-- Accounts-related methods -->  
-    <method name="getAccountDetails">
-      <arg type="s" name="accountID" direction="in"/>
+  <method name="getAccountDetails">
       <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+      <arg type="s" name="accountID" direction="in"/>
       <arg type="a{ss}" name="details" direction="out"/>
     </method>
     
@@ -26,7 +26,6 @@
     </method>
     
     <method name="getAccountList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
    
@@ -40,7 +39,6 @@
   <!-- Various audio-related methods   -->
  
     <method name="getToneLocaleList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
   
@@ -49,17 +47,14 @@
     </method>
     
     <method name="getRingtoneList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
    
     <method name="getPlaybackDeviceList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
     
     <method name="getRecordDeviceList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
     
@@ -101,23 +96,19 @@
    <!-- Codecs-related methods -->
  
     <method name="getCodecList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
    
    <method name="getCodecDetails">
      <arg type="i" name="payload" direction="in"/>
-     <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
      <arg type="as" name="details" direction="out"/>
    </method>
  
     <method name="getActiveCodecList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
 
     <method name="setActiveCodecList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="VectorString"/>
       <arg type="as" name="list" direction="in"/>
     </method>
 
@@ -125,12 +116,10 @@
 	<!-- Audio devices methods -->
 	
     <method name="getInputAudioPluginList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
 		
     <method name="getOutputAudioPluginList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
     
@@ -143,7 +132,6 @@
     </method>
     
     <method name="getAudioOutputDeviceList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
     
@@ -152,7 +140,6 @@
     </method>
     
     <method name="getAudioInputDeviceList">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
     
@@ -161,7 +148,6 @@
     </method>
     
     <method name="getCurrentAudioDevicesIndex">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="VectorString"/>
       <arg type="as" name="list" direction="out"/>
     </method>
 
@@ -290,11 +276,6 @@
     </method>
 
   <!--        /////////////////////////////       -->
-    <signal name="parametersChanged">
-      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="MapStringString"/>
-      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-      <arg type="a{ss}" name="details" direction="out"/>
-    </signal>
     
     <signal name="accountsChanged">
     </signal>

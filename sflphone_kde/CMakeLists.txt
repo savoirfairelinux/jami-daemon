@@ -1,11 +1,29 @@
 project(sflphone_kde)
+
 find_package(KDE4 REQUIRED)
+
 include (KDE4Defaults)
+
+# --- custom targets: ---
+INCLUDE( TargetDistclean.cmake OPTIONAL)
+
+
 include_directories( ${KDE4_INCLUDES} ${QT_INCLUDES} )
+
 INCLUDE (  ${CMAKE_ROOT}/Modules/FindQt4.cmake  )
+INCLUDE (  ${CMAKE_ROOT}/Modules/FindKDE4.cmake  )
+INCLUDE (  ${CMAKE_ROOT}/Modules/FindPkgConfig.cmake  )
+
 INCLUDE(   ${QT_USE_FILE}   )
 
 ADD_DEFINITIONS(${KDE4_DEFINITIONS} ${QT_DEFINITIONS} -fexceptions -DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\"")
+
+#AC_CHECK_HEADERS(log4c.h)
+
+#pkg_check_modules(LIBSEXY libsexy>=0.1)
+#pkg_check_modules(KDEPIM kdepimlibs5-dev REQUIRED)
+
+
 
 SET(
 	sflphone_kde_SRCS
@@ -29,6 +47,7 @@ SET(
 	ActionSetAccountFirst.cpp
 	Contact.cpp
 	ContactItemWidget.cpp
+	metatypes.h
 )
  
 SET(QtApp_RCCS resources.qrc)
@@ -42,13 +61,28 @@ QT4_ADD_RESOURCES(QtApp_RCC_SRCS ${QtApp_RCCS})
 
 kde4_add_ui_files(sflphone_kde_SRCS sflphone_kdeview_base.ui ConfigDialog.ui)
 
+# set(configurationmanager_xml ${CMAKE_CURRENT_SOURCE_DIR}/../sflphone-common/src/dbus/configurationmanager-introspec.xml)
+# 
+# set_source_files_properties(
+#    ${configurationmanager_xml}
+#    PROPERTIES 
+#    COMPILE_FLAGS "-i metatypes.h"
+#    CLASSNAME ConfigurationManagerInterface
+#    INCLUDE "../metatypes.h") 
+# 
+# qt4_add_dbus_interface(
+#    sflphone_kde_SRCS 
+#    ${configurationmanager_xml}
+#    configurationmanager_interface)
+
+
 #kde4_add_kcfg_files(sflphone_kde_SRCS settings.kcfgc )
 
-kde4_add_executable(sflphone_kde ${sflphone_kde_SRCS} ${QtApp_RCC_SRCS})
+kde4_add_executable(sflphone-client-kde ${sflphone_kde_SRCS} ${QtApp_RCC_SRCS})
 
-target_link_libraries(sflphone_kde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} -lkabc)
+target_link_libraries(sflphone-client-kde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} -lkabc)
 
-install(TARGETS sflphone_kde DESTINATION ${BIN_INSTALL_DIR})
+install(TARGETS sflphone-client-kde DESTINATION ${BIN_INSTALL_DIR})
 
 
 ########### install files ###############
