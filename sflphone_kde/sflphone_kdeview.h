@@ -57,7 +57,6 @@ class sflphone_kdeView : public QWidget, public Ui::SFLPhone
     Q_OBJECT
     
 private:
-	//Ui::SFLPhone ui_sflphone_kdeview_base;
 
 	static ConfigurationDialog * configDialog;
 	AccountWizard * wizard;
@@ -81,11 +80,17 @@ public:
 	QErrorMessage * getErrorWindow();
 
 private slots:
+	void actionb(Call * call, call_action action);
+	void action(QListWidgetItem * item, call_action action);
+	
+	void setAccountFirst(Account * account);
+	
 	//void typeChar(QChar c);
 	void typeString(QString str);
 	void backspace();
-	void actionb(Call * call, call_action action);
-	void action(QListWidgetItem * item, call_action action);
+	void escape();
+	void enter();
+	void editBeforeCall();
 	
 	void alternateColors(QListWidget * listWidget);
 	
@@ -106,29 +111,26 @@ private slots:
 	void updateVolumeControls();
 	void updateDialpad();
 	
-	void escape();
-	void enter();
 	
 	virtual void keyPressEvent(QKeyEvent *event)
-{
-	int key = event->key();
-	if(key == Qt::Key_Escape)
-		escape();
-	else if(key == Qt::Key_Return || key == Qt::Key_Enter)
-		on_action_accept_triggered();
-	else if(key == Qt::Key_Backspace)
-		backspace();
-	else
 	{
-		QString text = event->text();
-		if(! event->text().isEmpty())
+		int key = event->key();
+		if(key == Qt::Key_Escape)
+			escape();
+		else if(key == Qt::Key_Return || key == Qt::Key_Enter)
+			enter();
+		else if(key == Qt::Key_Backspace)
+			backspace();
+		else
 		{
-			typeString(text);
+			QString text = event->text();
+			if(! event->text().isEmpty())
+			{
+				typeString(text);
+			}
 		}
 	}
-}
 
-	
 	void on_action_displayVolumeControls_toggled();
 	void on_action_displayDialpad_toggled();
 	void on_action_configureAccounts_triggered();
@@ -143,7 +145,6 @@ private slots:
 	void on_action_history_triggered(bool checked);
 	void on_action_addressBook_triggered(bool checked);
 	void on_action_mailBox_triggered();
-	//void on_actionAbout();
 	
 	void on_pushButton_1_clicked();
 	void on_pushButton_2_clicked();
@@ -184,7 +185,6 @@ private slots:
 	void on1_voiceMailNotify(const QString &accountID, int count);
 	void on1_volumeChanged(const QString &device, double value);
 	
-	void setAccountFirst(Account * account);
 
 };
 

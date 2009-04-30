@@ -26,6 +26,7 @@
 #include <QtGui/QMenu>
 #include <QtGui/QBrush>
 #include <QtGui/QPalette>
+#include <QtGui/QInputDialog>
 
 #include <kstandardaction.h>
 #include <kactioncollection.h>
@@ -332,12 +333,27 @@ void sflphone_kdeView::enter()
 	if(stackedWidget_screen->currentWidget() == page_callHistory)
 	{
 		qDebug() << "In call history.";
-		lineEdit_searchHistory->clear();
+		action_history->setChecked(false);
+		stackedWidget_screen->setCurrentWidget(page_callList);
+		
+		Call * pastCall = callList->findCallByHistoryItem(listWidget_callHistory->currentItem());
+		Call * call = callList->addDialingCall(pastCall->getPeerName());
+		call->appendItemText(pastCall->getPeerPhoneNumber());
+		addCallToCallList(call);
+		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+		actionb(call, CALL_ACTION_ACCEPT);
 	}
 	if(stackedWidget_screen->currentWidget() == page_addressBook)
 	{
 		qDebug() << "In address book.";
-		lineEdit_addressBook->clear();
+		action_addressBook->setChecked(false);
+		stackedWidget_screen->setCurrentWidget(page_callList);
+		ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(listWidget_addressBook->currentItem()));
+		Call * call = callList->addDialingCall(w->getContactName());
+		call->appendItemText(w->getContactNumber());
+		addCallToCallList(call);
+		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+		actionb(call, CALL_ACTION_ACCEPT);
 	}
 }
 
@@ -958,12 +974,20 @@ void sflphone_kdeView::on_stackedWidget_screen_currentChanged(int index)
 void sflphone_kdeView::contextMenuEvent(QContextMenuEvent *event)
 {
 	QMenu menu(this);
+	if(stackedWidget_screen->currentWidget() == page_callHistory || stackedWidget_screen->currentWidget() == page_addressBook)
+	{
+		QAction * action_edit = new QAction(&menu);
+		action_edit->setText(tr2i18n("Edit before call", 0));
+		connect(action_edit, SIGNAL(triggered()),
+		        this  , SLOT(editBeforeCall()));
+		menu.addAction(action_edit);
+	}
+	
 	menu.addAction(action_accept);
 	menu.addAction(action_refuse);
 	menu.addAction(action_hold);
 	menu.addAction(action_transfer);
 	menu.addAction(action_record);
-	//TODO accounts to choose
 	menu.addSeparator();
 	QVector<Account *> accounts = registeredAccounts();
 	for (int i = 0 ; i < accounts.size() ; i++)
@@ -982,6 +1006,43 @@ void sflphone_kdeView::contextMenuEvent(QContextMenuEvent *event)
 	}
 	menu.exec(event->globalPos());
 	
+}
+
+void sflphone_kdeView::editBeforeCall()
+{
+	qDebug() << "editBeforeCall";
+	QString name;
+	QString number;
+	if(stackedWidget_screen->currentWidget() == page_callHistory)
+	{
+		QListWidgetItem * item = listWidget_callHistory->currentItem();
+		if(item)
+		{
+			Call * call = callList->findCallByHistoryItem(item);
+			name = call->getPeerName();
+			number = call->getPeerPhoneNumber();
+		}
+	}
+	if(stackedWidget_screen->currentWidget() == page_addressBook)
+	{
+		QListWidgetItem * item = listWidget_addressBook->currentItem();
+		if(item)
+		{
+			ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(listWidget_addressBook->currentItem()));
+			name = w->getContactName();
+			number = w->getContactNumber();
+		}
+	}
+	QString newNumber = QInputDialog::getText(this, tr2i18n("Edit before call", 0), QString(), QLineEdit::Normal, number);
+	
+	action_history->setChecked(false);
+	action_addressBook->setChecked(false);
+	stackedWidget_screen->setCurrentWidget(page_callList);
+	Call * call = callList->addDialingCall(name);
+	call->appendItemText(newNumber);
+	addCallToCallList(call);
+	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
+	actionb(call, CALL_ACTION_ACCEPT);
 }
 
 void sflphone_kdeView::setAccountFirst(Account * account)
@@ -1073,8 +1134,6 @@ void sflphone_kdeView::on_action_accept_triggered()
 		Call * pastCall = callList->findCallByHistoryItem(listWidget_callHistory->currentItem());
 		Call * call = callList->addDialingCall(pastCall->getPeerName());
 		call->appendItemText(pastCall->getPeerPhoneNumber());
-// 		if(!pastCall->getPeerName().isEmpty())
-// 			call->setPeerName(pastCall->getPeerName());
 		addCallToCallList(call);
 		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 		actionb(call, CALL_ACTION_ACCEPT);
@@ -1085,7 +1144,6 @@ void sflphone_kdeView::on_action_accept_triggered()
 		stackedWidget_screen->setCurrentWidget(page_callList);
 		ContactItemWidget * w = (ContactItemWidget *) (listWidget_addressBook->itemWidget(listWidget_addressBook->currentItem()));
 		Call * call = callList->addDialingCall(w->getContactName());
-// 		call->setPeerName(w->getContactName());
 		call->appendItemText(w->getContactNumber());
 		addCallToCallList(call);
 		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
