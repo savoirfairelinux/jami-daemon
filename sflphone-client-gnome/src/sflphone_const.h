@@ -29,7 +29,7 @@
  */
 
 
-#define LOGO        ICONS_DIR "/sflphone1.svg"
+#define LOGO        ICONS_DIR "/sflphone.svg"
 
 /** Locale */
 #define _(STRING)   gettext( STRING )
