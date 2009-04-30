@@ -78,9 +78,9 @@ status_bar_display_account ()
 
     acc = account_list_get_current ();
     if(acc){
-        msg = g_markup_printf_escaped(_("%s account- %s") ,
-                (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE),
-                (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS));
+        msg = g_markup_printf_escaped(_("Registered to %s (%s)") ,
+                (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
+                (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
         statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
         g_free(msg);
     }
