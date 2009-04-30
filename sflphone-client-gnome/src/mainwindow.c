@@ -237,6 +237,9 @@ main_window_message(GtkMessageType type, gchar * markup){
 void
 main_window_error_message(gchar * markup){
   main_window_message(GTK_MESSAGE_ERROR, markup);
+  gchar title;
+  title = "SFLPhone Error";
+  gtk_window_set_title(get_main_window(), title);
 }
 
 void
