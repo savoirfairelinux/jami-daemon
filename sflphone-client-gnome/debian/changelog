@@ -1,6 +1,6 @@
-sflphone-client-gnome (0.9.5-0ubuntu1~2.gbpgbpf07) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~3.gbp20b188) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @07374a187167c1d8c0c2458fcbf4ca408990897f **
+  ** SNAPSHOT build @20b188472f4e66c75b3f1dffe1f110b7070397ec **
 
   [ Emmanuel Milou ]
   * [#1220] Add Conflicts: sflphone in debian control files
@@ -45,7 +45,39 @@ sflphone-client-gnome (0.9.5-0ubuntu1~2.gbpgbpf07) SYSTEM; urgency=low
 
   [ Sflphone Project ]
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Wed, 29 Apr 2009 00:01:53 -0400
+  [ Alexandre Savard ]
+  * [#1143] Add celtcodec.cpp
+  * [#1143] add configure and make stuffs
+  * [#1143] add frame size into each codecs
+  * [#1143] Take timestamp's step size from codec
+  * [#1143] RTP thread at 11 ms
+  * [#1143] Dynamic RTP thread sleep parameter
+  * [#1143] Fix dynamic thread sleep time calculation
+
+  [ Emmanuel Milou ]
+  * [#1262] sflphone-client-gnome uses changelog version number
+
+  [ Alexandre Savard ]
+  * [#1143] Some cleanup
+
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    04-29
+
+  [ Emmanuel Milou ]
+  * [#1262] Update changelogs
+  * [#1262] Update rules
+  * [#1143] Build celt codec only if version >= 0.5.1 is detected
+  * [1143] Restore rules files - do not need to specify --without-celt
+  * [#1336] Change SFLphone logo
+  * [#1331] Fix searchbar problems
+  * [#1332] Fix unexplicit labels
+  * [#1334] Fix unexplicit label
+  * [#1329] Fix recordings config panel
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Thu, 30 Apr 2009 10:01:42 -0400
 
 sflphone-client-gnome (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
