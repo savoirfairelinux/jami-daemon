@@ -797,6 +797,7 @@ show_config_window ()
     result = gtk_dialog_run(dialog);
 
     save_configuration_parameters ();
+    toolbar_update_buttons();
 
     dialogOpen = FALSE;
 
