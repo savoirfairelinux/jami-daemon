@@ -70,6 +70,15 @@ addressbook_is_ready()
 }
 
 /**
+ * Return TRUE if at least one addressbook is active
+ */
+gboolean
+addressbook_is_active()
+{
+  return books_active();
+}
+
+/**
  * Asynchronous open callback.
  * Used to handle activation of books.
  */
