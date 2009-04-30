@@ -389,7 +389,7 @@ codec_active_toggled(GtkCellRendererToggle *renderer UNUSED, gchar *path, gpoint
             COLUMN_CODEC_FREQUENCY, &srate,
             -1);
 
-    printf("%s, %s\n", name, srate);
+    // printf("%s, %s\n", name, srate);
 
     // codec_list_get_by_name(name);
     if ((strcmp(name,"speex")==0) && (strcmp(srate,"8 kHz")==0))
@@ -624,12 +624,15 @@ select_audio_manager( void )
         alsabox = alsa_box();
         gtk_container_add( GTK_CONTAINER(alsa_conf ) , alsabox);
         gtk_widget_show( alsa_conf );
+        gtk_widget_set_sensitive(GTK_WIDGET(alsa_conf), TRUE);
     }
     else if( SHOW_ALSA_CONF && gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ))
     {
         dbus_set_audio_manager( PULSEAUDIO );
         DEBUG(" remove alsa conf panel");
         gtk_container_remove( GTK_CONTAINER(alsa_conf) , alsabox );
+        gtk_widget_hide( alsa_conf );
+        // gtk_widget_set_sensitive(GTK_WIDGET(alsa_conf), FALSE);
     }
     else
         DEBUG("alsa conf panel...nothing");
@@ -774,16 +777,28 @@ GtkWidget* ringtones_box()
 GtkWidget* noise_box()
 {
     GtkWidget *ret;
+    GtkWidget *enableVoiceActivity;
     GtkWidget *enableNoiseReduction;
 
     // check button to enable ringtones
     ret = gtk_hbox_new( TRUE , 1);
-    enableNoiseReduction = gtk_check_button_new_with_mnemonic( _("_Activate silence detection"));
+
+    enableVoiceActivity = gtk_check_button_new_with_mnemonic( _("_Voice Activity Detection"));
+    //TODO Use the value from D-BUS
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableVoiceActivity), FALSE );
+    gtk_box_pack_start( GTK_BOX(ret) , enableVoiceActivity , TRUE , TRUE , 1);
+    //TODO Enable it
+    //gtk_widget_set_sensitive(GTK_WIDGET(noise_conf), FALSE);
+    //TODO Add a callback function
+    //g_signal_connect(G_OBJECT( enableNoiseReduction) , "clicked" , NULL , NULL);
+
+
+    enableNoiseReduction = gtk_check_button_new_with_mnemonic( _("_Noise Reduction (Narrow-Band Companding)"));
     //TODO Use the value from D-BUS
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableNoiseReduction), FALSE );
     gtk_box_pack_start( GTK_BOX(ret) , enableNoiseReduction , TRUE , TRUE , 1);
     //TODO Enable it
-    gtk_widget_set_sensitive(GTK_WIDGET(noise_conf), FALSE);
+    // gtk_widget_set_sensitive(GTK_WIDGET(noise_conf), FALSE);
     //TODO Add a callback function
     //g_signal_connect(G_OBJECT( enableNoiseReduction) , "clicked" , NULL , NULL);
 
@@ -813,14 +828,22 @@ GtkWidget* create_audio_configuration()
     gtk_container_add( GTK_CONTAINER(sound_conf) , box );
 
     // Box for the ALSA configuration
+    printf("Creating the alsa configurration box \n");
     alsa_conf = gtk_frame_new(_("ALSA configuration"));
     gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);
+    // gtk_widget_hide( GTK_CONTAINER(alsa_conf) );
     gtk_widget_show( alsa_conf );
     if( SHOW_ALSA_CONF )
     {
+        // Box for the ALSA configuration
+        // alsa_conf = gtk_frame_new(_("ALSA configuration"));
+        // gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);
+        printf("ALSA Created \n");
         alsabox = alsa_box();
         gtk_container_add( GTK_CONTAINER(alsa_conf) , alsabox );
+        gtk_widget_hide( alsa_conf );
     }
+    
 
     // Box for the codecs
     codecs_conf = gtk_frame_new(_("Codecs"));
@@ -831,11 +854,15 @@ GtkWidget* create_audio_configuration()
     gtk_container_add( GTK_CONTAINER(codecs_conf) , box );
 
     // Box for noise reduction
-    noise_conf = gtk_frame_new(_("Noise reduction"));
+    // removed until the functions are implemented
+    
+    noise_conf = gtk_frame_new(_("Audio Processing"));
     gtk_box_pack_start(GTK_BOX(ret), noise_conf, FALSE, FALSE, 0);
     gtk_widget_show( noise_conf );
     box = noise_box();
     gtk_container_add( GTK_CONTAINER(noise_conf) , box );
+    gtk_widget_set_sensitive(GTK_WIDGET(noise_conf), FALSE);
+    
 
     // Box for the ringtones
     ringtones_conf = gtk_frame_new(_("Ringtones"));
@@ -845,6 +872,13 @@ GtkWidget* create_audio_configuration()
     gtk_container_add( GTK_CONTAINER(ringtones_conf) , box );
 
     gtk_widget_show_all(ret);
+
+    if( SHOW_ALSA_CONF ) {
+      gtk_widget_show( alsa_conf );
+    }
+    else{
+      gtk_widget_hide( alsa_conf );
+    }
 
     return ret;
 }
