@@ -2699,8 +2699,9 @@ void ManagerImpl::check_call_configuration (const CallID& id, const std::string 
     /* Check if the call is an IP-to-IP call */
     /* For an IP-to-IP call, we don't need any account */
     /* Pattern looked for : ip:xxx.xxx.xxx.xxx */
-    pattern = to.substr (0,3);
+    pattern = to.substr (0,4);
     if (pattern==IP_TO_IP_PATTERN) {
+        _debug("Sending Sip Call \n");
         config = Call::IPtoIP;
     } else {
         config = Call::Classic;

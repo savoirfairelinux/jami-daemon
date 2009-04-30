@@ -1198,7 +1198,6 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     }
 
     bool SIPVoIPLink::new_ip_to_ip_call (const CallID& id, const std::string& to) {
-
         SIPCall *call;
         pj_status_t status;
         std::string uri_from, uri_to, hostname;
@@ -1221,7 +1220,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             uri_from = "sip:" + hostname + "@" + getLocalIPAddress() ;
 
             // Generate the from URI
-            uri_to = "sip:" + to.substr (3, to.length());
+            uri_to = "sip:" + to.substr (4, to.length());
 
             // Generate the to URI
             setCallAudioLocal(call, getLocalIPAddress(), useStun(), getStunServer());
