@@ -36,6 +36,12 @@ gboolean
 addressbook_is_ready();
 
 /**
+ * Return addressbook state
+ */
+gboolean
+addressbook_is_enabled();
+
+/**
  * Perform a search in addressbook
  */
 void

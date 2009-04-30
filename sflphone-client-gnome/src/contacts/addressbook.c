@@ -50,6 +50,20 @@ addressbook_search(GtkEntry* entry)
  * Return addressbook state
  */
 gboolean
+addressbook_is_enabled()
+{
+  AddressBook_Config *addressbook_config;
+  
+  // Load the address book parameters
+  addressbook_config_load_parameters(&addressbook_config);
+
+  return (guint)addressbook_config->enable;
+}
+
+/**
+ * Return addressbook state
+ */
+gboolean
 addressbook_is_ready()
 {
   return books_ready();

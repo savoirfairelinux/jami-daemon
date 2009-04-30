@@ -283,6 +283,7 @@ GtkWidget *create_toolbar ()
   void
 toolbar_update_buttons ()
 {
+    
   gtk_widget_set_sensitive( GTK_WIDGET(callButton),       FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(hangupButton),     FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(holdButton),       FALSE);
@@ -290,6 +291,7 @@ toolbar_update_buttons ()
   gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton) ,   FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(unholdButton),     FALSE);
   gtk_widget_set_sensitive( GTK_WIDGET(recButton),        FALSE);
+  gtk_widget_set_sensitive( GTK_WIDGET(contactButton),        FALSE);
   g_object_ref(holdButton);
   g_object_ref(unholdButton);
   if( is_inserted( GTK_WIDGET(holdButton) ) )   gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(holdButton));
@@ -301,6 +303,7 @@ toolbar_update_buttons ()
   if( is_inserted( GTK_WIDGET(pickupButton) ) ) gtk_container_remove(GTK_CONTAINER(toolbar), GTK_WIDGET(pickupButton));
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), callButton, 0);
   //gtk_toolbar_insert(GTK_TOOLBAR(toolbar), recButton, 0);
+  if (addressbook_is_enabled () && addressbook_is_ready())    gtk_widget_set_sensitive( GTK_WIDGET(contactButton), TRUE);
 
 
   gtk_signal_handler_block(GTK_OBJECT(transfertButton),transfertButtonConnId);
@@ -386,10 +389,5 @@ toolbar_update_buttons ()
         }
     }
 
-    // Activate addressbook button if needed
-    // TODO : should be moved in a better place
-    if(addressbook_is_ready())
-      gtk_widget_set_sensitive( GTK_WIDGET(contactButton), TRUE);
-    else
-      gtk_widget_set_sensitive( GTK_WIDGET(contactButton), FALSE);
+  
 }

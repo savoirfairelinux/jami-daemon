@@ -1207,6 +1207,7 @@ ManagerImpl::initConfigFile ( bool load_user_value )
   fill_config_str(CONFIG_ACCOUNTS_ORDER, "");
 
   section = ADDRESSBOOK;
+  fill_config_int (ADDRESSBOOK_ENABLE, YES_STR);
   fill_config_int (ADDRESSBOOK_MAX_RESULTS, "25");
   fill_config_int (ADDRESSBOOK_DISPLAY_CONTACT_PHOTO, NO_STR);
   fill_config_int (ADDRESSBOOK_DISPLAY_PHONE_BUSINESS, YES_STR);
@@ -2627,6 +2628,7 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
 
     std::map<std::string, int32_t> settings;
 
+    settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_ENABLE", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_ENABLE)) );
     settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_MAX_RESULTS", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS)) );
     settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO)));
     settings.insert (std::pair<std::string, int32_t> ("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS", getConfigInt (ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS)));
@@ -2638,6 +2640,7 @@ std::map<std::string, int32_t> ManagerImpl::getAddressbookSettings () {
 
 void ManagerImpl::setAddressbookSettings (const std::map<std::string, int32_t>& settings){
 
+    setConfig(ADDRESSBOOK, ADDRESSBOOK_ENABLE, (*settings.find("ADDRESSBOOK_ENABLE")).second);
     setConfig(ADDRESSBOOK, ADDRESSBOOK_MAX_RESULTS, (*settings.find("ADDRESSBOOK_MAX_RESULTS")).second);
     setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_CONTACT_PHOTO , (*settings.find("ADDRESSBOOK_DISPLAY_CONTACT_PHOTO")).second);
     setConfig(ADDRESSBOOK, ADDRESSBOOK_DISPLAY_PHONE_BUSINESS , (*settings.find("ADDRESSBOOK_DISPLAY_PHONE_BUSINESS")).second);
