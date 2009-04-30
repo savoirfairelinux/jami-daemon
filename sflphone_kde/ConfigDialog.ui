@@ -7,8 +7,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>702</width>
-    <height>449</height>
+    <width>708</width>
+    <height>476</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -151,6 +151,11 @@
          <string>Address Book</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Hooks</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
@@ -170,7 +175,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget_options">
        <property name="currentIndex">
-        <number>5</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page_general">
         <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -596,7 +601,7 @@
                      <string>Remove this account</string>
                     </property>
                     <property name="icon">
-                     <iconset>
+                     <iconset resource="resources.qrc">
                       <normaloff>:/images/icons/remove.png</normaloff>:/images/icons/remove.png</iconset>
                     </property>
                     <property name="shortcut">
@@ -622,7 +627,7 @@
                      <string>Add a new account</string>
                     </property>
                     <property name="icon">
-                     <iconset>
+                     <iconset resource="resources.qrc">
                       <normaloff>:/images/icons/add.png</normaloff>:/images/icons/add.png</iconset>
                     </property>
                    </widget>
@@ -1144,16 +1149,6 @@
            </widget>
           </widget>
          </item>
-         <item>
-          <widget class="QWidget" name="widget_fullConfigAudio" native="true">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
        <widget class="QWidget" name="page_record">
@@ -1334,6 +1329,152 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="page_hooks">
+        <layout class="QVBoxLayout" name="verticalLayout_11">
+         <item>
+          <widget class="QLabel" name="label_configHooks">
+           <property name="text">
+            <string>Configure hooks settings</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line_configHooks">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_urlArgument">
+           <property name="title">
+            <string>URL Argument</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_12">
+            <item>
+             <widget class="QWidget" name="widget_protocols" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>10</width>
+                <height>10</height>
+               </size>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_8">
+               <property name="margin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="checkBox_hooksSIP">
+                 <property name="text">
+                  <string>SIP Protocol</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBox_hooksIAX">
+                 <property name="text">
+                  <string>IAX2 Protocol</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="widget_urlArgumentForm" native="true">
+              <layout class="QFormLayout" name="formLayout_6">
+               <item row="1" column="0">
+                <widget class="QLabel" name="label_SIPHeader">
+                 <property name="text">
+                  <string>SIP Header</string>
+                 </property>
+                 <property name="buddy">
+                  <cstring>lineEdit_SIPHeader</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="label_command">
+                 <property name="text">
+                  <string>Command</string>
+                 </property>
+                 <property name="buddy">
+                  <cstring>lineEdit_command</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLineEdit" name="lineEdit_SIPHeader"/>
+               </item>
+               <item row="3" column="1">
+                <widget class="QLineEdit" name="lineEdit_command"/>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_phoneNumberFormatting">
+           <property name="title">
+            <string>Phone number formatting</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_13">
+            <item>
+             <widget class="QCheckBox" name="checkBox_addPrefix">
+              <property name="text">
+               <string>Add phone number prefix</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="widget_phoneNumberFormattingForm" native="true">
+              <layout class="QFormLayout" name="formLayout_7">
+               <item row="1" column="0">
+                <widget class="QLabel" name="label_prepend">
+                 <property name="text">
+                  <string>Prepend</string>
+                 </property>
+                 <property name="buddy">
+                  <cstring>lineEdit_prepend</cstring>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLineEdit" name="lineEdit_prepend">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_configHooks">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -1387,8 +1528,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>300</x>
-     <y>430</y>
+     <x>301</x>
+     <y>474</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -1419,12 +1560,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>228</x>
-     <y>374</y>
+     <x>130</x>
+     <y>29</y>
     </hint>
     <hint type="destinationlabel">
-     <x>431</x>
-     <y>378</y>
+     <x>202</x>
+     <y>31</y>
     </hint>
    </hints>
   </connection>
@@ -1439,8 +1580,8 @@
      <y>64</y>
     </hint>
     <hint type="destinationlabel">
-     <x>325</x>
-     <y>286</y>
+     <x>446</x>
+     <y>433</y>
     </hint>
    </hints>
   </connection>
@@ -1455,8 +1596,8 @@
      <y>89</y>
     </hint>
     <hint type="destinationlabel">
-     <x>682</x>
-     <y>98</y>
+     <x>688</x>
+     <y>95</y>
     </hint>
    </hints>
   </connection>
@@ -1467,8 +1608,8 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>682</x>
-     <y>98</y>
+     <x>688</x>
+     <y>95</y>
     </hint>
     <hint type="destinationlabel">
      <x>352</x>
@@ -1505,6 +1646,22 @@
     <hint type="destinationlabel">
      <x>585</x>
      <y>56</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_addPrefix</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_prepend</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>167</x>
+     <y>224</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>231</x>
+     <y>259</y>
     </hint>
    </hints>
   </connection>

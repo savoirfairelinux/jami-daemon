@@ -165,13 +165,29 @@ void ConfigurationDialog::loadOptions()
 	////Address book settings////
 	/////////////////////////////
 	
-	qDebug() << "getAddressbookSettings() : " << configurationManager.getAddressbookSettings().value();
 	MapStringInt addressBookSettings = configurationManager.getAddressbookSettings().value();
+	qDebug() << "getAddressbookSettings() : " << addressBookSettings;
 	spinBox_maxResults->setValue(addressBookSettings[ADDRESSBOOK_MAX_RESULTS]);
 	checkBox_displayPhoto->setChecked(addressBookSettings[ADDRESSBOOK_DISPLAY_CONTACT_PHOTO]);
 	checkBox_business->setChecked(addressBookSettings[ADDRESSBOOK_DISPLAY_BUSINESS]);
 	checkBox_mobile->setChecked(addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE]);
 	checkBox_home->setChecked(addressBookSettings[ADDRESSBOOK_DISPLAY_HOME]);
+	
+	/////////////////////////////
+	///////Hooks settings////////
+	/////////////////////////////
+	
+	MapStringString hooksSettings = configurationManager.getHookSettings().value();
+	qDebug() << "getHooksSettings() : " << hooksSettings;
+	checkBox_addPrefix->setChecked(hooksSettings[HOOKS_ENABLED]=="1");
+	lineEdit_prepend->setText(hooksSettings[HOOKS_ADD_PREFIX]);
+	checkBox_hooksSIP->setChecked(hooksSettings[HOOKS_SIP_ENABLED]=="1");
+	checkBox_hooksIAX->setChecked(hooksSettings[HOOKS_IAX2_ENABLED]=="1");
+	lineEdit_SIPHeader->setText(hooksSettings[HOOKS_SIP_FIELD]);
+	lineEdit_command->setText(hooksSettings[HOOKS_COMMAND]);
+	
+	
+	
 }
 
 
@@ -270,6 +286,20 @@ void ConfigurationDialog::saveOptions()
 	addressBookSettings[ADDRESSBOOK_DISPLAY_MOBILE] = checkBox_mobile->isChecked();
 	addressBookSettings[ADDRESSBOOK_DISPLAY_HOME] = checkBox_home->isChecked();
 	configurationManager.setAddressbookSettings(addressBookSettings);
+	
+	/////////////////////////////
+	///////Hooks settings////////
+	/////////////////////////////
+	
+	MapStringString hooksSettings = MapStringString();
+	hooksSettings[HOOKS_ENABLED] = checkBox_addPrefix->isChecked() ? "1" : "0";
+	hooksSettings[HOOKS_ADD_PREFIX] = lineEdit_prepend->text();
+	hooksSettings[HOOKS_SIP_ENABLED] = checkBox_hooksSIP->isChecked() ? "1" : "0";
+	hooksSettings[HOOKS_IAX2_ENABLED] = checkBox_hooksIAX->isChecked() ? "1" : "0";
+	hooksSettings[HOOKS_SIP_FIELD] = lineEdit_SIPHeader->text();
+	hooksSettings[HOOKS_COMMAND] = lineEdit_command->text();
+	configurationManager.setHookSettings(hooksSettings);
+	
 }
 
 
