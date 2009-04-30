@@ -223,23 +223,45 @@ get_main_window()
 
 void
 main_window_message(GtkMessageType type, gchar * markup){
+  
   GtkWidget * dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(get_main_window()),
                                       GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                                       type,
                                       GTK_BUTTONS_CLOSE,
                                       "%s\n",
                                       markup);
-  gtk_dialog_run (GTK_DIALOG(dialog));
 
+  /*
+  // In order to put a title to the dialog
+  if (type == GTK_MESSAGE_ERROR) {
+    gchar * title;
+    title = "SFLPhone Error";
+
+    gchar * button_text;
+    button_text = "OK";
+
+    GtkDialog * dialog = gtk_dialog_new_with_buttons(title,GTK_WINDOW(&window),GTK_DIALOG_MODAL,button_text);
+    gtk_dialog_run(dialog);
+  }
+  else {
+    GtkWidget * dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(get_main_window()),
+                                      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                      type,
+                                      GTK_BUTTONS_CLOSE,
+                                      "%s\n",
+                                      markup);
+    gtk_dialog_run (GTK_DIALOG(dialog));
+    gtk_widget_destroy (GTK_WIDGET(dialog));
+  }
+  */
+  
+  gtk_dialog_run (GTK_DIALOG(dialog));
   gtk_widget_destroy (GTK_WIDGET(dialog));
 }
 
 void
 main_window_error_message(gchar * markup){
   main_window_message(GTK_MESSAGE_ERROR, markup);
-  gchar title;
-  title = "SFLPhone Error";
-  gtk_window_set_title(get_main_window(), title);
 }
 
 void
