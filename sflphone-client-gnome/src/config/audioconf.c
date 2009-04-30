@@ -856,13 +856,14 @@ GtkWidget* create_audio_configuration()
     // Box for noise reduction
     // removed until the functions are implemented
     
+    /*
     noise_conf = gtk_frame_new(_("Audio Processing"));
     gtk_box_pack_start(GTK_BOX(ret), noise_conf, FALSE, FALSE, 0);
     gtk_widget_show( noise_conf );
     box = noise_box();
     gtk_container_add( GTK_CONTAINER(noise_conf) , box );
     gtk_widget_set_sensitive(GTK_WIDGET(noise_conf), FALSE);
-    
+    */
 
     // Box for the ringtones
     ringtones_conf = gtk_frame_new(_("Ringtones"));
