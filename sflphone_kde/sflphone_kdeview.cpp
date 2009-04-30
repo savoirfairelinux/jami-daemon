@@ -384,7 +384,7 @@ void sflphone_kdeView::updateWindowCallState()
 	
 	bool enabledActions[6]= {true,true,true,true,true,true};
 	QString buttonIconFiles[3] = {ICON_CALL, ICON_HANGUP, ICON_HOLD};
-	QString actionTexts[5] = {tr2i18n("Call", 0), tr2i18n("Hang up", 0), tr2i18n("Hold", 0), tr2i18n("Transfer", 0), tr2i18n("Record", 0)};
+	QString actionTexts[5] = {ACTION_LABEL_CALL, ACTION_LABEL_HANG_UP, ACTION_LABEL_HOLD, ACTION_LABEL_TRANSFER, ACTION_LABEL_RECORD};
 	bool transfer = false;
 	//tells whether the call is in recording position
 	bool recordActivated = false;
@@ -415,8 +415,8 @@ void sflphone_kdeView::updateWindowCallState()
 					qDebug() << "Reached CALL_STATE_INCOMING with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					buttonIconFiles[0] = ICON_ACCEPT;
 					buttonIconFiles[1] = ICON_REFUSE;
-					actionTexts[0] = tr2i18n("Accept", 0);
-					actionTexts[0] = tr2i18n("Refuse", 0);
+					actionTexts[0] = ACTION_LABEL_ACCEPT;
+					actionTexts[0] = ACTION_LABEL_REFUSE;
 					break;
 				case CALL_STATE_RINGING:
 					qDebug() << "Reached CALL_STATE_RINGING with call " << (*callList)[item]->getCallId() << ". Updating window.";
@@ -437,7 +437,7 @@ void sflphone_kdeView::updateWindowCallState()
 				case CALL_STATE_HOLD:
 					qDebug() << "Reached CALL_STATE_HOLD with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					buttonIconFiles[2] = ICON_UNHOLD;
-					actionTexts[2] = tr2i18n("Unhold", 0);
+					actionTexts[2] = ACTION_LABEL_UNHOLD;
 					break;		
 				case CALL_STATE_FAILURE:
 					qDebug() << "Reached CALL_STATE_FAILURE with call " << (*callList)[item]->getCallId() << ". Updating window.";
@@ -456,7 +456,7 @@ void sflphone_kdeView::updateWindowCallState()
 				case CALL_STATE_TRANSFER:
 					qDebug() << "Reached CALL_STATE_TRANSFER with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					buttonIconFiles[0] = ICON_EXEC_TRANSF;
-					actionTexts[3] = tr2i18n("Give up transfer", 0);
+					actionTexts[3] = ACTION_LABEL_GIVE_UP_TRANSF;
 					transfer = true;
 					recordEnabled = true;
 					break;
@@ -464,8 +464,8 @@ void sflphone_kdeView::updateWindowCallState()
 					qDebug() << "Reached CALL_STATE_TRANSF_HOLD with call " << (*callList)[item]->getCallId() << ". Updating window.";
 					buttonIconFiles[0] = ICON_EXEC_TRANSF;
 					buttonIconFiles[2] = ICON_UNHOLD;
-					actionTexts[3] = tr2i18n("Give up transfer", 0);
-					actionTexts[2] = tr2i18n("Unhold", 0);
+					actionTexts[3] = ACTION_LABEL_GIVE_UP_TRANSF;
+					actionTexts[2] = ACTION_LABEL_UNHOLD;
 					transfer = true;
 					break;
 				case CALL_STATE_OVER:
@@ -484,6 +484,8 @@ void sflphone_kdeView::updateWindowCallState()
 	{
 		item = listWidget_callHistory->currentItem();
 		buttonIconFiles[0] = ICON_ACCEPT;
+		actionTexts[0] = ACTION_LABEL_CALL_BACK;
+		actionTexts[1] = ACTION_LABEL_GIVE_UP_SEARCH;
 		if (!item)
 		{
 			qDebug() << "No item selected. Updating window.";
@@ -509,6 +511,7 @@ void sflphone_kdeView::updateWindowCallState()
 	{
 		item = listWidget_addressBook->currentItem();
 		buttonIconFiles[0] = ICON_ACCEPT;
+		actionTexts[1] = ACTION_LABEL_GIVE_UP_SEARCH;
 		if (!item)
 		{
 			qDebug() << "No item selected. Updating window.";
