@@ -49,6 +49,7 @@ struct _wizard
   GtkWidget *sip_server;
   GtkWidget *sip_username;
   GtkWidget *sip_password;
+  GtkWidget *sip_voicemail;
   GtkWidget *test;
   GtkWidget *state;
   GtkWidget *mailbox;
@@ -58,6 +59,7 @@ struct _wizard
   GtkWidget *iax_server;
   GtkWidget *iax_username;
   GtkWidget *iax_password;
+  GtkWidget *iax_voicemail;
   /** Page 4 - Nat detection */
   GtkWidget *nat;
   GtkWidget *enable;
