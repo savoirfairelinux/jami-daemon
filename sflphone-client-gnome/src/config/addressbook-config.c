@@ -262,7 +262,7 @@ create_addressbook_settings()
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    result_frame = gtk_frame_new(_("General"));
+    gnome_main_section_new (_("General"), &result_frame);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
     gtk_widget_show (result_frame);
 
@@ -296,7 +296,7 @@ create_addressbook_settings()
     g_signal_connect (G_OBJECT(photo) , "clicked" , G_CALLBACK (display_contact_photo_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), photo, 1, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    result_frame = gtk_frame_new(_("Fields"));
+    gnome_main_section_new (_("Fields"), &result_frame);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, FALSE, FALSE, 0);
     gtk_widget_show (result_frame);
 
@@ -321,7 +321,7 @@ create_addressbook_settings()
     g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_mobile_cb) , NULL);
     gtk_table_attach ( GTK_TABLE( table ), item, 1, 3, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    result_frame = gtk_frame_new(_("Books"));
+    gnome_main_section_new (_("Books"), &result_frame);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, TRUE, TRUE, 0);
     gtk_widget_show (result_frame);
 

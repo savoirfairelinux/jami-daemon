@@ -31,6 +31,7 @@
 #include <audioconf.h>
 #include <addressbook-config.h>
 #include <hooks-config.h>
+#include <utils.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -540,12 +541,10 @@ create_general_settings ()
 
     GtkWidget *ret;
 
-    GtkWidget *notifFrame;
     GtkWidget *notifBox;
     GtkWidget *notifAll;
     GtkWidget *widg;
 
-    GtkWidget *trayFrame;
     GtkWidget *trayBox;
     GtkWidget *trayItem;
 
@@ -562,13 +561,13 @@ create_general_settings ()
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Notifications Frame
-    notifFrame = gtk_frame_new(_("Desktop Notification"));
-    gtk_box_pack_start(GTK_BOX(ret), notifFrame, FALSE, FALSE, 0);
-    gtk_widget_show( notifFrame );
+    gnome_main_section_new (_("Desktop Notification"), &frame);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     notifBox = gtk_vbox_new(FALSE, 10);
     gtk_widget_show( notifBox );
-    gtk_container_add( GTK_CONTAINER(notifFrame) , notifBox);
+    gtk_container_add( GTK_CONTAINER(frame) , notifBox);
+    gtk_container_set_border_width(GTK_CONTAINER(notifBox), 2);
 
     notifAll = gtk_check_button_new_with_mnemonic( _("_Enable"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify() );
@@ -581,13 +580,13 @@ create_general_settings ()
     g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
 
     // System Tray option frame
-    trayFrame = gtk_frame_new(_("System Tray Icon"));
-    gtk_box_pack_start(GTK_BOX(ret), trayFrame, FALSE, FALSE, 0);
-    gtk_widget_show( trayFrame );
+    gnome_main_section_new (_("System Tray Icon"), &frame);
+    gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
+    gtk_widget_show (frame);
 
     trayBox = gtk_vbox_new(FALSE, 10);
     gtk_widget_show( trayBox );
-    gtk_container_add( GTK_CONTAINER(trayFrame) , trayBox);
+    gtk_container_add( GTK_CONTAINER(frame) , trayBox);
 
     GtkWidget* trayItem1 = gtk_radio_button_new_with_mnemonic(NULL,  _("_Popup main window on incoming call"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem1), dbus_popup_mode() );
@@ -604,31 +603,31 @@ create_general_settings ()
     g_signal_connect(G_OBJECT( trayItem ) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
 
     /** HISTORY CONFIGURATION */
-    frame = gtk_frame_new(_("Calls History"));
+    gnome_main_section_new (_("Calls History"), &frame);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show( frame );
 
-    vbox = gtk_vbox_new(FALSE, 10);
-    gtk_widget_show( vbox );
-    gtk_container_add( GTK_CONTAINER(frame) , vbox);
+    hbox = gtk_hbox_new(FALSE, 10);
+    gtk_widget_show( hbox );
+    gtk_container_add( GTK_CONTAINER(frame) , hbox);
 
     label = gtk_label_new_with_mnemonic(_("_Maximum number of calls"));
-    gtk_box_pack_start( GTK_BOX(vbox) , label , TRUE , TRUE , 0);
+    gtk_box_pack_start( GTK_BOX(hbox) , label , TRUE , TRUE , 0);
 
     value = gtk_hscale_new_with_range(0.0 , 50.0 , 5.0);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), value);
     gtk_scale_set_digits( GTK_SCALE(value) , 0);
     gtk_scale_set_value_pos( GTK_SCALE(value) , GTK_POS_RIGHT);
     gtk_range_set_value( GTK_RANGE( value ) , dbus_get_max_calls());
-    gtk_box_pack_start( GTK_BOX(vbox) , value , TRUE , TRUE , 0);
+    gtk_box_pack_start( GTK_BOX(hbox) , value , TRUE , TRUE , 0);
     g_signal_connect( G_OBJECT( value) , "value-changed" , G_CALLBACK( update_max_value ) , NULL);
 
     cleanButton = gtk_button_new_from_stock( GTK_STOCK_CLEAR );
-    gtk_box_pack_end( GTK_BOX(vbox) , cleanButton , FALSE , TRUE , 0);
+    gtk_box_pack_end( GTK_BOX(hbox) , cleanButton , FALSE , TRUE , 0);
     g_signal_connect( G_OBJECT( cleanButton ) , "clicked" , G_CALLBACK( clean_history ) , NULL);
 
     /** PULSEAUDIO CONFIGURATION */
-    frame = gtk_frame_new( _("PulseAudio sound server"));
+    gnome_main_section_new (_("PulseAudio sound server"), &frame);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show( frame );
 
@@ -649,7 +648,7 @@ create_general_settings ()
     if(curPort <= 0 || curPort > 65535)
         curPort = 5060;
 
-    frame = gtk_frame_new( _("SIP Port"));
+    gnome_main_section_new (_("SIP Port"), &frame);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show( frame );
     gtk_widget_set_sensitive( GTK_WIDGET(frame), (n==0)?FALSE:TRUE );
@@ -707,9 +706,8 @@ create_recording_settings ()
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Recorded file saving path
-    savePathFrame = gtk_frame_new(_("General"));
+    gnome_main_section_new (_("General"), &savePathFrame);
     gtk_box_pack_start(GTK_BOX(ret), savePathFrame, FALSE, FALSE, 5);
-    gtk_widget_show(savePathFrame);
 
     table = gtk_table_new(1, 2, FALSE);
     gtk_table_set_row_spacings( GTK_TABLE(table), 10);
@@ -792,7 +790,7 @@ show_config_window ()
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), tab, gtk_label_new(_("Hooks")));
     gtk_notebook_page_num(GTK_NOTEBOOK(notebook), tab);
 
-    gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  1);
+    gtk_notebook_set_current_page( GTK_NOTEBOOK( notebook) ,  0);
 
     result = gtk_dialog_run(dialog);
 
@@ -828,7 +826,7 @@ show_accounts_window( void )
     gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 500);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
-    accountFrame = gtk_frame_new( _("Accounts previously setup"));
+    gnome_main_section_new (_("Account previously setup"), &accountFrame);
     gtk_box_pack_start( GTK_BOX( dialog->vbox ), accountFrame , TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(accountFrame), 10);
     gtk_widget_show(accountFrame);
@@ -839,7 +837,7 @@ show_accounts_window( void )
     gtk_container_add(GTK_CONTAINER(accountFrame) , tab);
 
     // Stun Frame, displayed only if at least 1 SIP account is configured
-    stunFrame = gtk_frame_new(_("Network Address Translation"));
+    gnome_main_section_new (_("Network Address Translation"), &stunFrame);
     gtk_box_pack_start( GTK_BOX( dialog->vbox ), stunFrame , TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(stunFrame), 10);
     gtk_widget_show(stunFrame);
