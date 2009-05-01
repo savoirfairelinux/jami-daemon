@@ -62,7 +62,6 @@ codec_list_clear ()
 void
 codec_list_add(codec_t * c)
 {
-  g_print ("add %s codec\n", c->name);
   g_queue_push_tail (codecQueue, (gpointer *) c);
 }
 
