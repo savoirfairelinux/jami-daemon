@@ -858,8 +858,6 @@ show_accounts_window( void )
     accDialogOpen=FALSE;
 
     gtk_widget_destroy(GTK_WIDGET(dialog));
-    if( account_list_get_size() >0 && account_list_get_current()==NULL )
-        account_list_set_current_pos(0);
     toolbar_update_buttons();
 }
 

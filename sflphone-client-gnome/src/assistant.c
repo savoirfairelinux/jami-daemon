@@ -104,7 +104,6 @@ static void sip_apply_callback( void ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_SIP_STUN_SERVER), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->addr))));
 
 		dbus_add_account( current );
-		account_list_set_current_id( current->accountID );
         	sprintf(message, MESSAGE_SUMMARY,
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->sip_server)),
@@ -129,7 +128,6 @@ static void iax_apply_callback( void ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_server))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_password))));
 		dbus_add_account( current );
-		account_list_set_current_id( current->accountID );
         	sprintf(message, MESSAGE_SUMMARY,
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_alias)),
 			gtk_entry_get_text (GTK_ENTRY(wiz->iax_server)),

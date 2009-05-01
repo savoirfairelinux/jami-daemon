@@ -125,15 +125,9 @@ account_t * account_list_get_current( );
 
 /** 
  * This function sets an account as the current one
- * @param accountID The ID of the current account
+ * @param current the account you want to set as current
  */
-void account_list_set_current_id(const gchar * accountID);
-
-/** 
- * This function sets an account as the current one
- * @param n the position of the account you want to use
- */
-void account_list_set_current_pos( guint n );
+void account_list_set_current (account_t *current);
 
 /** 
  * This function maps account_state_t enums to a description.
@@ -184,5 +178,6 @@ int account_list_get_iax_account_number( void );
 
 gchar * account_list_get_ordered_list (void);
 
+guint account_list_get_position (account_t *account);
 
 #endif 

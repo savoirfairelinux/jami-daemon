@@ -23,7 +23,6 @@
 #include <string.h>
 
 GQueue * accountQueue;
-gchar* __CURRENT_ACCOUNT_ID = NULL;
 
 /* GCompareFunc to compare a accountID (gchar* and a account_t) */
 gint
@@ -129,23 +128,35 @@ account_list_get_nth ( guint n )
 account_t*
 account_list_get_current( )
 {
-  if( __CURRENT_ACCOUNT_ID != NULL  )
-    return account_list_get_by_id( __CURRENT_ACCOUNT_ID );
-  else
-    return NULL;
+    account_t *current;
+    
+    // No account registered
+    if (account_list_get_registered_accounts () == 0)
+        return NULL;
+
+    // if we are here, it means that we have at least one registered account in the list
+    // So we get the first one
+    current = account_list_get_by_state (ACCOUNT_STATE_REGISTERED);
+    if (!current)
+        return NULL;
+
+    return current;
 }
 
-void
-account_list_set_current_id(const gchar * accountID)
+void account_list_set_current (account_t *current)
 {
-  DEBUG("set current id = %s", accountID);
-  __CURRENT_ACCOUNT_ID = g_strdup(accountID);
-}
+    gpointer acc;
+    guint pos;
 
-void
-account_list_set_current_pos( guint n)
-{
-  __CURRENT_ACCOUNT_ID = account_list_get_nth(n)->accountID;
+    // 2 steps:
+    // 1 - retrieve the index of the current account in the Queue
+    // 2 - then set it as first
+    pos = account_list_get_position (current);
+    if (pos > 0)
+    {
+		acc = g_queue_pop_nth(accountQueue, pos);
+		g_queue_push_nth(accountQueue, acc, 0);
+    }
 }
 
 
@@ -198,12 +209,13 @@ account_list_clear ( )
 void
 account_list_move_up(guint index)
 {
+    DEBUG ("index  = %i\n", index);
+
 	if(index != 0)
 	{
 		gpointer acc = g_queue_pop_nth(accountQueue, index);
 		g_queue_push_nth(accountQueue, acc, index-1);
 	}
-	account_list_set_current_pos( 0 );
 }
 
 void
@@ -214,7 +226,6 @@ account_list_move_down(guint index)
 		gpointer acc = g_queue_pop_nth(accountQueue, index);
 		g_queue_push_nth(accountQueue, acc, index+1);
 	}
-	account_list_set_current_pos( 0 );
 }
 
 guint
@@ -232,10 +243,14 @@ account_list_get_registered_accounts( void )
 }
 
 gchar* account_list_get_current_id( void ){
-        if( __CURRENT_ACCOUNT_ID == NULL )
-            return "";
-        else
-            return __CURRENT_ACCOUNT_ID;
+
+    account_t *current;
+
+    current = account_list_get_current ();
+    if (current)
+        return current->accountID;
+    else
+        return "";
 }
 
 int account_list_get_sip_account_number( void ){
@@ -282,4 +297,23 @@ gchar * account_list_get_ordered_list (void) {
         order = g_strconcat (order, account_list_get_nth (i)->accountID, "/", NULL);
     }
     return order;
+}
+
+
+guint account_list_get_position (account_t *account) 
+{
+    guint size, i;
+    account_t *tmp;
+
+    size = account_list_get_size ();
+    for (i=0; i<size; i++)
+    {
+        tmp = account_list_get_nth (i);
+        if (g_strcasecmp (tmp->accountID, account->accountID) == 0)
+        {
+            return i;
+        }
+    }
+    // Not found
+    return -1;
 }
