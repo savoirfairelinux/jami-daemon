@@ -1,6 +1,6 @@
-sflphone-common (0.9.5-0ubuntu1~3.gbp20b188) SYSTEM; urgency=low
+sflphone-common (0.9.5-0ubuntu1~4.gbp008b11) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @20b188472f4e66c75b3f1dffe1f110b7070397ec **
+  ** SNAPSHOT build @008b116930c10263e32e9096cd40df76f7f5c843 **
 
   [ Emmanuel Milou ]
   * [#1220] Add Conflicts: sflphone in debian control files
@@ -77,7 +77,19 @@ sflphone-common (0.9.5-0ubuntu1~3.gbp20b188) SYSTEM; urgency=low
 
   [ Sflphone Project ]
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Thu, 30 Apr 2009 10:01:34 -0400
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    04-30
+
+  [ Emmanuel Milou ]
+  * [#1336] Add new logo
+  * [#1335] Enable/disable address book, change option name
+  * [#1324] Add more insightful status bar message
+  * [#1330] Fix behaviour if no addressbook are active
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Fri, 01 May 2009 00:01:53 -0400
 
 sflphone-common (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
