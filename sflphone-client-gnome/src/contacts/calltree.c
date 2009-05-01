@@ -23,6 +23,7 @@
 #include <glib/gprintf.h>
 #include <calllist.h>
 #include <toolbar.h>
+#include <mainwindow.h>
 
 /**
  * Show popup menu
@@ -53,6 +54,8 @@ selected(GtkTreeSelection *sel, void* data UNUSED )
     g_value_unset(&val);
 
     toolbar_update_buttons();
+
+    // set_focus_on_mainwindow();
 }
 
 /* A row is activated when it is double clicked */
@@ -138,6 +141,31 @@ button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUS
     return FALSE;
 }
 
+    static gboolean
+on_key_released (GtkWidget   *widget UNUSED,
+        GdkEventKey *event,
+        gpointer     user_data UNUSED)
+{
+
+        // If a modifier key is pressed, it's a shortcut, pass along
+        if(event->state & GDK_CONTROL_MASK ||
+                event->state & GDK_MOD1_MASK    ||
+                event->keyval == 60             || // <
+                event->keyval == 62             || // >
+                event->keyval == 34             || // "
+                event->keyval == 65361          || // left arrow
+                event->keyval == 65363          || // right arrow
+                event->keyval >= 65470          || // F-keys
+                event->keyval == 32                // space
+                )
+            return FALSE;
+        else
+            sflphone_keypad(event->keyval, event->string);
+   
+   
+   return TRUE;
+}
+
 /**
  * Reset call tree
  */
@@ -179,6 +207,8 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
             G_CALLBACK (row_activated),
             NULL);
 
+    // GTK_WIDGET_SET_FLAGS (GTK_WIDGET(sw),GTK_CAN_FOCUS);
+
     // Connect the popup menu
     g_signal_connect (G_OBJECT (tab->view), "popup-menu",
             G_CALLBACK (popup_menu),
@@ -186,6 +216,9 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
     g_signal_connect (G_OBJECT (tab->view), "button-press-event",
             G_CALLBACK (button_pressed),
             NULL);
+
+    g_signal_connect (G_OBJECT (sw), "key-release-event",
+                    G_CALLBACK (on_key_released), NULL);
 
 
     rend = gtk_cell_renderer_pixbuf_new();
@@ -469,6 +502,7 @@ calltree_add_call (calltab_t* tab, call_t * c)
 }
 
 void calltree_display (calltab_t *tab) {
+
 
     GtkTreeSelection *sel;
 

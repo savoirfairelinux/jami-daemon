@@ -118,7 +118,7 @@ help_about ( void * foo UNUSED)
     "Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>",
     "Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>",
     "Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>",
-    "Yun Liu <yun.liu@savoirfairelinux.com>"
+    "Yun Liu <yun.liu@savoirfairelinux.com>",
     "Alexandre Savard <alexandre.savard@savoirfairelinux.com>",
     "Jean-Philippe Barrette-LaPierre",
     "Laurielle Lea",

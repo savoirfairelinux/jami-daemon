@@ -26,7 +26,10 @@
 const GdkColor BLACK_COLOR = { 0, 0, 0, 0 };
 const GdkColor GRAY_COLOR = { 0, 30000, 30000, 30000 };
 
+
 void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED) {
+  printf("Search entry changed \n");
+    // gtk_widget_grab_focus (GTK_WIDGET(searchbox));
 
     if (active_calltree == contacts) {
       addressbook_search(entry);
@@ -42,6 +45,8 @@ void searchbar_clear_entry_if_default (GtkWidget* widget, gpointer user_data UNU
     gtk_widget_modify_text(widget, GTK_STATE_NORMAL, &BLACK_COLOR); 
     if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(widget)), _("Search"), 6) == 0)
         gtk_entry_set_text(GTK_ENTRY(widget), "");
+
+    // gtk_widget_grab_focus (GTK_WIDGET(searchbox));
 
 }
 
@@ -73,7 +78,10 @@ GtkWidget* searchbar_new(gchar* searchbar_type) {
   sexy_icon_entry_add_clear_button( SEXY_ICON_ENTRY(searchbox) );
 #endif
 
-    gtk_widget_modify_text(searchbox, GTK_STATE_NORMAL, &GRAY_COLOR); 
+  // GTK_WIDGET_SET_FLAGS (GTK_WIDGET(searchbox),GTK_CAN_FOCUS);
+  // gtk_widget_set_name (searchbox, "searchbar");
+
+  gtk_widget_modify_text(searchbox, GTK_STATE_NORMAL, &GRAY_COLOR); 
 
   gtk_entry_set_text(GTK_ENTRY(searchbox), _("Search contact"));
   g_signal_connect(GTK_ENTRY(searchbox), "changed", G_CALLBACK(searchbar_entry_changed), NULL);

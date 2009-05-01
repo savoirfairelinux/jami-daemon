@@ -97,13 +97,26 @@ main_window_ask_quit(){
   return TRUE;
 }
 
-    static gboolean
-on_key_released (GtkWidget   *widget UNUSED,
+
+/*
+static gboolean
+on_key_released (GtkWidget   *widget,
         GdkEventKey *event,
         gpointer     user_data UNUSED)
 {
+  printf("On key released from Main Window : %s\n", gtk_widget_get_name(widget));
 
-  if( (active_calltree != history) && (active_calltree != contacts)){
+  // if ((active_calltree != contacts) && (active_calltree != history)) {
+  if (gtk_widget_is_focus(window)){
+      printf("Focus is on main window \n");
+  }
+
+  if (!GTK_WIDGET_CAN_FOCUS(widget)){
+       printf("Widget can't focus \n");
+       gtk_widget_grab_focus(GTK_WIDGET(window));
+  }
+
+  if (gtk_widget_is_focus (window)) {
         // If a modifier key is pressed, it's a shortcut, pass along
         if(event->state & GDK_CONTROL_MASK ||
                 event->state & GDK_MOD1_MASK    ||
@@ -118,12 +131,18 @@ on_key_released (GtkWidget   *widget UNUSED,
             return FALSE;
         else
             sflphone_keypad(event->keyval, event->string);
+        }
    }
-   //   else
-      // searchbar_entry_changed(event,NULL,NULL);
-
    return TRUE;
 }
+
+
+void
+set_focus_on_mainwindow(){
+  DEBUG("set_focus_on_mainwindow \n");
+  gtk_widget_grab_focus(GTK_WIDGET(window));
+}
+*/
 
 void
 create_main_window ()
@@ -138,6 +157,9 @@ create_main_window ()
                                           NULL);
   gtk_window_set_position( GTK_WINDOW( window ) , GTK_WIN_POS_MOUSE);
 
+  // GTK_WIDGET_SET_FLAGS (GTK_WIDGET(window),GTK_CAN_FOCUS);
+  // gtk_widget_grab_focus (GTK_WIDGET(window));
+
   /* Connect the destroy event of the window with our on_destroy function
     * When the window is about to be destroyed we get a notificaiton and
     * stop the main GTK loop
@@ -145,9 +167,13 @@ create_main_window ()
   g_signal_connect (G_OBJECT (window), "delete-event",
                     G_CALLBACK (on_delete), NULL);
 
-  g_signal_connect (G_OBJECT (window), "key-release-event",
-                    G_CALLBACK (on_key_released), NULL);
-  
+  // g_signal_connect (G_OBJECT (window), "key-release-event",
+  //                   G_CALLBACK (on_key_released), NULL);
+
+  // g_signal_connect (G_OBJECT (window), "client-event",
+  //                   G_CALLBACK (set_focus_on_mainwindow), NULL);
+
+  gtk_widget_set_name (window, "mainwindow");
 
   /* Create an accel group for window's shortcuts */
   accelGroup = gtk_accel_group_new ();

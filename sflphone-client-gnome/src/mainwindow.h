@@ -90,4 +90,6 @@ void statusbar_push_message( const gchar* message , guint id );
 void statusbar_pop_message( guint id );
 
 void main_window_searchbar( gboolean *state );
+
+// void set_focus_on_mainwindow();
 #endif
