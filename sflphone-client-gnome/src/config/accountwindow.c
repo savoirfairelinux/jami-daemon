@@ -84,7 +84,7 @@ show_account_window (account_t * a)
     gchar * curHostname = "";
     gchar * curPassword = "";
     /* TODO: add curProxy, and add boxes for Proxy support */
-    gchar * curMailbox = "888";
+    gchar * curMailbox = "";
 
     // Load from SIP/IAX/Unknown ?
     if(a)
@@ -230,19 +230,6 @@ show_account_window (account_t * a)
 
     gtk_widget_show_all( table );
     gtk_container_set_border_width (GTK_CONTAINER(table), 10);
-
-    // Toggle enabled/disabled widgets
-    if (strcmp(curAccountType, "SIP") == 0) {
-        //gtk_widget_set_sesitive( GTK_WIDGET(entryUserPart), TRUE);<
-    }
-    else if (strcmp(curAccountType, "IAX") == 0) {
-        //gtk_widget_set_sensitive( GTK_WIDGET(stunEnable), FALSE);
-        //gtk_widget_set_sensitive( GTK_WIDGET(stunServer), FALSE);
-    }
-    else {
-        // Disable everything ! ouch!
-        // Shouldn't get there.
-    }
 
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     if(response == GTK_RESPONSE_ACCEPT)
