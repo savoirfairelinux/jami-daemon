@@ -72,6 +72,8 @@ void set_sflphone_org( GtkWidget* widget , gpointer data UNUSED ) {
 static void close_callback( void ) {
 	gtk_widget_destroy(wiz->assistant);
 	g_free(wiz); wiz = NULL;
+
+    status_bar_display_account ();
 }
 
 /**
@@ -81,6 +83,8 @@ static void close_callback( void ) {
 static void cancel_callback( void ) {
 	gtk_widget_destroy(wiz->assistant);
 	g_free(wiz); wiz = NULL;
+    
+    status_bar_display_account ();
 }
 
 /**
@@ -95,7 +99,7 @@ static void sip_apply_callback( void ) {
 	if( account_type == _SIP ) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_alias))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("TRUE"));
-		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup("888"));
+		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup(""));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_TYPE), g_strdup("SIP"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_server))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_PASSWORD), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->sip_password))));
@@ -122,7 +126,7 @@ static void iax_apply_callback( void ) {
 	if( account_type == _IAX) {
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ALIAS), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_alias))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_ENABLED), g_strdup("TRUE"));
-		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup("888"));
+		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_MAILBOX), g_strdup(""));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_TYPE), g_strdup("IAX"));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_USERNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_username))));
 		g_hash_table_insert(current->properties, g_strdup(ACCOUNT_HOSTNAME), g_strdup((gchar *)gtk_entry_get_text(GTK_ENTRY(wiz->iax_server))));
