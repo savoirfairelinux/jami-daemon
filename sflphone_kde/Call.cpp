@@ -1,10 +1,8 @@
 #include "Call.h"
 
-#include "callmanager_interface_p.h"
 #include "callmanager_interface_singleton.h"
 #include "SFLPhone.h"
 #include "sflphone_const.h"
-#include "configurationmanager_interface_p.h"
 #include "configurationmanager_interface_singleton.h"
 
 #include <kabc/addressbook.h>

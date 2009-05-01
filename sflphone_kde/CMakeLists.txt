@@ -1,19 +1,29 @@
-project(sflphone_kde)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-find_package(KDE4 REQUIRED)
+PROJECT(sflphone_kde)
 
-include (KDE4Defaults)
+SET(LOCAL_CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
+SET(CMAKE_MODULE_PATH "${LOCAL_CMAKE_MODULE_PATH}")
 
 # --- custom targets: ---
-INCLUDE( TargetDistclean.cmake OPTIONAL)
+INCLUDE( ${LOCAL_CMAKE_MODULE_PATH}/TargetDistclean.cmake  REQUIRED)
+
+FIND_PACKAGE ( PkgConfig REQUIRED )
+FIND_PACKAGE ( Kabc REQUIRED )
+FIND_PACKAGE ( KDE4 REQUIRED )
+FIND_PACKAGE ( Qt4 REQUIRED )
+
+INCLUDE ( KDE4Defaults )
 
 
-include_directories( ${KDE4_INCLUDES} ${QT_INCLUDES} )
 
-INCLUDE (  ${CMAKE_ROOT}/Modules/FindQt4.cmake  )
-INCLUDE (  ${CMAKE_ROOT}/Modules/FindKDE4.cmake  )
-INCLUDE (  ${CMAKE_ROOT}/Modules/FindPkgConfig.cmake  )
+INCLUDE_DIRECTORIES ( ${KDE4_INCLUDES} ${QT_INCLUDES} )
 
+#INCLUDE (  ${CMAKE_ROOT}/Modules/FindQt4.cmake  )
+#INCLUDE (  ${CMAKE_ROOT}/Modules/FindKDE4.cmake  )
+#INCLUDE (  ${CMAKE_ROOT}/Modules/FindPkgConfig.cmake  )
+
+INCLUDE (  ${CMAKE_ROOT}/Modules/CheckIncludeFiles.cmake  )
 INCLUDE(   ${QT_USE_FILE}   )
 
 ADD_DEFINITIONS(${KDE4_DEFINITIONS} ${QT_DEFINITIONS} -fexceptions -DDATA_INSTALL_DIR="\\\"${DATA_INSTALL_DIR}\\\"")
@@ -22,6 +32,9 @@ ADD_DEFINITIONS(${KDE4_DEFINITIONS} ${QT_DEFINITIONS} -fexceptions -DDATA_INSTAL
 
 #pkg_check_modules(LIBSEXY libsexy>=0.1)
 #pkg_check_modules(KDEPIM kdepimlibs5-dev REQUIRED)
+
+
+CHECK_INCLUDE_FILES (malloc.h HAVE_MALLOC_H)
 
 
 
@@ -36,18 +49,18 @@ SET(
 	AccountList.cpp
 	Call.cpp
 	CallList.cpp
-	configurationmanager_interface.cpp
+	#configurationmanager_interface.cpp
 	configurationmanager_interface_singleton.cpp
-	callmanager_interface.cpp
+	#callmanager_interface.cpp
 	callmanager_interface_singleton.cpp
-	instance_interface.cpp
+	#instance_interface.cpp
 	instance_interface_singleton.cpp
 	AccountWizard.cpp
 	AccountItemWidget.cpp
 	ActionSetAccountFirst.cpp
 	Contact.cpp
 	ContactItemWidget.cpp
-	metatypes.h
+	#metatypes.h
 )
  
 SET(QtApp_RCCS resources.qrc)
@@ -59,21 +72,47 @@ QT4_ADD_RESOURCES(QtApp_RCC_SRCS ${QtApp_RCCS})
 
 #kde4_automoc(${sflphone_kde_SRCS})
 
-kde4_add_ui_files(sflphone_kde_SRCS sflphone_kdeview_base.ui ConfigDialog.ui)
+KDE4_ADD_UI_FILES(sflphone_kde_SRCS sflphone_kdeview_base.ui ConfigDialog.ui)
 
-# set(configurationmanager_xml ${CMAKE_CURRENT_SOURCE_DIR}/../sflphone-common/src/dbus/configurationmanager-introspec.xml)
-# 
-# set_source_files_properties(
-#    ${configurationmanager_xml}
-#    PROPERTIES 
-#    COMPILE_FLAGS "-i metatypes.h"
-#    CLASSNAME ConfigurationManagerInterface
-#    INCLUDE "../metatypes.h") 
-# 
-# qt4_add_dbus_interface(
-#    sflphone_kde_SRCS 
-#    ${configurationmanager_xml}
-#    configurationmanager_interface)
+SET ( configurationmanager_xml  ${CMAKE_CURRENT_SOURCE_DIR}/../sflphone-common/src/dbus/configurationmanager-introspec.xml )
+SET ( callmanager_xml  ${CMAKE_CURRENT_SOURCE_DIR}/../sflphone-common/src/dbus/callmanager-introspec.xml )
+SET ( instance_xml  ${CMAKE_CURRENT_SOURCE_DIR}/../sflphone-common/src/dbus/instance-introspec.xml )
+
+
+SET_SOURCE_FILES_PROPERTIES(
+   ${configurationmanager_xml}
+   PROPERTIES 
+   CLASSNAME ConfigurationManagerInterface
+   INCLUDE "../metatypes.h") 
+
+qt4_add_dbus_interface(
+   sflphone_kde_SRCS 
+   ${configurationmanager_xml}
+   configurationmanager_interface)
+
+
+SET_SOURCE_FILES_PROPERTIES(
+   ${callmanager_xml}
+   PROPERTIES 
+   CLASSNAME CallManagerInterface
+   INCLUDE "../metatypes.h") 
+
+qt4_add_dbus_interface(
+   sflphone_kde_SRCS 
+   ${callmanager_xml}
+   callmanager_interface)
+
+
+SET_SOURCE_FILES_PROPERTIES(
+   ${instance_xml}
+   PROPERTIES 
+   CLASSNAME InstanceInterface
+   INCLUDE "../metatypes.h") 
+   
+qt4_add_dbus_interface(
+   sflphone_kde_SRCS 
+   ${instance_xml}
+   instance_interface)
 
 
 #kde4_add_kcfg_files(sflphone_kde_SRCS settings.kcfgc )

@@ -11,7 +11,6 @@
 #include "sflphone_const.h"
 #include "metatypes.h"
 #include "configurationmanager_interface_singleton.h"
-#include "configurationmanager_interface_p.h"
 
 
 AccountList * ConfigurationDialog::accountList;

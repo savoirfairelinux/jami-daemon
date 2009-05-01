@@ -1,0 +1,20 @@
+FIND_LIBRARY(KABC_LIBRARY NAMES libkabc.so)
+
+
+IF (KABC_LIBRARY)
+   SET(KABC_FOUND TRUE)
+ELSE (KABC_LIBRARY)
+   SET(KABC_FOUND FALSE)
+ENDIF (KABC_LIBRARY)
+
+
+IF (KABC_FOUND)
+	IF (NOT Kabc_FIND_QUIETLY)
+		MESSAGE(STATUS "Found Kabc library : ${KABC_LIBRARY}")
+	ENDIF (NOT Kabc_FIND_QUIETLY)
+ELSE (KABC_FOUND)
+	IF (Kabc_FIND_REQUIRED)
+		MESSAGE(FATAL_ERROR "Could not find Kabc : You might install kdepimlibs5-dev.\n      sudo apt-get install kdepimlibs5-dev\n")
+	ENDIF (Kabc_FIND_REQUIRED)
+ENDIF (KABC_FOUND)
+

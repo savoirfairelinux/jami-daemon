@@ -107,6 +107,7 @@ void sflphone_kdeView::loadWindow()
 	updateDialpad();
 	updateSearchHistory();
 	updateSearchAddressBook();
+	stackedWidget_screen->setCurrentWidget(page_callList);
 }
 
 QString sflphone_kdeView::firstAccountId()

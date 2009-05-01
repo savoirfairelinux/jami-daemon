@@ -11,7 +11,6 @@
 #include "ConfigDialog.h"
 #include "SFLPhone.h"
 #include "AccountWizard.h"
-#include "instance_interface_p.h"
 #include "instance_interface_singleton.h"
 #include "sflphone_const.h"
 
