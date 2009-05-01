@@ -387,7 +387,8 @@ toolbar_update_buttons ()
         if( account_list_get_size() > 0 )
         {
             gtk_widget_set_sensitive( GTK_WIDGET(callButton), TRUE );
-            gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton), TRUE );
+            if (account_list_current_account_has_mailbox ())
+                gtk_widget_set_sensitive( GTK_WIDGET(mailboxButton), TRUE );
         }
         else
         {

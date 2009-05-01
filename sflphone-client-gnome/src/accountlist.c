@@ -317,3 +317,21 @@ guint account_list_get_position (account_t *account)
     // Not found
     return -1;
 }
+
+gboolean account_list_current_account_has_mailbox (void)
+{
+
+    account_t *current;
+
+    // Check if the current account has a voicemail number configured
+
+    current = account_list_get_current ();
+    if (current)
+    {
+        if (g_strcasecmp (g_hash_table_lookup (current->properties, ACCOUNT_MAILBOX), "") != 0)
+            return TRUE;
+    }
+    
+    return FALSE;
+}
+
