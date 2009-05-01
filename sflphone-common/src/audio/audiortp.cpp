@@ -186,7 +186,6 @@ AudioRtpRTX::initBuffers()
     void
 AudioRtpRTX::initAudioRtpSession (void) 
 {
-    _debug("************* initAudioRtpSession *******************\n");
 
     try {
         if (_ca == 0) { return; }
@@ -194,11 +193,8 @@ AudioRtpRTX::initAudioRtpSession (void)
 
         if (_audiocodec == NULL) { return; }
 
-        _debug("************* get codec info *******************\n");
         _codecSampleRate = _audiocodec->getClockRate();
         _codecFrameSize = _audiocodec->getFrameSize();
-        _debug("_codecFrameSize: %i\n", _codecFrameSize);
-        _debug("_codecSampleRate: %i\n", _codecSampleRate);
         
 
         ost::InetHostAddress remote_ip(_ca->getLocalSDP()->get_remote_ip().c_str());
@@ -241,8 +237,6 @@ AudioRtpRTX::initAudioRtpSession (void)
             }
             _sessionSend->setMark(true);
         } else {
-
-            //_debug("AudioRTP Thread: Added session destination %s\n", remote_ip.getHostname() );
 
             if (!_session->addDestination (remote_ip, (unsigned short)_ca->getLocalSDP()->get_remote_audio_port() )) {
                 return;
@@ -416,7 +410,7 @@ AudioRtpRTX::sendSessionFromMic(int timestamp)
 
     // encode divise by two
     // Send encoded audio sample over the network
-    if (compSize > nbSamplesMax) { _debug("! ARTP: %d should be %d\n", compSize, nbSamplesMax);}
+    // if (compSize > nbSamplesMax) { _debug("! ARTP: %d should be %d\n", compSize, nbSamplesMax);}
     if (!_sym) {
         _sessionSend->putData(timestamp, micDataEncoded, compSize);
     } else {
@@ -611,13 +605,10 @@ AudioRtpRTX::run () {
       
       if(sessionWaiting == 1){
         // Record mic and speaker during conversation
-        _debug("_nSamplesSpkr: %i \n", _nSamplesSpkr);
-        _debug("_nSamplesMic: %i \n", _nSamplesMic);
         _ca->recAudio.recData(spkrDataConverted,micData,_nSamplesSpkr,_nSamplesMic);
       }
       else {
         // Record mic only while leaving a message
-        _debug("_nSamplesMic: %i \n", _nSamplesMic);
         _ca->recAudio.recData(micData,_nSamplesMic);
       }
 

@@ -116,28 +116,6 @@ void  row_activated(GtkTreeView       *tree_view UNUSED,
 }
 
     static gboolean
-on_key_released (GtkWidget   *widget UNUSED,
-        GdkEventKey *event,
-        gpointer     user_data UNUSED)
-{
-    // If a modifier key is pressed, it's a shortcut, pass along
-    if(event->state & GDK_CONTROL_MASK ||
-            event->state & GDK_MOD1_MASK    ||
-            event->keyval == 60             || // <
-            event->keyval == 62             || // >
-            event->keyval == 34             || // "
-            event->keyval == 65361          || // left arrow
-            event->keyval == 65363          || // right arrow
-            event->keyval >= 65470          || // F-keys
-            event->keyval == 32                // space
-      )
-        return FALSE;
-    else
-        sflphone_keypad(event->keyval, event->string);
-    return TRUE;
-}
-
-    static gboolean
 button_pressed(GtkWidget* widget, GdkEventButton *event, gpointer user_data UNUSED)
 {
     if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
@@ -187,7 +165,6 @@ calltree_create (calltab_t* tab, gchar* searchbar_type)
     sw = gtk_scrolled_window_new( NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
-    g_signal_connect (G_OBJECT ( sw ), "key-release-event",G_CALLBACK (on_key_released), NULL);
 
     tab->store = gtk_list_store_new (3,
             GDK_TYPE_PIXBUF,// Icon
