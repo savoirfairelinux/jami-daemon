@@ -1,6 +1,6 @@
-sflphone-common (0.9.5-0ubuntu1~4.gbp008b11) SYSTEM; urgency=low
+sflphone-common (0.9.5-0ubuntu1~5.gbpd32197) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @008b116930c10263e32e9096cd40df76f7f5c843 **
+  ** SNAPSHOT build @d32197529323a41861b121f9317fa3d9220ed7e7 **
 
   [ Emmanuel Milou ]
   * [#1220] Add Conflicts: sflphone in debian control files
@@ -89,7 +89,26 @@ sflphone-common (0.9.5-0ubuntu1~4.gbp008b11) SYSTEM; urgency=low
 
   [ Sflphone Project ]
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Fri, 01 May 2009 00:01:53 -0400
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    05-01
+
+  [ Julien Bonjean ]
+  * [#1161] Added build system scripts
+
+  [ Emmanuel Milou ]
+  * [#1215] Redesign current account computing
+  * [#1333] Remove default voicemail number
+  * [#1333] Voicemail icon update if current account has no voicemail
+    number + unit tests
+  * [#1333] Remove default voicemail number in assistant; update status
+    bar message
+  * [#1333] Add voicemail number field in wizard
+  * [#1342] Make config panels more GNOME compliant
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Sat, 02 May 2009 00:02:00 -0400
 
 sflphone-common (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
