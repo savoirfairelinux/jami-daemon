@@ -28,7 +28,6 @@ const GdkColor GRAY_COLOR = { 0, 30000, 30000, 30000 };
 
 
 void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED) {
-  printf("Search entry changed \n");
     // gtk_widget_grab_focus (GTK_WIDGET(searchbox));
 
     if (active_calltree == contacts) {
@@ -43,7 +42,8 @@ void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data
 void searchbar_clear_entry_if_default (GtkWidget* widget, gpointer user_data UNUSED) {
 
     gtk_widget_modify_text(widget, GTK_STATE_NORMAL, &BLACK_COLOR); 
-    if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(widget)), _("Search"), 6) == 0)
+    if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(widget)), "Search history", 14) == 0
+            || g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(widget)), "Search contact", 14) == 0 )
         gtk_entry_set_text(GTK_ENTRY(widget), "");
 
     // gtk_widget_grab_focus (GTK_WIDGET(searchbox));
