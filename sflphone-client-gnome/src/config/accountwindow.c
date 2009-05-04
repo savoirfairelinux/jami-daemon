@@ -84,7 +84,7 @@ show_account_window (account_t * a)
     gchar * curHostname = "";
     gchar * curPassword = "";
     /* TODO: add curProxy, and add boxes for Proxy support */
-    gchar * curMailbox = "888";
+    gchar * curMailbox = "";
 
     // Load from SIP/IAX/Unknown ?
     if(a)
@@ -117,7 +117,7 @@ show_account_window (account_t * a)
     gtk_dialog_set_has_separator(dialog, TRUE);
     gtk_container_set_border_width (GTK_CONTAINER(dialog), 0);
 
-    frame = gtk_frame_new(_("Account parameters"));
+    gnome_main_section_new (_("Account parameters"), &frame);
     gtk_box_pack_start(GTK_BOX(dialog->vbox), frame, FALSE, FALSE, 0);
     gtk_widget_show(frame);
 
@@ -231,19 +231,6 @@ show_account_window (account_t * a)
     gtk_widget_show_all( table );
     gtk_container_set_border_width (GTK_CONTAINER(table), 10);
 
-    // Toggle enabled/disabled widgets
-    if (strcmp(curAccountType, "SIP") == 0) {
-        //gtk_widget_set_sesitive( GTK_WIDGET(entryUserPart), TRUE);<
-    }
-    else if (strcmp(curAccountType, "IAX") == 0) {
-        //gtk_widget_set_sensitive( GTK_WIDGET(stunEnable), FALSE);
-        //gtk_widget_set_sensitive( GTK_WIDGET(stunServer), FALSE);
-    }
-    else {
-        // Disable everything ! ouch!
-        // Shouldn't get there.
-    }
-
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     if(response == GTK_RESPONSE_ACCEPT)
     {
@@ -309,11 +296,9 @@ show_account_window (account_t * a)
         /** @todo Verify if it's the best condition to check */
         if (currentAccount->accountID == NULL) {
             dbus_add_account(currentAccount);
-            account_list_set_current_id( currentAccount->accountID );
         }
         else {
             dbus_set_account_details(currentAccount);
-            account_list_set_current_id( currentAccount->accountID);
         }
     }
     gtk_widget_destroy (GTK_WIDGET(dialog));

@@ -18,6 +18,7 @@
  */
 
 #include <audioconf.h>
+#include <utils.h>
 
 GtkListStore *pluginlist;
 GtkListStore *outputlist;
@@ -821,15 +822,14 @@ GtkWidget* create_audio_configuration()
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Box for the audio manager selection
-    sound_conf = gtk_frame_new(_("Sound Manager"));
+    gnome_main_section_new (_("Sound Manager"), &sound_conf);
     gtk_box_pack_start(GTK_BOX(ret), sound_conf, FALSE, FALSE, 0);
     gtk_widget_show( sound_conf );
     box = api_box();
     gtk_container_add( GTK_CONTAINER(sound_conf) , box );
 
     // Box for the ALSA configuration
-    printf("Creating the alsa configurration box \n");
-    alsa_conf = gtk_frame_new(_("ALSA configuration"));
+    gnome_main_section_new (_("ALSA configuration"), &alsa_conf);
     gtk_box_pack_start(GTK_BOX(ret), alsa_conf, FALSE, FALSE, 0);
     // gtk_widget_hide( GTK_CONTAINER(alsa_conf) );
     gtk_widget_show( alsa_conf );
@@ -846,7 +846,7 @@ GtkWidget* create_audio_configuration()
     
 
     // Box for the codecs
-    codecs_conf = gtk_frame_new(_("Codecs"));
+    gnome_main_section_new (_("Codecs"), &codecs_conf);
     gtk_box_pack_start(GTK_BOX(ret), codecs_conf, FALSE, FALSE, 0);
     gtk_widget_set_size_request(GTK_WIDGET(codecs_conf), -1, 200);
     gtk_widget_show( codecs_conf );
@@ -858,6 +858,9 @@ GtkWidget* create_audio_configuration()
     
     /*
     noise_conf = gtk_frame_new(_("Audio Processing"));
+=======
+    gnome_main_section_new (_("Noise reduction"), &noise_conf);
+>>>>>>> master:sflphone-client-gnome/src/config/audioconf.c
     gtk_box_pack_start(GTK_BOX(ret), noise_conf, FALSE, FALSE, 0);
     gtk_widget_show( noise_conf );
     box = noise_box();
@@ -866,7 +869,7 @@ GtkWidget* create_audio_configuration()
     */
 
     // Box for the ringtones
-    ringtones_conf = gtk_frame_new(_("Ringtones"));
+    gnome_main_section_new (_("Ringtones"), &ringtones_conf);
     gtk_box_pack_start(GTK_BOX(ret), ringtones_conf, FALSE, FALSE, 0);
     gtk_widget_show( ringtones_conf );
     box = ringtones_box();

@@ -127,7 +127,7 @@ GtkWidget* create_hooks_settings (){
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    frame = gtk_frame_new(_("URL argument"));
+    gnome_main_section_new (_("URL argument"), &frame);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show (frame);
 
@@ -161,7 +161,7 @@ GtkWidget* create_hooks_settings (){
     gtk_entry_set_text(GTK_ENTRY(command), _urlhook_config->command);
     gtk_table_attach ( GTK_TABLE( table ), command, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
 
-    frame = gtk_frame_new(_("Phone number formatting"));
+    gnome_main_section_new (_("Phone number formatting"), &frame);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show (frame);
 

@@ -81,9 +81,13 @@ status_bar_display_account ()
         msg = g_markup_printf_escaped(_("Registered to %s (%s)") ,
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_ALIAS),
                 (gchar*)g_hash_table_lookup( acc->properties , ACCOUNT_TYPE));
-        statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
-        g_free(msg);
     }
+    else
+    {
+        msg = g_markup_printf_escaped(_("No registered account"));
+    }
+    statusbar_push_message( msg , __MSG_ACCOUNT_DEFAULT);
+    g_free(msg);
 }
 
 
@@ -235,7 +239,6 @@ gboolean sflphone_init()
         codec_list_init();
         sflphone_fill_account_list(FALSE);
         sflphone_fill_codec_list();
-        sflphone_set_current_account();
         return TRUE;
     }
 }
@@ -680,7 +683,6 @@ sflphone_keypad( guint keyval, gchar * key)
 sflphone_place_call ( call_t * c )
 {
 
-
     if (c->state == CALL_STATE_DIALING && g_str_has_prefix (c->to, "sip:"))
     {
         dbus_place_call (c);
@@ -736,7 +738,6 @@ sflphone_place_call ( call_t * c )
                         c -> accountID = current -> accountID;
                         dbus_place_call(c);
                         notify_current_account( current );
-                        account_list_set_current_id( c-> accountID );
                     }
                 }
                 else
@@ -749,7 +750,6 @@ sflphone_place_call ( call_t * c )
                     c -> accountID = current -> accountID;
                     dbus_place_call(c);
                     notify_current_account( current );
-                    account_list_set_current_id( c-> accountID );
                 }
             }
             // Update history
@@ -818,15 +818,6 @@ sflphone_rec_call()
     // gchar* codname = sflphone_get_current_codec_name();
     // DEBUG("sflphone_get_current_codec_name: %s",codname);
 }
-
-/* Internal to action - set the __CURRENT_ACCOUNT variable */
-    void
-sflphone_set_current_account()
-{
-    if( account_list_get_size() > 0 )
-        account_list_set_current_pos( 0 );
-}
-
 
 /* Internal to action - get the codec list */
     void

@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2009 Savoir-Faire Linux inc.
- *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,47 +17,15 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/**
- * This file contains functions specific for addressbook.
- * It is used as a "mapping" between real search implementation
- * and search bar.
- */
-
-#ifndef __ADDRESSBOOK_H__
-#define __ADDRESSBOOK_H__
+#ifndef _UTILS_
+#define _UTILS_
 
 #include <gtk/gtk.h>
-#include <addressbook/eds.h>
 
-/**
- * Return addressbook state
- */
-gboolean
-addressbook_is_ready();
+G_BEGIN_DECLS
 
-/**
- * Return addressbook state
- */
-gboolean
-addressbook_is_enabled();
+void gnome_main_section_new (gchar *title, GtkWidget**);
 
-/**
- * Return if at least one addressbook is active
- */
-gboolean
-addressbook_is_active();
+G_END_DECLS
 
-
-/**
- * Perform a search in addressbook
- */
-void
-addressbook_search(GtkEntry*);
-
-/**
- * Initialize addressbook
- */
-void
-addressbook_init();
-
-#endif
+#endif // _UTILS_

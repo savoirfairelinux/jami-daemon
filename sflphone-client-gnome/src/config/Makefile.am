@@ -7,7 +7,8 @@ libconfig_la_SOURCES = \
   configwindow.c \
   accountwindow.c \
   hooks-config.c \
-  audioconf.c 
+  audioconf.c \
+  utils.c
 
 libconfig_la_LDFLAGS = @DEPS_LDFLAGS@
 					  
