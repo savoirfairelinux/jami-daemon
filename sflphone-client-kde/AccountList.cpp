@@ -3,16 +3,7 @@
 #include "configurationmanager_interface_singleton.h"
 
 //Constructors
-/*
-AccountList::AccountList(VectorString & _accountIds)
-{
-	accounts = new QVector<Account *>(1);
-	(*accounts) += new Account(*(new QListWidgetItem()), "alias");
-	for (int i = 0; i < _accountIds.size(); ++i){
-		(*accounts) += new Account(_accountIds[i]);
-	}
-}
-*/
+
 AccountList::AccountList(QStringList & _accountIds)
 {
 	firstAccount = NULL;
@@ -56,7 +47,7 @@ QVector<Account *> AccountList::registeredAccounts() const
 	Account * current;
 	for (int i = 0; i < accounts->count(); ++i){
 		current = (*accounts)[i];
-		if(current->getAccountDetail(ACCOUNT_STATUS) == QString(ACCOUNT_STATE_REGISTERED))
+		if(current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
 		{
 			registeredAccounts.append(current);
 		}
@@ -73,7 +64,7 @@ Account * AccountList::firstRegisteredAccount() const
 	Account * current;
 	for (int i = 0; i < accounts->count(); ++i){
 		current = (*accounts)[i];
-		if(current->getAccountDetail(ACCOUNT_STATUS) == QString(ACCOUNT_STATE_REGISTERED))
+		if(current->getAccountDetail(ACCOUNT_STATUS) == ACCOUNT_STATE_REGISTERED)
 		{
 			return current;
 		}

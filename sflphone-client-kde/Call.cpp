@@ -477,8 +477,8 @@ void Call::call()
 	else
 	{
 		qDebug() << "Trying to call " << number << " with no account registered . callId : " << callId;
-		throw "No account registered!";
 		this->historyState = NONE;
+		throw "No account registered!";
 	}
 }
 

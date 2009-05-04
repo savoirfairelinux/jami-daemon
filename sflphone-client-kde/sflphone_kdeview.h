@@ -42,7 +42,7 @@
 class QPainter;
 class ConfigurationDialog;
 /**
- * This is the main view class for sflphone_kde.  Most of the non-menu,
+ * This is the main view class for sflphone-client-kde.  Most of the non-menu,
  * non-toolbar, and non-statusbar (e.g., non frame) GUI code should go
  * here.
  *

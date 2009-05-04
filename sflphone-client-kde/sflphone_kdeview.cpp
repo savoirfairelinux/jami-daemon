@@ -48,6 +48,7 @@ using namespace KABC;
 ConfigurationDialog * sflphone_kdeView::configDialog;
 
 sflphone_kdeView::sflphone_kdeView(QWidget *parent)
+	: QWidget(parent)
 {
 	setupUi(this);
 	
@@ -86,8 +87,6 @@ sflphone_kdeView::~sflphone_kdeView()
 	delete wizard;
 	delete callList;
 	delete errorWindow;
-// 	InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
-// 	instance.Unregister(getpid());
 }
 
 
@@ -112,7 +111,12 @@ void sflphone_kdeView::loadWindow()
 
 QString sflphone_kdeView::firstAccountId()
 {
-	return getAccountList()->firstRegisteredAccount()->getAccountId();
+	Account * firstAccount = getAccountList()->firstRegisteredAccount();
+	if(firstAccount == NULL)
+	{
+		return QString();
+	}
+	return firstAccount->getAccountId();
 }
 
 QVector<Account *> sflphone_kdeView::registeredAccounts()
@@ -383,13 +387,12 @@ void sflphone_kdeView::action(QListWidgetItem * item, call_action action)
 
 void sflphone_kdeView::updateCallItem(Call * call)
 {
-	QListWidgetItem * item = call->getItem();
 	call_state state = call->getState();
 	if(state == CALL_STATE_OVER)
 	{
+		QListWidgetItem * item = call->getItem();
 		qDebug() << "Updating call with CALL_STATE_OVER. Deleting item " << (*callList)[item]->getCallId();
 		listWidget_callList->takeItem(listWidget_callList->row(item));
-		addCallToCallHistory(call);
 	}
 }
 
@@ -1248,19 +1251,12 @@ void sflphone_kdeView::on_action_mailBox_triggered()
 {
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	QString account = firstAccountId();
-	if(account.isEmpty())
-	{
-		errorWindow->showMessage("No account registered!");
-	}
-	else
-	{
 		QString mailBoxNumber = configurationManager.getAccountDetails(account).value()[ACCOUNT_MAILBOX];
 		Call * call = callList->addDialingCall();
 		call->appendItemText(mailBoxNumber);
 		addCallToCallList(call);
 		listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 		actionb(call, CALL_ACTION_ACCEPT);
-	}
 }
 
 void sflphone_kdeView::on1_callStateChanged(const QString &callID, const QString &state)
@@ -1293,10 +1289,10 @@ void sflphone_kdeView::on1_error(MapStringString details)
 	qDebug() << "Signal : Daemon error : " << details;
 }
 
-void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString & callID/*, const QString &from*/)
+void sflphone_kdeView::on1_incomingCall(const QString &accountID, const QString & callID)
 {
 	qDebug() << "Signal : Incoming Call !";
-	Call * call = callList->addIncomingCall(callID/*, from, accountID*/);
+	Call * call = callList->addIncomingCall(callID);
 	addCallToCallList(call);
 	listWidget_callList->setCurrentRow(listWidget_callList->count() - 1);
 }

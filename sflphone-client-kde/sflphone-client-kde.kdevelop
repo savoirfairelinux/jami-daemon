@@ -12,7 +12,7 @@
       <keyword>Qt</keyword>
       <keyword>KDE</keyword>
     </keywords>
-    <projectname>sflphone_kde</projectname>
+    <projectname>sflphone-client-kde</projectname>
     <projectdirectory>.</projectdirectory>
     <absoluteprojectpath>false</absoluteprojectpath>
     <description/>
@@ -121,7 +121,7 @@
   </cppsupportpart>
   <kdevcustomproject>
     <run>
-      <mainprogram>/home/jquentin/sflphone/sflphone_kde/build</mainprogram>
+      <mainprogram>/home/jquentin/sflphone/sflphone-client-kde/build</mainprogram>
       <programargs/>
       <terminal>false</terminal>
       <autocompile>false</autocompile>
@@ -140,12 +140,12 @@
       <autokdesu>false</autokdesu>
       <globaldebugarguments/>
       <useglobalprogram>false</useglobalprogram>
-      <globalcwd>/home/jquentin/sflphone/sflphone_kde</globalcwd>
+      <globalcwd>/home/jquentin/sflphone/sflphone-client-kde</globalcwd>
       <directoryradio>executable</directoryradio>
     </run>
     <build>
       <buildtool>make</buildtool>
-      <builddir>/home/jquentin/sflphone/sflphone_kde/build</builddir>
+      <builddir>/home/jquentin/sflphone/sflphone-client-kde/build</builddir>
     </build>
     <make>
       <abortonerror>false</abortonerror>
@@ -192,9 +192,7 @@
         <default/>
       </environments>
     </other>
-    <blacklist>
-      <path>build</path>
-    </blacklist>
+    <blacklist/>
   </kdevcustomproject>
   <kdevcppsupport>
     <qt>
@@ -254,20 +252,20 @@
   <kdevdocumentation>
     <projectdoc>
       <docsystem>Doxygen Documentation Collection</docsystem>
-      <docurl>sflphone_kde.tag</docurl>
+      <docurl>sflphone-client-kde.tag</docurl>
     </projectdoc>
   </kdevdocumentation>
   <substmap>
-    <APPNAME>sflphone_kde</APPNAME>
-    <APPNAMELC>sflphone_kde</APPNAMELC>
-    <APPNAMESC>Sflphone_kde</APPNAMESC>
-    <APPNAMEUC>SFLPHONE_KDE</APPNAMEUC>
+    <APPNAME>sflphone-client-kde</APPNAME>
+    <APPNAMELC>sflphone-client-kde</APPNAMELC>
+    <APPNAMESC>Sflphone-client-kde</APPNAMESC>
+    <APPNAMEUC>SFLPHONE-CLIENT-KDE</APPNAMEUC>
     <AUTHOR>Jérémy Quentin</AUTHOR>
     <EMAIL>jeremy.quentin@gmail.com</EMAIL>
     <LICENSE>GPL</LICENSE>
     <LICENSEFILE>COPYING</LICENSEFILE>
     <VERSION>0.1</VERSION>
     <YEAR>2009</YEAR>
-    <dest>/home/jquentin/sflphone/sflphone_kde</dest>
+    <dest>/home/jquentin/sflphone/sflphone-client-kde</dest>
   </substmap>
 </kdevelop>

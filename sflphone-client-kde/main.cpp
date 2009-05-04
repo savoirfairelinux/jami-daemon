@@ -16,7 +16,7 @@
 
 static const char description[] = I18N_NOOP("A KDE 4 Client for SflPhone");
 
-static const char version[] = "0.1";
+static const char version[] = "0.9.5";
 
 int main(int argc, char **argv)
 {
@@ -42,9 +42,9 @@ int main(int argc, char **argv)
 		instance.Register(getpid(), APP_NAME);
 		
 		KAboutData about(
-		   "sflphone_kde", 
+		   "sflphone-client-kde", 
 		   0, 
-		   ki18n("sflphone_kde"), 
+		   ki18n("sflphone-client-kde"), 
 		   version, 
 		   ki18n(description),
 		   KAboutData::License_GPL, 
@@ -67,19 +67,7 @@ int main(int argc, char **argv)
 		QTranslator translator;
 		translator.load(QString("config_") + locale);
 		app.installTranslator(&translator);
-	
-	/*
-		QApplication app(argc,argv);
-		//
-		QMainWindow * fenetre = new QMainWindow();
-		QMenu * menu = new QMenu("menubb",0);
-		fenetre->menuBar()->addMenu(menu);
-		//QMenu * menu = fenetre->menuBar()->addMenu("menu");
-		QAction * action = new QAction("actioncc", 0);
-		action->setText("actionbb");
-		menu->addAction(action);
-		//fenetre->menuBar()->addMenu("menu");
-*/
+
 		fenetre->move(QCursor::pos().x() - fenetre->geometry().width()/2, QCursor::pos().y() - fenetre->geometry().height()/2);
 		fenetre->show();
 	

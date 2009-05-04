@@ -33,7 +33,7 @@ SFLPhone::SFLPhone(QWidget *parent)
 		
 		setupActions();
 		
-		QString str = QString(DATA_INSTALL_DIR) + "/sflphone_kde/sflphone_kdeui.rc";
+		QString str = QString(DATA_INSTALL_DIR) + "/sflphone-client-kde/sflphone-client-kdeui.rc";
 		qDebug() << "str = " << str ;
 		createGUI(str);
 		
