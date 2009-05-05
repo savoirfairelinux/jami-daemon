@@ -1,3 +1,32 @@
+sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
+
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    05-05
+
+  [ Emmanuel Milou ]
+  * Add some python CLI client code; not really functional
+  * [#1108] Fix peerHungup method for IP to IP call
+
+  [ Alexandre Savard ]
+  * [#1108] Correct setting of SIP contact for direct IP call
+  * [#1108] SIP user agent handles incoming REFER
+
+  [ Emmanuel Milou ]
+  * Remove website from repository
+  * Update translation
+
+  [ Alexandre Savard ]
+  * Sflphone icon's tooltip changed for "configured" instead of
+    "registered"
+
+  [ Emmanuel Milou ]
+  * Update translation
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Tue, 05 May 2009 19:16:13 -0400
+
 sflphone-client-gnome (0.9.5-0ubuntu1~6.gbpdfcd86) SYSTEM; urgency=low
 
   ** SNAPSHOT build @dfcd86f7fdabcc0462e8e5aef3a21ada929e077b **
