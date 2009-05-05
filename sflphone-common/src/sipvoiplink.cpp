@@ -1911,6 +1911,13 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
     }
 
 void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e){
+
+	if (tsx->role==PJSIP_ROLE_UAS && tsx->state==PJSIP_TSX_STATE_TRYING &&
+        	pjsip_method_cmp(&tsx->method, &pjsip_refer_method)==0)
+    	{
+		/** Handle the refer method **/
+		onCallTransfered (inv, e->body.tsx_state.src.rdata);
+    	}
     }
 
     void regc_cb(struct pjsip_regc_cbparam *param){
