@@ -578,18 +578,22 @@ SIPVoIPLink::hangup(const CallID& id)
     call = getSIPCall(id);
 
     if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
-
+    _debug("Create Bye");
     // User hangup current call. Notify peer
     status = pjsip_inv_end_session(call->getInvSession(), 404, NULL, &tdata);
     if(status != PJ_SUCCESS)
         return false;
+    _debug("Bye Created\n");
 
     if(tdata == NULL)
         return true;
+    // _debug("Some tdata info: %",);
 
+    _debug("Sending BYE");
     status = pjsip_inv_send_msg(call->getInvSession(), tdata);
     if(status != PJ_SUCCESS)
         return false;
+    _debug("BYE sent!\n");
 
     call->getInvSession()->mod_data[getModId()] = NULL;
 
@@ -807,6 +811,8 @@ SIPVoIPLink::transfer(const CallID& id, const std::string& to)
      * voiplink from the call any more. But the voiplink is useful!
      */
     pjsip_evsub_set_mod_data(sub, getModId(), this);
+ 
+    _debug ("SIP port listener = %i ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", _localExternPort);
 
     /*
      * Create REFER request.
@@ -1222,6 +1228,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             // Generate the from URI
             uri_to = "sip:" + to.substr (4, to.length());
 
+            _debug("get local ip address: %s \n", getLocalIPAddress().c_str());
             // Generate the to URI
             setCallAudioLocal(call, getLocalIPAddress(), useStun(), getStunServer());
 
@@ -1232,7 +1239,8 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
             call->getLocalSDP()->create_initial_offer();
 
             // Generate the contact URI
-            uri_contact << "<" << uri_from << ":" << call->getLocalSDP()->get_local_extern_audio_port() << ">";
+            // uri_contact << "<" << uri_from << ":" << call->getLocalSDP()->get_local_extern_audio_port() << ">";
+            uri_contact << "<" << uri_from << ":" << _localExternPort << ">";
 
             // pjsip need the from and to information in pj_str_t format
             pj_strdup2(_pool, &from, uri_from.data());
@@ -1489,8 +1497,8 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         status = pjsip_xfer_init_module(_endpt);
         PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
-        status = enable_dns_srv_resolver (_endpt, &p_resv);
-        PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
+        //status = enable_dns_srv_resolver (_endpt, &p_resv);
+        //PJ_ASSERT_RETURN( status == PJ_SUCCESS, 1 );
 
         // Init the callback for INVITE session: 
         pj_bzero(&inv_cb, sizeof (inv_cb));
@@ -1847,6 +1855,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
                     case PJSIP_SC_OK:
                     case PJSIP_SC_DECLINE:
                     case PJSIP_SC_REQUEST_TERMINATED: 
+                        _debug("GOT THE BYE MESSAGE!!!!!!! \n");
                         accId = Manager::instance().getAccountFromCall(call->getCallId());
                         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
                         if (link) {
@@ -1989,7 +1998,7 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(uri);
 
             userName = std::string(sip_uri->user.ptr, sip_uri->user.slen);
-            server = std::string(sip_uri->host.ptr, sip_uri->host.slen) ;
+            server = std::string(sip_uri->host.ptr, sip_uri->host.slen);
 
             std::cout << userName << " ------------------ " << server << std::endl;
 
@@ -2019,6 +2028,8 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             /* Now, it is the time to find the information of the caller */
             uri = rdata->msg_info.from->uri;
             sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(uri);
+
+            _debug("---------pjsip_sip_uri: port %i\n",sip_uri->port);
 
             /* Retrieve only the fisrt characters */
             caller = std::string(sip_uri->user.ptr, sip_uri->user.slen);
@@ -2449,34 +2460,51 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             /* When subscription is terminated, clear the xfer_sub member of 
              * the inv_data.
              */
+            
             if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
                 pjsip_evsub_set_mod_data(sub, _mod_ua.id, NULL);
                 _debug("UserAgent: Xfer client subscription terminated\n");
 
             }
-
+            
             if (!link || !event) {
                 /* Application is not interested with call progress status */
                 _debug("UserAgent: Either link or event is empty!\n");
                 return;
             }
             
+            _debug("START: --- PJSIP_EVENT_TSX_STATE && PJSIP_EVENT_RX_MSG ---\n");
+
+            /*
+            // Get current call
+            SIPCall *call = dynamic_cast<SIPCall *>(link->getCall(Manager::instance().getCurrentCallId()));
+            if(!call) {
+                _debug("UserAgent: Call doesn't exit!\n");
+                return;
+            }
+            */
 
             /* This better be a NOTIFY request */
             if (event->type == PJSIP_EVENT_TSX_STATE &&
                     event->body.tsx_state.type == PJSIP_EVENT_RX_MSG)
             {
-
+                _debug("      Setting pjsip_rx_data \n");
                 pjsip_rx_data *rdata;
 
                 rdata = event->body.tsx_state.src.rdata;
 
+                _debug("      Check if there's body\n");
                 /* Check if there's body */
                 msg = rdata->msg_info.msg;
                 body = msg->body;
                 if (!body) {
-                    _debug("UserAgent: Warning! Received NOTIFY without message body\n");
-                    return;
+                  // if (call->getCallConfiguration () == Call::IPtoIP) {
+                  //   _debug("UserAgent: IptoIp NOTIFY without message body\n");
+                  // }
+                  // else{
+                      _debug("UserAgent: Warning! Received NOTIFY without message body\n");
+                      return;
+                      // }
                 }
 
                 
@@ -2502,7 +2530,7 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                 status_line.code = 500;
                 status_line.reason = *pjsip_get_status_text(500);
             }
-
+            _debug("COMPLETE: --- PJSIP_EVENT_TSX_STATE && PJSIP_EVENT_RX_MSG ---\n");
             
             if(event->body.rx_msg.rdata->msg_info.msg_buf != NULL) {
                 request = event->body.rx_msg.rdata->msg_info.msg_buf;
@@ -2521,7 +2549,7 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                 }
             }
 
-
+            
             // Get current call
             SIPCall *call = dynamic_cast<SIPCall *>(link->getCall(Manager::instance().getCurrentCallId()));
             if(!call) {
