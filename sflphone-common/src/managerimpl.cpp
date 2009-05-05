@@ -808,10 +808,19 @@ ManagerImpl::peerHungupCall(const CallID& id)
     AccountID accountid;
     bool returnValue;
 
-    accountid = getAccountFromCall( id );
-    if (accountid == AccountNULL) {
-        _debug("peerHungupCall: Call doesn't exists\n");
-        return;
+    /* Direct IP to IP call */
+    if (getConfigFromCall (id) == Call::IPtoIP) {
+        SIPVoIPLink::instance (AccountNULL)->hangup (id);
+    }
+
+    else
+    {
+        accountid = getAccountFromCall( id );
+        if (accountid == AccountNULL) {
+            _debug("peerHungupCall: Call doesn't exists\n");
+            return;
+        }
+        returnValue = getAccountLink(accountid)->peerHungup(id);
     }
 
     /* Broadcast a signal over DBus */
@@ -821,8 +830,6 @@ ManagerImpl::peerHungupCall(const CallID& id)
         stopTone(true);
         switchCall("");
     }
-
-    returnValue = getAccountLink(accountid)->peerHungup(id);
 
     removeWaitingCall(id);
     removeCallAccount(id);
