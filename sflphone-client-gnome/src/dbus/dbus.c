@@ -189,7 +189,7 @@ error_alert(DBusGProxy *proxy UNUSED,
 		  int errCode,
                   void * foo  UNUSED )
 {
-  ERROR ("Error notifying : (%i)" , errCode);
+  ERROR ("Error notifying : (%i)", errCode);
   sflphone_throw_exception( errCode );
 }
 
@@ -510,13 +510,15 @@ dbus_set_account_details(account_t *a)
   }
 }
 
-void
+guint
 dbus_add_account(account_t *a)
 {
+  gint accountId;
   GError *error = NULL;
   org_sflphone_SFLphone_ConfigurationManager_add_account (
     configurationManagerProxy,
     a->properties,
+    &accountId,
     &error);
   if (error)
   {
@@ -524,6 +526,7 @@ dbus_add_account(account_t *a)
                 error->message);
     g_error_free (error);
   }
+  return (guint) accountId;
 }
 
 void
