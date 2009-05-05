@@ -1,6 +1,6 @@
-sflphone-common (0.9.5-0ubuntu1~5.gbpd32197) SYSTEM; urgency=low
+sflphone-common (0.9.5-0ubuntu1~6.gbpdfcd86) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @d32197529323a41861b121f9317fa3d9220ed7e7 **
+  ** SNAPSHOT build @dfcd86f7fdabcc0462e8e5aef3a21ada929e077b **
 
   [ Emmanuel Milou ]
   * [#1220] Add Conflicts: sflphone in debian control files
@@ -108,7 +108,34 @@ sflphone-common (0.9.5-0ubuntu1~5.gbpd32197) SYSTEM; urgency=low
 
   [ Sflphone Project ]
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Sat, 02 May 2009 00:02:00 -0400
+  [ Alexandre Savard ]
+  * [#1143] Fixed auio record after celt refactoring
+  * [#1327] Alsa display unappropriate info
+  * [#1328] Unappropriate label in audio preferences panel
+  * [#1316] Forgot 's' to RFC3969 'sip:' URI when calling in unicast
+    mode
+  * [#1316] #define IP_TO_IP_PATTERN  "sip:"
+  * [#1316] 'sip:' subtitution to 4 char
+  * [#1321] Startup wizard password display is inconsistent
+  * [#1325] Error window in preferences shows formatting error
+  * [#1325] Proposed Implementation
+  * [#1325] Add title to window
+  * [#1343] Moved key stroke signal from call tree to main window
+  * [#1343] Dialing on key strike disabled when either history or
+    contact selected
+  * [#1343] Cannot dial when focus not on white frame
+
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    05-02
+
+  [ Emmanuel Milou ]
+  * [#1331] Fix clear default message bug
+  * [#936] Remove old codecs from repository
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Tue, 05 May 2009 00:02:13 -0400
 
 sflphone-common (0.9.5-0ubuntu1~beta) SYSTEM; urgency=low
 
