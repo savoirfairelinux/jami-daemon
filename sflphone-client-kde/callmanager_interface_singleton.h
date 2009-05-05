@@ -1,7 +1,7 @@
 #ifndef CALL_MANAGER_INTERFACE_SINGLETON_H
 #define CALL_MANAGER_INTERFACE_SINGLETON_H
 
-#include "callmanager_interface.h"
+#include "callmanager_dbus_interface.h"
 
 class CallManagerInterfaceSingleton
 {

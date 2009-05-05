@@ -22,7 +22,7 @@
 #define INSTANCE_INTERFACE_SINGLETON_H
 
 
-#include "instance_interface.h"
+#include "instance_dbus_interface.h"
 
 /**
 	@author Jérémy Quentin <jeremy.quentin@gmail.com>

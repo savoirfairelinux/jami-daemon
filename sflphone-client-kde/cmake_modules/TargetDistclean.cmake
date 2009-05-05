@@ -22,10 +22,11 @@ IF (UNIX)
    ui_*.h
    *.moc
    qrc_resources.cxx
-   *introspecinterface.cpp
-   *introspecinterface.h
+   *_dbus_interface.cpp
+   *_dbus_interface.h
    sflphone-client-kde
    sflphone-client-kde.shell
+   install_manifest.txt
   )
   
   ADD_CUSTOM_COMMAND(

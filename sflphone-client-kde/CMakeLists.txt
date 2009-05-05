@@ -80,7 +80,7 @@ SET_SOURCE_FILES_PROPERTIES(
 QT4_ADD_DBUS_INTERFACE(
    sflphone_client_kde_SRCS 
    ${configurationmanager_xml}
-   configurationmanager_interface)
+   configurationmanager_dbus_interface)
 
 # call manager interface
 
@@ -95,7 +95,7 @@ SET_SOURCE_FILES_PROPERTIES(
 QT4_ADD_DBUS_INTERFACE(
    sflphone_client_kde_SRCS 
    ${callmanager_xml}
-   callmanager_interface)
+   callmanager_dbus_interface)
 
 # instance interface
 
@@ -110,7 +110,7 @@ SET_SOURCE_FILES_PROPERTIES(
 QT4_ADD_DBUS_INTERFACE(
    sflphone_client_kde_SRCS 
    ${instance_xml}
-   instance_interface)
+   instance_dbus_interface)
 
 
 # kde4_add_kcfg_files(sflphone_client_kde_SRCS settings.kcfgc )

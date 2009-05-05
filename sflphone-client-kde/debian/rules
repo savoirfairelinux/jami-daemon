@@ -10,17 +10,19 @@
 #export DH_VERBOSE=1
 export DH_OPTIONS
 
-package=sflphone-client-gnome
+package=sflphone-client-kde
 
 CXX = g++-4.0
-CFLAGS = -Wall -g
-DEB_INSTALL_MANPAGES_sflphone_client_gnome = sflphone.1 sflphone-client-gnome.1
+# CFLAGS = -Wall -g
+DEB_INSTALL_MANPAGES_sflphone_client_kde = sflphone.1 sflphone-client-kde.1
 
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	./autogen.sh --prefix=/usr
+	mkdir build
+	cd build
+	cmake ..
 	touch configure-stamp
 
 
@@ -40,6 +42,7 @@ build-indep-stamp: configure-stamp
        # Add here commands to compile the indep part of the package.
        #$(MAKE) doc
 	touch $@
+
 clean:
 	dh_testdir
 	dh_testroot

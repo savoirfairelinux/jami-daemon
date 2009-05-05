@@ -5,14 +5,10 @@
 
 set -e
 
-package=sflphone-client-gnome
+package=sflphone-client-kde
 
 case "$1" in
     install|upgrade)
-        ## Clean up the previous manpage
-        if [ -f /usr/share/man/man1/sflphone-gtk.1 ]; then
-            rm /usr/share/man/man1/sflphone-gtk.1
-        fi
     ;;
 esac
 

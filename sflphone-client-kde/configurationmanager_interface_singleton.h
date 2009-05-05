@@ -1,7 +1,7 @@
 #ifndef CONFIGURATION_MANAGER_INTERFACE_SINGLETON_H
 #define CONFIGURATION_MANAGER_INTERFACE_SINGLETON_H
 
-#include "configurationmanager_interface.h"
+#include "configurationmanager_dbus_interface.h"
 
 
 class ConfigurationManagerInterfaceSingleton

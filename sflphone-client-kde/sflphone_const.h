@@ -48,17 +48,17 @@
 #define CONTACT_ITEM_HEIGHT               40
 
 
-#define ACTION_LABEL_CALL                 tr2i18n("Call", 0)
-#define ACTION_LABEL_HANG_UP              tr2i18n("Hang up", 0)
-#define ACTION_LABEL_HOLD                 tr2i18n("Hold", 0)
-#define ACTION_LABEL_TRANSFER             tr2i18n("Transfer", 0)
-#define ACTION_LABEL_RECORD               tr2i18n("Record", 0)
-#define ACTION_LABEL_ACCEPT               tr2i18n("Accept", 0)
-#define ACTION_LABEL_REFUSE               tr2i18n("Refuse", 0)
-#define ACTION_LABEL_UNHOLD               tr2i18n("Unhold", 0)
-#define ACTION_LABEL_GIVE_UP_TRANSF       tr2i18n("Give up transfer", 0)
-#define ACTION_LABEL_CALL_BACK            tr2i18n("Call back", 0)
-#define ACTION_LABEL_GIVE_UP_SEARCH       tr2i18n("Give up search", 0)
+#define ACTION_LABEL_CALL                 i18nc("Call")
+#define ACTION_LABEL_HANG_UP              tr2i18n("Hang up")
+#define ACTION_LABEL_HOLD                 tr2i18n("Hold")
+#define ACTION_LABEL_TRANSFER             tr2i18n("Transfer")
+#define ACTION_LABEL_RECORD               tr2i18n("Record")
+#define ACTION_LABEL_ACCEPT               tr2i18n("Accept")
+#define ACTION_LABEL_REFUSE               tr2i18n("Refuse")
+#define ACTION_LABEL_UNHOLD               tr2i18n("Unhold")
+#define ACTION_LABEL_GIVE_UP_TRANSF       tr2i18n("Give up transfer")
+#define ACTION_LABEL_CALL_BACK            tr2i18n("Call back")
+#define ACTION_LABEL_GIVE_UP_SEARCH       tr2i18n("Give up search")
 
 
 #define ICON_INCOMING                     ":/images/icons/ring.svg"

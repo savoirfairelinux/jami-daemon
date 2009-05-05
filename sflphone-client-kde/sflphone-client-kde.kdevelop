@@ -192,7 +192,50 @@
         <default/>
       </environments>
     </other>
-    <blacklist/>
+    <blacklist>
+      <path>build</path>
+      <path>build/callmanager_interface.cpp</path>
+      <path>build/callmanager_interface.h</path>
+      <path>build/CMakeFiles</path>
+      <path>build/CMakeFiles/CMakeCCompiler.cmake</path>
+      <path>build/CMakeFiles/CMakeCXXCompiler.cmake</path>
+      <path>build/CMakeFiles/CMakeDirectoryInformation.cmake</path>
+      <path>build/CMakeFiles/CMakeSystem.cmake</path>
+      <path>build/CMakeFiles/CompilerIdCXX</path>
+      <path>build/CMakeFiles/CompilerIdCXX/CMakeCXXCompilerId.cpp</path>
+      <path>build/CMakeFiles/distclean.dir</path>
+      <path>build/CMakeFiles/distclean.dir/cmake_clean.cmake</path>
+      <path>build/CMakeFiles/distclean.dir/DependInfo.cmake</path>
+      <path>build/CMakeFiles/Makefile.cmake</path>
+      <path>build/CMakeFiles/sflphone-client-kde_automoc.dir</path>
+      <path>build/CMakeFiles/sflphone-client-kde_automoc.dir/cmake_clean.cmake</path>
+      <path>build/CMakeFiles/sflphone-client-kde_automoc.dir/DependInfo.cmake</path>
+      <path>build/CMakeFiles/sflphone-client-kde.dir</path>
+      <path>build/CMakeFiles/sflphone-client-kde.dir/cmake_clean.cmake</path>
+      <path>build/CMakeFiles/sflphone-client-kde.dir/DependInfo.cmake</path>
+      <path>build/CMakeFiles/uninstall.dir</path>
+      <path>build/CMakeFiles/uninstall.dir/cmake_clean.cmake</path>
+      <path>build/CMakeFiles/uninstall.dir/DependInfo.cmake</path>
+      <path>build/cmake_install.cmake</path>
+      <path>build/CMakeTmp</path>
+      <path>build/CMakeTmp/check_qt_visibility.cpp</path>
+      <path>build/cmake_uninstall.cmake</path>
+      <path>build/configurationmanager_interface.cpp</path>
+      <path>build/configurationmanager_interface.h</path>
+      <path>build/CTestTestfile.cmake</path>
+      <path>build/instance_interface.cpp</path>
+      <path>build/instance_interface.h</path>
+      <path>build/moc_AccountItemWidget.cpp</path>
+      <path>build/moc_AccountWizard.cpp</path>
+      <path>build/moc_ActionSetAccountFirst.cpp</path>
+      <path>build/moc_ConfigDialog.cpp</path>
+      <path>build/moc_ContactItemWidget.cpp</path>
+      <path>build/moc_SFLPhone.cpp</path>
+      <path>build/sflphone-client-kde_automoc.cpp</path>
+      <path>build/ui_ConfigDialog.h</path>
+      <path>build/ui_sflphone_kdeview_base.h</path>
+      <path>sflphone-client-kde.kcfg</path>
+    </blacklist>
   </kdevcustomproject>
   <kdevcppsupport>
     <qt>
