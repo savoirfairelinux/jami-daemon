@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SFLphone 0.9.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-04-02 11:15-0400\n"
+"POT-Creation-Date: 2009-05-05 17:03-0400\n"
 "PO-Revision-Date: 2008-10-28 14:15\n"
 "Last-Translator: Yun Liu <yun.liu@savoirfairelinux.com>\n"
 "Language-Team: SavoirFaireLinux Inc <sflphoneteam@savoirfairelinux.com>\n"
@@ -17,63 +17,70 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: ../sflphone-gtk/src/accountlist.c:158
+#: ../../sflphone-client-gnome/src/accountlist.c:169
 msgid "Registered"
 msgstr "已註冊"
 
-#: ../sflphone-gtk/src/accountlist.c:161
+#: ../../sflphone-client-gnome/src/accountlist.c:172
 msgid "Not Registered"
 msgstr "未註冊"
 
-#: ../sflphone-gtk/src/accountlist.c:164
+#: ../../sflphone-client-gnome/src/accountlist.c:175
 msgid "Trying..."
 msgstr "正在連接..."
 
-#: ../sflphone-gtk/src/accountlist.c:167 ../sflphone-gtk/src/sflnotify.c:171
-#: ../sflphone-gtk/src/sflnotify.c:212
+#: ../../sflphone-client-gnome/src/accountlist.c:178
+#: ../../sflphone-client-gnome/src/sflnotify.c:176
+#: ../../sflphone-client-gnome/src/sflnotify.c:217
 msgid "Error"
 msgstr "註冊失敗"
 
-#: ../sflphone-gtk/src/accountlist.c:170
+#: ../../sflphone-client-gnome/src/accountlist.c:181
 msgid "Bad authentification"
 msgstr "認證錯誤"
 
-#: ../sflphone-gtk/src/accountlist.c:173
+#: ../../sflphone-client-gnome/src/accountlist.c:184
 msgid "Network unreachable"
 msgstr "網路連線失敗"
 
-#: ../sflphone-gtk/src/accountlist.c:176
+#: ../../sflphone-client-gnome/src/accountlist.c:187
 msgid "Host unreachable"
 msgstr "伺服器連線失敗"
 
-#: ../sflphone-gtk/src/accountlist.c:179
+#: ../../sflphone-client-gnome/src/accountlist.c:190
 msgid "Stun configuration error"
 msgstr "Stun配置有誤"
 
-#: ../sflphone-gtk/src/accountlist.c:182
+#: ../../sflphone-client-gnome/src/accountlist.c:193
 msgid "Stun server invalid"
 msgstr "Stun伺服器無效"
 
-#: ../sflphone-gtk/src/accountlist.c:185
+#: ../../sflphone-client-gnome/src/accountlist.c:196
 msgid "Invalid"
 msgstr "無效"
 
-#: ../sflphone-gtk/src/actions.c:55 ../sflphone-gtk/src/sflnotify.c:103
+#: ../../sflphone-client-gnome/src/actions.c:55
+#: ../../sflphone-client-gnome/src/sflnotify.c:108
 #, c-format
 msgid "%d voice mails"
 msgstr "%d 個語音郵件"
 
-#: ../sflphone-gtk/src/actions.c:57
+#: ../../sflphone-client-gnome/src/actions.c:57
 #, c-format
 msgid "%d voice mail"
 msgstr "%d 個語音郵件"
 
-#: ../sflphone-gtk/src/actions.c:81
-#, c-format
-msgid "%s account- %s"
-msgstr "%s 帳戶- %s"
+#: ../../sflphone-client-gnome/src/actions.c:81
+#, fuzzy, c-format
+msgid "Connected to %s (%s)"
+msgstr "已註冊"
 
-#: ../sflphone-gtk/src/actions.c:225
+#: ../../sflphone-client-gnome/src/actions.c:87
+#, fuzzy
+msgid "No registered account"
+msgstr "未發現已註冊帳戶"
+
+#: ../../sflphone-client-gnome/src/actions.c:229
 msgid ""
 "Unable to connect to the SFLphone server.\n"
 "Make sure the daemon is running."
@@ -81,11 +88,17 @@ msgstr ""
 "連接SFLphone伺服器失敗.\n"
 "請核查daemon是否正在運行."
 
-#: ../sflphone-gtk/src/actions.c:764
-msgid "%s account- %s             %s"
-msgstr "%s 帳戶- %s		%s"
+#: ../../sflphone-client-gnome/src/actions.c:775
+#, c-format
+msgid "IP call - %s"
+msgstr ""
 
-#: ../sflphone-gtk/src/actions.c:861
+#: ../../sflphone-client-gnome/src/actions.c:778
+#, c-format
+msgid "%s account- %s             %s"
+msgstr "%s 帳戶- %s\t\t%s"
+
+#: ../../sflphone-client-gnome/src/actions.c:868
 #, c-format
 msgid ""
 "<b>Error: No audio codecs found.\n"
@@ -98,7 +111,8 @@ msgstr ""
 "</b> SFL聲音編碼檔案應該位于<i>%s</i> 或者位于主目錄( <i>%s</i> )的<b>."
 "sflphone</b>目錄下"
 
-#: ../sflphone-gtk/src/assistant.c:31
+#: ../../sflphone-client-gnome/src/assistant.c:35
+#, fuzzy, c-format
 msgid ""
 "This assistant is now finished.\n"
 "You can at any time check your registration state or modify your accounts "
@@ -107,145 +121,136 @@ msgid ""
 "Alias :    %s\n"
 "Server :   %s\n"
 "Username : %s\n"
-"Password : %s"
 msgstr ""
 "配置完成.\n"
-"你可以隨時在 選項/帳戶 中查看註冊狀態或者修改帳戶信息"
-"\n"
+"你可以隨時在 選項/帳戶 中查看註冊狀態或者修改帳戶信息\n"
 "別稱:         %s\n"
 "伺服器:       %s\n"
 "使用者名稱:   %s\n"
 "密碼:         %s"
 
-#: ../sflphone-gtk/src/assistant.c:154
+#: ../../sflphone-client-gnome/src/assistant.c:160
 msgid "SFLphone account configuration wizard"
 msgstr "SFLphone 帳戶設置向導"
 
-#: ../sflphone-gtk/src/assistant.c:180
+#: ../../sflphone-client-gnome/src/assistant.c:186
 msgid "Welcome to SFLphone!"
 msgstr "歡迎使用SFLphone!"
 
-#: ../sflphone-gtk/src/assistant.c:181
+#: ../../sflphone-client-gnome/src/assistant.c:187
 msgid "This installation wizard will help you configure an account."
 msgstr "安裝向導將幫助您配置帳戶"
 
-#: ../sflphone-gtk/src/assistant.c:195
+#: ../../sflphone-client-gnome/src/assistant.c:201
 msgid "VoIP Protocols"
 msgstr "VoIP協議"
 
-#: ../sflphone-gtk/src/assistant.c:195
+#: ../../sflphone-client-gnome/src/assistant.c:201
 msgid "Select an account type:"
 msgstr "選擇帳戶類型:"
 
-#: ../sflphone-gtk/src/assistant.c:213
+#: ../../sflphone-client-gnome/src/assistant.c:219
 msgid "Account"
 msgstr "帳戶"
 
-#: ../sflphone-gtk/src/assistant.c:213
+#: ../../sflphone-client-gnome/src/assistant.c:219
 msgid "Please select one of the following option:"
 msgstr "請選擇以下選項中的一個:"
 
-#: ../sflphone-gtk/src/assistant.c:215
+#: ../../sflphone-client-gnome/src/assistant.c:221
 msgid "Create a free SIP/IAX2 account on sflphone.org"
 msgstr "在sflphone.org上創建免費的SIP/IAX2帳戶"
 
-#: ../sflphone-gtk/src/assistant.c:217
+#: ../../sflphone-client-gnome/src/assistant.c:223
 msgid "Register an existing SIP or IAX2 account"
 msgstr "註冊已存在的SIP或IAX2帳戶"
 
-#: ../sflphone-gtk/src/assistant.c:230
+#: ../../sflphone-client-gnome/src/assistant.c:236
 msgid "SIP account configuration"
 msgstr "SIP帳戶配置"
 
-#: ../sflphone-gtk/src/assistant.c:230 ../sflphone-gtk/src/assistant.c:305
+#: ../../sflphone-client-gnome/src/assistant.c:236
+#: ../../sflphone-client-gnome/src/assistant.c:332
 msgid "Please fill the following information:"
 msgstr "請填寫如下信息:"
 
-#: ../sflphone-gtk/src/assistant.c:238 ../sflphone-gtk/src/assistant.c:313
-#: ../sflphone-gtk/src/config/accountwindow.c:143
+#: ../../sflphone-client-gnome/src/assistant.c:244
+#: ../../sflphone-client-gnome/src/assistant.c:340
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:148
 msgid "_Alias"
 msgstr "別稱(A)"
 
-#: ../sflphone-gtk/src/assistant.c:246 ../sflphone-gtk/src/assistant.c:321
-#: ../sflphone-gtk/src/config/accountwindow.c:179
+#: ../../sflphone-client-gnome/src/assistant.c:252
+#: ../../sflphone-client-gnome/src/assistant.c:348
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:184
 msgid "_Host name"
 msgstr "主机名稱(H)"
 
-#: ../sflphone-gtk/src/assistant.c:254 ../sflphone-gtk/src/assistant.c:329
-#: ../sflphone-gtk/src/config/accountwindow.c:187
+#: ../../sflphone-client-gnome/src/assistant.c:260
+#: ../../sflphone-client-gnome/src/assistant.c:356
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:192
 msgid "_User name"
 msgstr "使用者名稱(U)"
 
-#: ../sflphone-gtk/src/assistant.c:264 ../sflphone-gtk/src/assistant.c:339
-#: ../sflphone-gtk/src/config/accountwindow.c:198
+#: ../../sflphone-client-gnome/src/assistant.c:276
+#: ../../sflphone-client-gnome/src/assistant.c:371
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:207
 msgid "_Password"
 msgstr "密碼(P)"
 
-#: ../sflphone-gtk/src/assistant.c:282
+#: ../../sflphone-client-gnome/src/assistant.c:294
+#: ../../sflphone-client-gnome/src/assistant.c:387
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:223
+#, fuzzy
+msgid "_Voicemail number"
+msgstr "語音郵箱(V)"
+
+#: ../../sflphone-client-gnome/src/assistant.c:309
 msgid "Optional Email Address "
 msgstr "可選郵件地址 "
 
-#: ../sflphone-gtk/src/assistant.c:282
+#: ../../sflphone-client-gnome/src/assistant.c:309
 msgid "This email address will be use to send your voicemail messages"
 msgstr "這個郵件地址將被用來發送您的語音郵箱消息"
 
-#: ../sflphone-gtk/src/assistant.c:290
+#: ../../sflphone-client-gnome/src/assistant.c:317
 msgid "_Email"
 msgstr "郵件(E)"
 
-#: ../sflphone-gtk/src/assistant.c:305
+#: ../../sflphone-client-gnome/src/assistant.c:332
 msgid "IAX2 account configuration"
 msgstr "IAX2帳戶配置"
 
-#: ../sflphone-gtk/src/assistant.c:360
-#: ../sflphone-gtk/src/config/configwindow.c:837
+#: ../../sflphone-client-gnome/src/assistant.c:405
+#: ../../sflphone-client-gnome/src/config/configwindow.c:840
 msgid "Network Address Translation"
 msgstr "網路地址分析"
 
-#: ../sflphone-gtk/src/assistant.c:360
+#: ../../sflphone-client-gnome/src/assistant.c:405
 msgid "You should probably enable this if you are behind a firewall."
 msgstr "如果你使用網路防火牆，你很有可能需要設定該項."
 
-#: ../sflphone-gtk/src/assistant.c:369
-#: ../sflphone-gtk/src/config/configwindow.c:499
+#: ../../sflphone-client-gnome/src/assistant.c:414
+#: ../../sflphone-client-gnome/src/config/configwindow.c:504
 msgid "E_nable STUN"
 msgstr "啟用STUN(n)"
 
-#: ../sflphone-gtk/src/assistant.c:376
+#: ../../sflphone-client-gnome/src/assistant.c:421
 msgid "_STUN server"
 msgstr "STUN伺服器(S)"
 
-#: ../sflphone-gtk/src/assistant.c:390
+#: ../../sflphone-client-gnome/src/assistant.c:435
 msgid "Account Registration"
 msgstr "帳戶註冊"
 
-#: ../sflphone-gtk/src/assistant.c:390
+#: ../../sflphone-client-gnome/src/assistant.c:435
 msgid "Congratulations!"
 msgstr "恭喜！"
 
-#: ../sflphone-gtk/src/context-menu.c:296 ../sflphone-gtk/src/menus.c:308
-#: ../sflphone-gtk/src/menus.c:791
-msgid "_Pick up"
-msgstr "撥出(P)"
-
-#: ../sflphone-gtk/src/context-menu.c:308 ../sflphone-gtk/src/menus.c:318
-#: ../sflphone-gtk/src/menus.c:803
-msgid "_Hang up"
-msgstr "放下(H)"
-
-#: ../sflphone-gtk/src/context-menu.c:320 ../sflphone-gtk/src/menus.c:328
-#: ../sflphone-gtk/src/menus.c:815
-msgid "On _Hold"
-msgstr "待机"
-
-#: ../sflphone-gtk/src/context-menu.c:332 ../sflphone-gtk/src/menus.c:340
-#: ../sflphone-gtk/src/menus.c:827
-msgid "_Record"
-msgstr "記錄(R)"
-
-#: ../sflphone-gtk/src/errors.c:28
+#: ../../sflphone-client-gnome/src/errors.c:28
+#, fuzzy
 msgid ""
-"<b>ALSA notification</b>\n"
+"ALSA notification\n"
 "\n"
 "Error while opening playback device"
 msgstr ""
@@ -253,9 +258,10 @@ msgstr ""
 "\n"
 "打開回放設備時出錯"
 
-#: ../sflphone-gtk/src/errors.c:31
+#: ../../sflphone-client-gnome/src/errors.c:31
+#, fuzzy
 msgid ""
-"<b>ALSA notification</b>\n"
+"ALSA notification\n"
 "\n"
 "Error while opening capture device"
 msgstr ""
@@ -263,469 +269,559 @@ msgstr ""
 "\n"
 "打開采集設備時出錯"
 
-#: ../sflphone-gtk/src/errors.c:34
+#: ../../sflphone-client-gnome/src/errors.c:34
 msgid ""
-"<b>Pulseaudio notification</b>\n"
+"Pulseaudio notification\n"
 "\n"
 "Pulseaudio is not running"
 msgstr ""
 
-#: ../sflphone-gtk/src/mainwindow.c:70
+#: ../../sflphone-client-gnome/src/mainwindow.c:70
 msgid "There is one call in progress."
 msgstr "有一個電話正在處理中."
 
-#: ../sflphone-gtk/src/mainwindow.c:74
+#: ../../sflphone-client-gnome/src/mainwindow.c:74
 msgid "There are calls in progress."
 msgstr "有電話正在處理中."
 
-#: ../sflphone-gtk/src/mainwindow.c:83
+#: ../../sflphone-client-gnome/src/mainwindow.c:83
 msgid "Do you still want to quit?"
 msgstr "確認要退出?"
 
-#: ../sflphone-gtk/src/menus.c:131
+#: ../../sflphone-client-gnome/src/mainwindow.c:293
+#, fuzzy
+msgid "SFLphone Error"
+msgstr "SFLphone 0.9.2"
+
+#: ../../sflphone-client-gnome/src/menus.c:134
 msgid "SFLphone is a VoIP client compatible with SIP and IAX2 protocols."
 msgstr "SFLphone是一個VoIP客戶端，它兼容SIP和IAX2协议."
 
-#: ../sflphone-gtk/src/menus.c:134
+#: ../../sflphone-client-gnome/src/menus.c:137
 msgid "About SFLphone"
 msgstr "有關SFLphone"
 
-#: ../sflphone-gtk/src/menus.c:157
+#: ../../sflphone-client-gnome/src/menus.c:161
 msgid "_Help"
 msgstr "幫助(H)"
 
-#: ../sflphone-gtk/src/menus.c:296 ../sflphone-gtk/src/menus.c:949
+#: ../../sflphone-client-gnome/src/menus.c:300
+#: ../../sflphone-client-gnome/src/menus.c:971
 msgid "_New call"
 msgstr "新電話(N)"
 
-#: ../sflphone-gtk/src/menus.c:354
-msgid "_Account Assistant"
-msgstr "帳戶向導(A)"
+#: ../../sflphone-client-gnome/src/menus.c:312
+#: ../../sflphone-client-gnome/src/menus.c:803
+msgid "_Pick up"
+msgstr "撥出(P)"
 
-#: ../sflphone-gtk/src/menus.c:384
+#: ../../sflphone-client-gnome/src/menus.c:322
+#: ../../sflphone-client-gnome/src/menus.c:815
+msgid "_Hang up"
+msgstr "放下(H)"
+
+#: ../../sflphone-client-gnome/src/menus.c:332
+#: ../../sflphone-client-gnome/src/menus.c:827
+msgid "On _Hold"
+msgstr "待机"
+
+#: ../../sflphone-client-gnome/src/menus.c:344
+#: ../../sflphone-client-gnome/src/menus.c:839
+msgid "_Record"
+msgstr "記錄(R)"
+
+#: ../../sflphone-client-gnome/src/menus.c:358
+#, fuzzy
+msgid "_Account creation wizard"
+msgstr "SFLphone 帳戶設置向導"
+
+#: ../../sflphone-client-gnome/src/menus.c:388
 msgid "_Call"
 msgstr "電話"
 
-#: ../sflphone-gtk/src/menus.c:557
+#: ../../sflphone-client-gnome/src/menus.c:561
 msgid "_Clear history"
 msgstr "清空曆史記錄(C)"
 
-#: ../sflphone-gtk/src/menus.c:569
+#: ../../sflphone-client-gnome/src/menus.c:573
 msgid "_Accounts"
 msgstr "帳戶(A)"
 
-#: ../sflphone-gtk/src/menus.c:584
+#: ../../sflphone-client-gnome/src/menus.c:588
 msgid "_Edit"
 msgstr "編輯(E)"
 
-#: ../sflphone-gtk/src/menus.c:644
+#: ../../sflphone-client-gnome/src/menus.c:649
 msgid "_Dialpad"
 msgstr "撥號面板"
 
-#: ../sflphone-gtk/src/menus.c:656
+#: ../../sflphone-client-gnome/src/menus.c:661
 msgid "_Volume controls"
 msgstr "音量控制(V)"
 
-#: ../sflphone-gtk/src/menus.c:665
-msgid "_Search contact"
-msgstr "搜尋歷史(S)"
-
-#: ../sflphone-gtk/src/menus.c:673
+#: ../../sflphone-client-gnome/src/menus.c:679
 msgid "_View"
 msgstr "查看(V)"
 
-#: ../sflphone-gtk/src/menus.c:885
+#: ../../sflphone-client-gnome/src/menus.c:899
 msgid "_Call back"
 msgstr "回叫(C)"
 
-#: ../sflphone-gtk/src/sflnotify.c:34 ../sflphone-gtk/src/sflnotify.c:100
+#: ../../sflphone-client-gnome/src/menus.c:1082
+#, fuzzy
+msgid "Edit phone"
+msgstr "移動電話(M)"
+
+#: ../../sflphone-client-gnome/src/menus.c:1093
+msgid "Edit the phone number before making a call"
+msgstr ""
+
+#: ../../sflphone-client-gnome/src/sflnotify.c:38
+#: ../../sflphone-client-gnome/src/sflnotify.c:105
 #, c-format
 msgid "%s account: %s"
 msgstr "%s 帳戶: %s"
 
-#: ../sflphone-gtk/src/sflnotify.c:37
+#: ../../sflphone-client-gnome/src/sflnotify.c:42
 #, c-format
 msgid "<i>From:</i> %s"
 msgstr "<i>撥入方：</i> %s"
 
-#: ../sflphone-gtk/src/sflnotify.c:52
+#: ../../sflphone-client-gnome/src/sflnotify.c:57
 msgid "Accept"
 msgstr "接受"
 
-#: ../sflphone-gtk/src/sflnotify.c:53
+#: ../../sflphone-client-gnome/src/sflnotify.c:58
 msgid "Refuse"
 msgstr "拒絕"
 
-#: ../sflphone-gtk/src/sflnotify.c:54 ../sflphone-gtk/src/sflnotify.c:117
-#: ../sflphone-gtk/src/sflnotify.c:154
+#: ../../sflphone-client-gnome/src/sflnotify.c:59
+#: ../../sflphone-client-gnome/src/sflnotify.c:122
+#: ../../sflphone-client-gnome/src/sflnotify.c:159
 msgid "Ignore"
 msgstr "忽略"
 
-#: ../sflphone-gtk/src/sflnotify.c:136
+#: ../../sflphone-client-gnome/src/sflnotify.c:141
 #, c-format
 msgid "Calling with %s account <i>%s</i>"
 msgstr "使用%s帳戶<i>%s</i>呼叫"
 
-#: ../sflphone-gtk/src/sflnotify.c:140
+#: ../../sflphone-client-gnome/src/sflnotify.c:145
 msgid "Current account"
 msgstr "當前帳戶"
 
-#: ../sflphone-gtk/src/sflnotify.c:169
+#: ../../sflphone-client-gnome/src/sflnotify.c:174
 msgid "You haven't setup any accounts"
 msgstr "你沒有設置任何帳戶"
 
-#: ../sflphone-gtk/src/sflnotify.c:209
+#: ../../sflphone-client-gnome/src/sflnotify.c:214
 msgid "You have no registered accounts"
 msgstr "未發現已註冊帳戶"
 
-#: ../sflphone-gtk/src/sliders.c:161
+#: ../../sflphone-client-gnome/src/sliders.c:161
 msgid "Speakers volume"
 msgstr "揚聲器音量"
 
-#: ../sflphone-gtk/src/sliders.c:163
+#: ../../sflphone-client-gnome/src/sliders.c:163
 msgid "Mic volume"
 msgstr "話筒音量"
 
-#: ../sflphone-gtk/src/statusicon.c:91
+#: ../../sflphone-client-gnome/src/statusicon.c:91
 msgid "_Show main window"
 msgstr "顯示主窗口(S)"
 
-#: ../sflphone-gtk/src/statusicon.c:124
+#: ../../sflphone-client-gnome/src/statusicon.c:124
 #, c-format
 msgid "SFLphone - %i accounts registered"
 msgstr "SFLphone - %i 個帳戶已註冊"
 
-#: ../sflphone-gtk/src/timestamp.c:46
+#: ../../sflphone-client-gnome/src/timestamp.c:46
 msgid "<small>Missed call</small>"
 msgstr "<small>未接電話</small>"
 
-#: ../sflphone-gtk/src/timestamp.c:64
+#: ../../sflphone-client-gnome/src/timestamp.c:64
 #, c-format
 msgid "<small>Duration:</small> %s"
 msgstr "<small>時長:</small> %s"
 
-#: ../sflphone-gtk/src/toolbar.c:49
+#: ../../sflphone-client-gnome/src/toolbar.c:50
 #, c-format
 msgid "\"Voicemail\" <%s>"
 msgstr "\"語音郵件\" <%s>"
 
-#: ../sflphone-gtk/src/toolbar.c:175 ../sflphone-gtk/src/toolbar.c:177
+#: ../../sflphone-client-gnome/src/toolbar.c:176
+#: ../../sflphone-client-gnome/src/toolbar.c:178
 msgid "Place a call"
 msgstr "打電話"
 
-#: ../sflphone-gtk/src/toolbar.c:184 ../sflphone-gtk/src/toolbar.c:186
+#: ../../sflphone-client-gnome/src/toolbar.c:185
+#: ../../sflphone-client-gnome/src/toolbar.c:187
 msgid "Pick up"
 msgstr "接電話"
 
-#: ../sflphone-gtk/src/toolbar.c:194 ../sflphone-gtk/src/toolbar.c:196
+#: ../../sflphone-client-gnome/src/toolbar.c:195
+#: ../../sflphone-client-gnome/src/toolbar.c:197
 msgid "Hang up"
 msgstr "放電話"
 
-#: ../sflphone-gtk/src/toolbar.c:204 ../sflphone-gtk/src/toolbar.c:206
+#: ../../sflphone-client-gnome/src/toolbar.c:205
+#: ../../sflphone-client-gnome/src/toolbar.c:207
 msgid "Off Hold"
 msgstr "恢复通話"
 
-#: ../sflphone-gtk/src/toolbar.c:215 ../sflphone-gtk/src/toolbar.c:217
+#: ../../sflphone-client-gnome/src/toolbar.c:216
+#: ../../sflphone-client-gnome/src/toolbar.c:218
 msgid "On Hold"
 msgstr "待机"
 
-#: ../sflphone-gtk/src/toolbar.c:228 ../sflphone-gtk/src/toolbar.c:230
+#: ../../sflphone-client-gnome/src/toolbar.c:229
+#: ../../sflphone-client-gnome/src/toolbar.c:231
 msgid "Transfer"
 msgstr "轉接"
 
-#: ../sflphone-gtk/src/toolbar.c:240 ../sflphone-gtk/src/toolbar.c:242
+#: ../../sflphone-client-gnome/src/toolbar.c:241
+#: ../../sflphone-client-gnome/src/toolbar.c:243
 msgid "History"
 msgstr "歷史"
 
-#: ../sflphone-gtk/src/toolbar.c:251 ../sflphone-gtk/src/toolbar.c:253
+#: ../../sflphone-client-gnome/src/toolbar.c:252
+#: ../../sflphone-client-gnome/src/toolbar.c:254
 msgid "Address book"
 msgstr "地址簿"
 
-#: ../sflphone-gtk/src/toolbar.c:258 ../sflphone-gtk/src/toolbar.c:262
+#: ../../sflphone-client-gnome/src/toolbar.c:260
+#: ../../sflphone-client-gnome/src/toolbar.c:264
 msgid "Voicemail"
 msgstr "語音郵件"
 
-#: ../sflphone-gtk/src/toolbar.c:270
+#: ../../sflphone-client-gnome/src/toolbar.c:272
 msgid "Record a call"
 msgstr "記錄通話"
 
-#: ../sflphone-gtk/src/contacts/history.c:75
-#: ../sflphone-gtk/src/contacts/searchbar.c:39
-#: ../sflphone-gtk/src/contacts/searchbar.c:65
-msgid "Search"
-msgstr "搜尋"
-
-#: ../sflphone-gtk/src/config/accountwindow.c:103
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:108
 msgid "Account settings"
 msgstr "帳戶設置"
 
-#: ../sflphone-gtk/src/config/accountwindow.c:115
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:120
 msgid "Account parameters"
 msgstr "帳戶相關參數"
 
-#: ../sflphone-gtk/src/config/accountwindow.c:137
-msgid "_Enabled"
-msgstr "啟用(E)"
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:142
+msgid "_Enable this account"
+msgstr ""
 
-#: ../sflphone-gtk/src/config/accountwindow.c:151
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:156
 msgid "_Protocol"
 msgstr "協議(P)"
 
-#: ../sflphone-gtk/src/config/accountwindow.c:169
+#: ../../sflphone-client-gnome/src/config/accountwindow.c:174
 msgid "Unknown"
 msgstr "未知"
 
-#: ../sflphone-gtk/src/config/accountwindow.c:209
-msgid "_Voicemail box #"
-msgstr "語音郵箱(V)"
-
-#: ../sflphone-gtk/src/config/addressbook-config.c:105
-msgid "Search Parameters"
-msgstr "搜尋相關參數"
-
-#: ../sflphone-gtk/src/config/addressbook-config.c:116
-msgid "Maximum result number for a request: "
-msgstr "最大打出電話數目"
-
-#: ../sflphone-gtk/src/config/addressbook-config.c:127
-msgid "_Display contact photo if available"
-msgstr "如果可以則顯示聯繫人照片(D)"
-
-#: ../sflphone-gtk/src/config/addressbook-config.c:132
-msgid "Search for and display: "
-msgstr "搜尋並顯示:"
-
-#: ../sflphone-gtk/src/config/addressbook-config.c:135
-msgid "_Business phone"
-msgstr "商務電話(B)"
-
-#: ../sflphone-gtk/src/config/addressbook-config.c:140
-msgid "_Home phone"
-msgstr "家庭電話(H)"
-
-#: ../sflphone-gtk/src/config/addressbook-config.c:145
-msgid "_Mobile phone"
-msgstr "移動電話(M)"
-
-#: ../sflphone-gtk/src/config/audioconf.c:154
-#, c-format
-msgid "audio device index for output = %d\n"
-msgstr "音訊設備索引輸出 ＝ %d\n"
-
-#: ../sflphone-gtk/src/config/audioconf.c:562
-msgid "Name"
-msgstr "名稱"
-
-#: ../sflphone-gtk/src/config/audioconf.c:567
-msgid "Frequency"
-msgstr "顰律"
-
-#: ../sflphone-gtk/src/config/audioconf.c:572
-msgid "Bitrate"
-msgstr "比率"
-
-#: ../sflphone-gtk/src/config/audioconf.c:577
-msgid "Bandwidth"
-msgstr "顰寬"
-
-#: ../sflphone-gtk/src/config/audioconf.c:637
-msgid "Pulseaudio"
-msgstr "Pulseaudio"
-
-#: ../sflphone-gtk/src/config/audioconf.c:640
-msgid "ALSA"
-msgstr "ALSA"
-
-#: ../sflphone-gtk/src/config/audioconf.c:666
-msgid "ALSA plugin"
-msgstr "ALSA插件"
-
-#: ../sflphone-gtk/src/config/audioconf.c:688
-msgid "Output"
-msgstr "輸出"
-
-#: ../sflphone-gtk/src/config/audioconf.c:710
-msgid "Input"
-msgstr "輸入"
-
-#: ../sflphone-gtk/src/config/audioconf.c:743
-msgid "_Enable ringtones"
-msgstr "啟動鈴聲(E)"
-
-#: ../sflphone-gtk/src/config/audioconf.c:748
-msgid "Choose a ringtone"
-msgstr "鈴聲選擇"
-
-#: ../sflphone-gtk/src/config/audioconf.c:753
-msgid "Audio Files"
-msgstr "音訊檔案"
-
-#: ../sflphone-gtk/src/config/audioconf.c:770
-msgid "_Activate silence detection"
-msgstr "啟用靜音檢測(A)"
-
-#: ../sflphone-gtk/src/config/audioconf.c:798
-msgid "Sound Manager"
-msgstr "聲音管理器"
-
-#: ../sflphone-gtk/src/config/audioconf.c:805
-msgid "ALSA configuration"
-msgstr "ALSA 配置"
-
-#: ../sflphone-gtk/src/config/audioconf.c:815
-msgid "Codecs"
-msgstr "編碼"
-
-#: ../sflphone-gtk/src/config/audioconf.c:823
-msgid "Noise reduction"
-msgstr "降噪"
-
-#: ../sflphone-gtk/src/config/audioconf.c:830
-msgid "Ringtones"
-msgstr "鈴聲"
-
-#: ../sflphone-gtk/src/config/configwindow.c:385
-msgid "Protocol"
-msgstr "協議"
-
-#: ../sflphone-gtk/src/config/configwindow.c:392
-msgid "Status"
-msgstr "狀態"
-
-#: ../sflphone-gtk/src/config/configwindow.c:495
-msgid "Stun parameters will apply to each SIP account created."
-msgstr "Stun參數將應用於每一個註冊的SIP帳戶"
-
-#: ../sflphone-gtk/src/config/configwindow.c:503
-msgid "Enable it if you are behind a firewall"
-msgstr "當使用防火牆時，需要設定此項"
-
-#: ../sflphone-gtk/src/config/configwindow.c:511
-msgid "Format: name.server:port"
-msgstr "格式：name.server:port"
-
-#: ../sflphone-gtk/src/config/configwindow.c:561
-msgid "Desktop Notification"
-msgstr "桌面提示"
-
-#: ../sflphone-gtk/src/config/configwindow.c:569
-msgid "_Enable"
-msgstr "啟用(E)"
-
-#: ../sflphone-gtk/src/config/configwindow.c:574
-msgid "_Notify voice mails"
-msgstr "語音郵件通知(N)"
-
-#: ../sflphone-gtk/src/config/configwindow.c:580
-msgid "System Tray Icon"
-msgstr "系統托盤圖標"
-
-#: ../sflphone-gtk/src/config/configwindow.c:588
-msgid "_Popup main window on incoming call"
-msgstr "來電話時彈出主視窗(P)"
-
-#: ../sflphone-gtk/src/config/configwindow.c:593
-msgid "Ne_ver popup main window"
-msgstr "從不彈出主視窗(v)"
-
-#: ../sflphone-gtk/src/config/configwindow.c:597
-msgid "_Start hidden"
-msgstr "啟動時隱藏(S)"
-
-#: ../sflphone-gtk/src/config/configwindow.c:603
-msgid "Calls History"
-msgstr "打電話歷史"
-
-#: ../sflphone-gtk/src/config/configwindow.c:611
-msgid "_Maximum number of calls"
-msgstr "最大打出電話數目(M)"
-
-#: ../sflphone-gtk/src/config/configwindow.c:627
-msgid "PulseAudio sound server"
-msgstr "PulseAudio聲音伺服器"
-
-#: ../sflphone-gtk/src/config/configwindow.c:635
-msgid "_Control running applications volume"
-msgstr "控制正在運行中的應用程式的音量(C)"
-
-#: ../sflphone-gtk/src/config/configwindow.c:648
-msgid "SIP Port"
-msgstr "SIP端口"
-
-#: ../sflphone-gtk/src/config/configwindow.c:661
-msgid "Port:"
-msgstr "端口:"
-
-#: ../sflphone-gtk/src/config/configwindow.c:706
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:265
+#: ../../sflphone-client-gnome/src/config/configwindow.c:709
 msgid "General"
 msgstr "常用配置"
 
-#: ../sflphone-gtk/src/config/configwindow.c:717
-msgid "_Destination folder"
-msgstr "目標文件夾(D)"
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:276
+msgid "_Use Evolution address book"
+msgstr ""
 
-#: ../sflphone-gtk/src/config/configwindow.c:723
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:283
+msgid "Download limit:"
+msgstr ""
+
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:294
+msgid "_Display contact photo if available"
+msgstr "如果可以則顯示聯繫人照片(D)"
+
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:299
+msgid "Fields"
+msgstr ""
+
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:309
+msgid "_Business phone"
+msgstr "商務電話(B)"
+
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:314
+msgid "_Home phone"
+msgstr "家庭電話(H)"
+
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:319
+msgid "_Mobile phone"
+msgstr "移動電話(M)"
+
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:324
+#, fuzzy
+msgid "Books"
+msgstr "鉤鍵"
+
+#: ../../sflphone-client-gnome/src/config/addressbook-config.c:356
+#: ../../sflphone-client-gnome/src/config/audioconf.c:574
+msgid "Name"
+msgstr "名稱"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:155
+#, fuzzy, c-format
+msgid "audio device index for output = %d"
+msgstr "音訊設備索引輸出 ＝ %d\n"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:579
+msgid "Frequency"
+msgstr "顰律"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:584
+msgid "Bitrate"
+msgstr "比率"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:589
+msgid "Bandwidth"
+msgstr "顰寬"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:652
+msgid "Pulseaudio"
+msgstr "Pulseaudio"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:655
+msgid "ALSA"
+msgstr "ALSA"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:681
+msgid "ALSA plugin"
+msgstr "ALSA插件"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:703
+msgid "Output"
+msgstr "輸出"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:725
+msgid "Input"
+msgstr "輸入"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:758
+msgid "_Enable ringtones"
+msgstr "啟動鈴聲(E)"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:763
+msgid "Choose a ringtone"
+msgstr "鈴聲選擇"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:768
+msgid "Audio Files"
+msgstr "音訊檔案"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:787
+#, fuzzy
+msgid "_Voice Activity Detection"
+msgstr "啟用靜音檢測(A)"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:797
+msgid "_Noise Reduction (Narrow-Band Companding)"
+msgstr ""
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:825
+msgid "Sound Manager"
+msgstr "聲音管理器"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:832
+msgid "ALSA configuration"
+msgstr "ALSA 配置"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:849
+msgid "Codecs"
+msgstr "編碼"
+
+#: ../../sflphone-client-gnome/src/config/audioconf.c:872
+msgid "Ringtones"
+msgstr "鈴聲"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:390
+msgid "Protocol"
+msgstr "協議"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:397
+msgid "Status"
+msgstr "狀態"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:500
+msgid "Stun parameters will apply to each SIP account created."
+msgstr "Stun參數將應用於每一個註冊的SIP帳戶"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:508
+msgid "Enable it if you are behind a firewall"
+msgstr "當使用防火牆時，需要設定此項"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:516
+msgid "Format: name.server:port"
+msgstr "格式：name.server:port"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:564
+msgid "Desktop Notification"
+msgstr "桌面提示"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:572
+msgid "_Enable"
+msgstr "啟用(E)"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:577
+msgid "_Notify voice mails"
+msgstr "語音郵件通知(N)"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:583
+msgid "System Tray Icon"
+msgstr "系統托盤圖標"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:591
+msgid "_Popup main window on incoming call"
+msgstr "來電話時彈出主視窗(P)"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:596
+msgid "Ne_ver popup main window"
+msgstr "從不彈出主視窗(v)"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:600
+msgid "_Start hidden"
+msgstr "啟動時隱藏(S)"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:606
+msgid "Calls History"
+msgstr "打電話歷史"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:614
+msgid "_Maximum number of calls"
+msgstr "最大打出電話數目(M)"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:630
+msgid "PulseAudio sound server"
+msgstr "PulseAudio聲音伺服器"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:638
+msgid "_Control running applications volume"
+msgstr "控制正在運行中的應用程式的音量(C)"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:651
+msgid "SIP Port"
+msgstr "SIP端口"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:664
+msgid "Port:"
+msgstr "端口:"
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:719
+msgid "_Recordings folder"
+msgstr ""
+
+#: ../../sflphone-client-gnome/src/config/configwindow.c:725
 msgid "Select a folder"
 msgstr "選擇文件夾"
 
-#: ../sflphone-gtk/src/config/configwindow.c:748
+#: ../../sflphone-client-gnome/src/config/configwindow.c:750
 msgid "Preferences"
 msgstr "屬性"
 
-#: ../sflphone-gtk/src/config/configwindow.c:768
+#: ../../sflphone-client-gnome/src/config/configwindow.c:770
 msgid "General Settings"
 msgstr "常用配置"
 
-#: ../sflphone-gtk/src/config/configwindow.c:773
+#: ../../sflphone-client-gnome/src/config/configwindow.c:775
 msgid "Audio Settings"
 msgstr "音訊配置"
 
-#: ../sflphone-gtk/src/config/configwindow.c:778
-msgid "Record"
+#: ../../sflphone-client-gnome/src/config/configwindow.c:780
+#, fuzzy
+msgid "Recordings"
 msgstr "記錄"
 
-#: ../sflphone-gtk/src/config/configwindow.c:783
+#: ../../sflphone-client-gnome/src/config/configwindow.c:785
 msgid "Address Book"
 msgstr "地址簿"
 
-#: ../sflphone-gtk/src/config/configwindow.c:788
+#: ../../sflphone-client-gnome/src/config/configwindow.c:790
 msgid "Hooks"
 msgstr "鉤鍵"
 
-#: ../sflphone-gtk/src/config/configwindow.c:814
+#: ../../sflphone-client-gnome/src/config/configwindow.c:817
 msgid "Accounts"
 msgstr "帳戶"
 
-#: ../sflphone-gtk/src/config/configwindow.c:826
-msgid "Accounts previously setup"
+#: ../../sflphone-client-gnome/src/config/configwindow.c:829
+#, fuzzy
+msgid "Account previously setup"
 msgstr "以前帳戶設定"
 
-#: ../sflphone-gtk/src/config/hooks-config.c:92
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:130
 msgid "URL argument"
 msgstr "URL參數"
 
-#: ../sflphone-gtk/src/config/hooks-config.c:102
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:140
 msgid "_SIP protocol"
 msgstr "SIP 協議(S)"
 
-#: ../sflphone-gtk/src/config/hooks-config.c:107
-msgid "_IAX2 protocol"
-msgstr "IAX2 協議(I)"
-
-#: ../sflphone-gtk/src/config/hooks-config.c:113
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:145
 msgid "_SIP Header: "
 msgstr "SIP消息頭(S):"
 
-#: ../sflphone-gtk/src/config/hooks-config.c:120
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:152
+msgid "_IAX2 protocol"
+msgstr "IAX2 協議(I)"
+
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:157
 msgid "_Command: "
 msgstr "命令(C):"
 
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:164
+msgid "Phone number formatting"
+msgstr ""
 
-#~ msgid "SFLphone 0.9.3"
-#~ msgstr "SFLphone 0.9.2"
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:174
+msgid "_Add phone number prefix"
+msgstr ""
+
+#: ../../sflphone-client-gnome/src/config/hooks-config.c:179
+msgid "_Prepend: "
+msgstr ""
+
+#: ../../sflphone-client-gnome/src/contacts/history.c:75
+#: ../../sflphone-client-gnome/src/contacts/searchbar.c:94
+#, fuzzy
+msgid "Search history"
+msgstr "清空曆史記錄(C)"
+
+#: ../../sflphone-client-gnome/src/contacts/history.c:75
+#: ../../sflphone-client-gnome/src/contacts/searchbar.c:86
+#, fuzzy
+msgid "Search contact"
+msgstr "搜尋歷史(S)"
+
+#~ msgid "Search"
+#~ msgstr "搜尋"
+
+#~ msgid "_Enabled"
+#~ msgstr "啟用(E)"
+
+#~ msgid "%s account- %s"
+#~ msgstr "%s 帳戶- %s"
+
+#~ msgid "Noise reduction"
+#~ msgstr "降噪"
+
+#~ msgid "_Destination folder"
+#~ msgstr "目標文件夾(D)"
+
+#~ msgid "_Account Assistant"
+#~ msgstr "帳戶向導(A)"
 
 #~ msgid "Setup Accounts"
 #~ msgstr "設定帳戶"
+
+#~ msgid "Search Parameters"
+#~ msgstr "搜尋相關參數"
+
+#~ msgid "Maximum result number for a request: "
+#~ msgstr "最大打出電話數目"
+
+#~ msgid "Search for and display: "
+#~ msgstr "搜尋並顯示:"
 
 #~ msgid "_STUN Server"
 #~ msgstr "STUN伺服器(S)"
@@ -735,4 +831,3 @@ msgstr "命令(C):"
 
 #~ msgid "History empty"
 #~ msgstr "無曆史記錄"
-
