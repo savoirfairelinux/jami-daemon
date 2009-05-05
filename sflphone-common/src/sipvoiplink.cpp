@@ -578,22 +578,22 @@ SIPVoIPLink::hangup(const CallID& id)
     call = getSIPCall(id);
 
     if (call==0) { _debug("! SIP Error: Call doesn't exist\n"); return false; }  
-    _debug("Create Bye");
+    
     // User hangup current call. Notify peer
     status = pjsip_inv_end_session(call->getInvSession(), 404, NULL, &tdata);
     if(status != PJ_SUCCESS)
         return false;
-    _debug("Bye Created\n");
+    
 
     if(tdata == NULL)
         return true;
     // _debug("Some tdata info: %",);
 
-    _debug("Sending BYE");
+    
     status = pjsip_inv_send_msg(call->getInvSession(), tdata);
     if(status != PJ_SUCCESS)
         return false;
-    _debug("BYE sent!\n");
+
 
     call->getInvSession()->mod_data[getModId()] = NULL;
 
@@ -846,7 +846,7 @@ SIPVoIPLink::refuse (const CallID& id)
     pj_status_t status;
     pjsip_tx_data *tdata;
 
-    _debug("SIPVoIPLink::refuse() : the call is refused \n");
+    
     call = getSIPCall(id);
 
     if (call==0) { 
@@ -1104,7 +1104,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
         SIPVoIPLink::SIPCallClosed(SIPCall *call) 
         {
 
-            _debug("SIPVoIPLink::SIPCallClosed():: function called when peer hangup");
+            
             // it was without did before
             //SIPCall* call = findSIPCallWithCid(event->cid);
             if (!call) { return; }
@@ -1855,7 +1855,7 @@ std::string SIPVoIPLink::getSipTo(const std::string& to_url, std::string hostnam
                     case PJSIP_SC_OK:
                     case PJSIP_SC_DECLINE:
                     case PJSIP_SC_REQUEST_TERMINATED: 
-                        _debug("GOT THE BYE MESSAGE!!!!!!! \n");
+                        
                         accId = Manager::instance().getAccountFromCall(call->getCallId());
                         link = dynamic_cast<SIPVoIPLink *> (Manager::instance().getAccountLink(accId));
                         if (link) {
@@ -2036,7 +2036,6 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
             uri = rdata->msg_info.from->uri;
             sip_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(uri);
 
-            _debug("---------pjsip_sip_uri: port %i\n",sip_uri->port);
 
             /* Retrieve only the fisrt characters */
             caller = std::string(sip_uri->user.ptr, sip_uri->user.slen);
@@ -2393,7 +2392,7 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
         // _debug(" %s \n", event->body.rx_msg.rdata->msg_info.msg_buf);
             
 
-        _debug("UserAgent: Transfer callback is involved!\n");
+        
         // _debug("UserAgent: pjsip_evsub_get_state_name: %s \n", pjsip_evsub_get_state_name(sub));
 
         /*
@@ -2480,27 +2479,18 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                 return;
             }
             
-            _debug("START: --- PJSIP_EVENT_TSX_STATE && PJSIP_EVENT_RX_MSG ---\n");
-
-            /*
-            // Get current call
-            SIPCall *call = dynamic_cast<SIPCall *>(link->getCall(Manager::instance().getCurrentCallId()));
-            if(!call) {
-                _debug("UserAgent: Call doesn't exit!\n");
-                return;
-            }
-            */
+            
 
             /* This better be a NOTIFY request */
             if (event->type == PJSIP_EVENT_TSX_STATE &&
                     event->body.tsx_state.type == PJSIP_EVENT_RX_MSG)
             {
-                _debug("      Setting pjsip_rx_data \n");
+                
                 pjsip_rx_data *rdata;
 
                 rdata = event->body.tsx_state.src.rdata;
 
-                _debug("      Check if there's body\n");
+            
                 /* Check if there's body */
                 msg = rdata->msg_info.msg;
                 body = msg->body;
@@ -2537,7 +2527,7 @@ void call_on_tsx_changed(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_e
                 status_line.code = 500;
                 status_line.reason = *pjsip_get_status_text(500);
             }
-            _debug("COMPLETE: --- PJSIP_EVENT_TSX_STATE && PJSIP_EVENT_RX_MSG ---\n");
+            
             
             if(event->body.rx_msg.rdata->msg_info.msg_buf != NULL) {
                 request = event->body.rx_msg.rdata->msg_info.msg_buf;
