@@ -121,7 +121,7 @@ show_status_icon()
 			  create_menu());			  
 
   // Add a tooltip to the system tray icon
-  gchar *tip =  g_markup_printf_escaped (_("SFLphone - %i accounts registered") , account_list_get_size());
+  gchar *tip =  g_markup_printf_escaped (_("SFLphone - %i accounts configured") , account_list_get_size());
   gtk_status_icon_set_tooltip( status , tip );
   g_free(tip);
 }
