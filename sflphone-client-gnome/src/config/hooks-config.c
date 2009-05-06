@@ -127,7 +127,7 @@ GtkWidget* create_hooks_settings (){
     ret = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
-    gnome_main_section_new (_("URL argument"), &frame);
+    gnome_main_section_new (_("URL Passing"), &frame);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show (frame);
 
@@ -137,31 +137,31 @@ GtkWidget* create_hooks_settings (){
     gtk_widget_show(table);
     gtk_container_add( GTK_CONTAINER (frame) , table );
 
-    widg = gtk_check_button_new_with_mnemonic( _("_SIP protocol"));
+    widg = gtk_check_button_new_with_mnemonic( _("Trigger on specific _SIP header"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), (g_strcasecmp (_urlhook_config->sip_enabled, "1")==0)?TRUE:FALSE);
     g_signal_connect (G_OBJECT(widg) , "clicked" , G_CALLBACK (sip_enabled_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), widg, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
  
-    label = gtk_label_new_with_mnemonic (_("_SIP Header: "));
+    label = gtk_label_new_with_mnemonic (_("FIXME: "));
     gtk_table_attach ( GTK_TABLE( table ), label, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     field = gtk_entry_new ();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), field);
     gtk_entry_set_text(GTK_ENTRY(field), _urlhook_config->sip_field);
     gtk_table_attach ( GTK_TABLE( table ), field, 2, 3, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    widg = gtk_check_button_new_with_mnemonic( _("_IAX2 protocol"));
+    widg = gtk_check_button_new_with_mnemonic( _("Trigger on _IAX2 URL"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), (g_strcasecmp (_urlhook_config->iax2_enabled, "1")==0)?TRUE:FALSE); 
     g_signal_connect (G_OBJECT(widg) , "clicked" , G_CALLBACK (iax2_enabled_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), widg, 0, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    label = gtk_label_new_with_mnemonic (_("_Command: "));
+    label = gtk_label_new_with_mnemonic (_("_Command to run: "));
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     command = gtk_entry_new ();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), command);
     gtk_entry_set_text(GTK_ENTRY(command), _urlhook_config->command);
     gtk_table_attach ( GTK_TABLE( table ), command, 1, 2, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 10);
 
-    gnome_main_section_new (_("Phone number formatting"), &frame);
+    gnome_main_section_new (_("Phone Number Rewriting"), &frame);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
     gtk_widget_show (frame);
 
@@ -171,12 +171,12 @@ GtkWidget* create_hooks_settings (){
     gtk_widget_show(table);
     gtk_container_add( GTK_CONTAINER (frame) , table );
 
-    widg = gtk_check_button_new_with_mnemonic( _("_Add phone number prefix"));
+    widg = gtk_check_button_new_with_mnemonic( _("_Prefix dialed numbers with"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widg), (g_strcasecmp (_urlhook_config->phone_number_enabled, "1")==0)?TRUE:FALSE);
     g_signal_connect (G_OBJECT(widg) , "clicked" , G_CALLBACK (phone_number_enabled_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), widg, 0, 2, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
  
-    label = gtk_label_new_with_mnemonic (_("_Prepend: "));
+    label = gtk_label_new_with_mnemonic (_("_FIXME: "));
     gtk_table_attach ( GTK_TABLE( table ), label, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     prefix = gtk_entry_new ();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefix);

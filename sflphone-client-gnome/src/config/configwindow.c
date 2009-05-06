@@ -561,7 +561,7 @@ create_general_settings ()
     gtk_container_set_border_width(GTK_CONTAINER(ret), 10);
 
     // Notifications Frame
-    gnome_main_section_new (_("Desktop Notification"), &frame);
+    gnome_main_section_new (_("Desktop Notifications"), &frame);
     gtk_box_pack_start(GTK_BOX(ret), frame, FALSE, FALSE, 0);
 
     notifBox = gtk_vbox_new(FALSE, 10);
@@ -569,12 +569,12 @@ create_general_settings ()
     gtk_container_add( GTK_CONTAINER(frame) , notifBox);
     gtk_container_set_border_width(GTK_CONTAINER(notifBox), 2);
 
-    notifAll = gtk_check_button_new_with_mnemonic( _("_Enable"));
+    notifAll = gtk_check_button_new_with_mnemonic( _("_Enable notifications"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify() );
     gtk_box_pack_start( GTK_BOX(notifBox) , notifAll , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
 
-    widg = gtk_check_button_new_with_mnemonic(  _("_Notify voice mails"));
+    widg = gtk_check_button_new_with_mnemonic(  _("Enable voicemail _notifications"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_mail_notify() );
     gtk_box_pack_start( GTK_BOX(notifBox) , widg , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
@@ -597,7 +597,7 @@ create_general_settings ()
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), !dbus_popup_mode() );
     gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
 
-    trayItem = gtk_check_button_new_with_mnemonic(_("_Start hidden"));
+    trayItem = gtk_check_button_new_with_mnemonic(_("Hide SFLphone window on _startup"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(trayItem), dbus_is_start_hidden() );
     gtk_box_pack_start( GTK_BOX(trayBox) , trayItem , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( trayItem ) , "clicked" , G_CALLBACK( start_hidden ) , NULL);
@@ -611,7 +611,7 @@ create_general_settings ()
     gtk_widget_show( hbox );
     gtk_container_add( GTK_CONTAINER(frame) , hbox);
 
-    label = gtk_label_new_with_mnemonic(_("_Maximum number of calls"));
+    label = gtk_label_new_with_mnemonic(_("_History size limit"));
     gtk_box_pack_start( GTK_BOX(hbox) , label , TRUE , TRUE , 0);
 
     value = gtk_hscale_new_with_range(0.0 , 50.0 , 5.0);
@@ -635,7 +635,7 @@ create_general_settings ()
     gtk_widget_show( vbox );
     gtk_container_add( GTK_CONTAINER(frame) , vbox);
 
-    widg = gtk_check_button_new_with_mnemonic(  _("_Control running applications volume"));
+    widg = gtk_check_button_new_with_mnemonic(  _("Mute other applications during a _call"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_pulse_app_volume_control() );
     gtk_box_pack_start( GTK_BOX(vbox) , widg , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);

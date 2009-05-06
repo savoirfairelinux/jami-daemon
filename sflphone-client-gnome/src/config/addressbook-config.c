@@ -273,7 +273,7 @@ create_addressbook_settings()
     gtk_container_add( GTK_CONTAINER (result_frame) , table );
 
     // PHOTO DISPLAY
-    item = gtk_check_button_new_with_mnemonic( _("_Use Evolution address book"));
+    item = gtk_check_button_new_with_mnemonic( _("_Use Evolution address books"));
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(item), addressbook_config->enable);
     g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (enable_cb), NULL);
     gtk_table_attach ( GTK_TABLE( table ), item, 1, 3, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -321,7 +321,7 @@ create_addressbook_settings()
     g_signal_connect (G_OBJECT(item) , "clicked" , G_CALLBACK (search_phone_mobile_cb) , NULL);
     gtk_table_attach ( GTK_TABLE( table ), item, 1, 3, 3, 4, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 
-    gnome_main_section_new (_("Books"), &result_frame);
+    gnome_main_section_new (_("Address Books"), &result_frame);
     gtk_box_pack_start(GTK_BOX(ret), result_frame, TRUE, TRUE, 0);
     gtk_widget_show (result_frame);
 
