@@ -826,7 +826,7 @@ show_accounts_window( void )
     gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 500);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
-    gnome_main_section_new (_("Account previously setup"), &accountFrame);
+    gnome_main_section_new (_("Configured Accounts"), &accountFrame);
     gtk_box_pack_start( GTK_BOX( dialog->vbox ), accountFrame , TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(accountFrame), 10);
     gtk_widget_show(accountFrame);
