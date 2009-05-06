@@ -14,15 +14,13 @@ package=sflphone-client-kde
 
 CXX = g++-4.0
 # CFLAGS = -Wall -g
-DEB_INSTALL_MANPAGES_sflphone_client_kde = sflphone.1 sflphone-client-kde.1
+# DEB_INSTALL_PAGES_sflphone_client_kde = sflphone.1 sflphone-client-kde.1
 
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	mkdir build
-	cd build
-	cmake ..
+	cmake . -DCMAKE_INSTALL_PREFIX=$(CURDIR)/debian/$(package)/usr
 	touch configure-stamp
 
 
@@ -33,7 +31,7 @@ build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp 
 
     # Add here commands to compile the arch part of the package.
-	$(MAKE) 
+	$(MAKE)
 	touch $@
 
 build-indep: build-indep-stamp
@@ -48,7 +46,7 @@ clean:
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp
 	# Add here commands to clean up after the build process.
-	[ ! -f Makefile ] || $(MAKE) distclean 
+	[ ! -f Makefile ] || $(MAKE) distclean
 
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 	cp -f /usr/share/misc/config.sub config.sub
@@ -73,7 +71,7 @@ install-arch:
 	dh_installdirs -s
 	# Add here commands to install the arch part of the package into 
 	# debian/tmp.
-	$(MAKE) prefix=$(CURDIR)/debian/$(package)/usr install
+	$(MAKE) install
 	rm -rf $(CURDIR)/debian/$(package)/usr/include
 	dh_install -s
 # Must not depend on anything. This is to be called by
@@ -81,6 +79,7 @@ install-arch:
 # in another 'make' thread.
 
 binary-common:
+	pwd
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs ChangeLog
@@ -96,7 +95,7 @@ binary-common:
 #	dh_installinit
 #	dh_installcron
 #	dh_installinfo
-	dh_installman
+#	dh_installman
 	dh_link
 	dh_strip
 	dh_compress 

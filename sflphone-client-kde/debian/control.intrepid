@@ -2,14 +2,13 @@ Source: sflphone-client-kde
 Maintainer: SavoirFaireLinux Inc <jeremy.quentin@savoirfairelinux.com>
 Section: kde
 Priority: optional
-Build-Depends: cmake (>=2.6), kdepimlibs5-dev (>=4.1.4), libcommoncpp2-dev (>=1.6.2)
+Build-Depends: debhelper (>= 5), cmake (>=2.6), kdepimlibs5-dev (>=4.1.4), libcommoncpp2-dev (>=1.6.2)
 Standards-Version: 3.7.3
 
 Package: sflphone-client-kde
 Priority: optional
 Architecture: any
 Depends: sflphone-common (>=0.9.5), libcommoncpp2-1.6-0, kdepimlibs5 (>=4.1.4), libqt4-dbus (>=4.4.3), libqt4-svg (>=4.4.3), libqtgui4 (>=4.4.3)
-
 Replaces: sflphone
 Conflicts: sflphone
 Homepage: http://www.sflphone.org

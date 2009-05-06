@@ -75,7 +75,7 @@ SET_SOURCE_FILES_PROPERTIES(
    ${configurationmanager_xml}
    PROPERTIES 
    CLASSNAME ConfigurationManagerInterface
-   INCLUDE "../metatypes.h") 
+   INCLUDE "metatypes.h") 
 
 QT4_ADD_DBUS_INTERFACE(
    sflphone_client_kde_SRCS 
@@ -90,7 +90,7 @@ SET_SOURCE_FILES_PROPERTIES(
    ${callmanager_xml}
    PROPERTIES 
    CLASSNAME CallManagerInterface
-   INCLUDE "../metatypes.h") 
+   INCLUDE "metatypes.h") 
 
 QT4_ADD_DBUS_INTERFACE(
    sflphone_client_kde_SRCS 
@@ -105,7 +105,7 @@ SET_SOURCE_FILES_PROPERTIES(
    ${instance_xml}
    PROPERTIES 
    CLASSNAME InstanceInterface
-   INCLUDE "../metatypes.h") 
+   INCLUDE "metatypes.h") 
    
 QT4_ADD_DBUS_INTERFACE(
    sflphone_client_kde_SRCS 
