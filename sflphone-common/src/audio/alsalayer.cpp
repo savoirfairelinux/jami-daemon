@@ -50,7 +50,7 @@ AlsaLayer::~AlsaLayer (void)
     closeLayer();
 }
 
-    bool
+bool
 AlsaLayer::closeLayer()
 {
     _debugAlsa("Close ALSA streams\n");

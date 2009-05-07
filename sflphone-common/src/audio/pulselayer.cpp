@@ -48,8 +48,8 @@ PulseLayer::~PulseLayer (void)
 { 
     closeLayer ();
 
-    pa_context_disconnect( context );  
-    pa_context_unref( context );
+    // pa_context_disconnect( context );  
+    // pa_context_unref( context );
 }
 
 bool
@@ -60,19 +60,19 @@ PulseLayer::closeLayer( void )
     playback->disconnect(); 
     record->disconnect();
 
-    while(PulseLayer::streamState != 2)
-        ;
+    while(PulseLayer::streamState != 2);
     PulseLayer::streamState = 0; 
 
     //TODO  Remove this ugly hack
     sleep(2);
 
-    
+    pa_context_disconnect( context );  
+    pa_context_unref( context );
+
     return true;
-    
 }
 
-    void
+void
 PulseLayer::connectPulseAudioServer( void )
 {
     _debug("PulseLayer::connectPulseAudioServer \n");
@@ -129,8 +129,10 @@ void PulseLayer::context_state_callback( pa_context* c, void* user_data )
 
 bool PulseLayer::disconnectPulseAudioServer( void )
 {
-  _debug(" PulseLayer::disconnectPulseAudioServer( void ) \n");
+    _debug(" PulseLayer::disconnectPulseAudioServer( void ) \n");
+
     if( playback )
+        playback->disconnect();
         delete playback; playback=NULL;
 
     if( record )

@@ -1880,7 +1880,7 @@ ManagerImpl::initAudioDriver(void)
     }
   }
 
-  return true;manager
+  return true;
 
 }
 
