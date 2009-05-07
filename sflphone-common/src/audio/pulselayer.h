@@ -153,7 +153,7 @@ class PulseLayer : public AudioLayer {
      * Create the audio streams into the given context
      * @param c	The pulseaudio context
      */ 
-    void createStreams( pa_context* c );
+    bool createStreams( pa_context* c );
 
     /**
      * Drop the pending frames and close the playback device
@@ -192,9 +192,12 @@ class PulseLayer : public AudioLayer {
     int spkrVolume;
     int micVolume;
 
+    // private:
 
 public: 
     static int streamState;
+
+    friend class AudioLayerTest;
 };
 
 #endif // _PULSE_LAYER_H_

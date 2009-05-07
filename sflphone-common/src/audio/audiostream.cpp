@@ -34,7 +34,7 @@ AudioStream::AudioStream( pa_context* context, int type, std::string desc, doubl
   
   _context = context;
 
-  connectStream();
+  // connectStream();
 } 
 
 AudioStream::~AudioStream()
@@ -42,7 +42,7 @@ AudioStream::~AudioStream()
   disconnectStream();
 }
 
-void
+bool
 AudioStream::connectStream()
 {
   ost::MutexLock guard(_mutex);
@@ -52,10 +52,12 @@ AudioStream::connectStream()
   else {
     disconnectStream();
     _audiostream = createStream( _context );
-  } 
+  }
+
+  return true;
 }
 
-void
+bool
 AudioStream::disconnectStream( void )
 { 
   ost::MutexLock guard(_mutex);
@@ -65,6 +67,8 @@ AudioStream::disconnectStream( void )
   pa_stream_unref( _audiostream );
 
   _audiostream = NULL;
+
+  return true;
 } 
 
 

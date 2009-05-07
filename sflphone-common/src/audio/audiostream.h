@@ -73,12 +73,12 @@ class AudioStream {
     /**
      * Connect the pulse audio stream
      */
-    void connectStream();
+    bool connectStream();
 
     /**
      * Disconnect the pulseaudio stream
      */
-    void disconnectStream();
+    bool disconnectStream();
     
     /**
      * Accessor: Get the pulseaudio stream object

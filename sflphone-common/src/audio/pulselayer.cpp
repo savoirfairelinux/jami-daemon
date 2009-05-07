@@ -41,6 +41,7 @@ static  void audioCallback ( pa_stream* s, size_t bytes, void* userdata )
 {
     PulseLayer::streamState = 0;
     _debug("PulseLayer::Pulse audio constructor: Create context\n");
+    
 }
 
 // Destructor
@@ -132,11 +133,11 @@ bool PulseLayer::disconnectPulseAudioServer( void )
     _debug(" PulseLayer::disconnectPulseAudioServer( void ) \n");
 
     if( playback ){
-        playback->disconnectStream();
+      // playback->disconnectStream();
         delete playback; playback=NULL;
     }
     if( record ){
-        record->disconnectStream();
+      // record->disconnectStream();
         delete record; record=NULL;
     }
     if (!playback && !record)
@@ -146,22 +147,26 @@ bool PulseLayer::disconnectPulseAudioServer( void )
 }
 
 
-void PulseLayer::createStreams( pa_context* c )
+bool PulseLayer::createStreams( pa_context* c )
 {
     _debug("PulseLayer::createStreams \n");
     
     playback = new AudioStream(c, PLAYBACK_STREAM, PLAYBACK_STREAM_NAME, _manager->getSpkrVolume());
+    playback->connectStream();
     pa_stream_set_write_callback( playback->pulseStream(), audioCallback, this);
     // pa_stream_set_overflow_callback( playback->pulseStream() , overflow , this);
     // pa_stream_set_suspended_callback( playback->pulseStream(), stream_suspended_callback, this);
     
     record = new AudioStream(c, CAPTURE_STREAM, CAPTURE_STREAM_NAME , _manager->getMicVolume());
+    record->connectStream();
     pa_stream_set_read_callback( record->pulseStream() , audioCallback, this);
     // pa_stream_set_underflow_callback( record->pulseStream() , underflow , this);
     // pa_stream_set_suspended_callback(record->pulseStream(), stream_suspended_callback, this);
 
 
     pa_threaded_mainloop_signal(m , 0);
+
+    return true;
 }
 
 
@@ -189,7 +194,7 @@ bool PulseLayer::openDevice(int indexIn UNUSED, int indexOut UNUSED, int sampleR
     // startStream();
 
     _debug("Connection Done!! \n");
-    return true;
+
 }
 
 void PulseLayer::closeCaptureStream( void )
