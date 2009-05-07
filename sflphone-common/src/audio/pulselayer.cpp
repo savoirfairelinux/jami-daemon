@@ -57,8 +57,8 @@ PulseLayer::closeLayer( void )
 { 
     _debug("PulseLayer::closeLayer :: Destroy pulselayer\n");
 
-    playback->disconnect(); 
-    record->disconnect();
+    playback->disconnectStream(); 
+    record->disconnectStream();
 
     while(PulseLayer::streamState != 2);
     PulseLayer::streamState = 0; 
@@ -131,13 +131,14 @@ bool PulseLayer::disconnectPulseAudioServer( void )
 {
     _debug(" PulseLayer::disconnectPulseAudioServer( void ) \n");
 
-    if( playback )
-        playback->disconnect();
+    if( playback ){
+        playback->disconnectStream();
         delete playback; playback=NULL;
-
-    if( record )
+    }
+    if( record ){
+        record->disconnectStream();
         delete record; record=NULL;
-
+    }
     if (!playback && !record)
       return true;
     else
