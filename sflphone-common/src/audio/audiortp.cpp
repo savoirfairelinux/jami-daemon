@@ -572,8 +572,13 @@ AudioRtpRTX::run () {
     step = _codecFrameSize;
 
     int countTime = 0; // for receive
- 
-    int threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
+    
+    int threadSleep = 0;
+    if (_codecSampleRate != 0)
+        threadSleep = (_codecFrameSize * 1000) / _codecSampleRate;
+    else
+      threadSleep = _layerFrameSize;
+
     TimerPort::setTimer(threadSleep);
 
     audiolayer->startStream();
