@@ -1,6 +1,6 @@
 If we need to update sflphone.pot file, do the following steps:
 
-xgettext -k_ -o sflphone.pot ../sflphone-gtk/src/*.c
+xgettext -k_ -o sflphone.pot ../../sflphone-client-gnome/src/*.c ../../sflphone-client-gnome/src/config/*.c ../../sflphone-client-gnome/src/dbus/*.c ../../sflphone-client-gnome/src/contacts/*.c
 
 Then make && sudo make install
 
