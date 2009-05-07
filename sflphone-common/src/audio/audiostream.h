@@ -69,6 +69,11 @@ class AudioStream {
     int putUrgent( void* buffer , int toCopy );
 
     /**
+     * Connect the pulse audio stream
+     */
+    void connect();
+
+    /**
      * Disconnect the pulseaudio stream
      */
     void disconnect();
@@ -93,6 +98,12 @@ class AudioStream {
 
     void setVolume( double pc ) { _volume.values[0] *= pc/100; }
     pa_cvolume getVolume( void ) { return _volume; }
+
+    /**
+     * Accessor
+     * @return stream state
+     */
+    pa_stream_state_t getStreamState(void);
 
   private:
   
@@ -123,6 +134,11 @@ class AudioStream {
      * Write data to the sound device
      */
     void write( void );
+
+    /**
+     * The pulse audio context
+     */
+    pa_context* _context;
 
     /**
      * The pulse audio object

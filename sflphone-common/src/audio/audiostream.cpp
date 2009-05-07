@@ -32,7 +32,9 @@ AudioStream::AudioStream( pa_context* context, int type, std::string desc, doubl
   channel_map.channels = 1; 
   pa_cvolume_set( &_volume , 1 , PA_VOLUME_NORM ) ; // * vol / 100 ;
   
-  _audiostream =  createStream( context );
+  _context = context;
+
+  connect();
 } 
 
 AudioStream::~AudioStream()
@@ -40,7 +42,13 @@ AudioStream::~AudioStream()
   _debug("Destroy audio streams\n");
   pa_stream_disconnect( pulseStream() );
   pa_stream_unref( pulseStream() );
-} 
+}
+
+void
+AudioStream::connect()
+{
+  _audiostream = createStream( _context );
+}
 
 void
 AudioStream::disconnect( void )
@@ -79,6 +87,10 @@ AudioStream::stream_state_callback( pa_stream* s, void* user_data UNUSED )
   }
 }
 
+pa_stream_state_t 
+AudioStream::getStreamState(void) {
+  return pa_stream_get_state(_audiostream);
+}
 
 
 
