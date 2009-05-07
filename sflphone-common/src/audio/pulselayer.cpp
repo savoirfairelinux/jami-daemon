@@ -52,7 +52,7 @@ PulseLayer::~PulseLayer (void)
     pa_context_unref( context );
 }
 
-    void
+bool
 PulseLayer::closeLayer( void )
 { 
     _debug("PulseLayer::closeLayer :: Destroy pulselayer\n");
@@ -66,6 +66,10 @@ PulseLayer::closeLayer( void )
 
     //TODO  Remove this ugly hack
     sleep(2);
+
+    
+    return true;
+    
 }
 
     void
@@ -123,7 +127,7 @@ void PulseLayer::context_state_callback( pa_context* c, void* user_data )
     }
 }
 
-void PulseLayer::disconnectPulseAudioServer( void )
+bool PulseLayer::disconnectPulseAudioServer( void )
 {
   _debug(" PulseLayer::disconnectPulseAudioServer( void ) \n");
     if( playback )
@@ -131,6 +135,11 @@ void PulseLayer::disconnectPulseAudioServer( void )
 
     if( record )
         delete record; record=NULL;
+
+    if (!playback && !record)
+      return true;
+    else
+      return false;
 }
 
 

@@ -37,7 +37,7 @@ class PulseLayer : public AudioLayer {
     PulseLayer(ManagerImpl* manager);
     ~PulseLayer(void);
 
-    void closeLayer( void );
+    bool closeLayer( void );
 
     /**
      * Check if no devices are opened, otherwise close them.
@@ -168,7 +168,7 @@ class PulseLayer : public AudioLayer {
     /**
      * Close the connection with the local pulseaudio server
      */
-    void disconnectPulseAudioServer( void );
+    bool disconnectPulseAudioServer( void );
 
     /**
      * Get some information about the pulseaudio server
