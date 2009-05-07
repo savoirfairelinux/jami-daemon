@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 		KAboutData about(
 		   "sflphone-client-kde", 
 		   0, 
-		   ki18n("sflphone-client-kde"), 
+		   ki18n("sflphone KDE client"), 
 		   version, 
 		   ki18n(description),
 		   KAboutData::License_GPL, 

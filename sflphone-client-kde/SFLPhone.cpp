@@ -30,6 +30,7 @@ SFLPhone::SFLPhone(QWidget *parent)
 
 
 		setWindowIcon(QIcon(ICON_SFLPHONE));
+		setWindowTitle(tr2i18n("SFLPhone"));
 		
 		setupActions();
 		
