@@ -396,6 +396,6 @@ AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir 
 AC_SUBST(SFLPHONE_CFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
 AC_OUTPUT
-AC_MSG_NOTICE([[Configuration done! Run `make' to build the software.]])
+AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject-1.0.1) has already been compiled. Run `make' to build the software.]])
 
 
