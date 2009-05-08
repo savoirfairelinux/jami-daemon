@@ -206,7 +206,7 @@ if [ ${DO_PREPARE} ]; then
 		exit -1
 	fi
 
-	FULL_VER=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1-2`
+	FULL_VER=`cd ${REPOSITORY_DIR} && git describe --tag HEAD  | cut -d "/" -f2 | cut -d "-" -f1-2 | sed 's/\.rc.*//' | sed 's/\.beta.*//'`
 	
 	# change current branch if needed
         if [ ${RELEASE_MODE} ]; then
@@ -223,9 +223,9 @@ if [ ${DO_PREPARE} ]; then
 	# use git to generate changelogs
 	# TODO : currently do symlink to workaround git-dch bug, check if better way is possible
 	if [ ${RELEASE_MODE} ]; then
-	        cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/ . && ${BIN_DIR}/git-dch -a -R -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian && \
-		# cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian . && ${BIN_DIR}/git-dch -a -R -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian && \
-		cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian . && ${BIN_DIR}/git-dch -a -R -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian
+	        cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/ . && ${BIN_DIR}/git-dch -a -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian && \
+		# cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian . && ${BIN_DIR}/git-dch -a -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian && \
+		cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian . && ${BIN_DIR}/git-dch -a -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian
 	else
 		cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian . && ${BIN_DIR}/git-dch -a -S && rm debian && \
 		# cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian . && ${BIN_DIR}/git-dch -a -S && rm debian && \
