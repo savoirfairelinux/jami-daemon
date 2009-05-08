@@ -1,3 +1,19 @@
+sflphone-client-gnome (0.9.5-0ubuntu1~1.gbp22d013) SYSTEM; urgency=low
+
+  ** SNAPSHOT build @22d0135a841ca830bf4ff57ba068506b919fb86e **
+
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1~rc1
+
+  [ Emmanuel Milou ]
+  * [#1402] Build the daemon with the local pjsip library (vs the
+    installed one)
+  * [#1402] Add info message after configure
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Fri, 08 May 2009 00:01:57 -0400
+
 sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
   [ SFLphone Project ]
