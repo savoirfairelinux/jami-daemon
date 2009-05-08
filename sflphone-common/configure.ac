@@ -6,19 +6,22 @@ AC_INIT([SFLphone],[0.9.5~beta],[sflphoneteam@savoirfairelinux.com],[sflphone])
 AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2009]])
 AC_REVISION([$Revision$])
 
+AC_CANONICAL_SYSTEM
+
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AM_CONFIG_HEADER([config.h])
-
-dnl Compute canonical system name
-dnl AC_CANONICAL_TARGET
 
 dnl Use this variable in the program
 AC_SUBST(PACKAGE_VERSION)
 
 AM_PROG_LIBTOOL
 
+
 dnl Rewrite name of programs to be installed
 dnl AC_ARG_PROGRAM
+
+dnl Compute canonical system name
+dnl AC_CANONICAL_TARGET
 
 dnl Improve make variable MAKE
 AC_PROG_MAKE_SET
@@ -144,11 +147,11 @@ dnl Check for GNU ccRTP
 PKG_PROG_PKG_CONFIG
 
 #Trying to set PJSIP using pkg-config
-PKG_CHECK_MODULES(SIP, libpj-sfl, have_libpj=true, have_libpj=false)
-if test "x${have_libpj}" = "xfalse" ; then
-    AC_MSG_ERROR([PJSIP not found. http://www.pjsip.org/download.htm])
-fi
-AC_SUBST(SIP_CFLAGS)
+#PKG_CHECK_MODULES(SIP, libpj-sfl, have_libpj=true, have_libpj=false)
+#if test "x${have_libpj}" = "xfalse" ; then
+ #   AC_MSG_ERROR([PJSIP not found. http://www.pjsip.org/download.htm])
+#fi
+#AC_SUBST(SIP_CFLAGS)
 
 dnl Check for uuid development package - name: uuid-dev 
 UUID_MIN_VERSION=1.0
@@ -393,4 +396,6 @@ AC_DEFINE_UNQUOTED(DBUS_SERVICES_DIR, "$DBUS_SERVICES_DIR", [Where services dir 
 AC_SUBST(SFLPHONE_CFLAGS)
 AC_SUBST(SFLPHONE_LIBS)
 AC_OUTPUT
-AC_MSG_NOTICE([[Configuration done! Run `make' to build the software.]])
+AC_MSG_NOTICE([[Configuration done! Please make sure that pjsip library (libs/pjproject-1.0.1) has already been compiled. Run `make' to build the software.]])
+
+
