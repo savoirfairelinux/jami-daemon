@@ -1,6 +1,6 @@
-sflphone-client-gnome (0.9.5-0ubuntu1~1.gbp22d013) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~2.gbpd6d0ca) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @22d0135a841ca830bf4ff57ba068506b919fb86e **
+  ** SNAPSHOT build @d6d0ca0f1b33931ed2159165f9d15162591119c0 **
 
   [ SFLphone Project ]
   * [#1262] Updated changelogs for version 0.9.5-0ubuntu1~rc1
@@ -12,7 +12,17 @@ sflphone-client-gnome (0.9.5-0ubuntu1~1.gbp22d013) SYSTEM; urgency=low
 
   [ Sflphone Project ]
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Fri, 08 May 2009 00:01:57 -0400
+  [ jerome ]
+  * Bug #1404: Fix strings in preferences panel.
+  * Bug #1405: Fix strings as requested.
+
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    05-08
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Sat, 09 May 2009 00:01:54 -0400
 
 sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
