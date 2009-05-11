@@ -634,6 +634,7 @@ create_general_settings ()
     gtk_container_add( GTK_CONTAINER(frame) , hbox);
 
     label = gtk_label_new_with_mnemonic(_("_History size limit"));
+    gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
     gtk_box_pack_start( GTK_BOX(hbox) , label , TRUE , TRUE , 0);
 
     value = gtk_hscale_new_with_range(0.0 , 50.0 , 5.0);
@@ -684,7 +685,7 @@ create_general_settings ()
     //gtk_widget_set_sensitive( GTK_WIDGET(applyButton), (n==0)?FALSE:TRUE );
 
     label = gtk_label_new(_("Port:"));
-
+    gtk_misc_set_alignment(GTK_MISC(label), 0.03, 0.4);
     entryPort = gtk_spin_button_new_with_range(1, 65535, 1);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), entryPort);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(entryPort), curPort);
@@ -740,7 +741,7 @@ create_recording_settings ()
     // label
     label = gtk_label_new_with_mnemonic(_("_Recordings folder"));
     gtk_table_attach( GTK_TABLE(table), label, 0, 1, 0, 1, GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 5);
-    gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+    gtk_misc_set_alignment(GTK_MISC(label), 0.08, 0.5);
 
 
     // folder chooser button
