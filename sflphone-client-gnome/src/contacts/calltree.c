@@ -146,7 +146,7 @@ on_key_released (GtkWidget   *widget UNUSED,
         GdkEventKey *event,
         gpointer     user_data UNUSED)
 {
-
+        DEBUG("key-release-event signal cought by on_key_released callback \n");
         // If a modifier key is pressed, it's a shortcut, pass along
         if(event->state & GDK_CONTROL_MASK ||
                 event->state & GDK_MOD1_MASK    ||

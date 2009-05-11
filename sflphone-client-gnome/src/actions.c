@@ -294,7 +294,7 @@ sflphone_hang_up()
     void
 sflphone_pick_up()
 {
-    printf("sflphone_pick_up\n");
+    DEBUG("sflphone_pick_up\n");
     call_t * selectedCall = calltab_get_selected_call(active_calltree);
     if(selectedCall)
     {
@@ -541,7 +541,7 @@ sflphone_new_call()
     gchar *from, *to;
 
 
-    printf("sflphone_new_call\n");
+    DEBUG("sflphone_new_call\n");
     sflphone_on_hold();
 
     // Play a tone when creating a new call
@@ -563,6 +563,7 @@ sflphone_new_call()
     void
 sflphone_keypad( guint keyval, gchar * key)
 {
+    DEBUG("sflphone_keypad \n");
     call_t * c = calltab_get_selected_call(current_calls);
 
     if((active_calltree != current_calls) || (active_calltree == current_calls && !c))
@@ -587,6 +588,7 @@ sflphone_keypad( guint keyval, gchar * key)
         switch(c->state)
         {
             case CALL_STATE_DIALING: // Currently dialing => edit number
+                DEBUG("Writing a number\n");
                 process_dialing(c, keyval, key);
                 break;
             case CALL_STATE_RECORD:
@@ -676,6 +678,10 @@ sflphone_keypad( guint keyval, gchar * key)
             default:
                 break;
         }
+        
+    }
+    else {
+      sflphone_new_call();
     }
 }
 
