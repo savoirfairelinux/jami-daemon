@@ -74,6 +74,10 @@ enum {
     COLUMN_ACCOUNT_COUNT
 };
 
+// Mail notification
+GtkWidget * widg;
+
+
 
 /**
  * Fills the treelist with accounts
@@ -161,6 +165,14 @@ set_popup_mode( void )
 set_notif_level(  )
 {
     dbus_set_notify();
+
+    if (dbus_get_notify())
+      gtk_widget_set_sensitive(widg, TRUE);
+    else {
+      gtk_widget_set_sensitive(widg, FALSE);
+      if (dbus_get_mail_notify())
+        gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), FALSE);
+    }
 }
 
     void
@@ -532,6 +544,7 @@ GtkWidget* create_stun_tab()
 
 
 
+
     GtkWidget*
 create_general_settings ()
 {
@@ -543,7 +556,9 @@ create_general_settings ()
 
     GtkWidget *notifBox;
     GtkWidget *notifAll;
-    GtkWidget *widg;
+    // GtkWidget *widg;
+
+    GtkWidget *mutewidget;
 
     GtkWidget *trayBox;
     GtkWidget *trayItem;
@@ -569,15 +584,22 @@ create_general_settings ()
     gtk_container_add( GTK_CONTAINER(frame) , notifBox);
     gtk_container_set_border_width(GTK_CONTAINER(notifBox), 2);
 
+    // Notification All
     notifAll = gtk_check_button_new_with_mnemonic( _("_Enable notifications"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(notifAll), dbus_get_notify() );
     gtk_box_pack_start( GTK_BOX(notifBox) , notifAll , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( notifAll ) , "clicked" , G_CALLBACK( set_notif_level ) , NULL );
-
+    
+    // Notification
     widg = gtk_check_button_new_with_mnemonic(  _("Enable voicemail _notifications"));
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_mail_notify() );
     gtk_box_pack_start( GTK_BOX(notifBox) , widg , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_mail_notif ) , NULL);
+
+    if (dbus_get_notify())
+       gtk_widget_set_sensitive(widg, TRUE);
+    else
+       gtk_widget_set_sensitive(widg, FALSE);
 
     // System Tray option frame
     gnome_main_section_new (_("System Tray Icon"), &frame);
@@ -635,10 +657,10 @@ create_general_settings ()
     gtk_widget_show( vbox );
     gtk_container_add( GTK_CONTAINER(frame) , vbox);
 
-    widg = gtk_check_button_new_with_mnemonic(  _("Mute other applications during a _call"));
-    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widg), dbus_get_pulse_app_volume_control() );
-    gtk_box_pack_start( GTK_BOX(vbox) , widg , TRUE , TRUE , 1);
-    g_signal_connect(G_OBJECT( widg ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
+    mutewidget = gtk_check_button_new_with_mnemonic(  _("Mute other applications during a _call"));
+    gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(mutewidget), dbus_get_pulse_app_volume_control() );
+    gtk_box_pack_start( GTK_BOX(vbox) , mutewidget , TRUE , TRUE , 1);
+    g_signal_connect(G_OBJECT( mutewidget ) , "clicked" , G_CALLBACK( set_pulse_app_volume_control ) , NULL);
 
     n = account_list_get_sip_account_number();
     DEBUG("sip account number = %i", n);

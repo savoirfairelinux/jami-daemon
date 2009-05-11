@@ -616,7 +616,7 @@ GtkWidget* codecs_box()
 select_audio_manager( void )
 {
 
-    DEBUG("audio manager selected");
+    DEBUG("audio manager selected\n");
 
     if( !SHOW_ALSA_CONF && !gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(pulse) ) )
     {
