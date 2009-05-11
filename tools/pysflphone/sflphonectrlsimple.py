@@ -342,6 +342,19 @@ class SflPhoneCtrlSimple(object):
 		except SflPhoneError, e:
 			print e
 
+        #
+        # Codec manager
+        #
+                        
+        def getCodecList(self):
+                """ Return the codec list """
+                return self.configurationmanager.getCodecList()
+
+        def getActiveCodecList(self):
+                """ Return the active codec list """
+                return self.configurationmanager.getActiveCodecList()
+
+
 
 	#
 	# Call management

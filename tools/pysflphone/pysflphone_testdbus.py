@@ -7,26 +7,32 @@ class SflPhoneTests(SflPhoneCtrlSimple):
 
     def test_get_allaccounts_methods(self):
 
-        print "getAllAccounts()"
+        print "--- getAllAccounts() ---"
         for account in self.getAllAccounts():
             print "  " + account
         print "\n"
 
-        print "getAllRegisteredAccounts()"
+        print "--- getAllRegisteredAccounts() ---"
         for account in self.getAllRegisteredAccounts():
             print "  " + account
         print "\n"
 
-        print "getAllSipAccounts()"
+        print "--- getAllSipAccounts() ---"
         for account in self.getAllSipAccounts():
             print "  " + account
         print "\n"
 
-        print "getAllIaxAccounts()"
+        print "--- getAllIaxAccounts() ---"
         for account in self.getAllIaxAccounts():
             print "  " + account
         print "\n"
 
+    def test_codecs_methods
+
+        print "--- getCodecList() ---"
+        for codec int self.getCodecList():
+            print "  " + codec
+        print "\n"
 
 
 sfl = SflPhoneTests()
