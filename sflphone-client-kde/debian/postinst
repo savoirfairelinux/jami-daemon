@@ -3,5 +3,7 @@
 update-alternatives --install /usr/bin/sflphone sflphone /usr/bin/sflphone-client-kde 100 \
                     --slave /usr/share/man/man1/sflphone.1.gz sflphone.1.gz \
                             /usr/share/man/man1/sflphone-client-kde.1.gz
+                            
+update-alternatives --set sflphone /usr/bin/sflphone-client-kde
 
 exit 0

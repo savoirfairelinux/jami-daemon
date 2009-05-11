@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>327</width>
-    <height>475</height>
+    <width>655</width>
+    <height>487</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -391,6 +391,75 @@
      </layout>
     </widget>
    </item>
+   <item>
+    <widget class="QWidget" name="widget_controlsAlone" native="true">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="margin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QWidget" name="widget_recVolAlone" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QToolButton" name="toolButton_recVolAlone">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Images/mic_75.svg</normaloff>:/Images/mic_75.svg</iconset>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="slider_recVolAlone">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_sndVolAlone" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QToolButton" name="toolButton_sndVolAlone">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Images/mic_75.svg</normaloff>:/Images/mic_75.svg</iconset>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="slider_sndVolAlone">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
   </layout>
   <action name="action_accept">
    <property name="icon">
@@ -547,5 +616,70 @@
  <resources>
   <include location="resources.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>slider_recVolAlone</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>slider_recVol</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>158</x>
+     <y>434</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>19</x>
+     <y>342</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>slider_sndVolAlone</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>slider_sndVol</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>264</x>
+     <y>463</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>637</x>
+     <y>368</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolButton_recVolAlone</sender>
+   <signal>clicked()</signal>
+   <receiver>toolButton_recVol</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>32</x>
+     <y>429</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>12</x>
+     <y>402</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolButton_sndVolAlone</sender>
+   <signal>clicked()</signal>
+   <receiver>toolButton_sndVol</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>18</x>
+     <y>462</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>637</x>
+     <y>411</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

@@ -77,4 +77,8 @@ int main(int argc, char **argv)
 	{
 		printf("%s\n",msg);
 	}
+	catch(QString msg)
+	{
+		qDebug() << msg;
+	}
 } 

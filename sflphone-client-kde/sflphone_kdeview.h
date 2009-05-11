@@ -131,8 +131,8 @@ private slots:
 		}
 	}
 
-	void on_action_displayVolumeControls_toggled();
-	void on_action_displayDialpad_toggled();
+	void on_action_displayVolumeControls_triggered();
+	void on_action_displayDialpad_triggered();
 	void on_action_configureAccounts_triggered();
 	void on_action_configureAudio_triggered();
 	void on_action_configureSflPhone_triggered();

@@ -347,8 +347,8 @@ WizardAccountTypePage::WizardAccountTypePage(QWidget *parent)
 	setTitle(tr2i18n("VoIP Protocols"));
 	setSubTitle(tr2i18n("Choose the account type :"));
 
-	radioButton_SIP = new QRadioButton(tr2i18n("Create a SIP (Session Initiation Protocol) account"));
-	radioButton_IAX = new QRadioButton(tr2i18n("Create a IAX2 (InterAsterisk eXchange) account"));
+	radioButton_SIP = new QRadioButton(tr2i18n("Register a SIP (Session Initiation Protocol) account"));
+	radioButton_IAX = new QRadioButton(tr2i18n("Register a IAX2 (InterAsterisk eXchange) account"));
 	radioButton_SIP->setChecked(true);
 	
 	registerField(FIELD_SIP_ACCOUNT, radioButton_SIP);

@@ -6,7 +6,7 @@
 # Exec=kapp4 %i -caption "%c"
 # Icon=kapp4
 Type=Application
-X-DocPath=sflphone-client-kde/index.html
+X-DocPath=sflphone-client-kde/index.docbook
 # GenericName=A KDE4 Application
 # GenericName[ca]=Una aplicació del KDE4
 # GenericName[da]=Et KDE4-program
@@ -32,7 +32,7 @@ Terminal=false
 Name=SFLphone VoIP KDE4 client
 GenericName=Telephone
 Comment=Call and receive calls with SIP or IAX protocols
-Exec=sflphone_kde
+Exec=sflphone-client-kde
 Icon=sflphone.png
 StartupNotify=true
 Categories=Network;Telephony;
