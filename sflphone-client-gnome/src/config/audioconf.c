@@ -656,7 +656,7 @@ GtkWidget* api_box()
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(alsa), SHOW_ALSA_CONF );
     gtk_box_pack_end( GTK_BOX(ret) , alsa , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT(alsa), "clicked", G_CALLBACK(select_audio_manager), NULL);
-
+    gtk_misc_set_alignment(GTK_MISC(alsa), 0.2, 0.4);
     gtk_widget_show_all(ret);
 
     return ret;
@@ -756,6 +756,7 @@ GtkWidget* ringtones_box()
     // check button to enable ringtones
     ret = gtk_hbox_new( TRUE , 1);
     enableTone = gtk_check_button_new_with_mnemonic( _("_Enable ringtones"));
+    gtk_misc_set_alignment(GTK_MISC(enableTone), 0.2, 0.5);
     gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(enableTone), dbus_is_ringtone_enabled() );
     gtk_box_pack_start( GTK_BOX(ret) , enableTone , TRUE , TRUE , 1);
     g_signal_connect(G_OBJECT( enableTone) , "clicked" , G_CALLBACK( ringtone_enabled ) , NULL);
