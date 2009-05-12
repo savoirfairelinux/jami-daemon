@@ -6,7 +6,7 @@
 # Exec=kapp4 %i -caption "%c"
 # Icon=kapp4
 Type=Application
-X-DocPath=sflphone-client-kde/index.docbook
+X-DocPath=sflphone-client-kde/index.html
 # GenericName=A KDE4 Application
 # GenericName[ca]=Una aplicació del KDE4
 # GenericName[da]=Et KDE4-program

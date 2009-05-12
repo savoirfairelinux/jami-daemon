@@ -14,7 +14,7 @@
 #include "instance_interface_singleton.h"
 #include "sflphone_const.h"
 
-static const char description[] = I18N_NOOP("A KDE 4 Client for SflPhone");
+static const char description[] = I18N_NOOP("A KDE 4 Client for SFLPhone");
 
 static const char version[] = "0.9.5";
 
@@ -38,13 +38,11 @@ int main(int argc, char **argv)
 
 	try
 	{
-		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
-		instance.Register(getpid(), APP_NAME);
 		
 		KAboutData about(
 		   "sflphone-client-kde", 
 		   0, 
-		   ki18n("sflphone KDE client"), 
+		   ki18n("SFLPhone KDE Client"), 
 		   version, 
 		   ki18n(description),
 		   KAboutData::License_GPL, 
@@ -59,6 +57,19 @@ int main(int argc, char **argv)
 		//options.add("+[URL]", ki18n( "Document to open" ));
 		KCmdLineArgs::addCmdLineOptions(options);
 		KApplication app;
+		
+			
+		//configuration dbus
+		registerCommTypes();
+		
+		
+		if(!QFile(QDir::homePath() + CONFIG_FILE_PATH).exists())
+		{
+			(new AccountWizard())->show();
+		}
+		
+		InstanceInterface & instance = InstanceInterfaceSingleton::getInstance();
+		instance.Register(getpid(), APP_NAME);
 		
 		SFLPhone * fenetre = new SFLPhone();
 		

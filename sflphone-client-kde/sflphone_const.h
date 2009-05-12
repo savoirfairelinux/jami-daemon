@@ -47,6 +47,7 @@
 
 #define CONTACT_ITEM_HEIGHT               40
 
+#define CONFIG_FILE_PATH                  "/.sflphone/sflphonedrc"
 
 #define ACTION_LABEL_CALL                 tr2i18n("Call")
 #define ACTION_LABEL_HANG_UP              tr2i18n("Hang up")

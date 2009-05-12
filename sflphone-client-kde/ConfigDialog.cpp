@@ -42,14 +42,12 @@ ConfigurationDialog::ConfigurationDialog(sflphone_kdeView *parent) : QDialog(par
 
 	//TODO ajouter les items de l'interface audio ici avec les constantes
 	
-	//configuration dbus
-	registerCommTypes();
 
 	
 	
 	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
-	connect(&configurationManager, SIGNAL(accountsChanged()),
-	        this,                  SLOT(on1_accountsChanged()));
+// 	connect(&configurationManager, SIGNAL(accountsChanged()),
+// 	        this,                  SLOT(on1_accountsChanged()));
 	
 	loadOptions();
 	
@@ -134,7 +132,7 @@ void ConfigurationDialog::loadOptions()
 	comboBox1_alsaPlugin->clear();
 	QStringList pluginList = configurationManager.getOutputAudioPluginList();
 	comboBox1_alsaPlugin->addItems(pluginList);
-	comboBox1_alsaPlugin->setCurrentIndex(comboBox1_alsaPlugin->findText(configurationManager.getCurrentAudioOutputPlugin()));
+	//comboBox1_alsaPlugin->setCurrentIndex(comboBox1_alsaPlugin->findText(configurationManager.getCurrentAudioOutputPlugin()));
 	
 	QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
 	
@@ -376,7 +374,10 @@ void ConfigurationDialog::loadAccount(QListWidgetItem * item)
 	
 	QString protocolsTab[] = ACCOUNT_TYPES_TAB;
 	QList<QString> * protocolsList = new QList<QString>();
-	for(int i=0;i<sizeof(protocolsTab)/sizeof(QString);i++) protocolsList->append(protocolsTab[i]);
+	for(int i = 0 ; i < (int) (sizeof(protocolsTab) / sizeof(QString)) ; i++)
+	{ 
+		protocolsList->append(protocolsTab[i]);
+	}
 	QString accountName = account->getAccountDetail(ACCOUNT_TYPE);
 	int protocolIndex = protocolsList->indexOf(accountName);
 	delete protocolsList;
@@ -536,7 +537,8 @@ void ConfigurationDialog::updateCodecListCommands()
 void ConfigurationDialog::on_edit1_alias_textChanged(const QString & text)
 {
 	qDebug() << "on_edit1_alias_textChanged";
-	//listWidget_accountList->currentItem()->setText(text);
+	Account * account = accountList->getAccountByItem(listWidget_accountList->currentItem());
+	account->setItemText(text);
 }
 
 void ConfigurationDialog::on_spinBox_SIPPort_valueChanged ( int value )
@@ -609,21 +611,14 @@ void ConfigurationDialog::on_button_accountUp_clicked()
 
 void ConfigurationDialog::on_button_accountDown_clicked()
 {
-	qDebug() << "on_button_accountDown_clicked";
 	int currentRow = listWidget_accountList->currentRow();
-	qDebug() << "on_button_accountDown_clicked1";
 	QListWidgetItem * prevItem = listWidget_accountList->takeItem(currentRow);
-	qDebug() << "on_button_accountDown_clicked2";
 	Account * account = accountList->getAccountByItem(prevItem);
 	QListWidgetItem * item = account->renewItem();
 	delete prevItem;
-	qDebug() << "on_button_accountDown_clicked3";
 	listWidget_accountList->insertItem(currentRow + 1 , item);
-	qDebug() << "on_button_accountDown_clicked4 : " << account->getAlias() << "  " << account->getItemWidget();
 	listWidget_accountList->setItemWidget(item, account->getItemWidget());
-	qDebug() << "on_button_accountDown_clicked5";
 	listWidget_accountList->setCurrentItem(item);
-	qDebug() << "on_button_accountDown_clicked6";
 }
 
 void ConfigurationDialog::on_button_accountAdd_clicked()

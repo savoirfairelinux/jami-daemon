@@ -79,6 +79,7 @@ sflphone_kdeView::sflphone_kdeView(QWidget *parent)
 	
 	loadWindow();
 	
+	
 } 
 
 sflphone_kdeView::~sflphone_kdeView()
