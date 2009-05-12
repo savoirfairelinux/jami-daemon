@@ -779,7 +779,7 @@ show_config_window ()
 
     // Set window properties
     gtk_dialog_set_has_separator(dialog, FALSE);
-    gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 400);
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 600, 400);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
     // Create tabs container
@@ -846,7 +846,7 @@ show_accounts_window( void )
 
     // Set window properties
     gtk_dialog_set_has_separator(dialog, FALSE);
-    gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 500);
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 600, 500);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 0);
 
     gnome_main_section_new (_("Configured Accounts"), &accountFrame);
