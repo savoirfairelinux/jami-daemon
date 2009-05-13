@@ -203,7 +203,7 @@ dbus_connect ()
 
   g_type_init ();
 
-  connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
+  connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 
   if (error)
   {
@@ -215,22 +215,34 @@ dbus_connect ()
 
   /* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
 
-  // instanceProxy = dbus_g_proxy_new_for_name (connection,
+  /*
+  instanceProxy = dbus_g_proxy_new_for_name (connection,
+                                     "org.sflphone.SFLphone",
+                                     "/org/sflphone/SFLphone/Instance",
+                                     "org.sflphone.SFLphone.Instance");
+  */
   instanceProxy = dbus_g_proxy_new_for_name_owner (connection,
                                      "org.sflphone.SFLphone",
                                      "/org/sflphone/SFLphone/Instance",
                                      "org.sflphone.SFLphone.Instance",
                                      &error);
 
+ 
   if (instanceProxy==NULL)
   {
     ERROR ("Failed to get proxy to Instance");
     return FALSE;
   }
 
-  DEBUG ("DBus connected to Instance");
 
-  // callManagerProxy = dbus_g_proxy_new_for_name (connection,
+  DEBUG ("DBus connected to Instance");
+  /*
+  callManagerProxy = dbus_g_proxy_new_for_name (connection,
+                                     "org.sflphone.SFLphone",
+                                     "/org/sflphone/SFLphone/CallManager",
+                                     "org.sflphone.SFLphone.CallManager");
+
+  */
   callManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
                                      "org.sflphone.SFLphone",
                                      "/org/sflphone/SFLphone/CallManager",
@@ -287,7 +299,14 @@ dbus_connect ()
   dbus_g_proxy_connect_signal (callManagerProxy,
     "volumeChanged", G_CALLBACK(volume_changed_cb), NULL, NULL);
 
-  // configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 
+  /*
+  configurationManagerProxy = dbus_g_proxy_new_for_name (connection, 
+                                  "org.sflphone.SFLphone",
+                                  "/org/sflphone/SFLphone/ConfigurationManager",
+                                  "org.sflphone.SFLphone.ConfigurationManager");
+  */
+
+ 
   configurationManagerProxy = dbus_g_proxy_new_for_name_owner (connection,
                                   "org.sflphone.SFLphone",
                                   "/org/sflphone/SFLphone/ConfigurationManager",

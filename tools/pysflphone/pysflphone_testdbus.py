@@ -27,12 +27,12 @@ class SflPhoneTests(SflPhoneCtrlSimple):
             print "  " + account
         print "\n"
 
-    def test_codecs_methods
+ #   def test_codecs_methods(self):
 
-        print "--- getCodecList() ---"
-        for codec int self.getCodecList():
-            print "  " + codec
-        print "\n"
+#        print "--- getCodecList() ---"
+#        for codec int self.getCodecList():
+#            print "  " + codec
+#        print "\n"
 
 
 sfl = SflPhoneTests()

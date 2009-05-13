@@ -43,92 +43,99 @@ except ImportError, e:
 
 
 class SflPhoneCtrlSimple(object):
-	"""Simple class for controlling SflPhoned through DBUS"""
+    """Simple class for controlling SflPhoned through DBUS"""
 
-	# list of active calls (known by the client)
-	activeCalls = {}
+    # list of active calls (known by the client)
+    activeCalls = {}
 
-	def __init__(self, name=sys.argv[0]):
-		# current active account
-		self.account = None
-		# client name
-		self.name = name
-		# client registered to sflphoned ?
-		self.registered = False
+    def __init__(self, name=sys.argv[0]):
+       	# current active account
+        self.account = None
+        # client name
+        self.name = name
+        # client registered to sflphoned ?
+        self.registered = False
 
-		self.register()
-
-
-	def __del__(self):
-		if self.registered:
-			self.unregister()
+        self.register()
 
 
-	def register(self):
-		if self.registered:
-			return
+    def __del__(self):
+        if self.registered:
+            self.unregister()
 
-		try:
-			# register the main loop for d-bus events
-			DBusGMainLoop(set_as_default=True)
-			self.bus = dbus.SessionBus()
-		except dbus.DBusException, e:
-			raise SPdbusError("Unable to connect DBUS session bus")
 
-		dbus_objects = dbus.Interface(self.bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus'), 'org.freedesktop.DBus').ListNames()
-		if not "org.sflphone.SFLphone" in dbus_objects:
-			raise SPdbusError("Unable to find org.sflphone.SFLphone in DBUS. Check if sflphoned is running")
+    def register(self):
+        if self.registered:
+            return
 
-		try:
-			proxy_instance = self.bus.get_object("org.sflphone.SFLphone",
-												 "/org/sflphone/SFLphone/Instance",
-												 introspect=False)
-			proxy_callmgr = self.bus.get_object("org.sflphone.SFLphone",
-												"/org/sflphone/SFLphone/CallManager",
-												introspect=False)
-			proxy_confmgr = self.bus.get_object("org.sflphone.SFLphone",
-												"/org/sflphone/SFLphone/ConfigurationManager",
-												introspect=False)
-			self.instance = dbus.Interface(proxy_instance,
-										   "org.sflphone.SFLphone.Instance")
-			self.callmanager = dbus.Interface(proxy_callmgr,
-											  "org.sflphone.SFLphone.CallManager")
-			self.configurationmanager = dbus.Interface(proxy_confmgr,
-													   "org.sflphone.SFLphone.ConfigurationManager")
-		except dbus.DBusException, e:
-			raise SPdbusError("Unable to bind to sflphoned api, ask core-dev team to implement getVersion method and start to pray.")
+        try:
+            # register the main loop for d-bus events
+            DBusGMainLoop(set_as_default=True)
+            self.bus = dbus.SessionBus()
+        except dbus.DBusException, e:
+            raise SPdbusError("Unable to connect DBUS session bus")
 
-		try:
-			self.instance.Register(os.getpid(), self.name)
-			self.registered = True
-		except:
-			raise SPdaemonError("Client registration failed")
+        dbus_objects = dbus.Interface(self.bus.get_object(
+              'org.freedesktop.DBus', '/org/freedesktop/DBus'), 
+                      'org.freedesktop.DBus').ListNames()
 
-		try:
-			proxy_callmgr.connect_to_signal('incomingCall', self.onIncomingCall)
-			proxy_callmgr.connect_to_signal('callStateChanged', self.onCallStateChanged)
-		except dbus.DBusException, e:
-			print e
+        if not "org.sflphone.SFLphone" in dbus_objects:
+            raise SPdbusError("Unable to find org.sflphone.SFLphone in DBUS. Check if sflphoned is running")
+
+        try:
+            proxy_instance = self.bus.get_object("org.sflphone.SFLphone",
+		 "/org/sflphone/SFLphone/Instance", introspect=False)
+            proxy_callmgr = self.bus.get_object("org.sflphone.SFLphone",
+		 "/org/sflphone/SFLphone/CallManager", introspect=False)
+            proxy_confmgr = self.bus.get_object("org.sflphone.SFLphone", 
+                 "/org/sflphone/SFLphone/ConfigurationManager", 
+                        introspect=False)
+
+            self.instance = dbus.Interface(proxy_instance,
+                          "org.sflphone.SFLphone.Instance")
+            self.callmanager = dbus.Interface(proxy_callmgr,
+		          "org.sflphone.SFLphone.CallManager")
+            self.configurationmanager = dbus.Interface(proxy_confmgr,
+			  "org.sflphone.SFLphone.ConfigurationManager")
+
+        except dbus.DBusException, e:
+            
+            raise SPdbusError("Unable to bind to sflphoned api, 
+                ask core-dev team to implement getVersion method and 
+                      start to pray.")
+
+        try:
+            self.instance.Register(os.getpid(), self.name)
+            self.registered = True
+        except:
+            raise SPdaemonError("Client registration failed")
+
+        try:
+            proxy_callmgr.connect_to_signal('incomingCall', self.onIncomingCall)
+            proxy_callmgr.connect_to_signal('callStateChanged', self.onCallStateChanged)
+        except dbus.DBusException, e:
+            print e
 			
 
-	def unregister(self):
-		if not self.registered:
-			return
-			#raise SflPhoneError("Not registered !")
-		try:
-			self.instance.Unregister(os.getpid())
-			self.registered = False
-		except:
-			raise SPdaemonError("Client unregistration failed")
+    def unregister(self):
+
+        if not self.registered:
+            return
+            #raise SflPhoneError("Not registered !")
+        try:
+            self.instance.Unregister(os.getpid())
+            self.registered = False
+        except:
+            raise SPdaemonError("Client unregistration failed")
 
 
-	def isRegistered(self):
-		return self.registered
+    def isRegistered(self):
+        return self.registered
 
 
-	#
-	# Signal handling
-	#
+    #
+    # Signal handling
+    #
 
 	# On incoming call event, add the call to the list of active calls
 	def onIncomingCall(self, account, callid, to):
