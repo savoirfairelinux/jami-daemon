@@ -203,7 +203,7 @@ dbus_connect ()
 
   g_type_init ();
 
-  connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
+  connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
 
   if (error)
   {
