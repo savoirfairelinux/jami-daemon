@@ -1,6 +1,6 @@
-sflphone-client-gnome (0.9.5-0ubuntu1~3.gbpc470ee) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~4.gbpc11c5a) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @c470ee0b624b39d151a22ee67c8d8e542aaf9064 **
+  ** SNAPSHOT build @c11c5adbc5d4bbe5ee225dd85d6be59f03feaaeb **
 
   [ SFLphone Project ]
   * [#1262] Updated changelogs for version 0.9.5-0ubuntu1~rc1
@@ -50,7 +50,13 @@ sflphone-client-gnome (0.9.5-0ubuntu1~3.gbpc470ee) SYSTEM; urgency=low
 
   [ Sflphone Project ]
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Tue, 12 May 2009 00:02:18 -0400
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    05-12
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Wed, 13 May 2009 00:01:59 -0400
 
 sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
