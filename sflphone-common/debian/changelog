@@ -1,6 +1,6 @@
-sflphone-common (0.9.5-0ubuntu1~2.gbpd6d0ca) SYSTEM; urgency=low
+sflphone-common (0.9.5-0ubuntu1~4.gbpc11c5a) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @d6d0ca0f1b33931ed2159165f9d15162591119c0 **
+  ** SNAPSHOT build @c11c5adbc5d4bbe5ee225dd85d6be59f03feaaeb **
 
   [ SFLphone Project ]
   * [#1262] Updated changelogs for version 0.9.5-0ubuntu1~rc1
@@ -22,7 +22,41 @@ sflphone-common (0.9.5-0ubuntu1~2.gbpd6d0ca) SYSTEM; urgency=low
 
   [ Sflphone Project ]
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Sat, 09 May 2009 00:01:52 -0400
+  [ Alexandre Savard ]
+  * [#1314] Add some return values to audio init functions
+  * Add debug messages in debus calls concerning account
+  * [#1314] Refactoring of pulselayer to test conect/disconnect
+  * [#1314] Refactoring pulseaudio stream to test connect disconnect
+  * [#1314] Add mutex to pulse layer audio streams
+  * [#1009] Fix Codec Sampling Rate set to zeros
+  * [#1314] Test pulse audio and audio streams connect and disconnect
+  * Add python dbus test suite
+  * Test client dbus connection to a fixed owner
+  * [#1407] Add a scenario to pick_up action
+
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    05-09
+
+  [ Alexandre Savard ]
+  * [#1407] Some print info
+  * Add codec debug tests in pysflphone
+  * Dbus with fixed owner does not automatically start the deamon
+  * [#1404] IF the first notification option disable the second
+    notification
+  * [#1404] Gnome -> Preferences -> Address Book
+  * [#1404] Call History
+  * [#1404] Gnome -> Preferences -> Recordings
+
+  [ Sflphone Project ]
+
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    05-12
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Wed, 13 May 2009 00:01:58 -0400
 
 sflphone-common (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
