@@ -27,6 +27,7 @@ IF (UNIX)
    sflphone-client-kde
    sflphone-client-kde.shell
    install_manifest.txt
+   *.1
   )
   
   ADD_CUSTOM_COMMAND(

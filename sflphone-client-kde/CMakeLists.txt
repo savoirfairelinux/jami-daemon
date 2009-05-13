@@ -129,19 +129,48 @@ TARGET_LINK_LIBRARIES(sflphone-client-kde ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${
 
 
 
-ADD_CUSTOM_COMMAND(OUTPUT  "${CMAKE_CURRENT_BUILD_DIR}/sflphone-client-kde.1"
-                   DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod"
-                   COMMAND /bin/pod2man
-                   ARGS --section=1 --release=${VERSION} --center "" "${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod" > "${CMAKE_CURRENT_BUILD_DIR}/sflphone-client-kde.1"
-                   COMMENT "Compiling manpage of sflphone-client-kde with pod2man")
+# ADD_CUSTOM_COMMAND(OUTPUT  "sflphone-client-kde.1"
+# #                    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod"
+#                    COMMAND /bin/pod2man
+#                    ARGS --section=1 --release=${VERSION} --center "" "${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod" > "${CMAKE_CURRENT_BUILD_DIR}/sflphone-client-kde.1"
+# #                    COMMENT "Compiling manpage of sflphone-client-kde with pod2man"
+#                    )
 
 
+# ADD_CUSTOM_COMMAND(OUTPUT  ${CMAKE_BINARY_DIR}/sflphone-client-kde.1
+# #                    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod"
+#                    COMMAND /usr/bin/pod2man
+#                     ARGS --release=${VERSION} ${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod > ${CMAKE_BIANRY_DIR}/sflphone-client-kde.1
+#                    COMMENT "Compiling manpage of sflphone-client-kde with pod2man"
+# # 		              VERBATIM
+#                    )
+                   
+                   
+# ADD_CUSTOM_COMMAND(OUTPUT  ${CMAKE_CURRENT_BUILD_DIR}/test.txt
+# #                    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod"
+#                    COMMAND cp 
+#                     ARGS ${CMAKE_CURRENT_BUILD_DIR}/test2.txt ${CMAKE_CURRENT_BUILD_DIR}/test.txt
+#                    COMMENT "Yeaaaaaaaaaaaaaahhhhhhh"
+# # 		              VERBATIM
+#                    )
+                   
+#                    ADD_CUSTOM_COMMAND(
+#     OUTPUT ${CMAKE_BINARY_DIR}/test.txt
+#     COMMAND cp ${CMAKE_BINARY_DIR}/test2.txt ${CMAKE_BINARY_DIR}/test.txt
+#     COMMENT "Yeaaaaaaaaaaaaaahhhhhhh"
+#     )
 
+# FILE(WRITE "${CMAKE_BINARY_DIR}/sflphone-client-kde.1")
+                   
+execute_process(COMMAND pod2man --release=${VERSION} ${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.pod
+                OUTPUT_FILE sflphone-client-kde.1)
+
+# execute_process(COMMAND "cp ${CMAKE_CURRENT_BUILD_DIR}/test2.txt ${CMAKE_CURRENT_BUILD_DIR}/test.txt")
 
 ########### install files ###############
 
 SET ( HANDBOOK_INSTALL_DIR  /usr/share/doc/kde/HTML )
-SET ( MANPAGES_INSTALL_DIR  /usr/share/man )
+#SET ( MANPAGES_INSTALL_DIR  /usr/share/man )
 
 INSTALL(TARGETS sflphone-client-kde DESTINATION ${BIN_INSTALL_DIR})
 
@@ -154,7 +183,7 @@ INSTALL( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc/ DESTINATION ${HANDBOOK_INSTA
 #KDE4_CREATE_MANPAGE( ${CMAKE_CURRENT_SOURCE_DIR}/doc/en/sflphone-client-kde/index.docbook INSTALL_DESTINATION ${MAN_INSTALL_DIR} SUBDIR  )
 #INSTALL ( CODE "FILE(MAKE_DIRECTORY ${HTML_INSTALL_DIR}/en/sflphone-client-kde)"  )
 #INSTALL( FILES ${CMAKE_CURRENT_BUILD_DIR}/sflphone.1 ${CMAKE_CURRENT_SOURCE_DIR}/man/sflphone-client-kde.1   DESTINATION  ${MANPAGES_INSTALL_DIR}/man1 )
-INSTALL( FILES ${CMAKE_CURRENT_BUILD_DIR}/sflphone-client-kde.1  DESTINATION  ${MANPAGES_INSTALL_DIR}/man1 )
+INSTALL( FILES ${CMAKE_BINARY_DIR}/sflphone-client-kde.1  DESTINATION  ${MAN_INSTALL_DIR}/man1 )
 
 
 #INSTALL ( CODE "MESSAGE (\"ton pere\")" )
