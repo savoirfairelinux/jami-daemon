@@ -1,6 +1,6 @@
-sflphone-client-gnome (0.9.5-0ubuntu1~4.gbpc11c5a) SYSTEM; urgency=low
+sflphone-client-gnome (0.9.5-0ubuntu1~5.gbp8ad70b) SYSTEM; urgency=low
 
-  ** SNAPSHOT build @c11c5adbc5d4bbe5ee225dd85d6be59f03feaaeb **
+  ** SNAPSHOT build @8ad70bce0778ea1bf78344c45355ba1ee7090fd0 **
 
   [ SFLphone Project ]
   * [#1262] Updated changelogs for version 0.9.5-0ubuntu1~rc1
@@ -56,7 +56,22 @@ sflphone-client-gnome (0.9.5-0ubuntu1~4.gbpc11c5a) SYSTEM; urgency=low
 
   [ Sflphone Project ]
 
- -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Wed, 13 May 2009 00:01:59 -0400
+  [ Alexandre Savard ]
+  * [#1404] Gnome -> Preferences -> Hooks
+  * Second test with DBUS owner
+
+  [ SFLphone Project ]
+  * [#1262] Updated changelogs for version 0.9.5-0ubuntu1 Snapshot 2009-
+    05-13
+
+  [ Alexandre Savard ]
+  * [#1430] Dbus fixed owner message binding
+  * [#1430] Get back DBUS_BUS_SESSION type
+  * [#1430] Get back dbus_g_proxy_new_for_name
+
+  [ Sflphone Project ]
+
+ -- Sflphone Project <sflphone@mtl.savoirfairelinux.net>  Thu, 14 May 2009 00:01:57 -0400
 
 sflphone-client-gnome (0.9.5-0ubuntu1~rc1) SYSTEM; urgency=low
 
