@@ -50,7 +50,7 @@ AlsaLayer::~AlsaLayer (void)
     closeLayer();
 }
 
-    void
+bool
 AlsaLayer::closeLayer()
 {
     _debugAlsa("Close ALSA streams\n");
@@ -73,6 +73,8 @@ AlsaLayer::closeLayer()
     
     _CaptureHandle = 0;
     _PlaybackHandle = 0;
+
+    return true;
 }
 
     bool 

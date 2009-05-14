@@ -1843,7 +1843,7 @@ int ManagerImpl::app_is_running( std::string process )
 /**
  * Initialization: Main Thread
  */
-  void
+bool
 ManagerImpl::initAudioDriver(void)
 {
 
@@ -1871,12 +1871,16 @@ ManagerImpl::initAudioDriver(void)
 
   if (_audiodriver == 0) {
     _debug("Init audio driver error\n");
+    return false;
   } else {
     error = getAudioDriver()->getErrorMessage();
     if (error == -1) {
       _debug("Init audio driver: %i\n", error);
+      return false;
     }
   }
+
+  return true;
 
 }
 
@@ -1974,7 +1978,7 @@ void ManagerImpl::switchAudioManager (void)
 
     // need to stop audio streams if there is currently no call
     if( (type != PULSEAUDIO) && (!hasCurrentCall())) {
-        _debug("There is currently a call!!\n");
+      // _debug("There is currently a call!!\n");
         _audiodriver->stopStream();
 
     }

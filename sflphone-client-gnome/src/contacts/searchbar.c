@@ -26,6 +26,7 @@
 const GdkColor BLACK_COLOR = { 0, 0, 0, 0 };
 const GdkColor GRAY_COLOR = { 0, 30000, 30000, 30000 };
 
+GtkWidget * searchbox;
 
 void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data UNUSED) {
     // gtk_widget_grab_focus (GTK_WIDGET(searchbox));
@@ -39,16 +40,39 @@ void searchbar_entry_changed (GtkEntry* entry, gchar* arg1 UNUSED, gpointer data
 
 }
 
+//   static void
+// focus_in_event(GtkWidget *widget, GdkEventFocus *event, gpointer data)
+// {
+    
+// }
+
+
 void searchbar_clear_entry_if_default (GtkWidget* widget, gpointer user_data UNUSED) {
 
+    DEBUG("searchbar_clear_entry_if_default\n");
     gtk_widget_modify_text(widget, GTK_STATE_NORMAL, &BLACK_COLOR); 
     if(g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(widget)), "Search history", 14) == 0
             || g_ascii_strncasecmp(gtk_entry_get_text(GTK_ENTRY(widget)), "Search contact", 14) == 0 )
         gtk_entry_set_text(GTK_ENTRY(widget), "");
 
-    // gtk_widget_grab_focus (GTK_WIDGET(searchbox));
+    // gtk_widget_grab_focus (GTK_WIDGET(searchbox));1
 
 }
+
+void
+focus_on_searchbar_out(){
+  DEBUG("set_focus_on_searchbar_out \n");
+  // gtk_widget_grab_focus(GTK_WIDGET(sw));
+  focus_is_on_searchbar = FALSE;
+}
+
+void
+focus_on_searchbar_in(){
+  DEBUG("set_focus_on_searchbar_in \n");
+  // gtk_widget_grab_focus(GTK_WIDGET(sw));
+  focus_is_on_searchbar = TRUE;
+}
+
 
 void
 searchbar_init(calltab_t *tab)
@@ -63,7 +87,7 @@ searchbar_init(calltab_t *tab)
 
 GtkWidget* searchbar_new(gchar* searchbar_type) {
 
-  GtkWidget * searchbox;
+  // GtkWidget * searchbox;
   GtkWidget* image;
   GtkWidget* ret = gtk_hbox_new(FALSE, 0);
 
@@ -84,8 +108,13 @@ GtkWidget* searchbar_new(gchar* searchbar_type) {
   gtk_widget_modify_text(searchbox, GTK_STATE_NORMAL, &GRAY_COLOR); 
 
   gtk_entry_set_text(GTK_ENTRY(searchbox), _("Search contact"));
-  g_signal_connect(GTK_ENTRY(searchbox), "changed", G_CALLBACK(searchbar_entry_changed), NULL);
-  g_signal_connect(GTK_ENTRY(searchbox), "grab-focus", G_CALLBACK(searchbar_clear_entry_if_default), NULL);
+  g_signal_connect_after(GTK_ENTRY(searchbox), "changed", G_CALLBACK(searchbar_entry_changed), NULL);
+  g_signal_connect_after(GTK_ENTRY(searchbox), "grab-focus", G_CALLBACK(searchbar_clear_entry_if_default), NULL);
+
+  g_signal_connect_after (G_OBJECT (searchbox), "focus-in-event",
+                      G_CALLBACK (focus_on_searchbar_in), NULL);
+  g_signal_connect_after (G_OBJECT (searchbox), "focus-out-event",
+                      G_CALLBACK (focus_on_searchbar_out), NULL);
 
   gtk_box_pack_start(GTK_BOX(ret), searchbox, TRUE, TRUE, 0);
 
