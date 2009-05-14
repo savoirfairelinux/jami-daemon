@@ -217,6 +217,15 @@ void Account::setAccountDetail(QString param, QString val)
 	(*accountDetails)[param] = val;
 }
 
+void Account::setAccountId(QString id)
+{
+	if (! isNew())
+	{
+		qDebug() << "Error : setting AccountId of an existing account.";
+	}
+	*accountId = id;
+}
+
 //Operators
 bool Account::operator==(const Account& a)const
 {

@@ -130,23 +130,23 @@ void ConfigurationDialog::loadOptions()
 	//
 	//alsa settings
 	comboBox1_alsaPlugin->clear();
-	QStringList pluginList = configurationManager.getOutputAudioPluginList();
-	comboBox1_alsaPlugin->addItems(pluginList);
-	//comboBox1_alsaPlugin->setCurrentIndex(comboBox1_alsaPlugin->findText(configurationManager.getCurrentAudioOutputPlugin()));
+// 	QStringList pluginList = configurationManager.getOutputAudioPluginList();
+// 	comboBox1_alsaPlugin->addItems(pluginList);
+// 	comboBox1_alsaPlugin->setCurrentIndex(comboBox1_alsaPlugin->findText(configurationManager.getCurrentAudioOutputPlugin()));
 	
 	QStringList devices = configurationManager.getCurrentAudioDevicesIndex();
 	
 	int inputDevice = devices[1].toInt();
 	comboBox2_in->clear();
-	QStringList inputDeviceList = configurationManager.getAudioInputDeviceList();
-	comboBox2_in->addItems(inputDeviceList);
+// 	QStringList inputDeviceList = configurationManager.getAudioInputDeviceList();
+// 	comboBox2_in->addItems(inputDeviceList);
 	comboBox2_in->setCurrentIndex(inputDevice);
 	
 	int outputDevice = devices[0].toInt();
 	comboBox3_out->clear();
-	QStringList outputDeviceList = configurationManager.getAudioOutputDeviceList();
-	comboBox3_out->addItems(inputDeviceList);
-	comboBox3_out->setCurrentIndex(outputDevice);
+// 	QStringList outputDeviceList = configurationManager.getAudioOutputDeviceList();
+// 	comboBox3_out->addItems(outputDeviceList);
+// 	comboBox3_out->setCurrentIndex(outputDevice);
 	
 	//pulseaudio settings
 	checkBox_pulseAudioVolumeAlter->setCheckState(configurationManager.getPulseAppVolumeControl() ? Qt::Checked : Qt::Unchecked);
@@ -320,11 +320,11 @@ void ConfigurationDialog::loadAccountList()
 
 void ConfigurationDialog::saveAccountList()
 {
+	//get the configurationManager instance
+	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	//save the account being edited
 	if(listWidget_accountList->currentItem())
 		saveAccount(listWidget_accountList->currentItem());
-	//get the configurationManager instance
-	ConfigurationManagerInterface & configurationManager = ConfigurationManagerInterfaceSingleton::getInstance();
 	//ask for the list of accounts ids to the configurationManager
 	QStringList accountIds= QStringList(configurationManager.getAccountList().value());
 	//create or update each account from accountList
@@ -334,14 +334,16 @@ void ConfigurationDialog::saveAccountList()
 		//if the account has no instanciated id, it has just been created in the client
 		if(current.isNew())
 		{
-			currentId = configurationManager.addAccount(current.getAccountDetails());
+			MapStringString details = current.getAccountDetails();
+			currentId = configurationManager.addAccount(details);
+			current.setAccountId(currentId);
 		}
 		//if the account has an instanciated id but it's not in configurationManager
 		else{
 			if(! accountIds.contains(current.getAccountId()))
 			{
 				qDebug() << "The account with id " << current.getAccountId() << " doesn't exist. It might have been removed by another SFLPhone client.";
-				currentId = QString("");
+				currentId = QString();
 			}
 			else
 			{
@@ -648,6 +650,7 @@ void ConfigurationDialog::on_toolButton_accountsApply_clicked()
 {
 	qDebug() << "on_toolButton_accountsApply_clicked";
 	saveAccountList();
+	loadAccountList();
 }
 
 

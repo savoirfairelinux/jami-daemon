@@ -1,0 +1,175 @@
+<chapter id="getting-started">
+
+<chapterinfo>
+<authorgroup>
+<author><firstname>J&eacute;r&eacute;my</firstname><surname>Quentin</surname></author>
+<!-- TRANS:ROLES_OF_TRANSLATORS -->
+</authorgroup>
+</chapterinfo>
+
+<title>Getting Started with &sflphone-client-kde;</title>
+
+<para>When you start &sflphone-client-kde; for the first time, you get an account configuration wizard. This wizard will help you setting up an account for &sflphone; to use. You should complete the wizard before going to the main window of &sflphone-client-kde; for it will not work without at least one account set up.
+You can still change all the settings of the account from the main window after the wizard is complete. You can also start the wizard from the main window at any time.
+We will now describe the different options of this wizard.</para>
+
+<simplelist>
+<member><link linkend="gettingstarted-welcome">The wizard introduction page.</link></member>
+<member><link linkend="gettingstarted-createorregister">The registering type page.</link></member>
+<member><link linkend="gettingstarted-create">Creating a new account.</link></member>
+<member><link linkend="gettingstarted-register">Register an existing account.</link></member>
+<member><link linkend="gettingstarted-stun">The STUN settings.</link></member>
+<member><link linkend="gettingstarted-finish">The conclusion page.</link></member>
+</simplelist>
+
+<sect2 id="gettingstarted-wizard-welcome">
+<title>Welcoming page</title>
+
+<screenshot>
+<mediaobject>
+<imageobject>
+<imagedata fileref="wizard-welcome.png" format="PNG"/>
+</imageobject>
+<caption>
+<para>The wizard introduction page</para>
+</caption>
+</mediaobject>
+</screenshot>
+
+
+<para>You can navigate in this wizard using the <I>Next</I>, <I>Previous</I> and <I>Cancel</I> buttons. If you click on the <I>Cancel</I> button, the wizard will shut down without adding the account. Click on the <I>Next</I> button to start configuring the account</para>
+
+</sect2>
+
+
+<sect2 id="gettingstarted-wizard-createorregister">
+<title>Create or register</title>
+
+<screenshot>
+<mediaobject>
+<imageobject>
+<imagedata fileref="wizard-createorregister.png" format="PNG"/>
+</imageobject>
+<caption>
+<para>The registering type page</para>
+</caption>
+</mediaobject>
+</screenshot>
+
+<para>You can now choose to create a new account hosted by sflphone.org or register an existing account that you own.
+If you use &sflphone; for the first time and want to make things work the simplest way possible, you should choose <I>create a new account</I>. It will create an account and add it to &sflphone;.
+If you already have a SIP or IAX account created with &sflphone; or by any other way, you can add it to &sflphone; by choosing <I>register an existing account</I>.
+</para>
+
+</sect2>
+
+<sect2 id="gettingstarted-wizard-create">
+<title>Creating a new account</title>
+
+If you choose to create an account on sflphone.org, the wizard will need very few informations to create the account, create it automatically and add the informations of the new account in &sflphone;. It creates a SIP account, so you will then be able to use this new account from any other system, with any software handling SIP accounts, using the informations of the new account that are displayed at the end of the process or reachable from the main window.
+
+<sect3 id="gettingstarted-wizard-create-email">
+<title>Email address</title>
+
+<screenshot>
+<mediaobject>
+<imageobject>
+<imagedata fileref="wizard-create-email.png" format="PNG"/>
+</imageobject>
+<caption>
+<para>The email address page</para>
+</caption>
+</mediaobject>
+</screenshot>
+
+<para>The first information it will ask for is your email address. This is non-obligatory, so you can just skip that step by clicking <I>Next</I> button. But it will enable you to receive some notifications about the voice or text messages you receive while you're away.</para>
+
+
+</sect3>
+
+</sect2>
+
+<sect2 id="gettingstarted-wizard-register">
+<title>Register an existing account</title>
+
+<para> If you have already created a SIP or IAX account with &sflphone; from another computer or with another software, or if you want to use an existing account, you can register it with this wizard to be able to use it with this instance of &sflphone;. The wizard will ask you for the basic informations of this account in order to find it back. These informations are described in this section.</para>
+
+
+
+<sect3 id="gettingstarted-wizard-register-siporiax">
+<title>SIP or IAX</title>
+
+<screenshot>
+<mediaobject>
+<imageobject>
+<imagedata fileref="wizard-register-siporiax.png" format="PNG"/>
+</imageobject>
+<caption>
+<para>The account type page</para>
+</caption>
+</mediaobject>
+</screenshot>
+
+<para> &sflphone; handles two protocols for calls, SIP and IAX2. The wizard will now ask you which of those is your account. If you already have an account created, just choose the right type. If you want to create one without &sflphone; and you wonder which type to choose, you can refer to <ulink url="http://www.voip-info.org/wiki/view/IAX+versus+SIP">this document</ulink> to know which one feets your needs best. </para>
+
+</sect3>
+
+<sect3 id="gettingstarted-wizard-register-settings">
+<title>Account settings</title>
+
+<screenshot>
+<mediaobject>
+<imageobject>
+<imagedata fileref="wizard-register-settings.png" format="PNG"/>
+</imageobject>
+<caption>
+<para>The settings page</para>
+</caption>
+</mediaobject>
+</screenshot>
+
+<para> The wizard needs a few informations to find your account. The alias is for convenience only, you can choose anyone. It will be applied only on &sflphone; on this system, not in the account. Server is the one that hosts your account. User is the username of the account. Unlike the alias, it has to be the username chosen while creating the account. Password is also the one chosen for the account. Mailbox number will be used by the mailbox button to keep you from having to type that number too often. Usually it is 888.</para>
+
+</sect3>
+
+</sect2>
+
+<sect2 id="gettingstarted-wizard-stun">
+<title>STUN settings</title>
+
+<screenshot>
+<mediaobject>
+<imageobject>
+<imagedata fileref="wizard-stun.png" format="PNG"/>
+</imageobject>
+<caption>
+<para>The STUN page</para>
+</caption>
+</mediaobject>
+</screenshot>
+
+<para>If you register a SIP account or create it on sflphone.org (that also means registering a SIP account after all), the wizard proposes you to enable STUN. You may want to do it if you are connected under a firewall. Actually, this is not an option of this account in particular, but of the &sflphone; configuration; it will be applied for any account. If you enable this option, you have to choose the STUN server you want to use (example : stunserver.org).</para>
+
+</sect2>
+
+
+<sect2 id="gettingstarted-wizard-finish">
+<title>The conclusion page</title>
+
+<screenshot>
+<mediaobject>
+<imageobject>
+<imagedata fileref="wizard-finish.png" format="PNG"/>
+</imageobject>
+<caption>
+<para>The final page</para>
+</caption>
+</mediaobject>
+</screenshot>
+
+<para> The conclusion page resumes the informations you have sent during the wizard process. It has not done anything yet so you can still give up clicking <I>Cancel</I> button. If you click on <I>Finish</I>, it will send all the information and create the account if you chose to create it or register it if you were registering an existing account. As it has not sent the informations at this step, it cannot know if the registration will succeed. To check this, once you are in the main window, go to the account settings page to see the state of your accounts. </para>
+
+</sect2>
+
+
+</chapter>
