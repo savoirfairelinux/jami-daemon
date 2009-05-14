@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-14 16:24:40 -0400
+# Last Modified: 2009-05-14 17:57:35 -0400
 #####################################################
 
 #
@@ -250,7 +250,7 @@ if [ ${DO_PREPARE} ]; then
 	fi
 	git commit -m "[#1262] Updated changelogs for version ${VERSION_COMMIT}" . >/dev/null
 	echo " Pushing commit"
-#	git push origin master >/dev/null
+	git push origin master >/dev/null
 
 	# change back current branch if needed
 	if [ ${RELEASE_MODE} ]; then
@@ -260,7 +260,7 @@ if [ ${DO_PREPARE} ]; then
 	fi
 	
 	echo "Archiving repository"
-	tar czf ${REPOSITORY_ARCHIVE} -C `dirname ${REPOSITORY_DIR}` sflphone 
+	tar czf ${REPOSITORY_ARCHIVE} --exclude .git -C `dirname ${REPOSITORY_DIR}` sflphone 
 
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot archive repository"
