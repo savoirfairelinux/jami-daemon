@@ -82,11 +82,14 @@ exec 2>&3
 
 echo "SFLPhone version is ${VER}"
 
-# generate the changelog, according to the distribution and the git commit messages
+# generate the changelog, according to the distribution
 echo "Generate changelogs"
 sed -i 's/SYSTEM/'${OS_VERSION}'/g' ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/changelog && \
+sed -i 's/SYSVER/0ubuntu1/g' ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/changelog && \
  # sed -i 's/SYSTEM/'${OS_VERSION}'/g' ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian/changelog && \
- sed -i 's/SYSTEM/'${OS_VERSION}'/g' ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/changelog
+ # sed -i 's/SYSVER/0ubuntu1/g' ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian/changelog && \
+ sed -i 's/SYSTEM/'${OS_VERSION}'/g' ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/changelog && \
+ sed -i 's/SYSVER/0ubuntu1/g' ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian/changelog
 
 if [ "$?" -ne "0" ]; then
 	echo "!! Cannot generate changelogs"

@@ -7,8 +7,16 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified:
+# Last Modified: 2009-05-14 16:16:49 -0400
 #####################################################
+
+#
+# Not working with git 1.5.4.3
+#
+#
+#
+#
+
 
 TAG=`date +%Y-%m-%d`
 
@@ -220,26 +228,12 @@ if [ ${DO_PREPARE} ]; then
 	# generate the changelog, according to the distribution and the git commit messages
 	echo "Update changelogs"
 
-	# use git to generate changelogs
-	# TODO : currently do symlink to workaround git-dch bug, check if better way is possible
-	if [ ${RELEASE_MODE} ]; then
-	        cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian/ . && ${BIN_DIR}/git-dch -a -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian && \
-		# cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian . && ${BIN_DIR}/git-dch -a -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian && \
-		cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian . && ${BIN_DIR}/git-dch -a -N "${FULL_VER}${VERSION_APPEND}" --debian-branch=release && rm debian
-	else
-		cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_COMMON_DIR}/debian . && ${BIN_DIR}/git-dch -a -S && rm debian && \
-		# cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_KDE_DIR}/debian . && ${BIN_DIR}/git-dch -a -S && rm debian && \
-		cd ${REPOSITORY_DIR} && ln -s ${REPOSITORY_SFLPHONE_CLIENT_GNOME_DIR}/debian . && ${BIN_DIR}/git-dch -a -S && rm debian
-	fi
+	${SCRIPTS_DIR}/sfl-git-dch.sh ${RELEASE_MODE}
 	
 	if [ "$?" -ne "0" ]; then
 		echo "!! Cannot update changelogs"
 		exit -1
 	fi
-
-	# change UNRELEASED flag to system as we alway do a build for each distribution
-	# and distribution is set by another script
-	find ${REPOSITORY_DIR} -name changelog -exec sed -i 's/UNRELEASED/SYSTEM/g' {} \;
 
 	cd ${REPOSITORY_DIR}	
 	echo "Update repository with new changelog"
@@ -255,9 +249,9 @@ if [ ${DO_PREPARE} ]; then
 	if [ ! ${RELEASE_MODE} ]; then
 		VERSION_COMMIT=${FULL_VER}" Snapshot ${TAG}"
 	fi
-	git-commit -m "[#1262] Updated changelogs for version ${VERSION_COMMIT}" . >/dev/null
+	git commit -m "[#1262] Updated changelogs for version ${VERSION_COMMIT}" . >/dev/null
 	echo " Pushing commit"
-	git push origin master >/dev/null
+#	git push origin master >/dev/null
 
 	# change back current branch if needed
 	if [ ${RELEASE_MODE} ]; then
