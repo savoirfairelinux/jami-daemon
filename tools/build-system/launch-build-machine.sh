@@ -7,7 +7,7 @@
 # Author: Julien Bonjean (julien@bonjean.info) 
 #
 # Creation Date: 2009-04-20
-# Last Modified: 2009-05-14 16:16:49 -0400
+# Last Modified: 2009-05-14 16:24:40 -0400
 #####################################################
 
 #
@@ -208,7 +208,6 @@ if [ ${DO_PREPARE} ]; then
 	echo "Clone repository"
 	git clone ssh://repos-sflphone-git@sflphone.org/~/sflphone.git ${REPOSITORY_DIR} >/dev/null 2>&1
 
-
 	if [ "$?" -ne "0" ]; then
 		echo " !! Cannot clone repository"
 		exit -1
@@ -303,10 +302,6 @@ if [ ${DO_MAIN_LOOP} ]; then
 			sleep ${STARTUP_WAIT}
 		fi
 	
-		echo "Doing updates"
-		${SSH_BASE} 'sudo apt-get update >/dev/null'
-		${SSH_BASE} 'sudo apt-get upgrade -y >/dev/null'
-
 		echo "Clean remote directory"
 		${SSH_BASE} "rm -rf ${REMOTE_DEPLOY_DIR} 2>/dev/null"
 

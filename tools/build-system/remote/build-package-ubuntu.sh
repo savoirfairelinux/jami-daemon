@@ -52,7 +52,7 @@ if [ "$?" -ne "0" ]; then
         exit -1
 fi
 
-# decompress reppository
+# decompress repository
 echo "Untar repository"
 cd ${BUILD_DIR} && tar xf ${REPOSITORY_ARCHIVE}
 
@@ -81,6 +81,10 @@ exec 1>&3
 exec 2>&3
 
 echo "SFLPhone version is ${VER}"
+
+echo "Do updates"
+sudo apt-get update >/dev/null
+sudo apt-get upgrade -y >/dev/null
 
 # generate the changelog, according to the distribution
 echo "Generate changelogs"
